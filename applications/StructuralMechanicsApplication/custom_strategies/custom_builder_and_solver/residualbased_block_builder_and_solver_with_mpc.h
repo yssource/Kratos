@@ -14,7 +14,6 @@
 #ifndef KRATOS_SOLVING_STRATEGIES_BUILDER_AND_SOLVERS_RESIDUALBASED_BLOCK_BUILDER_AND_SOLVER_WITH_MPC_H_
 #define KRATOS_SOLVING_STRATEGIES_BUILDER_AND_SOLVERS_RESIDUALBASED_BLOCK_BUILDER_AND_SOLVER_WITH_MPC_H_
 
-
 /* System includes */
 
 #include "utilities/openmp_utils.h"
@@ -29,6 +28,7 @@
 #include "includes/define.h"
 #include "solving_strategies/builder_and_solvers/residualbased_block_builder_and_solver.h"
 #include "includes/model_part.h"
+#include "custom_utilities/multipoint_constraint_data.hpp"
 
 // #define USE_GOOGLE_HASH
 #ifdef USE_GOOGLE_HASH
@@ -44,23 +44,18 @@ namespace Kratos
 /**@name Kratos Globals */
 /*@{ */
 
-
 /*@} */
 /**@name Type Definitions */
 /*@{ */
 
 /*@} */
 
-
 /**@name  Enum's */
 /*@{ */
-
 
 /*@} */
 /**@name  Functions */
 /*@{ */
-
-
 
 /*@} */
 /**@name Kratos Classes */
@@ -101,77 +96,91 @@ Calculation of the reactions involves a cost very similiar to the calculation of
 
 
  */
-template<class TSparseSpace,
-class TDenseSpace, //= DenseSpace<double>,
-class TLinearSolver //= LinearSolver<TSparseSpace,TDenseSpace>
->
+template <class TSparseSpace,
+          class TDenseSpace,  //= DenseSpace<double>,
+          class TLinearSolver //= LinearSolver<TSparseSpace,TDenseSpace>
+          >
 class ResidualBasedBlockBuilderAndSolverWithMpc
-		: public ResidualBasedBlockBuilderAndSolver< TSparseSpace, TDenseSpace, TLinearSolver >
+    : public ResidualBasedBlockBuilderAndSolver<TSparseSpace, TDenseSpace, TLinearSolver>
 {
-public:
-	/**@name Type Definitions */
-	/*@{ */
-	KRATOS_CLASS_POINTER_DEFINITION(ResidualBasedBlockBuilderAndSolverWithMpc);
+  public:
+    /**@name Type Definitions */
+    /*@{ */
+    KRATOS_CLASS_POINTER_DEFINITION(ResidualBasedBlockBuilderAndSolverWithMpc);
 
+    typedef ResidualBasedBlockBuilderAndSolver<TSparseSpace, TDenseSpace, TLinearSolver> BaseType;
 
-	typedef ResidualBasedBlockBuilderAndSolver<TSparseSpace, TDenseSpace, TLinearSolver> BaseType;
+    typedef typename BaseType::TSchemeType TSchemeType;
 
-	typedef typename BaseType::TSchemeType TSchemeType;
+    typedef typename BaseType::TDataType TDataType;
 
-	typedef typename BaseType::TDataType TDataType;
+    typedef typename BaseType::DofsArrayType DofsArrayType;
 
-	typedef typename BaseType::DofsArrayType DofsArrayType;
+    typedef typename BaseType::TSystemMatrixType TSystemMatrixType;
 
-	typedef typename BaseType::TSystemMatrixType TSystemMatrixType;
+    typedef typename BaseType::TSystemVectorType TSystemVectorType;
 
-	typedef typename BaseType::TSystemVectorType TSystemVectorType;
+    typedef typename BaseType::LocalSystemVectorType LocalSystemVectorType;
 
-	typedef typename BaseType::LocalSystemVectorType LocalSystemVectorType;
+    typedef typename BaseType::LocalSystemMatrixType LocalSystemMatrixType;
 
-	typedef typename BaseType::LocalSystemMatrixType LocalSystemMatrixType;
+    typedef typename BaseType::TSystemMatrixPointerType TSystemMatrixPointerType;
+    typedef typename BaseType::TSystemVectorPointerType TSystemVectorPointerType;
 
-	typedef typename BaseType::TSystemMatrixPointerType TSystemMatrixPointerType;
-	typedef typename BaseType::TSystemVectorPointerType TSystemVectorPointerType;
+    typedef typename BaseType::NodesArrayType NodesArrayType;
+    typedef typename BaseType::ElementsArrayType ElementsArrayType;
+    typedef typename BaseType::ConditionsArrayType ConditionsArrayType;
 
-	typedef typename BaseType::NodesArrayType NodesArrayType;
-	typedef typename BaseType::ElementsArrayType ElementsArrayType;
-	typedef typename BaseType::ConditionsArrayType ConditionsArrayType;
-
-	typedef typename BaseType::ElementsContainerType ElementsContainerType;
-    typedef Dof<double>::Pointer DofPointerType;
+    typedef typename BaseType::ElementsContainerType ElementsContainerType;
+    typedef Dof<double> *DofPointerType;
     typedef Dof<double> DofType;
 
+    typedef Kratos::MpcData::MasterIdWeightMapType MasterIdWeightMapType;
+    typedef Kratos::MpcData::SlavePairType SlavePairType;
+    typedef Kratos::MpcData::VariableDataType VariableDataType;
+    typedef Kratos::MpcData::MasterDofWeightMapType MasterDofWeightMapType;
+    typedef Node<3> NodeType;
+    typedef MpcData::Pointer MpcDataPointerType;
 
-	/*@} */
-	/**@name Life Cycle
+    typedef ProcessInfo      ProcessInfoType;
+
+    /*@} */
+    /**@name Life Cycle
 	 */
-	/*@{ */
+    /*@{ */
 
-	/** Constructor.
+    /** Constructor.
 	 */
-	ResidualBasedBlockBuilderAndSolverWithMpc(
-			typename TLinearSolver::Pointer pNewLinearSystemSolver)
-	: ResidualBasedBlockBuilderAndSolver< TSparseSpace, TDenseSpace, TLinearSolver >(pNewLinearSystemSolver)
-	  {
-	  }
+    ResidualBasedBlockBuilderAndSolverWithMpc(
+        typename TLinearSolver::Pointer pNewLinearSystemSolver)
+        : ResidualBasedBlockBuilderAndSolver<TSparseSpace, TDenseSpace, TLinearSolver>(pNewLinearSystemSolver)
+    {
+    }
 
-	/** Destructor.
+    /** Destructor.
 	 */
-	virtual ~ResidualBasedBlockBuilderAndSolverWithMpc()
-	{
-	}
+    virtual ~ResidualBasedBlockBuilderAndSolverWithMpc()
+    {
+    }
 
+    void SetUpSystem(
+        ModelPart& r_model_part
+    ) override
+    {
+        BaseType::SetUpSystem(r_model_part);
+        FormulateEquationIdRelationMap(r_model_part);        
+    }
 
 
     //**************************************************************************
     //**************************************************************************
-	// This is modified to include the MPC information.
-	//
+    // This is modified to include the MPC information.
+    //
     void Build(
         typename TSchemeType::Pointer pScheme,
-        ModelPart& r_model_part,
-        TSystemMatrixType& A,
-        TSystemVectorType& b) override
+        ModelPart &r_model_part,
+        TSystemMatrixType &A,
+        TSystemVectorType &b) override
     {
         KRATOS_TRY
         if (!pScheme)
@@ -183,7 +192,7 @@ public:
         //getting the array of the conditions
         const int nconditions = static_cast<int>(r_model_part.Conditions().size());
 
-        ProcessInfo& CurrentProcessInfo = r_model_part.GetProcessInfo();
+        ProcessInfo &CurrentProcessInfo = r_model_part.GetProcessInfo();
         ModelPart::ElementsContainerType::iterator el_begin = r_model_part.ElementsBegin();
         ModelPart::ConditionsContainerType::iterator cond_begin = r_model_part.ConditionsBegin();
 
@@ -198,9 +207,9 @@ public:
         // assemble all elements
         double start_build = OpenMPUtils::GetCurrentTime();
 
-        #pragma omp parallel firstprivate(nelements,nconditions, LHS_Contribution, RHS_Contribution, EquationId )
+#pragma omp parallel firstprivate(nelements, nconditions, LHS_Contribution, RHS_Contribution, EquationId)
         {
-            # pragma omp for  schedule(guided, 512) nowait
+#pragma omp for schedule(guided, 512) nowait
             for (int k = 0; k < nelements; k++)
             {
                 ModelPart::ElementsContainerType::iterator it = el_begin + k;
@@ -217,21 +226,19 @@ public:
                     pScheme->CalculateSystemContributions(*(it.base()), LHS_Contribution, RHS_Contribution, EquationId, CurrentProcessInfo);
                     // Modifying the local contributions for MPC
                     this->Element_ApplyMultipointConstraints(*(it.base()), LHS_Contribution, RHS_Contribution, EquationId, CurrentProcessInfo);
-                    //assemble the elemental contribution
-    #ifdef USE_LOCKS_IN_ASSEMBLY
+//assemble the elemental contribution
+#ifdef USE_LOCKS_IN_ASSEMBLY
                     this->Assemble(A, b, LHS_Contribution, RHS_Contribution, EquationId, BaseType::mlock_array);
-    #else
+#else
                     this->Assemble(A, b, LHS_Contribution, RHS_Contribution, EquationId);
-    #endif
+#endif
                     // clean local elemental memory
                     pScheme->CleanMemory(*(it.base()));
                 }
-
             }
 
-
-            //#pragma omp parallel for firstprivate(nconditions, LHS_Contribution, RHS_Contribution, EquationId ) schedule(dynamic, 1024)
-            #pragma omp for  schedule(guided, 512)
+//#pragma omp parallel for firstprivate(nconditions, LHS_Contribution, RHS_Contribution, EquationId ) schedule(dynamic, 1024)
+#pragma omp for schedule(guided, 512)
             for (int k = 0; k < nconditions; k++)
             {
                 ModelPart::ConditionsContainerType::iterator it = cond_begin + k;
@@ -250,12 +257,12 @@ public:
                     // Modifying the local contributions for MPC
                     this->Condition_ApplyMultipointConstraints(*(it.base()), LHS_Contribution, RHS_Contribution, EquationId, CurrentProcessInfo);
 
-                    //assemble the elemental contribution
-    #ifdef USE_LOCKS_IN_ASSEMBLY
+//assemble the elemental contribution
+#ifdef USE_LOCKS_IN_ASSEMBLY
                     this->Assemble(A, b, LHS_Contribution, RHS_Contribution, EquationId, BaseType::mlock_array);
-    #else
+#else
                     this->Assemble(A, b, LHS_Contribution, RHS_Contribution, EquationId);
-    #endif
+#endif
 
                     // clean local elemental memory
                     pScheme->CleanMemory(*(it.base()));
@@ -278,19 +285,14 @@ public:
         }
 
         KRATOS_CATCH("")
-
     }
 
-
-
-protected:
-
-
+  protected:
     void ConstructMatrixStructure(
-        TSystemMatrixType& A,
-        ElementsContainerType& rElements,
-        ConditionsArrayType& rConditions,
-        ProcessInfo& CurrentProcessInfo) override
+        TSystemMatrixType &A,
+        ElementsContainerType &rElements,
+        ConditionsArrayType &rConditions,
+        ProcessInfo &CurrentProcessInfo) override
     {
         //filling with zero the matrix (creating the structure)
         Timer::Start("MatrixStructure");
@@ -298,26 +300,26 @@ protected:
         const std::size_t equation_size = BaseType::mDofSet.size();
 
 #ifdef USE_GOOGLE_HASH
-        std::vector<google::dense_hash_set<std::size_t> > indices(equation_size);
-        const std::size_t empty_key = 2*equation_size + 10;
+        std::vector<google::dense_hash_set<std::size_t>> indices(equation_size);
+        const std::size_t empty_key = 2 * equation_size + 10;
 #else
-        std::vector<std::unordered_set<std::size_t> > indices(equation_size);
+        std::vector<std::unordered_set<std::size_t>> indices(equation_size);
 #endif
 
-        #pragma omp parallel for firstprivate(equation_size)
+#pragma omp parallel for firstprivate(equation_size)
         for (int iii = 0; iii < static_cast<int>(equation_size); iii++)
         {
 #ifdef USE_GOOGLE_HASH
-        indices[iii].set_empty_key(empty_key);
+            indices[iii].set_empty_key(empty_key);
 #else
-        indices[iii].reserve(40);
+            indices[iii].reserve(40);
 #endif
         }
         Element::EquationIdVectorType ids(3, 0);
 
         const int nelements = static_cast<int>(rElements.size());
-        #pragma omp parallel for firstprivate(nelements, ids)
-        for(int iii=0; iii<nelements; iii++)
+#pragma omp parallel for firstprivate(nelements, ids)
+        for (int iii = 0; iii < nelements; iii++)
         {
             typename ElementsContainerType::iterator i_element = rElements.begin() + iii;
             (i_element)->EquationIdVector(ids, CurrentProcessInfo);
@@ -330,18 +332,17 @@ protected:
 #ifdef _OPENMP
                 omp_set_lock(&(BaseType::mlock_array[ids[i]]));
 #endif
-                auto& row_indices = indices[ids[i]];
+                auto &row_indices = indices[ids[i]];
                 row_indices.insert(ids.begin(), ids.end());
 
 #ifdef _OPENMP
                 omp_unset_lock(&(BaseType::mlock_array[ids[i]]));
 #endif
             }
-
         }
         const int nconditions = static_cast<int>(rConditions.size());
-        #pragma omp parallel for firstprivate(nconditions, ids)
-        for (int iii = 0; iii<nconditions; iii++)
+#pragma omp parallel for firstprivate(nconditions, ids)
+        for (int iii = 0; iii < nconditions; iii++)
         {
             typename ConditionsArrayType::iterator i_condition = rConditions.begin() + iii;
             (i_condition)->EquationIdVector(ids, CurrentProcessInfo);
@@ -353,7 +354,7 @@ protected:
 #ifdef _OPENMP
                 omp_set_lock(&(BaseType::mlock_array[ids[i]]));
 #endif
-                auto& row_indices = indices[ids[i]];
+                auto &row_indices = indices[ids[i]];
                 row_indices.insert(ids.begin(), ids.end());
 #ifdef _OPENMP
                 omp_unset_lock(&(BaseType::mlock_array[ids[i]]));
@@ -367,21 +368,20 @@ protected:
 
         A = boost::numeric::ublas::compressed_matrix<double>(indices.size(), indices.size(), nnz);
 
-        double* Avalues = A.value_data().begin();
-        std::size_t* Arow_indices = A.index1_data().begin();
-        std::size_t* Acol_indices = A.index2_data().begin();
+        double *Avalues = A.value_data().begin();
+        std::size_t *Arow_indices = A.index1_data().begin();
+        std::size_t *Acol_indices = A.index2_data().begin();
 
         //filling the index1 vector - DO NOT MAKE PARALLEL THE FOLLOWING LOOP!
         Arow_indices[0] = 0;
         for (int i = 0; i < static_cast<int>(A.size1()); i++)
-            Arow_indices[i+1] = Arow_indices[i] + indices[i].size();
+            Arow_indices[i + 1] = Arow_indices[i] + indices[i].size();
 
-
-        #pragma omp parallel for
+#pragma omp parallel for
         for (int i = 0; i < static_cast<int>(A.size1()); i++)
         {
             const unsigned int row_begin = Arow_indices[i];
-            const unsigned int row_end = Arow_indices[i+1];
+            const unsigned int row_end = Arow_indices[i + 1];
             unsigned int k = row_begin;
             for (auto it = indices[i].begin(); it != indices[i].end(); it++)
             {
@@ -393,15 +393,13 @@ protected:
             indices[i].clear(); //deallocating the memory
 
             std::sort(&Acol_indices[row_begin], &Acol_indices[row_end]);
-
         }
 
-        A.set_filled(indices.size()+1, nnz);
+        A.set_filled(indices.size() + 1, nnz);
         Timer::Stop("MatrixStructure");
     }
 
-
-protected:
+  protected:
     /*@} */
     /**@name Protected member Variables */
     /*@{ */
@@ -410,68 +408,63 @@ protected:
      * This function modifies the provided equation ID vector to accommodate MPC constraints
      */
     void Element_ModifyEquationIdsForMPC(Element::Pointer rCurrentElement,
-    		Element::EquationIdVectorType& EquationId,
-			ProcessInfo& CurrentProcessInfo){
-    	const unsigned int number_of_nodes = rCurrentElement->GetGeometry().PointsNumber();
+                                         Element::EquationIdVectorType &EquationId,
+                                         ProcessInfo &CurrentProcessInfo)
+    {
+        const unsigned int number_of_nodes = rCurrentElement->GetGeometry().PointsNumber();
+        MpcData::Pointer mpcData = CurrentProcessInfo.GetValue(MPC_POINTER);
 
-    	// For each node check if it is a slave or not If it is .. we change the Transformation matrix
-    	for ( unsigned int j = 0; j < number_of_nodes; j++ )
-    	{
-    		if( rCurrentElement->GetGeometry()[j].GetValue(IS_SLAVE) ){ //temporary, will be checked once at the beginning only
-    			//slaveFound = true;
-    			// Necessary data for iterating and modifying the matrix
-    			MpcData &mpcData       = rCurrentElement->GetGeometry()[j].GetValue(MPC_DATA);
-    			std::vector<DofType> slaveDOFs = mpcData.GetSlaveDOFs();
-    			int totalNumberOfSlaves  = slaveDOFs.size();
-
-    			for(int slaveI=0; slaveI<totalNumberOfSlaves; slaveI++){ // For each of the Slave DOF
-    				std::vector<DofType> masterDOFs = mpcData.GetMasterDOFs(slaveDOFs[slaveI]);
-
-    				int totalNumberOfMasters = masterDOFs.size();
-    				for(int i=0; i<totalNumberOfMasters; i++){
-    					// We extend the EquationId vector
-    					int masterEqID = masterDOFs[i].EquationId();
-    					EquationId.push_back(masterEqID);
-    				}
-    			} // If the node is slave
-
-    		}
-    	}
-
+        // For each node check if it is a slave or not If it is .. we change the Transformation matrix
+        for (unsigned int j = 0; j < number_of_nodes; j++)
+        {
+            if (rCurrentElement->GetGeometry()[j].Is(SLAVE))
+            { //temporary, will be checked once at the beginning only
+                // Necessary data for iterating and modifying the matrix
+                Node<3>::DofsContainerType nodeDofs = rCurrentElement->GetGeometry()[j].GetDofs();
+                unsigned int slaveEquationId;
+                for(auto dof : nodeDofs){
+                    slaveEquationId = dof.EquationId();
+                    if(mpcData->mEquationIdToWeightsMap.count(slaveEquationId) > 0){
+                        MasterIdWeightMapType masterWeightsMap = mpcData->mEquationIdToWeightsMap[slaveEquationId];
+                        for(auto master : masterWeightsMap){
+                            EquationId.push_back(master.first);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /*
      * This function modifies the provided equation ID vector to accommodate MPC constraints
      */
     void Condition_ModifyEquationIdsForMPC(Condition::Pointer rCurrentCondition,
-    		Element::EquationIdVectorType& EquationId,
-			ProcessInfo& CurrentProcessInfo){
+                                           Element::EquationIdVectorType &EquationId,
+                                           ProcessInfo &CurrentProcessInfo)
+    {
 
-    	const unsigned int number_of_nodes = rCurrentCondition->GetGeometry().PointsNumber();
+        const unsigned int number_of_nodes = rCurrentCondition->GetGeometry().PointsNumber();
+        MpcData::Pointer mpcData = CurrentProcessInfo.GetValue(MPC_POINTER);
 
-    	// For each node check if it is a slave or not If it is .. we change the Transformation matrix
-    	for ( unsigned int j = 0; j < number_of_nodes; j++ )
-    	{
-
-    		if( rCurrentCondition->GetGeometry()[j].GetValue(IS_SLAVE) ){ //temporary, will be checked once at the beginning only
-    			//slaveFound = true;
-    			// Necessary data for iterating and modifying the matrix
-    			MpcData &mpcData       = rCurrentCondition->GetGeometry()[j].GetValue(MPC_DATA);
-    			std::vector<DofType> slaveDOFs = mpcData.GetSlaveDOFs();
-    			int totalNumberOfSlaves  = slaveDOFs.size();
-
-    			for(int slaveI=0; slaveI<totalNumberOfSlaves; slaveI++){ // For each of the Slave DOF
-    				std::vector<DofType> masterDOFs = mpcData.GetMasterDOFs(slaveDOFs[slaveI]);
-    				int totalNumberOfMasters = masterDOFs.size();
-    				for(int i=0; i<totalNumberOfMasters; i++){
-    					// We extend the EquationId vector
-    					int masterEqID = masterDOFs[i].EquationId();
-    					EquationId.push_back(masterEqID);
-    				}
-    			} // If the node is slave
-
-    		}
-    	}
+        // For each node check if it is a slave or not If it is .. we change the Transformation matrix
+        for (unsigned int j = 0; j < number_of_nodes; j++)
+        {
+            if (rCurrentCondition->GetGeometry()[j].Is(SLAVE))
+            { //temporary, will be checked once at the beginning only
+                // Necessary data for iterating and modifying the matrix
+                Node<3>::DofsContainerType nodeDofs = rCurrentCondition->GetGeometry()[j].GetDofs();
+                unsigned int slaveEquationId;
+                for(auto dof : nodeDofs){
+                    slaveEquationId = dof.EquationId();
+                    if(mpcData->mEquationIdToWeightsMap.count(slaveEquationId) > 0){
+                        MasterIdWeightMapType masterWeightsMap = mpcData->mEquationIdToWeightsMap[slaveEquationId];
+                        for(auto master : masterWeightsMap){
+                            EquationId.push_back(master.first);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /*
@@ -479,333 +472,340 @@ protected:
      */
 
     void Element_ApplyMultipointConstraints(Element::Pointer rCurrentElement,
-   		 LocalSystemMatrixType& LHS_Contribution,
-			 LocalSystemVectorType& RHS_Contribution,
-			 Element::EquationIdVectorType& EquationId,
-			 ProcessInfo& CurrentProcessInfo){
+                                            LocalSystemMatrixType &LHS_Contribution,
+                                            LocalSystemVectorType &RHS_Contribution,
+                                            Element::EquationIdVectorType &EquationId,
+                                            ProcessInfo &CurrentProcessInfo)
+    {
 
-    KRATOS_TRY
-     bool slaveFound = false;
-     const unsigned int number_of_nodes = rCurrentElement->GetGeometry().PointsNumber();
-     int totalNumberOfSlaves = 0;
-     int totalNumberOfMasters = 0;
-     for ( unsigned int j = 0; j < number_of_nodes; j++ ){
-         if( rCurrentElement->GetGeometry()[j].GetValue(IS_SLAVE) ){ //temporary, will be checked once at the beginning only
-             slaveFound = true;
-             break;
-         }
-     }
-
-     // If no slave is found no need of going on
-     if(!slaveFound){
-         return;
-     }
-     
-    std::vector<std::size_t> localEquationIds;
-    std::vector<std::size_t> localSlaveEquationIds;
-    std::vector<std::size_t> localInternEquationIds;
-    // Formulating the local slave equationId vector
-    // Formulating the local slave equationId vector
-    for(int i=0; i<EquationId.size(); ++i){
-        localEquationIds.push_back(i);
-    }
-    
-    for ( unsigned int j = 0; j < number_of_nodes; ++j ){ // Loop over the nodes
-         
-         if( rCurrentElement->GetGeometry()[j].GetValue(IS_SLAVE) ){ // If the node has a slave DOF
-             // Necessary data for iterating and modifying the matrix
-             MpcData &mpcData       = rCurrentElement->GetGeometry()[j].GetValue(MPC_DATA);
-             totalNumberOfSlaves  = mpcData.GetSlaveDOFs().size();
-             std::vector<DofType> slaveDOFs = mpcData.GetSlaveDOFs();
-             std::vector<std::size_t>::iterator it;
-    
-            // Formulating the local slave equationId vector
-            for(int slaveI=0; slaveI<totalNumberOfSlaves; ++slaveI){ // For each of the Slave DOF                               
-                    // Obtaining the local dof number for the slave.
-                    int localSlaveEqId = -1;
-                    int slaveEqId = slaveDOFs[slaveI].EquationId();
-                    it = std::find (EquationId.begin(), EquationId.end(), slaveEqId);
-                    if (it != EquationId.end()){
-                        std::size_t pos = std::distance(EquationId.begin(), it);
-                        localSlaveEqId = pos;
-                    }              
-                    localSlaveEquationIds.push_back(localSlaveEqId);
-            }                       
-            
-         }// If the node has a slave DOF
-         
-    }// Loop over the nodes
-    
-    std::sort(localEquationIds.begin(), localEquationIds.end());
-    std::sort(localSlaveEquationIds.begin(), localSlaveEquationIds.end());             
-    std::set_difference(localEquationIds.begin(), localEquationIds.end(), localSlaveEquationIds.begin(), localSlaveEquationIds.end(), std::back_inserter(localInternEquationIds));
-    
-    
-    for ( unsigned int j = 0; j < number_of_nodes; ++j ){ // Loop over the nodes
-         
-         if( rCurrentElement->GetGeometry()[j].GetValue(IS_SLAVE) ){ // If the node has a slave DOF
-             // Necessary data for iterating and modifying the matrix
-             MpcData &mpcData       = rCurrentElement->GetGeometry()[j].GetValue(MPC_DATA);
-             //mpcData.GetInfo();
-             totalNumberOfMasters = mpcData.GetTotalNumbeOfMasterDOFs();
-             totalNumberOfSlaves  = mpcData.GetSlaveDOFs().size();
-             std::vector<DofType> slaveDOFs = mpcData.GetSlaveDOFs();
-             std::vector<std::size_t>::iterator it;
-             std::vector<std::size_t> localNodalSlaveEquationIds;
-    
-             // We resize the LHS and RHS contribution with the master sizes
-             int currentSysSize = LHS_Contribution.size1();
-             int lhsSize1 = currentSysSize + totalNumberOfMasters;
-             int lhsSize2 = currentSysSize + totalNumberOfMasters;
-             LHS_Contribution.resize(lhsSize1,lhsSize2,true); //true for Preserving the data and resizing the matrix
-             RHS_Contribution.resize(lhsSize1,true);             
-
-             // Making the extra part of matrx
-             for(int m=currentSysSize; m<lhsSize1; m++){
-                 for(int n=0; n<lhsSize1; n++){
-                     LHS_Contribution(m,n) = 0.0;
-                     LHS_Contribution(n,m) = 0.0;
-                 }
-                 RHS_Contribution(m) = 0.0;
-             }
-    
-            // Formulating the local slave equationId vector
-            for(int slaveI=0; slaveI<totalNumberOfSlaves; ++slaveI){ // For each of the Slave DOF                               
-                    // Obtaining the local dof number for the slave.
-                    int localSlaveEqId = -1;
-                    int slaveEqId = slaveDOFs[slaveI].EquationId();
-                    it = std::find (EquationId.begin(), EquationId.end(), slaveEqId);
-                    if (it != EquationId.end()){
-                        std::size_t pos = std::distance(EquationId.begin(), it);
-                        localSlaveEqId = pos;
-                    }              
-                    localNodalSlaveEquationIds.push_back(localSlaveEqId);
+        KRATOS_TRY
+        bool slaveFound = false;
+        Element::NodesArrayType nodesArray = rCurrentElement->GetGeometry();
+        const unsigned int number_of_nodes = rCurrentElement->GetGeometry().PointsNumber();
+        for (unsigned int j = 0; j < number_of_nodes; j++)
+        {
+            if (rCurrentElement->GetGeometry()[j].Is(SLAVE))
+            { //temporary, will be checked once at the beginning only
+                slaveFound = true;
+                break;
             }
-            
-            int currentNumberOfMastersProcessed = 0;
-            for (auto localSlaveEqId : localNodalSlaveEquationIds){ // Loop over all the slaves for this node
-                
-                    it = std::find (localNodalSlaveEquationIds.begin(), localNodalSlaveEquationIds.end(), localSlaveEqId);
+        }
+        // If no slave is found no need of going on
+        if (!slaveFound)
+        {
+            return;
+        }
+        MpcData::Pointer mpcData = CurrentProcessInfo.GetValue(MPC_POINTER);
+        std::vector<std::size_t> localEquationIds;
+        std::vector<std::size_t> localSlaveEquationIds;
+        std::vector<std::size_t> localInternEquationIds;
+        // Formulating the local slave equationId vector
+        for (int i = 0; i < EquationId.size(); ++i)
+        {
+            localEquationIds.push_back(i);
+            if(mpcData->mEquationIdToWeightsMap.count(EquationId[i]) > 0){
+                localSlaveEquationIds.push_back(i);
+            }
+        }
+        std::sort(localEquationIds.begin(), localEquationIds.end());
+        std::sort(localSlaveEquationIds.begin(), localSlaveEquationIds.end());
+        std::set_difference(localEquationIds.begin(), localEquationIds.end(), localSlaveEquationIds.begin(), localSlaveEquationIds.end(), std::back_inserter(localInternEquationIds));
+        for (unsigned int j = 0; j < number_of_nodes; ++j)
+        { // Loop over the nodes
+            std::vector<int> slaveEquationIds;
+            int totalNumberOfSlaves = 0;
+            int totalNumberOfMasters = 0;
+            if (rCurrentElement->GetGeometry()[j].Is(SLAVE))
+            { // If the node has a slave DOF
+
+                Node<3>::DofsContainerType nodeDofs = rCurrentElement->GetGeometry()[j].GetDofs();
+                unsigned int slaveEquationId;
+                for(auto dof : nodeDofs){
+                    slaveEquationId = dof.EquationId();
+                    if(mpcData->mEquationIdToWeightsMap.count(slaveEquationId) > 0){
+                        totalNumberOfSlaves++;
+                        slaveEquationIds.push_back(slaveEquationId);
+                        MasterIdWeightMapType& masterWeightsMap = mpcData->mEquationIdToWeightsMap[slaveEquationId];
+                        
+                        totalNumberOfMasters += masterWeightsMap.size();                       
+                    }
+                }
+
+                std::vector<std::size_t>::iterator it;
+                std::vector<std::size_t> localNodalSlaveEquationIds;
+
+                // We resize the LHS and RHS contribution with the master sizes
+                int currentSysSize = LHS_Contribution.size1();
+                int lhsSize1 = currentSysSize + totalNumberOfMasters;
+                int lhsSize2 = currentSysSize + totalNumberOfMasters;
+                LHS_Contribution.resize(lhsSize1, lhsSize2, true); //true for Preserving the data and resizing the matrix
+                RHS_Contribution.resize(lhsSize1, true);
+
+                // Making the extra part of matrx
+                for (int m = currentSysSize; m < lhsSize1; m++)
+                {
+                    for (int n = 0; n < lhsSize1; n++)
+                    {
+                        LHS_Contribution(m, n) = 0.0;
+                        LHS_Contribution(n, m) = 0.0;
+                    }
+                    RHS_Contribution(m) = 0.0;
+                }
+                // Formulating the local slave equationId vector
+                for (int slaveI = 0; slaveI < totalNumberOfSlaves; ++slaveI)
+                { // For each of the Slave DOF
+                    // Obtaining the local dof number for the slave.
+                    int localSlaveEqId = -1;
+                    int slaveEqId = slaveEquationIds[slaveI];
+                    it = std::find(EquationId.begin(), EquationId.end(), slaveEqId);
+                    if (it != EquationId.end())
+                    {
+                        std::size_t pos = std::distance(EquationId.begin(), it);
+                        localSlaveEqId = pos;
+                    }
+                    localNodalSlaveEquationIds.push_back(localSlaveEqId);
+                }
+                int currentNumberOfMastersProcessed = 0;
+                for (auto localSlaveEqId : localNodalSlaveEquationIds)
+                { // Loop over all the slaves for this node
+                    it = std::find(localNodalSlaveEquationIds.begin(), localNodalSlaveEquationIds.end(), localSlaveEqId);
                     int slaveIndex = std::distance(localNodalSlaveEquationIds.begin(), it);
-                    std::vector<DofType> masterDOFs = mpcData.GetMasterDOFs(slaveDOFs[slaveIndex]);
-                    int numMastersForThisSlave  = masterDOFs.size();
-                    std::vector<double> masterWeights = mpcData.GetMasterWeightsForSlave(slaveDOFs[slaveIndex]);
-                    for(int masterI=0; masterI<numMastersForThisSlave; ++masterI){ // Loop over all the masters the slave has
+                    MasterIdWeightMapType &masterWeightsMap = mpcData->mEquationIdToWeightsMap[ slaveEquationIds[slaveIndex] ];
+                    for (auto masterI : masterWeightsMap)
+                    { // Loop over all the masters the slave has
                         int localMasterEqId = currentNumberOfMastersProcessed + currentSysSize;
                         ++currentNumberOfMastersProcessed;
                         // For K(m,u) and K(u,m)
-                        for(auto localInternEqId : localInternEquationIds){// Loop over all the local equation ids
-                            LHS_Contribution(localInternEqId, localMasterEqId) += LHS_Contribution(localInternEqId, localSlaveEqId) * masterWeights[masterI];
-                            LHS_Contribution(localMasterEqId, localInternEqId) += LHS_Contribution(localSlaveEqId, localInternEqId) * masterWeights[masterI];                                               
-                        } // Loop over all the local equation ids 
-                        
+                        for (auto localInternEqId : localInternEquationIds)
+                        { // Loop over all the local equation ids
+                            LHS_Contribution(localInternEqId, localMasterEqId) += LHS_Contribution(localInternEqId, localSlaveEqId) * masterI.second;
+                            LHS_Contribution(localMasterEqId, localInternEqId) += LHS_Contribution(localSlaveEqId, localInternEqId) * masterI.second;
+                        } // Loop over all the local equation ids
+
                         // For K(m,s) and K(s,m)
-                        for (auto localSlaveEqIdOther : localSlaveEquationIds){ // Loop over all the slaves for this node
-                            LHS_Contribution(localSlaveEqIdOther, localMasterEqId) += masterWeights[masterI] * LHS_Contribution(localSlaveEqIdOther, localSlaveEqId);
-                            LHS_Contribution(localMasterEqId, localSlaveEqIdOther) += masterWeights[masterI] * LHS_Contribution(localSlaveEqId, localSlaveEqIdOther);
+                        for (auto localSlaveEqIdOther : localSlaveEquationIds)
+                        { // Loop over all the slaves for this node
+                            LHS_Contribution(localSlaveEqIdOther, localMasterEqId) += masterI.second * LHS_Contribution(localSlaveEqIdOther, localSlaveEqId);
+                            LHS_Contribution(localMasterEqId, localSlaveEqIdOther) += masterI.second * LHS_Contribution(localSlaveEqId, localSlaveEqIdOther);
                         }
-                        
-                        EquationId.push_back(masterDOFs[masterI].EquationId());
+
+                        EquationId.push_back(masterI.first);
                         // Changing the RHS side of the equation
-                        RHS_Contribution(localMasterEqId) =  RHS_Contribution(localMasterEqId) + masterWeights[masterI]*RHS_Contribution(localSlaveEqId);  
-                        
-                    } // Loop over all the masters the slave has 
-                    
+                        RHS_Contribution(localMasterEqId) = RHS_Contribution(localMasterEqId) + masterI.second * RHS_Contribution(localSlaveEqId);
+
+                    } // Loop over all the masters the slave has
+
                     RHS_Contribution(localSlaveEqId) = 0.0;
-                    
-            } // Loop over all the slaves for this node                          
-            
-         } // If the node has a slave DOF
-    } // Loop over the nodes
-        
-            // For K(s,s)
-            for (auto localSlaveEqId : localSlaveEquationIds){ // Loop over all the slaves for this node
-                for(auto localSlaveEqIdOther : localSlaveEquationIds){// Loop over all the local equation ids
-                    LHS_Contribution(localSlaveEqId, localSlaveEqIdOther) = -1*LHS_Contribution(localSlaveEqId, localSlaveEqIdOther);
-                }                                
-            }// Loop over all the slaves for this node
-        
-        
-            // For K(u,s) and K(s,u)
-            for (auto localSlaveEqId : localSlaveEquationIds){ // Loop over all the slaves for this node
-                for(auto localInternEqId : localInternEquationIds){// Loop over all the local equation ids
-                    LHS_Contribution(localSlaveEqId, localInternEqId) = 0.0;
-                    LHS_Contribution(localInternEqId, localSlaveEqId) = 0.0;
-                }                                
-            }// Loop over all the slaves for this node    
-       KRATOS_CATCH("Applying Multipoint constraints failed ..");
-        
-    }   // End of function
-    
+                } // Loop over all the slaves for this node
 
-    void Condition_ApplyMultipointConstraints( Condition::Pointer rCurrentElement,
-                 LocalSystemMatrixType& LHS_Contribution,
-                 LocalSystemVectorType& RHS_Contribution,
-                 Element::EquationIdVectorType& EquationId,
-                 ProcessInfo& CurrentProcessInfo){
-
-
-    KRATOS_TRY
-     bool slaveFound = false;
-     const unsigned int number_of_nodes = rCurrentElement->GetGeometry().PointsNumber();
-     int totalNumberOfSlaves = 0;
-     int totalNumberOfMasters = 0;
-     for ( unsigned int j = 0; j < number_of_nodes; j++ ){
-         if( rCurrentElement->GetGeometry()[j].GetValue(IS_SLAVE) ){ //temporary, will be checked once at the beginning only
-             slaveFound = true;
-             break;
-         }
-     }
-
-     // If no slave is found no need of going on
-     if(!slaveFound){
-         return;
-     }
-     
-    std::vector<std::size_t> localEquationIds;
-    std::vector<std::size_t> localSlaveEquationIds;
-    std::vector<std::size_t> localInternEquationIds;
-    // Formulating the local slave equationId vector
-    for(int i=0; i<EquationId.size(); ++i){
-        localEquationIds.push_back(i);
-    }
-    
-    for ( unsigned int j = 0; j < number_of_nodes; ++j ){ // Loop over the nodes
-         
-         if( rCurrentElement->GetGeometry()[j].GetValue(IS_SLAVE) ){ // If the node has a slave DOF
-             // Necessary data for iterating and modifying the matrix
-             MpcData &mpcData       = rCurrentElement->GetGeometry()[j].GetValue(MPC_DATA);
-             totalNumberOfSlaves  = mpcData.GetSlaveDOFs().size();
-             std::vector<DofType> slaveDOFs = mpcData.GetSlaveDOFs();
-             std::vector<std::size_t>::iterator it;
-    
-            // Formulating the local slave equationId vector
-            for(int slaveI=0; slaveI<totalNumberOfSlaves; ++slaveI){ // For each of the Slave DOF                               
-                    // Obtaining the local dof number for the slave.
-                    int localSlaveEqId = -1;
-                    int slaveEqId = slaveDOFs[slaveI].EquationId();
-                    it = std::find (EquationId.begin(), EquationId.end(), slaveEqId);
-                    if (it != EquationId.end()){
-                        std::size_t pos = std::distance(EquationId.begin(), it);
-                        localSlaveEqId = pos;
-                    }              
-                    localSlaveEquationIds.push_back(localSlaveEqId);
-            }                       
-            
-         }// If the node has a slave DOF
-         
-    }// Loop over the nodes
-    
-    std::sort(localEquationIds.begin(), localEquationIds.end());
-    std::sort(localSlaveEquationIds.begin(), localSlaveEquationIds.end());             
-    std::set_difference(localEquationIds.begin(), localEquationIds.end(), localSlaveEquationIds.begin(), localSlaveEquationIds.end(), std::back_inserter(localInternEquationIds));
-    
-    
-    for ( unsigned int j = 0; j < number_of_nodes; ++j ){ // Loop over the nodes
-         
-         if( rCurrentElement->GetGeometry()[j].GetValue(IS_SLAVE) ){ // If the node has a slave DOF
-             // Necessary data for iterating and modifying the matrix
-             MpcData &mpcData       = rCurrentElement->GetGeometry()[j].GetValue(MPC_DATA);
-             //mpcData.GetInfo();
-             totalNumberOfMasters = mpcData.GetTotalNumbeOfMasterDOFs();
-             totalNumberOfSlaves  = mpcData.GetSlaveDOFs().size();
-             std::vector<DofType> slaveDOFs = mpcData.GetSlaveDOFs();
-             std::vector<std::size_t>::iterator it;
-             std::vector<std::size_t> localNodalSlaveEquationIds;
-    
-             // We resize the LHS and RHS contribution with the master sizes
-             int currentSysSize = LHS_Contribution.size1();
-             int lhsSize1 = currentSysSize + totalNumberOfMasters;
-             int lhsSize2 = currentSysSize + totalNumberOfMasters;
-             LHS_Contribution.resize(lhsSize1,lhsSize2,true); //true for Preserving the data and resizing the matrix
-             RHS_Contribution.resize(lhsSize1,true);             
-
-             // Making the extra part of matrx
-             for(int m=currentSysSize; m<lhsSize1; m++){
-                 for(int n=0; n<lhsSize1; n++){
-                     LHS_Contribution(m,n) = 0.0;
-                     LHS_Contribution(n,m) = 0.0;
-                 }
-                 RHS_Contribution(m) = 0.0;
-             }
-    
-            // Formulating the local slave equationId vector
-            for(int slaveI=0; slaveI<totalNumberOfSlaves; ++slaveI){ // For each of the Slave DOF                               
-                    // Obtaining the local dof number for the slave.
-                    int localSlaveEqId = -1;
-                    int slaveEqId = slaveDOFs[slaveI].EquationId();
-                    it = std::find (EquationId.begin(), EquationId.end(), slaveEqId);
-                    if (it != EquationId.end()){
-                        std::size_t pos = std::distance(EquationId.begin(), it);
-                        localSlaveEqId = pos;
-                    }              
-                    localNodalSlaveEquationIds.push_back(localSlaveEqId);
+            } // If the node has a slave DOF
+        }     // Loop over the nodes
+        // For K(s,s)
+        for (auto localSlaveEqId : localSlaveEquationIds)
+        { // Loop over all the slaves for this node
+            for (auto localSlaveEqIdOther : localSlaveEquationIds)
+            { // Loop over all the local equation ids
+                LHS_Contribution(localSlaveEqId, localSlaveEqIdOther) = -1 * LHS_Contribution(localSlaveEqId, localSlaveEqIdOther);
             }
-            
-            int currentNumberOfMastersProcessed = 0;
-            for (auto localSlaveEqId : localNodalSlaveEquationIds){ // Loop over all the slaves for this node
-                
-                    it = std::find (localNodalSlaveEquationIds.begin(), localNodalSlaveEquationIds.end(), localSlaveEqId);
+        } // Loop over all the slaves for this node
+        // For K(u,s) and K(s,u)
+        for (auto localSlaveEqId : localSlaveEquationIds)
+        { // Loop over all the slaves for this node
+            for (auto localInternEqId : localInternEquationIds)
+            { // Loop over all the local equation ids
+                LHS_Contribution(localSlaveEqId, localInternEqId) = 0.0;
+                LHS_Contribution(localInternEqId, localSlaveEqId) = 0.0;
+            }
+        } // Loop over all the slaves for this node
+        KRATOS_CATCH("Applying Multipoint constraints failed ..");
+    } // End of function
+
+    void Condition_ApplyMultipointConstraints(Condition::Pointer rCurrentElement,
+                                              LocalSystemMatrixType &LHS_Contribution,
+                                              LocalSystemVectorType &RHS_Contribution,
+                                              Element::EquationIdVectorType &EquationId,
+                                              ProcessInfo &CurrentProcessInfo)
+    {
+
+        KRATOS_TRY
+        bool slaveFound = false;
+        Element::NodesArrayType nodesArray = rCurrentElement->GetGeometry();
+        const unsigned int number_of_nodes = rCurrentElement->GetGeometry().PointsNumber();
+        for (unsigned int j = 0; j < number_of_nodes; j++)
+        {
+            if (rCurrentElement->GetGeometry()[j].Is(SLAVE))
+            { //temporary, will be checked once at the beginning only
+                slaveFound = true;
+                break;
+            }
+        }
+        // If no slave is found no need of going on
+        if (!slaveFound)
+        {
+            return;
+        }
+        MpcData::Pointer mpcData = CurrentProcessInfo.GetValue(MPC_POINTER);
+        std::vector<std::size_t> localEquationIds;
+        std::vector<std::size_t> localSlaveEquationIds;
+        std::vector<std::size_t> localInternEquationIds;
+        // Formulating the local slave equationId vector
+        for (int i = 0; i < EquationId.size(); ++i)
+        {
+            localEquationIds.push_back(i);
+            if(mpcData->mEquationIdToWeightsMap.count(EquationId[i]) > 0){
+                localSlaveEquationIds.push_back(i);
+            }
+        }
+        std::sort(localEquationIds.begin(), localEquationIds.end());
+        std::sort(localSlaveEquationIds.begin(), localSlaveEquationIds.end());
+        std::set_difference(localEquationIds.begin(), localEquationIds.end(), localSlaveEquationIds.begin(), localSlaveEquationIds.end(), std::back_inserter(localInternEquationIds));
+        for (unsigned int j = 0; j < number_of_nodes; ++j)
+        { // Loop over the nodes
+            std::vector<int> slaveEquationIds;
+            int totalNumberOfSlaves = 0;
+            int totalNumberOfMasters = 0;
+            if (rCurrentElement->GetGeometry()[j].Is(SLAVE))
+            { // If the node has a slave DOF
+
+                Node<3>::DofsContainerType nodeDofs = rCurrentElement->GetGeometry()[j].GetDofs();
+                unsigned int slaveEquationId;
+                for(auto dof : nodeDofs){
+                    slaveEquationId = dof.EquationId();
+                    if(mpcData->mEquationIdToWeightsMap.count(slaveEquationId) > 0){
+                        totalNumberOfSlaves++;
+                        slaveEquationIds.push_back(slaveEquationId);
+                        MasterIdWeightMapType& masterWeightsMap = mpcData->mEquationIdToWeightsMap[slaveEquationId];
+                        
+                        totalNumberOfMasters += masterWeightsMap.size();                       
+                    }
+                }
+
+                std::vector<std::size_t>::iterator it;
+                std::vector<std::size_t> localNodalSlaveEquationIds;
+
+                // We resize the LHS and RHS contribution with the master sizes
+                int currentSysSize = LHS_Contribution.size1();
+                int lhsSize1 = currentSysSize + totalNumberOfMasters;
+                int lhsSize2 = currentSysSize + totalNumberOfMasters;
+                LHS_Contribution.resize(lhsSize1, lhsSize2, true); //true for Preserving the data and resizing the matrix
+                RHS_Contribution.resize(lhsSize1, true);
+
+                // Making the extra part of matrx
+                for (int m = currentSysSize; m < lhsSize1; m++)
+                {
+                    for (int n = 0; n < lhsSize1; n++)
+                    {
+                        LHS_Contribution(m, n) = 0.0;
+                        LHS_Contribution(n, m) = 0.0;
+                    }
+                    RHS_Contribution(m) = 0.0;
+                }
+                // Formulating the local slave equationId vector
+                for (int slaveI = 0; slaveI < totalNumberOfSlaves; ++slaveI)
+                { // For each of the Slave DOF
+                    // Obtaining the local dof number for the slave.
+                    int localSlaveEqId = -1;
+                    int slaveEqId = slaveEquationIds[slaveI];
+                    it = std::find(EquationId.begin(), EquationId.end(), slaveEqId);
+                    if (it != EquationId.end())
+                    {
+                        std::size_t pos = std::distance(EquationId.begin(), it);
+                        localSlaveEqId = pos;
+                    }
+                    localNodalSlaveEquationIds.push_back(localSlaveEqId);
+                }
+                int currentNumberOfMastersProcessed = 0;
+                for (auto localSlaveEqId : localNodalSlaveEquationIds)
+                { // Loop over all the slaves for this node
+                    it = std::find(localNodalSlaveEquationIds.begin(), localNodalSlaveEquationIds.end(), localSlaveEqId);
                     int slaveIndex = std::distance(localNodalSlaveEquationIds.begin(), it);
-                    std::vector<DofType> masterDOFs = mpcData.GetMasterDOFs(slaveDOFs[slaveIndex]);
-                    int numMastersForThisSlave  = masterDOFs.size();
-                    std::vector<double> masterWeights = mpcData.GetMasterWeightsForSlave(slaveDOFs[slaveIndex]);
-                    for(int masterI=0; masterI<numMastersForThisSlave; ++masterI){ // Loop over all the masters the slave has
+                    MasterIdWeightMapType &masterWeightsMap = mpcData->mEquationIdToWeightsMap[ slaveEquationIds[slaveIndex] ];
+                    for (auto masterI : masterWeightsMap)
+                    { // Loop over all the masters the slave has
                         int localMasterEqId = currentNumberOfMastersProcessed + currentSysSize;
                         ++currentNumberOfMastersProcessed;
                         // For K(m,u) and K(u,m)
-                        for(auto localInternEqId : localInternEquationIds){// Loop over all the local equation ids
-                            LHS_Contribution(localInternEqId, localMasterEqId) += LHS_Contribution(localInternEqId, localSlaveEqId) * masterWeights[masterI];
-                            LHS_Contribution(localMasterEqId, localInternEqId) += LHS_Contribution(localSlaveEqId, localInternEqId) * masterWeights[masterI];                                               
-                        } // Loop over all the local equation ids 
-                        
-                        // For K(m,s) and K(s,m)
-                        for (auto localSlaveEqIdOther : localSlaveEquationIds){ // Loop over all the slaves for this node
-                            LHS_Contribution(localSlaveEqIdOther, localMasterEqId) += masterWeights[masterI] * LHS_Contribution(localSlaveEqIdOther, localSlaveEqId);
-                            LHS_Contribution(localMasterEqId, localSlaveEqIdOther) += masterWeights[masterI] * LHS_Contribution(localSlaveEqId, localSlaveEqIdOther);
-                        }
-                        
-                        EquationId.push_back(masterDOFs[masterI].EquationId());
-                        // Changing the RHS side of the equation
-                        RHS_Contribution(localMasterEqId) =  RHS_Contribution(localMasterEqId) + masterWeights[masterI]*RHS_Contribution(localSlaveEqId);  
-                        
-                    } // Loop over all the masters the slave has 
-                    
-                    RHS_Contribution(localSlaveEqId) = 0.0;
-                    
-            } // Loop over all the slaves for this node                          
-            
-         } // If the node has a slave DOF
-    } // Loop over the nodes
-        
-            // For K(s,s)
-            for (auto localSlaveEqId : localSlaveEquationIds){ // Loop over all the slaves for this node
-                for(auto localSlaveEqIdOther : localSlaveEquationIds){// Loop over all the local equation ids
-                    LHS_Contribution(localSlaveEqId, localSlaveEqIdOther) = -1*LHS_Contribution(localSlaveEqId, localSlaveEqIdOther);
-                }                                
-            }// Loop over all the slaves for this node
-        
-        
-            // For K(u,s) and K(s,u)
-            for (auto localSlaveEqId : localSlaveEquationIds){ // Loop over all the slaves for this node
-                for(auto localInternEqId : localInternEquationIds){// Loop over all the local equation ids
-                    LHS_Contribution(localSlaveEqId, localInternEqId) = 0.0;
-                    LHS_Contribution(localInternEqId, localSlaveEqId) = 0.0;
-                }                                
-            }// Loop over all the slaves for this node              
-        
-           KRATOS_CATCH("Applying Multipoint constraints failed ..");    
+                        for (auto localInternEqId : localInternEquationIds)
+                        { // Loop over all the local equation ids
+                            LHS_Contribution(localInternEqId, localMasterEqId) += LHS_Contribution(localInternEqId, localSlaveEqId) * masterI.second;
+                            LHS_Contribution(localMasterEqId, localInternEqId) += LHS_Contribution(localSlaveEqId, localInternEqId) * masterI.second;
+                        } // Loop over all the local equation ids
 
-                     
-                } // End of the function
+                        // For K(m,s) and K(s,m)
+                        for (auto localSlaveEqIdOther : localSlaveEquationIds)
+                        { // Loop over all the slaves for this node
+                            LHS_Contribution(localSlaveEqIdOther, localMasterEqId) += masterI.second * LHS_Contribution(localSlaveEqIdOther, localSlaveEqId);
+                            LHS_Contribution(localMasterEqId, localSlaveEqIdOther) += masterI.second * LHS_Contribution(localSlaveEqId, localSlaveEqIdOther);
+                        }
+
+                        EquationId.push_back(masterI.first);
+                        // Changing the RHS side of the equation
+                        RHS_Contribution(localMasterEqId) = RHS_Contribution(localMasterEqId) + masterI.second * RHS_Contribution(localSlaveEqId);
+
+                    } // Loop over all the masters the slave has
+
+                    RHS_Contribution(localSlaveEqId) = 0.0;
+                } // Loop over all the slaves for this node
+
+            } // If the node has a slave DOF
+        }     // Loop over the nodes
+        // For K(s,s)
+        for (auto localSlaveEqId : localSlaveEquationIds)
+        { // Loop over all the slaves for this node
+            for (auto localSlaveEqIdOther : localSlaveEquationIds)
+            { // Loop over all the local equation ids
+                LHS_Contribution(localSlaveEqId, localSlaveEqIdOther) = -1 * LHS_Contribution(localSlaveEqId, localSlaveEqIdOther);
+            }
+        } // Loop over all the slaves for this node
+        // For K(u,s) and K(s,u)
+        for (auto localSlaveEqId : localSlaveEquationIds)
+        { // Loop over all the slaves for this node
+            for (auto localInternEqId : localInternEquationIds)
+            { // Loop over all the local equation ids
+                LHS_Contribution(localSlaveEqId, localInternEqId) = 0.0;
+                LHS_Contribution(localInternEqId, localSlaveEqId) = 0.0;
+            }
+        } // Loop over all the slaves for this node
+        KRATOS_CATCH("Applying Multipoint constraints failed ..");
+    } // End of the function
+
+    /*
+     * This function Formulates the MPC data in equation ID terms
+     */
+    void FormulateEquationIdRelationMap(ModelPart &r_model_part)
+    {
+         
+        ProcessInfoType info = r_model_part.GetProcessInfo();
+        MpcData::Pointer mpcData = info[MPC_POINTER];
+     
+        for (auto slaveMasterDofMap : mpcData->mDofConstraints)
+        {
+            SlavePairType slaveDofMap = slaveMasterDofMap.first;
+            MasterDofWeightMapType &masterDofMap = slaveMasterDofMap.second;
+            unsigned int slaveNodeId = slaveDofMap.first;
+            unsigned int slaveDofKey = slaveDofMap.second;
+
+            NodeType &node = r_model_part.Nodes()[slaveNodeId];
+            Node<3>::DofsContainerType::iterator it = node.GetDofs().find(slaveDofKey);
+            unsigned int slaveEquationId = it->EquationId();
+
+            for (auto masterDofMapElem : masterDofMap)
+            {
+                unsigned int masterNodeId;
+                unsigned int PartitionId;
+                unsigned int masterEquationId;
+                unsigned int masterDofKey;
+                double weight = masterDofMapElem.second;
+                std::tie(masterNodeId, masterDofKey, PartitionId) = masterDofMapElem.first;                
+                NodeType &masterNode = r_model_part.Nodes()[masterNodeId];
+                Node<3>::DofsContainerType::iterator it = masterNode.GetDofs().find(masterDofKey);
+                masterEquationId = it->EquationId();
+                // 
+                mpcData->mEquationIdToWeightsMap[slaveEquationId].insert(  std::pair<unsigned int, double>(masterEquationId, weight)  );
+            }
+        }
+    }
 };
 }
-
-
-
-
-
-
-
 
 #endif /* KRATOS_SOLVING_STRATEGIES_BUILDER_AND_SOLVERS_RESIDUALBASED_BLOCK_BUILDER_AND_SOLVER_WITH_MPC_H_ */

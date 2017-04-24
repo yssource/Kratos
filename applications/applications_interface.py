@@ -44,6 +44,7 @@ Import_ContactMechanicsApplication = False
 Import_ContactStructuralMechanicsApplication = False
 Import_KratosMappingApplication = False
 Import_ConstitutiveModelsApplication = False
+Import_ChimeraApplication = False
 
 print("Applications Available:")
 print("Import_SolidMechanicsApplication: False")
@@ -86,7 +87,8 @@ print("Import_ContactMechanicsApplication: False")
 print("Import_ContactStructuralMechanicsApplication: False")
 print("Import_KratosMappingApplication: False")
 print("Import_ConstitutiveModelsApplication: False")
-
+print("Import_ConstitutiveModelsApplication: False")
+print("Import_ChimeraApplication: False")
 application_directory = os.path.dirname(os.path.realpath(__file__))
 
 def ImportApplications(kernel, applications_path=application_directory):
@@ -131,7 +133,8 @@ def ImportApplications(kernel, applications_path=application_directory):
     print("Import_ContactStructuralMechanicsApplication: " + str(Import_ContactStructuralMechanicsApplication))
     print("Import_KratosMappingApplication: " + str(Import_KratosMappingApplication))    
     print("Import_ConstitutiveModelsApplication: " + str(Import_ConstitutiveModelsApplication))
-
+    print("Import_ChimeraApplication: " + str(Import_ChimeraApplication))
+   
     if(Import_SolidMechanicsApplication):
         print("importing KratosSolidMechanicsApplication ...")
         sys.path.append(applications_path + '/SolidMechanicsApplication/python_scripts')
@@ -483,6 +486,15 @@ def ImportApplications(kernel, applications_path=application_directory):
         kernel.AddApplication(constitutive_models_application)
         print("KratosConstitutiveModelsApplication Succesfully imported")
 
+    if(Import_ChimeraApplication):
+        print("importing KratosChimeraApplication ...")
+        sys.path.append(applications_path + '/ChimeraApplication/python_scripts')
+        #sys.path.append(applications_path + '/ChimeraApplication/Linux')
+        from KratosChimeraApplication import *
+        chimera_application = KratosChimeraApplication()
+        kernel.AddApplication(chimera_application)
+        print("KratosChimeraApplication Succesfully imported")
+
 
     # dynamic renumbering of variables to ensure the consistency
     kernel.Initialize()
@@ -568,6 +580,8 @@ def ImportApplications(kernel, applications_path=application_directory):
         kernel.InitializeApplication(mapping_application)    
     if(Import_ConstitutiveModelsApplication):
         kernel.InitializeApplication(constitutive_models_application)
+    if(Import_ChimeraApplication):
+        kernel.InitializeApplication(chimera_application)
 
 # def ImportApplications(kernel  ):
     # import os.path

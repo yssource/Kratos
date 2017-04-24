@@ -60,6 +60,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "custom_python/add_custom_processes_to_python.h"
 #include "custom_processes/custom_whole_cutting_process.h"
 #include "custom_processes/custom_extract_variables_process.h"
+#include "custom_processes/custom_apply_mpc_constraint_2d_process.h"
+#include "custom_processes/custom_apply_mpc_constraint_3d_process.h"
 namespace Kratos
 {
 
@@ -84,6 +86,15 @@ void AddCustomProcessesToPython()
 			.def("ExtractVariable", &CustomExtractVariablesProcess::ExtractVariable< array_1d<double, 3> >)
 			.def("ExtractVariable", &CustomExtractVariablesProcess::ExtractVariable<double>);
 
+	/*
+	 * CustomApplyMpcConstraintProcess
+	 */
+	class_<CustomApplyMpcConstraint2dProcess,bases<Process> >("CustomApplyMpcConstraint2dProcess", init<>())
+			.def("ApplyMpcConstraint2d", &CustomApplyMpcConstraint2dProcess::ApplyMpcConstraint2d);
+
+	class_<CustomApplyMpcConstraint3dProcess,bases<Process> >("CustomApplyMpcConstraint3dProcess", init<>())
+			.def("ApplyMpcConstraint3d", &CustomApplyMpcConstraint3dProcess::ApplyMpcConstraint3d);
+			
 }
 
 

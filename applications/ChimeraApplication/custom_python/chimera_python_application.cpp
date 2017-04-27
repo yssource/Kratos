@@ -53,10 +53,12 @@ namespace Python
 			  KratosChimeraApplication::Pointer,
 			  bases<KratosApplication>, boost::noncopyable >("KratosChimeraApplication")
 			;
-	AddCustomProcessesToPython();
+		AddCustomStrategiesToPython();
+		AddCustomProcessesToPython();
+		AddCustomUtilitiesToPython();
 
-	//registering variables in python
-  KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS( CHIM_NEUMANN_COND )
+			//registering variables in python
+  		KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS( CHIM_NEUMANN_COND )
 }
 
 

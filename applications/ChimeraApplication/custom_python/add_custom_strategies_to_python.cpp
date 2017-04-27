@@ -41,18 +41,20 @@
 //linear solvers
 #include "linear_solvers/linear_solver.h"
 
+//Builder and solver
+#include "custom_strategies/custom_builder_and_solver/residualbased_block_builder_and_solver_with_mpc_chimera.h"
 
 
 namespace Kratos
 {
 
-	namespace Python
-	{
-		using namespace boost::python;
+namespace Python
+{
 
-		void  AddCustomStrategiesToPython()
-		{
-			typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
+void AddCustomStrategiesToPython()
+{
+	using namespace boost::python;
+	typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
 			typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
 
 			typedef LinearSolver<SparseSpaceType, LocalSpaceType > LinearSolverType;
@@ -68,8 +70,19 @@ namespace Kratos
 // 				.def("MoveNodes",&TestStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType >::MoveNodes)
 // 				;
 
-		}
+//********************************************************************
+    //*************************BUILDER AND SOLVER*************************
+    //********************************************************************
+    		class_< ResidualBasedBlockBuilderAndSolverWithMpcChimera< SparseSpaceType, LocalSpaceType, LinearSolverType >,
+                bases< ResidualBasedBlockBuilderAndSolverWithMpcChimera< SparseSpaceType, LocalSpaceType, LinearSolverType > >,
+                boost::noncopyable >
+                ("ResidualBasedBlockBuilderAndSolverWithMpcChimera", init<LinearSolverType::Pointer>()); 
+			
+}
 
-	}  // namespace Python.
+
+
+} // namespace Python.
 
 } // Namespace Kratos
+

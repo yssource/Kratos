@@ -29,12 +29,15 @@
 // Project includes
 #include "includes/define.h"
 #include "processes/process.h"
+#include "includes/model_part.h"
 #include "custom_python/add_custom_utilities_to_python.h"
 
 #include "spaces/ublas_space.h"
 #include "linear_solvers/linear_solver.h"
 
-
+//Processes
+#include "custom_processes/apply_multi_point_constraints_process.h"
+#include "custom_utilities/multipoint_constraint_data.hpp"
 
 namespace Kratos
 {
@@ -45,12 +48,19 @@ namespace Python
 
   void  AddCustomUtilitiesToPython()
   {
-	using namespace boost::python;
+    using namespace boost::python;
 
 
-		typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
-		typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
-		typedef LinearSolver<SparseSpaceType, LocalSpaceType > LinearSolverType;
+      //typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
+      //typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
+      //typedef LinearSolver<SparseSpaceType, LocalSpaceType > LinearSolverType;
+
+
+          /// Processes
+      class_<ApplyMultipointConstraintsProcess, boost::noncopyable, bases<Process>>("ApplyMultipointConstraintsProcess", init<ModelPart&>())
+      .def(init< ModelPart&, Parameters& >())
+      .def("AddMasterSlaveRelation", &ApplyMultipointConstraintsProcess::AddMasterSlaveRelation)
+      .def("PrintData", &ApplyMultipointConstraintsProcess::PrintData);
 
 
   }

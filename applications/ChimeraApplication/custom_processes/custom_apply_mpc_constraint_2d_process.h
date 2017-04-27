@@ -40,6 +40,9 @@
 #include "solving_strategies/builder_and_solvers/residualbased_block_builder_and_solver.h"
 #include "solving_strategies/strategies/residualbased_linear_strategy.h"
 #include "elements/distance_calculation_element_simplex.h"
+#include "custom_processes/apply_multi_point_constraints_process.h"
+// Application includes
+#include "custom_utilities/multipoint_constraint_data.hpp"
 
 namespace Kratos {
 
@@ -149,19 +152,23 @@ public:
 					// This should be extended to a general variable
 					
 
-					//Geometry<Node<3> >& geom = pElement->GetGeometry();
+					Geometry<Node<3> >& geom = pElement->GetGeometry();
 
 					// TO DO Apply MPC constraints. Here have to use the mpc functions to apply the constraint
 					//std::cout<<"Node Id: "<<p_boundary_node->Id()<<std::endl;
 					
-					
+					ApplyMultipointConstraintsProcess ConstraintMaker(surfaceModelPart);
 
+					for(int i = 0; i < geom.size(); i++){
+
+					ConstraintMaker.AddMasterSlaveRelation( geom[i],DISPLACEMENT_X,*p_boundary_node,DISPLACEMENT_X,N[i], 0 );
+					ConstraintMaker.AddMasterSlaveRelation( geom[i],DISPLACEMENT_Y,*p_boundary_node,DISPLACEMENT_Y,N[i], 0 );
+		
 					//std::cout<<"Element Id: "<< pElement->Id();
 					
-										
-					//nodalVariableValues is passed by reference
 					
-					// Assign Interpolated value to the node
+					}	//Nodes loop inside the found element ends here
+										
 					
 					p_boundary_node->Set(VISITED);
 				}

@@ -21,10 +21,14 @@
 #include "includes/define.h"
 #include "includes/variables.h"
 #include "includes/kratos_application.h"
+#include "custom_utilities/multipoint_constraint_data.hpp"
 
 namespace Kratos
 {
-KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS( CHIM_NEUMANN_COND )
+    typedef MpcData::Pointer MpcDataPointerType;
+KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS( CHIM_NEUMANN_COND );
+KRATOS_DEFINE_VARIABLE(MpcDataPointerType, MPC_POINTER);
+
 
 }
 

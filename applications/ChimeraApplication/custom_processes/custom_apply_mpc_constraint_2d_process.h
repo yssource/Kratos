@@ -125,7 +125,7 @@ public:
 			BinBasedFastPointLocator<2>::ResultContainerType results(max_results);
 			const int n_boundary_nodes = boundaryModelPart.Nodes().size();
 			
-
+			std::cout<<"Node Id \t"<<"Node1 \t"<<"Node2 \t"<<"Node3 \t"<<"wt1 \t"<<"wt2 \t"<<"wt3 \t"<<std::endl;
 			#pragma omp parallel for firstprivate(results,N)
 			//MY NEW LOOP: reset the visited flag
 			for (int i = 0; i < n_boundary_nodes; i++)
@@ -153,16 +153,19 @@ public:
 					
 
 					Geometry<Node<3> >& geom = pElement->GetGeometry();
+					//std::cout<<"Element Id: "<< pElement->Id();
 
 					// TO DO Apply MPC constraints. Here have to use the mpc functions to apply the constraint
-					//std::cout<<"Node Id: "<<p_boundary_node->Id()<<std::endl;
 					
-					ApplyMultipointConstraintsProcess ConstraintMaker(surfaceModelPart);
-
+					std::cout<<p_boundary_node->Id()<<" \t"<<geom[0].Id()<<" \t"<<geom[1].Id()<<" \t"<<geom[2].Id()<<" \t"<<N[0]<<" \t "<<N[1]<<" \t"<< N[2]<<std::endl;
+					
+					ApplyMultipointConstraintsProcess mpcProcess(surfaceModelPart);
+					
+					
 					for(int i = 0; i < geom.size(); i++){
-
-					ConstraintMaker.AddMasterSlaveRelation( geom[i],DISPLACEMENT_X,*p_boundary_node,DISPLACEMENT_X,N[i], 0 );
-					ConstraintMaker.AddMasterSlaveRelation( geom[i],DISPLACEMENT_Y,*p_boundary_node,DISPLACEMENT_Y,N[i], 0 );
+					
+					mpcProcess.AddMasterSlaveRelation( geom[i],DISPLACEMENT_X,*p_boundary_node,DISPLACEMENT_X,N[i], 0 );
+					mpcProcess.AddMasterSlaveRelation( geom[i],DISPLACEMENT_Y,*p_boundary_node,DISPLACEMENT_Y,N[i], 0 );
 		
 					//std::cout<<"Element Id: "<< pElement->Id();
 					
@@ -171,19 +174,15 @@ public:
 										
 					
 					p_boundary_node->Set(VISITED);
+					
 				}
 			}
-			//AND NOW WE "TREAT" the bad nodes, the ones that belong to the structural faces that by some chance did not cross the fluid elements
-			//to such nodes we simply extrapolate the pressure from the neighbors
+			
 	
-
+			std::cout<<"mpcProcess ends"<<std::endl;
 			
 
 		}
-
-
-
-
 		
 		delete pBinLocator;
 	}

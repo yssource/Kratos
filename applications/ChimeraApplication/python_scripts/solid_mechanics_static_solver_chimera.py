@@ -72,7 +72,7 @@ class StaticMechanicalSolverChimera(solid_mechanics_solver.MechanicalSolver):
             "processes_sub_model_part_list": [""]
         }
         """)
-        print("23115")
+        
         
         ##overwrite the default settings with user-provided parameters
         self.settings = custom_settings

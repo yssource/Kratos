@@ -21,6 +21,8 @@
 #include "includes/define.h"
 #include "includes/variables.h"
 #include "includes/kratos_application.h"
+#include "chimera_application.h"
+#include "chimera_application_variables.h"
 #include "custom_utilities/multipoint_constraint_data.hpp"
 
 namespace Kratos

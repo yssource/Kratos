@@ -82,9 +82,9 @@ public:
 	///@name Life Cycle
 	///@{
 
-	CustomApplyMpcConstraint2dProcess(){
-		this->pBinLocator = NULL;
-		
+	CustomApplyMpcConstraint2dProcess(ModelPart& surfaceModelPart){		
+		this->pBinLocator = BinBasedFastPointLocator<2>::Pointer( new BinBasedFastPointLocator<2>(surfaceModelPart) );
+		this->pMpcProcess = ApplyMultipointConstraintsProcess::Pointer( new ApplyMultipointConstraintsProcess(surfaceModelPart) );		
 	}
 
 	/// Destructor.
@@ -110,9 +110,7 @@ public:
 	}
 
 	
-	void ApplyMpcConstraint2d(ModelPart& surfaceModelPart, ModelPart& boundaryModelPart){
-		
-		this->pBinLocator = new BinBasedFastPointLocator<2>(surfaceModelPart);
+	void ApplyMpcConstraint2d(ModelPart& boundaryModelPart){
 
 		/*
 		 * This part of the code below is adapted from "MappingPressureToStructure" function of class CalculateSignedDistanceTo3DSkinProcess
@@ -125,7 +123,7 @@ public:
 			BinBasedFastPointLocator<2>::ResultContainerType results(max_results);
 			const int n_boundary_nodes = boundaryModelPart.Nodes().size();
 			
-			std::cout<<"Node Id \t"<<"Node1 \t"<<"Node2 \t"<<"Node3 \t"<<"wt1 \t"<<"wt2 \t"<<"wt3 \t"<<std::endl;
+			
 			#pragma omp parallel for firstprivate(results,N)
 			//MY NEW LOOP: reset the visited flag
 			for (int i = 0; i < n_boundary_nodes; i++)
@@ -157,18 +155,13 @@ public:
 
 					// TO DO Apply MPC constraints. Here have to use the mpc functions to apply the constraint
 					
-					std::cout<<p_boundary_node->Id()<<" \t"<<geom[0].Id()<<" \t"<<geom[1].Id()<<" \t"<<geom[2].Id()<<" \t"<<N[0]<<" \t "<<N[1]<<" \t"<< N[2]<<std::endl;
-					
-					ApplyMultipointConstraintsProcess mpcProcess(surfaceModelPart);
-					
+					//std::cout<<p_boundary_node->Id()<<" \t"<<geom[0].Id()<<" \t"<<geom[1].Id()<<" \t"<<geom[2].Id()<<" \t"<<N[0]<<" \t "<<N[1]<<" \t"<< N[2]<<std::endl;										
 					
 					for(int i = 0; i < geom.size(); i++){
 					
-					mpcProcess.AddMasterSlaveRelation( geom[i],DISPLACEMENT_X,*p_boundary_node,DISPLACEMENT_X,N[i], 0 );
-					mpcProcess.AddMasterSlaveRelation( geom[i],DISPLACEMENT_Y,*p_boundary_node,DISPLACEMENT_Y,N[i], 0 );
-		
-					//std::cout<<"Element Id: "<< pElement->Id();
-					
+					pMpcProcess->AddMasterSlaveRelation( geom[i],DISPLACEMENT_X,*p_boundary_node,DISPLACEMENT_X,N[i], 0 );
+					pMpcProcess->AddMasterSlaveRelation( geom[i],DISPLACEMENT_Y,*p_boundary_node,DISPLACEMENT_Y,N[i], 0 );
+				
 					
 					}	//Nodes loop inside the found element ends here
 										
@@ -180,11 +173,8 @@ public:
 			
 	
 			std::cout<<"mpcProcess ends"<<std::endl;
-			
 
 		}
-		
-		delete pBinLocator;
 	}
 
 
@@ -249,7 +239,8 @@ private:
 	
 	//ModelPart &mrBackGroundModelPart;
 	//ModelPart &mrPatchSurfaceModelPart;
-	BinBasedFastPointLocator<2>* pBinLocator; // Template argument 3 stands for 3D case
+	BinBasedFastPointLocator<2>::Pointer pBinLocator; // Template argument 3 stands for 3D case
+	ApplyMultipointConstraintsProcess::Pointer pMpcProcess;
 	///@}
 	///@name Private Operators
 	///@{

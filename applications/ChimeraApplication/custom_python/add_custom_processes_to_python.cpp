@@ -90,7 +90,7 @@ void AddCustomProcessesToPython()
 	/*
 	 * CustomApplyMpcConstraintProcessforChimera
 	 */
-	class_<CustomApplyMpcConstraint2dProcess,bases<Process> >("CustomApplyMpcConstraint2dProcess", init<>())
+	class_<CustomApplyMpcConstraint2dProcess,bases<Process> >("CustomApplyMpcConstraint2dProcess", init<ModelPart&>())
 			.def("ApplyMpcConstraint2d", &CustomApplyMpcConstraint2dProcess::ApplyMpcConstraint2d);
 
 	class_<CustomApplyMpcConstraint3dProcess,bases<Process> >("CustomApplyMpcConstraint3dProcess", init<>())

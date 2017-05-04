@@ -1,16 +1,14 @@
-//    |  /           |
-//    ' /   __| _` | __|  _ \   __|
-//    . \  |   (   | |   (   |\__ `
-//   _|\_\_|  \__,_|\__|\___/ ____/
-//                   Multi-Physics
 //
-//  License:		 BSD License
-//					 Kratos default license: kratos/license.txt
+// ==============================================================================
+//  ChimeraApplication
 //
-//  Main authors:    Aditya Ghantasala / Navaneeth K Narayanan
+//  License:         BSD License
+//                   license: ChimeraApplication/license.txt
 //
+//  Main authors:    Aditya Ghantasala, https://github.com/adityaghantasala
+//                   Navaneeth K Narayanan
 //
-
+// ==============================================================================
 #ifndef KRATOS_SOLVING_STRATEGIES_BUILDER_AND_SOLVERS_RESIDUALBASED_BLOCK_BUILDER_AND_SOLVER_WITH_MPC_CHIMERA_H_
 #define KRATOS_SOLVING_STRATEGIES_BUILDER_AND_SOLVERS_RESIDUALBASED_BLOCK_BUILDER_AND_SOLVER_WITH_MPC_CHIMERA_H_
 

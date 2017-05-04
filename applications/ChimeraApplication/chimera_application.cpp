@@ -1,15 +1,14 @@
-//    |  /           |
-//    ' /   __| _` | __|  _ \   __|
-//    . \  |   (   | |   (   |\__ `
-//   _|\_\_|  \__,_|\__|\___/ ____/
-//                   Multi-Physics
 //
-//  License:		 BSD License
-//					 Kratos default license: kratos/license.txt
+// ==============================================================================
+//  ChimeraApplication
 //
-//  Main authors:    Pooyan Dadvand@{KRATOS_APP_AUTHOR}
+//  License:         BSD License
+//                   license: ChimeraApplication/license.txt
 //
-
+//  Main authors:    Aditya Ghantasala, https://github.com/adityaghantasala
+//                   Navaneeth K Narayanan
+//
+// ==============================================================================
 
 // System includes
 

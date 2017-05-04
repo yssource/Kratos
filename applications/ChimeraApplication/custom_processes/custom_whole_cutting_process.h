@@ -1,13 +1,12 @@
-//    |  /           |
-//    ' /   __| _` | __|  _ \   __|
-//    . \  |   (   | |   (   |\__ `
-//   _|\_\_|  \__,_|\__|\___/ ____/
-//                   Multi-Physics
+// ==============================================================================
+//  ChimeraApplication
 //
-//  License:		 BSD License
-//					 Kratos default license: kratos/license.txt
+//  License:         BSD License
+//                   license: ChimeraApplication/license.txt
 //
-//  Main authors:    Pooyan Dadvand, , KratosAppGenerator
+//  Main authors:    Aditya Ghantasala, https://github.com/adityaghantasala
+//
+// ==============================================================================
 //
 
 #if !defined(KRATOS_CUSTOM_WHOLE_CUTTING_PROCESS_H_INCLUDED )

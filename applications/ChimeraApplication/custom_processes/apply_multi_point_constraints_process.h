@@ -1,16 +1,12 @@
-//    |  /           |
-//    ' /   __| _` | __|  _ \   __|
-//    . \  |   (   | |   (   |\__ `
-//   _|\_\_|  \__,_|\__|\___/ ____/
-//                   Multi-Physics
+// ==============================================================================
+//  ChimeraApplication
 //
-//  License:		 BSD License
-//					 Kratos default license: kratos/license.txt
+//  License:         BSD License
+//                   license: ChimeraApplication/license.txt
 //
-//  Main authors:    Aditya Ghantasala 
+//  Main authors:    Aditya Ghantasala, https://github.com/adityaghantasala
 //
-//
-
+// ==============================================================================
 
 #ifndef APPLY_MULTI_POINT_CONSTRAINTS_PROCESS_H
 #define APPLY_MULTI_POINT_CONSTRAINTS_PROCESS_H

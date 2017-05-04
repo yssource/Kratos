@@ -288,6 +288,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 
   protected:
     void ConstructMatrixStructure(
+        typename TSchemeType::Pointer pScheme,
         TSystemMatrixType &A,
         ElementsContainerType &rElements,
         ConditionsArrayType &rConditions,
@@ -321,7 +322,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
         for (int iii = 0; iii < nelements; iii++)
         {
             typename ElementsContainerType::iterator i_element = rElements.begin() + iii;
-            (i_element)->EquationIdVector(ids, CurrentProcessInfo);
+            pScheme->EquationId( *(i_element.base()) , ids, CurrentProcessInfo);
 
             // Modifying the equation IDs of this element to suit MPCs
             this->Element_ModifyEquationIdsForMPC(*(i_element.base()), ids, CurrentProcessInfo);
@@ -344,7 +345,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
         for (int iii = 0; iii < nconditions; iii++)
         {
             typename ConditionsArrayType::iterator i_condition = rConditions.begin() + iii;
-            (i_condition)->EquationIdVector(ids, CurrentProcessInfo);
+            pScheme->Condition_EquationId( *(i_condition.base()), ids, CurrentProcessInfo);
             // Modifying the equation IDs of this element to suit MPCs
             this->Condition_ModifyEquationIdsForMPC(*(i_condition.base()), ids, CurrentProcessInfo);
 

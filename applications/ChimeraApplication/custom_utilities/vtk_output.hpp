@@ -46,10 +46,11 @@ class VtkOutput
     /**
 		Creates a VtkOutput data object
 		*/
-    VtkOutput(ModelPart &model_part, std::string outPutFileName, Parameters rParameters) : mr_model_part(model_part), mrOutputSettings(rParameters)
+    VtkOutput(ModelPart &model_part, std::string outPutFileName, Parameters& rParameters) : mr_model_part(model_part), mrOutputSettings(rParameters)
     {
         mcaseName = outPutFileName;
         mDefaultPrecision = 15;
+        step = 0;
     }
     /// Destructor.
     virtual ~VtkOutput(){};
@@ -108,7 +109,7 @@ class VtkOutput
         outputFile << "ASCII"
                    << "\n";
         outputFile << "DATASET UNSTRUCTURED_GRID"
-                   << "\n";
+                   << "\n";                   
         outputFile.close();
     }
 
@@ -153,18 +154,6 @@ class VtkOutput
         // write cells header
         outputFile << "CELLS " << model_part.NumberOfConditions() + model_part.NumberOfElements() << " " << mVtkCellListSize << "\n";
 
-        // write Conditions
-        for (ModelPart::ConditionIterator condition_i = model_part.ConditionsBegin(); condition_i != model_part.ConditionsEnd(); ++condition_i)
-        {
-            ModelPart::ConditionType::GeometryType &condition_geometry = condition_i->GetGeometry();
-            const unsigned int numberOfNodes = condition_geometry.size();
-
-            outputFile << numberOfNodes;
-            for (unsigned int i = 0; i < numberOfNodes; i++)
-                outputFile << " " << mKratosIdToVtkId[condition_geometry[i].Id()];
-            outputFile << "\n";
-        }
-
         // write elements
         for (ModelPart::ElementIterator elem_i = model_part.ElementsBegin(); elem_i != model_part.ElementsEnd(); ++elem_i)
         {
@@ -174,6 +163,18 @@ class VtkOutput
             outputFile << numberOfNodes;
             for (unsigned int i = 0; i < numberOfNodes; i++)
                 outputFile << " " << mKratosIdToVtkId[elem_geometry[i].Id()];
+            outputFile << "\n";
+        }
+
+        // write Conditions
+        for (ModelPart::ConditionIterator condition_i = model_part.ConditionsBegin(); condition_i != model_part.ConditionsEnd(); ++condition_i)
+        {
+            ModelPart::ConditionType::GeometryType &condition_geometry = condition_i->GetGeometry();
+            const unsigned int numberOfNodes = condition_geometry.size();
+
+            outputFile << numberOfNodes;
+            for (unsigned int i = 0; i < numberOfNodes; i++)
+                outputFile << " " << mKratosIdToVtkId[condition_geometry[i].Id()];
             outputFile << "\n";
         }
 
@@ -187,7 +188,7 @@ class VtkOutput
         outputFile.open(outputFileName, std::ios::out | std::ios::app);
 
         // write cell types header
-        outputFile << "CELL_TYPES " << model_part.NumberOfElements() << "\n";
+        outputFile << "CELL_TYPES " << model_part.NumberOfConditions() + model_part.NumberOfElements() << "\n";
 
         // write elements types
         for (ModelPart::ElementIterator elem_i = model_part.ElementsBegin(); elem_i != model_part.ElementsEnd(); ++elem_i)
@@ -247,12 +248,11 @@ class VtkOutput
         std::string outputFileName = GetOutputFileName(model_part);
         std::ofstream outputFile;
         outputFile.open(outputFileName, std::ios::out | std::ios::app);
-
         // write nodal results header
-        Parameters nodalResults = mrOutputSettings["output_configuration"]["nodal_results"];
+        Parameters nodalResults = mrOutputSettings["result_file_configuration"]["nodal_results"];
         outputFile << "POINT_DATA " << model_part.NumberOfNodes() << "\n";
 
-        for (unsigned int entry = 1; entry < nodalResults.size(); entry++)
+        for (unsigned int entry = 0; entry < nodalResults.size(); entry++)
         {
             // write nodal results variable header
             std::string nodalResultName = nodalResults[entry].GetString();
@@ -260,8 +260,9 @@ class VtkOutput
             if (KratosComponents<Variable<double>>::Has(nodalResultName))
             {
                 dataCharacteristic = 1;
-                outputFile << "SCALARS " << nodalResultName << " float"
+                outputFile << "SCALARS " << nodalResultName << " float" << " 1"
                            << "\n";
+                outputFile << "LOOKUP_TABLE default"<<"\n";
             }
             else if (KratosComponents<Variable<array_1d<double, 3>>>::Has(nodalResultName))
             {
@@ -314,6 +315,7 @@ class VtkOutput
             ModelPart &subModelPart = mr_model_part.GetSubModelPart(subModelPartName);
             PrintOutputSubModelPart(subModelPart);
         }
+        ++step;
     }
 
     ///@}
@@ -353,12 +355,12 @@ class VtkOutput
     unsigned int mDefaultPrecision;
     std::map<int, int> mKratosIdToVtkId;
     unsigned int mVtkCellListSize;
+    unsigned int step;
     ///@}
 
     std::string GetOutputFileName(ModelPart &model_part)
-    {
-        double currentTime = mr_model_part.GetProcessInfo()[TIME];
-        std::string outputFilename = model_part.Name() + std::to_string(currentTime) + ".vtk";
+    {           
+        std::string outputFilename = model_part.Name() +"_"+std::to_string(step) + ".vtk";
         return outputFilename;
     }
 

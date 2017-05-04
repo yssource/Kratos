@@ -25,7 +25,7 @@
 #include "linear_solvers/linear_solver.h"
 
 //Processes
-#include "custom_processes/apply_multi_point_constraints_process.h"
+#include "custom_processes/apply_multi_point_constraints_process_chimera.h"
 #include "custom_utilities/vtk_output.hpp"
 //#include "custom_utilities/multipoint_constraint_data.hpp"
 
@@ -47,10 +47,10 @@ namespace Python
 
 
           /// Processes
-      class_<ApplyMultipointConstraintsProcess, boost::noncopyable, bases<Process>>("ApplyMultipointConstraintsProcess", init<ModelPart&>())
+      class_<ApplyMultipointConstraintsProcessChimera, boost::noncopyable, bases<Process>>("ApplyMultipointConstraintsProcessChimera", init<ModelPart&>())
       .def(init< ModelPart&, Parameters& >())
-      .def("AddMasterSlaveRelation", &ApplyMultipointConstraintsProcess::AddMasterSlaveRelation)
-      .def("PrintData", &ApplyMultipointConstraintsProcess::PrintData);
+      .def("AddMasterSlaveRelation", &ApplyMultipointConstraintsProcessChimera::AddMasterSlaveRelation)
+      .def("PrintData", &ApplyMultipointConstraintsProcessChimera::PrintData);
 
       class_<VtkOutput, boost::noncopyable>("VtkOutput", init< ModelPart&, std::string, Parameters& >())
       .def("PrintOutput", &VtkOutput::PrintOutput)

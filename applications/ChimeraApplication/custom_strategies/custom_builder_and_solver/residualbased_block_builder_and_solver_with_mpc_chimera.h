@@ -1,16 +1,14 @@
-//    |  /           |
-//    ' /   __| _` | __|  _ \   __|
-//    . \  |   (   | |   (   |\__ `
-//   _|\_\_|  \__,_|\__|\___/ ____/
-//                   Multi-Physics
 //
-//  License:		 BSD License
-//					 Kratos default license: kratos/license.txt
+// ==============================================================================
+//  ChimeraApplication
 //
-//  Main authors:    Aditya Ghantasala / Navaneeth K Narayanan
+//  License:         BSD License
+//                   license: ChimeraApplication/license.txt
 //
+//  Main authors:    Aditya Ghantasala, https://github.com/adityaghantasala
+//                   Navaneeth K Narayanan
 //
-
+// ==============================================================================
 #ifndef KRATOS_SOLVING_STRATEGIES_BUILDER_AND_SOLVERS_RESIDUALBASED_BLOCK_BUILDER_AND_SOLVER_WITH_MPC_CHIMERA_H_
 #define KRATOS_SOLVING_STRATEGIES_BUILDER_AND_SOLVERS_RESIDUALBASED_BLOCK_BUILDER_AND_SOLVER_WITH_MPC_CHIMERA_H_
 
@@ -290,6 +288,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 
   protected:
     void ConstructMatrixStructure(
+        typename TSchemeType::Pointer pScheme,
         TSystemMatrixType &A,
         ElementsContainerType &rElements,
         ConditionsArrayType &rConditions,
@@ -323,7 +322,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
         for (int iii = 0; iii < nelements; iii++)
         {
             typename ElementsContainerType::iterator i_element = rElements.begin() + iii;
-            (i_element)->EquationIdVector(ids, CurrentProcessInfo);
+            pScheme->EquationId( *(i_element.base()) , ids, CurrentProcessInfo);
 
             // Modifying the equation IDs of this element to suit MPCs
             this->Element_ModifyEquationIdsForMPC(*(i_element.base()), ids, CurrentProcessInfo);
@@ -346,7 +345,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
         for (int iii = 0; iii < nconditions; iii++)
         {
             typename ConditionsArrayType::iterator i_condition = rConditions.begin() + iii;
-            (i_condition)->EquationIdVector(ids, CurrentProcessInfo);
+            pScheme->Condition_EquationId( *(i_condition.base()), ids, CurrentProcessInfo);
             // Modifying the equation IDs of this element to suit MPCs
             this->Condition_ModifyEquationIdsForMPC(*(i_condition.base()), ids, CurrentProcessInfo);
 

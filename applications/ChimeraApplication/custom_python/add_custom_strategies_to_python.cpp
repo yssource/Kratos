@@ -1,14 +1,14 @@
-// KRATOS  ___|  |                   |                   |
-//       \___ \  __|  __| |   |  __| __| |   |  __| _` | |
-//             | |   |    |   | (    |   |   | |   (   | |
-//       _____/ \__|_|   \__,_|\___|\__|\__,_|_|  \__,_|_| MECHANICS
 //
-//  License:		 BSD License
-//					 license: structural_mechanics_application/license.txt
+// ==============================================================================
+//  ChimeraApplication
 //
-//  Main authors:    Riccardo Rossi
+//  License:         BSD License
+//                   license: ChimeraApplication/license.txt
 //
-
+//  Main authors:    Aditya Ghantasala, https://github.com/adityaghantasala
+//                   Navaneeth K Narayanan
+//
+// ==============================================================================
 
 // System includes
 

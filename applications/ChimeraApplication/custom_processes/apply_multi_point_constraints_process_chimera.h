@@ -1,19 +1,15 @@
-//    |  /           |
-//    ' /   __| _` | __|  _ \   __|
-//    . \  |   (   | |   (   |\__ `
-//   _|\_\_|  \__,_|\__|\___/ ____/
-//                   Multi-Physics
+// ==============================================================================
+//  ChimeraApplication
 //
-//  License:		 BSD License
-//					 Kratos default license: kratos/license.txt
+//  License:         BSD License
+//                   license: ChimeraApplication/license.txt
 //
-//  Main authors:    Aditya Ghantasala 
+//  Main authors:    Aditya Ghantasala, https://github.com/adityaghantasala
 //
-//
+// ==============================================================================
 
-
-#ifndef APPLY_MULTI_POINT_CONSTRAINTS_PROCESS_H
-#define APPLY_MULTI_POINT_CONSTRAINTS_PROCESS_H
+#ifndef APPLY_MULTI_POINT_CONSTRAINTS_PROCESS_CHIMERA_H
+#define APPLY_MULTI_POINT_CONSTRAINTS_PROCESS_CHIMERA_H
 
 // System includes
 #include <string>
@@ -34,12 +30,12 @@
 namespace Kratos
 {
 
-class ApplyMultipointConstraintsProcess : public Process
+class ApplyMultipointConstraintsProcessChimera : public Process
 {
 public:
 
     /// Pointer definition of MoveRotorProcess
-    KRATOS_CLASS_POINTER_DEFINITION(ApplyMultipointConstraintsProcess);
+    KRATOS_CLASS_POINTER_DEFINITION(ApplyMultipointConstraintsProcessChimera);
 
     typedef MpcData::Pointer MpcDataPointerType;
     typedef Dof<double>* DofPointerType;
@@ -50,7 +46,7 @@ public:
     typedef ProcessInfo::Pointer      ProcessInfoPointerType;
 
     /// Constructor.
-    ApplyMultipointConstraintsProcess(  ModelPart& model_part,
+    ApplyMultipointConstraintsProcessChimera(  ModelPart& model_part,
                                         Parameters rParameters
                                         ) : Process(Flags()) , mr_model_part(model_part), mpcDataMap()
     {
@@ -70,7 +66,7 @@ public:
         info->SetValue(MPC_POINTER, mpcDataMap["default"]);
     }
 
-    ApplyMultipointConstraintsProcess(  ModelPart& model_part
+    ApplyMultipointConstraintsProcessChimera(  ModelPart& model_part
                                         ) : Process(Flags()) , mr_model_part(model_part), mpcDataMap()
     {
 
@@ -98,7 +94,7 @@ public:
 
 
     /// Destructor.
-    virtual ~ApplyMultipointConstraintsProcess(){
+    virtual ~ApplyMultipointConstraintsProcessChimera(){
         /*for(auto mpcDataMapElem : mpcDataMap){
             delete mpcDataMapElem.second;
         }*/
@@ -126,12 +122,12 @@ public:
     virtual std::string Info() const override
     {
         std::stringstream buffer;
-        buffer << "ApplyMultipointConstraintsProcess" ;
+        buffer << "ApplyMultipointConstraintsProcessChimera" ;
         return buffer.str();
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const override {rOStream << "ApplyMultipointConstraintsProcess";}
+    virtual void PrintInfo(std::ostream& rOStream) const override {rOStream << "ApplyMultipointConstraintsProcessChimera";}
 
     /// Print object's data.
     void PrintData() {
@@ -154,7 +150,7 @@ protected:
 private:
 
     /// Assignment operator.
-    ApplyMultipointConstraintsProcess& operator=(ApplyMultipointConstraintsProcess const& rOther){return *this;}
+    ApplyMultipointConstraintsProcessChimera& operator=(ApplyMultipointConstraintsProcessChimera const& rOther){return *this;}
 
 }; // Class MoveRotorProcess
 

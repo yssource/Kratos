@@ -1,13 +1,12 @@
-//    |  /           |
-//    ' /   __| _` | __|  _ \   __|
-//    . \  |   (   | |   (   |\__ `
-//   _|\_\_|  \__,_|\__|\___/ ____/
-//                   Multi-Physics
+// ==============================================================================
+//  ChimeraApplication
 //
-//  License:		 BSD License
-//					 Kratos default license: kratos/license.txt
+//  License:         BSD License
+//                   license: ChimeraApplication/license.txt
 //
-//  Main authors:    Pooyan Dadvand, , KratosAppGenerator
+//  Main authors:    Aditya Ghantasala, https://github.com/adityaghantasala
+//
+// ==============================================================================
 //
 
 #if !defined(KRATOS_CUSTOM_APPLY_MPC_CONSTRAINT_2D_H_INCLUDED )
@@ -40,7 +39,7 @@
 #include "solving_strategies/builder_and_solvers/residualbased_block_builder_and_solver.h"
 #include "solving_strategies/strategies/residualbased_linear_strategy.h"
 #include "elements/distance_calculation_element_simplex.h"
-#include "custom_processes/apply_multi_point_constraints_process.h"
+#include "custom_processes/apply_multi_point_constraints_process_chimera.h"
 // Application includes
 #include "custom_utilities/multipoint_constraint_data.hpp"
 
@@ -84,7 +83,7 @@ public:
 
 	CustomApplyMpcConstraint2dProcess(ModelPart& surfaceModelPart){		
 		this->pBinLocator = BinBasedFastPointLocator<2>::Pointer( new BinBasedFastPointLocator<2>(surfaceModelPart) );
-		this->pMpcProcess = ApplyMultipointConstraintsProcess::Pointer( new ApplyMultipointConstraintsProcess(surfaceModelPart) );		
+		this->pMpcProcess = ApplyMultipointConstraintsProcessChimera::Pointer( new ApplyMultipointConstraintsProcessChimera(surfaceModelPart) );		
 	}
 
 	/// Destructor.
@@ -240,7 +239,7 @@ private:
 	//ModelPart &mrBackGroundModelPart;
 	//ModelPart &mrPatchSurfaceModelPart;
 	BinBasedFastPointLocator<2>::Pointer pBinLocator; // Template argument 3 stands for 3D case
-	ApplyMultipointConstraintsProcess::Pointer pMpcProcess;
+	ApplyMultipointConstraintsProcessChimera::Pointer pMpcProcess;
 	///@}
 	///@name Private Operators
 	///@{

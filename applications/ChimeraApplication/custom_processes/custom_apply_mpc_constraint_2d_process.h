@@ -158,8 +158,8 @@ public:
 					
 					for(int i = 0; i < geom.size(); i++){
 					
-					pMpcProcess->AddMasterSlaveRelation( geom[i],DISPLACEMENT_X,*p_boundary_node,DISPLACEMENT_X,N[i], 0 );
-					pMpcProcess->AddMasterSlaveRelation( geom[i],DISPLACEMENT_Y,*p_boundary_node,DISPLACEMENT_Y,N[i], 0 );
+					pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_X,*p_boundary_node,VELOCITY_X,N[i], 0 );
+					pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_Y,*p_boundary_node,VELOCITY_Y,N[i], 0 );
 				
 					
 					}	//Nodes loop inside the found element ends here

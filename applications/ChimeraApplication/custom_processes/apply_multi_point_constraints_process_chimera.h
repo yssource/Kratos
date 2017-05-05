@@ -42,6 +42,7 @@ public:
     typedef Dof<double> DofType;
     typedef std::map<std::string, MpcDataPointerType> MpcDataMapType;
     typedef MpcData::VariableComponentType VariableComponentType;
+    typedef MpcData::VariableDataType VariableDataType;
     typedef ProcessInfo      ProcessInfoType;
     typedef ProcessInfo::Pointer      ProcessInfoPointerType;
 
@@ -84,6 +85,16 @@ public:
     	DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
         AddMasterSlaveRelationWithDofs(pointerSlaveDOF, pointerMasterDOF, weight, PartitionId);
     }
+
+    void AddMasterSlaveRelationVariables(Node<3> &MasterNode, VariableDataType& MasterVariable, Node<3> &SlaveNode, VariableDataType& SlaveVariable, double weight, int PartitionId=0)
+    {
+        SlaveNode.Set(SLAVE);        
+        DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
+    	DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
+        AddMasterSlaveRelationWithDofs(pointerSlaveDOF, pointerMasterDOF, weight, PartitionId);
+    }
+
+
 
     void AddMasterSlaveRelationWithDofs(DofType slaveDOF, DofType masterDOF, double masterWeight, int PartitionId=0 )
     {

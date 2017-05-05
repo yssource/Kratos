@@ -46,7 +46,7 @@ class VtkOutput
     /**
 		Creates a VtkOutput data object
 		*/
-    VtkOutput(ModelPart &model_part, std::string outPutFileName, Parameters& rParameters) : mr_model_part(model_part), mrOutputSettings(rParameters)
+    VtkOutput(ModelPart &model_part, std::string outPutFileName, Parameters rParameters) : mr_model_part(model_part), mrOutputSettings(rParameters)
     {
         mcaseName = outPutFileName;
         mDefaultPrecision = 15;
@@ -249,7 +249,7 @@ class VtkOutput
         std::ofstream outputFile;
         outputFile.open(outputFileName, std::ios::out | std::ios::app);
         // write nodal results header
-        Parameters nodalResults = mrOutputSettings["result_file_configuration"]["nodal_results"];
+        Parameters nodalResults = this->mrOutputSettings["result_file_configuration"]["nodal_results"];
         outputFile << "POINT_DATA " << model_part.NumberOfNodes() << "\n";
 
         for (unsigned int entry = 0; entry < nodalResults.size(); entry++)
@@ -351,7 +351,7 @@ class VtkOutput
     ModelPart &mr_model_part;
     std::string mcaseName;
     std::string mOutputFilename;
-    Parameters &mrOutputSettings;
+    Parameters mrOutputSettings;
     unsigned int mDefaultPrecision;
     std::map<int, int> mKratosIdToVtkId;
     unsigned int mVtkCellListSize;

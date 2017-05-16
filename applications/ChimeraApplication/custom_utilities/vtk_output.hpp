@@ -6,25 +6,26 @@
 //
 //  Main authors:    Aditya Ghantasala, https://github.com/adityaghantasala
 //
+//
+//  Reference :      This class is adapted from applications/ShapeOptimizationapplication/custom_utilities/input_output/vtk_file_io.h
 // ==============================================================================
 
 #if !defined(VTK_OUTPUT_H)
 #define VTK_OUTPUT_H
 // System includes
 #include <vector>
-#include <unordered_map>
 #include <iostream>
-#include <tuple>
-#include <utility>
 #include <string>
-#include <assert.h>
 #include <fstream>
 #include <algorithm>
 #include <iomanip> // for std::setprecision
 #include <map>
+// For MPI-parallel output
+#ifdef KRATOS_USING_MPI
+#include "mpi.h"
+#endif
 
 // project includes
-#include <boost/functional/hash.hpp>
 
 namespace Kratos
 {
@@ -101,7 +102,7 @@ class VtkOutput
     {
         std::string outputFileName = GetOutputFileName(model_part);
         std::ofstream outputFile;
-        outputFile.open(outputFileName, std::ios::out | std::ios::trunc);
+        outputFile.open(outputFileName, std::ios::out | std::ios::binary | std::ios::trunc );
         outputFile << "# vtk DataFile Version 4.0"
                    << "\n";
         outputFile << "vtk output"
@@ -125,7 +126,7 @@ class VtkOutput
     {
         std::string outputFileName = GetOutputFileName(model_part);
         std::ofstream outputFile;
-        outputFile.open(outputFileName, std::ios::out | std::ios::app);
+        outputFile.open(outputFileName, std::ios::out | std::ios::app | std::ios::binary);
         outputFile << std::scientific;
         outputFile << std::setprecision(mDefaultPrecision);
 
@@ -150,7 +151,7 @@ class VtkOutput
     {
         std::string outputFileName = GetOutputFileName(model_part);
         std::ofstream outputFile;
-        outputFile.open(outputFileName, std::ios::out | std::ios::app);
+        outputFile.open(outputFileName, std::ios::out | std::ios::app | std::ios::binary);
 
         // write cells header
         outputFile << "CELLS " << model_part.NumberOfConditions() + model_part.NumberOfElements() << " " << mVtkCellListSize << "\n";
@@ -225,7 +226,7 @@ class VtkOutput
     {
         std::string outputFileName = GetOutputFileName(model_part);
         std::ofstream outputFile;
-        outputFile.open(outputFileName, std::ios::out | std::ios::app);
+        outputFile.open(outputFileName, std::ios::out | std::ios::app | std::ios::binary);
 
         // write cell types header
         outputFile << "CELL_TYPES " << model_part.NumberOfConditions() + model_part.NumberOfElements() << "\n";
@@ -287,7 +288,7 @@ class VtkOutput
     {
         std::string outputFileName = GetOutputFileName(model_part);
         std::ofstream outputFile;
-        outputFile.open(outputFileName, std::ios::out | std::ios::app);
+        outputFile.open(outputFileName, std::ios::out | std::ios::app | std::ios::binary);
         // write nodal results header
         Parameters nodalResults = this->mrOutputSettings["result_file_configuration"]["nodal_results"];
         outputFile << "POINT_DATA " << model_part.NumberOfNodes() << "\n";
@@ -399,8 +400,12 @@ class VtkOutput
     ///@}
 
     std::string GetOutputFileName(ModelPart &model_part)
-    {           
-        std::string outputFilename = model_part.Name() +"_"+std::to_string(step) + ".vtk";
+    {
+        int rank = 0;
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif                   
+        std::string outputFilename = model_part.Name() +"_"+std::to_string(rank)+"_"+std::to_string(step) + ".vtk";
         return outputFilename;
     }
 

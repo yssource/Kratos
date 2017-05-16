@@ -52,7 +52,7 @@ namespace Python
       .def("AddMasterSlaveRelation", &ApplyMultipointConstraintsProcessChimera::AddMasterSlaveRelation)
       .def("PrintData", &ApplyMultipointConstraintsProcessChimera::PrintData);
 
-      class_<VtkOutput, boost::noncopyable>("VtkOutput", init< ModelPart&, std::string, Parameters& >())
+      class_<VtkOutput, boost::noncopyable>("VtkOutput", init< ModelPart&, std::string, Parameters >())
       .def("PrintOutput", &VtkOutput::PrintOutput)
       .def("PrintOutput", &VtkOutput::PrintOutputSubModelPart);      
 

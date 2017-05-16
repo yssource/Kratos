@@ -122,7 +122,7 @@ public:
 			const int n_structure_nodes = toSurfaceModelPart.Nodes().size();
 
 			#pragma omp parallel for firstprivate(results,N)
-			//MY NEW LOOP: reset the viisted flaf
+			//MY NEW LOOP: reset the visited flag
 			for (int i = 0; i < n_structure_nodes; i++)
 			{
 				ModelPart::NodesContainerType::iterator iparticle = toSurfaceModelPart.NodesBegin() + i;

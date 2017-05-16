@@ -9,19 +9,19 @@
 // ==============================================================================
 //
 
-#if !defined(KRATOS_CUSTOM_WHOLE_CUTTING_PROCESS_H_INCLUDED )
-#define  KRATOS_CUSTOM_WHOLE_CUTTING_PROCESS_H_INCLUDED
+#if !defined(KRATOS_CUSTOM_HOLE_CUTTING_PROCESS_H_INCLUDED )
+#define  KRATOS_CUSTOM_HOLE_CUTTING_PROCESS_H_INCLUDED
 
 
 // System includes
-// Please put system includes in custom_whole_cutting_process.h
+// Please put system includes in custom_hole_cutting_process.h
 
 // External includes
-// Please put external includes in custom_whole_cutting_process.h
+// Please put external includes in custom_hole_cutting_process.h
 
 // Project includes
 
-#include "custom_processes/custom_whole_cutting_process.h"
+#include "custom_processes/custom_hole_cutting_process.h"
 
 // System includes
 #include <iostream>
@@ -47,6 +47,7 @@
 #include "processes/node_erase_process.h" // To delete empty nodes
 #include "utilities/normal_calculation_utils.h" // To calculate element's normal
 #include "geometries/triangle_3d_3.h" // Skin face geometry template
+#include "geometries/line_2d_2.h"
 
 
 namespace Kratos {
@@ -72,7 +73,7 @@ namespace Kratos {
 
 /// Short class definition.
 
-class CustomWholeCuttingProcess{
+class CustomHoleCuttingProcess{
 public:
 	// Needed structures for the ExtractSurfaceMesh operation
 	struct KeyComparor
@@ -105,18 +106,20 @@ public:
 
 	///@}
 	///@name Pointer Definitions
-	/// Pointer definition of CustomWholeCuttingProcess
-	KRATOS_CLASS_POINTER_DEFINITION(CustomWholeCuttingProcess);
+	/// Pointer definition of CustomHoleCuttingProcess
+	KRATOS_CLASS_POINTER_DEFINITION(CustomHoleCuttingProcess);
 
 	///@}
 	///@name Life Cycle
 	///@{
 
-	CustomWholeCuttingProcess() {
+	CustomHoleCuttingProcess() {
+
+		
 	}
 
 	/// Destructor.
-	virtual ~CustomWholeCuttingProcess() {
+	virtual ~CustomHoleCuttingProcess() {
 	}
 
 	///@}
@@ -131,17 +134,17 @@ public:
 	///@name Operations
 	///@{
 
-	/// For CHIMERA boundary condition purposes: Extracts a volume mesh with a certain threshold value
-	void ExtractSurfaceMeshAtDistance(ModelPart& rModelPart, ModelPart& rExtractedSurfaceModelPart, double distance)
+	/// For CHIMERA boundary condition purposes: Extracts a volume mesh with a certain threshold value based on centroid distance
+	void ExtractMeshAtCentroidDistance(ModelPart& rModelPart, ModelPart& rExtractedModelPart, double distance)
 	{
 
 		KRATOS_TRY;
 
-		std::cout<<"\n::[Volume Mesh Extraction]::"<<std::endl;
-		ModelPart rExtractedVolumeModelPart;
+		std::cout<<"\n::[Mesh Extraction]::"<<std::endl;
+		ModelPart rExtractedModelPart;
 
 		// Initializing mesh nodes
-		rExtractedVolumeModelPart.Nodes() = rModelPart.Nodes();
+		rExtractedModelPart.Nodes() = rModelPart.Nodes();
 
 		// Extracting mesh elements which are only above the threshold value
 		std::cout<<"  Extracting elements with in a distance of > " << fabs(distance) <<std::endl;
@@ -159,28 +162,29 @@ public:
 			if(elementDistance < distance)
 			{
 				pElem = Element::Pointer(new Element(*it));
-				rExtractedVolumeModelPart.Elements().push_back(pElem);
+				rExtractedModelPart.Elements().push_back(pElem);
 			}
 		}
 
-		std::cout<<"  Successful extraction of the Volume !! "<<rExtractedVolumeModelPart.GetMesh()<<"\b"<<std::endl;
-		ExtractSurfaceMesh(rExtractedVolumeModelPart, rExtractedSurfaceModelPart);
+		std::cout<<"  Successful extraction of the Mesh !! "<<rExtractedModelPart.GetMesh()<<"\b"<<std::endl;
+		//ExtractSurfaceMesh(rExtractedModelPart, rExtractedSurfaceModelPart);
 
 		KRATOS_CATCH("");
 
 	}
 
 
-	/// For CHIMERA boundary condition purposes: Extracts a volume mesh with a certain threshold value
-	void ExtractVolumeMeshBetweenLimits(ModelPart& rModelPart,ModelPart& rExtractedVolumeModelPart, double lLimit, double uLimit)
+
+	/// For CHIMERA boundary condition purposes: Extracts a  mesh with a certain threshold value
+	void ExtractMeshBetweenLimits(ModelPart& rModelPart,ModelPart& rExtractedModelPart, double lLimit, double uLimit)
 	{
 
 		KRATOS_TRY;
 
-		std::cout<<"\n::[Volume Mesh Extraction]::"<<std::endl;
+		std::cout<<"\n::[Mesh Extraction]::"<<std::endl;
 
 		// Initializing mesh nodes
-		rExtractedVolumeModelPart.Nodes() = rModelPart.Nodes();
+		rExtractedModelPart.Nodes() = rModelPart.Nodes();
 
 		// Extracting mesh elements which are only above the threshold value
 		std::cout<<"  Extracting elements between " << lLimit <<" and "<<uLimit<<std::endl;
@@ -201,15 +205,76 @@ public:
 			if(numPointsInside > 0)
 			{
 				pElem = Element::Pointer(new Element(*it));
-				rExtractedVolumeModelPart.Elements().push_back(pElem);
+				rExtractedModelPart.Elements().push_back(pElem);
 			}
 		}
 
-		std::cout<<" ########  Successful extraction of the Volume !! "<<rExtractedVolumeModelPart.GetMesh()<<"\b"<<std::endl;
+		std::cout<<" ########  Successful extraction of the Mesh !! "<<rExtractedModelPart.GetMesh()<<"\b"<<std::endl;
 		KRATOS_CATCH("");
 	}
 
+    
 
+	void CreateHoleAfterDistance(ModelPart& rModelPart, ModelPart& rExtractedModelPart, ModelPart& rExtractedBoundaryModelPart, double distance)
+
+	{
+
+		KRATOS_TRY;
+
+		std::cout<<"\n::[Creating Hole]::"<<std::endl;
+
+		//Create a hole model part
+
+		
+
+		// Extracting mesh elements which are only above the threshold value
+		std::cout<<"  Extracting elements after " << distance << std::endl;
+		Element::Pointer pElem;
+		for(ModelPart::ElementsContainerType::iterator it = rModelPart.ElementsBegin(); it != rModelPart.ElementsEnd(); ++it)
+		{
+			double elementDistance = 0.0;
+			int numPointsOutside = 0;
+			unsigned int j = 0;
+			Geometry<Node<3> >& geom = it->GetGeometry();
+			for (j = 0 ; j < geom.size(); j++){
+				elementDistance = it->GetGeometry()[j].FastGetSolutionStepValue(DISTANCE);
+				if(elementDistance > distance )
+				{
+				  numPointsOutside++;
+				}
+			}
+
+			if(numPointsOutside == geom.size())
+			{
+				it->Set(ACTIVE,false);
+				pElem = Element::Pointer(new Element(*it));
+				rExtractedModelPart.Elements().push_back(pElem);
+				
+			}
+		}
+
+		std::cout<<" ########  Successful hole cutting of the Mesh !!########## "<<std::endl;
+		KRATOS_CATCH("");
+       unsigned int n_nodes = rModelPart.ElementsBegin()->GetGeometry().size();
+
+	   if(n_nodes == 3){
+		 
+		 ExtractBoundaryMesh(rExtractedModelPart,rExtractedBoundaryModelPart);
+		   
+	   }
+
+	   else if (n_nodes == 4){
+		 ExtractSurfaceMesh(rExtractedModelPart,rExtractedBoundaryModelPart);
+
+	   }
+
+	   else std::cout<<"Hole cutting process is only supported for tetrahedral and triangular elements"<<std::endl;
+
+
+
+	}
+
+	
 
 	/// For Topology Optimization purposes: Extracts a surface mesh from a provided volume mesh
 	void ExtractSurfaceMesh(ModelPart& rExtractedVolumeModelPart, ModelPart& rExtractedSurfaceModelPart)
@@ -334,7 +399,104 @@ public:
 	}
 
 
+void ExtractBoundaryMesh(ModelPart& rModelPart, ModelPart& rExtractedBoundaryModelPart)
+	{
+		KRATOS_TRY;
 
+		std::cout<<"::[Boundary Mesh Extraction]::"<<std::endl;
+
+		// Some type-definitions
+		typedef boost::unordered_map<vector<unsigned int>, unsigned int, KeyHasher, KeyComparor > hashmap;
+		typedef boost::unordered_map<vector<unsigned int>, vector<unsigned int>, KeyHasher, KeyComparor > hashmap_vec;
+
+		// Create map to ask for number of edges for the given set of node ids representing on edge in the model part
+		hashmap n_edges_map;
+
+		// Fill map that counts number of edges for given set of nodes
+		for (ModelPart::ElementIterator itElem = rModelPart.ElementsBegin(); itElem != rModelPart.ElementsEnd(); itElem++)
+		{
+			Element::GeometryType::GeometriesArrayType edges = itElem->GetGeometry().Edges();
+
+			for(unsigned int edge=0; edge<edges.size(); edge++)
+			{
+				// Create vector that stores all node is of current edge
+				vector<unsigned int> ids(edges[edge].size());
+
+				// Store node ids
+				for(unsigned int i=0; i<edges[edge].size(); i++)
+					ids[i] = edges[edge][i].Id();
+
+				//*** THE ARRAY OF IDS MUST BE ORDERED!!! ***
+				std::sort(ids.begin(), ids.end());
+
+				// Fill the map
+				n_edges_map[ids] += 1;
+			}
+		}
+
+		// Create a map to get nodes of skin edge in original order for given set of node ids representing that edge
+		// The given set of node ids may have a different node order
+		hashmap_vec ordered_skin_edge_nodes_map;
+
+		// Fill map that gives original node order for set of nodes
+		for (ModelPart::ElementIterator itElem = rModelPart.ElementsBegin(); itElem != rModelPart.ElementsEnd(); itElem++)
+		{
+			Element::GeometryType::GeometriesArrayType edges = itElem->GetGeometry().Edges();
+
+			for(unsigned int edge=0; edge<edges.size(); edge++)
+			{
+				// Create vector that stores all node is of current edge
+				vector<unsigned int> ids(edges[edge].size());
+				vector<unsigned int> unsorted_ids(edges[edge].size());
+
+				// Store node ids
+				for(unsigned int i=0; i<edges[edge].size(); i++)
+				{
+					ids[i] = edges[edge][i].Id();
+					unsorted_ids[i] = edges[edge][i].Id();
+				}
+
+				//*** THE ARRAY OF IDS MUST BE ORDERED!!! ***
+				std::sort(ids.begin(), ids.end());
+
+				if(n_edges_map[ids] == 1)
+					ordered_skin_edge_nodes_map[ids] = unsorted_ids;
+			}
+		}
+		// First assign to skin model part all nodes from original model_part, unnecessary nodes will be removed later
+		unsigned int id_condition = 1;
+		rExtractedBoundaryModelPart.Nodes() = rModelPart.Nodes();
+
+		// Add skin edges as triangles to skin-model-part (loop over all node sets)
+		std::cout<<"  Extracting boundary mesh and computing normals" <<std::endl;
+		for(typename hashmap::const_iterator it=n_edges_map.begin(); it!=n_edges_map.end(); it++)
+		{
+			// If given node set represents edge that is not overlapping with a edge of another element, add it as skin element
+			if(it->second == 1)
+			{
+				// If skin edge is a triangle store triangle in with its original orientation in new skin model part
+				if(it->first.size()==2)
+				{
+					// Getting original order is important to properly reproduce skin edge including its normal orientation
+					vector<unsigned int> original_nodes_order = ordered_skin_edge_nodes_map[it->first];
+					Node < 3 >::Pointer pnode1 = rModelPart.Nodes()(original_nodes_order[0]);
+					Node < 3 >::Pointer pnode2 = rModelPart.Nodes()(original_nodes_order[1]);
+					
+					Properties::Pointer properties = rExtractedBoundaryModelPart.rProperties()(0);
+					Condition const& rReferenceLineCondition = KratosComponents<Condition>::Get("Condition2D");
+
+					// Skin edges are added as conditions
+					Line2D2< Node<3> > line1(pnode1, pnode2);
+					Condition::Pointer p_condition1 = rReferenceLineCondition.Create(id_condition++, line1, properties);
+					rExtractedBoundaryModelPart.Conditions().push_back(p_condition1);
+				}
+				
+			}
+		}
+		std::cout<<"Successful extraction of the Boundary "<<rExtractedBoundaryModelPart.GetMesh()<<std::endl;
+
+		KRATOS_CATCH("");
+	}
 
 
 
@@ -358,12 +520,12 @@ public:
 
 	/// Turn back information as a string.
 	virtual std::string Info() const {
-		return "CustomWholeCuttingProcess";
+		return "CustomHoleCuttingProcess";
 	}
 
 	/// Print information about this object.
 	virtual void PrintInfo(std::ostream& rOStream) const {
-		rOStream << "CustomWholeCuttingProcess";
+		rOStream << "CustomHoleCuttingProcess";
 	}
 
 	/// Print object's data.
@@ -443,15 +605,16 @@ private:
 	///@{
 
 	/// Assignment operator.
-	CustomWholeCuttingProcess& operator=(CustomWholeCuttingProcess const& rOther);
-
+	CustomHoleCuttingProcess& operator=(CustomHoleCuttingProcess const& rOther);
+	
+	
 	/// Copy constructor.
-	//CustomWholeCuttingProcess(CustomWholeCuttingProcess const& rOther);
+	//CustomHoleCuttingProcess(CustomHoleCuttingProcess const& rOther);
 
 	///@}
 
-}; // Class CustomWholeCuttingProcess
+}; // Class CustomHoleCuttingProcess
 
 }  // namespace Kratos.
 
-#endif // KRATOS_CUSTOM_WHOLE_CUTTING_PROCESS_H_INCLUDED  defined
+#endif // KRATOS_CUSTOM_HOLE_CUTTING_PROCESS_H_INCLUDED  defined

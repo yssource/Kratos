@@ -118,6 +118,7 @@ class VtkOutput
         writeNodes(model_part);
         writeConditionsAndElements(model_part);
         writeConditionAndElementTypes(model_part);
+        writeElementData(model_part);
     }
 
     void writeNodes(ModelPart &model_part)
@@ -177,6 +178,45 @@ class VtkOutput
                 outputFile << " " << mKratosIdToVtkId[condition_geometry[i].Id()];
             outputFile << "\n";
         }
+
+        outputFile.close();
+    }
+
+    void writeElementData(ModelPart &model_part)
+    {
+        std::string outputFileName = GetOutputFileName(model_part);
+        std::ofstream outputFile;
+        outputFile.open(outputFileName, std::ios::out | std::ios::app);
+
+        // write cells header
+        outputFile << "CELL_DATA " << model_part.NumberOfElements() << "\n";
+        outputFile << "SCALARS ACTIVE float 1\nLOOKUP_TABLE default\n";
+
+        // write elements
+        for (ModelPart::ElementIterator elem_i = model_part.ElementsBegin(); elem_i != model_part.ElementsEnd(); ++elem_i)
+        {
+             //outputFile << numberOfNodes;
+            if ((elem_i)->IsDefined(ACTIVE)){
+
+                outputFile << elem_i->Is(ACTIVE) << "\n";
+            }
+
+            else
+                outputFile <<"1\n";
+            
+        }
+
+        // write Conditions
+        /*for (ModelPart::ConditionIterator condition_i = model_part.ConditionsBegin(); condition_i != model_part.ConditionsEnd(); ++condition_i)
+        {
+            ModelPart::ConditionType::GeometryType &condition_geometry = condition_i->GetGeometry();
+            const unsigned int numberOfNodes = condition_geometry.size();
+
+            outputFile << numberOfNodes;
+            for (unsigned int i = 0; i < numberOfNodes; i++)
+                outputFile << " " << mKratosIdToVtkId[condition_geometry[i].Id()];
+            outputFile << "\n";
+        }*/
 
         outputFile.close();
     }

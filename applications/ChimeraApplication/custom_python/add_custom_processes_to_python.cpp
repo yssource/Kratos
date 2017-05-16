@@ -20,11 +20,11 @@
 #include "includes/model_part.h"
 #include "processes/process.h"
 #include "custom_python/add_custom_processes_to_python.h"
-#include "custom_processes/custom_whole_cutting_process.h"
+#include "custom_processes/custom_hole_cutting_process.h"
 #include "custom_processes/custom_extract_variables_process.h"
-#include "custom_processes/custom_apply_mpc_constraint_2d_process.h"
-#include "custom_processes/custom_apply_mpc_constraint_3d_process.h"
 
+#include "custom_processes/custom_apply_chimera_using_mpc_process.h"
+#include "custom_processes/custom_calculate_and_extract_distance_process.h"
 namespace Kratos
 {
 
@@ -36,30 +36,42 @@ void AddCustomProcessesToPython()
 	using namespace boost::python;
 
 	/*
-	 *  Custom WholeCuttingProcess
+	 *  Custom holeCuttingProcess
 	 */
-	class_<CustomWholeCuttingProcess,bases<Process> >("CustomWholeCuttingProcess", init<>())
-		.def("ExtractSurfaceMeshAtDistance", &CustomWholeCuttingProcess::ExtractSurfaceMeshAtDistance)
-		.def("ExtractVolumeMeshBetweenLimits", &CustomWholeCuttingProcess::ExtractVolumeMeshBetweenLimits);
+	class_<CustomHoleCuttingProcess,bases<Process> >("CustomHoleCuttingProcess", init<>())
+		.def("ExtractMeshAtCentroidDistance", &CustomHoleCuttingProcess::ExtractMeshAtCentroidDistance)
+		.def("ExtractMeshBetweenLimits", &CustomHoleCuttingProcess::ExtractMeshBetweenLimits)
+		
+
+	/*
+	 * CustomCalculateAndExtractDistanceProcess
+	 */ 
+	class_<CustomCalculateAndExtractDistanceProcess<2>,bases<Process> >("CustomCalculateAndExtractDistanceProcess2D", init<>())
+			.def("ExtractDistance", &CustomCalculateAndExtractDistanceProcess<2>::ExtractDistance);
+
+	class_<CustomCalculateAndExtractDistanceProcess<3>,bases<Process> >("CustomCalculateAndExtractDistanceProcess3D", init<>())
+			.def("ExtractDistance", &CustomCalculateAndExtractDistanceProcess<3>::ExtractDistance);		
 
 	/*
 	 * CustomExtractVariablesProcess
 	 */
 	class_<CustomExtractVariablesProcess,bases<Process> >("CustomExtractVariablesProcess", init<>())
 			.def("ExtractVariable", &CustomExtractVariablesProcess::ExtractVariable< array_1d<double, 3> >)
-			.def("ExtractVariable", &CustomExtractVariablesProcess::ExtractVariable<double>);
+			.def("ExtractVariable", &CustomExtractVariablesProcess::ExtractVariable<double>);			
 
+
+    
 	/*
-	 * CustomApplyMpcConstraintProcessforChimera
+	 * CustomApplyMpcConstraintProcessforChimera for 2d and 3d
 	 */
-	class_<CustomApplyMpcConstraint2dProcess,bases<Process> >("CustomApplyMpcConstraint2dProcess", init<ModelPart&>())
-			.def("ApplyMpcConstraint2d", &CustomApplyMpcConstraint2dProcess::ApplyMpcConstraint2d);
+	class_<CustomApplyChimeraUsingMpcProcess<2>,bases<Process> >("CustomApplyChimeraUsingMpcProcess2d", init<ModelPart&,ModelPart&,double>())
+			.def("ApplyMpcConstraint", &CustomApplyChimeraUsingMpcProcess<2>::ApplyMpcConstraint)
+			.def("ApplyChimeraUsingMpc2d", &CustomApplyChimeraUsingMpcProcess<2>::ApplyChimeraUsingMpc);
 
-	class_<CustomApplyMpcConstraint3dProcess,bases<Process> >("CustomApplyMpcConstraint3dProcess", init<>())
-			.def("ApplyMpcConstraint3d", &CustomApplyMpcConstraint3dProcess::ApplyMpcConstraint3d);
-
-
-			
+	class_<CustomApplyChimeraUsingMpcProcess<3>,bases<Process> >("CustomApplyChimeraUsingMpcProcess3d", init<ModelPart&,ModelPart&,double>())
+			.def("ApplyMpcConstraint", &CustomApplyChimeraUsingMpcProcess<3>::ApplyMpcConstraint)		
+			.def("ApplyChimeraUsingMpc3d", &CustomApplyChimeraUsingMpcProcess<3>::ApplyChimeraUsingMpc);
+    
 }
 
 

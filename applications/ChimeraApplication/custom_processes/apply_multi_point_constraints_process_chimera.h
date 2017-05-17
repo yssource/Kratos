@@ -22,7 +22,6 @@
 #include "processes/process.h"
 #include "utilities/math_utils.h"
 #include "includes/kratos_parameters.h"
-
 // Application includes
 #include "custom_utilities/multipoint_constraint_data.hpp"
 #include "chimera_application_variables.h"

@@ -223,7 +223,8 @@ public:
 
 		std::cout<<"\n::[Creating Hole]::"<<std::endl;
 
-		//Create a hole model part
+		//Initialising mesh nodes
+		rExtractedModelPart.Nodes() = rModelPart.Nodes();
 
 		
 
@@ -256,6 +257,7 @@ public:
 		std::cout<<" ########  Successful hole cutting of the Mesh !!########## "<<std::endl;
 		KRATOS_CATCH("");
        unsigned int n_nodes = rModelPart.ElementsBegin()->GetGeometry().size();
+	  
 
 	   if(n_nodes == 3){
 		 
@@ -399,7 +401,7 @@ public:
 	}
 
 
-void ExtractBoundaryMesh(ModelPart& rModelPart, ModelPart& rExtractedBoundaryModelPart)
+void ExtractBoundaryMesh(ModelPart& rSurfaceModelPart, ModelPart& rExtractedBoundaryModelPart)
 	{
 		KRATOS_TRY;
 
@@ -413,7 +415,7 @@ void ExtractBoundaryMesh(ModelPart& rModelPart, ModelPart& rExtractedBoundaryMod
 		hashmap n_edges_map;
 
 		// Fill map that counts number of edges for given set of nodes
-		for (ModelPart::ElementIterator itElem = rModelPart.ElementsBegin(); itElem != rModelPart.ElementsEnd(); itElem++)
+		for (ModelPart::ElementIterator itElem = rSurfaceModelPart.ElementsBegin(); itElem != rSurfaceModelPart.ElementsEnd(); itElem++)
 		{
 			Element::GeometryType::GeometriesArrayType edges = itElem->GetGeometry().Edges();
 
@@ -439,7 +441,7 @@ void ExtractBoundaryMesh(ModelPart& rModelPart, ModelPart& rExtractedBoundaryMod
 		hashmap_vec ordered_skin_edge_nodes_map;
 
 		// Fill map that gives original node order for set of nodes
-		for (ModelPart::ElementIterator itElem = rModelPart.ElementsBegin(); itElem != rModelPart.ElementsEnd(); itElem++)
+		for (ModelPart::ElementIterator itElem = rSurfaceModelPart.ElementsBegin(); itElem != rSurfaceModelPart.ElementsEnd(); itElem++)
 		{
 			Element::GeometryType::GeometriesArrayType edges = itElem->GetGeometry().Edges();
 
@@ -465,7 +467,7 @@ void ExtractBoundaryMesh(ModelPart& rModelPart, ModelPart& rExtractedBoundaryMod
 		}
 		// First assign to skin model part all nodes from original model_part, unnecessary nodes will be removed later
 		unsigned int id_condition = 1;
-		rExtractedBoundaryModelPart.Nodes() = rModelPart.Nodes();
+		rExtractedBoundaryModelPart.Nodes() = rSurfaceModelPart.Nodes();
 
 		// Add skin edges as triangles to skin-model-part (loop over all node sets)
 		std::cout<<"  Extracting boundary mesh and computing normals" <<std::endl;
@@ -475,12 +477,17 @@ void ExtractBoundaryMesh(ModelPart& rModelPart, ModelPart& rExtractedBoundaryMod
 			if(it->second == 1)
 			{
 				// If skin edge is a triangle store triangle in with its original orientation in new skin model part
+				std::cout<<"size of the ordered pair : "<<it->first.size()<<std::endl;
 				if(it->first.size()==2)
 				{
 					// Getting original order is important to properly reproduce skin edge including its normal orientation
 					vector<unsigned int> original_nodes_order = ordered_skin_edge_nodes_map[it->first];
-					Node < 3 >::Pointer pnode1 = rModelPart.Nodes()(original_nodes_order[0]);
-					Node < 3 >::Pointer pnode2 = rModelPart.Nodes()(original_nodes_order[1]);
+					
+					std::cout<<"First Node: "<<original_nodes_order[0]<<std::endl;
+					std::cout<<"Second Node: "<<original_nodes_order[1]<<std::endl;
+					
+					Node < 3 >::Pointer pnode1 = rSurfaceModelPart.Nodes()(original_nodes_order[0]);
+					Node < 3 >::Pointer pnode2 = rSurfaceModelPart.Nodes()(original_nodes_order[1]);
 					
 					Properties::Pointer properties = rExtractedBoundaryModelPart.rProperties()(0);
 					Condition const& rReferenceLineCondition = KratosComponents<Condition>::Get("Condition2D");
@@ -491,10 +498,12 @@ void ExtractBoundaryMesh(ModelPart& rModelPart, ModelPart& rExtractedBoundaryMod
 					rExtractedBoundaryModelPart.Conditions().push_back(p_condition1);
 				}
 				
+				
 			}
 		}
-		std::cout<<"Successful extraction of the Boundary "<<rExtractedBoundaryModelPart.GetMesh()<<std::endl;
 
+		std::cout<<"Successful extraction of the Boundary "<<rExtractedBoundaryModelPart.GetMesh()<<std::endl;
+		
 		KRATOS_CATCH("");
 	}
 

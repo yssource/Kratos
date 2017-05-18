@@ -122,7 +122,7 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 	}
 
 	
-	void ApplyMpcConstraint(ModelPart& mrPatchBoundaryModelPart,BinBasedPointLocatorPointerType& pBinLocator){
+	void ApplyMpcConstraint(ModelPart& mrBoundaryModelPart,BinBasedPointLocatorPointerType& pBinLocator){
 
 		/*
 		 * This part of the code below is adapted from "MappingPressureToStructure" function of class CalculateSignedDistanceTo3DSkinProcess
@@ -133,35 +133,39 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 			array_1d<double, TDim+1 > N;
 			const int max_results = 10000;
 			typename BinBasedFastPointLocator<TDim>::ResultContainerType results(max_results);
-			const int n_patch_boundary_nodes = mrPatchBoundaryModelPart.Nodes().size();
+			const int n_boundary_nodes = mrBoundaryModelPart.Nodes().size();
+			
 			
 			
 			#pragma omp parallel for firstprivate(results,N)
 			//MY NEW LOOP: reset the visited flag
-			for (int i = 0; i < n_patch_boundary_nodes; i++)
+			for (int i = 0; i < n_boundary_nodes; i++)
 			{
-				ModelPart::NodesContainerType::iterator iparticle = mrPatchBoundaryModelPart.NodesBegin() + i;
-				Node < 3 > ::Pointer p_patch_boundary_node = *(iparticle.base());
-				//p_patch_boundary_node->Set(VISITED, false);
+				ModelPart::NodesContainerType::iterator iparticle = mrBoundaryModelPart.NodesBegin() + i;
+				Node < 3 > ::Pointer p_boundary_node = *(iparticle.base());
+				p_boundary_node->Set(VISITED, false);
 			}
-			for (int i = 0; i < n_patch_boundary_nodes; i++)
+			
+			for (int i = 0; i < n_boundary_nodes; i++)
+			
 			{
-				ModelPart::NodesContainerType::iterator iparticle = mrPatchBoundaryModelPart.NodesBegin() + i;
-				Node < 3 > ::Pointer p_patch_boundary_node = *(iparticle.base());
+				ModelPart::NodesContainerType::iterator iparticle = mrBoundaryModelPart.NodesBegin() + i;
+				Node < 3 > ::Pointer p_boundary_node = *(iparticle.base());
+				
 				
 				typename BinBasedFastPointLocator<TDim>::ResultIteratorType result_begin = results.begin();
 				
 				Element::Pointer pElement;
 				
 				bool is_found = false;
-				is_found = pBinLocator->FindPointOnMesh(p_patch_boundary_node->Coordinates(), N, pElement,result_begin, max_results);
+				is_found = pBinLocator->FindPointOnMesh(p_boundary_node->Coordinates(), N, pElement,result_begin, max_results);
 				
 				if (is_found == true)
 				{
 					// TODO : For now it only does velocities by components
 					// This should be extended to a general variable
 					
-					//Check if the hole elements are host elements
+					//Check if some of the host elements are made inactive
 					if ((pElement)->IsDefined(ACTIVE)){
 						
 						if(!(pElement->Is(ACTIVE))){
@@ -171,6 +175,10 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 						
 						
 						}
+				
+					
+						 
+
 
 
 
@@ -182,19 +190,21 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 					// TO DO Apply MPC constraints. Here have to use the mpc functions to apply the constraint
 					
 					//std::cout<<p_boundary_node->Id()<<" \t"<<geom[0].Id()<<" \t"<<geom[1].Id()<<" \t"<<geom[2].Id()<<" \t"<<N[0]<<" \t "<<N[1]<<" \t"<< N[2]<<std::endl;										
-					
+					//for debugging the patch elements which are host	
+					//pElement->Set(ACTIVE,false);
+					//p_boundary_node->Set(VISITED);
 					for(int i = 0; i < geom.size(); i++){
 					
-					pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_X,*p_patch_boundary_node,VELOCITY_X,N[i], 0 );
-					pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_Y,*p_patch_boundary_node,VELOCITY_Y,N[i], 0 );
+					pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_X,*p_boundary_node,VELOCITY_X,N[i], 0 );
+					pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_Y,*p_boundary_node,VELOCITY_Y,N[i], 0 );
 					//pMpcProcess->AddMasterSlaveRelationVariables( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i], 0 );
+					
 					
 
 
 					}	//Nodes loop inside the found element ends here
 										
-					
-					//p_boundary_node->Set(VISITED);
+
 					
 				}
 			}

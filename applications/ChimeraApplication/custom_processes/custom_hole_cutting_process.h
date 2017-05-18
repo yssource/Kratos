@@ -144,11 +144,12 @@ public:
 		ModelPart rExtractedModelPart;
 
 		// Initializing mesh nodes
-		rExtractedModelPart.Nodes() = rModelPart.Nodes();
+		//rExtractedModelPart.Nodes() = rModelPart.Nodes();
 
 		// Extracting mesh elements which are only above the threshold value
 		std::cout<<"  Extracting elements with in a distance of > " << fabs(distance) <<std::endl;
 		Element::Pointer pElem;
+		std::vector<unsigned int> vector_of_node_ids;
 		for(ModelPart::ElementsContainerType::iterator it = rModelPart.ElementsBegin(); it != rModelPart.ElementsEnd(); ++it)
 		{
 			double elementDistance = 0.0;
@@ -161,10 +162,36 @@ public:
 
 			if(elementDistance < distance)
 			{
+				//Adding elements in the ModelPart
 				pElem = Element::Pointer(new Element(*it));
 				rExtractedModelPart.Elements().push_back(pElem);
+				
+				//Adding node all the node Ids of the elements satisfying the condition
+				for(j =0; j < pElem->GetGeometry().PointsNumber(); j++)
+				vector_of_node_ids.push_back(pElem->GetGeometry()[j].Id());
+
+
+
 			}
 		}
+
+						
+		//sorting and making unique list of node ids
+
+		std::set<unsigned int> s( vector_of_node_ids.begin(), vector_of_node_ids.end() );
+		vector_of_node_ids.assign( s.begin(), s.end() );  
+
+		// Add unique nodes in the ModelPart
+
+		for (auto it = vector_of_node_ids.begin(); it != vector_of_node_ids.end(); it++)
+		{
+
+			Node < 3 >::Pointer pnode = rModelPart.Nodes()(*it);
+			rExtractedModelPart.AddNode(pnode);
+
+		}
+		
+		
 
 		std::cout<<"  Successful extraction of the Mesh !! "<<rExtractedModelPart.GetMesh()<<"\b"<<std::endl;
 		//ExtractSurfaceMesh(rExtractedModelPart, rExtractedSurfaceModelPart);
@@ -184,11 +211,12 @@ public:
 		std::cout<<"\n::[Mesh Extraction]::"<<std::endl;
 
 		// Initializing mesh nodes
-		rExtractedModelPart.Nodes() = rModelPart.Nodes();
+		//rExtractedModelPart.Nodes() = rModelPart.Nodes();
 
 		// Extracting mesh elements which are only above the threshold value
 		std::cout<<"  Extracting elements between " << lLimit <<" and "<<uLimit<<std::endl;
 		Element::Pointer pElem;
+		std::vector<unsigned int> vector_of_node_ids;
 		for(ModelPart::ElementsContainerType::iterator it = rModelPart.ElementsBegin(); it != rModelPart.ElementsEnd(); ++it)
 		{
 			double elementDistance = 0.0;
@@ -206,7 +234,26 @@ public:
 			{
 				pElem = Element::Pointer(new Element(*it));
 				rExtractedModelPart.Elements().push_back(pElem);
+
+				//Adding node all the node Ids of the elements satisfying the condition
+				for(j =0; j < pElem->GetGeometry().PointsNumber(); j++)
+				vector_of_node_ids.push_back(pElem->GetGeometry()[j].Id());
 			}
+		}
+
+	    //sorting and making unique list of node ids
+
+		std::set<unsigned int> s( vector_of_node_ids.begin(), vector_of_node_ids.end() );
+		vector_of_node_ids.assign( s.begin(), s.end() );  
+
+		// Add unique nodes in the ModelPart
+
+		for (auto it = vector_of_node_ids.begin(); it != vector_of_node_ids.end(); it++)
+		{
+
+			Node < 3 >::Pointer pnode = rModelPart.Nodes()(*it);
+			rExtractedModelPart.AddNode(pnode);
+
 		}
 
 		std::cout<<" ########  Successful extraction of the Mesh !! "<<rExtractedModelPart.GetMesh()<<"\b"<<std::endl;
@@ -224,13 +271,14 @@ public:
 		std::cout<<"\n::[Creating Hole]::"<<std::endl;
 
 		//Initialising mesh nodes
-		rExtractedModelPart.Nodes() = rModelPart.Nodes();
+		//rExtractedModelPart.Nodes() = rModelPart.Nodes();
 
 		
 
 		// Extracting mesh elements which are only above the threshold value
 		std::cout<<"  Extracting elements after " << distance << std::endl;
 		Element::Pointer pElem;
+		std::vector<unsigned int> vector_of_node_ids;
 		for(ModelPart::ElementsContainerType::iterator it = rModelPart.ElementsBegin(); it != rModelPart.ElementsEnd(); ++it)
 		{
 			double elementDistance = 0.0;
@@ -245,13 +293,32 @@ public:
 				}
 			}
 
-			if(numPointsOutside == geom.size())
+			//if(numPointsOutside == geom.size())
+			if(numPointsOutside > 0)
 			{
 				it->Set(ACTIVE,false);
 				pElem = Element::Pointer(new Element(*it));
 				rExtractedModelPart.Elements().push_back(pElem);
+				//Adding node all the node Ids of the elements satisfying the condition
+				for(j =0; j < pElem->GetGeometry().PointsNumber(); j++)
+				vector_of_node_ids.push_back(pElem->GetGeometry()[j].Id());
 				
 			}
+		}
+
+	    //sorting and making unique list of node ids
+
+		std::set<unsigned int> s( vector_of_node_ids.begin(), vector_of_node_ids.end() );
+		vector_of_node_ids.assign( s.begin(), s.end() );  
+
+		// Add unique nodes in the ModelPart
+
+		for (auto it = vector_of_node_ids.begin(); it != vector_of_node_ids.end(); it++)
+		{
+
+			Node < 3 >::Pointer pnode = rModelPart.Nodes()(*it);
+			rExtractedModelPart.AddNode(pnode);
+
 		}
 
 		std::cout<<" ########  Successful hole cutting of the Mesh !!########## "<<std::endl;
@@ -345,10 +412,11 @@ public:
 		}
 		// First assign to skin model part all nodes from original model_part, unnecessary nodes will be removed later
 		unsigned int id_condition = 1;
-		rExtractedSurfaceModelPart.Nodes() = rExtractedVolumeModelPart.Nodes();
+		//rExtractedSurfaceModelPart.Nodes() = rExtractedVolumeModelPart.Nodes();
 
 		// Add skin faces as triangles to skin-model-part (loop over all node sets)
 		std::cout<<"  Extracting surface mesh and computing normals" <<std::endl;
+		std::vector<unsigned int> vector_of_node_ids;
 		for(typename hashmap::const_iterator it=n_faces_map.begin(); it!=n_faces_map.end(); it++)
 		{
 			// If given node set represents face that is not overlapping with a face of another element, add it as skin element
@@ -362,6 +430,11 @@ public:
 					Node < 3 >::Pointer pnode1 = rExtractedVolumeModelPart.Nodes()(original_nodes_order[0]);
 					Node < 3 >::Pointer pnode2 = rExtractedVolumeModelPart.Nodes()(original_nodes_order[1]);
 					Node < 3 >::Pointer pnode3 = rExtractedVolumeModelPart.Nodes()(original_nodes_order[2]);
+
+					//Storing the node ids list
+					vector_of_node_ids.push_back(original_nodes_order[0]);
+					vector_of_node_ids.push_back(original_nodes_order[1]);
+					vector_of_node_ids.push_back(original_nodes_order[2]);
 					Properties::Pointer properties = rExtractedSurfaceModelPart.rProperties()(0);
 					Condition const& rReferenceTriangleCondition = KratosComponents<Condition>::Get("Condition3D");
 
@@ -380,6 +453,11 @@ public:
 					Node < 3 >::Pointer pnode2 = rExtractedVolumeModelPart.Nodes()(original_nodes_order[1]);
 					Node < 3 >::Pointer pnode3 = rExtractedVolumeModelPart.Nodes()(original_nodes_order[2]);
 					Node < 3 >::Pointer pnode4 = rExtractedVolumeModelPart.Nodes()(original_nodes_order[3]);
+					//Storing the node ids list
+					vector_of_node_ids.push_back(original_nodes_order[0]);
+					vector_of_node_ids.push_back(original_nodes_order[1]);
+					vector_of_node_ids.push_back(original_nodes_order[2]);
+					vector_of_node_ids.push_back(original_nodes_order[3]);
 					Properties::Pointer properties = rExtractedSurfaceModelPart.rProperties()(0);
 					Condition const& rReferenceTriangleCondition = KratosComponents<Condition>::Get("Condition3D");
 
@@ -395,6 +473,22 @@ public:
 				}
 			}
 		}
+
+		//sorting and making unique list of node ids
+
+		std::set<unsigned int> s( vector_of_node_ids.begin(), vector_of_node_ids.end() );
+		vector_of_node_ids.assign( s.begin(), s.end() ); 
+
+		for (auto it = vector_of_node_ids.begin(); it != vector_of_node_ids.end(); it++)
+		
+		{
+			//Adding the nodes to the rExtractedSurfaceModelPart
+			Node < 3 >::Pointer pnode = rExtractedVolumeModelPart.Nodes()(*it);
+			rExtractedSurfaceModelPart.AddNode(pnode);
+		
+
+		}
+
 		std::cout<<"Successful extraction of the Surface "<<rExtractedSurfaceModelPart.GetMesh()<<std::endl;
 
 		KRATOS_CATCH("");
@@ -467,10 +561,11 @@ void ExtractBoundaryMesh(ModelPart& rSurfaceModelPart, ModelPart& rExtractedBoun
 		}
 		// First assign to skin model part all nodes from original model_part, unnecessary nodes will be removed later
 		unsigned int id_condition = 1;
-		rExtractedBoundaryModelPart.Nodes() = rSurfaceModelPart.Nodes();
+		//rExtractedBoundaryModelPart.Nodes() = rSurfaceModelPart.Nodes();
 
 		// Add skin edges as triangles to skin-model-part (loop over all node sets)
 		std::cout<<"  Extracting boundary mesh and computing normals" <<std::endl;
+		std::vector<unsigned int> vector_of_node_ids;
 		for(typename hashmap::const_iterator it=n_edges_map.begin(); it!=n_edges_map.end(); it++)
 		{
 			// If given node set represents edge that is not overlapping with a edge of another element, add it as skin element
@@ -488,6 +583,10 @@ void ExtractBoundaryMesh(ModelPart& rSurfaceModelPart, ModelPart& rExtractedBoun
 					
 					Node < 3 >::Pointer pnode1 = rSurfaceModelPart.Nodes()(original_nodes_order[0]);
 					Node < 3 >::Pointer pnode2 = rSurfaceModelPart.Nodes()(original_nodes_order[1]);
+
+					//Storing the node ids list
+					vector_of_node_ids.push_back(original_nodes_order[0]);
+					vector_of_node_ids.push_back(original_nodes_order[1]);
 					
 					Properties::Pointer properties = rExtractedBoundaryModelPart.rProperties()(0);
 					Condition const& rReferenceLineCondition = KratosComponents<Condition>::Get("Condition2D");
@@ -501,6 +600,21 @@ void ExtractBoundaryMesh(ModelPart& rSurfaceModelPart, ModelPart& rExtractedBoun
 				
 			}
 		}
+
+		//sorting and making unique list of node ids
+
+		std::set<unsigned int> s( vector_of_node_ids.begin(), vector_of_node_ids.end() );
+		vector_of_node_ids.assign( s.begin(), s.end() ); 
+
+		for (auto it = vector_of_node_ids.begin(); it != vector_of_node_ids.end(); it++)
+		
+		{
+			//Adding the nodes to the rExtractedSurfaceModelPart
+			Node < 3 >::Pointer pnode = rSurfaceModelPart.Nodes()(*it);
+			rExtractedBoundaryModelPart.AddNode(pnode);
+		
+
+		}		
 
 		std::cout<<"Successful extraction of the Boundary "<<rExtractedBoundaryModelPart.GetMesh()<<std::endl;
 		

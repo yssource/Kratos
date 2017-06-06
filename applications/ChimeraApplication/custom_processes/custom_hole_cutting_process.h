@@ -279,6 +279,10 @@ public:
 		std::cout<<"  Extracting elements after " << distance << std::endl;
 		Element::Pointer pElem;
 		std::vector<unsigned int> vector_of_node_ids;
+		
+		
+		 
+
 		for(ModelPart::ElementsContainerType::iterator it = rModelPart.ElementsBegin(); it != rModelPart.ElementsEnd(); ++it)
 		{
 			double elementDistance = 0.0;
@@ -288,14 +292,16 @@ public:
 			for (j = 0 ; j < geom.size(); j++){
 				elementDistance = it->GetGeometry()[j].FastGetSolutionStepValue(DISTANCE);
 				if(elementDistance > distance )
+
 				{
 				  numPointsOutside++;
 				}
 			}
-
-			//if(numPointsOutside == geom.size())
-			if(numPointsOutside > 0)
+			
+			if(numPointsOutside == geom.size())
+			//if(numPointsOutside > 0)
 			{
+				
 				it->Set(ACTIVE,false);
 				pElem = Element::Pointer(new Element(*it));
 				rExtractedModelPart.Elements().push_back(pElem);
@@ -572,14 +578,14 @@ void ExtractBoundaryMesh(ModelPart& rSurfaceModelPart, ModelPart& rExtractedBoun
 			if(it->second == 1)
 			{
 				// If skin edge is a triangle store triangle in with its original orientation in new skin model part
-				std::cout<<"size of the ordered pair : "<<it->first.size()<<std::endl;
+				//std::cout<<"size of the ordered pair : "<<it->first.size()<<std::endl;
 				if(it->first.size()==2)
 				{
 					// Getting original order is important to properly reproduce skin edge including its normal orientation
 					vector<unsigned int> original_nodes_order = ordered_skin_edge_nodes_map[it->first];
 					
-					std::cout<<"First Node: "<<original_nodes_order[0]<<std::endl;
-					std::cout<<"Second Node: "<<original_nodes_order[1]<<std::endl;
+					//std::cout<<"First Node: "<<original_nodes_order[0]<<std::endl;
+					//std::cout<<"Second Node: "<<original_nodes_order[1]<<std::endl;
 					
 					Node < 3 >::Pointer pnode1 = rSurfaceModelPart.Nodes()(original_nodes_order[0]);
 					Node < 3 >::Pointer pnode2 = rSurfaceModelPart.Nodes()(original_nodes_order[1]);

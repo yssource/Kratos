@@ -124,6 +124,8 @@ public:
 			distance = 0.0;
 
 		}
+
+		
 		
 
 		unsigned int max_level = 100;
@@ -131,6 +133,18 @@ public:
 
 		this->pDistanceCalculator->CalculateDistancesLagrangianSurface(fromPatchModelPart, DISTANCE, NODAL_AREA, max_level,max_distance);
 
+		//For signed distance
+		/*unsigned int n_patch_nodes = fromPatchModelPart.Nodes().size();
+		for(int i = 0; i < n_patch_nodes; i++ ) {
+
+			ModelPart::NodesContainerType::iterator it=patchBoundaryModelPart.NodesBegin()+i;
+			
+            double& distance = it->FastGetSolutionStepValue(DISTANCE);
+			distance = -distance;
+			
+			
+		}
+*/
 
 		/*
 		 * This part of the code below is adapted from "MappingPressureToStructure" function of class CalculateSignedDistanceTo3DSkinProcess
@@ -168,6 +182,7 @@ public:
 					Geometry<Node<3> >& geom = pElement->GetGeometry();
 
 					double& nodalDistance = p_background_node->FastGetSolutionStepValue(DISTANCE);
+					
 
 					// Do mapping
 					MapDistancetoNode((*p_background_node),geom,nodalDistance,N);
@@ -197,6 +212,7 @@ public:
 				for( int i = 0; i<geom.size();i++){
 
 					rVariable += N[i]*geom[i].FastGetSolutionStepValue(DISTANCE);
+
 
 				}
 				

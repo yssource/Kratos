@@ -122,7 +122,7 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 	}
 
 	
-	void ApplyMpcConstraint(ModelPart& mrBoundaryModelPart,BinBasedPointLocatorPointerType& pBinLocator){
+	void ApplyMpcConstraint(ModelPart& mrBoundaryModelPart,BinBasedPointLocatorPointerType& pBinLocator, unsigned int type = 1){
 
 		/*
 		 * This part of the code below is adapted from "MappingPressureToStructure" function of class CalculateSignedDistanceTo3DSkinProcess
@@ -145,6 +145,7 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 				Node < 3 > ::Pointer p_boundary_node = *(iparticle.base());
 				p_boundary_node->Set(VISITED, false);
 			}
+
 			
 			for (int i = 0; i < n_boundary_nodes; i++)
 			
@@ -159,32 +160,27 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 				
 				bool is_found = false;
 				is_found = pBinLocator->FindPointOnMesh(p_boundary_node->Coordinates(), N, pElement,result_begin, max_results);
-				
-				if (is_found == true)
-				{
+
+
+					if (is_found == true)
+					{
 					// TODO : For now it only does velocities by components
 					// This should be extended to a general variable
 					
 					//Check if some of the host elements are made inactive
-					if ((pElement)->IsDefined(ACTIVE)){
+
+						if ((pElement)->IsDefined(ACTIVE)){
 						
-						if(!(pElement->Is(ACTIVE))){
-							std::cout<<"Warning : One of the hole element is used for MPC constraint"<<std::endl;
-							pElement->Set(ACTIVE);
-							std::cout<<"Setting the element: "<<pElement->Id()<<" to active"<<std::endl;
-						
-						
+							if(!(pElement->Is(ACTIVE))){
+								std::cout<<"Warning : One of the hole element is used for MPC constraint"<<std::endl;
+								pElement->Set(ACTIVE);
+								std::cout<<"Setting the element: "<<pElement->Id()<<" to active"<<std::endl;
+											
+							}	
+
 						}
-				
-					
-						 
-
-
-
-
-					}
 						
-					Geometry<Node<3> >& geom = pElement->GetGeometry();
+						Geometry<Node<3> >& geom = pElement->GetGeometry();
 					//std::cout<<"Element Id: "<< pElement->Id();
 
 					// TO DO Apply MPC constraints. Here have to use the mpc functions to apply the constraint
@@ -193,20 +189,79 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 					//for debugging the patch elements which are host	
 					//pElement->Set(ACTIVE,false);
 					//p_boundary_node->Set(VISITED);
-					for(int i = 0; i < geom.size(); i++){
+						/*if (type == 0)
+						{
+							for(int i = 0; i < geom.size(); i++)
+							{
 					
-					pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_X,*p_boundary_node,VELOCITY_X,N[i], 0 );
-					pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_Y,*p_boundary_node,VELOCITY_Y,N[i], 0 );
-					//pMpcProcess->AddMasterSlaveRelationVariables( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i], 0 );
-					
+								pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_X,*p_boundary_node,VELOCITY_X,N[i], 0 );
+								pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_Y,*p_boundary_node,VELOCITY_Y,N[i], 0 );
+								pMpcProcess->AddMasterSlaveRelationVariables( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i], 0 );
 					
 
+							}
 
-					}	//Nodes loop inside the found element ends here
-										
+						}
+
+						else*/
+						{
+
+							for(int i = 0; i < geom.size(); i++)
+							{
+					
+								pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_X,*p_boundary_node,VELOCITY_X,N[i], 0 );
+								pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_Y,*p_boundary_node,VELOCITY_Y,N[i], 0 );
+								//pMpcProcess->AddMasterSlaveRelationVariables( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i], 0 );
+					
+
+							}	
+
+
+						}	
+
 
 					
+					}			
+
+			}
+
+			if (type == 0)
+
+			{
+				ModelPart::NodesContainerType::iterator iparticle = mrBoundaryModelPart.NodesBegin();
+				Node < 3 > ::Pointer p_boundary_node = *(iparticle.base());
+				
+				typename BinBasedFastPointLocator<TDim>::ResultIteratorType result_begin = results.begin();
+				
+				Element::Pointer pElement;
+				
+				bool is_found = false;
+				is_found = pBinLocator->FindPointOnMesh(p_boundary_node->Coordinates(), N, pElement,result_begin, max_results);
+
+				if (is_found == true)
+				{
+
+					Geometry<Node<3> >& geom = pElement->GetGeometry();
+
+					std::cout<<"Presssure of "<<p_boundary_node->Id()<<"coupled to "<< pElement->Id()<<std::endl;
+					//std::exit(-1);
+
+					for(int i = 0; i < geom.size(); i++)
+					{
+					
+					pMpcProcess->AddMasterSlaveRelationVariables( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i], 0 );
+				
+					}
 				}
+
+				else 
+				{
+					std::cout<<"Cannot find host element for Pressure coupling"<<std::endl;
+					std::exit(-1);
+
+				}
+				
+
 			}
 			
 	
@@ -237,9 +292,9 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 		this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart,HoleModelPart,HoleBoundaryModelPart, overlap_distance);
 		
 
-		ApplyMpcConstraint(mrPatchBoundaryModelPart,pBinLocatorForBackground);
+		ApplyMpcConstraint(mrPatchBoundaryModelPart,pBinLocatorForBackground,0);
 
-		ApplyMpcConstraint(HoleBoundaryModelPart,pBinLocatorForPatch);
+		ApplyMpcConstraint(HoleBoundaryModelPart,pBinLocatorForPatch,1);
 
 
 
@@ -251,7 +306,7 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 		ModelPart HoleModelPart =  ModelPart("HoleModelPart");
 		ModelPart HoleBoundaryModelPart =  ModelPart("HoleBoundaryModelPart");
 
-		this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
+		//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
 
 	
 		this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart,HoleModelPart,HoleBoundaryModelPart,overlap_distance);
@@ -270,6 +325,15 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 
 
 		}
+
+		void SetOverlapDistance(double distance)
+		{
+
+			this->overlap_distance = distance;
+
+
+		}
+		
 
 
    

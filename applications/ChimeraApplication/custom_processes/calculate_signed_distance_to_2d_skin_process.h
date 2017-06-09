@@ -148,6 +148,7 @@ public:
                 rHighPoint[i] =  (rHighPoint[i] <  rObject->GetGeometry().GetPoint(point)[i] ) ?  rObject->GetGeometry().GetPoint(point)[i] : rHighPoint[i];
             }
         }
+
     }
 
     static inline void GetBoundingBox(const PointerType rObject, double* rLowPoint, double* rHighPoint)
@@ -167,6 +168,7 @@ public:
                 rHighPoint[i] =  (rHighPoint[i] <  rObject->GetGeometry().GetPoint(point)[i] ) ?  rObject->GetGeometry().GetPoint(point)[i] : rHighPoint[i];
             }
         }
+
     }
 
     static inline bool Intersection(const PointerType& rObj_1, const PointerType& rObj_2)
@@ -292,8 +294,9 @@ public:
 
     /// Constructor.
     CalculateSignedDistanceTo2DSkinProcess(ModelPart& rThisModelPartStruc, ModelPart& rThisModelPartFluid)
-        : mrSkinModelPart(rThisModelPartStruc), mrBodyModelPart(rThisModelPartStruc), mrFluidModelPart(rThisModelPartFluid)
+        : mrSkinModelPart(rThisModelPartStruc), mrBodyModelPart(rThisModelPartStruc), mrBackgroundModelPart(rThisModelPartFluid) 
     {
+     std::cout<<"Inside Constructor"<<std::endl;
     }
 
     /// Destructor.
@@ -322,8 +325,11 @@ public:
     virtual void Execute() override
     {
         KRATOS_TRY;
-
+        std::cout<<"Inside Execute1"<<std::endl;
+        GenerateFluidModelPartbasedOnBoundingBox();
         GenerateOctree();
+        std::cout<<"Inside Execute"<<std::endl;
+        
 
         DistanceFluidStructure();
 
@@ -349,6 +355,105 @@ public:
     ///******************************************************************************************************************
     ///******************************************************************************************************************
 
+    // generates 
+    void GenerateFluidModelPartbasedOnBoundingBox()
+    {
+
+        array_1d<double,3> low;
+        array_1d<double,3> high;
+        array_1d<double,3> size;
+         
+
+        // loop over all skin nodes
+        for(ModelPart::NodeIterator i_node = mrSkinModelPart.NodesBegin();
+            i_node != mrSkinModelPart.NodesEnd();
+            i_node++)
+        {
+            for (int i = 0 ; i < 3; i++)
+            {
+                low[i]  = i_node->Coordinate(i+1) < low[i]  ? i_node->Coordinate(i+1) : low[i];
+                high[i] = i_node->Coordinate(i+1) > high[i] ? i_node->Coordinate(i+1) : high[i];
+            }
+        }
+
+
+        /*for (int i = 0 ; i < 3; i++)
+            {
+                //considering 10% more length
+                size[i] = high[i]-low[i];
+                low[i]  = low[i]- 0.1*size[i];
+                high[i] = high[i]*0.1*size[i];
+            }
+   */
+    
+        std::cout<<"Lowest Dimension"<<low[0]<<","<<low[1]<<","<<low[2]<<","<<std::endl;
+        
+        std::cout<<"Highest Dimension"<<high[0]<<","<<high[1]<<","<<high[2]<<","<<std::endl;
+  
+        for(ModelPart::ElementIterator elem = mrBackgroundModelPart.ElementsBegin(); elem != mrBackgroundModelPart.ElementsEnd(); elem ++)
+
+        {
+            
+            Geometry<Node<3> >& geom = elem->GetGeometry();
+            array_1d<double,3> coords; 
+            unsigned int numOfPointsInside = 0;
+			for (int j = 0 ; j < geom.size(); j++){
+				coords = elem->GetGeometry()[j].Coordinates();
+				
+				{
+				  bool isInside = IsInside(coords,high,low);
+                  numOfPointsInside++;
+
+				}
+			}
+            
+            if (numOfPointsInside > 0) 
+            {
+            
+            Element::Pointer pElem = Element::Pointer(new Element(*elem));
+			mrFluidModelPart.Elements().push_back(pElem);
+
+            }
+            
+            
+
+        }
+
+        std::cout<<"Fluid Model Part that is considered"<<mrFluidModelPart.Elements().size()<<std::endl;
+       
+
+    }    
+
+//Checks if the node is inside the bounding box implemented only for 2d case
+        bool IsInside (array_1d<double,3> coords, array_1d<double,3> high,array_1d<double,3> low)
+
+        {
+
+            array_1d<double, 3 > ab; 
+            array_1d<double, 3 > ad;
+            array_1d<double, 3 > am;
+
+            ab[0] = high[0]-low[0];
+            ad[1] = high[1]-low[1];
+            ab[2] = 0.0;
+            ad[2] = 0.0;
+            for (int i = 0; i <3 ; i++ )
+            am[i] = coords[i]-low[i];
+
+            if (inner_prod(ab,am) < 0 && inner_prod(ab,am)>inner_prod(ab,ab))
+            return false;
+            
+            if (inner_prod(ad,am) < 0 && inner_prod(ad,am)>inner_prod(ad,ad))
+            return false;
+
+            return true;
+
+
+        }
+
+
+
+    
     void DistanceFluidStructure()
     {
       //std::cout << "Start calculating Elemental distances..." << std::endl;
@@ -459,7 +564,7 @@ public:
 
         // Get leaves of octree intersecting with fluid Element
         mpOctree->GetIntersectedLeaves(*(i_fluidElement).base(),leaves);
-
+      
         int intersection_counter = 0;
 
         // Loop over all 6 line Edges of the triangle
@@ -489,7 +594,7 @@ public:
                                     unsigned int&                                 NumberIntersectionsOnTriangleCorner,
                                     bounded_matrix<unsigned int,6,2>              TriangleEdgeIndexTable,
                                     int&                                          intersection_counter )
-    {
+    {   
         std::vector<unsigned int> IntersectingStructElemID;
         TriangleEdgeStruct             NewTriangleEdge;
         unsigned int              NumberIntersectionsOnTriangleCornerCurrentEdge = 0;
@@ -503,27 +608,51 @@ public:
 
         double EdgeNode1[3] = {P1.X() , P1.Y() , P1.Z()};
         double EdgeNode2[3] = {P2.X() , P2.Y() , P2.Z()};
-	
+	    //std::cout<<"Leaves size "<<leaves.size()<<std::endl;
+/*
+        if (leaves.size()>0){
+
+        //std::cout<<"Fluid element with no leaves :"<<i_fluidElement->Id()<<std::endl;
+        std::cout<<"Fluid Nodes \n :"<<i_fluidElement->GetGeometry()<<std::endl;
+        
+        
+        }*/
+        
+        
         // loop over all octree cells which are intersected by the fluid Element
         for(unsigned int i_cell = 0 ; i_cell < leaves.size() ; i_cell++)
         {
             // Structural Element contained in one cell of the octree
+
+            
             object_container_type* struct_elem = (leaves[i_cell]->pGetObjects());
+            //if(struct_elem->size()==0)
+            //std::cout<<"0"<<std::endl;
+
+            //else
+            //std::cout<<"Nr of structural element in struc_elem "<<struct_elem->size()<<std::endl;
+            
+            
+            
 
             // loop over all structural Elements within each octree cell
             for(object_container_type::iterator i_StructElement = struct_elem->begin(); i_StructElement != struct_elem->end(); i_StructElement++)
             {
 
+                std::cout<<"Hello there "<<std::endl;
                 if( StructuralElementNotYetConsidered( (*i_StructElement)->Id() , IntersectingStructElemID ) )
                 {
-
+                    
                     // Calculate and associate intersection point to the current fluid Element
                     double IntersectionPoint[3] = {0.0 , 0.0 , 0.0};
+
                     int TriangleEdgeHasIntersections = IntersectionLineSegment( (*i_StructElement)->GetGeometry() , EdgeNode1 , EdgeNode2 , IntersectionPoint );
 
                     if( TriangleEdgeHasIntersections == 1 )
                     {
                         IntersectionNodeStruct NewIntersectionNode;
+                        std::cout<<"#######Found one intersection"<<std::endl;
+                        std::exit(-1);
 
                         // Assign information to the intersection node
                         NewIntersectionNode.Coordinates[0] = IntersectionPoint[0];
@@ -1057,6 +1186,7 @@ public:
 
                 if( fabs( nodeInElemDist ) < fabs( currentNodeDist ) )
                     geom[i_TriangleNode].GetSolutionStepValue(DISTANCE) = nodeInElemDist; // overwrite nodal distance (which is global)
+                    //std::cout<<geom[i_TriangleNode].GetSolutionStepValue(DISTANCE)<<std::endl;
             } // loop i_TriangleNode
         } // loop i_fluidElement
     }
@@ -1295,9 +1425,12 @@ public:
                 high[i] = i_node->Coordinate(i+1) > high[i] ? i_node->Coordinate(i+1) : high[i];
             }
         }
-                
+   
         mpOctree->SetBoundingBox(low,high);
-
+        std::cout<<"Lowest Dimension"<<low[0]<<","<<low[1]<<","<<low[2]<<","<<std::endl;
+        
+        std::cout<<"Highest Dimension"<<high[0]<<","<<high[1]<<","<<high[2]<<","<<std::endl;
+        
         //mpOctree->RefineWithUniformSize(0.0625);
 
         // loop over all structure nodes
@@ -1322,16 +1455,16 @@ public:
             mpOctree->Insert(*(i_element).base());
         }
 
-        Timer::Stop("Generating Octree");
+        /*Timer::Stop("Generating Octree");
+        std::cout<<"Octree generation finished"<<std::endl;
+        KRATOS_WATCH(mpOctree);
 
-//        KRATOS_WATCH(mpOctree);
-
-//        std::cout << "######## WRITING OCTREE MESH #########" << std::endl;
-//        std::ofstream myfile;
-//        myfile.open ("octree.post.msh");
-//        mpOctree.PrintGiDMesh(myfile);
-//        myfile.close();
-
+        std::cout << "######## WRITING OCTREE MESH #########" << std::endl;
+        std::ofstream myfile;
+        myfile.open ("octree.post.msh");
+        mpOctree->PrintGiDMesh(myfile);
+        myfile.close();
+*/
         //std::cout << "Generating the Octree finished" << std::endl;
     }
 
@@ -2175,8 +2308,9 @@ private:
     ///@{
     ModelPart& mrSkinModelPart;
     ModelPart& mrBodyModelPart;
-    ModelPart& mrFluidModelPart;
-
+    
+    ModelPart& mrBackgroundModelPart;
+    ModelPart mrFluidModelPart;
     DistanceSpatialContainersConfigure::data_type mOctreeNodes;
 
     boost::shared_ptr<OctreeType> mpOctree;

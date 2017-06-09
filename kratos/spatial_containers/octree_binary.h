@@ -1034,7 +1034,7 @@ namespace Kratos {
 
             //
             // to be added to configure
-
+            
             configuration_type::GetBoundingBox(object, min_coord,  max_coord);
             //KRATOS_THROW_ERROR(std::logic_error,"To be added to configure", "")
             NormalizeCoordinates(min_coord);
@@ -1104,8 +1104,10 @@ namespace Kratos {
                 ScaleBackToOriginalCoordinate(cell_max_point);
 
                 const int is_intersected = /*configuration_type::*/IsIntersected(object,tolerance, cell_min_point, cell_max_point);
+                
                 if(is_intersected)
                   cell->Insert(object);
+                  
 
               }
             }
@@ -1746,52 +1748,6 @@ namespace Kratos {
           const double scale = 1.00 / (1 << ROOT_LEVEL);
 
           return static_cast<double>(key * scale);
-        }
-
-        void PrintGiDMeshNew(std::ostream & rOStream) const {
-            std::vector<cell_type*> leaves;
-
-            GetAllLeavesVector(leaves);
-
-            std::cout << "writing " << leaves.size() << " leaves" << std::endl;
-            rOStream << "MESH \"leaves\" dimension 3 ElemType Hexahedra Nnode 8" << std::endl;
-            rOStream << "# color 96 96 96" << std::endl;
-            rOStream << "Coordinates" << std::endl;
-            rOStream << "# node number coordinate_x coordinate_y coordinate_z  " << std::endl;
-            std::size_t node_number = 0;
-            //            std::size_t node_index = 1;
-            for (std::size_t i = 0; i < leaves.size(); i++) {
-                cell_type* leaf = leaves[i];
-                for (std::size_t i_point = 0; i_point < 8; i_point++) {
-                    std::size_t node_id = (*(leaf->pGetData()))[i_point]->Id();
-                    if (node_id > node_number) {
-                        key_type point_key[3];
-                        leaf->GetKey(i_point, point_key);
-                        double point_coordinate[3];
-
-                        for (std::size_t j = 0; j < DIMENSION; j++) {
-                            point_coordinate[j] = leaf->GetCoordinate(point_key[j]);
-                        }
-                        rOStream << node_id << "  " << point_coordinate[0] << "  " << point_coordinate[1] << "  " << point_coordinate[2] << std::endl;
-                        node_number++;
-                    }
-                }
-            }
-
-            rOStream << "end coordinates" << std::endl;
-            rOStream << "Elements" << std::endl;
-            rOStream << "# element node_1 node_2 node_3 material_number" << std::endl;
-
-            for (std::size_t i = 0; i < leaves.size(); i++) {
-                cell_type* leaf = leaves[i];
-                rOStream << i + 1 << "  ";
-                for (std::size_t i_point = 0; i_point < 8; i_point++)
-                    rOStream << (*(leaf->pGetData()))[i_point]->Id() << "  ";
-
-                rOStream << std::endl;
-            }
-            rOStream << "end elements" << std::endl;
-
         }
 
         /// Turn back information as a string.

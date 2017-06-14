@@ -31,7 +31,7 @@
 #include "includes/model_part.h"
 #include "includes/deprecated_variables.h"
 
-#include "spatial_containers/octree_binary.h"
+#include "spatial_containers/quadtree_binary.h"
 #include "utilities/spatial_containers_configure.h"
 #include "utilities/timer.h"
 #include "utilities/math_utils.h"
@@ -272,11 +272,11 @@ public:
     KRATOS_CLASS_POINTER_DEFINITION(CalculateSignedDistanceTo2DSkinProcess);
 
     typedef DistanceSpatialContainersConfigure ConfigurationType;
-    typedef OctreeBinaryCell<ConfigurationType> CellType;
-    typedef OctreeBinary<CellType> OctreeType;
+    typedef QuadtreeBinaryCell<ConfigurationType> CellType;
+    typedef QuadtreeBinary<CellType> QuadtreeType;
     typedef ConfigurationType::cell_node_data_type CellNodeDataType;
     typedef Point<3, double> PointType;  /// always the point 3D
-    typedef OctreeType::cell_type::object_container_type object_container_type;
+    typedef QuadtreeType::cell_type::object_container_type object_container_type;
     typedef struct{
         array_1d<double,3>  Coordinates;
         array_1d<double,3>  StructElemNormal;
@@ -325,9 +325,9 @@ public:
     virtual void Execute() override
     {
         KRATOS_TRY;
-        std::cout<<"Inside Execute1"<<std::endl;
-        GenerateFluidModelPartbasedOnBoundingBox();
-        GenerateOctree();
+        
+        //GenerateFluidModelPartbasedOnBoundingBox();
+        GenerateQuadtree();
         std::cout<<"Inside Execute"<<std::endl;
         
 
@@ -337,14 +337,14 @@ public:
         //          GenerateNodes();
         //CalculateDistance2(); // I have to change this. Pooyan.
         //mrSkinModelPart.GetCommunicator().AssembleCurrentData(DISTANCE);
-        //          std::ofstream mesh_file1("octree1.post.msh");
-        //          std::ofstream res_file("octree1.post.res");
+        //          std::ofstream mesh_file1("quadtree1.post.msh");
+        //          std::ofstream res_file("quadtree1.post.res");
         //          Timer::Start("Writing Gid conform Mesh");
         //          PrintGiDMesh(mesh_file1);
         //          PrintGiDResults(res_file);
-        //          octree.PrintGiDMeshNew(mesh_file2);
+        //          quadtree.PrintGiDMeshNew(mesh_file2);
         //          Timer::Stop("Writing Gid conform Mesh");
-        //          delete octree. TODO: Carlos
+        //          delete quadtree. TODO: Carlos
         //          ------------------------------------------------------------------
 
         KRATOS_CATCH("");
@@ -558,12 +558,12 @@ public:
     void CalcElementDistances( ModelPart::ElementsContainerType::iterator& i_fluidElement,
                                bounded_matrix<unsigned int,3,2>            TriangleEdgeIndexTable )
     {
-        std::vector<OctreeType::cell_type*> leaves;
+        std::vector<QuadtreeType::cell_type*> leaves;
         std::vector<TriangleEdgeStruct>          IntersectedTriangleEdges;
         unsigned int NumberIntersectionsOnTriangleCorner = 0;
 
-        // Get leaves of octree intersecting with fluid Element
-        mpOctree->GetIntersectedLeaves(*(i_fluidElement).base(),leaves);
+        // Get leaves of quadtree intersecting with fluid Element
+        mpQuadtree->GetIntersectedLeaves(*(i_fluidElement).base(),leaves);
       
         int intersection_counter = 0;
 
@@ -589,7 +589,7 @@ public:
 
     void IdentifyIntersectionNodes( ModelPart::ElementsContainerType::iterator&   i_fluidElement,
                                     unsigned int                                  i_triangleEdge,
-                                    std::vector<OctreeType::cell_type*>&          leaves,
+                                    std::vector<QuadtreeType::cell_type*>&          leaves,
                                     std::vector<TriangleEdgeStruct>&              IntersectedTriangleEdges,
                                     unsigned int&                                 NumberIntersectionsOnTriangleCorner,
                                     bounded_matrix<unsigned int,6,2>              TriangleEdgeIndexTable,
@@ -619,10 +619,10 @@ public:
         }*/
         
         
-        // loop over all octree cells which are intersected by the fluid Element
+        // loop over all quadtree cells which are intersected by the fluid Element
         for(unsigned int i_cell = 0 ; i_cell < leaves.size() ; i_cell++)
         {
-            // Structural Element contained in one cell of the octree
+            // Structural Element contained in one cell of the quadtree
 
             
             object_container_type* struct_elem = (leaves[i_cell]->pGetObjects());
@@ -635,7 +635,7 @@ public:
             
             
 
-            // loop over all structural Elements within each octree cell
+            // loop over all structural Elements within each quadtree cell
             for(object_container_type::iterator i_StructElement = struct_elem->begin(); i_StructElement != struct_elem->end(); i_StructElement++)
             {
 
@@ -736,7 +736,7 @@ public:
                 return false;
         }
 
-        // if structural Element has not been considered in another octree, which also intersects the fluid Element
+        // if structural Element has not been considered in another quadtree, which also intersects the fluid Element
         // add the new object ID to the vector
         IntersectingStructElemID.push_back( IDCurrentStructElem );
         return true;
@@ -1386,13 +1386,13 @@ public:
     ///******************************************************************************************************************
     ///******************************************************************************************************************
 
-    void GenerateOctree()
+    void GenerateQuadtree()
     {
-        Timer::Start("Generating Octree");
-        //std::cout << "Generating the Octree..." << std::endl;
-        boost::shared_ptr<OctreeType> temp_octree =  boost::shared_ptr<OctreeType>( new OctreeType() );
-        //OctreeType::Pointer temp_octree = OctreeType::Pointer(new OctreeType() );
-        mpOctree.swap(temp_octree);
+        Timer::Start("Generating Quadtree");
+        //std::cout << "Generating the Quadtree..." << std::endl;
+        boost::shared_ptr<QuadtreeType> temp_quadtree =  boost::shared_ptr<QuadtreeType>( new QuadtreeType() );
+        //QuadtreeType::Pointer temp_quadtree = QuadtreeType::Pointer(new QuadtreeType() );
+        mpQuadtree.swap(temp_quadtree);
         
         double low[3];
         double high[3];
@@ -1426,12 +1426,12 @@ public:
             }
         }
    
-        mpOctree->SetBoundingBox(low,high);
+        mpQuadtree->SetBoundingBox(low,high);
         std::cout<<"Lowest Dimension"<<low[0]<<","<<low[1]<<","<<low[2]<<","<<std::endl;
         
         std::cout<<"Highest Dimension"<<high[0]<<","<<high[1]<<","<<high[2]<<","<<std::endl;
         
-        //mpOctree->RefineWithUniformSize(0.0625);
+        //mpQuadtree->RefineWithUniformSize(0.0625);
 
         // loop over all structure nodes
         for(ModelPart::NodeIterator i_node = mrSkinModelPart.NodesBegin();
@@ -1442,30 +1442,30 @@ public:
             temp_point[0] = i_node->X();
             temp_point[1] = i_node->Y();
             temp_point[2] = i_node->Z();
-            mpOctree->Insert(temp_point);
+            mpQuadtree->Insert(temp_point);
         }
 
-        //mpOctree->Constrain2To1(); // To be removed. Pooyan.
+        //mpQuadtree->Constrain2To1(); // To be removed. Pooyan.
 
         // loop over all structure elements
         for(ModelPart::ElementIterator i_element = mrSkinModelPart.ElementsBegin();
             i_element != mrSkinModelPart.ElementsEnd();
             i_element++)
         {
-            mpOctree->Insert(*(i_element).base());
+            mpQuadtree->Insert(*(i_element).base());
         }
 
-        /*Timer::Stop("Generating Octree");
-        std::cout<<"Octree generation finished"<<std::endl;
-        KRATOS_WATCH(mpOctree);
+        /*Timer::Stop("Generating Quadtree");
+        std::cout<<"Quadtree generation finished"<<std::endl;
+        KRATOS_WATCH(mpQuadtree);
 
         std::cout << "######## WRITING OCTREE MESH #########" << std::endl;
         std::ofstream myfile;
-        myfile.open ("octree.post.msh");
-        mpOctree->PrintGiDMesh(myfile);
+        myfile.open ("quadtree.post.msh");
+        mpQuadtree->PrintGiDMesh(myfile);
         myfile.close();
 */
-        //std::cout << "Generating the Octree finished" << std::endl;
+        //std::cout << "Generating the Quadtree finished" << std::endl;
     }
 
     ///******************************************************************************************************************
@@ -1474,8 +1474,8 @@ public:
     void GenerateNodes()
     {
         Timer::Start("Generating Nodes");
-        std::vector<OctreeType::cell_type*> all_leaves;
-        mpOctree->GetAllLeavesVector(all_leaves);
+        std::vector<QuadtreeType::cell_type*> all_leaves;
+        mpQuadtree->GetAllLeavesVector(all_leaves);
 
         int leaves_size = all_leaves.size();
 
@@ -1512,7 +1512,7 @@ public:
 
                 (*(pCell->pGetData()))[i_pos]->Id() = LastId++;
 
-                        mOctreeNodes.push_back((*(pCell->pGetData()))[i_pos]);
+                        mQuadtreeNodes.push_back((*(pCell->pGetData()))[i_pos]);
 
                 SetNodeInNeighbours(pCell,i_pos,(*(pCell->pGetData()))[i_pos]);
             }
@@ -1531,7 +1531,7 @@ public:
         for (std::size_t i_direction = 0; i_direction < 8; i_direction++) {
             CellType::key_type neighbour_key[3];
             if (pCell->GetNeighbourKey(Position, i_direction, neighbour_key)) {
-                CellType* neighbour_cell = mpOctree->pGetCell(neighbour_key);
+                CellType* neighbour_cell = mpQuadtree->pGetCell(neighbour_key);
                 if (!neighbour_cell || (neighbour_cell == pCell))
                     continue;
 
@@ -1562,7 +1562,7 @@ public:
 
         std::vector<CellType*> leaves;
 
-        mpOctree->GetAllLeavesVector(leaves);
+        mpQuadtree->GetAllLeavesVector(leaves);
         //int leaves_size = leaves.size();
 
         //         for(int i = 0 ; i < leaves_size ; i++)
@@ -1592,7 +1592,7 @@ public:
 
     //           std::vector<CellType*> leaves;
 
-    //         mpOctree->GetAllLeavesVector(leaves);
+    //         mpQuadtree->GetAllLeavesVector(leaves);
     //         int leaves_size = leaves.size();
 
     //         for(int i = 0 ; i < leaves_size ; i++)
@@ -1613,7 +1613,7 @@ public:
     //         int nodes_size = nodes.size();
     //           std::vector<CellType*> leaves;
 
-    //         mpOctree->GetAllLeavesVector(leaves);
+    //         mpQuadtree->GetAllLeavesVector(leaves);
     //         int leaves_size = leaves.size();
 
     //#pragma omp parallel for firstprivate(nodes_size)
@@ -1628,7 +1628,7 @@ public:
     void CalculateDistance()
     {
         Timer::Start("Calculate Distances");
-        DistanceSpatialContainersConfigure::data_type& nodes = mOctreeNodes;
+        DistanceSpatialContainersConfigure::data_type& nodes = mQuadtreeNodes;
         int nodes_size = nodes.size();
         // first of all we reste the node distance to 1.00 which is the maximum distnace in our normalized space.
 #pragma omp parallel for firstprivate(nodes_size)
@@ -1638,7 +1638,7 @@ public:
 
         std::vector<CellType*> leaves;
 
-        mpOctree->GetAllLeavesVector(leaves);
+        mpQuadtree->GetAllLeavesVector(leaves);
         int leaves_size = leaves.size();
 
         for(int i = 0 ; i < leaves_size ; i++)
@@ -1681,7 +1681,7 @@ public:
         // Creating the ray
         double ray[3] = {coords[0], coords[1], coords[2]};
         
-        mpOctree->NormalizeCoordinates(ray);
+        mpQuadtree->NormalizeCoordinates(ray);
         ray[i_direction] = 0; // starting from the lower extreme
 
         //            KRATOS_WATCH_3(ray)
@@ -1727,7 +1727,7 @@ public:
     void CalculateNotEmptyLeavesDistance(CellType* pCell)
     {
       //typedef Element::GeometryType triangle_type;
-        typedef OctreeType::cell_type::object_container_type object_container_type;
+        typedef QuadtreeType::cell_type::object_container_type object_container_type;
 
         object_container_type* objects = (pCell->pGetObjects());
 
@@ -1746,7 +1746,7 @@ public:
                 pCell->GetKey(i_pos,keys);
 
                 double cell_point[3];
-                mpOctree->CalculateCoordinates(keys,cell_point);
+                mpQuadtree->CalculateCoordinates(keys,cell_point);
 
                 //                cell_point[0] = pCell->GetCoordinate(keys[0]);
                 //                cell_point[1] = pCell->GetCoordinate(keys[1]);
@@ -1781,8 +1781,8 @@ public:
 
     //      void CalculateNodeDistanceFromCell(Node<3>& rNode)
     //      {
-    //          OctreeType::key_type node_key[3] = {octree->CalcKeyNormalized(rNode.X()), octree->CalcKeyNormalized(rNode.Y()), octree->CalcKeyNormalized(rNode.Z())};
-    //          OctreeType::cell_type* pcell = octree->pGetCell(node_key);
+    //          QuadtreeType::key_type node_key[3] = {quadtree->CalcKeyNormalized(rNode.X()), quadtree->CalcKeyNormalized(rNode.Y()), quadtree->CalcKeyNormalized(rNode.Z())};
+    //          QuadtreeType::cell_type* pcell = quadtree->pGetCell(node_key);
 
     //          object_container_type* objects = (pCell->pGetObjects());
 
@@ -1822,7 +1822,7 @@ public:
             // Creating the ray
             double ray[3] = {coords[0], coords[1], coords[2]};
             
-            mpOctree->NormalizeCoordinates(ray);
+            mpQuadtree->NormalizeCoordinates(ray);
             ray[i_direction] = 0; // starting from the lower extreme
 
             GetIntersections(ray, i_direction, intersections);
@@ -1886,19 +1886,19 @@ public:
         // first clearing the intersections points vector
         intersections.clear();
 
-        //OctreeType* octree = &mOctree;
-        OctreeType* octree = mpOctree.get();
+        //QuadtreeType* quadtree = &mQuadtree;
+        QuadtreeType* quadtree = mpQuadtree.get();
 
-        OctreeType::key_type ray_key[3] = {octree->CalcKeyNormalized(ray[0]), octree->CalcKeyNormalized(ray[1]), octree->CalcKeyNormalized(ray[2])};
-        OctreeType::key_type cell_key[3];
+        QuadtreeType::key_type ray_key[3] = {quadtree->CalcKeyNormalized(ray[0]), quadtree->CalcKeyNormalized(ray[1]), quadtree->CalcKeyNormalized(ray[2])};
+        QuadtreeType::key_type cell_key[3];
 
         // getting the entrance cell from lower extreme
         ray_key[direction] = 0;
-        OctreeType::cell_type* cell = octree->pGetCell(ray_key);
+        QuadtreeType::cell_type* cell = quadtree->pGetCell(ray_key);
 
         while (cell) {
             std::size_t position = cell->GetLocalPosition(ray_key); // Is this the local position!?!?!?!
-            OctreeType::key_type node_key[3];
+            QuadtreeType::key_type node_key[3];
             cell->GetKey(position, node_key);
             if((node_key[0] == ray_key[0]) && (node_key[1] == ray_key[1]) && (node_key[2] == ray_key[2]))
             {
@@ -1954,13 +1954,13 @@ public:
             // go to the next cell
             if (cell->GetNeighbourKey(1 + direction * 2, cell_key)) {
                 ray_key[direction] = cell_key[direction];
-                cell = octree->pGetCell(ray_key);
+                cell = quadtree->pGetCell(ray_key);
                 ray_key[direction] -= 1 ;//the key returned by GetNeighbourKey is inside the cell (minkey +1), to ensure that the corresponding
                 //cell get in pGetCell is the right one.
 //#ifdef _DEBUG
-//                Octree_Pooyan::key_type min_key[3];
+//                Quadtree_Pooyan::key_type min_key[3];
 //                cell->GetMinKey(min_key[0],min_key[1],min_key[2]);
-//                Octree_Pooyan::key_type tmp;
+//                Quadtree_Pooyan::key_type tmp;
 //                tmp= min_key[direction];
 //                assert(ray_key[direction]==tmp);
 //#endif
@@ -1999,14 +1999,14 @@ public:
         // first clearing the intersections points vector
         intersections.clear();
 
-        //OctreeType* octree = &mOctree;
-        OctreeType* octree = mpOctree.get();
+        //QuadtreeType* quadtree = &mQuadtree;
+        QuadtreeType* quadtree = mpQuadtree.get();
 
-        OctreeType::key_type ray_key[3] = {octree->CalcKeyNormalized(ray[0]), octree->CalcKeyNormalized(ray[1]), octree->CalcKeyNormalized(ray[2])};
-        OctreeType::key_type cell_key[3];
+        QuadtreeType::key_type ray_key[3] = {quadtree->CalcKeyNormalized(ray[0]), quadtree->CalcKeyNormalized(ray[1]), quadtree->CalcKeyNormalized(ray[2])};
+        QuadtreeType::key_type cell_key[3];
 
         // getting the entrance cell from lower extreme
-        OctreeType::cell_type* cell = octree->pGetCell(ray_key);
+        QuadtreeType::cell_type* cell = quadtree->pGetCell(ray_key);
 
         while (cell) {
             //        std::cout << ".";
@@ -2014,13 +2014,13 @@ public:
             // go to the next cell
             if (cell->GetNeighbourKey(1 + direction * 2, cell_key)) {
                 ray_key[direction] = cell_key[direction];
-                cell = octree->pGetCell(ray_key);
+                cell = quadtree->pGetCell(ray_key);
                 ray_key[direction] -= 1 ;//the key returned by GetNeighbourKey is inside the cell (minkey +1), to ensure that the corresponding
                 //cell get in pGetCell is the right one.
 //#ifdef _DEBUG
-//                Octree_Pooyan::key_type min_key[3];
+//                Quadtree_Pooyan::key_type min_key[3];
 //                cell->GetMinKey(min_key[0],min_key[1],min_key[2]);
-//                Octree_Pooyan::key_type tmp;
+//                Quadtree_Pooyan::key_type tmp;
 //                tmp= min_key[direction];
 //                assert(ray_key[direction]==tmp);
 //#endif
@@ -2046,15 +2046,15 @@ public:
         }
     }
 
-    int GetCellIntersections(OctreeType::cell_type* cell, double* ray,
-                             OctreeType::key_type* ray_key, int direction,
+    int GetCellIntersections(QuadtreeType::cell_type* cell, double* ray,
+                             QuadtreeType::key_type* ray_key, int direction,
                              std::vector<std::pair<double, Element::GeometryType*> >& intersections)  {
         //This function passes the ray through the cell and gives the hit point to all objects in its way
         //ray is of dimension (3) normalized in (0,1)^3 space
         // direction can be 0,1,2 which are x,y and z respectively
 
         //typedef Element::GeometryType triangle_type;
-        typedef OctreeType::cell_type::object_container_type object_container_type;
+        typedef QuadtreeType::cell_type::object_container_type object_container_type;
 
         object_container_type* objects = (cell->pGetObjects());
 
@@ -2067,12 +2067,12 @@ public:
         double ray_point1[3] = {ray[0], ray[1], ray[2]};
         double ray_point2[3] = {ray[0], ray[1], ray[2]};
         double normalized_coordinate;
-        mpOctree->CalculateCoordinateNormalized(ray_key[direction], normalized_coordinate);
+        mpQuadtree->CalculateCoordinateNormalized(ray_key[direction], normalized_coordinate);
         ray_point1[direction] = normalized_coordinate;
-        ray_point2[direction] = ray_point1[direction] + mpOctree->CalcSizeNormalized(cell);
+        ray_point2[direction] = ray_point1[direction] + mpQuadtree->CalcSizeNormalized(cell);
 
-        mpOctree->ScaleBackToOriginalCoordinate(ray_point1);
-        mpOctree->ScaleBackToOriginalCoordinate(ray_point2);
+        mpQuadtree->ScaleBackToOriginalCoordinate(ray_point1);
+        mpQuadtree->ScaleBackToOriginalCoordinate(ray_point2);
 
         for (object_container_type::iterator i_object = objects->begin(); i_object != objects->end(); i_object++) {
             double intersection[3]={0.00,0.00,0.00};
@@ -2202,7 +2202,7 @@ public:
     void PrintGiDMesh(std::ostream & rOStream) const {
         std::vector<CellType*> leaves;
 
-        mpOctree->GetAllLeavesVector(leaves);
+        mpQuadtree->GetAllLeavesVector(leaves);
 
         std::cout << "writing " << leaves.size() << " leaves" << std::endl;
         rOStream << "MESH \"leaves\" dimension 3 ElemType Hexahedra Nnode 8" << std::endl;
@@ -2210,10 +2210,10 @@ public:
         rOStream << "Coordinates" << std::endl;
         rOStream << "# node number coordinate_x coordinate_y coordinate_z  " << std::endl;
 
-        for(DistanceSpatialContainersConfigure::data_type::const_iterator i_node = mOctreeNodes.begin() ; i_node != mOctreeNodes.end() ; i_node++)
+        for(DistanceSpatialContainersConfigure::data_type::const_iterator i_node = mQuadtreeNodes.begin() ; i_node != mQuadtreeNodes.end() ; i_node++)
         {
             rOStream << (*i_node)->Id() << "  " << (*i_node)->Coordinate(1) << "  " << (*i_node)->Coordinate(2) << "  " << (*i_node)->Coordinate(3) << std::endl;
-            //mpOctree->Insert(temp_point);
+            //mpQuadtree->Insert(temp_point);
         }
         std::cout << "Nodes written..." << std::endl;
         rOStream << "end coordinates" << std::endl;
@@ -2238,7 +2238,7 @@ public:
     void PrintGiDResults(std::ostream & rOStream) const {
         std::vector<CellType*> leaves;
 
-        mpOctree->GetAllLeavesVector(leaves);
+        mpQuadtree->GetAllLeavesVector(leaves);
 
         rOStream << "GiD Post Results File 1.0" << std::endl << std::endl;
 
@@ -2246,7 +2246,7 @@ public:
 
         rOStream << "Values" << std::endl;
 
-        for(DistanceSpatialContainersConfigure::data_type::const_iterator i_node = mOctreeNodes.begin() ; i_node != mOctreeNodes.end() ; i_node++)
+        for(DistanceSpatialContainersConfigure::data_type::const_iterator i_node = mQuadtreeNodes.begin() ; i_node != mQuadtreeNodes.end() ; i_node++)
         {
             rOStream << (*i_node)->Id() << "  " << (*i_node)->Distance() << std::endl;
         }
@@ -2311,9 +2311,9 @@ private:
     
     ModelPart& mrBackgroundModelPart;
     ModelPart mrFluidModelPart;
-    DistanceSpatialContainersConfigure::data_type mOctreeNodes;
+    DistanceSpatialContainersConfigure::data_type mQuadtreeNodes;
 
-    boost::shared_ptr<OctreeType> mpOctree;
+    boost::shared_ptr<QuadtreeType> mpQuadtree;
 
     static const double epsilon;
 

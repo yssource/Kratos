@@ -7,8 +7,8 @@
 //
 
 
-#if !defined(KRATOS_QUAD_BINARY_CELL_H_INCLUDED )
-#define  KRATOS_QUAD_BINARY_CELL_H_INCLUDED
+#if !defined(KRATOS_QUADTREE_BINARY_CELL_H_INCLUDED )
+#define  KRATOS_QUADTREE_BINARY_CELL_H_INCLUDED
 
 
 
@@ -33,9 +33,9 @@ namespace Kratos {
     ///@name Kratos Classes
     ///@{
 
-    /// This class represents a cell in an quadree to be used with quadree class
+    /// This class represents a cell in an quadtree to be used with quadtree class
 
-    /** This class represents a cell in an quadree and holds its level, min_key
+    /** This class represents a cell in an quadtree and holds its level, min_key
      *  ,the children of the cell and pointer to a data class defined by
      *  configuration class.
      *  The level_ start from ROOT_LEVEL and each children has 1 level less than
@@ -61,13 +61,13 @@ namespace Kratos {
      *
     */
     template<class TConfiguration>
-    class quadreeBinaryCell {
+    class QuadtreeBinaryCell {
     public:
         ///@name Type Definitions
         ///@{
 
-        /// Pointer definition of quadreeBinaryCell
-        //KRATOS_CLASS_POINTER_DEFINITION(quadreeBinaryCell);
+        /// Pointer definition of QuadtreeBinaryCell
+        //KRATOS_CLASS_POINTER_DEFINITION(QuadtreeBinaryCell);
 
         typedef typename TConfiguration::data_type data_type;
 
@@ -101,14 +101,14 @@ namespace Kratos {
 
         /// Default constructor.
 
-        quadreeBinaryCell(char Level = ROOT_LEVEL) : level_(Level), children_(NULL), data_(NULL) {
+        QuadtreeBinaryCell(char Level = ROOT_LEVEL) : level_(Level), children_(NULL), data_(NULL) {
             for (std::size_t i = 0; i < DIMENSION; i++)
                 min_key_[i] = 0;
         }
 
         /// Destructor.
 
-        virtual ~quadreeBinaryCell() {
+        virtual ~QuadtreeBinaryCell() {
 
             if (data_) configuration_type::DeleteData(data_);
             delete [] children_;
@@ -145,7 +145,7 @@ namespace Kratos {
             if(children_)
                 return 1;
 
-            children_ = new quadreeBinaryCell[CHILDREN_NUMBER];
+            children_ = new QuadtreeBinaryCell[CHILDREN_NUMBER];
 
             char next_level = ( char)( level_ - 1);
 
@@ -156,6 +156,8 @@ namespace Kratos {
 
             return 0; // Zero says no error!
         }
+
+        
 
         void GetMinPointNormalized(double* min_point) const {
             for (std::size_t i = 0; i < DIMENSION; i++) {
@@ -353,7 +355,7 @@ namespace Kratos {
           double max_coord[3]={0.00, 0.00, 0.00};
 
           for (std::size_t i = 0; i < CHILDREN_NUMBER; i++){            
-            quadreeBinaryCell* son = pGetChild(i);
+            QuadtreeBinaryCell* son = pGetChild(i);
             if (son->HasChildren()){
               son->TransferObjectsToSonsNormalized();
               continue;
@@ -400,23 +402,23 @@ namespace Kratos {
             //min_key_[2] = min_key_z;
         }
 
-        quadreeBinaryCell& rGetChild(std::size_t pos) const {
+        QuadtreeBinaryCell& rGetChild(std::size_t pos) const {
             return children_[pos];
         }
 
-        quadreeBinaryCell* pGetChild(std::size_t pos) const {
+        QuadtreeBinaryCell* pGetChild(std::size_t pos) const {
             return children_ + pos;
         }
 
-        quadreeBinaryCell* pGetChild(key_type x_key, key_type y_key) const {
+        QuadtreeBinaryCell* pGetChild(key_type x_key, key_type y_key) const {
             return pGetChild(GetChildIndex(x_key, y_key));
         }
 
-        quadreeBinaryCell* GetChildren() {
+        QuadtreeBinaryCell* GetChildren() {
             return children_;
         }
 
-        quadreeBinaryCell const* GetChildren() const {
+        QuadtreeBinaryCell const* GetChildren() const {
             return children_;
         }
 
@@ -465,7 +467,7 @@ namespace Kratos {
         /// Turn back information as a string.
 
         virtual std::string Info() const {
-            return "QuadreeBinaryCell";
+            return "QuadtreeBinaryCell";
         }
 
         /// Print information about this object.
@@ -551,7 +553,7 @@ namespace Kratos {
 
         char level_;
         key_type min_key_[DIMENSION];
-        quadreeBinaryCell* children_;
+        QuadtreeBinaryCell* children_;
         data_type* data_;
         object_container_type objects_;
         
@@ -594,19 +596,19 @@ namespace Kratos {
 
         /// Assignment operator.
 
-        quadreeBinaryCell & operator=(quadreeBinaryCell const& rOther) {
+        QuadtreeBinaryCell & operator=(QuadtreeBinaryCell const& rOther) {
             return *this;
         }
 
         /// Copy constructor.
 
-        quadreeBinaryCell(quadreeBinaryCell const& rOther) {
+        QuadtreeBinaryCell(QuadtreeBinaryCell const& rOther) {
         }
 
 
         ///@}
 
-    }; // Class quadreeBinaryCell
+    }; // Class QuadtreeBinaryCell
 
     ///@}
 
@@ -621,12 +623,12 @@ namespace Kratos {
 
 //    /// input stream function
 //    inline std::istream & operator >>(std::istream& rIStream,
-//            quadreeBinaryCell& rThis);
+//            QuadtreeBinaryCell& rThis);
 
     /// output stream function
     template<class TConfiguration>
     inline std::ostream & operator <<(std::ostream& rOStream,
-            const quadreeBinaryCell<TConfiguration>& rThis) {
+            const QuadtreeBinaryCell<TConfiguration>& rThis) {
         rThis.PrintInfo(rOStream);
         rThis.PrintData(rOStream);
 
@@ -638,6 +640,6 @@ namespace Kratos {
 
 } // namespace Kratos.
 
-#endif // KRATOS_quadREE_BYNARY_CELL_H_INCLUDED  defined
+#endif // KRATOS_Quadtree_BYNARY_CELL_H_INCLUDED  defined
 
 

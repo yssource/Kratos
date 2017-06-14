@@ -28,7 +28,7 @@
 #include "includes/define.h"
 #endif
 
-#include "custom_utilities/octree_binary_cell.h"
+#include "custom_utilities/quadtree_binary_cell.h"
 
 
 #define KRATOS_WATCH_3(name) std::cout << #name << " : " << name[0] << ", " << name[1] << ", " << name[2] << std::endl;
@@ -61,13 +61,13 @@ namespace Kratos {
     /** Detail class definition.
      */
     template <class TCellType>
-    class OctreeBinary {
+    class QuadtreeBinary {
     public:
         ///@name Type Definitions
         ///@{
 
-        /// Pointer definition of Octree
-        //KRATOS_CLASS_POINTER_DEFINITION(Octree_Pooyan);
+        /// Pointer definition of Quadtree
+        //KRATOS_CLASS_POINTER_DEFINITION();
 
         typedef TCellType cell_type;
 
@@ -91,7 +91,7 @@ namespace Kratos {
 
         /// Default constructor.
 
-        OctreeBinary() : root_(new cell_type), number_of_cells_(CHILDREN_NUMBER + 1), number_of_leaves_(1), levels_(0) {
+        QuadtreeBinary() : root_(new cell_type), number_of_cells_(CHILDREN_NUMBER + 1), number_of_leaves_(1), levels_(0) {
 
             for(int i = 0 ; i < DIMENSION ; i++)
             {
@@ -100,7 +100,7 @@ namespace Kratos {
             }
         }
 
-        OctreeBinary(const double*  NewScaleFactor, const double* NewOffset) : root_(new cell_type), number_of_cells_(CHILDREN_NUMBER + 1), number_of_leaves_(1), levels_(0) {
+        QuadtreeBinary(const double*  NewScaleFactor, const double* NewOffset) : root_(new cell_type), number_of_cells_(CHILDREN_NUMBER + 1), number_of_leaves_(1), levels_(0) {
             for(int i = 0 ; i < DIMENSION ; i++)
             {
                 mScaleFactor[i] = NewScaleFactor[i];
@@ -110,7 +110,7 @@ namespace Kratos {
 
         /// Destructor.
 
-        virtual ~OctreeBinary() {
+        virtual ~QuadtreeBinary() {
             delete root_;
         }
         
@@ -276,7 +276,7 @@ namespace Kratos {
         }*/
 
         bool CheckConstrain2To1() const{
-          //POOYAN. This function must return true if the octree is balanced (constrained2:1) and false if not.
+          //POOYAN. This function must return true if the quadtree is balanced (constrained2:1) and false if not.
           return true;
         }
 
@@ -299,10 +299,10 @@ namespace Kratos {
 //
 //                    }
 //                }
-//                bool octree_have_changed = true;
+//                bool quadtree_have_changed = true;
 //
-//                while (octree_have_changed) {
-//                    octree_have_changed = false;
+//                while (quadtree_have_changed) {
+//                    quadtree_have_changed = false;
 //                    for (std::size_t i_cell = 0; i_cell < current_leaves.size(); i_cell++) {
 //                        //                        KRATOS_WATCH(i_cell)
 //                        cell_type* current_leaf = current_leaves[i_cell];
@@ -318,7 +318,7 @@ namespace Kratos {
 //                                            number_of_cells_ += CHILDREN_NUMBER;
 //                                            number_of_leaves_ += CHILDREN_NUMBER - 1;
 //
-//                                            octree_have_changed = true;
+//                                            quadtree_have_changed = true;
 //                                            cell_is_divided = true;
 //                                            for (std::size_t j = 0; j < CHILDREN_NUMBER; j++)
 //                                                next_cells_stack.push_back(current_leaf->pGetChild(j));
@@ -513,7 +513,7 @@ namespace Kratos {
           std::vector<cell_type*> leaves;
           std::vector<cell_type*> next_leaves;
 
-          //when the function will be at upper level (in mesher instead of octree) this vector (leaves) should be passed and copied instead of recomputed
+          //when the function will be at upper level (in mesher instead of quadtree) this vector (leaves) should be passed and copied instead of recomputed
           GetAllLeavesVector(leaves);
 
           for (char i_level = MIN_LEVEL; i_level < ROOT_LEVEL - 1; i_level++) {
@@ -1389,7 +1389,7 @@ namespace Kratos {
         //Sign changes of the points in the rectangle wrt line
         // dely*x - dely*y + (x2*y1-x1*y2)---- Equation of line
 
-        double x1,x2,y1,y2,dlx,dely,c,x,y,value1,value2;
+        double x1,x2,y1,y2,delx,dely,c,x,y,value1,value2;
 
         x1 = triverts[0][0];
         x2 = triverts[1][0];
@@ -1399,7 +1399,7 @@ namespace Kratos {
         dely = y2-y1;
         c = x2*y1-x1*y2;
 
-        x = Low1[[0];
+        x = Low1[0];
         y = Low1[1];
 
         value1 = dely*x-delx*y+c;
@@ -1533,8 +1533,8 @@ namespace Kratos {
 #endif // KRATOS_INDEPENDENT
 
 
-        cell_type* pGetCellContainRegion(key_type min_x_key, key_type min_y_key, key_type min_z_key,
-                                         key_type max_x_key, key_type max_y_key, key_type max_z_key)
+        cell_type* pGetCellContainRegion(key_type min_x_key, key_type min_y_key,
+                                         key_type max_x_key, key_type max_y_key)
         {
             cell_type* cell = root_;
 
@@ -1655,7 +1655,7 @@ namespace Kratos {
         /// Turn back information as a string.
 
         virtual std::string Info() const {
-            return "Octree";
+            return "Quadtree";
         }
 
         /// Print information about this object.
@@ -1732,8 +1732,8 @@ namespace Kratos {
         std::size_t number_of_leaves_;
         std::size_t levels_;
 
-        coordinate_type mOffset[3];
-        coordinate_type mScaleFactor[3];
+        coordinate_type mOffset[2];
+        coordinate_type mScaleFactor[2];
 
 
         ///@}
@@ -1762,20 +1762,20 @@ namespace Kratos {
 
         /// Assignment operator.
 
-        //OctreeBinary & operator=(OctreeBinary const& rOther) {
+        //QuadtreeBinary & operator=(QuadtreeBinary const& rOther) {
         //   return *this;
         //}
 
         /// Copy constructor.
 
-        //OctreeBinary(OctreeBinary const& rOther) {
+        //QuadtreeBinary(QuadtreeBinary const& rOther) {
 
         //}
 
 
         ///@}
 
-    }; // Class Octree
+    }; // Class Quadtree
 
     ///@}
 
@@ -1790,13 +1790,13 @@ namespace Kratos {
 
     /// input stream function
     //    inline std::istream & operator >>(std::istream& rIStream,
-    //            Octree& rThis);
+    //            Quadtree& rThis);
 
     /// output stream function
 
     template <class TCellType>
     inline std::ostream & operator <<(std::ostream& rOStream,
-    const OctreeBinary<TCellType>& rThis) {
+    const QuadtreeBinary<TCellType>& rThis) {
         rThis.PrintInfo(rOStream);
         rOStream << std::endl;
         rThis.PrintData(rOStream);

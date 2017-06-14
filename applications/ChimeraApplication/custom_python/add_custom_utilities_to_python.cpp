@@ -27,6 +27,8 @@
 //Processes
 #include "custom_processes/apply_multi_point_constraints_process_chimera.h"
 #include "custom_utilities/vtk_output.hpp"
+#include "custom_utilities/quadtree_binary_cell.h"
+#include "custom_utilities/quadtree_binary.h"
 //#include "custom_utilities/multipoint_constraint_data.hpp"
 
 namespace Kratos

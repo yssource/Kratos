@@ -31,7 +31,7 @@
 #include "includes/model_part.h"
 #include "includes/deprecated_variables.h"
 
-#include "spatial_containers/quadtree_binary.h"
+#include "custom_utilities/quadtree_binary.h"
 #include "utilities/spatial_containers_configure.h"
 #include "utilities/timer.h"
 #include "utilities/math_utils.h"
@@ -77,7 +77,7 @@ public:
     ///@{
 
     enum { Dimension = 3,
-           DIMENSION = 3,
+           DIMENSION = 2,
            MAX_LEVEL = 12,
            MIN_LEVEL = 2    // this cannot be less than 2!!!
          };
@@ -124,7 +124,7 @@ public:
     ///@{
 
     static data_type* AllocateData() {
-        return new data_type(27, (CellNodeData*)NULL);
+        return new data_type(8, (CellNodeData*)NULL);
     }
 
     static void CopyData(data_type* source, data_type* destination) {
@@ -293,10 +293,10 @@ public:
     ///@{
 
     /// Constructor.
-    CalculateSignedDistanceTo2DSkinProcess(ModelPart& rThisModelPartStruc, ModelPart& rThisModelPartFluid)
-        : mrSkinModelPart(rThisModelPartStruc), mrBodyModelPart(rThisModelPartStruc), mrBackgroundModelPart(rThisModelPartFluid) 
+    CalculateSignedDistanceTo2DSkinProcess(ModelPart& rThisModelPartStruc, ModelPart& rThisModelPartFluid,ModelPart& rThisModelPartAll)
+        : mrSkinModelPart(rThisModelPartStruc),  mrFluidModelPart(rThisModelPartFluid),mrBodyModelPart(rThisModelPartAll)
     {
-     std::cout<<"Inside Constructor"<<std::endl;
+     
     }
 
     /// Destructor.
@@ -356,7 +356,7 @@ public:
     ///******************************************************************************************************************
 
     // generates 
-    void GenerateFluidModelPartbasedOnBoundingBox()
+    /*void GenerateFluidModelPartbasedOnBoundingBox()
     {
 
         array_1d<double,3> low;
@@ -374,7 +374,7 @@ public:
                 low[i]  = i_node->Coordinate(i+1) < low[i]  ? i_node->Coordinate(i+1) : low[i];
                 high[i] = i_node->Coordinate(i+1) > high[i] ? i_node->Coordinate(i+1) : high[i];
             }
-        }
+        }*/
 
 
         /*for (int i = 0 ; i < 3; i++)
@@ -386,7 +386,7 @@ public:
             }
    */
     
-        std::cout<<"Lowest Dimension"<<low[0]<<","<<low[1]<<","<<low[2]<<","<<std::endl;
+        /*std::cout<<"Lowest Dimension"<<low[0]<<","<<low[1]<<","<<low[2]<<","<<std::endl;
         
         std::cout<<"Highest Dimension"<<high[0]<<","<<high[1]<<","<<high[2]<<","<<std::endl;
   
@@ -422,10 +422,10 @@ public:
         std::cout<<"Fluid Model Part that is considered"<<mrFluidModelPart.Elements().size()<<std::endl;
        
 
-    }    
+    }    */
 
 //Checks if the node is inside the bounding box implemented only for 2d case
-        bool IsInside (array_1d<double,3> coords, array_1d<double,3> high,array_1d<double,3> low)
+      /*  bool IsInside (array_1d<double,3> coords, array_1d<double,3> high,array_1d<double,3> low)
 
         {
 
@@ -451,7 +451,7 @@ public:
 
         }
 
-
+*/
 
     
     void DistanceFluidStructure()
@@ -609,14 +609,36 @@ public:
         double EdgeNode1[3] = {P1.X() , P1.Y() , P1.Z()};
         double EdgeNode2[3] = {P2.X() , P2.Y() , P2.Z()};
 	    //std::cout<<"Leaves size "<<leaves.size()<<std::endl;
-/*
-        if (leaves.size()>0){
 
-        //std::cout<<"Fluid element with no leaves :"<<i_fluidElement->Id()<<std::endl;
-        std::cout<<"Fluid Nodes \n :"<<i_fluidElement->GetGeometry()<<std::endl;
         
+
+       
+        //std::cout<<"Fluid Nodes \n :"<<i_fluidElement->GetGeometry()<<std::endl;
         
-        }*/
+        //check to see structure elemets near the fluid element
+         /*for(unsigned int i_cell = 0 ; i_cell < leaves.size() ; i_cell++)
+         {
+
+            
+
+            object_container_type* struct_elem = (leaves[i_cell]->pGetObjects());
+            std::cout<<"Str element :"<<struct_elem->size()<<std::endl;
+            if (struct_elem->size()>0)
+            {
+                std::cout<<"Fluid element with intersected leaves :"<<i_fluidElement->Id()<<std::endl;
+                std::cout<<"Nr Struct element with intersected leaves :"<<struct_elem->size()<<std::endl;
+
+                for(object_container_type::iterator i_StructElement = struct_elem->begin(); i_StructElement != struct_elem->end(); i_StructElement++)
+                    std::cout<<"Structural element Id :"<<(*i_StructElement)->Id()<<",";
+            
+            }
+
+             //std::cout<<"Next cell"<<std::endl;
+            
+
+         }*/
+
+        
         
         
         // loop over all quadtree cells which are intersected by the fluid Element
@@ -639,7 +661,7 @@ public:
             for(object_container_type::iterator i_StructElement = struct_elem->begin(); i_StructElement != struct_elem->end(); i_StructElement++)
             {
 
-                std::cout<<"Hello there "<<std::endl;
+                //std::cout<<"Hello there "<<std::endl;
                 if( StructuralElementNotYetConsidered( (*i_StructElement)->Id() , IntersectingStructElemID ) )
                 {
                     
@@ -652,7 +674,7 @@ public:
                     {
                         IntersectionNodeStruct NewIntersectionNode;
                         std::cout<<"#######Found one intersection"<<std::endl;
-                        std::exit(-1);
+                        //std::exit(-1);
 
                         // Assign information to the intersection node
                         NewIntersectionNode.Coordinates[0] = IntersectionPoint[0];
@@ -1393,11 +1415,15 @@ public:
         boost::shared_ptr<QuadtreeType> temp_quadtree =  boost::shared_ptr<QuadtreeType>( new QuadtreeType() );
         //QuadtreeType::Pointer temp_quadtree = QuadtreeType::Pointer(new QuadtreeType() );
         mpQuadtree.swap(temp_quadtree);
+
+        std::cout<<"Inside Quadtree"<<std::endl;
         
-        double low[3];
-        double high[3];
+        double low[2];
+        double high[2];
+
+        std::cout<<"Fluid Model part"<< mrFluidModelPart<<std::endl;
         
-        for (int i = 0 ; i < 3; i++)
+        for (int i = 0 ; i < 2; i++)
         {
             low[i] = high[i] = mrFluidModelPart.NodesBegin()->Coordinate(i+1);
         }
@@ -1407,7 +1433,7 @@ public:
             i_node != mrFluidModelPart.NodesEnd();
             i_node++)
         {
-            for (int i = 0 ; i < 3; i++)
+            for (int i = 0 ; i < 2; i++)
             {
                 low[i]  = i_node->Coordinate(i+1) < low[i]  ? i_node->Coordinate(i+1) : low[i];
                 high[i] = i_node->Coordinate(i+1) > high[i] ? i_node->Coordinate(i+1) : high[i];
@@ -1419,17 +1445,17 @@ public:
             i_node != mrSkinModelPart.NodesEnd();
             i_node++)
         {
-            for (int i = 0 ; i < 3; i++)
+            for (int i = 0 ; i < 2; i++)
             {
                 low[i]  = i_node->Coordinate(i+1) < low[i]  ? i_node->Coordinate(i+1) : low[i];
                 high[i] = i_node->Coordinate(i+1) > high[i] ? i_node->Coordinate(i+1) : high[i];
             }
         }
-   
+        std::cout<<"Skin added"<<std::endl;
         mpQuadtree->SetBoundingBox(low,high);
-        std::cout<<"Lowest Dimension"<<low[0]<<","<<low[1]<<","<<low[2]<<","<<std::endl;
+        std::cout<<"Lowest Dimension"<<low[0]<<","<<low[1]<<std::endl;
         
-        std::cout<<"Highest Dimension"<<high[0]<<","<<high[1]<<","<<high[2]<<","<<std::endl;
+        std::cout<<"Highest Dimension"<<high[0]<<","<<high[1]<<std::endl;
         
         //mpQuadtree->RefineWithUniformSize(0.0625);
 
@@ -1438,10 +1464,10 @@ public:
             i_node != mrSkinModelPart.NodesEnd();
             i_node++)
         {
-            double temp_point[3];
+            double temp_point[2];
             temp_point[0] = i_node->X();
             temp_point[1] = i_node->Y();
-            temp_point[2] = i_node->Z();
+            //temp_point[2] = i_node->Z();
             mpQuadtree->Insert(temp_point);
         }
 
@@ -1455,17 +1481,20 @@ public:
             mpQuadtree->Insert(*(i_element).base());
         }
 
-        /*Timer::Stop("Generating Quadtree");
-        std::cout<<"Quadtree generation finished"<<std::endl;
+        Timer::Stop("Generating Quadtree");
+        /*std::cout<<"Quadtree generation finished"<<std::endl;
         KRATOS_WATCH(mpQuadtree);
 
-        std::cout << "######## WRITING OCTREE MESH #########" << std::endl;
+        GenerateNodes();
+
+        std::cout << "######## WRITING QUADTREE MESH #########" << std::endl;
         std::ofstream myfile;
         myfile.open ("quadtree.post.msh");
-        mpQuadtree->PrintGiDMesh(myfile);
-        myfile.close();
-*/
-        //std::cout << "Generating the Quadtree finished" << std::endl;
+        mpQuadtree->PrintGiDMeshNew(myfile);
+        myfile.close();*/
+
+        std::cout << "Generating the Quadtree finished" << std::endl;
+        
     }
 
     ///******************************************************************************************************************
@@ -1503,8 +1532,11 @@ public:
 
     void GenerateCellNode(CellType* pCell, std::size_t& LastId)
     {
-        for (int i_pos=0; i_pos < 8; i_pos++) // position 8 is for center
+
+        
+        for (int i_pos=0; i_pos < 4; i_pos++) // position 4 is for center
         {
+            
             DistanceSpatialContainersConfigure::cell_node_data_type* p_node = (*(pCell->pGetData()))[i_pos];
             if(p_node == 0)
             {
@@ -1512,12 +1544,15 @@ public:
 
                 (*(pCell->pGetData()))[i_pos]->Id() = LastId++;
 
-                        mQuadtreeNodes.push_back((*(pCell->pGetData()))[i_pos]);
+                mQuadtreeNodes.push_back((*(pCell->pGetData()))[i_pos]);
 
                 SetNodeInNeighbours(pCell,i_pos,(*(pCell->pGetData()))[i_pos]);
             }
 
+            
+
         }
+        
     }
 
     ///******************************************************************************************************************
@@ -1525,11 +1560,11 @@ public:
 
     void SetNodeInNeighbours(CellType* pCell, int Position, CellNodeDataType* pNode)
     {
-        CellType::key_type point_key[3];
+        CellType::key_type point_key[2];
         pCell->GetKey(Position, point_key);
 
-        for (std::size_t i_direction = 0; i_direction < 8; i_direction++) {
-            CellType::key_type neighbour_key[3];
+        for (std::size_t i_direction = 0; i_direction < 5; i_direction++) {
+            CellType::key_type neighbour_key[2];
             if (pCell->GetNeighbourKey(Position, i_direction, neighbour_key)) {
                 CellType* neighbour_cell = mpQuadtree->pGetCell(neighbour_key);
                 if (!neighbour_cell || (neighbour_cell == pCell))
@@ -2163,7 +2198,7 @@ public:
         
         if (t < 0.0 - epsilon || t > 1.0 + epsilon)  // I is outside fluid edge
             return 0;
-
+        std::cout<<"One intersection found"<<std::endl;
         return 1;                      // I is in struc edge
 
     }
@@ -2307,10 +2342,11 @@ private:
     ///@name Member Variables
     ///@{
     ModelPart& mrSkinModelPart;
-    ModelPart& mrBodyModelPart;
     
-    ModelPart& mrBackgroundModelPart;
-    ModelPart mrFluidModelPart;
+    
+    //ModelPart& mrBackgroundModelPart;
+    ModelPart& mrFluidModelPart;
+    ModelPart& mrBodyModelPart;
     DistanceSpatialContainersConfigure::data_type mQuadtreeNodes;
 
     boost::shared_ptr<QuadtreeType> mpQuadtree;

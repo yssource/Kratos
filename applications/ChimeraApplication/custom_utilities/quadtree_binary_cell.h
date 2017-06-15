@@ -310,7 +310,7 @@ namespace Kratos {
 
         std::size_t GetLocalPosition(key_type* keys){
             key_type position[2];
-            //in total, there are a maximum of 27 nodes (as the Quadratic9 Hexa in GiD). The only difference is that here
+            //in total, there are a maximum of 9 nodes (as the Quadratic9 Hexa in GiD). The only difference is that here
             //the central node of the hexa (cell) is just after the lineal nodes.
             // the node index              : 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 
             const std::size_t local_index[]={0, 5, 1, 8, 4, 6, 3, 7, 2};

@@ -1000,7 +1000,7 @@ namespace Kratos {
         }
 
         void Insert(typename cell_type::pointer_type object){
-
+            
             const double tolerance = 0.001 * double(1 << MIN_LEVEL) / double(1 << ROOT_LEVEL) ; // 0.1% of the min size
 
             double min_coord[2]={0.00, 0.00};
@@ -1078,8 +1078,14 @@ namespace Kratos {
                 ScaleBackToOriginalCoordinate(cell_max_point);
 
                 const int is_intersected = /*configuration_type::*/IsIntersected(object,tolerance, cell_min_point, cell_max_point);
+                
                 if(is_intersected)
+                {
+                 
                   cell->Insert(object);
+
+                }
+                 
 
               }
             }
@@ -1217,7 +1223,7 @@ namespace Kratos {
         Point<2,double> low_point(rLowPoint[0] - Tolerance, rLowPoint[1] - Tolerance);
         Point<2,double> high_point(rHighPoint[0] + Tolerance, rHighPoint[1] + Tolerance);
 
-
+        
         return HasIntersection(rObject->GetGeometry(), low_point, high_point);
     }
 
@@ -1384,7 +1390,7 @@ namespace Kratos {
 
         }
         
-        if !(Collides( Low1, High1, Low2, High2)) return false;
+        if (!Collides( Low1, High1, Low2, High2)) return false;
 
         //Sign changes of the points in the rectangle wrt line
         // dely*x - dely*y + (x2*y1-x1*y2)---- Equation of line
@@ -1612,24 +1618,30 @@ namespace Kratos {
             GetAllLeavesVector(leaves);
 
             std::cout << "writing " << leaves.size() << " leaves" << std::endl;
-            rOStream << "MESH \"leaves\" dimension 3 ElemType Hexahedra Nnode 8" << std::endl;
+            rOStream << "MESH \"leaves\" dimension 2 ElemType Quadrilateral Nnode 4" << std::endl;
             rOStream << "# color 96 96 96" << std::endl;
             rOStream << "Coordinates" << std::endl;
             rOStream << "# node number coordinate_x coordinate_y coordinate_z  " << std::endl;
             std::size_t node_number = 0;
+            
             //            std::size_t node_index = 1;
             for (std::size_t i = 0; i < leaves.size(); i++) {
                 cell_type* leaf = leaves[i];
-                for (std::size_t i_point = 0; i_point < 8; i_point++) {
+                for (std::size_t i_point = 0; i_point < 4; i_point++) {
+                    
                     std::size_t node_id = (*(leaf->pGetData()))[i_point]->Id();
+                    
                     if (node_id > node_number) {
-                        key_type point_key[3];
+                        key_type point_key[2];
                         leaf->GetKey(i_point, point_key);
-                        double point_coordinate[3];
+                        coordinate_type point_coordinate[3];
+                       
 
-                        for (std::size_t j = 0; j < DIMENSION; j++) {
-                            point_coordinate[j] = leaf->GetCoordinate(point_key[j]);
-                        }
+                    
+
+                        
+                            CalculateCoordinates(point_key,point_coordinate);
+                            point_coordinate[2] = 0;
                         rOStream << node_id << "  " << point_coordinate[0] << "  " << point_coordinate[1] << "  " << point_coordinate[2] << std::endl;
                         node_number++;
                     }
@@ -1643,7 +1655,7 @@ namespace Kratos {
             for (std::size_t i = 0; i < leaves.size(); i++) {
                 cell_type* leaf = leaves[i];
                 rOStream << i + 1 << "  ";
-                for (std::size_t i_point = 0; i_point < 8; i_point++)
+                for (std::size_t i_point = 0; i_point < 4; i_point++)
                     rOStream << (*(leaf->pGetData()))[i_point]->Id() << "  ";
 
                 rOStream << std::endl;

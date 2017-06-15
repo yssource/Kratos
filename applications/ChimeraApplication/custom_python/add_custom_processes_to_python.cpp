@@ -79,7 +79,7 @@ void AddCustomProcessesToPython()
 	 * Calculate_signed_distance_2d
 	 */
 
-	class_<CalculateSignedDistanceTo2DSkinProcess,bases<Process> >("CalculateSignedDistanceTo2DSkinProcess", init<ModelPart&,ModelPart&>())
+	class_<CalculateSignedDistanceTo2DSkinProcess,bases<Process> >("CalculateSignedDistanceTo2DSkinProcess", init<ModelPart&,ModelPart&,ModelPart&>())
 		.def("Execute", &CalculateSignedDistanceTo2DSkinProcess::Execute);		
 			
 }

@@ -160,7 +160,10 @@ namespace Kratos {
             for (std::size_t i = 0; i < CHILDREN_NUMBER; i++) {
                 children_[i].SetMinKey(min_key_[0] | ((i & 1) << next_level), min_key_[1] | (((i & 2) >> 1)) << next_level, min_key_[2] | (((i & 4) >> 2)) << next_level);
                 children_[i].SetLevel(next_level);
+                
+                
             }
+            std::exit(-1);
 
             return 0; // Zero says no error!
         }

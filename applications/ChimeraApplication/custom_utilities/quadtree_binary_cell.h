@@ -258,12 +258,12 @@ namespace Kratos {
           //the key returned is inside the cell (minkey +1), to ensure that the corresponding
           //cell get in pGetCell is the right one.
 
-            assert(direction<5);
-            const std::size_t x_offset[]={1,0,2,1,1};
-            const std::size_t y_offset[]={1,1,1,0,2};
-            const std::size_t z_offset[]={0,0,0,0,0};
-            const std::size_t x_coef[]  ={0,0,1,0,0};
-            const std::size_t y_coef[]  ={0,0,0,0,1};
+            assert(direction<4);
+            const std::size_t x_offset[]={0,2,1,1};
+            const std::size_t y_offset[]={1,1,0,2};
+            //const std::size_t z_offset[]={0,0,0,0};
+            const std::size_t x_coef[]  ={0,1,0,0};
+            const std::size_t y_coef[]  ={0,0,0,1};
             //const std::size_t z_coef[]  ={0,0,0,0,0};
 
             std::size_t size = (1<<level_);

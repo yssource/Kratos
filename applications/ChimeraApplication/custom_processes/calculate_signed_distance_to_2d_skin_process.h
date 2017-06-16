@@ -78,7 +78,7 @@ public:
 
     enum { Dimension = 3,
            DIMENSION = 2,
-           MAX_LEVEL = 12,
+           MAX_LEVEL = 8,
            MIN_LEVEL = 2    // this cannot be less than 2!!!
          };
 
@@ -564,6 +564,8 @@ public:
 
         // Get leaves of quadtree intersecting with fluid Element
         mpQuadtree->GetIntersectedLeaves(*(i_fluidElement).base(),leaves);
+
+        std::cout<<"Fluid element"<<i_fluidElement->Id()<<std::endl;
       
         int intersection_counter = 0;
 
@@ -616,27 +618,27 @@ public:
         //std::cout<<"Fluid Nodes \n :"<<i_fluidElement->GetGeometry()<<std::endl;
         
         //check to see structure elemets near the fluid element
-         /*for(unsigned int i_cell = 0 ; i_cell < leaves.size() ; i_cell++)
+        for(unsigned int i_cell = 0 ; i_cell < leaves.size() ; i_cell++)
          {
 
             
 
             object_container_type* struct_elem = (leaves[i_cell]->pGetObjects());
-            std::cout<<"Str element :"<<struct_elem->size()<<std::endl;
+            
             if (struct_elem->size()>0)
             {
-                std::cout<<"Fluid element with intersected leaves :"<<i_fluidElement->Id()<<std::endl;
-                std::cout<<"Nr Struct element with intersected leaves :"<<struct_elem->size()<<std::endl;
+                
+                
 
                 for(object_container_type::iterator i_StructElement = struct_elem->begin(); i_StructElement != struct_elem->end(); i_StructElement++)
                     std::cout<<"Structural element Id :"<<(*i_StructElement)->Id()<<",";
             
             }
 
-             //std::cout<<"Next cell"<<std::endl;
+             
             
 
-         }*/
+         }
 
         
         
@@ -1482,7 +1484,7 @@ public:
         }
 
         Timer::Stop("Generating Quadtree");
-        /*std::cout<<"Quadtree generation finished"<<std::endl;
+        std::cout<<"Quadtree generation finished"<<std::endl;
         KRATOS_WATCH(mpQuadtree);
 
         GenerateNodes();
@@ -1491,7 +1493,7 @@ public:
         std::ofstream myfile;
         myfile.open ("quadtree.post.msh");
         mpQuadtree->PrintGiDMeshNew(myfile);
-        myfile.close();*/
+        myfile.close();
 
         std::cout << "Generating the Quadtree finished" << std::endl;
         
@@ -1563,7 +1565,7 @@ public:
         CellType::key_type point_key[2];
         pCell->GetKey(Position, point_key);
 
-        for (std::size_t i_direction = 0; i_direction < 5; i_direction++) {
+        for (std::size_t i_direction = 0; i_direction < 4; i_direction++) {
             CellType::key_type neighbour_key[2];
             if (pCell->GetNeighbourKey(Position, i_direction, neighbour_key)) {
                 CellType* neighbour_cell = mpQuadtree->pGetCell(neighbour_key);

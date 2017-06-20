@@ -42,6 +42,8 @@
 #include "includes/kratos_flags.h"
 #include "utilities/binbased_fast_point_locator.h"
 #include "utilities/binbased_nodes_in_element_locator.h"
+#include "elements/distance_calculation_element_simplex.h"
+#include "utilities/parallel_levelset_distance_calculator.h"
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -296,7 +298,7 @@ public:
     CalculateSignedDistanceTo2DSkinProcess(ModelPart& rThisModelPartStruc, ModelPart& rThisModelPartFluid,ModelPart& rThisModelPartAll)
         : mrSkinModelPart(rThisModelPartStruc),  mrFluidModelPart(rThisModelPartFluid),mrBodyModelPart(rThisModelPartAll)
     {
-     
+     this->pDistanceCalculator = typename ParallelDistanceCalculator<2>::Pointer(new ParallelDistanceCalculator<2>());
     }
 
     /// Destructor.
@@ -332,10 +334,15 @@ public:
         
 
         DistanceFluidStructure();
+        unsigned int max_level = 100;
+		double max_distance = 5000;
 
+        //this->pDistanceCalculator->CalculateDistancesbn(mrFluidModelPart,DISTANCE,NODAL_AREA,max_level,max_distance);
+        this->pDistanceCalculator->CalculateDistances(mrFluidModelPart,DISTANCE,NODAL_AREA,max_level,max_distance);
+        
         //          ------------------------------------------------------------------
         //          GenerateNodes();
-        //CalculateDistance2(); // I have to change this. Pooyan.
+        CalculateDistance2(); // I have to change this. Pooyan.
         //mrSkinModelPart.GetCommunicator().AssembleCurrentData(DISTANCE);
         //          std::ofstream mesh_file1("quadtree1.post.msh");
         //          std::ofstream res_file("quadtree1.post.res");
@@ -496,6 +503,27 @@ public:
         // --> now synchronize these values by finding the minimal distance and assign to each node a minimal nodal distance
         AssignMinimalNodalDistance();
 
+        const double initial_distance = 1000;
+        
+        
+
+       /* ModelPart::NodesContainerType::ContainerType& nodes = mrFluidModelPart.NodesArray();
+
+        // reset the node distance to 1.0 which is the maximum distance in our normalized space.
+        int nodesSize = nodes.size();
+
+#pragma omp parallel for firstprivate(nodesSize)
+        for(int i = 0 ; i < nodesSize ; i++)
+        {
+
+            double& nodal_distance = nodes[i]->GetSolutionStepValue(DISTANCE) ;
+
+            if(nodal_distance > (initial_distance)-0.001) nodal_distance = 0;
+
+        }*/
+            
+ 
+
         //std::cout << "Finished calculating Elemental distances..." << std::endl;
     }
 
@@ -504,7 +532,7 @@ public:
 
     void Initialize()
     {
-        const double initial_distance = 1000;
+        const double initial_distance = 10000;
 
         ModelPart::NodesContainerType::ContainerType& nodes = mrFluidModelPart.NodesArray();
 
@@ -521,7 +549,7 @@ public:
         ElementalDistances[0] = initial_distance;
         ElementalDistances[1] = initial_distance;
         ElementalDistances[2] = initial_distance;
-        ElementalDistances[3] = initial_distance;
+       // ElementalDistances[3] = initial_distance;
 
         // reset the Elemental distance to 1.0 which is the maximum distance in our normalized space.
         // also initialize the embedded velocity of the fluid Element
@@ -565,7 +593,7 @@ public:
         // Get leaves of quadtree intersecting with fluid Element
         mpQuadtree->GetIntersectedLeaves(*(i_fluidElement).base(),leaves);
 
-        std::cout<<"Fluid element"<<i_fluidElement->Id()<<std::endl;
+        //std::cout<<"Fluid element"<<i_fluidElement->Id()<<std::endl;
       
         int intersection_counter = 0;
 
@@ -618,7 +646,7 @@ public:
         //std::cout<<"Fluid Nodes \n :"<<i_fluidElement->GetGeometry()<<std::endl;
         
         //check to see structure elemets near the fluid element
-        for(unsigned int i_cell = 0 ; i_cell < leaves.size() ; i_cell++)
+       /* for(unsigned int i_cell = 0 ; i_cell < leaves.size() ; i_cell++)
          {
 
             
@@ -631,14 +659,14 @@ public:
                 
 
                 for(object_container_type::iterator i_StructElement = struct_elem->begin(); i_StructElement != struct_elem->end(); i_StructElement++)
-                    std::cout<<"Structural element Id :"<<(*i_StructElement)->Id()<<",";
+                    //std::cout<<"Structural element Id :"<<(*i_StructElement)->Id()<<",";
             
             }
 
              
             
 
-         }
+         }*/
 
         
         
@@ -674,9 +702,10 @@ public:
 
                     if( TriangleEdgeHasIntersections == 1 )
                     {
+                        //std::cout<<"Fluid element"<<i_fluidElement->Id()<<std::endl;
+                        //std::cout<<"Structural element Id :"<<(*i_StructElement)->Id()<<std::endl;
                         IntersectionNodeStruct NewIntersectionNode;
-                        std::cout<<"#######Found one intersection"<<std::endl;
-                        //std::exit(-1);
+                      
 
                         // Assign information to the intersection node
                         NewIntersectionNode.Coordinates[0] = IntersectionPoint[0];
@@ -685,8 +714,10 @@ public:
 			 
                         if( IsIntersectionNodeOnTriangleEdge( IntersectionPoint , EdgeNode1 , EdgeNode2 ) )
                         {
+                            //std::cout<<"Intersection on Triangle edge"<<std::endl;
                             if ( IsNewIntersectionNode( NewIntersectionNode , IntersectedTriangleEdges ) )
                             {
+                                //std::cout<<" new intersection on  node"<<std::endl;
                                 // Calculate normal of the structural Element at the position of the intersection point
                                 CalculateNormal2D((*i_StructElement)->GetGeometry()[0],
                                                   (*i_StructElement)->GetGeometry()[1],
@@ -696,6 +727,8 @@ public:
                                 if ( IsIntersectionOnCorner( NewIntersectionNode , EdgeNode1 , EdgeNode2) )
                                 {
                                     NumberIntersectionsOnTriangleCornerCurrentEdge++;
+
+                                    std::cout<<" ####Intersection on corner####"<<std::endl;
 
                                     // only allow one intersection node on a triangle edge
                                     if(NumberIntersectionsOnTriangleCornerCurrentEdge < 2)
@@ -870,9 +903,10 @@ public:
                             Point<3>&       Point2,
                             array_1d<double,3>&   rResultNormal )
     {
-            rResultNormal[0] =   Point2[1] - Point1[1];
-            rResultNormal[1] = - (Point2[0] - Point1[0]);
+            rResultNormal[0] =  (Point2[1] - Point1[1]);
+            rResultNormal[1] =   -(Point2[0] - Point1[0]);
             rResultNormal[2] =    0.00;
+            //std::cout<<" Normal "<<rResultNormal[0]<<","<<rResultNormal[1]<<std::endl;
     }
 
     ///******************************************************************************************************************
@@ -892,6 +926,7 @@ public:
         {
             CalcSignedDistancesToOneIntNode(i_fluid_Element,NodesOfApproximatedStructure,ElementalDistances);
             i_fluid_Element->GetValue(SPLIT_ELEMENT) = true;
+            //std::cout<<"CalcSignedDistancesToOneIntNode"<<"ED "<<ElementalDistances[0]<<","<<ElementalDistances[1]<<","<<ElementalDistances[2]<<std::endl;
         }
 
         // Intersection with two corner points / one triangle edge
@@ -899,6 +934,7 @@ public:
         {
             CalcSignedDistancesToTwoIntNodes(i_fluid_Element,NodesOfApproximatedStructure,ElementalDistances);
             i_fluid_Element->GetValue(SPLIT_ELEMENT) = true;
+            //std::cout<<"CalcSignedDistancesToTwoIntNodes"<<"ED "<<ElementalDistances[0]<<","<<ElementalDistances[1]<<","<<ElementalDistances[2]<<std::endl;
         }
 
         // Intersection with two triangle edges
@@ -906,6 +942,13 @@ public:
         {
             CalcSignedDistancesToTwoEdgeIntNodes(i_fluid_Element,NodesOfApproximatedStructure,ElementalDistances);
             i_fluid_Element->GetValue(SPLIT_ELEMENT) = true;
+            
+            //std::cout<<"CalcSignedDistancesToTwoEdgeIntNodes"<<"ED "<<ElementalDistances[0]<<","<<ElementalDistances[1]<<","<<ElementalDistances[2]<<std::endl;
+            /*if(i_fluid_Element->Id()==2541)
+            {
+                std::cout<<"Normal1 "<<NodesOfApproximatedStructure[0].StructElemNormal<<"Normal2 "<<NodesOfApproximatedStructure[1].StructElemNormal<<std::endl;
+                //std::exit(-1);
+            }*/
         }
 
         // Intersection with more than two triangle edges
@@ -913,15 +956,28 @@ public:
         {
             CalcSignedDistancesToMoreThanTwoIntNodes(i_fluid_Element,NodesOfApproximatedStructure,ElementalDistances,IntersectedTriangleEdges);
             i_fluid_Element->GetValue(SPLIT_ELEMENT) = true;
+            
+            //std::cout<<"CalcSignedDistancesToMoreThanTwoIntNodes"<<"ED "<<ElementalDistances[0]<<","<<ElementalDistances[1]<<","<<ElementalDistances[2]<<std::endl;
+
+
+          
         }
 
         // Postprocessing treatment of Elemental distances
-        if( i_fluid_Element->GetValue(SPLIT_ELEMENT) == true )
-            AvoidZeroDistances(i_fluid_Element, ElementalDistances);
+        /*if( i_fluid_Element->GetValue(SPLIT_ELEMENT) == true )
+            AvoidZeroDistances(i_fluid_Element, ElementalDistances);*/
 
         // In case there is intersection with fluid Element: assign distances to the Element
         if( i_fluid_Element->GetValue(SPLIT_ELEMENT) == true )
+        {
+             //std::cout<<"Assigning distances to element"<<std::endl;
+        
             i_fluid_Element->GetValue(ELEMENTAL_DISTANCES) = ElementalDistances;
+
+            //std::cout<<"Assignment done"<<std::endl;
+            
+        }
+            
     }
 
     ///******************************************************************************************************************
@@ -1225,11 +1281,11 @@ public:
        * @param Element            current Element which was cut by the structure (flag SPLIT_ELEMENT is set to one)
        * @param ElementalDistances Elemental distances calculated by the intersection pattern
        */
-    void AvoidZeroDistances( ModelPart::ElementsContainerType::iterator& Element,
+    /*void AvoidZeroDistances( ModelPart::ElementsContainerType::iterator& Element,
                              array_1d<double,3>&                         ElementalDistances)
     {
         // Assign a distance limit
-        double dist_limit = 1e-5;
+        double dist_limit = 1e-5;*/
 //         bool distChangedToLimit = false; //variable to indicate that a distance value < tolerance is set to a limit distance = tolerance
 // 
 //         for(unsigned int i_node = 0; i_node < 3; i_node++)
@@ -1249,7 +1305,7 @@ public:
 //                 numberNodesPositiveDistance++;
 //         }
         
-        for(unsigned int i_node = 0; i_node < 3; i_node++)
+        /*for(unsigned int i_node = 0; i_node < 3; i_node++)
         {
             double & di = ElementalDistances[i_node];
             if(fabs(di) < dist_limit)
@@ -1262,7 +1318,7 @@ public:
         // Element is not set
 //         if(numberNodesPositiveDistance == 4 && distChangedToLimit == true)
 //             Element->GetValue(SPLIT_ELEMENT) = false;
-    }
+    }*/
 
     ///******************************************************************************************************************
     ///******************************************************************************************************************
@@ -1589,6 +1645,7 @@ public:
 
     void CalculateDistance2()
     {
+        /*std::cout<<"nav Inside Calcute2"<<std::endl;*/
         Timer::Start("Calculate Distances2");
         ModelPart::NodesContainerType::ContainerType& nodes = mrFluidModelPart.NodesArray();
         int nodes_size = nodes.size();
@@ -1597,18 +1654,26 @@ public:
         //         for(int i = 0 ; i < nodes_size ; i++)
         //             nodes[i]->GetSolutionStepValue(DISTANCE) = 1.00;
 
-        std::vector<CellType*> leaves;
+        //std::vector<CellType*> leaves;
 
-        mpQuadtree->GetAllLeavesVector(leaves);
+        //mpQuadtree->GetAllLeavesVector(leaves);
         //int leaves_size = leaves.size();
 
         //         for(int i = 0 ; i < leaves_size ; i++)
         //             CalculateNotEmptyLeavesDistance(leaves[i]);
 
-#pragma omp parallel for firstprivate(nodes_size)
+ #pragma omp parallel for firstprivate(nodes_size)
         for(int i = 0 ; i < nodes_size ; i++)
         {
-            CalculateNodeDistance(*(nodes[i]));
+            /*std::cout<<"nav Node Id"<<nodes[i]->Id()<<std::endl;*/
+            
+            //debug
+            
+
+                CalculateNodeDistance(*(nodes[i]));
+            
+            
+            
         }
         Timer::Stop("Calculate Distances2");
 
@@ -1698,6 +1763,8 @@ public:
 
     void CalculateDistance(CellNodeDataType& rNode, int i_direction)
     {
+       
+
         double coords[3] = {rNode.X(), rNode.Y(), rNode.Z()};
         // KRATOS_WATCH_3(coords);
 
@@ -1809,11 +1876,15 @@ public:
         double distance = DistancePositionInSpace(coord);
         double& node_distance =  rNode.GetSolutionStepValue(DISTANCE);
 
-        //const double epsilon = 1.00e-12;
+        //std::cout<<"navInitial distance "<<node_distance<<std::endl;
+
+        const double epsilon = 1.00e-12;
         if(fabs(node_distance) > fabs(distance))
             node_distance = distance;
         else if (distance*node_distance < 0.00) // assigning the correct sign
             node_distance = -node_distance;
+
+            /*std::cout<<"navFinal distance"<<node_distance<<std::endl;*/
     }
 
     //      void CalculateNodeDistanceFromCell(Node<3>& rNode)
@@ -1844,22 +1915,25 @@ public:
         //This function must color the positions in space defined by 'coords'.
         //coords is of dimension (3) normalized in (0,1)^3 space
 
-        typedef Element::GeometryType triangle_type;
-        typedef std::vector<std::pair<double, triangle_type*> > intersections_container_type;
+        typedef Element::GeometryType line_type;
+        typedef std::vector<std::pair<double, line_type*> > intersections_container_type;
 
         intersections_container_type intersections;
 
-        const int dimension = 3;
+        const int dimension = 2;
         const double epsilon = 1e-12;
 
-        double distances[3] = {1.0, 1.0, 1.0};
+        double distances[2] = {10000, 10000};
 
         for (int i_direction = 0; i_direction < dimension; i_direction++)
         {
             // Creating the ray
-            double ray[3] = {coords[0], coords[1], coords[2]};
+            double ray[2] = {coords[0], coords[1]};
+
+            /*std::cout<<"navray "<<ray[0]<<","<<ray[1]<<std::endl;*/
             
             mpQuadtree->NormalizeCoordinates(ray);
+            /*std::cout<<"navAfterNormalisation-ray "<<ray[0]<<","<<ray[1]<<std::endl;*/
             ray[i_direction] = 0; // starting from the lower extreme
 
             GetIntersections(ray, i_direction, intersections);
@@ -1873,6 +1947,7 @@ public:
             std::vector<std::pair<double, Element::GeometryType*> >::iterator i_intersection = intersections.begin();
             while (i_intersection != intersections.end()) {
                 double d = coords[i_direction] - i_intersection->first;
+                /*std::cout<<"nav distance "<<d<<std::endl;*/
                 if (d > epsilon) {
 
                     ray_color = -ray_color;
@@ -1897,6 +1972,7 @@ public:
             }
 
             distances[i_direction] *= ray_color;
+            /*std::cout<<"nav signeddistance "<<i_direction<<distances[i_direction]<<std::endl;*/
         }
 
         //            if(distances[0]*distances[1] < 0.00 || distances[2]*distances[1] < 0.00)
@@ -1906,7 +1982,9 @@ public:
 //        std::cout << "colors : " << colors[0] << ", " << colors[1] << ", " << colors[2] << std::endl;
 //#endif
         double distance = (fabs(distances[0]) > fabs(distances[1])) ? distances[1] : distances[0];
-        distance = (fabs(distance) > fabs(distances[2])) ? distances[2] : distance;
+        //distance = (fabs(distance) > fabs(distances[2])) ? distances[2] : distance;
+
+        
 
         return distance;
 
@@ -2028,8 +2106,8 @@ public:
     void GetIntersections(double* ray, int direction, std::vector<std::pair<double,Element::GeometryType*> >& intersections)
     {
         //This function passes the ray through the model and gives the hit point to all objects in its way
-        //ray is of dimension (3) normalized in (0,1)^3 space
-        // direction can be 0,1,2 which are x,y and z respectively
+        //ray is of dimension (2) normalized in (0,1)^2 space
+        // direction can be 0,1which are x,y respectively
 
         const double epsilon = 1.00e-12;
 
@@ -2039,8 +2117,8 @@ public:
         //QuadtreeType* quadtree = &mQuadtree;
         QuadtreeType* quadtree = mpQuadtree.get();
 
-        QuadtreeType::key_type ray_key[3] = {quadtree->CalcKeyNormalized(ray[0]), quadtree->CalcKeyNormalized(ray[1]), quadtree->CalcKeyNormalized(ray[2])};
-        QuadtreeType::key_type cell_key[3];
+        QuadtreeType::key_type ray_key[2] = {quadtree->CalcKeyNormalized(ray[0]), quadtree->CalcKeyNormalized(ray[1])};
+        QuadtreeType::key_type cell_key[2];
 
         // getting the entrance cell from lower extreme
         QuadtreeType::cell_type* cell = quadtree->pGetCell(ray_key);
@@ -2081,14 +2159,19 @@ public:
             intersections.resize((++i_intersection) - intersections.begin());
 
         }
+
+        //debug
+        /*std::vector<std::pair<double, Element::GeometryType*> >::iterator i_begin = intersections.begin();
+
+        std::cout<<"navDirection "<<direction <<" Intersection "<<i_begin->first<<","<<(i_begin+1)->first<<std::endl;*/
     }
 
     int GetCellIntersections(QuadtreeType::cell_type* cell, double* ray,
                              QuadtreeType::key_type* ray_key, int direction,
                              std::vector<std::pair<double, Element::GeometryType*> >& intersections)  {
         //This function passes the ray through the cell and gives the hit point to all objects in its way
-        //ray is of dimension (3) normalized in (0,1)^3 space
-        // direction can be 0,1,2 which are x,y and z respectively
+        //ray is of dimension (2) normalized in (0,1)^2 space
+        // direction can be 0,1 which are x,y  respectively
 
         //typedef Element::GeometryType triangle_type;
         typedef QuadtreeType::cell_type::object_container_type object_container_type;
@@ -2101,8 +2184,8 @@ public:
 
         //      std::cout << "X";
         // calculating the two extreme of the ray segment inside the cell
-        double ray_point1[3] = {ray[0], ray[1], ray[2]};
-        double ray_point2[3] = {ray[0], ray[1], ray[2]};
+        double ray_point1[3] = {ray[0], ray[1]};
+        double ray_point2[3] = {ray[0], ray[1]};
         double normalized_coordinate;
         mpQuadtree->CalculateCoordinateNormalized(ray_key[direction], normalized_coordinate);
         ray_point1[direction] = normalized_coordinate;
@@ -2117,7 +2200,18 @@ public:
             int is_intersected = IntersectionLineSegment((*i_object)->GetGeometry(), ray_point1, ray_point2, intersection); // This intersection has to be optimized for axis aligned rays
 
             if (is_intersected == 1) // There is an intersection but not coplanar
+            {
+                
+/*                std::cout<<"navIntersection happened"<<std::endl;
+                std::cout<<"navPoint 1 "<<(*i_object)->GetGeometry()[0][0]<<","<<(*i_object)->GetGeometry()[0][1]<<std::endl;
+                std::cout<<"navPoint 2 "<<(*i_object)->GetGeometry()[1][0]<<","<<(*i_object)->GetGeometry()[1][1]<<std::endl;
+                std::cout<<"navIntersection  "<<intersection[direction]<<" Direction "<<direction<<std::endl;*/
                 intersections.push_back(std::pair<double, Element::GeometryType*>(intersection[direction], &((*i_object)->GetGeometry())));
+
+
+            }
+             
+                
             //else if(is_intersected == 2) // coplanar case
         }
 
@@ -2166,6 +2260,8 @@ public:
             vec_cd[i] = RayPoint2[i] - RayPoint1[i];             // ray direction vector CD
             
         }
+
+        vec_ac = vec_c-vec_a;
                                 
         MathUtils<double>::CrossProduct(vec_g,vec_cd,vec_ac);
         MathUtils<double>::CrossProduct(vec_h,vec_ab,vec_ac);
@@ -2190,7 +2286,14 @@ public:
         // for a segment, also test if (r > 1.0) => no intersect
 
         for(int i = 0 ; i < 3 ; i++)
+        {
+
             IntersectionPoint[i]  = vec_a[i] + s * vec_ab[i];           // intersect point of ray and struc edge
+
+        }
+
+        
+            
 
         // is I inside line segment?
 
@@ -2200,8 +2303,25 @@ public:
         
         if (t < 0.0 - epsilon || t > 1.0 + epsilon)  // I is outside fluid edge
             return 0;
-        std::cout<<"One intersection found"<<std::endl;
+
+
+        /*std::cout<<"str edge "<<rGeometry[0][0]<<","<<rGeometry[0][1]<<")  ("<<rGeometry[1][0]<<","<<rGeometry[1][1]<<std::endl;
+        std::cout<<"Fluid edge "<<RayPoint1[0]<<","<<RayPoint1[1]<<")  ("<<RayPoint2[0]<<","<<RayPoint2[1]<<std::endl;
+        std::cout<<" s "<<s<<" t "<<t<<" gk "<<gk<<" hk "<<hk<<" kk "<<kk<<std::endl;
+        std::cout<<" g "<<vec_g[0]<<","<<vec_g[1]<<","<<vec_g[2]<<std::endl;
+        std::cout<<" h "<<vec_h[0]<<","<<vec_h[1]<<","<<vec_h[2]<<std::endl;
+        std::cout<<" k "<<vec_k[0]<<","<<vec_k[1]<<","<<vec_k[2]<<std::endl;
+        std::cout<<" Intersection"<<IntersectionPoint[0]<<","<<IntersectionPoint[1]<<std::endl;
+        std::exit(-1);*/
+        
+      
+
         return 1;                      // I is in struc edge
+
+     
+
+    
+
 
     }
 
@@ -2354,6 +2474,7 @@ private:
     boost::shared_ptr<QuadtreeType> mpQuadtree;
 
     static const double epsilon;
+    typename ParallelDistanceCalculator<2>::Pointer pDistanceCalculator;
 
     /**
          * @}

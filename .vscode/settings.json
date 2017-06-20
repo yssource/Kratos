@@ -22,6 +22,26 @@
         "type_traits": "cpp",
         "typeinfo": "cpp",
         "*.ipp": "cpp",
-        "array": "cpp"
+        "array": "cpp",
+        "strstream": "cpp",
+        "*.tcc": "cpp",
+        "bitset": "cpp",
+        "clocale": "cpp",
+        "complex": "cpp",
+        "fstream": "cpp",
+        "functional": "cpp",
+        "iomanip": "cpp",
+        "iostream": "cpp",
+        "istream": "cpp",
+        "mutex": "cpp",
+        "new": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "stdexcept": "cpp",
+        "streambuf": "cpp",
+        "system_error": "cpp",
+        "tuple": "cpp",
+        "utility": "cpp",
+        "valarray": "cpp"
     }
 }

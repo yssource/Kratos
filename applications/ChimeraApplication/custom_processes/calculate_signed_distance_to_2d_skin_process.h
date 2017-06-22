@@ -335,10 +335,10 @@ public:
 
         DistanceFluidStructure();
         unsigned int max_level = 100;
-		double max_distance = 5000;
+		double max_distance = 200;
 
-        //this->pDistanceCalculator->CalculateDistancesbn(mrFluidModelPart,DISTANCE,NODAL_AREA,max_level,max_distance);
-        this->pDistanceCalculator->CalculateDistances(mrFluidModelPart,DISTANCE,NODAL_AREA,max_level,max_distance);
+       
+        
         
         //          ------------------------------------------------------------------
         //          GenerateNodes();
@@ -353,7 +353,7 @@ public:
         //          Timer::Stop("Writing Gid conform Mesh");
         //          delete quadtree. TODO: Carlos
         //          ------------------------------------------------------------------
-
+        this->pDistanceCalculator->CalculateDistances(mrFluidModelPart,DISTANCE,NODAL_AREA,max_level,max_distance);
         KRATOS_CATCH("");
     }
 
@@ -512,15 +512,6 @@ public:
         // reset the node distance to 1.0 which is the maximum distance in our normalized space.
         int nodesSize = nodes.size();
 
-#pragma omp parallel for firstprivate(nodesSize)
-        for(int i = 0 ; i < nodesSize ; i++)
-        {
-
-            double& nodal_distance = nodes[i]->GetSolutionStepValue(DISTANCE) ;
-
-            if(nodal_distance > (initial_distance)-0.001) nodal_distance = 0;
-
-        }*/
             
  
 
@@ -1882,7 +1873,11 @@ public:
         if(fabs(node_distance) > fabs(distance))
             node_distance = distance;
         else if (distance*node_distance < 0.00) // assigning the correct sign
-            node_distance = -node_distance;
+                node_distance = -node_distance;
+
+        //For ignoring the distance calculation from this function
+        //if (distance*node_distance < 0.00) // assigning the correct sign
+            //node_distance = -node_distance;
 
             /*std::cout<<"navFinal distance"<<node_distance<<std::endl;*/
     }

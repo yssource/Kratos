@@ -19,10 +19,10 @@
 
 // System includes
 #include <string>
-#include <iostream> 
+#include <iostream>
 #include <ctime>
 
-// External includes 
+// External includes
 
 
 // Project includes
@@ -141,7 +141,7 @@ public:
     {
         rHighPoint = rObject->GetGeometry().GetPoint(0);
         rLowPoint  = rObject->GetGeometry().GetPoint(0);
-        
+
         for (unsigned int point = 0; point<rObject->GetGeometry().PointsNumber(); point++)
         {
             for(std::size_t i = 0; i<3; i++)
@@ -327,19 +327,19 @@ public:
     virtual void Execute() override
     {
         KRATOS_TRY;
-        
+
         //GenerateFluidModelPartbasedOnBoundingBox();
         GenerateQuadtree();
         std::cout<<"Inside Execute"<<std::endl;
-        
+
 
         DistanceFluidStructure();
         unsigned int max_level = 100;
 		double max_distance = 200;
 
-       
-        
-        
+
+
+
         //          ------------------------------------------------------------------
         //          GenerateNodes();
         CalculateDistance2(); // I have to change this. Pooyan.
@@ -357,19 +357,19 @@ public:
         KRATOS_CATCH("");
     }
 
-    
+
 
     ///******************************************************************************************************************
     ///******************************************************************************************************************
 
-    // generates 
+    // generates
     /*void GenerateFluidModelPartbasedOnBoundingBox()
     {
 
         array_1d<double,3> low;
         array_1d<double,3> high;
         array_1d<double,3> size;
-         
+
 
         // loop over all skin nodes
         for(ModelPart::NodeIterator i_node = mrSkinModelPart.NodesBegin();
@@ -392,42 +392,42 @@ public:
                 high[i] = high[i]*0.1*size[i];
             }
    */
-    
+
         /*std::cout<<"Lowest Dimension"<<low[0]<<","<<low[1]<<","<<low[2]<<","<<std::endl;
-        
+
         std::cout<<"Highest Dimension"<<high[0]<<","<<high[1]<<","<<high[2]<<","<<std::endl;
-  
+
         for(ModelPart::ElementIterator elem = mrBackgroundModelPart.ElementsBegin(); elem != mrBackgroundModelPart.ElementsEnd(); elem ++)
 
         {
-            
+
             Geometry<Node<3> >& geom = elem->GetGeometry();
-            array_1d<double,3> coords; 
+            array_1d<double,3> coords;
             unsigned int numOfPointsInside = 0;
 			for (int j = 0 ; j < geom.size(); j++){
 				coords = elem->GetGeometry()[j].Coordinates();
-				
+
 				{
 				  bool isInside = IsInside(coords,high,low);
                   numOfPointsInside++;
 
 				}
 			}
-            
-            if (numOfPointsInside > 0) 
+
+            if (numOfPointsInside > 0)
             {
-            
+
             Element::Pointer pElem = Element::Pointer(new Element(*elem));
 			mrFluidModelPart.Elements().push_back(pElem);
 
             }
-            
-            
+
+
 
         }
 
         std::cout<<"Fluid Model Part that is considered"<<mrFluidModelPart.Elements().size()<<std::endl;
-       
+
 
     }    */
 
@@ -436,7 +436,7 @@ public:
 
         {
 
-            array_1d<double, 3 > ab; 
+            array_1d<double, 3 > ab;
             array_1d<double, 3 > ad;
             array_1d<double, 3 > am;
 
@@ -449,7 +449,7 @@ public:
 
             if (inner_prod(ab,am) < 0 && inner_prod(ab,am)>inner_prod(ab,ab))
             return false;
-            
+
             if (inner_prod(ad,am) < 0 && inner_prod(ad,am)>inner_prod(ad,ad))
             return false;
 
@@ -460,7 +460,7 @@ public:
 
 */
 
-    
+
     void DistanceFluidStructure()
     {
       //std::cout << "Start calculating Elemental distances..." << std::endl;
@@ -496,7 +496,7 @@ public:
             {
                 CalcElementDistances( it , TriangleEdgeIndexTable );
             }
-        }        
+        }
 
         // Finally, each triangle Element has 3 distance values. But each node belongs to
         // several Elements, such that it is assigned several distance values
@@ -504,16 +504,16 @@ public:
         AssignMinimalNodalDistance();
 
         const double initial_distance = 1000;
-        
-        
 
-       /* ModelPart::NodesContainerType::ContainerType& nodes = mrFluidModelPart.NodesArray();
+
+
+       /* ModelPart::NodesContainerType::ContainerType& nodes = mrFluidModelPart.NodesArray();*/
 
         // reset the node distance to 1.0 which is the maximum distance in our normalized space.
-        int nodesSize = nodes.size();
+        //int nodesSize = nodes.size();
 
-            
- 
+
+
 
         //std::cout << "Finished calculating Elemental distances..." << std::endl;
     }
@@ -568,7 +568,7 @@ public:
         TriangleEdgeIndexTable(1,1) = 2;
         TriangleEdgeIndexTable(2,0) = 1;
         TriangleEdgeIndexTable(2,1) = 2;
-        
+
     }
 
     ///******************************************************************************************************************
@@ -585,7 +585,7 @@ public:
         mpQuadtree->GetIntersectedLeaves(*(i_fluidElement).base(),leaves);
 
         //std::cout<<"Fluid element"<<i_fluidElement->Id()<<std::endl;
-      
+
         int intersection_counter = 0;
 
         // Loop over all 6 line Edges of the triangle
@@ -615,7 +615,7 @@ public:
                                     unsigned int&                                 NumberIntersectionsOnTriangleCorner,
                                     bounded_matrix<unsigned int,6,2>              TriangleEdgeIndexTable,
                                     int&                                          intersection_counter )
-    {   
+    {
         std::vector<unsigned int> IntersectingStructElemID;
         TriangleEdgeStruct             NewTriangleEdge;
         unsigned int              NumberIntersectionsOnTriangleCornerCurrentEdge = 0;
@@ -631,52 +631,52 @@ public:
         double EdgeNode2[3] = {P2.X() , P2.Y() , P2.Z()};
 	    //std::cout<<"Leaves size "<<leaves.size()<<std::endl;
 
-        
 
-       
+
+
         //std::cout<<"Fluid Nodes \n :"<<i_fluidElement->GetGeometry()<<std::endl;
-        
+
         //check to see structure elemets near the fluid element
        /* for(unsigned int i_cell = 0 ; i_cell < leaves.size() ; i_cell++)
          {
 
-            
+
 
             object_container_type* struct_elem = (leaves[i_cell]->pGetObjects());
-            
+
             if (struct_elem->size()>0)
             {
-                
-                
+
+
 
                 for(object_container_type::iterator i_StructElement = struct_elem->begin(); i_StructElement != struct_elem->end(); i_StructElement++)
                     //std::cout<<"Structural element Id :"<<(*i_StructElement)->Id()<<",";
-            
+
             }
 
-             
-            
+
+
 
          }*/
 
-        
-        
-        
+
+
+
         // loop over all quadtree cells which are intersected by the fluid Element
         for(unsigned int i_cell = 0 ; i_cell < leaves.size() ; i_cell++)
         {
             // Structural Element contained in one cell of the quadtree
 
-            
+
             object_container_type* struct_elem = (leaves[i_cell]->pGetObjects());
             //if(struct_elem->size()==0)
             //std::cout<<"0"<<std::endl;
 
             //else
             //std::cout<<"Nr of structural element in struc_elem "<<struct_elem->size()<<std::endl;
-            
-            
-            
+
+
+
 
             // loop over all structural Elements within each quadtree cell
             for(object_container_type::iterator i_StructElement = struct_elem->begin(); i_StructElement != struct_elem->end(); i_StructElement++)
@@ -685,7 +685,7 @@ public:
                 //std::cout<<"Hello there "<<std::endl;
                 if( StructuralElementNotYetConsidered( (*i_StructElement)->Id() , IntersectingStructElemID ) )
                 {
-                    
+
                     // Calculate and associate intersection point to the current fluid Element
                     double IntersectionPoint[3] = {0.0 , 0.0 , 0.0};
 
@@ -696,13 +696,13 @@ public:
                         //std::cout<<"Fluid element"<<i_fluidElement->Id()<<std::endl;
                         //std::cout<<"Structural element Id :"<<(*i_StructElement)->Id()<<std::endl;
                         IntersectionNodeStruct NewIntersectionNode;
-                      
+
 
                         // Assign information to the intersection node
                         NewIntersectionNode.Coordinates[0] = IntersectionPoint[0];
                         NewIntersectionNode.Coordinates[1] = IntersectionPoint[1];
                         NewIntersectionNode.Coordinates[2] = IntersectionPoint[2];
-			 
+
                         if( IsIntersectionNodeOnTriangleEdge( IntersectionPoint , EdgeNode1 , EdgeNode2 ) )
                         {
                             //std::cout<<"Intersection on Triangle edge"<<std::endl;
@@ -911,7 +911,7 @@ public:
         array_1d<double,3> ElementalDistances;
 
         FillIntNodesContainer(IntersectedTriangleEdges,NodesOfApproximatedStructure);
-	
+
         // Intersection with one corner point
         if( NodesOfApproximatedStructure.size() == 1 && NumberIntersectionsOnTriangleCorner == 1 )
         {
@@ -933,7 +933,7 @@ public:
         {
             CalcSignedDistancesToTwoEdgeIntNodes(i_fluid_Element,NodesOfApproximatedStructure,ElementalDistances);
             i_fluid_Element->GetValue(SPLIT_ELEMENT) = true;
-            
+
             //std::cout<<"CalcSignedDistancesToTwoEdgeIntNodes"<<"ED "<<ElementalDistances[0]<<","<<ElementalDistances[1]<<","<<ElementalDistances[2]<<std::endl;
             /*if(i_fluid_Element->Id()==2541)
             {
@@ -947,11 +947,11 @@ public:
         {
             CalcSignedDistancesToMoreThanTwoIntNodes(i_fluid_Element,NodesOfApproximatedStructure,ElementalDistances,IntersectedTriangleEdges);
             i_fluid_Element->GetValue(SPLIT_ELEMENT) = true;
-            
+
             //std::cout<<"CalcSignedDistancesToMoreThanTwoIntNodes"<<"ED "<<ElementalDistances[0]<<","<<ElementalDistances[1]<<","<<ElementalDistances[2]<<std::endl;
 
 
-          
+
         }
 
         // Postprocessing treatment of Elemental distances
@@ -962,13 +962,13 @@ public:
         if( i_fluid_Element->GetValue(SPLIT_ELEMENT) == true )
         {
              //std::cout<<"Assigning distances to element"<<std::endl;
-        
+
             i_fluid_Element->GetValue(ELEMENTAL_DISTANCES) = ElementalDistances;
 
             //std::cout<<"Assignment done"<<std::endl;
-            
+
         }
-            
+
     }
 
     ///******************************************************************************************************************
@@ -1043,8 +1043,8 @@ public:
 
         // switch direction of normal
         if(NormalWrongOriented)
-            Normal *=-1;	
-	
+            Normal *=-1;
+
         // Compute distance values for all triangle-nodes
         for(unsigned int i_TriangleNode = 0 ; i_TriangleNode < 3 ; i_TriangleNode++)
         {
@@ -1278,7 +1278,7 @@ public:
         // Assign a distance limit
         double dist_limit = 1e-5;*/
 //         bool distChangedToLimit = false; //variable to indicate that a distance value < tolerance is set to a limit distance = tolerance
-// 
+//
 //         for(unsigned int i_node = 0; i_node < 3; i_node++)
 //         {
 //             if(fabs(ElementalDistances[i_node]) < dist_limit)
@@ -1287,7 +1287,7 @@ public:
 //                 distChangedToLimit = true;
 //             }
 //         }
-// 
+//
 //         // Check, if this approach changes the split-flag (might be, that Element is not cut anymore if node with zero distance gets a positive limit distance value
 //         unsigned int numberNodesPositiveDistance = 0;
 //         for(unsigned int i_node = 0; i_node < 3; i_node++)
@@ -1295,7 +1295,7 @@ public:
 //             if((ElementalDistances[i_node]) > 0)
 //                 numberNodesPositiveDistance++;
 //         }
-        
+
         /*for(unsigned int i_node = 0; i_node < 3; i_node++)
         {
             double & di = ElementalDistances[i_node];
@@ -1438,7 +1438,7 @@ public:
                     Triangle3D3< Node<3> > triangle2(pnode1, pnode3, pnode4);
 
                     Condition const& rReferenceCondition = KratosComponents<Condition>::Get("Condition3D");
-                 
+
                     Properties::Pointer properties = mrNewSkinModelPart.rProperties()(0);
 
                     Condition::Pointer p_condition1 = rReferenceCondition.Create(id_condition++, triangle1, properties);
@@ -1446,7 +1446,7 @@ public:
 
                     mrNewSkinModelPart.Conditions().push_back(p_condition1);
                     mrNewSkinModelPart.Conditions().push_back(p_condition2);
-                    
+
                 }
 
             }
@@ -1466,17 +1466,17 @@ public:
         mpQuadtree.swap(temp_quadtree);
 
         std::cout<<"Inside Quadtree"<<std::endl;
-        
+
         double low[2];
         double high[2];
 
         std::cout<<"Fluid Model part"<< mrFluidModelPart<<std::endl;
-        
+
         for (int i = 0 ; i < 2; i++)
         {
             low[i] = high[i] = mrFluidModelPart.NodesBegin()->Coordinate(i+1);
         }
-        
+
         // loop over all nodes in the bounding box
         for(ModelPart::NodeIterator i_node = mrFluidModelPart.NodesBegin();
             i_node != mrFluidModelPart.NodesEnd();
@@ -1488,7 +1488,7 @@ public:
                 high[i] = i_node->Coordinate(i+1) > high[i] ? i_node->Coordinate(i+1) : high[i];
             }
         }
-        
+
         // loop over all skin nodes
         for(ModelPart::NodeIterator i_node = mrSkinModelPart.NodesBegin();
             i_node != mrSkinModelPart.NodesEnd();
@@ -1503,9 +1503,9 @@ public:
         std::cout<<"Skin added"<<std::endl;
         mpQuadtree->SetBoundingBox(low,high);
         std::cout<<"Lowest Dimension"<<low[0]<<","<<low[1]<<std::endl;
-        
+
         std::cout<<"Highest Dimension"<<high[0]<<","<<high[1]<<std::endl;
-        
+
         //mpQuadtree->RefineWithUniformSize(0.0625);
 
         // loop over all structure nodes
@@ -1543,7 +1543,7 @@ public:
         myfile.close();
 
         std::cout << "Generating the Quadtree finished" << std::endl;
-        
+
     }
 
     ///******************************************************************************************************************
@@ -1582,10 +1582,10 @@ public:
     void GenerateCellNode(CellType* pCell, std::size_t& LastId)
     {
 
-        
+
         for (int i_pos=0; i_pos < 4; i_pos++) // position 4 is for center
         {
-            
+
             DistanceSpatialContainersConfigure::cell_node_data_type* p_node = (*(pCell->pGetData()))[i_pos];
             if(p_node == 0)
             {
@@ -1598,10 +1598,10 @@ public:
                 SetNodeInNeighbours(pCell,i_pos,(*(pCell->pGetData()))[i_pos]);
             }
 
-            
+
 
         }
-        
+
     }
 
     ///******************************************************************************************************************
@@ -1657,14 +1657,14 @@ public:
         for(int i = 0 ; i < nodes_size ; i++)
         {
             /*std::cout<<"nav Node Id"<<nodes[i]->Id()<<std::endl;*/
-            
+
             //debug
-            
+
 
                 CalculateNodeDistance(*(nodes[i]));
-            
-            
-            
+
+
+
         }
         Timer::Stop("Calculate Distances2");
 
@@ -1754,7 +1754,7 @@ public:
 
     void CalculateDistance(CellNodeDataType& rNode, int i_direction)
     {
-       
+
 
         double coords[3] = {rNode.X(), rNode.Y(), rNode.Z()};
         // KRATOS_WATCH_3(coords);
@@ -1775,7 +1775,7 @@ public:
 
         // Creating the ray
         double ray[3] = {coords[0], coords[1], coords[2]};
-        
+
         mpQuadtree->NormalizeCoordinates(ray);
         ray[i_direction] = 0; // starting from the lower extreme
 
@@ -1926,7 +1926,7 @@ public:
             double ray[2] = {coords[0], coords[1]};
 
             /*std::cout<<"navray "<<ray[0]<<","<<ray[1]<<std::endl;*/
-            
+
             mpQuadtree->NormalizeCoordinates(ray);
             /*std::cout<<"navAfterNormalisation-ray "<<ray[0]<<","<<ray[1]<<std::endl;*/
             ray[i_direction] = 0; // starting from the lower extreme
@@ -1979,7 +1979,7 @@ public:
         double distance = (fabs(distances[0]) > fabs(distances[1])) ? distances[1] : distances[0];
         //distance = (fabs(distance) > fabs(distances[2])) ? distances[2] : distance;
 
-        
+
 
         return distance;
 
@@ -2196,7 +2196,7 @@ public:
 
             if (is_intersected == 1) // There is an intersection but not coplanar
             {
-                
+
 /*                std::cout<<"navIntersection happened"<<std::endl;
                 std::cout<<"navPoint 1 "<<(*i_object)->GetGeometry()[0][0]<<","<<(*i_object)->GetGeometry()[0][1]<<std::endl;
                 std::cout<<"navPoint 2 "<<(*i_object)->GetGeometry()[1][0]<<","<<(*i_object)->GetGeometry()[1][1]<<std::endl;
@@ -2205,8 +2205,8 @@ public:
 
 
             }
-             
-                
+
+
             //else if(is_intersected == 2) // coplanar case
         }
 
@@ -2218,16 +2218,16 @@ public:
         // This is the adaption of the algorithm provided in:
         // http://mathworld.wolfram.com/Line-LineIntersection.html
 
-        
-        
-/*                       D 
-                        /             
+
+
+/*                       D
+                        /
                        /
                       / I
                 A----o-------B
-                    /  
+                    /
                    /
-                  /        
+                  /
                  C
 */
         const double epsilon = 1.00e-12;
@@ -2238,7 +2238,7 @@ public:
         array_1d<double,3>    vec_ac,vec_g,vec_h,vec_k;    // intermediate vector for intersection calculation
 
 
-        // get struc edge vectors 
+        // get struc edge vectors
 
         vec_a = rGeometry[0];
         vec_ab = rGeometry[1] - rGeometry[0];
@@ -2246,24 +2246,24 @@ public:
 
         if (norm_2(vec_ab) == 0)                    //line segment is degenerate
             return -1;                             // do not deal with this case
-        
+
 
         // get fluid edge vectors
         for(int i = 0 ; i < 3 ; i++)
         {
             vec_c[i] = RayPoint1[i];
             vec_cd[i] = RayPoint2[i] - RayPoint1[i];             // ray direction vector CD
-            
+
         }
 
         vec_ac = vec_c-vec_a;
-                                
+
         MathUtils<double>::CrossProduct(vec_g,vec_cd,vec_ac);
         MathUtils<double>::CrossProduct(vec_h,vec_ab,vec_ac);
         MathUtils<double>::CrossProduct(vec_k,vec_cd,vec_ab);
        double mag_cd,gk,hk,kk;
         mag_cd = norm_2(vec_cd);
-        
+
         gk = inner_prod(vec_g,vec_k);
         hk = inner_prod(vec_h,vec_k);
         kk = inner_prod(vec_k,vec_k);
@@ -2287,15 +2287,15 @@ public:
 
         }
 
-        
-            
+
+
 
         // is I inside line segment?
 
-       
+
         if (s < 0.0 - epsilon || s > 1.0 + epsilon)        // I is outside struc edge
             return 0;
-        
+
         if (t < 0.0 - epsilon || t > 1.0 + epsilon)  // I is outside fluid edge
             return 0;
 
@@ -2308,14 +2308,14 @@ public:
         std::cout<<" k "<<vec_k[0]<<","<<vec_k[1]<<","<<vec_k[2]<<std::endl;
         std::cout<<" Intersection"<<IntersectionPoint[0]<<","<<IntersectionPoint[1]<<std::endl;
         std::exit(-1);*/
-        
-      
+
+
 
         return 1;                      // I is in struc edge
 
-     
 
-    
+
+
 
 
     }
@@ -2459,8 +2459,8 @@ private:
     ///@name Member Variables
     ///@{
     ModelPart& mrSkinModelPart;
-    
-    
+
+
     //ModelPart& mrBackgroundModelPart;
     ModelPart& mrFluidModelPart;
     ModelPart& mrBodyModelPart;
@@ -2713,6 +2713,4 @@ const double CalculateSignedDistanceTo2DSkinProcess::epsilon = 1e-18;
 
 }  // namespace Kratos.
 
-#endif // KRATOS_CALCULATE_DISTANCE_PROCESS_H_INCLUDED  defined 
-
-
+#endif // KRATOS_CALCULATE_DISTANCE_PROCESS_H_INCLUDED  defined

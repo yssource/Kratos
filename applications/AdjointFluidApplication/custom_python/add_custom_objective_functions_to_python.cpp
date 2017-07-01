@@ -6,7 +6,7 @@
 // Application includes
 #include "custom_utilities/objective_function.h"
 #include "custom_utilities/drag_objective_function.h"
-#include "custom_python/add_custom_objective_functions_to_python.h"
+#include "custom_utilities/potentialflow_lift_objective_function.h"
 
 namespace Kratos
 {
@@ -30,6 +30,9 @@ void AddCustomObjectiveFunctionsToPython()
 
     class_<DragObjectiveFunction<2>, bases<ObjectiveFunction>, boost::noncopyable>
     ("DragObjectiveFunction2D", init<Parameters&>());
+
+    class_<DragObjectiveFunction<3>, bases<ObjectiveFunction>, boost::noncopyable>
+    ("DragObjectiveFunction3D", init<Parameters&>());
 
     class_<DragObjectiveFunction<3>, bases<ObjectiveFunction>, boost::noncopyable>
     ("DragObjectiveFunction3D", init<Parameters&>());

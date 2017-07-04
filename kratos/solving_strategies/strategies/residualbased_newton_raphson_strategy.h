@@ -437,11 +437,17 @@ public:
      
     virtual double Solve() override
     {
+        
         Initialize();
+        
         InitializeSolutionStep();
+        
         Predict();
+        
         SolveSolutionStep();
+        
         FinalizeSolutionStep();
+        
         return 0.00;
     }
 
@@ -535,7 +541,7 @@ public:
         typename TSchemeType::Pointer pScheme = GetScheme();
         typename TBuilderAndSolverType::Pointer pBuilderAndSolver = GetBuilderAndSolver();
         int rank = BaseType::GetModelPart().GetCommunicator().MyPID();
-
+        
         //set up the system, operation performed just once unless it is required
         //to reform the dof set at each iteration
         if (pBuilderAndSolver->GetDofSetIsInitializedFlag() == false ||
@@ -543,21 +549,25 @@ public:
         {
             //setting up the list of the DOFs to be solved
             double setup_dofs_begintime = OpenMPUtils::GetCurrentTime();
+           
             pBuilderAndSolver->SetUpDofSet(pScheme, BaseType::GetModelPart());
             if (this->GetEchoLevel() > 0 && rank == 0)
             {
                 double setup_dofs_endtime = OpenMPUtils::GetCurrentTime();
                 std::cout << "setup_dofs_time : " << setup_dofs_endtime- setup_dofs_begintime << std::endl;
             }
+            
 
             //shaping correctly the system
             double setup_system_begin = OpenMPUtils::GetCurrentTime();
+            
             pBuilderAndSolver->SetUpSystem(BaseType::GetModelPart());
             if (this->GetEchoLevel() > 0 && rank == 0)
             {
                 double setup_system_end = OpenMPUtils::GetCurrentTime();
                 std::cout << rank << ": setup_system_time : " << setup_system_end- setup_system_begin << std::endl;
             }
+            
         }
 
         //prints informations about the current time

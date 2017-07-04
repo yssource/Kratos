@@ -43,7 +43,7 @@
 
 // Application includes
 #include "custom_utilities/multipoint_constraint_data.hpp"
-#include "custom_processes/custom_calculate_and_extract_distance_process.h"
+#include "custom_processes/custom_calculate_signed_distance_process.h"
 #include "custom_hole_cutting_process.h"
 #include "custom_processes/apply_multi_point_constraints_process_chimera.h"
 
@@ -95,12 +95,14 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 		this->pBinLocatorForPatch = BinBasedPointLocatorPointerType( new BinBasedFastPointLocator<TDim>(mrPatchModelPart) );
 		this->pMpcProcess =  ApplyMultipointConstraintsProcessChimera::Pointer(new ApplyMultipointConstraintsProcessChimera(mrAllModelPart)); 
 		this->pHoleCuttingProcess = CustomHoleCuttingProcess::Pointer(new CustomHoleCuttingProcess());
-		this->pCalculateDistanceProcess = typename CustomCalculateAndExtractDistanceProcess<TDim>::Pointer(new CustomCalculateAndExtractDistanceProcess<TDim>());
+		this->pCalculateDistanceProcess = typename CustomCalculateSignedDistanceProcess<TDim>::Pointer(new CustomCalculateSignedDistanceProcess<TDim>());
 
 	}
 
 	/// Destructor.
 	virtual ~CustomApplyChimeraUsingMpcProcess() {
+
+		
 	}
 
 	///@}
@@ -181,29 +183,7 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 						}
 						
 						Geometry<Node<3> >& geom = pElement->GetGeometry();
-					//std::cout<<"Element Id: "<< pElement->Id();
-
-					// TO DO Apply MPC constraints. Here have to use the mpc functions to apply the constraint
 					
-					//std::cout<<p_boundary_node->Id()<<" \t"<<geom[0].Id()<<" \t"<<geom[1].Id()<<" \t"<<geom[2].Id()<<" \t"<<N[0]<<" \t "<<N[1]<<" \t"<< N[2]<<std::endl;										
-					//for debugging the patch elements which are host	
-					//pElement->Set(ACTIVE,false);
-					//p_boundary_node->Set(VISITED);
-						/*if (type == 0)
-						{
-							for(int i = 0; i < geom.size(); i++)
-							{
-					
-								pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_X,*p_boundary_node,VELOCITY_X,N[i], 0 );
-								pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_Y,*p_boundary_node,VELOCITY_Y,N[i], 0 );
-								pMpcProcess->AddMasterSlaveRelationVariables( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i], 0 );
-					
-
-							}
-
-						}
-
-						else*/
 						{
 
 							for(int i = 0; i < geom.size(); i++)
@@ -273,7 +253,7 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 
 
 
-//Apply Chimera without overlap
+//Apply Chimera with or without overlap
 	void ApplyChimeraUsingMpc(ModelPart& mrPatchBoundaryModelPart){
 
 		if(overlap_distance < 0) {
@@ -281,20 +261,24 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 			std::cout<<"Overlap distance should be a positive number"<<std::endl;
 			std::exit(-1);
 		}
-		if (overlap_distance > 0){
+		if (overlap_distance > 0)
+		
+		{
           
 		ModelPart HoleModelPart = ModelPart("HoleModelpart");
 		ModelPart HoleBoundaryModelPart = ModelPart("HoleBoundaryModelPart");
 
-		this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
+		//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
+		 this->pCalculateDistanceProcess->CalculateSignedDistance(mrBackgroundModelPart, mrPatchBoundaryModelPart);
 
 	
 		this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart,HoleModelPart,HoleBoundaryModelPart, overlap_distance);
 		
 
 		ApplyMpcConstraint(mrPatchBoundaryModelPart,pBinLocatorForBackground,0);
-
+		std::cout<<"Patch boundary coupled with background"<<std::endl;
 		ApplyMpcConstraint(HoleBoundaryModelPart,pBinLocatorForPatch,1);
+		std::cout<<"HoleBoundary  coupled with patch"<<std::endl;
 
 
 
@@ -303,28 +287,25 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 
 		else {
 
-		ModelPart HoleModelPart =  ModelPart("HoleModelPart");
-		ModelPart HoleBoundaryModelPart =  ModelPart("HoleBoundaryModelPart");
+			ModelPart HoleModelPart =  ModelPart("HoleModelPart");
+			ModelPart HoleBoundaryModelPart =  ModelPart("HoleBoundaryModelPart");
 
-		//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
+			//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
 
 	
-		this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart,HoleModelPart,HoleBoundaryModelPart,overlap_distance);
+			this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart,HoleModelPart,HoleBoundaryModelPart,overlap_distance);
 		
 
-		ApplyMpcConstraint(mrPatchBoundaryModelPart,pBinLocatorForBackground);
+			ApplyMpcConstraint(mrPatchBoundaryModelPart,pBinLocatorForBackground);
 
 
+			}
+		
+		
 
-
-
-
+			
 		}
-		
-		
 
-
-		}
 
 		void SetOverlapDistance(double distance)
 		{
@@ -404,7 +385,7 @@ private:
 	BinBasedPointLocatorPointerType pBinLocatorForPatch;
 	ApplyMultipointConstraintsProcessChimera::Pointer pMpcProcess;
 	CustomHoleCuttingProcess::Pointer pHoleCuttingProcess;
-	typename CustomCalculateAndExtractDistanceProcess<TDim>::Pointer pCalculateDistanceProcess;
+	typename CustomCalculateSignedDistanceProcess<TDim>::Pointer pCalculateDistanceProcess;
 	double overlap_distance;
 	ModelPart& mrBackgroundModelPart;
 	ModelPart& mrPatchModelPart;

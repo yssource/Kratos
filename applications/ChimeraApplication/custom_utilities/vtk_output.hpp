@@ -119,7 +119,7 @@ class VtkOutput
         writeNodes(model_part);
         writeConditionsAndElements(model_part);
         writeConditionAndElementTypes(model_part);
-        //writeElementData(model_part);
+        writeElementData(model_part);
     }
 
     void writeNodes(ModelPart &model_part)

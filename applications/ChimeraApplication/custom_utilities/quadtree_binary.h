@@ -82,7 +82,7 @@ namespace Kratos {
             DIMENSION = cell_type::DIMENSION,
             MAX_LEVEL = cell_type::MAX_LEVEL,
             ROOT_LEVEL = cell_type::ROOT_LEVEL,
-            MIN_LEVEL = cell_type::MIN_LEVEL // must be greater iqual to 2
+            MIN_LEVEL = cell_type::MIN_LEVEL // must be greater equal to 2
         };
 
         ///@}
@@ -212,7 +212,7 @@ namespace Kratos {
         void InsertNormalized(coordinate_type* point) {
             key_type x_key = CalcKeyNormalized(point[0]);
             key_type y_key = CalcKeyNormalized(point[1]);
-            //key_type z_key = CalcKeyNormalized(point[2]);
+            
 
             cell_type* cell = root_;
 
@@ -230,7 +230,7 @@ namespace Kratos {
             NormalizeCoordinates(point, normalized_point);
             key_type x_key = CalcKeyNormalized(normalized_point[0]);
             key_type y_key = CalcKeyNormalized(normalized_point[1]);
-            //key_type z_key = CalcKeyNormalized(normalized_point[2]);
+            
 
             cell_type* cell = root_;
 
@@ -625,25 +625,25 @@ namespace Kratos {
 
             key_type min_x_key = CalcKeyNormalized(coord1[0]);
             key_type min_y_key = CalcKeyNormalized(coord1[1]);
-            //key_type min_z_key = CalcKeyNormalized(coord1[2]);
+            
 
             key_type max_x_key = CalcKeyNormalized(coord2[0]);
             key_type max_y_key = CalcKeyNormalized(coord2[1]);
-            //key_type max_z_key = CalcKeyNormalized(coord2[2]);
+            
 
             key_type delta_x = min_x_key^max_x_key;
             key_type delta_y = min_y_key^max_y_key;
-            //key_type delta_z = min_z_key^max_z_key;
+           
 
             // finding the level of the cell containing the entire region
             std::size_t min_level_1 = ROOT_LEVEL;
             std::size_t min_level = ROOT_LEVEL;
-            //std::size_t min_level = ROOT_LEVEL;
+            
 
             const std::size_t one = 1;
             while (!(delta_x & (one << min_level_1)) && (min_level_1 > MIN_LEVEL)) min_level_1--;
             while (!(delta_y & (one << min_level)) && (min_level > min_level_1)) min_level--;
-            //while (!(delta_z & (one << min_level)) && (min_level > min_level_2)) min_level--;
+            
             min_level++;
 
             cell_type* range_cell = root_;
@@ -686,10 +686,10 @@ namespace Kratos {
         {
             return (Low1[0] <= High2[0]) &&
                    (Low1[1] <= High2[1]) &&
-                   //(Low1[2] <= High2[2]) &&
+                   
                    (Low2[0] <= High1[0]) &&
                    (Low2[1] <= High1[1]);
-                   //(Low2[2] <= High1[2]);
+                   
         }
 
 
@@ -713,8 +713,7 @@ namespace Kratos {
             key_type keys[2];
             keys[0] = CalcKeyNormalized(point[0]);
             keys[1] = CalcKeyNormalized(point[1]);
-            //keys[2] = CalcKeyNormalized(point[2]);
-
+            
             return pGetCell(keys);
         }
 
@@ -861,8 +860,7 @@ namespace Kratos {
         int SubdivideUntilSizeNormalized(double* coord, const double desired_size){
             key_type x_key = CalcKeyNormalized(coord[0]);
             key_type y_key = CalcKeyNormalized(coord[1]);
-            //key_type z_key = CalcKeyNormalized(coord[2]);
-
+           
             cell_type* cell = root_;
 
 
@@ -924,26 +922,22 @@ namespace Kratos {
 
             key_type min_x_key = CalcKeyNormalized(min_coord[0]);
             key_type min_y_key = CalcKeyNormalized(min_coord[1]);
-            //key_type min_z_key = CalcKeyNormalized(min_coord[2]);
-
+            
             key_type max_x_key = CalcKeyNormalized(max_coord[0]);
             key_type max_y_key = CalcKeyNormalized(max_coord[1]);
-            //key_type max_z_key = CalcKeyNormalized(max_coord[2]);
+           
 
             key_type delta_x = min_x_key^max_x_key;
             key_type delta_y = min_y_key^max_y_key;
-            //key_type delta_z = min_z_key^max_z_key;
-
+            
             // finding the level of the cell containing the entire region
             std::size_t min_level_1 = ROOT_LEVEL;
             std::size_t min_level = ROOT_LEVEL;
-            //std::size_t min_level = ROOT_LEVEL;
-
+           
             const std::size_t one = 1;
             while (!(delta_x & (one << min_level_1)) && (min_level_1 > MIN_LEVEL)) min_level_1--;
             while (!(delta_y & (one << min_level)) && (min_level > min_level_1)) min_level--;
-            //while (!(delta_z & (one << min_level)) && (min_level > min_level_2)) min_level--;
-            min_level++;
+            
 
             cell_type* range_cell = root_;
 
@@ -1016,25 +1010,22 @@ namespace Kratos {
 
             key_type min_x_key = CalcKeyNormalized(min_coord[0]);
             key_type min_y_key = CalcKeyNormalized(min_coord[1]);
-            //key_type min_z_key = CalcKeyNormalized(min_coord[2]);
-
+           
             key_type max_x_key = CalcKeyNormalized(max_coord[0]);
             key_type max_y_key = CalcKeyNormalized(max_coord[1]);
-            //key_type max_z_key = CalcKeyNormalized(max_coord[2]);
-
+            
             key_type delta_x = min_x_key^max_x_key;
             key_type delta_y = min_y_key^max_y_key;
-            //key_type delta_z = min_z_key^max_z_key;
-
+            
             // finding the level of the cell containing the entire region
             std::size_t min_level_1 = ROOT_LEVEL;
             std::size_t min_level = ROOT_LEVEL;
-            //std::size_t min_level = ROOT_LEVEL;
+            
 
             const std::size_t one = 1;
             while (!(delta_x & (one << min_level_1)) && (min_level_1 > MIN_LEVEL)) min_level_1--;
             while (!(delta_y & (one << min_level)) && (min_level > min_level_1)) min_level--;
-            //while (!(delta_z & (one << min_level)) && (min_level > min_level_2)) min_level--;
+            
             min_level++;
 
             cell_type* range_cell = root_;
@@ -1124,15 +1115,15 @@ namespace Kratos {
 
             key_type min_x_key = CalcKeyNormalized(min_coord[0]);
             key_type min_y_key = CalcKeyNormalized(min_coord[1]);
-            //key_type min_z_key = CalcKeyNormalized(min_coord[2]);
+            
 
             key_type max_x_key = CalcKeyNormalized(max_coord[0]);
             key_type max_y_key = CalcKeyNormalized(max_coord[1]);
-            //key_type max_z_key = CalcKeyNormalized(max_coord[2]);
+            
 
             key_type delta_x = min_x_key^max_x_key;
             key_type delta_y = min_y_key^max_y_key;
-            //key_type delta_z = min_z_key^max_z_key;
+            
 
             // finding the level of the cell containing the entire region
             std::size_t min_level_1 = ROOT_LEVEL;
@@ -1142,7 +1133,7 @@ namespace Kratos {
             const std::size_t one = 1;
             while (!(delta_x & (one << min_level_1)) && (min_level_1 > MIN_LEVEL)) min_level_1--;
             while (!(delta_y & (one << min_level)) && (min_level > min_level_1)) min_level--;
-            //while (!(delta_z & (one << min_level)) && (min_level > min_level_2)) min_level--;
+           
             min_level++;
 
             cell_type* range_cell = root_;
@@ -1317,7 +1308,7 @@ namespace Kratos {
         fex = fabs( e1[0] );
         fey = fabs( e1[1] );
 
-        //AXISTEST_Z0(e1[1], e1[0], fey, fex);
+        
         if ( AxisTest_Z0( e1[1], e1[0], fey, fex, p0,  p1, min, max, rad, v0, v1, boxhalfsize ) == 0 ) return false;
 
 

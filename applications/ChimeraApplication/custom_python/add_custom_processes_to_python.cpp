@@ -24,7 +24,7 @@
 #include "custom_processes/custom_extract_variables_process.h"
 #include "custom_processes/custom_apply_chimera_using_mpc_process.h"
 #include "custom_processes/apply_multi_point_constraints_process_chimera.h"
-#include "custom_processes/custom_calculate_and_extract_distance_process.h"
+#include "custom_processes/custom_calculate_signed_distance_process.h"
 #include "custom_processes/calculate_signed_distance_to_2d_skin_process.h"
 namespace Kratos
 {
@@ -45,13 +45,13 @@ void AddCustomProcessesToPython()
 		
 
 	/*
-	 * CustomCalculateAndExtractDistanceProcess
+	 * CustomCalculateSignedDistanceProcess
 	 */ 
-	class_<CustomCalculateAndExtractDistanceProcess<2>,bases<Process> >("CustomCalculateAndExtractDistanceProcess2D", init<>())
-			.def("ExtractDistance", &CustomCalculateAndExtractDistanceProcess<2>::ExtractDistance);
+	class_<CustomCalculateSignedDistanceProcess<2>,bases<Process> >("CustomCalculateSignedDistanceProcess2D", init<>())
+			.def("ExtractDistance", &CustomCalculateSignedDistanceProcess<2>::ExtractDistance);
 
-	class_<CustomCalculateAndExtractDistanceProcess<3>,bases<Process> >("CustomCalculateAndExtractDistanceProcess3D", init<>())
-			.def("ExtractDistance", &CustomCalculateAndExtractDistanceProcess<3>::ExtractDistance);		
+	class_<CustomCalculateSignedDistanceProcess<3>,bases<Process> >("CustomCalculateSignedDistanceProcess3D", init<>())
+			.def("ExtractDistance", &CustomCalculateSignedDistanceProcess<3>::ExtractDistance);		
 
 	/*
 	 * CustomExtractVariablesProcess
@@ -79,7 +79,7 @@ void AddCustomProcessesToPython()
 	 * Calculate_signed_distance_2d
 	 */
 
-	class_<CalculateSignedDistanceTo2DSkinProcess,bases<Process> >("CalculateSignedDistanceTo2DSkinProcess", init<ModelPart&,ModelPart&,ModelPart&>())
+	class_<CalculateSignedDistanceTo2DSkinProcess,bases<Process> >("CalculateSignedDistanceTo2DSkinProcess", init<ModelPart&,ModelPart&>())
 		.def("Execute", &CalculateSignedDistanceTo2DSkinProcess::Execute);		
 			
 }

@@ -154,6 +154,8 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
         typename TLinearSolver::Pointer pNewLinearSystemSolver)
         : ResidualBasedBlockBuilderAndSolver<TSparseSpace, TDenseSpace, TLinearSolver>(pNewLinearSystemSolver)
     {
+
+        
     }
 
     /** Destructor.
@@ -166,8 +168,12 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
         ModelPart& r_model_part
     ) override
     {
+        
         BaseType::SetUpSystem(r_model_part);
+        
         FormulateEquationIdRelationMap(r_model_part);        
+        
+        
     }
 
 
@@ -182,6 +188,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
         TSystemVectorType &b) override
     {
         KRATOS_TRY
+        
         if (!pScheme)
             KRATOS_THROW_ERROR(std::runtime_error, "No scheme provided!", "");
 
@@ -205,6 +212,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 
         // assemble all elements
         double start_build = OpenMPUtils::GetCurrentTime();
+        
 
 #pragma omp parallel firstprivate(nelements, nconditions, LHS_Contribution, RHS_Contribution, EquationId)
         {
@@ -213,17 +221,21 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
             {
                 ModelPart::ElementsContainerType::iterator it = el_begin + k;
 
+                
+
                 //detect if the element is active or not. If the user did not make any choice the element
                 //is active by default
                 bool element_is_active = true;
                 if ((it)->IsDefined(ACTIVE))
                     element_is_active = (it)->Is(ACTIVE);
+                
 
                 if (element_is_active)
                 {
                     //calculate elemental contribution
                     pScheme->CalculateSystemContributions(*(it.base()), LHS_Contribution, RHS_Contribution, EquationId, CurrentProcessInfo);
                     // Modifying the local contributions for MPC
+                    
                     this->Element_ApplyMultipointConstraints(*(it.base()), LHS_Contribution, RHS_Contribution, EquationId, CurrentProcessInfo);
 //assemble the elemental contribution
 #ifdef USE_LOCKS_IN_ASSEMBLY
@@ -479,6 +491,8 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
     {
 
         KRATOS_TRY
+        
+        
         bool slaveFound = false;
         Element::NodesArrayType nodesArray = rCurrentElement->GetGeometry();
         const unsigned int number_of_nodes = rCurrentElement->GetGeometry().PointsNumber();
@@ -618,6 +632,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
             }
         } // Loop over all the slaves for this node
         KRATOS_CATCH("Applying Multipoint constraints failed ..");
+        
     } // End of function
 
     void Condition_ApplyMultipointConstraints(Condition::Pointer rCurrentElement,
@@ -774,10 +789,10 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
      */
     void FormulateEquationIdRelationMap(ModelPart &r_model_part)
     {
-         
+        
         ProcessInfoType info = r_model_part.GetProcessInfo();
         MpcData::Pointer mpcData = info[MPC_POINTER];
-     
+        
         for (auto slaveMasterDofMap : mpcData->mDofConstraints)
         {
             SlavePairType slaveDofMap = slaveMasterDofMap.first;
@@ -804,6 +819,8 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                 mpcData->mEquationIdToWeightsMap[slaveEquationId].insert(  std::pair<unsigned int, double>(masterEquationId, weight)  );
             }
         }
+
+        
     }
 };
 }

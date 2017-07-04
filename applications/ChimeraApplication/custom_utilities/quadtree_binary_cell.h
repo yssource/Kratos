@@ -173,11 +173,11 @@ namespace Kratos {
         }
 
         int GetLeftKey(key_type* keys) const {
-//            if (min_key_[0] >= static_cast<key_type> (1 << level_)) {
+
             if (min_key_[0] >= 1) {
                 keys[0] = min_key_[0] - 1;
                 keys[1] = min_key_[1];
-                //keys[2] + min_key_[2];
+                
                 
                 return 1; // There is a neighbour
             }
@@ -188,7 +188,7 @@ namespace Kratos {
             if (min_key_[0] < static_cast<key_type> ((1 << ROOT_LEVEL) - (1 << level_))) {
                 keys[0] = min_key_[0] + (static_cast<key_type>(1) << level_);
                 keys[1] = min_key_[1];
-                //keys[2] = min_key_[2];
+                
                 
                 return 1; // There is a neighbour
             }
@@ -196,11 +196,11 @@ namespace Kratos {
         }
 
         int GetBackKey(key_type* keys) const {
-//            if (min_key_[1] >= static_cast<key_type> (1 << level_)) {
+//            
             if (min_key_[1] >= 1) {
                 keys[0] = min_key_[0];
                 keys[1] = min_key_[1] - 1;
-                //keys[2] = min_key_[2];
+                
                 
                 return 1; // There is a neighbour
             }
@@ -211,7 +211,7 @@ namespace Kratos {
             if (min_key_[1] < static_cast<key_type> ((1 << ROOT_LEVEL) - (1 << level_))) {
                 keys[0] = min_key_[0];
                 keys[1] = min_key_[1] + (static_cast<key_type>(1) << level_);
-                //keys[2] = min_key_[2];
+                
                 
                 return 1; // There is a neighbour
             }
@@ -224,36 +224,23 @@ namespace Kratos {
         int GetKey(std::size_t position, key_type* keys) const {
             //in total, there are a maximum of 9 nodes. The only difference is that here
             //the central node of the quad (cell) is just after the lineal nodes.
-            // the node index              :  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
+            // the node index              :  1  2  3  4  5  6  7  8  9 
             const std::size_t x_position[] = {0, 2, 2, 0, 1, 1, 2, 1, 0};
             const std::size_t y_position[] = {0, 0, 2, 2, 1, 0, 1, 2, 1};
-            //const std::size_t z_position[] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+            
 
             keys[0] = min_key_[0] + ((x_position[position]) << (level_ - 1));
             keys[1] = min_key_[1] + ((y_position[position]) << (level_ - 1));
-            //keys[2] = min_key_[2]
+            
            
 
             return 1;
         }
-//        int GetKey(std::size_t position, key_type* keys) {
-//            const std::size_t local_position[] = {0, 1, 3, 2, 4, 5, 7, 6};
-//
-//            keys[0] = min_key_[0] + ((local_position[position] & 1) << level_);
-//            keys[1] = min_key_[1] + ((((local_position[position] & 2) >> 1)) << level_);
-//            keys[2] = min_key_[2] + ((((local_position[position] & 4) >> 2)) << level_);
-//
-//            return 1;
-//        }
+      
         
         int GetNeighbourKey(std::size_t direction, key_type* keys) const {
-            // direction 0 : X < 0
-            // direction 1 : X > 0
-            // direction 2 : Y < 0
-            // direction 3 : Y > 0
-            // direction 4 : Z < 0
-            // direction 5 : Z > 0
-          //from 6 to 18 are the directions coorresponding to edges of the cell
+            
+            
 
           //the key returned is inside the cell (minkey +1), to ensure that the corresponding
           //cell get in pGetCell is the right one.
@@ -261,17 +248,17 @@ namespace Kratos {
             assert(direction<4);
             const std::size_t x_offset[]={0,2,1,1};
             const std::size_t y_offset[]={1,1,0,2};
-            //const std::size_t z_offset[]={0,0,0,0};
+            
             const std::size_t x_coef[]  ={0,1,0,0};
             const std::size_t y_coef[]  ={0,0,0,1};
-            //const std::size_t z_coef[]  ={0,0,0,0,0};
+            
 
             std::size_t size = (1<<level_);
 
             // here i'm adding 2 to each dimension and it won't overflow
             keys[0] = min_key_[0] + x_offset[direction] + x_coef[direction] * size;
             keys[1] = min_key_[1] + y_offset[direction] + y_coef[direction] * size;
-            //keys[2] = min_key_[2] + z_offset[direction] + z_coef[direction] * size;
+            
 
             for(int i = 0 ; i < DIMENSION ; i++){
                 if(keys[i] == 0)
@@ -311,8 +298,8 @@ namespace Kratos {
         std::size_t GetLocalPosition(key_type* keys){
             key_type position[2];
             //in total, there are a maximum of 9 nodes (as the Quadratic9 Hexa in GiD). The only difference is that here
-            //the central node of the hexa (cell) is just after the lineal nodes.
-            // the node index              : 0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 
+            //the central node of the cell is just after the lineal nodes.
+            // the node index              : 0  1  2  3  4  5  6  7  8  
             const std::size_t local_index[]={0, 5, 1, 8, 4, 6, 3, 7, 2};
 
             for(std::size_t i = 0 ; i < DIMENSION ; i++)
@@ -365,7 +352,7 @@ namespace Kratos {
             pointer_type object;
             for (int j=0;j<(int)objects_.size();j++){
               object=objects_[j];
-            //for (object_container_type::iterator i_object = objects_.begin(); i_object != objects_.end(); i_object++) {
+            
               const int is_intersected = configuration_type::IsIntersected(object,tolerance, min_coord, max_coord);
               if(is_intersected)
                 son->Insert(object);
@@ -393,13 +380,13 @@ namespace Kratos {
         void GetMinKey(key_type& min_key_x, key_type& min_key_y) const {
             min_key_x = min_key_[0];
             min_key_y = min_key_[1];
-            //min_key_z = min_key_[2];
+            
         }
 
         void SetMinKey(key_type min_key_x, key_type min_key_y) {
             min_key_[0] = min_key_x;
             min_key_[1] = min_key_y;
-            //min_key_[2] = min_key_z;
+            
         }
 
         QuadtreeBinaryCell& rGetChild(std::size_t pos) const {

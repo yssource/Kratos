@@ -279,8 +279,11 @@ public:
 		std::cout<<"  Extracting elements after " << distance << std::endl;
 		Element::Pointer pElem;
 		std::vector<unsigned int> vector_of_node_ids;
+
+		//For signed distance
 		
-		
+		distance *= -1;
+		std::cout<<"Updated distance"<<distance<<std::endl;
 		 
 
 		for(ModelPart::ElementsContainerType::iterator it = rModelPart.ElementsBegin(); it != rModelPart.ElementsEnd(); ++it)
@@ -291,7 +294,7 @@ public:
 			Geometry<Node<3> >& geom = it->GetGeometry();
 			for (j = 0 ; j < geom.size(); j++){
 				elementDistance = it->GetGeometry()[j].FastGetSolutionStepValue(DISTANCE);
-				if(elementDistance > distance )
+				if(elementDistance < distance )
 
 				{
 				  numPointsOutside++;
@@ -303,6 +306,7 @@ public:
 			{
 				
 				it->Set(ACTIVE,false);
+				/*std::cout<<"Elements Nr "<<it->Id()<<"inactive"<<std::endl;*/
 				pElem = Element::Pointer(new Element(*it));
 				rExtractedModelPart.Elements().push_back(pElem);
 				//Adding node all the node Ids of the elements satisfying the condition
@@ -310,6 +314,9 @@ public:
 				vector_of_node_ids.push_back(pElem->GetGeometry()[j].Id());
 				
 			}
+
+			/*if(!(it->IsDefined(ACTIVE)))
+				std::cout<<"Elements Nr "<<it->Id()<<"active"<<std::endl;*/
 		}
 
 	    //sorting and making unique list of node ids

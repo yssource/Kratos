@@ -144,6 +144,7 @@ class NavierStokesSolver_VMSMonolithic_Chimera(navier_stokes_base_solver.NavierS
         else:
 
             if (self.settings["implementation"].GetString() == "MPC"):
+                
 
                 builder_and_solver = KratosChimera.ResidualBasedBlockBuilderAndSolverWithMpcChimera(self.linear_solver)
 
@@ -223,7 +224,9 @@ class NavierStokesSolver_VMSMonolithic_Chimera(navier_stokes_base_solver.NavierS
 
 
     def Solve(self):
+       
         self.DivergenceClearance()
+       
         (self.solver).Solve()
 
 

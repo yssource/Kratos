@@ -43,7 +43,7 @@
 #include "utilities/binbased_fast_point_locator.h"
 #include "utilities/binbased_nodes_in_element_locator.h"
 #include "elements/distance_calculation_element_simplex.h"
-#include "utilities/parallel_levelset_distance_calculator.h"
+//#include "utilities/parallel_levelset_distance_calculator.h"
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -55,7 +55,7 @@ using namespace boost::numeric::ublas;
 namespace Kratos
 {
 
-class DistanceSpatialContainersConfigure
+class DistanceSpatialContainersConfigure2d
 {
 public:
     class CellNodeData
@@ -102,18 +102,18 @@ public:
 
 
 
-    /// Pointer definition of DistanceSpatialContainersConfigure
-    KRATOS_CLASS_POINTER_DEFINITION(DistanceSpatialContainersConfigure);
+    /// Pointer definition of DistanceSpatialContainersConfigure2d
+    KRATOS_CLASS_POINTER_DEFINITION(DistanceSpatialContainersConfigure2d);
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    DistanceSpatialContainersConfigure() {}
+    DistanceSpatialContainersConfigure2d() {}
 
     /// Destructor.
-    virtual ~DistanceSpatialContainersConfigure() {}
+    virtual ~DistanceSpatialContainersConfigure2d() {}
 
 
     ///@}
@@ -232,13 +232,13 @@ protected:
 private:
 
     /// Assignment operator.
-    DistanceSpatialContainersConfigure& operator=(DistanceSpatialContainersConfigure const& rOther);
+    DistanceSpatialContainersConfigure2d& operator=(DistanceSpatialContainersConfigure2d const& rOther);
 
     /// Copy constructor.
-    DistanceSpatialContainersConfigure(DistanceSpatialContainersConfigure const& rOther);
+    DistanceSpatialContainersConfigure2d(DistanceSpatialContainersConfigure2d const& rOther);
 
 
-}; // Class DistanceSpatialContainersConfigure
+}; // Class DistanceSpatialContainersConfigure2d
 
 ///@name Kratos Globals
 ///@{
@@ -273,7 +273,7 @@ public:
     /// Pointer definition of CalculateSignedDistanceTo2DSkinProcess
     KRATOS_CLASS_POINTER_DEFINITION(CalculateSignedDistanceTo2DSkinProcess);
 
-    typedef DistanceSpatialContainersConfigure ConfigurationType;
+    typedef DistanceSpatialContainersConfigure2d ConfigurationType;
     typedef QuadtreeBinaryCell<ConfigurationType> CellType;
     typedef QuadtreeBinary<CellType> QuadtreeType;
     typedef ConfigurationType::cell_node_data_type CellNodeDataType;
@@ -295,10 +295,10 @@ public:
     ///@{
 
     /// Constructor.
-    CalculateSignedDistanceTo2DSkinProcess(ModelPart& rThisModelPartStruc, ModelPart& rThisModelPartFluid,ModelPart& rThisModelPartAll)
-        : mrSkinModelPart(rThisModelPartStruc),  mrFluidModelPart(rThisModelPartFluid),mrBodyModelPart(rThisModelPartAll)
+    CalculateSignedDistanceTo2DSkinProcess(ModelPart& rThisModelPartStruc, ModelPart& rThisModelPartFluid)
+        : mrSkinModelPart(rThisModelPartStruc),  mrFluidModelPart(rThisModelPartFluid)
     {
-     this->pDistanceCalculator = typename ParallelDistanceCalculator<2>::Pointer(new ParallelDistanceCalculator<2>());
+     //this->pDistanceCalculator = typename ParallelDistanceCalculator<2>::Pointer(new ParallelDistanceCalculator<2>());
     }
 
     /// Destructor.
@@ -328,14 +328,14 @@ public:
     {
         KRATOS_TRY;
         
-        //GenerateFluidModelPartbasedOnBoundingBox();
+        
         GenerateQuadtree();
         std::cout<<"Inside Execute"<<std::endl;
         
 
         DistanceFluidStructure();
-        unsigned int max_level = 100;
-		double max_distance = 200;
+        //unsigned int max_level = 100;
+		//double max_distance = 200;
 
        
         
@@ -353,112 +353,14 @@ public:
         //          Timer::Stop("Writing Gid conform Mesh");
         //          delete quadtree. TODO: Carlos
         //          ------------------------------------------------------------------
-        this->pDistanceCalculator->CalculateDistances(mrFluidModelPart,DISTANCE,NODAL_AREA,max_level,max_distance);
+        //this->pDistanceCalculator->CalculateDistances(mrFluidModelPart,DISTANCE,NODAL_AREA,max_level,max_distance);
         KRATOS_CATCH("");
     }
 
     
 
     ///******************************************************************************************************************
-    ///******************************************************************************************************************
-
-    // generates 
-    /*void GenerateFluidModelPartbasedOnBoundingBox()
-    {
-
-        array_1d<double,3> low;
-        array_1d<double,3> high;
-        array_1d<double,3> size;
-         
-
-        // loop over all skin nodes
-        for(ModelPart::NodeIterator i_node = mrSkinModelPart.NodesBegin();
-            i_node != mrSkinModelPart.NodesEnd();
-            i_node++)
-        {
-            for (int i = 0 ; i < 3; i++)
-            {
-                low[i]  = i_node->Coordinate(i+1) < low[i]  ? i_node->Coordinate(i+1) : low[i];
-                high[i] = i_node->Coordinate(i+1) > high[i] ? i_node->Coordinate(i+1) : high[i];
-            }
-        }*/
-
-
-        /*for (int i = 0 ; i < 3; i++)
-            {
-                //considering 10% more length
-                size[i] = high[i]-low[i];
-                low[i]  = low[i]- 0.1*size[i];
-                high[i] = high[i]*0.1*size[i];
-            }
-   */
-    
-        /*std::cout<<"Lowest Dimension"<<low[0]<<","<<low[1]<<","<<low[2]<<","<<std::endl;
-        
-        std::cout<<"Highest Dimension"<<high[0]<<","<<high[1]<<","<<high[2]<<","<<std::endl;
-  
-        for(ModelPart::ElementIterator elem = mrBackgroundModelPart.ElementsBegin(); elem != mrBackgroundModelPart.ElementsEnd(); elem ++)
-
-        {
-            
-            Geometry<Node<3> >& geom = elem->GetGeometry();
-            array_1d<double,3> coords; 
-            unsigned int numOfPointsInside = 0;
-			for (int j = 0 ; j < geom.size(); j++){
-				coords = elem->GetGeometry()[j].Coordinates();
-				
-				{
-				  bool isInside = IsInside(coords,high,low);
-                  numOfPointsInside++;
-
-				}
-			}
-            
-            if (numOfPointsInside > 0) 
-            {
-            
-            Element::Pointer pElem = Element::Pointer(new Element(*elem));
-			mrFluidModelPart.Elements().push_back(pElem);
-
-            }
-            
-            
-
-        }
-
-        std::cout<<"Fluid Model Part that is considered"<<mrFluidModelPart.Elements().size()<<std::endl;
-       
-
-    }    */
-
-//Checks if the node is inside the bounding box implemented only for 2d case
-      /*  bool IsInside (array_1d<double,3> coords, array_1d<double,3> high,array_1d<double,3> low)
-
-        {
-
-            array_1d<double, 3 > ab; 
-            array_1d<double, 3 > ad;
-            array_1d<double, 3 > am;
-
-            ab[0] = high[0]-low[0];
-            ad[1] = high[1]-low[1];
-            ab[2] = 0.0;
-            ad[2] = 0.0;
-            for (int i = 0; i <3 ; i++ )
-            am[i] = coords[i]-low[i];
-
-            if (inner_prod(ab,am) < 0 && inner_prod(ab,am)>inner_prod(ab,ab))
-            return false;
-            
-            if (inner_prod(ad,am) < 0 && inner_prod(ad,am)>inner_prod(ad,ad))
-            return false;
-
-            return true;
-
-
-        }
-
-*/
+    ///*****************************************************************************************************************
 
     
     void DistanceFluidStructure()
@@ -503,19 +405,7 @@ public:
         // --> now synchronize these values by finding the minimal distance and assign to each node a minimal nodal distance
         AssignMinimalNodalDistance();
 
-        const double initial_distance = 1000;
         
-        
-
-       /* ModelPart::NodesContainerType::ContainerType& nodes = mrFluidModelPart.NodesArray();
-
-        // reset the node distance to 1.0 which is the maximum distance in our normalized space.
-        int nodesSize = nodes.size();
-
-            
- 
-
-        //std::cout << "Finished calculating Elemental distances..." << std::endl;
     }
 
     ///******************************************************************************************************************
@@ -540,7 +430,7 @@ public:
         ElementalDistances[0] = initial_distance;
         ElementalDistances[1] = initial_distance;
         ElementalDistances[2] = initial_distance;
-       // ElementalDistances[3] = initial_distance;
+
 
         // reset the Elemental distance to 1.0 which is the maximum distance in our normalized space.
         // also initialize the embedded velocity of the fluid Element
@@ -629,38 +519,7 @@ public:
 
         double EdgeNode1[3] = {P1.X() , P1.Y() , P1.Z()};
         double EdgeNode2[3] = {P2.X() , P2.Y() , P2.Z()};
-	    //std::cout<<"Leaves size "<<leaves.size()<<std::endl;
 
-        
-
-       
-        //std::cout<<"Fluid Nodes \n :"<<i_fluidElement->GetGeometry()<<std::endl;
-        
-        //check to see structure elemets near the fluid element
-       /* for(unsigned int i_cell = 0 ; i_cell < leaves.size() ; i_cell++)
-         {
-
-            
-
-            object_container_type* struct_elem = (leaves[i_cell]->pGetObjects());
-            
-            if (struct_elem->size()>0)
-            {
-                
-                
-
-                for(object_container_type::iterator i_StructElement = struct_elem->begin(); i_StructElement != struct_elem->end(); i_StructElement++)
-                    //std::cout<<"Structural element Id :"<<(*i_StructElement)->Id()<<",";
-            
-            }
-
-             
-            
-
-         }*/
-
-        
-        
         
         // loop over all quadtree cells which are intersected by the fluid Element
         for(unsigned int i_cell = 0 ; i_cell < leaves.size() ; i_cell++)
@@ -669,20 +528,12 @@ public:
 
             
             object_container_type* struct_elem = (leaves[i_cell]->pGetObjects());
-            //if(struct_elem->size()==0)
-            //std::cout<<"0"<<std::endl;
-
-            //else
-            //std::cout<<"Nr of structural element in struc_elem "<<struct_elem->size()<<std::endl;
-            
-            
-            
+                  
 
             // loop over all structural Elements within each quadtree cell
             for(object_container_type::iterator i_StructElement = struct_elem->begin(); i_StructElement != struct_elem->end(); i_StructElement++)
             {
 
-                //std::cout<<"Hello there "<<std::endl;
                 if( StructuralElementNotYetConsidered( (*i_StructElement)->Id() , IntersectingStructElemID ) )
                 {
                     
@@ -820,7 +671,7 @@ public:
         double MaxEdgeLength = norm_2( EdgeVector );
 
         // if both connection vectors (corner point --> intersection point)
-        // are smaller or equal to the edge length of trianglerahedra,
+        // are smaller or equal to the edge length of triangle,
         // then intersection point is located on the edge
         if( (LengthConnectVect1 <= (MaxEdgeLength)) && (LengthConnectVect2 <= (MaxEdgeLength)) )
             return true;
@@ -1064,7 +915,7 @@ public:
         Point<3> P1;
         Point<3> P2;
         Point<3> P3;
-
+ 
         P1.Coordinates() = NodesOfApproximatedStructure[0].Coordinates;
         P2.Coordinates() = NodesOfApproximatedStructure[1].Coordinates;
         P3.Coordinates() = NodesOfApproximatedStructure[2].Coordinates;
@@ -1516,11 +1367,11 @@ public:
             double temp_point[2];
             temp_point[0] = i_node->X();
             temp_point[1] = i_node->Y();
-            //temp_point[2] = i_node->Z();
+            
             mpQuadtree->Insert(temp_point);
         }
 
-        //mpQuadtree->Constrain2To1(); // To be removed. Pooyan.
+        
 
         // loop over all structure elements
         for(ModelPart::ElementIterator i_element = mrSkinModelPart.ElementsBegin();
@@ -1534,13 +1385,13 @@ public:
         std::cout<<"Quadtree generation finished"<<std::endl;
         KRATOS_WATCH(mpQuadtree);
 
-        GenerateNodes();
+        /*GenerateNodes();
 
         std::cout << "######## WRITING QUADTREE MESH #########" << std::endl;
         std::ofstream myfile;
         myfile.open ("quadtree.post.msh");
         mpQuadtree->PrintGiDMeshNew(myfile);
-        myfile.close();
+        myfile.close();*/
 
         std::cout << "Generating the Quadtree finished" << std::endl;
         
@@ -1549,7 +1400,7 @@ public:
     ///******************************************************************************************************************
     ///******************************************************************************************************************
 
-    void GenerateNodes()
+    /*void GenerateNodes()
     {
         Timer::Start("Generating Nodes");
         std::vector<QuadtreeType::cell_type*> all_leaves;
@@ -1564,7 +1415,7 @@ public:
         }
 
 
-        std::size_t last_id = mrBodyModelPart.NumberOfNodes() + 1;
+        std::size_t last_id = mrSkinModelPart.NumberOfNodes() +mrFluidModelPart.numberOfNodes()+ 1;
 
         for (std::size_t i = 0; i < all_leaves.size(); i++)
         {
@@ -1574,7 +1425,7 @@ public:
 
         Timer::Stop("Generating Nodes");
 
-    }
+    }*/
 
     ///******************************************************************************************************************
     ///******************************************************************************************************************
@@ -1586,10 +1437,10 @@ public:
         for (int i_pos=0; i_pos < 4; i_pos++) // position 4 is for center
         {
             
-            DistanceSpatialContainersConfigure::cell_node_data_type* p_node = (*(pCell->pGetData()))[i_pos];
+            DistanceSpatialContainersConfigure2d::cell_node_data_type* p_node = (*(pCell->pGetData()))[i_pos];
             if(p_node == 0)
             {
-                (*(pCell->pGetData()))[i_pos] = new DistanceSpatialContainersConfigure::cell_node_data_type;
+                (*(pCell->pGetData()))[i_pos] = new DistanceSpatialContainersConfigure2d::cell_node_data_type;
 
                 (*(pCell->pGetData()))[i_pos]->Id() = LastId++;
 
@@ -1636,7 +1487,7 @@ public:
 
     void CalculateDistance2()
     {
-        /*std::cout<<"nav Inside Calcute2"<<std::endl;*/
+        
         Timer::Start("Calculate Distances2");
         ModelPart::NodesContainerType::ContainerType& nodes = mrFluidModelPart.NodesArray();
         int nodes_size = nodes.size();
@@ -1656,9 +1507,7 @@ public:
  #pragma omp parallel for firstprivate(nodes_size)
         for(int i = 0 ; i < nodes_size ; i++)
         {
-            /*std::cout<<"nav Node Id"<<nodes[i]->Id()<<std::endl;*/
-            
-            //debug
+           
             
 
                 CalculateNodeDistance(*(nodes[i]));
@@ -1721,7 +1570,7 @@ public:
     void CalculateDistance()
     {
         Timer::Start("Calculate Distances");
-        DistanceSpatialContainersConfigure::data_type& nodes = mQuadtreeNodes;
+        DistanceSpatialContainersConfigure2d::data_type& nodes = mQuadtreeNodes;
         int nodes_size = nodes.size();
         // first of all we reste the node distance to 1.00 which is the maximum distnace in our normalized space.
 #pragma omp parallel for firstprivate(nodes_size)
@@ -1766,7 +1615,7 @@ public:
         typedef std::vector<std::pair<double, triangle_type*> > intersections_container_type;
 
         intersections_container_type intersections;
-        DistanceSpatialContainersConfigure::data_type nodes_array;
+        DistanceSpatialContainersConfigure2d::data_type nodes_array;
 
 
         const double epsilon = 1e-12;
@@ -1867,19 +1716,13 @@ public:
         double distance = DistancePositionInSpace(coord);
         double& node_distance =  rNode.GetSolutionStepValue(DISTANCE);
 
-        //std::cout<<"navInitial distance "<<node_distance<<std::endl;
-
         const double epsilon = 1.00e-12;
         if(fabs(node_distance) > fabs(distance))
             node_distance = distance;
         else if (distance*node_distance < 0.00) // assigning the correct sign
                 node_distance = -node_distance;
-
-        //For ignoring the distance calculation from this function
-        //if (distance*node_distance < 0.00) // assigning the correct sign
-            //node_distance = -node_distance;
-
-            /*std::cout<<"navFinal distance"<<node_distance<<std::endl;*/
+     
+            
     }
 
     //      void CalculateNodeDistanceFromCell(Node<3>& rNode)
@@ -1925,10 +1768,9 @@ public:
             // Creating the ray
             double ray[2] = {coords[0], coords[1]};
 
-            /*std::cout<<"navray "<<ray[0]<<","<<ray[1]<<std::endl;*/
             
             mpQuadtree->NormalizeCoordinates(ray);
-            /*std::cout<<"navAfterNormalisation-ray "<<ray[0]<<","<<ray[1]<<std::endl;*/
+            
             ray[i_direction] = 0; // starting from the lower extreme
 
             GetIntersections(ray, i_direction, intersections);
@@ -1942,7 +1784,7 @@ public:
             std::vector<std::pair<double, Element::GeometryType*> >::iterator i_intersection = intersections.begin();
             while (i_intersection != intersections.end()) {
                 double d = coords[i_direction] - i_intersection->first;
-                /*std::cout<<"nav distance "<<d<<std::endl;*/
+                
                 if (d > epsilon) {
 
                     ray_color = -ray_color;
@@ -1967,7 +1809,7 @@ public:
             }
 
             distances[i_direction] *= ray_color;
-            /*std::cout<<"nav signeddistance "<<i_direction<<distances[i_direction]<<std::endl;*/
+           
         }
 
         //            if(distances[0]*distances[1] < 0.00 || distances[2]*distances[1] < 0.00)
@@ -1985,7 +1827,7 @@ public:
 
     }
 
-    void GetIntersectionsAndNodes(double* ray, int direction, std::vector<std::pair<double,Element::GeometryType*> >& intersections, DistanceSpatialContainersConfigure::data_type& rNodesArray)
+    void GetIntersectionsAndNodes(double* ray, int direction, std::vector<std::pair<double,Element::GeometryType*> >& intersections, DistanceSpatialContainersConfigure2d::data_type& rNodesArray)
     {
         //This function passes the ray through the model and gives the hit point to all objects in its way
         //ray is of dimension (3) normalized in (0,1)^3 space
@@ -2155,10 +1997,7 @@ public:
 
         }
 
-        //debug
-        /*std::vector<std::pair<double, Element::GeometryType*> >::iterator i_begin = intersections.begin();
-
-        std::cout<<"navDirection "<<direction <<" Intersection "<<i_begin->first<<","<<(i_begin+1)->first<<std::endl;*/
+        
     }
 
     int GetCellIntersections(QuadtreeType::cell_type* cell, double* ray,
@@ -2197,17 +2036,14 @@ public:
             if (is_intersected == 1) // There is an intersection but not coplanar
             {
                 
-/*                std::cout<<"navIntersection happened"<<std::endl;
-                std::cout<<"navPoint 1 "<<(*i_object)->GetGeometry()[0][0]<<","<<(*i_object)->GetGeometry()[0][1]<<std::endl;
-                std::cout<<"navPoint 2 "<<(*i_object)->GetGeometry()[1][0]<<","<<(*i_object)->GetGeometry()[1][1]<<std::endl;
-                std::cout<<"navIntersection  "<<intersection[direction]<<" Direction "<<direction<<std::endl;*/
+
                 intersections.push_back(std::pair<double, Element::GeometryType*>(intersection[direction], &((*i_object)->GetGeometry())));
 
 
             }
              
                 
-            //else if(is_intersected == 2) // coplanar case
+            
         }
 
         return 0;
@@ -2362,7 +2198,7 @@ public:
         rOStream << "Coordinates" << std::endl;
         rOStream << "# node number coordinate_x coordinate_y coordinate_z  " << std::endl;
 
-        for(DistanceSpatialContainersConfigure::data_type::const_iterator i_node = mQuadtreeNodes.begin() ; i_node != mQuadtreeNodes.end() ; i_node++)
+        for(DistanceSpatialContainersConfigure2d::data_type::const_iterator i_node = mQuadtreeNodes.begin() ; i_node != mQuadtreeNodes.end() ; i_node++)
         {
             rOStream << (*i_node)->Id() << "  " << (*i_node)->Coordinate(1) << "  " << (*i_node)->Coordinate(2) << "  " << (*i_node)->Coordinate(3) << std::endl;
             //mpQuadtree->Insert(temp_point);
@@ -2375,7 +2211,7 @@ public:
         for (std::size_t i = 0; i < leaves.size(); i++) {
             if ((leaves[i]->pGetData()))
             {
-                DistanceSpatialContainersConfigure::data_type& nodes = (*(leaves[i]->pGetData()));
+                DistanceSpatialContainersConfigure2d::data_type& nodes = (*(leaves[i]->pGetData()));
 
                 rOStream << i + 1;
                 for(int j = 0 ; j < 8 ; j++)
@@ -2398,7 +2234,7 @@ public:
 
         rOStream << "Values" << std::endl;
 
-        for(DistanceSpatialContainersConfigure::data_type::const_iterator i_node = mQuadtreeNodes.begin() ; i_node != mQuadtreeNodes.end() ; i_node++)
+        for(DistanceSpatialContainersConfigure2d::data_type::const_iterator i_node = mQuadtreeNodes.begin() ; i_node != mQuadtreeNodes.end() ; i_node++)
         {
             rOStream << (*i_node)->Id() << "  " << (*i_node)->Distance() << std::endl;
         }
@@ -2463,13 +2299,12 @@ private:
     
     //ModelPart& mrBackgroundModelPart;
     ModelPart& mrFluidModelPart;
-    ModelPart& mrBodyModelPart;
-    DistanceSpatialContainersConfigure::data_type mQuadtreeNodes;
+    DistanceSpatialContainersConfigure2d::data_type mQuadtreeNodes;
 
     boost::shared_ptr<QuadtreeType> mpQuadtree;
 
     static const double epsilon;
-    typename ParallelDistanceCalculator<2>::Pointer pDistanceCalculator;
+    //typename ParallelDistanceCalculator<2>::Pointer pDistanceCalculator;
 
     /**
          * @}

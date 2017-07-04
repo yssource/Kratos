@@ -9,8 +9,8 @@
 // ==============================================================================
 //
 
-#if !defined(KRATOS_CUSTOM_CALCULATE_AND_EXTRACT_DISTANCE_PROCESS_H_INCLUDED )
-#define  KRATOS_CUSTOM_CALCULATE_AND_EXTRACT_DISTANCE_PROCESS_H_INCLUDED
+#if !defined(KRATOS_CUSTOM_CALCULATE_SIGNED_DISTANCE_PROCESS_H_INCLUDED )
+#define  KRATOS_CUSTOM_CALCULATE_SIGNED_DISTANCE_PROCESS_H_INCLUDED
 
 
 // System includes
@@ -21,7 +21,7 @@
 
 // External includes
 #include "includes/kratos_flags.h"
-#include "processes/calculate_signed_distance_to_3d_condition_skin_process.h"
+#include "processes/calculate_signed_distance_to_3d_skin_process.h"
 #include "utilities/binbased_fast_point_locator.h"
 
 // Project includes
@@ -41,6 +41,9 @@
 #include "solving_strategies/strategies/residualbased_linear_strategy.h"
 #include "elements/distance_calculation_element_simplex.h"
 #include "utilities/parallel_levelset_distance_calculator.h"
+#include "custom_processes/calculate_signed_distance_to_2d_skin_process.h"
+
+
 namespace Kratos {
 
 ///@name Kratos Globals
@@ -64,7 +67,7 @@ namespace Kratos {
 
 /// Short class definition.
 template< unsigned int TDim>
-class CustomCalculateAndExtractDistanceProcess {
+class CustomCalculateSignedDistanceProcess {
 public:
 
 	///@name Type Definitions
@@ -73,19 +76,22 @@ public:
 	///@}
 	///@name Pointer Definitions
 	/// Pointer definition of CustomExtractVariablesProcess
-	KRATOS_CLASS_POINTER_DEFINITION(CustomCalculateAndExtractDistanceProcess);
+	KRATOS_CLASS_POINTER_DEFINITION(CustomCalculateSignedDistanceProcess);
 
 	///@}
 	///@name Life Cycle
 	///@{
 
-	CustomCalculateAndExtractDistanceProcess(){
+	CustomCalculateSignedDistanceProcess(){
 		this->pBinLocator = NULL;
 		this->pDistanceCalculator = NULL;
+		
+		p2DSignedDistanceCalculator = NULL;
+		p3DSignedDistanceCalculator = NULL;
 	}
 
 	/// Destructor.
-	virtual ~CustomCalculateAndExtractDistanceProcess() {
+	virtual ~CustomCalculateSignedDistanceProcess() {
 	}
 
 	///@}
@@ -144,7 +150,7 @@ public:
 			
 			
 		}
-*/
+
 
 		/*
 		 * This part of the code below is adapted from "MappingPressureToStructure" function of class CalculateSignedDistanceTo3DSkinProcess
@@ -203,6 +209,35 @@ public:
 		
 	}
 
+	void CalculateSignedDistance(ModelPart& toBackgroundModelPart, ModelPart& patchBoundaryModelPart)
+	{
+
+		if (TDim == 2) 
+		{
+			p2DSignedDistanceCalculator = CalculateSignedDistanceTo2DSkinProcess::Pointer(new CalculateSignedDistanceTo2DSkinProcess(patchBoundaryModelPart,toBackgroundModelPart));
+			p2DSignedDistanceCalculator->Execute();
+			std::cout<<"2Signeddistance is called nav"<<std::endl;
+
+		}
+
+		if (TDim == 3) 
+		{
+			p3DSignedDistanceCalculator = CalculateSignedDistanceTo3DSkinProcess::Pointer(new CalculateSignedDistanceTo3DSkinProcess(patchBoundaryModelPart,toBackgroundModelPart));
+			p3DSignedDistanceCalculator->Execute();
+
+		}
+
+		unsigned int max_level = 100;
+		double max_distance = 200;
+
+		pDistanceCalculator->CalculateDistances(toBackgroundModelPart,DISTANCE,NODAL_AREA,max_level,max_distance);
+
+
+
+
+	}
+
+
 
 	
 	void MapDistancetoNode(const Node<3>& pNode,
@@ -234,12 +269,12 @@ public:
 
 	/// Turn back information as a string.
 	virtual std::string Info() const {
-		return "CustomCalculateAndExtractDistanceProcess";
+		return "CustomCalculateSignedDistanceProcess";
 	}
 
 	/// Print information about this object.
 	virtual void PrintInfo(std::ostream& rOStream) const {
-		rOStream << "CustomCalculateAndExtractDistanceProcess";
+		rOStream << "CustomCalculateSignedDistanceProcess";
 	}
 
 	/// Print object's data.
@@ -295,6 +330,9 @@ private:
 	//ModelPart &mrBackGroundModelPart;
 	//ModelPart &mrPatchSurfaceModelPart;
 	typename BinBasedFastPointLocator<TDim>::Pointer pBinLocator; // Template argument 3 stands for 3D case
+	CalculateSignedDistanceTo2DSkinProcess:: Pointer p2DSignedDistanceCalculator;
+	CalculateSignedDistanceTo3DSkinProcess:: Pointer  p3DSignedDistanceCalculator;
+	
 	///@}
 	///@name Private Operators
 	///@{
@@ -316,10 +354,10 @@ private:
 	///@{
 
 	/// Assignment operator.
-	CustomCalculateAndExtractDistanceProcess<TDim>& operator=(CustomCalculateAndExtractDistanceProcess<TDim> const& rOther);
+	CustomCalculateSignedDistanceProcess<TDim>& operator=(CustomCalculateSignedDistanceProcess<TDim> const& rOther);
 
 	/// Copy constructor.
-	//CustomCalculateAndExtractDistanceProcess(CustomCalculateAndExtractDistanceProcess<TDim> const& rOther);
+	//CustomCalculateSignedDistanceProcess(CustomCalculateSignedDistanceProcess<TDim> const& rOther);
 
 	///@}
 

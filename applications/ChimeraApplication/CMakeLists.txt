@@ -11,16 +11,23 @@ include_directories( ${CMAKE_SOURCE_DIR}/applications/ChimeraApplication )
 # generate variables with the sources
 set( KRATOS_CHIMERA_APPLICATION_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/chimera_application.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/chimera_application_variables.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/chimera_application_variables.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/chimera_python_application.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_processes_to_python.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_strategies_to_python.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_utilities_to_python.cpp
 )
 
+set(KRATOS_CHIMERA_APPLICATION_EXTRA_LIBS "")
+## If we have mpi support, use it
+if(${MPI_NEEDED} MATCHES ON )
+	set(KRATOS_CHIMERA_APPLICATION_EXTRA_LIBS ${KRATOS_CHIMERA_APPLICATION_EXTRA_LIBS} ${MPI_LIBRARIES})
+endif(${MPI_NEEDED} MATCHES ON )
+
+
 # define library Kratos which defines the basic python interface
 add_library(KratosChimeraApplication SHARED ${KRATOS_CHIMERA_APPLICATION_SOURCES})
-target_link_libraries(KratosChimeraApplication KratosCore )
+target_link_libraries(KratosChimeraApplication KratosCore ${KRATOS_CHIMERA_APPLICATION_EXTRA_LIBS} )
 set_target_properties(KratosChimeraApplication PROPERTIES PREFIX "")
 install(TARGETS KratosChimeraApplication DESTINATION libs )
 

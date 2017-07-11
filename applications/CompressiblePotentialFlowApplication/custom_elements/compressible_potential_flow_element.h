@@ -262,6 +262,18 @@ public:
         }
     }
 
+    /**
+     * Getting method to obtain the variable which defines the degrees of freedom
+     */
+    virtual void GetValuesVector(Vector& values, int Step = 0)
+    {
+        //gather nodal data
+        for(unsigned int i=0; i<NumNodes; i++)
+        {
+            values[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+        }
+    }
+
 
     /**
      * ELEMENTS inherited from this class have to implement next

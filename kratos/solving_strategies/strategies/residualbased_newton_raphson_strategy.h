@@ -119,6 +119,7 @@ public:
     typedef typename BaseType::LocalSystemMatrixType LocalSystemMatrixType;
 
     typedef typename BaseType::TSystemMatrixPointerType TSystemMatrixPointerType;
+    
     typedef typename BaseType::TSystemVectorPointerType TSystemVectorPointerType;
 
 
@@ -257,7 +258,7 @@ public:
      * Destructor.
      */
      
-    virtual ~ResidualBasedNewtonRaphsonStrategy()
+    ~ResidualBasedNewtonRaphsonStrategy() override
     {
         Clear();
     }
@@ -338,7 +339,7 @@ public:
     // 3 -> Print of debug informations:
     //		Echo of stiffness matrix, Dx, b...
 
-    virtual void SetEchoLevel(int Level) override
+    void SetEchoLevel(int Level) override
     {
         BaseType::mEchoLevel = Level;
         GetBuilderAndSolver()->SetEchoLevel(Level);
@@ -352,7 +353,7 @@ public:
      * values of the solution step of interest are assumed equal to the old values 
      */
      
-    virtual void Predict() override
+    void Predict() override
     {
         KRATOS_TRY
         //OPERATIONS THAT SHOULD BE DONE ONCE - internal check to avoid repetitions
@@ -388,7 +389,7 @@ public:
      * Initialization of member variables and prior operations
      */
      
-    virtual void Initialize() override
+    void Initialize() override
     {
         KRATOS_TRY;
 
@@ -435,7 +436,7 @@ public:
      * All those functions can otherwise be called separately.
      */
      
-    virtual double Solve() override
+    double Solve() override
     {
         
         Initialize();
@@ -455,7 +456,7 @@ public:
      * Clears the internal storage
      */
      
-    virtual void Clear() override
+    void Clear() override
     {
         KRATOS_TRY;
 
@@ -491,7 +492,7 @@ public:
      * analysis - the convergence criteria used is the one used inside the "solve" step
      */
      
-    virtual bool IsConverged() override
+    bool IsConverged() override
     {
         KRATOS_TRY;
 
@@ -518,7 +519,7 @@ public:
      * negligible cost
      */
      
-    virtual void CalculateOutputData() override
+    void CalculateOutputData() override
     {
         TSystemMatrixType& A = *mpA;
         TSystemVectorType& Dx = *mpDx;
@@ -533,7 +534,7 @@ public:
      * A member variable should be used as a flag to make sure this function is called only once per step.
      */
     
-    virtual void InitializeSolutionStep() override
+    void InitializeSolutionStep() override
     {
         KRATOS_TRY;
 
@@ -613,7 +614,7 @@ public:
      * A member variable should be used as a flag to make sure this function is called only once per step.
      */
     
-    virtual void FinalizeSolutionStep() override
+    void FinalizeSolutionStep() override
     {
         KRATOS_TRY;
 
@@ -654,7 +655,7 @@ public:
      * Solves the current step. This function returns true if a solution has been found, false otherwise.
      */
     
-    virtual bool SolveSolutionStep() override
+    bool SolveSolutionStep() override
     {
         // Pointers needed in the solution
         typename TSchemeType::Pointer pScheme = GetScheme();
@@ -1013,10 +1014,11 @@ protected:
         }
     }
     
-    //**********************************************************************
-    //**********************************************************************
-
-    void MaxIterationsExceeded()
+    /**
+     * This method prints information after reach the max number of interations
+     */
+    
+    virtual void MaxIterationsExceeded()
     {
         if (this->GetEchoLevel() != 0 && BaseType::GetModelPart().GetCommunicator().MyPID() == 0 )
         {
@@ -1032,7 +1034,7 @@ protected:
      * It is designed to be called ONCE to verify that the input is correct.
      */
      
-    virtual int Check() override
+    int Check() override
     {
         KRATOS_TRY
 

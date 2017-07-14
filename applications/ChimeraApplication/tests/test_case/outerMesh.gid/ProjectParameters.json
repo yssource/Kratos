@@ -50,21 +50,32 @@
         "dynamic_tau"                     : 0.1,
         "compute_reactions"               : true,
         "divergence_clearance_steps"      : 0,
-        "reform_dofs_at_each_iteration"   : false,
-        "velocity_linear_solver_settings" : {
-            "solver_type"   : "BiConjugate_gradient_stabilized",
-            "max_iteration" : 500,
-            "tolerance"     : 1e-9,
-            "scaling"       : true,
-            "verbosity"     : 2
-        },
-        "pressure_linear_solver_settings" : {
-            "solver_type"   : "BiConjugate_gradient_stabilized",
-            "max_iteration" : 500,
-            "tolerance"     : 1e-9,
-            "scaling"       : true,
-            "verbosity"     : 2
-        },
+        "pressure_linear_solver_settings":  {
+                "solver_type"                    : "AMGCL",
+                "max_iteration"                  : 50,
+                "tolerance"                      : 1e-6,
+                "provide_coordinates"            : false,
+                "smoother_type"                  : "ilu0",
+                "krylov_type"                    : "cg",
+                "gmres_krylov_space_dimension"   : 100,
+                "use_block_matrices_if_possible" : false,
+                "coarsening_type"                : "aggregation",
+                "scaling"                        : true,
+                "verbosity"                      : 0
+            },
+            "velocity_linear_solver_settings": {
+                "solver_type"                    : "AMGCL",
+                "max_iteration"                  : 200,
+                "tolerance"                      : 1e-6,
+                "provide_coordinates"            : false,
+                "smoother_type"                  : "ilu0",
+                "krylov_type"                    : "lgmres",
+                "gmres_krylov_space_dimension"   : 100,
+                "use_block_matrices_if_possible" : false,
+                "coarsening_type"                : "aggregation",
+                "scaling"                        : true,
+                "verbosity"                      : 0
+            },
         "volume_model_part_name"        : "Parts_Fluid",
         "skin_parts"                    : ["Inlet3D_Inlet","Outlet3D_Outlet","NoSlip3D_topBottomSides"]
     },
@@ -79,7 +90,7 @@
             "mesh_id"         : 0,
             "model_part_name" : "Inlet3D_Inlet",
             "variable_name"   : "VELOCITY",
-            "factor"          : 1.0,
+            "modulus"          : 1.0,
             "direction"       : [5.0,0.0,0.0]
         }
     },{
@@ -110,7 +121,7 @@
             "mesh_id"         : 0,
             "model_part_name" : "Parts_Fluid",
             "variable_name"   : "BODY_FORCE",
-            "factor"          : 9.8,
+            "modulus"          : 9.8,
             "direction"       : [0.0,-1.0,0.0]
         }
     }]

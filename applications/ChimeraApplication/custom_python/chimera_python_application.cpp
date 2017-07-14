@@ -48,6 +48,8 @@ namespace Python
 
 			//registering variables in python
   		KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS( CHIM_NEUMANN_COND )
+
+		//KRATOS_REGISTER_IN_PYTHON_VARIABLE( IS_WEAK )
 }
 
 

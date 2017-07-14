@@ -8,7 +8,6 @@ from KratosMultiphysics.ExternalSolversApplication import *
 from KratosMultiphysics.MeshingApplication import *
 # ADI BEGIN
 from KratosMultiphysics.ALEApplication import *
-from KratosMultiphysics.EmpireApplication import *
 from KratosMultiphysics.ChimeraApplication import *
 import math
 import numpy as np

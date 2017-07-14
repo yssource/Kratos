@@ -65,7 +65,7 @@ public:
         ProcessInfoPointerType info = mr_model_part.pGetProcessInfo();
         info->SetValue(MPC_POINTER, mpcDataMap["default"]);
     }
-
+ 
     ApplyMultipointConstraintsProcessChimera(  ModelPart& model_part
                                         ) : Process(Flags()) , mr_model_part(model_part), mpcDataMap()
     {

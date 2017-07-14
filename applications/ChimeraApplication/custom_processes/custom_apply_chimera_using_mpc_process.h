@@ -9,9 +9,8 @@
 // ==============================================================================
 //
 
-#if !defined(KRATOS_CUSTOM_APPLY_CHIMERA_USING_CHIMERA_H_INCLUDED )
-#define  KRATOS_CUSTOM_APPLY_CHIMERA_USING_CHIMERA_H_INCLUDED
-
+#if !defined(KRATOS_CUSTOM_APPLY_CHIMERA_USING_CHIMERA_H_INCLUDED)
+#define KRATOS_CUSTOM_APPLY_CHIMERA_USING_CHIMERA_H_INCLUDED
 
 // System includes
 
@@ -47,7 +46,8 @@
 #include "custom_hole_cutting_process.h"
 #include "custom_processes/apply_multi_point_constraints_process_chimera.h"
 
-namespace Kratos {
+namespace Kratos
+{
 
 ///@name Kratos Globals
 ///@{
@@ -70,11 +70,11 @@ namespace Kratos {
 
 /// Short class definition.
 
-template<unsigned int TDim>
+template <unsigned int TDim>
 
-class CustomApplyChimeraUsingMpcProcess {
-public:
-
+class CustomApplyChimeraUsingMpcProcess
+{
+  public:
 	///@name Type Definitions
 	///@{
 
@@ -83,33 +83,31 @@ public:
 	/// Pointer definition of CustomExtractVariablesProcess
 	KRATOS_CLASS_POINTER_DEFINITION(CustomApplyChimeraUsingMpcProcess);
 
-
 	typedef typename BinBasedFastPointLocator<TDim>::Pointer BinBasedPointLocatorPointerType;
 	///@}
 	///@name Life Cycle
 	///@{
-CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundModelPart,ModelPart& PatchModelPart,double distance = 0) : mrAllModelPart(AllModelPart), mrBackgroundModelPart(BackgroundModelPart), mrPatchModelPart(PatchModelPart), overlap_distance(distance) 
+	CustomApplyChimeraUsingMpcProcess(ModelPart &AllModelPart, ModelPart &BackgroundModelPart, ModelPart &PatchModelPart, double distance = 1e-12) : mrAllModelPart(AllModelPart), mrBackgroundModelPart(BackgroundModelPart), mrPatchModelPart(PatchModelPart), overlap_distance(distance)
 
-{		
-		this->pBinLocatorForBackground = BinBasedPointLocatorPointerType ( new BinBasedFastPointLocator<TDim>(mrBackgroundModelPart) );
-		this->pBinLocatorForPatch = BinBasedPointLocatorPointerType( new BinBasedFastPointLocator<TDim>(mrPatchModelPart) );
-		this->pMpcProcess =  ApplyMultipointConstraintsProcessChimera::Pointer(new ApplyMultipointConstraintsProcessChimera(mrAllModelPart)); 
+	{
+		this->pBinLocatorForBackground = BinBasedPointLocatorPointerType(new BinBasedFastPointLocator<TDim>(mrBackgroundModelPart));
+		this->pBinLocatorForPatch = BinBasedPointLocatorPointerType(new BinBasedFastPointLocator<TDim>(mrPatchModelPart));
+		this->pMpcProcess = ApplyMultipointConstraintsProcessChimera::Pointer(new ApplyMultipointConstraintsProcessChimera(mrAllModelPart));
 		this->pHoleCuttingProcess = CustomHoleCuttingProcess::Pointer(new CustomHoleCuttingProcess());
 		this->pCalculateDistanceProcess = typename CustomCalculateSignedDistanceProcess<TDim>::Pointer(new CustomCalculateSignedDistanceProcess<TDim>());
-
 	}
 
 	/// Destructor.
-	virtual ~CustomApplyChimeraUsingMpcProcess() {
-
-		
+	virtual ~CustomApplyChimeraUsingMpcProcess()
+	{
 	}
 
 	///@}
 	///@name Operators
 	///@{
 
-	void operator()() {
+	void operator()()
+	{
 		Execute();
 	}
 
@@ -117,220 +115,182 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 	///@name Operations
 	///@{
 
-	virtual void Execute() {
+	virtual void Execute()
+	{
 	}
 
-	virtual void Clear() {
+	virtual void Clear()
+	{
 	}
 
-	
-	void ApplyMpcConstraint(ModelPart& mrBoundaryModelPart,BinBasedPointLocatorPointerType& pBinLocator, unsigned int type = 1){
-
-		/*
-		 * This part of the code below is adapted from "MappingPressureToStructure" function of class CalculateSignedDistanceTo3DSkinProcess
-		 */
+	void ApplyMpcConstraint(ModelPart &mrBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, unsigned int type = 1)
+	{
 
 		{
 			//loop over nodes and find the triangle in which it falls, than do interpolation
-			array_1d<double, TDim+1 > N;
+			array_1d<double, TDim + 1> N;
 			const int max_results = 10000;
 			typename BinBasedFastPointLocator<TDim>::ResultContainerType results(max_results);
 			const int n_boundary_nodes = mrBoundaryModelPart.Nodes().size();
-			
-			
-			
-			#pragma omp parallel for firstprivate(results,N)
+
+#pragma omp parallel for firstprivate(results, N)
 			//MY NEW LOOP: reset the visited flag
 			for (int i = 0; i < n_boundary_nodes; i++)
 			{
 				ModelPart::NodesContainerType::iterator iparticle = mrBoundaryModelPart.NodesBegin() + i;
-				Node < 3 > ::Pointer p_boundary_node = *(iparticle.base());
+				Node<3>::Pointer p_boundary_node = *(iparticle.base());
 				p_boundary_node->Set(VISITED, false);
 			}
 
-			
 			for (int i = 0; i < n_boundary_nodes; i++)
-			
+
 			{
 				ModelPart::NodesContainerType::iterator iparticle = mrBoundaryModelPart.NodesBegin() + i;
-				Node < 3 > ::Pointer p_boundary_node = *(iparticle.base());
-				
-				
+				Node<3>::Pointer p_boundary_node = *(iparticle.base());
+
 				typename BinBasedFastPointLocator<TDim>::ResultIteratorType result_begin = results.begin();
-				
+
 				Element::Pointer pElement;
-				
+
 				bool is_found = false;
-				is_found = pBinLocator->FindPointOnMesh(p_boundary_node->Coordinates(), N, pElement,result_begin, max_results);
+				is_found = pBinLocator->FindPointOnMesh(p_boundary_node->Coordinates(), N, pElement, result_begin, max_results);
 
-
-					if (is_found == true)
-					{
+				if (is_found == true)
+				{
 					// TODO : For now it only does velocities by components
 					// This should be extended to a general variable
-					
+
 					//Check if some of the host elements are made inactive
 
-						if ((pElement)->IsDefined(ACTIVE)){
-						
-							if(!(pElement->Is(ACTIVE))){
-								std::cout<<"Warning : One of the hole element is used for MPC constraint"<<std::endl;
-								pElement->Set(ACTIVE);
-								std::cout<<"Setting the element: "<<pElement->Id()<<" to active"<<std::endl;
-											
-							}	
+					if ((pElement)->IsDefined(ACTIVE))
+					{
 
+						if (!(pElement->Is(ACTIVE)))
+						{
+							std::cout << "Warning : One of the hole element is used for MPC constraint" << std::endl;
+							pElement->Set(ACTIVE);
+							std::cout << "Setting the element: " << pElement->Id() << " to active" << std::endl;
 						}
-						
-						Geometry<Node<3> >& geom = pElement->GetGeometry();
-					
+					}
+
+					Geometry<Node<3>> &geom = pElement->GetGeometry();
+
+					{
+
+						for (int i = 0; i < geom.size(); i++)
 						{
 
-							for(int i = 0; i < geom.size(); i++)
-							{
-					
-								pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_X,*p_boundary_node,VELOCITY_X,N[i], 0 );
-								pMpcProcess->AddMasterSlaveRelation( geom[i],VELOCITY_Y,*p_boundary_node,VELOCITY_Y,N[i], 0 );
-								//pMpcProcess->AddMasterSlaveRelationVariables( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i], 0 );
-					
-
-							}	
-
-
-						}	
-
-
-					
-					}			
-
+							pMpcProcess->AddMasterSlaveRelation(geom[i], VELOCITY_X, *p_boundary_node, VELOCITY_X, N[i], 0);
+							pMpcProcess->AddMasterSlaveRelation(geom[i], VELOCITY_Y, *p_boundary_node, VELOCITY_Y, N[i], 0);
+							//pMpcProcess->AddMasterSlaveRelationVariables( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i], 0 );
+						}
+					}
+				}
 			}
 
 			if (type == 0)
 
 			{
 				ModelPart::NodesContainerType::iterator iparticle = mrBoundaryModelPart.NodesBegin();
-				Node < 3 > ::Pointer p_boundary_node = *(iparticle.base());
-				
+				Node<3>::Pointer p_boundary_node = *(iparticle.base());
+
 				typename BinBasedFastPointLocator<TDim>::ResultIteratorType result_begin = results.begin();
-				
+
 				Element::Pointer pElement;
-				
+
 				bool is_found = false;
-				is_found = pBinLocator->FindPointOnMesh(p_boundary_node->Coordinates(), N, pElement,result_begin, max_results);
+				is_found = pBinLocator->FindPointOnMesh(p_boundary_node->Coordinates(), N, pElement, result_begin, max_results);
 
 				if (is_found == true)
 				{
 
-					Geometry<Node<3> >& geom = pElement->GetGeometry();
+					Geometry<Node<3>> &geom = pElement->GetGeometry();
 
-					std::cout<<"Presssure of "<<p_boundary_node->Id()<<"coupled to "<< pElement->Id()<<std::endl;
-					//std::exit(-1);
-
-					for(int i = 0; i < geom.size(); i++)
-					{
-					
-					pMpcProcess->AddMasterSlaveRelationVariables( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i], 0 );
+					std::cout << "Presssure of " << p_boundary_node->Id() << "coupled to " << pElement->Id() << std::endl;
 				
+
+					for (int i = 0; i < geom.size(); i++)
+					{
+
+						pMpcProcess->AddMasterSlaveRelationVariables(geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i], 0);
 					}
 				}
 
-				else 
+				else
 				{
-					std::cout<<"Cannot find host element for Pressure coupling"<<std::endl;
+					std::cout << "Cannot find host element for Pressure coupling" << std::endl;
 					std::exit(-1);
-
 				}
-				
-
 			}
-			
-	
-			std::cout<<"mpcProcess ends"<<std::endl;
 
+			std::cout << "mpcProcess ends" << std::endl;
 		}
 	}
 
-
-
-
-//Apply Chimera with or without overlap
-	void ApplyChimeraUsingMpc(ModelPart& mrPatchBoundaryModelPart){
-
-		if(overlap_distance < 0) {
-
-			std::cout<<"Overlap distance should be a positive number"<<std::endl;
+	//Apply Chimera with or without overlap
+	void ApplyChimeraUsingMpc(ModelPart &mrPatchBoundaryModelPart)
+	{
+		const double epsilon = 1e-12;
+		if (overlap_distance < epsilon)
+		{
+			std::cout << "Overlap distance should be a positive number" << std::endl;
 			std::exit(-1);
 		}
-		if (overlap_distance > 0)
-		
+		if (overlap_distance > epsilon)
+
 		{
-          
-		ModelPart HoleModelPart = ModelPart("HoleModelpart");
-		ModelPart HoleBoundaryModelPart = ModelPart("HoleBoundaryModelPart");
 
-		//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
-		 this->pCalculateDistanceProcess->CalculateSignedDistance(mrBackgroundModelPart, mrPatchBoundaryModelPart);
-
-	
-		this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart,HoleModelPart,HoleBoundaryModelPart, overlap_distance);
-		
-
-		ApplyMpcConstraint(mrPatchBoundaryModelPart,pBinLocatorForBackground,0);
-		std::cout<<"Patch boundary coupled with background"<<std::endl;
-		ApplyMpcConstraint(HoleBoundaryModelPart,pBinLocatorForPatch,1);
-		std::cout<<"HoleBoundary  coupled with patch"<<std::endl;
-
-
-
-
-		}
-
-		else {
-
-			ModelPart HoleModelPart =  ModelPart("HoleModelPart");
-			ModelPart HoleBoundaryModelPart =  ModelPart("HoleBoundaryModelPart");
+			ModelPart HoleModelPart = ModelPart("HoleModelpart");
+			ModelPart HoleBoundaryModelPart = ModelPart("HoleBoundaryModelPart");
 
 			//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
+			this->pCalculateDistanceProcess->CalculateSignedDistance(mrBackgroundModelPart, mrPatchBoundaryModelPart);
 
-	
-			this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart,HoleModelPart,HoleBoundaryModelPart,overlap_distance);
-		
+			this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart, HoleModelPart, HoleBoundaryModelPart, overlap_distance);
 
-			ApplyMpcConstraint(mrPatchBoundaryModelPart,pBinLocatorForBackground);
-
-
-			}
-		
-		
-
-			
+			ApplyMpcConstraint(mrPatchBoundaryModelPart, pBinLocatorForBackground, 0);
+			std::cout << "Patch boundary coupled with background" << std::endl;
+			ApplyMpcConstraint(HoleBoundaryModelPart, pBinLocatorForPatch, 1);
+			std::cout << "HoleBoundary  coupled with patch" << std::endl;
 		}
 
-
-		void SetOverlapDistance(double distance)
+		else
 		{
 
-			this->overlap_distance = distance;
+			std::cout << "Applying Strong MPC " << std::endl;
 
+			ModelPart HoleModelPart = ModelPart("HoleModelPart");
+			ModelPart HoleBoundaryModelPart = ModelPart("HoleBoundaryModelPart");
 
+			//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
+			this->pCalculateDistanceProcess->CalculateSignedDistance(mrBackgroundModelPart, mrPatchBoundaryModelPart);
+
+			this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart, HoleModelPart, HoleBoundaryModelPart, overlap_distance);
+
+			ApplyMpcConstraint(mrPatchBoundaryModelPart, pBinLocatorForBackground, 1);
 		}
-		
+	}
 
+	void SetOverlapDistance(double distance)
+	{
 
-   
+		this->overlap_distance = distance;
+	}
 
-
-	virtual std::string Info() const {
+	virtual std::string Info() const
+	{
 		return "CustomApplyChimeraUsingMpcProcess";
 	}
 
 	/// Print information about this object.
-	virtual void PrintInfo(std::ostream& rOStream) const {
+	virtual void PrintInfo(std::ostream &rOStream) const
+	{
 		rOStream << "CustomApplyChimeraUsingMpcProcess";
 	}
 
 	/// Print object's data.
-	virtual void PrintData(std::ostream& rOStream) const {
+	virtual void PrintData(std::ostream &rOStream) const
+	{
 	}
 
 	///@}
@@ -339,8 +299,7 @@ CustomApplyChimeraUsingMpcProcess(ModelPart& AllModelPart,ModelPart& BackgroundM
 
 	///@}
 
-protected:
-
+  protected:
 	///@name Protected static Member Variables
 	///@{
 
@@ -370,15 +329,14 @@ protected:
 
 	///@}
 
-private:
-
+  private:
 	///@name Static Member Variables
 	///@{
 
 	///@}
 	///@name Member Variables
 	///@{
-	
+
 	//ModelPart &mrBackGroundModelPart;
 	//ModelPart &mrPatchSurfaceModelPart;
 	BinBasedPointLocatorPointerType pBinLocatorForBackground; // Template argument 3 stands for 3D case
@@ -387,9 +345,12 @@ private:
 	CustomHoleCuttingProcess::Pointer pHoleCuttingProcess;
 	typename CustomCalculateSignedDistanceProcess<TDim>::Pointer pCalculateDistanceProcess;
 	double overlap_distance;
-	ModelPart& mrBackgroundModelPart;
-	ModelPart& mrPatchModelPart;
-	ModelPart& mrAllModelPart;
+	ModelPart &mrBackgroundModelPart;
+	ModelPart &mrPatchModelPart;
+	ModelPart &mrAllModelPart;
+
+	// epsilon
+	//static const double epsilon;
 
 	///@}
 	///@name Private Operators
@@ -412,7 +373,7 @@ private:
 	///@{
 
 	/// Assignment operator.
-	CustomApplyChimeraUsingMpcProcess& operator=(CustomApplyChimeraUsingMpcProcess const& rOther);
+	CustomApplyChimeraUsingMpcProcess &operator=(CustomApplyChimeraUsingMpcProcess const &rOther);
 
 	/// Copy constructor.
 	//CustomExtractVariablesProcess(CustomExtractVariablesProcess const& rOther);
@@ -421,6 +382,6 @@ private:
 
 }; // Class CustomExtractVariablesProcess
 
-}  // namespace Kratos.
+} // namespace Kratos.
 
 #endif // KRATOS_CUSTOM_EXTRACT_VARIABLES_PROCESS_H_INCLUDED  defined

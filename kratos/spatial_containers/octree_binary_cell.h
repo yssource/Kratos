@@ -163,8 +163,6 @@ namespace Kratos {
                 
                 
             }
-            std::exit(-1);
-
             return 0; // Zero says no error!
         }
 

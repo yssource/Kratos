@@ -28,7 +28,7 @@ class Partitioned_chimera_solver:
         self.overLapDistance = -1
         #### Uitility for extracting the surface meshes on both background and patches
         #### These surface meshes are used to apply the boundary conditions
-        self.extractorUtil = chimeraApp.CustomWholeCuttingProcess()
+        self.extractorUtil = chimeraApp.CustomHoleCuttingProcess()
         self.varableExtractor = chimeraApp.CustomExtractVariablesProcess()
         
         print("Construction of patitioned chimera solver finished !")
@@ -137,10 +137,10 @@ class Partitioned_chimera_solver:
         if(self.overLapDistance < 0):
             print('\n\nWARNING :: Setting default overlap distance of 0.2. \n If this is not desired please set the overlap distance before calling this function !\n\n')
             self.overLapDistance = 0.2
-        self.extractorUtil.ExtractVolumeMeshBetweenLimits(self.background_model_part, self.background_cut_volume_modelPart, -self.overLapDistance, self.overLapDistance)
-        self.extractorUtil.ExtractSurfaceMeshAtDistance(self.background_model_part, testMPOuterSurface, -1*self.overLapDistance)
+        self.extractorUtil.ExtractMeshBetweenLimits(self.background_model_part, self.background_cut_volume_modelPart, -self.overLapDistance, self.overLapDistance)
+        self.extractorUtil.ExtractMeshAtCentroidDistance(self.background_model_part, testMPOuterSurface, -1*self.overLapDistance)
         for patchName, patch_model_part in self.patchNameModelPartMap.items():
-            self.extractorUtil.ExtractVolumeMeshBetweenLimits(patch_model_part, testMPInner, -1*(self.overLapDistance + 0.750*self.overLapDistance), -1*(self.overLapDistance - 0.750*self.overLapDistance))
+            self.extractorUtil.ExtractMeshBetweenLimits(patch_model_part, testMPInner, -1*(self.overLapDistance + 0.750*self.overLapDistance), -1*(self.overLapDistance - 0.750*self.overLapDistance))
                     
         #self.varableExtractor.ExtractVariable(self.background_cut_volume_modelPart, self.patchNameModelPartMap['square'].GetSubModelPart('Inlet3D_interface'), KratosMultiphysics.PRESSURE)        
         return self.background_cut_volume_modelPart, testMPInner

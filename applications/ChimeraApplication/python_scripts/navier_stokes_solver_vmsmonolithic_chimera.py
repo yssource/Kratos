@@ -68,7 +68,9 @@ class NavierStokesSolver_VMSMonolithic_Chimera(navier_stokes_base_solver.NavierS
             "move_mesh_strategy": 0,
             "periodic": "periodic",
             "move_mesh_flag": false,
-            "turbulence_model": "None"
+            "turbulence_model": "None",
+            "use_spalart_allmaras": false,
+            "reorder": false  
         }""")
 
         ## Overwrite the default settings with user-provided parameters

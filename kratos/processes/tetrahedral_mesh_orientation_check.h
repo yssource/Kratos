@@ -311,6 +311,7 @@ public:
         {
             if(itCond->IsNot(VISITED) )
             {
+                
                 KRATOS_THROW_ERROR(std::runtime_error,
                                    "Found a condition without any corresponding element. ID of condition = ", itCond->Id());
             }

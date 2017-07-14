@@ -31,6 +31,7 @@ namespace Kratos
     typedef MpcData::Pointer MpcDataPointerType;
 KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS( CHIM_NEUMANN_COND );
 KRATOS_DEFINE_VARIABLE(MpcDataPointerType, MPC_POINTER);
+//KRATOS_DEFINE_VARIABLE(MpcDataPointerType, IS_WEAK);
 
 
 }

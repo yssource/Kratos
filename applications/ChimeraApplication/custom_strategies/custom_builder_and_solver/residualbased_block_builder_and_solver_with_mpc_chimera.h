@@ -592,20 +592,20 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                         // For K(m,u) and K(u,m)
                         for (auto localInternEqId : localInternEquationIds)
                         { // Loop over all the local equation ids
-                            LHS_Contribution(localInternEqId, localMasterEqId) += LHS_Contribution(localInternEqId, localSlaveEqId) * masterI.second*0;
-                            LHS_Contribution(localMasterEqId, localInternEqId) += LHS_Contribution(localSlaveEqId, localInternEqId) * masterI.second*0;
+                            LHS_Contribution(localInternEqId, localMasterEqId) += LHS_Contribution(localInternEqId, localSlaveEqId) * masterI.second;
+                            LHS_Contribution(localMasterEqId, localInternEqId) += LHS_Contribution(localSlaveEqId, localInternEqId) * masterI.second*1;
                         } // Loop over all the local equation ids
 
                         // For K(m,s) and K(s,m)
                         for (auto localSlaveEqIdOther : localSlaveEquationIds)
                         { // Loop over all the slaves for this node
-                            LHS_Contribution(localSlaveEqIdOther, localMasterEqId) += masterI.second * LHS_Contribution(localSlaveEqIdOther, localSlaveEqId)*-1;
-                            LHS_Contribution(localMasterEqId, localSlaveEqIdOther) += masterI.second * LHS_Contribution(localSlaveEqId, localSlaveEqIdOther)*0;
+                            LHS_Contribution(localSlaveEqIdOther, localMasterEqId) += masterI.second * LHS_Contribution(localSlaveEqIdOther, localSlaveEqId)*1;
+                            LHS_Contribution(localMasterEqId, localSlaveEqIdOther) += masterI.second * LHS_Contribution(localSlaveEqId, localSlaveEqIdOther)*1;
                         }
 
                         EquationId.push_back(masterI.first);
                         // Changing the RHS side of the equation
-                        RHS_Contribution(localMasterEqId) = RHS_Contribution(localMasterEqId) + masterI.second * RHS_Contribution(localSlaveEqId)*0;
+                        RHS_Contribution(localMasterEqId) = RHS_Contribution(localMasterEqId) + masterI.second * RHS_Contribution(localSlaveEqId)*1;
 
                     } // Loop over all the masters the slave has
 
@@ -619,7 +619,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
         { // Loop over all the slaves for this node
             for (auto localSlaveEqIdOther : localSlaveEquationIds)
             { // Loop over all the local equation ids
-                LHS_Contribution(localSlaveEqId, localSlaveEqIdOther) = 1 * LHS_Contribution(localSlaveEqId, localSlaveEqIdOther);
+                LHS_Contribution(localSlaveEqId, localSlaveEqIdOther) = -1 * LHS_Contribution(localSlaveEqId, localSlaveEqIdOther);
             }
         } // Loop over all the slaves for this node
         // For K(u,s) and K(s,u)

@@ -12,8 +12,8 @@
 //
 
 
-#if !defined(KRATOS_CALCULATE_SIGNED_DISTANCE_2D_PROCESS_H_INCLUDED )
-#define  KRATOS_CALCULATE_SIGNED_DISTANCE_2D_PROCESS_H_INCLUDED
+#if !defined(KRATOS_CALCULATE_SIGNED_DISTANCE_CONDITION_2D_PROCESS_H_INCLUDED )
+#define  KRATOS_CALCULATE_SIGNED_DISTANCE_CONDITION_2D_PROCESS_H_INCLUDED
 
 
 
@@ -55,7 +55,7 @@ using namespace boost::numeric::ublas;
 namespace Kratos
 {
 
-class DistanceSpatialContainersConfigure2d
+class DistanceSpatialContainersConditionConfigure2d
 {
 public:
     class CellNodeData
@@ -80,20 +80,20 @@ public:
 
     enum { Dimension = 3,
            DIMENSION = 2,
-           MAX_LEVEL = 8,
+           MAX_LEVEL = 12,
            MIN_LEVEL = 2    // this cannot be less than 2!!!
          };
 
     typedef Point<3, double>                                PointType;  /// always the point 3D
     typedef std::vector<double>::iterator                   DistanceIteratorType;
-    typedef ModelPart::ElementsContainerType::ContainerType ContainerType;
+    typedef PointerVectorSet<GeometricalObject::Pointer, IndexedObject> ContainerType;
     typedef ContainerType::value_type                       PointerType;
     typedef ContainerType::iterator                         IteratorType;
-    typedef ModelPart::ElementsContainerType::ContainerType ResultContainerType;
+    typedef PointerVectorSet<GeometricalObject::Pointer, IndexedObject> ResultContainerType;
     typedef ResultContainerType::value_type                 ResultPointerType;
     typedef ResultContainerType::iterator                   ResultIteratorType;
 
-    typedef Element::Pointer                                        pointer_type;
+    typedef GeometricalObject::Pointer                                        pointer_type; //nav
     typedef CellNodeData                cell_node_data_type;
     typedef std::vector<CellNodeData*> data_type;
 
@@ -102,18 +102,18 @@ public:
 
 
 
-    /// Pointer definition of DistanceSpatialContainersConfigure2d
-    KRATOS_CLASS_POINTER_DEFINITION(DistanceSpatialContainersConfigure2d);
+    /// Pointer definition of DistanceSpatialContainersConditionConfigure2d
+    KRATOS_CLASS_POINTER_DEFINITION(DistanceSpatialContainersConditionConfigure2d);
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    DistanceSpatialContainersConfigure2d() {}
+    DistanceSpatialContainersConditionConfigure2d() {}
 
     /// Destructor.
-    virtual ~DistanceSpatialContainersConfigure2d() {}
+    virtual ~DistanceSpatialContainersConditionConfigure2d() {}
 
 
     ///@}
@@ -232,13 +232,13 @@ protected:
 private:
 
     /// Assignment operator.
-    DistanceSpatialContainersConfigure2d& operator=(DistanceSpatialContainersConfigure2d const& rOther);
+    DistanceSpatialContainersConditionConfigure2d& operator=(DistanceSpatialContainersConditionConfigure2d const& rOther);
 
     /// Copy constructor.
-    DistanceSpatialContainersConfigure2d(DistanceSpatialContainersConfigure2d const& rOther);
+    DistanceSpatialContainersConditionConfigure2d(DistanceSpatialContainersConditionConfigure2d const& rOther);
 
 
-}; // Class DistanceSpatialContainersConfigure2d
+}; // Class DistanceSpatialContainersConditionConfigure2d
 
 ///@name Kratos Globals
 ///@{
@@ -263,17 +263,17 @@ private:
 /// Short class definition.
 /** Detail class definition.
   */
-class CalculateSignedDistanceTo2DSkinProcess
+class CalculateSignedDistanceTo2DConditionSkinProcess
         : public Process
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of CalculateSignedDistanceTo2DSkinProcess
-    KRATOS_CLASS_POINTER_DEFINITION(CalculateSignedDistanceTo2DSkinProcess);
+    /// Pointer definition of CalculateSignedDistanceTo2DConditionSkinProcess
+    KRATOS_CLASS_POINTER_DEFINITION(CalculateSignedDistanceTo2DConditionSkinProcess);
 
-    typedef DistanceSpatialContainersConfigure2d ConfigurationType;
+    typedef DistanceSpatialContainersConditionConfigure2d ConfigurationType;
     typedef QuadtreeBinaryCell<ConfigurationType> CellType;
     typedef QuadtreeBinary<CellType> QuadtreeType;
     typedef ConfigurationType::cell_node_data_type CellNodeDataType;
@@ -295,14 +295,14 @@ public:
     ///@{
 
     /// Constructor.
-    CalculateSignedDistanceTo2DSkinProcess(ModelPart& rThisModelPartStruc, ModelPart& rThisModelPartFluid)
+    CalculateSignedDistanceTo2DConditionSkinProcess(ModelPart& rThisModelPartStruc, ModelPart& rThisModelPartFluid)
         : mrSkinModelPart(rThisModelPartStruc),  mrFluidModelPart(rThisModelPartFluid)
     {
      //this->pDistanceCalculator = typename ParallelDistanceCalculator<2>::Pointer(new ParallelDistanceCalculator<2>());
     }
 
     /// Destructor.
-    virtual ~CalculateSignedDistanceTo2DSkinProcess()
+    virtual ~CalculateSignedDistanceTo2DConditionSkinProcess()
     {
     }
 
@@ -329,9 +329,7 @@ public:
         KRATOS_TRY;
         
         
-        GenerateQuadtree();
-        std::cout<<"Inside Execute"<<std::endl;
-        
+        GenerateQuadtree(); 
 
         DistanceFluidStructure();
         //unsigned int max_level = 100;
@@ -367,8 +365,8 @@ public:
     {
       //std::cout << "Start calculating Elemental distances..." << std::endl;
 
-        // Initialize Elemental distances in the domain
-        Initialize();
+        // Initialize nodal distances in the domain
+        InitializeDistances();
 
         // Initialize index table that defines line Edges of fluid Element
         bounded_matrix<unsigned int,3,2> TriangleEdgeIndexTable;
@@ -392,18 +390,18 @@ public:
         {
             ModelPart::ElementsContainerType::iterator it_begin = pElements.ptr_begin() + Element_partition[k];
             ModelPart::ElementsContainerType::iterator it_end = pElements.ptr_begin() + Element_partition[k+1];
-
+            
             // assemble all Elements
             for (ModelPart::ElementIterator it = it_begin; it != it_end; ++it)
             {
-                CalcElementDistances( it , TriangleEdgeIndexTable );
+                CalcNodalDistancesOfTriangleNodes( it , TriangleEdgeIndexTable );
             }
         }        
 
         // Finally, each triangle Element has 3 distance values. But each node belongs to
         // several Elements, such that it is assigned several distance values
         // --> now synchronize these values by finding the minimal distance and assign to each node a minimal nodal distance
-        AssignMinimalNodalDistance();
+        AssignMinimalNodalDistance(); // revisit -nav
 
         
     }
@@ -411,7 +409,7 @@ public:
     ///******************************************************************************************************************
     ///******************************************************************************************************************
 
-    void Initialize()
+    void InitializeDistances()
     {
         const double initial_distance = 10000;
 
@@ -464,7 +462,7 @@ public:
     ///******************************************************************************************************************
     ///******************************************************************************************************************
 
-    void CalcElementDistances( ModelPart::ElementsContainerType::iterator& i_fluidElement,
+    void CalcNodalDistancesOfTriangleNodes( ModelPart::ElementsContainerType::iterator& i_fluidElement,
                                bounded_matrix<unsigned int,3,2>            TriangleEdgeIndexTable )
     {
         std::vector<QuadtreeType::cell_type*> leaves;
@@ -490,8 +488,12 @@ public:
         {
             i_fluidElement->GetValue(EMBEDDED_VELOCITY) /= intersection_counter;
         }*/
+        
+      
+        
 
         if(IntersectedTriangleEdges.size() > 0)
+
             CalcDistanceTo2DSkin( IntersectedTriangleEdges , i_fluidElement , NumberIntersectionsOnTriangleCorner );
     }
 
@@ -503,10 +505,10 @@ public:
                                     std::vector<QuadtreeType::cell_type*>&          leaves,
                                     std::vector<TriangleEdgeStruct>&              IntersectedTriangleEdges,
                                     unsigned int&                                 NumberIntersectionsOnTriangleCorner,
-                                    bounded_matrix<unsigned int,6,2>              TriangleEdgeIndexTable,
+                                    bounded_matrix<unsigned int,3,2>              TriangleEdgeIndexTable,
                                     int&                                          intersection_counter )
     {   
-        std::vector<unsigned int> IntersectingStructElemID;
+        std::vector<unsigned int> IntersectingStructCondID;
         TriangleEdgeStruct             NewTriangleEdge;
         unsigned int              NumberIntersectionsOnTriangleCornerCurrentEdge = 0;
 
@@ -524,23 +526,23 @@ public:
         // loop over all quadtree cells which are intersected by the fluid Element
         for(unsigned int i_cell = 0 ; i_cell < leaves.size() ; i_cell++)
         {
-            // Structural Element contained in one cell of the quadtree
+            // Structural Condition contained in one cell of the quadtree
 
             
-            object_container_type* struct_elem = (leaves[i_cell]->pGetObjects());
+            object_container_type* struct_cond = (leaves[i_cell]->pGetObjects());
                   
 
-            // loop over all structural Elements within each quadtree cell
-            for(object_container_type::iterator i_StructElement = struct_elem->begin(); i_StructElement != struct_elem->end(); i_StructElement++)
+            // loop over all structural Conditions within each quadtree cell
+            for(object_container_type::iterator i_StructCondition = struct_cond->begin(); i_StructCondition != struct_cond->end(); i_StructCondition++)
             {
 
-                if( StructuralElementNotYetConsidered( (*i_StructElement)->Id() , IntersectingStructElemID ) )
+                if( StructuralElementNotYetConsidered( (*i_StructCondition)->Id() , IntersectingStructCondID ) )
                 {
                     
                     // Calculate and associate intersection point to the current fluid Element
                     double IntersectionPoint[3] = {0.0 , 0.0 , 0.0};
 
-                    int TriangleEdgeHasIntersections = IntersectionLineSegment( (*i_StructElement)->GetGeometry() , EdgeNode1 , EdgeNode2 , IntersectionPoint );
+                    int TriangleEdgeHasIntersections = IntersectionLineSegment( (*i_StructCondition)->GetGeometry() , EdgeNode1 , EdgeNode2 , IntersectionPoint );
 
                     if( TriangleEdgeHasIntersections == 1 )
                     {
@@ -560,9 +562,9 @@ public:
                             if ( IsNewIntersectionNode( NewIntersectionNode , IntersectedTriangleEdges ) )
                             {
                                 //std::cout<<" new intersection on  node"<<std::endl;
-                                // Calculate normal of the structural Element at the position of the intersection point
-                                CalculateNormal2D((*i_StructElement)->GetGeometry()[0],
-                                                  (*i_StructElement)->GetGeometry()[1],
+                                // Calculate normal of the structural Condition at the position of the intersection point
+                                CalculateNormal2D((*i_StructCondition)->GetGeometry()[0],
+                                                  (*i_StructCondition)->GetGeometry()[1],
                                                   NewIntersectionNode.StructElemNormal);
 
                                 // check, how many intersection nodes are located on corner points of the triangle
@@ -600,9 +602,9 @@ public:
                                     NewTriangleEdge.IntNodes.push_back(NewIntersectionNode);
 
                                     // velocity mapping structure --> fluid
-/*                                    array_1d<double,3> emb_vel = (*i_StructElement)->GetGeometry()[0].GetSolutionStepValue(VELOCITY);
-                                    emb_vel += (*i_StructElement)->GetGeometry()[1].GetSolutionStepValue(VELOCITY);
-                                    emb_vel += (*i_StructElement)->GetGeometry()[2].GetSolutionStepValue(VELOCITY);*/
+/*                                    array_1d<double,3> emb_vel = (*i_StructCondition)->GetGeometry()[0].GetSolutionStepValue(VELOCITY);
+                                    emb_vel += (*i_StructCondition)->GetGeometry()[1].GetSolutionStepValue(VELOCITY);
+                                    emb_vel += (*i_StructCondition)->GetGeometry()[2].GetSolutionStepValue(VELOCITY);*/
 /*
                                     i_fluidElement->GetValue(EMBEDDED_VELOCITY) += emb_vel/3;*/
                                     intersection_counter++;
@@ -625,19 +627,19 @@ public:
     ///******************************************************************************************************************
     ///******************************************************************************************************************
 
-    bool StructuralElementNotYetConsidered( unsigned int                IDCurrentStructElem,
-                                            std::vector<unsigned int>&  IntersectingStructElemID )
+    bool StructuralElementNotYetConsidered( unsigned int                IDCurrentStructCond,
+                                            std::vector<unsigned int>&  IntersectingStructCondID )
     {
         // check if the structural Element was already considered as intersecting Element
-        for(unsigned int k = 0 ; k < IntersectingStructElemID.size() ; k++)
+        for(unsigned int k = 0 ; k < IntersectingStructCondID.size() ; k++)
         {
-            if( IDCurrentStructElem == IntersectingStructElemID[k] )
+            if( IDCurrentStructCond == IntersectingStructCondID[k] )
                 return false;
         }
 
         // if structural Element has not been considered in another quadtree, which also intersects the fluid Element
         // add the new object ID to the vector
-        IntersectingStructElemID.push_back( IDCurrentStructElem );
+        IntersectingStructCondID.push_back( IDCurrentStructCond );
         return true;
     }
 
@@ -784,13 +786,18 @@ public:
         {
             CalcSignedDistancesToTwoEdgeIntNodes(i_fluid_Element,NodesOfApproximatedStructure,ElementalDistances);
             i_fluid_Element->GetValue(SPLIT_ELEMENT) = true;
-            
-            //std::cout<<"CalcSignedDistancesToTwoEdgeIntNodes"<<"ED "<<ElementalDistances[0]<<","<<ElementalDistances[1]<<","<<ElementalDistances[2]<<std::endl;
-            /*if(i_fluid_Element->Id()==2541)
+            //nav
+            /*if (i_fluid_Element->Id() == 513)
             {
+                std::cout<<"CalcSignedDistancesToTwoEdgeIntNodes"<<"ED "<<ElementalDistances[0]<<","<<ElementalDistances[1]<<","<<ElementalDistances[2]<<std::endl;
+         
                 std::cout<<"Normal1 "<<NodesOfApproximatedStructure[0].StructElemNormal<<"Normal2 "<<NodesOfApproximatedStructure[1].StructElemNormal<<std::endl;
-                //std::exit(-1);
+                std::exit(-1);
+
+
             }*/
+            
+           
         }
 
         // Intersection with more than two triangle edges
@@ -798,9 +805,13 @@ public:
         {
             CalcSignedDistancesToMoreThanTwoIntNodes(i_fluid_Element,NodesOfApproximatedStructure,ElementalDistances,IntersectedTriangleEdges);
             i_fluid_Element->GetValue(SPLIT_ELEMENT) = true;
-            
-            //std::cout<<"CalcSignedDistancesToMoreThanTwoIntNodes"<<"ED "<<ElementalDistances[0]<<","<<ElementalDistances[1]<<","<<ElementalDistances[2]<<std::endl;
 
+              //nav  
+
+            /*std::cout<<"Fluid Id" << i_fluid_Element->Id()<<std::endl;
+            
+            std::cout<<"CalcSignedDistancesToMoreThanTwoIntNodes"<<"ED "<<ElementalDistances[0]<<","<<ElementalDistances[1]<<","<<ElementalDistances[2]<<std::endl;
+*/
 
           
         }
@@ -914,18 +925,22 @@ public:
 
         Point<3> P1;
         Point<3> P2;
-        Point<3> P3;
+        
  
         P1.Coordinates() = NodesOfApproximatedStructure[0].Coordinates;
         P2.Coordinates() = NodesOfApproximatedStructure[1].Coordinates;
-        P3.Coordinates() = NodesOfApproximatedStructure[2].Coordinates;
+        
 
         array_1d<double,3> Normal;
         CalculateNormal2D(P1,P2,Normal);
-
+        //nav
+        //std::cout<<" Calculated  Normal " << Normal<<std::endl;
         // Check whether orientation of normal is in direction of the normal of the intersecting structure
         // Note: The normal of the approx. surface can be max. 90deg to every surrounding normal of the structure at the intersection nodes
         const array_1d<double,3> NormalAtOneIntersectionNode = NodesOfApproximatedStructure[0].StructElemNormal;
+        //nav
+        //std::cout<<" Intersection Normal " << NodesOfApproximatedStructure[0].StructElemNormal<<std::endl;
+        //std::cout<<" P1 " <<P1.Coordinates()<<std::endl;
 
         bool NormalWrongOriented = false;
         if(inner_prod(NormalAtOneIntersectionNode,Normal)<0)
@@ -955,23 +970,40 @@ public:
         // Compute average of the intersection nodes which is a node on the line we look for
         Point<3> P_mean;
         for(unsigned int k=0; k<numberCutEdges; k++)
-            for(unsigned int i=0; i<3; i++)
+            for(unsigned int i=0; i<2; i++)
                 P_mean.Coordinates()[i] += NodesOfApproximatedStructure[k].Coordinates[i];
 
-        for(unsigned int i=0; i<3; i++)
+            P_mean.Coordinates()[2] = 0.0;
+/*
+        std::cout<<"Element Id "<<i_fluid_Element->Id()<<std::endl;
+        std::cout<<"Number of cut edges "<<NodesOfApproximatedStructure.size()<<std::endl;*/
+         //nav
+         /*for(unsigned int k=0; k<numberCutEdges; k++)
+            {
+            
+                std::cout<<"Coordinate "<< k <<" "<< NodesOfApproximatedStructure[k].Coordinates[0]<<","<<NodesOfApproximatedStructure[k].Coordinates[1]<<","<<NodesOfApproximatedStructure[k].Coordinates[2]<<std::endl; 
+
+                std::cout<<"Normal "<< k <<" "<< NodesOfApproximatedStructure[k].StructElemNormal[0]<<","<<NodesOfApproximatedStructure[k].StructElemNormal[1]<<","<<NodesOfApproximatedStructure[k].StructElemNormal[2]<<std::endl;
+            }*/
+
+
+         
+                  
+
+        for(unsigned int i=0; i<2; i++)
             P_mean.Coordinates()[i] /= numberCutEdges;
 
         // Compute normal for the best-fitted plane
         array_1d<double,3> N_mean;
 
-        Matrix coordinates(numberCutEdges,3);
+        Matrix coordinates(numberCutEdges,2);
         for(unsigned int i=0; i<numberCutEdges; i++)
-            for(unsigned int j=0; j<3; j++)
+            for(unsigned int j=0; j<2; j++)
                 coordinates(i,j) = NodesOfApproximatedStructure[i].Coordinates[j] - P_mean[j];
 
         Matrix A = prod(trans(coordinates),coordinates);
-        Matrix V(3,3);
-        Vector lambda(3);
+        Matrix V(2,2);
+        Vector lambda(2);
 
         // Calculate the eigenvectors V and the corresponding eigenvalues lambda
         EigenVectors(A, V, lambda);
@@ -979,7 +1011,8 @@ public:
         // Look for the minimal eigenvalue all lambdas
         unsigned int min_pos = 0;
         double min_lambda = lambda[min_pos];
-        for(unsigned int i=1;i<3; i++)
+        
+        for(unsigned int i=1;i<2; i++)
             if(min_lambda > lambda[i])
             {
                 min_lambda = lambda[i];
@@ -987,9 +1020,18 @@ public:
             }
 
         // the normal equals to the eigenvector which corresponds to the minimal eigenvalue
-        for(unsigned int i=0;i<3; i++) N_mean[i] = V(min_pos,i);
-        N_mean /= norm_2(N_mean);
+        for(unsigned int i=0;i<2; i++) N_mean[i] = V(min_pos,i);
 
+        N_mean[2] = 0.0;
+        N_mean /= norm_2(N_mean);
+        
+       
+        
+        
+        //nav
+        /*std::cout<<"Min lamda "<<min_lambda<<std::endl;
+        std::cout<<"Min eigenvector "<<V(min_pos,0)<<","<<V(min_pos,1)<<std::endl;
+        std::cout<<"N_mean "<< N_mean[0]<<","<<N_mean[1]<<","<<N_mean[2]<<std::endl;*/
         // Check whether orientation of normal is in direction of the normal of the intersecting structure
         // Note: The normal of the approx. surface can be max. 90deg to every surrounding normal of the structure at the intersection nodes
         array_1d<double,3> NormalAtOneIntersectionNode;
@@ -1078,6 +1120,7 @@ public:
 
         // projection of node on the plane
         const double sn = inner_prod(lineToPointVec,lineNormal);
+        //std::cout<<"nav dot product"<<sn<<std::endl;
         const double sd = inner_prod(lineNormal,lineNormal);
         double DistanceToLine = sn / sqrt(sd);
 
@@ -1374,11 +1417,11 @@ public:
         
 
         // loop over all structure elements
-        for(ModelPart::ElementIterator i_element = mrSkinModelPart.ElementsBegin();
-            i_element != mrSkinModelPart.ElementsEnd();
-            i_element++)
+        for(ModelPart::ConditionIterator i_cond = mrSkinModelPart.ConditionsBegin(); //nav
+            i_cond != mrSkinModelPart.ConditionsEnd(); //nav
+            i_cond++)
         {
-            mpQuadtree->Insert(*(i_element).base());
+            mpQuadtree->Insert(*(i_cond).base());
         }
 
         Timer::Stop("Generating Quadtree");
@@ -1437,10 +1480,10 @@ public:
         for (int i_pos=0; i_pos < 4; i_pos++) // position 4 is for center
         {
             
-            DistanceSpatialContainersConfigure2d::cell_node_data_type* p_node = (*(pCell->pGetData()))[i_pos];
+            DistanceSpatialContainersConditionConfigure2d::cell_node_data_type* p_node = (*(pCell->pGetData()))[i_pos];
             if(p_node == 0)
             {
-                (*(pCell->pGetData()))[i_pos] = new DistanceSpatialContainersConfigure2d::cell_node_data_type;
+                (*(pCell->pGetData()))[i_pos] = new DistanceSpatialContainersConditionConfigure2d::cell_node_data_type;
 
                 (*(pCell->pGetData()))[i_pos]->Id() = LastId++;
 
@@ -1570,7 +1613,7 @@ public:
     void CalculateDistance()
     {
         Timer::Start("Calculate Distances");
-        DistanceSpatialContainersConfigure2d::data_type& nodes = mQuadtreeNodes;
+        DistanceSpatialContainersConditionConfigure2d::data_type& nodes = mQuadtreeNodes;
         int nodes_size = nodes.size();
         // first of all we reste the node distance to 1.00 which is the maximum distnace in our normalized space.
 #pragma omp parallel for firstprivate(nodes_size)
@@ -1615,7 +1658,7 @@ public:
         typedef std::vector<std::pair<double, triangle_type*> > intersections_container_type;
 
         intersections_container_type intersections;
-        DistanceSpatialContainersConfigure2d::data_type nodes_array;
+        DistanceSpatialContainersConditionConfigure2d::data_type nodes_array;
 
 
         const double epsilon = 1e-12;
@@ -1827,7 +1870,7 @@ public:
 
     }
 
-    void GetIntersectionsAndNodes(double* ray, int direction, std::vector<std::pair<double,Element::GeometryType*> >& intersections, DistanceSpatialContainersConfigure2d::data_type& rNodesArray)
+    void GetIntersectionsAndNodes(double* ray, int direction, std::vector<std::pair<double,Element::GeometryType*> >& intersections, DistanceSpatialContainersConditionConfigure2d::data_type& rNodesArray)
     {
         //This function passes the ray through the model and gives the hit point to all objects in its way
         //ray is of dimension (3) normalized in (0,1)^3 space
@@ -2173,13 +2216,13 @@ public:
     /// Turn back information as a string.
     virtual std::string Info() const override
     {
-        return "CalculateSignedDistanceTo2DSkinProcess";
+        return "CalculateSignedDistanceTo2DConditionSkinProcess";
     }
 
     /// Print information about this object.
     virtual void PrintInfo(std::ostream& rOStream) const override
     {
-        rOStream << "CalculateSignedDistanceTo2DSkinProcess";
+        rOStream << "CalculateSignedDistanceTo2DConditionSkinProcess";
     }
 
     /// Print object's data.
@@ -2198,7 +2241,7 @@ public:
         rOStream << "Coordinates" << std::endl;
         rOStream << "# node number coordinate_x coordinate_y coordinate_z  " << std::endl;
 
-        for(DistanceSpatialContainersConfigure2d::data_type::const_iterator i_node = mQuadtreeNodes.begin() ; i_node != mQuadtreeNodes.end() ; i_node++)
+        for(DistanceSpatialContainersConditionConfigure2d::data_type::const_iterator i_node = mQuadtreeNodes.begin() ; i_node != mQuadtreeNodes.end() ; i_node++)
         {
             rOStream << (*i_node)->Id() << "  " << (*i_node)->Coordinate(1) << "  " << (*i_node)->Coordinate(2) << "  " << (*i_node)->Coordinate(3) << std::endl;
             //mpQuadtree->Insert(temp_point);
@@ -2211,7 +2254,7 @@ public:
         for (std::size_t i = 0; i < leaves.size(); i++) {
             if ((leaves[i]->pGetData()))
             {
-                DistanceSpatialContainersConfigure2d::data_type& nodes = (*(leaves[i]->pGetData()));
+                DistanceSpatialContainersConditionConfigure2d::data_type& nodes = (*(leaves[i]->pGetData()));
 
                 rOStream << i + 1;
                 for(int j = 0 ; j < 8 ; j++)
@@ -2234,7 +2277,7 @@ public:
 
         rOStream << "Values" << std::endl;
 
-        for(DistanceSpatialContainersConfigure2d::data_type::const_iterator i_node = mQuadtreeNodes.begin() ; i_node != mQuadtreeNodes.end() ; i_node++)
+        for(DistanceSpatialContainersConditionConfigure2d::data_type::const_iterator i_node = mQuadtreeNodes.begin() ; i_node != mQuadtreeNodes.end() ; i_node++)
         {
             rOStream << (*i_node)->Id() << "  " << (*i_node)->Distance() << std::endl;
         }
@@ -2299,7 +2342,7 @@ private:
     
     //ModelPart& mrBackgroundModelPart;
     ModelPart& mrFluidModelPart;
-    DistanceSpatialContainersConfigure2d::data_type mQuadtreeNodes;
+    DistanceSpatialContainersConditionConfigure2d::data_type mQuadtreeNodes;
 
     boost::shared_ptr<QuadtreeType> mpQuadtree;
 
@@ -2323,8 +2366,8 @@ private:
     {
         Matrix Help= A;
 
-        for(int i=0; i<3; i++)
-            for(int j=0; j<3; j++)
+        for(int i=0; i<2; i++)
+            for(int j=0; j<2; j++)
                 Help(i,j)= Help(i,j);
 
 
@@ -2506,15 +2549,15 @@ private:
     ///@{
 
     /// Assignment operator.
-    CalculateSignedDistanceTo2DSkinProcess& operator=(CalculateSignedDistanceTo2DSkinProcess const& rOther);
+    CalculateSignedDistanceTo2DConditionSkinProcess& operator=(CalculateSignedDistanceTo2DConditionSkinProcess const& rOther);
 
     /// Copy constructor.
-    //CalculateSignedDistanceTo2DSkinProcess(CalculateSignedDistanceTo2DSkinProcess const& rOther);
+    //CalculateSignedDistanceTo2DConditionSkinProcess(CalculateSignedDistanceTo2DConditionSkinProcess const& rOther);
 
 
     ///@}
 
-}; // Class CalculateSignedDistanceTo2DSkinProcess
+}; // Class CalculateSignedDistanceTo2DConditionSkinProcess
 
 ///@}
 
@@ -2529,11 +2572,11 @@ private:
 
 /// input stream function
 inline std::istream& operator >> (std::istream& rIStream,
-                                  CalculateSignedDistanceTo2DSkinProcess& rThis);
+                                  CalculateSignedDistanceTo2DConditionSkinProcess& rThis);
 
 /// output stream function
 inline std::ostream& operator << (std::ostream& rOStream,
-                                  const CalculateSignedDistanceTo2DSkinProcess& rThis)
+                                  const CalculateSignedDistanceTo2DConditionSkinProcess& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
@@ -2543,7 +2586,7 @@ inline std::ostream& operator << (std::ostream& rOStream,
 }
 ///@}
 
-const double CalculateSignedDistanceTo2DSkinProcess::epsilon = 1e-18;
+const double CalculateSignedDistanceTo2DConditionSkinProcess::epsilon = 1e-18;
 
 
 }  // namespace Kratos.

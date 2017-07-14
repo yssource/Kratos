@@ -44,8 +44,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //
 
-#if !defined(KRATOS_CALCULATE_DISTANCE_CONDITION_PROCESS_H_INCLUDED)
-#define KRATOS_CALCULATE_DISTANCE_CONDITION_PROCESS_H_INCLUDED
+#if !defined(KRATOS_CALCULATE_CHIMERA_SIGNED_DISTANCE_CONDITION_PROCESS_H_INCLUDED)
+#define KRATOS_CALCULATE_CHIMERA_SIGNED_DISTANCE_CONDITION_PROCESS_H_INCLUDED
 
 // System includes
 #include <string>
@@ -69,7 +69,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace Kratos
 {
 
-class DistanceSpatialContainersConditionConfigure
+class DistanceSpatialContainersConditionConfigure3d
 {
   public:
     class CellNodeData
@@ -113,18 +113,18 @@ class DistanceSpatialContainersConditionConfigure
 
     typedef std::vector<PointerType>::iterator PointerTypeIterator;
 
-    /// Pointer definition of DistanceSpatialContainersConditionConfigure
-    KRATOS_CLASS_POINTER_DEFINITION(DistanceSpatialContainersConditionConfigure);
+    /// Pointer definition of DistanceSpatialContainersConditionConfigure3d
+    KRATOS_CLASS_POINTER_DEFINITION(DistanceSpatialContainersConditionConfigure3d);
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    DistanceSpatialContainersConditionConfigure() {}
+    DistanceSpatialContainersConditionConfigure3d() {}
 
     /// Destructor.
-    virtual ~DistanceSpatialContainersConditionConfigure() {}
+    virtual ~DistanceSpatialContainersConditionConfigure3d() {}
 
     ///@}
     ///@name Operators
@@ -246,12 +246,12 @@ class DistanceSpatialContainersConditionConfigure
   protected:
   private:
     /// Assignment operator.
-    DistanceSpatialContainersConditionConfigure &operator=(DistanceSpatialContainersConditionConfigure const &rOther);
+    DistanceSpatialContainersConditionConfigure3d &operator=(DistanceSpatialContainersConditionConfigure3d const &rOther);
 
     /// Copy constructor.
-    DistanceSpatialContainersConditionConfigure(DistanceSpatialContainersConditionConfigure const &rOther);
+    DistanceSpatialContainersConditionConfigure3d(DistanceSpatialContainersConditionConfigure3d const &rOther);
 
-}; // Class DistanceSpatialContainersConditionConfigure
+}; // Class DistanceSpatialContainersConditionConfigure3d
 
 ///@name Kratos Globals
 ///@{
@@ -275,17 +275,17 @@ class DistanceSpatialContainersConditionConfigure
 /// Short class definition.
 /** Detail class definition.
   */
-class CalculateSignedDistanceTo3DConditionSkinProcess
+class CalculateChimeraSignedDistanceTo3DConditionSkinProcess
     : public Process
 {
   public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of CalculateSignedDistanceTo3DConditionSkinProcess
-    KRATOS_CLASS_POINTER_DEFINITION(CalculateSignedDistanceTo3DConditionSkinProcess);
+    /// Pointer definition of CalculateChimeraSignedDistanceTo3DConditionSkinProcess
+    KRATOS_CLASS_POINTER_DEFINITION(CalculateChimeraSignedDistanceTo3DConditionSkinProcess);
 
-    typedef DistanceSpatialContainersConditionConfigure ConfigurationType;
+    typedef DistanceSpatialContainersConditionConfigure3d ConfigurationType;
     typedef OctreeBinaryCell<ConfigurationType> CellType;
     typedef OctreeBinary<CellType> OctreeType;
     typedef ConfigurationType::cell_node_data_type CellNodeDataType;
@@ -306,13 +306,14 @@ class CalculateSignedDistanceTo3DConditionSkinProcess
     ///@{
 
     /// Constructor.
-    CalculateSignedDistanceTo3DConditionSkinProcess(ModelPart &rThisModelPartStruc, ModelPart &rThisModelPartFluid)
+    CalculateChimeraSignedDistanceTo3DConditionSkinProcess(ModelPart &rThisModelPartStruc, ModelPart &rThisModelPartFluid)
         : mrSkinModelPart(rThisModelPartStruc), mrBodyModelPart(rThisModelPartStruc), mrFluidModelPart(rThisModelPartFluid)
     {
+        
     }
 
     /// Destructor.
-    ~CalculateSignedDistanceTo3DConditionSkinProcess() override
+    ~CalculateChimeraSignedDistanceTo3DConditionSkinProcess() override
     {
     }
 
@@ -332,14 +333,33 @@ class CalculateSignedDistanceTo3DConditionSkinProcess
     ///******************************************************************************************************************
     ///******************************************************************************************************************
 
-    virtual void Execute() override
+    void Execute() override
     {
         KRATOS_TRY
+        /*
+            std::cout << "Clearing the list of correspondances between the FIXED MESH ELEMENTS and the EMBEDDED CONDITIONS THAT ARE CROSSING THEM..." << std::endl;	
+
+		
+	  for( ModelPart::ElementIterator i_fluidElement = mrFluidModelPart.ElementsBegin();
+                                          i_fluidElement != mrFluidModelPart.ElementsEnd();
+                                          i_fluidElement++)
+          {
+              //i_fluidElement->GetValue(NEIGHBOUR_CONDITIONS).resize(0);
+		( i_fluidElement->GetValue(NEIGHBOUR_EMBEDDED_FACES)).reserve(6);
+
+		 WeakPointerVector<GeometricalObject >& rE = i_fluidElement->GetValue(NEIGHBOUR_EMBEDDED_FACES);
+	            rE.erase(rE.begin(),rE.end() );	
+          } 
+	*/
+
+        std::cout << "Inside Execute" << std::endl;
         //std::cout << "Generating the Octree..." << std::endl;
         GenerateOctree();
-        //std::cout << "Generating the Octree finished" << std::endl;
+        std::cout << "Generating the Octree finished" << std::endl;
 
         DistanceFluidStructure();
+
+        std::cout << "DistanceFluidStructure" << std::endl;
 
         //GenerateNodes();
         CalculateDistance2(); // I have to change this. Pooyan.
@@ -1215,19 +1235,31 @@ class CalculateSignedDistanceTo3DConditionSkinProcess
         // KRATOS_WATCH( high[2] )
         mOctree.SetBoundingBox(low, high);
 
+        std::cout << "Skin added" << std::endl;
+
+        std::cout << "Lowest Dimension" << low[0] << "," << low[1] << "," << low[2] << std::endl;
+
+        std::cout << "Highest Dimension" << high[0] << "," << high[1] << "," << high[2] << std::endl;
+
         //mOctree.RefineWithUniformSize(0.0625);
+
+        std::cout<<"First node"<<mrSkinModelPart.NodesBegin()->Id()<<std::endl;
 
         // loop over all structure nodes
         for (ModelPart::NodeIterator i_node = mrSkinModelPart.NodesBegin();
              i_node != mrSkinModelPart.NodesEnd();
              i_node++)
         {
+            
             double temp_point[3];
             temp_point[0] = i_node->X();
             temp_point[1] = i_node->Y();
             temp_point[2] = i_node->Z();
+             
             mOctree.Insert(temp_point);
+            
         }
+       
 
         //mOctree.Constrain2To1(); // To be removed. Pooyan.
 
@@ -1241,8 +1273,10 @@ class CalculateSignedDistanceTo3DConditionSkinProcess
         {
             mOctree.Insert(*(i_cond).base());
         }
+        
 
         Timer::Stop("Generating Octree");
+        
 
         //        KRATOS_WATCH(mOctree);
 
@@ -1252,7 +1286,7 @@ class CalculateSignedDistanceTo3DConditionSkinProcess
         //        mOctree.PrintGiDMesh(myfile);
         //        myfile.close();
 
-        //std::cout << "Generating the Octree finished" << std::endl;
+        std::cout << "Generating the Octree finished" << std::endl;
     }
 
     ///******************************************************************************************************************
@@ -1934,13 +1968,13 @@ class CalculateSignedDistanceTo3DConditionSkinProcess
     /// Turn back information as a string.
     std::string Info() const override
     {
-        return "CalculateSignedDistanceTo3DConditionSkinProcess";
+        return "CalculateChimeraSignedDistanceTo3DConditionSkinProcess";
     }
 
     /// Print information about this object.
     void PrintInfo(std::ostream &rOStream) const override
     {
-        rOStream << "CalculateSignedDistanceTo3DConditionSkinProcess";
+        rOStream << "CalculateChimeraSignedDistanceTo3DConditionSkinProcess";
     }
 
     /// Print object's data.
@@ -2079,14 +2113,14 @@ class CalculateSignedDistanceTo3DConditionSkinProcess
     ///@{
 
     /// Assignment operator.
-    CalculateSignedDistanceTo3DConditionSkinProcess &operator=(CalculateSignedDistanceTo3DConditionSkinProcess const &rOther);
+    CalculateChimeraSignedDistanceTo3DConditionSkinProcess &operator=(CalculateChimeraSignedDistanceTo3DConditionSkinProcess const &rOther);
 
     /// Copy constructor.
-    //CalculateSignedDistanceTo3DConditionSkinProcess(CalculateSignedDistanceTo3DConditionSkinProcess const& rOther);
+    //CalculateChimeraSignedDistanceTo3DConditionSkinProcess(CalculateChimeraSignedDistanceTo3DConditionSkinProcess const& rOther);
 
     ///@}
 
-}; // Class CalculateSignedDistanceTo3DConditionSkinProcess
+}; // Class CalculateChimeraSignedDistanceTo3DConditionSkinProcess
 
 ///@}
 
@@ -2099,11 +2133,11 @@ class CalculateSignedDistanceTo3DConditionSkinProcess
 
 /// input stream function
 inline std::istream &operator>>(std::istream &rIStream,
-                                CalculateSignedDistanceTo3DConditionSkinProcess &rThis);
+                                CalculateChimeraSignedDistanceTo3DConditionSkinProcess &rThis);
 
 /// output stream function
 inline std::ostream &operator<<(std::ostream &rOStream,
-                                const CalculateSignedDistanceTo3DConditionSkinProcess &rThis)
+                                const CalculateChimeraSignedDistanceTo3DConditionSkinProcess &rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
@@ -2113,8 +2147,8 @@ inline std::ostream &operator<<(std::ostream &rOStream,
 }
 ///@}
 
-const double CalculateSignedDistanceTo3DConditionSkinProcess::epsilon = 1e-12;
+const double CalculateChimeraSignedDistanceTo3DConditionSkinProcess::epsilon = 1e-12;
 
 } // namespace Kratos.
 
-#endif // KRATOS_CALCULATE_DISTANCE_CONDITION_PROCESS_H_INCLUDED  defined
+#endif // KRATOS_CALCULATE_CHIMERA_SIGNED_DISTANCE_CONDITION_PROCESS_H_INCLUDED  defined

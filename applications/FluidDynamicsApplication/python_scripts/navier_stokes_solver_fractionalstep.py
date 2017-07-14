@@ -179,7 +179,7 @@ class NavierStokesSolver_FractionalStep(navier_stokes_base_solver.NavierStokesBa
         self.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.DYNAMIC_TAU, self.settings["dynamic_tau"].GetDouble())
         self.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.OSS_SWITCH, self.settings["oss_switch"].GetInt())
 
-        (self.solver).Initialize()
+        #nav (self.solver).Initialize()
 
         print ("Initialization NavierStokesSolver_FractionalStep finished.")
 

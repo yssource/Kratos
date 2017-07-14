@@ -9,9 +9,8 @@
 // ==============================================================================
 //
 
-#if !defined(KRATOS_CUSTOM_CALCULATE_SIGNED_DISTANCE_PROCESS_H_INCLUDED )
-#define  KRATOS_CUSTOM_CALCULATE_SIGNED_DISTANCE_PROCESS_H_INCLUDED
-
+#if !defined(KRATOS_CUSTOM_CALCULATE_SIGNED_DISTANCE_PROCESS_H_INCLUDED)
+#define KRATOS_CUSTOM_CALCULATE_SIGNED_DISTANCE_PROCESS_H_INCLUDED
 
 // System includes
 
@@ -21,7 +20,7 @@
 
 // External includes
 #include "includes/kratos_flags.h"
-#include "processes/calculate_signed_distance_to_3d_skin_process.h"
+
 #include "utilities/binbased_fast_point_locator.h"
 
 // Project includes
@@ -41,10 +40,11 @@
 #include "solving_strategies/strategies/residualbased_linear_strategy.h"
 #include "elements/distance_calculation_element_simplex.h"
 #include "utilities/parallel_levelset_distance_calculator.h"
-#include "custom_processes/calculate_signed_distance_to_2d_skin_process.h"
+#include "custom_processes/calculate_signed_distance_to_2d_condition_skin_process.h"
+#include "custom_processes/calculate_chimera_signed_distance_to_3d_condition_skin_process.h"
 
-
-namespace Kratos {
+namespace Kratos
+{
 
 ///@name Kratos Globals
 ///@{
@@ -66,10 +66,10 @@ namespace Kratos {
 ///@{
 
 /// Short class definition.
-template< unsigned int TDim>
-class CustomCalculateSignedDistanceProcess {
-public:
-
+template <unsigned int TDim>
+class CustomCalculateSignedDistanceProcess
+{
+  public:
 	///@name Type Definitions
 	///@{
 
@@ -82,23 +82,26 @@ public:
 	///@name Life Cycle
 	///@{
 
-	CustomCalculateSignedDistanceProcess(){
+	CustomCalculateSignedDistanceProcess()
+	{
 		this->pBinLocator = NULL;
 		this->pDistanceCalculator = NULL;
-		
+
 		p2DSignedDistanceCalculator = NULL;
 		p3DSignedDistanceCalculator = NULL;
 	}
 
 	/// Destructor.
-	virtual ~CustomCalculateSignedDistanceProcess() {
+	virtual ~CustomCalculateSignedDistanceProcess()
+	{
 	}
 
 	///@}
 	///@name Operators
 	///@{
 
-	void operator()() {
+	void operator()()
+	{
 		Execute();
 	}
 
@@ -106,38 +109,37 @@ public:
 	///@name Operations
 	///@{
 
-	virtual void Execute() {
+	virtual void Execute()
+	{
 	}
 
-	virtual void Clear() {
+	virtual void Clear()
+	{
 	}
 
-	
-	void ExtractDistance(ModelPart& fromPatchModelPart, ModelPart& toBackgroundModelPart, ModelPart& patchBoundaryModelPart){
+	void ExtractDistance(ModelPart &fromPatchModelPart, ModelPart &toBackgroundModelPart, ModelPart &patchBoundaryModelPart)
+	{
 		this->pDistanceCalculator = typename ParallelDistanceCalculator<TDim>::Pointer(new ParallelDistanceCalculator<TDim>());
 		this->pBinLocator = typename BinBasedFastPointLocator<TDim>::Pointer(new BinBasedFastPointLocator<TDim>(fromPatchModelPart));
-        
+
 		const int n_patch_boundary_nodes = patchBoundaryModelPart.Nodes().size();
 		//Set the boundary node distance to 0 and is_visited to 1.0
-		for(int i = 0; i < n_patch_boundary_nodes; i++ ) {
+		for (int i = 0; i < n_patch_boundary_nodes; i++)
+		{
 
-			ModelPart::NodesContainerType::iterator it=patchBoundaryModelPart.NodesBegin()+i;
-			double& is_visited = it->GetValue(IS_VISITED);
-            double& distance = it->FastGetSolutionStepValue(DISTANCE);
+			ModelPart::NodesContainerType::iterator it = patchBoundaryModelPart.NodesBegin() + i;
+			double &is_visited = it->GetValue(IS_VISITED);
+			double &distance = it->FastGetSolutionStepValue(DISTANCE);
 
 			//Set the IS_VISITED to 1.0 and DISTANCE to 0.0
 			is_visited = 1.0;
 			distance = 0.0;
-
 		}
-
-		
-		
 
 		unsigned int max_level = 100;
 		double max_distance = 1000;
 
-		this->pDistanceCalculator->CalculateDistancesLagrangianSurface(fromPatchModelPart, DISTANCE, NODAL_AREA, max_level,max_distance);
+		this->pDistanceCalculator->CalculateDistancesLagrangianSurface(fromPatchModelPart, DISTANCE, NODAL_AREA, max_level, max_distance);
 
 		//For signed distance
 		/*unsigned int n_patch_nodes = fromPatchModelPart.Nodes().size();
@@ -158,23 +160,23 @@ public:
 
 		{
 			//loop over nodes and find the tetra/triangle in which it falls, than do interpolation
-			array_1d<double, TDim+1 > N;
+			array_1d<double, TDim + 1> N;
 			const int max_results = 10000;
 			typename BinBasedFastPointLocator<TDim>::ResultContainerType results(max_results);
 			const int n_background_nodes = toBackgroundModelPart.Nodes().size();
-			
-			#pragma omp parallel for firstprivate(results,N)
+
+#pragma omp parallel for firstprivate(results, N)
 			//MY NEW LOOP: reset the visited flag
 			for (int i = 0; i < n_background_nodes; i++)
 			{
 				ModelPart::NodesContainerType::iterator iparticle = toBackgroundModelPart.NodesBegin() + i;
-				typename Node < 3 > ::Pointer p_background_node = *(iparticle.base());
+				typename Node<3>::Pointer p_background_node = *(iparticle.base());
 				p_background_node->Set(VISITED, false);
 			}
 			for (int i = 0; i < n_background_nodes; i++)
 			{
 				ModelPart::NodesContainerType::iterator iparticle = toBackgroundModelPart.NodesBegin() + i;
-				typename Node < 3 > ::Pointer p_background_node = *(iparticle.base());
+				typename Node<3>::Pointer p_background_node = *(iparticle.base());
 				typename BinBasedFastPointLocator<TDim>::ResultIteratorType result_begin = results.begin();
 				Element::Pointer pElement;
 
@@ -183,77 +185,57 @@ public:
 				if (is_found == true)
 				{
 
-					
+					Geometry<Node<3>> &geom = pElement->GetGeometry();
 
-					Geometry<Node<3> >& geom = pElement->GetGeometry();
-
-					double& nodalDistance = p_background_node->FastGetSolutionStepValue(DISTANCE);
-					
+					double &nodalDistance = p_background_node->FastGetSolutionStepValue(DISTANCE);
 
 					// Do mapping
-					MapDistancetoNode((*p_background_node),geom,nodalDistance,N);
+					MapDistancetoNode((*p_background_node), geom, nodalDistance, N);
 					//nodalVariableValues is passed by reference
 
-					
 					p_background_node->Set(VISITED);
 				}
 			}
-			
-		
-
 		}
-
-
-
-
-		
 	}
 
-	void CalculateSignedDistance(ModelPart& toBackgroundModelPart, ModelPart& patchBoundaryModelPart)
+	void CalculateSignedDistance(ModelPart &toBackgroundModelPart, ModelPart &patchBoundaryModelPart)
 	{
 
-		if (TDim == 2) 
+		if (TDim == 2)
 		{
-			p2DSignedDistanceCalculator = CalculateSignedDistanceTo2DSkinProcess::Pointer(new CalculateSignedDistanceTo2DSkinProcess(patchBoundaryModelPart,toBackgroundModelPart));
+			// Implemented in the custom_processes
+			p2DSignedDistanceCalculator = CalculateSignedDistanceTo2DConditionSkinProcess::Pointer(new CalculateSignedDistanceTo2DConditionSkinProcess(patchBoundaryModelPart, toBackgroundModelPart));
 			p2DSignedDistanceCalculator->Execute();
-			std::cout<<"2Signeddistance is called nav"<<std::endl;
-
+			std::cout << "2Signeddistance is called nav" << std::endl;
 		}
 
-		if (TDim == 3) 
+		if (TDim == 3)
 		{
-			p3DSignedDistanceCalculator = CalculateSignedDistanceTo3DSkinProcess::Pointer(new CalculateSignedDistanceTo3DSkinProcess(patchBoundaryModelPart,toBackgroundModelPart));
+			// From Core ?? Improve performance and algorithm based on CalculateSignedDistanceToSkinProcess
+			std::cout<<"Inside the distance function"<<std::endl;
+			p3DSignedDistanceCalculator = CalculateChimeraSignedDistanceTo3DConditionSkinProcess::Pointer(new CalculateChimeraSignedDistanceTo3DConditionSkinProcess(patchBoundaryModelPart, toBackgroundModelPart));
+			std::cout<<"Distance calculation initialised"<<std::endl;
 			p3DSignedDistanceCalculator->Execute();
-
+			std::cout<<"Distance calculations finished"<<std::endl;
 		}
 
 		unsigned int max_level = 100;
 		double max_distance = 200;
 
-		pDistanceCalculator->CalculateDistances(toBackgroundModelPart,DISTANCE,NODAL_AREA,max_level,max_distance);
-
-
-
-
+		pDistanceCalculator->CalculateDistances(toBackgroundModelPart, DISTANCE, NODAL_AREA, max_level, max_distance);
 	}
 
+	void MapDistancetoNode(const Node<3> &pNode,
+						   Geometry<Node<3>> &geom, double &rVariable, const array_1d<double, TDim + 1> &N)
+	{
+		rVariable = 0;
+		for (int i = 0; i < geom.size(); i++)
+		{
 
-
-	
-	void MapDistancetoNode(const Node<3>& pNode,
-            Geometry< Node<3> >& geom, double& rVariable, const array_1d<double, TDim+1 >& N)
-			{
-				rVariable = 0;
-				for( int i = 0; i<geom.size();i++){
-
-					rVariable += N[i]*geom[i].FastGetSolutionStepValue(DISTANCE);
-
-
-				}
-				
-
+			rVariable += N[i] * geom[i].FastGetSolutionStepValue(DISTANCE);
+		}
 	}
-
 
 	///@}
 	///@name Access
@@ -268,17 +250,20 @@ public:
 	///@{
 
 	/// Turn back information as a string.
-	virtual std::string Info() const {
+	virtual std::string Info() const
+	{
 		return "CustomCalculateSignedDistanceProcess";
 	}
 
 	/// Print information about this object.
-	virtual void PrintInfo(std::ostream& rOStream) const {
+	virtual void PrintInfo(std::ostream &rOStream) const
+	{
 		rOStream << "CustomCalculateSignedDistanceProcess";
 	}
 
 	/// Print object's data.
-	virtual void PrintData(std::ostream& rOStream) const {
+	virtual void PrintData(std::ostream &rOStream) const
+	{
 	}
 
 	///@}
@@ -287,8 +272,7 @@ public:
 
 	///@}
 
-protected:
-
+  protected:
 	///@name Protected static Member Variables
 	///@{
 
@@ -318,8 +302,7 @@ protected:
 
 	///@}
 
-private:
-
+  private:
 	///@name Static Member Variables
 	///@{
 
@@ -330,9 +313,9 @@ private:
 	//ModelPart &mrBackGroundModelPart;
 	//ModelPart &mrPatchSurfaceModelPart;
 	typename BinBasedFastPointLocator<TDim>::Pointer pBinLocator; // Template argument 3 stands for 3D case
-	CalculateSignedDistanceTo2DSkinProcess:: Pointer p2DSignedDistanceCalculator;
-	CalculateSignedDistanceTo3DSkinProcess:: Pointer  p3DSignedDistanceCalculator;
-	
+	CalculateSignedDistanceTo2DConditionSkinProcess::Pointer p2DSignedDistanceCalculator;
+	CalculateChimeraSignedDistanceTo3DConditionSkinProcess::Pointer p3DSignedDistanceCalculator;
+
 	///@}
 	///@name Private Operators
 	///@{
@@ -354,7 +337,7 @@ private:
 	///@{
 
 	/// Assignment operator.
-	CustomCalculateSignedDistanceProcess<TDim>& operator=(CustomCalculateSignedDistanceProcess<TDim> const& rOther);
+	CustomCalculateSignedDistanceProcess<TDim> &operator=(CustomCalculateSignedDistanceProcess<TDim> const &rOther);
 
 	/// Copy constructor.
 	//CustomCalculateSignedDistanceProcess(CustomCalculateSignedDistanceProcess<TDim> const& rOther);
@@ -363,6 +346,6 @@ private:
 
 }; // Class CustomExtractVariablesProcess
 
-}  // namespace Kratos.
+} // namespace Kratos.
 
 #endif // KRATOS_CUSTOM_EXTRACT_VARIABLES_PROCESS_H_INCLUDED  defined

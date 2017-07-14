@@ -30,8 +30,10 @@ void KratosChimeraApplication::Register() {
  	KratosApplication::Register();
  	std::cout << "Initializing KratosChimeraApplication... " << std::endl;
 
-  KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( CHIM_NEUMANN_COND )
+   KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( CHIM_NEUMANN_COND )
    KRATOS_REGISTER_VARIABLE(MPC_POINTER);
+   //KRATOS_REGISTER_VARIABLE(IS_WEAK);
+   
 
 
 }

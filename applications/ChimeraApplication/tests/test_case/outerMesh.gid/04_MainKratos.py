@@ -7,7 +7,6 @@ from KratosMultiphysics.ExternalSolversApplication import *
 from KratosMultiphysics.MeshingApplication import *
 # ADI BEGIN
 from KratosMultiphysics.ALEApplication import *
-from KratosMultiphysics.EmpireApplication import *
 from KratosMultiphysics.ChimeraApplication import *
 import math
 import numpy as np
@@ -67,7 +66,7 @@ for patchName, patchProjectParameters in patchNameParameterMap.items():
 
 for patchName, patchProjectParameters in patchNameParameterMap.items():
     patch_solver = patchNameSolverMap[patchName]    
-    patch_gid_output = GiDOutputProcess(patch_solver.GetComputeModelPart(),
+    patch_gid_output = GiDOutputProcess(patch_solver.GetComputingModelPart(),
                               patchProjectParameters["problem_data"]["problem_name"].GetString() ,
                               patchProjectParameters["output_configuration"])
     patch_gid_output.ExecuteInitialize()
@@ -141,7 +140,7 @@ back_ground_solver.AddDofs()
 print(backGround_model_part)
 
 ## Initialize GiD  I/O
-background_gid_output = GiDOutputProcess(back_ground_solver.GetComputeModelPart(),
+background_gid_output = GiDOutputProcess(back_ground_solver.GetComputingModelPart(),
                               backGroundProjectParameters["problem_data"]["problem_name"].GetString() ,
                               backGroundProjectParameters["output_configuration"])
 background_gid_output.ExecuteInitialize()
@@ -177,8 +176,6 @@ for process in background_list_of_processes:
 print('################ :: setup of back ground model finished !')
 
 
-                
-adfsafsdfafs
 
 ''' ##########################################  '''
 ''' Helper Functions  ''' 

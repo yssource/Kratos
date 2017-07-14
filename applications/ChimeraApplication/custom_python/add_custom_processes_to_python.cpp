@@ -25,7 +25,9 @@
 #include "custom_processes/custom_apply_chimera_using_mpc_process.h"
 #include "custom_processes/apply_multi_point_constraints_process_chimera.h"
 #include "custom_processes/custom_calculate_signed_distance_process.h"
-#include "custom_processes/calculate_signed_distance_to_2d_skin_process.h"
+//#include "custom_processes/calculate_signed_distance_to_2d_skin_process.h"
+#include "custom_processes/calculate_signed_distance_to_2d_condition_skin_process.h"
+#include "custom_processes/calculate_chimera_signed_distance_to_3d_condition_skin_process.h"
 namespace Kratos
 {
 
@@ -79,8 +81,10 @@ void AddCustomProcessesToPython()
 	 * Calculate_signed_distance_2d
 	 */
 
-	class_<CalculateSignedDistanceTo2DSkinProcess,bases<Process> >("CalculateSignedDistanceTo2DSkinProcess", init<ModelPart&,ModelPart&>())
-		.def("Execute", &CalculateSignedDistanceTo2DSkinProcess::Execute);		
+	//class_<CalculateSignedDistanceTo2DSkinProcess,bases<Process> >("CalculateSignedDistanceTo2DSkinProcess", init<ModelPart&,ModelPart&>())
+		//.def("Execute", &CalculateSignedDistanceTo2DSkinProcess::Execute);	
+	class_<CalculateChimeraSignedDistanceTo3DConditionSkinProcess,bases<Process> >("CalculateChimeraSignedDistanceTo3DConditionSkinProcess", init<ModelPart&,ModelPart&>())
+		.def("Execute", &CalculateChimeraSignedDistanceTo3DConditionSkinProcess::Execute);	
 			
 }
 

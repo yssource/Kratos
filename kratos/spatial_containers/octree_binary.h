@@ -240,7 +240,6 @@ namespace Kratos {
                 }
                 cell = cell->pGetChild(x_key, y_key, z_key);
             }
-
         }
 
         /*void InsertAndBallance(coordinate_type* point) {

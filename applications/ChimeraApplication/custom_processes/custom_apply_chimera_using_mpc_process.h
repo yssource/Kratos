@@ -182,6 +182,9 @@ class CustomApplyChimeraUsingMpcProcess
 
 							pMpcProcess->AddMasterSlaveRelation(geom[i], VELOCITY_X, *p_boundary_node, VELOCITY_X, N[i], 0);
 							pMpcProcess->AddMasterSlaveRelation(geom[i], VELOCITY_Y, *p_boundary_node, VELOCITY_Y, N[i], 0);
+
+							if(TDim == 3)
+							pMpcProcess->AddMasterSlaveRelation(geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i], 0);
 							//pMpcProcess->AddMasterSlaveRelationVariables( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i], 0 );
 						}
 					}

@@ -77,13 +77,16 @@ void  AddCustomUtilitiesToPython()
     /// Processes
     class_<ApplyMultipointConstraintsProcess, boost::noncopyable, bases<Process>>("ApplyMultipointConstraintsProcess", init<ModelPart&>())
     .def(init< ModelPart&, Parameters& >())
-	.def("AddMasterSlaveRelation", &ApplyMultipointConstraintsProcess::AddMasterSlaveRelation)
+	.def("AddMasterSlaveRelation", &ApplyMultipointConstraintsProcess::AddMasterSlaveRelationWithNodesAndVariableComponents)
+    .def("AddMasterSlaveRelation", &ApplyMultipointConstraintsProcess::AddMasterSlaveRelationWithNodeIdsAndVariableComponents)
+	.def("AddMasterSlaveRelation", &ApplyMultipointConstraintsProcess::AddMasterSlaveRelationWithNodesAndVariable)
+    .def("AddMasterSlaveRelation", &ApplyMultipointConstraintsProcess::AddMasterSlaveRelationWithNodeIdsAndVariable)
+    .def("SetActive", &ApplyMultipointConstraintsProcess::SetActive)      
     .def("PrintData", &ApplyMultipointConstraintsProcess::PrintData);
-
 
 }
 
-}  // namespace Python.
+}  // namespace Python.  
 
 } // Namespace Kratos
 

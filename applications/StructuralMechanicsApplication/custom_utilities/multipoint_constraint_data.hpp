@@ -79,6 +79,7 @@ class MpcData
     typedef std::unordered_map<unsigned int, double> MasterIdWeightMapType;
     typedef std::pair<unsigned int, unsigned int> SlavePairType;
     typedef std::tuple<unsigned int, unsigned int, int> key_tupple;
+    typedef Kratos::Variable<double> VariableType;
 
     struct key_hash_tuple : public std::unary_function<key_tupple, std::size_t>
     {
@@ -125,6 +126,8 @@ class MpcData
         }
     };
 
+    //friend bool operator == (MpcData &obj1, MpcData &obj2);
+
     typedef std::unordered_map<const key_tupple, double, key_hash_tuple, key_equal_tuple> MasterDofWeightMapType;
     //typedef std::unordered_map<std::tuple<unsigned int, VariableComponentType, int>, double> ;
 
@@ -164,6 +167,15 @@ class MpcData
     /**
 		Adds a constraints between the given slave and master with a weight. 		
 		*/
+
+    // Takes in a slave dof equationId and a master dof equationId
+    void AddConstraint(unsigned int SlaveDofEquationId, unsigned int MasterDofEquationId, double weight, int PartitionId = 0)
+    {
+        mEquationIdToWeightsMap[SlaveDofEquationId].insert(  std::pair<unsigned int, double>(MasterDofEquationId, weight)  );
+        //mDofConstraints[std::make_pair(SlaveDof.Id(), slaveVariableKey)][std::tie(MasterNodeId, MasterVariableKey, PartitionId)] += weight;
+    }
+
+
     // Takes in a slave dof and a master dof
     void AddConstraint(DofType &SlaveDof, DofType &MasterDof, double weight, int PartitionId = 0)
     {
@@ -213,10 +225,43 @@ class MpcData
         return mDofConstraints[std::make_pair(SlaveDof.Id(), SlaveDof.GetVariable().Key())].size();
     }
 
+    /**
+		Set the name for the current set of constraints. 
+		 */
+    void SetName(const std::string name)
+    {
+        mName = name;
+    }
+    /**
+		Get the name for the current set of constraints. 
+		 */
+    std::string GetName()
+    {
+        return mName;
+    }    
+
+    /**
+		Set the activeness for current set of constraints. 
+		 */
+    void SetActive(const bool isActive)
+    {
+        mActive = isActive;
+    }
+
+    /**
+		Returns true if the constraint set is active
+		 */
+    bool IsActive()
+    {
+        return mActive;
+    }    
+
+
     ///@
 
     ///@name Static Operations
-    ///@{
+    ///
+    //@{
     /**
 		 * Returns the string containing a detailed description of this object.
 		 * @return the string with informations
@@ -253,6 +298,9 @@ class MpcData
                        std::unordered_map<unsigned int, double>>
         mEquationIdToWeightsMap;
 
+
+    bool mActive;
+    std::string mName;
     ///@}
 
     ///@name Serialization
@@ -274,6 +322,11 @@ class MpcData
 
 ///@name Input/Output funcitons
 ///@{
+
+/*bool operator== (MpcData &obj1, MpcData &obj2) 
+{
+        return obj1.GetName() == obj2.GetName();
+}    */
 
 inline std::istream &operator>>(std::istream &rIStream, MpcData &rThis);
 

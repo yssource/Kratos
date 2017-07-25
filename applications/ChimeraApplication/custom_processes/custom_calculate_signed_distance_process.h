@@ -151,11 +151,10 @@ class CustomCalculateSignedDistanceProcess
 			distance = -distance;
 			
 			
-		}
-
+		}*/
 
 		/*
-		 * This part of the code below is adapted from "MappingPressureToStructure" function of class CalculateSignedDistanceTo3DSkinProcess
+		  This part of the code below is adapted from "MappingPressureToStructure" function of class CalculateSignedDistanceTo3DSkinProcess
 		 */
 
 		{
@@ -213,11 +212,11 @@ class CustomCalculateSignedDistanceProcess
 		if (TDim == 3)
 		{
 			// From Core ?? Improve performance and algorithm based on CalculateSignedDistanceToSkinProcess
-			std::cout<<"Inside the distance function"<<std::endl;
+			std::cout << "Inside the distance function" << std::endl;
 			p3DSignedDistanceCalculator = CalculateChimeraSignedDistanceTo3DConditionSkinProcess::Pointer(new CalculateChimeraSignedDistanceTo3DConditionSkinProcess(patchBoundaryModelPart, toBackgroundModelPart));
-			std::cout<<"Distance calculation initialised"<<std::endl;
+			std::cout << "Distance calculation initialised" << std::endl;
 			p3DSignedDistanceCalculator->Execute();
-			std::cout<<"Distance calculations finished"<<std::endl;
+			std::cout << "Distance calculations finished" << std::endl;
 		}
 
 		unsigned int max_level = 100;

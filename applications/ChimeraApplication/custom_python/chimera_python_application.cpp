@@ -20,9 +20,11 @@
 #include "includes/define.h"
 #include "chimera_application.h"
 #include "chimera_application_variables.h"
-#include "custom_python/add_custom_strategies_to_python.h"
-#include "custom_python/add_custom_utilities_to_python.h"
 #include "custom_python/add_custom_processes_to_python.h"
+#include "custom_python/add_custom_utilities_to_python.h"
+#include "custom_python/add_custom_strategies_to_python.h"
+
+
 
 
 namespace Kratos
@@ -42,9 +44,9 @@ namespace Python
 			  KratosChimeraApplication::Pointer,
 			  bases<KratosApplication>, boost::noncopyable >("KratosChimeraApplication")
 			;
-		AddCustomStrategiesToPython();
-		AddCustomProcessesToPython();
+		AddCustomProcessesToPython();			
 		AddCustomUtilitiesToPython();
+		AddCustomStrategiesToPython();
 
 			//registering variables in python
   		KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS( CHIM_NEUMANN_COND )

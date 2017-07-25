@@ -11,8 +11,8 @@
 // ==============================================================================
 //
 
-#if !defined(KRATOS_CHIMERA_APPLICATION_VARIABLES_H_INCLUDED )
-#define  KRATOS_CHIMERA_APPLICATION_VARIABLES_H_INCLUDED
+#if !defined(KRATOS_CHIMERA_APPLICATION_VARIABLES_H_INCLUDED)
+#define KRATOS_CHIMERA_APPLICATION_VARIABLES_H_INCLUDED
 
 // System includes
 
@@ -23,17 +23,17 @@
 #include "includes/variables.h"
 #include "includes/kratos_application.h"
 #include "chimera_application.h"
-#include "chimera_application_variables.h"
 #include "custom_utilities/multipoint_constraint_data.hpp"
 
 namespace Kratos
 {
-    typedef MpcData::Pointer MpcDataPointerType;
-KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS( CHIM_NEUMANN_COND );
-KRATOS_DEFINE_VARIABLE(MpcDataPointerType, MPC_POINTER);
+typedef MpcData::Pointer MpcDataPointerType;
+typedef std::vector<MpcDataPointerType> *MpcDataPointerVectorType;
+
+KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(CHIM_NEUMANN_COND);
+// For MPC implementations
+KRATOS_DEFINE_VARIABLE(MpcDataPointerVectorType, MPC_DATA_CONTAINER)
 //KRATOS_DEFINE_VARIABLE(MpcDataPointerType, IS_WEAK);
-
-
 }
 
-#endif	/* KRATOS_CHIMERA_APPLICATION_VARIABLES_H_INCLUDED */
+#endif /* KRATOS_CHIMERA_APPLICATION_VARIABLES_H_INCLUDED */

@@ -23,6 +23,7 @@
 //#include "structural_mechanics_application.h"
 #include "includes/mat_variables.h"
 #include "custom_utilities/shell_cross_section.hpp"
+#include "custom_utilities/multipoint_constraint_data.hpp"
 
 namespace Kratos
 {

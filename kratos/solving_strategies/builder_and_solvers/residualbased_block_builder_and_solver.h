@@ -371,7 +371,7 @@ public:
 
     }
 
-    void SystemSolveWithPhysics(
+    virtual void SystemSolveWithPhysics(
         TSystemMatrixType& A,
         TSystemVectorType& Dx,
         TSystemVectorType& b,
@@ -848,7 +848,7 @@ public:
     //**************************************************************************
     //**************************************************************************
 
-    void ApplyDirichletConditions(
+    virtual void ApplyDirichletConditions(
         typename TSchemeType::Pointer pScheme,
         ModelPart& r_model_part,
         TSystemMatrixType& A,

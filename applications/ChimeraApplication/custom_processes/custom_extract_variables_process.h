@@ -144,7 +144,7 @@ public:
 					// This should be extended to a general variable
 					TVariableType nodalVariableValues(0.0);
 
-					Geometry<Node<3> >& geom = pElement->GetGeometry();
+					//Geometry<Node<3> >& geom = pElement->GetGeometry();
 
 					// Do mapping
 					ComputeContinuousInterpolation<TVariableType>((*p_structure_node),pElement->GetGeometry(),rVariable,nodalVariableValues);

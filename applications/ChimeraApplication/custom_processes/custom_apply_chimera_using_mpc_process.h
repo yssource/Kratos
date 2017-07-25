@@ -44,7 +44,7 @@
 #include "custom_utilities/multipoint_constraint_data.hpp"
 #include "custom_processes/custom_calculate_signed_distance_process.h"
 #include "custom_hole_cutting_process.h"
-#include "custom_processes/apply_multi_point_constraints_process_chimera.h"
+#include "custom_processes/apply_multi_point_constraints_process.h"
 
 namespace Kratos
 {
@@ -92,7 +92,7 @@ class CustomApplyChimeraUsingMpcProcess
 	{
 		this->pBinLocatorForBackground = BinBasedPointLocatorPointerType(new BinBasedFastPointLocator<TDim>(mrBackgroundModelPart));
 		this->pBinLocatorForPatch = BinBasedPointLocatorPointerType(new BinBasedFastPointLocator<TDim>(mrPatchModelPart));
-		this->pMpcProcess = ApplyMultipointConstraintsProcessChimera::Pointer(new ApplyMultipointConstraintsProcessChimera(mrAllModelPart));
+		this->pMpcProcess = ApplyMultipointConstraintsProcess::Pointer(new ApplyMultipointConstraintsProcess(mrAllModelPart));
 		this->pHoleCuttingProcess = CustomHoleCuttingProcess::Pointer(new CustomHoleCuttingProcess());
 		this->pCalculateDistanceProcess = typename CustomCalculateSignedDistanceProcess<TDim>::Pointer(new CustomCalculateSignedDistanceProcess<TDim>());
 	}
@@ -173,6 +173,8 @@ class CustomApplyChimeraUsingMpcProcess
 						}
 					}
 
+					
+
 					Geometry<Node<3>> &geom = pElement->GetGeometry();
 
 					{
@@ -180,11 +182,11 @@ class CustomApplyChimeraUsingMpcProcess
 						for (int i = 0; i < geom.size(); i++)
 						{
 
-							pMpcProcess->AddMasterSlaveRelation(geom[i], VELOCITY_X, *p_boundary_node, VELOCITY_X, N[i], 0);
-							pMpcProcess->AddMasterSlaveRelation(geom[i], VELOCITY_Y, *p_boundary_node, VELOCITY_Y, N[i], 0);
+							pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_X, *p_boundary_node, VELOCITY_X, N[i]);
+							pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Y, *p_boundary_node, VELOCITY_Y, N[i]);
 
-							if(TDim == 3)
-							pMpcProcess->AddMasterSlaveRelation(geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i], 0);
+							if (TDim == 3)
+								pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Z,*p_boundary_node, VELOCITY_Z, N[i]);
 							//pMpcProcess->AddMasterSlaveRelationVariables( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i], 0 );
 						}
 					}
@@ -210,12 +212,11 @@ class CustomApplyChimeraUsingMpcProcess
 					Geometry<Node<3>> &geom = pElement->GetGeometry();
 
 					std::cout << "Presssure of " << p_boundary_node->Id() << "coupled to " << pElement->Id() << std::endl;
-				
 
 					for (int i = 0; i < geom.size(); i++)
 					{
 
-						pMpcProcess->AddMasterSlaveRelationVariables(geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i], 0);
+						pMpcProcess->AddMasterSlaveRelationWithNodesAndVariable(geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
 					}
 				}
 
@@ -268,7 +269,7 @@ class CustomApplyChimeraUsingMpcProcess
 			//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
 			this->pCalculateDistanceProcess->CalculateSignedDistance(mrBackgroundModelPart, mrPatchBoundaryModelPart);
 
-			this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart, HoleModelPart, HoleBoundaryModelPart, overlap_distance);
+			this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart, HoleModelPart, HoleBoundaryModelPart, epsilon);
 
 			ApplyMpcConstraint(mrPatchBoundaryModelPart, pBinLocatorForBackground, 1);
 		}
@@ -344,13 +345,13 @@ class CustomApplyChimeraUsingMpcProcess
 	//ModelPart &mrPatchSurfaceModelPart;
 	BinBasedPointLocatorPointerType pBinLocatorForBackground; // Template argument 3 stands for 3D case
 	BinBasedPointLocatorPointerType pBinLocatorForPatch;
-	ApplyMultipointConstraintsProcessChimera::Pointer pMpcProcess;
+	ApplyMultipointConstraintsProcess::Pointer pMpcProcess;
 	CustomHoleCuttingProcess::Pointer pHoleCuttingProcess;
 	typename CustomCalculateSignedDistanceProcess<TDim>::Pointer pCalculateDistanceProcess;
-	double overlap_distance;
+	ModelPart &mrAllModelPart;
 	ModelPart &mrBackgroundModelPart;
 	ModelPart &mrPatchModelPart;
-	ModelPart &mrAllModelPart;
+	double overlap_distance;
 
 	// epsilon
 	//static const double epsilon;

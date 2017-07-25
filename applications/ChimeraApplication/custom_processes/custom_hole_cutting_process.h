@@ -276,7 +276,7 @@ class CustomHoleCuttingProcess
 		for (ModelPart::ElementsContainerType::iterator it = rModelPart.ElementsBegin(); it != rModelPart.ElementsEnd(); ++it)
 		{
 			double elementDistance = 0.0;
-			int numPointsOutside = 0;
+			unsigned int numPointsOutside = 0;
 			unsigned int j = 0;
 			Geometry<Node<3>> &geom = it->GetGeometry();
 			for (j = 0; j < geom.size(); j++)

@@ -1324,7 +1324,7 @@ class QuadtreeBinary
         /*       we do not even need to test these) */
         /*    2) 3 edge normal of the triangle */
 
-        double min, max, d, p0, p1, p2, rad, fex, fey;
+        double min, max, p0, p1, p2, rad, fex, fey;
         array_1d<double, 3> v0, v1, v2;
         array_1d<double, 3> axis;
         array_1d<double, 3> normal, e0, e1, e2;

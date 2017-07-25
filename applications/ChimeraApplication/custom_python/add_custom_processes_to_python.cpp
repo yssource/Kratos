@@ -23,11 +23,11 @@
 #include "custom_processes/custom_hole_cutting_process.h"
 #include "custom_processes/custom_extract_variables_process.h"
 #include "custom_processes/custom_apply_chimera_using_mpc_process.h"
-#include "custom_processes/apply_multi_point_constraints_process_chimera.h"
 #include "custom_processes/custom_calculate_signed_distance_process.h"
 //#include "custom_processes/calculate_signed_distance_to_2d_skin_process.h"
 #include "custom_processes/calculate_signed_distance_to_2d_condition_skin_process.h"
 #include "custom_processes/calculate_chimera_signed_distance_to_3d_condition_skin_process.h"
+#include "custom_processes/apply_multi_point_constraints_process.h"
 namespace Kratos
 {
 

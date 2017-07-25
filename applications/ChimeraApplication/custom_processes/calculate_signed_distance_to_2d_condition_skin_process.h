@@ -280,6 +280,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         : mrSkinModelPart(rThisModelPartStruc), mrFluidModelPart(rThisModelPartFluid)
     {
         //this->pDistanceCalculator = typename ParallelDistanceCalculator<2>::Pointer(new ParallelDistanceCalculator<2>());
+        dist_limit = 1e-2;
     }
 
     /// Destructor.
@@ -314,7 +315,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         DistanceFluidStructure();
         //unsigned int max_level = 100;
         //double max_distance = 200;
-
+        
         //          ------------------------------------------------------------------
         //          GenerateNodes();
         CalculateDistance2(); // I have to change this. Pooyan.
@@ -329,6 +330,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         //          delete quadtree. TODO: Carlos
         //          ------------------------------------------------------------------
         //this->pDistanceCalculator->CalculateDistances(mrFluidModelPart,DISTANCE,NODAL_AREA,max_level,max_distance);
+        AvoidZeroDistances();
         KRATOS_CATCH("");
     }
 
@@ -475,7 +477,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         // --> now synchronize these values by finding the minimal distance and assign to each node a minimal nodal distance
         AssignMinimalNodalDistance(); // revisit -nav
 
-        const double initial_distance = 1000;
+        
 
         /* ModelPart::NodesContainerType::ContainerType& nodes = mrFluidModelPart.NodesArray();*/
 
@@ -641,7 +643,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
                                 {
                                     NumberIntersectionsOnTriangleCornerCurrentEdge++;
 
-                                    std::cout << " ####Intersection on corner####" << std::endl;
+                                    //std::cout << " ####Intersection on corner####" << std::endl;
 
                                     // only allow one intersection node on a triangle edge
                                     if (NumberIntersectionsOnTriangleCornerCurrentEdge < 2)
@@ -1117,7 +1119,9 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         }
 
         if ((numberDoubleCutEdges >= 1))
+
         {
+            
             array_1d<double, 3> normal_1 = IntersectedTriangleEdges[indexDoubleCutEdge].IntNodes[0].StructElemNormal;
             array_1d<double, 3> normal_2 = IntersectedTriangleEdges[indexDoubleCutEdge].IntNodes[1].StructElemNormal;
 
@@ -1142,12 +1146,18 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
             {
                 N_mean = 0.5 * (normal_1 - normal_2);
             }
+            
+            
 
             // Based on N_mean and P_mean compute the distances to that plane
             for (unsigned int i_TriangleNode = 0; i_TriangleNode < 3; i_TriangleNode++)
             {
                 ElementalDistances[i_TriangleNode] = PointDistanceToLine(P_mean, N_mean, i_fluid_Element->GetGeometry()[i_TriangleNode]);
+               
+                
+
             }
+            
         }
     }
 
@@ -1258,6 +1268,32 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
     ///******************************************************************************************************************
     ///******************************************************************************************************************
 
+
+void AvoidZeroDistances()
+{
+    //double dist_limit = 1e-2;
+
+     ModelPart::NodesContainerType::ContainerType &nodes = mrFluidModelPart.NodesArray();
+
+        // reset the node distance to 1.0 which is the maximum distance in our normalized space.
+        int nodesSize = nodes.size();
+
+#pragma omp parallel for firstprivate(nodesSize)
+        for (int i = 0; i < nodesSize; i++)
+        {
+            double& distance = nodes[i]->GetSolutionStepValue(DISTANCE) ;
+
+            if(fabs(distance) < dist_limit)
+            distance = -dist_limit;
+
+
+        }
+            
+
+
+
+
+}
     void GenerateSkinModelPart(ModelPart &mrNewSkinModelPart)
     {
         unsigned int id_node = 1;
@@ -1797,9 +1833,19 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         double coord[3] = {rNode.X(), rNode.Y(), rNode.Z()};
         double distance = DistancePositionInSpace(coord);
         double &node_distance = rNode.GetSolutionStepValue(DISTANCE);
+        //double dist_limit = 1e-2;
+        //debug
+        /*if(rNode.Id() == 1481)
+        {
+            std::cout<<" previous distance "<<node_distance<<std::endl;
+            std::cout<<" From quadtree"<< distance<<std::endl;
+            std::exit(-1);
 
-        const double epsilon = 1.00e-12;
-        if (fabs(node_distance) > fabs(distance))
+        }*/
+        
+
+        
+        if (fabs(node_distance) > fabs(distance)||fabs(node_distance < dist_limit))
             node_distance = distance;
         else if (distance * node_distance < 0.00) // assigning the correct sign
             node_distance = -node_distance;
@@ -2363,6 +2409,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
     boost::shared_ptr<QuadtreeType> mpQuadtree;
 
     static const double epsilon;
+    double dist_limit;
     //typename ParallelDistanceCalculator<2>::Pointer pDistanceCalculator;
 
     /**

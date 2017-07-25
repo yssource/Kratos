@@ -12,29 +12,26 @@
 
 // System includes
 
-
 // External includes
-
 
 // Project includes
 #include "chimera_application.h"
 #include "chimera_application_variables.h"
 
-
-namespace Kratos {
+namespace Kratos
+{
 
 KratosChimeraApplication::KratosChimeraApplication() {}
 
-void KratosChimeraApplication::Register() {
- 	// calling base class register to register Kratos components
- 	KratosApplication::Register();
- 	std::cout << "Initializing KratosChimeraApplication... " << std::endl;
+void KratosChimeraApplication::Register()
+{
+  // calling base class register to register Kratos components
+  KratosApplication::Register();
+  std::cout << "Initializing KratosChimeraApplication... " << std::endl;
 
-   KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( CHIM_NEUMANN_COND )
-   KRATOS_REGISTER_VARIABLE(MPC_POINTER);
-   //KRATOS_REGISTER_VARIABLE(IS_WEAK);
-   
-
-
+  KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS(CHIM_NEUMANN_COND)
+  // For MPC implementations
+  KRATOS_REGISTER_VARIABLE(MPC_DATA_CONTAINER)
+  //KRATOS_REGISTER_VARIABLE(IS_WEAK);
 }
-}  // namespace Kratos.
+} // namespace Kratos.

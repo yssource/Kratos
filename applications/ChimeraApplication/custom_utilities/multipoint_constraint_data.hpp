@@ -1,12 +1,50 @@
-// ==============================================================================
-//  ChimeraApplication
+/*
+==============================================================================
+KratosMultiScaleApplication
+A library based on:
+Kratos
+A General Purpose Software for Multi-Physics Finite Element Analysis
+Version 1.0 (Released on march 05, 2007).
+
+Copyright 2007
+Pooyan Dadvand, Riccardo Rossi, 
+pooyan@cimne.upc.edu
+rrossi@cimne.upc.edu
+
+- CIMNE (International Center for Numerical Methods in Engineering),
+Gran Capita' s/n, 08034 Barcelona, Spain
+
+Permission is hereby granted, free  of charge, to any person obtaining
+a  copy  of this  software  and  associated  documentation files  (the
+"Software"), to  deal in  the Software without  restriction, including
+without limitation  the rights to  use, copy, modify,  merge, publish,
+distribute,  sublicense and/or  sell copies  of the  Software,  and to
+permit persons to whom the Software  is furnished to do so, subject to
+the following condition:
+
+Distribution of this code for  any  commercial purpose  is permissible
+ONLY BY DIRECT ARRANGEMENT WITH THE COPYRIGHT OWNERS.
+
+The  above  copyright  notice  and  this permission  notice  shall  be
+included in all copies or substantial portions of the Software.
+
+THE  SOFTWARE IS  PROVIDED  "AS  IS", WITHOUT  WARRANTY  OF ANY  KIND,
+EXPRESS OR  IMPLIED, INCLUDING  BUT NOT LIMITED  TO THE  WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT  SHALL THE AUTHORS OR COPYRIGHT HOLDERS  BE LIABLE FOR ANY
+CLAIM, DAMAGES OR  OTHER LIABILITY, WHETHER IN AN  ACTION OF CONTRACT,
+TORT  OR OTHERWISE, ARISING  FROM, OUT  OF OR  IN CONNECTION  WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+==============================================================================
+*/
 //
-//  License:         BSD License
-//                   license: ChimeraApplication/license.txt
+//   Project Name:        Kratos
+//   Last Modified by:    $Author: Aditya Ghantasala $
+//   Date:                $Date: 14-03-2017 $
+//   Revision:            $Revision: 1.00 $
 //
-//  Main authors:    Aditya Ghantasala, https://github.com/adityaghantasala
 //
-// ==============================================================================
 
 #if !defined(MULTIPOINT_CONSTRAINT_DATA_H)
 #define MULTIPOINT_CONSTRAINT_DATA_H
@@ -41,6 +79,7 @@ class MpcData
     typedef std::unordered_map<unsigned int, double> MasterIdWeightMapType;
     typedef std::pair<unsigned int, unsigned int> SlavePairType;
     typedef std::tuple<unsigned int, unsigned int, int> key_tupple;
+    typedef Kratos::Variable<double> VariableType;
 
     struct key_hash_tuple : public std::unary_function<key_tupple, std::size_t>
     {
@@ -87,6 +126,8 @@ class MpcData
         }
     };
 
+    //friend bool operator == (MpcData &obj1, MpcData &obj2);
+
     typedef std::unordered_map<const key_tupple, double, key_hash_tuple, key_equal_tuple> MasterDofWeightMapType;
     //typedef std::unordered_map<std::tuple<unsigned int, VariableComponentType, int>, double> ;
 
@@ -126,6 +167,15 @@ class MpcData
     /**
 		Adds a constraints between the given slave and master with a weight. 		
 		*/
+
+    // Takes in a slave dof equationId and a master dof equationId
+    void AddConstraint(unsigned int SlaveDofEquationId, unsigned int MasterDofEquationId, double weight, int PartitionId = 0)
+    {
+        mEquationIdToWeightsMap[SlaveDofEquationId].insert(  std::pair<unsigned int, double>(MasterDofEquationId, weight)  );
+        //mDofConstraints[std::make_pair(SlaveDof.Id(), slaveVariableKey)][std::tie(MasterNodeId, MasterVariableKey, PartitionId)] += weight;
+    }
+
+
     // Takes in a slave dof and a master dof
     void AddConstraint(DofType &SlaveDof, DofType &MasterDof, double weight, int PartitionId = 0)
     {
@@ -175,10 +225,43 @@ class MpcData
         return mDofConstraints[std::make_pair(SlaveDof.Id(), SlaveDof.GetVariable().Key())].size();
     }
 
+    /**
+		Set the name for the current set of constraints. 
+		 */
+    void SetName(const std::string name)
+    {
+        mName = name;
+    }
+    /**
+		Get the name for the current set of constraints. 
+		 */
+    std::string GetName()
+    {
+        return mName;
+    }    
+
+    /**
+		Set the activeness for current set of constraints. 
+		 */
+    void SetActive(const bool isActive)
+    {
+        mActive = isActive;
+    }
+
+    /**
+		Returns true if the constraint set is active
+		 */
+    bool IsActive()
+    {
+        return mActive;
+    }    
+
+
     ///@
 
     ///@name Static Operations
-    ///@{
+    ///
+    //@{
     /**
 		 * Returns the string containing a detailed description of this object.
 		 * @return the string with informations
@@ -215,6 +298,9 @@ class MpcData
                        std::unordered_map<unsigned int, double>>
         mEquationIdToWeightsMap;
 
+
+    bool mActive;
+    std::string mName;
     ///@}
 
     ///@name Serialization
@@ -236,6 +322,11 @@ class MpcData
 
 ///@name Input/Output funcitons
 ///@{
+
+/*bool operator== (MpcData &obj1, MpcData &obj2) 
+{
+        return obj1.GetName() == obj2.GetName();
+}    */
 
 inline std::istream &operator>>(std::istream &rIStream, MpcData &rThis);
 

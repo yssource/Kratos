@@ -29,6 +29,8 @@ namespace Kratos
 KratosChimeraApplication::KratosChimeraApplication():
     mSkSyFluidElement2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mSkSyFluidElement3D4N(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
+    mSkSyFluidCondition2D2N(0, Element::GeometryType::Pointer( new Line2D2<Node<3> >( Element::GeometryType::PointsArrayType(2) ) ) ),
+    mSkSyFluidCondition3D3N(0, Element::GeometryType::Pointer( new Triangle3D3<Node<3> >( Element::GeometryType::PointsArrayType(3) ) ) ),
     mChimeraFluidCouplingCondition2D(0, Element::GeometryType::Pointer( new Line2D2<Node<3> >( Element::GeometryType::PointsArrayType(2) ) ) ),
     mChimeraFluidCouplingCondition3D(0, Element::GeometryType::Pointer( new Triangle3D3<Node<3> >( Element::GeometryType::PointsArrayType(3) ) ) ),
     mChimeraThermalCouplingCondition2D(0, Element::GeometryType::Pointer( new Line2D2<Node<3> >( Element::GeometryType::PointsArrayType(2) ) ) ),
@@ -52,6 +54,9 @@ void KratosChimeraApplication::Register()
 
   KRATOS_REGISTER_ELEMENT("SkSyFluidElement2D3N",mSkSyFluidElement2D3N);
   KRATOS_REGISTER_ELEMENT("SkSyFluidElement3D4N",mSkSyFluidElement3D4N);
+
+  KRATOS_REGISTER_CONDITION("SkSyFluidConditiont2D2N",mSkSyFluidCondition2D2N);
+  KRATOS_REGISTER_CONDITION("SkSyFluidConditiont3D3N",mSkSyFluidCondition3D3N);
 
   KRATOS_REGISTER_CONDITION("ChimeraFluidCouplingCondition2D",mChimeraFluidCouplingCondition2D);
   KRATOS_REGISTER_CONDITION("ChimeraFluidCouplingCondition3D",mChimeraFluidCouplingCondition3D);

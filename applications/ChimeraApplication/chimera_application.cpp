@@ -55,8 +55,8 @@ void KratosChimeraApplication::Register()
   KRATOS_REGISTER_ELEMENT("SkSyFluidElement2D3N",mSkSyFluidElement2D3N);
   KRATOS_REGISTER_ELEMENT("SkSyFluidElement3D4N",mSkSyFluidElement3D4N);
 
-  KRATOS_REGISTER_CONDITION("SkSyFluidConditiont2D2N",mSkSyFluidCondition2D2N);
-  KRATOS_REGISTER_CONDITION("SkSyFluidConditiont3D3N",mSkSyFluidCondition3D3N);
+  KRATOS_REGISTER_CONDITION("SkSyFluidCondition2D2N",mSkSyFluidCondition2D2N);
+  KRATOS_REGISTER_CONDITION("SkSyFluidCondition3D3N",mSkSyFluidCondition3D3N);
 
   KRATOS_REGISTER_CONDITION("ChimeraFluidCouplingCondition2D",mChimeraFluidCouplingCondition2D);
   KRATOS_REGISTER_CONDITION("ChimeraFluidCouplingCondition3D",mChimeraFluidCouplingCondition3D);

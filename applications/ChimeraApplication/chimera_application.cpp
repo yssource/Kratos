@@ -18,10 +18,16 @@
 #include "chimera_application.h"
 #include "chimera_application_variables.h"
 
+#include "geometries/triangle_2d_3.h"
+#include "geometries/tetrahedra_3d_4.h"
+
 namespace Kratos
 {
 
-KratosChimeraApplication::KratosChimeraApplication() {}
+KratosChimeraApplication::KratosChimeraApplication():
+    mSkSyFluidElement2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+    mSkSyFluidElement3D4N(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4))))
+{}
 
 void KratosChimeraApplication::Register()
 {
@@ -33,5 +39,8 @@ void KratosChimeraApplication::Register()
   // For MPC implementations
   KRATOS_REGISTER_VARIABLE(MPC_DATA_CONTAINER)
   //KRATOS_REGISTER_VARIABLE(IS_WEAK);
+
+  KRATOS_REGISTER_ELEMENT("SkSyFluidElement2D3N",mSkSyFluidElement2D3N);
+  KRATOS_REGISTER_ELEMENT("SkSyFluidElement3D4N",mSkSyFluidElement3D4N);
 }
 } // namespace Kratos.

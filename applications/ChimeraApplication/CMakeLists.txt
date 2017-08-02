@@ -12,6 +12,7 @@ include_directories( ${CMAKE_SOURCE_DIR}/applications/ChimeraApplication )
 set( KRATOS_CHIMERA_APPLICATION_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/chimera_application.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/chimera_application_variables.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/sksy_fluid_element.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/chimera_python_application.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_processes_to_python.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_strategies_to_python.cpp

@@ -26,6 +26,8 @@
 #include "includes/kratos_application.h"
 #include "includes/variables.h"
 
+#include "custom_elements/sksy_fluid_element.h"
+
 
 namespace Kratos {
 
@@ -179,8 +181,9 @@ private:
 	///@name Member Variables
 	///@{
 
-	// const Elem2D   mElem2D;
-	// const Elem3D   mElem3D;
+	// Skew-symmetric fluid element
+	const SkSyFluidElement<2> mSkSyFluidElement2D3N;
+	const SkSyFluidElement<3> mSkSyFluidElement3D4N;
 
 	///@}
 	///@name Private Operators

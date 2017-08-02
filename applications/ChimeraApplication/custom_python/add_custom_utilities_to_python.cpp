@@ -31,8 +31,27 @@
 #include "custom_utilities/quadtree_binary.h"
 //#include "custom_utilities/multipoint_constraint_data.hpp"
 
+#include "custom_utilities/interpolation_utility.h"
+
 namespace Kratos
 {
+
+template< unsigned int TDim >
+void AuxCreateFluidBoundaryFaces(InterpolationUtility<TDim>& ThisUtility, ModelPart& rBackground)
+{
+    std::string ConditionName("ChimeraFluidCouplingCondition2D");
+    const Condition& rReferenceCondition = KratosComponents<Condition>::Get(ConditionName);
+    ThisUtility.CreateBoundaryFaces(rBackground,rReferenceCondition);
+}
+
+
+template< unsigned int TDim >
+void AuxCreateThermalBoundaryFaces(InterpolationUtility<TDim>& ThisUtility, ModelPart& rBackground)
+{
+    std::string ConditionName("ChimeraThermalCouplingCondition2D");
+    const Condition& rReferenceCondition = KratosComponents<Condition>::Get(ConditionName);
+    ThisUtility.CreateBoundaryFaces(rBackground,rReferenceCondition);
+}
 
 namespace Python
 {
@@ -57,6 +76,39 @@ namespace Python
       class_<VtkOutput, boost::noncopyable>("VtkOutput", init< ModelPart&, std::string, Parameters >())
       .def("PrintOutput", &VtkOutput::PrintOutput)
       .def("PrintOutput", &VtkOutput::PrintOutputSubModelPart);      
+
+      class_ < InterpolationUtility<2>, boost::noncopyable >( "InterpolationUtility2D", init<>() )
+              .def("Test", &InterpolationUtility<2>::Test )
+              //.def("DirichletBoundaryCalculation", &InterpolationUtility < 2 > ::DirichletBoundaryCalculation<double>)
+              .def("Projection_Flux", &InterpolationUtility < 2 > ::Projection_Flux<double>)
+              //.def("DirichletBoundaryCalculationKreis", &InterpolationUtility < 2 > ::DirichletBoundaryCalculationKreis<double>)
+              //.def("NeumannBoundaryCalculationRechteck", &InterpolationUtility < 2 > ::NeumannBoundaryCalculationRechteck<double>)
+              //.def("DirichletBoundaryCalculationRechteck", &InterpolationUtility < 2 > ::DirichletBoundaryCalculationRechteck<double>)
+              .def("CreateFluidBoundaryFaces", AuxCreateFluidBoundaryFaces<2>)
+              .def("CreateThermalBoundaryFaces", AuxCreateThermalBoundaryFaces<2>)
+              //.def("DirichletBoundaryCalculationFlag", &InterpolationUtility < 2 > ::DirichletBoundaryCalculationFlag<double>)
+              .def("Projection_Vector", &InterpolationUtility < 2 > ::Projection_Vector< array_1d<double,3> >)
+              .def("Projection_Scalar", &InterpolationUtility < 2 > ::Projection_Vector< double >)
+              .def("Projection_Traction", &InterpolationUtility < 2 > ::Projection_Traction)
+              .def("Projection_Traction_Cavity", &InterpolationUtility < 2 > ::Projection_Traction_Cavity)
+              .def("Projection_Traction_Nodal", &InterpolationUtility < 2 > ::Projection_Traction_Nodal)
+              .def("Projection_Flux_Gauss", &InterpolationUtility < 2 > :: Projection_Flux_Gauss)
+              ;
+
+      class_ < InterpolationUtility<3>, boost::noncopyable >( "InterpolationUtility3D", init<>() )
+              .def("Test", &InterpolationUtility<3>::Test )
+              //.def("DirichletBoundaryCalculation", &InterpolationUtility < 2 > ::DirichletBoundaryCalculation<double>)
+
+              //.def("DirichletBoundaryCalculationKreis", &InterpolationUtility < 2 > ::DirichletBoundaryCalculationKreis<double>)
+              //.def("NeumannBoundaryCalculationRechteck", &InterpolationUtility < 2 > ::NeumannBoundaryCalculationRechteck<double>)
+              //.def("DirichletBoundaryCalculationRechteck", &InterpolationUtility < 2 > ::DirichletBoundaryCalculationRechteck<double>)
+              //.def("CreateBoundaryFaces", &InterpolationUtility < 3 > ::CreateBoundaryFaces)
+              //.def("DirichletBoundaryCalculationFlag", &InterpolationUtility < 2 > ::DirichletBoundaryCalculationFlag<double>)
+              .def("Projection_Vector", &InterpolationUtility < 3 > ::Projection_Vector< array_1d<double,3> >)
+              .def("Projection_Scalar", &InterpolationUtility < 3 > ::Projection_Vector< double >)
+              .def("Projection_Traction", &InterpolationUtility < 3 > ::Projection_Traction)
+              .def("ExtractBoundaryFaces",&InterpolationUtility < 3 >::ExtractBoundaryFaces)
+              ;
 
 
   }

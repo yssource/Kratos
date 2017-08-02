@@ -7,7 +7,7 @@
 //  License:         BSD License 
 //                   Kratos default license: kratos/license.txt
 //
-//  Main authord:    Jordi Cotela
+//  Main author:     Jordi Cotela
 //
 
 // This is an adapted version of the stabilized ASGS/OSS element described in 

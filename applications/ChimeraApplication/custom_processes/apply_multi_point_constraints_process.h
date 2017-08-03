@@ -255,6 +255,13 @@ class ApplyMultipointConstraintsProcess : public Process
         pMpc->SetName(name);
     }
 
+    void SetWeak(bool value = true)
+    {
+
+        pMpc->SetIsWeak(value);
+
+    }
+
     /// Destructor.
     virtual ~ApplyMultipointConstraintsProcess()
     {

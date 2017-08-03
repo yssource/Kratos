@@ -80,6 +80,7 @@ class MpcData
     typedef std::pair<unsigned int, unsigned int> SlavePairType;
     typedef std::tuple<unsigned int, unsigned int, int> key_tupple;
     typedef Kratos::Variable<double> VariableType;
+    
 
     struct key_hash_tuple : public std::unary_function<key_tupple, std::size_t>
     {
@@ -139,6 +140,7 @@ class MpcData
 		*/
     MpcData() : mDofConstraints(), mEquationIdToWeightsMap()
     {
+        mIsWeak = false;
     }
     /// Destructor.
     virtual ~MpcData(){};
@@ -256,6 +258,16 @@ class MpcData
         return mActive;
     }    
 
+    bool IsWeak()
+    {
+        return mIsWeak;
+    }
+
+    void SetIsWeak(bool value)
+    {
+        this->mIsWeak = value;
+    }
+
 
     ///@
 
@@ -301,6 +313,7 @@ class MpcData
 
     bool mActive;
     std::string mName;
+    bool mIsWeak;
     ///@}
 
     ///@name Serialization

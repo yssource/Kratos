@@ -182,7 +182,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
         KRATOS_TRY
 
         Timer::Start("Build");
-        
+
         Build(pScheme, r_model_part, A, b);
 
         Timer::Stop("Build");
@@ -640,6 +640,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                             localNodalSlaveEquationIds.push_back(localSlaveEqId);
                         }
                         int currentNumberOfMastersProcessed = 0;
+
                         for (auto localSlaveEqId : localNodalSlaveEquationIds)
                         { // Loop over all the slaves for this node
                             it = std::find(localNodalSlaveEquationIds.begin(), localNodalSlaveEquationIds.end(), localSlaveEqId);
@@ -650,40 +651,52 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                                 int localMasterEqId = currentNumberOfMastersProcessed + currentSysSize;
                                 ++currentNumberOfMastersProcessed;
                                 // For K(m,u) and K(u,m)
-                                for (auto localInternEqId : localInternEquationIds)
-                                { // Loop over all the local equation ids
-                                    LHS_Contribution(localInternEqId, localMasterEqId) += LHS_Contribution(localInternEqId, localSlaveEqId) * masterI.second;
-                                    LHS_Contribution(localMasterEqId, localInternEqId) += LHS_Contribution(localSlaveEqId, localInternEqId) * masterI.second;
-                                } // Loop over all the local equation ids
+                                if (!(mpcData->IsWeak()))
+                                {
+                                    for (auto localInternEqId : localInternEquationIds)
+                                    { // Loop over all the local equation ids
+                                        LHS_Contribution(localInternEqId, localMasterEqId) += LHS_Contribution(localInternEqId, localSlaveEqId) * masterI.second;
+                                        LHS_Contribution(localMasterEqId, localInternEqId) += LHS_Contribution(localSlaveEqId, localInternEqId) * masterI.second;
+                                    } // Loop over all the local equation ids
 
-                                // For K(m,s) and K(s,m)
-                                /*for (auto localSlaveEqIdOther : localSlaveEquationIds)
+                                    // For K(m,s) and K(s,m)
+                                    /*for (auto localSlaveEqIdOther : localSlaveEquationIds)
                                 { // Loop over all the slaves for this node
                                     LHS_Contribution(localSlaveEqIdOther, localMasterEqId) += masterI.second * LHS_Contribution(localSlaveEqIdOther, localSlaveEqId) * -1;
                                     //LHS_Contribution(localMasterEqId, localSlaveEqIdOther) += masterI.second * LHS_Contribution(localSlaveEqId, localSlaveEqIdOther);
                                 }*/
+                                }
 
                                 EquationId.push_back(masterI.first);
                                 // Changing the RHS side of the equation
-                                RHS_Contribution(localMasterEqId) = RHS_Contribution(localMasterEqId) + masterI.second * RHS_Contribution(localSlaveEqId);
+                                if (!(mpcData->IsWeak()))
+                                {
 
-                                localMasterEquationIds.push_back(localMasterEqId);
-                                WeightsCorrespondingToMasters.push_back(masterI.second);
-                                SlavesCorrespondingToMasters.push_back(localSlaveEqId);
+                                    RHS_Contribution(localMasterEqId) = RHS_Contribution(localMasterEqId) + masterI.second * RHS_Contribution(localSlaveEqId);
+
+                                    localMasterEquationIds.push_back(localMasterEqId);
+                                    WeightsCorrespondingToMasters.push_back(masterI.second);
+                                    SlavesCorrespondingToMasters.push_back(localSlaveEqId);
+                                }
+
                             } // Loop over all the masters the slave has
 
                             RHS_Contribution(localSlaveEqId) = 0.0;
                         } // Loop over all the slaves for this node
 
                         //Adding contribution from slave to Kmm
-                        for (unsigned int localMasterIndex = 0; localMasterIndex < localMasterEquationIds.size(); localMasterIndex++)
-
+                        if (!(mpcData->IsWeak()))
                         {
 
-                            for (unsigned int localMasterIndexOther = 0; localMasterIndexOther < localMasterEquationIds.size(); localMasterIndexOther++)
+                            for (unsigned int localMasterIndex = 0; localMasterIndex < localMasterEquationIds.size(); localMasterIndex++)
+
                             {
 
-                                LHS_Contribution(localMasterEquationIds[localMasterIndex], localMasterEquationIds[localMasterIndexOther]) += WeightsCorrespondingToMasters[localMasterIndex] * LHS_Contribution(SlavesCorrespondingToMasters[localMasterIndex], SlavesCorrespondingToMasters[localMasterIndexOther]) * WeightsCorrespondingToMasters[localMasterIndexOther];
+                                for (unsigned int localMasterIndexOther = 0; localMasterIndexOther < localMasterEquationIds.size(); localMasterIndexOther++)
+                                {
+
+                                    LHS_Contribution(localMasterEquationIds[localMasterIndex], localMasterEquationIds[localMasterIndexOther]) += WeightsCorrespondingToMasters[localMasterIndex] * LHS_Contribution(SlavesCorrespondingToMasters[localMasterIndex], SlavesCorrespondingToMasters[localMasterIndexOther]) * WeightsCorrespondingToMasters[localMasterIndexOther];
+                                }
                             }
                         }
 
@@ -938,7 +951,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
         ModelPart &r_model_part,
         TSystemMatrixType &A,
         TSystemVectorType &Dx,
-        TSystemVectorType &b) 
+        TSystemVectorType &b)
     {
 
         unsigned int n_nodes = r_model_part.Nodes().size();
@@ -973,14 +986,14 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                                 for (auto master : masterWeightsMap)
                                 {
 
-                                    Dx[slaveEquationId] = TSparseSpace::GetValue(Dx,slaveEquationId) + TSparseSpace::GetValue(Dx,master.first) * master.second; 
+                                    Dx[slaveEquationId] = TSparseSpace::GetValue(Dx, slaveEquationId) + TSparseSpace::GetValue(Dx, master.first) * master.second;
                                     //std::cout << "Master solution " << Dx[master.first] << " weight " << master.second << std::endl; //debug
                                 }
                                 //std::cout << "Dx after postprocessing" << Dx[slaveEquationId] << std::endl; //debug
                                 //counter++;
 
                                 //if (counter > 10) //nav
-                                    //std::exit(-1);
+                                //std::exit(-1);
                             }
                         }
                     }

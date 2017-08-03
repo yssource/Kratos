@@ -162,7 +162,7 @@ class CustomApplyChimeraUsingMpcProcess
 
 					//Check if some of the host elements are made inactive
 
-					if ((pElement)->IsDefined(ACTIVE))
+					/*if ((pElement)->IsDefined(ACTIVE))
 					{
 
 						if (!(pElement->Is(ACTIVE)))
@@ -171,7 +171,7 @@ class CustomApplyChimeraUsingMpcProcess
 							pElement->Set(ACTIVE);
 							std::cout << "Setting the element: " << pElement->Id() << " to active" << std::endl;
 						}
-					}
+					}*/
 
 					
 
@@ -234,6 +234,12 @@ class CustomApplyChimeraUsingMpcProcess
 	//Apply Chimera with or without overlap
 	void ApplyChimeraUsingMpc(ModelPart &mrPatchBoundaryModelPart)
 	{
+		for (ModelPart::ElementsContainerType::iterator it = mrAllModelPart.ElementsBegin(); it != mrAllModelPart.ElementsEnd(); ++it)
+		{
+
+			it->Set(ACTIVE, true);
+		}
+
 		const double epsilon = 1e-12;
 		if (overlap_distance < epsilon)
 		{
@@ -246,7 +252,7 @@ class CustomApplyChimeraUsingMpcProcess
 
 			ModelPart HoleModelPart = ModelPart("HoleModelpart");
 			ModelPart HoleBoundaryModelPart = ModelPart("HoleBoundaryModelPart");
-
+			pMpcProcess->SetWeak(true);
 			//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
 			this->pCalculateDistanceProcess->CalculateSignedDistance(mrBackgroundModelPart, mrPatchBoundaryModelPart);
 

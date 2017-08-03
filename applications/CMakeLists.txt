@@ -274,7 +274,7 @@ endif(${COMPRESSIBLE_POTENTIAL_FLOW_APPLICATION} MATCHES ON)
 
 if(${CHIMERA_APPLICATION} MATCHES ON)
   add_subdirectory(ChimeraApplication)
-endif(${CHIMERA_APPLICATIONN} MATCHES ON)
+endif(${CHIMERA_APPLICATION} MATCHES ON)
 
 # get_property(inc_dirs DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
 # message("applications subdir inc_dirs = ${inc_dirs}")

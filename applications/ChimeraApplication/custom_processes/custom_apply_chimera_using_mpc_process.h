@@ -173,8 +173,6 @@ class CustomApplyChimeraUsingMpcProcess
 						}
 					}*/
 
-					
-
 					Geometry<Node<3>> &geom = pElement->GetGeometry();
 
 					{
@@ -186,7 +184,7 @@ class CustomApplyChimeraUsingMpcProcess
 							pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Y, *p_boundary_node, VELOCITY_Y, N[i]);
 
 							if (TDim == 3)
-								pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Z,*p_boundary_node, VELOCITY_Z, N[i]);
+								pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i]);
 							//pMpcProcess->AddMasterSlaveRelationVariables( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i], 0 );
 						}
 					}
@@ -250,17 +248,17 @@ class CustomApplyChimeraUsingMpcProcess
 
 		{
 
-			ModelPart HoleModelPart = ModelPart("HoleModelpart");
-			ModelPart HoleBoundaryModelPart = ModelPart("HoleBoundaryModelPart");
+			ModelPart::Pointer pHoleModelPart = ModelPart::Pointer(new ModelPart("HoleModelpart"));
+			ModelPart::Pointer pHoleBoundaryModelPart = ModelPart::Pointer(new ModelPart("HoleBoundaryModelPart"));
 			pMpcProcess->SetWeak(true);
 			//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
 			this->pCalculateDistanceProcess->CalculateSignedDistance(mrBackgroundModelPart, mrPatchBoundaryModelPart);
 
-			this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart, HoleModelPart, HoleBoundaryModelPart, overlap_distance);
+			this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart, *pHoleModelPart, *pHoleBoundaryModelPart, overlap_distance);
 
 			ApplyMpcConstraint(mrPatchBoundaryModelPart, pBinLocatorForBackground, 0);
 			std::cout << "Patch boundary coupled with background" << std::endl;
-			ApplyMpcConstraint(HoleBoundaryModelPart, pBinLocatorForPatch, 1);
+			ApplyMpcConstraint(*pHoleBoundaryModelPart, pBinLocatorForPatch, 1);
 			std::cout << "HoleBoundary  coupled with patch" << std::endl;
 		}
 
@@ -269,13 +267,13 @@ class CustomApplyChimeraUsingMpcProcess
 
 			std::cout << "Applying Strong MPC " << std::endl;
 
-			ModelPart HoleModelPart = ModelPart("HoleModelPart");
-			ModelPart HoleBoundaryModelPart = ModelPart("HoleBoundaryModelPart");
+			ModelPart::Pointer pHoleModelPart = ModelPart::Pointer(new ModelPart("HoleModelpart"));
+			ModelPart::Pointer pHoleBoundaryModelPart = ModelPart::Pointer(new ModelPart("HoleBoundaryModelPart"));
 
 			//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
 			this->pCalculateDistanceProcess->CalculateSignedDistance(mrBackgroundModelPart, mrPatchBoundaryModelPart);
 
-			this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart, HoleModelPart, HoleBoundaryModelPart, epsilon);
+			this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart, *pHoleModelPart, *pHoleBoundaryModelPart, epsilon);
 
 			ApplyMpcConstraint(mrPatchBoundaryModelPart, pBinLocatorForBackground, 1);
 		}

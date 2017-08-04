@@ -619,7 +619,7 @@ public:
             for(unsigned int i=0; i<nnodes; i++)
                 p[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
 
-            const double rho  = 1; //clearly this should be changed...//INIGO: TESTING USE OF GIT
+            const double rho  = 1; //clearly this should be changed...
             
             if(dim == 2)
             {

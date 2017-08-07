@@ -265,7 +265,7 @@ public:
     /**
      * Getting method to obtain the variable which defines the degrees of freedom
      */
-    virtual void GetValuesVector(Vector& values, int Step = 0)
+    virtual void GetFirstDerivativesVector(Vector& values, int Step = 0)
     {
         //gather nodal data
         for(unsigned int i=0; i<NumNodes; i++)
@@ -597,21 +597,24 @@ public:
             Matrix lhs;
             Vector rhs;
             CalculateLocalSystem(lhs,rhs,const_cast<ProcessInfo&>(rCurrentProcessInfo)); //TODO: the const cast here is HORRIBLE
-            rOutput = trans(lhs);
+            //rOutput = trans(lhs);
+            rOutput = lhs;
         }
         else if(rVariable == SHAPE_DERIVATIVE_MATRIX_1)
         {
             //matrix of coordinates
-            bounded_matrix<double,Dim, NumNodes> x(dim,NumNodes);
+            bounded_matrix<double,Dim, NumNodes> x(NumNodes,dim);
             for(unsigned int i=0; i<NumNodes; ++i)
                 for(unsigned int k=0; k<dim; k++)
-                    x(k,i) = GetGeometry()[i].Coordinates()[k];
+                    x(i,k) = GetGeometry()[i].Coordinates()[k];
             
             bounded_matrix<double, NumNodes, Dim > DN;   
-            bounded_matrix<double,NumNodes, Dim> DRDx;
+            bounded_matrix<double,NumNodes*Dim, NumNodes> DRDx;
+            //std::cout << "DIM #" << Dim;
             array_1d<double,NumNodes> N;
             double vol;
             GeometryUtils::CalculateGeometryData(GetGeometry(), DN, N, vol);
+            
 
 
             //gather nodal data
@@ -623,137 +626,63 @@ public:
             
             if(dim == 2)
             {
-                
-                
-                const double cDRDx0 =             DN(0,1)*x(0,0) + DN(1,1)*x(1,0) + DN(2,1)*x(2,0);
-                const double cDRDx1 =             DN(0,0)*cDRDx0;
-                const double cDRDx2 =             DN(0,0)*x(0,0) + DN(1,0)*x(1,0) + DN(2,0)*x(2,0);
-                const double cDRDx3 =             -DN(0,1)*cDRDx2 + cDRDx1;
-                const double cDRDx4 =             DN(0,1)*x(0,1) + DN(1,1)*x(1,1) + DN(2,1)*x(2,1);
-                const double cDRDx5 =             DN(0,0)*x(0,1) + DN(1,0)*x(1,1) + DN(2,0)*x(2,1);
-                const double cDRDx6 =             DN(0,1)*cDRDx5;
-                const double cDRDx7 =             DN(0,0)*cDRDx4 - cDRDx6;
-                const double cDRDx8 =             cDRDx0*cDRDx5;
-                const double cDRDx9 =             cDRDx2*cDRDx4 - cDRDx8;
-                const double cDRDx10 =             cDRDx3*p[0];
-                const double cDRDx11 =             DN(1,0)*cDRDx0;
-                const double cDRDx12 =             -DN(1,1)*cDRDx2 + cDRDx11;
-                const double cDRDx13 =             cDRDx12*p[1];
-                const double cDRDx14 =             DN(2,0)*cDRDx0;
-                const double cDRDx15 =             -DN(2,1)*cDRDx2 + cDRDx14;
-                const double cDRDx16 =             cDRDx15*p[2];
-                const double cDRDx17 =             cDRDx10 + cDRDx13 + cDRDx16;
-                const double cDRDx18 =             cDRDx17/pow(cDRDx9, 3);
-                const double cDRDx19 =             pow(cDRDx9, -2);
-                const double cDRDx20 =             cDRDx19*cDRDx3;
-                const double cDRDx21 =             1.0/cDRDx9;
-                const double cDRDx22 =             DN(0,0)*DN(1,1);
-                const double cDRDx23 =             DN(0,1)*DN(1,0);
-                const double cDRDx24 =             DN(1,0)*cDRDx0*cDRDx21;
-                const double cDRDx25 =             DN(1,1)*cDRDx2*cDRDx21;
-                const double cDRDx26 =             cDRDx22 - cDRDx23 + cDRDx24*cDRDx7 - cDRDx25*cDRDx7;
-                const double cDRDx27 =             DN(0,0)*DN(2,1);
-                const double cDRDx28 =             DN(0,1)*DN(2,0);
-                const double cDRDx29 =             DN(2,0)*cDRDx0*cDRDx21;
-                const double cDRDx30 =             DN(2,1)*cDRDx2*cDRDx21;
-                const double cDRDx31 =             cDRDx27 - cDRDx28 + cDRDx29*cDRDx7 - cDRDx30*cDRDx7;
-                const double cDRDx32 =             cDRDx10*cDRDx21*cDRDx7 + cDRDx26*p[1] + cDRDx31*p[2];
-                const double cDRDx33 =             DN(0,1)*cDRDx19*cDRDx5;
-                const double cDRDx34 =             1.0/cDRDx2;
-                const double cDRDx35 =             DN(0,0)*cDRDx34;
-                const double cDRDx36 =             cDRDx21*cDRDx6;
-                const double cDRDx37 =             cDRDx21*cDRDx34*cDRDx5;
-                const double cDRDx38 =             cDRDx0*cDRDx19*cDRDx5;
-                const double cDRDx39 =             -cDRDx1*cDRDx37 - cDRDx35 + cDRDx36 - cDRDx38*cDRDx7;
-                const double cDRDx40 =             cDRDx33*cDRDx7 + cDRDx35*cDRDx39;
-                const double cDRDx41 =             cDRDx21*cDRDx8 + 1;
-                const double cDRDx42 =             cDRDx35*cDRDx41 - cDRDx36;
-                const double cDRDx43 =             DN(1,1)*cDRDx5;
-                const double cDRDx44 =             cDRDx21*cDRDx43;
-                const double cDRDx45 =             DN(1,0)*cDRDx34;
-                const double cDRDx46 =             cDRDx41*cDRDx45 - cDRDx44;
-                const double cDRDx47 =             DN(2,1)*cDRDx5;
-                const double cDRDx48 =             cDRDx21*cDRDx47;
-                const double cDRDx49 =             DN(2,0)*cDRDx34;
-                const double cDRDx50 =             cDRDx41*cDRDx49 - cDRDx48;
-                const double cDRDx51 =             cDRDx42*p[0] + cDRDx46*p[1] + cDRDx50*p[2];
-                const double cDRDx52 =             DN(1,1)*cDRDx19*cDRDx5;
-                const double cDRDx53 =             cDRDx39*cDRDx45 + cDRDx52*cDRDx7;
-                const double cDRDx54 =             DN(2,1)*cDRDx19*cDRDx5;
-                const double cDRDx55 =             cDRDx39*cDRDx49 + cDRDx54*cDRDx7;
-                const double cDRDx56 =             cDRDx40*p[0] + cDRDx53*p[1] + cDRDx55*p[2];
-                const double cDRDx57 =             cDRDx17*cDRDx19;
-                const double cDRDx58 =             cDRDx12*cDRDx19;
-                const double cDRDx59 =             cDRDx15*cDRDx19;
-                const double cDRDx60 =             cDRDx21*rho;
-                const double cDRDx61 =             2*cDRDx17*cDRDx19;
-                const double cDRDx62 =             DN(0,0)*cDRDx0*cDRDx34;
-                const double cDRDx63 =             cDRDx21*cDRDx5;
-                const double cDRDx64 =             DN(0,0) + cDRDx3*cDRDx63;
-                const double cDRDx65 =             DN(0,0)*DN(0,1) + cDRDx3*cDRDx36 - cDRDx62*cDRDx64;
-                const double cDRDx66 =             DN(1,0)*cDRDx0*cDRDx34;
-                const double cDRDx67 =             cDRDx22 + cDRDx3*cDRDx44 - cDRDx64*cDRDx66;
-                const double cDRDx68 =             DN(2,0)*cDRDx0*cDRDx34;
-                const double cDRDx69 =             cDRDx27 + cDRDx3*cDRDx48 - cDRDx64*cDRDx68;
-                const double cDRDx70 =             cDRDx65*p[0] + cDRDx67*p[1] + cDRDx69*p[2];
-                const double cDRDx71 =             2*cDRDx17*cDRDx19*cDRDx3;
-                const double cDRDx72 =             -cDRDx12*cDRDx71;
-                const double cDRDx73 =             -cDRDx15*cDRDx71;
-                const double cDRDx74 =             DN(1,0)*cDRDx4 - cDRDx43;
-                const double cDRDx75 =             DN(0,0)*cDRDx0*cDRDx21;
-                const double cDRDx76 =             DN(0,1)*cDRDx2*cDRDx21;
-                const double cDRDx77 =             -cDRDx22 + cDRDx23 + cDRDx74*cDRDx75 - cDRDx74*cDRDx76;
-                const double cDRDx78 =             DN(1,0)*DN(2,1);
-                const double cDRDx79 =             DN(1,1)*DN(2,0);
-                const double cDRDx80 =             cDRDx29*cDRDx74 - cDRDx30*cDRDx74 + cDRDx78 - cDRDx79;
-                const double cDRDx81 =             cDRDx13*cDRDx21*cDRDx74 + cDRDx77*p[0] + cDRDx80*p[2];
-                const double cDRDx82 =             -cDRDx11*cDRDx37 - cDRDx38*cDRDx74 + cDRDx44 - cDRDx45;
-                const double cDRDx83 =             cDRDx33*cDRDx74 + cDRDx35*cDRDx82;
-                const double cDRDx84 =             cDRDx45*cDRDx82 + cDRDx52*cDRDx74;
-                const double cDRDx85 =             cDRDx49*cDRDx82 + cDRDx54*cDRDx74;
-                const double cDRDx86 =             cDRDx83*p[0] + cDRDx84*p[1] + cDRDx85*p[2];
-                const double cDRDx87 =             DN(1,0) + cDRDx12*cDRDx63;
-                const double cDRDx88 =             cDRDx12*cDRDx36 + cDRDx23 - cDRDx62*cDRDx87;
-                const double cDRDx89 =             DN(1,0)*DN(1,1) + cDRDx12*cDRDx44 - cDRDx66*cDRDx87;
-                const double cDRDx90 =             cDRDx12*cDRDx48 - cDRDx68*cDRDx87 + cDRDx78;
-                const double cDRDx91 =             cDRDx88*p[0] + cDRDx89*p[1] + cDRDx90*p[2];
-                const double cDRDx92 =             -cDRDx12*cDRDx15*cDRDx61;
-                const double cDRDx93 =             DN(2,0)*cDRDx4 - cDRDx47;
-                const double cDRDx94 =             -cDRDx27 + cDRDx28 + cDRDx75*cDRDx93 - cDRDx76*cDRDx93;
-                const double cDRDx95 =             cDRDx24*cDRDx93 - cDRDx25*cDRDx93 - cDRDx78 + cDRDx79;
-                const double cDRDx96 =             cDRDx16*cDRDx21*cDRDx93 + cDRDx94*p[0] + cDRDx95*p[1];
-                const double cDRDx97 =             -cDRDx14*cDRDx37 - cDRDx38*cDRDx93 + cDRDx48 - cDRDx49;
-                const double cDRDx98 =             cDRDx33*cDRDx93 + cDRDx35*cDRDx97;
-                const double cDRDx99 =             cDRDx45*cDRDx97 + cDRDx52*cDRDx93;
-                const double cDRDx100 =             cDRDx49*cDRDx97 + cDRDx54*cDRDx93;
-                const double cDRDx101 =             cDRDx100*p[2] + cDRDx98*p[0] + cDRDx99*p[1];
-                const double cDRDx102 =             DN(2,0) + cDRDx15*cDRDx63;
-                const double cDRDx103 =             -cDRDx102*cDRDx62 + cDRDx15*cDRDx36 + cDRDx28;
-                const double cDRDx104 =             -cDRDx102*cDRDx66 + cDRDx15*cDRDx44 + cDRDx79;
-                const double cDRDx105 =             DN(2,0)*DN(2,1) - cDRDx102*cDRDx68 + cDRDx15*cDRDx48;
-                const double cDRDx106 =             cDRDx103*p[0] + cDRDx104*p[1] + cDRDx105*p[2];
-                DRDx(0,0)=rho*(cDRDx18*cDRDx3*cDRDx7 + cDRDx20*cDRDx32 - cDRDx40*cDRDx51 - cDRDx42*cDRDx56);
-                DRDx(0,1)=rho*(cDRDx26*cDRDx57 + cDRDx32*cDRDx58 - cDRDx46*cDRDx56 - cDRDx51*cDRDx53);
-                DRDx(0,2)=rho*(cDRDx31*cDRDx57 + cDRDx32*cDRDx59 - cDRDx50*cDRDx56 - cDRDx51*cDRDx55);
-                DRDx(1,0)=cDRDx60*(-pow(cDRDx3, 2)*cDRDx61 + cDRDx42*cDRDx70 + cDRDx51*cDRDx65);
-                DRDx(1,1)=cDRDx60*(cDRDx46*cDRDx70 + cDRDx51*cDRDx67 + cDRDx72);
-                DRDx(1,2)=cDRDx60*(cDRDx50*cDRDx70 + cDRDx51*cDRDx69 + cDRDx73);
-                DRDx(2,0)=rho*(cDRDx20*cDRDx81 - cDRDx42*cDRDx86 - cDRDx51*cDRDx83 + cDRDx57*cDRDx77);
-                DRDx(2,1)=rho*(cDRDx12*cDRDx18*cDRDx74 - cDRDx46*cDRDx86 - cDRDx51*cDRDx84 + cDRDx58*cDRDx81);
-                DRDx(2,2)=rho*(-cDRDx50*cDRDx86 - cDRDx51*cDRDx85 + cDRDx57*cDRDx80 + cDRDx59*cDRDx81);
-                DRDx(3,0)=cDRDx60*(cDRDx42*cDRDx91 + cDRDx51*cDRDx88 + cDRDx72);
-                DRDx(3,1)=cDRDx60*(-pow(cDRDx12, 2)*cDRDx61 + cDRDx46*cDRDx91 + cDRDx51*cDRDx89);
-                DRDx(3,2)=cDRDx60*(cDRDx50*cDRDx91 + cDRDx51*cDRDx90 + cDRDx92);
-                DRDx(4,0)=rho*(-cDRDx101*cDRDx42 + cDRDx20*cDRDx96 - cDRDx51*cDRDx98 + cDRDx57*cDRDx94);
-                DRDx(4,1)=rho*(-cDRDx101*cDRDx46 - cDRDx51*cDRDx99 + cDRDx57*cDRDx95 + cDRDx58*cDRDx96);
-                DRDx(4,2)=rho*(-cDRDx100*cDRDx51 - cDRDx101*cDRDx50 + cDRDx15*cDRDx18*cDRDx93 + cDRDx59*cDRDx96);
-                DRDx(5,0)=cDRDx60*(cDRDx103*cDRDx51 + cDRDx106*cDRDx42 + cDRDx73);
-                DRDx(5,1)=cDRDx60*(cDRDx104*cDRDx51 + cDRDx106*cDRDx46 + cDRDx92);
-                DRDx(5,2)=cDRDx60*(cDRDx105*cDRDx51 + cDRDx106*cDRDx50 - pow(cDRDx15, 2)*cDRDx61);
+                const double cDRDx0 =             DN(0,0)*x(0,0) + DN(1,0)*x(1,0) + DN(2,0)*x(2,0);
+                const double cDRDx1 =             DN(0,1)*x(0,1) + DN(1,1)*x(1,1) + DN(2,1)*x(2,1);
+                const double cDRDx2 =             DN(0,0)*x(0,1) + DN(1,0)*x(1,1) + DN(2,0)*x(2,1);
+                const double cDRDx3 =             DN(0,1)*x(0,0) + DN(1,1)*x(1,0) + DN(2,1)*x(2,0);
+                const double cDRDx4 =             1.0/(cDRDx0*cDRDx1 - cDRDx2*cDRDx3);
+                const double cDRDx5 =             0.5*cDRDx4*rho;
+                const double cDRDx6 =             DN(0,0)*DN(1,1) - DN(0,1)*DN(1,0);
+                const double cDRDx7 =             DN(0,0)*DN(2,1) - DN(0,1)*DN(2,0);
+                const double cDRDx8 =             cDRDx6*p[1] + cDRDx7*p[2];
+                const double cDRDx9 =             DN(0,0)*cDRDx3 - DN(0,1)*cDRDx0;
+                const double cDRDx10 =             DN(0,0)*cDRDx1 - DN(0,1)*cDRDx2;
+                const double cDRDx11 =             cDRDx10*cDRDx4;
+                const double cDRDx12 =             DN(1,0)*cDRDx3 - DN(1,1)*cDRDx0;
+                const double cDRDx13 =             DN(2,0)*cDRDx3 - DN(2,1)*cDRDx0;
+                const double cDRDx14 =             cDRDx12*p[1] + cDRDx13*p[2] + cDRDx9*p[0];
+                const double cDRDx15 =             DN(1,0)*cDRDx1 - DN(1,1)*cDRDx2;
+                const double cDRDx16 =             DN(2,0)*cDRDx1 - DN(2,1)*cDRDx2;
+                const double cDRDx17 =             cDRDx10*p[0] + cDRDx15*p[1] + cDRDx16*p[2];
+                const double cDRDx18 =             cDRDx10*cDRDx17 + cDRDx14*cDRDx9;
+                const double cDRDx19 =             cDRDx14*cDRDx6;
+                const double cDRDx20 =             cDRDx12*cDRDx14 + cDRDx15*cDRDx17;
+                const double cDRDx21 =             cDRDx14*cDRDx7;
+                const double cDRDx22 =             cDRDx13*cDRDx14 + cDRDx16*cDRDx17;
+                const double cDRDx23 =             cDRDx4*cDRDx9;
+                const double cDRDx24 =             cDRDx17*cDRDx6;
+                const double cDRDx25 =             cDRDx17*cDRDx7;
+                const double cDRDx26 =             DN(1,0)*DN(2,1) - DN(1,1)*DN(2,0);
+                const double cDRDx27 =             -cDRDx26*p[2] + cDRDx6*p[0];
+                const double cDRDx28 =             cDRDx15*cDRDx4;
+                const double cDRDx29 =             cDRDx14*cDRDx26;
+                const double cDRDx30 =             cDRDx12*cDRDx4;
+                const double cDRDx31 =             cDRDx17*cDRDx26;
+                const double cDRDx32 =             cDRDx26*p[1] + cDRDx7*p[0];
+                const double cDRDx33 =             cDRDx16*cDRDx4;
+                const double cDRDx34 =             cDRDx13*cDRDx4;            
 
+                DRDx(0,0)=cDRDx5*(cDRDx11*cDRDx18 + cDRDx8*cDRDx9);
+                DRDx(0,1)=cDRDx5*(cDRDx11*cDRDx20 + cDRDx12*cDRDx8 + cDRDx19);
+                DRDx(0,2)=cDRDx5*(cDRDx11*cDRDx22 + cDRDx13*cDRDx8 + cDRDx21);
+                DRDx(1,0)=cDRDx5*(cDRDx10*cDRDx8 - cDRDx18*cDRDx23);
+                DRDx(1,1)=cDRDx5*(cDRDx15*cDRDx8 - cDRDx20*cDRDx23 + cDRDx24);
+                DRDx(1,2)=cDRDx5*(cDRDx16*cDRDx8 - cDRDx22*cDRDx23 + cDRDx25);
+                DRDx(2,0)=cDRDx5*(cDRDx18*cDRDx28 - cDRDx19 - cDRDx27*cDRDx9);
+                DRDx(2,1)=cDRDx5*(-cDRDx12*cDRDx27 + cDRDx20*cDRDx28);
+                DRDx(2,2)=cDRDx5*(-cDRDx13*cDRDx27 + cDRDx22*cDRDx28 + cDRDx29);
+                DRDx(3,0)=-cDRDx5*(cDRDx10*cDRDx27 + cDRDx18*cDRDx30 + cDRDx24);
+                DRDx(3,1)=-cDRDx5*(cDRDx15*cDRDx27 + cDRDx20*cDRDx30);
+                DRDx(3,2)=-cDRDx5*(cDRDx16*cDRDx27 + cDRDx22*cDRDx30 - cDRDx31);
+                DRDx(4,0)=cDRDx5*(cDRDx18*cDRDx33 - cDRDx21 - cDRDx32*cDRDx9);
+                DRDx(4,1)=cDRDx5*(-cDRDx12*cDRDx32 + cDRDx20*cDRDx33 - cDRDx29);
+                DRDx(4,2)=cDRDx5*(-cDRDx13*cDRDx32 + cDRDx22*cDRDx33);
+                DRDx(5,0)=-cDRDx5*(cDRDx10*cDRDx32 + cDRDx18*cDRDx34 + cDRDx25);
+                DRDx(5,1)=-cDRDx5*(cDRDx15*cDRDx32 + cDRDx20*cDRDx34 + cDRDx31);
+                DRDx(5,2)=-cDRDx5*(cDRDx16*cDRDx32 + cDRDx22*cDRDx34);               
                 
-                
-                rOutput = trans(DRDx);
+                //rOutput = trans(DRDx);
+                rOutput = DRDx;
 
             }
             else

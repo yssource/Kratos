@@ -61,14 +61,43 @@ class TestCase(KratosUnittest.TestCase):
             for j in range(matrix1.Size2()):
                 self.assertAlmostEqual(matrix1[i,j], matrix2[i,j], prec)
 
-    def test_SHAPE_DERIVATIVE_MATRIX_1(self):
-        print('TESTING')
+    def test_ADJOINT_MATRIX_1(self):
         # unperturbed residual
         LHS = Matrix(3,3)
         RHS = self.zeroVector(3)
         Potential = Vector(3)
         self.potential_element.CalculateLocalSystem(LHS,RHS,self.model_part.ProcessInfo)
-        self.potential_element.GetValuesVector(Potential,0)#TODO: change GetFirstDerivativesVector to GetValuesVector
+        self.potential_element.GetFirstDerivativesVector(Potential,0)#TODO: change GetFirstDerivativesVector to GetValuesVector
+        res0 = LHS * Potential
+        #print('res0=',res0)
+        # finite difference approximation
+        h = 0.0000001
+        FDAdjointMatrix = Matrix(3,3)
+        row_index = 0
+        for node in self.model_part.Nodes:
+            # Phi1
+            potential = node.GetSolutionStepValue(POSITIVE_FACE_PRESSURE,0)
+            node.SetSolutionStepValue(POSITIVE_FACE_PRESSURE,0,potential+h)
+            self.potential_element.CalculateLocalSystem(LHS,RHS,self.model_part.ProcessInfo)
+            self.potential_element.GetFirstDerivativesVector(Potential,0)
+            #print('Potentials =', "{0:.16f}".format(Potential[0]))
+            node.SetSolutionStepValue(POSITIVE_FACE_PRESSURE,0,potential)
+            res = LHS * Potential
+            for j in range(3):
+                FDAdjointMatrix[row_index,j] = (res[j] - res0[j]) / h
+            row_index = row_index + 1
+
+        # analytical implementation
+        AdjointMatrix = self.potential_element.Calculate(ADJOINT_MATRIX_1,self.model_part.ProcessInfo)
+        self.assertMatrixAlmostEqual(FDAdjointMatrix, AdjointMatrix)
+
+    def test_SHAPE_DERIVATIVE_MATRIX_1(self):
+        # unperturbed residual
+        LHS = Matrix(3,3)
+        RHS = self.zeroVector(3)
+        Potential = Vector(3)
+        self.potential_element.CalculateLocalSystem(LHS,RHS,self.model_part.ProcessInfo)
+        self.potential_element.GetFirstDerivativesVector(Potential,0)#TODO: change GetFirstDerivativesVector to GetValuesVector
         res0 = LHS * Potential
         # finite difference approximation
         h = 0.00000001
@@ -96,11 +125,7 @@ class TestCase(KratosUnittest.TestCase):
             
         # analytical implementation       
         ShapeDerivativeMatrix = self.adjoint_element.Calculate(SHAPE_DERIVATIVE_MATRIX_1,self.model_part.ProcessInfo)
-        print(FDShapeDerivativeMatrix.Size1())
-        print(FDShapeDerivativeMatrix.Size2())
-        print(ShapeDerivativeMatrix.Size1())
-        print(ShapeDerivativeMatrix.Size2())
-        #self.assertMatrixAlmostEqual(FDShapeDerivativeMatrix, ShapeDerivativeMatrix)
+        self.assertMatrixAlmostEqual(FDShapeDerivativeMatrix, ShapeDerivativeMatrix)
 
 
 if __name__ == '__main__':

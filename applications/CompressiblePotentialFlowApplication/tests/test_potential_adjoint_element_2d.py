@@ -124,7 +124,6 @@ class TestCase(KratosUnittest.TestCase):
             
         # analytical implementation       
         ShapeDerivativeMatrix = self.adjoint_element.Calculate(SHAPE_DERIVATIVE_MATRIX_1,self.model_part.ProcessInfo)
-        print(ShapeDerivativeMatrix)
         self.assertMatrixAlmostEqual(FDShapeDerivativeMatrix, ShapeDerivativeMatrix)
 
 

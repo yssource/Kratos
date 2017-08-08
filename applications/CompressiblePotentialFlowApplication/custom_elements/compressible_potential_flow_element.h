@@ -597,8 +597,8 @@ public:
             Matrix lhs;
             Vector rhs;
             CalculateLocalSystem(lhs,rhs,const_cast<ProcessInfo&>(rCurrentProcessInfo)); //TODO: the const cast here is HORRIBLE
-            //rOutput = trans(lhs);
-            rOutput = lhs;
+            rOutput = trans(-lhs);
+            //rOutput = -lhs;
         }
         else if(rVariable == SHAPE_DERIVATIVE_MATRIX_1)
         {
@@ -609,7 +609,7 @@ public:
                     x(i,k) = GetGeometry()[i].Coordinates()[k];
             
             bounded_matrix<double, NumNodes, Dim > DN;   
-            bounded_matrix<double,NumNodes*Dim, NumNodes> DRDx;
+            bounded_matrix<double,NumNodes, NumNodes*Dim> DRDx;
             //std::cout << "DIM #" << Dim;
             array_1d<double,NumNodes> N;
             double vol;
@@ -645,44 +645,42 @@ public:
                 const double cDRDx16 =             DN(2,0)*cDRDx1 - DN(2,1)*cDRDx2;
                 const double cDRDx17 =             cDRDx10*p[0] + cDRDx15*p[1] + cDRDx16*p[2];
                 const double cDRDx18 =             cDRDx10*cDRDx17 + cDRDx14*cDRDx9;
-                const double cDRDx19 =             cDRDx14*cDRDx6;
-                const double cDRDx20 =             cDRDx12*cDRDx14 + cDRDx15*cDRDx17;
-                const double cDRDx21 =             cDRDx14*cDRDx7;
-                const double cDRDx22 =             cDRDx13*cDRDx14 + cDRDx16*cDRDx17;
-                const double cDRDx23 =             cDRDx4*cDRDx9;
+                const double cDRDx19 =             cDRDx4*cDRDx9;
+                const double cDRDx20 =             DN(1,0)*DN(2,1) - DN(1,1)*DN(2,0);
+                const double cDRDx21 =             -cDRDx20*p[2] + cDRDx6*p[0];
+                const double cDRDx22 =             cDRDx14*cDRDx6;
+                const double cDRDx23 =             cDRDx15*cDRDx4;
                 const double cDRDx24 =             cDRDx17*cDRDx6;
-                const double cDRDx25 =             cDRDx17*cDRDx7;
-                const double cDRDx26 =             DN(1,0)*DN(2,1) - DN(1,1)*DN(2,0);
-                const double cDRDx27 =             -cDRDx26*p[2] + cDRDx6*p[0];
-                const double cDRDx28 =             cDRDx15*cDRDx4;
-                const double cDRDx29 =             cDRDx14*cDRDx26;
-                const double cDRDx30 =             cDRDx12*cDRDx4;
-                const double cDRDx31 =             cDRDx17*cDRDx26;
-                const double cDRDx32 =             cDRDx26*p[1] + cDRDx7*p[0];
-                const double cDRDx33 =             cDRDx16*cDRDx4;
-                const double cDRDx34 =             cDRDx13*cDRDx4;            
-
+                const double cDRDx25 =             cDRDx12*cDRDx4;
+                const double cDRDx26 =             cDRDx20*p[1] + cDRDx7*p[0];
+                const double cDRDx27 =             cDRDx14*cDRDx7;
+                const double cDRDx28 =             cDRDx16*cDRDx4;
+                const double cDRDx29 =             cDRDx17*cDRDx7;
+                const double cDRDx30 =             cDRDx13*cDRDx4;
+                const double cDRDx31 =             cDRDx12*cDRDx14 + cDRDx15*cDRDx17;
+                const double cDRDx32 =             cDRDx14*cDRDx20;
+                const double cDRDx33 =             cDRDx17*cDRDx20;
+                const double cDRDx34 =             cDRDx13*cDRDx14 + cDRDx16*cDRDx17;
                 DRDx(0,0)=cDRDx5*(cDRDx11*cDRDx18 + cDRDx8*cDRDx9);
-                DRDx(0,1)=cDRDx5*(cDRDx11*cDRDx20 + cDRDx12*cDRDx8 + cDRDx19);
-                DRDx(0,2)=cDRDx5*(cDRDx11*cDRDx22 + cDRDx13*cDRDx8 + cDRDx21);
-                DRDx(1,0)=cDRDx5*(cDRDx10*cDRDx8 - cDRDx18*cDRDx23);
-                DRDx(1,1)=cDRDx5*(cDRDx15*cDRDx8 - cDRDx20*cDRDx23 + cDRDx24);
-                DRDx(1,2)=cDRDx5*(cDRDx16*cDRDx8 - cDRDx22*cDRDx23 + cDRDx25);
-                DRDx(2,0)=cDRDx5*(cDRDx18*cDRDx28 - cDRDx19 - cDRDx27*cDRDx9);
-                DRDx(2,1)=cDRDx5*(-cDRDx12*cDRDx27 + cDRDx20*cDRDx28);
-                DRDx(2,2)=cDRDx5*(-cDRDx13*cDRDx27 + cDRDx22*cDRDx28 + cDRDx29);
-                DRDx(3,0)=-cDRDx5*(cDRDx10*cDRDx27 + cDRDx18*cDRDx30 + cDRDx24);
-                DRDx(3,1)=-cDRDx5*(cDRDx15*cDRDx27 + cDRDx20*cDRDx30);
-                DRDx(3,2)=-cDRDx5*(cDRDx16*cDRDx27 + cDRDx22*cDRDx30 - cDRDx31);
-                DRDx(4,0)=cDRDx5*(cDRDx18*cDRDx33 - cDRDx21 - cDRDx32*cDRDx9);
-                DRDx(4,1)=cDRDx5*(-cDRDx12*cDRDx32 + cDRDx20*cDRDx33 - cDRDx29);
-                DRDx(4,2)=cDRDx5*(-cDRDx13*cDRDx32 + cDRDx22*cDRDx33);
-                DRDx(5,0)=-cDRDx5*(cDRDx10*cDRDx32 + cDRDx18*cDRDx34 + cDRDx25);
-                DRDx(5,1)=-cDRDx5*(cDRDx15*cDRDx32 + cDRDx20*cDRDx34 + cDRDx31);
-                DRDx(5,2)=-cDRDx5*(cDRDx16*cDRDx32 + cDRDx22*cDRDx34);               
+                DRDx(0,1)=cDRDx5*(cDRDx10*cDRDx8 - cDRDx18*cDRDx19);
+                DRDx(0,2)=cDRDx5*(cDRDx18*cDRDx23 - cDRDx21*cDRDx9 - cDRDx22);
+                DRDx(0,3)=-cDRDx5*(cDRDx10*cDRDx21 + cDRDx18*cDRDx25 + cDRDx24);
+                DRDx(0,4)=cDRDx5*(cDRDx18*cDRDx28 - cDRDx26*cDRDx9 - cDRDx27);
+                DRDx(0,5)=-cDRDx5*(cDRDx10*cDRDx26 + cDRDx18*cDRDx30 + cDRDx29);
+                DRDx(1,0)=cDRDx5*(cDRDx11*cDRDx31 + cDRDx12*cDRDx8 + cDRDx22);
+                DRDx(1,1)=cDRDx5*(cDRDx15*cDRDx8 - cDRDx19*cDRDx31 + cDRDx24);
+                DRDx(1,2)=cDRDx5*(-cDRDx12*cDRDx21 + cDRDx23*cDRDx31);
+                DRDx(1,3)=-cDRDx5*(cDRDx15*cDRDx21 + cDRDx25*cDRDx31);
+                DRDx(1,4)=cDRDx5*(-cDRDx12*cDRDx26 + cDRDx28*cDRDx31 - cDRDx32);
+                DRDx(1,5)=-cDRDx5*(cDRDx15*cDRDx26 + cDRDx30*cDRDx31 + cDRDx33);
+                DRDx(2,0)=cDRDx5*(cDRDx11*cDRDx34 + cDRDx13*cDRDx8 + cDRDx27);
+                DRDx(2,1)=cDRDx5*(cDRDx16*cDRDx8 - cDRDx19*cDRDx34 + cDRDx29);
+                DRDx(2,2)=cDRDx5*(-cDRDx13*cDRDx21 + cDRDx23*cDRDx34 + cDRDx32);
+                DRDx(2,3)=-cDRDx5*(cDRDx16*cDRDx21 + cDRDx25*cDRDx34 - cDRDx33);
+                DRDx(2,4)=cDRDx5*(-cDRDx13*cDRDx26 + cDRDx28*cDRDx34);
+                DRDx(2,5)=-cDRDx5*(cDRDx16*cDRDx26 + cDRDx30*cDRDx34);              
                 
-                //rOutput = trans(DRDx);
-                rOutput = DRDx;
+                rOutput = trans(DRDx);
 
             }
             else

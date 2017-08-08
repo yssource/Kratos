@@ -69,7 +69,6 @@ class TestCase(KratosUnittest.TestCase):
         self.potential_element.CalculateLocalSystem(LHS,RHS,self.model_part.ProcessInfo)
         self.potential_element.GetFirstDerivativesVector(Potential,0)#TODO: change GetFirstDerivativesVector to GetValuesVector
         res0 = LHS * Potential
-        #print('res0=',res0)
         # finite difference approximation
         h = 0.0000001
         FDAdjointMatrix = Matrix(3,3)
@@ -84,7 +83,7 @@ class TestCase(KratosUnittest.TestCase):
             node.SetSolutionStepValue(POSITIVE_FACE_PRESSURE,0,potential)
             res = LHS * Potential
             for j in range(3):
-                FDAdjointMatrix[row_index,j] = (res[j] - res0[j]) / h
+                FDAdjointMatrix[row_index,j] = -(res[j] - res0[j]) / h
             row_index = row_index + 1
 
         # analytical implementation

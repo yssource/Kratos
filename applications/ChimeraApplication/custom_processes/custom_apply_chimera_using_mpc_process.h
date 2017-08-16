@@ -206,9 +206,9 @@ class CustomApplyChimeraUsingMpcProcess
 
 			{
 
-				double distance;
-				const int n_patch_nodes = mrPatchModelPart.Nodes().size();
-				bool IsCoupled = false;
+				//double distance;
+				//const int n_patch_nodes = mrPatchModelPart.Nodes().size();
+				//bool IsCoupled = false;
 				//Fringe node coupled
 				/*				for (int i = 0; i < n_patch_nodes; i++)
 
@@ -495,7 +495,7 @@ class CustomApplyChimeraUsingMpcProcess
 
 			if (type == "NearestElement")
 			{
-				ApplyMpcConstraint(mrPatchBoundaryModelPart, pBinLocatorForBackground, 0);
+				ApplyMpcConstraint(mrPatchBoundaryModelPart, pBinLocatorForBackground, 0);//0 for pressure coupling
 				std::cout << "Patch boundary coupled with background" << std::endl;
 				ApplyMpcConstraint(*pHoleBoundaryModelPart, pBinLocatorForPatch, 1);
 				std::cout << "HoleBoundary  coupled with patch" << std::endl;
@@ -503,7 +503,7 @@ class CustomApplyChimeraUsingMpcProcess
 
 			else if (type == "Conservative")
 			{
-				ApplyMpcConstraintConservative(mrPatchBoundaryModelPart, pBinLocatorForBackground, 0);
+				ApplyMpcConstraintConservative(mrPatchBoundaryModelPart, pBinLocatorForBackground, 0);//0 for pressure coupling
 				std::cout << "Patch boundary coupled with background using conservative approach" << std::endl;
 				ApplyMpcConstraintConservative(*pHoleBoundaryModelPart, pBinLocatorForPatch, 1);
 				std::cout << "HoleBoundary  coupled with patch using conservative approach" << std::endl;

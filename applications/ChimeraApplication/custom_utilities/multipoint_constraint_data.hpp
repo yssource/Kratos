@@ -218,6 +218,24 @@ class MpcData
         }
     }
 
+    void AddNodalNormalToSlaveDof(DofType &SlaveDof, double nodalNormalComponent, int PartitionId = 0)
+    {
+
+        unsigned int slaveVariableKey = SlaveDof.GetVariable().Key();
+
+        mSlaveDofToNodalNormalMap.insert({std::make_pair(SlaveDof.Id(), slaveVariableKey),nodalNormalComponent}) ;
+
+    }
+
+        void AddNodalNormalToSlaveDof(unsigned int SlaveDofEquationId, double nodalNormalComponent, int PartitionId = 0)
+    {
+
+       mSlaveEquationIdToNodalNormalMap.insert({SlaveDofEquationId,nodalNormalComponent});
+
+    }
+
+
+
     /**
 		Get the Total number of MasterDOFs for a given slave dof
 		@return Total number of MasterDOFs for a given slave dof
@@ -310,6 +328,8 @@ class MpcData
                        std::unordered_map<unsigned int, double>>
         mEquationIdToWeightsMap;
 
+    std::unordered_map<SlavePairType, double,pair_hash> mSlaveDofToNodalNormalMap;    
+    std::unordered_map<unsigned int, double> mSlaveEquationIdToNodalNormalMap;
 
     bool mActive;
     std::string mName;

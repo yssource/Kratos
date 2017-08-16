@@ -198,6 +198,43 @@ class CustomCalculateSignedDistanceProcess
 		}
 	}
 
+	void CalculateSignedDistanceOnModelPart(ModelPart &fromPatchModelPart,ModelPart &patchBoundaryModelPart)
+	{
+
+		this->pDistanceCalculator = typename ParallelDistanceCalculator<TDim>::Pointer(new ParallelDistanceCalculator<TDim>());
+
+		const int n_patch_boundary_nodes = patchBoundaryModelPart.Nodes().size();
+		//Set the boundary node distance to 0 and is_visited to 1.0
+		for (int i = 0; i < n_patch_boundary_nodes; i++)
+		{
+
+			ModelPart::NodesContainerType::iterator it = patchBoundaryModelPart.NodesBegin() + i;
+			double &is_visited = it->GetValue(IS_VISITED);
+			double &distance = it->FastGetSolutionStepValue(DISTANCE);
+
+			//Set the IS_VISITED to 1.0 and DISTANCE to 0.0
+			is_visited = 1.0;
+			distance = 0.0;
+		}
+
+		unsigned int max_level = 100;
+		double max_distance = 1000;
+
+		this->pDistanceCalculator->CalculateDistancesLagrangianSurface(fromPatchModelPart, DISTANCE, NODAL_AREA, max_level, max_distance);
+		
+		//For signed distance
+		unsigned int n_patch_nodes = fromPatchModelPart.Nodes().size();
+		for (int i = 0; i < n_patch_nodes; i++)
+		{
+
+			ModelPart::NodesContainerType::iterator it = fromPatchModelPart.NodesBegin() + i;
+
+			double &distance = it->FastGetSolutionStepValue(DISTANCE);
+			distance = -distance;
+		}
+		
+	}
+
 	void CalculateSignedDistance(ModelPart &toBackgroundModelPart, ModelPart &patchBoundaryModelPart)
 	{
 

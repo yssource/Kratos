@@ -215,7 +215,11 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
             std::cout << "RHS vector = " << b << std::endl;
         }
 
-        ReconstructSlaveDofForIterationStep(r_model_part, A, Dx, b); // Reconstructing the slave dofs from master solutions
+        ProcessInfo &CurrentProcessInfo = r_model_part.GetProcessInfo();
+        MpcDataPointerVectorType mpcDataVector = CurrentProcessInfo.GetValue(MPC_DATA_CONTAINER);
+        //std::cout<<"Is Weak "<<((*mpcDataVector).front())->IsWeak()<<std::endl;
+        if(!(((*mpcDataVector).front())->IsWeak()))
+        ReconstructSlaveDofForIterationStep(r_model_part, A, Dx, b); // Reconstructing the slave dofs from master solutions for only strong coupling
 
         KRATOS_CATCH("")
     }
@@ -658,13 +662,16 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                                         LHS_Contribution(localInternEqId, localMasterEqId) += LHS_Contribution(localInternEqId, localSlaveEqId) * masterI.second;
                                         LHS_Contribution(localMasterEqId, localInternEqId) += LHS_Contribution(localSlaveEqId, localInternEqId) * masterI.second;
                                     } // Loop over all the local equation ids
+                                }
 
-                                    // For K(m,s) and K(s,m)
-                                    /*for (auto localSlaveEqIdOther : localSlaveEquationIds)
-                                { // Loop over all the slaves for this node
-                                    LHS_Contribution(localSlaveEqIdOther, localMasterEqId) += masterI.second * LHS_Contribution(localSlaveEqIdOther, localSlaveEqId) * -1;
-                                    //LHS_Contribution(localMasterEqId, localSlaveEqIdOther) += masterI.second * LHS_Contribution(localSlaveEqId, localSlaveEqIdOther);
-                                }*/
+                                //For K(s,m)
+                                if (mpcData->IsWeak())
+                                {
+                                    for (auto localSlaveEqIdOther : localSlaveEquationIds)
+                                    { // Loop over all the slaves for this node
+                                        LHS_Contribution(localSlaveEqIdOther, localMasterEqId) += -masterI.second * LHS_Contribution(localSlaveEqIdOther, localSlaveEqId);
+                                        
+                                    }
                                 }
 
                                 EquationId.push_back(masterI.first);
@@ -702,24 +709,32 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 
                     } // If the node has a slave DOF
                 }
-                // Loop over the nodes
-                // For K(s,s)
-                /*for (auto localSlaveEqId : localSlaveEquationIds)
-                { // Loop over all the slaves for this node
-                    for (auto localSlaveEqIdOther : localSlaveEquationIds)
-                    { // Loop over all the local equation ids
-                        LHS_Contribution(localSlaveEqId, localSlaveEqIdOther) = -1 * LHS_Contribution(localSlaveEqId, localSlaveEqIdOther);
-                    }
-                } */ // Loop over all the slaves for this node
+
                 // For K(u,s) and K(s,u)
-                for (auto localSlaveEqId : localSlaveEquationIds)
-                { // Loop over all the slaves for this node
-                    for (auto localInternEqId : localInternEquationIds)
-                    { // Loop over all the local equation ids
-                        LHS_Contribution(localSlaveEqId, localInternEqId) = 0.0;
-                        LHS_Contribution(localInternEqId, localSlaveEqId) = 0.0;
-                    }
-                } // Loop over all the slaves for this node
+                if (mpcData->IsWeak())
+                {
+
+                    for (auto localSlaveEqId : localSlaveEquationIds)
+                    { // Loop over all the slaves for this node
+                        for (auto localInternEqId : localInternEquationIds)
+                        { // Loop over all the local equation ids
+                            LHS_Contribution(localSlaveEqId, localInternEqId) = 0.0;
+                        }
+                    } // Loop over all the slaves for this node
+                }
+
+                else
+                {
+
+                    for (auto localSlaveEqId : localSlaveEquationIds)
+                    { // Loop over all the slaves for this node
+                        for (auto localInternEqId : localInternEquationIds)
+                        { // Loop over all the local equation ids
+                            LHS_Contribution(localSlaveEqId, localInternEqId) = 0.0;
+                            LHS_Contribution(localInternEqId, localSlaveEqId) = 0.0;
+                        }
+                    } // Loop over all the slaves for this node
+                }
             }
         }
         KRATOS_CATCH("Applying Multipoint constraints failed ..");

@@ -70,12 +70,16 @@ void AddCustomProcessesToPython()
 	class_<CustomApplyChimeraUsingMpcProcess<2>,bases<Process> >("CustomApplyChimeraUsingMpcProcess2d", init<ModelPart&,ModelPart&,ModelPart&,double>())
 			.def("ApplyMpcConstraint", &CustomApplyChimeraUsingMpcProcess<2>::ApplyMpcConstraint)
 			.def("ApplyChimeraUsingMpc2d", &CustomApplyChimeraUsingMpcProcess<2>::ApplyChimeraUsingMpc)
-			.def("SetOverlapDistance",&CustomApplyChimeraUsingMpcProcess<2>::SetOverlapDistance);
+			.def("SetOverlapDistance",&CustomApplyChimeraUsingMpcProcess<2>::SetOverlapDistance)
+			.def("CalculateNodalAreaAndNodalMass",&CustomApplyChimeraUsingMpcProcess<2>::CalculateNodalAreaAndNodalMass);
+			
 
 	class_<CustomApplyChimeraUsingMpcProcess<3>,bases<Process> >("CustomApplyChimeraUsingMpcProcess3d", init<ModelPart&,ModelPart&,ModelPart&,double>())
 			.def("ApplyMpcConstraint", &CustomApplyChimeraUsingMpcProcess<3>::ApplyMpcConstraint)		
 			.def("ApplyChimeraUsingMpc3d", &CustomApplyChimeraUsingMpcProcess<3>::ApplyChimeraUsingMpc)
-			.def("SetOverlapDistance",&CustomApplyChimeraUsingMpcProcess<2>::SetOverlapDistance);
+			.def("SetOverlapDistance",&CustomApplyChimeraUsingMpcProcess<3>::SetOverlapDistance)
+			.def("CalculateNodalAreaAndNodalMass",&CustomApplyChimeraUsingMpcProcess<3>::CalculateNodalAreaAndNodalMass);
+			
 
 	/*
 	 * Calculate_signed_distance_2d

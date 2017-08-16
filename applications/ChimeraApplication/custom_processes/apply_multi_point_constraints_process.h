@@ -237,6 +237,11 @@ class ApplyMultipointConstraintsProcess : public Process
         pMpc->AddConstraint(slaveDOF, masterDOF, masterWeight, PartitionId);
     }
 
+       void AddNodalNormalSlaveRelationWithDofs(DofType slaveDOF, double nodalNormalComponent, int PartitionId = 0)
+    {
+        pMpc->AddNodalNormalToSlaveDof(slaveDOF,nodalNormalComponent , PartitionId);
+    }
+
     /**
 		Activates the constraint set or deactivates
 		@arg isActive true/false

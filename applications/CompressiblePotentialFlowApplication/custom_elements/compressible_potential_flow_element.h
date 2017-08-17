@@ -585,6 +585,31 @@ public:
         }
     }
 
+        /**
+     * @brief Calculates the adjoint matrix for velocity and pressure.
+     *
+     * This function returns the gradient of the elemental residual w.r.t.
+     * velocity and pressure transposed:
+     *
+     * \f[
+     *    \partial_{\mathbf{w}^n}\mathbf{f}(\mathbf{w}^n)^T
+     *  - \partial_{\mathbf{w}^n}(\mathbf{M}^n \dot{\mathbf{w}}^n)^T
+     * \f]
+     *
+     * where \f$\mathbf{w}^n\f$ is the vector of nodal velocities and pressures
+     * stored at the current step. For steady problems, the ACCELERATION
+     * (\f$\dot{\mathbf{w}}^n\f$) must be set to zero on the nodes. For
+     * the Bossak method, \f$\dot{\mathbf{w}}^{n-\alpha}\f$ must be stored in
+     * ACCELERATION.
+     */
+    void CalculateFirstDerivativesLHS(MatrixType& rLeftHandSideMatrix,
+					      ProcessInfo& rCurrentProcessInfo) override
+    {
+        Vector rhs;
+        this->CalculateLocalSystem(rLeftHandSideMatrix,rhs,rCurrentProcessInfo);
+        rLeftHandSideMatrix = trans(-rLeftHandSideMatrix); // transpose
+    }
+
     
     virtual void Calculate(const Variable<Matrix >& rVariable,
             Matrix& rOutput,
@@ -592,15 +617,15 @@ public:
     {
         const unsigned int dim = GetGeometry().WorkingSpaceDimension();
         const unsigned int nnodes = GetGeometry().size();
-        if(rVariable == ADJOINT_MATRIX_1)
-        {
-            Matrix lhs;
-            Vector rhs;
-            CalculateLocalSystem(lhs,rhs,const_cast<ProcessInfo&>(rCurrentProcessInfo)); //TODO: the const cast here is HORRIBLE
-            rOutput = trans(-lhs);
-            //rOutput = -lhs;
-        }
-        else if(rVariable == SHAPE_DERIVATIVE_MATRIX_1)
+        // if(rVariable == ADJOINT_MATRIX_1)
+        // {
+        //     Matrix lhs;
+        //     Vector rhs;
+        //     CalculateLocalSystem(lhs,rhs,const_cast<ProcessInfo&>(rCurrentProcessInfo)); //TODO: the const cast here is HORRIBLE
+        //     rOutput = trans(-lhs);
+        //     //rOutput = -lhs;
+        // }
+        // else if(rVariable == SHAPE_DERIVATIVE_MATRIX_1)
         {
             //matrix of coordinates
             bounded_matrix<double,Dim, NumNodes> x(NumNodes,dim);

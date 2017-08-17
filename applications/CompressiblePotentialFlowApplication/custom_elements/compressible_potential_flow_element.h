@@ -699,10 +699,8 @@ public:
             }
             else
             {
-                KRATOS_ERROR << "sorry, SHAPE_DERIVATIVE_MATRIX not yet implemented in 3D";
-            }
-
-            
+                KRATOS_ERROR << "sorry, SHAPE_SENSITIVITY not yet implemented in 3D";
+            }            
         }
         else
         {
@@ -711,115 +709,6 @@ public:
 
         KRATOS_CATCH("")
     }
-
-
-
-
-    
-    // virtual void Calculate(const Variable<Matrix >& rVariable,
-    //         Matrix& rOutput,
-    //         const ProcessInfo& rCurrentProcessInfo)
-    // {
-    //     const unsigned int dim = GetGeometry().WorkingSpaceDimension();
-    //     const unsigned int nnodes = GetGeometry().size();
-    //     //  if(rVariable == ADJOINT_MATRIX_1)
-    //     // {
-    //     //     Matrix lhs;
-    //     //     Vector rhs;
-    //     //     CalculateLocalSystem(lhs,rhs,const_cast<ProcessInfo&>(rCurrentProcessInfo)); //TODO: the const cast here is HORRIBLE
-    //     //     rOutput = trans(-lhs);
-    //     //     //rOutput = -lhs;
-    //     // }
-    //     else if(rVariable == SHAPE_DERIVATIVE_MATRIX_1) 
-    //     {
-    //         //matrix of coordinates
-    //         bounded_matrix<double,Dim, NumNodes> x(NumNodes,dim);
-    //         for(unsigned int i=0; i<NumNodes; ++i)
-    //             for(unsigned int k=0; k<dim; k++)
-    //                 x(i,k) = GetGeometry()[i].Coordinates()[k];
-            
-    //         bounded_matrix<double, NumNodes, Dim > DN;   
-    //         bounded_matrix<double,NumNodes, NumNodes*Dim> DRDx;
-    //         //std::cout << "DIM #" << Dim;
-    //         array_1d<double,NumNodes> N;
-    //         double vol;
-    //         GeometryUtils::CalculateGeometryData(GetGeometry(), DN, N, vol);
-            
-
-
-    //         //gather nodal data
-    //         array_1d<double,NumNodes> p;
-    //         for(unsigned int i=0; i<nnodes; i++)
-    //             p[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
-
-    //         const double rho  = 1; //clearly this should be changed...
-            
-    //         if(dim == 2)
-    //         {
-    //             const double cDRDx0 =             DN(0,0)*x(0,0) + DN(1,0)*x(1,0) + DN(2,0)*x(2,0);
-    //             const double cDRDx1 =             DN(0,1)*x(0,1) + DN(1,1)*x(1,1) + DN(2,1)*x(2,1);
-    //             const double cDRDx2 =             DN(0,0)*x(0,1) + DN(1,0)*x(1,1) + DN(2,0)*x(2,1);
-    //             const double cDRDx3 =             DN(0,1)*x(0,0) + DN(1,1)*x(1,0) + DN(2,1)*x(2,0);
-    //             const double cDRDx4 =             1.0/(cDRDx0*cDRDx1 - cDRDx2*cDRDx3);
-    //             const double cDRDx5 =             0.5*cDRDx4*rho;
-    //             const double cDRDx6 =             DN(0,0)*DN(1,1) - DN(0,1)*DN(1,0);
-    //             const double cDRDx7 =             DN(0,0)*DN(2,1) - DN(0,1)*DN(2,0);
-    //             const double cDRDx8 =             cDRDx6*p[1] + cDRDx7*p[2];
-    //             const double cDRDx9 =             DN(0,0)*cDRDx3 - DN(0,1)*cDRDx0;
-    //             const double cDRDx10 =             DN(0,0)*cDRDx1 - DN(0,1)*cDRDx2;
-    //             const double cDRDx11 =             cDRDx10*cDRDx4;
-    //             const double cDRDx12 =             DN(1,0)*cDRDx3 - DN(1,1)*cDRDx0;
-    //             const double cDRDx13 =             DN(2,0)*cDRDx3 - DN(2,1)*cDRDx0;
-    //             const double cDRDx14 =             cDRDx12*p[1] + cDRDx13*p[2] + cDRDx9*p[0];
-    //             const double cDRDx15 =             DN(1,0)*cDRDx1 - DN(1,1)*cDRDx2;
-    //             const double cDRDx16 =             DN(2,0)*cDRDx1 - DN(2,1)*cDRDx2;
-    //             const double cDRDx17 =             cDRDx10*p[0] + cDRDx15*p[1] + cDRDx16*p[2];
-    //             const double cDRDx18 =             cDRDx10*cDRDx17 + cDRDx14*cDRDx9;
-    //             const double cDRDx19 =             cDRDx4*cDRDx9;
-    //             const double cDRDx20 =             DN(1,0)*DN(2,1) - DN(1,1)*DN(2,0);
-    //             const double cDRDx21 =             -cDRDx20*p[2] + cDRDx6*p[0];
-    //             const double cDRDx22 =             cDRDx14*cDRDx6;
-    //             const double cDRDx23 =             cDRDx15*cDRDx4;
-    //             const double cDRDx24 =             cDRDx17*cDRDx6;
-    //             const double cDRDx25 =             cDRDx12*cDRDx4;
-    //             const double cDRDx26 =             cDRDx20*p[1] + cDRDx7*p[0];
-    //             const double cDRDx27 =             cDRDx14*cDRDx7;
-    //             const double cDRDx28 =             cDRDx16*cDRDx4;
-    //             const double cDRDx29 =             cDRDx17*cDRDx7;
-    //             const double cDRDx30 =             cDRDx13*cDRDx4;
-    //             const double cDRDx31 =             cDRDx12*cDRDx14 + cDRDx15*cDRDx17;
-    //             const double cDRDx32 =             cDRDx14*cDRDx20;
-    //             const double cDRDx33 =             cDRDx17*cDRDx20;
-    //             const double cDRDx34 =             cDRDx13*cDRDx14 + cDRDx16*cDRDx17;
-    //             DRDx(0,0)=cDRDx5*(cDRDx11*cDRDx18 + cDRDx8*cDRDx9);
-    //             DRDx(0,1)=cDRDx5*(cDRDx10*cDRDx8 - cDRDx18*cDRDx19);
-    //             DRDx(0,2)=cDRDx5*(cDRDx18*cDRDx23 - cDRDx21*cDRDx9 - cDRDx22);
-    //             DRDx(0,3)=-cDRDx5*(cDRDx10*cDRDx21 + cDRDx18*cDRDx25 + cDRDx24);
-    //             DRDx(0,4)=cDRDx5*(cDRDx18*cDRDx28 - cDRDx26*cDRDx9 - cDRDx27);
-    //             DRDx(0,5)=-cDRDx5*(cDRDx10*cDRDx26 + cDRDx18*cDRDx30 + cDRDx29);
-    //             DRDx(1,0)=cDRDx5*(cDRDx11*cDRDx31 + cDRDx12*cDRDx8 + cDRDx22);
-    //             DRDx(1,1)=cDRDx5*(cDRDx15*cDRDx8 - cDRDx19*cDRDx31 + cDRDx24);
-    //             DRDx(1,2)=cDRDx5*(-cDRDx12*cDRDx21 + cDRDx23*cDRDx31);
-    //             DRDx(1,3)=-cDRDx5*(cDRDx15*cDRDx21 + cDRDx25*cDRDx31);
-    //             DRDx(1,4)=cDRDx5*(-cDRDx12*cDRDx26 + cDRDx28*cDRDx31 - cDRDx32);
-    //             DRDx(1,5)=-cDRDx5*(cDRDx15*cDRDx26 + cDRDx30*cDRDx31 + cDRDx33);
-    //             DRDx(2,0)=cDRDx5*(cDRDx11*cDRDx34 + cDRDx13*cDRDx8 + cDRDx27);
-    //             DRDx(2,1)=cDRDx5*(cDRDx16*cDRDx8 - cDRDx19*cDRDx34 + cDRDx29);
-    //             DRDx(2,2)=cDRDx5*(-cDRDx13*cDRDx21 + cDRDx23*cDRDx34 + cDRDx32);
-    //             DRDx(2,3)=-cDRDx5*(cDRDx16*cDRDx21 + cDRDx25*cDRDx34 - cDRDx33);
-    //             DRDx(2,4)=cDRDx5*(-cDRDx13*cDRDx26 + cDRDx28*cDRDx34);
-    //             DRDx(2,5)=-cDRDx5*(cDRDx16*cDRDx26 + cDRDx30*cDRDx34);              
-                
-    //             rOutput = trans(DRDx);
-
-    //         }
-    //         else
-    //         {
-    //             KRATOS_ERROR << "sorry, SHAPE_DERIVATIVE_MATRIX not yet implemented in 3D";
-    //         }
-    //     }
-        
-    // }
 
     ///@}
     ///@name Access

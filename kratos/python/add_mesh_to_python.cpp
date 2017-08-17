@@ -392,6 +392,7 @@ void ElementGetValuesVector2(Element& dummy,
         int step)
 {
     dummy.GetValuesVector(rOutput,step);
+}
 
 template<class TDataType>
 void ElementCalculateSensitivityMatrix(Element& dummy,
@@ -427,6 +428,13 @@ void ElementGetSecondDerivativesVector2(Element& dummy,
         int step)
 {
     dummy.GetSecondDerivativesVector(rOutput,step);
+}
+
+void ElementCalculateLeftHandSide(Element& dummy,
+                                  Matrix& rLeftHandSideMatrix,
+                                  ProcessInfo& rCurrentProcessInfo)
+{
+    dummy.CalculateLeftHandSide(rLeftHandSideMatrix,rCurrentProcessInfo);
 }
 
 
@@ -534,6 +542,7 @@ void  AddMeshToPython()
     .def("GetSecondDerivativesVector", &ElementGetSecondDerivativesVector2)
     .def("CalculateSensitivityMatrix", &ElementCalculateSensitivityMatrix<double>)
     .def("CalculateSensitivityMatrix", &ElementCalculateSensitivityMatrix<array_1d<double,3> >)
+    .def("CalculateLeftHandSide", &ElementCalculateLeftHandSide)
     //.def("__setitem__", SetValueHelperFunction< Element, Variable< VectorComponentAdaptor< array_1d<double, 3>  > > >)
     //.def("__getitem__", GetValueHelperFunction< Element, Variable< VectorComponentAdaptor< array_1d<double, 3>  > > >)
     //.def("SetValue", SetValueHelperFunction< Element, Variable< VectorComponentAdaptor< array_1d<double, 3>  > > >)

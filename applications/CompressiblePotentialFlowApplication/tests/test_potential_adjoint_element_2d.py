@@ -11,12 +11,6 @@ class TestCase(KratosUnittest.TestCase):
         # create test model part
         self.model_part = ModelPart("test")
         self.model_part.AddNodalSolutionStepVariable(POSITIVE_FACE_PRESSURE)
-        self.model_part.AddNodalSolutionStepVariable(ACCELERATION)
-        self.model_part.AddNodalSolutionStepVariable(MESH_VELOCITY)
-        self.model_part.AddNodalSolutionStepVariable(PRESSURE)
-        self.model_part.AddNodalSolutionStepVariable(VISCOSITY)
-        self.model_part.AddNodalSolutionStepVariable(DENSITY)
-        self.model_part.AddNodalSolutionStepVariable(BODY_FORCE)
         self.model_part.CreateNewNode(1, 0.0, 0.0, 0.0)
         self.model_part.CreateNewNode(2, 1.0, 0.0, 0.0)
         self.model_part.CreateNewNode(3, 1.0, 1.0, 0.0)
@@ -25,8 +19,6 @@ class TestCase(KratosUnittest.TestCase):
         self.model_part.CreateNewElement("CompressiblePotentialFlowElement2D3N", 2, [1, 2, 3], prop)
         #self.model_part.SetBufferSize(2)
         self.model_part.ProcessInfo[OSS_SWITCH] = 0
-        #self.model_part.ProcessInfo[DELTA_TIME] = self.delta_time
-        #self.model_part.ProcessInfo[DYNAMIC_TAU] = 1.0
 
         self.potential_element = self.model_part.GetElement(1)
         self.adjoint_element = self.model_part.GetElement(2)
@@ -61,7 +53,7 @@ class TestCase(KratosUnittest.TestCase):
             for j in range(matrix1.Size2()):
                 self.assertAlmostEqual(matrix1[i,j], matrix2[i,j], prec)
 
-    def test_ADJOINT_MATRIX_1(self):
+    def test_CalculateLeftHandSide(self):
         # unperturbed residual
         LHS = Matrix(3,3)
         RHS = self.zeroVector(3)
@@ -87,10 +79,11 @@ class TestCase(KratosUnittest.TestCase):
             row_index = row_index + 1
 
         # analytical implementation
-        AdjointMatrix = self.potential_element.Calculate(ADJOINT_MATRIX_1,self.model_part.ProcessInfo)
+        AdjointMatrix = Matrix(3,3)
+        self.potential_element.CalculateLeftHandSide(AdjointMatrix,self.model_part.ProcessInfo)
         self.assertMatrixAlmostEqual(FDAdjointMatrix, AdjointMatrix)
 
-    def test_SHAPE_DERIVATIVE_MATRIX_1(self):
+    def test_CalculateSensitivityMatrix(self):
         # unperturbed residual
         LHS = Matrix(3,3)
         RHS = self.zeroVector(3)
@@ -122,8 +115,9 @@ class TestCase(KratosUnittest.TestCase):
                 FDShapeDerivativeMatrix[row_index,j] = -(res[j] - res0[j]) / h
             row_index = row_index + 1
             
-        # analytical implementation       
-        ShapeDerivativeMatrix = self.adjoint_element.Calculate(SHAPE_DERIVATIVE_MATRIX_1,self.model_part.ProcessInfo)
+        # analytical implementation
+        ShapeDerivativeMatrix = Matrix(6,3)
+        self.adjoint_element.CalculateSensitivityMatrix(SHAPE_SENSITIVITY,ShapeDerivativeMatrix,self.model_part.ProcessInfo)
         self.assertMatrixAlmostEqual(FDShapeDerivativeMatrix, ShapeDerivativeMatrix)
 
 

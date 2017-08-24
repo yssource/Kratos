@@ -201,7 +201,7 @@ public:
      * @param[out]    rResponseGradient the gradient of the response function.
      * @param[in]     rProcessInfo      the current process info.
      */
-    virtual void CalculateGradient(const Element& rAdjointElem,
+    virtual void CalculateGradient(Element& rAdjointElem,
                                    const Matrix& rAdjointMatrix,
                                    Vector& rResponseGradient,
                                    ProcessInfo& rProcessInfo)
@@ -341,6 +341,28 @@ public:
 
     ///@}
 
+    /// Calculate the local gradient of response function w.r.t. the sensitivity variable.
+    /**
+     * @param[in]     rAdjointElem       the adjoint element.
+     * @param[in]     rVariable          the sensitivity variable.
+     * @param[in]     rDerivativesMatrix the transposed gradient of the element's
+     *                                   residual w.r.t. the sensitivity variable.
+     * @param[out]    rResponseGradient  the gradient of the response function.
+     * @param[in,out] rProcessInfo       the current process info.
+     */
+     virtual void CalculateSensitivityGradient(Element& rAdjointElem,
+        const Variable<array_1d<double,3>>& rVariable,
+        const Matrix& rDerivativesMatrix,
+        Vector& rResponseGradient,
+        ProcessInfo& rProcessInfo)
+    {
+        KRATOS_TRY;
+        
+        KRATOS_ERROR << "This should be implemented in the derived class." << std::endl;
+        
+        KRATOS_CATCH("");
+    }
+
 protected:
     ///@name Protected member Variables
     ///@{
@@ -430,9 +452,9 @@ protected:
 
                 // This is the sensitivity contribution coming from the response
                 // function with primal variables treated as constant.
-                this->CalculateSensitivityGradient(
-                    *it, rSensitivityVariable, sensitivity_matrix[k],
-                    response_gradient[k], r_process_info);
+                // this->CalculateSensitivityGradient(
+                //     *it, rSensitivityVariable, sensitivity_matrix[k],
+                //     response_gradient[k], r_process_info);
 
                 // Get the element adjoint vector.
                 it->GetValuesVector(adjoint_vector[k]);
@@ -513,18 +535,18 @@ protected:
      * @param[out]    rResponseGradient  the gradient of the response function.
      * @param[in,out] rProcessInfo       the current process info.
      */
-    virtual void CalculateSensitivityGradient(const Element& rAdjointElem,
-                                              const Variable<double>& rVariable,
-                                              const Matrix& rDerivativesMatrix,
-                                              Vector& rResponseGradient,
-                                              ProcessInfo& rProcessInfo)
-    {
-        KRATOS_TRY;
+    // virtual void CalculateSensitivityGradient(Element& rAdjointElem,
+    //                                           const Variable<double>& rVariable,
+    //                                           const Matrix& rDerivativesMatrix,
+    //                                           Vector& rResponseGradient,
+    //                                           ProcessInfo& rProcessInfo)
+    // {
+    //     KRATOS_TRY;
 
-        KRATOS_ERROR << "This should be implemented in the derived class." << std::endl;
+    //     KRATOS_ERROR << "This should be implemented in the derived class." << std::endl;
 
-        KRATOS_CATCH("");
-    }
+    //     KRATOS_CATCH("");
+    // }
 
     // virtual void CalculateSensitivityGradient(const Condition& rAdjointCondition,
     //                                           const Variable<double>& rVariable,
@@ -539,27 +561,28 @@ protected:
     //     KRATOS_CATCH("");
     // }
 
-    /// Calculate the local gradient of response function w.r.t. the sensitivity variable.
-    /**
-     * @param[in]     rAdjointElem       the adjoint element.
-     * @param[in]     rVariable          the sensitivity variable.
-     * @param[in]     rDerivativesMatrix the transposed gradient of the element's
-     *                                   residual w.r.t. the sensitivity variable.
-     * @param[out]    rResponseGradient  the gradient of the response function.
-     * @param[in,out] rProcessInfo       the current process info.
-     */
-    virtual void CalculateSensitivityGradient(const Element& rAdjointElem,
-                                              const Variable<array_1d<double,3>>& rVariable,
-                                              const Matrix& rDerivativesMatrix,
-                                              Vector& rResponseGradient,
-                                              ProcessInfo& rProcessInfo)
-    {
-        KRATOS_TRY;
+    // I MOVE THIS TO PUBLIC TO BE ABLE TO CALL IT FROM PYTHON
+    // /// Calculate the local gradient of response function w.r.t. the sensitivity variable.
+    // /**
+    //  * @param[in]     rAdjointElem       the adjoint element.
+    //  * @param[in]     rVariable          the sensitivity variable.
+    //  * @param[in]     rDerivativesMatrix the transposed gradient of the element's
+    //  *                                   residual w.r.t. the sensitivity variable.
+    //  * @param[out]    rResponseGradient  the gradient of the response function.
+    //  * @param[in,out] rProcessInfo       the current process info.
+    //  */
+    // virtual void CalculateSensitivityGradient(Element& rAdjointElem,
+    //                                           const Variable<array_1d<double,3>>& rVariable,
+    //                                           const Matrix& rDerivativesMatrix,
+    //                                           Vector& rResponseGradient,
+    //                                           ProcessInfo& rProcessInfo)
+    // {
+    //     KRATOS_TRY;
 
-        KRATOS_ERROR << "This should be implemented in the derived class." << std::endl;
+    //     KRATOS_ERROR << "This should be implemented in the derived class." << std::endl;
 
-        KRATOS_CATCH("");
-    }
+    //     KRATOS_CATCH("");
+    // }
 
     // virtual void CalculateSensitivityGradient(const Condition& rAdjointCondition,
     //                                           const Variable<array_1d<double,3>>& rVariable,

@@ -437,6 +437,19 @@ void ElementCalculateLeftHandSide(Element& dummy,
     dummy.CalculateLeftHandSide(rLeftHandSideMatrix,rCurrentProcessInfo);
 }
 
+void ConditionGetValuesVector1(Condition& dummy,
+    Vector& rOutput)
+{
+dummy.GetValuesVector(rOutput,0);
+}
+
+void ConditionGetValuesVector2(Condition& dummy,
+    Vector& rOutput,
+    int step)
+{
+dummy.GetValuesVector(rOutput,step);
+}
+
 
 void  AddMeshToPython()
 {
@@ -627,6 +640,9 @@ void  AddMeshToPython()
     .def("GetNormal",GetNormalFromCondition)
     .def("GetNormal",FastGetNormalFromCondition)
     .def("GetArea",GetAreaFromCondition)
+    .def("GetValuesVector", &ConditionGetValuesVector1)
+    .def("GetValuesVector", &ConditionGetValuesVector2)
+    .def("GetValuesVector", &ConditionGetValuesVector2)
 
 
 

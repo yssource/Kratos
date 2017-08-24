@@ -18,6 +18,7 @@
 // Project includes
 #include "includes/define.h"
 #include "includes/element.h"
+#include "includes/condition.h"
 #include "includes/process_info.h"
 #include "includes/model_part.h"
 #include "includes/ublas_interface.h"
@@ -25,7 +26,7 @@
 #include "utilities/openmp_utils.h"
 
 // Application includes
-#include "custom_utilities/objective_function.h"
+#include "custom_utilities/response_function.h"
 #include "utilities/geometry_utilities.h"
 
 namespace Kratos
@@ -38,7 +39,7 @@ namespace Kratos
 
 /// An objective function for drag.
 template <unsigned int TDim>
-class PotentialFlowLiftObjectiveFunction : public ObjectiveFunction
+class PotentialFlowLiftObjectiveFunction : public ResponseFunction
 {
 public:
     ///@name Type Definitions
@@ -46,12 +47,15 @@ public:
 
     KRATOS_CLASS_POINTER_DEFINITION(PotentialFlowLiftObjectiveFunction);
 
+    typedef ResponseFunction BaseType;
+
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Constructor.
-    PotentialFlowLiftObjectiveFunction(Parameters& rParameters)
+    PotentialFlowLiftObjectiveFunction(ModelPart& rModelPart, Parameters& rParameters)
+        : ResponseFunction(rModelPart, rParameters)
     {
         KRATOS_TRY
 
@@ -165,6 +169,30 @@ public:
         }
 
         KRATOS_CATCH("")
+    }
+
+    /// Calculate the scalar valued response function
+    double CalculateValue(ModelPart& rModelPart) override
+    {
+        //define and initialize lift variable
+        double lift = 0;
+
+        //loop over conditions
+        for (ModelPart::ConditionsContainerType::iterator icond = r_model_part.ConditionsBegin();
+                 icond!=r_model_part.ConditionsEnd(); icond++)
+        {
+            //compute Area*normal
+            array_1d<double,3> An;
+            if(TDim == 2) icond->CalculateNormal2D(An);
+            else icond->CalculateNormal3D(An);
+
+            //Get pressure
+            double pressure = icond->GetValue(PRESSURE)
+
+            //compute lift
+            lift += pressure*An[1];
+        }
+        return lift;
     }
 
     //here i do dL/dphi

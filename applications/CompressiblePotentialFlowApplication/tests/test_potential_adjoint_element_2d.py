@@ -59,7 +59,7 @@ class TestCase(KratosUnittest.TestCase):
         RHS = self.zeroVector(3)
         Potential = Vector(3)
         self.potential_element.CalculateLocalSystem(LHS,RHS,self.model_part.ProcessInfo)
-        self.potential_element.GetFirstDerivativesVector(Potential,0)#TODO: change GetFirstDerivativesVector to GetValuesVector
+        self.potential_element.GetValuesVector(Potential,0)#TODO: change GetFirstDerivativesVector to GetValuesVector
         res0 = LHS * Potential
         # finite difference approximation
         h = 0.0000001
@@ -70,7 +70,7 @@ class TestCase(KratosUnittest.TestCase):
             potential = node.GetSolutionStepValue(POSITIVE_FACE_PRESSURE,0)
             node.SetSolutionStepValue(POSITIVE_FACE_PRESSURE,0,potential+h)
             self.potential_element.CalculateLocalSystem(LHS,RHS,self.model_part.ProcessInfo)
-            self.potential_element.GetFirstDerivativesVector(Potential,0)
+            self.potential_element.GetValuesVector(Potential,0)
             #print('Potentials =', "{0:.16f}".format(Potential[0]))
             node.SetSolutionStepValue(POSITIVE_FACE_PRESSURE,0,potential)
             res = LHS * Potential
@@ -89,7 +89,7 @@ class TestCase(KratosUnittest.TestCase):
         RHS = self.zeroVector(3)
         Potential = Vector(3)
         self.potential_element.CalculateLocalSystem(LHS,RHS,self.model_part.ProcessInfo)
-        self.potential_element.GetFirstDerivativesVector(Potential,0)#TODO: change GetFirstDerivativesVector to GetValuesVector
+        self.potential_element.GetValuesVector(Potential,0)#TODO: change GetFirstDerivativesVector to GetValuesVector
         res0 = LHS * Potential
         # finite difference approximation
         h = 0.00000001

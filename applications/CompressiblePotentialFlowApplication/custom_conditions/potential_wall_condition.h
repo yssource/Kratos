@@ -31,6 +31,8 @@
 #include "includes/process_info.h"
 #include "includes/cfd_variables.h"
 
+#include "includes/element.h"//DO I REALLY NEED THIS?
+
 // Application includes
 #include "compressible_potential_flow_application_variables.h"
 
@@ -92,6 +94,10 @@ public:
     typedef PointerVectorSet<Dof<double>, IndexedObject> DofsArrayType;
 
     typedef VectorMap<IndexType, DataValueContainer> SolutionStepsConditionalDataContainerType;
+
+    typedef Element::WeakPointer ElementWeakPointerType;
+
+	typedef Element::Pointer ElementPointerType;
 
     ///@}
     ///@name Life Cycle
@@ -202,6 +208,95 @@ public:
         return pNewCondition;
     }
 
+    // /// Find the condition's parent element.
+	// void Initialize() override
+	// {
+	// 	KRATOS_TRY;
+
+	// 	const array_1d<double,3>& rNormal = this->GetValue(NORMAL);
+	// 	if (norm_2(rNormal) == 0.0)
+	// 	  {
+	// 	    std::cout << "error on condition -> " << this->Id() << std::endl;
+	// 	    KRATOS_THROW_ERROR(std::logic_error, "NORMAL must be calculated before using this condition","");
+	// 	  }
+
+	// 	if (mInitializeWasPerformed)
+	// 	{
+	// 		return;
+	// 	}
+
+	// 	mInitializeWasPerformed = true;
+
+	// 	double EdgeLength;
+	// 	array_1d<double,3> Edge;
+	// 	GeometryType& rGeom = this->GetGeometry();
+	// 	WeakPointerVector<Element> ElementCandidates;
+	// 	for (SizeType i = 0; i < TDim; i++)
+	// 	{
+	// 		WeakPointerVector<Element>& rNodeElementCandidates = rGeom[i].GetValue(NEIGHBOUR_ELEMENTS);
+	// 		for (SizeType j = 0; j < rNodeElementCandidates.size(); j++)
+	// 		{
+	// 			ElementCandidates.push_back(rNodeElementCandidates(j));
+	// 		}
+	// 	}
+
+	// 	std::vector<IndexType> NodeIds(TNumNodes), ElementNodeIds;
+
+	// 	for (SizeType i=0; i < TNumNodes; i++)
+	// 	{
+	// 		NodeIds[i] = rGeom[i].Id();
+	// 	}
+
+	// 	std::sort(NodeIds.begin(), NodeIds.end());
+
+	// 	for (SizeType i=0; i < ElementCandidates.size(); i++)
+	// 	{
+	// 		GeometryType& rElemGeom = ElementCandidates[i].GetGeometry();
+	// 		ElementNodeIds.resize(rElemGeom.PointsNumber());
+
+	// 		for (SizeType j=0; j < rElemGeom.PointsNumber(); j++)
+	// 		{
+	// 			ElementNodeIds[j] = rElemGeom[j].Id();
+	// 		}
+
+	// 		std::sort(ElementNodeIds.begin(), ElementNodeIds.end());
+
+	// 		if ( std::includes(ElementNodeIds.begin(), ElementNodeIds.end(), NodeIds.begin(), NodeIds.end()) )
+	// 		{
+	// 			mpElement = ElementCandidates(i);
+
+	// 			Edge = rElemGeom[1].Coordinates() - rElemGeom[0].Coordinates();
+	// 			mMinEdgeLength = Edge[0]*Edge[0];
+	// 			for (SizeType d=1; d < TDim; d++)
+	// 			{
+	// 				mMinEdgeLength += Edge[d]*Edge[d];
+	// 			}
+
+	// 			for (SizeType j=2; j < rElemGeom.PointsNumber(); j++)
+	// 			{
+	// 				for (SizeType k=0; k < j; k++)
+	// 				{
+	// 					Edge = rElemGeom[j].Coordinates() - rElemGeom[k].Coordinates();
+	// 					EdgeLength = Edge[0]*Edge[0];
+
+	// 					for (SizeType d = 1; d < TDim; d++)
+	// 					{
+	// 						EdgeLength += Edge[d]*Edge[d];
+	// 					}
+
+	// 					mMinEdgeLength = (EdgeLength < mMinEdgeLength) ? EdgeLength : mMinEdgeLength;
+	// 				}
+	// 			}
+	// 			mMinEdgeLength = sqrt(mMinEdgeLength);
+	// 			return;
+	// 		}
+	// 	}
+
+	// 	std::cout << "error in condition -> " << this->Id() << std::endl;
+	// 	KRATOS_THROW_ERROR(std::logic_error, "Condition cannot find parent element","");
+	// 	KRATOS_CATCH("");
+	// }
+
 
     void CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix,
                                        ProcessInfo& rCurrentProcessInfo) override
@@ -209,6 +304,18 @@ public:
         VectorType RHS;
         this->CalculateLocalSystem(rLeftHandSideMatrix,RHS,rCurrentProcessInfo);
     }
+
+    /**
+     * Getting method to obtain the variable which defines the degrees of freedom
+     */
+     void GetValuesVector(Vector& values, int Step = 0) override
+     {
+         //gather nodal data
+         for(unsigned int i=0; i<TNumNodes; i++)
+         {
+             values[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+         }
+     }
 
 
 
@@ -227,6 +334,8 @@ public:
         if (rRightHandSideVector.size() != TNumNodes)
             rRightHandSideVector.resize(TNumNodes,false);
         rLeftHandSideMatrix.clear();
+
+        std::cout << "I AM A POTENTIAL WALL CONDITION " << std::endl;
 
         array_1d<double,3> An;
         if(TDim == 2) CalculateNormal2D(An);
@@ -315,6 +424,22 @@ public:
 
         }
 
+        // void FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) override
+        // {
+        //     std::vector<double> pressure;
+        //     ElementPointerType pElem = pGetElement();
+        //     pElem->GetValueOnIntegrationPoints(PRESSURE,pressure, rCurrentProcessInfo);
+        //     this->SetValue(PRESSURE,pressure[0]);
+        // }
+
+        void Calculate(const Variable< array_1d<double,3> >& rVariable,
+            array_1d<double,3>& Output,
+            const ProcessInfo& rCurrentProcessInfo) override
+        {
+            if(TDim == 2) CalculateNormal2D(Output);
+            else CalculateNormal3D(Output);
+        }
+
 
 
 
@@ -380,6 +505,11 @@ protected:
         ///@name Protected Operations
         ///@{
 
+        ElementPointerType pGetElement()
+	    {
+		    return mpElement.lock();
+	    }
+
 
 
 
@@ -410,6 +540,9 @@ private:
         ///@}
         ///@name Member Variables
         ///@{
+        bool mInitializeWasPerformed;
+	    double mMinEdgeLength;
+	    ElementWeakPointerType mpElement;
 
         void CalculateNormal2D(array_1d<double,3>& An)
         {

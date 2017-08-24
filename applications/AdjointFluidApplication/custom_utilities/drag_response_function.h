@@ -220,7 +220,7 @@ protected:
     ///@name Protected Operations
     ///@{
 
-    void CalculateSensitivityGradient(const Element& rAdjointElem,
+    void CalculateSensitivityGradient(Element& rAdjointElem,
                                       const Variable<array_1d<double,3>>& rVariable,
                                       const Matrix& rDerivativesMatrix,
                                       Vector& rResponseGradient,

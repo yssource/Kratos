@@ -7,6 +7,7 @@
 #include "custom_utilities/response_function.h"
 #include "custom_utilities/drag_response_function.h"
 #include "custom_python/add_custom_response_functions_to_python.h"
+#include "custom_utilities/potentialflow_lift_response_function.h"
 
 namespace Kratos
 {
@@ -28,6 +29,7 @@ void AddCustomResponseFunctionsToPython()
              &ResponseFunction::CalculateFirstDerivativesGradient)
         .def("CalculateSecondDerivativesGradient",
              &ResponseFunction::CalculateSecondDerivativesGradient)
+        .def("CalculateSensitivityGradient", &ResponseFunction::CalculateSensitivityGradient)        
         .def("CalculateValue", &ResponseFunction::CalculateValue)
         .def("UpdateSensitivities", &ResponseFunction::UpdateSensitivities);
 
@@ -36,6 +38,12 @@ void AddCustomResponseFunctionsToPython()
 
     class_<DragResponseFunction<3>, bases<ResponseFunction>, boost::noncopyable>
       ("DragResponseFunction3D", init<ModelPart&, Parameters&>());
+
+    class_<PotentialFlowLiftResponseFunction<2>, bases<ResponseFunction>, boost::noncopyable>
+      ("PotentialFlowLiftResponseFunction2D", init<ModelPart&, Parameters&>());
+
+    class_<PotentialFlowLiftResponseFunction<3>, bases<ResponseFunction>, boost::noncopyable>
+      ("PotentialFlowLiftResponseFunction3D", init<ModelPart&, Parameters&>());
 
 }
 

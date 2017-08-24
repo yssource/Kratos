@@ -2,6 +2,7 @@ from __future__ import print_function, absolute_import, division #makes KratosMu
 # importing the Kratos Library
 import KratosMultiphysics
 import KratosMultiphysics.ConvectionDiffusionApplication
+import KratosMultiphysics.CompressiblePotentialFlowApplication
 KratosMultiphysics.CheckForPreviousImport()
 
 
@@ -49,6 +50,10 @@ class LaplacianSolver:
         self.settings = custom_settings
         self.settings.ValidateAndAssignDefaults(default_settings)
         
+        #number_of_avg_elems = 10
+        #number_of_avg_nodes = 10
+        #self.neighbour_search = FindNodalNeighboursProcess(self.main_model_part, number_of_avg_elems, number_of_avg_nodes)        
+        
         #construct the linear solvers
         import linear_solver_factory
         self.linear_solver = linear_solver_factory.ConstructSolver(self.settings["linear_solver_settings"])
@@ -67,6 +72,7 @@ class LaplacianSolver:
             node.AddDof(KratosMultiphysics.NEGATIVE_FACE_PRESSURE)
         
     def Initialize(self):
+        #(self.neighbour_search).Execute()
         time_scheme = KratosMultiphysics.ResidualBasedIncrementalUpdateStaticScheme()
         move_mesh_flag = False #USER SHOULD NOT CHANGE THIS
         

@@ -324,6 +324,13 @@ public:
     }
 
     /**
+    * Getting method to obtain the variable which defines the degrees of freedom
+    */
+    virtual void GetValuesVector(Vector& values, int Step = 0) const
+    {
+    }
+
+    /**
      * Getting method to obtain the time derivative of variable which defines the degrees of freedom
      */
     virtual void GetFirstDerivativesVector(Vector& values, int Step = 0)

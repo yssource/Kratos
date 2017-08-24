@@ -3,7 +3,7 @@
 //  License:		 BSD License
 //					 license: AdjointFluidApplication/license.txt
 //
-//  Main authors:    Riccardo Rossi
+//  Main authors:    Iñigo Lopez and Riccardo Rossi
 //
 
 #if !defined(KRATOS_POTENTIALFLOW_LIFT_RESPONSE_FUNCTION)

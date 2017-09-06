@@ -335,7 +335,6 @@ public:
             rRightHandSideVector.resize(TNumNodes,false);
         rLeftHandSideMatrix.clear();
 
-        std::cout << "I AM A POTENTIAL WALL CONDITION " << std::endl;
 
         array_1d<double,3> An;
         if(TDim == 2) CalculateNormal2D(An);

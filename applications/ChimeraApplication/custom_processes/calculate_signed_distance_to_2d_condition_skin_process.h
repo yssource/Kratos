@@ -280,7 +280,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         : mrSkinModelPart(rThisModelPartStruc), mrFluidModelPart(rThisModelPartFluid)
     {
         //this->pDistanceCalculator = typename ParallelDistanceCalculator<2>::Pointer(new ParallelDistanceCalculator<2>());
-        dist_limit = 1e-2;
+        dist_limit = 1e-6;
     }
 
     /// Destructor.
@@ -315,7 +315,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         DistanceFluidStructure();
         //unsigned int max_level = 100;
         //double max_distance = 200;
-        
+
         //          ------------------------------------------------------------------
         //          GenerateNodes();
         CalculateDistance2(); // I have to change this. Pooyan.
@@ -330,7 +330,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         //          delete quadtree. TODO: Carlos
         //          ------------------------------------------------------------------
         //this->pDistanceCalculator->CalculateDistances(mrFluidModelPart,DISTANCE,NODAL_AREA,max_level,max_distance);
-        AvoidZeroDistances();
+        AvoidZeroNodalDistances();
         KRATOS_CATCH("");
     }
 
@@ -476,8 +476,6 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         // several Elements, such that it is assigned several distance values
         // --> now synchronize these values by finding the minimal distance and assign to each node a minimal nodal distance
         AssignMinimalNodalDistance(); // revisit -nav
-
-        
 
         /* ModelPart::NodesContainerType::ContainerType& nodes = mrFluidModelPart.NodesArray();*/
 
@@ -845,15 +843,17 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         }
 
         // Intersection with two corner points / one triangle edge
-        if (NodesOfApproximatedStructure.size() == 2 && NumberIntersectionsOnTriangleCorner == 2)
+        /*if (NodesOfApproximatedStructure.size() == 2 && NumberIntersectionsOnTriangleCorner == 2)
         {
-            CalcSignedDistancesToTwoIntNodes(i_fluid_Element, NodesOfApproximatedStructure, ElementalDistances);
+            CalcSignedDistancesToTwoEdgeIntNodes(i_fluid_Element, NodesOfApproximatedStructure, ElementalDistances); //changed
             i_fluid_Element->GetValue(SPLIT_ELEMENT) = true;
-            //std::cout<<"CalcSignedDistancesToTwoIntNodes"<<"ED "<<ElementalDistances[0]<<","<<ElementalDistances[1]<<","<<ElementalDistances[2]<<std::endl;
-        }
+            //_DEBUG
+        if (i_fluid_Element->Id() == 3504 || i_fluid_Element->Id() == 544)
+            std::cout<<"CalcSignedDistancesToTwoIntNodes"<<"ED "<<ElementalDistances[0]<<","<<ElementalDistances[1]<<","<<ElementalDistances[2]<<std::endl;
+        }*/
 
         // Intersection with two triangle edges
-        if (NodesOfApproximatedStructure.size() == 2 && NumberIntersectionsOnTriangleCorner < 2)
+        if (NodesOfApproximatedStructure.size() == 2 && NumberIntersectionsOnTriangleCorner <= 2)
         {
             CalcSignedDistancesToTwoEdgeIntNodes(i_fluid_Element, NodesOfApproximatedStructure, ElementalDistances);
             i_fluid_Element->GetValue(SPLIT_ELEMENT) = true;
@@ -879,8 +879,8 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         }
 
         // Postprocessing treatment of Elemental distances
-        /*if( i_fluid_Element->GetValue(SPLIT_ELEMENT) == true )
-            AvoidZeroDistances(i_fluid_Element, ElementalDistances);*/
+        if (i_fluid_Element->GetValue(SPLIT_ELEMENT) == true)
+            AvoidZeroDistances(i_fluid_Element, ElementalDistances);
 
         // In case there is intersection with fluid Element: assign distances to the Element
         if (i_fluid_Element->GetValue(SPLIT_ELEMENT) == true)
@@ -1121,7 +1121,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         if ((numberDoubleCutEdges >= 1))
 
         {
-            
+
             array_1d<double, 3> normal_1 = IntersectedTriangleEdges[indexDoubleCutEdge].IntNodes[0].StructElemNormal;
             array_1d<double, 3> normal_2 = IntersectedTriangleEdges[indexDoubleCutEdge].IntNodes[1].StructElemNormal;
 
@@ -1146,18 +1146,12 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
             {
                 N_mean = 0.5 * (normal_1 - normal_2);
             }
-            
-            
 
             // Based on N_mean and P_mean compute the distances to that plane
             for (unsigned int i_TriangleNode = 0; i_TriangleNode < 3; i_TriangleNode++)
             {
                 ElementalDistances[i_TriangleNode] = PointDistanceToLine(P_mean, N_mean, i_fluid_Element->GetGeometry()[i_TriangleNode]);
-               
-                
-
             }
-            
         }
     }
 
@@ -1226,54 +1220,75 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
        * @param Element            current Element which was cut by the structure (flag SPLIT_ELEMENT is set to one)
        * @param ElementalDistances Elemental distances calculated by the intersection pattern
        */
-    /*void AvoidZeroDistances( ModelPart::ElementsContainerType::iterator& Element,
-                             array_1d<double,3>&                         ElementalDistances)
+    void AvoidZeroDistances(ModelPart::ElementsContainerType::iterator &Element,
+                            array_1d<double, 3> &ElementalDistances)
     {
         // Assign a distance limit
-        double dist_limit = 1e-5;*/
-    //         bool distChangedToLimit = false; //variable to indicate that a distance value < tolerance is set to a limit distance = tolerance
-    //
-    //         for(unsigned int i_node = 0; i_node < 3; i_node++)
-    //         {
-    //             if(fabs(ElementalDistances[i_node]) < dist_limit)
-    //             {
-    //                 ElementalDistances[i_node] = dist_limit;
-    //                 distChangedToLimit = true;
-    //             }
-    //         }
-    //
-    //         // Check, if this approach changes the split-flag (might be, that Element is not cut anymore if node with zero distance gets a positive limit distance value
-    //         unsigned int numberNodesPositiveDistance = 0;
-    //         for(unsigned int i_node = 0; i_node < 3; i_node++)
-    //         {
-    //             if((ElementalDistances[i_node]) > 0)
-    //                 numberNodesPositiveDistance++;
-    //         }
-
-    /*for(unsigned int i_node = 0; i_node < 3; i_node++)
+        //double dist_limit = 1e-5;*/
+        bool distChangedToLimit = false; //variable to indicate that a distance value < tolerance is set to a limit distance = tolerance
+                                         /*
+        for (unsigned int i_node = 0; i_node < 3; i_node++)
         {
-            double & di = ElementalDistances[i_node];
-            if(fabs(di) < dist_limit)
+            if (fabs(ElementalDistances[i_node]) < dist_limit)
             {
-                if(di >= 0) di = dist_limit;
-                else di = -dist_limit;
+                ElementalDistances[i_node] = dist_limit;
+                distChangedToLimit = true;
+            }
+        }*/
+
+        // Check, if this approach changes the split-flag (might be, that Element is not cut anymore if node with zero distance gets a positive limit distance value
+        unsigned int numberNodesPositiveDistance = 0;
+
+        for (unsigned int i_node = 0; i_node < 3; i_node++)
+        {
+            double &di = ElementalDistances[i_node];
+            if (fabs(di) < dist_limit)
+            {
+                distChangedToLimit = true;
+                /*if (di >= 0)
+                {
+                    di = dist_limit;
+                    
+                }
+
+                else
+                    di = -dist_limit;
+            }*/
+
+                di = dist_limit;
+            }
+        }
+
+        for (unsigned int i_node = 0; i_node < 3; i_node++)
+        {
+            if ((ElementalDistances[i_node]) > 0)
+                numberNodesPositiveDistance++;
+        }
+
+         //_DEBUG
+        if (Element->Id() == 5832 || Element->Id() == 6022)
+        {
+
+            for (unsigned int i_node = 0; i_node < 3; i_node++)
+            {
+                double &di = ElementalDistances[i_node];
+
+                std::cout << "Element " << Element->Id() << " elem dist " << di << std::endl;
             }
         }
 
         // Element is not set
-//         if(numberNodesPositiveDistance == 4 && distChangedToLimit == true)
-//             Element->GetValue(SPLIT_ELEMENT) = false;
-    }*/
+        if (numberNodesPositiveDistance == 3 && distChangedToLimit == true)
+            Element->GetValue(SPLIT_ELEMENT) = false;
+    }
 
     ///******************************************************************************************************************
     ///******************************************************************************************************************
 
+    void AvoidZeroNodalDistances()
+    {
 
-void AvoidZeroDistances()
-{
-    //double dist_limit = 1e-2;
-
-     ModelPart::NodesContainerType::ContainerType &nodes = mrFluidModelPart.NodesArray();
+        ModelPart::NodesContainerType::ContainerType &nodes = mrFluidModelPart.NodesArray();
 
         // reset the node distance to 1.0 which is the maximum distance in our normalized space.
         int nodesSize = nodes.size();
@@ -1281,19 +1296,12 @@ void AvoidZeroDistances()
 #pragma omp parallel for firstprivate(nodesSize)
         for (int i = 0; i < nodesSize; i++)
         {
-            double& distance = nodes[i]->GetSolutionStepValue(DISTANCE) ;
+            double &distance = nodes[i]->GetSolutionStepValue(DISTANCE);
 
-            if(fabs(distance) < dist_limit)
-            distance = -dist_limit;
-
-
+            if (fabs(distance) < dist_limit)
+                distance = dist_limit;
         }
-            
-
-
-
-
-}
+    }
     void GenerateSkinModelPart(ModelPart &mrNewSkinModelPart)
     {
         unsigned int id_node = 1;
@@ -1314,12 +1322,12 @@ void AvoidZeroDistances()
 
                 // generate the points on the edges at the zero of the distance function
                 std::vector<Point<3>> edge_points;
-                edge_points.reserve(4);
+                edge_points.reserve(2);
 
-                // loop over all 6 edges of the trianglerahedra
-                for (unsigned int i = 0; i < 3; i++)
+                // loop over all 6 edges of the triangle
+                for (unsigned int i = 0; i < 2; i++)
                 {
-                    for (unsigned int j = i + 1; j < 4; j++) // go through the edges 01, 02, 03, 12, 13, 23
+                    for (unsigned int j = i + 1; j < 3; j++) // go through the edges 01, 02, 03, 12
                     {
                         double di = distances[i];
                         double dj = distances[j];
@@ -1336,26 +1344,31 @@ void AvoidZeroDistances()
                 }
 
                 // three intersection nodes
-                if (edge_points.size() == 3)
+                if (edge_points.size() == 2)
                 {
                     // ######## ADDING NEW NODE #########
                     Node<3>::Pointer pnode1 = mrNewSkinModelPart.CreateNewNode(id_node++, edge_points[0].X(), edge_points[0].Y(), edge_points[0].Z());
                     Node<3>::Pointer pnode2 = mrNewSkinModelPart.CreateNewNode(id_node++, edge_points[1].X(), edge_points[1].Y(), edge_points[1].Z());
-                    Node<3>::Pointer pnode3 = mrNewSkinModelPart.CreateNewNode(id_node++, edge_points[2].X(), edge_points[2].Y(), edge_points[2].Z());
 
                     // ######## ADDING NEW CONDITION #########
                     //form a triangle
-                    Triangle3D3<Node<3>> triangle(pnode1, pnode2, pnode3);
+                    Line2D2<Node<3>> line(pnode1, pnode2);
 
-                    Condition const &rReferenceCondition = KratosComponents<Condition>::Get("Condition3D");
+                    Condition const &rReferenceCondition = KratosComponents<Condition>::Get("Condition2D");
                     Properties::Pointer properties = mrNewSkinModelPart.rProperties()(0);
-                    Condition::Pointer p_condition = rReferenceCondition.Create(id_condition++, triangle, properties);
+                    Condition::Pointer p_condition = rReferenceCondition.Create(id_condition++, line, properties);
 
                     mrNewSkinModelPart.Conditions().push_back(p_condition);
                 }
 
+                else
+                {
+                    std::cout << "Error :: Found more than two intersection in the triagular element" << std::endl;
+                    std::exit(-1);
+                }
+
                 // four intersection nodes
-                if (edge_points.size() == 4)
+                /*    if (edge_points.size() == 4)
                 {
                     //form a quadrilatera with the 4 cut nodes
                     array_1d<double, 3> x21 = edge_points[1] - edge_points[0];
@@ -1428,7 +1441,7 @@ void AvoidZeroDistances()
 
                     mrNewSkinModelPart.Conditions().push_back(p_condition1);
                     mrNewSkinModelPart.Conditions().push_back(p_condition2);
-                }
+                }*/
             }
         }
     }
@@ -1833,7 +1846,7 @@ void AvoidZeroDistances()
         double coord[3] = {rNode.X(), rNode.Y(), rNode.Z()};
         double distance = DistancePositionInSpace(coord);
         double &node_distance = rNode.GetSolutionStepValue(DISTANCE);
-        //double dist_limit = 1e-2;
+
         //debug
         /*if(rNode.Id() == 1481)
         {
@@ -1842,10 +1855,8 @@ void AvoidZeroDistances()
             std::exit(-1);
 
         }*/
-        
 
-        
-        if (fabs(node_distance) > fabs(distance)||fabs(node_distance < dist_limit))
+        if (fabs(node_distance) > fabs(distance) || fabs(node_distance < dist_limit))
             node_distance = distance;
         else if (distance * node_distance < 0.00) // assigning the correct sign
             node_distance = -node_distance;
@@ -2187,7 +2198,7 @@ void AvoidZeroDistances()
         // This is the adaption of the algorithm provided in:
         // http://mathworld.wolfram.com/Line-LineIntersection.html
 
-        /*                       D
+        /*               D
                         /
                        /
                       / I
@@ -2197,7 +2208,6 @@ void AvoidZeroDistances()
                   /
                  C
 */
-        const double epsilon = 1.00e-12;
 
         array_1d<double, 3> vec_a, vec_ab;               // struc line segment vector vec_a + s vec_ab
         array_1d<double, 3> vec_c, vec_cd;               // fluid line edge vector vec_c + t vec_cd
@@ -2638,7 +2648,7 @@ inline std::ostream &operator<<(std::ostream &rOStream,
 }
 ///@}
 
-const double CalculateSignedDistanceTo2DConditionSkinProcess::epsilon = 1e-18;
+const double CalculateSignedDistanceTo2DConditionSkinProcess::epsilon = 1e-12;
 
 } // namespace Kratos.
 

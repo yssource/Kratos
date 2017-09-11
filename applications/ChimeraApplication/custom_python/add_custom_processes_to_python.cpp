@@ -14,7 +14,6 @@
 
 // External includes
 #include <boost/python.hpp>
-
 // Project includes
 #include "includes/define.h"
 #include "includes/model_part.h"
@@ -28,6 +27,7 @@
 #include "custom_processes/calculate_signed_distance_to_2d_condition_skin_process.h"
 #include "custom_processes/calculate_chimera_signed_distance_to_3d_condition_skin_process.h"
 #include "custom_processes/apply_multi_point_constraints_process.h"
+#include "custom_processes/test_mapper_process.h"
 namespace Kratos
 {
 
@@ -58,9 +58,11 @@ void AddCustomProcessesToPython()
 	/*
 	 * CustomExtractVariablesProcess
 	 */
-	class_<CustomExtractVariablesProcess,bases<Process> >("CustomExtractVariablesProcess", init<>())
-			.def("ExtractVariable", &CustomExtractVariablesProcess::ExtractVariable< array_1d<double, 3> >)
-			.def("ExtractVariable", &CustomExtractVariablesProcess::ExtractVariable<double>);			
+	class_<CustomExtractVariablesProcess<2>,bases<Process> >("CustomExtractVariablesProcess2d", init<>())
+			.def("ExtractVariables", &CustomExtractVariablesProcess<2>::ExtractVariables );
+
+	class_<CustomExtractVariablesProcess<3>,bases<Process> >("CustomExtractVariablesProcess3d", init<>())
+			.def("ExtractVariables", &CustomExtractVariablesProcess<3>::ExtractVariables );				
 
 
     
@@ -89,7 +91,16 @@ void AddCustomProcessesToPython()
 		//.def("Execute", &CalculateSignedDistanceTo2DSkinProcess::Execute);	
 	class_<CalculateChimeraSignedDistanceTo3DConditionSkinProcess,bases<Process> >("CalculateChimeraSignedDistanceTo3DConditionSkinProcess", init<ModelPart&,ModelPart&>())
 		.def("Execute", &CalculateChimeraSignedDistanceTo3DConditionSkinProcess::Execute);	
-			
+
+	class_<TestMapperProcess<2>,bases<Process> >("TestMapperProcess2d", init<ModelPart&,ModelPart&,ModelPart&,double>())
+			.def("Interpolate2d",&TestMapperProcess<2>::Interpolate2d)
+			.def("CalculateNodalAreaAndNodalMass",&TestMapperProcess<2>::CalculateNodalAreaAndNodalMass)
+			.def("Initialize",&TestMapperProcess<2>::Initialize);
+
+	/*	
+	*	test_mapper_process
+	*/
+	
 }
 
 

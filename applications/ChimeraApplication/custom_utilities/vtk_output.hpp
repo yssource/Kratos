@@ -24,7 +24,7 @@
 #ifdef KRATOS_USING_MPI
 #include "mpi.h"
 #endif
-
+#include "includes/deprecated_variables.h"
 // project includes
 
 namespace Kratos
@@ -102,7 +102,7 @@ class VtkOutput
     {
         std::string outputFileName = GetOutputFileName(model_part);
         std::ofstream outputFile;
-        outputFile.open(outputFileName, std::ios::out | std::ios::binary | std::ios::trunc );
+        outputFile.open(outputFileName, std::ios::out | std::ios::binary | std::ios::trunc);
         outputFile << "# vtk DataFile Version 4.0"
                    << "\n";
         outputFile << "vtk output"
@@ -110,7 +110,7 @@ class VtkOutput
         outputFile << "ASCII"
                    << "\n";
         outputFile << "DATASET UNSTRUCTURED_GRID"
-                   << "\n";                   
+                   << "\n";
         outputFile.close();
     }
 
@@ -188,36 +188,78 @@ class VtkOutput
         std::string outputFileName = GetOutputFileName(model_part);
         std::ofstream outputFile;
         outputFile.open(outputFileName, std::ios::out | std::ios::app);
-
+        std::vector<std::string> elementResults = {"NORMAL"}; // list of element results
         // write cells header
         outputFile << "CELL_DATA " << model_part.NumberOfElements() << "\n";
         outputFile << "SCALARS ACTIVE float 1\nLOOKUP_TABLE default\n";
 
-        // write elements
+        // write element results for active
         for (ModelPart::ElementIterator elem_i = model_part.ElementsBegin(); elem_i != model_part.ElementsEnd(); ++elem_i)
         {
-             //outputFile << numberOfNodes;
-            if ((elem_i)->IsDefined(ACTIVE)){
+            //outputFile << numberOfNodes;
+            if ((elem_i)->IsDefined(ACTIVE))
+            {
 
                 outputFile << elem_i->Is(ACTIVE) << "\n";
             }
 
             else
-                outputFile <<"1\n";
-            
+                outputFile << "1\n";
         }
 
-        // write Conditions
-        /*for (ModelPart::ConditionIterator condition_i = model_part.ConditionsBegin(); condition_i != model_part.ConditionsEnd(); ++condition_i)
+        for (unsigned int entry = 0; entry < elementResults.size(); entry++)
         {
-            ModelPart::ConditionType::GeometryType &condition_geometry = condition_i->GetGeometry();
-            const unsigned int numberOfNodes = condition_geometry.size();
 
-            outputFile << numberOfNodes;
-            for (unsigned int i = 0; i < numberOfNodes; i++)
-                outputFile << " " << mKratosIdToVtkId[condition_geometry[i].Id()];
-            outputFile << "\n";
-        }*/
+            std::string elementResultName = elementResults[entry];
+            unsigned int dataCharacteristic = 0; // 0: unknown, 1: Scalar value, 2: 3 DOF global translation vector
+
+            if (KratosComponents<Variable<double>>::Has(elementResultName))
+            {
+                dataCharacteristic = 1;
+                outputFile << "SCALARS " << elementResultName << " float"
+                           << " 1"
+                           << "\n";
+                outputFile << "LOOKUP_TABLE default"
+                           << "\n";
+            }
+            else if (KratosComponents<Variable<array_1d<double, 3>>>::Has(elementResultName))
+            {
+                dataCharacteristic = 2;
+                outputFile << "VECTORS " << elementResultName << " float"
+                           << "\n";
+            }
+
+            // write nodal results
+            outputFile << std::scientific;
+            outputFile << std::setprecision(mDefaultPrecision);
+            for (ModelPart::ElementIterator elem_i = model_part.ElementsBegin(); elem_i != model_part.ElementsEnd(); ++elem_i)
+            {
+                if (dataCharacteristic == 1)
+                {
+                    Variable<double> elementResultVariable = KratosComponents<Variable<double>>::Get(elementResultName);
+                    double &elementResult = elem_i->GetValue(elementResultVariable);
+                    outputFile << elementResult << "\n";
+                }
+                else if (dataCharacteristic == 2)
+                {
+                    Variable<array_1d<double, 3>> elementResultVariable = KratosComponents<Variable<array_1d<double, 3>>>::Get(elementResultName);
+                    array_1d<double, 3> &elementResult = elem_i->GetValue(elementResultVariable);
+                    outputFile << elementResult[0] << " ";
+                    outputFile << elementResult[1] << " ";
+                    outputFile << elementResult[2] << "\n";
+                }
+            }
+        }
+
+        outputFile << "SCALARS SPLIT_ELEMENT float 1\nLOOKUP_TABLE default\n";
+
+        // write element results for active
+        for (ModelPart::ElementIterator elem_i = model_part.ElementsBegin(); elem_i != model_part.ElementsEnd(); ++elem_i)
+        {
+            //outputFile << numberOfNodes;
+            bool is_split = elem_i->GetValue(SPLIT_ELEMENT);
+            outputFile << is_split << "\n";
+        }
 
         outputFile.close();
     }
@@ -301,9 +343,11 @@ class VtkOutput
             if (KratosComponents<Variable<double>>::Has(nodalResultName))
             {
                 dataCharacteristic = 1;
-                outputFile << "SCALARS " << nodalResultName << " float" << " 1"
+                outputFile << "SCALARS " << nodalResultName << " float"
+                           << " 1"
                            << "\n";
-                outputFile << "LOOKUP_TABLE default"<<"\n";
+                outputFile << "LOOKUP_TABLE default"
+                           << "\n";
             }
             else if (KratosComponents<Variable<array_1d<double, 3>>>::Has(nodalResultName))
             {
@@ -404,8 +448,8 @@ class VtkOutput
         int rank = 0;
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif                   
-        std::string outputFilename = model_part.Name() +"_"+std::to_string(rank)+"_"+std::to_string(step) + ".vtk";
+#endif
+        std::string outputFilename = model_part.Name() + "_" + std::to_string(rank) + "_" + std::to_string(step) + ".vtk";
         return outputFilename;
     }
 

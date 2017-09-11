@@ -80,7 +80,6 @@ class MpcData
     typedef std::pair<unsigned int, unsigned int> SlavePairType;
     typedef std::tuple<unsigned int, unsigned int, int> key_tupple;
     typedef Kratos::Variable<double> VariableType;
-    
 
     struct key_hash_tuple : public std::unary_function<key_tupple, std::size_t>
     {
@@ -108,8 +107,7 @@ class MpcData
             std::size_t seed1 = 0;
             boost::hash_combine(seed1, std::get<0>(v1));
             boost::hash_combine(seed1, std::get<1>(v1));
-            boost::hash_combine(seed1, std::get<2>(v1));            
-
+            boost::hash_combine(seed1, std::get<2>(v1));
 
             return (seed0 == seed1);
         }
@@ -141,6 +139,7 @@ class MpcData
     MpcData() : mDofConstraints(), mEquationIdToWeightsMap()
     {
         mIsWeak = false;
+        this->RtMinvR = 1;
     }
     /// Destructor.
     virtual ~MpcData(){};
@@ -173,10 +172,9 @@ class MpcData
     // Takes in a slave dof equationId and a master dof equationId
     void AddConstraint(unsigned int SlaveDofEquationId, unsigned int MasterDofEquationId, double weight, int PartitionId = 0)
     {
-        mEquationIdToWeightsMap[SlaveDofEquationId].insert(  std::pair<unsigned int, double>(MasterDofEquationId, weight)  );
+        mEquationIdToWeightsMap[SlaveDofEquationId].insert(std::pair<unsigned int, double>(MasterDofEquationId, weight));
         //mDofConstraints[std::make_pair(SlaveDof.Id(), slaveVariableKey)][std::tie(MasterNodeId, MasterVariableKey, PartitionId)] += weight;
     }
-
 
     // Takes in a slave dof and a master dof
     void AddConstraint(DofType &SlaveDof, DofType &MasterDof, double weight, int PartitionId = 0)
@@ -206,7 +204,7 @@ class MpcData
         {
             IndexType MasterNodeId = (*MasterDof).Id();
             unsigned int MasterVariableKey = (*MasterDof).GetVariable().Key(); // TODO :: Check why do we need a mastervariable ... is a master key not enough ?
-            int PartitionId=0;
+            int PartitionId = 0;
             if (PartitionIdVector.size() == 0)
                 PartitionId = 0;
             else
@@ -223,18 +221,20 @@ class MpcData
 
         unsigned int slaveVariableKey = SlaveDof.GetVariable().Key();
 
-        mSlaveDofToNodalNormalMap.insert({std::make_pair(SlaveDof.Id(), slaveVariableKey),nodalNormalComponent}) ;
-
+        mSlaveDofToNodalNormalMap.insert({std::make_pair(SlaveDof.Id(), slaveVariableKey), nodalNormalComponent});
     }
 
-        void AddNodalNormalToSlaveDof(unsigned int SlaveDofEquationId, double nodalNormalComponent, int PartitionId = 0)
+    void AddNodalNormalToSlaveDof(unsigned int SlaveDofEquationId, double nodalNormalComponent, int PartitionId = 0)
     {
 
-       mSlaveEquationIdToNodalNormalMap.insert({SlaveDofEquationId,nodalNormalComponent});
-
+        mSlaveEquationIdToNodalNormalMap.insert({SlaveDofEquationId, nodalNormalComponent});
     }
 
+    void SetRtMinvR(double value)
+    {
 
+        this->RtMinvR = value;
+    }
 
     /**
 		Get the Total number of MasterDOFs for a given slave dof
@@ -258,7 +258,7 @@ class MpcData
     std::string GetName()
     {
         return mName;
-    }    
+    }
 
     /**
 		Set the activeness for current set of constraints. 
@@ -274,7 +274,7 @@ class MpcData
     bool IsActive()
     {
         return mActive;
-    }    
+    }
 
     bool IsWeak()
     {
@@ -285,7 +285,6 @@ class MpcData
     {
         this->mIsWeak = value;
     }
-
 
     ///@
 
@@ -300,10 +299,10 @@ class MpcData
     {
         std::cout << std::endl;
         std::cout << "===============================================================" << std::endl;
-        std::cout << "Number of Slave DOFs :: "<< mDofConstraints.size()<<std::endl;
-        for(auto i : mDofConstraints)
+        std::cout << "Number of Slave DOFs :: " << mDofConstraints.size() << std::endl;
+        for (auto i : mDofConstraints)
         {
-            std::cout << "Number of Master DOFs :: "<< i.second.size()<<std::endl;
+            std::cout << "Number of Master DOFs :: " << i.second.size() << std::endl;
         }
 
         std::cout << "===============================================================" << std::endl;
@@ -328,9 +327,9 @@ class MpcData
                        std::unordered_map<unsigned int, double>>
         mEquationIdToWeightsMap;
 
-    std::unordered_map<SlavePairType, double,pair_hash> mSlaveDofToNodalNormalMap;    
+    std::unordered_map<SlavePairType, double, pair_hash> mSlaveDofToNodalNormalMap;
     std::unordered_map<unsigned int, double> mSlaveEquationIdToNodalNormalMap;
-
+    double RtMinvR;
     bool mActive;
     std::string mName;
     bool mIsWeak;

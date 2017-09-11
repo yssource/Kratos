@@ -265,7 +265,7 @@ class CustomHoleCuttingProcess
 
 		// Extracting mesh elements which are only above the threshold value
 		std::cout << "  Extracting elements after " << distance << std::endl;
-		Element::Pointer pElem;
+
 		std::vector<unsigned int> vector_of_node_ids;
 
 		//For signed distance
@@ -275,10 +275,12 @@ class CustomHoleCuttingProcess
 
 		for (ModelPart::ElementsContainerType::iterator it = rModelPart.ElementsBegin(); it != rModelPart.ElementsEnd(); ++it)
 		{
+
 			double elementDistance = 0.0;
 			unsigned int numPointsOutside = 0;
 			unsigned int j = 0;
 			Geometry<Node<3>> &geom = it->GetGeometry();
+			
 			for (j = 0; j < geom.size(); j++)
 			{
 				elementDistance = it->GetGeometry()[j].FastGetSolutionStepValue(DISTANCE);
@@ -292,14 +294,18 @@ class CustomHoleCuttingProcess
 			if (numPointsOutside == geom.size())
 			//if(numPointsOutside > 0)
 			{
-
+				
 				it->Set(ACTIVE, false);
-				/*std::cout<<"Elements Nr "<<it->Id()<<"inactive"<<std::endl;*/
-				pElem = Element::Pointer(new Element(*it));
+				
+				
+				Element::Pointer pElem = *(it.base());
+
 				rExtractedModelPart.Elements().push_back(pElem);
+				
 				//Adding node all the node Ids of the elements satisfying the condition
 				for (j = 0; j < pElem->GetGeometry().PointsNumber(); j++)
 					vector_of_node_ids.push_back(pElem->GetGeometry()[j].Id());
+				
 			}
 
 			/*if(!(it->IsDefined(ACTIVE)))
@@ -318,6 +324,7 @@ class CustomHoleCuttingProcess
 
 			Node<3>::Pointer pnode = rModelPart.Nodes()(*it);
 			rExtractedModelPart.AddNode(pnode);
+			
 		}
 
 		std::cout << " ########  Successful hole cutting of the Mesh !!########## " << std::endl;

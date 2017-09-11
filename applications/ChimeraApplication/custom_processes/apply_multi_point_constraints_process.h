@@ -88,8 +88,8 @@ class ApplyMultipointConstraintsProcess : public Process
         {
             KRATOS_THROW_ERROR(std::runtime_error, "No valid interpolation type provided !", "");
         }
-        
-        //AddMasterSlaveRelation();        
+
+        //AddMasterSlaveRelation();
     }
 
     ApplyMultipointConstraintsProcess(ModelPart &model_part, std::string name = "default") : Process(Flags()), mr_model_part(model_part), m_parameters("{}")
@@ -110,7 +110,7 @@ class ApplyMultipointConstraintsProcess : public Process
 		Applies the MPC condition using two model parts, one as master and other as slave.
         Here a nearest element interpolation is used by default to get the relation between master and slave
 		*/
-/*    void AddMasterSlaveRelation()
+    /*    void AddMasterSlaveRelation()
     {
         ModelPart &master_model_part = mr_model_part.GetSubModelPart(m_parameters["master_sub_model_part_name"].GetString());
         ModelPart &slave_model_part = mr_model_part.GetSubModelPart(m_parameters["slave_sub_model_part_name"].GetString());
@@ -237,9 +237,9 @@ class ApplyMultipointConstraintsProcess : public Process
         pMpc->AddConstraint(slaveDOF, masterDOF, masterWeight, PartitionId);
     }
 
-       void AddNodalNormalSlaveRelationWithDofs(DofType slaveDOF, double nodalNormalComponent, int PartitionId = 0)
+    void AddNodalNormalSlaveRelationWithDofs(DofType slaveDOF, double nodalNormalComponent, int PartitionId = 0)
     {
-        pMpc->AddNodalNormalToSlaveDof(slaveDOF,nodalNormalComponent , PartitionId);
+        pMpc->AddNodalNormalToSlaveDof(slaveDOF, nodalNormalComponent, PartitionId);
     }
 
     /**
@@ -249,6 +249,12 @@ class ApplyMultipointConstraintsProcess : public Process
     void SetActive(bool isActive = true)
     {
         pMpc->SetActive(isActive);
+    }
+
+    void SetRtMinvR(double value)
+    {
+
+        pMpc->RtMinvR = value;
     }
 
     /**
@@ -264,7 +270,6 @@ class ApplyMultipointConstraintsProcess : public Process
     {
 
         pMpc->SetIsWeak(value);
-
     }
 
     /// Destructor.

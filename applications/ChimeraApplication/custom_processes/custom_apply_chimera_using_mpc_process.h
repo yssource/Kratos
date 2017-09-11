@@ -33,6 +33,7 @@
 #include "geometries/geometry_data.h"
 #include "includes/variables.h"
 #include "utilities/math_utils.h"
+# include "includes/kratos_parameters.h"
 
 #include "spaces/ublas_space.h"
 #include "linear_solvers/linear_solver.h"
@@ -46,6 +47,7 @@
 #include "custom_processes/custom_calculate_signed_distance_process.h"
 #include "custom_hole_cutting_process.h"
 #include "custom_processes/apply_multi_point_constraints_process.h"
+#include "custom_utilities/vtk_output.hpp"
 
 namespace Kratos
 {
@@ -196,7 +198,7 @@ class CustomApplyChimeraUsingMpcProcess
 
 							if (TDim == 3)
 								pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i]);
-							//pMpcProcess->AddMasterSlaveRelationVariables( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i], 0 );
+							pMpcProcess->AddMasterSlaveRelationWithNodesAndVariable(geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
 						}
 					}
 				}
@@ -480,12 +482,13 @@ class CustomApplyChimeraUsingMpcProcess
 
 			ModelPart::Pointer pHoleModelPart = ModelPart::Pointer(new ModelPart("HoleModelpart"));
 			ModelPart::Pointer pHoleBoundaryModelPart = ModelPart::Pointer(new ModelPart("HoleBoundaryModelPart"));
+			//ModelPart::Pointer pNewSkinModelPart = ModelPart::Pointer(new ModelPart("NewSkinModelPart"));
 			pMpcProcess->SetWeak(true);
 			std::cout << "checkpoint nav 1" << std::endl;
-			//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
+
 			//this->pCalculateDistanceProcess->CalculateSignedDistanceOnModelPart(mrPatchModelPart, mrPatchBoundaryModelPart);
 			this->pCalculateDistanceProcess->CalculateSignedDistance(mrBackgroundModelPart, mrPatchBoundaryModelPart);
-			//std::cout<<"checkpoint nav 2"<<std::endl;
+			//PrintGIDMesh(*pNewSkinModelPart);
 			this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart, *pHoleModelPart, *pHoleBoundaryModelPart, overlap_distance);
 
 			CalculateNodalAreaAndNodalMass(mrPatchBoundaryModelPart, 1);
@@ -495,7 +498,7 @@ class CustomApplyChimeraUsingMpcProcess
 
 			if (type == "NearestElement")
 			{
-				ApplyMpcConstraint(mrPatchBoundaryModelPart, pBinLocatorForBackground, 0);//0 for pressure coupling
+				ApplyMpcConstraint(mrPatchBoundaryModelPart, pBinLocatorForBackground, 1); //0 for pressure coupling
 				std::cout << "Patch boundary coupled with background" << std::endl;
 				ApplyMpcConstraint(*pHoleBoundaryModelPart, pBinLocatorForPatch, 1);
 				std::cout << "HoleBoundary  coupled with patch" << std::endl;
@@ -503,7 +506,7 @@ class CustomApplyChimeraUsingMpcProcess
 
 			else if (type == "Conservative")
 			{
-				ApplyMpcConstraintConservative(mrPatchBoundaryModelPart, pBinLocatorForBackground, 0);//0 for pressure coupling
+				ApplyMpcConstraintConservative(mrPatchBoundaryModelPart, pBinLocatorForBackground, 0); //0 for pressure coupling
 				std::cout << "Patch boundary coupled with background using conservative approach" << std::endl;
 				ApplyMpcConstraintConservative(*pHoleBoundaryModelPart, pBinLocatorForPatch, 1);
 				std::cout << "HoleBoundary  coupled with patch using conservative approach" << std::endl;
@@ -517,6 +520,7 @@ class CustomApplyChimeraUsingMpcProcess
 
 			ModelPart::Pointer pHoleModelPart = ModelPart::Pointer(new ModelPart("HoleModelpart"));
 			ModelPart::Pointer pHoleBoundaryModelPart = ModelPart::Pointer(new ModelPart("HoleBoundaryModelPart"));
+			//ModelPart::Pointer pNewSkinModelPart = ModelPart::Pointer(new ModelPart("NewSkinModelPart"));
 
 			//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
 			this->pCalculateDistanceProcess->CalculateSignedDistance(mrBackgroundModelPart, mrPatchBoundaryModelPart);
@@ -671,6 +675,50 @@ class CustomApplyChimeraUsingMpcProcess
 		normal = normal * sign;
 		// 				noalias((it)->GetValue(NORMAL)) = An;
 	}
+
+	void PrintGIDMesh(ModelPart& rmodel_part)
+	{
+		std::ofstream myfile;
+        myfile.open (rmodel_part.Name()+".post.msh");
+        myfile << "MESH \"leaves\" dimension 2 ElemType Line Nnode 2" << std::endl;
+        myfile << "# color 96 96 96" << std::endl;
+        myfile << "Coordinates" << std::endl;
+        myfile << "# node number coordinate_x coordinate_y coordinate_z  " << std::endl;
+        
+		
+
+		for (unsigned int i = 0; i < rmodel_part.Nodes().size(); i++)
+		{
+			ModelPart::NodesContainerType::iterator iparticle = rmodel_part.NodesBegin() + i;
+			Node<3>::Pointer p_node = *(iparticle.base());
+			myfile << p_node->Id()<< "  " << p_node->Coordinates()[0] << "  " << p_node->Coordinates()[1]<< "  " << p_node->Coordinates()[2] << std::endl;
+
+		}
+
+		myfile << "end coordinates" << std::endl;
+        myfile << "elements" << std::endl;
+        myfile << "# element node_1 node_2 material_number" << std::endl;
+
+		for (ConditionsArrayType::iterator it = rmodel_part.Conditions().begin();
+			 it != rmodel_part.Conditions().end(); it++)
+		{
+			
+			myfile << it->Id() << "  ";
+			for (unsigned int i =0; i < it->GetGeometry().PointsNumber(); i++)
+			myfile << (it->GetGeometry()[i]).Id() << "  ";
+
+			myfile << std::endl;
+
+		}
+
+		myfile << "end elements" << std::endl;
+
+
+
+
+	}
+
+	
 
 	virtual std::string Info() const
 	{

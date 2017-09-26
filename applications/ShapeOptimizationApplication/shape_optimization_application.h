@@ -75,8 +75,11 @@ namespace Kratos
 	KRATOS_DEFINE_VARIABLE(Vector,DKDXU);
     KRATOS_DEFINE_VARIABLE(Vector,DKDXU_X);
     KRATOS_DEFINE_VARIABLE(Vector,DKDXU_Y);
-    KRATOS_DEFINE_VARIABLE(Vector,DKDXU_Z);
-
+	KRATOS_DEFINE_VARIABLE(Vector,DKDXU_Z);
+	
+    // For CAD reconstruction
+	KRATOS_DEFINE_VARIABLE( int, CAD_RECONSTRUCTION_ID );
+	
 	///@} 
 	///@name Type Definitions
 	///@{ 

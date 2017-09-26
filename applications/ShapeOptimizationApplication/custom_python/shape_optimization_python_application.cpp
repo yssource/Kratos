@@ -81,6 +81,10 @@ namespace Python
 
     // For mapping
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(MAPPING_ID);
+
+    // For CAD reconstruction
+    KRATOS_REGISTER_IN_PYTHON_VARIABLE(CAD_RECONSTRUCTION_ID);
+
   }
   
   

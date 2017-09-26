@@ -74,6 +74,8 @@ namespace Kratos
     KRATOS_CREATE_VARIABLE( Vector, DKDXU_Y );
     KRATOS_CREATE_VARIABLE( Vector, DKDXU_Z );
 
+    // For CAD reconstruction
+    KRATOS_CREATE_VARIABLE( int, CAD_RECONSTRUCTION_ID );
 
     // Eof variables
 
@@ -129,8 +131,11 @@ namespace Kratos
         KRATOS_REGISTER_VARIABLE( DKDXU )
 		KRATOS_REGISTER_VARIABLE( DKDXU_X )
 		KRATOS_REGISTER_VARIABLE( DKDXU_Y )
-		KRATOS_REGISTER_VARIABLE( DKDXU_Z )
-
+        KRATOS_REGISTER_VARIABLE( DKDXU_Z )
+        
+        // For CAD reconstruction
+        KRATOS_REGISTER_VARIABLE( CAD_RECONSTRUCTION_ID )
+        
         // Register elements
         KRATOS_REGISTER_ELEMENT( "SmallDisplacementAnalyticSensitivityElement3D4N", mSmallDisplacementAnalyticSensitivityElement3D4N );
         KRATOS_REGISTER_ELEMENT( "SmallDisplacementAnalyticSensitivityElement3D10N", mSmallDisplacementAnalyticSensitivityElement3D10N );

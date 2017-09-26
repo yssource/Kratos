@@ -35,6 +35,9 @@
 #include "custom_utilities/input_output/universal_file_io.h"
 #include "custom_utilities/input_output/vtk_file_io.h"
 
+#include "linear_solvers/linear_solver.h"
+#include "custom_utilities/cad_reconstruction/cad_reconstructor.h"
+#include "custom_utilities/cad_reconstruction/reconstruction_output_utilities.h"
 
 // ==============================================================================
 
@@ -48,6 +51,10 @@ namespace Python
 void  AddCustomUtilitiesToPython()
 {
     using namespace boost::python;
+
+    typedef UblasSpace<double, CompressedMatrix, Vector> CompressedSpaceType;
+    typedef UblasSpace<double, Matrix, Vector> DenseSpaceType;
+    typedef LinearSolver<CompressedSpaceType, DenseSpaceType > SparseLinearSolverType;
 
     // ================================================================
     // For perfoming the mapping according to Vertex Morphing
@@ -136,6 +143,20 @@ void  AddCustomUtilitiesToPython()
         .def("initializeLogging", &VTKFileIO::initializeLogging)
         .def("logNodalResults", &VTKFileIO::logNodalResults)
         ;
+
+    // ========================================================================
+    // For CAD reconstruction
+    // ========================================================================
+    class_<CADReconstructor, bases<Process> >("CADReconstructor", init<>())
+        ;   
+    class_<ReconstructionDataBase, bases<Process> >("ReconstructionDataBase", init<ModelPart&, boost::python::dict, boost::python::dict>())
+        .def("Create", &ReconstructionDataBase::Create)
+        ;
+    class_<ReconstructionOutputUtilities, bases<Process> >("ReconstructionOutputUtilities", init<ReconstructionDataBase&>())
+        .def("OutputCADSurfacePoints", &ReconstructionOutputUtilities::OutputCADSurfacePoints)
+        .def("OutputGaussPointsOfFEMesh", &ReconstructionOutputUtilities::OutputGaussPointsOfFEMesh)
+        .def("OutputControlPointDisplacementsInRhinoFormat", &ReconstructionOutputUtilities::OutputControlPointDisplacementsInRhinoFormat)        
+        ;                            
 }
 
 

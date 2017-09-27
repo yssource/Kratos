@@ -71,8 +71,8 @@ public:
 
 	///@}
 
-	/// Pointer definition of Patch
-	//    KRATOS_CLASS_POINTER_DEFINITION[Patch];
+	// Pointer definition of Patch
+	KRATOS_CLASS_POINTER_DEFINITION(Patch);
 
 	/// Default constructor.
 	Patch(unsigned int patch_id, NURBSSurface nurbs_surface, std::vector<BoundaryLoop> boundary_loops ) 
@@ -183,11 +183,11 @@ private:
 	// ==============================================================================
 	// General working arrays
 	// ==============================================================================
-	/// Assignment operator.
-	//      Patch& operator=[Patch const& rOther];
+    /// Assignment operator.
+    //      Patch& operator=(Patch const& rOther);
 
-	/// Copy constructor.
-	//      Patch[Patch const& rOther];
+    /// Copy constructor.
+    //      Patch(Patch const& rOther);	
 
 }; // Class Patch
 

@@ -37,7 +37,7 @@
 
 #include "linear_solvers/linear_solver.h"
 #include "custom_utilities/cad_reconstruction/cad_reconstructor.h"
-#include "custom_utilities/cad_reconstruction/reconstruction_output_utilities.h"
+#include "custom_utilities/cad_reconstruction/reconstruction_output_writer.h"
 
 // ==============================================================================
 
@@ -147,18 +147,20 @@ void  AddCustomUtilitiesToPython()
     // ========================================================================
     // For CAD reconstruction
     // ========================================================================
-    class_<CADReconstructor, bases<Process> >("CADReconstructor", init<>())
-        ;   
     class_<ReconstructionDataBase, bases<Process> >("ReconstructionDataBase", init<ModelPart&, boost::python::dict, boost::python::dict>())
         .def("Create", &ReconstructionDataBase::Create)
         ;
-    class_<ReconstructionOutputUtilities, bases<Process> >("ReconstructionOutputUtilities", init<ReconstructionDataBase&>())
-        .def("OutputCADSurfacePoints", &ReconstructionOutputUtilities::OutputCADSurfacePoints)
-        .def("OutputGaussPointsOfFEMesh", &ReconstructionOutputUtilities::OutputGaussPointsOfFEMesh)
-        .def("OutputControlPointDisplacementsInRhinoFormat", &ReconstructionOutputUtilities::OutputControlPointDisplacementsInRhinoFormat)        
+    class_<CADReconstructor, bases<Process> >("CADReconstructor", init<ReconstructionDataBase&>())
+        .def("CreateSurfaceMappingConditions", &CADReconstructor::CreateSurfaceMappingConditions)
+        .def("CreateCouplingConditionsOnAllCouplingPoints", &CADReconstructor::CreateCouplingConditionsOnAllCouplingPoints)    
+        .def("CreateDirichletConditions", &CADReconstructor::CreateDirichletConditions)            
+        ;   
+    class_<ReconstructionOutputWriter, bases<Process> >("ReconstructionOutputWriter", init<ReconstructionDataBase&>())
+        .def("OutputCADSurfacePoints", &ReconstructionOutputWriter::OutputCADSurfacePoints)
+        .def("OutputGaussPointsOfFEMesh", &ReconstructionOutputWriter::OutputGaussPointsOfFEMesh)
+        .def("OutputControlPointDisplacementsInRhinoFormat", &ReconstructionOutputWriter::OutputControlPointDisplacementsInRhinoFormat)        
         ;                            
 }
-
 
 }  // namespace Python.
 

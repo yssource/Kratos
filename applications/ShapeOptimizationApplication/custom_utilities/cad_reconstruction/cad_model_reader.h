@@ -100,7 +100,8 @@ public:
 	void ReadGeometry(PatchVector& r_patches)
 	{
 		std::cout << "\n> Start reading CAD geometry of given json-file..." << std::endl;
-
+		boost::timer timer;
+		
 		// loop over patches / faces
 		for (int i = 0; i < boost::python::len(mr_cad_geometry_in_json["faces"]); i++)
 		{
@@ -108,7 +109,7 @@ public:
 			// 1. Step: We read in the given nurbs surface
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-			std::cout << "> Reading surface " << i << "..." << std::endl;
+			std::cout << "> Reading  surface/patch " << i << "..." << std::endl;
 
 			// Variables needed later
 			DoubleVector knot_vector_u;
@@ -222,13 +223,14 @@ public:
 			Patch patch(patch_id, surface, boundary_loops);
 			r_patches.push_back(patch);
 		}		
-		std::cout << "> Finished reading CAD geometry of given json-file..." << std::endl;	
+		std::cout << "> Time needed for reading CAD geometry of given json-file: " << timer.elapsed() << " s" << std::endl;   		
 	}
 
 	// --------------------------------------------------------------------------
 	void ReadIntegrationData(BREPElementVector& r_brep_elements)
 	{
 		std::cout << "\n> Start reading CAD integration data of given json-file..." << std::endl;
+		boost::timer timer;
 
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// 1. Step: Loop over all 2D elements defined in the integration file to assign every element_id the 
@@ -357,7 +359,7 @@ public:
 				r_brep_elements.push_back(new_brep_element);
 			}
 		}
-		std::cout << "> Finished reading CAD integration data of given json-file..." << std::endl;
+		std::cout << "> Time needed for reading CAD integration data of given json-file: " << timer.elapsed() << " s" << std::endl;   
 	}
 
 	// ==============================================================================

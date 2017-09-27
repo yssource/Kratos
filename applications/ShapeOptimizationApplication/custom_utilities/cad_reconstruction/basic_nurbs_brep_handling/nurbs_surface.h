@@ -1041,12 +1041,12 @@ public:
 	}	
 
 	// --------------------------------------------------------------------------
-	IntVector GetKnotSpan(double _u, double _v)
+	array_1d<int,2> GetKnotSpan(double _u, double _v)
 	{
 		int span_u=find_Knot_Span(m_knot_vector_u,_u,m_p,m_n_u);
 		int span_v=find_Knot_Span(m_knot_vector_v,_v,m_q,m_n_v);
 
-		IntVector span(2);
+		array_1d<int,2> span;
 		span[0] = span_u;
 		span[1] = span_v;
 

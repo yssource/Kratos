@@ -21,24 +21,36 @@ import json as json
 class CADReconstrutionUtilities():
 
     # --------------------------------------------------------------------------
-    def __init__( self, fem_filename, fe_refinement_level, cad_geometry_filename, cad_integration_data_filename ):
-
+    def __init__( self, fem_filename, cad_geometry_filename, cad_integration_data_filename ):
         self.FEMInputFilename = fem_filename
-        self.FERefinementLevel = fe_refinement_level
         self.CADGeometryFilename = cad_geometry_filename
         self.CADIntegrationDataFilename = cad_integration_data_filename
 
+        # Internal parameters to specify reconstruction method
+        
+        # Gernal strategy parameters
+        self.ReconstructionStrategy = "mapping" # mapping / least_squares 
+
+        # Parameters to edit input data       
+        self.FERefinementLevel = 0
+
+        # Projection setttings
+        self.ParameterResolutionForInitialProjection = [ 20, 20 ]
+        self.MaxProjectionIterations = 20
+        self.ProjectionTolerance = 1e-5
+
+        # Specific parameters for mapping strategy
+        self.FEMGaussIntegrationDegree = 5
+
+        
     # --------------------------------------------------------------------------
     def Initialize( self ):
         self.__ReadFEData()
         self.__RefineFEModel()
         self.__ReadCADData()
+        self.__InitializeBoundaryConditions()
         self.__CreateReconstructionDataBase()
         self.__CreateReconstructionOutputWriter()
-
-    # # --------------------------------------------------------------------------
-    # def PerformReconstruction( self ):
-        
 
     # --------------------------------------------------------------------------
     def __ReadFEData( self ):
@@ -83,14 +95,54 @@ class CADReconstrutionUtilities():
             self.CADIntegrationData = json.load(cad_data2)       
 
     # --------------------------------------------------------------------------
+    def __InitializeBoundaryConditions( self ):
+        self.AreCouplingConditionsSpecifiedForAllCouplingPoints = False
+        self.AreDirichletConditionsSpecified = False
+    
+    # --------------------------------------------------------------------------
     def __CreateReconstructionDataBase( self ):
-        self.ReconstructionDataBase = ReconstructionDataBase(self.FEModelPart, self.CADGeometry, self.CADIntegrationData)
-        self.ReconstructionDataBase.Create()
+        self.DataBase = ReconstructionDataBase(self.FEModelPart, self.CADGeometry, self.CADIntegrationData)
+        self.DataBase.Create()
 
     # --------------------------------------------------------------------------
     def __CreateReconstructionOutputWriter( self ):
-        self.OutputWriter = ReconstructionOutputUtilities( self.ReconstructionDataBase )      
+        self.OutputWriter = ReconstructionOutputWriter( self.DataBase )    
 
+    # --------------------------------------------------------------------------
+    def SetCouplingConditionsOnAllCouplingPoints( self ):
+        self.AreCouplingConditionsSpecifiedForAllCouplingPoints = True
+
+    # --------------------------------------------------------------------------
+    def SetDirichletBoundaryConditions( self, list_of_condition_settings ):
+        self.AreDirichletConditionsSpecified = True
+        self.DirichletConditions = list_of_condition_settings
+
+    # --------------------------------------------------------------------------
+    def PerformReconstruction( self ):
+        self.__CreateReconstructor()
+        self.__CreateConditions()
+
+    # --------------------------------------------------------------------------
+    def __CreateReconstructor( self ):
+        self.Reconstructor = CADReconstructor( self.DataBase )
+
+    # --------------------------------------------------------------------------
+    def __CreateConditions( self ):
+        if self.ReconstructionStrategy == "mapping":
+            self.Reconstructor.CreateSurfaceMappingConditions( self.ParameterResolutionForInitialProjection, 
+                                                               self.FEMGaussIntegrationDegree,
+                                                               self.MaxProjectionIterations,
+                                                               self.ProjectionTolerance )
+            err
+        else:
+            raise ValueError( "The following reconstruction strategy does not exist: ", self.ReconstructionStrategy )
+
+        if self.AreCouplingConditionsSpecifiedForAllCouplingPoints: 
+            self.Reconstructor.CreateCouplingConditionsOnAllCouplingPoints()
+
+        if self.AreDirichletConditionsSpecified:
+            self.Reconstructor.CreateDirichletConditions( self.DirichletConditions )
+    
     # --------------------------------------------------------------------------
     def OutputFEData( self ):
         from gid_output import GiDOutput
@@ -113,8 +165,8 @@ class CADReconstrutionUtilities():
         self.OutputWriter.OutputCADSurfacePoints( file_to_write, u_resolution, v_resolution )
 
     # --------------------------------------------------------------------------
-    def OutputGaussPointsOfFEMesh( self, file_to_write,integration_degree ):
-        self.OutputWriter.OutputGaussPointsOfFEMesh( file_to_write,integration_degree )
+    def OutputGaussPointsOfFEMesh( self, file_to_write ):
+        self.OutputWriter.OutputGaussPointsOfFEMesh( file_to_write, self.FEMGaussIntegrationDegree )
 
     # --------------------------------------------------------------------------
     def OutputControlPointDisplacementsInRhinoFormat( self, file_to_write ):
@@ -126,62 +178,55 @@ class CADReconstrutionUtilities():
 
 # Input parameters
 fem_filename = "tripod"
-fe_refinement_level = 0
 cad_geometry_filename = "tripod_geometry.json" 
-cad_integration_data_filename = "tripod_integration_data.json" 
+cad_integration_data_filename = "tripod_integration_data.json"
 
-# Reconstruction
-CADReconstructionUtility = CADReconstrutionUtilities( fem_filename, fe_refinement_level, cad_geometry_filename, cad_integration_data_filename )
+# Initialize Reconstruction
+CADReconstructionUtility = CADReconstrutionUtilities( fem_filename, cad_geometry_filename, cad_integration_data_filename )
 CADReconstructionUtility.Initialize()
+
+# Set Boundary Conditions
+CADReconstructionUtility.SetCouplingConditionsOnAllCouplingPoints()
+
+# Perform reconstruction
+CADReconstructionUtility.PerformReconstruction()
 
 # Some output
 CADReconstructionUtility.OutputFEData()
 CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_cad_geometry.txt", 50, 50 )
-CADReconstructionUtility.OutputGaussPointsOfFEMesh( "gauss_points_of_fe_mesh.txt", 5)
+CADReconstructionUtility.OutputGaussPointsOfFEMesh( "gauss_points_of_fe_mesh.txt" )
 CADReconstructionUtility.OutputControlPointDisplacementsInRhinoFormat( "tripod.post.res" )
 
-err
 
 
 
+# # ======================================================================================================================================
+# # Mapping
+# # ======================================================================================================================================    
 
-# Output parameters
-cad_geometry_output_filename = cad_geometry_filename.replace(".json","_updated.json")
+# # Create CAD-mapper
+# linear_solver = SuperLUSolver()
+# # DiagPrecond = DiagonalPreconditioner()
+# # linear_solver =  BICGSTABSolver(1e-9, 5000, DiagPrecond)
+# # linear_solver = AMGCLSolver(AMGCLSmoother.GAUSS_SEIDEL, AMGCLIterativeSolverType.BICGSTAB, 1e-9, 300, 2, 10)
+# mapper = CADMapper(fe_model_part,cad_geometry,cad_integration_data,linear_solver)
 
-# ======================================================================================================================================
-# Mapping
-# ======================================================================================================================================    
+# # Compute mapping matrix
+# u_resolution = 300
+# v_resolution = 300
+# mapper.compute_mapping_matrix(u_resolution,v_resolution)
 
-# Create CAD-mapper
-linear_solver = SuperLUSolver()
-# DiagPrecond = DiagonalPreconditioner()
-# linear_solver =  BICGSTABSolver(1e-9, 5000, DiagPrecond)
-# linear_solver = AMGCLSolver(AMGCLSmoother.GAUSS_SEIDEL, AMGCLIterativeSolverType.BICGSTAB, 1e-9, 300, 2, 10)
-mapper = CADMapper(fe_model_part,cad_geometry,cad_integration_data,linear_solver)
+# # Apply boundary conditions
+# penalty_factor_displacement_coupling = 1e3
+# penalty_factor_rotation_coupling = 1e3
+# penalty_factor_dirichlet_condition = 1e3
+# edges_with_specific_dirichlet_conditions = [ ]
+# edges_with_enforced_tangent_continuity = [ ]
+# mapper.apply_boundary_conditions( penalty_factor_displacement_coupling, 
+#                                   penalty_factor_rotation_coupling, 
+#                                   penalty_factor_dirichlet_condition,
+#                                   edges_with_specific_dirichlet_conditions,
+#                                   edges_with_enforced_tangent_continuity )
 
-# Compute mapping matrix
-u_resolution = 300
-v_resolution = 300
-mapper.compute_mapping_matrix(u_resolution,v_resolution)
-
-# Apply boundary conditions
-penalty_factor_displacement_coupling = 1e3
-penalty_factor_rotation_coupling = 1e3
-penalty_factor_dirichlet_condition = 1e3
-edges_with_specific_dirichlet_conditions = [ ]
-edges_with_enforced_tangent_continuity = [ ]
-mapper.apply_boundary_conditions( penalty_factor_displacement_coupling, 
-                                  penalty_factor_rotation_coupling, 
-                                  penalty_factor_dirichlet_condition,
-                                  edges_with_specific_dirichlet_conditions,
-                                  edges_with_enforced_tangent_continuity )
-
-# Perform mapping
-mapper.map_to_cad_space()
-
-# Output control point update as result file to be used in Rhino
-mapper.output_control_point_displacements(rhino_result_file)
-
-# Output json file with updated geometry
-with open(cad_geometry_output_filename, 'w') as fp:
-    json.dump(cad_geometry, fp)
+# # Perform mapping
+# mapper.map_to_cad_space()

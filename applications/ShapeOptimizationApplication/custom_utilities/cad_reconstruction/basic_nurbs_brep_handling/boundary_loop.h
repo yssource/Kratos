@@ -73,6 +73,7 @@ public:
 	  m_is_inner_loop(is_inner_loop)
 	{
 		// Create polygon for inside / outside check
+		std::cout << "> Better creation of polygon needed (e.g as in Carat). Currently there is only a hard coded number of points in boundary polygon!!!!!!" << std::endl;								
 		CreatePolygon();
 	}
 
@@ -84,10 +85,8 @@ public:
 	// --------------------------------------------------------------------------
 	void CreatePolygon()	
 	{
-		std::cout << "> Better creation of points on polygon needed, like the one in Carat e.g. Currently only hard coded!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
-		unsigned int np_per_edge = 500;
-
 		// Variables needed
+		unsigned int np_per_edge = 500;
 		unsigned int counter=0;
 
 		// Loop over all boundary edges creating the closed boundary loop

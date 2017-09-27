@@ -8,8 +8,8 @@
 //
 // ==============================================================================
 
-#ifndef CAD_RECONSTRUCTION_OUTPUT_UTILITIES
-#define CAD_RECONSTRUCTION_OUTPUT_UTILITIES
+#ifndef CAD_RECONSTRUCTION_OUTPUT_WRITER_H
+#define CAD_RECONSTRUCTION_OUTPUT_WRITER_H
 
 // ------------------------------------------------------------------------------
 // System includes
@@ -34,29 +34,30 @@
 
 namespace Kratos
 {
-class ReconstructionOutputUtilities
+class ReconstructionOutputWriter
 {
   public:
     ///@name Type Definitions
     ///@{
 
     typedef Node<3> NodeType;
-
-    /// Pointer definition of ReconstructionOutputUtilities
-    KRATOS_CLASS_POINTER_DEFINITION(ReconstructionOutputUtilities);
+    typedef Element::GeometryType::IntegrationMethod IntegrationMethodType;
+    
+    /// Pointer definition of ReconstructionOutputWriter
+    KRATOS_CLASS_POINTER_DEFINITION(ReconstructionOutputWriter);
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    ReconstructionOutputUtilities( ReconstructionDataBase& reconstruction_data_base )
-    : mpReconstructionDataBase( reconstruction_data_base )
+    ReconstructionOutputWriter( ReconstructionDataBase& reconstruction_data_base )
+    : mrReconstructionDataBase( reconstruction_data_base )
     {      
     }
 
     /// Destructor.
-    virtual ~ReconstructionOutputUtilities()
+    virtual ~ReconstructionOutputWriter()
     {
     }
 
@@ -70,8 +71,8 @@ class ReconstructionOutputUtilities
       double max_coordinate = 1000;
       std::cout << "> Max value for control point coordinates set to " << max_coordinate << "." << std::endl;
 
-      std::vector<Patch>& patches = mpReconstructionDataBase.GetPatchVector();
-      for(auto & patch_i : patches) 
+      std::vector<Patch>& patch_vector = mrReconstructionDataBase.GetPatchVector();
+      for(auto & patch_i : patch_vector) 
 			{
 				std::vector<double>& knot_vec_u_i = patch_i.GetSurface().GetKnotVectorU();
         std::vector<double>& knot_vec_v_i = patch_i.GetSurface().GetKnotVectorV();
@@ -125,33 +126,38 @@ class ReconstructionOutputUtilities
 	    std::cout << "\n> Start writing Gauss points of given FE-mesh..." << std::endl;
       std::ofstream file_to_write(output_filename);
   
-      Element::GeometryType::IntegrationMethod integration_method;
-      switch(integration_degree)
-      {
-        case 1 : integration_method = GeometryData::GI_GAUSS_1; break;
-        case 2 : integration_method = GeometryData::GI_GAUSS_2; break;
-        case 3 : integration_method = GeometryData::GI_GAUSS_3; break;
-        case 4 : integration_method = GeometryData::GI_GAUSS_4; break;
-        case 5 : integration_method = GeometryData::GI_GAUSS_5; break;                                                           
-      }
+      IntegrationMethodType fem_integration_method = DefineIntegrationMethod( integration_degree );      
 
-      ModelPart& r_fe_model_part = mpReconstructionDataBase.GetFEModelPart();
+      ModelPart& r_fe_model_part = mrReconstructionDataBase.GetFEModelPart();
       for (ModelPart::ElementsContainerType::iterator elem_i = r_fe_model_part.ElementsBegin(); elem_i != r_fe_model_part.ElementsEnd(); ++elem_i)
       {
         Element::GeometryType& geom_i = elem_i->GetGeometry();
-        const Element::GeometryType::IntegrationPointsArrayType& integration_points = geom_i.IntegrationPoints(integration_method);
-        const unsigned int number_of_integration_points = integration_points.size();
+        const Element::GeometryType::IntegrationPointsArrayType& integration_points = geom_i.IntegrationPoints( fem_integration_method );
 
-        for ( unsigned int PointNumber = 0; PointNumber < number_of_integration_points; PointNumber++ )
+        for (auto & integration_point_i : integration_points)
         {
-          NodeType::CoordinatesArrayType ip_coordinates = geom_i.GlobalCoordinates(ip_coordinates, integration_points[PointNumber].Coordinates());
-
+          NodeType::CoordinatesArrayType ip_coordinates = geom_i.GlobalCoordinates(ip_coordinates, integration_point_i.Coordinates());
           file_to_write << ip_coordinates[0] << " " << ip_coordinates[1] << " " << ip_coordinates[2] << std::endl;
         }
       }
-    file_to_write.close();
-    std::cout << "> Finished writing Gauss points of given FE-mesh." << std::endl;
-  }
+      file_to_write.close();
+      std::cout << "> Finished writing Gauss points of given FE-mesh." << std::endl;
+    }
+
+    // --------------------------------------------------------------------------
+    IntegrationMethodType DefineIntegrationMethod(int integration_degree )
+    {
+      IntegrationMethodType fem_integration_method;
+      switch(integration_degree)
+      {
+        case 1 : fem_integration_method = GeometryData::GI_GAUSS_1; break;
+        case 2 : fem_integration_method = GeometryData::GI_GAUSS_2; break;
+        case 3 : fem_integration_method = GeometryData::GI_GAUSS_3; break;
+        case 4 : fem_integration_method = GeometryData::GI_GAUSS_4; break;
+        case 5 : fem_integration_method = GeometryData::GI_GAUSS_5; break;
+      }
+      return fem_integration_method;
+    }    
 
   // --------------------------------------------------------------------------
     void OutputControlPointDisplacementsInRhinoFormat( std::string output_filename )
@@ -164,8 +170,8 @@ class ReconstructionOutputUtilities
       output_file << "Values" << std::endl;
 
       unsigned int control_point_iterator = 0;
-      std::vector<Patch>& patches = mpReconstructionDataBase.GetPatchVector();
-      for(auto & patch_i : patches) 
+      std::vector<Patch>& patch_vector = mrReconstructionDataBase.GetPatchVector();
+      for(auto & patch_i : patch_vector) 
 			{
         std::vector<ControlPoint>& control_points = patch_i.GetSurface().GetControlPoints();
         for(auto & control_point_i : control_points)
@@ -188,13 +194,13 @@ class ReconstructionOutputUtilities
     /// Turn back information as a string.
     virtual std::string Info() const
     {
-		return "ReconstructionOutputUtilities";
+		return "ReconstructionOutputWriter";
     }
 
     /// Print information about this object.
     virtual void PrintInfo(std::ostream &rOStream) const
     {
-		rOStream << "ReconstructionOutputUtilities";
+		rOStream << "ReconstructionOutputWriter";
     }
 
     /// Print object's data.
@@ -204,18 +210,15 @@ class ReconstructionOutputUtilities
 
   private:
 
-	// ==============================================================================
-    // Solver and strategies
-    // ==============================================================================
-    ReconstructionDataBase& mpReconstructionDataBase;
+    ReconstructionDataBase& mrReconstructionDataBase;
 
     /// Assignment operator.
-    //      ReconstructionOutputUtilities& operator=(ReconstructionOutputUtilities const& rOther);
+    //      ReconstructionOutputWriter& operator=(ReconstructionOutputWriter const& rOther);
 
     /// Copy constructor.
-    //      ReconstructionOutputUtilities(ReconstructionOutputUtilities const& rOther);
+    //      ReconstructionOutputWriter(ReconstructionOutputWriter const& rOther);
 
-}; // Class ReconstructionOutputUtilities
+}; // Class ReconstructionOutputWriter
 } // namespace Kratos.
 
-#endif // CAD_RECONSTRUCTION_OUTPUT_UTILITIES
+#endif // CAD_RECONSTRUCTION_OUTPUT_WRITER_H

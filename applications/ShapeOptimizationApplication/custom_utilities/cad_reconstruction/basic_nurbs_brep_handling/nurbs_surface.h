@@ -110,7 +110,7 @@ public:
 	///              Algorithm A4.3
 	///
 	/// ======================================================================================
-	///  \param[in]  rSurfacePoint   	evaluated point
+	///  \param[out]  rSurfacePoint   	evaluated point
 	///  \param[in]  _uoi    			local parameter in u-direction
 	///  \param[in]  _voi    			local parameter in v-direction
 	///
@@ -118,11 +118,12 @@ public:
 	///  \author     Daniel Baumgärtner (12/2016)
 	//
 	//########################################################################################
-	void EvaluateSurfacePoint(Point<3>& rSurfacePoint, double u, double v)
+	Point<3> EvaluateSurfacePoint( double u, double v )
 	{
-		rSurfacePoint[0] = 0;
-		rSurfacePoint[1] = 0;
-		rSurfacePoint[2] = 0;
+		Point<3> surface_point;
+		surface_point[0] = 0;
+		surface_point[1] = 0;
+		surface_point[2] = 0;
 
 		int span_u=find_Knot_Span(m_knot_vector_u,u,m_p,m_n_u);
 		int span_v=find_Knot_Span(m_knot_vector_v,v,m_q,m_n_v);
@@ -139,11 +140,13 @@ public:
 				Matrix R;
 				EvaluateNURBSFunctions(span_u, span_v, u, v, R);
 
-				rSurfacePoint[0] += R(b,c) * m_control_points[control_point_index].GetX();
-				rSurfacePoint[1] += R(b,c) * m_control_points[control_point_index].GetY();
-				rSurfacePoint[2] += R(b,c) * m_control_points[control_point_index].GetZ();
+				surface_point[0] += R(b,c) * m_control_points[control_point_index].GetX();
+				surface_point[1] += R(b,c) * m_control_points[control_point_index].GetY();
+				surface_point[2] += R(b,c) * m_control_points[control_point_index].GetZ();
 			}
 		}
+
+		return surface_point;
 	}
 
 	//  #####################################################################################
@@ -1014,13 +1017,12 @@ public:
 	}
 
 	// --------------------------------------------------------------------------
-	matrix<unsigned int> GetMappingMatrixIds(int span_u, int span_v, double _u, double _v)
+	std::vector<int> GetReconstructionIds(int span_u, int span_v, double _u, double _v)
 	{
 		if(span_u==-1) span_u=find_Knot_Span(m_knot_vector_u,_u,m_p,m_n_u);
 		if(span_v==-1) span_v=find_Knot_Span(m_knot_vector_v,_v,m_q,m_n_v);
 
-		// Initialize matrices
-		matrix<unsigned int> mapping_matrix_ids = zero_matrix<unsigned int>( m_p+1 ,m_q+1 );
+		std::vector<int> vector_of_ids;
 
 		// Loop in the same order as for the evaluation of the NURBs functiosn
 		for (int c=0;c<=m_q;c++)
@@ -1032,16 +1034,15 @@ public:
 				int vi = span_v-m_q+c;
 				int control_point_index =vi*m_n_u + ui;
 
-				// Store control point Id in corresponding matrix
-				mapping_matrix_ids(b,c) = m_control_points[control_point_index].GetMappingMatrixId();
+				vector_of_ids.push_back( m_control_points[control_point_index].GetReconstructionId() );
 			}
 		}
 
-		return mapping_matrix_ids;
+		return vector_of_ids;
 	}	
 
 	// --------------------------------------------------------------------------
-	array_1d<int,2> GetKnotSpan(double _u, double _v)
+	array_1d<int,2> GetKnotSpans( double _u, double _v )
 	{
 		int span_u=find_Knot_Span(m_knot_vector_u,_u,m_p,m_n_u);
 		int span_v=find_Knot_Span(m_knot_vector_v,_v,m_q,m_n_v);

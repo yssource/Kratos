@@ -94,8 +94,8 @@ class CADProjectionUtility
       for (auto & patch_i : mrPatchVector)
       {
         int index_in_patch_vector = &patch_i - &mrPatchVector[0];
-        DoubleVector& knot_vec_u_i = patch_i.GetSurface().GetKnotVectorU();
-        DoubleVector& knot_vec_v_i = patch_i.GetSurface().GetKnotVectorV();
+        DoubleVector& knot_vec_u_i = patch_i.GetSurfaceKnotVectorU();
+        DoubleVector& knot_vec_v_i = patch_i.GetSurfaceKnotVectorV();
         std::cout << "> Processing Patch with brep_id " << patch_i.GetId() << std::endl;
       
 				double u_min = knot_vec_u_i[0];
@@ -123,8 +123,7 @@ class CADProjectionUtility
 						if(point_is_inside)
 						{
 						  ++mNumberOfNodesInCADPointCloud;					
-						  Point<3> cad_point_coordinates;
-				    	patch_i.GetSurface().EvaluateSurfacePoint(cad_point_coordinates, u_i, v_j);
+						  Point<3> cad_point_coordinates = patch_i.EvaluateSurfacePoint( u_i, v_j );
 
               NodeType::Pointer new_cad_node = Node <3>::Pointer(new Node<3>(mNumberOfNodesInCADPointCloud, cad_point_coordinates));
 
@@ -165,7 +164,6 @@ class CADProjectionUtility
 				Vector gradient = ZeroVector(2);
 				double determinant_of_hessian = 0;
 				Matrix inverse_of_hessian = ZeroMatrix(2,2);				
-				Point<3> UpdatedCADPoint;
 
         // Variables neeed by the Netwon Raphson algorithm
 				double norm_delta_u = 100000000;
@@ -179,7 +177,7 @@ class CADProjectionUtility
           Distance(2) = nearest_point->Z() - PointOfInterest->Z();
           
           // The distance is used to compute hessian and gradient
-          patch_of_nearest_point.GetSurface().EvaluateGradientsForClosestPointSearch(Distance, hessian, gradient , parameter_values_of_nearest_point[0], parameter_values_of_nearest_point[1]);
+          patch_of_nearest_point.EvaluateGradientsForClosestPointSearch(Distance, hessian, gradient , parameter_values_of_nearest_point[0], parameter_values_of_nearest_point[1]);
 
           // u_k and v_k are updated
           MathUtils<double>::InvertMatrix( hessian, inverse_of_hessian, determinant_of_hessian );
@@ -188,7 +186,7 @@ class CADProjectionUtility
           parameter_values_of_nearest_point[1] -= delta_u(1);
 
           // Point on CAD surface is udpated
-          patch_of_nearest_point.GetSurface().EvaluateSurfacePoint(UpdatedCADPoint, parameter_values_of_nearest_point[0], parameter_values_of_nearest_point[1]);
+          Point<3> UpdatedCADPoint = patch_of_nearest_point.EvaluateSurfacePoint( parameter_values_of_nearest_point[0], parameter_values_of_nearest_point[1] );
           nearest_point->X() = UpdatedCADPoint[0];
           nearest_point->Y() = UpdatedCADPoint[1];
           nearest_point->Z() = UpdatedCADPoint[2];
@@ -206,7 +204,7 @@ class CADProjectionUtility
         }
 
         // Compute and output span of each parameter
-				parameter_spans_of_nearest_point = patch_of_nearest_point.GetSurface().GetKnotSpan(parameter_values_of_nearest_point[0], parameter_values_of_nearest_point[1]); 
+				parameter_spans_of_nearest_point = patch_of_nearest_point.ComputeSurfaceKnotSpans(parameter_values_of_nearest_point[0], parameter_values_of_nearest_point[1]); 
     }
     
     // ==============================================================================

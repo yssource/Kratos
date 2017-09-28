@@ -74,8 +74,8 @@ class ReconstructionOutputWriter
       std::vector<Patch>& patch_vector = mrReconstructionDataBase.GetPatchVector();
       for(auto & patch_i : patch_vector) 
 			{
-				std::vector<double>& knot_vec_u_i = patch_i.GetSurface().GetKnotVectorU();
-        std::vector<double>& knot_vec_v_i = patch_i.GetSurface().GetKnotVectorV();
+				std::vector<double>& knot_vec_u_i = patch_i.GetSurfaceKnotVectorU();
+        std::vector<double>& knot_vec_v_i = patch_i.GetSurfaceKnotVectorV();
       
 				double u_min = knot_vec_u_i[0];
 				double u_max = knot_vec_u_i[knot_vec_u_i.size()-1];
@@ -101,8 +101,7 @@ class ReconstructionOutputWriter
 
 						if(point_is_inside)
 						{
-							Point<3> cad_point;
-							patch_i.GetSurface().EvaluateSurfacePoint(cad_point, u_i, v_j);
+							Point<3> cad_point = patch_i.EvaluateSurfacePoint( u_i, v_j );
 
 							if(std::abs(cad_point.X())>max_coordinate)
 								cad_point.X() = MathUtils<int>::Sign(cad_point.X()) * max_coordinate;
@@ -173,7 +172,7 @@ class ReconstructionOutputWriter
       std::vector<Patch>& patch_vector = mrReconstructionDataBase.GetPatchVector();
       for(auto & patch_i : patch_vector) 
 			{
-        std::vector<ControlPoint>& control_points = patch_i.GetSurface().GetControlPoints();
+        std::vector<ControlPoint>& control_points = patch_i.GetSurfaceControlPoints();
         for(auto & control_point_i : control_points)
         {
           // It is important to iterate outside to stick to the carat settings

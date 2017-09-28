@@ -120,20 +120,21 @@ class CADReconstrutionUtilities():
     # --------------------------------------------------------------------------
     def PerformReconstruction( self ):
         self.__CreateReconstructor()
-        self.__CreateConditions()
+        self.__CreateReconstructionConditions()
+        self.__IdentifyControlPointsRelevantForReconstruction()
+        # self.__AssignRelevantControlPointsWithReconstructionId()
 
     # --------------------------------------------------------------------------
     def __CreateReconstructor( self ):
         self.Reconstructor = CADReconstructor( self.DataBase )
 
     # --------------------------------------------------------------------------
-    def __CreateConditions( self ):
+    def __CreateReconstructionConditions( self ):
         if self.ReconstructionStrategy == "mapping":
-            self.Reconstructor.CreateSurfaceMappingConditions( self.ParameterResolutionForInitialProjection, 
-                                                               self.FEMGaussIntegrationDegree,
-                                                               self.MaxProjectionIterations,
-                                                               self.ProjectionTolerance )
-            err
+            self.Reconstructor.CreateSurfaceDisplacementMappingConditions( self.ParameterResolutionForInitialProjection, 
+                                                                           self.FEMGaussIntegrationDegree,
+                                                                           self.MaxProjectionIterations,
+                                                                           self.ProjectionTolerance )
         else:
             raise ValueError( "The following reconstruction strategy does not exist: ", self.ReconstructionStrategy )
 
@@ -142,7 +143,11 @@ class CADReconstrutionUtilities():
 
         if self.AreDirichletConditionsSpecified:
             self.Reconstructor.CreateDirichletConditions( self.DirichletConditions )
-    
+      
+    # --------------------------------------------------------------------------
+    def __IdentifyControlPointsRelevantForReconstruction( self ):
+        self.Reconstructor.IdentifyControlPointsRelevantForReconstruction()
+
     # --------------------------------------------------------------------------
     def OutputFEData( self ):
         from gid_output import GiDOutput

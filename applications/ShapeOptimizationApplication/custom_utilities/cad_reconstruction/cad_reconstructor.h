@@ -30,6 +30,7 @@
 #include "includes/kratos_flags.h"
 #include "reconstruction_data_base.h"
 #include "cad_projection_utility.h"
+#include "reconstruction_conditions/surface_displacement_mapping_condition.h"
 
 // ==============================================================================
 
@@ -66,21 +67,23 @@ class CADReconstructor
     }
 
     // --------------------------------------------------------------------------
-    void CreateSurfaceMappingConditions( boost::python::list rParameterResolutionForCoarseNeighborSearch, int integration_degree, int max_iterations, double projection_tolerance )
+    void CreateSurfaceDisplacementMappingConditions( boost::python::list rParameterResolutionForCoarseNeighborSearch, 
+                                                     int integration_degree, 
+                                                     int max_iterations, 
+                                                     double projection_tolerance )
     {
-      std::cout << "\n> Starting to CreateSurfaceMappingConditions...";
-      boost::timer timer;
+      std::cout << "\n> Starting to CreateSurfaceDisplacementMappingConditions...";
       
       PatchVector& patch_vector = mrReconstructionDataBase.GetPatchVector();
       ModelPart& fe_model_part = mrReconstructionDataBase.GetFEModelPart();
+      IntegrationMethodType fem_integration_method = DefineIntegrationMethod( integration_degree );
       
       CADProjectionUtility FE2CADProjector( patch_vector, max_iterations, projection_tolerance );
       FE2CADProjector.Initialize( rParameterResolutionForCoarseNeighborSearch );
-      
-      IntegrationMethodType fem_integration_method = DefineIntegrationMethod( integration_degree );
-      
+       
       std::cout << "> Starting to loop over integration points..." << std::endl;
-      boost::timer timer_2;      
+      boost::timer timer;   
+         
       for (ModelPart::ElementsContainerType::iterator elem_i = fe_model_part.ElementsBegin(); elem_i != fe_model_part.ElementsEnd(); ++elem_i)
       {
         Element::GeometryType& geom_i = elem_i->GetGeometry();
@@ -88,9 +91,10 @@ class CADReconstructor
 
         for (auto & integration_point_i : integration_pionts)
         {
+          int integration_point_number = &integration_point_i - &integration_pionts[0];
           NodeType::CoordinatesArrayType ip_coordinates = geom_i.GlobalCoordinates(ip_coordinates, integration_point_i.Coordinates());
           NodeType::Pointer node_of_interest = Node <3>::Pointer(new Node<3>(1, ip_coordinates));
-        
+
           array_1d<double,2> parameter_values_of_nearest_point;
           array_1d<int,2> parameter_spans_of_nearest_point;
           int patch_index_of_nearest_point = -1;
@@ -99,12 +103,17 @@ class CADReconstructor
                                                     parameter_values_of_nearest_point, 
                                                     parameter_spans_of_nearest_point, 
                                                     patch_index_of_nearest_point );
-                                                    
-          // ListOfConditions.append(   condition(geom_i, integration_point , parameter_values_of_nearest_point, parameter_spans_of_nearest_point, patch_index_of_nearest_point ) )
-        }
+                                                                                                        
+          mListOfConditions.push_back( SurfaceDisplacementMappingCondition::Pointer( new SurfaceDisplacementMappingCondition( geom_i,
+                                                                                                                              fem_integration_method,
+                                                                                                                              integration_point_number,
+                                                                                                                              patch_vector[patch_index_of_nearest_point],
+                                                                                                                              parameter_values_of_nearest_point,
+                                                                                                                              parameter_spans_of_nearest_point )));
+          }
       }
-		  std::cout << "> Time needed for looping over integration points: " << timer_2.elapsed() << " s" << std::endl;            
-		  std::cout << "> Time needed for creating surface mapping conditions: " << timer.elapsed() << " s" << std::endl;      
+      std::cout << "> Time needed for looping over integration points: " << timer.elapsed() << " s" << std::endl;            
+		  std::cout << "> Finished creating surface mapping conditions: " << std::endl;      
     }
 
     // --------------------------------------------------------------------------
@@ -131,7 +140,13 @@ class CADReconstructor
     void CreateDirichletConditions()
     {
 
-    }    
+    }   
+    
+    // --------------------------------------------------------------------------
+    void IdentifyControlPointsRelevantForReconstruction()
+    {
+
+    }      
 
     // ==============================================================================
 
@@ -154,7 +169,15 @@ class CADReconstructor
 
   private:
 
-    ReconstructionDataBase& mrReconstructionDataBase;   
+    // ==============================================================================
+    // Initialized by class constructor
+    // ==============================================================================
+    ReconstructionDataBase& mrReconstructionDataBase;
+
+    // ==============================================================================
+    // Additional variables
+    // ==============================================================================
+    std::vector<ReconstructionCondition::Pointer> mListOfConditions;
 
     /// Assignment operator.
     //      CADReconstructor& operator=(CADReconstructor const& rOther);

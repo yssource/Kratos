@@ -151,7 +151,8 @@ void  AddCustomUtilitiesToPython()
         .def("Create", &ReconstructionDataBase::Create)
         ;
     class_<CADReconstructor, bases<Process> >("CADReconstructor", init<ReconstructionDataBase&>())
-        .def("CreateSurfaceMappingConditions", &CADReconstructor::CreateSurfaceMappingConditions)
+        .def("IdentifyControlPointsRelevantForReconstruction", &CADReconstructor::IdentifyControlPointsRelevantForReconstruction)    
+        .def("CreateSurfaceDisplacementMappingConditions", &CADReconstructor::CreateSurfaceDisplacementMappingConditions)
         .def("CreateCouplingConditionsOnAllCouplingPoints", &CADReconstructor::CreateCouplingConditionsOnAllCouplingPoints)    
         .def("CreateDirichletConditions", &CADReconstructor::CreateDirichletConditions)            
         ;   

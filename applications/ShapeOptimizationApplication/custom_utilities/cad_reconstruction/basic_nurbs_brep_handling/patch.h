@@ -133,16 +133,52 @@ public:
 	}
 
 	// --------------------------------------------------------------------------
+	Point<3> EvaluateSurfacePoint( double _u, double _v )
+	{
+		return m_nurbs_surface.EvaluateSurfacePoint( _u, _v );
+	}
+
+	// --------------------------------------------------------------------------
 	unsigned int GetId()
 	{
 		return m_patch_id;
 	}
 
 	// --------------------------------------------------------------------------
-	NURBSSurface& GetSurface()
+	std::vector<ControlPoint>& GetSurfaceControlPoints()
 	{
-		return m_nurbs_surface;
+		return m_nurbs_surface.GetControlPoints();
 	}
+
+	// --------------------------------------------------------------------------
+	std::vector<double>& GetSurfaceKnotVectorU()
+	{
+		return m_nurbs_surface.GetKnotVectorU();
+	}	
+
+	// --------------------------------------------------------------------------
+	std::vector<double>& GetSurfaceKnotVectorV()
+	{
+		return m_nurbs_surface.GetKnotVectorV();
+	}	
+
+	// --------------------------------------------------------------------------
+	array_1d<int,2> ComputeSurfaceKnotSpans( double _u, double _v )
+	{
+		return m_nurbs_surface.GetKnotSpans( _u, _v );
+	}	
+
+	// --------------------------------------------------------------------------
+	void EvaluateGradientsForClosestPointSearch( Vector distance, Matrix& rHessian, Vector& rGradient , double u, double v )
+	{
+		return m_nurbs_surface.EvaluateGradientsForClosestPointSearch( distance, rHessian, rGradient, u, v );
+	}
+
+	// --------------------------------------------------------------------------
+	std::vector<int> GetReconstructionIds( array_1d<double,2> parameter_values, array_1d<double,2> parameter_spans )
+	{
+		return m_nurbs_surface.GetReconstructionIds( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
+	}	
 
 	// --------------------------------------------------------------------------
 	std::vector<BoundaryLoop>& GetBoundaryLoops()

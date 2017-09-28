@@ -112,17 +112,17 @@ public:
     	return m_global_id;
     }
 
-    void SetMappingMatrixId(unsigned int id)
+    void SetReconstructionId(unsigned int id)
     {
-        m_mapping_matrix_id = id;
+        m_reconstruction_id = id;
     }    
 
-    int GetMappingMatrixId()
+    int GetReconstructionId()
     {
-        if(m_mapping_matrix_id<0)
-            KRATOS_THROW_ERROR(std::logic_error, "No mapping matrix ID specified for current control point", m_mapping_matrix_id);
+        if(m_reconstruction_id<0)
+            KRATOS_THROW_ERROR(std::logic_error, "No mapping matrix ID specified for current control point", m_reconstruction_id);
 
-    	return m_mapping_matrix_id;
+    	return m_reconstruction_id;
     }
 
     void SetRelevantForMapping()
@@ -173,7 +173,7 @@ private:
     std::vector<double> m_displacements;
     double m_w;
     unsigned int m_global_id;
-    int m_mapping_matrix_id = -1;
+    int m_reconstruction_id = -1;
     bool m_is_relevant_for_mapping = false;
 
 

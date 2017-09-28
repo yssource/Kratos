@@ -146,7 +146,8 @@ public:
             OpenMPUtils::PartitionedIterators(rModelPart.Nodes(), nodes_begin, nodes_end);
             for (auto it = nodes_begin; it != nodes_end; ++it)
             {
-                it->FastGetSolutionStepValue(ADJOINT_POTENTIAL) = ADJOINT_POTENTIAL.Zero();
+                it->FastGetSolutionStepValue(ADJOINT_POSITIVE_FACE_PRESSURE) = ADJOINT_POSITIVE_FACE_PRESSURE.Zero();
+                it->FastGetSolutionStepValue(ADJOINT_NEGATIVE_FACE_PRESSURE) = ADJOINT_NEGATIVE_FACE_PRESSURE.Zero();
             }
         }
 
@@ -229,10 +230,12 @@ public:
         if (domain_size != working_space_dimension)
             KRATOS_ERROR << "DOMAIN_SIZE != WorkingSpaceDimension()" << std::endl;
 
-        if (rModelPart.NodesBegin()->SolutionStepsDataHas(ADJOINT_POTENTIAL) == false)
-            KRATOS_ERROR << "Nodal solution steps data missing variable: " << ADJOINT_PRESSURE << std::endl;
+        if (rModelPart.NodesBegin()->SolutionStepsDataHas(ADJOINT_POSITIVE_FACE_PRESSURE) == false)
+            KRATOS_ERROR << "Nodal solution steps data missing variable: " << ADJOINT_POSITIVE_FACE_PRESSURE << std::endl;
         
-
+        if (rModelPart.NodesBegin()->SolutionStepsDataHas(ADJOINT_NEGATIVE_FACE_PRESSURE) == false)
+            KRATOS_ERROR << "Nodal solution steps data missing variable: " << ADJOINT_NEGATIVE_FACE_PRESSURE << std::endl;
+        
         return BaseType::Check(rModelPart); // check elements and conditions
         KRATOS_CATCH("");
     }
@@ -250,7 +253,10 @@ public:
 
         // Calculate transposed gradient of element residual w.r.t. potential (primal variable)
         //pCurrentElement->CalculateFirstDerivativesLHS(rLHS_Contribution, rCurrentProcessInfo);
+        rLHS_Contribution.clear();
         pCurrentElement->CalculateLeftHandSide(rLHS_Contribution, rCurrentProcessInfo);
+        //std::cout << "rLHS_Contribution =" << rLHS_Contribution << std::endl;
+        
 
         if (rRHS_Contribution.size() != rLHS_Contribution.size1())
             rRHS_Contribution.resize(rLHS_Contribution.size1(), false);
@@ -263,9 +269,12 @@ public:
 
         // Calculate system contributions in residual form.
         pCurrentElement->GetValuesVector(mAdjointValues[thread_id]);
+        
+
         noalias(rRHS_Contribution) -= prod(rLHS_Contribution, mAdjointValues[thread_id]);
 
         pCurrentElement->EquationIdVector(rEquationId, rCurrentProcessInfo);
+        //std::cout << "rRHS_Contribution =" << rRHS_Contribution << std::endl;
 
         KRATOS_CATCH("");
     }

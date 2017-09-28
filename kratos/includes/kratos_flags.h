@@ -45,6 +45,7 @@ namespace Kratos
   ///@name Kratos Globals
   ///@{
 
+KRATOS_CREATE_FLAG(KUTTA,           64);
 KRATOS_CREATE_FLAG(STRUCTURE,       63);
 KRATOS_CREATE_FLAG(FLUID,           62);
 KRATOS_CREATE_FLAG(THERMAL,         61);

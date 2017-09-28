@@ -47,6 +47,9 @@ class DefineWakeProcess(KratosMultiphysics.Process):
         #mark as STRUCTURE and deactivate the elements that touch the kutta node
         for node in self.kutta_model_part.Nodes:
             node.Set(KratosMultiphysics.STRUCTURE)
+            print(node)
+            if (node.Is(KratosMultiphysics.STRUCTURE)):
+                print('I AM A STRUCTURE NODE!')
             
 
 
@@ -119,7 +122,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                             elem.SetValue(KratosMultiphysics.ELEMENTAL_DISTANCES,distances)
                             
                             #for elnode in elem.GetNodes():
-                                #if elnode.Is(KratosMultiphysics.STRUCTURE):
+                                #if elnode.Is(KratosMultiphysics.KUTTA):
                                     #elem.Set(KratosMultiphysics.ACTIVE,False)
                                     #elem.Set(KratosMultiphysics.MARKER,False)
                                     
@@ -180,7 +183,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
             #for elem in self.fluid_model_part.Elements:
                 #kutta_elem = False
                 #for node in elem.GetNodes():
-                    #if(node.Is(KratosMultiphysics.STRUCTURE)):
+                    #if(node.Is(KratosMultiphysics.KUTTA)):
                         #kutta_elem = True
 
                 #if(kutta_elem == True and elem.IsNot(KratosMultiphysics.MARKER)):
@@ -189,14 +192,14 @@ class DefineWakeProcess(KratosMultiphysics.Process):
             #for elem in self.fluid_model_part.Elements:
                 #kutta_elem = False
                 #for node in elem.GetNodes():
-                    #if(node.Is(KratosMultiphysics.STRUCTURE)):
+                    #if(node.Is(KratosMultiphysics.KUTTA)):
                         #kutta_elem = True
 
                 #if(kutta_elem == True and elem.IsNot(KratosMultiphysics.MARKER)):
                     #d = elem.GetValue(KratosMultiphysics.ELEMENTAL_DISTANCES)
                     #i = 0
                     #for node in elem.GetNodes():
-                        #if(node.Is(KratosMultiphysics.STRUCTURE)):
+                        #if(node.Is(KratosMultiphysics.KUTTA)):
                             #d[i] = -1e-4
                         #else:
                             #d[i] = 1.0

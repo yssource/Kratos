@@ -15,6 +15,24 @@ namespace Python
 {
 using namespace boost::python;
 
+void CalculateSensitivityGradient1(ResponseFunction& dummy,Element& rAdjointElem,
+  const Variable<array_1d<double,3>>& rVariable,
+  const Matrix& rDerivativesMatrix,
+  Vector& rResponseGradient,
+  ProcessInfo& rProcessInfo)
+{
+dummy.CalculateSensitivityGradient(rAdjointElem,rVariable,rDerivativesMatrix,rResponseGradient,rProcessInfo);
+}
+
+void CalculateSensitivityGradient2(ResponseFunction& dummy,Element& rAdjointElem,
+  const Variable<double>& rVariable,
+  const Matrix& rDerivativesMatrix,
+  Vector& rResponseGradient,
+  ProcessInfo& rProcessInfo)
+{
+dummy.CalculateSensitivityGradient(rAdjointElem,rVariable,rDerivativesMatrix,rResponseGradient,rProcessInfo);
+}
+
 void AddCustomResponseFunctionsToPython()
 {
   class_<ResponseFunction, boost::noncopyable>("ResponseFunction", init<ModelPart&, Parameters&>())
@@ -29,7 +47,8 @@ void AddCustomResponseFunctionsToPython()
              &ResponseFunction::CalculateFirstDerivativesGradient)
         .def("CalculateSecondDerivativesGradient",
              &ResponseFunction::CalculateSecondDerivativesGradient)
-        .def("CalculateSensitivityGradient", &ResponseFunction::CalculateSensitivityGradient)        
+        .def("CalculateSensitivityGradient", &CalculateSensitivityGradient1)
+        .def("CalculateSensitivityGradient", &CalculateSensitivityGradient2)         
         .def("CalculateValue", &ResponseFunction::CalculateValue)
         .def("UpdateSensitivities", &ResponseFunction::UpdateSensitivities);
 

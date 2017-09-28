@@ -29,6 +29,8 @@
 #include "includes/variables.h"
 #include "custom_elements/compressible_potential_flow_element.h"
 #include "custom_conditions/potential_wall_condition.h"
+#include "custom_elements/adjoint_compressible_potential_flow_element.h"
+#include "custom_conditions/adjoint_potential_wall_condition.h"
 
 namespace Kratos {
 
@@ -184,7 +186,11 @@ private:
         const CompressiblePotentialFlowElement<2,3> mCompressiblePotentialFlowElement2D3N;
         const CompressiblePotentialFlowElement<3,4> mCompressiblePotentialFlowElement3D4N;
         const PotentialWallCondition<2,2> mPotentialWallCondition2D2N;
-        const PotentialWallCondition<3,3> mPotentialWallCondition3D3N;
+		const PotentialWallCondition<3,3> mPotentialWallCondition3D3N;
+		const AdjointCompressiblePotentialFlowElement<2,3> mAdjointCompressiblePotentialFlowElement2D3N;
+		const AdjointCompressiblePotentialFlowElement<3,4> mAdjointCompressiblePotentialFlowElement3D4N;
+		const AdjointPotentialWallCondition<2,2> mAdjointPotentialWallCondition2D2N;
+		const AdjointPotentialWallCondition<3,3> mAdjointPotentialWallCondition3D3N;
 
 
 	///@}

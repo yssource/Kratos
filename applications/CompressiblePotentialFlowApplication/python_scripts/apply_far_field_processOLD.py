@@ -15,8 +15,7 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
                 "model_part_name":"PLEASE_CHOOSE_MODEL_PART_NAME",
                 "mesh_id": 0,
                 "inlet_phi": 1.0,
-                "velocity_infinity": [1.0,0.0,0],
-                "variable_name":   "POSITIVE_FACE_PRESSURE"
+                "velocity_infinity": [1.0,0.0,0]
             }  """ );
         
             
@@ -29,7 +28,6 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
         self.velocity_infinity[2] = settings["velocity_infinity"][2].GetDouble()
         #self.density_infinity = settings["density_infinity"].GetDouble() #TODO: must read this from the properties
         self.inlet_phi = settings["inlet_phi"].GetDouble()
-        self.variable = getattr(KratosMultiphysics, settings["variable_name"].GetString())
         
         self.model_part.ProcessInfo.SetValue(KratosMultiphysics.VELOCITY,self.velocity_infinity)
         
@@ -37,7 +35,6 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
     def Execute(self):
         for cond in self.model_part.Conditions:
             cond.SetValue(KratosMultiphysics.VELOCITY, self.velocity_infinity)
-        
 
         #select the first node
         for node in self.model_part.Nodes:
@@ -68,9 +65,8 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
             tmp = dx*self.velocity_infinity[0] + dy*self.velocity_infinity[1] + dz*self.velocity_infinity[2]
             
             if(tmp < pos+1e-9):
-                node.Fix(self.variable)
-                node.SetSolutionStepValue(self.variable,0,self.inlet_phi)
-                #print(node)
+                node.Fix(KratosMultiphysics.POSITIVE_FACE_PRESSURE)
+                node.SetSolutionStepValue(KratosMultiphysics.POSITIVE_FACE_PRESSURE,0,self.inlet_phi)
         
     def ExecuteInitializeSolutionStep(self):
         self.Execute()

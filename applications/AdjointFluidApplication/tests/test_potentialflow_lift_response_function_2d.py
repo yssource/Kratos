@@ -41,7 +41,7 @@ class TestCase(KratosUnittest.TestCase):
         self.model_part.CreateNewNode(1, 0.0, 0.0, 0.0)
         self.model_part.CreateNewNode(2, 1.0, 0.0, 0.0)
         self.model_part.CreateNewNode(3, 1.0, 1.0, 0.0)
-        self.model_part.Nodes[1].Set(KratosMultiphysics.STRUCTURE)
+        self.model_part.Nodes[1].Set(KratosMultiphysics.STRUCTURE)#Ask Mike or Riccardo: For some reason I loose this setting in the functions and need to do it again, why? I think before it was working
         self.model_part.Nodes[2].Set(KratosMultiphysics.STRUCTURE)
         prop = self.model_part.GetProperties()[0]
         self.model_part.CreateNewElement("CompressiblePotentialFlowElement2D3N", 1, [1, 2, 3], prop)
@@ -104,14 +104,21 @@ class TestCase(KratosUnittest.TestCase):
     
     def test_CalculateValue(self):
         print('Testing CalculateValue...')
-        liftc = self.response_function.CalculateValue(self.model_part)
+        for node in self.model_part.Nodes:
+            if node.Y < 1:
+                node.Set(KratosMultiphysics.STRUCTURE)
         liftpython = self.ComputeLift()
+        liftc = self.response_function.CalculateValue(self.model_part)
         self.assertAlmostEqual(liftc, liftpython, 7)
         
     def test_CalculateGradient(self):
         print('Testing CalculateGradient...')
+        #setting structure nodes
+        for node in self.model_part.Nodes:
+            if node.Y < 1:
+                node.Set(KratosMultiphysics.STRUCTURE)
         #unperturbed lift
-        lift0 = self.ComputeLift()        
+        lift0 = self.ComputeLift() 
         
         # finite difference approximation using python
         h = 0.0000001
@@ -121,7 +128,7 @@ class TestCase(KratosUnittest.TestCase):
             # Phi
             potential = node.GetSolutionStepValue(POSITIVE_FACE_PRESSURE,0)
             node.SetSolutionStepValue(POSITIVE_FACE_PRESSURE,0,potential+h)
-            lift = self.ComputeLift()            
+            lift = self.ComputeLift() 
             node.SetSolutionStepValue(POSITIVE_FACE_PRESSURE,0,potential)            
             FDResponseGradient[row_index] = (lift - lift0) / h
             row_index = row_index + 1
@@ -151,9 +158,13 @@ class TestCase(KratosUnittest.TestCase):
         self.response_function.CalculateGradient(self.potential_element,AdjointMatrix,ResponseGradient,self.model_part.ProcessInfo)
         self.assertVectorAlmostEqual(FDResponseGradient, ResponseGradient)
         
-
+    
     def test_CalculateSensitivityGradient(self):
         print('Testing CalculateSensitivityGradient...')
+        #setting structure nodes
+        for node in self.model_part.Nodes:
+            if node.Y < 1:
+                node.Set(KratosMultiphysics.STRUCTURE)
         #unperturbed lift
         lift0 = self.ComputeLift()
         
@@ -207,7 +218,7 @@ class TestCase(KratosUnittest.TestCase):
         #print('ResponseGradient =',ResponseGradient)
         self.assertVectorAlmostEqual(FDResponseGradient, FDResponseGradient2)
         self.assertVectorAlmostEqual(FDResponseGradient, ResponseGradient)
-        
+       
         
         
     def ComputeLift(self):        
@@ -251,7 +262,7 @@ class TestCase(KratosUnittest.TestCase):
         DNDx = DNDe*DxDeInverse
                 
         Potential = Vector(3)
-        self.potential_element.GetValuesVector(Potential,0)
+        self.potential_element.GetFirstDerivativesVector(Potential,0)
         
         LocalVelocity = Potential*DNDx
         

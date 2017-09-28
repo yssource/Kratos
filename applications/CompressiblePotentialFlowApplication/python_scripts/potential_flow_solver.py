@@ -65,11 +65,15 @@ class LaplacianSolver:
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NEGATIVE_FACE_PRESSURE)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.DISTANCE)
         
+        print("variables for the potential fluid solver added correctly")
+        
     def AddDofs(self):
         for node in self.main_model_part.Nodes:
             # adding dofs
             node.AddDof(KratosMultiphysics.POSITIVE_FACE_PRESSURE)
             node.AddDof(KratosMultiphysics.NEGATIVE_FACE_PRESSURE)
+            
+        print("DOFs for the potential solver added correctly.")
         
     def Initialize(self):
         #(self.neighbour_search).Execute()
@@ -102,6 +106,8 @@ class LaplacianSolver:
         
         (self.solver).SetEchoLevel(self.settings["echo_level"].GetInt())
         self.solver.Check()
+        
+    print ("Potential solver initialization finished.")
         
     def ImportModelPart(self):
         

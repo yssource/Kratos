@@ -16,7 +16,7 @@ void KratosAdjointFluidApplication::Register()
   // Register elements
   KRATOS_REGISTER_ELEMENT( "VMSAdjointElement2D", mVMSAdjointElement2D );
   KRATOS_REGISTER_ELEMENT( "VMSAdjointElement3D", mVMSAdjointElement3D );
-      
+  
   // Register variables
   // Moved to Kratos Core for trilinos_application
   //KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( ADJOINT_VELOCITY );

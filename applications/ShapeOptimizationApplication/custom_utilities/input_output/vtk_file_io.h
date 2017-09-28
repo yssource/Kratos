@@ -18,7 +18,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-#include <iomanip>      // for setprecision
+#include <iomanip>      // for std::setprecision
 
 // ------------------------------------------------------------------------------
 // Project includes
@@ -38,8 +38,6 @@ namespace Kratos
 
 ///@name Kratos Globals
 ///@{
-
-using namespace std;
 
 ///@}
 ///@name Type Definitions
@@ -98,10 +96,10 @@ public:
     ///@{
 
     // ==============================================================================
-    string initializeOutputFilenameWithPath( Parameters& optimizationSettings  )
+    std::string initializeOutputFilenameWithPath( Parameters& optimizationSettings  )
     {
-        string outputDirectory = optimizationSettings["output"]["output_directory"].GetString();
-        string outputFilename = outputDirectory + "/" + optimizationSettings["output"]["design_history_filename"].GetString() + "_";
+        std::string outputDirectory = optimizationSettings["output"]["output_directory"].GetString();
+        std::string outputFilename = outputDirectory + "/" + optimizationSettings["output"]["design_history_filename"].GetString() + "_";
         return outputFilename;
     }
 
@@ -113,9 +111,9 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    map<int,int> createMapFromKratosIdToVTKId()
+    std::map<int,int> createMapFromKratosIdToVTKId()
     {
-        map<int,int> kratos_id_to_vtk;
+        std::map<int,int> kratos_id_to_vtk;
         int vtk_id = 0;
 
         for (ModelPart::NodeIterator node_i = mrDesignSurface.NodesBegin(); node_i != mrDesignSurface.NodesEnd(); ++node_i)
@@ -154,15 +152,15 @@ public:
     // --------------------------------------------------------------------------
     void updateOutputFilename( const int optimizationIteration )
     {
-        string outputFilename = mOutputFilenamePrefix + to_string(optimizationIteration) + ".vtk";
+        std::string outputFilename = mOutputFilenamePrefix + std::to_string(optimizationIteration) + ".vtk";
         mOutputFilename = outputFilename;
     }
 
     // --------------------------------------------------------------------------
     void writeHeader()
     {
-        ofstream outputFile;
-        outputFile.open(mOutputFilename, ios::out | ios::trunc );
+        std::ofstream outputFile;
+        outputFile.open(mOutputFilename, std::ios::out | std::ios::trunc );
         outputFile << "# vtk DataFile Version 4.0" << "\n";
         outputFile << "vtk output" << "\n";
         outputFile << "ASCII" << "\n";
@@ -188,10 +186,10 @@ public:
     // --------------------------------------------------------------------------
     void writeNodes()
     {
-        ofstream outputFile;
-        outputFile.open(mOutputFilename, ios::out | ios::app );
-        outputFile << scientific;
-        outputFile << setprecision(mDefaultPrecision);
+        std::ofstream outputFile;
+        outputFile.open(mOutputFilename, std::ios::out | std::ios::app );
+        outputFile << std::scientific;
+        outputFile << std::setprecision(mDefaultPrecision);
 
         // write nodes header
         outputFile << "POINTS " << mrDesignSurface.NumberOfNodes() << " float" << "\n";
@@ -213,8 +211,8 @@ public:
     // --------------------------------------------------------------------------
     void writeElements()
     {
-        ofstream outputFile;
-        outputFile.open(mOutputFilename, ios::out | ios::app );
+        std::ofstream outputFile;
+        outputFile.open(mOutputFilename, std::ios::out | std::ios::app );
 
         // write elements header
         outputFile << "CELLS " << mrDesignSurface.NumberOfConditions() << " " << mVtkCellListSize << "\n";
@@ -237,8 +235,8 @@ public:
     // --------------------------------------------------------------------------
     void writeElementTypes()
     {
-        ofstream outputFile;
-        outputFile.open(mOutputFilename, ios::out | ios::app );
+        std::ofstream outputFile;
+        outputFile.open(mOutputFilename, std::ios::out | std::ios::app );
 
         // write element types header
         outputFile << "CELL_TYPES " << mrDesignSurface.NumberOfConditions() << "\n";
@@ -265,15 +263,15 @@ public:
     // --------------------------------------------------------------------------
     void writeFirstNodalResultsAsPointData()
     {
-        ofstream outputFile;
-        outputFile.open(mOutputFilename, ios::out | ios::app );
+        std::ofstream outputFile;
+        outputFile.open(mOutputFilename, std::ios::out | std::ios::app );
 
         // write nodal results header
         Parameters nodalResults = mrOptimizationSettings["output"]["nodal_results"];
         outputFile << "POINT_DATA " << mrDesignSurface.NumberOfNodes() << "\n";
 
         // write nodal results variable header
-        string nodalResultName = nodalResults[0].GetString();
+        std::string nodalResultName = nodalResults[0].GetString();
         unsigned int dataCharacteristic = 0; // 0: unknown, 1: Scalar value, 2: 3 DOF global translation vector
         if( KratosComponents<Variable<double>>::Has(nodalResultName))
         {
@@ -287,8 +285,8 @@ public:
         }
 
         // write nodal results
-        outputFile << scientific;
-        outputFile << setprecision(mDefaultPrecision);
+        outputFile << std::scientific;
+        outputFile << std::setprecision(mDefaultPrecision);
         for (ModelPart::NodeIterator node_i = mrDesignSurface.NodesBegin(); node_i != mrDesignSurface.NodesEnd(); ++node_i)
         {
             if(dataCharacteristic==1)
@@ -313,8 +311,8 @@ public:
     // --------------------------------------------------------------------------
     void writeOtherNodalResultsAsFieldData()
     {
-        ofstream outputFile;
-        outputFile.open(mOutputFilename, ios::out | ios::app );
+        std::ofstream outputFile;
+        outputFile.open(mOutputFilename, std::ios::out | std::ios::app );
 
         // write nodal results header
         Parameters nodalResults = mrOptimizationSettings["output"]["nodal_results"];
@@ -323,7 +321,7 @@ public:
         for(unsigned int entry = 1; entry < nodalResults.size(); entry++)
         {
             // write nodal results variable header
-            string nodalResultName = nodalResults[entry].GetString();
+            std::string nodalResultName = nodalResults[entry].GetString();
             unsigned int dataCharacteristic = 0; // 0: unknown, 1: Scalar value, 2: 3 DOF global translation vector
             if( KratosComponents<Variable<double>>::Has(nodalResultName))
             {
@@ -337,8 +335,8 @@ public:
             }
 
             // write nodal results
-            outputFile << scientific;
-            outputFile << setprecision(mDefaultPrecision);
+            outputFile << std::scientific;
+            outputFile << std::setprecision(mDefaultPrecision);
             for (ModelPart::NodeIterator node_i = mrDesignSurface.NodesBegin(); node_i != mrDesignSurface.NodesEnd(); ++node_i)
             {
                 if(dataCharacteristic==1)
@@ -377,20 +375,20 @@ public:
     ///@name Input and output
     ///@{
 
-    /// Turn back information as a string.
-    virtual string Info() const
+    /// Turn back information as a std::string.
+    virtual std::string Info() const
     {
         return "VTKFileIO";
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(ostream& rOStream) const
+    virtual void PrintInfo(std::ostream& rOStream) const
     {
         rOStream << "VTKFileIO";
     }
 
     /// Print object's data.
-    virtual void PrintData(ostream& rOStream) const
+    virtual void PrintData(std::ostream& rOStream) const
     {
     }
 
@@ -453,10 +451,10 @@ private:
     // ==============================================================================
     ModelPart& mrDesignSurface;
     Parameters& mrOptimizationSettings;
-    string mOutputFilename;
-    string mOutputFilenamePrefix;
+    std::string mOutputFilename;
+    std::string mOutputFilenamePrefix;
     unsigned int mDefaultPrecision;
-    map<int,int> mKratosIdToVtkId;
+    std::map<int,int> mKratosIdToVtkId;
     unsigned int mVtkCellListSize;
 
     ///@}

@@ -118,12 +118,11 @@ public:
 	///  \author     Daniel Baumgärtner (12/2016)
 	//
 	//########################################################################################
-	Point<3> EvaluateSurfacePoint( double u, double v )
+	void EvaluateSurfacePoint( double u, double v, Point<3>& rSurfacePoint )
 	{
-		Point<3> surface_point;
-		surface_point[0] = 0;
-		surface_point[1] = 0;
-		surface_point[2] = 0;
+		rSurfacePoint[0] = 0;
+		rSurfacePoint[1] = 0;
+		rSurfacePoint[2] = 0;
 
 		int span_u=find_Knot_Span(m_knot_vector_u,u,m_p,m_n_u);
 		int span_v=find_Knot_Span(m_knot_vector_v,v,m_q,m_n_v);
@@ -140,13 +139,11 @@ public:
 				Matrix R;
 				EvaluateNURBSFunctions(span_u, span_v, u, v, R);
 
-				surface_point[0] += R(b,c) * m_control_points[control_point_index].GetX();
-				surface_point[1] += R(b,c) * m_control_points[control_point_index].GetY();
-				surface_point[2] += R(b,c) * m_control_points[control_point_index].GetZ();
+				rSurfacePoint[0] += R(b,c) * m_control_points[control_point_index].GetX();
+				rSurfacePoint[1] += R(b,c) * m_control_points[control_point_index].GetY();
+				rSurfacePoint[2] += R(b,c) * m_control_points[control_point_index].GetZ();
 			}
 		}
-
-		return surface_point;
 	}
 
 	//  #####################################################################################
@@ -995,7 +992,7 @@ public:
 	}
 
 	// --------------------------------------------------------------------------
-	void FlagControlPointsForMapping(int span_u, int span_v, double _u, double _v)
+	void FlagAffectedControlPointsForReconstruction( int span_u, int span_v, double _u, double _v )
 	{
 		if(span_u==-1) span_u=find_Knot_Span(m_knot_vector_u,_u,m_p,m_n_u);
 		if(span_v==-1) span_v=find_Knot_Span(m_knot_vector_v,_v,m_q,m_n_v);
@@ -1010,14 +1007,14 @@ public:
 				int vi = span_v-m_q+c;
 				int control_point_index =vi*m_n_u + ui;
 
-				// Flag control point as relevant for mapping
-				m_control_points[control_point_index].SetRelevantForMapping();
+				// Flag control point as relevant for reconstruction
+				m_control_points[control_point_index].SetRelevantForReconstruction();
 			}
 		}
 	}
 
 	// --------------------------------------------------------------------------
-	std::vector<int> GetReconstructionIds(int span_u, int span_v, double _u, double _v)
+	std::vector<int> GetEquationIdsOfAffectedControlPoints(int span_u, int span_v, double _u, double _v)
 	{
 		if(span_u==-1) span_u=find_Knot_Span(m_knot_vector_u,_u,m_p,m_n_u);
 		if(span_v==-1) span_v=find_Knot_Span(m_knot_vector_v,_v,m_q,m_n_v);
@@ -1034,7 +1031,7 @@ public:
 				int vi = span_v-m_q+c;
 				int control_point_index =vi*m_n_u + ui;
 
-				vector_of_ids.push_back( m_control_points[control_point_index].GetReconstructionId() );
+				vector_of_ids.push_back( m_control_points[control_point_index].GetEquationId() );
 			}
 		}
 

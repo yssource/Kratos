@@ -8,8 +8,8 @@
 //
 // ==============================================================================
 
-#ifndef RECONSTRUCTION_CONDITION_H
-#define RECONSTRUCTION_CONDITION_H
+#ifndef RECONSTRUCTION_CONSTRAINT_DISPLACEMENT_COUPLING_H
+#define RECONSTRUCTION_CONSTRAINT_DISPLACEMENT_COUPLING_H
 
 // ------------------------------------------------------------------------------
 // System includes
@@ -24,8 +24,7 @@
 // ------------------------------------------------------------------------------
 // Project includes
 // ------------------------------------------------------------------------------
-#include "includes/define.h"
-#include "../basic_nurbs_brep_handling/patch.h"
+#include "reconstruction_condition_base.h"
 
 // ==============================================================================
 
@@ -56,26 +55,27 @@ namespace Kratos
 
 */
 
-class ReconstructionCondition
+class DisplacementCouplingConstraint : public ReconstructionCondition
 {
 public:
     ///@name Type Definitions
-    ///@{
-        
-    /// Pointer definition of ReconstructionCondition
-    KRATOS_CLASS_POINTER_DEFINITION(ReconstructionCondition);
+    ///@{   
+
+    /// Pointer definition of DisplacementCouplingConstraint
+    KRATOS_CLASS_POINTER_DEFINITION(DisplacementCouplingConstraint);
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    ReconstructionCondition()
+    DisplacementCouplingConstraint( double penalty_factor )
+    : mPenaltyFactor( penalty_factor )
     {
     }
 
     /// Destructor.
-    virtual ~ReconstructionCondition()
+    virtual ~DisplacementCouplingConstraint()
     {
     }
 
@@ -88,13 +88,20 @@ public:
     ///@{
 
     // ==============================================================================
-    virtual void ComputeAndAddLHSContribution( SparseMatrix& LHS ) = 0;
+    void ComputeAndAddLHSContribution( SparseMatrix& LHS ) override
+    {
+    }
 
     // --------------------------------------------------------------------------
-    virtual void ComputeAndAddRHSContribution( Vector& RHS ) = 0;
+    void ComputeAndAddRHSContribution( Vector& RHS ) override
+    {
+    }
 
     // --------------------------------------------------------------------------
-    virtual void FlagControlPointsRelevantForReconstruction() = 0;
+    void FlagControlPointsRelevantForReconstruction()
+    {
+        // mrAffectedPatch.FlagAffectedControlPointsForReconstruction(  mParmeterSpans, mParmeterValues );
+    }
 
     // ==============================================================================
 
@@ -113,13 +120,13 @@ public:
     /// Turn back information as a string.
     virtual std::string Info() const
     {
-        return "ReconstructionCondition";
+        return "DisplacementCouplingConstraint";
     }
 
     /// Print information about this object.
     virtual void PrintInfo(std::ostream &rOStream) const
     {
-        rOStream << "ReconstructionCondition";
+        rOStream << "DisplacementCouplingConstraint";
     }
 
     /// Print object's data.
@@ -127,54 +134,59 @@ public:
     {
     }
 
+    ///@}
+    ///@name Friends
+    ///@{
+
+    ///@}
+
+protected:
+  ///@name Protected static Member Variables
+  ///@{
+
   ///@}
-  ///@name Friends
+  ///@name Protected member Variables
+  ///@{
+
+  ///@}
+  ///@name Protected Operators
+  ///@{
+
+  ///@}
+  ///@name Protected Operations
+  ///@{
+
+  ///@}
+  ///@name Protected  Access
+  ///@{
+
+  ///@}
+  ///@name Protected Inquiry
+  ///@{
+
+  ///@}
+  ///@name Protected LifeCycle
   ///@{
 
   ///@}
 
-protected:
-    ///@name Protected static Member Variables
-    ///@{
-
-    ///@}
-    ///@name Protected member Variables
-    ///@{
-
-    ///@}
-    ///@name Protected Operators
-    ///@{
-
-    ///@}
-    ///@name Protected Operations
-    ///@{
-
-    ///@}
-    ///@name Protected  Access
-    ///@{
-
-    ///@}
-    ///@name Protected Inquiry
-    ///@{
-
-    ///@}
-    ///@name Protected LifeCycle
-    ///@{
-
-    ///@}
-
 private:
-    ///@name Static Member Variables
-    ///@{
+  ///@name Static Member Variables
+  ///@{
 
-    ///@}
-    ///@name Member Variables
-    ///@{
+  ///@}
+  ///@name Member Variables
+  ///@{
 
-    ///@}
-    ///@name Private Operators
-    ///@{
+  ///@}
+  ///@name Private Operators
+  ///@{
 
+    // ==============================================================================
+    // Initialized by class constructor
+    // ==============================================================================
+    double mPenaltyFactor = 0;
+    
     ///@}
     ///@name Private Operations
     ///@{
@@ -192,14 +204,14 @@ private:
     ///@{
 
     /// Assignment operator.
-    //      ReconstructionCondition& operator=(ReconstructionCondition const& rOther);
+    //      DisplacementCouplingConstraint& operator=(DisplacementCouplingConstraint const& rOther);
 
     /// Copy constructor.
-    //      ReconstructionCondition(ReconstructionCondition const& rOther);
+    //      DisplacementCouplingConstraint(DisplacementCouplingConstraint const& rOther);
 
     ///@}
 
-}; // Class ReconstructionCondition
+}; // Class DisplacementCouplingConstraint
 
 ///@}
 
@@ -214,4 +226,4 @@ private:
 
 } // namespace Kratos.
 
-#endif // RECONSTRUCTION_CONDITION_H
+#endif // RECONSTRUCTION_CONSTRAINT_DISPLACEMENT_COUPLING_H

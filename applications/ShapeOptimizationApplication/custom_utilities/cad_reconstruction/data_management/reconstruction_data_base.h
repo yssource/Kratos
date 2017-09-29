@@ -18,8 +18,8 @@
 // ------------------------------------------------------------------------------
 // Project includes
 // ------------------------------------------------------------------------------
-#include "basic_nurbs_brep_handling\patch.h"
-#include "basic_nurbs_brep_handling\brep_element.h"
+#include "..\basic_nurbs_brep_handling\patch.h"
+#include "..\basic_nurbs_brep_handling\brep_element.h"
 #include "cad_model_reader.h"
 
 // ==============================================================================
@@ -29,6 +29,8 @@ namespace Kratos
 class ReconstructionDataBase
 {
 public:
+
+    typedef boost::python::extract<int> ExtractInt;    
 
     /// Pointer definition of ReconstructionDataBase
     KRATOS_CLASS_POINTER_DEFINITION(ReconstructionDataBase);
@@ -56,59 +58,57 @@ public:
         cad_reader.ReadIntegrationData(mBrepElements);      
     }
 
-    // // --------------------------------------------------------------------------
-    // void UpdateControlPoints(PatchVector& patches, Vector& ds)
-    // {
-    //     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //     // 1. Step: Update C++ data base
-    //     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // --------------------------------------------------------------------------
+    void UpdateControlPointDisplacements( Vector& cp_displacements )
+    {
+        std::cout << "\n> Start updating control point displacements..." << std::endl;           
+        boost::timer timer;
 
-    //     // Map to identify control point for given global id (needed for python update later)
-    //     std::map<unsigned int, ControlPoint*> control_point_corresponding_to_global_id;
-
-    //     for (PatchVector::iterator patch_i = patches.begin(); patch_i != patches.end(); ++patch_i)
-    //     {
-    //         for (ControlPointVector::iterator cp_i = patch_i->GetSurface().GetControlPoints().begin(); cp_i != patch_i->GetSurface().GetControlPoints().end(); ++cp_i)
-    //         {
-    //             if(cp_i->IsRelevantForMapping())
-    //             {
-    //                 // Updating c++ data base
-    //                 unsigned int cp_mapping_matrix_id = cp_i->GetMappingMatrixId();
-    //                 cp_i->SetdX( ds[3*cp_mapping_matrix_id+0] );
-    //                 cp_i->SetdY( ds[3*cp_mapping_matrix_id+1] );
-    //                 cp_i->SetdZ( ds[3*cp_mapping_matrix_id+2] );
-
-    //             }
-    //             // Filling map to be used later
-    //             unsigned int cp_global_id = cp_i->GetGlobalId();
-    //             control_point_corresponding_to_global_id[cp_global_id] = &(*cp_i);
-    //         }
-    //     }
-
-    //     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //     // 2. Step: Update pyhon data base
-    //     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Map to get control point corresponding to a given global id (needed for python update later)
+        std::map<unsigned int, ControlPoint*> control_point_corresponding_to_global_id;
         
-    //     // loop over patches / faces in cad geometry file
-    //     for (int i = 0; i < boost::python::len(mr_cad_geometry_in_json["faces"]); i++)
-    //     {
-    //         for (int cp_idx = 0; cp_idx < boost::python::len(mr_cad_geometry_in_json["faces"][i]["surface"][0]["control_points"]); cp_idx++)
-    //         {
-    //             unsigned int global_id = extractInt(mr_cad_geometry_in_json["faces"][i]["surface"][0]["control_points"][cp_idx][0]);
+        // 1. Step: Update C++ data base
+        for(auto & patch_i : mPatches) 
+        {
+            for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
+            {
+                if(control_point_i.IsRelevantForReconstruction())
+                {
+                    // Updating c++ data base
+                    unsigned int cp_equation_id = control_point_i.GetEquationId();
+                    control_point_i.SetdX( cp_displacements[3*cp_equation_id+0] );
+                    control_point_i.SetdY( cp_displacements[3*cp_equation_id+1] );
+                    control_point_i.SetdZ( cp_displacements[3*cp_equation_id+2] );
 
-    //             ControlPoint* cp_j = control_point_corresponding_to_global_id[global_id];
+                }
+                // Filling map to be used later
+                unsigned int cp_global_id = control_point_i.GetGlobalId();
+                control_point_corresponding_to_global_id[cp_global_id] = &control_point_i;
+            }
+        }
 
-    //             double sx = cp_j->GetX();
-    //             double sy = cp_j->GetY();
-    //             double sz = cp_j->GetZ();
+        // 2. Step: Update pyhon data base
+        for (int i = 0; i < boost::python::len(mrCADGeometry["faces"]); i++)
+        {
+            for (int cp_idx = 0; cp_idx < boost::python::len(mrCADGeometry["faces"][i]["surface"][0]["control_points"]); cp_idx++)
+            {
 
-    //             // Update python data base which is store as a reference (so it is also updated on python level)
-    //             mr_cad_geometry_in_json["faces"][i]["surface"][0]["control_points"][cp_idx][1][0] = sx;
-    //             mr_cad_geometry_in_json["faces"][i]["surface"][0]["control_points"][cp_idx][1][1] = sy;
-    //             mr_cad_geometry_in_json["faces"][i]["surface"][0]["control_points"][cp_idx][1][2] = sz;
-    //         }
-    //     }
-    // }
+                unsigned int global_id = ExtractInt(mrCADGeometry["faces"][i]["surface"][0]["control_points"][cp_idx][0]);
+                ControlPoint* cp_j = control_point_corresponding_to_global_id[global_id];
+
+                double position_x = cp_j->GetX();
+                double position_y = cp_j->GetY();
+                double position_z = cp_j->GetZ();
+
+                // Update python data base which is stored as a reference (so it is also updated on python level)
+                mrCADGeometry["faces"][i]["surface"][0]["control_points"][cp_idx][1][0] = position_x;
+                mrCADGeometry["faces"][i]["surface"][0]["control_points"][cp_idx][1][1] = position_y;
+                mrCADGeometry["faces"][i]["surface"][0]["control_points"][cp_idx][1][2] = position_z;
+            }
+        }
+
+        std::cout << "> Time needed for updating control point displacements: " << timer.elapsed() << " s" << std::endl;                            
+    }
 
     // ------------------------------------------------------------------------------
     ModelPart& GetFEModelPart()

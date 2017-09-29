@@ -133,9 +133,27 @@ public:
 	}
 
 	// --------------------------------------------------------------------------
-	Point<3> EvaluateSurfacePoint( double _u, double _v )
+	void EvaluateSurfacePoint( double _u, double _v, Point<3>& rSurfacePoint )
 	{
-		return m_nurbs_surface.EvaluateSurfacePoint( _u, _v );
+		m_nurbs_surface.EvaluateSurfacePoint( _u, _v, rSurfacePoint );
+	}
+
+	// --------------------------------------------------------------------------
+	array_1d<int,2> ComputeSurfaceKnotSpans( double _u, double _v )
+	{
+		return m_nurbs_surface.GetKnotSpans( _u, _v );
+	}	
+
+	// --------------------------------------------------------------------------
+	void EvaluateGradientsForClosestPointSearch( Vector distance, Matrix& rHessian, Vector& rGradient , double _u, double _v )
+	{
+		return m_nurbs_surface.EvaluateGradientsForClosestPointSearch( distance, rHessian, rGradient, _u, _v );
+	}
+
+	// --------------------------------------------------------------------------
+	void FlagAffectedControlPointsForReconstruction( array_1d<double,2> parameter_spans, array_1d<double,2> parameter_values )
+	{
+		return m_nurbs_surface.FlagAffectedControlPointsForReconstruction( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
 	}
 
 	// --------------------------------------------------------------------------
@@ -163,21 +181,9 @@ public:
 	}	
 
 	// --------------------------------------------------------------------------
-	array_1d<int,2> ComputeSurfaceKnotSpans( double _u, double _v )
+	std::vector<int> GetEquationIdsOfAffectedControlPoints( array_1d<double,2> parameter_spans, array_1d<double,2> parameter_values )
 	{
-		return m_nurbs_surface.GetKnotSpans( _u, _v );
-	}	
-
-	// --------------------------------------------------------------------------
-	void EvaluateGradientsForClosestPointSearch( Vector distance, Matrix& rHessian, Vector& rGradient , double u, double v )
-	{
-		return m_nurbs_surface.EvaluateGradientsForClosestPointSearch( distance, rHessian, rGradient, u, v );
-	}
-
-	// --------------------------------------------------------------------------
-	std::vector<int> GetReconstructionIds( array_1d<double,2> parameter_values, array_1d<double,2> parameter_spans )
-	{
-		return m_nurbs_surface.GetReconstructionIds( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
+		return m_nurbs_surface.GetEquationIdsOfAffectedControlPoints( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
 	}	
 
 	// --------------------------------------------------------------------------

@@ -42,103 +42,122 @@ public:
         m_global_id = global_id;
     }
 
+    /// Destructor.
+    virtual ~ControlPoint()
+    {
+    }
+    
+    // --------------------------------------------------------------------------
     double GetX()
     {
         return (m_coordinates[0] + m_displacements[0]);
     }
 
+    // --------------------------------------------------------------------------
     double GetY()
     {
      	return (m_coordinates[1] + m_displacements[1]);
     }
 
+    // --------------------------------------------------------------------------
     double GetZ()
     {
     	return (m_coordinates[2] + m_displacements[2]);
     }
 
+    // --------------------------------------------------------------------------
     double GetX0()
     {
     	return m_coordinates[0];
     }
 
+    // --------------------------------------------------------------------------
     double GetY0()
     {
      	return m_coordinates[1];
     }
 
+    // --------------------------------------------------------------------------
     double GetZ0()
     {
     	return m_coordinates[2];
     }    
 
+    // --------------------------------------------------------------------------
     double GetdX()
     {
     	return m_displacements[0];
     }
 
+    // --------------------------------------------------------------------------
     double GetdY()
     {
      	return m_displacements[1];
     }
 
+    // --------------------------------------------------------------------------
     double GetdZ()
     {
     	return m_displacements[2];
     }  
 
+    // --------------------------------------------------------------------------
     void SetdX(double dX)
     {
         m_displacements[0] = dX;
     }  
 
+    // --------------------------------------------------------------------------
     void SetdY(double dY)
     {
         m_displacements[1] = dY;
     }  
 
+    // --------------------------------------------------------------------------
     void SetdZ(double dZ)
     {
         m_displacements[2] = dZ;
     }          
 
+    // --------------------------------------------------------------------------
     double GetWeight()
     {
     	return m_w;
     }
 
+    // --------------------------------------------------------------------------
     int GetGlobalId()
     {
     	return m_global_id;
     }
 
-    void SetReconstructionId(unsigned int id)
+    // --------------------------------------------------------------------------
+    void SetEquationId(unsigned int id)
     {
-        m_reconstruction_id = id;
+        m_equation_id = id;
     }    
 
-    int GetReconstructionId()
+    // --------------------------------------------------------------------------
+    int GetEquationId()
     {
-        if(m_reconstruction_id<0)
-            KRATOS_THROW_ERROR(std::logic_error, "No mapping matrix ID specified for current control point", m_reconstruction_id);
+        if(m_equation_id<0)
+            KRATOS_THROW_ERROR(std::logic_error, "No mapping matrix ID specified for current control point", "");
 
-    	return m_reconstruction_id;
+    	return m_equation_id;
     }
 
-    void SetRelevantForMapping()
+    // --------------------------------------------------------------------------
+    void SetRelevantForReconstruction()
     {
-    	m_is_relevant_for_mapping = true;
+    	m_is_relevant_for_reconstruction = true;
     }   
 
-    bool IsRelevantForMapping()
+    // --------------------------------------------------------------------------
+    bool IsRelevantForReconstruction()
     {
-    	return m_is_relevant_for_mapping;
+    	return m_is_relevant_for_reconstruction;
     }    
 
-    /// Destructor.
-    virtual ~ControlPoint()
-    {
-    }
     // ==============================================================================
 
 
@@ -173,8 +192,8 @@ private:
     std::vector<double> m_displacements;
     double m_w;
     unsigned int m_global_id;
-    int m_reconstruction_id = -1;
-    bool m_is_relevant_for_mapping = false;
+    int m_equation_id = -1;
+    bool m_is_relevant_for_reconstruction = false;
 
 
 }; // Class ControlPoint

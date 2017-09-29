@@ -29,26 +29,38 @@ class CADReconstrutionUtilities():
         # Internal parameters to specify reconstruction method
         
         # Gernal strategy parameters
-        self.ReconstructionStrategy = "mapping" # mapping / least_squares 
+        self.ReconstructionStrategy = "mapping"    # mapping / least_squares
+        self.FEMGaussIntegrationDegree = 3
 
+        self.SolutionStrategy = "penalty_approach" # penalty_approach 
+        self.SolutionIterations = 1
+        self.PenaltyFactorForDisplacementCoupling = 1e3
+        self.PenaltyFactorForDirichletConstraints = 1e3
+        self.PenaltyIncreaseFactor = 10
+       
         # Parameters to edit input data       
         self.FERefinementLevel = 0
 
-        # Projection setttings
-        self.ParameterResolutionForInitialProjection = [ 20, 20 ]
+        # Projection settings
+        self.ParameterResolutionForProjection = [ 100, 100 ]
         self.MaxProjectionIterations = 20
         self.ProjectionTolerance = 1e-5
 
-        # Specific parameters for mapping strategy
-        self.FEMGaussIntegrationDegree = 5
+        # Linear solver
+        self.LinearSolver = SuperLUSolver()
+        # DiagPrecond = DiagonalPreconditioner()
+        # self.LinearSolver =  BICGSTABSolver(1e-9, 5000, DiagPrecond)
+        # self.LinearSolver = AMGCLSolver(AMGCLSmoother.GAUSS_SEIDEL, AMGCLIterativeSolverType.BICGSTAB, 1e-9, 300, 2, 10)        
 
-        
+        # Parameters for output
+        self.ParameterResolutionForOutputOfSurfacePoints = [ 50, 50 ]
+
     # --------------------------------------------------------------------------
     def Initialize( self ):
         self.__ReadFEData()
         self.__RefineFEModel()
         self.__ReadCADData()
-        self.__InitializeBoundaryConditions()
+        self.__InitializeConstraints()
         self.__CreateReconstructionDataBase()
         self.__CreateReconstructionOutputWriter()
 
@@ -95,9 +107,9 @@ class CADReconstrutionUtilities():
             self.CADIntegrationData = json.load(cad_data2)       
 
     # --------------------------------------------------------------------------
-    def __InitializeBoundaryConditions( self ):
-        self.AreCouplingConditionsSpecifiedForAllCouplingPoints = False
-        self.AreDirichletConditionsSpecified = False
+    def __InitializeConstraints( self ):
+        self.IsDisplacementCouplingSpecifiedForAllCouplingPoints = False
+        self.AreDirichletConstraintsSpecified = False
     
     # --------------------------------------------------------------------------
     def __CreateReconstructionDataBase( self ):
@@ -109,44 +121,60 @@ class CADReconstrutionUtilities():
         self.OutputWriter = ReconstructionOutputWriter( self.DataBase )    
 
     # --------------------------------------------------------------------------
-    def SetCouplingConditionsOnAllCouplingPoints( self ):
-        self.AreCouplingConditionsSpecifiedForAllCouplingPoints = True
+    def SetDisplacementCouplingOnAllCouplingPoints( self ):
+        self.IsDisplacementCouplingSpecifiedForAllCouplingPoints = True
 
     # --------------------------------------------------------------------------
-    def SetDirichletBoundaryConditions( self, list_of_condition_settings ):
-        self.AreDirichletConditionsSpecified = True
+    def SetDirichletConstraints( self, list_of_condition_settings ):
+        self.AreDirichletConstraintsSpecified = True
         self.DirichletConditions = list_of_condition_settings
 
     # --------------------------------------------------------------------------
     def PerformReconstruction( self ):
-        self.__CreateReconstructor()
         self.__CreateReconstructionConditions()
-        self.__IdentifyControlPointsRelevantForReconstruction()
-        # self.__AssignRelevantControlPointsWithReconstructionId()
-
-    # --------------------------------------------------------------------------
-    def __CreateReconstructor( self ):
-        self.Reconstructor = CADReconstructor( self.DataBase )
+        self.__CreateSolverForReconstruction()
+        self.__SolveReconstructionEquation()
 
     # --------------------------------------------------------------------------
     def __CreateReconstructionConditions( self ):
+        self.ConditionsContainer = ReconstructionConditionContainer( self.DataBase )
+
         if self.ReconstructionStrategy == "mapping":
-            self.Reconstructor.CreateSurfaceDisplacementMappingConditions( self.ParameterResolutionForInitialProjection, 
-                                                                           self.FEMGaussIntegrationDegree,
-                                                                           self.MaxProjectionIterations,
-                                                                           self.ProjectionTolerance )
+            self.ConditionsContainer.CreateDisplacementMappingConditions( self.ParameterResolutionForProjection, 
+                                                                          self.FEMGaussIntegrationDegree,
+                                                                          self.MaxProjectionIterations,
+                                                                          self.ProjectionTolerance )
         else:
             raise ValueError( "The following reconstruction strategy does not exist: ", self.ReconstructionStrategy )
 
-        if self.AreCouplingConditionsSpecifiedForAllCouplingPoints: 
-            self.Reconstructor.CreateCouplingConditionsOnAllCouplingPoints()
+        if self.IsDisplacementCouplingSpecifiedForAllCouplingPoints: 
+            self.ConditionsContainer.CreateDisplacementCouplingConstraintsOnAllCouplingPoints( self.PenaltyFactorForDisplacementCoupling )
 
-        if self.AreDirichletConditionsSpecified:
-            self.Reconstructor.CreateDirichletConditions( self.DirichletConditions )
-      
+        if self.AreDirichletConstraintsSpecified:
+            self.ConditionsContainer.CreateDirichletConstraints( self.DirichletConstraints, self.PenaltyFactorForDirichletConstraints )
+
     # --------------------------------------------------------------------------
-    def __IdentifyControlPointsRelevantForReconstruction( self ):
-        self.Reconstructor.IdentifyControlPointsRelevantForReconstruction()
+    def __CreateSolverForReconstruction( self ):
+        self.ReconstructionSolver = CADReconstructionSolver( self.DataBase, self.ConditionsContainer, self.LinearSolver )
+
+    # --------------------------------------------------------------------------
+    def __SolveReconstructionEquation( self ): 
+        if(self.SolutionStrategy == "penalty_approach"):
+            self.__SolveReconstructionEquationUsingPenaltyApproach()
+        else:
+            raise ValueError( "The following solution strategy does not exist: ", self.SolutionStrategy )
+        
+    # --------------------------------------------------------------------------
+    def __SolveReconstructionEquationUsingPenaltyApproach( self ):  
+        
+        self.ReconstructionSolver.InitializeEquationSystem()            
+        
+        for iteration in range(1,self.SolutionIterations+1): 
+            self.ReconstructionSolver.ComputeLHS()
+            self.ReconstructionSolver.ComputeRHS()
+            self.ReconstructionSolver.SolveEquationSystem()
+            if self.SolutionIterations>1:  
+                self.ReconstructionSolver.IncreaseAllPenaltyFactorsByInputFactor( self.PenaltyIncreaseFactor )
 
     # --------------------------------------------------------------------------
     def OutputFEData( self ):
@@ -166,8 +194,8 @@ class CADReconstrutionUtilities():
         gig_io.finalize_results()
 
     # --------------------------------------------------------------------------
-    def OutputCADSurfacePoints( self, file_to_write, u_resolution, v_resolution ):
-        self.OutputWriter.OutputCADSurfacePoints( file_to_write, u_resolution, v_resolution )
+    def OutputCADSurfacePoints( self, file_to_write ):
+        self.OutputWriter.OutputCADSurfacePoints( file_to_write, self.ParameterResolutionForOutputOfSurfacePoints )
 
     # --------------------------------------------------------------------------
     def OutputGaussPointsOfFEMesh( self, file_to_write ):
@@ -191,14 +219,14 @@ CADReconstructionUtility = CADReconstrutionUtilities( fem_filename, cad_geometry
 CADReconstructionUtility.Initialize()
 
 # Set Boundary Conditions
-CADReconstructionUtility.SetCouplingConditionsOnAllCouplingPoints()
+CADReconstructionUtility.SetDisplacementCouplingOnAllCouplingPoints()
 
 # Perform reconstruction
 CADReconstructionUtility.PerformReconstruction()
 
 # Some output
 CADReconstructionUtility.OutputFEData()
-CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_cad_geometry.txt", 50, 50 )
+CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_cad_geometry.txt" )
 CADReconstructionUtility.OutputGaussPointsOfFEMesh( "gauss_points_of_fe_mesh.txt" )
 CADReconstructionUtility.OutputControlPointDisplacementsInRhinoFormat( "tripod.post.res" )
 

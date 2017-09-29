@@ -91,7 +91,7 @@ class CADMapper
 
     // Fort vector / matrix operations
 	typedef UblasSpace<double, CompressedMatrix, Vector> CompressedSpaceType;
-	// typedef UblasSpace<double, SparseMatrix, Vector> SparseSpaceType;
+	typedef UblasSpace<double, SparseMatrix, Vector> SparseSpaceType;
 	typedef UblasSpace<double, Matrix, Vector> DenseSpaceType;
 	typedef LinearSolver<CompressedSpaceType,DenseSpaceType> CompressedLinearSolverType;
 

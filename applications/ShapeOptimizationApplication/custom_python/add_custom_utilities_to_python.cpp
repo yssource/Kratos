@@ -36,8 +36,9 @@
 #include "custom_utilities/input_output/vtk_file_io.h"
 
 #include "linear_solvers/linear_solver.h"
-#include "custom_utilities/cad_reconstruction/cad_reconstructor.h"
-#include "custom_utilities/cad_reconstruction/reconstruction_output_writer.h"
+#include "custom_utilities/cad_reconstruction/reconstruction_conditions/reconstruction_condition_container.h"
+#include "custom_utilities/cad_reconstruction/cad_reconstruction_solver.h"
+#include "custom_utilities/cad_reconstruction/data_management/reconstruction_output_writer.h"
 
 // ==============================================================================
 
@@ -52,9 +53,10 @@ void  AddCustomUtilitiesToPython()
 {
     using namespace boost::python;
 
+    typedef UblasSpace<double, SparseMatrix, Vector> SparseSpaceType;
     typedef UblasSpace<double, CompressedMatrix, Vector> CompressedSpaceType;
     typedef UblasSpace<double, Matrix, Vector> DenseSpaceType;
-    typedef LinearSolver<CompressedSpaceType, DenseSpaceType > SparseLinearSolverType;
+    typedef LinearSolver<CompressedSpaceType, DenseSpaceType > CompressedLinearSolverType;
 
     // ================================================================
     // For perfoming the mapping according to Vertex Morphing
@@ -73,7 +75,6 @@ void  AddCustomUtilitiesToPython()
         .def("MapToDesignSpace", &MapperVertexMorphingImprovedIntegration::MapToDesignSpace)
         .def("MapToGeometrySpace", &MapperVertexMorphingImprovedIntegration::MapToGeometrySpace)
         ;
-
 
     // ================================================================
     // For a possible damping of nodal variables
@@ -150,11 +151,16 @@ void  AddCustomUtilitiesToPython()
     class_<ReconstructionDataBase, bases<Process> >("ReconstructionDataBase", init<ModelPart&, boost::python::dict, boost::python::dict>())
         .def("Create", &ReconstructionDataBase::Create)
         ;
-    class_<CADReconstructor, bases<Process> >("CADReconstructor", init<ReconstructionDataBase&>())
-        .def("IdentifyControlPointsRelevantForReconstruction", &CADReconstructor::IdentifyControlPointsRelevantForReconstruction)    
-        .def("CreateSurfaceDisplacementMappingConditions", &CADReconstructor::CreateSurfaceDisplacementMappingConditions)
-        .def("CreateCouplingConditionsOnAllCouplingPoints", &CADReconstructor::CreateCouplingConditionsOnAllCouplingPoints)    
-        .def("CreateDirichletConditions", &CADReconstructor::CreateDirichletConditions)            
+    class_<ReconstructionConditionContainer, bases<Process> >("ReconstructionConditionContainer", init<ReconstructionDataBase&>())
+        .def("CreateDisplacementMappingConditions", &ReconstructionConditionContainer::CreateDisplacementMappingConditions)
+        .def("CreateDisplacementCouplingConstraintsOnAllCouplingPoints", &ReconstructionConditionContainer::CreateDisplacementCouplingConstraintsOnAllCouplingPoints)    
+        .def("CreateDirichletConditions", &ReconstructionConditionContainer::CreateDirichletConditions)            
+        ;           
+    class_<CADReconstructionSolver, bases<Process> >("CADReconstructionSolver", init<ReconstructionDataBase&, ReconstructionConditionContainer&, CompressedLinearSolverType::Pointer>())
+        .def("InitializeEquationSystem", &CADReconstructionSolver::InitializeEquationSystem) 
+        .def("ComputeLHS", &CADReconstructionSolver::ComputeLHS) 
+        .def("ComputeRHS", &CADReconstructionSolver::ComputeRHS) 
+        .def("SolveEquationSystem", &CADReconstructionSolver::SolveEquationSystem)         
         ;   
     class_<ReconstructionOutputWriter, bases<Process> >("ReconstructionOutputWriter", init<ReconstructionDataBase&>())
         .def("OutputCADSurfacePoints", &ReconstructionOutputWriter::OutputCADSurfacePoints)

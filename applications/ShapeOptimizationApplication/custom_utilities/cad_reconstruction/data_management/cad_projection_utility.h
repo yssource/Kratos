@@ -123,7 +123,8 @@ class CADProjectionUtility
 						if(point_is_inside)
 						{
 						  ++mNumberOfNodesInCADPointCloud;					
-						  Point<3> cad_point_coordinates = patch_i.EvaluateSurfacePoint( u_i, v_j );
+              Point<3> cad_point_coordinates;
+              patch_i.EvaluateSurfacePoint( u_i, v_j, cad_point_coordinates );
 
               NodeType::Pointer new_cad_node = Node <3>::Pointer(new Node<3>(mNumberOfNodesInCADPointCloud, cad_point_coordinates));
 
@@ -163,7 +164,8 @@ class CADProjectionUtility
 				Matrix hessian = ZeroMatrix(2,2);
 				Vector gradient = ZeroVector(2);
 				double determinant_of_hessian = 0;
-				Matrix inverse_of_hessian = ZeroMatrix(2,2);				
+        Matrix inverse_of_hessian = ZeroMatrix(2,2);
+        Point<3> UpdatedCADPoint;			
 
         // Variables neeed by the Netwon Raphson algorithm
 				double norm_delta_u = 100000000;
@@ -186,7 +188,7 @@ class CADProjectionUtility
           parameter_values_of_nearest_point[1] -= delta_u(1);
 
           // Point on CAD surface is udpated
-          Point<3> UpdatedCADPoint = patch_of_nearest_point.EvaluateSurfacePoint( parameter_values_of_nearest_point[0], parameter_values_of_nearest_point[1] );
+          patch_of_nearest_point.EvaluateSurfacePoint( parameter_values_of_nearest_point[0], parameter_values_of_nearest_point[1], UpdatedCADPoint );
           nearest_point->X() = UpdatedCADPoint[0];
           nearest_point->Y() = UpdatedCADPoint[1];
           nearest_point->Z() = UpdatedCADPoint[2];

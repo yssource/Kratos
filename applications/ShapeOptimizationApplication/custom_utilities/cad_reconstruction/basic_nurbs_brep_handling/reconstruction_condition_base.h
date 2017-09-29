@@ -8,8 +8,8 @@
 //
 // ==============================================================================
 
-#ifndef SURFACE_DISPLACEMENT_MAPPING_CONDITION_H
-#define SURFACE_DISPLACEMENT_MAPPING_CONDITION_H
+#ifndef RECONSTRUCTION_CONDITION_H
+#define RECONSTRUCTION_CONDITION_H
 
 // ------------------------------------------------------------------------------
 // System includes
@@ -24,7 +24,8 @@
 // ------------------------------------------------------------------------------
 // Project includes
 // ------------------------------------------------------------------------------
-#include "reconstruction_condition_base.h"
+#include "includes/define.h"
+#include "../basic_nurbs_brep_handling/patch.h"
 
 // ==============================================================================
 
@@ -55,39 +56,26 @@ namespace Kratos
 
 */
 
-class SurfaceDisplacementMappingCondition : public ReconstructionCondition
+class ReconstructionCondition
 {
 public:
   ///@name Type Definitions
   ///@{
-
-  typedef Element::GeometryType::IntegrationMethod IntegrationMethodType;      
-
-  /// Pointer definition of SurfaceDisplacementMappingCondition
-  KRATOS_CLASS_POINTER_DEFINITION(SurfaceDisplacementMappingCondition);
+    
+  /// Pointer definition of ReconstructionCondition
+  KRATOS_CLASS_POINTER_DEFINITION(ReconstructionCondition);
 
   ///@}
   ///@name Life Cycle
   ///@{
 
   /// Default constructor.
-  SurfaceDisplacementMappingCondition( Element::GeometryType&  geometry,
-                                       IntegrationMethodType int_method,
-                                       int int_point_number,
-                                       Patch& patch,
-                                       array_1d<double,2> param_values,
-                                       array_1d<double,2> param_spans )
-  : mrGeometryContainingThisCondition( geometry ),
-    mFemIntegrationMethod( int_method ),
-    mIntegrationPointNumber( int_point_number ),
-    mrAffectedPatch( patch ),
-    mParmeterValues( param_values ),
-    mParmeterSpans( param_spans )
+  ReconstructionCondition()
   {
   }
 
   /// Destructor.
-  virtual ~SurfaceDisplacementMappingCondition()
+  virtual ~ReconstructionCondition()
   {
   }
 
@@ -100,28 +88,13 @@ public:
   ///@{
 
   // ==============================================================================
-  Matrix ComputeLHSContribution() override
-  {
-    Matrix LHSContribution = IdentityMatrix(6,6);
-
-    std::cout<< "test" << std::endl;
-
-    return LHSContribution;
-  }
+  virtual Matrix ComputeLHSContribution() = 0;
 
   // --------------------------------------------------------------------------
-  Vector ComputeRHSContribution() override
-  {
-    Vector RHSContribution = UnitVector(6);
-    
-    return RHSContribution;
-  }
+  virtual Vector ComputeRHSContribution() = 0;
 
   // --------------------------------------------------------------------------
-  std::vector<int> GetReconstructionIds() override
-  {
-		return mrAffectedPatch.GetReconstructionIds( mParmeterSpans, mParmeterValues );    
-  }
+  virtual std::vector<int> GetReconstructionIds() = 0;  
 
   // ==============================================================================
 
@@ -140,13 +113,13 @@ public:
   /// Turn back information as a string.
   virtual std::string Info() const
   {
-    return "SurfaceDisplacementMappingCondition";
+    return "ReconstructionCondition";
   }
 
   /// Print information about this object.
   virtual void PrintInfo(std::ostream &rOStream) const
   {
-    rOStream << "SurfaceDisplacementMappingCondition";
+    rOStream << "ReconstructionCondition";
   }
 
   /// Print object's data.
@@ -202,16 +175,6 @@ private:
   ///@name Private Operators
   ///@{
 
-    // ==============================================================================
-    // Initialized by class constructor
-    // ==============================================================================
-    Element::GeometryType& mrGeometryContainingThisCondition;
-    IntegrationMethodType mFemIntegrationMethod;
-    int mIntegrationPointNumber;
-    Patch& mrAffectedPatch;
-    array_1d<double,2> mParmeterValues;
-    array_1d<double,2>mParmeterSpans;
-    
   ///@}
   ///@name Private Operations
   ///@{
@@ -229,14 +192,14 @@ private:
   ///@{
 
   /// Assignment operator.
-  //      SurfaceDisplacementMappingCondition& operator=(SurfaceDisplacementMappingCondition const& rOther);
+  //      ReconstructionCondition& operator=(ReconstructionCondition const& rOther);
 
   /// Copy constructor.
-  //      SurfaceDisplacementMappingCondition(SurfaceDisplacementMappingCondition const& rOther);
+  //      ReconstructionCondition(ReconstructionCondition const& rOther);
 
   ///@}
 
-}; // Class SurfaceDisplacementMappingCondition
+}; // Class ReconstructionCondition
 
 ///@}
 
@@ -251,4 +214,4 @@ private:
 
 } // namespace Kratos.
 
-#endif // SURFACE_DISPLACEMENT_MAPPING_CONDITION_H
+#endif // RECONSTRUCTION_CONDITION_H

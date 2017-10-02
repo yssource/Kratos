@@ -13,6 +13,7 @@ CheckForPreviousImport()
 
 # Additional imports
 import json as json
+import time
 
 # ======================================================================================================================================
 # Class definition
@@ -32,11 +33,11 @@ class CADReconstrutionUtilities():
         self.ReconstructionStrategy = "mapping"    # mapping / least_squares
         self.FEMGaussIntegrationDegree = 5
 
-        self.SolutionStrategy = "penalty_approach" # penalty_approach 
-        self.SolutionIterations = 1
+        # Solution parameters
+        self.SolutionIterations = 2
         self.PenaltyFactorForDisplacementCoupling = 1e3
         self.PenaltyFactorForDirichletConstraints = 1e3
-        self.PenaltyIncreaseFactor = 10
+        self.PenaltyMultiplier = 10.0
        
         # Parameters to edit input data       
         self.FERefinementLevel = 0
@@ -63,13 +64,58 @@ class CADReconstrutionUtilities():
         self.__InitializeConstraints()
         self.__CreateReconstructionDataBase()
         self.__CreateReconstructionOutputWriter()
+    # --------------------------------------------------------------------------
+    def SetDisplacementCouplingOnAllCouplingPoints( self ):
+        self.IsDisplacementCouplingSpecifiedForAllCouplingPoints = True
+
+    # --------------------------------------------------------------------------
+    def SetDirichletConstraints( self, list_of_condition_settings ):
+        self.AreDirichletConstraintsSpecified = True
+        self.DirichletConditions = list_of_condition_settings
+
+    # --------------------------------------------------------------------------
+    def PerformReconstruction( self ):
+        self.__CreateReconstructionConditions()
+        self.__CreateSolverForReconstruction()
+        self.__SolveReconstructionEquation()
+        
+    # --------------------------------------------------------------------------
+    def OutputFEData( self ):
+        from gid_output import GiDOutput
+        fem_output_filename = self.FEMInputFilename+"_as_used_for_reconstruction"
+        nodal_results=["SHAPE_CHANGE_ABSOLUTE"]
+        gauss_points_results=[]
+        VolumeOutput = True
+        GiDPostMode = "Binary"
+        GiDWriteMeshFlag = False
+        GiDWriteConditionsFlag = True
+        GiDWriteParticlesFlag = False
+        GiDMultiFileFlag = "Single"
+        gig_io = GiDOutput(fem_output_filename, VolumeOutput, GiDPostMode, GiDMultiFileFlag, GiDWriteMeshFlag, GiDWriteConditionsFlag)
+        gig_io.initialize_results(self.FEModelPart)
+        gig_io.write_results(1, self.FEModelPart, nodal_results, gauss_points_results)
+        gig_io.finalize_results()
+
+    # --------------------------------------------------------------------------
+    def OutputCADSurfacePoints( self, file_to_write ):
+        self.OutputWriter.OutputCADSurfacePoints( file_to_write, self.ParameterResolutionForOutputOfSurfacePoints )
+
+    # --------------------------------------------------------------------------
+    def OutputGaussPointsOfFEMesh( self, file_to_write ):
+        self.OutputWriter.OutputGaussPointsOfFEMesh( file_to_write, self.FEMGaussIntegrationDegree )
+
+    # --------------------------------------------------------------------------
+    def OutputControlPointDisplacementsInRhinoFormat( self, file_to_write ):
+        self.OutputWriter.OutputControlPointDisplacementsInRhinoFormat( file_to_write )   
 
     # --------------------------------------------------------------------------
     def __ReadFEData( self ):
+        print("\n> Start importing FE data")
         self.FEModelPart = ModelPart("name_of_empty_mdpa")
         self.FEModelPart.AddNodalSolutionStepVariable(SHAPE_CHANGE_ABSOLUTE)
         model_part_io = ModelPartIO(self.FEMInputFilename)
         model_part_io.ReadModelPart(self.FEModelPart)
+        print("> Importing FE data finished.")        
 
     # --------------------------------------------------------------------------
     def __RefineFEModel( self ):       
@@ -99,12 +145,14 @@ class CADReconstrutionUtilities():
 
     # --------------------------------------------------------------------------
     def __ReadCADData( self ):
+        print("\n> Start importing CAD data")
         self.CADGeometry = {}
         with open(self.CADGeometryFilename) as cad_data1:
             self.CADGeometry = json.load(cad_data1)
         self.CADIntegrationData = {}
         with open(self.CADIntegrationDataFilename) as cad_data2:
-            self.CADIntegrationData = json.load(cad_data2)       
+            self.CADIntegrationData = json.load(cad_data2)
+        print("> Importing CAD data finished.")
 
     # --------------------------------------------------------------------------
     def __InitializeConstraints( self ):
@@ -119,21 +167,6 @@ class CADReconstrutionUtilities():
     # --------------------------------------------------------------------------
     def __CreateReconstructionOutputWriter( self ):
         self.OutputWriter = ReconstructionOutputWriter( self.DataBase )    
-
-    # --------------------------------------------------------------------------
-    def SetDisplacementCouplingOnAllCouplingPoints( self ):
-        self.IsDisplacementCouplingSpecifiedForAllCouplingPoints = True
-
-    # --------------------------------------------------------------------------
-    def SetDirichletConstraints( self, list_of_condition_settings ):
-        self.AreDirichletConstraintsSpecified = True
-        self.DirichletConditions = list_of_condition_settings
-
-    # --------------------------------------------------------------------------
-    def PerformReconstruction( self ):
-        self.__CreateReconstructionConditions()
-        self.__CreateSolverForReconstruction()
-        self.__SolveReconstructionEquation()
 
     # --------------------------------------------------------------------------
     def __CreateReconstructionConditions( self ):
@@ -159,56 +192,34 @@ class CADReconstrutionUtilities():
 
     # --------------------------------------------------------------------------
     def __SolveReconstructionEquation( self ): 
-        if(self.SolutionStrategy == "penalty_approach"):
-            self.__SolveReconstructionEquationUsingPenaltyApproach()
-        else:
-            raise ValueError( "The following solution strategy does not exist: ", self.SolutionStrategy )
-        
-    # --------------------------------------------------------------------------
-    def __SolveReconstructionEquationUsingPenaltyApproach( self ):  
-        
-        self.ReconstructionSolver.InitializeEquationSystem()            
-        
+        self.ReconstructionSolver.InitializeEquationSystem() 
+
         for iteration in range(1,self.SolutionIterations+1): 
+            print("\n===========================================")
+            print("Starting reconstruction iteration ", iteration,"...")
+            print("===========================================")            
             self.ReconstructionSolver.ComputeLHS()
             self.ReconstructionSolver.ComputeRHS()
             self.ReconstructionSolver.RegularizeEquationSystem()
             self.ReconstructionSolver.SolveEquationSystem()
+            self.ReconstructionSolver.UpdateControlPointsAccordingReconstructionStrategy( self.ReconstructionStrategy )
             if self.SolutionIterations>1:  
-                self.ReconstructionSolver.IncreaseAllPenaltyFactorsByInputFactor( self.PenaltyIncreaseFactor )
+                self.ReconstructionSolver.MultiplyAllPenaltyFactorsByInputFactor( self.PenaltyMultiplier ) 
 
-    # --------------------------------------------------------------------------
-    def OutputFEData( self ):
-        from gid_output import GiDOutput
-        fem_output_filename = self.FEMInputFilename+"_as_used_for_reconstruction"
-        nodal_results=["SHAPE_CHANGE_ABSOLUTE"]
-        gauss_points_results=[]
-        VolumeOutput = True
-        GiDPostMode = "Binary"
-        GiDWriteMeshFlag = False
-        GiDWriteConditionsFlag = True
-        GiDWriteParticlesFlag = False
-        GiDMultiFileFlag = "Single"
-        gig_io = GiDOutput(fem_output_filename, VolumeOutput, GiDPostMode, GiDMultiFileFlag, GiDWriteMeshFlag, GiDWriteConditionsFlag)
-        gig_io.initialize_results(self.FEModelPart)
-        gig_io.write_results(1, self.FEModelPart, nodal_results, gauss_points_results)
-        gig_io.finalize_results()
-
-    # --------------------------------------------------------------------------
-    def OutputCADSurfacePoints( self, file_to_write ):
-        self.OutputWriter.OutputCADSurfacePoints( file_to_write, self.ParameterResolutionForOutputOfSurfacePoints )
-
-    # --------------------------------------------------------------------------
-    def OutputGaussPointsOfFEMesh( self, file_to_write ):
-        self.OutputWriter.OutputGaussPointsOfFEMesh( file_to_write, self.FEMGaussIntegrationDegree )
-
-    # --------------------------------------------------------------------------
-    def OutputControlPointDisplacementsInRhinoFormat( self, file_to_write ):
-        self.OutputWriter.OutputControlPointDisplacementsInRhinoFormat( file_to_write )              
+        print("\n===========================================")
+        print("Finished reconstruction loop.")
+        print("===========================================")                    
 
 # ======================================================================================================================================
 # Reconstruction
 # ======================================================================================================================================    
+
+print("\n\n========================================================================================================")
+print("> Start reconstruction...")
+print("========================================================================================================")
+
+# Measure time
+start_time = time.time()
 
 # Input parameters
 fem_filename = "tripod"
@@ -234,36 +245,6 @@ CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_updated_cad_
 CADReconstructionUtility.OutputGaussPointsOfFEMesh( "gauss_points_of_fe_mesh.txt" )
 CADReconstructionUtility.OutputControlPointDisplacementsInRhinoFormat( "tripod.post.res" )
 
-
-
-
-# # ======================================================================================================================================
-# # Mapping
-# # ======================================================================================================================================    
-
-# # Create CAD-mapper
-# linear_solver = SuperLUSolver()
-# # DiagPrecond = DiagonalPreconditioner()
-# # linear_solver =  BICGSTABSolver(1e-9, 5000, DiagPrecond)
-# # linear_solver = AMGCLSolver(AMGCLSmoother.GAUSS_SEIDEL, AMGCLIterativeSolverType.BICGSTAB, 1e-9, 300, 2, 10)
-# mapper = CADMapper(fe_model_part,cad_geometry,cad_integration_data,linear_solver)
-
-# # Compute mapping matrix
-# u_resolution = 300
-# v_resolution = 300
-# mapper.compute_mapping_matrix(u_resolution,v_resolution)
-
-# # Apply boundary conditions
-# penalty_factor_displacement_coupling = 1e3
-# penalty_factor_rotation_coupling = 1e3
-# penalty_factor_dirichlet_condition = 1e3
-# edges_with_specific_dirichlet_conditions = [ ]
-# edges_with_enforced_tangent_continuity = [ ]
-# mapper.apply_boundary_conditions( penalty_factor_displacement_coupling, 
-#                                   penalty_factor_rotation_coupling, 
-#                                   penalty_factor_dirichlet_condition,
-#                                   edges_with_specific_dirichlet_conditions,
-#                                   edges_with_enforced_tangent_continuity )
-
-# # Perform mapping
-# mapper.map_to_cad_space()
+print("\n========================================================================================================")
+print("> Finished reconstruction in " ,round( time.time()-start_time, 3 ), " s.")
+print("========================================================================================================")

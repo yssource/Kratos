@@ -88,7 +88,17 @@ public:
     ///@{
 
     // ==============================================================================
-    void ComputeAndAddLHSContribution( SparseMatrix& LHS ) override
+    void FlagControlPointsRelevantForReconstruction() override
+    {
+    }
+
+    // --------------------------------------------------------------------------
+    void Initialize() override
+    {
+    }
+
+    // --------------------------------------------------------------------------    
+    void ComputeAndAddLHSContribution( CompressedMatrix& LHS ) override
     {
     }
 
@@ -96,13 +106,7 @@ public:
     void ComputeAndAddRHSContribution( Vector& RHS ) override
     {
     }
-
-    // --------------------------------------------------------------------------
-    void FlagControlPointsRelevantForReconstruction()
-    {
-        // mrAffectedPatch.FlagAffectedControlPointsForReconstruction(  mParmeterSpans, mParmeterValues );
-    }
-
+        
     // ==============================================================================
 
     ///@}

@@ -85,12 +85,6 @@ public:
       mParmeterValues( param_values ),
       mParmeterSpans( param_spans )
     {
-        mIntegrationWeight = geometry.IntegrationPoints(mFemIntegrationMethod)[mIntegrationPointNumber].Weight(); 
-
-        mNurbsFunctionValues = mrAffectedPatch.EvaluateNURBSFunctions( mParmeterSpans, mParmeterValues );
-
-        const Matrix& fem_shape_function_container = mrGeometryContainingThisCondition.ShapeFunctionsValues(mFemIntegrationMethod);
-        mFEMFunctionValues = row( fem_shape_function_container, mIntegrationPointNumber);        
     }
 
     /// Destructor.
@@ -107,19 +101,36 @@ public:
     ///@{
 
     // ==============================================================================
-    void ComputeAndAddLHSContribution( SparseMatrix& LHS ) override
+    void FlagControlPointsRelevantForReconstruction()
     {
-        std::vector<int> equation_ids = mrAffectedPatch.GetEquationIdsOfAffectedControlPoints( mParmeterSpans, mParmeterValues );            
-        int local_equation_size = equation_ids.size();        
+        mrAffectedPatch.FlagAffectedControlPointsForReconstruction(  mParmeterSpans, mParmeterValues );
+    }    
+    
+    // --------------------------------------------------------------------------
+    void Initialize()
+    {
+        mIntegrationWeight = mrGeometryContainingThisCondition.IntegrationPoints(mFemIntegrationMethod)[mIntegrationPointNumber].Weight(); 
+        
+        mNurbsFunctionValues = mrAffectedPatch.EvaluateNURBSFunctions( mParmeterSpans, mParmeterValues );
 
-        for(int row_itr=0; row_itr<local_equation_size; row_itr++)
+        const Matrix& fem_shape_function_container = mrGeometryContainingThisCondition.ShapeFunctionsValues(mFemIntegrationMethod);
+        mFEMFunctionValues = row( fem_shape_function_container, mIntegrationPointNumber);
+        
+        mEquationIdsOfAffectedControlPoints = mrAffectedPatch.GetEquationIdsOfAffectedControlPoints( mParmeterSpans, mParmeterValues );
+        mNumberOfLocalEquations = mEquationIdsOfAffectedControlPoints.size();         
+    }    
+    
+    // --------------------------------------------------------------------------
+    void ComputeAndAddLHSContribution( CompressedMatrix& LHS ) override
+    {           
+        for(int row_itr=0; row_itr<mNumberOfLocalEquations; row_itr++)
         {
-            int row_id = equation_ids[row_itr];
+            int row_id = mEquationIdsOfAffectedControlPoints[row_itr];
             double R_row = mNurbsFunctionValues[row_itr];
 
-            for(int collumn_itr=0; collumn_itr<local_equation_size; collumn_itr++)
+            for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquations; collumn_itr++)
             {                
-                int collumn_id = equation_ids[collumn_itr];
+                int collumn_id = mEquationIdsOfAffectedControlPoints[collumn_itr];
                 double R_collumn = mNurbsFunctionValues[collumn_itr];
 
                 LHS( 3*row_id+0, 3*collumn_id+0 ) += mIntegrationWeight * R_row * R_collumn;
@@ -133,8 +144,7 @@ public:
     void ComputeAndAddRHSContribution( Vector& RHS ) override
     {
         int n_affected_fem_nodes =  mrGeometryContainingThisCondition.size();
-        std::vector<int> equation_ids = mrAffectedPatch.GetEquationIdsOfAffectedControlPoints( mParmeterSpans, mParmeterValues );            
-
+        
         // Prepare vector of node displacements
         Vector node_displacements = ZeroVector(3*n_affected_fem_nodes);
         for(int itr  = 0; itr<n_affected_fem_nodes; itr++)
@@ -146,15 +156,12 @@ public:
         }
 
         // Compute RHS
-        int local_row_size = equation_ids.size();
-        int local_collumn_size = n_affected_fem_nodes;
-
-        for(int row_itr=0; row_itr<local_row_size; row_itr++)
+        for(int row_itr=0; row_itr<mNumberOfLocalEquations; row_itr++)
         {
-            int row_id = equation_ids[row_itr];
+            int row_id = mEquationIdsOfAffectedControlPoints[row_itr];
             double R_row = mNurbsFunctionValues[row_itr];
 
-            for(int collumn_itr=0; collumn_itr<local_collumn_size; collumn_itr++)
+            for(int collumn_itr=0; collumn_itr<n_affected_fem_nodes; collumn_itr++)
             {
                 double N_collumn = mFEMFunctionValues[collumn_itr];
                 
@@ -163,12 +170,6 @@ public:
                 RHS( 3*row_id+2 ) += mIntegrationWeight * R_row * N_collumn * node_displacements[3*collumn_itr+2];
             }
         }
-    }
-
-    // --------------------------------------------------------------------------
-    void FlagControlPointsRelevantForReconstruction()
-    {
-        mrAffectedPatch.FlagAffectedControlPointsForReconstruction(  mParmeterSpans, mParmeterValues );
     }
 
     // ==============================================================================
@@ -261,7 +262,9 @@ private:
     array_1d<double,2>mParmeterSpans;
     double mIntegrationWeight;
     std::vector<double> mNurbsFunctionValues;
-    Vector mFEMFunctionValues;    
+    Vector mFEMFunctionValues; 
+    std::vector<int> mEquationIdsOfAffectedControlPoints;
+    int mNumberOfLocalEquations;
 
   ///@}
   ///@name Private Operations

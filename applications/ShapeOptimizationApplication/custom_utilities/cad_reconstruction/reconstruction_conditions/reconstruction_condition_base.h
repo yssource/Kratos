@@ -88,13 +88,19 @@ public:
     ///@{
 
     // ==============================================================================
-    virtual void ComputeAndAddLHSContribution( SparseMatrix& LHS ) = 0;
+    virtual void FlagControlPointsRelevantForReconstruction() = 0;
+
+    // --------------------------------------------------------------------------
+    virtual void Initialize() = 0;    
+    
+    // --------------------------------------------------------------------------
+    virtual void ComputeAndAddLHSContribution( CompressedMatrix& LHS ) = 0;
 
     // --------------------------------------------------------------------------
     virtual void ComputeAndAddRHSContribution( Vector& RHS ) = 0;
 
     // --------------------------------------------------------------------------
-    virtual void FlagControlPointsRelevantForReconstruction() = 0;
+    virtual void Set( std::string identifier, double value ){};    
 
     // ==============================================================================
 

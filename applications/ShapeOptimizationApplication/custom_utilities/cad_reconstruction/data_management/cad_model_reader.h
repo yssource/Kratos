@@ -101,6 +101,8 @@ public:
 	{
 		std::cout << "\n> Start reading CAD geometry of given json-file..." << std::endl;
 		boost::timer timer;
+
+		std::cout << "> ATTENTION! Better creation of polygon in boundary_loop.h needed (e.g as in Carat). Currently boundary polygon is only created using hard coded number of points!!!!!!" << std::endl;					
 		
 		// loop over patches / faces
 		for (int i = 0; i < boost::python::len(mr_cad_geometry_in_json["faces"]); i++)

@@ -60,10 +60,7 @@ public:
 
     // --------------------------------------------------------------------------
     void UpdateControlPointDisplacements( Vector& cp_displacements )
-    {
-        std::cout << "\n> Start updating control point displacements..." << std::endl;           
-        boost::timer timer;
-
+    { 
         // Map to get control point corresponding to a given global id (needed for python update later)
         std::map<unsigned int, ControlPoint*> control_point_corresponding_to_global_id;
         
@@ -105,9 +102,7 @@ public:
                 mrCADGeometry["faces"][i]["surface"][0]["control_points"][cp_idx][1][1] = position_y;
                 mrCADGeometry["faces"][i]["surface"][0]["control_points"][cp_idx][1][2] = position_z;
             }
-        }
-
-        std::cout << "> Time needed for updating control point displacements: " << timer.elapsed() << " s" << std::endl;                            
+        }                         
     }
 
     // ------------------------------------------------------------------------------

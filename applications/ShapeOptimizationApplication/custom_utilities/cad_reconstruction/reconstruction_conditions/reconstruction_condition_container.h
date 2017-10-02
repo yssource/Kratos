@@ -115,7 +115,7 @@ public:
         std::cout << "> Starting to loop over integration points..." << std::endl;
         boost::timer timer;   
 
-        DisplacementMappingCondition::Pointer NewCondition;
+        ReconstructionCondition::Pointer NewCondition;
         
         for (ModelPart::ElementsContainerType::iterator elem_i = fe_model_part.ElementsBegin(); elem_i != fe_model_part.ElementsEnd(); ++elem_i)
         {
@@ -137,12 +137,12 @@ public:
                                                           parameter_spans_of_nearest_point, 
                                                           patch_index_of_nearest_point );
 
-                NewCondition = DisplacementMappingCondition::Pointer( new DisplacementMappingCondition( geom_i,
-                                                                                                        fem_integration_method,
-                                                                                                        integration_point_number,
-                                                                                                        patch_vector[patch_index_of_nearest_point],
-                                                                                                        parameter_values_of_nearest_point,
-                                                                                                        parameter_spans_of_nearest_point ));
+                NewCondition = ReconstructionCondition::Pointer( new DisplacementMappingCondition( geom_i,
+                                                                                                   fem_integration_method,
+                                                                                                   integration_point_number,
+                                                                                                   patch_vector[patch_index_of_nearest_point],
+                                                                                                   parameter_values_of_nearest_point,
+                                                                                                   parameter_spans_of_nearest_point ));
                 mListOfReconstructionConditions.push_back( NewCondition );
             }
         }

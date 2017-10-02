@@ -73,7 +73,6 @@ public:
 	  m_is_inner_loop(is_inner_loop)
 	{
 		// Create polygon for inside / outside check
-		std::cout << "> Better creation of polygon needed (e.g as in Carat). Currently there is only a hard coded number of points in boundary polygon!!!!!!" << std::endl;								
 		CreatePolygon();
 	}
 

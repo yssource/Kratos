@@ -160,6 +160,7 @@ void  AddCustomUtilitiesToPython()
         .def("InitializeEquationSystem", &CADReconstructionSolver::InitializeEquationSystem) 
         .def("ComputeLHS", &CADReconstructionSolver::ComputeLHS) 
         .def("ComputeRHS", &CADReconstructionSolver::ComputeRHS) 
+        .def("RegularizeEquationSystem", &CADReconstructionSolver::RegularizeEquationSystem) 
         .def("SolveEquationSystem", &CADReconstructionSolver::SolveEquationSystem)         
         ;   
     class_<ReconstructionOutputWriter, bases<Process> >("ReconstructionOutputWriter", init<ReconstructionDataBase&>())

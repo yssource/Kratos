@@ -89,12 +89,12 @@ public:
     {
         std::cout << "\n> Start computing LHS..." << std::endl;           
         boost::timer timer;  
-    
-        if(isLHSWithoutConstraintsAlreadyComputed)
+   
+        if(isLHSWithoutConstraintsComputed==false)
             for(auto & condition_i : mrReconstructionConditions)
             {
                 condition_i->ComputeAndAddLHSContribution( mLHSWithoutConstraints );
-                isRHSWithoutConstraintsAlreadyComputed = true;                
+                isLHSWithoutConstraintsComputed = true;                
             }
 
         mLHS = mLHSWithoutConstraints;
@@ -111,11 +111,11 @@ public:
         std::cout << "\n> Start computing RHS..." << std::endl;           
         boost::timer timer;  
     
-        if(isRHSWithoutConstraintsAlreadyComputed)
+        if(isRHSWithoutConstraintsComputed==false)
             for(auto & condition_i : mrReconstructionConditions)
             {
                 condition_i->ComputeAndAddRHSContribution( mRHSWithoutConstraints );
-                isRHSWithoutConstraintsAlreadyComputed = true;
+                isRHSWithoutConstraintsComputed = true;
             }
 
         mRHS = mRHSWithoutConstraints;        
@@ -125,6 +125,32 @@ public:
 
         std::cout << "> Time needed for computing RHS: " << timer.elapsed() << " s" << std::endl;            
     } 
+
+    // --------------------------------------------------------------------------
+    void RegularizeEquationSystem()
+    {
+        std::cout << "\n> Starting to regularize equation system ..." << std::endl;           
+    
+        bool is_small_value_on_main_diagonal = false;
+        int number_of_small_values_on_main_diagonal = 0;
+
+        for(int i_itr=0; i_itr<mLHS.size1(); i_itr++)
+            if(std::abs(mLHS(i_itr,i_itr))<1e-10)
+            {
+                is_small_value_on_main_diagonal = true;
+                number_of_small_values_on_main_diagonal++;
+
+                mLHS(i_itr,i_itr) = 1e-3;
+            }
+
+        if(is_small_value_on_main_diagonal)
+        {
+            std::cout << "> WARNING, number of values on main diagonal < 1e-10: " << number_of_small_values_on_main_diagonal << " !!!!!!!!!!!!!!! " << std::endl;
+            std::cout << "> All these values are manually set to 1e-3." << std::endl;
+        }
+
+        std::cout << "> Finished regularizing equation system." << std::endl;           
+    }   
 
     // --------------------------------------------------------------------------
     void SolveEquationSystem()
@@ -137,7 +163,16 @@ public:
 		// Assign sparse LHS matrix to compressed LHS matrix required by linear solver
         CompressedMatrix compressed_lhs = mLHS;
                 
+        // KRATOS_WATCH(compressed_lhs.size1())
+        // for(size_t i=0; i<compressed_lhs.size1(); i++)
+        // {
+        //         compressed_lhs(i,i) = 1;
+        //         mRHS(i) = 1;
+        // }
+
         mpLinearSolver->Solve(compressed_lhs, control_point_update, mRHS);
+
+        // KRATOS_WATCH(control_point_update[0])
 
         mrReconstructionDataBase.UpdateControlPointDisplacements( control_point_update );
 
@@ -224,10 +259,10 @@ private:
     int mNumberOfRelevantControlPoints = 0;
     SparseMatrix mLHS;
     SparseMatrix mLHSWithoutConstraints;
-    bool isLHSWithoutConstraintsAlreadyComputed = false;    
+    bool isLHSWithoutConstraintsComputed = false;    
     Vector mRHS;
     Vector mRHSWithoutConstraints;    
-    bool isRHSWithoutConstraintsAlreadyComputed = false;
+    bool isRHSWithoutConstraintsComputed = false;
 
     /// Assignment operator.
     //      CADReconstructionSolver& operator=(CADReconstructionSolver const& rOther);

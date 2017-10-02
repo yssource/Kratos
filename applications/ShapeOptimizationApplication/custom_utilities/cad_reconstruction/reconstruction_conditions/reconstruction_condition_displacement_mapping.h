@@ -61,7 +61,8 @@ public:
     ///@name Type Definitions
     ///@{
 
-    typedef Element::GeometryType::IntegrationMethod IntegrationMethodType;      
+    typedef Element::GeometryType::IntegrationMethod IntegrationMethodType;
+    typedef Element::GeometryType::IntegrationPointsArrayType IntegrationPointsArrayType;
 
     /// Pointer definition of DisplacementMappingCondition
     KRATOS_CLASS_POINTER_DEFINITION(DisplacementMappingCondition);
@@ -84,6 +85,12 @@ public:
       mParmeterValues( param_values ),
       mParmeterSpans( param_spans )
     {
+        mIntegrationWeight = geometry.IntegrationPoints(mFemIntegrationMethod)[mIntegrationPointNumber].Weight(); 
+
+        mNurbsFunctionValues = mrAffectedPatch.EvaluateNURBSFunctions( mParmeterSpans, mParmeterValues );
+
+        const Matrix& fem_shape_function_container = mrGeometryContainingThisCondition.ShapeFunctionsValues(mFemIntegrationMethod);
+        mFEMFunctionValues = row( fem_shape_function_container, mIntegrationPointNumber);        
     }
 
     /// Destructor.
@@ -102,12 +109,60 @@ public:
     // ==============================================================================
     void ComputeAndAddLHSContribution( SparseMatrix& LHS ) override
     {
-                // return mrAffectedPatch.GetEquationIdsOfAffectedControlPoints( mParmeterSpans, mParmeterValues );    
+        std::vector<int> equation_ids = mrAffectedPatch.GetEquationIdsOfAffectedControlPoints( mParmeterSpans, mParmeterValues );            
+        int local_equation_size = equation_ids.size();        
+
+        for(int row_itr=0; row_itr<local_equation_size; row_itr++)
+        {
+            int row_id = equation_ids[row_itr];
+            double R_row = mNurbsFunctionValues[row_itr];
+
+            for(int collumn_itr=0; collumn_itr<local_equation_size; collumn_itr++)
+            {                
+                int collumn_id = equation_ids[collumn_itr];
+                double R_collumn = mNurbsFunctionValues[collumn_itr];
+
+                LHS( 3*row_id+0, 3*collumn_id+0 ) += mIntegrationWeight * R_row * R_collumn;
+                LHS( 3*row_id+1, 3*collumn_id+1 ) += mIntegrationWeight * R_row * R_collumn;
+                LHS( 3*row_id+2, 3*collumn_id+2 ) += mIntegrationWeight * R_row * R_collumn;
+            }
+        }
     }
 
     // --------------------------------------------------------------------------
     void ComputeAndAddRHSContribution( Vector& RHS ) override
     {
+        int n_affected_fem_nodes =  mrGeometryContainingThisCondition.size();
+        std::vector<int> equation_ids = mrAffectedPatch.GetEquationIdsOfAffectedControlPoints( mParmeterSpans, mParmeterValues );            
+
+        // Prepare vector of node displacements
+        Vector node_displacements = ZeroVector(3*n_affected_fem_nodes);
+        for(int itr  = 0; itr<n_affected_fem_nodes; itr++)
+        {
+            Vector node_disp = mrGeometryContainingThisCondition[itr].FastGetSolutionStepValue(SHAPE_CHANGE_ABSOLUTE);
+            node_displacements[3*itr+0] = node_disp(0);
+            node_displacements[3*itr+1] = node_disp(1);
+            node_displacements[3*itr+2] = node_disp(2);
+        }
+
+        // Compute RHS
+        int local_row_size = equation_ids.size();
+        int local_collumn_size = n_affected_fem_nodes;
+
+        for(int row_itr=0; row_itr<local_row_size; row_itr++)
+        {
+            int row_id = equation_ids[row_itr];
+            double R_row = mNurbsFunctionValues[row_itr];
+
+            for(int collumn_itr=0; collumn_itr<local_collumn_size; collumn_itr++)
+            {
+                double N_collumn = mFEMFunctionValues[collumn_itr];
+                
+                RHS( 3*row_id+0 ) += mIntegrationWeight * R_row * N_collumn * node_displacements[3*collumn_itr+0];
+                RHS( 3*row_id+1 ) += mIntegrationWeight * R_row * N_collumn * node_displacements[3*collumn_itr+1];
+                RHS( 3*row_id+2 ) += mIntegrationWeight * R_row * N_collumn * node_displacements[3*collumn_itr+2];
+            }
+        }
     }
 
     // --------------------------------------------------------------------------
@@ -204,7 +259,10 @@ private:
     Patch& mrAffectedPatch;
     array_1d<double,2> mParmeterValues;
     array_1d<double,2>mParmeterSpans;
-    
+    double mIntegrationWeight;
+    std::vector<double> mNurbsFunctionValues;
+    Vector mFEMFunctionValues;    
+
   ///@}
   ///@name Private Operations
   ///@{

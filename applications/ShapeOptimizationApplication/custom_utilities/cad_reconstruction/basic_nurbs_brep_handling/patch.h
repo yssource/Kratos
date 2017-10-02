@@ -137,6 +137,12 @@ public:
 	{
 		m_nurbs_surface.EvaluateSurfacePoint( _u, _v, rSurfacePoint );
 	}
+	
+	// --------------------------------------------------------------------------
+	std::vector<double> EvaluateNURBSFunctions( array_1d<double,2> parameter_spans, array_1d<double,2> parameter_values )
+	{
+		return m_nurbs_surface.EvaluateNURBSFunctions( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
+	}	
 
 	// --------------------------------------------------------------------------
 	array_1d<int,2> ComputeSurfaceKnotSpans( double _u, double _v )

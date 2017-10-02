@@ -127,6 +127,9 @@ public:
 		int span_u=find_Knot_Span(m_knot_vector_u,u,m_p,m_n_u);
 		int span_v=find_Knot_Span(m_knot_vector_v,v,m_q,m_n_v);
 
+		std::vector<double> nurbs_function_values = EvaluateNURBSFunctions( span_u, span_v, u, v );		
+		int control_point_itr = 0;
+
 		for (int c=0;c<=m_q;c++)
 		{
 			for (int b=0;b<=m_p;b++)
@@ -136,12 +139,11 @@ public:
 				int vi = span_v-m_q+c;
 				int control_point_index =vi*m_n_u + ui;
 
-				Matrix R;
-				EvaluateNURBSFunctions(span_u, span_v, u, v, R);
+				rSurfacePoint[0] += nurbs_function_values[control_point_itr] * m_control_points[control_point_index].GetX();
+				rSurfacePoint[1] += nurbs_function_values[control_point_itr] * m_control_points[control_point_index].GetY();
+				rSurfacePoint[2] += nurbs_function_values[control_point_itr] * m_control_points[control_point_index].GetZ();
 
-				rSurfacePoint[0] += R(b,c) * m_control_points[control_point_index].GetX();
-				rSurfacePoint[1] += R(b,c) * m_control_points[control_point_index].GetY();
-				rSurfacePoint[2] += R(b,c) * m_control_points[control_point_index].GetZ();
+				control_point_itr++;
 			}
 		}
 	}
@@ -157,13 +159,12 @@ public:
 	///  \param[in]  span_v     knotspan index in v-direction
 	///  \param[in]  _u         local parameter in u-direction
 	///  \param[in]  _v         local parameter in v-direction
-	///  \param[out] R         basis func
 	///
 	/// ======================================================================================
 	///  \author     Daniel Baumgärtner (12/2016)
 	//
 	//########################################################################################
-	void EvaluateNURBSFunctions(int span_u, int span_v, double _u, double _v, Matrix& R)
+	std::vector<double> EvaluateNURBSFunctions( int span_u, int span_v, double _u, double _v )
 	{
 		if(span_u==-1) span_u=find_Knot_Span(m_knot_vector_u,_u,m_p,m_n_u);
 		if(span_v==-1) span_v=find_Knot_Span(m_knot_vector_v,_v,m_q,m_n_v);
@@ -171,14 +172,12 @@ public:
 		Vector N;
 		Vector M;
 
-		R.resize( m_p+1,m_q+1 );
-		noalias(R) = ZeroMatrix( m_p+1 ,m_q+1 );
-
 		// Evaluate basis functions with derivatives
 		eval_nonzero_basis_function(N, m_knot_vector_u, _u, span_u, m_p);
 		eval_nonzero_basis_function(M, m_knot_vector_v, _v, span_v, m_q);
 
 		double sum = 0.0;
+		std::vector<double> nurbs_function_values;
 
 		for (int c=0;c<=m_q;c++)
 		{
@@ -190,8 +189,9 @@ public:
 				int control_point_index =vi*m_n_u + ui;
 
 				// Evaluate basis function
-				R(b,c) = N(b)*M(c)*m_control_points[control_point_index].GetWeight();
-				sum +=R(b,c);
+				double function_value = N(b)*M(c)*m_control_points[control_point_index].GetWeight();
+				nurbs_function_values.push_back( function_value );
+				sum += function_value;
 			}
 		}
 
@@ -199,9 +199,10 @@ public:
 		//if (std::abs(sum-weight)> cepsilon) //Breitenberger 18.06.2014
 		double inv_sum = 1/sum;
 		// divide through by sum
-		for(int c=0;c<=m_q;c++)
-			for(int b=0;b<=m_p;b++)
-				R(b,c) = inv_sum*R(b,c);
+		for(size_t itr=0; itr<nurbs_function_values.size(); itr++ )
+			nurbs_function_values[itr] *= inv_sum;
+
+		return nurbs_function_values;
 	}
 
 	//  #####################################################################################

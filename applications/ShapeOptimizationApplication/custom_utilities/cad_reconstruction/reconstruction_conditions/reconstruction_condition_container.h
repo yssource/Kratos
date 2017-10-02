@@ -120,11 +120,11 @@ public:
         for (ModelPart::ElementsContainerType::iterator elem_i = fe_model_part.ElementsBegin(); elem_i != fe_model_part.ElementsEnd(); ++elem_i)
         {
             Element::GeometryType& geom_i = elem_i->GetGeometry();
-            const Element::GeometryType::IntegrationPointsArrayType& integration_pionts = geom_i.IntegrationPoints(fem_integration_method);
+            const Element::GeometryType::IntegrationPointsArrayType& integration_points = geom_i.IntegrationPoints(fem_integration_method);
 
-            for (auto & integration_point_i : integration_pionts)
+            for (auto & integration_point_i : integration_points)
             {
-                int integration_point_number = &integration_point_i - &integration_pionts[0];
+                int integration_point_number = &integration_point_i - &integration_points[0];
                 NodeType::CoordinatesArrayType ip_coordinates = geom_i.GlobalCoordinates(ip_coordinates, integration_point_i.Coordinates());
                 NodeType::Pointer node_of_interest = Node <3>::Pointer(new Node<3>(1, ip_coordinates));
 
@@ -133,9 +133,9 @@ public:
                 int patch_index_of_nearest_point = -1;
 
                 FE2CADProjector.DetermineNearestCADPoint( node_of_interest, 
-                parameter_values_of_nearest_point, 
-                parameter_spans_of_nearest_point, 
-                patch_index_of_nearest_point );
+                                                          parameter_values_of_nearest_point, 
+                                                          parameter_spans_of_nearest_point, 
+                                                          patch_index_of_nearest_point );
 
                 NewCondition = DisplacementMappingCondition::Pointer( new DisplacementMappingCondition( geom_i,
                                                                                                         fem_integration_method,

@@ -30,7 +30,7 @@ class CADReconstrutionUtilities():
         
         # Gernal strategy parameters
         self.ReconstructionStrategy = "mapping"    # mapping / least_squares
-        self.FEMGaussIntegrationDegree = 3
+        self.FEMGaussIntegrationDegree = 5
 
         self.SolutionStrategy = "penalty_approach" # penalty_approach 
         self.SolutionIterations = 1
@@ -172,6 +172,7 @@ class CADReconstrutionUtilities():
         for iteration in range(1,self.SolutionIterations+1): 
             self.ReconstructionSolver.ComputeLHS()
             self.ReconstructionSolver.ComputeRHS()
+            self.ReconstructionSolver.RegularizeEquationSystem()
             self.ReconstructionSolver.SolveEquationSystem()
             if self.SolutionIterations>1:  
                 self.ReconstructionSolver.IncreaseAllPenaltyFactorsByInputFactor( self.PenaltyIncreaseFactor )
@@ -221,12 +222,15 @@ CADReconstructionUtility.Initialize()
 # Set Boundary Conditions
 CADReconstructionUtility.SetDisplacementCouplingOnAllCouplingPoints()
 
+# Some output before reconstruction
+CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_cad_geometry.txt" )
+
 # Perform reconstruction
 CADReconstructionUtility.PerformReconstruction()
 
 # Some output
 CADReconstructionUtility.OutputFEData()
-CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_cad_geometry.txt" )
+CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_updated_cad_geometry.txt" )
 CADReconstructionUtility.OutputGaussPointsOfFEMesh( "gauss_points_of_fe_mesh.txt" )
 CADReconstructionUtility.OutputControlPointDisplacementsInRhinoFormat( "tripod.post.res" )
 

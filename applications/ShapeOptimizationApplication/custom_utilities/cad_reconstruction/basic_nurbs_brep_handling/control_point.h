@@ -132,7 +132,7 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    void SetEquationId(unsigned int id)
+    void SetEquationId(int id)
     {
         m_equation_id = id;
     }    

@@ -106,7 +106,7 @@ class TestMapperProcess
 		this->pBinLocatorForBackground = BinBasedPointLocatorPointerType(new BinBasedFastPointLocator<TDim>(mrBackgroundModelPart));
 
 		//this->pMpcProcess = ApplyMultipointConstraintsProcess::Pointer(new ApplyMultipointConstraintsProcess(mrAllModelPart));
-		this->pMpcProcess = NULL; //mapping at the hole boundary
+		this->pMpcProcessBackground = NULL; //mapping at the hole boundary
 		this->pCalculateDistanceProcess = typename CustomCalculateSignedDistanceProcess<TDim>::Pointer(new CustomCalculateSignedDistanceProcess<TDim>());
 	}
 
@@ -136,7 +136,7 @@ class TestMapperProcess
 	{
 	}
 
-	void ApplyMpcConstraint(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, unsigned int type = 1)
+	void ApplyMpcConstraint(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator,ApplyMultipointConstraintsProcess::Pointer pMpcProcess, unsigned int type = 1)
 	{
 
 		{
@@ -238,12 +238,12 @@ class TestMapperProcess
 		}
 	}
 
-	void ApplyMpcConstraintConservative(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, unsigned int type = 1)
+	void ApplyMpcConstraintConservative(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator,ApplyMultipointConstraintsProcess::Pointer pMpcProcess, unsigned int type = 1)
 	{
 
 		double rtMinvR = 0;
 
-		ApplyMpcConstraint(rBoundaryModelPart, pBinLocator, type);
+		ApplyMpcConstraint(rBoundaryModelPart, pBinLocator,pMpcProcess, type);
 
 		std::cout << "Slave nodes are coupled to the nearest element" << std::endl;
 
@@ -583,7 +583,7 @@ class TestMapperProcess
 	{
 		ModelPart::Pointer pHoleModelPart = ModelPart::Pointer(new ModelPart("HoleModelpart"));
 		ModelPart::Pointer pHoleBoundaryModelPart = ModelPart::Pointer(new ModelPart("HoleBoundaryModelpart"));
-		this->pMpcProcess = ApplyMultipointConstraintsProcess::Pointer(new ApplyMultipointConstraintsProcess(mrAllModelPart));
+		this->pMpcProcessBackground = ApplyMultipointConstraintsProcess::Pointer(new ApplyMultipointConstraintsProcess(mrAllModelPart,mrBackgroundModelPart));
 
 		for (ModelPart::ElementsContainerType::iterator i_elem = mrAllModelPart.ElementsBegin(); i_elem != mrAllModelPart.ElementsBegin(); i_elem++)
 		{
@@ -601,13 +601,13 @@ class TestMapperProcess
 	
 		if (type == "NearestElement")
 		{
-			ApplyMpcConstraint(*pHoleBoundaryModelPart, pBinLocatorForBackground, 1); //0 for pressure coupling
+			ApplyMpcConstraint(*pHoleBoundaryModelPart, pBinLocatorForBackground,pMpcProcessBackground 1); //0 for pressure coupling
 			std::cout << "Patch boundary coupled with background" << std::endl;
 		}
 
 		else if (type == "Conservative")
 		{
-			ApplyMpcConstraintConservative(*pHoleBoundaryModelPart, pBinLocatorForBackground, 1); //0 for pressure coupling
+			ApplyMpcConstraintConservative(*pHoleBoundaryModelPart, pBinLocatorForBackground, pMpcProcessBackground, 1); //0 for pressure coupling
 			std::cout << "Patch boundary coupled with background using conservative approach" << std::endl;
 		}
 
@@ -1118,7 +1118,7 @@ class TestMapperProcess
 	//ModelPart &mrPatchSurfaceModelPart;
 	BinBasedPointLocatorPointerType pBinLocatorForBackground; // Template argument 3 stands for 3D case
 	BinBasedPointLocatorPointerType pBinLocatorForPatch;
-	ApplyMultipointConstraintsProcess::Pointer pMpcProcess;
+	ApplyMultipointConstraintsProcess::Pointer pMpcProcessBackground;
 	CustomHoleCuttingProcess::Pointer pHoleCuttingProcess;
 	typename CustomCalculateSignedDistanceProcess<TDim>::Pointer pCalculateDistanceProcess;
 	ModelPart &mrAllModelPart;

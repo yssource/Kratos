@@ -7,8 +7,8 @@
 //  License:		 BSD License
 //					 Kratos default license: kratos/license.txt
 //
-//  Main authors:    Daniel Baumgaertner
-//                   Johannes Wolf
+//  Main authors:    Navaneeth K Narayanan
+//                   
 //
 
 #if !defined(KRATOS_CALCULATE_SIGNED_DISTANCE_CONDITION_2D_PROCESS_H_INCLUDED)

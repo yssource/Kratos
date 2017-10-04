@@ -136,11 +136,13 @@ class MpcData
     /**
 		Creates a MPC data object
 		*/
-    MpcData() : mDofConstraints(), mEquationIdToWeightsMap()
+
+    MpcData(std::string type = "NearestElement", std::string modelPartName = "") : mType(type), mModelPartName(modelPartName), mDofConstraints(), mEquationIdToWeightsMap()
     {
         mIsWeak = false;
         this->RtMinvR = 1;
     }
+
     /// Destructor.
     virtual ~MpcData(){};
 
@@ -157,6 +159,15 @@ class MpcData
     ///@{
 
     /**
+		Clears the maps contents
+		*/
+    void Clear()
+    {
+        mSlaveEquationIdConstantsMap.clear();
+        mEquationIdToWeightsMap.clear();
+    }
+
+    /**
 		Get the MasterDOFs vector for this slave
 		@return MasterDOFs vector for this slave
 		*/
@@ -170,14 +181,16 @@ class MpcData
 		*/
 
     // Takes in a slave dof equationId and a master dof equationId
-    void AddConstraint(unsigned int SlaveDofEquationId, unsigned int MasterDofEquationId, double weight, int PartitionId = 0)
+    void AddConstraint(unsigned int SlaveDofEquationId, unsigned int MasterDofEquationId, double weight, double constant = 0.0)
     {
         mEquationIdToWeightsMap[SlaveDofEquationId].insert(std::pair<unsigned int, double>(MasterDofEquationId, weight));
+        mSlaveEquationIdConstantsMap.insert(std::pair<unsigned int, double>(SlaveDofEquationId, constant));
+        mSlaveEquationIdConstantsUpdate.insert(std::pair<unsigned int, double>(SlaveDofEquationId, constant));
         //mDofConstraints[std::make_pair(SlaveDof.Id(), slaveVariableKey)][std::tie(MasterNodeId, MasterVariableKey, PartitionId)] += weight;
     }
 
     // Takes in a slave dof and a master dof
-    void AddConstraint(DofType &SlaveDof, DofType &MasterDof, double weight, int PartitionId = 0)
+    void AddConstraint(DofType &SlaveDof, DofType &MasterDof, double weight, double constant = 0.0)
     {
         //here we can get the dof since we are sure that such dof exist
         //auto &slave_dof = mp_model_part.Nodes(SlaveNodeId).GetDof(SlaveVariable);
@@ -186,11 +199,11 @@ class MpcData
 
         unsigned int slaveVariableKey = SlaveDof.GetVariable().Key();
 
-        mDofConstraints[std::make_pair(SlaveDof.Id(), slaveVariableKey)][std::tie(MasterNodeId, MasterVariableKey, PartitionId)] += weight;
+        mDofConstraints[std::make_pair(SlaveDof.Id(), slaveVariableKey)][std::tie(MasterNodeId, MasterVariableKey, constant)] += weight;
     }
 
     // Takes in a slave dof and a list of all the masters associated with it and corresponding weights, partitionIds
-    void AddConstraint(DofType &SlaveDof, DofsVectorType MasterDofsVector, std::vector<double> weightsVector, std::vector<int> PartitionIdVector = std::vector<int>())
+    void AddConstraint(DofType &SlaveDof, DofsVectorType MasterDofsVector, std::vector<double> weightsVector, std::vector<double> ConstantVector = std::vector<double>())
     {
         //here we can get the dof since we are sure that such dof exist
         //auto &slave_dof = mp_model_part.Nodes(SlaveNodeId).GetDof(SlaveVariable);
@@ -204,19 +217,19 @@ class MpcData
         {
             IndexType MasterNodeId = (*MasterDof).Id();
             unsigned int MasterVariableKey = (*MasterDof).GetVariable().Key(); // TODO :: Check why do we need a mastervariable ... is a master key not enough ?
-            int PartitionId = 0;
-            if (PartitionIdVector.size() == 0)
-                PartitionId = 0;
+            double constant = 0.0;
+            if (ConstantVector.size() == 0.0)
+                constant = 0.0;
             else
-                PartitionId = PartitionIdVector[index];
+                constant = ConstantVector[index];
 
             mDofConstraints[std::make_pair(slaveNodeId, slaveVariableKey)]
-                           [std::make_tuple(MasterNodeId, MasterVariableKey, PartitionId)] += weightsVector[index];
+                           [std::make_tuple(MasterNodeId, MasterVariableKey, constant)] += weightsVector[index];
             ++index;
         }
     }
 
-    void AddNodalNormalToSlaveDof(DofType &SlaveDof, double nodalNormalComponent, int PartitionId = 0)
+    void AddNodalNormalToSlaveDof(DofType &SlaveDof, double nodalNormalComponent = 0.0)
     {
 
         unsigned int slaveVariableKey = SlaveDof.GetVariable().Key();
@@ -224,7 +237,7 @@ class MpcData
         mSlaveDofToNodalNormalMap.insert({std::make_pair(SlaveDof.Id(), slaveVariableKey), nodalNormalComponent});
     }
 
-    void AddNodalNormalToSlaveDof(unsigned int SlaveDofEquationId, double nodalNormalComponent, int PartitionId = 0)
+    void AddNodalNormalToSlaveDof(unsigned int SlaveDofEquationId, double nodalNormalComponent = 0.0)
     {
 
         mSlaveEquationIdToNodalNormalMap.insert({SlaveDofEquationId, nodalNormalComponent});
@@ -319,6 +332,9 @@ class MpcData
     ///@name Member Variables
     ///@{
     //this holds the definition of the constraint - can be constructed prior to EquationIds
+    std::string mType;
+    std::string mModelPartName;
+
     std::unordered_map<SlavePairType, MasterDofWeightMapType, pair_hash> mDofConstraints;
 
     //this stores a much simpler "map of maps" of EquationIds vs EquationId & weight
@@ -329,10 +345,13 @@ class MpcData
 
     std::unordered_map<SlavePairType, double, pair_hash> mSlaveDofToNodalNormalMap;
     std::unordered_map<unsigned int, double> mSlaveEquationIdToNodalNormalMap;
+    std::unordered_map<unsigned int, double> mSlaveEquationIdConstantsMap;
+    std::unordered_map<unsigned int, double> mSlaveEquationIdConstantsUpdate;
     double RtMinvR;
     bool mActive;
     std::string mName;
     bool mIsWeak;
+
     ///@}
 
     ///@name Serialization

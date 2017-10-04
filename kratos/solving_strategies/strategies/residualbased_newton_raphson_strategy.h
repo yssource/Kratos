@@ -654,9 +654,9 @@ public:
         //operations to be done after achieving convergence, for example the
         //Final Residual Vector (mb) has to be saved in there
         //to avoid error accumulation
-
-        pScheme->FinalizeSolutionStep(BaseType::GetModelPart(), A, Dx, b);
         pBuilderAndSolver->FinalizeSolutionStep(BaseType::GetModelPart(), A, Dx, b);
+        pScheme->FinalizeSolutionStep(BaseType::GetModelPart(), A, Dx, b);
+        //order change nav
 
         //Cleaning memory after the solution
         pScheme->Clean();

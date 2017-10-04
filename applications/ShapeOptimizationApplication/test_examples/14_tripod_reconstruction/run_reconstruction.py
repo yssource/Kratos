@@ -34,7 +34,7 @@ class CADReconstrutionUtilities():
         self.FEMGaussIntegrationDegree = 5
 
         # Solution parameters
-        self.SolutionIterations = 2
+        self.SolutionIterations = 1
         self.PenaltyFactorForDisplacementCoupling = 1e3
         self.PenaltyFactorForDirichletConstraints = 1e3
         self.PenaltyMultiplier = 10.0
@@ -46,6 +46,11 @@ class CADReconstrutionUtilities():
         self.ParameterResolutionForProjection = [ 100, 100 ]
         self.MaxProjectionIterations = 20
         self.ProjectionTolerance = 1e-5
+
+        # Regularization settings
+        self.ApplyMinimalDiagonalValueRegularization = False 
+        self.MinimalValue = 1e-3
+        # self.ApplyBetaRegularization = True
 
         # Linear solver
         self.LinearSolver = SuperLUSolver()
@@ -170,8 +175,11 @@ class CADReconstrutionUtilities():
 
     # --------------------------------------------------------------------------
     def __CreateReconstructionConditions( self ):
+
+        # Container to store all conditions (including constraints and reguarlization )
         self.ConditionsContainer = ReconstructionConditionContainer( self.DataBase )
 
+        # Basic reconstruction condition
         if self.ReconstructionStrategy == "mapping":
             self.ConditionsContainer.CreateDisplacementMappingConditions( self.ParameterResolutionForProjection, 
                                                                           self.FEMGaussIntegrationDegree,
@@ -180,11 +188,17 @@ class CADReconstrutionUtilities():
         else:
             raise ValueError( "The following reconstruction strategy does not exist: ", self.ReconstructionStrategy )
 
+        # Reconstruction constraints
         if self.IsDisplacementCouplingSpecifiedForAllCouplingPoints: 
             self.ConditionsContainer.CreateDisplacementCouplingConstraintsOnAllCouplingPoints( self.PenaltyFactorForDisplacementCoupling )
-
         if self.AreDirichletConstraintsSpecified:
             self.ConditionsContainer.CreateDirichletConstraints( self.DirichletConstraints, self.PenaltyFactorForDirichletConstraints )
+
+        # Regularization
+        if self.ApplyMinimalDiagonalValueRegularization: 
+            self.ConditionsContainer.CreateMinimalDiagonalValueRegularizationCondition( self.MinimalValue )
+        # if self.ApplyBetaRegularization: 
+        #     self.ConditionsContainer.CreateBetaRegularizationCondition()                   
 
     # --------------------------------------------------------------------------
     def __CreateSolverForReconstruction( self ):
@@ -200,7 +214,6 @@ class CADReconstrutionUtilities():
             print("===========================================")            
             self.ReconstructionSolver.ComputeLHS()
             self.ReconstructionSolver.ComputeRHS()
-            self.ReconstructionSolver.RegularizeEquationSystem()
             self.ReconstructionSolver.SolveEquationSystem()
             self.ReconstructionSolver.UpdateControlPointsAccordingReconstructionStrategy( self.ReconstructionStrategy )
             if self.SolutionIterations>1:  

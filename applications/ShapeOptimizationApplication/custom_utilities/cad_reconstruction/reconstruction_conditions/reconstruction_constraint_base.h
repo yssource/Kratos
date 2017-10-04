@@ -8,8 +8,8 @@
 //
 // ==============================================================================
 
-#ifndef RECONSTRUCTION_CONDITION_H
-#define RECONSTRUCTION_CONDITION_H
+#ifndef RECONSTRUCTION_CONSTRAINT_H
+#define RECONSTRUCTION_CONSTRAINT_H
 
 // ------------------------------------------------------------------------------
 // System includes
@@ -25,7 +25,6 @@
 // Project includes
 // ------------------------------------------------------------------------------
 #include "includes/define.h"
-#include "../basic_nurbs_brep_handling/patch.h"
 
 // ==============================================================================
 
@@ -56,26 +55,26 @@ namespace Kratos
 
 */
 
-class ReconstructionCondition
+class ReconstructionConstraint
 {
 public:
     ///@name Type Definitions
     ///@{
         
-    /// Pointer definition of ReconstructionCondition
-    KRATOS_CLASS_POINTER_DEFINITION(ReconstructionCondition);
+    /// Pointer definition of ReconstructionConstraint
+    KRATOS_CLASS_POINTER_DEFINITION(ReconstructionConstraint);
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    ReconstructionCondition()
+    ReconstructionConstraint()
     {
     }
 
     /// Destructor.
-    virtual ~ReconstructionCondition()
+    virtual ~ReconstructionConstraint()
     {
     }
 
@@ -89,7 +88,7 @@ public:
 
     // ==============================================================================
     virtual void FlagControlPointsRelevantForReconstruction() = 0;
-    
+
     // --------------------------------------------------------------------------
     virtual void Initialize() = 0;    
     
@@ -98,6 +97,9 @@ public:
 
     // --------------------------------------------------------------------------
     virtual void ComputeAndAddRHSContribution( Vector& RHS ) = 0;
+
+    // --------------------------------------------------------------------------
+    virtual void Set( std::string identifier, double value ){};    
 
     // ==============================================================================
 
@@ -116,13 +118,13 @@ public:
     /// Turn back information as a string.
     virtual std::string Info() const
     {
-        return "ReconstructionCondition";
+        return "ReconstructionConstraint";
     }
 
     /// Print information about this object.
     virtual void PrintInfo(std::ostream &rOStream) const
     {
-        rOStream << "ReconstructionCondition";
+        rOStream << "ReconstructionConstraint";
     }
 
     /// Print object's data.
@@ -195,14 +197,14 @@ private:
     ///@{
 
     /// Assignment operator.
-    //      ReconstructionCondition& operator=(ReconstructionCondition const& rOther);
+    //      ReconstructionConstraint& operator=(ReconstructionConstraint const& rOther);
 
     /// Copy constructor.
-    //      ReconstructionCondition(ReconstructionCondition const& rOther);
+    //      ReconstructionConstraint(ReconstructionConstraint const& rOther);
 
     ///@}
 
-}; // Class ReconstructionCondition
+}; // Class ReconstructionConstraint
 
 ///@}
 
@@ -217,4 +219,4 @@ private:
 
 } // namespace Kratos.
 
-#endif // RECONSTRUCTION_CONDITION_H
+#endif // RECONSTRUCTION_CONSTRAINT_H

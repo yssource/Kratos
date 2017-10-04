@@ -24,7 +24,7 @@
 // ------------------------------------------------------------------------------
 // Project includes
 // ------------------------------------------------------------------------------
-#include "reconstruction_condition_base.h"
+#include "reconstruction_constraint_base.h"
 
 // ==============================================================================
 
@@ -55,7 +55,7 @@ namespace Kratos
 
 */
 
-class DisplacementCouplingConstraint : public ReconstructionCondition
+class DisplacementCouplingConstraint : public ReconstructionConstraint
 {
 public:
     ///@name Type Definitions

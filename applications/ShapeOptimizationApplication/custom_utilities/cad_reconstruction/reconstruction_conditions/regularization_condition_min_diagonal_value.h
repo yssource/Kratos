@@ -8,8 +8,8 @@
 //
 // ==============================================================================
 
-#ifndef RECONSTRUCTION_CONDITION_H
-#define RECONSTRUCTION_CONDITION_H
+#ifndef REGULARIZATION_CONDITION_MIN_DIAGONAL_VALUE_H
+#define REGULARIZATION_CONDITION_MIN_DIAGONAL_VALUE_H
 
 // ------------------------------------------------------------------------------
 // System includes
@@ -25,7 +25,7 @@
 // Project includes
 // ------------------------------------------------------------------------------
 #include "includes/define.h"
-#include "../basic_nurbs_brep_handling/patch.h"
+#include "regularization_condition_base.h"
 
 // ==============================================================================
 
@@ -56,26 +56,27 @@ namespace Kratos
 
 */
 
-class ReconstructionCondition
+class MinimalDiagonalValueCondition : public RegularizationCondition
 {
 public:
     ///@name Type Definitions
     ///@{
         
-    /// Pointer definition of ReconstructionCondition
-    KRATOS_CLASS_POINTER_DEFINITION(ReconstructionCondition);
+    /// Pointer definition of MinimalDiagonalValueCondition
+    KRATOS_CLASS_POINTER_DEFINITION(MinimalDiagonalValueCondition);
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    ReconstructionCondition()
+    MinimalDiagonalValueCondition( double min_value )
+    : mMinValue( min_value )
     {
     }
 
     /// Destructor.
-    virtual ~ReconstructionCondition()
+    virtual ~MinimalDiagonalValueCondition()
     {
     }
 
@@ -88,16 +89,29 @@ public:
     ///@{
 
     // ==============================================================================
-    virtual void FlagControlPointsRelevantForReconstruction() = 0;
+    void Initialize()
+    {
+    }  
     
     // --------------------------------------------------------------------------
-    virtual void Initialize() = 0;    
+    void ComputeAndAddLHSContribution( CompressedMatrix& LHS )
+    {
+        std::cout << "> Starting regularization of LHS by enforcing minimal diagonal value..." << std::endl;           
     
-    // --------------------------------------------------------------------------
-    virtual void ComputeAndAddLHSContribution( CompressedMatrix& LHS ) = 0;
+        double zero_threshold = 1e-10;
+
+        for(int i_itr=0; i_itr<LHS.size1(); i_itr++)
+            if( std::abs(LHS(i_itr,i_itr)) < zero_threshold )
+                LHS(i_itr,i_itr) = mMinValue;
+
+        std::cout << "> All values on main diagonal of LHS < " << zero_threshold << " are manually set to " << mMinValue << "." << std::endl;
+        std::cout << "> Finished regularization of LHS by enforcing minimal diagonal value." << std::endl;           
+    }
 
     // --------------------------------------------------------------------------
-    virtual void ComputeAndAddRHSContribution( Vector& RHS ) = 0;
+    void ComputeAndAddRHSContribution( Vector& RHS )
+    {
+    }
 
     // ==============================================================================
 
@@ -116,13 +130,13 @@ public:
     /// Turn back information as a string.
     virtual std::string Info() const
     {
-        return "ReconstructionCondition";
+        return "MinimalDiagonalValueCondition";
     }
 
     /// Print information about this object.
     virtual void PrintInfo(std::ostream &rOStream) const
     {
-        rOStream << "ReconstructionCondition";
+        rOStream << "MinimalDiagonalValueCondition";
     }
 
     /// Print object's data.
@@ -174,6 +188,11 @@ private:
     ///@name Member Variables
     ///@{
 
+    // ==============================================================================
+    // Initialized by class constructor
+    // ==============================================================================
+    double mMinValue;
+
     ///@}
     ///@name Private Operators
     ///@{
@@ -195,14 +214,14 @@ private:
     ///@{
 
     /// Assignment operator.
-    //      ReconstructionCondition& operator=(ReconstructionCondition const& rOther);
+    //      MinimalDiagonalValueCondition& operator=(MinimalDiagonalValueCondition const& rOther);
 
     /// Copy constructor.
-    //      ReconstructionCondition(ReconstructionCondition const& rOther);
+    //      MinimalDiagonalValueCondition(MinimalDiagonalValueCondition const& rOther);
 
     ///@}
 
-}; // Class ReconstructionCondition
+}; // Class MinimalDiagonalValueCondition
 
 ///@}
 
@@ -217,4 +236,4 @@ private:
 
 } // namespace Kratos.
 
-#endif // RECONSTRUCTION_CONDITION_H
+#endif // REGULARIZATION_CONDITION_MIN_DIAGONAL_VALUE_H

@@ -33,6 +33,7 @@
 #include "../data_management/cad_projection_utility.h"
 #include "../reconstruction_conditions/reconstruction_condition_displacement_mapping.h"
 #include "../reconstruction_conditions/reconstruction_constraint_displacement_coupling.h"
+#include "../reconstruction_conditions/regularization_condition_min_diagonal_value.h"
 
 // ==============================================================================
 
@@ -107,12 +108,21 @@ public:
 
         PatchVector& patch_vector = mrReconstructionDataBase.GetPatchVector();
         ModelPart& fe_model_part = mrReconstructionDataBase.GetFEModelPart();
-        IntegrationMethodType fem_integration_method = DefineIntegrationMethod( integration_degree );
-        
+
+        IntegrationMethodType fem_integration_method;
+        switch(integration_degree)
+        {
+            case 1 : fem_integration_method = GeometryData::GI_GAUSS_1; break;
+            case 2 : fem_integration_method = GeometryData::GI_GAUSS_2; break;
+            case 3 : fem_integration_method = GeometryData::GI_GAUSS_3; break;
+            case 4 : fem_integration_method = GeometryData::GI_GAUSS_4; break;
+            case 5 : fem_integration_method = GeometryData::GI_GAUSS_5; break;
+        }
+
         CADProjectionUtility FE2CADProjector( patch_vector, max_iterations, projection_tolerance );
         FE2CADProjector.Initialize( rParameterResolution );
         
-        std::cout << "> Starting to loop over integration points..." << std::endl;
+        std::cout << "> Starting to create a condition every integration point..." << std::endl;
         boost::timer timer;   
 
         ReconstructionCondition::Pointer NewCondition;
@@ -151,21 +161,6 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    IntegrationMethodType DefineIntegrationMethod(int integration_degree )
-    {
-        IntegrationMethodType fem_integration_method;
-        switch(integration_degree)
-        {
-            case 1 : fem_integration_method = GeometryData::GI_GAUSS_1; break;
-            case 2 : fem_integration_method = GeometryData::GI_GAUSS_2; break;
-            case 3 : fem_integration_method = GeometryData::GI_GAUSS_3; break;
-            case 4 : fem_integration_method = GeometryData::GI_GAUSS_4; break;
-            case 5 : fem_integration_method = GeometryData::GI_GAUSS_5; break;
-        }
-        return fem_integration_method;
-    }
-
-    // --------------------------------------------------------------------------
     void CreateDisplacementCouplingConstraintsOnAllCouplingPoints( double penalty_factor )
     {
     }
@@ -173,8 +168,14 @@ public:
     // --------------------------------------------------------------------------
     void CreateDirichletConditions()
     {
+    }
 
-    }   
+    // --------------------------------------------------------------------------
+    void CreateMinimalDiagonalValueRegularizationCondition( double min_value )
+    {
+        RegularizationCondition::Pointer NewCondition = RegularizationCondition::Pointer( new MinimalDiagonalValueCondition( min_value ) );
+        mListOfRegularizationConditions.push_back( NewCondition );
+    }       
 
     // --------------------------------------------------------------------------
     std::vector<ReconstructionCondition::Pointer>& GetReconstructionConditions()
@@ -183,10 +184,16 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    std::vector<ReconstructionCondition::Pointer>& GetConstraints()
+    std::vector<ReconstructionConstraint::Pointer>& GetReconstructionConstraints()
     {
         return mListOfReconstructionConstraints;
     }    
+
+    // --------------------------------------------------------------------------
+    std::vector<RegularizationCondition::Pointer>& GetRegularizationConditions()
+    {
+        return mListOfRegularizationConditions;
+    }      
 
     // ==============================================================================
 
@@ -272,7 +279,9 @@ private:
     // Additional variables
     // ==============================================================================
     std::vector<ReconstructionCondition::Pointer> mListOfReconstructionConditions;
-    std::vector<ReconstructionCondition::Pointer> mListOfReconstructionConstraints;    
+    std::vector<ReconstructionConstraint::Pointer> mListOfReconstructionConstraints;
+    std::vector<RegularizationCondition::Pointer> mListOfRegularizationConditions;    
+    
 
     ///@}
     ///@name Private Operators

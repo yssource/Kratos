@@ -52,7 +52,8 @@ public:
                              CompressedLinearSolverType::Pointer linear_solver )
     : mrReconstructionDataBase( reconstruction_data_base ),
       mrReconstructionConditions( condition_container.GetReconstructionConditions() ),
-      mrReconstructionConstraints( condition_container.GetConstraints() ),
+      mrReconstructionConstraints( condition_container.GetReconstructionConstraints() ),
+      mrRegularizationConditions( condition_container.GetRegularizationConditions() ),      
       mpLinearSolver( linear_solver )     
     {      
     }
@@ -123,7 +124,10 @@ public:
             condition_i->Initialize();
         
         for(auto condition_i : mrReconstructionConstraints)            
-            condition_i->Initialize(); 
+            condition_i->Initialize();
+
+        for(auto condition_i : mrRegularizationConditions)            
+            condition_i->Initialize();             
     }
 
     // --------------------------------------------------------------------------
@@ -149,6 +153,7 @@ public:
         std::cout << "\n> Start computing LHS..." << std::endl;           
         boost::timer timer;  
    
+        // Compute contribution from reconstruction conditions
         if(isLHSWithoutConstraintsComputed==false)
             for(auto condition_i : mrReconstructionConditions)
             {
@@ -158,10 +163,31 @@ public:
 
         mLHS = mLHSWithoutConstraints;
 
+        // Compute contribution from reconstruction constraints
         for(auto condition_i : mrReconstructionConstraints)
-            condition_i->ComputeAndAddLHSContribution( mLHS );            
-        
+            condition_i->ComputeAndAddLHSContribution( mLHS ); 
+            
+        CheckLHSConditionBeforeRegularization();
+
+        // Compute contribution from regularization conditions
+        for(auto condition_i : mrRegularizationConditions)
+            condition_i->ComputeAndAddLHSContribution( mLHS );
+            
         std::cout << "> Time needed for computing LHS: " << timer.elapsed() << " s" << std::endl;            
+    }
+
+    // --------------------------------------------------------------------------
+    void CheckLHSConditionBeforeRegularization()
+    {
+        int number_of_small_values_on_main_diagonal = 0;
+        double zero_threshold = 1e-10;
+
+        for(int i_itr=0; i_itr<mLHS.size1(); i_itr++)
+            if( std::abs(mLHS(i_itr,i_itr)) < zero_threshold )
+                number_of_small_values_on_main_diagonal++;
+
+        if(number_of_small_values_on_main_diagonal>0)
+            std::cout << "> WARNING, number of values on main diagonal < " << zero_threshold << ": " << number_of_small_values_on_main_diagonal << " !!!!!!!!!!!!!!! " << std::endl;
     }
 
     // --------------------------------------------------------------------------
@@ -169,7 +195,8 @@ public:
     {
         std::cout << "\n> Start computing RHS..." << std::endl;           
         boost::timer timer;  
-    
+
+        // Compute contribution from reconstruction conditions
         if(isRHSWithoutConstraintsComputed==false)
             for(auto condition_i : mrReconstructionConditions)
             {
@@ -177,39 +204,18 @@ public:
                 isRHSWithoutConstraintsComputed = true;
             }
 
-        mRHS = mRHSWithoutConstraints;        
+        mRHS = mRHSWithoutConstraints;    
 
+        // Compute contribution from reconstruction constraints
         for(auto condition_i : mrReconstructionConstraints)
-            condition_i->ComputeAndAddRHSContribution( mRHS );              
+            condition_i->ComputeAndAddRHSContribution( mRHS );
+            
+        // Compute contribution from regularization conditions
+        for(auto condition_i : mrRegularizationConditions)
+            condition_i->ComputeAndAddRHSContribution( mRHS );               
 
         std::cout << "> Time needed for computing RHS: " << timer.elapsed() << " s" << std::endl;            
     } 
-
-    // --------------------------------------------------------------------------
-    void RegularizeEquationSystem()
-    {
-        std::cout << "\n> Starting to regularize equation system ..." << std::endl;           
-    
-        bool is_small_value_on_main_diagonal = false;
-        int number_of_small_values_on_main_diagonal = 0;
-
-        for(int i_itr=0; i_itr<mLHS.size1(); i_itr++)
-            if(std::abs(mLHS(i_itr,i_itr))<1e-10)
-            {
-                is_small_value_on_main_diagonal = true;
-                number_of_small_values_on_main_diagonal++;
-
-                mLHS(i_itr,i_itr) = 1e-3;
-            }
-
-        if(is_small_value_on_main_diagonal)
-        {
-            std::cout << "> WARNING, number of values on main diagonal < 1e-10: " << number_of_small_values_on_main_diagonal << " !!!!!!!!!!!!!!! " << std::endl;
-            std::cout << "> All these values are manually set to 1e-3." << std::endl;
-        }
-
-        std::cout << "> Finished regularizing equation system." << std::endl;           
-    }   
 
     // --------------------------------------------------------------------------
     void SolveEquationSystem()
@@ -269,7 +275,8 @@ private:
     // ==============================================================================
     ReconstructionDataBase& mrReconstructionDataBase;    
     std::vector<ReconstructionCondition::Pointer>& mrReconstructionConditions;
-    std::vector<ReconstructionCondition::Pointer>& mrReconstructionConstraints;
+    std::vector<ReconstructionConstraint::Pointer>& mrReconstructionConstraints;
+    std::vector<RegularizationCondition::Pointer>& mrRegularizationConditions;    
     CompressedLinearSolverType::Pointer mpLinearSolver;
 
     // ==============================================================================

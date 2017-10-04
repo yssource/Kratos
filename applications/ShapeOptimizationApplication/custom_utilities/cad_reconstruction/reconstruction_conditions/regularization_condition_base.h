@@ -8,8 +8,8 @@
 //
 // ==============================================================================
 
-#ifndef RECONSTRUCTION_CONDITION_H
-#define RECONSTRUCTION_CONDITION_H
+#ifndef REGULARIZATION_CONDITION_H
+#define REGULARIZATION_CONDITION_H
 
 // ------------------------------------------------------------------------------
 // System includes
@@ -25,7 +25,6 @@
 // Project includes
 // ------------------------------------------------------------------------------
 #include "includes/define.h"
-#include "../basic_nurbs_brep_handling/patch.h"
 
 // ==============================================================================
 
@@ -56,26 +55,26 @@ namespace Kratos
 
 */
 
-class ReconstructionCondition
+class RegularizationCondition
 {
 public:
     ///@name Type Definitions
     ///@{
         
-    /// Pointer definition of ReconstructionCondition
-    KRATOS_CLASS_POINTER_DEFINITION(ReconstructionCondition);
+    /// Pointer definition of RegularizationCondition
+    KRATOS_CLASS_POINTER_DEFINITION(RegularizationCondition);
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    ReconstructionCondition()
+    RegularizationCondition()
     {
     }
 
     /// Destructor.
-    virtual ~ReconstructionCondition()
+    virtual ~RegularizationCondition()
     {
     }
 
@@ -88,9 +87,6 @@ public:
     ///@{
 
     // ==============================================================================
-    virtual void FlagControlPointsRelevantForReconstruction() = 0;
-    
-    // --------------------------------------------------------------------------
     virtual void Initialize() = 0;    
     
     // --------------------------------------------------------------------------
@@ -116,13 +112,13 @@ public:
     /// Turn back information as a string.
     virtual std::string Info() const
     {
-        return "ReconstructionCondition";
+        return "RegularizationCondition";
     }
 
     /// Print information about this object.
     virtual void PrintInfo(std::ostream &rOStream) const
     {
-        rOStream << "ReconstructionCondition";
+        rOStream << "RegularizationCondition";
     }
 
     /// Print object's data.
@@ -195,14 +191,14 @@ private:
     ///@{
 
     /// Assignment operator.
-    //      ReconstructionCondition& operator=(ReconstructionCondition const& rOther);
+    //      RegularizationCondition& operator=(RegularizationCondition const& rOther);
 
     /// Copy constructor.
-    //      ReconstructionCondition(ReconstructionCondition const& rOther);
+    //      RegularizationCondition(RegularizationCondition const& rOther);
 
     ///@}
 
-}; // Class ReconstructionCondition
+}; // Class RegularizationCondition
 
 ///@}
 
@@ -217,4 +213,4 @@ private:
 
 } // namespace Kratos.
 
-#endif // RECONSTRUCTION_CONDITION_H
+#endif // REGULARIZATION_CONDITION_H

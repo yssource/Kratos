@@ -117,18 +117,18 @@ public:
         mFEMFunctionValues = row( fem_shape_function_container, mIntegrationPointNumber);
         
         mEquationIdsOfAffectedControlPoints = mrAffectedPatch.GetEquationIdsOfAffectedControlPoints( mParmeterSpans, mParmeterValues );
-        mNumberOfLocalEquations = mEquationIdsOfAffectedControlPoints.size();         
+        mNumberOfLocalEquationIds = mEquationIdsOfAffectedControlPoints.size();         
     }    
     
     // --------------------------------------------------------------------------
     void ComputeAndAddLHSContribution( CompressedMatrix& LHS ) override
     {           
-        for(int row_itr=0; row_itr<mNumberOfLocalEquations; row_itr++)
+        for(int row_itr=0; row_itr<mNumberOfLocalEquationIds; row_itr++)
         {
             int row_id = mEquationIdsOfAffectedControlPoints[row_itr];
             double R_row = mNurbsFunctionValues[row_itr];
 
-            for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquations; collumn_itr++)
+            for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquationIds; collumn_itr++)
             {                
                 int collumn_id = mEquationIdsOfAffectedControlPoints[collumn_itr];
                 double R_collumn = mNurbsFunctionValues[collumn_itr];
@@ -156,7 +156,7 @@ public:
         }
 
         // Compute RHS
-        for(int row_itr=0; row_itr<mNumberOfLocalEquations; row_itr++)
+        for(int row_itr=0; row_itr<mNumberOfLocalEquationIds; row_itr++)
         {
             int row_id = mEquationIdsOfAffectedControlPoints[row_itr];
             double R_row = mNurbsFunctionValues[row_itr];
@@ -260,11 +260,15 @@ private:
     Patch& mrAffectedPatch;
     array_1d<double,2> mParmeterValues;
     array_1d<double,2>mParmeterSpans;
+
+    // ==============================================================================
+    // Additional member variables
+    // ==============================================================================
     double mIntegrationWeight;
     std::vector<double> mNurbsFunctionValues;
     Vector mFEMFunctionValues; 
     std::vector<int> mEquationIdsOfAffectedControlPoints;
-    int mNumberOfLocalEquations;
+    int mNumberOfLocalEquationIds;
 
   ///@}
   ///@name Private Operations

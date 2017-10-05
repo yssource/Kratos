@@ -130,8 +130,17 @@ public:
 	    std::cout << "\n> Start writing Gauss points of given FE-mesh..." << std::endl;
         std::ofstream file_to_write(output_filename);
   
-        IntegrationMethodType fem_integration_method = DefineIntegrationMethod( integration_degree );      
         ModelPart& r_fe_model_part = mrReconstructionDataBase.GetFEModelPart();
+
+        IntegrationMethodType fem_integration_method;
+        switch(integration_degree)
+        {
+            case 1 : fem_integration_method = GeometryData::GI_GAUSS_1; break;
+            case 2 : fem_integration_method = GeometryData::GI_GAUSS_2; break;
+            case 3 : fem_integration_method = GeometryData::GI_GAUSS_3; break;
+            case 4 : fem_integration_method = GeometryData::GI_GAUSS_4; break;
+            case 5 : fem_integration_method = GeometryData::GI_GAUSS_5; break;
+        }   
       
         for (ModelPart::ElementsContainerType::iterator elem_i = r_fe_model_part.ElementsBegin(); elem_i != r_fe_model_part.ElementsEnd(); ++elem_i)
         {
@@ -149,21 +158,6 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    IntegrationMethodType DefineIntegrationMethod(int integration_degree )
-    {
-        IntegrationMethodType fem_integration_method;
-        switch(integration_degree)
-        {
-            case 1 : fem_integration_method = GeometryData::GI_GAUSS_1; break;
-            case 2 : fem_integration_method = GeometryData::GI_GAUSS_2; break;
-            case 3 : fem_integration_method = GeometryData::GI_GAUSS_3; break;
-            case 4 : fem_integration_method = GeometryData::GI_GAUSS_4; break;
-            case 5 : fem_integration_method = GeometryData::GI_GAUSS_5; break;
-        }
-        return fem_integration_method;
-    }    
-
-    // --------------------------------------------------------------------------
     void OutputControlPointDisplacementsInRhinoFormat( std::string output_filename )
     {
         std::cout << "\n> Start writing displacements of control points into Rhino results file..." << std::endl;
@@ -173,18 +167,15 @@ public:
         output_file << "Result \"Displacement\" \"Load Case\" 0 Vector OnNodes" << std::endl;
         output_file << "Values" << std::endl;
 
-        unsigned int control_point_iterator = 0;
         std::vector<Patch>& patch_vector = mrReconstructionDataBase.GetPatchVector();
 
+        unsigned int control_point_iterator = 0;
         for(auto & patch_i : patch_vector) 
         {
             std::vector<ControlPoint>& control_points = patch_i.GetSurfaceControlPoints();
             for(auto & control_point_i : control_points)
             {
-            // It is important to iterate outside to stick to the carat settings
-            ++control_point_iterator;
-            
-            if(control_point_i.IsRelevantForReconstruction())
+                control_point_iterator++;
                 output_file << control_point_iterator << " " << control_point_i.GetdX() << " " << control_point_i.GetdY() << " " << control_point_i.GetdZ() << std::endl;
             }
         }

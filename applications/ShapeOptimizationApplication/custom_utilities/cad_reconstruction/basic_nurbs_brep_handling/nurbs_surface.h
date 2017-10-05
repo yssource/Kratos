@@ -412,7 +412,7 @@ public:
 		}	
 		
 		// computer base vectors
-		Matrix g_matrix = GetBaseVectors(-1,-1,_u,_v);
+		Matrix g_matrix = ComputeBaseVectors(-1,-1,_u,_v);
 		Vector g1_act = ZeroVector(3);
 		g1_act(0) = g_matrix(0,0);
 		g1_act(1) = g_matrix(1,0);
@@ -821,7 +821,7 @@ public:
 	///  \author     M.Breitenberger (01/2017)
 	//
 	//########################################################################################
-	Matrix GetBaseVectors(int span_u, int span_v, double _u, double _v)
+	Matrix ComputeBaseVectors(int span_u, int span_v, double _u, double _v)
 	{
 		if(span_u==-1) span_u = find_Knot_Span(m_knot_vector_u,_u,m_p,m_n_u);
 		if(span_v==-1) span_v = find_Knot_Span(m_knot_vector_v,_v,m_q,m_n_v);
@@ -1040,7 +1040,7 @@ public:
 	}	
 
 	// --------------------------------------------------------------------------
-	array_1d<int,2> GetKnotSpans( double _u, double _v )
+	array_1d<int,2> ComputeKnotSpans( double _u, double _v )
 	{
 		int span_u=find_Knot_Span(m_knot_vector_u,_u,m_p,m_n_u);
 		int span_v=find_Knot_Span(m_knot_vector_v,_v,m_q,m_n_v);

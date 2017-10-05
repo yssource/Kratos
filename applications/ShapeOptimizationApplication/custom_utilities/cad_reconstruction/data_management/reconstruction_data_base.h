@@ -55,6 +55,14 @@ public:
         
         cad_reader.ReadGeometry(mPatches);
             if(len(mrCADIntegrationData.keys())>0)
+
+        // Create map to identify patch in patch vector for a given patch_id
+        for(auto & patch_i : mPatches)
+        {
+            unsigned int index_in_patch_vector = &patch_i - &mPatches[0];
+            mPatchVectorIndexFromPatchId[patch_i.GetId()] = index_in_patch_vector;
+        }   
+
         cad_reader.ReadIntegrationData(mBrepElements);      
     }
 
@@ -115,10 +123,16 @@ public:
     std::vector<Patch>& GetPatchVector()
     {
         return mPatches;   
-    }    
+    }
+    
+    // ------------------------------------------------------------------------------    
+    Patch& GetPatchFromPatchId( unsigned int patch_id )
+    {
+        return mPatches[mPatchVectorIndexFromPatchId[patch_id]];
+    }
 
     // ------------------------------------------------------------------------------
-    std::vector<BREPElement>& GetBREPElementsPatches()
+    std::vector<BREPElement>& GetBREPElements()
     {
         return mBrepElements;   
     } 
@@ -153,7 +167,8 @@ private:
     boost::python::dict mrCADGeometry;
 	boost::python::dict mrCADIntegrationData;
     std::vector<Patch> mPatches;
-	std::vector<BREPElement> mBrepElements;
+    std::vector<BREPElement> mBrepElements;
+    std::map<unsigned int, unsigned int> mPatchVectorIndexFromPatchId;
 
 }; // Class ReconstructionDataBase
 

@@ -281,8 +281,8 @@ public:
 				unsigned int gauss_point_id;				
 				unsigned int master_elem_id;
 				double weight;
-				Vector location = ZeroVector(2);
-				Vector tangent = ZeroVector(2);
+				array_1d<double,2> master_location;
+				array_1d<double,2> master_tangent;
 
 				// Check if current edge only carries information about a master element or also about a corresponding slave element (as only needed for coupling)
 				// To this end we check if the first gauss point of this element has master-slave information 
@@ -293,8 +293,8 @@ public:
 					// Additional variables in case of a coupling edge
 					unsigned int slave_patch_id;
 					unsigned int slave_elem_id;
-					Vector location_slave = ZeroVector(2);
-					Vector tangent_slave = ZeroVector(2);
+					array_1d<double,2> location_slave;
+					array_1d<double,2> tangent_slave;
 
 					// Loop over all Gauss points on the current brep element
 					for (unsigned int gp_itr = 0; gp_itr < boost::python::len(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1]); gp_itr++)
@@ -304,21 +304,21 @@ public:
 						slave_elem_id = extractInt(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][0][1]);
 						gauss_point_id = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][0]);
 						weight = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][1]);
-						location(0) = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][2][0]);
-						location(1) = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][2][1]);
-						tangent(0) = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][3][0]);
-						tangent(1) = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][3][1]);	
-						location_slave(0) = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][4][0]);
-						location_slave(1) = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][4][1]);					
-						tangent_slave(0) = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][5][0]);
-						tangent_slave(1) = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][5][1]);	
+						master_location[0] = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][2][0]);
+						master_location[1] = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][2][1]);
+						master_tangent[0] = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][3][0]);
+						master_tangent[1] = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][3][1]);	
+						location_slave[0] = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][4][0]);
+						location_slave[1] = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][4][1]);					
+						tangent_slave[0] = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][5][0]);
+						tangent_slave[1] = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][5][1]);	
 
 						// identify patch Id corresponding to above read element id (each for master and slave element)
 						master_patch_id = corresponding_patch_id[master_elem_id];
 						slave_patch_id = corresponding_patch_id[slave_elem_id];			
 
 						// Create new Gauss point on brep element
-						BREPGaussPoint new_brep_gp(master_patch_id, slave_patch_id, gauss_point_id, weight, location, tangent, location_slave, tangent_slave);
+						BREPGaussPoint new_brep_gp(master_patch_id, slave_patch_id, gauss_point_id, weight, master_location, master_tangent, location_slave, tangent_slave);
 
 						// Add Gauss point to list of all brep Gauss points
 						gauss_points.push_back(new_brep_gp);
@@ -336,16 +336,16 @@ public:
 						master_elem_id = extractInt(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][0][0]);
 						gauss_point_id = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][0]);
 						weight = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][1]);
-						location(0) = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][2][0]);
-						location(1) = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][2][1]);
-						tangent(0) = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][3][0]);
-						tangent(1) = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][3][1]);	
+						master_location[0] = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][2][0]);
+						master_location[1] = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][2][1]);
+						master_tangent[0] = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][3][0]);
+						master_tangent[1] = extractDouble(mr_cad_integration_data_in_json["brep_elements"][edge_itr][1][elem_itr][1][gp_itr][1][3][1]);	
 
 						// identify patch Id corresponding to above read element id (each for master and slave element)
 						master_patch_id = corresponding_patch_id[master_elem_id];	
 
 						// Create new Gauss point on brep element
-						BREPGaussPoint new_brep_gp(master_patch_id, gauss_point_id, weight, location, tangent);
+						BREPGaussPoint new_brep_gp(master_patch_id, gauss_point_id, weight, master_location, master_tangent);
 
 						// Add Gauss point to list of all brep Gauss points
 						gauss_points.push_back(new_brep_gp);

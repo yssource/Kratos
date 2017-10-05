@@ -1,46 +1,10 @@
 // ==============================================================================
-/*
- KratosShapeOptimizationApplication
- A library based on:
- Kratos
- A General Purpose Software for Multi-Physics Finite Element Analysis
- [Released on march 05, 2007].
-
- Copyright [c] 2016: Daniel Baumgaertner
-                     daniel.baumgaertner@tum.de
-                     Chair of Structural Analysis
-                     Technische Universitaet Muenchen
-                     Arcisstrasse 21 80333 Munich, Germany
-
- Permission is hereby granted, free  of charge, to any person obtaining
- a  copy  of this  software  and  associated  documentation files  [the
- "Software"], to  deal in  the Software without  restriction, including
- without limitation  the rights to  use, copy, modify,  merge, publish,
- distribute,  sublicense and/or  sell copies  of the  Software,  and to
- permit persons to whom the Software  is furnished to do so, subject to
- the following condition:
-
- Distribution of this code for  any  commercial purpose  is permissible
- ONLY BY DIRECT ARRANGEMENT WITH THE COPYRIGHT OWNERS.
-
- The  above  copyright  notice  and  this permission  notice  shall  be
- included in all copies or substantial portions of the Software.
-
- THE  SOFTWARE IS  PROVIDED  "AS  IS", WITHOUT  WARRANTY  OF ANY  KIND,
- EXPRESS OR  IMPLIED, INCLUDING  BUT NOT LIMITED  TO THE  WARRANTIES OF
- MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
- IN NO EVENT  SHALL THE AUTHORS OR COPYRIGHT HOLDERS  BE LIABLE FOR ANY
- CLAIM, DAMAGES OR  OTHER LIABILITY, WHETHER IN AN  ACTION OF CONTRACT,
- TORT  OR OTHERWISE, ARISING  FROM, OUT  OF OR  IN CONNECTION  WITH THE
- SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
-//==============================================================================
+//  KratosShapeOptimizationApplication
 //
-//   Project Name:        KratosShape                            $
-//   Created by:          $Author:    daniel.baumgaertner@tum.de $
-//   Last modified by:    $Co-Author: daniel.baumgaertner@tum.de $
-//   Date:                $Date:                   December 2016 $
-//   Revision:            $Revision:                         0.0 $
+//  License:         BSD License
+//                   license: ShapeOptimizationApplication/license.txt
+//
+//  Main authors:    Baumgaertner Daniel, https://github.com/dbaumgaertner
 //
 // ==============================================================================
 
@@ -103,14 +67,14 @@ public:
 	/// Default constructor.
 	BREPGaussPoint(	unsigned int master_patch_id,
 					unsigned int gauss_point_id,
-					double weight,
-					Vector location,
-					Vector tangent )
-	: m_master_patch_id(master_patch_id),
-	  m_gauss_point_id(gauss_point_id),
-	  m_weight(weight),
-	  m_location(location),
-	  m_tangent(tangent)
+					double integration_weight,
+					array_1d<double,2> master_location,
+					array_1d<double,2> master_tangent )
+	: mMasterPatchId(master_patch_id),
+	  mGaussPointId(gauss_point_id),
+	  mIntegartionWeight(integration_weight),
+	  mLocationOnMasterInParameterSpace(master_location),
+	  mTangentOnMasterInParametersSpace(master_tangent)
 	{
 	}
 
@@ -118,19 +82,19 @@ public:
 	BREPGaussPoint(	unsigned int master_patch_id,
 					unsigned int slave_patch_id,
 					unsigned int gauss_point_id,
-					double weight,
-					Vector location,
-					Vector tangent,
-					Vector location_slave,
-					Vector tangent_slave )
-	: m_master_patch_id(master_patch_id),
-	  m_slave_patch_id(slave_patch_id),
-	  m_gauss_point_id(gauss_point_id),
-	  m_weight(weight),
-	  m_location(location),
-	  m_tangent(tangent),
-	  m_slave_location(location_slave),
-	  m_slave_tangent(tangent_slave)
+					double integration_weight,
+					array_1d<double,2> master_location,
+					array_1d<double,2> master_tangent,
+					array_1d<double,2> location_slave,
+					array_1d<double,2> tangent_slave )
+	: mMasterPatchId(master_patch_id),
+	  mSlavePatchId(slave_patch_id),
+	  mGaussPointId(gauss_point_id),
+	  mIntegartionWeight(integration_weight),
+	  mLocationOnMasterInParameterSpace(master_location),
+	  mTangentOnMasterInParametersSpace(master_tangent),
+	  mLocationOnSlaveInParameterSpace(location_slave),
+	  mTangentOnSlaveInParametersSpace(tangent_slave)
 	{
 	}
 
@@ -142,49 +106,49 @@ public:
 	// --------------------------------------------------------------------------
 	unsigned int GetId()
 	{
-		return m_gauss_point_id;
+		return mGaussPointId;
 	}	
 
 	// --------------------------------------------------------------------------
-	unsigned int GetPatchId()
+	unsigned int GetMasterPatchId()
 	{
-		return m_master_patch_id;
+		return mMasterPatchId;
 	}	
 
 	// --------------------------------------------------------------------------
 	unsigned int GetSlavePatchId()
 	{
-		return m_slave_patch_id;
+		return mSlavePatchId;
 	}	
 
 	// --------------------------------------------------------------------------
 	double GetWeight()
 	{
-		return m_weight;
+		return mIntegartionWeight;
 	}			
 
 	// --------------------------------------------------------------------------
-	Vector GetLocation()
+	array_1d<double,2> GetLocationOnMasterInParameterSpace()
 	{
-		return m_location;
+		return mLocationOnMasterInParameterSpace;
 	}		
 
 	// --------------------------------------------------------------------------
-	Vector GetSlaveLocation()
+	array_1d<double,2> GetLocationOnSlaveInParameterSpace()
 	{
-		return m_slave_location;
+		return mLocationOnSlaveInParameterSpace;
 	}	
 
 	// --------------------------------------------------------------------------
-	Vector GetTangent()
+	array_1d<double,2> GetTangentOnMasterInParameterSpace()
 	{
-		return m_tangent;
+		return mTangentOnMasterInParametersSpace;
 	}	
 
 	// --------------------------------------------------------------------------
-	Vector GetSlaveTangent()
+	array_1d<double,2> GetTangentOnSlaveInParameterSpace()
 	{
-		return m_slave_tangent;
+		return mTangentOnSlaveInParametersSpace;
 	}				
 
 	// ==============================================================================
@@ -212,14 +176,14 @@ private:
 	// ==============================================================================
 	// Initialized by class constructor
 	// ==============================================================================
-	unsigned int m_master_patch_id;
-	unsigned int m_slave_patch_id;
-	unsigned int m_gauss_point_id;
-	double m_weight;
-	Vector m_location = ZeroVector(2);
-	Vector m_tangent = ZeroVector(2);
-	Vector m_slave_location = ZeroVector(2);
-	Vector m_slave_tangent = ZeroVector(2);
+	unsigned int mMasterPatchId;
+	unsigned int mSlavePatchId;
+	unsigned int mGaussPointId;
+	double mIntegartionWeight;
+	array_1d<double,2> mLocationOnMasterInParameterSpace;
+	array_1d<double,2> mTangentOnMasterInParametersSpace;
+	array_1d<double,2> mLocationOnSlaveInParameterSpace;
+	array_1d<double,2> mTangentOnSlaveInParametersSpace;
 
 	// ==============================================================================
 	// General working arrays

@@ -48,7 +48,7 @@ class CADReconstrutionUtilities():
         self.ProjectionTolerance = 1e-5
 
         # Regularization settings
-        self.ApplyMinimalDiagonalValueRegularization = False 
+        self.ApplyMinimalDiagonalValueRegularization = True 
         self.MinimalValue = 1e-3
         # self.ApplyBetaRegularization = True
 

@@ -105,11 +105,11 @@ public:
 
 	/// Default constructor.
 	BREPElement(unsigned int element_id, unsigned int edge_id, BREPGaussPointVector gauss_points, bool has_coupling_condition, bool has_dirichlet_condition) 
-	: m_element_id(element_id),
-	  m_edge_id(edge_id),
-	  m_gauss_points(gauss_points),
-	  m_has_coupling_condition(has_coupling_condition),
-	  m_has_dirichlet_condition(has_dirichlet_condition)
+	: mElementId(element_id),
+	  mEdgeId(edge_id),
+	  mGaussPoints(gauss_points),
+	  mHasCouplingConditions(has_coupling_condition),
+	  mHasDirichletConditions(has_dirichlet_condition)
 	{
 	}
 
@@ -120,31 +120,31 @@ public:
 	// --------------------------------------------------------------------------
 	unsigned int GetElementId()
 	{
-		return m_element_id;
+		return mElementId;
 	}	
 
 	// --------------------------------------------------------------------------
 	unsigned int GetEdgeId()
 	{
-		return m_edge_id;
+		return mEdgeId;
 	}		
 
 	// --------------------------------------------------------------------------
-	BREPGaussPointVector GetGaussPoints()
+	BREPGaussPointVector& GetGaussPoints()
 	{
-		return m_gauss_points;
+		return mGaussPoints;
 	}	
 
 	// --------------------------------------------------------------------------
 	bool HasCouplingCondition()
 	{
-		return m_has_coupling_condition;
+		return mHasCouplingConditions;
 	}	
 
 	// --------------------------------------------------------------------------
 	bool HasDirichletCondition()
 	{
-		return m_has_dirichlet_condition;
+		return mHasDirichletConditions;
 	}			
 
 	// ==============================================================================
@@ -172,11 +172,11 @@ private:
 	// ==============================================================================
 	// Initialized by class constructor
 	// ==============================================================================
-	unsigned int m_element_id;
-	unsigned int m_edge_id;
-	BREPGaussPointVector m_gauss_points;
-	bool m_has_coupling_condition;
-	bool m_has_dirichlet_condition;
+	unsigned int mElementId;
+	unsigned int mEdgeId;
+	BREPGaussPointVector mGaussPoints;
+	bool mHasCouplingConditions;
+	bool mHasDirichletConditions;
 
 	// ==============================================================================
 	// General working arrays

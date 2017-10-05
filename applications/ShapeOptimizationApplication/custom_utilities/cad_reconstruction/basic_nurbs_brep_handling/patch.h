@@ -139,7 +139,7 @@ public:
 	}
 	
 	// --------------------------------------------------------------------------
-	std::vector<double> EvaluateNURBSFunctions( array_1d<double,2> parameter_spans, array_1d<double,2> parameter_values )
+	std::vector<double> EvaluateNURBSFunctions( array_1d<int,2> parameter_spans, array_1d<double,2> parameter_values )
 	{
 		return m_nurbs_surface.EvaluateNURBSFunctions( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
 	}	
@@ -147,8 +147,14 @@ public:
 	// --------------------------------------------------------------------------
 	array_1d<int,2> ComputeSurfaceKnotSpans( double _u, double _v )
 	{
-		return m_nurbs_surface.GetKnotSpans( _u, _v );
-	}	
+		return m_nurbs_surface.ComputeKnotSpans( _u, _v );
+	}
+	
+	// --------------------------------------------------------------------------
+	Matrix ComputeBaseVectors( array_1d<int,2> parameter_spans, array_1d<double,2> parameter_values )
+	{	
+		return m_nurbs_surface.ComputeBaseVectors( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
+	}
 
 	// --------------------------------------------------------------------------
 	void EvaluateGradientsForClosestPointSearch( Vector distance, Matrix& rHessian, Vector& rGradient , double _u, double _v )
@@ -157,7 +163,7 @@ public:
 	}
 
 	// --------------------------------------------------------------------------
-	void FlagAffectedControlPointsForReconstruction( array_1d<double,2> parameter_spans, array_1d<double,2> parameter_values )
+	void FlagAffectedControlPointsForReconstruction( array_1d<int,2> parameter_spans, array_1d<double,2> parameter_values )
 	{
 		return m_nurbs_surface.FlagAffectedControlPointsForReconstruction( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
 	}

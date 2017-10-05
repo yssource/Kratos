@@ -30,6 +30,7 @@
 #include "includes/element.h"
 #include "includes/model_part.h"
 #include "includes/kratos_flags.h"
+#include "../basic_nurbs_brep_handling/brep_gauss_point.h"
 #include "../data_management/cad_projection_utility.h"
 #include "../reconstruction_conditions/reconstruction_condition_displacement_mapping.h"
 #include "../reconstruction_conditions/reconstruction_constraint_displacement_coupling.h"
@@ -72,7 +73,9 @@ public:
 
     typedef Node<3> NodeType;
     typedef std::vector<NodeType::Pointer> NodeVector;   
-    typedef std::vector<Patch> PatchVector; 
+    typedef std::vector<Patch> PatchVector;
+    typedef std::vector<BREPElement> BREPElementVector;
+    typedef std::vector<BREPGaussPoint> BREPGaussPointVector;    
     typedef Element::GeometryType::IntegrationMethod IntegrationMethodType;    
         
     /// Pointer definition of ReconstructionConditionContainer
@@ -108,7 +111,7 @@ public:
 
         PatchVector& patch_vector = mrReconstructionDataBase.GetPatchVector();
         ModelPart& fe_model_part = mrReconstructionDataBase.GetFEModelPart();
-
+        
         IntegrationMethodType fem_integration_method;
         switch(integration_degree)
         {
@@ -118,13 +121,13 @@ public:
             case 4 : fem_integration_method = GeometryData::GI_GAUSS_4; break;
             case 5 : fem_integration_method = GeometryData::GI_GAUSS_5; break;
         }
-
+        
         CADProjectionUtility FE2CADProjector( patch_vector, max_iterations, projection_tolerance );
         FE2CADProjector.Initialize( rParameterResolution );
         
-        std::cout << "> Starting to create a condition every integration point..." << std::endl;
+        std::cout << "> Starting to create a condition for every integration point..." << std::endl;
         boost::timer timer;   
-
+        
         ReconstructionCondition::Pointer NewCondition;
         
         for (ModelPart::ElementsContainerType::iterator elem_i = fe_model_part.ElementsBegin(); elem_i != fe_model_part.ElementsEnd(); ++elem_i)
@@ -163,6 +166,34 @@ public:
     // --------------------------------------------------------------------------
     void CreateDisplacementCouplingConstraintsOnAllCouplingPoints( double penalty_factor )
     {
+        std::cout << "\n> Starting to create displacement coupling constraints..." << std::endl;
+        boost::timer timer;   
+        
+        ReconstructionConstraint::Pointer NewConstraint;        
+
+        BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
+        for(auto & brep_element_i : brep_elements_vector)
+        {
+            if(brep_element_i.HasCouplingCondition())
+            {
+                BREPGaussPointVector& coupling_gauss_points = brep_element_i.GetGaussPoints();
+                for(auto & gauss_point_i : coupling_gauss_points)
+                {
+                        unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
+                        Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
+            
+                        unsigned int slave_patch_id = gauss_point_i.GetSlavePatchId();
+                        Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );                
+                        
+                        NewConstraint = ReconstructionConstraint::Pointer( new DisplacementCouplingConstraint( gauss_point_i,
+                                                                                                               master_patch,
+                                                                                                               slave_patch,
+                                                                                                               penalty_factor ));
+                        mListOfReconstructionConstraints.push_back( NewConstraint );
+                }
+            }
+        }
+        std::cout << "> Time needed for creating displacement constraints: " << timer.elapsed() << " s" << std::endl;              
     }
 
     // --------------------------------------------------------------------------

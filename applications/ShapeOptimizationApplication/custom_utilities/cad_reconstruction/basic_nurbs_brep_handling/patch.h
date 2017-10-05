@@ -133,11 +133,17 @@ public:
 	}
 
 	// --------------------------------------------------------------------------
-	void EvaluateSurfacePoint( double _u, double _v, Point<3>& rSurfacePoint )
+	void EvaluateSurfacePoint( array_1d<double,2> parameter_values, Point<3>& rSurfacePoint )
 	{
-		m_nurbs_surface.EvaluateSurfacePoint( _u, _v, rSurfacePoint );
+		m_nurbs_surface.EvaluateSurfacePoint( parameter_values[0], parameter_values[1], rSurfacePoint );
 	}
-	
+
+	// --------------------------------------------------------------------------
+	void EvaluateSurfaceDisplacement( array_1d<double,2> parameter_values, array_1d<double,3>& rSurfaceDisplacement )
+	{
+		m_nurbs_surface.EvaluateSurfaceDisplacement( parameter_values[0], parameter_values[1], rSurfaceDisplacement );
+	}
+		
 	// --------------------------------------------------------------------------
 	std::vector<double> EvaluateNURBSFunctions( array_1d<int,2> parameter_spans, array_1d<double,2> parameter_values )
 	{
@@ -145,9 +151,9 @@ public:
 	}	
 
 	// --------------------------------------------------------------------------
-	array_1d<int,2> ComputeSurfaceKnotSpans( double _u, double _v )
+	array_1d<int,2> ComputeSurfaceKnotSpans( array_1d<double,2> parameter_values )
 	{
-		return m_nurbs_surface.ComputeKnotSpans( _u, _v );
+		return m_nurbs_surface.ComputeKnotSpans( parameter_values[0], parameter_values[1] );
 	}
 	
 	// --------------------------------------------------------------------------
@@ -157,9 +163,9 @@ public:
 	}
 
 	// --------------------------------------------------------------------------
-	void EvaluateGradientsForClosestPointSearch( Vector distance, Matrix& rHessian, Vector& rGradient , double _u, double _v )
+	void EvaluateGradientsForClosestPointSearch( Vector distance, Matrix& rHessian, Vector& rGradient , array_1d<double,2> parameter_values )
 	{
-		return m_nurbs_surface.EvaluateGradientsForClosestPointSearch( distance, rHessian, rGradient, _u, _v );
+		return m_nurbs_surface.EvaluateGradientsForClosestPointSearch( distance, rHessian, rGradient, parameter_values[0], parameter_values[1] );
 	}
 
 	// --------------------------------------------------------------------------

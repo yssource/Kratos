@@ -89,24 +89,20 @@ public:
             double delta_v = (v_max-v_min) / v_resolution;
 
             // Loop over all u & v according to specified resolution
+            array_1d<double,2> point_in_parameter_space;
             for(unsigned int i=0; i<=u_resolution; i++)
             {
-                double u_i = u_min + i*delta_u;
+                point_in_parameter_space[0] = u_min + i*delta_u;
 
                 for(unsigned int j=0; j<=v_resolution; j++)
                 {
-                    double v_j = v_min + j*delta_v;
+                    point_in_parameter_space[1] = v_min + j*delta_v;
 
-                    // Check if u_i and v_j represent a point inside the closed boundary loop
-                    array_1d<double, 2> point_of_interest;
-                    point_of_interest[0] = u_i;
-                    point_of_interest[1] = v_j;
-                    bool point_is_inside = patch_i.IsPointInside(point_of_interest);
-
+                    bool point_is_inside = patch_i.IsPointInside(point_in_parameter_space);
                     if(point_is_inside)
                     {
                         Point<3> cad_point;
-                        patch_i.EvaluateSurfacePoint( u_i, v_j, cad_point );
+                        patch_i.EvaluateSurfacePoint( point_in_parameter_space, cad_point );
 
                         if(std::abs(cad_point.X())>max_coordinate)
                             cad_point.X() = MathUtils<int>::Sign(cad_point.X()) * max_coordinate;

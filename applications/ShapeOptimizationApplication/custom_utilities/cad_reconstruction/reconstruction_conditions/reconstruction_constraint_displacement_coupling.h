@@ -201,6 +201,13 @@ public:
     // --------------------------------------------------------------------------
     void ComputeAndAddRHSContribution( Vector& RHS ) override
     {
+        // array_1d<double,3> master_surface_displacement;
+        // array_1d<double,3> slave_surface_displacement;
+
+        // double patch_i.EvaluateSurfaceDisplacement( point_in_parameter_space, master_surface_displacement );
+        // double patch_i.EvaluateSurfaceDisplacement( point_in_parameter_space, slave_surface_displacement );
+
+
     }
         
     // ==============================================================================

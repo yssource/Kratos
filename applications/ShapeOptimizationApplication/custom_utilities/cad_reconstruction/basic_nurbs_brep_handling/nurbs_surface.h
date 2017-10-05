@@ -148,6 +148,47 @@ public:
 		}
 	}
 
+//  #####################################################################################
+	// #######################################################################################
+	///
+	///  \details    returns the displacement in geometry space for a specific point 
+	///              located on the NURBS surface S(u=fixed and v=fixed).
+	///              Algorithm essentially corresponds to "EvaluateSurfacePoint"
+	///
+	/// ======================================================================================
+	///  \author     Daniel Baumgärtner (12/2016)
+	//
+	//########################################################################################
+	void EvaluateSurfaceDisplacement( double u, double v, array_1d<double,3>& rSurfaceDisplacement )
+	{
+		rSurfaceDisplacement[0] = 0;
+		rSurfaceDisplacement[1] = 0;
+		rSurfaceDisplacement[2] = 0;
+
+		int span_u=find_Knot_Span(m_knot_vector_u,u,m_p,m_n_u);
+		int span_v=find_Knot_Span(m_knot_vector_v,v,m_q,m_n_v);
+
+		std::vector<double> nurbs_function_values = EvaluateNURBSFunctions( span_u, span_v, u, v );		
+		int control_point_itr = 0;
+
+		for (int c=0;c<=m_q;c++)
+		{
+			for (int b=0;b<=m_p;b++)
+			{
+				// the control point vector is filled up by first going over u, then over v
+				int ui = span_u-m_p+b;
+				int vi = span_v-m_q+c;
+				int control_point_index =vi*m_n_u + ui;
+
+				rSurfaceDisplacement[0] += nurbs_function_values[control_point_itr] * m_control_points[control_point_index].GetdX();
+				rSurfaceDisplacement[1] += nurbs_function_values[control_point_itr] * m_control_points[control_point_index].GetdY();
+				rSurfaceDisplacement[2] += nurbs_function_values[control_point_itr] * m_control_points[control_point_index].GetdZ();
+
+				control_point_itr++;
+			}
+		}
+	}	
+
 	//  #####################################################################################
 	// #######################################################################################
 	//
@@ -378,7 +419,7 @@ public:
 	
 	// ########################################################################################
 	void ComputeVariationOfLocalCSY( double _u, double _v,
-									 Vector&_par_g1, // entspricht t1 und t2 vom JSON File
+									 Vector& _par_g1, // entspricht t1 und t2 vom JSON File
 									 Vector& _t1, //nicht relevant dummy
 									 Vector& _t2, //Dein groß T2
 									 Vector& _t3, //Dein T3
@@ -881,9 +922,7 @@ public:
 				int ui = span_u-m_p+b;
 				int vi = span_v-m_q+c;
 				int control_point_index =vi*m_n_u + ui;
-
-				weight=m_control_points[control_point_index].GetWeight();			
-		
+	
 				g_matrix(0,0) += dR1(b,c)*m_control_points[control_point_index].GetX();
 				g_matrix(1,0) += dR1(b,c)*m_control_points[control_point_index].GetY();
 				g_matrix(2,0) += dR1(b,c)*m_control_points[control_point_index].GetZ();

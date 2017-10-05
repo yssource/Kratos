@@ -38,7 +38,7 @@ namespace Kratos
 {
 class CADProjectionUtility
 {
-  public:
+public:
     ///@name Type Definitions
     ///@{
 
@@ -76,13 +76,13 @@ class CADProjectionUtility
     // --------------------------------------------------------------------------
     void Initialize( boost::python::list ParameterResolutionForCoarseNeighborSearch )
     {
-      std::cout << "\n> Initializing CAD projection..." << std::endl;           
-      boost::timer timer;
+        std::cout << "\n> Initializing CAD projection..." << std::endl;           
+        boost::timer timer;
 
-      CreateCADPointCloudUsingLists( ParameterResolutionForCoarseNeighborSearch );
-      CreateSearchTreeWithCADPointCloud();
+        CreateCADPointCloudUsingLists( ParameterResolutionForCoarseNeighborSearch );
+        CreateSearchTreeWithCADPointCloud();
 
-		  std::cout << "> Time needed initializing CAD projection: " << timer.elapsed() << " s" << std::endl;    
+		std::cout << "> Time needed initializing CAD projection: " << timer.elapsed() << " s" << std::endl;    
     }
     
     // --------------------------------------------------------------------------
@@ -93,48 +93,44 @@ class CADProjectionUtility
 
       for (auto & patch_i : mrPatchVector)
       {
-        int index_in_patch_vector = &patch_i - &mrPatchVector[0];
-        DoubleVector& knot_vec_u_i = patch_i.GetSurfaceKnotVectorU();
-        DoubleVector& knot_vec_v_i = patch_i.GetSurfaceKnotVectorV();
-        std::cout << "> Processing Patch with brep_id " << patch_i.GetId() << std::endl;
+            int index_in_patch_vector = &patch_i - &mrPatchVector[0];
+            DoubleVector& knot_vec_u_i = patch_i.GetSurfaceKnotVectorU();
+            DoubleVector& knot_vec_v_i = patch_i.GetSurfaceKnotVectorV();
+            std::cout << "> Processing Patch with brep_id " << patch_i.GetId() << std::endl;
       
-				double u_min = knot_vec_u_i[0];
-				double u_max = knot_vec_u_i[knot_vec_u_i.size()-1];
-				double v_min = knot_vec_v_i[0];
-				double v_max = knot_vec_v_i[knot_vec_v_i.size()-1];
-				double delta_u = (u_max-u_min) / u_resolution;
-				double delta_v = (v_max-v_min) / v_resolution;
+            double u_min = knot_vec_u_i[0];
+            double u_max = knot_vec_u_i[knot_vec_u_i.size()-1];
+            double v_min = knot_vec_v_i[0];
+            double v_max = knot_vec_v_i[knot_vec_v_i.size()-1];
+            double delta_u = (u_max-u_min) / u_resolution;
+            double delta_v = (v_max-v_min) / v_resolution;
 
-				// Loop over all u & v according to specified resolution
-				for(unsigned int i=0; i<=u_resolution; i++)
-				{
-					double u_i = u_min + i*delta_u;
+            // Loop over all u & v according to specified resolution
+            array_1d<double,2> point_in_parameter_space;
+            for(unsigned int i=0; i<=u_resolution; i++)
+            {
+                point_in_parameter_space[0] = u_min + i*delta_u;
 
-					for(unsigned int j=0; j<=v_resolution; j++)
-					{
-						double v_j = v_min + j*delta_v;
+                for(unsigned int j=0; j<=v_resolution; j++)
+                {
+                    point_in_parameter_space[1] = v_min + j*delta_v;
 
-						// Check if u_i and v_j represent a point inside the closed boundary loop
-						array_1d<double, 2> point_of_interest_in_parameters_space;
-						point_of_interest_in_parameters_space[0] = u_i;
-						point_of_interest_in_parameters_space[1] = v_j;
-						bool point_is_inside = patch_i.IsPointInside(point_of_interest_in_parameters_space);
+                    bool point_is_inside = patch_i.IsPointInside(point_in_parameter_space);
+                    if(point_is_inside)
+                    {
+                        ++mNumberOfNodesInCADPointCloud;					
+                        Point<3> cad_point_coordinates;
+                        patch_i.EvaluateSurfacePoint( point_in_parameter_space, cad_point_coordinates );
 
-						if(point_is_inside)
-						{
-						  ++mNumberOfNodesInCADPointCloud;					
-              Point<3> cad_point_coordinates;
-              patch_i.EvaluateSurfacePoint( u_i, v_j, cad_point_coordinates );
+                         NodeType::Pointer new_cad_node = Node <3>::Pointer(new Node<3>(mNumberOfNodesInCADPointCloud, cad_point_coordinates));
 
-              NodeType::Pointer new_cad_node = Node <3>::Pointer(new Node<3>(mNumberOfNodesInCADPointCloud, cad_point_coordinates));
-
-              mOrderedListOfNodes.push_back(new_cad_node);
-              mOrderedListOfParameterValues.push_back(point_of_interest_in_parameters_space);
-              mOrderedListOfPatchIndices.push_back(index_in_patch_vector);
+                        mOrderedListOfNodes.push_back(new_cad_node);
+                        mOrderedListOfParameterValues.push_back(point_in_parameter_space);
+                        mOrderedListOfPatchIndices.push_back(index_in_patch_vector);
+                    }
+                }
             }
-          }
-        }
-      }      
+        }      
     }
 
     // --------------------------------------------------------------------------
@@ -179,7 +175,7 @@ class CADProjectionUtility
           Distance(2) = nearest_point->Z() - PointOfInterest->Z();
           
           // The distance is used to compute hessian and gradient
-          patch_of_nearest_point.EvaluateGradientsForClosestPointSearch(Distance, hessian, gradient , parameter_values_of_nearest_point[0], parameter_values_of_nearest_point[1]);
+          patch_of_nearest_point.EvaluateGradientsForClosestPointSearch( Distance, hessian, gradient , parameter_values_of_nearest_point );
 
           // u_k and v_k are updated
           MathUtils<double>::InvertMatrix( hessian, inverse_of_hessian, determinant_of_hessian );
@@ -188,7 +184,7 @@ class CADProjectionUtility
           parameter_values_of_nearest_point[1] -= delta_u(1);
 
           // Point on CAD surface is udpated
-          patch_of_nearest_point.EvaluateSurfacePoint( parameter_values_of_nearest_point[0], parameter_values_of_nearest_point[1], UpdatedCADPoint );
+          patch_of_nearest_point.EvaluateSurfacePoint( parameter_values_of_nearest_point, UpdatedCADPoint );
           nearest_point->X() = UpdatedCADPoint[0];
           nearest_point->Y() = UpdatedCADPoint[1];
           nearest_point->Z() = UpdatedCADPoint[2];
@@ -206,7 +202,7 @@ class CADProjectionUtility
         }
 
         // Compute and output span of each parameter
-				parameter_spans_of_nearest_point = patch_of_nearest_point.ComputeSurfaceKnotSpans(parameter_values_of_nearest_point[0], parameter_values_of_nearest_point[1]); 
+				parameter_spans_of_nearest_point = patch_of_nearest_point.ComputeSurfaceKnotSpans( parameter_values_of_nearest_point ); 
     }
     
     // ==============================================================================

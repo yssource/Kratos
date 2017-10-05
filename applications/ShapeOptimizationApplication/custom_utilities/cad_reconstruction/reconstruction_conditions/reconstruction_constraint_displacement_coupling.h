@@ -201,13 +201,39 @@ public:
     // --------------------------------------------------------------------------
     void ComputeAndAddRHSContribution( Vector& RHS ) override
     {
-        // array_1d<double,3> master_surface_displacement;
-        // array_1d<double,3> slave_surface_displacement;
+        array_1d<double,3> master_surface_displacement;
+        array_1d<double,3> slave_surface_displacement;
+        mrAffectedMasterPatch.EvaluateSurfaceDisplacement( mLocationOnMaster, master_surface_displacement );
+        mrAffectedSlavePatch.EvaluateSurfaceDisplacement( mLocationOnSlave, slave_surface_displacement );
+        
+        // Master contribution
+        for(int equation_itr=0; equation_itr<mNumberOfLocalEquationIdsOnMaster; equation_itr++)
+        {
+            int equation_id_master = mEquationIdsOfAffectedControlPointsOnMaster[equation_itr];
+            double R_master = mNurbsFunctionValuesOnMaster[equation_itr];
+            
+            RHS[3*equation_id_master+0] -= mPenaltyFactor * mIntegrationWeight * mJ1 * ( master_surface_displacement[0] - slave_surface_displacement[0] ) * R_master;
+            RHS[3*equation_id_master+1] -= mPenaltyFactor * mIntegrationWeight * mJ1 * ( master_surface_displacement[1] - slave_surface_displacement[1] ) * R_master;
+            RHS[3*equation_id_master+2] -= mPenaltyFactor * mIntegrationWeight * mJ1 * ( master_surface_displacement[2] - slave_surface_displacement[2] ) * R_master;           
+        }
+        
+        // Slave contribution
+        for(int equation_itr=0; equation_itr<mNumberOfLocalEquationIdsOnSlave; equation_itr++)
+        {
+            int equation_id_slave = mEquationIdsOfAffectedControlPointsOnSlave[equation_itr];
+            double R_slave = mNurbsFunctionValuesOnSlave[equation_itr];
 
-        // double patch_i.EvaluateSurfaceDisplacement( point_in_parameter_space, master_surface_displacement );
-        // double patch_i.EvaluateSurfaceDisplacement( point_in_parameter_space, slave_surface_displacement );
+            RHS[3*equation_id_slave+0] -= mPenaltyFactor * mIntegrationWeight * mJ1 * ( master_surface_displacement[0] - slave_surface_displacement[0] ) * R_slave;
+            RHS[3*equation_id_slave+1] -= mPenaltyFactor * mIntegrationWeight * mJ1 * ( master_surface_displacement[1] - slave_surface_displacement[1] ) * R_slave;
+            RHS[3*equation_id_slave+2] -= mPenaltyFactor * mIntegrationWeight * mJ1 * ( master_surface_displacement[2] - slave_surface_displacement[2] ) * R_slave;
+        }
+    }
 
-
+    // --------------------------------------------------------------------------
+    void Set( std::string identifier, double value ) override
+    {
+        if(identifier.compare("PENALTY_MULTIPLIER") == 0)
+            mPenaltyFactor *= value;
     }
         
     // ==============================================================================

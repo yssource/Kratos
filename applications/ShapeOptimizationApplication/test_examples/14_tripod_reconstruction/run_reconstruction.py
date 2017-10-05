@@ -37,7 +37,7 @@ class CADReconstrutionUtilities():
         self.SolutionIterations = 1
         self.PenaltyFactorForDisplacementCoupling = 1e3
         self.PenaltyFactorForDirichletConstraints = 1e3
-        self.PenaltyMultiplier = 10.0
+        self.PenaltyMultiplier = 1.0
        
         # Parameters to edit input data       
         self.FERefinementLevel = 0

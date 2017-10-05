@@ -99,7 +99,7 @@ public:
     virtual void ComputeAndAddRHSContribution( Vector& RHS ) = 0;
 
     // --------------------------------------------------------------------------
-    virtual void Set( std::string identifier, double value ){};    
+    virtual void Set( std::string identifier, double value ) = 0;    
 
     // ==============================================================================
 

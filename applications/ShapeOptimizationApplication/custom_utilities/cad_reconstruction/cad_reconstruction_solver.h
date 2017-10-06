@@ -227,8 +227,8 @@ public:
     void UpdateControlPointsAccordingReconstructionStrategy(std::string reconstruction_strategy )
     {
         std::cout << "\n> Start updating control points..." << std::endl;  
-
         boost::timer timer;
+        
         if(reconstruction_strategy.compare("mapping") == 0)
             mrReconstructionDataBase.UpdateControlPointDisplacements( mSolutionVector );
         else

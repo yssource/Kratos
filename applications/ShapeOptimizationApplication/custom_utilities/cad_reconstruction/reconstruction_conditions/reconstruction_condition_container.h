@@ -130,9 +130,9 @@ public:
         
         ReconstructionCondition::Pointer NewCondition;
         
-        for (ModelPart::ElementsContainerType::iterator elem_i = fe_model_part.ElementsBegin(); elem_i != fe_model_part.ElementsEnd(); ++elem_i)
+        for (auto & elem_i : fe_model_part.Elements())
         {
-            Element::GeometryType& geom_i = elem_i->GetGeometry();
+            Element::GeometryType& geom_i = elem_i.GetGeometry();
             const Element::GeometryType::IntegrationPointsArrayType& integration_points = geom_i.IntegrationPoints(fem_integration_method);
 
             for (auto & integration_point_i : integration_points)

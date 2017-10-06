@@ -133,6 +133,8 @@ public:
     // --------------------------------------------------------------------------
     void InitializeSystemLHSAndRHS()
     {
+        std::cout << "\n> Initializing System LHS and RHS..." << std::endl;            
+
 		mLHS.resize(3*mNumberOfRelevantControlPoints,3*mNumberOfRelevantControlPoints);
         mRHS.resize(3*mNumberOfRelevantControlPoints);
 		mLHS.clear();
@@ -140,28 +142,21 @@ public:
 
         mSolutionVector.resize(3*mNumberOfRelevantControlPoints);
         mSolutionVector.clear();
-        
-		mLHSWithoutConstraints.resize(3*mNumberOfRelevantControlPoints,3*mNumberOfRelevantControlPoints);
-        mRHSWithoutConstraints.resize(3*mNumberOfRelevantControlPoints);
-		mLHSWithoutConstraints.clear();
-        mRHSWithoutConstraints.clear();                
+
+        std::cout << "> Finished initialization of System LHS and RHS." << std::endl;            
     }
 
     // --------------------------------------------------------------------------
     void ComputeLHS()
     {
         std::cout << "\n> Start computing LHS..." << std::endl;           
-        boost::timer timer;  
+        boost::timer timer; 
+        
+        mLHS.clear();        
    
         // Compute contribution from reconstruction conditions
-        if(isLHSWithoutConstraintsComputed==false)
-            for(auto condition_i : mrReconstructionConditions)
-            {
-                condition_i->ComputeAndAddLHSContribution( mLHSWithoutConstraints );
-                isLHSWithoutConstraintsComputed = true;                
-            }
-
-        mLHS = mLHSWithoutConstraints;
+        for(auto condition_i : mrReconstructionConditions)
+            condition_i->ComputeAndAddLHSContribution( mLHS );
 
         // Compute contribution from reconstruction constraints
         for(auto condition_i : mrReconstructionConstraints)
@@ -196,15 +191,11 @@ public:
         std::cout << "\n> Start computing RHS..." << std::endl;           
         boost::timer timer;  
 
-        // Compute contribution from reconstruction conditions
-        if(isRHSWithoutConstraintsComputed==false)
-            for(auto condition_i : mrReconstructionConditions)
-            {
-                condition_i->ComputeAndAddRHSContribution( mRHSWithoutConstraints );
-                isRHSWithoutConstraintsComputed = true;
-            }
+        mRHS.clear();        
 
-        mRHS = mRHSWithoutConstraints;    
+        // Compute contribution from reconstruction conditions
+        for(auto condition_i : mrReconstructionConditions)
+            condition_i->ComputeAndAddRHSContribution( mRHS );
 
         // Compute contribution from reconstruction constraints
         for(auto condition_i : mrReconstructionConstraints)
@@ -212,17 +203,21 @@ public:
             
         // Compute contribution from regularization conditions
         for(auto condition_i : mrRegularizationConditions)
-            condition_i->ComputeAndAddRHSContribution( mRHS );               
+            condition_i->ComputeAndAddRHSContribution( mRHS );
 
+        std::cout << "> Max value in RHS vector = " << *std::max_element(mRHS.begin(),mRHS.end()) << std::endl;
+        std::cout << "> L2 norm of RHS vector = " << norm_2(mRHS) << std::endl;            
+            
         std::cout << "> Time needed for computing RHS: " << timer.elapsed() << " s" << std::endl;            
-    } 
+    }
 
     // --------------------------------------------------------------------------
     void SolveEquationSystem()
     {
         std::cout << "\n> Start solving reconstruction equation..." << std::endl;  
-
         boost::timer timer;
+
+        mSolutionVector.clear();        
         mpLinearSolver->Solve(mLHS, mSolutionVector, mRHS);
 
         std::cout << "> Time needed for solving reconstruction equation: " << timer.elapsed() << " s" << std::endl;
@@ -285,11 +280,7 @@ private:
     int mNumberOfControlPoints = 0;
     int mNumberOfRelevantControlPoints = 0;
     CompressedMatrix mLHS;
-    CompressedMatrix mLHSWithoutConstraints;
-    bool isLHSWithoutConstraintsComputed = false;    
     Vector mRHS;
-    Vector mRHSWithoutConstraints;    
-    bool isRHSWithoutConstraintsComputed = false;
     Vector mSolutionVector;
 
     /// Assignment operator.

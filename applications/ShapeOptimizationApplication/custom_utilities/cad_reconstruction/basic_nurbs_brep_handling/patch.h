@@ -199,6 +199,12 @@ public:
 	}	
 
 	// --------------------------------------------------------------------------
+	std::vector<ControlPoint*> GetPointersToAffectedControlPoints( array_1d<double,2> parameter_spans, array_1d<double,2> parameter_values )
+	{
+		return m_nurbs_surface.GetPointersToAffectedControlPoints( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
+	}	
+
+	// --------------------------------------------------------------------------
 	std::vector<int> GetEquationIdsOfAffectedControlPoints( array_1d<double,2> parameter_spans, array_1d<double,2> parameter_values )
 	{
 		return m_nurbs_surface.GetEquationIdsOfAffectedControlPoints( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );

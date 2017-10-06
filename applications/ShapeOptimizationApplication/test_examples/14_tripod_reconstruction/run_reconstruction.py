@@ -206,6 +206,7 @@ class CADReconstrutionUtilities():
 
     # --------------------------------------------------------------------------
     def __SolveReconstructionEquation( self ): 
+        
         self.ReconstructionSolver.InitializeEquationSystem() 
 
         for iteration in range(1,self.SolutionIterations+1): 

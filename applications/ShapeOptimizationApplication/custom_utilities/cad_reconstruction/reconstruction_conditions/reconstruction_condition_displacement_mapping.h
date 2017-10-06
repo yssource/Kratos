@@ -116,6 +116,7 @@ public:
         const Matrix& fem_shape_function_container = mrGeometryContainingThisCondition.ShapeFunctionsValues(mFemIntegrationMethod);
         mFEMFunctionValues = row( fem_shape_function_container, mIntegrationPointNumber);
         
+        mAffectedControlPoints = mrAffectedPatch.GetPointersToAffectedControlPoints( mParmeterSpans, mParmeterValues );
         mEquationIdsOfAffectedControlPoints = mrAffectedPatch.GetEquationIdsOfAffectedControlPoints( mParmeterSpans, mParmeterValues );
         mNumberOfLocalEquationIds = mEquationIdsOfAffectedControlPoints.size();         
     }    
@@ -161,14 +162,31 @@ public:
             int row_id = mEquationIdsOfAffectedControlPoints[row_itr];
             double R_row = mNurbsFunctionValues[row_itr];
 
+            Vector corresponding_control_point_displacement = ZeroVector(3);
+            corresponding_control_point_displacement[0] = mAffectedControlPoints[row_itr]->GetdX();
+            corresponding_control_point_displacement[1] = mAffectedControlPoints[row_itr]->GetdY();
+            corresponding_control_point_displacement[2] = mAffectedControlPoints[row_itr]->GetdZ();
+
+            // Computation of RR*\hat{u_C}
+            Vector rhs_contribution = ZeroVector(3);
+            rhs_contribution(0) += R_row * R_row * corresponding_control_point_displacement[0];
+            rhs_contribution(1) += R_row * R_row * corresponding_control_point_displacement[1];
+            rhs_contribution(2) += R_row * R_row * corresponding_control_point_displacement[2]; 
+
+            // Computation of -RN*\hat{u_F}
             for(int collumn_itr=0; collumn_itr<n_affected_fem_nodes; collumn_itr++)
             {
                 double N_collumn = mFEMFunctionValues[collumn_itr];
                 
-                RHS( 3*row_id+0 ) += mIntegrationWeight * R_row * N_collumn * node_displacements[3*collumn_itr+0];
-                RHS( 3*row_id+1 ) += mIntegrationWeight * R_row * N_collumn * node_displacements[3*collumn_itr+1];
-                RHS( 3*row_id+2 ) += mIntegrationWeight * R_row * N_collumn * node_displacements[3*collumn_itr+2];
+                rhs_contribution(0) -= R_row * N_collumn * node_displacements[3*collumn_itr+0];
+                rhs_contribution(1) -= R_row * N_collumn * node_displacements[3*collumn_itr+1];
+                rhs_contribution(2) -= R_row * N_collumn * node_displacements[3*collumn_itr+2];
             }
+
+            // Computation of complete RHS contribution: rhs_contribution = -integration_weight*( R*\hat{u_C} - N*\hat{u_F})R
+            RHS( 3*row_id+0 ) -= mIntegrationWeight * rhs_contribution(0);
+            RHS( 3*row_id+1 ) -= mIntegrationWeight * rhs_contribution(1);
+            RHS( 3*row_id+2 ) -= mIntegrationWeight * rhs_contribution(2);             
         }
     }
 
@@ -267,6 +285,7 @@ private:
     double mIntegrationWeight;
     std::vector<double> mNurbsFunctionValues;
     Vector mFEMFunctionValues; 
+    std::vector<ControlPoint*> mAffectedControlPoints;
     std::vector<int> mEquationIdsOfAffectedControlPoints;
     int mNumberOfLocalEquationIds;
 

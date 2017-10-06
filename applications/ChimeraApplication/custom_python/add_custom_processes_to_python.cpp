@@ -20,14 +20,11 @@
 #include "processes/process.h"
 #include "custom_python/add_custom_processes_to_python.h"
 #include "custom_processes/custom_hole_cutting_process.h"
-#include "custom_processes/custom_extract_variables_process.h"
-#include "custom_processes/custom_apply_chimera_using_mpc_process.h"
+#include "custom_processes/apply_chimera_process.h"
 #include "custom_processes/custom_calculate_signed_distance_process.h"
-//#include "custom_processes/calculate_signed_distance_to_2d_skin_process.h"
 #include "custom_processes/calculate_signed_distance_to_2d_condition_skin_process.h"
 #include "custom_processes/calculate_chimera_signed_distance_to_3d_condition_skin_process.h"
 #include "custom_processes/apply_multi_point_constraints_process.h"
-//#include "custom_processes/test_mapper_process.h"
 namespace Kratos
 {
 
@@ -37,70 +34,24 @@ namespace Python
 void AddCustomProcessesToPython()
 {
 	using namespace boost::python;
-
-	/*
-	 *  Custom holeCuttingProcess
-	 */
-	class_<CustomHoleCuttingProcess,bases<Process> >("CustomHoleCuttingProcess", init<>())
-		.def("ExtractMeshAtCentroidDistance", &CustomHoleCuttingProcess::ExtractMeshAtCentroidDistance)
-		.def("ExtractMeshBetweenLimits", &CustomHoleCuttingProcess::ExtractMeshBetweenLimits);
 		
-
+  
 	/*
-	 * CustomCalculateSignedDistanceProcess
-	 */ 
-	class_<CustomCalculateSignedDistanceProcess<2>,bases<Process> >("CustomCalculateSignedDistanceProcess2D", init<>())
-			.def("ExtractDistance", &CustomCalculateSignedDistanceProcess<2>::ExtractDistance);
-
-	class_<CustomCalculateSignedDistanceProcess<3>,bases<Process> >("CustomCalculateSignedDistanceProcess3D", init<>())
-			.def("ExtractDistance", &CustomCalculateSignedDistanceProcess<3>::ExtractDistance);		
-
-	/*
-	 * CustomExtractVariablesProcess
+	 * ApplyChimeraProcess for 2d and 3d
 	 */
-	class_<CustomExtractVariablesProcess<2>,bases<Process> >("CustomExtractVariablesProcess2d", init<>())
-			.def("ExtractVariables", &CustomExtractVariablesProcess<2>::ExtractVariables );
-
-	class_<CustomExtractVariablesProcess<3>,bases<Process> >("CustomExtractVariablesProcess3d", init<>())
-			.def("ExtractVariables", &CustomExtractVariablesProcess<3>::ExtractVariables );				
-
-
-    
-	/*
-	 * CustomApplyMpcConstraintProcessforChimera for 2d and 3d
-	 */
-	class_<CustomApplyChimeraUsingMpcProcess<2>,bases<Process> >("CustomApplyChimeraUsingMpcProcess2d", init<ModelPart&,ModelPart&,ModelPart&,double>())
-			.def("ApplyMpcConstraint", &CustomApplyChimeraUsingMpcProcess<2>::ApplyMpcConstraint)
-			.def("ApplyChimeraUsingMpc2d", &CustomApplyChimeraUsingMpcProcess<2>::ApplyChimeraUsingMpc)
-			.def("SetOverlapDistance",&CustomApplyChimeraUsingMpcProcess<2>::SetOverlapDistance)
-			.def("CalculateNodalAreaAndNodalMass",&CustomApplyChimeraUsingMpcProcess<2>::CalculateNodalAreaAndNodalMass);
+	class_<ApplyChimeraProcess<2>,bases<Process> >("ApplyChimeraProcess2d", init< ModelPart&, Parameters >())
+			.def("ApplyMpcConstraint", &ApplyChimeraProcess<2>::ApplyMpcConstraint)
+			.def("FormulateChimera2D", &ApplyChimeraProcess<2>::FormulateChimera)
+			.def("SetOverlapDistance",&ApplyChimeraProcess<2>::SetOverlapDistance)
+			.def("CalculateNodalAreaAndNodalMass",&ApplyChimeraProcess<2>::CalculateNodalAreaAndNodalMass);
 			
 
-	class_<CustomApplyChimeraUsingMpcProcess<3>,bases<Process> >("CustomApplyChimeraUsingMpcProcess3d", init<ModelPart&,ModelPart&,ModelPart&,double>())
-			.def("ApplyMpcConstraint", &CustomApplyChimeraUsingMpcProcess<3>::ApplyMpcConstraint)		
-			.def("ApplyChimeraUsingMpc3d", &CustomApplyChimeraUsingMpcProcess<3>::ApplyChimeraUsingMpc)
-			.def("SetOverlapDistance",&CustomApplyChimeraUsingMpcProcess<3>::SetOverlapDistance)
-			.def("CalculateNodalAreaAndNodalMass",&CustomApplyChimeraUsingMpcProcess<3>::CalculateNodalAreaAndNodalMass);
+	class_<ApplyChimeraProcess<3>,bases<Process> >("ApplyChimeraProcess3d", init< ModelPart&, Parameters >())
+			.def("ApplyMpcConstraint", &ApplyChimeraProcess<3>::ApplyMpcConstraint)		
+			.def("FormulateChimera3D", &ApplyChimeraProcess<3>::FormulateChimera)
+			.def("SetOverlapDistance",&ApplyChimeraProcess<3>::SetOverlapDistance)
+			.def("CalculateNodalAreaAndNodalMass",&ApplyChimeraProcess<3>::CalculateNodalAreaAndNodalMass);
 			
-
-	/*
-	 * Calculate_signed_distance_2d
-	 */
-
-	//class_<CalculateSignedDistanceTo2DSkinProcess,bases<Process> >("CalculateSignedDistanceTo2DSkinProcess", init<ModelPart&,ModelPart&>())
-		//.def("Execute", &CalculateSignedDistanceTo2DSkinProcess::Execute);	
-	class_<CalculateChimeraSignedDistanceTo3DConditionSkinProcess,bases<Process> >("CalculateChimeraSignedDistanceTo3DConditionSkinProcess", init<ModelPart&,ModelPart&>())
-		.def("Execute", &CalculateChimeraSignedDistanceTo3DConditionSkinProcess::Execute);	
-
-	/*class_<TestMapperProcess<2>,bases<Process> >("TestMapperProcess2d", init<ModelPart&,ModelPart&,ModelPart&,double>())
-			.def("Interpolate2d",&TestMapperProcess<2>::Interpolate2d)
-			.def("CalculateNodalAreaAndNodalMass",&TestMapperProcess<2>::CalculateNodalAreaAndNodalMass)
-			.def("Initialize",&TestMapperProcess<2>::Initialize);
-*/
-	/*	
-	*	test_mapper_process
-	*/
-	
 }
 
 

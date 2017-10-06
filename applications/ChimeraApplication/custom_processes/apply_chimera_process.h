@@ -75,7 +75,7 @@ namespace Kratos
 
 template <unsigned int TDim>
 
-class CustomApplyChimeraUsingMpcProcess
+class ApplyChimeraProcess : public Process
 {
   public:
 	///@name Type Definitions
@@ -83,8 +83,8 @@ class CustomApplyChimeraUsingMpcProcess
 
 	///@}
 	///@name Pointer Definitions
-	/// Pointer definition of CustomExtractVariablesProcess
-	KRATOS_CLASS_POINTER_DEFINITION(CustomApplyChimeraUsingMpcProcess);
+	/// Pointer definition of ApplyChimeraProcess
+	KRATOS_CLASS_POINTER_DEFINITION(ApplyChimeraProcess);
 
 	typedef typename BinBasedFastPointLocator<TDim>::Pointer BinBasedPointLocatorPointerType;
 	typedef ModelPart::ConditionsContainerType ConditionsArrayType;
@@ -100,7 +100,43 @@ class CustomApplyChimeraUsingMpcProcess
 	///@}
 	///@name Life Cycle
 	///@{
-	CustomApplyChimeraUsingMpcProcess(ModelPart &AllModelPart, ModelPart &BackgroundModelPart, ModelPart &PatchModelPart, double distance = 1e-12) : mrAllModelPart(AllModelPart), mrBackgroundModelPart(BackgroundModelPart), mrPatchModelPart(PatchModelPart), overlap_distance(distance)
+
+	ApplyChimeraProcess(ModelPart &MainModelPart, Parameters rParameters) : Process(Flags()), mrMainModelPart(MainModelPart), m_parameters(rParameters)
+	{
+
+		Parameters default_parameters(R"(
+            {
+                "process_name":"default",
+                "background_part_name":"default",
+                "patch_model_part_name":"default",
+				"patch_boundary_model_part_name":"default",
+                "overlap_distance":0.0,
+				"type":"conservative" 
+            }  )");
+
+		m_background_part_name = m_parameters["background_part_name"].GetString();
+		m_patch_model_part_name = m_parameters["patch_model_part_name"].GetString();
+		m_patch_boundary_model_part_name = m_parameters["patch_boundary_model_part_name"].GetString();
+		m_type = m_parameters["type"].GetString();
+
+		m_overlap_distance = m_parameters["overlap_distance"].GetDouble();
+
+		ModelPart &rBackgroundModelPart = mrMainModelPart.GetSubModelPart(m_background_part_name);
+		ModelPart &rPatchModelPart = mrMainModelPart.GetSubModelPart(m_patch_model_part_name);
+
+		this->pBinLocatorForBackground = BinBasedPointLocatorPointerType(new BinBasedFastPointLocator<TDim>(rBackgroundModelPart));
+		this->pBinLocatorForPatch = BinBasedPointLocatorPointerType(new BinBasedFastPointLocator<TDim>(rPatchModelPart));
+		this->pMpcProcessPatch = NULL;
+		this->pMpcProcessBackground = NULL;
+		this->pHoleCuttingProcess = CustomHoleCuttingProcess::Pointer(new CustomHoleCuttingProcess());
+		this->pCalculateDistanceProcess = typename CustomCalculateSignedDistanceProcess<TDim>::Pointer(new CustomCalculateSignedDistanceProcess<TDim>());
+	}
+
+	/*	ApplyChimeraProcess(ModelPart &MainModelPart, ModelPart &BackgroundModelPart, ModelPart &PatchModelPart, double distance = 1e-12)
+		: mrMainModelPart(MainModelPart),
+		  mrBackgroundModelPart(BackgroundModelPart),
+		  mrPatchModelPart(PatchModelPart),
+		  m_overlap_distance(distance)
 
 	{
 		this->pBinLocatorForBackground = BinBasedPointLocatorPointerType(new BinBasedFastPointLocator<TDim>(mrBackgroundModelPart));
@@ -109,10 +145,10 @@ class CustomApplyChimeraUsingMpcProcess
 		this->pMpcProcessBackground = NULL;
 		this->pHoleCuttingProcess = CustomHoleCuttingProcess::Pointer(new CustomHoleCuttingProcess());
 		this->pCalculateDistanceProcess = typename CustomCalculateSignedDistanceProcess<TDim>::Pointer(new CustomCalculateSignedDistanceProcess<TDim>());
-	}
+	}*/
 
 	/// Destructor.
-	virtual ~CustomApplyChimeraUsingMpcProcess()
+	virtual ~ApplyChimeraProcess()
 	{
 	}
 
@@ -137,9 +173,37 @@ class CustomApplyChimeraUsingMpcProcess
 	{
 	}
 
-	void ApplyMpcConstraint(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, ApplyMultipointConstraintsProcess::Pointer pMpcProcess, unsigned int type = 1)
+	void ExecuteBeforeSolutionLoop() override
 	{
+	}
 
+	void ExecuteInitializeSolutionStep() override
+	{
+		KRATOS_TRY;
+		// Actual execution of the functionality of this class
+		FormulateChimera();
+
+		KRATOS_CATCH("");
+	}
+
+	void ExecuteFinalizeSolutionStep() override
+	{
+	}
+
+	void ExecuteBeforeOutputStep() override
+	{
+	}
+
+	void ExecuteAfterOutputStep() override
+	{
+	}
+
+	void ExecuteFinalize() override
+	{
+	}
+
+	void ApplyMpcConstraint(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, ApplyMultipointConstraintsProcess::Pointer pMpcProcess, bool isOuter = false)
+	{
 		{
 			//loop over nodes and find the triangle in which it falls, than do interpolation
 			array_1d<double, TDim + 1> N;
@@ -171,17 +235,12 @@ class CustomApplyChimeraUsingMpcProcess
 
 				if (is_found == true)
 				{
-
 					Geometry<Node<3>> &geom = pElement->GetGeometry();
-
 					{
-
 						for (int i = 0; i < geom.size(); i++)
 						{
-
 							pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_X, *p_boundary_node, VELOCITY_X, N[i]);
 							pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Y, *p_boundary_node, VELOCITY_Y, N[i]);
-
 							if (TDim == 3)
 								pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i]);
 							//pMpcProcess->AddMasterSlaveRelationWithNodesAndVariable(geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
@@ -190,17 +249,11 @@ class CustomApplyChimeraUsingMpcProcess
 				}
 			}
 
-			if (type == 0)
-
+			if (isOuter)
 			{
 
-				//for (int i = 0; i < n_boundary_nodes; i++)
-
-			//{
-				//ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin() + i;
-				ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin() ;
+				ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin();
 				Node<3>::Pointer p_boundary_node = *(iparticle.base());
-
 				typename BinBasedFastPointLocator<TDim>::ResultIteratorType result_begin = results.begin();
 
 				Element::Pointer pElement;
@@ -210,30 +263,14 @@ class CustomApplyChimeraUsingMpcProcess
 
 				if (is_found == true)
 				{
-
 					Geometry<Node<3>> &geom = pElement->GetGeometry();
-
+					for (int i = 0; i < geom.size(); i++)
 					{
-
-						for (int i = 0; i < geom.size(); i++)
-						{
-
-							/*pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_X, *p_boundary_node, VELOCITY_X, N[i]);
-							pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Y, *p_boundary_node, VELOCITY_Y, N[i]);
-
-							if (TDim == 3)
-								pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i]);*/
-							pMpcProcess->AddMasterSlaveRelationWithNodesAndVariable(geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
-						}
+						pMpcProcess->AddMasterSlaveRelationWithNodesAndVariable(geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
 					}
 				}
-			//}
-
-				
 
 			} // end of if (type == 0) conditions
-
-			std::cout << "mpcProcess ends" << std::endl;
 		}
 	}
 
@@ -245,16 +282,11 @@ class CustomApplyChimeraUsingMpcProcess
 		double R = 0;
 
 		ApplyMpcConstraint(rBoundaryModelPart, pBinLocator, pMpcProcess, type);
-
-		std::cout << "Slave nodes are coupled to the nearest element" << std::endl;
-
 		std::vector<VariableComponentType> dofComponentVector = {VELOCITY_X, VELOCITY_Y, VELOCITY_Z};
 
 		// Calculation of Rt*Minv*R and assignment of nodalnormals to the slave dofs
-
 		for (ModelPart::NodesContainerType::iterator inode = rBoundaryModelPart.NodesBegin(); inode != rBoundaryModelPart.NodesEnd(); ++inode)
 		{
-
 			double Minode = inode->FastGetSolutionStepValue(NODAL_MASS);
 
 			for (unsigned int i = 0; i < TDim; i++)
@@ -264,7 +296,6 @@ class CustomApplyChimeraUsingMpcProcess
 				DofType &slaveDOF = inode->GetDof(dofComponentVector[i]);
 				pMpcProcess->AddNodalNormalSlaveRelationWithDofs(inode->GetDof(dofComponentVector[i]), rIdof);
 				slaveDofVector.push_back(slaveDOF);
-				//std::cout << "slaveid,slavekey" << slaveDofVector[i].Id() << "," << slaveDofVector[i].GetVariable().Key() << std::endl;
 				rtMinvR += (rIdof * rIdof) / Minode;
 				R += rIdof;
 			}
@@ -273,228 +304,70 @@ class CustomApplyChimeraUsingMpcProcess
 
 			pMpcProcess->SetRtMinvR(rtMinvR);
 		}
-
-		std::cout << "trMinvR calculated : " << rtMinvR << std::endl;
-		std::cout << "R calculated : " << R << std::endl;
-
-		/*SlavePairType slaveDofMap;
-		SlavePairType slaveDofMapOther;
-		MasterDofWeightMapType MasterDofWeightMap;
-		ProcessInfoType info = mrAllModelPart.GetProcessInfo();
-		double nodalMass;
-		double modifiedWeight;
-		double NodalNormalComponent;
-		double NodalNormalComponentOther;
-		unsigned int slaveNodeId;
-		unsigned int slaveDofKey;
-		unsigned int slaveNodeIdOther;
-		unsigned int slaveDofKeyOther;
-		unsigned int masterNodeId;
-		unsigned int PartitionId;
-		unsigned int masterDofKey;
-		unsigned int slaveDofVectorSize = slaveDofVector.size();
-
-		//debug
-
-		/*{
-			slaveNodeId = slaveDofVector[0].Id();
-			slaveDofKey = slaveDofVector[0].GetVariable().Key();
-			slaveDofMap = std::make_pair(slaveNodeId, slaveDofKey);
-			MpcDataPointerVectorType mpcDataVector = info.GetValue(MPC_DATA_CONTAINER);
-			for (auto mpcData : (*mpcDataVector))
-			{
-
-				if (mpcData->IsActive())
-				{
-
-					MasterDofWeightMap = mpcData->mDofConstraints[slaveDofMap];
-					unsigned int counterbefore = 0;
-
-					for (auto master : MasterDofWeightMap)
-					{
-						counterbefore++;
-						std::tie(masterNodeId, masterDofKey, PartitionId) = master.first;
-
-						std::cout << "master node " << masterNodeId << " coupled to " << slaveNodeId << " weight " << master.second << std::endl;
-					}
-
-					std::cout << " Total number of masters " << counterbefore << std::endl;
-					std::cout << "############################################################" << std::endl;
-				}
-			}
-		}
-
-		MpcDataPointerVectorType mpcDataVector = info.GetValue(MPC_DATA_CONTAINER);
-		for (auto mpcData : (*mpcDataVector))
-		{
-
-			if (mpcData->IsActive())
-			{
-
-				std::cout << "slaveDofVectorSize " << slaveDofVectorSize << std::endl;
-
-				for (unsigned int i = 0; i < slaveDofVectorSize; i++)
-				{
-
-					//std::cout<<"Inside i loop nav "<<i <<std::endl;
-
-					slaveNodeId = slaveDofVector[i].Id();
-					slaveDofKey = slaveDofVector[i].GetVariable().Key();
-					slaveDofMap = std::make_pair(slaveNodeId, slaveDofKey);
-					Node<3> &slaveNode = rBoundaryModelPart.Nodes()[slaveNodeId];
-					Node<3>::DofsContainerType::iterator it_SlaveDof = slaveNode.GetDofs().find(slaveDofKey);
-					nodalMass = slaveNode.FastGetSolutionStepValue(NODAL_MASS);
-
-					for (unsigned int j = 0; j < slaveDofVectorSize; j++)
-					{
-
-						//std::cout << "Inside j loop nav " << j << std::endl;
-
-						slaveNodeIdOther = slaveDofVector[j].Id();
-						slaveDofKeyOther = slaveDofVector[j].GetVariable().Key();
-						slaveDofMapOther = std::make_pair(slaveNodeIdOther, slaveDofKeyOther);
-
-						MasterDofWeightMap = mpcData->mDofConstraints[slaveDofMapOther];
-						//std::cout << "slaveId,key " << slaveNodeIdOther << "," << slaveDofKeyOther << std::endl;
-						for (auto master : MasterDofWeightMap)
-
-						{
-
-							//std::cout<<"master loop nav "<<std::endl;
-
-							std::tie(masterNodeId, masterDofKey, PartitionId) = master.first;
-							Node<3> &masterNode = mrAllModelPart.Nodes()[masterNodeId];
-							Node<3>::DofsContainerType::iterator itMasterDof = masterNode.GetDofs().find(masterDofKey);
-							NodalNormalComponent = mpcData->mSlaveDofToNodalNormalMap[slaveDofMap];
-							NodalNormalComponentOther = mpcData->mSlaveDofToNodalNormalMap[slaveDofMapOther];
-							modifiedWeight = -master.second * NodalNormalComponent * NodalNormalComponentOther / (rtMinvR * nodalMass);
-							pMpcProcess->AddMasterSlaveRelationWithDofs(*it_SlaveDof, *itMasterDof, modifiedWeight);
-							//std::cout << "master ID " << masterNodeId << "," << masterDofKey << " modifiedWeight " << modifiedWeight << std::endl;
-						}
-					}
-
-					//debug
-
-					MasterDofWeightMap = mpcData->mDofConstraints[slaveDofMap];
-					unsigned int counter = 0;
-					std::ofstream myfile;
-					//myfile.open("example.py");
-					//myfile << "l = ";
-
-					for (auto master : MasterDofWeightMap)
-					{
-						counter++;
-						std::tie(masterNodeId, masterDofKey, PartitionId) = master.first;
-
-						//std::cout << "master node " << masterNodeId << "," << masterDofKey << " coupled to " << slaveNodeId << "," << slaveDofKey << " weight " << master.second << std::endl;
-						//myfile << masterNodeId << ",";
-					}
-					//myfile << "\n";
-					//myfile << "set([x for x in l if l.count(x) > 1]) \n";
-					//myfile.close();
-
-					//std::cout << " Total number of masters " << counter << std::endl;
-					//std::cout << "trMinvR calculated : " << rtMinvR << std::endl;
-					///std::cout << "R calculated : " << R << std::endl;
-					//std::exit(-1);
-
-					//debug
-				}
-			}
-		}*/
 	}
 
 	//Apply Chimera with or without overlap
-	void  ApplyChimeraUsingMpc(ModelPart &mrPatchBoundaryModelPart, std::string type = "NearestElement")
-
+	void FormulateChimera()
 	{
 
-		for (ModelPart::ElementsContainerType::iterator it = mrAllModelPart.ElementsBegin(); it != mrAllModelPart.ElementsEnd(); ++it)
+		ModelPart &rBackgroundModelPart = mrMainModelPart.GetSubModelPart(m_background_part_name);
+		ModelPart &rPatchModelPart = mrMainModelPart.GetSubModelPart(m_patch_model_part_name);
+		ModelPart &rPatchBoundaryModelPart = mrMainModelPart.GetSubModelPart(m_background_part_name);
+
+		for (ModelPart::ElementsContainerType::iterator it = mrMainModelPart.ElementsBegin(); it != mrMainModelPart.ElementsEnd(); ++it)
 		{
 
 			it->Set(ACTIVE, true);
 		}
 
 		const double epsilon = 1e-12;
-		if (overlap_distance < epsilon)
+		if (m_overlap_distance < epsilon)
 		{
-			std::cout << "Overlap distance should be a positive number" << std::endl;
-			std::exit(-1);
+			KRATOS_THROW_ERROR("","Overlap distance should be a positive number \n", "");
 		}
 
-		if (overlap_distance > epsilon)
+		if (m_overlap_distance > epsilon)
 
 		{
 
 			ModelPart::Pointer pHoleModelPart = ModelPart::Pointer(new ModelPart("HoleModelpart"));
 			ModelPart::Pointer pHoleBoundaryModelPart = ModelPart::Pointer(new ModelPart("HoleBoundaryModelPart"));
-			//ModelPart::Pointer pNewSkinModelPart = ModelPart::Pointer(new ModelPart("NewSkinModelPart"));
 
-			this->pMpcProcessPatch = ApplyMultipointConstraintsProcess::Pointer(new ApplyMultipointConstraintsProcess(type, mrAllModelPart, mrBackgroundModelPart));
+			this->pMpcProcessPatch = ApplyMultipointConstraintsProcess::Pointer(new ApplyMultipointConstraintsProcess(m_type, mrMainModelPart, rBackgroundModelPart));
 
-			//this->pCalculateDistanceProcess->CalculateSignedDistanceOnModelPart(mrPatchModelPart, mrPatchBoundaryModelPart);
-			this->pCalculateDistanceProcess->CalculateSignedDistance(mrBackgroundModelPart, mrPatchBoundaryModelPart);
-			//PrintGIDMesh(*pNewSkinModelPart);
-			this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart, *pHoleModelPart, *pHoleBoundaryModelPart, overlap_distance);
+			this->pCalculateDistanceProcess->CalculateSignedDistance(rBackgroundModelPart, rPatchBoundaryModelPart);
+			this->pHoleCuttingProcess->CreateHoleAfterDistance(rBackgroundModelPart, *pHoleModelPart, *pHoleBoundaryModelPart, m_overlap_distance);
+			this->pMpcProcessBackground = ApplyMultipointConstraintsProcess::Pointer(new ApplyMultipointConstraintsProcess(m_type, mrMainModelPart, rPatchModelPart));
 
-			//this->pCalculateDistanceProcess->CalculateSignedDistance(mrPatchModelPart, *pHoleBoundaryModelPart);
-			this->pMpcProcessBackground = ApplyMultipointConstraintsProcess::Pointer(new ApplyMultipointConstraintsProcess(type, mrAllModelPart, mrPatchModelPart));
-
-			CalculateNodalAreaAndNodalMass(mrPatchBoundaryModelPart, 1);
-			std::cout << "Nodal mass and normal calculated for the patch boundary" << std::endl;
+			CalculateNodalAreaAndNodalMass(rPatchBoundaryModelPart, 1);
 			CalculateNodalAreaAndNodalMass(*pHoleBoundaryModelPart, -1);
-			std::cout << "Nodal mass and normal calculated for the hole boundary" << std::endl;
 
 			pMpcProcessPatch->SetWeak(true); // false for hybrid approach
 			pMpcProcessBackground->SetWeak(true);
 
-			if (type == "NearestElement")
+			if (m_type == "nearest_element")
 			{
-
-				ApplyMpcConstraint(mrPatchBoundaryModelPart, pBinLocatorForBackground, pMpcProcessPatch, 0); //0 for one node  pressure coupling
+				ApplyMpcConstraint(rPatchBoundaryModelPart, pBinLocatorForBackground, pMpcProcessPatch, true); //true for one node  pressure coupling
 				std::cout << "Patch boundary coupled with background" << std::endl;
-
-				ApplyMpcConstraint(*pHoleBoundaryModelPart, pBinLocatorForPatch, pMpcProcessBackground, 1);
+				ApplyMpcConstraint(*pHoleBoundaryModelPart, pBinLocatorForPatch, pMpcProcessBackground, false);
 				std::cout << "HoleBoundary  coupled with patch" << std::endl;
 			}
 
-			else if (type == "Conservative")
+			else if (m_type == "conservative")
 			{
 				//patch boundary is nearest element
-				ApplyMpcConstraintConservative(mrPatchBoundaryModelPart, pBinLocatorForBackground, pMpcProcessPatch, 0); //0 for one node for pressure coupling
+				ApplyMpcConstraintConservative(rPatchBoundaryModelPart, pBinLocatorForBackground, pMpcProcessPatch, true); //true for one node  pressure coupling
 				std::cout << "Patch boundary coupled with background using conservative approach" << std::endl;
-				ApplyMpcConstraintConservative(*pHoleBoundaryModelPart, pBinLocatorForPatch, pMpcProcessBackground, 1);
+				ApplyMpcConstraintConservative(*pHoleBoundaryModelPart, pBinLocatorForPatch, pMpcProcessBackground, false);
 				std::cout << "HoleBoundary  coupled with patch using conservative approach" << std::endl;
 			}
-		}
-
-		else
-		{
-
-			std::cout << "Applying Strong MPC " << std::endl;
-
-			ModelPart::Pointer pHoleModelPart = ModelPart::Pointer(new ModelPart("HoleModelpart"));
-			ModelPart::Pointer pHoleBoundaryModelPart = ModelPart::Pointer(new ModelPart("HoleBoundaryModelPart"));
-			//ModelPart::Pointer pNewSkinModelPart = ModelPart::Pointer(new ModelPart("NewSkinModelPart"));
-
-			//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
-			this->pMpcProcessPatch = ApplyMultipointConstraintsProcess::Pointer(new ApplyMultipointConstraintsProcess(type, mrAllModelPart, mrBackgroundModelPart));
-			this->pCalculateDistanceProcess->CalculateSignedDistance(mrBackgroundModelPart, mrPatchBoundaryModelPart);
-
-			this->pHoleCuttingProcess->CreateHoleAfterDistance(mrBackgroundModelPart, *pHoleModelPart, *pHoleBoundaryModelPart, epsilon);
-
-			if (type == "NearestElement")
-				ApplyMpcConstraint(mrPatchBoundaryModelPart, pBinLocatorForBackground, pMpcProcessPatch, 1);
-
-			else if (type == "Conservative")
-				ApplyMpcConstraintConservative(mrPatchBoundaryModelPart, pBinLocatorForBackground, pMpcProcessPatch, 1);
 		}
 	}
 
 	void SetOverlapDistance(double distance)
 	{
 
-		this->overlap_distance = distance;
+		this->m_overlap_distance = distance;
 	}
 
 	void CalculateNodalAreaAndNodalMass(ModelPart &rBoundaryModelPart, int sign)
@@ -532,7 +405,6 @@ class CustomApplyChimeraUsingMpcProcess
 		}
 
 		centre = centre / n_nodes;
-		std::cout << "Centre " << centre[0] << " " << centre[1] << " " << centre[2] << std::endl;
 
 		//calculating the normals and storing on the conditions
 		array_1d<double, 3> An;
@@ -668,13 +540,13 @@ class CustomApplyChimeraUsingMpcProcess
 
 	virtual std::string Info() const
 	{
-		return "CustomApplyChimeraUsingMpcProcess";
+		return "ApplyChimeraProcess";
 	}
 
 	/// Print information about this object.
 	virtual void PrintInfo(std::ostream &rOStream) const
 	{
-		rOStream << "CustomApplyChimeraUsingMpcProcess";
+		rOStream << "ApplyChimeraProcess";
 	}
 
 	/// Print object's data.
@@ -734,10 +606,14 @@ class CustomApplyChimeraUsingMpcProcess
 	ApplyMultipointConstraintsProcess::Pointer pMpcProcessBackground;
 	CustomHoleCuttingProcess::Pointer pHoleCuttingProcess;
 	typename CustomCalculateSignedDistanceProcess<TDim>::Pointer pCalculateDistanceProcess;
-	ModelPart &mrAllModelPart;
-	ModelPart &mrBackgroundModelPart;
-	ModelPart &mrPatchModelPart;
-	double overlap_distance;
+	ModelPart &mrMainModelPart;
+	double m_overlap_distance;
+
+	Parameters m_parameters;
+	std::string m_background_part_name;
+	std::string m_patch_boundary_model_part_name;
+	std::string m_patch_model_part_name;
+	std::string m_type;
 
 	// epsilon
 	//static const double epsilon;
@@ -763,7 +639,7 @@ class CustomApplyChimeraUsingMpcProcess
 	///@{
 
 	/// Assignment operator.
-	CustomApplyChimeraUsingMpcProcess &operator=(CustomApplyChimeraUsingMpcProcess const &rOther);
+	ApplyChimeraProcess &operator=(ApplyChimeraProcess const &rOther);
 
 	/// Copy constructor.
 	//CustomExtractVariablesProcess(CustomExtractVariablesProcess const& rOther);

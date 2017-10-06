@@ -135,76 +135,13 @@ class CustomHoleCuttingProcess
 	///@name Operations
 	///@{
 
-	/// For CHIMERA boundary condition purposes: Extracts a volume mesh with a certain threshold value based on centroid distance
-	void ExtractMeshAtCentroidDistance(ModelPart &rModelPart, ModelPart &rExtractedModelPart, double distance)
-	{
-
-		KRATOS_TRY;
-
-		std::cout << "\n::[Mesh Extraction]::" << std::endl;
-		ModelPart rExtractedModelPart;
-
-		// Initializing mesh nodes
-		//rExtractedModelPart.Nodes() = rModelPart.Nodes();
-
-		// Extracting mesh elements which are only above the threshold value
-		std::cout << "  Extracting elements with in a distance of > " << fabs(distance) << std::endl;
-		Element::Pointer pElem;
-		std::vector<unsigned int> vector_of_node_ids;
-		for (ModelPart::ElementsContainerType::iterator it = rModelPart.ElementsBegin(); it != rModelPart.ElementsEnd(); ++it)
-		{
-			double elementDistance = 0.0;
-			unsigned int j = 0;
-			for (j = 0; j < it->GetGeometry().PointsNumber(); j++)
-			{
-				elementDistance += it->GetGeometry()[j].FastGetSolutionStepValue(DISTANCE);
-			}
-			// Element distance is the average of the nodal distances.
-			elementDistance = (elementDistance / j);
-
-			if (elementDistance < distance)
-			{
-				//Adding elements in the ModelPart
-				pElem = Element::Pointer(new Element(*it));
-				rExtractedModelPart.Elements().push_back(pElem);
-
-				//Adding node all the node Ids of the elements satisfying the condition
-				for (j = 0; j < pElem->GetGeometry().PointsNumber(); j++)
-					vector_of_node_ids.push_back(pElem->GetGeometry()[j].Id());
-			}
-		}
-
-		//sorting and making unique list of node ids
-
-		std::set<unsigned int> s(vector_of_node_ids.begin(), vector_of_node_ids.end());
-		vector_of_node_ids.assign(s.begin(), s.end());
-
-		// Add unique nodes in the ModelPart
-
-		for (auto it = vector_of_node_ids.begin(); it != vector_of_node_ids.end(); it++)
-		{
-
-			Node<3>::Pointer pnode = rModelPart.Nodes()(*it);
-			rExtractedModelPart.AddNode(pnode);
-		}
-
-		std::cout << "  Successful extraction of the Mesh !! " << rExtractedModelPart.GetMesh() << "\b" << std::endl;
-		//ExtractSurfaceMesh(rExtractedModelPart, rExtractedSurfaceModelPart);
-
-		KRATOS_CATCH("");
-	}
-
 	/// For CHIMERA boundary condition purposes: Extracts a  mesh with a certain threshold value
 	void ExtractMeshBetweenLimits(ModelPart &rModelPart, ModelPart &rExtractedModelPart, double lLimit, double uLimit)
 	{
 
 		KRATOS_TRY;
-
 		std::cout << "\n::[Mesh Extraction]::" << std::endl;
-
 		// Initializing mesh nodes
-		//rExtractedModelPart.Nodes() = rModelPart.Nodes();
-
 		// Extracting mesh elements which are only above the threshold value
 		std::cout << "  Extracting elements between " << lLimit << " and " << uLimit << std::endl;
 		Element::Pointer pElem;
@@ -235,43 +172,27 @@ class CustomHoleCuttingProcess
 		}
 
 		//sorting and making unique list of node ids
-
 		std::set<unsigned int> s(vector_of_node_ids.begin(), vector_of_node_ids.end());
 		vector_of_node_ids.assign(s.begin(), s.end());
 
 		// Add unique nodes in the ModelPart
-
 		for (auto it = vector_of_node_ids.begin(); it != vector_of_node_ids.end(); it++)
 		{
-
 			Node<3>::Pointer pnode = rModelPart.Nodes()(*it);
 			rExtractedModelPart.AddNode(pnode);
 		}
-
-		std::cout << " ########  Successful extraction of the Mesh !! " << rExtractedModelPart.GetMesh() << "\b" << std::endl;
 		KRATOS_CATCH("");
 	}
 
 	void CreateHoleAfterDistance(ModelPart &rModelPart, ModelPart &rExtractedModelPart, ModelPart &rExtractedBoundaryModelPart, double distance)
 
 	{
-
 		KRATOS_TRY;
 
 		std::cout << "\n::[Creating Hole]::" << std::endl;
-
-		//Initialising mesh nodes
-		//rExtractedModelPart.Nodes() = rModelPart.Nodes();
-
-		// Extracting mesh elements which are only above the threshold value
-		std::cout << "  Extracting elements after " << distance << std::endl;
-
 		std::vector<unsigned int> vector_of_node_ids;
-
 		//For signed distance
-
 		distance *= -1;
-		std::cout << "Updated distance" << distance << std::endl;
 
 		for (ModelPart::ElementsContainerType::iterator it = rModelPart.ElementsBegin(); it != rModelPart.ElementsEnd(); ++it)
 		{
@@ -280,7 +201,7 @@ class CustomHoleCuttingProcess
 			unsigned int numPointsOutside = 0;
 			unsigned int j = 0;
 			Geometry<Node<3>> &geom = it->GetGeometry();
-			
+
 			for (j = 0; j < geom.size(); j++)
 			{
 				elementDistance = it->GetGeometry()[j].FastGetSolutionStepValue(DISTANCE);
@@ -294,22 +215,13 @@ class CustomHoleCuttingProcess
 			if (numPointsOutside == geom.size())
 			//if(numPointsOutside > 0)
 			{
-				
 				it->Set(ACTIVE, false);
-				
-				
 				Element::Pointer pElem = *(it.base());
-
 				rExtractedModelPart.Elements().push_back(pElem);
-				
 				//Adding node all the node Ids of the elements satisfying the condition
 				for (j = 0; j < pElem->GetGeometry().PointsNumber(); j++)
 					vector_of_node_ids.push_back(pElem->GetGeometry()[j].Id());
-				
 			}
-
-			/*if(!(it->IsDefined(ACTIVE)))
-				std::cout<<"Elements Nr "<<it->Id()<<"active"<<std::endl;*/
 		}
 
 		//sorting and making unique list of node ids
@@ -324,11 +236,8 @@ class CustomHoleCuttingProcess
 
 			Node<3>::Pointer pnode = rModelPart.Nodes()(*it);
 			rExtractedModelPart.AddNode(pnode);
-			
 		}
 
-		std::cout << " ########  Successful hole cutting of the Mesh !!########## " << std::endl;
-		KRATOS_CATCH("");
 		unsigned int n_nodes = rModelPart.ElementsBegin()->GetGeometry().size();
 
 		if (n_nodes == 3)
@@ -344,6 +253,8 @@ class CustomHoleCuttingProcess
 
 		else
 			std::cout << "Hole cutting process is only supported for tetrahedral and triangular elements" << std::endl;
+
+		KRATOS_CATCH("");
 	}
 
 	/// For Topology Optimization purposes: Extracts a surface mesh from a provided volume mesh

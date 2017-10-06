@@ -41,7 +41,7 @@
 #include "elements/distance_calculation_element_simplex.h"
 #include "utilities/parallel_levelset_distance_calculator.h"
 #include "custom_processes/calculate_signed_distance_to_2d_condition_skin_process.h"
-#include "custom_processes/calculate_chimera_signed_distance_to_3d_condition_skin_process.h"
+#include "processes/calculate_signed_distance_to_3d_condition_skin_process.h"
 
 namespace Kratos
 {
@@ -251,7 +251,7 @@ class CustomCalculateSignedDistanceProcess
 		{
 			// From Core ?? Improve performance and algorithm based on CalculateSignedDistanceToSkinProcess
 			std::cout << "Inside the distance function" << std::endl;
-			p3DSignedDistanceCalculator = CalculateChimeraSignedDistanceTo3DConditionSkinProcess::Pointer(new CalculateChimeraSignedDistanceTo3DConditionSkinProcess(patchBoundaryModelPart, toBackgroundModelPart));
+			p3DSignedDistanceCalculator = CalculateSignedDistanceTo3DConditionSkinProcess::Pointer(new CalculateSignedDistanceTo3DConditionSkinProcess(patchBoundaryModelPart, toBackgroundModelPart));
 			std::cout << "Distance calculation initialised" << std::endl;
 			//p3DSignedDistanceCalculator->Execute();
 			std::cout << "Distance calculations finished" << std::endl;
@@ -353,7 +353,7 @@ class CustomCalculateSignedDistanceProcess
 	//ModelPart &mrPatchSurfaceModelPart;
 	typename BinBasedFastPointLocator<TDim>::Pointer pBinLocator; // Template argument 3 stands for 3D case
 	CalculateSignedDistanceTo2DConditionSkinProcess::Pointer p2DSignedDistanceCalculator;
-	CalculateChimeraSignedDistanceTo3DConditionSkinProcess::Pointer p3DSignedDistanceCalculator;
+	CalculateSignedDistanceTo3DConditionSkinProcess::Pointer p3DSignedDistanceCalculator;
 
 	///@}
 	///@name Private Operators

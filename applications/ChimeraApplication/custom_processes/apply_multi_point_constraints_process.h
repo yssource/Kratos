@@ -30,11 +30,6 @@
 #include "custom_utilities/multipoint_constraint_data.hpp"
 #include "chimera_application_variables.h"
 
-//#ifdef MAPPING_APPLICATION
-/*#include "../../MappingApplication/custom_utilities/mapper.h"
-#include "../../MappingApplication/custom_utilities/mapper_communicator.h"*/
-//#endif
-
 namespace Kratos
 {
 
@@ -107,78 +102,6 @@ class ApplyMultipointConstraintsProcess : public Process
         MpcDataPointerVectorType mpcDataVector = info->GetValue(MPC_DATA_CONTAINER);
         (*mpcDataVector).push_back(pMpc);
     }
-
-    /**
-		Applies the MPC condition using two model parts, one as master and other as slave.
-        Here a nearest element interpolation is used by default to get the relation between master and slave
-		*/
-    /*    void AddMasterSlaveRelation()
-    {
-        ModelPart &master_model_part = mr_model_part.GetSubModelPart(m_parameters["master_sub_model_part_name"].GetString());
-        ModelPart &slave_model_part = mr_model_part.GetSubModelPart(m_parameters["slave_sub_model_part_name"].GetString());
-        std::string interpolationType = m_parameters["interpolation_type"].GetString();
-        int numVars = m_parameters["variable_names"].size();
-        Parameters mapper_parameters = m_parameters["interpolation_settings"];
-
-        MapperCommunicator::Pointer mpMapperCommunicator = MapperCommunicator::Pointer(
-            new MapperCommunicator(master_model_part,
-                                   slave_model_part,
-                                   mapper_parameters));
-
-        // KratosComponents< Variable<double> >::Get( mvariable_name )
-        if (interpolationType == "nearest_node")
-        {
-            mpMapperCommunicator->InitializeOrigin(MapperUtilities::Node_Coords);
-            mpMapperCommunicator->InitializeDestination(MapperUtilities::Node_Coords);
-            mpMapperCommunicator->Initialize();
-        }
-        else if (interpolationType == "nearest_element")
-        {
-            mpMapperCommunicator->InitializeOrigin(MapperUtilities::Condition_Center);
-            mpMapperCommunicator->InitializeDestination(MapperUtilities::Node_Coords);
-            mpMapperCommunicator->Initialize();
-        }
-
-        for (int i = 0; i < numVars; i++)
-        {
-
-            VariableComponentType rVar = KratosComponents<VariableComponentType>::Get(m_parameters["variable_names"][i].GetString());
-
-            // Create the mapper based on the type of interpolation
-            // Creating the function pointers for the InterfaceObjects
-            if (interpolationType == "nearest_node")
-            {
-                auto function_pointer_origin = std::bind(&GetMasterRelationInformationFromNode,
-                                                         std::placeholders::_1,
-                                                         rVar,
-                                                         std::placeholders::_2);
-
-                auto function_pointer_destination = std::bind(&SetMpcDataAtNode<void *>,
-                                                              std::placeholders::_1,
-                                                              rVar,
-                                                              std::placeholders::_2,
-                                                              pMpc);
-
-                mpMapperCommunicator->TransferVariableData(function_pointer_origin,
-                                                           function_pointer_destination);
-            }
-            else if (interpolationType == "nearest_element")
-            {
-                auto function_pointer_origin = std::bind(&GetMasterRelationInformationFromElement,
-                                                         std::placeholders::_1,
-                                                         rVar,
-                                                         std::placeholders::_2);
-                auto function_pointer_destination = std::bind(&SetMpcDataAtNode<void *>,
-                                                              std::placeholders::_1,
-                                                              rVar,
-                                                              std::placeholders::_2,
-                                                              pMpc);
-
-                mpMapperCommunicator->TransferVariableData(function_pointer_origin,
-                                                           function_pointer_destination);
-            }
-        }
-    }*/
 
     // Functions which use two variable components
 
@@ -334,75 +257,6 @@ class ApplyMultipointConstraintsProcess : public Process
     /// Assignment operator.
     ApplyMultipointConstraintsProcess &operator=(ApplyMultipointConstraintsProcess const &rOther) { return *this; }
 
-    /*
-    *   Structrue which contain the slave master information. This is used in conjection with the mapper communicator
-    *   
-    */
-    struct MasterSlaveRelation
-    {
-        std::vector<int> MastersDOFIds;
-        std::vector<double> MastersDOFWeights;
-        std::vector<double> MasterConstants;
-    };
-
-    /*
-    * Function to be used in realation with the nearest node mapper. Master side 
-    */
-    /*static MasterSlaveRelation *GetMasterRelationInformationFromNode(InterfaceObject *pInterfaceObject, const VariableComponentType &rVariable,
-                                                                     const std::vector<double> &rShapeFunctionValues)
-    {
-        MasterSlaveRelation *pMasterSlaveRelation = new MasterSlaveRelation();
-        Node<3> *p_base_node = static_cast<InterfaceNode *>(pInterfaceObject)->pGetBase();
-        KRATOS_ERROR_IF_NOT(p_base_node) << "Base Pointer is nullptr!!!" << std::endl;
-
-        unsigned int dofId = p_base_node->GetDof(rVariable).EquationId();
-        pMasterSlaveRelation->MastersDOFIds.push_back(dofId);
-        pMasterSlaveRelation->MastersDOFWeights.push_back(1.0);
-
-        return pMasterSlaveRelation;
-    }*/
-
-    /*
-    * Function to be used in realation with the nearest element mapper. Master side 
-    */
-    /*static MasterSlaveRelation *GetMasterRelationInformationFromElement(InterfaceObject *pInterfaceObject, const VariableComponentType &rVariable,
-                                                                        const std::vector<double> &rShapeFunctionValues)
-    {
-        MasterSlaveRelation *pMasterSlaveRelation = new MasterSlaveRelation();
-        Geometry<Node<3>> *p_base_geometry = static_cast<InterfaceGeometryObject *>(pInterfaceObject)->pGetBase();
-        KRATOS_ERROR_IF_NOT(p_base_geometry) << "Base Pointer is nullptr!!!" << std::endl;
-
-        for (std::size_t i = 0; i < p_base_geometry->PointsNumber(); ++i)
-        {
-            unsigned int dofId = p_base_geometry->GetPoint(i).GetDof(rVariable).EquationId();
-            pMasterSlaveRelation->MastersDOFIds.push_back(dofId);
-            pMasterSlaveRelation->MastersDOFWeights.push_back(rShapeFunctionValues[i]);
-        }
-
-        return pMasterSlaveRelation;
-    }*/
-
-    /*
-    * Function to be used in realation with the mapper. Slave side 
-    */
-    /*template <typename T>
-    static void SetMpcDataAtNode(InterfaceObject *pInterfaceObject, VariableComponentType &rVariable, T rValue, MpcDataPointerType pMpc)
-    {
-
-        Node<3> *p_base_node = static_cast<InterfaceNode *>(pInterfaceObject)->pGetBase();
-        MasterSlaveRelation *mMasterSlaveRelation = static_cast<MasterSlaveRelation *>(rValue);
-        KRATOS_ERROR_IF_NOT(p_base_node) << "Base Pointer is nullptr!!!" << std::endl;
-        // Marking the node as a slave
-        p_base_node->Set(SLAVE);
-
-        unsigned int slaveDofId = p_base_node->GetDof(rVariable).EquationId();
-        for (int i = 0; i < mMasterSlaveRelation->MastersDOFIds.size(); i++)
-        {
-            pMpc->AddConstraint(slaveDofId, mMasterSlaveRelation->MastersDOFIds[i], mMasterSlaveRelation->MastersDOFWeights[i], 0);
-        }
-
-        delete mMasterSlaveRelation;
-    }*/
 
 }; // Class MoveRotorProcess
 

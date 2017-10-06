@@ -14,7 +14,6 @@
 
 // External includes
 #include <boost/python.hpp>
-
 // Project includes
 #include "includes/define.h"
 #include "includes/model_part.h"
@@ -28,8 +27,7 @@
 #include "custom_processes/calculate_signed_distance_to_2d_condition_skin_process.h"
 #include "custom_processes/calculate_chimera_signed_distance_to_3d_condition_skin_process.h"
 #include "custom_processes/apply_multi_point_constraints_process.h"
-#include "custom_processes/rotate_region_process.h"
-
+//#include "custom_processes/test_mapper_process.h"
 namespace Kratos
 {
 
@@ -60,9 +58,11 @@ void AddCustomProcessesToPython()
 	/*
 	 * CustomExtractVariablesProcess
 	 */
-	class_<CustomExtractVariablesProcess,bases<Process> >("CustomExtractVariablesProcess", init<>())
-			.def("ExtractVariable", &CustomExtractVariablesProcess::ExtractVariable< array_1d<double, 3> >)
-			.def("ExtractVariable", &CustomExtractVariablesProcess::ExtractVariable<double>);			
+	class_<CustomExtractVariablesProcess<2>,bases<Process> >("CustomExtractVariablesProcess2d", init<>())
+			.def("ExtractVariables", &CustomExtractVariablesProcess<2>::ExtractVariables );
+
+	class_<CustomExtractVariablesProcess<3>,bases<Process> >("CustomExtractVariablesProcess3d", init<>())
+			.def("ExtractVariables", &CustomExtractVariablesProcess<3>::ExtractVariables );				
 
 
     
@@ -73,16 +73,14 @@ void AddCustomProcessesToPython()
 			.def("ApplyMpcConstraint", &CustomApplyChimeraUsingMpcProcess<2>::ApplyMpcConstraint)
 			.def("ApplyChimeraUsingMpc2d", &CustomApplyChimeraUsingMpcProcess<2>::ApplyChimeraUsingMpc)
 			.def("SetOverlapDistance",&CustomApplyChimeraUsingMpcProcess<2>::SetOverlapDistance)
-			.def("CalculateNodalAreaAndNodalMass",&CustomApplyChimeraUsingMpcProcess<2>::CalculateNodalAreaAndNodalMass)
-			.def("Clear",&CustomApplyChimeraUsingMpcProcess<2>::Clear);
+			.def("CalculateNodalAreaAndNodalMass",&CustomApplyChimeraUsingMpcProcess<2>::CalculateNodalAreaAndNodalMass);
 			
 
 	class_<CustomApplyChimeraUsingMpcProcess<3>,bases<Process> >("CustomApplyChimeraUsingMpcProcess3d", init<ModelPart&,ModelPart&,ModelPart&,double>())
 			.def("ApplyMpcConstraint", &CustomApplyChimeraUsingMpcProcess<3>::ApplyMpcConstraint)		
 			.def("ApplyChimeraUsingMpc3d", &CustomApplyChimeraUsingMpcProcess<3>::ApplyChimeraUsingMpc)
 			.def("SetOverlapDistance",&CustomApplyChimeraUsingMpcProcess<3>::SetOverlapDistance)
-			.def("CalculateNodalAreaAndNodalMass",&CustomApplyChimeraUsingMpcProcess<3>::CalculateNodalAreaAndNodalMass)
-			.def("Clear",&CustomApplyChimeraUsingMpcProcess<3>::Clear);
+			.def("CalculateNodalAreaAndNodalMass",&CustomApplyChimeraUsingMpcProcess<3>::CalculateNodalAreaAndNodalMass);
 			
 
 	/*
@@ -93,11 +91,16 @@ void AddCustomProcessesToPython()
 		//.def("Execute", &CalculateSignedDistanceTo2DSkinProcess::Execute);	
 	class_<CalculateChimeraSignedDistanceTo3DConditionSkinProcess,bases<Process> >("CalculateChimeraSignedDistanceTo3DConditionSkinProcess", init<ModelPart&,ModelPart&>())
 		.def("Execute", &CalculateChimeraSignedDistanceTo3DConditionSkinProcess::Execute);	
-			
 
-	class_< RotateRegionProcess, bases<Process>, boost::noncopyable >
-    ("RotateRegionProcess",init<ModelPart&, Parameters& >())
-    ;
+	/*class_<TestMapperProcess<2>,bases<Process> >("TestMapperProcess2d", init<ModelPart&,ModelPart&,ModelPart&,double>())
+			.def("Interpolate2d",&TestMapperProcess<2>::Interpolate2d)
+			.def("CalculateNodalAreaAndNodalMass",&TestMapperProcess<2>::CalculateNodalAreaAndNodalMass)
+			.def("Initialize",&TestMapperProcess<2>::Initialize);
+*/
+	/*	
+	*	test_mapper_process
+	*/
+	
 }
 
 

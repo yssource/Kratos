@@ -28,6 +28,7 @@
 
 // Strategies
 #include "solving_strategies/strategies/solving_strategy.h"
+
 //#include "custom_strategies/custom_strategies/residual_based_arc_length_strategy.hpp"
 //#include "custom_strategies/custom_strategies/eigensolver_strategy.hpp"
 
@@ -39,6 +40,7 @@
 // Builder and solvers
 #include "solving_strategies/builder_and_solvers/residualbased_block_builder_and_solver.h"
 #include "custom_strategies/custom_builder_and_solver/residualbased_block_builder_and_solver_with_mpc_chimera.h"
+
 
 // Convergence criterias
 #include "solving_strategies/convergencecriterias/convergence_criteria.h"
@@ -60,8 +62,6 @@ void  AddCustomStrategiesToPython()
     // Base types
     typedef LinearSolver<SparseSpaceType, LocalSpaceType > LinearSolverType;
     
-    
-    
     // Custom convergence criterion types
 
     // Custom builder and solvers types
@@ -69,8 +69,7 @@ void  AddCustomStrategiesToPython()
     //********************************************************************
     //*************************STRATEGY CLASSES***************************
     //********************************************************************
-    
-    
+   
 
     //********************************************************************
     //*******************CONVERGENCE CRITERIA CLASSES*********************

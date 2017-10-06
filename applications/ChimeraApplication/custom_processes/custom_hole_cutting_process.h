@@ -265,7 +265,7 @@ class CustomHoleCuttingProcess
 
 		// Extracting mesh elements which are only above the threshold value
 		std::cout << "  Extracting elements after " << distance << std::endl;
-		Element::Pointer pElem;
+
 		std::vector<unsigned int> vector_of_node_ids;
 
 		//For signed distance
@@ -275,10 +275,12 @@ class CustomHoleCuttingProcess
 
 		for (ModelPart::ElementsContainerType::iterator it = rModelPart.ElementsBegin(); it != rModelPart.ElementsEnd(); ++it)
 		{
+
 			double elementDistance = 0.0;
 			unsigned int numPointsOutside = 0;
 			unsigned int j = 0;
 			Geometry<Node<3>> &geom = it->GetGeometry();
+			
 			for (j = 0; j < geom.size(); j++)
 			{
 				elementDistance = it->GetGeometry()[j].FastGetSolutionStepValue(DISTANCE);
@@ -292,34 +294,18 @@ class CustomHoleCuttingProcess
 			if (numPointsOutside == geom.size())
 			//if(numPointsOutside > 0)
 			{
-
-				for (j = 0; j < geom.size(); j++)
-				{
-
-					it->GetGeometry()[j].FastGetSolutionStepValue(VELOCITY_X, 0) = 0;
-					it->GetGeometry()[j].FastGetSolutionStepValue(VELOCITY_Y, 0) = 0;
-					it->GetGeometry()[j].FastGetSolutionStepValue(PRESSURE, 0) = 0;
-
-					if (geom.size() == 4)
-						it->GetGeometry()[j].FastGetSolutionStepValue(VELOCITY_Z, 0) = 0;
-
-					it->GetGeometry()[j].FastGetSolutionStepValue(VELOCITY_X, 1) = 0;
-					it->GetGeometry()[j].FastGetSolutionStepValue(VELOCITY_Y, 1) = 0;
-					it->GetGeometry()[j].FastGetSolutionStepValue(PRESSURE, 1) = 0;
-
-					if (geom.size() == 4)
-						it->GetGeometry()[j].FastGetSolutionStepValue(VELOCITY_Z, 1) = 0;
-
-					//std::cout << " Setting zero velocity" << std::endl;
-				}
-
+				
 				it->Set(ACTIVE, false);
-				/*std::cout<<"Elements Nr "<<it->Id()<<"inactive"<<std::endl;*/
-				pElem = Element::Pointer(new Element(*it));
+				
+				
+				Element::Pointer pElem = *(it.base());
+
 				rExtractedModelPart.Elements().push_back(pElem);
+				
 				//Adding node all the node Ids of the elements satisfying the condition
 				for (j = 0; j < pElem->GetGeometry().PointsNumber(); j++)
 					vector_of_node_ids.push_back(pElem->GetGeometry()[j].Id());
+				
 			}
 
 			/*if(!(it->IsDefined(ACTIVE)))
@@ -338,9 +324,11 @@ class CustomHoleCuttingProcess
 
 			Node<3>::Pointer pnode = rModelPart.Nodes()(*it);
 			rExtractedModelPart.AddNode(pnode);
+			
 		}
 
 		std::cout << " ########  Successful hole cutting of the Mesh !!########## " << std::endl;
+		KRATOS_CATCH("");
 		unsigned int n_nodes = rModelPart.ElementsBegin()->GetGeometry().size();
 
 		if (n_nodes == 3)
@@ -356,8 +344,6 @@ class CustomHoleCuttingProcess
 
 		else
 			std::cout << "Hole cutting process is only supported for tetrahedral and triangular elements" << std::endl;
-
-		KRATOS_CATCH("In CreateHoleAfterDistance");
 	}
 
 	/// For Topology Optimization purposes: Extracts a surface mesh from a provided volume mesh

@@ -42,6 +42,7 @@
         "system_error": "cpp",
         "tuple": "cpp",
         "utility": "cpp",
-        "valarray": "cpp"
+        "valarray": "cpp",
+        "algorithm": "cpp"
     }
 }

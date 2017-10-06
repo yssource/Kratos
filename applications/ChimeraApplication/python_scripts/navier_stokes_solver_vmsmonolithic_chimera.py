@@ -28,6 +28,7 @@ class NavierStokesSolver_VMSMonolithic_Chimera(navier_stokes_base_solver.NavierS
                 "input_filename": "unknown_name"
             },
             "implementation"		  : "MPC",
+            
             "maximum_iterations": 10,
             "dynamic_tau": 0.0,
             "oss_switch": 0,
@@ -155,8 +156,7 @@ class NavierStokesSolver_VMSMonolithic_Chimera(navier_stokes_base_solver.NavierS
                 builder_and_solver = KratosMultiphysics.ResidualBasedBlockBuilderAndSolver(self.linear_solver)
 
 
-
-        self.solver = KratosMultiphysics.ResidualBasedNewtonRaphsonStrategy(self.main_model_part,
+            self.solver = KratosMultiphysics.ResidualBasedNewtonRaphsonStrategy(self.main_model_part,
                                                                             self.time_scheme,
                                                                             self.linear_solver,
                                                                             self.conv_criteria,

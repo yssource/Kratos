@@ -57,8 +57,8 @@ class ApplyMultipointConstraintsProcess : public Process
     typedef ModelPart::NodeIterator NodeIterator;
 
     /// Constructor.
-    ApplyMultipointConstraintsProcess(ModelPart &model_part,
-                                      Parameters rParameters) : Process(Flags()), mr_model_part(model_part), m_parameters(rParameters)
+    ApplyMultipointConstraintsProcess(std::string type, ModelPart &model_part, ModelPart &rSubModelPart,
+                                      Parameters rParameters) : Process(Flags()), mtype(type), mr_model_part(model_part), mrSubModelPart(rSubModelPart), m_parameters(rParameters)
     {
 
         Parameters default_parameters(R"(
@@ -75,7 +75,8 @@ class ApplyMultipointConstraintsProcess : public Process
         if (info->GetValue(MPC_DATA_CONTAINER) == NULL)
             info->SetValue(MPC_DATA_CONTAINER, new std::vector<MpcDataPointerType>());
 
-        pMpc = MpcDataPointerType(new MpcData());
+        std::string SubModelPartName = mrSubModelPart.Name();
+        pMpc = MpcDataPointerType(new MpcData(type, SubModelPartName));
         std::string name = rParameters["constraint_set_name"].GetString();
         pMpc->SetName(name);
         pMpc->SetActive(true);
@@ -88,17 +89,18 @@ class ApplyMultipointConstraintsProcess : public Process
         {
             KRATOS_THROW_ERROR(std::runtime_error, "No valid interpolation type provided !", "");
         }
-        
-        //AddMasterSlaveRelation();        
+
+        //AddMasterSlaveRelation();
     }
 
-    ApplyMultipointConstraintsProcess(ModelPart &model_part, std::string name = "default") : Process(Flags()), mr_model_part(model_part), m_parameters("{}")
+    ApplyMultipointConstraintsProcess(std::string type, ModelPart &model_part, ModelPart &rSubModelPart, std::string name = "default") : Process(Flags()), mtype(type), mr_model_part(model_part), mrSubModelPart(rSubModelPart), m_parameters("{}")
     {
         ProcessInfoPointerType info = mr_model_part.pGetProcessInfo();
         if (info->GetValue(MPC_DATA_CONTAINER) == NULL)
             info->SetValue(MPC_DATA_CONTAINER, new std::vector<MpcDataPointerType>());
 
-        pMpc = MpcDataPointerType(new MpcData());
+        std::string SubModelPartName = mrSubModelPart.Name();
+        pMpc = MpcDataPointerType(new MpcData(type, SubModelPartName));
         pMpc->SetName(name);
         pMpc->SetActive(true);
 
@@ -110,7 +112,7 @@ class ApplyMultipointConstraintsProcess : public Process
 		Applies the MPC condition using two model parts, one as master and other as slave.
         Here a nearest element interpolation is used by default to get the relation between master and slave
 		*/
-/*    void AddMasterSlaveRelation()
+    /*    void AddMasterSlaveRelation()
     {
         ModelPart &master_model_part = mr_model_part.GetSubModelPart(m_parameters["master_sub_model_part_name"].GetString());
         ModelPart &slave_model_part = mr_model_part.GetSubModelPart(m_parameters["slave_sub_model_part_name"].GetString());
@@ -188,41 +190,41 @@ class ApplyMultipointConstraintsProcess : public Process
         @arg SlaveVariable
         @arg weight
 		*/
-    void AddMasterSlaveRelationWithNodesAndVariableComponents(Node<3> &MasterNode, VariableComponentType &MasterVariable, Node<3> &SlaveNode, VariableComponentType &SlaveVariable, double weight)
+    void AddMasterSlaveRelationWithNodesAndVariableComponents(Node<3> &MasterNode, VariableComponentType &MasterVariable, Node<3> &SlaveNode, VariableComponentType &SlaveVariable, double weight, double constant = 0.0)
     {
         SlaveNode.Set(SLAVE);
         DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
         DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
-        AddMasterSlaveRelationWithDofs(pointerSlaveDOF, pointerMasterDOF, weight, 0);
+        AddMasterSlaveRelationWithDofs(pointerSlaveDOF, pointerMasterDOF, weight, constant);
     }
 
-    void AddMasterSlaveRelationWithNodeIdsAndVariableComponents(IndexType MasterNodeId, VariableComponentType &MasterVariable, IndexType SlaveNodeId, VariableComponentType &SlaveVariable, double weight)
+    void AddMasterSlaveRelationWithNodeIdsAndVariableComponents(IndexType MasterNodeId, VariableComponentType &MasterVariable, IndexType SlaveNodeId, VariableComponentType &SlaveVariable, double weight, double constant = 0.0)
     {
         Node<3> &SlaveNode = mr_model_part.Nodes()[SlaveNodeId];
         Node<3> &MasterNode = mr_model_part.Nodes()[MasterNodeId];
         SlaveNode.Set(SLAVE);
         DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
         DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
-        AddMasterSlaveRelationWithDofs(pointerSlaveDOF, pointerMasterDOF, weight, 0);
+        AddMasterSlaveRelationWithDofs(pointerSlaveDOF, pointerMasterDOF, weight, constant);
     }
 
     // Functions with use two variables
-    void AddMasterSlaveRelationWithNodesAndVariable(Node<3> &MasterNode, VariableType &MasterVariable, Node<3> &SlaveNode, VariableType &SlaveVariable, double weight)
+    void AddMasterSlaveRelationWithNodesAndVariable(Node<3> &MasterNode, VariableType &MasterVariable, Node<3> &SlaveNode, VariableType &SlaveVariable, double weight, double constant = 0.0)
     {
         SlaveNode.Set(SLAVE);
         DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
         DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
-        AddMasterSlaveRelationWithDofs(pointerSlaveDOF, pointerMasterDOF, weight, 0);
+        AddMasterSlaveRelationWithDofs(pointerSlaveDOF, pointerMasterDOF, weight, constant);
     }
 
-    void AddMasterSlaveRelationWithNodeIdsAndVariable(IndexType MasterNodeId, VariableType &MasterVariable, IndexType SlaveNodeId, VariableType &SlaveVariable, double weight)
+    void AddMasterSlaveRelationWithNodeIdsAndVariable(IndexType MasterNodeId, VariableType &MasterVariable, IndexType SlaveNodeId, VariableType &SlaveVariable, double weight,double constant = 0.0)
     {
         Node<3> &SlaveNode = mr_model_part.Nodes()[SlaveNodeId];
         Node<3> &MasterNode = mr_model_part.Nodes()[MasterNodeId];
         SlaveNode.Set(SLAVE);
         DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
         DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
-        AddMasterSlaveRelationWithDofs(pointerSlaveDOF, pointerMasterDOF, weight, 0);
+        AddMasterSlaveRelationWithDofs(pointerSlaveDOF, pointerMasterDOF, weight, constant);
     }
 
     // Default functions
@@ -232,14 +234,14 @@ class ApplyMultipointConstraintsProcess : public Process
         @arg masterDOF 
         @arg weight
 		*/
-    void AddMasterSlaveRelationWithDofs(DofType slaveDOF, DofType masterDOF, double masterWeight, int PartitionId = 0)
+    void AddMasterSlaveRelationWithDofs(DofType slaveDOF, DofType masterDOF, double masterWeight, double constant = 0.0)
     {
-        pMpc->AddConstraint(slaveDOF, masterDOF, masterWeight, PartitionId);
+        pMpc->AddConstraint(slaveDOF, masterDOF, masterWeight, constant);
     }
 
-       void AddNodalNormalSlaveRelationWithDofs(DofType slaveDOF, double nodalNormalComponent, int PartitionId = 0)
+    void AddNodalNormalSlaveRelationWithDofs(DofType slaveDOF, double nodalNormalComponent = 0.0)
     {
-        pMpc->AddNodalNormalToSlaveDof(slaveDOF,nodalNormalComponent , PartitionId);
+        pMpc->AddNodalNormalToSlaveDof(slaveDOF, nodalNormalComponent);
     }
 
     /**
@@ -249,6 +251,12 @@ class ApplyMultipointConstraintsProcess : public Process
     void SetActive(bool isActive = true)
     {
         pMpc->SetActive(isActive);
+    }
+
+    void SetRtMinvR(double value)
+    {
+
+        pMpc->RtMinvR = value;
     }
 
     /**
@@ -264,7 +272,6 @@ class ApplyMultipointConstraintsProcess : public Process
     {
 
         pMpc->SetIsWeak(value);
-
     }
 
     /// Destructor.
@@ -317,7 +324,9 @@ class ApplyMultipointConstraintsProcess : public Process
     ///@}
     ///@name Protected member Variables
     ///@{
+    std::string mtype;
     ModelPart &mr_model_part;
+    ModelPart &mrSubModelPart;
     MpcDataPointerType pMpc;
     Parameters m_parameters;
 
@@ -333,6 +342,7 @@ class ApplyMultipointConstraintsProcess : public Process
     {
         std::vector<int> MastersDOFIds;
         std::vector<double> MastersDOFWeights;
+        std::vector<double> MasterConstants;
     };
 
     /*

@@ -243,6 +243,7 @@ class CustomCalculateSignedDistanceProcess
 			// Implemented in the custom_processes
 			p2DSignedDistanceCalculator = CalculateSignedDistanceTo2DConditionSkinProcess::Pointer(new CalculateSignedDistanceTo2DConditionSkinProcess(patchBoundaryModelPart, toBackgroundModelPart));
 			p2DSignedDistanceCalculator->Execute();
+			//p2DSignedDistanceCalculator->GenerateSkinModelPart(rNewSkinModelPart);
 			std::cout << "2Signeddistance is called nav" << std::endl;
 		}
 
@@ -252,7 +253,7 @@ class CustomCalculateSignedDistanceProcess
 			std::cout << "Inside the distance function" << std::endl;
 			p3DSignedDistanceCalculator = CalculateChimeraSignedDistanceTo3DConditionSkinProcess::Pointer(new CalculateChimeraSignedDistanceTo3DConditionSkinProcess(patchBoundaryModelPart, toBackgroundModelPart));
 			std::cout << "Distance calculation initialised" << std::endl;
-			p3DSignedDistanceCalculator->Execute();
+			//p3DSignedDistanceCalculator->Execute();
 			std::cout << "Distance calculations finished" << std::endl;
 		}
 
@@ -272,6 +273,8 @@ class CustomCalculateSignedDistanceProcess
 			rVariable += N[i] * geom[i].FastGetSolutionStepValue(DISTANCE);
 		}
 	}
+
+	
 
 	///@}
 	///@name Access

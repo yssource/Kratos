@@ -28,6 +28,8 @@
 #include "custom_processes/calculate_signed_distance_to_2d_condition_skin_process.h"
 #include "custom_processes/calculate_chimera_signed_distance_to_3d_condition_skin_process.h"
 #include "custom_processes/apply_multi_point_constraints_process.h"
+#include "custom_processes/rotate_region_process.h"
+
 namespace Kratos
 {
 
@@ -71,14 +73,16 @@ void AddCustomProcessesToPython()
 			.def("ApplyMpcConstraint", &CustomApplyChimeraUsingMpcProcess<2>::ApplyMpcConstraint)
 			.def("ApplyChimeraUsingMpc2d", &CustomApplyChimeraUsingMpcProcess<2>::ApplyChimeraUsingMpc)
 			.def("SetOverlapDistance",&CustomApplyChimeraUsingMpcProcess<2>::SetOverlapDistance)
-			.def("CalculateNodalAreaAndNodalMass",&CustomApplyChimeraUsingMpcProcess<2>::CalculateNodalAreaAndNodalMass);
+			.def("CalculateNodalAreaAndNodalMass",&CustomApplyChimeraUsingMpcProcess<2>::CalculateNodalAreaAndNodalMass)
+			.def("Clear",&CustomApplyChimeraUsingMpcProcess<2>::Clear);
 			
 
 	class_<CustomApplyChimeraUsingMpcProcess<3>,bases<Process> >("CustomApplyChimeraUsingMpcProcess3d", init<ModelPart&,ModelPart&,ModelPart&,double>())
 			.def("ApplyMpcConstraint", &CustomApplyChimeraUsingMpcProcess<3>::ApplyMpcConstraint)		
 			.def("ApplyChimeraUsingMpc3d", &CustomApplyChimeraUsingMpcProcess<3>::ApplyChimeraUsingMpc)
 			.def("SetOverlapDistance",&CustomApplyChimeraUsingMpcProcess<3>::SetOverlapDistance)
-			.def("CalculateNodalAreaAndNodalMass",&CustomApplyChimeraUsingMpcProcess<3>::CalculateNodalAreaAndNodalMass);
+			.def("CalculateNodalAreaAndNodalMass",&CustomApplyChimeraUsingMpcProcess<3>::CalculateNodalAreaAndNodalMass)
+			.def("Clear",&CustomApplyChimeraUsingMpcProcess<3>::Clear);
 			
 
 	/*
@@ -90,6 +94,10 @@ void AddCustomProcessesToPython()
 	class_<CalculateChimeraSignedDistanceTo3DConditionSkinProcess,bases<Process> >("CalculateChimeraSignedDistanceTo3DConditionSkinProcess", init<ModelPart&,ModelPart&>())
 		.def("Execute", &CalculateChimeraSignedDistanceTo3DConditionSkinProcess::Execute);	
 			
+
+	class_< RotateRegionProcess, bases<Process>, boost::noncopyable >
+    ("RotateRegionProcess",init<ModelPart&, Parameters& >())
+    ;
 }
 
 

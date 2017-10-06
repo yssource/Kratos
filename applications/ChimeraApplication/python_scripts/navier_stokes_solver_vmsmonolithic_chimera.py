@@ -40,6 +40,7 @@ class NavierStokesSolver_VMSMonolithic_Chimera(navier_stokes_base_solver.NavierS
             "absolute_velocity_tolerance": 1e-5,
             "relative_pressure_tolerance": 1e-3,
             "absolute_pressure_tolerance": 1e-5,
+            "rotating_regions_used"        : true,
             "linear_solver_settings"        : {
                     "solver_type" : "AMGCL",
                     "smoother_type":"ilu0",

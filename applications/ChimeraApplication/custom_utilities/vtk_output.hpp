@@ -102,7 +102,7 @@ class VtkOutput
     {
         std::string outputFileName = GetOutputFileName(model_part);
         std::ofstream outputFile;
-        outputFile.open(outputFileName, std::ios::out | std::ios::binary | std::ios::trunc );
+        outputFile.open(outputFileName, std::ios::out | std::ios::binary | std::ios::trunc);
         outputFile << "# vtk DataFile Version 4.0"
                    << "\n";
         outputFile << "vtk output"
@@ -110,7 +110,7 @@ class VtkOutput
         outputFile << "ASCII"
                    << "\n";
         outputFile << "DATASET UNSTRUCTURED_GRID"
-                   << "\n";                   
+                   << "\n";
         outputFile.close();
     }
 
@@ -159,13 +159,19 @@ class VtkOutput
         // write elements
         for (ModelPart::ElementIterator elem_i = model_part.ElementsBegin(); elem_i != model_part.ElementsEnd(); ++elem_i)
         {
-            ModelPart::ConditionType::GeometryType &elem_geometry = elem_i->GetGeometry();
-            const unsigned int numberOfNodes = elem_geometry.size();
 
-            outputFile << numberOfNodes;
-            for (unsigned int i = 0; i < numberOfNodes; i++)
-                outputFile << " " << mKratosIdToVtkId[elem_geometry[i].Id()];
-            outputFile << "\n";
+            bool element_is_active = true;
+
+            if (element_is_active)
+            {
+                ModelPart::ConditionType::GeometryType &elem_geometry = elem_i->GetGeometry();
+                const unsigned int numberOfNodes = elem_geometry.size();
+
+                outputFile << numberOfNodes;
+                for (unsigned int i = 0; i < numberOfNodes; i++)
+                    outputFile << " " << mKratosIdToVtkId[elem_geometry[i].Id()];
+                outputFile << "\n";
+            }
         }
 
         // write Conditions
@@ -187,7 +193,7 @@ class VtkOutput
     {
         std::string outputFileName = GetOutputFileName(model_part);
         std::ofstream outputFile;
-        outputFile.open(outputFileName, std::ios::out | std::ios::app);
+        outputFile.open(outputFileName, std::ios::out | std::ios::app | std::ios::binary);
 
         // write cells header
         outputFile << "CELL_DATA " << model_part.NumberOfElements() << "\n";
@@ -196,15 +202,15 @@ class VtkOutput
         // write elements
         for (ModelPart::ElementIterator elem_i = model_part.ElementsBegin(); elem_i != model_part.ElementsEnd(); ++elem_i)
         {
-             //outputFile << numberOfNodes;
-            if ((elem_i)->IsDefined(ACTIVE)){
+            //outputFile << numberOfNodes;
+            if ((elem_i)->IsDefined(ACTIVE))
+            {
 
                 outputFile << elem_i->Is(ACTIVE) << "\n";
             }
 
             else
-                outputFile <<"1\n";
-            
+                outputFile << "1\n";
         }
 
         // write Conditions
@@ -301,9 +307,11 @@ class VtkOutput
             if (KratosComponents<Variable<double>>::Has(nodalResultName))
             {
                 dataCharacteristic = 1;
-                outputFile << "SCALARS " << nodalResultName << " float" << " 1"
+                outputFile << "SCALARS " << nodalResultName << " float"
+                           << " 1"
                            << "\n";
-                outputFile << "LOOKUP_TABLE default"<<"\n";
+                outputFile << "LOOKUP_TABLE default"
+                           << "\n";
             }
             else if (KratosComponents<Variable<array_1d<double, 3>>>::Has(nodalResultName))
             {
@@ -404,8 +412,8 @@ class VtkOutput
         int rank = 0;
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif                   
-        std::string outputFilename = model_part.Name() +"_"+std::to_string(rank)+"_"+std::to_string(step) + ".vtk";
+#endif
+        std::string outputFilename = model_part.Name() + "_" + std::to_string(rank) + "_" + std::to_string(step) + ".vtk";
         return outputFilename;
     }
 

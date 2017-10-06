@@ -94,6 +94,7 @@ class CustomApplyChimeraUsingMpcProcess
 	typedef Dof<double> DofType;
 	typedef std::vector<DofType> DofVectorType;
 	typedef MpcData::VariableComponentType VariableComponentType;
+	typedef ProcessInfo::Pointer ProcessInfoPointerType;
 
 	///@}
 	///@name Life Cycle
@@ -132,6 +133,13 @@ class CustomApplyChimeraUsingMpcProcess
 
 	virtual void Clear()
 	{
+		this->pMpcProcess->Clear();
+		ProcessInfoPointerType info = mrAllModelPart.pGetProcessInfo();
+		if (info->GetValue(MPC_DATA_CONTAINER) != NULL)
+		{
+			MpcDataPointerVectorType mpcDataVector = info->GetValue(MPC_DATA_CONTAINER);
+			(*mpcDataVector).clear();
+		}
 	}
 
 	void ApplyMpcConstraint(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, unsigned int type = 1)
@@ -187,16 +195,60 @@ class CustomApplyChimeraUsingMpcProcess
 					Geometry<Node<3>> &geom = pElement->GetGeometry();
 
 					{
+						p_boundary_node->FastGetSolutionStepValue(VELOCITY_X, 0) = 0;
+						p_boundary_node->FastGetSolutionStepValue(VELOCITY_Y, 0) = 0;
+						p_boundary_node->FastGetSolutionStepValue(PRESSURE, 0) = 0;
 
+						if (TDim == 3)
+							p_boundary_node->FastGetSolutionStepValue(VELOCITY_Z, 0) = 0;
+
+						p_boundary_node->FastGetSolutionStepValue(VELOCITY_X, 1) = 0;
+						p_boundary_node->FastGetSolutionStepValue(VELOCITY_Y, 1) = 0;
+						p_boundary_node->FastGetSolutionStepValue(PRESSURE, 1) = 0;
+
+						if (TDim == 3)
+							p_boundary_node->FastGetSolutionStepValue(VELOCITY_Z, 1) = 0;
+						// Interpolate Velocity and pressure field from host at  start of the time step
 						for (int i = 0; i < geom.size(); i++)
 						{
 
-							pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_X, *p_boundary_node, VELOCITY_X, N[i]);
-							pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Y, *p_boundary_node, VELOCITY_Y, N[i]);
+							p_boundary_node->FastGetSolutionStepValue(VELOCITY_X, 0) += geom[i].FastGetSolutionStepValue(VELOCITY_X, 0) * N[i];
+							p_boundary_node->FastGetSolutionStepValue(VELOCITY_Y, 0) += geom[i].FastGetSolutionStepValue(VELOCITY_Y, 0) * N[i];
+							p_boundary_node->FastGetSolutionStepValue(PRESSURE, 0) += geom[i].FastGetSolutionStepValue(PRESSURE, 0) * N[i];
 
 							if (TDim == 3)
-								pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i]);
-							//pMpcProcess->AddMasterSlaveRelationVariables( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i], 0 );
+								p_boundary_node->FastGetSolutionStepValue(VELOCITY_Z, 0) = geom[i].FastGetSolutionStepValue(VELOCITY_Z, 0) * N[i];
+
+							p_boundary_node->FastGetSolutionStepValue(VELOCITY_X, 1) += geom[i].FastGetSolutionStepValue(VELOCITY_X, 1) * N[i];
+							p_boundary_node->FastGetSolutionStepValue(VELOCITY_Y, 1) += geom[i].FastGetSolutionStepValue(VELOCITY_Y, 1) * N[i];
+							p_boundary_node->FastGetSolutionStepValue(PRESSURE, 1) += geom[i].FastGetSolutionStepValue(PRESSURE, 1) * N[i];
+
+							if (TDim == 3)
+								p_boundary_node->FastGetSolutionStepValue(VELOCITY_Z, 1) = geom[i].FastGetSolutionStepValue(VELOCITY_Z, 1) * N[i];
+						}
+
+						for (int i = 0; i < geom.size(); i++)
+						{
+							if (type == 2)
+							{
+								pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_X, *p_boundary_node, VELOCITY_X, N[i]);
+								pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Y, *p_boundary_node, VELOCITY_Y, N[i]);
+
+								if (TDim == 3)
+									pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i]);
+
+								//pMpcProcess->AddMasterSlaveRelationWithNodesAndVariable( geom[i],PRESSURE,*p_boundary_node,PRESSURE,N[i]);
+							}
+							if (type == 1)
+							{
+								pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_X, *p_boundary_node, VELOCITY_X, N[i]);
+								pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Y, *p_boundary_node, VELOCITY_Y, N[i]);
+
+								if (TDim == 3)
+									pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i]);
+
+								pMpcProcess->AddMasterSlaveRelationWithNodesAndVariable(geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
+							}
 						}
 					}
 				}
@@ -257,7 +309,7 @@ class CustomApplyChimeraUsingMpcProcess
 					
 				}*/ // end of loop over nodes
 
-				ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin();
+				/*ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin();
 				Node<3>::Pointer p_boundary_node = *(iparticle.base());
 
 				typename BinBasedFastPointLocator<TDim>::ResultIteratorType result_begin = results.begin();
@@ -285,7 +337,7 @@ class CustomApplyChimeraUsingMpcProcess
 				{
 					std::cout << "Cannot find host element for Pressure coupling" << std::endl;
 					std::exit(-1);
-				}
+				}*/
 
 			} // end of if (type == 0) conditions
 
@@ -481,7 +533,6 @@ class CustomApplyChimeraUsingMpcProcess
 			ModelPart::Pointer pHoleModelPart = ModelPart::Pointer(new ModelPart("HoleModelpart"));
 			ModelPart::Pointer pHoleBoundaryModelPart = ModelPart::Pointer(new ModelPart("HoleBoundaryModelPart"));
 			pMpcProcess->SetWeak(true);
-			std::cout << "checkpoint nav 1" << std::endl;
 			//this->pCalculateDistanceProcess->ExtractDistance(mrPatchModelPart, mrBackgroundModelPart, mrPatchBoundaryModelPart);
 			//this->pCalculateDistanceProcess->CalculateSignedDistanceOnModelPart(mrPatchModelPart, mrPatchBoundaryModelPart);
 			this->pCalculateDistanceProcess->CalculateSignedDistance(mrBackgroundModelPart, mrPatchBoundaryModelPart);
@@ -495,15 +546,15 @@ class CustomApplyChimeraUsingMpcProcess
 
 			if (type == "NearestElement")
 			{
-				ApplyMpcConstraint(mrPatchBoundaryModelPart, pBinLocatorForBackground, 0);//0 for pressure coupling
+				ApplyMpcConstraint(mrPatchBoundaryModelPart, pBinLocatorForBackground, 1); //0 for pressure coupling
 				std::cout << "Patch boundary coupled with background" << std::endl;
-				ApplyMpcConstraint(*pHoleBoundaryModelPart, pBinLocatorForPatch, 1);
-				std::cout << "HoleBoundary  coupled with patch" << std::endl;
+				ApplyMpcConstraint(*pHoleBoundaryModelPart, pBinLocatorForPatch, 2);
+				std::cout << "############## HoleBoundary  coupled with patch with 2" << std::endl;
 			}
 
 			else if (type == "Conservative")
 			{
-				ApplyMpcConstraintConservative(mrPatchBoundaryModelPart, pBinLocatorForBackground, 0);//0 for pressure coupling
+				ApplyMpcConstraintConservative(mrPatchBoundaryModelPart, pBinLocatorForBackground, 1); //0 for pressure coupling
 				std::cout << "Patch boundary coupled with background using conservative approach" << std::endl;
 				ApplyMpcConstraintConservative(*pHoleBoundaryModelPart, pBinLocatorForPatch, 1);
 				std::cout << "HoleBoundary  coupled with patch using conservative approach" << std::endl;

@@ -293,6 +293,26 @@ class CustomHoleCuttingProcess
 			//if(numPointsOutside > 0)
 			{
 
+				for (j = 0; j < geom.size(); j++)
+				{
+
+					it->GetGeometry()[j].FastGetSolutionStepValue(VELOCITY_X, 0) = 0;
+					it->GetGeometry()[j].FastGetSolutionStepValue(VELOCITY_Y, 0) = 0;
+					it->GetGeometry()[j].FastGetSolutionStepValue(PRESSURE, 0) = 0;
+
+					if (geom.size() == 4)
+						it->GetGeometry()[j].FastGetSolutionStepValue(VELOCITY_Z, 0) = 0;
+
+					it->GetGeometry()[j].FastGetSolutionStepValue(VELOCITY_X, 1) = 0;
+					it->GetGeometry()[j].FastGetSolutionStepValue(VELOCITY_Y, 1) = 0;
+					it->GetGeometry()[j].FastGetSolutionStepValue(PRESSURE, 1) = 0;
+
+					if (geom.size() == 4)
+						it->GetGeometry()[j].FastGetSolutionStepValue(VELOCITY_Z, 1) = 0;
+
+					//std::cout << " Setting zero velocity" << std::endl;
+				}
+
 				it->Set(ACTIVE, false);
 				/*std::cout<<"Elements Nr "<<it->Id()<<"inactive"<<std::endl;*/
 				pElem = Element::Pointer(new Element(*it));
@@ -321,7 +341,6 @@ class CustomHoleCuttingProcess
 		}
 
 		std::cout << " ########  Successful hole cutting of the Mesh !!########## " << std::endl;
-		KRATOS_CATCH("");
 		unsigned int n_nodes = rModelPart.ElementsBegin()->GetGeometry().size();
 
 		if (n_nodes == 3)
@@ -337,6 +356,8 @@ class CustomHoleCuttingProcess
 
 		else
 			std::cout << "Hole cutting process is only supported for tetrahedral and triangular elements" << std::endl;
+
+		KRATOS_CATCH("In CreateHoleAfterDistance");
 	}
 
 	/// For Topology Optimization purposes: Extracts a surface mesh from a provided volume mesh

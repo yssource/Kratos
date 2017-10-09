@@ -137,7 +137,7 @@ class MpcData
 		Creates a MPC data object
 		*/
 
-    MpcData(std::string type = "NearestElement") : mType(type), mDofConstraints(), mEquationIdToWeightsMap()
+    MpcData(std::string type = "nearest_element") : mType(type), mDofConstraints(), mEquationIdToWeightsMap()
     {
         mIsWeak = false;
         this->RtMinvR = 1;

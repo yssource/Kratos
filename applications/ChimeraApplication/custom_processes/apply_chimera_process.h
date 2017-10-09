@@ -113,7 +113,7 @@ class ApplyChimeraProcess : public Process
                 "patch_model_part_name":"default",
 				"patch_boundary_model_part_name":"default",
                 "overlap_distance":0.0,
-				"type":"conservative" 
+				"type":"nearest_element" 
             })");
 
 		m_background_part_name = m_parameters["background_part_name"].GetString();

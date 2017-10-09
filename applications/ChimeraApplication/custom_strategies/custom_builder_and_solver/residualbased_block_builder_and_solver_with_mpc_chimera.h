@@ -1231,7 +1231,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                 //std::cout << "flux " << r << std::endl;
 
                 //##################################################### END OF CALCULATION OF FLUX######################################################
-                if (mpcData->mType == "Conservative")
+                if (mpcData->mType == "conservative")
                 {
                     double nodalMass;
                     unsigned int slaveNodeId;

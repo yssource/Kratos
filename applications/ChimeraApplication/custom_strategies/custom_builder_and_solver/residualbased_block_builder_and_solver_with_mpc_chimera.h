@@ -1107,8 +1107,8 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
             if (mpcData->IsActive())
 
             {
-                double r = 0;
-                ModelPart &mrBackgroundModelPart = r_model_part.GetSubModelPart(mpcData->mModelPartName);
+                /*double r = 0;
+                ModelPart &mrBackgroundModelPart = r_model_part.GetSubModelPart(mpcData->mName);
                 for (ModelPart::ElementsContainerType::iterator i_fluid_element = mrBackgroundModelPart.ElementsBegin(); i_fluid_element != mrBackgroundModelPart.ElementsEnd(); i_fluid_element++)
                 {
                     double NumberOfPostiveDistance = 0;
@@ -1127,8 +1127,8 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                     {
                         is_split = false;
                     }
-                }
-
+                }*/
+/*
                 for (ModelPart::ElementsContainerType::iterator i_fluid_element = mrBackgroundModelPart.ElementsBegin(); i_fluid_element != mrBackgroundModelPart.ElementsEnd(); i_fluid_element++)
                 {
                     bool is_split = i_fluid_element->GetValue(SPLIT_ELEMENT);
@@ -1213,7 +1213,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 						PrintGIDMesh(*pSkinModelPart);*/
                         //###################################FOR VISUALSING SKIN MODEL PART##################################################################################
 
-                        if (edge_points.size() == 2)
+                        /*if (edge_points.size() == 2)
                         {
 
                             for (unsigned int i = 0; i < 2; i++)
@@ -1226,9 +1226,9 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 
                     } // if split = true
 
-                } // End of element loop
+                } // End of element loop*/
 
-                std::cout << "flux " << r << std::endl;
+                //std::cout << "flux " << r << std::endl;
                 if (mpcData->mType == "Conservative")
                 {
                     double nodalMass;

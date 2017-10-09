@@ -23,8 +23,8 @@
 #include "custom_processes/apply_chimera_process.h"
 #include "custom_processes/custom_calculate_signed_distance_process.h"
 #include "custom_processes/calculate_signed_distance_to_2d_condition_skin_process.h"
-#include "custom_processes/calculate_chimera_signed_distance_to_3d_condition_skin_process.h"
-#include "custom_processes/apply_multi_point_constraints_process.h"
+#include "processes/calculate_signed_distance_to_3d_condition_skin_process.h"
+//#include "custom_processes/apply_multi_point_constraints_process.h"
 namespace Kratos
 {
 

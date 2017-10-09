@@ -137,7 +137,7 @@ class MpcData
 		Creates a MPC data object
 		*/
 
-    MpcData(std::string type = "NearestElement", std::string modelPartName = "") : mType(type), mModelPartName(modelPartName), mDofConstraints(), mEquationIdToWeightsMap()
+    MpcData(std::string type = "NearestElement") : mType(type), mDofConstraints(), mEquationIdToWeightsMap()
     {
         mIsWeak = false;
         this->RtMinvR = 1;
@@ -333,7 +333,7 @@ class MpcData
     ///@{
     //this holds the definition of the constraint - can be constructed prior to EquationIds
     std::string mType;
-    std::string mModelPartName;
+
 
     std::unordered_map<SlavePairType, MasterDofWeightMapType, pair_hash> mDofConstraints;
 

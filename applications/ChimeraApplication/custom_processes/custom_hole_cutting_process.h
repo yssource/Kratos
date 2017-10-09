@@ -257,7 +257,7 @@ class CustomHoleCuttingProcess
 		KRATOS_CATCH("");
 	}
 
-	/// For Topology Optimization purposes: Extracts a surface mesh from a provided volume mesh
+	/// Extracts a surface mesh from a provided volume mesh
 	void ExtractSurfaceMesh(ModelPart &rExtractedVolumeModelPart, ModelPart &rExtractedSurfaceModelPart)
 	{
 		KRATOS_TRY;

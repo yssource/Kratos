@@ -43,10 +43,10 @@
 #include "elements/distance_calculation_element_simplex.h"
 
 // Application includes
+#include "chimera_application_variables.h"
 #include "custom_utilities/multipoint_constraint_data.hpp"
 #include "custom_processes/custom_calculate_signed_distance_process.h"
 #include "custom_hole_cutting_process.h"
-#include "custom_processes/apply_multi_point_constraints_process.h"
 #include "custom_utilities/vtk_output.hpp"
 
 namespace Kratos
@@ -85,7 +85,7 @@ class ApplyChimeraProcess : public Process
 	///@name Pointer Definitions
 	/// Pointer definition of ApplyChimeraProcess
 	KRATOS_CLASS_POINTER_DEFINITION(ApplyChimeraProcess);
-
+	typedef ProcessInfo::Pointer ProcessInfoPointerType;
 	typedef typename BinBasedFastPointLocator<TDim>::Pointer BinBasedPointLocatorPointerType;
 	typedef ModelPart::ConditionsContainerType ConditionsArrayType;
 	typedef std::pair<unsigned int, unsigned int> SlavePairType;
@@ -96,6 +96,8 @@ class ApplyChimeraProcess : public Process
 	typedef Dof<double> DofType;
 	typedef std::vector<DofType> DofVectorType;
 	typedef MpcData::VariableComponentType VariableComponentType;
+	typedef unsigned int IndexType;
+	typedef MpcData::VariableType VariableType;
 
 	///@}
 	///@name Life Cycle
@@ -124,12 +126,25 @@ class ApplyChimeraProcess : public Process
 		ModelPart &rBackgroundModelPart = mrMainModelPart.GetSubModelPart(m_background_part_name);
 		ModelPart &rPatchModelPart = mrMainModelPart.GetSubModelPart(m_patch_model_part_name);
 
+		ProcessInfoPointerType info = mrMainModelPart.pGetProcessInfo();
+		if (info->GetValue(MPC_DATA_CONTAINER) == NULL)
+			info->SetValue(MPC_DATA_CONTAINER, new std::vector<MpcDataPointerType>());
+
 		this->pBinLocatorForBackground = BinBasedPointLocatorPointerType(new BinBasedFastPointLocator<TDim>(rBackgroundModelPart));
 		this->pBinLocatorForPatch = BinBasedPointLocatorPointerType(new BinBasedFastPointLocator<TDim>(rPatchModelPart));
-		this->pMpcProcessPatch = NULL;
-		this->pMpcProcessBackground = NULL;
+		this->pMpcPatch = MpcDataPointerType(new MpcData(m_type));
+		this->pMpcBackground = MpcDataPointerType(new MpcData(m_type));
 		this->pHoleCuttingProcess = CustomHoleCuttingProcess::Pointer(new CustomHoleCuttingProcess());
 		this->pCalculateDistanceProcess = typename CustomCalculateSignedDistanceProcess<TDim>::Pointer(new CustomCalculateSignedDistanceProcess<TDim>());
+
+		this->pMpcPatch->SetName(m_background_part_name);
+		this->pMpcBackground->SetName(m_patch_model_part_name);
+		this->pMpcPatch->SetActive(true);
+		this->pMpcBackground->SetActive(true);
+
+		MpcDataPointerVectorType mpcDataVector = info->GetValue(MPC_DATA_CONTAINER);
+		(*mpcDataVector).push_back(pMpcPatch);
+		(*mpcDataVector).push_back(pMpcBackground);
 	}
 
 	/*	ApplyChimeraProcess(ModelPart &MainModelPart, ModelPart &BackgroundModelPart, ModelPart &PatchModelPart, double distance = 1e-12)
@@ -202,7 +217,7 @@ class ApplyChimeraProcess : public Process
 	{
 	}
 
-	void ApplyMpcConstraint(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, ApplyMultipointConstraintsProcess::Pointer pMpcProcess, bool isOuter = false)
+	void ApplyMpcConstraint(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, MpcDataPointerType pMpc, bool isOuter = false)
 	{
 		{
 			//loop over nodes and find the triangle in which it falls, than do interpolation
@@ -239,10 +254,11 @@ class ApplyChimeraProcess : public Process
 					{
 						for (int i = 0; i < geom.size(); i++)
 						{
-							pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_X, *p_boundary_node, VELOCITY_X, N[i]);
-							pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Y, *p_boundary_node, VELOCITY_Y, N[i]);
+
+							AddMasterSlaveRelationWithNodesAndVariableComponents(pMpc, geom[i], VELOCITY_X, *p_boundary_node, VELOCITY_X, N[i]);
+							AddMasterSlaveRelationWithNodesAndVariableComponents(pMpc, geom[i], VELOCITY_Y, *p_boundary_node, VELOCITY_Y, N[i]);
 							if (TDim == 3)
-								pMpcProcess->AddMasterSlaveRelationWithNodesAndVariableComponents(geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i]);
+								AddMasterSlaveRelationWithNodesAndVariableComponents(pMpc, geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i]);
 							//pMpcProcess->AddMasterSlaveRelationWithNodesAndVariable(geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
 						}
 					}
@@ -266,7 +282,7 @@ class ApplyChimeraProcess : public Process
 					Geometry<Node<3>> &geom = pElement->GetGeometry();
 					for (int i = 0; i < geom.size(); i++)
 					{
-						pMpcProcess->AddMasterSlaveRelationWithNodesAndVariable(geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
+						AddMasterSlaveRelationWithNodesAndVariable(pMpc, geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
 					}
 				}
 
@@ -274,14 +290,14 @@ class ApplyChimeraProcess : public Process
 		}
 	}
 
-	void ApplyMpcConstraintConservative(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, ApplyMultipointConstraintsProcess::Pointer pMpcProcess, unsigned int type = 1)
+	void ApplyMpcConstraintConservative(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, MpcDataPointerType pMpc, unsigned int type = 1)
 	{
 
 		double rtMinvR = 0;
 		DofVectorType slaveDofVector;
 		double R = 0;
 
-		ApplyMpcConstraint(rBoundaryModelPart, pBinLocator, pMpcProcess, type);
+		ApplyMpcConstraint(rBoundaryModelPart, pBinLocator, pMpc, type);
 		std::vector<VariableComponentType> dofComponentVector = {VELOCITY_X, VELOCITY_Y, VELOCITY_Z};
 
 		// Calculation of Rt*Minv*R and assignment of nodalnormals to the slave dofs
@@ -294,15 +310,15 @@ class ApplyChimeraProcess : public Process
 
 				double rIdof = inode->FastGetSolutionStepValue(NORMAL)[i];
 				DofType &slaveDOF = inode->GetDof(dofComponentVector[i]);
-				pMpcProcess->AddNodalNormalSlaveRelationWithDofs(inode->GetDof(dofComponentVector[i]), rIdof);
+				AddNodalNormalSlaveRelationWithDofs(pMpc, inode->GetDof(dofComponentVector[i]), rIdof);
 				slaveDofVector.push_back(slaveDOF);
 				rtMinvR += (rIdof * rIdof) / Minode;
 				R += rIdof;
 			}
 
-			pMpcProcess->AddNodalNormalSlaveRelationWithDofs(inode->GetDof(PRESSURE), 0);
+			AddNodalNormalSlaveRelationWithDofs(pMpc, inode->GetDof(PRESSURE), 0);
 
-			pMpcProcess->SetRtMinvR(rtMinvR);
+			SetRtMinvR(pMpc,rtMinvR);
 		}
 	}
 
@@ -311,7 +327,7 @@ class ApplyChimeraProcess : public Process
 	{
 
 		ModelPart &rBackgroundModelPart = mrMainModelPart.GetSubModelPart(m_background_part_name);
-		ModelPart &rPatchModelPart = mrMainModelPart.GetSubModelPart(m_patch_model_part_name);
+		//ModelPart &rPatchModelPart = mrMainModelPart.GetSubModelPart(m_patch_model_part_name);
 		ModelPart &rPatchBoundaryModelPart = mrMainModelPart.GetSubModelPart(m_background_part_name);
 
 		for (ModelPart::ElementsContainerType::iterator it = mrMainModelPart.ElementsBegin(); it != mrMainModelPart.ElementsEnd(); ++it)
@@ -323,7 +339,7 @@ class ApplyChimeraProcess : public Process
 		const double epsilon = 1e-12;
 		if (m_overlap_distance < epsilon)
 		{
-			KRATOS_THROW_ERROR("","Overlap distance should be a positive number \n", "");
+			KRATOS_THROW_ERROR("", "Overlap distance should be a positive number \n", "");
 		}
 
 		if (m_overlap_distance > epsilon)
@@ -333,32 +349,29 @@ class ApplyChimeraProcess : public Process
 			ModelPart::Pointer pHoleModelPart = ModelPart::Pointer(new ModelPart("HoleModelpart"));
 			ModelPart::Pointer pHoleBoundaryModelPart = ModelPart::Pointer(new ModelPart("HoleBoundaryModelPart"));
 
-			this->pMpcProcessPatch = ApplyMultipointConstraintsProcess::Pointer(new ApplyMultipointConstraintsProcess(m_type, mrMainModelPart, rBackgroundModelPart));
-
 			this->pCalculateDistanceProcess->CalculateSignedDistance(rBackgroundModelPart, rPatchBoundaryModelPart);
 			this->pHoleCuttingProcess->CreateHoleAfterDistance(rBackgroundModelPart, *pHoleModelPart, *pHoleBoundaryModelPart, m_overlap_distance);
-			this->pMpcProcessBackground = ApplyMultipointConstraintsProcess::Pointer(new ApplyMultipointConstraintsProcess(m_type, mrMainModelPart, rPatchModelPart));
 
 			CalculateNodalAreaAndNodalMass(rPatchBoundaryModelPart, 1);
 			CalculateNodalAreaAndNodalMass(*pHoleBoundaryModelPart, -1);
 
-			pMpcProcessPatch->SetWeak(true); // false for hybrid approach
-			pMpcProcessBackground->SetWeak(true);
+			pMpcPatch->SetIsWeak(true); 
+			pMpcBackground->SetIsWeak(true);
 
 			if (m_type == "nearest_element")
 			{
-				ApplyMpcConstraint(rPatchBoundaryModelPart, pBinLocatorForBackground, pMpcProcessPatch, true); //true for one node  pressure coupling
+				ApplyMpcConstraint(rPatchBoundaryModelPart, pBinLocatorForBackground, pMpcPatch, true); //true for one node  pressure coupling
 				std::cout << "Patch boundary coupled with background" << std::endl;
-				ApplyMpcConstraint(*pHoleBoundaryModelPart, pBinLocatorForPatch, pMpcProcessBackground, false);
+				ApplyMpcConstraint(*pHoleBoundaryModelPart, pBinLocatorForPatch, pMpcBackground, false);
 				std::cout << "HoleBoundary  coupled with patch" << std::endl;
 			}
 
 			else if (m_type == "conservative")
 			{
 				//patch boundary is nearest element
-				ApplyMpcConstraintConservative(rPatchBoundaryModelPart, pBinLocatorForBackground, pMpcProcessPatch, true); //true for one node  pressure coupling
+				ApplyMpcConstraintConservative(rPatchBoundaryModelPart, pBinLocatorForBackground, pMpcPatch, true); //true for one node  pressure coupling
 				std::cout << "Patch boundary coupled with background using conservative approach" << std::endl;
-				ApplyMpcConstraintConservative(*pHoleBoundaryModelPart, pBinLocatorForPatch, pMpcProcessBackground, false);
+				ApplyMpcConstraintConservative(*pHoleBoundaryModelPart, pBinLocatorForPatch, pMpcBackground, false);
 				std::cout << "HoleBoundary  coupled with patch using conservative approach" << std::endl;
 			}
 		}
@@ -504,6 +517,89 @@ class ApplyChimeraProcess : public Process
 		// 				noalias((it)->GetValue(NORMAL)) = An;
 	}
 
+	// Functions which use two variable components
+
+	/**
+		Applies the MPC condition using two nodes, one as master and other as slave, and with the given weight
+		@arg MasterNode 
+        @arg MasterVariable 
+        @arg SlaveNode 
+        @arg SlaveVariable
+        @arg weight
+		*/
+	void AddMasterSlaveRelationWithNodesAndVariableComponents(MpcDataPointerType pMpc,Node<3> &MasterNode, VariableComponentType &MasterVariable, Node<3> &SlaveNode, VariableComponentType &SlaveVariable, double weight, double constant = 0.0)
+	{
+		SlaveNode.Set(SLAVE);
+		DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
+		DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
+		AddMasterSlaveRelationWithDofs(pMpc,pointerSlaveDOF, pointerMasterDOF, weight, constant);
+	}
+
+	void AddMasterSlaveRelationWithNodeIdsAndVariableComponents(MpcDataPointerType pMpc,IndexType MasterNodeId, VariableComponentType &MasterVariable, IndexType SlaveNodeId, VariableComponentType &SlaveVariable, double weight, double constant = 0.0)
+	{
+		Node<3> &SlaveNode = mrMainModelPart.Nodes()[SlaveNodeId];
+		Node<3> &MasterNode = mrMainModelPart.Nodes()[MasterNodeId];
+		SlaveNode.Set(SLAVE);
+		DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
+		DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
+		AddMasterSlaveRelationWithDofs(pMpc,pointerSlaveDOF, pointerMasterDOF, weight, constant);
+	}
+
+	// Functions with use two variables
+	void AddMasterSlaveRelationWithNodesAndVariable(MpcDataPointerType pMpc,Node<3> &MasterNode, VariableType &MasterVariable, Node<3> &SlaveNode, VariableType &SlaveVariable, double weight, double constant = 0.0)
+	{
+		SlaveNode.Set(SLAVE);
+		DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
+		DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
+		AddMasterSlaveRelationWithDofs(pMpc,pointerSlaveDOF, pointerMasterDOF, weight, constant);
+	}
+
+	void AddMasterSlaveRelationWithNodeIdsAndVariable(MpcDataPointerType pMpc,IndexType MasterNodeId, VariableType &MasterVariable, IndexType SlaveNodeId, VariableType &SlaveVariable, double weight, double constant = 0.0)
+	{
+		Node<3> &SlaveNode = mrMainModelPart.Nodes()[SlaveNodeId];
+		Node<3> &MasterNode = mrMainModelPart.Nodes()[MasterNodeId];
+		SlaveNode.Set(SLAVE);
+		DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
+		DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
+		AddMasterSlaveRelationWithDofs(pMpc,pointerSlaveDOF, pointerMasterDOF, weight, constant);
+	}
+
+	// Default functions
+	/**
+		Applies the MPC condition using DOFs, one as master and other as slave, and with the given weight
+		@arg slaveDOF 
+        @arg masterDOF 
+        @arg weight
+		*/
+	void AddMasterSlaveRelationWithDofs(MpcDataPointerType pMpc,DofType slaveDOF, DofType masterDOF, double masterWeight, double constant = 0.0)
+	{
+		pMpc->AddConstraint(slaveDOF, masterDOF, masterWeight, constant);
+	}
+
+	void AddNodalNormalSlaveRelationWithDofs(MpcDataPointerType pMpc,DofType slaveDOF, double nodalNormalComponent = 0.0)
+	{
+		pMpc->AddNodalNormalToSlaveDof(slaveDOF, nodalNormalComponent);
+	}
+
+	/**
+		Activates the constraint set or deactivates
+		@arg isActive true/false
+		*/
+	void SetActive(bool isActive = true)
+	{
+		pMpcPatch->SetActive(isActive);
+		pMpcBackground->SetActive(isActive);
+	}
+
+	void SetRtMinvR(MpcDataPointerType pMpc,double value)
+	{
+
+		pMpc->RtMinvR = value;
+	}
+
+
+
+
 	void PrintGIDMesh(ModelPart &rmodel_part)
 	{
 		std::ofstream myfile;
@@ -552,6 +648,13 @@ class ApplyChimeraProcess : public Process
 	/// Print object's data.
 	virtual void PrintData(std::ostream &rOStream) const
 	{
+
+		std::cout << "\nNumber of  patch slave nodes :: " << std::endl;
+		pMpcPatch->GetInfo();
+
+
+		std::cout << "\nNumber of  background slave nodes :: " << std::endl;
+		pMpcBackground->GetInfo();
 	}
 
 	///@}
@@ -602,8 +705,8 @@ class ApplyChimeraProcess : public Process
 	//ModelPart &mrPatchSurfaceModelPart;
 	BinBasedPointLocatorPointerType pBinLocatorForBackground; // Template argument 3 stands for 3D case
 	BinBasedPointLocatorPointerType pBinLocatorForPatch;
-	ApplyMultipointConstraintsProcess::Pointer pMpcProcessPatch;
-	ApplyMultipointConstraintsProcess::Pointer pMpcProcessBackground;
+	MpcDataPointerType pMpcPatch;
+	MpcDataPointerType pMpcBackground;
 	CustomHoleCuttingProcess::Pointer pHoleCuttingProcess;
 	typename CustomCalculateSignedDistanceProcess<TDim>::Pointer pCalculateDistanceProcess;
 	ModelPart &mrMainModelPart;

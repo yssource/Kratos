@@ -25,6 +25,7 @@
 #include "mpi.h"
 #endif
 #include "includes/deprecated_variables.h"
+#include "includes/kratos_parameters.h"
 // project includes
 
 namespace Kratos

@@ -67,7 +67,7 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    void UpdateControlPointDisplacements( Vector& cp_displacements )
+    void AddToControlPointDisplacements( Vector& delta_displacements )
     { 
         // Map to get control point corresponding to a given global id (needed for python update later)
         std::map<unsigned int, ControlPoint*> control_point_corresponding_to_global_id;
@@ -81,9 +81,9 @@ public:
                 {
                     // Updating c++ data base
                     unsigned int cp_equation_id = control_point_i.GetEquationId();
-                    control_point_i.SetdX( cp_displacements[3*cp_equation_id+0] );
-                    control_point_i.SetdY( cp_displacements[3*cp_equation_id+1] );
-                    control_point_i.SetdZ( cp_displacements[3*cp_equation_id+2] );
+                    control_point_i.SetdX( control_point_i.GetdX() + delta_displacements[3*cp_equation_id+0] );
+                    control_point_i.SetdY( control_point_i.GetdY() + delta_displacements[3*cp_equation_id+1] );
+                    control_point_i.SetdZ( control_point_i.GetdZ() + delta_displacements[3*cp_equation_id+2] );
 
                 }
                 // Filling map to be used later

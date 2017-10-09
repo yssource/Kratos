@@ -95,12 +95,10 @@ public:
 
         // Equation id starts with zero since it shall also determin the row position in the equation system and C++ starts counting with 0
         int equation_id = 0;
-        std::vector<Patch>& patch_vector = mrReconstructionDataBase.GetPatchVector();
 
-        for(auto & patch_i : patch_vector) 
+        for(auto & patch_i : mrReconstructionDataBase.GetPatchVector()) 
         {
-            std::vector<ControlPoint>& control_points = patch_i.GetSurfaceControlPoints();
-            for(auto & control_point_i : control_points)
+            for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
             {
                 if(control_point_i.IsRelevantForReconstruction())
                 {
@@ -135,9 +133,11 @@ public:
     {
         std::cout << "\n> Initializing System LHS and RHS..." << std::endl;            
 
-		mLHS.resize(3*mNumberOfRelevantControlPoints,3*mNumberOfRelevantControlPoints);
+        mLHS.resize(3*mNumberOfRelevantControlPoints,3*mNumberOfRelevantControlPoints);
+        mLHSWithoutConstraints.resize(3*mNumberOfRelevantControlPoints,3*mNumberOfRelevantControlPoints);
         mRHS.resize(3*mNumberOfRelevantControlPoints);
-		mLHS.clear();
+        mLHS.clear();
+        mLHSWithoutConstraints.clear();
         mRHS.clear();
 
         mSolutionVector.resize(3*mNumberOfRelevantControlPoints);
@@ -155,8 +155,14 @@ public:
         mLHS.clear();        
    
         // Compute contribution from reconstruction conditions
-        for(auto condition_i : mrReconstructionConditions)
-            condition_i->ComputeAndAddLHSContribution( mLHS );
+        if(isLHSWithoutConstraintsComputed==false)
+        {
+            isLHSWithoutConstraintsComputed = true;
+            for(auto condition_i : mrReconstructionConditions)
+                condition_i->ComputeAndAddLHSContribution( mLHSWithoutConstraints );
+        }
+
+        mLHS = mLHSWithoutConstraints;
 
         // Compute contribution from reconstruction constraints
         for(auto condition_i : mrReconstructionConstraints)
@@ -228,9 +234,9 @@ public:
     {
         std::cout << "\n> Start updating control points..." << std::endl;  
         boost::timer timer;
-        
+
         if(reconstruction_strategy.compare("mapping") == 0)
-            mrReconstructionDataBase.UpdateControlPointDisplacements( mSolutionVector );
+            mrReconstructionDataBase.AddToControlPointDisplacements( mSolutionVector );
         else
             KRATOS_THROW_ERROR(std::invalid_argument, "Reconstruction strategy specified to update control points is not recognized!","");
 
@@ -280,6 +286,8 @@ private:
     int mNumberOfControlPoints = 0;
     int mNumberOfRelevantControlPoints = 0;
     CompressedMatrix mLHS;
+    CompressedMatrix mLHSWithoutConstraints;
+    bool isLHSWithoutConstraintsComputed = false;
     Vector mRHS;
     Vector mSolutionVector;
 

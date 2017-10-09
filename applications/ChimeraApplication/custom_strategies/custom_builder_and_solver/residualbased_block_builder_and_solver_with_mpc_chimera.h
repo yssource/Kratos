@@ -1106,7 +1106,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 
             if (mpcData->IsActive())
 
-            {
+            {   //#####################################################CALCULATION OF FLUX######################################################
                 /*double r = 0;
                 ModelPart &mrBackgroundModelPart = r_model_part.GetSubModelPart(mpcData->mName);
                 for (ModelPart::ElementsContainerType::iterator i_fluid_element = mrBackgroundModelPart.ElementsBegin(); i_fluid_element != mrBackgroundModelPart.ElementsEnd(); i_fluid_element++)
@@ -1229,6 +1229,8 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                 } // End of element loop*/
 
                 //std::cout << "flux " << r << std::endl;
+
+                //##################################################### END OF CALCULATION OF FLUX######################################################
                 if (mpcData->mType == "Conservative")
                 {
                     double nodalMass;

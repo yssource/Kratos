@@ -318,7 +318,7 @@ class ApplyChimeraProcess : public Process
 
 			AddNodalNormalSlaveRelationWithDofs(pMpc, inode->GetDof(PRESSURE), 0);
 
-			SetRtMinvR(pMpc,rtMinvR);
+			SetRtMinvR(pMpc, rtMinvR);
 		}
 	}
 
@@ -355,7 +355,7 @@ class ApplyChimeraProcess : public Process
 			CalculateNodalAreaAndNodalMass(rPatchBoundaryModelPart, 1);
 			CalculateNodalAreaAndNodalMass(*pHoleBoundaryModelPart, -1);
 
-			pMpcPatch->SetIsWeak(true); 
+			pMpcPatch->SetIsWeak(true);
 			pMpcBackground->SetIsWeak(true);
 
 			if (m_type == "nearest_element")
@@ -527,41 +527,41 @@ class ApplyChimeraProcess : public Process
         @arg SlaveVariable
         @arg weight
 		*/
-	void AddMasterSlaveRelationWithNodesAndVariableComponents(MpcDataPointerType pMpc,Node<3> &MasterNode, VariableComponentType &MasterVariable, Node<3> &SlaveNode, VariableComponentType &SlaveVariable, double weight, double constant = 0.0)
+	void AddMasterSlaveRelationWithNodesAndVariableComponents(MpcDataPointerType pMpc, Node<3> &MasterNode, VariableComponentType &MasterVariable, Node<3> &SlaveNode, VariableComponentType &SlaveVariable, double weight, double constant = 0.0)
 	{
 		SlaveNode.Set(SLAVE);
 		DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
 		DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
-		AddMasterSlaveRelationWithDofs(pMpc,pointerSlaveDOF, pointerMasterDOF, weight, constant);
+		AddMasterSlaveRelationWithDofs(pMpc, pointerSlaveDOF, pointerMasterDOF, weight, constant);
 	}
 
-	void AddMasterSlaveRelationWithNodeIdsAndVariableComponents(MpcDataPointerType pMpc,IndexType MasterNodeId, VariableComponentType &MasterVariable, IndexType SlaveNodeId, VariableComponentType &SlaveVariable, double weight, double constant = 0.0)
+	void AddMasterSlaveRelationWithNodeIdsAndVariableComponents(MpcDataPointerType pMpc, IndexType MasterNodeId, VariableComponentType &MasterVariable, IndexType SlaveNodeId, VariableComponentType &SlaveVariable, double weight, double constant = 0.0)
 	{
 		Node<3> &SlaveNode = mrMainModelPart.Nodes()[SlaveNodeId];
 		Node<3> &MasterNode = mrMainModelPart.Nodes()[MasterNodeId];
 		SlaveNode.Set(SLAVE);
 		DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
 		DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
-		AddMasterSlaveRelationWithDofs(pMpc,pointerSlaveDOF, pointerMasterDOF, weight, constant);
+		AddMasterSlaveRelationWithDofs(pMpc, pointerSlaveDOF, pointerMasterDOF, weight, constant);
 	}
 
 	// Functions with use two variables
-	void AddMasterSlaveRelationWithNodesAndVariable(MpcDataPointerType pMpc,Node<3> &MasterNode, VariableType &MasterVariable, Node<3> &SlaveNode, VariableType &SlaveVariable, double weight, double constant = 0.0)
+	void AddMasterSlaveRelationWithNodesAndVariable(MpcDataPointerType pMpc, Node<3> &MasterNode, VariableType &MasterVariable, Node<3> &SlaveNode, VariableType &SlaveVariable, double weight, double constant = 0.0)
 	{
 		SlaveNode.Set(SLAVE);
 		DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
 		DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
-		AddMasterSlaveRelationWithDofs(pMpc,pointerSlaveDOF, pointerMasterDOF, weight, constant);
+		AddMasterSlaveRelationWithDofs(pMpc, pointerSlaveDOF, pointerMasterDOF, weight, constant);
 	}
 
-	void AddMasterSlaveRelationWithNodeIdsAndVariable(MpcDataPointerType pMpc,IndexType MasterNodeId, VariableType &MasterVariable, IndexType SlaveNodeId, VariableType &SlaveVariable, double weight, double constant = 0.0)
+	void AddMasterSlaveRelationWithNodeIdsAndVariable(MpcDataPointerType pMpc, IndexType MasterNodeId, VariableType &MasterVariable, IndexType SlaveNodeId, VariableType &SlaveVariable, double weight, double constant = 0.0)
 	{
 		Node<3> &SlaveNode = mrMainModelPart.Nodes()[SlaveNodeId];
 		Node<3> &MasterNode = mrMainModelPart.Nodes()[MasterNodeId];
 		SlaveNode.Set(SLAVE);
 		DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
 		DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
-		AddMasterSlaveRelationWithDofs(pMpc,pointerSlaveDOF, pointerMasterDOF, weight, constant);
+		AddMasterSlaveRelationWithDofs(pMpc, pointerSlaveDOF, pointerMasterDOF, weight, constant);
 	}
 
 	// Default functions
@@ -571,12 +571,12 @@ class ApplyChimeraProcess : public Process
         @arg masterDOF 
         @arg weight
 		*/
-	void AddMasterSlaveRelationWithDofs(MpcDataPointerType pMpc,DofType slaveDOF, DofType masterDOF, double masterWeight, double constant = 0.0)
+	void AddMasterSlaveRelationWithDofs(MpcDataPointerType pMpc, DofType slaveDOF, DofType masterDOF, double masterWeight, double constant = 0.0)
 	{
 		pMpc->AddConstraint(slaveDOF, masterDOF, masterWeight, constant);
 	}
 
-	void AddNodalNormalSlaveRelationWithDofs(MpcDataPointerType pMpc,DofType slaveDOF, double nodalNormalComponent = 0.0)
+	void AddNodalNormalSlaveRelationWithDofs(MpcDataPointerType pMpc, DofType slaveDOF, double nodalNormalComponent = 0.0)
 	{
 		pMpc->AddNodalNormalToSlaveDof(slaveDOF, nodalNormalComponent);
 	}
@@ -591,14 +591,11 @@ class ApplyChimeraProcess : public Process
 		pMpcBackground->SetActive(isActive);
 	}
 
-	void SetRtMinvR(MpcDataPointerType pMpc,double value)
+	void SetRtMinvR(MpcDataPointerType pMpc, double value)
 	{
 
 		pMpc->RtMinvR = value;
 	}
-
-
-
 
 	void PrintGIDMesh(ModelPart &rmodel_part)
 	{
@@ -651,7 +648,6 @@ class ApplyChimeraProcess : public Process
 
 		std::cout << "\nNumber of  patch slave nodes :: " << std::endl;
 		pMpcPatch->GetInfo();
-
 
 		std::cout << "\nNumber of  background slave nodes :: " << std::endl;
 		pMpcBackground->GetInfo();

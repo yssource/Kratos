@@ -77,8 +77,7 @@ public:
         double max_coordinate = 1000;
         std::cout << "> Max value for control point coordinates set to " << max_coordinate << "." << std::endl;
 
-        std::vector<Patch>& patch_vector = mrReconstructionDataBase.GetPatchVector();
-        for(auto & patch_i : patch_vector) 
+        for(auto & patch_i : mrReconstructionDataBase.GetPatchVector()) 
         {
             std::vector<double>& knot_vec_u_i = patch_i.GetSurfaceKnotVectorU();
             std::vector<double>& knot_vec_v_i = patch_i.GetSurfaceKnotVectorV();
@@ -140,9 +139,9 @@ public:
             case 5 : fem_integration_method = GeometryData::GI_GAUSS_5; break;
         }   
       
-        for (ModelPart::ElementsContainerType::iterator elem_i = r_fe_model_part.ElementsBegin(); elem_i != r_fe_model_part.ElementsEnd(); ++elem_i)
+        for (auto & elem_i : r_fe_model_part.Elements())
         {
-            Element::GeometryType& geom_i = elem_i->GetGeometry();
+            Element::GeometryType& geom_i = elem_i.GetGeometry();
             const Element::GeometryType::IntegrationPointsArrayType& integration_points = geom_i.IntegrationPoints( fem_integration_method );
 
             for (auto & integration_point_i : integration_points)
@@ -176,10 +175,8 @@ public:
         restult_output_file << "Result \"Displacement\" \"Load Case\" 0 Vector OnNodes" << std::endl;
         restult_output_file << "Values" << std::endl;
 
-        std::vector<Patch>& patch_vector = mrReconstructionDataBase.GetPatchVector();
-
         unsigned int control_point_iterator = 0;
-        for(auto & patch_i : patch_vector) 
+        for(auto & patch_i : mrReconstructionDataBase.GetPatchVector()) 
         {
             for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
             {
@@ -220,8 +217,7 @@ public:
         
         // write node section
         unsigned int control_point_iterator = 0;
-        std::vector<Patch>& patch_vector = mrReconstructionDataBase.GetPatchVector(); 
-        for(auto & patch_i : patch_vector) 
+        for(auto & patch_i : mrReconstructionDataBase.GetPatchVector()) 
         {
             for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
             {
@@ -234,7 +230,7 @@ public:
         
         // substitute all the lines with "NODE_ID", ignore those with "GP_POINT_GEO", copy the others
         std::vector<ControlPoint*> control_points_vector;
-        for(auto & patch_i : patch_vector) 
+        for(auto & patch_i : mrReconstructionDataBase.GetPatchVector()) 
         {
             for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
                 control_points_vector.push_back(&control_point_i);

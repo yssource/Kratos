@@ -161,7 +161,10 @@ public:
 				Vector gradient = ZeroVector(2);
 				double determinant_of_hessian = 0;
         Matrix inverse_of_hessian = ZeroMatrix(2,2);
-        Point<3> UpdatedCADPoint;			
+        Point<3> current_nearest_point;
+        current_nearest_point[0] = nearest_point->X();
+        current_nearest_point[1] = nearest_point->Y();
+        current_nearest_point[2] = nearest_point->Z();
 
         // Variables neeed by the Netwon Raphson algorithm
 				double norm_delta_u = 100000000;
@@ -170,9 +173,9 @@ public:
         for(unsigned int k=0; k<mMaxIterations; k++)
         {
           // The distance between point on CAD surface point on the FE-mesh
-          Distance(0) = nearest_point->X() - PointOfInterest->X();
-          Distance(1) = nearest_point->Y() - PointOfInterest->Y();
-          Distance(2) = nearest_point->Z() - PointOfInterest->Z();
+          Distance(0) = current_nearest_point[0] - PointOfInterest->X();
+          Distance(1) = current_nearest_point[1] - PointOfInterest->Y();
+          Distance(2) = current_nearest_point[2] - PointOfInterest->Z();
           
           // The distance is used to compute hessian and gradient
           patch_of_nearest_point.EvaluateGradientsForClosestPointSearch( Distance, hessian, gradient , parameter_values_of_nearest_point );
@@ -184,10 +187,7 @@ public:
           parameter_values_of_nearest_point[1] -= delta_u(1);
 
           // Point on CAD surface is udpated
-          patch_of_nearest_point.EvaluateSurfacePoint( parameter_values_of_nearest_point, UpdatedCADPoint );
-          nearest_point->X() = UpdatedCADPoint[0];
-          nearest_point->Y() = UpdatedCADPoint[1];
-          nearest_point->Z() = UpdatedCADPoint[2];
+          patch_of_nearest_point.EvaluateSurfacePoint( parameter_values_of_nearest_point, current_nearest_point );
           
           // Check convergence
           norm_delta_u = norm_2(delta_u);
@@ -196,7 +196,7 @@ public:
           else if(k+1==mMaxIterations)
           {
             std::cout << "WARNING!!! Newton-Raphson in projection did not converge in the following number of iterations: " << k+1 << std::endl;
-            KRATOS_WATCH(nearest_point)
+            KRATOS_WATCH(current_nearest_point)
             KRATOS_WATCH(PointOfInterest)
           }
         }

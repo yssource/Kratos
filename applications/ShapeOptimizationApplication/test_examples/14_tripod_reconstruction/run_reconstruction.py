@@ -14,6 +14,7 @@ CheckForPreviousImport()
 # Additional imports
 import json as json
 import time
+import os
 
 # ======================================================================================================================================
 # Class definition
@@ -59,6 +60,7 @@ class CADReconstrutionUtilities():
         # self.LinearSolver = AMGCLSolver(AMGCLSmoother.GAUSS_SEIDEL, AMGCLIterativeSolverType.BICGSTAB, 1e-9, 300, 2, 10)        
 
         # Parameters for output
+        self.OutputFolder = "01_Results"
         self.ParameterResolutionForOutputOfSurfacePoints = [ 50, 50 ]
 
     # --------------------------------------------------------------------------
@@ -87,7 +89,7 @@ class CADReconstrutionUtilities():
     # --------------------------------------------------------------------------
     def OutputFEData( self ):
         from gid_output import GiDOutput
-        fem_output_filename = self.FEMInputFilename+"_as_used_for_reconstruction"
+        fem_output_filename = self.OutputFolder + "/" + self.FEMInputFilename + "_as_used_for_reconstruction"
         nodal_results=["SHAPE_CHANGE_ABSOLUTE"]
         gauss_points_results=[]
         VolumeOutput = True
@@ -110,8 +112,8 @@ class CADReconstrutionUtilities():
         self.OutputWriter.OutputGaussPointsOfFEMesh( file_to_write, self.FEMGaussIntegrationDegree )
 
     # --------------------------------------------------------------------------
-    def OutputControlPointDisplacementsInRhinoFormat( self, file_to_write ):
-        self.OutputWriter.OutputControlPointDisplacementsInRhinoFormat( file_to_write )   
+    def OutputControlPointDisplacementsInRhinoFormat( self, file_to_write, georhino_file_containing_cad_geometry ):
+        self.OutputWriter.OutputControlPointDisplacementsInRhinoFormat( file_to_write,  georhino_file_containing_cad_geometry )   
 
     # --------------------------------------------------------------------------
     def __ReadFEData( self ):
@@ -171,7 +173,9 @@ class CADReconstrutionUtilities():
 
     # --------------------------------------------------------------------------
     def __CreateReconstructionOutputWriter( self ):
-        self.OutputWriter = ReconstructionOutputWriter( self.DataBase )    
+        if not os.path.exists( self.OutputFolder ):
+            os.makedirs( self.OutputFolder )    
+        self.OutputWriter = ReconstructionOutputWriter( self.DataBase, self.OutputFolder )    
 
     # --------------------------------------------------------------------------
     def __CreateReconstructionConditions( self ):
@@ -257,7 +261,7 @@ CADReconstructionUtility.PerformReconstruction()
 CADReconstructionUtility.OutputFEData()
 CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_updated_cad_geometry.txt" )
 CADReconstructionUtility.OutputGaussPointsOfFEMesh( "gauss_points_of_fe_mesh.txt" )
-CADReconstructionUtility.OutputControlPointDisplacementsInRhinoFormat( "tripod.post.res" )
+CADReconstructionUtility.OutputControlPointDisplacementsInRhinoFormat( "tripod.post.res", "tripod.georhino.txt" )
 
 print("\n========================================================================================================")
 print("> Finished reconstruction in " ,round( time.time()-start_time, 3 ), " s.")

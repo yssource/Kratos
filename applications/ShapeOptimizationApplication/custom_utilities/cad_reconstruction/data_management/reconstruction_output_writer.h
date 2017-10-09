@@ -14,6 +14,7 @@
 // ------------------------------------------------------------------------------
 // System includes
 // ------------------------------------------------------------------------------
+#include <string>
 
 // ------------------------------------------------------------------------------
 // External includes
@@ -52,8 +53,9 @@ public:
     ///@{
 
     /// Default constructor.
-    ReconstructionOutputWriter( ReconstructionDataBase& reconstruction_data_base )
-    : mrReconstructionDataBase( reconstruction_data_base )
+    ReconstructionOutputWriter( ReconstructionDataBase& reconstruction_data_base, std::string output_folder )
+    : mrReconstructionDataBase( reconstruction_data_base ),
+      mOutputFolder( output_folder )
     {      
     }
 
@@ -66,7 +68,7 @@ public:
     void OutputCADSurfacePoints( std::string output_filename, boost::python::list ParameterResolutionForCoarseNeighborSearch )
     {
 	    std::cout << "\n> Start writing surface points of given CAD geometry to file..." << std::endl;
-        std::ofstream file_to_write(output_filename);
+        std::ofstream  output_file( mOutputFolder + "/" + output_filename );
 
         int u_resolution = ExtractInt( ParameterResolutionForCoarseNeighborSearch[0] );
         int v_resolution = ExtractInt( ParameterResolutionForCoarseNeighborSearch[1] );      
@@ -111,12 +113,12 @@ public:
                         if(std::abs(cad_point.Z())>max_coordinate)
                             cad_point.Z() = MathUtils<int>::Sign(cad_point.Z()) * max_coordinate;														
 
-                        file_to_write << cad_point.X() << " " << cad_point.Y() << " " << cad_point.Z() << std::endl;
+                        output_file << cad_point.X() << " " << cad_point.Y() << " " << cad_point.Z() << std::endl;
                     }
                 }
             }
         }
-        file_to_write.close();
+        output_file.close();
         std::cout << "> Finished writing surface points of given CAD geometry to file." << std::endl;
     }
 
@@ -124,7 +126,7 @@ public:
     void OutputGaussPointsOfFEMesh( std::string output_filename, int integration_degree )
     {
 	    std::cout << "\n> Start writing Gauss points of given FE-mesh..." << std::endl;
-        std::ofstream file_to_write(output_filename);
+        std::ofstream output_file( mOutputFolder + "/" + output_filename );
   
         ModelPart& r_fe_model_part = mrReconstructionDataBase.GetFEModelPart();
 
@@ -146,39 +148,126 @@ public:
             for (auto & integration_point_i : integration_points)
             {
                 NodeType::CoordinatesArrayType ip_coordinates = geom_i.GlobalCoordinates(ip_coordinates, integration_point_i.Coordinates());
-                file_to_write << ip_coordinates[0] << " " << ip_coordinates[1] << " " << ip_coordinates[2] << std::endl;
+                output_file << ip_coordinates[0] << " " << ip_coordinates[1] << " " << ip_coordinates[2] << std::endl;
             }
         }
-        file_to_write.close();
+        output_file.close();
         std::cout << "> Finished writing Gauss points of given FE-mesh." << std::endl;
     }
 
     // --------------------------------------------------------------------------
-    void OutputControlPointDisplacementsInRhinoFormat( std::string output_filename )
+    void OutputControlPointDisplacementsInRhinoFormat( std::string result_output_filename, std::string original_georhino_filename )
     {
-        std::cout << "\n> Start writing displacements of control points into Rhino results file..." << std::endl;
-        std::ofstream output_file(output_filename);
+        std::cout << "\n> Starting to write displacements of control points into Rhino results file..." << std::endl;
+        OutputDisplacementsInRhinoFormat( result_output_filename );
+        std::cout << "> Finished writing displacements of control points into Rhino format." << std::endl;
+        
+        std::cout << "> Starting to write modified georhino file to visualize displacements of all control points relevant for reconstruction..." << std::endl;
+        OutputModifiedGeoRhinoFileToIncludeAllRelevantControlPoints( result_output_filename, original_georhino_filename );
+        std::cout << "> Finished writing modified georhino file." << std::endl;
+    }
 
-        output_file << "Rhino Post Results File 1.0" << std::endl;
-        output_file << "Result \"Displacement\" \"Load Case\" 0 Vector OnNodes" << std::endl;
-        output_file << "Values" << std::endl;
+    // --------------------------------------------------------------------------
+    void OutputDisplacementsInRhinoFormat( std::string result_output_filename )
+    {
+        std::ofstream restult_output_file( mOutputFolder + "/" + result_output_filename );        
+
+        restult_output_file << "Rhino Post Results File 1.0" << std::endl;
+        restult_output_file << "Result \"Displacement\" \"Load Case\" 0 Vector OnNodes" << std::endl;
+        restult_output_file << "Values" << std::endl;
 
         std::vector<Patch>& patch_vector = mrReconstructionDataBase.GetPatchVector();
 
         unsigned int control_point_iterator = 0;
         for(auto & patch_i : patch_vector) 
         {
-            std::vector<ControlPoint>& control_points = patch_i.GetSurfaceControlPoints();
-            for(auto & control_point_i : control_points)
+            for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
             {
                 control_point_iterator++;
-                output_file << control_point_iterator << " " << control_point_i.GetdX() << " " << control_point_i.GetdY() << " " << control_point_i.GetdZ() << std::endl;
+                if(control_point_i.IsRelevantForReconstruction())                
+                    restult_output_file << control_point_iterator << " " << control_point_i.GetdX() << " " << control_point_i.GetdY() << " " << control_point_i.GetdZ() << std::endl;
             }
         }
+        restult_output_file << "End Values" << std::endl;
+        restult_output_file.close();
+    }  
 
-        output_file << "End Values" << std::endl;
-        output_file.close();
-        std::cout << "> Finished writing displacements of control points into Rhino results file..." << std::endl;
+    // --------------------------------------------------------------------------
+    void OutputModifiedGeoRhinoFileToIncludeAllRelevantControlPoints( std::string result_output_filename, std::string original_georhino_filename )
+    {
+        std::ifstream input_file(original_georhino_filename);
+        std::ofstream georhino_output_file( mOutputFolder + "/" + original_georhino_filename );
+        
+        std::string line; // last line to be read
+        
+        // copy all lines from the old file before the node section
+        while(std::getline(input_file, line))
+        {
+            // if the line contains the word "NODE"
+            if(find_substring(line, "NODE"))
+            break;
+            // else copy line
+            georhino_output_file << line << std::endl;
+        }
+        
+        // read and ignore node section
+        while(std::getline(input_file, line))
+        {
+            // stop as soon as the line doesn't contain the word "NODE" anymore
+            if(!find_substring(line, "NODE"))
+                break;
+        }
+        
+        // write node section
+        unsigned int control_point_iterator = 0;
+        std::vector<Patch>& patch_vector = mrReconstructionDataBase.GetPatchVector(); 
+        for(auto & patch_i : patch_vector) 
+        {
+            for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
+            {
+                control_point_iterator++;
+                if(control_point_i.IsRelevantForReconstruction())
+                    georhino_output_file << "  NODE  " << control_point_iterator << "  X " << control_point_i.GetX0() << "  Y "<< control_point_i.GetY0() << "  Z " << control_point_i.GetZ0() << std::endl;
+            }
+        }
+        georhino_output_file << line << std::endl;
+        
+        // substitute all the lines with "NODE_ID", ignore those with "GP_POINT_GEO", copy the others
+        std::vector<ControlPoint*> control_points_vector;
+        for(auto & patch_i : patch_vector) 
+        {
+            for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
+                control_points_vector.push_back(&control_point_i);
+        }
+        
+        control_point_iterator = 0;
+        while(std::getline(input_file, line))
+        {
+            if(find_substring(line, "NODE_ID"))
+            {
+                control_point_iterator++;
+                ControlPoint* cp = control_points_vector[control_point_iterator-1];
+                
+                if(cp->IsRelevantForReconstruction())
+                    georhino_output_file << "  NODE_ID  " << control_point_iterator << "  W  " << cp->GetWeight() << std::endl;
+                else
+                    georhino_output_file << "  NODE_ID  0  X  " << cp->GetX0() << "  Y  " << cp->GetY0() << "  Z  " << cp->GetZ0() << "  W  " << cp->GetWeight() << std::endl;
+            }
+            else if(find_substring(line, "GP_POINT_GEO"))
+                ;// ignore line
+            else
+                georhino_output_file << line << std::endl; // copy line
+        }
+        georhino_output_file.close();
+    }
+
+    // --------------------------------------------------------------------------
+    bool find_substring(std::string str, std::string substring)
+    {
+        std::size_t found = str.find(substring);
+        if(found != std::string::npos) 
+            return true;
+        return false;
     }
 
     // ==============================================================================
@@ -203,6 +292,7 @@ public:
 private:
 
     ReconstructionDataBase& mrReconstructionDataBase;
+    std::string mOutputFolder;
 
     /// Assignment operator.
     //      ReconstructionOutputWriter& operator=(ReconstructionOutputWriter const& rOther);

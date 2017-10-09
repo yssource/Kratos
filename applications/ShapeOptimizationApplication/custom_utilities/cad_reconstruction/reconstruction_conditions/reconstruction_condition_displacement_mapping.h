@@ -162,31 +162,33 @@ public:
             int row_id = mEquationIdsOfAffectedControlPoints[row_itr];
             double R_row = mNurbsFunctionValues[row_itr];
 
-            Vector corresponding_control_point_displacement = ZeroVector(3);
-            corresponding_control_point_displacement[0] = mAffectedControlPoints[row_itr]->GetdX();
-            corresponding_control_point_displacement[1] = mAffectedControlPoints[row_itr]->GetdY();
-            corresponding_control_point_displacement[2] = mAffectedControlPoints[row_itr]->GetdZ();
-
-            // Computation of RR*\hat{u_C}
-            Vector rhs_contribution = ZeroVector(3);
-            rhs_contribution(0) += R_row * R_row * corresponding_control_point_displacement[0];
-            rhs_contribution(1) += R_row * R_row * corresponding_control_point_displacement[1];
-            rhs_contribution(2) += R_row * R_row * corresponding_control_point_displacement[2]; 
-
             // Computation of -RN*\hat{u_F}
+            Vector cad_fem_contribution = ZeroVector(3);                                
             for(int collumn_itr=0; collumn_itr<n_affected_fem_nodes; collumn_itr++)
             {
                 double N_collumn = mFEMFunctionValues[collumn_itr];
                 
-                rhs_contribution(0) -= R_row * N_collumn * node_displacements[3*collumn_itr+0];
-                rhs_contribution(1) -= R_row * N_collumn * node_displacements[3*collumn_itr+1];
-                rhs_contribution(2) -= R_row * N_collumn * node_displacements[3*collumn_itr+2];
+                cad_fem_contribution(0) += R_row * N_collumn * node_displacements[3*collumn_itr+0];
+                cad_fem_contribution(1) += R_row * N_collumn * node_displacements[3*collumn_itr+1];
+                cad_fem_contribution(2) += R_row * N_collumn * node_displacements[3*collumn_itr+2];
             }
+            
+            // Computation of RR*\hat{u_C}
+            Vector cad_cad_contribution = ZeroVector(3);                                            
+            for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquationIds; collumn_itr++)
+            {                
+                int collumn_id = mEquationIdsOfAffectedControlPoints[collumn_itr];
+                double R_collumn = mNurbsFunctionValues[collumn_itr];
+
+                cad_cad_contribution(0) += R_row * R_collumn * mAffectedControlPoints[collumn_itr]->GetdX();
+                cad_cad_contribution(1) += R_row * R_collumn * mAffectedControlPoints[collumn_itr]->GetdY();
+                cad_cad_contribution(2) += R_row * R_collumn * mAffectedControlPoints[collumn_itr]->GetdZ();
+            }  
 
             // Computation of complete RHS contribution: rhs_contribution = -integration_weight*( R*\hat{u_C} - N*\hat{u_F})R
-            RHS( 3*row_id+0 ) -= mIntegrationWeight * rhs_contribution(0);
-            RHS( 3*row_id+1 ) -= mIntegrationWeight * rhs_contribution(1);
-            RHS( 3*row_id+2 ) -= mIntegrationWeight * rhs_contribution(2);             
+            RHS( 3*row_id+0 ) -= mIntegrationWeight * ( cad_cad_contribution[0] - cad_fem_contribution[0]);
+            RHS( 3*row_id+1 ) -= mIntegrationWeight * ( cad_cad_contribution[1] - cad_fem_contribution[1]);
+            RHS( 3*row_id+2 ) -= mIntegrationWeight * ( cad_cad_contribution[2] - cad_fem_contribution[2]);             
         }
     }
 

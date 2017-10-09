@@ -290,14 +290,14 @@ class ApplyChimeraProcess : public Process
 		}
 	}
 
-	void ApplyMpcConstraintConservative(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, MpcDataPointerType pMpc, unsigned int type = 1)
+	void ApplyMpcConstraintConservative(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, MpcDataPointerType pMpc, bool isOuter )
 	{
 
 		double rtMinvR = 0;
 		DofVectorType slaveDofVector;
 		double R = 0;
 
-		ApplyMpcConstraint(rBoundaryModelPart, pBinLocator, pMpc, type);
+		ApplyMpcConstraint(rBoundaryModelPart, pBinLocator, pMpc, isOuter);
 		std::vector<VariableComponentType> dofComponentVector = {VELOCITY_X, VELOCITY_Y, VELOCITY_Z};
 
 		// Calculation of Rt*Minv*R and assignment of nodalnormals to the slave dofs

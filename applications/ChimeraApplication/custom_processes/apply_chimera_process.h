@@ -114,7 +114,7 @@ class ApplyChimeraProcess : public Process
 				"patch_boundary_model_part_name":"default",
                 "overlap_distance":0.0,
 				"type":"conservative" 
-            }  )");
+            })");
 
 		m_background_part_name = m_parameters["background_part_name"].GetString();
 		m_patch_model_part_name = m_parameters["patch_model_part_name"].GetString();
@@ -328,7 +328,7 @@ class ApplyChimeraProcess : public Process
 
 		ModelPart &rBackgroundModelPart = mrMainModelPart.GetSubModelPart(m_background_part_name);
 		//ModelPart &rPatchModelPart = mrMainModelPart.GetSubModelPart(m_patch_model_part_name);
-		ModelPart &rPatchBoundaryModelPart = mrMainModelPart.GetSubModelPart(m_background_part_name);
+		ModelPart &rPatchBoundaryModelPart = mrMainModelPart.GetSubModelPart(m_patch_boundary_model_part_name);
 
 		for (ModelPart::ElementsContainerType::iterator it = mrMainModelPart.ElementsBegin(); it != mrMainModelPart.ElementsEnd(); ++it)
 		{

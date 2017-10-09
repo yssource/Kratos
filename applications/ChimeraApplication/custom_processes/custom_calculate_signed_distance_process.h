@@ -243,7 +243,7 @@ class CustomCalculateSignedDistanceProcess
 			// Implemented in the custom_processes
 			p2DSignedDistanceCalculator = CalculateSignedDistanceTo2DConditionSkinProcess::Pointer(new CalculateSignedDistanceTo2DConditionSkinProcess(patchBoundaryModelPart, toBackgroundModelPart));
 			p2DSignedDistanceCalculator->Execute();
-			//p2DSignedDistanceCalculator->GenerateSkinModelPart(rNewSkinModelPart);
+		
 			std::cout << "2Signeddistance is called nav" << std::endl;
 		}
 

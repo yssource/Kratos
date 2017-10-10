@@ -201,13 +201,6 @@ public:
     void CreateDirichletConditions()
     {
     }
-
-    // --------------------------------------------------------------------------
-    void CreateMinimalDiagonalValueCondition( double min_value )
-    {
-        RegularizationCondition::Pointer NewCondition = RegularizationCondition::Pointer( new MinimalDiagonalValueCondition( min_value ) );
-        mListOfRegularizationConditions.push_back( NewCondition );
-    }
     
     // --------------------------------------------------------------------------
     void CreateMinimalControlPointDisplacementCondition( ReconstructionDataBase& data_base, double beta_value, std::string solution_strategy )

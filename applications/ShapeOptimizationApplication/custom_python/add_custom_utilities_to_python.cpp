@@ -155,7 +155,6 @@ void  AddCustomUtilitiesToPython()
         .def("CreateDisplacementMappingConditions", &ReconstructionConditionContainer::CreateDisplacementMappingConditions)
         .def("CreateDisplacementCouplingConstraintsOnAllCouplingPoints", &ReconstructionConditionContainer::CreateDisplacementCouplingConstraintsOnAllCouplingPoints)    
         .def("CreateDirichletConditions", &ReconstructionConditionContainer::CreateDirichletConditions)
-        .def("CreateMinimalDiagonalValueCondition", &ReconstructionConditionContainer::CreateMinimalDiagonalValueCondition)                    
         .def("CreateMinimalControlPointDisplacementCondition", &ReconstructionConditionContainer::CreateMinimalControlPointDisplacementCondition)       
         ;           
     class_<CADReconstructionSolver, bases<Process> >("CADReconstructionSolver", init<ReconstructionDataBase&, ReconstructionConditionContainer&, CompressedLinearSolverType::Pointer>())

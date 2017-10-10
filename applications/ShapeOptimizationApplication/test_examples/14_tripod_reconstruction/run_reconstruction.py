@@ -49,9 +49,6 @@ class CADReconstrutionUtilities():
         self.ProjectionTolerance = 1e-5
 
         # Regularization settings
-        self.EnforceMinimalDiagonalValue = False 
-        self.MinimalValue = 1e-3
-
         self.MinimizeControlPointDisplacement = True
         self.Beta = 0.002
 
@@ -201,8 +198,6 @@ class CADReconstrutionUtilities():
             self.ConditionsContainer.CreateDirichletConstraints( self.DirichletConstraints, self.PenaltyFactorForDirichletConstraints )
 
         # Regularization
-        if self.EnforceMinimalDiagonalValue: 
-            self.ConditionsContainer.CreateMinimalDiagonalValueCondition( self.MinimalValue )
         if self.MinimizeControlPointDisplacement: 
             self.ConditionsContainer.CreateMinimalControlPointDisplacementCondition( self.DataBase, self.Beta, self.ReconstructionStrategy )                   
 
@@ -228,9 +223,6 @@ class CADReconstrutionUtilities():
             self.ReconstructionSolver.SolveEquationSystem()
 
             self.ReconstructionSolver.UpdateControlPointsAccordingReconstructionStrategy( self.ReconstructionStrategy )
-
-
-
 
         print("\n===========================================")
         print("Finished reconstruction loop.")

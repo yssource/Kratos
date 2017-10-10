@@ -111,13 +111,13 @@ class ApplyChimeraProcess : public Process
                 "process_name":"apply_chimera_process",
                     "background": {
 									"model_part_name":"GENERIC_background",
-									"pressure_coupling":"all",
+									"pressure_coupling":"",
 									"type" : "nearest_element",
 									"IsWeak" : true
                                   },
                 	"patch" :     {
 									"model_part_name":"GENERIC_patch",
-									"pressure_coupling" : "false",
+									"pressure_coupling" : "one",
 									"type" : "nearest_element",
 									"IsWeak" : true
                                   },
@@ -127,7 +127,7 @@ class ApplyChimeraProcess : public Process
             })");
 
 		m_background_part_name = m_parameters["background"]["model_part_name"].GetString();
-		m_patch_model_part_name = m_parameters["patch"]"model_part_name"].GetString();
+		m_patch_model_part_name = m_parameters["patch"]["model_part_name"].GetString();
 		m_patch_boundary_model_part_name = m_parameters["patch_boundary_model_part_name"].GetString();
 		m_type_patch = m_parameters["patch"]["type"].GetString();
 		m_type_background = m_parameters["background"]["type"].GetString();
@@ -236,11 +236,10 @@ class ApplyChimeraProcess : public Process
 		typename BinBasedFastPointLocator<TDim>::ResultContainerType results(max_results);
 		const int n_boundary_nodes = rBoundaryModelPart.Nodes().size();
 		unsigned int counter = 0;
-		unsigned int 
 
 #pragma omp parallel for firstprivate(results, N)
-		//MY NEW LOOP: reset the visited flag
-		for (int i = 0; i < n_boundary_nodes; i++)
+			//MY NEW LOOP: reset the visited flag
+			for (int i = 0; i < n_boundary_nodes; i++)
 		{
 			ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin() + i;
 			Node<3>::Pointer p_boundary_node = *(iparticle.base());
@@ -305,9 +304,9 @@ class ApplyChimeraProcess : public Process
 
 		} // end of if (pressure_coupling == "one")
 
-		counter /= TDim+1;
+		counter /= TDim + 1;
 
-		std::cout <<counter<< " pressure node from " << rBoundaryModelPart.Name() << " is coupled" << std::endl;
+		std::cout << counter << " pressure nodes from " << rBoundaryModelPart.Name() << " is coupled" << std::endl;
 	}
 
 	void ApplyMpcConstraintConservative(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, MpcDataPointerType pMpc, std::string pressure_coupling)
@@ -375,11 +374,11 @@ class ApplyChimeraProcess : public Process
 			CalculateNodalAreaAndNodalMass(rPatchBoundaryModelPart, 1);
 			CalculateNodalAreaAndNodalMass(*pHoleBoundaryModelPart, -1);
 
-			pMpcPatch->SetIsWeak(m_parameters["patch"]["pressure_coupling"].GetBool());
-			pMpcBackground->SetIsWeak(m_parameters["background"]["pressure_coupling"].GetBool());
+			pMpcPatch->SetIsWeak(m_parameters["patch"]["IsWeak"].GetBool());
+			pMpcBackground->SetIsWeak(m_parameters["background"]["IsWeak"].GetBool());
 
-			pr_coupling_patch = m_parameters["patch"]["pressure_coupling"].GetString();
-			pr_coupling_background = m_parameters["background"]["pressure_coupling"].GetString();
+			std::string pr_coupling_patch = m_parameters["patch"]["pressure_coupling"].GetString();
+			std::string pr_coupling_background = m_parameters["background"]["pressure_coupling"].GetString();
 
 			if (m_type_patch == "nearest_element")
 			{
@@ -389,7 +388,7 @@ class ApplyChimeraProcess : public Process
 
 			else if (m_type_patch == "conservative")
 			{
-				//patch boundary is nearest element
+				
 				ApplyMpcConstraintConservative(rPatchBoundaryModelPart, pBinLocatorForBackground, pMpcPatch, pr_coupling_patch);
 				std::cout << "Patch boundary coupled with background using conservative approach" << std::endl;
 			}
@@ -400,7 +399,7 @@ class ApplyChimeraProcess : public Process
 				std::cout << "HoleBoundary  coupled with patch" << std::endl;
 			}
 
-			else if (m_type == "conservative")
+			else if (m_type_background == "conservative")
 			{
 
 				ApplyMpcConstraintConservative(*pHoleBoundaryModelPart, pBinLocatorForPatch, pMpcBackground, pr_coupling_background);

@@ -24,6 +24,7 @@
 #include "custom_processes/custom_calculate_signed_distance_process.h"
 #include "custom_processes/calculate_signed_distance_to_2d_condition_skin_process.h"
 #include "processes/calculate_signed_distance_to_3d_condition_skin_process.h"
+#include "custom_processes/rotate_region_process.h"
 //#include "custom_processes/apply_multi_point_constraints_process.h"
 namespace Kratos
 {
@@ -53,6 +54,12 @@ void AddCustomProcessesToPython()
 			.def("SetOverlapDistance",&ApplyChimeraProcess<3>::SetOverlapDistance)
 			.def("CalculateNodalAreaAndNodalMass",&ApplyChimeraProcess<3>::CalculateNodalAreaAndNodalMass)
 			.def("ExecuteInitializeSolutionStep",&ApplyChimeraProcess<2>::ExecuteInitializeSolutionStep);
+
+
+    class_< RotateRegionProcess, bases<Process>, boost::noncopyable >
+    ("RotateRegionProcess",init<ModelPart&, Parameters& >())
+    ;
+			
 }
 
 

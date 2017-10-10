@@ -213,14 +213,27 @@ class CustomHoleCuttingProcess
 			}
 
 			if (numPointsOutside == geom.size())
-			//if(numPointsOutside > 0)
 			{
 				it->Set(ACTIVE, false);
 				Element::Pointer pElem = *(it.base());
+				unsigned int numNodesPerElem = pElem->GetGeometry().PointsNumber();
 				rExtractedModelPart.Elements().push_back(pElem);
 				//Adding node all the node Ids of the elements satisfying the condition
-				for (j = 0; j < pElem->GetGeometry().PointsNumber(); j++)
+				for (j = 0; j <numNodesPerElem; j++){
+					pElem->GetGeometry()[j].GetDof(VELOCITY_X).GetSolutionStepValue(0) = 0.0;
+					pElem->GetGeometry()[j].GetDof(VELOCITY_Y).GetSolutionStepValue(0) = 0.0;
+					if(numNodesPerElem-1 > 2)
+						pElem->GetGeometry()[j].GetDof(VELOCITY_Z).GetSolutionStepValue(0) = 0.0;
+					pElem->GetGeometry()[j].GetDof(PRESSURE).GetSolutionStepValue(0) = 0.0;
+
+					pElem->GetGeometry()[j].GetDof(VELOCITY_X).GetSolutionStepValue(1) = 0.0;
+					pElem->GetGeometry()[j].GetDof(VELOCITY_Y).GetSolutionStepValue(1) = 0.0;
+					if(numNodesPerElem-1 > 2)
+						pElem->GetGeometry()[j].GetDof(VELOCITY_Z).GetSolutionStepValue(1) = 0.0;
+					pElem->GetGeometry()[j].GetDof(PRESSURE).GetSolutionStepValue(1) = 0.0;					
+
 					vector_of_node_ids.push_back(pElem->GetGeometry()[j].Id());
+				}
 			}
 		}
 

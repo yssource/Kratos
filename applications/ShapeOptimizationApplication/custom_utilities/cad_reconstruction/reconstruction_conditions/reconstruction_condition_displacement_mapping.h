@@ -76,15 +76,14 @@ public:
                                   IntegrationMethodType int_method,
                                   int int_point_number,
                                   Patch& patch,
-                                  array_1d<double,2> param_values,
-                                  array_1d<double,2> param_spans )
+                                  array_1d<double,2> param_values )
     : mrGeometryContainingThisCondition( geometry ),
       mFemIntegrationMethod( int_method ),
       mIntegrationPointNumber( int_point_number ),
       mrAffectedPatch( patch ),
-      mParmeterValues( param_values ),
-      mParmeterSpans( param_spans )
+      mParmeterValues( param_values )
     {
+        mParameterSpans = mrAffectedPatch.ComputeSurfaceKnotSpans( mParmeterValues );
     }
 
     /// Destructor.
@@ -103,7 +102,7 @@ public:
     // ==============================================================================
     void FlagControlPointsRelevantForReconstruction()
     {
-        mrAffectedPatch.FlagAffectedControlPointsForReconstruction(  mParmeterSpans, mParmeterValues );
+        mrAffectedPatch.FlagAffectedControlPointsForReconstruction(  mParameterSpans, mParmeterValues );
     }    
     
     // --------------------------------------------------------------------------
@@ -111,13 +110,13 @@ public:
     {
         mIntegrationWeight = mrGeometryContainingThisCondition.IntegrationPoints(mFemIntegrationMethod)[mIntegrationPointNumber].Weight(); 
         
-        mNurbsFunctionValues = mrAffectedPatch.EvaluateNURBSFunctions( mParmeterSpans, mParmeterValues );
+        mNurbsFunctionValues = mrAffectedPatch.EvaluateNURBSFunctions( mParameterSpans, mParmeterValues );
 
         const Matrix& fem_shape_function_container = mrGeometryContainingThisCondition.ShapeFunctionsValues(mFemIntegrationMethod);
         mFEMFunctionValues = row( fem_shape_function_container, mIntegrationPointNumber);
         
-        mAffectedControlPoints = mrAffectedPatch.GetPointersToAffectedControlPoints( mParmeterSpans, mParmeterValues );
-        mEquationIdsOfAffectedControlPoints = mrAffectedPatch.GetEquationIdsOfAffectedControlPoints( mParmeterSpans, mParmeterValues );
+        mAffectedControlPoints = mrAffectedPatch.GetPointersToAffectedControlPoints( mParameterSpans, mParmeterValues );
+        mEquationIdsOfAffectedControlPoints = mrAffectedPatch.GetEquationIdsOfAffectedControlPoints( mParameterSpans, mParmeterValues );
         mNumberOfLocalEquationIds = mEquationIdsOfAffectedControlPoints.size();         
     }    
     
@@ -279,7 +278,7 @@ private:
     int mIntegrationPointNumber;
     Patch& mrAffectedPatch;
     array_1d<double,2> mParmeterValues;
-    array_1d<double,2>mParmeterSpans;
+    array_1d<int,2> mParameterSpans;
 
     // ==============================================================================
     // Additional member variables

@@ -418,8 +418,9 @@ public:
 	///  \author     from M.Breitenberger in Carat (04/2014)
 	
 	// ########################################################################################
-	void ComputeVariationOfLocalCSY( double _u, double _v,
-									 Vector& _par_g1, // entspricht t1 und t2 vom JSON File
+	void ComputeVariationOfLocalCSY( int span_u, int span_v,
+									 double _u, double _v,
+									 array_1d<double,2> _par_g1, // entspricht t1 und t2 vom JSON File
 									 Vector& _t1, //nicht relevant dummy
 									 Vector& _t2, //Dein groß T2
 									 Vector& _t3, //Dein T3
@@ -437,7 +438,7 @@ public:
 		Matrix R_matrix;
 		std::vector<Matrix> dR_matrix;
 
-		EvaluateNURBSFunctionsAndDerivative(-1,-1,_u,_v,R_matrix, dR_matrix);
+		EvaluateNURBSFunctionsAndDerivative(span_u,span_v,_u,_v,R_matrix, dR_matrix);
 
 		Vector dR1 = ZeroVector(number_of_affected_control_points); //derivatives of shape functions in u-direction
 		Vector dR2 = ZeroVector(number_of_affected_control_points); //derivatives of shape functions in v-direction
@@ -784,7 +785,7 @@ public:
 	//
 	//########################################################################################	
 
-	void EvaluateGradientsForClosestPointSearch(Vector QminP, Matrix& Hessian, Vector& Gradient , double u, double v)
+	void EvaluateGradientsForClosestPointSearch(Vector& QminP, Matrix& Hessian, Vector& Gradient , double u, double v)
 	{
 		// The derivatives of the basis functions are evaluated
 		Matrix dR;

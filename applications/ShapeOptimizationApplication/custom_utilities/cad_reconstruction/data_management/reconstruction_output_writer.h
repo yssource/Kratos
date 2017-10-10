@@ -164,12 +164,12 @@ public:
     {
         if(iteration==1)
         {
-            std::cout << "> Starting to write modified georhino file to visualize displacements of all control points relevant for reconstruction..." << std::endl;
+            std::cout << "\n> Starting to write modified georhino file to visualize displacements of all control points relevant for reconstruction..." << std::endl;
             OutputModifiedGeoRhinoFileToIncludeAllRelevantControlPoints();
             std::cout << "> Finished writing modified georhino file." << std::endl;
         }
 
-        std::cout << "> Adding displacements of control points into Rhino results file..." << std::endl;
+        std::cout << "\n> Adding displacements of control points into Rhino results file..." << std::endl;
         OutputResultingControlPointDisplacementsInRhinoFormat( iteration );
         std::cout << "> Finished adding displacements of control points into Rhino results file." << std::endl;
     }

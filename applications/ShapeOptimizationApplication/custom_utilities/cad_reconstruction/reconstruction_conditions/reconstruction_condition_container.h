@@ -34,6 +34,7 @@
 #include "../data_management/cad_projection_utility.h"
 #include "../reconstruction_conditions/reconstruction_condition_displacement_mapping.h"
 #include "../reconstruction_conditions/reconstruction_constraint_displacement_coupling.h"
+#include "../reconstruction_conditions/reconstruction_constraint_rotation_coupling.h"
 #include "../reconstruction_conditions/regularization_condition_min_control_point_displacement.h"
 
 // ==============================================================================
@@ -142,20 +143,17 @@ public:
                 NodeType::Pointer node_of_interest = Node <3>::Pointer(new Node<3>(1, ip_coordinates));
 
                 array_1d<double,2> parameter_values_of_nearest_point;
-                array_1d<int,2> parameter_spans_of_nearest_point;
                 int patch_index_of_nearest_point = -1;
 
                 FE2CADProjector.DetermineNearestCADPoint( node_of_interest, 
                                                           parameter_values_of_nearest_point, 
-                                                          parameter_spans_of_nearest_point, 
                                                           patch_index_of_nearest_point );
 
                 NewCondition = ReconstructionCondition::Pointer( new DisplacementMappingCondition( geom_i,
                                                                                                    fem_integration_method,
                                                                                                    integration_point_number,
                                                                                                    patch_vector[patch_index_of_nearest_point],
-                                                                                                   parameter_values_of_nearest_point,
-                                                                                                   parameter_spans_of_nearest_point ));
+                                                                                                   parameter_values_of_nearest_point ));
                 mListOfReconstructionConditions.push_back( NewCondition );
             }
         }
@@ -195,6 +193,39 @@ public:
         }
         std::cout << "> Time needed for creating displacement constraints: " << timer.elapsed() << " s" << std::endl;              
     }
+
+    // --------------------------------------------------------------------------
+    void CreateRotationCouplingConstraintsOnAllCouplingPoints( double penalty_factor )
+    {
+        std::cout << "\n> Starting to create rotation coupling constraints..." << std::endl;
+        boost::timer timer;   
+        
+        ReconstructionConstraint::Pointer NewConstraint;        
+
+        BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
+        for(auto & brep_element_i : brep_elements_vector)
+        {
+            if(brep_element_i.HasCouplingCondition())
+            {
+                BREPGaussPointVector& coupling_gauss_points = brep_element_i.GetGaussPoints();
+                for(auto & gauss_point_i : coupling_gauss_points)
+                {
+                        unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
+                        Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
+            
+                        unsigned int slave_patch_id = gauss_point_i.GetSlavePatchId();
+                        Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );                
+                        
+                        NewConstraint = ReconstructionConstraint::Pointer( new RotationCouplingConstraint( gauss_point_i,
+                                                                                                           master_patch,
+                                                                                                           slave_patch,
+                                                                                                           penalty_factor ));
+                        mListOfReconstructionConstraints.push_back( NewConstraint );
+                }
+            }
+        }
+        std::cout << "> Time needed for creating rotation constraints: " << timer.elapsed() << " s" << std::endl;              
+    }    
 
     // --------------------------------------------------------------------------
     void CreateDirichletConditions()

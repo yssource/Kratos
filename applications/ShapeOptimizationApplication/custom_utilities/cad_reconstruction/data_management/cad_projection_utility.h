@@ -142,7 +142,6 @@ public:
     // --------------------------------------------------------------------------
     void DetermineNearestCADPoint( NodeType::Pointer PointOfInterest,
                                    array_1d<double,2>& parameter_values_of_nearest_point,
-                                   array_1d<int,2>& parameter_spans_of_nearest_point,
                                    int& patch_index_of_nearest_point )
     {
         // 1) Coarse search in the point cloud
@@ -200,9 +199,6 @@ public:
             KRATOS_WATCH(PointOfInterest)
           }
         }
-
-        // Compute and output span of each parameter
-				parameter_spans_of_nearest_point = patch_of_nearest_point.ComputeSurfaceKnotSpans( parameter_values_of_nearest_point ); 
     }
     
     // ==============================================================================

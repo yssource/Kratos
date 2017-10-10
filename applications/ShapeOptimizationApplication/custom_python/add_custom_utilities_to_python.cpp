@@ -154,6 +154,7 @@ void  AddCustomUtilitiesToPython()
     class_<ReconstructionConditionContainer, bases<Process> >("ReconstructionConditionContainer", init<ReconstructionDataBase&>())
         .def("CreateDisplacementMappingConditions", &ReconstructionConditionContainer::CreateDisplacementMappingConditions)
         .def("CreateDisplacementCouplingConstraintsOnAllCouplingPoints", &ReconstructionConditionContainer::CreateDisplacementCouplingConstraintsOnAllCouplingPoints)    
+        .def("CreateRotationCouplingConstraintsOnAllCouplingPoints", &ReconstructionConditionContainer::CreateRotationCouplingConstraintsOnAllCouplingPoints)    
         .def("CreateDirichletConditions", &ReconstructionConditionContainer::CreateDirichletConditions)
         .def("CreateMinimalControlPointDisplacementCondition", &ReconstructionConditionContainer::CreateMinimalControlPointDisplacementCondition)       
         ;           

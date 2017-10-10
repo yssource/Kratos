@@ -118,6 +118,9 @@ public:
     // --------------------------------------------------------------------------
     void InitializeConditions()
     {
+        std::cout << "\n> Initializing conditions ..." << std::endl;            
+        boost::timer timer; 
+             
         for(auto condition_i : mrReconstructionConditions)
             condition_i->Initialize();
         
@@ -125,7 +128,9 @@ public:
             condition_i->Initialize();
 
         for(auto condition_i : mrRegularizationConditions)            
-            condition_i->Initialize();             
+            condition_i->Initialize(); 
+            
+        std::cout << "> Time needed for initializing conditions: " << timer.elapsed() << " s" << std::endl;                  
     }
 
     // --------------------------------------------------------------------------

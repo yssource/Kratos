@@ -133,43 +133,63 @@ public:
 	}
 
 	// --------------------------------------------------------------------------
-	void EvaluateSurfacePoint( array_1d<double,2> parameter_values, Point<3>& rSurfacePoint )
+	void EvaluateSurfacePoint( array_1d<double,2>& parameter_values, Point<3>& rSurfacePoint )
 	{
 		m_nurbs_surface.EvaluateSurfacePoint( parameter_values[0], parameter_values[1], rSurfacePoint );
 	}
 
 	// --------------------------------------------------------------------------
-	void EvaluateSurfaceDisplacement( array_1d<double,2> parameter_values, array_1d<double,3>& rSurfaceDisplacement )
+	void EvaluateSurfaceDisplacement( array_1d<double,2>& parameter_values, array_1d<double,3>& rSurfaceDisplacement )
 	{
 		m_nurbs_surface.EvaluateSurfaceDisplacement( parameter_values[0], parameter_values[1], rSurfaceDisplacement );
 	}
 		
 	// --------------------------------------------------------------------------
-	std::vector<double> EvaluateNURBSFunctions( array_1d<int,2> parameter_spans, array_1d<double,2> parameter_values )
+	std::vector<double> EvaluateNURBSFunctions( array_1d<int,2>& parameter_spans, array_1d<double,2>& parameter_values )
 	{
 		return m_nurbs_surface.EvaluateNURBSFunctions( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
-	}	
+	}
 
 	// --------------------------------------------------------------------------
-	array_1d<int,2> ComputeSurfaceKnotSpans( array_1d<double,2> parameter_values )
+	void ComputeVariationOfLocalCSY( array_1d<int,2>& parameter_spans, 
+									 array_1d<double,2>& parameter_values, 
+									 array_1d<double,2>& _par_g1, 
+								     Vector& _t1, 
+								     Vector& _t2,
+								     Vector& _t3,
+								     std::vector<Vector>& _t1r, 
+								     std::vector<Vector>& _t2r, 
+									 std::vector<Vector>& _t3r )
+	{
+		m_nurbs_surface.ComputeVariationOfLocalCSY( parameter_spans[0], 
+													parameter_spans[1], 
+													parameter_values[0], 
+													parameter_values[1],
+													_par_g1, 
+													_t1, _t2, _t3,
+													_t1r, _t2r, _t3r );
+	}
+
+	// --------------------------------------------------------------------------
+	array_1d<int,2> ComputeSurfaceKnotSpans( array_1d<double,2>& parameter_values )
 	{
 		return m_nurbs_surface.ComputeKnotSpans( parameter_values[0], parameter_values[1] );
 	}
 	
 	// --------------------------------------------------------------------------
-	Matrix ComputeBaseVectors( array_1d<int,2> parameter_spans, array_1d<double,2> parameter_values )
+	Matrix ComputeBaseVectors( array_1d<int,2>& parameter_spans, array_1d<double,2>& parameter_values )
 	{	
 		return m_nurbs_surface.ComputeBaseVectors( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
 	}
 
 	// --------------------------------------------------------------------------
-	void EvaluateGradientsForClosestPointSearch( Vector distance, Matrix& rHessian, Vector& rGradient , array_1d<double,2> parameter_values )
+	void EvaluateGradientsForClosestPointSearch( Vector& distance, Matrix& rHessian, Vector& rGradient , array_1d<double,2>& parameter_values )
 	{
 		return m_nurbs_surface.EvaluateGradientsForClosestPointSearch( distance, rHessian, rGradient, parameter_values[0], parameter_values[1] );
 	}
 
 	// --------------------------------------------------------------------------
-	void FlagAffectedControlPointsForReconstruction( array_1d<int,2> parameter_spans, array_1d<double,2> parameter_values )
+	void FlagAffectedControlPointsForReconstruction( array_1d<int,2>& parameter_spans, array_1d<double,2>& parameter_values )
 	{
 		return m_nurbs_surface.FlagAffectedControlPointsForReconstruction( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
 	}
@@ -199,13 +219,13 @@ public:
 	}	
 
 	// --------------------------------------------------------------------------
-	std::vector<ControlPoint*> GetPointersToAffectedControlPoints( array_1d<double,2> parameter_spans, array_1d<double,2> parameter_values )
+	std::vector<ControlPoint*> GetPointersToAffectedControlPoints( array_1d<int,2>& parameter_spans, array_1d<double,2>& parameter_values )
 	{
 		return m_nurbs_surface.GetPointersToAffectedControlPoints( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
 	}	
 
 	// --------------------------------------------------------------------------
-	std::vector<int> GetEquationIdsOfAffectedControlPoints( array_1d<double,2> parameter_spans, array_1d<double,2> parameter_values )
+	std::vector<int> GetEquationIdsOfAffectedControlPoints( array_1d<int,2>& parameter_spans, array_1d<double,2>& parameter_values )
 	{
 		return m_nurbs_surface.GetEquationIdsOfAffectedControlPoints( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
 	}	

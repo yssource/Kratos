@@ -37,11 +37,12 @@ class CADReconstrutionUtilities():
         # Solution parameters
         self.SolutionIterations = 1
         self.PenaltyFactorForDisplacementCoupling = 1e3
+        self.PenaltyFactorForRotationCoupling = 1e3
         self.PenaltyFactorForDirichletConstraints = 1e3
         self.PenaltyMultiplier = 1.0
        
         # Parameters to edit input data       
-        self.FERefinementLevel = 0
+        self.FERefinementLevel = 1
 
         # Projection settings
         self.ParameterResolutionForProjection = [ 100, 100 ]
@@ -76,6 +77,10 @@ class CADReconstrutionUtilities():
     def SetDisplacementCouplingOnAllCouplingPoints( self ):
         self.IsDisplacementCouplingSpecifiedForAllCouplingPoints = True
 
+    # --------------------------------------------------------------------------
+    def SetRotationCouplingOnAllCouplingPoints( self ):
+        self.IsRotationCouplingSpecifiedForAllCouplingPoints = True
+        
     # --------------------------------------------------------------------------
     def SetDirichletConstraints( self, list_of_condition_settings ):
         self.AreDirichletConstraintsSpecified = True
@@ -161,6 +166,7 @@ class CADReconstrutionUtilities():
     # --------------------------------------------------------------------------
     def __InitializeConstraints( self ):
         self.IsDisplacementCouplingSpecifiedForAllCouplingPoints = False
+        self.IsRotationCouplingSpecifiedForAllCouplingPoints = False
         self.AreDirichletConstraintsSpecified = False
     
     # --------------------------------------------------------------------------
@@ -192,6 +198,8 @@ class CADReconstrutionUtilities():
         # Reconstruction constraints
         if self.IsDisplacementCouplingSpecifiedForAllCouplingPoints: 
             self.ConditionsContainer.CreateDisplacementCouplingConstraintsOnAllCouplingPoints( self.PenaltyFactorForDisplacementCoupling )
+        if self.IsRotationCouplingSpecifiedForAllCouplingPoints: 
+            self.ConditionsContainer.CreateRotationCouplingConstraintsOnAllCouplingPoints( self.PenaltyFactorForRotationCoupling )            
         if self.AreDirichletConstraintsSpecified:
             self.ConditionsContainer.CreateDirichletConstraints( self.DirichletConstraints, self.PenaltyFactorForDirichletConstraints )
 
@@ -250,6 +258,7 @@ CADReconstructionUtility.Initialize()
 
 # Set Boundary Conditions
 CADReconstructionUtility.SetDisplacementCouplingOnAllCouplingPoints()
+CADReconstructionUtility.SetRotationCouplingOnAllCouplingPoints()
 
 # Some output before reconstruction
 CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_cad_geometry.txt" )

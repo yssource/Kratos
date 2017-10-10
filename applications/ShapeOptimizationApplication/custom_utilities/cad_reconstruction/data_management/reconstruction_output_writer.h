@@ -53,9 +53,14 @@ public:
     ///@{
 
     /// Default constructor.
-    ReconstructionOutputWriter( ReconstructionDataBase& reconstruction_data_base, std::string output_folder )
+    ReconstructionOutputWriter( ReconstructionDataBase& reconstruction_data_base,
+                                std::string output_folder,
+                                std::string result_output_filename, 
+                                std::string original_georhino_filename )
     : mrReconstructionDataBase( reconstruction_data_base ),
-      mOutputFolder( output_folder )
+      mOutputFolder( output_folder ),
+      mResultOutputFilename( result_output_filename ),
+      mOriginalGeorhinoFilename( original_georhino_filename )
     {      
     }
 
@@ -155,45 +160,25 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    void OutputControlPointDisplacementsInRhinoFormat( std::string result_output_filename, std::string original_georhino_filename )
+    void OutputResultsInRhinoFormat( int iteration )
     {
-        std::cout << "\n> Starting to write displacements of control points into Rhino results file..." << std::endl;
-        OutputDisplacementsInRhinoFormat( result_output_filename );
-        std::cout << "> Finished writing displacements of control points into Rhino format." << std::endl;
-        
-        std::cout << "> Starting to write modified georhino file to visualize displacements of all control points relevant for reconstruction..." << std::endl;
-        OutputModifiedGeoRhinoFileToIncludeAllRelevantControlPoints( result_output_filename, original_georhino_filename );
-        std::cout << "> Finished writing modified georhino file." << std::endl;
+        if(iteration==1)
+        {
+            std::cout << "> Starting to write modified georhino file to visualize displacements of all control points relevant for reconstruction..." << std::endl;
+            OutputModifiedGeoRhinoFileToIncludeAllRelevantControlPoints();
+            std::cout << "> Finished writing modified georhino file." << std::endl;
+        }
+
+        std::cout << "> Adding displacements of control points into Rhino results file..." << std::endl;
+        OutputResultingControlPointDisplacementsInRhinoFormat( iteration );
+        std::cout << "> Finished adding displacements of control points into Rhino results file." << std::endl;
     }
 
     // --------------------------------------------------------------------------
-    void OutputDisplacementsInRhinoFormat( std::string result_output_filename )
+    void OutputModifiedGeoRhinoFileToIncludeAllRelevantControlPoints()
     {
-        std::ofstream restult_output_file( mOutputFolder + "/" + result_output_filename );        
-
-        restult_output_file << "Rhino Post Results File 1.0" << std::endl;
-        restult_output_file << "Result \"Displacement\" \"Load Case\" 0 Vector OnNodes" << std::endl;
-        restult_output_file << "Values" << std::endl;
-
-        unsigned int control_point_iterator = 0;
-        for(auto & patch_i : mrReconstructionDataBase.GetPatchVector()) 
-        {
-            for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
-            {
-                control_point_iterator++;
-                if(control_point_i.IsRelevantForReconstruction())                
-                    restult_output_file << control_point_iterator << " " << control_point_i.GetdX() << " " << control_point_i.GetdY() << " " << control_point_i.GetdZ() << std::endl;
-            }
-        }
-        restult_output_file << "End Values" << std::endl;
-        restult_output_file.close();
-    }  
-
-    // --------------------------------------------------------------------------
-    void OutputModifiedGeoRhinoFileToIncludeAllRelevantControlPoints( std::string result_output_filename, std::string original_georhino_filename )
-    {
-        std::ifstream input_file(original_georhino_filename);
-        std::ofstream georhino_output_file( mOutputFolder + "/" + original_georhino_filename );
+        std::ifstream input_file(mOriginalGeorhinoFilename);
+        std::ofstream georhino_output_file( mOutputFolder + "/" + mOriginalGeorhinoFilename );
         
         std::string line; // last line to be read
         
@@ -258,6 +243,36 @@ public:
     }
 
     // --------------------------------------------------------------------------
+    void OutputResultingControlPointDisplacementsInRhinoFormat( int iteration )
+    {
+        std::ofstream restult_output_file;
+
+        if(iteration==1)
+        {
+            restult_output_file.open( mOutputFolder + "/" + mResultOutputFilename, std::ofstream::out | std::ofstream::trunc );        
+            restult_output_file << "Rhino Post Results File 1.0" << std::endl;
+        }
+        else
+            restult_output_file.open( mOutputFolder + "/" + mResultOutputFilename, std::ofstream::out | std::ofstream::app );        
+        
+        restult_output_file << "Result \"Displacement\" \"Load Case\" " << std::to_string(iteration) << " Vector OnNodes" << std::endl;
+        restult_output_file << "Values" << std::endl;
+
+        unsigned int control_point_iterator = 0;
+        for(auto & patch_i : mrReconstructionDataBase.GetPatchVector()) 
+        {
+            for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
+            {
+                control_point_iterator++;
+                if(control_point_i.IsRelevantForReconstruction())                
+                    restult_output_file << control_point_iterator << " " << control_point_i.GetdX() << " " << control_point_i.GetdY() << " " << control_point_i.GetdZ() << std::endl;
+            }
+        }
+        restult_output_file << "End Values" << std::endl;
+        restult_output_file.close();
+    }      
+
+    // --------------------------------------------------------------------------
     bool find_substring(std::string str, std::string substring)
     {
         std::size_t found = str.find(substring);
@@ -289,6 +304,8 @@ private:
 
     ReconstructionDataBase& mrReconstructionDataBase;
     std::string mOutputFolder;
+    std::string mResultOutputFilename;
+    std::string mOriginalGeorhinoFilename;
 
     /// Assignment operator.
     //      ReconstructionOutputWriter& operator=(ReconstructionOutputWriter const& rOther);

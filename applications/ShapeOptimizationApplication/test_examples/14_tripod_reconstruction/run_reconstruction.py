@@ -35,10 +35,10 @@ class CADReconstrutionUtilities():
         self.FEMGaussIntegrationDegree = 5
 
         # Solution parameters
-        self.SolutionIterations = 2
-        self.PenaltyFactorForDisplacementCoupling = 1e1
+        self.SolutionIterations = 1
+        self.PenaltyFactorForDisplacementCoupling = 1e3
         self.PenaltyFactorForDirichletConstraints = 1e3
-        self.PenaltyMultiplier = 10.0
+        self.PenaltyMultiplier = 1.0
        
         # Parameters to edit input data       
         self.FERefinementLevel = 0
@@ -61,6 +61,8 @@ class CADReconstrutionUtilities():
         # Parameters for output
         self.OutputFolder = "01_Results"
         self.ParameterResolutionForOutputOfSurfacePoints = [ 50, 50 ]
+        self.GeorhinoFilename = "tripod.georhino.txt"
+        self.RhinoResultsFilename = "tripod.post.res"
 
     # --------------------------------------------------------------------------
     def Initialize( self ):
@@ -83,7 +85,7 @@ class CADReconstrutionUtilities():
     def PerformReconstruction( self ):
         self.__CreateReconstructionConditions()
         self.__CreateSolverForReconstruction()
-        self.__SolveReconstructionEquation()
+        self.__RunSolutionAlorithm()
         
     # --------------------------------------------------------------------------
     def OutputFEData( self ):
@@ -109,10 +111,6 @@ class CADReconstrutionUtilities():
     # --------------------------------------------------------------------------
     def OutputGaussPointsOfFEMesh( self, file_to_write ):
         self.OutputWriter.OutputGaussPointsOfFEMesh( file_to_write, self.FEMGaussIntegrationDegree )
-
-    # --------------------------------------------------------------------------
-    def OutputControlPointDisplacementsInRhinoFormat( self, file_to_write, georhino_file_containing_cad_geometry ):
-        self.OutputWriter.OutputControlPointDisplacementsInRhinoFormat( file_to_write,  georhino_file_containing_cad_geometry )   
 
     # --------------------------------------------------------------------------
     def __ReadFEData( self ):
@@ -174,7 +172,7 @@ class CADReconstrutionUtilities():
     def __CreateReconstructionOutputWriter( self ):
         if not os.path.exists( self.OutputFolder ):
             os.makedirs( self.OutputFolder )    
-        self.OutputWriter = ReconstructionOutputWriter( self.DataBase, self.OutputFolder )    
+        self.OutputWriter = ReconstructionOutputWriter( self.DataBase, self.OutputFolder, self.RhinoResultsFilename, self.GeorhinoFilename )    
 
     # --------------------------------------------------------------------------
     def __CreateReconstructionConditions( self ):
@@ -206,23 +204,25 @@ class CADReconstrutionUtilities():
         self.ReconstructionSolver = CADReconstructionSolver( self.DataBase, self.ConditionsContainer, self.LinearSolver )
 
     # --------------------------------------------------------------------------
-    def __SolveReconstructionEquation( self ): 
+    def __RunSolutionAlorithm( self ): 
         
-        self.ReconstructionSolver.InitializeEquationSystem() 
+        self.ReconstructionSolver.InitializeEquationSystem()
 
         for iteration in range(1,self.SolutionIterations+1): 
             print("\n===========================================")
             print("Starting reconstruction iteration ", iteration,"...")
             print("===========================================")            
 
-            if self.SolutionIterations>1:  
-                self.ReconstructionSolver.MultiplyAllPenaltyFactorsByInputFactor( self.PenaltyMultiplier ) 
+            if iteration > 1:  
+                self.ReconstructionSolver.MultiplyAllPenaltyFactorsByInputFactor( self.PenaltyMultiplier )               
 
             self.ReconstructionSolver.ComputeLHS()
             self.ReconstructionSolver.ComputeRHS()
             self.ReconstructionSolver.SolveEquationSystem()
 
             self.ReconstructionSolver.UpdateControlPointsAccordingReconstructionStrategy( self.ReconstructionStrategy )
+            
+            self.OutputWriter.OutputResultsInRhinoFormat( iteration ) 
 
         print("\n===========================================")
         print("Finished reconstruction loop.")
@@ -261,7 +261,6 @@ CADReconstructionUtility.PerformReconstruction()
 CADReconstructionUtility.OutputFEData()
 CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_updated_cad_geometry.txt" )
 CADReconstructionUtility.OutputGaussPointsOfFEMesh( "gauss_points_of_fe_mesh.txt" )
-CADReconstructionUtility.OutputControlPointDisplacementsInRhinoFormat( "tripod.post.res", "tripod.georhino.txt" )
 
 print("\n========================================================================================================")
 print("> Finished reconstruction in " ,round( time.time()-start_time, 3 ), " s.")

@@ -34,7 +34,6 @@
 #include "../data_management/cad_projection_utility.h"
 #include "../reconstruction_conditions/reconstruction_condition_displacement_mapping.h"
 #include "../reconstruction_conditions/reconstruction_constraint_displacement_coupling.h"
-#include "../reconstruction_conditions/regularization_condition_min_diagonal_value.h"
 #include "../reconstruction_conditions/regularization_condition_min_control_point_displacement.h"
 
 // ==============================================================================

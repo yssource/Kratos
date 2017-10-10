@@ -109,9 +109,10 @@ public:
     // --------------------------------------------------------------------------
     void ComputeAndAddRHSContribution( Vector& RHS )
     {
-        if(mSolutionStrategy.compare("least_squares") == 0)
+        std::cout << "> Starting to compute RHS contribution of beta-regularization (minimal control point displacement)..." << std::endl;  
+        
+        if(mSolutionStrategy.compare("mapping") == 0)
         {
-            std::cout << "> Starting to compute RHS contribution of beta-regularization (minimal control point displacement)..." << std::endl;  
             for(auto & patch_i : mrReconstructionDataBase.GetPatchVector()) 
             {
                 for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
@@ -119,14 +120,15 @@ public:
                     if(control_point_i.IsRelevantForReconstruction())
                     {
                         unsigned int cp_equation_id = control_point_i.GetEquationId();
-                        RHS[3*cp_equation_id+0] += mBetaValue*control_point_i.GetX0();
-                        RHS[3*cp_equation_id+1] += mBetaValue*control_point_i.GetY0();
-                        RHS[3*cp_equation_id+2] += mBetaValue*control_point_i.GetZ0();     
+                        RHS[3*cp_equation_id+0] -= mBetaValue*control_point_i.GetdX();
+                        RHS[3*cp_equation_id+1] -= mBetaValue*control_point_i.GetdY();
+                        RHS[3*cp_equation_id+2] -= mBetaValue*control_point_i.GetdZ();     
                     }
                 }
             }
-            std::cout << "> Finished computing RHS contribution of beta-regularization (minimal control point displacement)." << std::endl;                   
-        }
+        }      
+
+        std::cout << "> Finished computing RHS contribution of beta-regularization (minimal control point displacement)." << std::endl;                   
     }
 
     // ==============================================================================

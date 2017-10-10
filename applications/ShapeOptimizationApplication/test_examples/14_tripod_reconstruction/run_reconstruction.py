@@ -35,10 +35,10 @@ class CADReconstrutionUtilities():
         self.FEMGaussIntegrationDegree = 5
 
         # Solution parameters
-        self.SolutionIterations = 1
-        self.PenaltyFactorForDisplacementCoupling = 1e3
+        self.SolutionIterations = 2
+        self.PenaltyFactorForDisplacementCoupling = 1e1
         self.PenaltyFactorForDirichletConstraints = 1e3
-        self.PenaltyMultiplier = 1.0
+        self.PenaltyMultiplier = 10.0
        
         # Parameters to edit input data       
         self.FERefinementLevel = 0

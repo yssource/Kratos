@@ -49,9 +49,11 @@ class CADReconstrutionUtilities():
         self.ProjectionTolerance = 1e-5
 
         # Regularization settings
-        self.ApplyMinimalDiagonalValueRegularization = True 
+        self.EnforceMinimalDiagonalValue = False 
         self.MinimalValue = 1e-3
-        # self.ApplyBetaRegularization = True
+
+        self.MinimizeControlPointDisplacement = True
+        self.Beta = 0.002
 
         # Linear solver
         self.LinearSolver = SuperLUSolver()
@@ -199,10 +201,10 @@ class CADReconstrutionUtilities():
             self.ConditionsContainer.CreateDirichletConstraints( self.DirichletConstraints, self.PenaltyFactorForDirichletConstraints )
 
         # Regularization
-        if self.ApplyMinimalDiagonalValueRegularization: 
-            self.ConditionsContainer.CreateMinimalDiagonalValueRegularizationCondition( self.MinimalValue )
-        # if self.ApplyBetaRegularization: 
-        #     self.ConditionsContainer.CreateBetaRegularizationCondition()                   
+        if self.EnforceMinimalDiagonalValue: 
+            self.ConditionsContainer.CreateMinimalDiagonalValueCondition( self.MinimalValue )
+        if self.MinimizeControlPointDisplacement: 
+            self.ConditionsContainer.CreateMinimalControlPointDisplacementCondition( self.DataBase, self.Beta, self.ReconstructionStrategy )                   
 
     # --------------------------------------------------------------------------
     def __CreateSolverForReconstruction( self ):
@@ -217,12 +219,18 @@ class CADReconstrutionUtilities():
             print("\n===========================================")
             print("Starting reconstruction iteration ", iteration,"...")
             print("===========================================")            
+
+            if self.SolutionIterations>1:  
+                self.ReconstructionSolver.MultiplyAllPenaltyFactorsByInputFactor( self.PenaltyMultiplier ) 
+
             self.ReconstructionSolver.ComputeLHS()
             self.ReconstructionSolver.ComputeRHS()
             self.ReconstructionSolver.SolveEquationSystem()
+
             self.ReconstructionSolver.UpdateControlPointsAccordingReconstructionStrategy( self.ReconstructionStrategy )
-            if self.SolutionIterations>1:  
-                self.ReconstructionSolver.MultiplyAllPenaltyFactorsByInputFactor( self.PenaltyMultiplier ) 
+
+
+
 
         print("\n===========================================")
         print("Finished reconstruction loop.")

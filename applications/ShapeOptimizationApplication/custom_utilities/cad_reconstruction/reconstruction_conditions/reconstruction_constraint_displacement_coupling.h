@@ -223,9 +223,9 @@ public:
             int equation_id_slave = mEquationIdsOfAffectedControlPointsOnSlave[equation_itr];
             double R_slave = mNurbsFunctionValuesOnSlave[equation_itr];
 
-            RHS[3*equation_id_slave+0] -= mPenaltyFactor * mIntegrationWeight * mJ1 * ( master_surface_displacement[0] - slave_surface_displacement[0] ) * R_slave;
-            RHS[3*equation_id_slave+1] -= mPenaltyFactor * mIntegrationWeight * mJ1 * ( master_surface_displacement[1] - slave_surface_displacement[1] ) * R_slave;
-            RHS[3*equation_id_slave+2] -= mPenaltyFactor * mIntegrationWeight * mJ1 * ( master_surface_displacement[2] - slave_surface_displacement[2] ) * R_slave;
+            RHS[3*equation_id_slave+0] += mPenaltyFactor * mIntegrationWeight * mJ1 * ( master_surface_displacement[0] - slave_surface_displacement[0] ) * R_slave;
+            RHS[3*equation_id_slave+1] += mPenaltyFactor * mIntegrationWeight * mJ1 * ( master_surface_displacement[1] - slave_surface_displacement[1] ) * R_slave;
+            RHS[3*equation_id_slave+2] += mPenaltyFactor * mIntegrationWeight * mJ1 * ( master_surface_displacement[2] - slave_surface_displacement[2] ) * R_slave;
         }
     }
 

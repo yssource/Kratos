@@ -35,6 +35,7 @@
 #include "../reconstruction_conditions/reconstruction_condition_displacement_mapping.h"
 #include "../reconstruction_conditions/reconstruction_constraint_displacement_coupling.h"
 #include "../reconstruction_conditions/regularization_condition_min_diagonal_value.h"
+#include "../reconstruction_conditions/regularization_condition_min_control_point_displacement.h"
 
 // ==============================================================================
 
@@ -202,11 +203,20 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    void CreateMinimalDiagonalValueRegularizationCondition( double min_value )
+    void CreateMinimalDiagonalValueCondition( double min_value )
     {
         RegularizationCondition::Pointer NewCondition = RegularizationCondition::Pointer( new MinimalDiagonalValueCondition( min_value ) );
         mListOfRegularizationConditions.push_back( NewCondition );
-    }       
+    }
+    
+    // --------------------------------------------------------------------------
+    void CreateMinimalControlPointDisplacementCondition( ReconstructionDataBase& data_base, double beta_value, std::string solution_strategy )
+    {
+        RegularizationCondition::Pointer NewCondition = RegularizationCondition::Pointer( new MinimalControlPointDisplacementCondition( data_base,
+                                                                                                                                        beta_value,
+                                                                                                                                        solution_strategy ) );
+        mListOfRegularizationConditions.push_back( NewCondition );
+    }     
 
     // --------------------------------------------------------------------------
     std::vector<ReconstructionCondition::Pointer>& GetReconstructionConditions()

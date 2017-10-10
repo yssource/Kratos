@@ -134,10 +134,10 @@ public:
         std::cout << "\n> Initializing System LHS and RHS..." << std::endl;            
 
         mLHS.resize(3*mNumberOfRelevantControlPoints,3*mNumberOfRelevantControlPoints);
-        mLHSWithoutConstraints.resize(3*mNumberOfRelevantControlPoints,3*mNumberOfRelevantControlPoints);
+        mLHSConstantPart.resize(3*mNumberOfRelevantControlPoints,3*mNumberOfRelevantControlPoints);
         mRHS.resize(3*mNumberOfRelevantControlPoints);
         mLHS.clear();
-        mLHSWithoutConstraints.clear();
+        mLHSConstantPart.clear();
         mRHS.clear();
 
         mSolutionVector.resize(3*mNumberOfRelevantControlPoints);
@@ -159,10 +159,10 @@ public:
         {
             isLHSWithoutConstraintsComputed = true;
             for(auto condition_i : mrReconstructionConditions)
-                condition_i->ComputeAndAddLHSContribution( mLHSWithoutConstraints );
+                condition_i->ComputeAndAddLHSContribution( mLHSConstantPart );
         }
 
-        mLHS = mLHSWithoutConstraints;
+        mLHS = mLHSConstantPart;
 
         // Compute contribution from reconstruction constraints
         for(auto condition_i : mrReconstructionConstraints)
@@ -188,7 +188,7 @@ public:
                 number_of_small_values_on_main_diagonal++;
 
         if(number_of_small_values_on_main_diagonal>0)
-            std::cout << "> WARNING, number of values on main diagonal < " << zero_threshold << ": " << number_of_small_values_on_main_diagonal << " !!!!!!!!!!!!!!! " << std::endl;
+            std::cout << "> WARNING, before regularization, number of values on main diagonal < " << zero_threshold << ": " << number_of_small_values_on_main_diagonal << " !!!!!!!!!!!!!!! " << std::endl;
     }
 
     // --------------------------------------------------------------------------
@@ -226,6 +226,10 @@ public:
         mSolutionVector.clear();        
         mpLinearSolver->Solve(mLHS, mSolutionVector, mRHS);
 
+        Vector residual_vector = mRHS - prod(mLHS,mSolutionVector);
+        std::cout << "> Max value in residual vector = " << *std::max_element(residual_vector.begin(),residual_vector.end()) << std::endl;
+        std::cout << "> L2 norm of residual vector = " << norm_2(residual_vector) << std::endl;      
+
         std::cout << "> Time needed for solving reconstruction equation: " << timer.elapsed() << " s" << std::endl;
     }
 
@@ -247,7 +251,7 @@ public:
     void MultiplyAllPenaltyFactorsByInputFactor( double factor )
     {
         for(auto condition_i : mrReconstructionConstraints)
-            condition_i->Set( "PENALTY_MULTIPLIER", 10 );  
+            condition_i->Set( "PENALTY_MULTIPLIER", factor );  
     }    
 
     // ==============================================================================
@@ -286,7 +290,7 @@ private:
     int mNumberOfControlPoints = 0;
     int mNumberOfRelevantControlPoints = 0;
     CompressedMatrix mLHS;
-    CompressedMatrix mLHSWithoutConstraints;
+    CompressedMatrix mLHSConstantPart;
     bool isLHSWithoutConstraintsComputed = false;
     Vector mRHS;
     Vector mSolutionVector;

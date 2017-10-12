@@ -163,8 +163,13 @@ class MpcData
 		*/
     void Clear()
     {
-        mSlaveEquationIdConstantsMap.clear();
+        mDofConstraints.clear();
         mEquationIdToWeightsMap.clear();
+        mSlaveDofToNodalNormalMap.clear();
+        mSlaveEquationIdToNodalNormalMap.clear();
+        mSlaveEquationIdConstantsMap.clear();
+        mSlaveEquationIdConstantsUpdate.clear();
+        RtMinvR = 1;
     }
 
     /**
@@ -333,7 +338,6 @@ class MpcData
     ///@{
     //this holds the definition of the constraint - can be constructed prior to EquationIds
     std::string mType;
-
 
     std::unordered_map<SlavePairType, MasterDofWeightMapType, pair_hash> mDofConstraints;
 

@@ -285,8 +285,12 @@ class ApplyChimeraProcess : public Process
 
 					if (pressure_coupling == "all")
 					{
-						AddMasterSlaveRelationWithNodesAndVariable(pMpc, geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
+						//Interpolation of pressure
 						p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0) += geom[i].GetDof(PRESSURE).GetSolutionStepValue(0) * N[i];
+
+						//Defining master slave relation for pressure
+						AddMasterSlaveRelationWithNodesAndVariable(pMpc, geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
+						
 						counter++;
 					}
 				} // end of loop over host element nodes
@@ -342,7 +346,7 @@ class ApplyChimeraProcess : public Process
 		std::cout << counter << " pressure nodes from " << rBoundaryModelPart.Name() << " is coupled" << std::endl;
 	}
 
-	void ApplyMpcConstraintConservative(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, MpcDataPointerType pMpc, bool isOuter)
+	void ApplyMpcConstraintConservative(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, MpcDataPointerType pMpc, std::string pressure_coupling)
 	{
 
 		double rtMinvR = 0;

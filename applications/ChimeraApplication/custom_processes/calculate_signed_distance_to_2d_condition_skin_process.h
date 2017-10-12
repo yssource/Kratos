@@ -310,7 +310,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
 
         //GenerateFluidModelPartbasedOnBoundingBox();
         GenerateQuadtree();
-        std::cout << "Inside Execute" << std::endl;
+
 
         DistanceFluidStructure();
         //unsigned int max_level = 100;
@@ -1263,18 +1263,6 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         {
             if ((ElementalDistances[i_node]) > 0)
                 numberNodesPositiveDistance++;
-        }
-
-         //_DEBUG
-        if (Element->Id() == 5832 || Element->Id() == 6022)
-        {
-
-            for (unsigned int i_node = 0; i_node < 3; i_node++)
-            {
-                double &di = ElementalDistances[i_node];
-
-                std::cout << "Element " << Element->Id() << " elem dist " << di << std::endl;
-            }
         }
 
         // Element is not set

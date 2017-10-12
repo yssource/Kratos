@@ -246,7 +246,6 @@ class ApplyChimeraProcess : public Process
 				p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(0) = 0.0;
 				p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(1) = 0.0;
 
-
 				if (TDim == 3)
 				{
 					p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0) = 0.0;
@@ -278,37 +277,40 @@ class ApplyChimeraProcess : public Process
 			}
 		}
 
-		if (isOuter)
+		if (!isOuter)
 		{
 
-			ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin();
-			Node<3>::Pointer p_boundary_node = *(iparticle.base());
-			typename BinBasedFastPointLocator<TDim>::ResultIteratorType result_begin = results.begin();
+			for (int i = 0; i < n_boundary_nodes; i++)
 
-			/*			std::cout<<"Point :: p_boundary_node->Coordinates() " << p_boundary_node->Coordinates()[0] <<" "<<p_boundary_node->Coordinates()[1] <<" "<<p_boundary_node->Coordinates()[2]<<std::endl;
+			{
+				ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin() + i;
+				Node<3>::Pointer p_boundary_node = *(iparticle.base());
+				typename BinBasedFastPointLocator<TDim>::ResultIteratorType result_begin = results.begin();
+
+				/*			std::cout<<"Point :: p_boundary_node->Coordinates() " << p_boundary_node->Coordinates()[0] <<" "<<p_boundary_node->Coordinates()[1] <<" "<<p_boundary_node->Coordinates()[2]<<std::endl;
 			std::exit(-1);*/
 
-			Element::Pointer pElement;
+				Element::Pointer pElement;
 
-			bool is_found = false;
-			is_found = pBinLocator->FindPointOnMesh(p_boundary_node->Coordinates(), N, pElement, result_begin, max_results);
+				bool is_found = false;
+				is_found = pBinLocator->FindPointOnMesh(p_boundary_node->Coordinates(), N, pElement, result_begin, max_results);
 
-			if (is_found == true)
-			{
-				Geometry<Node<3>> &geom = pElement->GetGeometry();
-				p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0) = 0.0;
-				for (int i = 0; i < geom.size(); i++)
+				if (is_found == true)
 				{
-					p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0) += geom[i].GetDof(PRESSURE).GetSolutionStepValue(0) * N[i];
-				}
-				p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(1) = p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0);
+					Geometry<Node<3>> &geom = pElement->GetGeometry();
+					p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0) = 0.0;
+					for (int i = 0; i < geom.size(); i++)
+					{
+						p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0) += geom[i].GetDof(PRESSURE).GetSolutionStepValue(0) * N[i];
+					}
+					p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(1) = p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0);
 
-				for (int i = 0; i < geom.size(); i++)
-				{
-					AddMasterSlaveRelationWithNodesAndVariable(pMpc, geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
+					for (int i = 0; i < geom.size(); i++)
+					{
+						AddMasterSlaveRelationWithNodesAndVariable(pMpc, geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
+					}
 				}
 			}
-
 		} // end of if (type == 0) conditions
 	}
 
@@ -356,7 +358,6 @@ class ApplyChimeraProcess : public Process
 
 		for (ModelPart::ElementsContainerType::iterator it = mrMainModelPart.ElementsBegin(); it != mrMainModelPart.ElementsEnd(); ++it)
 		{
-
 			it->Set(ACTIVE, true);
 		}
 

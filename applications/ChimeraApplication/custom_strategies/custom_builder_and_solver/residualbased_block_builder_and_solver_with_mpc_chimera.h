@@ -118,6 +118,8 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 
     typedef typename BaseType::DofsArrayType DofsArrayType;
 
+    typedef std::vector< Dof<double>::Pointer > DofsVectorType;
+
     typedef typename BaseType::TSystemMatrixType TSystemMatrixType;
 
     typedef typename BaseType::TSystemVectorType TSystemVectorType;
@@ -472,14 +474,16 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                 // For each node check if it is a slave or not If it is .. we change the Transformation matrix
                 for (unsigned int j = 0; j < number_of_nodes; j++)
                 {
+                    DofsVectorType elementDofs;
+                    rCurrentElement->GetDofList(elementDofs, CurrentProcessInfo);
+                    int numDofsPerNode = elementDofs.size() / number_of_nodes;
                     if (rCurrentElement->GetGeometry()[j].Is(SLAVE))
                     { //temporary, will be checked once at the beginning only
                         // Necessary data for iterating and modifying the matrix
-                        Node<3>::DofsContainerType nodeDofs = rCurrentElement->GetGeometry()[j].GetDofs();
                         unsigned int slaveEquationId;
-                        for (auto dof : nodeDofs)
-                        {
-                            slaveEquationId = dof.EquationId();
+                        int startPositionNodeDofs = numDofsPerNode*(j);  
+                        for (int i=0; i<numDofsPerNode; i++){
+                            slaveEquationId = elementDofs[startPositionNodeDofs + i] -> EquationId();
                             if (mpcData->mEquationIdToWeightsMap.count(slaveEquationId) > 0)
                             {
                                 MasterIdWeightMapType masterWeightsMap = mpcData->mEquationIdToWeightsMap[slaveEquationId];
@@ -512,14 +516,16 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                 // For each node check if it is a slave or not If it is .. we change the Transformation matrix
                 for (unsigned int j = 0; j < number_of_nodes; j++)
                 {
+                    DofsVectorType conditionDofs;
+                    rCurrentCondition->GetDofList(conditionDofs, CurrentProcessInfo);
+                    int numDofsPerNode = conditionDofs.size() / number_of_nodes;                    
                     if (rCurrentCondition->GetGeometry()[j].Is(SLAVE))
                     { //temporary, will be checked once at the beginning only
                         // Necessary data for iterating and modifying the matrix
-                        Node<3>::DofsContainerType nodeDofs = rCurrentCondition->GetGeometry()[j].GetDofs();
                         unsigned int slaveEquationId;
-                        for (auto dof : nodeDofs)
-                        {
-                            slaveEquationId = dof.EquationId();
+                        int startPositionNodeDofs = numDofsPerNode*(j);  
+                        for (int i=0; i<numDofsPerNode; i++){
+                            slaveEquationId = conditionDofs[startPositionNodeDofs + i] -> EquationId();                        
                             if (mpcData->mEquationIdToWeightsMap.count(slaveEquationId) > 0)
                             {
                                 MasterIdWeightMapType masterWeightsMap = mpcData->mEquationIdToWeightsMap[slaveEquationId];
@@ -563,7 +569,9 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
         {
             return;
         }
+
         MpcDataPointerVectorType mpcDataVector = CurrentProcessInfo.GetValue(MPC_DATA_CONTAINER);
+
         for (auto mpcData : (*mpcDataVector))
         {
             if (mpcData->IsActive())
@@ -592,13 +600,16 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                     std::vector<int> slaveEquationIds;
                     int totalNumberOfSlaves = 0;
                     int totalNumberOfMasters = 0;
+                    DofsVectorType elementDofs;
+                    rCurrentElement->GetDofList(elementDofs, CurrentProcessInfo);
+                    int numDofsPerNode = elementDofs.size() / number_of_nodes;
+
                     if (rCurrentElement->GetGeometry()[j].Is(SLAVE))
                     { // If the node has a slave DOF
-                        Node<3>::DofsContainerType nodeDofs = rCurrentElement->GetGeometry()[j].GetDofs();
+                        int startPositionNodeDofs = numDofsPerNode*(j);  
                         unsigned int slaveEquationId;
-                        for (auto dof : nodeDofs)
-                        {
-                            slaveEquationId = dof.EquationId();
+                        for (int i=0; i<numDofsPerNode; i++){
+                            slaveEquationId = elementDofs[startPositionNodeDofs + i] -> EquationId();
                             if (mpcData->mEquationIdToWeightsMap.count(slaveEquationId) > 0)
                             {
                                 totalNumberOfSlaves++;
@@ -606,7 +617,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                                 MasterIdWeightMapType &masterWeightsMap = mpcData->mEquationIdToWeightsMap[slaveEquationId];
 
                                 totalNumberOfMasters += masterWeightsMap.size();
-                            }
+                            }                            
                         }
 
                         std::vector<std::size_t>::iterator it;
@@ -724,7 +735,6 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 
                             RHS_Contribution(localSlaveEqId) = 0.0;
                         } // Loop over all the slaves for this node
-
                         //Adding contribution from slave to Kmm
                         if (!(mpcData->IsWeak()))
                         {
@@ -748,12 +758,10 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                 { // Loop over all the slaves for this node
                     for (auto localInternEqId : localInternEquationIds)
                     {
-
                         LHS_Contribution(localSlaveEqId, localInternEqId) = 0.0;
                         LHS_Contribution(localInternEqId, localSlaveEqId) = 0.0;
                     }
                 }
-
                 // For K(u,s) and K(s,u)
                 /*if(!(mpcData->IsWeak()))
                 {
@@ -825,13 +833,16 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                     std::vector<int> slaveEquationIds;
                     int totalNumberOfSlaves = 0;
                     int totalNumberOfMasters = 0;
+                    DofsVectorType elementDofs;
+                    rCurrentElement->GetDofList(elementDofs, CurrentProcessInfo);
+                    int numDofsPerNode = elementDofs.size() / number_of_nodes;
+
                     if (rCurrentElement->GetGeometry()[j].Is(SLAVE))
                     { // If the node has a slave DOF
-                        Node<3>::DofsContainerType nodeDofs = rCurrentElement->GetGeometry()[j].GetDofs();
+                        int startPositionNodeDofs = numDofsPerNode*(j);  
                         unsigned int slaveEquationId;
-                        for (auto dof : nodeDofs)
-                        {
-                            slaveEquationId = dof.EquationId();
+                        for (int i=0; i<numDofsPerNode; i++){
+                            slaveEquationId = elementDofs[startPositionNodeDofs + i] -> EquationId();
                             if (mpcData->mEquationIdToWeightsMap.count(slaveEquationId) > 0)
                             {
                                 totalNumberOfSlaves++;
@@ -839,7 +850,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                                 MasterIdWeightMapType &masterWeightsMap = mpcData->mEquationIdToWeightsMap[slaveEquationId];
 
                                 totalNumberOfMasters += masterWeightsMap.size();
-                            }
+                            }                            
                         }
 
                         std::vector<std::size_t>::iterator it;
@@ -1069,7 +1080,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 
                             {
                                 MasterIdWeightMapType masterWeightsMap = mpcData->mEquationIdToWeightsMap[slaveEquationId];
-                                 double constant = mpcData->mSlaveEquationIdConstantsMap[slaveEquationId];
+                                double constant = mpcData->mSlaveEquationIdConstantsMap[slaveEquationId];
                                 //std::cout << "Dx before postprocessing" << Dx[slaveEquationId] << std::endl; //debug
                                 for (auto master : masterWeightsMap)
                                 {
@@ -1079,7 +1090,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                                     //std::cout << "Master solution " << Dx[master.first] << " weight " << master.second << std::endl; //debug
                                 }
 
-                                Dx[slaveEquationId] = TSparseSpace::GetValue(Dx, slaveEquationId)+ constant;
+                                Dx[slaveEquationId] = TSparseSpace::GetValue(Dx, slaveEquationId) + constant;
                                 //std::cout << "Dx after postprocessing" << Dx[slaveEquationId] << std::endl; //debug
                                 //counter++;
 
@@ -1106,7 +1117,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 
             if (mpcData->IsActive())
 
-            {   //#####################################################CALCULATION OF FLUX######################################################
+            { //#####################################################CALCULATION OF FLUX######################################################
                 /*double r = 0;
                 ModelPart &mrBackgroundModelPart = r_model_part.GetSubModelPart(mpcData->mName);
                 for (ModelPart::ElementsContainerType::iterator i_fluid_element = mrBackgroundModelPart.ElementsBegin(); i_fluid_element != mrBackgroundModelPart.ElementsEnd(); i_fluid_element++)
@@ -1128,7 +1139,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                         is_split = false;
                     }
                 }*/
-/*
+                /*
                 for (ModelPart::ElementsContainerType::iterator i_fluid_element = mrBackgroundModelPart.ElementsBegin(); i_fluid_element != mrBackgroundModelPart.ElementsEnd(); i_fluid_element++)
                 {
                     bool is_split = i_fluid_element->GetValue(SPLIT_ELEMENT);
@@ -1211,9 +1222,9 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 							pSkinModelPart->Conditions().push_back(p_condition);
 						}
 						PrintGIDMesh(*pSkinModelPart);*/
-                        //###################################FOR VISUALSING SKIN MODEL PART##################################################################################
+                //###################################FOR VISUALSING SKIN MODEL PART##################################################################################
 
-                        /*if (edge_points.size() == 2)
+                /*if (edge_points.size() == 2)
                         {
 
                             for (unsigned int i = 0; i < 2; i++)
@@ -1313,7 +1324,6 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
             } // mpcData->IsActive()
 
         } // mpcData vector
-        
     }
 
     /*void UpdateConstraintEquationsAfterIteration(

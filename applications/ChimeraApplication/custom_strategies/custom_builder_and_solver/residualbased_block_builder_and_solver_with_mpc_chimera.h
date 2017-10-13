@@ -1258,6 +1258,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                     //std::cout << " RtMinvR " << RtMinvR << std::endl;
                     std::vector<double> VectorOfconstants;
                     unsigned int slaveIndex = 0;
+                    double norm = 0;
 
                     for (auto slaveMasterDofMap : mpcData->mDofConstraints)
                     {
@@ -1291,6 +1292,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                         // nav
                         //VectorOfconstants[slaveIndex] += ((NodalNormalComponent * r) / (nodalMass * RtMinvR));
                         //!!!!!!!!!!!!!!!!!!!!!!######################################################################
+                        norm += VectorOfconstants[slaveIndex]*VectorOfconstants[slaveIndex];
                         slaveIndex++;
                         //debug
                         //if((slaveDofKey == 972))
@@ -1318,7 +1320,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                     } // slaveMasterDofMap loop
 
                     //std::cout << "Conservative correction to the velocity field applied" << std::endl;
-                    std::cout << "Conservative Correction is calculated" << std::endl;
+                    std::cout << "Conservative Correction norm"<< sqrt(norm)<< std::endl;
                 } // if type == "Conservative"
 
             } // mpcData->IsActive()

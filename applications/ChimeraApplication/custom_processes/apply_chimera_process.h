@@ -208,15 +208,19 @@ class ApplyChimeraProcess : public Process
 
 	void ApplyMpcConstraint(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, MpcDataPointerType pMpc, bool isOuter = false)
 	{
+
 		//loop over nodes and find the triangle in which it falls, than do interpolation
 		array_1d<double, TDim + 1> N;
 		const int max_results = 10000;
 		typename BinBasedFastPointLocator<TDim>::ResultContainerType results(max_results);
 		const int n_boundary_nodes = rBoundaryModelPart.Nodes().size();
 
+		unsigned int counter = 0;
+
 #pragma omp parallel for firstprivate(results, N)
 		//MY NEW LOOP: reset the visited flag
 		for (int i = 0; i < n_boundary_nodes; i++)
+
 		{
 			ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin() + i;
 			Node<3>::Pointer p_boundary_node = *(iparticle.base());
@@ -236,82 +240,84 @@ class ApplyChimeraProcess : public Process
 			bool is_found = false;
 			is_found = pBinLocator->FindPointOnMesh(p_boundary_node->Coordinates(), N, pElement, result_begin, max_results);
 
+			// Initialise the boundary nodes dofs to 0 at ever time steps
+
+			p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(0) = 0.0;
+			p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(0) = 0.0;
+
+			if (TDim == 3)
+				p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0) = 0.0;
+
 			if (is_found == true)
 			{
 				Geometry<Node<3>> &geom = pElement->GetGeometry();
 
-				p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(0) = 0.0;
-				p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(1) = 0.0;
-
-				p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(0) = 0.0;
-				p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(1) = 0.0;
-
-				if (TDim == 3)
-				{
-					p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0) = 0.0;
-					p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(1) = 0.0;
-				}
-
 				for (int i = 0; i < geom.size(); i++)
 				{
+					//Interpolation of velocity
 					p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(0) += geom[i].GetDof(VELOCITY_X).GetSolutionStepValue(0) * N[i];
 					p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(0) += geom[i].GetDof(VELOCITY_Y).GetSolutionStepValue(0) * N[i];
-					if (TDim == 3)
-					{
-						p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0) += geom[i].GetDof(VELOCITY_Z).GetSolutionStepValue(0) * N[i];
-					}
-				}
-				p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(0);
-				p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(0);
-				if (TDim == 3)
-					p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0);
 
-				for (int i = 0; i < geom.size(); i++)
-				{
-
+					//Define master slave relation for velocity
 					AddMasterSlaveRelationWithNodesAndVariableComponents(pMpc, geom[i], VELOCITY_X, *p_boundary_node, VELOCITY_X, N[i]);
 					AddMasterSlaveRelationWithNodesAndVariableComponents(pMpc, geom[i], VELOCITY_Y, *p_boundary_node, VELOCITY_Y, N[i]);
 					if (TDim == 3)
-						AddMasterSlaveRelationWithNodesAndVariableComponents(pMpc, geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i]);
-				}
-			}
-		}
+					{
+						//Interpolation of velocity
+						p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0) += geom[i].GetDof(VELOCITY_Z).GetSolutionStepValue(0) * N[i];
 
-		if (!isOuter)
+						//Define master slave relation for velocity
+						AddMasterSlaveRelationWithNodesAndVariableComponents(pMpc, geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i]);
+					}
+
+				} // end of loop over host element nodes
+
+			} // if (is_found = true)
+
+			// Setting the buffer 1 same buffer 0
+			p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(0);
+			p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(0);
+			if (TDim == 3)
+				p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0);
+
+		} // end of loop over boundary nodes
+
+		if (isOuter)
 		{
 
-			for (int i = 0; i < n_boundary_nodes; i++)
+			ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin();
+			Node<3>::Pointer p_boundary_node = *(iparticle.base());
+			typename BinBasedFastPointLocator<TDim>::ResultIteratorType result_begin = results.begin();
 
+			Element::Pointer pElement;
+
+			bool is_found = false;
+			is_found = pBinLocator->FindPointOnMesh(p_boundary_node->Coordinates(), N, pElement, result_begin, max_results);
+
+			//Initialsing pressure to 0 at every time steps
+			p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0) = 0.0;
+
+			if (is_found == true)
 			{
-				ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin() + i;
-				Node<3>::Pointer p_boundary_node = *(iparticle.base());
-				typename BinBasedFastPointLocator<TDim>::ResultIteratorType result_begin = results.begin();
-
-				/*			std::cout<<"Point :: p_boundary_node->Coordinates() " << p_boundary_node->Coordinates()[0] <<" "<<p_boundary_node->Coordinates()[1] <<" "<<p_boundary_node->Coordinates()[2]<<std::endl;
-			std::exit(-1);*/
-
-				Element::Pointer pElement;
-
-				bool is_found = false;
-				is_found = pBinLocator->FindPointOnMesh(p_boundary_node->Coordinates(), N, pElement, result_begin, max_results);
-
-				if (is_found == true)
+				Geometry<Node<3>> &geom = pElement->GetGeometry();
+				for (int i = 0; i < geom.size(); i++)
 				{
-					Geometry<Node<3>> &geom = pElement->GetGeometry();
-					p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0) = 0.0;
-					for (int i = 0; i < geom.size(); i++)
-					{
-						p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0) += geom[i].GetDof(PRESSURE).GetSolutionStepValue(0) * N[i];
-					}
-					p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(1) = p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0);
+					// Interpolation of pressure
+					p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0) += geom[i].GetDof(PRESSURE).GetSolutionStepValue(0) * N[i];
 
-					for (int i = 0; i < geom.size(); i++)
-					{
-						AddMasterSlaveRelationWithNodesAndVariable(pMpc, geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
-					}
+					// Defining master slave relation for one pressure node
+					AddMasterSlaveRelationWithNodesAndVariable(pMpc, geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
+					counter++;
 				}
 			}
-		} // end of if (type == 0) conditions
+			// Setting the buffer 1 same buffer 0
+			p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(1) = p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0);
+
+		} // end of if (pressure_coupling == "one")
+
+		counter /= TDim + 1;
+
+		std::cout << counter << " pressure nodes from " << rBoundaryModelPart.Name() << " is coupled" << std::endl;
 	}
 
 	void ApplyMpcConstraintConservative(ModelPart &rBoundaryModelPart, BinBasedPointLocatorPointerType &pBinLocator, MpcDataPointerType pMpc, bool isOuter)

@@ -31,7 +31,7 @@ class CADReconstrutionUtilities():
         # Internal parameters to specify reconstruction method
         
         # Gernal strategy parameters
-        self.ReconstructionStrategy = "mapping"    # mapping / least_squares
+        self.ReconstructionStrategy = "distance_minimization"    # displacement_mapping / distance_minimization
         self.FEMGaussIntegrationDegree = 5
 
         # Solution parameters
@@ -42,7 +42,7 @@ class CADReconstrutionUtilities():
         self.PenaltyMultiplier = 1.0
        
         # Parameters to edit input data       
-        self.FERefinementLevel = 1
+        self.FERefinementLevel = 2
 
         # Projection settings
         self.ParameterResolutionForProjection = [ 100, 100 ]
@@ -187,11 +187,15 @@ class CADReconstrutionUtilities():
         self.ConditionsContainer = ReconstructionConditionContainer( self.DataBase )
 
         # Basic reconstruction condition
-        if self.ReconstructionStrategy == "mapping":
+        if self.ReconstructionStrategy == "displacement_mapping":
             self.ConditionsContainer.CreateDisplacementMappingConditions( self.ParameterResolutionForProjection, 
                                                                           self.FEMGaussIntegrationDegree,
                                                                           self.MaxProjectionIterations,
                                                                           self.ProjectionTolerance )
+        elif self.ReconstructionStrategy == "distance_minimization":
+            self.ConditionsContainer.CreateDistanceMinimizationConditions( self.ParameterResolutionForProjection, 
+                                                                           self.MaxProjectionIterations,
+                                                                           self.ProjectionTolerance )                                                                          
         else:
             raise ValueError( "The following reconstruction strategy does not exist: ", self.ReconstructionStrategy )
 
@@ -209,7 +213,7 @@ class CADReconstrutionUtilities():
 
     # --------------------------------------------------------------------------
     def __CreateSolverForReconstruction( self ):
-        self.ReconstructionSolver = CADReconstructionSolver( self.DataBase, self.ConditionsContainer, self.LinearSolver )
+        self.ReconstructionSolver = CADReconstructionSolver( self.ReconstructionStrategy, self.DataBase, self.ConditionsContainer, self.LinearSolver )
 
     # --------------------------------------------------------------------------
     def __RunSolutionAlorithm( self ): 
@@ -228,7 +232,7 @@ class CADReconstrutionUtilities():
             self.ReconstructionSolver.ComputeRHS()
             self.ReconstructionSolver.SolveEquationSystem()
 
-            self.ReconstructionSolver.UpdateControlPointsAccordingReconstructionStrategy( self.ReconstructionStrategy )
+            self.ReconstructionSolver.UpdateControlPointsAccordingReconstructionStrategy()
             
             self.OutputWriter.OutputResultsInRhinoFormat( iteration ) 
 
@@ -269,7 +273,7 @@ CADReconstructionUtility.PerformReconstruction()
 # Some output
 CADReconstructionUtility.OutputFEData()
 CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_updated_cad_geometry.txt" )
-CADReconstructionUtility.OutputGaussPointsOfFEMesh( "gauss_points_of_fe_mesh.txt" )
+# CADReconstructionUtility.OutputGaussPointsOfFEMesh( "gauss_points_of_fe_mesh.txt" )
 
 print("\n========================================================================================================")
 print("> Finished reconstruction in " ,round( time.time()-start_time, 3 ), " s.")

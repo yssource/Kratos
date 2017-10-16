@@ -47,10 +47,12 @@ public:
     ///@{
 
     /// Default constructor.
-    CADReconstructionSolver( ReconstructionDataBase& reconstruction_data_base, 
+    CADReconstructionSolver( std::string solution_strategy,
+                             ReconstructionDataBase& reconstruction_data_base, 
                              ReconstructionConditionContainer& condition_container, 
                              CompressedLinearSolverType::Pointer linear_solver )
-    : mrReconstructionDataBase( reconstruction_data_base ),
+    : mReconstructionStrategy( solution_strategy ),
+      mrReconstructionDataBase( reconstruction_data_base ),
       mrReconstructionConditions( condition_container.GetReconstructionConditions() ),
       mrReconstructionConstraints( condition_container.GetReconstructionConstraints() ),
       mrRegularizationConditions( condition_container.GetRegularizationConditions() ),      
@@ -70,6 +72,7 @@ public:
         AssignEquationIdToControlPointsRelevantForReconstruction();
         InitializeConditions();   
         InitializeSystemLHSAndRHS();
+        InitializeSolutionVector();
     }
 
     // --------------------------------------------------------------------------
@@ -145,10 +148,39 @@ public:
         mLHSConstantPart.clear();
         mRHS.clear();
 
+        std::cout << "> Finished initialization of System LHS and RHS." << std::endl;            
+    }
+
+    // --------------------------------------------------------------------------
+    void InitializeSolutionVector()
+    {
+        std::cout << "\n> Initializing solution vector..." << std::endl;                    
+
         mSolutionVector.resize(3*mNumberOfRelevantControlPoints);
         mSolutionVector.clear();
 
-        std::cout << "> Finished initialization of System LHS and RHS." << std::endl;            
+        // Initial guess for Newton-Raphson iteration
+        mCummulatedSolutionVector.resize(3*mNumberOfRelevantControlPoints);
+        mCummulatedSolutionVector.clear();
+        if(mReconstructionStrategy.compare("distance_minimization") == 0)
+        {
+            unsigned int index = 0;
+            for(auto & patch_i : mrReconstructionDataBase.GetPatchVector()) 
+            {
+                for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
+                {
+                    if(control_point_i.IsRelevantForReconstruction())
+                    {
+                        mCummulatedSolutionVector[3*index+0] = control_point_i.GetX0();
+                        mCummulatedSolutionVector[3*index+1] = control_point_i.GetY0();
+                        mCummulatedSolutionVector[3*index+2] = control_point_i.GetZ0();
+                        index++;
+                    }
+                }
+            }
+        }
+
+        std::cout << "> Finished initialization solution vector." << std::endl;                    
     }
 
     // --------------------------------------------------------------------------
@@ -228,27 +260,32 @@ public:
         std::cout << "\n> Start solving reconstruction equation..." << std::endl;  
         boost::timer timer;
 
-        mSolutionVector.clear();        
+        mSolutionVector.clear();    
+
         mpLinearSolver->Solve(mLHS, mSolutionVector, mRHS);
 
         Vector residual_vector = mRHS - prod(mLHS,mSolutionVector);
         std::cout << "> Max value in residual vector = " << *std::max_element(residual_vector.begin(),residual_vector.end()) << std::endl;
         std::cout << "> L2 norm of residual vector = " << norm_2(residual_vector) << std::endl;      
-
+        
+        mCummulatedSolutionVector += mSolutionVector;
+        
         std::cout << "> Time needed for solving reconstruction equation: " << timer.elapsed() << " s" << std::endl;
     }
 
     // --------------------------------------------------------------------------
-    void UpdateControlPointsAccordingReconstructionStrategy(std::string reconstruction_strategy )
+    void UpdateControlPointsAccordingReconstructionStrategy()
     {
         std::cout << "\n> Start updating control points..." << std::endl;  
         boost::timer timer;
 
-        if(reconstruction_strategy.compare("mapping") == 0)
-            mrReconstructionDataBase.AddToControlPointDisplacements( mSolutionVector );
+        if(mReconstructionStrategy.compare("displacement_mapping") == 0)
+            mrReconstructionDataBase.UpdateControlPointDisplacements( mCummulatedSolutionVector, false );
+        else if(mReconstructionStrategy.compare("distance_minimization") == 0)
+            mrReconstructionDataBase.UpdateControlPointDisplacements( mCummulatedSolutionVector, true );
         else
-            KRATOS_THROW_ERROR(std::invalid_argument, "Reconstruction strategy specified to update control points is not recognized!","");
-
+            KRATOS_THROW_ERROR(std::invalid_argument, "Updating control points not implemented for this solution strategy: ", mReconstructionStrategy );
+        
         std::cout << "> Time needed for updating control points: " << timer.elapsed() << " s" << std::endl;          
     }    
 
@@ -283,6 +320,7 @@ private:
     // ==============================================================================
     // Initialized by class constructor
     // ==============================================================================
+    std::string mReconstructionStrategy;
     ReconstructionDataBase& mrReconstructionDataBase;    
     std::vector<ReconstructionCondition::Pointer>& mrReconstructionConditions;
     std::vector<ReconstructionConstraint::Pointer>& mrReconstructionConstraints;
@@ -299,6 +337,7 @@ private:
     bool isLHSWithoutConstraintsComputed = false;
     Vector mRHS;
     Vector mSolutionVector;
+    Vector mCummulatedSolutionVector;    
 
     /// Assignment operator.
     //      CADReconstructionSolver& operator=(CADReconstructionSolver const& rOther);

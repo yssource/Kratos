@@ -140,12 +140,12 @@ public:
     }     
 
     // --------------------------------------------------------------------------
-    void DetermineNearestCADPoint( NodeType::Pointer PointOfInterest,
+    void DetermineNearestCADPoint( NodeType& PointOfInterest,
                                    array_1d<double,2>& parameter_values_of_nearest_point,
                                    int& patch_index_of_nearest_point )
     {
         // 1) Coarse search in the point cloud
-        NodeType::Pointer nearest_point = mpSearchTree->SearchNearestPoint( *PointOfInterest );
+        NodeType::Pointer nearest_point = mpSearchTree->SearchNearestPoint( PointOfInterest );
 
         // 2) Detailed projection using Newton-Raphson
         
@@ -172,9 +172,9 @@ public:
         for(unsigned int k=0; k<mMaxIterations; k++)
         {
           // The distance between point on CAD surface point on the FE-mesh
-          Distance(0) = current_nearest_point[0] - PointOfInterest->X();
-          Distance(1) = current_nearest_point[1] - PointOfInterest->Y();
-          Distance(2) = current_nearest_point[2] - PointOfInterest->Z();
+          Distance(0) = current_nearest_point[0] - PointOfInterest.X();
+          Distance(1) = current_nearest_point[1] - PointOfInterest.Y();
+          Distance(2) = current_nearest_point[2] - PointOfInterest.Z();
           
           // The distance is used to compute hessian and gradient
           patch_of_nearest_point.EvaluateGradientsForClosestPointSearch( Distance, hessian, gradient , parameter_values_of_nearest_point );

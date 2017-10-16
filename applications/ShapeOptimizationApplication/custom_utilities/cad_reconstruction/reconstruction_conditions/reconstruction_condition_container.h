@@ -33,6 +33,7 @@
 #include "../basic_nurbs_brep_handling/brep_gauss_point.h"
 #include "../data_management/cad_projection_utility.h"
 #include "../reconstruction_conditions/reconstruction_condition_displacement_mapping.h"
+#include "../reconstruction_conditions/reconstruction_condition_distance_minimization.h"
 #include "../reconstruction_conditions/reconstruction_constraint_displacement_coupling.h"
 #include "../reconstruction_conditions/reconstruction_constraint_rotation_coupling.h"
 #include "../reconstruction_conditions/regularization_condition_min_control_point_displacement.h"
@@ -145,9 +146,7 @@ public:
                 array_1d<double,2> parameter_values_of_nearest_point;
                 int patch_index_of_nearest_point = -1;
 
-                FE2CADProjector.DetermineNearestCADPoint( node_of_interest, 
-                                                          parameter_values_of_nearest_point, 
-                                                          patch_index_of_nearest_point );
+                FE2CADProjector.DetermineNearestCADPoint( *node_of_interest, parameter_values_of_nearest_point, patch_index_of_nearest_point );
 
                 NewCondition = ReconstructionCondition::Pointer( new DisplacementMappingCondition( geom_i,
                                                                                                    fem_integration_method,
@@ -160,6 +159,38 @@ public:
         std::cout << "> Time needed for looping over integration points: " << timer.elapsed() << " s" << std::endl;            
         std::cout << "> Finished creating displacement mapping conditions: " << std::endl;      
     }
+
+    // --------------------------------------------------------------------------
+    void CreateDistanceMinimizationConditions( boost::python::list rParameterResolution, int max_iterations, double projection_tolerance )
+    {
+        std::cout << "\n> Starting to create distance minimization conditions...";
+
+        PatchVector& patch_vector = mrReconstructionDataBase.GetPatchVector();
+        ModelPart& fe_model_part = mrReconstructionDataBase.GetFEModelPart();
+                
+        CADProjectionUtility FE2CADProjector( patch_vector, max_iterations, projection_tolerance );
+        FE2CADProjector.Initialize( rParameterResolution );
+        
+        std::cout << "> Starting to create a condition for every fem point..." << std::endl;
+        boost::timer timer;   
+        
+        ReconstructionCondition::Pointer NewCondition;
+        
+        for (auto & node_i : fe_model_part.Nodes())
+        {
+            array_1d<double,2> parameter_values_of_nearest_point;
+            int patch_index_of_nearest_point = -1;
+
+            FE2CADProjector.DetermineNearestCADPoint( node_i, parameter_values_of_nearest_point, patch_index_of_nearest_point );
+
+            NewCondition = ReconstructionCondition::Pointer( new DistanceMinimizationCondition( node_i,
+                                                                                                patch_vector[patch_index_of_nearest_point],
+                                                                                                parameter_values_of_nearest_point ));
+            mListOfReconstructionConditions.push_back( NewCondition );
+        }
+        std::cout << "> Time needed for looping over fem points: " << timer.elapsed() << " s" << std::endl;            
+        std::cout << "> Finished creating distance minimization mapping conditions: " << std::endl;      
+    }    
 
     // --------------------------------------------------------------------------
     void CreateDisplacementCouplingConstraintsOnAllCouplingPoints( double penalty_factor )

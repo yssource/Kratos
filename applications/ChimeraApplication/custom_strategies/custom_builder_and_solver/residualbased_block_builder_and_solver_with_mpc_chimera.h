@@ -1320,7 +1320,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                     } // slaveMasterDofMap loop
 
                     //std::cout << "Conservative correction to the velocity field applied" << std::endl;
-                    std::cout << "Conservative Correction norm : "<<sqrt(norm) << std::endl;
+                    std::cout << "Conservative Correction norm  of "<<mpcData->mName<<" : "<<sqrt(norm) << std::endl;
                 } // if type == "Conservative"
 
             } // mpcData->IsActive()

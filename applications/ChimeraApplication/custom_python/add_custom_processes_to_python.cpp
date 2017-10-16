@@ -45,16 +45,17 @@ void AddCustomProcessesToPython()
 			.def("FormulateChimera2D", &ApplyChimeraProcess<2>::FormulateChimera)
 			.def("SetOverlapDistance",&ApplyChimeraProcess<2>::SetOverlapDistance)
 			.def("CalculateNodalAreaAndNodalMass",&ApplyChimeraProcess<2>::CalculateNodalAreaAndNodalMass)
-			.def("ExecuteInitializeSolutionStep",&ApplyChimeraProcess<2>::ExecuteInitializeSolutionStep);
-			
+			.def("ExecuteInitializeSolutionStep",&ApplyChimeraProcess<2>::ExecuteInitializeSolutionStep)
+			.def("SetType",&ApplyChimeraProcess<2>::SetType);
+
 
 	class_<ApplyChimeraProcess<3>,bases<Process> >("ApplyChimeraProcess3d", init< ModelPart&, Parameters >())
 			.def("ApplyMpcConstraint", &ApplyChimeraProcess<3>::ApplyMpcConstraint)		
 			.def("FormulateChimera3D", &ApplyChimeraProcess<3>::FormulateChimera)
 			.def("SetOverlapDistance",&ApplyChimeraProcess<3>::SetOverlapDistance)
 			.def("CalculateNodalAreaAndNodalMass",&ApplyChimeraProcess<3>::CalculateNodalAreaAndNodalMass)
-			.def("ExecuteInitializeSolutionStep",&ApplyChimeraProcess<2>::ExecuteInitializeSolutionStep);
-
+			.def("ExecuteInitializeSolutionStep",&ApplyChimeraProcess<2>::ExecuteInitializeSolutionStep)
+			.def("SetType",&ApplyChimeraProcess<3>::SetType);
 
     class_< RotateRegionProcess, bases<Process>, boost::noncopyable >
     ("RotateRegionProcess",init<ModelPart&, Parameters& >())

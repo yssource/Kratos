@@ -286,6 +286,12 @@ class MpcData
         mActive = isActive;
     }
 
+    void SetType(std::string type)
+    {
+
+        mType = type;
+    }
+
     /**
 		Returns true if the constraint set is active
 		 */

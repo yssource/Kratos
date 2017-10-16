@@ -126,14 +126,14 @@ class ApplyChimeraProcess : public Process
                     "overlap_distance":0.045
             })");
 
-		m_background_part_name = m_parameters["background"]["model_part_name"].GetString();
+		m_background_model_part_name = m_parameters["background"]["model_part_name"].GetString();
 		m_patch_model_part_name = m_parameters["patch"]["model_part_name"].GetString();
 		m_patch_boundary_model_part_name = m_parameters["patch_boundary_model_part_name"].GetString();
 		m_type_patch = m_parameters["patch"]["type"].GetString();
 		m_type_background = m_parameters["background"]["type"].GetString();
 		m_overlap_distance = m_parameters["overlap_distance"].GetDouble();
 
-		ModelPart &rBackgroundModelPart = mrMainModelPart.GetSubModelPart(m_background_part_name);
+		ModelPart &rBackgroundModelPart = mrMainModelPart.GetSubModelPart(m_background_model_part_name);
 		ModelPart &rPatchModelPart = mrMainModelPart.GetSubModelPart(m_patch_model_part_name);
 
 		ProcessInfoPointerType info = mrMainModelPart.pGetProcessInfo();
@@ -147,8 +147,8 @@ class ApplyChimeraProcess : public Process
 		this->pHoleCuttingProcess = CustomHoleCuttingProcess::Pointer(new CustomHoleCuttingProcess());
 		this->pCalculateDistanceProcess = typename CustomCalculateSignedDistanceProcess<TDim>::Pointer(new CustomCalculateSignedDistanceProcess<TDim>());
 
-		this->pMpcPatch->SetName(m_background_part_name);
-		this->pMpcBackground->SetName(m_patch_model_part_name);
+		this->pMpcPatch->SetName(m_patch_model_part_name);
+		this->pMpcBackground->SetName(m_background_model_part_name);
 		this->pMpcPatch->SetActive(true);
 		this->pMpcBackground->SetActive(true);
 
@@ -290,7 +290,7 @@ class ApplyChimeraProcess : public Process
 
 						//Defining master slave relation for pressure
 						AddMasterSlaveRelationWithNodesAndVariable(pMpc, geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
-						
+
 						counter++;
 					}
 				} // end of loop over host element nodes
@@ -339,6 +339,9 @@ class ApplyChimeraProcess : public Process
 			// Setting the buffer 1 same buffer 0
 			p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(1) = p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0);
 
+			std::cout<<"Coordinates of node that are pressure coupled"<<std::endl;
+			std::cout<<p_boundary_node->X()<<","<<p_boundary_node->Y()<<","<<p_boundary_node->Z()<<std::endl;
+
 		} // end of if (pressure_coupling == "one")
 
 		counter /= TDim + 1;
@@ -382,7 +385,7 @@ class ApplyChimeraProcess : public Process
 	void FormulateChimera()
 	{
 
-		ModelPart &rBackgroundModelPart = mrMainModelPart.GetSubModelPart(m_background_part_name);
+		ModelPart &rBackgroundModelPart = mrMainModelPart.GetSubModelPart(m_background_model_part_name);
 		ModelPart &rPatchBoundaryModelPart = mrMainModelPart.GetSubModelPart(m_patch_boundary_model_part_name);
 
 		this->pBinLocatorForBackground->UpdateSearchDatabase();
@@ -450,6 +453,35 @@ class ApplyChimeraProcess : public Process
 	{
 
 		this->m_overlap_distance = distance;
+	}
+
+	void SetType(std::string model_part_string, std::string type)
+	{
+		KRATOS_TRY
+		{
+			if ((type != "nearest_element") && (type != "conservative"))
+				KRATOS_THROW_ERROR("", "Second argument should be either nearest_element or conservative \n", "");
+
+			if (model_part_string == "patch")
+			{
+				this->m_type_patch = type;
+				pMpcPatch->SetType(this->m_type_patch);
+				
+			}
+
+			else if (model_part_string == "background")
+			{
+				this->m_type_background = type;
+				 pMpcBackground->SetType(this->m_type_background);
+				
+			}
+
+			else
+
+				KRATOS_THROW_ERROR("", "First argument should be either patch or background \n", "");
+		}
+
+		KRATOS_CATCH("")
 	}
 
 	void CalculateNodalAreaAndNodalMass(ModelPart &rBoundaryModelPart, int sign)
@@ -778,7 +810,7 @@ class ApplyChimeraProcess : public Process
 	double m_overlap_distance;
 
 	Parameters m_parameters;
-	std::string m_background_part_name;
+	std::string m_background_model_part_name;
 	std::string m_patch_boundary_model_part_name;
 	std::string m_patch_model_part_name;
 	std::string m_type_patch;

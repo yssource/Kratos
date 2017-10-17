@@ -220,7 +220,7 @@ public:
         int number_of_small_values_on_main_diagonal = 0;
         double zero_threshold = 1e-10;
 
-        for(int i_itr=0; i_itr<mLHS.size1(); i_itr++)
+        for(size_t i_itr=0; i_itr<mLHS.size1(); i_itr++)
             if( std::abs(mLHS(i_itr,i_itr)) < zero_threshold )
                 number_of_small_values_on_main_diagonal++;
 

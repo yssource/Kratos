@@ -100,7 +100,7 @@ public:
     {
         std::cout << "> Starting to compute LHS contribution of beta-regularization (minimal control point displacement)..." << std::endl;  
 
-        for(int i_itr=0; i_itr<LHS.size1(); i_itr++)
+        for(size_t i_itr=0; i_itr<LHS.size1(); i_itr++)
             LHS(i_itr,i_itr) += mBetaValue;
             
         std::cout << "> Finished computing LHS contribution of beta-regularization (minimal control point displacement)." << std::endl;           

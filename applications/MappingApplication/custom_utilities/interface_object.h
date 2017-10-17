@@ -329,6 +329,16 @@ private:
     ///@name Private Operations
     ///@{
 
+        
+    ///@}
+    ///@name Serialization
+    ///@{
+
+    friend class Serializer;
+    
+    virtual void save(Serializer& rSerializer) const {}
+    virtual void load(Serializer& rSerializer) {}
+
 
     ///@}
     ///@name Private  Access

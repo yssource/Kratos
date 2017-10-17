@@ -96,11 +96,13 @@ public:
 
             // Loop over all u & v according to specified resolution
             array_1d<double,2> point_in_parameter_space;
-            for(unsigned int i=0; i<=u_resolution; i++)
+            for(
+                int i=0; i<=u_resolution; i++)
             {
                 point_in_parameter_space[0] = u_min + i*delta_u;
 
-                for(unsigned int j=0; j<=v_resolution; j++)
+                for(
+                    int j=0; j<=v_resolution; j++)
                 {
                     point_in_parameter_space[1] = v_min + j*delta_v;
 
@@ -134,7 +136,7 @@ public:
   
         ModelPart& r_fe_model_part = mrReconstructionDataBase.GetFEModelPart();
 
-        IntegrationMethodType fem_integration_method;
+        IntegrationMethodType fem_integration_method = GeometryData::GI_GAUSS_5;
         switch(integration_degree)
         {
             case 1 : fem_integration_method = GeometryData::GI_GAUSS_1; break;
@@ -201,7 +203,8 @@ public:
         }
         
         // write node section
-        unsigned int control_point_iterator = 0;
+        
+        int control_point_iterator = 0;
         for(auto & patch_i : mrReconstructionDataBase.GetPatchVector()) 
         {
             for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
@@ -258,7 +261,8 @@ public:
         restult_output_file << "Result \"Displacement\" \"Load Case\" " << std::to_string(iteration) << " Vector OnNodes" << std::endl;
         restult_output_file << "Values" << std::endl;
 
-        unsigned int control_point_iterator = 0;
+        
+        int control_point_iterator = 0;
         for(auto & patch_i : mrReconstructionDataBase.GetPatchVector()) 
         {
             for(auto & control_point_i : patch_i.GetSurfaceControlPoints())

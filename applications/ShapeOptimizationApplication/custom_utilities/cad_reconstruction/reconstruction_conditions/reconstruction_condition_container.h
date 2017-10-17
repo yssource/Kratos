@@ -114,7 +114,7 @@ public:
         PatchVector& patch_vector = mrReconstructionDataBase.GetPatchVector();
         ModelPart& fe_model_part = mrReconstructionDataBase.GetFEModelPart();
         
-        IntegrationMethodType fem_integration_method;
+        IntegrationMethodType fem_integration_method = GeometryData::GI_GAUSS_5;
         switch(integration_degree)
         {
             case 1 : fem_integration_method = GeometryData::GI_GAUSS_1; break;

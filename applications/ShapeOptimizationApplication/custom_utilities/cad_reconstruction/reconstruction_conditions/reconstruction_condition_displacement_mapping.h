@@ -176,7 +176,6 @@ public:
             Vector cad_cad_contribution = ZeroVector(3);                                            
             for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquationIds; collumn_itr++)
             {                
-                int collumn_id = mEquationIdsOfAffectedControlPoints[collumn_itr];
                 double R_collumn = mNurbsFunctionValues[collumn_itr];
 
                 cad_cad_contribution(0) += R_row * R_collumn * mAffectedControlPoints[collumn_itr]->GetdX();

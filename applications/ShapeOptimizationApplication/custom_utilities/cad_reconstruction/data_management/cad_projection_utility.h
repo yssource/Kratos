@@ -107,11 +107,11 @@ public:
 
             // Loop over all u & v according to specified resolution
             array_1d<double,2> point_in_parameter_space;
-            for(unsigned int i=0; i<=u_resolution; i++)
+            for(int i=0; i<=u_resolution; i++)
             {
                 point_in_parameter_space[0] = u_min + i*delta_u;
 
-                for(unsigned int j=0; j<=v_resolution; j++)
+                for(int j=0; j<=v_resolution; j++)
                 {
                     point_in_parameter_space[1] = v_min + j*delta_v;
 
@@ -169,7 +169,7 @@ public:
 				double norm_delta_u = 100000000;
         
         // Newton-Raphson algorithm if iterations are specified
-        for(unsigned int k=0; k<mMaxIterations; k++)
+        for(int k=0; k<mMaxIterations; k++)
         {
           // The distance between point on CAD surface point on the FE-mesh
           Distance(0) = current_nearest_point[0] - PointOfInterest.X();

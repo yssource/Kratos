@@ -103,15 +103,16 @@ public:
 		boost::timer timer;
 
 		std::cout << "> ATTENTION! Better creation of polygon in boundary_loop.h needed (e.g as in Carat). Currently boundary polygon is only created using hard coded number of points!!!!!!" << std::endl;					
+		std::cout << "> ATTENTION! Reader assumes the order of patches in \"faces\" in the geomtry-JSON and the order of patches in \"2d_elements\" in the integration-JSON are the same!!!!" << std::endl;					
 		
 		// loop over patches / faces
-		for (int i = 0; i < boost::python::len(mr_cad_geometry_in_json["faces"]); i++)
+		for (int patch_itr = 0; patch_itr < boost::python::len(mr_cad_geometry_in_json["faces"]); patch_itr++)
 		{
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 			// 1. Step: We read in the given nurbs surface
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-			std::cout << "> Reading  surface/patch " << i << "..." << std::endl;
+			std::cout << "> Reading  surface/patch " << patch_itr << "..." << std::endl;
 
 			// Variables needed later
 			DoubleVector knot_vector_u;
@@ -121,34 +122,34 @@ public:
 			ControlPointVector control_points;
 
 			// read and store knot_vector_u
-			for (int u_idx = 0; u_idx < boost::python::len(mr_cad_geometry_in_json["faces"][i]["surface"][0]["knot_vectors"][0]); u_idx++)
+			for (int u_idx = 0; u_idx < boost::python::len(mr_cad_geometry_in_json["faces"][patch_itr]["surface"][0]["knot_vectors"][0]); u_idx++)
 			{
-				double knot = extractDouble(mr_cad_geometry_in_json["faces"][i]["surface"][0]["knot_vectors"][0][u_idx]);
+				double knot = extractDouble(mr_cad_geometry_in_json["faces"][patch_itr]["surface"][0]["knot_vectors"][0][u_idx]);
 				knot_vector_u.push_back(knot);
 			}
 
 			// read and store knot_vector_v
-			for (int v_idx = 0; v_idx < boost::python::len(mr_cad_geometry_in_json["faces"][i]["surface"][0]["knot_vectors"][1]); v_idx++)
+			for (int v_idx = 0; v_idx < boost::python::len(mr_cad_geometry_in_json["faces"][patch_itr]["surface"][0]["knot_vectors"][1]); v_idx++)
 			{
-				double knot = extractDouble(mr_cad_geometry_in_json["faces"][i]["surface"][0]["knot_vectors"][1][v_idx]);
+				double knot = extractDouble(mr_cad_geometry_in_json["faces"][patch_itr]["surface"][0]["knot_vectors"][1][v_idx]);
 				knot_vector_v.push_back(knot);
 			}
 
 			// read and store polynamial degree p and q
-			p = extractInt(mr_cad_geometry_in_json["faces"][i]["surface"][0]["degrees"][0]);
-			q = extractInt(mr_cad_geometry_in_json["faces"][i]["surface"][0]["degrees"][1]);
+			p = extractInt(mr_cad_geometry_in_json["faces"][patch_itr]["surface"][0]["degrees"][0]);
+			q = extractInt(mr_cad_geometry_in_json["faces"][patch_itr]["surface"][0]["degrees"][1]);
 
 			// read and store control_points
 			// Control points in each patch Get a global as well as a mapping matrix id
 			// global Id: Unique Id for each control point (given by json-file)
 			// mapping matrix id: specifies position in global mapping matrix (given by numbering of control points)
-			for (int cp_idx = 0; cp_idx < boost::python::len(mr_cad_geometry_in_json["faces"][i]["surface"][0]["control_points"]); cp_idx++)
+			for (int cp_idx = 0; cp_idx < boost::python::len(mr_cad_geometry_in_json["faces"][patch_itr]["surface"][0]["control_points"]); cp_idx++)
 			{
-				unsigned int global_id = extractInt(mr_cad_geometry_in_json["faces"][i]["surface"][0]["control_points"][cp_idx][0]);
-				double x = extractDouble(mr_cad_geometry_in_json["faces"][i]["surface"][0]["control_points"][cp_idx][1][0]);
-				double y = extractDouble(mr_cad_geometry_in_json["faces"][i]["surface"][0]["control_points"][cp_idx][1][1]);
-				double z = extractDouble(mr_cad_geometry_in_json["faces"][i]["surface"][0]["control_points"][cp_idx][1][2]);
-				double w = extractDouble(mr_cad_geometry_in_json["faces"][i]["surface"][0]["control_points"][cp_idx][1][3]);
+				unsigned int global_id = extractInt(mr_cad_geometry_in_json["faces"][patch_itr]["surface"][0]["control_points"][cp_idx][0]);
+				double x = extractDouble(mr_cad_geometry_in_json["faces"][patch_itr]["surface"][0]["control_points"][cp_idx][1][0]);
+				double y = extractDouble(mr_cad_geometry_in_json["faces"][patch_itr]["surface"][0]["control_points"][cp_idx][1][1]);
+				double z = extractDouble(mr_cad_geometry_in_json["faces"][patch_itr]["surface"][0]["control_points"][cp_idx][1][2]);
+				double w = extractDouble(mr_cad_geometry_in_json["faces"][patch_itr]["surface"][0]["control_points"][cp_idx][1][3]);
 
 				ControlPoint new_control_point(x, y, z, w, global_id);
 				control_points.push_back(new_control_point);
@@ -163,7 +164,7 @@ public:
 			BoundaryLoopVector boundary_loops;
 
 			// For better reading
-			boost::python::list boundary_dict(mr_cad_geometry_in_json["faces"][i]["boundary_loops"]);
+			boost::python::list boundary_dict(mr_cad_geometry_in_json["faces"][patch_itr]["boundary_loops"]);
 
 			// Loop over all boundary loops
 			for (int loop_idx = 0; loop_idx < boost::python::len(boundary_dict); loop_idx++)
@@ -219,9 +220,9 @@ public:
 			}		
 
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			// 3. Step: Creat and add patch with unique Id
+			// 3. Step: Creat and add patch with unique Id (ID defined through iterator over faces)
 			/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			unsigned int patch_id = extractInt(mr_cad_geometry_in_json["faces"][i]["brep_id"]);
+			unsigned int patch_id = patch_itr + 1;
 			Patch patch(patch_id, surface, boundary_loops);
 			r_patches.push_back(patch);
 		}		
@@ -234,6 +235,8 @@ public:
 		std::cout << "\n> Start reading CAD integration data of given json-file..." << std::endl;
 		boost::timer timer;
 
+		std::cout << "> ATTENTION! Reader assumes the order of patches in \"faces\" in the geomtry-JSON and the order of patches in \"2d_elements\" in the integration-JSON are the same!!!!" << std::endl;							
+
 		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		// 1. Step: Loop over all 2D elements defined in the integration file to assign every element_id the 
 		// 			corresponding patch_id. This is needed to store the patch id with each Gauss point that is read later.
@@ -244,7 +247,7 @@ public:
 		// Loop over the patches
 		for (unsigned int patch_itr = 0; patch_itr < boost::python::len(mr_cad_integration_data_in_json["2d_elements"]); patch_itr++)
 		{		
-			unsigned int patch_id = extractInt(mr_cad_integration_data_in_json["2d_elements"][patch_itr][0]);	
+			unsigned int patch_id = patch_itr + 1;	
 
 			// Loop over all 2D_elements
 			for (unsigned int elem_itr = 0; elem_itr < boost::python::len(mr_cad_integration_data_in_json["2d_elements"][patch_itr][1]); elem_itr++)

@@ -665,12 +665,12 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                                 ++currentNumberOfMastersProcessed;
 
                                 // RHS(u) = RHS(u)-Kus*b
-                                double constant = mpcData->mSlaveEquationIdConstantsMap[slaveEquationIds[slaveIndex]];
+                                /*double constant = mpcData->mSlaveEquationIdConstantsMap[slaveEquationIds[slaveIndex]];
 
                                 for (auto localInternEqId : localInternEquationIds)
                                 {
                                     RHS_Contribution(localInternEqId) += -LHS_Contribution(localInternEqId, localSlaveEqId) * constant;
-                                }
+                                }*/
 
                                 // For RHS(m) -= A'*LHS(s,s)*B
                                 /*if (!(mpcData->IsWeak()))

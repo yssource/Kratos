@@ -184,6 +184,7 @@ class ApplyChimeraProcess : public Process
 	{
 		pMpcBackground->Clear();
 		pMpcPatch->Clear();
+		std::cout<<"Chimera process is cleared"<<std::endl;
 	}
 
 	void ExecuteBeforeSolutionLoop() override
@@ -201,7 +202,9 @@ class ApplyChimeraProcess : public Process
 
 	void ExecuteFinalizeSolutionStep() override
 	{
+		
 		Clear();
+		
 	}
 
 	void ExecuteBeforeOutputStep() override

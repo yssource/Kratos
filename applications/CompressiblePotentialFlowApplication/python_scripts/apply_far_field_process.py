@@ -12,6 +12,7 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
         
         default_parameters = KratosMultiphysics.Parameters( """
             {
+                "main_model_part_name":"PLEASE_CHOOSE_MODEL_PART_NAME",
                 "model_part_name":"PLEASE_CHOOSE_MODEL_PART_NAME",
                 "mesh_id": 0,
                 "inlet_phi": 1.0,
@@ -22,6 +23,7 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
             
         settings.ValidateAndAssignDefaults(default_parameters);
         
+        self.main_model_part = Model[settings["main_model_part_name"].GetString()]
         self.model_part = Model[settings["model_part_name"].GetString()]
         self.velocity_infinity = KratosMultiphysics.Vector(3)#array('d', [1.0, 2.0, 3.14])#np.array([0,0,0])#np.zeros(3)#vector(3)
         self.velocity_infinity[0] = settings["velocity_infinity"][0].GetDouble()
@@ -31,7 +33,7 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
         self.inlet_phi = settings["inlet_phi"].GetDouble()
         self.variable = getattr(KratosMultiphysics, settings["variable_name"].GetString())
         
-        self.model_part.ProcessInfo.SetValue(KratosMultiphysics.VELOCITY,self.velocity_infinity)
+        self.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.VELOCITY,self.velocity_infinity)
         
         
     def Execute(self):

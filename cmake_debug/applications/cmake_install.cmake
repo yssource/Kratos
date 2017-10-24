@@ -39,7 +39,6 @@ if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   include("/home/inigo/software/Kratos/cmake_debug/applications/convection_diffusion_application/cmake_install.cmake")
   include("/home/inigo/software/Kratos/cmake_debug/applications/FluidDynamicsApplication/cmake_install.cmake")
   include("/home/inigo/software/Kratos/cmake_debug/applications/AdjointFluidApplication/cmake_install.cmake")
-  include("/home/inigo/software/Kratos/cmake_debug/applications/incompressible_fluid_application/cmake_install.cmake")
   include("/home/inigo/software/Kratos/cmake_debug/applications/CompressiblePotentialFlowApplication/cmake_install.cmake")
 
 endif()

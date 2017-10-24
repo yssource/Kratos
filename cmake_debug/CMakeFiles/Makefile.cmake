@@ -19,7 +19,6 @@ set(CMAKE_MAKEFILE_DEPENDS
   "../applications/MeshingApplication/custom_external_libraries/tetgen/tetgen1.4.3/CMakeLists.txt"
   "../applications/MeshingApplication/custom_external_libraries/triangle/CMakeLists.txt"
   "../applications/convection_diffusion_application/CMakeLists.txt"
-  "../applications/incompressible_fluid_application/CMakeLists.txt"
   "CMakeFiles/3.5.1/CMakeCCompiler.cmake"
   "CMakeFiles/3.5.1/CMakeCXXCompiler.cmake"
   "CMakeFiles/3.5.1/CMakeFortranCompiler.cmake"
@@ -108,7 +107,6 @@ set(CMAKE_MAKEFILE_PRODUCTS
   "applications/convection_diffusion_application/CMakeFiles/CMakeDirectoryInformation.cmake"
   "applications/FluidDynamicsApplication/CMakeFiles/CMakeDirectoryInformation.cmake"
   "applications/AdjointFluidApplication/CMakeFiles/CMakeDirectoryInformation.cmake"
-  "applications/incompressible_fluid_application/CMakeFiles/CMakeDirectoryInformation.cmake"
   "applications/CompressiblePotentialFlowApplication/CMakeFiles/CMakeDirectoryInformation.cmake"
   "embedded_python/CMakeFiles/CMakeDirectoryInformation.cmake"
   )
@@ -133,7 +131,6 @@ set(CMAKE_DEPEND_INFO_FILES
   "applications/convection_diffusion_application/CMakeFiles/KratosConvectionDiffusionApplication.dir/DependInfo.cmake"
   "applications/FluidDynamicsApplication/CMakeFiles/KratosFluidDynamicsApplication.dir/DependInfo.cmake"
   "applications/AdjointFluidApplication/CMakeFiles/KratosAdjointFluidApplication.dir/DependInfo.cmake"
-  "applications/incompressible_fluid_application/CMakeFiles/KratosIncompressibleFluidApplication.dir/DependInfo.cmake"
   "applications/CompressiblePotentialFlowApplication/CMakeFiles/KratosCompressiblePotentialFlowApplication.dir/DependInfo.cmake"
   "embedded_python/CMakeFiles/runkratos.dir/DependInfo.cmake"
   )

@@ -24,8 +24,6 @@
 /home/inigo/software/Kratos/KratosMultiphysics/FluidDynamicsApplication.py
 /home/inigo/software/Kratos/libs/KratosAdjointFluidApplication.so
 /home/inigo/software/Kratos/KratosMultiphysics/AdjointFluidApplication.py
-/home/inigo/software/Kratos/libs/KratosIncompressibleFluidApplication.so
-/home/inigo/software/Kratos/KratosMultiphysics/IncompressibleFluidApplication.py
 /home/inigo/software/Kratos/libs/KratosCompressiblePotentialFlowApplication.so
 /home/inigo/software/Kratos/KratosMultiphysics/CompressiblePotentialFlowApplication.py
 /home/inigo/software/Kratos/./runkratos

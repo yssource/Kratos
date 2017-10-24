@@ -335,18 +335,18 @@ public:
             rRightHandSideVector.resize(TNumNodes,false);
         rLeftHandSideMatrix.clear();
 
-        std::cout << "Entering Boundary Condiction" << std::endl;
+        //std::cout << "Entering Boundary Condition" << std::endl;
 
-        Geometry<Node<3> >& pGeometry = this->GetGeometry();
+        // Geometry<Node<3> >& pGeometry = this->GetGeometry();
 
-        if(pGeometry[1].X()<1.01 & pGeometry[1].X()>0.99)
-        {
-            std::cout << "Entering Condiction" << std::endl;
-            std::cout << "pGeometry =" << pGeometry << std::endl;
-            const array_1d<double,3>& v = this->GetValue(VELOCITY);
-            std::cout << "v =" << v << std::endl;
+        // if(pGeometry[1].X()<1.01 & pGeometry[1].X()>0.99)
+        // {
+        //     std::cout << "Entering Condiction" << std::endl;
+        //     std::cout << "pGeometry =" << pGeometry[1].Y() << std::endl;
+        //     const array_1d<double,3>& v = this->GetValue(VELOCITY);
+        //     std::cout << "v =" << v << std::endl;
 
-        }
+        // }
 
 
         array_1d<double,3> An;
@@ -360,6 +360,8 @@ public:
         {
             rRightHandSideVector[i] = value;
         }
+
+        //std::cout << "Exiting Boundary Condition" << std::endl;
 
     }
 

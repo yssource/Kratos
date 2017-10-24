@@ -389,19 +389,6 @@ KratosAdjointFluidApplication/fast:
 .PHONY : KratosAdjointFluidApplication/fast
 
 #=============================================================================
-# Target rules for targets named KratosIncompressibleFluidApplication
-
-# Build rule for target.
-KratosIncompressibleFluidApplication: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 KratosIncompressibleFluidApplication
-.PHONY : KratosIncompressibleFluidApplication
-
-# fast build rule for target.
-KratosIncompressibleFluidApplication/fast:
-	$(MAKE) -f applications/incompressible_fluid_application/CMakeFiles/KratosIncompressibleFluidApplication.dir/build.make applications/incompressible_fluid_application/CMakeFiles/KratosIncompressibleFluidApplication.dir/build
-.PHONY : KratosIncompressibleFluidApplication/fast
-
-#=============================================================================
 # Target rules for targets named KratosCompressiblePotentialFlowApplication
 
 # Build rule for target.
@@ -457,7 +444,6 @@ help:
 	@echo "... KratosConvectionDiffusionApplication"
 	@echo "... KratosFluidDynamicsApplication"
 	@echo "... KratosAdjointFluidApplication"
-	@echo "... KratosIncompressibleFluidApplication"
 	@echo "... KratosCompressiblePotentialFlowApplication"
 	@echo "... runkratos"
 .PHONY : help

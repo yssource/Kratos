@@ -342,6 +342,10 @@ public:
         VectorType& rRightHandSideVector,
         ProcessInfo& rCurrentProcessInfo) override
     {
+        //std::cout << "Entering Normal Element" << std::endl;
+
+
+
         ElementalData<NumNodes,Dim> data;
 
         //calculate shape functions
@@ -499,6 +503,7 @@ public:
             GetValuesOnSplitElement(split_element_values, data.distances);
             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix,split_element_values);
         }
+        //std::cout << "Exiting Normal Element" << std::endl;
         
     }
 
@@ -599,7 +604,14 @@ public:
             std::vector< array_1d<double,3> >& rValues,
             const ProcessInfo& rCurrentProcessInfo) override
     {
-        if(rValues.size() != 1) rValues.resize(1);
+        KRATOS_TRY;
+
+        const unsigned int& integration_points_number = GetGeometry().IntegrationPointsNumber();
+        
+        if ( rValues.size() != integration_points_number )
+            rValues.resize( integration_points_number );
+
+        //if(rValues.size() != 1) rValues.resize(1);
 
         if (rVariable == VELOCITY)
         {
@@ -607,7 +619,9 @@ public:
             if ((this)->IsDefined(ACTIVE))
                 active = (this)->Is(ACTIVE);
 
-            array_1d<double,3> v = ZeroVector();
+            array_1d<double,3> v(3,0.0);//More efficient initialization than ZeroVector??
+            //array_1d<double,3> v = ZeroVector(3);
+
             if(this->IsNot(MARKER) && active==true)
             {
                 ElementalData<NumNodes,Dim> data;
@@ -630,6 +644,7 @@ public:
 
             rValues[0] = v;
         }
+        KRATOS_CATCH("");
     }
 
     /**

@@ -349,10 +349,15 @@ public:
                 rRightHandSideVector.resize(TNumNodes,false);
             rLeftHandSideMatrix.clear();
 
+            std::cout << "Entering Adjoint Boundary Condiction" << std::endl;
+
+            std::cout << "TNumNodes ="<< TNumNodes << std::endl;
+
             for(unsigned int i=0; i<TNumNodes; ++i)
             {
                 rRightHandSideVector[i] = 0;
             }
+            std::cout << "Exiting Adjoint Boundary Condiction" << std::endl;
         }
 
 
@@ -412,6 +417,7 @@ public:
 
             for (unsigned int i = 0; i < TNumNodes; i++)
                 rResult[i] = Condition::GetGeometry()[i].GetDof(ADJOINT_POSITIVE_FACE_PRESSURE).EquationId();
+
         }
 
 

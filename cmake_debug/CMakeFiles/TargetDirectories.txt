@@ -100,13 +100,6 @@
 /home/inigo/software/Kratos/cmake_debug/applications/AdjointFluidApplication/CMakeFiles/KratosAdjointFluidApplication.dir
 /home/inigo/software/Kratos/cmake_debug/applications/AdjointFluidApplication/CMakeFiles/install/strip.dir
 /home/inigo/software/Kratos/cmake_debug/applications/AdjointFluidApplication/CMakeFiles/install/local.dir
-/home/inigo/software/Kratos/cmake_debug/applications/incompressible_fluid_application/CMakeFiles/install.dir
-/home/inigo/software/Kratos/cmake_debug/applications/incompressible_fluid_application/CMakeFiles/list_install_components.dir
-/home/inigo/software/Kratos/cmake_debug/applications/incompressible_fluid_application/CMakeFiles/rebuild_cache.dir
-/home/inigo/software/Kratos/cmake_debug/applications/incompressible_fluid_application/CMakeFiles/KratosIncompressibleFluidApplication.dir
-/home/inigo/software/Kratos/cmake_debug/applications/incompressible_fluid_application/CMakeFiles/edit_cache.dir
-/home/inigo/software/Kratos/cmake_debug/applications/incompressible_fluid_application/CMakeFiles/install/strip.dir
-/home/inigo/software/Kratos/cmake_debug/applications/incompressible_fluid_application/CMakeFiles/install/local.dir
 /home/inigo/software/Kratos/cmake_debug/applications/CompressiblePotentialFlowApplication/CMakeFiles/install.dir
 /home/inigo/software/Kratos/cmake_debug/applications/CompressiblePotentialFlowApplication/CMakeFiles/list_install_components.dir
 /home/inigo/software/Kratos/cmake_debug/applications/CompressiblePotentialFlowApplication/CMakeFiles/rebuild_cache.dir

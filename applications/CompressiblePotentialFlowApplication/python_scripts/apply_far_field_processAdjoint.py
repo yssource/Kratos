@@ -42,6 +42,7 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
         
         for cond in self.main_model_part.Conditions:
             cond.SetValue(KratosMultiphysics.VELOCITY, self.zero_vector)
+            cond.Set(KratosMultiphysics.ACTIVE,False)
         
         
     def Execute(self):

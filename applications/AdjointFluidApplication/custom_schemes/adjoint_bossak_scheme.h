@@ -164,6 +164,10 @@ public:
             }
         }
 
+        // inigo: fix GetValue error in omp.
+        for (auto& r_node : rModelPart.Nodes())
+            r_node.GetValue(NUMBER_OF_NEIGHBOUR_ELEMENTS) = 0.0;
+
         mpResponseFunction->Initialize();
 
         KRATOS_CATCH("");

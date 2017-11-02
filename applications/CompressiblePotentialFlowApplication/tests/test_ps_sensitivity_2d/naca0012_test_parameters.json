@@ -1,0 +1,113 @@
+{
+    "test_settings" : {
+        "execute_solve" : true
+    },
+    "problem_data"                     : {
+        "problem_name"    : "naca0012_test",
+        "model_part_name" : "MainModelPart",
+        "domain_size"     : 2,
+        "parallel_type"   : "OpenMP",
+        "echo_level"      : 2,
+        "start_time"      : 0.0,
+        "time_step"       : 1,
+        "nsteps"          : 1
+    },
+    "output_configuration"             : {
+        "result_file_configuration" : {
+            "gidpost_flags"       : {
+                "GiDPostMode"           : "GiD_PostBinary",
+                "WriteDeformedMeshFlag" : "WriteDeformed",
+                "WriteConditionsFlag"   : "WriteConditions",
+                "MultiFileFlag"         : "SingleFile"
+            },
+            "file_label"          : "step",
+            "output_control_type" : "step",
+            "output_frequency"    : 1,
+            "body_output"         : true,
+            "node_output"         : false,
+            "skin_output"         : false,
+            "plane_output"        : [],
+            "nodal_results"       : ["POSITIVE_FACE_PRESSURE","NEGATIVE_FACE_PRESSURE"],
+            "gauss_point_results" : ["PRESSURE","VELOCITY"]
+        },
+        "point_data_configuration"  : []
+    },
+    "restart_options"                  : {
+        "SaveRestart"      : "False",
+        "RestartFrequency" : 0,
+        "LoadRestart"      : "False",
+        "Restart_Step"     : 0
+    },
+    "solver_settings"                  : {
+        "solver_type"            : "potential_flow_solver",
+        "model_import_settings"  : {
+            "input_type"     : "mdpa",
+            "input_filename" : "test_ps_sensitivity_2d/naca0012_test"
+        },
+        "maximum_iterations"     : 10,
+        "echo_level"             : 0,
+        "volume_model_part_name" : "Parts_Parts_Auto1",
+        "skin_parts"             : ["PotentialWallCondition2D_Far_field_Auto1","Body2D_Body_Auto1"],
+        "no_skin_parts"          : ["Wake2D_Wake_Auto1"]
+    },
+    "initial_conditions_process_list"  : [],
+    "boundary_conditions_process_list" : [{
+        "python_module" : "apply_far_field_process",
+        "kratos_module" : "KratosMultiphysics.CompressiblePotentialFlowApplication",
+        "process_name"  : "FarFieldProcess",
+        "Parameters"    : {
+            "mesh_id"           : 0,
+            "main_model_part_name"   : "MainModelPart",
+            "model_part_name"   : "PotentialWallCondition2D_Far_field_Auto1",
+            "inlet_phi"         : 2.0,
+            "velocity_infinity" : [10.0,0.0,0.0],
+            "variable_name"     : "POSITIVE_FACE_PRESSURE"
+        }
+    },{
+        "python_module" : "define_wake_process",
+        "kratos_module" : "KratosMultiphysics.CompressiblePotentialFlowApplication",
+        "process_name"  : "DefineWakeProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "Wake2D_Wake_Auto1",
+            "direction"       : [1.0,0.0,0.0],
+            "epsilon"         : 1e-6
+        }
+    },{
+        "python_module" : "placeholder_process",
+        "kratos_module" : "KratosMultiphysics.CompressiblePotentialFlowApplication",
+        "process_name"  : "PlaceholderProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "Body2D_Body_Auto1"
+        }
+    },{
+        "kratos_module"    : "KratosMultiphysics.AdjointFluidApplication",
+        "python_module"    : "output_primal_solution_process",
+        "help"             : "",
+        "process_name"     : "OutputPrimalSolutionProcess",
+        "Parameters"          : {
+            "model_part_name" : "MainModelPart",
+            "file_name"       : "test_ps_sensitivity_2d/naca0012_test",
+            "variable_list"   : ["POSITIVE_FACE_PRESSURE","NEGATIVE_FACE_PRESSURE"]
+        }
+    },{
+        "kratos_module" : "KratosMultiphysics.CompressiblePotentialFlowApplication",
+        "python_module" : "print_lift_process",
+        "help"          : "",
+        "process_name"  : "PrintLiftProcess",
+        "Parameters" : {
+            "response_function_settings" : {
+                "response_type"            : "lift",
+                "sensitivity_model_part_name"  : "Body2D_Body_Auto1",
+                "nodal_sensitivity_variables" : ["SHAPE_SENSITIVITY"],
+                "custom_settings" : {
+                    "structure_model_part_name" : "Body2D_Body_Auto1",
+                    "lift_direction"            : [0.0, 1.0, 0.0]
+                }                
+            },
+	    "lift_model_part_name" : "MainModelPart",
+            "lift_file_name"       : "test_ps_sensitivity_2d/naca0012_test.dat"
+        }
+    }]
+}

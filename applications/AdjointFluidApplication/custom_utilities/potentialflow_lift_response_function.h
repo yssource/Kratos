@@ -256,6 +256,12 @@ public:
                     x1[1] = geom[i].Y();
                     x2[0] = geom[j].X();
                     x2[1] = geom[j].Y();
+                    // std::cout << "X1 " << geom[0].X() << std::endl;
+                    // std::cout << "Y1 " << geom[0].Y() << std::endl;
+                    // std::cout << "X2 " << geom[1].X() << std::endl;
+                    // std::cout << "Y2 " << geom[1].Y() << std::endl;
+                    // std::cout << "X3 " << geom[2].X() << std::endl;
+                    // std::cout << "Y3 " << geom[2].Y() << std::endl;
                               
                     array_1d<double,3> An;
                     An[0] = (x2[1]-x1[1]);//carefull with signs! normal pointing outwards in this case

@@ -1755,8 +1755,6 @@ geometries/geometry_data.h
 ../kratos/includes/geometries/geometry_data.h
 
 ../kratos/includes/gid_io.h
-typeinfo
--
 string
 -
 iostream

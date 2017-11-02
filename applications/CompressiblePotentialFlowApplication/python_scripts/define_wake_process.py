@@ -34,7 +34,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
         self.direction[0] /= dnorm
         self.direction[1] /= dnorm
         self.direction[2] /= dnorm
-        print(self.direction)
+        #print(self.direction)
         
         self.epsilon = settings["epsilon"].GetDouble()
 
@@ -54,7 +54,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
 
 
             
-        print(self.kutta_model_part)            
+        #print(self.kutta_model_part)            
         
 
         #compute the distances of the elements of the wake, and decide which ones are wak    
@@ -66,7 +66,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
             self.n[0] = -self.direction[1]
             self.n[1] = self.direction[0]
             self.n[2] = 0.0
-            print("normal =",self.n)
+            #print("normal =",self.n)
             
             for node in self.kutta_model_part.Nodes:
                 x0 = node.X
@@ -114,12 +114,13 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                                 npos += 1
                                 
                         if(nneg>0 and npos>0):
-                            elem.Set(KratosMultiphysics.MARKER,True)
+                            #elem.Set(KratosMultiphysics.MARKER,True)
                             counter = 0
                             for elnode in elem.GetNodes():
                                 elnode.SetSolutionStepValue(KratosMultiphysics.DISTANCE,0,distances[counter])
                                 counter+=1
                             elem.SetValue(KratosMultiphysics.ELEMENTAL_DISTANCES,distances)
+                            #elem.Set(KratosMultiphysics.ACTIVE,False)
                             
                             #for elnode in elem.GetNodes():
                                 #if elnode.Is(KratosMultiphysics.KUTTA):

@@ -43,6 +43,13 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
         for cond in self.main_model_part.Conditions:
             cond.SetValue(KratosMultiphysics.VELOCITY, self.zero_vector)
             cond.Set(KratosMultiphysics.ACTIVE,False)
+            
+        #print('INLET PHI =',self.inlet_phi)
+        #print(self.variable)
+        #for node in self.main_model_part.Nodes:
+        #    node.Fix(self.variable)
+        #    node.SetSolutionStepValue(self.variable,0,self.inlet_phi)
+            
         
         
     def Execute(self):

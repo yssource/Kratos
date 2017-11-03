@@ -38,7 +38,9 @@
 #include "python/add_c2c_variables_to_python.h" //TODO: to be removed eventually
 #include "python/add_cfd_variables_to_python.h" //TODO: to be removed eventually
 #include "python/add_ale_variables_to_python.h" //TODO: to be removed eventually
+#include "python/add_mapping_variables_to_python.h" //TODO: to be removed eventually
 #include "python/add_dem_variables_to_python.h" //TODO: to be removed eventually
+#include "python/add_fsi_variables_to_python.h" //TODO: to be removed eventually
 #include "python/add_mat_variables_to_python.h" //TODO: to be removed eventually
 #include "python/add_legacy_structural_app_vars_to_python.h" //TODO: to be removed eventually
 
@@ -47,36 +49,6 @@
 #include "utilities/timer.h"
 #include "utilities/quaternion.h"
 
-
-
-#ifdef KRATOS_REGISTER_IN_PYTHON_FLAG_IMPLEMENTATION
-#undef KRATOS_REGISTER_IN_PYTHON_FLAG_IMPLEMENTATION
-#endif
-#define KRATOS_REGISTER_IN_PYTHON_FLAG_IMPLEMENTATION(flag) \
-  scope().attr(#flag) = boost::ref(flag);		    \
-
-#ifdef KRATOS_REGISTER_IN_PYTHON_FLAG
-#undef KRATOS_REGISTER_IN_PYTHON_FLAG
-#endif
-#define KRATOS_REGISTER_IN_PYTHON_FLAG(flag) \
-    KRATOS_REGISTER_IN_PYTHON_FLAG_IMPLEMENTATION(flag)   \
-    KRATOS_REGISTER_IN_PYTHON_FLAG_IMPLEMENTATION(NOT_##flag)
-
-#ifdef KRATOS_REGISTER_IN_PYTHON_VARIABLE
-#undef KRATOS_REGISTER_IN_PYTHON_VARIABLE
-#endif
-#define KRATOS_REGISTER_IN_PYTHON_VARIABLE(variable) \
-    scope().attr(#variable) = boost::ref(variable);
-
-
-#ifdef KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS
-#undef KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS
-#endif
-#define KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS(name) \
-    KRATOS_REGISTER_IN_PYTHON_VARIABLE(name) \
-    KRATOS_REGISTER_IN_PYTHON_VARIABLE(name##_X) \
-    KRATOS_REGISTER_IN_PYTHON_VARIABLE(name##_Y) \
-    KRATOS_REGISTER_IN_PYTHON_VARIABLE(name##_Z)
 
 namespace Kratos
 {
@@ -394,8 +366,12 @@ void  AddContainersToPython()
     AddC2CVariablesToPython();
     AddDEMVariablesToPython(); //TODO: move this to the DEM application
     AddCFDVariablesToPython(); ///@TODO: move variables to CFD application
-    AddALEVariablesToPython(); ///@TODO: move variables to CFD application
+    AddALEVariablesToPython(); ///@TODO: move variables to ALE application
+    AddFSIVariablesToPython(); ///@TODO: move variables to FSI application
     AddMATVariablesToPython(); ///@TODO: move variables to CFD application
+    AddALEVariablesToPython(); ///@TODO: move variables to ALE application
+    AddMappingVariablesToPython(); ///@TODO: move variables to Mapping application
+    AddMATVariablesToPython(); ///@TODO: move variables to CL application
     AddLegacyStructuralAppVarsToPython();
 
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( DOMAIN_SIZE )
@@ -653,6 +629,11 @@ void  AddContainersToPython()
     KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS( DIRECTION )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(NODAL_SWITCH)
     KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS(Y)
+    
+    KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS( LOCAL_AXIS_1 )
+    KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS( LOCAL_AXIS_2 )
+    KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS( LOCAL_AXIS_3 ) 
+      
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( SWITCH_TEMPERATURE )
 
     KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS(EMBEDDED_VELOCITY)
@@ -675,6 +656,7 @@ void  AddContainersToPython()
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( CUTTED_AREA)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( NET_INPUT_MATERIAL)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( MIU )
+    KRATOS_REGISTER_IN_PYTHON_VARIABLE( SCALE_FACTOR )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( NORMAL_CONTACT_STRESS )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( TANGENTIAL_CONTACT_STRESS )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( STABILIZATION_FACTOR )
@@ -764,9 +746,5 @@ void  AddContainersToPython()
     // KRATOS_REGISTER_IN_PYTHON_VARIABLE(CONVECTION_DIFFUSION_SETTINGS)
 
 }
-}  // namespace Python.
+} // namespace Python.
 } // Namespace Kratos
-
-#undef KRATOS_REGISTER_IN_PYTHON_FLAG
-#undef KRATOS_REGISTER_IN_PYTHON_VARIABLE
-#undef KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS

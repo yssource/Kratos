@@ -31,7 +31,6 @@
 #include "geometries/line_2d_2.h"
 #include "geometries/line_2d_3.h"
 #include "geometries/line_3d_2.h"
-#include "geometries/line_gl_3d_2.h"
 #include "geometries/line_3d_3.h"
 #include "geometries/point.h"
 #include "geometries/point_2d.h"
@@ -159,6 +158,7 @@ namespace Kratos
   KRATOS_CREATE_VARIABLE( double, FRICTION_COEFFICIENT )
   KRATOS_CREATE_VARIABLE( double, LAMBDA )
   KRATOS_CREATE_VARIABLE( double, MIU )
+  KRATOS_CREATE_VARIABLE( double, SCALE_FACTOR )
   KRATOS_CREATE_VARIABLE( double, NORMAL_CONTACT_STRESS )
   KRATOS_CREATE_VARIABLE( double, TANGENTIAL_CONTACT_STRESS )
 
@@ -257,6 +257,7 @@ namespace Kratos
   KRATOS_CREATE_VARIABLE( double, PRESSUREAUX )
   KRATOS_CREATE_VARIABLE( double, NODAL_MAUX )
   KRATOS_CREATE_VARIABLE( double, NODAL_PAUX )
+  KRATOS_CREATE_3D_VARIABLE_WITH_COMPONENTS( NODAL_VAUX )
   KRATOS_CREATE_VARIABLE( double, HEAT_FLUX )
   KRATOS_CREATE_VARIABLE( double, REACTION_FLUX )
   KRATOS_CREATE_VARIABLE( double, TC )
@@ -409,6 +410,10 @@ namespace Kratos
 
   KRATOS_CREATE_3D_VARIABLE_WITH_COMPONENTS( DIRECTION )
   KRATOS_CREATE_3D_VARIABLE_WITH_COMPONENTS( Y )
+  
+  KRATOS_CREATE_3D_VARIABLE_WITH_COMPONENTS( LOCAL_AXIS_1 )
+  KRATOS_CREATE_3D_VARIABLE_WITH_COMPONENTS( LOCAL_AXIS_2 )
+  KRATOS_CREATE_3D_VARIABLE_WITH_COMPONENTS( LOCAL_AXIS_3 )
 
   KRATOS_CREATE_VARIABLE( Vector, BDF_COEFFICIENTS )
 
@@ -588,7 +593,9 @@ namespace Kratos
       KratosApplication::RegisterC2CVariables(); //TODO: move to application
       KratosApplication::RegisterCFDVariables(); //TODO: move to application
       KratosApplication::RegisterALEVariables(); //TODO: move to application
+      KratosApplication::RegisterMappingVariables(); //TODO: move to application
       KratosApplication::RegisterDEMVariables(); //TODO: move to application
+      KratosApplication::RegisterFSIVariables(); //TODO: move to application
       KratosApplication::RegisterMATVariables(); //TODO: move to application
       KratosApplication::RegisterLegacyStructuralAppVariables(); //TODO: move to application
 
@@ -771,6 +778,7 @@ namespace Kratos
       KRATOS_REGISTER_VARIABLE( FRICTION_COEFFICIENT )
       KRATOS_REGISTER_VARIABLE( LAMBDA )
       KRATOS_REGISTER_VARIABLE( MIU )
+      KRATOS_REGISTER_VARIABLE( SCALE_FACTOR )
       KRATOS_REGISTER_VARIABLE( NORMAL_CONTACT_STRESS )
       KRATOS_REGISTER_VARIABLE( TANGENTIAL_CONTACT_STRESS )
 
@@ -926,6 +934,11 @@ namespace Kratos
 //       KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( xi_c )
       KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( DIRECTION )
       KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( Y )
+      
+   
+      KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( LOCAL_AXIS_1 )
+      KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( LOCAL_AXIS_2 )
+      KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( LOCAL_AXIS_3 )     
 
       KRATOS_REGISTER_VARIABLE( ARRHENIUS )
       KRATOS_REGISTER_VARIABLE( ARRHENIUSAUX )
@@ -933,6 +946,7 @@ namespace Kratos
       KRATOS_REGISTER_VARIABLE( PRESSUREAUX )
       KRATOS_REGISTER_VARIABLE( NODAL_MAUX )
       KRATOS_REGISTER_VARIABLE( NODAL_PAUX )
+      KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( NODAL_VAUX )
       KRATOS_REGISTER_VARIABLE( HEAT_FLUX )
       KRATOS_REGISTER_VARIABLE( REACTION_FLUX )
       KRATOS_REGISTER_VARIABLE( TC )
@@ -1122,7 +1136,7 @@ namespace Kratos
       //Register general geometries:
 
       //Points:
-      Serializer::Register( "Point", Point<3>() );
+      Serializer::Register( "Point", Point() );
 
       Point2D<Node<3> > Point2DPrototype( Element::GeometryType::PointsArrayType( 1 ) );
       Serializer::Register( "Point2D", Point2DPrototype );

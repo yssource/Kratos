@@ -63,7 +63,7 @@ namespace Kratos {
         mTotalNumberOfParticlesInjected = 0;
         mTotalMassInjected = 0.0;
         SetNormalizedMaxIndentationForRelease(0.0);
-        SetNormalizedMaxIndentationForNewParticleCreation(0.05);
+        SetNormalizedMaxIndentationForNewParticleCreation(0.0);
         
         mWarningTooSmallInlet = false;
         mWarningTooSmallInletForMassFlow = false;
@@ -95,7 +95,8 @@ namespace Kratos {
         
         mStrategyForContinuum = using_strategy_for_continuum;
         unsigned int& max_Id=creator.mMaxNodeId;
-        CreatePropertiesProxies(mFastProperties, mInletModelPart);      
+        //CreatePropertiesProxies(mFastProperties, mInletModelPart); 
+        mFastProperties = PropertiesProxiesManager().GetPropertiesProxies(r_modelpart);
         VariablesList r_modelpart_nodal_variables_list = r_modelpart.GetNodalSolutionStepVariablesList();
         
         if (r_modelpart_nodal_variables_list.Has(PARTICLE_SPHERICITY)) mBallsModelPartHasSphericity = true;        
@@ -397,13 +398,14 @@ namespace Kratos {
                     } // (push_back) //Inlet BLOCKED nodes are ACTIVE when injecting, but once they are not in contact with other balls, ACTIVE can be reseted.
                 }
                 
-                if (valid_elements_length < number_of_particles_to_insert) {                                                
+                 if (valid_elements_length < number_of_particles_to_insert) {                                                
                     number_of_particles_to_insert = valid_elements_length;
+                    if(!imposed_mass_flow_option){
+                        ThrowWarningTooSmallInlet(mp);
+                    }
                 }
                 
-                if(!imposed_mass_flow_option){    
-                    ThrowWarningTooSmallInlet(mp);                                                      
-                }
+
                
                 PropertiesProxy* p_fast_properties = NULL;
                 int general_properties_id = mInletModelPart.GetProperties(mp[PROPERTIES_ID]).Id();  

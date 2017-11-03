@@ -23,6 +23,7 @@
 #include "../custom_elements/discrete_element.h"
 #include "../custom_elements/spheric_particle.h"
 #include "../custom_utilities/discrete_particle_configure.h"
+#include "analytic_tools/analytic_watcher.h"
 
 
 namespace Kratos {
@@ -45,6 +46,8 @@ public:
 
     /// Default constructor 
     ParticleCreatorDestructor();
+
+    ParticleCreatorDestructor(AnalyticWatcher::Pointer p_watcher);
 
     /// Destructor
     virtual ~ParticleCreatorDestructor();
@@ -76,7 +79,7 @@ public:
                                                       bool has_rotation,
                                                       bool initial);
         
-    Kratos::SphericParticle* ElementCreatorWithPhysicalParameters(ModelPart& r_modelpart,
+    SphericParticle* ElementCreatorWithPhysicalParameters(ModelPart& r_modelpart,
                                               int r_Elem_Id,
                                               Node < 3 > ::Pointer reference_node, 
                                               Element::Pointer injector_element,
@@ -89,7 +92,91 @@ public:
                                               bool initial,
                                               ElementsContainerType& array_of_injector_elements);  
     
-    Kratos::Cluster3D* ClusterCreatorWithPhysicalParameters(ModelPart& r_modelpart,
+    SphericParticle* AddInitialDataToNewlyCreatedElementAndNode(ModelPart& r_modelpart, Properties::Pointer r_params, const double radius, Node<3>::Pointer& pnew_node, Element::Pointer& p_particle);
+        
+    
+    SphericParticle* CreateSphericParticleRaw(ModelPart& r_modelpart,
+                                              int r_Elem_Id,
+                                              const array_1d<double, 3 >& coordinates, 
+                                              Properties::Pointer r_params,
+                                              const double radius,
+                                              const Element& r_reference_element);
+    
+    SphericParticle* CreateSphericParticleRaw(ModelPart& r_modelpart,
+                                              int r_Elem_Id,
+                                              Node < 3 > ::Pointer reference_node, 
+                                              Properties::Pointer r_params,
+                                              const double radius,
+                                              const Element& r_reference_element);
+    
+    SphericParticle* CreateSphericParticleRaw(ModelPart& r_modelpart,
+                                              int r_Elem_Id,
+                                              Node < 3 > ::Pointer reference_node, 
+                                              Properties::Pointer r_params,
+                                              const double radius,
+                                              const std::string& element_type);      
+    
+    SphericParticle* CreateSphericParticleRaw(ModelPart& r_modelpart,
+                                              Node < 3 > ::Pointer reference_node, 
+                                              Properties::Pointer r_params,
+                                              const double radius,
+                                              const std::string& element_type);
+    
+    SphericParticle* CreateSphericParticleRaw(ModelPart& r_modelpart,
+                                              int r_Elem_Id,  
+                                              const array_1d<double, 3 >& coordinates, 
+                                              Properties::Pointer r_params,
+                                              const double radius,
+                                              const std::string& element_type);
+    
+    SphericParticle* CreateSphericParticleRaw(ModelPart& r_modelpart,
+                                              const array_1d<double, 3 >& coordinates, 
+                                              Properties::Pointer r_params,
+                                              const double radius,
+                                              const std::string& element_type); 
+    
+    Element::Pointer CreateSphericParticle(ModelPart& r_modelpart,
+                                              int r_Elem_Id,
+                                              const array_1d<double, 3 >& coordinates, 
+                                              Properties::Pointer r_params,
+                                              const double radius,
+                                              const Element& r_reference_element);
+
+    Element::Pointer CreateSphericParticle(ModelPart& r_modelpart,
+                                              int r_Elem_Id,
+                                              Node < 3 > ::Pointer reference_node, 
+                                              Properties::Pointer r_params,
+                                              const double radius,
+                                              const Element& r_reference_element);
+    
+    Element::Pointer CreateSphericParticle(ModelPart& r_modelpart,
+                                              int r_Elem_Id,
+                                              Node < 3 > ::Pointer reference_node, 
+                                              Properties::Pointer r_params,
+                                              const double radius,
+                                              const std::string& element_type);      
+    
+    Element::Pointer CreateSphericParticle(ModelPart& r_modelpart,
+                                              Node < 3 > ::Pointer reference_node, 
+                                              Properties::Pointer r_params,
+                                              const double radius,
+                                              const std::string& element_type);
+    
+    Element::Pointer CreateSphericParticle(ModelPart& r_modelpart,
+                                              int r_Elem_Id,  
+                                              const array_1d<double, 3 >& coordinates, 
+                                              Properties::Pointer r_params,
+                                              const double radius,
+                                              const std::string& element_type);
+    
+    Element::Pointer CreateSphericParticle(ModelPart& r_modelpart,
+                                              const array_1d<double, 3 >& coordinates, 
+                                              Properties::Pointer r_params,
+                                              const double radius,
+                                              const std::string& element_type);
+    
+    
+    Cluster3D* ClusterCreatorWithPhysicalParameters(ModelPart& r_modelpart,
                                             ModelPart& r_clusters_modelpart,
                                             int r_Elem_Id,
                                             Node < 3 > ::Pointer reference_node,
@@ -112,7 +199,7 @@ public:
                                 double radius, 
                                 Properties& params);
     
-    Kratos::SphericParticle* SphereCreatorForClusters( ModelPart& r_modelpart, 
+    SphericParticle* SphereCreatorForClusters( ModelPart& r_modelpart, 
                                     int r_Elem_Id, 
                                     double radius,
                                     array_1d<double, 3 >& reference_coordinates, 
@@ -122,7 +209,7 @@ public:
                                     const int cluster_id,
                                     PropertiesProxy* p_fast_properties);
     
-    Kratos::SphericParticle* SphereCreatorForBreakableClusters(ModelPart& r_modelpart,
+    SphericParticle* SphereCreatorForBreakableClusters(ModelPart& r_modelpart,
                                                                 int r_Elem_Id,
                                                                 double radius,
                                                                 array_1d<double, 3>& reference_coordinates,
@@ -194,6 +281,7 @@ private:
     double mScaleFactor;
     int mGreatestParticleId;
     bool mDoSearchNeighbourElements;
+    AnalyticWatcher::Pointer mpAnalyticWatcher;
     void Clear(ModelPart::NodesContainerType::iterator node_it, int step_data_size);
     inline void ClearVariables(ModelPart::NodesContainerType::iterator node_it, Variable<array_1d<double, 3 > >& rVariable);
     inline void ClearVariables(ParticleIterator particle_it, Variable<double>& rVariable);

@@ -20,6 +20,7 @@
 #include "includes/define.h"
 #include "includes/kratos_application.h"
 
+
 // Application includes
 #include "adjoint_fluid_application_variables.h"
 #include "custom_elements/vms_adjoint_element.h"
@@ -90,6 +91,7 @@ private:
 
   const VMSAdjointElement<2> mVMSAdjointElement2D;
   const VMSAdjointElement<3> mVMSAdjointElement3D;
+  
 
   ///@}
   ///@name Unaccessible methods

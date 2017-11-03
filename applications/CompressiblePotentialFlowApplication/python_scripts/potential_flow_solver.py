@@ -57,19 +57,20 @@ class LaplacianSolver:
         #construct the linear solvers
         import linear_solver_factory
         self.linear_solver = linear_solver_factory.ConstructSolver(self.settings["linear_solver_settings"])
-
-        print("Construction of LaplacianSolver finished")
+        #print("Construction of LaplacianSolver finished")
 
     def AddVariables(self):
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.POSITIVE_FACE_PRESSURE)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NEGATIVE_FACE_PRESSURE)
-        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.DISTANCE)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.DISTANCE)        
+        #print("variables for the potential fluid solver added correctly")
         
     def AddDofs(self):
         for node in self.main_model_part.Nodes:
             # adding dofs
             node.AddDof(KratosMultiphysics.POSITIVE_FACE_PRESSURE)
-            node.AddDof(KratosMultiphysics.NEGATIVE_FACE_PRESSURE)
+            node.AddDof(KratosMultiphysics.NEGATIVE_FACE_PRESSURE)            
+        #print("DOFs for the potential solver added correctly.")
         
     def Initialize(self):
         #(self.neighbour_search).Execute()
@@ -103,11 +104,13 @@ class LaplacianSolver:
         (self.solver).SetEchoLevel(self.settings["echo_level"].GetInt())
         self.solver.Check()
         
+    #print ("Potential solver initialization finished.")
+        
     def ImportModelPart(self):
         
         if(self.settings["model_import_settings"]["input_type"].GetString() == "mdpa"):
             #here it would be the place to import restart data if required
-            print(self.settings["model_import_settings"]["input_filename"].GetString())
+            #print(self.settings["model_import_settings"]["input_filename"].GetString())
             KratosMultiphysics.ModelPartIO(self.settings["model_import_settings"]["input_filename"].GetString()).ReadModelPart(self.main_model_part)
                      
             throw_errors = False
@@ -140,7 +143,7 @@ class LaplacianSolver:
         if(self.GetMinimumBufferSize() > current_buffer_size):
             self.main_model_part.SetBufferSize( self.GetMinimumBufferSize() )
                 
-        print ("model reading finished")
+        #print ("model reading finished")
         
     def GetMinimumBufferSize(self):
         return 2;

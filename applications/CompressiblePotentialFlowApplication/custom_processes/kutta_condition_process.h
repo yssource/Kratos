@@ -99,7 +99,7 @@ public:
         using normal_map_type = std::unordered_map<std::size_t, array_1d<double,3> >;
         
         for(auto it=mrModelPart.NodesBegin(); it!=mrModelPart.NodesEnd(); ++it)
-            if(it->Is(STRUCTURE)) it->Set(VISITED,false);
+            if(it->Is(KUTTA)) it->Set(VISITED,false);
 
         PointerVector<Element> kutta_elements;
         for(auto it=mrModelPart.ElementsBegin(); it!=mrModelPart.ElementsEnd(); ++it)
@@ -108,7 +108,7 @@ public:
             
             for(unsigned int i=0; i<geom.size(); ++i)
             {
-                if(geom[i].Is(STRUCTURE))
+                if(geom[i].Is(KUTTA))
                 {
                     kutta_elements.push_back(*(it.base()));
                     break;
@@ -138,7 +138,7 @@ public:
                 auto geom = it->GetGeometry();
                 for(unsigned int i=0; i<geom.size(); ++i)
                 {
-                    if(geom[i].Is(STRUCTURE))
+                    if(geom[i].Is(KUTTA))
                     {
                         geom[i].Set(VISITED,true);
                         normal_map[geom[i].Id()] = n;;
@@ -158,7 +158,7 @@ public:
             int kutta_id = -1;
             for(unsigned int i=0; i<geom.size(); ++i)
             {
-                if(geom[i].Is(STRUCTURE) && geom[i].Is(VISITED))
+                if(geom[i].Is(KUTTA) && geom[i].Is(VISITED))
                 {
                     kutta_id = i;
                     n = normal_map[geom[i].Id()];

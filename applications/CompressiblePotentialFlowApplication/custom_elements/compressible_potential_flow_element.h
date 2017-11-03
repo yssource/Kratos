@@ -215,11 +215,9 @@ public:
                 if(distances[i] < 0)
                     rResult[NumNodes+i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
                 else
-                    rResult[NumNodes+i] = GetGeometry()[i].GetDof(NEGATIVE_FACE_PRESSURE,0).EquationId();
+                    rResult[NumNodes+i] = GetGeometry()[i].GetDof(NEGATIVE_FACE_PRESSURE).EquationId();
             }
         }
-
-
     }
 
 
@@ -278,13 +276,49 @@ public:
     /**
      * Getting method to obtain the variable which defines the degrees of freedom
      */
-    void GetValuesVector(Vector& values, int Step = 0) override
+    void GetFirstDerivativesVector(Vector& values, int Step = 0) override//this name should be changed
     {
-        //gather nodal data
-        for(unsigned int i=0; i<NumNodes; i++)
+        if(this->IsNot(MARKER)) //normal element
         {
-            values[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+            if(values.size()!=NumNodes)
+            {
+                values.resize(NumNodes,false);
+            }
+
+            //gather nodal data
+            for(unsigned int i=0; i<NumNodes; i++)
+            {
+                values[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+            }
         }
+        else //wake element
+        {
+            if(values.size()!=2*NumNodes)
+            {
+                values.resize(2*NumNodes,false);
+            }
+
+            array_1d<double,NumNodes> distances;
+            GetWakeDistances(distances);
+
+            //positive part
+            for (unsigned int i = 0; i < NumNodes; i++)
+            {
+                if(distances[i] > 0)
+                    values[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+                else
+                    values[i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
+            }
+
+            //negative part - sign is opposite to the previous case
+            for (unsigned int i = 0; i < NumNodes; i++)
+            {
+                if(distances[i] < 0)
+                    values[NumNodes+i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+                else
+                    values[NumNodes+i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
+            }
+        }        
     }
 
 
@@ -308,6 +342,10 @@ public:
         VectorType& rRightHandSideVector,
         ProcessInfo& rCurrentProcessInfo) override
     {
+        //std::cout << "Entering Normal Element" << std::endl;
+
+
+
         ElementalData<NumNodes,Dim> data;
 
         //calculate shape functions
@@ -465,6 +503,7 @@ public:
             GetValuesOnSplitElement(split_element_values, data.distances);
             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix,split_element_values);
         }
+        //std::cout << "Exiting Normal Element" << std::endl;
         
     }
 
@@ -565,7 +604,14 @@ public:
             std::vector< array_1d<double,3> >& rValues,
             const ProcessInfo& rCurrentProcessInfo) override
     {
-        if(rValues.size() != 1) rValues.resize(1);
+        KRATOS_TRY;
+
+        const unsigned int& integration_points_number = GetGeometry().IntegrationPointsNumber();
+        
+        if ( rValues.size() != integration_points_number )
+            rValues.resize( integration_points_number );
+
+        //if(rValues.size() != 1) rValues.resize(1);
 
         if (rVariable == VELOCITY)
         {
@@ -573,7 +619,9 @@ public:
             if ((this)->IsDefined(ACTIVE))
                 active = (this)->Is(ACTIVE);
 
-            array_1d<double,3> v = ZeroVector();
+            array_1d<double,3> v(3,0.0);//More efficient initialization than ZeroVector??
+            //array_1d<double,3> v = ZeroVector(3);
+
             if(this->IsNot(MARKER) && active==true)
             {
                 ElementalData<NumNodes,Dim> data;
@@ -596,6 +644,7 @@ public:
 
             rValues[0] = v;
         }
+        KRATOS_CATCH("");
     }
 
     /**
@@ -610,209 +659,9 @@ public:
         //TODO: improve speed
         Vector tmp;
         CalculateLocalSystem(rLeftHandSideMatrix, tmp, rCurrentProcessInfo);
-        rLeftHandSideMatrix = trans(-rLeftHandSideMatrix); // transpose
+        rLeftHandSideMatrix = trans(rLeftHandSideMatrix); // transpose (Inigo: careful with the sign!)
     }
 
-
-
-    /**
-     * Calculate the transposed gradient of the element's residual w.r.t. design variable (i.e. in this case w.r.t. potential).
-     */
-    void CalculateSensitivityMatrix(const Variable<array_1d<double,3> >& rSensitivityVariable,
-                                    Matrix& rOutput,
-                                    const ProcessInfo& rCurrentProcessInfo) override
-    {
-        KRATOS_TRY
-
-        if (rSensitivityVariable == SHAPE_SENSITIVITY)
-        {
-            const unsigned int dim = GetGeometry().WorkingSpaceDimension();
-            const unsigned int nnodes = GetGeometry().size();
-
-            //matrix of coordinates
-            bounded_matrix<double,NumNodes, Dim> x(NumNodes,dim);
-            for(unsigned int i=0; i<NumNodes; ++i)
-                for(unsigned int k=0; k<dim; k++)
-                    x(i,k) = GetGeometry()[i].Coordinates()[k];
-            
-            
-            bounded_matrix<double, NumNodes, Dim > DN;   
-            bounded_matrix<double,NumNodes, NumNodes*Dim> DRDx;
-            //std::cout << "DIM #" << Dim;
-            array_1d<double,NumNodes> N;
-            double vol;
-            GeometryUtils::CalculateGeometryData(GetGeometry(), DN, N, vol);
-            
-            //gather nodal data
-            array_1d<double,NumNodes> p;
-            for(unsigned int i=0; i<nnodes; i++)
-                p[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
-
-            const double rho  = 1; //clearly this should be changed...
-            
-            if(dim == 2)
-            {
-                const double cDRDx0 =             x(0,0) - x(1,0);
-                const double cDRDx1 =             -x(2,1);
-                const double cDRDx2 =             cDRDx1 + x(0,1);
-                const double cDRDx3 =             -x(2,0);
-                const double cDRDx4 =             cDRDx3 + x(0,0);
-                const double cDRDx5 =             x(0,1) - x(1,1);
-                const double cDRDx6 =             cDRDx0*cDRDx2 - cDRDx4*cDRDx5;
-                const double cDRDx7 =             0.5*rho/pow(cDRDx6, 2);
-                const double cDRDx8 =             cDRDx3 + x(1,0);
-                const double cDRDx9 =             -p[2];
-                const double cDRDx10 =             cDRDx9 + p[1];
-                const double cDRDx11 =             cDRDx10*cDRDx6;
-                const double cDRDx12 =             cDRDx1 + x(1,1);
-                const double cDRDx13 =             cDRDx0*p[2] - cDRDx4*p[1] + cDRDx8*p[0];
-                const double cDRDx14 =             cDRDx12*p[0] - cDRDx2*p[1] + cDRDx5*p[2];
-                const double cDRDx15 =             cDRDx12*cDRDx14 + cDRDx13*cDRDx8;
-                const double cDRDx16 =             cDRDx9 + p[0];
-                const double cDRDx17 =             p[0] - p[1];
-                const double cDRDx18 =             cDRDx13*cDRDx4 + cDRDx14*cDRDx2;
-                const double cDRDx19 =             cDRDx16*cDRDx6;
-                const double cDRDx20 =             cDRDx0*cDRDx13 + cDRDx14*cDRDx5;
-                const double cDRDx21 =             cDRDx17*cDRDx6;
-                DRDx(0,0)=cDRDx7*(cDRDx11*cDRDx8 + cDRDx12*cDRDx15);
-                DRDx(0,1)=cDRDx7*(cDRDx11*cDRDx12 - cDRDx15*cDRDx8);
-                DRDx(0,2)=-cDRDx7*(cDRDx15*cDRDx2 + cDRDx6*(cDRDx13 + cDRDx16*cDRDx8));
-                DRDx(0,3)=cDRDx7*(cDRDx15*cDRDx4 - cDRDx6*(cDRDx12*cDRDx16 + cDRDx14));
-                DRDx(0,4)=cDRDx7*(cDRDx15*cDRDx5 + cDRDx6*(cDRDx13 + cDRDx17*cDRDx8));
-                DRDx(0,5)=-cDRDx7*(cDRDx0*cDRDx15 - cDRDx6*(cDRDx12*cDRDx17 + cDRDx14));
-                DRDx(1,0)=-cDRDx7*(cDRDx12*cDRDx18 - cDRDx6*(-cDRDx10*cDRDx4 + cDRDx13));
-                DRDx(1,1)=cDRDx7*(cDRDx18*cDRDx8 + cDRDx6*(-cDRDx10*cDRDx2 + cDRDx14));
-                DRDx(1,2)=cDRDx7*(cDRDx18*cDRDx2 + cDRDx19*cDRDx4);
-                DRDx(1,3)=cDRDx7*(-cDRDx18*cDRDx4 + cDRDx19*cDRDx2);
-                DRDx(1,4)=-cDRDx7*(cDRDx18*cDRDx5 + cDRDx6*(cDRDx13 + cDRDx17*cDRDx4));
-                DRDx(1,5)=cDRDx7*(cDRDx0*cDRDx18 - cDRDx6*(cDRDx14 + cDRDx17*cDRDx2));
-                DRDx(2,0)=cDRDx7*(cDRDx12*cDRDx20 - cDRDx6*(-cDRDx0*cDRDx10 + cDRDx13));
-                DRDx(2,1)=-cDRDx7*(cDRDx20*cDRDx8 + cDRDx6*(-cDRDx10*cDRDx5 + cDRDx14));
-                DRDx(2,2)=-cDRDx7*(cDRDx2*cDRDx20 - cDRDx6*(-cDRDx0*cDRDx16 + cDRDx13));
-                DRDx(2,3)=cDRDx7*(cDRDx20*cDRDx4 + cDRDx6*(cDRDx14 - cDRDx16*cDRDx5));
-                DRDx(2,4)=cDRDx7*(cDRDx0*cDRDx21 + cDRDx20*cDRDx5);
-                DRDx(2,5)=cDRDx7*(-cDRDx0*cDRDx20 + cDRDx21*cDRDx5);
-                
-                // const double cDRDx0 =             DN(0,0)*x(0,0) + DN(1,0)*x(1,0) + DN(2,0)*x(2,0);
-                // const double cDRDx1 =             DN(0,1)*x(0,1) + DN(1,1)*x(1,1) + DN(2,1)*x(2,1);
-                // const double cDRDx2 =             DN(0,0)*x(0,1) + DN(1,0)*x(1,1) + DN(2,0)*x(2,1);
-                // const double cDRDx3 =             DN(0,1)*x(0,0) + DN(1,1)*x(1,0) + DN(2,1)*x(2,0);
-                // const double cDRDx4 =             cDRDx0*cDRDx1 - cDRDx2*cDRDx3;
-                // const double cDRDx5 =             0.5*rho/pow(cDRDx4, 2);
-                // const double cDRDx6 =             DN(0,0)*cDRDx3 - DN(0,1)*cDRDx0;
-                // const double cDRDx7 =             DN(0,0)*DN(1,1) - DN(0,1)*DN(1,0);
-                // const double cDRDx8 =             DN(0,0)*DN(2,1) - DN(0,1)*DN(2,0);
-                // const double cDRDx9 =             cDRDx7*p[1] + cDRDx8*p[2];
-                // const double cDRDx10 =             cDRDx4*cDRDx9;
-                // const double cDRDx11 =             DN(0,0)*cDRDx1 - DN(0,1)*cDRDx2;
-                // const double cDRDx12 =             DN(1,0)*cDRDx3 - DN(1,1)*cDRDx0;
-                // const double cDRDx13 =             DN(2,0)*cDRDx3 - DN(2,1)*cDRDx0;
-                // const double cDRDx14 =             cDRDx12*p[1] + cDRDx13*p[2] + cDRDx6*p[0];
-                // const double cDRDx15 =             DN(1,0)*cDRDx1 - DN(1,1)*cDRDx2;
-                // const double cDRDx16 =             DN(2,0)*cDRDx1 - DN(2,1)*cDRDx2;
-                // const double cDRDx17 =             cDRDx11*p[0] + cDRDx15*p[1] + cDRDx16*p[2];
-                // const double cDRDx18 =             cDRDx11*cDRDx17 + cDRDx14*cDRDx6;
-                // const double cDRDx19 =             DN(1,0)*DN(2,1) - DN(1,1)*DN(2,0);
-                // const double cDRDx20 =             -cDRDx19*p[2] + cDRDx7*p[0];
-                // const double cDRDx21 =             cDRDx14*cDRDx7;
-                // const double cDRDx22 =             cDRDx17*cDRDx7;
-                // const double cDRDx23 =             cDRDx19*p[1] + cDRDx8*p[0];
-                // const double cDRDx24 =             cDRDx14*cDRDx8;
-                // const double cDRDx25 =             cDRDx17*cDRDx8;
-                // const double cDRDx26 =             cDRDx12*cDRDx14 + cDRDx15*cDRDx17;
-                // const double cDRDx27 =             cDRDx20*cDRDx4;
-                // const double cDRDx28 =             cDRDx14*cDRDx19;
-                // const double cDRDx29 =             cDRDx17*cDRDx19;
-                // const double cDRDx30 =             cDRDx13*cDRDx14 + cDRDx16*cDRDx17;
-                // const double cDRDx31 =             cDRDx23*cDRDx4;
-                // DRDx(0,0)=cDRDx5*(cDRDx10*cDRDx6 + cDRDx11*cDRDx18);
-                // DRDx(0,1)=-cDRDx5*(-cDRDx10*cDRDx11 + cDRDx18*cDRDx6);
-                // DRDx(0,2)=cDRDx5*(cDRDx15*cDRDx18 - cDRDx4*(cDRDx20*cDRDx6 + cDRDx21));
-                // DRDx(0,3)=-cDRDx5*(cDRDx12*cDRDx18 + cDRDx4*(cDRDx11*cDRDx20 + cDRDx22));
-                // DRDx(0,4)=cDRDx5*(cDRDx16*cDRDx18 - cDRDx4*(cDRDx23*cDRDx6 + cDRDx24));
-                // DRDx(0,5)=-cDRDx5*(cDRDx13*cDRDx18 + cDRDx4*(cDRDx11*cDRDx23 + cDRDx25));
-                // DRDx(1,0)=cDRDx5*(cDRDx11*cDRDx26 + cDRDx4*(cDRDx12*cDRDx9 + cDRDx21));
-                // DRDx(1,1)=-cDRDx5*(cDRDx26*cDRDx6 - cDRDx4*(cDRDx15*cDRDx9 + cDRDx22));
-                // DRDx(1,2)=-cDRDx5*(cDRDx12*cDRDx27 - cDRDx15*cDRDx26);
-                // DRDx(1,3)=-cDRDx5*(cDRDx12*cDRDx26 + cDRDx15*cDRDx27);
-                // DRDx(1,4)=cDRDx5*(cDRDx16*cDRDx26 - cDRDx4*(cDRDx12*cDRDx23 + cDRDx28));
-                // DRDx(1,5)=-cDRDx5*(cDRDx13*cDRDx26 + cDRDx4*(cDRDx15*cDRDx23 + cDRDx29));
-                // DRDx(2,0)=cDRDx5*(cDRDx11*cDRDx30 + cDRDx4*(cDRDx13*cDRDx9 + cDRDx24));
-                // DRDx(2,1)=-cDRDx5*(cDRDx30*cDRDx6 - cDRDx4*(cDRDx16*cDRDx9 + cDRDx25));
-                // DRDx(2,2)=cDRDx5*(cDRDx15*cDRDx30 + cDRDx4*(-cDRDx13*cDRDx20 + cDRDx28));
-                // DRDx(2,3)=-cDRDx5*(cDRDx12*cDRDx30 - cDRDx4*(-cDRDx16*cDRDx20 + cDRDx29));
-                // DRDx(2,4)=-cDRDx5*(cDRDx13*cDRDx31 - cDRDx16*cDRDx30);
-                // DRDx(2,5)=-cDRDx5*(cDRDx13*cDRDx30 + cDRDx16*cDRDx31);
-                
-                // const double cDRDx0 =             DN(0,0)*x(0,0) + DN(1,0)*x(1,0) + DN(2,0)*x(2,0);
-                // const double cDRDx1 =             DN(0,1)*x(0,1) + DN(1,1)*x(1,1) + DN(2,1)*x(2,1);
-                // const double cDRDx2 =             DN(0,0)*x(0,1) + DN(1,0)*x(1,1) + DN(2,0)*x(2,1);
-                // const double cDRDx3 =             DN(0,1)*x(0,0) + DN(1,1)*x(1,0) + DN(2,1)*x(2,0);
-                // const double cDRDx4 =             1.0/(cDRDx0*cDRDx1 - cDRDx2*cDRDx3);
-                // const double cDRDx5 =             0.5*cDRDx4*rho;
-                // const double cDRDx6 =             DN(0,0)*DN(1,1) - DN(0,1)*DN(1,0);
-                // const double cDRDx7 =             DN(0,0)*DN(2,1) - DN(0,1)*DN(2,0);
-                // const double cDRDx8 =             cDRDx6*p[1] + cDRDx7*p[2];
-                // const double cDRDx9 =             DN(0,0)*cDRDx3 - DN(0,1)*cDRDx0;
-                // const double cDRDx10 =             DN(0,0)*cDRDx1 - DN(0,1)*cDRDx2;
-                // const double cDRDx11 =             cDRDx10*cDRDx4;
-                // const double cDRDx12 =             DN(1,0)*cDRDx3 - DN(1,1)*cDRDx0;
-                // const double cDRDx13 =             DN(2,0)*cDRDx3 - DN(2,1)*cDRDx0;
-                // const double cDRDx14 =             cDRDx12*p[1] + cDRDx13*p[2] + cDRDx9*p[0];
-                // const double cDRDx15 =             DN(1,0)*cDRDx1 - DN(1,1)*cDRDx2;
-                // const double cDRDx16 =             DN(2,0)*cDRDx1 - DN(2,1)*cDRDx2;
-                // const double cDRDx17 =             cDRDx10*p[0] + cDRDx15*p[1] + cDRDx16*p[2];
-                // const double cDRDx18 =             cDRDx10*cDRDx17 + cDRDx14*cDRDx9;
-                // const double cDRDx19 =             cDRDx4*cDRDx9;
-                // const double cDRDx20 =             DN(1,0)*DN(2,1) - DN(1,1)*DN(2,0);
-                // const double cDRDx21 =             -cDRDx20*p[2] + cDRDx6*p[0];
-                // const double cDRDx22 =             cDRDx14*cDRDx6;
-                // const double cDRDx23 =             cDRDx15*cDRDx4;
-                // const double cDRDx24 =             cDRDx17*cDRDx6;
-                // const double cDRDx25 =             cDRDx12*cDRDx4;
-                // const double cDRDx26 =             cDRDx20*p[1] + cDRDx7*p[0];
-                // const double cDRDx27 =             cDRDx14*cDRDx7;
-                // const double cDRDx28 =             cDRDx16*cDRDx4;
-                // const double cDRDx29 =             cDRDx17*cDRDx7;
-                // const double cDRDx30 =             cDRDx13*cDRDx4;
-                // const double cDRDx31 =             cDRDx12*cDRDx14 + cDRDx15*cDRDx17;
-                // const double cDRDx32 =             cDRDx14*cDRDx20;
-                // const double cDRDx33 =             cDRDx17*cDRDx20;
-                // const double cDRDx34 =             cDRDx13*cDRDx14 + cDRDx16*cDRDx17;
-                // DRDx(0,0)=cDRDx5*(cDRDx11*cDRDx18 + cDRDx8*cDRDx9);
-                // DRDx(0,1)=cDRDx5*(cDRDx10*cDRDx8 - cDRDx18*cDRDx19);
-                // DRDx(0,2)=cDRDx5*(cDRDx18*cDRDx23 - cDRDx21*cDRDx9 - cDRDx22);
-                // DRDx(0,3)=-cDRDx5*(cDRDx10*cDRDx21 + cDRDx18*cDRDx25 + cDRDx24);
-                // DRDx(0,4)=cDRDx5*(cDRDx18*cDRDx28 - cDRDx26*cDRDx9 - cDRDx27);
-                // DRDx(0,5)=-cDRDx5*(cDRDx10*cDRDx26 + cDRDx18*cDRDx30 + cDRDx29);
-                // DRDx(1,0)=cDRDx5*(cDRDx11*cDRDx31 + cDRDx12*cDRDx8 + cDRDx22);
-                // DRDx(1,1)=cDRDx5*(cDRDx15*cDRDx8 - cDRDx19*cDRDx31 + cDRDx24);
-                // DRDx(1,2)=cDRDx5*(-cDRDx12*cDRDx21 + cDRDx23*cDRDx31);
-                // DRDx(1,3)=-cDRDx5*(cDRDx15*cDRDx21 + cDRDx25*cDRDx31);
-                // DRDx(1,4)=cDRDx5*(-cDRDx12*cDRDx26 + cDRDx28*cDRDx31 - cDRDx32);
-                // DRDx(1,5)=-cDRDx5*(cDRDx15*cDRDx26 + cDRDx30*cDRDx31 + cDRDx33);
-                // DRDx(2,0)=cDRDx5*(cDRDx11*cDRDx34 + cDRDx13*cDRDx8 + cDRDx27);
-                // DRDx(2,1)=cDRDx5*(cDRDx16*cDRDx8 - cDRDx19*cDRDx34 + cDRDx29);
-                // DRDx(2,2)=cDRDx5*(-cDRDx13*cDRDx21 + cDRDx23*cDRDx34 + cDRDx32);
-                // DRDx(2,3)=-cDRDx5*(cDRDx16*cDRDx21 + cDRDx25*cDRDx34 - cDRDx33);
-                // DRDx(2,4)=cDRDx5*(-cDRDx13*cDRDx26 + cDRDx28*cDRDx34);
-                // DRDx(2,5)=-cDRDx5*(cDRDx16*cDRDx26 + cDRDx30*cDRDx34);              
-                
-                rOutput = trans(DRDx);
-
-            }
-            else
-            {
-                KRATOS_ERROR << "sorry, SHAPE_SENSITIVITY not yet implemented in 3D";
-            }            
-        }
-        else
-        {
-            KRATOS_ERROR << "Sensitivity variable " << rSensitivityVariable << " not supported." << std::endl;
-        }
-
-        KRATOS_CATCH("")
-    }
 
     ///@}
     ///@name Access

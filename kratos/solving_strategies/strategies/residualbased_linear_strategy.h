@@ -346,6 +346,8 @@ public:
     {
         KRATOS_TRY
 
+        std::cout << "I AM ENTERING SOLVE! " << std::endl;
+
         //pointers needed in the solution
         typename TSchemeType::Pointer pScheme = GetScheme();
         typename TBuilderAndSolverType::Pointer pBuilderAndSolver = GetBuilderAndSolver();
@@ -387,6 +389,7 @@ public:
 
         if (BaseType::mRebuildLevel > 0 || BaseType::mStiffnessMatrixIsBuilt == false)
         {
+            std::cout << "I DO  BuildAndSolve" << std::endl;
             TSparseSpace::SetToZero(mA);
             TSparseSpace::SetToZero(mDx);
             TSparseSpace::SetToZero(mb);
@@ -398,6 +401,7 @@ public:
         }
         else
         {
+            std::cout << "I DO  BuildRHSAndSolve" << std::endl;
             TSparseSpace::SetToZero(mDx);
             TSparseSpace::SetToZero(mb);
             pBuilderAndSolver->BuildRHSAndSolve(pScheme, BaseType::GetModelPart(), mA, mDx, mb);

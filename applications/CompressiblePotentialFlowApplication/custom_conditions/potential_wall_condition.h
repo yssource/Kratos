@@ -335,7 +335,19 @@ public:
             rRightHandSideVector.resize(TNumNodes,false);
         rLeftHandSideMatrix.clear();
 
-        std::cout << "I AM A POTENTIAL WALL CONDITION " << std::endl;
+        //std::cout << "Entering Boundary Condition" << std::endl;
+
+        // Geometry<Node<3> >& pGeometry = this->GetGeometry();
+
+        // if(pGeometry[1].X()<1.01 & pGeometry[1].X()>0.99)
+        // {
+        //     std::cout << "Entering Condiction" << std::endl;
+        //     std::cout << "pGeometry =" << pGeometry[1].Y() << std::endl;
+        //     const array_1d<double,3>& v = this->GetValue(VELOCITY);
+        //     std::cout << "v =" << v << std::endl;
+
+        // }
+
 
         array_1d<double,3> An;
         if(TDim == 2) CalculateNormal2D(An);
@@ -348,6 +360,8 @@ public:
         {
             rRightHandSideVector[i] = value;
         }
+
+        //std::cout << "Exiting Boundary Condition" << std::endl;
 
     }
 

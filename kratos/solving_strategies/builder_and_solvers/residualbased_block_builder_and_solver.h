@@ -236,6 +236,8 @@ public:
                 {
                     //calculate elemental contribution
                     pScheme->CalculateSystemContributions(*(it.base()), LHS_Contribution, RHS_Contribution, EquationId, CurrentProcessInfo);
+                    //std::cout << "RHS_ContributionBUILD =" << RHS_Contribution << std::endl;
+                    
 
                     //assemble the elemental contribution
     #ifdef USE_LOCKS_IN_ASSEMBLY
@@ -248,6 +250,7 @@ public:
                 }
 
             }
+            
 
 
             //#pragma omp parallel for firstprivate(nconditions, LHS_Contribution, RHS_Contribution, EquationId ) schedule(dynamic, 1024)
@@ -380,6 +383,8 @@ public:
     {
         KRATOS_TRY
 
+        //std::cout << "b=" << b << std::endl;
+
         double norm_b;
         if (TSparseSpace::Size(b) != 0)
             norm_b = TSparseSpace::TwoNorm(b);
@@ -428,9 +433,12 @@ public:
         Build(pScheme, r_model_part, A, b);
 
         Timer::Stop("Build");
+        //std::cout << "RHS vectorAFTERBUILD = " << b << std::endl;
+        
 
 
         ApplyDirichletConditions(pScheme, r_model_part, A, Dx, b);
+        //std::cout << "RHS vectorAFTERDIRICHLET = " << b << std::endl;
 
         if (this->GetEchoLevel() == 3)
         {
@@ -443,7 +451,9 @@ public:
         double start_solve = OpenMPUtils::GetCurrentTime();
         Timer::Start("Solve");
 
+        //std::cout << "RHS vectorBEFORESOLVE = " << b << std::endl;
         SystemSolveWithPhysics(A, Dx, b, r_model_part);
+        //std::cout << "RHS vectorAFTERSOLVE = " << b << std::endl;
 
         Timer::Stop("Solve");
         double stop_solve = OpenMPUtils::GetCurrentTime();

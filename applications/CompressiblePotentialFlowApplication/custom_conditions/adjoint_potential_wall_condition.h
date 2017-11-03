@@ -1,0 +1,632 @@
+//    |  /           |
+//    ' /   __| _` | __|  _ \   __|
+//    . \  |   (   | |   (   |\__ `
+//   _|\_\_|  \__,_|\__|\___/ ____/
+//                   Multi-Physics
+//
+//  License:		 BSD License
+//					 Kratos default license: kratos/license.txt
+//
+//  Main authors:    Riccardo Rossi
+//
+
+
+#ifndef KRATOS_ADJOINT_POTENTIAL_WALL_CONDITION_H
+#define KRATOS_ADJOINT_POTENTIAL_WALL_CONDITION_H
+
+// System includes
+#include <string>
+#include <iostream>
+
+#include "includes/kratos_flags.h"
+#include "includes/deprecated_variables.h"
+
+// External includes
+
+
+// Project includes
+
+#include "custom_conditions/potential_wall_condition.h"
+
+// Application includes
+
+
+namespace Kratos
+{
+///@addtogroup FluidDynamicsApplication
+///@{
+
+///@name Kratos Globals
+///@{
+
+///@}
+///@name Type Definitions
+///@{
+
+///@}
+///@name  Enum's
+///@{
+
+///@}
+///@name  Functions
+///@{
+
+///@}
+///@name Kratos Classes
+///@{
+
+/// Implements a wall condition for the potential flow formulation
+template< unsigned int TDim, unsigned int TNumNodes = TDim >
+class AdjointPotentialWallCondition : public PotentialWallCondition<TDim, TNumNodes>
+{
+public:
+    ///@name Type Definitions
+    ///@{
+
+    typedef PotentialWallCondition< TDim, TNumNodes> BaseType;
+
+    /// Pointer definition of AdjointPotentialWallCondition
+    KRATOS_CLASS_POINTER_DEFINITION(AdjointPotentialWallCondition);
+
+    // typedef Node < 3 > NodeType;
+
+    // typedef Properties PropertiesType;
+
+    // typedef Geometry<NodeType> GeometryType;
+
+    // typedef Geometry<NodeType>::PointsArrayType NodesArrayType;
+
+    // typedef Vector VectorType;
+
+    // typedef Matrix MatrixType;
+
+    // typedef std::size_t IndexType;
+
+    // typedef std::size_t SizeType;
+
+    // typedef std::vector<std::size_t> EquationIdVectorType;
+
+    // typedef std::vector< Dof<double>::Pointer > DofsVectorType;
+
+    // typedef PointerVectorSet<Dof<double>, IndexedObject> DofsArrayType;
+
+    // typedef VectorMap<IndexType, DataValueContainer> SolutionStepsConditionalDataContainerType;
+
+    // typedef Element::WeakPointer ElementWeakPointerType;
+
+    // typedef Element::Pointer ElementPointerType;
+    
+    typedef Condition::GeometryType GeometryType;
+    
+    typedef Condition::PropertiesType PropertiesType;
+    
+    typedef Condition::EquationIdVectorType EquationIdVectorType;
+    
+    typedef Condition::DofsVectorType DofsVectorType;
+
+    typedef Condition::IndexType IndexType;
+
+    typedef Condition::NodesArrayType NodesArrayType;
+
+    typedef Condition::MatrixType MatrixType;
+
+    typedef Condition::VectorType VectorType;
+
+    ///@}
+    ///@name Life Cycle
+    ///@{
+
+    /// Default constructor.
+    /** Admits an Id as a parameter.
+      @param NewId Index for the new condition
+      */
+    AdjointPotentialWallCondition(IndexType NewId = 0):
+        PotentialWallCondition<TDim, TNumNodes>(NewId)
+    {
+    }
+
+    /// Constructor using an array of nodes
+    /**
+     @param NewId Index of the new condition
+     @param ThisNodes An array containing the nodes of the new condition
+     */
+    AdjointPotentialWallCondition(IndexType NewId,
+                           const NodesArrayType& ThisNodes):
+        PotentialWallCondition<TDim, TNumNodes>(NewId,ThisNodes)
+    {
+    }
+
+    /// Constructor using Geometry
+    /**
+     @param NewId Index of the new condition
+     @param pGeometry Pointer to a geometry object
+     */
+    AdjointPotentialWallCondition(IndexType NewId,
+                           GeometryType::Pointer pGeometry):
+        PotentialWallCondition<TDim, TNumNodes>(NewId,pGeometry)
+    {
+    }
+
+    /// Constructor using Properties
+    /**
+     @param NewId Index of the new element
+     @param pGeometry Pointer to a geometry object
+     @param pProperties Pointer to the element's properties
+     */
+    AdjointPotentialWallCondition(IndexType NewId,
+                           GeometryType::Pointer pGeometry,
+                           PropertiesType::Pointer pProperties):
+        PotentialWallCondition<TDim, TNumNodes>(NewId,pGeometry,pProperties)
+    {
+    }
+
+    /// Copy constructor.
+    AdjointPotentialWallCondition(AdjointPotentialWallCondition const& rOther):
+        PotentialWallCondition<TDim, TNumNodes>(rOther)
+    {
+    }
+
+    /// Destructor.
+    ~AdjointPotentialWallCondition() override {}
+
+
+    ///@}
+    ///@name Operators
+    ///@{
+
+    /// Copy constructor
+    AdjointPotentialWallCondition & operator=(AdjointPotentialWallCondition const& rOther)
+    {
+        Condition::operator=(rOther);
+
+        return *this;
+    }
+
+    ///@}
+    ///@name Operations
+    ///@{
+
+    /// Create a new AdjointPotentialWallCondition object.
+    /**
+      @param NewId Index of the new condition
+      @param ThisNodes An array containing the nodes of the new condition
+      @param pProperties Pointer to the element's properties
+      */
+    Condition::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const override
+    {
+        return Condition::Pointer(new AdjointPotentialWallCondition(NewId, Condition::GetGeometry().Create(ThisNodes), pProperties));
+    }
+
+
+    Condition::Pointer Create(IndexType NewId, Condition::GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const override
+    {
+        return Condition::Pointer(new AdjointPotentialWallCondition(NewId, pGeom, pProperties));
+    }
+
+    /**
+     * Clones the selected element variables, creating a new one
+     * @param NewId: the ID of the new element
+     * @param ThisNodes: the nodes of the new element
+     * @param pProperties: the properties assigned to the new element
+     * @return a Pointer to the new element
+     */
+
+    Condition::Pointer Clone(IndexType NewId, NodesArrayType const& rThisNodes) const override
+    {
+        Condition::Pointer pNewCondition = Create(NewId, Condition::GetGeometry().Create( rThisNodes ), Condition::pGetProperties() );
+
+        pNewCondition->SetData(this->GetData());
+        pNewCondition->SetFlags(this->GetFlags());
+
+        return pNewCondition;
+    }
+
+    // /// Find the condition's parent element.
+	// void Initialize() override
+	// {
+	// 	KRATOS_TRY;
+
+	// 	const array_1d<double,3>& rNormal = this->GetValue(NORMAL);
+	// 	if (norm_2(rNormal) == 0.0)
+	// 	  {
+	// 	    std::cout << "error on condition -> " << this->Id() << std::endl;
+	// 	    KRATOS_THROW_ERROR(std::logic_error, "NORMAL must be calculated before using this condition","");
+	// 	  }
+
+	// 	if (mInitializeWasPerformed)
+	// 	{
+	// 		return;
+	// 	}
+
+	// 	mInitializeWasPerformed = true;
+
+	// 	double EdgeLength;
+	// 	array_1d<double,3> Edge;
+	// 	GeometryType& rGeom = this->GetGeometry();
+	// 	WeakPointerVector<Element> ElementCandidates;
+	// 	for (SizeType i = 0; i < TDim; i++)
+	// 	{
+	// 		WeakPointerVector<Element>& rNodeElementCandidates = rGeom[i].GetValue(NEIGHBOUR_ELEMENTS);
+	// 		for (SizeType j = 0; j < rNodeElementCandidates.size(); j++)
+	// 		{
+	// 			ElementCandidates.push_back(rNodeElementCandidates(j));
+	// 		}
+	// 	}
+
+	// 	std::vector<IndexType> NodeIds(TNumNodes), ElementNodeIds;
+
+	// 	for (SizeType i=0; i < TNumNodes; i++)
+	// 	{
+	// 		NodeIds[i] = rGeom[i].Id();
+	// 	}
+
+	// 	std::sort(NodeIds.begin(), NodeIds.end());
+
+	// 	for (SizeType i=0; i < ElementCandidates.size(); i++)
+	// 	{
+	// 		GeometryType& rElemGeom = ElementCandidates[i].GetGeometry();
+	// 		ElementNodeIds.resize(rElemGeom.PointsNumber());
+
+	// 		for (SizeType j=0; j < rElemGeom.PointsNumber(); j++)
+	// 		{
+	// 			ElementNodeIds[j] = rElemGeom[j].Id();
+	// 		}
+
+	// 		std::sort(ElementNodeIds.begin(), ElementNodeIds.end());
+
+	// 		if ( std::includes(ElementNodeIds.begin(), ElementNodeIds.end(), NodeIds.begin(), NodeIds.end()) )
+	// 		{
+	// 			mpElement = ElementCandidates(i);
+
+	// 			Edge = rElemGeom[1].Coordinates() - rElemGeom[0].Coordinates();
+	// 			mMinEdgeLength = Edge[0]*Edge[0];
+	// 			for (SizeType d=1; d < TDim; d++)
+	// 			{
+	// 				mMinEdgeLength += Edge[d]*Edge[d];
+	// 			}
+
+	// 			for (SizeType j=2; j < rElemGeom.PointsNumber(); j++)
+	// 			{
+	// 				for (SizeType k=0; k < j; k++)
+	// 				{
+	// 					Edge = rElemGeom[j].Coordinates() - rElemGeom[k].Coordinates();
+	// 					EdgeLength = Edge[0]*Edge[0];
+
+	// 					for (SizeType d = 1; d < TDim; d++)
+	// 					{
+	// 						EdgeLength += Edge[d]*Edge[d];
+	// 					}
+
+	// 					mMinEdgeLength = (EdgeLength < mMinEdgeLength) ? EdgeLength : mMinEdgeLength;
+	// 				}
+	// 			}
+	// 			mMinEdgeLength = sqrt(mMinEdgeLength);
+	// 			return;
+	// 		}
+	// 	}
+
+	// 	std::cout << "error in condition -> " << this->Id() << std::endl;
+	// 	KRATOS_THROW_ERROR(std::logic_error, "Condition cannot find parent element","");
+	// 	KRATOS_CATCH("");
+    // }
+    
+    void CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix,
+                                ProcessInfo& rCurrentProcessInfo) override
+    {
+        VectorType RHS;
+        this->CalculateLocalSystem(rLeftHandSideMatrix,RHS,rCurrentProcessInfo);
+    }
+
+
+
+
+    // /**
+    //  * Getting method to obtain the variable which defines the degrees of freedom
+    //  */
+    //  void GetValuesVector(Vector& values, int Step = 0) override
+    //  {
+    //      //gather nodal data
+    //      for(unsigned int i=0; i<TNumNodes; i++)
+    //      {
+    //          values[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+    //      }
+    //  }
+
+
+        /// Calculate wall stress term for all nodes with IS_STRUCTURE != 0.0
+    /**
+      @param rDampingMatrix Left-hand side matrix
+      @param rRightHandSideVector Right-hand side vector
+      @param rCurrentProcessInfo ProcessInfo instance (unused)
+      */
+      void CalculateLocalSystem(MatrixType& rLeftHandSideMatrix,
+        VectorType& rRightHandSideVector,
+        ProcessInfo& rCurrentProcessInfo) override
+        {
+            if (rLeftHandSideMatrix.size1() != TNumNodes)
+                rLeftHandSideMatrix.resize(TNumNodes,TNumNodes,false);
+            if (rRightHandSideVector.size() != TNumNodes)
+                rRightHandSideVector.resize(TNumNodes,false);
+            rLeftHandSideMatrix.clear();
+
+            std::cout << "Entering Adjoint Boundary Condiction" << std::endl;
+
+            std::cout << "TNumNodes ="<< TNumNodes << std::endl;
+
+            for(unsigned int i=0; i<TNumNodes; ++i)
+            {
+                rRightHandSideVector[i] = 0;
+            }
+            std::cout << "Exiting Adjoint Boundary Condiction" << std::endl;
+        }
+
+
+
+   
+
+    /// Check that all data required by this condition is available and reasonable
+    int Check(const ProcessInfo& rCurrentProcessInfo) override
+    {
+        KRATOS_TRY;
+
+        int Check = Condition::Check(rCurrentProcessInfo); // Checks id > 0 and area > 0
+
+        if (Check != 0)
+        {
+            return Check;
+        }
+        else
+        {
+            // Check that all required variables have been registered
+            if(ADJOINT_POSITIVE_FACE_PRESSURE.Key() == 0)
+                KRATOS_ERROR << "ADJOINT_POSITIVE_FACE_PRESSURE Key is 0. Check if the application was correctly registered.";
+            if(ADJOINT_NEGATIVE_FACE_PRESSURE.Key() == 0)
+                KRATOS_ERROR << "ADJOINT_NEGATIVE_FACE_PRESSURE Key is 0. Check if the application was correctly registered.";
+
+            // Checks on nodes
+
+            // Check that the element's nodes contain all required SolutionStepData and Degrees of freedom
+            for(unsigned int i=0; i<Condition::GetGeometry().size(); ++i)
+            {
+
+                if(Condition::GetGeometry()[i].SolutionStepsDataHas(ADJOINT_POSITIVE_FACE_PRESSURE) == false)
+                    KRATOS_ERROR << "missing ADJOINT_POSITIVE_FACE_PRESSURE variable on solution step data for node " << Condition::GetGeometry()[i].Id();
+                if(Condition::GetGeometry()[i].SolutionStepsDataHas(ADJOINT_NEGATIVE_FACE_PRESSURE) == false)
+                    KRATOS_ERROR << "missing ADJOINT_NEGATIVE_FACE_PRESSURE variable on solution step data for node " << Condition::GetGeometry()[i].Id();
+
+
+                return Check;
+            }
+        }
+        return BaseType::Check(rCurrentProcessInfo);
+
+            KRATOS_CATCH("");
+        }
+
+
+        /// Provides the global indices for each one of this element's local rows.
+        /** This determines the elemental equation ID vector for all elemental DOFs
+         * @param rResult A vector containing the global Id of each row
+         * @param rCurrentProcessInfo the current process info object (unused)
+         */
+        void EquationIdVector(EquationIdVectorType& rResult,
+                                      ProcessInfo& rCurrentProcessInfo) override
+        {
+            if (rResult.size() != TNumNodes)
+                rResult.resize(TNumNodes, false);
+
+            for (unsigned int i = 0; i < TNumNodes; i++)
+                rResult[i] = Condition::GetGeometry()[i].GetDof(ADJOINT_POSITIVE_FACE_PRESSURE).EquationId();
+
+        }
+
+
+        /// Returns a list of the element's Dofs
+        /**
+         * @param ElementalDofList the list of DOFs
+         * @param rCurrentProcessInfo the current process info instance
+         */
+        void GetDofList(DofsVectorType& ConditionDofList,
+                                ProcessInfo& CurrentProcessInfo) override
+        {
+            if (ConditionDofList.size() != TNumNodes)
+                ConditionDofList.resize(TNumNodes);
+
+            for (unsigned int i = 0; i < TNumNodes; i++)
+                ConditionDofList[i] = Condition::GetGeometry()[i].pGetDof(ADJOINT_POSITIVE_FACE_PRESSURE);
+
+        }
+
+        // void FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) override
+        // {
+        //     std::vector<double> pressure;
+        //     ElementPointerType pElem = pGetElement();
+        //     pElem->GetValueOnIntegrationPoints(PRESSURE,pressure, rCurrentProcessInfo);
+        //     this->SetValue(PRESSURE,pressure[0]);
+        // }
+
+        
+
+
+
+
+        ///@}
+        ///@name Access
+        ///@{
+
+
+        ///@}
+        ///@name Inquiry
+        ///@{
+
+
+        ///@}
+        ///@name Input and output
+        ///@{
+
+        /// Turn back information as a string.
+        std::string Info() const override
+        {
+            std::stringstream buffer;
+            this->PrintInfo(buffer);
+            return buffer.str();
+        }
+
+        /// Print information about this object.
+        void PrintInfo(std::ostream& rOStream) const override
+        {
+            rOStream << "AdjointPotentialWallCondition" << TDim << "D #" << Condition::Id();
+        }
+
+        /// Print object's data.
+        void PrintData(std::ostream& rOStream) const override
+        {
+            Condition::pGetGeometry()->PrintData(rOStream);
+        }
+
+
+        ///@}
+        ///@name Friends
+        ///@{
+
+
+        ///@}
+
+protected:
+        ///@name Protected static Member Variables
+        ///@{
+
+
+        ///@}
+        ///@name Protected member Variables
+        ///@{
+
+
+        ///@}
+        ///@name Protected Operators
+        ///@{
+
+
+        ///@}
+        ///@name Protected Operations
+        ///@{
+
+        
+
+
+
+
+
+        ///@}
+        ///@name Protected  Access
+        ///@{
+
+
+        ///@}
+        ///@name Protected Inquiry
+        ///@{
+
+
+        ///@}
+        ///@name Protected LifeCycle
+        ///@{
+
+
+        ///@}
+
+private:
+        ///@name Static Member Variables
+        ///@{
+
+
+        ///@}
+        ///@name Member Variables
+        ///@{
+      
+
+
+        ///@}
+        ///@name Serialization
+        ///@{
+
+        friend class Serializer;
+
+        void save(Serializer& rSerializer) const override
+        {
+            KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Condition );
+        }
+
+        void load(Serializer& rSerializer) override
+        {
+            KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Condition );
+        }
+
+        ///@}
+        ///@name Private Operators
+        ///@{
+
+
+        ///@}
+        ///@name Private Operations
+        ///@{
+
+
+        ///@}
+        ///@name Private  Access
+        ///@{
+
+
+        ///@}
+        ///@name Private Inquiry
+        ///@{
+
+
+        ///@}
+        ///@name Un accessible methods
+        ///@{
+
+
+        ///@}
+
+    }; // Class AdjointPotentialWallCondition
+
+
+    ///@}
+
+    ///@name Type Definitions
+    ///@{
+
+
+    ///@}
+    ///@name Input and output
+    ///@{
+
+
+    /// input stream function
+    template< unsigned int TDim, unsigned int TNumNodes >
+    inline std::istream& operator >> (std::istream& rIStream,
+                                      AdjointPotentialWallCondition<TDim,TNumNodes>& rThis)
+    {
+        return rIStream;
+    }
+
+    /// output stream function
+    template< unsigned int TDim, unsigned int TNumNodes >
+    inline std::ostream& operator << (std::ostream& rOStream,
+                                      const AdjointPotentialWallCondition<TDim,TNumNodes>& rThis)
+    {
+        rThis.PrintInfo(rOStream);
+        rOStream << std::endl;
+        rThis.PrintData(rOStream);
+
+        return rOStream;
+    }
+
+    ///@}
+
+    ///@} addtogroup block
+
+
+}  // namespace Kratos.
+
+#endif // KRATOS_POTENTIAL_WALL_CONDITION_H

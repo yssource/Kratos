@@ -37,6 +37,7 @@
 #include "../reconstruction_conditions/reconstruction_constraint_displacement_coupling.h"
 #include "../reconstruction_conditions/reconstruction_constraint_rotation_coupling.h"
 #include "../reconstruction_conditions/regularization_condition_min_control_point_displacement.h"
+#include "../reconstruction_conditions/regularization_condition_min_control_point_distance_to_surface.h"
 
 // ==============================================================================
 
@@ -266,11 +267,27 @@ public:
     // --------------------------------------------------------------------------
     void CreateMinimalControlPointDisplacementCondition( ReconstructionDataBase& data_base, double beta_value, std::string solution_strategy )
     {
+        std::cout << "\n> Starting to create beta-regularization condition (minimal control point displacement)..." << std::endl;
+        
         RegularizationCondition::Pointer NewCondition = RegularizationCondition::Pointer( new MinimalControlPointDisplacementCondition( data_base,
                                                                                                                                         beta_value,
                                                                                                                                         solution_strategy ) );
         mListOfRegularizationConditions.push_back( NewCondition );
+        std::cout << "> Finished creating beta-regularization condition (minimal control point displacement)." << std::endl;                      
     }     
+
+    // --------------------------------------------------------------------------
+    void CreateMinimalControlPointDistanceToSurfaceCondition( ReconstructionDataBase& data_base, double alpha_value, std::string solution_strategy )
+    {
+        std::cout << "\n> Starting to create alpha-regularization condition (minimal control point distance to surface)..." << std::endl;
+        
+        RegularizationCondition::Pointer NewCondition = RegularizationCondition::Pointer( new MinimalControlPointDistanceToSurfaceCondition( data_base,
+                                                                                                                                             alpha_value,
+                                                                                                                                             solution_strategy ) );
+        mListOfRegularizationConditions.push_back( NewCondition );
+        std::cout << "> Finished creating alpha-regularization condition (minimal control point distance to surface)." << std::endl;                  
+    }     
+
 
     // --------------------------------------------------------------------------
     std::vector<ReconstructionCondition::Pointer>& GetReconstructionConditions()

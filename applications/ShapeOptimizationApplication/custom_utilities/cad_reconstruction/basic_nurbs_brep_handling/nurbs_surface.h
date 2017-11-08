@@ -28,7 +28,6 @@
 // ------------------------------------------------------------------------------
 // Project includes
 // ------------------------------------------------------------------------------
-#include "control_point.h"
 #include "b_spline_utilities.h"
 
 // ==============================================================================
@@ -1055,6 +1054,53 @@ public:
 	}
 
 	// --------------------------------------------------------------------------
+	array_1d<int,2> ComputeKnotSpans( double _u, double _v )
+	{
+		int span_u=find_Knot_Span(m_knot_vector_u,_u,m_p,m_n_u);
+		int span_v=find_Knot_Span(m_knot_vector_v,_v,m_q,m_n_v);
+
+		array_1d<int,2> span;
+		span[0] = span_u;
+		span[1] = span_v;
+
+		return span;
+	}
+
+	// --------------------------------------------------------------------------
+	void ComputeGrevilleAbscissae( std::vector<double>& rGrevilleAbscissaeInUDirection, std::vector<double>& rGrevilleAbscissaeInVDirection )
+	{
+		// Computes Grevillle Abscissae according to:
+		// Schillinger et al. 2013: Isogeometric colocation Cost Comparison with Galerkin Methods and Extension to Adaptive Hierarchical NURBS Discretizations
+		// The latter references to
+		// NURBS Curves and Surfaces: from Projective Geometry to Practical Use, Second Edition, G.E. Farin, 1999b or 2005 <-- This book is often the base reference
+
+		rGrevilleAbscissaeInUDirection.resize(m_control_points.size());
+		rGrevilleAbscissaeInVDirection.resize(m_control_points.size());		
+
+		for(auto & control_point_i : m_control_points)
+		{
+			int cp_vector_index = &control_point_i-&m_control_points[0];
+			
+			int cp_index_in_u = cp_vector_index % m_n_u;  // This modulus operator computes the remainder of the given division 
+			int cp_index_in_v = cp_vector_index / m_n_u; // Note, this is a division of two integers --> remainder is negleted
+
+			double u_value_of_greville_abscissa = 0.0;
+			double v_value_of_greville_abscissa = 0.0;
+			
+			for(int p_index=1; p_index<=m_p; p_index++)
+				u_value_of_greville_abscissa += m_knot_vector_u[cp_index_in_u+p_index];
+			u_value_of_greville_abscissa /= m_p;
+
+			for(int q_index=1; q_index<=m_q; q_index++)
+				v_value_of_greville_abscissa += m_knot_vector_v[cp_index_in_v+q_index];
+			v_value_of_greville_abscissa /= m_q;
+				
+			rGrevilleAbscissaeInUDirection[cp_vector_index] = u_value_of_greville_abscissa;
+			rGrevilleAbscissaeInVDirection[cp_vector_index]	= v_value_of_greville_abscissa;
+		}
+	}
+
+	// --------------------------------------------------------------------------
 	std::vector<ControlPoint*> GetPointersToAffectedControlPoints(int span_u, int span_v, double _u, double _v)
 	{
 		if(span_u==-1) span_u=find_Knot_Span(m_knot_vector_u,_u,m_p,m_n_u);
@@ -1103,19 +1149,6 @@ public:
 
 		return vector_of_ids;
 	}	
-
-	// --------------------------------------------------------------------------
-	array_1d<int,2> ComputeKnotSpans( double _u, double _v )
-	{
-		int span_u=find_Knot_Span(m_knot_vector_u,_u,m_p,m_n_u);
-		int span_v=find_Knot_Span(m_knot_vector_v,_v,m_q,m_n_v);
-
-		array_1d<int,2> span;
-		span[0] = span_u;
-		span[1] = span_v;
-
-		return span;
-	}
 		
 	// --------------------------------------------------------------------------
 	DoubleVector& GetKnotVectorU()

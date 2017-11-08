@@ -85,7 +85,10 @@ public:
             condition_i->FlagControlPointsRelevantForReconstruction();
 
         for(auto & condition_i : mrReconstructionConstraints)
-            condition_i->FlagControlPointsRelevantForReconstruction();              
+            condition_i->FlagControlPointsRelevantForReconstruction();
+            
+        for(auto & condition_i : mrRegularizationConditions)
+            condition_i->FlagControlPointsRelevantForReconstruction();               
 
         std::cout << "> Time needed for identifying control points relevant for reconstruction: " << timer.elapsed() << " s" << std::endl;    
     }      

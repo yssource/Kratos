@@ -42,7 +42,7 @@ class CADReconstrutionUtilities():
         self.PenaltyMultiplier = 1.0
        
         # Parameters to edit input data       
-        self.FERefinementLevel = 2
+        self.FERefinementLevel = 1
 
         # Projection settings
         self.ParameterResolutionForProjection = [ 100, 100 ]
@@ -50,7 +50,9 @@ class CADReconstrutionUtilities():
         self.ProjectionTolerance = 1e-5
 
         # Regularization settings
-        self.MinimizeControlPointDisplacement = True
+        self.MinimizeControlPointDistanceToSurface = True
+        self.Alpha = 0.001       
+        self.MinimizeControlPointDisplacement = False
         self.Beta = 0.002
 
         # Linear solver
@@ -208,8 +210,10 @@ class CADReconstrutionUtilities():
             self.ConditionsContainer.CreateDirichletConstraints( self.DirichletConstraints, self.PenaltyFactorForDirichletConstraints )
 
         # Regularization
+        if self.MinimizeControlPointDistanceToSurface: 
+            self.ConditionsContainer.CreateMinimalControlPointDistanceToSurfaceCondition( self.DataBase, self.Alpha, self.ReconstructionStrategy )                               
         if self.MinimizeControlPointDisplacement: 
-            self.ConditionsContainer.CreateMinimalControlPointDisplacementCondition( self.DataBase, self.Beta, self.ReconstructionStrategy )                   
+            self.ConditionsContainer.CreateMinimalControlPointDisplacementCondition( self.DataBase, self.Beta, self.ReconstructionStrategy )
 
     # --------------------------------------------------------------------------
     def __CreateSolverForReconstruction( self ):

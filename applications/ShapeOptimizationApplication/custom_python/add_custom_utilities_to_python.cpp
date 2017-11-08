@@ -158,6 +158,7 @@ void  AddCustomUtilitiesToPython()
         .def("CreateRotationCouplingConstraintsOnAllCouplingPoints", &ReconstructionConditionContainer::CreateRotationCouplingConstraintsOnAllCouplingPoints)    
         .def("CreateDirichletConditions", &ReconstructionConditionContainer::CreateDirichletConditions)
         .def("CreateMinimalControlPointDisplacementCondition", &ReconstructionConditionContainer::CreateMinimalControlPointDisplacementCondition)       
+        .def("CreateMinimalControlPointDistanceToSurfaceCondition", &ReconstructionConditionContainer::CreateMinimalControlPointDistanceToSurfaceCondition)       
         ;           
     class_<CADReconstructionSolver, bases<Process> >("CADReconstructionSolver", init<std::string, ReconstructionDataBase&, ReconstructionConditionContainer&, CompressedLinearSolverType::Pointer>())
         .def("InitializeEquationSystem", &CADReconstructionSolver::InitializeEquationSystem) 

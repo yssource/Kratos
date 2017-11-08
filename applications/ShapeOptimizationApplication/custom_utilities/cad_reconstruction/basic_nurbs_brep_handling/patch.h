@@ -183,6 +183,12 @@ public:
 	}
 
 	// --------------------------------------------------------------------------
+	void ComputeGrevilleAbscissae( std::vector<double>& rGrevilleAbscissaeInUDirection, std::vector<double>& rGrevilleAbscissaeInVDirection )
+	{
+		m_nurbs_surface.ComputeGrevilleAbscissae( rGrevilleAbscissaeInUDirection, rGrevilleAbscissaeInVDirection );
+	}
+
+	// --------------------------------------------------------------------------
 	void EvaluateGradientsForClosestPointSearch( Vector& distance, Matrix& rHessian, Vector& rGradient , array_1d<double,2>& parameter_values )
 	{
 		return m_nurbs_surface.EvaluateGradientsForClosestPointSearch( distance, rHessian, rGradient, parameter_values[0], parameter_values[1] );

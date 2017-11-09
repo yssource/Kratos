@@ -58,10 +58,11 @@ class CADReconstrutionUtilities():
     def OutputFEData( self ):
         fem_input_filename = self.Parameters["inpute_parameters"]["fem_filename"].GetString()
         output_folder = self.Parameters["result_output_parameters"]["results_output_folder"].GetString()
+        shape_change_variable_name = self.Parameters["inpute_parameters"]["shape_change_variable_name"].GetString()
 
         from gid_output import GiDOutput
         fem_output_filename = output_folder + "/" + fem_input_filename + "_as_used_for_reconstruction"
-        nodal_results=["SHAPE_CHANGE_ABSOLUTE"]
+        nodal_results=[shape_change_variable_name]
         gauss_points_results=[]
         VolumeOutput = True
         GiDPostMode = "Binary"
@@ -86,11 +87,16 @@ class CADReconstrutionUtilities():
     # --------------------------------------------------------------------------
     def __ReadFEData( self ):
         print("\n> Start importing FE data")
+
         fem_input_filename = self.Parameters["inpute_parameters"]["fem_filename"].GetString()
+        shape_change_variable_name = self.Parameters["inpute_parameters"]["shape_change_variable_name"].GetString()
+        shape_change_variable = KratosGlobals.GetVariable(shape_change_variable_name)
+
         self.FEModelPart = ModelPart("name_of_empty_mdpa")
-        self.FEModelPart.AddNodalSolutionStepVariable(SHAPE_CHANGE_ABSOLUTE)
+        self.FEModelPart.AddNodalSolutionStepVariable(shape_change_variable)
         model_part_io = ModelPartIO(fem_input_filename)
         model_part_io.ReadModelPart(self.FEModelPart)
+        
         print("> Importing FE data finished.")        
 
     # --------------------------------------------------------------------------

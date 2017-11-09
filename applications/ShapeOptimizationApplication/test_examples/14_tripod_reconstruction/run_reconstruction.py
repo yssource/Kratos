@@ -23,11 +23,12 @@ reconstruction_parameters = Parameters("""
         "cad_geometry_filename"         : "tripod_geometry.json",
         "cad_integration_data_filename" : "tripod_integration_data.json",
         "fem_filename"                  : "tripod",
-        "fe_refinement_level"           : 1
+        "fe_refinement_level"           : 1,
+        "shape_change_variable_name"    : "SHAPE_CHANGE_ABSOLUTE"
     },
     "solution_parameters" : 
     {
-        "strategy" : "displacement_mapping",
+        "strategy" : "distance_minimization",
         "general_parameters": 
         {
             "solution_iterations"                       : 1,

@@ -77,14 +77,53 @@ public:
         std::cout << "\n> Initializing CAD projection..." << std::endl;           
         boost::timer timer;
 
-        CreateCADPointCloudUsingLists();
+        bool initialize_using_greville_abscissae = mProjectionParameters["automatic_initialization_using_greville_abscissae"].GetBool();
+        if(initialize_using_greville_abscissae)
+          CreateCADPointCloudBasedOnGrevilleAbscissae();
+        else
+          CreateCADPointCloudBasedOnManualInput();
         CreateSearchTreeWithCADPointCloud();
 
 		std::cout << "> Time needed initializing CAD projection: " << timer.elapsed() << " s" << std::endl;    
     }
+
+    // --------------------------------------------------------------------------
+    void CreateCADPointCloudBasedOnGrevilleAbscissae()
+    {
+      for (auto & patch_i : mrPatchVector)
+      {
+            int index_in_patch_vector = &patch_i - &mrPatchVector[0];
+
+            std::vector<double> greville_abscissae_in_u_direction;
+            std::vector<double> greville_abscissae_in_v_direction;
+    
+            patch_i.ComputeGrevilleAbscissae( greville_abscissae_in_u_direction, greville_abscissae_in_v_direction );
+
+            array_1d<double,2> point_in_parameter_space;
+            for(int i=0; i<=greville_abscissae_in_u_direction.size(); i++)
+            {
+                point_in_parameter_space[0] = greville_abscissae_in_u_direction[i];
+                point_in_parameter_space[1] = greville_abscissae_in_v_direction[i];
+
+                bool point_is_inside = patch_i.IsPointInside(point_in_parameter_space);
+                if(point_is_inside)
+                {
+                    ++mNumberOfNodesInCADPointCloud;					
+                    Point<3> cad_point_coordinates;
+                    patch_i.EvaluateSurfacePoint( point_in_parameter_space, cad_point_coordinates );
+
+                      NodeType::Pointer new_cad_node = Node <3>::Pointer(new Node<3>(mNumberOfNodesInCADPointCloud, cad_point_coordinates));
+
+                    mOrderedListOfNodes.push_back(new_cad_node);
+                    mOrderedListOfParameterValues.push_back(point_in_parameter_space);
+                    mOrderedListOfPatchIndices.push_back(index_in_patch_vector);
+                }
+            }
+        }      
+    }    
     
     // --------------------------------------------------------------------------
-    void CreateCADPointCloudUsingLists()
+    void CreateCADPointCloudBasedOnManualInput()
     {
       int u_resolution = mProjectionParameters["parameter_resolution_for_projection"][0].GetInt();
       int v_resolution =  mProjectionParameters["parameter_resolution_for_projection"][1].GetInt();

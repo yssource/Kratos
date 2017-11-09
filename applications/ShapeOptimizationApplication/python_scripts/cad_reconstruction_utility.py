@@ -193,7 +193,7 @@ class CADReconstrutionUtilities():
         self.LinearSolver = None
         if linear_solver_name == "SuperLU":
             self.LinearSolver = SuperLUSolver()
-        if linear_solver_name == "DeflatedCG":
+        elif linear_solver_name == "DeflatedCG":
             self.LinearSolver = DeflatedCGSolver(1e-6, 3000, True,1000)
         elif linear_solver_name == "BICGSTAB":
             DiagPrecond = DiagonalPreconditioner()

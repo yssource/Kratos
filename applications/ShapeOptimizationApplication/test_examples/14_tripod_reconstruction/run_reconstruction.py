@@ -43,15 +43,16 @@ reconstruction_parameters = Parameters("""
         },
         "projection_parameters": 
         {
-            "parameter_resolution_for_projection" : [ 100, 100 ],
-            "max_projection_iterations"           : 20,
-            "projection_tolerance"                : 1e-5      
+            "automatic_initialization_using_greville_abscissae" : true,
+            "parameter_resolution_for_manual_initialization"    : [ 100, 100 ],
+            "max_projection_iterations"                         : 20,
+            "projection_tolerance"                              : 1e-5      
         },
         "regularization_parameters":
         {
-            "minimize_control_point_distance_to_surface" : true,
+            "minimize_control_point_distance_to_surface" : false,
             "alpha"                                      : 0.001,    
-            "minimize_control_point_displacement"        : false,
+            "minimize_control_point_displacement"        : true,
             "beta"                                       : 0.002
         },
         "linear_solver_name" : "SuperLU"                  

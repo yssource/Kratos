@@ -1067,13 +1067,16 @@ public:
 	}
 
 	// --------------------------------------------------------------------------
-	void ComputeGrevilleAbscissae( std::vector<double>& rGrevilleAbscissaeInUDirection, std::vector<double>& rGrevilleAbscissaeInVDirection )
+	void ComputeGrevilleAbscissae( std::vector<double>& rGrevilleAbscissaeInUDirection, 
+								   std::vector<double>& rGrevilleAbscissaeInVDirection )
 	{
 		// Computes Grevillle Abscissae according to:
 		// Schillinger et al. 2013: Isogeometric colocation Cost Comparison with Galerkin Methods and Extension to Adaptive Hierarchical NURBS Discretizations
 		// The latter references to
 		// NURBS Curves and Surfaces: from Projective Geometry to Practical Use, Second Edition, G.E. Farin, 1999b or 2005 <-- This book is often the base reference
 
+		rGrevilleAbscissaeInUDirection.clear();
+		rGrevilleAbscissaeInVDirection.clear();	
 		rGrevilleAbscissaeInUDirection.resize(m_control_points.size());
 		rGrevilleAbscissaeInVDirection.resize(m_control_points.size());		
 
@@ -1099,6 +1102,34 @@ public:
 			rGrevilleAbscissaeInVDirection[cp_vector_index]	= v_value_of_greville_abscissa;
 		}
 	}
+
+	// --------------------------------------------------------------------------
+    void RefineGrevilleAbscissae( std::vector<double>& rGrevilleAbscissaeInUDirection, 
+								  std::vector<double>& rGrevilleAbscissaeInVDirection,
+								  std::vector<double>& rRefinedGrevilleAbscissaeInUDirection,
+								  std::vector<double>& rRefinedGrevilleAbscissaeInVDirection )
+	{
+		// This algorithm doulbes the resolution of the Greville abscissa by inserting an entry with have of the value from one entry of the abscissae to the subsequent one
+		// E.g. u = [1,3,5,7,13] --> u = [1,2,3,4,5,6,7,9,13]
+
+		int number_of_greville_points = rGrevilleAbscissaeInUDirection.size();
+		
+		rRefinedGrevilleAbscissaeInUDirection.clear();
+		rRefinedGrevilleAbscissaeInVDirection.clear();
+		rRefinedGrevilleAbscissaeInUDirection.resize(2*number_of_greville_points-1);
+		rRefinedGrevilleAbscissaeInVDirection.resize(2*number_of_greville_points-1);
+
+		for(int i=0; i<number_of_greville_points-1; i++)
+		{
+			rRefinedGrevilleAbscissaeInUDirection[2*i+0] = rGrevilleAbscissaeInUDirection[i];
+			rRefinedGrevilleAbscissaeInUDirection[2*i+1] = rGrevilleAbscissaeInUDirection[i]+(rGrevilleAbscissaeInUDirection[i+1]-rGrevilleAbscissaeInUDirection[i])/2.0;  
+
+			rRefinedGrevilleAbscissaeInVDirection[2*i+0] = rGrevilleAbscissaeInVDirection[i];
+			rRefinedGrevilleAbscissaeInVDirection[2*i+1] = rGrevilleAbscissaeInVDirection[i]+(rGrevilleAbscissaeInVDirection[i+1]-rGrevilleAbscissaeInVDirection[i])/2.0;            
+		}
+		rRefinedGrevilleAbscissaeInUDirection[2*(number_of_greville_points-1)+0] = rGrevilleAbscissaeInUDirection[number_of_greville_points-1];
+		rRefinedGrevilleAbscissaeInVDirection[2*(number_of_greville_points-1)+1] = rGrevilleAbscissaeInVDirection[number_of_greville_points-1];							
+	}	
 
 	// --------------------------------------------------------------------------
 	std::vector<ControlPoint*> GetPointersToAffectedControlPoints(int span_u, int span_v, double _u, double _v)

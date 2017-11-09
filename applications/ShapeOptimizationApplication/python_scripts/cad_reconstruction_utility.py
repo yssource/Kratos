@@ -167,7 +167,7 @@ class CADReconstrutionUtilities():
         if reconstruction_strategy == "displacement_mapping":
             self.ConditionsContainer.CreateDisplacementMappingConditions()
         elif reconstruction_strategy == "distance_minimization":
-            self.ConditionsContainer.CreateDistanceMinimizationConditions()                                                                          
+            self.ConditionsContainer.CreateDistanceMinimizationConditions()                                                                       
         else:
             raise ValueError( "The following reconstruction strategy does not exist: ", reconstruction_strategy )
 

@@ -60,9 +60,9 @@ public:
     ///@{
 
     /// Default constructor.
-    CADProjectionUtility( PatchVector& patch_vector, Parameters& mProjectionParameters )
+    CADProjectionUtility( PatchVector& patch_vector, Parameters& projection_parameters )
     : mrPatchVector( patch_vector ),
-      mProjectionParameters( mProjectionParameters )
+      mProjectionParameters( projection_parameters )
     {      
     }
 
@@ -84,7 +84,7 @@ public:
           CreateCADPointCloudBasedOnManualInput();
         CreateSearchTreeWithCADPointCloud();
 
-		std::cout << "> Time needed initializing CAD projection: " << timer.elapsed() << " s" << std::endl;    
+    std::cout << "> Time needed initializing CAD projection: " << timer.elapsed() << " s" << std::endl;    
     }
 
     // --------------------------------------------------------------------------
@@ -94,13 +94,31 @@ public:
       {
             int index_in_patch_vector = &patch_i - &mrPatchVector[0];
 
+            // Computation of greville points
             std::vector<double> greville_abscissae_in_u_direction;
             std::vector<double> greville_abscissae_in_v_direction;
-    
             patch_i.ComputeGrevilleAbscissae( greville_abscissae_in_u_direction, greville_abscissae_in_v_direction );
 
+            // Greville abscissae is refined if specified
+            int number_of_refinements = mProjectionParameters["refinement_iterations_of_greville_abscissae"].GetInt();      
+            int number_of_greville_points = greville_abscissae_in_u_direction.size();
+            std::vector<double> refined_greville_abscissae_in_u_direction;
+            std::vector<double> refined_greville_abscissae_in_v_direction;            
+            for(int refinement_itr=0; refinement_itr<number_of_refinements; refinement_itr++)
+            {
+                patch_i.RefineGrevilleAbscissae( greville_abscissae_in_u_direction, 
+                                                 greville_abscissae_in_v_direction,
+                                                 refined_greville_abscissae_in_u_direction, 
+                                                 refined_greville_abscissae_in_v_direction );
+                
+                greville_abscissae_in_u_direction = refined_greville_abscissae_in_u_direction;
+                greville_abscissae_in_v_direction = refined_greville_abscissae_in_v_direction;
+            }
+            
+            // Points of (refined) Greville abscissae are rendered into a point cloud
+            number_of_greville_points = greville_abscissae_in_u_direction.size();
             array_1d<double,2> point_in_parameter_space;
-            for(int i=0; i<=greville_abscissae_in_u_direction.size(); i++)
+            for(int i=0; i<number_of_greville_points; i++)
             {
                 point_in_parameter_space[0] = greville_abscissae_in_u_direction[i];
                 point_in_parameter_space[1] = greville_abscissae_in_v_direction[i];
@@ -112,7 +130,7 @@ public:
                     Point<3> cad_point_coordinates;
                     patch_i.EvaluateSurfacePoint( point_in_parameter_space, cad_point_coordinates );
 
-                      NodeType::Pointer new_cad_node = Node <3>::Pointer(new Node<3>(mNumberOfNodesInCADPointCloud, cad_point_coordinates));
+                    NodeType::Pointer new_cad_node = Node <3>::Pointer(new Node<3>(mNumberOfNodesInCADPointCloud, cad_point_coordinates));
 
                     mOrderedListOfNodes.push_back(new_cad_node);
                     mOrderedListOfParameterValues.push_back(point_in_parameter_space);
@@ -125,8 +143,8 @@ public:
     // --------------------------------------------------------------------------
     void CreateCADPointCloudBasedOnManualInput()
     {
-      int u_resolution = mProjectionParameters["parameter_resolution_for_projection"][0].GetInt();
-      int v_resolution =  mProjectionParameters["parameter_resolution_for_projection"][1].GetInt();
+      int u_resolution = mProjectionParameters["parameter_resolution_for_manual_initialization"][0].GetInt();
+      int v_resolution =  mProjectionParameters["parameter_resolution_for_manual_initialization"][1].GetInt();
 
       for (auto & patch_i : mrPatchVector)
       {
@@ -173,7 +191,9 @@ public:
     // --------------------------------------------------------------------------
     void CreateSearchTreeWithCADPointCloud()
     {
+      std::cout << "> Creating search tree..." << std::endl;           
       mpSearchTree = boost::shared_ptr<KDTree>(new KDTree(mOrderedListOfNodes.begin(), mOrderedListOfNodes.end(), mBucketSize));
+      std::cout << "> Search tree created using " << mOrderedListOfNodes.size() << " points on the CAD model." << std::endl;                 
     }     
 
     // --------------------------------------------------------------------------
@@ -191,11 +211,11 @@ public:
         patch_index_of_nearest_point = mOrderedListOfPatchIndices[nearest_point->Id()-1];
         Patch& patch_of_nearest_point = mrPatchVector[patch_index_of_nearest_point];
         
-				// Initialize what's needed in the Newton-Raphson iteration				
-				Vector Distance = ZeroVector(3); 
-				Matrix hessian = ZeroMatrix(2,2);
-				Vector gradient = ZeroVector(2);
-				double determinant_of_hessian = 0;
+        // Initialize what's needed in the Newton-Raphson iteration				
+        Vector Distance = ZeroVector(3); 
+        Matrix hessian = ZeroMatrix(2,2);
+        Vector gradient = ZeroVector(2);
+        double determinant_of_hessian = 0;
         Matrix inverse_of_hessian = ZeroMatrix(2,2);
         Point<3> current_nearest_point;
         current_nearest_point[0] = nearest_point->X();
@@ -203,7 +223,7 @@ public:
         current_nearest_point[2] = nearest_point->Z();
 
         // Variables neeed by the Netwon Raphson algorithm
-				double norm_delta_u = 100000000;
+        double norm_delta_u = 100000000;
         
         int max_iterations = mProjectionParameters["max_projection_iterations"].GetInt();
         double tolerance = mProjectionParameters["projection_tolerance"].GetDouble(); 
@@ -246,13 +266,13 @@ public:
     /// Turn back information as a string.
     virtual std::string Info() const
     {
-		return "CADProjectionUtility";
+    return "CADProjectionUtility";
     }
 
     /// Print information about this object.
     virtual void PrintInfo(std::ostream &rOStream) const
     {
-		rOStream << "CADProjectionUtility";
+    rOStream << "CADProjectionUtility";
     }
 
     /// Print object's data.

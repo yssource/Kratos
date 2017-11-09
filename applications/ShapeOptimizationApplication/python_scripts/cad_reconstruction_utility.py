@@ -96,7 +96,7 @@ class CADReconstrutionUtilities():
         self.FEModelPart.AddNodalSolutionStepVariable(shape_change_variable)
         model_part_io = ModelPartIO(fem_input_filename)
         model_part_io.ReadModelPart(self.FEModelPart)
-        
+
         print("> Importing FE data finished.")        
 
     # --------------------------------------------------------------------------
@@ -193,6 +193,8 @@ class CADReconstrutionUtilities():
         self.LinearSolver = None
         if linear_solver_name == "SuperLU":
             self.LinearSolver = SuperLUSolver()
+        if linear_solver_name == "DeflatedCG":
+            self.LinearSolver = DeflatedCGSolver(1e-6, 3000, True,1000)
         elif linear_solver_name == "BICGSTAB":
             DiagPrecond = DiagonalPreconditioner()
             self.LinearSolver =  BICGSTABSolver(1e-9, 5000, DiagPrecond)

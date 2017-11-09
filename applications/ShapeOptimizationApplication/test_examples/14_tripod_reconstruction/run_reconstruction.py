@@ -15,18 +15,53 @@ import time
 # Parameters
 # ====================================================================================================================================== 
 
-# Input parameters
-fem_filename = "tripod"
-cad_geometry_filename = "tripod_geometry.json" 
-cad_integration_data_filename = "tripod_integration_data.json"
-
-# Output parameters
-results_output_settings = Parameters("""
+# Parameters
+reconstruction_parameters = Parameters("""
 {
-    "results_output_folder"                             : "01_Results",
-    "parameter_resolution_for_output_of_surface_points" : [ 50, 50 ],
-    "original_georhino_filename"                        : "tripod.georhino.txt",
-    "rhino_results_filename"                            : "tripod.post.res"
+    "inpute_parameters": 
+    {
+        "cad_geometry_filename"         : "tripod_geometry.json",
+        "cad_integration_data_filename" : "tripod_integration_data.json",
+        "fem_filename"                  : "tripod",
+        "fe_refinement_level"           : 1
+    },
+    "solution_parameters" : 
+    {
+        "strategy" : "displacement_mapping",
+        "general_parameters": 
+        {
+            "solution_iterations"                       : 1,
+            "penalty_factor_for_displacement_coupling" : 1e3,
+            "penalty_factor_for_rotation_coupling"     : 1e3,
+            "penalty_factor_for_dirichlet_constraints" : 1e3,
+            "penalty_multiplier"                       : 1.0         
+        },
+        "strategy_specifc_parameters": 
+        {
+            "fem_gauss_integration_degree" : 5
+        },
+        "projection_parameters": 
+        {
+            "parameter_resolution_for_projection" : [ 100, 100 ],
+            "max_projection_iterations"           : 20,
+            "projection_tolerance"                : 1e-5      
+        },
+        "regularization_parameters":
+        {
+            "minimize_control_point_distance_to_surface" : true,
+            "alpha"                                      : 0.001,    
+            "minimize_control_point_displacement"        : false,
+            "beta"                                       : 0.002
+        },
+        "linear_solver_name" : "SuperLU"                  
+    },
+    "result_output_parameters" : 
+    {
+        "results_output_folder"                             : "01_Results",
+        "parameter_resolution_for_output_of_surface_points" : [ 50, 50 ],
+        "original_georhino_filename"                        : "tripod.georhino.txt",
+        "rhino_results_filename"                            : "tripod.post.res"
+    }
 }""")
 
 # ======================================================================================================================================
@@ -37,13 +72,13 @@ print("\n\n=====================================================================
 print("> Start reconstruction...")
 print("========================================================================================================")
 
-import cad_reconstruction_utility
+from cad_reconstruction_utility import CADReconstrutionUtilities
 
 # Measure time
 start_time = time.time()
 
 # Initialize Reconstruction
-CADReconstructionUtility = cad_reconstruction_utility.CADReconstrutionUtilities( fem_filename, cad_geometry_filename, cad_integration_data_filename, results_output_settings )
+CADReconstructionUtility = CADReconstrutionUtilities( reconstruction_parameters )
 CADReconstructionUtility.Initialize()
 
 # Set Boundary Conditions

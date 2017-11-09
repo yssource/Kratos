@@ -41,7 +41,6 @@ public:
     ///@name Type Definitions
     ///@{
 
-    typedef boost::python::extract<int> ExtractInt;
     typedef Node<3> NodeType;
     typedef Element::GeometryType::IntegrationMethod IntegrationMethodType;
     
@@ -53,11 +52,11 @@ public:
     ///@{
 
     /// Default constructor.
-    ReconstructionOutputWriter( ReconstructionDataBase& reconstruction_data_base, Parameters results_output_parameters )
+    ReconstructionOutputWriter( ReconstructionDataBase& reconstruction_data_base, Parameters& parameters )
     : mrReconstructionDataBase( reconstruction_data_base ),
-      mOutputFolder( results_output_parameters["results_output_folder"].GetString() ),
-      mOriginalGeorhinoFile( results_output_parameters["original_georhino_filename"].GetString() ),
-      mRhinoResultsFile( results_output_parameters["rhino_results_filename"].GetString() )
+      mOutputFolder( parameters["result_output_parameters"]["results_output_folder"].GetString() ),
+      mOriginalGeorhinoFile( parameters["result_output_parameters"]["original_georhino_filename"].GetString() ),
+      mRhinoResultsFile( parameters["result_output_parameters"]["rhino_results_filename"].GetString() )
     {      
     }
 
@@ -67,13 +66,13 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    void OutputCADSurfacePoints( std::string output_filename, Parameters results_output_parameters )
+    void OutputCADSurfacePoints( std::string output_filename, Parameters parameters )
     {
 	    std::cout << "\n> Start writing surface points of given CAD geometry to file..." << std::endl;
         std::ofstream  output_file( mOutputFolder + "/" + output_filename );
 
-        int u_resolution = results_output_parameters["parameter_resolution_for_output_of_surface_points"][0].GetInt();
-        int v_resolution = results_output_parameters["parameter_resolution_for_output_of_surface_points"][1].GetInt();      
+        int u_resolution = parameters["result_output_parameters"]["parameter_resolution_for_output_of_surface_points"][0].GetInt();
+        int v_resolution = parameters["result_output_parameters"]["parameter_resolution_for_output_of_surface_points"][1].GetInt();      
 	
         // Set a max value for the coordinte output to avoid clutter through points that moving uncontrolled
         double max_coordinate = 1000;

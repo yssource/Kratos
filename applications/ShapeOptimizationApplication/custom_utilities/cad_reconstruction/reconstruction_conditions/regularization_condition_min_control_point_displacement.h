@@ -68,10 +68,9 @@ public:
     ///@{
 
     /// Default constructor.
-    MinimalControlPointDisplacementCondition( ReconstructionDataBase& data_base, double beta_value, std::string solution_strategy )
+    MinimalControlPointDisplacementCondition( ReconstructionDataBase& data_base, Parameters reconstruction_parameters )
     : mrReconstructionDataBase( data_base ),
-      mBetaValue( beta_value ),
-      mSolutionStrategy( solution_strategy )
+      mBetaValue( reconstruction_parameters["solution_parameters"]["regularization_parameters"]["beta"].GetDouble() )
     {
     }
 

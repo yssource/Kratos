@@ -68,10 +68,9 @@ public:
     ///@{
 
     /// Default constructor.
-    MinimalControlPointDistanceToSurfaceCondition( ReconstructionDataBase& data_base, double alpha_value, std::string solution_strategy )
+    MinimalControlPointDistanceToSurfaceCondition( ReconstructionDataBase& data_base, Parameters& reconstruction_parameters )
     : mrReconstructionDataBase( data_base ),
-      mAlphaValue( alpha_value ),
-      mSolutionStrategy( solution_strategy )
+      mAlphaValue( reconstruction_parameters["solution_parameters"]["regularization_parameters"]["alpha"].GetDouble() )
     {
     }
 

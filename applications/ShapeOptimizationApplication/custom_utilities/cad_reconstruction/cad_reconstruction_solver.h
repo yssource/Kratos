@@ -47,16 +47,16 @@ public:
     ///@{
 
     /// Default constructor.
-    CADReconstructionSolver( std::string solution_strategy,
-                             ReconstructionDataBase& reconstruction_data_base, 
+    CADReconstructionSolver( ReconstructionDataBase& reconstruction_data_base, 
                              ReconstructionConditionContainer& condition_container, 
-                             CompressedLinearSolverType::Pointer linear_solver )
-    : mReconstructionStrategy( solution_strategy ),
-      mrReconstructionDataBase( reconstruction_data_base ),
-      mrReconstructionConditions( condition_container.GetReconstructionConditions() ),
-      mrReconstructionConstraints( condition_container.GetReconstructionConstraints() ),
-      mrRegularizationConditions( condition_container.GetRegularizationConditions() ),      
-      mpLinearSolver( linear_solver )     
+                             CompressedLinearSolverType::Pointer linear_solver,
+                             Parameters& reconstruction_parameters )
+        : mrReconstructionDataBase( reconstruction_data_base ),
+          mrReconstructionConditions( condition_container.GetReconstructionConditions() ),
+          mrReconstructionConstraints( condition_container.GetReconstructionConstraints() ),
+          mrRegularizationConditions( condition_container.GetRegularizationConditions() ),      
+          mpLinearSolver( linear_solver ),
+          mReconstructionStrategy( reconstruction_parameters["solution_parameters"]["strategy"].GetString() )
     {      
     }
 

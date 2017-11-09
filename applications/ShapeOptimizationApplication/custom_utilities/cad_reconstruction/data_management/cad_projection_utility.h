@@ -42,7 +42,6 @@ public:
     ///@name Type Definitions
     ///@{
 
-    typedef boost::python::extract<int> ExtractInt;
     typedef Node<3> NodeType;
     typedef Node < 3 > ::Pointer NodeTypePointer;    
     typedef std::vector<NodeType::Pointer> NodeVector;
@@ -61,10 +60,9 @@ public:
     ///@{
 
     /// Default constructor.
-    CADProjectionUtility( PatchVector& patch_vector, int max_projection_iterations, double projection_tolerance )
+    CADProjectionUtility( PatchVector& patch_vector, Parameters& mProjectionParameters )
     : mrPatchVector( patch_vector ),
-      mMaxIterations( max_projection_iterations ),
-      mTolerance( projection_tolerance )
+      mProjectionParameters( mProjectionParameters )
     {      
     }
 
@@ -74,22 +72,22 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    void Initialize( boost::python::list ParameterResolutionForCoarseNeighborSearch )
+    void Initialize()
     {
         std::cout << "\n> Initializing CAD projection..." << std::endl;           
         boost::timer timer;
 
-        CreateCADPointCloudUsingLists( ParameterResolutionForCoarseNeighborSearch );
+        CreateCADPointCloudUsingLists();
         CreateSearchTreeWithCADPointCloud();
 
 		std::cout << "> Time needed initializing CAD projection: " << timer.elapsed() << " s" << std::endl;    
     }
     
     // --------------------------------------------------------------------------
-    void CreateCADPointCloudUsingLists( boost::python::list ParameterResolutionForCoarseNeighborSearch )
+    void CreateCADPointCloudUsingLists()
     {
-      int u_resolution = ExtractInt( ParameterResolutionForCoarseNeighborSearch[0] );
-      int v_resolution = ExtractInt( ParameterResolutionForCoarseNeighborSearch[1] );
+      int u_resolution = mProjectionParameters["parameter_resolution_for_projection"][0].GetInt();
+      int v_resolution =  mProjectionParameters["parameter_resolution_for_projection"][1].GetInt();
 
       for (auto & patch_i : mrPatchVector)
       {
@@ -168,8 +166,11 @@ public:
         // Variables neeed by the Netwon Raphson algorithm
 				double norm_delta_u = 100000000;
         
+        int max_iterations = mProjectionParameters["max_projection_iterations"].GetInt();
+        double tolerance = mProjectionParameters["projection_tolerance"].GetDouble(); 
+
         // Newton-Raphson algorithm if iterations are specified
-        for(int k=0; k<mMaxIterations; k++)
+        for(int k=0; k<max_iterations; k++)
         {
           // The distance between point on CAD surface point on the FE-mesh
           Distance(0) = current_nearest_point[0] - PointOfInterest.X();
@@ -190,9 +191,9 @@ public:
           
           // Check convergence
           norm_delta_u = norm_2(delta_u);
-          if(norm_delta_u<mTolerance)
+          if(norm_delta_u<tolerance)
             break;
-          else if(k+1==mMaxIterations)
+          else if(k+1==max_iterations)
           {
             std::cout << "WARNING!!! Newton-Raphson in projection did not converge in the following number of iterations: " << k+1 << std::endl;
             KRATOS_WATCH(current_nearest_point)
@@ -227,8 +228,7 @@ public:
     // Variables initialized by constructor
     // ==============================================================================
     PatchVector& mrPatchVector;
-    int mMaxIterations;
-    double mTolerance;
+    Parameters& mProjectionParameters;
 
     // ==============================================================================
     // Variables for spatial search

@@ -23,44 +23,8 @@ import os
 class CADReconstrutionUtilities():
 
     # --------------------------------------------------------------------------
-    def __init__( self, fem_filename, cad_geometry_filename, cad_integration_data_filename, results_output_settings ):
-        self.FEMInputFilename = fem_filename
-        self.CADGeometryFilename = cad_geometry_filename
-        self.CADIntegrationDataFilename = cad_integration_data_filename
-        self.ResultsOutputSettings = results_output_settings
-
-        # Internal parameters to specify reconstruction method
-        
-        # Gernal strategy parameters
-        self.ReconstructionStrategy = "distance_minimization"    # displacement_mapping / distance_minimization
-        self.FEMGaussIntegrationDegree = 5
-
-        # Solution parameters
-        self.SolutionIterations = 1
-        self.PenaltyFactorForDisplacementCoupling = 1e3
-        self.PenaltyFactorForRotationCoupling = 1e3
-        self.PenaltyFactorForDirichletConstraints = 1e3
-        self.PenaltyMultiplier = 1.0
-       
-        # Parameters to edit input data       
-        self.FERefinementLevel = 1
-
-        # Projection settings
-        self.ParameterResolutionForProjection = [ 100, 100 ]
-        self.MaxProjectionIterations = 20
-        self.ProjectionTolerance = 1e-5
-
-        # Regularization settings
-        self.MinimizeControlPointDistanceToSurface = True
-        self.Alpha = 0.001       
-        self.MinimizeControlPointDisplacement = False
-        self.Beta = 0.002
-
-        # Linear solver
-        self.LinearSolver = SuperLUSolver()
-        # DiagPrecond = DiagonalPreconditioner()
-        # self.LinearSolver =  BICGSTABSolver(1e-9, 5000, DiagPrecond)
-        # self.LinearSolver = AMGCLSolver(AMGCLSmoother.GAUSS_SEIDEL, AMGCLIterativeSolverType.BICGSTAB, 1e-9, 300, 2, 10)        
+    def __init__( self, reconstruction_parameters ):
+        self.Parameters = reconstruction_parameters
 
     # --------------------------------------------------------------------------
     def Initialize( self ):
@@ -80,9 +44,9 @@ class CADReconstrutionUtilities():
         self.IsRotationCouplingSpecifiedForAllCouplingPoints = True
         
     # --------------------------------------------------------------------------
-    def SetDirichletConstraints( self, list_of_condition_settings ):
+    def SetDirichletConstraints( self, edges_with_dirichlet_conditions ):
         self.AreDirichletConstraintsSpecified = True
-        self.DirichletConditions = list_of_condition_settings
+        self.EdgesWithDirichletConditions = edges_with_dirichlet_conditions
 
     # --------------------------------------------------------------------------
     def PerformReconstruction( self ):
@@ -92,10 +56,11 @@ class CADReconstrutionUtilities():
         
     # --------------------------------------------------------------------------
     def OutputFEData( self ):
-        output_folder = self.ResultsOutputSettings["results_output_folder"].GetString()
+        fem_input_filename = self.Parameters["inpute_parameters"]["fem_filename"].GetString()
+        output_folder = self.Parameters["result_output_parameters"]["results_output_folder"].GetString()
 
         from gid_output import GiDOutput
-        fem_output_filename = output_folder + "/" + self.FEMInputFilename + "_as_used_for_reconstruction"
+        fem_output_filename = output_folder + "/" + fem_input_filename + "_as_used_for_reconstruction"
         nodal_results=["SHAPE_CHANGE_ABSOLUTE"]
         gauss_points_results=[]
         VolumeOutput = True
@@ -112,7 +77,7 @@ class CADReconstrutionUtilities():
 
     # --------------------------------------------------------------------------
     def OutputCADSurfacePoints( self, file_to_write ):
-        self.OutputWriter.OutputCADSurfacePoints( file_to_write, self.ResultsOutputSettings )
+        self.OutputWriter.OutputCADSurfacePoints( file_to_write, self.Parameters )
 
     # --------------------------------------------------------------------------
     def OutputGaussPointsOfFEMesh( self, file_to_write ):
@@ -121,22 +86,23 @@ class CADReconstrutionUtilities():
     # --------------------------------------------------------------------------
     def __ReadFEData( self ):
         print("\n> Start importing FE data")
+        fem_input_filename = self.Parameters["inpute_parameters"]["fem_filename"].GetString()
         self.FEModelPart = ModelPart("name_of_empty_mdpa")
         self.FEModelPart.AddNodalSolutionStepVariable(SHAPE_CHANGE_ABSOLUTE)
-        model_part_io = ModelPartIO(self.FEMInputFilename)
+        model_part_io = ModelPartIO(fem_input_filename)
         model_part_io.ReadModelPart(self.FEModelPart)
         print("> Importing FE data finished.")        
 
     # --------------------------------------------------------------------------
     def __RefineFEModel( self ):       
-
         # Assign pseudo material to elements (required by refinement)
         prop_id = 1
         prop = self.FEModelPart.Properties[prop_id]
         mat = LinearElasticPlaneStress2DLaw()
         prop.SetValue(CONSTITUTIVE_LAW, mat.Clone())
 
-        for refinement_level in range(0,self.FERefinementLevel):
+        refinement_level = self.Parameters["inpute_parameters"]["fe_refinement_level"].GetInt()
+        for refinement_level in range(0,refinement_level):
 
             number_of_avg_elems = 10
             number_of_avg_nodes = 10
@@ -156,11 +122,14 @@ class CADReconstrutionUtilities():
     # --------------------------------------------------------------------------
     def __ReadCADData( self ):
         print("\n> Start importing CAD data")
+        cad_geometry_filename = self.Parameters["inpute_parameters"]["cad_geometry_filename"].GetString()        
         self.CADGeometry = {}
-        with open(self.CADGeometryFilename) as cad_data1:
+        with open(cad_geometry_filename) as cad_data1:
             self.CADGeometry = json.load(cad_data1)
+
+        cad_integration_data_filename = self.Parameters["inpute_parameters"]["cad_integration_data_filename"].GetString()                    
         self.CADIntegrationData = {}
-        with open(self.CADIntegrationDataFilename) as cad_data2:
+        with open(cad_integration_data_filename) as cad_data2:
             self.CADIntegrationData = json.load(cad_data2)
         print("> Importing CAD data finished.")
 
@@ -177,54 +146,63 @@ class CADReconstrutionUtilities():
 
     # --------------------------------------------------------------------------
     def __CreateReconstructionOutputWriter( self ):
-        output_folder = self.ResultsOutputSettings["results_output_folder"].GetString()
+        output_folder = self.Parameters["result_output_parameters"]["results_output_folder"].GetString()
         if not os.path.exists( output_folder ):
             os.makedirs( output_folder )    
-        self.OutputWriter = ReconstructionOutputWriter( self.DataBase, self.ResultsOutputSettings )    
+        self.OutputWriter = ReconstructionOutputWriter( self.DataBase, self.Parameters )    
 
     # --------------------------------------------------------------------------
     def __CreateReconstructionConditions( self ):
-
         # Container to store all conditions (including constraints and reguarlization )
-        self.ConditionsContainer = ReconstructionConditionContainer( self.DataBase )
+        self.ConditionsContainer = ReconstructionConditionContainer( self.DataBase, self.Parameters )
 
         # Basic reconstruction condition
-        if self.ReconstructionStrategy == "displacement_mapping":
-            self.ConditionsContainer.CreateDisplacementMappingConditions( self.ParameterResolutionForProjection, 
-                                                                          self.FEMGaussIntegrationDegree,
-                                                                          self.MaxProjectionIterations,
-                                                                          self.ProjectionTolerance )
-        elif self.ReconstructionStrategy == "distance_minimization":
-            self.ConditionsContainer.CreateDistanceMinimizationConditions( self.ParameterResolutionForProjection, 
-                                                                           self.MaxProjectionIterations,
-                                                                           self.ProjectionTolerance )                                                                          
+        reconstruction_strategy = self.Parameters["solution_parameters"]["strategy"].GetString()
+        if reconstruction_strategy == "displacement_mapping":
+            self.ConditionsContainer.CreateDisplacementMappingConditions()
+        elif reconstruction_strategy == "distance_minimization":
+            self.ConditionsContainer.CreateDistanceMinimizationConditions()                                                                          
         else:
-            raise ValueError( "The following reconstruction strategy does not exist: ", self.ReconstructionStrategy )
+            raise ValueError( "The following reconstruction strategy does not exist: ", reconstruction_strategy )
 
         # Reconstruction constraints
         if self.IsDisplacementCouplingSpecifiedForAllCouplingPoints: 
-            self.ConditionsContainer.CreateDisplacementCouplingConstraintsOnAllCouplingPoints( self.PenaltyFactorForDisplacementCoupling )
+            self.ConditionsContainer.CreateDisplacementCouplingConstraintsOnAllCouplingPoints()
         if self.IsRotationCouplingSpecifiedForAllCouplingPoints: 
-            self.ConditionsContainer.CreateRotationCouplingConstraintsOnAllCouplingPoints( self.PenaltyFactorForRotationCoupling )            
+            self.ConditionsContainer.CreateRotationCouplingConstraintsOnAllCouplingPoints()            
         if self.AreDirichletConstraintsSpecified:
-            self.ConditionsContainer.CreateDirichletConstraints( self.DirichletConstraints, self.PenaltyFactorForDirichletConstraints )
+            self.ConditionsContainer.CreateDirichletConstraints( self.DirichletConstraints )
 
         # Regularization
-        if self.MinimizeControlPointDistanceToSurface: 
-            self.ConditionsContainer.CreateMinimalControlPointDistanceToSurfaceCondition( self.DataBase, self.Alpha, self.ReconstructionStrategy )                               
-        if self.MinimizeControlPointDisplacement: 
-            self.ConditionsContainer.CreateMinimalControlPointDisplacementCondition( self.DataBase, self.Beta, self.ReconstructionStrategy )
+        minimize_control_point_distance_to_surface = self.Parameters["solution_parameters"]["regularization_parameters"]["minimize_control_point_distance_to_surface"].GetBool()
+        minimize_control_point_displacement = self.Parameters["solution_parameters"]["regularization_parameters"]["minimize_control_point_displacement"].GetBool()
+        if minimize_control_point_distance_to_surface: 
+            self.ConditionsContainer.CreateMinimalControlPointDistanceToSurfaceCondition()                               
+        if minimize_control_point_displacement: 
+            self.ConditionsContainer.CreateMinimalControlPointDisplacementCondition()
 
     # --------------------------------------------------------------------------
     def __CreateSolverForReconstruction( self ):
-        self.ReconstructionSolver = CADReconstructionSolver( self.ReconstructionStrategy, self.DataBase, self.ConditionsContainer, self.LinearSolver )
+        linear_solver_name = self.Parameters["solution_parameters"]["linear_solver_name"].GetString()
+        self.LinearSolver = None
+        if linear_solver_name == "SuperLU":
+            self.LinearSolver = SuperLUSolver()
+        elif linear_solver_name == "BICGSTAB":
+            DiagPrecond = DiagonalPreconditioner()
+            self.LinearSolver =  BICGSTABSolver(1e-9, 5000, DiagPrecond)
+        elif linear_solver_name == "AMGCL":
+            self.LinearSolver = AMGCLSolver(AMGCLSmoother.GAUSS_SEIDEL, AMGCLIterativeSolverType.BICGSTAB, 1e-9, 300, 2, 10)        
+        else:
+            raise NameError("Linear solver not implemented!")              
+        self.ReconstructionSolver = CADReconstructionSolver( self.DataBase, self.ConditionsContainer, self.LinearSolver, self.Parameters )
 
     # --------------------------------------------------------------------------
-    def __RunSolutionAlorithm( self ): 
-        
+    def __RunSolutionAlorithm( self ):
+        solution_iterations = self.Parameters["solution_parameters"]["general_parameters"]["solution_iterations"].GetInt()        
+        penalty_multiplier =  self.Parameters["solution_parameters"]["general_parameters"]["penalty_multiplier"].GetDouble()
         self.ReconstructionSolver.InitializeEquationSystem()
 
-        for iteration in range(1,self.SolutionIterations+1): 
+        for iteration in range(1,solution_iterations+1): 
             print("\n===========================================")
             print("Starting reconstruction iteration ", iteration,"...")
             print("===========================================")            

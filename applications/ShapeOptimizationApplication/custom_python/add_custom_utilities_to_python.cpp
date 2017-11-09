@@ -168,7 +168,7 @@ void  AddCustomUtilitiesToPython()
         .def("MultiplyAllPenaltyFactorsByInputFactor", &CADReconstructionSolver::MultiplyAllPenaltyFactorsByInputFactor)         
         .def("UpdateControlPointsAccordingReconstructionStrategy", &CADReconstructionSolver::UpdateControlPointsAccordingReconstructionStrategy)         
         ;   
-    class_<ReconstructionOutputWriter, bases<Process> >("ReconstructionOutputWriter", init<ReconstructionDataBase&, std::string, std::string, std::string>())
+    class_<ReconstructionOutputWriter, bases<Process> >("ReconstructionOutputWriter", init<ReconstructionDataBase&, Parameters>())
         .def("OutputCADSurfacePoints", &ReconstructionOutputWriter::OutputCADSurfacePoints)
         .def("OutputGaussPointsOfFEMesh", &ReconstructionOutputWriter::OutputGaussPointsOfFEMesh)
         .def("OutputResultsInRhinoFormat", &ReconstructionOutputWriter::OutputResultsInRhinoFormat)        

@@ -53,14 +53,11 @@ public:
     ///@{
 
     /// Default constructor.
-    ReconstructionOutputWriter( ReconstructionDataBase& reconstruction_data_base,
-                                std::string output_folder,
-                                std::string result_output_filename, 
-                                std::string original_georhino_filename )
+    ReconstructionOutputWriter( ReconstructionDataBase& reconstruction_data_base, Parameters results_output_parameters )
     : mrReconstructionDataBase( reconstruction_data_base ),
-      mOutputFolder( output_folder ),
-      mResultOutputFilename( result_output_filename ),
-      mOriginalGeorhinoFilename( original_georhino_filename )
+      mOutputFolder( results_output_parameters["results_output_folder"].GetString() ),
+      mOriginalGeorhinoFile( results_output_parameters["original_georhino_filename"].GetString() ),
+      mRhinoResultsFile( results_output_parameters["rhino_results_filename"].GetString() )
     {      
     }
 
@@ -70,13 +67,13 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    void OutputCADSurfacePoints( std::string output_filename, boost::python::list ParameterResolutionForCoarseNeighborSearch )
+    void OutputCADSurfacePoints( std::string output_filename, Parameters results_output_parameters )
     {
 	    std::cout << "\n> Start writing surface points of given CAD geometry to file..." << std::endl;
         std::ofstream  output_file( mOutputFolder + "/" + output_filename );
 
-        int u_resolution = ExtractInt( ParameterResolutionForCoarseNeighborSearch[0] );
-        int v_resolution = ExtractInt( ParameterResolutionForCoarseNeighborSearch[1] );      
+        int u_resolution = results_output_parameters["parameter_resolution_for_output_of_surface_points"][0].GetInt();
+        int v_resolution = results_output_parameters["parameter_resolution_for_output_of_surface_points"][1].GetInt();      
 	
         // Set a max value for the coordinte output to avoid clutter through points that moving uncontrolled
         double max_coordinate = 1000;
@@ -179,8 +176,8 @@ public:
     // --------------------------------------------------------------------------
     void OutputModifiedGeoRhinoFileToIncludeAllRelevantControlPoints()
     {
-        std::ifstream input_file(mOriginalGeorhinoFilename);
-        std::ofstream georhino_output_file( mOutputFolder + "/" + mOriginalGeorhinoFilename );
+        std::ifstream input_file(mOriginalGeorhinoFile);
+        std::ofstream georhino_output_file( mOutputFolder + "/" + mOriginalGeorhinoFile );
         
         std::string line; // last line to be read
         
@@ -252,11 +249,11 @@ public:
 
         if(iteration==1)
         {
-            restult_output_file.open( mOutputFolder + "/" + mResultOutputFilename, std::ofstream::out | std::ofstream::trunc );        
+            restult_output_file.open( mOutputFolder + "/" + mRhinoResultsFile, std::ofstream::out | std::ofstream::trunc );        
             restult_output_file << "Rhino Post Results File 1.0" << std::endl;
         }
         else
-            restult_output_file.open( mOutputFolder + "/" + mResultOutputFilename, std::ofstream::out | std::ofstream::app );        
+            restult_output_file.open( mOutputFolder + "/" + mRhinoResultsFile, std::ofstream::out | std::ofstream::app );        
         
         restult_output_file << "Result \"Displacement\" \"Load Case\" " << std::to_string(iteration) << " Vector OnNodes" << std::endl;
         restult_output_file << "Values" << std::endl;
@@ -308,8 +305,8 @@ private:
 
     ReconstructionDataBase& mrReconstructionDataBase;
     std::string mOutputFolder;
-    std::string mResultOutputFilename;
-    std::string mOriginalGeorhinoFilename;
+    std::string mRhinoResultsFile;
+    std::string mOriginalGeorhinoFile;
 
     /// Assignment operator.
     //      ReconstructionOutputWriter& operator=(ReconstructionOutputWriter const& rOther);

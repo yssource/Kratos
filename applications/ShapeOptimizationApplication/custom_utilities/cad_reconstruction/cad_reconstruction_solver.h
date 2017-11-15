@@ -323,12 +323,12 @@ private:
     // ==============================================================================
     // Initialized by class constructor
     // ==============================================================================
-    std::string mReconstructionStrategy;
     ReconstructionDataBase& mrReconstructionDataBase;    
     std::vector<ReconstructionCondition::Pointer>& mrReconstructionConditions;
     std::vector<ReconstructionConstraint::Pointer>& mrReconstructionConstraints;
     std::vector<RegularizationCondition::Pointer>& mrRegularizationConditions;    
     CompressedLinearSolverType::Pointer mpLinearSolver;
+    std::string mReconstructionStrategy;
 
     // ==============================================================================
     // Member variables

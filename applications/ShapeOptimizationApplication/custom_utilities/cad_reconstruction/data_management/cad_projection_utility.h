@@ -60,7 +60,7 @@ public:
     ///@{
 
     /// Default constructor.
-    CADProjectionUtility( PatchVector& patch_vector, Parameters& projection_parameters )
+    CADProjectionUtility( PatchVector& patch_vector, Parameters projection_parameters )
     : mrPatchVector( patch_vector ),
       mProjectionParameters( projection_parameters )
     {      
@@ -287,7 +287,7 @@ public:
     // Variables initialized by constructor
     // ==============================================================================
     PatchVector& mrPatchVector;
-    Parameters& mProjectionParameters;
+    Parameters mProjectionParameters;
 
     // ==============================================================================
     // Variables for spatial search

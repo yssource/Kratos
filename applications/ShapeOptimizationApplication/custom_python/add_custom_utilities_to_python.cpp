@@ -38,7 +38,8 @@
 #include "linear_solvers/linear_solver.h"
 #include "custom_utilities/cad_reconstruction/reconstruction_conditions/reconstruction_condition_container.h"
 #include "custom_utilities/cad_reconstruction/cad_reconstruction_solver.h"
-#include "custom_utilities/cad_reconstruction/data_management/reconstruction_output_writer.h"
+#include "custom_utilities/cad_reconstruction/results_output/reconstruction_output_writer.h"
+#include "custom_utilities/cad_reconstruction/results_output/quality_evaluation_utility.h"
 
 // ==============================================================================
 
@@ -53,7 +54,7 @@ void  AddCustomUtilitiesToPython()
 {
     using namespace boost::python;
 
-    typedef UblasSpace<double, SparseMatrix, Vector> SparseSpaceType;
+    // typedef UblasSpace<double, SparseMatrix, Vector> SparseSpaceType;
     typedef UblasSpace<double, CompressedMatrix, Vector> CompressedSpaceType;
     typedef UblasSpace<double, Matrix, Vector> DenseSpaceType;
     typedef LinearSolver<CompressedSpaceType, DenseSpaceType > CompressedLinearSolverType;
@@ -167,7 +168,12 @@ void  AddCustomUtilitiesToPython()
         .def("SolveEquationSystem", &CADReconstructionSolver::SolveEquationSystem) 
         .def("MultiplyAllPenaltyFactorsByInputFactor", &CADReconstructionSolver::MultiplyAllPenaltyFactorsByInputFactor)         
         .def("UpdateControlPointsAccordingReconstructionStrategy", &CADReconstructionSolver::UpdateControlPointsAccordingReconstructionStrategy)         
-        ;   
+        ;
+    class_<QualityEvaluationUtility, bases<Process> >("QualityEvaluationUtility", init<ReconstructionDataBase&, ReconstructionConditionContainer&, Parameters&>())
+        .def("EvaluateSurfaceReconstructionQuality", &QualityEvaluationUtility::EvaluateSurfaceReconstructionQuality)
+        .def("EvaluateDisplacementCoupling", &QualityEvaluationUtility::EvaluateDisplacementCoupling)
+        .def("EvaluateRotationCoupling", &QualityEvaluationUtility::EvaluateRotationCoupling)        
+        ;           
     class_<ReconstructionOutputWriter, bases<Process> >("ReconstructionOutputWriter", init<ReconstructionDataBase&, Parameters&>())
         .def("OutputCADSurfacePoints", &ReconstructionOutputWriter::OutputCADSurfacePoints)
         .def("OutputGaussPointsOfFEMesh", &ReconstructionOutputWriter::OutputGaussPointsOfFEMesh)

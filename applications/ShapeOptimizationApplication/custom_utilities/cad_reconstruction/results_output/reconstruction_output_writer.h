@@ -29,7 +29,7 @@
 #include "includes/element.h"
 #include "includes/model_part.h"
 #include "includes/kratos_flags.h"
-#include "reconstruction_data_base.h"
+#include "../data_management/reconstruction_data_base.h"
 
 // ==============================================================================
 
@@ -304,8 +304,8 @@ private:
 
     ReconstructionDataBase& mrReconstructionDataBase;
     std::string mOutputFolder;
-    std::string mRhinoResultsFile;
     std::string mOriginalGeorhinoFile;
+    std::string mRhinoResultsFile;
 
     /// Assignment operator.
     //      ReconstructionOutputWriter& operator=(ReconstructionOutputWriter const& rOther);

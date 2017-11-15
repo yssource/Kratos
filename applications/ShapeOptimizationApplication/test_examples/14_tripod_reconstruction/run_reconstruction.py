@@ -94,6 +94,9 @@ CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_cad_geometry
 # Perform reconstruction
 CADReconstructionUtility.PerformReconstruction()
 
+# Measure quality of reconstruction
+CADReconstructionUtility.EvaluateQuality()
+
 # Some output
 CADReconstructionUtility.OutputFEData()
 CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_updated_cad_geometry.txt" )

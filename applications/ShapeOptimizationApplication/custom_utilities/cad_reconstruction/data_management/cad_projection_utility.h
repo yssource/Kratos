@@ -261,6 +261,23 @@ public:
         }
     }
     
+    // --------------------------------------------------------------------------
+    void DetermineNearestCADPointInGeometrySpace( NodeType& PointOfInterest,
+                                                  array_1d<double,3>& coordinates_of_nearest_cad_point )
+    {
+        array_1d<double,2> parameter_values_of_nearest_point;
+        int patch_index_of_nearest_point = -1;
+
+        DetermineNearestCADPoint( PointOfInterest, parameter_values_of_nearest_point, patch_index_of_nearest_point );
+
+        Point<3> nearest_cad_point;
+        mrPatchVector[patch_index_of_nearest_point].EvaluateSurfacePoint( parameter_values_of_nearest_point, nearest_cad_point );
+
+        coordinates_of_nearest_cad_point[0] = nearest_cad_point[0];
+        coordinates_of_nearest_cad_point[1] = nearest_cad_point[1];
+        coordinates_of_nearest_cad_point[2] = nearest_cad_point[2];      
+    }
+
     // ==============================================================================
 
     /// Turn back information as a string.

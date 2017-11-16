@@ -8,8 +8,8 @@
 //
 // ==============================================================================
 
-#ifndef CAD_RECONSTRUCTION_OUTPUT_WRITER_H
-#define CAD_RECONSTRUCTION_OUTPUT_WRITER_H
+#ifndef RECONSTRUCTION_OUTPUT_UTILITIES_H
+#define RECONSTRUCTION_OUTPUT_UTILITIES_H
 
 // ------------------------------------------------------------------------------
 // System includes
@@ -35,7 +35,7 @@
 
 namespace Kratos
 {
-class ReconstructionOutputWriter
+class ReconstructionOutputUtilities
 {
 public:
     ///@name Type Definitions
@@ -44,24 +44,24 @@ public:
     typedef Node<3> NodeType;
     typedef Element::GeometryType::IntegrationMethod IntegrationMethodType;
     
-    /// Pointer definition of ReconstructionOutputWriter
-    KRATOS_CLASS_POINTER_DEFINITION(ReconstructionOutputWriter);
+    /// Pointer definition of ReconstructionOutputUtilities
+    KRATOS_CLASS_POINTER_DEFINITION(ReconstructionOutputUtilities);
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    ReconstructionOutputWriter( ReconstructionDataBase& reconstruction_data_base, Parameters& parameters )
+    ReconstructionOutputUtilities( ReconstructionDataBase& reconstruction_data_base, Parameters& parameters )
     : mrReconstructionDataBase( reconstruction_data_base ),
-      mOutputFolder( parameters["result_output_parameters"]["results_output_folder"].GetString() ),
-      mOriginalGeorhinoFile( parameters["result_output_parameters"]["original_georhino_filename"].GetString() ),
-      mRhinoResultsFile( parameters["result_output_parameters"]["rhino_results_filename"].GetString() )
+      mOutputFolder( parameters["output_parameters"]["output_folder"].GetString() ),
+      mOriginalGeorhinoFile( parameters["output_parameters"]["original_georhino_filename"].GetString() ),
+      mRhinoResultsFile( parameters["output_parameters"]["rhino_results_filename"].GetString() )
     {      
     }
 
     /// Destructor.
-    virtual ~ReconstructionOutputWriter()
+    virtual ~ReconstructionOutputUtilities()
     {
     }
 
@@ -71,8 +71,8 @@ public:
 	    std::cout << "\n> Start writing surface points of given CAD geometry to file..." << std::endl;
         std::ofstream  output_file( mOutputFolder + "/" + output_filename );
 
-        int u_resolution = parameters["result_output_parameters"]["parameter_resolution_for_output_of_surface_points"][0].GetInt();
-        int v_resolution = parameters["result_output_parameters"]["parameter_resolution_for_output_of_surface_points"][1].GetInt();      
+        int u_resolution = parameters["output_parameters"]["parameter_resolution_for_output_of_surface_points"][0].GetInt();
+        int v_resolution = parameters["output_parameters"]["parameter_resolution_for_output_of_surface_points"][1].GetInt();      
 	
         // Set a max value for the coordinte output to avoid clutter through points that moving uncontrolled
         double max_coordinate = 1000;
@@ -286,13 +286,13 @@ public:
     /// Turn back information as a string.
     virtual std::string Info() const
     {
-		return "ReconstructionOutputWriter";
+		return "ReconstructionOutputUtilities";
     }
 
     /// Print information about this object.
     virtual void PrintInfo(std::ostream &rOStream) const
     {
-		rOStream << "ReconstructionOutputWriter";
+		rOStream << "ReconstructionOutputUtilities";
     }
 
     /// Print object's data.
@@ -308,12 +308,12 @@ private:
     std::string mRhinoResultsFile;
 
     /// Assignment operator.
-    //      ReconstructionOutputWriter& operator=(ReconstructionOutputWriter const& rOther);
+    //      ReconstructionOutputUtilities& operator=(ReconstructionOutputUtilities const& rOther);
 
     /// Copy constructor.
-    //      ReconstructionOutputWriter(ReconstructionOutputWriter const& rOther);
+    //      ReconstructionOutputUtilities(ReconstructionOutputUtilities const& rOther);
 
-}; // Class ReconstructionOutputWriter
+}; // Class ReconstructionOutputUtilities
 } // namespace Kratos.
 
-#endif // CAD_RECONSTRUCTION_OUTPUT_WRITER_H
+#endif // RECONSTRUCTION_OUTPUT_UTILITIES_H

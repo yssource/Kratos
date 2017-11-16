@@ -38,8 +38,8 @@
 #include "linear_solvers/linear_solver.h"
 #include "custom_utilities/cad_reconstruction/reconstruction_conditions/reconstruction_condition_container.h"
 #include "custom_utilities/cad_reconstruction/cad_reconstruction_solver.h"
-#include "custom_utilities/cad_reconstruction/results_output/reconstruction_output_writer.h"
-#include "custom_utilities/cad_reconstruction/results_output/quality_evaluation_utility.h"
+#include "custom_utilities/cad_reconstruction/results_output/output_utilities.h"
+#include "custom_utilities/cad_reconstruction/results_output/quality_evaluation_utilities.h"
 
 // ==============================================================================
 
@@ -170,14 +170,14 @@ void  AddCustomUtilitiesToPython()
         .def("UpdateControlPointsAccordingReconstructionStrategy", &CADReconstructionSolver::UpdateControlPointsAccordingReconstructionStrategy)         
         ;
     class_<QualityEvaluationUtility, bases<Process> >("QualityEvaluationUtility", init<ReconstructionDataBase&, ReconstructionConditionContainer&, Parameters&>())
-        .def("EvaluateSurfaceReconstructionQuality", &QualityEvaluationUtility::EvaluateSurfaceReconstructionQuality)
+        .def("EvaluateSurfaceReconstruction", &QualityEvaluationUtility::EvaluateSurfaceReconstruction)
         .def("EvaluateDisplacementCoupling", &QualityEvaluationUtility::EvaluateDisplacementCoupling)
         .def("EvaluateRotationCoupling", &QualityEvaluationUtility::EvaluateRotationCoupling)        
         ;           
-    class_<ReconstructionOutputWriter, bases<Process> >("ReconstructionOutputWriter", init<ReconstructionDataBase&, Parameters&>())
-        .def("OutputCADSurfacePoints", &ReconstructionOutputWriter::OutputCADSurfacePoints)
-        .def("OutputGaussPointsOfFEMesh", &ReconstructionOutputWriter::OutputGaussPointsOfFEMesh)
-        .def("OutputResultsInRhinoFormat", &ReconstructionOutputWriter::OutputResultsInRhinoFormat)        
+    class_<ReconstructionOutputUtilities, bases<Process> >("ReconstructionOutputUtilities", init<ReconstructionDataBase&, Parameters&>())
+        .def("OutputCADSurfacePoints", &ReconstructionOutputUtilities::OutputCADSurfacePoints)
+        .def("OutputGaussPointsOfFEMesh", &ReconstructionOutputUtilities::OutputGaussPointsOfFEMesh)
+        .def("OutputResultsInRhinoFormat", &ReconstructionOutputUtilities::OutputResultsInRhinoFormat)        
         ;                            
 }
 

@@ -118,179 +118,6 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    void EvaluateQualityWithVTKOutput( Variable<array_1d<double,3>>& shape_change_variable,
-                                       std::vector<double>& distances_by_projection, 
-                                       std::vector<double>& distances_to_projected_cad_point_after_reconstruction, 
-                                       std::vector<double>& distances_to_nearest_cad_point_after_reconstruction, 
-                                       std::vector<unsigned int>& is_projected_cad_point_inside,
-                                       ModelPart::Pointer mdpa_to_evaluate_surface_reconstruction )
-    {    
-        mdpa_to_evaluate_surface_reconstruction->AddNodalSolutionStepVariable(DISTANCE_BY_PROJECTION);
-        mdpa_to_evaluate_surface_reconstruction->AddNodalSolutionStepVariable(PATCH_ID);
-        mdpa_to_evaluate_surface_reconstruction->AddNodalSolutionStepVariable(IS_PROJECTED_CAD_POINT_INSIDE_VISIBLE_PATCH_REGION);
-        mdpa_to_evaluate_surface_reconstruction->AddNodalSolutionStepVariable(SHAPE_CHANGE_ABSOLUTE);
-        mdpa_to_evaluate_surface_reconstruction->AddNodalSolutionStepVariable(DISTANCE_TO_PROJECTED_CAD_POINT_AFTER_RECONSTRUCTION);
-        mdpa_to_evaluate_surface_reconstruction->AddNodalSolutionStepVariable(DISTANCE_TO_NEAREST_CAD_POINT_AFTER_RECONSTRUCTION);   
-
-        Parameters& projection_parameters =  mrReconstructionParameters["output_parameters"]["quality_evaluation_parameters"]["projection_parameters"];
-        CADProjectionUtility FE2CADProjector( mrReconstructionDataBase.GetPatchVector(), projection_parameters );
-        FE2CADProjector.Initialize();
-
-        for(auto & condition_i : mrReconstructionConditions)
-        {
-            int condition_index = &condition_i-&mrReconstructionConditions[0];
-
-            // Get condition data
-            array_1d<double,3> fe_coordinates_undeformed;
-            array_1d<double,3> fe_coordinates_deformed;
-            array_1d<double,3> cad_coordinates_undeformed;
-            array_1d<double,3> cad_coordinates_deformed;
-            array_1d<double,3> nearest_cad_coordinates_deformed; 
-            condition_i->DetermineFECoordinatesInUndeformedConfiguration(fe_coordinates_undeformed);
-            condition_i->DetermineFECoordinatesInDeformedConfiguration(shape_change_variable, fe_coordinates_deformed);
-            condition_i->DetermineCADCoordinatesInUndeformedConfiguration(cad_coordinates_undeformed);
-            condition_i->DetermineCADCoordinatesInDeformedConfiguration(cad_coordinates_deformed);
-
-            NodeType::Pointer fe_point = Node <3>::Pointer(new Node<3>(1, fe_coordinates_deformed));
-            FE2CADProjector.DetermineNearestCADPointInGeometrySpace( *fe_point, nearest_cad_coordinates_deformed );
-            
-            bool projected_cad_point_is_inside = condition_i->IsProjectedCADPointInsideVisiblePatchRegion();
-
-            // compute distances
-            double distance_by_projection =  EvaluateDistanceBetweenCoordinates(cad_coordinates_undeformed, fe_coordinates_undeformed);
-            double distance_to_projected_cad_point_after_reconstruction =  EvaluateDistanceBetweenCoordinates(cad_coordinates_deformed, fe_coordinates_deformed);
-            double distance_to_nearest_cad_point_after_reconstruction =  EvaluateDistanceBetweenCoordinates(nearest_cad_coordinates_deformed, fe_coordinates_deformed);
-
-            // push_back results
-            if(projected_cad_point_is_inside)
-            {
-                distances_by_projection.push_back(distance_by_projection);
-                distances_to_projected_cad_point_after_reconstruction.push_back(distance_to_projected_cad_point_after_reconstruction);
-                is_projected_cad_point_inside.push_back(0);
-            }
-            else
-            {
-                is_projected_cad_point_inside.push_back(1);
-            }
-            distances_to_nearest_cad_point_after_reconstruction.push_back(distance_to_nearest_cad_point_after_reconstruction);
-
-            // create node at FE coordinates in undeformed configuration
-            NodeType::Pointer new_node = Node <3>::Pointer(new Node<3>(condition_index, fe_coordinates_undeformed));
-            new_node->SetSolutionStepVariablesList(&(mdpa_to_evaluate_surface_reconstruction->GetNodalSolutionStepVariablesList()));
-            mdpa_to_evaluate_surface_reconstruction->AddNode(new_node);
-
-            // Add nodal results
-            new_node->FastGetSolutionStepValue(DISTANCE_BY_PROJECTION) = cad_coordinates_undeformed - fe_coordinates_undeformed;
-            new_node->FastGetSolutionStepValue(PATCH_ID) = condition_i->GetAffectedPatch().GetId();
-            new_node->FastGetSolutionStepValue(IS_PROJECTED_CAD_POINT_INSIDE_VISIBLE_PATCH_REGION) = projected_cad_point_is_inside;
-            new_node->FastGetSolutionStepValue(SHAPE_CHANGE_ABSOLUTE) = fe_coordinates_deformed - fe_coordinates_undeformed;
-            new_node->FastGetSolutionStepValue(DISTANCE_TO_PROJECTED_CAD_POINT_AFTER_RECONSTRUCTION) = cad_coordinates_deformed - fe_coordinates_deformed;
-            new_node->FastGetSolutionStepValue(DISTANCE_TO_NEAREST_CAD_POINT_AFTER_RECONSTRUCTION) = nearest_cad_coordinates_deformed - fe_coordinates_deformed;                 
-        }        
-    }
-
-    // --------------------------------------------------------------------------
-    void EvaluateQualityWithoutVTKOutput( Variable<array_1d<double,3>>& shape_change_variable,
-                                          std::vector<double>& distances_by_projection, 
-                                          std::vector<double>& distances_to_projected_cad_point_after_reconstruction, 
-                                          std::vector<double>& distances_to_nearest_cad_point_after_reconstruction, 
-                                          std::vector<unsigned int>& is_projected_cad_point_inside )
-{         
-        Parameters& projection_parameters =  mrReconstructionParameters["output_parameters"]["quality_evaluation_parameters"]["projection_parameters"];
-        CADProjectionUtility FE2CADProjector( mrReconstructionDataBase.GetPatchVector(), projection_parameters );
-        FE2CADProjector.Initialize();
-
-        for(auto & condition_i : mrReconstructionConditions)
-        {
-            int condition_index = &condition_i-&mrReconstructionConditions[0];
-
-            // Get condition data
-            array_1d<double,3> fe_coordinates_undeformed;
-            array_1d<double,3> fe_coordinates_deformed;
-            array_1d<double,3> cad_coordinates_undeformed;
-            array_1d<double,3> cad_coordinates_deformed;
-            array_1d<double,3> nearest_cad_coordinates_deformed; 
-            condition_i->DetermineFECoordinatesInUndeformedConfiguration(fe_coordinates_undeformed);
-            condition_i->DetermineFECoordinatesInDeformedConfiguration(shape_change_variable, fe_coordinates_deformed);
-            condition_i->DetermineCADCoordinatesInUndeformedConfiguration(cad_coordinates_undeformed);
-            condition_i->DetermineCADCoordinatesInDeformedConfiguration(cad_coordinates_deformed);
-
-            NodeType::Pointer fe_point = Node <3>::Pointer(new Node<3>(1, fe_coordinates_deformed));
-            FE2CADProjector.DetermineNearestCADPointInGeometrySpace( *fe_point, nearest_cad_coordinates_deformed );
-            
-            bool projected_cad_point_is_inside = condition_i->IsProjectedCADPointInsideVisiblePatchRegion();
-
-            // compute distances
-            double distance_by_projection =  EvaluateDistanceBetweenCoordinates(cad_coordinates_undeformed, fe_coordinates_undeformed);
-            double distance_to_projected_cad_point_after_reconstruction =  EvaluateDistanceBetweenCoordinates(cad_coordinates_deformed, fe_coordinates_deformed);
-            double distance_to_nearest_cad_point_after_reconstruction =  EvaluateDistanceBetweenCoordinates(nearest_cad_coordinates_deformed, fe_coordinates_deformed);
-
-            // push_back results
-            if(projected_cad_point_is_inside)
-            {
-                distances_by_projection.push_back(distance_by_projection);
-                distances_to_projected_cad_point_after_reconstruction.push_back(distance_to_projected_cad_point_after_reconstruction);
-                is_projected_cad_point_inside.push_back(0);
-            }
-            else
-            {
-                is_projected_cad_point_inside.push_back(1);
-            }
-            distances_to_nearest_cad_point_after_reconstruction.push_back(distance_to_nearest_cad_point_after_reconstruction);              
-        }        
-    }
-
-    // --------------------------------------------------------------------------
-    void WriteVTKFileWithQualityResults( ModelPart::Pointer mdpa_to_evaluate_surface_reconstruction )
-    {
-        Parameters vtk_output_parameters(R"({
-            "nodal_results": [ "DISTANCE_BY_PROJECTION",
-                               "PATCH_ID", 
-                               "IS_PROJECTED_CAD_POINT_INSIDE_VISIBLE_PATCH_REGION",
-                               "SHAPE_CHANGE_ABSOLUTE",
-                               "DISTANCE_TO_PROJECTED_CAD_POINT_AFTER_RECONSTRUCTION", 
-                               "DISTANCE_TO_NEAREST_CAD_POINT_AFTER_RECONSTRUCTION" ],
-            "vtk_type"     : "Ascii"
-        })");
-        vtk_output_parameters.AddValue("output_folder", mrReconstructionParameters["output_parameters"]["output_folder"]);
-        vtk_output_parameters.AddValue("output_filename", mrReconstructionParameters["output_parameters"]["quality_evaluation_parameters"]["vtk_filename"]);
-        
-        QualityEvaluationVTKOutputUtilities vtk_io( *mdpa_to_evaluate_surface_reconstruction, vtk_output_parameters );
-        vtk_io.PrintOutput();        
-    }
-
-    // --------------------------------------------------------------------------
-    void WriteStatisticsToConsole( std::vector<double>& distances_by_projection, 
-                                   std::vector<double>& distances_to_projected_cad_point_after_reconstruction,
-                                   std::vector<double>& distances_to_nearest_cad_point_after_reconstruction, 
-                                   std::vector<unsigned int>& is_projected_cad_point_inside )
-    {
-        double average_dist = std::accumulate( distances_by_projection.begin(), distances_by_projection.end(), 0.0 ) / distances_by_projection.size();
-        double max = *std::max_element( distances_by_projection.begin(), distances_by_projection.end());
-        int number_of_qk_outside = std::accumulate( is_projected_cad_point_inside.begin(), is_projected_cad_point_inside.end(), 0 );
-        double percentage_of_qk_outside = (100.0 * number_of_qk_outside) / is_projected_cad_point_inside.size();
-        // double l2_norm = std::sqrt( std::inner_product(distances_by_projection.begin(), distances_by_projection.end(), distances_by_projection.begin(), 0) );
-        std::cout << "\n> Quality of projection:" << std::endl;
-        std::cout << "\t average distance = " << std::fixed << std::scientific << std::setprecision(6) << average_dist << std::endl;
-        std::cout << "\t max distance = " << std::fixed << std::setprecision(6) << max << std::endl;
-        std::cout << "\t " << number_of_qk_outside << " out of " << is_projected_cad_point_inside.size() << " points are outside of trimming boundaries (" << std::fixed << std::setprecision(2) << percentage_of_qk_outside << "%)" << std::endl;
-        
-        average_dist = std::accumulate( distances_to_projected_cad_point_after_reconstruction.begin(), distances_to_projected_cad_point_after_reconstruction.end(), 0.0 ) / distances_to_projected_cad_point_after_reconstruction.size();
-        max = *std::max_element( distances_to_projected_cad_point_after_reconstruction.begin(), distances_to_projected_cad_point_after_reconstruction.end());
-        // l2_norm = std::sqrt( std::inner_product(distances_to_projected_cad_point_after_reconstruction.begin(), distances_to_projected_cad_point_after_reconstruction.end(), distances_to_projected_cad_point_after_reconstruction.begin(), 0) );
-        std::cout << "\n> Quality of reconstruction: | P - Q_k |" << std::endl;
-        std::cout << "\t average distance = " << std::fixed << std::scientific << std::setprecision(6) << average_dist << std::endl;
-        std::cout << "\t max distance = " << std::fixed << std::setprecision(6) << max << std::endl;
-        
-        average_dist = std::accumulate( distances_to_nearest_cad_point_after_reconstruction.begin(), distances_to_nearest_cad_point_after_reconstruction.end(), 0.0 ) / distances_to_nearest_cad_point_after_reconstruction.size();
-        max = *std::max_element( distances_to_nearest_cad_point_after_reconstruction.begin(), distances_to_nearest_cad_point_after_reconstruction.end());
-        // l2_norm = std::sqrt( std::inner_product(distances_to_nearest_cad_point_after_reconstruction.begin(), distances_to_nearest_cad_point_after_reconstruction.end(), distances_to_nearest_cad_point_after_reconstruction.begin(), 0) );
-        std::cout << "\n> Quality of reconstruction: | P - Q |" << std::endl;
-        std::cout << "\t average distance = " << std::fixed << std::scientific << std::setprecision(6) << average_dist << std::endl;
-        std::cout << "\t max distance = " << std::fixed << std::setprecision(6) << max << std::endl; 
-    }
-
-    // --------------------------------------------------------------------------
     void EvaluateDisplacementCoupling()
     {
         std::cout << "\n> Starting to evaluate displacement coupling..." << std::endl;
@@ -437,25 +264,6 @@ public:
         std::cout << "\n> Finished evaluating rotation coupling in " << timer.elapsed() << " s." << std::endl;        
     }
 
-    // --------------------------------------------------------------------------
-    void EvaluateDistanceBetweenPoints(Point<3>& first, Point<3>& second, double& rdistance)
-    {
-      Vector distance_vector = ZeroVector(3);
-      distance_vector(0) = first.X() - second.X();
-      distance_vector(1) = first.Y() - second.Y();
-      distance_vector(2) = first.Z() - second.Z();
-      rdistance = norm_2(distance_vector);
-    }
-
-    // --------------------------------------------------------------------------
-    double EvaluateDistanceBetweenCoordinates(array_1d<double,3>& first, array_1d<double,3>& second)
-    {
-      array_1d<double,3> d  = first - second;
-      return std::sqrt( d[0]*d[0] + d[1]*d[1] + d[2]*d[2] );
-    }
-
-    // ==============================================================================
-
     /// Turn back information as a string.
     virtual std::string Info() const
     {
@@ -475,18 +283,206 @@ public:
 
 private:
 
-    // ==============================================================================
-    // Initialized by class constructor
-    // ==============================================================================
+    ///@}
+    ///@name Private member variables
+    ///@{
+
+    // Initialized by constructor 
     ReconstructionDataBase& mrReconstructionDataBase;
     std::vector<ReconstructionCondition::Pointer>& mrReconstructionConditions;
     Parameters& mrReconstructionParameters;
     
-    // ==============================================================================
-    // Additional variables
-    // ==============================================================================    
+    // Additional variables    
     int points_counter=0;
     int outside_points_counter=0;  
+
+    ///@}
+    ///@name Private member functions
+    ///@{    
+    void EvaluateQualityWithVTKOutput( Variable<array_1d<double,3>> shape_change_variable,
+                                       std::vector<double>& distances_by_projection, 
+                                       std::vector<double>& distances_to_projected_cad_point_after_reconstruction, 
+                                       std::vector<double>& distances_to_nearest_cad_point_after_reconstruction, 
+                                       std::vector<unsigned int>& is_projected_cad_point_inside,
+                                       ModelPart::Pointer mdpa_to_evaluate_surface_reconstruction )
+    {    
+        mdpa_to_evaluate_surface_reconstruction->AddNodalSolutionStepVariable(DISTANCE_BY_PROJECTION);
+        mdpa_to_evaluate_surface_reconstruction->AddNodalSolutionStepVariable(PATCH_ID);
+        mdpa_to_evaluate_surface_reconstruction->AddNodalSolutionStepVariable(IS_PROJECTED_CAD_POINT_INSIDE_VISIBLE_PATCH_REGION);
+        mdpa_to_evaluate_surface_reconstruction->AddNodalSolutionStepVariable(SHAPE_CHANGE_ABSOLUTE);
+        mdpa_to_evaluate_surface_reconstruction->AddNodalSolutionStepVariable(DISTANCE_TO_PROJECTED_CAD_POINT_AFTER_RECONSTRUCTION);
+        mdpa_to_evaluate_surface_reconstruction->AddNodalSolutionStepVariable(DISTANCE_TO_NEAREST_CAD_POINT_AFTER_RECONSTRUCTION);   
+
+        CADProjectionUtility FE2CADProjector( mrReconstructionDataBase.GetPatchVector(), mrReconstructionParameters["output_parameters"]["quality_evaluation_parameters"]["projection_parameters"] );
+        FE2CADProjector.Initialize();
+
+        for(auto & condition_i : mrReconstructionConditions)
+        {
+            int condition_index = &condition_i-&mrReconstructionConditions[0];
+
+            // Get condition data
+            array_1d<double,3> fe_coordinates_undeformed;
+            array_1d<double,3> fe_coordinates_deformed;
+            array_1d<double,3> cad_coordinates_undeformed;
+            array_1d<double,3> cad_coordinates_deformed;
+            array_1d<double,3> nearest_cad_coordinates_deformed; 
+            condition_i->DetermineFECoordinatesInUndeformedConfiguration(fe_coordinates_undeformed);
+            condition_i->DetermineFECoordinatesInDeformedConfiguration(shape_change_variable, fe_coordinates_deformed);
+            condition_i->DetermineCADCoordinatesInUndeformedConfiguration(cad_coordinates_undeformed);
+            condition_i->DetermineCADCoordinatesInDeformedConfiguration(cad_coordinates_deformed);
+            
+            Node<3> fe_point(1, fe_coordinates_deformed);
+            FE2CADProjector.DetermineNearestCADPointInGeometrySpace( fe_point, nearest_cad_coordinates_deformed );
+            
+            bool projected_cad_point_is_inside = condition_i->IsProjectedCADPointInsideVisiblePatchRegion();
+
+            // compute distances
+            double distance_by_projection =  EvaluateDistanceBetweenCoordinates(cad_coordinates_undeformed, fe_coordinates_undeformed);
+            double distance_to_projected_cad_point_after_reconstruction =  EvaluateDistanceBetweenCoordinates(cad_coordinates_deformed, fe_coordinates_deformed);
+            double distance_to_nearest_cad_point_after_reconstruction =  EvaluateDistanceBetweenCoordinates(nearest_cad_coordinates_deformed, fe_coordinates_deformed);
+
+            // push_back results
+            if(projected_cad_point_is_inside)
+            {
+                distances_by_projection.push_back(distance_by_projection);
+                distances_to_projected_cad_point_after_reconstruction.push_back(distance_to_projected_cad_point_after_reconstruction);
+                is_projected_cad_point_inside.push_back(0);
+            }
+            else
+            {
+                is_projected_cad_point_inside.push_back(1);
+            }
+            distances_to_nearest_cad_point_after_reconstruction.push_back(distance_to_nearest_cad_point_after_reconstruction);
+
+            // create node at FE coordinates in undeformed configuration
+            NodeType::Pointer new_node = Node <3>::Pointer(new Node<3>(condition_index, fe_coordinates_undeformed));
+            new_node->SetSolutionStepVariablesList(&(mdpa_to_evaluate_surface_reconstruction->GetNodalSolutionStepVariablesList()));
+            mdpa_to_evaluate_surface_reconstruction->AddNode(new_node);
+
+            // Add nodal results
+            new_node->FastGetSolutionStepValue(DISTANCE_BY_PROJECTION) = cad_coordinates_undeformed - fe_coordinates_undeformed;
+            new_node->FastGetSolutionStepValue(PATCH_ID) = condition_i->GetAffectedPatch().GetId();
+            new_node->FastGetSolutionStepValue(IS_PROJECTED_CAD_POINT_INSIDE_VISIBLE_PATCH_REGION) = projected_cad_point_is_inside;
+            new_node->FastGetSolutionStepValue(SHAPE_CHANGE_ABSOLUTE) = fe_coordinates_deformed - fe_coordinates_undeformed;
+            new_node->FastGetSolutionStepValue(DISTANCE_TO_PROJECTED_CAD_POINT_AFTER_RECONSTRUCTION) = cad_coordinates_deformed - fe_coordinates_deformed;
+            new_node->FastGetSolutionStepValue(DISTANCE_TO_NEAREST_CAD_POINT_AFTER_RECONSTRUCTION) = nearest_cad_coordinates_deformed - fe_coordinates_deformed;                 
+        }        
+    }
+
+    // --------------------------------------------------------------------------
+    void EvaluateQualityWithoutVTKOutput( Variable<array_1d<double,3>>& shape_change_variable,
+                                          std::vector<double>& distances_by_projection, 
+                                          std::vector<double>& distances_to_projected_cad_point_after_reconstruction, 
+                                          std::vector<double>& distances_to_nearest_cad_point_after_reconstruction, 
+                                          std::vector<unsigned int>& is_projected_cad_point_inside )
+    {         
+        Parameters& projection_parameters =  mrReconstructionParameters["output_parameters"]["quality_evaluation_parameters"]["projection_parameters"];
+        CADProjectionUtility FE2CADProjector( mrReconstructionDataBase.GetPatchVector(), projection_parameters );
+        FE2CADProjector.Initialize();
+
+        for(auto & condition_i : mrReconstructionConditions)
+        {
+            int condition_index = &condition_i-&mrReconstructionConditions[0];
+
+            // Get condition data
+            array_1d<double,3> fe_coordinates_undeformed;
+            array_1d<double,3> fe_coordinates_deformed;
+            array_1d<double,3> cad_coordinates_undeformed;
+            array_1d<double,3> cad_coordinates_deformed;
+            array_1d<double,3> nearest_cad_coordinates_deformed; 
+            condition_i->DetermineFECoordinatesInUndeformedConfiguration(fe_coordinates_undeformed);
+            condition_i->DetermineFECoordinatesInDeformedConfiguration(shape_change_variable, fe_coordinates_deformed);
+            condition_i->DetermineCADCoordinatesInUndeformedConfiguration(cad_coordinates_undeformed);
+            condition_i->DetermineCADCoordinatesInDeformedConfiguration(cad_coordinates_deformed);
+
+            Node<3> fe_point(1, fe_coordinates_deformed);
+            FE2CADProjector.DetermineNearestCADPointInGeometrySpace( fe_point, nearest_cad_coordinates_deformed );
+            
+            bool projected_cad_point_is_inside = condition_i->IsProjectedCADPointInsideVisiblePatchRegion();
+
+            // compute distances
+            double distance_by_projection =  EvaluateDistanceBetweenCoordinates(cad_coordinates_undeformed, fe_coordinates_undeformed);
+            double distance_to_projected_cad_point_after_reconstruction =  EvaluateDistanceBetweenCoordinates(cad_coordinates_deformed, fe_coordinates_deformed);
+            double distance_to_nearest_cad_point_after_reconstruction =  EvaluateDistanceBetweenCoordinates(nearest_cad_coordinates_deformed, fe_coordinates_deformed);
+
+            // push_back results
+            if(projected_cad_point_is_inside)
+            {
+                distances_by_projection.push_back(distance_by_projection);
+                distances_to_projected_cad_point_after_reconstruction.push_back(distance_to_projected_cad_point_after_reconstruction);
+                is_projected_cad_point_inside.push_back(0);
+            }
+            else
+            {
+                is_projected_cad_point_inside.push_back(1);
+            }
+            distances_to_nearest_cad_point_after_reconstruction.push_back(distance_to_nearest_cad_point_after_reconstruction);              
+        }        
+    }
+
+    // --------------------------------------------------------------------------
+    void WriteVTKFileWithQualityResults( ModelPart::Pointer mdpa_to_evaluate_surface_reconstruction )
+    {
+        Parameters vtk_output_parameters(R"({
+            "nodal_results": [ "DISTANCE_BY_PROJECTION",
+                               "PATCH_ID", 
+                               "IS_PROJECTED_CAD_POINT_INSIDE_VISIBLE_PATCH_REGION",
+                               "SHAPE_CHANGE_ABSOLUTE",
+                               "DISTANCE_TO_PROJECTED_CAD_POINT_AFTER_RECONSTRUCTION", 
+                               "DISTANCE_TO_NEAREST_CAD_POINT_AFTER_RECONSTRUCTION" ],
+            "vtk_type"     : "Ascii"
+        })");
+        vtk_output_parameters.AddValue("output_folder", mrReconstructionParameters["output_parameters"]["output_folder"]);
+        vtk_output_parameters.AddValue("output_filename", mrReconstructionParameters["output_parameters"]["quality_evaluation_parameters"]["vtk_filename"]);
+        
+        QualityEvaluationVTKOutputUtilities vtk_io( *mdpa_to_evaluate_surface_reconstruction, vtk_output_parameters );
+        vtk_io.PrintOutput();        
+    }
+
+    // --------------------------------------------------------------------------
+    void WriteStatisticsToConsole( std::vector<double>& distances_by_projection, 
+                                   std::vector<double>& distances_to_projected_cad_point_after_reconstruction,
+                                   std::vector<double>& distances_to_nearest_cad_point_after_reconstruction, 
+                                   std::vector<unsigned int>& is_projected_cad_point_inside )
+    {
+        double average_dist = std::accumulate( distances_by_projection.begin(), distances_by_projection.end(), 0.0 ) / distances_by_projection.size();
+        double max = *std::max_element( distances_by_projection.begin(), distances_by_projection.end());
+        int number_of_qk_outside = std::accumulate( is_projected_cad_point_inside.begin(), is_projected_cad_point_inside.end(), 0 );
+        double percentage_of_qk_outside = (100.0 * number_of_qk_outside) / is_projected_cad_point_inside.size();
+        std::cout << "\n> Quality of projection:" << std::endl;
+        std::cout << "\t average distance = " << std::fixed << std::scientific << std::setprecision(6) << average_dist << std::endl;
+        std::cout << "\t max distance = " << std::fixed << std::setprecision(6) << max << std::endl;
+        std::cout << "\t " << number_of_qk_outside << " out of " << is_projected_cad_point_inside.size() << " points are outside of trimming boundaries (" << std::fixed << std::setprecision(2) << percentage_of_qk_outside << "%)" << std::endl;
+        
+        average_dist = std::accumulate( distances_to_projected_cad_point_after_reconstruction.begin(), distances_to_projected_cad_point_after_reconstruction.end(), 0.0 ) / distances_to_projected_cad_point_after_reconstruction.size();
+        max = *std::max_element( distances_to_projected_cad_point_after_reconstruction.begin(), distances_to_projected_cad_point_after_reconstruction.end());
+        std::cout << "\n> Quality of reconstruction: | P - Q_k |" << std::endl;
+        std::cout << "\t average distance = " << std::fixed << std::scientific << std::setprecision(6) << average_dist << std::endl;
+        std::cout << "\t max distance = " << std::fixed << std::setprecision(6) << max << std::endl;
+        
+        average_dist = std::accumulate( distances_to_nearest_cad_point_after_reconstruction.begin(), distances_to_nearest_cad_point_after_reconstruction.end(), 0.0 ) / distances_to_nearest_cad_point_after_reconstruction.size();
+        max = *std::max_element( distances_to_nearest_cad_point_after_reconstruction.begin(), distances_to_nearest_cad_point_after_reconstruction.end());
+        std::cout << "\n> Quality of reconstruction: | P - Q |" << std::endl;
+        std::cout << "\t average distance = " << std::fixed << std::scientific << std::setprecision(6) << average_dist << std::endl;
+        std::cout << "\t max distance = " << std::fixed << std::setprecision(6) << max << std::endl; 
+    }    
+
+    // --------------------------------------------------------------------------
+    void EvaluateDistanceBetweenPoints(Point<3>& first, Point<3>& second, double& rdistance)
+    {
+      Vector distance_vector = ZeroVector(3);
+      distance_vector(0) = first.X() - second.X();
+      distance_vector(1) = first.Y() - second.Y();
+      distance_vector(2) = first.Z() - second.Z();
+      rdistance = norm_2(distance_vector);
+    }
+
+    // --------------------------------------------------------------------------
+    double EvaluateDistanceBetweenCoordinates(array_1d<double,3>& first, array_1d<double,3>& second)
+    {
+      array_1d<double,3> d  = first - second;
+      return std::sqrt( d[0]*d[0] + d[1]*d[1] + d[2]*d[2] );
+    }
 
     /// Assignment operator.
     //      QualityEvaluationUtility& operator=(QualityEvaluationUtility const& rOther);

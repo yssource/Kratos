@@ -257,6 +257,13 @@ public:
             std::cout << "WARNING!!! Newton-Raphson in projection did not converge in the following number of iterations: " << k+1 << std::endl;
             KRATOS_WATCH(current_nearest_point)
             KRATOS_WATCH(PointOfInterest)
+            std::cout << "Do you want to continue (Y/N)?\n";
+            char ans = 'N';
+            std::cin >> ans;
+            if(ans == 'Y' || ans == 'y')
+                continue;
+            else
+                exit(EXIT_SUCCESS);            
           }
         }
     }

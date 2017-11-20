@@ -144,12 +144,12 @@ public:
             {
                 int integration_point_number = &integration_point_i - &integration_points[0];
                 NodeType::CoordinatesArrayType ip_coordinates = geom_i.GlobalCoordinates(ip_coordinates, integration_point_i.Coordinates());
-                NodeType::Pointer node_of_interest = Node <3>::Pointer(new Node<3>(1, ip_coordinates));
+                NodeType node_of_interest(1, ip_coordinates);
 
                 array_1d<double,2> parameter_values_of_nearest_point;
                 int patch_index_of_nearest_point = -1;
 
-                FE2CADProjector.DetermineNearestCADPoint( *node_of_interest, parameter_values_of_nearest_point, patch_index_of_nearest_point );
+                FE2CADProjector.DetermineNearestCADPoint( node_of_interest, parameter_values_of_nearest_point, patch_index_of_nearest_point );
 
                 NewCondition = ReconstructionCondition::Pointer( new DisplacementMappingCondition( geom_i,
                                                                                                    fem_integration_method,

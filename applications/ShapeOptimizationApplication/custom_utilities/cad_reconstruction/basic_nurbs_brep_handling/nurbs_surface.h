@@ -1128,7 +1128,7 @@ public:
 			rRefinedGrevilleAbscissaeInVDirection[2*i+1] = rGrevilleAbscissaeInVDirection[i]+(rGrevilleAbscissaeInVDirection[i+1]-rGrevilleAbscissaeInVDirection[i])/2.0;            
 		}
 		rRefinedGrevilleAbscissaeInUDirection[2*(number_of_greville_points-1)+0] = rGrevilleAbscissaeInUDirection[number_of_greville_points-1];
-		rRefinedGrevilleAbscissaeInVDirection[2*(number_of_greville_points-1)+1] = rGrevilleAbscissaeInVDirection[number_of_greville_points-1];							
+		rRefinedGrevilleAbscissaeInUDirection[2*(number_of_greville_points-1)+0] = rGrevilleAbscissaeInUDirection[number_of_greville_points-1];
 	}	
 
 	// --------------------------------------------------------------------------

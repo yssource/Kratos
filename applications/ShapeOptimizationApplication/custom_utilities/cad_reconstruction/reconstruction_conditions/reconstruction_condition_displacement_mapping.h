@@ -206,6 +206,10 @@ public:
         array_1d<double,3> fe_point_coords = mrGeometryContainingThisCondition.GlobalCoordinates(fe_point_coords, fe_point.Coordinates());
 
         array_1d<double,3> displacement;
+        displacement[0] = 0.0;
+        displacement[1] = 0.0;
+        displacement[2] = 0.0;
+
         for(int i = 0; i < mrGeometryContainingThisCondition.size(); i++)
         {
             array_1d<double,3>& shape_change_absolute_i = mrGeometryContainingThisCondition[i].FastGetSolutionStepValue(shape_change_variable);
@@ -213,7 +217,7 @@ public:
             displacement[1] += mFEMFunctionValues[i] * shape_change_absolute_i[1];
             displacement[2] += mFEMFunctionValues[i] * shape_change_absolute_i[2];
         }
-
+        
         fe_point_coords_in_deformed_configuration[0] = fe_point_coords[0] + displacement[0];
         fe_point_coords_in_deformed_configuration[1] = fe_point_coords[1] + displacement[1];
         fe_point_coords_in_deformed_configuration[2] = fe_point_coords[2] + displacement[2];        

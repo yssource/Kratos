@@ -53,13 +53,8 @@ class CADReconstrutionUtilities():
         self.__CreateReconstructionConditions()
         self.__CreateSolverForReconstruction()
         self.__RunSolutionAlorithm()
-
-    # --------------------------------------------------------------------------
-    def EvaluateReconstructionQuality( self ):
-        quality_evaluator = QualityEvaluationUtility( self.DataBase, self.ConditionsContainer, self.Parameters )
-        quality_evaluator.EvaluateSurfaceReconstruction()
-        quality_evaluator.EvaluateDisplacementCoupling()
-        quality_evaluator.EvaluateRotationCoupling()
+        if self.Parameters["output_parameters"]["perform_quality_evaluation"].GetBool():
+            self.__EvaluateReconstructionQuality()
 
     # --------------------------------------------------------------------------
     def OutputFEData( self ):
@@ -236,3 +231,10 @@ class CADReconstrutionUtilities():
         print("\n===========================================")
         print("Finished reconstruction loop.")
         print("===========================================")                    
+
+    # --------------------------------------------------------------------------
+    def __EvaluateReconstructionQuality( self ):
+        quality_evaluator = QualityEvaluationUtility( self.DataBase, self.ConditionsContainer, self.Parameters )
+        quality_evaluator.EvaluateSurfaceReconstruction()
+        quality_evaluator.EvaluateDisplacementCoupling()
+        quality_evaluator.EvaluateRotationCoupling()

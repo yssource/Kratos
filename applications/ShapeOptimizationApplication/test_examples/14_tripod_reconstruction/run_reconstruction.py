@@ -23,12 +23,12 @@ reconstruction_parameters = Parameters("""
         "cad_geometry_filename"         : "tripod_geometry.json",
         "cad_integration_data_filename" : "tripod_integration_data.json",
         "fem_filename"                  : "tripod",
-        "fe_refinement_level"           : 2,
+        "fe_refinement_level"           : 0,
         "shape_change_variable_name"    : "SHAPE_CHANGE_ABSOLUTE"
     },
     "solution_parameters" : 
     {
-        "strategy" : "distance_minimization",
+        "strategy" : "displacement_mapping",
         "general_parameters": 
         {
             "solution_iterations"                       : 1,
@@ -43,6 +43,8 @@ reconstruction_parameters = Parameters("""
         },
         "projection_parameters": 
         {
+            "projection_strategy"                               : "multiple_search_tree",
+            "search_radius_with_multiple_trees"                 : 1.0,               
             "automatic_initialization_using_greville_abscissae" : true,
             "refinement_iterations_of_greville_abscissae"       : 1,
             "parameter_resolution_for_manual_initialization"    : [ 100, 100 ],
@@ -64,10 +66,13 @@ reconstruction_parameters = Parameters("""
         "parameter_resolution_for_output_of_surface_points" : [ 50, 50 ],
         "original_georhino_filename"                        : "tripod.georhino.txt",
         "rhino_results_filename"                            : "tripod.post.res",
+        "perform_quality_evaluation"                        : true,
         "quality_evaluation_parameters" : 
         {
             "projection_parameters": 
             {
+                "projection_strategy"                               : "single_search_tree",   
+                "search_radius_with_multiple_trees"                 : 1.0,  
                 "automatic_initialization_using_greville_abscissae" : true,
                 "refinement_iterations_of_greville_abscissae"       : 1,
                 "parameter_resolution_for_manual_initialization"    : [ 100, 100 ],
@@ -106,9 +111,6 @@ CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_cad_geometry
 
 # Perform reconstruction
 CADReconstructionUtility.PerformReconstruction()
-
-# Measure quality of reconstruction
-# CADReconstructionUtility.EvaluateReconstructionQuality()
 
 # Some output
 CADReconstructionUtility.OutputFEData()

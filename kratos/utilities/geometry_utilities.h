@@ -112,7 +112,7 @@ public:
 
     //********************************************************************************
     //********************************************************************************
-    /**this function is designed to compute the shape function derivatives, shape functions and volume in 3D
+    /**this function is designed to compute the shape function derivatives, shape functions and volume in 2D
      * @param geom it is the array of nodes. It is expected to be a triangle
      * @param a stack matrix of size 3*2 to store the shape function's derivatives
      * @param an array_1d to store the shape functions at the barycenter

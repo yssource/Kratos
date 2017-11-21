@@ -190,6 +190,76 @@ public:
         }
     }
 
+    // --------------------------------------------------------------------------
+    void DetermineFECoordinatesInUndeformedConfiguration( array_1d<double,3>& fe_point_coords ) override
+    {
+        Point<3> fe_point;
+        fe_point = mrGeometryContainingThisCondition.IntegrationPoints(mFemIntegrationMethod)[mIntegrationPointNumber];
+        fe_point_coords = mrGeometryContainingThisCondition.GlobalCoordinates(fe_point_coords, fe_point.Coordinates());        
+    }
+
+    // --------------------------------------------------------------------------
+    void DetermineFECoordinatesInDeformedConfiguration( Variable<array_1d<double,3>> shape_change_variable, array_1d<double,3>& fe_point_coords_in_deformed_configuration ) override
+    {
+        Point<3> fe_point;
+        fe_point = mrGeometryContainingThisCondition.IntegrationPoints(mFemIntegrationMethod)[mIntegrationPointNumber];
+        array_1d<double,3> fe_point_coords = mrGeometryContainingThisCondition.GlobalCoordinates(fe_point_coords, fe_point.Coordinates());
+
+        array_1d<double,3> displacement;
+        displacement[0] = 0.0;
+        displacement[1] = 0.0;
+        displacement[2] = 0.0;
+
+        for(int i = 0; i < mrGeometryContainingThisCondition.size(); i++)
+        {
+            array_1d<double,3>& shape_change_absolute_i = mrGeometryContainingThisCondition[i].FastGetSolutionStepValue(shape_change_variable);
+            displacement[0] += mFEMFunctionValues[i] * shape_change_absolute_i[0];
+            displacement[1] += mFEMFunctionValues[i] * shape_change_absolute_i[1];
+            displacement[2] += mFEMFunctionValues[i] * shape_change_absolute_i[2];
+        }
+        
+        fe_point_coords_in_deformed_configuration[0] = fe_point_coords[0] + displacement[0];
+        fe_point_coords_in_deformed_configuration[1] = fe_point_coords[1] + displacement[1];
+        fe_point_coords_in_deformed_configuration[2] = fe_point_coords[2] + displacement[2];        
+    }
+
+    // --------------------------------------------------------------------------
+    void DetermineCADCoordinatesInUndeformedConfiguration(array_1d<double,3>& cad_point_coords) override
+    {
+        Point<3> cad_point_in_deformed_configuration;
+        mrAffectedPatch.EvaluateSurfacePoint(mParmeterValues, cad_point_in_deformed_configuration);
+
+        array_1d<double,3> displacement;
+        mrAffectedPatch.EvaluateSurfaceDisplacement(mParmeterValues, displacement);
+
+        cad_point_coords[0] = cad_point_in_deformed_configuration(0) - displacement[0];
+        cad_point_coords[1] = cad_point_in_deformed_configuration(1) - displacement[1];
+        cad_point_coords[2] = cad_point_in_deformed_configuration(2) - displacement[2];        
+    }
+
+    // --------------------------------------------------------------------------
+    void DetermineCADCoordinatesInDeformedConfiguration(array_1d<double,3>& cad_point_coords_in_deformed_configuration) override
+    {
+        Point<3> cad_point_in_deformed_configuration;
+        mrAffectedPatch.EvaluateSurfacePoint(mParmeterValues, cad_point_in_deformed_configuration);
+
+        cad_point_coords_in_deformed_configuration[0] = cad_point_in_deformed_configuration(0);
+        cad_point_coords_in_deformed_configuration[1] = cad_point_in_deformed_configuration(1);
+        cad_point_coords_in_deformed_configuration[2] = cad_point_in_deformed_configuration(2);        
+    }
+    
+    // --------------------------------------------------------------------------
+    Patch& GetAffectedPatch() override
+    {
+        return mrAffectedPatch;
+    }
+
+    // --------------------------------------------------------------------------
+    bool IsProjectedCADPointInsideVisiblePatchRegion() override
+    {
+        return mrAffectedPatch.IsPointInside(mParmeterValues);
+    }    
+
     // ==============================================================================
 
     ///@}

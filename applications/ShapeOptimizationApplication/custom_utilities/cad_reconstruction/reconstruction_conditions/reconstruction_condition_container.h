@@ -91,7 +91,7 @@ public:
     /// Default constructor.
     ReconstructionConditionContainer( ReconstructionDataBase& reconstruction_data_base, Parameters& reconstruction_parameters )
     : mrReconstructionDataBase( reconstruction_data_base ),
-      mReconstructionParameters( reconstruction_parameters )    
+      mrReconstructionParameters( reconstruction_parameters )    
     {
     }
 
@@ -117,7 +117,7 @@ public:
         ModelPart& fe_model_part = mrReconstructionDataBase.GetFEModelPart();
         
         IntegrationMethodType fem_integration_method = GeometryData::GI_GAUSS_5;
-        int integration_degree = mReconstructionParameters["solution_parameters"]["strategy_specifc_parameters"]["fem_gauss_integration_degree"].GetInt();
+        int integration_degree = mrReconstructionParameters["solution_parameters"]["strategy_specifc_parameters"]["fem_gauss_integration_degree"].GetInt();
         switch(integration_degree)
         {
             case 1 : fem_integration_method = GeometryData::GI_GAUSS_1; break;
@@ -127,7 +127,7 @@ public:
             case 5 : fem_integration_method = GeometryData::GI_GAUSS_5; break;
         }
         
-        CADProjectionUtility FE2CADProjector( patch_vector, mReconstructionParameters["solution_parameters"]["projection_parameters"] );
+        CADProjectionUtility FE2CADProjector( patch_vector, mrReconstructionParameters["solution_parameters"]["projection_parameters"] );
         FE2CADProjector.Initialize();
         
         std::cout << "> Starting to create a condition for every integration point..." << std::endl;
@@ -144,12 +144,12 @@ public:
             {
                 int integration_point_number = &integration_point_i - &integration_points[0];
                 NodeType::CoordinatesArrayType ip_coordinates = geom_i.GlobalCoordinates(ip_coordinates, integration_point_i.Coordinates());
-                NodeType::Pointer node_of_interest = Node <3>::Pointer(new Node<3>(1, ip_coordinates));
+                NodeType node_of_interest(1, ip_coordinates);
 
                 array_1d<double,2> parameter_values_of_nearest_point;
                 int patch_index_of_nearest_point = -1;
 
-                FE2CADProjector.DetermineNearestCADPoint( *node_of_interest, parameter_values_of_nearest_point, patch_index_of_nearest_point );
+                FE2CADProjector.DetermineNearestCADPoint( node_of_interest, parameter_values_of_nearest_point, patch_index_of_nearest_point );
 
                 NewCondition = ReconstructionCondition::Pointer( new DisplacementMappingCondition( geom_i,
                                                                                                    fem_integration_method,
@@ -171,7 +171,7 @@ public:
         PatchVector& patch_vector = mrReconstructionDataBase.GetPatchVector();
         ModelPart& fe_model_part = mrReconstructionDataBase.GetFEModelPart();
                 
-        CADProjectionUtility FE2CADProjector( patch_vector, mReconstructionParameters["solution_parameters"]["projection_parameters"] );
+        CADProjectionUtility FE2CADProjector( patch_vector, mrReconstructionParameters["solution_parameters"]["projection_parameters"] );
         FE2CADProjector.Initialize();
         
         std::cout << "> Starting to create a condition for every fem point..." << std::endl;
@@ -202,7 +202,7 @@ public:
         boost::timer timer;   
         
         ReconstructionConstraint::Pointer NewConstraint;
-        double penalty_factor = mReconstructionParameters["solution_parameters"]["general_parameters"]["penalty_factor_for_displacement_coupling"].GetDouble();        
+        double penalty_factor = mrReconstructionParameters["solution_parameters"]["general_parameters"]["penalty_factor_for_displacement_coupling"].GetDouble();        
 
         BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
         for(auto & brep_element_i : brep_elements_vector)
@@ -235,7 +235,7 @@ public:
         std::cout << "\n> Starting to create rotation coupling constraints..." << std::endl;
         boost::timer timer;   
         
-        double penalty_factor = mReconstructionParameters["solution_parameters"]["general_parameters"]["penalty_factor_for_rotation_coupling"].GetDouble();
+        double penalty_factor = mrReconstructionParameters["solution_parameters"]["general_parameters"]["penalty_factor_for_rotation_coupling"].GetDouble();
         ReconstructionConstraint::Pointer NewConstraint;
 
         BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
@@ -273,7 +273,7 @@ public:
     {
         std::cout << "\n> Starting to create beta-regularization condition (minimal control point displacement)..." << std::endl;
         
-        RegularizationCondition::Pointer NewCondition = RegularizationCondition::Pointer( new MinimalControlPointDisplacementCondition( mrReconstructionDataBase, mReconstructionParameters ) );
+        RegularizationCondition::Pointer NewCondition = RegularizationCondition::Pointer( new MinimalControlPointDisplacementCondition( mrReconstructionDataBase, mrReconstructionParameters ) );
         mListOfRegularizationConditions.push_back( NewCondition );
         std::cout << "> Finished creating beta-regularization condition (minimal control point displacement)." << std::endl;                      
     }     
@@ -283,7 +283,7 @@ public:
     {
         std::cout << "\n> Starting to create alpha-regularization condition (minimal control point distance to surface)..." << std::endl;
         
-        RegularizationCondition::Pointer NewCondition = RegularizationCondition::Pointer( new MinimalControlPointDistanceToSurfaceCondition( mrReconstructionDataBase, mReconstructionParameters ) );
+        RegularizationCondition::Pointer NewCondition = RegularizationCondition::Pointer( new MinimalControlPointDistanceToSurfaceCondition( mrReconstructionDataBase, mrReconstructionParameters ) );
         mListOfRegularizationConditions.push_back( NewCondition );
         std::cout << "> Finished creating alpha-regularization condition (minimal control point distance to surface)." << std::endl;                  
     }     
@@ -386,7 +386,7 @@ private:
     // Initialized by class constructor
     // ==============================================================================
     ReconstructionDataBase& mrReconstructionDataBase;
-    Parameters& mReconstructionParameters;
+    Parameters& mrReconstructionParameters;
     
     // ==============================================================================
     // Additional variables

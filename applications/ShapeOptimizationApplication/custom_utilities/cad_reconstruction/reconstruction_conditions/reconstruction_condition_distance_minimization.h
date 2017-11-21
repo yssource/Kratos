@@ -163,6 +163,58 @@ public:
         }
     }
 
+    // --------------------------------------------------------------------------
+    void DetermineFECoordinatesInUndeformedConfiguration( array_1d<double,3>& fe_point_coords ) override
+    {
+        fe_point_coords[0] = mrFemNode.X();
+        fe_point_coords[1] = mrFemNode.Y();  
+        fe_point_coords[2] = mrFemNode.Z();                        
+    }
+
+    // --------------------------------------------------------------------------
+    void DetermineFECoordinatesInDeformedConfiguration( Variable<array_1d<double,3>> shape_change_variable, array_1d<double,3>& fe_point_coords_in_deformed_configuration ) override
+    {
+        array_1d<double,3>& displacement = mrFemNode.FastGetSolutionStepValue(shape_change_variable);
+        fe_point_coords_in_deformed_configuration[0] = mrFemNode.X() + displacement[0];
+        fe_point_coords_in_deformed_configuration[1] = mrFemNode.Y() + displacement[1];
+        fe_point_coords_in_deformed_configuration[2] = mrFemNode.Z() + displacement[2];        
+    }
+    // --------------------------------------------------------------------------
+    void DetermineCADCoordinatesInUndeformedConfiguration(array_1d<double,3>& cad_point_coords) override
+    {
+        Point<3> cad_point_in_deformed_configuration;
+        mrAffectedPatch.EvaluateSurfacePoint(mParmeterValues, cad_point_in_deformed_configuration);
+
+        array_1d<double,3> displacement;
+        mrAffectedPatch.EvaluateSurfaceDisplacement(mParmeterValues, displacement);
+
+        cad_point_coords[0] = cad_point_in_deformed_configuration(0) - displacement[0];
+        cad_point_coords[1] = cad_point_in_deformed_configuration(1) - displacement[1];
+        cad_point_coords[2] = cad_point_in_deformed_configuration(2) - displacement[2];        
+    }
+    // --------------------------------------------------------------------------
+    void DetermineCADCoordinatesInDeformedConfiguration(array_1d<double,3>& cad_point_coords_in_deformed_configuration) override
+    {
+        Point<3> cad_point_in_deformed_configuration;
+        mrAffectedPatch.EvaluateSurfacePoint(mParmeterValues, cad_point_in_deformed_configuration);
+        
+        cad_point_coords_in_deformed_configuration[0] = cad_point_in_deformed_configuration(0);
+        cad_point_coords_in_deformed_configuration[1] = cad_point_in_deformed_configuration(1);
+        cad_point_coords_in_deformed_configuration[2] = cad_point_in_deformed_configuration(2);        
+    }
+     
+    // --------------------------------------------------------------------------
+    Patch& GetAffectedPatch() override
+    {
+        return mrAffectedPatch;
+    }  
+
+    // --------------------------------------------------------------------------
+    bool IsProjectedCADPointInsideVisiblePatchRegion() override
+    {
+        return mrAffectedPatch.IsPointInside(mParmeterValues);
+    }         
+
     // ==============================================================================
 
     ///@}

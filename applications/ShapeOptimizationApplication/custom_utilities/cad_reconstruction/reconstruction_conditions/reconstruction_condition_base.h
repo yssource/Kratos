@@ -99,6 +99,24 @@ public:
     // --------------------------------------------------------------------------
     virtual void ComputeAndAddRHSContribution( Vector& RHS ) = 0;
 
+    // --------------------------------------------------------------------------
+    virtual void DetermineFECoordinatesInUndeformedConfiguration( array_1d<double,3>& coordinates ) = 0;
+
+    // --------------------------------------------------------------------------
+    virtual void DetermineFECoordinatesInDeformedConfiguration( Variable<array_1d<double,3>> shape_change_variable, array_1d<double,3>& coordinates ) = 0;
+
+    // --------------------------------------------------------------------------
+    virtual void DetermineCADCoordinatesInUndeformedConfiguration( array_1d<double,3>& coordinates ) = 0;
+
+    // --------------------------------------------------------------------------
+    virtual void DetermineCADCoordinatesInDeformedConfiguration( array_1d<double,3>& coordinates ) = 0;
+
+    // --------------------------------------------------------------------------
+    virtual Patch& GetAffectedPatch() = 0;
+
+    // --------------------------------------------------------------------------
+    virtual bool IsProjectedCADPointInsideVisiblePatchRegion() = 0;
+
     // ==============================================================================
 
     ///@}

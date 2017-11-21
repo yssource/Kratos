@@ -28,9 +28,10 @@
 #include "includes/element.h"
 #include "includes/model_part.h"
 #include "includes/kratos_flags.h"
-#include "reconstruction_data_base.h"
-#include "spatial_containers/spatial_containers.h"
-#include "utilities/binbased_fast_point_locator.h"
+#include "../basic_nurbs_brep_handling/patch.h"
+#include "cad_projection_base.h"
+#include "cad_projection_single_search_tree.h"
+#include "cad_projection_multiple_search_trees.h"
 
 // ==============================================================================
 
@@ -43,14 +44,7 @@ public:
     ///@{
 
     typedef Node<3> NodeType;
-    typedef Node < 3 > ::Pointer NodeTypePointer;    
-    typedef std::vector<NodeType::Pointer> NodeVector;
-    typedef std::vector<NodeType::Pointer>::iterator NodeIterator;
-    typedef std::vector<double>::iterator DoubleVectorIterator;    
     typedef std::vector<Patch> PatchVector; 
-    typedef std::vector<double> DoubleVector;
-    typedef Bucket< 3, NodeType, NodeVector, NodeTypePointer, NodeIterator, DoubleVectorIterator > BucketType;
-    typedef Tree< KDTreePartition<BucketType> > KDTree;    
 
     /// Pointer definition of CADProjectionUtility
     KRATOS_CLASS_POINTER_DEFINITION(CADProjectionUtility);
@@ -60,10 +54,15 @@ public:
     ///@{
 
     /// Default constructor.
-    CADProjectionUtility( PatchVector& patch_vector, Parameters& projection_parameters )
-    : mrPatchVector( patch_vector ),
-      mProjectionParameters( projection_parameters )
-    {      
+    CADProjectionUtility( PatchVector& patch_vector, Parameters projection_parameters )
+    : mrPatchVector( patch_vector )
+    {
+        if(projection_parameters["projection_strategy"].GetString().compare("single_search_tree")==0)
+            mpProjectionStrategy = CADProjectionBase::Pointer (new CADProjectionSingleSearchTree( patch_vector, projection_parameters ));
+        else if(projection_parameters["projection_strategy"].GetString().compare("multiple_search_tree")==0)
+            mpProjectionStrategy = CADProjectionBase::Pointer (new CADProjectionMultipleSearchTrees( patch_vector, projection_parameters ));
+        else
+            KRATOS_THROW_ERROR(std::runtime_error, "Specified projection strategy not implemented!", "");
     }
 
     /// Destructor.
@@ -74,194 +73,30 @@ public:
     // --------------------------------------------------------------------------
     void Initialize()
     {
-        std::cout << "\n> Initializing CAD projection..." << std::endl;           
-        boost::timer timer;
-
-        bool initialize_using_greville_abscissae = mProjectionParameters["automatic_initialization_using_greville_abscissae"].GetBool();
-        if(initialize_using_greville_abscissae)
-          CreateCADPointCloudBasedOnGrevilleAbscissae();
-        else
-          CreateCADPointCloudBasedOnManualInput();
-        CreateSearchTreeWithCADPointCloud();
-
-    std::cout << "> Time needed initializing CAD projection: " << timer.elapsed() << " s" << std::endl;    
+        mpProjectionStrategy->Initialize();
     }
 
     // --------------------------------------------------------------------------
-    void CreateCADPointCloudBasedOnGrevilleAbscissae()
+    void DetermineNearestCADPoint( NodeType& PointOfInterest, array_1d<double,2>& parameter_values_of_nearest_point, int& patch_index_of_nearest_point )
     {
-      for (auto & patch_i : mrPatchVector)
-      {
-            int index_in_patch_vector = &patch_i - &mrPatchVector[0];
-
-            // Computation of greville points
-            std::vector<double> greville_abscissae_in_u_direction;
-            std::vector<double> greville_abscissae_in_v_direction;
-            patch_i.ComputeGrevilleAbscissae( greville_abscissae_in_u_direction, greville_abscissae_in_v_direction );
-
-            // Greville abscissae is refined if specified
-            int number_of_refinements = mProjectionParameters["refinement_iterations_of_greville_abscissae"].GetInt();      
-            int number_of_greville_points = greville_abscissae_in_u_direction.size();
-            std::vector<double> refined_greville_abscissae_in_u_direction;
-            std::vector<double> refined_greville_abscissae_in_v_direction;            
-            for(int refinement_itr=0; refinement_itr<number_of_refinements; refinement_itr++)
-            {
-                patch_i.RefineGrevilleAbscissae( greville_abscissae_in_u_direction, 
-                                                 greville_abscissae_in_v_direction,
-                                                 refined_greville_abscissae_in_u_direction, 
-                                                 refined_greville_abscissae_in_v_direction );
-                
-                greville_abscissae_in_u_direction = refined_greville_abscissae_in_u_direction;
-                greville_abscissae_in_v_direction = refined_greville_abscissae_in_v_direction;
-            }
-            
-            // Points of (refined) Greville abscissae are rendered into a point cloud
-            number_of_greville_points = greville_abscissae_in_u_direction.size();
-            array_1d<double,2> point_in_parameter_space;
-            for(int i=0; i<number_of_greville_points; i++)
-            {
-                point_in_parameter_space[0] = greville_abscissae_in_u_direction[i];
-                point_in_parameter_space[1] = greville_abscissae_in_v_direction[i];
-
-                bool point_is_inside = patch_i.IsPointInside(point_in_parameter_space);
-                if(point_is_inside)
-                {
-                    ++mNumberOfNodesInCADPointCloud;					
-                    Point<3> cad_point_coordinates;
-                    patch_i.EvaluateSurfacePoint( point_in_parameter_space, cad_point_coordinates );
-
-                    NodeType::Pointer new_cad_node = Node <3>::Pointer(new Node<3>(mNumberOfNodesInCADPointCloud, cad_point_coordinates));
-
-                    mOrderedListOfNodes.push_back(new_cad_node);
-                    mOrderedListOfParameterValues.push_back(point_in_parameter_space);
-                    mOrderedListOfPatchIndices.push_back(index_in_patch_vector);
-                }
-            }
-        }      
-    }    
-    
-    // --------------------------------------------------------------------------
-    void CreateCADPointCloudBasedOnManualInput()
-    {
-      int u_resolution = mProjectionParameters["parameter_resolution_for_manual_initialization"][0].GetInt();
-      int v_resolution =  mProjectionParameters["parameter_resolution_for_manual_initialization"][1].GetInt();
-
-      for (auto & patch_i : mrPatchVector)
-      {
-            int index_in_patch_vector = &patch_i - &mrPatchVector[0];
-            DoubleVector& knot_vec_u_i = patch_i.GetSurfaceKnotVectorU();
-            DoubleVector& knot_vec_v_i = patch_i.GetSurfaceKnotVectorV();
-            std::cout << "> Processing Patch with brep_id " << patch_i.GetId() << std::endl;
-      
-            double u_min = knot_vec_u_i[0];
-            double u_max = knot_vec_u_i[knot_vec_u_i.size()-1];
-            double v_min = knot_vec_v_i[0];
-            double v_max = knot_vec_v_i[knot_vec_v_i.size()-1];
-            double delta_u = (u_max-u_min) / u_resolution;
-            double delta_v = (v_max-v_min) / v_resolution;
-
-            // Loop over all u & v according to specified resolution
-            array_1d<double,2> point_in_parameter_space;
-            for(int i=0; i<=u_resolution; i++)
-            {
-                point_in_parameter_space[0] = u_min + i*delta_u;
-
-                for(int j=0; j<=v_resolution; j++)
-                {
-                    point_in_parameter_space[1] = v_min + j*delta_v;
-
-                    bool point_is_inside = patch_i.IsPointInside(point_in_parameter_space);
-                    if(point_is_inside)
-                    {
-                        ++mNumberOfNodesInCADPointCloud;					
-                        Point<3> cad_point_coordinates;
-                        patch_i.EvaluateSurfacePoint( point_in_parameter_space, cad_point_coordinates );
-
-                         NodeType::Pointer new_cad_node = Node <3>::Pointer(new Node<3>(mNumberOfNodesInCADPointCloud, cad_point_coordinates));
-
-                        mOrderedListOfNodes.push_back(new_cad_node);
-                        mOrderedListOfParameterValues.push_back(point_in_parameter_space);
-                        mOrderedListOfPatchIndices.push_back(index_in_patch_vector);
-                    }
-                }
-            }
-        }      
-    }
-
-    // --------------------------------------------------------------------------
-    void CreateSearchTreeWithCADPointCloud()
-    {
-      std::cout << "> Creating search tree..." << std::endl;           
-      mpSearchTree = boost::shared_ptr<KDTree>(new KDTree(mOrderedListOfNodes.begin(), mOrderedListOfNodes.end(), mBucketSize));
-      std::cout << "> Search tree created using " << mOrderedListOfNodes.size() << " points on the CAD model." << std::endl;                 
-    }     
-
-    // --------------------------------------------------------------------------
-    void DetermineNearestCADPoint( NodeType& PointOfInterest,
-                                   array_1d<double,2>& parameter_values_of_nearest_point,
-                                   int& patch_index_of_nearest_point )
-    {
-        // 1) Coarse search in the point cloud
-        NodeType::Pointer nearest_point = mpSearchTree->SearchNearestPoint( PointOfInterest );
-
-        // 2) Detailed projection using Newton-Raphson
-        
-        // Recover CAD information from lists representing point cloud
-        parameter_values_of_nearest_point = mOrderedListOfParameterValues[nearest_point->Id()-1];
-        patch_index_of_nearest_point = mOrderedListOfPatchIndices[nearest_point->Id()-1];
-        Patch& patch_of_nearest_point = mrPatchVector[patch_index_of_nearest_point];
-        
-        // Initialize what's needed in the Newton-Raphson iteration				
-        Vector Distance = ZeroVector(3); 
-        Matrix hessian = ZeroMatrix(2,2);
-        Vector gradient = ZeroVector(2);
-        double determinant_of_hessian = 0;
-        Matrix inverse_of_hessian = ZeroMatrix(2,2);
-        Point<3> current_nearest_point;
-        current_nearest_point[0] = nearest_point->X();
-        current_nearest_point[1] = nearest_point->Y();
-        current_nearest_point[2] = nearest_point->Z();
-
-        // Variables neeed by the Netwon Raphson algorithm
-        double norm_delta_u = 100000000;
-        
-        int max_iterations = mProjectionParameters["max_projection_iterations"].GetInt();
-        double tolerance = mProjectionParameters["projection_tolerance"].GetDouble(); 
-
-        // Newton-Raphson algorithm if iterations are specified
-        for(int k=0; k<max_iterations; k++)
-        {
-          // The distance between point on CAD surface point on the FE-mesh
-          Distance(0) = current_nearest_point[0] - PointOfInterest.X();
-          Distance(1) = current_nearest_point[1] - PointOfInterest.Y();
-          Distance(2) = current_nearest_point[2] - PointOfInterest.Z();
-          
-          // The distance is used to compute hessian and gradient
-          patch_of_nearest_point.EvaluateGradientsForClosestPointSearch( Distance, hessian, gradient , parameter_values_of_nearest_point );
-
-          // u_k and v_k are updated
-          MathUtils<double>::InvertMatrix( hessian, inverse_of_hessian, determinant_of_hessian );
-          Vector delta_u = prod(inverse_of_hessian,gradient);
-          parameter_values_of_nearest_point[0] -= delta_u(0);
-          parameter_values_of_nearest_point[1] -= delta_u(1);
-
-          // Point on CAD surface is udpated
-          patch_of_nearest_point.EvaluateSurfacePoint( parameter_values_of_nearest_point, current_nearest_point );
-          
-          // Check convergence
-          norm_delta_u = norm_2(delta_u);
-          if(norm_delta_u<tolerance)
-            break;
-          else if(k+1==max_iterations)
-          {
-            std::cout << "WARNING!!! Newton-Raphson in projection did not converge in the following number of iterations: " << k+1 << std::endl;
-            KRATOS_WATCH(current_nearest_point)
-            KRATOS_WATCH(PointOfInterest)
-          }
-        }
+        mpProjectionStrategy->DetermineNearestCADPoint(PointOfInterest, parameter_values_of_nearest_point, patch_index_of_nearest_point );
     }
     
-    // ==============================================================================
+    // --------------------------------------------------------------------------
+    void DetermineNearestCADPointInGeometrySpace( NodeType& PointOfInterest, array_1d<double,3>& coordinates_of_nearest_cad_point )
+    {
+        array_1d<double,2> parameter_values_of_nearest_point;
+        int patch_index_of_nearest_point = -1;
+
+        DetermineNearestCADPoint( PointOfInterest, parameter_values_of_nearest_point, patch_index_of_nearest_point );
+
+        Point<3> nearest_cad_point;
+        mrPatchVector[patch_index_of_nearest_point].EvaluateSurfacePoint( parameter_values_of_nearest_point, nearest_cad_point );
+
+        coordinates_of_nearest_cad_point[0] = nearest_cad_point[0];
+        coordinates_of_nearest_cad_point[1] = nearest_cad_point[1];
+        coordinates_of_nearest_cad_point[2] = nearest_cad_point[2];      
+    }
 
     /// Turn back information as a string.
     virtual std::string Info() const
@@ -279,25 +114,13 @@ public:
     virtual void PrintData(std::ostream &rOStream) const
     {
     }
-
-  private:
-
     
     // ==============================================================================
-    // Variables initialized by constructor
-    // ==============================================================================
-    PatchVector& mrPatchVector;
-    Parameters& mProjectionParameters;
+  private:
 
-    // ==============================================================================
-    // Variables for spatial search
-    // ==============================================================================
-    unsigned int mNumberOfNodesInCADPointCloud = 0;
-    NodeVector mOrderedListOfNodes;
-    std::vector<array_1d<double,2>> mOrderedListOfParameterValues; 
-    std::vector<int> mOrderedListOfPatchIndices;
-    unsigned int mBucketSize = 100;
-    KDTree::Pointer mpSearchTree;
+    // Variables initialized by constructor
+    CADProjectionBase::Pointer mpProjectionStrategy;
+    PatchVector& mrPatchVector;
 
     /// Assignment operator.
     //      CADProjectionUtility& operator=(CADProjectionUtility const& rOther);

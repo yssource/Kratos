@@ -53,11 +53,13 @@ class CADReconstrutionUtilities():
         self.__CreateReconstructionConditions()
         self.__CreateSolverForReconstruction()
         self.__RunSolutionAlorithm()
-        
+        if self.Parameters["output_parameters"]["perform_quality_evaluation"].GetBool():
+            self.__EvaluateReconstructionQuality()
+
     # --------------------------------------------------------------------------
     def OutputFEData( self ):
         fem_input_filename = self.Parameters["inpute_parameters"]["fem_filename"].GetString()
-        output_folder = self.Parameters["result_output_parameters"]["results_output_folder"].GetString()
+        output_folder = self.Parameters["output_parameters"]["output_folder"].GetString()
         shape_change_variable_name = self.Parameters["inpute_parameters"]["shape_change_variable_name"].GetString()
 
         from gid_output import GiDOutput
@@ -152,10 +154,10 @@ class CADReconstrutionUtilities():
 
     # --------------------------------------------------------------------------
     def __CreateReconstructionOutputWriter( self ):
-        output_folder = self.Parameters["result_output_parameters"]["results_output_folder"].GetString()
+        output_folder = self.Parameters["output_parameters"]["output_folder"].GetString()
         if not os.path.exists( output_folder ):
             os.makedirs( output_folder )    
-        self.OutputWriter = ReconstructionOutputWriter( self.DataBase, self.Parameters )    
+        self.OutputWriter = ReconstructionOutputUtilities( self.DataBase, self.Parameters )    
 
     # --------------------------------------------------------------------------
     def __CreateReconstructionConditions( self ):
@@ -229,3 +231,10 @@ class CADReconstrutionUtilities():
         print("\n===========================================")
         print("Finished reconstruction loop.")
         print("===========================================")                    
+
+    # --------------------------------------------------------------------------
+    def __EvaluateReconstructionQuality( self ):
+        quality_evaluator = QualityEvaluationUtility( self.DataBase, self.ConditionsContainer, self.Parameters )
+        quality_evaluator.EvaluateSurfaceReconstruction()
+        quality_evaluator.EvaluateDisplacementCoupling()
+        quality_evaluator.EvaluateRotationCoupling()

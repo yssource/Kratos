@@ -23,12 +23,12 @@ reconstruction_parameters = Parameters("""
         "cad_geometry_filename"         : "tripod_geometry.json",
         "cad_integration_data_filename" : "tripod_integration_data.json",
         "fem_filename"                  : "tripod",
-        "fe_refinement_level"           : 1,
+        "fe_refinement_level"           : 0,
         "shape_change_variable_name"    : "SHAPE_CHANGE_ABSOLUTE"
     },
     "solution_parameters" : 
     {
-        "strategy" : "distance_minimization",
+        "strategy" : "displacement_mapping",
         "general_parameters": 
         {
             "solution_iterations"                       : 1,
@@ -43,8 +43,10 @@ reconstruction_parameters = Parameters("""
         },
         "projection_parameters": 
         {
+            "projection_strategy"                               : "multiple_search_tree",
+            "search_radius_with_multiple_trees"                 : 1.0,               
             "automatic_initialization_using_greville_abscissae" : true,
-            "refinement_iterations_of_greville_abscissae"       : 0,
+            "refinement_iterations_of_greville_abscissae"       : 1,
             "parameter_resolution_for_manual_initialization"    : [ 100, 100 ],
             "max_projection_iterations"                         : 20,
             "projection_tolerance"                              : 1e-5      
@@ -58,12 +60,28 @@ reconstruction_parameters = Parameters("""
         },
         "linear_solver_name" : "SuperLU"                  
     },
-    "result_output_parameters" : 
+    "output_parameters" : 
     {
-        "results_output_folder"                             : "01_Results",
+        "output_folder"                                     : "01_Results",
         "parameter_resolution_for_output_of_surface_points" : [ 50, 50 ],
         "original_georhino_filename"                        : "tripod.georhino.txt",
-        "rhino_results_filename"                            : "tripod.post.res"
+        "rhino_results_filename"                            : "tripod.post.res",
+        "perform_quality_evaluation"                        : true,
+        "quality_evaluation_parameters" : 
+        {
+            "projection_parameters": 
+            {
+                "projection_strategy"                               : "single_search_tree",   
+                "search_radius_with_multiple_trees"                 : 1.0,  
+                "automatic_initialization_using_greville_abscissae" : true,
+                "refinement_iterations_of_greville_abscissae"       : 1,
+                "parameter_resolution_for_manual_initialization"    : [ 100, 100 ],
+                "max_projection_iterations"                         : 20,
+                "projection_tolerance"                              : 1e-5      
+            },
+            "compile_results_in_vtk_file" : true,
+            "vtk_filename"                : "quality_evaluation_of_surface_reconstruction"        
+        }    
     }
 }""")
 

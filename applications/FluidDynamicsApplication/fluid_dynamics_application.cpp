@@ -79,7 +79,11 @@ KratosFluidDynamicsApplication::KratosFluidDynamicsApplication():
     mNavierStokesWallCondition3D(0, Element::GeometryType::Pointer( new Triangle3D3<Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ),
     // Embedded Navier-Stokes symbolic elements
     mEmbeddedNavierStokes2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
-    mEmbeddedNavierStokes3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4))))
+    mEmbeddedNavierStokes3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
+    
+    // elisa Compressible Navier-Stokes symbolic elements
+    mCompressibleNavierStokes2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+    mCompressibleNavierStokes3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4))))
 {}
 
 void KratosFluidDynamicsApplication::Register()
@@ -116,6 +120,9 @@ void KratosFluidDynamicsApplication::Register()
     KRATOS_REGISTER_VARIABLE(VORTICITY_MAGNITUDE);
     KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS(RECOVERED_PRESSURE_GRADIENT);
     KRATOS_REGISTER_VARIABLE(NODAL_WEIGHTS);
+    
+    // Heat capacity ratio  elisa
+    KRATOS_REGISTER_VARIABLE(HEAT_CAPACITY_RATIO)
 
 
     // Register Elements
@@ -159,7 +166,9 @@ void KratosFluidDynamicsApplication::Register()
     KRATOS_REGISTER_ELEMENT("NavierStokes3D4N",mNavierStokes3D);
     KRATOS_REGISTER_ELEMENT("EmbeddedNavierStokes2D3N",mEmbeddedNavierStokes2D);
     KRATOS_REGISTER_ELEMENT("EmbeddedNavierStokes3D4N",mEmbeddedNavierStokes3D);
-
+    //elisa
+    KRATOS_REGISTER_ELEMENT("CompressibleNavierStokes2D3N",mCompressibleNavierStokes2D);
+    KRATOS_REGISTER_ELEMENT("CompressibleNavierStokes3D4N",mCompressibleNavierStokes3D);
     // Register Conditions
     KRATOS_REGISTER_CONDITION("WallCondition2D2N",mWallCondition2D); //this is the name the element should have according to the naming convention
     KRATOS_REGISTER_CONDITION("WallCondition3D3N",mWallCondition3D); //this is the name the element should have according to the naming convention

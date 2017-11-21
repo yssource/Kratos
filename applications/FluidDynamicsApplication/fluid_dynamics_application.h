@@ -51,16 +51,18 @@
 #include "custom_conditions/monolithic_wall_condition.h"
 #include "custom_conditions/stokes_wall_condition.h"
 #include "custom_conditions/fs_periodic_condition.h"
-#include "custom_elements/dpg_vms.h"
+#include "custom_conditions/navier_stokes_wall_condition.h"
+#include "custom_conditions/embedded_ausas_navier_stokes_wall_condition.h"
 
+#include "custom_elements/dpg_vms.h"
 #include "custom_elements/bingham_fluid.h"
 #include "custom_elements/herschel_bulkley_fluid.h"
 #include "custom_elements/stokes_3D.h"
 #include "custom_elements/stokes_3D_twofluid.h"
-
 #include "custom_elements/navier_stokes.h"
-#include "custom_conditions/navier_stokes_wall_condition.h"
 #include "custom_elements/embedded_navier_stokes.h"
+#include "custom_elements/embedded_ausas_navier_stokes.h"
+
 
 //elisa
 #include "custom_elements/compressible_navier_stokes.h"
@@ -246,9 +248,9 @@ private:
     const SpalartAllmaras mSpalartAllmaras3D;
 
     /// Exact 2D slip condition using rotated coordinates (fractional step version)
-    const  WallCondition<2,2> mWallCondition2D;
+    const WallCondition<2,2> mWallCondition2D;
     /// Exact 3D slip condition using rotated coordinates (fractional step version)
-    const  WallCondition<3,3> mWallCondition3D;
+    const WallCondition<3,3> mWallCondition3D;
 
     /// Wall model using Werner-Wengle power law (fractional step version)
     const FSWernerWengleWallCondition<2,2> mFSWernerWengleWallCondition2D;
@@ -259,16 +261,16 @@ private:
     const FSGeneralizedWallCondition<3,3> mFSGeneralizedWallCondition3D;
 
     /// Exact 2D slip condition using rotated coordinates (fractional step version) - suitable for continuity equation integrated by parts
-    const  WallConditionDiscontinuous<2,2> mWallConditionDiscontinuous2D;
+    const WallConditionDiscontinuous<2,2> mWallConditionDiscontinuous2D;
     /// Exact 3D slip condition using rotated coordinates (fractional step version) - suitable for continuity equation integrated by parts
-    const  WallConditionDiscontinuous<3,3> mWallConditionDiscontinuous3D;
+    const WallConditionDiscontinuous<3,3> mWallConditionDiscontinuous3D;
 
     /// Exact 2D slip condition using rotated coordinates (monolithic version)
-    const  MonolithicWallCondition<2,2> mMonolithicWallCondition2D;
+    const MonolithicWallCondition<2,2> mMonolithicWallCondition2D;
     /// Exact 3D slip condition using rotated coordinates (monolithic version)
-    const  MonolithicWallCondition<3,3> mMonolithicWallCondition3D;
+    const MonolithicWallCondition<3,3> mMonolithicWallCondition3D;
     /// stokes condition(monolithic version)
-    const  StokesWallCondition<3,3> mStokesWallCondition3D;
+    const StokesWallCondition<3,3> mStokesWallCondition3D;
 
     /// Periodic Condition
     const FSPeriodicCondition<2> mFSPeriodicCondition2D;
@@ -301,8 +303,6 @@ private:
     const HerschelBulkleyFluid< VMS<2> > mHerschelBulkleyVMS2D;
     const HerschelBulkleyFluid< VMS<3> > mHerschelBulkleyVMS3D;
 
-//     const NavierStokesSymbolic2D mNavierStokesSymbolic2D;
-//     const StokesSymbolic2D mStokesSymbolic2D;
     const Stokes3D mStokes3D;
     const Stokes3DTwoFluid mStokes3DTwoFluid;
 
@@ -319,6 +319,12 @@ private:
     /// Compressible Navier-Stokes symbolic element
     const CompressibleNavierStokes<2> mCompressibleNavierStokes2D;
     const CompressibleNavierStokes<3> mCompressibleNavierStokes3D;
+
+    /// Embedded Navier-Stokes symbolic element with Ausas discontinuous shape functions
+    const EmbeddedAusasNavierStokes<2> mEmbeddedAusasNavierStokes2D;
+    const EmbeddedAusasNavierStokes<3> mEmbeddedAusasNavierStokes3D;
+    const EmbeddedAusasNavierStokesWallCondition<2> mEmbeddedAusasNavierStokesWallCondition2D;
+    const EmbeddedAusasNavierStokesWallCondition<3> mEmbeddedAusasNavierStokesWallCondition3D;
 
     ///@}
     ///@name Private Operators

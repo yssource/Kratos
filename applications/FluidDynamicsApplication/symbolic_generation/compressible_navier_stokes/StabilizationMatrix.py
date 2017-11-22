@@ -19,14 +19,17 @@ def computeTau(dofs,params):
     nu = params["nu"]				# Kinematic viscosity (mu/rho)
     l = params["lambda"]			# Thermal Conductivity of the fluid
     h = params["h"]				# Element size
-    c1 = params["c_1"]				# Algorithm constant
-    c2 = params["c_2"]				# Algorithm constant
+    c1 = params["stab_c1"]				# Algorithm constant
+    c2 = params["stab_c2"]				# Algorithm constant
     
     ## c - Speed of Sound definition
     c_tmp = Ug[dim+1]/Ug[0]
     for i in range (0,dim):
         c_tmp += -Ug[i+1]**2/(2*Ug[0]**2)
-    c_g = sqrt(y*(y-1)*c_tmp)
+    #c_g = sqrt((y*(y-1)*c_tmp))
+    c_g = real_root((y*(y-1)*c_tmp))
+    
+    
     
     ## Tau - Stabilization Matrix definition
     tmp = 0
@@ -44,6 +47,8 @@ def computeTau(dofs,params):
     for i in range (0,dim):
     	Tau[i+1,i+1] = tau2
     Tau[dim+1,dim+1] = tau3
+    
+    Tau = Tau.inv()
     '''
     for i in range (0, dim+2):
         for j in range (0,dim+2):

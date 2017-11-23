@@ -1,0 +1,44 @@
+ |  /           |             
+ ' /   __| _` | __|  _ \   __|
+ . \  |   (   | |   (   |\__ \ 
+_|\_\_|  \__,_|\__|\___/ ____/
+           Multi-Physics 5.1.0-49fff8c8d
+
+Compute Source Matrix 
+
+
+Compute Convective Matrix 
+
+
+Compute Diffusive Matrix
+
+
+Compute Stabilization Matrix
+
+
+Compute the residual
+
+
+Compute the adjoint
+
+
+Compute Variational Formulation - Final equation
+
+
+Substitution of the discretized values at the gauss points
+
+
+Compute RHS
+
+
+RHS:
+
+
+NUMERICAL RHS:
+
+
+0: -73.8276321104056
+
+1: 13.4839985841946*f_ext_0_0 + 13.4839985841946*f_ext_1_0 + 13.4839985841946*f_ext_2_0 + 3843.7129561567
+
+2: 13.4839985841946*f_ext_0_1 + 13.4839985841946*f_ext_1_1 + 13.4839985841946*f_ext_2_1 + 8087.11623545519

@@ -8,7 +8,7 @@ def computeTau(dofs,params):
     print("\nCompute Stabilization Matrix\n")
     dim = params["dim"]				# spatial dimensions
     ## Unknown field definition
-    Tau = DefineMatrix('Tau',dim+2,dim+2)	# Stabilization matrix 
+    Tau = DefineMatrix('Tau',dim+2,dim+2, real=True)	# Stabilization matrix 
     
     ## Data interpolation to the Gauss points
     Ug = dofs
@@ -26,11 +26,8 @@ def computeTau(dofs,params):
     c_tmp = Ug[dim+1]/Ug[0]
     for i in range (0,dim):
         c_tmp += -Ug[i+1]**2/(2*Ug[0]**2)
-    #c_g = sqrt((y*(y-1)*c_tmp))
-    c_g = real_root((y*(y-1)*c_tmp))
-    
-    
-    
+    c_g = sqrt((y*(y-1)*c_tmp))
+ 
     ## Tau - Stabilization Matrix definition
     tmp = 0
     

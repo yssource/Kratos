@@ -9,10 +9,10 @@ def computeK(dofs,params):
     print("\nCompute Diffusive Matrix\n")
     dim = params["dim"]				# spatial dimensions
     ## Unknown fields definition
-    H = DefineMatrix('H',dim+2,dim)		# Gradient of U
-    G = DefineMatrix('G',dim+2,dim)		# Diffusive Flux matrix 
-    tau = DefineMatrix('tau',dim,dim)		# Shear stress tensor for Newtonian fluid
-    q = DefineVector('q',dim)			# Heat flux vector
+    H = DefineMatrix('H',dim+2,dim, real=True)		# Gradient of U
+    G = DefineMatrix('G',dim+2,dim, real=True)		# Diffusive Flux matrix 
+    tau = DefineMatrix('tau',dim,dim, real=True)		# Shear stress tensor for Newtonian fluid
+    q = DefineVector('q',dim, real=True)			# Heat flux vector
     
     ## Other simbols definition
     Cv = params["c_v"]				# Specific Heat at Constant volume

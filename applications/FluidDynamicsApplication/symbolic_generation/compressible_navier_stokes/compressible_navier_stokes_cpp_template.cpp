@@ -149,8 +149,8 @@ void CompressibleNavierStokes<3>::ComputeGaussPointLHSContribution(bounded_matri
 
     
     // Stabilization parameters
-    const double c1 = 4.0;
-    const double c2 = 2.0;
+    const double stab_c1 = 4.0;
+    const double stab_c2 = 2.0;
    
     //substitute_lhs_3D
 
@@ -188,8 +188,8 @@ void CompressibleNavierStokes<2>::ComputeGaussPointLHSContribution(bounded_matri
     const bounded_matrix<double,nnodes,dim>& DN = data.DN_DX;
 
     // Stabilization parameters
-    const double c1 = 4.0;
-    const double c2 = 2.0;
+    const double stab_c1 = 4.0;
+    const double stab_c2 = 2.0;
 
     //substitute_lhs_2D
 
@@ -228,7 +228,7 @@ void CompressibleNavierStokes<3>::ComputeGaussPointRHSContribution(array_1d<doub
     // Auxiliary variables used in the calculation of the RHS
     const array_1d<double,dimes> U_gauss = prod(trans(U), N);
     const array_1d<double,dim> f_gauss = prod(trans(f_ext), N);
-    const array_1d<double,dim> grad_U = prod(trans(DN), U);
+    const bounded_matrix<double,dim,dimes> grad_U = prod(trans(DN), U);
     const double& r_gauss = inner_prod(data.N, data.r);
     
     const array_1d<double,dimes> accel_gauss = bdf0*U_gauss+bdf1*prod(trans(Un), N)+bdf2*prod(trans(Unn), N);
@@ -273,19 +273,19 @@ void CompressibleNavierStokes<2>::ComputeGaussPointRHSContribution(array_1d<doub
     // Auxiliary variables used in the calculation of the RHS
     const array_1d<double,dimes> U_gauss = prod(trans(U), N);
     const array_1d<double,dim> f_gauss = prod(trans(f_ext), N);
-    const array_1d<double,dim> grad_U = prod(trans(DN), U);
+    const bounded_matrix<double,dim,dimes> grad_U = prod(trans(DN), U);
     const double& r_gauss = inner_prod(data.N, data.r);
     
     const array_1d<double,dimes> accel_gauss = bdf0*U_gauss+bdf1*prod(trans(Un), N)+bdf2*prod(trans(Unn), N);
    
     // Stabilization parameters
-    const double c1 = 4.0;
-    const double c2 = 2.0;
+    const double stab_c1 = 4.0;
+    const double stab_c2 = 2.0;
 
     //substitute_rhs_2D
 }
 
-
+/*
 template<>
 double CompressibleNavierStokes<3>::SubscaleErrorEstimate(const ElementDataStruct& data)
 {
@@ -319,14 +319,14 @@ double CompressibleNavierStokes<3>::SubscaleErrorEstimate(const ElementDataStruc
     array_1d<double,dimes> U_s_gauss; //WHAT IS THIS FOR?
     const array_1d<double,dimes> U_gauss = prod(trans(U), N);
     const array_1d<double,dim> f_gauss = prod(trans(f_ext), N);
-    const array_1d<double,dimes> grad_U = prod(trans(DN), U);
+    const bounded_matrix<double,dim,dimes> grad_U = prod(trans(DN), U);
     const double& r_gauss = inner_prod(data.N, data.r);
     
     const array_1d<double,dimes> accel_gauss = bdf0*U_gauss+bdf1*prod(trans(Un), N)+bdf2*prod(trans(Unn), N);
     
     // Stabilization parameters
-    const double c1 = 4.0;
-    const double c2 = 2.0;
+    const double stab_c1 = 4.0;
+    const double stab_c2 = 2.0;
    
     // Gauss point velocity subscale value computation
     //substitute_gausspt_subscale_3D
@@ -371,7 +371,7 @@ double CompressibleNavierStokes<2>::SubscaleErrorEstimate(const ElementDataStruc
     array_1d<double,dimes> U_s_gauss; //WHAT IS THIS FOR?
     const array_1d<double,dimes> U_gauss = prod(trans(U), N);
     const array_1d<double,dim> f_gauss = prod(trans(f_ext), N);
-    const array_1d<double,dimes> grad_U = prod(trans(DN), U);
+    const bounded_matrix<double,dim,dimes> grad_U = prod(trans(DN), U);
     const double& r_gauss = inner_prod(data.N, data.r);
     
     const array_1d<double,dimes> accel_gauss = bdf0*U_gauss+bdf1*prod(trans(Un), N)+bdf2*prod(trans(Unn), N);
@@ -384,5 +384,6 @@ double CompressibleNavierStokes<2>::SubscaleErrorEstimate(const ElementDataStruc
 
     return U_s_gauss_norm/U_gauss_norm;
 }
+*/
 
 }

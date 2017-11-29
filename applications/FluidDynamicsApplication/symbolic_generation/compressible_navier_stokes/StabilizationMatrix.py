@@ -8,7 +8,7 @@ def computeTau(dofs,params):
     print("\nCompute Stabilization Matrix\n")
     dim = params["dim"]				# spatial dimensions
     ## Unknown field definition
-    Tau = DefineMatrix('Tau',dim+2,dim+2, real=True)	# Stabilization matrix 
+    Tau = DefineMatrix('Tau',dim+2,dim+2)	# Stabilization matrix 
     
     ## Data interpolation to the Gauss points
     Ug = dofs
@@ -29,14 +29,12 @@ def computeTau(dofs,params):
     c_g = sqrt((y*(y-1)*c_tmp))
  
     ## Tau - Stabilization Matrix definition
-    tmp = 0
-    
-    for i in range (0,dim):  
-        tmp += Ug[i+1]
-        
     Tau = zeros(dim+2,dim+2)
     
-    tau1 = c2*(abs(tmp/Ug[0])+c_g)/h
+    tau1 = 0.0
+    for i in range(0,dim):
+        tau1 +=(Ug[i+1]/Ug[0])**2
+    tau1 = (sqrt(tau1)+c_g)*c2/h
     tau2 = c1*nu/h**2+tau1
     tau3 = c1*l/(Ug[0]*Cp*h**2)+tau1
     
@@ -51,6 +49,32 @@ def computeTau(dofs,params):
         for j in range (0,dim+2):
             print(i,j,"=",Tau[i,j],"\n")
     '''
+    return(Tau)
+
+def computeSymbolicTau(dofs,params):
+    print("\nCompute Stabilization Matrix\n")
+    dim = params["dim"]				# spatial dimensions
+    ## Unknown field definition
+    if(dim == 2):
+        nnodes = 3
+    elif(dim == 3):
+        nnodes = 4
+
+    impose_partion_of_unity = False
+    N,DN = DefineShapeFunctions(nnodes, dim, impose_partion_of_unity)
+   
+    Tau = zeros(dim+2,dim+2)
+    tau1 = Symbol('tau1')
+    tau2 = Symbol('tau2')
+    tau3 = Symbol('tau3')
+    
+
+    Tau[0,0] = tau1
+    for i in range (0,dim):
+        Tau[i+1,i+1] = tau2
+    Tau[dim+1,dim+1] = tau3
+
+    Tau = Tau.inv()
     return(Tau)
     
 def printTau(Tau, params):

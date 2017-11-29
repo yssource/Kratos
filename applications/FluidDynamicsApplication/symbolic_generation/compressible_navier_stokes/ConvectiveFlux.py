@@ -9,7 +9,7 @@ def computeA(dofs, params):
     print("\nCompute Convective Matrix \n")
     dim = params["dim"]				# spatial dimensions
     ## Unknown field definition
-    F = DefineMatrix('F',dim+2,dim, real=True)		# Convective Flux matrix 
+    F = DefineMatrix('F',dim+2,dim)		# Convective Flux matrix 
 
     ## Data interpolation to the Gauss points
     Ug = dofs

@@ -10,7 +10,7 @@ def computeS(force,source,params):
     dim = params["dim"]				# spatial dimensions
     
     ## Unknown field definition
-    S = DefineMatrix('S',dim+2,dim+2, real=True)		# Reactive matrix (Source terms)
+    S = DefineMatrix('S',dim+2,dim+2)		# Reactive matrix (Source terms)
     f = force					# Body force vector
     r = source			 		# Heat Source/Sink Term  #Symbol('r', positive = True) 
 

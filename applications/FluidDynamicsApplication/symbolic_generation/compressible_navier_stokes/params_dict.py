@@ -1,6 +1,6 @@
 ## Dictionary of the constant parameters used in the Variational Formulation
 from sympy import *
-'''
+
 params = {
             "dim": 2,			                            # Dimension
             "mu": Symbol('mu', positive = True),			# Dynamic viscosity 
@@ -14,14 +14,13 @@ params = {
             "stab_c2" : Symbol('stab_c2', positive = True),			# Algorithm constant
             
 	}
-#print (params)
-'''
 
+'''
 ## 2D test AIR 20º
 params = {
             "dim": 2,			                            # Dimension
             "mu": 1.846*0.00005,			# Dynamic viscosity 
-            "nu" :1.568*0.00005,			# Kinematic viscosity (mu/rho)
+            "nu" :1.568*0.00005,			# Kinematic viscosity 
             "h" : 1,	        	# Element size
             "lambda" : 0.0257,         # Thermal Conductivity of the fluid
             "c_v" : 0.718,			# Specific Heat at Constant volume
@@ -31,3 +30,4 @@ params = {
             "stab_c2" : 2,			# Algorithm constant
             
 	}
+'''

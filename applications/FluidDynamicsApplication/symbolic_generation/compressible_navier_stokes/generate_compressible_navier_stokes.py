@@ -73,7 +73,8 @@ for dim in dim_vector:
     #ConvectiveFlux.printA(A,params)
     K = DiffusiveFlux.computeK(Ug,params)
     #DiffusiveFlux.printK(K,params)
-    Tau = StabilizationMatrix.computeTau(Ug,params)
+    #Tau = StabilizationMatrix.computeTau(Ug,params)
+    Tau = StabilizationMatrix.computeTau(Ug,params) #To Consider Tau as a symbol
     #StabilizationMatrix.printTau(Tau,params)
     
     ## Nonlinear operator definition

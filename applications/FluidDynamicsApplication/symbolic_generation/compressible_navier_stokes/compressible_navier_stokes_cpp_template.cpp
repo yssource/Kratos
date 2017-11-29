@@ -140,6 +140,7 @@ void CompressibleNavierStokes<3>::ComputeGaussPointLHSContribution(bounded_matri
     const double nu = data.nu;
     const double lambda = data.lambda;
     const double cv = data.cv;
+    const double cp = data.cp;
     const double y = data.y;
     
     // Get shape function values
@@ -181,6 +182,7 @@ void CompressibleNavierStokes<2>::ComputeGaussPointLHSContribution(bounded_matri
     const double nu = data.nu;
     const double lambda = data.lambda;
     const double cv = data.cv;
+    const double cp = data.cp;
     const double y = data.y;
     
     // Get shape function values
@@ -219,6 +221,7 @@ void CompressibleNavierStokes<3>::ComputeGaussPointRHSContribution(array_1d<doub
     const double nu = data.nu;
     const double lambda = data.lambda;
     const double cv = data.cv;
+    const double cp = data.cp;
     const double y = data.y;
     
     // Get shape function values
@@ -264,6 +267,7 @@ void CompressibleNavierStokes<2>::ComputeGaussPointRHSContribution(array_1d<doub
     const double nu = data.nu;
     const double lambda = data.lambda;
     const double cv = data.cv;
+    const double cp = data.cp;
     const double y = data.y;
 
     // Get shape function values
@@ -309,6 +313,7 @@ double CompressibleNavierStokes<3>::SubscaleErrorEstimate(const ElementDataStruc
     const double nu = data.nu;
     const double lambda = data.lambda;
     const double cv = data.cv;
+    const double cp = data.cp;
     const double y = data.y;
 
     // Get shape function values
@@ -361,6 +366,7 @@ double CompressibleNavierStokes<2>::SubscaleErrorEstimate(const ElementDataStruc
     const double nu = data.nu;
     const double lambda = data.lambda;
     const double cv = data.cv;
+    const double cp = data.cp;
     const double y = data.y;
 
     // Get shape function values

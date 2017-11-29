@@ -86,6 +86,7 @@ public:
         double nu;
         double lambda;          
         double cv;
+        double cp;
         double y;               //gamma
       
     };
@@ -409,6 +410,7 @@ protected:
             rData.lambda = this->GetGeometry()[i].FastGetSolutionStepValue(CONDUCTIVITY);
             rData.cv = this->GetGeometry()[i].FastGetSolutionStepValue(SPECIFIC_HEAT);
             rData.y = this->GetGeometry()[i].FastGetSolutionStepValue(HEAT_CAPACITY_RATIO);
+            rData.cp = rData.y*rData.cv;
             rData.r(i) = this->GetGeometry()[i].FastGetSolutionStepValue(EXTERNAL_PRESSURE);
             
         }

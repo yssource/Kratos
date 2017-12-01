@@ -1,6 +1,6 @@
 ## Dictionary of the constant parameters used in the Variational Formulation
 from sympy import *
-
+'''
 params = {
             "dim": 2,			                            # Dimension
             "mu": Symbol('mu', positive = True),			# Dynamic viscosity 
@@ -30,4 +30,4 @@ params = {
             "stab_c2" : 2,			# Algorithm constant
             
 	}
-'''
+

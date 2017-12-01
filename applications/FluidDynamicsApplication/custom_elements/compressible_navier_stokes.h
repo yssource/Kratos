@@ -231,7 +231,7 @@ public:
      * @param rCurrentProcessInfo The ProcessInfo of the ModelPart that contains this element.
      * @return 0 if no errors were found.
      */
-    /*
+    
     int Check(const ProcessInfo& rCurrentProcessInfo) override
     {
         KRATOS_TRY

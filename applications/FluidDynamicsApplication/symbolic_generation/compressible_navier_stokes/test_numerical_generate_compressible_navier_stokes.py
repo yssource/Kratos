@@ -202,18 +202,19 @@ for dim in dim_vector:
     
     #rhs_out = OutputVector_CollectingFactors(rhs, "rhs", mode)
     
-    '''
+    
     ## TEST TO CHECK NUMERICAL RESULT IN RHS
     print("\nNUMERICAL RHS:\n")
     dofsval = Matrix(zeros(nnodes*(dim+2),1))
     testfuncval = Matrix(zeros(nnodes*(dim+2),1))
     
     if(dim == 2 and nnodes==3): #I did it for 2D!
-        dofsval[0] = 1.177; dofsval[1] = 1;    dofsval[2] = -1; dofsval[3] = 50;
-        dofsval[4] =  1.177; dofsval[5] =  -1;    dofsval[6] =  0; dofsval[7] =  100;
-        dofsval[8] =  1.177; dofsval[9] =  2;    dofsval[10] =  1; dofsval[11] =  0;
+        dofsval[0] = 1.177; dofsval[1] = 0;    dofsval[2] = 0; dofsval[3] = 0;
+        dofsval[4] =  1.177; dofsval[5] =  0;    dofsval[6] =  0; dofsval[7] =  0;
+        dofsval[8] =  1.177; dofsval[9] =  0;    dofsval[10] =  0; dofsval[11] =  10;
         Unval = Matrix(zeros(nnodes,dimes));
         Unnval = Matrix(zeros(nnodes,dimes));
+        f_ext_val = Matrix(zeros(nnodes,2))
         rval = Matrix(zeros(nnodes,1));
         
         testfuncval[0] = 300; testfuncval[1] = 1;    
@@ -250,32 +251,31 @@ for dim in dim_vector:
         bdf2val = -1/3
         rval[0] = 33; rval[1] = 22; rval[2] = -12; 
         
-        
-        print("\nSubstitute testfunc:\n")
-        SubstituteMatrixValue(rhs, testfunc, testfuncval)
-        for i in range(0,rhs.shape[0]):
-            print("rhs(",i,"):=",rhs[i],"\t\t")
-            print("\n")
+        print("\nSubstitute bdf,rval:\n")
+        SubstituteScalarValue(rhs, bdf0, bdf0val)
+        SubstituteScalarValue(rhs, bdf1, bdf1val)
+        SubstituteScalarValue(rhs, bdf2, bdf2val)
+        SubstituteMatrixValue(rhs, r, rval)
         print("\nSubstitute Un, Unn:\n")
         SubstituteMatrixValue(rhs, Un, Unval)
         SubstituteMatrixValue(rhs, Unn, Unnval)
         for i in range(0,rhs.shape[0]):
             print("rhs(",i,"):=",rhs[i],"\t\t")
             print("\n")
+        print("\nSubstitute testfunc:\n")
+        SubstituteMatrixValue(rhs, testfunc, testfuncval)
+        #for i in range(0,rhs.shape[0]):
+            #print("rhs(",i,"):=",rhs[i],"\t\t")
+            #print("\n")
         print("\nSubstitute N,Dn:\n")
         SubstituteMatrixValue(rhs, N, Nval)
         SubstituteMatrixValue(rhs, DN, DNval)
-        for i in range(0,rhs.shape[0]):
-            print("rhs(",i,"):=",rhs[i],"\t\t")
-            print("\n")
-        print("\nSubstitute bdf,rval:\n")
-        SubstituteScalarValue(rhs, bdf0, bdf0val)
-        SubstituteScalarValue(rhs, bdf1, bdf1val)
-        SubstituteScalarValue(rhs, bdf2, bdf2val)
-        SubstituteMatrixValue(rhs, r, rval)
-        for i in range(0,rhs.shape[0]):
-            print("rhs(",i,"):=",rhs[i],"\t\t")
-            print("\n")
+        #for i in range(0,rhs.shape[0]):
+            #print("rhs(",i,"):=",rhs[i],"\t\t")
+            #print("\n")
+        #for i in range(0,rhs.shape[0]):
+            #print("rhs(",i,"):=",rhs[i],"\t\t")
+            #print("\n")
         print("\nSubstitute fext:\n")
         SubstituteMatrixValue(rhs, f_ext, f_ext_val)
         print("\nSubstitute DOFS:\n")
@@ -339,6 +339,12 @@ for dim in dim_vector:
         bdf2val = -1/3
         rval[0] = 33; rval[1] = 22; rval[2] = -12; 
             
+        
+        print("\nSubstitute bdf:\n")
+        SubstituteScalarValue(lhs, bdf0, 0.0 )
+        print("lhs(0,0):=",lhs[0,0],"\t\t")
+        SubstituteScalarValue(lhs, bdf1, 0.0)
+        SubstituteScalarValue(lhs, bdf2,  0.0)
         print("\nSubstitute DOFS:\n")
         SubstituteMatrixValue(lhs, dofs, dofsval)
         print("\nSubstitute N,Dn:\n")
@@ -353,10 +359,7 @@ for dim in dim_vector:
         print("\nSubstitute Un, Unn:\n")
         SubstituteMatrixValue(lhs, Un, Unval)
         SubstituteMatrixValue(lhs, Unn, Unnval)
-        print("\nSubstitute bdf,rval:\n")
-        SubstituteMatrixValue(lhs, bdf0, bdf0val)
-        SubstituteMatrixValue(lhs, bdf1, bdf1val)
-        SubstituteMatrixValue(lhs, bdf2, bdf2val)
+        print("\nSubstitute rval:\n")        
         SubstituteMatrixValue(lhs, r, rval)
         print("\nSubstitute fext:\n")
         SubstituteMatrixValue(lhs, f_ext, f_ext_val)
@@ -367,8 +370,8 @@ for dim in dim_vector:
             for j in range(0,nnodes*(dim+2)):
                 print("lhs(",i,",",j,"):=",lhs[i,j],"\t\t")
             print("\n") 
-
     '''
+'''
     ## READING TEMPLATE FILE
     print("\nReading compressible_navier_stokes_cpp_template.cpp\n")
     templatefile = open("compressible_navier_stokes_cpp_template.cpp")

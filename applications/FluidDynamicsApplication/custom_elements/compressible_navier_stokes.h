@@ -284,7 +284,7 @@ public:
 	
         KRATOS_CATCH("");
     }
-    */
+    
 
     void Calculate(const Variable<double>& rVariable,
                            double& rOutput,
@@ -393,8 +393,7 @@ protected:
             const array_1d<double,3>& vel = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENT);
             const array_1d<double,3>& vel_n = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENT,1);
             const array_1d<double,3>& vel_nn = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENT,2);
-            //const array_1d<double,3>& vel_mesh = this->GetGeometry()[i].FastGetSolutionStepValue(MESH_VELOCITY);
-
+     
             for(unsigned int k=0; k<TDim; k++)
             {
                 rData.U(i,k+1)   = vel[k];

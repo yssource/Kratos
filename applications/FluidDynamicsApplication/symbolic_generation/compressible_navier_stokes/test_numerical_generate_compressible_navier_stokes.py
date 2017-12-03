@@ -11,6 +11,7 @@ import SourceTerm
 import StabilizationMatrix
 
 dim = params["dim"]  
+c = params["c"]
 dimes = dim+2 					        # Dimension of the vector of Unknowns
 do_simplifications = False
 dim_to_compute = "2D"                # Spatial dimensions to compute. Options:  "2D","3D","Both"
@@ -202,15 +203,15 @@ for dim in dim_vector:
     
     #rhs_out = OutputVector_CollectingFactors(rhs, "rhs", mode)
     
-    
+    '''  
     ## TEST TO CHECK NUMERICAL RESULT IN RHS
     print("\nNUMERICAL RHS:\n")
     dofsval = Matrix(zeros(nnodes*(dim+2),1))
     testfuncval = Matrix(zeros(nnodes*(dim+2),1))
     
     if(dim == 2 and nnodes==3): #I did it for 2D!
-        dofsval[0] = 1.177; dofsval[1] = 0;    dofsval[2] = 0; dofsval[3] = 0;
-        dofsval[4] =  1.177; dofsval[5] =  0;    dofsval[6] =  0; dofsval[7] =  0;
+        dofsval[0] = 1.177; dofsval[1] = 0;    dofsval[2] = 0; dofsval[3] = 10;
+        dofsval[4] =  1.177; dofsval[5] =  0;    dofsval[6] =  0; dofsval[7] =  20;
         dofsval[8] =  1.177; dofsval[9] =  0;    dofsval[10] =  0; dofsval[11] =  10;
         Unval = Matrix(zeros(nnodes,dimes));
         Unnval = Matrix(zeros(nnodes,dimes));
@@ -250,11 +251,19 @@ for dim in dim_vector:
         bdf1val = 4/3
         bdf2val = -1/3
         rval[0] = 33; rval[1] = 22; rval[2] = -12; 
+
+        y = params["gamma"]
+        c_tmp = dofsval[dim+1]/dofsval[0]
+        for i in range (0,dim):
+            c_tmp += -dofsval[i+1]**2/(2*dofsval[0]**2)
+        c_g = sqrt((y*(y-1)*c_tmp))
         
+        print("\nSubstitute Speed of sound:\n")
+        SubstituteScalarValue(rhs, c, c_g)
         print("\nSubstitute bdf,rval:\n")
-        SubstituteScalarValue(rhs, bdf0, bdf0val)
-        SubstituteScalarValue(rhs, bdf1, bdf1val)
-        SubstituteScalarValue(rhs, bdf2, bdf2val)
+        SubstituteScalarValue(rhs, bdf0, 0.0)
+        SubstituteScalarValue(rhs, bdf1, 0.0)
+        SubstituteScalarValue(rhs, bdf2, 0.0)
         SubstituteMatrixValue(rhs, r, rval)
         print("\nSubstitute Un, Unn:\n")
         SubstituteMatrixValue(rhs, Un, Unval)
@@ -285,6 +294,7 @@ for dim in dim_vector:
         for i in range(0,rhs.shape[0]):
             print("rhs(",i,"):=",rhs[i],"\t\t")
             print("\n")
+    
     '''
         
     print("\nCompute LHS\n")
@@ -298,9 +308,9 @@ for dim in dim_vector:
     f_ext_val = Matrix(zeros(nnodes,2))
     
     if(dim == 2 and nnodes==3): #I did it for 2D!
-        dofsval[0] = 1.177; dofsval[1] = 1;    dofsval[2] = -1; dofsval[3] = 50;
-        dofsval[4] =  1.177; dofsval[5] =  -1;    dofsval[6] =  0; dofsval[7] =  100;
-        dofsval[8] =  1.177; dofsval[9] =  2;    dofsval[10] =  1; dofsval[11] =  0;
+        dofsval[0] = 1.177; dofsval[1] = 0;    dofsval[2] = 0; dofsval[3] = 1;
+        dofsval[4] =  1.177; dofsval[5] =  0;    dofsval[6] =  0; dofsval[7] =  0;
+        dofsval[8] =  1.177; dofsval[9] = 0;    dofsval[10] = 0; dofsval[11] =  0;
         Unval = Matrix(zeros(nnodes,dimes));
         Unnval = Matrix(zeros(nnodes,dimes));
         rval = Matrix(zeros(nnodes,1));
@@ -330,30 +340,53 @@ for dim in dim_vector:
                 DNval[i,j]/=detJ
                 
         f_ext_val[0,0] = 0; f_ext_val[0,1] = 0;
-        f_ext_val[1,0] = 1000; f_ext_val[1,1] = 1000;
+        f_ext_val[1,0] = 0; f_ext_val[1,1] = 0;
         f_ext_val[2,0] = 0; f_ext_val[2,1] = 0;
         
         # Definition of other symbols
         bdf0val = 2/3                    # Backward differantiation coefficients
         bdf1val = 4/3
         bdf2val = -1/3
-        rval[0] = 33; rval[1] = 22; rval[2] = -12; 
+        rval[0] = 0; rval[1] = 0; rval[2] = 0; 
             
         
+        y = params["gamma"]
+        c_tmp = dofsval[dim+1]/dofsval[0]
+        for i in range (0,dim):
+            c_tmp += -dofsval[i+1]**2/(2*dofsval[0]**2)
+        c_g = sqrt((y*(y-1)*c_tmp))
+        
+        print("\nSubstitute Speed of sound:\n")
+        for i  in range(lhs.shape[0] ) :
+            for j in range(lhs.shape[1]):
+                tmp  =lhs[i,j]
+                tmp = tmp.subs( c, c_g )
+                lhs[i,j] = tmp
         print("\nSubstitute bdf:\n")
-        SubstituteScalarValue(lhs, bdf0, 0.0 )
-        print("lhs(0,0):=",lhs[0,0],"\t\t")
-        SubstituteScalarValue(lhs, bdf1, 0.0)
-        SubstituteScalarValue(lhs, bdf2,  0.0)
+        for i  in range(lhs.shape[0] ) :
+            for j in range(lhs.shape[1]):
+                tmp  =lhs[i,j]
+                tmp = tmp.subs( bdf0, 0.0 )
+                lhs[i,j] = tmp
+        for i  in range(lhs.shape[0] ) :
+            for j in range(lhs.shape[1]):
+                tmp  =lhs[i,j]
+                tmp = tmp.subs( bdf1, 0.0 )
+                lhs[i,j] = tmp
+        for i  in range(lhs.shape[0] ) :
+            for j in range(lhs.shape[1]):
+                tmp  =lhs[i,j]
+                tmp = tmp.subs( bdf2, 0.0 )
+                lhs[i,j] = tmp
         print("\nSubstitute DOFS:\n")
         SubstituteMatrixValue(lhs, dofs, dofsval)
         print("\nSubstitute N,Dn:\n")
         SubstituteMatrixValue(lhs, N, Nval)
         SubstituteMatrixValue(lhs, DN, DNval) 
-        for i in range(0,nnodes*(dim+2)):
-            for j in range(0,nnodes*(dim+2)):
-                print("lhs(",i,",",j,"):=",lhs[i,j],"\t\t")
-            print("\n")
+        #for i in range(0,nnodes*(dim+2)):
+         #   for j in range(0,nnodes*(dim+2)):
+          #      print("lhs(",i,",",j,"):=",lhs[i,j],"\t\t")
+           # print("\n")
         print("\nSubstitute testfunc:\n")
         SubstituteMatrixValue(lhs, testfunc, testfuncval)
         print("\nSubstitute Un, Unn:\n")
@@ -364,13 +397,13 @@ for dim in dim_vector:
         print("\nSubstitute fext:\n")
         SubstituteMatrixValue(lhs, f_ext, f_ext_val)
         
-        
         print("\nNUMERICAL LHS:\n")
         for i in range(0,nnodes*(dim+2)):
             for j in range(0,nnodes*(dim+2)):
                 print("lhs(",i,",",j,"):=",lhs[i,j],"\t\t")
             print("\n") 
-    '''
+    
+    
 '''
     ## READING TEMPLATE FILE
     print("\nReading compressible_navier_stokes_cpp_template.cpp\n")

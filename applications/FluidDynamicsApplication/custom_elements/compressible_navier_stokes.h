@@ -59,7 +59,7 @@ namespace Kratos
 * symbolic implementation is defined in the file:
 *    https://drive.google.com/file/d/0B_gRLnSH5vCwaXRKRUpDbmx4VXM/view?usp=sharing
 */
-template< unsigned int TDim, unsigned int TDimes = TDim+2, unsigned int TNumNodes = TDim + 1 >
+template< unsigned int TDim, unsigned int BlockSize = TDim+2, unsigned int TNumNodes = TDim + 1 >
 class CompressibleNavierStokes : public Element
 {
 public:
@@ -70,13 +70,15 @@ public:
     KRATOS_CLASS_POINTER_DEFINITION(CompressibleNavierStokes);
     struct ElementDataStruct
     {
-        bounded_matrix<double, TNumNodes, TDimes> U, Un, Unn;
+        bounded_matrix<double, TNumNodes, BlockSize> U, Un, Unn;
+//         array_1d<double, TNumNodes > c;            //speed of sound
+//         array_1d<double, TNumNodes > tau1,tau2,tau3; // stabilization matrix parameters
         bounded_matrix<double, TNumNodes, TDim> f_ext;
         array_1d<double,TNumNodes> r; // At the moment considering all parameters as constant in the domain (mu, nu, etc...)
 
         bounded_matrix<double, TNumNodes, TDim > DN_DX;
         array_1d<double, TNumNodes > N;
-
+        
         double bdf0;
         double bdf1;
         double bdf2;
@@ -88,7 +90,7 @@ public:
         double cv;
         double cp;
         double y;               //gamma
-      
+        double c, tau1, tau2, tau3;
     };
 
     ///@}
@@ -121,14 +123,14 @@ public:
     Element::Pointer Create(IndexType NewId, NodesArrayType const& rThisNodes, PropertiesType::Pointer pProperties) const override
     {
         KRATOS_TRY
-        return boost::make_shared< CompressibleNavierStokes < TDim,TDimes, TNumNodes > >(NewId, this->GetGeometry().Create(rThisNodes), pProperties);
+        return boost::make_shared< CompressibleNavierStokes < TDim,BlockSize, TNumNodes > >(NewId, this->GetGeometry().Create(rThisNodes), pProperties);
         KRATOS_CATCH("");
     }
 
     Element::Pointer Create(IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const override
     {
         KRATOS_TRY
-        return boost::make_shared< CompressibleNavierStokes < TDim,TDimes, TNumNodes > >(NewId, pGeom, pProperties);
+        return boost::make_shared< CompressibleNavierStokes < TDim,BlockSize, TNumNodes > >(NewId, pGeom, pProperties);
         KRATOS_CATCH("");
     }
 
@@ -139,7 +141,7 @@ public:
     {
         KRATOS_TRY
 
-        constexpr unsigned int MatrixSize = TNumNodes*(TDimes);
+        constexpr unsigned int MatrixSize = TNumNodes*(BlockSize);
 
         if (rLeftHandSideMatrix.size1() != MatrixSize)
             rLeftHandSideMatrix.resize(MatrixSize, MatrixSize, false); //false says not to preserve existing storage!!
@@ -187,7 +189,7 @@ public:
     {
         KRATOS_TRY
 
-        constexpr unsigned int MatrixSize = TNumNodes*(TDimes);
+        constexpr unsigned int MatrixSize = TNumNodes*(BlockSize);
 
         if (rRightHandSideVector.size() != MatrixSize)
             rRightHandSideVector.resize(MatrixSize, false); //false says not to preserve existing storage!!
@@ -353,8 +355,8 @@ protected:
     void GetDofList(DofsVectorType& ElementalDofList, ProcessInfo& rCurrentProcessInfo) override;
     void EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& rCurrentProcessInfo) override;
 
-    void ComputeGaussPointLHSContribution(bounded_matrix<double,TNumNodes*(TDimes),TNumNodes*(TDimes)>& lhs, const ElementDataStruct& data);
-    void ComputeGaussPointRHSContribution(array_1d<double,TNumNodes*(TDimes)>& rhs, const ElementDataStruct& data);
+    void ComputeGaussPointLHSContribution(bounded_matrix<double,TNumNodes*(BlockSize),TNumNodes*(BlockSize)>& lhs, const ElementDataStruct& data);
+    void ComputeGaussPointRHSContribution(array_1d<double,TNumNodes*(BlockSize)>& rhs, const ElementDataStruct& data);
 
     double SubscaleErrorEstimate(const ElementDataStruct& data);
 
@@ -388,18 +390,20 @@ protected:
 
         for (unsigned int i = 0; i < TNumNodes; i++)
         {
-           
-            const array_1d<double,TDim>& body_force = this->GetGeometry()[i].FastGetSolutionStepValue(BODY_FORCE);
-            const array_1d<double,3>& vel = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENT);
-            const array_1d<double,3>& vel_n = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENT,1);
-            const array_1d<double,3>& vel_nn = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENT,2);
+            // Stabilization parameters
+            const double stab_c1 = 4.0;
+            const double stab_c2 = 2.0;
+            const array_1d<double,3>& body_force = this->GetGeometry()[i].FastGetSolutionStepValue(BODY_FORCE);
+            const array_1d<double,3>& moment = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENT);
+            const array_1d<double,3>& moment_n = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENT,1);
+            const array_1d<double,3>& moment_nn = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENT,2);
      
             for(unsigned int k=0; k<TDim; k++)
             {
-                rData.U(i,k+1)   = vel[k];
-                rData.Un(i,k+1)  = vel_n[k];
-                rData.Unn(i,k+1) = vel_nn[k];
-                //rData.vmesh(i,k) = vel_mesh[k];
+                rData.U(i,k+1)   = moment[k];
+                rData.Un(i,k+1)  = moment_n[k];
+                rData.Unn(i,k+1) = moment_nn[k];
+                //rData.vmesh(i,k) = moment_mesh[k];
                 rData.f_ext(i,k)   = body_force[k];
             }
             rData.U(i,0)= this->GetGeometry()[i].FastGetSolutionStepValue(DENSITY);
@@ -411,6 +415,22 @@ protected:
             rData.y = this->GetGeometry()[i].FastGetSolutionStepValue(HEAT_CAPACITY_RATIO);
             rData.cp = rData.y*rData.cv;
             rData.r(i) = this->GetGeometry()[i].FastGetSolutionStepValue(EXTERNAL_PRESSURE);
+            
+            double tmp = rData.U(i,TDim+1)/rData.U(i,0);
+            for(unsigned int ll=0; ll<TDim; ll++) {
+                tmp -=(rData.U(i,ll+1)*rData.U(i,ll+1))/(2*rData.U(i,0)*rData.U(i,0));
+            }
+            rData.c = sqrt(rData.y*(rData.y-1)*tmp);
+            double tau1inv,tau2inv,tau3inv;
+            tau1inv = 0.0;
+            for(unsigned int ll=0; ll<TDim; ll++)
+                tau1inv += (rData.U(i,ll+1)/rData.U(i,0))*(rData.U(i,ll+1)/rData.U(i,0));
+            tau1inv = (sqrt(tau1inv)+rData.c)*stab_c2/rData.h;
+            tau2inv = stab_c1*rData.nu/(rData.h*rData.h)+tau1inv;
+            tau3inv = stab_c1*rData.lambda/(rData.U(i,0)*rData.cp*rData.h*rData.h)+tau1inv;
+            rData.tau1 = 1/tau1inv;
+            rData.tau2 = 1/tau2inv;
+            rData.tau3 = 1/tau3inv;
             
         }
 

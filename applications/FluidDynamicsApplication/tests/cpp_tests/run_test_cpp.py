@@ -1,5 +1,5 @@
 from KratosMultiphysics import *
-# from KratosMultiphysics.FluidDynamicsApplication import *
+from KratosMultiphysics.FluidDynamicsApplication import *
 # from KratosMultiphysics.mpi import *
 # from KratosMultiphysics.MPISearchApplication import *
 

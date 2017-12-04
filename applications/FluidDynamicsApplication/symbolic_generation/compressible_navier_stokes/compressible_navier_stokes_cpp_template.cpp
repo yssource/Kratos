@@ -20,20 +20,20 @@ void CompressibleNavierStokes<3>::EquationIdVector(EquationIdVectorType& rResult
     KRATOS_TRY
 
     unsigned int Dim = 3;
-    unsigned int Dimes = Dim+2;
+    unsigned int BlockSize = Dim+2;
     unsigned int NumNodes = 4;
-    unsigned int DofSize  = NumNodes*(Dimes);
+    unsigned int DofSize  = NumNodes*(BlockSize);
 
     if (rResult.size() != DofSize)
         rResult.resize(DofSize, false);
 
     for(unsigned int i=0; i<NumNodes; i++)
     {
-        rResult[i*(Dimes)  ]  =  this->GetGeometry()[i].GetDof(DENSITY).EquationId();
-        rResult[i*(Dimes)+1]  =  this->GetGeometry()[i].GetDof(MOMENT_X).EquationId();
-        rResult[i*(Dimes)+2]  =  this->GetGeometry()[i].GetDof(MOMENT_Y).EquationId();
-        rResult[i*(Dimes)+3]  =  this->GetGeometry()[i].GetDof(MOMENT_Z).EquationId(); 
-        rResult[i*(Dimes)+4]  =  this->GetGeometry()[i].GetDof(TOTAL_ENERGY).EquationId();
+        rResult[i*(BlockSize)  ]  =  this->GetGeometry()[i].GetDof(DENSITY).EquationId();
+        rResult[i*(BlockSize)+1]  =  this->GetGeometry()[i].GetDof(MOMENT_X).EquationId();
+        rResult[i*(BlockSize)+2]  =  this->GetGeometry()[i].GetDof(MOMENT_Y).EquationId();
+        rResult[i*(BlockSize)+3]  =  this->GetGeometry()[i].GetDof(MOMENT_Z).EquationId(); 
+        rResult[i*(BlockSize)+4]  =  this->GetGeometry()[i].GetDof(TOTAL_ENERGY).EquationId();
     }
 
     KRATOS_CATCH("")
@@ -46,19 +46,19 @@ void CompressibleNavierStokes<2>::EquationIdVector(EquationIdVectorType& rResult
     KRATOS_TRY
 
     unsigned int Dim = 2;
-    unsigned int Dimes = Dim+2;
+    unsigned int BlockSize = Dim+2;
     unsigned int NumNodes = 3;
-    unsigned int DofSize  = NumNodes*(Dimes);
+    unsigned int DofSize  = NumNodes*(BlockSize);
 
     if (rResult.size() != DofSize)
         rResult.resize(DofSize, false);
 
     for(unsigned int i=0; i<NumNodes; i++)
     {
-       rResult[i*(Dimes)  ]  =  this->GetGeometry()[i].GetDof(DENSITY).EquationId();
-        rResult[i*(Dimes)+1]  =  this->GetGeometry()[i].GetDof(MOMENT_X).EquationId();
-        rResult[i*(Dimes)+2]  =  this->GetGeometry()[i].GetDof(MOMENT_Y).EquationId();
-        rResult[i*(Dimes)+3]  =  this->GetGeometry()[i].GetDof(TOTAL_ENERGY).EquationId();
+       rResult[i*(BlockSize)  ]  =  this->GetGeometry()[i].GetDof(DENSITY).EquationId();
+        rResult[i*(BlockSize)+1]  =  this->GetGeometry()[i].GetDof(MOMENT_X).EquationId();
+        rResult[i*(BlockSize)+2]  =  this->GetGeometry()[i].GetDof(MOMENT_Y).EquationId();
+        rResult[i*(BlockSize)+3]  =  this->GetGeometry()[i].GetDof(TOTAL_ENERGY).EquationId();
     }
 
     KRATOS_CATCH("")
@@ -71,20 +71,20 @@ void CompressibleNavierStokes<3>::GetDofList(DofsVectorType& ElementalDofList, P
     KRATOS_TRY
 
     unsigned int Dim = 3;
-    unsigned int Dimes = Dim+2;
+    unsigned int BlockSize = Dim+2;
     unsigned int NumNodes = 4;
-    unsigned int DofSize  = NumNodes*(Dimes);
+    unsigned int DofSize  = NumNodes*(BlockSize);
 
     if (ElementalDofList.size() != DofSize)
         ElementalDofList.resize(DofSize);
 
     for(unsigned int i=0; i<NumNodes; i++)
     {
-        ElementalDofList[i*(Dimes)  ]  =  this->GetGeometry()[i].pGetDof(DENSITY);
-        ElementalDofList[i*(Dimes)+1]  =  this->GetGeometry()[i].pGetDof(MOMENT_X);
-        ElementalDofList[i*(Dimes)+2]  =  this->GetGeometry()[i].pGetDof(MOMENT_Y);
-        ElementalDofList[i*(Dimes)+3]  =  this->GetGeometry()[i].pGetDof(MOMENT_Z);
-        ElementalDofList[i*(Dimes)+4]  =  this->GetGeometry()[i].pGetDof(TOTAL_ENERGY);
+        ElementalDofList[i*(BlockSize)  ]  =  this->GetGeometry()[i].pGetDof(DENSITY);
+        ElementalDofList[i*(BlockSize)+1]  =  this->GetGeometry()[i].pGetDof(MOMENT_X);
+        ElementalDofList[i*(BlockSize)+2]  =  this->GetGeometry()[i].pGetDof(MOMENT_Y);
+        ElementalDofList[i*(BlockSize)+3]  =  this->GetGeometry()[i].pGetDof(MOMENT_Z);
+        ElementalDofList[i*(BlockSize)+4]  =  this->GetGeometry()[i].pGetDof(TOTAL_ENERGY);
     }
 
     KRATOS_CATCH("");
@@ -97,19 +97,19 @@ void CompressibleNavierStokes<2>::GetDofList(DofsVectorType& ElementalDofList, P
     KRATOS_TRY
 
     unsigned int Dim = 2;
-    unsigned int Dimes = Dim+2;
+    unsigned int BlockSize = Dim+2;
     unsigned int NumNodes = 3;
-    unsigned int DofSize  = NumNodes*(Dimes);
+    unsigned int DofSize  = NumNodes*(BlockSize);
 
     if (ElementalDofList.size() != DofSize)
         ElementalDofList.resize(DofSize);
 
     for(unsigned int i=0; i<NumNodes; i++)
     {
-        ElementalDofList[i*(Dimes)  ]  =  this->GetGeometry()[i].pGetDof(DENSITY);
-        ElementalDofList[i*(Dimes)+1]  =  this->GetGeometry()[i].pGetDof(MOMENT_X);
-        ElementalDofList[i*(Dimes)+2]  =  this->GetGeometry()[i].pGetDof(MOMENT_Y);
-        ElementalDofList[i*(Dimes)+3]  =  this->GetGeometry()[i].pGetDof(TOTAL_ENERGY);
+        ElementalDofList[i*(BlockSize)  ]  =  this->GetGeometry()[i].pGetDof(DENSITY);
+        ElementalDofList[i*(BlockSize)+1]  =  this->GetGeometry()[i].pGetDof(MOMENT_X);
+        ElementalDofList[i*(BlockSize)+2]  =  this->GetGeometry()[i].pGetDof(MOMENT_Y);
+        ElementalDofList[i*(BlockSize)+3]  =  this->GetGeometry()[i].pGetDof(TOTAL_ENERGY);
     }
 
     KRATOS_CATCH("");
@@ -135,6 +135,10 @@ void CompressibleNavierStokes<3>::ComputeGaussPointLHSContribution(bounded_matri
     const bounded_matrix<double,nnodes,dim>& f_ext = data.f_ext;
 //     const bounded_matrix<double,nnodes,dim>& vmesh = data.vmesh;
     const array_1d<double,nnodes>& r = data.r;
+//     const array_1d<double,nnodes>& c = data.c;
+//     const array_1d<double,nnodes>& tau1 = data.tau1;
+//     const array_1d<double,nnodes>& tau2 = data.tau2;
+//     const array_1d<double,nnodes>& tau3 = data.tau3;
     
     const double mu = data.mu;
     const double nu = data.nu;
@@ -142,6 +146,11 @@ void CompressibleNavierStokes<3>::ComputeGaussPointLHSContribution(bounded_matri
     const double cv = data.cv;
     const double cp = data.cp;
     const double y = data.y;
+    const double c = data.c;
+    const double tau1 = data.tau1;
+    const double tau2 = data.tau2;
+    const double tau3 = data.tau3;
+    
     
     // Get shape function values
     const array_1d<double,nnodes>& N = data.N;
@@ -177,6 +186,10 @@ void CompressibleNavierStokes<2>::ComputeGaussPointLHSContribution(bounded_matri
     const bounded_matrix<double,nnodes,dim>& f_ext = data.f_ext;
     //     const bounded_matrix<double,nnodes,dim>& vmesh = data.vmesh;
     const array_1d<double,nnodes>& r = data.r;
+//     const array_1d<double,nnodes>& c = data.c;
+//     const array_1d<double,nnodes>& tau1 = data.tau1;
+//     const array_1d<double,nnodes>& tau2 = data.tau2;
+//     const array_1d<double,nnodes>& tau3 = data.tau3;
 
     const double mu = data.mu;
     const double nu = data.nu;
@@ -184,6 +197,11 @@ void CompressibleNavierStokes<2>::ComputeGaussPointLHSContribution(bounded_matri
     const double cv = data.cv;
     const double cp = data.cp;
     const double y = data.y;
+    const double c = data.c;
+    const double tau1 = data.tau1;
+    const double tau2 = data.tau2;
+    const double tau3 = data.tau3;
+    
     
     // Get shape function values
     const array_1d<double,nnodes>& N = data.N;
@@ -216,6 +234,10 @@ void CompressibleNavierStokes<3>::ComputeGaussPointRHSContribution(array_1d<doub
     const bounded_matrix<double,nnodes,dimes>& Unn = data.Unn;
     const bounded_matrix<double,nnodes,dim>& f_ext = data.f_ext;
     const array_1d<double,nnodes>& r = data.r;
+//     const array_1d<double,nnodes>& c = data.c;
+//     const array_1d<double,nnodes>& tau1 = data.tau1;
+//     const array_1d<double,nnodes>& tau2 = data.tau2;
+//     const array_1d<double,nnodes>& tau3 = data.tau3;
 
     const double mu = data.mu;
     const double nu = data.nu;
@@ -223,6 +245,11 @@ void CompressibleNavierStokes<3>::ComputeGaussPointRHSContribution(array_1d<doub
     const double cv = data.cv;
     const double cp = data.cp;
     const double y = data.y;
+    const double c = data.c;
+    const double tau1 = data.tau1;
+    const double tau2 = data.tau2;
+    const double tau3 = data.tau3;
+    
     
     // Get shape function values
     const array_1d<double,nnodes>& N = data.N;
@@ -262,6 +289,10 @@ void CompressibleNavierStokes<2>::ComputeGaussPointRHSContribution(array_1d<doub
     const bounded_matrix<double,nnodes,dimes>& Unn = data.Unn;
     const bounded_matrix<double,nnodes,dim>& f_ext = data.f_ext;
     const array_1d<double,nnodes>& r = data.r;
+//     const array_1d<double,nnodes>& c = data.c;
+//     const array_1d<double,nnodes>& tau1 = data.tau1;
+//     const array_1d<double,nnodes>& tau2 = data.tau2;
+//     const array_1d<double,nnodes>& tau3 = data.tau3;
         
     const double mu = data.mu;
     const double nu = data.nu;
@@ -269,6 +300,11 @@ void CompressibleNavierStokes<2>::ComputeGaussPointRHSContribution(array_1d<doub
     const double cv = data.cv;
     const double cp = data.cp;
     const double y = data.y;
+    const double c = data.c;
+    const double tau1 = data.tau1;
+    const double tau2 = data.tau2;
+    const double tau3 = data.tau3;
+    
 
     // Get shape function values
     const array_1d<double,nnodes>& N = data.N;

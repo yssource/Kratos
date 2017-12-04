@@ -1,9 +1,8 @@
 ## Dictionary of the constant parameters used in the Variational Formulation
 from sympy import *
-'''
+
 params = {
             "dim": 2,			                            # Dimension
-            "c" : Symbol('c', positive = True),             # Speed of Sound
             "mu": Symbol('mu', positive = True),			# Dynamic viscosity 
             "nu" :Symbol('nu', positive = True),			# Kinematic viscosity (mu/rho)
             "h" : Symbol('h', positive = True),	        	# Element size
@@ -20,7 +19,6 @@ params = {
 ## 2D test AIR 20º
 params = {
             "dim": 2,			                            # Dimension
-            "c" : Symbol('c', positive = True),              # Speed of Sound
             "mu": 1.846*0.00005,			# Dynamic viscosity 
             "nu" :1.568*0.00005,			# Kinematic viscosity 
             "h" : 1,	        	# Element size
@@ -33,3 +31,4 @@ params = {
             
 	}
 
+'''

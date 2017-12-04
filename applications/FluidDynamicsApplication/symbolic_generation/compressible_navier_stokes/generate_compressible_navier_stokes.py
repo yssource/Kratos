@@ -11,8 +11,8 @@ import SourceTerm
 import StabilizationMatrix
 
 
-dim = params["dim"]  
-dimes = dim+2 					        # Dimension of the vector of Unknowns
+dim = params["dim"]   
+BlockSize = dim+2 					        # Dimension of the vector of Unknowns
 do_simplifications = False
 dim_to_compute = "2D"                # Spatial dimensions to compute. Options:  "2D","3D","Both"
 linearisation = "Picard"            # Iteration type. Options: "Picard", "FullNR"
@@ -40,13 +40,13 @@ for dim in dim_vector:
     N,DN = DefineShapeFunctions(nnodes, dim, impose_partion_of_unity)
     
     # Unknown fields definition (Used later for the gauss point interpolation)
-    U = DefineMatrix('U',nnodes,dimes)	     # Vector of Unknowns ( Density,Velocity[dim],Total Energy )
-    Un = DefineMatrix('Un',nnodes,dimes)     # Vector of Unknowns one step back
-    Unn = DefineMatrix('Unn',nnodes,dimes)   # Vector of Unknowns two steps back
+    U = DefineMatrix('U',nnodes,BlockSize)	     # Vector of Unknowns ( Density,Velocity[dim],Total Energy )
+    Un = DefineMatrix('Un',nnodes,BlockSize)     # Vector of Unknowns one step back
+    Unn = DefineMatrix('Unn',nnodes,BlockSize)   # Vector of Unknowns two steps back
     r = DefineVector('r',nnodes)             # Sink term
 
     # Test functions defintiion
-    w = DefineMatrix('w',nnodes,dimes)	     # Variables field test
+    w = DefineMatrix('w',nnodes,BlockSize)	     # Variables field test
 
     # External terms definition
     f_ext = DefineMatrix('f_ext',nnodes,dim) # Forcing term 
@@ -65,7 +65,7 @@ for dim in dim_vector:
     rg = Symbol('rg', positive = True)		# Source/Sink term
     V = DefineVector('V',dim+2)			    # Test function
     Q = DefineMatrix('Q',dim+2,dim)			# Gradient of V
-    acc = DefineVector('acc',dimes)         # Derivative of Dofs/Time
+    acc = DefineVector('acc',BlockSize)         # Derivative of Dofs/Time
 
     S = SourceTerm.computeS(f,rg,params)
     #SourceTerm.printS(S,params)
@@ -73,8 +73,7 @@ for dim in dim_vector:
     #ConvectiveFlux.printA(A,params)
     K = DiffusiveFlux.computeK(Ug,params)
     #DiffusiveFlux.printK(K,params)
-    #Tau = StabilizationMatrix.computeTau(Ug,params)
-    Tau = StabilizationMatrix.computeTau(Ug,params) #To Consider Tau as a symbol
+    Tau = StabilizationMatrix.computeTau(params)
     #StabilizationMatrix.printTau(Tau,params)
     
     ## Nonlinear operator definition
@@ -162,7 +161,8 @@ for dim in dim_vector:
     
 
     ### Substitution of the discretized values at the gauss points
-
+    print("\nSubstitution of the discretized values at the gauss points\n")
+    
     ## Data interpolation at the gauss points
     U_gauss = U.transpose()*N
     w_gauss = w.transpose()*N
@@ -185,21 +185,22 @@ for dim in dim_vector:
        
     dofs = Matrix(zeros(nnodes*(dim+2),1))
     testfunc = Matrix(zeros(nnodes*(dim+2),1))
-    
     for i in range(0,nnodes):
          for j in range(0,dim+2):
             dofs[i*(dim+2)+j] = U[i,j]
             testfunc[i*(dim+2)+j] = w[i,j]
 
     ## Compute LHS and RHS
-
+    print("\nCompute RHS\n")
     rhs = Compute_RHS(rv.copy(), testfunc, do_simplifications)
     rhs_out = OutputVector_CollectingFactors(rhs, "rhs", mode)
-
+    
+    print("\nCompute LHS\n")
     lhs = Compute_LHS(rhs, testfunc, dofs, do_simplifications) # Compute the LHS
     lhs_out = OutputMatrix_CollectingFactors(lhs, "lhs", mode)
-
-    ## WRITING TEMPLATE FILE
+    
+    ## Reading Template File
+    print("\nReading compressible_navier_stokes_cpp_template.cpp\n")
     templatefile = open("compressible_navier_stokes_cpp_template.cpp")
     outstring=templatefile.read()
 
@@ -211,6 +212,7 @@ for dim in dim_vector:
             outstring = outstring.replace("//substitute_rhs_3D", rhs_out)
 
 ## Write the modified template
+print("\nWriting compressible_navier_stokes.cpp\n")
 out = open("compressible_navier_stokes.cpp",'w')
 out.write(outstring)
 out.close()

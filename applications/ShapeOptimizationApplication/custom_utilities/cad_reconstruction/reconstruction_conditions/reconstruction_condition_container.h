@@ -202,7 +202,7 @@ public:
         boost::timer timer;   
         
         ReconstructionConstraint::Pointer NewConstraint;
-        double penalty_factor = mrReconstructionParameters["solution_parameters"]["general_parameters"]["penalty_factor_for_displacement_coupling"].GetDouble();        
+        double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_displacement_coupling"].GetDouble();        
 
         BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
         for(auto & brep_element_i : brep_elements_vector)
@@ -235,7 +235,7 @@ public:
         std::cout << "\n> Starting to create rotation coupling constraints..." << std::endl;
         boost::timer timer;   
         
-        double penalty_factor = mrReconstructionParameters["solution_parameters"]["general_parameters"]["penalty_factor_for_rotation_coupling"].GetDouble();
+        double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_rotation_coupling"].GetDouble();
         ReconstructionConstraint::Pointer NewConstraint;
 
         BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
@@ -264,9 +264,14 @@ public:
     }    
 
     // --------------------------------------------------------------------------
-    void CreateDirichletConditions()
+    void CreateDirichletConditions( Parameters& rListOfEdgeIds )
     {
     }
+
+    // --------------------------------------------------------------------------
+    void CreateTangentContinuityConditions( Parameters& rListOfEdgeIds )
+    {           
+    }    
     
     // --------------------------------------------------------------------------
     void CreateMinimalControlPointDisplacementCondition()

@@ -31,27 +31,13 @@ class CADReconstrutionUtilities():
         self.__ReadFEData()
         self.__RefineFEModel()
         self.__ReadCADData()
-        self.__InitializeConstraints()
         self.__CreateReconstructionDataBase()
+        self.__CreateReconstructionConditions()
+        self.__CreateSolverForReconstruction()
         self.__CreateReconstructionOutputWriter()
     
     # --------------------------------------------------------------------------
-    def SetDisplacementCouplingOnAllCouplingPoints( self ):
-        self.IsDisplacementCouplingSpecifiedForAllCouplingPoints = True
-
-    # --------------------------------------------------------------------------
-    def SetRotationCouplingOnAllCouplingPoints( self ):
-        self.IsRotationCouplingSpecifiedForAllCouplingPoints = True
-        
-    # --------------------------------------------------------------------------
-    def SetDirichletConstraints( self, edges_with_dirichlet_conditions ):
-        self.AreDirichletConstraintsSpecified = True
-        self.EdgesWithDirichletConditions = edges_with_dirichlet_conditions
-
-    # --------------------------------------------------------------------------
     def PerformReconstruction( self ):
-        self.__CreateReconstructionConditions()
-        self.__CreateSolverForReconstruction()
         self.__RunSolutionAlorithm()
         if self.Parameters["output_parameters"]["perform_quality_evaluation"].GetBool():
             self.__EvaluateReconstructionQuality()
@@ -140,12 +126,6 @@ class CADReconstrutionUtilities():
         with open(cad_integration_data_filename) as cad_data2:
             self.CADIntegrationData = json.load(cad_data2)
         print("> Importing CAD data finished.")
-
-    # --------------------------------------------------------------------------
-    def __InitializeConstraints( self ):
-        self.IsDisplacementCouplingSpecifiedForAllCouplingPoints = False
-        self.IsRotationCouplingSpecifiedForAllCouplingPoints = False
-        self.AreDirichletConstraintsSpecified = False
     
     # --------------------------------------------------------------------------
     def __CreateReconstructionDataBase( self ):
@@ -174,19 +154,21 @@ class CADReconstrutionUtilities():
             raise ValueError( "The following reconstruction strategy does not exist: ", reconstruction_strategy )
 
         # Reconstruction constraints
-        if self.IsDisplacementCouplingSpecifiedForAllCouplingPoints: 
+        constraint_parameters = self.Parameters["solution_parameters"]["constraints"]
+        if constraint_parameters["set_displacement_coupling_on_all_coupling_points"].GetBool(): 
             self.ConditionsContainer.CreateDisplacementCouplingConstraintsOnAllCouplingPoints()
-        if self.IsRotationCouplingSpecifiedForAllCouplingPoints: 
+        if constraint_parameters["set_rotation_coupling_on_all_coupling_points"].GetBool(): 
             self.ConditionsContainer.CreateRotationCouplingConstraintsOnAllCouplingPoints()            
-        if self.AreDirichletConstraintsSpecified:
-            self.ConditionsContainer.CreateDirichletConstraints( self.DirichletConstraints )
+        if constraint_parameters["set_dirichlet_constraints"].GetBool():
+            self.ConditionsContainer.CreateDirichletConditions( constraint_parameters["list_of_edge_ids_with_dirichlet_constraints"] )
+        if constraint_parameters["set_constraint_to_enforce_tangent_continuity"].GetBool():
+            self.ConditionsContainer.CreateTangentContinuityConditions( constraint_parameters["list_of_edge_ids_with_tangent_constraints"] )            
 
         # Regularization
-        minimize_control_point_distance_to_surface = self.Parameters["solution_parameters"]["regularization_parameters"]["minimize_control_point_distance_to_surface"].GetBool()
-        minimize_control_point_displacement = self.Parameters["solution_parameters"]["regularization_parameters"]["minimize_control_point_displacement"].GetBool()
-        if minimize_control_point_distance_to_surface: 
+        regularization_parameters = self.Parameters["solution_parameters"]["regularization_parameters"]
+        if regularization_parameters["minimize_control_point_distance_to_surface"].GetBool(): 
             self.ConditionsContainer.CreateMinimalControlPointDistanceToSurfaceCondition()                               
-        if minimize_control_point_displacement: 
+        if regularization_parameters["minimize_control_point_displacement"].GetBool(): 
             self.ConditionsContainer.CreateMinimalControlPointDisplacementCondition()
 
     # --------------------------------------------------------------------------
@@ -208,8 +190,8 @@ class CADReconstrutionUtilities():
 
     # --------------------------------------------------------------------------
     def __RunSolutionAlorithm( self ):
-        solution_iterations = self.Parameters["solution_parameters"]["general_parameters"]["solution_iterations"].GetInt()        
-        penalty_multiplier =  self.Parameters["solution_parameters"]["general_parameters"]["penalty_multiplier"].GetDouble()
+        solution_iterations = self.Parameters["solution_parameters"]["solution_iterations"].GetInt()        
+        penalty_multiplier =  self.Parameters["solution_parameters"]["constraints"]["penalty_multiplier"].GetDouble()
         self.ReconstructionSolver.InitializeEquationSystem()
 
         for iteration in range(1,solution_iterations+1): 

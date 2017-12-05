@@ -28,22 +28,29 @@ reconstruction_parameters = Parameters("""
     },
     "solution_parameters" : 
     {
-        "strategy" : "displacement_mapping",
-        "general_parameters": 
-        {
-            "solution_iterations"                       : 1,
-            "penalty_factor_for_displacement_coupling" : 1e3,
-            "penalty_factor_for_rotation_coupling"     : 1e3,
-            "penalty_factor_for_dirichlet_constraints" : 1e3,
-            "penalty_multiplier"                       : 1.0         
-        },
+        "strategy"            : "displacement_mapping",
         "strategy_specifc_parameters": 
         {
             "fem_gauss_integration_degree" : 5
         },
+        "solution_iterations" : 1,
+        "constraints"         : 
+        {
+            "set_displacement_coupling_on_all_coupling_points"  : true,
+            "penalty_factor_for_displacement_coupling"          : 1e3,
+            "set_rotation_coupling_on_all_coupling_points"      : true,            
+            "penalty_factor_for_rotation_coupling"              : 1e3,
+            "set_dirichlet_constraints"                         : false,
+            "list_of_edge_ids_with_dirichlet_constraints"       : [],                               
+            "penalty_factor_for_dirichlet_constraints"          : 1e3,
+            "set_constraint_to_enforce_tangent_continuity"      : false,
+            "list_of_edge_ids_with_tangent_constraints"         : [],                                           
+            "penalty_factor_for_tangent_continuity_constraints" : 1e3,
+            "penalty_multiplier"                                : 1.0         
+        },
         "projection_parameters": 
         {
-            "projection_strategy"                               : "multiple_search_tree",
+            "projection_strategy"                               : "single_search_tree",
             "search_radius_with_multiple_trees"                 : 1.0,               
             "automatic_initialization_using_greville_abscissae" : true,
             "refinement_iterations_of_greville_abscissae"       : 1,
@@ -53,9 +60,9 @@ reconstruction_parameters = Parameters("""
         },
         "regularization_parameters":
         {
-            "minimize_control_point_distance_to_surface" : false,
+            "minimize_control_point_distance_to_surface" : true,
             "alpha"                                      : 0.001,    
-            "minimize_control_point_displacement"        : true,
+            "minimize_control_point_displacement"        : false,
             "beta"                                       : 0.002
         },
         "linear_solver_name" : "SuperLU"                  
@@ -101,10 +108,6 @@ start_time = time.time()
 # Initialize Reconstruction
 CADReconstructionUtility = CADReconstrutionUtilities( reconstruction_parameters )
 CADReconstructionUtility.Initialize()
-
-# Set Boundary Conditions
-CADReconstructionUtility.SetDisplacementCouplingOnAllCouplingPoints()
-CADReconstructionUtility.SetRotationCouplingOnAllCouplingPoints()
 
 # Some output before reconstruction
 CADReconstructionUtility.OutputCADSurfacePoints( "surface_points_of_cad_geometry.txt" )

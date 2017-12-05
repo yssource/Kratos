@@ -11,8 +11,8 @@ def computeS(force,source,params):
     
     ## Unknown field definition
     S = DefineMatrix('S',dim+2,dim+2)		# Reactive matrix (Source terms)
-    f = force					# Body force vector
-    r = source			 		# Heat Source/Sink Term  #Symbol('r', positive = True) 
+    f = force					            # Body force vector
+    r = source			 		            # Heat Source/Sink Term  #Symbol('r', positive = True) 
 
     ## S - Reactive Matrix definition
     S = zeros(dim+2,dim+2)

@@ -16,9 +16,7 @@ def computeK(dofs,params):
     
     ## Other simbols definition
     Cv = params["c_v"]				# Specific Heat at Constant volume
-    Cp = params["c_p"]				# Specific Heat at Constant Pressure
     y = params["gamma"]				# Gamma (Cp/Cv) 
-    nu = params["nu"]		         	# Kinematic viscosity (mu/rho)
     mu  = params["mu"]         			# Dynamic viscosity 
     l = params["lambda"]			# Thermal Conductivity of the fluid
         
@@ -45,13 +43,8 @@ def computeK(dofs,params):
         for j in range(0,dim-1):
             if j!=i:
                tau[i,j] = tau[j,i]
-    '''         
-    for i in range(0,dim):
-        for j in range(0,dim):
-            print(i,j,"=	",tau[i,j])
-    '''              
-
-     ## q - Heat flux vector definition
+               
+    ## q - Heat flux vector definition
     for i in range(0,dim):
         q[i] = l*Ug[dim+1]/(Ug[0]**2*Cv)*H[0,i]-(l*H[dim+1,i])/(Ug[0]*Cv)
         for j in range(0,dim):

@@ -88,9 +88,7 @@ public:
         double nu;
         double lambda;          
         double cv;
-        double cp;
         double y;               //gamma
-        double c, tau1, tau2, tau3;
     };
 
     ///@}
@@ -140,7 +138,6 @@ public:
                               ProcessInfo& rCurrentProcessInfo) override
     {
         KRATOS_TRY
-
         constexpr unsigned int MatrixSize = TNumNodes*(BlockSize);
 
         if (rLeftHandSideMatrix.size1() != MatrixSize)
@@ -168,7 +165,7 @@ public:
         for(unsigned int igauss = 0; igauss<Ncontainer.size2(); igauss++)
         {
             noalias(data.N) = row(Ncontainer, igauss);
-
+            
             ComputeGaussPointRHSContribution(rhs_local, data);
             ComputeGaussPointLHSContribution(lhs_local, data);
 
@@ -211,13 +208,12 @@ public:
         {
             noalias(data.N) = row(Ncontainer, igauss);
 
-//             ComputeGaussPointRHSContribution(rhs_local, data);
+            ComputeGaussPointRHSContribution(rhs_local, data);
 
             //here we assume that all the weights of the gauss points are the same so we multiply at the end by Volume/n_nodes
             noalias(rRightHandSideVector) += rhs_local;
         }
 
-        // rRightHandSideVector *= Volume/static_cast<double>(TNumNodes);
         rRightHandSideVector *= data.volume/static_cast<double>(TNumNodes);
 
         KRATOS_CATCH("")
@@ -387,12 +383,16 @@ protected:
         rData.bdf0 = BDFVector[0];
         rData.bdf1 = BDFVector[1];
         rData.bdf2 = BDFVector[2];
+        
+        Properties& r_properties = this->GetProperties();
+        rData.nu = r_properties.GetValue(KINEMATIC_VISCOSITY);
+        rData.mu =  r_properties.GetValue(DYNAMIC_VISCOSITY);
+        rData.lambda = r_properties.GetValue(CONDUCTIVITY);
+        rData.cv = r_properties.GetValue(SPECIFIC_HEAT);
+        rData.y = r_properties.GetValue(HEAT_CAPACITY_RATIO);
 
         for (unsigned int i = 0; i < TNumNodes; i++)
         {
-            // Stabilization parameters
-            const double stab_c1 = 4.0;
-            const double stab_c2 = 2.0;
             const array_1d<double,3>& body_force = this->GetGeometry()[i].FastGetSolutionStepValue(BODY_FORCE);
             const array_1d<double,3>& moment = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENT);
             const array_1d<double,3>& moment_n = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENT,1);
@@ -403,36 +403,12 @@ protected:
                 rData.U(i,k+1)   = moment[k];
                 rData.Un(i,k+1)  = moment_n[k];
                 rData.Unn(i,k+1) = moment_nn[k];
-                //rData.vmesh(i,k) = moment_mesh[k];
                 rData.f_ext(i,k)   = body_force[k];
             }
             rData.U(i,0)= this->GetGeometry()[i].FastGetSolutionStepValue(DENSITY);
             rData.U(i,TDim+1) = this->GetGeometry()[i].FastGetSolutionStepValue(TOTAL_ENERGY);
-            rData.mu = this->GetGeometry()[i].FastGetSolutionStepValue(DYNAMIC_VISCOSITY);
-            rData.nu = this->GetGeometry()[i].FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
-            rData.lambda = this->GetGeometry()[i].FastGetSolutionStepValue(CONDUCTIVITY);
-            rData.cv = this->GetGeometry()[i].FastGetSolutionStepValue(SPECIFIC_HEAT);
-            rData.y = this->GetGeometry()[i].FastGetSolutionStepValue(HEAT_CAPACITY_RATIO);
-            rData.cp = rData.y*rData.cv;
             rData.r(i) = this->GetGeometry()[i].FastGetSolutionStepValue(EXTERNAL_PRESSURE);
-            
-            double tmp = rData.U(i,TDim+1)/rData.U(i,0);
-            for(unsigned int ll=0; ll<TDim; ll++) {
-                tmp -=(rData.U(i,ll+1)*rData.U(i,ll+1))/(2*rData.U(i,0)*rData.U(i,0));
-            }
-            rData.c = sqrt(rData.y*(rData.y-1)*tmp);
-            double tau1inv,tau2inv,tau3inv;
-            tau1inv = 0.0;
-            for(unsigned int ll=0; ll<TDim; ll++)
-                tau1inv += (rData.U(i,ll+1)/rData.U(i,0))*(rData.U(i,ll+1)/rData.U(i,0));
-            tau1inv = (sqrt(tau1inv)+rData.c)*stab_c2/rData.h;
-            tau2inv = stab_c1*rData.nu/(rData.h*rData.h)+tau1inv;
-            tau3inv = stab_c1*rData.lambda/(rData.U(i,0)*rData.cp*rData.h*rData.h)+tau1inv;
-            rData.tau1 = 1/tau1inv;
-            rData.tau2 = 1/tau2inv;
-            rData.tau3 = 1/tau3inv;
-            
-        }
+         }
 
     }
 

@@ -184,11 +184,11 @@ namespace Kratos {
 			modelPart.AddNodalSolutionStepVariable(CONDUCTIVITY);
 
 			// Process info creation
-// 			double delta_time = 0.1;
+            double delta_time = 0.1;
 			Vector bdf_coefs(3);
-			bdf_coefs[0] = 0.0;
-			bdf_coefs[1] = 0.0;
-			bdf_coefs[2] = 0.0;
+			bdf_coefs[0] = 3.0/(2.0*delta_time);
+			bdf_coefs[1] = -2.0/delta_time;
+			bdf_coefs[2] = 0.5*delta_time;
 			modelPart.GetProcessInfo().SetValue(BDF_COEFFICIENTS, bdf_coefs);
 
 			// Set the element properties
@@ -208,13 +208,27 @@ namespace Kratos {
             
 
 			Element::Pointer pElement = modelPart.pGetElement(1);
-
+//             std::cout<<*pElement<<std::endl; //Info on element
+            
 			// Define the nodal values
-			array_1d<double, 2> momentum;
+			array_1d<double, 3> momentum;
 			double density = 1.772;      //density
-			momentum[0] = 0.0;        //momentum
-			momentum[1] = 0.0;        //momentum
-			double total_energy = 0.0;   			
+			std::cout<<"\nDensity = "<<density<<std::endl;
+			double T = 293;              // Temperature in K
+			std::cout<<"\nTemperature = "<<T<<std::endl;
+			double velocity = 32.55;
+            momentum[0] = velocity*density;        //momentum (velocity = 300 m/s)
+            std::cout<<"\nMomentum_0 = "<<momentum[0]<<std::endl;
+			momentum[1] = velocity*density;        //momentum
+			std::cout<<"\nMomentum_1 = "<<momentum[1]<<std::endl;
+			momentum[2] = 0.0;        //momentum
+			std::cout<<"\nMomentum_2 = "<<momentum[2]<<std::endl;
+			
+			double Ma = velocity/sqrt(1.4*(1.005-0.718)*T);
+            std::cout<<"\nMach = "<<Ma<<std::endl;
+			double total_energy = density*(1.005-0.718)*T/(1.4-1)+(momentum[0]*momentum[0]+momentum[1]*momentum[1]+momentum[2]*momentum[2])/(2*density);   	
+            std::cout<<"\nTotal energy:"<<total_energy<<std::endl;
+            
             array_1d<double, 3> f_ext;
             f_ext[0] = 0.0;
             f_ext[1] = 0.0;
@@ -228,12 +242,10 @@ namespace Kratos {
 				it_node->FastGetSolutionStepValue(TOTAL_ENERGY) = total_energy;
 				it_node->FastGetSolutionStepValue(BODY_FORCE) = f_ext;
 				it_node->FastGetSolutionStepValue(EXTERNAL_PRESSURE) = r;
-
-				it_node->FastGetSolutionStepValue(DYNAMIC_VISCOSITY) = pElemProp->GetValue(DYNAMIC_VISCOSITY);
-				it_node->FastGetSolutionStepValue(KINEMATIC_VISCOSITY) = pElemProp->GetValue(KINEMATIC_VISCOSITY);
-				it_node->FastGetSolutionStepValue(CONDUCTIVITY) = pElemProp->GetValue(CONDUCTIVITY);
-				it_node->FastGetSolutionStepValue(SPECIFIC_HEAT) = pElemProp->GetValue(HEAT_CAPACITY_RATIO);
 			}
+			
+			modelPart.CloneTimeStep(delta_time); //generate other time step equal to this one
+            modelPart.CloneTimeStep(2*delta_time);
 
 			// Compute RHS and LHS
 			Vector RHS = ZeroVector(12);
@@ -244,10 +256,13 @@ namespace Kratos {
 
 			// Check obtained RHS
 			double sum_RHS = 0.0;
-			for (unsigned int i=0; i<RHS.size(); ++i)
-				sum_RHS += RHS[i];
+			for (unsigned int i=0; i<RHS.size(); ++i){
+				sum_RHS += RHS[i]*RHS[i];
+                std::cout<<"\nRHS["<<i<<"]="<<RHS[i]<<std::endl;
+            }
+            sum_RHS = sqrt(sum_RHS);
 			KRATOS_CHECK_NEAR(sum_RHS, 0.0, 1e-12);
-
+            /*
 			// Check rigid movement modes
 			Vector a(12);
 			Vector rhs(12);
@@ -261,7 +276,7 @@ namespace Kratos {
 			for (unsigned int i=0; i<rhs.size(); ++i)
 				sum_rhs += rhs[i];
 			KRATOS_CHECK_NEAR(sum_rhs, 0.0, 1e-12);
-			/*
+        
             // Mode 2 check
 			a[0] = 0.0; a[1] = 1.0; a[2] = 0.0;	a[3] = 0.0;	a[4] = 1.0;	a[5] = 0.0;	a[6] = 0.0;	a[7] = 1.0;	a[8] = 0.0;
 			sum_rhs = 0.0;

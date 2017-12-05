@@ -67,19 +67,21 @@ for dim in dim_vector:
     Q = DefineMatrix('Q',dim+2,dim)			# Gradient of V
     acc = DefineVector('acc',BlockSize)         # Derivative of Dofs/Time
 
-    S = SourceTerm.computeS(f,rg,params)
+    #S = SourceTerm.computeS(f,rg,params)
     #SourceTerm.printS(S,params)
-    A = ConvectiveFlux.computeA(Ug,params)
+    #A = ConvectiveFlux.computeA(Ug,params)
     #ConvectiveFlux.printA(A,params)
-    K = DiffusiveFlux.computeK(Ug,params)
+    #K = DiffusiveFlux.computeK(Ug,params)
     #DiffusiveFlux.printK(K,params)
-    Tau = StabilizationMatrix.computeTau(params)
+    #Tau = StabilizationMatrix.computeTau(params)
+    Tau = zeros(dim+2,dim+2)
     #StabilizationMatrix.printTau(Tau,params)
     
     ## Nonlinear operator definition
-    L = DefineVector('L',dim+2)		       # Nonlinear operator
+    #L = DefineVector('L',dim+2)		       # Nonlinear operator
+   
     res = DefineVector('res',dim+2)		   # Residual definition
-
+    '''
     l1 = Matrix(zeros(dim+2,1))		       # Convective Matrix*Gradient of U
     tmp = []
     for j in range(0,dim):
@@ -87,7 +89,7 @@ for dim in dim_vector:
         l1 +=tmp
 
     l2 = Matrix(zeros(dim+2,1))		       # Diffusive term
-
+    
     for s in range(0,dim+2):
         for k in range(0,dim):
             kinter = K[k]			       # Intermediate matrix
@@ -98,18 +100,20 @@ for dim in dim_vector:
                         for n in range(0,dim+2):
                             l2[s] += diff(ksmall[l,m],Ug[n])*H[n,k]*H[s,j]
                             #print("l",l,"m",m,"n",n,":\n",l2[s],"\n\n\n\n\n\n"
+    
 
     l3 = S*Ug				               # Source term
     print("\nCompute Non-linear operator\n")
     L = l1-l2-l3
-    
+    '''
 
     ## Redisual definition
+    L = zeros(dim+2,1)		       # Nonlinear operator
     res = -acc - L		
-
+   
     ## Nonlinear adjoint operator definition
     L_adj = DefineVector('L_adj',dim+2)	   # Nonlinear adjoint operator
-
+    '''
     m1 = Matrix(zeros(dim+2,1))		       # Convective term
     for s in range(0,dim+2):
         for j in range(0,dim):
@@ -119,9 +123,9 @@ for dim in dim_vector:
                     m1[s] -= A_T[l,m]*Q[s,j]
                     for n in range(0,dim+2):
                         m1[s] -= diff(A_T[l,m],Ug[n])*H[n,j]*V[s]
-                    
+                 
     m2 = Matrix(zeros(dim+2,1))		       # Diffusive term
-
+    
     for s in range(0,dim+2):
         for k in range(0,dim):
             kinter = K[k]
@@ -131,33 +135,37 @@ for dim in dim_vector:
                     for m in range(0,dim+2):
                         for n in range(0,dim+2):
                             m2[s] -= diff(ksmall[l,m],Ug[n])*H[n,j]*Q[s,k]
-
+    
     m3 = -S.transpose()*V			        # Source term
     L_adj = m1+m2+m3
-            
+    '''
         
     ## Variational Formulation - Final equation
 
     n1 = V.transpose()*acc		            # Mass term - FE scale
-
+    '''
+    temp = zeros(dim+2,1)
     for i in range(0,dim):
-        tmp += A[i]*H[:,i]
-    n2 = V.transpose()*tmp			       # Convective term - FE scale
+        temp += A[i]*H[:,i]
+    n2 = V.transpose()*temp			       # Convective term - FE scale
 
     tmp = Matrix(zeros(dim+2,1))
     n3 = Matrix(zeros(1,1))			       # Diffusive term - FE scale
+    
     for k in range(0,dim):
         kinter= K[k]
         for j in range(0,dim):
             tmp += kinter[j]*H[:,j] 
         n3 += Q[:,k].transpose()*tmp
+    
 
     n4 = -V.transpose()*(S*Ug)		       # Source term - FE scale
-
+    '''
     n5 = L_adj.transpose()*(Tau*res)	   # VMS_adjoint - Subscales
     
     print("\nCompute Variational Formulation\n")
-    rv = n1+n2+n3+n4+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
+    #rv = n1+n2+n3+n4+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
+    rv = n1+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
     
 
     ### Substitution of the discretized values at the gauss points
@@ -180,8 +188,7 @@ for dim in dim_vector:
     SubstituteMatrixValue(rv, V, w_gauss)
     SubstituteMatrixValue(rv, Q, grad_w)
     SubstituteMatrixValue(rv, f, f_gauss)
-    SubstituteScalarValue(rv, rg, r_gauss)
-    
+    SubstituteScalarValue(rv, rg, r_gauss)    
        
     dofs = Matrix(zeros(nnodes*(dim+2),1))
     testfunc = Matrix(zeros(nnodes*(dim+2),1))
@@ -194,7 +201,7 @@ for dim in dim_vector:
     print("\nCompute RHS\n")
     rhs = Compute_RHS(rv.copy(), testfunc, do_simplifications)
     rhs_out = OutputVector_CollectingFactors(rhs, "rhs", mode)
-    
+        
     print("\nCompute LHS\n")
     lhs = Compute_LHS(rhs, testfunc, dofs, do_simplifications) # Compute the LHS
     lhs_out = OutputMatrix_CollectingFactors(lhs, "lhs", mode)

@@ -133,13 +133,6 @@ class CADReconstrutionUtilities():
         self.DataBase.Create()
 
     # --------------------------------------------------------------------------
-    def __CreateReconstructionOutputWriter( self ):
-        output_folder = self.Parameters["output_parameters"]["output_folder"].GetString()
-        if not os.path.exists( output_folder ):
-            os.makedirs( output_folder )    
-        self.OutputWriter = ReconstructionOutputUtilities( self.DataBase, self.Parameters )    
-
-    # --------------------------------------------------------------------------
     def __CreateReconstructionConditions( self ):
         # Container to store all conditions (including constraints and reguarlization )
         self.ConditionsContainer = ReconstructionConditionContainer( self.DataBase, self.Parameters )
@@ -187,6 +180,13 @@ class CADReconstrutionUtilities():
         else:
             raise NameError("Linear solver not implemented!")              
         self.ReconstructionSolver = CADReconstructionSolver( self.DataBase, self.ConditionsContainer, self.LinearSolver, self.Parameters )
+
+    # --------------------------------------------------------------------------
+    def __CreateReconstructionOutputWriter( self ):
+        output_folder = self.Parameters["output_parameters"]["output_folder"].GetString()
+        if not os.path.exists( output_folder ):
+            os.makedirs( output_folder )    
+        self.OutputWriter = ReconstructionOutputUtilities( self.DataBase, self.Parameters )    
 
     # --------------------------------------------------------------------------
     def __RunSolutionAlorithm( self ):

@@ -36,6 +36,7 @@
 #include "../reconstruction_conditions/reconstruction_condition_distance_minimization.h"
 #include "../reconstruction_conditions/reconstruction_constraint_displacement_coupling.h"
 #include "../reconstruction_conditions/reconstruction_constraint_rotation_coupling.h"
+#include "../reconstruction_conditions/reconstruction_constraint_tangent_enforcement.h"
 #include "../reconstruction_conditions/regularization_condition_min_control_point_displacement.h"
 #include "../reconstruction_conditions/regularization_condition_min_control_point_distance_to_surface.h"
 
@@ -202,7 +203,7 @@ public:
         boost::timer timer;   
         
         ReconstructionConstraint::Pointer NewConstraint;
-        double penalty_factor = mrReconstructionParameters["solution_parameters"]["general_parameters"]["penalty_factor_for_displacement_coupling"].GetDouble();        
+        double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_displacement_coupling"].GetDouble();        
 
         BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
         for(auto & brep_element_i : brep_elements_vector)
@@ -235,7 +236,7 @@ public:
         std::cout << "\n> Starting to create rotation coupling constraints..." << std::endl;
         boost::timer timer;   
         
-        double penalty_factor = mrReconstructionParameters["solution_parameters"]["general_parameters"]["penalty_factor_for_rotation_coupling"].GetDouble();
+        double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_rotation_coupling"].GetDouble();
         ReconstructionConstraint::Pointer NewConstraint;
 
         BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
@@ -264,9 +265,49 @@ public:
     }    
 
     // --------------------------------------------------------------------------
-    void CreateDirichletConditions()
+    void CreateDirichletConditions( Parameters& rListOfEdgeIds )
     {
     }
+
+    // --------------------------------------------------------------------------
+    void CreateTangentContinuityConditions( Parameters& rListOfEdgeIds )
+    {
+        std::cout << "\n> Starting to create tangenent enforcement constraints..." << std::endl;
+        boost::timer timer;   
+        
+        double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_tangent_continuity_constraints"].GetDouble();
+        ReconstructionConstraint::Pointer NewConstraint;
+
+        std::vector<int> list_of_edge_ids;
+        for(int index=0; index<rListOfEdgeIds.size(); index++)
+            list_of_edge_ids.push_back(rListOfEdgeIds.GetArrayItem(index).GetInt());
+
+        BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
+        for(auto & brep_element_i : brep_elements_vector)
+        {
+            unsigned int edge_id_corresponding_to_brep_element_i = brep_element_i.GetEdgeId();
+
+            if( std::find(list_of_edge_ids.begin(), list_of_edge_ids.end(), edge_id_corresponding_to_brep_element_i) != list_of_edge_ids.end())
+            {
+                BREPGaussPointVector& coupling_gauss_points = brep_element_i.GetGaussPoints();
+                for(auto & gauss_point_i : coupling_gauss_points)
+                {
+                        unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
+                        Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
+            
+                        unsigned int slave_patch_id = gauss_point_i.GetSlavePatchId();
+                        Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );                
+                        
+                        NewConstraint = ReconstructionConstraint::Pointer( new TangentEnforcementConstraint( gauss_point_i,
+                                                                                                             master_patch,
+                                                                                                             slave_patch,
+                                                                                                             penalty_factor ));
+                        mListOfReconstructionConstraints.push_back( NewConstraint );
+                }
+            }
+        }
+        std::cout << "> Time needed for creating tangenent enforcement constraints: " << timer.elapsed() << " s" << std::endl;             
+    }    
     
     // --------------------------------------------------------------------------
     void CreateMinimalControlPointDisplacementCondition()

@@ -516,8 +516,9 @@ public:
 	///  \author     from M.Breitenberger in Carat (04/2014)
 	//
 	//########################################################################################
-	void ComputeSecondVariationOfLocalCSY( double _u, double _v,
-									 	   Vector &_par_g1, // entspricht t1 und t2 vom JSON File
+	void ComputeSecondVariationOfLocalCSY( int span_u, int span_v,
+									       double _u, double _v,
+									       array_1d<double,2> _par_g1, // entspricht t1 und t2 vom JSON File
 									  	   Vector& _t1, 
 										   Vector& _t2, 
 										   Vector& _t3, 
@@ -567,7 +568,7 @@ public:
 		Matrix R_matrix;
 		std::vector<Matrix> dr_vector_format; //1st Derivatives of shape functions in vector format
 
-		EvaluateNURBSFunctionsAndDerivative(-1,-1,_u,_v,R_matrix, dr_vector_format);
+		EvaluateNURBSFunctionsAndDerivative(span_u,span_v,_u,_v,R_matrix, dr_vector_format);
 
 		Vector dr1 = ZeroVector(number_of_affected_control_points); // 1st derivative of shape functions in u-direction
 		Vector dr2 = ZeroVector(number_of_affected_control_points); // 1st derivative of shape functions in v-direction
@@ -584,7 +585,7 @@ public:
 
 		Matrix dr; //1st Derivatives of shape functions in matrix format
 		Matrix ddr; //2nd Derivatives of shape functions in vector format
-		EvaluateNURBSFunctionsDerivatives(-1,-1, _u, _v, dr,ddr);
+		EvaluateNURBSFunctionsDerivatives(span_u,span_v, _u, _v, dr,ddr);
 		
 		// computer base vectors
 		Vector g1_act = ZeroVector(3);

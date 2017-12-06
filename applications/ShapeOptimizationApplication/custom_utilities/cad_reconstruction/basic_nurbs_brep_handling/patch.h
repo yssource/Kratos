@@ -171,6 +171,42 @@ public:
 	}
 
 	// --------------------------------------------------------------------------
+	void ComputeSecondVariationOfLocalCSY( array_1d<int,2>& parameter_spans, 
+									       array_1d<double,2>& parameter_values, 
+									       array_1d<double,2>& _par_g1, 
+									  	   Vector& _t1, 
+										   Vector& _t2, 
+										   Vector& _t3, 
+										   Vector& _t1_der,
+										   Vector& _t2_der,
+										   Vector& _t3_der,
+										   std::vector<Vector >& _t1_r,
+										   std::vector<Vector >& _t2_r,
+										   std::vector<Vector >& _t3_r,
+										   std::vector<Vector >& _t1_der_r,
+										   std::vector<Vector >& _t2_der_r,
+										   std::vector<Vector >& _t3_der_r,
+										   std::vector<std::vector<Vector > >& _t1_rs,
+										   std::vector<std::vector<Vector > >& _t2_rs,
+										   std::vector<std::vector<Vector > >& _t3_rs,
+										   std::vector<std::vector<Vector > >& _t1_der_rs, 
+										   std::vector<std::vector<Vector > >& _t2_der_rs, 
+										   std::vector<std::vector<Vector > >& _t3_der_rs )
+	{
+		m_nurbs_surface.ComputeSecondVariationOfLocalCSY( parameter_spans[0], 
+													      parameter_spans[1], 
+													      parameter_values[0], 
+													      parameter_values[1],
+													      _par_g1, 
+												          _t1, _t2, _t3, 
+												          _t1_der, _t2_der, _t3_der,
+												          _t1_r, _t2_r, _t3_r, 
+												          _t1_der_r, _t2_der_r, _t3_der_r,
+												          _t1_rs, _t2_rs, _t3_rs,
+												          _t1_der_rs, _t2_der_rs, _t3_der_rs );
+	}	
+
+	// --------------------------------------------------------------------------
 	array_1d<int,2> ComputeSurfaceKnotSpans( array_1d<double,2>& parameter_values )
 	{
 		return m_nurbs_surface.ComputeKnotSpans( parameter_values[0], parameter_values[1] );

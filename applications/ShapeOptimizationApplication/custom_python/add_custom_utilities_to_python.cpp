@@ -158,6 +158,7 @@ void  AddCustomUtilitiesToPython()
         .def("CreateDisplacementCouplingConstraintsOnAllCouplingPoints", &ReconstructionConditionContainer::CreateDisplacementCouplingConstraintsOnAllCouplingPoints)    
         .def("CreateRotationCouplingConstraintsOnAllCouplingPoints", &ReconstructionConditionContainer::CreateRotationCouplingConstraintsOnAllCouplingPoints)    
         .def("CreateDirichletConditions", &ReconstructionConditionContainer::CreateDirichletConditions)
+        .def("CreateTangentContinuityConditions", &ReconstructionConditionContainer::CreateTangentContinuityConditions)        
         .def("CreateMinimalControlPointDisplacementCondition", &ReconstructionConditionContainer::CreateMinimalControlPointDisplacementCondition)       
         .def("CreateMinimalControlPointDistanceToSurfaceCondition", &ReconstructionConditionContainer::CreateMinimalControlPointDistanceToSurfaceCondition)       
         ;           

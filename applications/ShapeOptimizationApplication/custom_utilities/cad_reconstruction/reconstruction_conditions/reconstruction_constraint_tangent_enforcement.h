@@ -319,10 +319,7 @@ public:
         int sign_factor = 1;
         if( inner_prod(T3_m,T3_s) > 0 )
             sign_factor = -1;
-
-        KRATOS_WATCH(sign_factor)
-        KRATOS_WATCH(norm_2(T3_m))        
-        KRATOS_WATCH(norm_2(T3_s))
+            
         return -(inner_prod(T3_m, T3_s) + sign_factor*norm_2(T3_m)*norm_2(T3_s));
     }
 

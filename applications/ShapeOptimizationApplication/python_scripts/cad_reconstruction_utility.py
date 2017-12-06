@@ -200,7 +200,7 @@ class CADReconstrutionUtilities():
             print("===========================================")            
 
             if iteration > 1:  
-                self.ReconstructionSolver.MultiplyAllPenaltyFactorsByInputFactor( self.PenaltyMultiplier )               
+                self.ReconstructionSolver.MultiplyAllPenaltyFactorsByInputFactor( penalty_multiplier )               
 
             self.ReconstructionSolver.ComputeLHS()
             self.ReconstructionSolver.ComputeRHS()

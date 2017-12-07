@@ -289,7 +289,7 @@ public:
                                                                t1rs_s, t2rs_s, t3rs_s,
                                                                t1_der_rs_s, t2_der_rs_s, t3_der_rs_s );
 
-        double fac = ComputePreFactor( T3_m, T3_s );
+        double fac = -ComputePreFactor( T3_m, T3_s );
 
 
         // First we consider the relation Master-Master ( MM )
@@ -320,7 +320,7 @@ public:
         if( inner_prod(T3_m,T3_s) > 0 )
             sign_factor = -1;
             
-        return -(inner_prod(T3_m, T3_s) + sign_factor*norm_2(T3_m)*norm_2(T3_s));
+        return (inner_prod(T3_m, T3_s) + sign_factor*norm_2(T3_m)*norm_2(T3_s));
     }
 
     // --------------------------------------------------------------------------

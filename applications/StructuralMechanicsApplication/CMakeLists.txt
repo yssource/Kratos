@@ -39,7 +39,7 @@ set( KRATOS_STRUCTURAL_MECHANICS_APPLICATION_SOURCES
   ## ELEMENTS
   #Adding truss element
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/truss_element_3D2N.cpp
-   
+
   # Adding the beam element
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/cr_beam_element_3D2N.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/cr_beam_element_2D2N.cpp
@@ -61,7 +61,7 @@ set( KRATOS_STRUCTURAL_MECHANICS_APPLICATION_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/axisym_total_lagrangian.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/updated_lagrangian.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/axisym_updated_lagrangian.cpp
-  
+
   # Adding the SPRISM element
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/SprismElement3D6N.cpp
 
@@ -69,7 +69,7 @@ set( KRATOS_STRUCTURAL_MECHANICS_APPLICATION_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/nodal_concentrated_element.cpp
 
   # Adding the spring + damper element
-  ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/spring_damper_element_3D2N.cpp  
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/spring_damper_element_3D2N.cpp
 
   ## CONDITIONS
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/base_load_condition.cpp
@@ -77,6 +77,7 @@ set( KRATOS_STRUCTURAL_MECHANICS_APPLICATION_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/point_contact_condition.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/axisym_point_load_condition.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/line_load_condition_2d.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/fsi_line_load_condition_2d.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/axisym_line_load_condition_2d.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/surface_load_condition_3d.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/point_moment_condition_3d.cpp

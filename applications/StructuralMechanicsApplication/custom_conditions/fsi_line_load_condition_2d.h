@@ -7,6 +7,7 @@
 //					 license: structural_mechanics_application/license.txt
 //
 //  Main authors:    Riccardo Rossi
+//                   Ruben Zorrilla
 //
 
 // System includes
@@ -19,8 +20,8 @@
 
 // Project includes
 #include "includes/define.h"
-#include "custom_conditions/line_load_condition_2d.h"
 #include "includes/variables.h"
+#include "custom_conditions/line_load_condition_2d.h"
 
 namespace Kratos
 {
@@ -48,7 +49,7 @@ namespace Kratos
 /** Detail class definition.
 */
 
-class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION)  FSIFSILineLoadCondition2D
+class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION)  FSILineLoadCondition2D
     : public LineLoadCondition2D
 {
 public:
@@ -73,28 +74,31 @@ public:
     ///@name Operators
     ///@{
 
-
     ///@}
     ///@name Operations
     ///@{
-    
+
     Condition::Pointer Create(
         IndexType NewId,
         GeometryType::Pointer pGeom,
         PropertiesType::Pointer pProperties
         ) const override;
-        
-    Condition::Pointer Create( 
-        IndexType NewId, 
-        NodesArrayType const& ThisNodes, 
-        PropertiesType::Pointer pProperties 
+
+    Condition::Pointer Create(
+        IndexType NewId,
+        NodesArrayType const& ThisNodes,
+        PropertiesType::Pointer pProperties
         ) const override;
 
-    void CalculateMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo) override;
-    
-    void CalculateLocalSystem(MatrixType& rLeftHandSideMatrix,
-				      VectorType& rRightHandSideVector,
-				      ProcessInfo& rCurrentProcessInfo) override;
+    void CalculateMassMatrix(
+        MatrixType& rMassMatrix,
+        ProcessInfo& rCurrentProcessInfo) override;
+
+    void CalculateLocalSystem(
+        MatrixType& rLeftHandSideMatrix,
+		VectorType& rRightHandSideVector,
+		ProcessInfo& rCurrentProcessInfo) override;
+
     ///@}
     ///@name Access
     ///@{
@@ -176,16 +180,14 @@ private:
     ///@}
     ///@name Private Operators
     ///@{
-    
+
     ///@}
     ///@name Private Operations
     ///@{
 
-
     ///@}
     ///@name Private  Access
     ///@{
-
 
     ///@}
     ///@name Private Inquiry
@@ -197,16 +199,13 @@ private:
 
     friend class Serializer;
 
-    void save( Serializer& rSerializer ) const override
-    {
+    void save( Serializer& rSerializer ) const override {
         KRATOS_SERIALIZE_SAVE_BASE_CLASS( rSerializer, LineLoadCondition2D );
     }
 
-    void load( Serializer& rSerializer ) override
-    {
+    void load( Serializer& rSerializer ) override {
         KRATOS_SERIALIZE_LOAD_BASE_CLASS( rSerializer, LineLoadCondition2D );
     }
-
 
     ///@}
     ///@name Un accessible methods
@@ -218,7 +217,6 @@ private:
     /// Copy constructor.
     //FSILineLoadCondition2D(const FSILineLoadCondition2D& rOther);
 
-
     ///@}
 
 }; // Class FSILineLoadCondition2D
@@ -227,11 +225,9 @@ private:
 ///@name Type Definitions
 ///@{
 
-
 ///@}
 ///@name Input and output
 ///@{
-
 
 /// input stream function
 /*  inline std::istream& operator >> (std::istream& rIStream,
@@ -251,6 +247,4 @@ private:
 
 }  // namespace Kratos.
 
-#endif // KRATOS_FSI_LINE_LOAD_CONDITION_2D_H_INCLUDED  defined 
-
-
+#endif // KRATOS_FSI_LINE_LOAD_CONDITION_2D_H_INCLUDED  defined

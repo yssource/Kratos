@@ -51,7 +51,7 @@ namespace Kratos
 KratosStructuralMechanicsApplication::KratosStructuralMechanicsApplication():
     /* ELEMENTS */
     // Adding the truss elements
-    mTrussElement3D2N(0, Element::GeometryType::Pointer(new Line3D2 <Node<3> >(Element::GeometryType::PointsArrayType(2))), false),    
+    mTrussElement3D2N(0, Element::GeometryType::Pointer(new Line3D2 <Node<3> >(Element::GeometryType::PointsArrayType(2))), false),
     mTrussLinearElement3D2N(0, Element::GeometryType::Pointer(new Line3D2 <Node<3> >(Element::GeometryType::PointsArrayType(2))), true),
     // Adding the beam element
     mCrBeamElement3D2N(0, Element::GeometryType::Pointer(new Line3D2 <Node<3> >(Element::GeometryType::PointsArrayType(2))), false),
@@ -97,7 +97,7 @@ KratosStructuralMechanicsApplication::KratosStructuralMechanicsApplication():
     mAxisymSmallDisplacement2D8N( 0, Element::GeometryType::Pointer( new Quadrilateral2D8 <Node<3> >( Element::GeometryType::PointsArrayType( 8 ) ) ) ),
     mAxisymSmallDisplacement2D9N( 0, Element::GeometryType::Pointer( new Quadrilateral2D9 <Node<3> >( Element::GeometryType::PointsArrayType( 9 ) ) ) ),
     // Adding the Total lagrangian elements
-    mTotalLagrangian2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ), 
+    mTotalLagrangian2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ),
     mTotalLagrangian2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4 <Node<3> >( Element::GeometryType::PointsArrayType( 4 ) ) ) ),
     mTotalLagrangian2D6N( 0, Element::GeometryType::Pointer( new Triangle2D6 <Node<3> >( Element::GeometryType::PointsArrayType( 6 ) ) ) ),
     mTotalLagrangian2D8N( 0, Element::GeometryType::Pointer( new Quadrilateral2D8 <Node<3> >( Element::GeometryType::PointsArrayType( 8 ) ) ) ),
@@ -109,13 +109,13 @@ KratosStructuralMechanicsApplication::KratosStructuralMechanicsApplication():
     mTotalLagrangian3D15N( 0, Element::GeometryType::Pointer( new Prism3D15 <Node<3> >( Element::GeometryType::PointsArrayType( 15 ) ) ) ),
     mTotalLagrangian3D20N( 0, Element::GeometryType::Pointer( new Hexahedra3D20 <Node<3> >( Element::GeometryType::PointsArrayType( 20 ) ) ) ),
     mTotalLagrangian3D27N( 0, Element::GeometryType::Pointer( new Hexahedra3D27 <Node<3> >( Element::GeometryType::PointsArrayType( 27 ) ) ) ),
-    mAxisymTotalLagrangian2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ), 
+    mAxisymTotalLagrangian2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ),
     mAxisymTotalLagrangian2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4 <Node<3> >( Element::GeometryType::PointsArrayType( 4 ) ) ) ),
     mAxisymTotalLagrangian2D6N( 0, Element::GeometryType::Pointer( new Triangle2D6 <Node<3> >( Element::GeometryType::PointsArrayType( 6 ) ) ) ),
     mAxisymTotalLagrangian2D8N( 0, Element::GeometryType::Pointer( new Quadrilateral2D8 <Node<3> >( Element::GeometryType::PointsArrayType( 8 ) ) ) ),
     mAxisymTotalLagrangian2D9N( 0, Element::GeometryType::Pointer( new Quadrilateral2D9 <Node<3> >( Element::GeometryType::PointsArrayType( 9 ) ) ) ),
     // Adding the Updated lagrangian elements
-    mUpdatedLagrangian2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ), 
+    mUpdatedLagrangian2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ),
     mUpdatedLagrangian2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4 <Node<3> >( Element::GeometryType::PointsArrayType( 4 ) ) ) ),
     mUpdatedLagrangian2D6N( 0, Element::GeometryType::Pointer( new Triangle2D6 <Node<3> >( Element::GeometryType::PointsArrayType( 6 ) ) ) ),
     mUpdatedLagrangian2D8N( 0, Element::GeometryType::Pointer( new Quadrilateral2D8 <Node<3> >( Element::GeometryType::PointsArrayType( 8 ) ) ) ),
@@ -127,7 +127,7 @@ KratosStructuralMechanicsApplication::KratosStructuralMechanicsApplication():
     mUpdatedLagrangian3D15N( 0, Element::GeometryType::Pointer( new Prism3D15 <Node<3> >( Element::GeometryType::PointsArrayType( 15 ) ) ) ),
     mUpdatedLagrangian3D20N( 0, Element::GeometryType::Pointer( new Hexahedra3D20 <Node<3> >( Element::GeometryType::PointsArrayType( 20 ) ) ) ),
     mUpdatedLagrangian3D27N( 0, Element::GeometryType::Pointer( new Hexahedra3D27 <Node<3> >( Element::GeometryType::PointsArrayType( 27 ) ) ) ),
-    mAxisymUpdatedLagrangian2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ), 
+    mAxisymUpdatedLagrangian2D3N( 0, Element::GeometryType::Pointer( new Triangle2D3 <Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) ),
     mAxisymUpdatedLagrangian2D4N( 0, Element::GeometryType::Pointer( new Quadrilateral2D4 <Node<3> >( Element::GeometryType::PointsArrayType( 4 ) ) ) ),
     mAxisymUpdatedLagrangian2D6N( 0, Element::GeometryType::Pointer( new Triangle2D6 <Node<3> >( Element::GeometryType::PointsArrayType( 6 ) ) ) ),
     mAxisymUpdatedLagrangian2D8N( 0, Element::GeometryType::Pointer( new Quadrilateral2D8 <Node<3> >( Element::GeometryType::PointsArrayType( 8 ) ) ) ),
@@ -153,7 +153,10 @@ KratosStructuralMechanicsApplication::KratosStructuralMechanicsApplication():
     mSurfaceLoadCondition3D8N( 0, Condition::GeometryType::Pointer( new Quadrilateral3D8 <Node<3> >( Condition::GeometryType::PointsArrayType( 8 ) ) ) ),
     mSurfaceLoadCondition3D9N( 0, Condition::GeometryType::Pointer( new Quadrilateral3D9 <Node<3> >( Condition::GeometryType::PointsArrayType( 9 ) ) ) ),
     // Adding point moment conditions
-    mPointMomentCondition3D1N( 0, Condition::GeometryType::Pointer( new Point3D <Node<3> >( Condition::GeometryType::PointsArrayType( 1 ) ) ) )
+    mPointMomentCondition3D1N( 0, Condition::GeometryType::Pointer( new Point3D <Node<3> >( Condition::GeometryType::PointsArrayType( 1 ) ) ) ),
+    // Adding FSI line load conditions
+    mFSILineLoadCondition2D2N( 0, Condition::GeometryType::Pointer( new Line2D2 <Node<3> >( Condition::GeometryType::PointsArrayType( 2 ) ) ) ),
+    mFSILineLoadCondition2D3N( 0, Condition::GeometryType::Pointer( new Line2D3 <Node<3> >( Condition::GeometryType::PointsArrayType( 3 ) ) ) )
 {}
 
 void KratosStructuralMechanicsApplication::Register()
@@ -206,7 +209,7 @@ void KratosStructuralMechanicsApplication::Register()
     KRATOS_REGISTER_VARIABLE( SHELL_FORCE )
     KRATOS_REGISTER_VARIABLE( SHELL_STRAIN_GLOBAL )
     KRATOS_REGISTER_VARIABLE( SHELL_FORCE_GLOBAL )
-    KRATOS_REGISTER_VARIABLE( SHELL_CURVATURE ) 
+    KRATOS_REGISTER_VARIABLE( SHELL_CURVATURE )
     KRATOS_REGISTER_VARIABLE(SHELL_CURVATURE_GLOBAL)
     KRATOS_REGISTER_VARIABLE( SHELL_MOMENT )
     KRATOS_REGISTER_VARIABLE( SHELL_MOMENT_GLOBAL )
@@ -270,11 +273,11 @@ void KratosStructuralMechanicsApplication::Register()
     KRATOS_REGISTER_VARIABLE(HENCKY_STRAIN_VECTOR);
     KRATOS_REGISTER_VARIABLE(HENCKY_STRAIN_TENSOR);
 
-    KRATOS_REGISTER_VARIABLE( VON_MISES_STRESS ) 
-    
+    KRATOS_REGISTER_VARIABLE( VON_MISES_STRESS )
+
     KRATOS_REGISTER_VARIABLE(REFERENCE_DEFORMATION_GRADIENT);
     KRATOS_REGISTER_VARIABLE(REFERENCE_DEFORMATION_GRADIENT_DETERMINANT);
-    
+
     // Rayleigh variables
     KRATOS_REGISTER_VARIABLE( RAYLEIGH_ALPHA )
     KRATOS_REGISTER_VARIABLE( RAYLEIGH_BETA )
@@ -284,7 +287,7 @@ void KratosStructuralMechanicsApplication::Register()
     KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( POINT_LOAD )
     KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( LINE_LOAD )
     KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( SURFACE_LOAD )
-        
+
     // Condition load variables
     KRATOS_REGISTER_VARIABLE(POINT_LOADS_VECTOR )
     KRATOS_REGISTER_VARIABLE(LINE_LOADS_VECTOR )
@@ -301,7 +304,6 @@ void KratosStructuralMechanicsApplication::Register()
     KRATOS_REGISTER_ELEMENT( "CrLinearBeamElement3D2N", mCrLinearBeamElement3D2N)
     KRATOS_REGISTER_ELEMENT( "CrBeamElement2D2N", mCrBeamElement2D2N)
     KRATOS_REGISTER_ELEMENT( "CrLinearBeamElement2D2N", mCrLinearBeamElement2D2N)
-
 
     //Register the shells elements
     KRATOS_REGISTER_ELEMENT( "IsotropicShellElement3D3N", mIsotropicShellElement3D3N )
@@ -341,7 +343,7 @@ void KratosStructuralMechanicsApplication::Register()
     KRATOS_REGISTER_ELEMENT( "SmallDisplacementElement3D15N", mSmallDisplacement3D15N )
     KRATOS_REGISTER_ELEMENT( "SmallDisplacementElement3D20N", mSmallDisplacement3D20N )
     KRATOS_REGISTER_ELEMENT( "SmallDisplacementElement3D27N", mSmallDisplacement3D27N )
-    
+
     KRATOS_REGISTER_ELEMENT( "AxisymSmallDisplacementElement2D3N", mAxisymSmallDisplacement2D3N )
     KRATOS_REGISTER_ELEMENT( "AxisymSmallDisplacementElement2D4N", mAxisymSmallDisplacement2D4N )
     KRATOS_REGISTER_ELEMENT( "AxisymSmallDisplacementElement2D6N", mAxisymSmallDisplacement2D6N )
@@ -361,13 +363,13 @@ void KratosStructuralMechanicsApplication::Register()
     KRATOS_REGISTER_ELEMENT( "TotalLagrangianElement3D15N", mTotalLagrangian3D15N )
     KRATOS_REGISTER_ELEMENT( "TotalLagrangianElement3D20N", mTotalLagrangian3D20N )
     KRATOS_REGISTER_ELEMENT( "TotalLagrangianElement3D27N", mTotalLagrangian3D27N )
-    
+
     KRATOS_REGISTER_ELEMENT( "AxisymTotalLagrangianElement2D3N", mAxisymTotalLagrangian2D3N )
     KRATOS_REGISTER_ELEMENT( "AxisymTotalLagrangianElement2D4N", mAxisymTotalLagrangian2D4N )
     KRATOS_REGISTER_ELEMENT( "AxisymTotalLagrangianElement2D6N", mAxisymTotalLagrangian2D6N )
     KRATOS_REGISTER_ELEMENT( "AxisymTotalLagrangianElement2D8N", mAxisymTotalLagrangian2D8N )
     KRATOS_REGISTER_ELEMENT( "AxisymTotalLagrangianElement2D9N", mAxisymTotalLagrangian2D9N )
-    
+
     // Updated lagrangian elements
     KRATOS_REGISTER_ELEMENT( "UpdatedLagrangianElement2D3N", mUpdatedLagrangian2D3N )
     KRATOS_REGISTER_ELEMENT( "UpdatedLagrangianElement2D4N", mUpdatedLagrangian2D4N )
@@ -381,7 +383,7 @@ void KratosStructuralMechanicsApplication::Register()
     KRATOS_REGISTER_ELEMENT( "UpdatedLagrangianElement3D15N", mUpdatedLagrangian3D15N )
     KRATOS_REGISTER_ELEMENT( "UpdatedLagrangianElement3D20N", mUpdatedLagrangian3D20N )
     KRATOS_REGISTER_ELEMENT( "UpdatedLagrangianElement3D27N", mUpdatedLagrangian3D27N )
-    
+
     KRATOS_REGISTER_ELEMENT( "AxisymUpdatedLagrangianElement2D3N", mAxisymUpdatedLagrangian2D3N )
     KRATOS_REGISTER_ELEMENT( "AxisymUpdatedLagrangianElement2D4N", mAxisymUpdatedLagrangian2D4N )
     KRATOS_REGISTER_ELEMENT( "AxisymUpdatedLagrangianElement2D6N", mAxisymUpdatedLagrangian2D6N )
@@ -397,16 +399,16 @@ void KratosStructuralMechanicsApplication::Register()
     KRATOS_REGISTER_CONDITION( "PointLoadCondition3D1N", mPointLoadCondition3D1N )
     KRATOS_REGISTER_CONDITION( "PointContactCondition2D1N", mPointContactCondition2D1N )
     KRATOS_REGISTER_CONDITION( "PointContactCondition3D1N", mPointContactCondition3D1N )
-    
+
     KRATOS_REGISTER_CONDITION( "AxisymPointLoadCondition2D1N", mAxisymPointLoadCondition2D1N )
-    
+
     // Line loads
     KRATOS_REGISTER_CONDITION( "LineLoadCondition2D2N", mLineLoadCondition2D2N )
     KRATOS_REGISTER_CONDITION( "LineLoadCondition2D3N", mLineLoadCondition2D3N )
-    
+
     KRATOS_REGISTER_CONDITION( "AxisymLineLoadCondition2D2N", mAxisymLineLoadCondition2D2N )
     KRATOS_REGISTER_CONDITION( "AxisymLineLoadCondition2D3N", mAxisymLineLoadCondition2D3N )
-    
+
     // Surface loads
     KRATOS_REGISTER_CONDITION( "SurfaceLoadCondition3D3N", mSurfaceLoadCondition3D3N )
     KRATOS_REGISTER_CONDITION( "SurfaceLoadCondition3D4N", mSurfaceLoadCondition3D4N )
@@ -416,6 +418,10 @@ void KratosStructuralMechanicsApplication::Register()
 
     // Point moment
     KRATOS_REGISTER_CONDITION( "PointMomentCondition3D1N", mPointMomentCondition3D1N );
+
+    // FSI line loads
+    KRATOS_REGISTER_CONDITION( "FSILineLoadCondition2D2N", mFSILineLoadCondition2D2N )
+    KRATOS_REGISTER_CONDITION( "FSILineLoadCondition2D3N", mFSILineLoadCondition2D3N )
 
     // For MPC implementations
     KRATOS_REGISTER_VARIABLE(MPC_DATA_CONTAINER)

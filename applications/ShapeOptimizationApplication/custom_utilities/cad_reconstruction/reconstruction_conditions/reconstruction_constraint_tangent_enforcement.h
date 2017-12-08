@@ -162,8 +162,9 @@ public:
                                                                t1rs_s, t2rs_s, t3rs_s,
                                                                t1_der_rs_s, t2_der_rs_s, t3_der_rs_s );
 
-        double fac = ComputePreFactor( T3_m, T3_s );
+        int sign_factor = ComputeSignFactor( T3_m, T3_s );
 
+        Vector diff_vector = T3_m + sign_factor * T3_s;  
 
         // First we consider the relation Master-Master ( MM )
         for(int row_itr=0; row_itr<mNumberOfLocalEquationIdsOnMaster; row_itr++)
@@ -174,44 +175,46 @@ public:
             {                
                 int collumn_id = mEquationIdsOfAffectedControlPointsOnMaster[collumn_itr];
 
-                double term_1_x = inner_prod(t3r_m[3*collumn_itr+0],T3_s) * inner_prod(t3r_m[3*row_itr+0],T3_s);
-                double term_1_y = inner_prod(t3r_m[3*collumn_itr+1],T3_s) * inner_prod(t3r_m[3*row_itr+1],T3_s);
-                double term_1_z = inner_prod(t3r_m[3*collumn_itr+2],T3_s) * inner_prod(t3r_m[3*row_itr+2],T3_s);
+                double term_1_x = inner_prod(t3r_m[3*row_itr+0], t3r_m[3*collumn_itr+0]);
+                double term_1_y = inner_prod(t3r_m[3*row_itr+1], t3r_m[3*collumn_itr+1]);
+                double term_1_z = inner_prod(t3r_m[3*row_itr+2], t3r_m[3*collumn_itr+2]);
 
-                double term_2_x = fac * inner_prod(t3rs_m[3*row_itr+0][3*collumn_itr+0],T3_s);
-                double term_2_y = fac * inner_prod(t3rs_m[3*row_itr+1][3*collumn_itr+1],T3_s);
-                double term_2_z = fac * inner_prod(t3rs_m[3*row_itr+2][3*collumn_itr+2],T3_s);
+                double term_2_x = inner_prod(diff_vector, t3rs_m[3*row_itr+0][3*collumn_itr+0]);
+                double term_2_y = inner_prod(diff_vector, t3rs_m[3*row_itr+1][3*collumn_itr+1]);
+                double term_2_z = inner_prod(diff_vector, t3rs_m[3*row_itr+2][3*collumn_itr+2]);
 
-                LHS( 3*row_id+0, 3*collumn_id+0 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * ( term_1_x + term_2_x );
-                LHS( 3*row_id+1, 3*collumn_id+1 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * ( term_1_y + term_2_y );
-                LHS( 3*row_id+2, 3*collumn_id+2 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * ( term_1_z + term_2_z );	
+
+                LHS( 3*row_id+0, 3*collumn_id+0 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * (term_1_x + term_2_x);
+                LHS( 3*row_id+1, 3*collumn_id+1 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * (term_1_y + term_2_y);
+                LHS( 3*row_id+2, 3*collumn_id+2 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * (term_1_z + term_2_z);	
             }
         }
 
         // Then we consider the relation Slave-Slave ( SS )
         for(int row_itr=0; row_itr<mNumberOfLocalEquationIdsOnSlave; row_itr++)
         {
-            int row_id = mEquationIdsOfAffectedControlPointsOnSlave[row_itr]; 
+            int row_id = mEquationIdsOfAffectedControlPointsOnSlave[row_itr];
 
             for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquationIdsOnSlave; collumn_itr++)
             {                
                 int collumn_id = mEquationIdsOfAffectedControlPointsOnSlave[collumn_itr];
 
-                double term_1_x = inner_prod(t3r_s[3*collumn_itr+0],T3_m) * inner_prod(T3_m, t3r_s[3*row_itr+0]);
-                double term_1_y = inner_prod(t3r_s[3*collumn_itr+1],T3_m) * inner_prod(T3_m, t3r_s[3*row_itr+1]);
-                double term_1_z = inner_prod(t3r_s[3*collumn_itr+2],T3_m) * inner_prod(T3_m, t3r_s[3*row_itr+2]);
+                double term_1_x = inner_prod(t3r_s[3*row_itr+0], t3r_s[3*collumn_itr+0]);
+                double term_1_y = inner_prod(t3r_s[3*row_itr+1], t3r_s[3*collumn_itr+1]);
+                double term_1_z = inner_prod(t3r_s[3*row_itr+2], t3r_s[3*collumn_itr+2]);
 
-                double term_2_x = fac * inner_prod(T3_m, t3rs_s[3*row_itr+0][3*collumn_itr+0]);
-                double term_2_y = fac * inner_prod(T3_m, t3rs_s[3*row_itr+1][3*collumn_itr+1]);
-                double term_2_z = fac * inner_prod(T3_m, t3rs_s[3*row_itr+2][3*collumn_itr+2]);
+                double term_2_x = inner_prod(diff_vector, t3rs_s[3*row_itr+0][3*collumn_itr+0]);
+                double term_2_y = inner_prod(diff_vector, t3rs_s[3*row_itr+1][3*collumn_itr+1]);
+                double term_2_z = inner_prod(diff_vector, t3rs_s[3*row_itr+2][3*collumn_itr+2]);
 
-                LHS( 3*row_id+0, 3*collumn_id+0 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * ( term_1_x + term_2_x );
-                LHS( 3*row_id+1, 3*collumn_id+1 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * ( term_1_y + term_2_y );
-                LHS( 3*row_id+2, 3*collumn_id+2 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * ( term_1_z + term_2_z );	
+
+                LHS( 3*row_id+0, 3*collumn_id+0 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * (term_1_x + sign_factor * term_2_x);
+                LHS( 3*row_id+1, 3*collumn_id+1 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * (term_1_y + sign_factor * term_2_y);
+                LHS( 3*row_id+2, 3*collumn_id+2 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * (term_1_z + sign_factor * term_2_z);	
             }
-        }        
-
-        // Then we consider the Master-Slave relation ( MS )
+        }
+        
+        // Then we consider the Master-Slave relation ( MS & SM )
         for(int row_itr=0; row_itr<mNumberOfLocalEquationIdsOnMaster; row_itr++)
         {
             int row_id = mEquationIdsOfAffectedControlPointsOnMaster[row_itr];
@@ -219,43 +222,20 @@ public:
             for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquationIdsOnSlave; collumn_itr++)
             {                
                 int collumn_id = mEquationIdsOfAffectedControlPointsOnSlave[collumn_itr];
+
+                double term_1_x = inner_prod(t3r_m[3*row_itr+0], t3r_s[3*collumn_itr+0]);
+                double term_1_y = inner_prod(t3r_m[3*row_itr+1], t3r_s[3*collumn_itr+1]);
+                double term_1_z = inner_prod(t3r_m[3*row_itr+2], t3r_s[3*collumn_itr+2]);
               
-                double term_1_x = inner_prod(T3_m,t3r_s[3*collumn_itr+0]) * inner_prod(t3r_m[3*row_itr+0],T3_s);
-                double term_1_y = inner_prod(T3_m,t3r_s[3*collumn_itr+1]) * inner_prod(t3r_m[3*row_itr+1],T3_s);
-                double term_1_z = inner_prod(T3_m,t3r_s[3*collumn_itr+2]) * inner_prod(t3r_m[3*row_itr+2],T3_s);
+                LHS( 3*row_id+0, 3*collumn_id+0 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * sign_factor * term_1_x;
+                LHS( 3*row_id+1, 3*collumn_id+1 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * sign_factor * term_1_y;
+                LHS( 3*row_id+2, 3*collumn_id+2 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * sign_factor * term_1_z;
 
-                double term_2_x = fac * inner_prod(t3r_m[3*row_itr+0],t3r_s[3*collumn_itr+0]);
-                double term_2_y = fac * inner_prod(t3r_m[3*row_itr+1],t3r_s[3*collumn_itr+1]);
-                double term_2_z = fac * inner_prod(t3r_m[3*row_itr+2],t3r_s[3*collumn_itr+2]);
-
-                LHS( 3*row_id+0, 3*collumn_id+0 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * ( term_1_x + term_2_x );
-                LHS( 3*row_id+1, 3*collumn_id+1 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * ( term_1_y + term_2_y );
-                LHS( 3*row_id+2, 3*collumn_id+2 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * ( term_1_z + term_2_z );
+                LHS( 3*collumn_id+0, 3*row_id+0 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * sign_factor * term_1_x;
+                LHS( 3*collumn_id+1, 3*row_id+1 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * sign_factor * term_1_y;
+                LHS( 3*collumn_id+2, 3*row_id+2 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * sign_factor * term_1_z;                
             }
-        }  
-
-        // Then we consider the Slave-Master relation ( SM )
-        for(int row_itr=0; row_itr<mNumberOfLocalEquationIdsOnSlave; row_itr++)
-        {
-            int row_id = mEquationIdsOfAffectedControlPointsOnSlave[row_itr];
-
-            for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquationIdsOnMaster; collumn_itr++)
-            {                
-                int collumn_id = mEquationIdsOfAffectedControlPointsOnMaster[collumn_itr];
-              
-                double term_1_y = inner_prod(t3r_m[3*collumn_itr+1], T3_s) * inner_prod(T3_m, t3r_s[3*row_itr+1]);
-                double term_1_z = inner_prod(t3r_m[3*collumn_itr+2], T3_s) * inner_prod(T3_m, t3r_s[3*row_itr+2]);
-                double term_1_x = inner_prod(t3r_m[3*collumn_itr+0], T3_s) * inner_prod(T3_m, t3r_s[3*row_itr+0]);
-
-                double term_2_x = fac * inner_prod(t3r_m[3*collumn_itr+0], t3r_s[3*row_itr+0]);
-                double term_2_y = fac * inner_prod(t3r_m[3*collumn_itr+1], t3r_s[3*row_itr+1]);
-                double term_2_z = fac * inner_prod(t3r_m[3*collumn_itr+2], t3r_s[3*row_itr+2]);
-
-                LHS( 3*row_id+0, 3*collumn_id+0 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * ( term_1_x + term_2_x );
-                LHS( 3*row_id+1, 3*collumn_id+1 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * ( term_1_y + term_2_y );
-                LHS( 3*row_id+2, 3*collumn_id+2 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * ( term_1_z + term_2_z );	
-            }
-        }
+        }          
     }
 
     // --------------------------------------------------------------------------
@@ -263,43 +243,24 @@ public:
     {
         // Variables needed later
         Vector T1_m, T1_s, T2_m, T2_s, T3_m, T3_s;
-        Vector T1_der_m, T1_der_s, T2_der_m, T2_der_s, T3_der_m, T3_der_s;
-        std::vector<Vector> t1r_m, t1r_s, t2r_m, t2r_s, t3r_m, t3r_s;
-        std::vector<Vector> t1_der_r_m, t1_der_r_s, t2_der_r_m, t2_der_r_s, t3_der_r_m, t3_der_r_s;					
-        std::vector<std::vector<Vector>> t1rs_m, t1rs_s, t2rs_m, t2rs_s, t3rs_m, t3rs_s;
-        std::vector<std::vector<Vector>> t1_der_rs_m, t1_der_rs_s, t2_der_rs_m, t2_der_rs_s, t3_der_rs_m, t3_der_rs_s;
+        std::vector<Vector> t1r_m, t1r_s, t2r_m, t2r_s, t3r_m, t3r_s;				
 
         // Compute geometric quantities
-        mrAffectedMasterPatch.ComputeSecondVariationOfLocalCSY( mSpanOnMaster, 
-                                                                mLocationOnMaster, 
-                                                                mTangentOnMaster, 
-                                                                T1_m, T2_m, T3_m, 
-                                                                T1_der_m, T2_der_m, T3_der_m,
-                                                                t1r_m, t2r_m, t3r_m,
-                                                                t1_der_r_m, t2_der_r_m, t3_der_r_m,
-                                                                t1rs_m, t2rs_m, t3rs_m,
-                                                                t1_der_rs_m, t2_der_rs_m, t3_der_rs_m );
-        mrAffectedSlavePatch.ComputeSecondVariationOfLocalCSY( mSpanOnSlave, 
-                                                               mLocationOnSlave, 
-                                                               mTangentOnSlave, 
-                                                               T1_s, T2_s, T3_s, 
-                                                               T1_der_s, T2_der_s, T3_der_s,
-                                                               t1r_s, t2r_s, t3r_s,
-                                                               t1_der_r_s, t2_der_r_s, t3_der_r_s,
-                                                               t1rs_s, t2rs_s, t3rs_s,
-                                                               t1_der_rs_s, t2_der_rs_s, t3_der_rs_s );
+        mrAffectedMasterPatch.ComputeVariationOfLocalCSY( mSpanOnMaster, mLocationOnMaster, mTangentOnMaster, T1_m, T2_m, T3_m, t1r_m, t2r_m, t3r_m );
+        mrAffectedSlavePatch.ComputeVariationOfLocalCSY( mSpanOnSlave, mLocationOnSlave, mTangentOnSlave, T1_s, T2_s, T3_s, t1r_s, t2r_s, t3r_s );
 
-        double fac = -ComputePreFactor( T3_m, T3_s );
+        int sign_factor = ComputeSignFactor( T3_m, T3_s );
 
+        Vector diff_vector = T3_m + sign_factor * T3_s;  
 
         // First we consider the relation Master-Master ( MM )
         for(int row_itr=0; row_itr<mNumberOfLocalEquationIdsOnMaster; row_itr++)
         {
             int row_id = mEquationIdsOfAffectedControlPointsOnMaster[row_itr];
 
-            RHS( 3*row_id+0 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * fac * inner_prod(t3r_m[3*row_itr+0],T3_s);
-            RHS( 3*row_id+1 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * fac * inner_prod(t3r_m[3*row_itr+1],T3_s);
-            RHS( 3*row_id+2 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * fac * inner_prod(t3r_m[3*row_itr+2],T3_s);
+            RHS( 3*row_id+0 ) -= mPenaltyFactor * mIntegrationWeight * mJ1 * inner_prod(diff_vector, t3r_m[3*row_itr+0]);
+            RHS( 3*row_id+1 ) -= mPenaltyFactor * mIntegrationWeight * mJ1 * inner_prod(diff_vector, t3r_m[3*row_itr+1]);
+            RHS( 3*row_id+2 ) -= mPenaltyFactor * mIntegrationWeight * mJ1 * inner_prod(diff_vector, t3r_m[3*row_itr+2]);
         }
 
         // The we consider the relation Slave-Slave ( SS )
@@ -307,20 +268,19 @@ public:
         {
             int row_id = mEquationIdsOfAffectedControlPointsOnSlave[row_itr];
 
-            RHS( 3*row_id+0 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * fac * inner_prod(t3r_s[3*row_itr+0],T3_m);
-            RHS( 3*row_id+1 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * fac * inner_prod(t3r_s[3*row_itr+1],T3_m);
-            RHS( 3*row_id+2 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * fac * inner_prod(t3r_s[3*row_itr+2],T3_m);            
+            RHS( 3*row_id+0 ) -= mPenaltyFactor * mIntegrationWeight * mJ1 * sign_factor * inner_prod(diff_vector, t3r_s[3*row_itr+0]);
+            RHS( 3*row_id+1 ) -= mPenaltyFactor * mIntegrationWeight * mJ1 * sign_factor * inner_prod(diff_vector, t3r_s[3*row_itr+1]);
+            RHS( 3*row_id+2 ) -= mPenaltyFactor * mIntegrationWeight * mJ1 * sign_factor * inner_prod(diff_vector, t3r_s[3*row_itr+2]);            
         }
     }
 
     // --------------------------------------------------------------------------
-    double ComputePreFactor( Vector T3_m, Vector T3_s )
+    int ComputeSignFactor( Vector T3_m, Vector T3_s )
     {
         int sign_factor = 1;
         if( inner_prod(T3_m,T3_s) > 0 )
             sign_factor = -1;
-            
-        return (inner_prod(T3_m, T3_s) + sign_factor*norm_2(T3_m)*norm_2(T3_s));
+        return sign_factor;
     }
 
     // --------------------------------------------------------------------------

@@ -45,9 +45,21 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-/// Short class definition.
-/** Detail class definition.
-*/
+/// FSI line load intended to equilibrate the incompressible fluid added mass.
+/** The aim of this load is to add the FSI artificial mass appeared in the fluid
+  * field due to the incompressible added mass effect. Besides, it also adds the
+  * standard line load contrubition (in case it applies).
+  * To do that, the next terms are added:
+  *     LHS += rho*h*M
+  *     RHS -= rho*h*M*(acc_i - acc_old)
+  * being:
+  *     rho: the fluid density
+  *     h : the hypothetical fluid thickness movilized by the structure
+  *     M : the consistent mass matrix
+  *     acc_i: structure previous non-linear iteration acceleration
+  *     acc_old: structure previous FSI non-linear iteration acceleration (it is
+  *              supposed to be stored in the non-historical database)
+  */
 
 class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION)  FSILineLoadCondition2D
     : public LineLoadCondition2D

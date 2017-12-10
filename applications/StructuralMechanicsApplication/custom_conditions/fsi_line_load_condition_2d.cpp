@@ -25,18 +25,13 @@ namespace Kratos
     //************************************************************************************
 
     FSILineLoadCondition2D::FSILineLoadCondition2D( IndexType NewId, GeometryType::Pointer pGeometry )
-        : LineLoadCondition2D( NewId, pGeometry )
-    {
-        //DO NOT ADD DOFS HERE!!!
-    }
+        : LineLoadCondition2D( NewId, pGeometry ) {}
 
     //************************************************************************************
     //************************************************************************************
 
     FSILineLoadCondition2D::FSILineLoadCondition2D( IndexType NewId, GeometryType::Pointer pGeometry,  PropertiesType::Pointer pProperties )
-        : LineLoadCondition2D( NewId, pGeometry, pProperties )
-    {
-    }
+        : LineLoadCondition2D( NewId, pGeometry, pProperties ) {}
 
     //********************************* CREATE *******************************************
     //************************************************************************************
@@ -45,8 +40,7 @@ namespace Kratos
         IndexType NewId,
         GeometryType::Pointer pGeom,
         PropertiesType::Pointer pProperties
-        ) const
-    {
+        ) const {
         return boost::make_shared<FSILineLoadCondition2D>(NewId, pGeom, pProperties);
     }
 
@@ -57,18 +51,17 @@ namespace Kratos
         IndexType NewId,
         NodesArrayType const& ThisNodes,
         PropertiesType::Pointer pProperties
-        ) const
-    {
+        ) const {
         return boost::make_shared<FSILineLoadCondition2D>( NewId, GetGeometry().Create( ThisNodes ), pProperties );
     }
 
     //******************************* DESTRUCTOR *****************************************
     //************************************************************************************
 
-    FSILineLoadCondition2D::~FSILineLoadCondition2D()
-    {
-    }
+    FSILineLoadCondition2D::~FSILineLoadCondition2D() {}
 
+    //********************************* PUBLIC *******************************************
+    //************************************************************************************
 
     void FSILineLoadCondition2D::CalculateMassMatrix(
         MatrixType& rMassMatrix,
@@ -77,8 +70,8 @@ namespace Kratos
         // const double h = rCurrentProcessInfo[LENGHT]; //TO BE CHANGED
         // const double rho_fluid = rCurrentProcessInfo[DENSITY];  //TO BE CHANGED
 
-        const double h = 1.0; //TO BE CHANGED
-        const double rho_fluid = 1.0;  //TO BE CHANGED
+        const double h = 1.0;               //TO BE CHANGED
+        const double rho_fluid = 956.0;     //TO BE CHANGED
 
         // Get a reference to the condition geometry
         Geometry<Node<3>> &r_geometry = this->GetGeometry();
@@ -97,14 +90,13 @@ namespace Kratos
 
         // Fill the mass matrix
         const unsigned int n_gauss = N_container.size1();
-        for (unsigned int i_gauss; i_gauss < n_gauss; ++i_gauss) {
+        for (unsigned int i_gauss = 0; i_gauss < n_gauss; ++i_gauss) {
             // Gauss pt. shape function values
             const Vector aux_N = row(N_container, i_gauss);
             // Add current Gauss pt. contribution
             for(unsigned int i = 0; i < n_nodes; ++i) {
                 for(unsigned int j = 0; j < n_nodes; ++j) {
                     for(unsigned int k = 0; k < domain_size; ++k) {
-                        // TODO: CHECK THIS, BESIDES NEEDS TO MULTIPLY BY h AND rho_fluid
                         rMassMatrix(i*domain_size+k, j*domain_size+k) += aux_N(i)*aux_N(j);
                     }
                 }
@@ -151,6 +143,7 @@ namespace Kratos
         }
 
         // Add the mass matrix times old acceleration product to the RHS
+        // Note that the LHS contribution is added by the scheme
         noalias(rRightHandSideVector) += prod(mass_matrix, acc_old_it);
 
     }

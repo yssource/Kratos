@@ -114,11 +114,17 @@ class PartitionedFSIDirichletNeumannSolver(partitioned_fsi_base_solver.Partition
             nl_res_norm = self.fluid_solver.main_model_part.ProcessInfo[KratosMultiphysics.FSI_INTERFACE_RESIDUAL_NORM]
             interface_dofs = self.partitioned_fsi_utilities.GetInterfaceResidualSize(self._GetFluidInterfaceSubmodelPart())
 
+            # If convergence is achieved, save the structure acceleration in the non-historical database
+            # This is needed in the FSI structure interface to compute the added mass effect correction
+            KratosMultiphysics.VariableUtils().SaveVectorVar(KratosMultiphysics.ACCELERATION,
+                                                             KratosMultiphysics.ACCELERATION,
+                                                             self._GetStructureInterfaceSubmodelPart().Nodes)
+
             # Check convergence
             if nl_res_norm/math.sqrt(interface_dofs) < self.nl_tol:
+                # Exit FSI non-linear iteration loop
                 print("     NON-LINEAR ITERATION CONVERGENCE ACHIEVED")
                 print("     Total non-linear iterations: ",nl_it," |res|/sqrt(Ndofs) = ",nl_res_norm/math.sqrt(interface_dofs))
-
                 break
             else:
                 # If convergence is not achieved, perform the correction of the prediction

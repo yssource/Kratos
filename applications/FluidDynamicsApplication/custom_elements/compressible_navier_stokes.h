@@ -406,7 +406,13 @@ protected:
                 rData.f_ext(i,k)   = body_force[k];
             }
             rData.U(i,0)= this->GetGeometry()[i].FastGetSolutionStepValue(DENSITY);
+            rData.Un(i,0)= this->GetGeometry()[i].FastGetSolutionStepValue(DENSITY,1);
+            rData.Unn(i,0)= this->GetGeometry()[i].FastGetSolutionStepValue(DENSITY,2);
+            
             rData.U(i,TDim+1) = this->GetGeometry()[i].FastGetSolutionStepValue(TOTAL_ENERGY);
+            rData.Un(i,TDim+1) = this->GetGeometry()[i].FastGetSolutionStepValue(TOTAL_ENERGY,1);
+            rData.Unn(i,TDim+1) = this->GetGeometry()[i].FastGetSolutionStepValue(TOTAL_ENERGY,2);
+            
             rData.r(i) = this->GetGeometry()[i].FastGetSolutionStepValue(EXTERNAL_PRESSURE);
          }
 

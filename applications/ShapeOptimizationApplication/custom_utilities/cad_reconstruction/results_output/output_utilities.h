@@ -75,7 +75,7 @@ public:
         int v_resolution = parameters["output_parameters"]["parameter_resolution_for_output_of_surface_points"][1].GetInt();      
 	
         // Set a max value for the coordinte output to avoid clutter through points that moving uncontrolled
-        double max_coordinate = 1000;
+        double max_coordinate = 10000;
         std::cout << "> Max value for control point coordinates set to " << max_coordinate << "." << std::endl;
 
         for(auto & patch_i : mrReconstructionDataBase.GetPatchVector()) 

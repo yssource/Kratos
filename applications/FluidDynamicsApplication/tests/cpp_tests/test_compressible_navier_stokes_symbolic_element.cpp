@@ -565,8 +565,9 @@ namespace Kratos {
 				it_node->FastGetSolutionStepValue(DENSITY) = density;
 				it_node->FastGetSolutionStepValue(DENSITY,1) = 1;
 				it_node->FastGetSolutionStepValue(DENSITY,2) = 1;
-                momentum[0] = -density*it_node->Coordinate(2);
-                momentum[1] = density*it_node->Coordinate(1);
+				const array_1d<double,3>& r_coordinates = it_node->Coordinates();
+                momentum[0] = -density*r_coordinate[1];
+                momentum[1] = density*r_coordinate[0];
                 momentum[2] = 0.0;
                 it_node->FastGetSolutionStepValue(MOMENT) = momentum;
                 it_node->FastGetSolutionStepValue(MOMENT,1) = momentum_n;

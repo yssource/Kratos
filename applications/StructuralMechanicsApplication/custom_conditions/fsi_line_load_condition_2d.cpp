@@ -70,7 +70,7 @@ namespace Kratos
         // const double h = rCurrentProcessInfo[LENGHT]; //TO BE CHANGED
         // const double rho_fluid = rCurrentProcessInfo[DENSITY];  //TO BE CHANGED
 
-        const double h = 1.0;               //TO BE CHANGED
+        const double h = 2.5e3;            //TO BE CHANGED
         const double rho_fluid = 956.0;     //TO BE CHANGED
 
         // Get a reference to the condition geometry
@@ -86,18 +86,22 @@ namespace Kratos
         rMassMatrix.clear();
 
         // Get the condition shape functions
-        const Matrix N_container = r_geometry.ShapeFunctionsValues();
+        Vector det_J;
+        r_geometry.DeterminantOfJacobian(det_J, GeometryData::GI_GAUSS_2);
+        const Matrix N_container = r_geometry.ShapeFunctionsValues(GeometryData::GI_GAUSS_2);
+        const auto& integration_points = r_geometry.IntegrationPoints(GeometryData::GI_GAUSS_2);
 
         // Fill the mass matrix
         const unsigned int n_gauss = N_container.size1();
         for (unsigned int i_gauss = 0; i_gauss < n_gauss; ++i_gauss) {
-            // Gauss pt. shape function values
+            // Gauss pt. values
             const Vector aux_N = row(N_container, i_gauss);
+            const double aux_weight = det_J(i_gauss)*integration_points[i_gauss].Weight();
             // Add current Gauss pt. contribution
             for(unsigned int i = 0; i < n_nodes; ++i) {
                 for(unsigned int j = 0; j < n_nodes; ++j) {
                     for(unsigned int k = 0; k < domain_size; ++k) {
-                        rMassMatrix(i*domain_size+k, j*domain_size+k) += aux_N(i)*aux_N(j);
+                        rMassMatrix(i*domain_size+k, j*domain_size+k) += aux_weight*aux_N(i)*aux_N(j);
                     }
                 }
             }
@@ -112,13 +116,24 @@ namespace Kratos
 		VectorType& rRightHandSideVector,
 		ProcessInfo& rCurrentProcessInfo) {
 
-        //TODO: THE LHS h*rho_fluid PART IS MISSED. THIS PART SHOULD BE ADDED!
-
-        // Get a reference to the condition geometry
+        // Get the condition constant parameters
         Geometry<Node<3>> &r_geometry = this->GetGeometry();
         const unsigned int n_nodes = r_geometry.size();
         const unsigned int domain_size = r_geometry.WorkingSpaceDimension();
         const unsigned int mat_size = n_nodes * domain_size;
+
+        // Resize and initialize condition arrays
+        if (rRightHandSideVector.size() != mat_size) {
+            rRightHandSideVector.resize(mat_size, false);
+        }
+
+        if (rLeftHandSideMatrix.size1() != mat_size ||
+            rLeftHandSideMatrix.size2() != mat_size) {
+            rLeftHandSideMatrix.resize(mat_size, mat_size, false);
+        }
+
+        rLeftHandSideMatrix.clear();
+        rRightHandSideVector.clear();
 
         // Call the base class to do the load integration
         LineLoadCondition2D::CalculateLocalSystem(
@@ -145,6 +160,5 @@ namespace Kratos
         // Add the mass matrix times old acceleration product to the RHS
         // Note that the LHS contribution is added by the scheme
         noalias(rRightHandSideVector) += prod(mass_matrix, acc_old_it);
-
     }
 } // Namespace Kratos

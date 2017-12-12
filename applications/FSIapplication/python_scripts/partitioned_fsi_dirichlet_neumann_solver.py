@@ -102,6 +102,12 @@ class PartitionedFSIDirichletNeumannSolver(partitioned_fsi_base_solver.Partition
             # Solve the mesh problem as well as the fluid problem
             self._SolveMeshAndFluid()
 
+            # Save the structure previous FSI non-linear iteration acceleration in the non-historical database
+            # This is needed in the FSI structure interface to compute the added mass effect correction
+            KratosMultiphysics.VariableUtils().SaveVectorVar(KratosMultiphysics.ACCELERATION,
+                                                             KratosMultiphysics.ACCELERATION,
+                                                             self._GetStructureInterfaceSubmodelPart().Nodes)
+
             # Solve the structure problem and computes the displacement residual
             if (self.double_faced_structure):
                 self._SolveStructureDoubleFaced()
@@ -113,12 +119,6 @@ class PartitionedFSIDirichletNeumannSolver(partitioned_fsi_base_solver.Partition
             # Residual computation
             nl_res_norm = self.fluid_solver.main_model_part.ProcessInfo[KratosMultiphysics.FSI_INTERFACE_RESIDUAL_NORM]
             interface_dofs = self.partitioned_fsi_utilities.GetInterfaceResidualSize(self._GetFluidInterfaceSubmodelPart())
-
-            # If convergence is achieved, save the structure acceleration in the non-historical database
-            # This is needed in the FSI structure interface to compute the added mass effect correction
-            KratosMultiphysics.VariableUtils().SaveVectorVar(KratosMultiphysics.ACCELERATION,
-                                                             KratosMultiphysics.ACCELERATION,
-                                                             self._GetStructureInterfaceSubmodelPart().Nodes)
 
             # Check convergence
             if nl_res_norm/math.sqrt(interface_dofs) < self.nl_tol:

@@ -231,11 +231,15 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    void CreateRotationCouplingConstraintsOnAllCouplingPoints()
+    void CreateRotationCouplingConstraintsOnAllCouplingPoints( Parameters& rListOfEdgeIdsWithEnforcedTangent )
     {
         std::cout << "\n> Starting to create rotation coupling constraints..." << std::endl;
-        boost::timer timer;   
-        
+        boost::timer timer;
+
+        std::vector<int> list_of_ids_of_edges_with_enforced_tangent;
+        for(int index=0; index<rListOfEdgeIdsWithEnforcedTangent.size(); index++)
+            list_of_ids_of_edges_with_enforced_tangent.push_back(rListOfEdgeIdsWithEnforcedTangent.GetArrayItem(index).GetInt());  
+                   
         double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_rotation_coupling"].GetDouble();
         ReconstructionConstraint::Pointer NewConstraint;
 
@@ -244,6 +248,16 @@ public:
         {
             if(brep_element_i.HasCouplingCondition())
             {
+                unsigned int edge_id_corresponding_to_brep_element_i = brep_element_i.GetEdgeId();
+                bool has_edge_enforced_tangent_constraint = (std::find(list_of_ids_of_edges_with_enforced_tangent.begin(), list_of_ids_of_edges_with_enforced_tangent.end(), edge_id_corresponding_to_brep_element_i) != list_of_ids_of_edges_with_enforced_tangent.end());
+
+                // Skip current rotation coupling if for this edge tangent continuity shall be enforced
+                if(has_edge_enforced_tangent_constraint)
+                {
+                    std::cout << "> Skipping brep_element on the following edge in the rotation coupling since tangent continuity shall be enforced here: " << edge_id_corresponding_to_brep_element_i << std::endl;
+                    continue;
+                }
+
                 BREPGaussPointVector& coupling_gauss_points = brep_element_i.GetGaussPoints();
                 for(auto & gauss_point_i : coupling_gauss_points)
                 {

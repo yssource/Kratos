@@ -151,7 +151,7 @@ class CADReconstrutionUtilities():
         if constraint_parameters["set_displacement_coupling_on_all_coupling_points"].GetBool(): 
             self.ConditionsContainer.CreateDisplacementCouplingConstraintsOnAllCouplingPoints()
         if constraint_parameters["set_rotation_coupling_on_all_coupling_points"].GetBool(): 
-            self.ConditionsContainer.CreateRotationCouplingConstraintsOnAllCouplingPoints()            
+            self.ConditionsContainer.CreateRotationCouplingConstraintsOnAllCouplingPoints( constraint_parameters["list_of_edge_ids_with_tangent_constraints"] )            
         if constraint_parameters["set_dirichlet_constraints"].GetBool():
             self.ConditionsContainer.CreateDirichletConditions( constraint_parameters["list_of_edge_ids_with_dirichlet_constraints"] )
         if constraint_parameters["set_constraint_to_enforce_tangent_continuity"].GetBool():

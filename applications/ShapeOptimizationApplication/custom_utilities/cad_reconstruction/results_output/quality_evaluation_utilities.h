@@ -376,7 +376,7 @@ private:
                                           std::vector<double>& distances_to_nearest_cad_point_after_reconstruction, 
                                           std::vector<unsigned int>& is_projected_cad_point_inside )
     {         
-        Parameters& projection_parameters =  mrReconstructionParameters["output_parameters"]["quality_evaluation_parameters"]["projection_parameters"];
+        const Parameters& projection_parameters =  mrReconstructionParameters["output_parameters"]["quality_evaluation_parameters"]["projection_parameters"];
         CADProjectionUtility FE2CADProjector( mrReconstructionDataBase.GetPatchVector(), projection_parameters );
         FE2CADProjector.Initialize();
 

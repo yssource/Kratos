@@ -36,6 +36,7 @@
 #include "../reconstruction_conditions/reconstruction_condition_distance_minimization.h"
 #include "../reconstruction_conditions/reconstruction_constraint_displacement_coupling.h"
 #include "../reconstruction_conditions/reconstruction_constraint_rotation_coupling.h"
+#include "../reconstruction_conditions/reconstruction_constraint_zero_displacement.h"
 #include "../reconstruction_conditions/reconstruction_constraint_tangent_enforcement.h"
 #include "../reconstruction_conditions/regularization_condition_min_control_point_displacement.h"
 #include "../reconstruction_conditions/regularization_condition_min_control_point_distance_to_surface.h"
@@ -213,17 +214,17 @@ public:
                 BREPGaussPointVector& coupling_gauss_points = brep_element_i.GetGaussPoints();
                 for(auto & gauss_point_i : coupling_gauss_points)
                 {
-                        unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
-                        Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
-            
-                        unsigned int slave_patch_id = gauss_point_i.GetSlavePatchId();
-                        Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );                
-                        
-                        NewConstraint = ReconstructionConstraint::Pointer( new DisplacementCouplingConstraint( gauss_point_i,
-                                                                                                               master_patch,
-                                                                                                               slave_patch,
-                                                                                                               penalty_factor ));
-                        mListOfReconstructionConstraints.push_back( NewConstraint );
+                    unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
+                    Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
+        
+                    unsigned int slave_patch_id = gauss_point_i.GetSlavePatchId();
+                    Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );                
+                    
+                    NewConstraint = ReconstructionConstraint::Pointer( new DisplacementCouplingConstraint( gauss_point_i,
+                                                                                                            master_patch,
+                                                                                                            slave_patch,
+                                                                                                            penalty_factor ));
+                    mListOfReconstructionConstraints.push_back( NewConstraint );
                 }
             }
         }
@@ -249,10 +250,11 @@ public:
             if(brep_element_i.HasCouplingCondition())
             {
                 unsigned int edge_id_corresponding_to_brep_element_i = brep_element_i.GetEdgeId();
-                bool has_edge_enforced_tangent_constraint = (std::find(list_of_ids_of_edges_with_enforced_tangent.begin(), list_of_ids_of_edges_with_enforced_tangent.end(), edge_id_corresponding_to_brep_element_i) != list_of_ids_of_edges_with_enforced_tangent.end());
 
                 // Skip current rotation coupling if for this edge tangent continuity shall be enforced
-                if(has_edge_enforced_tangent_constraint)
+                bool has_edge_enforced_tangent_constraint = (std::find(list_of_ids_of_edges_with_enforced_tangent.begin(), list_of_ids_of_edges_with_enforced_tangent.end(), edge_id_corresponding_to_brep_element_i) != list_of_ids_of_edges_with_enforced_tangent.end());
+                bool is_tangent_constraint_set = mrReconstructionParameters["solution_parameters"]["constraints"]["set_constraint_to_enforce_tangent_continuity"].GetBool();        
+                if( is_tangent_constraint_set && has_edge_enforced_tangent_constraint )
                 {
                     std::cout << "> Skipping brep_element on the following edge in the rotation coupling since tangent continuity shall be enforced here: " << edge_id_corresponding_to_brep_element_i << std::endl;
                     continue;
@@ -261,17 +263,17 @@ public:
                 BREPGaussPointVector& coupling_gauss_points = brep_element_i.GetGaussPoints();
                 for(auto & gauss_point_i : coupling_gauss_points)
                 {
-                        unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
-                        Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
-            
-                        unsigned int slave_patch_id = gauss_point_i.GetSlavePatchId();
-                        Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );                
-                        
-                        NewConstraint = ReconstructionConstraint::Pointer( new RotationCouplingConstraint( gauss_point_i,
-                                                                                                           master_patch,
-                                                                                                           slave_patch,
-                                                                                                           penalty_factor ));
-                        mListOfReconstructionConstraints.push_back( NewConstraint );
+                    unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
+                    Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
+        
+                    unsigned int slave_patch_id = gauss_point_i.GetSlavePatchId();
+                    Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );                
+                    
+                    NewConstraint = ReconstructionConstraint::Pointer( new RotationCouplingConstraint( gauss_point_i,
+                                                                                                        master_patch,
+                                                                                                        slave_patch,
+                                                                                                        penalty_factor ));
+                    mListOfReconstructionConstraints.push_back( NewConstraint );
                 }
             }
         }
@@ -279,8 +281,31 @@ public:
     }    
 
     // --------------------------------------------------------------------------
-    void CreateDirichletConditions( Parameters& rListOfEdgeIds )
+    void CreateZeroDisplacementConditionsOnAllDirichletPoints()
     {
+        std::cout << "\n> Starting to create zero displacement constraints..." << std::endl;
+        boost::timer timer;   
+        
+        ReconstructionConstraint::Pointer NewConstraint;
+        double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_zero_displacement_points"].GetDouble();        
+
+        BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
+        for(auto & brep_element_i : brep_elements_vector)
+        {
+            if(brep_element_i.HasDirichletCondition())
+            {
+                BREPGaussPointVector& coupling_gauss_points = brep_element_i.GetGaussPoints();
+                for(auto & gauss_point_i : coupling_gauss_points)
+                {
+                    unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
+                    Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );          
+                    
+                    NewConstraint = ReconstructionConstraint::Pointer( new ZeroDisplacementConstraint( gauss_point_i, master_patch, penalty_factor ));
+                    mListOfReconstructionConstraints.push_back( NewConstraint );
+                }
+            }
+        }
+        std::cout << "> Time needed for creating zero displacement constraints: " << timer.elapsed() << " s" << std::endl; 
     }
 
     // --------------------------------------------------------------------------
@@ -306,17 +331,17 @@ public:
                 BREPGaussPointVector& coupling_gauss_points = brep_element_i.GetGaussPoints();
                 for(auto & gauss_point_i : coupling_gauss_points)
                 {
-                        unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
-                        Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
-            
-                        unsigned int slave_patch_id = gauss_point_i.GetSlavePatchId();
-                        Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );                
-                        
-                        NewConstraint = ReconstructionConstraint::Pointer( new TangentEnforcementConstraint( gauss_point_i,
-                                                                                                             master_patch,
-                                                                                                             slave_patch,
-                                                                                                             penalty_factor ));
-                        mListOfReconstructionConstraints.push_back( NewConstraint );
+                    unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
+                    Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
+        
+                    unsigned int slave_patch_id = gauss_point_i.GetSlavePatchId();
+                    Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );                
+                    
+                    NewConstraint = ReconstructionConstraint::Pointer( new TangentEnforcementConstraint( gauss_point_i,
+                                                                                                            master_patch,
+                                                                                                            slave_patch,
+                                                                                                            penalty_factor ));
+                    mListOfReconstructionConstraints.push_back( NewConstraint );
                 }
             }
         }

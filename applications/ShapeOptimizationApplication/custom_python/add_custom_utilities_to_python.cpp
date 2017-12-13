@@ -157,11 +157,12 @@ void  AddCustomUtilitiesToPython()
         .def("CreateDistanceMinimizationConditions", &ReconstructionConditionContainer::CreateDistanceMinimizationConditions)        
         .def("CreateDisplacementCouplingConstraintsOnAllCouplingPoints", &ReconstructionConditionContainer::CreateDisplacementCouplingConstraintsOnAllCouplingPoints)    
         .def("CreateRotationCouplingConstraintsOnAllCouplingPoints", &ReconstructionConditionContainer::CreateRotationCouplingConstraintsOnAllCouplingPoints)    
-        .def("CreateDirichletConditions", &ReconstructionConditionContainer::CreateDirichletConditions)
+        .def("CreateZeroDisplacementConditionsOnAllDirichletPoints", &ReconstructionConditionContainer::CreateZeroDisplacementConditionsOnAllDirichletPoints)
         .def("CreateTangentContinuityConditions", &ReconstructionConditionContainer::CreateTangentContinuityConditions)        
         .def("CreateMinimalControlPointDisplacementCondition", &ReconstructionConditionContainer::CreateMinimalControlPointDisplacementCondition)       
         .def("CreateMinimalControlPointDistanceToSurfaceCondition", &ReconstructionConditionContainer::CreateMinimalControlPointDistanceToSurfaceCondition)       
-        ;           
+        ;        
+           
     class_<CADReconstructionSolver, bases<Process> >("CADReconstructionSolver", init< ReconstructionDataBase&, ReconstructionConditionContainer&, CompressedLinearSolverType::Pointer, Parameters&>())
         .def("InitializeEquationSystem", &CADReconstructionSolver::InitializeEquationSystem) 
         .def("ComputeLHS", &CADReconstructionSolver::ComputeLHS) 

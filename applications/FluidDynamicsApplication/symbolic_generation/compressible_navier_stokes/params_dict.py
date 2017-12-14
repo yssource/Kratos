@@ -12,7 +12,7 @@ params = {
             "gamma": Symbol('y',positive = True),			# Gamma (Cp/Cv) 
             "stab_c1" : Symbol('stab_c1', positive = True),			# Algorithm constant
             "stab_c2" : Symbol('stab_c2', positive = True),			# Algorithm constant
-            
+        
 	}
 
 '''

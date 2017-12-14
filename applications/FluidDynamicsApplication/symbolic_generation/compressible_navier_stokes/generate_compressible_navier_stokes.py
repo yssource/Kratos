@@ -86,7 +86,7 @@ for dim in dim_vector:
     for j in range(0,dim):
         tmp = A[j]*H[:,j]
         l1 +=tmp
-
+    
     l2 = Matrix(zeros(dim+2,1))		       # Diffusive term
     
     for s in range(0,dim+2):
@@ -104,7 +104,6 @@ for dim in dim_vector:
     l3 = S*Ug				               # Source term
     print("\nCompute Non-linear operator\n")
     L = l1-l2-l3                           # Nonlinear operator
-    
 
     ## Redisual definition     
     res = -acc - L		
@@ -121,7 +120,7 @@ for dim in dim_vector:
                     m1[s] -= A_T[l,m]*Q[s,j]
                     for n in range(0,dim+2):
                         m1[s] -= diff(A_T[l,m],Ug[n])*H[n,j]*V[s]
-                 
+            
     m2 = Matrix(zeros(dim+2,1))		       # Diffusive term
     
     for s in range(0,dim+2):
@@ -136,8 +135,7 @@ for dim in dim_vector:
     
     m3 = -S.transpose()*V			        # Source term
     L_adj = m1+m2+m3
-    
-        
+      
     ## Variational Formulation - Final equation
 
     n1 = V.transpose()*acc		            # Mass term - FE scale
@@ -163,7 +161,6 @@ for dim in dim_vector:
     
     print("\nCompute Variational Formulation\n")
     rv = n1+n2+n3+n4+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
-    #rv = n1+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
 
     ### Substitution of the discretized values at the gauss points
     print("\nSubstitution of the discretized values at the gauss points\n")

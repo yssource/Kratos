@@ -45,7 +45,7 @@ def computeA(dofs, params):
       	        tmp[i,k] = diff(F[i,j], Ug[k])
       	        #print(j,'	',i,k,'=',tmp[i,k]) 	   
         A.append(tmp)    
-    return A    
+    return A   
  
 ## Printing the Convective Matrix
 def printA(A,params):

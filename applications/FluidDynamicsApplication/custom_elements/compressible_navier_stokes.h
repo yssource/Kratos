@@ -194,7 +194,7 @@ public:
         // Struct to pass around the data
         ElementDataStruct data;
         this->FillElementData(data, rCurrentProcessInfo);
-
+ 
         // Allocate memory needed
         array_1d<double,MatrixSize> rhs_local;
 
@@ -209,7 +209,6 @@ public:
             noalias(data.N) = row(Ncontainer, igauss);
 
             ComputeGaussPointRHSContribution(rhs_local, data);
-
             //here we assume that all the weights of the gauss points are the same so we multiply at the end by Volume/n_nodes
             noalias(rRightHandSideVector) += rhs_local;
         }
@@ -239,8 +238,8 @@ public:
         if(ErrorCode != 0) return ErrorCode;
 
         // Check that all required variables have been registered
-        if(MOMENT.Key() == 0)
-            KRATOS_THROW_ERROR(std::invalid_argument,"MOMENT Key is 0. Check if the application was correctly registered.","");
+        if(MOMENTUM.Key() == 0)
+            KRATOS_THROW_ERROR(std::invalid_argument,"MOMENTUM Key is 0. Check if the application was correctly registered.","");
         if(TOTAL_ENERGY.Key() == 0)
             KRATOS_THROW_ERROR(std::invalid_argument,"TOTAL_ENERGY Key is 0. Check if the application was correctly registered.","");
         if(DENSITY.Key() == 0)
@@ -261,17 +260,17 @@ public:
         // Check that the element's nodes contain all required SolutionStepData and Degrees of freedom
         for(unsigned int i=0; i<this->GetGeometry().size(); ++i)
         {
-            if(this->GetGeometry()[i].SolutionStepsDataHas(MOMENT) == false)
-                KRATOS_THROW_ERROR(std::invalid_argument,"Missing MOMENT variable on solution step data for node ",this->GetGeometry()[i].Id());
+            if(this->GetGeometry()[i].SolutionStepsDataHas(MOMENTUM) == false)
+                KRATOS_THROW_ERROR(std::invalid_argument,"Missing MOMENTUM variable on solution step data for node ",this->GetGeometry()[i].Id());
             if(this->GetGeometry()[i].SolutionStepsDataHas(TOTAL_ENERGY) == false)
                 KRATOS_THROW_ERROR(std::invalid_argument,"Missing TOTAL_ENERGY variable on solution step data for node ",this->GetGeometry()[i].Id());
             if(this->GetGeometry()[i].SolutionStepsDataHas(DENSITY) == false)
                 KRATOS_THROW_ERROR(std::invalid_argument,"Missing DENSITY variable on solution step data for node ",this->GetGeometry()[i].Id());
 
-            if(this->GetGeometry()[i].HasDofFor(MOMENT_X) == false ||
-               this->GetGeometry()[i].HasDofFor(MOMENT_Y) == false ||
-               this->GetGeometry()[i].HasDofFor(MOMENT_Z) == false)
-                KRATOS_THROW_ERROR(std::invalid_argument,"Missing MOMENT component degree of freedom on node ",this->GetGeometry()[i].Id());
+            if(this->GetGeometry()[i].HasDofFor(MOMENTUM_X) == false ||
+               this->GetGeometry()[i].HasDofFor(MOMENTUM_Y) == false ||
+               this->GetGeometry()[i].HasDofFor(MOMENTUM_Z) == false)
+                KRATOS_THROW_ERROR(std::invalid_argument,"Missing MOMENTUM component degree of freedom on node ",this->GetGeometry()[i].Id());
             if(this->GetGeometry()[i].HasDofFor(TOTAL_ENERGY) == false)
                 KRATOS_THROW_ERROR(std::invalid_argument,"Missing TOTAL_ENERGY component degree of freedom on node ",this->GetGeometry()[i].Id());
             if(this->GetGeometry()[i].HasDofFor(DENSITY) == false)
@@ -353,7 +352,7 @@ protected:
 
     void ComputeGaussPointLHSContribution(bounded_matrix<double,TNumNodes*(BlockSize),TNumNodes*(BlockSize)>& lhs, const ElementDataStruct& data);
     void ComputeGaussPointRHSContribution(array_1d<double,TNumNodes*(BlockSize)>& rhs, const ElementDataStruct& data);
-
+    KRATOS_WATCH(rhs)
     double SubscaleErrorEstimate(const ElementDataStruct& data);
 
     ///@}
@@ -394,9 +393,9 @@ protected:
         for (unsigned int i = 0; i < TNumNodes; i++)
         {
             const array_1d<double,3>& body_force = this->GetGeometry()[i].FastGetSolutionStepValue(BODY_FORCE);
-            const array_1d<double,3>& moment = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENT);
-            const array_1d<double,3>& moment_n = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENT,1);
-            const array_1d<double,3>& moment_nn = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENT,2);
+            const array_1d<double,3>& moment = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENTUM);
+            const array_1d<double,3>& moment_n = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENTUM,1);
+            const array_1d<double,3>& moment_nn = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENTUM,2);
      
             for(unsigned int k=0; k<TDim; k++)
             {

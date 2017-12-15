@@ -30,9 +30,9 @@ void CompressibleNavierStokes<3>::EquationIdVector(EquationIdVectorType& rResult
     for(unsigned int i=0; i<NumNodes; i++)
     {
         rResult[i*(BlockSize)  ]  =  this->GetGeometry()[i].GetDof(DENSITY).EquationId();
-        rResult[i*(BlockSize)+1]  =  this->GetGeometry()[i].GetDof(MOMENT_X).EquationId();
-        rResult[i*(BlockSize)+2]  =  this->GetGeometry()[i].GetDof(MOMENT_Y).EquationId();
-        rResult[i*(BlockSize)+3]  =  this->GetGeometry()[i].GetDof(MOMENT_Z).EquationId(); 
+        rResult[i*(BlockSize)+1]  =  this->GetGeometry()[i].GetDof(MOMENTUM_X).EquationId();
+        rResult[i*(BlockSize)+2]  =  this->GetGeometry()[i].GetDof(MOMENTUM_Y).EquationId();
+        rResult[i*(BlockSize)+3]  =  this->GetGeometry()[i].GetDof(MOMENTUM_Z).EquationId(); 
         rResult[i*(BlockSize)+4]  =  this->GetGeometry()[i].GetDof(TOTAL_ENERGY).EquationId();
     }
 
@@ -56,8 +56,8 @@ void CompressibleNavierStokes<2>::EquationIdVector(EquationIdVectorType& rResult
     for(unsigned int i=0; i<NumNodes; i++)
     {
        rResult[i*(BlockSize)  ]  =  this->GetGeometry()[i].GetDof(DENSITY).EquationId();
-        rResult[i*(BlockSize)+1]  =  this->GetGeometry()[i].GetDof(MOMENT_X).EquationId();
-        rResult[i*(BlockSize)+2]  =  this->GetGeometry()[i].GetDof(MOMENT_Y).EquationId();
+        rResult[i*(BlockSize)+1]  =  this->GetGeometry()[i].GetDof(MOMENTUM_X).EquationId();
+        rResult[i*(BlockSize)+2]  =  this->GetGeometry()[i].GetDof(MOMENTUM_Y).EquationId();
         rResult[i*(BlockSize)+3]  =  this->GetGeometry()[i].GetDof(TOTAL_ENERGY).EquationId();
     }
 
@@ -81,9 +81,9 @@ void CompressibleNavierStokes<3>::GetDofList(DofsVectorType& ElementalDofList, P
     for(unsigned int i=0; i<NumNodes; i++)
     {
         ElementalDofList[i*(BlockSize)  ]  =  this->GetGeometry()[i].pGetDof(DENSITY);
-        ElementalDofList[i*(BlockSize)+1]  =  this->GetGeometry()[i].pGetDof(MOMENT_X);
-        ElementalDofList[i*(BlockSize)+2]  =  this->GetGeometry()[i].pGetDof(MOMENT_Y);
-        ElementalDofList[i*(BlockSize)+3]  =  this->GetGeometry()[i].pGetDof(MOMENT_Z);
+        ElementalDofList[i*(BlockSize)+1]  =  this->GetGeometry()[i].pGetDof(MOMENTUM_X);
+        ElementalDofList[i*(BlockSize)+2]  =  this->GetGeometry()[i].pGetDof(MOMENTUM_Y);
+        ElementalDofList[i*(BlockSize)+3]  =  this->GetGeometry()[i].pGetDof(MOMENTUM_Z);
         ElementalDofList[i*(BlockSize)+4]  =  this->GetGeometry()[i].pGetDof(TOTAL_ENERGY);
     }
 
@@ -107,8 +107,8 @@ void CompressibleNavierStokes<2>::GetDofList(DofsVectorType& ElementalDofList, P
     for(unsigned int i=0; i<NumNodes; i++)
     {
         ElementalDofList[i*(BlockSize)  ]  =  this->GetGeometry()[i].pGetDof(DENSITY);
-        ElementalDofList[i*(BlockSize)+1]  =  this->GetGeometry()[i].pGetDof(MOMENT_X);
-        ElementalDofList[i*(BlockSize)+2]  =  this->GetGeometry()[i].pGetDof(MOMENT_Y);
+        ElementalDofList[i*(BlockSize)+1]  =  this->GetGeometry()[i].pGetDof(MOMENTUM_X);
+        ElementalDofList[i*(BlockSize)+2]  =  this->GetGeometry()[i].pGetDof(MOMENTUM_Y);
         ElementalDofList[i*(BlockSize)+3]  =  this->GetGeometry()[i].pGetDof(TOTAL_ENERGY);
     }
 

@@ -42,7 +42,7 @@ namespace Kratos {
 			// Variables addition
 			modelPart.AddNodalSolutionStepVariable(BODY_FORCE);
 			modelPart.AddNodalSolutionStepVariable(DENSITY);
-			modelPart.AddNodalSolutionStepVariable(MOMENT);
+			modelPart.AddNodalSolutionStepVariable(MOMENTUM);
 			modelPart.AddNodalSolutionStepVariable(TOTAL_ENERGY);
             modelPart.AddNodalSolutionStepVariable(EXTERNAL_PRESSURE);
             modelPart.AddNodalSolutionStepVariable(DYNAMIC_VISCOSITY);
@@ -107,7 +107,7 @@ namespace Kratos {
 			// Set the nodal values
 			for (NodeIteratorType it_node=modelPart.NodesBegin(); it_node<modelPart.NodesEnd(); ++it_node){
 				it_node->FastGetSolutionStepValue(DENSITY) = density;
-				it_node->FastGetSolutionStepValue(MOMENT) = momentum;
+				it_node->FastGetSolutionStepValue(MOMENTUM) = momentum;
 				it_node->FastGetSolutionStepValue(TOTAL_ENERGY) = total_energy;
 				it_node->FastGetSolutionStepValue(BODY_FORCE) = f_ext;
 				it_node->FastGetSolutionStepValue(EXTERNAL_PRESSURE) = r;
@@ -145,7 +145,7 @@ namespace Kratos {
 			// Variables addition
 			modelPart.AddNodalSolutionStepVariable(BODY_FORCE);
 			modelPart.AddNodalSolutionStepVariable(DENSITY);
-			modelPart.AddNodalSolutionStepVariable(MOMENT);
+			modelPart.AddNodalSolutionStepVariable(MOMENTUM);
 			modelPart.AddNodalSolutionStepVariable(TOTAL_ENERGY);
             modelPart.AddNodalSolutionStepVariable(EXTERNAL_PRESSURE);
             modelPart.AddNodalSolutionStepVariable(DYNAMIC_VISCOSITY);
@@ -213,9 +213,9 @@ namespace Kratos {
 				it_node->FastGetSolutionStepValue(DENSITY) = density;
 				it_node->FastGetSolutionStepValue(DENSITY,1) = 1;
 				it_node->FastGetSolutionStepValue(DENSITY,2) = 1;
-				it_node->FastGetSolutionStepValue(MOMENT) = momentum;
-				it_node->FastGetSolutionStepValue(MOMENT,1) = momentum_n;
-				it_node->FastGetSolutionStepValue(MOMENT,2) = momentum_n;
+				it_node->FastGetSolutionStepValue(MOMENTUM) = momentum;
+				it_node->FastGetSolutionStepValue(MOMENTUM,1) = momentum_n;
+				it_node->FastGetSolutionStepValue(MOMENTUM,2) = momentum_n;
 				it_node->FastGetSolutionStepValue(TOTAL_ENERGY) = total_energy;
 				it_node->FastGetSolutionStepValue(TOTAL_ENERGY,1) = 1;
 				it_node->FastGetSolutionStepValue(TOTAL_ENERGY,2) = 1;
@@ -315,7 +315,7 @@ namespace Kratos {
 			// Variables addition
 			modelPart.AddNodalSolutionStepVariable(BODY_FORCE);
 			modelPart.AddNodalSolutionStepVariable(DENSITY);
-			modelPart.AddNodalSolutionStepVariable(MOMENT);
+			modelPart.AddNodalSolutionStepVariable(MOMENTUM);
 			modelPart.AddNodalSolutionStepVariable(TOTAL_ENERGY);
             modelPart.AddNodalSolutionStepVariable(EXTERNAL_PRESSURE);
             modelPart.AddNodalSolutionStepVariable(DYNAMIC_VISCOSITY);
@@ -383,9 +383,9 @@ namespace Kratos {
 				it_node->FastGetSolutionStepValue(DENSITY) = density;
 				it_node->FastGetSolutionStepValue(DENSITY,1) = 1;
 				it_node->FastGetSolutionStepValue(DENSITY,2) = 1;
-				it_node->FastGetSolutionStepValue(MOMENT) = momentum;
-				it_node->FastGetSolutionStepValue(MOMENT,1) = momentum_n;
-				it_node->FastGetSolutionStepValue(MOMENT,2) = momentum_n;
+				it_node->FastGetSolutionStepValue(MOMENTUM) = momentum;
+				it_node->FastGetSolutionStepValue(MOMENTUM,1) = momentum_n;
+				it_node->FastGetSolutionStepValue(MOMENTUM,2) = momentum_n;
 				it_node->FastGetSolutionStepValue(TOTAL_ENERGY) = total_energy;
 				it_node->FastGetSolutionStepValue(TOTAL_ENERGY,1) = 1;
 				it_node->FastGetSolutionStepValue(TOTAL_ENERGY,2) = 1;

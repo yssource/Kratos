@@ -210,7 +210,7 @@ public:
         displacement[1] = 0.0;
         displacement[2] = 0.0;
 
-        for(int i = 0; i < mrGeometryContainingThisCondition.size(); i++)
+        for(unsigned int i = 0; i < mrGeometryContainingThisCondition.size(); i++)
         {
             array_1d<double,3>& shape_change_absolute_i = mrGeometryContainingThisCondition[i].FastGetSolutionStepValue(shape_change_variable);
             displacement[0] += mFEMFunctionValues[i] * shape_change_absolute_i[0];

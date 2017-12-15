@@ -137,7 +137,7 @@ public:
         // Note that only nearest points inside a certain search readius will be further analyzed by NewtonRaphson (this is to prevent unecessary analysis for patches far away) 
         else
         {
-          for(int tree_index = 0; tree_index < mListOfLocalSearchTrees.size(); tree_index++)
+          for(unsigned int tree_index = 0; tree_index < mListOfLocalSearchTrees.size(); tree_index++)
           {
               NodeType::Pointer nearest_point_in_local_tree = mListOfLocalSearchTrees[tree_index]->SearchNearestPoint( PointOfInterest );
               parameter_values_of_nearest_point = mParameterValuesOfNodesInGlobalSearchTree[nearest_point_in_local_tree->Id()-1];

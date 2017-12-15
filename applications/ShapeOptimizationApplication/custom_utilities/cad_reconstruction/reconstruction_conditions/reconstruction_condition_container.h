@@ -238,7 +238,7 @@ public:
         boost::timer timer;
 
         std::vector<int> list_of_ids_of_edges_with_enforced_tangent;
-        for(int index=0; index<rListOfEdgeIdsWithEnforcedTangent.size(); index++)
+        for(unsigned int index=0; index<rListOfEdgeIdsWithEnforcedTangent.size(); index++)
             list_of_ids_of_edges_with_enforced_tangent.push_back(rListOfEdgeIdsWithEnforcedTangent.GetArrayItem(index).GetInt());  
                    
         double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_rotation_coupling"].GetDouble();
@@ -318,7 +318,7 @@ public:
         ReconstructionConstraint::Pointer NewConstraint;
 
         std::vector<int> list_of_edge_ids;
-        for(int index=0; index<rListOfEdgeIds.size(); index++)
+        for(unsigned int index=0; index<rListOfEdgeIds.size(); index++)
             list_of_edge_ids.push_back(rListOfEdgeIds.GetArrayItem(index).GetInt());
 
         BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();

@@ -1000,8 +1000,8 @@ class QualityEvaluationVTKOutputUtilities
     std::string mcaseName;
     std::string mOutputFilename;
 
-    Parameters mNodalResults;
     std::string mVTKType;
+    Parameters mNodalResults;
     unsigned int mDefaultPrecision;
     std::map<int, int> mKratosIdToVtkId;
     unsigned int mVtkCellListSize;

@@ -382,8 +382,6 @@ private:
 
         for(auto & condition_i : mrReconstructionConditions)
         {
-            int condition_index = &condition_i-&mrReconstructionConditions[0];
-
             // Get condition data
             array_1d<double,3> fe_coordinates_undeformed;
             array_1d<double,3> fe_coordinates_deformed;

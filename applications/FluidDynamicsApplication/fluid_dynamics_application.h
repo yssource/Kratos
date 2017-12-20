@@ -62,9 +62,6 @@
 #include "custom_elements/navier_stokes.h"
 #include "custom_elements/embedded_navier_stokes.h"
 #include "custom_elements/embedded_ausas_navier_stokes.h"
-
-
-//elisa
 #include "custom_elements/compressible_navier_stokes.h"
 
 namespace Kratos
@@ -315,7 +312,6 @@ private:
     /// Embedded Navier-Stokes symbolic element
     const EmbeddedNavierStokes<2> mEmbeddedNavierStokes2D;
     const EmbeddedNavierStokes<3> mEmbeddedNavierStokes3D;
-    /// elisa
     /// Compressible Navier-Stokes symbolic element
     const CompressibleNavierStokes<2> mCompressibleNavierStokes2D;
     const CompressibleNavierStokes<3> mCompressibleNavierStokes3D;

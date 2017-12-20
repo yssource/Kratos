@@ -352,7 +352,7 @@ protected:
 
     void ComputeGaussPointLHSContribution(bounded_matrix<double,TNumNodes*(BlockSize),TNumNodes*(BlockSize)>& lhs, const ElementDataStruct& data);
     void ComputeGaussPointRHSContribution(array_1d<double,TNumNodes*(BlockSize)>& rhs, const ElementDataStruct& data);
-    KRATOS_WATCH(rhs)
+
     double SubscaleErrorEstimate(const ElementDataStruct& data);
 
     ///@}

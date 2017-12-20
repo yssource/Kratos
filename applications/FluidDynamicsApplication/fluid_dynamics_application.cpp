@@ -81,7 +81,7 @@ KratosFluidDynamicsApplication::KratosFluidDynamicsApplication():
     mEmbeddedNavierStokes2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mEmbeddedNavierStokes3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
     
-    // elisa Compressible Navier-Stokes symbolic elements
+    // Compressible Navier-Stokes symbolic elements
     mCompressibleNavierStokes2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mCompressibleNavierStokes3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
     // Embedded Navier-Stokes symbolic element with Ausas discontinuous shape functions
@@ -176,7 +176,7 @@ void KratosFluidDynamicsApplication::Register()
     KRATOS_REGISTER_ELEMENT("NavierStokes3D4N",mNavierStokes3D);
     KRATOS_REGISTER_ELEMENT("EmbeddedNavierStokes2D3N",mEmbeddedNavierStokes2D);
     KRATOS_REGISTER_ELEMENT("EmbeddedNavierStokes3D4N",mEmbeddedNavierStokes3D);
-    //elisa
+    // Compressible Navier-Stokes symbolic elements
     KRATOS_REGISTER_ELEMENT("CompressibleNavierStokes2D3N",mCompressibleNavierStokes2D);
     KRATOS_REGISTER_ELEMENT("CompressibleNavierStokes3D4N",mCompressibleNavierStokes3D);
     KRATOS_REGISTER_ELEMENT("EmbeddedAusasNavierStokes2D3N",mEmbeddedAusasNavierStokes2D);

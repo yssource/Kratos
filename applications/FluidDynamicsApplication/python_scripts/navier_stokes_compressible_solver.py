@@ -28,7 +28,7 @@ class NavierStokesCompressibleSolver(navier_stokes_base_solver.NavierStokesBaseS
                 "input_filename": "two_element_test"
             },
             "maximum_iterations": 10,
-            "echo_level": 0,
+            "echo_level": 3,
             "time_order": 2,
             "compute_reactions": false,
             "reform_dofs_at_each_step" : true,
@@ -103,15 +103,10 @@ class NavierStokesCompressibleSolver(navier_stokes_base_solver.NavierStokesBaseS
     def AddDofs(self):
         print("Inside AddDof()")
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.MOMENTUM_X, KratosMultiphysics.REACTION_X, self.main_model_part)
-        print("1")
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.MOMENTUM_Y, KratosMultiphysics.REACTION_Y, self.main_model_part)
-        print("2")
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.MOMENTUM_Z, KratosMultiphysics.REACTION_Z, self.main_model_part)
-        print("3")
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.DENSITY, KratosFluid.REACTION_DENSITY, self.main_model_part)
-        print("4")
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.TOTAL_ENERGY, KratosFluid.REACTION_ENERGY, self.main_model_part)
-        print("5")
 
     def Initialize(self):
         print("Inside Initialize() ..")

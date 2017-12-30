@@ -91,6 +91,12 @@ Begin Conditions WallCondition2D2N// GUI group identifier: NoSlip
 13 0 3 1
 End Conditions
 
+Begin Conditions WallCondition2D2N// GUI group identifier: Bottom
+14 0 21 22
+15 0 22 23
+16 0 23 24
+End Conditions
+
 Begin SubModelPart Parts_Fluid // Group Fluid // Subtree Parts
     Begin SubModelPartNodes
          1

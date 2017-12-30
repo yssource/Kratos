@@ -1,4 +1,5 @@
 import KratosMultiphysics
+import KratosMultiphysics.ExternalSolversApplication
 import KratosMultiphysics.FluidDynamicsApplication as KratosFluid
 
 import KratosMultiphysics.KratosUnittest as UnitTest
@@ -19,7 +20,7 @@ class WorkFolderScope:
 class EmbeddedReservoirTest(UnitTest.TestCase):
     def testEmbeddedReservoir2D(self):
         self.distance = 0.5
-        self.slip_level_set = False
+        self.embedded_formulation = "NoSlip"
         self.work_folder = "EmbeddedReservoirTest"   
         self.reference_file = "reference_reservoir_2D"
         self.settings = "EmbeddedReservoir2DTest_parameters.json"
@@ -34,7 +35,7 @@ class EmbeddedReservoirTest(UnitTest.TestCase):
 
     def testEmbeddedReservoir3D(self):
         self.distance = 0.5
-        self.slip_level_set = False
+        self.embedded_formulation = "NoSlip"
         self.work_folder = "EmbeddedReservoirTest"   
         self.reference_file = "reference_reservoir_3D"
         self.settings = "EmbeddedReservoir3DTest_parameters.json"
@@ -49,7 +50,7 @@ class EmbeddedReservoirTest(UnitTest.TestCase):
 
     def testEmbeddedSlipReservoir2D(self):
         self.distance = 0.5
-        self.slip_level_set = True
+        self.embedded_formulation = "Slip"
         self.work_folder = "EmbeddedReservoirTest"   
         self.reference_file = "reference_slip_reservoir_2D"
         self.settings = "EmbeddedReservoir2DTest_parameters.json"
@@ -64,7 +65,37 @@ class EmbeddedReservoirTest(UnitTest.TestCase):
 
     def testEmbeddedSlipReservoir3D(self):
         self.distance = 0.5
-        self.slip_level_set = True
+        self.embedded_formulation = "Slip"
+        self.work_folder = "EmbeddedReservoirTest"   
+        self.reference_file = "reference_slip_reservoir_3D"
+        self.settings = "EmbeddedReservoir3DTest_parameters.json"
+
+        with WorkFolderScope(self.work_folder):
+            self.setUp()
+            self.setUpProblem()
+            self.setUpDistanceField()
+            self.runTest()
+            self.tearDown()
+            self.checkResults()
+
+    def testEmbeddedAusasSlipReservoir2D(self):
+        self.distance = 0.5
+        self.embedded_formulation = "AusasSlip"
+        self.work_folder = "EmbeddedReservoirTest"   
+        self.reference_file = "reference_slip_reservoir_2D"
+        self.settings = "EmbeddedReservoir2DTest_parameters.json"
+
+        with WorkFolderScope(self.work_folder):
+            self.setUp()
+            self.setUpProblem()
+            self.setUpDistanceField()
+            self.runTest()
+            self.tearDown()
+            self.checkResults()
+
+    def testEmbeddedAusasSlipReservoir3D(self):
+        self.distance = 0.5
+        self.embedded_formulation = "AusasSlip"
         self.work_folder = "EmbeddedReservoirTest"   
         self.reference_file = "reference_slip_reservoir_3D"
         self.settings = "EmbeddedReservoir3DTest_parameters.json"
@@ -99,6 +130,21 @@ class EmbeddedReservoirTest(UnitTest.TestCase):
             self.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.DOMAIN_SIZE, self.ProjectParameters["problem_data"]["domain_size"].GetInt())
 
             Model = {self.ProjectParameters["problem_data"]["model_part_name"].GetString() : self.main_model_part}
+
+            ## Set the solver type according to the embedded formulation
+            if ((self.embedded_formulation == "NoSlip") or (self.embedded_formulation == "Slip")):
+                self.ProjectParameters["solver_settings"]["solver_type"].SetString("Embedded")
+            elif (self.embedded_formulation == "AusasSlip"):
+                self.ProjectParameters["solver_settings"]["solver_type"].SetString("EmbeddedAusas")
+            else:
+                raise Exception("Wrong solver type in embedded reservoir test settings.")
+
+            ## Set the distance modification settings according to the embedded formulation
+            ## Note that process 2 corresponds to the distance modification one in the settings Json file
+            if ((self.embedded_formulation == "NoSlip") or (self.embedded_formulation == "Slip")):
+                self.ProjectParameters["boundary_conditions_process_list"][2]["Parameters"]["deactivate_full_negative_elements"].SetBool(True)
+            elif (self.embedded_formulation == "AusasSlip"):
+                self.ProjectParameters["boundary_conditions_process_list"][2]["Parameters"]["deactivate_full_negative_elements"].SetBool(False)
 
             ## Solver construction
             import python_solvers_wrapper_fluid
@@ -155,7 +201,7 @@ class EmbeddedReservoirTest(UnitTest.TestCase):
             element.SetValue(KratosMultiphysics.ELEMENTAL_DISTANCES, elem_dist)
 
         # If proceeds, set the SLIP flag
-        if (self.slip_level_set):
+        if ((self.embedded_formulation == "Slip") or (self.embedded_formulation == "AusasSlip")):
             KratosMultiphysics.VariableUtils().SetFlag(KratosMultiphysics.SLIP, True, self.main_model_part.Elements)
 
     def runTest(self):
@@ -243,9 +289,9 @@ if __name__ == '__main__':
     test = EmbeddedReservoirTest()
     test.setUp()
     test.distance = 0.5
-    test.slip_level_set = False
-    test.print_output = False
+    test.print_output = True
     test.print_reference_values = False
+    test.embedded_formulation = "AusasSlip"
     test.work_folder = "EmbeddedReservoirTest"
     test.reference_file = "reference_slip_reservoir_2D"   
     test.settings = "EmbeddedReservoir2DTest_parameters.json"

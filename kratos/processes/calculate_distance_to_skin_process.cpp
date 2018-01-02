@@ -118,11 +118,13 @@ namespace Kratos
         const double epsilon = 1e-12;
 
         double distances[3] = {1.0, 1.0, 1.0};
+		bool ray_is_valid[3]={true,true,true};
 
         for (int i_direction = 0; i_direction < dimension; i_direction++)
         {
             // Creating the ray
             double ray[3] = {coords[0], coords[1], coords[2]};
+
 
 			OctreeType* pOctree = CalculateDiscontinuousDistanceToSkinProcess::CalculateDiscontinuousDistanceToSkinProcess::mFindIntersectedObjectsProcess.GetOctreePointer();
             pOctree->NormalizeCoordinates(ray);
@@ -151,7 +153,7 @@ namespace Kratos
                         distances[i_direction] = -d;
                     break;
                 }
-
+				ray_is_valid[i_direction] = !ray_is_valid[i_direction];
                 i_intersection++;
             }
 
@@ -160,6 +162,25 @@ namespace Kratos
 
         double distance = (fabs(distances[0]) > fabs(distances[1])) ? distances[1] : distances[0];
         distance = (fabs(distance) > fabs(distances[2])) ? distances[2] : distance;
+
+		if(ray_is_valid[2]) { // z direction ray is the important one
+			if(distance * distances[2] < 0)
+				distance = -distance;
+		}
+		else{ // we vote
+			int number_of_positive_distances = 0;
+			int number_of_negative_distances = 0;
+			for(int i = 0 ; i < 3 ; i++)
+				if(distances[i] > -epsilon)
+					number_of_positive_distances++;
+				else
+					number_of_negative_distances++;
+
+			if (number_of_positive_distances > number_of_negative_distances)
+				distance = std::abs(distance);
+			else
+				distance = -std::abs(distance);
+		}
 
         return distance;
 	}

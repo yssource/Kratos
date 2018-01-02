@@ -22,6 +22,7 @@ from volume_source_test import VolumeSourceTest
 from darcy_channel_test import DarcyChannelTest
 from embedded_reservoir_test import EmbeddedReservoirTest
 from embedded_ausas_couette_test import EmbeddedAusasCouetteTest
+from embedded_circular_flow_test import EmbeddedCircularFlowTest
 
 ## NIGTHLY TESTS
 
@@ -55,6 +56,9 @@ def AssambleTestSuites():
     smallSuite.addTest(EmbeddedReservoirTest('testEmbeddedReservoir2D'))
     smallSuite.addTest(EmbeddedReservoirTest('testEmbeddedSlipReservoir2D'))
     smallSuite.addTest(EmbeddedAusasCouetteTest('testEmbeddedAusasCouette2D'))
+    smallSuite.addTest(EmbeddedCircularFlowTest('testEmbeddedCircularFlow2D'))
+    smallSuite.addTest(EmbeddedCircularFlowTest('testEmbeddedSlipCircularFlow2D'))
+    smallSuite.addTest(EmbeddedCircularFlowTest('testEmbeddedAusasSlipCircularFlow2D'))
     #smallSuite.addTest(BuoyancyTest('testBFECC')) # I'm skipping this one, it varies too much between runs JC.
 
     # Create a test suite with the selected tests plus all small tests

@@ -19,7 +19,7 @@ class WorkFolderScope:
         os.chdir(self.currentPath)
 
 class EmbeddedCircularFlowTest(UnitTest.TestCase):
-    def testEmbeddedReservoir2D(self):
+    def testEmbeddedCircularFlow2D(self):
         self.distance = 0.5
         self.embedded_formulation = "NoSlip"
         self.work_folder = "EmbeddedCircularFlow2DTest"   
@@ -34,7 +34,7 @@ class EmbeddedCircularFlowTest(UnitTest.TestCase):
             self.tearDown()
             self.checkResults()
 
-    def testEmbeddedSlipReservoir2D(self):
+    def testEmbeddedSlipCircularFlow2D(self):
         self.distance = 0.5
         self.embedded_formulation = "Slip"
         self.work_folder = "EmbeddedCircularFlow2DTest"   
@@ -49,7 +49,7 @@ class EmbeddedCircularFlowTest(UnitTest.TestCase):
             self.tearDown()
             self.checkResults()
 
-    def testEmbeddedAusasSlipReservoir2D(self):
+    def testEmbeddedAusasSlipCircularFlow2D(self):
         self.distance = 0.5
         self.embedded_formulation = "AusasSlip"
         self.work_folder = "EmbeddedCircularFlow2DTest"   
@@ -242,7 +242,7 @@ if __name__ == '__main__':
     test.distance = 0.5
     test.print_output = True
     test.print_reference_values = False
-    test.embedded_formulation = "Slip"
+    test.embedded_formulation = "AusasSlip"
     test.work_folder = "EmbeddedCircularFlow2DTest"
     test.reference_file = "reference_ausas_slip_circular_flow_2D"   
     test.settings = "EmbeddedCircularFlow2DTest_parameters.json"

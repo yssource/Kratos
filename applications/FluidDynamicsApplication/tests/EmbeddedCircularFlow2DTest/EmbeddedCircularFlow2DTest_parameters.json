@@ -48,6 +48,9 @@
         "absolute_velocity_tolerance" : 1e-7,
         "relative_pressure_tolerance" : 1e-5,
         "absolute_pressure_tolerance" : 1e-7,
+        "linear_solver_settings"      : {
+            "solver_type" : "SuperLUSolver"
+        },
         "volume_model_part_name"      : "Parts_Fluid",
         "skin_parts"                  : ["NoSlip2D_Ext_boundary","Outlet2D_Fix_pressure"],
         "no_skin_parts"               : [],
@@ -75,7 +78,7 @@
         "kratos_module" : "KratosMultiphysics",
         "process_name"  : "AssignScalarVariableProcess",
         "Parameters"    : {
-            "model_part_name" : "Outlet2D_Fix_pressure",
+            "model_part_name" : "NoSlip2D_Ext_boundary",
             "variable_name"   : "PRESSURE",
             "value"           : 0.0,
             "constrained"     : true,

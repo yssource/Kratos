@@ -60,7 +60,8 @@ namespace Kratos
 		for (int k = 0; k< static_cast<int> (mrVolumePart.NumberOfElements()); ++k)
 		{
 			ModelPart::ElementsContainerType::iterator itElement = mrVolumePart.ElementsBegin() + k;
-			itElement->Set(TO_SPLIT, false);
+			itElement->Set(TO_SPLIT, false);			
+			itElement->Set(TO_REFINE, false);
 			itElement->SetValue(EMBEDDED_VELOCITY, ZeroVector(3));
 			itElement->SetValue(ELEMENTAL_DISTANCES,ElementalDistances);
 		}
@@ -144,6 +145,9 @@ namespace Kratos
 				has_negative_distance = true;
 
 		rElement1.Set(TO_SPLIT, has_positive_distance && has_negative_distance);
+
+		if(rIntersectedObjects.size()>1)
+			rElement1.Set(TO_REFINE, true);
 	}
 
 	double CalculateDiscontinuousDistanceToSkinProcess::CalculateDistanceToNode(Element& rElement1, int NodeIndex, PointerVector<GeometricalObject>& rIntersectedObjects, const double Epsilon)

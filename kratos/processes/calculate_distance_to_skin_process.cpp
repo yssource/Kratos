@@ -163,24 +163,19 @@ namespace Kratos
         double distance = (fabs(distances[0]) > fabs(distances[1])) ? distances[1] : distances[0];
         distance = (fabs(distance) > fabs(distances[2])) ? distances[2] : distance;
 
-		if(ray_is_valid[2]) { // z direction ray is the important one
-			if(distance * distances[2] < 0)
-				distance = -distance;
-		}
-		else{ // we vote
-			int number_of_positive_distances = 0;
-			int number_of_negative_distances = 0;
-			for(int i = 0 ; i < 3 ; i++)
-				if(distances[i] > -epsilon)
-					number_of_positive_distances++;
-				else
-					number_of_negative_distances++;
-
-			if (number_of_positive_distances > number_of_negative_distances)
-				distance = std::abs(distance);
+		// we vote
+		int number_of_positive_distances = 0;
+		int number_of_negative_distances = 0;
+		for(int i = 0 ; i < 3 ; i++)
+			if(distances[i] > -epsilon)
+				number_of_positive_distances++;
 			else
-				distance = -std::abs(distance);
-		}
+				number_of_negative_distances++;
+
+		if (number_of_positive_distances > number_of_negative_distances)
+			distance = std::abs(distance);
+		else
+			distance = -std::abs(distance);
 
         return distance;
 	}

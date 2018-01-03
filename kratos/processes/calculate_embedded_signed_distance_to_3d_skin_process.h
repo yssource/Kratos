@@ -106,8 +106,10 @@ public:
         }
         else
         {
+          Parameters use_default_parameters("{}");
+
             pdistance_calculator = CalculateDiscontinuousDistanceToSkinProcess::Pointer(
-                new CalculateDistanceToSkinProcess(mrFluidModelPart, mrSkinModelPart));
+                new CalculateDistanceToSkinProcess(mrFluidModelPart, mrSkinModelPart,use_default_parameters));
         }
 
         // Call the distance calculator methods

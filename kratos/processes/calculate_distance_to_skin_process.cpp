@@ -182,15 +182,15 @@ void CalculateDistanceToSkinProcess::Initialize() {
         distance = (fabs(distance) > fabs(distances[2])) ? distances[2] : distance;
 
 		// we vote
-		int number_of_positive_distances = 0;
-		int number_of_negative_distances = 0;
+		double positive_distances_weight = 0;
+		double negative_distances_weight = 0;
 		for(int i = 0 ; i < 3 ; i++)
 			if(distances[i] > -mEpsilon)
-				number_of_positive_distances++;
+				positive_distances_weight+= mValidRayWeights[i];
 			else
-				number_of_negative_distances++;
+				negative_distances_weight+= mValidRayWeights[i];
 
-		if (number_of_positive_distances > number_of_negative_distances)
+		if (positive_distances_weight > negative_distances_weight)
 			distance = std::abs(distance);
 		else
 			distance = -std::abs(distance);

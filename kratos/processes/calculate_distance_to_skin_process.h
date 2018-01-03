@@ -25,6 +25,7 @@
 // Project includes
 #include "processes/find_intersected_geometrical_objects_process.h"
 #include "processes/calculate_discontinuous_distance_to_skin_process.h"
+#include "includes/kratos_parameters.h"
 
 namespace Kratos
 {
@@ -57,7 +58,7 @@ namespace Kratos
       ///@{
 
 	  /// Constructor to be used.
-	  CalculateDistanceToSkinProcess(ModelPart& rVolumePart, ModelPart& rSkinPart);
+	  CalculateDistanceToSkinProcess(ModelPart& rVolumePart, ModelPart& rSkinPart, Parameters rParameters);
 
 	  /// Destructor.
       ~CalculateDistanceToSkinProcess() override;
@@ -126,6 +127,9 @@ namespace Kratos
       ///@name Member Variables
       ///@{
 
+        double mEpsilon;
+        array_1d<double, 3> mValidRayWeights;
+        array_1d<double, 3> mInvalidRayWeights;
 
       ///@}
       ///@name Private Operators

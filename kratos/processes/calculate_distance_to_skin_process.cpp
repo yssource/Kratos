@@ -24,19 +24,38 @@
 namespace Kratos
 {
 
-	CalculateDistanceToSkinProcess::CalculateDistanceToSkinProcess(ModelPart& rVolumePart, ModelPart& rSkinPart)
-		: CalculateDiscontinuousDistanceToSkinProcess(rVolumePart, rSkinPart)
-	{
-	}
+CalculateDistanceToSkinProcess::CalculateDistanceToSkinProcess(
+    ModelPart &rVolumePart, ModelPart &rSkinPart, Parameters TheParameters)
+    : CalculateDiscontinuousDistanceToSkinProcess(rVolumePart, rSkinPart) {
 
-	CalculateDistanceToSkinProcess::~CalculateDistanceToSkinProcess()
-	{
-	}
+  Parameters default_parameters(R"(
+            {
+                "epsilon"                       : 1e-12, 
+                "ray_casting" : {
+                    "xyz_valid_weights"       : [1.0, 1.0, 1.0],
+                    "xyz_invalid_weights"     : [0.0, 0.0, 0.0]
+                }
+            }  )");
 
-	void CalculateDistanceToSkinProcess::Initialize()
-	{
-		CalculateDiscontinuousDistanceToSkinProcess::Initialize();
-		this->InitializeNodalDistances();
+  TheParameters.ValidateAndAssignDefaults(default_parameters);
+
+  mEpsilon = TheParameters["epsilon"].GetDouble();
+
+  Parameters ray_casting_parameters = TheParameters["ray_casting"];
+  mValidRayWeights[0] = ray_casting_parameters["xyz_valid_weights"][0].GetDouble();
+  mValidRayWeights[1] = ray_casting_parameters["xyz_valid_weights"][1].GetDouble();
+  mValidRayWeights[2] = ray_casting_parameters["xyz_valid_weights"][2].GetDouble();
+
+  mInvalidRayWeights[0] = ray_casting_parameters["xyz_invalid_weights"][0].GetDouble();
+  mInvalidRayWeights[1] = ray_casting_parameters["xyz_invalid_weights"][1].GetDouble();
+  mInvalidRayWeights[2] = ray_casting_parameters["xyz_invalid_weights"][2].GetDouble();
+}
+
+CalculateDistanceToSkinProcess::~CalculateDistanceToSkinProcess() {}
+
+void CalculateDistanceToSkinProcess::Initialize() {
+  CalculateDiscontinuousDistanceToSkinProcess::Initialize();
+  this->InitializeNodalDistances();
 	}
 
 	void CalculateDistanceToSkinProcess::InitializeNodalDistances()
@@ -115,7 +134,6 @@ namespace Kratos
         intersections_container_type intersections;
 
         const int dimension = 3;
-        const double epsilon = 1e-12;
 
         double distances[3] = {1.0, 1.0, 1.0};
 		bool ray_is_valid[3]={true,true,true};
@@ -137,12 +155,12 @@ namespace Kratos
             while (i_intersection != intersections.end())
 			{
                 double d = coords[i_direction] - i_intersection->first;
-                if (d > epsilon)
+                if (d > mEpsilon)
 				{
                     ray_color = -ray_color;
                     distances[i_direction] = d;
                 }
-				else if (d > -epsilon)
+				else if (d > -mEpsilon)
 				{
                     distances[i_direction] = 0.00;
                     break;
@@ -167,7 +185,7 @@ namespace Kratos
 		int number_of_positive_distances = 0;
 		int number_of_negative_distances = 0;
 		for(int i = 0 ; i < 3 ; i++)
-			if(distances[i] > -epsilon)
+			if(distances[i] > -mEpsilon)
 				number_of_positive_distances++;
 			else
 				number_of_negative_distances++;
@@ -185,8 +203,6 @@ namespace Kratos
 		//This function passes the ray through the model and gives the hit point to all objects in its way
         //ray is of dimension (3) normalized in (0,1)^3 space
         // direction can be 0,1,2 which are x,y and z respectively
-
-        const double epsilon = 1.00e-12;
 
         // first clearing the intersections points vector
         intersections.clear();
@@ -226,7 +242,7 @@ namespace Kratos
             while (++i_begin != intersections.end())
 			{
                 // considering the very near points as the same points
-                if (fabs(i_begin->first - i_intersection->first) > epsilon) // if the hit points are far enough they are not the same
+                if (fabs(i_begin->first - i_intersection->first) > mEpsilon) // if the hit points are far enough they are not the same
                     *(++i_intersection) = *i_begin;
             }
             intersections.resize((++i_intersection) - intersections.begin());
@@ -280,8 +296,6 @@ namespace Kratos
 	//TODO: This method has been adapted from the previous implementation. It is still pending to update it.
 	int CalculateDistanceToSkinProcess::IntersectionTriangleSegment(Element::GeometryType& rGeometry, double* RayPoint1, double* RayPoint2, double* IntersectionPoint)
 	{
-		const double epsilon = 1.00e-12;
-
         array_1d<double,3>    u, v, n;             // triangle vectors
         array_1d<double,3>    dir, w0, w;          // ray vectors
         double     r, a, b;             // params to calc ray-plane intersect
@@ -310,12 +324,12 @@ namespace Kratos
 		double sign_distance_1 = inner_prod(n, ray_point_1) + triangle_origin_distance;
 		double sign_distance_2 = inner_prod(n, ray_point_2) + triangle_origin_distance;
 
-		if (sign_distance_1*sign_distance_2 > epsilon) // segment line point on the same side of plane
+		if (sign_distance_1*sign_distance_2 > mEpsilon) // segment line point on the same side of plane
 			return 0;
 		a = -inner_prod(n,w0);
         b = inner_prod(n,dir);
 
-        if (fabs(b) < epsilon) // ray is parallel to triangle plane
+        if (fabs(b) < mEpsilon) // ray is parallel to triangle plane
 		{
             if (a == 0)                // ray lies in triangle plane
                 return 2;
@@ -347,10 +361,10 @@ namespace Kratos
         // get and test parametric coords
         double s, t;
         s = (uv * wv - vv * wu) / D;
-        if (s < 0.0 - epsilon || s > 1.0 + epsilon)        // I is outside T
+        if (s < 0.0 - mEpsilon || s > 1.0 + mEpsilon)        // I is outside T
             return 0;
         t = (uv * wu - uu * wv) / D;
-        if (t < 0.0 - epsilon || (s + t) > 1.0 + epsilon)  // I is outside T
+        if (t < 0.0 - mEpsilon || (s + t) > 1.0 + mEpsilon)  // I is outside T
             return 0;
 
         return 1;                      // I is in T

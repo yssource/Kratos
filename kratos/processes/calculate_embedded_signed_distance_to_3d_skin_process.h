@@ -113,9 +113,10 @@ public:
         }
 
         // Call the distance calculator methods
-        pdistance_calculator->Initialize();
-        pdistance_calculator->FindIntersections();
-        pdistance_calculator->CalculateDistances(pdistance_calculator->GetIntersections());
+        pdistance_calculator->Execute();
+        // pdistance_calculator->Initialize();
+        // pdistance_calculator->FindIntersections();
+        // pdistance_calculator->CalculateDistances(pdistance_calculator->GetIntersections());
 
         // TODO: Raycasting
 

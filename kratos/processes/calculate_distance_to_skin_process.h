@@ -119,6 +119,15 @@ namespace Kratos
       ///@}
 
     private:
+        struct Statistics {
+            array_1d<std::size_t,3> NumberOfValidRays;
+            array_1d<std::size_t,3> NumberOfInvalidRays;
+            int NumberOfConsensusVotes;
+            int NumberOfNoConsensusVotes;
+            int NumberOfIrregularElementalDistances;
+            Statistics(): NumberOfValidRays(ZeroVector(3)), NumberOfInvalidRays(ZeroVector(3)), NumberOfConsensusVotes(0), NumberOfNoConsensusVotes(0), NumberOfIrregularElementalDistances(0) {}
+        };
+
       ///@name Static Member Variables
       ///@{
 
@@ -130,7 +139,7 @@ namespace Kratos
         double mEpsilon;
         array_1d<double, 3> mValidRayWeights;
         array_1d<double, 3> mInvalidRayWeights;
-
+        Statistics mStatistics;
       ///@}
       ///@name Private Operators
       ///@{

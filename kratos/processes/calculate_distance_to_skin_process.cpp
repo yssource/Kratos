@@ -12,7 +12,7 @@
 
 
 // System includes
-
+#include <chrono>
 
 // External includes
 
@@ -23,10 +23,24 @@
 
 namespace Kratos
 {
+namespace Internals
+{
+    class Timer {
+    std::chrono::high_resolution_clock::time_point _start;
 
+   public:
+    using duration_type = long long;
+    Timer() : _start(std::chrono::high_resolution_clock::now()) {}
+    std::chrono::milliseconds elapsed() {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::high_resolution_clock::now() - _start);
+    }
+    void reset() { _start = std::chrono::high_resolution_clock::now(); }
+};
+}
 CalculateDistanceToSkinProcess::CalculateDistanceToSkinProcess(
     ModelPart &rVolumePart, ModelPart &rSkinPart, Parameters TheParameters)
-    : CalculateDiscontinuousDistanceToSkinProcess(rVolumePart, rSkinPart) {
+    : CalculateDiscontinuousDistanceToSkinProcess(rVolumePart, rSkinPart) , mStatistics(){
 
   Parameters default_parameters(R"(
             {
@@ -107,7 +121,37 @@ void CalculateDistanceToSkinProcess::Initialize() {
 			ModelPart::NodesContainerType::iterator itNode = ModelPart1.NodesBegin() + k;
             this->CalculateNodeDistance(*itNode);
         }
+        		
+        constexpr int number_of_tetrahedra_points = 4;
+		for (auto& element : ModelPart1.Elements())
+		{
+            int number_of_positive_distances = 0;
+			if (element.IsNot(TO_SPLIT))
+			{
+                array_1d<double*, number_of_tetrahedra_points> distances;
+				for (int i = 0; i < number_of_tetrahedra_points; i++)
+				{
+					Node<3>& r_node = element.GetGeometry()[i];
+                    distances[i] = &(r_node.GetSolutionStepValue(DISTANCE));
+					if(*(distances[i]) > -mEpsilon) 
+                        number_of_positive_distances++;
 
+				}
+                if(number_of_positive_distances != 0 && number_of_positive_distances != number_of_tetrahedra_points){
+                    if(number_of_positive_distances == 1){
+                        for (int i = 0; i < number_of_tetrahedra_points; i++)
+                            *(distances[i]) = -std::abs(*(distances[i]));
+                    }
+                    else if(number_of_positive_distances == 3){
+                        for (int i = 0; i < number_of_tetrahedra_points; i++)
+                            *(distances[i]) = std::abs(*(distances[i]));
+                    }
+                    else
+                        mStatistics.NumberOfIrregularElementalDistances++;
+                }
+
+			}
+		}
 	}
 
 	//TODO: This method has been adapted from the previous implementation. It is still pending to update it.
@@ -174,6 +218,10 @@ void CalculateDistanceToSkinProcess::Initialize() {
 				ray_is_valid[i_direction] = !ray_is_valid[i_direction];
                 i_intersection++;
             }
+            if (ray_is_valid[i_direction])
+                mStatistics.NumberOfValidRays[i_direction]++;
+            else
+                mStatistics.NumberOfInvalidRays[i_direction]++;
 
             distances[i_direction] *= ray_color;
         }
@@ -184,11 +232,22 @@ void CalculateDistanceToSkinProcess::Initialize() {
 		// we vote
 		double positive_distances_weight = 0;
 		double negative_distances_weight = 0;
+        bool has_positive_distance = false;
+        bool has_negative_distance = false;
 		for(int i = 0 ; i < 3 ; i++)
-			if(distances[i] > -mEpsilon)
+			if(distances[i] > -mEpsilon){
 				positive_distances_weight+= mValidRayWeights[i];
-			else
+                has_positive_distance = true;
+            }
+			else{
 				negative_distances_weight+= mValidRayWeights[i];
+                has_negative_distance = true;
+            }
+
+        if(has_positive_distance && has_negative_distance)
+            mStatistics.NumberOfNoConsensusVotes++;
+        else
+            mStatistics.NumberOfConsensusVotes++;
 
 		if (positive_distances_weight > negative_distances_weight)
 			distance = std::abs(distance);
@@ -373,9 +432,27 @@ void CalculateDistanceToSkinProcess::Initialize() {
 
 	void CalculateDistanceToSkinProcess::Execute()
 	{
+        Internals::Timer timer;
 		this->Initialize();
+        std::cout << "Initialization is done in " << timer.elapsed().count() << " milliseconds" << std::endl;
+
+        timer.reset();
 		this->FindIntersections();
+        std::cout << "FindIntersections is done in " << timer.elapsed().count()  << " milliseconds" << std::endl;
+
+        timer.reset();
 		this->CalculateDistances(this->GetIntersections());
+        std::cout << "CalculateDistances is done in " << timer.elapsed().count()  << " milliseconds" << std::endl;
+
+        		
+        ModelPart& ModelPart1 = (CalculateDiscontinuousDistanceToSkinProcess::mFindIntersectedObjectsProcess).GetModelPart1();
+
+        std::cout << "    NumberOfValidRays        : " << mStatistics.NumberOfValidRays[0] << "," << mStatistics.NumberOfValidRays[1] << "," << mStatistics.NumberOfValidRays[2] << std::endl;
+        std::cout << "    NumberOfInvalidRays      : " << mStatistics.NumberOfInvalidRays[0] << "," << mStatistics.NumberOfInvalidRays[1] << "," << mStatistics.NumberOfInvalidRays[2] << std::endl;
+        std::cout << "    NumberOfConsensusVotes   : " << mStatistics.NumberOfConsensusVotes << " (" << static_cast<double>(mStatistics.NumberOfConsensusVotes) / ModelPart1.NumberOfNodes() *100.00 << "%)" <<  std::endl;
+        std::cout << "    NumberOfNoConsensusVotes : " << mStatistics.NumberOfNoConsensusVotes << " (" << static_cast<double>(mStatistics.NumberOfNoConsensusVotes) / ModelPart1.NumberOfNodes() *100.00 << "%)" << std::endl;
+        std::cout << "    NumberOfIrregularElementalDistances : " << mStatistics.NumberOfIrregularElementalDistances << std::endl;
+
 	}
 
 	/// Turn back information as a string.

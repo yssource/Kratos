@@ -123,35 +123,40 @@ void CalculateDistanceToSkinProcess::Initialize() {
         }
         		
         constexpr int number_of_tetrahedra_points = 4;
-		for (auto& element : ModelPart1.Elements())
-		{
-            int number_of_positive_distances = 0;
-			if (element.IsNot(TO_SPLIT))
-			{
-                array_1d<double*, number_of_tetrahedra_points> distances;
-				for (int i = 0; i < number_of_tetrahedra_points; i++)
-				{
-					Node<3>& r_node = element.GetGeometry()[i];
-                    distances[i] = &(r_node.GetSolutionStepValue(DISTANCE));
-					if(*(distances[i]) > -mEpsilon) 
-                        number_of_positive_distances++;
+        for(int repeat = 0 ; repeat < 10 ; repeat++){
+            mStatistics.NumberOfIrregularElementalDistances = 0;
+            for (auto& element : ModelPart1.Elements())
+            {
+                int number_of_positive_distances = 0;
+                if (element.IsNot(TO_SPLIT))
+                {
+                    array_1d<double*, number_of_tetrahedra_points> distances;
+                    for (int i = 0; i < number_of_tetrahedra_points; i++)
+                    {
+                        Node<3>& r_node = element.GetGeometry()[i];
+                        distances[i] = &(r_node.GetSolutionStepValue(DISTANCE));
+                        if(*(distances[i]) > -mEpsilon) 
+                            number_of_positive_distances++;
 
-				}
-                if(number_of_positive_distances != 0 && number_of_positive_distances != number_of_tetrahedra_points){
-                    if(number_of_positive_distances == 1){
-                        for (int i = 0; i < number_of_tetrahedra_points; i++)
-                            *(distances[i]) = -std::abs(*(distances[i]));
                     }
-                    else if(number_of_positive_distances == 3){
-                        for (int i = 0; i < number_of_tetrahedra_points; i++)
-                            *(distances[i]) = std::abs(*(distances[i]));
+                    if(number_of_positive_distances != 0 && number_of_positive_distances != number_of_tetrahedra_points){
+                        if(number_of_positive_distances == 1){
+                            for (int i = 0; i < number_of_tetrahedra_points; i++)
+                                *(distances[i]) = -std::abs(*(distances[i]));
+                        }
+                        else if(number_of_positive_distances == 3){
+                            for (int i = 0; i < number_of_tetrahedra_points; i++)
+                                *(distances[i]) = std::abs(*(distances[i]));
+                        }
+                        else
+                            mStatistics.NumberOfIrregularElementalDistances++;
                     }
-                    else
-                        mStatistics.NumberOfIrregularElementalDistances++;
+
                 }
-
-			}
-		}
+            }
+            if(mStatistics.NumberOfIrregularElementalDistances == 0)
+                break;
+        }
 	}
 
 	//TODO: This method has been adapted from the previous implementation. It is still pending to update it.

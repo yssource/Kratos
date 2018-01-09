@@ -65,7 +65,7 @@ namespace Kratos {
             pElemProp->SetValue(DYNAMIC_VISCOSITY, 1.846e-05);
             pElemProp->SetValue(KINEMATIC_VISCOSITY, 1.568e-05);
             pElemProp->SetValue(CONDUCTIVITY,  0.0257);
-            pElemProp->SetValue(SPECIFIC_HEAT,  0.718);
+            pElemProp->SetValue(SPECIFIC_HEAT,  718);
             pElemProp->SetValue(HEAT_CAPACITY_RATIO, 1.4);
 
 			// Geometry creation
@@ -81,14 +81,15 @@ namespace Kratos {
             
 			// Define the nodal values
 			array_1d<double, 3> momentum;
+			double R = 287.05;						// J/(kg*K)
 			double density = 1.772;                 // density
-			double T = 293;                         // Temperature in K
-			double velocity = 32.55;     
-            momentum[0] = velocity*density;        //momentum (velocity = 300 m/s)
+			double T = 0.00247;                         // Temperature in K
+			double velocity = 2.9;   
+            momentum[0] = velocity*density;        //momentum
             momentum[1] = velocity*density;        //momentum
 			momentum[2] = 0.0;        //momentum
-			double Ma = velocity/sqrt(1.4*(1.005-0.718)*T);
-            double total_energy = density*(1.005-0.718)*T/(1.4-1)+(momentum[0]*momentum[0]+momentum[1]*momentum[1]+momentum[2]*momentum[2])/(2*density);   	
+			double Ma = velocity/sqrt(1.4*R*T); 
+            double total_energy = density*R*T/(1.4-1)+(momentum[0]*momentum[0]+momentum[1]*momentum[1]+momentum[2]*momentum[2])/(2*density);   	
 
             std::cout<<"\nDensity = "<<density<<std::endl;
 			std::cout<<"\nTemperature = "<<T<<std::endl;
@@ -138,7 +139,7 @@ namespace Kratos {
 		 */
         KRATOS_TEST_CASE_IN_SUITE(ElementCompressibleNavierStokes2D3NStationarySupersonic, FluidDynamicsApplicationFastSuite)
 		{
-            std::cout<<"\n\nTest For Stationary Rigid Movements"<<std::endl;
+            std::cout<<"\n\nSupersonic Test For Stationary Rigid Movements"<<std::endl;
 			ModelPart modelPart("Main");
 			modelPart.SetBufferSize(3);
 
@@ -167,7 +168,7 @@ namespace Kratos {
             pElemProp->SetValue(DYNAMIC_VISCOSITY, 1.846e-05);
             pElemProp->SetValue(KINEMATIC_VISCOSITY, 1.568e-05);
             pElemProp->SetValue(CONDUCTIVITY,  0.0257);
-            pElemProp->SetValue(SPECIFIC_HEAT,  0.718);
+            pElemProp->SetValue(SPECIFIC_HEAT,  718);
             pElemProp->SetValue(HEAT_CAPACITY_RATIO, 1.4);
 
 			// Geometry creation
@@ -185,13 +186,14 @@ namespace Kratos {
 			array_1d<double, 3> momentum;
 			array_1d<double, 3> momentum_n;
 			double density = 1.772;              //density
-			double T = 293;                      // Temperature in K
-			double velocity = 32.55;     
+			double T = 0.00247;                      // Temperature in K
+			double R = 287.05;						// J/(kg*K)
+			double velocity = 2.9;     
             momentum[0] = velocity*density;        //momentum (velocity = 300 m/s)
             momentum[1] = velocity*density;        //momentum
 			momentum[2] = 0.0;        //momentum
-			double Ma = velocity/sqrt(1.4*(1.005-0.718)*T);
-            double total_energy = density*(1.005-0.718)*T/(1.4-1)+(momentum[0]*momentum[0]+momentum[1]*momentum[1]+momentum[2]*momentum[2])/(2*density);   	
+			double Ma = velocity/sqrt(1.4*R*T);
+            double total_energy = density*R*T/(1.4-1)+(momentum[0]*momentum[0]+momentum[1]*momentum[1]+momentum[2]*momentum[2])/(2*density);   	
             momentum_n[0] = 1.0; momentum_n[1] = 1.0; momentum_n[2] = 1.0; //Casual value for the previous steps 
 
             std::cout<<"\n\nDensity = "<<density<<std::endl;
@@ -308,7 +310,7 @@ namespace Kratos {
          * Test for Air at 20 degrees and Mach 0.5
 		 */	    KRATOS_TEST_CASE_IN_SUITE(ElementCompressibleNavierStokes2D3NStationarySubsonic, FluidDynamicsApplicationFastSuite)
 		{
-            std::cout<<"\n\nSupersonic Test For Stationary Rigid Movements"<<std::endl;
+            std::cout<<"\n\nSubsonic Test For Stationary Rigid Movements"<<std::endl;
 			ModelPart modelPart("Main");
 			modelPart.SetBufferSize(3);
 
@@ -337,7 +339,7 @@ namespace Kratos {
             pElemProp->SetValue(DYNAMIC_VISCOSITY, 1.846e-05);
             pElemProp->SetValue(KINEMATIC_VISCOSITY, 1.568e-05);
             pElemProp->SetValue(CONDUCTIVITY,  0.0257);
-            pElemProp->SetValue(SPECIFIC_HEAT,  0.718);
+            pElemProp->SetValue(SPECIFIC_HEAT,  718);
             pElemProp->SetValue(HEAT_CAPACITY_RATIO, 1.4);
 
 			// Geometry creation
@@ -355,13 +357,14 @@ namespace Kratos {
 			array_1d<double, 3> momentum;
 			array_1d<double, 3> momentum_n;
 			double density = 1.772;              //density
+			double R = 287.05;						// J/(kg*K)
 			double T = 293;                      // Temperature in K
-			double velocity = 5.427;     
+			double velocity = 1.0;     
             momentum[0] = velocity*density;        //momentum (velocity = 300 m/s)
             momentum[1] = velocity*density;        //momentum
 			momentum[2] = 0.0;        //momentum
-			double Ma = velocity/sqrt(1.4*(1.005-0.718)*T);
-            double total_energy = density*(1.005-0.718)*T/(1.4-1)+(momentum[0]*momentum[0]+momentum[1]*momentum[1]+momentum[2]*momentum[2])/(2*density);   	
+			double Ma = velocity/sqrt(1.4*R*T);
+            double total_energy = density*R*T/(1.4-1)+(momentum[0]*momentum[0]+momentum[1]*momentum[1]+momentum[2]*momentum[2])/(2*density);   	
             momentum_n[0] = 1.0; momentum_n[1] = 1.0; momentum_n[2] = 1.0; //Casual value for the previous steps 
 
             std::cout<<"\n\nDensity = "<<density<<std::endl;

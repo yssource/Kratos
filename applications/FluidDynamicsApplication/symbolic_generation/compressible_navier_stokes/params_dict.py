@@ -23,8 +23,8 @@ params = {
             "nu" :1.568*0.00005,			# Kinematic viscosity 
             "h" : 1,	        	# Element size
             "lambda" : 0.0257,         # Thermal Conductivity of the fluid
-            "c_v" : 0.718,			# Specific Heat at Constant volume
-            "c_p" : 1.005,			# Specific Heat at Constant Pressure
+            "c_v" : 718,			# Specific Heat at Constant volume
+            "c_p" : 1005,			# Specific Heat at Constant Pressure
             "gamma": 1.4,			# Gamma (Cp/Cv) 
             "stab_c1" : 4,			# Algorithm constant
             "stab_c2" : 2,			# Algorithm constant

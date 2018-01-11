@@ -124,6 +124,7 @@ public:
         mpForceVectorReduced = SparseSpaceType::CreateEmptyVectorPointer();
         mpStiffnessMatrixReduced = SparseSpaceType::CreateEmptyMatrixPointer();
         mpMassMatrixReduced = SparseSpaceType::CreateEmptyMatrixPointer();
+        mpReducedBasis = SparseSpaceType::CreateEmptyMatrixPointer();
 
         mRayleighAlpha = 0.0;
         mRayleighBeta = 0.0;
@@ -398,8 +399,8 @@ public:
         KRATOS_WATCH(r_basis)
         mQR_decomposition.compute_q();
 
-        auto basis_r = SparseSpaceType::CreateEmptyMatrixPointer();
-        auto& r_basis_r = *basis_r;
+        // auto basis_r = SparseSpaceType::CreateEmptyMatrixPointer();
+        auto& r_basis_r = *mpReducedBasis;
         SparseSpaceType::Resize(r_basis_r, system_size, 3*n_sampling_points);
         for( size_t i = 0; i < system_size; ++i )
         {
@@ -432,25 +433,9 @@ public:
         // mpForceVectorReduced = ZeroMatrix( 3*n_sampling_points );
         r_force_vector_reduced = (prod( r_force_vector, r_basis_r ));
         auto& r_stiffness_matrix_reduced = *mpStiffnessMatrixReduced;
-        // KRATOS_WATCH(prod(r_stiffness_matrix, r_basis_r))
-        // auto aa = prod(r_stiffness_matrix, r_basis_r);
-        // auto aaa = prod( r_basis_r, trans( aa ) );
-        // KRATOS_WATCH( prod( prod( r_basis_r, r_mass_matrix ), r_basis_r ) )
-        // r_stiffness_matrix_reduced = prod( prod( r_stiffness_matrix, r_basis_r ), r_basis_r );
         auto& r_mass_matrix_reduced = *mpMassMatrixReduced;
-        // r_mass_matrix_reduced = prod( prod( r_mass_matrix, r_basis_r ), r_basis_r );
-        
 
-
-        // KRATOS_WATCH( prod( r_basis_r, r_stiffness_matrix ) )
-        // KRATOS_WATCH( prod( trans(r_basis_r), r_stiffness_matrix ) )
-        // KRATOS_WATCH( prod( r_stiffness_matrix, r_basis_r ) )
-        // KRATOS_WATCH( prod( r_stiffness_matrix, trans(r_basis_r) ) )
-
-        // auto aa = prod( trans(r_basis_r), r_stiffness_matrix, r_basis_r );
-        std::cout << "Ü************************" << std::endl;
-        // KRATOS_WATCH(aa)
-        KRATOS_WATCH( prod( matrix<double>(prod(trans(r_basis_r),r_stiffness_matrix)), r_basis_r))
+        // KRATOS_WATCH( prod( matrix<double>(prod(trans(r_basis_r),r_stiffness_matrix)), r_basis_r))
         r_stiffness_matrix_reduced = prod( matrix< double >( prod( trans( r_basis_r ),r_stiffness_matrix ) ), r_basis_r );
         r_mass_matrix_reduced = prod( matrix< double >( prod( trans( r_basis_r ),r_mass_matrix ) ), r_basis_r );
         
@@ -463,7 +448,7 @@ public:
         KRATOS_WATCH(*mpMassMatrixReduced)
         KRATOS_WATCH(*mpStiffnessMatrixReduced)
         KRATOS_WATCH(*mpForceVectorReduced)
-
+        std::cout << "ende" << std::endl;
         
         // mQR_decomposition.compute(system_size, 3*n_sampling_points, &(*pAuxMatQR)(0,0));
 
@@ -616,8 +601,8 @@ public:
     {
         KRATOS_TRY
 
-        // auto& r_model_part = BaseType::GetModelPart();
-
+        auto& r_model_part = BaseType::GetModelPart();
+        std::cout << "yooo" << std::endl;
         // operations to be done once
         if (this->GetIsInitialized() == false)
         {
@@ -627,9 +612,41 @@ public:
 
         this->InitializeSolutionStep();
 
-        // auto& r_process_info = r_model_part.GetProcessInfo();
-        // double excitation_frequency = r_process_info[TIME];
+        auto& r_process_info = r_model_part.GetProcessInfo();
+        double excitation_frequency = r_process_info[TIME];
+        const unsigned int system_size = this->pGetBuilderAndSolver()->GetEquationSystemSize();
+        const std::size_t reduced_system_size = 3 * mSamplingPoints.size();
 
+        auto& r_stiffness_matrix_reduced = *mpStiffnessMatrixReduced;
+        auto& r_mass_matrix_reduced = *mpMassMatrixReduced;
+        auto& r_force_vector_reduced = *mpForceVectorReduced;
+
+        // auto displacement_reduced = SparseSpaceType::CreateEmptyVectorPointer();
+        // auto& r_displacement_reduced = *displacement_reduced;
+        // SparseSpaceType::Resize(r_displacement_reduced,reduced_system_size);
+        // SparseSpaceType::Set(r_displacement_reduced,0.0);
+
+        SparseVectorType displacement_reduced;
+        displacement_reduced.resize( reduced_system_size, false );
+        displacement_reduced = ZeroVector( reduced_system_size );
+
+
+
+        auto kdyn = SparseSpaceType::CreateEmptyMatrixPointer();
+        auto& r_kdyn = *kdyn;
+        SparseSpaceType::Resize(r_kdyn, reduced_system_size, reduced_system_size);
+
+        r_kdyn = r_stiffness_matrix_reduced - ( std::pow( excitation_frequency, 2.0 ) * r_mass_matrix_reduced );
+
+        this->pGetBuilderAndSolver()->GetLinearSystemSolver()->Solve( r_kdyn, displacement_reduced, r_force_vector_reduced );
+
+        SparseVectorType displacement;
+        displacement.resize( system_size, false );
+        displacement = ZeroVector( system_size );
+
+        displacement = prod( *mpReducedBasis, displacement_reduced );
+        KRATOS_WATCH(displacement)
+        
         // // get eigenvalues
         // DenseVectorType eigenvalues = r_process_info[EIGENVALUE_VECTOR];
         // const std::size_t n_modes = eigenvalues.size();
@@ -686,7 +703,7 @@ public:
         //     }
         // }
 
-        // this->AssignVariables(modal_displacement);
+        this->AssignVariables(displacement);
         this->FinalizeSolutionStep();
 
         return 0.0;
@@ -854,6 +871,8 @@ private:
 
     SparseMatrixPointerType mpStiffnessMatrixReduced;
 
+    SparseMatrixPointerType mpReducedBasis;
+
     DenseMatrixPointerType mpModalMatrix;
 
     double mRayleighAlpha;
@@ -879,7 +898,7 @@ private:
     ///@{
 
     /// Assign the modal displacement to the dofs and the phase angle to the reaction
-    void AssignVariables(ComplexVectorType& rModalDisplacement, int step=0)
+    void AssignVariables(SparseVectorType& rModalDisplacement, int step=0)
     {
         auto& r_model_part = BaseType::GetModelPart();
         for( auto& node : r_model_part.Nodes() )
@@ -891,9 +910,9 @@ private:
                 if( !it_dof->IsFixed() )
                 {
                     //absolute displacement
-                    it_dof->GetSolutionStepValue(step) = std::abs(rModalDisplacement(it_dof->EquationId()));
+                    it_dof->GetSolutionStepValue(step) = rModalDisplacement(it_dof->EquationId());
                     //phase angle
-                    it_dof->GetSolutionStepReactionValue(step) = std::abs(std::arg(rModalDisplacement(it_dof->EquationId())));
+                    // it_dof->GetSolutionStepReactionValue(step) = std::abs(std::arg(rModalDisplacement(it_dof->EquationId())));
                 }
                 else
                 {

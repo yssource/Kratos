@@ -177,6 +177,14 @@ public:
         rLeftHandSideMatrix  *= data.volume/static_cast<double>(TNumNodes);
         rRightHandSideVector *= data.volume/static_cast<double>(TNumNodes);
 
+        std::cout<<this->Id()<<" "<<rRightHandSideVector<<std::endl;
+        for(unsigned int i=0; i<GetGeometry().size(); i++){
+            std::cout<<GetGeometry()[i].Id()<<" "<<GetGeometry()[i].Coordinates()<<std::endl;
+            std::cout<<GetGeometry()[i].FastGetSolutionStepValue(MOMENTUM)<<std::endl;
+            std::cout<<GetGeometry()[i].FastGetSolutionStepValue(DENSITY)<<std::endl;
+            std::cout<<GetGeometry()[i].FastGetSolutionStepValue(TOTAL_ENERGY)<<std::endl;
+        }
+
         KRATOS_CATCH("Error in Compressible Navier Stokes Element Symbolic")
     }
 

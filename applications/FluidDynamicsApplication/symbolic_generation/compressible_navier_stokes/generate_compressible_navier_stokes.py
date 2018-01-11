@@ -68,13 +68,14 @@ for dim in dim_vector:
     acc = DefineVector('acc',BlockSize)         # Derivative of Dofs/Time
 
     S = SourceTerm.computeS(f,rg,params)
-    SourceTerm.printS(S,params)
+    #SourceTerm.printS(S,params)
     A = ConvectiveFlux.computeA(Ug,params)
-    ConvectiveFlux.printA(A,params)
+    #ConvectiveFlux.printA(A,params)
     K = DiffusiveFlux.computeK(Ug,params)
-    DiffusiveFlux.printK(K,params)
+    #DiffusiveFlux.printK(K,params)
     Tau = StabilizationMatrix.computeTau(params)
-    StabilizationMatrix.printTau(Tau,params)
+    #Tau = zeros(dim+2,dim+2)
+    #StabilizationMatrix.printTau(Tau,params)
     
     ## Nonlinear operator definition
     L = DefineVector('L',dim+2)		       # Nonlinear operator
@@ -86,7 +87,7 @@ for dim in dim_vector:
     for j in range(0,dim):
         tmp = A[j]*H[:,j]
         l1 +=tmp
-
+    
     l2 = Matrix(zeros(dim+2,1))		       # Diffusive term
     
     for s in range(0,dim+2):
@@ -104,6 +105,7 @@ for dim in dim_vector:
     l3 = S*Ug				               # Source term
     print("\nCompute Non-linear operator\n")
     L = l1-l2-l3                           # Nonlinear operator
+    #L = -l2-l3                           # Nonlinear operator
   
     ## Redisual definition     
     res = -acc - L		
@@ -120,7 +122,7 @@ for dim in dim_vector:
                     m1[s] -= A_T[l,m]*Q[s,j]
                     for n in range(0,dim+2):
                         m1[s] -= diff(A_T[l,m],Ug[n])*H[n,j]*V[s]
-          
+       
     m2 = Matrix(zeros(dim+2,1))		       # Diffusive term
     
     for s in range(0,dim+2):
@@ -135,6 +137,7 @@ for dim in dim_vector:
     
     m3 = -S.transpose()*V			        # Source term
     L_adj = m1+m2+m3
+    #L_adj = m2+m3
          
     ## Variational Formulation - Final equation
 
@@ -161,6 +164,7 @@ for dim in dim_vector:
     
     print("\nCompute Variational Formulation\n")
     rv = n1+n2+n3+n4+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
+    #rv = n1+n3+n4+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
 
     ### Substitution of the discretized values at the gauss points
     print("\nSubstitution of the discretized values at the gauss points\n")

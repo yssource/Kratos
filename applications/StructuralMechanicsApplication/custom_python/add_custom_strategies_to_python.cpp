@@ -31,6 +31,7 @@
 #include "custom_strategies/custom_strategies/residual_based_arc_length_strategy.hpp"
 #include "custom_strategies/custom_strategies/eigensolver_strategy.hpp"
 #include "custom_strategies/custom_strategies/harmonic_analysis_strategy.hpp"
+#include "custom_strategies/custom_strategies/projection_method_strategy.hpp"
 #include "custom_strategies/custom_strategies/formfinding_updated_reference_strategy.hpp"
 
 // Schemes
@@ -80,6 +81,7 @@ void  AddCustomStrategiesToPython()
     typedef ResidualBasedArcLengthStrategy< SparseSpaceType, LocalSpaceType , LinearSolverType >  ResidualBasedArcLengthStrategyType;
     typedef EigensolverStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType > EigensolverStrategyType;
     typedef HarmonicAnalysisStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType > HarmonicAnalysisStrategyType;
+    typedef ProjectionMethodStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType > ProjectionMethodStrategyType;
     typedef FormfindingUpdatedReferenceStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType > FormfindingUpdatedReferenceStrategyType;
 
     // Custom scheme types
@@ -130,6 +132,10 @@ void  AddCustomStrategiesToPython()
             .def("GetUseMaterialDampingFlag", &HarmonicAnalysisStrategyType::GetUseMaterialDampingFlag)
             ;
 
+    class_< ProjectionMethodStrategyType, bases< BaseSolvingStrategyType >, boost::noncopyable >
+            (
+                "ProjectionMethodStrategy", init< ModelPart&, BaseSchemeType::Pointer, BuilderAndSolverPointer, vector< double > >() )
+            ;
     //********************************************************************
     //*************************SCHEME CLASSES*****************************
     //********************************************************************

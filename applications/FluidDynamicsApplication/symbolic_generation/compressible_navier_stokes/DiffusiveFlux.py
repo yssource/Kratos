@@ -74,7 +74,8 @@ def computeK(dofs,params):
             tmp = DefineMatrix('tmp',dim+2,dim+2)
             for l in range(0,dim+2):
                 for m in range(0,dim+2):
-                    tmp[l,m] = diff(-G[l,j],H[m,k])
+                    #tmp[l,m] = diff(-G[l,j],H[m,k])
+                    tmp[l,m] = diff(G[l,k],H[m,j])
                     #print("\n\n",l,m,"=",tmp[l,m],"\n\n")
             
             ksmall.append(tmp)

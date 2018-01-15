@@ -22,12 +22,41 @@ f_ext = DefineVector('f_ext',2)
 r = Symbol('r', real=True)  
 
 # Analytical expression of variables
-rho = 0.5*x+y+0.8
-u = 1
-v = -0.5
-m_u = rho*u
-m_v = rho*v
-et = 0.5*x+0.5*y+0.4
+R = 287.05
+rho = 0.5*x+y+0.8     #ALWAYS POSITIVE (BETWEEN 0.8-3.5 ca)
+u = 48
+v = -24
+m_u = rho*u         #DIVERGENCE FREE
+m_v = rho*v         #DIVERGENCE FREE
+et = 1000*x +500*y +30000 #MUST BE POSITIVE
+
+
+print("CHECK DIVERGENCE: ", m_u, "      ", m_v)
+'''
+for x in range(0,4):
+    for y in range(0,2):
+
+        x = 0
+        y = 0
+        print(x)
+        rho = 0.5*x+y+0.8
+        u = 48
+        v = -24
+        m_u = rho*u
+        m_v = rho*v
+        et = 1000*x +500*y +30000
+        print("CHECK DIVERGENCE: ", m_u, "      ", m_v)
+        T = (1.4-1)*(et-(m_u**2+m_v**2)/(2*rho))/(rho*R)
+        Ma = u/sqrt(1.4*R*T) #  SUPERSONIC
+        print("CHECK POSITIVE Energy: ",et)
+        print("CHECK POSITIVE T: ", T)
+        print("CHECK SUPERSONIC Mach: ",Ma)
+        tmp = et/rho
+        tmp -= (m_u**2+m_v**2)/(2*rho**2)   # MUST BE ALWAYS POSITIVE FOR THE SPEED OF SOUND
+        print("CHECK SPEED OF SOUND: ",sqrt(tmp))
+        if tmp<0:
+            print("ERROR FOR x = ",x,"and y = ",y,"\n")
+'''
 
 # Definition of costants
 mu = 0.0
@@ -37,7 +66,7 @@ cv = 718
 
 
 p = (gamma-1)*(et-(m_u**2+m_v**2)/(2*rho))
-#tau_xx = mu*(4/3*diff((m_u/rho),x)-2/3*diff(m_v/rho,y)) IT IS THE SAME
+#tau_xx = mu*(4/3*diff((m_u/rho),x)-2/3*diff(m_v/rho,y)) #IT IS THE SAME
 tau_xx = 4*mu/(3*rho)*diff(m_u,x)-2*mu/(3*rho)*diff(m_v,y)-4*mu/(3*rho**2)*m_u*diff(rho,x)+2*mu/(3*rho**2)*m_v*diff(rho,y)
 tau_yy = 4*mu/(3*rho)*diff(m_v,y)-2*mu/(3*rho)*diff(m_u,x)-4*mu/(3*rho**2)*m_v*diff(rho,y)+2*mu/(3*rho**2)*(m_u*diff(rho,x))
 tau_xy = mu/rho*(diff(m_u,y)+diff(m_v,x))-mu/rho**2*(m_u*diff(rho,y)+m_v*diff(rho,x))
@@ -50,26 +79,32 @@ print("\nS_rho:\n",S_rho)
 
 # Moment Equation: x direction
 S_u = diff(m_u,t)+diff((m_u**2/rho+p-tau_xx),x)+diff((m_u*m_v/rho-tau_xy),y)
-print("\nS_u:\n",S_u)
-
-S_u = diff(m_u,t)+diff((m_u**2/rho+p-tau_xx),x)+diff((m_u*m_v/rho-tau_xy),y)
-print("\nS_u:\n",S_u)
+#print("\nS_u:\n",S_u)
 
 # Moment Equation: y direction
 S_v = diff(m_v,t)+diff((m_v**2/rho+p-tau_yy),y)+diff((m_u*m_v/rho-tau_xy),x)
-print("\nS_v:\n",S_v)
+#print("\nS_v:\n",S_v)
 
 # Energy Equation
 S_e = diff(et,t)+diff(((et+p)*m_u/rho-m_u*tau_xx/rho-m_v*tau_xy/rho+q_x),x)+diff(((et+p)*m_v/rho-m_u*tau_xy/rho-m_v*tau_yy/rho+q_y),y)
-print("\nS_e:\n",S_e)
+#print("\nS_e:\n",S_e)
 
 f_ext[0] = S_u/rho
 f_ext[1] = S_v/rho
+print("\nf_ext0:\n",factor(f_ext[0]))
+print("\nf_ext1:\n",factor(f_ext[1]))
+'''
+f_ext[0] = simplify(f_ext[0])
+f_ext[1] = simplify(f_ext[1])
 print("\nf_ext0:\n",f_ext[0])
 print("\nf_ext1:\n",f_ext[1])
+'''
+r = simplify((S_e-(f_ext[0]*m_u+f_ext[1]*m_v))/rho)
 
-r = (S_e-(f_ext[0]*m_u+f_ext[1]*m_v))/rho
-print("\nr:\n",r)
+print("\nr:\n",factor(r))
+
+
+
 '''
 ## TAKEN FROM CODE VERIFICATION SCRIPT
 ## Constant Variables for manufactured solutions
@@ -115,5 +150,5 @@ print("\nS_v:\n",S_v)
 # Energy Equation
 S_e = diff(et,t)+diff(((et+p)*m_u/rho-m_u*tau_xx/rho-m_v*tau_xy/rho+q_x),x)+diff(((et+p)*m_v/rho-m_u*tau_xy/rho-m_v*tau_yy/rho+q_y),y)
 print("\nS_e:\n",S_e)
-'''
 
+'''

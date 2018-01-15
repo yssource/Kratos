@@ -172,10 +172,12 @@ for dim in dim_vector:
     ## Data interpolation at the gauss points
     U_gauss = U.transpose()*N
     w_gauss = w.transpose()*N
+    #f_gauss = DefineVector('f_gauss',dim)      #USED FOR MANUFACTURED SOLUTION
     f_gauss = f_ext.transpose()*N
     acc_gauss = (bdf0*U+bdf1*Un+bdf2*Unn).transpose()*N
     
-    r_gauss = (r.transpose()*N)[0]      
+    r_gauss = (r.transpose()*N)[0] 
+    #r_gauss = Symbol('r_gauss', positive = True)     #USED FOR MANUFACTURED SOLUTION
 
     ## Gradients computation
     grad_U = DfjDxi(DN,U).transpose()

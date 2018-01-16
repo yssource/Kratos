@@ -36,8 +36,6 @@ print("CHECK DIVERGENCE: ", m_u, "      ", m_v)
 for x in range(0,4):
     for y in range(0,2):
 
-        x = 0
-        y = 0
         print(x)
         rho = 0.5*x+y+0.8
         u = 48

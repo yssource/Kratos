@@ -21,9 +21,9 @@ class WorkFolderScope:
 class EmbeddedCircularFlowTest(UnitTest.TestCase):
     def testEmbeddedCircularFlow2D(self):
         self.distance = 0.5
-        self.embedded_formulation = "NoSlip"
+        self.embedded_formulation = "no_slip"
         self.work_folder = "EmbeddedCircularFlow2DTest"   
-        self.reference_file = "reference_circular_flow_2D"
+        self.reference_file = "reference_no_slip_circular_flow_2D"
         self.settings = "EmbeddedCircularFlow2DTest_parameters.json"
 
         with WorkFolderScope(self.work_folder):
@@ -36,7 +36,7 @@ class EmbeddedCircularFlowTest(UnitTest.TestCase):
 
     def testEmbeddedSlipCircularFlow2D(self):
         self.distance = 0.5
-        self.embedded_formulation = "Slip"
+        self.embedded_formulation = "slip"
         self.work_folder = "EmbeddedCircularFlow2DTest"   
         self.reference_file = "reference_slip_circular_flow_2D"
         self.settings = "EmbeddedCircularFlow2DTest_parameters.json"
@@ -51,7 +51,7 @@ class EmbeddedCircularFlowTest(UnitTest.TestCase):
 
     def testEmbeddedAusasSlipCircularFlow2D(self):
         self.distance = 0.5
-        self.embedded_formulation = "AusasSlip"
+        self.embedded_formulation = "ausas_slip"
         self.work_folder = "EmbeddedCircularFlow2DTest"   
         self.reference_file = "reference_ausas_slip_circular_flow_2D"
         self.settings = "EmbeddedCircularFlow2DTest_parameters.json"
@@ -88,18 +88,18 @@ class EmbeddedCircularFlowTest(UnitTest.TestCase):
             Model = {self.ProjectParameters["problem_data"]["model_part_name"].GetString() : self.main_model_part}
 
             ## Set the solver type according to the embedded formulation
-            if ((self.embedded_formulation == "NoSlip") or (self.embedded_formulation == "Slip")):
+            if ((self.embedded_formulation == "no_slip") or (self.embedded_formulation == "slip")):
                 self.ProjectParameters["solver_settings"]["solver_type"].SetString("Embedded")
-            elif (self.embedded_formulation == "AusasSlip"):
+            elif (self.embedded_formulation == "ausas_slip"):
                 self.ProjectParameters["solver_settings"]["solver_type"].SetString("EmbeddedAusas")
             else:
                 raise Exception("Wrong solver type in embedded reservoir test settings.")
 
             ## Set the distance modification settings according to the embedded formulation
             ## Note that process 2 corresponds to the distance modification one in the settings Json file
-            if ((self.embedded_formulation == "NoSlip") or (self.embedded_formulation == "Slip")):
+            if ((self.embedded_formulation == "no_slip") or (self.embedded_formulation == "slip")):
                 self.ProjectParameters["auxiliar_process_list"][0]["Parameters"]["deactivate_full_negative_elements"].SetBool(True)
-            elif (self.embedded_formulation == "AusasSlip"):
+            elif (self.embedded_formulation == "ausas_slip"):
                 self.ProjectParameters["auxiliar_process_list"][0]["Parameters"]["deactivate_full_negative_elements"].SetBool(False)
 
             ## Solver construction
@@ -131,6 +131,7 @@ class EmbeddedCircularFlowTest(UnitTest.TestCase):
             import process_factory
             self.list_of_processes  = process_factory.KratosProcessFactory(Model).ConstructListOfProcesses( self.ProjectParameters["gravity"] )
             self.list_of_processes += process_factory.KratosProcessFactory(Model).ConstructListOfProcesses( self.ProjectParameters["boundary_conditions_process_list"] )
+            self.list_of_processes += process_factory.KratosProcessFactory(Model).ConstructListOfProcesses( self.ProjectParameters["auxiliar_process_list"] )
 
             ## Processes initialization
             for process in self.list_of_processes:
@@ -152,7 +153,7 @@ class EmbeddedCircularFlowTest(UnitTest.TestCase):
             element.SetValue(KratosMultiphysics.ELEMENTAL_DISTANCES, elem_dist)
 
         # If proceeds, set the SLIP flag
-        if ((self.embedded_formulation == "Slip") or (self.embedded_formulation == "AusasSlip")):
+        if ((self.embedded_formulation == "slip") or (self.embedded_formulation == "ausas_slip")):
             KratosMultiphysics.VariableUtils().SetFlag(KratosMultiphysics.SLIP, True, self.main_model_part.Elements)
 
     def runTest(self):
@@ -181,15 +182,15 @@ class EmbeddedCircularFlowTest(UnitTest.TestCase):
             while(time <= end_time):
 
                 Dt = self.solver.ComputeDeltaTime()
-                time = time + Dt
-                step = step + 1
+                step += 1
+                time += Dt
                 self.main_model_part.CloneTimeStep(time)
+                self.main_model_part.ProcessInfo[KratosMultiphysics.STEP] = step
 
                 for process in self.list_of_processes:
                     process.ExecuteInitializeSolutionStep()
 
-                if(step >= 3):
-                    self.solver.Solve()
+                self.solver.Solve()
 
                 for process in self.list_of_processes:
                     process.ExecuteFinalizeSolutionStep()
@@ -201,6 +202,7 @@ class EmbeddedCircularFlowTest(UnitTest.TestCase):
                     gid_io.WriteNodalResults(KratosMultiphysics.VELOCITY,self.main_model_part.Nodes,time,0)
                     gid_io.WriteNodalResults(KratosMultiphysics.PRESSURE,self.main_model_part.Nodes,time,0)
                     gid_io.WriteNodalResults(KratosMultiphysics.DISTANCE,self.main_model_part.Nodes,time,0)
+                    gid_io.WriteNodalResults(KratosFluid.EMBEDDED_WET_VELOCITY,self.main_model_part.Nodes,time,0)
 
                 for process in self.list_of_processes:
                     process.ExecuteAfterOutputStep()
@@ -242,9 +244,9 @@ if __name__ == '__main__':
     test.distance = 0.5
     test.print_output = True
     test.print_reference_values = False
-    test.embedded_formulation = "AusasSlip"
+    test.embedded_formulation = "slip"
     test.work_folder = "EmbeddedCircularFlow2DTest"
-    test.reference_file = "reference_ausas_slip_circular_flow_2D"   
+    test.reference_file = "reference_" + test.embedded_formulation + "_circular_flow_2D"   
     test.settings = "EmbeddedCircularFlow2DTest_parameters.json"
     test.setUpProblem()
     test.setUpDistanceField()

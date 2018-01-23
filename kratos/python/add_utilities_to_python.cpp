@@ -337,10 +337,10 @@ void AddUtilitiesToPython()
     .def("IsInInterval", &IntervalUtility ::IsInInterval)
     ;
     
-    // Adding table from table stream to python
-    class_<TableStreamUtility>("TableStreamUtility", init<>())
-    .def(init< bool >())
-    ;
+    // // Adding table from table stream to python
+    // class_<TableStreamUtility>("TableStreamUtility", init<>())
+    // .def(init< bool >())
+    // ;
     
     // Exact integration (for testing)
     class_<ExactMortarIntegrationUtility<2,2>>("ExactMortarIntegrationUtility2D2N", init<>())

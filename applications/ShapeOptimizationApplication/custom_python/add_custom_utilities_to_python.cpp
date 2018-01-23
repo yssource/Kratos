@@ -34,7 +34,7 @@
 #include "custom_utilities/response_functions/mass_response_function.h"
 #include "custom_utilities/input_output/universal_file_io.h"
 #include "custom_utilities/input_output/vtk_file_io.h"
-
+#include "custom_utilities/neighbour_search_utilities.h"
 
 // ==============================================================================
 
@@ -103,7 +103,7 @@ void  AddCustomUtilitiesToPython()
         .def("ProjectNodalVariableOnUnitSurfaceNormals", &GeometryUtilities::ProjectNodalVariableOnUnitSurfaceNormals)
         .def("UpdateShapeChangeByInputVariable", &GeometryUtilities::UpdateShapeChangeByInputVariable)
         .def("ExtractSurfaceNodes", &GeometryUtilities::ExtractSurfaceNodes)
-        ;
+        ;   
 
     // ========================================================================
     // For calculations related to response functions
@@ -137,6 +137,15 @@ void  AddCustomUtilitiesToPython()
         .def("InitializeLogging", &VTKFileIO::InitializeLogging)
         .def("LogNodalResults", &VTKFileIO::LogNodalResults)
         ;
+
+    // ========================================================================
+    // Additional utilities
+    // ========================================================================
+
+    class_<NeighbourSearchUtilities, bases<Process> >("NeighbourSearchUtilities", init<ModelPart&>())
+        .def("SearchInRadius", &NeighbourSearchUtilities::SearchInRadius)
+        .def("SearchNearestPoint", &NeighbourSearchUtilities::SearchNearestPoint)
+        ;            
 }
 
 

@@ -22,6 +22,9 @@ CheckForPreviousImport()
 # Import algorithm base classes
 from algorithm_base import OptimizationAlgorithm
 
+# Import SVD
+from svd import svd
+
 # ==============================================================================
 class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
 
@@ -44,7 +47,7 @@ class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
         self.optimizationTools = OptimizationUtilities( DesignSurface, OptimizationSettings )
         if self.performDamping:
             self.dampingUtilities = DampingUtilities( DesignSurface, DampingRegions, self.OptimizationSettings )
-            
+
     # --------------------------------------------------------------------------
     def execute( self ):
         self.__initializeOptimizationLoop()
@@ -131,8 +134,12 @@ class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
         self.__mapSensitivitiesToDesignSpace()
         self.optimizationTools.ComputeSearchDirectionSteepestDescent()
         self.optimizationTools.ComputeControlPointUpdate()
-        self.__mapDesignUpdateToGeometrySpace()
-
+        self.__mapDesignUpdateToGeometrySpace() #--> dx
+        # ---
+        self.__correctDesignUpdateWithRigidBodyConstraints() # --> ds
+        # ---
+        self.__mapDesignUpdateToGeometrySpace() # considering rigid body motion --> dx
+ 
     # --------------------------------------------------------------------------
     def __mapSensitivitiesToDesignSpace( self ):
         self.Mapper.MapToDesignSpace( OBJECTIVE_SENSITIVITY, MAPPED_OBJECTIVE_SENSITIVITY )
@@ -181,5 +188,16 @@ class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
     def __updateShape( self ):
         self.optimizationTools.UpdateControlPointChangeByInputVariable( CONTROL_POINT_UPDATE )
         self.geometryTools.UpdateShapeChangeByInputVariable( SHAPE_UPDATE )
+
+    # --------------------------------------------------------------------------
+    def __correctDesignUpdateWithRigidBodyConstraints( self ):
+        print('\n> ++Correct design update with rigid body constraints...',end='')
+        RigidBodyTools = RigidBodyUtilities( self.DesignSurface, self.OptimizationSettings)
+        RigidBodyTools.CorrectDesignUpdateWithRigidBodyConstraints()
+        # --> ds
+        print('OK!')
+    
+
+
 
 # ==============================================================================

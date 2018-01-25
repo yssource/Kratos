@@ -26,6 +26,7 @@
 #include "custom_python/add_custom_utilities_to_python.h"
 #include "custom_utilities/optimization_utilities.h"
 #include "custom_utilities/geometry_utilities.h"
+#include "custom_utilities/rigid_body_utilities.h"
 #include "custom_utilities/mapping/mapper_vertex_morphing.h"
 #include "custom_utilities/mapping/mapper_vertex_morphing_matrix_free.h"
 #include "custom_utilities/mapping/mapper_vertex_morphing_improved_integration.h"
@@ -50,7 +51,7 @@ void  AddCustomUtilitiesToPython()
     using namespace boost::python;
 
     // ================================================================
-    // For perfoming the mapping according to Vertex Morphing
+    // For performing the mapping according to Vertex Morphing
     // ================================================================
     class_<MapperVertexMorphing, bases<Process> >("MapperVertexMorphing", init<ModelPart&, Parameters>())
         .def("MapToDesignSpace", &MapperVertexMorphing::MapToDesignSpace)
@@ -67,6 +68,13 @@ void  AddCustomUtilitiesToPython()
         .def("MapToGeometrySpace", &MapperVertexMorphingImprovedIntegration::MapToGeometrySpace)
         ;
 
+
+    // ================================================================
+    // For performing rigid body movements
+    // ================================================================
+    class_<RigidBodyUtilities, bases<Process> >("RigidBodyUtilities", init<ModelPart&, Parameters>())
+        .def("CorrectDesignUpdateWithRigidBodyConstraints", &RigidBodyUtilities::CorrectDesignUpdateWithRigidBodyConstraints)
+        ;
 
     // ================================================================
     // For a possible damping of nodal variables

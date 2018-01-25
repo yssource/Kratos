@@ -22,9 +22,6 @@ CheckForPreviousImport()
 # Import algorithm base classes
 from algorithm_base import OptimizationAlgorithm
 
-# Import SVD
-from svd import svd
-
 # ==============================================================================
 class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
 
@@ -137,6 +134,7 @@ class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
         self.__mapDesignUpdateToGeometrySpace() #--> dx
         # ---
         self.__correctDesignUpdateWithRigidBodyConstraints() # --> ds
+        print("nicht ok")
         # ---
         self.__mapDesignUpdateToGeometrySpace() # considering rigid body motion --> dx
  
@@ -191,7 +189,7 @@ class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
 
     # --------------------------------------------------------------------------
     def __correctDesignUpdateWithRigidBodyConstraints( self ):
-        print('\n> ++Correct design update with rigid body constraints...',end='')
+        print('\n> ++Correct design update with rigid body constraints...')
         RigidBodyTools = RigidBodyUtilities( self.DesignSurface, self.OptimizationSettings)
         RigidBodyTools.CorrectDesignUpdateWithRigidBodyConstraints()
         # --> ds

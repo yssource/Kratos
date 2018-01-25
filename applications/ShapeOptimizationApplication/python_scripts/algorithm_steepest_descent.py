@@ -136,7 +136,7 @@ class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
         self.__correctDesignUpdateWithRigidBodyConstraints() # --> ds
         print("nicht ok")
         # ---
-        self.__mapDesignUpdateToGeometrySpace() # considering rigid body motion --> dx
+        #self.__mapDesignUpdateToGeometrySpace() # considering rigid body motion --> dx
  
     # --------------------------------------------------------------------------
     def __mapSensitivitiesToDesignSpace( self ):

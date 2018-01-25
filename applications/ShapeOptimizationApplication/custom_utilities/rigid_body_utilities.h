@@ -213,6 +213,19 @@ public:
         // Vector t = ZeroVector(3);
         // t = - R*centroid_undeformed + centroid_undeformed;
 
+
+        for(int node_index = 0 ; node_index<mListOfRigidNodes.size() ; node_index++)
+        {
+            // Get node information
+            ModelPart::NodeType& node_i = *mListOfRigidNodes[node_index];
+
+            array_3d modified_update;
+            modified_update[0] = 0.0;
+            modified_update[1] = 0.0;
+            modified_update[2] = 0.0;
+            noalias(node_i.FastGetSolutionStepValue( SHAPE_UPDATE )) = modified_update;
+        }
+
         // print(R);
         // print(t);
         KRATOS_WATCH(H);

@@ -101,11 +101,11 @@ for dim in dim_vector:
                             l2[s] += diff(ksmall[l,m],Ug[n])*H[n,k]*H[s,j]
                             #print("l",l,"m",m,"n",n,":\n",l2[s],"\n\n\n\n\n\n"
     
-
+    
     l3 = S*Ug				               # Source term
     print("\nCompute Non-linear operator\n")
-    L = l1-l2-l3                           # Nonlinear operator
-    #L = -l2-l3                           # Nonlinear operator
+    L = l1-l2-l3                           # Nonlinear operator 
+    #L = l1-l3                           # Nonlinear operator
   
     ## Redisual definition     
     res = -acc - L		
@@ -122,7 +122,7 @@ for dim in dim_vector:
                     m1[s] -= A_T[l,m]*Q[s,j]
                     for n in range(0,dim+2):
                         m1[s] -= diff(A_T[l,m],Ug[n])*H[n,j]*V[s]
-       
+    
     m2 = Matrix(zeros(dim+2,1))		       # Diffusive term
     
     for s in range(0,dim+2):
@@ -137,7 +137,7 @@ for dim in dim_vector:
     
     m3 = -S.transpose()*V			        # Source term
     L_adj = m1+m2+m3
-    #L_adj = m2+m3
+    #L_adj = m1+m3
          
     ## Variational Formulation - Final equation
 
@@ -157,14 +157,13 @@ for dim in dim_vector:
             tmp += kinter[j]*H[:,j] 
         n3 += Q[:,k].transpose()*tmp
     
-
     n4 = -V.transpose()*(S*Ug)		       # Source term - FE scale
     
-    n5 = L_adj.transpose()*(Tau*res)	   # VMS_adjoint - Subscales
+    n5 = L_adj.transpose()*(Tau*res)	   # VMS_adjoint - Subscales 
     
     print("\nCompute Variational Formulation\n")
     rv = n1+n2+n3+n4+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
-    #rv = n1+n3+n4+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
+    #rv = n1+n2+n4+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
 
     ### Substitution of the discretized values at the gauss points
     print("\nSubstitution of the discretized values at the gauss points\n")
@@ -172,12 +171,12 @@ for dim in dim_vector:
     ## Data interpolation at the gauss points
     U_gauss = U.transpose()*N
     w_gauss = w.transpose()*N
-    #f_gauss = DefineVector('f_gauss',dim)      #USED FOR MANUFACTURED SOLUTION
-    f_gauss = f_ext.transpose()*N
+    f_gauss = DefineVector('f_gauss',dim)      #USED FOR MANUFACTURED SOLUTION
+    #f_gauss = f_ext.transpose()*N
     acc_gauss = (bdf0*U+bdf1*Un+bdf2*Unn).transpose()*N
     
-    r_gauss = (r.transpose()*N)[0] 
-    #r_gauss = Symbol('r_gauss', positive = True)     #USED FOR MANUFACTURED SOLUTION
+    #r_gauss = (r.transpose()*N)[0] 
+    r_gauss = Symbol('r_gauss', positive = True)     #USED FOR MANUFACTURED SOLUTION
 
     ## Gradients computation
     grad_U = DfjDxi(DN,U).transpose()

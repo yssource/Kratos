@@ -75,6 +75,8 @@ public:
 //         array_1d<double, TNumNodes > tau1,tau2,tau3; // stabilization matrix parameters
         bounded_matrix<double, TNumNodes, TDim> f_ext;
         array_1d<double,TNumNodes> r; // At the moment considering all parameters as constant in the domain (mu, nu, etc...)
+        array_1d<double, TDim> f_gauss;
+        double r_gauss;
 
         bounded_matrix<double, TNumNodes, TDim > DN_DX;
         array_1d<double, TNumNodes > N;
@@ -89,6 +91,7 @@ public:
         double lambda;          
         double cv;
         double y;               //gamma
+        double c;               // TO DO : temporarily use for testing
     };
 
     ///@}
@@ -149,7 +152,7 @@ public:
         // Struct to pass around the data
         ElementDataStruct data;
         this->FillElementData(data, rCurrentProcessInfo);
-
+        
         // Allocate memory needed
         bounded_matrix<double,MatrixSize, MatrixSize> lhs_local;
         array_1d<double,MatrixSize> rhs_local;
@@ -159,24 +162,47 @@ public:
         noalias(rRightHandSideVector) = ZeroVector(MatrixSize);
 
         // Gauss point position
-        bounded_matrix<double,TNumNodes, TNumNodes> Ncontainer;
-        GetShapeFunctionsOnGauss(Ncontainer);
-
-        for(unsigned int igauss = 0; igauss<Ncontainer.size2(); igauss++)
+        //bounded_matrix<double,TNumNodes, TNumNodes> Ncontainer;
+        //GetShapeFunctionsOnGauss(Ncontainer);
+        unsigned int ngauss = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4).size1();
+        const auto& integration_points = GetGeometry().IntegrationPoints(GeometryData::GI_GAUSS_4);
+        
+        for(unsigned int igauss = 0; igauss<ngauss; /*Ncontainer.size2();*/ igauss++)
         {
-            noalias(data.N) = row(Ncontainer, igauss);
+            //noalias(data.N) = row(Ncontainer, igauss);
+            noalias(data.N) = row(GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4), igauss);
+            
+            double xgauss = 0;
+            double ygauss = 0;
+            
+            for(unsigned int i = 0; i<GetGeometry().size(); i++){
+                xgauss += GetGeometry()[i].X()*data.N[i];
+                ygauss += GetGeometry()[i].Y()*data.N[i];
+            }
+            double x = xgauss;
+            double y = ygauss;
+           
+            
+          
+            data.f_gauss[0] = 1.0*(210.699588477366*x - 84.2798353909465*y + 611.028806584362);
+
+            data.f_gauss[1] = -1.0*(84.2798353909465*x - 4.21062361931904e-14*y + 273.909465020576);
+
+            data.r_gauss = -1.0*(3329.57374383986*pow(x, 2) + 8323.93435959965*x*y + 28925.6718996088*x - 3329.57374383986*pow(y, 2) + 21226.0326169791*y + 56306.1508078532);
             
             ComputeGaussPointRHSContribution(rhs_local, data);
             ComputeGaussPointLHSContribution(lhs_local, data);
 
+            const double integration_weight = integration_points[igauss].Weight()*data.volume;
+
             // here we assume that all the weights of the gauss points are the same so we multiply at the end by Volume/n_nodes
-            noalias(rLeftHandSideMatrix) += lhs_local;
-            noalias(rRightHandSideVector) += rhs_local;
+            noalias(rLeftHandSideMatrix) += integration_weight*lhs_local;
+            noalias(rRightHandSideVector) += integration_weight*rhs_local;
         }
 
-        rLeftHandSideMatrix  *= data.volume/static_cast<double>(TNumNodes);
-        rRightHandSideVector *= data.volume/static_cast<double>(TNumNodes);
-
+        //rLeftHandSideMatrix  *= data.volume/static_cast<double>(TNumNodes);
+        //rRightHandSideVector *= data.volume/static_cast<double>(TNumNodes);
+        /*
         std::cout<<this->Id()<<" "<<rRightHandSideVector<<std::endl;
         for(unsigned int i=0; i<GetGeometry().size(); i++){
             std::cout<<GetGeometry()[i].Id()<<" "<<GetGeometry()[i].Coordinates()<<std::endl;
@@ -184,7 +210,7 @@ public:
             std::cout<<GetGeometry()[i].FastGetSolutionStepValue(DENSITY)<<std::endl;
             std::cout<<GetGeometry()[i].FastGetSolutionStepValue(TOTAL_ENERGY)<<std::endl;
         }
-
+        */
         KRATOS_CATCH("Error in Compressible Navier Stokes Element Symbolic")
     }
 
@@ -210,11 +236,15 @@ public:
         bounded_matrix<double,TNumNodes, TNumNodes> Ncontainer;
         GetShapeFunctionsOnGauss(Ncontainer);
 
+        //unsigned int ngauss = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4).size1();
+
         // Loop on gauss point
         noalias(rRightHandSideVector) = ZeroVector(MatrixSize);
         for(unsigned int igauss = 0; igauss<Ncontainer.size2(); igauss++)
         {
             noalias(data.N) = row(Ncontainer, igauss);
+            //noalias(data.N) = row(GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4), igauss);
+
 
             ComputeGaussPointRHSContribution(rhs_local, data);
             //here we assume that all the weights of the gauss points are the same so we multiply at the end by Volume/n_nodes
@@ -400,7 +430,7 @@ protected:
 
         for (unsigned int i = 0; i < TNumNodes; i++)
         {
-            const array_1d<double,3>& body_force = this->GetGeometry()[i].FastGetSolutionStepValue(BODY_FORCE);
+            //const array_1d<double,3>& body_force = this->GetGeometry()[i].FastGetSolutionStepValue(BODY_FORCE);
             const array_1d<double,3>& moment = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENTUM);
             const array_1d<double,3>& moment_n = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENTUM,1);
             const array_1d<double,3>& moment_nn = this->GetGeometry()[i].FastGetSolutionStepValue(MOMENTUM,2);
@@ -410,7 +440,7 @@ protected:
                 rData.U(i,k+1)   = moment[k];
                 rData.Un(i,k+1)  = moment_n[k];
                 rData.Unn(i,k+1) = moment_nn[k];
-                rData.f_ext(i,k)   = body_force[k];
+                //rData.f_ext(i,k)   = body_force[k];
             }
             rData.U(i,0)= this->GetGeometry()[i].FastGetSolutionStepValue(DENSITY);
             rData.Un(i,0)= this->GetGeometry()[i].FastGetSolutionStepValue(DENSITY,1);
@@ -420,7 +450,7 @@ protected:
             rData.Un(i,TDim+1) = this->GetGeometry()[i].FastGetSolutionStepValue(TOTAL_ENERGY,1);
             rData.Unn(i,TDim+1) = this->GetGeometry()[i].FastGetSolutionStepValue(TOTAL_ENERGY,2);
             
-            rData.r(i) = this->GetGeometry()[i].FastGetSolutionStepValue(EXTERNAL_PRESSURE);
+            //rData.r(i) = this->GetGeometry()[i].FastGetSolutionStepValue(EXTERNAL_PRESSURE);
          }
 
     }

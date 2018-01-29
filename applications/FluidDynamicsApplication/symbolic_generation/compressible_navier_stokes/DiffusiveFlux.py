@@ -33,11 +33,11 @@ def computeK(dofs,params):
     for i in range(0,dim):
         for j in range(i,dim):#NOT SURE
             if i!=j:
-               tau[i,j] = mu/Ug[0]*(H[i+1,j]+H[j+1,i])-mu/Ug[0]**2*(Ug[i+1]*H[0,j]+Ug[j+1]*H[0,i])
+               tau[i,j] = (mu/Ug[0])*(H[i+1,j]+H[j+1,i])-(mu/Ug[0]**2)*(Ug[i+1]*H[0,j]+Ug[j+1]*H[0,i])
             if i==j:
-               tau[i,j]= 2*mu/Ug[0]*H[i+1,i]-2*mu/Ug[0]**2*Ug[i+1]*H[0,i]
+               tau[i,j]= (2*mu/Ug[0])*H[i+1,i]-(2*mu/Ug[0]**2)*Ug[i+1]*H[0,i]
                for k in range(0,dim):
-                   tau[i,j]+= -2*mu/(3*Ug[0])*H[k+1,k]+2*mu/(3*Ug[0]**2)*Ug[k+1]*H[0,k]
+                   tau[i,j]+= -(2*mu/(3*Ug[0]))*H[k+1,k]+(2*mu/(3*Ug[0]**2))*Ug[k+1]*H[0,k]
     
     for i in range(1,dim):
         for j in range(0,dim-1):
@@ -72,15 +72,16 @@ def computeK(dofs,params):
         ksmall = []			#Intermediate 5*5*3 tensor
         for j in range(0,dim):
             tmp = DefineMatrix('tmp',dim+2,dim+2)
-            for l in range(0,dim+2):
+            for p in range(0,dim+2):
                 for m in range(0,dim+2):
-                    #tmp[l,m] = diff(-G[l,j],H[m,k])
-                    tmp[l,m] = diff(G[l,k],H[m,j])
-                    #print("\n\n",l,m,"=",tmp[l,m],"\n\n")
+                    #tmp[p,m] = diff(G[p,k],H[m,j]) THIS SEEMS WRONG
+                    tmp[p,m] = diff(-G[p,k],H[m,j])
+                    #print("\n\n",p,m,"=",tmp[p,m],"\n\n")
             
             ksmall.append(tmp)
         
-        K.append(ksmall)     
+        K.append(ksmall)   
+      
     return K
     
 ## Printing the Diffusive Matrix
@@ -95,13 +96,7 @@ def printK(K,params):
       	    tmp = ksmall[j]
       	    #print(tmp)
       	    for i in range(0,dim+2):
-                for l in range(0,dim+2):  
-                    print("K[",k,",",j,",",i,",",l,"]=",tmp[i,l],"\n")
+                for p in range(0,dim+2):  
+                    print("K[",k,",",j,",",i,",",p,"]=",tmp[i,p],"\n")
        
     return 0
-
-
-
-
-
-

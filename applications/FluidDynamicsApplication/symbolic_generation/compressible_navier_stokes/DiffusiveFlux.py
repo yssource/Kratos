@@ -5,12 +5,12 @@ from sympy_fe_utilities import *
 import pprint
 
 ## Computation of the Diffusive Matrix
-def computeK(dofs,params):
+def computeK(dofs,params,Hg,Gg):
     print("\nCompute Diffusive Matrix\n")
     dim = params["dim"]				# spatial dimensions
     ## Unknown fields definition
-    H = DefineMatrix('H',dim+2,dim)		# Gradient of U
-    G = DefineMatrix('G',dim+2,dim)		# Diffusive Flux matrix 
+    H = Hg      #DefineMatrix('H',dim+2,dim)		# Gradient of U
+    G = Gg      #DefineMatrix('G',dim+2,dim)		# Diffusive Flux matrix 
     tau = DefineMatrix('tau',dim,dim)		# Shear stress tensor for Newtonian fluid
     q = DefineVector('q',dim)			# Heat flux vector
     
@@ -21,7 +21,7 @@ def computeK(dofs,params):
     l = params["lambda"]			# Thermal Conductivity of the fluid
         
     ## Data interpolation to the Gauss points
-    Ug = dofs
+    Ug = dofs             
 
     ## Pgauss - Pressure definition
     pg = (y-1)*Ug[dim+1]
@@ -50,7 +50,12 @@ def computeK(dofs,params):
         for j in range(0,dim):
             q[i] += -l*Ug[j+1]**2/(Cv*Ug[0]**3)*H[0,i]+l/(Ug[0]**2*Cv)*Ug[j+1]*H[j+1,i] 
     #NB!!!There is an error in the definition of q[i] in the research proposal. The second term of the equation has an opposite sign!!!NB#
-       
+    ''' 
+    0                                   0 
+    -tau00                              -tau01
+    -tau01                              -tau11
+    -mu/rho*tau00-mv/rho*tau01+q0       -mu/rho*tau01-mv/rho*tau11+q1
+    '''
     ## G - Diffusive Matrix definition 
     for j in range(0,dim):
         G[0,j]= 0 			#Mass equation related
@@ -63,7 +68,8 @@ def computeK(dofs,params):
         G[dim+1,j] = q[j]
         for k in range(0,dim):
             G[dim+1,j] += -Ug[k+1]*tau[k,j]/Ug[0]
-    
+
+    '''
     ## K - Jacobian Diffusive Matrix definition
     K = []				#Final 5*5*3 tensor 			
     # k:index of H(moving over colomns), j:index of G(moving over colomns)	
@@ -74,17 +80,18 @@ def computeK(dofs,params):
             tmp = DefineMatrix('tmp',dim+2,dim+2)
             for p in range(0,dim+2):
                 for m in range(0,dim+2):
-                    #tmp[p,m] = diff(G[p,k],H[m,j]) THIS SEEMS WRONG
-                    tmp[p,m] = diff(-G[p,k],H[m,j])
+                    #tmp[p,m] = diff(-G[p,k],H[m,j])  
+                    #tmp[p,m] = diff(-G[p,k],Ug[m])
+                    #tmp[p,m] = -(diff(G[p,k],H[m,j])+diff(G[p,k],Ug[m]))       #MY TEST NOT WORKING
                     #print("\n\n",p,m,"=",tmp[p,m],"\n\n")
             
             ksmall.append(tmp)
         
         K.append(ksmall)   
-      
-    return K
+    '''
+    return G
     
-## Printing the Diffusive Matrix
+## TO DO: MODIFY IT FOR G Printing the Diffusive Matrix
 def printK(K,params):
     dim = params["dim"]
     ksmall = []

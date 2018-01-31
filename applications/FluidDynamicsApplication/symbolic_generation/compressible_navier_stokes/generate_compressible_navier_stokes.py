@@ -66,12 +66,14 @@ for dim in dim_vector:
     V = DefineVector('V',dim+2)			    # Test function
     Q = DefineMatrix('Q',dim+2,dim)			# Gradient of V
     acc = DefineVector('acc',BlockSize)         # Derivative of Dofs/Time
-
+    G = DefineMatrix('G',dim+2,dim)		# Diffusive Flux matrix
+    
     S = SourceTerm.computeS(f,rg,params)
     #SourceTerm.printS(S,params)
     A = ConvectiveFlux.computeA(Ug,params)
     #ConvectiveFlux.printA(A,params)
-    K = DiffusiveFlux.computeK(Ug,params)
+    #K = DiffusiveFlux.computeK(Ug,params)
+    G = DiffusiveFlux.computeK(Ug,params,H,G)
     #DiffusiveFlux.printK(K,params)
     Tau = StabilizationMatrix.computeTau(params)
     #Tau = zeros(dim+2,dim+2)
@@ -87,7 +89,7 @@ for dim in dim_vector:
     for j in range(0,dim):
         tmp = A[j]*H[:,j]
         l1 +=tmp
-    
+    '''
     l2 = Matrix(zeros(dim+2,1))		       # Diffusive term
     
     for s in range(0,dim+2):
@@ -101,13 +103,13 @@ for dim in dim_vector:
                             l2[s] += diff(ksmall[l,m],Ug[n])*H[n,k]*H[s,j]
                             #print("l",l,"m",m,"n",n,":\n",l2[s],"\n\n\n\n\n\n"
     
-    
+    '''
     l3 = S*Ug				               # Source term
     print("\nCompute Non-linear operator\n")
-    L = l1-l2-l3                           # Nonlinear operator 
-    #L = l1-l3                           # Nonlinear operator
-  
-    ## Redisual definition     
+    #L = l1-l2-l3                           # Nonlinear operator 
+    L = l1-l3                               # REMOVING DIFFUSION FROM STABILIZATION
+
+    ## Residual definition     
     res = -acc - L		
    
     ## Nonlinear adjoint operator definition
@@ -122,7 +124,7 @@ for dim in dim_vector:
                     m1[s] -= A_T[l,m]*Q[s,j]
                     for n in range(0,dim+2):
                         m1[s] -= diff(A_T[l,m],Ug[n])*H[n,j]*V[s]
-    
+    '''
     m2 = Matrix(zeros(dim+2,1))		       # Diffusive term
     
     for s in range(0,dim+2):
@@ -134,10 +136,10 @@ for dim in dim_vector:
                     for m in range(0,dim+2):
                         for n in range(0,dim+2):
                             m2[s] -= diff(ksmall[l,m],Ug[n])*H[n,j]*Q[s,k]
-    
+    '''
     m3 = -S.transpose()*V			        # Source term
-    L_adj = m1+m2+m3
-    #L_adj = m1+m3
+    #L_adj = m1+m2+m3
+    L_adj = m1+m3                           # REMOVING DIFFUSION FROM STABILIZATION
          
     ## Variational Formulation - Final equation
 
@@ -147,7 +149,7 @@ for dim in dim_vector:
     for i in range(0,dim):
         temp += A[i]*H[:,i]
     n2 = V.transpose()*temp			       # Convective term - FE scale
-    
+    '''
     tmp = Matrix(zeros(dim+2,1))
     n3 = Matrix(zeros(1,1))			       # Diffusive term - FE scale
     
@@ -156,22 +158,26 @@ for dim in dim_vector:
         for j in range(0,dim):
             tmp += kinter[j]*H[:,j] 
         n3 += Q[:,k].transpose()*tmp
-    
+    '''
+
+    for j in range(0,dim):
+        n3 = Q[:,j].transpose()*(-G[:,j])
+
     n4 = -V.transpose()*(S*Ug)		       # Source term - FE scale
     
     n5 = L_adj.transpose()*(Tau*res)	   # VMS_adjoint - Subscales 
     
     print("\nCompute Variational Formulation\n")
     rv = n1+n2+n3+n4+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
+    #print(rv)
     #rv = n1+n2+n4+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
-
+    
     ### Substitution of the discretized values at the gauss points
     print("\nSubstitution of the discretized values at the gauss points\n")
     
     ## Data interpolation at the gauss points
     U_gauss = U.transpose()*N
     w_gauss = w.transpose()*N
-    f_gauss = DefineVector('f_gauss',dim)      #USED FOR MANUFACTURED SOLUTION
     #f_gauss = f_ext.transpose()*N
     acc_gauss = (bdf0*U+bdf1*Un+bdf2*Unn).transpose()*N
     
@@ -181,14 +187,14 @@ for dim in dim_vector:
     ## Gradients computation
     grad_U = DfjDxi(DN,U).transpose()
     grad_w = DfjDxi(DN,w).transpose()
-
+    
     SubstituteMatrixValue(rv, Ug, U_gauss)
     SubstituteMatrixValue(rv, acc, acc_gauss)
     SubstituteMatrixValue(rv, H, grad_U)
     SubstituteMatrixValue(rv, V, w_gauss)
     SubstituteMatrixValue(rv, Q, grad_w)
-    SubstituteMatrixValue(rv, f, f_gauss)
-    SubstituteScalarValue(rv, rg, r_gauss)    
+    #SubstituteMatrixValue(rv, f, f_gauss)
+    #SubstituteScalarValue(rv, rg, r_gauss)    
     
     dofs = Matrix(zeros(nnodes*(dim+2),1))
     testfunc = Matrix(zeros(nnodes*(dim+2),1))

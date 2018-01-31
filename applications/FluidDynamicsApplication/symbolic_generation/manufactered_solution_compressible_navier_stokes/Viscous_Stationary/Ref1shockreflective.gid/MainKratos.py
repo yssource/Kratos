@@ -133,9 +133,7 @@ for node in main_model_part.GetSubModelPart("Parts_Parts_Auto1").Nodes:
     y = node.Y
     for step in range(3):
         node.SetSolutionStepValue(MOMENTUM_X,step,32*x + 64*y + 160 )
-        #node.SetSolutionStepValue(MOMENTUM_X,step,240 )
         node.SetSolutionStepValue(MOMENTUM_Y,step,16*x - 32*y + 24)
-        #node.SetSolutionStepValue(MOMENTUM_Y,step,-12)
         #node.SetSolutionStepValue(DENSITY,step,0.5*x+y+0.8)
         node.SetSolutionStepValue(DENSITY,step,2.7)
         #node.SetSolutionStepValue(TOTAL_ENERGY,step,100*x - 500*y + 36500)
@@ -145,9 +143,7 @@ for node in main_model_part.GetSubModelPart("AutomaticInlet2D_Automatic_inlet_ve
     x = node.X
     y = node.Y
     node.SetSolutionStepValue(MOMENTUM_X, 32*x + 64*y + 160)
-    #node.SetSolutionStepValue(MOMENTUM_X, 240)
     node.SetSolutionStepValue(MOMENTUM_Y, 16*x - 32*y + 24)
-    #node.SetSolutionStepValue(MOMENTUM_Y,-12)
     #node.SetSolutionStepValue(DENSITY, 0.5*x+y+0.8)
     node.SetSolutionStepValue(DENSITY,2.7)
     #node.SetSolutionStepValue(TOTAL_ENERGY, 100*x - 500*y + 36500)
@@ -161,9 +157,7 @@ for node in main_model_part.GetSubModelPart("Slip2D_Slip_Auto1").Nodes:
     x = node.X
     y = node.Y
     node.SetSolutionStepValue(MOMENTUM_X, 32*x + 64*y + 160)
-    #node.SetSolutionStepValue(MOMENTUM_X, 240)
     node.SetSolutionStepValue(MOMENTUM_Y, 16*x - 32*y + 24)
-    #node.SetSolutionStepValue(MOMENTUM_Y, -12)
     #node.SetSolutionStepValue(DENSITY, 0.5*x+y+0.8)
     node.SetSolutionStepValue(DENSITY,2.7)
     #node.SetSolutionStepValue(TOTAL_ENERGY, 100*x - 500*y + 36500)
@@ -177,9 +171,7 @@ for node in main_model_part.GetSubModelPart("NoSlip2D_No_Slip_Auto1").Nodes:
     x = node.X
     y = node.Y
     node.SetSolutionStepValue(MOMENTUM_X, 32*x + 64*y + 160)
-    #node.SetSolutionStepValue(MOMENTUM_X, 240)
     node.SetSolutionStepValue(MOMENTUM_Y, 16*x - 32*y + 24)
-    #node.SetSolutionStepValue(MOMENTUM_Y, -12)
     #node.SetSolutionStepValue(DENSITY, 0.5*x+y+0.8)
     node.SetSolutionStepValue(DENSITY,2.7)
     #node.SetSolutionStepValue(TOTAL_ENERGY, 100*x - 500*y + 36500)
@@ -193,9 +185,7 @@ for node in main_model_part.GetSubModelPart("Outlet2D_Outlet_pressure_Auto1").No
     x = node.X
     y = node.Y
     node.SetSolutionStepValue(MOMENTUM_X, 32*x + 64*y + 160)
-    #node.SetSolutionStepValue(MOMENTUM_X, 240)
     node.SetSolutionStepValue(MOMENTUM_Y, 16*x - 32*y + 24)
-    #node.SetSolutionStepValue(MOMENTUM_Y, -12)
     #node.SetSolutionStepValue(DENSITY, 0.5*x+y+0.8)
     node.SetSolutionStepValue(DENSITY,2.7)
     #node.SetSolutionStepValue(TOTAL_ENERGY, 100*x - 500*y + 36500)
@@ -246,7 +236,12 @@ def check(mp):
                 else:
                     print("Ma",Ma)
         
- 
+
+for node in main_model_part.Nodes:
+    node.Fix(TOTAL_ENERGY)
+    #node.Fix(MOMENTUM_X)
+    #node.Fix(MOMENTUM_Y)
+    #node.Fix(DENSITY)
 
 while(time <= end_time):
     #check(main_model_part)       

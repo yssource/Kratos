@@ -132,8 +132,7 @@ void CompressibleNavierStokes<3>::ComputeGaussPointLHSContribution(bounded_matri
     const bounded_matrix<double,nnodes,BlockSize>& Un = data.Un;
     const bounded_matrix<double,nnodes,BlockSize>& Unn = data.Unn;
     const bounded_matrix<double,nnodes,dim>& f_ext = data.f_ext;
-
-    const double rg = data.r_gauss; 
+    const array_1d<double,nnodes>& r = data.r;   
     const double mu = data.mu;
     const double nu = data.nu;
     const double lambda = data.lambda;
@@ -186,10 +185,8 @@ void CompressibleNavierStokes<2>::ComputeGaussPointLHSContribution(bounded_matri
     const bounded_matrix<double,nnodes,BlockSize>& U = data.U;
     const bounded_matrix<double,nnodes,BlockSize>& Un = data.Un;
     const bounded_matrix<double,nnodes,BlockSize>& Unn = data.Unn;
-    //const bounded_matrix<double,nnodes,dim>& f_ext = data.f_ext;
-    //const array_1d<double,nnodes>& r = data.r;
-    const array_1d<double,dim>& f = data.f_gauss;
-    const double rg = data.r_gauss;
+    const bounded_matrix<double,nnodes,dim>& f_ext = data.f_ext;
+    const array_1d<double,nnodes>& r = data.r;
     const double mu = data.mu;
     const double nu = data.nu;
     const double lambda = data.lambda;
@@ -219,9 +216,9 @@ void CompressibleNavierStokes<2>::ComputeGaussPointLHSContribution(bounded_matri
     double tau2inv = stab_c1*nu/(h*h)+tau1inv;
     double tau3inv = stab_c1*lambda/(U_gauss(0)*cp*h*h)+tau1inv;
         
-    const double tau1 = 0.0;//1/tau1inv;
-    const double tau2 = 0.0;//1/tau2inv;
-    const double tau3 = 0.0;//1/tau3inv;
+    const double tau1 = 1/tau1inv;
+    const double tau2 = 1/tau2inv;
+    const double tau3 = 1/tau3inv;
 
     const double clhs0 =             N[0]*bdf0;
 const double clhs1 =             N[0]*U(0,0) + N[1]*U(1,0) + N[2]*U(2,0);
@@ -2480,10 +2477,8 @@ void CompressibleNavierStokes<2>::ComputeGaussPointRHSContribution(array_1d<doub
     const bounded_matrix<double,nnodes,BlockSize>& U = data.U;
     const bounded_matrix<double,nnodes,BlockSize>& Un = data.Un;
     const bounded_matrix<double,nnodes,BlockSize>& Unn = data.Unn;
-    //const bounded_matrix<double,nnodes,dim>& f_ext = data.f_ext;
-    //const array_1d<double,nnodes>& r = data.r;
-    const array_1d<double,dim>& f = data.f_gauss;
-    const double rg = data.r_gauss; 
+    const bounded_matrix<double,nnodes,dim>& f_ext = data.f_ext;
+    const array_1d<double,nnodes>& r = data.r;
     const double mu = data.mu;
     const double nu = data.nu;
     const double lambda = data.lambda;
@@ -2498,7 +2493,7 @@ void CompressibleNavierStokes<2>::ComputeGaussPointRHSContribution(array_1d<doub
 
     // Auxiliary variables used in the calculation of the RHS
     const array_1d<double,BlockSize> U_gauss = prod(trans(U), N);
-    //const array_1d<double,dim> f_gauss = prod(trans(f_ext), N);
+    const array_1d<double,dim> f_gauss = prod(trans(f_ext), N);
     const bounded_matrix<double,dim,BlockSize> grad_U = prod(trans(DN), U);
     const array_1d<double,BlockSize> accel_gauss = bdf0*U_gauss+bdf1*prod(trans(Un), N)+bdf2*prod(trans(Unn), N);
     
@@ -2517,9 +2512,9 @@ void CompressibleNavierStokes<2>::ComputeGaussPointRHSContribution(array_1d<doub
     double tau2inv = stab_c1*nu/(h*h)+tau1inv;
     double tau3inv = stab_c1*lambda/(U_gauss(0)*cp*h*h)+tau1inv;
         
-    const double tau1 = 0.0;//1/tau1inv;
-    const double tau2 = 0.0;//1/tau2inv;
-    const double tau3 = 0.0;//1/tau3inv;
+    const double tau1 = 1/tau1inv;
+    const double tau2 = 1/tau2inv;
+    const double tau3 = 1/tau3inv;
 
     const double crhs0 =             DN(0,0)*U(0,1);
 const double crhs1 =             DN(1,0)*U(1,1);

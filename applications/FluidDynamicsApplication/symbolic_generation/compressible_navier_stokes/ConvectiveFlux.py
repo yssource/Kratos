@@ -21,10 +21,10 @@ def computeA(dofs, params):
     pg = (y-1)*Ug[dim+1]
     for i in range(0,dim):
         pg += (y-1)*(-Ug[i+1]*Ug[i+1]/(2*Ug[0]))
-
+    
     ## F - Convective Flux Matrix definition
     for j in range(0,dim):
-        F[0,j] = Ug[j+1];
+        F[0,j] = Ug[j+1]
     
     for i in range (1,dim+1):
         for j in range(0,dim):
@@ -35,6 +35,7 @@ def computeA(dofs, params):
     for j in range(0,dim):
         F[dim+1,j] = (Ug[dim+1]+pg)*Ug[j+1]/Ug[0]
  
+
     ## A - Jacobian Convective Matrix definition
     A = []
 

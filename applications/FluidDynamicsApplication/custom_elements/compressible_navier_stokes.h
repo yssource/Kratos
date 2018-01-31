@@ -1,3 +1,4 @@
+
 //    |  /           |
 //    ' /   __| _` | __|  _ \   __|
 //    . \  |   (   | |   (   |\__ `
@@ -164,36 +165,49 @@ public:
         // Gauss point position
         //bounded_matrix<double,TNumNodes, TNumNodes> Ncontainer;
         //GetShapeFunctionsOnGauss(Ncontainer);
-        unsigned int ngauss = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4).size1();
-        const auto& integration_points = GetGeometry().IntegrationPoints(GeometryData::GI_GAUSS_4);
-        
-        for(unsigned int igauss = 0; igauss<ngauss; /*Ncontainer.size2();*/ igauss++)
+        //unsigned int ngauss = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4).size1();
+        const auto& integration_points = GetGeometry().IntegrationPoints(GeometryData::GI_GAUSS_3);
+        const Matrix& Ncontainer = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_3);
+
+        Vector determinants(Ncontainer.size2());
+        GetGeometry().DeterminantOfJacobian( determinants, GeometryData::GI_GAUSS_3 );
+
+        for(unsigned int igauss = 0; igauss<Ncontainer.size1(); igauss++)
         {
             //noalias(data.N) = row(Ncontainer, igauss);
-            noalias(data.N) = row(GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4), igauss);
-            
-            double xgauss = 0;
-            double ygauss = 0;
-            
-            for(unsigned int i = 0; i<GetGeometry().size(); i++){
-                xgauss += GetGeometry()[i].X()*data.N[i];
-                ygauss += GetGeometry()[i].Y()*data.N[i];
+            noalias(data.N) = row(Ncontainer, igauss);
+
+            /*if(rCurrentProcessInfo[FRACTIONAL_STEP] == 0) //forces are zero
+            {
+                data.f_gauss[0] = 0.0;
+                data.f_gauss[1] = 0.0;
+                data.r_gauss = 0.0;
             }
-            double x = xgauss;
-            double y = ygauss;
-           
+            else 
+            {*/
+                double xgauss = 0;
+                double ygauss = 0;
+                
+                for(unsigned int i = 0; i<GetGeometry().size(); i++){
+                    xgauss += GetGeometry()[i].X()*data.N[i];
+                    ygauss += GetGeometry()[i].Y()*data.N[i];
+                }
+                double x = xgauss;
+                double y = ygauss;
             
-          
-            data.f_gauss[0] = 1.0*(210.699588477366*x - 84.2798353909465*y + 611.028806584362);
-
-            data.f_gauss[1] = -1.0*(84.2798353909465*x - 4.21062361931904e-14*y + 273.909465020576);
-
-            data.r_gauss = -1.0*(3329.57374383986*pow(x, 2) + 8323.93435959965*x*y + 28925.6718996088*x - 3329.57374383986*pow(y, 2) + 21226.0326169791*y + 56306.1508078532);
+                
             
+                data.f_gauss[0] =210.699588477366*x - 84.2798353909465*y + 611.028806584362;
+
+                data.f_gauss[1] = -84.2798353909465*x + 4.21062361931911e-14*y - 273.909465020576;
+                
+                data.r_gauss = 0.137174211248285*(-227.555555555555*x - 758.518518518518*y - 1403.25925925926)*(16*x - 32*y + 24) + 0.137174211248285*(-189.62962962963*x - 227.555555555555*y - 815.407407407407)*(32*x + 64*y + 160) - 0.37037037037037*(-84.2798353909465*x + 4.21062361931911e-14*y - 273.909465020576)*(16*x - 32*y + 24) - 0.37037037037037*(32*x + 64*y + 160)*(210.699588477366*x - 84.2798353909465*y + 611.028806584362) - 159.975613473561;
+                //}
+
             ComputeGaussPointRHSContribution(rhs_local, data);
             ComputeGaussPointLHSContribution(lhs_local, data);
 
-            const double integration_weight = integration_points[igauss].Weight()*data.volume;
+            const double integration_weight = integration_points[igauss].Weight()*determinants[igauss];
 
             // here we assume that all the weights of the gauss points are the same so we multiply at the end by Volume/n_nodes
             noalias(rLeftHandSideMatrix) += integration_weight*lhs_local;
@@ -202,15 +216,15 @@ public:
 
         //rLeftHandSideMatrix  *= data.volume/static_cast<double>(TNumNodes);
         //rRightHandSideVector *= data.volume/static_cast<double>(TNumNodes);
-        /*
+        
         std::cout<<this->Id()<<" "<<rRightHandSideVector<<std::endl;
-        for(unsigned int i=0; i<GetGeometry().size(); i++){
+        /*for(unsigned int i=0; i<GetGeometry().size(); i++){
             std::cout<<GetGeometry()[i].Id()<<" "<<GetGeometry()[i].Coordinates()<<std::endl;
             std::cout<<GetGeometry()[i].FastGetSolutionStepValue(MOMENTUM)<<std::endl;
             std::cout<<GetGeometry()[i].FastGetSolutionStepValue(DENSITY)<<std::endl;
             std::cout<<GetGeometry()[i].FastGetSolutionStepValue(TOTAL_ENERGY)<<std::endl;
-        }
-        */
+        }*/
+        
         KRATOS_CATCH("Error in Compressible Navier Stokes Element Symbolic")
     }
 
@@ -219,7 +233,7 @@ public:
                                 ProcessInfo& rCurrentProcessInfo) override
     {
         KRATOS_TRY
-
+KRATOS_ERROR << "aaaaaaaaaaaaaaaaaaaaaaaa";
         constexpr unsigned int MatrixSize = TNumNodes*(BlockSize);
 
         if (rRightHandSideVector.size() != MatrixSize)
@@ -587,7 +601,6 @@ private:
       rThis.PrintInfo(rOStream);
       rOStream << std::endl;
       rThis.PrintData(rOStream);
-
       return rOStream;
     }*/
 ///@}

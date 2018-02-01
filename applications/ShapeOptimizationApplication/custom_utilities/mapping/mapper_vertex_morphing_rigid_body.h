@@ -89,9 +89,12 @@ public:
     typedef ModelPart::ConditionsContainerType ConditionsArrayType;
 
     // Type definitions for linear algebra including sparse systems
-    typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
-    typedef SparseSpaceType::MatrixType SparseMatrixType;
-    typedef SparseSpaceType::VectorType VectorType;
+    typedef UblasSpace<double, CompressedMatrix, Vector> CompressedSpaceType;
+    typedef CompressedSpaceType::MatrixType CompressedMatrixType;
+    typedef CompressedSpaceType::VectorType VectorType;
+
+    typedef UblasSpace<double, Matrix, Vector> DenseSpaceType;
+    typedef LinearSolver<CompressedSpaceType, DenseSpaceType > CompressedLinearSolverType;
 
     // Type definitions for tree-search
     typedef Bucket< 3, NodeType, NodeVector, NodeTypePointer, NodeIterator, DoubleVectorIterator > BucketType;
@@ -115,9 +118,9 @@ public:
     {
         CreateListOfNodesOfDesignSurface();
         CreateFilterFunction();
+        CreateListOfRigidNodes();
         InitializeMappingVariables();
         AssignMappingIds();
-        CreateListOfRigidNodes();
     }
 
     /// Destructor.
@@ -279,6 +282,28 @@ public:
     }
 
     // --------------------------------------------------------------------------
+    void MapToDesignSpaceWithRigidCorrection( const Variable<array_3d> &rNodalVariable, 
+                                              const Variable<array_3d> &rNodalVariableInDesignSpace,
+                                              CompressedLinearSolverType::Pointer linear_solver )
+    {
+        boost::timer mapping_time;
+        std::cout << "\n> Starting to map " << rNodalVariable.Name() << " to design space..." << std::endl;
+
+        RecomputeMappingMatrixIfGeometryHasChanged();
+        PrepareVectorsForMappingToDesignSpace( rNodalVariable );
+        if (mConsistentBackwardMapping)
+            MultiplyVectorsWithConsistentBackwardMappingMatrix();
+        else
+            MultiplyVectorsWithTransposeMappingMatrix();
+        AssignResultingDesignVectorsToNodalVariable( rNodalVariableInDesignSpace );
+
+        CorrectDesignUpdateWithRigidBodyConstraints( linear_solver );
+        AssignResultingDesignVectorsToNodalVariable( rNodalVariableInDesignSpace );
+
+        std::cout << "> Time needed for mapping: " << mapping_time.elapsed() << " s" << std::endl;
+    }
+
+    // --------------------------------------------------------------------------
     void MapToGeometrySpace( const Variable<array_3d> &rNodalVariable, const Variable<array_3d> &rNodalVariableInGeometrySpace )
     {
         boost::timer mapping_time;
@@ -287,8 +312,6 @@ public:
         RecomputeMappingMatrixIfGeometryHasChanged();
         PrepareVectorsForMappingToGeometrySpace( rNodalVariable );
         MultiplyVectorsWithMappingMatrix();
-        AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
-        CorrectDesignUpdateWithRigidBodyConstraints();
         AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
 
         std::cout << "> Time needed for mapping: " << mapping_time.elapsed() << " s" << std::endl;
@@ -347,9 +370,9 @@ public:
     // --------------------------------------------------------------------------
     void MultiplyVectorsWithTransposeMappingMatrix()
     {
-        SparseSpaceType::TransposeMult(mMappingMatrix,x_variables_in_geometry_space,x_variables_in_design_space);
-        SparseSpaceType::TransposeMult(mMappingMatrix,y_variables_in_geometry_space,y_variables_in_design_space);
-        SparseSpaceType::TransposeMult(mMappingMatrix,z_variables_in_geometry_space,z_variables_in_design_space);
+        CompressedSpaceType::TransposeMult(mMappingMatrix,x_variables_in_geometry_space,x_variables_in_design_space);
+        CompressedSpaceType::TransposeMult(mMappingMatrix,y_variables_in_geometry_space,y_variables_in_design_space);
+        CompressedSpaceType::TransposeMult(mMappingMatrix,z_variables_in_geometry_space,z_variables_in_design_space);
     }
 
     // --------------------------------------------------------------------------
@@ -446,7 +469,7 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    void CorrectDesignUpdateWithRigidBodyConstraints()
+    void CorrectDesignUpdateWithRigidBodyConstraints( CompressedLinearSolverType::Pointer linear_solver )
     {
         // centroid A
         Vector centroid_undeformed = ZeroVector(3);
@@ -526,38 +549,48 @@ public:
         t = - prod(R, centroid_undeformed) + centroid_undeformed;
         KRATOS_WATCH(t);
 
+
+        // From here we have R & t
+
+
         // compute rigid body movement of rigid nodes
         for(int node_index = 0 ; node_index<mListOfRigidNodes.size() ; node_index++)
         {
+
+
             // Get node information
             ModelPart::NodeType& node_i = *mListOfRigidNodes[node_index];
-
             array_3d& coord = node_i.Coordinates();
 
             x_variables_in_geometry_space_rigid[node_index] = coord[0]*R(0,0)
                                                 + coord[1]*R(0,1)
-                                                + coord[2]*R(0,1)
+                                                + coord[2]*R(0,2)
                                                 + t(0);
             y_variables_in_geometry_space_rigid[node_index] = coord[0]*R(1,0)
                                                 + coord[1]*R(1,1)
-                                                + coord[2]*R(1,1)
+                                                + coord[2]*R(1,2)
                                                 + t(1);
             z_variables_in_geometry_space_rigid[node_index] = coord[0]*R(2,0)
                                                 + coord[1]*R(2,1)
-                                                + coord[2]*R(2,1)
+                                                + coord[2]*R(2,2)
                                                 + t(2);
         }
 
         // compute modified mapping matrix
-        SparseMatrix modifiedMatrix = ZeroMatrix( mNumberOfDesignVariables+mNumberOfRigidNodes , 
+        CompressedMatrixType modifiedMatrix = ZeroMatrix( mNumberOfDesignVariables+mNumberOfRigidNodes , 
                                             mNumberOfDesignVariables );
         Vector x_variables_modified, y_variables_modified, z_variables_modified;
         x_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
         y_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
         z_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
 
-        
 
+
+        double penalty_factor = 1000000;
+
+
+        
+        // Copy from orignal mapping matrix & shape update
         for( int node_index_i = 0 ; node_index_i<mNumberOfDesignVariables ; node_index_i++)
         {
             // modified matrix
@@ -565,14 +598,14 @@ public:
             {
                 modifiedMatrix.push_back(node_index_i,
                                         node_index_j,
-                                        mMappingMatrix.get(node_index_i,node_index_j));
+                                        penalty_factor*mMappingMatrix(node_index_i,node_index_j));
 
                 
             }
             // modified vectors
-            x_variables_modified[node_index_i] = x_variables_in_geometry_space[node_index_i];
-            y_variables_modified[node_index_i] = y_variables_in_geometry_space[node_index_i];
-            z_variables_modified[node_index_i] = z_variables_in_geometry_space[node_index_i];
+            x_variables_modified[node_index_i] = penalty_factor*x_variables_in_geometry_space[node_index_i];
+            y_variables_modified[node_index_i] = penalty_factor*y_variables_in_geometry_space[node_index_i];
+            z_variables_modified[node_index_i] = penalty_factor*z_variables_in_geometry_space[node_index_i];
         }
 
         for( int node_index_i = 0 ; node_index_i<mNumberOfRigidNodes ; node_index_i++)
@@ -585,33 +618,60 @@ public:
             for( int node_index_j = 0 ; node_index_j<mNumberOfDesignVariables ; node_index_j++)
             {
                 
-                modifiedMatrix.push_back(numberOfDesignVariables + node_index_i,
-                                        node_index_j,
-                                        mMappingMatrix.get(i,node_index_j));
+                modifiedMatrix.push_back(mNumberOfDesignVariables + node_index_i, node_index_j,
+                                        mMappingMatrix(i,node_index_j));
             }
             
             // modified vectors
             x_variables_modified[node_index_i+mNumberOfDesignVariables] 
-                    = x_variables_in_geometry_space[node_index_i];
+                    = x_variables_in_geometry_space_rigid[node_index_i];
             y_variables_modified[node_index_i+mNumberOfDesignVariables] 
-                    = y_variables_in_geometry_space[node_index_i];
+                    = y_variables_in_geometry_space_rigid[node_index_i];
             z_variables_modified[node_index_i+mNumberOfDesignVariables] 
-                    = z_variables_in_geometry_space[node_index_i];
+                    = z_variables_in_geometry_space_rigid[node_index_i];
         }
 
+        KRATOS_WATCH("test3")
+        
+
         // compute matrix
-        SparseMatrix optimalMappingMatrix = prod(trans(modifiedMatrix) , modifiedMatrix)
+        CompressedMatrixType transA = trans(modifiedMatrix);
+        CompressedMatrixType optimalMappingMatrix = prod(transA, modifiedMatrix);
+
+        // CompressedMatrixType optimalMappingMatrix;
+        // CompressedSpaceType::TransposeMult(modifiedMatrix,modifiedMatrix,optimalMappingMatrix);
+
+        KRATOS_WATCH("test4")
+
 
         // compute vectors
         Vector x_variables_RHS, y_variables_RHS, z_variables_RHS;
-        noalias(x_variables_RHS) = prod(modifiedMatrix , x_variables_modified);
-        noalias(y_variables_RHS) = prod(modifiedMatrix , y_variables_modified);
-        noalias(z_variables_RHS) = prod(modifiedMatrix , z_variables_modified);
+        x_variables_RHS.resize(mNumberOfDesignVariables);
+        y_variables_RHS.resize(mNumberOfDesignVariables);
+        z_variables_RHS.resize(mNumberOfDesignVariables);
 
-        // solve system vor new x
-        x_variables_in_geometry_space = solve(x_variables_RHS,optimalMappingMatrix);
-        y_variables_in_geometry_space = solve(y_variables_RHS,optimalMappingMatrix);
-        z_variables_in_geometry_space = solve(z_variables_RHS,optimalMappingMatrix);
+        // CompressedSpaceType::TransposeMult(modifiedMatrix,x_variables_modified,x_variables_RHS);
+        // CompressedSpaceType::TransposeMult(modifiedMatrix,y_variables_modified,y_variables_RHS);
+        // CompressedSpaceType::TransposeMult(modifiedMatrix,z_variables_modified,z_variables_RHS);
+
+        noalias(x_variables_RHS) = prod(transA , x_variables_modified);
+        noalias(y_variables_RHS) = prod(transA , y_variables_modified);
+        noalias(z_variables_RHS) = prod(transA , z_variables_modified);
+
+        KRATOS_WATCH("test5")
+
+        Vector x_variables_in_design_space;
+        Vector y_variables_in_design_space;
+        Vector z_variables_in_design_space;
+
+        linear_solver->Solve(optimalMappingMatrix, x_variables_in_design_space, x_variables_RHS);
+        linear_solver->Solve(optimalMappingMatrix, y_variables_in_design_space, y_variables_RHS);
+        linear_solver->Solve(optimalMappingMatrix, z_variables_in_design_space, z_variables_RHS);
+
+        // // solve system for new x
+        // x_variables_in_design_space = solve(x_variables_RHS,optimalMappingMatrix);
+        // y_variables_in_design_space = solve(y_variables_RHS,optimalMappingMatrix);
+        // z_variables_in_design_space = solve(z_variables_RHS,optimalMappingMatrix);
 
     }
 
@@ -728,7 +788,7 @@ private:
     // ==============================================================================
     // Variables for mapping
     // ==============================================================================
-    SparseMatrixType mMappingMatrix;
+    CompressedMatrixType mMappingMatrix;
     Vector x_variables_in_design_space, y_variables_in_design_space, z_variables_in_design_space;
     Vector x_variables_in_geometry_space, y_variables_in_geometry_space, z_variables_in_geometry_space;
     Vector x_variables_in_geometry_space_rigid, y_variables_in_geometry_space_rigid, z_variables_in_geometry_space_rigid;

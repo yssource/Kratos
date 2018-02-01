@@ -155,6 +155,32 @@ class kratosCSMAnalyzer( (__import__("analyzer_base")).analyzerBaseClass ):
 
             communicator.reportGradient("strain_energy", gradientOnDesignSurface)
 
+        # Calculation of value of constraint function
+        if communicator.isRequestingFunctionValueOf("mass"):
+
+            print("\n> Starting calculation of value of mass constraint")
+            listOfResponseFunctions["mass"].CalculateValue()
+            constraintFunctionValue = listOfResponseFunctions["mass"].GetValue() - listOfResponseFunctions["mass"].GetInitialValue()
+            print("> Time needed for calculation of value of mass constraint = ",round(timer.time() - startTime,2),"s")
+
+            communicator.reportFunctionValue("mass", constraintFunctionValue)
+            communicator.setFunctionReferenceValue("mass", listOfResponseFunctions["mass"].GetInitialValue())            
+
+        # Calculation of gradients of constraint function  
+        if communicator.isRequestingGradientOf("mass"):       
+
+            print("\n> Starting calculation of gradient of constraint function")
+            startTime = timer.time()    
+            listOfResponseFunctions["mass"].CalculateGradient()
+            print("> Time needed for calculating gradient of constraint function = ",round(timer.time() - startTime,2),"s")
+
+            gradientForCompleteModelPart = listOfResponseFunctions["mass"].GetGradient()
+            gradientOnDesignSurface = {}
+            for node in currentDesign.Nodes:
+                gradientOnDesignSurface[node.Id] = gradientForCompleteModelPart[node.Id]
+
+            communicator.reportGradient("mass", gradientOnDesignSurface)             
+
     # --------------------------------------------------------------------------
     def initializeNewSolutionStep( self, optimizationIteration ):
         main_model_part.CloneTimeStep( optimizationIteration )

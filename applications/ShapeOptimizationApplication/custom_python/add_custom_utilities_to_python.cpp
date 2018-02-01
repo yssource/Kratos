@@ -30,12 +30,14 @@
 #include "custom_utilities/mapping/mapper_vertex_morphing.h"
 #include "custom_utilities/mapping/mapper_vertex_morphing_matrix_free.h"
 #include "custom_utilities/mapping/mapper_vertex_morphing_improved_integration.h"
-#include "custom_utilities/mapping/mapper_vertex_morphing_rigid_body.h"
 #include "custom_utilities/damping/damping_utilities.h"
 #include "custom_utilities/response_functions/strain_energy_response_function.h"
 #include "custom_utilities/response_functions/mass_response_function.h"
 #include "custom_utilities/input_output/universal_file_io.h"
 #include "custom_utilities/input_output/vtk_file_io.h"
+
+#include "linear_solvers/linear_solver.h"
+#include "custom_utilities/mapping/mapper_vertex_morphing_rigid_body.h"
 
 
 // ==============================================================================
@@ -50,6 +52,12 @@ namespace Python
 void  AddCustomUtilitiesToPython()
 {
     using namespace boost::python;
+
+
+    // typedef UblasSpace<double, SparseMatrix, Vector> SparseSpaceType;
+    typedef UblasSpace<double, CompressedMatrix, Vector> CompressedSpaceType;
+    typedef UblasSpace<double, Matrix, Vector> DenseSpaceType;
+    typedef LinearSolver<CompressedSpaceType, DenseSpaceType > CompressedLinearSolverType;
 
     // ================================================================
     // For performing the mapping according to Vertex Morphing
@@ -70,7 +78,7 @@ void  AddCustomUtilitiesToPython()
         ;
     
     class_<MapperVertexMorphingRigidBody, bases<Process> >("MapperVertexMorphingRigidBody", init<ModelPart&, Parameters>())
-        .def("MapToDesignSpace", &MapperVertexMorphingRigidBody::MapToDesignSpace)
+        .def("MapToDesignSpaceWithRigidCorrection", &MapperVertexMorphingRigidBody::MapToDesignSpaceWithRigidCorrection)
         .def("MapToGeometrySpace", &MapperVertexMorphingRigidBody::MapToGeometrySpace)
         ;
 

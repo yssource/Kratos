@@ -15,6 +15,7 @@ from __future__ import print_function, absolute_import, division
 # importing the Kratos Library
 from KratosMultiphysics import *
 from KratosMultiphysics.ShapeOptimizationApplication import *
+from KratosMultiphysics.ExternalSolversApplication import *
 
 # check that KratosMultiphysics was imported in the main script
 CheckForPreviousImport()
@@ -140,7 +141,8 @@ class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
  
     # --------------------------------------------------------------------------
     def __mapSensitivitiesToDesignSpace( self ):
-        self.Mapper.MapToDesignSpace( OBJECTIVE_SENSITIVITY, MAPPED_OBJECTIVE_SENSITIVITY )
+        LinearSolver = SuperLUSolver()
+        self.Mapper.MapToDesignSpaceWithRigidCorrection( OBJECTIVE_SENSITIVITY, MAPPED_OBJECTIVE_SENSITIVITY, LinearSolver )
 
     # --------------------------------------------------------------------------
     def __mapDesignUpdateToGeometrySpace( self ):
@@ -187,13 +189,13 @@ class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
         self.optimizationTools.UpdateControlPointChangeByInputVariable( CONTROL_POINT_UPDATE )
         self.geometryTools.UpdateShapeChangeByInputVariable( SHAPE_UPDATE )
 
-    # --------------------------------------------------------------------------
-    def __correctDesignUpdateWithRigidBodyConstraints( self ):
-        print('\n> ++Correct design update with rigid body constraints...')
-        RigidBodyTools = RigidBodyUtilities( self.DesignSurface, self.OptimizationSettings)
-        RigidBodyTools.CorrectDesignUpdateWithRigidBodyConstraints()
-        # --> ds
-        print('OK!')
+    # # --------------------------------------------------------------------------
+    # def __correctDesignUpdateWithRigidBodyConstraints( self ):
+    #     print('\n> ++Correct design update with rigid body constraints...')
+    #     RigidBodyTools = RigidBodyUtilities( self.DesignSurface, self.OptimizationSettings)
+    #     RigidBodyTools.CorrectDesignUpdateWithRigidBodyConstraints()
+    #     # --> ds
+    #     print('OK!')
     
 
 

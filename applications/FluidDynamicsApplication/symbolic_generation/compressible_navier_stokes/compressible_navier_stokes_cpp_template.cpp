@@ -136,9 +136,9 @@ void CompressibleNavierStokes<3>::ComputeGaussPointLHSContribution(bounded_matri
     const double mu = data.mu;
     const double nu = data.nu;
     const double lambda = data.lambda;
-    const double cv = data.cv;
-    const double y = data.y;
-    const double cp = cv*y;
+    const double c_v = data.c_v;
+    const double gamma = data.gamma;
+    const double cp = c_v*gamma;
  
     // Get shape function values
     const array_1d<double,nnodes>& N = data.N;
@@ -153,7 +153,7 @@ void CompressibleNavierStokes<3>::ComputeGaussPointLHSContribution(bounded_matri
     double tmp = U_gauss(dim+1)/U_gauss(0);
     for(unsigned int ll=0; ll<dim; ll++)
         tmp -=(U_gauss(ll+1)*U_gauss(ll+1))/(2*U_gauss(0)*U_gauss(0));
-    double c = sqrt(y*(y-1)*tmp);
+    double c = sqrt(gamma*(gamma-1)*tmp);
 
     double tau1inv = 0.0;
     for(unsigned int ll=0; ll<dim; ll++)
@@ -190,9 +190,9 @@ void CompressibleNavierStokes<2>::ComputeGaussPointLHSContribution(bounded_matri
     const double mu = data.mu;
     const double nu = data.nu;
     const double lambda = data.lambda;
-    const double cv = data.cv;
-    const double y = data.y;
-    const double cp = cv*y;
+    const double c_v = data.c_v;
+    const double gamma = data.gamma;
+    const double cp = c_v*gamma;
  
     // Get shape function values
     const array_1d<double,nnodes>& N = data.N;
@@ -207,7 +207,7 @@ void CompressibleNavierStokes<2>::ComputeGaussPointLHSContribution(bounded_matri
     double tmp = U_gauss(dim+1)/U_gauss(0);
     for(unsigned int ll=0; ll<dim; ll++)
         tmp -=(U_gauss(ll+1)*U_gauss(ll+1))/(2*U_gauss(0)*U_gauss(0));
-    double c = sqrt(y*(y-1)*tmp);
+    double c = sqrt(gamma*(gamma-1)*tmp);
 
     double tau1inv = 0.0;
     for(unsigned int ll=0; ll<dim; ll++)
@@ -245,9 +245,9 @@ void CompressibleNavierStokes<3>::ComputeGaussPointRHSContribution(array_1d<doub
     const double mu = data.mu;
     const double nu = data.nu;
     const double lambda = data.lambda;
-    const double cv = data.cv;
-    const double y = data.y;
-    const double cp = cv*y;
+    const double c_v = data.c_v;
+    const double gamma = data.gamma;
+    const double cp = c_v*gamma;
     
     
     // Get shape function values
@@ -266,7 +266,7 @@ void CompressibleNavierStokes<3>::ComputeGaussPointRHSContribution(array_1d<doub
     double tmp = U_gauss(dim+1)/U_gauss(0);
     for(unsigned int ll=0; ll<dim; ll++)
         tmp -=(U_gauss(ll+1)*U_gauss(ll+1))/(2*U_gauss(0)*U_gauss(0));
-    double c = sqrt(y*(y-1)*tmp);
+    double c = sqrt(gamma*(gamma-1)*tmp);
 
     double tau1inv = 0.0;
     for(unsigned int ll=0; ll<dim; ll++)
@@ -302,9 +302,9 @@ void CompressibleNavierStokes<2>::ComputeGaussPointRHSContribution(array_1d<doub
     const double mu = data.mu;
     const double nu = data.nu;
     const double lambda = data.lambda;
-    const double cv = data.cv;
-    const double y = data.y;
-    const double cp = cv*y;
+    const double c_v = data.c_v;
+    const double gamma = data.gamma;
+    const double cp = c_v*gamma;
     
 
     // Get shape function values
@@ -323,7 +323,7 @@ void CompressibleNavierStokes<2>::ComputeGaussPointRHSContribution(array_1d<doub
     double tmp = U_gauss(dim+1)/U_gauss(0);
     for(unsigned int ll=0; ll<dim; ll++)
         tmp -=(U_gauss(ll+1)*U_gauss(ll+1))/(2*U_gauss(0)*U_gauss(0));
-    double c = sqrt(y*(y-1)*tmp);
+    double c = sqrt(gamma*(gamma-1)*tmp);
 
     double tau1inv = 0.0;
     for(unsigned int ll=0; ll<dim; ll++)

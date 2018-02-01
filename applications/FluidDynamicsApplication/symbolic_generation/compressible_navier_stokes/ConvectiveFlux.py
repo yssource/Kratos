@@ -8,11 +8,10 @@ import pprint
 def computeA(dofs, params):
     print("\nCompute Convective Matrix \n")
     dim = params["dim"]				# spatial dimensions
+    
     ## Unknown field definition
     F = DefineMatrix('F',dim+2,dim)		# Convective Flux matrix 
-
-    ## Data interpolation to the Gauss points
-    Ug = dofs
+    Ug = dofs                           # Data interpolation to the Gauss points
     
     ## Other symbols definitions
     y = params["gamma"]				# Gamma (Cp/Cv)
@@ -55,7 +54,6 @@ def printA(A,params):
     print("The convective matrix is:\n")
     for j in range(0,dim):
     	tmp = A[j]
-    	#print(tmp)
     	for i in range(0,dim+2):
             for k in range(0,dim+2):
                 print("A[",j,",",i,",",k,"]=",tmp[i,k],"\n")

@@ -15,7 +15,6 @@ dim = params["dim"]
 BlockSize = dim+2 					        # Dimension of the vector of Unknowns
 do_simplifications = False
 dim_to_compute = "2D"                # Spatial dimensions to compute. Options:  "2D","3D","Both"
-linearisation = "Picard"            # Iteration type. Options: "Picard", "FullNR"
 mode = "c"                              # Output mode to a c++ file
 
 if (dim_to_compute == "2D"):
@@ -43,13 +42,13 @@ for dim in dim_vector:
     U = DefineMatrix('U',nnodes,BlockSize)	     # Vector of Unknowns ( Density,Velocity[dim],Total Energy )
     Un = DefineMatrix('Un',nnodes,BlockSize)     # Vector of Unknowns one step back
     Unn = DefineMatrix('Unn',nnodes,BlockSize)   # Vector of Unknowns two steps back
-    r = DefineVector('r',nnodes)             # Sink term
+    #r = DefineVector('r',nnodes)             # Sink term
 
     # Test functions defintiion
     w = DefineMatrix('w',nnodes,BlockSize)	     # Variables field test
 
     # External terms definition
-    f_ext = DefineMatrix('f_ext',nnodes,dim) # Forcing term 
+    #f_ext = DefineMatrix('f_ext',nnodes,dim) # Forcing term 
 
     # Definition of other symbols
     bdf0 = Symbol('bdf0')                    # Backward differantiation coefficients
@@ -59,36 +58,33 @@ for dim in dim_vector:
 
     ### Construction of the variational equation
 
-    Ug = DefineVector('Ug',dim+2)			# Dofs vector
-    H = DefineMatrix('H',dim+2,dim)			# Gradient of U
+    Ug = DefineVector('Ug',BlockSize)			# Dofs vector
+    H = DefineMatrix('H',BlockSize,dim)			# Gradient of U
     f = DefineVector('f',dim)			    # Body force vector
     rg = Symbol('rg', positive = True)		# Source/Sink term
-    V = DefineVector('V',dim+2)			    # Test function
-    Q = DefineMatrix('Q',dim+2,dim)			# Gradient of V
+    V = DefineVector('V',BlockSize)			    # Test function
+    Q = DefineMatrix('Q',BlockSize,dim)			# Gradient of V
     acc = DefineVector('acc',BlockSize)         # Derivative of Dofs/Time
-    G = DefineMatrix('G',dim+2,dim)		# Diffusive Flux matrix
+    G = DefineMatrix('G',BlockSize,dim)		# Diffusive Flux matrix
     
     S = SourceTerm.computeS(f,rg,params)
     #SourceTerm.printS(S,params)
     A = ConvectiveFlux.computeA(Ug,params)
     #ConvectiveFlux.printA(A,params)
-    #K = DiffusiveFlux.computeK(Ug,params)
     G = DiffusiveFlux.computeK(Ug,params,H,G)
-    #DiffusiveFlux.printK(K,params)
+    #DiffusiveFlux.printK(G,params)
     Tau = StabilizationMatrix.computeTau(params)
     #Tau = zeros(dim+2,dim+2)
     #StabilizationMatrix.printTau(Tau,params)
     
-    ## Nonlinear operator definition
-    L = DefineVector('L',dim+2)		       # Nonlinear operator
-   
-    res = DefineVector('res',dim+2)		   # Residual definition
-    
+    ## Nonlinear operator definition   
     l1 = Matrix(zeros(dim+2,1))		       # Convective Matrix*Gradient of U
-    tmp = []
+    A_small = []
     for j in range(0,dim):
-        tmp = A[j]*H[:,j]
-        l1 +=tmp
+        A_small = A[j]
+        for ll in range(BlockSize):
+            for mm in range(BlockSize):
+                l1[ll] += A_small[ll,mm]*H[mm,j]
     '''
     l2 = Matrix(zeros(dim+2,1))		       # Diffusive term
     
@@ -106,15 +102,12 @@ for dim in dim_vector:
     '''
     l3 = S*Ug				               # Source term
     print("\nCompute Non-linear operator\n")
-    #L = l1-l2-l3                           # Nonlinear operator 
-    L = l1-l3                               # REMOVING DIFFUSION FROM STABILIZATION
+    L = l1-l3 #-l2                          # Nonlinear operator
 
     ## Residual definition     
     res = -acc - L		
    
-    ## Nonlinear adjoint operator definition
-    L_adj = DefineVector('L_adj',dim+2)	   # Nonlinear adjoint operator
-    
+    ## Nonlinear adjoint operator definition  
     m1 = Matrix(zeros(dim+2,1))		       # Convective term
     for s in range(0,dim+2):
         for j in range(0,dim):
@@ -138,20 +131,24 @@ for dim in dim_vector:
                             m2[s] -= diff(ksmall[l,m],Ug[n])*H[n,j]*Q[s,k]
     '''
     m3 = -S.transpose()*V			        # Source term
-    #L_adj = m1+m2+m3
-    L_adj = m1+m3                           # REMOVING DIFFUSION FROM STABILIZATION
+    L_adj = m1+m3 #+m2                      # Nonlinear adjoint operator
          
     ## Variational Formulation - Final equation
-
     n1 = V.transpose()*acc		            # Mass term - FE scale
     
     temp = zeros(dim+2,1)
+    A_smalll = []
     for i in range(0,dim):
-        temp += A[i]*H[:,i]
+        A_smalll = A[i]
+        for ll in range(BlockSize):
+            for mm in range(BlockSize):
+                temp[ll] += A_smalll[ll,mm]*H[mm,i]
+    
     n2 = V.transpose()*temp			       # Convective term - FE scale
+
     '''
     tmp = Matrix(zeros(dim+2,1))
-    n3 = Matrix(zeros(1,1))			       # Diffusive term - FE scale
+    n3 = Matrix(zeros(1,1))			       
     
     for k in range(0,dim):
         kinter= K[k]
@@ -160,18 +157,19 @@ for dim in dim_vector:
         n3 += Q[:,k].transpose()*tmp
     '''
 
+    n3 = Matrix(zeros(1,1))                 # Diffusive term - FE scale
     for j in range(0,dim):
-        n3 = Q[:,j].transpose()*(-G[:,j])
+        for k in range(BlockSize):
+            n3[0,0] += Q[k,j]*(-G[k,j])
 
     n4 = -V.transpose()*(S*Ug)		       # Source term - FE scale
     
     n5 = L_adj.transpose()*(Tau*res)	   # VMS_adjoint - Subscales 
-    
+ 
     print("\nCompute Variational Formulation\n")
     rv = n1+n2+n3+n4+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
-    #print(rv)
-    #rv = n1+n2+n4+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
-    
+  
+
     ### Substitution of the discretized values at the gauss points
     print("\nSubstitution of the discretized values at the gauss points\n")
     

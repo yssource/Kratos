@@ -7,50 +7,54 @@ import pprint
 ## Computation of the Diffusive Matrix
 def computeK(dofs,params,Hg,Gg):
     print("\nCompute Diffusive Matrix\n")
-    dim = params["dim"]				# spatial dimensions
+    dim = params["dim"]				                    # spatial dimensions
+    
     ## Unknown fields definition
-    H = Hg      #DefineMatrix('H',dim+2,dim)		# Gradient of U
-    G = Gg      #DefineMatrix('G',dim+2,dim)		# Diffusive Flux matrix 
-    tau = DefineMatrix('tau',dim,dim)		# Shear stress tensor for Newtonian fluid
+    H = Hg.copy()                               		# Gradient of U
+    G = Gg.copy()                               		# Diffusive Flux matrix 
+    tau_stress = DefineMatrix('tau_stress',dim,dim)		# Shear stress tensor for Newtonian fluid
     q = DefineVector('q',dim)			# Heat flux vector
     
     ## Other simbols definition
-    Cv = params["c_v"]				# Specific Heat at Constant volume
-    y = params["gamma"]				# Gamma (Cp/Cv) 
+    c_v = params["c_v"]				    # Specific Heat at Constant volume
+    gamma = params["gamma"]				# Gamma (Cp/Cv) 
     mu  = params["mu"]         			# Dynamic viscosity 
-    l = params["lambda"]			# Thermal Conductivity of the fluid
+    l = params["lambda"]			    # Thermal Conductivity of the fluid
         
     ## Data interpolation to the Gauss points
     Ug = dofs             
 
     ## Pgauss - Pressure definition
-    pg = (y-1)*Ug[dim+1]
+    pg = Ug[dim+1]
     for i in range(0,dim):
-        pg += (y-1)*(-Ug[i+1]*Ug[i+1]/(2*Ug[0]))
-    
-    ## Tau - Shear stress tensor definition
+        pg += (-Ug[i+1]*Ug[i+1]/(2*Ug[0]))
+    pg *= (gamma-1)
 
+    ## Tau - Shear stress tensor definition
     for i in range(0,dim):
-        for j in range(i,dim):#NOT SURE
+        for j in range(i,dim):
             if i!=j:
-               tau[i,j] = (mu/Ug[0])*(H[i+1,j]+H[j+1,i])-(mu/Ug[0]**2)*(Ug[i+1]*H[0,j]+Ug[j+1]*H[0,i])
+               tau_stress[i,j] = (mu/Ug[0])*(H[i+1,j]+H[j+1,i])-(mu/Ug[0]**2)*(Ug[i+1]*H[0,j]+Ug[j+1]*H[0,i])
             if i==j:
-               tau[i,j]= (2*mu/Ug[0])*H[i+1,i]-(2*mu/Ug[0]**2)*Ug[i+1]*H[0,i]
+               tau_stress[i,j]= (2*mu/Ug[0])*H[i+1,i]-(2*mu/Ug[0]**2)*Ug[i+1]*H[0,i]
                for k in range(0,dim):
-                   tau[i,j]+= -(2*mu/(3*Ug[0]))*H[k+1,k]+(2*mu/(3*Ug[0]**2))*Ug[k+1]*H[0,k]
+                   tau_stress[i,j]+= -(2*mu/(3*Ug[0]))*H[k+1,k]+(2*mu/(3*Ug[0]**2))*Ug[k+1]*H[0,k]
     
     for i in range(1,dim):
         for j in range(0,dim-1):
             if j!=i:
-               tau[i,j] = tau[j,i]
+               tau_stress[i,j] = tau_stress[j,i]
                
     ## q - Heat flux vector definition
     for i in range(0,dim):
-        q[i] = l*Ug[dim+1]/(Ug[0]**2*Cv)*H[0,i]-(l*H[dim+1,i])/(Ug[0]*Cv)
+        q[i] = l*Ug[dim+1]/(Ug[0]**2*c_v)*H[0,i]-(l*H[dim+1,i])/(Ug[0]*c_v)
         for j in range(0,dim):
-            q[i] += -l*Ug[j+1]**2/(Cv*Ug[0]**3)*H[0,i]+l/(Ug[0]**2*Cv)*Ug[j+1]*H[j+1,i] 
-    #NB!!!There is an error in the definition of q[i] in the research proposal. The second term of the equation has an opposite sign!!!NB#
+            q[i] += -l*Ug[j+1]**2/(c_v*Ug[0]**3)*H[0,i]+l/(Ug[0]**2*c_v)*Ug[j+1]*H[j+1,i] 
+    #NB!!!There is an error in the definition of q[i] in the research proposal. 
+    #The second term of the equation has an opposite sign!!!NB#
     ''' 
+    G [(dim+2)*(dim)]
+    
     0                                   0 
     -tau00                              -tau01
     -tau01                              -tau11
@@ -58,52 +62,25 @@ def computeK(dofs,params,Hg,Gg):
     '''
     ## G - Diffusive Matrix definition 
     for j in range(0,dim):
-        G[0,j]= 0 			#Mass equation related
+        G[0,j]= 0 			                #Mass equation related
        
     for i in range(1,dim+1):
         for j in range(0,dim):
-            G[i,j]=-tau[i-1,j]		#Moment equation related
+            G[i,j]=-tau_stress[i-1,j]		#Moment equation related
     
-    for j in range(0,dim):
+    for j in range(0,dim):                  #Energy equation related
         G[dim+1,j] = q[j]
         for k in range(0,dim):
-            G[dim+1,j] += -Ug[k+1]*tau[k,j]/Ug[0]
+            G[dim+1,j] += -Ug[k+1]*tau_stress[k,j]/Ug[0]
 
-    '''
-    ## K - Jacobian Diffusive Matrix definition
-    K = []				#Final 5*5*3 tensor 			
-    # k:index of H(moving over colomns), j:index of G(moving over colomns)	
-      
-    for k in range(0,dim):
-        ksmall = []			#Intermediate 5*5*3 tensor
-        for j in range(0,dim):
-            tmp = DefineMatrix('tmp',dim+2,dim+2)
-            for p in range(0,dim+2):
-                for m in range(0,dim+2):
-                    #tmp[p,m] = diff(-G[p,k],H[m,j])  
-                    #tmp[p,m] = diff(-G[p,k],Ug[m])
-                    #tmp[p,m] = -(diff(G[p,k],H[m,j])+diff(G[p,k],Ug[m]))       #MY TEST NOT WORKING
-                    #print("\n\n",p,m,"=",tmp[p,m],"\n\n")
-            
-            ksmall.append(tmp)
-        
-        K.append(ksmall)   
-    '''
     return G
     
-## TO DO: MODIFY IT FOR G Printing the Diffusive Matrix
-def printK(K,params):
+## Printing the Diffusive Matrix G
+def printK(G,params):
     dim = params["dim"]
-    ksmall = []
-    tmp = []
     print("The diffusive matrix is:\n")
-    for k in range (0,dim):
-        ksmall = K[k]
-        for j in range(0,dim):
-      	    tmp = ksmall[j]
-      	    #print(tmp)
-      	    for i in range(0,dim+2):
-                for p in range(0,dim+2):  
-                    print("K[",k,",",j,",",i,",",p,"]=",tmp[i,p],"\n")
+    for ll in range(dim+2):
+        for mm in range(dim+2):
+            print("G[",ll,",",mm,"]=",G[ll,mm],"\n")
        
     return 0

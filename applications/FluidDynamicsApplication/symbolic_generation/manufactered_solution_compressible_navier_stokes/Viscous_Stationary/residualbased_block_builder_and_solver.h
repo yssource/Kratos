@@ -435,13 +435,13 @@ public:
         if (this->GetEchoLevel() == 3)
         {
             std::cout << "before the solution of the system" << std::endl;
-            std::cout << "System Matrix = " << A << std::endl;
+            //std::cout << "System Matrix = " << A << std::endl;
             std::cout << "unknowns vector = " << Dx << std::endl;
             std::cout << "RHS vector = " << b << std::endl;
 
             for(auto it=BaseType::mDofSet.begin(); it!=BaseType::mDofSet.end(); ++it)
             {
-                std::cout << it->Id() << " " << it->GetVariable().Name() << " " << "r=" << b[it->EquationId()] << " v=" << it->GetSolutionStepValue() << " fixed= " << it->IsFixed() << std::endl;
+                std::cout << it->Id() << " " << it->GetVariable().Name() << " " << "r=" << b[it->EquationId()] << " v=" << it->GetSolutionStepValue() << " fixed= " << it->IsFixed() << " dx =" << Dx[it->EquationId()] << std::endl;
             }
         }
 
@@ -458,7 +458,7 @@ public:
         if (this->GetEchoLevel() == 3)
         {
             std::cout << "after the solution of the system" << std::endl;
-            std::cout << "System Matrix = " << A << std::endl;
+            //std::cout << "System Matrix = " << A << std::endl;
             std::cout << "unknowns vector = " << Dx << std::endl;
             std::cout << "RHS vector = " << b << std::endl;
 

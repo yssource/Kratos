@@ -1,3 +1,4 @@
+
 //    |  /           |
 //    ' /   __| _` | __|  _ \   __|
 //    . \  |   (   | |   (   |\__ `
@@ -89,8 +90,8 @@ public:
         double mu;
         double nu;
         double lambda;          
-        double cv;
-        double y;               //gamma
+        double c_v;
+        double gamma;               //gamma
         double c;               // TO DO : temporarily use for testing
     };
 
@@ -164,53 +165,68 @@ public:
         // Gauss point position
         //bounded_matrix<double,TNumNodes, TNumNodes> Ncontainer;
         //GetShapeFunctionsOnGauss(Ncontainer);
-        unsigned int ngauss = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4).size1();
-        
-        for(unsigned int igauss = 0; igauss<ngauss; igauss++)
+        //unsigned int ngauss = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4).size1();
+        const auto& integration_points = GetGeometry().IntegrationPoints(GeometryData::GI_GAUSS_4);
+        const Matrix& Ncontainer = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4);
+
+        Vector determinants(Ncontainer.size2());
+        GetGeometry().DeterminantOfJacobian( determinants, GeometryData::GI_GAUSS_4 );
+
+        for(unsigned int igauss = 0; igauss<Ncontainer.size1(); igauss++)
         {
             //noalias(data.N) = row(Ncontainer, igauss);
-            noalias(data.N) = row(GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4), igauss);
-            double xgauss = 0;
-            double ygauss = 0;
-            
-            for(unsigned int i = 0; i<GetGeometry().size(); i++){
-                xgauss += GetGeometry()[i].X()*data.N[i];
-                ygauss += GetGeometry()[i].Y()*data.N[i];
-            }
-            double x = xgauss;
-            double y = ygauss;
-           
-            
-            //mu = 0.0 lambda = 0.0
-            data.f_gauss[0] = -1.0*(118.0*pow(x,4)+ 944.0*pow(x,3)*y + 4236.8*pow(x,3) + 2422.4*x*x*y*y + 18437.12*x*x*y + 23084.8*x*x + 2137.6*x*pow(y,3) + 21596.16*x*y*y + 69991.424*x*y + 43266.048*x + 249.599999999999*pow(y,4) + 3338.24000000001*pow(y,3) + 46595.072*y*y + 68653.8752*y + 26709.1968)/(pow((0.5*x + 1.0*y + 0.8),3)*pow((1.0*x + 2.0*y + 1.6),2));
+            noalias(data.N) = row(Ncontainer, igauss);
 
-            data.f_gauss[1] = -1.0*(613.2*pow(x,4) + 1628.8*pow(x,3)*y + 3842.56*pow(x,3) - 1667.2*x*x*y*y + 4008.96000000001*x*x*y + 6573.056*x*x - 6592.0*x*pow(y,3) - 19589.12*x*y*y - 9490.43199999999*x*y + 1569.5872*x - 3296.0*pow(y,4) - 24473.6*pow(y,3) - 36884.48*y*y - 18776.064*y - 2595.2256)/(pow((0.5*x + 1.0*y + 0.8),3)*pow((1.0*x + 2.0*y + 1.6),2));
+            /*if(rCurrentProcessInfo[FRACTIONAL_STEP] == 0) //forces are zero
+            {
+                data.f_gauss[0] = 0.0;
+                data.f_gauss[1] = 0.0;
+                data.r_gauss = 0.0;
+            }
+            else 
+            {*/
+                double xgauss = 0;
+                double ygauss = 0;
+                
+                for(unsigned int i = 0; i<GetGeometry().size(); i++){
+                    xgauss += GetGeometry()[i].X()*data.N[i];
+                    ygauss += GetGeometry()[i].Y()*data.N[i];
+                }
+                double x = xgauss;
+                double y = ygauss;
             
-            data.r_gauss = 1.0*(12944.0*pow(x,5) + 29804.8*pow(x,4)*y - 544532.8*pow(x,4) + 69427.2*pow(x,3)*y*y - 3710957.44*pow(x,3)*y - 4449297.28*pow(x,3) + 422195.2*x*x*pow(y,3) - 7279169.28*x*x*y*y - 22964259.072*x*x*y - 11712234.496*x*x + 773888.0*x*pow(y,4) - 3016870.4*x*pow(y,3) - 35006937.6*x*y*y - 41496424.448*x*y - 12654321.664*x + 351744.0*pow(y,5) + 2107801.6*pow(y,4) - 14556523.52*pow(y,3)\
-                 - 34091323.392*y*y - 23001186.304*y - 4783538.176)/(0.0625*pow(x,6) + 0.75*pow(x,5)*y + 0.6*pow(x,5) + 3.75*pow(x,4)*y*y + 6.0*pow(x,4)*y + 2.4*pow(x,4) + 10.0*pow(x,3)*pow(y,3) + 24.0*pow(x,3)*y*y + 19.2*pow(x,3)*y + 5.12*pow(x,3) + 15.0*x*x*pow(y,4) + 48.0*x*x*pow(y,3) + 57.6*x*x*y*y + 30.72*x*x*y + 6.144*x*x + 12.0*x*pow(y,5) + 48.0*x*pow(y,4) + 76.8*x*pow(y,3) + 61.44*x*y*y + 24.576*x*y + 3.93216*x \
-                 + 4.0*pow(y,6) + 19.2*pow(y,5) + 38.4*pow(y,4) + 40.96*pow(y,3) + 24.576*y*y + 7.86432*y + 1.048576);
+                
             
-            
+                data.f_gauss[0] = (0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + 40.0 - 0.4*(2560*x + 3072*y + 11008)/(x + 2*y + 1.6) + 64*(16*x - 32*y + 24)/(0.5*x + y + 0.8) - 32*(32*x + 64*y + 160)/(0.5*x + y + 0.8) + (2048*x + 4096*y + 10240)/(0.5*x + y + 0.8) - (16*x - 32*y + 24)*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2) - 0.5*pow(32*x + 64*y + 160, 2)/pow(0.5*x + y + 0.8, 2))/(0.5*x + y + 0.8);
+
+                data.f_gauss[1] = (0.8*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + (-1024*x + 2048*y - 1536)/(0.5*x + y + 0.8) - 200.0 - 0.4*(3072*x + 10240*y + 18944)/(x + 2*y + 1.6) + 32*(16*x - 32*y + 24)/(0.5*x + y + 0.8) + 16*(32*x + 64*y + 160)/(0.5*x + y + 0.8) - pow(16*x - 32*y + 24, 2)/pow(0.5*x + y + 0.8, 2) - 0.5*(16*x - 32*y + 24)*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2))/(0.5*x + y + 0.8);
+
+                data.r_gauss = ((16*x - 32*y + 24)*(0.8*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) - 700.0 - 0.4*(3072*x + 10240*y + 18944)/(x + 2*y + 1.6))/(0.5*x + y + 0.8) - (16*x - 32*y + 24)*(0.8*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + (-1024*x + 2048*y - 1536)/(0.5*x + y + 0.8) - 200.0 - 0.4*(3072*x + 10240*y + 18944)/(x + 2*y + 1.6) + 32*(16*x - 32*y + 24)/(0.5*x + y + 0.8) + 16*(32*x + 64*y + 160)/(0.5*x + y + 0.8) - pow(16*x - 32*y + 24, 2)/pow(0.5*x + y + 0.8, 2) - 0.5*(16*x - 32*y + 24)*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2))/(0.5*x + y + 0.8) + (32*x + 64*y + 160)*(0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + 140.0 - 0.4*(2560*x + 3072*y + 11008)/(x + 2*y + 1.6))/(0.5*x + y + 0.8) - (32*x + 64*y + 160)*(0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + 40.0 - 0.4*(2560*x + 3072*y + 11008)/(x + 2*y + 1.6) + 64*(16*x - 32*y + 24)/(0.5*x + y + 0.8) - 32*(32*x + 64*y + 160)/(0.5*x + y + 0.8) + (2048*x + 4096*y + 10240)/(0.5*x + y + 0.8) - (16*x - 32*y + 24)*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2) - 0.5*pow(32*x + 64*y + 160, 2)/pow(0.5*x + y + 0.8, 2))/(0.5*x + y + 0.8) - (16*x - 32*y + 24)*(140.0*x - 700.0*y - 0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/(x + 2*y + 1.6) + 51100.0)/pow(0.5*x + y + 0.8, 2) - 0.5*(32*x + 64*y + 160)*(140.0*x - 700.0*y - 0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/(x + 2*y + 1.6) + 51100.0)/pow(0.5*x + y + 0.8, 2))/(0.5*x + y + 0.8);
+
+
+                //}
 
             ComputeGaussPointRHSContribution(rhs_local, data);
             ComputeGaussPointLHSContribution(lhs_local, data);
 
+            const double integration_weight = integration_points[igauss].Weight()*determinants[igauss];
+
             // here we assume that all the weights of the gauss points are the same so we multiply at the end by Volume/n_nodes
-            noalias(rLeftHandSideMatrix) += lhs_local;
-            noalias(rRightHandSideVector) += rhs_local;
+            noalias(rLeftHandSideMatrix) += integration_weight*lhs_local;
+            noalias(rRightHandSideVector) += integration_weight*rhs_local;
         }
 
-        rLeftHandSideMatrix  *= data.volume/static_cast<double>(TNumNodes);
-        rRightHandSideVector *= data.volume/static_cast<double>(TNumNodes);
-
-        std::cout<<this->Id()<<" "<<rRightHandSideVector<<std::endl;
-        for(unsigned int i=0; i<GetGeometry().size(); i++){
+        //rLeftHandSideMatrix  *= data.volume/static_cast<double>(TNumNodes);
+        //rRightHandSideVector *= data.volume/static_cast<double>(TNumNodes);
+        
+        //std::cout<<this->Id()<<" "<<rRightHandSideVector<<std::endl;
+        /*for(unsigned int i=0; i<GetGeometry().size(); i++){
             std::cout<<GetGeometry()[i].Id()<<" "<<GetGeometry()[i].Coordinates()<<std::endl;
             std::cout<<GetGeometry()[i].FastGetSolutionStepValue(MOMENTUM)<<std::endl;
             std::cout<<GetGeometry()[i].FastGetSolutionStepValue(DENSITY)<<std::endl;
             std::cout<<GetGeometry()[i].FastGetSolutionStepValue(TOTAL_ENERGY)<<std::endl;
-        }
-
+        }*/
+        
         KRATOS_CATCH("Error in Compressible Navier Stokes Element Symbolic")
     }
 
@@ -219,7 +235,7 @@ public:
                                 ProcessInfo& rCurrentProcessInfo) override
     {
         KRATOS_TRY
-
+KRATOS_ERROR << "aaaaaaaaaaaaaaaaaaaaaaaa";
         constexpr unsigned int MatrixSize = TNumNodes*(BlockSize);
 
         if (rRightHandSideVector.size() != MatrixSize)
@@ -233,17 +249,17 @@ public:
         array_1d<double,MatrixSize> rhs_local;
 
         // Gauss point position
-        //bounded_matrix<double,TNumNodes, TNumNodes> Ncontainer;
-        //GetShapeFunctionsOnGauss(Ncontainer);
+        bounded_matrix<double,TNumNodes, TNumNodes> Ncontainer;
+        GetShapeFunctionsOnGauss(Ncontainer);
 
-        unsigned int ngauss = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4).size1();
+        //unsigned int ngauss = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4).size1();
 
         // Loop on gauss point
         noalias(rRightHandSideVector) = ZeroVector(MatrixSize);
-        for(unsigned int igauss = 0; igauss<ngauss; igauss++)
+        for(unsigned int igauss = 0; igauss<Ncontainer.size2(); igauss++)
         {
-            //noalias(data.N) = row(Ncontainer, igauss);
-            noalias(data.N) = row(GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4), igauss);
+            noalias(data.N) = row(Ncontainer, igauss);
+            //noalias(data.N) = row(GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4), igauss);
 
 
             ComputeGaussPointRHSContribution(rhs_local, data);
@@ -425,8 +441,8 @@ protected:
         rData.nu = r_properties.GetValue(KINEMATIC_VISCOSITY);
         rData.mu =  r_properties.GetValue(DYNAMIC_VISCOSITY);
         rData.lambda = r_properties.GetValue(CONDUCTIVITY);
-        rData.cv = r_properties.GetValue(SPECIFIC_HEAT);
-        rData.y = r_properties.GetValue(HEAT_CAPACITY_RATIO);
+        rData.c_v = r_properties.GetValue(SPECIFIC_HEAT);
+        rData.gamma = r_properties.GetValue(HEAT_CAPACITY_RATIO);
 
         for (unsigned int i = 0; i < TNumNodes; i++)
         {
@@ -587,7 +603,6 @@ private:
       rThis.PrintInfo(rOStream);
       rOStream << std::endl;
       rThis.PrintData(rOStream);
-
       return rOStream;
     }*/
 ///@}

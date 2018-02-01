@@ -1,3 +1,4 @@
+
 //    |  /           |
 //    ' /   __| _` | __|  _ \   __|
 //    . \  |   (   | |   (   |\__ `
@@ -87,10 +88,10 @@ public:
         double h;             // Element size 
         double volume;        // In 2D: element area. In 3D: element volume
         double mu;
-        //double nu;            // TO DO : temporarily use for testing
+        double nu;
         double lambda;          
-        double cv;
-        double y;               //gamma
+        double c_v;
+        double gamma;               //gamma
         double c;               // TO DO : temporarily use for testing
     };
 
@@ -164,51 +165,68 @@ public:
         // Gauss point position
         //bounded_matrix<double,TNumNodes, TNumNodes> Ncontainer;
         //GetShapeFunctionsOnGauss(Ncontainer);
-        unsigned int ngauss = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4).size1();
-        
-        for(unsigned int igauss = 0; igauss<ngauss; igauss++)
+        //unsigned int ngauss = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4).size1();
+        const auto& integration_points = GetGeometry().IntegrationPoints(GeometryData::GI_GAUSS_4);
+        const Matrix& Ncontainer = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4);
+
+        Vector determinants(Ncontainer.size2());
+        GetGeometry().DeterminantOfJacobian( determinants, GeometryData::GI_GAUSS_4 );
+
+        for(unsigned int igauss = 0; igauss<Ncontainer.size1(); igauss++)
         {
             //noalias(data.N) = row(Ncontainer, igauss);
-            noalias(data.N) = row(GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4), igauss);
-            double xgauss = 0;
-            double ygauss = 0;
-            
-            for(unsigned int i = 0; i<GetGeometry().size(); i++){
-                xgauss += GetGeometry()[i].X()*data.N[i];
-                ygauss += GetGeometry()[i].Y()*data.N[i];
+            noalias(data.N) = row(Ncontainer, igauss);
+
+            /*if(rCurrentProcessInfo[FRACTIONAL_STEP] == 0) //forces are zero
+            {
+                data.f_gauss[0] = 0.0;
+                data.f_gauss[1] = 0.0;
+                data.r_gauss = 0.0;
             }
-            double x = xgauss;
-            double y = ygauss;
+            else 
+            {*/
+                double xgauss = 0;
+                double ygauss = 0;
+                
+                for(unsigned int i = 0; i<GetGeometry().size(); i++){
+                    xgauss += GetGeometry()[i].X()*data.N[i];
+                    ygauss += GetGeometry()[i].Y()*data.N[i];
+                }
+                double x = xgauss;
+                double y = ygauss;
             
-            //mu = 0.3 lambda = 1.0
+                
             
-            data.f_gauss[0] =  -0.111111111111111*(132.75*pow(x, 7) + 1858.5*pow(x, 6)*y + 5403.6*pow(x, 6) + 10690.2*pow(x, 5)*pow(y, 2) + 56986.56*pow(x, 5)*y + 49872.24*pow(x, 5) + 32562.0*pow(x, 4)*pow(y, 3) + 241963.2*pow(x, 4)*pow(y, 2) + 435854.88*pow(x, 4)*y + 210706.2*pow(x, 4) + 55908.0*pow(x, 3)*pow(y, 4) + 520819.2*pow(x, 3)*pow(y, 3) + 1480152.96*pow(x, 3)*pow(y, 2) + 1484427.456*pow(x, 3)*y + 484003.584*pow(x, 3) + 52344.0*pow(x, 2)*pow(y, 5) + 579859.2*pow(x, 2)*pow(y, 4) + 2410179.84*pow(x, 2)*pow(y, 3) + 3830741.568*pow(x, 2)*pow(y, 2) + 2581992.3456*pow(x, 2)*y + 627573.10464*pow(x, 2) + 22608.0*x*pow(y, 6) + 290995.2*x*pow(y, 5) + 1836460.8*x*pow(y, 4) + 4252435.2*x*pow(y, 3) + 4504826.88*x*pow(y, 2) + 2252610.10944*x*y + 433458.118656*x + 2246.39999999999*pow(y, 7) + 35435.52*pow(y, 6) + 495659.52*pow(y, 5) + 1686024.576*pow(y, 4) + 2553713.0496*pow(y, 3) + 1990095.962112*pow(y, 2) + 784439.0240256*y + 124394.8253184)/(pow(0.5*x + 1.0*y + 0.8, 6)*pow(1.0*x + 2.0*y + 1.6, 2));
+                data.f_gauss[0] = (0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + 40.0 + 0.00531648/pow(1.5*x + 3*y + 2.4, 2) - 0.4*(2560*x + 3072*y + 11008)/(x + 2*y + 1.6) + 64*(16*x - 32*y + 24)/(0.5*x + y + 0.8) - 32*(32*x + 64*y + 160)/(0.5*x + y + 0.8) + (2048*x + 4096*y + 10240)/(0.5*x + y + 0.8) - (16*x - 32*y + 24)*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2) - 0.5*pow(32*x + 64*y + 160, 2)/pow(0.5*x + y + 0.8, 2) + 0.00255978666666667/pow(0.5*x + y + 0.8, 2) + 1.23066666666667e-5*(16*x - 32*y + 24)/pow(0.5*x + y + 0.8, 3) - 1.23066666666667e-5*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 3) - 3.692e-5*(40.0*x + 48.0*y + 172.0)/pow(0.5*x + y + 0.8, 3))/(0.5*x + y + 0.8);
 
-            data.f_gauss[1] = -0.111111111111111*(689.85*pow(x, 7) + 5971.5*pow(x, 6)*y + 7634.16*pow(x, 6) + 17397.0*pow(x, 5)*pow(y, 2) + 52488.0*pow(x, 5)*y + 33500.16*pow(x, 5) + 8837.99999999999*pow(x, 4)*pow(y, 3) + 96321.6*pow(x, 4)*pow(y, 2) + 163447.2*pow(x, 4)*y + 73767.492*pow(x, 4) - 56052.0000000001*pow(x, 3)*pow(y, 4) - 107481.6*pow(x, 3)*pow(y, 3) + 61943.0400000002*pow(x, 3)*pow(y, 2) + 191723.04*pow(x, 3)*y + 81663.2064*pow(x, 3) - 126244.8*pow(x, 2)*pow(y, 5) - 589766.4*pow(x, 2)*pow(y, 4) - 871061.759999999*pow(x, 2)*pow(y, 3) - 469086.624*pow(x, 2)*pow(y, 2) - 27392.2560000003*pow(x, 2)*y + 32518.434816*pow(x, 2) - 103824.0*x*pow(y, 6) - 720276.48*x*pow(y, 5) - 1677265.92*x*pow(y, 4) - 1816463.232*x*pow(y, 3) - 968731.5456*x*pow(y, 2) - 226401.73056*x*y - 12957.6075264*x - 29664.0*pow(y, 7) - 291456.0*pow(y, 6) - 917890.56*pow(y, 5) - 1403075.52*pow(y, 4) - 1174588.416*pow(y, 3) - 544222.49472*pow(y, 2) - 127797.16608*y - 11216.8009728)/(pow(0.5*x + 1.0*y + 0.8, 6)*pow(1.0*x + 2.0*y + 1.6, 2));
+                data.f_gauss[1] = (0.8*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + (-1024*x + 2048*y - 1536)/(0.5*x + y + 0.8) - 200.0 - 0.01063296/pow(1.5*x + 3*y + 2.4, 2) - 0.4*(3072*x + 10240*y + 18944)/(x + 2*y + 1.6) + 32*(16*x - 32*y + 24)/(0.5*x + y + 0.8) + 16*(32*x + 64*y + 160)/(0.5*x + y + 0.8) - pow(16*x - 32*y + 24, 2)/pow(0.5*x + y + 0.8, 2) - 0.5*(16*x - 32*y + 24)*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2) + 0.00029536/pow(0.5*x + y + 0.8, 2) - 4.92266666666667e-5*(16*x - 32*y + 24)/pow(0.5*x + y + 0.8, 3) + 2.46133333333333e-5*(16.0*x + 32.0*y + 80.0)/pow(0.5*x + y + 0.8, 3) - 1.846e-5*(40.0*x + 48.0*y + 172.0)/pow(0.5*x + y + 0.8, 3))/(0.5*x + y + 0.8);
 
-            data.r_gauss =  0.111111111111111*(1876765122.0*pow(x, 10) + 23089082702.4*pow(x, 9)*y - 63938302295.4*pow(x, 9) + 128351247537.6*pow(x, 8)*pow(y, 2) - 1172895707099.52*pow(x, 8)*y - 1228800908084.49*pow(x, 8) + 484876304409.6*pow(x, 7)*pow(y, 3) - 8876629673389.44*pow(x, 7)*pow(y, 2) - 18740620748962.4*pow(x, 7)*y - 8804661442182.96*pow(x, 7) + 1622861303616.0*pow(x, 6)*pow(y, 4) - 36385870333478.4*pow(x, 6)*pow(y, 3) - 120723116005349.0*pow(x, 6)*pow(y, 2) - 116351930845578.0*pow(x, 6)*y - 35114886793212.3*pow(x, 6) + 4832728185600.0*pow(x, 5)*pow(y, 5) - 87551210790086.4*pow(x, 5)*pow(y, 4) - 427420063774781.0*pow(x, 5)*pow(y, 3) - 643138151885957.0*pow(x, 5)*pow(y, 2) - 397598988705812.0*pow(x, 5)*y - 87865282098847.8*pow(x, 5) + 10839029848012.8*pow(x, 4)*pow(y, 6) - 121972239344794.0*pow(x, 4)*pow(y, 5) - 901930470081722.0*pow(x, 4)*pow(y, 4) - 1.92210955940701e+15*pow(x, 4)*pow(y, 3) - 1.84085360786283e+15*pow(x, 4)*pow(y, 2) - 830959475264704.0*pow(x, 4)*y - 144119895079452.0*pow(x, 4) + 16235828722483.2*pow(x, 3)*pow(y, 7) - 82652913395619.8*pow(x, 3)*pow(y, 6) - 1.14160337838682e+15*pow(x, 3)*pow(y, 5) - 3.33704892748786e+15*pow(x, 3)*pow(y, 4) - 4.45171310153756e+15*pow(x, 3)*pow(y, 3) - 3.09531007610314e+15*pow(x, 3)*pow(y, 2) - 1.09377456693309e+15*pow(x, 3)*y - 155451801761574.0*pow(x, 3) + 15015397825843.2*pow(x, 2)*pow(y, 8) + 2034550356664.25*pow(x, 2)*pow(y, 7) - 815032165073662.0*pow(x, 2)*pow(y, 6) - 3.33498537624359e+15*pow(x, 2)*pow(y, 5) - 5.91013828661146e+15*pow(x, 2)*pow(y, 4) - 5.66809904212906e+15*pow(x, 2)*pow(y, 3) - 3.07228737453247e+15*pow(x, 2)*pow(y, 2) - 887782996821446.0*pow(x, 2)*y - 106481250928374.0*pow(x, 2) + 7670601197568.0*x*pow(y, 9) + 37870000416921.6*x*pow(y, 8) - 270390367655784.0*x*pow(y, 7) - 1.74689052152098e+15*x*pow(y, 6) - 4.06145054743746e+15*x*pow(y, 5) - 5.09015589584126e+15*x*pow(y, 4) - 3.78104783025142e+15*x*pow(y, 3) - 1.67073533535682e+15*x*pow(y, 2) - 406758187091081.0*x*y - 42052786842382.1*x + 1631992264704.0*pow(y, 10) + 16307569867161.6*pow(y, 9) - 17980620652149.1*pow(y, 8) - 357371958291277.0*pow(y, 7) - 1.11820991874469e+15*pow(y, 6) - 1.78673365491928e+15*pow(y, 5) - 1.71722437656645e+15*pow(y, 4) - 1.03517743872642e+15*pow(y, 3) - 384480096619006.0*pow(y, 2) - 80581883473861.2*y - 7295005034606.26)/(pow(0.5*x + 1.0*y + 0.8, 7)*pow(1.0*x + 2.0*y + 1.6, 2)*pow(359.0*x + 718.0*y + 574.4, 2));
+                data.r_gauss = (-(-0.00236288/pow(0.5*x + y + 0.8, 2) + 3.692e-5*(40.0*x + 48.0*y + 172.0)/pow(0.5*x + y + 0.8, 3))*(32*x + 64*y + 160)/(0.5*x + y + 0.8) - (-0.0014768/pow(0.5*x + y + 0.8, 2) + 1.846e-5*(40.0*x + 48.0*y + 172.0)/pow(0.5*x + y + 0.8, 3))*(16*x - 32*y + 24)/(0.5*x + y + 0.8) - 80*(0.0014768/(0.5*x + y + 0.8) - 1.846e-5*(40.0*x + 48.0*y + 172.0)/pow(0.5*x + y + 0.8, 2))/(0.5*x + y + 0.8) + 0.5*(0.0014768/(0.5*x + y + 0.8) - 1.846e-5*(40.0*x + 48.0*y + 172.0)/pow(0.5*x + y + 0.8, 2))*(16*x - 32*y + 24)/pow(0.5*x + y + 0.8, 2) + (0.0014768/(0.5*x + y + 0.8) - 1.846e-5*(40.0*x + 48.0*y + 172.0)/pow(0.5*x + y + 0.8, 2))*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2) + 0.00783426183844011*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(0.5*x + y + 0.8, 4) - 484650.0/pow(359.0*x + 718*y + 574.4, 2) + (16*x - 32*y + 24)*(0.8*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) - 700.0 - 0.4*(3072*x + 10240*y + 18944)/(x + 2*y + 1.6))/(0.5*x + y + 0.8) - (16*x - 32*y + 24)*(0.01063296/pow(1.5*x + 3*y + 2.4, 2) + 0.00118144/pow(0.5*x + y + 0.8, 2) + 4.92266666666667e-5*(16*x - 32*y + 24)/pow(0.5*x + y + 0.8, 3) - 2.46133333333333e-5*(16.0*x + 32.0*y + 80.0)/pow(0.5*x + y + 0.8, 3))/(0.5*x + y + 0.8) - (16*x - 32*y + 24)*(0.8*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + (-1024*x + 2048*y - 1536)/(0.5*x + y + 0.8) - 200.0 - 0.01063296/pow(1.5*x + 3*y + 2.4, 2) - 0.4*(3072*x + 10240*y + 18944)/(x + 2*y + 1.6) + 32*(16*x - 32*y + 24)/(0.5*x + y + 0.8) + 16*(32*x + 64*y + 160)/(0.5*x + y + 0.8) - pow(16*x - 32*y + 24, 2)/pow(0.5*x + y + 0.8, 2) - 0.5*(16*x - 32*y + 24)*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2) + 0.00029536/pow(0.5*x + y + 0.8, 2) - 4.92266666666667e-5*(16*x - 32*y + 24)/pow(0.5*x + y + 0.8, 3) + 2.46133333333333e-5*(16.0*x + 32.0*y + 80.0)/pow(0.5*x + y + 0.8, 3) - 1.846e-5*(40.0*x + 48.0*y + 172.0)/pow(0.5*x + y + 0.8, 3))/(0.5*x + y + 0.8) + (32*x + 64*y + 160)*(0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + 140.0 - 0.4*(2560*x + 3072*y + 11008)/(x + 2*y + 1.6))/(0.5*x + y + 0.8) - (32*x + 64*y + 160)*(-0.00531648/pow(1.5*x + 3*y + 2.4, 2) - 0.000196906666666667/pow(0.5*x + y + 0.8, 2) - 1.23066666666667e-5*(16*x - 32*y + 24)/pow(0.5*x + y + 0.8, 3) + 1.23066666666667e-5*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 3))/(0.5*x + y + 0.8) - (32*x + 64*y + 160)*(0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + 40.0 + 0.00531648/pow(1.5*x + 3*y + 2.4, 2) - 0.4*(2560*x + 3072*y + 11008)/(x + 2*y + 1.6) + 64*(16*x - 32*y + 24)/(0.5*x + y + 0.8) - 32*(32*x + 64*y + 160)/(0.5*x + y + 0.8) + (2048*x + 4096*y + 10240)/(0.5*x + y + 0.8) - (16*x - 32*y + 24)*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2) - 0.5*pow(32*x + 64*y + 160, 2)/pow(0.5*x + y + 0.8, 2) + 0.00255978666666667/pow(0.5*x + y + 0.8, 2) + 1.23066666666667e-5*(16*x - 32*y + 24)/pow(0.5*x + y + 0.8, 3) - 1.23066666666667e-5*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 3) - 3.692e-5*(40.0*x + 48.0*y + 172.0)/pow(0.5*x + y + 0.8, 3))/(0.5*x + y + 0.8) + 32*(-0.00354432/(1.5*x + 3*y + 2.4) - 2.46133333333333e-5*(16*x - 32*y + 24)/pow(0.5*x + y + 0.8, 2) + 1.23066666666667e-5*(16.0*x + 32.0*y + 80.0)/pow(0.5*x + y + 0.8, 2))/(0.5*x + y + 0.8) - 32*(0.00354432/(1.5*x + 3*y + 2.4) + 1.23066666666667e-5*(16*x - 32*y + 24)/pow(0.5*x + y + 0.8, 2) - 1.23066666666667e-5*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2))/(0.5*x + y + 0.8) + (16*x - 32*y + 24)*(-0.00354432/(1.5*x + 3*y + 2.4) - 2.46133333333333e-5*(16*x - 32*y + 24)/pow(0.5*x + y + 0.8, 2) + 1.23066666666667e-5*(16.0*x + 32.0*y + 80.0)/pow(0.5*x + y + 0.8, 2))/pow(0.5*x + y + 0.8, 2) - (16*x - 32*y + 24)*(140.0*x - 700.0*y - 0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/(x + 2*y + 1.6) + 51100.0)/pow(0.5*x + y + 0.8, 2) + 0.5*(32*x + 64*y + 160)*(0.00354432/(1.5*x + 3*y + 2.4) + 1.23066666666667e-5*(16*x - 32*y + 24)/pow(0.5*x + y + 0.8, 2) - 1.23066666666667e-5*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2))/pow(0.5*x + y + 0.8, 2) - 0.5*(32*x + 64*y + 160)*(140.0*x - 700.0*y - 0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/(x + 2*y + 1.6) + 51100.0)/pow(0.5*x + y + 0.8, 2) + 12.4303621169916/pow(0.5*x + y + 0.8, 2) - 0.00348189415041783*(150.0*x - 750.0*y + 54750.0)/pow(0.5*x + y + 0.8, 3) - 0.0020891364902507*(1280*x + 1536*y + 5504)/pow(0.5*x + y + 0.8, 3) - 0.00417827298050139*(1536*x + 5120*y + 9472)/pow(0.5*x + y + 0.8, 3) - 0.00104456824512535*(2560*x + 3072*y + 11008)/pow(0.5*x + y + 0.8, 3) - 0.0020891364902507*(3072*x + 10240*y + 18944)/pow(0.5*x + y + 0.8, 3))/(0.5*x + y + 0.8);
+                
 
+                //}
 
             ComputeGaussPointRHSContribution(rhs_local, data);
-
             ComputeGaussPointLHSContribution(lhs_local, data);
 
+            const double integration_weight = integration_points[igauss].Weight()*determinants[igauss];
+
             // here we assume that all the weights of the gauss points are the same so we multiply at the end by Volume/n_nodes
-            noalias(rLeftHandSideMatrix) += lhs_local;
-            noalias(rRightHandSideVector) += rhs_local;
+            noalias(rLeftHandSideMatrix) += integration_weight*lhs_local;
+            noalias(rRightHandSideVector) += integration_weight*rhs_local;
         }
 
-        rLeftHandSideMatrix  *= data.volume/static_cast<double>(TNumNodes);
-        rRightHandSideVector *= data.volume/static_cast<double>(TNumNodes);
-
-        std::cout<<this->Id()<<" "<<rRightHandSideVector<<std::endl;
-        for(unsigned int i=0; i<GetGeometry().size(); i++){
+        //rLeftHandSideMatrix  *= data.volume/static_cast<double>(TNumNodes);
+        //rRightHandSideVector *= data.volume/static_cast<double>(TNumNodes);
+        
+        //std::cout<<this->Id()<<" "<<rRightHandSideVector<<std::endl;
+        /*for(unsigned int i=0; i<GetGeometry().size(); i++){
             std::cout<<GetGeometry()[i].Id()<<" "<<GetGeometry()[i].Coordinates()<<std::endl;
             std::cout<<GetGeometry()[i].FastGetSolutionStepValue(MOMENTUM)<<std::endl;
             std::cout<<GetGeometry()[i].FastGetSolutionStepValue(DENSITY)<<std::endl;
             std::cout<<GetGeometry()[i].FastGetSolutionStepValue(TOTAL_ENERGY)<<std::endl;
-        }
-
+        }*/
+        
         KRATOS_CATCH("Error in Compressible Navier Stokes Element Symbolic")
     }
 
@@ -217,7 +235,7 @@ public:
                                 ProcessInfo& rCurrentProcessInfo) override
     {
         KRATOS_TRY
-
+KRATOS_ERROR << "aaaaaaaaaaaaaaaaaaaaaaaa";
         constexpr unsigned int MatrixSize = TNumNodes*(BlockSize);
 
         if (rRightHandSideVector.size() != MatrixSize)
@@ -231,17 +249,17 @@ public:
         array_1d<double,MatrixSize> rhs_local;
 
         // Gauss point position
-        //bounded_matrix<double,TNumNodes, TNumNodes> Ncontainer;
-        //GetShapeFunctionsOnGauss(Ncontainer);
+        bounded_matrix<double,TNumNodes, TNumNodes> Ncontainer;
+        GetShapeFunctionsOnGauss(Ncontainer);
 
-        unsigned int ngauss = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4).size1();
+        //unsigned int ngauss = GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4).size1();
 
         // Loop on gauss point
         noalias(rRightHandSideVector) = ZeroVector(MatrixSize);
-        for(unsigned int igauss = 0; igauss<ngauss; igauss++)
+        for(unsigned int igauss = 0; igauss<Ncontainer.size2(); igauss++)
         {
-            //noalias(data.N) = row(Ncontainer, igauss);
-            noalias(data.N) = row(GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4), igauss);
+            noalias(data.N) = row(Ncontainer, igauss);
+            //noalias(data.N) = row(GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_4), igauss);
 
 
             ComputeGaussPointRHSContribution(rhs_local, data);
@@ -420,11 +438,11 @@ protected:
         rData.bdf2 = BDFVector[2];
         
         Properties& r_properties = this->GetProperties();
-        //rData.nu = r_properties.GetValue(KINEMATIC_VISCOSITY);
+        rData.nu = r_properties.GetValue(KINEMATIC_VISCOSITY);
         rData.mu =  r_properties.GetValue(DYNAMIC_VISCOSITY);
         rData.lambda = r_properties.GetValue(CONDUCTIVITY);
-        rData.cv = r_properties.GetValue(SPECIFIC_HEAT);
-        rData.y = r_properties.GetValue(HEAT_CAPACITY_RATIO);
+        rData.c_v = r_properties.GetValue(SPECIFIC_HEAT);
+        rData.gamma = r_properties.GetValue(HEAT_CAPACITY_RATIO);
 
         for (unsigned int i = 0; i < TNumNodes; i++)
         {
@@ -585,7 +603,6 @@ private:
       rThis.PrintInfo(rOStream);
       rOStream << std::endl;
       rThis.PrintData(rOStream);
-
       return rOStream;
     }*/
 ///@}

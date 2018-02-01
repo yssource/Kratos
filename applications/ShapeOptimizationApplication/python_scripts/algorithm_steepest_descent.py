@@ -132,11 +132,11 @@ class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
         self.optimizationTools.ComputeSearchDirectionSteepestDescent()
         self.optimizationTools.ComputeControlPointUpdate()
         self.__mapDesignUpdateToGeometrySpace() #--> dx
-        # ---
-        self.__correctDesignUpdateWithRigidBodyConstraints() # --> ds
-        print("nicht ok")
-        # ---
-        #self.__mapDesignUpdateToGeometrySpace() # considering rigid body motion --> dx
+        # # ---
+        # self.__correctDesignUpdateWithRigidBodyConstraints() # --> ds
+        # print("nicht ok")
+        # # ---
+        # #self.__mapDesignUpdateToGeometrySpace() # considering rigid body motion --> dx
  
     # --------------------------------------------------------------------------
     def __mapSensitivitiesToDesignSpace( self ):

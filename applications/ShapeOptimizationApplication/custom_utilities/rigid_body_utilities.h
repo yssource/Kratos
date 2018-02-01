@@ -185,50 +185,53 @@ public:
                 }
             }
         }
+        KRATOS_WATCH(H);
 
         // U,V,S = svd(H)
         Matrix U = ZeroMatrix(3,3);
         Matrix V = ZeroMatrix(3,3);
         Matrix S = ZeroMatrix(3,3);
 
-        Matrix R = prod(trans(H),H);
-
         SVDUtils<double>::JacobiSingularValueDecomposition(H, U, S, V);
 
         KRATOS_WATCH(U);
+        KRATOS_WATCH(S);
+        KRATOS_WATCH(V);
 
-        // // R
-        // Matrix R = prod(U,trans(V))
+        // R
+        Matrix R = prod(trans(V),trans(U));
+        KRATOS_WATCH(R);
 
         double detR = MathUtils<double>::Det(R);
+        KRATOS_WATCH(detR);
 
-        // if (detR < 0) // special reflection case
-        // {
-        //     R(0,0) *= -1;
-        //     R(0,1) *= -1;
-        //     R(0,2) *= -1;
-        // }
-
-        // // t
-        // Vector t = ZeroVector(3);
-        // t = - R*centroid_undeformed + centroid_undeformed;
-
-
-        for(int node_index = 0 ; node_index<mListOfRigidNodes.size() ; node_index++)
+        if (detR < 0) // special reflection case
         {
-            // Get node information
-            ModelPart::NodeType& node_i = *mListOfRigidNodes[node_index];
-
-            array_3d modified_update;
-            modified_update[0] = 0.0;
-            modified_update[1] = 0.0;
-            modified_update[2] = 0.0;
-            noalias(node_i.FastGetSolutionStepValue( SHAPE_UPDATE )) = modified_update;
+            R(0,0) *= -1;
+            R(0,1) *= -1;
+            R(0,2) *= -1;
         }
+
+        // t
+        Vector t = ZeroVector(3);
+        t = - prod(R, centroid_undeformed) + centroid_undeformed;
+        KRATOS_WATCH(t);
+
+
+        // for(int node_index = 0 ; node_index<mListOfRigidNodes.size() ; node_index++)
+        // {
+        //     // Get node information
+        //     ModelPart::NodeType& node_i = *mListOfRigidNodes[node_index];
+
+        //     array_3d modified_update;
+        //     modified_update[0] = 0.0;
+        //     modified_update[1] = 0.0;
+        //     modified_update[2] = 0.0;
+        //     noalias(node_i.FastGetSolutionStepValue( SHAPE_UPDATE )) = modified_update;
+        // }
 
         // print(R);
         // print(t);
-        KRATOS_WATCH(H);
     }
 
     // --------------------------------------------------------------------------

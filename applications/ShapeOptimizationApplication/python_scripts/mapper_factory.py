@@ -61,7 +61,8 @@ def CreateMapper( designSurface, optimizationSettings ):
         if integrationMethod in ["gauss_integration", "area_weighted_sum"]:
             return MapperVertexMorphingImprovedIntegration( designSurface, optimizationSettings )
         elif integrationMethod == "node_sum":
-            return MapperVertexMorphing( designSurface, optimizationSettings )
+            # return MapperVertexMorphing( designSurface, optimizationSettings )
+            return MapperVertexMorphingRigidBody( designSurface, optimizationSettings )
         else:
             raise ValueError ("CreateMapper: integration_method not known!")
 

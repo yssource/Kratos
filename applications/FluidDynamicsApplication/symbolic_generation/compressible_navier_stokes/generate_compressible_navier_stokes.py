@@ -109,14 +109,22 @@ for dim in dim_vector:
    
     ## Nonlinear adjoint operator definition  
     m1 = Matrix(zeros(dim+2,1))		       # Convective term
+    psi = Matrix(zeros(dim+2,dim))
+
+    for j in range(0,dim):
+        A_T = A[j].transpose()
+        for l in range(0,dim+2):
+            for m in range(0,dim+2):
+                psi[l,j] += A_T[l,m]*Q[m,j]                 
+                for n in range(0,dim+2):
+                    psi[l,j] +=diff(A_T[l,m],Ug[n])*H[n,j]*V[m]   
+
+        #print(psi)
+
     for s in range(0,dim+2):
         for j in range(0,dim):
-            A_T = A[j].transpose()
-            for l in range(0,dim+2):
-                for m in range(0,dim+2):
-                    m1[s] -= A_T[l,m]*Q[s,j]
-                    for n in range(0,dim+2):
-                        m1[s] -= diff(A_T[l,m],Ug[n])*H[n,j]*V[s]
+            m1[s] += psi[s,j]
+
     '''
     m2 = Matrix(zeros(dim+2,1))		       # Diffusive term
     
@@ -130,12 +138,12 @@ for dim in dim_vector:
                         for n in range(0,dim+2):
                             m2[s] -= diff(ksmall[l,m],Ug[n])*H[n,j]*Q[s,k]
     '''
-    m3 = -S.transpose()*V			        # Source term
-    L_adj = m1+m3 #+m2                      # Nonlinear adjoint operator
+    m3 = S.transpose()*V			        # Source term
+    L_adj = -m1-m3 #+m2                      # Nonlinear adjoint operator
          
     ## Variational Formulation - Final equation
     n1 = V.transpose()*acc		            # Mass term - FE scale
-    
+     
     temp = zeros(dim+2,1)
     A_smalll = []
     for i in range(0,dim):
@@ -178,7 +186,6 @@ for dim in dim_vector:
     w_gauss = w.transpose()*N
     #f_gauss = f_ext.transpose()*N
     acc_gauss = (bdf0*U+bdf1*Un+bdf2*Unn).transpose()*N
-    
     #r_gauss = (r.transpose()*N)[0] 
     r_gauss = Symbol('r_gauss', positive = True)     #USED FOR MANUFACTURED SOLUTION
 

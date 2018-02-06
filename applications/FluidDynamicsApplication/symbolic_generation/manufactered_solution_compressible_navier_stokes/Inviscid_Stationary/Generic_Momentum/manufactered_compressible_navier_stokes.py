@@ -40,11 +40,12 @@ rho = 2.7
 m_u = 240
 m_v = -12
 et = 36500
+'''
 print("rho = ", rho)
 print("m_U = ", m_u)
 print("m_v = ", m_v)
 print("et = ", et)
-'''
+
 '''
 print("CHECK DIVERGENCE: ", m_u, "      ", m_v)
 

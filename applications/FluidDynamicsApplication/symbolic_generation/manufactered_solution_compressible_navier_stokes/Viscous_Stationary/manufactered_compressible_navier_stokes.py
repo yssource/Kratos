@@ -40,11 +40,12 @@ rho = 2.7
 m_u = 240
 m_v = -12
 et = 36500
+'''
 print("rho = ", rho)
 print("m_U = ", m_u)
 print("m_v = ", m_v)
 print("et = ", et)
-'''
+
 '''
 print("CHECK DIVERGENCE: ", m_u, "      ", m_v)
 
@@ -84,9 +85,9 @@ for x in range(0,4):
 '''
 
 # Definition of costants
-mu = 0.0
+mu = 1.846*0.00001
 print("mu", mu)
-l = 0.0
+l = 1.5
 print("lambda", l)
 gamma = 1.4
 cv = 718

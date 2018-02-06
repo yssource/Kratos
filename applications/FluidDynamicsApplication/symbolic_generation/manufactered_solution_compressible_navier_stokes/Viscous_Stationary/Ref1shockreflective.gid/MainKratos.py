@@ -127,7 +127,6 @@ if ((parallel_type == "OpenMP") or (mpi.rank == 0)) and (echo_level > 0):
     f.write(ProjectParameters.PrettyPrintJsonString())
     f.close()
     
-
 for node in main_model_part.GetSubModelPart("Parts_Parts_Auto1").Nodes:
     x = node.X
     y = node.Y
@@ -141,7 +140,7 @@ for node in main_model_part.GetSubModelPart("Parts_Parts_Auto1").Nodes:
         #node.SetSolutionStepValue(MOMENTUM_X,step,240 )
         #node.SetSolutionStepValue(MOMENTUM_Y,step,-12)
         #node.SetSolutionStepValue(TOTAL_ENERGY,step, 36500)
-     
+            
 for node in main_model_part.GetSubModelPart("AutomaticInlet2D_Automatic_inlet_velocity_Auto1").Nodes:
     x = node.X
     y = node.Y
@@ -194,7 +193,7 @@ for node in main_model_part.GetSubModelPart("NoSlip2D_No_Slip_Auto1").Nodes:
     node.Fix(MOMENTUM_Y)
     node.Fix(DENSITY)
     node.Fix(TOTAL_ENERGY)
- 
+
 for node in main_model_part.GetSubModelPart("Outlet2D_Outlet_pressure_Auto1").Nodes:
     x = node.X
     y = node.Y
@@ -266,6 +265,7 @@ while(time <= end_time):
     step += 1
     time = time + delta_time
     main_model_part.CloneTimeStep(time)
+
 
     if (parallel_type == "OpenMP") or (mpi.rank == 0):
         print("")

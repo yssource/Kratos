@@ -93,6 +93,7 @@ public:
         double c_v;
         double gamma;               //gamma
         double c;               // TO DO : temporarily use for testing
+        double time;               // TO DO: used for manufactured solution
     };
 
     ///@}
@@ -188,20 +189,22 @@ public:
                 double xgauss = 0;
                 double ygauss = 0;
                 
+                
                 for(unsigned int i = 0; i<GetGeometry().size(); i++){
                     xgauss += GetGeometry()[i].X()*data.N[i];
                     ygauss += GetGeometry()[i].Y()*data.N[i];
                 }
                 double x = xgauss;
                 double y = ygauss;
-            
-                
-            
+                double t;
+                t = data.time;
+                            
                 data.f_gauss[0] = (0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + 40.0 - 0.4*(2560*x + 3072*y + 11008)/(x + 2*y + 1.6) + 64*(16*x - 32*y + 24)/(0.5*x + y + 0.8) - 32*(32*x + 64*y + 160)/(0.5*x + y + 0.8) + (2048*x + 4096*y + 10240)/(0.5*x + y + 0.8) - (16*x - 32*y + 24)*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2) - 0.5*pow(32*x + 64*y + 160, 2)/pow(0.5*x + y + 0.8, 2))/(0.5*x + y + 0.8);
 
                 data.f_gauss[1] = (0.8*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + (-1024*x + 2048*y - 1536)/(0.5*x + y + 0.8) - 200.0 - 0.4*(3072*x + 10240*y + 18944)/(x + 2*y + 1.6) + 32*(16*x - 32*y + 24)/(0.5*x + y + 0.8) + 16*(32*x + 64*y + 160)/(0.5*x + y + 0.8) - pow(16*x - 32*y + 24, 2)/pow(0.5*x + y + 0.8, 2) - 0.5*(16*x - 32*y + 24)*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2))/(0.5*x + y + 0.8);
 
                 data.r_gauss = ((16*x - 32*y + 24)*(0.8*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) - 700.0 - 0.4*(3072*x + 10240*y + 18944)/(x + 2*y + 1.6))/(0.5*x + y + 0.8) - (16*x - 32*y + 24)*(0.8*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + (-1024*x + 2048*y - 1536)/(0.5*x + y + 0.8) - 200.0 - 0.4*(3072*x + 10240*y + 18944)/(x + 2*y + 1.6) + 32*(16*x - 32*y + 24)/(0.5*x + y + 0.8) + 16*(32*x + 64*y + 160)/(0.5*x + y + 0.8) - pow(16*x - 32*y + 24, 2)/pow(0.5*x + y + 0.8, 2) - 0.5*(16*x - 32*y + 24)*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2))/(0.5*x + y + 0.8) + (32*x + 64*y + 160)*(0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + 140.0 - 0.4*(2560*x + 3072*y + 11008)/(x + 2*y + 1.6))/(0.5*x + y + 0.8) - (32*x + 64*y + 160)*(0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/pow(x + 2*y + 1.6, 2) + 40.0 - 0.4*(2560*x + 3072*y + 11008)/(x + 2*y + 1.6) + 64*(16*x - 32*y + 24)/(0.5*x + y + 0.8) - 32*(32*x + 64*y + 160)/(0.5*x + y + 0.8) + (2048*x + 4096*y + 10240)/(0.5*x + y + 0.8) - (16*x - 32*y + 24)*(32*x + 64*y + 160)/pow(0.5*x + y + 0.8, 2) - 0.5*pow(32*x + 64*y + 160, 2)/pow(0.5*x + y + 0.8, 2))/(0.5*x + y + 0.8) - (16*x - 32*y + 24)*(140.0*x - 700.0*y - 0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/(x + 2*y + 1.6) + 51100.0)/pow(0.5*x + y + 0.8, 2) - 0.5*(32*x + 64*y + 160)*(140.0*x - 700.0*y - 0.4*(pow(16*x - 32*y + 24, 2) + pow(32*x + 64*y + 160, 2))/(x + 2*y + 1.6) + 51100.0)/pow(0.5*x + y + 0.8, 2))/(0.5*x + y + 0.8);
+                
 
 
                 //}
@@ -436,6 +439,7 @@ protected:
         rData.bdf0 = BDFVector[0];
         rData.bdf1 = BDFVector[1];
         rData.bdf2 = BDFVector[2];
+        rData.time = rCurrentProcessInfo[TIME];
         
         Properties& r_properties = this->GetProperties();
         rData.nu = r_properties.GetValue(KINEMATIC_VISCOSITY);

@@ -42,13 +42,13 @@ for dim in dim_vector:
     U = DefineMatrix('U',nnodes,BlockSize)	     # Vector of Unknowns ( Density,Velocity[dim],Total Energy )
     Un = DefineMatrix('Un',nnodes,BlockSize)     # Vector of Unknowns one step back
     Unn = DefineMatrix('Unn',nnodes,BlockSize)   # Vector of Unknowns two steps back
-    #r = DefineVector('r',nnodes)             # Sink term
+    r = DefineVector('r',nnodes)             # Sink term    #COMMENT for manufactured solution
 
     # Test functions defintiion
     w = DefineMatrix('w',nnodes,BlockSize)	     # Variables field test
 
     # External terms definition
-    #f_ext = DefineMatrix('f_ext',nnodes,dim) # Forcing term 
+    f_ext = DefineMatrix('f_ext',nnodes,dim) # Forcing term #COMMENT for manufactured solution
 
     # Definition of other symbols
     bdf0 = Symbol('bdf0')                    # Backward differantiation coefficients
@@ -74,7 +74,6 @@ for dim in dim_vector:
     G = DiffusiveFlux.computeK(Ug,params,H,G)
     #DiffusiveFlux.printK(G,params)
     Tau = StabilizationMatrix.computeTau(params)
-    #Tau = zeros(dim+2,dim+2)
     #StabilizationMatrix.printTau(Tau,params)
     
     ## Nonlinear operator definition   
@@ -184,10 +183,10 @@ for dim in dim_vector:
     ## Data interpolation at the gauss points
     U_gauss = U.transpose()*N
     w_gauss = w.transpose()*N
-    #f_gauss = f_ext.transpose()*N
+    f_gauss = f_ext.transpose()*N                     #COMMENT for manufactured solution
     acc_gauss = (bdf0*U+bdf1*Un+bdf2*Unn).transpose()*N
-    #r_gauss = (r.transpose()*N)[0] 
-    r_gauss = Symbol('r_gauss', positive = True)     #USED FOR MANUFACTURED SOLUTION
+    r_gauss = (r.transpose()*N)[0]                   #COMMENT for manufactured solution   
+    #r_gauss = Symbol('r_gauss', positive = True)     #USED FOR MANUFACTURED SOLUTION
 
     ## Gradients computation
     grad_U = DfjDxi(DN,U).transpose()
@@ -198,8 +197,8 @@ for dim in dim_vector:
     SubstituteMatrixValue(rv, H, grad_U)
     SubstituteMatrixValue(rv, V, w_gauss)
     SubstituteMatrixValue(rv, Q, grad_w)
-    #SubstituteMatrixValue(rv, f, f_gauss)
-    #SubstituteScalarValue(rv, rg, r_gauss)    
+    SubstituteMatrixValue(rv, f, f_gauss)       #COMMENT for manufactured solution
+    SubstituteScalarValue(rv, rg, r_gauss)      #COMMENT for manufactured solution
     
     dofs = Matrix(zeros(nnodes*(dim+2),1))
     testfunc = Matrix(zeros(nnodes*(dim+2),1))

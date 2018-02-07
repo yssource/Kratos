@@ -110,9 +110,9 @@ S_e = diff(et,t)+diff(((et+p)*m_u/rho-m_u*tau_xx/rho-m_v*tau_xy/rho+q_x),x)+diff
 
 f_ext[0] = S_u/rho
 f_ext[1] = S_v/rho
-print("\nf_ext0:\n",factor(f_ext[0]))
-print("\nf_ext1:\n",factor(f_ext[1]))
+print("\nf_ext0:\n",simplify(ccode(f_ext[0])))
+print("\nf_ext1:\n",simplify(ccode(f_ext[1])))
 
 r = (S_e-(f_ext[0]*m_u+f_ext[1]*m_v))/rho
 
-print("\nr:\n",factor(r))
+print("\nr:\n",simplify(ccode(r)))

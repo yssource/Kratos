@@ -526,9 +526,9 @@ public:
 
         SVDUtils<double>::JacobiSingularValueDecomposition(H, U, S, V);
 
-        KRATOS_WATCH(U);
-        KRATOS_WATCH(S);
-        KRATOS_WATCH(V);
+        // KRATOS_WATCH(U);
+        // KRATOS_WATCH(S);
+        // KRATOS_WATCH(V);
 
         // R
         Matrix R = prod(trans(V),trans(U));
@@ -556,8 +556,6 @@ public:
         // compute rigid body movement of rigid nodes
         for(int node_index = 0 ; node_index<mListOfRigidNodes.size() ; node_index++)
         {
-
-
             // Get node information
             ModelPart::NodeType& node_i = *mListOfRigidNodes[node_index];
             array_3d& coord = node_i.Coordinates();
@@ -576,73 +574,12 @@ public:
                                                 + t(2);
         }
 
-        // compute modified mapping matrix
-        CompressedMatrixType modifiedMatrix = ZeroMatrix( mNumberOfDesignVariables+mNumberOfRigidNodes , 
-                                            mNumberOfDesignVariables );
-        Vector x_variables_modified, y_variables_modified, z_variables_modified;
-        x_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
-        y_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
-        z_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
-
-
 
         double penalty_factor = 1000000;
-
-
         
-        // Copy from orignal mapping matrix & shape update
-        for( int node_index_i = 0 ; node_index_i<mNumberOfDesignVariables ; node_index_i++)
-        {
-            // modified matrix
-            for( int node_index_j = 0 ; node_index_j<mNumberOfDesignVariables ; node_index_j++)
-            {
-                modifiedMatrix.push_back(node_index_i,
-                                        node_index_j,
-                                        penalty_factor*mMappingMatrix(node_index_i,node_index_j));
-
-                
-            }
-            // modified vectors
-            x_variables_modified[node_index_i] = penalty_factor*x_variables_in_geometry_space[node_index_i];
-            y_variables_modified[node_index_i] = penalty_factor*y_variables_in_geometry_space[node_index_i];
-            z_variables_modified[node_index_i] = penalty_factor*z_variables_in_geometry_space[node_index_i];
-        }
-
-        for( int node_index_i = 0 ; node_index_i<mNumberOfRigidNodes ; node_index_i++)
-        {
-            // Get node information
-            ModelPart::NodeType& node_i = *mListOfRigidNodes[node_index_i];
-            int i = node_i.GetValue(MAPPING_ID);
-
-            // modified matrix
-            for( int node_index_j = 0 ; node_index_j<mNumberOfDesignVariables ; node_index_j++)
-            {
-                
-                modifiedMatrix.push_back(mNumberOfDesignVariables + node_index_i, node_index_j,
-                                        mMappingMatrix(i,node_index_j));
-            }
-            
-            // modified vectors
-            x_variables_modified[node_index_i+mNumberOfDesignVariables] 
-                    = x_variables_in_geometry_space_rigid[node_index_i];
-            y_variables_modified[node_index_i+mNumberOfDesignVariables] 
-                    = y_variables_in_geometry_space_rigid[node_index_i];
-            z_variables_modified[node_index_i+mNumberOfDesignVariables] 
-                    = z_variables_in_geometry_space_rigid[node_index_i];
-        }
-
         KRATOS_WATCH("test3")
-        
 
-        // compute matrix
-        CompressedMatrixType transA = trans(modifiedMatrix);
-        CompressedMatrixType optimalMappingMatrix = prod(transA, modifiedMatrix);
-
-        // CompressedMatrixType optimalMappingMatrix;
-        // CompressedSpaceType::TransposeMult(modifiedMatrix,modifiedMatrix,optimalMappingMatrix);
-
-        KRATOS_WATCH("test4")
-
+        CompressedMatrixType optimalMappingMatrix = ZeroMatrix(mNumberOfDesignVariables, mNumberOfDesignVariables);
 
         // compute vectors
         Vector x_variables_RHS, y_variables_RHS, z_variables_RHS;
@@ -650,28 +587,127 @@ public:
         y_variables_RHS.resize(mNumberOfDesignVariables);
         z_variables_RHS.resize(mNumberOfDesignVariables);
 
+
+        KRATOS_WATCH("start copy 1")
+        // compute optimal mapping matrix
+        // CompressedMatrixType transA = trans(mMappingMatrix);
+        // CompressedMatrixType optimalMappingMatrix = prod(transA, mMappingMatrix);
+        // x_variables_RHS = prod(transA, x_variables_in_geometry_space);
+        // y_variables_RHS = prod(transA, y_variables_in_geometry_space);
+        // z_variables_RHS = prod(transA, z_variables_in_geometry_space);
+
+
+        // Copy from orignal mapping matrix & shape update
+        for( int node_index_i = 0 ; node_index_i<mNumberOfDesignVariables ; node_index_i++ )
+        {
+            for( int node_index_j = 0 ; node_index_j<mNumberOfDesignVariables ; node_index_j++ )
+            {
+                // modified matrix
+                for( int node_index_k = 0; node_index_k<mNumberOfDesignVariables ; node_index_k++ )
+                {   
+                    double tmp_value = optimalMappingMatrix(node_index_i, node_index_j);
+                    tmp_value += mMappingMatrix(node_index_i,node_index_k) * 
+                                 mMappingMatrix(node_index_j,node_index_k);
+                    optimalMappingMatrix.push_back(node_index_i, node_index_j, tmp_value);
+                }
+
+                // account for symmetry
+                // optimalMappingMatrix.push_back(node_index_j,node_index_i,
+                //                         optimalMappingMatrix(node_index_i, node_index_j));
+                
+                // modified vectors
+                double tmp_mapping_value = mMappingMatrix(node_index_i, node_index_j);
+                x_variables_RHS[node_index_i] += tmp_mapping_value *
+                                                 x_variables_in_geometry_space[node_index_i];
+                y_variables_RHS[node_index_i] += tmp_mapping_value *
+                                                 y_variables_in_geometry_space[node_index_i];
+                z_variables_RHS[node_index_i] += tmp_mapping_value *
+                                                 z_variables_in_geometry_space[node_index_i];
+            }
+        }
+
+        KRATOS_WATCH("start copy 2")
+        // Copy from extended mapping matrix
+        for( int node_index_i = 0 ; node_index_i<mNumberOfRigidNodes ; node_index_i++ )
+        {
+            // Get node information (i)
+            ModelPart::NodeType& node_i = *mListOfRigidNodes[node_index_i];
+            int i = node_i.GetValue(MAPPING_ID);
+
+            for( int node_index_j = 0 ; node_index_j<mNumberOfRigidNodes ; node_index_j++ )
+            {
+                // Get node information (j)
+                ModelPart::NodeType& node_j = *mListOfRigidNodes[node_index_j];
+                int j = node_j.GetValue(MAPPING_ID);
+
+                // modified matrix
+                for( int node_index_k = 0 ; node_index_k<mNumberOfDesignVariables ; node_index_k++ )
+                {
+                    double tmp_value = optimalMappingMatrix(i, j);
+                    tmp_value += penalty_factor * penalty_factor *
+                                 mMappingMatrix(i, node_index_k) * 
+                                 mMappingMatrix(j, node_index_k);
+                    optimalMappingMatrix.push_back(i, j, tmp_value);
+                }
+
+                // account for symmetry
+                // optimalMappingMatrix.push_back(j, i,
+                //                     optimalMappingMatrix(i, j));
+
+                // modified vectors
+                double tmp_mapping_value = penalty_factor * mMappingMatrix(i, j);
+                x_variables_RHS[node_index_i] += tmp_mapping_value *
+                                                 x_variables_in_geometry_space[node_index_i];
+                y_variables_RHS[node_index_i] += tmp_mapping_value *
+                                                 y_variables_in_geometry_space[node_index_i];
+                z_variables_RHS[node_index_i] += tmp_mapping_value *
+                                                 z_variables_in_geometry_space[node_index_i];
+            }
+        }
+        
+
+        // compute optimal mapping matrix
+        // CompressedMatrixType transA = trans(modifiedMatrix);
+        // CompressedMatrixType optimalMappingMatrix = prod(transA, modifiedMatrix);
+
+        // CompressedMatrixType optimalMappingMatrix;
+        // CompressedSpaceType::TransposeMult(modifiedMatrix,modifiedMatrix,optimalMappingMatrix);
+
+        // KRATOS_WATCH("test4")
+
+
+        // compute vectors
+        // Vector x_variables_RHS, y_variables_RHS, z_variables_RHS;
+        // x_variables_RHS.resize(mNumberOfDesignVariables);
+        // y_variables_RHS.resize(mNumberOfDesignVariables);
+        // z_variables_RHS.resize(mNumberOfDesignVariables);
+
         // CompressedSpaceType::TransposeMult(modifiedMatrix,x_variables_modified,x_variables_RHS);
         // CompressedSpaceType::TransposeMult(modifiedMatrix,y_variables_modified,y_variables_RHS);
         // CompressedSpaceType::TransposeMult(modifiedMatrix,z_variables_modified,z_variables_RHS);
 
-        noalias(x_variables_RHS) = prod(transA , x_variables_modified);
-        noalias(y_variables_RHS) = prod(transA , y_variables_modified);
-        noalias(z_variables_RHS) = prod(transA , z_variables_modified);
+        // noalias(x_variables_RHS) = prod(transA , x_variables_modified);
+        // noalias(y_variables_RHS) = prod(transA , y_variables_modified);
+        // noalias(z_variables_RHS) = prod(transA , z_variables_modified);
 
-        KRATOS_WATCH("test5")
+        KRATOS_WATCH("start solving")
 
-        Vector x_variables_in_design_space;
-        Vector y_variables_in_design_space;
-        Vector z_variables_in_design_space;
+        Vector xx, yy, zz;
+        xx.resize(mNumberOfDesignVariables, 0.0);
+        yy.resize(mNumberOfDesignVariables, 0.0);
+        zz.resize(mNumberOfDesignVariables, 0.0);
 
-        linear_solver->Solve(optimalMappingMatrix, x_variables_in_design_space, x_variables_RHS);
-        linear_solver->Solve(optimalMappingMatrix, y_variables_in_design_space, y_variables_RHS);
-        linear_solver->Solve(optimalMappingMatrix, z_variables_in_design_space, z_variables_RHS);
+        
+        // solve system for new ds
+        linear_solver->Solve(optimalMappingMatrix, xx, x_variables_RHS);
+        linear_solver->Solve(optimalMappingMatrix, yy, y_variables_RHS);
+        linear_solver->Solve(optimalMappingMatrix, zz, z_variables_RHS);
 
-        // // solve system for new x
-        // x_variables_in_design_space = solve(x_variables_RHS,optimalMappingMatrix);
-        // y_variables_in_design_space = solve(y_variables_RHS,optimalMappingMatrix);
-        // z_variables_in_design_space = solve(z_variables_RHS,optimalMappingMatrix);
+        KRATOS_WATCH("end solving")
+
+        x_variables_in_design_space = xx;
+        y_variables_in_design_space = yy;
+        z_variables_in_design_space = zz;
 
     }
 

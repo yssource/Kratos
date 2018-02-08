@@ -45,6 +45,12 @@
 #include "filter_function.h"
 #include "utilities/svd_utils.h"
 
+
+	
+#include <Eigen/Core>
+#include <Eigen/Sparse>
+#include <Eigen/IterativeLinearSolvers>
+
 // ==============================================================================
 
 namespace Kratos
@@ -283,8 +289,7 @@ public:
 
     // --------------------------------------------------------------------------
     void MapToDesignSpaceWithRigidCorrection( const Variable<array_3d> &rNodalVariable, 
-                                              const Variable<array_3d> &rNodalVariableInDesignSpace,
-                                              CompressedLinearSolverType::Pointer linear_solver )
+                                              const Variable<array_3d> &rNodalVariableInDesignSpace )
     {
         boost::timer mapping_time;
         std::cout << "\n> Starting to map " << rNodalVariable.Name() << " to design space..." << std::endl;
@@ -297,7 +302,7 @@ public:
             MultiplyVectorsWithTransposeMappingMatrix();
         AssignResultingDesignVectorsToNodalVariable( rNodalVariableInDesignSpace );
 
-        CorrectDesignUpdateWithRigidBodyConstraints( linear_solver );
+        CorrectDesignUpdateWithRigidBodyConstraints();
         AssignResultingDesignVectorsToNodalVariable( rNodalVariableInDesignSpace );
 
         std::cout << "> Time needed for mapping: " << mapping_time.elapsed() << " s" << std::endl;
@@ -469,7 +474,7 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    void CorrectDesignUpdateWithRigidBodyConstraints( CompressedLinearSolverType::Pointer linear_solver )
+    void CorrectDesignUpdateWithRigidBodyConstraints()
     {
         // centroid A
         Vector centroid_undeformed = ZeroVector(3);
@@ -577,20 +582,17 @@ public:
         }
 
         // compute modified mapping matrix
-        CompressedMatrixType modifiedMatrix = ZeroMatrix( mNumberOfDesignVariables+mNumberOfRigidNodes , 
-                                            mNumberOfDesignVariables );
-        Vector x_variables_modified, y_variables_modified, z_variables_modified;
-        x_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
-        y_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
-        z_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
-
-
+        Eigen::SparseMatrix<double> modifiedMatrix(mNumberOfDesignVariables+mNumberOfRigidNodes, mNumberOfDesignVariables);
+        Eigen::VectorXd x_variables_modified(mNumberOfDesignVariables + mNumberOfRigidNodes);
+        Eigen::VectorXd y_variables_modified(mNumberOfDesignVariables + mNumberOfRigidNodes);
+        Eigen::VectorXd z_variables_modified(mNumberOfDesignVariables + mNumberOfRigidNodes);
 
         KRATOS_WATCH("test1")
 
         double penalty_factor = 1000000;
 
-
+        typedef Eigen::Triplet<double> T;
+        std::vector<T> tripletList;
         
         // Copy from orignal mapping matrix & shape update
         for( int node_index_i = 0 ; node_index_i<mNumberOfDesignVariables ; node_index_i++)
@@ -598,15 +600,14 @@ public:
             // modified matrix
             for( int node_index_j = 0 ; node_index_j<mNumberOfDesignVariables ; node_index_j++)
             {
-                modifiedMatrix.push_back(node_index_i, node_index_j, mMappingMatrix(node_index_i,node_index_j));
-
-                
+                tripletList.push_back(T(node_index_i, node_index_j, mMappingMatrix(node_index_i,node_index_j)));                
             }
             // modified vectors
             x_variables_modified[node_index_i] = x_variables_in_geometry_space[node_index_i];
             y_variables_modified[node_index_i] = y_variables_in_geometry_space[node_index_i];
             z_variables_modified[node_index_i] = z_variables_in_geometry_space[node_index_i];
         }
+
 
 
         KRATOS_WATCH("test2")
@@ -621,15 +622,19 @@ public:
             // modified matrix
             for( int node_index_j = 0 ; node_index_j<mNumberOfDesignVariables ; node_index_j++)
             {
-                
-                modifiedMatrix.push_back(mNumberOfDesignVariables + node_index_i, node_index_j, penalty_factor*mMappingMatrix(i,node_index_j));
+                tripletList.push_back(T(mNumberOfDesignVariables + node_index_i, node_index_j, penalty_factor*mMappingMatrix(i,node_index_j)));
             }
             
             // modified vectors
-            x_variables_modified[node_index_i+mNumberOfDesignVariables] = penalty_factor*x_variables_in_geometry_space_rigid[node_index_i];
-            y_variables_modified[node_index_i+mNumberOfDesignVariables] = penalty_factor*y_variables_in_geometry_space_rigid[node_index_i];
-            z_variables_modified[node_index_i+mNumberOfDesignVariables] = penalty_factor*z_variables_in_geometry_space_rigid[node_index_i];
+            x_variables_modified[node_index_i+mNumberOfDesignVariables] 
+                    =  penalty_factor*x_variables_in_geometry_space_rigid[node_index_i];
+            y_variables_modified[node_index_i+mNumberOfDesignVariables] 
+                    =  penalty_factor*y_variables_in_geometry_space_rigid[node_index_i];
+            z_variables_modified[node_index_i+mNumberOfDesignVariables] 
+                    =  penalty_factor*z_variables_in_geometry_space_rigid[node_index_i];
         }
+
+        modifiedMatrix.setFromTriplets(tripletList.begin(), tripletList.end());
 
         KRATOS_WATCH("test3")
         
@@ -660,17 +665,22 @@ public:
 
         // KRATOS_WATCH("test5")
 
-        Vector x_variables_in_design_space;
-        Vector y_variables_in_design_space;
-        Vector z_variables_in_design_space;
+        Eigen::VectorXd x_variables_in_design_space(mNumberOfDesignVariables);
+        Eigen::VectorXd y_variables_in_design_space(mNumberOfDesignVariables);
+        Eigen::VectorXd z_variables_in_design_space(mNumberOfDesignVariables);
 
-        x_variables_in_design_space.resize(mNumberOfDesignVariables,0.0);
-        y_variables_in_design_space.resize(mNumberOfDesignVariables,0.0);
-        z_variables_in_design_space.resize(mNumberOfDesignVariables,0.0);        
+        Eigen::LeastSquaresConjugateGradient<Eigen::SparseMatrix<double> > lscg;
+        lscg.compute(modifiedMatrix);
 
-        linear_solver->Solve(modifiedMatrix, x_variables_in_design_space, x_variables_modified);
-        linear_solver->Solve(modifiedMatrix, y_variables_in_design_space, y_variables_modified);
-        linear_solver->Solve(modifiedMatrix, z_variables_in_design_space, z_variables_modified);
+        KRATOS_WATCH("test 4")
+
+        // x_variables_in_design_space = lscg.solve(x_variables_modified);        
+        // y_variables_in_design_space = lscg.solve(y_variables_modified);        
+        // z_variables_in_design_space = lscg.solve(z_variables_modified);        
+
+        // linear_solver->Solve(modifiedMatrix, x_variables_in_design_space, x_variables_modified);
+        // linear_solver->Solve(modifiedMatrix, y_variables_in_design_space, y_variables_modified);
+        // linear_solver->Solve(modifiedMatrix, z_variables_in_design_space, z_variables_modified);
 
         KRATOS_WATCH("Solution done!")
 

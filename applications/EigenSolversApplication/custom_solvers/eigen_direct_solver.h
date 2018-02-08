@@ -20,6 +20,9 @@
 #if defined EIGEN_USE_MKL_ALL
 #include <Eigen/PardisoSupport>
 #endif
+#include <Eigen/IterativeLinearSolvers>
+#include <Eigen/SparseQR>
+#include <Eigen/OrderingMethods>
 
 // Project includes
 #include "includes/define.h"
@@ -42,6 +45,20 @@ struct SparseLU : SolverType
     using TSolver = Eigen::SparseLU<TSparseMatrix>;
 
     static constexpr auto Name = "SparseLU";
+};
+
+struct LeastSquaresConjugateGradient : SolverType
+{
+    using TSolver = Eigen::LeastSquaresConjugateGradient<TSparseMatrix>;
+
+    static constexpr auto Name = "LeastSquaresConjugateGradient";
+};
+
+struct SparseQR : SolverType
+{
+    using TSolver = Eigen::SparseQR<TSparseMatrix, Eigen::COLAMDOrdering<int>>;
+
+    static constexpr auto Name = "SparseQR";
 };
 
 #if defined EIGEN_USE_MKL_ALL
@@ -138,7 +155,7 @@ class EigenDirectSolver
     {
         Eigen::Map<Eigen::VectorXd> x(rX.data().begin(), rX.size());
         Eigen::Map<Eigen::VectorXd> b(rB.data().begin(), rB.size());
-        
+
         x = m_solver.solve(b);
 
         KRATOS_ERROR_IF(m_solver.info() != Eigen::Success) << "Solving failed!" << std::endl;

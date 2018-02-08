@@ -16,6 +16,7 @@ from __future__ import print_function, absolute_import, division
 from KratosMultiphysics import *
 from KratosMultiphysics.ShapeOptimizationApplication import *
 from KratosMultiphysics.ExternalSolversApplication import *
+from KratosMultiphysics.EigenSolversApplication import *
 
 # check that KratosMultiphysics was imported in the main script
 CheckForPreviousImport()
@@ -141,7 +142,7 @@ class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
  
     # --------------------------------------------------------------------------
     def __mapSensitivitiesToDesignSpace( self ):
-        LinearSolver = SuperLUSolver()
+        LinearSolver = SparseQR()
         self.Mapper.MapToDesignSpaceWithRigidCorrection( OBJECTIVE_SENSITIVITY, MAPPED_OBJECTIVE_SENSITIVITY, LinearSolver )
 
     # --------------------------------------------------------------------------

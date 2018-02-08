@@ -43,23 +43,27 @@ void AddCustomSolversToPython()
 	using SparseLUSolver = EigenDirectSolver<SparseLU, SparseSpaceType, LocalSpaceType>;
 	class_<SparseLUSolver, bases<DirectSolverType>, boost::noncopyable>
 		("SparseLUSolver", init<>())
-		.def(init<Parameters>());
+		.def(init<Parameters>())
+	;
 
 	#if defined EIGEN_USE_MKL_ALL
 	using PardisoLLTSolver = EigenDirectSolver<PardisoLLT, SparseSpaceType, LocalSpaceType>;
 	class_<PardisoLLTSolver, bases<DirectSolverType>, boost::noncopyable>
 		("PardisoLLTSolver", init<>())
-		.def(init<Parameters>());
+		.def(init<Parameters>())
+	;
 
 	using PardisoLDLTSolver = EigenDirectSolver<PardisoLDLT, SparseSpaceType, LocalSpaceType>;
 	class_<PardisoLDLTSolver, bases<DirectSolverType>, boost::noncopyable>
 		("PardisoLDLTSolver", init<>())
-		.def(init<Parameters>());
+		.def(init<Parameters>())
+	;
 
 	using PardisoLUSolver = EigenDirectSolver<PardisoLU, SparseSpaceType, LocalSpaceType>;
 	class_<PardisoLUSolver, bases<DirectSolverType>, boost::noncopyable>
 		("PardisoLUSolver", init<>())
-		.def(init<Parameters>());
+		.def(init<Parameters>())
+	;
 	#endif
 
 	using SparseEigensystemSolverType = SparseEigensystemSolver<SparseSpaceType, LocalSpaceType>;
@@ -68,7 +72,18 @@ void AddCustomSolversToPython()
     	.def("Solve", &SparseEigensystemSolverType::Solve)
     	.def("GetEigenValue", &SparseEigensystemSolverType::GetEigenValue)
 	;
-;
+
+	using LeastSquaresConjugateGradient = EigenDirectSolver<LeastSquaresConjugateGradient, SparseSpaceType, LocalSpaceType>;
+	class_<LeastSquaresConjugateGradient, bases<DirectSolverType>, boost::noncopyable>
+		("LeastSquaresConjugateGradient", init<>())
+		.def(init<Parameters>())
+	;
+
+	using SparseQR = EigenDirectSolver<SparseQR, SparseSpaceType, LocalSpaceType>;
+	class_<SparseQR, bases<DirectSolverType>, boost::noncopyable>
+		("SparseQR", init<>())
+		.def(init<Parameters>())
+	;	
 }
 
 } // namespace Python

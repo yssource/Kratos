@@ -577,8 +577,7 @@ public:
         }
 
         // compute modified mapping matrix
-        CompressedMatrixType modifiedMatrix = ZeroMatrix( mNumberOfDesignVariables+mNumberOfRigidNodes , 
-                                            mNumberOfDesignVariables );
+        CompressedMatrix modifiedMatrix(mNumberOfDesignVariables+mNumberOfRigidNodes , mNumberOfDesignVariables );
         Vector x_variables_modified, y_variables_modified, z_variables_modified;
         x_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
         y_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
@@ -598,7 +597,9 @@ public:
             // modified matrix
             for( int node_index_j = 0 ; node_index_j<mNumberOfDesignVariables ; node_index_j++)
             {
-                modifiedMatrix.push_back(node_index_i, node_index_j, mMappingMatrix(node_index_i,node_index_j));
+                double matrix_entry = mMappingMatrix(node_index_i,node_index_j);
+                if(matrix_entry!=0.0)
+                    modifiedMatrix.insert_element(node_index_i, node_index_j, matrix_entry);
 
                 
             }
@@ -607,10 +608,6 @@ public:
             y_variables_modified[node_index_i] = y_variables_in_geometry_space[node_index_i];
             z_variables_modified[node_index_i] = z_variables_in_geometry_space[node_index_i];
         }
-
-
-        KRATOS_WATCH("test2")
-
 
         for( int node_index_i = 0 ; node_index_i<mNumberOfRigidNodes ; node_index_i++)
         {
@@ -621,8 +618,9 @@ public:
             // modified matrix
             for( int node_index_j = 0 ; node_index_j<mNumberOfDesignVariables ; node_index_j++)
             {
-                
-                modifiedMatrix.push_back(mNumberOfDesignVariables + node_index_i, node_index_j, penalty_factor*mMappingMatrix(i,node_index_j));
+                double matrix_entry = penalty_factor*mMappingMatrix(node_index_i,node_index_j);
+                if(matrix_entry!=0.0)                
+                    modifiedMatrix.insert_element(mNumberOfDesignVariables + node_index_i, node_index_j, matrix_entry);
             }
             
             // modified vectors

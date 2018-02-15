@@ -196,7 +196,6 @@ public:
     {
     }
 
-
     /// Destructor.
 
     virtual ~MPICommunicator()
@@ -211,7 +210,6 @@ public:
 
         KRATOS_CATCH("");
     }
-
 
     ///@}
     ///@name Operators
@@ -681,7 +679,7 @@ public:
     /**
      * Transfer objects from a given process to a destination process
      * @param SendObjects list of objects to be send.      SendObjects[i] -> Objects to   process i
-     * @param RecvObjects list of objects to be received.  RecvObjects[i] -> objects from process i
+     * @param RecvObjects list of objects to be received.  RecvObjects[i] -> Objects from process i
      **/
     virtual bool TransferObjects(std::vector<NodesContainerType>& SendObjects, std::vector<NodesContainerType>& RecvObjects)
     {
@@ -693,7 +691,7 @@ public:
     /**
     * Transfer objects from a given process to a destination process
     * @param SendObjects list of objects to be send.      SendObjects[i] -> Objects to   process i
-    * @param RecvObjects list of objects to be received.  RecvObjects[i] -> objects from process i
+    * @param RecvObjects list of objects to be received.  RecvObjects[i] -> Objects from process i
     **/
     virtual bool TransferObjects(std::vector<ElementsContainerType>& SendObjects, std::vector<ElementsContainerType>& RecvObjects)
     {
@@ -705,7 +703,7 @@ public:
     /**
     * Transfer objects from a given process to a destination process
     * @param SendObjects list of objects to be send.      SendObjects[i] -> Objects to   process i
-    * @param RecvObjects list of objects to be received.  RecvObjects[i] -> objects from process i
+    * @param RecvObjects list of objects to be received.  RecvObjects[i] -> Objects from process i
     **/
     virtual bool TransferObjects(std::vector<ConditionsContainerType>& SendObjects, std::vector<ConditionsContainerType>& RecvObjects)
     {
@@ -717,7 +715,7 @@ public:
     /**
      * Transfer objects from a given process to a destination process
      * @param SendObjects list of objects to be send.      SendObjects[i] -> Objects to   process i
-     * @param RecvObjects list of objects to be received.  RecvObjects[i] -> objects from process i
+     * @param RecvObjects list of objects to be received.  RecvObjects[i] -> Objects from process i
      **/
     virtual bool TransferObjects(std::vector<NodesContainerType>& SendObjects, std::vector<NodesContainerType>& RecvObjects,Kratos::Serializer& particleSerializer)
     {
@@ -726,10 +724,10 @@ public:
     }
 
     /**
-    * Transfer objects from a given process to a destination process
-    * @param SendObjects list of objects to be send.      SendObjects[i] -> Objects to   process i
-    * @param RecvObjects list of objects to be received.  RecvObjects[i] -> objects from process i
-    **/
+     * Transfer objects from a given process to a destination process
+     * @param SendObjects list of objects to be send.      SendObjects[i] -> Objects to   process i
+     * @param RecvObjects list of objects to be received.  RecvObjects[i] -> Objects from process i
+     **/
     virtual bool TransferObjects(std::vector<ElementsContainerType>& SendObjects, std::vector<ElementsContainerType>& RecvObjects,Kratos::Serializer& particleSerializer)
     {
         AsyncSendAndReceiveObjects<ElementsContainerType>(SendObjects,RecvObjects,particleSerializer);
@@ -737,13 +735,25 @@ public:
     }
 
     /**
-    * Transfer objects from a given process to a destination process
-    * @param SendObjects list of objects to be send.      SendObjects[i] -> Objects to   process i
-    * @param RecvObjects list of objects to be received.  RecvObjects[i] -> objects from process i
-    **/
+     * Transfer objects from a given process to a destination process
+     * @param SendObjects list of objects to be send.      SendObjects[i] -> Objects to   process i
+     * @param RecvObjects list of objects to be received.  RecvObjects[i] -> Objects from process i
+     **/
     virtual bool TransferObjects(std::vector<ConditionsContainerType>& SendObjects, std::vector<ConditionsContainerType>& RecvObjects,Kratos::Serializer& particleSerializer)
     {
         AsyncSendAndReceiveObjects<ConditionsContainerType>(SendObjects,RecvObjects,particleSerializer);
+        return true;
+    }
+
+    /**
+     * Transfer meshes from a given process to a destination process. The mesh will be transfered completly.
+     * In other words all nodes, elements, conditions and properties in the mesh will be transfered.
+     * @param SendMeshes list of meshes to be send.      SendMeshes[i] -> Meshes to   process i
+     * @param RecvMeshes list of meshes to be received.  RecvMeshes[i] -> Meshes from process i
+     **/
+    virtual bool TransferMesh(std::vector<MeshType>& SendMeshes, std::vector<MeshType>& RecvMeshes)
+    {
+        AsyncSendAndReceiveMeshes<MeshType>(SendMeshes, RecvMeshes);
         return true;
     }
 
@@ -1180,8 +1190,6 @@ private:
         return true;
     }
 
-
-
     template< class TDataType, class TSendType >
     bool AssembleThisNonHistoricalVariable(Variable<TDataType> const& ThisVariable)
     {
@@ -1402,7 +1410,6 @@ private:
         return true;
     }
 
-
     template< class TDataType, class TSendType >
     bool SynchronizeHeterogeneousElementalNonHistoricalVariable(Variable<vector<TDataType> > const& ThisVariable)
     {
@@ -1601,7 +1608,6 @@ private:
 
     }
 
-
     template<class TObjectType>
     bool AsyncSendAndReceiveObjects(std::vector<TObjectType>& SendObjects, std::vector<TObjectType>& RecvObjects, Kratos::Serializer& externParticleSerializer)
     {
@@ -1722,6 +1728,392 @@ private:
 
         delete [] msgSendSize;
         delete [] msgRecvSize;
+
+        return true;
+    }
+
+    template<class TObjectType>
+    bool AsyncSendAndReceiveObjects(std::vector<TObjectType>& SendObjects, std::vector<TObjectType>& RecvObjects, std::vector<Kratos::Serializer>& SendSerializer, std::vector<Kratos::Serializer>& RecvSerializer)
+    {
+        int mpi_rank;
+        int mpi_size;
+
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+
+        int * msgSendSize = new int[mpi_size];
+        int * msgRecvSize = new int[mpi_size];
+
+        char ** message = new char * [mpi_size];
+        char ** mpi_send_buffer = new char * [mpi_size];
+
+        for(int i = 0; i < mpi_size; i++)
+        {
+            msgSendSize[i] = 0;
+            msgRecvSize[i] = 0;
+        }
+
+        for(int i = 0; i < mpi_size; i++)
+        {
+            if(mpi_rank != i)
+            {
+                Kratos::Serializer& particleSerializer = SendSerializer[i];
+
+                particleSerializer.save("VariableList",mpVariables_list);
+                particleSerializer.save("ObjectList",SendObjects[i].GetContainer());
+
+                std::stringstream * stream = (std::stringstream *)particleSerializer.pGetBuffer();
+                const std::string & stream_str = stream->str();
+                const char * cstr = stream_str.c_str();
+
+                msgSendSize[i] = sizeof(char) * (stream_str.size()+1);
+                mpi_send_buffer[i] = (char *)malloc(msgSendSize[i]);
+                memcpy(mpi_send_buffer[i],cstr,msgSendSize[i]);
+            }
+        }
+
+        MPI_Alltoall(msgSendSize,1,MPI_INT,msgRecvSize,1,MPI_INT,MPI_COMM_WORLD);
+
+        int NumberOfCommunicationEvents      = 0;
+        int NumberOfCommunicationEventsIndex = 0;
+
+        for(int j = 0; j < mpi_size; j++)
+        {
+            if(j != mpi_rank && msgRecvSize[j]) NumberOfCommunicationEvents++;
+            if(j != mpi_rank && msgSendSize[j]) NumberOfCommunicationEvents++;
+        }
+
+        MPI_Request * reqs = new MPI_Request[NumberOfCommunicationEvents];
+        MPI_Status * stats = new MPI_Status[NumberOfCommunicationEvents];
+
+        //Set up all receive and send events
+        for(int i = 0; i < mpi_size; i++)
+        {
+            if(i != mpi_rank && msgRecvSize[i])
+            {
+                message[i] = (char *)malloc(sizeof(char) * msgRecvSize[i]);
+
+                MPI_Irecv(message[i],msgRecvSize[i],MPI_CHAR,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+            }
+
+            if(i != mpi_rank && msgSendSize[i])
+            {
+                MPI_Isend(mpi_send_buffer[i],msgSendSize[i],MPI_CHAR,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+            }
+        }
+
+        //wait untill all communications finish
+        int err = MPI_Waitall(NumberOfCommunicationEvents, reqs, stats);
+
+        if(err != MPI_SUCCESS)
+            KRATOS_THROW_ERROR(std::runtime_error,"Error in mpi_communicator","")
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        for(int i = 0; i < mpi_size; i++)
+        {
+            if (i != mpi_rank && msgRecvSize[i])
+            {
+                Kratos::Serializer& particleSerializer = RecvSerializer[i];
+                std::stringstream * serializer_buffer;
+
+                serializer_buffer = (std::stringstream *)particleSerializer.pGetBuffer();
+                serializer_buffer->write(message[i], msgRecvSize[i]);
+
+                VariablesList* tmp_mpVariables_list = NULL;
+
+                particleSerializer.load("VariableList",tmp_mpVariables_list);
+
+                if(tmp_mpVariables_list != NULL)
+                  delete tmp_mpVariables_list;
+                tmp_mpVariables_list = mpVariables_list;
+
+                particleSerializer.load("ObjectList",RecvObjects[i].GetContainer());
+            }
+
+            MPI_Barrier(MPI_COMM_WORLD);
+        }
+
+        // Free buffers
+        for(int i = 0; i < mpi_size; i++)
+        {
+            if(msgRecvSize[i])
+                free(message[i]);
+
+            if(msgSendSize[i])
+                free(mpi_send_buffer[i]);
+        }
+
+        delete [] reqs;
+        delete [] stats;
+
+        delete [] message;
+        delete [] mpi_send_buffer;
+
+        delete [] msgSendSize;
+        delete [] msgRecvSize;
+
+        return true;
+    }
+
+    /** Request the list of objects that the destination process needs
+     * Request the list of objects that the destination process needs. The sender sends the id's of the objects to be transfered
+     * and the recv will answer with the id's of the objects it already owns and its ????
+     * @param Petition list of objects to be sent to each process
+     * @param mpi_send_size array to store the size of the objects to be sent to each process.
+     * @param mpi_send_size array to store the size of the objects to be received from each process.
+     * @param mpi_send_buffer array to store the arrays of the id of the objects to be sent to each process. This function allocates this buffer.
+     * @param mpi_recv_buffer array to store the arrays of the id of the objects to be received from each process. This function allocates this buffer.
+     **/
+    template<class TObjectType>
+    void AsyncTransferPetition(
+      std::vector<TObjectType>& Petition,
+      int * mpi_send_size, int * mpi_recv_size,
+      long ** mpi_send_buffer, long ** mpi_recv_buffer) {
+
+        int mpi_rank;
+        int mpi_size;
+
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+
+        int NumberOfCommunicationEvents      = 0;
+        int NumberOfCommunicationEventsIndex = 0;
+
+        for(int i = 0; i < mpi_size; i++)
+        {
+            mpi_send_size[i] = 0;
+            mpi_recv_size[i] = 0;
+        }
+
+        // Send number of objects to transfer
+        for(std::size_t i = 0; i < mpi_size; i++)
+        {
+            if(i != mpi_rank) 
+            {
+                mpi_send_size[i] = Petition[i].size();
+            }
+        }
+
+        MPI_Alltoall(mpi_send_size,1,MPI_INT,mpi_recv_size,1,MPI_INT,MPI_COMM_WORLD);
+
+        // Prepare the payload, recv buffer and communication events
+        for(std::size_t i = 0; i < mpi_size; i++) 
+        {
+            if(i != mpi_rank) 
+            {
+                if(mpi_send_size[i])
+                {
+                    mpi_send_buffer[i] = new long[mpi_send_size[i] * 2];
+                    NumberOfCommunicationEvents++;
+                }
+                if(mpi_recv_size[i])
+                {
+                    mpi_recv_buffer[i] = new long[mpi_recv_size[i] * 2];
+                    NumberOfCommunicationEvents++;
+                }
+                for(std::size_t j = 0; j < Petition[i].size(); j++)
+                {
+                   mpi_send_buffer[i][j] = Petition[i][j].Id(); 
+                }
+            }
+        }
+
+        MPI_Request * reqs = new MPI_Request[NumberOfCommunicationEvents];
+        MPI_Status * stats = new MPI_Status[NumberOfCommunicationEvents];
+
+        // Communicate the data
+        for(int i = 0; i < mpi_size; i++)
+        {
+            if(i != mpi_rank && mpi_send_size[i])
+            {
+                MPI_Isend(mpi_send_buffer[i],mpi_send_size[i],MPI_LONG,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+            }
+
+            if(i != mpi_rank && mpi_recv_size[i])
+            {
+                MPI_Irecv(mpi_recv_buffer[i],mpi_recv_size[i],MPI_LONG,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+            }
+        }
+
+        // Wait untill all communications have finished
+        if(MPI_Waitall(NumberOfCommunicationEvents, reqs, stats) != MPI_SUCCESS)
+        {
+            KRATOS_ERROR << "Error in mpi_communicator" << std::endl;
+        }
+    }
+
+    /** Request the list of objects that the destination process needs
+     * Request the list of objects that the destination process needs. The sender sends the id's of the objects to be transfered
+     * and the recv will answer with the id's of the objects it already owns and its ????
+     * @param Petition list of objects to be sent to each process
+     * @param mpi_send_size array to store the size of the objects to be sent to each process.
+     * @param mpi_send_size array to store the size of the objects to be received from each process.
+     * @param mpi_send_buffer array to store the arrays of the id of the objects to be sent to each process. This function allocates this buffer.
+     * @param mpi_recv_buffer array to store the arrays of the id of the objects to be received from each process. This function allocates this buffer.
+     **/
+    void AsyncOwnedPointers(
+      int * mpi_send_size, int * mpi_recv_size,
+      long ** mpi_send_buffer, long ** mpi_recv_buffer) {
+
+        int mpi_rank;
+        int mpi_size;
+
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+
+        int NumberOfCommunicationEvents      = 0;
+        int NumberOfCommunicationEventsIndex = 0;
+
+        MPI_Alltoall(mpi_send_size,2,MPI_INT,mpi_recv_size,2,MPI_INT,MPI_COMM_WORLD);
+
+        // Prepare the payload, recv buffer and communication events
+        for(std::size_t i = 0; i < mpi_size; i++)
+        {
+            if(i != mpi_rank)
+            {
+                if(mpi_send_size[i])
+                {
+                    NumberOfCommunicationEvents++;
+                }
+                if(mpi_recv_size[i])
+                {
+                    NumberOfCommunicationEvents++;
+                }
+            }
+        }
+
+        MPI_Request * reqs = new MPI_Request[NumberOfCommunicationEvents];
+        MPI_Status * stats = new MPI_Status[NumberOfCommunicationEvents];
+
+        // Communicate the data
+        for(int i = 0; i < mpi_size; i++) {
+            if(i != mpi_rank && mpi_send_size[i]) {
+                MPI_Isend(mpi_send_buffer[i],mpi_send_size[i],MPI_LONG,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+            }
+
+            if(i != mpi_rank && mpi_recv_size[i]) {
+                MPI_Irecv(mpi_recv_buffer[i],mpi_recv_size[i],MPI_LONG,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+            }
+        }
+
+        // Wait untill all communications have finished
+        if(MPI_Waitall(NumberOfCommunicationEvents, reqs, stats) != MPI_SUCCESS) {
+            KRATOS_ERROR << "Error in mpi_communicator" << std::endl;
+        }
+    }
+
+    void ClearSendRecvBuffers(int * mpi_send_size, int * mpi_recv_size, long ** mpi_send_buffer, long ** mpi_recv_buffer) {
+        int mpi_rank;
+        int mpi_size;
+
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+
+        // Clear the buffers
+        for(int i = 0; i < mpi_size; i++) {
+            if(i != mpi_rank && mpi_send_size[i]) {
+                delete[] mpi_send_buffer[i];
+            }
+
+            if(i != mpi_rank && mpi_recv_size[i]) {
+                delete[] mpi_recv_buffer[i];
+            }
+        }
+    }
+
+    template<class TMeshType>
+    bool AsyncSendAndReceiveMeshes(std::vector<TMeshType>& SendMeshes, std::vector<TMeshType>& RecvMeshes)
+    {
+        int mpi_rank;
+        int mpi_size;
+
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+
+        int * mpi_send_size = new int[mpi_size];
+        int * mpi_recv_size = new int[mpi_size];
+
+        long ** mpi_send_buffer = new long * [mpi_size];
+        long ** mpi_recv_buffer = new long * [mpi_size];
+
+        std::vector<MeshType::NodesContainerType> send_mesh_nodes;
+        std::vector<MeshType::ElementsContainerType> send_mesh_elements;
+        std::vector<MeshType::ConditionsContainerType> send_mesh_conditions;
+
+        std::vector<MeshType::NodesContainerType> recv_mesh_nodes;
+        std::vector<MeshType::ElementsContainerType> recv_mesh_elements;
+        std::vector<MeshType::ConditionsContainerType> recv_mesh_conditions;
+
+        // Extract the objects of the mesh that may have duplicates in the destination
+        for(int i = 0; i < mpi_size; i++) {
+            send_mesh_nodes[i] = SendMeshes[i].Nodes();
+            send_mesh_elements[i] = SendMeshes[i].Elements();
+            send_mesh_conditions[i] = SendMeshes[i].Conditions();
+
+            recv_mesh_nodes[i] = RecvMeshes[i].Nodes();
+            recv_mesh_elements[i] = RecvMeshes[i].Elements();
+            recv_mesh_conditions[i] = RecvMeshes[i].Conditions();
+        }
+
+        // We build an array of id's for the entities we are going to transfer (nodes, elements, conditions, ...)
+        // and we send them to the target process. The target process looks for the already existing entities and
+        // returns a list of the entities he wants
+        std::vector<Kratos::Serializer> send_serializers(mpi_size);
+        std::vector<Kratos::Serializer> recv_serializers(mpi_size);
+
+        // For Nodes
+        AsyncTransferPetition(send_mesh_nodes, mpi_send_size, mpi_recv_size, mpi_send_buffer, mpi_recv_buffer);
+
+        for(int i = 0; i < mpi_size; i++) {
+            if(i != mpi_rank) {
+                for(int j = 0; j < mpi_recv_size[i]; j++) {
+                    if(LocalMesh().HasNode(mpi_recv_buffer[i][j])) {
+                        void * dst_node_addr = &*(LocalMesh().pGetNode(mpi_recv_buffer[i][j*2+0]));
+                        void * src_node_addr = (void *)mpi_recv_buffer[i][j*2+1];
+                        recv_serializers[i].RedirectLoadingPointer(src_node_addr, dst_node_addr);
+                        mpi_send_buffer[i][j] = mpi_recv_buffer[i][j*2+0];
+                    } else {
+                        mpi_send_buffer[i][j] = -1;
+                    }
+                }
+                mpi_send_size[i] = mpi_recv_size[i];
+            }
+        }
+
+        AsyncOwnedPointers(mpi_send_size, mpi_recv_size, mpi_send_buffer, mpi_recv_buffer);
+
+        for(int i = 0; i < mpi_size; i++) {
+            if(i != mpi_rank) {
+                for(int j = 0; j < mpi_recv_size[i]; j++) {
+                    if(mpi_recv_buffer[i][j] != -1) {
+                        void * src_node_addr = &*(LocalMesh().pGetNode(mpi_recv_buffer[i][j]));
+                        recv_serializers[i].AddToSavedPointers(src_node_addr);
+                    }
+                }
+            }
+        }
+
+        ClearSendRecvBuffers(mpi_send_size, mpi_recv_size, mpi_send_buffer, mpi_recv_buffer);
+
+        // Transfer the Objects
+        AsyncSendAndReceiveObjects(send_mesh_nodes, recv_mesh_nodes, send_serializers, recv_serializers);
+
+        // // For Elements
+        // AsyncSendTransferPetition(mesh_elements, mpi_send_size, mpi_recv_size, mpi_send_buffer, mpi_recv_buffer);
+
+
+        // ClearSendRecvBuffers(mpi_send_size, mpi_recv_size, mpi_send_buffer, mpi_recv_buffer);
+
+        // // For Conditions
+        // AsyncSendTransferPetition(mesh_conditions, mpi_send_size, mpi_recv_size, mpi_send_buffer, mpi_recv_buffer);
+
+
+        // ClearSendRecvBuffers(mpi_send_size, mpi_recv_size, mpi_send_buffer, mpi_recv_buffer);
+
+
+        delete[] mpi_send_buffer;
+        delete[] mpi_recv_buffer;
 
         return true;
     }

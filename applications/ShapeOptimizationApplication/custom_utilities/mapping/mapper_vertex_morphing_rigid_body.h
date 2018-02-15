@@ -460,7 +460,7 @@ public:
         {   
             NodeTypePointer pnode = *(node_it.base());
 
-            if(pnode->X() < -5.0)
+            if(pnode->X() < -8.0)
             {
                 mNumberOfRigidNodes++;
                 mListOfRigidNodes.push_back(pnode);
@@ -483,6 +483,8 @@ public:
 
             array_3d& coord = node_i.Coordinates();
             array_3d& def = node_i.FastGetSolutionStepValue( SHAPE_UPDATE );
+            // array_3d& def = node_i.FastGetSolutionStepValue( OBJECTIVE_SENSITIVITY );
+
 
             centroid_undeformed(0) += coord[0];
             centroid_undeformed(1) += coord[1];
@@ -551,13 +553,13 @@ public:
 
 
         // From here we have R & t
-
+        KRATOS_WATCH(mListOfRigidNodes.size());
+        KRATOS_WATCH(mNumberOfRigidNodes);
+        KRATOS_WATCH(mNumberOfDesignVariables);
 
         // compute rigid body movement of rigid nodes
         for(int node_index = 0 ; node_index<mListOfRigidNodes.size() ; node_index++)
         {
-
-
             // Get node information
             ModelPart::NodeType& node_i = *mListOfRigidNodes[node_index];
             array_3d& coord = node_i.Coordinates();
@@ -583,10 +585,6 @@ public:
         y_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
         z_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
 
-
-
-        KRATOS_WATCH("test1")
-
         double penalty_factor = 1000000;
 
 
@@ -600,7 +598,6 @@ public:
                 double matrix_entry = mMappingMatrix(node_index_i,node_index_j);
                 if(matrix_entry!=0.0)
                     modifiedMatrix.insert_element(node_index_i, node_index_j, matrix_entry);
-
                 
             }
             // modified vectors
@@ -618,7 +615,7 @@ public:
             // modified matrix
             for( int node_index_j = 0 ; node_index_j<mNumberOfDesignVariables ; node_index_j++)
             {
-                double matrix_entry = penalty_factor*mMappingMatrix(node_index_i,node_index_j);
+                double matrix_entry = penalty_factor*mMappingMatrix(i,node_index_j);
                 if(matrix_entry!=0.0)                
                     modifiedMatrix.insert_element(mNumberOfDesignVariables + node_index_i, node_index_j, matrix_entry);
             }
@@ -627,10 +624,7 @@ public:
             x_variables_modified[node_index_i+mNumberOfDesignVariables] = penalty_factor*x_variables_in_geometry_space_rigid[node_index_i];
             y_variables_modified[node_index_i+mNumberOfDesignVariables] = penalty_factor*y_variables_in_geometry_space_rigid[node_index_i];
             z_variables_modified[node_index_i+mNumberOfDesignVariables] = penalty_factor*z_variables_in_geometry_space_rigid[node_index_i];
-        }
-
-        KRATOS_WATCH("test3")
-        
+        }        
 
         // // compute matrix
         // CompressedMatrixType transA = trans(modifiedMatrix);
@@ -658,9 +652,9 @@ public:
 
         // KRATOS_WATCH("test5")
 
-        Vector x_variables_in_design_space;
-        Vector y_variables_in_design_space;
-        Vector z_variables_in_design_space;
+        // Vector x_variables_in_design_space;
+        // Vector y_variables_in_design_space;
+        // Vector z_variables_in_design_space;
 
         x_variables_in_design_space.resize(mNumberOfDesignVariables,0.0);
         y_variables_in_design_space.resize(mNumberOfDesignVariables,0.0);
@@ -671,12 +665,6 @@ public:
         linear_solver->Solve(modifiedMatrix, z_variables_in_design_space, z_variables_modified);
 
         KRATOS_WATCH("Solution done!")
-
-        // // solve system for new x
-        // x_variables_in_design_space = solve(x_variables_RHS,optimalMappingMatrix);
-        // y_variables_in_design_space = solve(y_variables_RHS,optimalMappingMatrix);
-        // z_variables_in_design_space = solve(z_variables_RHS,optimalMappingMatrix);
-
     }
 
     // ==============================================================================

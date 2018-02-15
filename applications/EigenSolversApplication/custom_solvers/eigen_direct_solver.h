@@ -23,6 +23,7 @@
 #include <Eigen/IterativeLinearSolvers>
 #include <Eigen/SparseQR>
 #include <Eigen/OrderingMethods>
+#include <unsupported/Eigen/SparseExtra>
 
 // Project includes
 #include "includes/define.h"
@@ -136,10 +137,12 @@ class EigenDirectSolver
         for (size_t i = 0; i < rA.index2_data().size(); i++) {
             index2_vector[i] = (int)rA.index2_data()[i];
         }
-        
+
         Eigen::Map<typename TSolver::TSparseMatrix> a(rA.size1(), rA.size2(), rA.nnz(), index1_vector.data(), index2_vector.data(), rA.value_data().begin());
 
         m_solver.compute(a);
+
+        Eigen::saveMarket(a, "a.mtx");
 
         KRATOS_ERROR_IF(m_solver.info() != Eigen::Success) << "Decomposition failed!" << std::endl;
     }
@@ -157,6 +160,9 @@ class EigenDirectSolver
         Eigen::Map<Eigen::VectorXd> b(rB.data().begin(), rB.size());
 
         x = m_solver.solve(b);
+
+        Eigen::saveMarketVector(b, "b.mtx");
+        Eigen::saveMarketVector(x, "x.mtx");
 
         KRATOS_ERROR_IF(m_solver.info() != Eigen::Success) << "Solving failed!" << std::endl;
     }

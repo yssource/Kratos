@@ -123,7 +123,7 @@
                 "matrix_free_filtering"      : false
             },
             "damping" : {
-                "perform_damping" : true,
+                "perform_damping" : false,
                 "damping_regions" : [{
                         "sub_model_part_name"   : "support_edges",
                         "damp_X"                : false,
@@ -143,7 +143,7 @@
         },
         "optimization_algorithm" : {
             "name"               : "steepest_descent",
-            "max_iterations"     : 1,
+            "max_iterations"     : 2,
             "relative_tolerance" : 1e-1
         },
         "line_search" : {
@@ -155,7 +155,7 @@
             "output_directory"        : "Optimization_Results",
             "design_history_filename" : "design_history",
             "response_log_filename"   : "response_log",
-            "design_output_mode"      : "WriteDesignSurface",            
+            "design_output_mode"      : "WriteDesignSurface",
             "nodal_results"           : [ "NORMALIZED_SURFACE_NORMAL",
                                           "OBJECTIVE_SENSITIVITY",
                                           "MAPPED_OBJECTIVE_SENSITIVITY",

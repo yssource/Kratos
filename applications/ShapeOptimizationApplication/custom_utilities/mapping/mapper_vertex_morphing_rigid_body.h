@@ -281,24 +281,42 @@ public:
         std::cout << "> Time needed for mapping: " << mapping_time.elapsed() << " s" << std::endl;
     }
 
+    // // --------------------------------------------------------------------------
+    // void MapToDesignSpaceWithRigidCorrection( const Variable<array_3d> &rNodalVariable,
+    //                                           const Variable<array_3d> &rNodalVariableInDesignSpace,
+    //                                           CompressedLinearSolverType::Pointer linear_solver )
+    // {
+    //     boost::timer mapping_time;
+    //     std::cout << "\n> Starting to map " << rNodalVariable.Name() << " to design space..." << std::endl;
+
+    //     RecomputeMappingMatrixIfGeometryHasChanged();
+    //     PrepareVectorsForMappingToDesignSpace( rNodalVariable );
+    //     if (mConsistentBackwardMapping)
+    //         MultiplyVectorsWithConsistentBackwardMappingMatrix();
+    //     else
+    //         MultiplyVectorsWithTransposeMappingMatrix();
+    //     AssignResultingDesignVectorsToNodalVariable( rNodalVariableInDesignSpace );
+
+    //     CorrectDesignUpdateWithRigidBodyConstraints( linear_solver );
+    //     AssignResultingDesignVectorsToNodalVariable( rNodalVariableInDesignSpace );
+
+    //     std::cout << "> Time needed for mapping: " << mapping_time.elapsed() << " s" << std::endl;
+    // }
+
     // --------------------------------------------------------------------------
-    void MapToDesignSpaceWithRigidCorrection( const Variable<array_3d> &rNodalVariable, 
-                                              const Variable<array_3d> &rNodalVariableInDesignSpace,
-                                              CompressedLinearSolverType::Pointer linear_solver )
+    void MapToGeometrySpaceWithRigidCorrection( const Variable<array_3d> &rNodalVariable, const Variable<array_3d> &rNodalVariableInGeometrySpace, CompressedLinearSolverType::Pointer linear_solver )
     {
         boost::timer mapping_time;
-        std::cout << "\n> Starting to map " << rNodalVariable.Name() << " to design space..." << std::endl;
+        std::cout << "\n> Starting to map " << rNodalVariable.Name() << " to geometry space..." << std::endl;
 
         RecomputeMappingMatrixIfGeometryHasChanged();
-        PrepareVectorsForMappingToDesignSpace( rNodalVariable );
-        if (mConsistentBackwardMapping)
-            MultiplyVectorsWithConsistentBackwardMappingMatrix();
-        else
-            MultiplyVectorsWithTransposeMappingMatrix();
-        AssignResultingDesignVectorsToNodalVariable( rNodalVariableInDesignSpace );
+        PrepareVectorsForMappingToGeometrySpace( rNodalVariable );
+        MultiplyVectorsWithMappingMatrix();
+        AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
 
         CorrectDesignUpdateWithRigidBodyConstraints( linear_solver );
-        AssignResultingDesignVectorsToNodalVariable( rNodalVariableInDesignSpace );
+        MultiplyVectorsWithMappingMatrix();
+        AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
 
         std::cout << "> Time needed for mapping: " << mapping_time.elapsed() << " s" << std::endl;
     }
@@ -457,7 +475,7 @@ public:
         // mListOfRigidNodes.resize(mNumberOfRigidNodes)
 
         for (ModelPart::NodesContainerType::iterator node_it = mrDesignSurface.NodesBegin(); node_it != mrDesignSurface.NodesEnd(); ++node_it)
-        {   
+        {
             NodeTypePointer pnode = *(node_it.base());
 
             if(pnode->X() < -8.0)
@@ -564,18 +582,9 @@ public:
             ModelPart::NodeType& node_i = *mListOfRigidNodes[node_index];
             array_3d& coord = node_i.Coordinates();
 
-            x_variables_in_geometry_space_rigid[node_index] = coord[0]*R(0,0)
-                                                + coord[1]*R(0,1)
-                                                + coord[2]*R(0,2)
-                                                + t(0);
-            y_variables_in_geometry_space_rigid[node_index] = coord[0]*R(1,0)
-                                                + coord[1]*R(1,1)
-                                                + coord[2]*R(1,2)
-                                                + t(1);
-            z_variables_in_geometry_space_rigid[node_index] = coord[0]*R(2,0)
-                                                + coord[1]*R(2,1)
-                                                + coord[2]*R(2,2)
-                                                + t(2);
+            x_variables_in_geometry_space_rigid[node_index] = (coord[0]*R(0,0) + coord[1]*R(0,1) + coord[2]*R(0,2) + t(0)) - coord[0];
+            y_variables_in_geometry_space_rigid[node_index] = (coord[0]*R(1,0) + coord[1]*R(1,1) + coord[2]*R(1,2) + t(1)) - coord[1];
+            z_variables_in_geometry_space_rigid[node_index] = (coord[0]*R(2,0) + coord[1]*R(2,1) + coord[2]*R(2,2) + t(2)) - coord[2];
         }
 
         // compute modified mapping matrix
@@ -585,26 +594,42 @@ public:
         y_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
         z_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
 
-        double penalty_factor = 1000000;
+        double penalty_factor = 10000;
 
 
-        
-        // Copy from orignal mapping matrix & shape update
+
+        // // Copy from orignal mapping matrix & shape update
+        // for( int node_index_i = 0 ; node_index_i<mNumberOfDesignVariables ; node_index_i++)
+        // {
+        //     // modified matrix
+        //     for( int node_index_j = 0 ; node_index_j<mNumberOfDesignVariables ; node_index_j++)
+        //     {
+        //         double matrix_entry = mMappingMatrix(node_index_i,node_index_j);
+        //         if(matrix_entry!=0.0)
+        //             modifiedMatrix.insert_element(node_index_i, node_index_j, matrix_entry);
+
+        //     }
+        //     // modified vectors
+        //     x_variables_modified[node_index_i] = x_variables_in_geometry_space[node_index_i];
+        //     y_variables_modified[node_index_i] = y_variables_in_geometry_space[node_index_i];
+        //     z_variables_modified[node_index_i] = z_variables_in_geometry_space[node_index_i];
+        // }
+
+
+
+        // USing identity matrix for intial ds
         for( int node_index_i = 0 ; node_index_i<mNumberOfDesignVariables ; node_index_i++)
         {
-            // modified matrix
-            for( int node_index_j = 0 ; node_index_j<mNumberOfDesignVariables ; node_index_j++)
-            {
-                double matrix_entry = mMappingMatrix(node_index_i,node_index_j);
-                if(matrix_entry!=0.0)
-                    modifiedMatrix.insert_element(node_index_i, node_index_j, matrix_entry);
-                
-            }
+            modifiedMatrix.insert_element(node_index_i, node_index_i, 1.0);
+
             // modified vectors
-            x_variables_modified[node_index_i] = x_variables_in_geometry_space[node_index_i];
-            y_variables_modified[node_index_i] = y_variables_in_geometry_space[node_index_i];
-            z_variables_modified[node_index_i] = z_variables_in_geometry_space[node_index_i];
+            x_variables_modified[node_index_i] = x_variables_in_design_space[node_index_i];
+            y_variables_modified[node_index_i] = y_variables_in_design_space[node_index_i];
+            z_variables_modified[node_index_i] = z_variables_in_design_space[node_index_i];
         }
+
+
+
 
         for( int node_index_i = 0 ; node_index_i<mNumberOfRigidNodes ; node_index_i++)
         {
@@ -616,15 +641,15 @@ public:
             for( int node_index_j = 0 ; node_index_j<mNumberOfDesignVariables ; node_index_j++)
             {
                 double matrix_entry = penalty_factor*mMappingMatrix(i,node_index_j);
-                if(matrix_entry!=0.0)                
+                if(matrix_entry!=0.0)
                     modifiedMatrix.insert_element(mNumberOfDesignVariables + node_index_i, node_index_j, matrix_entry);
             }
-            
+
             // modified vectors
             x_variables_modified[node_index_i+mNumberOfDesignVariables] = penalty_factor*x_variables_in_geometry_space_rigid[node_index_i];
             y_variables_modified[node_index_i+mNumberOfDesignVariables] = penalty_factor*y_variables_in_geometry_space_rigid[node_index_i];
             z_variables_modified[node_index_i+mNumberOfDesignVariables] = penalty_factor*z_variables_in_geometry_space_rigid[node_index_i];
-        }        
+        }
 
         // // compute matrix
         // CompressedMatrixType transA = trans(modifiedMatrix);
@@ -658,7 +683,7 @@ public:
 
         x_variables_in_design_space.resize(mNumberOfDesignVariables,0.0);
         y_variables_in_design_space.resize(mNumberOfDesignVariables,0.0);
-        z_variables_in_design_space.resize(mNumberOfDesignVariables,0.0);        
+        z_variables_in_design_space.resize(mNumberOfDesignVariables,0.0);
 
         linear_solver->Solve(modifiedMatrix, x_variables_in_design_space, x_variables_modified);
         linear_solver->Solve(modifiedMatrix, y_variables_in_design_space, y_variables_modified);

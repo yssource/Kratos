@@ -76,10 +76,11 @@ void  AddCustomUtilitiesToPython()
         .def("MapToDesignSpace", &MapperVertexMorphingImprovedIntegration::MapToDesignSpace)
         .def("MapToGeometrySpace", &MapperVertexMorphingImprovedIntegration::MapToGeometrySpace)
         ;
-    
+
     class_<MapperVertexMorphingRigidBody, bases<Process> >("MapperVertexMorphingRigidBody", init<ModelPart&, Parameters>())
-        .def("MapToDesignSpaceWithRigidCorrection", &MapperVertexMorphingRigidBody::MapToDesignSpaceWithRigidCorrection)
+        .def("MapToDesignSpace", &MapperVertexMorphingRigidBody::MapToDesignSpace)
         .def("MapToGeometrySpace", &MapperVertexMorphingRigidBody::MapToGeometrySpace)
+        .def("MapToGeometrySpaceWithRigidCorrection", &MapperVertexMorphingRigidBody::MapToGeometrySpaceWithRigidCorrection)
         ;
 
 
@@ -114,7 +115,7 @@ void  AddCustomUtilitiesToPython()
         // General optimization operations
         // ----------------------------------------------------------------
         .def("ComputeControlPointUpdate", &OptimizationUtilities::ComputeControlPointUpdate)
-        .def("UpdateControlPointChangeByInputVariable", &OptimizationUtilities::UpdateControlPointChangeByInputVariable)        
+        .def("UpdateControlPointChangeByInputVariable", &OptimizationUtilities::UpdateControlPointChangeByInputVariable)
         ;
 
     // ========================================================================

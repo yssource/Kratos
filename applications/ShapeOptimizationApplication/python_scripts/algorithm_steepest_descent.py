@@ -139,15 +139,15 @@ class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
         # print("nicht ok")
         # # ---
         # #self.__mapDesignUpdateToGeometrySpace() # considering rigid body motion --> dx
- 
+
     # --------------------------------------------------------------------------
     def __mapSensitivitiesToDesignSpace( self ):
-        LinearSolver = SparseQR()
-        self.Mapper.MapToDesignSpaceWithRigidCorrection( OBJECTIVE_SENSITIVITY, MAPPED_OBJECTIVE_SENSITIVITY, LinearSolver )
+        self.Mapper.MapToDesignSpace( OBJECTIVE_SENSITIVITY, MAPPED_OBJECTIVE_SENSITIVITY)
 
     # --------------------------------------------------------------------------
     def __mapDesignUpdateToGeometrySpace( self ):
-        self.Mapper.MapToGeometrySpace( CONTROL_POINT_UPDATE, SHAPE_UPDATE )
+        LinearSolver = SparseQR()
+        self.Mapper.MapToGeometrySpaceWithRigidCorrection( CONTROL_POINT_UPDATE, SHAPE_UPDATE, LinearSolver )
 
     # --------------------------------------------------------------------------
     def __dampShapeUpdate( self ):
@@ -197,7 +197,7 @@ class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
     #     RigidBodyTools.CorrectDesignUpdateWithRigidBodyConstraints()
     #     # --> ds
     #     print('OK!')
-    
+
 
 
 

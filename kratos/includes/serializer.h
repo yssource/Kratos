@@ -758,6 +758,15 @@ public:
         return mpBuffer;
     }
 
+    template<class TDataType>
+    void AddToSavedPointers(const TDataType& pValue) {
+        mSavedPointers.insert(pValue);
+    }
+    
+    void RedirectLoadingPointer(void * pStoredPointer, void * pAllocatedPosition) {
+        mLoadedPointers[pStoredPointer]=pAllocatedPosition;
+    }
+
     static RegisteredObjectsContainerType& GetRegisteredObjects()
     {
         return msRegisteredObjects;
@@ -767,7 +776,6 @@ public:
     {
         return msRegisteredObjectsName;
     }
-
 
     ///@}
     ///@name Inquiry

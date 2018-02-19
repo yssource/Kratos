@@ -30,7 +30,7 @@ class ReconstructionDataBase
 {
 public:
 
-    typedef boost::python::extract<int> ExtractInt;    
+    typedef boost::python::extract<int> ExtractInt;
 
     /// Pointer definition of ReconstructionDataBase
     KRATOS_CLASS_POINTER_DEFINITION(ReconstructionDataBase);
@@ -40,7 +40,7 @@ public:
 	: mpFEModelPart(fe_model_part),
       mrCADGeometry(cad_geometry),
       mrCADIntegrationData(cad_integration_data)
-    {     
+    {
     }
 
     /// Destructor.
@@ -52,7 +52,7 @@ public:
     void Create()
     {
         CADModelReader cad_reader(mrCADGeometry,mrCADIntegrationData);
-        
+
         cad_reader.ReadGeometry(mPatches);
             if(len(mrCADIntegrationData.keys())>0)
 
@@ -61,58 +61,34 @@ public:
         {
             unsigned int index_in_patch_vector = &patch_i - &mPatches[0];
             mPatchVectorIndexFromPatchId[patch_i.GetId()] = index_in_patch_vector;
-        }   
+        }
 
-        cad_reader.ReadIntegrationData(mBrepElements);      
+        cad_reader.ReadIntegrationData(mBrepElements);
     }
 
     // --------------------------------------------------------------------------
-    void UpdateControlPointDisplacements( Vector& update_vector, bool update_vector_contains_coordinates )
-    { 
+    void UpdateControlPointDisplacements( Vector& update_vector )
+    {
         // Map to get control point corresponding to a given global id (needed for python update later)
         std::map<unsigned int, ControlPoint*> control_point_corresponding_to_global_id;
-        
-        // 1. Step: Update C++ data base
-        if(update_vector_contains_coordinates)
-        {
-            for(auto & patch_i : mPatches) 
-            {
-                for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
-                {
-                    if(control_point_i.IsRelevantForReconstruction())
-                    {
-                        // Updating c++ data base
-                        unsigned int cp_equation_id = control_point_i.GetEquationId();
-                        control_point_i.SetdX( update_vector[3*cp_equation_id+0] - control_point_i.GetX0() );
-                        control_point_i.SetdY( update_vector[3*cp_equation_id+1] - control_point_i.GetY0() );
-                        control_point_i.SetdZ( update_vector[3*cp_equation_id+2] - control_point_i.GetZ0() );
-    
-                    }
-                    // Filling map to be used later
-                    unsigned int cp_global_id = control_point_i.GetGlobalId();
-                    control_point_corresponding_to_global_id[cp_global_id] = &control_point_i;
-                }
-            }            
-        }
-        else
-        {
-            for(auto & patch_i : mPatches) 
-            {
-                for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
-                {
-                    if(control_point_i.IsRelevantForReconstruction())
-                    {
-                        // Updating c++ data base
-                        unsigned int cp_equation_id = control_point_i.GetEquationId();
-                        control_point_i.SetdX( update_vector[3*cp_equation_id+0] );
-                        control_point_i.SetdY( update_vector[3*cp_equation_id+1] );
-                        control_point_i.SetdZ( update_vector[3*cp_equation_id+2] );
 
-                    }
-                    // Filling map to be used later
-                    unsigned int cp_global_id = control_point_i.GetGlobalId();
-                    control_point_corresponding_to_global_id[cp_global_id] = &control_point_i;
+        // 1. Step: Update C++ data base
+        for(auto & patch_i : mPatches)
+        {
+            for(auto & control_point_i : patch_i.GetSurfaceControlPoints())
+            {
+                if(control_point_i.IsRelevantForReconstruction())
+                {
+                    // Updating c++ data base
+                    unsigned int cp_equation_id = control_point_i.GetEquationId();
+                    control_point_i.SetdX( update_vector[3*cp_equation_id+0] );
+                    control_point_i.SetdY( update_vector[3*cp_equation_id+1] );
+                    control_point_i.SetdZ( update_vector[3*cp_equation_id+2] );
+
                 }
+                // Filling map to be used later
+                unsigned int cp_global_id = control_point_i.GetGlobalId();
+                control_point_corresponding_to_global_id[cp_global_id] = &control_point_i;
             }
         }
 
@@ -134,22 +110,22 @@ public:
                 mrCADGeometry["faces"][i]["surface"][0]["control_points"][cp_idx][1][1] = position_y;
                 mrCADGeometry["faces"][i]["surface"][0]["control_points"][cp_idx][1][2] = position_z;
             }
-        }                         
+        }
     }
 
     // ------------------------------------------------------------------------------
     ModelPart& GetFEModelPart()
     {
-        return mpFEModelPart;   
-    }    
+        return mpFEModelPart;
+    }
 
     // ------------------------------------------------------------------------------
     std::vector<Patch>& GetPatchVector()
     {
-        return mPatches;   
+        return mPatches;
     }
-    
-    // ------------------------------------------------------------------------------    
+
+    // ------------------------------------------------------------------------------
     Patch& GetPatchFromPatchId( unsigned int patch_id )
     {
         return mPatches[mPatchVectorIndexFromPatchId[patch_id]];
@@ -158,8 +134,8 @@ public:
     // ------------------------------------------------------------------------------
     std::vector<BREPElement>& GetBREPElements()
     {
-        return mBrepElements;   
-    } 
+        return mBrepElements;
+    }
 
     // ==============================================================================
 
@@ -183,7 +159,7 @@ public:
 
 
 private:
-    
+
     // ==============================================================================
     // Initialized by class constructor
     // ==============================================================================

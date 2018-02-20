@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gid version="13.3">
+  <pre>
+    <layer_to_use name="Layer0"/>
+    <groups>
+      <group id="1" name="Parts Auto1" color="#ff00ffff"/>
+      <group id="2" name="Automatic inlet velocity Auto1" color="#008000ff"/>
+      <group id="3" name="Total" color="#ff00ffff" parent_id="2"/>
+      <group id="4" name="Slip Auto1" color="#ffff00ff"/>
+      <group id="5" name="No Slip Auto1" color="#ffa500ff"/>
+    </groups>
+    <entities_groups>
+      <entities_group name="lines">
+        <vector name="entity_ids" length="3" type="integer">1 3 4</vector>
+        <vector name="entity_num_groups" length="3" type="ushort">1 1 2</vector>
+        <vector name="entity_groups" length="4" type="ushort">5 4 2 3</vector>
+      </entities_group>
+      <entities_group name="surfaces">
+        <vector name="entity_ids" length="1" type="integer">1</vector>
+        <vector name="entity_num_groups" length="1" type="ushort">1</vector>
+        <vector name="entity_groups" length="1" type="ushort">1</vector>
+      </entities_group>
+      <entities_group name="nodes">
+        <vector name="entity_ids" length="93" type="integer">1:93</vector>
+        <vector name="entity_num_groups" length="93" type="ushort">2 2 1 2 1 1 2 1 2x4 1 2 2 1 2x3 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 2 1 2 4 3 4</vector>
+        <vector name="entity_groups" length="161" type="ushort">4 1 4 1 1 4 1x3 4 1 1 5 1 5 1 4 1 5 1 1 5 1 4 1 1 5 1 4 1 5 1 1 4 1 5 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 1 1 5 1 4 2 3 1 2 3 1 5 2 3 1</vector>
+      </entities_group>
+      <entities_group name="elements">
+        <vector name="entity_ids" length="182" type="integer">1:182</vector>
+        <vector name="entity_num_groups" length="182" type="ushort">1x180 2 2</vector>
+        <vector name="entity_groups" length="184" type="ushort">1x120 5x30 4x30 2 3 2 3</vector>
+      </entities_group>
+    </entities_groups>
+  </pre>
+</gid>

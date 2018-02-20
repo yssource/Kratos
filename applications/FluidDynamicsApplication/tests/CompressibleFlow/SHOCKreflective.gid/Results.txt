@@ -1,0 +1,4189 @@
+ |  /           |             
+ ' /   __| _` | __|  _ \   __|
+ . \  |   (   | |   (   |\__ \ 
+_|\_\_|  \__,_|\__|\___/ ____/
+           Multi-Physics 5.1.0-14ee6ba-FullDebug
+Initializing KratosFluidDynamicsApplication... 
+Initializing KratosExternalSolversApplication... 
+  [Reading Nodes    : 1281 nodes read]
+  [Reading Elements : 2400 elements read] [Type: Element2D3N]
+  [Reading Conditions : 20 conditions read] [Type: WallCondition2D2N]
+  [Reading Conditions : 60 conditions read] [Type: WallCondition2D2N]
+  [Reading Conditions : 60 conditions read] [Type: WallCondition2D2N]
+  [Total Lines Read : 7849]
+No inverted elements found
+Mesh orientation check found 140 inverted conditions.
+setup_dofs_time : 0.101377
+0: setup_system_time : 0.00998446
+setup_dofs_time : 0.0947059
+0: setup_system_time : 0.0100158
+ 
+CurrentTime = 0.03
+0: system_matrix_resize_time : 0.112042
+build time: 0.379766
+system solve time: 0.107898
+build time: 0.190562
+system solve time: 0.108622
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0986395
+0: setup_system_time : 0.00993558
+ 
+CurrentTime = 0.04
+0: system_matrix_resize_time : 0.116652
+build time: 0.196258
+system solve time: 0.111775
+build time: 0.196898
+system solve time: 0.113276
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.10608
+0: setup_system_time : 0.0136191
+ 
+CurrentTime = 0.05
+0: system_matrix_resize_time : 0.125876
+build time: 0.190984
+system solve time: 0.111622
+build time: 0.195733
+system solve time: 0.112981
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.100355
+0: setup_system_time : 0.0101748
+ 
+CurrentTime = 0.06
+0: system_matrix_resize_time : 0.110986
+build time: 0.193607
+system solve time: 0.11106
+build time: 0.196084
+system solve time: 0.111461
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.100454
+0: setup_system_time : 0.010259
+ 
+CurrentTime = 0.07
+0: system_matrix_resize_time : 0.112452
+build time: 0.196748
+system solve time: 0.111817
+build time: 0.207237
+system solve time: 0.116693
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0987656
+0: setup_system_time : 0.0101905
+ 
+CurrentTime = 0.08
+0: system_matrix_resize_time : 0.117883
+build time: 0.197515
+system solve time: 0.112872
+build time: 0.180551
+system solve time: 0.110585
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0971277
+0: setup_system_time : 0.0100478
+ 
+CurrentTime = 0.09
+0: system_matrix_resize_time : 0.115113
+build time: 0.189959
+system solve time: 0.106723
+build time: 0.184829
+system solve time: 0.108701
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103392
+0: setup_system_time : 0.0099869
+ 
+CurrentTime = 0.1
+0: system_matrix_resize_time : 0.113465
+build time: 0.194384
+system solve time: 0.108304
+build time: 0.190757
+system solve time: 0.108608
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104365
+0: setup_system_time : 0.0100745
+ 
+CurrentTime = 0.11
+0: system_matrix_resize_time : 0.115813
+build time: 0.200167
+system solve time: 0.10781
+build time: 0.184452
+system solve time: 0.10825
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.100066
+0: setup_system_time : 0.0100509
+ 
+CurrentTime = 0.12
+0: system_matrix_resize_time : 0.117392
+build time: 0.190725
+system solve time: 0.111324
+build time: 0.195597
+system solve time: 0.105086
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0974017
+0: setup_system_time : 0.0103164
+ 
+CurrentTime = 0.13
+0: system_matrix_resize_time : 0.111235
+build time: 0.198818
+system solve time: 0.113818
+build time: 0.186678
+system solve time: 0.113146
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104965
+0: setup_system_time : 0.0102133
+ 
+CurrentTime = 0.14
+0: system_matrix_resize_time : 0.114211
+build time: 0.199633
+system solve time: 0.111494
+build time: 0.181407
+system solve time: 0.111238
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0974688
+0: setup_system_time : 0.0102481
+ 
+CurrentTime = 0.15
+0: system_matrix_resize_time : 0.11428
+build time: 0.184834
+system solve time: 0.111095
+build time: 0.184013
+system solve time: 0.112142
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103575
+0: setup_system_time : 0.0102341
+ 
+CurrentTime = 0.16
+0: system_matrix_resize_time : 0.113127
+build time: 0.182364
+system solve time: 0.110968
+build time: 0.200195
+system solve time: 0.116041
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.109767
+0: setup_system_time : 0.0129588
+ 
+CurrentTime = 0.17
+0: system_matrix_resize_time : 0.137716
+build time: 0.239322
+system solve time: 0.141122
+build time: 0.226386
+system solve time: 0.140267
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.129217
+0: setup_system_time : 0.0130134
+ 
+CurrentTime = 0.18
+0: system_matrix_resize_time : 0.132636
+build time: 0.228319
+system solve time: 0.141006
+build time: 0.242133
+system solve time: 0.14068
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.133075
+0: setup_system_time : 0.012933
+ 
+CurrentTime = 0.19
+0: system_matrix_resize_time : 0.13915
+build time: 0.239069
+system solve time: 0.140476
+build time: 0.242228
+system solve time: 0.141349
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.121586
+0: setup_system_time : 0.0130172
+ 
+CurrentTime = 0.2
+0: system_matrix_resize_time : 0.135854
+build time: 0.241563
+system solve time: 0.140815
+build time: 0.19324
+system solve time: 0.105103
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0935768
+0: setup_system_time : 0.00994487
+ 
+CurrentTime = 0.21
+0: system_matrix_resize_time : 0.115221
+build time: 0.188726
+system solve time: 0.10743
+build time: 0.179306
+system solve time: 0.107683
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0995396
+0: setup_system_time : 0.0100475
+ 
+CurrentTime = 0.22
+0: system_matrix_resize_time : 0.107078
+build time: 0.181955
+system solve time: 0.106846
+build time: 0.185892
+system solve time: 0.106722
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.101538
+0: setup_system_time : 0.00998311
+ 
+CurrentTime = 0.23
+0: system_matrix_resize_time : 0.113178
+build time: 0.184762
+system solve time: 0.107325
+build time: 0.220743
+system solve time: 0.106938
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102777
+0: setup_system_time : 0.00978535
+ 
+CurrentTime = 0.24
+0: system_matrix_resize_time : 0.115058
+build time: 0.182329
+system solve time: 0.10854
+build time: 0.190814
+system solve time: 0.10802
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0965948
+0: setup_system_time : 0.00994714
+ 
+CurrentTime = 0.25
+0: system_matrix_resize_time : 0.109839
+build time: 0.176509
+system solve time: 0.112428
+build time: 0.195951
+system solve time: 0.146128
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.100807
+0: setup_system_time : 0.0100076
+ 
+CurrentTime = 0.26
+0: system_matrix_resize_time : 0.108063
+build time: 0.204642
+system solve time: 0.107199
+build time: 0.196832
+system solve time: 0.107329
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.100584
+0: setup_system_time : 0.00982048
+ 
+CurrentTime = 0.27
+0: system_matrix_resize_time : 0.10963
+build time: 0.196406
+system solve time: 0.106258
+build time: 0.180093
+system solve time: 0.106932
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0958009
+0: setup_system_time : 0.0101078
+ 
+CurrentTime = 0.28
+0: system_matrix_resize_time : 0.109679
+build time: 0.185843
+system solve time: 0.106603
+build time: 0.184746
+system solve time: 0.108328
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102282
+0: setup_system_time : 0.0100944
+ 
+CurrentTime = 0.29
+0: system_matrix_resize_time : 0.112547
+build time: 0.182925
+system solve time: 0.111557
+build time: 0.185565
+system solve time: 0.110394
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103419
+0: setup_system_time : 0.0103433
+ 
+CurrentTime = 0.3
+0: system_matrix_resize_time : 0.116041
+build time: 0.192439
+system solve time: 0.111168
+build time: 0.193674
+system solve time: 0.110884
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.109966
+0: setup_system_time : 0.0103016
+ 
+CurrentTime = 0.31
+0: system_matrix_resize_time : 0.108451
+build time: 0.195217
+system solve time: 0.110917
+build time: 0.198867
+system solve time: 0.112112
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104879
+0: setup_system_time : 0.0102513
+ 
+CurrentTime = 0.32
+0: system_matrix_resize_time : 0.107037
+build time: 0.19795
+system solve time: 0.109735
+build time: 0.18765
+system solve time: 0.110149
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0971276
+0: setup_system_time : 0.0103021
+ 
+CurrentTime = 0.33
+0: system_matrix_resize_time : 0.108062
+build time: 0.200934
+system solve time: 0.138415
+build time: 0.242247
+system solve time: 0.138751
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.125492
+0: setup_system_time : 0.0130482
+ 
+CurrentTime = 0.34
+0: system_matrix_resize_time : 0.131523
+build time: 0.246805
+system solve time: 0.139561
+build time: 0.243761
+system solve time: 0.140073
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.134183
+0: setup_system_time : 0.0130191
+ 
+CurrentTime = 0.35
+0: system_matrix_resize_time : 0.133155
+build time: 0.253974
+system solve time: 0.13838
+build time: 0.242577
+system solve time: 0.138978
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.133489
+0: setup_system_time : 0.0129831
+ 
+CurrentTime = 0.36
+0: system_matrix_resize_time : 0.132166
+build time: 0.230135
+system solve time: 0.1403
+build time: 0.230465
+system solve time: 0.125235
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.112138
+0: setup_system_time : 0.0117362
+ 
+CurrentTime = 0.37
+0: system_matrix_resize_time : 0.121133
+build time: 0.215418
+system solve time: 0.125275
+build time: 0.217203
+system solve time: 0.124704
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.11462
+0: setup_system_time : 0.0116514
+ 
+CurrentTime = 0.38
+0: system_matrix_resize_time : 0.119951
+build time: 0.21036
+system solve time: 0.125208
+build time: 0.20137
+system solve time: 0.123979
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.115609
+0: setup_system_time : 0.0117984
+ 
+CurrentTime = 0.39
+0: system_matrix_resize_time : 0.119578
+build time: 0.211814
+system solve time: 0.123952
+build time: 0.213328
+system solve time: 0.12396
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.122318
+0: setup_system_time : 0.0117075
+ 
+CurrentTime = 0.4
+0: system_matrix_resize_time : 0.118988
+build time: 0.198157
+system solve time: 0.123358
+build time: 0.209997
+system solve time: 0.148676
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103109
+0: setup_system_time : 0.010256
+ 
+CurrentTime = 0.41
+0: system_matrix_resize_time : 0.111427
+build time: 0.205085
+system solve time: 0.109343
+build time: 0.190643
+system solve time: 0.111253
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0972324
+0: setup_system_time : 0.0102645
+ 
+CurrentTime = 0.42
+0: system_matrix_resize_time : 0.110499
+build time: 0.180913
+system solve time: 0.11057
+build time: 0.178539
+system solve time: 0.108981
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102324
+0: setup_system_time : 0.0102735
+ 
+CurrentTime = 0.43
+0: system_matrix_resize_time : 0.110339
+build time: 0.179948
+system solve time: 0.110231
+build time: 0.212069
+system solve time: 0.109059
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.105673
+0: setup_system_time : 0.0103474
+ 
+CurrentTime = 0.44
+0: system_matrix_resize_time : 0.108882
+build time: 0.176006
+system solve time: 0.116852
+build time: 0.19873
+system solve time: 0.112157
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.110661
+0: setup_system_time : 0.0116905
+ 
+CurrentTime = 0.45
+0: system_matrix_resize_time : 0.12012
+build time: 0.21744
+system solve time: 0.123837
+build time: 0.216714
+system solve time: 0.123835
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.116121
+0: setup_system_time : 0.0116223
+ 
+CurrentTime = 0.46
+0: system_matrix_resize_time : 0.118177
+build time: 0.218451
+system solve time: 0.124511
+build time: 0.217061
+system solve time: 0.123636
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.113655
+0: setup_system_time : 0.0117098
+ 
+CurrentTime = 0.47
+0: system_matrix_resize_time : 0.126057
+build time: 0.207644
+system solve time: 0.126345
+build time: 0.215225
+system solve time: 0.124786
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.1144
+0: setup_system_time : 0.0117487
+ 
+CurrentTime = 0.48
+0: system_matrix_resize_time : 0.122267
+build time: 0.212397
+system solve time: 0.124535
+build time: 0.244974
+system solve time: 0.11487
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.10614
+0: setup_system_time : 0.010291
+ 
+CurrentTime = 0.49
+0: system_matrix_resize_time : 0.115242
+build time: 0.192029
+system solve time: 0.109589
+build time: 0.227151
+system solve time: 0.117435
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.123868
+0: setup_system_time : 0.0103356
+ 
+CurrentTime = 0.5
+0: system_matrix_resize_time : 0.131055
+build time: 0.208683
+system solve time: 0.10969
+build time: 0.195442
+system solve time: 0.149617
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.115772
+0: setup_system_time : 0.0108847
+ 
+CurrentTime = 0.51
+0: system_matrix_resize_time : 0.136963
+build time: 0.225864
+system solve time: 0.122259
+build time: 0.238505
+system solve time: 0.118883
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.1066
+0: setup_system_time : 0.0103134
+ 
+CurrentTime = 0.52
+0: system_matrix_resize_time : 0.118665
+build time: 0.19581
+system solve time: 0.123544
+build time: 0.23905
+system solve time: 0.12384
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.120004
+0: setup_system_time : 0.0118521
+ 
+CurrentTime = 0.53
+0: system_matrix_resize_time : 0.119755
+build time: 0.21708
+system solve time: 0.123637
+build time: 0.222604
+system solve time: 0.126103
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.133747
+0: setup_system_time : 0.0158354
+ 
+CurrentTime = 0.54
+0: system_matrix_resize_time : 0.143014
+build time: 0.24156
+system solve time: 0.139653
+build time: 0.242936
+system solve time: 0.133312
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.132735
+0: setup_system_time : 0.0114506
+ 
+CurrentTime = 0.55
+0: system_matrix_resize_time : 0.145038
+build time: 0.244533
+system solve time: 0.123941
+build time: 0.203751
+system solve time: 0.109598
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104757
+0: setup_system_time : 0.0102137
+ 
+CurrentTime = 0.56
+0: system_matrix_resize_time : 0.124357
+build time: 0.194628
+system solve time: 0.113019
+build time: 0.193869
+system solve time: 0.115449
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.1068
+0: setup_system_time : 0.0103105
+ 
+CurrentTime = 0.57
+0: system_matrix_resize_time : 0.112442
+build time: 0.184272
+system solve time: 0.110065
+build time: 0.203913
+system solve time: 0.114201
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0983301
+0: setup_system_time : 0.0102966
+ 
+CurrentTime = 0.58
+0: system_matrix_resize_time : 0.111339
+build time: 0.182699
+system solve time: 0.108429
+build time: 0.197248
+system solve time: 0.108015
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103883
+0: setup_system_time : 0.0101854
+ 
+CurrentTime = 0.59
+0: system_matrix_resize_time : 0.111488
+build time: 0.185472
+system solve time: 0.156564
+build time: 0.186548
+system solve time: 0.114812
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.118382
+0: setup_system_time : 0.011595
+ 
+CurrentTime = 0.6
+0: system_matrix_resize_time : 0.122822
+build time: 0.228186
+system solve time: 0.125544
+build time: 0.188733
+system solve time: 0.12311
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.119293
+0: setup_system_time : 0.0115747
+ 
+CurrentTime = 0.61
+0: system_matrix_resize_time : 0.122375
+build time: 0.234097
+system solve time: 0.12346
+build time: 0.209213
+system solve time: 0.124064
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.116051
+0: setup_system_time : 0.0118655
+ 
+CurrentTime = 0.62
+0: system_matrix_resize_time : 0.121943
+build time: 0.212401
+system solve time: 0.127981
+build time: 0.228261
+system solve time: 0.134305
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.155752
+0: setup_system_time : 0.0121251
+ 
+CurrentTime = 0.63
+0: system_matrix_resize_time : 0.179615
+build time: 0.23232
+system solve time: 0.114903
+build time: 0.1993
+system solve time: 0.110404
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.12324
+0: setup_system_time : 0.0102977
+ 
+CurrentTime = 0.64
+0: system_matrix_resize_time : 0.154464
+build time: 0.182584
+system solve time: 0.107843
+build time: 0.183224
+system solve time: 0.111433
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.123857
+0: setup_system_time : 0.0102854
+ 
+CurrentTime = 0.65
+0: system_matrix_resize_time : 0.13306
+build time: 0.217818
+system solve time: 0.114615
+build time: 0.188519
+system solve time: 0.10893
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.116536
+0: setup_system_time : 0.0102334
+ 
+CurrentTime = 0.66
+0: system_matrix_resize_time : 0.129427
+build time: 0.196728
+system solve time: 0.108613
+build time: 0.206078
+system solve time: 0.113262
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.112274
+0: setup_system_time : 0.0103119
+ 
+CurrentTime = 0.67
+0: system_matrix_resize_time : 0.110486
+build time: 0.193031
+system solve time: 0.108575
+build time: 0.201696
+system solve time: 0.123216
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.116778
+0: setup_system_time : 0.0117998
+ 
+CurrentTime = 0.68
+0: system_matrix_resize_time : 0.120885
+build time: 0.215634
+system solve time: 0.12492
+build time: 0.220267
+system solve time: 0.123112
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.119299
+0: setup_system_time : 0.0150343
+ 
+CurrentTime = 0.69
+0: system_matrix_resize_time : 0.143825
+build time: 0.203294
+system solve time: 0.133212
+build time: 0.20979
+system solve time: 0.124928
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.117798
+0: setup_system_time : 0.0117195
+ 
+CurrentTime = 0.7
+0: system_matrix_resize_time : 0.134706
+build time: 0.236244
+system solve time: 0.128345
+build time: 0.228791
+system solve time: 0.124027
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.114988
+0: setup_system_time : 0.0117675
+ 
+CurrentTime = 0.71
+0: system_matrix_resize_time : 0.127847
+build time: 0.209791
+system solve time: 0.108017
+build time: 0.181631
+system solve time: 0.108423
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104931
+0: setup_system_time : 0.00986047
+ 
+CurrentTime = 0.72
+0: system_matrix_resize_time : 0.123249
+build time: 0.192082
+system solve time: 0.111685
+build time: 0.193883
+system solve time: 0.118076
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.097341
+0: setup_system_time : 0.0102024
+ 
+CurrentTime = 0.73
+0: system_matrix_resize_time : 0.108302
+build time: 0.189458
+system solve time: 0.112782
+build time: 0.182261
+system solve time: 0.15588
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.105271
+0: setup_system_time : 0.0102508
+ 
+CurrentTime = 0.74
+0: system_matrix_resize_time : 0.108252
+build time: 0.194996
+system solve time: 0.111194
+build time: 0.180588
+system solve time: 0.107705
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102386
+0: setup_system_time : 0.0101033
+ 
+CurrentTime = 0.75
+0: system_matrix_resize_time : 0.110254
+build time: 0.193801
+system solve time: 0.108577
+build time: 0.177902
+system solve time: 0.104742
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102338
+0: setup_system_time : 0.0099825
+ 
+CurrentTime = 0.76
+0: system_matrix_resize_time : 0.108899
+build time: 0.190531
+system solve time: 0.105707
+build time: 0.17457
+system solve time: 0.104916
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0931065
+0: setup_system_time : 0.00996741
+ 
+CurrentTime = 0.77
+0: system_matrix_resize_time : 0.108792
+build time: 0.187155
+system solve time: 0.104777
+build time: 0.184603
+system solve time: 0.104642
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0969394
+0: setup_system_time : 0.0100032
+ 
+CurrentTime = 0.78
+0: system_matrix_resize_time : 0.108427
+build time: 0.182981
+system solve time: 0.104566
+build time: 0.176963
+system solve time: 0.104657
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.101186
+0: setup_system_time : 0.00997759
+ 
+CurrentTime = 0.79
+0: system_matrix_resize_time : 0.109785
+build time: 0.176244
+system solve time: 0.107552
+build time: 0.174776
+system solve time: 0.104518
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102663
+0: setup_system_time : 0.0102434
+ 
+CurrentTime = 0.8
+0: system_matrix_resize_time : 0.106124
+build time: 0.19187
+system solve time: 0.124194
+build time: 0.195942
+system solve time: 0.107743
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0998421
+0: setup_system_time : 0.0102544
+ 
+CurrentTime = 0.81
+0: system_matrix_resize_time : 0.108894
+build time: 0.188649
+system solve time: 0.107618
+build time: 0.175534
+system solve time: 0.107648
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104075
+0: setup_system_time : 0.0103456
+ 
+CurrentTime = 0.82
+0: system_matrix_resize_time : 0.110244
+build time: 0.191721
+system solve time: 0.107102
+build time: 0.190894
+system solve time: 0.10808
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103832
+0: setup_system_time : 0.0102648
+ 
+CurrentTime = 0.83
+0: system_matrix_resize_time : 0.106611
+build time: 0.180282
+system solve time: 0.107884
+build time: 0.192112
+system solve time: 0.107604
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0971421
+0: setup_system_time : 0.010274
+ 
+CurrentTime = 0.84
+0: system_matrix_resize_time : 0.108234
+build time: 0.190042
+system solve time: 0.136563
+build time: 0.244811
+system solve time: 0.136893
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.123612
+0: setup_system_time : 0.012988
+ 
+CurrentTime = 0.85
+0: system_matrix_resize_time : 0.132001
+build time: 0.242509
+system solve time: 0.135644
+build time: 0.242194
+system solve time: 0.175066
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.129851
+0: setup_system_time : 0.01299
+ 
+CurrentTime = 0.86
+0: system_matrix_resize_time : 0.132838
+build time: 0.232994
+system solve time: 0.136873
+build time: 0.21893
+system solve time: 0.136675
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.122245
+0: setup_system_time : 0.0131281
+ 
+CurrentTime = 0.87
+0: system_matrix_resize_time : 0.133523
+build time: 0.243516
+system solve time: 0.136636
+build time: 0.240895
+system solve time: 0.136643
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.119588
+0: setup_system_time : 0.0117006
+ 
+CurrentTime = 0.88
+0: system_matrix_resize_time : 0.118916
+build time: 0.217944
+system solve time: 0.124902
+build time: 0.215669
+system solve time: 0.12339
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.117868
+0: setup_system_time : 0.0117357
+ 
+CurrentTime = 0.89
+0: system_matrix_resize_time : 0.121876
+build time: 0.203383
+system solve time: 0.122476
+build time: 0.209863
+system solve time: 0.121717
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.114017
+0: setup_system_time : 0.0118093
+ 
+CurrentTime = 0.9
+0: system_matrix_resize_time : 0.11839
+build time: 0.201832
+system solve time: 0.164926
+build time: 0.202563
+system solve time: 0.122912
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.118396
+0: setup_system_time : 0.0117257
+ 
+CurrentTime = 0.91
+0: system_matrix_resize_time : 0.121782
+build time: 0.215296
+system solve time: 0.122583
+build time: 0.205247
+system solve time: 0.1079
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102895
+0: setup_system_time : 0.010274
+ 
+CurrentTime = 0.92
+0: system_matrix_resize_time : 0.125355
+build time: 0.202059
+system solve time: 0.109014
+build time: 0.191394
+system solve time: 0.109525
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0986632
+0: setup_system_time : 0.010238
+ 
+CurrentTime = 0.93
+0: system_matrix_resize_time : 0.130922
+build time: 0.193367
+system solve time: 0.107312
+build time: 0.1981
+system solve time: 0.107821
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103406
+0: setup_system_time : 0.0102155
+ 
+CurrentTime = 0.94
+0: system_matrix_resize_time : 0.109949
+build time: 0.182586
+system solve time: 0.109856
+build time: 0.198108
+system solve time: 0.107893
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103549
+0: setup_system_time : 0.0102928
+ 
+CurrentTime = 0.95
+0: system_matrix_resize_time : 0.110481
+build time: 0.190275
+system solve time: 0.1118
+build time: 0.19317
+system solve time: 0.109821
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.101485
+0: setup_system_time : 0.00990884
+ 
+CurrentTime = 0.96
+0: system_matrix_resize_time : 0.113004
+build time: 0.17826
+system solve time: 0.102971
+build time: 0.19005
+system solve time: 0.104572
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0990668
+0: setup_system_time : 0.0100181
+ 
+CurrentTime = 0.97
+0: system_matrix_resize_time : 0.112739
+build time: 0.180974
+system solve time: 0.105512
+build time: 0.187143
+system solve time: 0.108314
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.101191
+0: setup_system_time : 0.0100437
+ 
+CurrentTime = 0.98
+0: system_matrix_resize_time : 0.111949
+build time: 0.184178
+system solve time: 0.104133
+build time: 0.185491
+system solve time: 0.103598
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.10276
+0: setup_system_time : 0.00997998
+ 
+CurrentTime = 0.99
+0: system_matrix_resize_time : 0.111551
+build time: 0.189295
+system solve time: 0.103608
+build time: 0.187791
+system solve time: 0.103267
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.100427
+0: setup_system_time : 0.00995721
+ 
+CurrentTime = 1
+0: system_matrix_resize_time : 0.110453
+build time: 0.183468
+system solve time: 0.109628
+build time: 0.183892
+system solve time: 0.109148
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0990811
+0: setup_system_time : 0.0102293
+ 
+CurrentTime = 1.01
+0: system_matrix_resize_time : 0.116876
+build time: 0.19347
+system solve time: 0.108464
+build time: 0.201426
+system solve time: 0.107591
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.097195
+0: setup_system_time : 0.0101943
+ 
+CurrentTime = 1.02
+0: system_matrix_resize_time : 0.11046
+build time: 0.186745
+system solve time: 0.108026
+build time: 0.191388
+system solve time: 0.107863
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102744
+0: setup_system_time : 0.010276
+ 
+CurrentTime = 1.03
+0: system_matrix_resize_time : 0.116798
+build time: 0.187393
+system solve time: 0.107571
+build time: 0.196139
+system solve time: 0.108035
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102591
+0: setup_system_time : 0.0102616
+ 
+CurrentTime = 1.04
+0: system_matrix_resize_time : 0.158647
+build time: 0.193246
+system solve time: 0.108214
+build time: 0.21765
+system solve time: 0.137394
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.125817
+0: setup_system_time : 0.013162
+ 
+CurrentTime = 1.05
+0: system_matrix_resize_time : 0.133413
+build time: 0.228675
+system solve time: 0.137148
+build time: 0.222508
+system solve time: 0.13669
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.12503
+0: setup_system_time : 0.0130266
+ 
+CurrentTime = 1.06
+0: system_matrix_resize_time : 0.133966
+build time: 0.241344
+system solve time: 0.137728
+build time: 0.225982
+system solve time: 0.136284
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.130908
+0: setup_system_time : 0.0128868
+ 
+CurrentTime = 1.07
+0: system_matrix_resize_time : 0.134658
+build time: 0.227595
+system solve time: 0.137045
+build time: 0.224505
+system solve time: 0.142812
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.121439
+0: setup_system_time : 0.012993
+ 
+CurrentTime = 1.08
+0: system_matrix_resize_time : 0.120337
+build time: 0.202476
+system solve time: 0.125089
+build time: 0.21815
+system solve time: 0.122676
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.116459
+0: setup_system_time : 0.011629
+ 
+CurrentTime = 1.09
+0: system_matrix_resize_time : 0.124741
+build time: 0.218588
+system solve time: 0.122402
+build time: 0.198258
+system solve time: 0.122644
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.117077
+0: setup_system_time : 0.0116687
+ 
+CurrentTime = 1.1
+0: system_matrix_resize_time : 0.126499
+build time: 0.199043
+system solve time: 0.123602
+build time: 0.21721
+system solve time: 0.123751
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.116217
+0: setup_system_time : 0.0117202
+ 
+CurrentTime = 1.11
+0: system_matrix_resize_time : 0.118742
+build time: 0.211912
+system solve time: 0.124411
+build time: 0.217539
+system solve time: 0.122627
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.100432
+0: setup_system_time : 0.0103028
+ 
+CurrentTime = 1.12
+0: system_matrix_resize_time : 0.113476
+build time: 0.185429
+system solve time: 0.109355
+build time: 0.192388
+system solve time: 0.109205
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104251
+0: setup_system_time : 0.0101401
+ 
+CurrentTime = 1.13
+0: system_matrix_resize_time : 0.108466
+build time: 0.181967
+system solve time: 0.109702
+build time: 0.195305
+system solve time: 0.109052
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0996163
+0: setup_system_time : 0.0104032
+ 
+CurrentTime = 1.14
+0: system_matrix_resize_time : 0.108494
+build time: 0.180225
+system solve time: 0.108721
+build time: 0.176887
+system solve time: 0.108383
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.10519
+0: setup_system_time : 0.0102805
+ 
+CurrentTime = 1.15
+0: system_matrix_resize_time : 0.112703
+build time: 0.194506
+system solve time: 0.108076
+build time: 0.186242
+system solve time: 0.108203
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0983539
+0: setup_system_time : 0.0102106
+ 
+CurrentTime = 1.16
+0: system_matrix_resize_time : 0.11115
+build time: 0.210818
+system solve time: 0.128696
+build time: 0.203479
+system solve time: 0.123546
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.113798
+0: setup_system_time : 0.0115671
+ 
+CurrentTime = 1.17
+0: system_matrix_resize_time : 0.119031
+build time: 0.209747
+system solve time: 0.125588
+build time: 0.233909
+system solve time: 0.122954
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.116288
+0: setup_system_time : 0.0117794
+ 
+CurrentTime = 1.18
+0: system_matrix_resize_time : 0.118017
+build time: 0.202386
+system solve time: 0.124038
+build time: 0.195308
+system solve time: 0.16473
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.119328
+0: setup_system_time : 0.0117411
+ 
+CurrentTime = 1.19
+0: system_matrix_resize_time : 0.120846
+build time: 0.218537
+system solve time: 0.127471
+build time: 0.218262
+system solve time: 0.12779
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.116401
+0: setup_system_time : 0.0102801
+ 
+CurrentTime = 1.2
+0: system_matrix_resize_time : 0.108739
+build time: 0.181992
+system solve time: 0.108963
+build time: 0.194486
+system solve time: 0.108676
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0965845
+0: setup_system_time : 0.0102952
+ 
+CurrentTime = 1.21
+0: system_matrix_resize_time : 0.108691
+build time: 0.194575
+system solve time: 0.108289
+build time: 0.195629
+system solve time: 0.113632
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.109712
+0: setup_system_time : 0.0103245
+ 
+CurrentTime = 1.22
+0: system_matrix_resize_time : 0.116299
+build time: 0.208277
+system solve time: 0.10872
+build time: 0.188057
+system solve time: 0.10834
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104377
+0: setup_system_time : 0.0101966
+ 
+CurrentTime = 1.23
+0: system_matrix_resize_time : 0.126563
+build time: 0.214605
+system solve time: 0.120057
+build time: 0.20253
+system solve time: 0.107921
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103444
+0: setup_system_time : 0.010187
+ 
+CurrentTime = 1.24
+0: system_matrix_resize_time : 0.108091
+build time: 0.213005
+system solve time: 0.124811
+build time: 0.215235
+system solve time: 0.123402
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.118246
+0: setup_system_time : 0.0116738
+ 
+CurrentTime = 1.25
+0: system_matrix_resize_time : 0.119042
+build time: 0.202536
+system solve time: 0.123675
+build time: 0.216544
+system solve time: 0.123265
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.119528
+0: setup_system_time : 0.011705
+ 
+CurrentTime = 1.26
+0: system_matrix_resize_time : 0.119355
+build time: 0.213115
+system solve time: 0.123773
+build time: 0.215881
+system solve time: 0.123735
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.114603
+0: setup_system_time : 0.0117461
+ 
+CurrentTime = 1.27
+0: system_matrix_resize_time : 0.122449
+build time: 0.217788
+system solve time: 0.125555
+build time: 0.21386
+system solve time: 0.123401
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.122471
+0: setup_system_time : 0.0100012
+ 
+CurrentTime = 1.28
+0: system_matrix_resize_time : 0.117982
+build time: 0.180957
+system solve time: 0.108382
+build time: 0.190893
+system solve time: 0.109964
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.124441
+0: setup_system_time : 0.0106753
+ 
+CurrentTime = 1.29
+0: system_matrix_resize_time : 0.116944
+build time: 0.178539
+system solve time: 0.108873
+build time: 0.190601
+system solve time: 0.108541
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103982
+0: setup_system_time : 0.0119812
+ 
+CurrentTime = 1.3
+0: system_matrix_resize_time : 0.120386
+build time: 0.182956
+system solve time: 0.109594
+build time: 0.193551
+system solve time: 0.107966
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.098025
+0: setup_system_time : 0.0101717
+ 
+CurrentTime = 1.31
+0: system_matrix_resize_time : 0.112137
+build time: 0.202148
+system solve time: 0.108732
+build time: 0.187511
+system solve time: 0.108028
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0988122
+0: setup_system_time : 0.0102193
+ 
+CurrentTime = 1.32
+0: system_matrix_resize_time : 0.109452
+build time: 0.184097
+system solve time: 0.123789
+build time: 0.218283
+system solve time: 0.123023
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.118196
+0: setup_system_time : 0.0116471
+ 
+CurrentTime = 1.33
+0: system_matrix_resize_time : 0.119204
+build time: 0.198181
+system solve time: 0.124464
+build time: 0.208833
+system solve time: 0.12351
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.118224
+0: setup_system_time : 0.0116155
+ 
+CurrentTime = 1.34
+0: system_matrix_resize_time : 0.122454
+build time: 0.197497
+system solve time: 0.123556
+build time: 0.199158
+system solve time: 0.123078
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.117805
+0: setup_system_time : 0.0115648
+ 
+CurrentTime = 1.35
+0: system_matrix_resize_time : 0.120235
+build time: 0.208771
+system solve time: 0.12382
+build time: 0.208421
+system solve time: 0.125198
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.112054
+0: setup_system_time : 0.0120888
+ 
+CurrentTime = 1.36
+0: system_matrix_resize_time : 0.118924
+build time: 0.1974
+system solve time: 0.108324
+build time: 0.193595
+system solve time: 0.110661
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104835
+0: setup_system_time : 0.0102551
+ 
+CurrentTime = 1.37
+0: system_matrix_resize_time : 0.108508
+build time: 0.192142
+system solve time: 0.108866
+build time: 0.192595
+system solve time: 0.109104
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0987424
+0: setup_system_time : 0.0104911
+ 
+CurrentTime = 1.38
+0: system_matrix_resize_time : 0.112709
+build time: 0.192185
+system solve time: 0.110827
+build time: 0.175434
+system solve time: 0.109159
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0964415
+0: setup_system_time : 0.010193
+ 
+CurrentTime = 1.39
+0: system_matrix_resize_time : 0.108502
+build time: 0.193128
+system solve time: 0.110467
+build time: 0.179836
+system solve time: 0.108847
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104723
+0: setup_system_time : 0.0102653
+ 
+CurrentTime = 1.4
+0: system_matrix_resize_time : 0.109251
+build time: 0.194094
+system solve time: 0.111771
+build time: 0.184203
+system solve time: 0.106438
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0940396
+0: setup_system_time : 0.00994529
+ 
+CurrentTime = 1.41
+0: system_matrix_resize_time : 0.111295
+build time: 0.179224
+system solve time: 0.105378
+build time: 0.186407
+system solve time: 0.106114
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.101204
+0: setup_system_time : 0.0100616
+ 
+CurrentTime = 1.42
+0: system_matrix_resize_time : 0.108764
+build time: 0.178923
+system solve time: 0.106468
+build time: 0.168691
+system solve time: 0.103992
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.100967
+0: setup_system_time : 0.00997553
+ 
+CurrentTime = 1.43
+0: system_matrix_resize_time : 0.108445
+build time: 0.190313
+system solve time: 0.106897
+build time: 0.184146
+system solve time: 0.109462
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0949673
+0: setup_system_time : 0.0100091
+ 
+CurrentTime = 1.44
+0: system_matrix_resize_time : 0.110551
+build time: 0.191752
+system solve time: 0.106026
+build time: 0.198393
+system solve time: 0.105225
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.10242
+0: setup_system_time : 0.0102043
+ 
+CurrentTime = 1.45
+0: system_matrix_resize_time : 0.108446
+build time: 0.196782
+system solve time: 0.110321
+build time: 0.19154
+system solve time: 0.109416
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.101058
+0: setup_system_time : 0.010189
+ 
+CurrentTime = 1.46
+0: system_matrix_resize_time : 0.107492
+build time: 0.210392
+system solve time: 0.109117
+build time: 0.192332
+system solve time: 0.109217
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102571
+0: setup_system_time : 0.0102481
+ 
+CurrentTime = 1.47
+0: system_matrix_resize_time : 0.112532
+build time: 0.190597
+system solve time: 0.109056
+build time: 0.19731
+system solve time: 0.11027
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.106529
+0: setup_system_time : 0.010284
+ 
+CurrentTime = 1.48
+0: system_matrix_resize_time : 0.109645
+build time: 0.18744
+system solve time: 0.1094
+build time: 0.180089
+system solve time: 0.108453
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102218
+0: setup_system_time : 0.0103976
+ 
+CurrentTime = 1.49
+0: system_matrix_resize_time : 0.10908
+build time: 0.219537
+system solve time: 0.139721
+build time: 0.226883
+system solve time: 0.13814
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.131004
+0: setup_system_time : 0.0139722
+ 
+CurrentTime = 1.5
+0: system_matrix_resize_time : 0.140415
+build time: 0.224878
+system solve time: 0.178132
+build time: 0.243579
+system solve time: 0.138979
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.135523
+0: setup_system_time : 0.0131293
+ 
+CurrentTime = 1.51
+0: system_matrix_resize_time : 0.13489
+build time: 0.224729
+system solve time: 0.138654
+build time: 0.227938
+system solve time: 0.137862
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.13223
+0: setup_system_time : 0.013028
+ 
+CurrentTime = 1.52
+0: system_matrix_resize_time : 0.132776
+build time: 0.243874
+system solve time: 0.138194
+build time: 0.227125
+system solve time: 0.124686
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.117569
+0: setup_system_time : 0.0117517
+ 
+CurrentTime = 1.53
+0: system_matrix_resize_time : 0.118348
+build time: 0.216596
+system solve time: 0.125814
+build time: 0.198991
+system solve time: 0.125496
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.122119
+0: setup_system_time : 0.0117926
+ 
+CurrentTime = 1.54
+0: system_matrix_resize_time : 0.120699
+build time: 0.218282
+system solve time: 0.125208
+build time: 0.202712
+system solve time: 0.123922
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.114568
+0: setup_system_time : 0.0116435
+ 
+CurrentTime = 1.55
+0: system_matrix_resize_time : 0.119643
+build time: 0.208284
+system solve time: 0.124911
+build time: 0.20007
+system solve time: 0.127064
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.119565
+0: setup_system_time : 0.0116841
+ 
+CurrentTime = 1.56
+0: system_matrix_resize_time : 0.11933
+build time: 0.227011
+system solve time: 0.125627
+build time: 0.193611
+system solve time: 0.109884
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0964638
+0: setup_system_time : 0.0103475
+ 
+CurrentTime = 1.57
+0: system_matrix_resize_time : 0.108621
+build time: 0.179601
+system solve time: 0.110746
+build time: 0.193308
+system solve time: 0.110413
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.105278
+0: setup_system_time : 0.0102541
+ 
+CurrentTime = 1.58
+0: system_matrix_resize_time : 0.109379
+build time: 0.192687
+system solve time: 0.109809
+build time: 0.194907
+system solve time: 0.109566
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104825
+0: setup_system_time : 0.0102862
+ 
+CurrentTime = 1.59
+0: system_matrix_resize_time : 0.108535
+build time: 0.192229
+system solve time: 0.110064
+build time: 0.176396
+system solve time: 0.109701
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103062
+0: setup_system_time : 0.0102473
+ 
+CurrentTime = 1.6
+0: system_matrix_resize_time : 0.108191
+build time: 0.183231
+system solve time: 0.109367
+build time: 0.198394
+system solve time: 0.109804
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.117052
+0: setup_system_time : 0.0117114
+ 
+CurrentTime = 1.61
+0: system_matrix_resize_time : 0.125156
+build time: 0.208828
+system solve time: 0.12501
+build time: 0.19726
+system solve time: 0.124469
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.117554
+0: setup_system_time : 0.011726
+ 
+CurrentTime = 1.62
+0: system_matrix_resize_time : 0.123109
+build time: 0.200208
+system solve time: 0.124874
+build time: 0.217956
+system solve time: 0.125567
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.119566
+0: setup_system_time : 0.0115654
+ 
+CurrentTime = 1.63
+0: system_matrix_resize_time : 0.123805
+build time: 0.198873
+system solve time: 0.124429
+build time: 0.222687
+system solve time: 0.125442
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.122353
+0: setup_system_time : 0.011682
+ 
+CurrentTime = 1.64
+0: system_matrix_resize_time : 0.11881
+build time: 0.218478
+system solve time: 0.125251
+build time: 0.196172
+system solve time: 0.111566
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0978817
+0: setup_system_time : 0.010119
+ 
+CurrentTime = 1.65
+0: system_matrix_resize_time : 0.108784
+build time: 0.193144
+system solve time: 0.153229
+build time: 0.186537
+system solve time: 0.111239
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.106646
+0: setup_system_time : 0.0102185
+ 
+CurrentTime = 1.66
+0: system_matrix_resize_time : 0.111032
+build time: 0.195153
+system solve time: 0.109549
+build time: 0.199456
+system solve time: 0.111075
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104665
+0: setup_system_time : 0.0102607
+ 
+CurrentTime = 1.67
+0: system_matrix_resize_time : 0.10804
+build time: 0.196143
+system solve time: 0.111005
+build time: 0.186011
+system solve time: 0.110071
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102862
+0: setup_system_time : 0.0102533
+ 
+CurrentTime = 1.68
+0: system_matrix_resize_time : 0.118964
+build time: 0.1938
+system solve time: 0.109771
+build time: 0.183215
+system solve time: 0.111074
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.105955
+0: setup_system_time : 0.0116992
+ 
+CurrentTime = 1.69
+0: system_matrix_resize_time : 0.119131
+build time: 0.213091
+system solve time: 0.12488
+build time: 0.221689
+system solve time: 0.132062
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.109744
+0: setup_system_time : 0.0116927
+ 
+CurrentTime = 1.7
+0: system_matrix_resize_time : 0.120413
+build time: 0.217847
+system solve time: 0.125714
+build time: 0.218854
+system solve time: 0.124183
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.11383
+0: setup_system_time : 0.0117266
+ 
+CurrentTime = 1.71
+0: system_matrix_resize_time : 0.11812
+build time: 0.215447
+system solve time: 0.12661
+build time: 0.215638
+system solve time: 0.124709
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.112202
+0: setup_system_time : 0.0121263
+ 
+CurrentTime = 1.72
+0: system_matrix_resize_time : 0.118605
+build time: 0.206227
+system solve time: 0.126027
+build time: 0.21542
+system solve time: 0.110204
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.116407
+0: setup_system_time : 0.010218
+ 
+CurrentTime = 1.73
+0: system_matrix_resize_time : 0.121166
+build time: 0.195894
+system solve time: 0.112381
+build time: 0.196211
+system solve time: 0.109108
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104704
+0: setup_system_time : 0.0101789
+ 
+CurrentTime = 1.74
+0: system_matrix_resize_time : 0.111272
+build time: 0.195183
+system solve time: 0.110124
+build time: 0.198213
+system solve time: 0.110024
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104116
+0: setup_system_time : 0.0101194
+ 
+CurrentTime = 1.75
+0: system_matrix_resize_time : 0.108166
+build time: 0.192787
+system solve time: 0.109999
+build time: 0.177866
+system solve time: 0.151258
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104217
+0: setup_system_time : 0.00972677
+ 
+CurrentTime = 1.76
+0: system_matrix_resize_time : 0.112665
+build time: 0.19369
+system solve time: 0.110071
+build time: 0.191978
+system solve time: 0.110433
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.100794
+0: setup_system_time : 0.0116724
+ 
+CurrentTime = 1.77
+0: system_matrix_resize_time : 0.118931
+build time: 0.218799
+system solve time: 0.124589
+build time: 0.208374
+system solve time: 0.1264
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.119848
+0: setup_system_time : 0.0115526
+ 
+CurrentTime = 1.78
+0: system_matrix_resize_time : 0.119648
+build time: 0.214116
+system solve time: 0.125151
+build time: 0.212425
+system solve time: 0.125499
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.115897
+0: setup_system_time : 0.0117058
+ 
+CurrentTime = 1.79
+0: system_matrix_resize_time : 0.118985
+build time: 0.209122
+system solve time: 0.125437
+build time: 0.224555
+system solve time: 0.124234
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.123027
+0: setup_system_time : 0.0116486
+ 
+CurrentTime = 1.8
+0: system_matrix_resize_time : 0.118543
+build time: 0.213504
+system solve time: 0.124888
+build time: 0.216468
+system solve time: 0.159988
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103958
+0: setup_system_time : 0.010276
+ 
+CurrentTime = 1.81
+0: system_matrix_resize_time : 0.108504
+build time: 0.190767
+system solve time: 0.109813
+build time: 0.21044
+system solve time: 0.112015
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103856
+0: setup_system_time : 0.0103085
+ 
+CurrentTime = 1.82
+0: system_matrix_resize_time : 0.10703
+build time: 0.193653
+system solve time: 0.109754
+build time: 0.194699
+system solve time: 0.110358
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0968855
+0: setup_system_time : 0.0102325
+ 
+CurrentTime = 1.83
+0: system_matrix_resize_time : 0.111956
+build time: 0.183551
+system solve time: 0.109975
+build time: 0.179588
+system solve time: 0.10995
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0983266
+0: setup_system_time : 0.0101637
+ 
+CurrentTime = 1.84
+0: system_matrix_resize_time : 0.116578
+build time: 0.180054
+system solve time: 0.110003
+build time: 0.192508
+system solve time: 0.110169
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.101056
+0: setup_system_time : 0.0102613
+ 
+CurrentTime = 1.85
+0: system_matrix_resize_time : 0.123838
+build time: 0.252414
+system solve time: 0.128546
+build time: 0.215993
+system solve time: 0.125747
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.114182
+0: setup_system_time : 0.0115925
+ 
+CurrentTime = 1.86
+0: system_matrix_resize_time : 0.125006
+build time: 0.218212
+system solve time: 0.128513
+build time: 0.200121
+system solve time: 0.12657
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.11207
+0: setup_system_time : 0.0117598
+ 
+CurrentTime = 1.87
+0: system_matrix_resize_time : 0.119847
+build time: 0.227054
+system solve time: 0.125067
+build time: 0.207736
+system solve time: 0.126586
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.117977
+0: setup_system_time : 0.0116333
+ 
+CurrentTime = 1.88
+0: system_matrix_resize_time : 0.117615
+build time: 0.242476
+system solve time: 0.161488
+build time: 0.279155
+system solve time: 0.242772
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.241673
+0: setup_system_time : 0.0209872
+ 
+CurrentTime = 1.89
+0: system_matrix_resize_time : 0.223656
+build time: 0.31797
+system solve time: 0.198191
+build time: 0.273797
+system solve time: 0.163156
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.155505
+0: setup_system_time : 0.0152618
+ 
+CurrentTime = 1.9
+0: system_matrix_resize_time : 0.196766
+build time: 0.307946
+system solve time: 0.162963
+build time: 0.275665
+system solve time: 0.163457
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.145847
+0: setup_system_time : 0.0153541
+ 
+CurrentTime = 1.91
+0: system_matrix_resize_time : 0.155385
+build time: 0.190042
+system solve time: 0.105362
+build time: 0.195224
+system solve time: 0.107371
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+Importing    KratosFluidDynamicsApplication
+Importing    KratosExternalSolversApplication
+Construction of NavierStokesCompressibleSolver finished.
+Monolithic compressible fluid solver variables added correctly
+adding nodes and elements to fluid_computational_model_part
+-fluid_computational_model_part- model part
+    Number of tables : 0
+    Number of sub model parts : 0
+
+    Mesh 0 : 
+        Number of Nodes      : 1281
+        Number of Properties : 0
+        Number of Elements   : 2400
+        Number of Conditions : 140
+
+
+Base class model reading finished.
+Inside AddDof()
+Inside Initialize() ..
+Convergence criteria set
+BDF process set
+Time scheme set
+BS set
+NR set
+Before NR Initialize
+After NR Initialize
+After NR Check
+Monolithic compressible solver initialization finished.
+
+STEP =  1
+TIME =  0.01
+
+STEP =  2
+TIME =  0.02
+
+STEP =  3
+TIME =  0.03
+
+STEP =  4
+TIME =  0.04
+
+STEP =  5
+TIME =  0.05
+
+STEP =  6
+TIME =  0.060000000000000005
+
+STEP =  7
+TIME =  0.07
+
+STEP =  8
+TIME =  0.08
+
+STEP =  9
+TIME =  0.09
+
+STEP =  10
+TIME =  0.09999999999999999
+
+STEP =  11
+TIME =  0.10999999999999999
+
+STEP =  12
+TIME =  0.11999999999999998
+
+STEP =  13
+TIME =  0.12999999999999998
+
+STEP =  14
+TIME =  0.13999999999999999
+
+STEP =  15
+TIME =  0.15
+
+STEP =  16
+TIME =  0.16
+
+STEP =  17
+TIME =  0.17
+
+STEP =  18
+TIME =  0.18000000000000002
+
+STEP =  19
+TIME =  0.19000000000000003
+
+STEP =  20
+TIME =  0.20000000000000004
+
+STEP =  21
+TIME =  0.21000000000000005
+
+STEP =  22
+TIME =  0.22000000000000006
+
+STEP =  23
+TIME =  0.23000000000000007
+
+STEP =  24
+TIME =  0.24000000000000007
+
+STEP =  25
+TIME =  0.25000000000000006
+
+STEP =  26
+TIME =  0.26000000000000006
+
+STEP =  27
+TIME =  0.2700000000000001
+
+STEP =  28
+TIME =  0.2800000000000001
+
+STEP =  29
+TIME =  0.2900000000000001
+
+STEP =  30
+TIME =  0.3000000000000001
+
+STEP =  31
+TIME =  0.3100000000000001
+
+STEP =  32
+TIME =  0.3200000000000001
+
+STEP =  33
+TIME =  0.3300000000000001
+
+STEP =  34
+TIME =  0.34000000000000014
+
+STEP =  35
+TIME =  0.35000000000000014
+
+STEP =  36
+TIME =  0.36000000000000015
+
+STEP =  37
+TIME =  0.37000000000000016
+
+STEP =  38
+TIME =  0.38000000000000017
+
+STEP =  39
+TIME =  0.3900000000000002
+
+STEP =  40
+TIME =  0.4000000000000002
+
+STEP =  41
+TIME =  0.4100000000000002
+
+STEP =  42
+TIME =  0.4200000000000002
+
+STEP =  43
+TIME =  0.4300000000000002
+
+STEP =  44
+TIME =  0.4400000000000002
+
+STEP =  45
+TIME =  0.45000000000000023
+
+STEP =  46
+TIME =  0.46000000000000024
+
+STEP =  47
+TIME =  0.47000000000000025
+
+STEP =  48
+TIME =  0.48000000000000026
+
+STEP =  49
+TIME =  0.49000000000000027
+
+STEP =  50
+TIME =  0.5000000000000002
+
+STEP =  51
+TIME =  0.5100000000000002
+
+STEP =  52
+TIME =  0.5200000000000002
+
+STEP =  53
+TIME =  0.5300000000000002
+
+STEP =  54
+TIME =  0.5400000000000003
+
+STEP =  55
+TIME =  0.5500000000000003
+
+STEP =  56
+TIME =  0.5600000000000003
+
+STEP =  57
+TIME =  0.5700000000000003
+
+STEP =  58
+TIME =  0.5800000000000003
+
+STEP =  59
+TIME =  0.5900000000000003
+
+STEP =  60
+TIME =  0.6000000000000003
+
+STEP =  61
+TIME =  0.6100000000000003
+
+STEP =  62
+TIME =  0.6200000000000003
+
+STEP =  63
+TIME =  0.6300000000000003
+
+STEP =  64
+TIME =  0.6400000000000003
+
+STEP =  65
+TIME =  0.6500000000000004
+
+STEP =  66
+TIME =  0.6600000000000004
+
+STEP =  67
+TIME =  0.6700000000000004
+
+STEP =  68
+TIME =  0.6800000000000004
+
+STEP =  69
+TIME =  0.6900000000000004
+
+STEP =  70
+TIME =  0.7000000000000004
+
+STEP =  71
+TIME =  0.7100000000000004
+
+STEP =  72
+TIME =  0.7200000000000004
+
+STEP =  73
+TIME =  0.7300000000000004
+
+STEP =  74
+TIME =  0.7400000000000004
+
+STEP =  75
+TIME =  0.7500000000000004
+
+STEP =  76
+TIME =  0.7600000000000005
+
+STEP =  77
+TIME =  0.7700000000000005
+
+STEP =  78
+TIME =  0.7800000000000005
+
+STEP =  79
+TIME =  0.7900000000000005
+
+STEP =  80
+TIME =  0.8000000000000005
+
+STEP =  81
+TIME =  0.8100000000000005
+
+STEP =  82
+TIME =  0.8200000000000005
+
+STEP =  83
+TIME =  0.8300000000000005
+
+STEP =  84
+TIME =  0.8400000000000005
+
+STEP =  85
+TIME =  0.8500000000000005
+
+STEP =  86
+TIME =  0.8600000000000005
+
+STEP =  87
+TIME =  0.8700000000000006
+
+STEP =  88
+TIME =  0.8800000000000006
+
+STEP =  89
+TIME =  0.8900000000000006
+
+STEP =  90
+TIME =  0.9000000000000006
+
+STEP =  91
+TIME =  0.9100000000000006
+
+STEP =  92
+TIME =  0.9200000000000006
+
+STEP =  93
+TIME =  0.9300000000000006
+
+STEP =  94
+TIME =  0.9400000000000006
+
+STEP =  95
+TIME =  0.9500000000000006
+
+STEP =  96
+TIME =  0.9600000000000006
+
+STEP =  97
+TIME =  0.9700000000000006
+
+STEP =  98
+TIME =  0.9800000000000006
+
+STEP =  99
+TIME =  0.9900000000000007
+
+STEP =  100
+TIME =  1.0000000000000007
+
+STEP =  101
+TIME =  1.0100000000000007
+
+STEP =  102
+TIME =  1.0200000000000007
+
+STEP =  103
+TIME =  1.0300000000000007
+
+STEP =  104
+TIME =  1.0400000000000007
+
+STEP =  105
+TIME =  1.0500000000000007
+
+STEP =  106
+TIME =  1.0600000000000007
+
+STEP =  107
+TIME =  1.0700000000000007
+
+STEP =  108
+TIME =  1.0800000000000007
+
+STEP =  109
+TIME =  1.0900000000000007
+
+STEP =  110
+TIME =  1.1000000000000008
+
+STEP =  111
+TIME =  1.1100000000000008
+
+STEP =  112
+TIME =  1.1200000000000008
+
+STEP =  113
+TIME =  1.1300000000000008
+
+STEP =  114
+TIME =  1.1400000000000008
+
+STEP =  115
+TIME =  1.1500000000000008
+
+STEP =  116
+TIME =  1.1600000000000008
+
+STEP =  117
+TIME =  1.1700000000000008
+
+STEP =  118
+TIME =  1.1800000000000008
+
+STEP =  119
+TIME =  1.1900000000000008
+
+STEP =  120
+TIME =  1.2000000000000008
+
+STEP =  121
+TIME =  1.2100000000000009
+
+STEP =  122
+TIME =  1.2200000000000009
+
+STEP =  123
+TIME =  1.2300000000000009
+
+STEP =  124
+TIME =  1.2400000000000009
+
+STEP =  125
+TIME =  1.2500000000000009
+
+STEP =  126
+TIME =  1.260000000000001
+
+STEP =  127
+TIME =  1.270000000000001
+
+STEP =  128
+TIME =  1.280000000000001
+
+STEP =  129
+TIME =  1.290000000000001
+
+STEP =  130
+TIME =  1.300000000000001
+
+STEP =  131
+TIME =  1.310000000000001
+
+STEP =  132
+TIME =  1.320000000000001
+
+STEP =  133
+TIME =  1.330000000000001
+
+STEP =  134
+TIME =  1.340000000000001
+
+STEP =  135
+TIME =  1.350000000000001
+
+STEP =  136
+TIME =  1.360000000000001
+
+STEP =  137
+TIME =  1.370000000000001
+
+STEP =  138
+TIME =  1.380000000000001
+
+STEP =  139
+TIME =  1.390000000000001
+
+STEP =  140
+TIME =  1.400000000000001
+
+STEP =  141
+TIME =  1.410000000000001
+
+STEP =  142
+TIME =  1.420000000000001
+
+STEP =  143
+TIME =  1.430000000000001
+
+STEP =  144
+TIME =  1.440000000000001
+
+STEP =  145
+TIME =  1.450000000000001
+
+STEP =  146
+TIME =  1.460000000000001
+
+STEP =  147
+TIME =  1.470000000000001
+
+STEP =  148
+TIME =  1.480000000000001
+
+STEP =  149
+TIME =  1.490000000000001
+
+STEP =  150
+TIME =  1.500000000000001
+
+STEP =  151
+TIME =  1.5100000000000011
+
+STEP =  152
+TIME =  1.5200000000000011
+
+STEP =  153
+TIME =  1.5300000000000011
+
+STEP =  154
+TIME =  1.5400000000000011
+
+STEP =  155
+TIME =  1.5500000000000012
+
+STEP =  156
+TIME =  1.5600000000000012
+
+STEP =  157
+TIME =  1.5700000000000012
+
+STEP =  158
+TIME =  1.5800000000000012
+
+STEP =  159
+TIME =  1.5900000000000012
+
+STEP =  160
+TIME =  1.6000000000000012
+
+STEP =  161
+TIME =  1.6100000000000012
+
+STEP =  162
+TIME =  1.6200000000000012
+
+STEP =  163
+TIME =  1.6300000000000012
+
+STEP =  164
+TIME =  1.6400000000000012
+
+STEP =  165
+TIME =  1.6500000000000012
+
+STEP =  166
+TIME =  1.6600000000000013
+
+STEP =  167
+TIME =  1.6700000000000013
+
+STEP =  168
+TIME =  1.6800000000000013
+
+STEP =  169
+TIME =  1.6900000000000013
+
+STEP =  170
+TIME =  1.7000000000000013
+
+STEP =  171
+TIME =  1.7100000000000013
+
+STEP =  172
+TIME =  1.7200000000000013
+
+STEP =  173
+TIME =  1.7300000000000013
+
+STEP =  174
+TIME =  1.7400000000000013
+
+STEP =  175
+TIME =  1.7500000000000013
+
+STEP =  176
+TIME =  1.7600000000000013
+
+STEP =  177
+TIME =  1.7700000000000014
+
+STEP =  178
+TIME =  1.7800000000000014
+
+STEP =  179
+TIME =  1.7900000000000014
+
+STEP =  180
+TIME =  1.8000000000000014
+
+STEP =  181
+TIME =  1.8100000000000014
+
+STEP =  182
+TIME =  1.8200000000000014
+
+STEP =  183
+TIME =  1.8300000000000014
+
+STEP =  184
+TIME =  1.8400000000000014
+
+STEP =  185
+TIME =  1.8500000000000014
+
+STEP =  186
+TIME =  1.8600000000000014
+
+STEP =  187
+TIME =  1.8700000000000014
+
+STEP =  188
+TIME =  1.8800000000000014
+
+STEP =  189
+TIME =  1.8900000000000015
+
+STEP =  190
+TIME =  1.9000000000000015
+
+STEP =  191
+TIME =  1.9100000000000015
+
+STEP =  192
+TIME =  1.9200000000000015setup_dofs_time : 0.100877
+0: setup_system_time : 0.0100327
+ 
+CurrentTime = 1.92
+0: system_matrix_resize_time : 0.116818
+build time: 0.199029
+system solve time: 0.106583
+build time: 0.192166
+system solve time: 0.104244
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0989472
+0: setup_system_time : 0.00995864
+ 
+CurrentTime = 1.93
+0: system_matrix_resize_time : 0.142277
+build time: 0.223108
+system solve time: 0.104539
+build time: 0.182968
+system solve time: 0.104389
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102205
+0: setup_system_time : 0.0100292
+ 
+CurrentTime = 1.94
+0: system_matrix_resize_time : 0.1167
+build time: 0.201868
+system solve time: 0.106026
+build time: 0.19302
+system solve time: 0.107821
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102273
+0: setup_system_time : 0.00988734
+ 
+CurrentTime = 1.95
+0: system_matrix_resize_time : 0.113863
+build time: 0.184379
+system solve time: 0.107439
+build time: 0.213072
+system solve time: 0.111252
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103783
+0: setup_system_time : 0.0123274
+ 
+CurrentTime = 1.96
+0: system_matrix_resize_time : 0.14902
+build time: 0.199495
+system solve time: 0.109325
+build time: 0.193453
+system solve time: 0.108512
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102318
+0: setup_system_time : 0.0103704
+ 
+CurrentTime = 1.97
+0: system_matrix_resize_time : 0.120206
+build time: 0.204331
+system solve time: 0.108806
+build time: 0.196691
+system solve time: 0.109251
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.108106
+0: setup_system_time : 0.0102065
+ 
+CurrentTime = 1.98
+0: system_matrix_resize_time : 0.119683
+build time: 0.212326
+system solve time: 0.113251
+build time: 0.184293
+system solve time: 0.109253
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.107015
+0: setup_system_time : 0.0102815
+ 
+CurrentTime = 1.99
+0: system_matrix_resize_time : 0.115134
+build time: 0.199662
+system solve time: 0.111669
+build time: 0.193761
+system solve time: 0.102745
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.108691
+0: setup_system_time : 0.0100267
+ 
+CurrentTime = 2
+0: system_matrix_resize_time : 0.114182
+build time: 0.209074
+system solve time: 0.105893
+build time: 0.191457
+system solve time: 0.105567
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104544
+0: setup_system_time : 0.00995265
+ 
+CurrentTime = 2.01
+0: system_matrix_resize_time : 0.11977
+build time: 0.191911
+system solve time: 0.103046
+build time: 0.194318
+system solve time: 0.106519
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102604
+0: setup_system_time : 0.00999841
+ 
+CurrentTime = 2.02
+0: system_matrix_resize_time : 0.115218
+build time: 0.191596
+system solve time: 0.106318
+build time: 0.194655
+system solve time: 0.105681
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102328
+0: setup_system_time : 0.0100082
+ 
+CurrentTime = 2.03
+0: system_matrix_resize_time : 0.131517
+build time: 0.227882
+system solve time: 0.104386
+build time: 0.188818
+system solve time: 0.113424
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.118106
+0: setup_system_time : 0.0110002
+ 
+CurrentTime = 2.04
+0: system_matrix_resize_time : 0.14921
+build time: 0.234467
+system solve time: 0.108105
+build time: 0.180566
+system solve time: 0.108062
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.106702
+0: setup_system_time : 0.0102729
+ 
+CurrentTime = 2.05
+0: system_matrix_resize_time : 0.119412
+build time: 0.191553
+system solve time: 0.109836
+build time: 0.196184
+system solve time: 0.108642
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0997304
+0: setup_system_time : 0.0111797
+ 
+CurrentTime = 2.06
+0: system_matrix_resize_time : 0.134868
+build time: 0.206962
+system solve time: 0.10869
+build time: 0.201194
+system solve time: 0.108257
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104146
+0: setup_system_time : 0.0102515
+ 
+CurrentTime = 2.07
+0: system_matrix_resize_time : 0.116556
+build time: 0.190031
+system solve time: 0.109459
+build time: 0.207507
+system solve time: 0.130076
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.134394
+0: setup_system_time : 0.0136408
+ 
+CurrentTime = 2.08
+0: system_matrix_resize_time : 0.149112
+build time: 0.220528
+system solve time: 0.142691
+build time: 0.245895
+system solve time: 0.136907
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.132101
+0: setup_system_time : 0.0130469
+ 
+CurrentTime = 2.09
+0: system_matrix_resize_time : 0.141514
+build time: 0.276632
+system solve time: 0.142852
+build time: 0.239591
+system solve time: 0.136583
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.133316
+0: setup_system_time : 0.0130217
+ 
+CurrentTime = 2.1
+0: system_matrix_resize_time : 0.135519
+build time: 0.263687
+system solve time: 0.138695
+build time: 0.240337
+system solve time: 0.137
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.127209
+0: setup_system_time : 0.0130176
+ 
+CurrentTime = 2.11
+0: system_matrix_resize_time : 0.127149
+build time: 0.208116
+system solve time: 0.124009
+build time: 0.207414
+system solve time: 0.122602
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.116515
+0: setup_system_time : 0.0116705
+ 
+CurrentTime = 2.12
+0: system_matrix_resize_time : 0.119084
+build time: 0.217391
+system solve time: 0.124563
+build time: 0.215058
+system solve time: 0.122874
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.119708
+0: setup_system_time : 0.0117214
+ 
+CurrentTime = 2.13
+0: system_matrix_resize_time : 0.120389
+build time: 0.215551
+system solve time: 0.123407
+build time: 0.218832
+system solve time: 0.126716
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.122687
+0: setup_system_time : 0.0116508
+ 
+CurrentTime = 2.14
+0: system_matrix_resize_time : 0.127598
+build time: 0.218082
+system solve time: 0.124387
+build time: 0.220382
+system solve time: 0.123672
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.11153
+0: setup_system_time : 0.0124096
+ 
+CurrentTime = 2.15
+0: system_matrix_resize_time : 0.127844
+build time: 0.211263
+system solve time: 0.10947
+build time: 0.19429
+system solve time: 0.108717
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.107531
+0: setup_system_time : 0.0101232
+ 
+CurrentTime = 2.16
+0: system_matrix_resize_time : 0.117228
+build time: 0.211247
+system solve time: 0.109793
+build time: 0.185494
+system solve time: 0.109396
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103884
+0: setup_system_time : 0.0103814
+ 
+CurrentTime = 2.17
+0: system_matrix_resize_time : 0.116364
+build time: 0.207114
+system solve time: 0.111783
+build time: 0.219306
+system solve time: 0.109084
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.10726
+0: setup_system_time : 0.0102373
+ 
+CurrentTime = 2.18
+0: system_matrix_resize_time : 0.121859
+build time: 0.182755
+system solve time: 0.109513
+build time: 0.188063
+system solve time: 0.111333
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.106526
+0: setup_system_time : 0.011354
+ 
+CurrentTime = 2.19
+0: system_matrix_resize_time : 0.125411
+build time: 0.225183
+system solve time: 0.123276
+build time: 0.204947
+system solve time: 0.122888
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.110094
+0: setup_system_time : 0.0116845
+ 
+CurrentTime = 2.2
+0: system_matrix_resize_time : 0.119393
+build time: 0.225774
+system solve time: 0.122642
+build time: 0.216238
+system solve time: 0.122283
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.113107
+0: setup_system_time : 0.0141793
+ 
+CurrentTime = 2.21
+0: system_matrix_resize_time : 0.132365
+build time: 0.236158
+system solve time: 0.122764
+build time: 0.201049
+system solve time: 0.124708
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.112526
+0: setup_system_time : 0.0117397
+ 
+CurrentTime = 2.22
+0: system_matrix_resize_time : 0.1214
+build time: 0.233031
+system solve time: 0.143393
+build time: 0.239943
+system solve time: 0.124389
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102454
+0: setup_system_time : 0.0103021
+ 
+CurrentTime = 2.23
+0: system_matrix_resize_time : 0.122583
+build time: 0.203323
+system solve time: 0.111632
+build time: 0.203452
+system solve time: 0.108338
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.121312
+0: setup_system_time : 0.0106669
+ 
+CurrentTime = 2.24
+0: system_matrix_resize_time : 0.143891
+build time: 0.209341
+system solve time: 0.110341
+build time: 0.187224
+system solve time: 0.108234
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0992851
+0: setup_system_time : 0.0102345
+ 
+CurrentTime = 2.25
+0: system_matrix_resize_time : 0.114412
+build time: 0.20036
+system solve time: 0.1076
+build time: 0.182475
+system solve time: 0.108937
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102011
+0: setup_system_time : 0.0104329
+ 
+CurrentTime = 2.26
+0: system_matrix_resize_time : 0.11617
+build time: 0.193825
+system solve time: 0.111894
+build time: 0.186996
+system solve time: 0.123293
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.112507
+0: setup_system_time : 0.0135058
+ 
+CurrentTime = 2.27
+0: system_matrix_resize_time : 0.1401
+build time: 0.216414
+system solve time: 0.12171
+build time: 0.203161
+system solve time: 0.122281
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.113492
+0: setup_system_time : 0.0117031
+ 
+CurrentTime = 2.28
+0: system_matrix_resize_time : 0.123197
+build time: 0.227154
+system solve time: 0.12242
+build time: 0.233134
+system solve time: 0.12223
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.118162
+0: setup_system_time : 0.0117357
+ 
+CurrentTime = 2.29
+0: system_matrix_resize_time : 0.118564
+build time: 0.235604
+system solve time: 0.129872
+build time: 0.200686
+system solve time: 0.12286
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.118419
+0: setup_system_time : 0.0117181
+ 
+CurrentTime = 2.3
+0: system_matrix_resize_time : 0.119385
+build time: 0.243946
+system solve time: 0.115877
+build time: 0.196783
+system solve time: 0.108517
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0991176
+0: setup_system_time : 0.0102735
+ 
+CurrentTime = 2.31
+0: system_matrix_resize_time : 0.112966
+build time: 0.18109
+system solve time: 0.107148
+build time: 0.192605
+system solve time: 0.107556
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104655
+0: setup_system_time : 0.0110405
+ 
+CurrentTime = 2.32
+0: system_matrix_resize_time : 0.112113
+build time: 0.201187
+system solve time: 0.107428
+build time: 0.201639
+system solve time: 0.107624
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.100521
+0: setup_system_time : 0.0100608
+ 
+CurrentTime = 2.33
+0: system_matrix_resize_time : 0.12191
+build time: 0.198107
+system solve time: 0.108364
+build time: 0.190718
+system solve time: 0.113794
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.109173
+0: setup_system_time : 0.0102467
+ 
+CurrentTime = 2.34
+0: system_matrix_resize_time : 0.115681
+build time: 0.182042
+system solve time: 0.108709
+build time: 0.203753
+system solve time: 0.121617
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.120411
+0: setup_system_time : 0.0117612
+ 
+CurrentTime = 2.35
+0: system_matrix_resize_time : 0.127128
+build time: 0.227498
+system solve time: 0.124526
+build time: 0.215199
+system solve time: 0.122257
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.1147
+0: setup_system_time : 0.0116714
+ 
+CurrentTime = 2.36
+0: system_matrix_resize_time : 0.124998
+build time: 0.219531
+system solve time: 0.12248
+build time: 0.215584
+system solve time: 0.126324
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.116999
+0: setup_system_time : 0.0115715
+ 
+CurrentTime = 2.37
+0: system_matrix_resize_time : 0.152974
+build time: 0.233538
+system solve time: 0.129642
+build time: 0.220936
+system solve time: 0.125502
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.120018
+0: setup_system_time : 0.0111547
+ 
+CurrentTime = 2.38
+0: system_matrix_resize_time : 0.124384
+build time: 0.219536
+system solve time: 0.108657
+build time: 0.184321
+system solve time: 0.10771
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0997569
+0: setup_system_time : 0.0102484
+ 
+CurrentTime = 2.39
+0: system_matrix_resize_time : 0.112422
+build time: 0.19758
+system solve time: 0.107346
+build time: 0.184059
+system solve time: 0.107584
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.10327
+0: setup_system_time : 0.0103012
+ 
+CurrentTime = 2.4
+0: system_matrix_resize_time : 0.113351
+build time: 0.185621
+system solve time: 0.10758
+build time: 0.197098
+system solve time: 0.108555
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104128
+0: setup_system_time : 0.00985542
+ 
+CurrentTime = 2.41
+0: system_matrix_resize_time : 0.114554
+build time: 0.196379
+system solve time: 0.107906
+build time: 0.196451
+system solve time: 0.106924
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0998524
+0: setup_system_time : 0.010219
+ 
+CurrentTime = 2.42
+0: system_matrix_resize_time : 0.111878
+build time: 0.185163
+system solve time: 0.10765
+build time: 0.205507
+system solve time: 0.135654
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.120795
+0: setup_system_time : 0.0118759
+ 
+CurrentTime = 2.43
+0: system_matrix_resize_time : 0.121598
+build time: 0.214381
+system solve time: 0.122348
+build time: 0.199858
+system solve time: 0.121361
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.121294
+0: setup_system_time : 0.0117613
+ 
+CurrentTime = 2.44
+0: system_matrix_resize_time : 0.126315
+build time: 0.198761
+system solve time: 0.124508
+build time: 0.218233
+system solve time: 0.125889
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.118666
+0: setup_system_time : 0.011627
+ 
+CurrentTime = 2.45
+0: system_matrix_resize_time : 0.120772
+build time: 0.224449
+system solve time: 0.123469
+build time: 0.203908
+system solve time: 0.122233
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.115147
+0: setup_system_time : 0.0115563
+ 
+CurrentTime = 2.46
+0: system_matrix_resize_time : 0.122001
+build time: 0.192685
+system solve time: 0.11357
+build time: 0.199747
+system solve time: 0.110846
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104258
+0: setup_system_time : 0.010689
+ 
+CurrentTime = 2.47
+0: system_matrix_resize_time : 0.118499
+build time: 0.199403
+system solve time: 0.11179
+build time: 0.191889
+system solve time: 0.108451
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.118961
+0: setup_system_time : 0.0125291
+ 
+CurrentTime = 2.48
+0: system_matrix_resize_time : 0.119074
+build time: 0.223389
+system solve time: 0.121299
+build time: 0.199874
+system solve time: 0.107085
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.105484
+0: setup_system_time : 0.0102366
+ 
+CurrentTime = 2.49
+0: system_matrix_resize_time : 0.11098
+build time: 0.195115
+system solve time: 0.109565
+build time: 0.195077
+system solve time: 0.110515
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.108447
+0: setup_system_time : 0.0102285
+ 
+CurrentTime = 2.5
+0: system_matrix_resize_time : 0.119217
+build time: 0.192911
+system solve time: 0.108986
+build time: 0.216792
+system solve time: 0.125411
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.12135
+0: setup_system_time : 0.0133373
+ 
+CurrentTime = 2.51
+0: system_matrix_resize_time : 0.12161
+build time: 0.209695
+system solve time: 0.126792
+build time: 0.226434
+system solve time: 0.122945
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.120718
+0: setup_system_time : 0.0115926
+ 
+CurrentTime = 2.52
+0: system_matrix_resize_time : 0.128977
+build time: 0.245004
+system solve time: 0.136435
+build time: 0.211256
+system solve time: 0.131478
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.155966
+0: setup_system_time : 0.0219491
+ 
+CurrentTime = 2.53
+0: system_matrix_resize_time : 0.146061
+build time: 0.218538
+system solve time: 0.135247
+build time: 0.230167
+system solve time: 0.122126
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.115638
+0: setup_system_time : 0.0103264
+ 
+CurrentTime = 2.54
+0: system_matrix_resize_time : 0.112398
+build time: 0.196958
+system solve time: 0.108069
+build time: 0.200147
+system solve time: 0.109417
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.100227
+0: setup_system_time : 0.0106964
+ 
+CurrentTime = 2.55
+0: system_matrix_resize_time : 0.112424
+build time: 0.182852
+system solve time: 0.110903
+build time: 0.17976
+system solve time: 0.109973
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.108324
+0: setup_system_time : 0.0107311
+ 
+CurrentTime = 2.56
+0: system_matrix_resize_time : 0.115108
+build time: 0.187637
+system solve time: 0.107969
+build time: 0.199582
+system solve time: 0.10728
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.101148
+0: setup_system_time : 0.0102624
+ 
+CurrentTime = 2.57
+0: system_matrix_resize_time : 0.116485
+build time: 0.228558
+system solve time: 0.108887
+build time: 0.207953
+system solve time: 0.107227
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.106947
+0: setup_system_time : 0.0102934
+ 
+CurrentTime = 2.58
+0: system_matrix_resize_time : 0.117175
+build time: 0.206595
+system solve time: 0.125797
+build time: 0.226005
+system solve time: 0.127421
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.10736
+0: setup_system_time : 0.0123602
+ 
+CurrentTime = 2.59
+0: system_matrix_resize_time : 0.125975
+build time: 0.220256
+system solve time: 0.122931
+build time: 0.203133
+system solve time: 0.121791
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.117285
+0: setup_system_time : 0.0116206
+ 
+CurrentTime = 2.6
+0: system_matrix_resize_time : 0.118918
+build time: 0.216639
+system solve time: 0.12239
+build time: 0.218077
+system solve time: 0.122314
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.116993
+0: setup_system_time : 0.0115866
+ 
+CurrentTime = 2.61
+0: system_matrix_resize_time : 0.118828
+build time: 0.215596
+system solve time: 0.121902
+build time: 0.218727
+system solve time: 0.122424
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103319
+0: setup_system_time : 0.0102541
+ 
+CurrentTime = 2.62
+0: system_matrix_resize_time : 0.111648
+build time: 0.186549
+system solve time: 0.107966
+build time: 0.18941
+system solve time: 0.108798
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104491
+0: setup_system_time : 0.0102789
+ 
+CurrentTime = 2.63
+0: system_matrix_resize_time : 0.11196
+build time: 0.199191
+system solve time: 0.111221
+build time: 0.188271
+system solve time: 0.108637
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0976057
+0: setup_system_time : 0.0102068
+ 
+CurrentTime = 2.64
+0: system_matrix_resize_time : 0.120658
+build time: 0.190142
+system solve time: 0.115185
+build time: 0.201114
+system solve time: 0.108473
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103073
+0: setup_system_time : 0.0103714
+ 
+CurrentTime = 2.65
+0: system_matrix_resize_time : 0.11501
+build time: 0.195989
+system solve time: 0.107738
+build time: 0.194259
+system solve time: 0.110989
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.111283
+0: setup_system_time : 0.0103389
+ 
+CurrentTime = 2.66
+0: system_matrix_resize_time : 0.11385
+build time: 0.205195
+system solve time: 0.123309
+build time: 0.209147
+system solve time: 0.122416
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.117733
+0: setup_system_time : 0.0116875
+ 
+CurrentTime = 2.67
+0: system_matrix_resize_time : 0.118254
+build time: 0.201723
+system solve time: 0.128078
+build time: 0.237735
+system solve time: 0.121466
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.117747
+0: setup_system_time : 0.0116268
+ 
+CurrentTime = 2.68
+0: system_matrix_resize_time : 0.119911
+build time: 0.20247
+system solve time: 0.122438
+build time: 0.217552
+system solve time: 0.124382
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.11918
+0: setup_system_time : 0.0117247
+ 
+CurrentTime = 2.69
+0: system_matrix_resize_time : 0.120555
+build time: 0.217167
+system solve time: 0.122204
+build time: 0.214831
+system solve time: 0.126895
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.100043
+0: setup_system_time : 0.0102586
+ 
+CurrentTime = 2.7
+0: system_matrix_resize_time : 0.107674
+build time: 0.198116
+system solve time: 0.108171
+build time: 0.220175
+system solve time: 0.11111
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.105754
+0: setup_system_time : 0.0102202
+ 
+CurrentTime = 2.71
+0: system_matrix_resize_time : 0.109608
+build time: 0.221606
+system solve time: 0.113863
+build time: 0.197767
+system solve time: 0.107164
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.106201
+0: setup_system_time : 0.0102591
+ 
+CurrentTime = 2.72
+0: system_matrix_resize_time : 0.108546
+build time: 0.191637
+system solve time: 0.107616
+build time: 0.193902
+system solve time: 0.107393
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102814
+0: setup_system_time : 0.0102037
+ 
+CurrentTime = 2.73
+0: system_matrix_resize_time : 0.109542
+build time: 0.189211
+system solve time: 0.109894
+build time: 0.21242
+system solve time: 0.113109
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104924
+0: setup_system_time : 0.00998452
+ 
+CurrentTime = 2.74
+0: system_matrix_resize_time : 0.128121
+build time: 0.249207
+system solve time: 0.125935
+build time: 0.225156
+system solve time: 0.122212
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.118777
+0: setup_system_time : 0.0117296
+ 
+CurrentTime = 2.75
+0: system_matrix_resize_time : 0.132365
+build time: 0.215844
+system solve time: 0.125735
+build time: 0.202598
+system solve time: 0.124824
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.113049
+0: setup_system_time : 0.0116926
+ 
+CurrentTime = 2.76
+0: system_matrix_resize_time : 0.118566
+build time: 0.219585
+system solve time: 0.123482
+build time: 0.201547
+system solve time: 0.122764
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.122945
+0: setup_system_time : 0.0117433
+ 
+CurrentTime = 2.77
+0: system_matrix_resize_time : 0.130542
+build time: 0.230285
+system solve time: 0.12372
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.124748
+0: setup_system_time : 0.0115919
+ 
+CurrentTime = 2.78
+0: system_matrix_resize_time : 0.118375
+build time: 0.205325
+system solve time: 0.108183
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0982283
+0: setup_system_time : 0.0102127
+ 
+CurrentTime = 2.79
+0: system_matrix_resize_time : 0.113271
+build time: 0.198799
+system solve time: 0.110409
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102561
+0: setup_system_time : 0.0100356
+ 
+CurrentTime = 2.8
+0: system_matrix_resize_time : 0.116994
+build time: 0.183387
+system solve time: 0.107588
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.0988936
+0: setup_system_time : 0.0102618
+ 
+CurrentTime = 2.81
+0: system_matrix_resize_time : 0.114027
+build time: 0.200355
+system solve time: 0.109327
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.11364
+0: setup_system_time : 0.0110122
+ 
+CurrentTime = 2.82
+0: system_matrix_resize_time : 0.124781
+build time: 0.187569
+system solve time: 0.107202
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.102845
+0: setup_system_time : 0.0102025
+ 
+CurrentTime = 2.83
+0: system_matrix_resize_time : 0.112844
+build time: 0.198538
+system solve time: 0.109105
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.10406
+0: setup_system_time : 0.0103362
+ 
+CurrentTime = 2.84
+0: system_matrix_resize_time : 0.113984
+build time: 0.199033
+system solve time: 0.110202
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.117415
+0: setup_system_time : 0.0117871
+ 
+CurrentTime = 2.85
+0: system_matrix_resize_time : 0.139926
+build time: 0.205282
+system solve time: 0.121782
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.112064
+0: setup_system_time : 0.0117565
+ 
+CurrentTime = 2.86
+0: system_matrix_resize_time : 0.118237
+build time: 0.218929
+system solve time: 0.130127
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.114801
+0: setup_system_time : 0.0116675
+ 
+CurrentTime = 2.87
+0: system_matrix_resize_time : 0.119105
+build time: 0.217876
+system solve time: 0.122223
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.126039
+0: setup_system_time : 0.0116522
+ 
+CurrentTime = 2.88
+0: system_matrix_resize_time : 0.129143
+build time: 0.206027
+system solve time: 0.123205
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.117366
+0: setup_system_time : 0.013494
+ 
+CurrentTime = 2.89
+0: system_matrix_resize_time : 0.121076
+build time: 0.211259
+system solve time: 0.123166
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.124956
+0: setup_system_time : 0.011523
+ 
+CurrentTime = 2.9
+0: system_matrix_resize_time : 0.131394
+build time: 0.244655
+system solve time: 0.170879
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.149455
+0: setup_system_time : 0.0153048
+ 
+CurrentTime = 2.91
+0: system_matrix_resize_time : 0.17103
+build time: 0.300614
+system solve time: 0.173383
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.155419
+0: setup_system_time : 0.0144677
+ 
+CurrentTime = 2.92
+0: system_matrix_resize_time : 0.179514
+build time: 0.29055
+system solve time: 0.167114
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.147056
+0: setup_system_time : 0.0154162
+ 
+CurrentTime = 2.93
+0: system_matrix_resize_time : 0.156458
+build time: 0.263352
+system solve time: 0.160774
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.154575
+0: setup_system_time : 0.0153159
+ 
+CurrentTime = 2.94
+0: system_matrix_resize_time : 0.157219
+build time: 0.268084
+system solve time: 0.144321
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.10428
+0: setup_system_time : 0.0099836
+ 
+CurrentTime = 2.95
+0: system_matrix_resize_time : 0.113665
+build time: 0.194498
+system solve time: 0.102633
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.110825
+0: setup_system_time : 0.0102241
+ 
+CurrentTime = 2.96
+0: system_matrix_resize_time : 0.120292
+build time: 0.191965
+system solve time: 0.111722
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.103782
+0: setup_system_time : 0.010228
+ 
+CurrentTime = 2.97
+0: system_matrix_resize_time : 0.113301
+build time: 0.202517
+system solve time: 0.108067
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.100878
+0: setup_system_time : 0.00987701
+ 
+CurrentTime = 2.98
+0: system_matrix_resize_time : 0.122396
+build time: 0.2092
+system solve time: 0.106449
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.108102
+0: setup_system_time : 0.0106712
+ 
+CurrentTime = 2.99
+0: system_matrix_resize_time : 0.1247
+build time: 0.189247
+system solve time: 0.104469
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.111025
+0: setup_system_time : 0.012943
+ 
+CurrentTime = 3
+0: system_matrix_resize_time : 0.128119
+build time: 0.214711
+system solve time: 0.110136
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+setup_dofs_time : 0.104044
+0: setup_system_time : 0.0102437
+ 
+CurrentTime = 3.01
+0: system_matrix_resize_time : 0.1155
+build time: 0.186527
+system solve time: 0.107137
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used
+
+
+STEP =  193
+TIME =  1.9300000000000015
+
+STEP =  194
+TIME =  1.9400000000000015
+
+STEP =  195
+TIME =  1.9500000000000015
+
+STEP =  196
+TIME =  1.9600000000000015
+
+STEP =  197
+TIME =  1.9700000000000015
+
+STEP =  198
+TIME =  1.9800000000000015
+
+STEP =  199
+TIME =  1.9900000000000015
+
+STEP =  200
+TIME =  2.0000000000000013
+
+STEP =  201
+TIME =  2.010000000000001
+
+STEP =  202
+TIME =  2.020000000000001
+
+STEP =  203
+TIME =  2.0300000000000007
+
+STEP =  204
+TIME =  2.0400000000000005
+
+STEP =  205
+TIME =  2.0500000000000003
+
+STEP =  206
+TIME =  2.06
+
+STEP =  207
+TIME =  2.07
+
+STEP =  208
+TIME =  2.0799999999999996
+
+STEP =  209
+TIME =  2.0899999999999994
+
+STEP =  210
+TIME =  2.099999999999999
+
+STEP =  211
+TIME =  2.109999999999999
+
+STEP =  212
+TIME =  2.1199999999999988
+
+STEP =  213
+TIME =  2.1299999999999986
+
+STEP =  214
+TIME =  2.1399999999999983
+
+STEP =  215
+TIME =  2.149999999999998
+
+STEP =  216
+TIME =  2.159999999999998
+
+STEP =  217
+TIME =  2.1699999999999977
+
+STEP =  218
+TIME =  2.1799999999999975
+
+STEP =  219
+TIME =  2.1899999999999973
+
+STEP =  220
+TIME =  2.199999999999997
+
+STEP =  221
+TIME =  2.209999999999997
+
+STEP =  222
+TIME =  2.2199999999999966
+
+STEP =  223
+TIME =  2.2299999999999964
+
+STEP =  224
+TIME =  2.239999999999996
+
+STEP =  225
+TIME =  2.249999999999996
+
+STEP =  226
+TIME =  2.259999999999996
+
+STEP =  227
+TIME =  2.2699999999999956
+
+STEP =  228
+TIME =  2.2799999999999954
+
+STEP =  229
+TIME =  2.289999999999995
+
+STEP =  230
+TIME =  2.299999999999995
+
+STEP =  231
+TIME =  2.3099999999999947
+
+STEP =  232
+TIME =  2.3199999999999945
+
+STEP =  233
+TIME =  2.3299999999999943
+
+STEP =  234
+TIME =  2.339999999999994
+
+STEP =  235
+TIME =  2.349999999999994
+
+STEP =  236
+TIME =  2.3599999999999937
+
+STEP =  237
+TIME =  2.3699999999999934
+
+STEP =  238
+TIME =  2.3799999999999932
+
+STEP =  239
+TIME =  2.389999999999993
+
+STEP =  240
+TIME =  2.399999999999993
+
+STEP =  241
+TIME =  2.4099999999999926
+
+STEP =  242
+TIME =  2.4199999999999924
+
+STEP =  243
+TIME =  2.429999999999992
+
+STEP =  244
+TIME =  2.439999999999992
+
+STEP =  245
+TIME =  2.4499999999999917
+
+STEP =  246
+TIME =  2.4599999999999915
+
+STEP =  247
+TIME =  2.4699999999999913
+
+STEP =  248
+TIME =  2.479999999999991
+
+STEP =  249
+TIME =  2.489999999999991
+
+STEP =  250
+TIME =  2.4999999999999907
+
+STEP =  251
+TIME =  2.5099999999999905
+
+STEP =  252
+TIME =  2.5199999999999902
+
+STEP =  253
+TIME =  2.52999999999999
+
+STEP =  254
+TIME =  2.53999999999999
+
+STEP =  255
+TIME =  2.5499999999999896
+
+STEP =  256
+TIME =  2.5599999999999894
+
+STEP =  257
+TIME =  2.569999999999989
+
+STEP =  258
+TIME =  2.579999999999989
+
+STEP =  259
+TIME =  2.5899999999999888
+
+STEP =  260
+TIME =  2.5999999999999885
+
+STEP =  261
+TIME =  2.6099999999999883
+
+STEP =  262
+TIME =  2.619999999999988
+
+STEP =  263
+TIME =  2.629999999999988
+
+STEP =  264
+TIME =  2.6399999999999877
+
+STEP =  265
+TIME =  2.6499999999999875
+
+STEP =  266
+TIME =  2.6599999999999873
+
+STEP =  267
+TIME =  2.669999999999987
+
+STEP =  268
+TIME =  2.679999999999987
+
+STEP =  269
+TIME =  2.6899999999999866
+
+STEP =  270
+TIME =  2.6999999999999864
+
+STEP =  271
+TIME =  2.709999999999986
+
+STEP =  272
+TIME =  2.719999999999986
+
+STEP =  273
+TIME =  2.7299999999999858
+
+STEP =  274
+TIME =  2.7399999999999856
+
+STEP =  275
+TIME =  2.7499999999999853
+
+STEP =  276
+TIME =  2.759999999999985
+
+STEP =  277
+TIME =  2.769999999999985
+
+STEP =  278
+TIME =  2.7799999999999847
+
+STEP =  279
+TIME =  2.7899999999999845
+
+STEP =  280
+TIME =  2.7999999999999843
+
+STEP =  281
+TIME =  2.809999999999984
+
+STEP =  282
+TIME =  2.819999999999984
+
+STEP =  283
+TIME =  2.8299999999999836
+
+STEP =  284
+TIME =  2.8399999999999834
+
+STEP =  285
+TIME =  2.849999999999983
+
+STEP =  286
+TIME =  2.859999999999983
+
+STEP =  287
+TIME =  2.869999999999983
+
+STEP =  288
+TIME =  2.8799999999999826
+
+STEP =  289
+TIME =  2.8899999999999824
+
+STEP =  290
+TIME =  2.899999999999982
+
+STEP =  291
+TIME =  2.909999999999982
+
+STEP =  292
+TIME =  2.9199999999999817
+
+STEP =  293
+TIME =  2.9299999999999815
+
+STEP =  294
+TIME =  2.9399999999999813
+
+STEP =  295
+TIME =  2.949999999999981
+
+STEP =  296
+TIME =  2.959999999999981
+
+STEP =  297
+TIME =  2.9699999999999807
+
+STEP =  298
+TIME =  2.9799999999999804
+
+STEP =  299
+TIME =  2.9899999999999802
+
+STEP =  300
+TIME =  2.99999999999998
+
+STEP =  301
+TIME =  3.00999999999998
+ResidualBasedBlockBuilderAndSolver Clear Function called
+Newton Raphson strategy Clear function used

@@ -28,7 +28,7 @@ class NavierStokesCompressibleSolver(navier_stokes_base_solver.NavierStokesBaseS
                 "input_filename": "two_element_test"
             },
             "maximum_iterations": 10,
-            "echo_level": 3,
+            "echo_level": 1,
             "time_order": 2,
             "compute_reactions": false,
             "reform_dofs_at_each_step" : true,
@@ -151,8 +151,8 @@ class NavierStokesCompressibleSolver(navier_stokes_base_solver.NavierStokesBaseS
         
         print("NR set")
 
-        #(self.solver).SetEchoLevel(self.settings["echo_level"].GetInt())
-        (self.solver).SetEchoLevel(3)
+        (self.solver).SetEchoLevel(self.settings["echo_level"].GetInt())
+        #(self.solver).SetEchoLevel(1)
 
         print("Before NR Initialize")
 

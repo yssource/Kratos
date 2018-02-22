@@ -1,0 +1,162 @@
+{
+    "problem_data"                     : {
+        "problem_name"    : "SupersonicCylinder",
+        "model_part_name" : "MainModelPart",
+        "domain_size"     : 2,
+        "parallel_type"   : "OpenMP",
+        "echo_level"      : 0,
+        "start_time"      : 0.0,
+        "end_time"        : 20.0
+    },
+    "output_configuration"             : {
+        "result_file_configuration" : {
+            "gidpost_flags"       : {
+                "GiDPostMode"           : "GiD_PostBinary",
+                "WriteDeformedMeshFlag" : "WriteDeformed",
+                "WriteConditionsFlag"   : "WriteConditions",
+                "MultiFileFlag"         : "SingleFile"
+            },
+            "file_label"          : "time",
+            "output_control_type" : "step",
+            "output_frequency"    : 1.0,
+            "body_output"         : true,
+            "node_output"         : false,
+            "skin_output"         : false,
+            "plane_output"        : [],
+            "nodal_results"       : ["DENSITY","MOMENTUM","TOTAL_ENERGY","BODY_FORCE","EXTERNAL_PRESSURE"],
+            "gauss_point_results" : []
+        },
+        "point_data_configuration"  : []
+    },
+    "restart_options"                  : {
+        "SaveRestart"      : "False",
+        "RestartFrequency" : 0,
+        "LoadRestart"      : "False",
+        "Restart_Step"     : 0
+    },
+    "solver_settings"                  : {
+        "solver_type"                 : "Compressible",
+        "model_import_settings"       : {
+            "input_type"     : "mdpa",
+            "input_filename" : "SupersonicCylinder"
+        },
+        "echo_level"                  : 1,
+        "compute_reactions"           : false,
+        "relative_tolerance"          : 0.001,
+        "absolute_tolerance"          : 1e-5,
+        "linear_solver_settings"       : {
+                                       "solver_type" : "AMGCL",
+                                       "smoother_type":"ilu0",
+                                       "krylov_type": "lgmres",
+                                       "coarsening_type": "aggregation",
+                                       "max_iteration": 100,
+                                       "provide_coordinates": false,
+                                       "gmres_krylov_space_dimension": 100,
+                                       "verbosity" : 1,
+                                       "tolerance": 1e-6,
+                                       "scaling": false,
+                                       "block_size": 4,
+                                       "use_block_matrices_if_possible" : true,
+           "coarse_enough" : 5000
+            },
+        "volume_model_part_name"      : "Parts_Parts_Auto1",
+        "skin_parts"                  : ["AutomaticInlet2D_Automatic_inlet_velocity_Auto1","Outlet2D_Outlet_pressure_Auto1","NoSlip2D_No_Slip_Auto1"],
+        "no_skin_parts"               : [],
+        "time_stepping"               : {
+            "automatic_time_step" : false,
+            "time_step"           : 0.005
+        }
+    },
+    "initial_conditions_process_list"  : [{
+        "python_module" : "assign_vector_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "help"          : [],
+        "process_name"  : "AssignVectorVariableProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "Parts_Parts_Auto1",
+            "variable_name"   : "MOMENTUM",
+            "value"         : [1.0,0.0,0.0],
+            "constrained"     : [true,true,true],
+            "interval"        : [0.0,0.0]
+        }
+    },{
+        "python_module" : "assign_scalar_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "help"          : [],
+        "process_name"  : "AssignScalarVariableProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "Parts_Parts_Auto1",
+            "variable_name"   : "DENSITY",
+            "value"           : 1.0,
+            "interval"        : [0.0,0.0]
+        }
+    },{
+        "python_module" : "assign_scalar_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "help"          : [],
+        "process_name"  : "AssignScalarVariableProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "Parts_Parts_Auto1",
+            "variable_name"   : "TOTAL_ENERGY",
+            "value"           :  0.943989,
+            "interval"        : [0.0,0.0]
+        }
+    }],
+    "boundary_conditions_process_list" : [{
+        "python_module" : "assign_vector_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "help"          : [],
+        "process_name"  : "AssignVectorVariableProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "AutomaticInlet2D_Automatic_inlet_velocity_Auto1",
+            "variable_name"   : "MOMENTUM",
+            "value"         : [1.0,0.0,0.0],
+            "constrained"     : [true,true,true],
+            "interval"        : [0.0,"End"]
+        }
+    },{
+        "python_module" : "assign_scalar_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "help"          : [],
+        "process_name"  : "AssignScalarVariableProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "AutomaticInlet2D_Automatic_inlet_velocity_Auto1",
+            "variable_name"   : "DENSITY",
+            "value"         : 1.0,
+            "constrained"     : true,
+            "interval"        : [0.0,"End"]
+        }
+    },{
+        "python_module" : "assign_scalar_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "help"          : [],
+        "process_name"  : "AssignScalarVariableProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "AutomaticInlet2D_Automatic_inlet_velocity_Auto1",
+            "variable_name"   : "TOTAL_ENERGY",
+            "value"         : 0.943989,
+            "constrained"     : true,
+            "interval"        : [0.0,"End"]
+        }
+    },{
+        "python_module" : "assign_vector_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "process_name"  : "AssignVectorVariableProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "NoSlip2D_No_Slip_Auto1",
+            "variable_name"   : "MOMENTUM",
+            "value"           : [0.0,0.0,0.0],
+            "constrained"     : [true,true,true],
+            "interval"        : [0,"End"]
+        }
+    }],
+    "gravity"                          : [],
+    "auxiliar_process_list"            : []
+}

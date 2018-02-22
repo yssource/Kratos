@@ -122,7 +122,8 @@ class NavierStokesCompressibleSolver(navier_stokes_base_solver.NavierStokesBaseS
         
         print("Convergence criteria set")
 
-        (self.conv_criteria).SetEchoLevel(self.settings["echo_level"].GetInt())
+        #(self.conv_criteria).SetEchoLevel(self.settings["echo_level"].GetInt()
+        (self.conv_criteria).SetEchoLevel(3)
 
         self.bdf_process = KratosMultiphysics.ComputeBDFCoefficientsProcess(self.computing_model_part,
                                                                             self.settings["time_order"].GetInt())

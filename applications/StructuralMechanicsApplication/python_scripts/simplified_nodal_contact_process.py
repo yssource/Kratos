@@ -63,7 +63,7 @@ class SimplifiedNodalContactProcess(KratosMultiphysics.Process):
         KratosMultiphysics.BodyNormalCalculationUtils().CalculateBodyNormals(self.active_contact_body,self.domain_size)
                 
         max_cond_id = 1
-        for cond in self.active_contact_body.Conditions:
+        for cond in self.active_contact_body.GetRootModelPart().Conditions:
             if(cond.Id > max_cond_id):
                 max_cond_id = cond.Id
                 
@@ -124,7 +124,7 @@ class SimplifiedNodalContactProcess(KratosMultiphysics.Process):
         import linear_solver_factory
         distance_linear_solver = linear_solver_factory.ConstructSolver(distance_linear_solver_settings)
 
-        max_iterations=30
+        max_iterations=1 #30
         if(self.domain_size == 2):
             self.distance_calculator = KratosMultiphysics.VariationalDistanceCalculationProcess2D(self.background_all, distance_linear_solver, max_iterations)
         else:
@@ -141,6 +141,7 @@ class SimplifiedNodalContactProcess(KratosMultiphysics.Process):
         print("finished initialize")
     
     def ExecuteInitializeSolutionStep(self):
+        print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         KratosMultiphysics.BodyNormalCalculationUtils().CalculateBodyNormals(self.active_contact_body,self.domain_size)
         
         zero = KratosMultiphysics.Vector(3)
@@ -152,7 +153,7 @@ class SimplifiedNodalContactProcess(KratosMultiphysics.Process):
         coords =  KratosMultiphysics.Array3()
         pelem =  KratosMultiphysics.Element(-1) #UGLY! here i create an empty pointer
         grad =  KratosMultiphysics.Vector(3)
-   
+        print("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
         for node in self.active_contact_surface.Nodes: #nodes on the skin of the rotor
             
             #save the displacement
@@ -185,7 +186,7 @@ class SimplifiedNodalContactProcess(KratosMultiphysics.Process):
             else:
                 node.SetValue(KratosMultiphysics.DISTANCE,0.0)
                 node.SetValue(KratosMultiphysics.DISTANCE_GRADIENT,zero)
-
+        print("cccccccccc")
 
 
 

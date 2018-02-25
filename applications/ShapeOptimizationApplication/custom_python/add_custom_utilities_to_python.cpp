@@ -154,33 +154,34 @@ void  AddCustomUtilitiesToPython()
         ;
     class_<ReconstructionConditionContainer, bases<Process> >("ReconstructionConditionContainer", init<ReconstructionDataBase&, Parameters&>())
         .def("CreateDisplacementMappingConditions", &ReconstructionConditionContainer::CreateDisplacementMappingConditions)
-        .def("CreateDistanceMinimizationConditions", &ReconstructionConditionContainer::CreateDistanceMinimizationConditions)        
-        .def("CreateDisplacementCouplingConstraintsOnAllCouplingPoints", &ReconstructionConditionContainer::CreateDisplacementCouplingConstraintsOnAllCouplingPoints)    
-        .def("CreateRotationCouplingConstraintsOnAllCouplingPoints", &ReconstructionConditionContainer::CreateRotationCouplingConstraintsOnAllCouplingPoints)    
+        .def("CreateDistanceMinimizationConditions", &ReconstructionConditionContainer::CreateDistanceMinimizationConditions)
+        .def("CreateDisplacementCouplingConstraintsOnAllCouplingPoints", &ReconstructionConditionContainer::CreateDisplacementCouplingConstraintsOnAllCouplingPoints)
+        .def("CreateRotationCouplingConstraintsOnAllCouplingPoints", &ReconstructionConditionContainer::CreateRotationCouplingConstraintsOnAllCouplingPoints)
         .def("CreateZeroDisplacementConditionsOnAllDirichletPoints", &ReconstructionConditionContainer::CreateZeroDisplacementConditionsOnAllDirichletPoints)
-        .def("CreateTangentContinuityConditions", &ReconstructionConditionContainer::CreateTangentContinuityConditions)        
-        .def("CreateMinimalControlPointDisplacementCondition", &ReconstructionConditionContainer::CreateMinimalControlPointDisplacementCondition)       
-        .def("CreateMinimalControlPointDistanceToSurfaceCondition", &ReconstructionConditionContainer::CreateMinimalControlPointDistanceToSurfaceCondition)       
-        ;        
-           
+        .def("CreateTangentContinuityConditions", &ReconstructionConditionContainer::CreateTangentContinuityConditions)
+        .def("CreateRotationTargetConstraints", &ReconstructionConditionContainer::CreateRotationTargetConstraints)
+        .def("CreateMinimalControlPointDisplacementCondition", &ReconstructionConditionContainer::CreateMinimalControlPointDisplacementCondition)
+        .def("CreateMinimalControlPointDistanceToSurfaceCondition", &ReconstructionConditionContainer::CreateMinimalControlPointDistanceToSurfaceCondition)
+        ;
+
     class_<CADReconstructionSolver, bases<Process> >("CADReconstructionSolver", init< ReconstructionDataBase&, ReconstructionConditionContainer&, CompressedLinearSolverType::Pointer, Parameters&>())
-        .def("InitializeEquationSystem", &CADReconstructionSolver::InitializeEquationSystem) 
-        .def("ComputeLHS", &CADReconstructionSolver::ComputeLHS) 
-        .def("ComputeRHS", &CADReconstructionSolver::ComputeRHS) 
-        .def("SolveEquationSystem", &CADReconstructionSolver::SolveEquationSystem) 
-        .def("MultiplyAllPenaltyFactorsByInputFactor", &CADReconstructionSolver::MultiplyAllPenaltyFactorsByInputFactor)         
-        .def("UpdateControlPointsAccordingReconstructionStrategy", &CADReconstructionSolver::UpdateControlPointsAccordingReconstructionStrategy)         
+        .def("InitializeEquationSystem", &CADReconstructionSolver::InitializeEquationSystem)
+        .def("ComputeLHS", &CADReconstructionSolver::ComputeLHS)
+        .def("ComputeRHS", &CADReconstructionSolver::ComputeRHS)
+        .def("SolveEquationSystem", &CADReconstructionSolver::SolveEquationSystem)
+        .def("MultiplyAllPenaltyFactorsByInputFactor", &CADReconstructionSolver::MultiplyAllPenaltyFactorsByInputFactor)
+        .def("UpdateControlPointsAccordingReconstructionStrategy", &CADReconstructionSolver::UpdateControlPointsAccordingReconstructionStrategy)
         ;
     class_<QualityEvaluationUtility, bases<Process> >("QualityEvaluationUtility", init<ReconstructionDataBase&, ReconstructionConditionContainer&, Parameters&>())
         .def("EvaluateSurfaceReconstruction", &QualityEvaluationUtility::EvaluateSurfaceReconstruction)
         .def("EvaluateDisplacementCoupling", &QualityEvaluationUtility::EvaluateDisplacementCoupling)
-        .def("EvaluateRotationCoupling", &QualityEvaluationUtility::EvaluateRotationCoupling)        
-        ;           
+        .def("EvaluateRotationCoupling", &QualityEvaluationUtility::EvaluateRotationCoupling)
+        ;
     class_<ReconstructionOutputUtilities, bases<Process> >("ReconstructionOutputUtilities", init<ReconstructionDataBase&, Parameters&>())
         .def("OutputCADSurfacePoints", &ReconstructionOutputUtilities::OutputCADSurfacePoints)
         .def("OutputGaussPointsOfFEMesh", &ReconstructionOutputUtilities::OutputGaussPointsOfFEMesh)
-        .def("OutputResultsInRhinoFormat", &ReconstructionOutputUtilities::OutputResultsInRhinoFormat)        
-        ;                            
+        .def("OutputResultsInRhinoFormat", &ReconstructionOutputUtilities::OutputResultsInRhinoFormat)
+        ;
 }
 
 }  // namespace Python.

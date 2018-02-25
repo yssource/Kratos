@@ -1,5 +1,5 @@
 # Making KratosMultiphysics backward compatible with python 2.6 and 2.7
-from __future__ import print_function, absolute_import, division 
+from __future__ import print_function, absolute_import, division
 
 # importing the Kratos Library
 from KratosMultiphysics import *
@@ -35,7 +35,7 @@ class CADReconstrutionUtilities():
         self.__CreateReconstructionConditions()
         self.__CreateSolverForReconstruction()
         self.__CreateReconstructionOutputWriter()
-    
+
     # --------------------------------------------------------------------------
     def PerformReconstruction( self ):
         self.__RunSolutionAlorithm()
@@ -85,10 +85,10 @@ class CADReconstrutionUtilities():
         model_part_io = ModelPartIO(fem_input_filename)
         model_part_io.ReadModelPart(self.FEModelPart)
 
-        print("> Importing FE data finished.")        
+        print("> Importing FE data finished.")
 
     # --------------------------------------------------------------------------
-    def __RefineFEModel( self ):       
+    def __RefineFEModel( self ):
         # Assign pseudo material to elements (required by refinement)
         prop_id = 1
         prop = self.FEModelPart.Properties[prop_id]
@@ -116,17 +116,17 @@ class CADReconstrutionUtilities():
     # --------------------------------------------------------------------------
     def __ReadCADData( self ):
         print("\n> Start importing CAD data")
-        cad_geometry_filename = self.Parameters["inpute_parameters"]["cad_geometry_filename"].GetString()        
+        cad_geometry_filename = self.Parameters["inpute_parameters"]["cad_geometry_filename"].GetString()
         self.CADGeometry = {}
         with open(cad_geometry_filename) as cad_data1:
             self.CADGeometry = json.load(cad_data1)
 
-        cad_integration_data_filename = self.Parameters["inpute_parameters"]["cad_integration_data_filename"].GetString()                    
+        cad_integration_data_filename = self.Parameters["inpute_parameters"]["cad_integration_data_filename"].GetString()
         self.CADIntegrationData = {}
         with open(cad_integration_data_filename) as cad_data2:
             self.CADIntegrationData = json.load(cad_data2)
         print("> Importing CAD data finished.")
-    
+
     # --------------------------------------------------------------------------
     def __CreateReconstructionDataBase( self ):
         self.DataBase = ReconstructionDataBase(self.FEModelPart, self.CADGeometry, self.CADIntegrationData)
@@ -142,26 +142,28 @@ class CADReconstrutionUtilities():
         if reconstruction_strategy == "displacement_mapping":
             self.ConditionsContainer.CreateDisplacementMappingConditions()
         elif reconstruction_strategy == "distance_minimization":
-            self.ConditionsContainer.CreateDistanceMinimizationConditions()                                                                       
+            self.ConditionsContainer.CreateDistanceMinimizationConditions()
         else:
             raise ValueError( "The following reconstruction strategy does not exist: ", reconstruction_strategy )
 
         # Reconstruction constraints
         constraint_parameters = self.Parameters["solution_parameters"]["constraints"]
-        if constraint_parameters["set_displacement_coupling_on_all_coupling_points"].GetBool(): 
+        if constraint_parameters["set_constraint_to_enforce_tangent_continuity"].GetBool():
+            self.ConditionsContainer.CreateTangentContinuityConditions( constraint_parameters["list_of_edge_ids_with_tangent_constraints"] )
+        if constraint_parameters["set_rotation_target_to_enforce_tangent_continuity"].GetBool():
+            self.ConditionsContainer.CreateRotationTargetConstraints( constraint_parameters["list_of_edge_ids_with_rotation_target"] )
+        if constraint_parameters["set_displacement_coupling_on_all_coupling_points"].GetBool():
             self.ConditionsContainer.CreateDisplacementCouplingConstraintsOnAllCouplingPoints()
-        if constraint_parameters["set_rotation_coupling_on_all_coupling_points"].GetBool(): 
-            self.ConditionsContainer.CreateRotationCouplingConstraintsOnAllCouplingPoints( constraint_parameters["list_of_edge_ids_with_tangent_constraints"] )            
+        if constraint_parameters["set_rotation_coupling_on_all_coupling_points"].GetBool():
+            self.ConditionsContainer.CreateRotationCouplingConstraintsOnAllCouplingPoints( constraint_parameters["list_of_edge_ids_with_tangent_constraints"] )
         if constraint_parameters["set_zero_displacement_on_all_dirichlet_points"].GetBool():
             self.ConditionsContainer.CreateZeroDisplacementConditionsOnAllDirichletPoints()
-        if constraint_parameters["set_constraint_to_enforce_tangent_continuity"].GetBool():
-            self.ConditionsContainer.CreateTangentContinuityConditions( constraint_parameters["list_of_edge_ids_with_tangent_constraints"] )            
 
         # Regularization
         regularization_parameters = self.Parameters["solution_parameters"]["regularization_parameters"]
-        if regularization_parameters["minimize_control_point_distance_to_surface"].GetBool(): 
-            self.ConditionsContainer.CreateMinimalControlPointDistanceToSurfaceCondition()                               
-        if regularization_parameters["minimize_control_point_displacement"].GetBool(): 
+        if regularization_parameters["minimize_control_point_distance_to_surface"].GetBool():
+            self.ConditionsContainer.CreateMinimalControlPointDistanceToSurfaceCondition()
+        if regularization_parameters["minimize_control_point_displacement"].GetBool():
             self.ConditionsContainer.CreateMinimalControlPointDisplacementCondition()
 
     # --------------------------------------------------------------------------
@@ -176,43 +178,43 @@ class CADReconstrutionUtilities():
             DiagPrecond = DiagonalPreconditioner()
             self.LinearSolver =  BICGSTABSolver(1e-9, 5000, DiagPrecond)
         elif linear_solver_name == "AMGCL":
-            self.LinearSolver = AMGCLSolver(AMGCLSmoother.GAUSS_SEIDEL, AMGCLIterativeSolverType.BICGSTAB, 1e-9, 300, 2, 10)        
+            self.LinearSolver = AMGCLSolver(AMGCLSmoother.GAUSS_SEIDEL, AMGCLIterativeSolverType.BICGSTAB, 1e-9, 300, 2, 10)
         else:
-            raise NameError("Linear solver not implemented!")              
+            raise NameError("Linear solver not implemented!")
         self.ReconstructionSolver = CADReconstructionSolver( self.DataBase, self.ConditionsContainer, self.LinearSolver, self.Parameters )
 
     # --------------------------------------------------------------------------
     def __CreateReconstructionOutputWriter( self ):
         output_folder = self.Parameters["output_parameters"]["output_folder"].GetString()
         if not os.path.exists( output_folder ):
-            os.makedirs( output_folder )    
-        self.OutputWriter = ReconstructionOutputUtilities( self.DataBase, self.Parameters )    
+            os.makedirs( output_folder )
+        self.OutputWriter = ReconstructionOutputUtilities( self.DataBase, self.Parameters )
 
     # --------------------------------------------------------------------------
     def __RunSolutionAlorithm( self ):
-        solution_iterations = self.Parameters["solution_parameters"]["solution_iterations"].GetInt()        
+        solution_iterations = self.Parameters["solution_parameters"]["solution_iterations"].GetInt()
         penalty_multiplier =  self.Parameters["solution_parameters"]["constraints"]["penalty_multiplier"].GetDouble()
         self.ReconstructionSolver.InitializeEquationSystem()
 
-        for iteration in range(1,solution_iterations+1): 
+        for iteration in range(1,solution_iterations+1):
             print("\n===========================================")
             print("Starting reconstruction iteration ", iteration,"...")
-            print("===========================================")            
+            print("===========================================")
 
-            if iteration > 1:  
-                self.ReconstructionSolver.MultiplyAllPenaltyFactorsByInputFactor( penalty_multiplier )               
+            if iteration > 1:
+                self.ReconstructionSolver.MultiplyAllPenaltyFactorsByInputFactor( penalty_multiplier )
 
             self.ReconstructionSolver.ComputeLHS()
             self.ReconstructionSolver.ComputeRHS()
             self.ReconstructionSolver.SolveEquationSystem()
 
             self.ReconstructionSolver.UpdateControlPointsAccordingReconstructionStrategy()
-            
-            self.OutputWriter.OutputResultsInRhinoFormat( iteration ) 
+
+            self.OutputWriter.OutputResultsInRhinoFormat( iteration )
 
         print("\n===========================================")
         print("Finished reconstruction loop.")
-        print("===========================================")                    
+        print("===========================================")
 
     # --------------------------------------------------------------------------
     def __EvaluateReconstructionQuality( self ):

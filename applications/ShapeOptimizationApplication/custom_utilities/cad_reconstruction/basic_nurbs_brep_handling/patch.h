@@ -75,13 +75,13 @@ public:
 	KRATOS_CLASS_POINTER_DEFINITION(Patch);
 
 	/// Default constructor.
-	Patch(unsigned int patch_id, NURBSSurface nurbs_surface, std::vector<BoundaryLoop> boundary_loops ) 
+	Patch(unsigned int patch_id, NURBSSurface nurbs_surface, std::vector<BoundaryLoop> boundary_loops )
 	: m_patch_id(patch_id),
 	  m_nurbs_surface(nurbs_surface),
 	  m_boundary_loops(boundary_loops)
 	{
 	}
-	
+
 	/// Destructor.
 	virtual ~Patch()
 	{
@@ -109,15 +109,15 @@ public:
 
 			// Prepare polygon for boost
 			for(unsigned int i=0;i<boundary_polygon.size();i++)
-				boost::geometry::append( boost::geometry::exterior_ring(poly), 
+				boost::geometry::append( boost::geometry::exterior_ring(poly),
 										 boost::geometry::make<point_type>(boundary_polygon[i][0], boundary_polygon[i][1]));
 			if(boundary_polygon.size()>0)
-				boost::geometry::append( boost::geometry::exterior_ring(poly), 
+				boost::geometry::append( boost::geometry::exterior_ring(poly),
 										 boost::geometry::make<point_type>(boundary_polygon[0][0], boundary_polygon[0][1]));
 
 			// Check inside or outside
 			is_inside = boost::geometry::within(poi, poly);
-			
+
 			// Boost does not consider the polygon direction, it always assumes inside as in the interior of the closed polygon.
 			// If the CAD loop is an inner loop, however, the area which is considered inner is the unbounded side of the closed polygon.
 			// So we toggle the results from the within search to be correct.
@@ -125,10 +125,10 @@ public:
 				is_inside = !is_inside;
 
 			// If a point is considered outside in one loop, it is outside in general, hence we can break the loop
-			if(!is_inside) 
+			if(!is_inside)
 				break;
 		}
-		
+
 		return is_inside;
 	}
 
@@ -143,7 +143,7 @@ public:
 	{
 		m_nurbs_surface.EvaluateSurfaceDisplacement( parameter_values[0], parameter_values[1], rSurfaceDisplacement );
 	}
-		
+
 	// --------------------------------------------------------------------------
 	std::vector<double> EvaluateNURBSFunctions( array_1d<int,2>& parameter_spans, array_1d<double,2>& parameter_values )
 	{
@@ -151,32 +151,48 @@ public:
 	}
 
 	// --------------------------------------------------------------------------
-	void ComputeVariationOfLocalCSY( array_1d<int,2>& parameter_spans, 
-									 array_1d<double,2>& parameter_values, 
-									 array_1d<double,2>& _par_g1, 
-								     Vector& _t1, 
+	void ComputeLocalCSY( array_1d<int,2>& parameter_spans,
+									 array_1d<double,2>& parameter_values,
+									 array_1d<double,2>& _par_g1,
+								     Vector& _t1,
+								     Vector& _t2,
+								     Vector& _t3 )
+	{
+		m_nurbs_surface.ComputeLocalCSY( parameter_spans[0],
+													parameter_spans[1],
+													parameter_values[0],
+													parameter_values[1],
+													_par_g1,
+													_t1, _t2, _t3 );
+	}
+
+	// --------------------------------------------------------------------------
+	void ComputeVariationOfLocalCSY( array_1d<int,2>& parameter_spans,
+									 array_1d<double,2>& parameter_values,
+									 array_1d<double,2>& _par_g1,
+								     Vector& _t1,
 								     Vector& _t2,
 								     Vector& _t3,
-								     std::vector<Vector>& _t1r, 
-								     std::vector<Vector>& _t2r, 
+								     std::vector<Vector>& _t1r,
+								     std::vector<Vector>& _t2r,
 									 std::vector<Vector>& _t3r )
 	{
-		m_nurbs_surface.ComputeVariationOfLocalCSY( parameter_spans[0], 
-													parameter_spans[1], 
-													parameter_values[0], 
+		m_nurbs_surface.ComputeVariationOfLocalCSY( parameter_spans[0],
+													parameter_spans[1],
+													parameter_values[0],
 													parameter_values[1],
-													_par_g1, 
+													_par_g1,
 													_t1, _t2, _t3,
 													_t1r, _t2r, _t3r );
 	}
 
 	// --------------------------------------------------------------------------
-	void ComputeSecondVariationOfLocalCSY( array_1d<int,2>& parameter_spans, 
-									       array_1d<double,2>& parameter_values, 
-									       array_1d<double,2>& _par_g1, 
-									  	   Vector& _t1, 
-										   Vector& _t2, 
-										   Vector& _t3, 
+	void ComputeSecondVariationOfLocalCSY( array_1d<int,2>& parameter_spans,
+									       array_1d<double,2>& parameter_values,
+									       array_1d<double,2>& _par_g1,
+									  	   Vector& _t1,
+										   Vector& _t2,
+										   Vector& _t3,
 										   Vector& _t1_der,
 										   Vector& _t2_der,
 										   Vector& _t3_der,
@@ -189,32 +205,32 @@ public:
 										   std::vector<std::vector<Vector > >& _t1_rs,
 										   std::vector<std::vector<Vector > >& _t2_rs,
 										   std::vector<std::vector<Vector > >& _t3_rs,
-										   std::vector<std::vector<Vector > >& _t1_der_rs, 
-										   std::vector<std::vector<Vector > >& _t2_der_rs, 
+										   std::vector<std::vector<Vector > >& _t1_der_rs,
+										   std::vector<std::vector<Vector > >& _t2_der_rs,
 										   std::vector<std::vector<Vector > >& _t3_der_rs )
 	{
-		m_nurbs_surface.ComputeSecondVariationOfLocalCSY( parameter_spans[0], 
-													      parameter_spans[1], 
-													      parameter_values[0], 
+		m_nurbs_surface.ComputeSecondVariationOfLocalCSY( parameter_spans[0],
+													      parameter_spans[1],
+													      parameter_values[0],
 													      parameter_values[1],
-													      _par_g1, 
-												          _t1, _t2, _t3, 
+													      _par_g1,
+												          _t1, _t2, _t3,
 												          _t1_der, _t2_der, _t3_der,
-												          _t1_r, _t2_r, _t3_r, 
+												          _t1_r, _t2_r, _t3_r,
 												          _t1_der_r, _t2_der_r, _t3_der_r,
 												          _t1_rs, _t2_rs, _t3_rs,
 												          _t1_der_rs, _t2_der_rs, _t3_der_rs );
-	}	
+	}
 
 	// --------------------------------------------------------------------------
 	array_1d<int,2> ComputeSurfaceKnotSpans( array_1d<double,2>& parameter_values )
 	{
 		return m_nurbs_surface.ComputeKnotSpans( parameter_values[0], parameter_values[1] );
 	}
-	
+
 	// --------------------------------------------------------------------------
 	Matrix ComputeBaseVectors( array_1d<int,2>& parameter_spans, array_1d<double,2>& parameter_values )
-	{	
+	{
 		return m_nurbs_surface.ComputeBaseVectors( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
 	}
 
@@ -225,16 +241,16 @@ public:
 	}
 
 	// --------------------------------------------------------------------------
-	void RefineGrevilleAbscissae( std::vector<double>& rGrevilleAbscissaeInUDirection, 
-								  std::vector<double>& rGrevilleAbscissaeInVDirection, 
-								  std::vector<double>& rRefinedGrevilleAbscissaeInUDirection, 
+	void RefineGrevilleAbscissae( std::vector<double>& rGrevilleAbscissaeInUDirection,
+								  std::vector<double>& rGrevilleAbscissaeInVDirection,
+								  std::vector<double>& rRefinedGrevilleAbscissaeInUDirection,
 								  std::vector<double>& rRefinedGrevilleAbscissaeInVDirection )
 	{
-		m_nurbs_surface.RefineGrevilleAbscissae( rGrevilleAbscissaeInUDirection, 
+		m_nurbs_surface.RefineGrevilleAbscissae( rGrevilleAbscissaeInUDirection,
 												 rGrevilleAbscissaeInVDirection,
 												 rRefinedGrevilleAbscissaeInUDirection,
 												 rRefinedGrevilleAbscissaeInVDirection );
-	}	
+	}
 
 	// --------------------------------------------------------------------------
 	void EvaluateGradientsForClosestPointSearch( Vector& distance, Matrix& rHessian, Vector& rGradient , array_1d<double,2>& parameter_values )
@@ -264,25 +280,25 @@ public:
 	std::vector<double>& GetSurfaceKnotVectorU()
 	{
 		return m_nurbs_surface.GetKnotVectorU();
-	}	
+	}
 
 	// --------------------------------------------------------------------------
 	std::vector<double>& GetSurfaceKnotVectorV()
 	{
 		return m_nurbs_surface.GetKnotVectorV();
-	}	
+	}
 
 	// --------------------------------------------------------------------------
 	std::vector<ControlPoint*> GetPointersToAffectedControlPoints( array_1d<int,2>& parameter_spans, array_1d<double,2>& parameter_values )
 	{
 		return m_nurbs_surface.GetPointersToAffectedControlPoints( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
-	}	
+	}
 
 	// --------------------------------------------------------------------------
 	std::vector<int> GetEquationIdsOfAffectedControlPoints( array_1d<int,2>& parameter_spans, array_1d<double,2>& parameter_values )
 	{
 		return m_nurbs_surface.GetEquationIdsOfAffectedControlPoints( parameter_spans[0], parameter_spans[1], parameter_values[0], parameter_values[1] );
-	}	
+	}
 
 	// --------------------------------------------------------------------------
 	std::vector<BoundaryLoop>& GetBoundaryLoops()
@@ -327,7 +343,7 @@ private:
     //      Patch& operator=(Patch const& rOther);
 
     /// Copy constructor.
-    //      Patch(Patch const& rOther);	
+    //      Patch(Patch const& rOther);
 
 }; // Class Patch
 

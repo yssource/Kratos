@@ -6,8 +6,8 @@ import pprint
 
 def computeTau(params):
     print("\nCompute Stabilization Matrix\n")
-    dim = params["dim"]				# spatial dimensions
-    Tau = zeros(dim+2,dim+2)        ## Tau - Stabilization Matrix definition
+    dim = params["dim"]				# Spatial dimensions
+    Tau = zeros(dim+2,dim+2)        # Stabilization Matrix
     
     tau1 = Symbol('tau1')
     tau2 = Symbol('tau2')
@@ -22,7 +22,7 @@ def computeTau(params):
 
 
 def printTau(Tau, params):
-    dim = params["dim"]				#spatial dimensions
+    dim = params["dim"]				# Spatial dimensions
     print("The Stabilization term matrix is:\n")
     for i in range (0,dim+2):
         for j in range (0,dim+2):

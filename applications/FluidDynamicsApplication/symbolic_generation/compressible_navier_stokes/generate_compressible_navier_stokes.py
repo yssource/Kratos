@@ -14,8 +14,8 @@ import StabilizationMatrix
 dim = params["dim"]   
 BlockSize = dim+2 					        # Dimension of the vector of Unknowns
 do_simplifications = False
-dim_to_compute = "2D"                # Spatial dimensions to compute. Options:  "2D","3D","Both"
-mode = "c"                              # Output mode to a c++ file
+dim_to_compute = "2D"                       # Spatial dimensions to compute. Options:  "2D","3D","Both"
+mode = "c"                                  # Output mode to a c++ file
 
 if (dim_to_compute == "2D"):
     dim_vector = [2]
@@ -42,32 +42,31 @@ for dim in dim_vector:
     U = DefineMatrix('U',nnodes,BlockSize)	     # Vector of Unknowns ( Density,Velocity[dim],Total Energy )
     Un = DefineMatrix('Un',nnodes,BlockSize)     # Vector of Unknowns one step back
     Unn = DefineMatrix('Unn',nnodes,BlockSize)   # Vector of Unknowns two steps back
-    r = DefineVector('r',nnodes)             # Sink term    #COMMENT for manufactured solution
+    r = DefineVector('r',nnodes)                 # Sink term    #COMMENT for manufactured solution
 
     # Test functions defintiion
-    w = DefineMatrix('w',nnodes,BlockSize)	     # Variables field test
+    w = DefineMatrix('w',nnodes,BlockSize)	    # Variables field test
 
     # External terms definition
-    f_ext = DefineMatrix('f_ext',nnodes,dim) # Forcing term #COMMENT for manufactured solution
+    f_ext = DefineMatrix('f_ext',nnodes,dim)    # Forcing term #COMMENT for manufactured solution
 
     # Definition of other symbols
-    bdf0 = Symbol('bdf0')                    # Backward differantiation coefficients
+    bdf0 = Symbol('bdf0')                       # Backward differantiation coefficients
     bdf1 = Symbol('bdf1')
     bdf2 = Symbol('bdf2')
-    v_sc = Symbol('v_sc')                    # Shock capturing Viscosity
-    k_sc = Symbol('k_sc')                    # Shock capturing Conductivity
+    v_sc = Symbol('v_sc')                       # Shock capturing Viscosity
+    k_sc = Symbol('k_sc')                       # Shock capturing Conductivity
 
     ### Construction of the variational equation
-
     Ug = DefineVector('Ug',BlockSize)			# Dofs vector
     H = DefineMatrix('H',BlockSize,dim)			# Gradient of U
-    f = DefineVector('f',dim)			    # Body force vector
-    rg = Symbol('rg', positive = True)		# Source/Sink term
+    f = DefineVector('f',dim)			        # Body force vector
+    rg = Symbol('rg', positive = True)		    # Source/Sink term
     V = DefineVector('V',BlockSize)			    # Test function
     Q = DefineMatrix('Q',BlockSize,dim)			# Gradient of V
     acc = DefineVector('acc',BlockSize)         # Derivative of Dofs/Time
     #G = DefineMatrix('G',BlockSize,dim)		# Diffusive Flux matrix
-    Gsc = DefineMatrix('G',BlockSize,dim)   # Diffusive Flux matrix with Shock Capturing
+    Gsc = DefineMatrix('G',BlockSize,dim)       # Diffusive Flux matrix with Shock Capturing
     
 
     ## Matrix Computation
@@ -83,7 +82,7 @@ for dim in dim_vector:
     #StabilizationMatrix.printTau(Tau,params)
     
     ## Nonlinear operator definition   
-    l1 = Matrix(zeros(dim+2,1))		       # Convective Matrix*Gradient of U
+    l1 = Matrix(zeros(dim+2,1))		            # Convective Matrix*Gradient of U
     A_small = []
     for j in range(0,dim):
         A_small = A[j]
@@ -91,15 +90,15 @@ for dim in dim_vector:
             for mm in range(BlockSize):
                 l1[ll] += A_small[ll,mm]*H[mm,j]
    
-    l3 = S*Ug				               # Source term
+    l3 = S*Ug				                    # Source term
     print("\nCompute Non-linear operator\n")
-    L = l1-l3                              # Nonlinear operator
+    L = l1-l3                                   # Nonlinear operator
    
     ## Residual definition     
     res = -acc - L		
    
     ## Nonlinear adjoint operator definition  
-    m1 = Matrix(zeros(dim+2,1))		       # Convective term
+    m1 = Matrix(zeros(dim+2,1))		            # Convective term
     psi = Matrix(zeros(dim+2,dim))
 
     for j in range(0,dim):
@@ -110,26 +109,25 @@ for dim in dim_vector:
                 for n in range(0,dim+2):
                     psi[l,j] +=diff(A_T[l,m],Ug[n])*H[n,j]*V[m]   
 
-        #print(psi)
-
     for s in range(0,dim+2):
         for j in range(0,dim):
             m1[s] += psi[s,j]
 
-    m3 = S.transpose()*V			        # Source term
-    L_adj = -m1-m3                          # Nonlinear adjoint operator
-    
+    m3 = S.transpose()*V			            # Source term
 
+    L_adj = -m1-m3                              # Nonlinear adjoint operator
+    
     ## Istotropic Residual Based Shock Capturing
-    res_m = Matrix(zeros(dim,1))            # Momentum residual to compute Shock capturing viscosity
+    res_m = Matrix(zeros(dim,1))                # Momentum residual
     for i in range(0,dim):
         res_m[i,0] = res[i+1,0]
    
-    res_e = Matrix(zeros(1,1))              # Energy residual to compute Shock capturing conductivity
+    res_e = Matrix(zeros(1,1))                  # Energy residual
     res_e[0,0] = res[dim+1]
 
+
     ## Variational Formulation - Final equation
-    n1 = V.transpose()*acc		            # Mass term - FE scale
+    n1 = V.transpose()*acc		                # Mass term - FE scale
      
     temp = zeros(dim+2,1)
     A_smalll = []
@@ -139,19 +137,20 @@ for dim in dim_vector:
             for mm in range(BlockSize):
                 temp[ll] += A_smalll[ll,mm]*H[mm,i]
     
-    n2 = V.transpose()*temp			       # Convective term - FE scale
+    n2 = V.transpose()*temp			            # Convective term - FE scale
 
-    n3 = Matrix(zeros(1,1))                 # Diffusive term - FE scale
+    n3 = Matrix(zeros(1,1))                     # Diffusive term - FE scale
     
     for j in range(0,dim):
         for k in range(BlockSize):
-            n3[0,0] += Q[k,j]*(-Gsc[k,j])     # G with shock capturing for the Galerkin term
+            n3[0,0] += Q[k,j]*(-Gsc[k,j])       # G with shock capturing - FE scale
 
-    n4 = -V.transpose()*(S*Ug)		       # Source term - FE scale
+    n4 = -V.transpose()*(S*Ug)		            # Source term - FE scale
     
-    n5 = L_adj.transpose()*(Tau*res)	   # VMS_adjoint - Subscales 
+    n5 = L_adj.transpose()*(Tau*res)	        # VMS_adjoint - Subscales 
+    
     print("\nCompute Variational Formulation\n")
-    rv = n1+n2+n3+n4+n5 			       # VARIATIONAL FORMULATION - FINAL EQUATION
+    rv = n1+n2+n3+n4+n5 			            # VARIATIONAL FORMULATION - FINAL EQUATION
 
     ### Substitution of the discretized values at the gauss points
     print("\nSubstitution of the discretized values at the gauss points\n")
@@ -161,8 +160,8 @@ for dim in dim_vector:
     w_gauss = w.transpose()*N
     f_gauss = f_ext.transpose()*N                     #COMMENT for manufactured solution
     acc_gauss = (bdf0*U+bdf1*Un+bdf2*Unn).transpose()*N
-    r_gauss = (r.transpose()*N)[0]                   #COMMENT for manufactured solution  
-    #r_gauss = Symbol('r_gauss', positive = True)     #USED FOR MANUFACTURED SOLUTION
+    r_gauss = (r.transpose()*N)[0]                    #COMMENT for manufactured solution  
+    #r_gauss = Symbol('r_gauss', positive = True)     #USED fro manufactured solution
 
     ## Gradients computation
     grad_U = DfjDxi(DN,U).transpose()
@@ -174,23 +173,23 @@ for dim in dim_vector:
     SubstituteMatrixValue(rv, H, grad_U)
     SubstituteMatrixValue(rv, V, w_gauss)
     SubstituteMatrixValue(rv, Q, grad_w)
-    SubstituteMatrixValue(rv, f, f_gauss)       #COMMENT for manufactured solution
-    SubstituteScalarValue(rv, rg, r_gauss)      #COMMENT for manufactured solution
+    SubstituteMatrixValue(rv, f, f_gauss)           #COMMENT for manufactured solution
+    SubstituteScalarValue(rv, rg, r_gauss)          #COMMENT for manufactured solution
 
-    print("\nSubstitution in residual of momentum\n")
+    print("\nSubstitution in the residual of momentum\n")
     SubstituteMatrixValue(res_m, Ug, U_gauss)
     SubstituteMatrixValue(res_m, acc, acc_gauss)
     SubstituteMatrixValue(res_m, H, grad_U)
     SubstituteMatrixValue(res_m, f, f_gauss)       #COMMENT for manufactured solution
     SubstituteScalarValue(res_m, rg, r_gauss)      #COMMENT for manufactured solution
 
-    print("\nSubstitution in residual of total energy\n")
+    print("\nSubstitution in the residual of total energy\n")
     SubstituteMatrixValue(res_e, Ug, U_gauss)
     SubstituteMatrixValue(res_e, acc, acc_gauss)
     SubstituteMatrixValue(res_e, H, grad_U)
     SubstituteMatrixValue(res_e, f, f_gauss)       #COMMENT for manufactured solution
     SubstituteScalarValue(res_e, rg, r_gauss)      #COMMENT for manufactured solution
-
+    
     dofs = Matrix(zeros(nnodes*(dim+2),1))
     testfunc = Matrix(zeros(nnodes*(dim+2),1))
     for i in range(0,nnodes):

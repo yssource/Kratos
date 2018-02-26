@@ -2,12 +2,12 @@
 from sympy import *
 
 params = {
-            "dim": 2,			                            # Dimension
-            "mu": Symbol('mu', positive = True),			# Dynamic viscosity 
-            "h" : Symbol('h', positive = True),	        	# Element size
-            "lambda" : Symbol('lambda', positive = True),         # Thermal Conductivity of the fluid
-            "c_v" : Symbol('c_v', positive = True),			# Specific Heat at Constant volume
-            "gamma": Symbol('gamma',positive = True),			# Gamma (Cp/Cv) 
+            "dim": 2,			                                    # Dimension
+            "mu": Symbol('mu', positive = True),			        # Dynamic viscosity 
+            "h" : Symbol('h', positive = True),	        	        # Element size
+            "lambda" : Symbol('lambda', positive = True),           # Thermal Conductivity of the fluid
+            "c_v" : Symbol('c_v', positive = True),			        # Specific Heat at Constant volume
+            "gamma": Symbol('gamma',positive = True),			    # Gamma (Cp/Cv) 
             "stab_c1" : Symbol('stab_c1', positive = True),			# Algorithm constant
             "stab_c2" : Symbol('stab_c2', positive = True),			# Algorithm constant
         

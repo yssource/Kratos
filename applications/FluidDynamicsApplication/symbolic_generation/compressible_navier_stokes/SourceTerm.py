@@ -7,10 +7,10 @@ import pprint
 ## Computation of the Source Matrix
 def computeS(force,source,params):
     print("\nCompute Source Matrix \n")
-    dim = params["dim"]				# spatial dimensions
+    dim = params["dim"]				        # Spatial dimensions
     
     ## Unknown field definition	
-    f = force.copy()					            # Body force vector
+    f = force.copy()					    # Body force vector
     r = source			 		            # Heat Source/Sink Term  #Symbol('r', positive = True) 
     '''
     S - Reactive Matrix definition     
@@ -31,7 +31,7 @@ def computeS(force,source,params):
 
 ## Printing of the Source Matrix   
 def printS(S,params):
-    dim = params["dim"]				#spatial dimensions
+    dim = params["dim"]				        # Spatial dimensions
     print("The source term matrix is:\n")
     for i in range (0,dim+2):
         for j in range (0,dim+2):

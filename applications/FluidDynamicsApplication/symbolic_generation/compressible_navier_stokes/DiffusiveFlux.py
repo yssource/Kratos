@@ -13,13 +13,13 @@ def computeG(dofs,params,Hg,Gg):
     H = Hg.copy()                               		# Gradient of U
     G = Gg.copy()                               		# Diffusive Flux matrix 
     tau_stress = DefineMatrix('tau_stress',dim,dim)		# Shear stress tensor for Newtonian fluid
-    q = DefineVector('q',dim)			# Heat flux vector
+    q = DefineVector('q',dim)			                # Heat flux vector
     
     ## Other simbols definition
-    c_v = params["c_v"]				    # Specific Heat at Constant volume
-    gamma = params["gamma"]				# Gamma (Cp/Cv) 
-    mu  = params["mu"]         			# Dynamic viscosity 
-    l = params["lambda"]			    # Thermal Conductivity of the fluid
+    c_v = params["c_v"]				                    # Specific Heat at Constant volume
+    gamma = params["gamma"]				                # Gamma (Cp/Cv) 
+    mu  = params["mu"]         			                # Dynamic viscosity 
+    l = params["lambda"]			                    # Thermal Conductivity of the fluid
         
     ## Data interpolation to the Gauss points
     Ug = dofs             
@@ -62,13 +62,13 @@ def computeG(dofs,params,Hg,Gg):
     '''
     ## G - Diffusive Matrix definition 
     for j in range(0,dim):
-        G[0,j]= 0 			                #Mass equation related
+        G[0,j]= 0 			                            #Mass equation related
        
     for i in range(1,dim+1):
         for j in range(0,dim):
-            G[i,j]=-tau_stress[i-1,j]		#Moment equation related
+            G[i,j]=-tau_stress[i-1,j]		            #Moment equation related
     
-    for j in range(0,dim):                  #Energy equation related
+    for j in range(0,dim):                              #Energy equation related
         G[dim+1,j] = q[j]
         for k in range(0,dim):
             G[dim+1,j] += -Ug[k+1]*tau_stress[k,j]/Ug[0]
@@ -85,13 +85,13 @@ def computeGsc(dofs,params,Hg,Gg,v_sc,k_sc):
     H = Hg.copy()                               		# Gradient of U
     Gsc = Gg.copy()                               		# Diffusive Flux matrix 
     tau_stress = DefineMatrix('tau_stress',dim,dim)		# Shear stress tensor for Newtonian fluid
-    q = DefineVector('q',dim)			# Heat flux vector
+    q = DefineVector('q',dim)			                # Heat flux vector
     
     ## Other simbols definition
-    c_v = params["c_v"]				    # Specific Heat at Constant volume
-    gamma = params["gamma"]				# Gamma (Cp/Cv) 
-    mu  = params["mu"]         			# Dynamic viscosity 
-    l = params["lambda"]			    # Thermal Conductivity of the fluid
+    c_v = params["c_v"]				                    # Specific Heat at Constant volume
+    gamma = params["gamma"]				                # Gamma (Cp/Cv) 
+    mu  = params["mu"]         			                # Dynamic viscosity 
+    l = params["lambda"]			                    # Thermal Conductivity 
         
     ## Data interpolation to the Gauss points
     Ug = dofs             
@@ -102,7 +102,7 @@ def computeGsc(dofs,params,Hg,Gg,v_sc,k_sc):
         pg += (-Ug[i+1]*Ug[i+1]/(2*Ug[0]))
     pg *= (gamma-1)
 
-    ## Tau - Shear stress tensor definition
+    ## tau - Shear stress tensor definition
     for i in range(0,dim):
         for j in range(i,dim):
             if i!=j:

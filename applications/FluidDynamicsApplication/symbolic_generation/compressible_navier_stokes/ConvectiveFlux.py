@@ -7,14 +7,14 @@ import pprint
 ## Computation of the Convective Matrix
 def computeA(dofs, params):
     print("\nCompute Convective Matrix \n")
-    dim = params["dim"]				# spatial dimensions
+    dim = params["dim"]				        # Spatial dimensions
     
     ## Unknown field definition
-    F = DefineMatrix('F',dim+2,dim)		# Convective Flux matrix 
-    Ug = dofs                           # Data interpolation to the Gauss points
+    F = DefineMatrix('F',dim+2,dim)		    # Convective Flux matrix 
+    Ug = dofs                               # Data interpolation to the Gauss points
     
     ## Other symbols definitions
-    y = params["gamma"]				# Gamma (Cp/Cv)
+    y = params["gamma"]				        # Gamma (Cp/Cv)
    
     ## Pgauss - Pressure definition
     pg = (y-1)*Ug[dim+1]

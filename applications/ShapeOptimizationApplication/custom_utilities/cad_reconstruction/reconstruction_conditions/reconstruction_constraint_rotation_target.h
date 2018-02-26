@@ -158,16 +158,16 @@ public:
         mrAffectedMasterPatch.ComputeVariationOfLocalCSY( mSpanOnMaster, mLocationOnMaster, mTangentOnMaster, t1_m, t2_m, t3_m, t1r_m, t2r_m, t3r_m );
         mrAffectedSlavePatch.ComputeVariationOfLocalCSY( mSpanOnSlave, mLocationOnSlave, mTangentOnSlave, t1_s, t2_s, t3_s, t1r_s, t2r_s, t3r_s );
 
-        // // Compute difference between rotation of master and slave
-        // Vector w_m = t3_m - T3_m;
-        // Vector w_s = t3_s - T3_s;
-        // Vector omega_m = MathUtils<double>::CrossProduct(T3_m,w_m);
-        // Vector omega_s = MathUtils<double>::CrossProduct(T3_s,w_s);
-        // double current_rotation_m = std::asin( inner_prod(omega_m, T2_m) );
-        // double current_rotation_s = std::asin( inner_prod(omega_m, T2_s) );
-        // double current_rotation_difference = current_rotation_m + mSignFactor*current_rotation_s;
+        // Compute difference between rotation of master and slave
+        Vector w_m = t3_m - T3_m;
+        Vector w_s = t3_s - T3_s;
+        Vector omega_m = MathUtils<double>::CrossProduct(T3_m,w_m);
+        Vector omega_s = MathUtils<double>::CrossProduct(T3_s,w_s);
+        double tmp_inner_prod_m = inner_prod(omega_m, T2_m);
+        double tmp_inner_prod_s = inner_prod(omega_s, T2_s);
 
         // First we consider the relation Master-Master ( MM )
+        double divisor_m = std::sqrt((1-tmp_inner_prod_m*tmp_inner_prod_m));
         for(int row_itr=0; row_itr<mNumberOfLocalEquationIdsOnMaster; row_itr++)
         {
             int row_id = mEquationIdsOfAffectedControlPointsOnMaster[row_itr];
@@ -175,9 +175,9 @@ public:
             Vector omega_r_x = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+0]);
             Vector omega_r_y = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+1]);
             Vector omega_r_z = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+2]);
-            double omega_r_T2_x = inner_prod(omega_r_x,T2_m);
-            double omega_r_T2_y = inner_prod(omega_r_y,T2_m);
-            double omega_r_T2_z = inner_prod(omega_r_z,T2_m);
+            double omega_r_T2_x = inner_prod(omega_r_x,T2_m) / divisor_m;
+            double omega_r_T2_y = inner_prod(omega_r_y,T2_m) / divisor_m;
+            double omega_r_T2_z = inner_prod(omega_r_z,T2_m) / divisor_m;
 
             for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquationIdsOnMaster; collumn_itr++)
             {
@@ -186,9 +186,9 @@ public:
                 Vector omega_s_x = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*collumn_itr+0]);
                 Vector omega_s_y = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*collumn_itr+1]);
                 Vector omega_s_z = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*collumn_itr+2]);
-                double omega_s_T2_x = inner_prod(omega_s_x,T2_m);
-                double omega_s_T2_y = inner_prod(omega_s_y,T2_m);
-                double omega_s_T2_z = inner_prod(omega_s_z,T2_m);
+                double omega_s_T2_x = inner_prod(omega_s_x,T2_m) / divisor_m;
+                double omega_s_T2_y = inner_prod(omega_s_y,T2_m) / divisor_m;
+                double omega_s_T2_z = inner_prod(omega_s_z,T2_m) / divisor_m;
 
                 double second_order_term_x = 0.0; //(current_rotation_difference - mTargetRotation) * ...;
                 double second_order_term_y = 0.0; //(current_rotation_difference - mTargetRotation) * ...;
@@ -201,6 +201,7 @@ public:
         }
 
         // Then we consider the relation Slave-Slave ( SS )
+        double divisor_s = std::sqrt((1-tmp_inner_prod_s*tmp_inner_prod_s));
         for(int row_itr=0; row_itr<mNumberOfLocalEquationIdsOnSlave; row_itr++)
         {
             int row_id = mEquationIdsOfAffectedControlPointsOnSlave[row_itr];
@@ -208,9 +209,9 @@ public:
             Vector omega_r_x = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+0]);
             Vector omega_r_y = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+1]);
             Vector omega_r_z = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+2]);
-            double omega_r_T2_x = inner_prod(omega_r_x,T2_s);
-            double omega_r_T2_y = inner_prod(omega_r_y,T2_s);
-            double omega_r_T2_z = inner_prod(omega_r_z,T2_s);
+            double omega_r_T2_x = inner_prod(omega_r_x,T2_s) / divisor_s;
+            double omega_r_T2_y = inner_prod(omega_r_y,T2_s) / divisor_s;
+            double omega_r_T2_z = inner_prod(omega_r_z,T2_s) / divisor_s;
 
             for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquationIdsOnSlave; collumn_itr++)
             {
@@ -219,9 +220,9 @@ public:
                 Vector omega_s_x = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+0]);
                 Vector omega_s_y = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+1]);
                 Vector omega_s_z = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+2]);
-                double omega_s_T2_x = inner_prod(omega_s_x,T2_s);
-                double omega_s_T2_y = inner_prod(omega_s_y,T2_s);
-                double omega_s_T2_z = inner_prod(omega_s_z,T2_s);
+                double omega_s_T2_x = inner_prod(omega_s_x,T2_s) / divisor_s;
+                double omega_s_T2_y = inner_prod(omega_s_y,T2_s) / divisor_s;
+                double omega_s_T2_z = inner_prod(omega_s_z,T2_s) / divisor_s;
 
                 double second_order_term_x = 0.0; //(current_rotation_difference - mTargetRotation) ...;
                 double second_order_term_y = 0.0; //(current_rotation_difference - mTargetRotation) ...;
@@ -241,9 +242,9 @@ public:
             Vector omega_r_x = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+0]);
             Vector omega_r_y = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+1]);
             Vector omega_r_z = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+2]);
-            double omega_r_T2_x = inner_prod(omega_r_x,T2_m);
-            double omega_r_T2_y = inner_prod(omega_r_y,T2_m);
-            double omega_r_T2_z = inner_prod(omega_r_z,T2_m);
+            double omega_r_T2_x = inner_prod(omega_r_x,T2_m) / divisor_m;
+            double omega_r_T2_y = inner_prod(omega_r_y,T2_m) / divisor_m;
+            double omega_r_T2_z = inner_prod(omega_r_z,T2_m) / divisor_m;
 
             for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquationIdsOnSlave; collumn_itr++)
             {
@@ -252,9 +253,9 @@ public:
                 Vector omega_s_x = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+0]);
                 Vector omega_s_y = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+1]);
                 Vector omega_s_z = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+2]);
-                double omega_s_T2_x = inner_prod(omega_s_x,T2_s);
-                double omega_s_T2_y = inner_prod(omega_s_y,T2_s);
-                double omega_s_T2_z = inner_prod(omega_s_z,T2_s);
+                double omega_s_T2_x = inner_prod(omega_s_x,T2_s) / divisor_s;
+                double omega_s_T2_y = inner_prod(omega_s_y,T2_s) / divisor_s;
+                double omega_s_T2_z = inner_prod(omega_s_z,T2_s) / divisor_s;
 
                 // MS
                 LHS( 3*row_id+0, 3*collumn_id+0 ) += mSignFactor * mPenaltyFactor * mIntegrationWeight * mJ1 * omega_r_T2_x * omega_s_T2_x;
@@ -344,16 +345,25 @@ public:
         Vector w_s = t3_s - T3_s;
         Vector omega_m = MathUtils<double>::CrossProduct(T3_m,w_m);
         Vector omega_s = MathUtils<double>::CrossProduct(T3_s,w_s);
-        double current_rotation_m = std::asin( inner_prod(omega_m, T2_m) );
-        double current_rotation_s = std::asin( inner_prod(omega_s, T2_s) );
+        double tmp_inner_prod_m = inner_prod(omega_m, T2_m);
+        double tmp_inner_prod_s = inner_prod(omega_s, T2_s);
+        double current_rotation_m = std::asin( tmp_inner_prod_m );
+        double current_rotation_s = std::asin( tmp_inner_prod_s );
         double current_rotation_difference = current_rotation_m + mSignFactor*current_rotation_s;
 
         double target_rotation_in_deg = mTargetRotation*180/3.14;
         double current_rotation_difference_in_deg = current_rotation_difference*180/3.14;
+
+        KRATOS_WATCH("--------------")
+        // KRATOS_WATCH(w_m)
+        // KRATOS_WATCH(w_s)
+        // KRATOS_WATCH(tmp_inner_prod_m)
+        // KRATOS_WATCH(tmp_inner_prod_s)
         KRATOS_WATCH(target_rotation_in_deg)
         KRATOS_WATCH(current_rotation_difference_in_deg)
 
         // Master contribution
+        double divisor_m = std::sqrt((1-tmp_inner_prod_m*tmp_inner_prod_m));
         for(int row_itr=0; row_itr<mNumberOfLocalEquationIdsOnMaster; row_itr++)
         {
             int row_id = mEquationIdsOfAffectedControlPointsOnMaster[row_itr];
@@ -361,9 +371,9 @@ public:
             Vector omega_r_x = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+0]);
             Vector omega_r_y = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+1]);
             Vector omega_r_z = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+2]);
-            double omega_r_T2_x = inner_prod(omega_r_x,T2_m);
-            double omega_r_T2_y = inner_prod(omega_r_y,T2_m);
-            double omega_r_T2_z = inner_prod(omega_r_z,T2_m);
+            double omega_r_T2_x = inner_prod(omega_r_x,T2_m) / divisor_m;
+            double omega_r_T2_y = inner_prod(omega_r_y,T2_m) / divisor_m;
+            double omega_r_T2_z = inner_prod(omega_r_z,T2_m) / divisor_m;
 
             RHS[3*row_id+0] -= mPenaltyFactor * mIntegrationWeight * mJ1 * (current_rotation_difference - mTargetRotation) * omega_r_T2_x;
             RHS[3*row_id+1] -= mPenaltyFactor * mIntegrationWeight * mJ1 * (current_rotation_difference - mTargetRotation) * omega_r_T2_y;
@@ -371,6 +381,7 @@ public:
         }
 
         // Slave contribution
+        double divisor_s = std::sqrt((1-tmp_inner_prod_s*tmp_inner_prod_s));
         for(int row_itr=0; row_itr<mNumberOfLocalEquationIdsOnSlave; row_itr++)
         {
             int row_id = mEquationIdsOfAffectedControlPointsOnSlave[row_itr];
@@ -378,9 +389,9 @@ public:
             Vector omega_r_x = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+0]);
             Vector omega_r_y = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+1]);
             Vector omega_r_z = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+2]);
-            double omega_r_T2_x = inner_prod(omega_r_x,T2_s);
-            double omega_r_T2_y = inner_prod(omega_r_y,T2_s);
-            double omega_r_T2_z = inner_prod(omega_r_z,T2_s);
+            double omega_r_T2_x = inner_prod(omega_r_x,T2_s) / divisor_s;
+            double omega_r_T2_y = inner_prod(omega_r_y,T2_s) / divisor_s;
+            double omega_r_T2_z = inner_prod(omega_r_z,T2_s) / divisor_s;
 
             RHS[3*row_id+0] -= mSignFactor * mPenaltyFactor * mIntegrationWeight * mJ1 * (current_rotation_difference - mTargetRotation) * omega_r_T2_x;
             RHS[3*row_id+1] -= mSignFactor * mPenaltyFactor * mIntegrationWeight * mJ1 * (current_rotation_difference - mTargetRotation) * omega_r_T2_y;

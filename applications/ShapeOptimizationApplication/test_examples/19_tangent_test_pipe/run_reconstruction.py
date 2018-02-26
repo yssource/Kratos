@@ -20,10 +20,10 @@ reconstruction_parameters = Parameters("""
 {
     "inpute_parameters":
     {
-        "cad_geometry_filename"         : "tangent_test_geometry.json",
-        "cad_integration_data_filename" : "tangent_test_integration_data.json",
-        "fem_filename"                  : "tangent_test",
-        "fe_refinement_level"           : 2,
+        "cad_geometry_filename"         : "pipe_with_kink_geometry.json",
+        "cad_integration_data_filename" : "pipe_with_kink_integration_data.json",
+        "fem_filename"                  : "pipe_with_kink",
+        "fe_refinement_level"           : 1,
         "shape_change_variable_name"    : "SHAPE_CHANGE_ABSOLUTE"
     },
     "solution_parameters" :
@@ -33,39 +33,39 @@ reconstruction_parameters = Parameters("""
         {
             "fem_gauss_integration_degree" : 5
         },
-        "solution_iterations" : 5,
+        "solution_iterations" : 10,
         "constraints"         :
         {
             "set_displacement_coupling_on_all_coupling_points"  : true,
-            "penalty_factor_for_displacement_coupling"          : 1e3,
+            "penalty_factor_for_displacement_coupling"          : 1e4,
             "set_rotation_coupling_on_all_coupling_points"      : false,
             "penalty_factor_for_rotation_coupling"              : 1e3,
             "set_zero_displacement_on_all_dirichlet_points"     : false,
             "penalty_factor_for_zero_displacement_points"       : 1e3,
             "set_constraint_to_enforce_tangent_continuity"      : false,
-            "list_of_edge_ids_with_tangent_constraints"         : [1003],
+            "list_of_edge_ids_with_tangent_constraints"         : [],
             "penalty_factor_for_tangent_continuity_constraints" : 1e3,
             "set_rotation_target_to_enforce_tangent_continuity" : true,
-            "list_of_edge_ids_with_rotation_target"             : [1003],
-            "penalty_factor_for_edge_with_rotation_target"      : 1e3,
+            "list_of_edge_ids_with_rotation_target"             : [1003,2007,3010,4011],
+            "penalty_factor_for_edge_with_rotation_target"      : 1e1,
             "penalty_multiplier"                                : 1.0
         },
         "projection_parameters":
         {
             "projection_strategy"                               : "single_search_tree",
             "search_radius_with_multiple_trees"                 : 1.0,
-            "automatic_initialization_using_greville_abscissae" : true,
-            "refinement_iterations_of_greville_abscissae"       : 3,
+            "automatic_initialization_using_greville_abscissae" : false,
+            "refinement_iterations_of_greville_abscissae"       : 2,
             "parameter_resolution_for_manual_initialization"    : [ 100, 100 ],
             "max_projection_iterations"                         : 20,
             "projection_tolerance"                              : 1e-5
         },
         "regularization_parameters":
         {
-            "minimize_control_point_distance_to_surface" : true,
+            "minimize_control_point_distance_to_surface" : false,
             "alpha"                                      : 1e-1,
             "minimize_control_point_displacement"        : false,
-            "beta"                                       : 1e1
+            "beta"                                       : 1e-1
         },
         "linear_solver_name" : "SuperLU"
     },
@@ -73,8 +73,8 @@ reconstruction_parameters = Parameters("""
     {
         "output_folder"                                     : "01_Results",
         "parameter_resolution_for_output_of_surface_points" : [ 100, 100 ],
-        "original_georhino_filename"                        : "tangent_test.georhino.txt",
-        "rhino_results_filename"                            : "tangent_test.post.res",
+        "original_georhino_filename"                        : "pipe_with_kink.georhino.txt",
+        "rhino_results_filename"                            : "pipe_with_kink.post.res",
         "perform_quality_evaluation"                        : false,
         "quality_evaluation_parameters" :
         {

@@ -170,11 +170,8 @@ public:
         {
             noalias(data.N) = row(Ncontainer, igauss);
 
-            double v_sc;
-            v_sc = ShockCapturingViscosity(data);
-
-            double k_sc;
-            k_sc = ShockCapturingConductivity(data);
+            double v_sc = ShockCapturingViscosity(data);
+            double k_sc = ShockCapturingConductivity(data);
             
             ComputeGaussPointRHSContribution(rhs_local, data, v_sc, k_sc);
             ComputeGaussPointLHSContribution(lhs_local, data, v_sc, k_sc);
@@ -226,11 +223,8 @@ public:
         {
             noalias(data.N) = row(Ncontainer, igauss);
             
-            double v_sc;
-            v_sc = ShockCapturingViscosity(data);
-            
-            double k_sc;
-            k_sc = ShockCapturingConductivity(data);
+            double v_sc = ShockCapturingViscosity(data);
+            double k_sc = ShockCapturingConductivity(data);
             
             ComputeGaussPointRHSContribution(rhs_local, data,v_sc,k_sc);
             

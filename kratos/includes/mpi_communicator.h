@@ -1601,6 +1601,35 @@ private:
     }
 
     template<class TObjectType>
+    void SerializePayload(Kratos::Serializer& payload_serializer, const TObjectType& payload, char ** serialized_payload, int& serialized_payload_size) {
+        payload_serializer.save("VariableList",mpVariables_list);
+        payload_serializer.save("MpiPayload",payload);
+
+        std::stringstream * stream = (std::stringstream *)payload_serializer.pGetBuffer();
+        const std::string & stream_str = stream->str();
+        serialized_payload_size = stream_str.size()+1;
+        *serialized_payload = new char[serialized_payload_size];
+        memcpy(*serialized_payload, stream_str.c_str(), serialized_payload_size);
+        std::cout << serialized_payload << std::endl;
+    }
+
+    template<class TObjectType>
+    void DeserializePayload(Kratos::Serializer& payload_deserializer, TObjectType& payload, char ** serialized_payload, int& serialized_payload_size) {
+        std::stringstream * payload_deserializer_buffer;
+        VariablesList * tmp_mpVariables_list = NULL;
+
+        payload_deserializer_buffer = (std::stringstream *)payload_deserializer.pGetBuffer();
+        payload_deserializer_buffer->write(*serialized_payload, serialized_payload_size);
+        payload_deserializer.load("VariableList",tmp_mpVariables_list);
+
+        if(tmp_mpVariables_list != NULL)
+            delete tmp_mpVariables_list;
+        tmp_mpVariables_list = mpVariables_list;
+
+        payload_deserializer.load("MpiPayload",payload);
+    }
+
+    template<class TObjectType>
     bool AsyncSendAndReceiveObjects(std::vector<TObjectType>& SendObjects, std::vector<TObjectType>& RecvObjects, Kratos::Serializer& externParticleSerializer)
     {
         int * msgSendSize = new int[mpi_size];
@@ -1731,16 +1760,7 @@ private:
         {
             if(mpi_rank != i)
             {
-                Kratos::Serializer& particleSerializer = SendSerializer[i];
-
-                particleSerializer.save("VariableList",mpVariables_list);
-                particleSerializer.save("ObjectList",SendObjects[i]);
-
-                std::stringstream * stream = (std::stringstream *)particleSerializer.pGetBuffer();
-                const std::string & stream_str = stream->str();
-                msgSendSize[i] = stream_str.size()+1;
-                mpi_send_buffer[i] = new char[msgSendSize[i]];
-                memcpy(mpi_send_buffer[i],stream_str.c_str(),msgSendSize[i]);
+                SerializePayload(SendSerializer[i], SendObjects[i], &mpi_send_buffer[i], msgSendSize[i]);
             } else {
                 msgSendSize[i] = 0;
             }
@@ -1762,6 +1782,8 @@ private:
         MPI_Request * reqs = new MPI_Request[NumberOfCommunicationEvents];
         MPI_Status * stats = new MPI_Status[NumberOfCommunicationEvents];
 
+        std::cout << "LALAL" << std::endl;
+
         for(int i = 0; i < mpi_size; i++)
         {
             if(i != mpi_rank && msgSendSize[i])
@@ -1779,6 +1801,8 @@ private:
             }
         }
 
+        std::cout << "LOLOL" << std::endl;
+
         // Wait untill all communications finish
         mpi_erno = MPI_Waitall(NumberOfCommunicationEvents, reqs, stats);
         MpiUtils::HandleError(mpi_erno);
@@ -1787,21 +1811,7 @@ private:
         {
             if (i != mpi_rank && msgRecvSize[i])
             {
-                Kratos::Serializer& particleSerializer = RecvSerializer[i];
-                std::stringstream * serializer_buffer;
-
-                serializer_buffer = (std::stringstream *)particleSerializer.pGetBuffer();
-                serializer_buffer->write(mpi_recv_buffer[i], msgRecvSize[i]);
-
-                VariablesList* tmp_mpVariables_list = NULL;
-
-                particleSerializer.load("VariableList",tmp_mpVariables_list);
-
-                if(tmp_mpVariables_list != NULL)
-                  delete tmp_mpVariables_list;
-                tmp_mpVariables_list = mpVariables_list;
-
-                particleSerializer.load("ObjectList",RecvObjects[i]);
+                DeserializePayload(RecvSerializer[i], RecvObjects[i], &mpi_recv_buffer[i], msgRecvSize[i]);
             }
         }
 
@@ -1857,7 +1867,7 @@ private:
             }
         }
 
-        CalculateSendRecvMessageSize(msgSendSize, msgRecvSize);
+        CalculateSendRecvMessageSize(mpi_send_size, mpi_recv_size);
 
         // Prepare the payload, recv buffer and communication events
         for(int i = 0; i < mpi_size; i++) 
@@ -1925,7 +1935,7 @@ private:
         int NumberOfCommunicationEvents      = 0;
         int NumberOfCommunicationEventsIndex = 0;
 
-        CalculateSendRecvMessageSize(msgSendSize, msgRecvSize);
+        CalculateSendRecvMessageSize(mpi_send_size, mpi_recv_size);
 
         // Prepare the payload, recv buffer and communication events
         for(int i = 0; i < mpi_size; i++)
@@ -1955,6 +1965,8 @@ private:
         MpiUtils::HandleError(mpi_erno);
     }
 
+    /** Clears the buffers 
+     * **/
     void ClearSendRecvBuffers(int * mpi_send_size, int * mpi_recv_size, long ** mpi_send_buffer, long ** mpi_recv_buffer) {
         for(int i = 0; i < mpi_size; i++) {
             if(i != mpi_rank && mpi_send_size[i]) {

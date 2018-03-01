@@ -1602,6 +1602,11 @@ private:
 
     }
 
+    void CalculateSendRecvMessageSize(int * msgSendSize, int * msgRecvSize) {
+        int mpi_erno = MPI_Alltoall(msgSendSize,1,MPI_INT,msgRecvSize,1,MPI_INT,MPI_COMM_WORLD);
+        MpiUtils::HandleError(mpi_erno);
+    }
+
     template<class TObjectType>
     bool AsyncSendAndReceiveObjects(std::vector<TObjectType>& SendObjects, std::vector<TObjectType>& RecvObjects, Kratos::Serializer& externParticleSerializer)
     {
@@ -1642,7 +1647,7 @@ private:
             }
         }
 
-        MPI_Alltoall(msgSendSize,1,MPI_INT,msgRecvSize,1,MPI_INT,MPI_COMM_WORLD);
+        CalculateSendRecvMessageSize(msgSendSize, msgRecvSize);
 
         int NumberOfCommunicationEvents      = 0;
         int NumberOfCommunicationEventsIndex = 0;
@@ -1763,8 +1768,7 @@ private:
             msgRecvSize[i] = 0;
         }
 
-        mpi_erno = MPI_Alltoall(msgSendSize,1,MPI_INT,msgRecvSize,1,MPI_INT,MPI_COMM_WORLD);
-        MpiUtils::HandleError(mpi_erno);
+        CalculateSendRecvMessageSize(msgSendSize, msgRecvSize);
 
         int NumberOfCommunicationEvents      = 0;
         int NumberOfCommunicationEventsIndex = 0;
@@ -1798,7 +1802,7 @@ private:
         // Wait untill all communications finish
         mpi_erno = MPI_Waitall(NumberOfCommunicationEvents, reqs, stats);
         MpiUtils::HandleError(mpi_erno);
-        
+
         for(int i = 0; i < mpi_size; i++)
         {
             if (i != mpi_rank && msgRecvSize[i])
@@ -1820,8 +1824,6 @@ private:
                 particleSerializer.load("ObjectList",RecvObjects[i]);
             }
         }
-
-        std::cout << "Transferences done" << std::endl;
 
         // Free buffers
         for(int i = 0; i < mpi_size; i++)
@@ -1882,8 +1884,7 @@ private:
             }
         }
 
-        mpi_erno = MPI_Alltoall(mpi_send_size,1,MPI_INT,mpi_recv_size,1,MPI_INT,MPI_COMM_WORLD);
-        MpiUtils::HandleError(mpi_erno);
+        CalculateSendRecvMessageSize(msgSendSize, msgRecvSize);
 
         // Prepare the payload, recv buffer and communication events
         for(int i = 0; i < mpi_size; i++) 
@@ -1958,8 +1959,7 @@ private:
         int NumberOfCommunicationEvents      = 0;
         int NumberOfCommunicationEventsIndex = 0;
 
-        mpi_erno = MPI_Alltoall(mpi_send_size,1,MPI_INT,mpi_recv_size,1,MPI_INT,MPI_COMM_WORLD);
-        MpiUtils::HandleError(mpi_erno);
+        CalculateSendRecvMessageSize(msgSendSize, msgRecvSize);
 
         // Prepare the payload, recv buffer and communication events
         for(int i = 0; i < mpi_size; i++)

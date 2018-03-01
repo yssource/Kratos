@@ -12,12 +12,8 @@
 //                    
 //
 
-
-
 #if !defined(KRATOS_MPI_COMMUNICATOR_H_INCLUDED )
 #define  KRATOS_MPI_COMMUNICATOR_H_INCLUDED
-
-
 
 // System includes
 #include <string>
@@ -25,15 +21,12 @@
 #include <sstream>
 #include <cstddef>
 
-
 // External includes
-
-
+#include "mpi.h"
 
 // Project includes
 #include "includes/define.h"
 #include "includes/model_part.h"
-#include "mpi.h"
 
 #include "utilities/openmp_utils.h"
 #include "utilities/mpi_utils.h"
@@ -1770,7 +1763,8 @@ private:
             msgRecvSize[i] = 0;
         }
 
-        MPI_Alltoall(msgSendSize,1,MPI_INT,msgRecvSize,1,MPI_INT,MPI_COMM_WORLD);
+        mpi_erno = MPI_Alltoall(msgSendSize,1,MPI_INT,msgRecvSize,1,MPI_INT,MPI_COMM_WORLD);
+        MpiUtils::HandleError(mpi_erno);
 
         int NumberOfCommunicationEvents      = 0;
         int NumberOfCommunicationEventsIndex = 0;
@@ -1789,8 +1783,7 @@ private:
             if(i != mpi_rank && msgSendSize[i])
             {
                 mpi_erno = MPI_Isend(mpi_send_buffer[i],msgSendSize[i],MPI_CHAR,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
-                if(mpi_erno != MPI_SUCCESS)
-                    std::cout << mpi_rank << " Isned error: " << mpi_erno << std::endl; 
+                MpiUtils::HandleError(mpi_erno);
             }
 
             if(i != mpi_rank && msgRecvSize[i])
@@ -1798,20 +1791,14 @@ private:
                 mpi_recv_buffer[i] = new char[msgRecvSize[i]];
 
                 mpi_erno = MPI_Irecv(mpi_recv_buffer[i],msgRecvSize[i],MPI_CHAR,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
-                if(mpi_erno != MPI_SUCCESS)
-                    std::cout << mpi_rank << " Irecv error: " << mpi_erno << std::endl; 
+                MpiUtils::HandleError(mpi_erno);
             }
         }
 
         // Wait untill all communications finish
         mpi_erno = MPI_Waitall(NumberOfCommunicationEvents, reqs, stats);
-
-        if(mpi_erno != MPI_SUCCESS) {
-            KRATOS_THROW_ERROR(std::runtime_error,"Error in mpi_communicator","");
-        }
-
-        std::cout << "Transferences" << std::endl;
-
+        MpiUtils::HandleError(mpi_erno);
+        
         for(int i = 0; i < mpi_size; i++)
         {
             if (i != mpi_rank && msgRecvSize[i])
@@ -1895,7 +1882,8 @@ private:
             }
         }
 
-        MPI_Alltoall(mpi_send_size,1,MPI_INT,mpi_recv_size,1,MPI_INT,MPI_COMM_WORLD);
+        mpi_erno = MPI_Alltoall(mpi_send_size,1,MPI_INT,mpi_recv_size,1,MPI_INT,MPI_COMM_WORLD);
+        MpiUtils::HandleError(mpi_erno);
 
         // Prepare the payload, recv buffer and communication events
         for(int i = 0; i < mpi_size; i++) 
@@ -1931,21 +1919,20 @@ private:
         {
             if(i != mpi_rank && mpi_send_size[i])
             {
-                MPI_Isend(mpi_send_buffer[i],mpi_send_size[i]*2,MPI_LONG,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+                mpi_erno = MPI_Isend(mpi_send_buffer[i],mpi_send_size[i]*2,MPI_LONG,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+                MpiUtils::HandleError(mpi_erno);
             }
 
             if(i != mpi_rank && mpi_recv_size[i])
             {
-                MPI_Irecv(mpi_recv_buffer[i],mpi_recv_size[i]*2,MPI_LONG,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+                mpi_erno = MPI_Irecv(mpi_recv_buffer[i],mpi_recv_size[i]*2,MPI_LONG,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+                MpiUtils::HandleError(mpi_erno);
             }
         }
 
         // Wait untill all communications have finished
         mpi_erno = MPI_Waitall(NumberOfCommunicationEvents, reqs, stats);
-        if(mpi_erno != MPI_SUCCESS)
-        {
-            KRATOS_ERROR << "Error in mpi_communicator" << std::endl;
-        }
+        MpiUtils::HandleError(mpi_erno);
     }
 
     /** Request the list of objects that the destination process needs
@@ -1971,7 +1958,8 @@ private:
         int NumberOfCommunicationEvents      = 0;
         int NumberOfCommunicationEventsIndex = 0;
 
-        MPI_Alltoall(mpi_send_size,1,MPI_INT,mpi_recv_size,1,MPI_INT,MPI_COMM_WORLD);
+        mpi_erno = MPI_Alltoall(mpi_send_size,1,MPI_INT,mpi_recv_size,1,MPI_INT,MPI_COMM_WORLD);
+        MpiUtils::HandleError(mpi_erno);
 
         // Prepare the payload, recv buffer and communication events
         for(int i = 0; i < mpi_size; i++)
@@ -1986,11 +1974,13 @@ private:
         // Communicate the data
         for(int i = 0; i < mpi_size; i++) {
             if(i != mpi_rank && mpi_send_size[i]) {
-                MPI_Isend(mpi_send_buffer[i],mpi_send_size[i]*2,MPI_LONG,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+                mpi_erno = MPI_Isend(mpi_send_buffer[i],mpi_send_size[i]*2,MPI_LONG,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+                MpiUtils::HandleError(mpi_erno);
             }
 
             if(i != mpi_rank && mpi_recv_size[i]) {
-                MPI_Irecv(mpi_recv_buffer[i],mpi_recv_size[i]*2,MPI_LONG,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+                mpi_erno = MPI_Irecv(mpi_recv_buffer[i],mpi_recv_size[i]*2,MPI_LONG,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+                MpiUtils::HandleError(mpi_erno);
             }
         }
 

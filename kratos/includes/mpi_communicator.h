@@ -31,19 +31,6 @@
 #include "utilities/openmp_utils.h"
 #include "utilities/mpi_utils.h"
 
-#define CUSTOMTIMER 1
-
-/* Timer defines */
-#include "utilities/timer.h"
-#ifdef CUSTOMTIMER
-#define KRATOS_TIMER_START(t) Timer::Start(t);
-#define KRATOS_TIMER_STOP(t) Timer::Stop(t);
-#else
-#define KRATOS_TIMER_START(t)
-#define KRATOS_TIMER_STOP(t)
-#endif
-
-
 namespace Kratos
 {
 

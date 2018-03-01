@@ -169,6 +169,8 @@ public:
 
     MPICommunicator(VariablesList* Variables_list) : BaseType(), mpVariables_list(Variables_list)
     {
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
     }
 
     /// Copy constructor.
@@ -860,6 +862,10 @@ private:
     //      MeshesContainerType mInterfaceMeshes;
 
     VariablesList* mpVariables_list;
+
+    int mpi_rank;
+    int mpi_size;
+    int mpi_erno;
 
     ///@}
     ///@name Private Operators
@@ -1590,19 +1596,13 @@ private:
     }
 
     void CalculateSendRecvMessageSize(int * msgSendSize, int * msgRecvSize) {
-        int mpi_erno = MPI_Alltoall(msgSendSize,1,MPI_INT,msgRecvSize,1,MPI_INT,MPI_COMM_WORLD);
+        mpi_erno = MPI_Alltoall(msgSendSize,1,MPI_INT,msgRecvSize,1,MPI_INT,MPI_COMM_WORLD);
         MpiUtils::HandleError(mpi_erno);
     }
 
     template<class TObjectType>
     bool AsyncSendAndReceiveObjects(std::vector<TObjectType>& SendObjects, std::vector<TObjectType>& RecvObjects, Kratos::Serializer& externParticleSerializer)
     {
-        int mpi_rank;
-        int mpi_size;
-
-        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-
         int * msgSendSize = new int[mpi_size];
         int * msgRecvSize = new int[mpi_size];
 
@@ -1721,13 +1721,6 @@ private:
     template<class TObjectType>
     bool AsyncSendAndReceiveObjects(std::vector<TObjectType>& SendObjects, std::vector<TObjectType>& RecvObjects, std::vector<Kratos::Serializer>& SendSerializer, std::vector<Kratos::Serializer>& RecvSerializer)
     {
-        int mpi_rank;
-        int mpi_size;
-        int mpi_erno;
-
-        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-
         int * msgSendSize = new int[mpi_size];
         int * msgRecvSize = new int[mpi_size];
 
@@ -1846,13 +1839,6 @@ private:
       int * mpi_send_size, int * mpi_recv_size,
       long ** mpi_send_buffer, long ** mpi_recv_buffer) {
 
-        int mpi_rank;
-        int mpi_size;
-        int mpi_erno;
-
-        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-
         int NumberOfCommunicationEvents      = 0;
         int NumberOfCommunicationEventsIndex = 0;
 
@@ -1936,13 +1922,6 @@ private:
       int * mpi_send_size, int * mpi_recv_size,
       long ** mpi_send_buffer, long ** mpi_recv_buffer) {
 
-        int mpi_rank;
-        int mpi_size;
-        int mpi_erno;
-
-        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-
         int NumberOfCommunicationEvents      = 0;
         int NumberOfCommunicationEventsIndex = 0;
 
@@ -1977,13 +1956,6 @@ private:
     }
 
     void ClearSendRecvBuffers(int * mpi_send_size, int * mpi_recv_size, long ** mpi_send_buffer, long ** mpi_recv_buffer) {
-        int mpi_rank;
-        int mpi_size;
-
-        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-
-        // Clear the buffers
         for(int i = 0; i < mpi_size; i++) {
             if(i != mpi_rank && mpi_send_size[i]) {
                 delete[] mpi_send_buffer[i];
@@ -1998,12 +1970,6 @@ private:
     template<class TMeshType>
     bool AsyncSendAndReceiveMeshes(std::vector<TMeshType>& SendMeshes, std::vector<TMeshType>& RecvMeshes)
     {
-        int mpi_rank;
-        int mpi_size;
-
-        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-
         int * mpi_send_size = new int[mpi_size];
         int * mpi_recv_size = new int[mpi_size];
 

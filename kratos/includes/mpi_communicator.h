@@ -1635,8 +1635,8 @@ private:
         int * msgSendSize = new int[mpi_size];
         int * msgRecvSize = new int[mpi_size];
 
-        char ** message = new char * [mpi_size];
         char ** mpi_send_buffer = new char * [mpi_size];
+        char ** mpi_recv_buffer = new char * [mpi_size];
 
         for(int i = 0; i < mpi_size; i++)
         {
@@ -1648,18 +1648,7 @@ private:
         {
             if(mpi_rank != i)
             {
-                Kratos::Serializer particleSerializer;
-
-                particleSerializer.save("VariableList",mpVariables_list);
-                particleSerializer.save("ObjectList",SendObjects[i]);
-
-                std::stringstream * stream = (std::stringstream *)particleSerializer.pGetBuffer();
-                const std::string & stream_str = stream->str();
-                const char * cstr = stream_str.c_str();
-
-                msgSendSize[i] = sizeof(char) * (stream_str.size()+1);
-                mpi_send_buffer[i] = (char *)malloc(msgSendSize[i]);
-                memcpy(mpi_send_buffer[i],cstr,msgSendSize[i]);
+                SerializePayload(externParticleSerializer, SendObjects[i], &mpi_send_buffer[i], msgSendSize[i]);
             }
         }
 
@@ -1682,54 +1671,36 @@ private:
         {
             if(i != mpi_rank && msgRecvSize[i])
             {
-                message[i] = (char *)malloc(sizeof(char) * msgRecvSize[i]);
+                mpi_recv_buffer[i] = (char *)malloc(sizeof(char) * msgRecvSize[i]);
 
-                MPI_Irecv(message[i],msgRecvSize[i],MPI_CHAR,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+                mpi_erno = MPI_Irecv(mpi_recv_buffer[i],msgRecvSize[i],MPI_CHAR,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+                MpiUtils::HandleError(mpi_erno);
             }
 
             if(i != mpi_rank && msgSendSize[i])
             {
-                MPI_Isend(mpi_send_buffer[i],msgSendSize[i],MPI_CHAR,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+                mpi_erno = MPI_Isend(mpi_send_buffer[i],msgSendSize[i],MPI_CHAR,i,0,MPI_COMM_WORLD,&reqs[NumberOfCommunicationEventsIndex++]);
+                MpiUtils::HandleError(mpi_erno);
             }
         }
 
         //wait untill all communications finish
-        int err = MPI_Waitall(NumberOfCommunicationEvents, reqs, stats);
-
-        if(err != MPI_SUCCESS)
-            KRATOS_THROW_ERROR(std::runtime_error,"Error in mpi_communicator","")
-
-        MPI_Barrier(MPI_COMM_WORLD);
+        mpi_erno = MPI_Waitall(NumberOfCommunicationEvents, reqs, stats);
+        MpiUtils::HandleError(mpi_erno);
 
         for(int i = 0; i < mpi_size; i++)
         {
             if (i != mpi_rank && msgRecvSize[i])
             {
-                Kratos::Serializer particleSerializer;
-                std::stringstream * serializer_buffer;
-
-                serializer_buffer = (std::stringstream *)particleSerializer.pGetBuffer();
-                serializer_buffer->write(message[i], msgRecvSize[i]);
-
-                VariablesList* tmp_mpVariables_list = NULL;
-
-                particleSerializer.load("VariableList",tmp_mpVariables_list);
-
-                if(tmp_mpVariables_list != NULL)
-                  delete tmp_mpVariables_list;
-                tmp_mpVariables_list = mpVariables_list;
-
-                particleSerializer.load("ObjectList",RecvObjects[i]);
+                DeserializePayload(externParticleSerializer, RecvObjects[i], &message[i], msgRecvSize[i]);
             }
-
-            MPI_Barrier(MPI_COMM_WORLD);
         }
 
         // Free buffers
         for(int i = 0; i < mpi_size; i++)
         {
             if(msgRecvSize[i])
-                free(message[i]);
+                free(mpi_recv_buffer[i]);
 
             if(msgSendSize[i])
                 free(mpi_send_buffer[i]);
@@ -1738,7 +1709,7 @@ private:
         delete [] reqs;
         delete [] stats;
 
-        delete [] message;
+        delete [] mpi_recv_buffer;
         delete [] mpi_send_buffer;
 
         delete [] msgSendSize;

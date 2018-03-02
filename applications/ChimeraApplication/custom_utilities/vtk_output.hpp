@@ -310,69 +310,71 @@ class VtkOutput
         std::string outputFileName = GetOutputFileName(model_part);
         std::ofstream outputFile;
         outputFile.open(outputFileName, std::ios::out | std::ios::app);
-        std::vector<std::string> elementResults = {"NORMAL"}; // list of element results
+        std::vector<std::string> elementResults = {}; // list of element results
         // write cells header
-        outputFile << "CELL_DATA " << model_part.NumberOfElements() << "\n";
-        outputFile << "SCALARS ACTIVE float 1\nLOOKUP_TABLE default\n";
-
-        // write element results for active
-        for (ModelPart::ElementIterator elem_i = model_part.ElementsBegin(); elem_i != model_part.ElementsEnd(); ++elem_i)
+        if (model_part.NumberOfElements() > 0)
         {
-            //outputFile << numberOfNodes;
-            if ((elem_i)->IsDefined(ACTIVE))
-            {
+            outputFile << "CELL_DATA " << model_part.NumberOfElements() << "\n";
+            outputFile << "SCALARS ACTIVE float 1\nLOOKUP_TABLE default\n";
 
-                outputFile << elem_i->Is(ACTIVE) << "\n";
-            }
-
-            else
-                outputFile << "1\n";
-        }
-
-        for (unsigned int entry = 0; entry < elementResults.size(); entry++)
-        {
-
-            std::string elementResultName = elementResults[entry];
-            unsigned int dataCharacteristic = 0; // 0: unknown, 1: Scalar value, 2: 3 DOF global translation vector
-
-            if (KratosComponents<Variable<double>>::Has(elementResultName))
-            {
-                dataCharacteristic = 1;
-                outputFile << "SCALARS " << elementResultName << " float"
-                           << " 1"
-                           << "\n";
-                outputFile << "LOOKUP_TABLE default"
-                           << "\n";
-            }
-            else if (KratosComponents<Variable<array_1d<double, 3>>>::Has(elementResultName))
-            {
-                dataCharacteristic = 2;
-                outputFile << "VECTORS " << elementResultName << " float"
-                           << "\n";
-            }
-
-            // write nodal results
-            outputFile << std::scientific;
-            outputFile << std::setprecision(mDefaultPrecision);
+            // write element results for active
             for (ModelPart::ElementIterator elem_i = model_part.ElementsBegin(); elem_i != model_part.ElementsEnd(); ++elem_i)
             {
-                if (dataCharacteristic == 1)
+                //outputFile << numberOfNodes;
+                if ((elem_i)->IsDefined(ACTIVE))
                 {
-                    Variable<double> elementResultVariable = KratosComponents<Variable<double>>::Get(elementResultName);
-                    double &elementResult = elem_i->GetValue(elementResultVariable);
-                    outputFile << elementResult << "\n";
+
+                    outputFile << elem_i->Is(ACTIVE) << "\n";
                 }
-                else if (dataCharacteristic == 2)
+
+                else
+                    outputFile << "1\n";
+            }
+
+            for (unsigned int entry = 0; entry < elementResults.size(); entry++)
+            {
+
+                std::string elementResultName = elementResults[entry];
+                unsigned int dataCharacteristic = 0; // 0: unknown, 1: Scalar value, 2: 3 DOF global translation vector
+
+                if (KratosComponents<Variable<double>>::Has(elementResultName))
                 {
-                    Variable<array_1d<double, 3>> elementResultVariable = KratosComponents<Variable<array_1d<double, 3>>>::Get(elementResultName);
-                    array_1d<double, 3> &elementResult = elem_i->GetValue(elementResultVariable);
-                    outputFile << elementResult[0] << " ";
-                    outputFile << elementResult[1] << " ";
-                    outputFile << elementResult[2] << "\n";
+                    dataCharacteristic = 1;
+                    outputFile << "SCALARS " << elementResultName << " float"
+                               << " 1"
+                               << "\n";
+                    outputFile << "LOOKUP_TABLE default"
+                               << "\n";
+                }
+                else if (KratosComponents<Variable<array_1d<double, 3>>>::Has(elementResultName))
+                {
+                    dataCharacteristic = 2;
+                    outputFile << "VECTORS " << elementResultName << " float"
+                               << "\n";
+                }
+
+                // write nodal results
+                outputFile << std::scientific;
+                outputFile << std::setprecision(mDefaultPrecision);
+                for (ModelPart::ElementIterator elem_i = model_part.ElementsBegin(); elem_i != model_part.ElementsEnd(); ++elem_i)
+                {
+                    if (dataCharacteristic == 1)
+                    {
+                        Variable<double> elementResultVariable = KratosComponents<Variable<double>>::Get(elementResultName);
+                        double &elementResult = elem_i->GetValue(elementResultVariable);
+                        outputFile << elementResult << "\n";
+                    }
+                    else if (dataCharacteristic == 2)
+                    {
+                        Variable<array_1d<double, 3>> elementResultVariable = KratosComponents<Variable<array_1d<double, 3>>>::Get(elementResultName);
+                        array_1d<double, 3> &elementResult = elem_i->GetValue(elementResultVariable);
+                        outputFile << elementResult[0] << " ";
+                        outputFile << elementResult[1] << " ";
+                        outputFile << elementResult[2] << "\n";
+                    }
                 }
             }
-        }
-
+            /*
         outputFile << "SCALARS SPLIT_ELEMENT float 1\nLOOKUP_TABLE default\n";
 
         // write element results for active
@@ -382,8 +384,9 @@ class VtkOutput
             bool is_split = elem_i->GetValue(SPLIT_ELEMENT);
             outputFile << is_split << "\n";
         }
-
-        outputFile.close();
+*/
+            outputFile.close();
+        }
     }
 
     //#############################################For creating vtk files in binary format##########################################################
@@ -435,7 +438,7 @@ class VtkOutput
             outputFile.write((char *)(&x_coordinate), sizeof(float));
             force_big_endian((unsigned char *)&y_coordinate);
             outputFile.write((char *)(&y_coordinate), sizeof(float));
-            force_big_endian((unsigned char *)&y_coordinate);
+            force_big_endian((unsigned char *)&z_coordinate);
             outputFile.write((char *)(&z_coordinate), sizeof(float));
         }
 
@@ -621,86 +624,83 @@ class VtkOutput
         std::string outputFileName = GetOutputFileName(model_part);
         std::ofstream outputFile;
         outputFile.open(outputFileName, std::ios::out | std::ios::app);
-        std::vector<std::string> elementResults = {};                   //list of element results
-        // write cells header
-        outputFile << "\nCELL_DATA " << model_part.NumberOfElements() << "\n";
-        outputFile << "SCALARS ACTIVE float \nLOOKUP_TABLE default\n";
-
-        // write element results for active
-        for (ModelPart::ElementIterator elem_i = model_part.ElementsBegin(); elem_i != model_part.ElementsEnd(); ++elem_i)
+        std::vector<std::string> elementResults = {}; //list of element results
+        if (model_part.NumberOfElements() > 0)
         {
-            //outputFile << numberOfNodes;
-         
-            if ((elem_i)->IsDefined(ACTIVE))
-            {
-                float is_active = elem_i->Is(ACTIVE);
-                force_big_endian((unsigned char *)&is_active);
-                outputFile.write((char *)(&is_active), sizeof(float));
-                
-                
-                
-            }
+            // write cells header
+            outputFile << "\nCELL_DATA " << model_part.NumberOfElements() << "\n";
+            outputFile << "SCALARS ACTIVE float \nLOOKUP_TABLE default\n";
 
-            else
-            {
-
-                float is_active = 1;
-                force_big_endian((unsigned char *)&is_active);
-                outputFile.write((char *)(&is_active), sizeof(float));
-            }
-
-
-        }
-
-        for (unsigned int entry = 0; entry < elementResults.size(); entry++)
-        {
-
-            std::string elementResultName = elementResults[entry];
-            unsigned int dataCharacteristic = 0; // 0: unknown, 1: Scalar value, 2: 3 DOF global translation vector
-
-            if (KratosComponents<Variable<double>>::Has(elementResultName))
-            {
-                dataCharacteristic = 1;
-                outputFile << "SCALARS " << elementResultName << " float"
-                           << "\n";
-                outputFile << "LOOKUP_TABLE default"
-                           << "\n";
-            }
-            else if (KratosComponents<Variable<array_1d<double, 3>>>::Has(elementResultName))
-            {
-                dataCharacteristic = 2;
-                outputFile << "VECTORS " << elementResultName << " float"
-                           << "\n";
-            }
-
-            // write nodal results
-
+            // write element results for active
             for (ModelPart::ElementIterator elem_i = model_part.ElementsBegin(); elem_i != model_part.ElementsEnd(); ++elem_i)
             {
-                if (dataCharacteristic == 1)
+                //outputFile << numberOfNodes;
+
+                if ((elem_i)->IsDefined(ACTIVE))
                 {
-                    Variable<double> elementResultVariable = KratosComponents<Variable<double>>::Get(elementResultName);
-                    double elementResult = elem_i->GetValue(elementResultVariable);
-                    force_big_endian((unsigned char *)&elementResult);
-                    outputFile.write((char *)(&elementResult), sizeof(float));
+                    float is_active = elem_i->Is(ACTIVE);
+                    force_big_endian((unsigned char *)&is_active);
+                    outputFile.write((char *)(&is_active), sizeof(float));
                 }
-                else if (dataCharacteristic == 2)
+
+                else
                 {
-                    Variable<array_1d<double, 3>> elementResultVariable = KratosComponents<Variable<array_1d<double, 3>>>::Get(elementResultName);
-                    array_1d<double, 3> elementResult = elem_i->GetValue(elementResultVariable);
-                    float num1 = elementResult[0];
-                    force_big_endian((unsigned char *)&num1);
-                    outputFile.write((char *)(&num1), sizeof(float));
-                    float num2 = elementResult[1];
-                    force_big_endian((unsigned char *)&num2);
-                    outputFile.write((char *)(&num2), sizeof(float));
-                    float num3 = elementResult[2];
-                    force_big_endian((unsigned char *)&num3);
-                    outputFile.write((char *)(&num3), sizeof(float));
+
+                    float is_active = 1;
+                    force_big_endian((unsigned char *)&is_active);
+                    outputFile.write((char *)(&is_active), sizeof(float));
                 }
             }
-        }
 
+            for (unsigned int entry = 0; entry < elementResults.size(); entry++)
+            {
+
+                std::string elementResultName = elementResults[entry];
+                unsigned int dataCharacteristic = 0; // 0: unknown, 1: Scalar value, 2: 3 DOF global translation vector
+
+                if (KratosComponents<Variable<double>>::Has(elementResultName))
+                {
+                    dataCharacteristic = 1;
+                    outputFile << "SCALARS " << elementResultName << " float"
+                               << "\n";
+                    outputFile << "LOOKUP_TABLE default"
+                               << "\n";
+                }
+                else if (KratosComponents<Variable<array_1d<double, 3>>>::Has(elementResultName))
+                {
+                    dataCharacteristic = 2;
+                    outputFile << "VECTORS " << elementResultName << " float"
+                               << "\n";
+                }
+
+                // write nodal results
+
+                for (ModelPart::ElementIterator elem_i = model_part.ElementsBegin(); elem_i != model_part.ElementsEnd(); ++elem_i)
+                {
+                    if (dataCharacteristic == 1)
+                    {
+                        Variable<double> elementResultVariable = KratosComponents<Variable<double>>::Get(elementResultName);
+                        double elementResult = elem_i->GetValue(elementResultVariable);
+                        force_big_endian((unsigned char *)&elementResult);
+                        outputFile.write((char *)(&elementResult), sizeof(float));
+                    }
+                    else if (dataCharacteristic == 2)
+                    {
+                        Variable<array_1d<double, 3>> elementResultVariable = KratosComponents<Variable<array_1d<double, 3>>>::Get(elementResultName);
+                        array_1d<double, 3> elementResult = elem_i->GetValue(elementResultVariable);
+                        float num1 = elementResult[0];
+                        force_big_endian((unsigned char *)&num1);
+                        outputFile.write((char *)(&num1), sizeof(float));
+                        float num2 = elementResult[1];
+                        force_big_endian((unsigned char *)&num2);
+                        outputFile.write((char *)(&num2), sizeof(float));
+                        float num3 = elementResult[2];
+                        force_big_endian((unsigned char *)&num3);
+                        outputFile.write((char *)(&num3), sizeof(float));
+                    }
+                }
+            }
+            /*
         outputFile << "SCALARS SPLIT_ELEMENT float \nLOOKUP_TABLE default\n";
 
         // write element results for active
@@ -710,9 +710,10 @@ class VtkOutput
             float is_split = elem_i->GetValue(SPLIT_ELEMENT);
             force_big_endian((unsigned char *)&is_split);
             outputFile.write((char *)(&is_split), sizeof(float));
-        }
+        }*/
 
-        outputFile.close();
+            outputFile.close();
+        }
     }
 
     //#################################################################End of Binary vtk ################################################################

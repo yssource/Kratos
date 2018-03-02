@@ -99,6 +99,14 @@ class RotateRegionProcess : public Process
         this->mName = name;
     }
 
+    void SetCentreOfRotation(double x, double y, double z)
+    {
+
+        mCenterOfRotation[0] = x;
+        mCenterOfRotation[1] = y;
+        mCenterOfRotation[2] = z;
+    }
+
     /// Destructor.
     virtual ~RotateRegionProcess()
     {
@@ -143,36 +151,31 @@ class RotateRegionProcess : public Process
             if (domain_size > 2)
                 node->FastGetSolutionStepValue(MESH_DISPLACEMENT_Z) = node->Z() - node->Z0();*/
 
-
-
-
+            // Computing the linear velocity at this node
             std::vector<double> r(3);
             std::vector<double> linearVelocity(3);
             r[0] = node->X() - mCenterOfRotation[0];
             r[1] = node->Y() - mCenterOfRotation[1];
             r[2] = node->Z() - mCenterOfRotation[2];
-
-            // Computing the linear velocity at this node
             CrossProduct(mAxisOfRoationVector, r, linearVelocity);
 
             if (m_parameters["is_ale"].GetBool())
             {
-                node->FastGetSolutionStepValue(MESH_VELOCITY_X, 0) = m_angular_velocity_radians * linearVelocity[0];
-                node->FastGetSolutionStepValue(MESH_VELOCITY_Y, 0) = m_angular_velocity_radians * linearVelocity[1];
+                node->FastGetSolutionStepValue(MESH_VELOCITY_X, 0) += m_angular_velocity_radians * linearVelocity[0];
+                node->FastGetSolutionStepValue(MESH_VELOCITY_Y, 0) += m_angular_velocity_radians * linearVelocity[1];
                 if (domain_size > 2)
-                    node->FastGetSolutionStepValue(MESH_VELOCITY_Z, 0) = m_angular_velocity_radians * linearVelocity[2];
+                    node->FastGetSolutionStepValue(MESH_VELOCITY_Z, 0) += m_angular_velocity_radians * linearVelocity[2];
             }
 
             if (node->IsFixed(VELOCITY_X))
-                node->FastGetSolutionStepValue(VELOCITY_X, 0) = linearVelocity[0];
+                node->FastGetSolutionStepValue(VELOCITY_X, 0) = node->FastGetSolutionStepValue(MESH_VELOCITY_X, 0);
 
             if (node->IsFixed(VELOCITY_Y))
-                node->FastGetSolutionStepValue(VELOCITY_Y, 0) = linearVelocity[1];
+                node->FastGetSolutionStepValue(VELOCITY_Y, 0) = node->FastGetSolutionStepValue(MESH_VELOCITY_Y, 0);
 
             if (domain_size > 2)
                 if (node->IsFixed(VELOCITY_Z))
-                    node->FastGetSolutionStepValue(VELOCITY_Z, 0) = linearVelocity[2];
-
+                    node->FastGetSolutionStepValue(VELOCITY_Z, 0) = node->FastGetSolutionStepValue(MESH_VELOCITY_Z, 0);
         }
 
         /*if (m_parameters["is_ale"].GetBool())
@@ -192,9 +195,29 @@ class RotateRegionProcess : public Process
         KRATOS_CATCH("");
     }
 
+    void ExecuteFinalizeSolutionStep() override
+    {
+        ProcessInfoPointerType info = mr_model_part.pGetProcessInfo();
+
+        int domain_size = (*info)[DOMAIN_SIZE];
+
+        ModelPart &sub_model_part = mr_model_part.GetSubModelPart(m_sub_model_part_name);
+#pragma omp parallel for
+        for (NodeIteratorType node = sub_model_part.NodesBegin(); node < sub_model_part.NodesEnd(); node++)
+        {
+
+            if (m_parameters["is_ale"].GetBool())
+            {
+                node->FastGetSolutionStepValue(MESH_VELOCITY_X, 0) = 0.0;
+                node->FastGetSolutionStepValue(MESH_VELOCITY_Y, 0) = 0.0;
+                if (domain_size > 2)
+                    node->FastGetSolutionStepValue(MESH_VELOCITY_Z, 0) = 0.0;
+            }
+        }
+    }
+
     void ExecuteAfterOutputStep() override
     {
-        
     }
 
     virtual std::string Info() const override
@@ -332,7 +355,7 @@ class RotateRegionProcess : public Process
 
         p[0] -= mCenterOfRotation[0];
         p[1] -= mCenterOfRotation[1];
-        p[2] -= mCenterOfRotation[2];        
+        p[2] -= mCenterOfRotation[2];
 
         q[0] += (costheta + (1 - costheta) * r[0] * r[0]) * p[0];
         q[0] += ((1 - costheta) * r[0] * r[1] - r[2] * sintheta) * p[1];
@@ -348,13 +371,12 @@ class RotateRegionProcess : public Process
 
         q[0] += mCenterOfRotation[0];
         q[1] += mCenterOfRotation[1];
-        q[2] += mCenterOfRotation[2];       
+        q[2] += mCenterOfRotation[2];
 
         return (q);
     }
 
 }; // Class MoveRotorProcess
-
 }; // namespace Kratos.
 
 #endif // KRATOS_MOVE_ROTOR_PROCESS_H

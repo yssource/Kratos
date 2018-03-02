@@ -252,14 +252,15 @@ class CustomCalculateSignedDistanceProcess
 			// From Core ?? Improve performance and algorithm based on CalculateSignedDistanceToSkinProcess
 			std::cout << "Inside the distance function" << std::endl;
 			p3DSignedDistanceCalculator = CalculateSignedDistanceTo3DConditionSkinProcess::Pointer(new CalculateSignedDistanceTo3DConditionSkinProcess(patchBoundaryModelPart, toBackgroundModelPart));
+		
 			std::cout << "Distance calculation initialised" << std::endl;
-			//p3DSignedDistanceCalculator->Execute();
+			p3DSignedDistanceCalculator->Execute();
 			std::cout << "Distance calculations finished" << std::endl;
 		}
 
 		unsigned int max_level = 100;
 		double max_distance = 200;
-
+//nav
 		pDistanceCalculator->CalculateDistances(toBackgroundModelPart, DISTANCE, NODAL_AREA, max_level, max_distance);
 	}
 

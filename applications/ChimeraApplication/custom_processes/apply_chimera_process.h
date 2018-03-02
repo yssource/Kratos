@@ -98,6 +98,7 @@ class ApplyChimeraProcess : public Process
 	typedef MpcData::VariableComponentType VariableComponentType;
 	typedef unsigned int IndexType;
 	typedef MpcData::VariableType VariableType;
+	typedef Node<3> NodeType;
 
 	///@}
 	///@name Life Cycle
@@ -121,7 +122,7 @@ class ApplyChimeraProcess : public Process
 									"type" : "nearest_element",
 									"IsWeak" : true
                                   },
-
+					"pressure_coupling_node" : 0.0,			  
                     "patch_boundary_model_part_name":"GENERIC_patchBoundary",
                     "overlap_distance":0.045
             })");
@@ -184,7 +185,7 @@ class ApplyChimeraProcess : public Process
 	{
 		pMpcBackground->Clear();
 		pMpcPatch->Clear();
-		std::cout<<"Chimera process is cleared"<<std::endl;
+		std::cout << "Chimera process is cleared" << std::endl;
 	}
 
 	void ExecuteBeforeSolutionLoop() override
@@ -202,9 +203,11 @@ class ApplyChimeraProcess : public Process
 
 	void ExecuteFinalizeSolutionStep() override
 	{
-		
+
 		Clear();
-		
+		//for multipatch
+		for (ModelPart::ElementsContainerType::iterator it = mrMainModelPart.ElementsBegin(); it != mrMainModelPart.ElementsEnd(); ++it)
+			it->Set(VISITED, false);
 	}
 
 	void ExecuteBeforeOutputStep() override
@@ -314,8 +317,21 @@ class ApplyChimeraProcess : public Process
 		if (pressure_coupling == "one")
 		{
 
-			ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin();
-			Node<3>::Pointer p_boundary_node = *(iparticle.base());
+			Node<3>::Pointer p_boundary_node;
+			if (m_parameters["pressure_coupling_node"].GetDouble() == 0.0)
+			{
+
+				ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin();
+				p_boundary_node = *(iparticle.base());
+			}
+
+			else
+			{
+				unsigned int node_num = m_parameters["pressure_coupling_node"].GetDouble();
+
+				p_boundary_node = rBoundaryModelPart.pGetNode(node_num);
+			}
+
 			typename BinBasedFastPointLocator<TDim>::ResultIteratorType result_begin = results.begin();
 
 			Element::Pointer pElement;
@@ -342,8 +358,8 @@ class ApplyChimeraProcess : public Process
 			// Setting the buffer 1 same buffer 0
 			p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(1) = p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0);
 
-			std::cout<<"Coordinates of node that are pressure coupled"<<std::endl;
-			std::cout<<p_boundary_node->X()<<","<<p_boundary_node->Y()<<","<<p_boundary_node->Z()<<std::endl;
+			std::cout << "Coordinates of node that are pressure coupled" << std::endl;
+			std::cout << p_boundary_node->X() << "," << p_boundary_node->Y() << "," << p_boundary_node->Z() << std::endl;
 
 		} // end of if (pressure_coupling == "one")
 
@@ -379,9 +395,13 @@ class ApplyChimeraProcess : public Process
 			}
 
 			AddNodalNormalSlaveRelationWithDofs(pMpc, inode->GetDof(PRESSURE), 0);
-
-			SetRtMinvR(pMpc, rtMinvR);
 		}
+
+		SetRtMinvR(pMpc, rtMinvR);
+		std::cout << "RtMRinv of " << rBoundaryModelPart.Name() << rtMinvR << std::endl;
+
+		CalculateConservativeCorrections(mrMainModelPart, pMpc);
+		ApplyConservativeCorrections(mrMainModelPart, pMpc);
 	}
 
 	//Apply Chimera with or without overlap
@@ -396,7 +416,8 @@ class ApplyChimeraProcess : public Process
 
 		for (ModelPart::ElementsContainerType::iterator it = mrMainModelPart.ElementsBegin(); it != mrMainModelPart.ElementsEnd(); ++it)
 		{
-			it->Set(ACTIVE, true);
+			if (!it->Is(VISITED)) //for multipatch
+				it->Set(ACTIVE, true);
 		}
 
 		const double epsilon = 1e-12;
@@ -414,6 +435,10 @@ class ApplyChimeraProcess : public Process
 
 			this->pCalculateDistanceProcess->CalculateSignedDistance(rBackgroundModelPart, rPatchBoundaryModelPart);
 			this->pHoleCuttingProcess->CreateHoleAfterDistance(rBackgroundModelPart, *pHoleModelPart, *pHoleBoundaryModelPart, m_overlap_distance);
+
+			//for multipatch
+			for (ModelPart::ElementsContainerType::iterator it = pHoleModelPart->ElementsBegin(); it != pHoleModelPart->ElementsEnd(); ++it)
+				it->Set(VISITED, true);
 
 			CalculateNodalAreaAndNodalMass(rPatchBoundaryModelPart, 1);
 			CalculateNodalAreaAndNodalMass(*pHoleBoundaryModelPart, -1);
@@ -469,14 +494,12 @@ class ApplyChimeraProcess : public Process
 			{
 				this->m_type_patch = type;
 				pMpcPatch->SetType(this->m_type_patch);
-				
 			}
 
 			else if (model_part_string == "background")
 			{
 				this->m_type_background = type;
-				 pMpcBackground->SetType(this->m_type_background);
-				
+				pMpcBackground->SetType(this->m_type_background);
 			}
 
 			else
@@ -619,6 +642,94 @@ class ApplyChimeraProcess : public Process
 
 		normal = normal * sign;
 		// 				noalias((it)->GetValue(NORMAL)) = An;
+	}
+
+	void CalculateConservativeCorrections(ModelPart &r_model_part, MpcDataPointerType pMpc)
+	{
+
+		double nodalMass;
+		unsigned int slaveNodeId;
+		unsigned int slaveNodeIdOther;
+		unsigned int slaveDofKey;
+		unsigned int slaveDofKeyOther;
+		double slaveDofValueOther;
+		SlavePairType slaveDofMap;
+		SlavePairType slaveDofMapOther;
+		double RtMinvR = pMpc->RtMinvR;
+		double NodalNormalComponent;
+		double NodalNormalComponentOther;
+		//std::cout << " RtMinvR " << RtMinvR << std::endl;
+		std::vector<double> VectorOfconstants;
+		unsigned int slaveIndex = 0;
+
+		for (auto slaveMasterDofMap : pMpc->mDofConstraints)
+		{
+			slaveDofMap = slaveMasterDofMap.first;
+			slaveNodeId = slaveDofMap.first;
+			slaveDofKey = slaveDofMap.second;
+			Node<3> &slaveNode = r_model_part.Nodes()[slaveNodeId];
+			Node<3>::DofsContainerType::iterator idof = slaveNode.GetDofs().find(slaveDofKey);
+			nodalMass = slaveNode.FastGetSolutionStepValue(NODAL_MASS);
+			NodalNormalComponent = pMpc->mSlaveDofToNodalNormalMap[slaveDofMap];
+			VectorOfconstants.push_back(0.0);
+			for (auto slaveMasterDofMapOther : pMpc->mDofConstraints)
+			{
+
+				slaveDofMapOther = slaveMasterDofMapOther.first;
+				slaveNodeIdOther = slaveDofMapOther.first;
+				slaveDofKeyOther = slaveDofMapOther.second;
+				Node<3> &slaveNodeOther = r_model_part.Nodes()[slaveNodeIdOther];
+				Node<3>::DofsContainerType::iterator idofOther = slaveNodeOther.GetDofs().find(slaveDofKeyOther);
+				slaveDofValueOther = idofOther->GetSolutionStepValue();
+				NodalNormalComponentOther = pMpc->mSlaveDofToNodalNormalMap[slaveDofMapOther];
+				VectorOfconstants[slaveIndex] -= ((NodalNormalComponent * NodalNormalComponentOther) / (nodalMass * RtMinvR)) * slaveDofValueOther; // correction for zero flux
+
+			} // slaveMasterDofMapOher loop
+
+			slaveIndex++;
+
+		} // slaveMasterDofMap loop
+
+		slaveIndex = 0;
+
+		//Applying correction in the slaveDofValue
+		for (auto slaveMasterDofMap : pMpc->mDofConstraints)
+		{
+
+			slaveDofMap = slaveMasterDofMap.first;
+			slaveNodeId = slaveDofMap.first;
+			slaveDofKey = slaveDofMap.second;
+			Node<3> &slaveNode = r_model_part.Nodes()[slaveNodeId];
+			Node<3>::DofsContainerType::iterator idof = slaveNode.GetDofs().find(slaveDofKey);
+			unsigned int slaveEquationId = idof->EquationId();
+
+			pMpc->mSlaveEquationIdConstantsMap[slaveEquationId] = VectorOfconstants[slaveIndex];
+
+			slaveIndex++;
+
+		} // slaveMasterDofMap loop
+
+		//std::cout << "Conservative correction to the velocity field applied" << std::endl;
+		std::cout << "Conservative Correction of " << pMpc->mName << " is calculated" << std::endl;
+	}
+
+	void ApplyConservativeCorrections(ModelPart &r_model_part, MpcDataPointerType pMpc)
+	{
+
+		for (auto slaveMasterDofMap : pMpc->mDofConstraints)
+		{
+			SlavePairType slaveDofMap = slaveMasterDofMap.first;
+			unsigned int slaveNodeId = slaveDofMap.first;
+			unsigned int slaveDofKey = slaveDofMap.second;
+			NodeType &node = r_model_part.Nodes()[slaveNodeId];
+			Node<3>::DofsContainerType::iterator it = node.GetDofs().find(slaveDofKey);
+			unsigned int slaveEquationId = it->EquationId();
+
+			it->GetSolutionStepValue(0) += pMpc->mSlaveEquationIdConstantsMap[slaveEquationId];
+			it->GetSolutionStepValue(1) += pMpc->mSlaveEquationIdConstantsMap[slaveEquationId];
+		}
+
+		std::cout << "Conservative Correction of " << pMpc->mName << " is applied" << std::endl;
 	}
 
 	// Functions which use two variable components

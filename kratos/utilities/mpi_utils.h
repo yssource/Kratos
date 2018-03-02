@@ -1,10 +1,34 @@
+//    |  /           |
+//    ' /   __| _` | __|  _ \   __|
+//    . \  |   (   | |   (   |\__ `
+//   _|\_\_|  \__,_|\__|\___/ ____/
+//                   Multi-Physics 
+//
+//  License:		 BSD License 
+//					 Kratos default license: kratos/license.txt
+//
+//  Main authors:    Carlos A. Roig
+//                    
+//
+
+#pragma once
+
+// System includes
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <cstddef>
+
+// External includes
 #include "mpi.h"
-#include "includes/excpetion.h"
+
+// Project includes
+#include "includes/exception.h"
 
 namespace Kratos {
 
 class MpiUtils {
-
+public:
     static void HandleError(int mpi_erno) {
         if(mpi_erno != MPI_SUCCESS) {
             char estring[MPI_MAX_ERROR_STRING];

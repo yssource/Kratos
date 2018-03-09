@@ -38,7 +38,6 @@
 #include "../reconstruction_conditions/reconstruction_constraint_rotation_coupling.h"
 #include "../reconstruction_conditions/reconstruction_constraint_zero_displacement.h"
 #include "../reconstruction_conditions/reconstruction_constraint_rotation_target.h"
-#include "../reconstruction_conditions/reconstruction_constraint_tangent_enforcement.h"
 #include "../reconstruction_conditions/regularization_condition_min_control_point_displacement.h"
 #include "../reconstruction_conditions/regularization_condition_min_control_point_distance_to_surface.h"
 
@@ -248,17 +247,10 @@ public:
             {
                 unsigned int edge_id_corresponding_to_brep_element_i = brep_element_i.GetEdgeId();
 
-                // Skip current rotation coupling if for this edge tangent continuity shall be enforced using the two different options
-                bool has_edge_enforced_tangent_constraint = (std::find(mListOfEdgeIdsWithTangentContinuity.begin(), mListOfEdgeIdsWithTangentContinuity.end(), edge_id_corresponding_to_brep_element_i) != mListOfEdgeIdsWithTangentContinuity.end());
-                bool is_tangent_constraint_set = mrReconstructionParameters["solution_parameters"]["constraints"]["set_constraint_to_enforce_tangent_continuity"].GetBool();
+                // Skip current rotation coupling if for this edge tangent continuity shall be enforced
                 bool has_edge_target_rotation = (std::find(mListOfEdgeIdsWithTargetRotation.begin(), mListOfEdgeIdsWithTargetRotation.end(), edge_id_corresponding_to_brep_element_i) != mListOfEdgeIdsWithTargetRotation.end());
                 bool is_rotation_target_set = mrReconstructionParameters["solution_parameters"]["constraints"]["set_rotation_target_to_enforce_tangent_continuity"].GetBool();
-                if( is_tangent_constraint_set && has_edge_enforced_tangent_constraint )
-                {
-                    std::cout << "> Skipping brep_element on the following edge in the rotation coupling since tangent continuity shall be enforced here: " << edge_id_corresponding_to_brep_element_i << std::endl;
-                    continue;
-                }
-                else if( is_rotation_target_set && has_edge_target_rotation )
+                if( is_rotation_target_set && has_edge_target_rotation )
                 {
                     std::cout << "> Skipping brep_element on the following edge in the rotation coupling since a target rotation shall be enforced here: " << edge_id_corresponding_to_brep_element_i << std::endl;
                     continue;
@@ -350,45 +342,6 @@ public:
             }
         }
         std::cout << "> Time needed for creating rotation constraints: " << timer.elapsed() << " s" << std::endl;
-    }
-
-    // --------------------------------------------------------------------------
-    void CreateTangentContinuityConditions( Parameters& rListOfEdgeIds )
-    {
-        std::cout << "\n> Starting to create tangenent enforcement constraints..." << std::endl;
-        boost::timer timer;
-
-        double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_tangent_continuity_constraints"].GetDouble();
-        ReconstructionConstraint::Pointer NewConstraint;
-
-        for(unsigned int index=0; index<rListOfEdgeIds.size(); index++)
-            mListOfEdgeIdsWithTangentContinuity.push_back(rListOfEdgeIds.GetArrayItem(index).GetInt());
-
-        BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
-        for(auto & brep_element_i : brep_elements_vector)
-        {
-            unsigned int edge_id_corresponding_to_brep_element_i = brep_element_i.GetEdgeId();
-
-            if( std::find(mListOfEdgeIdsWithTangentContinuity.begin(), mListOfEdgeIdsWithTangentContinuity.end(), edge_id_corresponding_to_brep_element_i) != mListOfEdgeIdsWithTangentContinuity.end())
-            {
-                BREPGaussPointVector& coupling_gauss_points = brep_element_i.GetGaussPoints();
-                for(auto & gauss_point_i : coupling_gauss_points)
-                {
-                    unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
-                    Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
-
-                    unsigned int slave_patch_id = gauss_point_i.GetSlavePatchId();
-                    Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );
-
-                    NewConstraint = ReconstructionConstraint::Pointer( new TangentEnforcementConstraint( gauss_point_i,
-                                                                                                            master_patch,
-                                                                                                            slave_patch,
-                                                                                                            penalty_factor ));
-                    mListOfReconstructionConstraints.push_back( NewConstraint );
-                }
-            }
-        }
-        std::cout << "> Time needed for creating tangenent enforcement constraints: " << timer.elapsed() << " s" << std::endl;
     }
 
     // --------------------------------------------------------------------------
@@ -518,7 +471,6 @@ private:
     std::vector<ReconstructionConstraint::Pointer> mListOfReconstructionConstraints;
     std::vector<RegularizationCondition::Pointer> mListOfRegularizationConditions;
     std::vector<int> mListOfEdgeIdsWithTargetRotation;
-    std::vector<int> mListOfEdgeIdsWithTangentContinuity;
 
     ///@}
     ///@name Private Operators

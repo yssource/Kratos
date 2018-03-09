@@ -148,14 +148,12 @@ class CADReconstrutionUtilities():
 
         # Reconstruction constraints
         constraint_parameters = self.Parameters["solution_parameters"]["constraints"]
-        if constraint_parameters["set_constraint_to_enforce_tangent_continuity"].GetBool():
-            self.ConditionsContainer.CreateTangentContinuityConditions( constraint_parameters["list_of_edge_ids_with_tangent_constraints"] )
         if constraint_parameters["set_rotation_target_to_enforce_tangent_continuity"].GetBool():
             self.ConditionsContainer.CreateRotationTargetConstraints( constraint_parameters["list_of_edge_ids_with_rotation_target"] )
         if constraint_parameters["set_displacement_coupling_on_all_coupling_points"].GetBool():
             self.ConditionsContainer.CreateDisplacementCouplingConstraintsOnAllCouplingPoints()
         if constraint_parameters["set_rotation_coupling_on_all_coupling_points"].GetBool():
-            self.ConditionsContainer.CreateRotationCouplingConstraintsOnAllCouplingPoints( constraint_parameters["list_of_edge_ids_with_tangent_constraints"] )
+            self.ConditionsContainer.CreateRotationCouplingConstraintsOnAllCouplingPoints()
         if constraint_parameters["set_zero_displacement_on_all_dirichlet_points"].GetBool():
             self.ConditionsContainer.CreateZeroDisplacementConditionsOnAllDirichletPoints()
 

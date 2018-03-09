@@ -37,6 +37,7 @@
 #include "../reconstruction_conditions/reconstruction_constraint_displacement_coupling.h"
 #include "../reconstruction_conditions/reconstruction_constraint_rotation_coupling.h"
 #include "../reconstruction_conditions/reconstruction_constraint_zero_displacement.h"
+#include "../reconstruction_conditions/reconstruction_constraint_rotation_target.h"
 #include "../reconstruction_conditions/reconstruction_constraint_tangent_enforcement.h"
 #include "../reconstruction_conditions/regularization_condition_min_control_point_displacement.h"
 #include "../reconstruction_conditions/regularization_condition_min_control_point_distance_to_surface.h"
@@ -77,12 +78,12 @@ public:
     ///@{
 
     typedef Node<3> NodeType;
-    typedef std::vector<NodeType::Pointer> NodeVector;   
+    typedef std::vector<NodeType::Pointer> NodeVector;
     typedef std::vector<Patch> PatchVector;
     typedef std::vector<BREPElement> BREPElementVector;
-    typedef std::vector<BREPGaussPoint> BREPGaussPointVector;    
-    typedef Element::GeometryType::IntegrationMethod IntegrationMethodType;    
-        
+    typedef std::vector<BREPGaussPoint> BREPGaussPointVector;
+    typedef Element::GeometryType::IntegrationMethod IntegrationMethodType;
+
     /// Pointer definition of ReconstructionConditionContainer
     KRATOS_CLASS_POINTER_DEFINITION(ReconstructionConditionContainer);
 
@@ -93,7 +94,7 @@ public:
     /// Default constructor.
     ReconstructionConditionContainer( ReconstructionDataBase& reconstruction_data_base, Parameters& reconstruction_parameters )
     : mrReconstructionDataBase( reconstruction_data_base ),
-      mrReconstructionParameters( reconstruction_parameters )    
+      mrReconstructionParameters( reconstruction_parameters )
     {
     }
 
@@ -117,7 +118,7 @@ public:
 
         PatchVector& patch_vector = mrReconstructionDataBase.GetPatchVector();
         ModelPart& fe_model_part = mrReconstructionDataBase.GetFEModelPart();
-        
+
         IntegrationMethodType fem_integration_method = GeometryData::GI_GAUSS_5;
         int integration_degree = mrReconstructionParameters["solution_parameters"]["strategy_specifc_parameters"]["fem_gauss_integration_degree"].GetInt();
         switch(integration_degree)
@@ -128,15 +129,15 @@ public:
             case 4 : fem_integration_method = GeometryData::GI_GAUSS_4; break;
             case 5 : fem_integration_method = GeometryData::GI_GAUSS_5; break;
         }
-        
+
         CADProjectionUtility FE2CADProjector( patch_vector, mrReconstructionParameters["solution_parameters"]["projection_parameters"] );
         FE2CADProjector.Initialize();
-        
+
         std::cout << "> Starting to create a condition for every integration point..." << std::endl;
-        boost::timer timer;   
-        
+        boost::timer timer;
+
         ReconstructionCondition::Pointer NewCondition;
-        
+
         for (auto & elem_i : fe_model_part.Elements())
         {
             Element::GeometryType& geom_i = elem_i.GetGeometry();
@@ -161,8 +162,8 @@ public:
                 mListOfReconstructionConditions.push_back( NewCondition );
             }
         }
-        std::cout << "> Time needed for looping over integration points: " << timer.elapsed() << " s" << std::endl;            
-        std::cout << "> Finished creating displacement mapping conditions: " << std::endl;      
+        std::cout << "> Time needed for looping over integration points: " << timer.elapsed() << " s" << std::endl;
+        std::cout << "> Finished creating displacement mapping conditions: " << std::endl;
     }
 
     // --------------------------------------------------------------------------
@@ -172,15 +173,15 @@ public:
 
         PatchVector& patch_vector = mrReconstructionDataBase.GetPatchVector();
         ModelPart& fe_model_part = mrReconstructionDataBase.GetFEModelPart();
-                
+
         CADProjectionUtility FE2CADProjector( patch_vector, mrReconstructionParameters["solution_parameters"]["projection_parameters"] );
         FE2CADProjector.Initialize();
-        
+
         std::cout << "> Starting to create a condition for every fem point..." << std::endl;
-        boost::timer timer;   
-        
+        boost::timer timer;
+
         ReconstructionCondition::Pointer NewCondition;
-        
+
         for (auto & node_i : fe_model_part.Nodes())
         {
             array_1d<double,2> parameter_values_of_nearest_point;
@@ -193,18 +194,18 @@ public:
                                                                                                 parameter_values_of_nearest_point ));
             mListOfReconstructionConditions.push_back( NewCondition );
         }
-        std::cout << "> Time needed for looping over fem points: " << timer.elapsed() << " s" << std::endl;            
-        std::cout << "> Finished creating distance minimization mapping conditions: " << std::endl;      
-    }    
+        std::cout << "> Time needed for looping over fem points: " << timer.elapsed() << " s" << std::endl;
+        std::cout << "> Finished creating distance minimization mapping conditions: " << std::endl;
+    }
 
     // --------------------------------------------------------------------------
     void CreateDisplacementCouplingConstraintsOnAllCouplingPoints()
     {
         std::cout << "\n> Starting to create displacement coupling constraints..." << std::endl;
-        boost::timer timer;   
-        
+        boost::timer timer;
+
         ReconstructionConstraint::Pointer NewConstraint;
-        double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_displacement_coupling"].GetDouble();        
+        double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_displacement_coupling"].GetDouble();
 
         BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
         for(auto & brep_element_i : brep_elements_vector)
@@ -216,10 +217,10 @@ public:
                 {
                     unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
                     Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
-        
+
                     unsigned int slave_patch_id = gauss_point_i.GetSlavePatchId();
-                    Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );                
-                    
+                    Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );
+
                     NewConstraint = ReconstructionConstraint::Pointer( new DisplacementCouplingConstraint( gauss_point_i,
                                                                                                             master_patch,
                                                                                                             slave_patch,
@@ -228,19 +229,15 @@ public:
                 }
             }
         }
-        std::cout << "> Time needed for creating displacement constraints: " << timer.elapsed() << " s" << std::endl;              
+        std::cout << "> Time needed for creating displacement constraints: " << timer.elapsed() << " s" << std::endl;
     }
 
     // --------------------------------------------------------------------------
-    void CreateRotationCouplingConstraintsOnAllCouplingPoints( Parameters& rListOfEdgeIdsWithEnforcedTangent )
+    void CreateRotationCouplingConstraintsOnAllCouplingPoints()
     {
         std::cout << "\n> Starting to create rotation coupling constraints..." << std::endl;
         boost::timer timer;
 
-        std::vector<int> list_of_ids_of_edges_with_enforced_tangent;
-        for(unsigned int index=0; index<rListOfEdgeIdsWithEnforcedTangent.size(); index++)
-            list_of_ids_of_edges_with_enforced_tangent.push_back(rListOfEdgeIdsWithEnforcedTangent.GetArrayItem(index).GetInt());  
-                   
         double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_rotation_coupling"].GetDouble();
         ReconstructionConstraint::Pointer NewConstraint;
 
@@ -251,12 +248,19 @@ public:
             {
                 unsigned int edge_id_corresponding_to_brep_element_i = brep_element_i.GetEdgeId();
 
-                // Skip current rotation coupling if for this edge tangent continuity shall be enforced
-                bool has_edge_enforced_tangent_constraint = (std::find(list_of_ids_of_edges_with_enforced_tangent.begin(), list_of_ids_of_edges_with_enforced_tangent.end(), edge_id_corresponding_to_brep_element_i) != list_of_ids_of_edges_with_enforced_tangent.end());
-                bool is_tangent_constraint_set = mrReconstructionParameters["solution_parameters"]["constraints"]["set_constraint_to_enforce_tangent_continuity"].GetBool();        
+                // Skip current rotation coupling if for this edge tangent continuity shall be enforced using the two different options
+                bool has_edge_enforced_tangent_constraint = (std::find(mListOfEdgeIdsWithTangentContinuity.begin(), mListOfEdgeIdsWithTangentContinuity.end(), edge_id_corresponding_to_brep_element_i) != mListOfEdgeIdsWithTangentContinuity.end());
+                bool is_tangent_constraint_set = mrReconstructionParameters["solution_parameters"]["constraints"]["set_constraint_to_enforce_tangent_continuity"].GetBool();
+                bool has_edge_target_rotation = (std::find(mListOfEdgeIdsWithTargetRotation.begin(), mListOfEdgeIdsWithTargetRotation.end(), edge_id_corresponding_to_brep_element_i) != mListOfEdgeIdsWithTargetRotation.end());
+                bool is_rotation_target_set = mrReconstructionParameters["solution_parameters"]["constraints"]["set_rotation_target_to_enforce_tangent_continuity"].GetBool();
                 if( is_tangent_constraint_set && has_edge_enforced_tangent_constraint )
                 {
                     std::cout << "> Skipping brep_element on the following edge in the rotation coupling since tangent continuity shall be enforced here: " << edge_id_corresponding_to_brep_element_i << std::endl;
+                    continue;
+                }
+                else if( is_rotation_target_set && has_edge_target_rotation )
+                {
+                    std::cout << "> Skipping brep_element on the following edge in the rotation coupling since a target rotation shall be enforced here: " << edge_id_corresponding_to_brep_element_i << std::endl;
                     continue;
                 }
 
@@ -265,10 +269,10 @@ public:
                 {
                     unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
                     Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
-        
+
                     unsigned int slave_patch_id = gauss_point_i.GetSlavePatchId();
-                    Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );                
-                    
+                    Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );
+
                     NewConstraint = ReconstructionConstraint::Pointer( new RotationCouplingConstraint( gauss_point_i,
                                                                                                         master_patch,
                                                                                                         slave_patch,
@@ -277,17 +281,17 @@ public:
                 }
             }
         }
-        std::cout << "> Time needed for creating rotation constraints: " << timer.elapsed() << " s" << std::endl;              
-    }    
+        std::cout << "> Time needed for creating rotation constraints: " << timer.elapsed() << " s" << std::endl;
+    }
 
     // --------------------------------------------------------------------------
     void CreateZeroDisplacementConditionsOnAllDirichletPoints()
     {
         std::cout << "\n> Starting to create zero displacement constraints..." << std::endl;
-        boost::timer timer;   
-        
+        boost::timer timer;
+
         ReconstructionConstraint::Pointer NewConstraint;
-        double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_zero_displacement_points"].GetDouble();        
+        double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_zero_displacement_points"].GetDouble();
 
         BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
         for(auto & brep_element_i : brep_elements_vector)
@@ -298,45 +302,84 @@ public:
                 for(auto & gauss_point_i : coupling_gauss_points)
                 {
                     unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
-                    Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );          
-                    
+                    Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
+
                     NewConstraint = ReconstructionConstraint::Pointer( new ZeroDisplacementConstraint( gauss_point_i, master_patch, penalty_factor ));
                     mListOfReconstructionConstraints.push_back( NewConstraint );
                 }
             }
         }
-        std::cout << "> Time needed for creating zero displacement constraints: " << timer.elapsed() << " s" << std::endl; 
+        std::cout << "> Time needed for creating zero displacement constraints: " << timer.elapsed() << " s" << std::endl;
     }
 
     // --------------------------------------------------------------------------
-    void CreateTangentContinuityConditions( Parameters& rListOfEdgeIds )
+    void CreateRotationTargetConstraints( Parameters& rListOfEdgeIds )
     {
-        std::cout << "\n> Starting to create tangenent enforcement constraints..." << std::endl;
-        boost::timer timer;   
-        
-        double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_tangent_continuity_constraints"].GetDouble();
-        ReconstructionConstraint::Pointer NewConstraint;
+        std::cout << "\n> Starting to create rotation coupling constraints..." << std::endl;
+        boost::timer timer;
 
-        std::vector<int> list_of_edge_ids;
         for(unsigned int index=0; index<rListOfEdgeIds.size(); index++)
-            list_of_edge_ids.push_back(rListOfEdgeIds.GetArrayItem(index).GetInt());
+            mListOfEdgeIdsWithTargetRotation.push_back(rListOfEdgeIds.GetArrayItem(index).GetInt());
+
+        double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_edge_with_rotation_target"].GetDouble();
+        ReconstructionConstraint::Pointer NewConstraint;
 
         BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
         for(auto & brep_element_i : brep_elements_vector)
         {
             unsigned int edge_id_corresponding_to_brep_element_i = brep_element_i.GetEdgeId();
 
-            if( std::find(list_of_edge_ids.begin(), list_of_edge_ids.end(), edge_id_corresponding_to_brep_element_i) != list_of_edge_ids.end())
+            if( std::find(mListOfEdgeIdsWithTargetRotation.begin(), mListOfEdgeIdsWithTargetRotation.end(), edge_id_corresponding_to_brep_element_i) != mListOfEdgeIdsWithTargetRotation.end())
+            {
+
+                BREPGaussPointVector& coupling_gauss_points = brep_element_i.GetGaussPoints();
+                for(auto & gauss_point_i : coupling_gauss_points)
+                {
+                    unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
+                    Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
+
+                    unsigned int slave_patch_id = gauss_point_i.GetSlavePatchId();
+                    Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );
+
+                    NewConstraint = ReconstructionConstraint::Pointer( new RotationTargetConstraint( gauss_point_i,
+                                                                                                     master_patch,
+                                                                                                     slave_patch,
+                                                                                                     penalty_factor ));
+                    mListOfReconstructionConstraints.push_back( NewConstraint );
+                }
+            }
+        }
+        std::cout << "> Time needed for creating rotation constraints: " << timer.elapsed() << " s" << std::endl;
+    }
+
+    // --------------------------------------------------------------------------
+    void CreateTangentContinuityConditions( Parameters& rListOfEdgeIds )
+    {
+        std::cout << "\n> Starting to create tangenent enforcement constraints..." << std::endl;
+        boost::timer timer;
+
+        double penalty_factor = mrReconstructionParameters["solution_parameters"]["constraints"]["penalty_factor_for_tangent_continuity_constraints"].GetDouble();
+        ReconstructionConstraint::Pointer NewConstraint;
+
+        for(unsigned int index=0; index<rListOfEdgeIds.size(); index++)
+            mListOfEdgeIdsWithTangentContinuity.push_back(rListOfEdgeIds.GetArrayItem(index).GetInt());
+
+        BREPElementVector& brep_elements_vector = mrReconstructionDataBase.GetBREPElements();
+        for(auto & brep_element_i : brep_elements_vector)
+        {
+            unsigned int edge_id_corresponding_to_brep_element_i = brep_element_i.GetEdgeId();
+
+            if( std::find(mListOfEdgeIdsWithTangentContinuity.begin(), mListOfEdgeIdsWithTangentContinuity.end(), edge_id_corresponding_to_brep_element_i) != mListOfEdgeIdsWithTangentContinuity.end())
             {
                 BREPGaussPointVector& coupling_gauss_points = brep_element_i.GetGaussPoints();
                 for(auto & gauss_point_i : coupling_gauss_points)
                 {
                     unsigned int master_patch_id = gauss_point_i.GetMasterPatchId();
                     Patch& master_patch = mrReconstructionDataBase.GetPatchFromPatchId( master_patch_id );
-        
+
                     unsigned int slave_patch_id = gauss_point_i.GetSlavePatchId();
-                    Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );                
-                    
+                    Patch& slave_patch = mrReconstructionDataBase.GetPatchFromPatchId( slave_patch_id );
+
                     NewConstraint = ReconstructionConstraint::Pointer( new TangentEnforcementConstraint( gauss_point_i,
                                                                                                             master_patch,
                                                                                                             slave_patch,
@@ -345,28 +388,28 @@ public:
                 }
             }
         }
-        std::cout << "> Time needed for creating tangenent enforcement constraints: " << timer.elapsed() << " s" << std::endl;             
-    }    
-    
+        std::cout << "> Time needed for creating tangenent enforcement constraints: " << timer.elapsed() << " s" << std::endl;
+    }
+
     // --------------------------------------------------------------------------
     void CreateMinimalControlPointDisplacementCondition()
     {
         std::cout << "\n> Starting to create beta-regularization condition (minimal control point displacement)..." << std::endl;
-        
+
         RegularizationCondition::Pointer NewCondition = RegularizationCondition::Pointer( new MinimalControlPointDisplacementCondition( mrReconstructionDataBase, mrReconstructionParameters ) );
         mListOfRegularizationConditions.push_back( NewCondition );
-        std::cout << "> Finished creating beta-regularization condition (minimal control point displacement)." << std::endl;                      
-    }     
+        std::cout << "> Finished creating beta-regularization condition (minimal control point displacement)." << std::endl;
+    }
 
     // --------------------------------------------------------------------------
     void CreateMinimalControlPointDistanceToSurfaceCondition()
     {
         std::cout << "\n> Starting to create alpha-regularization condition (minimal control point distance to surface)..." << std::endl;
-        
+
         RegularizationCondition::Pointer NewCondition = RegularizationCondition::Pointer( new MinimalControlPointDistanceToSurfaceCondition( mrReconstructionDataBase, mrReconstructionParameters ) );
         mListOfRegularizationConditions.push_back( NewCondition );
-        std::cout << "> Finished creating alpha-regularization condition (minimal control point distance to surface)." << std::endl;                  
-    }     
+        std::cout << "> Finished creating alpha-regularization condition (minimal control point distance to surface)." << std::endl;
+    }
 
 
     // --------------------------------------------------------------------------
@@ -379,13 +422,13 @@ public:
     std::vector<ReconstructionConstraint::Pointer>& GetReconstructionConstraints()
     {
         return mListOfReconstructionConstraints;
-    }    
+    }
 
     // --------------------------------------------------------------------------
     std::vector<RegularizationCondition::Pointer>& GetRegularizationConditions()
     {
         return mListOfRegularizationConditions;
-    }      
+    }
 
     // ==============================================================================
 
@@ -467,14 +510,15 @@ private:
     // ==============================================================================
     ReconstructionDataBase& mrReconstructionDataBase;
     Parameters& mrReconstructionParameters;
-    
+
     // ==============================================================================
     // Additional variables
     // ==============================================================================
     std::vector<ReconstructionCondition::Pointer> mListOfReconstructionConditions;
     std::vector<ReconstructionConstraint::Pointer> mListOfReconstructionConstraints;
-    std::vector<RegularizationCondition::Pointer> mListOfRegularizationConditions;    
-    
+    std::vector<RegularizationCondition::Pointer> mListOfRegularizationConditions;
+    std::vector<int> mListOfEdgeIdsWithTargetRotation;
+    std::vector<int> mListOfEdgeIdsWithTangentContinuity;
 
     ///@}
     ///@name Private Operators

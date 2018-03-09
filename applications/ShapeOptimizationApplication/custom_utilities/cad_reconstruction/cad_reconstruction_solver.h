@@ -260,7 +260,7 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    void UpdateControlPointsAccordingReconstructionStrategy()
+    void UpdateControlPoints()
     {
         std::cout << "\n> Start updating control points..." << std::endl;
         boost::timer timer;

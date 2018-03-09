@@ -20,6 +20,7 @@
 // ------------------------------------------------------------------------------
 // External includes
 // ------------------------------------------------------------------------------
+#include "utilities/math_utils.h"
 
 // ------------------------------------------------------------------------------
 // Project includes
@@ -103,33 +104,36 @@ public:
     void FlagControlPointsRelevantForReconstruction()
     {
         mrAffectedPatch.FlagAffectedControlPointsForReconstruction(  mParameterSpans, mParmeterValues );
-    }    
-    
+    }
+
     // --------------------------------------------------------------------------
     void Initialize()
     {
-        mIntegrationWeight = mrGeometryContainingThisCondition.IntegrationPoints(mFemIntegrationMethod)[mIntegrationPointNumber].Weight(); 
-        
+        double detJ0 = ComputeJacobian();
+        KRATOS_WATCH(detJ0);
+
+        mIntegrationWeight = mrGeometryContainingThisCondition.IntegrationPoints(mFemIntegrationMethod)[mIntegrationPointNumber].Weight()*detJ0;
+
         mNurbsFunctionValues = mrAffectedPatch.EvaluateNURBSFunctions( mParameterSpans, mParmeterValues );
 
         const Matrix& fem_shape_function_container = mrGeometryContainingThisCondition.ShapeFunctionsValues(mFemIntegrationMethod);
         mFEMFunctionValues = row( fem_shape_function_container, mIntegrationPointNumber);
-        
+
         mAffectedControlPoints = mrAffectedPatch.GetPointersToAffectedControlPoints( mParameterSpans, mParmeterValues );
         mEquationIdsOfAffectedControlPoints = mrAffectedPatch.GetEquationIdsOfAffectedControlPoints( mParameterSpans, mParmeterValues );
-        mNumberOfLocalEquationIds = mEquationIdsOfAffectedControlPoints.size();         
-    }    
-    
+        mNumberOfLocalEquationIds = mEquationIdsOfAffectedControlPoints.size();
+    }
+
     // --------------------------------------------------------------------------
     void ComputeAndAddLHSContribution( CompressedMatrix& LHS ) override
-    {           
+    {
         for(int row_itr=0; row_itr<mNumberOfLocalEquationIds; row_itr++)
         {
             int row_id = mEquationIdsOfAffectedControlPoints[row_itr];
             double R_row = mNurbsFunctionValues[row_itr];
 
             for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquationIds; collumn_itr++)
-            {                
+            {
                 int collumn_id = mEquationIdsOfAffectedControlPoints[collumn_itr];
                 double R_collumn = mNurbsFunctionValues[collumn_itr];
 
@@ -144,7 +148,7 @@ public:
     void ComputeAndAddRHSContribution( Vector& RHS ) override
     {
         int n_affected_fem_nodes =  mrGeometryContainingThisCondition.size();
-        
+
         // Prepare vector of node displacements
         Vector node_displacements = ZeroVector(3*n_affected_fem_nodes);
         for(int itr  = 0; itr<n_affected_fem_nodes; itr++)
@@ -162,31 +166,31 @@ public:
             double R_row = mNurbsFunctionValues[row_itr];
 
             // Computation of -RN*\hat{u_F}
-            Vector cad_fem_contribution = ZeroVector(3);                                
+            Vector cad_fem_contribution = ZeroVector(3);
             for(int collumn_itr=0; collumn_itr<n_affected_fem_nodes; collumn_itr++)
             {
                 double N_collumn = mFEMFunctionValues[collumn_itr];
-                
+
                 cad_fem_contribution(0) += R_row * N_collumn * node_displacements[3*collumn_itr+0];
                 cad_fem_contribution(1) += R_row * N_collumn * node_displacements[3*collumn_itr+1];
                 cad_fem_contribution(2) += R_row * N_collumn * node_displacements[3*collumn_itr+2];
             }
-            
+
             // Computation of RR*\hat{u_C}
-            Vector cad_cad_contribution = ZeroVector(3);                                            
+            Vector cad_cad_contribution = ZeroVector(3);
             for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquationIds; collumn_itr++)
-            {                
+            {
                 double R_collumn = mNurbsFunctionValues[collumn_itr];
 
                 cad_cad_contribution(0) += R_row * R_collumn * mAffectedControlPoints[collumn_itr]->GetdX();
                 cad_cad_contribution(1) += R_row * R_collumn * mAffectedControlPoints[collumn_itr]->GetdY();
                 cad_cad_contribution(2) += R_row * R_collumn * mAffectedControlPoints[collumn_itr]->GetdZ();
-            }  
+            }
 
             // Computation of complete RHS contribution: rhs_contribution = -integration_weight*( R*\hat{u_C} - N*\hat{u_F})R
             RHS( 3*row_id+0 ) -= mIntegrationWeight * ( cad_cad_contribution[0] - cad_fem_contribution[0]);
             RHS( 3*row_id+1 ) -= mIntegrationWeight * ( cad_cad_contribution[1] - cad_fem_contribution[1]);
-            RHS( 3*row_id+2 ) -= mIntegrationWeight * ( cad_cad_contribution[2] - cad_fem_contribution[2]);             
+            RHS( 3*row_id+2 ) -= mIntegrationWeight * ( cad_cad_contribution[2] - cad_fem_contribution[2]);
         }
     }
 
@@ -195,7 +199,7 @@ public:
     {
         Point<3> fe_point;
         fe_point = mrGeometryContainingThisCondition.IntegrationPoints(mFemIntegrationMethod)[mIntegrationPointNumber];
-        fe_point_coords = mrGeometryContainingThisCondition.GlobalCoordinates(fe_point_coords, fe_point.Coordinates());        
+        fe_point_coords = mrGeometryContainingThisCondition.GlobalCoordinates(fe_point_coords, fe_point.Coordinates());
     }
 
     // --------------------------------------------------------------------------
@@ -217,10 +221,10 @@ public:
             displacement[1] += mFEMFunctionValues[i] * shape_change_absolute_i[1];
             displacement[2] += mFEMFunctionValues[i] * shape_change_absolute_i[2];
         }
-        
+
         fe_point_coords_in_deformed_configuration[0] = fe_point_coords[0] + displacement[0];
         fe_point_coords_in_deformed_configuration[1] = fe_point_coords[1] + displacement[1];
-        fe_point_coords_in_deformed_configuration[2] = fe_point_coords[2] + displacement[2];        
+        fe_point_coords_in_deformed_configuration[2] = fe_point_coords[2] + displacement[2];
     }
 
     // --------------------------------------------------------------------------
@@ -234,7 +238,7 @@ public:
 
         cad_point_coords[0] = cad_point_in_deformed_configuration(0) - displacement[0];
         cad_point_coords[1] = cad_point_in_deformed_configuration(1) - displacement[1];
-        cad_point_coords[2] = cad_point_in_deformed_configuration(2) - displacement[2];        
+        cad_point_coords[2] = cad_point_in_deformed_configuration(2) - displacement[2];
     }
 
     // --------------------------------------------------------------------------
@@ -245,9 +249,9 @@ public:
 
         cad_point_coords_in_deformed_configuration[0] = cad_point_in_deformed_configuration(0);
         cad_point_coords_in_deformed_configuration[1] = cad_point_in_deformed_configuration(1);
-        cad_point_coords_in_deformed_configuration[2] = cad_point_in_deformed_configuration(2);        
+        cad_point_coords_in_deformed_configuration[2] = cad_point_in_deformed_configuration(2);
     }
-    
+
     // --------------------------------------------------------------------------
     Patch& GetAffectedPatch() override
     {
@@ -258,7 +262,7 @@ public:
     bool IsProjectedCADPointInsideVisiblePatchRegion() override
     {
         return mrAffectedPatch.IsPointInside(mParmeterValues);
-    }    
+    }
 
     // ==============================================================================
 
@@ -331,6 +335,67 @@ private:
   ///@name Static Member Variables
   ///@{
 
+      double ComputeJacobian()
+      {
+        // unsigned int dimension = mrGeometryContainingThisCondition.WorkingSpaceDimension();
+        // double detJ0 = 0;
+
+        // Matrix J0 = ZeroMatrix(dimension,dimension);
+        // Matrix InvJ0 = ZeroMatrix(dimension,dimension);
+
+        // J0 = mrGeometryContainingThisCondition.Jacobian( J0, mIntegrationPointNumber, mFemIntegrationMethod );
+        // MathUtils<double>::InvertMatrix( J0, InvJ0, detJ0 );
+
+        // return detJ0;
+
+
+        // unsigned int dimension = mrGeometryContainingThisCondition.WorkingSpaceDimension();
+        // double detJ0 = 0;
+
+        // Matrix J0 = ZeroMatrix(dimension,dimension);
+        // Matrix InvJ0 = ZeroMatrix(dimension,dimension);
+
+        // const Matrix& DN_De = mrGeometryContainingThisCondition.ShapeFunctionsLocalGradients(mFemIntegrationMethod)[mIntegrationPointNumber];
+
+        // for ( unsigned int i = 0; i < mrGeometryContainingThisCondition.size(); i++ )
+        // {
+        //     const array_1d<double, 3>& coords = mrGeometryContainingThisCondition[i].GetInitialPosition(); //NOTE: here we refer to the original, undeformed position!!
+        //     for(unsigned int k = 0; k < mrGeometryContainingThisCondition.WorkingSpaceDimension(); k++)
+        //     {
+        //         for(unsigned int m = 0; m < dimension; m++)
+        //         {
+        //             J0(k,m) += coords[k]*DN_De(i,m);
+        //         }
+        //     }
+        // }
+
+        // MathUtils<double>::InvertMatrix( J0, InvJ0, detJ0 );
+
+        // return detJ0;
+
+
+        // For shells with 3 nodes!!!
+        // const Matrix& dN = mrGeometryContainingThisCondition.ShapeFunctionsLocalGradients(mFemIntegrationMethod)[mIntegrationPointNumber];
+        // unsigned int dimension = mrGeometryContainingThisCondition.WorkingSpaceDimension();
+
+        // const array_1d<double, 3>& coords1 = mrGeometryContainingThisCondition[0].GetInitialPosition();
+        // const array_1d<double, 3>& coords2 = mrGeometryContainingThisCondition[1].GetInitialPosition();
+        // const array_1d<double, 3>& coords3 = mrGeometryContainingThisCondition[2].GetInitialPosition();
+
+        // Matrix J0 = ZeroMatrix(dimension,dimension);
+        // J0(0, 0) = dN(0, 0) * coords1[0] + dN(1, 0) * coords2[0] + dN(2, 0) * coords3[0];
+        // J0(0, 1) = dN(0, 0) * coords1[1] + dN(1, 0) * coords2[1] + dN(2, 0) * coords3[1];
+        // J0(1, 0) = dN(0, 1) * coords1[0] + dN(1, 1) * coords2[0] + dN(2, 1) * coords3[0];
+        // J0(1, 1) = dN(0, 1) * coords1[1] + dN(1, 1) * coords2[1] + dN(2, 1) * coords3[1];
+
+        // double detJ0 = J0(0, 0) * J0(1, 1) - J0(1, 0) * J0(0, 1);
+
+        double detJ0 = mrGeometryContainingThisCondition.Area() / mrGeometryContainingThisCondition.IntegrationPoints(mFemIntegrationMethod).size();
+
+        return detJ0;
+
+      }
+
   ///@}
   ///@name Member Variables
   ///@{
@@ -354,7 +419,7 @@ private:
     // ==============================================================================
     double mIntegrationWeight;
     std::vector<double> mNurbsFunctionValues;
-    Vector mFEMFunctionValues; 
+    Vector mFEMFunctionValues;
     std::vector<ControlPoint*> mAffectedControlPoints;
     std::vector<int> mEquationIdsOfAffectedControlPoints;
     int mNumberOfLocalEquationIds;

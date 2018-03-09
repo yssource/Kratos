@@ -59,7 +59,7 @@ class RotationCouplingConstraint : public ReconstructionConstraint
 {
 public:
     ///@name Type Definitions
-    ///@{   
+    ///@{
 
     /// Pointer definition of RotationCouplingConstraint
     KRATOS_CLASS_POINTER_DEFINITION(RotationCouplingConstraint);
@@ -79,9 +79,9 @@ public:
       mPenaltyFactor( penalty_factor )
     {
         mLocationOnMaster = mrCouplingGaussPoint.GetLocationOnMasterInParameterSpace();
-        mLocationOnSlave = mrCouplingGaussPoint.GetLocationOnSlaveInParameterSpace(); 
+        mLocationOnSlave = mrCouplingGaussPoint.GetLocationOnSlaveInParameterSpace();
         mSpanOnMaster = mrAffectedMasterPatch.ComputeSurfaceKnotSpans( mLocationOnMaster );
-        mSpanOnSlave = mrAffectedSlavePatch.ComputeSurfaceKnotSpans( mLocationOnSlave );        
+        mSpanOnSlave = mrAffectedSlavePatch.ComputeSurfaceKnotSpans( mLocationOnSlave );
     }
 
     /// Destructor.
@@ -101,23 +101,23 @@ public:
     void FlagControlPointsRelevantForReconstruction() override
     {
         mrAffectedMasterPatch.FlagAffectedControlPointsForReconstruction(  mSpanOnMaster, mLocationOnMaster );
-        mrAffectedSlavePatch.FlagAffectedControlPointsForReconstruction(  mSpanOnSlave, mLocationOnSlave );      
+        mrAffectedSlavePatch.FlagAffectedControlPointsForReconstruction(  mSpanOnSlave, mLocationOnSlave );
     }
 
     // --------------------------------------------------------------------------
     void Initialize() override
-    {        
+    {
         mIntegrationWeight = mrCouplingGaussPoint.GetWeight();
-        
+
         mTangentOnMaster = mrCouplingGaussPoint.GetTangentOnMasterInParameterSpace();
         mTangentOnSlave = mrCouplingGaussPoint.GetTangentOnSlaveInParameterSpace();
 
         mEquationIdsOfAffectedControlPointsOnMaster = mrAffectedMasterPatch.GetEquationIdsOfAffectedControlPoints( mSpanOnMaster, mLocationOnMaster );
-        mNumberOfLocalEquationIdsOnMaster = mEquationIdsOfAffectedControlPointsOnMaster.size();  
-        
+        mNumberOfLocalEquationIdsOnMaster = mEquationIdsOfAffectedControlPointsOnMaster.size();
+
         mEquationIdsOfAffectedControlPointsOnSlave = mrAffectedSlavePatch.GetEquationIdsOfAffectedControlPoints( mSpanOnSlave, mLocationOnSlave );
-        mNumberOfLocalEquationIdsOnSlave = mEquationIdsOfAffectedControlPointsOnSlave.size();          
-        
+        mNumberOfLocalEquationIdsOnSlave = mEquationIdsOfAffectedControlPointsOnSlave.size();
+
         // Compute Jacobian mJ1
         Matrix g_master = mrAffectedMasterPatch.ComputeBaseVectors( mSpanOnMaster, mLocationOnMaster );
         Vector g1 = ZeroVector(3);
@@ -128,123 +128,206 @@ public:
         g2(0) = g_master(0,1);
         g2(1) = g_master(1,1);
         g2(2) = g_master(2,1);
-        mJ1 = norm_2( g1* mTangentOnMaster(0) + g2* mTangentOnMaster(1) );        
+        mJ1 = norm_2( g1* mTangentOnMaster(0) + g2* mTangentOnMaster(1) );
+
+        // Compute initial coordinate system
+        mrAffectedMasterPatch.ComputeLocalCSY( mSpanOnMaster, mLocationOnMaster, mTangentOnMaster, T1_m, T2_m, T3_m );
+        mrAffectedSlavePatch.ComputeLocalCSY( mSpanOnSlave, mLocationOnSlave, mTangentOnSlave, T1_s, T2_s, T3_s );
+
+        // Check if master and slave tangent point in same direction. If yes, we have to subtract in the following.
+        mSignFactor = 1;
+        if( inner_prod(T2_m,T2_s) > 0 )
+            mSignFactor = -1;
     }
 
-    // --------------------------------------------------------------------------    
+    // --------------------------------------------------------------------------
     void ComputeAndAddLHSContribution( CompressedMatrix& LHS ) override
     {
         // Variables needed later
-        Vector T1_m, T1_s, T2_m, T2_s, T3_m, T3_s;
-        std::vector<Vector> t1r_m, t1r_s, t2r_m, t2r_s, t3r_m, t3r_s;				
+        Vector t1_m, t1_s, t2_m, t2_s, t3_m, t3_s;
+        std::vector<Vector> t1r_m, t1r_s, t2r_m, t2r_s, t3r_m, t3r_s;
 
         // Compute geometric quantities
-        mrAffectedMasterPatch.ComputeVariationOfLocalCSY( mSpanOnMaster, mLocationOnMaster, mTangentOnMaster, T1_m, T2_m, T3_m, t1r_m, t2r_m, t3r_m );
-        mrAffectedSlavePatch.ComputeVariationOfLocalCSY( mSpanOnSlave, mLocationOnSlave, mTangentOnSlave, T1_s, T2_s, T3_s, t1r_s, t2r_s, t3r_s );
+        mrAffectedMasterPatch.ComputeVariationOfLocalCSY( mSpanOnMaster, mLocationOnMaster, mTangentOnMaster, t1_m, t2_m, t3_m, t1r_m, t2r_m, t3r_m );
+        mrAffectedSlavePatch.ComputeVariationOfLocalCSY( mSpanOnSlave, mLocationOnSlave, mTangentOnSlave, t1_s, t2_s, t3_s, t1r_s, t2r_s, t3r_s );
 
-        // Check if master and slave tangent point in same direction. If yes, we have to subtract in the following.
-        int sign_factor = 1;
-        if( inner_prod(T2_m,T2_s) > 0 )
-            sign_factor = -1;
+        // Some precomputations
+        Vector w_m = t3_m - T3_m;
+        Vector w_s = t3_s - T3_s;
+        Vector omega_m = MathUtils<double>::CrossProduct(T3_m,w_m);
+        Vector omega_s = MathUtils<double>::CrossProduct(T3_s,w_s);
+        double omega_dot_T2_m = inner_prod(omega_m, T2_m);
+        double omega_dot_T2_s = inner_prod(omega_s, T2_s);
 
         // First we consider the relation Master-Master ( MM )
+        double divisor_m_1 = std::sqrt((1-omega_dot_T2_m*omega_dot_T2_m));
         for(int row_itr=0; row_itr<mNumberOfLocalEquationIdsOnMaster; row_itr++)
         {
             int row_id = mEquationIdsOfAffectedControlPointsOnMaster[row_itr];
 
-            Vector omega_mx_row = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+0]);
-            Vector omega_my_row = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+1]);
-            Vector omega_mz_row = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+2]);
-            double omega_T2_mx_row = inner_prod(omega_mx_row,T2_m);
-            double omega_T2_my_row = inner_prod(omega_my_row,T2_m);
-            double omega_T2_mz_row = inner_prod(omega_mz_row,T2_m);            
+            Vector omega_r_x = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+0]);
+            Vector omega_r_y = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+1]);
+            Vector omega_r_z = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+2]);
+            double omega_r_x_dot_T2 = inner_prod(omega_r_x,T2_m);
+            double omega_r_y_dot_T2 = inner_prod(omega_r_y,T2_m);
+            double omega_r_z_dot_T2 = inner_prod(omega_r_z,T2_m);
+            double omega_T2_r_x = omega_r_x_dot_T2 / divisor_m_1;
+            double omega_T2_r_y = omega_r_y_dot_T2 / divisor_m_1;
+            double omega_T2_r_z = omega_r_z_dot_T2 / divisor_m_1;
 
             for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquationIdsOnMaster; collumn_itr++)
-            {                
+            {
                 int collumn_id = mEquationIdsOfAffectedControlPointsOnMaster[collumn_itr];
 
-                Vector omega_mx_coll = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*collumn_itr+0]);
-                Vector omega_my_coll = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*collumn_itr+1]);
-                Vector omega_mz_coll = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*collumn_itr+2]);
-                double omega_T2_mx_coll = inner_prod(omega_mx_coll,T2_m);
-                double omega_T2_my_coll = inner_prod(omega_my_coll,T2_m);
-                double omega_T2_mz_coll = inner_prod(omega_mz_coll,T2_m);
+                Vector omega_s_x = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*collumn_itr+0]);
+                Vector omega_s_y = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*collumn_itr+1]);
+                Vector omega_s_z = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*collumn_itr+2]);
+                double omega_s_x_dot_T2 = inner_prod(omega_s_x,T2_m);
+                double omega_s_y_dot_T2 = inner_prod(omega_s_y,T2_m);
+                double omega_s_z_dot_T2 = inner_prod(omega_s_z,T2_m);
+                double omega_T2_s_x = omega_s_x_dot_T2 / divisor_m_1;
+                double omega_T2_s_y = omega_s_y_dot_T2 / divisor_m_1;
+                double omega_T2_s_z = omega_s_z_dot_T2 / divisor_m_1;
 
-                LHS( 3*row_id+0, 3*collumn_id+0 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_mx_row * omega_T2_mx_coll;
-                LHS( 3*row_id+1, 3*collumn_id+1 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_my_row * omega_T2_my_coll;
-                LHS( 3*row_id+2, 3*collumn_id+2 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_mz_row * omega_T2_mz_coll;
+                LHS( 3*row_id+0, 3*collumn_id+0 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_r_x * omega_T2_s_x;
+                LHS( 3*row_id+1, 3*collumn_id+1 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_r_y * omega_T2_s_y;
+                LHS( 3*row_id+2, 3*collumn_id+2 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_r_z * omega_T2_s_z;
             }
         }
 
         // Then we consider the relation Slave-Slave ( SS )
+        double divisor_s_1 = std::sqrt((1-omega_dot_T2_s*omega_dot_T2_s));
         for(int row_itr=0; row_itr<mNumberOfLocalEquationIdsOnSlave; row_itr++)
         {
             int row_id = mEquationIdsOfAffectedControlPointsOnSlave[row_itr];
 
-            Vector omega_sx_row = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+0]);
-            Vector omega_sy_row = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+1]);
-            Vector omega_sz_row = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+2]);
-            double omega_T2_sx_row = inner_prod(omega_sx_row,T2_s);
-            double omega_T2_sy_row = inner_prod(omega_sy_row,T2_s);
-            double omega_T2_sz_row = inner_prod(omega_sz_row,T2_s);            
+            Vector omega_r_x = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+0]);
+            Vector omega_r_y = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+1]);
+            Vector omega_r_z = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+2]);
+            double omega_r_x_dot_T2 = inner_prod(omega_r_x,T2_s);
+            double omega_r_y_dot_T2 = inner_prod(omega_r_y,T2_s);
+            double omega_r_z_dot_T2 = inner_prod(omega_r_z,T2_s);
+            double omega_T2_r_x = omega_r_x_dot_T2 / divisor_s_1;
+            double omega_T2_r_y = omega_r_y_dot_T2 / divisor_s_1;
+            double omega_T2_r_z = omega_r_z_dot_T2 / divisor_s_1;
 
             for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquationIdsOnSlave; collumn_itr++)
-            {                
+            {
                 int collumn_id = mEquationIdsOfAffectedControlPointsOnSlave[collumn_itr];
 
-                Vector omega_sx_coll = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+0]);
-                Vector omega_sy_coll = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+1]);
-                Vector omega_sz_coll = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+2]);
-                double omega_T2_sx_coll = inner_prod(omega_sx_coll,T2_s);
-                double omega_T2_sy_coll = inner_prod(omega_sy_coll,T2_s);
-                double omega_T2_sz_coll = inner_prod(omega_sz_coll,T2_s);
+                Vector omega_s_x = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+0]);
+                Vector omega_s_y = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+1]);
+                Vector omega_s_z = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+2]);
+                double omega_s_x_dot_T2 = inner_prod(omega_s_x,T2_s);
+                double omega_s_y_dot_T2 = inner_prod(omega_s_y,T2_s);
+                double omega_s_z_dot_T2 = inner_prod(omega_s_z,T2_s);
+                double omega_T2_s_x = omega_s_x_dot_T2 / divisor_s_1;
+                double omega_T2_s_y = omega_s_y_dot_T2 / divisor_s_1;
+                double omega_T2_s_z = omega_s_z_dot_T2 / divisor_s_1;
 
-                LHS( 3*row_id+0, 3*collumn_id+0 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_sx_row * omega_T2_sx_coll;
-                LHS( 3*row_id+1, 3*collumn_id+1 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_sy_row * omega_T2_sy_coll;
-                LHS( 3*row_id+2, 3*collumn_id+2 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_sz_row * omega_T2_sz_coll;
+                LHS( 3*row_id+0, 3*collumn_id+0 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_r_x * omega_T2_s_x;
+                LHS( 3*row_id+1, 3*collumn_id+1 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_r_y * omega_T2_s_y;
+                LHS( 3*row_id+2, 3*collumn_id+2 ) += mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_r_z * omega_T2_s_z;
             }
-        } 
-		
+        }
+
         // Then we consider the Master-Slave relation ( MS & SM )
         for(int row_itr=0; row_itr<mNumberOfLocalEquationIdsOnMaster; row_itr++)
         {
             int row_id = mEquationIdsOfAffectedControlPointsOnMaster[row_itr];
 
-            Vector omega_mx = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+0]);
-            Vector omega_my = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+1]);
-            Vector omega_mz = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+2]);
-            double omega_T2_mx = inner_prod(omega_mx,T2_m);
-            double omega_T2_my = inner_prod(omega_my,T2_m);
-            double omega_T2_mz = inner_prod(omega_mz,T2_m);
+            Vector omega_r_x = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+0]);
+            Vector omega_r_y = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+1]);
+            Vector omega_r_z = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+2]);
+            double omega_T2_r_x = inner_prod(omega_r_x,T2_m) / divisor_m_1;
+            double omega_T2_r_y = inner_prod(omega_r_y,T2_m) / divisor_m_1;
+            double omega_T2_r_z = inner_prod(omega_r_z,T2_m) / divisor_m_1;
 
             for(int collumn_itr=0; collumn_itr<mNumberOfLocalEquationIdsOnSlave; collumn_itr++)
-            {                
+            {
                 int collumn_id = mEquationIdsOfAffectedControlPointsOnSlave[collumn_itr];
 
-                Vector omega_sx = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+0]);
-                Vector omega_sy = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+1]);
-                Vector omega_sz = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+2]);
-                double omega_T2_sx = inner_prod(omega_sx,T2_s);
-                double omega_T2_sy = inner_prod(omega_sy,T2_s);
-                double omega_T2_sz = inner_prod(omega_sz,T2_s);
+                Vector omega_s_x = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+0]);
+                Vector omega_s_y = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+1]);
+                Vector omega_s_z = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*collumn_itr+2]);
+                double omega_T2_s_x = inner_prod(omega_s_x,T2_s) / divisor_s_1;
+                double omega_T2_s_y = inner_prod(omega_s_y,T2_s) / divisor_s_1;
+                double omega_T2_s_z = inner_prod(omega_s_z,T2_s) / divisor_s_1;
 
                 // MS
-                LHS( 3*row_id+0, 3*collumn_id+0 ) += sign_factor * mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_mx * omega_T2_sx;
-                LHS( 3*row_id+1, 3*collumn_id+1 ) += sign_factor * mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_my * omega_T2_sy;
-                LHS( 3*row_id+2, 3*collumn_id+2 ) += sign_factor * mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_mz * omega_T2_sz;
-                
+                LHS( 3*row_id+0, 3*collumn_id+0 ) += mSignFactor * mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_r_x * omega_T2_s_x;
+                LHS( 3*row_id+1, 3*collumn_id+1 ) += mSignFactor * mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_r_y * omega_T2_s_y;
+                LHS( 3*row_id+2, 3*collumn_id+2 ) += mSignFactor * mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_r_z * omega_T2_s_z;
+
                 // SM
-                LHS( 3*collumn_id+0, 3*row_id+0 ) += sign_factor * mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_mx * omega_T2_sx;
-                LHS( 3*collumn_id+1, 3*row_id+1 ) += sign_factor * mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_my * omega_T2_sy;
-                LHS( 3*collumn_id+2, 3*row_id+2 ) += sign_factor * mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_mz * omega_T2_sz;                
+                LHS( 3*collumn_id+0, 3*row_id+0 ) += mSignFactor * mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_r_x * omega_T2_s_x;
+                LHS( 3*collumn_id+1, 3*row_id+1 ) += mSignFactor * mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_r_y * omega_T2_s_y;
+                LHS( 3*collumn_id+2, 3*row_id+2 ) += mSignFactor * mPenaltyFactor * mIntegrationWeight * mJ1 * omega_T2_r_z * omega_T2_s_z;
             }
-        }  
+        }
     }
 
     // --------------------------------------------------------------------------
     void ComputeAndAddRHSContribution( Vector& RHS ) override
     {
-        // To be implemented
+        // Variables needed later
+        Vector t1_m, t1_s, t2_m, t2_s, t3_m, t3_s;
+        std::vector<Vector> t1r_m, t1r_s, t2r_m, t2r_s, t3r_m, t3r_s;
+
+        // Compute geometric quantities
+        mrAffectedMasterPatch.ComputeVariationOfLocalCSY( mSpanOnMaster, mLocationOnMaster, mTangentOnMaster, t1_m, t2_m, t3_m, t1r_m, t2r_m, t3r_m );
+        mrAffectedSlavePatch.ComputeVariationOfLocalCSY( mSpanOnSlave, mLocationOnSlave, mTangentOnSlave, t1_s, t2_s, t3_s, t1r_s, t2r_s, t3r_s );
+
+        // Compute difference between rotation of master and slave
+        Vector w_m = t3_m - T3_m;
+        Vector w_s = t3_s - T3_s;
+        Vector omega_m = MathUtils<double>::CrossProduct(T3_m,w_m);
+        Vector omega_s = MathUtils<double>::CrossProduct(T3_s,w_s);
+        double omega_dot_T2_m = inner_prod(omega_m, T2_m);
+        double omega_dot_T2_s = inner_prod(omega_s, T2_s);
+        double current_rotation_m = std::asin( omega_dot_T2_m );
+        double current_rotation_s = std::asin( omega_dot_T2_s );
+        double current_rotation_difference = current_rotation_m + mSignFactor*current_rotation_s;
+
+        // KRATOS_WATCH("-------------")
+        // double current_rotation_difference_in_deg = current_rotation_difference*180/3.14;
+        // KRATOS_WATCH(current_rotation_difference_in_deg)
+
+        // Master contribution
+        double divisor_m = std::sqrt((1-omega_dot_T2_m*omega_dot_T2_m));
+        for(int row_itr=0; row_itr<mNumberOfLocalEquationIdsOnMaster; row_itr++)
+        {
+            int row_id = mEquationIdsOfAffectedControlPointsOnMaster[row_itr];
+
+            Vector omega_r_x = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+0]);
+            Vector omega_r_y = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+1]);
+            Vector omega_r_z = MathUtils<double>::CrossProduct(T3_m,t3r_m[3*row_itr+2]);
+            double omega_T2_r_x = inner_prod(omega_r_x,T2_m) / divisor_m;
+            double omega_T2_r_y = inner_prod(omega_r_y,T2_m) / divisor_m;
+            double omega_T2_r_z = inner_prod(omega_r_z,T2_m) / divisor_m;
+
+            RHS[3*row_id+0] -= mPenaltyFactor * mIntegrationWeight * mJ1 * current_rotation_difference * omega_T2_r_x;
+            RHS[3*row_id+1] -= mPenaltyFactor * mIntegrationWeight * mJ1 * current_rotation_difference * omega_T2_r_y;
+            RHS[3*row_id+2] -= mPenaltyFactor * mIntegrationWeight * mJ1 * current_rotation_difference * omega_T2_r_z;
+        }
+
+        // Slave contribution
+        double divisor_s = std::sqrt((1-omega_dot_T2_s*omega_dot_T2_s));
+        for(int row_itr=0; row_itr<mNumberOfLocalEquationIdsOnSlave; row_itr++)
+        {
+            int row_id = mEquationIdsOfAffectedControlPointsOnSlave[row_itr];
+
+            Vector omega_r_x = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+0]);
+            Vector omega_r_y = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+1]);
+            Vector omega_r_z = MathUtils<double>::CrossProduct(T3_s,t3r_s[3*row_itr+2]);
+            double omega_T2_r_x = inner_prod(omega_r_x,T2_s) / divisor_s;
+            double omega_T2_r_y = inner_prod(omega_r_y,T2_s) / divisor_s;
+            double omega_T2_r_z = inner_prod(omega_r_z,T2_s) / divisor_s;
+
+            RHS[3*row_id+0] -= mSignFactor * mPenaltyFactor * mIntegrationWeight * mJ1 * current_rotation_difference * omega_T2_r_x;
+            RHS[3*row_id+1] -= mSignFactor * mPenaltyFactor * mIntegrationWeight * mJ1 * current_rotation_difference * omega_T2_r_y;
+            RHS[3*row_id+2] -= mSignFactor * mPenaltyFactor * mIntegrationWeight * mJ1 * current_rotation_difference * omega_T2_r_z;
+        }
     }
 
     // --------------------------------------------------------------------------
@@ -253,7 +336,7 @@ public:
         if(identifier.compare("PENALTY_MULTIPLIER") == 0)
             mPenaltyFactor *= value;
     }
-        
+
     // ==============================================================================
 
     ///@}
@@ -338,8 +421,10 @@ private:
     // ==============================================================================
     BREPGaussPoint& mrCouplingGaussPoint;
     Patch& mrAffectedMasterPatch;
-    Patch& mrAffectedSlavePatch; 
+    Patch& mrAffectedSlavePatch;
     double mPenaltyFactor = 0;
+    Vector T1_m, T1_s, T2_m, T2_s, T3_m, T3_s;
+    double mSignFactor;
 
     // ==============================================================================
     // Additional member variables
@@ -347,7 +432,7 @@ private:
     array_1d<double,2> mLocationOnMaster;
     array_1d<double,2> mLocationOnSlave;
     array_1d<int,2> mSpanOnMaster;
-    array_1d<int,2> mSpanOnSlave;    
+    array_1d<int,2> mSpanOnSlave;
     double mIntegrationWeight;
     array_1d<double,2> mTangentOnMaster;
     array_1d<double,2> mTangentOnSlave;
@@ -355,7 +440,7 @@ private:
     int mNumberOfLocalEquationIdsOnMaster;
     std::vector<int> mEquationIdsOfAffectedControlPointsOnSlave;
     int mNumberOfLocalEquationIdsOnSlave;
-    double mJ1;     
+    double mJ1;
 
     ///@}
     ///@name Private Operations

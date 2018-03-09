@@ -170,7 +170,7 @@ void  AddCustomUtilitiesToPython()
         .def("ComputeRHS", &CADReconstructionSolver::ComputeRHS)
         .def("SolveEquationSystem", &CADReconstructionSolver::SolveEquationSystem)
         .def("MultiplyAllPenaltyFactorsByInputFactor", &CADReconstructionSolver::MultiplyAllPenaltyFactorsByInputFactor)
-        .def("UpdateControlPointsAccordingReconstructionStrategy", &CADReconstructionSolver::UpdateControlPointsAccordingReconstructionStrategy)
+        .def("UpdateControlPoints", &CADReconstructionSolver::UpdateControlPoints)
         ;
     class_<QualityEvaluationUtility, bases<Process> >("QualityEvaluationUtility", init<ReconstructionDataBase&, ReconstructionConditionContainer&, Parameters&>())
         .def("EvaluateSurfaceReconstruction", &QualityEvaluationUtility::EvaluateSurfaceReconstruction)

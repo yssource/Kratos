@@ -208,7 +208,7 @@ class CADReconstrutionUtilities():
             self.ReconstructionSolver.ComputeRHS()
             self.ReconstructionSolver.SolveEquationSystem()
 
-            self.ReconstructionSolver.UpdateControlPointsAccordingReconstructionStrategy()
+            self.ReconstructionSolver.UpdateControlPoints()
 
             self.OutputWriter.OutputResultsInRhinoFormat( iteration )
 

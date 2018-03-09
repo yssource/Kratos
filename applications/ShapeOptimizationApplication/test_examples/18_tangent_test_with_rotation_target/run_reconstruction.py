@@ -33,11 +33,11 @@ reconstruction_parameters = Parameters("""
         {
             "fem_gauss_integration_degree" : 5
         },
-        "solution_iterations" : 5,
+        "solution_iterations" : 20,
         "constraints"         :
         {
             "set_displacement_coupling_on_all_coupling_points"  : true,
-            "penalty_factor_for_displacement_coupling"          : 1e3,
+            "penalty_factor_for_displacement_coupling"          : 1e1,
             "set_rotation_coupling_on_all_coupling_points"      : false,
             "penalty_factor_for_rotation_coupling"              : 1e3,
             "set_zero_displacement_on_all_dirichlet_points"     : false,
@@ -47,7 +47,7 @@ reconstruction_parameters = Parameters("""
             "penalty_factor_for_tangent_continuity_constraints" : 1e3,
             "set_rotation_target_to_enforce_tangent_continuity" : true,
             "list_of_edge_ids_with_rotation_target"             : [1003],
-            "penalty_factor_for_edge_with_rotation_target"      : 1e3,
+            "penalty_factor_for_edge_with_rotation_target"      : 1e1,
             "penalty_multiplier"                                : 1.0
         },
         "projection_parameters":
@@ -63,30 +63,30 @@ reconstruction_parameters = Parameters("""
         "regularization_parameters":
         {
             "minimize_control_point_distance_to_surface" : true,
-            "alpha"                                      : 1e-1,
+            "alpha"                                      : 1e0,
             "minimize_control_point_displacement"        : false,
-            "beta"                                       : 1e1
+            "beta"                                       : 1e-6
         },
         "linear_solver_name" : "SuperLU"
     },
     "output_parameters" :
     {
         "output_folder"                                     : "01_Results",
-        "parameter_resolution_for_output_of_surface_points" : [ 100, 100 ],
+        "parameter_resolution_for_output_of_surface_points" : [ 300, 300 ],
         "original_georhino_filename"                        : "tangent_test.georhino.txt",
         "rhino_results_filename"                            : "tangent_test.post.res",
-        "perform_quality_evaluation"                        : false,
+        "perform_quality_evaluation"                        : true,
         "quality_evaluation_parameters" :
         {
             "projection_parameters":
             {
                 "projection_strategy"                               : "single_search_tree",
                 "search_radius_with_multiple_trees"                 : 1.0,
-                "automatic_initialization_using_greville_abscissae" : true,
+                "automatic_initialization_using_greville_abscissae" : false,
                 "refinement_iterations_of_greville_abscissae"       : 3,
-                "parameter_resolution_for_manual_initialization"    : [ 100, 100 ],
+                "parameter_resolution_for_manual_initialization"    : [ 200, 200 ],
                 "max_projection_iterations"                         : 20,
-                "projection_tolerance"                              : 1e-4
+                "projection_tolerance"                              : 1e-5
             },
             "compile_results_in_vtk_file" : true,
             "vtk_filename"                : "quality_evaluation_of_surface_reconstruction"

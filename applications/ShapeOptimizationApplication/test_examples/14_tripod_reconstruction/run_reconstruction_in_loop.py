@@ -33,15 +33,15 @@ reconstruction_parameters = Parameters("""
         {
             "fem_gauss_integration_degree" : 5
         },
-        "solution_iterations" : 1,
+        "solution_iterations" : 5,
         "constraints"         :
         {
             "set_displacement_coupling_on_all_coupling_points"  : true,
-            "penalty_factor_for_displacement_coupling"          : 1e3,
+            "penalty_factor_for_displacement_coupling"          : 1e2,
             "set_rotation_coupling_on_all_coupling_points"      : true,
-            "penalty_factor_for_rotation_coupling"              : 1e3,
+            "penalty_factor_for_rotation_coupling"              : 1e2,
             "set_zero_displacement_on_all_dirichlet_points"     : false,
-            "penalty_factor_for_zero_displacement_points"       : 1e3,
+            "penalty_factor_for_zero_displacement_points"       : 1e2,
             "set_rotation_target_to_enforce_tangent_continuity" : false,
             "list_of_edge_ids_with_rotation_target"             : [],
             "penalty_factor_for_edge_with_rotation_target"      : 1e1,

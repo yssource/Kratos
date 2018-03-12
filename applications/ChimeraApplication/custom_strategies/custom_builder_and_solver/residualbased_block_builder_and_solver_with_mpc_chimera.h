@@ -1139,15 +1139,7 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 
                         } // slaveMasterDofMapOher loop
 
-<<<<<<< HEAD
-                        //!!!!!!!!!!!!!!!!!!!!!##############################################CAUTION r = 0###########################
-                        // nav
-                        //VectorOfconstants[slaveIndex] += ((NodalNormalComponent * r) / (nodalMass * RtMinvR));
-                        //!!!!!!!!!!!!!!!!!!!!!!######################################################################
-                        norm += VectorOfconstants[slaveIndex]*VectorOfconstants[slaveIndex];
-=======
                         norm += VectorOfconstants[slaveIndex] * VectorOfconstants[slaveIndex];
->>>>>>> ChimeraApplication-Thesis
                         slaveIndex++;
 
                     } // slaveMasterDofMap loop
@@ -1170,13 +1162,8 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 
                     } // slaveMasterDofMap loop
 
-<<<<<<< HEAD
-                    //std::cout << "Conservative correction to the velocity field applied" << std::endl;
-                    std::cout << "Conservative Correction norm"<< sqrt(norm)<< std::endl;
-=======
                     //std::cout << "Conservative Correction norm  of " << mpcData->mName << " : " << sqrt(norm) << std::endl;
                     std::cout << "Conservative Correction of " << mpcData->mName << " is calculated " << std::endl;
->>>>>>> ChimeraApplication-Thesis
                 } // if type == "Conservative"
 
             } // mpcData->IsActive()

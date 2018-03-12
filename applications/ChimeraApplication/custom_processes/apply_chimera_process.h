@@ -264,12 +264,9 @@ class ApplyChimeraProcess : public Process
 			if (TDim == 3)
 				p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0) = 0.0;
 
-<<<<<<< HEAD
-=======
 			if (pressure_coupling == "all")
 				p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0) = 0.0;
 
->>>>>>> ChimeraApplication-Thesis
 			if (is_found == true)
 			{
 				Geometry<Node<3>> &geom = pElement->GetGeometry();
@@ -292,27 +289,6 @@ class ApplyChimeraProcess : public Process
 						AddMasterSlaveRelationWithNodesAndVariableComponents(pMpc, geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i]);
 					}
 
-<<<<<<< HEAD
-				} // end of loop over host element nodes
-
-			} // if (is_found = true)
-
-			// Setting the buffer 1 same buffer 0
-			p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(0);
-			p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(0);
-			if (TDim == 3)
-				p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0);
-
-		} // end of loop over boundary nodes
-
-		if (isOuter)
-		{
-
-			ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin();
-			Node<3>::Pointer p_boundary_node = *(iparticle.base());
-			typename BinBasedFastPointLocator<TDim>::ResultIteratorType result_begin = results.begin();
-
-=======
 					if (pressure_coupling == "all")
 					{
 						//Interpolation of pressure
@@ -358,7 +334,6 @@ class ApplyChimeraProcess : public Process
 
 			typename BinBasedFastPointLocator<TDim>::ResultIteratorType result_begin = results.begin();
 
->>>>>>> ChimeraApplication-Thesis
 			Element::Pointer pElement;
 
 			bool is_found = false;
@@ -383,12 +358,9 @@ class ApplyChimeraProcess : public Process
 			// Setting the buffer 1 same buffer 0
 			p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(1) = p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0);
 
-<<<<<<< HEAD
-=======
 			std::cout << "Coordinates of node that are pressure coupled" << std::endl;
 			std::cout << p_boundary_node->X() << "," << p_boundary_node->Y() << "," << p_boundary_node->Z() << std::endl;
 
->>>>>>> ChimeraApplication-Thesis
 		} // end of if (pressure_coupling == "one")
 
 		counter /= TDim + 1;

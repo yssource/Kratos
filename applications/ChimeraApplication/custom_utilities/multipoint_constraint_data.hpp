@@ -170,6 +170,7 @@ class MpcData
         mSlaveEquationIdConstantsMap.clear();
         mSlaveEquationIdConstantsUpdate.clear();
         RtMinvR = 1;
+        std::cout<<"mpcData is cleared"<<std::endl;
     }
 
     /**
@@ -284,6 +285,12 @@ class MpcData
     void SetActive(const bool isActive)
     {
         mActive = isActive;
+    }
+
+    void SetType(std::string type)
+    {
+
+        mType = type;
     }
 
     /**

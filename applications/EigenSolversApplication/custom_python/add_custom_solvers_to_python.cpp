@@ -23,7 +23,7 @@
 #include "linear_solvers/linear_solver.h"
 #include "linear_solvers/iterative_solver.h"
 #include "custom_solvers/eigen_direct_solver.h"
-#include "custom_solvers/sparse_eigensystem_solver.h"
+#include "custom_solvers/eigensystem_solver.h"
 
 namespace Kratos
 {
@@ -40,13 +40,15 @@ void AddCustomSolversToPython()
 	typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
 	typedef DirectSolver<SparseSpaceType, LocalSpaceType> DirectSolverType;
 
+	// --- direct solvers
+
 	using SparseLUSolver = EigenDirectSolver<SparseLU, SparseSpaceType, LocalSpaceType>;
 	class_<SparseLUSolver, bases<DirectSolverType>, boost::noncopyable>
 		("SparseLUSolver", init<>())
 		.def(init<Parameters>())
 	;
 
-	#if defined EIGEN_USE_MKL_ALL
+	#if defined USE_EIGEN_MKL
 	using PardisoLLTSolver = EigenDirectSolver<PardisoLLT, SparseSpaceType, LocalSpaceType>;
 	class_<PardisoLLTSolver, bases<DirectSolverType>, boost::noncopyable>
 		("PardisoLLTSolver", init<>())
@@ -63,27 +65,28 @@ void AddCustomSolversToPython()
 	class_<PardisoLUSolver, bases<DirectSolverType>, boost::noncopyable>
 		("PardisoLUSolver", init<>())
 		.def(init<Parameters>())
-	;
-	#endif
-
-	using SparseEigensystemSolverType = SparseEigensystemSolver<SparseSpaceType, LocalSpaceType>;
-	class_<SparseEigensystemSolverType, SparseEigensystemSolverType::Pointer, bases<LinearSolverType>, boost::noncopyable>
-    	("SparseEigensystemSolver", init<Parameters>())
-    	.def("Solve", &SparseEigensystemSolverType::Solve)
-    	.def("GetEigenValue", &SparseEigensystemSolverType::GetEigenValue)
-	;
-
-	using LeastSquaresConjugateGradient = EigenDirectSolver<LeastSquaresConjugateGradient, SparseSpaceType, LocalSpaceType>;
-	class_<LeastSquaresConjugateGradient, bases<DirectSolverType>, boost::noncopyable>
-		("LeastSquaresConjugateGradient", init<>())
-		.def(init<Parameters>())
-	;
-
-	using SparseQR = EigenDirectSolver<SparseQR, SparseSpaceType, LocalSpaceType>;
-	class_<SparseQR, bases<DirectSolverType>, boost::noncopyable>
-		("SparseQR", init<>())
-		.def(init<Parameters>())
 	;	
+	#endif // defined USE_EIGEN_MKL
+
+	using SparseQRSolver = EigenDirectSolver<SparseQR, SparseSpaceType, LocalSpaceType>;
+	class_<SparseQRSolver, bases<DirectSolverType>, boost::noncopyable>
+		("SparseQRSolver", init<>())
+		.def(init<Parameters>())
+	;
+
+	// --- eigensystem solver
+
+	#if defined USE_EIGEN_MKL
+	using EigensystemSolverType = EigensystemSolver<PardisoLDLT, SparseSpaceType, LocalSpaceType>;
+	#else  // defined USE_EIGEN_MKL
+	using EigensystemSolverType = EigensystemSolver<SparseLU, SparseSpaceType, LocalSpaceType>;
+	#endif // defined USE_EIGEN_MKL
+	class_<EigensystemSolverType, EigensystemSolverType::Pointer, bases<LinearSolverType>, boost::noncopyable>
+    	("EigensystemSolver", init<Parameters>())
+    	.def("Solve", &EigensystemSolverType::Solve)
+    	.def("GetEigenValue", &EigensystemSolverType::GetEigenValue)
+	;
+;
 }
 
 } // namespace Python

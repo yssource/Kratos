@@ -125,7 +125,7 @@
                 "matrix_free_filtering"      : false
             },
             "damping" : {
-                "perform_damping" : false,
+                "perform_damping" : true,
                 "damping_regions" : [{
                         "sub_model_part_name"   : "support_edges",
                         "damp_X"                : false,
@@ -140,6 +140,21 @@
                         "damp_Z"                : true,
                         "damping_function_type" : "linear",
                         "damping_radius"        : 3.0
+                }]
+            },
+            "fixing" : {
+                "enforce_fixed_regions" : true,
+                "fixed_regions" : [{
+                    "sub_model_part_name" : "fix_nodes",
+                    "fix_in_X"        : false,
+                    "fix_in_Y"        : false,
+                    "fix_in_Z"        : false
+                }]
+            },
+            "rigid_motion" : {
+                "enforce_rigid_motion" : true,
+                "rigid_regions" : [{
+                    "sub_model_part_name" : "rigid_nodes"
                 }]
             },
             "mesh_motion" : {
@@ -170,15 +185,7 @@
                                           "SHAPE_UPDATE",
                                           "SHAPE_CHANGE" ],
             "output_format" : {
-                "name"              : "gid",
-                "gid_configuration" : {
-                    "result_file_configuration" : {
-                        "gidpost_flags"       : {
-                            "GiDPostMode"           : "GiD_PostBinary"
-                        },
-                        "output_frequency"    : 1.0
-                    }
-                }
+                "name"              : "vtk"
             }
         }
     }

@@ -38,6 +38,10 @@
 #include "custom_utilities/input_output/vtk_file_io.h"
 #include "custom_utilities/response_functions/eigenfrequency_response_function.h"
 #include "custom_utilities/response_functions/eigenfrequency_response_function_lin_scal.h"
+
+#include "linear_solvers/linear_solver.h"
+#include "custom_utilities/mapping/mapper_vertex_morphing_rigid_body.h"
+
 // ==============================================================================
 
 namespace Kratos

@@ -157,8 +157,10 @@ class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
 
     # --------------------------------------------------------------------------
     def __mapDesignUpdateToGeometrySpace( self ):
-        LinearSolver = SparseQR()
-        self.Mapper.MapToGeometrySpaceWithRigidCorrection( CONTROL_POINT_UPDATE, SHAPE_UPDATE, LinearSolver )
+        LinearSolver = SparseQRSolver()
+        rigid_regions = self.ModelPartController.GetRigidRegions()
+        fixed_regions = self.ModelPartController.GetFixedRegions()
+        self.Mapper.MapToGeometrySpaceWithRigidCorrection( CONTROL_POINT_UPDATE, SHAPE_UPDATE, LinearSolver, rigid_regions, fixed_regions )
 
     # --------------------------------------------------------------------------
     def __dampShapeUpdate( self ):

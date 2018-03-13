@@ -125,7 +125,7 @@
                 "matrix_free_filtering"      : false
             },
             "damping" : {
-                "perform_damping" : true,
+                "perform_damping" : false,
                 "damping_regions" : [{
                         "sub_model_part_name"   : "support_edges",
                         "damp_X"                : false,

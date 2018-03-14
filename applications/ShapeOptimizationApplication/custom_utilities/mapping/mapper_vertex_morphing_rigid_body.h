@@ -120,6 +120,8 @@ public:
         CreateListOfNodesOfDesignSurface();
         CreateFilterFunction();
         CreateListOfRigidNodes();
+        CreateListOfFixedNodes();
+        CreateListOfAffectedNodes();
         InitializeMappingVariables();
         AssignMappingIds();
     }
@@ -169,10 +171,6 @@ public:
         x_variables_in_geometry_space.resize(mNumberOfDesignVariables,0.0);
         y_variables_in_geometry_space.resize(mNumberOfDesignVariables,0.0);
         z_variables_in_geometry_space.resize(mNumberOfDesignVariables,0.0);
-
-        x_variables_in_geometry_space_rigid.resize(mNumberOfRigidNodes,0.0);
-        y_variables_in_geometry_space_rigid.resize(mNumberOfRigidNodes,0.0);
-        z_variables_in_geometry_space_rigid.resize(mNumberOfRigidNodes,0.0);
     }
 
     // --------------------------------------------------------------------------
@@ -315,7 +313,8 @@ public:
         MultiplyVectorsWithMappingMatrix();
         AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
 
-        CorrectDesignUpdateWithRigidBodyConstraints( linear_solver );
+        // CorrectDesignUpdateWithRigidBodyConstraints( linear_solver );
+        CorrectDesignUpdateWithRigidBodyConstraintsFast( linear_solver );
         MultiplyVectorsWithMappingMatrix();
         AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
 
@@ -470,11 +469,6 @@ public:
     // --------------------------------------------------------------------------
     void CreateListOfRigidNodes()
     {
-        // for (auto & node_i : mrDesignSurface.Nodes())
-        //     if(node_i.X() < -5.0)
-        //         mNumberOfRigidNodes++;
-        // mListOfRigidNodes.resize(mNumberOfRigidNodes)
-
         for (ModelPart::NodesContainerType::iterator node_it = mrDesignSurface.NodesBegin(); node_it != mrDesignSurface.NodesEnd(); ++node_it)
         {
             NodeTypePointer pnode = *(node_it.base());
@@ -488,14 +482,45 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    void CorrectDesignUpdateWithRigidBodyConstraints( CompressedLinearSolverType::Pointer linear_solver )
+    void CreateListOfAffectedNodes()
     {
+        for (ModelPart::NodesContainerType::iterator node_it = mrDesignSurface.NodesBegin(); node_it != mrDesignSurface.NodesEnd(); ++node_it)
+        {
+            NodeTypePointer pnode = *(node_it.base());
 
-        if (mNumberOfRigidNodes != 0)
+            if(pnode->X() < -5.0)
+            {
+                mListOfAffectedNodes.push_back(pnode);
+            }
+        }
+    }
+
+    // --------------------------------------------------------------------------
+    void CreateListOfFixedNodes()
+    {
+        for (ModelPart::NodesContainerType::iterator node_it = mrDesignSurface.NodesBegin(); node_it != mrDesignSurface.NodesEnd(); ++node_it)
+        {
+            NodeTypePointer pnode = *(node_it.base());
+
+            // if(pnode->Id() == 892)
+            // {
+            //     mListOfFixedNodes.push_back(pnode);
+            // }
+        }
+    }
+
+    // --------------------------------------------------------------------------
+    void computeTranslationVectorAndRotationMatrix()
+    {
+        //initialization
+        mRotationMatrix = ZeroMatrix(3,3);
+        mTranslationVector = ZeroVector(3);
+
+        if(mListOfRigidNodes.size() > 0)
         {
             boost::timer svd_time;
             std::cout << "\n> Starting to compute SVD ..." << std::endl;
-            
+
             Vector centroid_undeformed = ZeroVector(3); // centroid A
             Vector centroid_deformed = ZeroVector(3); // centroid B
 
@@ -530,63 +555,59 @@ public:
 
             SVDUtils<double>::JacobiSingularValueDecomposition(H, U, S, V);
 
-            // R
-            Matrix R = prod(trans(V),trans(U));
-            double detR = MathUtils<double>::Det(R);
+            // mRotationMatrix [R]
+            mRotationMatrix = prod(trans(V),trans(U));
+            double detR = MathUtils<double>::Det(mRotationMatrix);
 
             if ( detR < 0 ) // special reflection case
             {
-                R(0,0) *= -1;
-                R(0,1) *= -1;
-                R(0,2) *= -1;
+                mRotationMatrix(0,0) *= -1;
+                mRotationMatrix(0,1) *= -1;
+                mRotationMatrix(0,2) *= -1;
             }
 
-            // t
-            Vector t = ZeroVector(3);
-            t = - prod(R, centroid_undeformed) + centroid_deformed;
+            // mTranslationVector [t]
+            mTranslationVector = - prod(mRotationMatrix, centroid_undeformed) + centroid_deformed;
 
-            // compute rigid body movement of rigid nodes
-            int counter = 0;
-            for( auto& node_i : mListOfRigidNodes )
-            {
-                Vector coord = node_i->Coordinates();
-                Vector modifiedDeformation = prod(coord, R) - coord;
-
-                x_variables_in_geometry_space_rigid[counter] = modifiedDeformation(0);
-                y_variables_in_geometry_space_rigid[counter] = modifiedDeformation(1);
-                z_variables_in_geometry_space_rigid[counter] = modifiedDeformation(2);
-                
-                counter ++;
-            }
             std::cout << "> Time needed for SVD: " << svd_time.elapsed() << " s" << std::endl;
         }
+    }
+
+    // --------------------------------------------------------------------------
+    void CorrectDesignUpdateWithRigidBodyConstraints( CompressedLinearSolverType::Pointer linear_solver )
+    {
+        computeTranslationVectorAndRotationMatrix();
 
         boost::timer assembling_time;
         std::cout << "\n> Starting to assemble modifiedMappingMatrix..." << std::endl;
 
         // compute modified mapping matrix
-        CompressedMatrixType modifiedMappingMatrix( mNumberOfDesignVariables + mNumberOfRigidNodes , mNumberOfDesignVariables );
+        int numberOfRowsInModifiedSystem = mNumberOfDesignVariables + mListOfRigidNodes.size() + mListOfFixedNodes.size();
+        CompressedMatrixType modifiedMappingMatrix( numberOfRowsInModifiedSystem , mNumberOfDesignVariables );
 
         Vector x_variables_modified, y_variables_modified, z_variables_modified;
-        x_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
-        y_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
-        z_variables_modified.resize(mNumberOfDesignVariables + mNumberOfRigidNodes,0.0);
+        x_variables_modified.resize( numberOfRowsInModifiedSystem , 0.0 );
+        y_variables_modified.resize( numberOfRowsInModifiedSystem , 0.0 );
+        z_variables_modified.resize( numberOfRowsInModifiedSystem , 0.0 );
 
         double penalty_factor = 1000;
 
         // Using identity matrix for initial ds
-        for( int node_index_i = 0 ; node_index_i<mNumberOfDesignVariables ; node_index_i++ )
+        int counter = 0;
+        for( auto & node_i : mrDesignSurface.Nodes() )
         {
-            modifiedMappingMatrix.insert_element(node_index_i, node_index_i, 1.0);
+            modifiedMappingMatrix.insert_element(counter, counter, 1.0);
 
             // modified vectors
-            x_variables_modified[node_index_i] = x_variables_in_design_space[node_index_i];
-            y_variables_modified[node_index_i] = y_variables_in_design_space[node_index_i];
-            z_variables_modified[node_index_i] = z_variables_in_design_space[node_index_i];
+            x_variables_modified[counter] = x_variables_in_design_space[counter];
+            y_variables_modified[counter] = y_variables_in_design_space[counter];
+            z_variables_modified[counter] = z_variables_in_design_space[counter];
+
+            counter ++;
         }
 
-
-        int counter = 0;
+        // rigid body transformation
+        counter = 0;
         for( auto& node_i : mListOfRigidNodes )
         {
             // Get node information
@@ -595,13 +616,35 @@ public:
             // Copy respective row from mMappingMatrix to modifiedMappingMatrix
             row(modifiedMappingMatrix, mNumberOfDesignVariables + counter) = penalty_factor*row(mMappingMatrix,i);
 
-            // modified vectors
-            x_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*x_variables_in_geometry_space_rigid[counter];
-            y_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*y_variables_in_geometry_space_rigid[counter];
-            z_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*z_variables_in_geometry_space_rigid[counter];
+            // compute rigid body movement of rigid nodes and store it in modified vector
+            Vector coord = node_i->Coordinates();
+            Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
+
+            x_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*modifiedDeformation(0);
+            y_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*modifiedDeformation(1);
+            z_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*modifiedDeformation(2);
             
             counter ++;
         }
+
+        // fixed points
+        counter = 0;
+        for( auto& node_i : mListOfFixedNodes )
+        {
+            // Get node information
+            int i = node_i->GetValue( MAPPING_ID );
+
+            // Copy respective row from mMappingMatrix to modifiedMappingMatrix
+            row(modifiedMappingMatrix, mNumberOfDesignVariables + mNumberOfRigidNodes + counter) = 
+                penalty_factor * row(mMappingMatrix,i);
+
+            x_variables_modified[mNumberOfDesignVariables+mNumberOfRigidNodes+counter] = 0;
+            y_variables_modified[mNumberOfDesignVariables+mNumberOfRigidNodes+counter] = 0;
+            z_variables_modified[mNumberOfDesignVariables+mNumberOfRigidNodes+counter] = 0;
+            
+            counter ++;
+        }
+
         std::cout << "> Time needed for assembling modifiedMappingMatrix: " << assembling_time.elapsed() << " s" << std::endl;
 
         // write mapping matrix
@@ -630,6 +673,122 @@ public:
         std::cout << "> Time needed for solving modified System: " << solving_time.elapsed() << " s" << std::endl;
     }
 
+    // --------------------------------------------------------------------------
+    // 
+    // --------------------------------------------------------------------------
+    void CorrectDesignUpdateWithRigidBodyConstraintsFast( CompressedLinearSolverType::Pointer linear_solver )
+    {
+        computeTranslationVectorAndRotationMatrix();
+
+        boost::timer assembling_time;
+        std::cout << "\n> Starting to assemble modifiedMappingMatrix..." << std::endl;
+
+        // compute modified mapping matrix
+        int numberOfRowsInModifiedSystem = mListOfAffectedNodes.size() + mListOfRigidNodes.size();
+        int numberOfColsInModifiedSystem = mListOfAffectedNodes.size();
+        CompressedMatrixType modifiedMappingMatrix( numberOfRowsInModifiedSystem , numberOfColsInModifiedSystem );
+
+        Vector x_variables_modified, y_variables_modified, z_variables_modified;
+        x_variables_modified.resize( numberOfRowsInModifiedSystem , 0.0 );
+        y_variables_modified.resize( numberOfRowsInModifiedSystem , 0.0 );
+        z_variables_modified.resize( numberOfRowsInModifiedSystem , 0.0 );
+
+        double penalty_factor = 1000;
+
+        // Using identity matrix for initial ds
+        int counter = 0;
+        for( auto& node_i : mListOfAffectedNodes )
+        {
+            int i = node_i->GetValue( MAPPING_ID );
+            modifiedMappingMatrix.insert_element(counter, counter, 1.0);
+
+            // modified vectors
+            x_variables_modified[counter] = x_variables_in_design_space[i];
+            y_variables_modified[counter] = y_variables_in_design_space[i];
+            z_variables_modified[counter] = z_variables_in_design_space[i];
+
+            counter ++;
+        }
+
+        // rigid body transformation
+        int counter2;
+        counter = 0;
+        for( auto& node_i : mListOfRigidNodes )
+        {
+            // Get node information
+            int i = node_i->GetValue( MAPPING_ID );
+            
+            counter2 = 0;
+            for( auto& node_j : mListOfAffectedNodes )
+            {
+                int j = node_j->GetValue( MAPPING_ID );
+                double val = mMappingMatrix(i,j);
+                if (val != 0.0)
+                    modifiedMappingMatrix.insert_element( mListOfAffectedNodes.size() + counter, counter2, penalty_factor*val );
+                counter2 ++;
+            }
+
+
+            // compute rigid body movement of rigid nodes and store it in modified vector
+            Vector coord = node_i->Coordinates();
+            Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
+
+            x_variables_modified[mListOfAffectedNodes.size()+counter] = penalty_factor*modifiedDeformation(0);
+            y_variables_modified[mListOfAffectedNodes.size()+counter] = penalty_factor*modifiedDeformation(1);
+            z_variables_modified[mListOfAffectedNodes.size()+counter] = penalty_factor*modifiedDeformation(2);
+            
+            counter ++;
+        }
+
+        std::cout << "> Time needed for assembling modifiedMappingMatrix: " << assembling_time.elapsed() << " s" << std::endl;
+
+        // write mapping matrix
+
+        // writeMatrixToFile( modifiedMappingMatrix,
+        //                    mListOfAffectedNodes.size()+mNumberOfRigidNodes,
+        //                    mListOfAffectedNodes.size(),
+        //                    "modifiedMappingMatrix.txt");
+
+        // writeMatrixToFile( mMappingMatrix,
+        //                    mNumberOfDesignVariables,
+        //                    mNumberOfDesignVariables,
+        //                    "mappingMatrix.txt");
+
+        boost::timer solving_time;
+        std::cout << "\n> Starting to solve modified System..." << std::endl;
+        Vector x_variables_in_design_space_affected, y_variables_in_design_space_affected, z_variables_in_design_space_affected;
+
+        x_variables_in_design_space_affected.resize(mListOfAffectedNodes.size(),0.0);
+        y_variables_in_design_space_affected.resize(mListOfAffectedNodes.size(),0.0);
+        z_variables_in_design_space_affected.resize(mListOfAffectedNodes.size(),0.0);
+
+        linear_solver->Solve(modifiedMappingMatrix, x_variables_in_design_space_affected, x_variables_modified);
+        linear_solver->Solve(modifiedMappingMatrix, y_variables_in_design_space_affected, y_variables_modified);
+        linear_solver->Solve(modifiedMappingMatrix, z_variables_in_design_space_affected, z_variables_modified);
+        
+        std::cout << "> Time needed for solving modified System: " << solving_time.elapsed() << " s" << std::endl;
+
+        boost::timer backassambling_time;
+        std::cout << "\n> Starting backward-assembling..." << std::endl;
+
+        // backward-assembling in the design-vector
+        counter = 0;
+        for( auto& node_i : mListOfAffectedNodes )
+        {
+            int i = node_i->GetValue( MAPPING_ID );
+            x_variables_in_design_space[i] = x_variables_in_design_space_affected[counter];
+            y_variables_in_design_space[i] = y_variables_in_design_space_affected[counter];
+            z_variables_in_design_space[i] = z_variables_in_design_space_affected[counter];
+        }
+
+        std::cout << "> Time needed for backward-assembling: " << backassambling_time.elapsed() << " s" << std::endl;
+
+
+        
+        
+    }
+
+    // --------------------------------------------------------------------------
     void writeMatrixToFile( Matrix matrix, int nrow, int ncol, const char* filename )
     {
         std::ofstream file (filename);
@@ -750,6 +909,7 @@ private:
     unsigned int mMaxNumberOfNeighbors;
     bool mConsistentBackwardMapping;
     NodeVector mListOfRigidNodes;
+    NodeVector mListOfFixedNodes;
     unsigned int mNumberOfRigidNodes = 0;
 
     // ==============================================================================
@@ -765,7 +925,9 @@ private:
     CompressedMatrixType mMappingMatrix;
     Vector x_variables_in_design_space, y_variables_in_design_space, z_variables_in_design_space;
     Vector x_variables_in_geometry_space, y_variables_in_geometry_space, z_variables_in_geometry_space;
-    Vector x_variables_in_geometry_space_rigid, y_variables_in_geometry_space_rigid, z_variables_in_geometry_space_rigid;
+    Vector mTranslationVector;
+    Matrix mRotationMatrix;
+    NodeVector mListOfAffectedNodes;
     double mControlSum = 0.0;
 
     ///@}

@@ -245,9 +245,11 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
 
                 dxLastInner = [xOuter[i]+dx[i]-xInner[i] for i in range(self.n)]
                 xInner = [xOuter[i]+dx[i] for i in range(self.n)]
+                self.__writeListOfValuesToNodalVariable(dxLastInner,SHAPE_UPDATE)
 
-                self.__WriteDesignSurfaceReference( xInner )
-                self.__WriteDesignSurface( xInner )
+                self.ModelPartController.UpdateMeshAccordingInputVariable( SHAPE_UPDATE )
+                self.ModelPartController.SetReferenceMeshToMesh()
+
 
                 dxAbsolute = [xInner[i] - xInit[i] for i in range(self.n)]
                 self.__writeListOfValuesToNodalVariable(dxAbsolute,SHAPE_CHANGE)
@@ -580,24 +582,6 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
     # --------------------------------------------------------------------------
     def __inInterval( self, value, bound):
         return min(max(value,-bound),bound)
-
-    # --------------------------------------------------------------------------
-    def __WriteDesignSurfaceReference(self,x):
-        k = 0
-        for node in self.DesignSurface.Nodes:
-            node.X0 = x[k]
-            node.Y0 = x[k+1]
-            node.Z0 = x[k+2]
-            k = k+3
-
-    # --------------------------------------------------------------------------
-    def __WriteDesignSurface(self,x):
-        k = 0
-        for node in self.DesignSurface.Nodes:
-            node.X = x[k]
-            node.Y = x[k+1]
-            node.Z = x[k+2]
-            k = k+3
 
     # # --------------------------------------------------------------------------
     # def __initializeNewShape( self ):

@@ -104,12 +104,6 @@ public:
         for(auto & node_i: mrModelPart.Nodes())
             noalias(node_i.Coordinates()) += node_i.FastGetSolutionStepValue(rInputVariable);
     }
-    // --------------------------------------------------------------------------
-    void UpdateReferenceMeshAccordingInputVariable( const Variable<array_1d<double,3>> &rInputVariable )
-    {
-        for(auto & node_i: mrModelPart.Nodes())
-            noalias(node_i.GetInitialPosition()) += node_i.FastGetSolutionStepValue(rInputVariable);
-    }
 
     // --------------------------------------------------------------------------
     void LogMeshChangeAccordingInputVariable( Variable<array_1d<double,3>> &rInputVariable )

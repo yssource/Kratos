@@ -41,4 +41,12 @@ class MeshControllerBasicUpdating( MeshController ):
         MeshControllerUtilities( self.OptimizationModelPart ).LogMeshChangeAccordingInputVariable( InputVariable )
         print("> Time needed for updating the mesh = ",round(timer.time() - startTime,2),"s")
 
+    # --------------------------------------------------------------------------
+    def UpdateReferenceMeshAccordingInputVariable( self, InputVariable ):
+        print("\n> Starting to update the mesh")
+        startTime = timer.time()
+        MeshControllerUtilities( self.OptimizationModelPart ).UpdateReferenceMeshAccordingInputVariable( InputVariable )
+        MeshControllerUtilities( self.OptimizationModelPart ).LogMeshChangeAccordingInputVariable( InputVariable )
+        print("> Time needed for updating the mesh = ",round(timer.time() - startTime,2),"s")
+
 # ==============================================================================

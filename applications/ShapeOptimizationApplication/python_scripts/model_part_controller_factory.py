@@ -66,6 +66,10 @@ class ModelPartController:
         self.MeshController.UpdateMeshAccordingInputVariable( InputVariable )
 
     # --------------------------------------------------------------------------
+    def UpdateReferenceMeshAccordingInputVariable( self, InputVariable ):
+        self.MeshController.UpdateReferenceMeshAccordingInputVariable( InputVariable )
+
+    # --------------------------------------------------------------------------
     def SetMeshToReferenceMesh( self ):
         MeshControllerUtilities( self.OptimizationModelPart ).SetMeshToReferenceMesh()
 

@@ -30,6 +30,7 @@ import timer_factory as timer_factory
 
 from response_logger_steepest_descent import ResponseLoggerSteepestDescent
 from response_logger_penalized_projection import ResponseLoggerPenalizedProjection
+from response_logger_projected_position import ResponseLoggerProjectedPosition
 
 # ==============================================================================
 def CreateDataLogger( ModelPartController, Communicator, OptimizationSettings ):
@@ -47,8 +48,8 @@ class DataLogger():
         self.ResponseLogger = self.__CreateResponseLogger()
         self.DesignLogger = self.__CreateDesignLogger()
 
-        self.__CreateFolderToStoreOptimizationResults()     
-        self.__OutputInformationAboutResponseFunctions()   
+        self.__CreateFolderToStoreOptimizationResults()
+        self.__OutputInformationAboutResponseFunctions()
 
     # -----------------------------------------------------------------------------
     def __CreateResponseLogger( self ):
@@ -56,7 +57,9 @@ class DataLogger():
         if AlgorithmName == "steepest_descent":
             return ResponseLoggerSteepestDescent( self.Communicator, self.OptimizationSettings, self.Timer )
         elif AlgorithmName == "penalized_projection":
-            return ResponseLoggerPenalizedProjection( self.Communicator, self.OptimizationSettings, self.Timer )   
+            return ResponseLoggerPenalizedProjection( self.Communicator, self.OptimizationSettings, self.Timer )
+        elif AlgorithmName == "projected_position":
+            return ResponseLoggerProjectedPosition( self.Communicator, self.OptimizationSettings, self.Timer )
         else:
             raise NameError("The following optimization algorithm not supported by the response logger (name may be a misspelling): " + AlgorithmName)
 
@@ -66,9 +69,9 @@ class DataLogger():
         if outputFormatName == "gid":
             return DesignLoggerGID( self.ModelPartController, self.OptimizationSettings )
         if outputFormatName == "unv":
-            return DesignLoggerUNV( self.ModelPartController, self.OptimizationSettings )  
+            return DesignLoggerUNV( self.ModelPartController, self.OptimizationSettings )
         if outputFormatName == "vtk":
-            return DesignLoggerVTK( self.ModelPartController, self.OptimizationSettings )                
+            return DesignLoggerVTK( self.ModelPartController, self.OptimizationSettings )
         else:
             raise NameError("The following output format is not supported by the design logger (name may be misspelled): " + outputFormatName)
 
@@ -93,21 +96,21 @@ class DataLogger():
             for constraintNumber in range(numberOfConstraints):
                 print(self.OptimizationSettings["constraints"][constraintNumber],"\n")
         else:
-            print("> No constraints defined.\n")              
+            print("> No constraints defined.\n")
 
     # --------------------------------------------------------------------------
     def InitializeDataLogging( self ):
-        self.DesignLogger.InitializeLogging()  
+        self.DesignLogger.InitializeLogging()
         self.ResponseLogger.InitializeLogging()
 
     # --------------------------------------------------------------------------
-    def LogCurrentData( self, optimizationIteration ):        
-        self.DesignLogger.LogCurrentDesign( optimizationIteration )   
+    def LogCurrentData( self, optimizationIteration ):
+        self.DesignLogger.LogCurrentDesign( optimizationIteration )
         self.ResponseLogger.LogCurrentResponses( optimizationIteration )
 
     # --------------------------------------------------------------------------
     def FinalizeDataLogging( self ):
-        self.DesignLogger.FinalizeLogging()  
+        self.DesignLogger.FinalizeLogging()
         self.ResponseLogger.FinalizeLogging()
 
     # --------------------------------------------------------------------------
@@ -126,7 +129,7 @@ class DataLogger():
     def GetLapTime( self ):
         lap_time = self.Timer.GetLapTime()
         self.Timer.StartNewLap()
-        return lap_time   
+        return lap_time
 
     # --------------------------------------------------------------------------
     def GetTotalTime( self ):

@@ -9,7 +9,7 @@
 # ==============================================================================
 
 # Making KratosMultiphysics backward compatible with python 2.6 and 2.7
-from __future__ import print_function, absolute_import, division 
+from __future__ import print_function, absolute_import, division
 
 # importing the Kratos Library
 from KratosMultiphysics import *
@@ -21,6 +21,7 @@ CheckForPreviousImport()
 # Additional imports
 from algorithm_steepest_descent import AlgorithmSteepestDescent
 from algorithm_penalized_projection import AlgorithmPenalizedProjection
+from algorithm_projected_position import AlgorithmProjectedPosition
 import mapper_factory
 import data_logger_factory
 
@@ -28,24 +29,31 @@ import data_logger_factory
 def CreateAlgorithm( ModelPartController, Analyzer, Communicator, OptimizationSettings ):
     AlgorithmName = OptimizationSettings["optimization_algorithm"]["name"].GetString()
 
-    Mapper = mapper_factory.CreateMapper( ModelPartController, OptimizationSettings ) 
-    DataLogger = data_logger_factory.CreateDataLogger( ModelPartController, Communicator, OptimizationSettings )  
+    Mapper = mapper_factory.CreateMapper( ModelPartController, OptimizationSettings )
+    DataLogger = data_logger_factory.CreateDataLogger( ModelPartController, Communicator, OptimizationSettings )
 
     if OptimizationSettings["optimization_algorithm"]["name"].GetString() == "steepest_descent":
-        return AlgorithmSteepestDescent( ModelPartController, 
-                                         Analyzer, 
-                                         Communicator, 
-                                         Mapper, 
-                                         DataLogger, 
+        return AlgorithmSteepestDescent( ModelPartController,
+                                         Analyzer,
+                                         Communicator,
+                                         Mapper,
+                                         DataLogger,
                                          OptimizationSettings )
     elif AlgorithmName == "penalized_projection":
-        return AlgorithmPenalizedProjection( ModelPartController, 
-                                             Analyzer, 
-                                             Communicator, 
-                                             Mapper, 
-                                             DataLogger, 
+        return AlgorithmPenalizedProjection( ModelPartController,
+                                             Analyzer,
+                                             Communicator,
+                                             Mapper,
+                                             DataLogger,
                                              OptimizationSettings )
+    elif AlgorithmName == "projected_position":
+        return AlgorithmProjectedPosition( ModelPartController,
+                                           Analyzer,
+                                           Communicator,
+                                           Mapper,
+                                           DataLogger,
+                                           OptimizationSettings )
     else:
-        raise NameError("The following optimization algorithm not supported by the algorithm driver (name may be misspelled): " + AlgorithmName)              
+        raise NameError("The following optimization algorithm not supported by the algorithm driver (name may be misspelled): " + AlgorithmName)
 
 # # ==============================================================================

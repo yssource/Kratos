@@ -107,6 +107,7 @@ void  AddCustomUtilitiesToPython()
     // ========================================================================
     class_<MeshControllerUtilities, bases<Process> >("MeshControllerUtilities", init<ModelPart&>())
         .def("UpdateMeshAccordingInputVariable", &MeshControllerUtilities::UpdateMeshAccordingInputVariable)
+        .def("UpdateReferenceMeshAccordingInputVariable", &MeshControllerUtilities::UpdateReferenceMeshAccordingInputVariable)
         .def("LogMeshChangeAccordingInputVariable", &MeshControllerUtilities::LogMeshChangeAccordingInputVariable)
         .def("SetMeshToReferenceMesh", &MeshControllerUtilities::SetMeshToReferenceMesh)
         .def("SetReferenceMeshToMesh", &MeshControllerUtilities::SetReferenceMeshToMesh)

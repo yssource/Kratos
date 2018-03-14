@@ -109,13 +109,13 @@ public:
     ///@{
 
     /// Default constructor.
-    MapperVertexMorphingRigidBody( ModelPart& designSurface, Parameters optimizationSettings )
+    MapperVertexMorphingRigidBody( ModelPart& designSurface, Parameters mapper_settings )
         : mrDesignSurface( designSurface ),
           mNumberOfDesignVariables(designSurface.Nodes().size()),
-          mFilterType( optimizationSettings["design_variables"]["filter"]["filter_function_type"].GetString() ),
-          mFilterRadius( optimizationSettings["design_variables"]["filter"]["filter_radius"].GetDouble() ),
-          mMaxNumberOfNeighbors( optimizationSettings["design_variables"]["filter"]["max_nodes_in_filter_radius"].GetInt() ),
-          mConsistentBackwardMapping (optimizationSettings["design_variables"]["consistent_mapping_to_geometry_space"].GetBool() )
+          mFilterType( mapper_settings["filter_function_type"].GetString() ),
+          mFilterRadius( mapper_settings["filter_radius"].GetDouble() ),
+          mMaxNumberOfNeighbors( mapper_settings["max_nodes_in_filter_radius"].GetInt() ),
+          mConsistentBackwardMapping (mapper_settings["consistent_mapping_to_geometry_space"].GetBool() )
     {
         CreateListOfNodesOfDesignSurface();
         CreateFilterFunction();
@@ -303,10 +303,17 @@ public:
     // }
 
     // --------------------------------------------------------------------------
-    void MapToGeometrySpaceWithRigidCorrection( const Variable<array_3d> &rNodalVariable, const Variable<array_3d> &rNodalVariableInGeometrySpace, CompressedLinearSolverType::Pointer linear_solver )
+    void MapToGeometrySpaceWithRigidCorrection( const Variable<array_3d> &rNodalVariable,
+                                                const Variable<array_3d> &rNodalVariableInGeometrySpace,
+                                                CompressedLinearSolverType::Pointer linear_solver,
+                                                boost::python::list rigidRegions,
+                                                boost::python::list fixedRegions )
     {
         boost::timer mapping_time;
         std::cout << "\n> Starting to map " << rNodalVariable.Name() << " to geometry space..." << std::endl;
+
+        mrFixedRegions = fixedRegions;
+        mrRigidRegions = rigidRegions;
 
         RecomputeMappingMatrixIfGeometryHasChanged();
         PrepareVectorsForMappingToGeometrySpace( rNodalVariable );
@@ -512,9 +519,30 @@ public:
     // --------------------------------------------------------------------------
     void computeTranslationVectorAndRotationMatrix()
     {
+<<<<<<< HEAD
         //initialization
         mRotationMatrix = ZeroMatrix(3,3);
         mTranslationVector = ZeroVector(3);
+=======
+        // Loop over all regions for which damping is to be applied
+        for (unsigned int regionNumber = 0; regionNumber < len(mrRigidRegions); regionNumber++)
+        {
+            ModelPart& rigid_region = extractModelPart( mrRigidRegions[regionNumber] );
+
+            for( auto& node_i : rigid_region.Nodes() )
+            {
+                array_1d<double,3> ds_example;
+                ds_example[0] = 0.0;
+                ds_example[1] = 0.0;
+                ds_example[2] = 0.0;
+
+                noalias(node_i.FastGetSolutionStepValue(CONTROL_POINT_UPDATE)) = ds_example;
+            }
+        }
+
+
+
+>>>>>>> f149a230fd1cad1b2f0aa7ac53f5357c40c46fe3
 
         if(mListOfRigidNodes.size() > 0)
         {
@@ -544,7 +572,7 @@ public:
             {
                 Vector coord = node_i->Coordinates();
                 Vector def = node_i->FastGetSolutionStepValue( SHAPE_UPDATE );
-                
+
                 H += outer_prod( (coord - centroid_undeformed) , (coord + def - centroid_deformed) );
             }
 
@@ -569,6 +597,22 @@ public:
             // mTranslationVector [t]
             mTranslationVector = - prod(mRotationMatrix, centroid_undeformed) + centroid_deformed;
 
+<<<<<<< HEAD
+=======
+            // compute rigid body movement of rigid nodes
+            int counter = 0;
+            for( auto& node_i : mListOfRigidNodes )
+            {
+                Vector coord = node_i->Coordinates();
+                Vector modifiedDeformation = prod(coord, R) - coord;
+
+                x_variables_in_geometry_space_rigid[counter] = modifiedDeformation(0);
+                y_variables_in_geometry_space_rigid[counter] = modifiedDeformation(1);
+                z_variables_in_geometry_space_rigid[counter] = modifiedDeformation(2);
+
+                counter ++;
+            }
+>>>>>>> f149a230fd1cad1b2f0aa7ac53f5357c40c46fe3
             std::cout << "> Time needed for SVD: " << svd_time.elapsed() << " s" << std::endl;
         }
     }
@@ -616,6 +660,7 @@ public:
             // Copy respective row from mMappingMatrix to modifiedMappingMatrix
             row(modifiedMappingMatrix, mNumberOfDesignVariables + counter) = penalty_factor*row(mMappingMatrix,i);
 
+<<<<<<< HEAD
             // compute rigid body movement of rigid nodes and store it in modified vector
             Vector coord = node_i->Coordinates();
             Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
@@ -642,6 +687,13 @@ public:
             y_variables_modified[mNumberOfDesignVariables+mNumberOfRigidNodes+counter] = 0;
             z_variables_modified[mNumberOfDesignVariables+mNumberOfRigidNodes+counter] = 0;
             
+=======
+            // modified vectors
+            x_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*x_variables_in_geometry_space_rigid[counter];
+            y_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*y_variables_in_geometry_space_rigid[counter];
+            z_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*z_variables_in_geometry_space_rigid[counter];
+
+>>>>>>> f149a230fd1cad1b2f0aa7ac53f5357c40c46fe3
             counter ++;
         }
 
@@ -929,6 +981,10 @@ private:
     Matrix mRotationMatrix;
     NodeVector mListOfAffectedNodes;
     double mControlSum = 0.0;
+
+    boost::python::list mrRigidRegions;
+    boost::python::list mrFixedRegions;
+
 
     ///@}
     ///@name Private Operators

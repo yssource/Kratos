@@ -184,18 +184,14 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
 
             self.__RevertPossibleShapeModificationsDuringAnalysis()
 
-            self.GeometryUtilities.ComputeUnitSurfaceNormals()
+            # self.GeometryUtilities.ComputeUnitSurfaceNormals()
             # self.GeometryUtilities.ProjectNodalVariableOnUnitSurfaceNormals( OBJECTIVE_SENSITIVITY )
             # self.GeometryUtilities.ProjectNodalVariableOnUnitSurfaceNormals( CONSTRAINT_SENSITIVITY )
 
             # gradObjectiveOuter = []
-            # gradInequalityOuter = [[]]
-            # self.__ReadNodalVariableToList( OBJECTIVE_SENSITIVITY, gradObjectiveOuter )
-            # self.__ReadNodalVariableToList( CONSTRAINT_SENSITIVITY, gradInequalityOuter[0] )
-
-
-
-
+            # gradEqualityOuter = [[]]
+            # gradObjectiveOuter = self.__ReadNodalVariableToList( OBJECTIVE_SENSITIVITY )
+            # gradEqualityOuter[0] = self.__ReadNodalVariableToList( CONSTRAINT_SENSITIVITY )
 
 
 
@@ -246,6 +242,10 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
                 dxLastInner = [xOuter[i]+dx[i]-xInner[i] for i in range(self.n)]
                 xInner = [xOuter[i]+dx[i] for i in range(self.n)]
                 self.__writeListOfValuesToNodalVariable(dxLastInner,SHAPE_UPDATE)
+
+                # self.DampingUtilities.DampNodalVariable( SHAPE_UPDATE )
+                # xInner = [xInner[i]+dxLastInner[i] for i in range(self.n)]
+                # dxLastInner = self.__ReadNodalVariableToList( SHAPE_UPDATE )
 
                 self.ModelPartController.UpdateMeshAccordingInputVariable( SHAPE_UPDATE )
                 self.ModelPartController.SetReferenceMeshToMesh()
@@ -509,6 +509,7 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
     # get length and directions
     def __valueFormatToLengthFormat(self,value,gradient):
         gradientMapped = self.__mapVector(gradient)
+        # gradientMapped = self.__dampVector(gradientMapped)
         ninf = norminf3d(gradientMapped)
         eDir = [-gradientMapped[i]/ninf for i in range(len(gradientMapped))]
         gradL = sum(a*b for a,b in zip(gradientMapped,eDir)) # dot product
@@ -518,6 +519,8 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
     # --------------------------------------------------------------------------
     # map a vector
     def __mapVector(self, gradient_list):
+
+        # Here we use OBJECTIVE_SENSITIVITY as generic placeholder
         self.__writeListOfValuesToNodalVariable( gradient_list, OBJECTIVE_SENSITIVITY )
 
         tmp_timer = timer_factory.CreateTimer()
@@ -531,6 +534,23 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
         list_of_mapped_gradients = []
         self.__SortVariableValuesIntoList( OBJECTIVE_SENSITIVITY, list_of_mapped_gradients )
         return list_of_mapped_gradients
+
+    # # --------------------------------------------------------------------------
+    # def __dampVector(self, gradient_list):
+
+    #     # Here we use OBJECTIVE_SENSITIVITY as generic placeholder
+    #     self.__writeListOfValuesToNodalVariable( gradient_list, OBJECTIVE_SENSITIVITY )
+
+    #     tmp_timer = timer_factory.CreateTimer()
+
+    #     print("Algo.mapVector> map...",end="\r")
+    #     startTime = tmp_timer.StartTimer()
+    #     self.DampingUtilities.DampNodalVariable( OBJECTIVE_SENSITIVITY )
+    #     print("Algo.mapVector> map in {:.2f} s".format(tmp_timer.GetTotalTime()))
+
+    #     list_of_mapped_gradients = []
+    #     self.__SortVariableValuesIntoList( OBJECTIVE_SENSITIVITY, list_of_mapped_gradients )
+    #     return list_of_mapped_gradients
 
     # --------------------------------------------------------------------------
     def __storeGradientOnNodalVariable( self, gradient, variable_name ):
@@ -572,12 +592,14 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
             node.SetSolutionStepValue(nodal_variable,tmp_values)
 
     # --------------------------------------------------------------------------
-    def __ReadNodalVariableToList(self, nodal_variable, list_of_values): # e.g.: OBJECTIVE_SENSITIVITY
+    def __ReadNodalVariableToList(self, nodal_variable): # e.g.: OBJECTIVE_SENSITIVITY
+        list_of_values = []
         for node in self.DesignSurface.Nodes:
             tmp_values = node.GetSolutionStepValue(nodal_variable)
             list_of_values.append(tmp_values[0])
             list_of_values.append(tmp_values[1])
             list_of_values.append(tmp_values[2])
+        return list_of_values
 
     # --------------------------------------------------------------------------
     def __inInterval( self, value, bound):

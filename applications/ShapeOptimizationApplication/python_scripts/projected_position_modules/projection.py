@@ -269,7 +269,7 @@ def testHp(x,pos,dir):
     if sum(hpTest)>0:
         # printmat(hpDist)
         # printmat(hpTest)
-        print("projection WARNING> HP not enforced, ",dist)
+        print("projection WARNING> HP not enforced, ",hpDist)
         # raise ValueError("HP not enforced")
 
 def testHs(x,pos,dir):

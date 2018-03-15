@@ -65,13 +65,16 @@ class ImmersedBCsUtility():
             found = self.structure_space_database.FindPointOnMesh(coords, N, pelem, 1000, 1e-9) 
             
             if(found): #fluid node falls within the structure
-                v = 0.0
+                v = KratosMultiphysics.Vector(3)
                 v[0] = 0.0
                 v[1] = 0.0
                 v[2] = 0.0
                 k = 0
                 for p in pelem.GetNodes():
-                    v += N[k]*p.GetSolutionStepValue(KratosMultiphysics.VELOCITY)                    
+                    tmp = N[k]*p.GetSolutionStepValue(KratosMultiphysics.VELOCITY)                    
+                    v[0] += tmp[0]
+                    v[1] += tmp[1]
+                    v[2] += tmp[2]
                     k+=1
                 
                 
@@ -116,8 +119,12 @@ class ImmersedBCsUtility():
                 k = 0
                 for p in pelem.GetNodes():
                     A = p.GetSolutionStepValue(KratosMultiphysics.NODAL_AREA)
-                    rho = p.GetSolutionStepValue(KratosMultiphysics.DENSITY)
-                    t += (N[k]/(A*rho))*p.GetSolutionStepValue(KratosMultiphysics.REACTION)                    
+                    rho = 1.0 #node.GetSolutionStepValue(KratosMultiphysics.DENSITY) #get the density from the fluid node
+                    aux = (N[k]/(A*rho))*p.GetSolutionStepValue(KratosMultiphysics.REACTION)
+                    t[0] += aux[0]
+                    t[1] += aux[1]
+                    t[2] += aux[2]
+                    
                     k+=1
                 
                 node.SetSolutionStepValue(KratosMultiphysics.VOLUME_ACCELERATION,t)

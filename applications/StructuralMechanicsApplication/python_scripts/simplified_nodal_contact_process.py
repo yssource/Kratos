@@ -42,9 +42,9 @@ class SimplifiedNodalContactProcess(KratosMultiphysics.Process):
         KratosMultiphysics.Process.__init__(self)
         
         #modelparts in the background (to be used in detecting contact and computing distances to the wall)
-        self.background_domain                = self.Model[self.settings["background_domain"].GetString()]
-        self.background_contact_surface       = self.Model[self.settings["background_contact_surface"].GetString()]
-        self.background_contact_volume        = self.Model[self.settings["background_contact_volume"].GetString()]
+        self.background_domain                = self.Model[self.settings["background_domain"].GetString()] #rubber. part in which the contacting body enters during contact
+        self.background_contact_surface       = self.Model[self.settings["background_contact_surface"].GetString()] 
+        self.background_contact_volume        = self.Model[self.settings["background_contact_volume"].GetString()] #air, part not in contact
         self.background_all = self.background_domain
  
         #modelparts on the structure
@@ -68,7 +68,7 @@ class SimplifiedNodalContactProcess(KratosMultiphysics.Process):
                 max_cond_id = cond.Id
                 
         prop_id = self.settings["contact_property_id"].GetInt()
-        prop = self.active_contact_body.Properties[prop_id]
+        prop = self.active_contact_body.GetRootModelPart().Properties[prop_id]
 
         if not prop.Has(KratosMultiphysics.YOUNG_MODULUS):
             raise Exception("property with Id ",prop_id," does not define YOUNG_MODULUS and cannot be used in contact")
@@ -114,7 +114,10 @@ class SimplifiedNodalContactProcess(KratosMultiphysics.Process):
             if(node.IsFixed(KratosMultiphysics.DISTANCE) == False):
                 node.SetSolutionStepValue(KratosMultiphysics.DISTANCE,0,1.0)
                 
-        
+        print("contact surface in the fluid = ",self.background_contact_surface)
+        print("all background domain        = ",self.background_all)
+        print("rubber domain                = ",self.background_domain)
+        print("air (not in contact)         = ",self.background_contact_volume)                        
 
     
         #computing distance from the contact surface on the background mesh

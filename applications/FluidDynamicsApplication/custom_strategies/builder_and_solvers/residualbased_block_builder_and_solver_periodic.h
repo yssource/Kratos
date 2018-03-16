@@ -136,8 +136,12 @@ public:
 
         for (typename DofsArrayType::iterator itDof = BaseType::mDofSet.begin(); itDof != BaseType::mDofSet.end(); ++itDof)
         {
-            if ( itDof->GetSolutionStepValue(mPeriodicIdVar) < static_cast<int>(itDof->Id()) )
+            if ( itDof->GetSolutionStepValue(mPeriodicIdVar) < static_cast<int>(itDof->Id()) ) {
                 itDof->SetEquationId(EqId++);
+            }
+            else {
+
+            }
         }
 
         // Copy Equation Id to duplicate nodes.
@@ -156,10 +160,30 @@ public:
                 // If the nodes are marked as a periodic pair (this is to avoid acting on two-noded conditions that are not PeriodicCondition)
                 if ( ( Node0 == Node1Pair ) && ( Node1 == Node0Pair ) )
                 {
-                    if ( Node0 < Node0Pair ) // If Node0 is the one with lower Id (the one that does not have an EquationId yet)
-                        CopyEquationId(rGeom[1],rGeom[0]);
-                    else
-                        CopyEquationId(rGeom[0],rGeom[1]);
+                    KRATOS_ERROR_IF_NOT(itCond->GetProperties().Has(PERIODIC_VARIABLES)) <<
+                        "Condition " << itCond->Id() << " is marked as periodic but does not have PERIODIC_VARIABLES defined in its properties." << std::endl;
+
+                    const auto& periodic_variable_list = itCond->GetProperties().GetValue(PERIODIC_VARIABLES);
+
+                    // The condition checks if Node0 is the one with lower Id of the pair (that is: the one that does not have an EquationId yet)
+                    Node<3>& r_origin_node = ( Node0 < Node0Pair ) ? rGeom[1] : rGeom[0];
+                    Node<3>& r_destination_node = ( Node0 < Node0Pair ) ? rGeom[0] : rGeom[1];
+
+                    for (auto var = periodic_variable_list.DoubleVariablesBegin(); var != periodic_variable_list.DoubleVariablesEnd(); ++var) {
+                        CopyEquationId(*var, r_origin_node, r_destination_node);
+                    }
+
+                    for (auto var = periodic_variable_list.VariableComponentsBegin(); var != periodic_variable_list.VariableComponentsEnd(); ++var) {
+                        CopyEquationId(*var, r_origin_node, r_destination_node);
+                    }
+
+                    // Assign an Equation Id for any remaining DOF in the destination node
+                    for ( Node<3>::DofsContainerType::iterator i_dof = r_destination_node.GetDofs().begin(); 
+                            i_dof != r_destination_node.GetDofs().end(); ++i_dof) {
+                        if (i_dof->EquationId() != r_origin_node.pGetDof(i_dof->GetVariable())->EquationId()) {
+                            i_dof->SetEquationId(EqId++);
+                        }
+                    }
                 }
             }
         }
@@ -274,11 +298,12 @@ private:
     /*@{ */
 
     /// Duplicate EquationIds to the second node on each periodic pair
-    void CopyEquationId(ModelPart::NodeType& rOrigin,
+    template< class TVariable >
+    void CopyEquationId(const TVariable& rVariable,
+                        ModelPart::NodeType& rOrigin,
                         ModelPart::NodeType& rDest)
     {
-        for (auto itDof = rOrigin.GetDofs().begin(); itDof != rOrigin.GetDofs().end(); itDof++)
-            rDest.pGetDof( itDof->GetVariable() )->SetEquationId( itDof->EquationId() );
+        rDest.pGetDof( rVariable )->SetEquationId( rOrigin.pGetDof(rVariable)->EquationId() );
     }
 
     /*@} */

@@ -115,13 +115,11 @@ public:
           mFilterType( mapper_settings["filter_function_type"].GetString() ),
           mFilterRadius( mapper_settings["filter_radius"].GetDouble() ),
           mMaxNumberOfNeighbors( mapper_settings["max_nodes_in_filter_radius"].GetInt() ),
-          mConsistentBackwardMapping (mapper_settings["consistent_mapping_to_geometry_space"].GetBool() )
+          mConsistentBackwardMapping (mapper_settings["consistent_mapping_to_geometry_space"].GetBool() ),
+          mMapperSettings( mapper_settings )
     {
         CreateListOfNodesOfDesignSurface();
         CreateFilterFunction();
-        CreateListOfRigidNodes();
-        CreateListOfFixedNodes();
-        CreateListOfAffectedNodes();
         InitializeMappingVariables();
         AssignMappingIds();
     }
@@ -314,14 +312,17 @@ public:
 
         mrFixedRegions = fixedRegions;
         mrRigidRegions = rigidRegions;
+        CreateListOfRigidNodes();
+        CreateListOfFixedNodes();
+        CreateListOfNodesInTransitionRegionsAndListOfImportantNodes();
 
         RecomputeMappingMatrixIfGeometryHasChanged();
         PrepareVectorsForMappingToGeometrySpace( rNodalVariable );
         MultiplyVectorsWithMappingMatrix();
         AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
 
-        // CorrectDesignUpdateWithRigidBodyConstraints( linear_solver );
-        CorrectDesignUpdateWithRigidBodyConstraintsFast( linear_solver );
+        CorrectDesignUpdateWithRigidBodyConstraints( linear_solver );
+        // CorrectDesignUpdateWithRigidBodyConstraintsFast( linear_solver );
         MultiplyVectorsWithMappingMatrix();
         AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
 
@@ -473,76 +474,180 @@ public:
         mMappingMatrix.clear();
     }
 
-    // --------------------------------------------------------------------------
-    void CreateListOfRigidNodes()
-    {
-        for (ModelPart::NodesContainerType::iterator node_it = mrDesignSurface.NodesBegin(); node_it != mrDesignSurface.NodesEnd(); ++node_it)
-        {
-            NodeTypePointer pnode = *(node_it.base());
-
-            if(pnode->X() < -8.0)
-            {
-                mNumberOfRigidNodes++;
-                mListOfRigidNodes.push_back(pnode);
-            }
-        }
-    }
-
-    // --------------------------------------------------------------------------
-    void CreateListOfAffectedNodes()
-    {
-        for (ModelPart::NodesContainerType::iterator node_it = mrDesignSurface.NodesBegin(); node_it != mrDesignSurface.NodesEnd(); ++node_it)
-        {
-            NodeTypePointer pnode = *(node_it.base());
-
-            if(pnode->X() < -5.0)
-            {
-                mListOfAffectedNodes.push_back(pnode);
-            }
-        }
-    }
 
     // --------------------------------------------------------------------------
     void CreateListOfFixedNodes()
     {
-        for (ModelPart::NodesContainerType::iterator node_it = mrDesignSurface.NodesBegin(); node_it != mrDesignSurface.NodesEnd(); ++node_it)
+        mListOfFixedNodes.clear();
+        // Loop over all regions that have to be fixed
+        for (unsigned int regionNumber = 0; regionNumber < len(mrFixedRegions); regionNumber++)
         {
-            NodeTypePointer pnode = *(node_it.base());
+            ModelPart& fixed_region = extractModelPart( mrFixedRegions[regionNumber] );
+            for (ModelPart::NodesContainerType::iterator node_it = fixed_region.NodesBegin(); node_it != fixed_region.NodesEnd(); ++node_it)
+            {
+                KRATOS_WATCH("test_fixed");
+                NodeTypePointer pnode = *(node_it.base());
+                mListOfFixedNodes.push_back( pnode );
+            }
 
-            // if(pnode->Id() == 892)
-            // {
-            //     mListOfFixedNodes.push_back(pnode);
-            // }
+            // mFix_in_X = mMapperSettings[regionNumber]["fix_in_X"].GetBool();
+            // mFix_in_Y = mMapperSettings[regionNumber]["fix_in_Y"].GetBool();
+            // mFix_in_Z = mMapperSettings[regionNumber]["fix_in_Z"].GetBool();
+            mFix_in_X = false;
+            mFix_in_Y = true;
+            mFix_in_Z = true;
         }
+
+        // // Loop over all regions for which damping is to be applied
+        // for (unsigned int regionNumber = 0; regionNumber < len(mrFixedRegions); regionNumber++)
+        // {
+        //     ModelPart& fixed_region = extractModelPart( mrRigidRegions[regionNumber] );
+
+        //     for( auto& node_i : rigid_region.Nodes() )
+        //     {
+        //         array_1d<double,3> ds_example;
+        //         ds_example[0] = 0.0;
+        //         ds_example[1] = 0.0;
+        //         ds_example[2] = 0.0;
+
+        //         // noalias(node_i.FastGetSolutionStepValue(CONTROL_POINT_UPDATE)) = ds_example;
+        //     }
+        // }
+    }
+
+
+    // --------------------------------------------------------------------------
+    void CreateListOfRigidNodes()
+    {   
+        mListOfRigidNodes.clear();
+        // Loop over all regions that a rigid motion has to be enforced on
+        for (unsigned int regionNumber = 0; regionNumber < len(mrRigidRegions); regionNumber++)
+        {
+            KRATOS_WATCH(regionNumber);
+            ModelPart& rigid_region = extractModelPart( mrRigidRegions[regionNumber] );
+            for (ModelPart::NodesContainerType::iterator node_it = rigid_region.NodesBegin(); node_it != rigid_region.NodesEnd(); ++node_it)
+            {
+                KRATOS_WATCH("test");
+                NodeTypePointer pnode = *(node_it.base());
+                mListOfRigidNodes.push_back( pnode );
+            }
+        }
+        mNumberOfRigidNodes = mListOfRigidNodes.size();
+
+    }
+
+    // --------------------------------------------------------------------------
+    void CreateListOfNodesInTransitionRegionsAndListOfImportantNodes()
+    {
+
+
+        boolVectorOfTransitionRegions.resize(mNumberOfDesignVariables,false);
+        boolVectorOfImportantNodes.resize(mNumberOfDesignVariables,false);
+
+        // Loop over all regions 
+        for (unsigned int regionNumber = 0; regionNumber < len(mrRigidRegions); regionNumber++)
+        {
+            ModelPart& rigidRegion = extractModelPart( mrRigidRegions[regionNumber] );
+
+            // Loop over all nodes in specified sub-model part 
+            for(auto& node_i : rigidRegion.Nodes())
+            {
+                NodeVector neighbor_nodes( mMaxNumberOfNeighbors );
+                std::vector<double> resulting_squared_distances( mMaxNumberOfNeighbors );
+                unsigned int number_of_neighbors = mpSearchTree->SearchInRadius( node_i,
+                                                                                mFilterRadius,
+                                                                                neighbor_nodes.begin(),
+                                                                                resulting_squared_distances.begin(),
+                                                                                mMaxNumberOfNeighbors );
+
+                ThrowWarningIfMaxNodeNeighborsReached( node_i, number_of_neighbors );
+                KRATOS_WATCH(number_of_neighbors);
+                
+                for(unsigned int j_itr = 0 ; j_itr<number_of_neighbors ; j_itr++)
+                {
+                    ModelPart::NodeType& neighbor_node = *neighbor_nodes[j_itr];
+                    int neighbor_id = neighbor_node.GetValue( MAPPING_ID );
+                    boolVectorOfTransitionRegions[neighbor_id] = true;
+                }
+            }
+        }
+
+        // Loop over all regions 
+        for (unsigned int regionNumber = 0; regionNumber < len(mrFixedRegions); regionNumber++)
+        {
+            ModelPart& fixedRegion = extractModelPart( mrFixedRegions[regionNumber] );
+
+            // Loop over all nodes in specified sub-model part 
+            for(auto& node_i : fixedRegion.Nodes())
+            {
+                NodeVector neighbor_nodes( mMaxNumberOfNeighbors );
+                std::vector<double> resulting_squared_distances( mMaxNumberOfNeighbors );
+                unsigned int number_of_neighbors = mpSearchTree->SearchInRadius( node_i,
+                                                                                mFilterRadius,
+                                                                                neighbor_nodes.begin(),
+                                                                                resulting_squared_distances.begin(),
+                                                                                mMaxNumberOfNeighbors );
+
+                ThrowWarningIfMaxNodeNeighborsReached( node_i, number_of_neighbors );
+                KRATOS_WATCH(number_of_neighbors);
+                
+                for(unsigned int j_itr = 0 ; j_itr<number_of_neighbors ; j_itr++)
+                {
+                    ModelPart::NodeType& neighbor_node = *neighbor_nodes[j_itr];
+                    int neighbor_id = neighbor_node.GetValue( MAPPING_ID );
+                    boolVectorOfTransitionRegions[neighbor_id] = true;
+                }
+            }
+        }
+
+        boolVectorOfImportantNodes = boolVectorOfTransitionRegions;
+
+        // Loop over all regions 
+        for (unsigned int regionNumber = 0; regionNumber < len(mrRigidRegions); regionNumber++)
+        {
+            ModelPart& rigidRegion = extractModelPart( mrRigidRegions[regionNumber] );
+            for(auto& node_i : rigidRegion.Nodes())
+            {
+                int id = node_i.GetValue( MAPPING_ID );
+                boolVectorOfTransitionRegions[id] = false;
+            }
+        }
+
+        // Loop over all regions 
+        for (unsigned int regionNumber = 0; regionNumber < len(mrFixedRegions); regionNumber++)
+        {
+            ModelPart& fixedRegion = extractModelPart( mrFixedRegions[regionNumber] );
+            for(auto& node_i : fixedRegion.Nodes())
+            {
+                int id = node_i.GetValue( MAPPING_ID );
+                boolVectorOfTransitionRegions[id] = false;
+            }
+        }
+
+
+        // create lists of nodes
+        mListOfImportantNodes.clear();
+        mListOfNodesInTransitionRegion.clear();
+        // for( auto & node_i : mrDesignSurface.Nodes() )
+        for( auto& node_i : mListOfNodesOfDesignSurface )
+        {
+            int id = node_i->GetValue( MAPPING_ID );
+
+            if ( boolVectorOfTransitionRegions[id] )
+                mListOfNodesInTransitionRegion.push_back( node_i );
+
+            if ( boolVectorOfImportantNodes[id] )
+                mListOfImportantNodes.push_back( node_i );
+        }
+
     }
 
     // --------------------------------------------------------------------------
     void computeTranslationVectorAndRotationMatrix()
     {
-<<<<<<< HEAD
         //initialization
         mRotationMatrix = ZeroMatrix(3,3);
         mTranslationVector = ZeroVector(3);
-=======
-        // Loop over all regions for which damping is to be applied
-        for (unsigned int regionNumber = 0; regionNumber < len(mrRigidRegions); regionNumber++)
-        {
-            ModelPart& rigid_region = extractModelPart( mrRigidRegions[regionNumber] );
-
-            for( auto& node_i : rigid_region.Nodes() )
-            {
-                array_1d<double,3> ds_example;
-                ds_example[0] = 0.0;
-                ds_example[1] = 0.0;
-                ds_example[2] = 0.0;
-
-                noalias(node_i.FastGetSolutionStepValue(CONTROL_POINT_UPDATE)) = ds_example;
-            }
-        }
-
-
-
->>>>>>> f149a230fd1cad1b2f0aa7ac53f5357c40c46fe3
 
         if(mListOfRigidNodes.size() > 0)
         {
@@ -597,22 +702,6 @@ public:
             // mTranslationVector [t]
             mTranslationVector = - prod(mRotationMatrix, centroid_undeformed) + centroid_deformed;
 
-<<<<<<< HEAD
-=======
-            // compute rigid body movement of rigid nodes
-            int counter = 0;
-            for( auto& node_i : mListOfRigidNodes )
-            {
-                Vector coord = node_i->Coordinates();
-                Vector modifiedDeformation = prod(coord, R) - coord;
-
-                x_variables_in_geometry_space_rigid[counter] = modifiedDeformation(0);
-                y_variables_in_geometry_space_rigid[counter] = modifiedDeformation(1);
-                z_variables_in_geometry_space_rigid[counter] = modifiedDeformation(2);
-
-                counter ++;
-            }
->>>>>>> f149a230fd1cad1b2f0aa7ac53f5357c40c46fe3
             std::cout << "> Time needed for SVD: " << svd_time.elapsed() << " s" << std::endl;
         }
     }
@@ -651,49 +740,45 @@ public:
         }
 
         // rigid body transformation
-        counter = 0;
         for( auto& node_i : mListOfRigidNodes )
         {
             // Get node information
             int i = node_i->GetValue( MAPPING_ID );
 
             // Copy respective row from mMappingMatrix to modifiedMappingMatrix
-            row(modifiedMappingMatrix, mNumberOfDesignVariables + counter) = penalty_factor*row(mMappingMatrix,i);
+            row( modifiedMappingMatrix , counter ) = penalty_factor * row( mMappingMatrix , i );
 
-<<<<<<< HEAD
             // compute rigid body movement of rigid nodes and store it in modified vector
             Vector coord = node_i->Coordinates();
             Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
 
-            x_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*modifiedDeformation(0);
-            y_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*modifiedDeformation(1);
-            z_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*modifiedDeformation(2);
+            x_variables_modified[counter] = penalty_factor*modifiedDeformation(0);
+            y_variables_modified[counter] = penalty_factor*modifiedDeformation(1);
+            z_variables_modified[counter] = penalty_factor*modifiedDeformation(2);
             
             counter ++;
         }
 
         // fixed points
-        counter = 0;
         for( auto& node_i : mListOfFixedNodes )
         {
             // Get node information
             int i = node_i->GetValue( MAPPING_ID );
 
             // Copy respective row from mMappingMatrix to modifiedMappingMatrix
-            row(modifiedMappingMatrix, mNumberOfDesignVariables + mNumberOfRigidNodes + counter) = 
-                penalty_factor * row(mMappingMatrix,i);
-
-            x_variables_modified[mNumberOfDesignVariables+mNumberOfRigidNodes+counter] = 0;
-            y_variables_modified[mNumberOfDesignVariables+mNumberOfRigidNodes+counter] = 0;
-            z_variables_modified[mNumberOfDesignVariables+mNumberOfRigidNodes+counter] = 0;
+            row( modifiedMappingMatrix , counter ) = penalty_factor * row( mMappingMatrix , i );
             
-=======
-            // modified vectors
-            x_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*x_variables_in_geometry_space_rigid[counter];
-            y_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*y_variables_in_geometry_space_rigid[counter];
-            z_variables_modified[mNumberOfDesignVariables+counter] = penalty_factor*z_variables_in_geometry_space_rigid[counter];
-
->>>>>>> f149a230fd1cad1b2f0aa7ac53f5357c40c46fe3
+            x_variables_modified[counter] = 0;
+            y_variables_modified[counter] = 0;
+            z_variables_modified[counter] = 0;
+                
+            if (!mFix_in_X)
+                x_variables_modified[counter] = penalty_factor * x_variables_in_geometry_space[i];
+            if (!mFix_in_Y)
+                y_variables_modified[counter] = penalty_factor * y_variables_in_geometry_space[i];
+            if (!mFix_in_Z)
+                z_variables_modified[counter] = penalty_factor * z_variables_in_geometry_space[i];
+            
             counter ++;
         }
 
@@ -736,9 +821,11 @@ public:
         std::cout << "\n> Starting to assemble modifiedMappingMatrix..." << std::endl;
 
         // compute modified mapping matrix
-        int numberOfRowsInModifiedSystem = mListOfAffectedNodes.size() + mListOfRigidNodes.size();
-        int numberOfColsInModifiedSystem = mListOfAffectedNodes.size();
+        unsigned int numberOfRowsInModifiedSystem = mListOfNodesInTransitionRegion.size() + mListOfRigidNodes.size() + mListOfFixedNodes.size();
+        unsigned int numberOfColsInModifiedSystem = mListOfImportantNodes.size();
         CompressedMatrixType modifiedMappingMatrix( numberOfRowsInModifiedSystem , numberOfColsInModifiedSystem );
+        KRATOS_WATCH(mListOfNodesInTransitionRegion.size());
+        KRATOS_WATCH(mListOfRigidNodes.size());
 
         Vector x_variables_modified, y_variables_modified, z_variables_modified;
         x_variables_modified.resize( numberOfRowsInModifiedSystem , 0.0 );
@@ -748,48 +835,80 @@ public:
         double penalty_factor = 1000;
 
         // Using identity matrix for initial ds
-        int counter = 0;
-        for( auto& node_i : mListOfAffectedNodes )
-        {
+        int counter_row = 0;
+        int counter_col = 0;
+        for( auto& node_i : mListOfImportantNodes )
+        {   
             int i = node_i->GetValue( MAPPING_ID );
-            modifiedMappingMatrix.insert_element(counter, counter, 1.0);
+            if (boolVectorOfTransitionRegions[i])
+            {
+                modifiedMappingMatrix.insert_element(counter_row, counter_col, 1.0);
 
-            // modified vectors
-            x_variables_modified[counter] = x_variables_in_design_space[i];
-            y_variables_modified[counter] = y_variables_in_design_space[i];
-            z_variables_modified[counter] = z_variables_in_design_space[i];
+                // modified vectors
+                x_variables_modified[counter_row] = x_variables_in_design_space[i];
+                y_variables_modified[counter_row] = y_variables_in_design_space[i];
+                z_variables_modified[counter_row] = z_variables_in_design_space[i];
 
-            counter ++;
+                counter_row ++;
+            }
+            counter_col ++;
         }
 
         // rigid body transformation
-        int counter2;
-        counter = 0;
         for( auto& node_i : mListOfRigidNodes )
         {
             // Get node information
             int i = node_i->GetValue( MAPPING_ID );
             
-            counter2 = 0;
-            for( auto& node_j : mListOfAffectedNodes )
+            int counter_col = 0;
+            for( auto& node_j : mListOfImportantNodes )
             {
                 int j = node_j->GetValue( MAPPING_ID );
                 double val = mMappingMatrix(i,j);
                 if (val != 0.0)
-                    modifiedMappingMatrix.insert_element( mListOfAffectedNodes.size() + counter, counter2, penalty_factor*val );
-                counter2 ++;
+                    modifiedMappingMatrix.insert_element( counter_row, counter_col, penalty_factor*val );
+                counter_col ++;
             }
-
 
             // compute rigid body movement of rigid nodes and store it in modified vector
             Vector coord = node_i->Coordinates();
             Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
 
-            x_variables_modified[mListOfAffectedNodes.size()+counter] = penalty_factor*modifiedDeformation(0);
-            y_variables_modified[mListOfAffectedNodes.size()+counter] = penalty_factor*modifiedDeformation(1);
-            z_variables_modified[mListOfAffectedNodes.size()+counter] = penalty_factor*modifiedDeformation(2);
+            x_variables_modified[counter_row] = penalty_factor*modifiedDeformation(0);
+            y_variables_modified[counter_row] = penalty_factor*modifiedDeformation(1);
+            z_variables_modified[counter_row] = penalty_factor*modifiedDeformation(2);
             
-            counter ++;
+            counter_row ++;
+        }
+
+        // fixed nodes
+        for( auto& node_i : mListOfFixedNodes )
+        {
+            // Get node information
+            int i = node_i->GetValue( MAPPING_ID );
+            
+            int counter_col = 0;
+            for( auto& node_j : mListOfImportantNodes )
+            {
+                int j = node_j->GetValue( MAPPING_ID );
+                double val = mMappingMatrix(i,j);
+                if (val != 0.0)
+                    modifiedMappingMatrix.insert_element( counter_row, counter_col, penalty_factor*val );
+                counter_col ++;
+            }
+
+            x_variables_modified[counter_row] = 0;
+            y_variables_modified[counter_row] = 0;
+            z_variables_modified[counter_row] = 0;
+            
+            if (!mFix_in_X)
+                x_variables_modified[counter_row] = penalty_factor * x_variables_in_geometry_space[i];
+            if (!mFix_in_Y)
+                y_variables_modified[counter_row] = penalty_factor * y_variables_in_geometry_space[i];
+            if (!mFix_in_Z)
+                z_variables_modified[counter_row] = penalty_factor * z_variables_in_geometry_space[i];
+            
+            counter_row ++;
         }
 
         std::cout << "> Time needed for assembling modifiedMappingMatrix: " << assembling_time.elapsed() << " s" << std::endl;
@@ -797,8 +916,8 @@ public:
         // write mapping matrix
 
         // writeMatrixToFile( modifiedMappingMatrix,
-        //                    mListOfAffectedNodes.size()+mNumberOfRigidNodes,
-        //                    mListOfAffectedNodes.size(),
+        //                    mListOfNodesInTransitionRegion.size()+mNumberOfRigidNodes,
+        //                    mListOfNodesInTransitionRegion.size(),
         //                    "modifiedMappingMatrix.txt");
 
         // writeMatrixToFile( mMappingMatrix,
@@ -810,9 +929,9 @@ public:
         std::cout << "\n> Starting to solve modified System..." << std::endl;
         Vector x_variables_in_design_space_affected, y_variables_in_design_space_affected, z_variables_in_design_space_affected;
 
-        x_variables_in_design_space_affected.resize(mListOfAffectedNodes.size(),0.0);
-        y_variables_in_design_space_affected.resize(mListOfAffectedNodes.size(),0.0);
-        z_variables_in_design_space_affected.resize(mListOfAffectedNodes.size(),0.0);
+        x_variables_in_design_space_affected.resize(mListOfImportantNodes.size(),0.0);
+        y_variables_in_design_space_affected.resize(mListOfImportantNodes.size(),0.0);
+        z_variables_in_design_space_affected.resize(mListOfImportantNodes.size(),0.0);
 
         linear_solver->Solve(modifiedMappingMatrix, x_variables_in_design_space_affected, x_variables_modified);
         linear_solver->Solve(modifiedMappingMatrix, y_variables_in_design_space_affected, y_variables_modified);
@@ -824,19 +943,18 @@ public:
         std::cout << "\n> Starting backward-assembling..." << std::endl;
 
         // backward-assembling in the design-vector
-        counter = 0;
-        for( auto& node_i : mListOfAffectedNodes )
+        counter_row = 0;
+        for( auto& node_i : mListOfImportantNodes )
         {
             int i = node_i->GetValue( MAPPING_ID );
-            x_variables_in_design_space[i] = x_variables_in_design_space_affected[counter];
-            y_variables_in_design_space[i] = y_variables_in_design_space_affected[counter];
-            z_variables_in_design_space[i] = z_variables_in_design_space_affected[counter];
+            x_variables_in_design_space[i] = x_variables_in_design_space_affected[counter_row];
+            y_variables_in_design_space[i] = y_variables_in_design_space_affected[counter_row];
+            z_variables_in_design_space[i] = z_variables_in_design_space_affected[counter_row];
+
+            counter_row ++;
         }
 
-        std::cout << "> Time needed for backward-assembling: " << backassambling_time.elapsed() << " s" << std::endl;
-
-
-        
+        std::cout << "> Time needed for backward-assembling: " << backassambling_time.elapsed() << " s" << std::endl;        
         
     }
 
@@ -979,11 +1097,16 @@ private:
     Vector x_variables_in_geometry_space, y_variables_in_geometry_space, z_variables_in_geometry_space;
     Vector mTranslationVector;
     Matrix mRotationMatrix;
-    NodeVector mListOfAffectedNodes;
+    NodeVector mListOfNodesInTransitionRegion;
+    NodeVector mListOfImportantNodes;
     double mControlSum = 0.0;
 
     boost::python::list mrRigidRegions;
     boost::python::list mrFixedRegions;
+    bool mFix_in_X, mFix_in_Y, mFix_in_Z;
+    Parameters mMapperSettings;
+    std::vector<bool> boolVectorOfTransitionRegions;
+    std::vector<bool> boolVectorOfImportantNodes;
 
 
     ///@}

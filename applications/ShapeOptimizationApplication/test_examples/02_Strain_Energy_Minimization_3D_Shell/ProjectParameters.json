@@ -145,10 +145,10 @@
             "fixing" : {
                 "enforce_fixed_regions" : true,
                 "fixed_regions" : [{
-                    "sub_model_part_name" : "fix_nodes",
-                    "fix_in_X"        : false,
-                    "fix_in_Y"        : false,
-                    "fix_in_Z"        : false
+                    "sub_model_part_name" : "support_edges",
+                    "fix_in_X"        : true,
+                    "fix_in_Y"        : true,
+                    "fix_in_Z"        : true
                 }]
             },
             "rigid_motion" : {

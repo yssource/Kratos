@@ -1,53 +1,45 @@
-// ==============================================================================
-/*
-TRUSS_ELEMENT_3D2N
-Main author: Klaus B. Sautter
-klaus.sautter@tum.de
-
-Permission is hereby granted, free  of charge, to any person obtaining
-a  copy  of this  software  and  associated  documentation files  (the
-"Software"), to  deal in  the Software without  restriction, including
-without limitation  the rights to  use, copy, modify,  merge, publish,
-distribute,  sublicense and/or  sell copies  of the  Software,  and to
-permit persons to whom the Software  is furnished to do so, subject to
-the following condition:
-
-Distribution of this code for  any  commercial purpose  is permissible
-ONLY BY DIRECT ARRANGEMENT WITH THE COPYRIGHT OWNERS.
-
-The  above  copyright  notice  and  this permission  notice  shall  be
-included in all copies or substantial portions of the Software.
-
-THE  SOFTWARE IS  PROVIDED  "AS  IS", WITHOUT  WARRANTY  OF ANY  KIND,
-EXPRESS OR  IMPLIED, INCLUDING  BUT NOT LIMITED  TO THE  WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT  SHALL THE AUTHORS OR COPYRIGHT HOLDERS  BE LIABLE FOR ANY
-CLAIM, DAMAGES OR  OTHER LIABILITY, WHETHER IN AN  ACTION OF CONTRACT,
-TORT  OR OTHERWISE, ARISING  FROM, OUT  OF OR  IN CONNECTION  WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-//==============================================================================
-
-/* ****************************************************************************
-*  Projectname:         $TRUSS_ELEMENT_3D2N
-*  Last Modified by:    $Author: klaus.sautter@tum.de $
-*  Date:                $Date: April 2017 $
-*  Revision:            $Revision: 1.0 $
-* ***************************************************************************/
+// KRATOS  ___|  |                   |                   |
+//       \___ \  __|  __| |   |  __| __| |   |  __| _` | |
+//             | |   |    |   | (    |   |   | |   (   | |
+//       _____/ \__|_|   \__,_|\___|\__|\__,_|_|  \__,_|_| MECHANICS
+//
+//  License:     BSD License
+//           license: structural_mechanics_application/license.txt
+//
+//  Main authors: Klaus B. Sautter
+//                   
+//                   
+//
 
 #if !defined(KRATOS_TRUSS_ELEMENT_3D2N_H_INCLUDED )
 #define  KRATOS_TRUSS_ELEMENT_3D2N_H_INCLUDED
 
+// System includes
 
+// External includes
+
+// Project includes
 #include "includes/element.h"
 #include "includes/define.h"
 #include "includes/variables.h"
 
 namespace Kratos
 {
+	/** 
+     * @class TrussElement3D2N
+     * 
+     * @brief This is a 3D-2node truss element with 3 translational dofs per node
+     * 
+     * @author Klaus B Sautter
+     */
 
 	class TrussElement3D2N : public Element
 	{
+	protected:
+		//const values
+		static constexpr int msNumberOfNodes = 2;
+		static constexpr int msDimension = 3;
+		static constexpr unsigned int msLocalSize = msNumberOfNodes * msDimension;
 	public:
 		KRATOS_CLASS_POINTER_DEFINITION(TrussElement3D2N);
 
@@ -64,13 +56,12 @@ namespace Kratos
 		typedef BaseType::DofsVectorType DofsVectorType;
 
 
+		TrussElement3D2N() {};
 		TrussElement3D2N(IndexType NewId, 
-						GeometryType::Pointer pGeometry,
-						bool rLinear = false);
+						GeometryType::Pointer pGeometry);
 		TrussElement3D2N(IndexType NewId,
 						GeometryType::Pointer pGeometry,
-						PropertiesType::Pointer pProperties,
-						bool rLinear = false);
+						PropertiesType::Pointer pProperties);
 
 
 		~TrussElement3D2N() override;
@@ -91,7 +82,11 @@ namespace Kratos
 
 		void Initialize() override;
 
-		MatrixType CreateElementStiffnessMatrix();
+		/**
+         * @brief This function calculates the total stiffness matrix for the element
+         */
+		virtual bounded_matrix<double,msLocalSize,msLocalSize>
+		 CreateElementStiffnessMatrix(ProcessInfo& rCurrentProcessInfo);
 
 		void CalculateOnIntegrationPoints(
 			const Variable<double>& rVariable,
@@ -103,11 +98,22 @@ namespace Kratos
 			std::vector<double>& rValues,
 			const ProcessInfo& rCurrentProcessInfo) override;
 
-		void UpdateInternalForces(
-			VectorType& rinternalForces);
-		void CreateTransformationMatrix(
-			Matrix& rRotationMatrix);
-		double CalculateCurrentLength();
+		void GetValueOnIntegrationPoints(
+			const Variable<array_1d<double, 3 > >& rVariable,
+			std::vector< array_1d<double, 3 > >& rOutput,
+			const ProcessInfo& rCurrentProcessInfo) override;
+
+        /**
+         * @brief This function updates the internal normal force w.r.t. the current deformations
+         * @param rinternalForces The current updated internal forces
+         */
+		virtual void UpdateInternalForces(bounded_vector<double,msLocalSize>& rinternalForces);
+
+		/**
+         * @brief This function calculates the transformation matrix to globalize vectors and/or matrices
+         * @param rRotationMatrix The transformation matrix
+         */
+		void CreateTransformationMatrix(bounded_matrix<double,msLocalSize,msLocalSize>& rRotationMatrix);
 
 		void CalculateOnIntegrationPoints(
 			const Variable<Vector>& rVariable,
@@ -118,6 +124,11 @@ namespace Kratos
 			const Variable<Vector>& rVariable,
 			std::vector<Vector>& rValues,
 			const ProcessInfo& rCurrentProcessInfo) override;
+
+		void CalculateOnIntegrationPoints(
+			const Variable<array_1d<double, 3 > >& rVariable,
+			std::vector< array_1d<double, 3 > >& rOutput,
+			const ProcessInfo& rCurrentProcessInfo) override; 
 
 		void CalculateLocalSystem(
 			MatrixType& rLeftHandSideMatrix,
@@ -163,22 +174,51 @@ namespace Kratos
 		int  Check(
 			const ProcessInfo& rCurrentProcessInfo) override;
 
-
+		/**
+         * @brief This function calculates the current Green-Lagrange strain
+         */
 		double CalculateGreenLagrangeStrain();
+
+		/**
+         * @brief This function calculates the reference length
+         */
 		double CalculateReferenceLength();
 
-		VectorType CalculateBodyForces();  
+		/**
+         * @brief This function calculates the current length
+         */
+		double CalculateCurrentLength();
 
-		bool ReturnIfIsCable();
+		/**
+         * @brief This function calculates self-weight forces
+         */
+		bounded_vector<double,msLocalSize> CalculateBodyForces();  
+		
+		/**
+         * @brief This function assembles the geometric stiffness part of the total stiffness matrix
+         * @param rGeometricStiffnessMatrix The geometric stiffness matrix
+         * @param rCurrentProcessInfo The current process information
+         */
+		void CalculateGeometricStiffnessMatrix(bounded_matrix<double,msLocalSize,msLocalSize>& rGeometricStiffnessMatrix,
+			ProcessInfo& rCurrentProcessInfo);
 
+		/**
+         * @brief This function assembles the elastic stiffness part of the total stiffness matrix
+         * @param rElasticStiffnessMatrix The elastic stiffness matrix
+         * @param rCurrentProcessInfo The current process information
+         */
+		void CalculateElasticStiffnessMatrix(bounded_matrix<double,msLocalSize,msLocalSize>& rElasticStiffnessMatrix,
+			ProcessInfo& rCurrentProcessInfo);
+
+		/**
+         * @brief This function calculates the current nodal postion for the transformation matrix
+         * @param rReferenceCoordinates The current coordinates
+         */
+		virtual void WriteTransformationCoordinates(
+			bounded_vector<double,msLocalSize>& rReferenceCoordinates);
 
 
 	private:
-		bool mIsCompressed;
-		bool mIsLinearElement = false;
-
-		TrussElement3D2N() {};
-
 		friend class Serializer;
 		void save(Serializer& rSerializer) const override;
 		void load(Serializer& rSerializer) override;

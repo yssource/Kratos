@@ -140,9 +140,9 @@ public:
     static double ComputeDistance(const array_1d<double, 3>& rCoords1,
                                   const array_1d<double, 3>& rCoords2)
     {
-        return sqrt(pow(rCoords1[0] - rCoords2[0] , 2) +
-                    pow(rCoords1[1] - rCoords2[1] , 2) +
-                    pow(rCoords1[2] - rCoords2[2] , 2));
+        return std::sqrt(std::pow(rCoords1[0] - rCoords2[0] , 2) +
+                         std::pow(rCoords1[1] - rCoords2[1] , 2) +
+                         std::pow(rCoords1[2] - rCoords2[2] , 2));
     }
 
     template <typename T>
@@ -223,7 +223,7 @@ public:
     {
         // NumNodes* are casted to doubles in order to use the double devision
         // if this function would take ints, then the return value would also be an int!
-        KRATOS_ERROR_IF(NumNodesDestination <= 0) << "Division by zero!" << std::endl;
+        KRATOS_DEBUG_ERROR_IF(NumNodesDestination <= 0) << "Division by zero!" << std::endl;
 
         return NumNodesOrigin / NumNodesDestination;
     }
@@ -295,21 +295,21 @@ public:
 
         // check destination bbox corner points in origin bbox
         // check lower point
-        Point<3> point_to_check_1(bbox_destination[1], bbox_destination[3], bbox_destination[5]);
+        Point point_to_check_1(bbox_destination[1], bbox_destination[3], bbox_destination[5]);
         if (MapperUtilities::PointIsInsideBoundingBox(&bbox_origin_tol[0], point_to_check_1))
             return true;
         // check higher point
-        Point<3> point_to_check_2(bbox_destination[0], bbox_destination[2], bbox_destination[4]);
+        Point point_to_check_2(bbox_destination[0], bbox_destination[2], bbox_destination[4]);
         if (MapperUtilities::PointIsInsideBoundingBox(&bbox_origin_tol[0], point_to_check_2))
             return true;
 
         // check origin bbox corner points in destination bbox
         // check lower point
-        Point<3> point_to_check_3(bbox_origin[1], bbox_origin[3], bbox_origin[5]);
+        Point point_to_check_3(bbox_origin[1], bbox_origin[3], bbox_origin[5]);
         if (MapperUtilities::PointIsInsideBoundingBox(&bbox_destination_tol[0], point_to_check_3))
             return true;
         // check higher point
-        Point<3> point_to_check_4(bbox_origin[0], bbox_origin[2], bbox_origin[4]);
+        Point point_to_check_4(bbox_origin[0], bbox_origin[2], bbox_origin[4]);
         if (MapperUtilities::PointIsInsideBoundingBox(&bbox_destination_tol[0], point_to_check_4))
             return true;
 
@@ -317,7 +317,7 @@ public:
     }
 
     static bool PointIsInsideBoundingBox(double* BoundingBox,
-                                         const Point<3>& rPoint)
+                                         const Point& rPoint)
     {   // The Bounding Box should have some tolerance already!
         bool is_inside = false;
         if (rPoint.X() < BoundingBox[0] && rPoint.X() > BoundingBox[1])   // check x-direction

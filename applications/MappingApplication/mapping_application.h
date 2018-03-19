@@ -14,7 +14,6 @@
 //  Framework for Non-Matching Grid Mapping"
 
 
-
 #if !defined(KRATOS_MAPPING_APPLICATION_H_INCLUDED )
 #define  KRATOS_MAPPING_APPLICATION_H_INCLUDED
 
@@ -30,7 +29,9 @@
 // Project includes
 #include "includes/define.h"
 #include "includes/kratos_application.h"
-#include "includes/variables.h"
+#include "custom_utilities/interface_object.h"
+#include "custom_utilities/interface_node.h"
+#include "custom_utilities/interface_geometry_object.h"
 
 
 namespace Kratos
@@ -135,7 +136,6 @@ public:
         KratosComponents<Condition>().PrintData(rOStream);
     }
 
-
     ///@}
     ///@name Friends
     ///@{
@@ -190,8 +190,9 @@ private:
     ///@name Member Variables
     ///@{
 
-    // const Elem2D   mElem2D;
-    // const Elem3D   mElem3D;
+    const InterfaceObject           mInterfaceObject;
+    const InterfaceNode             mInterfaceNode;
+    const InterfaceGeometryObject   mInterfaceGeometryObject;
 
     ///@}
     ///@name Private Operators

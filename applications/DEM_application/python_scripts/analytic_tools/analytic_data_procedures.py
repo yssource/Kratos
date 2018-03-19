@@ -1,6 +1,3 @@
-import matplotlib.pyplot as plt
-import h5py
-import numpy as np
 import os
 
 class ParticleWatcherAnalyzer:
@@ -11,11 +8,13 @@ class ParticleWatcherAnalyzer:
     def SetNodalMaxImpactVelocities(self, analytic_model_part):
         self.analytic_particle_watcher.SetNodalMaxImpactVelocities(analytic_model_part)
 
+    def SetNodalMaxFaceImpactVelocities(self, analytic_model_part):
+        self.analytic_particle_watcher.SetNodalMaxFaceImpactVelocities(analytic_model_part)
+
 
 class FaceWatcherAnalyzer:
     def __init__(self, analytic_face_watcher, path, do_clear_data = True):
         self.face_watcher = analytic_face_watcher
-        self.dtype = np.float64
         self.do_clear_data = do_clear_data
         # the following objects are useful if data is chunked into several databases
         self.times_data_base_names = []
@@ -53,6 +52,9 @@ class FaceWatcherAnalyzer:
         return self.GetJointData(self.mass_data_base_names)
 
     def GetJointData(self, data_base_names):
+        import h5py
+        import numpy as np
+
         data_list = []
 
         with h5py.File(self.file_path, 'r') as f:
@@ -72,10 +74,14 @@ class FaceWatcherAnalyzer:
         return acc_number_flux, acc_mass_flux
 
     def CalculateAccumulated(self, original_list, old_accumulated = 0):
+        import numpy as np
         new_accumulated = np.cumsum(np.array(original_list)) + old_accumulated
         return new_accumulated
 
     def UpdateDataFile(self, time):
+        import h5py
+        import numpy as np
+
         shape, times, n_particles_data, mass_data = self.MakeReading()
         label = str(len(self.times_data_base_names))
         name_times = 'times ' + label
@@ -97,6 +103,7 @@ class FaceWatcherAnalyzer:
             self.face_watcher.ClearData()
 
     def MakeTotalFluxPlot(self):
+        import matplotlib.pyplot as plt
         self.MakeReading()
         times = self.GetTimes()
         mass_flux = self.GetMassFlux()
@@ -106,6 +113,7 @@ class FaceWatcherAnalyzer:
         plt.savefig(self.folder_path + '/mass_throughput.svg')
 
     def MakeFluxOfNumberOfParticlesPlot(self):
+        import matplotlib.pyplot as plt
         self.MakeReading()
         times = self.GetTimes()
         flux = self.GetNumberOfParticlesFlux()

@@ -10,20 +10,18 @@
         "echo_level"      : 0
     },
     "solver_settings"          : {
-        "solver_type"                        : "structural_mechanics_static_solver",
-        "echo_level"                         : 2,
-        "solution_type"                      : "Static",
-        "analysis_type"                      : "Non-Linear",
+        "solver_type"                        : "Static",
+        "echo_level"                         : 0,
+        "analysis_type"                      : "non_linear",
         "model_import_settings"              : {
             "input_type"       : "mdpa",
-            "input_filename"   : "membrane_test/Membrane_Q4_Truss_PointLoad",
-            "input_file_label" : 0
+            "input_filename"   : "membrane_test/Membrane_Q4_Truss_PointLoad"
         },
         "material_import_settings" :{
             "materials_filename": "membrane_test/Membrane_Q4_Truss_PointLoad_test_material.json"
-        },           
+        },
         "line_search"                        : false,
-        "convergence_criterion"              : "Residual_criterion",
+        "convergence_criterion"              : "residual_criterion",
         "displacement_relative_tolerance"    : 0.0001,
         "displacement_absolute_tolerance"    : 1e-9,
         "residual_relative_tolerance"        : 0.0001,
@@ -52,8 +50,8 @@
         }
     }],
     "loads_process_list"       : [{
-        "implemented_in_file"   : "process_factory",
-        "implemented_in_module" : "KratosMultiphysics",
+        "python_module"   : "process_factory",
+        "kratos_module" : "KratosMultiphysics",
         "check"                 : "DirectorVectorNonZero direction",
         "help"                  : "This process ",
         "process_name"          : "ApplyConstantVectorValueProcess",
@@ -87,6 +85,6 @@
             "model_part_name"  : "Structure",
             "time_frequency"   : 0.90
         }
-    }    
-    ]	
+    }
+    ]
 }

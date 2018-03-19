@@ -71,7 +71,11 @@ public:
     ///@name Life Cycle
     ///@{
 
-    /// Default constructor.
+    // A default constructor necessary for serialization 
+    InterfaceGeometryObject() : InterfaceObject()
+    {
+    }
+    
     InterfaceGeometryObject(Geometry<Node<3>>& rGeometry, const double ApproximationTolerance, const int EchoLevel, const int ConstructionIndex,
                             GeometryData::IntegrationMethod IntegrationMethod = GeometryData::NumberOfIntegrationMethods) :
         mpGeometry(&rGeometry),
@@ -107,7 +111,7 @@ public:
     ///@name Operations
     ///@{
 
-    Geometry<Node<3>>* pGetBase()
+    Geometry<Node<3>>* pGetBaseGeometry() override
     {
         return mpGeometry;
     }
@@ -340,7 +344,23 @@ private:
     double mApproximationTolerance = 0.0f;
     int mConstructionIndex;
     GeometryData::IntegrationMethod mIntegrationMethod;
+        
+    ///@}
+    ///@name Serialization
+    ///@{
 
+    friend class Serializer;
+    
+    virtual void save(Serializer& rSerializer) const override
+    {
+        KRATOS_ERROR << "This object is not supposed to be used with serialization!" << std::endl;
+        KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, InterfaceObject);
+    }
+    virtual void load(Serializer& rSerializer) override
+    {
+        KRATOS_ERROR << "This object is not supposed to be used with serialization!" << std::endl;        
+        KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, InterfaceObject);
+    }
 
     ///@}
     ///@name Private Operators
@@ -383,7 +403,6 @@ private:
             this->Coordinates() = gauss_point_global_coords;
         }
     }
-
 
     ///@}
     ///@name Private  Access

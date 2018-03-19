@@ -70,7 +70,7 @@ class Element;
 /** The node class from Kratos is defined in this class
 */
 template<std::size_t TDimension, class TDofType = Dof<double> >
-class Node : public Point<TDimension>,  public IndexedObject, public Flags
+class Node : public Point,  public IndexedObject, public Flags
 {
     class GetDofKey : public std::unary_function<TDofType, VariableData::KeyType>
     {
@@ -90,9 +90,9 @@ public:
 
     typedef Node<TDimension, TDofType> NodeType;
 
-    typedef Point<TDimension> BaseType;
+    typedef Point BaseType;
 
-    typedef Point<TDimension> PointType;
+    typedef Point PointType;
 
     typedef TDofType DofType;
 
@@ -261,10 +261,6 @@ public:
     template<SizeType TOtherDimension>
     Node(Node<TOtherDimension> const& rOtherNode) = delete;
 
-    /** Copy constructor from a point with different dimension.*/
-    template<SizeType TOtherDimension>
-    Node(IndexType NewId, Point<TOtherDimension> const& rThisPoint) = delete;
-
 
     /**
      * Constructor using coordinates stored in given array. Initialize
@@ -339,7 +335,7 @@ public:
 
     typename Node<TDimension>::Pointer Clone()
     {
-        Node<3>::Pointer p_new_node = boost::make_shared<Node<3> >( this->Id(), (*this)[0], (*this)[1], (*this)[2]);
+        Node<3>::Pointer p_new_node = Kratos::make_shared<Node<3> >( this->Id(), (*this)[0], (*this)[1], (*this)[2]);
         p_new_node->mSolutionStepsNodalData = this->mSolutionStepsNodalData;
 
         Node<3>::DofsContainerType& my_dofs = (this)->GetDofs();
@@ -404,6 +400,8 @@ public:
     Node& operator=(const Node& rOther)
     {
         BaseType::operator=(rOther);
+        Flags::operator =(rOther);
+        IndexedObject::operator=(rOther);
 
         // Deep copying the dofs
         for(typename DofsContainerType::const_iterator it_dof = rOther.mDofs.begin() ; it_dof != rOther.mDofs.end() ; it_dof++)
@@ -1010,7 +1008,7 @@ public:
     template<class TVariableType>
     inline typename DofType::Pointer pAddDof(TVariableType const& rDofVariable)
     {
-        KRATOS_TRY_LEVEL_3
+        KRATOS_TRY
         
 #ifdef KRATOS_DEBUG
         if(rDofVariable.Key() == 0) 
@@ -1025,7 +1023,7 @@ public:
             return *(it_dof.base());
         }
 
-        typename DofType::Pointer p_new_dof =  boost::make_shared<DofType>(Id(), &mSolutionStepsNodalData, rDofVariable);
+        typename DofType::Pointer p_new_dof =  Kratos::make_shared<DofType>(Id(), &mSolutionStepsNodalData, rDofVariable);
         mDofs.insert(mDofs.begin(), p_new_dof);
 
 //         if(!mDofs.IsSorted())
@@ -1033,13 +1031,13 @@ public:
 
         return p_new_dof;
 
-        KRATOS_CATCH_LEVEL_3(*this);
+        KRATOS_CATCH(*this);
     }
 
     /** adds a Dof to the node and return new added dof or existed one. */
     inline typename DofType::Pointer pAddDof(DofType const& SourceDof)
     {
-        KRATOS_TRY_LEVEL_3
+        KRATOS_TRY
         
         typename DofsContainerType::iterator it_dof = mDofs.find(SourceDof.GetVariable());
         if(it_dof != mDofs.end())
@@ -1053,7 +1051,7 @@ public:
             return *(it_dof.base());
         }
 
-        typename DofType::Pointer p_new_dof =  boost::make_shared<DofType>(SourceDof);
+        typename DofType::Pointer p_new_dof =  Kratos::make_shared<DofType>(SourceDof);
         mDofs.insert(mDofs.begin(), p_new_dof);
 
         p_new_dof->SetId(Id());
@@ -1064,14 +1062,14 @@ public:
 
         return p_new_dof;
 
-        KRATOS_CATCH_LEVEL_3(*this);
+        KRATOS_CATCH(*this);
     }
 
     /** adds a Dof to the node and return new added dof or existed one. */
     template<class TVariableType, class TReactionType>
     inline typename DofType::Pointer pAddDof(TVariableType const& rDofVariable, TReactionType const& rDofReaction)
     {
-        KRATOS_TRY_LEVEL_3
+        KRATOS_TRY
         
 #ifdef KRATOS_DEBUG
         if(rDofVariable.Key() == 0) 
@@ -1091,7 +1089,7 @@ public:
             return *(it_dof.base());
         }
 
-        typename DofType::Pointer p_new_dof =  boost::make_shared<DofType>(Id(), &mSolutionStepsNodalData, rDofVariable, rDofReaction);
+        typename DofType::Pointer p_new_dof =  Kratos::make_shared<DofType>(Id(), &mSolutionStepsNodalData, rDofVariable, rDofReaction);
         mDofs.insert(mDofs.begin(), p_new_dof);
 
 //         if(!mDofs.IsSorted())
@@ -1099,7 +1097,7 @@ public:
 
         return p_new_dof;
 
-        KRATOS_CATCH_LEVEL_3(*this);
+        KRATOS_CATCH(*this);
 
     }
 
@@ -1107,7 +1105,7 @@ public:
     template<class TVariableType>
     inline DofType& AddDof(TVariableType const& rDofVariable)
     {
-        KRATOS_TRY_LEVEL_3
+        KRATOS_TRY
         
 #ifdef KRATOS_DEBUG
         if(rDofVariable.Key() == 0)
@@ -1122,7 +1120,7 @@ public:
             return *it_dof;
         }
             
-        typename DofType::Pointer p_new_dof =  boost::make_shared<DofType>(Id(), &mSolutionStepsNodalData, rDofVariable);
+        typename DofType::Pointer p_new_dof =  Kratos::make_shared<DofType>(Id(), &mSolutionStepsNodalData, rDofVariable);
         mDofs.insert(mDofs.begin(), p_new_dof);
 
 //         if(!mDofs.IsSorted())
@@ -1130,7 +1128,7 @@ public:
 
         return *p_new_dof;
 
-        KRATOS_CATCH_LEVEL_3(*this);
+        KRATOS_CATCH(*this);
 
     }
 
@@ -1138,7 +1136,7 @@ public:
     template<class TVariableType, class TReactionType>
     inline DofType& AddDof(TVariableType const& rDofVariable, TReactionType const& rDofReaction)
     {
-        KRATOS_TRY_LEVEL_3
+        KRATOS_TRY
         
 #ifdef KRATOS_DEBUG
         if(rDofVariable.Key() == 0) 
@@ -1158,7 +1156,7 @@ public:
             return *it_dof;
         }
 
-        typename DofType::Pointer p_new_dof =  boost::make_shared<DofType>(Id(), &mSolutionStepsNodalData, rDofVariable, rDofReaction);
+        typename DofType::Pointer p_new_dof =  Kratos::make_shared<DofType>(Id(), &mSolutionStepsNodalData, rDofVariable, rDofReaction);
         mDofs.insert(mDofs.begin(), p_new_dof);
 
 //         if(!mDofs.IsSorted())
@@ -1166,7 +1164,7 @@ public:
 
         return *p_new_dof;
 
-        KRATOS_CATCH_LEVEL_3(*this);
+        KRATOS_CATCH(*this);
 
     }
 
@@ -1306,9 +1304,7 @@ private:
 
     void save(Serializer& rSerializer) const override
     {
-// 	  int size = rSerializer.GetBuffer().end() - rSerializer.GetBuffer().begin();
-// 	  KRATOS_WATCH(rSerializer.GetBuffer().end() - rSerializer.GetBuffer().begin());
-        KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Point<TDimension> );
+        KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Point );
         KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, IndexedObject );
         KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Flags );
         rSerializer.save("Data", mData);
@@ -1318,14 +1314,11 @@ private:
         rSerializer.save("Initial Position", mInitialPosition);
         rSerializer.save("Data", mDofs);
 
-// 	  KRATOS_WATCH((rSerializer.GetBuffer().end() - rSerializer.GetBuffer().begin())-size);
     }
 
     void load(Serializer& rSerializer) override
     {
-// 	  int size = rSerializer.GetBuffer().end() - rSerializer.GetBuffer().begin();
-// 	  KRATOS_WATCH(rSerializer.GetBuffer().end() - rSerializer.GetBuffer().begin());
-        KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Point<TDimension> );
+        KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Point );
         KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, IndexedObject );
         KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Flags );
         rSerializer.load("Data", mData);
@@ -1333,7 +1326,6 @@ private:
         rSerializer.load("Solution Steps Nodal Data", pSolutionStepsNodalData);
         rSerializer.load("Initial Position", mInitialPosition);
         rSerializer.load("Data", mDofs);
-// 	  KRATOS_WATCH(size- (rSerializer.GetBuffer().end() - rSerializer.GetBuffer().begin()));
     }
 
     ///@}

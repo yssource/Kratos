@@ -79,7 +79,7 @@ class DistanceSpatialContainersConditionConfigure2d
         MIN_LEVEL = 2 // this cannot be less than 2!!!
     };
 
-    typedef Point<3, double> PointType; /// always the point 3D
+    typedef Point PointType; /// always the point 3D
     typedef std::vector<double>::iterator DistanceIteratorType;
     typedef PointerVectorSet<GeometricalObject::Pointer, IndexedObject> ContainerType;
     typedef ContainerType::value_type PointerType;
@@ -178,8 +178,8 @@ class DistanceSpatialContainersConditionConfigure2d
 
     static inline bool IsIntersected(const Element::Pointer rObject, double Tolerance, const double *rLowPoint, const double *rHighPoint)
     {
-        Point<3, double> low_point(rLowPoint[0] - Tolerance, rLowPoint[1] - Tolerance, rLowPoint[2] - Tolerance);
-        Point<3, double> high_point(rHighPoint[0] + Tolerance, rHighPoint[1] + Tolerance, rHighPoint[2] + Tolerance);
+        Point low_point(rLowPoint[0] - Tolerance, rLowPoint[1] - Tolerance, rLowPoint[2] - Tolerance);
+        Point high_point(rHighPoint[0] + Tolerance, rHighPoint[1] + Tolerance, rHighPoint[2] + Tolerance);
 
         KRATOS_THROW_ERROR(std::logic_error, "Not Implemented method", "")
         //return HasIntersection(rObject->GetGeometry(), low_point, high_point);
@@ -257,7 +257,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
     typedef QuadtreeBinaryCell<ConfigurationType> CellType;
     typedef QuadtreeBinary<CellType> QuadtreeType;
     typedef ConfigurationType::cell_node_data_type CellNodeDataType;
-    typedef Point<3, double> PointType; /// always the point 3D
+    typedef Point PointType; /// always the point 3D
     typedef QuadtreeType::cell_type::object_container_type object_container_type;
     typedef struct
     {
@@ -812,8 +812,8 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
     ///******************************************************************************************************************
     ///******************************************************************************************************************
 
-    void CalculateNormal2D(Point<3> &Point1,
-                           Point<3> &Point2,
+    void CalculateNormal2D(Point &Point1,
+                           Point &Point2,
                            array_1d<double, 3> &rResultNormal)
     {
         rResultNormal[0] = (Point2[1] - Point1[1]);
@@ -921,7 +921,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
     {
         Geometry<Node<3>> &rFluidGeom = i_fluid_Element->GetGeometry();
 
-        Point<3> P1;
+        Point P1;
         P1.Coordinates() = NodesOfApproximatedStructure[0].Coordinates;
 
         array_1d<double, 3> &Normal = NodesOfApproximatedStructure[0].StructElemNormal;
@@ -942,7 +942,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
     {
         Geometry<Node<3>> &rFluidGeom = i_fluid_Element->GetGeometry();
 
-        Point<3> P1;
+        Point P1;
         P1.Coordinates() = NodesOfApproximatedStructure[0].Coordinates;
 
         // Get normal at intersections, average them and check direction of distances
@@ -983,8 +983,8 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
     {
         Geometry<Node<3>> &rFluidGeom = i_fluid_Element->GetGeometry();
 
-        Point<3> P1;
-        Point<3> P2;
+        Point P1;
+        Point P2;
 
         P1.Coordinates() = NodesOfApproximatedStructure[0].Coordinates;
         P2.Coordinates() = NodesOfApproximatedStructure[1].Coordinates;
@@ -1026,7 +1026,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         unsigned int numberCutEdges = NodesOfApproximatedStructure.size();
 
         // Compute average of the intersection nodes which is a node on the line we look for
-        Point<3> P_mean;
+        Point P_mean;
         for (unsigned int k = 0; k < numberCutEdges; k++)
             for (unsigned int i = 0; i < 2; i++)
                 P_mean.Coordinates()[i] += NodesOfApproximatedStructure[k].Coordinates[i];
@@ -1165,9 +1165,9 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
        * @param ToPoint The point which distance is required
        * @return The distance between the point and the line spanned by the line segment
        */
-    double PointDistanceToLine(Point<3> &lineBasePoint,
+    double PointDistanceToLine(Point &lineBasePoint,
                                array_1d<double, 3> &lineNormal,
-                               Point<3> &ToPoint)
+                               Point &ToPoint)
     {
         // calculate vector pointing from a node in the line (e.g. line segment point 1) to the considered node ToPoint
         array_1d<double, 3> lineToPointVec = ToPoint - lineBasePoint;
@@ -1309,7 +1309,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
                 Geometry<Node<3>> &geom = i_fluid_element->GetGeometry();
 
                 // generate the points on the edges at the zero of the distance function
-                std::vector<Point<3>> edge_points;
+                std::vector<Point> edge_points;
                 edge_points.reserve(2);
 
                 // loop over all 6 edges of the triangle
@@ -1325,7 +1325,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
                             // generate point on edge by linear interpolation
                             double Ni = fabs(dj) / (fabs(di) + fabs(dj));
                             double Nj = 1.0 - Ni;
-                            Point<3> edge_point(Ni * geom[i] + Nj * geom[j]);
+                            Point edge_point(Ni * geom[i] + Nj * geom[j]);
                             edge_points.push_back(edge_point);
                         }
                     }
@@ -1454,7 +1454,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
 
         for (int i = 0; i < 2; i++)
         {
-            low[i] = high[i] = mrFluidModelPart.NodesBegin()->Coordinate(i + 1);
+            low[i] = high[i] = mrFluidModelPart.NodesBegin()->Coordinates()[i];
         }
 
         // loop over all nodes in the bounding box
@@ -1464,8 +1464,8 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         {
             for (int i = 0; i < 2; i++)
             {
-                low[i] = i_node->Coordinate(i + 1) < low[i] ? i_node->Coordinate(i + 1) : low[i];
-                high[i] = i_node->Coordinate(i + 1) > high[i] ? i_node->Coordinate(i + 1) : high[i];
+                low[i] = i_node->Coordinates()[i] < low[i] ? i_node->Coordinates()[i] : low[i];
+                high[i] = i_node->Coordinates()[i] > high[i] ? i_node->Coordinates()[i] : high[i];
             }
         }
 
@@ -1476,8 +1476,8 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
         {
             for (int i = 0; i < 2; i++)
             {
-                low[i] = i_node->Coordinate(i + 1) < low[i] ? i_node->Coordinate(i + 1) : low[i];
-                high[i] = i_node->Coordinate(i + 1) > high[i] ? i_node->Coordinate(i + 1) : high[i];
+                low[i] = i_node->Coordinates()[i] < low[i] ? i_node->Coordinates()[i] : low[i];
+                high[i] = i_node->Coordinates()[i] > high[i] ? i_node->Coordinates()[i] : high[i];
             }
         }
         std::cout << "Skin added" << std::endl;
@@ -1817,7 +1817,7 @@ class CalculateSignedDistanceTo2DConditionSkinProcess
                 //                cell_point[1] = pCell->GetCoordinate(keys[1]);
                 //                cell_point[2] = pCell->GetCoordinate(keys[2]);
 
-                double d = GeometryUtils::PointDistanceToTriangle3D((*i_object)->GetGeometry()[0], (*i_object)->GetGeometry()[1], (*i_object)->GetGeometry()[2], Point<3>(cell_point[0], cell_point[1], cell_point[2]));
+                double d = GeometryUtils::PointDistanceToTriangle3D((*i_object)->GetGeometry()[0], (*i_object)->GetGeometry()[1], (*i_object)->GetGeometry()[2], Point(cell_point[0], cell_point[1], cell_point[2]));
 
                 if (d < distance)
                     distance = d;

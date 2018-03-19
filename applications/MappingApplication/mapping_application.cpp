@@ -28,6 +28,11 @@
 #include "geometries/prism_3d_6.h"
 #include "geometries/hexahedra_3d_8.h"
 
+#include "custom_utilities/mapper_factory.h"
+
+#include "custom_mappers/nearest_neighbor_mapper.h"
+#include "custom_mappers/nearest_element_mapper.h"
+
 #ifdef KRATOS_USING_MPI
 #include "mpi.h"
 #endif
@@ -35,7 +40,12 @@
 namespace Kratos
 {
 
-KratosMappingApplication::KratosMappingApplication() { }
+KratosMappingApplication::KratosMappingApplication() : 
+    KratosApplication("MappingApplication"),
+    mInterfaceObject(0.0, 0.0, 0.0),
+    mInterfaceNode(),
+    mInterfaceGeometryObject()
+{}
 
 void KratosMappingApplication::Register()
 {
@@ -62,8 +72,15 @@ void KratosMappingApplication::Register()
 
     if (rank == 0) std::cout << banner.str();
 
+    ModelPart dummy_model_part;
+    dummy_model_part = ModelPart();
+
+    MapperFactory::Register("nearest_neighbor", Kratos::make_shared<NearestNeighborMapper>(dummy_model_part, dummy_model_part));
+    MapperFactory::Register("nearest_element",  Kratos::make_shared<NearestElementMapper>(dummy_model_part, dummy_model_part));
+
     // Needed to exchange Information abt the found neighbors (i.e. only for debugging)
     KRATOS_REGISTER_VARIABLE( NEIGHBOR_RANK )
     KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( NEIGHBOR_COORDINATES )
+
 }
 }  // namespace Kratos.

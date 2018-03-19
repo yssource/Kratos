@@ -271,7 +271,7 @@ class ApplyChimeraProcess : public Process
 			{
 				Geometry<Node<3>> &geom = pElement->GetGeometry();
 
-				for (int i = 0; i < geom.size(); i++)
+				for (unsigned int i = 0; i < geom.size(); i++)
 				{
 					//Interpolation of velocity
 					p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(0) += geom[i].GetDof(VELOCITY_X).GetSolutionStepValue(0) * N[i];
@@ -345,7 +345,7 @@ class ApplyChimeraProcess : public Process
 			if (is_found == true)
 			{
 				Geometry<Node<3>> &geom = pElement->GetGeometry();
-				for (int i = 0; i < geom.size(); i++)
+				for (unsigned int i = 0; i < geom.size(); i++)
 				{
 					// Interpolation of pressure
 					p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0) += geom[i].GetDof(PRESSURE).GetSolutionStepValue(0) * N[i];

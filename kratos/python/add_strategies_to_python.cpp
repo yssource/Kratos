@@ -329,10 +329,12 @@ namespace Kratos
                     "ResidualBasedIncrementalUpdateStaticScheme", init< >()
                     );
 
+            typedef typename ResidualBasedIncrementalUpdateStaticSchemeSlip< SparseSpaceType, LocalSpaceType>::RotationToolPointerType RotationToolPointerType;
             class_< ResidualBasedIncrementalUpdateStaticSchemeSlip< SparseSpaceType, LocalSpaceType>,
                     bases< ResidualBasedIncrementalUpdateStaticScheme< SparseSpaceType, LocalSpaceType> >,
                     boost::noncopyable >
-                    ("ResidualBasedIncrementalUpdateStaticSchemeSlip", init<unsigned int, unsigned int>());
+                    ("ResidualBasedIncrementalUpdateStaticSchemeSlip", init<unsigned int, unsigned int>())
+                    .def(init<RotationToolPointerType>());
 
 	    // Residual Based Bossak Scheme Type
 	    class_< ResidualBasedBossakDisplacementSchemeType,

@@ -130,9 +130,10 @@ class NavierStokesCompressibleSolver(navier_stokes_base_solver.NavierStokesBaseS
         
         print("BDF process set")
 
-        time_scheme = KratosMultiphysics.ResidualBasedIncrementalUpdateStaticScheme() # DOFs (4,5)
-        #time_scheme = KratosMultiphysics.ResidualBasedIncrementalUpdateStaticSchemeSlip(self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE],   # Domain size (2,3)
-                                                                                        #self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]+2) # DOFs (4,5)
+        domain_size = self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]
+        rotation_utility = KratosFluid.CompressibleElementRotationUtility(domain_size,KratosMultiphysics.IS_STRUCTURE)
+        time_scheme = KratosMultiphysics.ResidualBasedIncrementalUpdateStaticSchemeSlip(rotation_utility)
+        #time_scheme = KratosMultiphysics.ResidualBasedIncrementalUpdateStaticScheme() # DOFs (4,5)
         
         print("Time scheme set")
 

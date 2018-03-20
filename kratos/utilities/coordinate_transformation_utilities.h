@@ -150,9 +150,7 @@ public:
 			{
 				for(unsigned int j = 0; j < rGeometry.PointsNumber(); ++j)
 				{
-					const NodeType& rNode = rGeometry[j];
-					// The const reference is needed to ensure that we don't initialize the value for mrFlagVariable when it is not defined (which produces a race condtion in openmp).
-					if( rNode.GetValue(mrFlagVariable) != mZero )
+					if( this->IsSlip(rGeometry[j]) )
 					{
 						if(mDomainSize == 3)
 						{
@@ -193,9 +191,7 @@ public:
 			{
 				for(unsigned int j = 0; j < rGeometry.PointsNumber(); ++j)
 				{
-					const NodeType& rNode = rGeometry[j];
-					// The const reference is needed to ensure that we don't initialize the value for mrFlagVariable when it is not defined (which produces a race condtion in openmp).
-					if( rNode.GetValue(mrFlagVariable) != mZero )
+					if( this->IsSlip(rGeometry[j]) )
 					{
 						if(mDomainSize == 3)
 						{
@@ -251,8 +247,7 @@ public:
 		{
 			for(unsigned int itNode = 0; itNode < rGeometry.PointsNumber(); ++itNode)
 			{
-				const NodeType& rNode = rGeometry[itNode]; // The const reference is needed to ensure that we don't initialize the value for mrFlagVariable when it is not defined.
-				if( rNode.GetValue(mrFlagVariable) != mZero )
+				if( this->IsSlip(rGeometry[itNode]))
 				{
 					// We fix the first dof (normal velocity) for each rotated block
 					unsigned int j = itNode * mBlockSize;
@@ -290,8 +285,7 @@ public:
 		{
 			for(unsigned int itNode = 0; itNode < rGeometry.PointsNumber(); ++itNode)
 			{
-				const NodeType& rNode = rGeometry[itNode]; // The const reference is needed to ensure that we don't initialize the value for mrFlagVariable when it is not defined.
-				if( rNode.GetValue(mrFlagVariable) != mZero )
+				if( this->IsSlip(rGeometry[itNode]) )
 				{
 					// We fix the first dof (normal velocity) for each rotated block
 					unsigned int j = itNode * mBlockSize;
@@ -319,8 +313,7 @@ public:
 		for(int iii=0; iii<static_cast<int>(rModelPart.Nodes().size()); iii++)
 		{
 			ModelPart::NodeIterator itNode = it_begin+iii;
-			const NodeType& rNode = *itNode; // The const reference is needed to ensure that we don't initialize the value for mrFlagVariable when it is not defined.
-			if( rNode.GetValue(mrFlagVariable) != mZero )
+			if( this->IsSlip(*itNode) )
 			{
 				//this->RotationOperator<TLocalMatrixType>(Rotation,);
 				if(mDomainSize == 3)
@@ -358,8 +351,7 @@ public:
 		for(int iii=0; iii<static_cast<int>(rModelPart.Nodes().size()); iii++)
 		{
 			ModelPart::NodeIterator itNode = it_begin+iii;
-			const NodeType& rNode = *itNode; // The const reference is needed to ensure that we don't initialize the value for mrFlagVariable when it is not defined.
-			if( rNode.GetValue(mrFlagVariable) != mZero )
+			if( this->IsSlip(*itNode) )
 			{
 				if(mDomainSize == 3)
 				{
@@ -451,9 +443,7 @@ protected:
 		std::vector< boost::numeric::ublas::bounded_matrix<double,TBlockSize,TBlockSize> > rRot(NumBlocks);
 		for(unsigned int j = 0; j < NumBlocks; ++j)
 		{
-			const NodeType& rNode = rGeometry[j];
-			// The const reference is needed to ensure that we don't initialize the value for mrFlagVariable when it is not defined (which produces a race condtion in openmp).
-			if( rNode.GetValue(mrFlagVariable) != mZero )
+			if( this->IsSlip(rGeometry[j]) )
 			{
 				NeedRotation[j] = true;
 				rotations_needed++;
@@ -586,9 +576,24 @@ protected:
 		rRot(TSkip+2,TSkip+2) = rRot(TSkip,TSkip  )*rT1[1] - rRot(TSkip,TSkip+1)*rT1[0];
 	}
 
+	bool IsSlip(const Node<3>& rNode) const
+	{
+		return rNode.FastGetSolutionStepValue(mrFlagVariable) != mZero;
+	}
+
 	///@}
 	///@name Protected  Access
 	///@{
+
+	unsigned int GetDomainSize() const
+	{
+		return mDomainSize;
+	}
+
+	unsigned int GetBlockSize() const
+	{
+		return mBlockSize;
+	}
 
 	///@}
 	///@name Protected Inquiry
@@ -868,9 +873,7 @@ private:
 		std::vector< boost::numeric::ublas::bounded_matrix<double,TDim,TDim> > rRot(NumBlocks);
 		for(unsigned int j = 0; j < NumBlocks; ++j)
 		{
-			const NodeType& rNode = rGeometry[j];
-			// The const reference is needed to ensure that we don't initialize the value for mrFlagVariable when it is not defined (which produces a race condtion in openmp).
-			if( rNode.GetValue(mrFlagVariable) != mZero )
+			if( this->IsSlip(rGeometry[j]) )
 			{
 				NeedRotation[j] = true;
 				rotations_needed++;

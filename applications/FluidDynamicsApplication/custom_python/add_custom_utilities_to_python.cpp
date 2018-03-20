@@ -33,6 +33,7 @@
 #include "custom_utilities/fractional_step_settings.h"
 #include "custom_utilities/integration_point_to_node_transformation_utility.h"
 #include "custom_utilities/periodic_condition_utilities.h"
+#include "custom_utilities/compressible_element_rotation_utility.h"
 #include "utilities/split_tetrahedra.h"
 
 
@@ -134,7 +135,16 @@ void  AddCustomUtilitiesToPython()
         .def("TransformFromIntegrationPointsToNodes",&IntegrationPointToNodeTransformationUtility3DType::TransformFromIntegrationPointsToNodes<double>)
         ;
 
+    class_<CoordinateTransformationUtils<LocalSpaceType::MatrixType,LocalSpaceType::VectorType,double>,
+                CoordinateTransformationUtils<LocalSpaceType::MatrixType,LocalSpaceType::VectorType,double>::Pointer,
+                boost::noncopyable >("CoordinateTransformationUtils",no_init);
 
+    class_<CompressibleElementRotationUtility<LocalSpaceType::MatrixType,LocalSpaceType::VectorType>,
+                CompressibleElementRotationUtility<LocalSpaceType::MatrixType,LocalSpaceType::VectorType>::Pointer,
+                bases< CoordinateTransformationUtils<LocalSpaceType::MatrixType,LocalSpaceType::VectorType,double> >,
+                boost::noncopyable>
+        ("CompressibleElementRotationUtility",init<const unsigned int,const Variable<double>&>())
+        ;
 
 
 }

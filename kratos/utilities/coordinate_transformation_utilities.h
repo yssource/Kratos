@@ -576,6 +576,70 @@ protected:
 		rRot(TSkip+2,TSkip+2) = rRot(TSkip,TSkip  )*rT1[1] - rRot(TSkip,TSkip+1)*rT1[0];
 	}
 
+
+	void LocalRotationOperatorPure(boost::numeric::ublas::bounded_matrix<double,3,3>& rRot,
+			GeometryType::PointType& rThisPoint) const
+	{
+
+		// Get the normal evaluated at the node
+		const array_1d<double,3>& rNormal = rThisPoint.FastGetSolutionStepValue(NORMAL);
+
+		double aux = rNormal[0]*rNormal[0] + rNormal[1]*rNormal[1] + rNormal[2]*rNormal[2];
+		aux = sqrt(aux);
+		rRot(0,0) = rNormal[0]/aux;
+		rRot(0,1) = rNormal[1]/aux;
+		rRot(0,2) = rNormal[2]/aux;
+		// Define the new coordinate system, where the first vector is aligned with the normal
+
+		// To choose the remaining two vectors, we project the first component of the cartesian base to the tangent plane
+		array_1d<double,3> rT1;
+		rT1(0) = 1.0;
+		rT1(1) = 0.0;
+		rT1(2) = 0.0;
+		double dot = rRot(0,0);//this->Dot(rN,rT1);
+
+		// It is possible that the normal is aligned with (1,0,0), resulting in norm(rT1) = 0
+		// If this is the case, repeat the procedure using (0,1,0)
+		if ( fabs(dot) > 0.99 )
+		{
+			rT1(0) = 0.0;
+			rT1(1) = 1.0;
+			rT1(2) = 0.0;
+
+			dot = rRot(0,1); //this->Dot(rN,rT1);
+		}
+
+		// calculate projection and normalize
+		rT1[0] -= dot*rRot(0,0);
+		rT1[1] -= dot*rRot(0,1);
+		rT1[2] -= dot*rRot(0,2);
+		this->Normalize(rT1);
+		rRot(1,0) = rT1[0];
+		rRot(1,1) = rT1[1];
+		rRot(1,2) = rT1[2];
+
+		// The third base component is choosen as N x T1, which is normalized by construction
+		rRot(2,0) = rRot(0,1)*rT1[2] - rRot(0,2)*rT1[1];
+		rRot(2,1) = rRot(0,2)*rT1[0] - rRot(0,0)*rT1[2];
+		rRot(2,2) = rRot(0,0)*rT1[1] - rRot(0,1)*rT1[0];
+	}
+
+	void LocalRotationOperatorPure(boost::numeric::ublas::bounded_matrix<double,2,2>& rRot,
+			GeometryType::PointType& rThisPoint) const
+	{
+		// Get the normal evaluated at the node
+		const array_1d<double,3>& rNormal = rThisPoint.FastGetSolutionStepValue(NORMAL);
+
+		double aux = rNormal[0]*rNormal[0] + rNormal[1]*rNormal[1];
+		aux = sqrt(aux);
+
+		rRot(0,0) = rNormal[0]/aux;
+		rRot(0,1) = rNormal[1]/aux;
+		rRot(1,0) = -rNormal[1]/aux;
+		rRot(1,1) = rNormal[0]/aux;
+
+	}
+
 	bool IsSlip(const Node<3>& rNode) const
 	{
 		return rNode.FastGetSolutionStepValue(mrFlagVariable) != mZero;
@@ -792,69 +856,6 @@ private:
 				destination(Ibegin+i, Jbegin+j) = block(i,j);
 			}
 		}
-	}
-
-	void LocalRotationOperatorPure(boost::numeric::ublas::bounded_matrix<double,3,3>& rRot,
-			GeometryType::PointType& rThisPoint) const
-	{
-
-		// Get the normal evaluated at the node
-		const array_1d<double,3>& rNormal = rThisPoint.FastGetSolutionStepValue(NORMAL);
-
-		double aux = rNormal[0]*rNormal[0] + rNormal[1]*rNormal[1] + rNormal[2]*rNormal[2];
-		aux = sqrt(aux);
-		rRot(0,0) = rNormal[0]/aux;
-		rRot(0,1) = rNormal[1]/aux;
-		rRot(0,2) = rNormal[2]/aux;
-		// Define the new coordinate system, where the first vector is aligned with the normal
-
-		// To choose the remaining two vectors, we project the first component of the cartesian base to the tangent plane
-		array_1d<double,3> rT1;
-		rT1(0) = 1.0;
-		rT1(1) = 0.0;
-		rT1(2) = 0.0;
-		double dot = rRot(0,0);//this->Dot(rN,rT1);
-
-		// It is possible that the normal is aligned with (1,0,0), resulting in norm(rT1) = 0
-		// If this is the case, repeat the procedure using (0,1,0)
-		if ( fabs(dot) > 0.99 )
-		{
-			rT1(0) = 0.0;
-			rT1(1) = 1.0;
-			rT1(2) = 0.0;
-
-			dot = rRot(0,1); //this->Dot(rN,rT1);
-		}
-
-		// calculate projection and normalize
-		rT1[0] -= dot*rRot(0,0);
-		rT1[1] -= dot*rRot(0,1);
-		rT1[2] -= dot*rRot(0,2);
-		this->Normalize(rT1);
-		rRot(1,0) = rT1[0];
-		rRot(1,1) = rT1[1];
-		rRot(1,2) = rT1[2];
-
-		// The third base component is choosen as N x T1, which is normalized by construction
-		rRot(2,0) = rRot(0,1)*rT1[2] - rRot(0,2)*rT1[1];
-		rRot(2,1) = rRot(0,2)*rT1[0] - rRot(0,0)*rT1[2];
-		rRot(2,2) = rRot(0,0)*rT1[1] - rRot(0,1)*rT1[0];
-	}
-
-	void LocalRotationOperatorPure(boost::numeric::ublas::bounded_matrix<double,2,2>& rRot,
-			GeometryType::PointType& rThisPoint) const
-	{
-		// Get the normal evaluated at the node
-		const array_1d<double,3>& rNormal = rThisPoint.FastGetSolutionStepValue(NORMAL);
-
-		double aux = rNormal[0]*rNormal[0] + rNormal[1]*rNormal[1];
-		aux = sqrt(aux);
-
-		rRot(0,0) = rNormal[0]/aux;
-		rRot(0,1) = rNormal[1]/aux;
-		rRot(1,0) = -rNormal[1]/aux;
-		rRot(1,1) = rNormal[0]/aux;
-
 	}
 
 	//to be used when there is only velocity (no additional pressure or other var block)

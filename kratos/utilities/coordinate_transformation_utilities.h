@@ -119,14 +119,14 @@ public:
 	 @param rLocalVector Local RHS vector
 	 @param rGeometry A reference to the element's (or condition's) geometry
 	 */
-	void Rotate(TLocalMatrixType& rLocalMatrix,
+	virtual void Rotate(TLocalMatrixType& rLocalMatrix,
 			TLocalVectorType& rLocalVector,
 			GeometryType& rGeometry) const
 	{
 		if(mBlockSize != mDomainSize) //Monolithic case
 		{
-			if(mDomainSize == 2) RotateAux<2>(rLocalMatrix,rLocalVector,rGeometry);
-			if(mDomainSize == 3) RotateAux<3>(rLocalMatrix,rLocalVector,rGeometry);
+			if(mDomainSize == 2) RotateAux<2,3>(rLocalMatrix,rLocalVector,rGeometry);
+			if(mDomainSize == 3) RotateAux<3,4>(rLocalMatrix,rLocalVector,rGeometry);
 		}
 		else //fractional step case
 		{
@@ -137,7 +137,7 @@ public:
 	}
 
 	/// RHS only version of Rotate
-	void Rotate(TLocalVectorType& rLocalVector,
+	virtual void Rotate(TLocalVectorType& rLocalVector,
 			GeometryType& rGeometry) const
 	{
 		//const unsigned int LocalSize = rLocalVector.size(); // We expect this to work both with elements (4 nodes) and conditions (3 nodes)
@@ -241,7 +241,7 @@ public:
 	 and imposes that the normal velocity is equal to the mesh velocity in
 	 the normal direction.
 	 */
-	void ApplySlipCondition(TLocalMatrixType& rLocalMatrix,
+	virtual void ApplySlipCondition(TLocalMatrixType& rLocalMatrix,
 			TLocalVectorType& rLocalVector,
 			GeometryType& rGeometry) const
 	{
@@ -283,7 +283,7 @@ public:
 	}
 
 	/// RHS only version of ApplySlipCondition
-	void ApplySlipCondition(TLocalVectorType& rLocalVector,
+	virtual void ApplySlipCondition(TLocalVectorType& rLocalVector,
 			GeometryType& rGeometry) const
 	{
 		if (rLocalVector.size() > 0)
@@ -309,7 +309,7 @@ public:
 	}
 
 	/// Transform nodal velocities to the rotated coordinates (aligned with each node's normal)
-	void RotateVelocities(ModelPart& rModelPart) const
+	virtual void RotateVelocities(ModelPart& rModelPart) const
 	{
 		TLocalVectorType Vel(mDomainSize);
 		TLocalVectorType Tmp(mDomainSize);
@@ -348,7 +348,7 @@ public:
 	}
 
 	/// Transform nodal velocities from the rotated system to the original one
-	void RecoverVelocities(ModelPart& rModelPart) const
+	virtual void RecoverVelocities(ModelPart& rModelPart) const
 	{
 		TLocalVectorType Vel(mDomainSize);
 		TLocalVectorType Tmp(mDomainSize);
@@ -768,7 +768,7 @@ private:
 
 	}
 
-	template<unsigned int TDim>
+	template<unsigned int TDim, unsigned int TBlockSize>
 	void RotateAux(TLocalMatrixType& rLocalMatrix,
 			TLocalVectorType& rLocalVector,
 			GeometryType& rGeometry) const
@@ -777,10 +777,10 @@ private:
 
 		unsigned int Index = 0;
 		int rotations_needed = 0;
-		const unsigned int NumBlocks = LocalSize / mBlockSize;
+		const unsigned int NumBlocks = LocalSize / TBlockSize;
 		boost::numeric::ublas::vector<bool> NeedRotation( NumBlocks, false);
 
-		std::vector< boost::numeric::ublas::bounded_matrix<double,TDim+1,TDim+1> > rRot(NumBlocks);
+		std::vector< boost::numeric::ublas::bounded_matrix<double,TBlockSize,TBlockSize> > rRot(NumBlocks);
 		for(unsigned int j = 0; j < NumBlocks; ++j)
 		{
 			const NodeType& rNode = rGeometry[j];
@@ -793,13 +793,13 @@ private:
 				LocalRotationOperator(rRot[j],rGeometry[j]);
 			}
 
-			Index += mBlockSize;
+			Index += TBlockSize;
 		}
 
 		if(rotations_needed > 0)
 		{
-			boost::numeric::ublas::bounded_matrix<double,TDim+1,TDim+1> mat_block, tmp;
-			array_1d<double,TDim+1> aux, aux1;
+			boost::numeric::ublas::bounded_matrix<double,TBlockSize,TBlockSize> mat_block, tmp;
+			array_1d<double,TBlockSize> aux, aux1;
 
 			for(unsigned int i=0; i<NumBlocks; i++)
 			{
@@ -809,26 +809,26 @@ private:
 					{
 						if(NeedRotation[j] == true)
 						{
-							ReadBlockMatrix<TDim+1>(mat_block, rLocalMatrix, i*mBlockSize, j*mBlockSize);
+							ReadBlockMatrix<TBlockSize>(mat_block, rLocalMatrix, i*TBlockSize, j*TBlockSize);
 							noalias(tmp) = prod(mat_block,trans(rRot[j]));
 							noalias(mat_block) = prod(rRot[i],tmp);
-							WriteBlockMatrix<TDim+1>(mat_block, rLocalMatrix, i*mBlockSize, j*mBlockSize);
+							WriteBlockMatrix<TBlockSize>(mat_block, rLocalMatrix, i*TBlockSize, j*TBlockSize);
 						}
 						else
 						{
-							ReadBlockMatrix<TDim+1>(mat_block, rLocalMatrix, i*mBlockSize, j*mBlockSize);
+							ReadBlockMatrix<TBlockSize>(mat_block, rLocalMatrix, i*TBlockSize, j*TBlockSize);
 							noalias(tmp) = prod(rRot[i],mat_block);
-							WriteBlockMatrix<TDim+1>(tmp, rLocalMatrix, i*mBlockSize, j*mBlockSize);
+							WriteBlockMatrix<TBlockSize>(tmp, rLocalMatrix, i*TBlockSize, j*TBlockSize);
 						}
 					}
 
-					for(unsigned int k=0; k<TDim+1; k++)
-					aux[k] = rLocalVector[i*mBlockSize+k];
+					for(unsigned int k=0; k<TBlockSize; k++)
+					aux[k] = rLocalVector[i*TBlockSize+k];
 
 					noalias(aux1) = prod(rRot[i],aux);
 
-					for(unsigned int k=0; k<TDim+1; k++)
-					rLocalVector[i*mBlockSize+k] = aux1[k];
+					for(unsigned int k=0; k<TBlockSize; k++)
+					rLocalVector[i*TBlockSize+k] = aux1[k];
 
 				}
 				else
@@ -837,9 +837,9 @@ private:
 					{
 						if(NeedRotation[j] == true)
 						{
-							ReadBlockMatrix<TDim+1>(mat_block, rLocalMatrix, i*mBlockSize, j*mBlockSize);
+							ReadBlockMatrix<TBlockSize>(mat_block, rLocalMatrix, i*TBlockSize, j*TBlockSize);
 							noalias(tmp) = prod(mat_block,trans(rRot[j]));
-							WriteBlockMatrix<TDim+1>(tmp, rLocalMatrix, i*mBlockSize, j*mBlockSize);
+							WriteBlockMatrix<TBlockSize>(tmp, rLocalMatrix, i*TBlockSize, j*TBlockSize);
 						}
 					}
 				}

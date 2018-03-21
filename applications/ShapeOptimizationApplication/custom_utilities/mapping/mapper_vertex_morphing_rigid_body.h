@@ -159,7 +159,7 @@ public:
     // --------------------------------------------------------------------------
     void InitializeMappingVariables()
     {
-        mMappingMatrix.resize(mNumberOfDesignVariables,mNumberOfDesignVariables);
+        mMappingMatrix.resize(mNumberOfDesignVariables,mNumberOfDesignVariables,false);
         mMappingMatrix.clear();
 
         x_variables_in_design_space.resize(mNumberOfDesignVariables,0.0);

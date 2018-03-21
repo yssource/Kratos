@@ -316,13 +316,15 @@ public:
         CreateListOfFixedNodes();
         CreateListOfNodesInTransitionRegionsAndListOfImportantNodes();
 
+        // writeMappingIds();
+
         RecomputeMappingMatrixIfGeometryHasChanged();
         PrepareVectorsForMappingToGeometrySpace( rNodalVariable );
         MultiplyVectorsWithMappingMatrix();
         AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
 
-        CorrectDesignUpdateWithRigidBodyConstraints( linear_solver );
-        // CorrectDesignUpdateWithRigidBodyConstraintsFast( linear_solver );
+        // CorrectDesignUpdateWithRigidBodyConstraints( linear_solver );
+        CorrectDesignUpdateWithRigidBodyConstraintsFast( linear_solver );
         MultiplyVectorsWithMappingMatrix();
         AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
 
@@ -498,6 +500,8 @@ public:
             mFix_in_Z = true;
         }
 
+        writeVectorToFile(mListOfFixedNodes, "listOfFixedNodes.txt");
+
         // // Loop over all regions for which damping is to be applied
         // for (unsigned int regionNumber = 0; regionNumber < len(mrFixedRegions); regionNumber++)
         // {
@@ -533,13 +537,22 @@ public:
             }
         }
         mNumberOfRigidNodes = mListOfRigidNodes.size();
-
+        writeVectorToFile(mListOfRigidNodes, "listOfRigidNodes.txt");
     }
+
+    // void writeMappingIds()
+    // {
+    //     for (auto& node_i : mListOfNodesOfDesignSurface )
+    //     {
+    //         int id = node_i->GetValue( MAPPING_ID );
+    //         KRATOS_WATCH(id);
+    //     }
+    // }
 
     // --------------------------------------------------------------------------
     void CreateListOfNodesInTransitionRegionsAndListOfImportantNodes()
     {
-
+        double important_radius = mFilterRadius;
 
         boolVectorOfTransitionRegions.resize(mNumberOfDesignVariables,false);
         boolVectorOfImportantNodes.resize(mNumberOfDesignVariables,false);
@@ -555,7 +568,7 @@ public:
                 NodeVector neighbor_nodes( mMaxNumberOfNeighbors );
                 std::vector<double> resulting_squared_distances( mMaxNumberOfNeighbors );
                 unsigned int number_of_neighbors = mpSearchTree->SearchInRadius( node_i,
-                                                                                mFilterRadius,
+                                                                                important_radius,
                                                                                 neighbor_nodes.begin(),
                                                                                 resulting_squared_distances.begin(),
                                                                                 mMaxNumberOfNeighbors );
@@ -583,7 +596,7 @@ public:
                 NodeVector neighbor_nodes( mMaxNumberOfNeighbors );
                 std::vector<double> resulting_squared_distances( mMaxNumberOfNeighbors );
                 unsigned int number_of_neighbors = mpSearchTree->SearchInRadius( node_i,
-                                                                                mFilterRadius,
+                                                                                important_radius,
                                                                                 neighbor_nodes.begin(),
                                                                                 resulting_squared_distances.begin(),
                                                                                 mMaxNumberOfNeighbors );
@@ -628,7 +641,6 @@ public:
         // create lists of nodes
         mListOfImportantNodes.clear();
         mListOfNodesInTransitionRegion.clear();
-        // for( auto & node_i : mrDesignSurface.Nodes() )
         for( auto& node_i : mListOfNodesOfDesignSurface )
         {
             int id = node_i->GetValue( MAPPING_ID );
@@ -640,6 +652,8 @@ public:
                 mListOfImportantNodes.push_back( node_i );
         }
 
+        writeVectorToFile(mListOfImportantNodes, "listOfImportantNodes.txt");
+        writeVectorToFile(mListOfNodesInTransitionRegion, "listOfNodesInTransitionRegion.txt");
     }
 
     // --------------------------------------------------------------------------
@@ -715,7 +729,8 @@ public:
         std::cout << "\n> Starting to assemble modifiedMappingMatrix..." << std::endl;
 
         // compute modified mapping matrix
-        int numberOfRowsInModifiedSystem = mNumberOfDesignVariables + mListOfRigidNodes.size() + mListOfFixedNodes.size();
+        // int numberOfRowsInModifiedSystem = mNumberOfDesignVariables + mListOfRigidNodes.size() + mListOfFixedNodes.size();
+        int numberOfRowsInModifiedSystem = mNumberOfDesignVariables + mListOfFixedNodes.size();
         CompressedMatrixType modifiedMappingMatrix( numberOfRowsInModifiedSystem , mNumberOfDesignVariables );
 
         Vector x_variables_modified, y_variables_modified, z_variables_modified;
@@ -740,24 +755,24 @@ public:
         }
 
         // rigid body transformation
-        for( auto& node_i : mListOfRigidNodes )
-        {
-            // Get node information
-            int i = node_i->GetValue( MAPPING_ID );
+        // for( auto& node_i : mListOfRigidNodes )
+        // {
+        //     // Get node information
+        //     int i = node_i->GetValue( MAPPING_ID );
 
-            // Copy respective row from mMappingMatrix to modifiedMappingMatrix
-            row( modifiedMappingMatrix , counter ) = penalty_factor * row( mMappingMatrix , i );
+        //     // Copy respective row from mMappingMatrix to modifiedMappingMatrix
+        //     row( modifiedMappingMatrix , counter ) = penalty_factor * row( mMappingMatrix , i );
 
-            // compute rigid body movement of rigid nodes and store it in modified vector
-            Vector coord = node_i->Coordinates();
-            Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
+        //     // compute rigid body movement of rigid nodes and store it in modified vector
+        //     Vector coord = node_i->Coordinates();
+        //     Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
 
-            x_variables_modified[counter] = penalty_factor*modifiedDeformation(0);
-            y_variables_modified[counter] = penalty_factor*modifiedDeformation(1);
-            z_variables_modified[counter] = penalty_factor*modifiedDeformation(2);
+        //     x_variables_modified[counter] = penalty_factor*modifiedDeformation(0);
+        //     y_variables_modified[counter] = penalty_factor*modifiedDeformation(1);
+        //     z_variables_modified[counter] = penalty_factor*modifiedDeformation(2);
             
-            counter ++;
-        }
+        //     counter ++;
+        // }
 
         // fixed points
         for( auto& node_i : mListOfFixedNodes )
@@ -786,10 +801,17 @@ public:
 
         // write mapping matrix
 
-        // writeMatrixToFile( modifiedMappingMatrix,
-        //                    mNumberOfDesignVariables+mNumberOfRigidNodes,
-        //                    mNumberOfDesignVariables,
-        //                    "modifiedMappingMatrix.txt");
+        writeMatrixToFile( modifiedMappingMatrix,
+                           numberOfRowsInModifiedSystem,
+                           mNumberOfDesignVariables,
+                           "modifiedMappingMatrixFull.txt");
+
+        writeVectorToFile ( x_variables_modified,
+                            "x_variables_modified_full.txt");
+        writeVectorToFile ( y_variables_modified,
+                            "y_variables_modified_full.txt");
+        writeVectorToFile ( z_variables_modified,
+                            "z_variables_modified_full.txt");
 
         // writeMatrixToFile( mMappingMatrix,
         //                    mNumberOfDesignVariables,
@@ -821,7 +843,9 @@ public:
         std::cout << "\n> Starting to assemble modifiedMappingMatrix..." << std::endl;
 
         // compute modified mapping matrix
-        unsigned int numberOfRowsInModifiedSystem = mListOfNodesInTransitionRegion.size() + mListOfRigidNodes.size() + mListOfFixedNodes.size();
+        // unsigned int numberOfRowsInModifiedSystem = mListOfNodesInTransitionRegion.size() + mListOfRigidNodes.size() + mListOfFixedNodes.size();
+        unsigned int numberOfRowsInModifiedSystem = mListOfNodesInTransitionRegion.size() + mListOfFixedNodes.size();
+
         unsigned int numberOfColsInModifiedSystem = mListOfImportantNodes.size();
         CompressedMatrixType modifiedMappingMatrix( numberOfRowsInModifiedSystem , numberOfColsInModifiedSystem );
         KRATOS_WATCH(mListOfNodesInTransitionRegion.size());
@@ -855,31 +879,31 @@ public:
         }
 
         // rigid body transformation
-        for( auto& node_i : mListOfRigidNodes )
-        {
-            // Get node information
-            int i = node_i->GetValue( MAPPING_ID );
+        // for( auto& node_i : mListOfRigidNodes )
+        // {
+        //     // Get node information
+        //     int i = node_i->GetValue( MAPPING_ID );
             
-            int counter_col = 0;
-            for( auto& node_j : mListOfImportantNodes )
-            {
-                int j = node_j->GetValue( MAPPING_ID );
-                double val = mMappingMatrix(i,j);
-                if (val != 0.0)
-                    modifiedMappingMatrix.insert_element( counter_row, counter_col, penalty_factor*val );
-                counter_col ++;
-            }
+        //     int counter_col = 0;
+        //     for( auto& node_j : mListOfImportantNodes )
+        //     {
+        //         int j = node_j->GetValue( MAPPING_ID );
+        //         double val = mMappingMatrix(i,j);
+        //         if (val != 0.0)
+        //             modifiedMappingMatrix.insert_element( counter_row, counter_col, penalty_factor*val );
+        //         counter_col ++;
+        //     }
 
-            // compute rigid body movement of rigid nodes and store it in modified vector
-            Vector coord = node_i->Coordinates();
-            Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
+        //     // compute rigid body movement of rigid nodes and store it in modified vector
+        //     Vector coord = node_i->Coordinates();
+        //     Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
 
-            x_variables_modified[counter_row] = penalty_factor*modifiedDeformation(0);
-            y_variables_modified[counter_row] = penalty_factor*modifiedDeformation(1);
-            z_variables_modified[counter_row] = penalty_factor*modifiedDeformation(2);
+        //     x_variables_modified[counter_row] = penalty_factor*modifiedDeformation(0);
+        //     y_variables_modified[counter_row] = penalty_factor*modifiedDeformation(1);
+        //     z_variables_modified[counter_row] = penalty_factor*modifiedDeformation(2);
             
-            counter_row ++;
-        }
+        //     counter_row ++;
+        // }
 
         // fixed nodes
         for( auto& node_i : mListOfFixedNodes )
@@ -915,10 +939,17 @@ public:
 
         // write mapping matrix
 
-        // writeMatrixToFile( modifiedMappingMatrix,
-        //                    mListOfNodesInTransitionRegion.size()+mNumberOfRigidNodes,
-        //                    mListOfNodesInTransitionRegion.size(),
-        //                    "modifiedMappingMatrix.txt");
+        writeMatrixToFile( modifiedMappingMatrix,
+                           numberOfRowsInModifiedSystem,
+                           numberOfColsInModifiedSystem,
+                           "modifiedMappingMatrixReduced.txt");
+        
+        writeVectorToFile ( x_variables_modified,
+                            "x_variables_modified_red.txt");
+        writeVectorToFile ( y_variables_modified,
+                            "y_variables_modified_red.txt");
+        writeVectorToFile ( z_variables_modified,
+                            "z_variables_modified_red.txt");
 
         // writeMatrixToFile( mMappingMatrix,
         //                    mNumberOfDesignVariables,
@@ -977,6 +1008,36 @@ public:
         }
     }
 
+    // --------------------------------------------------------------------------
+    void writeVectorToFile( NodeVector vec, const char* filename )
+    {
+        std::ofstream file (filename);
+        if (file.is_open())
+        {
+            for (auto& node : vec )
+            {
+                int val = node->GetValue(MAPPING_ID);
+                file << val << " \n";
+            }
+            file.close();
+        }
+    }
+
+    // --------------------------------------------------------------------------
+    void writeVectorToFile( Vector vec, const char* filename )
+    {
+        
+        std::ofstream file (filename);
+        if (file.is_open())
+        {
+            for ( unsigned int i=0;i<vec.size();i++)
+            {
+                double val = vec[i];
+                file << val << " \n";
+            }
+            file.close();
+        }
+    }
 
     // ==============================================================================
 

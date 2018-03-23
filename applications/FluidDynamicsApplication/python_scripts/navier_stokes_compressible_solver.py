@@ -98,6 +98,11 @@ class NavierStokesCompressibleSolver(navier_stokes_base_solver.NavierStokesBaseS
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.KINEMATIC_VISCOSITY)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.DYNAMIC_VISCOSITY)
 
+        #This must be added after solving MODIFY       
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.VELOCITY)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.PRESSURE)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.THICKNESS)
+
         print("Monolithic compressible fluid solver variables added correctly")
         
     def AddDofs(self):

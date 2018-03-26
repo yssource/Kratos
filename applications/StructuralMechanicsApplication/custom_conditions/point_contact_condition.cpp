@@ -115,7 +115,7 @@ namespace Kratos
 //    KRATOS_WATCH(ddisp)
 //    KRATOS_WATCH(d_current)        
 //        if(d_reference > 0) //
-            const double E = GetProperties()[YOUNG_MODULUS]/10000.0;
+            const double E = GetProperties()[YOUNG_MODULUS]/*/10000.0*/;
             const double characteristic_lenght = 1.0e-2; //should get this from a variable
             const double spring_stiffness = E/characteristic_lenght;
             const double contact_pressure = d_current*spring_stiffness;

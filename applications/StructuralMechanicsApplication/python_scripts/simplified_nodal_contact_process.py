@@ -42,10 +42,13 @@ class SimplifiedNodalContactProcess(KratosMultiphysics.Process):
         KratosMultiphysics.Process.__init__(self)
         
         #modelparts in the background (to be used in detecting contact and computing distances to the wall)
-        self.background_domain                = self.Model[self.settings["background_domain"].GetString()] #rubber. part in which the contacting body enters during contact
+        #self.background_domain                = self.Model[self.settings["background_domain"].GetString()] #rubber. part in which the contacting body enters during contact
+        #self.background_contact_surface       = self.Model[self.settings["background_contact_surface"].GetString()] 
+        #self.background_contact_volume        = self.Model[self.settings["background_contact_volume"].GetString()] #air, part not in contact
+        self.background_domain                = self.Model[self.settings["background_contact_volume"].GetString()] #air, part not in contact  during contact
         self.background_contact_surface       = self.Model[self.settings["background_contact_surface"].GetString()] 
-        self.background_contact_volume        = self.Model[self.settings["background_contact_volume"].GetString()] #air, part not in contact
-        self.background_all = self.background_domain
+        self.background_contact_volume        = self.Model[self.settings["background_domain"].GetString()] #rubber. part in which the contacting body enters
+        self.background_all = self.background_domain.GetRootModelPart()
  
         #modelparts on the structure
         self.active_contact_body            = self.Model[self.settings["active_contact_body"].GetString()]
@@ -95,7 +98,6 @@ class SimplifiedNodalContactProcess(KratosMultiphysics.Process):
         for node in self.active_contact_body.Nodes:
             if(not node.IsFixed(KratosMultiphysics.DISTANCE)):
                 node.SetSolutionStepValue(KratosMultiphysics.DISTANCE,0,-1.0)
-                print(node.Id)
         
 
 
@@ -122,17 +124,22 @@ class SimplifiedNodalContactProcess(KratosMultiphysics.Process):
     
         #computing distance from the contact surface on the background mesh
         distance_linear_solver_settings = KratosMultiphysics.Parameters( """{
-                                       "solver_type" : "AMGCL"
+                                       "solver_type" : "AMGCL",
+                                       "verbosity" : 2
                                    } """)
         import linear_solver_factory
         distance_linear_solver = linear_solver_factory.ConstructSolver(distance_linear_solver_settings)
 
-        max_iterations=1 #30
+        max_iterations=30
         if(self.domain_size == 2):
             self.distance_calculator = KratosMultiphysics.VariationalDistanceCalculationProcess2D(self.background_all, distance_linear_solver, max_iterations)
         else:
             self.distance_calculator = KratosMultiphysics.VariationalDistanceCalculationProcess3D(self.background_all, distance_linear_solver, max_iterations)
         self.distance_calculator.Execute()
+        
+        for node in self.background_contact_volume.Nodes:
+            d = node.GetSolutionStepValue(KratosMultiphysics.DISTANCE)
+            #print(node.Id,d,node.IsFixed(KratosMultiphysics.DISTANCE))
         
         for node in self.background_all.Nodes:
             node.SetValue(KratosMultiphysics.DISTANCE, node.GetSolutionStepValue(KratosMultiphysics.DISTANCE))

@@ -435,6 +435,10 @@ void ModelPartRemoveConditionFromAllLevels4(ModelPart& rModelPart, ModelPart::Co
 {
 	rModelPart.RemoveConditionFromAllLevels(pThisCondition, ThisIndex);
 }
+void ModelPartRemoveConditionsFromAllLevels(ModelPart& rModelPart, Flags identifier_flag)
+{
+	rModelPart.RemoveConditionsFromAllLevels(identifier_flag);
+}
 
 ModelPart::MeshType& CommunicatorGetLocalMesh(Communicator& rCommunicator)
 {
@@ -723,6 +727,7 @@ void AddModelPartToPython()
 		.def("RemoveConditionFromAllLevels", ModelPartRemoveConditionFromAllLevels2)
 		.def("RemoveConditionFromAllLevels", ModelPartRemoveConditionFromAllLevels3)
 		.def("RemoveConditionFromAllLevels", ModelPartRemoveConditionFromAllLevels4)
+                .def("RemoveConditionsFromAllLevels", ModelPartRemoveConditionsFromAllLevels)
 		.def("CreateSubModelPart", &ModelPart::CreateSubModelPart)
 		.def("NumberOfSubModelParts", &ModelPart::NumberOfSubModelParts)
 		.def("GetSubModelPart", &ModelPart::pGetSubModelPart)

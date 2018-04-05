@@ -316,8 +316,6 @@ public:
         CreateListOfFixedNodes();
         CreateListOfNodesInTransitionRegionsAndListOfImportantNodes();
 
-        // writeMappingIds();
-
         RecomputeMappingMatrixIfGeometryHasChanged();
         PrepareVectorsForMappingToGeometrySpace( rNodalVariable );
         MultiplyVectorsWithMappingMatrix();
@@ -487,7 +485,6 @@ public:
             ModelPart& fixed_region = extractModelPart( mrFixedRegions[regionNumber] );
             for (ModelPart::NodesContainerType::iterator node_it = fixed_region.NodesBegin(); node_it != fixed_region.NodesEnd(); ++node_it)
             {
-                KRATOS_WATCH("test_fixed");
                 NodeTypePointer pnode = *(node_it.base());
                 mListOfFixedNodes.push_back( pnode );
             }
@@ -501,22 +498,6 @@ public:
         }
 
         writeVectorToFile(mListOfFixedNodes, "listOfFixedNodes.txt");
-
-        // // Loop over all regions for which damping is to be applied
-        // for (unsigned int regionNumber = 0; regionNumber < len(mrFixedRegions); regionNumber++)
-        // {
-        //     ModelPart& fixed_region = extractModelPart( mrRigidRegions[regionNumber] );
-
-        //     for( auto& node_i : rigid_region.Nodes() )
-        //     {
-        //         array_1d<double,3> ds_example;
-        //         ds_example[0] = 0.0;
-        //         ds_example[1] = 0.0;
-        //         ds_example[2] = 0.0;
-
-        //         // noalias(node_i.FastGetSolutionStepValue(CONTROL_POINT_UPDATE)) = ds_example;
-        //     }
-        // }
     }
 
 
@@ -527,27 +508,17 @@ public:
         // Loop over all regions that a rigid motion has to be enforced on
         for (unsigned int regionNumber = 0; regionNumber < len(mrRigidRegions); regionNumber++)
         {
-            KRATOS_WATCH(regionNumber);
             ModelPart& rigid_region = extractModelPart( mrRigidRegions[regionNumber] );
             for (ModelPart::NodesContainerType::iterator node_it = rigid_region.NodesBegin(); node_it != rigid_region.NodesEnd(); ++node_it)
             {
-                KRATOS_WATCH("test");
                 NodeTypePointer pnode = *(node_it.base());
                 mListOfRigidNodes.push_back( pnode );
             }
         }
         mNumberOfRigidNodes = mListOfRigidNodes.size();
+
         writeVectorToFile(mListOfRigidNodes, "listOfRigidNodes.txt");
     }
-
-    // void writeMappingIds()
-    // {
-    //     for (auto& node_i : mListOfNodesOfDesignSurface )
-    //     {
-    //         int id = node_i->GetValue( MAPPING_ID );
-    //         KRATOS_WATCH(id);
-    //     }
-    // }
 
     // --------------------------------------------------------------------------
     void CreateListOfNodesInTransitionRegionsAndListOfImportantNodes()
@@ -574,13 +545,13 @@ public:
                                                                                 mMaxNumberOfNeighbors );
 
                 ThrowWarningIfMaxNodeNeighborsReached( node_i, number_of_neighbors );
-                KRATOS_WATCH(number_of_neighbors);
                 
                 for(unsigned int j_itr = 0 ; j_itr<number_of_neighbors ; j_itr++)
                 {
                     ModelPart::NodeType& neighbor_node = *neighbor_nodes[j_itr];
                     int neighbor_id = neighbor_node.GetValue( MAPPING_ID );
                     boolVectorOfTransitionRegions[neighbor_id] = true;
+                    boolVectorOfImportantNodes[neighbor_id] = true;
                 }
             }
         }
@@ -602,18 +573,16 @@ public:
                                                                                 mMaxNumberOfNeighbors );
 
                 ThrowWarningIfMaxNodeNeighborsReached( node_i, number_of_neighbors );
-                KRATOS_WATCH(number_of_neighbors);
                 
                 for(unsigned int j_itr = 0 ; j_itr<number_of_neighbors ; j_itr++)
                 {
                     ModelPart::NodeType& neighbor_node = *neighbor_nodes[j_itr];
                     int neighbor_id = neighbor_node.GetValue( MAPPING_ID );
                     boolVectorOfTransitionRegions[neighbor_id] = true;
+                    boolVectorOfImportantNodes[neighbor_id] = true;
                 }
             }
         }
-
-        boolVectorOfImportantNodes = boolVectorOfTransitionRegions;
 
         // Loop over all regions 
         for (unsigned int regionNumber = 0; regionNumber < len(mrRigidRegions); regionNumber++)
@@ -708,9 +677,12 @@ public:
 
             if ( detR < 0 ) // special reflection case
             {
-                mRotationMatrix(0,0) *= -1;
-                mRotationMatrix(0,1) *= -1;
+                // Remove this warning, when the method works flawlessly!
+                std::cout << "> Warning: det(R) < 0. Entering special reflection case!" << std::endl;
+
                 mRotationMatrix(0,2) *= -1;
+                mRotationMatrix(1,2) *= -1;
+                mRotationMatrix(2,2) *= -1;
             }
 
             // mTranslationVector [t]
@@ -755,24 +727,24 @@ public:
         }
 
         // rigid body transformation
-        // for( auto& node_i : mListOfRigidNodes )
-        // {
-        //     // Get node information
-        //     int i = node_i->GetValue( MAPPING_ID );
+        for( auto& node_i : mListOfRigidNodes )
+        {
+            // Get node information
+            int i = node_i->GetValue( MAPPING_ID );
 
-        //     // Copy respective row from mMappingMatrix to modifiedMappingMatrix
-        //     row( modifiedMappingMatrix , counter ) = penalty_factor * row( mMappingMatrix , i );
+            // Copy respective row from mMappingMatrix to modifiedMappingMatrix
+            row( modifiedMappingMatrix , counter ) = penalty_factor * row( mMappingMatrix , i );
 
-        //     // compute rigid body movement of rigid nodes and store it in modified vector
-        //     Vector coord = node_i->Coordinates();
-        //     Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
+            // compute rigid body movement of rigid nodes and store it in modified vector
+            Vector coord = node_i->Coordinates();
+            Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
 
-        //     x_variables_modified[counter] = penalty_factor*modifiedDeformation(0);
-        //     y_variables_modified[counter] = penalty_factor*modifiedDeformation(1);
-        //     z_variables_modified[counter] = penalty_factor*modifiedDeformation(2);
+            x_variables_modified[counter] = penalty_factor*modifiedDeformation(0);
+            y_variables_modified[counter] = penalty_factor*modifiedDeformation(1);
+            z_variables_modified[counter] = penalty_factor*modifiedDeformation(2);
             
-        //     counter ++;
-        // }
+            counter ++;
+        }
 
         // fixed points
         for( auto& node_i : mListOfFixedNodes )
@@ -843,13 +815,10 @@ public:
         std::cout << "\n> Starting to assemble modifiedMappingMatrix..." << std::endl;
 
         // compute modified mapping matrix
-        // unsigned int numberOfRowsInModifiedSystem = mListOfNodesInTransitionRegion.size() + mListOfRigidNodes.size() + mListOfFixedNodes.size();
-        unsigned int numberOfRowsInModifiedSystem = mListOfNodesInTransitionRegion.size() + mListOfFixedNodes.size();
-
+        unsigned int numberOfRowsInModifiedSystem = mListOfNodesInTransitionRegion.size() + mListOfRigidNodes.size() + mListOfFixedNodes.size();
         unsigned int numberOfColsInModifiedSystem = mListOfImportantNodes.size();
+        
         CompressedMatrixType modifiedMappingMatrix( numberOfRowsInModifiedSystem , numberOfColsInModifiedSystem );
-        KRATOS_WATCH(mListOfNodesInTransitionRegion.size());
-        KRATOS_WATCH(mListOfRigidNodes.size());
 
         Vector x_variables_modified, y_variables_modified, z_variables_modified;
         x_variables_modified.resize( numberOfRowsInModifiedSystem , 0.0 );
@@ -879,31 +848,31 @@ public:
         }
 
         // rigid body transformation
-        // for( auto& node_i : mListOfRigidNodes )
-        // {
-        //     // Get node information
-        //     int i = node_i->GetValue( MAPPING_ID );
+        for( auto& node_i : mListOfRigidNodes )
+        {
+            // Get node information
+            int i = node_i->GetValue( MAPPING_ID );
             
-        //     int counter_col = 0;
-        //     for( auto& node_j : mListOfImportantNodes )
-        //     {
-        //         int j = node_j->GetValue( MAPPING_ID );
-        //         double val = mMappingMatrix(i,j);
-        //         if (val != 0.0)
-        //             modifiedMappingMatrix.insert_element( counter_row, counter_col, penalty_factor*val );
-        //         counter_col ++;
-        //     }
+            int counter_col = 0;
+            for( auto& node_j : mListOfImportantNodes )
+            {
+                int j = node_j->GetValue( MAPPING_ID );
+                double val = mMappingMatrix(i,j);
+                if (val != 0.0)
+                    modifiedMappingMatrix.insert_element( counter_row, counter_col, penalty_factor*val );
+                counter_col ++;
+            }
 
-        //     // compute rigid body movement of rigid nodes and store it in modified vector
-        //     Vector coord = node_i->Coordinates();
-        //     Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
+            // compute rigid body movement of rigid nodes and store it in modified vector
+            Vector coord = node_i->Coordinates();
+            Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
 
-        //     x_variables_modified[counter_row] = penalty_factor*modifiedDeformation(0);
-        //     y_variables_modified[counter_row] = penalty_factor*modifiedDeformation(1);
-        //     z_variables_modified[counter_row] = penalty_factor*modifiedDeformation(2);
+            x_variables_modified[counter_row] = penalty_factor*modifiedDeformation(0);
+            y_variables_modified[counter_row] = penalty_factor*modifiedDeformation(1);
+            z_variables_modified[counter_row] = penalty_factor*modifiedDeformation(2);
             
-        //     counter_row ++;
-        // }
+            counter_row ++;
+        }
 
         // fixed nodes
         for( auto& node_i : mListOfFixedNodes )

@@ -321,8 +321,8 @@ public:
         MultiplyVectorsWithMappingMatrix();
         AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
 
-        // CorrectDesignUpdateWithRigidBodyConstraints( linear_solver );
-        CorrectDesignUpdateWithRigidBodyConstraintsFast( linear_solver );
+        CorrectDesignUpdateWithRigidBodyConstraints( linear_solver );
+        // CorrectDesignUpdateWithRigidBodyConstraintsFast( linear_solver );
         MultiplyVectorsWithMappingMatrix();
         AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
 
@@ -503,7 +503,7 @@ public:
 
     // --------------------------------------------------------------------------
     void CreateListOfRigidNodes()
-    {   
+    {
         mListOfRigidNodes.clear();
         // Loop over all regions that a rigid motion has to be enforced on
         for (unsigned int regionNumber = 0; regionNumber < len(mrRigidRegions); regionNumber++)
@@ -528,12 +528,12 @@ public:
         boolVectorOfTransitionRegions.resize(mNumberOfDesignVariables,false);
         boolVectorOfImportantNodes.resize(mNumberOfDesignVariables,false);
 
-        // Loop over all regions 
+        // Loop over all regions
         for (unsigned int regionNumber = 0; regionNumber < len(mrRigidRegions); regionNumber++)
         {
             ModelPart& rigidRegion = extractModelPart( mrRigidRegions[regionNumber] );
 
-            // Loop over all nodes in specified sub-model part 
+            // Loop over all nodes in specified sub-model part
             for(auto& node_i : rigidRegion.Nodes())
             {
                 NodeVector neighbor_nodes( mMaxNumberOfNeighbors );
@@ -556,12 +556,12 @@ public:
             }
         }
 
-        // Loop over all regions 
+        // Loop over all regions
         for (unsigned int regionNumber = 0; regionNumber < len(mrFixedRegions); regionNumber++)
         {
             ModelPart& fixedRegion = extractModelPart( mrFixedRegions[regionNumber] );
 
-            // Loop over all nodes in specified sub-model part 
+            // Loop over all nodes in specified sub-model part
             for(auto& node_i : fixedRegion.Nodes())
             {
                 NodeVector neighbor_nodes( mMaxNumberOfNeighbors );
@@ -595,7 +595,7 @@ public:
             }
         }
 
-        // Loop over all regions 
+        // Loop over all regions
         for (unsigned int regionNumber = 0; regionNumber < len(mrFixedRegions); regionNumber++)
         {
             ModelPart& fixedRegion = extractModelPart( mrFixedRegions[regionNumber] );
@@ -669,10 +669,28 @@ public:
             Matrix V = ZeroMatrix(3,3);
             Matrix S = ZeroMatrix(3,3);
 
+
             SVDUtils<double>::JacobiSingularValueDecomposition(H, U, S, V);
 
-            // mRotationMatrix [R]
+            // KRATOS_WATCH(H)
+            // KRATOS_WATCH(U)
+            // KRATOS_WATCH(S)
+            // KRATOS_WATCH(V)
+
+
+            // mRotationMatrix [R], note that V is computed as transpose in the above svd algorithm
             mRotationMatrix = prod(trans(V),trans(U));
+
+
+            // for ( int i_itr = 0; i_itr<3; i_itr++)
+            //     if(std::abs(mRotationMatrix(i_itr,i_itr))<1e-10)
+            //         mRotationMatrix(i_itr,i_itr) = 1.0;
+            // for ( int i_itr = 0; i_itr<3; i_itr++)
+            //     for ( int j_itr = 0; j_itr<3; j_itr++)
+            //         if(std::abs(mRotationMatrix(i_itr,j_itr))<1e-10)
+
+            // KRATOS_WATCH(mRotationMatrix)
+
             double detR = MathUtils<double>::Det(mRotationMatrix);
 
             if ( detR < 0 ) // special reflection case
@@ -688,6 +706,9 @@ public:
             // mTranslationVector [t]
             mTranslationVector = - prod(mRotationMatrix, centroid_undeformed) + centroid_deformed;
 
+            // KRATOS_WATCH(mTranslationVector)
+
+
             std::cout << "> Time needed for SVD: " << svd_time.elapsed() << " s" << std::endl;
         }
     }
@@ -701,8 +722,8 @@ public:
         std::cout << "\n> Starting to assemble modifiedMappingMatrix..." << std::endl;
 
         // compute modified mapping matrix
-        // int numberOfRowsInModifiedSystem = mNumberOfDesignVariables + mListOfRigidNodes.size() + mListOfFixedNodes.size();
-        int numberOfRowsInModifiedSystem = mNumberOfDesignVariables + mListOfFixedNodes.size();
+        int numberOfRowsInModifiedSystem = mNumberOfDesignVariables + mListOfRigidNodes.size() + mListOfFixedNodes.size();
+        // int numberOfRowsInModifiedSystem = mNumberOfDesignVariables + mListOfFixedNodes.size();
         CompressedMatrixType modifiedMappingMatrix( numberOfRowsInModifiedSystem , mNumberOfDesignVariables );
 
         Vector x_variables_modified, y_variables_modified, z_variables_modified;
@@ -710,7 +731,7 @@ public:
         y_variables_modified.resize( numberOfRowsInModifiedSystem , 0.0 );
         z_variables_modified.resize( numberOfRowsInModifiedSystem , 0.0 );
 
-        double penalty_factor = 1000;
+        double penalty_factor = 100000;
 
         // Using identity matrix for initial ds
         int counter = 0;
@@ -737,12 +758,15 @@ public:
 
             // compute rigid body movement of rigid nodes and store it in modified vector
             Vector coord = node_i->Coordinates();
-            Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
+
+            Vector modifiedDeformation = prod(mRotationMatrix,coord) + mTranslationVector - coord;
+
+            KRATOS_WATCH(modifiedDeformation)
 
             x_variables_modified[counter] = penalty_factor*modifiedDeformation(0);
             y_variables_modified[counter] = penalty_factor*modifiedDeformation(1);
             z_variables_modified[counter] = penalty_factor*modifiedDeformation(2);
-            
+
             counter ++;
         }
 
@@ -754,18 +778,18 @@ public:
 
             // Copy respective row from mMappingMatrix to modifiedMappingMatrix
             row( modifiedMappingMatrix , counter ) = penalty_factor * row( mMappingMatrix , i );
-            
+
             x_variables_modified[counter] = 0;
             y_variables_modified[counter] = 0;
             z_variables_modified[counter] = 0;
-                
+
             if (!mFix_in_X)
                 x_variables_modified[counter] = penalty_factor * x_variables_in_geometry_space[i];
             if (!mFix_in_Y)
                 y_variables_modified[counter] = penalty_factor * y_variables_in_geometry_space[i];
             if (!mFix_in_Z)
                 z_variables_modified[counter] = penalty_factor * z_variables_in_geometry_space[i];
-            
+
             counter ++;
         }
 
@@ -805,7 +829,7 @@ public:
     }
 
     // --------------------------------------------------------------------------
-    // 
+    //
     // --------------------------------------------------------------------------
     void CorrectDesignUpdateWithRigidBodyConstraintsFast( CompressedLinearSolverType::Pointer linear_solver )
     {
@@ -825,13 +849,13 @@ public:
         y_variables_modified.resize( numberOfRowsInModifiedSystem , 0.0 );
         z_variables_modified.resize( numberOfRowsInModifiedSystem , 0.0 );
 
-        double penalty_factor = 1000;
+        double penalty_factor = 100000;
 
         // Using identity matrix for initial ds
         int counter_row = 0;
         int counter_col = 0;
         for( auto& node_i : mListOfImportantNodes )
-        {   
+        {
             int i = node_i->GetValue( MAPPING_ID );
             if (boolVectorOfTransitionRegions[i])
             {
@@ -852,7 +876,6 @@ public:
         {
             // Get node information
             int i = node_i->GetValue( MAPPING_ID );
-            
             int counter_col = 0;
             for( auto& node_j : mListOfImportantNodes )
             {
@@ -865,12 +888,11 @@ public:
 
             // compute rigid body movement of rigid nodes and store it in modified vector
             Vector coord = node_i->Coordinates();
-            Vector modifiedDeformation = prod(coord, mRotationMatrix) + mTranslationVector - coord;
+            Vector modifiedDeformation = prod(mRotationMatrix,coord) + mTranslationVector - coord;
 
             x_variables_modified[counter_row] = penalty_factor*modifiedDeformation(0);
             y_variables_modified[counter_row] = penalty_factor*modifiedDeformation(1);
             z_variables_modified[counter_row] = penalty_factor*modifiedDeformation(2);
-            
             counter_row ++;
         }
 
@@ -879,7 +901,7 @@ public:
         {
             // Get node information
             int i = node_i->GetValue( MAPPING_ID );
-            
+
             int counter_col = 0;
             for( auto& node_j : mListOfImportantNodes )
             {
@@ -893,14 +915,14 @@ public:
             x_variables_modified[counter_row] = 0;
             y_variables_modified[counter_row] = 0;
             z_variables_modified[counter_row] = 0;
-            
+
             if (!mFix_in_X)
                 x_variables_modified[counter_row] = penalty_factor * x_variables_in_geometry_space[i];
             if (!mFix_in_Y)
                 y_variables_modified[counter_row] = penalty_factor * y_variables_in_geometry_space[i];
             if (!mFix_in_Z)
                 z_variables_modified[counter_row] = penalty_factor * z_variables_in_geometry_space[i];
-            
+
             counter_row ++;
         }
 
@@ -912,7 +934,7 @@ public:
                            numberOfRowsInModifiedSystem,
                            numberOfColsInModifiedSystem,
                            "modifiedMappingMatrixReduced.txt");
-        
+
         writeVectorToFile ( x_variables_modified,
                             "x_variables_modified_red.txt");
         writeVectorToFile ( y_variables_modified,
@@ -936,7 +958,7 @@ public:
         linear_solver->Solve(modifiedMappingMatrix, x_variables_in_design_space_affected, x_variables_modified);
         linear_solver->Solve(modifiedMappingMatrix, y_variables_in_design_space_affected, y_variables_modified);
         linear_solver->Solve(modifiedMappingMatrix, z_variables_in_design_space_affected, z_variables_modified);
-        
+
         std::cout << "> Time needed for solving modified System: " << solving_time.elapsed() << " s" << std::endl;
 
         boost::timer backassambling_time;
@@ -954,8 +976,8 @@ public:
             counter_row ++;
         }
 
-        std::cout << "> Time needed for backward-assembling: " << backassambling_time.elapsed() << " s" << std::endl;        
-        
+        std::cout << "> Time needed for backward-assembling: " << backassambling_time.elapsed() << " s" << std::endl;
+
     }
 
     // --------------------------------------------------------------------------
@@ -995,7 +1017,7 @@ public:
     // --------------------------------------------------------------------------
     void writeVectorToFile( Vector vec, const char* filename )
     {
-        
+
         std::ofstream file (filename);
         if (file.is_open())
         {

@@ -321,8 +321,8 @@ public:
         MultiplyVectorsWithMappingMatrix();
         AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
 
-        CorrectDesignUpdateWithRigidBodyConstraints( linear_solver );
-        // CorrectDesignUpdateWithRigidBodyConstraintsFast( linear_solver );
+        // CorrectDesignUpdateWithRigidBodyConstraints( linear_solver );
+        CorrectDesignUpdateWithRigidBodyConstraintsFast( linear_solver );
         MultiplyVectorsWithMappingMatrix();
         AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
 
@@ -493,8 +493,8 @@ public:
             // mFix_in_Y = mMapperSettings[regionNumber]["fix_in_Y"].GetBool();
             // mFix_in_Z = mMapperSettings[regionNumber]["fix_in_Z"].GetBool();
             mFix_in_X = false;
-            mFix_in_Y = true;
-            mFix_in_Z = true;
+            mFix_in_Y = false;
+            mFix_in_Z = false;
         }
 
         writeVectorToFile(mListOfFixedNodes, "listOfFixedNodes.txt");
@@ -632,6 +632,8 @@ public:
         mRotationMatrix = ZeroMatrix(3,3);
         mTranslationVector = ZeroVector(3);
 
+        KRATOS_WATCH(mListOfRigidNodes.size())
+
         if(mListOfRigidNodes.size() > 0)
         {
             boost::timer svd_time;
@@ -706,8 +708,8 @@ public:
             // mTranslationVector [t]
             mTranslationVector = - prod(mRotationMatrix, centroid_undeformed) + centroid_deformed;
 
-            // KRATOS_WATCH(mTranslationVector)
-
+            KRATOS_WATCH(mTranslationVector)
+            KRATOS_WATCH(mRotationMatrix)
 
             std::cout << "> Time needed for SVD: " << svd_time.elapsed() << " s" << std::endl;
         }
@@ -723,7 +725,6 @@ public:
 
         // compute modified mapping matrix
         int numberOfRowsInModifiedSystem = mNumberOfDesignVariables + mListOfRigidNodes.size() + mListOfFixedNodes.size();
-        // int numberOfRowsInModifiedSystem = mNumberOfDesignVariables + mListOfFixedNodes.size();
         CompressedMatrixType modifiedMappingMatrix( numberOfRowsInModifiedSystem , mNumberOfDesignVariables );
 
         Vector x_variables_modified, y_variables_modified, z_variables_modified;
@@ -761,7 +762,7 @@ public:
 
             Vector modifiedDeformation = prod(mRotationMatrix,coord) + mTranslationVector - coord;
 
-            KRATOS_WATCH(modifiedDeformation)
+            // KRATOS_WATCH(modifiedDeformation)
 
             x_variables_modified[counter] = penalty_factor*modifiedDeformation(0);
             y_variables_modified[counter] = penalty_factor*modifiedDeformation(1);
@@ -809,10 +810,10 @@ public:
         writeVectorToFile ( z_variables_modified,
                             "z_variables_modified_full.txt");
 
-        // writeMatrixToFile( mMappingMatrix,
-        //                    mNumberOfDesignVariables,
-        //                    mNumberOfDesignVariables,
-        //                    "mappingMatrix.txt");
+        writeMatrixToFile( mMappingMatrix,
+                           mNumberOfDesignVariables,
+                           mNumberOfDesignVariables,
+                           "originalMappingMatrix.txt");
 
         boost::timer solving_time;
         std::cout << "\n> Starting to solve modified System..." << std::endl;
@@ -824,6 +825,13 @@ public:
         linear_solver->Solve(modifiedMappingMatrix, x_variables_in_design_space, x_variables_modified);
         linear_solver->Solve(modifiedMappingMatrix, y_variables_in_design_space, y_variables_modified);
         linear_solver->Solve(modifiedMappingMatrix, z_variables_in_design_space, z_variables_modified);
+
+        writeVectorToFile ( x_variables_in_design_space,
+                            "x_variables_in_design_space_full.txt");
+        writeVectorToFile ( y_variables_in_design_space,
+                            "y_variables_in_design_space_full.txt");
+        writeVectorToFile ( z_variables_in_design_space,
+                            "z_variables_in_design_space_full.txt");
 
         std::cout << "> Time needed for solving modified System: " << solving_time.elapsed() << " s" << std::endl;
     }
@@ -841,6 +849,8 @@ public:
         // compute modified mapping matrix
         unsigned int numberOfRowsInModifiedSystem = mListOfNodesInTransitionRegion.size() + mListOfRigidNodes.size() + mListOfFixedNodes.size();
         unsigned int numberOfColsInModifiedSystem = mListOfImportantNodes.size();
+        KRATOS_WATCH(numberOfRowsInModifiedSystem)
+        KRATOS_WATCH(numberOfColsInModifiedSystem)
         
         CompressedMatrixType modifiedMappingMatrix( numberOfRowsInModifiedSystem , numberOfColsInModifiedSystem );
 
@@ -942,10 +952,10 @@ public:
         writeVectorToFile ( z_variables_modified,
                             "z_variables_modified_red.txt");
 
-        // writeMatrixToFile( mMappingMatrix,
-        //                    mNumberOfDesignVariables,
-        //                    mNumberOfDesignVariables,
-        //                    "mappingMatrix.txt");
+        writeMatrixToFile( mMappingMatrix,
+                           mNumberOfDesignVariables,
+                           mNumberOfDesignVariables,
+                           "originalMappingMatrix.txt");
 
         boost::timer solving_time;
         std::cout << "\n> Starting to solve modified System..." << std::endl;
@@ -975,6 +985,13 @@ public:
 
             counter_row ++;
         }
+
+        writeVectorToFile ( x_variables_in_design_space,
+                            "x_variables_in_design_space_red.txt");
+        writeVectorToFile ( y_variables_in_design_space,
+                            "y_variables_in_design_space_red.txt");
+        writeVectorToFile ( z_variables_in_design_space,
+                            "z_variables_in_design_space_red.txt");
 
         std::cout << "> Time needed for backward-assembling: " << backassambling_time.elapsed() << " s" << std::endl;
 

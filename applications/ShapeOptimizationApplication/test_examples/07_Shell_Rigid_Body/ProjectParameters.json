@@ -51,7 +51,7 @@
         },
         "optimization_algorithm" : {
             "name"                                 : "steepest_descent",
-            "max_iterations"                       : 100,
+            "max_iterations"                       : 1,
             "relative_tolerance"                   : 1e-1,
             "project_gradients_on_surface_normals" : true
         },
@@ -73,15 +73,7 @@
                                           "SHAPE_UPDATE",
                                           "SHAPE_CHANGE" ],
             "output_format" : {
-            "name"              : "gid",
-            "gid_configuration" : {
-                "result_file_configuration" : {
-                    "gidpost_flags"       : {
-                        "GiDPostMode"           : "GiD_PostBinary"
-                    },
-                    "output_frequency"    : 1.0
-                }
-            }
+            "name"              : "vtk"
         }
         }
     }

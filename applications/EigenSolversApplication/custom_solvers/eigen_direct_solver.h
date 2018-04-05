@@ -124,8 +124,6 @@ class EigenDirectSolver
 
         m_solver.compute(a);
 
-        Eigen::saveMarket(a, "a.mtx");
-
         KRATOS_ERROR_IF(m_solver.info() != Eigen::Success) << "Decomposition failed!" << std::endl;
     }
 
@@ -142,9 +140,6 @@ class EigenDirectSolver
         Eigen::Map<Eigen::VectorXd> b(rB.data().begin(), rB.size());
 
         x = m_solver.solve(b);
-
-        Eigen::saveMarketVector(b, "b.mtx");
-        Eigen::saveMarketVector(x, "x.mtx");
 
         KRATOS_ERROR_IF(m_solver.info() != Eigen::Success) << "Solving failed!" << std::endl;
     }

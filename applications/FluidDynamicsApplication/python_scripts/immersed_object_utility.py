@@ -83,7 +83,6 @@ class ImmersedBCsUtility():
                 node.Fix(KratosMultiphysics.VELOCITY_Y)
                 node.Fix(KratosMultiphysics.VELOCITY_Z)
                 self.immersed_nodes.append(node)
-        print("cccccccccc")
     
     def ApplyStructureForces(self):
         

@@ -125,7 +125,7 @@ namespace Kratos
 
 // KRATOS_WATCH(Dimension)
             // Vector with a loading applied to the condition
-            array_1d<double, 3 > PointLoad = contact_pressure*n;
+            array_1d<double, 3 > PointLoad = -contact_pressure*n;
 // KRATOS_WATCH(PointLoad)
 
             for (unsigned int ii = 0; ii < NumberOfNodes; ++ii)
@@ -133,9 +133,9 @@ namespace Kratos
                 const unsigned int base = ii*Dimension;
                 
                 for(unsigned int k = 0; k < Dimension; ++k)
-                    rRightHandSideVector[base + k] = -PointLoad[k];
+                    rRightHandSideVector[base + k] = PointLoad[k];
                 
-                noalias(GetGeometry()[0].FastGetSolutionStepValue(FORCE)) = -PointLoad; //TODO: remove
+                noalias(GetGeometry()[0].FastGetSolutionStepValue(FORCE)) = PointLoad; //TODO: remove
                 GetGeometry()[0].FastGetSolutionStepValue(TEMPERATURE) = d_current;
                 GetGeometry()[0].FastGetSolutionStepValue(NODAL_PAUX) = d_reference;
                 
@@ -180,7 +180,7 @@ namespace Kratos
                         for(unsigned int l = 0; l < Dimension; ++l)
                         {
 //                             rLeftHandSideMatrix(base+k,base+l) = spring_stiffness*(n[k]*n[l])/norm_2(n);
-                             rLeftHandSideMatrix(base+k,base+l) = spring_stiffness*(n[k]*grad_d[l]); //this would be the proper tangent
+                              rLeftHandSideMatrix(base+k,base+l) = spring_stiffness*(n[k]*grad_d[l]); //this would be the proper tangent
                         }
                     }
                 }

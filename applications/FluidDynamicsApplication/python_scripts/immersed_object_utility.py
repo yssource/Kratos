@@ -57,7 +57,12 @@ class ImmersedBCsUtility():
         pelem =  KratosMultiphysics.Element(-1) #UGLY! here i create an empty pointer
         grad =  KratosMultiphysics.Vector(3)
 
-        for node in self.fluid_mp.Nodes: #nodes on the skin of the rotor            
+        print(self.fluid_mp)
+        
+        for node in self.fluid_mp.Nodes: #nodes on the skin of the rotor         
+            
+            if(node.Id == 838):
+                print(node)
             #now find if inside
             coords[0] = node.X
             coords[1] = node.Y
@@ -83,6 +88,9 @@ class ImmersedBCsUtility():
                 node.Fix(KratosMultiphysics.VELOCITY_Y)
                 node.Fix(KratosMultiphysics.VELOCITY_Z)
                 self.immersed_nodes.append(node)
+                
+        #for node in self.immersed_nodes:
+            #print(node.Id)
     
     def ApplyStructureForces(self):
         
@@ -118,7 +126,7 @@ class ImmersedBCsUtility():
                 k = 0
                 for p in pelem.GetNodes():
                     A = p.GetSolutionStepValue(KratosMultiphysics.NODAL_AREA)
-                    rho = 1.0 #node.GetSolutionStepValue(KratosMultiphysics.DENSITY) #get the density from the fluid node
+                    rho = p.GetSolutionStepValue(KratosMultiphysics.DENSITY) #get the density from the fluid node
                     aux = (N[k]/(A*rho))*p.GetSolutionStepValue(KratosMultiphysics.REACTION)
                     t[0] += aux[0]
                     t[1] += aux[1]

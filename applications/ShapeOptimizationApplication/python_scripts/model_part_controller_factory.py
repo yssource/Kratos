@@ -28,6 +28,8 @@ class ModelPartController:
 
         self.design_surface = None
         self.damping_regions = None
+        self.rigid_regions = None
+        self.fixed_regions = None
 
         mesh_motion_settings = self.optimization_settings["design_variables"]["mesh_motion"]
 
@@ -89,6 +91,18 @@ class ModelPartController:
         return self.damping_regions
 
     # --------------------------------------------------------------------------
+    def GetRigidRegions( self ):
+        if self.rigid_regions is None:
+            self.__IdentifyRigidRegions()
+        return self.rigid_regions
+
+    # --------------------------------------------------------------------------
+    def GetFixedRegions( self ):
+        if self.fixed_regions is None:
+            self.__IdentifyFixedRegions()
+        return self.fixed_regions
+
+    # --------------------------------------------------------------------------
     def __CheckIfDomainSizeIsSet(self):
         if self.optimization_mdpa.ProcessInfo.GetValue(DOMAIN_SIZE) == 0:
             raise ValueError("DOMAIN_SIZE not specified for given optimization model part!")
@@ -118,5 +132,40 @@ class ModelPartController:
             else:
                 raise ValueError("Definition of damping regions required but not availabe!")
         print("")
+
+    # --------------------------------------------------------------------------
+    def __IdentifyRigidRegions( self ):
+        print("> The following rigid regions are defined: \n")
+        self.rigid_regions = []
+        if self.optimization_settings["design_variables"]["rigid_motion"]["enforce_rigid_motion"].GetBool():
+            if self.optimization_settings["design_variables"]["rigid_motion"].Has("rigid_regions"):
+                for regionNumber in range(self.optimization_settings["design_variables"]["rigid_motion"]["rigid_regions"].size()):
+                    regionName = self.optimization_settings["design_variables"]["rigid_motion"]["rigid_regions"][regionNumber]["sub_model_part_name"].GetString()
+                    if self.optimization_mdpa.HasSubModelPart(regionName):
+                        print(regionName)
+                        self.rigid_regions.append( self.optimization_mdpa.GetSubModelPart(regionName) )
+                    else:
+                        raise ValueError("The following sub-model part specified as rigid region does not exist: ",regionName)
+            else:
+                raise ValueError("Definition of rigid regions required but not availabe!")
+        print("")
+
+    # --------------------------------------------------------------------------
+    def __IdentifyFixedRegions( self ):
+        print("> The following fixed regions are defined: \n")
+        self.fixed_regions = []
+        if self.optimization_settings["design_variables"]["fixing"]["enforce_fixed_regions"].GetBool():
+            if self.optimization_settings["design_variables"]["fixing"].Has("fixed_regions"):
+                for regionNumber in range(self.optimization_settings["design_variables"]["fixing"]["fixed_regions"].size()):
+                    regionName = self.optimization_settings["design_variables"]["fixing"]["fixed_regions"][regionNumber]["sub_model_part_name"].GetString()
+                    if self.optimization_mdpa.HasSubModelPart(regionName):
+                        print(regionName)
+                        self.fixed_regions.append( self.optimization_mdpa.GetSubModelPart(regionName) )
+                    else:
+                        raise ValueError("The following sub-model part specified as fixed region does not exist: ",regionName)
+            else:
+                raise ValueError("Definition of fixed regions required but not availabe!")
+        print("")
+
 
 # ==============================================================================

@@ -15,7 +15,7 @@
 // // ------------------------------------------------------------------------------
 // // External includes
 // // ------------------------------------------------------------------------------
-// #include <boost/python.hpp>
+#include <boost/python.hpp>
 
 // ------------------------------------------------------------------------------
 // Project includes
@@ -37,6 +37,10 @@
 #include "custom_utilities/input_output/vtk_file_io.h"
 #include "custom_utilities/response_functions/eigenfrequency_response_function.h"
 #include "custom_utilities/response_functions/eigenfrequency_response_function_lin_scal.h"
+
+#include "custom_utilities/mapping/mapper_vertex_morphing_rigid_body.h"
+#include "linear_solvers/linear_solver.h"
+
 // ==============================================================================
 
 namespace Kratos
@@ -64,6 +68,12 @@ void  AddCustomUtilitiesToPython()
     class_<MapperVertexMorphingImprovedIntegration, bases<Process> >("MapperVertexMorphingImprovedIntegration", init<ModelPart&, Parameters>())
         .def("MapToDesignSpace", &MapperVertexMorphingImprovedIntegration::MapToDesignSpace)
         .def("MapToGeometrySpace", &MapperVertexMorphingImprovedIntegration::MapToGeometrySpace)
+        ;
+
+    class_<MapperVertexMorphingRigidBody, bases<Process> >("MapperVertexMorphingRigidBody", init<ModelPart&, Parameters>())
+        .def("MapToDesignSpace", &MapperVertexMorphingRigidBody::MapToDesignSpace)
+        .def("MapToGeometrySpace", &MapperVertexMorphingRigidBody::MapToGeometrySpace)
+        .def("MapToGeometrySpaceWithRigidCorrection", &MapperVertexMorphingRigidBody::MapToGeometrySpaceWithRigidCorrection)
         ;
 
     // ================================================================

@@ -44,6 +44,9 @@ def CreateMapper( ModelPartController, OptimizationSettings ):
         else:
             return MapperVertexMorphingMatrixFree( design_surface, mapper_settings )
     else:
+        if (OptimizationSettings["design_variables"]["fixing"]["enforce_fixed_regions"].GetBool() or
+            OptimizationSettings["design_variables"]["rigid_motion"]["enforce_rigid_motion"].GetBool()):
+            return MapperVertexMorphingRigidBody( design_surface, mapper_settings )
         if mapper_settings["integration"]["integration_method"].GetString() in ["gauss_integration", "area_weighted_sum"]:
             return MapperVertexMorphingImprovedIntegration( design_surface, mapper_settings )
         elif mapper_settings["integration"]["integration_method"].GetString() == "node_sum":

@@ -15,6 +15,7 @@ from __future__ import print_function, absolute_import, division
 # Kratos Core and Apps
 from KratosMultiphysics import *
 from KratosMultiphysics.ShapeOptimizationApplication import *
+from KratosMultiphysics.EigenSolversApplication import *
 
 # Additional imports
 from algorithm_base import OptimizationAlgorithm
@@ -145,7 +146,14 @@ class AlgorithmSteepestDescent( OptimizationAlgorithm ) :
 
     # --------------------------------------------------------------------------
     def __mapDesignUpdateToGeometrySpace( self ):
-        self.Mapper.MapToGeometrySpace( CONTROL_POINT_UPDATE, SHAPE_UPDATE )
+        if (self.OptimizationSettings["design_variables"]["fixing"]["enforce_fixed_regions"].GetBool() or
+            self.OptimizationSettings["design_variables"]["rigid_motion"]["enforce_rigid_motion"].GetBool()):
+            LinearSolver = SparseQRSolver()
+            rigid_regions = self.ModelPartController.GetRigidRegions()
+            fixed_regions = self.ModelPartController.GetFixedRegions()
+            self.Mapper.MapToGeometrySpaceWithRigidCorrection( CONTROL_POINT_UPDATE, SHAPE_UPDATE, LinearSolver, rigid_regions, fixed_regions )
+        else:
+            self.Mapper.MapToGeometrySpace( CONTROL_POINT_UPDATE, SHAPE_UPDATE )
 
     # --------------------------------------------------------------------------
     def __dampShapeUpdate( self ):

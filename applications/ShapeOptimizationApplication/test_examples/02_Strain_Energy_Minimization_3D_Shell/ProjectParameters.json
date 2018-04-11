@@ -144,6 +144,16 @@
                         "damping_radius"        : 3.0
                 }]
             },
+            "fixing" : {
+                "enforce_fixed_regions" : false,
+                "fixed_regions" : [{
+                    "sub_model_part_name" : "test"
+                }]
+            },
+            "rigid_motion" : {
+                "enforce_rigid_motion" : false,
+                "rigid_regions" : []
+            },
             "mesh_motion" : {
                 "apply_ale_mesh_solver" : false
             }

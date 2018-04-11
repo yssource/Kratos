@@ -1,8 +1,8 @@
 {
     "optimization_settings" : {
         "objectives" : [{
-                "identifier" : "drag",
-                "type"       : "minimization",
+                "identifier" : "lift",
+                "type"       : "maximization",
                 "use_kratos" : false
         }],
         "constraints" : [],
@@ -29,6 +29,16 @@
                     }
                 ]
             },
+            "fixing" : {
+                "enforce_fixed_regions" : false,
+                "fixed_regions" : [{
+                    "sub_model_part_name"   : "fix_nodes"
+                }]
+            },
+            "rigid_motion" : {
+                "enforce_rigid_motion" : false,
+                "rigid_regions" : []
+            },
             "mesh_motion" : {
                 "apply_ale_mesh_solver" : false
             }
@@ -42,7 +52,7 @@
         "line_search" : {
             "line_search_type"           : "manual_stepping",
             "normalize_search_direction" : true,
-            "step_size"                  : 0.001
+            "step_size"                  : 0.01
         },
         "output" : {
             "output_directory"        : "Optimization_Results",
@@ -82,6 +92,6 @@
             "mdpa_file"      : "mesh_NACA0012_inv.mdpa",
             "write_elements" : false
         },
-        "echo_level" : 1
+        "echo_level" : 2
     }
 }

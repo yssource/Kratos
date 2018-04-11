@@ -35,16 +35,27 @@ class CustomSU2Analyzer(AnalyzerBaseClass):
             previos_iteration = optimization_iteration-1
             interface_su2.WriteNodesAsSU2MeshMotionFile(current_design.GetNodes(),"DESIGNS/DSN_"+str(previos_iteration).zfill(3))
 
-        if communicator.isRequestingValueOf("drag"):
+        if communicator.isRequestingValueOf("drag") or communicator.isRequestingValueOf("lift"):
             update_mesh = True
-            [value] = interface_su2.ComputeValues(["DRAG"], update_mesh, optimization_iteration)
-            communicator.reportValue("drag", value)
+            [drag_value, lift_value] = interface_su2.ComputeValues(["DRAG","LIFT"], update_mesh, optimization_iteration)
+
+        if communicator.isRequestingValueOf("drag"):
+            communicator.reportValue("drag", drag_value)
+
+        if communicator.isRequestingValueOf("lift"):
+            communicator.reportValue("lift", lift_value)
 
         if communicator.isRequestingGradientOf("drag"):
             update_mesh = False
             gradient = interface_su2.ComputeGradient(["DRAG"], update_mesh, optimization_iteration)
+            gradient.update({key: [value[0],value[1],0.0] for key, value in gradient.items()})
             communicator.reportGradient("drag", gradient)
 
+        if communicator.isRequestingGradientOf("lift"):
+            update_mesh = False
+            gradient = interface_su2.ComputeGradient(["LIFT"], update_mesh, optimization_iteration)
+            gradient.update({key: [value[0],value[1],0.0] for key, value in gradient.items()})
+            communicator.reportGradient("lift", gradient)
 
 # =======================================================================================================
 # Perform optimization

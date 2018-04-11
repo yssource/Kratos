@@ -492,9 +492,9 @@ public:
             // mFix_in_X = mMapperSettings[regionNumber]["fix_in_X"].GetBool();
             // mFix_in_Y = mMapperSettings[regionNumber]["fix_in_Y"].GetBool();
             // mFix_in_Z = mMapperSettings[regionNumber]["fix_in_Z"].GetBool();
-            mFix_in_X = false;
-            mFix_in_Y = false;
-            mFix_in_Z = false;
+            mFix_in_X = true;
+            mFix_in_Y = true;
+            mFix_in_Z = true;
         }
 
         // writeVectorToFile(mListOfFixedNodes, "listOfFixedNodes.txt");
@@ -545,7 +545,7 @@ public:
                                                                                 mMaxNumberOfNeighbors );
 
                 ThrowWarningIfMaxNodeNeighborsReached( node_i, number_of_neighbors );
-                
+
                 for(unsigned int j_itr = 0 ; j_itr<number_of_neighbors ; j_itr++)
                 {
                     ModelPart::NodeType& neighbor_node = *neighbor_nodes[j_itr];
@@ -572,7 +572,7 @@ public:
                                                                                 mMaxNumberOfNeighbors );
 
                 ThrowWarningIfMaxNodeNeighborsReached( node_i, number_of_neighbors );
-                
+
                 for(unsigned int j_itr = 0 ; j_itr<number_of_neighbors ; j_itr++)
                 {
                     ModelPart::NodeType& neighbor_node = *neighbor_nodes[j_itr];
@@ -804,7 +804,7 @@ public:
         // compute modified mapping matrix
         unsigned int numberOfRowsInModifiedSystem = mListOfActiveNodes.size() + mListOfRigidNodes.size() + mListOfFixedNodes.size();
         unsigned int numberOfColsInModifiedSystem = mListOfActiveNodes.size();
-        
+
         CompressedMatrixType modifiedMappingMatrix( numberOfRowsInModifiedSystem , numberOfColsInModifiedSystem );
 
         Vector x_variables_modified, y_variables_modified, z_variables_modified;

@@ -37,25 +37,23 @@ class CustomSU2Analyzer(AnalyzerBaseClass):
 
         if communicator.isRequestingValueOf("drag") or communicator.isRequestingValueOf("lift"):
             update_mesh = True
-            [drag_value, lift_value] = interface_su2.ComputeValues(["DRAG","LIFT"], update_mesh, optimization_iteration)
+            [drag,lift] = interface_su2.ComputeValues(["DRAG","LIFT"], update_mesh, optimization_iteration)
 
-        if communicator.isRequestingValueOf("drag"):
-            communicator.reportValue("drag", drag_value)
+            if communicator.isRequestingValueOf("drag"):
+                communicator.reportValue("drag", drag)
 
-        if communicator.isRequestingValueOf("lift"):
-            communicator.reportValue("lift", lift_value)
+            if communicator.isRequestingValueOf("lift"):
+                communicator.reportValue("lift", lift)
 
         if communicator.isRequestingGradientOf("drag"):
             update_mesh = False
-            gradient = interface_su2.ComputeGradient(["DRAG"], update_mesh, optimization_iteration)
-            gradient.update({key: [value[0],value[1],0.0] for key, value in gradient.items()})
-            communicator.reportGradient("drag", gradient)
+            [drag_gradient] = interface_su2.ComputeGradient(["DRAG"], update_mesh, optimization_iteration)
+            communicator.reportGradient("drag", drag_gradient)
 
         if communicator.isRequestingGradientOf("lift"):
             update_mesh = False
-            gradient = interface_su2.ComputeGradient(["LIFT"], update_mesh, optimization_iteration)
-            gradient.update({key: [value[0],value[1],0.0] for key, value in gradient.items()})
-            communicator.reportGradient("lift", gradient)
+            [lift_gradient] = interface_su2.ComputeGradient(["LIFT"], update_mesh, optimization_iteration)
+            communicator.reportGradient("lift", lift_gradient)
 
 # =======================================================================================================
 # Perform optimization

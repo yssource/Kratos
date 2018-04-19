@@ -95,6 +95,8 @@ class DampingFunction
         std::string cosine("cosine");
         std::string linear("linear");
         std::string quartic("quartic");
+        std::string linear_convolution("linear_convolution");
+        std::string cubic("cubic");
 
         // Set type of dymping function
 
@@ -108,7 +110,13 @@ class DampingFunction
 
         // Type 3: Quartic function
         else if (damping_function_type.compare(quartic) == 0)
-            m_damping_function_type = 3;            
+            m_damping_function_type = 3;
+        // Type 4: convolution of the triangle function
+        else if (damping_function_type.compare(linear_convolution) == 0)
+            m_damping_function_type = 4;
+        // Type 5: polynom of degree 3 with first and second derivative null at 1
+        else if (damping_function_type.compare(cubic) == 0)
+            m_damping_function_type = 5;
 
         // Throw error message in case of wrong specification
         else
@@ -168,7 +176,35 @@ class DampingFunction
             // Compute damping factor
             damping_factor = std::min(1.0, (1-pow(numerator,4.0)/pow(m_damping_radius,4.0)));
             break;
-        }        
+        }
+        case 4:
+        {
+            // Compute distance
+            double distance = sqrt(dist_vector[0] * dist_vector[0] + dist_vector[1] * dist_vector[1] + dist_vector[2] * dist_vector[2]);
+            double x = distance/m_damping_radius*2;
+            if (x<1){
+                damping_factor = 1.5*x*x*(1.0-0.5*x) ;
+            }else if (x<2){
+                damping_factor = 1.0-0.25*pow(2.0-x,3.0) ;
+            }else{
+                damping_factor = 1.0;
+            }
+            if (damping_factor<0)
+                throw std::invalid_argument( "damping factor negative" );
+            break;
+        }
+        case 5:
+        {
+            // Compute distance
+            double distance = sqrt(dist_vector[0] * dist_vector[0] + dist_vector[1] * dist_vector[1] + dist_vector[2] * dist_vector[2]);
+            double x = distance/m_damping_radius;
+            if (x<1){
+                damping_factor = x*x*x - 3*x*x + 3*x ;
+            }else{
+                damping_factor = 1.0;
+            }
+            break;
+        }
         }
 
         return damping_factor;

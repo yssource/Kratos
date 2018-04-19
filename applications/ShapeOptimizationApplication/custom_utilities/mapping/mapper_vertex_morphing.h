@@ -161,7 +161,7 @@ public:
         AssignResultingGeometryVectorsToNodalVariable( rNodalVariableInGeometrySpace );
 
         std::cout << "> Time needed for mapping: " << mapping_time.elapsed() << " s" << std::endl;
-    }    
+    }
     // --------------------------------------------------------------------------
 
     ///@}
@@ -519,7 +519,7 @@ private:
         for(auto& node_i : mrDesignSurface.Nodes())
         {
             array_3d& coord = node_i.Coordinates();
-            sumOfAllCoordinates += coord[0] + coord[1] + coord[2];
+            sumOfAllCoordinates += std::abs(coord[0]) + std::abs(coord[1]) + std::abs(coord[2]);
         }
 
         if (mControlSum == sumOfAllCoordinates)
@@ -530,7 +530,7 @@ private:
             return true;
         }
     }
-    
+
     // --------------------------------------------------------------------------
 
     ///@}

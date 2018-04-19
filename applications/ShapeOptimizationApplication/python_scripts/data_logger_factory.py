@@ -31,6 +31,9 @@ import timer_factory as timer_factory
 from response_logger_steepest_descent import ResponseLoggerSteepestDescent
 from response_logger_penalized_projection import ResponseLoggerPenalizedProjection
 from response_logger_projected_position import ResponseLoggerProjectedPosition
+from response_logger_projected_position_old import ResponseLoggerProjectedPositionOld
+
+import shutil
 
 # ==============================================================================
 def CreateDataLogger( ModelPartController, Communicator, OptimizationSettings ):
@@ -60,6 +63,8 @@ class DataLogger():
             return ResponseLoggerPenalizedProjection( self.Communicator, self.OptimizationSettings, self.Timer )
         elif AlgorithmName == "projected_position":
             return ResponseLoggerProjectedPosition( self.Communicator, self.OptimizationSettings, self.Timer )
+        elif AlgorithmName == "projected_position_old":
+            return ResponseLoggerProjectedPositionOld( self.Communicator, self.OptimizationSettings, self.Timer )
         else:
             raise NameError("The following optimization algorithm not supported by the response logger (name may be a misspelling): " + AlgorithmName)
 
@@ -77,11 +82,14 @@ class DataLogger():
 
     # --------------------------------------------------------------------------
     def __CreateFolderToStoreOptimizationResults ( self ):
-        resultsDirectory = self.OptimizationSettings["output"]["output_directory"].GetString()
-        if os.path.exists(resultsDirectory):
-            shutil.rmtree(resultsDirectory)
-        os.makedirs(resultsDirectory)
-
+        if hasattr(self.OptimizationSettings,"resultsFolder"): # projected position algo
+            os.makedirs(self.OptimizationSettings.resultsFolder)
+            shutil.copy("param.json",self.OptimizationSettings.resultsFolder) # copy param file in the results folder
+        else:
+            resultsDirectory = self.OptimizationSettings["output"]["output_directory"].GetString()
+            if os.path.exists(resultsDirectory):
+                shutil.rmtree(resultsDirectory)
+            os.makedirs(resultsDirectory)
     # --------------------------------------------------------------------------
     def __OutputInformationAboutResponseFunctions( self ):
         numberOfObjectives = self.OptimizationSettings["objectives"].size()

@@ -16,6 +16,16 @@ from __future__ import print_function, absolute_import, division
 from KratosMultiphysics import *
 from KratosMultiphysics.ShapeOptimizationApplication import *
 
+from projected_position_modules.translation_response_function import TranslationResponseFunction
+from projected_position_modules.rosenbrock_objective_response_function import RosenbrockObjectiveResponseFunction
+from projected_position_modules.rosenbrock_line_response_function import RosenbrockLineResponseFunction
+from projected_position_modules.rosenbrock_circle_response_function import RosenbrockCircleResponseFunction
+from projected_position_modules.mesh_control_response_function import MeshControlResponseFunction
+from projected_position_modules.packaging_response_function import PackagingResponseFunction
+from projected_position_modules.fix_point_response_function import FixPointResponseFunction
+
+
+
 # check that KratosMultiphysics was imported in the main script
 CheckForPreviousImport()
 
@@ -49,8 +59,8 @@ class ResponseFunctionCreator:
                 self.__checkIfGivenResponseFunctionIsAlreadyDefined( objective_id )
                 self.__createAndAddGivenResponse( objective_id, objective["kratos_response_settings"] )
 
-        if not self.listOfResponseFunctions:
-            raise ValueError("No objective function specified!")
+        # if not self.listOfResponseFunctions:
+        #     raise ValueError("No objective function specified!")
 
     # --------------------------------------------------------------------------
     def __addConstraintsToListOfResponseFunctions( self ):
@@ -86,6 +96,33 @@ class ResponseFunctionCreator:
 
             else:
                 raise NameError("The following weighting_method is not valid for eigenfrequency response: " + response_settings["weighting_method"].GetString())
+
+        elif response_id == "translation":
+            self.listOfResponseFunctions[response_id] = TranslationResponseFunction( self.optimization_model_part, response_settings )
+
+        elif response_id == "rosenbrock_objective":
+            self.listOfResponseFunctions[response_id] = RosenbrockObjectiveResponseFunction( self.optimization_model_part, response_settings )
+
+        elif "rosenbrock_line" in response_id: #  can add number : rosenbrock_line_2
+            self.listOfResponseFunctions[response_id] = RosenbrockLineResponseFunction( self.optimization_model_part, response_settings )
+
+        elif "rosenbrock_circle" in response_id: #  can add number : rosenbrock_circle_2
+            self.listOfResponseFunctions[response_id] = RosenbrockCircleResponseFunction( self.optimization_model_part, response_settings )
+
+        elif response_id == "mesh_control":
+            self.listOfResponseFunctions[response_id] = MeshControlResponseFunction( self.optimization_model_part, response_settings )
+
+        elif "packaging" in response_id:
+            if "inner" in response_id:
+                self.listOfResponseFunctions[response_id] = PackagingResponseFunction( self.optimization_model_part, response_settings,"inner",response_id )
+            elif "outer" in response_id:
+                self.listOfResponseFunctions[response_id] = PackagingResponseFunction( self.optimization_model_part, response_settings,"outer",response_id )
+            else:
+                raise NameError("inner or outer should be in packaging id")
+
+        elif response_id == "fix_point":
+            self.listOfResponseFunctions[response_id] = FixPointResponseFunction( self.optimization_model_part, response_settings )
+
         else:
             raise NameError("The following response function is not specified: " + response_id)
 

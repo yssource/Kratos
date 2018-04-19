@@ -47,6 +47,8 @@ class AlgorithmPenalizedProjection( OptimizationAlgorithm ) :
         self.OptimizationModelPart = ModelPartController.GetOptimizationModelPart()
         self.DesignSurface = ModelPartController.GetDesignSurface()
 
+        Communicator.p = self
+
         self.onlyObjectiveId = OptimizationSettings["objectives"][0]["identifier"].GetString()
         self.onlyConstraintId = OptimizationSettings["constraints"][0]["identifier"].GetString()
         self.typeOfOnlyConstraint = OptimizationSettings["constraints"][0]["type"].GetString()

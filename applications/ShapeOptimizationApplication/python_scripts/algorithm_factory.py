@@ -22,6 +22,7 @@ CheckForPreviousImport()
 from algorithm_steepest_descent import AlgorithmSteepestDescent
 from algorithm_penalized_projection import AlgorithmPenalizedProjection
 from algorithm_projected_position import AlgorithmProjectedPosition
+from algorithm_projected_position_old import AlgorithmProjectedPositionOld
 import mapper_factory
 import data_logger_factory
 
@@ -53,6 +54,14 @@ def CreateAlgorithm( ModelPartController, Analyzer, Communicator, OptimizationSe
                                            Mapper,
                                            DataLogger,
                                            OptimizationSettings )
+    elif AlgorithmName == "projected_position_old":
+        return AlgorithmProjectedPositionOld( ModelPartController,
+                                           Analyzer,
+                                           Communicator,
+                                           Mapper,
+                                           DataLogger,
+                                           OptimizationSettings )
+
     else:
         raise NameError("The following optimization algorithm not supported by the algorithm driver (name may be misspelled): " + AlgorithmName)
 

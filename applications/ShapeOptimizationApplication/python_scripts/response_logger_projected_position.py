@@ -24,6 +24,9 @@ from response_logger_base import ResponseLogger
 
 # Import additional libraries
 import csv
+import json
+import time as timer
+from copy import deepcopy
 
 # ==============================================================================
 class ResponseLoggerProjectedPosition( ResponseLogger ):
@@ -34,148 +37,158 @@ class ResponseLoggerProjectedPosition( ResponseLogger ):
         self.optimizationSettings = optimizationSettings
         self.timer = timer
 
-        self.onlyObjective = self.optimizationSettings["objectives"][0]["identifier"].GetString()
-        self.onlyConstraint = self.optimizationSettings["constraints"][0]["identifier"].GetString()
-        self.typOfOnlyConstraint = self.optimizationSettings["constraints"][0]["type"].GetString()
+        # columns to be printed on the left of the csv file
+        self.__namePrintFirst = ["iterCounter","stepLength","sDx","sInit","lInequality","lEquality","inequality","equality","objective","objectivePercent"]
 
-        self.completeResponseLogFileName = self.__CreateCompleteResponseLogFilename( optimizationSettings )
 
-        self.objectiveHistory = {}
-        self.constraintHistory = {}
-        self.objectiveOutputReference = None
-        self.constraintOutputReference = None
-        self.absoluteChangeOfObjectiveHistory = {}
-        self.relativeChangeOfObjectiveHistory = {}
+    def __FilterNamePrintFirst(self,p):
+        #remove unused names
+        if len(p.inequalityIds)==0:
+            for name in self.__namePrintFirst:
+                if "inequality" in name.lower():
+                    self.__namePrintFirst.remove(name)
+        if len(p.equalityIds)==0:
+            for name in self.__namePrintFirst:
+                if "equality" in name.lower():
+                    self.__namePrintFirst.remove(name)
 
-        self.currentIteration = 0
-        self.previousIteration = 0
-        self.initialIteration = 0
+    # --------------------------------------------------------------------------
+    def __GetPathCsvFile( self, optimizationSettings ):
+        path = "../results/"+self.optimizationSettings.runId+"/"+self.optimizationSettings.runId+".csv"
+        return path
+
+    # --------------------------------------------------------------------------
+    def __GetPathJsonFile( self, optimizationSettings):
+        path = "../results/"+self.optimizationSettings.runId+"/"+self.optimizationSettings.runId+".json"
+        return path
 
     # --------------------------------------------------------------------------
     def InitializeLogging( self ):
-        with open(self.completeResponseLogFileName, 'w') as csvfile:
-            historyWriter = csv.writer(csvfile, delimiter=',',quotechar='|',quoting=csv.QUOTE_MINIMAL)
-            row = []
-            row.append("{:<4s}".format("itr"))
-            row.append("{:>20s}".format("f"))
-            row.append("{:>12s}".format("df_abs[%]"))
-            row.append("{:>12s}".format("df_rel[%]"))
-            row.append("{:>20s}".format("c["+self.onlyConstraint+"]: "+self.typOfOnlyConstraint))
-            row.append("{:>20s}".format("c["+self.onlyConstraint+"]_ref"))
-            row.append("{:>13s}".format("c_scaling[-]"))
-            row.append("{:>13s}".format("step_size[-]"))
-            row.append("{:>12s}".format("t_itr[s]"))
-            row.append("{:>16s}".format("t_total[s]"))
-            row.append("{:>25s}".format("time_stamp"))
-            historyWriter.writerow(row)
-
-    # --------------------------------------------------------------------------
-    def LogCurrentResponses( self, optimizationIteration ):
-        self.currentIteration = optimizationIteration
-        if self.__IsFirstLog():
-            self.initialIteration = optimizationIteration
-            self.__AddResponseValuesToHistory()
-            self.__DetermineReferenceValuesForOutput()
-            self.__InitializeChangeOfObjectiveHistory()
-        else:
-            self.__AddResponseValuesToHistory()
-            self.__AddChangeOfObjectiveToHistory()
-        self.__PrintInfoAboutResponseFunctionValues()
-        self.__WriteDataToLogFile()
-        self.previousIteration = optimizationIteration
-
-    # --------------------------------------------------------------------------
-    def FinalizeLogging( self ):
         pass
 
-    # --------------------------------------------------------------------------
-    def GetValue( self, variableKey ):
-        if variableKey=="RELATIVE_CHANGE_OF_OBJECTIVE_VALUE":
-            if self.__IsFirstLog():
-                raise RuntimeError("Relative change of objective function can not be computed since only one logged value is existing!")
-            else:
-                return self.relativeChangeOfObjectiveHistory[self.currentIteration]
-        else:
-            raise NameError("Value with the following variable key not defined in response_logger_penalized_projection.py: " + variableKey)
+    # return "-" if not defined
+    def __GetValueForCsv(self,i,key,p):
+        if key not in p.r:
+            return ["-"]
+        val = p.r[key][i]
+        if not isinstance(val,list):
+            val = [val]
+        if len(val)==0:
+            return ["-"]
+        for i in range(len(val)):
+            if val[i] is None or (isinstance(val[i],list) and len(val[i])==0):
+                val[i] = "-"
+        return val
 
-    # --------------------------------------------------------------------------
-    def __CreateCompleteResponseLogFilename( self, optimizationSettings ):
-        resultsDirectory = optimizationSettings["output"]["output_directory"].GetString()
-        responseLogFilename = optimizationSettings["output"]["response_log_filename"].GetString() + ".csv"
-        return os.path.join( resultsDirectory, responseLogFilename )
+    def __GetLength(self,name,p):
+        if name not in p.r:
+            return 1
+        if len(p.r[name])>0 and isinstance(p.r[name][0],list):
+            return len(p.r[name][0])
+        return 1
 
-    # -------------------------------------------------------------------------
-    def __IsFirstLog( self ):
-        if len(self.objectiveHistory) == 0:
-            return True
-        else:
-            return False
+    def __FillValues(self,p):
+        r = p.r
 
-    # --------------------------------------------------------------------------
-    def __AddResponseValuesToHistory( self ):
-        objectiveValue = self.communicator.getValue( self.onlyObjective )
-        constraintValue = self.communicator.getValue( self.onlyConstraint )
+        # initialize
+        for name in ["time","inequalityFull","equalityFull","objectivePercent","lObjectiveActual","lInequalityActual","lEqualityActual"]:
+            if name not in r:
+                r[name] = []
+        r["inequalityFull"].append([None for _ in r["inequality"][0]])
+        r["lInequalityActual"].append([None for _ in r["inequality"][0]])
+        r["equalityFull"].append([None for _ in r["equality"][0]])
+        r["lEqualityActual"].append([None for _ in r["equality"][0]])
 
-        self.objectiveHistory[self.currentIteration] = objectiveValue
-        self.constraintHistory[self.currentIteration] = constraintValue
+        r["time"].append(int(round(self.timer.GetTotalTime())))
 
-    # --------------------------------------------------------------------------
-    def __DetermineReferenceValuesForOutput( self ):
-        self.constraintOutputReference = self.communicator.getReferenceValue( self.onlyConstraint )
-        self.objectiveOutputReference = self.objectiveHistory[self.initialIteration]
+        # add inequalityFull
+        for i,(vconstr,vref) in enumerate(zip(r["inequality"][-1],p.inequalityReferences)):
+            if p.inequalityTypes[i]=="<":
+                r["inequalityFull"][-1][i] = vconstr + vref
+            if p.inequalityTypes[i]==">":
+                r["inequalityFull"][-1][i] = vref - vconstr
 
-        if abs(self.objectiveOutputReference)<1e-12:
-            print("\n> WARNING: Objective reference value < 1e-12!! Therefore, standard reference value of 1 is assumed! ")
-            self.objectiveOutputReference = 1.0
-        else:
-            self.objectiveOutputReference = self.objectiveHistory[self.initialIteration]
+            if len(r["iterCounter"])>=2:
+                r["lInequalityActual"][-2][i] = (r["inequality"][-1][i]-r["inequality"][-2][i])/r["gradInequalityL"][-2][i]
 
-    # --------------------------------------------------------------------------
-    def __InitializeChangeOfObjectiveHistory( self ):
-        self.absoluteChangeOfObjectiveHistory[self.currentIteration] = 0.0
-        self.relativeChangeOfObjectiveHistory[self.currentIteration] = 0.0
+        # add equalityFull
+        for i, (veq,vref) in enumerate( zip(r["equality"][-1],p.equalityReferences) ):
+            r["equalityFull"][-1][i] = veq+vref
 
-    # --------------------------------------------------------------------------
-    def __AddChangeOfObjectiveToHistory( self ):
-        objectiveValue = self.objectiveHistory[self.currentIteration]
-        previousObjectiveValue = self.objectiveHistory[self.previousIteration]
+            if len(r["iterCounter"])>=2:
+                r["lEqualityActual"][-2][i] = (r["equality"][-1][i]-r["equality"][-2][i])/r["gradEqualityL"][-2][i]
 
-        self.absoluteChangeOfObjectiveHistory[self.currentIteration] = 100*(objectiveValue-self.objectiveOutputReference) / abs(self.objectiveOutputReference)
-        self.relativeChangeOfObjectiveHistory[self.currentIteration] = 100*(objectiveValue-previousObjectiveValue) / abs(self.objectiveOutputReference)
+        objectiveInit = r["objective"][0]
+        objectivePercent = (objectiveInit-r["objective"][-1])/objectiveInit*100
+        r["objectivePercent"].append("{:.0f}%".format(objectivePercent))
 
-    # --------------------------------------------------------------------------
-    def __PrintInfoAboutResponseFunctionValues( self ):
-        objectiveValue = self.objectiveHistory[self.currentIteration]
-        constraintValue = self.constraintHistory[self.currentIteration]
-        absoluteChangeOfObjectiveValue = self.absoluteChangeOfObjectiveHistory[self.currentIteration]
-        relativeChangeOfObjectiveValue = self.relativeChangeOfObjectiveHistory[self.currentIteration]
+        r["lObjectiveActual"].append(None)
+        if len(r["iterCounter"])>=2:
+            r["lObjectiveActual"][-2] = (r["objective"][-1]-r["objective"][-2])/r["gradObjectiveL"][-2]
 
-        print("\n> Current value of objective function = ", round(objectiveValue,12))
-        print("> Absolut change of objective function = ",round(absoluteChangeOfObjectiveValue,4)," [%]")
-        print("> Relative change of objective function = ",round(relativeChangeOfObjectiveValue,4)," [%]")
-        print("\n> Current value of constraint function = ", round(constraintValue,12))
 
-    # --------------------------------------------------------------------------
-    def __WriteDataToLogFile( self ):
-        objectiveValue = self.objectiveHistory[self.currentIteration]
-        constraintValue = self.constraintHistory[self.currentIteration]
-        absoluteChangeOfObjectiveValue = self.absoluteChangeOfObjectiveHistory[self.currentIteration]
-        relativeChangeOfObjectiveValue = self.relativeChangeOfObjectiveHistory[self.currentIteration]
+    # write the database in an array with the right columns and no list
+    def __DictToArray(self,p):
+        ar = []
 
-        with open(self.completeResponseLogFileName, 'a') as csvfile:
-            historyWriter = csv.writer(csvfile, delimiter=',',quotechar='|',quoting=csv.QUOTE_MINIMAL)
+        names = self.__namePrintFirst + ["others-->"] +  list( set(p.r.keys())-set(self.__namePrintFirst) )
+
+        # headers
+        headerRow = []
+        for name in names:
+            length = self.__GetLength(name,p)
+            headerRow += [name] + ["" for i in range(length-1)] # "" place holders for further columns
+        ar.append(headerRow)
+
+        # fill array with values, and put the columns in the right order
+        for i in range(len(p.r["iterCounter"])):
             row = []
-            row.append("{:<4s}".format(str(self.currentIteration)))
-            row.append(str("{:>20f}".format(objectiveValue)))
-            row.append(str("{:>12f}".format(absoluteChangeOfObjectiveValue)))
-            row.append(str("{:>12f}".format(relativeChangeOfObjectiveValue)))
-            row.append(str("{:>20f}".format(constraintValue)))
-            row.append(str("{:>20f}".format(self.constraintOutputReference)))
-            row.append(str("{:>13f}".format(self.optimizationSettings["optimization_algorithm"]["correction_scaling"].GetDouble())))
-            row.append(str("{:>13f}".format(self.optimizationSettings["line_search"]["step_size"].GetDouble())))
-            row.append(str("{:>12f}".format(self.timer.GetLapTime())))
-            row.append(str("{:>16f}".format(self.timer.GetTotalTime())))
-            row.append("{:>25}".format(self.timer.GetTimeStamp()))
-            historyWriter.writerow(row)
+            for name in names:
+                value = self.__GetValueForCsv(i,name,p)
+                length = self.__GetLength(name,p)
+                row += value + ["-" for i in range(length-len(value))] # fill with "-" if values are missing
+            ar.append(row)
+        return ar
 
-# ==============================================================================
+    # take array of single values (no list) as an input, first row is the name of the columns
+    # convert to string with the right format and write the csv file
+    def __WriteArrayToCsv(self,ar):
+        with open(self.__GetPathCsvFile(self.optimizationSettings), 'w') as csvfile:
+            historyWriter = csv.writer(csvfile, delimiter=',',quotechar='|',quoting=csv.QUOTE_MINIMAL)
+            headerRow = ar[0][:]
+            #convert values to string (only num and string, no list)
+            for row in ar:
+                pr = row[:]
+                for i,v in enumerate(row):
+                    width = str(6) if headerRow[i]=="" else str(max(12,len(headerRow[i])+1))
+                    if isinstance(v,(str,int)):
+                        pr[i] =  ("{:>"+width+"s}").format(str(v))
+                    elif isinstance(v,float):
+                        if abs(v)<1000 and abs(v)>0.01:
+                            pr[i] = ("{:>"+width+".2f}").format(v)
+                        else:
+                            pr[i] = ("{:>"+width+".2g}").format(v)
+                historyWriter.writerow(pr)
+
+    def __WriteParamResultsToJson(self,p):
+        dataDict = {"results": p.r, "param": p.param}
+        with open(self.pathJsonFile, 'w') as jsonfile:
+            json.dump(dataDict, jsonfile, sort_keys=True, indent=4)
+
+    def LogIteration(self,dicoIter,p):
+        self.pathJsonFile = self.__GetPathJsonFile(self.optimizationSettings)
+
+        self.__FilterNamePrintFirst(p)
+        self.__FillValues(p)
+
+
+        if len(p.r["iterCounter"])!=p.r["iterCounter"][-1]:
+            print(p.r["iterCounter"])
+            err
+
+        self.__WriteArrayToCsv(self.__DictToArray(p))
+        self.__WriteParamResultsToJson(p)
+
+    def FinalizeLogging( self ):
+        pass # No finalization necessary here
+

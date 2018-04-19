@@ -31,14 +31,15 @@ class DesignLoggerVTK( DesignLogger ):
         self.OptimizationModelPart = ModelPartController.GetOptimizationModelPart()
         self.DesignSurface = ModelPartController.GetDesignSurface()
         self.OutputSettings = OptimizationSettings["output"]
-        
+        self.OptimizationSettings = OptimizationSettings
+
         self.__DetermineOutputMode()
         self.__CreateVTKIO()
 
     # --------------------------------------------------------------------------
     def __DetermineOutputMode( self ):
         OutputMode = self.OutputSettings["design_output_mode"].GetString()
-        
+
         self.WriteDesignSurface = False
         self.WriteOptimizationModelPart = False
 
@@ -46,10 +47,10 @@ class DesignLoggerVTK( DesignLogger ):
             self.WriteDesignSurface = True
         elif OutputMode == "WriteOptimizationModelPart":
             if self.OptimizationModelPart.NumberOfElements() == 0:
-                raise NameError("Output of optimization model part in VKT-format requires definition of elements. No elements are given in current mdpa! You may change the design output mode.")              
+                raise NameError("Output of optimization model part in VKT-format requires definition of elements. No elements are given in current mdpa! You may change the design output mode.")
             self.WriteOptimizationModelPart = True
         else:
-            raise NameError("The following design output mode is not defined within a VKT output (name may be misspelled): " + OutputMode)     
+            raise NameError("The following design output mode is not defined within a VKT output (name may be misspelled): " + OutputMode)
 
     # --------------------------------------------------------------------------
     def __CreateVTKIO( self ):
@@ -57,12 +58,15 @@ class DesignLoggerVTK( DesignLogger ):
         DesignHistoryFilename = self.OutputSettings["design_history_filename"].GetString()
         DesignHistoryFilenameWithPath =  ResultsDirectory+"/"+DesignHistoryFilename
 
+        if hasattr(self.OptimizationSettings,"resultsFolder"): # projected position algo
+            DesignHistoryFilenameWithPath = self.OptimizationSettings.resultsFolder+"/"+self.OptimizationSettings.runId
+
         NodalResults = self.OutputSettings["nodal_results"]
-       
+
         if self.WriteDesignSurface:
-            self.VtkIO = VTKFileIO( self.DesignSurface, DesignHistoryFilenameWithPath, "WriteConditionsOnly", NodalResults )                
+            self.VtkIO = VTKFileIO( self.DesignSurface, DesignHistoryFilenameWithPath, "WriteConditionsOnly", NodalResults )
         elif self.WriteOptimizationModelPart:
-            self.VtkIO = VTKFileIO( self.OptimizationModelPart, DesignHistoryFilenameWithPath, "WriteElementsOnly", NodalResults )                
+            self.VtkIO = VTKFileIO( self.OptimizationModelPart, DesignHistoryFilenameWithPath, "WriteElementsOnly", NodalResults )
 
     # --------------------------------------------------------------------------
     def InitializeLogging( self ):
@@ -73,7 +77,7 @@ class DesignLoggerVTK( DesignLogger ):
         self.VtkIO.LogNodalResults( optimizationIteration )
 
     # --------------------------------------------------------------------------
-    def FinalizeLogging( self ):      
-        pass       
+    def FinalizeLogging( self ):
+        pass
 
 # ==============================================================================

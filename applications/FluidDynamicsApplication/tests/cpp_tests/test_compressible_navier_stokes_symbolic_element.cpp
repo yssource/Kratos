@@ -88,7 +88,7 @@ namespace Kratos {
             momentum[0] = velocity*density;        //momentum
             momentum[1] = velocity*density;        //momentum
 			momentum[2] = 0.0;        //momentum
-			double Ma = velocity/sqrt(1.4*R*T); 
+			double Ma = sqrt((momentum[0]*momentum[0]+momentum[1]*momentum[1]+momentum[2]*momentum[2]))/(density*sqrt(1.4*R*T));//velocity/sqrt(1.4*R*T); 
             double total_energy = density*R*T/(1.4-1)+(momentum[0]*momentum[0]+momentum[1]*momentum[1]+momentum[2]*momentum[2])/(2*density);   	
 
             std::cout<<"\nDensity = "<<density<<std::endl;

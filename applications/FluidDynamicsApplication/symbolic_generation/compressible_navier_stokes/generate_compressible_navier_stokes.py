@@ -189,7 +189,7 @@ for dim in dim_vector:
     SubstituteMatrixValue(res_e, H, grad_U)
     SubstituteMatrixValue(res_e, f, f_gauss)       #COMMENT for manufactured solution
     SubstituteScalarValue(res_e, rg, r_gauss)      #COMMENT for manufactured solution
-    
+
     dofs = Matrix(zeros(nnodes*(dim+2),1))
     testfunc = Matrix(zeros(nnodes*(dim+2),1))
     for i in range(0,nnodes):

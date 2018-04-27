@@ -14,8 +14,8 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/custom_external_libraries/SuperLU_4
 
 if(${INCLUDE_PASTIX} MATCHES ON)
     add_definitions(-DINCLUDE_PASTIX)
-    include_directories( ${PASTIX_INSTALL_DIR} )
-	FIND_LIBRARY(PASTIX_LINK_LIB pastix  ${PASTIX_INSTALL_DIR})
+    include_directories( ${PASTIX_INSTALL_DIR} ${PASTIX_INCLUDE_DIR} )
+	FIND_LIBRARY(PASTIX_LINK_LIB pastix  ${PASTIX_INSTALL_DIR} ${PASTIX_LIBRARY})
 	FIND_LIBRARY(SCOTCH_ERR_LIB scotcherr ${SCOTCH_INSTALL_DIR})
 	FIND_LIBRARY(SCOTCH_LIB scotch  ${SCOTCH_INSTALL_DIR})
 	message("pastix library found =" ${PASTIX_LINK_LIB})

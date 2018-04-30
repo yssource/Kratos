@@ -15,13 +15,16 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/custom_external_libraries/SuperLU_4
 if(${INCLUDE_PASTIX} MATCHES ON)
     add_definitions(-DINCLUDE_PASTIX)
     include_directories( ${PASTIX_INSTALL_DIR} ${PASTIX_INCLUDE_DIR} )
-	FIND_LIBRARY(PASTIX_LINK_LIB pastix  ${PASTIX_INSTALL_DIR} ${PASTIX_LIBRARY})
-	FIND_LIBRARY(SCOTCH_ERR_LIB scotcherr ${SCOTCH_INSTALL_DIR})
-	FIND_LIBRARY(SCOTCH_LIB scotch  ${SCOTCH_INSTALL_DIR})
-	message("pastix library found =" ${PASTIX_LINK_LIB})
-	add_definitions( -DFORCE_NOMPI )
-	add_library(kratos_pastix STATIC custom_external_libraries/solvePASTIX.c  )
-	target_link_libraries(kratos_pastix  ${PASTIX_LINK_LIB} ${SCOTCH_LIB} ${SCOTCH_ERR_LIB} rt  ${BLAS_LIBRARIES} )
+    if(${VERSION_PASTIX_6} MATCHES ON)
+        add_definitions( -DVERSION_PASTIX_6 )
+    endif(${VERSION_PASTIX_6} MATCHES ON)
+    FIND_LIBRARY(PASTIX_LINK_LIB pastix  ${PASTIX_INSTALL_DIR} ${PASTIX_LIBRARY})
+    FIND_LIBRARY(SCOTCH_ERR_LIB scotcherr ${SCOTCH_INSTALL_DIR})
+    FIND_LIBRARY(SCOTCH_LIB scotch  ${SCOTCH_INSTALL_DIR})
+    message("pastix library found =" ${PASTIX_LINK_LIB})
+    add_definitions( -DFORCE_NOMPI )
+    add_library(kratos_pastix STATIC custom_external_libraries/solvePASTIX.c  )
+    target_link_libraries(kratos_pastix  ${PASTIX_LINK_LIB} ${SCOTCH_LIB} ${SCOTCH_ERR_LIB} rt  ${BLAS_LIBRARIES} )
 
         install(FILES ${SCOTCH_LIB} ${SCOTCH_ERR_LIB}   ${BLAS_LIBRARIES} DESTINATION libs )
 else(${INCLUDE_PASTIX} MATCHES ON)
@@ -49,9 +52,9 @@ endif(${INCLUDE_FEAST} MATCHES ON)
 
 ## generate variables with the sources
 set( KRATOS_EXTERNAL_SOLVERS_APPLICATION_SOURCES    
-	${CMAKE_CURRENT_SOURCE_DIR}/externalsolvers_application.cpp 
-	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_linear_solvers_to_python.cpp 
-	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/externalsolvers_python_application.cpp 
+    ${CMAKE_CURRENT_SOURCE_DIR}/externalsolvers_application.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_linear_solvers_to_python.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/externalsolvers_python_application.cpp
 )
 # 
 # ###############################################################
@@ -76,12 +79,12 @@ set_target_properties(KratosExternalSolversApplication PROPERTIES PREFIX "")
 
 # changing the .dll suffix to .pyd 
 # if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-# 	set_target_properties(KratosExternalSolversApplication PROPERTIES SUFFIX .pyd)
+#     set_target_properties(KratosExternalSolversApplication PROPERTIES SUFFIX .pyd)
 # endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 # 
 # # changing the .dylib suffix to .so 
 # if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-# 	set_target_properties(KratosExternalSolversApplication PROPERTIES SUFFIX .so)
+#     set_target_properties(KratosExternalSolversApplication PROPERTIES SUFFIX .so)
 # endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 if(${INSTALL_PYTHON_FILES} MATCHES ON)
@@ -100,5 +103,5 @@ install(TARGETS KratosExternalSolversApplication DESTINATION libs )
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/ExternalSolversApplication.py" DESTINATION KratosMultiphysics )
 
 #if(${INCLUDE_PASTIX} MATCHES ON)
-#	install( TARGETS kratos_pastix DESTINATION libs)
+#    install( TARGETS kratos_pastix DESTINATION libs)
 #endif(${INCLUDE_PASTIX} MATCHES ON)

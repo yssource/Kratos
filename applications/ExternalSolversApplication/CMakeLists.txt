@@ -23,10 +23,7 @@ if(${INCLUDE_PASTIX} MATCHES ON)
     FIND_LIBRARY(SCOTCH_LIB scotch  ${SCOTCH_INSTALL_DIR})
     message("pastix library found =" ${PASTIX_LINK_LIB})
     add_definitions( -DFORCE_NOMPI )
-    add_library(kratos_pastix STATIC custom_external_libraries/solvePASTIX.c  )
-    target_link_libraries(kratos_pastix  ${PASTIX_LINK_LIB} ${SCOTCH_LIB} ${SCOTCH_ERR_LIB} rt  ${BLAS_LIBRARIES} )
-
-        install(FILES ${SCOTCH_LIB} ${SCOTCH_ERR_LIB}   ${BLAS_LIBRARIES} DESTINATION libs )
+    install(FILES ${SCOTCH_LIB} ${SCOTCH_ERR_LIB} ${BLAS_LIBRARIES} DESTINATION libs )
 else(${INCLUDE_PASTIX} MATCHES ON)
     set(PASTIX_LINK_LIB "")
 endif(${INCLUDE_PASTIX} MATCHES ON)
@@ -64,7 +61,7 @@ pybind11_add_module(KratosExternalSolversApplication MODULE THIN_LTO ${KRATOS_EX
 
 
 if(${INCLUDE_PASTIX} MATCHES ON)
-        target_link_libraries(KratosExternalSolversApplication PRIVATE KratosCore superlu  kratos_pastix rt)
+        target_link_libraries(KratosExternalSolversApplication PRIVATE KratosCore superlu ${PASTIX_LINK_LIB} ${SCOTCH_LIB} ${SCOTCH_ERR_LIB} rt ${BLAS_LIBRARIES})
 else(${INCLUDE_PASTIX} MATCHES ON)
         target_link_libraries(KratosExternalSolversApplication PRIVATE KratosCore superlu  )
 endif(${INCLUDE_PASTIX} MATCHES ON)

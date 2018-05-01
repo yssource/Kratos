@@ -1,13 +1,17 @@
+//    |  /           |
+//    ' /   __| _` | __|  _ \   __|
+//    . \  |   (   | |   (   |\__ `
+//   _|\_\_|  \__,_|\__|\___/ ____/
+//                   Multi-Physics
 //
-//   Project Name:        Kratos
-//   Last Modified by:    $Author: janosch $
-//   Date:                $Date: 2008-07-23 14:46:21 $
-//   Revision:            $Revision: 1.2 $
+//  License:		 BSD License
+//					 Kratos default license: kratos/license.txt
 //
+//  Main authors:    Riccardo Rossi
 //
 
-#if !defined(KRATOS_ALE_APPLICATION_H_INCLUDED)
-#define KRATOS_ALE_APPLICATION_H_INCLUDED
+#if !defined(KRATOS_EXTERNAL_SOLVERS_APPLICATION_H_INCLUDED)
+#define KRATOS_EXTERNAL_SOLVERS_APPLICATION_H_INCLUDED
 
 // System includes
 #include <string>
@@ -203,4 +207,4 @@ class KratosExternalSolversApplication : public KratosApplication {
 
 }  // namespace Kratos.
 
-#endif  // KRATOS_ALE_APPLICATION_H_INCLUDED  defined
+#endif  // KRATOS_EXTERNAL_SOLVERS_APPLICATION_H_INCLUDED  defined

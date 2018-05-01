@@ -46,9 +46,14 @@ public:
 
     typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
         
+    typedef std::size_t IndexType;
+
+    typedef std::size_t SizeType;
+
     // Pastix definitions
 #ifdef VERSION_PASTIX_6
     #include <spm.h>
+    #include <pastix/old_api.h>
     typedef double PastixFloatType;
     typedef pastix_int_t PastixIntegerType;
     typedef pastix_data_t PastisDataType;
@@ -77,12 +82,9 @@ public:
 
         settings.ValidateAndAssignDefaults(default_settings);
 
-        //validate if values are admissible
+        // Validate if values are admissible
         std::set<std::string> available_solution_methods = {"Direct","Iterative"};
-        if(available_solution_methods.find(settings["solution_method"].GetString()) == available_solution_methods.end())
-        {
-            KRATOS_ERROR << "trying to choose an inexisting solution method. Options are Direct, Iterative. Current choice is : " << settings["solution_method"].GetString() << std::endl;
-        }
+        KRATOS_ERROR_IF(available_solution_methods.find(settings["solution_method"].GetString()) == available_solution_methods.end()) << "Trying to choose an inexisting solution method. Options are Direct, Iterative. Current choice is : " << settings["solution_method"].GetString() << std::endl;
 
         if(settings["solution_method"].GetString() == "Iterative")
             mincomplete = 1;
@@ -94,7 +96,6 @@ public:
         mlevel_of_fill = settings["ilu_level_of_fill"].GetInt();
         mverbosity=settings["verbosity"].GetInt();
         mndof = settings["block_size"].GetInt();
-
 
         if(settings["is_symmetric"].GetBool() == false)
                 msymmetric = 0;
@@ -118,7 +119,7 @@ public:
                             int verbosity,
                             bool is_symmetric)
     {
-        std::cout << "setting up pastix for iterative solve " << std::endl;
+        KRATOS_INFO("PastixSolver") << "Setting up pastix for iterative solve " << std::endl;
         mTol = NewMaxTolerance;
         mmax_it = NewMaxIterationsNumber;
         mlevel_of_fill = level_of_fill;
@@ -169,8 +170,7 @@ public:
      */
     bool Solve(SparseMatrixType& rA, VectorType& rX, VectorType& rB) override
     {
-        int state = solvePASTIX(mverbosity, rA.size1(), rA.value_data().size(), rA.value_data().begin(), &(rA.index1_data()[0]), &(rA.index2_data()[0]), &rX[0], &rB[0]
-        ,mmax_it,mTol,mincomplete,mlevel_of_fill,mndof,msymmetric);
+        int state = solvePASTIX(mverbosity, rA.size1(), rA.value_data().size(), rA.value_data().begin(), &(rA.index1_data()[0]), &(rA.index2_data()[0]), &rX[0], &rB[0] ,mmax_it,mTol,mincomplete,mlevel_of_fill,mndof,msymmetric);
 
         return state;
     }
@@ -230,28 +230,23 @@ public:
     ) override
     {
         int old_ndof = -1;
-        unsigned int old_node_id = rdof_set.begin()->Id();
+        IndexType old_node_id = rdof_set.begin()->Id();
         int ndof=0;
 
-        for (ModelPart::DofsArrayType::iterator it = rdof_set.begin(); it!=rdof_set.end(); it++)
-        {
-            if(it->EquationId() < rA.size1() )
-            {
-                unsigned int id = it->Id();
-                if(id != old_node_id)
-                {
+        for (ModelPart::DofsArrayType::iterator it = rdof_set.begin(); it!=rdof_set.end(); it++) {
+            if(it->EquationId() < rA.size1() ) {
+                IndexType id = it->Id();
+                if(id != old_node_id) {
                     old_node_id = id;
-                    if(old_ndof == -1) old_ndof = ndof;
-                    else if(old_ndof != ndof) //if it is different than the block size is 1
-                    {
+                    if(old_ndof == -1) {
+                        old_ndof = ndof;
+                    } else if(old_ndof != ndof)  { //if it is different than the block size is 1
                         old_ndof = -1;
                         break;
                     }
 
                     ndof=1;
-                }
-                else
-                {
+                } else {
                     ndof++;
                 }
             }
@@ -309,17 +304,14 @@ private:
         for(i = 0; i < m; ++i)
             for(j = rowptr[i]; j < rowptr[i+1]; ++j) ++marker[colind[j]];
         (*colptr)[0] = 0;
-        for(j = 0; j < n; ++j)
-        {
+        for(j = 0; j < n; ++j) {
             (*colptr)[j+1] = (*colptr)[j] + marker[j];
             marker[j] = (*colptr)[j];
         }
 
         /* Transfer the matrix into the compressed column storage. */
-        for(i = 0; i < m; ++i)
-        {
-            for(j = rowptr[i]; j < rowptr[i+1]; ++j)
-            {
+        for(i = 0; i < m; ++i) {
+            for(j = rowptr[i]; j < rowptr[i+1]; ++j) {
                 col = colind[j];
                 relpos = marker[col];
                 (*rowind)[relpos] = i;
@@ -349,20 +341,16 @@ private:
         r = 0;
         c = 1;
 
-        for(j=0; j<nblocks; j++)
-        {
+        for(j=0; j<nblocks; j++) {
             aj = j*ndof;
             nzb = ((*colptr)[(aj+1)] - (*colptr)[aj])/ndof;
 
-            for(i=0; i<nzb;i++)
-            {
+            for(i=0; i<nzb;i++) {
                 ai = (*colptr)[aj]  - 1 + i*ndof ;
                 offset = nzb * ndof;
-                for(k = 0; k<ndof; k++)
-                {
+                for(k = 0; k<ndof; k++) {
                     aii = ai+k*offset;
-                    for(l = 0; l<ndof; l++)
-                    {
+                    for(l = 0; l<ndof; l++) {
                         bv[v] = (*at)[aii+l];
                         v += 1;
                     }
@@ -500,7 +488,8 @@ private:
         if(ndof > 1)
             CompressCSCinFortranNumbering(mat_size,ndof,&values, &rows, &colptr);
 
-        //copy b to the solution. It will be overwritten
+        // Copy b to the solution. It will be overwritten
+        #pragma omp parallel for
         for(i = 0; i < mat_size; i++)
             x[i] = b[i];
 
@@ -512,6 +501,7 @@ private:
     #else
         iparm[IPARM_MODIFY_PARAMETER] = API_NO;
     #endif
+
         pastix(&pastix_data, MPI_COMM_WORLD,
             ncol, colptr, rows, values,
             perm, invp, x, 1, iparm, dparm);

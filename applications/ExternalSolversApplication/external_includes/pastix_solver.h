@@ -27,13 +27,6 @@ extern "C" {
 namespace Kratos
 {
 
-// extern "C"
-// {
-//     int solvePASTIX(int verbosity,int mat_size, int nnz, double* AA, size_t* IA, size_t* JA, double* x, double* b, int m_gmres,
-//                 double tol, int incomplete, int ilu_level_of_fill, int ndof, int symmetric);
-// }
-
-
 template< class TSparseSpaceType, class TDenseSpaceType,
 class TReordererType = Reorderer<TSparseSpaceType, TDenseSpaceType> >
 class PastixSolver : public DirectSolver< TSparseSpaceType,
@@ -115,9 +108,9 @@ public:
      * Default constructor - uses ILU+GMRES
      * @param NewMaxTolerance tolerance that will be achieved by the iterative solver
      * @param NewMaxIterationsNumber this number represents both the number of iterations AND the size of the krylov space
-     * @param level of fill that will be used in the ILU
-     * @param verbosity, a number from 0 (no output) to 2 (maximal output)
-     * @param is_symmetric, set to True to solve assuming the matrix is symmetric
+     * @param level_of_fill of fill that will be used in the ILU
+     * @param verbosity a number from 0 (no output) to 2 (maximal output)
+     * @param is_symmetric set to True to solve assuming the matrix is symmetric
      */
     PastixSolver(double NewMaxTolerance,
                             int NewMaxIterationsNumber,
@@ -142,12 +135,12 @@ public:
 
     /**
      * Direct Solver
-     * @param verbosity, a number from 0 (no output) to 2 (maximal output)
-     * @param is_symmetric, set to True to solve assuming the matrix is symmetric
+     * @param verbosity a number from 0 (no output) to 2 (maximal output)
+     * @param is_symmetric set to True to solve assuming the matrix is symmetric
      */
     PastixSolver(int verbosity, bool is_symmetric)
     {
-        std::cout << "setting up pastix for direct solve " <<std::endl;
+        KRATOS_INFO("PastixSolver") << "Setting up pastix for direct solve " <<std::endl;
         mTol = -1;
         mmax_it = -1;
         mlevel_of_fill = -1;
@@ -158,7 +151,8 @@ public:
         if(is_symmetric == false)
             msymmetric = 0;
         else
-            msymmetric = 1;    }
+            msymmetric = 1;
+    }
 
     /**
      * Destructor
@@ -169,14 +163,12 @@ public:
      * Normal solve method.
      * Solves the linear system Ax=b and puts the result on SystemVector& rX.
      * rX is also th initial guess for iterative methods.
-     * @param rA. System matrix
-     * @param rX. Solution vector.
-     * @param rB. Right hand side vector.
+     * @param rA System matrix
+     * @param rX Solution vector.
+     * @param rB Right hand side vector.
      */
     bool Solve(SparseMatrixType& rA, VectorType& rX, VectorType& rB) override
     {
-            //KRATOS_WATCH(__LINE__);
-
         int state = solvePASTIX(mverbosity, rA.size1(), rA.value_data().size(), rA.value_data().begin(), &(rA.index1_data()[0]), &(rA.index2_data()[0]), &rX[0], &rB[0]
         ,mmax_it,mTol,mincomplete,mlevel_of_fill,mndof,msymmetric);
 
@@ -187,16 +179,13 @@ public:
      * Multi solve method for solving a set of linear systems with same coefficient matrix.
      * Solves the linear system Ax=b and puts the result on SystemVector& rX.
      * rX is also th initial guess for iterative methods.
-     * @param rA. System matrix
-     * @param rX. Solution vector.
-     * @param rB. Right hand side vector.
+     * @param rA System matrix
+     * @param rX Solution vector.
+     * @param rB Right hand side vector.
      */
     bool Solve(SparseMatrixType& rA, DenseMatrixType& rX, DenseMatrixType& rB) override
     {
-
         bool is_solved = true;
-
-
         return is_solved;
     }
 
@@ -246,7 +235,6 @@ public:
 
         for (ModelPart::DofsArrayType::iterator it = rdof_set.begin(); it!=rdof_set.end(); it++)
         {
-
             if(it->EquationId() < rA.size1() )
             {
                 unsigned int id = it->Id();
@@ -307,15 +295,15 @@ private:
                             double *a, size_t *colind, size_t *rowptr,
                             PastixFloatType **at, PastixIntegerType **rowind, PastixIntegerType **colptr)
     {
-        register int i, j, col, relpos;
+        int i, j, col, relpos;
         PastixIntegerType *marker = (PastixIntegerType *)malloc(n*sizeof(PastixIntegerType));
         for(i = 0; i<n; i++)
             marker[i] = 0;
 
         /* Allocate storage for another copy of the matrix. */
-    //    *at = (double *) (PastixFloatType *)malloc(nnz);
-    //    *rowind = (int *) (PastixIntegerType *)malloc(nnz);
-    //    *colptr = (int *) (PastixIntegerType *)malloc(n+1);
+//        *at = (double *) (PastixFloatType *)malloc(nnz);
+//        *rowind = (int *) (PastixIntegerType *)malloc(nnz);
+//        *colptr = (int *) (PastixIntegerType *)malloc(n+1);
 
         /* Get counts of each column of A, and set up column pointers */
         for(i = 0; i < m; ++i)
@@ -334,12 +322,7 @@ private:
             {
                 col = colind[j];
                 relpos = marker[col];
-    //printf("col %d \n",col);
-    //printf("relpos %d \n",relpos);
-    //printf("j %d \n",j);
-    //printf("i %d \n",i);
                 (*rowind)[relpos] = i;
-    //printf("(*rowind)[relpos]  %d \n",(*rowind)[relpos] );
                 (*at)[relpos] = a[j];
                 ++marker[col];
             }
@@ -406,8 +389,6 @@ private:
 
     }
 
-
-    //int solvePASTIX(int echo_level,int mat_size, int nnz, double* AA, size_t* IA, size_t* JA, double *x, double* b)
     int solvePASTIX(int verbosity,int mat_size, int nnz, double* AA, size_t* IA, size_t* JA, double *x, double* b, int m_gmres,
                     double tol, int incomplete, int ilu_level_of_fill, int ndof, int symmetric )
     {
@@ -471,37 +452,37 @@ private:
 
         //exit(1);
 
-    //     for(i=0; i<nnz; i++)
-    //       rows[i] = rows[i]+1;
-    //
-    //     for(i=0; i<mat_size; i++)
-    //       colptr[i] = colptr[i]+1;
+//         for(i=0; i<nnz; i++)
+//           rows[i] = rows[i]+1;
+//
+//         for(i=0; i<mat_size; i++)
+//           colptr[i] = colptr[i]+1;
 
     #ifdef VERSION_PASTIX_6
-    //     /* Check the sparse matrix */ // NOTE: This will require transform the current matrix to Pastix sparse matrix
-    //     pastix_spm_t *AA2;
-    //     spmPrintInfo( AA, stdout );
-    //
-    //     AA2 = spmCheckAndCorrect( AA );
-    //     if ( AA2 != AA ) {
-    //         spmExit( AA );
-    //         free( AA );
-    //         AA = AA2;
-    //     }
-    //     /**
-    //      * Generate a Fake values array if needed for the numerical part
-    //      */
-    //     if ( AA->flttype == PastixPattern ) {
-    //         spmGenFakeValues( AA );
-    //     }
+//         /* Check the sparse matrix */ // NOTE: This will require transform the current matrix to Pastix sparse matrix
+//         pastix_spm_t *AA2;
+//         spmPrintInfo( AA, stdout );
+//
+//         AA2 = spmCheckAndCorrect( AA );
+//         if ( AA2 != AA ) {
+//             spmExit( AA );
+//             free( AA );
+//             AA = AA2;
+//         }
+//         /**
+//          * Generate a Fake values array if needed for the numerical part
+//          */
+//         if ( AA->flttype == PastixPattern ) {
+//             spmGenFakeValues( AA );
+//         }
     #else
-    /*
-        * Matrix needs :
-        *    - to be in fortran numbering
-        *    - to have only the lower triangular part in symmetric case
-        *    - to have a graph with a symmetric structure in unsymmetric case
-        */
-    PastixIntegerType mat_type;
+        /**
+         * Matrix needs :
+         *    - to be in fortran numbering
+         *    - to have only the lower triangular part in symmetric case
+         *    - to have a graph with a symmetric structure in unsymmetric case
+         */
+        PastixIntegerType mat_type;
         if(symmetric == 0)
             mat_type = API_SYM_NO;
         else
@@ -534,7 +515,6 @@ private:
         pastix(&pastix_data, MPI_COMM_WORLD,
             ncol, colptr, rows, values,
             perm, invp, x, 1, iparm, dparm);
-    //    printf("ccc\n")    ;
 
         /*******************************************/
         /*       Customize some parameters         */
@@ -587,7 +567,7 @@ private:
         else if(incomplete == 0)
             iparm[IPARM_INCOMPLETE]          = API_NO;
         else
-            printf("Incomplete flag should either be 0 (direct solve) or 1 for ILU solve");
+            KRATOS_WARNING("PastixSolver") << "Incomplete flag should either be 0 (direct solve) or 1 for ILU solve" << std::endl;
 
     //     iparm[IPARM_OOC_LIMIT]           = ooc;
 
@@ -613,8 +593,8 @@ private:
             ncol/ndof, colptr, rows, values,
             perm, invp, x, nbrhs, iparm, dparm);
 
-    //     PRINT_RHS("SOL", rhs, ncol, mpid, iparm[IPARM_VERBOSE]);
-    //     CHECK_SOL(rhs, rhssaved, ncol, mpid);
+//         PRINT_RHS("SOL", rhs, ncol, mpid, iparm[IPARM_VERBOSE]);
+//         CHECK_SOL(rhs, rhssaved, ncol, mpid);
 
         free(colptr);
         free(rows);
@@ -622,9 +602,9 @@ private:
         free(perm);
         free(invp);
         free(rhs);
-    //     free(rhssaved);
-    //     free(type);
-    //     free(rhstype);
+//         free(rhssaved);
+//         free(type);
+//         free(rhstype);
 
         return EXIT_SUCCESS;
     }

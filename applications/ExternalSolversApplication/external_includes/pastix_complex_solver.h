@@ -120,13 +120,14 @@ public:
         m_iparm[IPARM_MODIFY_PARAMETER] = 0;
         m_iparm[IPARM_START_TASK      ] = PastixTaskInit;
         m_iparm[IPARM_END_TASK        ] = PastixTaskInit;
+        m_iparm[IPARM_FLOAT           ] = PastixComplex64;
+        pastix(&mp_pastix_data, 0, m_nrows, NULL, NULL, NULL, NULL, NULL, NULL, 1, m_iparm, m_dparm);
 #else
         m_iparm[IPARM_MODIFY_PARAMETER] = API_NO;
         m_iparm[IPARM_START_TASK      ] = API_TASK_INIT;
         m_iparm[IPARM_END_TASK        ] = API_TASK_INIT;
-#endif
-
         z_pastix(&mp_pastix_data, 0, m_nrows, NULL, NULL, NULL, NULL, NULL, NULL, 1, m_iparm, m_dparm);
+#endif
     }
 
     void InitializeSolutionStep(SparseMatrixType& rA, VectorType& rX, VectorType& rB) override
@@ -160,11 +161,18 @@ public:
 #ifdef VERSION_PASTIX_6
         m_iparm[IPARM_START_TASK] = PastixTaskOrdering;
         m_iparm[IPARM_END_TASK  ] = PastixTaskNumfact;
+        m_iparm[IPARM_FLOAT     ] = PastixComplex64;
+        pastix(&mp_pastix_data, 0, m_nrows,
+            static_cast<pastix_int_t*>(&m_rowptr[0]),
+            static_cast<pastix_int_t*>(&m_col[0]),
+            static_cast<std::complex<double>*>(&rA.value_data()[0]),
+            static_cast<pastix_int_t*>(&m_perm[0]),
+            static_cast<pastix_int_t*>(&m_invp[0]),
+            NULL,
+            1, m_iparm, m_dparm);
 #else
         m_iparm[IPARM_START_TASK] = API_TASK_ORDERING;
         m_iparm[IPARM_END_TASK  ] = API_TASK_NUMFACT;
-#endif
-
         z_pastix(&mp_pastix_data, 0, m_nrows,
             static_cast<pastix_int_t*>(&m_rowptr[0]),
             static_cast<pastix_int_t*>(&m_col[0]),
@@ -173,6 +181,7 @@ public:
             static_cast<pastix_int_t*>(&m_invp[0]),
             NULL,
             1, m_iparm, m_dparm);
+#endif
     }
 
     void PerformSolutionStep(SparseMatrixType& rA, VectorType& rX, VectorType& rB) override
@@ -184,11 +193,18 @@ public:
 #ifdef VERSION_PASTIX_6
         m_iparm[IPARM_START_TASK] = PastixTaskSolve;
         m_iparm[IPARM_END_TASK  ] = PastixTaskSolve;
+        m_iparm[IPARM_FLOAT     ] = PastixComplex64;
+        pastix(&mp_pastix_data, 0, m_nrows,
+            static_cast<pastix_int_t*>(&m_rowptr[0]),
+            static_cast<pastix_int_t*>(&m_col[0]),
+            static_cast<std::complex<double>*>(&rA.value_data()[0]),
+            static_cast<pastix_int_t*>(&m_perm[0]),
+            static_cast<pastix_int_t*>(&m_invp[0]),
+            static_cast<std::complex<double>*>(&rX[0]),
+            1, m_iparm, m_dparm);
 #else
         m_iparm[IPARM_START_TASK] = API_TASK_SOLVE;
         m_iparm[IPARM_END_TASK  ] = API_TASK_SOLVE;
-#endif
-
         z_pastix(&mp_pastix_data, 0, m_nrows,
             static_cast<pastix_int_t*>(&m_rowptr[0]),
             static_cast<pastix_int_t*>(&m_col[0]),
@@ -197,6 +213,7 @@ public:
             static_cast<pastix_int_t*>(&m_invp[0]),
             static_cast<std::complex<double>*>(&rX[0]),
             1, m_iparm, m_dparm);
+#endif
     }
 
     bool Solve(SparseMatrixType& rA, VectorType& rX, VectorType& rB) override
@@ -220,11 +237,18 @@ public:
 #ifdef VERSION_PASTIX_6
             m_iparm[IPARM_START_TASK] = PastixTaskClean;
             m_iparm[IPARM_END_TASK  ] = PastixTaskClean;
+            m_iparm[IPARM_FLOAT     ] = PastixComplex64;
+            pastix(&mp_pastix_data, 0, m_nrows,
+                static_cast<pastix_int_t*>(&m_rowptr[0]),
+                static_cast<pastix_int_t*>(&m_col[0]),
+                NULL,
+                static_cast<pastix_int_t*>(&m_perm[0]),
+                static_cast<pastix_int_t*>(&m_invp[0]),
+                NULL,
+                1, m_iparm, m_dparm);
 #else
             m_iparm[IPARM_START_TASK] = API_TASK_CLEAN;
             m_iparm[IPARM_END_TASK  ] = API_TASK_CLEAN;
-#endif
-
             z_pastix(&mp_pastix_data, 0, m_nrows,
                 static_cast<pastix_int_t*>(&m_rowptr[0]),
                 static_cast<pastix_int_t*>(&m_col[0]),
@@ -233,6 +257,7 @@ public:
                 static_cast<pastix_int_t*>(&m_invp[0]),
                 NULL,
                 1, m_iparm, m_dparm);
+#endif
 
             mp_pastix_data = NULL;
         }

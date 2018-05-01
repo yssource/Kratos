@@ -1,22 +1,29 @@
-/*-----------------------------------------------------------------*
- * main test driver for the ARMS2 preconditioner for
- * Matrices in the COO/Harwell Boeing format
- *-----------------------------------------------------------------*
- * Yousef Saad - Aug. 2005.                                        *
- *                                                                 *
- * Report bugs / send comments to: saad@cs.umn.edu                 *
- *-----------------------------------------------------------------*/
+//    |  /           |
+//    ' /   __| _` | __|  _ \   __|
+//    . \  |   (   | |   (   |\__ `
+//   _|\_\_|  \__,_|\__|\___/ ____/
+//                   Multi-Physics
+//
+//  License:		 BSD License
+//					 Kratos default license: kratos/license.txt
+//
+//  Main authors:    Riccardo Rossi
+//
+
+// System includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "pastix.h"
-
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
+// External includes
+#include "pastix.h"
+
 #ifdef VERSION_PASTIX_6
-typedef pastix_float_t PastixFloatType;
+#include <spm.h>
+typedef double PastixFloatType;
 typedef pastix_int_t PastixIntegerType;
 typedef pastix_data_t PastisDataType;
 #else
@@ -41,8 +48,6 @@ void CompRow_to_CompCol(int m, int n, int nnz,
 //    *rowind = (int *) (PastixIntegerType *)malloc(nnz);
 //    *colptr = (int *) (PastixIntegerType *)malloc(n+1);
 
-//printf("111\n");
-
     /* Get counts of each column of A, and set up column pointers */
     for(i = 0; i < m; ++i)
         for(j = rowptr[i]; j < rowptr[i+1]; ++j) ++marker[colind[j]];
@@ -52,7 +57,6 @@ void CompRow_to_CompCol(int m, int n, int nnz,
         (*colptr)[j+1] = (*colptr)[j] + marker[j];
         marker[j] = (*colptr)[j];
     }
-//printf("111\n");
 
     /* Transfer the matrix into the compressed column storage. */
     for(i = 0; i < m; ++i)
@@ -71,7 +75,6 @@ void CompRow_to_CompCol(int m, int n, int nnz,
             ++marker[col];
         }
     }
-//printf("111\n");
 
     free(marker);
 }
@@ -139,48 +142,43 @@ int CompressCSCinFortranNumbering(int n, int ndof,
 int solvePASTIX(int verbosity,int mat_size, int nnz, double* AA, size_t* IA, size_t* JA, double *x, double* b, int m_gmres, 
                 double tol, int incomplete, int ilu_level_of_fill, int ndof, int symmetric )
 {
-    PastisDataType  *pastix_data = NULL; /* Pointer to a storage structure needed by pastix           */
-    PastixIntegerType    ncol = mat_size;               /* Size of the matrix                                        */
-    PastixIntegerType   *rows      = (PastixIntegerType *)malloc(sizeof(PastixIntegerType)*(nnz));  /* Indexes of first element of each column in row and values */
-    PastixIntegerType   *colptr        = (PastixIntegerType *)malloc(sizeof(PastixIntegerType)*(mat_size+1));   /* Row of each element of the matrix                         */
-    PastixFloatType *values      = (PastixFloatType *)malloc(sizeof(PastixFloatType)*(nnz));   /* Value of each element of the matrix                       */
-    PastixFloatType *rhs         = (PastixFloatType *)malloc(sizeof(PastixFloatType)*mat_size);  /* right hand side                                           */
-    PastixIntegerType    iparm[IPARM_SIZE];  /* integer parameters for pastix                             */
-    double          dparm[DPARM_SIZE];  /* floating parameters for pastix                            */
-    PastixIntegerType   *perm        = (PastixIntegerType *)malloc((ncol+1)*sizeof(PastixIntegerType)); /* Permutation tabular                                       */
-    PastixIntegerType   *invp        = (PastixIntegerType *)malloc((ncol+1)*sizeof(PastixIntegerType)); /* Reverse permutation tabular                               */
+    PastisDataType *pastix_data = NULL;                                                              /* Pointer to a storage structure needed by pastix           */
+    PastixIntegerType ncol = mat_size;                                                               /* Size of the matrix                                        */
+    PastixIntegerType *rows = (PastixIntegerType *)malloc(sizeof(PastixIntegerType)*(nnz));          /* Indexes of first element of each column in row and values */
+    PastixIntegerType *colptr = (PastixIntegerType *)malloc(sizeof(PastixIntegerType)*(mat_size+1)); /* Row of each element of the matrix                         */
+    PastixFloatType *values = (PastixFloatType *)malloc(sizeof(PastixFloatType)*(nnz));              /* Value of each element of the matrix                       */
+    PastixFloatType *rhs = (PastixFloatType *)malloc(sizeof(PastixFloatType)*mat_size);              /* Right Hand Side                                           */
+    PastixIntegerType iparm[IPARM_SIZE];                                                             /* Integer parameters for pastix                             */
+    double dparm[DPARM_SIZE];                                                                        /* Floating parameters for pastix                            */
+    PastixIntegerType *perm = (PastixIntegerType *)malloc((ncol+1)*sizeof(PastixIntegerType));       /* Permutation tabular                                       */
+    PastixIntegerType *invp = (PastixIntegerType *)malloc((ncol+1)*sizeof(PastixIntegerType));       /* Reverse permutation tabular                               */
 #ifdef _OPENMP
-    PastixIntegerType             nbthread = omp_get_max_threads();           /* Number of thread wanted by user                           */
+    PastixIntegerType nbthread = omp_get_max_threads();                                              /* Number of thread wanted by user                           */
 #else
-        PastixIntegerType             nbthread = 1;           /* Number of thread wanted by user                           */
+    PastixIntegerType nbthread = 1;                                                                  /* Number of thread wanted by user                           */
 #endif
         
-    PastixIntegerType             verbosemode = verbosity;        /* Level of verbose mode (0, 1, 2)                           */
-     int             ordering = API_ORDER_SCOTCH;           /* Ordering to use                                           */
-    PastixIntegerType             nbrhs = 1;
-    //int             incomplete = 1;         /* Indicate if we want to use incomplete factorisation       */
-    int             level_of_fill = ilu_level_of_fill; //6;      /* Level of fill for incomplete factorisation                */
-    int             amalgamation = 25;       /* Level of amalgamation for Kass                            */
-    //int             ooc = 2000;                /* OOC limit (Mo/percent depending on compilation options)   */
-    PastixIntegerType    mat_type;
-//    int j;
-//        long            i;
-//        double norme1, norme2;
-    int i;
-//    printf("aaa\n");
-
-    if(symmetric == 0)
-         mat_type = API_SYM_NO;
-    else
-         mat_type = API_SYM_YES;
+    PastixIntegerType verbosemode = verbosity;                                                       /* Level of verbose mode (0, 1, 2)                           */
+#ifdef VERSION_PASTIX_6
+    int ordering = PastixOrderScotch;                                                                /* Ordering to use                                           */
+#else
+    int ordering = API_ORDER_SCOTCH;                                                                 /* Ordering to use                                           */
+#endif
+    PastixIntegerType nbrhs = 1;
+//     int incomplete = 1;                                                                              /* Indicate if we want to use incomplete factorisation       */
+    int level_of_fill = ilu_level_of_fill; //6;                                                      /* Level of fill for incomplete factorisation                */
+    int amalgamation = 25;                                                                           /* Level of amalgamation for Kass                            */
+#ifndef VERSION_PASTIX_6
+//     int             ooc = 2000;                                                                      /* OOC limit (Mo/percent depending on compilation options)   */
+#endif
 
 /*    memset(colptr,0,(mat_size+1)*sizeof(PastixIntegerType));
     memset(rows,0,(nnz)*sizeof(PastixIntegerType));*/
 
-    //compute the transpose
-       CompRow_to_CompCol(mat_size, mat_size, nnz,AA, JA, IA,&values, &rows, &colptr);
+    // Compute the transpose
+    CompRow_to_CompCol(mat_size, mat_size, nnz,AA, JA, IA,&values, &rows, &colptr);
 
-
+    int i;
 /*    FILE *fp_columns;
     fp_columns=fopen("columns.txt", "w");
     fprintf(fp_columns,"%d \n",(mat_size+1));
@@ -209,31 +207,61 @@ int solvePASTIX(int verbosity,int mat_size, int nnz, double* AA, size_t* IA, siz
 //
 //     for(i=0; i<mat_size; i++)
 //       colptr[i] = colptr[i]+1;
-//    /*
-//     * Matrix needs :
-//     *    - to be in fortran numbering
-//     *    - to have only the lower triangular part in symmetric case
-//     *    - to have a graph with a symmetric structure in unsymmetric case
-//     */
+
+#ifdef VERSION_PASTIX_6
+//     /* Check the sparse matrix */ // NOTE: This will require transform the current matrix to Pastix sparse matrix
+//     pastix_spm_t *AA2;
+//     spmPrintInfo( AA, stdout );
+//
+//     AA2 = spmCheckAndCorrect( AA );
+//     if ( AA2 != AA ) {
+//         spmExit( AA );
+//         free( AA );
+//         AA = AA2;
+//     }
+//     /**
+//      * Generate a Fake values array if needed for the numerical part
+//      */
+//     if ( AA->flttype == PastixPattern ) {
+//         spmGenFakeValues( AA );
+//     }
+#else
+   /*
+    * Matrix needs :
+    *    - to be in fortran numbering
+    *    - to have only the lower triangular part in symmetric case
+    *    - to have a graph with a symmetric structure in unsymmetric case
+    */
+   PastixIntegerType mat_type;
+    if(symmetric == 0)
+         mat_type = API_SYM_NO;
+    else
+         mat_type = API_SYM_YES;
     iparm[IPARM_MATRIX_VERIFICATION] = API_YES;
     if(NO_ERR != pastix_checkMatrix(0, verbosemode,
                                     mat_type,
                                     API_YES,
-                                    ncol, &colptr, &rows, &values, NULL, 1))
+                                    ncol, &colptr, &rows, &values, NULL, 1)) {
         return 1;
+    }
+#endif
 
-    //copy to block format if needed
+    // Copy to block format if needed
     if(ndof > 1)
         CompressCSCinFortranNumbering(mat_size,ndof,&values, &rows, &colptr);
 
     //copy b to the solution. It will be overwritten
     for(i = 0; i < mat_size; i++)
         x[i] = b[i];
-//    printf("bbb\n")    ;
+
     /*******************************************/
     /* Initialize parameters to default values */
     /*******************************************/
+#ifdef VERSION_PASTIX_6
+    iparm[IPARM_MODIFY_PARAMETER] = 0;
+#else
     iparm[IPARM_MODIFY_PARAMETER] = API_NO;
+#endif
     pastix(&pastix_data, MPI_COMM_WORLD,
            ncol, colptr, rows, values,
            perm, invp, x, 1, iparm, dparm);
@@ -243,6 +271,35 @@ int solvePASTIX(int verbosity,int mat_size, int nnz, double* AA, size_t* IA, siz
     /*       Customize some parameters         */
     /*******************************************/
     iparm[IPARM_THREAD_NBR] = nbthread;
+    iparm[IPARM_VERBOSE] = verbosemode;
+    iparm[IPARM_ORDERING] = ordering;
+    iparm[IPARM_DOF_NBR] = ndof;
+#ifdef VERSION_PASTIX_6
+    switch(symmetric)
+    {
+    case 1:
+        iparm[IPARM_FACTORIZATION] = PastixFactLDLT;
+        break;
+    default:
+        iparm[IPARM_FACTORIZATION] = PastixFactLU;
+    }
+
+    iparm[IPARM_INCOMPLETE] = incomplete;
+
+//    iparm[IPARM_FREE_CSCUSER] = 0;
+
+    if(incomplete == 1) {
+        iparm[IPARM_REFINEMENT] = PastixRefineGMRES;
+        iparm[IPARM_GMRES_IM] = m_gmres;
+        dparm[DPARM_EPSILON_REFINEMENT] = tol;
+        iparm[IPARM_LEVEL_OF_FILL] = level_of_fill;
+        iparm[IPARM_AMALGAMATION_LVLBLAS] = amalgamation;
+        iparm[IPARM_AMALGAMATION_LVLCBLK] = amalgamation;
+    }
+
+    iparm[IPARM_START_TASK] = PastixTaskOrdering;
+    iparm[IPARM_END_TASK] = PastixTaskClean;
+#else
     iparm[IPARM_SYM] = mat_type;
     switch(mat_type)
     {
@@ -256,22 +313,18 @@ int solvePASTIX(int verbosity,int mat_size, int nnz, double* AA, size_t* IA, siz
         iparm[IPARM_FACTORIZATION] = API_FACT_LU;
     }
     iparm[IPARM_MATRIX_VERIFICATION] = API_NO;
-    iparm[IPARM_VERBOSE]             = verbosemode;
-     iparm[IPARM_ORDERING]            = ordering;
-    iparm[IPARM_DOF_NBR] = ndof;
     if(incomplete == 1)
         iparm[IPARM_INCOMPLETE]          = API_YES;
     else if(incomplete == 0)
         iparm[IPARM_INCOMPLETE]          = API_NO;
     else
-        printf("incomplete flag should either be 0 (direct solve) or 1 for ILU solve");
+        printf("Incomplete flag should either be 0 (direct solve) or 1 for ILU solve");
 
-    //iparm[IPARM_OOC_LIMIT]           = ooc;
+//     iparm[IPARM_OOC_LIMIT]           = ooc;
 
-  //  iparm[IPARM_FREE_CSCUSER] = API_CSC_PRESERVE;
+//    iparm[IPARM_FREE_CSCUSER] = API_CSC_PRESERVE;
 
-    if(iparm[IPARM_INCOMPLETE]  == API_YES)
-    {
+    if(iparm[IPARM_INCOMPLETE]  == API_YES) {
         iparm[IPARM_REFINEMENT] = API_RAF_GMRES;
         iparm[IPARM_GMRES_IM] = m_gmres;
         dparm[DPARM_EPSILON_REFINEMENT] = tol;
@@ -282,10 +335,7 @@ int solvePASTIX(int verbosity,int mat_size, int nnz, double* AA, size_t* IA, siz
     iparm[IPARM_RHS_MAKING]          = API_RHS_B;
     iparm[IPARM_START_TASK]          = API_TASK_ORDERING;
     iparm[IPARM_END_TASK]            = API_TASK_CLEAN;
-
-
-
-
+#endif
     /*******************************************/
     /*           Call pastix                   */
     /*******************************************/
@@ -294,11 +344,8 @@ int solvePASTIX(int verbosity,int mat_size, int nnz, double* AA, size_t* IA, siz
            ncol/ndof, colptr, rows, values,
            perm, invp, x, nbrhs, iparm, dparm);
 
-//        PRINT_RHS("SOL", rhs, ncol, mpid, iparm[IPARM_VERBOSE]);
-//        CHECK_SOL(rhs, rhssaved, ncol, mpid);
-
-
-
+//     PRINT_RHS("SOL", rhs, ncol, mpid, iparm[IPARM_VERBOSE]);
+//     CHECK_SOL(rhs, rhssaved, ncol, mpid);
 
     free(colptr);
     free(rows);
@@ -306,9 +353,9 @@ int solvePASTIX(int verbosity,int mat_size, int nnz, double* AA, size_t* IA, siz
     free(perm);
     free(invp);
     free(rhs);
-//        free(rhssaved);
-//        free(type);
-//        free(rhstype);
+//     free(rhssaved);
+//     free(type);
+//     free(rhstype);
 
     return EXIT_SUCCESS;
 }

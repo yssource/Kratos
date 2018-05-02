@@ -61,6 +61,10 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
         self.GeometryUtilities = GeometryUtilities( self.DesignSurface )
         self.OptimizationUtilities = OptimizationUtilities( self.DesignSurface, OptimizationSettings )
         self.dampingIsSpecified = OptimizationSettings["design_variables"]["damping"]["perform_damping"].GetBool()
+        if OptimizationSettings["design_variables"]["damping"].Has("damp_only_after_mapping"):
+            self.dampOnlyAfterMapping = OptimizationSettings["design_variables"]["damping"]["damp_only_after_mapping"].GetBool()
+        else:
+            self.dampOnlyAfterMapping = False
         if self.dampingIsSpecified:
             damping_regions = self.ModelPartController.GetDampingRegions()
             self.DampingUtilities = DampingUtilities( self.DesignSurface, damping_regions, self.OptimizationSettings )
@@ -422,9 +426,12 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
     # get length and directions.    project on normals (done in getGradient),damp,map,damp. tolerance
     def __ValueFormatToLengthFormat(self,value,gradient):
         gradientOriginal = deepcopy(gradient)
-        # if self.dampingIsSpecified:
-        #     gradient = self.__DampVector(gradient)
-        # print("CAREFUL: DAMP ONLY ONCE")
+        if self.dampingIsSpecified:
+            if self.dampOnlyAfterMapping:
+                print("CAREFUL: DAMP ONLY ONCE")
+            else:
+                gradient = self.__DampVector(gradient)
+                print("damp also before mapping")
         gradient = self.__MapVector(gradient)
         if self.dampingIsSpecified:
             gradient = self.__DampVector(gradient)

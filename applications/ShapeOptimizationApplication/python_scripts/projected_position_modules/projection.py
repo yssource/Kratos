@@ -16,8 +16,8 @@ from projected_position_modules.matrix import *
 import csv
 from copy import deepcopy
 
-# called in the algorithm, p is the instance of the algorithm class
-def plusSphere(eObjective,lInequality,eInequality,lEquality,eEquality,p):
+# called in the algorithm, p is the instance of the algorithm class, "lEquality" is actually lBarEquality
+def stepDirectionRule(eObjective,lInequality,eInequality,lEquality,eEquality,p):
 
     target = 1
     tolerance = 0.03

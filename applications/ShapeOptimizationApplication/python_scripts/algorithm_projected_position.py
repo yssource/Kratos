@@ -33,7 +33,7 @@ import os.path
 
 import projected_position_modules.utils as utils
 from projected_position_modules.matrix import norminf3d
-from projected_position_modules.projection import plusSphere, printListValues
+from projected_position_modules.projection import stepDirectionRule, printListValues
 
 # ==============================================================================
 class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
@@ -171,12 +171,13 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
             # compute values and gradients and convert to length-directions format
             objective,inequality,equality = self.__GetValues()
             gradObjective,gradInequality,gradEquality = self.__GetGradients()
-            eObjective,gradObjectiveL,lInequality0,eInequality,gradInequalityL,lEquality0,eEquality,gradEqualityL = self.__GetLengthsDirections(gradObjective,inequality,gradInequality,equality,gradEquality)
+            eObjective,lInequality,eInequality,lEquality,eEquality = self.__GetLengthsDirections(gradObjective,inequality,gradInequality,equality,gradEquality)
 
             # update step length
-            stepLength = self.__UpdateStepLength(stepLength,objective,lInequality0,lEquality0)
+            stepLength = self.__StepLengthRule(stepLength,objective,lInequality,lEquality)
 
-            gradObjectiveL,lInequality0,gradInequalityL,lEquality0,gradEqualityL = self.__ConvertStepLength(stepLength,gradObjectiveL,lInequality0,gradInequalityL,lEquality0,gradEqualityL)
+            lBarInequality = [l/stepLength for l in lInequality]
+            lBarEquality = [l/stepLength for l in lEquality]
 
             # manage final feasibility check before calculating next step
             isTerminated = self.__CheckTerminationAndFinalFeasibility(iterCounter,stepLength,inequality,equality)
@@ -185,11 +186,11 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
                 break
 
             # convert (stepLength,lInequality,lEquality) into delta_x
-            dxRel,lObjective,lInequality,lEquality,sInit,sDx = plusSphere(eObjective,lInequality0,eInequality,lEquality0,eEquality,self)
-            dx = [stepLength*dxRel[i] for i in range(self.n)]
+            deltaXBar,lambdaBarObjective,lambdaBarInequality,lambdaBarEquality,sInit,sDx = stepDirectionRule(eObjective,lBarInequality,eInequality,lBarEquality,eEquality,self)
+            deltaX = [stepLength*deltaXBar[i] for i in range(self.n)]
 
             # update mesh
-            self.__UpdateMesh(dx)
+            self.__UpdateMesh(deltaX)
 
             # log all the variables in the scope except the too long lists (eObjective, dx, etc)
             self.__LogVariables(locals())
@@ -226,10 +227,10 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
 
     def __GetLengthsDirections(self,gradObjective,inequality,gradInequality,equality,gradEquality):
         self.__RevertPossibleShapeModificationsDuringAnalysis() # must be done before mapping and damping in conversion to length-direction
-        lInequality0 = [0 for _ in inequality]
+        lInequality = [0 for _ in inequality]
         eInequality = [0 for _ in inequality]
         gradInequalityL = [0 for _ in inequality]
-        lEquality0 = [0 for _ in equality]
+        lEquality = [0 for _ in equality]
         eEquality = [0 for _ in equality]
         gradEqualityL = [0 for _ in equality]
 
@@ -238,11 +239,12 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
             eObjective = [u+v for u,v in zip(eObjective,self.r["eObjective"][-1])]
             eObjective = [u/norminf3d(eObjective) for u in eObjective]
         for i in range(self.ni):
-            lInequality0[i],eInequality[i],gradInequalityL[i] = self.__ValueFormatToLengthFormat(inequality[i],gradInequality[i])
+            lInequality[i],eInequality[i],gradInequalityL[i] = self.__ValueFormatToLengthFormat(inequality[i],gradInequality[i])
         for i in range(self.ne):
-            lEquality0[i],eEquality[i],gradEqualityL[i] = self.__ValueFormatToLengthFormat(equality[i],gradEquality[i])
+            lEquality[i],eEquality[i],gradEqualityL[i] = self.__ValueFormatToLengthFormat(equality[i],gradEquality[i])
 
-        return eObjective,gradObjectiveL,lInequality0,eInequality,gradInequalityL,lEquality0,eEquality,gradEqualityL
+        # return eObjective,gradObjectiveL,lInequality,eInequality,gradInequalityL,lEquality,eEquality,gradEqualityL
+        return eObjective,lInequality,eInequality,lEquality,eEquality
 
     def __CheckTerminationAndFinalFeasibility(self,iterCounter,stepLength,inequality,equality):
         # condition to enter termination, terminate only after having enforce the final feasibility
@@ -305,7 +307,7 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
         self.ModelPartController.UpdateMeshAccordingInputVariable( SHAPE_UPDATE )
         self.ModelPartController.SetReferenceMeshToMesh()
 
-    def __UpdateStepLength(self,stepLength,objective,lInequality0,lEquality0):
+    def __StepLengthRule(self,stepLength,objective,lInequality,lEquality):
         # avoid interaction with final feasibility
         if self.isEnforcingFinalFeasibility:
             self.lastIterUpdateStepLength = self.iterCounter
@@ -319,7 +321,7 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
         histObjSmooth = self.r["objective"][-(nSmooth-1):]+[objective]
 
         # reduce steplength if objective oscillate and no progress on distance feasible domain
-        if self.__ReduceStepLengthCondition(objective,lInequality0,lEquality0):
+        if self.__ReduceStepLengthCondition(objective,lInequality,lEquality):
             self.lastIterUpdateStepLength = self.iterCounter
             print("Algo> oscillating: decrease step length")
             return stepLength/self.stepLengthDecreaseFactor
@@ -335,13 +337,13 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
         return stepLength
 
     # express quantities relatively to step length
-    def __ConvertStepLength(self,stepLength,gradObjectiveL,lInequality0,gradInequalityL,lEquality0,gradEqualityL):
-        gradObj = gradObjectiveL*stepLength
-        gradIneq = [g*stepLength for g in gradInequalityL]
-        gradEq = [g*stepLength for g in gradEqualityL]
-        lineq = [l/stepLength for l in lInequality0]
-        leq = [l/stepLength for l in lEquality0]
-        return gradObj,lineq,gradIneq,leq,gradEq
+    # def __ConvertStepLength(self,stepLength,gradObjectiveL,lInequality0,gradInequalityL,lEquality0,gradEqualityL):
+    #     gradObj = gradObjectiveL*stepLength
+    #     gradIneq = [g*stepLength for g in gradInequalityL]
+    #     gradEq = [g*stepLength for g in gradEqualityL]
+    #     lineq = [l/stepLength for l in lInequality0]
+    #     leq = [l/stepLength for l in lEquality0]
+    #     return gradObj,lineq,gradIneq,leq,gradEq
 
 
 ##########################################################################################################
@@ -484,7 +486,7 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
         return True
 
     # objective oscillate and no progress feasible
-    def __ReduceStepLengthCondition(self,objective,lInequality0,lEquality0):
+    def __ReduceStepLengthCondition(self,objective,lInequality,lEquality):
         r = self.r
 
         # objective oscillate
@@ -502,9 +504,9 @@ class AlgorithmProjectedPosition( OptimizationAlgorithm ) :
             noProgressObjective = False
 
         # no progress distance feasible
-        distF = utils.simpleDistanceToFeasibleDomain(lInequality0,lEquality0)
+        distF = utils.simpleDistanceToFeasibleDomain(lInequality,lEquality)
         sOld = r["stepLength"][-2]
-        distFOld = utils.simpleDistanceToFeasibleDomain([l*sOld for l in r["lInequality0"][-2]] , [l*sOld for l in r["lEquality0"][-2]])
+        distFOld = utils.simpleDistanceToFeasibleDomain([l*sOld for l in r["lInequality"][-2]] , [l*sOld for l in r["lEquality"][-2]])
         if distF>distFOld - 0.2*sOld:
             noProgressFeasible = True
         else:

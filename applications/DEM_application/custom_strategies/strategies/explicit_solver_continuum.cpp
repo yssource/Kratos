@@ -482,7 +482,7 @@ namespace Kratos {
         double& added_search_distance = r_process_info[SEARCH_RADIUS_INCREMENT];
 
         if(r_model_part.GetCommunicator().MyPID() == 0) {
-            KRATOS_WARNING("DEM") << "Setting up Coordination Number by increasing or decreasing the search radius... " << std::endl;
+            KRATOS_INFO("DEM") << "Setting up Coordination Number by increasing or decreasing the search radius... " << std::endl;
         }
 
         if (in_coordination_number <= 0.0) {
@@ -492,7 +492,7 @@ namespace Kratos {
         while (fabs(out_coordination_number / in_coordination_number - 1.0) > 1e-3) {
             if (iteration >= maxiteration) break;
             iteration++;
-            if(r_model_part.GetCommunicator().MyPID() == 0) { KRATOS_INFO("DEM") <<" * "<<std::flush; }
+            if(r_model_part.GetCommunicator().MyPID() == 0) { KRATOS_INFO("") <<" * "<<std::flush; }
             if (out_coordination_number == 0.0) {
                 KRATOS_WARNING("DEM") << "Coordination Number method not supported in this case" << "\n" << std::endl;
                 KRATOS_THROW_ERROR(std::runtime_error, "The specified tangency method is not supported for this problem, please use absolute value instead", " ")
@@ -509,7 +509,7 @@ namespace Kratos {
         if (iteration < maxiteration){
             if(r_model_part.GetCommunicator().MyPID() == 0) {
                 KRATOS_WARNING("DEM") << "Coordination Number iterative procedure converged after " << iteration << " iterations, to value " << out_coordination_number << " using an extension of " << added_search_distance << ". " << "\n" << std::endl;
-                KRATOS_WARNING("DEM") << "Standard deviation for achieved coordination number is " << standard_dev << ". " << "\n" << std::endl;
+                KRATOS_WARNING("DEM") << "Standard deviation for achieved coordination number is " << standard_dev << ". " << std::endl;
                 KRATOS_WARNING("DEM") << "This means that most particles (about 68% of the total particles, assuming a normal distribution) have a coordination number within " <<  standard_dev << " contacts of the mean (" << out_coordination_number-standard_dev << "–" << out_coordination_number+standard_dev << " contacts). " << "\n" << std::endl;
             }
         }

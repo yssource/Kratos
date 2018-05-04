@@ -15,7 +15,8 @@ namespace Kratos {
         ProcessInfo& r_process_info = r_model_part.GetProcessInfo();
 
         if (r_model_part.GetCommunicator().MyPID() == 0) {
-            KRATOS_INFO("DEM") << "------------------CONTINUUM SOLVER STRATEGY---------------------" << "\n" << std::endl;
+            KRATOS_INFO("DEM") << "------------------CONTINUUM SOLVER STRATEGY---------------------" << std::endl;
+            KRATOS_INFO("DEM") << std::endl;
         }
 
         // Omp initializations
@@ -494,7 +495,7 @@ namespace Kratos {
             iteration++;
             if(r_model_part.GetCommunicator().MyPID() == 0) { KRATOS_INFO("") <<" * "<<std::flush; }
             if (out_coordination_number == 0.0) {
-                KRATOS_WARNING("DEM") << "Coordination Number method not supported in this case" << "\n" << std::endl;
+                KRATOS_WARNING("DEM") << "Coordination Number method not supported in this case" << std::endl;
                 KRATOS_THROW_ERROR(std::runtime_error, "The specified tangency method is not supported for this problem, please use absolute value instead", " ")
                 break;
             }
@@ -508,15 +509,15 @@ namespace Kratos {
 
         if (iteration < maxiteration){
             if(r_model_part.GetCommunicator().MyPID() == 0) {
-                KRATOS_WARNING("DEM") << "Coordination Number iterative procedure converged after " << iteration << " iterations, to value " << out_coordination_number << " using an extension of " << added_search_distance << ". " << "\n" << std::endl;
-                KRATOS_WARNING("DEM") << "Standard deviation for achieved coordination number is " << standard_dev << ". " << std::endl;
-                KRATOS_WARNING("DEM") << "This means that most particles (about 68% of the total particles, assuming a normal distribution) have a coordination number within " <<  standard_dev << " contacts of the mean (" << out_coordination_number-standard_dev << "–" << out_coordination_number+standard_dev << " contacts). " << "\n" << std::endl;
+                KRATOS_INFO("DEM") << "Coordination Number iterative procedure converged after " << iteration << " iterations, to value " << out_coordination_number << " using an extension of " << added_search_distance << ". " << std::endl;
+                KRATOS_INFO("DEM") << "Standard deviation for achieved coordination number is " << standard_dev << ". " << std::endl;
+                KRATOS_INFO("DEM") << "This means that most particles (about 68% of the total particles, assuming a normal distribution) have a coordination number within " <<  standard_dev << " contacts of the mean (" << out_coordination_number-standard_dev << "–" << out_coordination_number+standard_dev << " contacts). " << std::endl;
             }
         }
 
         else {
             if(r_model_part.GetCommunicator().MyPID() == 0) {
-                KRATOS_WARNING("DEM") << "Coordination Number iterative procedure did NOT converge after " << iteration << " iterations. Coordination number reached is " << out_coordination_number << ". " << "\n" << std::endl;
+                KRATOS_WARNING("DEM") << "Coordination Number iterative procedure did NOT converge after " << iteration << " iterations. Coordination number reached is " << out_coordination_number << ". " << std::endl;
                 KRATOS_THROW_ERROR(std::runtime_error, "Please use a Absolute tolerance instead ", " ")
                     //NOTE: if it doesn't converge, problems occur with contact mesh and rigid face contact.
             }
@@ -660,12 +661,12 @@ namespace Kratos {
 
         DestroyMarkedParticlesRebuildLists();
 
-        //KRATOS_WARNING("DEM") << "Mesh repair complete. In MPI node " <<GetModelPart().GetCommunicator().MyPID()<<". "<< particle_counter << " particles were removed. " << "\n" << std::endl;
+        //KRATOS_WARNING("DEM") << "Mesh repair complete. In MPI node " <<GetModelPart().GetCommunicator().MyPID()<<". "<< particle_counter << " particles were removed. " << std::endl;
         double total_spheres_removed = particle_counter;
         GetModelPart().GetCommunicator().SumAll(total_spheres_removed);
 
         if(GetModelPart().GetCommunicator().MyPID() == 0) {
-            KRATOS_WARNING("DEM") << "A total of "<<total_spheres_removed<<" spheres were removed due to excessive overlapping." << std::endl;
+            KRATOS_INFO("DEM") << "A total of "<<total_spheres_removed<<" spheres were removed due to excessive overlapping." << std::endl;
         }
 
         KRATOS_CATCH("")

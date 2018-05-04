@@ -505,7 +505,9 @@ namespace Kratos {
             out_coordination_number = ComputeCoordinationNumber(standard_dev);
         }//while
 
-        if(r_model_part.GetCommunicator().MyPID() == 0) { KRATOS_INFO("DEM") <<std::endl;}
+        if(r_model_part.GetCommunicator().MyPID() == 0) {
+            KRATOS_INFO("")<<std::endl;
+        }
 
         if (iteration < maxiteration){
             if(r_model_part.GetCommunicator().MyPID() == 0) {

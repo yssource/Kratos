@@ -92,6 +92,7 @@ void WriteMatrix(
             break;
         }
         case 17:
+        case 18:
         {
             Vector adjoint_values;
             pElement->GetValuesVector(adjoint_values, time_step);
@@ -1032,7 +1033,7 @@ void Matrix_14(
     WriteMatrix(14, resultant_matrix, pElement, rCurrentProcessInfo);
 }
 
-template<IndexType TDim>
+template<unsigned int TDim>
 void NumericalDiffusionMatrix(
     VMSAdjointElement<TDim>* pElement,
     array_1d< double, TDim >& Velocity,
@@ -1040,8 +1041,8 @@ void NumericalDiffusionMatrix(
 )
 {
     constexpr unsigned int TNumNodes = TDim + 1;
-    constexpr unsigned int TCoordLocalSize = TDim * TNumNodes;
     constexpr unsigned int TBlockSize = TDim + 1;
+    constexpr unsigned int TCoordLocalSize = TBlockSize * TNumNodes;
 
     Element::MatrixType resultant_matrix;
 
@@ -1053,20 +1054,19 @@ void NumericalDiffusionMatrix(
     double volume;
     GeometryUtils::CalculateGeometryData(pElement->GetGeometry(),dn_dx,N,volume);
 
-
-    for (IndexType a = 0; a < TNumNodes; ++a)
+    for (unsigned int a = 0; a < TNumNodes; ++a)
     {
-        for (IndexType b = 0; b < TNumNodes; ++b)
+        for (unsigned int b = 0; b < TNumNodes; ++b)
         {
             // (dN_a/dx_k dN_b/dx_k)
             double value = 0.0;
-            for (IndexType k = 0; k < TDim; k++)
+            for (unsigned int k = 0; k < TDim; k++)
                 value += dn_dx(a,k) * dn_dx(b,k);
             
             value *= volume;
 
-            for (IndexType i=0; i < TBlockSize; i++)
-                resultant_matrix(a*TBlockSize+i,b*TBlockSize+i) += value;
+            for (unsigned int i=0; i < TBlockSize; i++)
+                resultant_matrix(a*TBlockSize+i,b*TBlockSize+i) = value;
         }
     }
 
@@ -1140,6 +1140,7 @@ void VMSAdjointElement<TDim>::ProcessSymmetricMatrices(ProcessInfo& rCurrentProc
     Matrix_12<TDim>(this, Velocity, Density, Viscosity, rCurrentProcessInfo, TauOneDerivatives);
     Matrix_13<TDim>(this, Velocity, Density, Viscosity, rCurrentProcessInfo, TauOne);
     Matrix_14<TDim>(this, Velocity, Density, Viscosity, rCurrentProcessInfo, TauOne);
+    NumericalDiffusionMatrix<TDim>(this, Velocity, rCurrentProcessInfo);
 
     Element::MatrixType resultant_matrix;
 
@@ -1148,6 +1149,6 @@ void VMSAdjointElement<TDim>::ProcessSymmetricMatrices(ProcessInfo& rCurrentProc
     resultant_matrix = 0.5*(resultant_matrix + boost::numeric::ublas::trans(resultant_matrix));
     
     WriteMatrix(17, resultant_matrix, this, rCurrentProcessInfo);
-    NumericalDiffusionMatrix<TDim>(this, Velocity, rCurrentProcessInfo);
+    
 }
 

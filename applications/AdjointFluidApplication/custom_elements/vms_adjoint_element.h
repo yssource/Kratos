@@ -1567,6 +1567,8 @@ private:
 
     friend class Serializer;
 
+    void ProcessSymmetricMatrices(ProcessInfo& rCurrentProcessInfo);
+
     void save(Serializer& rSerializer) const override
     {
         KRATOS_TRY;

@@ -1,5 +1,9 @@
 #include "vms_adjoint_element.h"
 
+#ifdef EIGEN_ROOT
+    #include <Eigen/Eigenvalues>
+#endif
+
 namespace Kratos {
 
 ///@name Specialized implementation for functions that depend on TDim
@@ -54,7 +58,7 @@ void VMSAdjointElement<3>::GetDofList(DofsVectorType& rElementalDofList,
 template<>
 void VMSAdjointElement<2>::EquationIdVector(
     EquationIdVectorType& rResult,
-    ProcessInfo& /*rCurrentProcessInfo*/)
+    ProcessInfo& rCurrentProcessInfo)
 {
   const SizeType NumNodes(3), LocalSize(9);
 
@@ -72,12 +76,13 @@ void VMSAdjointElement<2>::EquationIdVector(
     rResult[LocalIndex++] = this->GetGeometry()[iNode].GetDof(ADJOINT_FLUID_SCALAR_1)
         .EquationId();
   }
+  this->ProcessSymmetricMatrices(rCurrentProcessInfo);
 }
 
 template<>
 void VMSAdjointElement<3>::EquationIdVector(
     EquationIdVectorType& rResult,
-    ProcessInfo& /*rCurrentProcessInfo*/)
+    ProcessInfo& rCurrentProcessInfo)
 {
   const SizeType NumNodes(4), LocalSize(16);
 
@@ -97,6 +102,7 @@ void VMSAdjointElement<3>::EquationIdVector(
     rResult[LocalIndex++] = this->GetGeometry()[iNode].GetDof(ADJOINT_FLUID_SCALAR_1)
         .EquationId();
   }
+  this->ProcessSymmetricMatrices(rCurrentProcessInfo);
 }
 
 template<>
@@ -455,6 +461,8 @@ void VMSAdjointElement<3>::AddViscousTermDerivative(
 }
 
 ///@} // Specialized implementations
+
+#include "symmetric_matrix.h"
 
 template class VMSAdjointElement<2> ;
 template class VMSAdjointElement<3> ;

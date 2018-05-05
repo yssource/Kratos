@@ -1,0 +1,37 @@
+BeginZE /home/daniel/software/kratos/applications/ShapeOptimizationApplication/test_examples/01_Distance_function_sphere_test/box_coarse.gid/box_coarse.vv
+   x -1.90808510780334473 1.87290430068969727
+   y 1.14855575561523438 -1.15148246288299561
+   z -0.878883063793182373 0.874113976955413818
+   e 0.866025388240814209
+   v -0.291557163000106812 -0.0921693965792655945 -0.042276386171579361
+   r 0.95116347074508667
+   m 0.9794350266456604 0.134168803691864014 -0.150684356689453125 0 -0.0266782082617282867 0.826414227485656738 0.562430202960968018 0 0.199988290667533875 -0.546843886375427246 0.812998473644256592 0 0 0 0 1
+   c 0.0101418774574995041 -0.00106878369115293026 0.00238455622456967831
+   pd 0
+   pno 0
+   pfo 0
+   pf 4
+   pv 0
+   NowUse 1
+   DrawingType 0
+   LightVector 90 90 150 0
+   OGLShadow(UseShadows) 0
+   OGLShadow(RenderMode) RenderNice
+   OGLShadow(ShadowBias) -0.002
+   OGLShadow(AmbientShadows) 1
+   OGLShadow(UseFBO) 1
+   OGLShadow(FBOSize) 2048
+   OGLShadow(DimmedLightFactor) 0.02
+   OGLStereo(UseStereo) 0
+   OGLStereo(RelativeEyeDistance) 1
+   OGLStereo(FlipEyes) 0
+   OGLStereo(StereoMode) AnaglyphColors
+   OGLStereo(EyeDistance) 0.075
+   OGLStereo(LeftEyeDistance) 1 0 0 1
+   OGLStereo(RightEyeDistance) 0 1 1 1
+EndZE /home/daniel/software/kratos/applications/ShapeOptimizationApplication/test_examples/01_Distance_function_sphere_test/box_coarse.gid/box_coarse.vv
+
+BeginMirror
+   Mirror 0 Angle 0.0 AngleFake -15.0 SizeFactor 2.0 HeightOffset 0.25 Color #d9e5f24d Backlight Off EdgeStyle No Type Scene DrawMode Mirror
+EndMirror
+

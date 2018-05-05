@@ -12,10 +12,11 @@ import math
 # Parameters
 #############################################################################
 
-box_mdpa_filename = "box"
+box_mdpa_filename = "box_coarse"
 sphere_mdpa_filename = "sphere"
 skin_mdpa_filename = "skin"
-levels_of_refinement = 3
+levels_of_refinement = 6
+apply_global_refinement = False
 sphere_radius = 0.4
 
 output_parameters = Parameters("""
@@ -65,12 +66,16 @@ def EvaluateImplicitRepresentation(skin_mdpa):
         error = math.sqrt(node.X**2 + node.Y**2 + node.Z**2) - sphere_radius
         error_vector.append(error)
 
-    norm_2 = 0.0
-    for entry in error_vector:
-        norm_2 = norm_2 + entry*entry
-    norm_2 = math.sqrt(norm_2)
+    # norm_2 = 0.0
+    # for entry in error_vector:
+    #     norm_2 = norm_2 + entry*entry
+    # norm_2 = math.sqrt(norm_2)
 
-    return norm_2
+    norm_max = 0.0
+    for entry in error_vector:
+        norm_max = max(norm_max, abs(entry))
+
+    return norm_max
 
 #############################################################################
 # Main body
@@ -87,40 +92,60 @@ box_mdpa.Properties[0].SetValue(CONSTITUTIVE_LAW, LinearElastic3DLaw())
 box_mdpa.SetBufferSize(2)
 
 # Refine
-for refinement_level in range(0,levels_of_refinement):
+for refinement_level in range(0,levels_of_refinement+1):
 
-    print("#########################")
+    print("####################################")
     print("> Starting refinement level ", refinement_level)
+    print("####################################")
+
+    # Mesh refinement
+    if refinement_level is not 0:
+
+        # Mesh refinement requires identification of elemental and nodal neighbours
+        FindNodalNeighboursProcess(box_mdpa, 100, 100).Execute()
+        FindElementalNeighboursProcess(box_mdpa,3,100).Execute()
+
+        # Define elements to be refined
+        if apply_global_refinement:
+            # Refinement of complete box mesh
+            for element in box_mdpa.Elements:
+                element.SetValue(SPLIT_ELEMENT,True)
+        else:
+            # Local refinement of all intersected elements, which are already marked as split within the calculate distance process
+            pass
+
+        # Actual refinement
+        refine_on_reference = False
+        interpolate_internal_variables = False
+
+        refinement_tool = LocalRefineTetrahedraMesh(box_mdpa)
+        refinement_tool.LocalRefineMesh(refine_on_reference, interpolate_internal_variables)
+
+        # Reset refinement flag
+        for element in box_mdpa.Elements:
+            element.SetValue(SPLIT_ELEMENT,False)
+
+        OutputMdpa(box_mdpa, "box_after_refinement", output_parameters)
 
     # Calculate signed distance process
-    print("> Calculating distances!!!!!")
+    print("> Calculating distances!")
     calculate_distance_process = CalculateSignedDistanceTo3DSkinProcess(sphere_mdpa, box_mdpa)
     calculate_distance_process.Execute()
     # OutputMdpa(box_mdpa, "box_after_distance_calculation", output_parameters)
 
     # Generate reconstruction
-    print("> Generating skin mdpa!!!!!")
+    print("> Generating skin mdpa!")
     skin_mdpa = ModelPart(skin_mdpa_filename)
     calculate_distance_process.GenerateSkinModelPart(skin_mdpa)
-    # OutputMdpa(skin_mdpa, skin_mdpa_filename, output_parameters)
+    OutputMdpa(skin_mdpa, skin_mdpa_filename, output_parameters)
 
     # Evaluate error
     number_of_elements.append(box_mdpa.NumberOfElements())
     error_values.append(EvaluateImplicitRepresentation(skin_mdpa))
 
-    # Mesh refinement requires identification of elemental and nodal neighbours
-    FindNodalNeighboursProcess(box_mdpa, 100, 100).Execute()
-    FindElementalNeighboursProcess(box_mdpa,3,100).Execute()
-
-    # For only adaptive refinement: Note that all split elements are already marked as split using the variable SPLIT_ELEMENT
-
-    # Refinement of complete box mesh
-    for element in box_mdpa.Elements:
-        element.SetValue(SPLIT_ELEMENT,True)
-
-    # Actual refinement
-    refine_on_reference = False
-    interpolate_internal_variables = False
-
-    refinement_tool = LocalRefineTetrahedraMesh(box_mdpa)
-    refinement_tool.LocalRefineMesh(refine_on_reference, interpolate_internal_variables)
+# Output results
+print("##################################################")
+print("> Results")
+print("##################################################")
+print("error_values = ",error_values)
+print("number_of_elements = ",number_of_elements)

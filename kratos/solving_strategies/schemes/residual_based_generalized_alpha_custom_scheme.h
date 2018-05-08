@@ -89,9 +89,9 @@ public:
     /**
      * @brief Constructor.
      * @detail The generalized alpha method
-     * @rAlpham and rAlphaf The generalized alpha parameters. Default values are 0, which is the Newmark method
+     * @rAlpham and rAlphaf The generalized alpha parameters. Default values are 0.5, which is the midpoint rule
      */
-    explicit ResidualBasedGeneralizedAlphaCustomScheme(double const rAlphaM = 0.0, double const rAlphaF = 0.0)
+    explicit ResidualBasedGeneralizedAlphaCustomScheme(double const rAlphaM = 0.5, double const rAlphaF = 0.5)
         :ImplicitBaseType()
     {
 

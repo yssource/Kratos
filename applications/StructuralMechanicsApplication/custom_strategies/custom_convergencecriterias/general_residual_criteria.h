@@ -15,7 +15,18 @@
 #if !defined(KRATOS_GENERAL_RESIDUAL_CRITERIA_H_INCLUDED )
 #define  KRATOS_GENERAL_RESIDUAL_CRITERIA_H_INCLUDED
 
+/*
+Here is a list of files that you can look at for reference:
+- applications/StructuralMechanicsApplication/custom_strategies/custom_convergencecriterias/displacement_and_other_dof_criteria.h
+- applications/StructuralMechanicsApplication/custom_strategies/custom_convergencecriterias/residual_displacement_and_other_dof_criteria.h
+- applications/FluidDynamicsApplication/custom_strategies/convergence_criteria/vel_pr_criteria.h
+- applications/trilinos_application/custom_strategies/convergencecriterias/trilinos_displacement_criteria.h
+- applications/trilinos_application/custom_strategies/convergencecriterias/trilinos_up_criteria.h
+- kratos/solving_strategies/convergencecriterias/displacement_criteria.h
+- kratos/solving_strategies/convergencecriterias/residual_criteria.h
 
+
+*/
 
 // System includes
 

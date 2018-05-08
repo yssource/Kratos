@@ -19,7 +19,7 @@
 /* Project includes */
 #include "solving_strategies/schemes/residual_based_implicit_time_scheme.h"
 #include "includes/variables.h"
-#include "includes/checks.h" 
+#include "includes/checks.h"
 
 namespace Kratos
 {
@@ -38,7 +38,7 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-/** 
+/**
  * @class ResidualBasedBossakDisplacementScheme
  * @ingroup KratosCore
  * @brief Bossak integration scheme (for dynamic problems) for displacements
@@ -57,7 +57,7 @@ public:
     KRATOS_CLASS_POINTER_DEFINITION( ResidualBasedBossakDisplacementScheme );
 
     typedef Scheme<TSparseSpace,TDenseSpace>                                  BaseType;
-    
+
     typedef ResidualBasedImplicitTimeScheme<TSparseSpace,TDenseSpace> ImplicitBaseType;
 
     typedef typename ImplicitBaseType::TDataType                             TDataType;
@@ -103,18 +103,18 @@ public:
         double gamma = 0.5;
 
         CalculateNewmarkCoefficients(beta, gamma);
-        
+
         // Allocate auxiliary memory
         const std::size_t num_threads = OpenMPUtils::GetNumThreads();
-        
+
         mVector.v.resize(num_threads);
         mVector.a.resize(num_threads);
         mVector.ap.resize(num_threads);
-            
+
         KRATOS_DETAIL("MECHANICAL SCHEME: The Bossak Time Integration Scheme ") << "[alpha_m= " << mAlpha.m << " beta= " << mNewmark.beta << " gamma= " << mNewmark.gamma << "]" <<std::endl;
     }
 
-    /** 
+    /**
      * @brief Copy Constructor.
      */
     ResidualBasedBossakDisplacementScheme(ResidualBasedBossakDisplacementScheme& rOther)
@@ -176,7 +176,7 @@ public:
         DofsArrayType& rDofSet,
         TSystemMatrixType& A,
         TSystemVectorType& Dx,
-        TSystemVectorType& b 
+        TSystemVectorType& b
         ) override
     {
         KRATOS_TRY;
@@ -191,14 +191,14 @@ public:
             if (it_dof->IsFree())
                 it_dof->GetSolutionStepValue() += TSparseSpace::GetValue(Dx,it_dof->EquationId());
         }
-        
+
         // Updating time derivatives (nodally for efficiency)
         const int num_nodes = static_cast<int>(rModelPart.NumberOfNodes());
 
         #pragma omp parallel for
         for(int i = 0;  i < num_nodes; ++i) {
             auto it_node = rModelPart.Nodes().begin() + i;
-                        
+
             array_1d<double, 3 > delta_displacement;
 
             noalias(delta_displacement) = it_node->FastGetSolutionStepValue(DISPLACEMENT) - it_node->FastGetSolutionStepValue(DISPLACEMENT, 1);
@@ -208,7 +208,7 @@ public:
 
             array_1d<double, 3>& current_acceleration = it_node->FastGetSolutionStepValue(ACCELERATION);
             const array_1d<double, 3>& previous_acceleration = it_node->FastGetSolutionStepValue(ACCELERATION, 1);
-            
+
             UpdateVelocity(current_velocity, delta_displacement, previous_velocity, previous_acceleration);
             UpdateAcceleration(current_acceleration, delta_displacement, previous_velocity, previous_acceleration);
         }
@@ -235,14 +235,14 @@ public:
         ) override
     {
         KRATOS_TRY;
-        
+
         const double delta_time = rModelPart.GetProcessInfo()[DELTA_TIME];
 
         // Updating time derivatives (nodally for efficiency)
         const int num_nodes = static_cast<int>(rModelPart.NumberOfNodes());
 
         array_1d<double, 3 > delta_displacement;
-        
+
         #pragma omp parallel for private(delta_displacement)
         for(int i = 0;  i < num_nodes; ++i) {
             auto it_node = rModelPart.Nodes().begin() + i;
@@ -292,7 +292,7 @@ public:
 
             UpdateAcceleration (current_acceleration, delta_displacement, previous_velocity, previous_acceleration);
         }
-        
+
         KRATOS_CATCH( "" );
     }
 
@@ -303,7 +303,7 @@ public:
      * @param Dx Incremental update of primary variables
      * @param b RHS Vector
      */
-    
+
     void InitializeSolutionStep(
         ModelPart& rModelPart,
         TSystemMatrixType& A,
@@ -341,7 +341,7 @@ public:
 
     /**
      * @brief This function is designed to be called once to perform all the checks needed
-     * on the input provided. 
+     * on the input provided.
      * @details Checks can be "expensive" as the function is designed
      * to catch user's errors.
      * @param rModelPart The model of the problem to solve
@@ -357,19 +357,19 @@ public:
 
         // Check for variables keys
         // Verify that the variables are correctly initialized
-        KRATOS_CHECK_VARIABLE_KEY(DISPLACEMENT) 
-        KRATOS_CHECK_VARIABLE_KEY(VELOCITY) 
-        KRATOS_CHECK_VARIABLE_KEY(ACCELERATION) 
+        KRATOS_CHECK_VARIABLE_KEY(DISPLACEMENT)
+        KRATOS_CHECK_VARIABLE_KEY(VELOCITY)
+        KRATOS_CHECK_VARIABLE_KEY(ACCELERATION)
 
         // Check that variables are correctly allocated
         for(auto& rnode : rModelPart.Nodes()) {
-            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(DISPLACEMENT,rnode) 
-            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(VELOCITY,rnode) 
-            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(ACCELERATION,rnode) 
-    
-            KRATOS_CHECK_DOF_IN_NODE(DISPLACEMENT_X, rnode) 
-            KRATOS_CHECK_DOF_IN_NODE(DISPLACEMENT_Y, rnode) 
-            KRATOS_CHECK_DOF_IN_NODE(DISPLACEMENT_Z, rnode) 
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(DISPLACEMENT,rnode)
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(VELOCITY,rnode)
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(ACCELERATION,rnode)
+
+            KRATOS_CHECK_DOF_IN_NODE(DISPLACEMENT_X, rnode)
+            KRATOS_CHECK_DOF_IN_NODE(DISPLACEMENT_Y, rnode)
+            KRATOS_CHECK_DOF_IN_NODE(DISPLACEMENT_Z, rnode)
         }
 
         // Check for minimum value of the buffer index
@@ -411,12 +411,12 @@ protected:
     /**
      * @brief The Generalized Alpha components
      * @detail For more about it:
-     * J. Chung, G.M.Hubert. "A Time Integration Algorithm for Structural Dynamics with Improved Numerical Dissipation: The Generalized-α Method" ASME Journal of Applied Mechanics, 60, 371:375, 1993. 
+     * J. Chung, G.M.Hubert. "A Time Integration Algorithm for Structural Dynamics with Improved Numerical Dissipation: The Generalized-α Method" ASME Journal of Applied Mechanics, 60, 371:375, 1993.
      */
     struct GeneralizedAlphaMethod
     {
         double f; /// Alpha Hilbert
-        double m; /// Alpha Bosssak 
+        double m; /// Alpha Bosssak
     };
 
     /**
@@ -440,7 +440,7 @@ protected:
         std::vector< Vector > a;  /// Acceleration
         std::vector< Vector > ap; /// Previous acceleration
     };
-    
+
     GeneralizedAlphaMethod mAlpha; /// The structure containing the Generalized alpha components
     NewmarkMethod mNewmark;        /// The structure containing the Newmark parameters
     GeneralVectors mVector;        /// The structure containing the velocities and accelerations
@@ -452,7 +452,7 @@ protected:
     ///@}
     ///@name Protected Operations
     ///@{
-    
+
     /**
      * @brief Updating first time Derivative
      * @param CurrentVelocity The current velocity
@@ -509,7 +509,7 @@ protected:
         // Adding mass contribution to the dynamic stiffness
         if (M.size1() != 0) // if M matrix declared
             noalias(LHS_Contribution) += M * (1.0 - mAlpha.m) * mNewmark.c0;
-        
+
         // Adding  damping contribution
         if (D.size1() != 0) // if D matrix declared
             noalias(LHS_Contribution) += D * (1.0 - mAlpha.f) * mNewmark.c1;
@@ -529,11 +529,12 @@ protected:
         LocalSystemVectorType& RHS_Contribution,
         LocalSystemMatrixType& D,
         LocalSystemMatrixType& M,
+        LocalSystemMatrixType& K,
         ProcessInfo& rCurrentProcessInfo
         ) override
     {
         const std::size_t this_thread = OpenMPUtils::ThisThread();
-        
+
         // Adding inertia contribution
         if (M.size1() != 0) {
             pElement->GetSecondDerivativesVector(mVector.a[this_thread], 0);
@@ -541,7 +542,7 @@ protected:
 
             pElement->GetSecondDerivativesVector(mVector.ap[this_thread], 1);
             noalias(mVector.a[this_thread]) += mAlpha.m * mVector.ap[this_thread];
-            
+
             noalias(RHS_Contribution) -= prod(M, mVector.a[this_thread]);
         }
 
@@ -571,7 +572,7 @@ protected:
         ) override
     {
         const std::size_t this_thread = OpenMPUtils::ThisThread();
-        
+
         // Adding inertia contribution
         if (M.size1() != 0) {
             pCondition->GetSecondDerivativesVector(mVector.a[this_thread], 0);
@@ -590,6 +591,21 @@ protected:
 
             noalias(RHS_Contribution) -= prod(D, mVector.v[this_thread]);
         }
+    }
+
+    bool GetMassMatrixNeeded() override
+    {
+        return true;
+    }
+
+    bool GetDampingMatrixNeeded() override
+    {
+        return true;
+    }
+
+    bool GetStiffnessMatrixNeeded() override
+    {
+        return false;
     }
 
     ///@}

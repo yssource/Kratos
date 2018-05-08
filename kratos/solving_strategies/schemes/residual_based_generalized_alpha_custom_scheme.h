@@ -95,25 +95,25 @@ public:
         :ImplicitBaseType()
     {
 
-        mGeneralizedAlpha.alpha_m = rAlphaM;
-        mGeneralizedAlpha.alpha_f = rAlphaF;
+        mGenAlpha.alpha_m = rAlphaM;
+        mGenAlpha.alpha_f = rAlphaF;
 
         // Calcualte generalized alpha coefficients
-        mGeneralizedAlpha.beta  = 0.25 * (1 - rAlphaM + rAlphaF) * (1 - rAlphaM + rAlphaF);
-        mGeneralizedAlpha.gamma = 0.5 - rAlphaM + rAlphaF;
+        mGenAlpha.beta  = 0.25 * (1 - rAlphaM + rAlphaF) * (1 - rAlphaM + rAlphaF);
+        mGenAlpha.gamma = 0.5 - rAlphaM + rAlphaF;
 
         // Allocate auxiliary memory
         const std::size_t num_threads = OpenMPUtils::GetNumThreads();
 
-        mVector.v.resize(num_threads);
-        mVector.a.resize(num_threads);
-        mVector.ap.resize(num_threads);
+        mVector.previous_velocity.resize(num_threads);
+        mVector.previous_acceleration.resize(num_threads);
+        mVector.previous_displacement.resize(num_threads);
 
         KRATOS_DETAIL("MECHANICAL SCHEME: The Generalized Alpha Time Integration Scheme ")
-        << "[alpha_m = " << mGeneralizedAlpha.alpha_m
-        << " alpha_f = " << mGeneralizedAlpha.alpha_f
-        << " beta = " << mGeneralizedAlpha.beta
-        << " gamma = " << mGeneralizedAlpha.gamma << "]" <<std::endl;
+        << "[alpha_m = " << mGenAlpha.alpha_m
+        << " alpha_f = " << mGenAlpha.alpha_f
+        << " beta = " << mGenAlpha.beta
+        << " gamma = " << mGenAlpha.gamma << "]" <<std::endl;
     }
 
     /**
@@ -121,7 +121,7 @@ public:
      */
     ResidualBasedGeneralizedAlphaCustomScheme(ResidualBasedGeneralizedAlphaCustomScheme& rOther)
         :ImplicitBaseType(rOther)
-        ,mGeneralizedAlpha(rOther.mGeneralizedAlpha)
+        ,mGenAlpha(rOther.mGenAlpha)
         ,mVector(rOther.mVector)
     {
     }
@@ -245,7 +245,7 @@ public:
             array_1d<double, 3 > & current_displacement        = (it_node)->FastGetSolutionStepValue(DISPLACEMENT);
 
             if (it_node -> IsFixed(ACCELERATION_X)) {
-                current_displacement[0] = previous_displacement[0] + delta_time * previous_velocity[0] + std::pow(delta_time, 2) * ( 0.5 * (1.0 -  2.0 * mGeneralizedAlpha.beta) * previous_acceleration[0] + mGeneralizedAlpha.beta * current_acceleration[0]);
+                current_displacement[0] = previous_displacement[0] + delta_time * previous_velocity[0] + std::pow(delta_time, 2) * ( 0.5 * (1.0 -  2.0 * mGenAlpha.beta) * previous_acceleration[0] + mGenAlpha.beta * current_acceleration[0]);
             } else if (it_node -> IsFixed(VELOCITY_X)) {
                 current_displacement[0] = previous_displacement[0] + 0.5 * delta_time * (previous_velocity[0] + current_velocity[0]) + 0.5 * std::pow(delta_time, 2) * previous_acceleration[0];
             } else if (it_node -> IsFixed(DISPLACEMENT_X) == false) {
@@ -253,7 +253,7 @@ public:
             }
 
             if (it_node -> IsFixed(ACCELERATION_Y)) {
-                current_displacement[1] = previous_displacement[1] + delta_time * previous_velocity[1] + std::pow(delta_time, 2) * ( 0.5 * (1.0 -  2.0 * mGeneralizedAlpha.beta) * previous_acceleration[1] + mGeneralizedAlpha.beta * current_acceleration[1]);
+                current_displacement[1] = previous_displacement[1] + delta_time * previous_velocity[1] + std::pow(delta_time, 2) * ( 0.5 * (1.0 -  2.0 * mGenAlpha.beta) * previous_acceleration[1] + mGenAlpha.beta * current_acceleration[1]);
             } else if (it_node -> IsFixed(VELOCITY_Y)) {
                 current_displacement[1] = previous_displacement[1] + 0.5 * delta_time * (previous_velocity[1] + current_velocity[1]) + 0.5 * std::pow(delta_time, 2) * previous_acceleration[1] ;
             } else if (it_node -> IsFixed(DISPLACEMENT_Y) == false) {
@@ -263,7 +263,7 @@ public:
             // For 3D cases
             if (it_node -> HasDofFor(DISPLACEMENT_Z)) {
                 if (it_node -> IsFixed(ACCELERATION_Z)) {
-                    current_displacement[2] = previous_displacement[2] + delta_time * previous_velocity[2] + std::pow(delta_time, 2) * ( 0.5 * (1.0 -  2.0 * mGeneralizedAlpha.beta) * previous_acceleration[2] + mGeneralizedAlpha.beta * current_acceleration[2]);
+                    current_displacement[2] = previous_displacement[2] + delta_time * previous_velocity[2] + std::pow(delta_time, 2) * ( 0.5 * (1.0 -  2.0 * mGenAlpha.beta) * previous_acceleration[2] + mGenAlpha.beta * current_acceleration[2]);
                 } else if (it_node -> IsFixed(VELOCITY_Z)) {
                     current_displacement[2] = previous_displacement[2] + 0.5 * delta_time * (previous_velocity[2] + current_velocity[2]) + 0.5 * std::pow(delta_time, 2) * previous_acceleration[2] ;
                 } else if (it_node -> IsFixed(DISPLACEMENT_Z) == false) {
@@ -307,10 +307,10 @@ public:
         const double delta_time = current_process_info[DELTA_TIME];
 
         // Initializing generalized alpha constants
-        mGeneralizedAlpha.c0 = ( 1.0 / (mGeneralizedAlpha.beta * std::pow(delta_time, 2)) );
-        mGeneralizedAlpha.c1 = ( 1.0 / (mGeneralizedAlpha.beta * delta_time) );
-        mGeneralizedAlpha.c2 = ( 1.0 / (mGeneralizedAlpha.beta * 2.0) );
-        mGeneralizedAlpha.c3 = delta_time;
+        mGenAlpha.c0 = ( 1.0 / (mGenAlpha.beta * std::pow(delta_time, 2)) );
+        mGenAlpha.c1 = ( 1.0 / (mGenAlpha.beta * delta_time) );
+        mGenAlpha.c2 = ( 1.0 / (mGenAlpha.beta * 2.0) );
+        mGenAlpha.c3 = delta_time;
         KRATOS_CATCH( "" );
     }
 
@@ -352,7 +352,9 @@ public:
         KRATOS_ERROR_IF(rModelPart.GetBufferSize() < 2) << "Insufficient buffer size. Buffer size should be greater than 2. Current size is" << rModelPart.GetBufferSize() << std::endl;
 
         // Check for admissible value of the AlphaBossak
-        //KRATOS_ERROR_IF(mAlpha.m > 0.0 || mAlpha.m < -0.3) << "Value not admissible for AlphaBossak. Admissible values should be between 0.0 and -0.3. Current value is " << mAlpha.m << std::endl;
+        KRATOS_ERROR_IF(mGenAlpha.alpha_m > 0.5 || mGenAlpha.alpha_f > 0.5)
+        << "Maximum value for alpha_m and alpha_f is less than 0.5.  Current values are: akpha_m = "
+        << mGenAlpha.alpha_m << " and alpha_f = " << mGenAlpha.alpha_f << std::endl;
 
         return 0;
         KRATOS_CATCH( "" );
@@ -399,12 +401,12 @@ protected:
      */
     struct GeneralVectors
     {
-        std::vector< Vector > v;  /// Velocity
-        std::vector< Vector > a;  /// Acceleration
-        std::vector< Vector > ap; /// Previous acceleration
+        std::vector< Vector > previous_displacement;
+        std::vector< Vector > previous_velocity;
+        std::vector< Vector > previous_acceleration;
     };
 
-    GeneralizedAlphaMethod mGeneralizedAlpha; /// The structure containing the Generalized alpha components
+    GeneralizedAlphaMethod mGenAlpha; /// The structure containing the Generalized alpha components
     GeneralVectors mVector;        /// The structure containing the velocities and accelerations
 
     ///@}
@@ -431,9 +433,9 @@ protected:
         )
     {
 
-        noalias(CurrentVelocity) = PreviousVelocity + mGeneralizedAlpha.c3 * ( (1 - mGeneralizedAlpha.gamma)* PreviousAcceleration
-        + mGeneralizedAlpha.gamma * mGeneralizedAlpha.c0 * DeltaDisplacement - mGeneralizedAlpha.gamma * mGeneralizedAlpha.c1 * PreviousVelocity +
-        (mGeneralizedAlpha.gamma - mGeneralizedAlpha.gamma * mGeneralizedAlpha.c2) * PreviousAcceleration );
+        noalias(CurrentVelocity) = PreviousVelocity + mGenAlpha.c3 * ( (1 - mGenAlpha.gamma)* PreviousAcceleration
+        + mGenAlpha.gamma * mGenAlpha.c0 * DeltaDisplacement - mGenAlpha.gamma * mGenAlpha.c1 * PreviousVelocity +
+        (mGenAlpha.gamma - mGenAlpha.gamma * mGenAlpha.c2) * PreviousAcceleration );
     }
 
     /**
@@ -451,12 +453,13 @@ protected:
         const array_1d<double, 3>& PreviousAcceleration
         )
     {
-        noalias(CurrentAcceleration) = mGeneralizedAlpha.c0 * DeltaDisplacement
-        - mGeneralizedAlpha.c1 * PreviousVelocity + (1 - mGeneralizedAlpha.c2) * PreviousAcceleration;
+        noalias(CurrentAcceleration) = mGenAlpha.c0 * DeltaDisplacement
+        - mGenAlpha.c1 * PreviousVelocity + (1 - mGenAlpha.c2) * PreviousAcceleration;
     }
 
     /**
-     * @brief It adds the dynamic LHS contribution of the elements M*c0 + D*c1 + K
+     * @brief It adds the dynamic LHS contribution of the elements
+     * M*(c0 - alpha_m*c0) + D*(gamma * c1 - alpha_f * gamma * c1) + K * (1 - alpha_f)
      * @param LHS_Contribution The dynamic contribution for the LHS
      * @param D The damping matrix
      * @param M The mass matrix
@@ -467,18 +470,25 @@ protected:
         LocalSystemMatrixType& LHS_Contribution,
         LocalSystemMatrixType& D,
         LocalSystemMatrixType& M,
+        LocalSystemMatrixType& K,
         ProcessInfo& rCurrentProcessInfo
         ) override
     {
         // Adding mass contribution to the dynamic stiffness
         if (M.size1() != 0) // if M matrix declared
-            noalias(LHS_Contribution) += M * (mGeneralizedAlpha.c0
-            - mGeneralizedAlpha.alpha_m * mGeneralizedAlpha.c0);
+            noalias(LHS_Contribution) += M * (mGenAlpha.c0
+            - mGenAlpha.alpha_m * mGenAlpha.c0);
 
-        // Adding  damping contribution
+
+        // Adding damping contribution
         if (D.size1() != 0) // if D matrix declared
-            noalias(LHS_Contribution) += D * (mGeneralizedAlpha.c1
-            - mGeneralizedAlpha.alpha_f * mGeneralizedAlpha.c1);
+            noalias(LHS_Contribution) += D * ( mGenAlpha.gamma * mGenAlpha.c1
+            - mGenAlpha.alpha_f * mGenAlpha.gamma * mGenAlpha.c1 );
+
+        //Adding stiffness contribution
+        if (K.size1() != 0) // if D matrix declared
+            noalias(LHS_Contribution) += K * (1 - mGenAlpha.alpha_f);
+
     }
 
     /**
@@ -495,6 +505,7 @@ protected:
         LocalSystemVectorType& RHS_Contribution,
         LocalSystemMatrixType& D,
         LocalSystemMatrixType& M,
+        LocalSystemMatrixType& K,
         ProcessInfo& rCurrentProcessInfo
         ) override
     {
@@ -502,21 +513,69 @@ protected:
 
         // Adding inertia contribution
         if (M.size1() != 0) {
-            pElement->GetSecondDerivativesVector(mVector.a[this_thread], 0);
-            mVector.a[this_thread] *= (1.00 - mGeneralizedAlpha.alpha_m);
 
-            pElement->GetSecondDerivativesVector(mVector.ap[this_thread], 1);
-            noalias(mVector.a[this_thread]) += mGeneralizedAlpha.alpha_m * mVector.ap[this_thread];
+            pElement->GetSecondDerivativesVector(mVector.previous_acceleration[this_thread], 1);
+            mVector.previous_acceleration[this_thread] *=
+            (mGenAlpha.c2 - mGenAlpha.alpha_m * mGenAlpha.c2 - 1);
 
-            noalias(RHS_Contribution) -= prod(M, mVector.a[this_thread]);
+            pElement->GetFirstDerivativesVector(mVector.previous_velocity[this_thread], 1);
+            mVector.previous_velocity[this_thread] *= (mGenAlpha.c1 - mGenAlpha.alpha_m * mGenAlpha.c1);
+
+            pElement->GetValuesVector(mVector.previous_displacement[this_thread], 1);
+            mVector.previous_displacement[this_thread] *= (mGenAlpha.c0 - mGenAlpha.alpha_m * mGenAlpha.c0);
+
+            noalias(RHS_Contribution) += prod(M, mVector.previous_acceleration[this_thread]);
+            noalias(RHS_Contribution) += prod(M, mVector.previous_velocity[this_thread]);
+            noalias(RHS_Contribution) += prod(M, mVector.previous_displacement[this_thread]);
         }
 
         // Adding damping contribution
         if (D.size1() != 0) {
-            pElement->GetFirstDerivativesVector(mVector.v[this_thread], 0);
 
-            noalias(RHS_Contribution) -= prod(D, mVector.v[this_thread]);
+            pElement->GetSecondDerivativesVector(mVector.previous_acceleration[this_thread], 1);
+            mVector.previous_acceleration[this_thread] *=
+            (mGenAlpha.c3 * mGenAlpha.alpha_f
+            + mGenAlpha.c3 * mGenAlpha.gamma * mGenAlpha.c2
+            - mGenAlpha.c3
+            - mGenAlpha.c3 * mGenAlpha.alpha_f * mGenAlpha.gamma * mGenAlpha.c2);
+
+            pElement->GetFirstDerivativesVector(mVector.previous_velocity[this_thread], 1);
+            mVector.previous_velocity[this_thread] *= (mGenAlpha.gamma / mGenAlpha.beta
+            - mGenAlpha.alpha_f * mGenAlpha.gamma / mGenAlpha.beta
+            - 1);
+
+            pElement->GetValuesVector(mVector.previous_displacement[this_thread], 1);
+            mVector.previous_displacement[this_thread] *= (mGenAlpha.gamma * mGenAlpha.c1
+            - mGenAlpha.alpha_f * mGenAlpha.gamma * mGenAlpha.c1);
+
+            noalias(RHS_Contribution) += prod(D, mVector.previous_acceleration[this_thread]);
+            noalias(RHS_Contribution) += prod(D, mVector.previous_velocity[this_thread]);
+            noalias(RHS_Contribution) += prod(D, mVector.previous_displacement[this_thread]);
         }
+        // Adding stiffness contribution
+        if (K.size1() != 0) {
+            pElement->GetValuesVector(mVector.previous_displacement[this_thread], 1);
+            mVector.previous_displacement[this_thread] *= mGenAlpha.alpha_f;
+
+            noalias(RHS_Contribution) -= prod(K, mVector.previous_displacement[this_thread]);
+
+        }
+
+    }
+
+    bool GetMassMatrixNeeded() override
+    {
+        return true;
+    }
+
+    bool GetDampingMatrixNeeded() override
+    {
+        return true;
+    }
+
+    bool GetStiffnessMatrixNeeded() override
+    {
+        return true;
     }
 
     ///@}

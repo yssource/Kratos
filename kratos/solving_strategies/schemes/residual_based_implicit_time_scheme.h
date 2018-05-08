@@ -90,6 +90,7 @@ public:
 
         mMatrix.M.resize(num_threads);
         mMatrix.D.resize(num_threads);
+        mMatrix.K.resize(num_threads);
     }
 
     /** Copy Constructor.
@@ -139,20 +140,20 @@ public:
         KRATOS_TRY;
 
         ProcessInfo& current_process_info = rModelPart.GetProcessInfo();
-        
+
         #pragma omp parallel for
         for(int i=0; i<static_cast<int>(rModelPart.Elements().size()); ++i) {
             auto it_elem = rModelPart.ElementsBegin() + i;
             it_elem->InitializeNonLinearIteration(current_process_info);
         }
-        
-        
+
+
         #pragma omp parallel for
         for(int i=0; i<static_cast<int>(rModelPart.Conditions().size()); ++i) {
             auto it_elem = rModelPart.ConditionsBegin() + i;
             it_elem->InitializeNonLinearIteration(current_process_info);
-        }     
-        
+        }
+
         KRATOS_CATCH( "" );
     }
 
@@ -169,7 +170,7 @@ public:
     {
         pCondition->InitializeNonLinearIteration(rCurrentProcessInfo);
     }
-    
+
     /**
      * @brief It initializes a non-linear iteration (for an individual element)
      * @param pElement The element to compute
@@ -211,13 +212,16 @@ public:
 
         pElement->EquationIdVector(EquationId,rCurrentProcessInfo);
 
-        pElement->CalculateMassMatrix(mMatrix.M[this_thread],rCurrentProcessInfo);
+        if (GetMassMatrixNeeded() == true)
+            pElement->CalculateMassMatrix(mMatrix.M[this_thread],rCurrentProcessInfo);
+        if (GetDampingMatrixNeeded() == true)
+            pElement->CalculateDampingMatrix(mMatrix.D[this_thread],rCurrentProcessInfo);
+        if (GetStiffnessMatrixNeeded() == true)
+            pElement->CalculateLeftHandSide(mMatrix.K[this_thread], rCurrentProcessInfo);
 
-        pElement->CalculateDampingMatrix(mMatrix.D[this_thread],rCurrentProcessInfo);
+        AddDynamicsToLHS(LHS_Contribution, mMatrix.D[this_thread], mMatrix.M[this_thread], mMatrix.K[this_thread], rCurrentProcessInfo);
 
-        AddDynamicsToLHS(LHS_Contribution, mMatrix.D[this_thread], mMatrix.M[this_thread], rCurrentProcessInfo);
-
-        AddDynamicsToRHS(pElement, RHS_Contribution, mMatrix.D[this_thread], mMatrix.M[this_thread], rCurrentProcessInfo);
+        AddDynamicsToRHS(pElement, RHS_Contribution, mMatrix.D[this_thread], mMatrix.M[this_thread], mMatrix.K[this_thread], rCurrentProcessInfo);
 
         KRATOS_CATCH( "" );
     }
@@ -247,13 +251,16 @@ public:
         // Basic operations for the element considered
         pElement->CalculateRightHandSide(RHS_Contribution,rCurrentProcessInfo);
 
-        pElement->CalculateMassMatrix(mMatrix.M[this_thread], rCurrentProcessInfo);
-
-        pElement->CalculateDampingMatrix(mMatrix.D[this_thread],rCurrentProcessInfo);
+        if (GetMassMatrixNeeded() == true)
+            pElement->CalculateMassMatrix(mMatrix.M[this_thread],rCurrentProcessInfo);
+        if (GetDampingMatrixNeeded() == true)
+            pElement->CalculateDampingMatrix(mMatrix.D[this_thread],rCurrentProcessInfo);
+        if (GetStiffnessMatrixNeeded() == true)
+            pElement->CalculateLeftHandSide(mMatrix.K[this_thread], rCurrentProcessInfo);
 
         pElement->EquationIdVector(EquationId,rCurrentProcessInfo);
 
-        AddDynamicsToRHS (pElement, RHS_Contribution, mMatrix.D[this_thread], mMatrix.M[this_thread], rCurrentProcessInfo);
+        AddDynamicsToRHS (pElement, RHS_Contribution, mMatrix.D[this_thread], mMatrix.M[this_thread], mMatrix.K[this_thread], rCurrentProcessInfo);
 
         KRATOS_CATCH( "" );
     }
@@ -336,7 +343,7 @@ public:
 
         KRATOS_CATCH( "" );
     }
-    
+
     /**
      * @brief It initializes time step solution. Only for reasons if the time step solution is restarted
      * @param rModelPart The model of the problem to solve
@@ -344,7 +351,7 @@ public:
      * @param Dx Incremental update of primary variables
      * @param b RHS Vector
      */
-    
+
     void InitializeSolutionStep(
         ModelPart& rModelPart,
         TSystemMatrixType& A,
@@ -361,13 +368,13 @@ public:
         const double delta_time = current_process_info[DELTA_TIME];
 
         KRATOS_ERROR_IF(delta_time < 1.0e-24) << "ERROR:: Detected delta_time = 0 in the Solution Scheme DELTA_TIME. PLEASE : check if the time step is created correctly for the current time step" << std::endl;
-        
+
         KRATOS_CATCH( "" );
     }
-    
+
     /**
      * @brief This function is designed to be called once to perform all the checks needed
-     * on the input provided. 
+     * on the input provided.
      * @details Checks can be "expensive" as the function is designed
      * to catch user's errors.
      * @param rModelPart The model of the problem to solve
@@ -382,7 +389,7 @@ public:
         if(err!=0) return err;
 
         return 0;
-        
+
         KRATOS_CATCH( "" );
     }
 
@@ -416,10 +423,11 @@ protected:
     {
         std::vector< Matrix > M; /// First derivative matrix  (usually mass matrix)
         std::vector< Matrix > D; /// Second derivative matrix (usually damping matrix)
+        std::vector< Matrix > K; /// Zero derivative matrix (usuall stiffness matrix)
     };
-    
+
     GeneralMatrices mMatrix;
-    
+
     ///@}
     ///@name Protected Operators
     ///@{
@@ -428,7 +436,42 @@ protected:
     ///@name Protected Operations
     ///@{
 
-    /**
+    virtual bool GetMassMatrixNeeded()
+    {
+        KRATOS_ERROR << "YOU ARE CALLING THE BASE CLASS OF GetMassMatrixNeeded" << std::endl;
+    }
+
+    virtual bool GetDampingMatrixNeeded()
+    {
+        KRATOS_ERROR << "YOU ARE CALLING THE BASE CLASS OF GetDampingMatrixNeeded" << std::endl;
+    }
+
+    virtual bool GetStiffnessMatrixNeeded()
+    {
+        KRATOS_ERROR << "YOU ARE CALLING THE BASE CLASS OF GetStiffnessMatrixNeeded" << std::endl;
+    }
+
+
+     /**
+     * @brief It adds the dynamic LHS contribution of the elements LHS = d(-RHS)/d(un0) = c0*c0*M + c0*D + K
+     * @param LHS_Contribution The dynamic contribution for the LHS
+     * @param D The damping matrix
+     * @param M The mass matrix
+     * @param rCurrentProcessInfo The current process info instance
+     */
+
+    virtual void AddDynamicsToLHS(
+        LocalSystemMatrixType& LHS_Contribution,
+        LocalSystemMatrixType& D,
+        LocalSystemMatrixType& M,
+        LocalSystemMatrixType& K,
+        ProcessInfo& rCurrentProcessInfo
+        )
+    {
+        KRATOS_ERROR << "YOU ARE CALLING THE BASE CLASS OF AddDynamicsToLHS" << std::endl;
+    }
+
+     /**
      * @brief It adds the dynamic LHS contribution of the elements LHS = d(-RHS)/d(un0) = c0*c0*M + c0*D + K
      * @param LHS_Contribution The dynamic contribution for the LHS
      * @param D The damping matrix
@@ -461,6 +504,7 @@ protected:
         LocalSystemVectorType& RHS_Contribution,
         LocalSystemMatrixType& D,
         LocalSystemMatrixType& M,
+        LocalSystemMatrixType& K,
         ProcessInfo& rCurrentProcessInfo
         )
     {

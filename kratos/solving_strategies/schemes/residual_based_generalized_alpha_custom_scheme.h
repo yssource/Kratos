@@ -108,6 +108,7 @@ public:
         mVector.previous_velocity.resize(num_threads);
         mVector.previous_acceleration.resize(num_threads);
         mVector.previous_displacement.resize(num_threads);
+        mVector.intermediate_values.resize(num_threads);
 
         KRATOS_DETAIL("MECHANICAL SCHEME: The Generalized Alpha Time Integration Scheme ")
         << "[alpha_m = " << mGenAlpha.alpha_m
@@ -404,6 +405,8 @@ protected:
         std::vector< Vector > previous_displacement;
         std::vector< Vector > previous_velocity;
         std::vector< Vector > previous_acceleration;
+        std::vector< Vector > intermediate_values;
+
     };
 
     GeneralizedAlphaMethod mGenAlpha; /// The structure containing the Generalized alpha components
@@ -514,19 +517,24 @@ protected:
         // Adding inertia contribution
         if (M.size1() != 0) {
 
-            pElement->GetSecondDerivativesVector(mVector.previous_acceleration[this_thread], 1);
+            pElement->GetSecondDerivativesVector(mVector.previous_acceleration[this_thread], 0);
             mVector.previous_acceleration[this_thread] *=
             (mGenAlpha.c2 - mGenAlpha.alpha_m * mGenAlpha.c2 - 1);
 
-            pElement->GetFirstDerivativesVector(mVector.previous_velocity[this_thread], 1);
+            pElement->GetFirstDerivativesVector(mVector.previous_velocity[this_thread], 0);
             mVector.previous_velocity[this_thread] *= (mGenAlpha.c1 - mGenAlpha.alpha_m * mGenAlpha.c1);
 
-            pElement->GetValuesVector(mVector.previous_displacement[this_thread], 1);
+            pElement->GetValuesVector(mVector.previous_displacement[this_thread], 0);
             mVector.previous_displacement[this_thread] *= (mGenAlpha.c0 - mGenAlpha.alpha_m * mGenAlpha.c0);
 
-            noalias(RHS_Contribution) += prod(M, mVector.previous_acceleration[this_thread]);
-            noalias(RHS_Contribution) += prod(M, mVector.previous_velocity[this_thread]);
-            noalias(RHS_Contribution) += prod(M, mVector.previous_displacement[this_thread]);
+
+            mVector.intermediate_values[this_thread].resize(mVector.previous_acceleration[this_thread].size());
+
+            mVector.intermediate_values[this_thread] = mVector.previous_acceleration[this_thread];
+            mVector.intermediate_values[this_thread] += mVector.previous_velocity[this_thread];
+            mVector.intermediate_values[this_thread] += mVector.previous_displacement[this_thread];
+
+            noalias(RHS_Contribution) += prod(M, mVector.intermediate_values[this_thread]);
         }
 
         // Adding damping contribution
@@ -548,13 +556,13 @@ protected:
             mVector.previous_displacement[this_thread] *= (mGenAlpha.gamma * mGenAlpha.c1
             - mGenAlpha.alpha_f * mGenAlpha.gamma * mGenAlpha.c1);
 
-            noalias(RHS_Contribution) += prod(D, mVector.previous_acceleration[this_thread]);
-            noalias(RHS_Contribution) += prod(D, mVector.previous_velocity[this_thread]);
-            noalias(RHS_Contribution) += prod(D, mVector.previous_displacement[this_thread]);
+            noalias(RHS_Contribution) -= prod(D, mVector.previous_acceleration[this_thread]);
+            noalias(RHS_Contribution) -= prod(D, mVector.previous_velocity[this_thread]);
+            noalias(RHS_Contribution) -= prod(D, mVector.previous_displacement[this_thread]);
         }
         // Adding stiffness contribution
         if (K.size1() != 0) {
-            pElement->GetValuesVector(mVector.previous_displacement[this_thread], 1);
+            pElement->GetValuesVector(mVector.previous_displacement[this_thread], 0);
             mVector.previous_displacement[this_thread] *= mGenAlpha.alpha_f;
 
             noalias(RHS_Contribution) -= prod(K, mVector.previous_displacement[this_thread]);

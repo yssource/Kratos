@@ -269,7 +269,7 @@ namespace Kratos
 	         class_< ResidualBasedGeneralizedAlphaCustomSchemeType,
                    typename ResidualBasedGeneralizedAlphaCustomSchemeType::Pointer,
                    BaseSchemeType >(m,"ResidualBasedGeneralizedAlphaCustomScheme")
-                   .def(init< >() )
+                   .def(init< double, double >() )
                    .def("Initialize", &ResidualBasedGeneralizedAlphaCustomScheme<SparseSpaceType, LocalSpaceType>::Initialize)
                    ;
 

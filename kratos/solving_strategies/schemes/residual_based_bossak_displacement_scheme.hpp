@@ -503,6 +503,7 @@ protected:
         LocalSystemMatrixType& LHS_Contribution,
         LocalSystemMatrixType& D,
         LocalSystemMatrixType& M,
+        LocalSystemMatrixType& K,
         ProcessInfo& rCurrentProcessInfo
         ) override
     {

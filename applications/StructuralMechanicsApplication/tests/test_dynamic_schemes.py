@@ -1,4 +1,5 @@
 from __future__ import print_function, absolute_import, division
+
 import KratosMultiphysics
 
 import KratosMultiphysics.StructuralMechanicsApplication as StructuralMechanicsApplication
@@ -147,6 +148,9 @@ class DynamicSchemesTests(KratosUnittest.TestCase):
     def test_spring_bossak_scheme(self):
         self._base_spring_test_dynamic_schemes("bossak", 2)
 
+    def test_spring_generalized_alpha_scheme(self):
+        self._base_spring_test_dynamic_schemes("generalized_alpha", 2)
+
     def test_spring_newmark_scheme(self):
         self._base_spring_test_dynamic_schemes("newmark", 2)
 
@@ -201,8 +205,12 @@ def create_solver(mp, scheme_name):
         scheme = KratosMultiphysics.ResidualBasedBDFDisplacementScheme(1)
     elif (scheme_name == "bdf2"):
         scheme = KratosMultiphysics.ResidualBasedBDFDisplacementScheme(2)
+    elif (scheme_name == "generalized_alpha"):
+        damp_factor_m = 0.5
+        damp_factor_f = 0.5
+        scheme = KratosMultiphysics.ResidualBasedGeneralizedAlphaCustomScheme(damp_factor_m, damp_factor_f)
     else:
-        damp_factor_m = 0.0
+        damp_factor_m = -0.30
         scheme = KratosMultiphysics.ResidualBasedBossakDisplacementScheme(damp_factor_m)
     # Convergence_criterion = KratosMultiphysics.ResidualCriteria(1e-14,1e-20)
     convergence_criterion = KratosMultiphysics.ResidualCriteria(1e-4,1e-9)

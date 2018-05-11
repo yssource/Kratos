@@ -511,6 +511,11 @@ protected:
         if (M.size1() != 0) // if M matrix declared
             noalias(LHS_Contribution) += M * (1.0 - mAlpha.m) * mNewmark.c0;
 
+            //TSparseSpace::WriteMatrixMarketMatrix("BossakLHS", LHS_Contribution, true);
+            std::cout<<"Bossak LHS"<<std::endl;
+            KRATOS_WATCH(LHS_Contribution)
+
+
         // Adding  damping contribution
         if (D.size1() != 0) // if D matrix declared
             noalias(LHS_Contribution) += D * (1.0 - mAlpha.f) * mNewmark.c1;
@@ -545,6 +550,11 @@ protected:
             noalias(mVector.a[this_thread]) += mAlpha.m * mVector.ap[this_thread];
 
             noalias(RHS_Contribution) -= prod(M, mVector.a[this_thread]);
+
+            TSparseSpace::WriteMatrixMarketVector("BossakRHS", RHS_Contribution);
+            std::cout<<"Bossak RHS"<<std::endl;
+            KRATOS_WATCH(RHS_Contribution)
+
         }
 
         // Adding damping contribution
@@ -569,6 +579,7 @@ protected:
         LocalSystemVectorType& RHS_Contribution,
         LocalSystemMatrixType& D,
         LocalSystemMatrixType& M,
+        LocalSystemMatrixType& K,
         ProcessInfo& rCurrentProcessInfo
         ) override
     {

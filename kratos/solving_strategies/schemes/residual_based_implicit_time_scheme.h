@@ -294,13 +294,16 @@ public:
 
         pCondition->EquationIdVector(EquationId,rCurrentProcessInfo);
 
-        pCondition->CalculateMassMatrix(mMatrix.M[this_thread], rCurrentProcessInfo);
+        if (GetMassMatrixNeeded() == true)
+            pCondition->CalculateMassMatrix(mMatrix.M[this_thread],rCurrentProcessInfo);
+        if (GetDampingMatrixNeeded() == true)
+            pCondition->CalculateDampingMatrix(mMatrix.D[this_thread],rCurrentProcessInfo);
+        if (GetStiffnessMatrixNeeded() == true)
+            pCondition->CalculateLeftHandSide(mMatrix.K[this_thread], rCurrentProcessInfo);
 
-        pCondition->CalculateDampingMatrix(mMatrix.D[this_thread],rCurrentProcessInfo);
+        AddDynamicsToLHS(LHS_Contribution, mMatrix.D[this_thread], mMatrix.M[this_thread], mMatrix.K[this_thread], rCurrentProcessInfo);
 
-        AddDynamicsToLHS(LHS_Contribution, mMatrix.D[this_thread], mMatrix.M[this_thread], rCurrentProcessInfo);
-
-        AddDynamicsToRHS(pCondition, RHS_Contribution, mMatrix.D[this_thread], mMatrix.M[this_thread], rCurrentProcessInfo);
+        AddDynamicsToRHS(pCondition, RHS_Contribution, mMatrix.D[this_thread], mMatrix.M[this_thread], mMatrix.K[this_thread], rCurrentProcessInfo);
 
         // AssembleTimeSpaceLHS_Condition(pCondition, LHS_Contribution,DampMatrix, MassMatrix,rCurrentProcessInfo);
 
@@ -334,12 +337,15 @@ public:
 
         pCondition->EquationIdVector(EquationId, rCurrentProcessInfo);
 
-        pCondition->CalculateMassMatrix(mMatrix.M[this_thread], rCurrentProcessInfo);
-
-        pCondition->CalculateDampingMatrix(mMatrix.D[this_thread], rCurrentProcessInfo);
+        if (GetMassMatrixNeeded() == true)
+            pCondition->CalculateMassMatrix(mMatrix.M[this_thread],rCurrentProcessInfo);
+        if (GetDampingMatrixNeeded() == true)
+            pCondition->CalculateDampingMatrix(mMatrix.D[this_thread],rCurrentProcessInfo);
+        if (GetStiffnessMatrixNeeded() == true)
+            pCondition->CalculateLeftHandSide(mMatrix.K[this_thread], rCurrentProcessInfo);
 
         // Adding the dynamic contributions (static is already included)
-        AddDynamicsToRHS(pCondition, RHS_Contribution, mMatrix.D[this_thread], mMatrix.M[this_thread], rCurrentProcessInfo);
+        AddDynamicsToRHS(pCondition, RHS_Contribution, mMatrix.D[this_thread], mMatrix.M[this_thread], mMatrix.K[this_thread], rCurrentProcessInfo);
 
         KRATOS_CATCH( "" );
     }
@@ -525,6 +531,7 @@ protected:
         LocalSystemVectorType& RHS_Contribution,
         LocalSystemMatrixType& D,
         LocalSystemMatrixType& M,
+        LocalSystemMatrixType& K,
         ProcessInfo& rCurrentProcessInfo
         )
     {

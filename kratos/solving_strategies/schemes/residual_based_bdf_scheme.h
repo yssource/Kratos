@@ -475,6 +475,7 @@ protected:
         LocalSystemVectorType& RHS_Contribution,
         LocalSystemMatrixType& D,
         LocalSystemMatrixType& M,
+        LocalSystemMatrixType& K,
         ProcessInfo& rCurrentProcessInfo
         )
     {
@@ -512,7 +513,7 @@ protected:
         ProcessInfo& rCurrentProcessInfo
         ) override
     {
-        TemplateAddDynamicsToRHS<Element::Pointer>(pElement, RHS_Contribution, D, M, rCurrentProcessInfo);
+        TemplateAddDynamicsToRHS<Element::Pointer>(pElement, RHS_Contribution, D, M, K, rCurrentProcessInfo);
     }
 
     /**
@@ -530,10 +531,11 @@ protected:
         LocalSystemVectorType& RHS_Contribution,
         LocalSystemMatrixType& D,
         LocalSystemMatrixType& M,
+        LocalSystemMatrixType& K,
         ProcessInfo& rCurrentProcessInfo
         ) override
     {
-        TemplateAddDynamicsToRHS<Condition::Pointer>(pCondition, RHS_Contribution, D, M, rCurrentProcessInfo);
+        TemplateAddDynamicsToRHS<Condition::Pointer>(pCondition, RHS_Contribution, D, M, K, rCurrentProcessInfo);
     }
 
     bool GetMassMatrixNeeded() override

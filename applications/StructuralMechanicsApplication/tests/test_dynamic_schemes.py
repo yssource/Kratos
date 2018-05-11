@@ -11,7 +11,7 @@ class DynamicSchemesTests(KratosUnittest.TestCase):
     def setUp(self):
         pass
 
-    def _base_spring_test_dynamic_schemes(self, scheme_name = "bossak", buffer_size = 2, dt = 5.0e-3):
+    def _base_spring_test_dynamic_schemes(self, scheme_name = "bossak", buffer_size = 2, dt = 1.0e-3):
         mp = KratosMultiphysics.ModelPart("sdof")
         add_variables(mp)
 
@@ -36,7 +36,7 @@ class DynamicSchemesTests(KratosUnittest.TestCase):
 
         #time integration parameters
         time = 0.0
-        end_time = 0.05
+        end_time = 2.0e-3
         step = 0
 
         set_and_fill_buffer(mp,buffer_size,dt)
@@ -101,7 +101,7 @@ class DynamicSchemesTests(KratosUnittest.TestCase):
 
         #time integration parameters
         time = 0.0
-        end_time = 1.0e-1
+        end_time = 2.0e-2
         step = 0
 
         set_and_fill_buffer(mp,buffer_size,dt)
@@ -163,6 +163,9 @@ class DynamicSchemesTests(KratosUnittest.TestCase):
     def test_fall_bossak_scheme(self):
         self._base_fall_test_dynamic_schemes("bossak", 2)
 
+    def test_fall_generalized_alpha_scheme(self):
+        self._base_fall_test_dynamic_schemes("generalized_alpha", 2)
+
     def test_fall_newmark_scheme(self):
         self._base_fall_test_dynamic_schemes("newmark", 2)
 
@@ -206,11 +209,11 @@ def create_solver(mp, scheme_name):
     elif (scheme_name == "bdf2"):
         scheme = KratosMultiphysics.ResidualBasedBDFDisplacementScheme(2)
     elif (scheme_name == "generalized_alpha"):
-        damp_factor_m = 0.5
-        damp_factor_f = 0.5
+        damp_factor_m = 0.0
+        damp_factor_f = 0.0
         scheme = KratosMultiphysics.ResidualBasedGeneralizedAlphaCustomScheme(damp_factor_m, damp_factor_f)
     else:
-        damp_factor_m = -0.30
+        damp_factor_m = 0.0
         scheme = KratosMultiphysics.ResidualBasedBossakDisplacementScheme(damp_factor_m)
     # Convergence_criterion = KratosMultiphysics.ResidualCriteria(1e-14,1e-20)
     convergence_criterion = KratosMultiphysics.ResidualCriteria(1e-4,1e-9)

@@ -102,6 +102,10 @@ public:
         mGenAlpha.beta  = 0.25 * (1 - rAlphaM + rAlphaF) * (1 - rAlphaM + rAlphaF);
         mGenAlpha.gamma = 0.5 - rAlphaM + rAlphaF;
 
+        KRATOS_WATCH(mGenAlpha.beta);
+        KRATOS_WATCH(mGenAlpha.gamma);
+
+
         // Allocate auxiliary memory
         const std::size_t num_threads = OpenMPUtils::GetNumThreads();
 
@@ -197,8 +201,9 @@ public:
             array_1d<double, 3>& current_acceleration = it_node->FastGetSolutionStepValue(ACCELERATION);
             const array_1d<double, 3>& previous_acceleration = it_node->FastGetSolutionStepValue(ACCELERATION, 1);
 
-            UpdateVelocity(current_velocity, delta_displacement, previous_velocity, previous_acceleration);
             UpdateAcceleration(current_acceleration, delta_displacement, previous_velocity, previous_acceleration);
+            UpdateVelocity(current_velocity, current_acceleration, previous_velocity, previous_acceleration);
+
         }
 
         KRATOS_CATCH( "" );
@@ -213,7 +218,7 @@ public:
      * @param Dx Incremental update of primary variables
      * @param b RHS Vector
      */
-
+    /*
     void Predict(
         ModelPart& rModelPart,
         DofsArrayType& rDofSet,
@@ -283,7 +288,7 @@ public:
 
         KRATOS_CATCH( "" );
     }
-
+    */
     /**
      * @brief It initializes time step solution. Only for reasons if the time step solution is restarted
      * @param rModelPart The model of the problem to solve
@@ -430,15 +435,15 @@ protected:
 
     inline void UpdateVelocity(
         array_1d<double, 3>& CurrentVelocity,
-        const array_1d<double, 3>& DeltaDisplacement,
+        const array_1d<double, 3>& CurrentAcceleration,
         const array_1d<double, 3>& PreviousVelocity,
         const array_1d<double, 3>& PreviousAcceleration
         )
     {
 
-        noalias(CurrentVelocity) = PreviousVelocity + mGenAlpha.c3 * ( (1 - mGenAlpha.gamma)* PreviousAcceleration
-        + mGenAlpha.gamma * mGenAlpha.c0 * DeltaDisplacement - mGenAlpha.gamma * mGenAlpha.c1 * PreviousVelocity +
-        (mGenAlpha.gamma - mGenAlpha.gamma * mGenAlpha.c2) * PreviousAcceleration );
+        noalias(CurrentVelocity) = PreviousVelocity
+        + mGenAlpha.c3 * ( (1-mGenAlpha.gamma) * PreviousAcceleration
+        + mGenAlpha.gamma * CurrentAcceleration);
     }
 
     /**
@@ -448,6 +453,7 @@ protected:
      * @param PreviousVelocity The previous velocity
      * @param PreviousAcceleration The previous acceleration
      */
+
 
     inline void UpdateAcceleration(
         array_1d<double, 3>& CurrentAcceleration,
@@ -479,14 +485,18 @@ protected:
     {
         // Adding mass contribution to the dynamic stiffness
         if (M.size1() != 0) // if M matrix declared
-            noalias(LHS_Contribution) += M * (mGenAlpha.c0
-            - mGenAlpha.alpha_m * mGenAlpha.c0);
+            noalias(LHS_Contribution) += M * mGenAlpha.c0 *
+            (1 - mGenAlpha.alpha_m);
+
+        //TSparseSpace::WriteMatrixMarketMatrix("GenAlphaLHS", LHS_Contribution, false);
+        std::cout<<"GenAlpha LHS"<<std::endl;
+        KRATOS_WATCH(LHS_Contribution)
 
 
         // Adding damping contribution
         if (D.size1() != 0) // if D matrix declared
-            noalias(LHS_Contribution) += D * ( mGenAlpha.gamma * mGenAlpha.c1
-            - mGenAlpha.alpha_f * mGenAlpha.gamma * mGenAlpha.c1 );
+            noalias(LHS_Contribution) += D * mGenAlpha.gamma * mGenAlpha.c1 *
+           (1 - mGenAlpha.alpha_f);
 
         //Adding stiffness contribution
         if (K.size1() != 0) // if D matrix declared
@@ -517,14 +527,14 @@ protected:
         // Adding inertia contribution
         if (M.size1() != 0) {
 
-            pElement->GetSecondDerivativesVector(mVector.previous_acceleration[this_thread], 0);
+            pElement->GetSecondDerivativesVector(mVector.previous_acceleration[this_thread], 1);
             mVector.previous_acceleration[this_thread] *=
             (mGenAlpha.c2 - mGenAlpha.alpha_m * mGenAlpha.c2 - 1);
 
-            pElement->GetFirstDerivativesVector(mVector.previous_velocity[this_thread], 0);
+            pElement->GetFirstDerivativesVector(mVector.previous_velocity[this_thread], 1);
             mVector.previous_velocity[this_thread] *= (mGenAlpha.c1 - mGenAlpha.alpha_m * mGenAlpha.c1);
 
-            pElement->GetValuesVector(mVector.previous_displacement[this_thread], 0);
+            pElement->GetValuesVector(mVector.previous_displacement[this_thread], 1);
             mVector.previous_displacement[this_thread] *= (mGenAlpha.c0 - mGenAlpha.alpha_m * mGenAlpha.c0);
 
 
@@ -535,6 +545,10 @@ protected:
             mVector.intermediate_values[this_thread] += mVector.previous_displacement[this_thread];
 
             noalias(RHS_Contribution) += prod(M, mVector.intermediate_values[this_thread]);
+
+            TSparseSpace::WriteMatrixMarketVector("GenAlphaRHS", RHS_Contribution);
+            std::cout<<"GenAlpha RHS"<<std::endl;
+            KRATOS_WATCH(RHS_Contribution)
         }
 
         // Adding damping contribution
@@ -556,13 +570,92 @@ protected:
             mVector.previous_displacement[this_thread] *= (mGenAlpha.gamma * mGenAlpha.c1
             - mGenAlpha.alpha_f * mGenAlpha.gamma * mGenAlpha.c1);
 
-            noalias(RHS_Contribution) -= prod(D, mVector.previous_acceleration[this_thread]);
-            noalias(RHS_Contribution) -= prod(D, mVector.previous_velocity[this_thread]);
-            noalias(RHS_Contribution) -= prod(D, mVector.previous_displacement[this_thread]);
+            mVector.intermediate_values[this_thread].resize(mVector.previous_acceleration[this_thread].size());
+
+            mVector.intermediate_values[this_thread] = mVector.previous_acceleration[this_thread];
+            mVector.intermediate_values[this_thread] += mVector.previous_velocity[this_thread];
+            mVector.intermediate_values[this_thread] += mVector.previous_displacement[this_thread];
+
+            noalias(RHS_Contribution) += prod(D, mVector.intermediate_values[this_thread]);
+
         }
         // Adding stiffness contribution
         if (K.size1() != 0) {
             pElement->GetValuesVector(mVector.previous_displacement[this_thread], 0);
+            mVector.previous_displacement[this_thread] *= mGenAlpha.alpha_f;
+
+            noalias(RHS_Contribution) -= prod(K, mVector.previous_displacement[this_thread]);
+
+        }
+
+    }
+
+
+        void AddDynamicsToRHS(
+        Condition::Pointer pCondition,
+        LocalSystemVectorType& RHS_Contribution,
+        LocalSystemMatrixType& D,
+        LocalSystemMatrixType& M,
+        LocalSystemMatrixType& K,
+        ProcessInfo& rCurrentProcessInfo
+        ) override
+    {
+        const std::size_t this_thread = OpenMPUtils::ThisThread();
+
+        // Adding inertia contribution
+        if (M.size1() != 0) {
+
+            pCondition->GetSecondDerivativesVector(mVector.previous_acceleration[this_thread], 1);
+            mVector.previous_acceleration[this_thread] *=
+            (mGenAlpha.c2 - mGenAlpha.alpha_m * mGenAlpha.c2 - 1);
+
+            pCondition->GetFirstDerivativesVector(mVector.previous_velocity[this_thread], 1);
+            mVector.previous_velocity[this_thread] *= (mGenAlpha.c1 - mGenAlpha.alpha_m * mGenAlpha.c1);
+
+            pCondition->GetValuesVector(mVector.previous_displacement[this_thread], 1);
+            mVector.previous_displacement[this_thread] *= (mGenAlpha.c0 - mGenAlpha.alpha_m * mGenAlpha.c0);
+
+
+            mVector.intermediate_values[this_thread].resize(mVector.previous_acceleration[this_thread].size());
+
+            mVector.intermediate_values[this_thread] = mVector.previous_acceleration[this_thread];
+            mVector.intermediate_values[this_thread] += mVector.previous_velocity[this_thread];
+            mVector.intermediate_values[this_thread] += mVector.previous_displacement[this_thread];
+
+            noalias(RHS_Contribution) += prod(M, mVector.intermediate_values[this_thread]);
+        }
+
+        // Adding damping contribution
+        if (D.size1() != 0) {
+
+            pCondition->GetSecondDerivativesVector(mVector.previous_acceleration[this_thread], 1);
+            mVector.previous_acceleration[this_thread] *=
+            (mGenAlpha.c3 * mGenAlpha.alpha_f
+            + mGenAlpha.c3 * mGenAlpha.gamma * mGenAlpha.c2
+            - mGenAlpha.c3
+            - mGenAlpha.c3 * mGenAlpha.alpha_f * mGenAlpha.gamma * mGenAlpha.c2);
+
+            pCondition->GetFirstDerivativesVector(mVector.previous_velocity[this_thread], 1);
+            mVector.previous_velocity[this_thread] *= (mGenAlpha.gamma / mGenAlpha.beta
+            - mGenAlpha.alpha_f * mGenAlpha.gamma / mGenAlpha.beta
+            - 1);
+
+            pCondition->GetValuesVector(mVector.previous_displacement[this_thread], 1);
+            mVector.previous_displacement[this_thread] *= (mGenAlpha.gamma * mGenAlpha.c1
+            - mGenAlpha.alpha_f * mGenAlpha.gamma * mGenAlpha.c1);
+
+            mVector.intermediate_values[this_thread].resize(mVector.previous_acceleration[this_thread].size());
+
+            mVector.intermediate_values[this_thread] = mVector.previous_acceleration[this_thread];
+            mVector.intermediate_values[this_thread] += mVector.previous_velocity[this_thread];
+            mVector.intermediate_values[this_thread] += mVector.previous_displacement[this_thread];
+
+            noalias(RHS_Contribution) += prod(D, mVector.intermediate_values[this_thread]);
+
+        }
+        // Adding stiffness contribution
+        if (K.size1() != 0) {
+            pCondition->GetValuesVector(mVector.previous_displacement[this_thread], 0);
             mVector.previous_displacement[this_thread] *= mGenAlpha.alpha_f;
 
             noalias(RHS_Contribution) -= prod(K, mVector.previous_displacement[this_thread]);

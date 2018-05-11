@@ -143,9 +143,9 @@ public:
     
             GeometryUtils::CalculateGeometryData(rCurrentElement.GetGeometry(),dn_dx,n,volume);
 
-            numerical_diffusion = mBeta * numerical_diffusion * volume;
+            numerical_diffusion = mBeta * numerical_diffusion;
 
-            AddNumericalDiffusionTerm<2>(rAdjointMatrix, dn_dx, numerical_diffusion);            
+            AddNumericalDiffusionTerm<2>(rAdjointMatrix, dn_dx, numerical_diffusion * volume);            
         }
         else if (domain_size == 3)
         {
@@ -170,16 +170,20 @@ public:
     
             GeometryUtils::CalculateGeometryData(rCurrentElement.GetGeometry(),dn_dx,n,volume);
 
-            numerical_diffusion = mBeta * numerical_diffusion * volume;
+            numerical_diffusion = mBeta * numerical_diffusion;
 
-            AddNumericalDiffusionTerm<3>(rAdjointMatrix, dn_dx, numerical_diffusion);
+            AddNumericalDiffusionTerm<3>(rAdjointMatrix, dn_dx, numerical_diffusion * volume);
         }
         else
         {
             KRATOS_ERROR<<"numerical diffusion method only supports 2D or 3D elements";
         }        
 
+        KRATOS_ERROR_IF(numerical_diffusion < 0.0)<<"--- Added numerical diffusion should be greater than 0.0. [Element Id:"<<rCurrentElement.Id()<<", value:"<<numerical_diffusion<<" < 0.0]"<<std::endl;
         rCurrentElement.SetValue(NUMERICAL_DIFFUSION, numerical_diffusion);
+
+        if (numerical_diffusion < 0.0)
+            std::cout<<" negative numerical diffusion."<<std::endl;
 
         KRATOS_CATCH("");
     }
@@ -282,6 +286,13 @@ private:
     template<unsigned int TDim>
     void CalculateNumericalDiffusionSVMethodPressureCoupled(Element& rElement, const ProcessInfo& rCurrentProcessInfo, double& rNumericalDiffusion)
     {
+        constexpr unsigned int TNumNodes = TDim + 1;
+
+        BoundedMatrix<double, TNumNodes, TDim> dn_dx;
+        array_1d< double, TNumNodes > n;
+        double volume;
+
+        GeometryUtils::CalculateGeometryData(rElement.GetGeometry(),dn_dx,n,volume);
 
         Eigen::Matrix<double, TDim+1, TDim+1>  characteristic_matrix = 
                             CalculateSVMethodCharacteristicMatrix<TDim+1, TDim>(rElement);
@@ -301,12 +312,20 @@ private:
 
         const auto& S = svd.singularValues();
 
-        rNumericalDiffusion = S[0];
+        rNumericalDiffusion = S[0]/volume;
     }
 
     template<unsigned int TDim>
     void CalculateNumericalDiffusionSVMethodPressureDecoupled(Element& rElement, const ProcessInfo& rCurrentProcessInfo, double& rNumericalDiffusion)
     {
+        constexpr unsigned int TNumNodes = TDim + 1;
+
+        BoundedMatrix<double, TNumNodes, TDim> dn_dx;
+        array_1d< double, TNumNodes > n;
+        double volume;
+
+        GeometryUtils::CalculateGeometryData(rElement.GetGeometry(),dn_dx,n,volume);
+
         Eigen::Matrix<double, TDim, TDim>  characteristic_matrix = 
                 CalculateSVMethodCharacteristicMatrix<TDim, TDim>(rElement);
 
@@ -316,7 +335,7 @@ private:
 
         const auto& S = svd.singularValues();
 
-        rNumericalDiffusion = S[0];
+        rNumericalDiffusion = S[0]/volume;
        
     }
 
@@ -361,7 +380,7 @@ private:
         KRATOS_DEBUG_ERROR_IF(diffusion_energy <= 0.0)<<" --- Diffusion energy cannot be negative or zero."<<std::endl;
 
         if (adjoint_energy > 0.0)
-            rNumericalDiffusion = adjoint_energy/diffusion_energy;
+            rNumericalDiffusion = adjoint_energy/(diffusion_energy);
 
         KRATOS_CATCH("");
     }    

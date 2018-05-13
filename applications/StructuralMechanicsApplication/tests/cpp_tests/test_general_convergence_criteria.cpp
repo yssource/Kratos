@@ -22,6 +22,18 @@
 
 #include "custom_strategies/custom_convergencecriterias/general_residual_criteria.h"
 
+/*
+Things we will test:
+- For both residual- & solutionupdate-based => here we can think if it is really necessary for both, maybe for one of them just one test if they have a common baseclass
+    - For relative and absolute convergence
+        - For different types of variables:
+            - No Input (e.g. what the Displacement and the Residual Criterion do atm)
+            - One Array3D + Double Variable (what VelPrCriteria does)
+            - Two Double Variables
+            - Two Array3D Variables (What the criteria in StrucutralMechanics do atm)
+            - ... ?
+=> makes at least 2*2*(4+x) tests
+*/
 
 namespace Kratos
 {

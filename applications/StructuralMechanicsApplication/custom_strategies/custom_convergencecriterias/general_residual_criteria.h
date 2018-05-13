@@ -185,6 +185,7 @@ public:
         {
             return true;
         }*/
+        return false;
     }
 
     void Initialize(
@@ -214,6 +215,26 @@ public:
     ) override
     {
 
+    }
+
+    /**
+     * This function is designed to be called once to perform all the checks needed
+     * on the input provided. Checks can be "expensive" as the function is designed
+     * to catch user's errors.
+     * @param rModelPart
+     * @return 0 all ok
+     */
+    int Check(ModelPart& rModelPart) override
+    {
+        KRATOS_TRY
+
+        BaseType::Check(rModelPart);
+
+        // TODO check if the variables that are being checked here are in the ModelPart!
+        // TODO check if the variables that are being checked here Dofs!
+
+        return 0;
+        KRATOS_CATCH("");
     }
 
 
@@ -299,15 +320,15 @@ private:
     ///@name Member Variables
     ///@{
 
-    bool mInitialResidualIsSet;
-
     TDataType mRatioTolerance;
+
+    TDataType mAlwaysConvergedNorm;
+
+    bool mInitialResidualIsSet;
 
     TDataType mInitialResidualNorm;
 
     TDataType mCurrentResidualNorm;
-
-    TDataType mAlwaysConvergedNorm;
 
     TDataType mReferenceDispNorm;
 

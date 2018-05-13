@@ -37,7 +37,7 @@ Here is a list of files that you can look at for reference:
 // Project includes
 #include "includes/define.h"
 #include "solving_strategies/convergencecriterias/convergence_criteria.h"
-#include "includes/model_part.h"
+#include "utilities/color_utilities.h"
 
 
 namespace Kratos
@@ -125,6 +125,16 @@ public:
         const TSystemVectorType& b
     ) override
     {
+        // Natasha we will use this to print whether convergence has been achieved or not
+        // I think it is quite cool :D
+        KRATOS_INFO("CONVERGENCE_CRITERIA") << "Some regular print" << std::endl;
+        KRATOS_INFO("CONVERGENCE_CRITERIA") << BOLDFONT("Some regular print") << std::endl;
+        KRATOS_INFO("CONVERGENCE_CRITERIA") << FGRN("Some regular print") << std::endl;
+        KRATOS_INFO("CONVERGENCE_CRITERIA") << BOLDFONT(FRED("   Not achieved")) << std::endl;
+        KRATOS_INFO("CONVERGENCE_CRITERIA") << BOLDFONT(FBLU("   Not achieved")) << std::endl;
+        KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FYEL("   Not achieved")) << std::endl;
+        KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FMAG("   Not achieved")) << std::endl;
+        KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FCYN("   Not achieved")) << std::endl;
         /*if (TSparseSpace::Size(b) != 0) //if we are solving for something
         {
 

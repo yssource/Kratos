@@ -21,7 +21,7 @@
 #include "includes/define.h"
 #include "includes/exception.h"
 #include "includes/kratos_flags.h"
-#include "processes/tetrahedra_mesh_quality_weighted_smoothing_process.h"
+#include "processes/tetrahedra_mesh_point_insertion_process.h"
 #include "processes/measure_mesh_quality_process.h"
 #include "processes/find_nodal_neighbours_process.h"
 #include "modeler/tetrahedra_ball.h"
@@ -30,17 +30,17 @@
 namespace Kratos
 {
 
-	TetrahedraMeshQualityPointInsertionProcess::TetrahedraMeshQualityPointInsertionProcess(ModelPart& rModelPart, double AptQuality, std::size_t IterationsNumber)
+	TetrahedraMeshPointInsertionProcess::TetrahedraMeshPointInsertionProcess(ModelPart& rModelPart, double AptQuality, std::size_t IterationsNumber)
 		:TetrahedraMeshWorstElementSmoothingProcess(rModelPart, AptQuality, IterationsNumber) {
 	}
 
-	TetrahedraMeshQualityPointInsertionProcess::~TetrahedraMeshQualityPointInsertionProcess() {
+	TetrahedraMeshPointInsertionProcess::~TetrahedraMeshPointInsertionProcess() {
 	}
 
 	/// Turn back information as a string.
-	std::string TetrahedraMeshQualityPointInsertionProcess::Info() const
+	std::string TetrahedraMeshPointInsertionProcess::Info() const
 	{
-		return "TetrahedraMeshQualityPointInsertionProcess";
+		return "TetrahedraMeshPointInsertionProcess";
 	}
 
 	struct {
@@ -49,7 +49,7 @@ namespace Kratos
 		std::unordered_map<std::size_t, std::list<std::size_t>> connect;
 	} Graph;
 
-	void TetrahedraMeshQualityPointInsertionProcess::Execute() {
+	void TetrahedraMeshPointInsertionProcess::Execute() {
 
 		Point insert_point;
 		Graph mesh_cut;
@@ -60,7 +60,7 @@ namespace Kratos
 
 	}
 
-	void TetrahedraMeshQualityPointInsertionProcess::CalculateInsertPoint(ModelPart & rModelPart, Element & rElement, Point<double,3> & rInsertPoint)
+	void TetrahedraMeshPointInsertionProcess::CalculateInsertPoint(ModelPart & rModelPart, Element & rElement, Point<double,3> & rInsertPoint)
 	{
 
 
@@ -120,7 +120,7 @@ namespace Kratos
 		}
 	}
 
-	void TetrahedraMeshQualityPointInsertionProcess::CalculateCut(ModelPart & rModelPart, Element & rElement, Point<double,3> & rInsertPoint, Graph & mesh_cut, std::size_t depth) {		
+	void TetrahedraMeshPointInsertionProcess::CalculateCut(ModelPart & rModelPart, Element & rElement, Point<double,3> & rInsertPoint, Graph & mesh_cut, std::size_t depth) {		
 		std::list<Element::Pointer> elems_to_walk;
 
 		auto & root_elements = FastPointLocator(rInsertPoint);
@@ -145,7 +145,7 @@ namespace Kratos
 		
 	}
 
-	void TetrahedraMeshQualityPointInsertionProcess::CalculateCut() {
+	void TetrahedraMeshPointInsertionProcess::CalculateCut() {
 
 	}
 

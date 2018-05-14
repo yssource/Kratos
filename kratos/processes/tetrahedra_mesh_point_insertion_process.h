@@ -10,8 +10,8 @@
 //  Main authors:    Carlos A. Roig
 //
 
-#if !defined(KRATOS_TETRAHEDRA_MESH_QUALITY_POINT_INSERTION_PROCESS_H_INCLUDED )
-#define  KRATOS_TETRAHEDRA_MESH_QUALITY_POINT_INSERTION_PROCESS_H_INCLUDED
+#if !defined(KRATOS_TETRAHEDRA_MESH_POINT_INSERTION_PROCESS_H_INCLUDED )
+#define  KRATOS_TETRAHEDRA_MESH_POINT_INSERTION_PROCESS_H_INCLUDED
 
 // System includes
 #include <string>
@@ -33,13 +33,13 @@ namespace Kratos {
 /// Short class definition.
 /** Detail class definition.
 */
-class KRATOS_API(KRATOS_CORE) TetrahedraMeshQualityPointInsertionProcess {
+class KRATOS_API(KRATOS_CORE) TetrahedraMeshPointInsertionProcess {
 public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of TetrahedraMeshQualityPointInsertionProcess
-    KRATOS_CLASS_POINTER_DEFINITION(TetrahedraMeshQualityPointInsertionProcess);
+    /// Pointer definition of TetrahedraMeshPointInsertionProcess
+    KRATOS_CLASS_POINTER_DEFINITION(TetrahedraMeshPointInsertionProcess);
 
     typedef Node<3> NodeType;
     typedef WeakPointerVector< Node<3> > NeighboursVectorType;
@@ -54,10 +54,10 @@ public:
     ///@{
 
     /// Constructor takes the modelpart to apply smoothing to its mesh 0.
-    TetrahedraMeshQualityPointInsertionProcess(ModelPart& rModelPart);
+    TetrahedraMeshPointInsertionProcess(ModelPart& rModelPart);
 
     /// Destructor.
-    ~TetrahedraMeshQualityPointInsertionProcess() override;
+    ~TetrahedraMeshPointInsertionProcess() override;
 
     ///@}
     ///@name Operators
@@ -168,15 +168,15 @@ private:
     ///@{
 
     /// Assignment operator.
-    TetrahedraMeshQualityPointInsertionProcess& operator=(TetrahedraMeshQualityWeightedSmoothingProcess const& rOther);
+    TetrahedraMeshPointInsertionProcess& operator=(TetrahedraMeshPointInsertionProcess const& rOther);
 
     /// Copy constructor.
-    TetrahedraMeshQualityPointInsertionProcess(TetrahedraMeshQualityWeightedSmoothingProcess const& rOther);
+    TetrahedraMeshPointInsertionProcess(TetrahedraMeshPointInsertionProcess const& rOther);
 
 
     ///@}
 
-}; // Class TetrahedraMeshQualityPointInsertionProcess
+}; // Class TetrahedraMeshPointInsertionProcess
 
 ///@}
 
@@ -191,11 +191,11 @@ private:
 
 /// input stream function
 inline std::istream& operator >> (std::istream& rIStream,
-          TetrahedraMeshQualityPointInsertionProcess& rThis);
+          TetrahedraMeshPointInsertionProcess& rThis);
 
 /// output stream function
 inline std::ostream& operator << (std::ostream& rOStream,
-          const TetrahedraMeshQualityPointInsertionProcess& rThis)
+          const TetrahedraMeshPointInsertionProcess& rThis)
   {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
@@ -209,4 +209,4 @@ inline std::ostream& operator << (std::ostream& rOStream,
 
 }  // namespace Kratos.
 
-#endif // KRATOS_TETRAHEDRA_MESH_QUALITY_POINT_INSERTION_PROCESS_H_INCLUDED  defined
+#endif // KRATOS_TETRAHEDRA_MESH_POINT_INSERTION_PROCESS_H_INCLUDED  defined

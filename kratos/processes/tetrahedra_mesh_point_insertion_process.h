@@ -22,6 +22,7 @@
 // Project includes
 #include "includes/define.h"
 #include "includes/model_part.h"
+#include "processes/process.h"
 
 namespace Kratos {
 ///@addtogroup Kratos Core
@@ -33,7 +34,7 @@ namespace Kratos {
 /// Short class definition.
 /** Detail class definition.
 */
-class KRATOS_API(KRATOS_CORE) TetrahedraMeshPointInsertionProcess {
+class KRATOS_API(KRATOS_CORE) TetrahedraMeshPointInsertionProcess: public Process {
 public:
     ///@name Type Definitions
     ///@{
@@ -41,9 +42,15 @@ public:
     /// Pointer definition of TetrahedraMeshPointInsertionProcess
     KRATOS_CLASS_POINTER_DEFINITION(TetrahedraMeshPointInsertionProcess);
 
-    typedef Node<3> NodeType;
-    typedef WeakPointerVector< Node<3> > NeighboursVectorType;
-    typedef std::vector<Point > PointsVectorType;
+    typedef Node<3>                     NodeType;
+    typedef WeakPointerVector<Node<3>>  NeighboursVectorType;
+    typedef std::vector<Point>          PointsVectorType;
+
+    struct Graph {
+		std::unordered_map<std::size_t, std::size_t> nodes;
+		std::unordered_map<std::size_t, std::pair<std::size_t, std::size_t>> edges;
+		std::unordered_map<std::size_t, std::list<std::size_t>> connect;
+	};
 
     ///@}
     ///@name Flags
@@ -141,6 +148,8 @@ private:
     ///@name Member Variables
     ///@{
 
+    ModelPart & mrModelPart;
+
 
     ///@}
     ///@name Private Operators
@@ -151,7 +160,8 @@ private:
     ///@name Private Operations
     ///@{
 
-    void CalculateInsertPoint();
+    void CalculateInsertPoint(Element::Pointer & pElement, Point & rInsertPoint);
+    void CalculateCut(ModelPart & rModelPart, Element::Pointer & pElement, Point & rInsertPoint, Graph & meshCut, std::size_t depth);
 
     ///@}
     ///@name Private  Access

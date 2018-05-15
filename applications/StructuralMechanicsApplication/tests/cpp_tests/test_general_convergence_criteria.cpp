@@ -22,6 +22,10 @@
 
 #include "custom_strategies/custom_convergencecriterias/general_residual_criteria.h"
 
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+#include "includes/mpi_communicator.h"
+#endif
+
 /*
 Things we will test:
 - For both residual- & solutionupdate-based => here we can think if it is really necessary for both, maybe for one of them just one test if they have a common baseclass
@@ -202,6 +206,18 @@ namespace Kratos
                     is_converged = true;
             }
         }
+
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+        KRATOS_TEST_CASE_IN_SUITE(MPICommunicatorExtensionTest, KratosStructuralMechanicsFastSuite)
+        {
+            ModelPart dummy_model_part("dummy");
+
+            MPICommunicator comm_to_test(dummy_model_part.GetNodalSolutionStepVariablesList());
+
+            // comm_to_test.SumAll(...);
+
+        }
+#endif
 
     } // namespace Testing
 }  // namespace Kratos.

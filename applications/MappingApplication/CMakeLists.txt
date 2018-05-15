@@ -22,8 +22,12 @@ if(${MPI_NEEDED} MATCHES ON )
 	set(KRATOS_MAPPING_APPLICATION_EXTRA_LIBS ${KRATOS_MAPPING_APPLICATION_EXTRA_LIBS} ${MPI_LIBRARIES})
 endif(${MPI_NEEDED} MATCHES ON )
 
+if(${KRATOS_BUILD_TESTING} MATCHES ON)
+ 	file(GLOB_RECURSE KRATOS_MAPPING_TESTING_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/tests/cpp_tests/*.cpp)
+endif(${KRATOS_BUILD_TESTING} MATCHES ON)
+
 # define library Kratos which defines the basic python interface
-pybind11_add_module(KratosMappingApplication MODULE THIN_LTO ${KRATOS_MAPPING_APPLICATION_SOURCES})
+pybind11_add_module(KratosMappingApplication MODULE THIN_LTO ${KRATOS_MAPPING_APPLICATION_SOURCES} ${KRATOS_MAPPING_TESTING_SOURCES})
 target_link_libraries(KratosMappingApplication PRIVATE KratosCore ${KRATOS_MAPPING_APPLICATION_EXTRA_LIBS})
 set_target_properties(KratosMappingApplication PROPERTIES PREFIX "")
 install(TARGETS KratosMappingApplication DESTINATION libs )

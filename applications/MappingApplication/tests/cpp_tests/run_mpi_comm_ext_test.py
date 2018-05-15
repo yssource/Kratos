@@ -1,5 +1,5 @@
 from KratosMultiphysics import *
-from KratosMultiphysics.StructuralMechanicsApplication import *
+from KratosMultiphysics.MappingApplication import *
 
 def run():
     Tester.SetVerbosity(Tester.Verbosity.TESTS_OUTPUTS) # TESTS_OUTPUTS

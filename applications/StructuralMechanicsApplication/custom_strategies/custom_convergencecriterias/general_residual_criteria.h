@@ -272,6 +272,7 @@ public:
                     // Here we are getting the index that belongs to the corresponding variable key
                     // If the key for which we want to get the index does not exist, we get 0,
                     // which corresponds to the "remaining" dofs
+                    // at and count have constant (worst case linear) complexity, so this should be fine since the map is small
                     vec_index = (mKeyToIndexMap.count(dof_key)) ? mKeyToIndexMap.at(dof_key) : 0;
 
                     // These have to be atomic for omp if we don't do anything else

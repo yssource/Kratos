@@ -19,12 +19,12 @@
 #include "testing/testing.h"
 #include "includes/model_part.h"
 #include "spaces/ublas_space.h"
+#include "geometries/quadrilateral_2d_4.h"
+#include "utilities/variable_utils.h"
+#include "processes/structured_mesh_generator_process.h"
 
 #include "custom_strategies/custom_convergencecriterias/general_residual_criteria.h"
 
-#ifdef KRATOS_USING_MPI // mpi-parallel compilation
-// #include "includes/mpi_communicator.h"
-#endif
 
 /*
 Things we will test:
@@ -73,58 +73,80 @@ namespace Kratos
 
         // This function initializes the test depending on the passed configuration
         // TODO for now the dofs are hard-coded, this should be made variable
-        void SetUpTest(DofsArrayType& rDofSet,
+        void SetUpTest(ModelPart& rModelPart,
+                       DofsArrayType& rDofSet,
                        TSystemVectorType& rSystemVec_Dx,
                        TSystemVectorType& rSystemVec_b,
-                       const std::size_t SystemSize)
+                       const std::size_t NumDivisions)
         {
-            std::vector<NodeUniquePointerType> node_pointer_vector(SystemSize);
+            rModelPart.AddNodalSolutionStepVariable(ROTATION);
+            rModelPart.AddNodalSolutionStepVariable(VELOCITY);
+            rModelPart.AddNodalSolutionStepVariable(PRESSURE);
+
+            Node<3>::Pointer p_point1(new Node<3>(1, 0.00, 0.00, 0.00));
+            Node<3>::Pointer p_point2(new Node<3>(2, 0.00, 10.00, 0.00));
+            Node<3>::Pointer p_point3(new Node<3>(3, 10.00, 10.00, 0.00));
+            Node<3>::Pointer p_point4(new Node<3>(4, 10.00, 0.00, 0.00));
+
+            Quadrilateral2D4<Node<3> > geometry(p_point1, p_point2, p_point3, p_point4);
+
+            Parameters mesher_parameters(R"(
+            {
+                "number_of_divisions" : 0,
+                "element_name"        : "Element2D3N",
+                "create_skin_sub_model_part": false
+            }  )");
+
+            mesher_parameters["number_of_divisions"].SetInt(NumDivisions);
+
+            StructuredMeshGeneratorProcess(geometry, rModelPart, mesher_parameters).Execute();
+
+            const std::size_t system_size = rModelPart.NumberOfNodes();
+
+            KRATOS_INFO("System Size") << system_size << std::endl;
+
+            for (auto& r_node : rModelPart.Nodes())
+            {
+                r_node.AddDof(ROTATION_X);
+                r_node.AddDof(ROTATION_Y);
+                r_node.AddDof(ROTATION_Z);
+                r_node.AddDof(VELOCITY_X);
+                r_node.AddDof(VELOCITY_Z);
+                r_node.AddDof(VELOCITY_Y);
+                r_node.AddDof(PRESSURE);
+            }
+
+            VariableUtils var_utils();
+            // var_utils.AddDof(ROTATION, rModelPart);
+            // VariableUtils().AddDof(VELOCITY, rModelPart);
+            // VariableUtils().AddDof(PRESSURE, rModelPart);
 
             const std::size_t num_dofs_per_node = 7; // TODO hard coded for now, to be made variable
 
-            std::vector< Dof<double>::Pointer > dof_pointer_vector;
-
-            dof_pointer_vector.reserve((SystemSize*num_dofs_per_node));
-
-            // Creating Nodes and adding Dofs
-            for (std::size_t i=0; i<SystemSize; ++i)
+            std::vector< Dof<double>::Pointer > DoF;
+            DoF.reserve(system_size * num_dofs_per_node);
+            for (auto& r_node : rModelPart.Nodes())
             {
-                node_pointer_vector[i] = Kratos::make_unique<NodeType>();
-
-                node_pointer_vector[i]->AddDof(ROTATION_X, REACTION_MOMENT_X);
-                node_pointer_vector[i]->AddDof(ROTATION_Y, REACTION_MOMENT_Y);
-                node_pointer_vector[i]->AddDof(ROTATION_Z, REACTION_MOMENT_Z);
-
-                node_pointer_vector[i]->AddDof(VELOCITY_X, REACTION_X);
-                node_pointer_vector[i]->AddDof(VELOCITY_Y, REACTION_Y);
-                node_pointer_vector[i]->AddDof(VELOCITY_Z, REACTION_Z);
-
-                node_pointer_vector[i]->AddDof(PRESSURE, REACTION_WATER_PRESSURE);
-
-                dof_pointer_vector.push_back(node_pointer_vector[i]->pGetDof(ROTATION_X));
-                dof_pointer_vector.push_back(node_pointer_vector[i]->pGetDof(ROTATION_Y));
-                dof_pointer_vector.push_back(node_pointer_vector[i]->pGetDof(ROTATION_Z));
-                dof_pointer_vector.push_back(node_pointer_vector[i]->pGetDof(VELOCITY_X));
-                dof_pointer_vector.push_back(node_pointer_vector[i]->pGetDof(VELOCITY_Y));
-                dof_pointer_vector.push_back(node_pointer_vector[i]->pGetDof(VELOCITY_Z));
-                dof_pointer_vector.push_back(node_pointer_vector[i]->pGetDof(PRESSURE));
+                DoF.push_back(r_node.pGetDof(ROTATION_X));
+                DoF.push_back(r_node.pGetDof(ROTATION_Y));
+                DoF.push_back(r_node.pGetDof(ROTATION_Z));
+                DoF.push_back(r_node.pGetDof(VELOCITY_X));
+                DoF.push_back(r_node.pGetDof(VELOCITY_Y));
+                DoF.push_back(r_node.pGetDof(VELOCITY_Z));
+                DoF.push_back(r_node.pGetDof(PRESSURE));
             }
 
             rDofSet.clear();
-            rDofSet.reserve(dof_pointer_vector.size());
-
-            for (std::size_t i=0; i<dof_pointer_vector.size(); ++i)
-                dof_pointer_vector[i]->SetEquationId(i);
-
-            for (auto it=dof_pointer_vector.begin(); it!=dof_pointer_vector.end(); it++)
+            rDofSet.reserve(DoF.size());
+            for (auto it= DoF.begin(); it!= DoF.end(); it++)
                 rDofSet.push_back( it->get() );
 
             rDofSet.Sort();
 
             // Initializing the Solution Vector
-            SparseSpaceType::Resize(rSystemVec_Dx, SystemSize*num_dofs_per_node);
+            SparseSpaceType::Resize(rSystemVec_Dx, system_size*num_dofs_per_node);
             SparseSpaceType::SetToZero(rSystemVec_Dx);
-            SparseSpaceType::Resize(rSystemVec_b, SystemSize*num_dofs_per_node);
+            SparseSpaceType::Resize(rSystemVec_b, system_size*num_dofs_per_node);
             SparseSpaceType::SetToZero(rSystemVec_b);
         }
 
@@ -135,9 +157,8 @@ namespace Kratos
                          TSystemVectorType& rSystemVec_Dx,
                          TSystemVectorType& rSystemVec_b)
         {
-            // for (auto& r_dof : rDofSet)
-            //     r_dof.GetSolutionStepValue() = 5.123; // TODO so far this is a random value
-            // This does not work yet, I have to first figure out why ...
+            for (auto& r_dof : rDofSet)
+                r_dof.GetSolutionStepValue() = 5.123; // TODO so far this is a random value
 
             const std::size_t system_size = SparseSpaceType::Size(rSystemVec_Dx);
             KRATOS_ERROR_IF(system_size != SparseSpaceType::Size(rSystemVec_b))
@@ -153,7 +174,7 @@ namespace Kratos
         KRATOS_TEST_CASE_IN_SUITE(GeneralResudialConvergenceCriteriaTest1, KratosStructuralMechanicsFastSuite)
         {
             DofsArrayType dofs_array;
-            const std::size_t system_size = 10;
+            const std::size_t num_divisions = 10;
 
             // Natasha even though I am initializing both b and Dx the implementation of the criteria should
             // for now only consider b!
@@ -166,15 +187,14 @@ namespace Kratos
             TSystemVectorType& r_system_vector_b = *p_system_vector_b;
             TSystemVectorType& r_system_vector_Dx = *p_system_vector_Dx;
 
-            SetUpTest(dofs_array, r_system_vector_Dx, r_system_vector_b, system_size);
+            ModelPart dummy_model_part("dummy");
+            SetUpTest(dummy_model_part, dofs_array, r_system_vector_Dx, r_system_vector_b, num_divisions);
 
             const TDataType NewRatioTolerance = 1e-7;
             const TDataType AlwaysConvergedNorm = 1e-5;
 
             ConvergenceCriteriaPointerType p_conv_crit = Kratos::make_unique<GenConvergenceCriteriaType>(
                 NewRatioTolerance, AlwaysConvergedNorm);
-
-            ModelPart dummy_model_part("dummy");
 
             const std::size_t num_solution_steps = 5; // Natasha this should be used by "SetSolution"
             // in order to set a solution that will make the problem converge
@@ -206,20 +226,6 @@ namespace Kratos
                     is_converged = true;
             }
         }
-
-#ifdef KRATOS_USING_MPI // mpi-parallel compilation
-        KRATOS_TEST_CASE_IN_SUITE(MPICommunicatorExtensionTest, KratosStructuralMechanicsFastSuite)
-        {
-            ModelPart dummy_model_part("dummy");
-
-            const auto& dummy_var_list = dummy_model_part.GetNodalSolutionStepVariablesList();
-
-            // MPICommunicator comm_to_test(*());
-
-            // comm_to_test.SumAll(...);
-
-        }
-#endif
 
     } // namespace Testing
 }  // namespace Kratos.

@@ -2,14 +2,14 @@
 //    ' /   __| _` | __|  _ \   __|
 //    . \  |   (   | |   (   |\__ `
 //   _|\_\_|  \__,_|\__|\___/ ____/
-//                   Multi-Physics 
+//                   Multi-Physics
 //
-//  License:		 BSD License 
+//  License:		 BSD License
 //					 Kratos default license: kratos/license.txt
 //
 //  Main authors:    Pooyan Dadvand
 //                   Riccardo Rossi
-//                    
+//
 //
 
 
@@ -272,6 +272,18 @@ public:
     {
         array_1d<double, 3> local_value = rValue;
         MPI_Allreduce(&local_value, &rValue, 3, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        return true;
+    }
+
+    bool SumAll(std::vector<double>& rValue) const override
+    {
+        // Natasha to be implemented
+
+        /*
+        First please check if the sizes of the vector are the same across ranks => this I will later wrap in some debug directives
+
+        Then in the second step do the summation
+        */
         return true;
     }
 

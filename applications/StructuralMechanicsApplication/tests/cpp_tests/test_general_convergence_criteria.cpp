@@ -23,7 +23,7 @@
 #include "custom_strategies/custom_convergencecriterias/general_residual_criteria.h"
 
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
-#include "includes/mpi_communicator.h"
+// #include "includes/mpi_communicator.h"
 #endif
 
 /*
@@ -212,7 +212,9 @@ namespace Kratos
         {
             ModelPart dummy_model_part("dummy");
 
-            MPICommunicator comm_to_test(dummy_model_part.GetNodalSolutionStepVariablesList());
+            const auto& dummy_var_list = dummy_model_part.GetNodalSolutionStepVariablesList();
+
+            // MPICommunicator comm_to_test(*());
 
             // comm_to_test.SumAll(...);
 

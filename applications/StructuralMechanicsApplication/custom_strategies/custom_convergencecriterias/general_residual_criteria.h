@@ -29,6 +29,7 @@ Here is a list of files that you can look at for reference:
 */
 
 // System includes
+#include <unordered_map>
 
 
 // External includes
@@ -36,6 +37,7 @@ Here is a list of files that you can look at for reference:
 
 // Project includes
 #include "includes/define.h"
+#include "includes/kratos_parameters.h"
 #include "solving_strategies/convergencecriterias/convergence_criteria.h"
 #include "utilities/color_utilities.h"
 
@@ -90,6 +92,28 @@ public:
 
     typedef typename BaseType::TSystemVectorType TSystemVectorType;
 
+    typedef VariableData::KeyType KeyType;
+
+    typedef Variable<double> DoubleVariableType;
+
+    typedef Variable< array_1d< double, 3> > Array3VariableType;
+
+    typedef VariableComponent< VectorComponentAdaptor<array_1d<double, 3> > > ComponentVariableType;
+
+    typedef std::size_t SizeType;
+
+    typedef std::size_t IndexType;
+
+    ///@}
+    ///@name  Enum's
+    ///@{
+
+    enum BasisType
+    {
+        RESIDUAL,
+        SOLUTION_UPDATE
+    };
+
     ///@}
     ///@name Life Cycle
     ///@{
@@ -97,11 +121,98 @@ public:
     /// Default constructor.
     GeneralResidualCriteria(
         TDataType NewRatioTolerance,
-        TDataType AlwaysConvergedNorm)
+        TDataType AlwaysConvergedNorm,
+        Parameters rParameters = Parameters(R"({})"),
+        const std::string OtherDofsName="Other Dofs")
         : ConvergenceCriteria< TSparseSpace, TDenseSpace >(),
           mRatioTolerance(NewRatioTolerance),
           mAlwaysConvergedNorm(AlwaysConvergedNorm),
-          mInitialResidualIsSet(false) { }
+          mInitialResidualIsSet(false)
+    {
+        /*
+        Parameters(R"({
+            "relative_convergence_tolerance" : 1e-4,
+            "absolut_convergence_tolerance" : 1e-6,
+            "variables_to_separate" : [DISPLACEMENT, VELOCITY, PRESSURE],
+            "relative_convergence_tolerances" : [1e-4, 1e-4, 1e-6],
+            "absolut_convergence_tolerances" : [1e-6, 1e-6, 1e-6]
+        })")
+        */
+
+        Parameters default_params( R"({
+            "relative_convergence_tolerance" : 1e-4,
+            "absolut_convergence_tolerance" : 1e-6,
+            "variables_to_separate" : [],
+            "relative_convergence_tolerances" : [],
+            "absolut_convergence_tolerances" : []
+        })" );
+
+        rParameters.ValidateAndAssignDefaults(default_params);
+
+        const SizeType n_variables = rParameters["variables_to_separate"].size();
+        const SizeType n_rel_conv_tol = rParameters["relative_convergence_tolerances"].size();
+        const SizeType n_abs_conv_tol = rParameters["absolut_convergence_tolerances"].size();
+
+        // Size check
+        KRATOS_ERROR_IF(n_variables != n_rel_conv_tol) << "Your list of variables is not the same size as the list of relative_convergence_tolerances" << std::endl;
+        KRATOS_ERROR_IF(n_variables != n_abs_conv_tol) << "Your list of variables is not the same size as the list of absolut_convergence_tolerances" << std::endl;
+
+        const SizeType num_var_to_separate = n_variables + 1; // +1 bcs the "remaining" dofs are at pos 0
+
+        mRatioTolerances.resize(num_var_to_separate);
+        mAbsTolerances.resize(num_var_to_separate);
+
+        // TODO check if this initialization to 0 works (should be but haven't tested it)
+        mRatioResiduals.resize(num_var_to_separate, 0.0);
+        mAbsResiduals.resize(num_var_to_separate, 0.0);
+
+        mNumDofs.resize(num_var_to_separate, 0);
+
+        IndexType index = 1; // starting from 1 bcs the "remaining" dofs go to pos 0
+
+        mRatioTolerances[0] = rParameters["relative_convergence_tolerance"].GetDouble();
+        mAbsTolerances[0] = rParameters["absolut_convergence_tolerance"].GetDouble();
+
+        for (IndexType i_var = 0; i_var < num_var_to_separate-1; ++i_var){
+            mRatioTolerances[i_var] = rParameters["relative_convergence_tolerances"].GetArrayItem(i_var+1).GetDouble();
+            mAbsTolerances[i_var] = rParameters["absolut_convergence_tolerances"].GetArrayItem(i_var+1).GetDouble();
+
+            const std::string& variable_name = rParameters["variables_to_separate"].GetArrayItem(i_var).GetString();
+            KeyType the_key;
+
+            if (KratosComponents<DoubleVariableType>::Has(variable_name))
+            {
+                the_key = KratosComponents< DoubleVariableType >::Get(variable_name).Key();
+                mKeyToIndexMap[the_key] = index;
+                index += 1;
+            }
+            else if (KratosComponents< Array3VariableType >::Has(variable_name))
+            {
+                // In this case all the variables point to the same index
+                the_key = KratosComponents< ComponentVariableType >::Get(variable_name+std::string("_X")).Key();
+                mKeyToIndexMap[the_key] = index;
+                the_key = KratosComponents< ComponentVariableType >::Get(variable_name+std::string("_Y")).Key();
+                mKeyToIndexMap[the_key] = index;
+                the_key = KratosComponents< ComponentVariableType >::Get(variable_name+std::string("_Z")).Key();
+                mKeyToIndexMap[the_key] = index;
+                index += 1;
+            }
+            else if (KratosComponents< ComponentVariableType >::Has(variable_name)) //case of component variable)
+            {
+                the_key = KratosComponents< ComponentVariableType >::Get(variable_name).Key();
+                mKeyToIndexMap[the_key] = index;
+                index += 1;
+            }
+            else
+            {
+                KRATOS_ERROR << "Only Double (e.g. PRESSURE), Array3D (e.g. VELOCITY) or Component (e.g. VELOCITY_X) variables are allowed in the variables list" << std::endl;
+            }
+        }
+
+        // TODO test if a component and its Array are specified!
+
+
+    }
 
     /// Destructor.
     virtual ~GeneralResidualCriteria(){}
@@ -135,6 +246,85 @@ public:
         KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FYEL("   Not achieved")) << std::endl;
         KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FMAG("   Not achieved")) << std::endl;
         KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FCYN("   Not achieved")) << std::endl;
+
+        const TSystemVectorType& r_vec = (mBasisType == BasisType::RESIDUAL) ? b : Dx;
+
+        if (SparseSpaceType::Size(r_vec) != 0) // if we are solving for something
+        {
+            // #pragma omp parallel for // comment bcs some vars have to be private to the thread
+            for (int i=0; i<static_cast<int>(rDofSet.size()); ++i)
+            {
+                IndexType dof_id;
+                IndexType vec_index;
+                TDataType dof_value;
+                TDataType dof_incr;
+
+                auto it_dof = rDofSet.begin() + i;
+
+                if (it_dof->IsFree())
+                {
+                    dof_id = it_dof->EquationId();
+                    dof_value = it_dof->GetSolutionStepValue(0);
+                    dof_incr = r_vec[dof_id];
+
+                    KeyType dof_key = it_dof->GetVariable().Key();
+
+                    // Here we are getting the index that belongs to the corresponding variable key
+                    // If the key for which we want to get the index does not exist, we get 0,
+                    // which corresponds to the "remaining" dofs
+                    vec_index = (mKeyToIndexMap.count(dof_key)) ? mKeyToIndexMap.at(dof_key) : 0;
+
+                    // These have to be atomic for omp if we don't do anything else
+                    // Theoretically other operations are also possible
+                    mRatioResiduals[vec_index] += dof_value * dof_value;
+                    mAbsResiduals[vec_index] += dof_incr * dof_incr;
+                    ++mNumDofs[vec_index];
+                }
+            }
+
+
+
+            // Computing the residuals
+
+            //Synchroizing them across ranks
+            // rModelPart.GetCommunicator().SumAll(residuals); // This also needs to be implemented for std::vector
+
+            const int nonlin_iteration_number = rModelPart.GetProcessInfo()[NL_ITERATION_NUMBER];
+
+            // Checking for convergence
+            // This is done on each rank, since the residuals were synchronized before
+            // std::vector<bool> convergece_vec(vars2separat.size());
+            // for (vars2separat)
+            // {
+            //     convergece_vec[i] = (rel_ratio < exp_rel_ratio && abs_ratio < abs_rel_ratio)
+            // }
+            //is_converged = ... min(conv_vector)
+
+            bool is_converged = true;
+
+            // Printing information abt current residuals
+            if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
+            {
+                KRATOS_INFO("ConvergenceCriteria") << "Convergence Check:" << std::endl; // TODO most likely remove the color
+                // for (vars2separat)
+                //     KRATOS_INFO("Label") << var_name << rel_ratio << exp_rel_ratio << abs_ratio << exp_abs_ratio <<
+                //         << convergece_vec[i]
+
+
+
+                if (is_converged)
+                    KRATOS_INFO("ConvergenceCriteria") << BOLDFONT(FGRN("Convergence is achieved in Iteration ")) << nonlin_iteration_number << std::endl; // TODO most likely remove the color
+                else
+                    KRATOS_INFO("ConvergenceCriteria") << BOLDFONT(FRED("Convergence is not achieved in Iteration ")) << nonlin_iteration_number << std::endl; // TODO most likely remove the color
+            }
+
+
+            return is_converged;
+        }
+        else
+        {
+            return true;
+        }
         /*if (TSparseSpace::Size(b) != 0) //if we are solving for something
         {
 
@@ -195,7 +385,6 @@ public:
         {
             return true;
         }*/
-        return false;
     }
 
     void Initialize(
@@ -292,6 +481,22 @@ protected:
     ///@}
     ///@name Protected member Variables
     ///@{
+
+    std::vector<TDataType> mRatioTolerances;
+    std::vector<TDataType> mAbsTolerances;
+
+    std::vector<TDataType> mRatioResiduals;
+    std::vector<TDataType> mAbsResiduals;
+
+    std::vector<SizeType> mNumDofs;
+
+    std::unordered_map<KeyType, IndexType> mKeyToIndexMap;
+
+    BasisType mBasisType = BasisType::RESIDUAL;
+
+    // std::vector<DoubleVariableType> mDoubleVariables;
+    // std::vector<std::vector<ComponentVariableType>> mArray3Variables;
+    // std::vector<ComponentVariableType> mComponentVariables;
 
 
     ///@}

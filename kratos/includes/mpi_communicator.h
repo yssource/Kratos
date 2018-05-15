@@ -275,17 +275,17 @@ public:
         return true;
     }
 
-    // bool SumAll(std::vector<double>& rValue) const
-    // {
-    //     // Natasha to be implemented
+    bool SumAll(std::vector<double>& rValue) const override
+    {
+        // Natasha to be implemented
 
-    //     /*
-    //     First please check if the sizes of the vector are the same across ranks => this I will later wrap in some debug directives
+        /*
+        First please check if the sizes of the vector are the same across ranks => this I will later wrap in some debug directives
 
-    //     Then in the second step do the summation
-    //     */
-    //     return true;
-    // }
+        Then in the second step do the summation
+        */
+        return true;
+    }
 
     bool MinAll(int& rValue) const override
     {

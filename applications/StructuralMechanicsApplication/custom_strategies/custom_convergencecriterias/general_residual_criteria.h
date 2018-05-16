@@ -288,6 +288,9 @@ public:
             // Computing the residuals
 
             //Synchroizing them across ranks
+            // TODO concatenate the vectors to have only one call to MPI
+            // Then afterwards split them again
+            // I don't know the best way to do this => google :)
             // rModelPart.GetCommunicator().SumAll(residuals); // This also needs to be implemented for std::vector
 
             const int nonlin_iteration_number = rModelPart.GetProcessInfo()[NL_ITERATION_NUMBER];

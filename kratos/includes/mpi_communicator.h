@@ -280,10 +280,24 @@ public:
         // Natasha to be implemented
 
         /*
-        First please check if the sizes of the vector are the same across ranks => this I will later wrap in some debug directives
+        First please check if the sizes of the vector are the same across ranks 
+        => this I will later wrap in some debug directives
 
         Then in the second step do the summation
         */
+        int size = rvalue.size();
+        int result; 
+        MPI_Allreduce(&size, &result, 1, MPI_INT, MPI_XOR, MPI_COMM_WORLD);
+        if (result != 0) {
+            // some vectors differ in size
+            std::cout << rank << "Error (SumAll): vectors have different sizes" << std::endl;
+        }
+
+        std::vector<double> local_value = std::move(rvalue);
+
+        rValue.resize(size);
+        MPI_Allreduce(&local_value, &rValue.data(), size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
         return true;
     }
 

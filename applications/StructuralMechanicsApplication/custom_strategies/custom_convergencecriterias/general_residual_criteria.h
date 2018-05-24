@@ -252,7 +252,7 @@ public:
         if (SparseSpaceType::Size(r_vec) != 0) // if we are solving for something
         {
             // #pragma omp parallel for // comment bcs some vars have to be private to the thread
-            for (int i=0; i<static_cast<int>(rDofSet.size()); ++i)
+            for (int i = 0; i < static_cast<int>(rDofSet.size()); ++i)
             {
                 IndexType dof_id;
                 IndexType vec_index;
@@ -283,11 +283,32 @@ public:
                 }
             }
 
-
+            std::transform(mRatioResiduals.begin(), mRatioResiduals.end(), mRatioResiduals.begin(), std::sqrt);
+            std::transform(mAbsResiduals.begin(), mRatioResiduals.end(), mRatioResiduals.begin(), std::sqrt);
 
             // Computing the residuals
+            // TODO implement isZero()
+            if (mRatioResiduals[0] == 0.0) {
+                mRatioResiduals[0] = 1.0;
+            }
+            mRatioResiduals[0] /= mRatioResiduals[0];
+            mAbsResiduals[vec_index] /= mNumDofs[vec_index];
+            
+            for (auto & el : mKeyToIndexMap) 
+            {
+                IndexType vec_index = el.second;
 
-            //Synchroizing them across ranks
+                // TODO izZero()
+                if (mRatioResiduals[vect_index] == 0.0)
+                {
+                    mRatioResiduals[vec_index] = 1.0;
+                }
+
+                mRatioResiduals[vec_index] = mAbsResiduals[vec_index] / mRatioResiduals[vec_index];           
+                mAbsResiduals[vec_index] /= mNumDofs[vec_index];
+            }
+
+            // Synchroizing them across ranks
             // TODO concatenate the vectors to have only one call to MPI
             // Then afterwards split them again
             // I don't know the best way to do this => google :)
@@ -458,9 +479,9 @@ public:
     /// Turn back information as a string.
     virtual std::string Info() const
     {
-std::stringstream buffer;
-    buffer << "GeneralResidualCriteria" ;
-    return buffer.str();
+        std::stringstream buffer;
+        buffer << "GeneralResidualCriteria";
+        return buffer.str();
     }
 
     /// Print information about this object.

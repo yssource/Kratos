@@ -430,7 +430,7 @@ public:
      */
     double DomainSize() const override
     {
-        return std::abs( DeterminantOfJacobian( PointType() ) ) * 0.5;
+        return Area();
     }
 
     /**

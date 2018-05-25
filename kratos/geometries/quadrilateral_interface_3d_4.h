@@ -469,7 +469,7 @@ public:
      */
     double DomainSize() const override
     {
-		return Area();
+		return Length();
     }
 
 

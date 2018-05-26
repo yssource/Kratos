@@ -285,18 +285,18 @@ public:
 
         Then in the second step do the summation
         */
-        int size = rvalue.size();
+        int size = rValue.size();
         int result; 
-        MPI_Allreduce(&size, &result, 1, MPI_INT, MPI_XOR, MPI_COMM_WORLD);
+        MPI_Allreduce(&size, &result, 1, MPI_INT, MPI_BXOR, MPI_COMM_WORLD);
         if (result != 0) {
             // some vectors differ in size
-            std::cout << rank << "Error (SumAll): vectors have different sizes" << std::endl;
+            std::cout << "Error (SumAll): vectors have different sizes" << std::endl;
         }
 
-        std::vector<double> local_value = std::move(rvalue);
+        std::vector<double> local_value = std::move(rValue);
 
         rValue.resize(size);
-        MPI_Allreduce(&local_value, &rValue.data(), size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(local_value.data(), rValue.data(), size, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
         return true;
     }

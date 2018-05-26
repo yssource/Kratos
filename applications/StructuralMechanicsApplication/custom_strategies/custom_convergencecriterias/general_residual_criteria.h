@@ -150,6 +150,7 @@ public:
         rParameters.ValidateAndAssignDefaults(default_params);
 
         const SizeType n_variables = rParameters["variables_to_separate"].size();
+        const SizeType num_var_to_separate = n_variables + 1; // +1 bcs the "remaining" dofs are at pos 0
         const SizeType n_rel_conv_tol = rParameters["relative_convergence_tolerances"].size();
         const SizeType n_abs_conv_tol = rParameters["absolut_convergence_tolerances"].size();
 
@@ -157,7 +158,6 @@ public:
         KRATOS_ERROR_IF(n_variables != n_rel_conv_tol) << "Your list of variables is not the same size as the list of relative_convergence_tolerances" << std::endl;
         KRATOS_ERROR_IF(n_variables != n_abs_conv_tol) << "Your list of variables is not the same size as the list of absolut_convergence_tolerances" << std::endl;
 
-        const SizeType num_var_to_separate = n_variables + 1; // +1 bcs the "remaining" dofs are at pos 0
 
         mRatioTolerances.resize(num_var_to_separate);
         mAbsTolerances.resize(num_var_to_separate);
@@ -283,23 +283,40 @@ public:
                 }
             }
 
-            std::transform(mRatioResiduals.begin(), mRatioResiduals.end(), mRatioResiduals.begin(), std::sqrt);
-            std::transform(mAbsResiduals.begin(), mRatioResiduals.end(), mRatioResiduals.begin(), std::sqrt);
 
             // Computing the residuals
+
+            const SizeType num_var_to_separate = mRatioResiduals.size();
+            // TODO concatenate the vectors to have only one call to MPI
+            std::vector<TDataType> residuals = std::move(mRatioResiduals);
+            residuals.reserve(2 * num_var_to_separate);
+            std::move(mAbsResiduals.begin(), mAbsResiduals.end(), std::back_inserter(residuals));
+
+            // Synchroizing them across ranks
+            rModelPart.GetCommunicator().SumAll(residuals); // This also needs to be implemented for std::vector
+
+            // Then afterwards split them again
+            std::move(residuals.begin() + num_var_to_separate, residuals.end(), std::back_inserter(mAbsResiduals));
+            mRatioResiduals = std::move(residuals);
+
+            auto sqrtFunction = [](const TDataType & el) -> TDataType { return std::sqrt(el); };
+            std::transform(mRatioResiduals.begin(), mRatioResiduals.end(), mRatioResiduals.begin(), sqrtFunction);
+            std::transform(mAbsResiduals.begin(), mRatioResiduals.end(), mRatioResiduals.begin(), sqrtFunction);
+
             // TODO implement isZero()
             if (mRatioResiduals[0] == 0.0) {
                 mRatioResiduals[0] = 1.0;
             }
+
             mRatioResiduals[0] /= mRatioResiduals[0];
-            mAbsResiduals[vec_index] /= mNumDofs[vec_index];
+            mAbsResiduals[0] /= mNumDofs[0];
             
             for (auto & el : mKeyToIndexMap) 
             {
                 IndexType vec_index = el.second;
 
                 // TODO izZero()
-                if (mRatioResiduals[vect_index] == 0.0)
+                if (mRatioResiduals[vec_index] == 0.0)
                 {
                     mRatioResiduals[vec_index] = 1.0;
                 }
@@ -308,34 +325,34 @@ public:
                 mAbsResiduals[vec_index] /= mNumDofs[vec_index];
             }
 
-            // Synchroizing them across ranks
-            // TODO concatenate the vectors to have only one call to MPI
-            // Then afterwards split them again
-            // I don't know the best way to do this => google :)
-            // rModelPart.GetCommunicator().SumAll(residuals); // This also needs to be implemented for std::vector
-
             const int nonlin_iteration_number = rModelPart.GetProcessInfo()[NL_ITERATION_NUMBER];
 
             // Checking for convergence
             // This is done on each rank, since the residuals were synchronized before
-            // std::vector<bool> convergece_vec(vars2separat.size());
-            // for (vars2separat)
-            // {
-            //     convergece_vec[i] = (rel_ratio < exp_rel_ratio && abs_ratio < abs_rel_ratio)
-            // }
-            //is_converged = ... min(conv_vector)
 
+            std::vector<bool> conv_vec(num_var_to_separate);
             bool is_converged = true;
+
+            for (auto & el : mKeyToIndexMap) {
+                IndexType vec_index = el.second;
+                conv_vec[vec_index] = mRatioResiduals[vec_index] < mRatioTolerances[vec_index] ||
+                                      mAbsResiduals[vec_index] < mAbsTolerances[vec_index];
+                is_converged = is_converged && conv_vec[vec_index];
+            } 
 
             // Printing information abt current residuals
             if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
             {
                 KRATOS_INFO("ConvergenceCriteria") << "Convergence Check:" << std::endl; // TODO most likely remove the color
-                // for (vars2separat)
-                //     KRATOS_INFO("Label") << var_name << rel_ratio << exp_rel_ratio << abs_ratio << exp_abs_ratio <<
-                //         << convergece_vec[i]
-
-
+                for (auto &el : mKeyToIndexMap)
+                {
+                    KeyType var_name = el.first; 
+                    IndexType vec_index = el.second;
+                    KRATOS_INFO("Label")
+                        << var_name << mRatioResiduals[vec_index] << mRatioTolerances[vec_index] 
+                        << mAbsResiduals[vec_index] << mAbsTolerances[vec_index]
+                        << conv_vec[vec_index];
+                }
 
                 if (is_converged)
                     KRATOS_INFO("ConvergenceCriteria") << BOLDFONT(FGRN("Convergence is achieved in Iteration ")) << nonlin_iteration_number << std::endl; // TODO most likely remove the color

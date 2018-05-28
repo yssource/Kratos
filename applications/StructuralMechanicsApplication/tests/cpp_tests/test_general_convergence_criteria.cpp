@@ -150,7 +150,7 @@ namespace Kratos
             SparseSpaceType::SetToZero(rSystemVec_b);
         }
 
-        double computeError(int stepIndex) 
+        double computeError(int stepIndex)
         {
             int k = 3;
             double eps = 1e-9;
@@ -170,7 +170,7 @@ namespace Kratos
                          int stepIndex)
         {
             double err = computeError(stepIndex);
-            double errPrevious = computeError(stepIndex - 1); 
+            double errPrevious = computeError(stepIndex - 1);
 
             for (auto& r_dof : rDofSet)
             {
@@ -183,7 +183,7 @@ namespace Kratos
             KRATOS_ERROR_IF(system_size != SparseSpaceType::Size(rSystemVec_b))
                 << "System Vector sizes are inconsistent!" << std::endl;
 
-            // Philip: I believe we can compute the displaisment like this. 
+            // Philip: I believe we can compute the displaisment like this.
             // however, we probably can use this value for residuals as well, snce its just a decreasing series of numbers.
             // temp = err - start * 2 ^ ( -k * (i + 1) ) / (i + 1)) * eps
             double dx = err - errPrevious;
@@ -254,7 +254,7 @@ namespace Kratos
             }
 
             // check that convergence was achieved
-            KRATOS_CHECK(is_converged);
+            KRATOS_CHECK(is_converged); //TODO_N please reverse the check, it should check how many iterations it needs to converge
         }
 
         KRATOS_TEST_CASE_IN_SUITE(ConvergenceCriteriaAbsoluteNoSeparate, KratosStructuralMechanicsFastSuite)
@@ -277,6 +277,7 @@ namespace Kratos
             const TDataType AlwaysConvergedNorm = 1e-5;
 
             Parameters default_params( R"({
+                "basis_vector_type" : "solution_update",
                 "variables_to_separate" : [],
                 "relative_convergence_tolerances" : [],
                 "absolut_convergence_tolerances" : []
@@ -335,6 +336,7 @@ namespace Kratos
             const TDataType AlwaysConvergedNorm = 1e-5;
 
             Parameters default_params( R"({
+                "basis_vector_type" : "solution_update",
                 "variables_to_separate" : ["VELOCITY", "ROTATION"],
                 "relative_convergence_tolerances" : [1e-6, 1e-8],
                 "absolut_convergence_tolerances" : [1e-20, 1e-20]

@@ -245,7 +245,7 @@ public:
             // Initialize the vectors
             std::fill(mRatioResiduals.begin(), mRatioResiduals.end(), TDataType());
             std::fill(mAbsResiduals.begin(), mAbsResiduals.end(), TDataType());
-            std::fill(mNumDofs.begin(), mNumDofs.end(), SizeType());
+            std::fill(mNumDofs.begin(), mNumDofs.end(), int());
 
             #pragma omp parallel for // comment bcs some vars have to be private to the thread
             for (int i = 0; i < static_cast<int>(rDofSet.size()); ++i)
@@ -293,6 +293,7 @@ public:
 
             // Synchroizing them across ranks
             rModelPart.GetCommunicator().SumAll(residuals);
+            // rModelPart.GetCommunicator().SumAll(mNumDofs); // TODO_N this has to be implemented in the MPIComm
 
             // Then afterwards split them again
             std::copy(residuals.begin(), residuals.begin() + num_vars_to_separate, mRatioResiduals.begin());
@@ -311,7 +312,7 @@ public:
             bool is_converged = true;
             for (SizeType i=0; i<num_vars_to_separate; ++i)
             {
-                // TODO implement isZero()
+                // TODO_N implement isZero()
                 if (mRatioResiduals[i] == 0.0) mRatioResiduals[i] = 1.0;
                 if (mNumDofs[i] == 0) mNumDofs[i] = 1; // this might be the case if no "other" dofs are present
 
@@ -448,7 +449,7 @@ protected:
     std::vector<TDataType> mRatioResiduals;
     std::vector<TDataType> mAbsResiduals;
 
-    std::vector<SizeType> mNumDofs;
+    std::vector<int> mNumDofs;
 
     std::unordered_map<KeyType, IndexType> mKeyToIndexMap;
     std::vector<std::string> namesToSeparate;

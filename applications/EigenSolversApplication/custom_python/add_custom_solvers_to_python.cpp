@@ -18,6 +18,7 @@
 #include "custom_python/add_custom_solvers_to_python.h"
 #include "linear_solvers/linear_solver.h"
 #include "custom_solvers/eigen_direct_solver.h"
+#include "custom_solvers/eigen_iterative_solver.h"
 #include "custom_solvers/eigensystem_solver.h"
 
 namespace Kratos
@@ -38,6 +39,21 @@ void register_solver(pybind11::module& m, const std::string& name)
 	class_<EigenDirectSolverType, typename EigenDirectSolverType::Pointer, Base >
 		(m, name.c_str())
 		.def(init<>())
+		.def(init<Parameters>())
+	;
+}
+
+template <typename SolverType>
+void register_iterative_solver(pybind11::module& m, const std::string& name)
+{
+	using namespace pybind11;
+
+	using Base = LinearSolver<typename SolverType::TGlobalSpace, typename SolverType::TLocalSpace>;
+
+	using EigenIterativeSolverType = EigenIterativeSolver<SolverType>;
+
+	class_<EigenIterativeSolverType, typename EigenIterativeSolverType::Pointer, Base >
+		(m, name.c_str())
 		.def(init<Parameters>())
 	;
 }
@@ -82,6 +98,10 @@ void AddCustomSolversToPython(pybind11::module& m)
 	register_solver<PardisoLU<double>>(m, "PardisoLUSolver");
 	register_solver<PardisoLU<complex>>(m, "ComplexPardisoLUSolver");
 	#endif // defined USE_EIGEN_MKL
+
+	// --- iterative solver
+	register_iterative_solver<ConjugateGradient<double>>(m, "ConjugateGradientSolver");
+	register_iterative_solver<BiCGSTAB<double>>(m, "BiCGSTABSolver");
 
 	// --- eigensystem solver
 

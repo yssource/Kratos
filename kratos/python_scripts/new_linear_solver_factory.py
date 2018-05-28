@@ -83,6 +83,12 @@ def ConstructSolver(configuration):
     elif(solver_type == "complex_eigen_pardiso_lu"): # needs Intel MKL
         import KratosMultiphysics.EigenSolversApplication
         linear_solver = KratosMultiphysics.EigenSolversApplication.ComplexPardisoLUSolver(configuration)
+    elif(solver_type == "eigen_cg"):
+        import KratosMultiphysics.EigenSolversApplication
+        linear_solver = KratosMultiphysics.EigenSolversApplication.ConjugateGradientSolver(configuration)
+    elif(solver_type == "eigen_bicgstab"):
+        import KratosMultiphysics.EigenSolversApplication
+        linear_solver = KratosMultiphysics.EigenSolversApplication.BiCGSTABSolver(configuration)
 
      # emulating the solvers of the MKLSolversApplication through the EigenSolversApplication
     elif (solver_type == "ParallelMKLPardisoSolver"):

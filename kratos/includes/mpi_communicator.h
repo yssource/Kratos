@@ -277,21 +277,14 @@ public:
 
     bool SumAll(std::vector<double>& rValue) const override
     {
-        // Natasha to be implemented
-
-        /*
-        First please check if the sizes of the vector are the same across ranks 
-        => this I will later wrap in some debug directives
-
-        Then in the second step do the summation
-        */
         int size = rValue.size();
-        int result; 
+
+#ifdef KRATOS_DEBUG
+        int result;
         MPI_Allreduce(&size, &result, 1, MPI_INT, MPI_BXOR, MPI_COMM_WORLD);
-        if (result != 0) {
-            // some vectors differ in size
-            std::cout << "Error (SumAll): vectors have different sizes" << std::endl;
-        }
+        KRATOS_ERROR_IF_NOT(result != 0) << "Vectors have different sizes"
+            << std::endl;
+#endif
 
         std::vector<double> local_value = std::move(rValue);
 

@@ -11,6 +11,13 @@
 //
 
 
+/*
+References:
+- applications/mpi_search_application/tests/test_global_pointer_mpi.cpp
+- kratos/includes/checks.h
+
+*/
+
 // System includes
 
 // External includes
@@ -18,24 +25,10 @@
 // Project includes
 #include "testing/testing.h"
 #include "includes/model_part.h"
-#include "spaces/ublas_space.h"
 
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
 #include "includes/mpi_communicator.h"
 #endif
-
-/*
-Things we will test:
-- For both residual- & solutionupdate-based => here we can think if it is really necessary for both, maybe for one of them just one test if they have a common baseclass
-    - For relative and absolute convergence
-        - For different types of variables:
-            - No Input (e.g. what the Displacement and the Residual Criterion do atm)
-            - One Array3D + Double Variable (what VelPrCriteria does)
-            - Two Double Variables
-            - Two Array3D Variables (What the criteria in StrucutralMechanics do atm)
-            - ... ?
-=> makes at least 2*2*(4+x) tests
-*/
 
 namespace Kratos
 {
@@ -53,6 +46,21 @@ namespace Kratos
             comm_to_test.SumAll(dummy_vec);
 
         }
+
+#ifdef KRATOS_DEBUG
+        KRATOS_TEST_CASE_IN_SUITE(MPICommunicatorExtensionTest, KratosMappingAppFastSuite)
+        {
+            ModelPart dummy_model_part("dummy");
+
+            MPICommunicator comm_to_test(&dummy_model_part.GetNodalSolutionStepVariablesList());
+
+            std::vector<double> dummy_vec(5);
+            KRATOS_DEBUG_CHECK_EXCEPTION_IS_THROWN(comm_to_test.SumAll(dummy_vec),
+                "Error: The ModelPart named : \"Random\" was not found as SubModelPart of : \"Main\". The total input string was \"Main.Random\"");
+
+        }
+#endif
+
 #endif
 
     } // namespace Testing

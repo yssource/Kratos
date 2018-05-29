@@ -77,7 +77,7 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
     typedef BuilderAndSolverType::Pointer BuilderAndSolverPointer;
 
     // Custom strategy types
-    typedef ResidualBasedArcLengthStrategy< SparseSpaceType, LocalSpaceType , LinearSolverType >  ResidualBasedArcLengthStrategyType;
+    // typedef ResidualBasedArcLengthStrategy< SparseSpaceType, LocalSpaceType , LinearSolverType >  ResidualBasedArcLengthStrategyType;
     typedef EigensolverStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType > EigensolverStrategyType;
     typedef HarmonicAnalysisStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType > HarmonicAnalysisStrategyType;
     typedef FormfindingUpdatedReferenceStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType > FormfindingUpdatedReferenceStrategyType;
@@ -102,10 +102,11 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
     //********************************************************************
 
     // Residual Based Arc Length Strategy
-    class_< ResidualBasedArcLengthStrategyType,typename ResidualBasedArcLengthStrategyType::Pointer, BaseSolvingStrategyType >(m,"ResidualBasedArcLengthStrategy")
-    .def(init<ModelPart&, BaseSchemeType::Pointer, LinearSolverPointer, ConvergenceCriteriaPointer,
-                                                                unsigned int, unsigned int, unsigned int,long double,bool, bool, bool>() )
-            ;
+    // Currently not woking
+    // class_< ResidualBasedArcLengthStrategyType,typename ResidualBasedArcLengthStrategyType::Pointer, BaseSolvingStrategyType >(m,"ResidualBasedArcLengthStrategy")
+    // .def(init<ModelPart&, BaseSchemeType::Pointer, LinearSolverPointer, ConvergenceCriteriaPointer,
+    //                                                             unsigned int, unsigned int, unsigned int,long double,bool, bool, bool>() )
+    //        ;
 
     // Eigensolver Strategy
     class_< EigensolverStrategyType, typename EigensolverStrategyType::Pointer,BaseSolvingStrategyType >(m,"EigensolverStrategy")

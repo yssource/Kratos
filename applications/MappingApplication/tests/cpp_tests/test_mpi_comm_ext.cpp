@@ -48,7 +48,7 @@ namespace Kratos
         }
 
 #ifdef KRATOS_DEBUG
-        KRATOS_TEST_CASE_IN_SUITE(MPICommunicatorExtensionTest, KratosMappingAppFastSuite)
+        KRATOS_TEST_CASE_IN_SUITE(MPICommunicatorExtensionTest2, KratosMappingAppFastSuite)
         {
             ModelPart dummy_model_part("dummy");
 

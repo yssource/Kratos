@@ -8,6 +8,7 @@ KratosMultiphysics.CheckRegisteredApplications("FluidDynamicsApplication")
 
 # Import applications
 import KratosMultiphysics.FluidDynamicsApplication as KratosCFD
+import KratosMultiphysics.StructuralMechanicsApplication as StructMech
 
 # Import base class file
 import navier_stokes_base_solver
@@ -246,10 +247,22 @@ class NavierStokesSolverMonolithic(navier_stokes_base_solver.NavierStokesBaseSol
             self.EstimateDeltaTimeUtility = self._get_automatic_time_stepping_utility()
 
         # Creating the solution strategy
-        self.conv_criteria = KratosCFD.VelPrCriteria(self.settings["relative_velocity_tolerance"].GetDouble(),
-                                                     self.settings["absolute_velocity_tolerance"].GetDouble(),
-                                                     self.settings["relative_pressure_tolerance"].GetDouble(),
-                                                     self.settings["absolute_pressure_tolerance"].GetDouble())
+        conv_crit_settings = KratosMultiphysics.Parameters("""
+            {
+                "basis_vector_type" : "solution_update",
+                "variables_to_separate" : ["VELOCITY"],
+                "relative_convergence_tolerances" : [1e-6],
+                "absolut_convergence_tolerances" : [1e-11]
+            }
+            """)
+        vel_RT = self.settings["relative_velocity_tolerance"].GetDouble()
+        vel_AT = self.settings["absolute_velocity_tolerance"].GetDouble()
+        conv_crit_settings["relative_convergence_tolerances"][0].SetDouble(vel_RT)
+        conv_crit_settings["absolut_convergence_tolerances"][0].SetDouble(vel_AT)
+        self.conv_criteria = StructMech.GeneralConvergenceCriteria(self.settings["relative_pressure_tolerance"].GetDouble(),
+                                                      self.settings["absolute_pressure_tolerance"].GetDouble(),
+                                                      conv_crit_settings,
+                                                      "PRESSURE")
 
         (self.conv_criteria).SetEchoLevel(self.settings["echo_level"].GetInt())
 

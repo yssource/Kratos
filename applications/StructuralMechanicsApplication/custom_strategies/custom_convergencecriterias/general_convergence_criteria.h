@@ -162,42 +162,38 @@ public:
 
         mIndexToNameMap[0] = (num_vars_to_separate > 1) ? OtherDofsName + std::string(": ") : ""; // Print nothing in case of no separation
 
-        IndexType index = 1; // starting from 1 bcs the "remaining" dofs go to pos 0
-
         mRatioTolerances[0] = NewRatioTolerance;
         mAbsTolerances[0] = AlwaysConvergedNorm;
 
-        for (IndexType i_var = 1; i_var < num_vars_to_separate; ++i_var){
+        for (IndexType i_var = 1; i_var < num_vars_to_separate; ++i_var)
+        {
             mRatioTolerances[i_var] = rParameters["relative_convergence_tolerances"].GetArrayItem(i_var-1).GetDouble();
             mAbsTolerances[i_var] = rParameters["absolut_convergence_tolerances"].GetArrayItem(i_var-1).GetDouble();
 
             const std::string& variable_name = rParameters["variables_to_separate"].GetArrayItem(i_var-1).GetString();
             KeyType the_key;
 
-            mIndexToNameMap[index] = variable_name + std::string(": ") ;
+            mIndexToNameMap[i_var] = variable_name + std::string(": ") ;
 
             if (KratosComponents<DoubleVariableType>::Has(variable_name))
             {
                 the_key = KratosComponents< DoubleVariableType >::Get(variable_name).Key();
-                mKeyToIndexMap[the_key] = index;
-                index += 1;
+                mKeyToIndexMap[the_key] = i_var;
             }
             else if (KratosComponents< Array3VariableType >::Has(variable_name))
             {
                 // In this case all the variables point to the same index
                 the_key = KratosComponents< ComponentVariableType >::Get(variable_name+std::string("_X")).Key();
-                mKeyToIndexMap[the_key] = index;
+                mKeyToIndexMap[the_key] = i_var;
                 the_key = KratosComponents< ComponentVariableType >::Get(variable_name+std::string("_Y")).Key();
-                mKeyToIndexMap[the_key] = index;
+                mKeyToIndexMap[the_key] = i_var;
                 the_key = KratosComponents< ComponentVariableType >::Get(variable_name+std::string("_Z")).Key();
-                mKeyToIndexMap[the_key] = index;
-                index += 1;
+                mKeyToIndexMap[the_key] = i_var;
             }
             else if (KratosComponents< ComponentVariableType >::Has(variable_name)) //case of component variable)
             {
                 the_key = KratosComponents< ComponentVariableType >::Get(variable_name).Key();
-                mKeyToIndexMap[the_key] = index;
-                index += 1;
+                mKeyToIndexMap[the_key] = i_var;
             }
             else
             {

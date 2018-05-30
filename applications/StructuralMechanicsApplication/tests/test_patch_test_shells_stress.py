@@ -92,8 +92,15 @@ class TestPatchTestShellsStressRec(KratosUnittest.TestCase):
         linear_solver = KratosMultiphysics.SkylineLUFactorizationSolver()
         builder_and_solver = KratosMultiphysics.ResidualBasedBlockBuilderAndSolver(linear_solver)
         scheme = KratosMultiphysics.ResidualBasedIncrementalUpdateStaticScheme()
-        convergence_criterion = KratosMultiphysics.ResidualCriteria(1e-14,1e-20)
-        convergence_criterion.SetEchoLevel(0)
+        con_crit_settings = KratosMultiphysics.Parameters("""
+        {
+            "variables_to_separate" : ["DISPLACEMENT"],
+            "relative_convergence_tolerances" : [1e-6],
+            "absolut_convergence_tolerances" : [1e-11]
+        }
+        """)
+        convergence_criterion = StructuralMechanicsApplication.GeneralConvergenceCriteria(1e-8,1e-11, con_crit_settings, "ROTATION")
+        convergence_criterion.SetEchoLevel(1)
 
         max_iters = 20
         compute_reactions = True

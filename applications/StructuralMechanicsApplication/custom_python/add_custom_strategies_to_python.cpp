@@ -176,7 +176,7 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
             ;
 
     // General Residual Convergence Criterion
-    class_< GeneralConvergenceCriteriaType,typename GeneralConvergenceCriteriaType::Pointer, ConvergenceCriteriaType >(m,"GeneralResidualCriteria")
+    class_< GeneralConvergenceCriteriaType,typename GeneralConvergenceCriteriaType::Pointer, ConvergenceCriteriaType >(m,"GeneralConvergenceCriteria")
         .def(init< double, double>())
         .def(init< double, double, Parameters>())
         .def(init< double, double, Parameters, std::string>())

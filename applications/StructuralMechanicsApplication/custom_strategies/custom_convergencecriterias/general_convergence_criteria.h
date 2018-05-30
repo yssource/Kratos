@@ -137,12 +137,18 @@ public:
         */
 
         Parameters default_params( R"({
+            "basis_vector_type" : "residual",
             "variables_to_separate" : [],
             "relative_convergence_tolerances" : [],
             "absolut_convergence_tolerances" : []
         })" );
 
         rParameters.ValidateAndAssignDefaults(default_params);
+
+        const std::string& r_basis_type = rParameters["basis_vector_type"].GetString();
+        if (r_basis_type == "residual")              mBasisType = BasisType::RESIDUAL;
+        else if (r_basis_type == "solution_update") mBasisType = BasisType::SOLUTION_UPDATE;
+        else KRATOS_ERROR << "Wrong BasisType, use \"residual\" or \"solution_update\"" << std::endl;
 
         const SizeType n_variables = rParameters["variables_to_separate"].size();
         const SizeType num_vars_to_separate = n_variables + 1; // +1 bcs the "remaining" dofs are at pos 0
@@ -167,10 +173,11 @@ public:
 
         for (IndexType i_var = 1; i_var < num_vars_to_separate; ++i_var)
         {
-            mRatioTolerances[i_var] = rParameters["relative_convergence_tolerances"].GetArrayItem(i_var-1).GetDouble();
-            mAbsTolerances[i_var] = rParameters["absolut_convergence_tolerances"].GetArrayItem(i_var-1).GetDouble();
+            const IndexType reverse_idx = num_vars_to_separate - i_var - 1; // For printing in proper order
+            mRatioTolerances[i_var] = rParameters["relative_convergence_tolerances"].GetArrayItem(reverse_idx).GetDouble();
+            mAbsTolerances[i_var] = rParameters["absolut_convergence_tolerances"].GetArrayItem(reverse_idx).GetDouble();
 
-            const std::string& variable_name = rParameters["variables_to_separate"].GetArrayItem(i_var-1).GetString();
+            const std::string& variable_name = rParameters["variables_to_separate"].GetArrayItem(reverse_idx).GetString();
             KeyType the_key;
 
             mIndexToNameMap[i_var] = variable_name + std::string(": ") ;
@@ -426,7 +433,7 @@ protected:
     std::unordered_map<KeyType, IndexType> mKeyToIndexMap;
     std::unordered_map<IndexType, std::string> mIndexToNameMap;
 
-    BasisType mBasisType = BasisType::RESIDUAL;
+    BasisType mBasisType;
 
 
     ///@}

@@ -124,10 +124,7 @@ public:
         TDataType AlwaysConvergedNorm,
         Parameters rParameters = Parameters(R"({})"),
         const std::string OtherDofsName="Other Dofs")
-        : ConvergenceCriteria< TSparseSpace, TDenseSpace >(),
-          mRatioTolerance(NewRatioTolerance),
-          mAlwaysConvergedNorm(AlwaysConvergedNorm),
-          mInitialResidualIsSet(false)
+        : ConvergenceCriteria< TSparseSpace, TDenseSpace >()
     {
         /*
         Parameters(R"({
@@ -148,7 +145,7 @@ public:
         rParameters.ValidateAndAssignDefaults(default_params);
 
         const SizeType n_variables = rParameters["variables_to_separate"].size();
-        const SizeType num_var_to_separate = n_variables + 1; // +1 bcs the "remaining" dofs are at pos 0
+        const SizeType num_vars_to_separate = n_variables + 1; // +1 bcs the "remaining" dofs are at pos 0
         const SizeType n_rel_conv_tol = rParameters["relative_convergence_tolerances"].size();
         const SizeType n_abs_conv_tol = rParameters["absolut_convergence_tolerances"].size();
 
@@ -156,26 +153,28 @@ public:
         KRATOS_ERROR_IF(n_variables != n_rel_conv_tol) << "Your list of variables is not the same size as the list of relative_convergence_tolerances" << std::endl;
         KRATOS_ERROR_IF(n_variables != n_abs_conv_tol) << "Your list of variables is not the same size as the list of absolut_convergence_tolerances" << std::endl;
 
-        mRatioTolerances.resize(num_var_to_separate);
-        mAbsTolerances.resize(num_var_to_separate);
+        mRatioTolerances.resize(num_vars_to_separate);
+        mAbsTolerances.resize(num_vars_to_separate);
 
         // TODO check if this initialization to 0 works (should be but haven't tested it)
-        mRatioResiduals.resize(num_var_to_separate, 0.0);
-        mAbsResiduals.resize(num_var_to_separate, 0.0);
+        mRatioResiduals.resize(num_vars_to_separate, 0.0);
+        mAbsResiduals.resize(num_vars_to_separate, 0.0);
 
-        mNumDofs.resize(num_var_to_separate, 0);
+        mNumDofs.resize(num_vars_to_separate, 0);
 
         IndexType index = 1; // starting from 1 bcs the "remaining" dofs go to pos 0
 
-        mRatioTolerances[0] = rParameters["relative_convergence_tolerance"].GetDouble();
-        mAbsTolerances[0] = rParameters["absolut_convergence_tolerance"].GetDouble();
+        mRatioTolerances[0] = NewRatioTolerance;
+        mAbsTolerances[0] = AlwaysConvergedNorm;
 
-        for (IndexType i_var = 1; i_var < num_var_to_separate; ++i_var){
+        for (IndexType i_var = 1; i_var < num_vars_to_separate; ++i_var){
             mRatioTolerances[i_var] = rParameters["relative_convergence_tolerances"].GetArrayItem(i_var-1).GetDouble();
             mAbsTolerances[i_var] = rParameters["absolut_convergence_tolerances"].GetArrayItem(i_var-1).GetDouble();
 
             const std::string& variable_name = rParameters["variables_to_separate"].GetArrayItem(i_var-1).GetString();
             KeyType the_key;
+
+            mIndexToNameMap[index] = variable_name;
 
             if (KratosComponents<DoubleVariableType>::Has(variable_name))
             {
@@ -202,7 +201,8 @@ public:
             }
             else
             {
-                KRATOS_ERROR << "Only Double (e.g. PRESSURE), Array3D (e.g. VELOCITY) or Component (e.g. VELOCITY_X) variables are allowed in the variables list" << std::endl;
+                KRATOS_ERROR << "Only Double (e.g. PRESSURE), Array3D (e.g. VELOCITY) or Component "
+                    << "(e.g. VELOCITY_X) variables are allowed in the variables list" << std::endl;
             }
         }
 
@@ -248,6 +248,11 @@ public:
 
         if (SparseSpaceType::Size(r_vec) != 0) // if we are solving for something
         {
+            // Initialize the vectors
+            std::fill(mRatioResiduals.begin(), mRatioResiduals.end(), 0.0);
+            std::fill(mAbsResiduals.begin(), mAbsResiduals.end(), 0.0);
+            std::fill(mNumDofs.begin(), mNumDofs.end(), 0);
+
             // #pragma omp parallel for // comment bcs some vars have to be private to the thread
             for (int i = 0; i < static_cast<int>(rDofSet.size()); ++i)
             {
@@ -280,76 +285,70 @@ public:
                 }
             }
 
-
-
             // Computing the residuals
 
-            const SizeType num_var_to_separate = mRatioResiduals.size();
-            // TODO concatenate the vectors to have only one call to MPI
+            const SizeType num_vars_to_separate = mRatioResiduals.size();
+
+            // concatenate the vectors to have only one call to MPI
             std::vector<TDataType> residuals = mRatioResiduals;
-            residuals.reserve(2 * num_var_to_separate);
-            std::copy(mAbsResiduals.begin(), mAbsResiduals.end(), residuals.begin() + num_var_to_separate);
+            residuals.reserve(2 * num_vars_to_separate);
+            std::copy(mAbsResiduals.begin(), mAbsResiduals.end(), residuals.begin() + num_vars_to_separate);
 
             // Synchroizing them across ranks
-            rModelPart.GetCommunicator().SumAll(residuals); // This also needs to be implemented for std::vector
+            rModelPart.GetCommunicator().SumAll(residuals);
 
             // Then afterwards split them again
-            std::copy(residuals.begin(), residuals.begin() + num_var_to_separate, mRatioResiduals.begin());
-            std::copy(residuals.begin() + num_var_to_separate, residuals.end(), mAbsResiduals.begin());
+            std::copy(residuals.begin(), residuals.begin() + num_vars_to_separate, mRatioResiduals.begin());
+            std::copy(residuals.begin() + num_vars_to_separate, residuals.end(), mAbsResiduals.begin());
 
             auto sqrtFunction = [](const TDataType & el) -> TDataType { return std::sqrt(el); };
+            // Finish applying the L2-Norm
             std::transform(mRatioResiduals.begin(), mRatioResiduals.end(), mRatioResiduals.begin(), sqrtFunction);
             std::transform(mAbsResiduals.begin(), mAbsResiduals.end(), mAbsResiduals.begin(), sqrtFunction);
+            // Take into account the size of the domain
+            std::transform(mNumDofs.begin(), mNumDofs.end(), mNumDofs.begin(), sqrtFunction);
 
-            // TODO implement isZero()
-            if (mRatioResiduals[0] == 0.0) {
-                mRatioResiduals[0] = 1.0;
-            }
 
-            mRatioResiduals[0] /= mRatioResiduals[0];
-            mAbsResiduals[0] /= mNumDofs[0];
-
-            for (auto & el : mKeyToIndexMap)
-            {
-                IndexType vec_index = el.second;
-
-                // TODO izZero()
-                if (mRatioResiduals[vec_index] == 0.0)
-                {
-                    mRatioResiduals[vec_index] = 1.0;
-                }
-
-                mRatioResiduals[vec_index] = mAbsResiduals[vec_index] / mRatioResiduals[vec_index];
-                mAbsResiduals[vec_index] /= mNumDofs[vec_index];
-            }
-
-            const int nonlin_iteration_number = rModelPart.GetProcessInfo()[NL_ITERATION_NUMBER];
-
-            // Checking for convergence
+            // Computing the final residuals and checking for convergence
             // This is done on each rank, since the residuals were synchronized before
-
-            std::vector<bool> conv_vec(num_var_to_separate);
+            std::vector<bool> conv_vec(num_vars_to_separate); // save the convegence info for plotting
             bool is_converged = true;
+            // @Natasha I changed this to a simple size-based loop, I think this is ok
+            for (SizeType i=0; i<num_vars_to_separate; ++i)
+            {
+                // TODO implement isZero()
+                if (mRatioResiduals[i] == 0.0) mRatioResiduals[i] = 1.0;
+                if (mNumDofs[i] == 0) mNumDofs[i] = 0; // this might be the case if no "other" dofs are present
 
-            for (auto & el : mKeyToIndexMap) {
-                IndexType vec_index = el.second;
-                conv_vec[vec_index] = mRatioResiduals[vec_index] < mRatioTolerances[vec_index] ||
-                                      mAbsResiduals[vec_index] < mAbsTolerances[vec_index];
-                is_converged = is_converged && conv_vec[vec_index];
+                // Compute the final residuals
+                mRatioResiduals[i] = mAbsResiduals[i] / mRatioResiduals[i];
+                mAbsResiduals[i] /= mNumDofs[i];
+
+                // Check each variable for convergence
+                conv_vec[i] = mRatioResiduals[i] < mRatioTolerances[i] ||
+                              mAbsResiduals[i] < mAbsTolerances[i];
+
+                is_converged = is_converged && conv_vec[i]; // Check overall convergence
             }
 
             // Printing information abt current residuals
             if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
             {
-                KRATOS_INFO("ConvergenceCriteria") << "Convergence Check:" << std::endl; // TODO most likely remove the color
-                for (auto &el : mKeyToIndexMap)
+                const int nonlin_iteration_number = rModelPart.GetProcessInfo()[NL_ITERATION_NUMBER];
+
+                KRATOS_INFO("ConvergenceCriteria") << "Convergence Check; iteration "
+                    << nonlin_iteration_number << std::endl;
+
+                for (const auto& el : mKeyToIndexMap)
                 {
-                    KeyType var_name = el.first;
+                    KeyType var_key = el.first;
                     IndexType vec_index = el.second;
-                    KRATOS_INFO("Label")
-                        << var_name << mRatioResiduals[vec_index] << mRatioTolerances[vec_index]
-                        << mAbsResiduals[vec_index] << mAbsTolerances[vec_index]
-                        << conv_vec[vec_index] << std::endl;
+                    KRATOS_INFO(std::string("\t") + mIndexToNameMap[vec_index])
+                        << mRatioResiduals[vec_index] << " " << mRatioTolerances[vec_index] << " "
+                        << mAbsResiduals[vec_index] << " " << mAbsTolerances[vec_index] << " ";
+                    if (conv_vec[vec_index]) KRATOS_INFO("") << BOLDFONT(FGRN("converged"));
+                    else KRATOS_INFO("") << BOLDFONT(FRED("not converged"));
+                    KRATOS_INFO("") << std::endl;
                 }
 
                 if (is_converged)
@@ -366,96 +365,12 @@ public:
             return true;
         }
     }
-        /*if (TSparseSpace::Size(b) != 0) //if we are solving for something
-        {
-
-            if (mInitialResidualIsSet == false)
-            {
-                mInitialResidualNorm = TSparseSpace::TwoNorm(b);
-                mInitialResidualIsSet = true;
-
-                //KRATOS_INFO(" Initial Residual ") << mInitialResidualNorm <<std::endl;
-            }
-
-            TDataType ratio;
-            mCurrentResidualNorm = TSparseSpace::TwoNorm(b);
-
-            if(mInitialResidualNorm == 0.00)
-            {
-                ratio = 0.00;
-            }
-
-            else
-            {
-                ratio = mCurrentResidualNorm/mInitialResidualNorm;
-            }
-
-            //KRATOS_INFO(" Current Residual ") << mCurrentResidualNorm << " ratio: "<< ratio << std::endl;
-
-	    double b_size = TSparseSpace::Size(b);
-	    TDataType absolute_norm = (mCurrentResidualNorm/b_size);
-
-            if (rModelPart.GetCommunicator().MyPID() == 0)
-            {
-                if (this->GetEchoLevel() >= 1)
-                {
-                    std::cout << "RESIDUAL CRITERION :: Ratio = "<< ratio  << ";  Norm = " << absolute_norm << std::endl;
-                }
-            }
-
-            rModelPart.GetProcessInfo()[CONVERGENCE_RATIO] = ratio;
-            rModelPart.GetProcessInfo()[RESIDUAL_NORM] = absolute_norm;
-
-            if (ratio <= mRatioTolerance || absolute_norm < mAlwaysConvergedNorm)
-            {
-                if (rModelPart.GetCommunicator().MyPID() == 0)
-                {
-                    if (this->GetEchoLevel() >= 1)
-                    {
-                        std::cout << "Convergence is achieved" << std::endl;
-                    }
-                }
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else
-        {
-            return true;
-        }
-        return true;
-    }
 
     void Initialize(
         ModelPart& rModelPart
     ) override
     {
         BaseType::mConvergenceCriteriaIsInitialized = true;
-    }
-
-    void InitializeSolutionStep(
-        ModelPart& rModelPart,
-        DofsArrayType& rDofSet,
-        const TSystemMatrixType& A,
-        const TSystemVectorType& Dx,
-        const TSystemVectorType& b
-    ) override
-    {
-        mInitialResidualIsSet = false;
-    }
-
-    void FinalizeSolutionStep(
-        ModelPart& rModelPart,
-        DofsArrayType& rDofSet,
-        const TSystemMatrixType& A,
-        const TSystemVectorType& Dx,
-        const TSystemVectorType& b
-    ) override
-    {
-
     }
 
     /**
@@ -533,12 +448,9 @@ protected:
     std::vector<SizeType> mNumDofs;
 
     std::unordered_map<KeyType, IndexType> mKeyToIndexMap;
+    std::unordered_map<IndexType, std::string> mIndexToNameMap;
 
     BasisType mBasisType = BasisType::RESIDUAL;
-
-    // std::vector<DoubleVariableType> mDoubleVariables;
-    // std::vector<std::vector<ComponentVariableType>> mArray3Variables;
-    // std::vector<ComponentVariableType> mComponentVariables;
 
 
     ///@}
@@ -576,18 +488,6 @@ private:
     ///@}
     ///@name Member Variables
     ///@{
-
-    TDataType mRatioTolerance;
-
-    TDataType mAlwaysConvergedNorm;
-
-    bool mInitialResidualIsSet;
-
-    TDataType mInitialResidualNorm;
-
-    TDataType mCurrentResidualNorm;
-
-    TDataType mReferenceDispNorm;
 
 
     ///@}

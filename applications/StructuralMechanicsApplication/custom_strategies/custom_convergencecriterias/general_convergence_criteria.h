@@ -40,6 +40,7 @@ Here is a list of files that you can look at for reference:
 #include "includes/kratos_parameters.h"
 #include "solving_strategies/convergencecriterias/convergence_criteria.h"
 #include "utilities/color_utilities.h"
+#include "input_output/logger_table_output.h"
 
 
 namespace Kratos
@@ -270,7 +271,7 @@ public:
                 {
                     dof_id = it_dof->EquationId();
                     dof_value = it_dof->GetSolutionStepValue(0);
-                    dof_incr = r_vec[dof_id];
+                    dof_incr = r_vec[dof_id]; // TODO check if this is local => most probably implement a fct in the Space
 
                     KeyType dof_key = it_dof->GetVariable().Key();
 
@@ -354,6 +355,36 @@ public:
     ) override
     {
         BaseType::mConvergenceCriteriaIsInitialized = true;
+
+        // static std::stringstream buffer;
+        // LoggerOutput::Pointer p_output(new LoggerTableOutput(buffer, {"Time Step", "Iteration Number        ", "Convergence        ", "Is converged"}));
+        // Logger::AddOutput(p_output);
+        // p_output->WriteHeader();
+
+        // for (int i=0; i<5; ++i)
+        // {
+
+        //     LoggerMessage message1("Time Step");
+        //     message1 << "445";
+        //     LoggerMessage message2("Iteration Number");
+        //     message2 << "159";
+        //     LoggerMessage message3("Convergence");
+        //     message3 << "yuhu";
+        //     LoggerMessage message4("Is converged");
+        //     message4 << "NO";
+
+        //     p_output->WriteMessage(message1);
+        //     p_output->WriteMessage(message2);
+        //     p_output->WriteMessage(message3);
+        //     p_output->WriteMessage(message4);
+
+        //     // Logger("Time Step") << 123 << std::endl;
+        //     // Logger("Iteration Number") << 55 << std::endl;
+        //     // Logger("Convergence") << "NO" << std::endl;
+        //     // Logger("Is converged") << "Maybe" << std::endl;
+
+        //     std::cout << buffer.str() << std::endl;
+        // }
     }
 
     /**

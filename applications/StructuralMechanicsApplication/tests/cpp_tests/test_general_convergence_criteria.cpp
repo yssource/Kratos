@@ -23,7 +23,7 @@
 #include "utilities/variable_utils.h"
 #include "processes/structured_mesh_generator_process.h"
 
-#include "custom_strategies/custom_convergencecriterias/general_residual_criteria.h"
+#include "custom_strategies/custom_convergencecriterias/general_convergence_criteria.h"
 
 
 /*
@@ -63,7 +63,7 @@ namespace Kratos
         typedef ConvergenceCriteria<SparseSpaceType, LocalSpaceType> ConvergenceCriteriaType;
         typedef Kratos::unique_ptr<ConvergenceCriteriaType> ConvergenceCriteriaPointerType;
 
-        typedef GeneralResidualCriteria<SparseSpaceType, LocalSpaceType> GenConvergenceCriteriaType;
+        typedef GeneralConvergenceCriteria<SparseSpaceType, LocalSpaceType> GenConvergenceCriteriaType;
         typedef Kratos::unique_ptr<GenConvergenceCriteriaType> GenConvergenceCriteriaPointerType;
 
         typedef ModelPart::DofsArrayType DofsArrayType;
@@ -193,8 +193,16 @@ namespace Kratos
             const TDataType NewRatioTolerance = 1e-7;
             const TDataType AlwaysConvergedNorm = 1e-5;
 
+            Parameters default_params( R"({
+                "variables_to_separate" : ["VELOCITY", "ROTATION"],
+                "relative_convergence_tolerances" : [1e-5, 1e-3],
+                "absolut_convergence_tolerances" : [1e-5, 1e-3]
+            })" );
+
+            const std::string name_remaining_dofs = "PRESSURE";
+
             ConvergenceCriteriaPointerType p_conv_crit = Kratos::make_unique<GenConvergenceCriteriaType>(
-                NewRatioTolerance, AlwaysConvergedNorm);
+                NewRatioTolerance, AlwaysConvergedNorm, default_params);
 
             const std::size_t num_solution_steps = 5; // Natasha this should be used by "SetSolution"
             // in order to set a solution that will make the problem converge

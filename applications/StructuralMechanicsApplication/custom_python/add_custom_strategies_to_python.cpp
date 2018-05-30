@@ -45,7 +45,7 @@
 #include "solving_strategies/convergencecriterias/convergence_criteria.h"
 #include "custom_strategies/custom_convergencecriterias/displacement_and_other_dof_criteria.h"
 #include "custom_strategies/custom_convergencecriterias/residual_displacement_and_other_dof_criteria.h"
-#include "custom_strategies/custom_convergencecriterias/general_residual_criteria.h"
+#include "custom_strategies/custom_convergencecriterias/general_convergence_criteria.h"
 
 // Builders and solvers
 
@@ -93,7 +93,7 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
     // Custom convergence criterion types
     typedef DisplacementAndOtherDoFCriteria< SparseSpaceType,  LocalSpaceType > DisplacementAndOtherDoFCriteriaType;
     typedef ResidualDisplacementAndOtherDoFCriteria< SparseSpaceType,  LocalSpaceType > ResidualDisplacementAndOtherDoFCriteriaType;
-    typedef GeneralResidualCriteria< SparseSpaceType,  LocalSpaceType > GeneralResidualCriteriaType;
+    typedef GeneralConvergenceCriteria< SparseSpaceType,  LocalSpaceType > GeneralConvergenceCriteriaType;
 
     // Custom builder and solvers types
 
@@ -176,8 +176,11 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
             ;
 
     // General Residual Convergence Criterion
-    class_< GeneralResidualCriteriaType,typename GeneralResidualCriteriaType::Pointer, ConvergenceCriteriaType >(m,"GeneralResidualCriteria")
-    ;
+    class_< GeneralConvergenceCriteriaType,typename GeneralConvergenceCriteriaType::Pointer, ConvergenceCriteriaType >(m,"GeneralResidualCriteria")
+        .def(init< double, double>())
+        .def(init< double, double, Parameters>())
+        .def(init< double, double, Parameters, std::string>())
+        ;
 
     //********************************************************************
     //*************************BUILDER AND SOLVER*************************

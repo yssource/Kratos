@@ -12,8 +12,8 @@
 //
 
 
-#if !defined(KRATOS_GENERAL_RESIDUAL_CRITERIA_H_INCLUDED )
-#define  KRATOS_GENERAL_RESIDUAL_CRITERIA_H_INCLUDED
+#if !defined(KRATOS_GENERAL_CONVERGENCE_CRITERIA_H_INCLUDED )
+#define  KRATOS_GENERAL_CONVERGENCE_CRITERIA_H_INCLUDED
 
 /*
 Here is a list of files that you can look at for reference:
@@ -71,14 +71,14 @@ namespace Kratos
   */
 template<class TSparseSpace,
          class TDenseSpace>
-class GeneralResidualCriteria : public ConvergenceCriteria< TSparseSpace, TDenseSpace >
+class GeneralConvergenceCriteria : public ConvergenceCriteria< TSparseSpace, TDenseSpace >
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of GeneralResidualCriteria
-    KRATOS_CLASS_POINTER_DEFINITION(GeneralResidualCriteria);
+    /// Pointer definition of GeneralConvergenceCriteria
+    KRATOS_CLASS_POINTER_DEFINITION(GeneralConvergenceCriteria);
 
     typedef ConvergenceCriteria< TSparseSpace, TDenseSpace > BaseType;
 
@@ -119,7 +119,7 @@ public:
     ///@{
 
     /// Default constructor.
-    GeneralResidualCriteria(
+    GeneralConvergenceCriteria(
         TDataType NewRatioTolerance,
         TDataType AlwaysConvergedNorm,
         Parameters rParameters = Parameters(R"({})"),
@@ -140,8 +140,6 @@ public:
         */
 
         Parameters default_params( R"({
-            "relative_convergence_tolerance" : 1e-4,
-            "absolut_convergence_tolerance" : 1e-6,
             "variables_to_separate" : [],
             "relative_convergence_tolerances" : [],
             "absolut_convergence_tolerances" : []
@@ -158,7 +156,6 @@ public:
         KRATOS_ERROR_IF(n_variables != n_rel_conv_tol) << "Your list of variables is not the same size as the list of relative_convergence_tolerances" << std::endl;
         KRATOS_ERROR_IF(n_variables != n_abs_conv_tol) << "Your list of variables is not the same size as the list of absolut_convergence_tolerances" << std::endl;
 
-
         mRatioTolerances.resize(num_var_to_separate);
         mAbsTolerances.resize(num_var_to_separate);
 
@@ -173,11 +170,11 @@ public:
         mRatioTolerances[0] = rParameters["relative_convergence_tolerance"].GetDouble();
         mAbsTolerances[0] = rParameters["absolut_convergence_tolerance"].GetDouble();
 
-        for (IndexType i_var = 0; i_var < num_var_to_separate-1; ++i_var){
-            mRatioTolerances[i_var] = rParameters["relative_convergence_tolerances"].GetArrayItem(i_var+1).GetDouble();
-            mAbsTolerances[i_var] = rParameters["absolut_convergence_tolerances"].GetArrayItem(i_var+1).GetDouble();
+        for (IndexType i_var = 1; i_var < num_var_to_separate; ++i_var){
+            mRatioTolerances[i_var] = rParameters["relative_convergence_tolerances"].GetArrayItem(i_var-1).GetDouble();
+            mAbsTolerances[i_var] = rParameters["absolut_convergence_tolerances"].GetArrayItem(i_var-1).GetDouble();
 
-            const std::string& variable_name = rParameters["variables_to_separate"].GetArrayItem(i_var).GetString();
+            const std::string& variable_name = rParameters["variables_to_separate"].GetArrayItem(i_var-1).GetString();
             KeyType the_key;
 
             if (KratosComponents<DoubleVariableType>::Has(variable_name))
@@ -215,7 +212,7 @@ public:
     }
 
     /// Destructor.
-    virtual ~GeneralResidualCriteria(){}
+    virtual ~GeneralConvergenceCriteria(){}
 
 
     ///@}
@@ -282,7 +279,7 @@ public:
                     ++mNumDofs[vec_index];
                 }
             }
-        
+
 
 
             // Computing the residuals
@@ -311,8 +308,8 @@ public:
 
             mRatioResiduals[0] /= mRatioResiduals[0];
             mAbsResiduals[0] /= mNumDofs[0];
-            
-            for (auto & el : mKeyToIndexMap) 
+
+            for (auto & el : mKeyToIndexMap)
             {
                 IndexType vec_index = el.second;
 
@@ -322,7 +319,7 @@ public:
                     mRatioResiduals[vec_index] = 1.0;
                 }
 
-                mRatioResiduals[vec_index] = mAbsResiduals[vec_index] / mRatioResiduals[vec_index];           
+                mRatioResiduals[vec_index] = mAbsResiduals[vec_index] / mRatioResiduals[vec_index];
                 mAbsResiduals[vec_index] /= mNumDofs[vec_index];
             }
 
@@ -339,7 +336,7 @@ public:
                 conv_vec[vec_index] = mRatioResiduals[vec_index] < mRatioTolerances[vec_index] ||
                                       mAbsResiduals[vec_index] < mAbsTolerances[vec_index];
                 is_converged = is_converged && conv_vec[vec_index];
-            } 
+            }
 
             // Printing information abt current residuals
             if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
@@ -347,12 +344,12 @@ public:
                 KRATOS_INFO("ConvergenceCriteria") << "Convergence Check:" << std::endl; // TODO most likely remove the color
                 for (auto &el : mKeyToIndexMap)
                 {
-                    KeyType var_name = el.first; 
+                    KeyType var_name = el.first;
                     IndexType vec_index = el.second;
                     KRATOS_INFO("Label")
-                        << var_name << mRatioResiduals[vec_index] << mRatioTolerances[vec_index] 
+                        << var_name << mRatioResiduals[vec_index] << mRatioTolerances[vec_index]
                         << mAbsResiduals[vec_index] << mAbsTolerances[vec_index]
-                        << conv_vec[vec_index];
+                        << conv_vec[vec_index] << std::endl;
                 }
 
                 if (is_converged)
@@ -500,12 +497,12 @@ public:
     virtual std::string Info() const
     {
         std::stringstream buffer;
-        buffer << "GeneralResidualCriteria";
+        buffer << "GeneralConvergenceCriteria";
         return buffer.str();
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const {rOStream << "GeneralResidualCriteria";}
+    virtual void PrintInfo(std::ostream& rOStream) const {rOStream << "GeneralConvergenceCriteria";}
 
     /// Print object's data.
     virtual void PrintData(std::ostream& rOStream) const {}
@@ -618,15 +615,15 @@ private:
     ///@{
 
     /// Assignment operator.
-    GeneralResidualCriteria& operator=(GeneralResidualCriteria const& rOther){}
+    GeneralConvergenceCriteria& operator=(GeneralConvergenceCriteria const& rOther){}
 
     /// Copy constructor.
-    GeneralResidualCriteria(GeneralResidualCriteria const& rOther){}
+    GeneralConvergenceCriteria(GeneralConvergenceCriteria const& rOther){}
 
 
     ///@}
 
-}; // Class GeneralResidualCriteria
+}; // Class GeneralConvergenceCriteria
 
 ///@}
 
@@ -641,11 +638,11 @@ private:
 
 // /// input stream function
 // inline std::istream& operator >> (std::istream& rIStream,
-//                 GeneralResidualCriteria& rThis){}
+//                 GeneralConvergenceCriteria& rThis){}
 
 // /// output stream function
 // inline std::ostream& operator << (std::ostream& rOStream,
-//                 const GeneralResidualCriteria& rThis)
+//                 const GeneralConvergenceCriteria& rThis)
 // {
 //     rThis.PrintInfo(rOStream);
 //     rOStream << std::endl;
@@ -659,6 +656,6 @@ private:
 
 }  // namespace Kratos.
 
-#endif // KRATOS_GENERAL_RESIDUAL_CRITERIA_H_INCLUDED  defined
+#endif // KRATOS_GENERAL_CONVERGENCE_CRITERIA_H_INCLUDED  defined
 
 

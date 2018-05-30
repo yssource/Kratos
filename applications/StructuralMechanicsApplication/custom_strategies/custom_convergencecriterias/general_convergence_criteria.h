@@ -127,16 +127,6 @@ public:
         const std::string OtherDofsName="Other Dofs")
         : ConvergenceCriteria< TSparseSpace, TDenseSpace >()
     {
-        /*
-        Parameters(R"({
-            "relative_convergence_tolerance" : 1e-4,
-            "absolut_convergence_tolerance" : 1e-6,
-            "variables_to_separate" : [DISPLACEMENT, VELOCITY, PRESSURE],
-            "relative_convergence_tolerances" : [1e-4, 1e-4, 1e-6],
-            "absolut_convergence_tolerances" : [1e-6, 1e-6, 1e-6]
-        })")
-        */
-
         Parameters default_params( R"({
             "basis_vector_type" : "residual",
             "variables_to_separate" : [],
@@ -147,7 +137,7 @@ public:
         rParameters.ValidateAndAssignDefaults(default_params);
 
         const std::string& r_basis_type = rParameters["basis_vector_type"].GetString();
-        if (r_basis_type == "residual")              mBasisType = BasisType::RESIDUAL;
+        if (r_basis_type == "residual")             mBasisType = BasisType::RESIDUAL;
         else if (r_basis_type == "solution_update") mBasisType = BasisType::SOLUTION_UPDATE;
         else KRATOS_ERROR << "Wrong BasisType, use \"residual\" or \"solution_update\"" << std::endl;
 

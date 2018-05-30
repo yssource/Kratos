@@ -156,11 +156,11 @@ public:
         mRatioTolerances.resize(num_vars_to_separate);
         mAbsTolerances.resize(num_vars_to_separate);
 
-        // TODO check if this initialization to 0 works (should be but haven't tested it)
-        mRatioResiduals.resize(num_vars_to_separate, 0.0);
-        mAbsResiduals.resize(num_vars_to_separate, 0.0);
+        mRatioResiduals.resize(num_vars_to_separate);
+        mAbsResiduals.resize(num_vars_to_separate);
+        mNumDofs.resize(num_vars_to_separate);
 
-        mNumDofs.resize(num_vars_to_separate, 0);
+        mIndexToNameMap[0] = (num_vars_to_separate > 1) ? OtherDofsName + std::string(": ") : ""; // Print nothing in case of no separation
 
         IndexType index = 1; // starting from 1 bcs the "remaining" dofs go to pos 0
 
@@ -174,7 +174,7 @@ public:
             const std::string& variable_name = rParameters["variables_to_separate"].GetArrayItem(i_var-1).GetString();
             KeyType the_key;
 
-            mIndexToNameMap[index] = variable_name;
+            mIndexToNameMap[index] = variable_name + std::string(": ") ;
 
             if (KratosComponents<DoubleVariableType>::Has(variable_name))
             {
@@ -235,23 +235,23 @@ public:
     {
         // Natasha we will use this to print whether convergence has been achieved or not
         // I think it is quite cool :D
-        KRATOS_INFO("CONVERGENCE_CRITERIA") << "Some regular print" << std::endl;
-        KRATOS_INFO("CONVERGENCE_CRITERIA") << BOLDFONT("Some regular print") << std::endl;
-        KRATOS_INFO("CONVERGENCE_CRITERIA") << FGRN("Some regular print") << std::endl;
-        KRATOS_INFO("CONVERGENCE_CRITERIA") << BOLDFONT(FRED("   Not achieved")) << std::endl;
-        KRATOS_INFO("CONVERGENCE_CRITERIA") << BOLDFONT(FBLU("   Not achieved")) << std::endl;
-        KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FYEL("   Not achieved")) << std::endl;
-        KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FMAG("   Not achieved")) << std::endl;
-        KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FCYN("   Not achieved")) << std::endl;
+        // KRATOS_INFO("CONVERGENCE_CRITERIA") << "Some regular print" << std::endl;
+        // KRATOS_INFO("CONVERGENCE_CRITERIA") << BOLDFONT("Some regular print") << std::endl;
+        // KRATOS_INFO("CONVERGENCE_CRITERIA") << FGRN("Some regular print") << std::endl;
+        // KRATOS_INFO("CONVERGENCE_CRITERIA") << BOLDFONT(FRED("   Not achieved")) << std::endl;
+        // KRATOS_INFO("CONVERGENCE_CRITERIA") << BOLDFONT(FBLU("   Not achieved")) << std::endl;
+        // KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FYEL("   Not achieved")) << std::endl;
+        // KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FMAG("   Not achieved")) << std::endl;
+        // KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FCYN("   Not achieved")) << std::endl;
 
         const TSystemVectorType& r_vec = (mBasisType == BasisType::RESIDUAL) ? b : Dx;
 
         if (SparseSpaceType::Size(r_vec) != 0) // if we are solving for something
         {
             // Initialize the vectors
-            std::fill(mRatioResiduals.begin(), mRatioResiduals.end(), 0.0);
-            std::fill(mAbsResiduals.begin(), mAbsResiduals.end(), 0.0);
-            std::fill(mNumDofs.begin(), mNumDofs.end(), 0);
+            std::fill(mRatioResiduals.begin(), mRatioResiduals.end(), TDataType());
+            std::fill(mAbsResiduals.begin(), mAbsResiduals.end(), TDataType());
+            std::fill(mNumDofs.begin(), mNumDofs.end(), SizeType());
 
             // #pragma omp parallel for // comment bcs some vars have to be private to the thread
             for (int i = 0; i < static_cast<int>(rDofSet.size()); ++i)
@@ -335,28 +335,8 @@ public:
             if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
             {
                 const int nonlin_iteration_number = rModelPart.GetProcessInfo()[NL_ITERATION_NUMBER];
-
-                KRATOS_INFO("ConvergenceCriteria") << "Convergence Check; iteration "
-                    << nonlin_iteration_number << std::endl;
-
-                for (const auto& el : mKeyToIndexMap)
-                {
-                    KeyType var_key = el.first;
-                    IndexType vec_index = el.second;
-                    KRATOS_INFO(std::string("\t") + mIndexToNameMap[vec_index])
-                        << mRatioResiduals[vec_index] << " " << mRatioTolerances[vec_index] << " "
-                        << mAbsResiduals[vec_index] << " " << mAbsTolerances[vec_index] << " ";
-                    if (conv_vec[vec_index]) KRATOS_INFO("") << BOLDFONT(FGRN("converged"));
-                    else KRATOS_INFO("") << BOLDFONT(FRED("not converged"));
-                    KRATOS_INFO("") << std::endl;
-                }
-
-                if (is_converged)
-                    KRATOS_INFO("ConvergenceCriteria") << BOLDFONT(FGRN("Convergence is achieved in Iteration ")) << nonlin_iteration_number << std::endl; // TODO most likely remove the color
-                else
-                    KRATOS_INFO("ConvergenceCriteria") << BOLDFONT(FRED("Convergence is not achieved in Iteration ")) << nonlin_iteration_number << std::endl; // TODO most likely remove the color
+                PrintConvergenceInfo(is_converged, conv_vec, nonlin_iteration_number);
             }
-
 
             return is_converged;
         }
@@ -461,6 +441,36 @@ protected:
     ///@}
     ///@name Protected Operations
     ///@{
+
+    /*
+    Function to print info abt the convergence
+    Note that we are flushing the buffer at the end only!
+    */
+    void PrintConvergenceInfo(const bool IsConverged,
+                              const std::vector<bool> ConvergenceInfoVector,
+                              const int NonlinIterationNumber)
+    {
+        const int num_vars_to_separate = mRatioResiduals.size();
+
+        KRATOS_INFO("ConvergenceCriteria") << "Convergence Check; Iteration "
+            << NonlinIterationNumber << "\n";
+
+        for (int i=num_vars_to_separate-1; i>-1; --i) // Print in reverse to have the "other dofs" at the end
+        {
+            std::stringstream conv_info;
+            if (ConvergenceInfoVector[i]) conv_info << BOLDFONT(FGRN("converged"));
+            else conv_info << BOLDFONT(FRED("not converged"));
+
+            KRATOS_INFO("") << "\t" << mIndexToNameMap[i] << conv_info.str()
+                << " | ratio = " << mRatioResiduals[i] << "; exp.ratio = " << mRatioTolerances[i] << " | "
+                << "abs = "      << mAbsResiduals[i]   << "; exp.abs = "   << mAbsTolerances[i] << "\n";
+        }
+
+        if (IsConverged)
+            KRATOS_INFO("ConvergenceCriteria") << BOLDFONT(FGRN("Convergence is achieved in Iteration ")) << NonlinIterationNumber << std::endl; // TODO most likely remove the color
+        else
+            KRATOS_INFO("ConvergenceCriteria") << BOLDFONT(FRED("Convergence is not achieved in Iteration ")) << NonlinIterationNumber << std::endl; // TODO most likely remove the color
+    }
 
 
     ///@}

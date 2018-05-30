@@ -195,14 +195,14 @@ namespace Kratos
 
             Parameters default_params( R"({
                 "variables_to_separate" : ["VELOCITY", "ROTATION"],
-                "relative_convergence_tolerances" : [1e-5, 1e-3],
-                "absolut_convergence_tolerances" : [1e-5, 1e-3]
+                "relative_convergence_tolerances" : [1e-8, 1e-9],
+                "absolut_convergence_tolerances" : [1e-10, 1e-11]
             })" );
 
             const std::string name_remaining_dofs = "PRESSURE";
 
             ConvergenceCriteriaPointerType p_conv_crit = Kratos::make_unique<GenConvergenceCriteriaType>(
-                NewRatioTolerance, AlwaysConvergedNorm, default_params);
+                NewRatioTolerance, AlwaysConvergedNorm, default_params, name_remaining_dofs);
 
             const std::size_t num_solution_steps = 5; // Natasha this should be used by "SetSolution"
             // in order to set a solution that will make the problem converge
@@ -215,6 +215,8 @@ namespace Kratos
 
             while(!is_converged)
             {
+                dummy_model_part.GetProcessInfo()[NL_ITERATION_NUMBER]++;
+
                 SetSolution(dofs_array, r_system_vector_Dx, r_system_vector_b);
                 p_conv_crit->InitializeSolutionStep(dummy_model_part,
                                                     dofs_array,

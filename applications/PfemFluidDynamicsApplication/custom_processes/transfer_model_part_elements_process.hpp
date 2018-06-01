@@ -47,7 +47,8 @@ namespace Kratos
 				) :  mrHostModelPart(rHostModelPart), mrGuestModelPart(rGuestModelPart)
     {
       KRATOS_TRY
-			 	
+	std::cout<<" constructor  of ... TransferModelPartElementsProcess"<<std::endl;
+		 	
         KRATOS_CATCH("");
     }
 

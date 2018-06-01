@@ -79,7 +79,7 @@ public:
       : mrModelPart(rModelPart),
 	mrRemesh(rRemeshingParameters)
     {
-      std::cout<<" remove_mesh_nodes_process_for_fluids "<<std::endl;
+      std::cout<<" constructor  of ... RemoveMeshNodesForFluidsProcess"<<std::endl;
       mEchoLevel = EchoLevel;
     }
 
@@ -485,8 +485,8 @@ private:
 	    // unsigned int rigidNeighNodes=0;
 
 	    if(in->Is(FREE_SURFACE)){// it must be more difficult to erase a free_surface node, otherwise, lot of volume is lost
-	      radius = 0.5  * initialMeanRadius;//compared with element radius
-	      // radius = 0.4  * initialMeanRadius;//compared with element radius
+	      // radius = 0.5  * initialMeanRadius;//compared with element radius //in m015 this option was active
+	      radius = 0.4  * initialMeanRadius;//compared with element radius
 	      WeakPointerVector< Node < 3 > >& neighb_nodes = in->GetValue(NEIGHBOUR_NODES);
 	      unsigned int countRigid=0;
 	      for (WeakPointerVector< Node <3> >::iterator nn = neighb_nodes.begin();nn != neighb_nodes.end(); nn++)

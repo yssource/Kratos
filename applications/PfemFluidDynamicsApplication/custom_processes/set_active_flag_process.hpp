@@ -85,6 +85,7 @@ namespace Kratos
 			 int EchoLevel)
       : mrModelPart(rModelPart)
     {
+      std::cout<<" constructor  of ... SetActiveFlagProcess"<<std::endl;
       mUnactivePeakElements = unactivePeakElements;
       mUnactiveSliverElements = unactiveSliverElements;
       mEchoLevel = EchoLevel;

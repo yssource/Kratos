@@ -70,8 +70,7 @@ public:
       : mrModelPart(rModelPart),
 	mrRemesh(rRemeshingParameters)
     {
-      std::cout<<" inlet_management CONSTRUCTOR "<<std::endl;
-
+      std::cout<<" constructor  of ... InletManagementProcess"<<std::endl;
       mEchoLevel = EchoLevel;
     }
 

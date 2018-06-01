@@ -86,7 +86,8 @@ namespace Kratos
     AdaptiveTimeIntervalProcess(ModelPart& rModelPart,
 				 int EchoLevel)
       : mrModelPart(rModelPart)
-    { 
+    {
+      std::cout<<" constructor  of ... AdaptiveTimeIntervalProcess"<<std::endl;
       mEchoLevel = EchoLevel;
     }
 

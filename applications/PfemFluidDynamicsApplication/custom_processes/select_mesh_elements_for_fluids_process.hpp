@@ -71,6 +71,7 @@ public:
       : mrModelPart(rModelPart),
 	mrRemesh(rRemeshingParameters)
     {
+      std::cout<<" constructor  of ... SelectMeshElementsForFluidsProcess"<<std::endl;
       mEchoLevel = EchoLevel;
     }
 
@@ -166,7 +167,8 @@ public:
 	      unsigned int  numinternalsolid =0;	      
 	      unsigned int  numsolid =0;	      
 	      unsigned int  numinlet =0;	      
-	      unsigned int  numisolated =0;	      
+	      unsigned int  numisolated =0;
+	      double posX=1.0;
 	      // unsigned int  numinsertednodes =0;	      
 	      std::vector<double > normVelocityP;
 	      normVelocityP.resize(nds);
@@ -198,7 +200,7 @@ public:
 		  vertices.push_back(rNodes(OutElementList[el*nds+pn]));
 
 		  //check flags on nodes
-
+		  posX=vertices.back().X();
 		  if(vertices.back().Is(ISOLATED)){
 		    numisolated++;
 		  }
@@ -269,6 +271,9 @@ public:
 		       normVelocityP[1]/normVelocityP[2]>maxValue || normVelocityP[1]/normVelocityP[2]<minValue){
 		      Alpha*=0;
 		    }
+		    // else{ ///in case d it was not commented
+		    //   Alpha*=0.95;
+		    // }
 		  }else{
 		    std::cout<<"ATTENTION!!! CHECKED NODES= "<<checkedNodes<<" and the nodes are "<<nds<<std::endl;
 		    Alpha*=0;
@@ -277,6 +282,22 @@ public:
 
 		if(numrigid==0 && numfreesurf==0 && numisolated==0){
 		  Alpha*=1.75;
+		}
+		// if(posX<0 || posX>0.9){// in m015c and fifthB was like heere
+		//   // Alpha*=1.1; //as it was in case d
+		//   // Alpha*=1.15;//as it was in case 0.15b
+		//   Alpha*=1.1;
+		// }else{
+		//   // Alpha*=1.04;//as it was in case d; in case d, it was absent
+		//   Alpha*=1.04;
+		// }
+		if(posX<-0.51 || posX>0.9){
+		  // Alpha*=1.1; //as it was in case d
+		  // Alpha*=1.15;//as it was in case 0.15b
+		  Alpha*=1.1;
+		}else{
+		  // Alpha*=1.04;//as it was in case d; in case d, it was absent
+		  Alpha*=1.05;
 		}
 
 	      }else  if(dimension==3){

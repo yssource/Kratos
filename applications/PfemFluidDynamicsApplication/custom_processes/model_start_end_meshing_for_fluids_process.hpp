@@ -80,7 +80,7 @@ namespace Kratos
 					 Flags Options,
 					 int EchoLevel = 0)
       :ModelStartEndMeshingProcess(rMainModelPart,Options,EchoLevel)
-    { 
+    {
     }
 
     /// Destructor.
@@ -258,8 +258,9 @@ namespace Kratos
 		    i_node->Reset(NEW_ENTITY); //reset if was new 
 		    i_node->Reset(TO_REFINE);  //reset if was labeled to refine (to not duplicate boundary conditions)
 		    i_node->Reset(BLOCKED); 
-
-		    if( mOptions.Is(ModelerUtilities::KEEP_ISOLATED_NODES) && i_node->IsNot(TO_ERASE) ){
+		    double posX=i_node->X();
+		    double posY=i_node->Y();
+		    if( mOptions.Is(ModelerUtilities::KEEP_ISOLATED_NODES) && i_node->IsNot(TO_ERASE) && (posX<0 || (posX>0 && posY<1.0))){
 		      i_node->FastGetSolutionStepValue(PRESSURE) = 0;
 		      (i_mp->Nodes()).push_back(*(i_node.base()));
 		      (rModelPart.Nodes()).push_back(*(i_node.base()));	

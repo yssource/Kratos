@@ -70,8 +70,7 @@ namespace Kratos
       : mrModelPart(rModelPart),
 	mrRemesh(rRemeshingParameters)
     {
-      std::cout<<" generate_new_nodes_process_for_homogeneous_mesh CONSTRUCTOR "<<std::endl;
-
+      std::cout<<" constructor  of ... RecoverVolumeLossesProcess"<<std::endl;
       mEchoLevel = EchoLevel;
     }
 

@@ -132,13 +132,13 @@ class GiDOutputProcess(Process):
         gidpost_flags = result_file_configuration["gidpost_flags"]
         gidpost_flags.ValidateAndAssignDefaults(self.defaults["result_file_configuration"]["gidpost_flags"])
 
-        self._InitializeGiDIO(gidpost_flags,gidpost_flags)
+        self.__initialize_gidio(gidpost_flags,gidpost_flags)
 
         # Process nodal and gauss point output
-        self.nodal_variables = self._GenerateVariableListFromInput(result_file_configuration["nodal_results"])
-        self.gauss_point_variables = self._GenerateVariableListFromInput(result_file_configuration["gauss_point_results"])
-        self.nodal_nonhistorical_variables = self._GenerateVariableListFromInput(result_file_configuration["nodal_nonhistorical_results"])
-        self.nodal_flags = self._GenerateFlagsListFromInput(result_file_configuration["nodal_flags_results"])
+        self.nodal_variables = self.__generate_variable_list_from_input(result_file_configuration["nodal_results"])
+        self.gauss_point_variables = self.__generate_variable_list_from_input(result_file_configuration["gauss_point_results"])
+        self.nodal_nonhistorical_variables = self.__generate_variable_list_from_input(result_file_configuration["nodal_nonhistorical_results"])
+        self.nodal_flags = self.__generate_flags_list_from_input(result_file_configuration["nodal_flags_results"])
         self.nodal_flags_names =[]
         for i in range(result_file_configuration["nodal_flags_results"].size()):
             self.nodal_flags_names.append(result_file_configuration["nodal_flags_results"][i].GetString())
@@ -239,11 +239,26 @@ class GiDOutputProcess(Process):
 
         if self.output_control_is_time:
             #print( str(self.model_part.ProcessInfo[TIME])+">"+ str(self.next_output) )
-            return ( self.model_part.ProcessInfo[TIME] > self.next_output )
+            #return ( self.model_part.ProcessInfo[TIME] > self.next_output )
+            #print( "IsOutputStep TIME=", self.model_part.ProcessInfo[TIME])
+            #print( "self.next_output=", self.next_output)
+            tolerance=self.model_part.ProcessInfo[DELTA_TIME]*0.001
+
+            if(self.next_output == 0):
+                return True
+            #if(self.model_part.ProcessInfo[TIME] < (self.next_output + tolerance) and self.model_part.ProcessInfo[TIME] > (self.next_output - tolerance)):
+            if (self.model_part.ProcessInfo[TIME] > (self.next_output - tolerance)):
+                return True
+            else:
+                return False
         else:
             return ( self.step_count >= self.next_output )
 
     def PrintOutput(self):
+
+        print( "Print OutPut ", self.model_part.ProcessInfo[TIME])
+        tolerance=self.model_part.ProcessInfo[DELTA_TIME]*0.001
+
 
         if self.point_output_process is not None:
             self.point_output_process.ExecuteBeforeOutputStep()
@@ -273,7 +288,7 @@ class GiDOutputProcess(Process):
         # Schedule next output
         if self.output_frequency > 0.0: # Note: if == 0, we'll just always print
             if self.output_control_is_time:
-                while self.next_output <= time:
+                while self.next_output <= time + tolerance:
                     self.next_output += self.output_frequency
             else:
                 while self.next_output <= self.step_count:
@@ -306,7 +321,7 @@ class GiDOutputProcess(Process):
         del self.cut_io
 
 
-    def _InitializeGiDIO(self,gidpost_flags,param):
+    def __initialize_gidio(self,gidpost_flags,param):
         '''Initialize GidIO objects (for volume and cut outputs) and related data.'''
         self.volume_file_name = self.base_file_name
         self.cut_file_name = self.volume_file_name+"_cuts"
@@ -329,14 +344,14 @@ class GiDOutputProcess(Process):
                                 self.write_deformed_mesh,
                                 WriteConditionsFlag.WriteConditionsOnly) # Cuts are conditions, so we always print conditions in the cut ModelPart
 
-    def __get_gidpost_flag(self, param, label, dictionary):
+    def __get_gidpost_flag(self,param,label,dictionary):
         '''Parse gidpost settings using an auxiliary dictionary of acceptable values.'''
 
         keystring = param[label].GetString()
         try:
             value = dictionary[keystring]
         except KeyError:
-            msg = "{0} Error: Unknown value \"{1}\" read for parameter \"{2}\"".format(self.__class__.__name__,value,label)
+            msg = "{0} Error: Unknown value \"{1}\" read for parameter \"{2}\"".format(self.__class__.__name__,vaule,label)
             raise Exception(msg)
 
         return value
@@ -454,7 +469,7 @@ class GiDOutputProcess(Process):
                                         self.output_surface_index,
                                         0.01)
 
-    def _GenerateVariableListFromInput(self,param):
+    def __generate_variable_list_from_input(self,param):
         '''Parse a list of variables from input.'''
         # At least verify that the input is a string
         if not param.IsArray():
@@ -463,7 +478,7 @@ class GiDOutputProcess(Process):
         # Retrieve variable name from input (a string) and request the corresponding C++ object to the kernel
         return [ KratosGlobals.GetVariable( param[i].GetString() ) for i in range( 0,param.size() ) ]
 
-    def _GenerateFlagsListFromInput(self,param):
+    def __generate_flags_list_from_input(self,param):
         '''Parse a list of variables from input.'''
         # At least verify that the input is a string
         if not param.IsArray():
@@ -651,7 +666,7 @@ class GiDOutputProcess(Process):
                 if(os.path.exists(f)):
                     try:
                         os.remove(f)
-                    except OSError:
+                    except WindowsError:
                         pass
 
     #
@@ -696,5 +711,5 @@ class GiDOutputProcess(Process):
                 if(os.path.exists(f)):
                     try:
                         os.remove(f)
-                    except OSError:
+                    except WindowsError:
                         pass

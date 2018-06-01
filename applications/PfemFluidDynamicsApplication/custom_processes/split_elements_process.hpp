@@ -81,7 +81,8 @@ namespace Kratos
     SplitElementsProcess(ModelPart& rModelPart,
 				 int EchoLevel)
       : mrModelPart(rModelPart)
-    { 
+    {
+      std::cout<<" constructor  of ... SplitElementsProcess"<<std::endl;
       mEchoLevel = EchoLevel;
     }
 

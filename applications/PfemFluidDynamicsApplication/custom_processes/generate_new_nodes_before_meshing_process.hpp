@@ -70,6 +70,7 @@ public:
       : mrModelPart(rModelPart),
 	mrRemesh(rRemeshingParameters)
     {
+      std::cout<<" constructor  of ... GenerateNewNodesBeforeMeshingProcess"<<std::endl;
       mEchoLevel = EchoLevel;
     }
 
@@ -299,9 +300,12 @@ private:
     unsigned int freesurfaceNodes=0;
     unsigned int inletNodes=0;
     bool toEraseNodeFound=false;
-
+    double posX=1.0;
+    double posY=1.0;
     for(unsigned int pn=0; pn<nds; pn++)
       {
+	posX=Element[pn].X();
+	posY=Element[pn].Y();
 	if(Element[pn].Is(RIGID)){
 	  rigidNodes++;
 	}
@@ -320,12 +324,40 @@ private:
     double  limitEdgeLength=1.4*mrRemesh.Refine->CriticalRadius;
     double safetyCoefficient2D=1.5;
     double penalization=1.0;
+    double boundaryNodes=rigidNodes+freesurfaceNodes;
     if(rigidNodes>1){
       // penalization=0.7;
       penalization=0.8;
       if(inletNodes>0){
       	penalization=0.9;
       }
+    }
+    // if(boundaryNodes>1 && freesurfaceNodes>0 && rigidNodes==0 && posX>0){
+    
+    //as in case m015
+    // if(freesurfaceNodes>0 && rigidNodes==0 && posX>0){
+    //   penalization=0;
+    // }else if(boundaryNodes>1 && freesurfaceNodes>0 && rigidNodes>0){
+    //   penalization=0.9;
+    // }
+
+    // // as in the case m015b
+    // if(freesurfaceNodes>1 && rigidNodes==0 && posX>0){
+    //   penalization=0;
+    // } else if(freesurfaceNodes>0 && rigidNodes==0 && posX>0){
+    //   penalization=0.9;
+    // }else if(boundaryNodes>1 && freesurfaceNodes>0 && rigidNodes>0){
+    //   penalization=0.9;
+    // }
+    
+    if(freesurfaceNodes>0 && rigidNodes==0 && posX>0 && posY>0.4){
+      penalization=0;
+    }else if(freesurfaceNodes>1 && rigidNodes==0 && posX>0.9){
+      penalization=0;
+    }else if(freesurfaceNodes>0 && rigidNodes==0 && posX>0.9){
+      penalization=0.85;
+    } else if(boundaryNodes>1 && freesurfaceNodes>0 && rigidNodes>0){
+      penalization=0;
     }
 
     double ElementalVolume =  Element.Area();
@@ -364,7 +396,8 @@ private:
     }
 
     bool dangerousElement=false;
-    if(rigidNodes>1){
+    // if(rigidNodes>1){
+    if(rigidNodes>0){
       for (unsigned int i = 0; i < 3; i++){
 	if((Edges[i]<WallCharacteristicDistance*safetyCoefficient2D && (Element[FirstEdgeNode[i]].Is(RIGID) || Element[SecondEdgeNode[i]].Is(RIGID))) ||
 	   (Element[FirstEdgeNode[i]].Is(RIGID) && Element[SecondEdgeNode[i]].Is(RIGID) )){
@@ -375,8 +408,15 @@ private:
 	//   Edges[i]=0;
 	//   // Edges[i]*=penalizationFreeSurface;
 	// }
-	if((Element[FirstEdgeNode[i]].Is(FREE_SURFACE) || Element[FirstEdgeNode[i]].Is(RIGID))  && 
-	   (Element[SecondEdgeNode[i]].Is(FREE_SURFACE)|| Element[SecondEdgeNode[i]].Is(RIGID))){
+
+	//as it was in m015b
+	// if((Element[FirstEdgeNode[i]].Is(FREE_SURFACE) || Element[FirstEdgeNode[i]].Is(RIGID))  && 
+	//    (Element[SecondEdgeNode[i]].Is(FREE_SURFACE)|| Element[SecondEdgeNode[i]].Is(RIGID))){
+	//   Edges[i]=0;
+	// }
+	if((Element[FirstEdgeNode[i]].Is(RIGID)  &&  Element[SecondEdgeNode[i]].Is(RIGID)) ||
+	   (Element[FirstEdgeNode[i]].Is(FREE_SURFACE)  &&  Element[SecondEdgeNode[i]].Is(RIGID)) ||
+	   (Element[FirstEdgeNode[i]].Is(RIGID)  &&  Element[SecondEdgeNode[i]].Is(FREE_SURFACE))){
 	  Edges[i]=0;
 	}
       }
@@ -898,6 +938,15 @@ private:
     double yieldShear=SlaveNode->FastGetSolutionStepValue(YIELD_SHEAR);
     double flowIndex=SlaveNode->FastGetSolutionStepValue(FLOW_INDEX);
     double adaptiveExponent=SlaveNode->FastGetSolutionStepValue(ADAPTIVE_EXPONENT);
+    double staticFriction=SlaveNode->FastGetSolutionStepValue(STATIC_FRICTION);
+    double dynamicFriction=SlaveNode->FastGetSolutionStepValue(DYNAMIC_FRICTION);
+    double I0=SlaveNode->FastGetSolutionStepValue(INERTIAL_NUMBER_ZERO);
+    double grainDiameter=SlaveNode->FastGetSolutionStepValue(GRAIN_DIAMETER);
+    double grainRho=SlaveNode->FastGetSolutionStepValue(GRAIN_DENSITY);
+    double regCoeff=SlaveNode->FastGetSolutionStepValue(REGULARIZATION_COEFFICIENT);
+    double Iinf=SlaveNode->FastGetSolutionStepValue(INFINITE_FRICTION);
+    double I1=SlaveNode->FastGetSolutionStepValue(INERTIAL_NUMBER_ONE);
+    double AlphaPar=SlaveNode->FastGetSolutionStepValue(ALPHA_PARAMETER);
 
 
     MasterNode->FastGetSolutionStepValue(BULK_MODULUS)=bulkModulus;
@@ -906,7 +955,18 @@ private:
     MasterNode->FastGetSolutionStepValue(YIELD_SHEAR)=yieldShear;
     MasterNode->FastGetSolutionStepValue(FLOW_INDEX)=flowIndex;
     MasterNode->FastGetSolutionStepValue(ADAPTIVE_EXPONENT)=adaptiveExponent;
+    MasterNode->FastGetSolutionStepValue(STATIC_FRICTION)=staticFriction;
+    MasterNode->FastGetSolutionStepValue(DYNAMIC_FRICTION)=dynamicFriction;
+    MasterNode->FastGetSolutionStepValue(INERTIAL_NUMBER_ZERO)=I0;
+    MasterNode->FastGetSolutionStepValue(GRAIN_DIAMETER)=grainDiameter;
+    MasterNode->FastGetSolutionStepValue(GRAIN_DENSITY)=grainRho;
+    MasterNode->FastGetSolutionStepValue(REGULARIZATION_COEFFICIENT)=regCoeff;
+    MasterNode->FastGetSolutionStepValue(INFINITE_FRICTION)=Iinf;
+    MasterNode->FastGetSolutionStepValue(INERTIAL_NUMBER_ONE)=I1;
+    MasterNode->FastGetSolutionStepValue(ALPHA_PARAMETER)=AlphaPar;
 
+
+    
     KRATOS_CATCH( "" )
 
       }

@@ -68,8 +68,7 @@ public:
 				int EchoLevel) 
       : mrModelPart(rModelPart)
     {
-      std::cout<<" inlet_management CONSTRUCTOR "<<std::endl;
-
+      std::cout<<" constructor  of ... SetInletProcess"<<std::endl;
       mEchoLevel = EchoLevel;
     }
 

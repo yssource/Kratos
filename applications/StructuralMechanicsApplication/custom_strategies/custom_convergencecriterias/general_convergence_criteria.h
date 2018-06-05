@@ -247,7 +247,7 @@ public:
             std::fill(mAbsResiduals.begin(), mAbsResiduals.end(), TDataType());
             std::fill(mNumDofs.begin(), mNumDofs.end(), SizeType());
 
-            // #pragma omp parallel for // comment bcs some vars have to be private to the thread
+            #pragma omp parallel for // comment bcs some vars have to be private to the thread
             for (int i = 0; i < static_cast<int>(rDofSet.size()); ++i)
             {
                 IndexType dof_id;
@@ -273,9 +273,12 @@ public:
 
                     // These have to be atomic for omp if we don't do anything else
                     // Theoretically other operations are also possible
-                    mRatioResiduals[vec_index] += dof_value * dof_value;
-                    mAbsResiduals[vec_index] += dof_incr * dof_incr;
-                    ++mNumDofs[vec_index];
+                    #pragma omp critical
+                    {
+                        mRatioResiduals[vec_index] += dof_value * dof_value;
+                        mAbsResiduals[vec_index] += dof_incr * dof_incr;
+                        ++mNumDofs[vec_index];
+                    }
                 }
             }
 

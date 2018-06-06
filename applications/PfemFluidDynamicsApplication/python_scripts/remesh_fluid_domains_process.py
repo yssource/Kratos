@@ -32,6 +32,7 @@ class RemeshFluidDomainsProcess(remesh_domains_process.RemeshDomainsProcess):
         self.probe7 = None
         self.probe8 = None
         self.probe9 = None
+        self.Fig3 = None
 
         print("::[FLUID Meshing_Process]:: meshing frequency", self.meshing_frequency)
 
@@ -143,6 +144,7 @@ class RemeshFluidDomainsProcess(remesh_domains_process.RemeshDomainsProcess):
             self.probe7 = open("probe7.txt",'w')
             self.probe8 = open("probe8.txt",'w')
             self.probe9 = open("probe9.txt",'w')
+            self.Fig3   = open("Fig3.txt",'w')
 
         if(currentStep > 1 and self.fileTotalVolume is not None):
             maxYprobe1isolated=0.1
@@ -155,6 +157,7 @@ class RemeshFluidDomainsProcess(remesh_domains_process.RemeshDomainsProcess):
             maxYprobe7=0.1
             maxYprobe8=0.1
             maxYprobe9=0.1
+            maxFig3Y=0
             for node in self.main_model_part.Nodes:
                 if(node.X>1.87 and node.X<1.93):
                     if(node.Y>maxYprobe1isolated):
@@ -187,7 +190,13 @@ class RemeshFluidDomainsProcess(remesh_domains_process.RemeshDomainsProcess):
                     if(node.X>32.47 and node.X<32.53):
                         if(node.Y>maxYprobe9):
                             maxYprobe9=node.Y
-
+                    if(node.X>-1.13 and node.X<-1.07):
+                        if(node.Y>maxFig3Y):
+                            maxFig3Y=node.Y
+                            writeFig3X=node.X
+                            writeFig3VelX=node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)
+                            writeFig3VelY=node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y)
+                            
             outstring = str(currentTime) + " " +  str(maxYprobe1isolated) + "\n"
             self.probe1isolated.write(outstring)
             outstring = str(currentTime) + " " +  str(maxYprobe1) + "\n"
@@ -208,6 +217,8 @@ class RemeshFluidDomainsProcess(remesh_domains_process.RemeshDomainsProcess):
             self.probe8.write(outstring)
             outstring = str(currentTime) + " " +  str(maxYprobe9) + "\n"
             self.probe9.write(outstring)
+            outstring = str(currentTime) + " " +  str(writeFig3X) + " " +  str(maxFig3Y) + " " +  str(writeFig3VelX) + " " +  str(writeFig3VelY) + "\n"
+            self.Fig3.write(outstring)
             
             for domain in self.meshing_domains:
                 if(domain.Active()):
@@ -262,6 +273,7 @@ class RemeshFluidDomainsProcess(remesh_domains_process.RemeshDomainsProcess):
             self.probe7.flush()
             self.probe8.flush()
             self.probe9.flush()
+            self.Fig3.flush()
 
 
     def ExecuteFinalize(self):
@@ -277,6 +289,7 @@ class RemeshFluidDomainsProcess(remesh_domains_process.RemeshDomainsProcess):
             self.probe7.close()
             self.probe8.close()
             self.probe9.close()
+            self.Fig3.close()
       #if(self.main_model_part.ProcessInfo[KratosMultiphysics.STEP] == 1):
           #  for node in self.main_model_part.Nodes:
            #     if (node.Is(KratosMultiphysics.FLUID)):

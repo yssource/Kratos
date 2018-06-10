@@ -66,6 +66,7 @@
 #include "custom_elements/stokes_3D.h"
 #include "custom_elements/stokes_3D_twofluid.h"
 #include "custom_elements/navier_stokes.h"
+#include "custom_elements/time_averaged_navier_stokes.h"
 #include "custom_elements/embedded_navier_stokes.h"
 #include "custom_elements/embedded_ausas_navier_stokes.h"
 #include "custom_elements/compressible_navier_stokes.h"
@@ -352,6 +353,10 @@ private:
     const NavierStokes<3> mNavierStokes3D;
     const NavierStokesWallCondition<2> mNavierStokesWallCondition2D;
     const NavierStokesWallCondition<3> mNavierStokesWallCondition3D;
+
+    /// Time-averaged Navier-Stokes symbolic element
+    const TimeAveragedNavierStokes<2> mTimeAveragedNavierStokes2D;
+    const TimeAveragedNavierStokes<3> mTimeAveragedNavierStokes3D;
 
     /// Embedded Navier-Stokes symbolic element
     const EmbeddedNavierStokes<2> mEmbeddedNavierStokes2D;

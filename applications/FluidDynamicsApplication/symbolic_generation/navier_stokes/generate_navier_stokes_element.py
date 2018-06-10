@@ -24,6 +24,7 @@ linearisation = "Picard"            # Iteration type. Options: "Picard", "FullNR
 divide_by_rho = True                # Divide by density in mass conservation equation
 artificial_compressibility = True   # Consider an artificial compressibility
 ASGS_stabilization = True           # Consider ASGS stabilization terms
+time_averaged_element = True        # Generate a time-averaged element or not
 mode = "c"                          # Output mode to a c++ file
 
 if (dim_to_compute == "2D"):
@@ -34,7 +35,11 @@ elif (dim_to_compute == "Both"):
     dim_vector = [2,3]
 
 ## Read the template file
-templatefile = open("navier_stokes_cpp_template.cpp")
+if time_averaged_element:
+    template_filename = "navier_stokes_time_averaged_cpp_template.cpp"
+else:
+    template_filename = "navier_stokes_cpp_template.cpp"
+templatefile = open(template_filename)
 outstring = templatefile.read()
 
 for dim in dim_vector:
@@ -49,13 +54,45 @@ for dim in dim_vector:
     impose_partion_of_unity = False
     N,DN = DefineShapeFunctions(nnodes, dim, impose_partion_of_unity)
 
-    ## Unknown fields definition
-    v = DefineMatrix('v',nnodes,dim)            # Current step velocity (v(i,j) refers to velocity of node i component j)
-    vn = DefineMatrix('vn',nnodes,dim)          # Previous step velocity
-    vnn = DefineMatrix('vnn',nnodes,dim)        # 2 previous step velocity
-    p = DefineVector('p',nnodes)                # Pressure
-    pn = DefineVector('pn',nnodes)              # Previous step pressure
-    pnn = DefineVector('pnn',nnodes)            # 2 previous step pressure
+    ## Auxiliar symbols definition
+    c   = Symbol('c',positive= True)                # Wave length number
+    dt  = Symbol('dt', positive = True)             # Time increment
+    rho = Symbol('rho', positive = True)            # Density
+    nu  = Symbol('nu', positive = True)             # Kinematic viscosity (mu/rho)
+    mu  = Symbol('mu', positive = True)             # Dynamic viscosity
+    h = Symbol('h', positive = True)                # Element size
+    dyn_tau = Symbol('dyn_tau', positive = True)    # Stabilization dynamic tau
+    stab_c1 = Symbol('stab_c1', positive = True)    # Stabilization constant 1
+    stab_c2 = Symbol('stab_c2', positive = True)    # Stabilization constant 2
+
+    ## Set the element variables
+    if time_averaged_element:
+        ## Set the average velocity and pressure variables
+        step = Symbol('step',positive=True)         # Current time step
+        y = DefineMatrix('y',nnodes,dim)            # Current step velocity average
+        yn = DefineMatrix('yn',nnodes,dim)          # Previous step velocity average
+        ynn = DefineMatrix('ynn',nnodes,dim)        # 2 previous steps velocity average
+        ynnn = DefineMatrix('ynnn',nnodes,dim)      # 3 previous steps velocity average
+        x = DefineVector('x',nnodes)                # Current step pressure average
+        xn = DefineVector('xn',nnodes)              # Previous step pressure average
+        xnn = DefineVector('xnn',nnodes)            # 2 previous steps pressure average
+        xnnn = DefineVector('xnnn',nnodes)          # 3 previous steps pressure average
+
+        ## Rewrite velocity and pressure in terms of the time-averaged variables
+        v = step*y - (step-1)*yn                    # Time-averaged current step velocity
+        vn = (step-1)*yn - (step-2)*ynn             # Time-averaged previous step velocity
+        vnn = (step-2)*ynn - (step-3)*ynnn          # Time-averaged 2 previous step velocity
+        p = step*x - (step-1)*xn                    # Time-averaged current step pressure
+        pn = (step-1)*xn - (step-2)*xnn             # Time-averaged previous step pressure
+        pnn = (step-2)*xnn - (step-3)*xnnn          # Time-averaged 2 previous step pressure
+    else:
+        ## Set velocity and pressure variables
+        v = DefineMatrix('v',nnodes,dim)            # Current step velocity (v(i,j) refers to velocity of node i component j)
+        vn = DefineMatrix('vn',nnodes,dim)          # Previous step velocity
+        vnn = DefineMatrix('vnn',nnodes,dim)        # 2 previous step velocity
+        p = DefineVector('p',nnodes)                # Pressure
+        pn = DefineVector('pn',nnodes)              # Previous step pressure
+        pnn = DefineVector('pnn',nnodes)            # 2 previous step pressure
 
     ## Test functions definition
     w = DefineMatrix('w',nnodes,dim)            # Velocity field test function
@@ -69,17 +106,6 @@ for dim in dim_vector:
 
     ## Stress vector definition
     stress = DefineVector('stress',strain_size)
-
-    ## Other simbols definition
-    c   = Symbol('c',positive= True)            # Wave length number
-    dt  = Symbol('dt', positive = True)         # Time increment
-    rho = Symbol('rho', positive = True)        # Density
-    nu  = Symbol('nu', positive = True)         # Kinematic viscosity (mu/rho)
-    mu  = Symbol('mu', positive = True)         # Dynamic viscosity
-    h = Symbol('h', positive = True)
-    dyn_tau = Symbol('dyn_tau', positive = True)
-    stab_c1 = Symbol('stab_c1', positive = True)
-    stab_c2 = Symbol('stab_c2', positive = True)
 
     ## Backward differences coefficients
     bdf0 = Symbol('bdf0')
@@ -183,16 +209,24 @@ for dim in dim_vector:
     dofs = Matrix( zeros(nnodes*(dim+1), 1) )
     testfunc = Matrix( zeros(nnodes*(dim+1), 1) )
 
-    for i in range(0,nnodes):
-
-        # Velocity DOFs and test functions
-        for k in range(0,dim):
-            dofs[i*(dim+1)+k] = v[i,k]
-            testfunc[i*(dim+1)+k] = w[i,k]
-
-        # Pressure DOFs and test functions
-        dofs[i*(dim+1)+dim] = p[i,0]
-        testfunc[i*(dim+1)+dim] = q[i,0]
+    if time_averaged_element:
+        for i in range(0,nnodes):
+            # Time-averaged velocity DOFs and test functions
+            for k in range(0,dim):
+                dofs[i*(dim+1)+k] = y[i,k]
+                testfunc[i*(dim+1)+k] = w[i,k]
+            # Time-averaged pressure DOFs and test functions
+            dofs[i*(dim+1)+dim] = x[i,0]
+            testfunc[i*(dim+1)+dim] = q[i,0]
+    else:
+        for i in range(0,nnodes):
+            # Velocity DOFs and test functions
+            for k in range(0,dim):
+                dofs[i*(dim+1)+k] = v[i,k]
+                testfunc[i*(dim+1)+k] = w[i,k]
+            # Pressure DOFs and test functions
+            dofs[i*(dim+1)+dim] = p[i,0]
+            testfunc[i*(dim+1)+dim] = q[i,0]
 
     ## Compute LHS and RHS
     # For the RHS computation one wants the residual of the previous iteration (residual based formulation). By this reason the stress is
@@ -216,16 +250,17 @@ for dim in dim_vector:
         outstring = outstring.replace("//substitute_lhs_3D", lhs_out)
         outstring = outstring.replace("//substitute_rhs_3D", rhs_out)
 
-    ## Compute velocity subscale Gauss point value
-    v_s_gauss = tau1*rho*(f_gauss - accel_gauss - convective_term.transpose()) - tau1*grad_p
-    v_s_gauss_out = OutputVector_CollectingFactors(v_s_gauss, "v_s_gauss", mode)
+    if not time_averaged_element:
+        ## Compute velocity subscale Gauss point value
+        v_s_gauss = tau1*rho*(f_gauss - accel_gauss - convective_term.transpose()) - tau1*grad_p
+        v_s_gauss_out = OutputVector_CollectingFactors(v_s_gauss, "v_s_gauss", mode)
 
-    if(dim == 2):
-        outstring = outstring.replace("//substitute_gausspt_subscale_2D", v_s_gauss_out)
-    elif(dim == 3):
-        outstring = outstring.replace("//substitute_gausspt_subscale_3D", v_s_gauss_out)
+        if(dim == 2):
+            outstring = outstring.replace("//substitute_gausspt_subscale_2D", v_s_gauss_out)
+        elif(dim == 3):
+            outstring = outstring.replace("//substitute_gausspt_subscale_3D", v_s_gauss_out)
 
 ## Write the modified template
-out = open("navier_stokes.cpp",'w')
+out = open("time_averaged_navier_stokes.cpp",'w')
 out.write(outstring)
 out.close()

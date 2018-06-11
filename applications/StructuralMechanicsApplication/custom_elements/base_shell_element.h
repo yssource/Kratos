@@ -65,7 +65,7 @@ public:
 
     typedef std::vector< ShellCrossSection::Pointer > CrossSectionContainerType;
 
-    using SizeType = std::size_t;
+    typedef std::size_t SizeType;
 
     ///@}
     ///@name Life Cycle

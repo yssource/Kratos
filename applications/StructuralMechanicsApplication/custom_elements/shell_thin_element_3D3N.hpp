@@ -229,7 +229,7 @@ private:
         // calculations
 
         double beta0;
-        size_t gpIndex;
+        SizeType gpIndex;
 
         // ---------------------------------------
         // calculation-variable data

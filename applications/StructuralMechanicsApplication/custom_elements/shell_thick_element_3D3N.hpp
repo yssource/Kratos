@@ -87,8 +87,6 @@ namespace Kratos
 
 		typedef Quaternion<double> QuaternionType;
 
-        typedef std::size_t SizeType;
-
 		///@}
 
 		///@name Classes
@@ -257,7 +255,7 @@ namespace Kratos
 			// these data are updated during the
 			// calculations
 
-			SizeType gpIndex;
+			size_t gpIndex;
 
 			// ---------------------------------------
 			// calculation-variable data

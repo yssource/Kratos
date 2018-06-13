@@ -59,35 +59,22 @@ public:
     ///@name Type Definitions
     ///@{
 
-    typedef NavierStokes<TDim, TNumNodes>               BaseType;
-    typedef typename BaseType::IndexType               IndexType;
-    typedef typename BaseType::GeometryType         GeometryType;
-    typedef typename BaseType::NodesArrayType     NodesArrayType;
-    typedef typename BaseType::PropertiesType     PropertiesType;
+    typedef NavierStokes<TDim, TNumNodes>                     BaseType;
+    typedef typename BaseType::MatrixType                   MatrixType;
+    typedef typename BaseType::VectorType                   VectorType;
+    typedef typename BaseType::IndexType                     IndexType;
+    typedef typename BaseType::GeometryType               GeometryType;
+    typedef typename BaseType::NodesArrayType           NodesArrayType;
+    typedef typename BaseType::PropertiesType           PropertiesType;
+    typedef typename BaseType::ElementDataStruct       ElementDataType;
     
     /// Counted pointer of
     KRATOS_CLASS_POINTER_DEFINITION(TimeAveragedNavierStokes);
 
-    struct ElementDataStruct
+    struct TimeAveragedElementDataStruct : public ElementDataType
     {
-        BoundedMatrix<double, TNumNodes, TDim> y, yn, ynn, ynnn, vmesh, f;
-        array_1d<double,TNumNodes> x, xn, xnn, xnnn, rho, mu;
-
-        BoundedMatrix<double, TNumNodes, TDim > DN_DX;
-        array_1d<double, TNumNodes > N;
-
-        Matrix C;
-        Vector stress;
-        Vector strain;
-
-        double bdf0;
-        double bdf1;
-        double bdf2;
-        double c;             // Wave velocity (needed if artificial compressibility is considered)
-        double h;             // Element size
-        double volume;        // In 2D: element area. In 3D: element volume
-        double dt;            // Time increment
-        double dyn_tau;       // Dynamic tau considered in ASGS stabilization coefficients
+        BoundedMatrix<double, TNumNodes, TDim> vnnn;
+        array_1d<double,TNumNodes> pnnn;
 
         unsigned int step;    // Current time-step
     };
@@ -152,6 +139,101 @@ public:
         KRATOS_CATCH("");
     }
 
+    void CalculateLocalSystem(
+        MatrixType& rLeftHandSideMatrix,
+        VectorType& rRightHandSideVector,
+        ProcessInfo& rCurrentProcessInfo) override {
+            
+        KRATOS_TRY
+
+        constexpr unsigned int MatrixSize = TNumNodes*(TDim+1);
+
+        if (rLeftHandSideMatrix.size1() != MatrixSize)
+            rLeftHandSideMatrix.resize(MatrixSize, MatrixSize, false); //false says not to preserve existing storage!!
+
+        if (rRightHandSideVector.size() != MatrixSize)
+            rRightHandSideVector.resize(MatrixSize, false); //false says not to preserve existing storage!!
+
+        // Struct to pass around the data
+        TimeAveragedElementDataStruct data;
+        this->FillElementData(data, rCurrentProcessInfo);
+
+        // Allocate memory needed
+        BoundedMatrix<double,MatrixSize, MatrixSize> lhs_local;
+        array_1d<double,MatrixSize> rhs_local;
+
+        // Loop on gauss points
+        noalias(rLeftHandSideMatrix) = ZeroMatrix(MatrixSize,MatrixSize);
+        noalias(rRightHandSideVector) = ZeroVector(MatrixSize);
+
+        // Gauss point position
+        BoundedMatrix<double,TNumNodes, TNumNodes> N_container;
+        this->GetShapeFunctionsOnGauss(N_container);
+
+        for(unsigned int igauss = 0; igauss<N_container.size2(); igauss++)
+        {
+            noalias(data.N) = row(N_container, igauss);
+
+            this->ComputeConstitutiveResponse(data, rCurrentProcessInfo);
+
+            ComputeGaussPointRHSContribution(rhs_local, data);
+            ComputeGaussPointLHSContribution(lhs_local, data);
+
+            // here we assume that all the weights of the gauss points are the same so we multiply at the end by Volume/n_nodes
+            noalias(rLeftHandSideMatrix) += lhs_local;
+            noalias(rRightHandSideVector) += rhs_local;
+        }
+
+        rLeftHandSideMatrix  *= data.volume/static_cast<double>(TNumNodes);
+        rRightHandSideVector *= data.volume/static_cast<double>(TNumNodes);
+
+        KRATOS_CATCH("Error in time-averaged Navier-Stokes element")
+    }
+
+
+    void CalculateRightHandSide(
+        VectorType& rRightHandSideVector,
+        ProcessInfo& rCurrentProcessInfo) override {
+
+        KRATOS_TRY
+
+        constexpr unsigned int MatrixSize = TNumNodes*(TDim+1);
+
+        if (rRightHandSideVector.size() != MatrixSize)
+            rRightHandSideVector.resize(MatrixSize, false); //false says not to preserve existing storage!!
+
+        // Struct to pass around the data
+        TimeAveragedElementDataStruct data;
+        this->FillElementData(data, rCurrentProcessInfo);
+
+        // Allocate memory needed
+        array_1d<double,MatrixSize> rhs_local;
+
+        // Gauss point position
+        BoundedMatrix<double,TNumNodes, TNumNodes> N_container;
+        this->GetShapeFunctionsOnGauss(N_container);
+
+        // Loop on gauss point
+        noalias(rRightHandSideVector) = ZeroVector(MatrixSize);
+        for(unsigned int igauss = 0; igauss<N_container.size2(); igauss++)
+        {
+            noalias(data.N) = row(N_container, igauss);
+
+            this->ComputeConstitutiveResponse(data, rCurrentProcessInfo);
+
+            ComputeGaussPointRHSContribution(rhs_local, data);
+
+            //here we assume that all the weights of the gauss points are the same so we multiply at the end by Volume/n_nodes
+            noalias(rRightHandSideVector) += rhs_local;
+        }
+
+        // rRightHandSideVector *= Volume/static_cast<double>(TNumNodes);
+        rRightHandSideVector *= data.volume/static_cast<double>(TNumNodes);
+
+        KRATOS_CATCH("")
+
+    }
+
     ///@}
     ///@name Access
     ///@{
@@ -203,61 +285,29 @@ protected:
 
     void ComputeGaussPointLHSContribution(
         BoundedMatrix<double, TNumNodes *(TDim + 1),TNumNodes *(TDim + 1)> &lhs,
-        const ElementDataStruct &data);
+        const TimeAveragedElementDataStruct &data);
 
     void ComputeGaussPointRHSContribution(
         array_1d<double, TNumNodes *(TDim + 1)> &rhs,
-        const ElementDataStruct &data);
+        const TimeAveragedElementDataStruct &data);
 
     // Auxiliar function to fill the element data structure
     void FillElementData(
-        ElementDataStruct& rData, 
+        TimeAveragedElementDataStruct& rData, 
         const ProcessInfo& rCurrentProcessInfo){
 
-        // Getting data for the given geometry
-        // double Volume; // In 2D cases Volume variable contains the element area
-        GeometryUtils::CalculateGeometryData(this->GetGeometry(), rData.DN_DX, rData.N, rData.volume);
+        // Base element fill element data call
+        BaseType::FillElementData(rData, rCurrentProcessInfo);
 
-        // Compute element size
-        rData.h = ComputeH(rData.DN_DX);
+        // Specific time-averaged element data fill
+        rData.step = rCurrentProcessInfo[STEP];
 
-        // Database access to all of the variables needed
-        const Vector& BDFVector = rCurrentProcessInfo[BDF_COEFFICIENTS];
-        rData.bdf0 = BDFVector[0];
-        rData.bdf1 = BDFVector[1];
-        rData.bdf2 = BDFVector[2];
-
-        rData.dyn_tau = rCurrentProcessInfo[DYNAMIC_TAU];  // Only, needed if the temporal dependent term is considered in the subscales
-        rData.dt = rCurrentProcessInfo[DELTA_TIME];        // Only, needed if the temporal dependent term is considered in the subscales
-
-        rData.c = rCurrentProcessInfo[SOUND_VELOCITY];     // Wave velocity
-
-        rData.step = rCurrentProcessInfo[STEP];            // Current time step
-
-        for (unsigned int i = 0; i < TNumNodes; i++){
-
-            const array_1d<double,3>& r_vavg = this->GetGeometry()[i].FastGetSolutionStepValue(VELOCITY);
-            const array_1d<double,3>& r_vavg_n = this->GetGeometry()[i].FastGetSolutionStepValue(VELOCITY,1);
-            const array_1d<double,3>& r_vavg_nn = this->GetGeometry()[i].FastGetSolutionStepValue(VELOCITY,2);
+        for (unsigned int i = 0; i < TNumNodes; ++i){
+            rData.pnnn[i] = this->GetGeometry()[i].FastGetSolutionStepValue(PRESSURE,3);
             const array_1d<double,3>& r_vavg_nnn = this->GetGeometry()[i].FastGetSolutionStepValue(VELOCITY,3);
-            const array_1d<double,3>& r_vel_mesh = this->GetGeometry()[i].FastGetSolutionStepValue(MESH_VELOCITY);
-            const array_1d<double,3>& r_body_force = this->GetGeometry()[i].FastGetSolutionStepValue(BODY_FORCE);
-
-            for(unsigned int k=0; k<TDim; k++){
-                rData.y(i,k) = r_vavg[k];
-                rData.yn(i,k) = r_vavg_n[k];
-                rData.ynn(i,k) = r_vavg_nn[k];
-                rData.ynnn(i,k) = r_vavg_nnn[k];
-                rData.vmesh(i,k) = r_vel_mesh[k];
-                rData.f(i,k) = r_body_force[k];
+            for (unsigned int j = 0; j < TDim; ++j){
+                rData.vnnn(i,j) = r_vavg_nnn[j];
             }
-
-            rData.x[i] = this->GetGeometry()[i].FastGetSolutionStepValue(PRESSURE);
-            rData.xn[i] = this->GetGeometry()[i].FastGetSolutionStepValue(PRESSURE,1);
-            rData.xnn[i] = this->GetGeometry()[i].FastGetSolutionStepValue(PRESSURE,2);
-            rData.xnnn[i] = this->GetGeometry()[i].FastGetSolutionStepValue(PRESSURE,3);
-            rData.rho[i] = this->GetGeometry()[i].FastGetSolutionStepValue(DENSITY);
-            rData.mu[i] = this->GetGeometry()[i].FastGetSolutionStepValue(DYNAMIC_VISCOSITY);
         }
     }
 

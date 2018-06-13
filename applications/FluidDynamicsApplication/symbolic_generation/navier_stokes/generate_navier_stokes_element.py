@@ -69,22 +69,23 @@ for dim in dim_vector:
     if time_averaged_element:
         ## Set the average velocity and pressure variables
         step = Symbol('step',positive=True)         # Current time step
-        y = DefineMatrix('y',nnodes,dim)            # Current step velocity average
-        yn = DefineMatrix('yn',nnodes,dim)          # Previous step velocity average
-        ynn = DefineMatrix('ynn',nnodes,dim)        # 2 previous steps velocity average
-        ynnn = DefineMatrix('ynnn',nnodes,dim)      # 3 previous steps velocity average
-        x = DefineVector('x',nnodes)                # Current step pressure average
-        xn = DefineVector('xn',nnodes)              # Previous step pressure average
-        xnn = DefineVector('xnn',nnodes)            # 2 previous steps pressure average
-        xnnn = DefineVector('xnnn',nnodes)          # 3 previous steps pressure average
+        y = DefineMatrix('v',nnodes,dim)            # Current step velocity average
+        yn = DefineMatrix('vn',nnodes,dim)          # Previous step velocity average
+        ynn = DefineMatrix('vnn',nnodes,dim)        # 2 previous steps velocity average
+        ynnn = DefineMatrix('vnnn',nnodes,dim)      # 3 previous steps velocity average
+        x = DefineVector('p',nnodes)                # Current step pressure average
+        xn = DefineVector('pn',nnodes)              # Previous step pressure average
+        xnn = DefineVector('pnn',nnodes)            # 2 previous steps pressure average
+        xnnn = DefineVector('pnnn',nnodes)          # 3 previous steps pressure average
 
-        ## Rewrite velocity and pressure in terms of the time-averaged variables
+        # Rewrite velocity and pressure in terms of the time-averaged variables
         v = step*y - (step-1)*yn                    # Time-averaged current step velocity
         vn = (step-1)*yn - (step-2)*ynn             # Time-averaged previous step velocity
         vnn = (step-2)*ynn - (step-3)*ynnn          # Time-averaged 2 previous step velocity
         p = step*x - (step-1)*xn                    # Time-averaged current step pressure
         pn = (step-1)*xn - (step-2)*xnn             # Time-averaged previous step pressure
         pnn = (step-2)*xnn - (step-3)*xnnn          # Time-averaged 2 previous step pressure
+
     else:
         ## Set velocity and pressure variables
         v = DefineMatrix('v',nnodes,dim)            # Current step velocity (v(i,j) refers to velocity of node i component j)
@@ -261,6 +262,10 @@ for dim in dim_vector:
             outstring = outstring.replace("//substitute_gausspt_subscale_3D", v_s_gauss_out)
 
 ## Write the modified template
-out = open("time_averaged_navier_stokes.cpp",'w')
+if time_averaged_element:
+    output_filename = "time_averaged_navier_stokes.cpp"
+else:
+    output_filename = "navier_stokes.cpp"
+out = open(output_filename,'w')
 out.write(outstring)
 out.close()

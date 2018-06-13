@@ -17,7 +17,7 @@ namespace Kratos {
 template<>
 void TimeAveragedNavierStokes<3>::ComputeGaussPointLHSContribution(
     BoundedMatrix<double,16,16>& lhs, 
-    const ElementDataStruct& data){
+    const TimeAveragedElementDataStruct& data){
 
     const int dim = 3;
     const int nnodes = 4;
@@ -31,11 +31,11 @@ void TimeAveragedNavierStokes<3>::ComputeGaussPointLHSContribution(
     const double bdf0 = data.bdf0;
     const double dyn_tau = data.dyn_tau;
 
-    const unsigned int  step = data.step;
+    const unsigned int step = data.step;
 
-    const BoundedMatrix<double,nnodes,dim>& y = data.y;
+    const BoundedMatrix<double,nnodes,dim>& v = data.v;
     const BoundedMatrix<double,nnodes,dim>& vmesh = data.vmesh;
-    const BoundedMatrix<double,nnodes,dim>& vconv = y - vmesh;
+    const BoundedMatrix<double,nnodes,dim>& vconv = v - vmesh;
 
     // Get constitutive matrix
     const Matrix& C = data.C;
@@ -649,7 +649,7 @@ const double clhs337 =             step*(N[3] + clhs108*clhs40);
 template<>
 void TimeAveragedNavierStokes<2>::ComputeGaussPointLHSContribution(
     BoundedMatrix<double,9,9>& lhs,
-    const ElementDataStruct& data){
+    const TimeAveragedElementDataStruct& data){
 
     const int dim = 2;
     const int nnodes = 3;
@@ -663,11 +663,11 @@ void TimeAveragedNavierStokes<2>::ComputeGaussPointLHSContribution(
     const double bdf0 = data.bdf0;
     const double dyn_tau = data.dyn_tau;
 
-    const unsigned int  step = data.step;
+    const unsigned int step = data.step;
 
-    const BoundedMatrix<double,nnodes,dim>& y = data.y;
+    const BoundedMatrix<double,nnodes,dim>& v = data.v;
     const BoundedMatrix<double,nnodes,dim>& vmesh = data.vmesh;
-    const BoundedMatrix<double,nnodes,dim>& vconv = y - vmesh;
+    const BoundedMatrix<double,nnodes,dim>& vconv = v - vmesh;
 
     // Get constitutive matrix
     const Matrix& C = data.C;
@@ -900,7 +900,7 @@ const double clhs131 =             step*(N[2] + clhs28*clhs57);
 template<>
 void TimeAveragedNavierStokes<3>::ComputeGaussPointRHSContribution(
     array_1d<double,16>& rhs, 
-    const ElementDataStruct& data){
+    const TimeAveragedElementDataStruct& data){
 
     const int dim = 3;
     const int nnodes = 4;
@@ -916,19 +916,19 @@ void TimeAveragedNavierStokes<3>::ComputeGaussPointRHSContribution(
     const double bdf1 = data.bdf1;
     const double bdf2 = data.bdf2;
     const double dyn_tau = data.dyn_tau;
-    const unsigned int  step = data.step;
+    const unsigned int step = data.step;
 
-    const BoundedMatrix<double,nnodes,dim>& y = data.y;
-    const BoundedMatrix<double,nnodes,dim>& yn = data.yn;
-    const BoundedMatrix<double,nnodes,dim>& ynn = data.ynn;
-    const BoundedMatrix<double,nnodes,dim>& ynnn = data.ynnn;
+    const BoundedMatrix<double,nnodes,dim>& v = data.v;
+    const BoundedMatrix<double,nnodes,dim>& vn = data.vn;
+    const BoundedMatrix<double,nnodes,dim>& vnn = data.vnn;
+    const BoundedMatrix<double,nnodes,dim>& vnnn = data.vnnn;
     const BoundedMatrix<double,nnodes,dim>& vmesh = data.vmesh;
-    const BoundedMatrix<double,nnodes,dim>& vconv = y - vmesh;
+    const BoundedMatrix<double,nnodes,dim>& vconv = v - vmesh;
     const BoundedMatrix<double,nnodes,dim>& f = data.f;
-    const array_1d<double,nnodes>& x = data.x;
-    const array_1d<double,nnodes>& xn = data.xn;
-    const array_1d<double,nnodes>& xnn = data.xnn;
-    const array_1d<double,nnodes>& xnnn = data.xnnn;
+    const array_1d<double,nnodes>& p = data.p;
+    const array_1d<double,nnodes>& pn = data.pn;
+    const array_1d<double,nnodes>& pnn = data.pnn;
+    const array_1d<double,nnodes>& pnnn = data.pnnn;
     const array_1d<double,strain_size>& stress = data.stress;
 
     // Get shape function values
@@ -937,7 +937,7 @@ void TimeAveragedNavierStokes<3>::ComputeGaussPointRHSContribution(
 
     // Auxiliary variables used in the calculation of the RHS
     const array_1d<double,dim> f_gauss = prod(trans(f), N);
-    const array_1d<double,dim> grad_p = prod(trans(DN), x);
+    const array_1d<double,dim> grad_p = prod(trans(DN), p);
 
     // Stabilization parameters
     const double stab_c1 = 4.0;
@@ -945,30 +945,30 @@ void TimeAveragedNavierStokes<3>::ComputeGaussPointRHSContribution(
 
     const double crhs0 =             rho*(N[0]*f(0,0) + N[1]*f(1,0) + N[2]*f(2,0) + N[3]*f(3,0));
 const double crhs1 =             step - 1;
-const double crhs2 =             crhs1*xn[0];
-const double crhs3 =             -crhs2 + step*x[0];
-const double crhs4 =             crhs1*xn[1];
-const double crhs5 =             -crhs4 + step*x[1];
-const double crhs6 =             crhs1*xn[2];
-const double crhs7 =             -crhs6 + step*x[2];
-const double crhs8 =             crhs1*xn[3];
-const double crhs9 =             -crhs8 + step*x[3];
+const double crhs2 =             crhs1*pn[0];
+const double crhs3 =             -crhs2 + p[0]*step;
+const double crhs4 =             crhs1*pn[1];
+const double crhs5 =             -crhs4 + p[1]*step;
+const double crhs6 =             crhs1*pn[2];
+const double crhs7 =             -crhs6 + p[2]*step;
+const double crhs8 =             crhs1*pn[3];
+const double crhs9 =             -crhs8 + p[3]*step;
 const double crhs10 =             N[0]*crhs3 + N[1]*crhs5 + N[2]*crhs7 + N[3]*crhs9;
-const double crhs11 =             crhs1*yn(0,0);
-const double crhs12 =             -crhs11 + step*y(0,0);
+const double crhs11 =             crhs1*vn(0,0);
+const double crhs12 =             -crhs11 + step*v(0,0);
 const double crhs13 =             step - 2;
-const double crhs14 =             crhs13*ynn(0,0);
+const double crhs14 =             crhs13*vnn(0,0);
 const double crhs15 =             step - 3;
-const double crhs16 =             crhs1*yn(1,0);
-const double crhs17 =             -crhs16 + step*y(1,0);
-const double crhs18 =             crhs13*ynn(1,0);
-const double crhs19 =             crhs1*yn(2,0);
-const double crhs20 =             -crhs19 + step*y(2,0);
-const double crhs21 =             crhs13*ynn(2,0);
-const double crhs22 =             crhs1*yn(3,0);
-const double crhs23 =             -crhs22 + step*y(3,0);
-const double crhs24 =             crhs13*ynn(3,0);
-const double crhs25 =             rho*(N[0]*(bdf0*crhs12 + bdf1*(crhs11 - crhs14) + bdf2*(crhs14 - crhs15*ynnn(0,0))) + N[1]*(bdf0*crhs17 + bdf1*(crhs16 - crhs18) + bdf2*(-crhs15*ynnn(1,0) + crhs18)) + N[2]*(bdf0*crhs20 + bdf1*(crhs19 - crhs21) + bdf2*(-crhs15*ynnn(2,0) + crhs21)) + N[3]*(bdf0*crhs23 + bdf1*(crhs22 - crhs24) + bdf2*(-crhs15*ynnn(3,0) + crhs24)));
+const double crhs16 =             crhs1*vn(1,0);
+const double crhs17 =             -crhs16 + step*v(1,0);
+const double crhs18 =             crhs13*vnn(1,0);
+const double crhs19 =             crhs1*vn(2,0);
+const double crhs20 =             -crhs19 + step*v(2,0);
+const double crhs21 =             crhs13*vnn(2,0);
+const double crhs22 =             crhs1*vn(3,0);
+const double crhs23 =             -crhs22 + step*v(3,0);
+const double crhs24 =             crhs13*vnn(3,0);
+const double crhs25 =             rho*(N[0]*(bdf0*crhs12 + bdf1*(crhs11 - crhs14) + bdf2*(crhs14 - crhs15*vnnn(0,0))) + N[1]*(bdf0*crhs17 + bdf1*(crhs16 - crhs18) + bdf2*(-crhs15*vnnn(1,0) + crhs18)) + N[2]*(bdf0*crhs20 + bdf1*(crhs19 - crhs21) + bdf2*(-crhs15*vnnn(2,0) + crhs21)) + N[3]*(bdf0*crhs23 + bdf1*(crhs22 - crhs24) + bdf2*(-crhs15*vnnn(3,0) + crhs24)));
 const double crhs26 =             N[0]*vconv(0,0) + N[1]*vconv(1,0) + N[2]*vconv(2,0) + N[3]*vconv(3,0);
 const double crhs27 =             DN(0,0)*crhs12;
 const double crhs28 =             DN(1,0)*crhs17;
@@ -978,33 +978,33 @@ const double crhs31 =             N[0]*vconv(0,1) + N[1]*vconv(1,1) + N[2]*vconv
 const double crhs32 =             N[0]*vconv(0,2) + N[1]*vconv(1,2) + N[2]*vconv(2,2) + N[3]*vconv(3,2);
 const double crhs33 =             rho*(crhs26*(crhs27 + crhs28 + crhs29 + crhs30) + crhs31*(DN(0,1)*crhs12 + DN(1,1)*crhs17 + DN(2,1)*crhs20 + DN(3,1)*crhs23) + crhs32*(DN(0,2)*crhs12 + DN(1,2)*crhs17 + DN(2,2)*crhs20 + DN(3,2)*crhs23));
 const double crhs34 =             stab_c2*sqrt(pow(crhs26, 2) + pow(crhs31, 2) + pow(crhs32, 2));
-const double crhs35 =             crhs1*yn(0,2);
-const double crhs36 =             -crhs35 + step*y(0,2);
-const double crhs37 =             crhs1*yn(1,2);
-const double crhs38 =             -crhs37 + step*y(1,2);
-const double crhs39 =             crhs1*yn(2,2);
-const double crhs40 =             -crhs39 + step*y(2,2);
-const double crhs41 =             crhs1*yn(3,2);
-const double crhs42 =             -crhs41 + step*y(3,2);
+const double crhs35 =             crhs1*vn(0,2);
+const double crhs36 =             -crhs35 + step*v(0,2);
+const double crhs37 =             crhs1*vn(1,2);
+const double crhs38 =             -crhs37 + step*v(1,2);
+const double crhs39 =             crhs1*vn(2,2);
+const double crhs40 =             -crhs39 + step*v(2,2);
+const double crhs41 =             crhs1*vn(3,2);
+const double crhs42 =             -crhs41 + step*v(3,2);
 const double crhs43 =             DN(0,2)*crhs36 + DN(1,2)*crhs38 + DN(2,2)*crhs40 + DN(3,2)*crhs42;
-const double crhs44 =             crhs1*yn(0,1);
-const double crhs45 =             -crhs44 + step*y(0,1);
+const double crhs44 =             crhs1*vn(0,1);
+const double crhs45 =             -crhs44 + step*v(0,1);
 const double crhs46 =             DN(0,1)*crhs45;
-const double crhs47 =             crhs1*yn(1,1);
-const double crhs48 =             -crhs47 + step*y(1,1);
+const double crhs47 =             crhs1*vn(1,1);
+const double crhs48 =             -crhs47 + step*v(1,1);
 const double crhs49 =             DN(1,1)*crhs48;
-const double crhs50 =             crhs1*yn(2,1);
-const double crhs51 =             -crhs50 + step*y(2,1);
+const double crhs50 =             crhs1*vn(2,1);
+const double crhs51 =             -crhs50 + step*v(2,1);
 const double crhs52 =             DN(2,1)*crhs51;
-const double crhs53 =             crhs1*yn(3,1);
-const double crhs54 =             -crhs53 + step*y(3,1);
+const double crhs53 =             crhs1*vn(3,1);
+const double crhs54 =             -crhs53 + step*v(3,1);
 const double crhs55 =             DN(3,1)*crhs54;
 const double crhs56 =             crhs27 + crhs28 + crhs29 + crhs30 + crhs43 + crhs46 + crhs49 + crhs52 + crhs55;
-const double crhs57 =             crhs13*xnn[0];
-const double crhs58 =             crhs13*xnn[1];
-const double crhs59 =             crhs13*xnn[2];
-const double crhs60 =             crhs13*xnn[3];
-const double crhs61 =             (N[0]*(bdf0*crhs3 + bdf1*(crhs2 - crhs57) + bdf2*(-crhs15*xnnn[0] + crhs57)) + N[1]*(bdf0*crhs5 + bdf1*(crhs4 - crhs58) + bdf2*(-crhs15*xnnn[1] + crhs58)) + N[2]*(bdf0*crhs7 + bdf1*(-crhs59 + crhs6) + bdf2*(-crhs15*xnnn[2] + crhs59)) + N[3]*(bdf0*crhs9 + bdf1*(-crhs60 + crhs8) + bdf2*(-crhs15*xnnn[3] + crhs60)))/(pow(c, 2)*rho);
+const double crhs57 =             crhs13*pnn[0];
+const double crhs58 =             crhs13*pnn[1];
+const double crhs59 =             crhs13*pnn[2];
+const double crhs60 =             crhs13*pnn[3];
+const double crhs61 =             (N[0]*(bdf0*crhs3 + bdf1*(crhs2 - crhs57) + bdf2*(-crhs15*pnnn[0] + crhs57)) + N[1]*(bdf0*crhs5 + bdf1*(crhs4 - crhs58) + bdf2*(-crhs15*pnnn[1] + crhs58)) + N[2]*(bdf0*crhs7 + bdf1*(-crhs59 + crhs6) + bdf2*(-crhs15*pnnn[2] + crhs59)) + N[3]*(bdf0*crhs9 + bdf1*(-crhs60 + crhs8) + bdf2*(-crhs15*pnnn[3] + crhs60)))/(pow(c, 2)*rho);
 const double crhs62 =             (crhs56 + crhs61)*(crhs34*h/stab_c1 + mu);
 const double crhs63 =             DN(0,0)*vconv(0,0) + DN(0,1)*vconv(0,1) + DN(0,2)*vconv(0,2) + DN(1,0)*vconv(1,0) + DN(1,1)*vconv(1,1) + DN(1,2)*vconv(1,2) + DN(2,0)*vconv(2,0) + DN(2,1)*vconv(2,1) + DN(2,2)*vconv(2,2) + DN(3,0)*vconv(3,0) + DN(3,1)*vconv(3,1) + DN(3,2)*vconv(3,2);
 const double crhs64 =             N[0]*crhs63*rho;
@@ -1012,19 +1012,19 @@ const double crhs65 =             1.0/(crhs34*rho/h + mu*stab_c1/pow(h, 2) + dyn
 const double crhs66 =             1.0*crhs65*(DN(0,0)*crhs3 + DN(1,0)*crhs5 + DN(2,0)*crhs7 + DN(3,0)*crhs9 - crhs0 + crhs25 + crhs33);
 const double crhs67 =             rho*(DN(0,0)*crhs26 + DN(0,1)*crhs31 + DN(0,2)*crhs32);
 const double crhs68 =             rho*(N[0]*f(0,1) + N[1]*f(1,1) + N[2]*f(2,1) + N[3]*f(3,1));
-const double crhs69 =             crhs13*ynn(0,1);
-const double crhs70 =             crhs13*ynn(1,1);
-const double crhs71 =             crhs13*ynn(2,1);
-const double crhs72 =             crhs13*ynn(3,1);
-const double crhs73 =             rho*(N[0]*(bdf0*crhs45 + bdf1*(crhs44 - crhs69) + bdf2*(-crhs15*ynnn(0,1) + crhs69)) + N[1]*(bdf0*crhs48 + bdf1*(crhs47 - crhs70) + bdf2*(-crhs15*ynnn(1,1) + crhs70)) + N[2]*(bdf0*crhs51 + bdf1*(crhs50 - crhs71) + bdf2*(-crhs15*ynnn(2,1) + crhs71)) + N[3]*(bdf0*crhs54 + bdf1*(crhs53 - crhs72) + bdf2*(-crhs15*ynnn(3,1) + crhs72)));
+const double crhs69 =             crhs13*vnn(0,1);
+const double crhs70 =             crhs13*vnn(1,1);
+const double crhs71 =             crhs13*vnn(2,1);
+const double crhs72 =             crhs13*vnn(3,1);
+const double crhs73 =             rho*(N[0]*(bdf0*crhs45 + bdf1*(crhs44 - crhs69) + bdf2*(-crhs15*vnnn(0,1) + crhs69)) + N[1]*(bdf0*crhs48 + bdf1*(crhs47 - crhs70) + bdf2*(-crhs15*vnnn(1,1) + crhs70)) + N[2]*(bdf0*crhs51 + bdf1*(crhs50 - crhs71) + bdf2*(-crhs15*vnnn(2,1) + crhs71)) + N[3]*(bdf0*crhs54 + bdf1*(crhs53 - crhs72) + bdf2*(-crhs15*vnnn(3,1) + crhs72)));
 const double crhs74 =             rho*(crhs26*(DN(0,0)*crhs45 + DN(1,0)*crhs48 + DN(2,0)*crhs51 + DN(3,0)*crhs54) + crhs31*(crhs46 + crhs49 + crhs52 + crhs55) + crhs32*(DN(0,2)*crhs45 + DN(1,2)*crhs48 + DN(2,2)*crhs51 + DN(3,2)*crhs54));
 const double crhs75 =             1.0*crhs65*(DN(0,1)*crhs3 + DN(1,1)*crhs5 + DN(2,1)*crhs7 + DN(3,1)*crhs9 - crhs68 + crhs73 + crhs74);
 const double crhs76 =             rho*(N[0]*f(0,2) + N[1]*f(1,2) + N[2]*f(2,2) + N[3]*f(3,2));
-const double crhs77 =             crhs13*ynn(0,2);
-const double crhs78 =             crhs13*ynn(1,2);
-const double crhs79 =             crhs13*ynn(2,2);
-const double crhs80 =             crhs13*ynn(3,2);
-const double crhs81 =             rho*(N[0]*(bdf0*crhs36 + bdf1*(crhs35 - crhs77) + bdf2*(-crhs15*ynnn(0,2) + crhs77)) + N[1]*(bdf0*crhs38 + bdf1*(crhs37 - crhs78) + bdf2*(-crhs15*ynnn(1,2) + crhs78)) + N[2]*(bdf0*crhs40 + bdf1*(crhs39 - crhs79) + bdf2*(-crhs15*ynnn(2,2) + crhs79)) + N[3]*(bdf0*crhs42 + bdf1*(crhs41 - crhs80) + bdf2*(-crhs15*ynnn(3,2) + crhs80)));
+const double crhs77 =             crhs13*vnn(0,2);
+const double crhs78 =             crhs13*vnn(1,2);
+const double crhs79 =             crhs13*vnn(2,2);
+const double crhs80 =             crhs13*vnn(3,2);
+const double crhs81 =             rho*(N[0]*(bdf0*crhs36 + bdf1*(crhs35 - crhs77) + bdf2*(-crhs15*vnnn(0,2) + crhs77)) + N[1]*(bdf0*crhs38 + bdf1*(crhs37 - crhs78) + bdf2*(-crhs15*vnnn(1,2) + crhs78)) + N[2]*(bdf0*crhs40 + bdf1*(crhs39 - crhs79) + bdf2*(-crhs15*vnnn(2,2) + crhs79)) + N[3]*(bdf0*crhs42 + bdf1*(crhs41 - crhs80) + bdf2*(-crhs15*vnnn(3,2) + crhs80)));
 const double crhs82 =             rho*(crhs26*(DN(0,0)*crhs36 + DN(1,0)*crhs38 + DN(2,0)*crhs40 + DN(3,0)*crhs42) + crhs31*(DN(0,1)*crhs36 + DN(1,1)*crhs38 + DN(2,1)*crhs40 + DN(3,1)*crhs42) + crhs32*crhs43);
 const double crhs83 =             1.0*crhs65*(DN(0,2)*crhs3 + DN(1,2)*crhs5 + DN(2,2)*crhs7 + DN(3,2)*crhs9 - crhs76 + crhs81 + crhs82);
 const double crhs84 =             N[1]*crhs63*rho;
@@ -1056,10 +1056,10 @@ const double crhs89 =             rho*(DN(3,0)*crhs26 + DN(3,1)*crhs31 + DN(3,2)
 template<>
 void TimeAveragedNavierStokes<2>::ComputeGaussPointRHSContribution(
     array_1d<double,9>& rhs, 
-    const ElementDataStruct& data){
+    const TimeAveragedElementDataStruct& data){
 
-    const int nnodes = 3;
     const int dim = 2;
+    const int nnodes = 3;
     const int strain_size = 3;
 
     const double rho = inner_prod(data.N, data.rho);        // Density
@@ -1072,19 +1072,19 @@ void TimeAveragedNavierStokes<2>::ComputeGaussPointRHSContribution(
     const double bdf1 = data.bdf1;
     const double bdf2 = data.bdf2;
     const double dyn_tau = data.dyn_tau;
-    const unsigned int  step = data.step;
+    const unsigned int step = data.step;
 
-    const BoundedMatrix<double,nnodes,dim>& y = data.y;
-    const BoundedMatrix<double,nnodes,dim>& yn = data.yn;
-    const BoundedMatrix<double,nnodes,dim>& ynn = data.ynn;
-    const BoundedMatrix<double,nnodes,dim>& ynnn = data.ynnn;
+    const BoundedMatrix<double,nnodes,dim>& v = data.v;
+    const BoundedMatrix<double,nnodes,dim>& vn = data.vn;
+    const BoundedMatrix<double,nnodes,dim>& vnn = data.vnn;
+    const BoundedMatrix<double,nnodes,dim>& vnnn = data.vnnn;
     const BoundedMatrix<double,nnodes,dim>& vmesh = data.vmesh;
-    const BoundedMatrix<double,nnodes,dim>& vconv = y - vmesh;
+    const BoundedMatrix<double,nnodes,dim>& vconv = v - vmesh;
     const BoundedMatrix<double,nnodes,dim>& f = data.f;
-    const array_1d<double,nnodes>& x = data.x;
-    const array_1d<double,nnodes>& xn = data.xn;
-    const array_1d<double,nnodes>& xnn = data.xnn;
-    const array_1d<double,nnodes>& xnnn = data.xnnn;
+    const array_1d<double,nnodes>& p = data.p;
+    const array_1d<double,nnodes>& pn = data.pn;
+    const array_1d<double,nnodes>& pnn = data.pnn;
+    const array_1d<double,nnodes>& pnnn = data.pnnn;
     const array_1d<double,strain_size>& stress = data.stress;
 
     // Get shape function values
@@ -1093,7 +1093,7 @@ void TimeAveragedNavierStokes<2>::ComputeGaussPointRHSContribution(
 
     // Auxiliary variables used in the calculation of the RHS
     const array_1d<double,dim> f_gauss = prod(trans(f), N);
-    const array_1d<double,dim> grad_p = prod(trans(DN), x);
+    const array_1d<double,dim> grad_p = prod(trans(DN), p);
 
     // Stabilization parameters
     const double stab_c1 = 4.0;
@@ -1101,42 +1101,42 @@ void TimeAveragedNavierStokes<2>::ComputeGaussPointRHSContribution(
 
     const double crhs0 =             rho*(N[0]*f(0,0) + N[1]*f(1,0) + N[2]*f(2,0));
 const double crhs1 =             step - 1;
-const double crhs2 =             crhs1*xn[0];
-const double crhs3 =             -crhs2 + step*x[0];
-const double crhs4 =             crhs1*xn[1];
-const double crhs5 =             -crhs4 + step*x[1];
-const double crhs6 =             crhs1*xn[2];
-const double crhs7 =             -crhs6 + step*x[2];
+const double crhs2 =             crhs1*pn[0];
+const double crhs3 =             -crhs2 + p[0]*step;
+const double crhs4 =             crhs1*pn[1];
+const double crhs5 =             -crhs4 + p[1]*step;
+const double crhs6 =             crhs1*pn[2];
+const double crhs7 =             -crhs6 + p[2]*step;
 const double crhs8 =             N[0]*crhs3 + N[1]*crhs5 + N[2]*crhs7;
 const double crhs9 =             N[0]*vconv(0,0) + N[1]*vconv(1,0) + N[2]*vconv(2,0);
-const double crhs10 =             crhs1*yn(0,0);
-const double crhs11 =             -crhs10 + step*y(0,0);
-const double crhs12 =             crhs1*yn(1,0);
-const double crhs13 =             -crhs12 + step*y(1,0);
-const double crhs14 =             crhs1*yn(2,0);
-const double crhs15 =             -crhs14 + step*y(2,0);
+const double crhs10 =             crhs1*vn(0,0);
+const double crhs11 =             -crhs10 + step*v(0,0);
+const double crhs12 =             crhs1*vn(1,0);
+const double crhs13 =             -crhs12 + step*v(1,0);
+const double crhs14 =             crhs1*vn(2,0);
+const double crhs15 =             -crhs14 + step*v(2,0);
 const double crhs16 =             DN(0,0)*crhs11 + DN(1,0)*crhs13 + DN(2,0)*crhs15;
 const double crhs17 =             N[0]*vconv(0,1) + N[1]*vconv(1,1) + N[2]*vconv(2,1);
 const double crhs18 =             rho*(crhs16*crhs9 + crhs17*(DN(0,1)*crhs11 + DN(1,1)*crhs13 + DN(2,1)*crhs15));
 const double crhs19 =             step - 2;
-const double crhs20 =             crhs19*ynn(0,0);
+const double crhs20 =             crhs19*vnn(0,0);
 const double crhs21 =             step - 3;
-const double crhs22 =             crhs19*ynn(1,0);
-const double crhs23 =             crhs19*ynn(2,0);
-const double crhs24 =             rho*(N[0]*(bdf0*crhs11 + bdf1*(crhs10 - crhs20) + bdf2*(crhs20 - crhs21*ynnn(0,0))) + N[1]*(bdf0*crhs13 + bdf1*(crhs12 - crhs22) + bdf2*(-crhs21*ynnn(1,0) + crhs22)) + N[2]*(bdf0*crhs15 + bdf1*(crhs14 - crhs23) + bdf2*(-crhs21*ynnn(2,0) + crhs23)));
+const double crhs22 =             crhs19*vnn(1,0);
+const double crhs23 =             crhs19*vnn(2,0);
+const double crhs24 =             rho*(N[0]*(bdf0*crhs11 + bdf1*(crhs10 - crhs20) + bdf2*(crhs20 - crhs21*vnnn(0,0))) + N[1]*(bdf0*crhs13 + bdf1*(crhs12 - crhs22) + bdf2*(-crhs21*vnnn(1,0) + crhs22)) + N[2]*(bdf0*crhs15 + bdf1*(crhs14 - crhs23) + bdf2*(-crhs21*vnnn(2,0) + crhs23)));
 const double crhs25 =             stab_c2*sqrt(pow(crhs17, 2) + pow(crhs9, 2));
-const double crhs26 =             crhs1*yn(0,1);
-const double crhs27 =             -crhs26 + step*y(0,1);
-const double crhs28 =             crhs1*yn(1,1);
-const double crhs29 =             -crhs28 + step*y(1,1);
-const double crhs30 =             crhs1*yn(2,1);
-const double crhs31 =             -crhs30 + step*y(2,1);
+const double crhs26 =             crhs1*vn(0,1);
+const double crhs27 =             -crhs26 + step*v(0,1);
+const double crhs28 =             crhs1*vn(1,1);
+const double crhs29 =             -crhs28 + step*v(1,1);
+const double crhs30 =             crhs1*vn(2,1);
+const double crhs31 =             -crhs30 + step*v(2,1);
 const double crhs32 =             DN(0,1)*crhs27 + DN(1,1)*crhs29 + DN(2,1)*crhs31;
 const double crhs33 =             crhs16 + crhs32;
-const double crhs34 =             crhs19*xnn[0];
-const double crhs35 =             crhs19*xnn[1];
-const double crhs36 =             crhs19*xnn[2];
-const double crhs37 =             (N[0]*(bdf0*crhs3 + bdf1*(crhs2 - crhs34) + bdf2*(-crhs21*xnnn[0] + crhs34)) + N[1]*(bdf0*crhs5 + bdf1*(-crhs35 + crhs4) + bdf2*(-crhs21*xnnn[1] + crhs35)) + N[2]*(bdf0*crhs7 + bdf1*(-crhs36 + crhs6) + bdf2*(-crhs21*xnnn[2] + crhs36)))/(pow(c, 2)*rho);
+const double crhs34 =             crhs19*pnn[0];
+const double crhs35 =             crhs19*pnn[1];
+const double crhs36 =             crhs19*pnn[2];
+const double crhs37 =             (N[0]*(bdf0*crhs3 + bdf1*(crhs2 - crhs34) + bdf2*(-crhs21*pnnn[0] + crhs34)) + N[1]*(bdf0*crhs5 + bdf1*(-crhs35 + crhs4) + bdf2*(-crhs21*pnnn[1] + crhs35)) + N[2]*(bdf0*crhs7 + bdf1*(-crhs36 + crhs6) + bdf2*(-crhs21*pnnn[2] + crhs36)))/(pow(c, 2)*rho);
 const double crhs38 =             (crhs33 + crhs37)*(crhs25*h/stab_c1 + mu);
 const double crhs39 =             DN(0,0)*vconv(0,0) + DN(0,1)*vconv(0,1) + DN(1,0)*vconv(1,0) + DN(1,1)*vconv(1,1) + DN(2,0)*vconv(2,0) + DN(2,1)*vconv(2,1);
 const double crhs40 =             N[0]*crhs39*rho;
@@ -1145,10 +1145,10 @@ const double crhs42 =             1.0*crhs41*(DN(0,0)*crhs3 + DN(1,0)*crhs5 + DN
 const double crhs43 =             rho*(DN(0,0)*crhs9 + DN(0,1)*crhs17);
 const double crhs44 =             rho*(N[0]*f(0,1) + N[1]*f(1,1) + N[2]*f(2,1));
 const double crhs45 =             rho*(crhs17*crhs32 + crhs9*(DN(0,0)*crhs27 + DN(1,0)*crhs29 + DN(2,0)*crhs31));
-const double crhs46 =             crhs19*ynn(0,1);
-const double crhs47 =             crhs19*ynn(1,1);
-const double crhs48 =             crhs19*ynn(2,1);
-const double crhs49 =             rho*(N[0]*(bdf0*crhs27 + bdf1*(crhs26 - crhs46) + bdf2*(-crhs21*ynnn(0,1) + crhs46)) + N[1]*(bdf0*crhs29 + bdf1*(crhs28 - crhs47) + bdf2*(-crhs21*ynnn(1,1) + crhs47)) + N[2]*(bdf0*crhs31 + bdf1*(crhs30 - crhs48) + bdf2*(-crhs21*ynnn(2,1) + crhs48)));
+const double crhs46 =             crhs19*vnn(0,1);
+const double crhs47 =             crhs19*vnn(1,1);
+const double crhs48 =             crhs19*vnn(2,1);
+const double crhs49 =             rho*(N[0]*(bdf0*crhs27 + bdf1*(crhs26 - crhs46) + bdf2*(-crhs21*vnnn(0,1) + crhs46)) + N[1]*(bdf0*crhs29 + bdf1*(crhs28 - crhs47) + bdf2*(-crhs21*vnnn(1,1) + crhs47)) + N[2]*(bdf0*crhs31 + bdf1*(crhs30 - crhs48) + bdf2*(-crhs21*vnnn(2,1) + crhs48)));
 const double crhs50 =             1.0*crhs41*(DN(0,1)*crhs3 + DN(1,1)*crhs5 + DN(2,1)*crhs7 - crhs44 + crhs45 + crhs49);
 const double crhs51 =             N[1]*crhs39*rho;
 const double crhs52 =             rho*(DN(1,0)*crhs9 + DN(1,1)*crhs17);

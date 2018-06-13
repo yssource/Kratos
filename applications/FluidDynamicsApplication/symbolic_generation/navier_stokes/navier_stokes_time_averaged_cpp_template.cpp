@@ -17,7 +17,7 @@ namespace Kratos {
 template<>
 void TimeAveragedNavierStokes<3>::ComputeGaussPointLHSContribution(
     BoundedMatrix<double,16,16>& lhs, 
-    const ElementDataStruct& data){
+    const TimeAveragedElementDataStruct& data){
 
     const int dim = 3;
     const int nnodes = 4;
@@ -31,11 +31,11 @@ void TimeAveragedNavierStokes<3>::ComputeGaussPointLHSContribution(
     const double bdf0 = data.bdf0;
     const double dyn_tau = data.dyn_tau;
 
-    const unsigned int  step = data.step;
+    const unsigned int step = data.step;
 
-    const BoundedMatrix<double,nnodes,dim>& y = data.y;
+    const BoundedMatrix<double,nnodes,dim>& v = data.v;
     const BoundedMatrix<double,nnodes,dim>& vmesh = data.vmesh;
-    const BoundedMatrix<double,nnodes,dim>& vconv = y - vmesh;
+    const BoundedMatrix<double,nnodes,dim>& vconv = v - vmesh;
 
     // Get constitutive matrix
     const Matrix& C = data.C;
@@ -55,7 +55,7 @@ void TimeAveragedNavierStokes<3>::ComputeGaussPointLHSContribution(
 template<>
 void TimeAveragedNavierStokes<2>::ComputeGaussPointLHSContribution(
     BoundedMatrix<double,9,9>& lhs,
-    const ElementDataStruct& data){
+    const TimeAveragedElementDataStruct& data){
 
     const int dim = 2;
     const int nnodes = 3;
@@ -69,11 +69,11 @@ void TimeAveragedNavierStokes<2>::ComputeGaussPointLHSContribution(
     const double bdf0 = data.bdf0;
     const double dyn_tau = data.dyn_tau;
 
-    const unsigned int  step = data.step;
+    const unsigned int step = data.step;
 
-    const BoundedMatrix<double,nnodes,dim>& y = data.y;
+    const BoundedMatrix<double,nnodes,dim>& v = data.v;
     const BoundedMatrix<double,nnodes,dim>& vmesh = data.vmesh;
-    const BoundedMatrix<double,nnodes,dim>& vconv = y - vmesh;
+    const BoundedMatrix<double,nnodes,dim>& vconv = v - vmesh;
 
     // Get constitutive matrix
     const Matrix& C = data.C;
@@ -93,7 +93,7 @@ void TimeAveragedNavierStokes<2>::ComputeGaussPointLHSContribution(
 template<>
 void TimeAveragedNavierStokes<3>::ComputeGaussPointRHSContribution(
     array_1d<double,16>& rhs, 
-    const ElementDataStruct& data){
+    const TimeAveragedElementDataStruct& data){
 
     const int dim = 3;
     const int nnodes = 4;
@@ -109,19 +109,19 @@ void TimeAveragedNavierStokes<3>::ComputeGaussPointRHSContribution(
     const double bdf1 = data.bdf1;
     const double bdf2 = data.bdf2;
     const double dyn_tau = data.dyn_tau;
-    const unsigned int  step = data.step;
+    const unsigned int step = data.step;
 
-    const BoundedMatrix<double,nnodes,dim>& y = data.y;
-    const BoundedMatrix<double,nnodes,dim>& yn = data.yn;
-    const BoundedMatrix<double,nnodes,dim>& ynn = data.ynn;
-    const BoundedMatrix<double,nnodes,dim>& ynnn = data.ynnn;
+    const BoundedMatrix<double,nnodes,dim>& v = data.v;
+    const BoundedMatrix<double,nnodes,dim>& vn = data.vn;
+    const BoundedMatrix<double,nnodes,dim>& vnn = data.vnn;
+    const BoundedMatrix<double,nnodes,dim>& vnnn = data.vnnn;
     const BoundedMatrix<double,nnodes,dim>& vmesh = data.vmesh;
-    const BoundedMatrix<double,nnodes,dim>& vconv = y - vmesh;
+    const BoundedMatrix<double,nnodes,dim>& vconv = v - vmesh;
     const BoundedMatrix<double,nnodes,dim>& f = data.f;
-    const array_1d<double,nnodes>& x = data.x;
-    const array_1d<double,nnodes>& xn = data.xn;
-    const array_1d<double,nnodes>& xnn = data.xnn;
-    const array_1d<double,nnodes>& xnnn = data.xnnn;
+    const array_1d<double,nnodes>& p = data.p;
+    const array_1d<double,nnodes>& pn = data.pn;
+    const array_1d<double,nnodes>& pnn = data.pnn;
+    const array_1d<double,nnodes>& pnnn = data.pnnn;
     const array_1d<double,strain_size>& stress = data.stress;
 
     // Get shape function values
@@ -130,7 +130,7 @@ void TimeAveragedNavierStokes<3>::ComputeGaussPointRHSContribution(
 
     // Auxiliary variables used in the calculation of the RHS
     const array_1d<double,dim> f_gauss = prod(trans(f), N);
-    const array_1d<double,dim> grad_p = prod(trans(DN), x);
+    const array_1d<double,dim> grad_p = prod(trans(DN), p);
 
     // Stabilization parameters
     const double stab_c1 = 4.0;
@@ -143,10 +143,10 @@ void TimeAveragedNavierStokes<3>::ComputeGaussPointRHSContribution(
 template<>
 void TimeAveragedNavierStokes<2>::ComputeGaussPointRHSContribution(
     array_1d<double,9>& rhs, 
-    const ElementDataStruct& data){
+    const TimeAveragedElementDataStruct& data){
 
-    const int nnodes = 3;
     const int dim = 2;
+    const int nnodes = 3;
     const int strain_size = 3;
 
     const double rho = inner_prod(data.N, data.rho);        // Density
@@ -159,19 +159,19 @@ void TimeAveragedNavierStokes<2>::ComputeGaussPointRHSContribution(
     const double bdf1 = data.bdf1;
     const double bdf2 = data.bdf2;
     const double dyn_tau = data.dyn_tau;
-    const unsigned int  step = data.step;
+    const unsigned int step = data.step;
 
-    const BoundedMatrix<double,nnodes,dim>& y = data.y;
-    const BoundedMatrix<double,nnodes,dim>& yn = data.yn;
-    const BoundedMatrix<double,nnodes,dim>& ynn = data.ynn;
-    const BoundedMatrix<double,nnodes,dim>& ynnn = data.ynnn;
+    const BoundedMatrix<double,nnodes,dim>& v = data.v;
+    const BoundedMatrix<double,nnodes,dim>& vn = data.vn;
+    const BoundedMatrix<double,nnodes,dim>& vnn = data.vnn;
+    const BoundedMatrix<double,nnodes,dim>& vnnn = data.vnnn;
     const BoundedMatrix<double,nnodes,dim>& vmesh = data.vmesh;
-    const BoundedMatrix<double,nnodes,dim>& vconv = y - vmesh;
+    const BoundedMatrix<double,nnodes,dim>& vconv = v - vmesh;
     const BoundedMatrix<double,nnodes,dim>& f = data.f;
-    const array_1d<double,nnodes>& x = data.x;
-    const array_1d<double,nnodes>& xn = data.xn;
-    const array_1d<double,nnodes>& xnn = data.xnn;
-    const array_1d<double,nnodes>& xnnn = data.xnnn;
+    const array_1d<double,nnodes>& p = data.p;
+    const array_1d<double,nnodes>& pn = data.pn;
+    const array_1d<double,nnodes>& pnn = data.pnn;
+    const array_1d<double,nnodes>& pnnn = data.pnnn;
     const array_1d<double,strain_size>& stress = data.stress;
 
     // Get shape function values
@@ -180,7 +180,7 @@ void TimeAveragedNavierStokes<2>::ComputeGaussPointRHSContribution(
 
     // Auxiliary variables used in the calculation of the RHS
     const array_1d<double,dim> f_gauss = prod(trans(f), N);
-    const array_1d<double,dim> grad_p = prod(trans(DN), x);
+    const array_1d<double,dim> grad_p = prod(trans(DN), p);
 
     // Stabilization parameters
     const double stab_c1 = 4.0;

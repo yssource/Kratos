@@ -66,7 +66,8 @@ public:
     {
         singularValuePressureCoupled,
         singularValuePressureDecoupled,
-        eigenValueFullMatrix
+        eigenValueFullMatrix,
+        dynamicFullMatrix
     };
 
     ///@}
@@ -87,12 +88,14 @@ public:
         Parameters default_params(R"(
         {
             "method": "singular_value_pressure_coupled",
-            "beta": 0.0
+            "beta": 0.0,
+            "epsilon": 1e-6
         })");
 
         DiffusionParameters.ValidateAndAssignDefaults(default_params);
 
         mBeta = DiffusionParameters["beta"].GetDouble();
+        mEpsilon = DiffusionParameters["epsilon"].GetDouble();
 
         std::string method_name = DiffusionParameters["method"].GetString();
         
@@ -102,6 +105,8 @@ public:
             mNumericalDiffusionMethod = NumericalDiffusionMethod::singularValuePressureDecoupled;
         else if (method_name=="eigen_value_full_element_matrix")
             mNumericalDiffusionMethod = NumericalDiffusionMethod::eigenValueFullMatrix;
+        else if (method_name=="dynamic_full_element_matrix")
+            mNumericalDiffusionMethod = NumericalDiffusionMethod::dynamicFullMatrix;
         else
             KRATOS_ERROR<<"numerical diffusion method only supports singular_value_pressure_coupled or singular_value_pressure_decoupled or eigen_value_full_element_matrix"<<DiffusionParameters.PrettyPrintJsonString();
             
@@ -135,6 +140,9 @@ public:
                 case NumericalDiffusionMethod::eigenValueFullMatrix:
                     CalculateNumericalDiffusionEigenFullMatrix<2>(rCurrentElement, rCurrentProcessInfo, numerical_diffusion);
                     break;                    
+                case NumericalDiffusionMethod::dynamicFullMatrix:
+                    CalculateNumericalDiffusionDynamicFullMatrix<2>(rCurrentElement, rCurrentProcessInfo, numerical_diffusion);
+                    break;                                        
             }
 
             BoundedMatrix<double, 3, 2> dn_dx;
@@ -161,7 +169,10 @@ public:
                     break;
                 case NumericalDiffusionMethod::eigenValueFullMatrix:
                     CalculateNumericalDiffusionEigenFullMatrix<3>(rCurrentElement, rCurrentProcessInfo, numerical_diffusion);
-                    break;                                        
+                    break;
+                case NumericalDiffusionMethod::dynamicFullMatrix:
+                    CalculateNumericalDiffusionDynamicFullMatrix<3>(rCurrentElement, rCurrentProcessInfo, numerical_diffusion);
+                    break;                    
             }
 
             BoundedMatrix<double, 4, 3> dn_dx;
@@ -179,11 +190,12 @@ public:
             KRATOS_ERROR<<"numerical diffusion method only supports 2D or 3D elements";
         }        
 
-        KRATOS_ERROR_IF(numerical_diffusion < 0.0)<<"--- Added numerical diffusion should be greater than 0.0. [Element Id:"<<rCurrentElement.Id()<<", value:"<<numerical_diffusion<<" < 0.0]"<<std::endl;
+        KRATOS_ERROR_IF(numerical_diffusion < -mTolerance)<<"Added numerical diffusion should be greater than or equal to 0.0. [Element Id:"<<rCurrentElement.Id()<<", value:"<<numerical_diffusion<<" <= 0.0]"<<std::endl;
         rCurrentElement.SetValue(NUMERICAL_DIFFUSION, numerical_diffusion);
 
-        if (numerical_diffusion < 0.0)
-            std::cout<<" negative numerical diffusion."<<std::endl;
+        Matrix identity = identity_matrix<double>(rAdjointMatrix.size1());
+
+        noalias(rAdjointMatrix) += mEpsilon*identity;
 
         KRATOS_CATCH("");
     }
@@ -194,6 +206,8 @@ private:
     ///@{
     NumericalDiffusionMethod mNumericalDiffusionMethod = NumericalDiffusionMethod::singularValuePressureCoupled;
     double mBeta = 0.0;
+    double mEpsilon = 1e-6;
+    const double mTolerance = 1e-6;
     ///@}
     ///@name Private Operators
     ///@{
@@ -364,24 +378,114 @@ private:
         Vector adjoint_values_vector;
         rElement.GetValuesVector(adjoint_values_vector, 1);
 
-        BoundedVector<double, TLocalCoords> const temp_1 = prod(vms_steady_term_primal_gradient, adjoint_values_vector);
+        BoundedVector<double, TLocalCoords> temp_1 = prod(vms_steady_term_primal_gradient, adjoint_values_vector);
         double const adjoint_energy = inner_prod(temp_1, adjoint_values_vector);
-        
+
         MatrixType numerical_diffusion_matrix;
         InitializeMatrix<TDim>(numerical_diffusion_matrix);
 
         AddNumericalDiffusionTerm<TDim>(numerical_diffusion_matrix, dn_dx, volume);
 
-        BoundedVector<double, TLocalCoords> const temp_2 = prod(numerical_diffusion_matrix, adjoint_values_vector);
+        BoundedVector<double, TLocalCoords> temp_2 = prod(numerical_diffusion_matrix, adjoint_values_vector);
+        double const diffusion_energy = inner_prod(temp_2,adjoint_values_vector);
+
+        // std::cout<<"Print 1"<<std::endl;
+        // rElement.GetValuesVector(adjoint_values_vector, 1);
+        // std::cout<<adjoint_values_vector<<std::endl;
+
+        // std::cout<<"Print 0"<<std::endl;
+        // rElement.GetValuesVector(adjoint_values_vector, 0);
+        // std::cout<<adjoint_values_vector<<std::endl;
+
+        // std::cout<<"Print 2"<<std::endl;
+        // rElement.GetValuesVector(adjoint_values_vector, 2);
+        // std::cout<<adjoint_values_vector<<std::endl;
+
+        rNumericalDiffusion = 0.0;
+
+        // KRATOS_DEBUG_ERROR_IF(diffusion_energy <= 0.0)<<" --- Diffusion energy cannot be negative or zero."<<std::endl;
+
+        if (diffusion_energy < -mTolerance)
+        {
+            std::cout<<"vector"<<std::endl;
+            std::cout<<adjoint_values_vector<<std::endl;
+            std::cout<<"temp2"<<std::endl;
+            std::cout<<temp_2<<std::endl;
+            std::cout<<"energy:"<<diffusion_energy<<std::endl;
+            std::cout<<"Matrix"<<std::endl<<numerical_diffusion_matrix<<std::endl;
+            std::cout<<"DN_DX"<<std::endl<<dn_dx<<std::endl;
+            std::cout<<"volume:"<<volume<<std::endl;
+            std::cout<<"element_id:"<<rElement.Id()<<std::endl;
+        }
+
+        if (adjoint_energy > 0.0 && std::abs(diffusion_energy) > mTolerance)
+            rNumericalDiffusion = adjoint_energy/(diffusion_energy);
+
+        KRATOS_CATCH("");
+    }
+
+    template<unsigned int TDim>
+    void CalculateNumericalDiffusionDynamicFullMatrix(Element& rElement, const ProcessInfo& rCurrentProcessInfo, double& rNumericalDiffusion )
+    {
+        KRATOS_TRY;
+
+        constexpr unsigned int TNumNodes = TDim + 1;
+        constexpr unsigned int TBlockSize = TDim + 1;
+        constexpr unsigned int TLocalCoords = TNumNodes*TBlockSize;
+
+        BoundedMatrix<double, TNumNodes, TDim> dn_dx;
+        array_1d< double, TNumNodes > n;
+        double volume;
+
+        GeometryUtils::CalculateGeometryData(rElement.GetGeometry(),dn_dx,n,volume);
+
+        Matrix vms_steady_term_primal_gradient;
+
+        rElement.Calculate(
+                            VMS_STEADY_TERM_PRIMAL_GRADIENT_MATRIX,
+                            vms_steady_term_primal_gradient,
+                            rCurrentProcessInfo);
+
+        Matrix identity = identity_matrix<double>(vms_steady_term_primal_gradient.size1());
+   
+        Vector adjoint_values_vector;
+        rElement.GetValuesVector(adjoint_values_vector);
+
+        BoundedVector<double, TLocalCoords> temp_1 = prod(vms_steady_term_primal_gradient, adjoint_values_vector);
+        double const adjoint_energy = inner_prod(temp_1, adjoint_values_vector);
+
+        MatrixType numerical_diffusion_matrix;
+        InitializeMatrix<TDim>(numerical_diffusion_matrix);
+
+        AddNumericalDiffusionTerm<TDim>(numerical_diffusion_matrix, dn_dx, volume);
+
+        numerical_diffusion_matrix = numerical_diffusion_matrix + mEpsilon*identity;
+
+        BoundedVector<double, TLocalCoords> temp_2 = prod(numerical_diffusion_matrix, adjoint_values_vector);
         double const diffusion_energy = inner_prod(temp_2,adjoint_values_vector);
 
         rNumericalDiffusion = 0.0;
 
-        KRATOS_DEBUG_ERROR_IF(diffusion_energy <= 0.0)<<" --- Diffusion energy cannot be negative or zero."<<std::endl;
+        // KRATOS_DEBUG_ERROR_IF(diffusion_energy <= 0.0)<<" --- Diffusion energy cannot be negative or zero."<<std::endl;
+
+        if (diffusion_energy < -mTolerance)
+        {
+            std::cout<<"vector"<<std::endl;
+            std::cout<<adjoint_values_vector<<std::endl;
+            std::cout<<"temp2"<<std::endl;
+            std::cout<<temp_2<<std::endl;
+            std::cout<<"energy:"<<diffusion_energy<<std::endl;
+            std::cout<<"Matrix"<<std::endl<<numerical_diffusion_matrix<<std::endl;
+            std::cout<<"DN_DX"<<std::endl<<dn_dx<<std::endl;
+            std::cout<<"volume:"<<volume<<std::endl;
+            std::cout<<"element_id:"<<rElement.Id()<<std::endl;
+        }        
 
         if (adjoint_energy > 0.0)
-            rNumericalDiffusion = adjoint_energy/(diffusion_energy);
-
+        {
+            // std::cout<<rElement.Id()<<", DE="<<diffusion_energy<<", AE="<<adjoint_energy<<std::endl;
+            rNumericalDiffusion = adjoint_energy/diffusion_energy;
+        }
         KRATOS_CATCH("");
     }    
 

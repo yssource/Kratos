@@ -19,6 +19,8 @@ set( KRATOS_STRUCTURAL_MECHANICS_APPLICATION_CORE
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/shell_cross_section.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/shell_utilities.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/static_condensation_utility.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/formfinding_io_utility.cpp
+  
 
   ## PROCESSES
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_processes/postprocess_eigenvalues_process.cpp
@@ -57,7 +59,6 @@ set( KRATOS_STRUCTURAL_MECHANICS_APPLICATION_CORE
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/cr_beam_element_linear_2D2N.cpp
 
   # Adding shells and membranes elements
-  ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/membrane_element.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/isotropic_shell_element.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/base_shell_element.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/shell_thick_element_3D4N.cpp

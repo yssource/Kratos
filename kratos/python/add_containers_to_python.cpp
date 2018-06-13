@@ -36,7 +36,7 @@
 #include "python/add_deprecated_variables_to_python.h"
 #include "python/add_c2c_variables_to_python.h" //TODO: to be removed eventually
 #include "python/add_cfd_variables_to_python.h" //TODO: to be removed eventually
-#include "python/add_ale_variables_to_python.h" //TODO: to be removed eventually
+#include "python/add_mesh_moving_variables_to_python.h" //TODO: to be removed eventually
 #include "python/add_mapping_variables_to_python.h" //TODO: to be removed eventually
 #include "python/add_dem_variables_to_python.h" //TODO: to be removed eventually
 #include "python/add_fsi_variables_to_python.h" //TODO: to be removed eventually
@@ -58,6 +58,13 @@ using namespace pybind11;
 
 Flags FlagsOr(const Flags& Left, const Flags& Right )
 {
+    return (Left|Right);
+}
+
+Flags FlagsAnd(const Flags& Left, const Flags& Right )
+{
+    KRATOS_WARNING("Kratos::Flags Python interface") << "Using deprecated flag & operation, which internally perfms a union (bitwise or)." << std::endl
+                 << "Please use | instead, since this behaviour will be soon deprecated." << std::endl;
     return (Left|Right);
 }
 
@@ -275,7 +282,7 @@ void  AddContainersToPython(pybind11::module& m)
     .def("Flip", &Flags::Flip)
     .def("Clear", &Flags::Clear)
     .def("__or__", FlagsOr)
-    .def("__and__", FlagsOr) // this is not an error, the and and or are considered both as add. Pooyan.
+    .def("__and__", FlagsAnd)
     .def("__repr__", &Flags::Info )
     ;
 

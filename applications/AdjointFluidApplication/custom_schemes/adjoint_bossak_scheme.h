@@ -303,6 +303,8 @@ public:
                         TSparseSpace::GetValue(rDx, it->EquationId());
             }
 
+            // Assign contributions to adjoint second derivatives that don't
+            // require assembly.
             #pragma omp parallel
             {
                 ModelPart::NodeIterator nodes_begin;
@@ -533,7 +535,7 @@ public:
                 mLeftHandSide[thread_id],
                 rCurrentProcessInfo
             );
-            noalias(rLHS_Contribution) -= mLeftHandSide[thread_id];        
+            noalias(rLHS_Contribution) -= mLeftHandSide[thread_id];
         #endif
 
         // Calculate system contributions in residual form.

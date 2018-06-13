@@ -38,20 +38,20 @@ SubModelPartsListUtility::~SubModelPartsListUtility() {};
 /***********************************************************************************/
 
 void SubModelPartsListUtility::ComputeSubModelPartsList(
-    IntIntMapType& rNodesColors,
-    IntIntMapType& rCondColors,
-    IntIntMapType& rElemColors,
+    IndexIntMapType& rNodesColors,
+    IndexIntMapType& rCondColors,
+    IndexIntMapType& rElemColors,
     IntStringMapType& rColors
     )
 {
     // Initialize and create the auxiliary maps
-    std::unordered_map<int,std::set<int>> aux_nodes_colors, aux_cond_colors, aux_elem_colors;
+    std::unordered_map<IndexType,std::set<IndexType>> aux_nodes_colors, aux_cond_colors, aux_elem_colors;
 
     // We compute the list of submodelparts and subsubmodelparts
     const std::vector<std::string>& model_part_names = GetRecursiveSubModelPartNames(mrModelPart);
 
     // Initialize Colors
-    int color = 0;
+    IndexType color = 0;
     for (SizeType i_sub_model_part = 0; i_sub_model_part < model_part_names.size(); ++i_sub_model_part) {
         rColors[i_sub_model_part].push_back(model_part_names[i_sub_model_part]);
 
@@ -78,30 +78,30 @@ void SubModelPartsListUtility::ComputeSubModelPartsList(
     }
 
     // Now detect all the cases in which a node or a cond belongs to more than one part simultaneously
-    std::unordered_map<std::set<int>, int, KeyHasherRange<std::set<int>>, KeyComparorRange<std::set<int>> > combinations;
+    std::unordered_map<std::set<IndexType>, IndexType, KeyHasherRange<std::set<IndexType>>, KeyComparorRange<std::set<IndexType>> > combinations;
 
     /* Nodes */
     for(auto & aux_nodes_color : aux_nodes_colors) {
-        const std::set<int>& value = aux_nodes_color.second;
+        const std::set<IndexType>& value = aux_nodes_color.second;
         if (value.size() > 1) combinations[value] = -1;
     }
 
     /* Conditions */
     for(auto & aux_cond_color : aux_cond_colors) {
-        const std::set<int>& value = aux_cond_color.second;
+        const std::set<IndexType>& value = aux_cond_color.second;
         if (value.size() > 1) combinations[value] = -1;
     }
 
     /* Elements */
     for(auto & aux_elem_color : aux_elem_colors) {
-        const std::set<int>& value = aux_elem_color.second;
+        const std::set<IndexType>& value = aux_elem_color.second;
         if (value.size() > 1) combinations[value] = -1;
     }
 
     /* Combinations */
     for(auto & combination : combinations) {
-        const std::set<int>& key = combination.first;
-        for(int it : key)
+        const std::set<IndexType>& key = combination.first;
+        for(IndexType it : key)
             rColors[color].push_back(rColors[it][0]);
         combinations[key] = color;
         color += 1;
@@ -110,8 +110,8 @@ void SubModelPartsListUtility::ComputeSubModelPartsList(
     // The final maps are created
     /* Nodes */
     for(auto & aux_nodes_color : aux_nodes_colors) {
-        const int key = aux_nodes_color.first;
-        const std::set<int>& value = aux_nodes_color.second;
+        const IndexType key = aux_nodes_color.first;
+        const std::set<IndexType>& value = aux_nodes_color.second;
 
         if (value.size() == 0)
             rNodesColors[key] = 0; // Main Model Part
@@ -123,8 +123,8 @@ void SubModelPartsListUtility::ComputeSubModelPartsList(
 
     /* Conditions */
     for(auto & aux_cond_color : aux_cond_colors) {
-        const int key = aux_cond_color.first;
-        const std::set<int>& value = aux_cond_color.second;
+        const IndexType key = aux_cond_color.first;
+        const std::set<IndexType>& value = aux_cond_color.second;
 
         if (value.size() == 0)
             rCondColors[key] = 0; // Main Model Part
@@ -136,8 +136,8 @@ void SubModelPartsListUtility::ComputeSubModelPartsList(
 
     /* Elements */
     for(auto & aux_elem_color : aux_elem_colors) {
-        const int key = aux_elem_color.first;
-        const std::set<int>& value = aux_elem_color.second;
+        const IndexType key = aux_elem_color.first;
+        const std::set<IndexType>& value = aux_elem_color.second;
 
         if (value.size() == 0)
             rElemColors[key] = 0; // Main Model Part
@@ -205,57 +205,5 @@ ModelPart& SubModelPartsListUtility::GetRecursiveSubModelPart(
     return ThisModelPart;
 }
 
-/***********************************************************************************/
-/***********************************************************************************/
-
-int SubModelPartsListUtility::IntersectKeys(
-        int Key0,
-        int Key1,
-        IntStringMapType& rColors 
-    )
-{
-    std::vector<int> intersection_key = {Key0, Key1};
-    auto search = mIntersections.find(intersection_key);
-    if (search != mIntersections.end() )
-    {
-        return search->second;
-    }
-    else
-    {
-        // We check the order of the names again
-        std::sort(rColors[Key0].begin(), rColors[Key0].end());
-        std::sort(rColors[Key1].begin(), rColors[Key1].end());
-
-        // Computing the intersection
-        std::vector<std::string> intersection;
-        std::set_intersection(rColors[Key0].begin(), rColors[Key0].end(),
-                              rColors[Key1].begin(), rColors[Key1].end(),
-                              std::back_inserter(intersection));
-        
-        // Null intersection: MainModelPart
-        if (intersection.size()==0) {
-            mIntersections[intersection_key] = 0;
-            return 0;
-        }
-
-        // Find the intersection key
-        int color_id;
-        for (auto color : rColors)
-        {
-            if (color.second == intersection) {
-                mIntersections[intersection_key] = color.first;
-                return color.first;
-            }
-            color_id = color.first;
-        }
-
-        // In that case, we need to add a new color
-        rColors[++color_id] = intersection;
-        mIntersections[intersection_key] = color_id;
-        return color_id;
-    }
-}
 
 }  // namespace Kratos.
-
-

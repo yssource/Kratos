@@ -24,6 +24,7 @@
 #include "custom_python/add_custom_utilities_to_python.h"
 #include "custom_python/add_custom_processes_to_python.h"
 #include "custom_python/add_custom_constitutive_laws_to_python.h"
+#include "custom_python/add_custom_response_functions_to_python.h"
 
 
 namespace Kratos
@@ -45,9 +46,10 @@ PYBIND11_MODULE(KratosFluidDynamicsApplication,m)
            ;
 
     AddCustomConstitutiveLawsToPython(m);
+    AddCustomProcessesToPython(m);
+    AddCustomResponseFunctionsToPython(m);
     AddCustomStrategiesToPython(m);
     AddCustomUtilitiesToPython(m);
-    AddCustomProcessesToPython(m);
 
     //registering variables in python
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m,PATCH_INDEX);
@@ -67,6 +69,8 @@ PYBIND11_MODULE(KratosFluidDynamicsApplication,m)
 
     KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS(m,SUBSCALE_VELOCITY);
     KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS(m,COARSE_VELOCITY);
+
+    KRATOS_REGISTER_IN_PYTHON_VARIABLE(m,FIC_BETA);
 
     // Embedded fluid variables
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m,EMBEDDED_IS_ACTIVE);

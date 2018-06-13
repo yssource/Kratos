@@ -92,10 +92,16 @@ void WriteMatrix(
             break;
         }
         case 17:
-        case 18:
         {
             Vector adjoint_values;
             pElement->GetValuesVector(adjoint_values, time_step);
+            matrix_energy = CalculateMatrixEnergy<TDim>(rMatrix, adjoint_values);
+            break;
+        }
+        case 18:
+        {
+            Vector adjoint_values;
+            pElement->GetValuesVector(adjoint_values, time_step+3);
             matrix_energy = CalculateMatrixEnergy<TDim>(rMatrix, adjoint_values);
             break;
         }

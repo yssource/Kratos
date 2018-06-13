@@ -97,7 +97,7 @@ public:
 
         mBeta = DiffusionParameters["beta"].GetDouble();
         mEpsilon = DiffusionParameters["epsilon"].GetDouble();
-        mTimeStep =  DiffusionParameters["time_step"].GetInteger();
+        mTimeStep =  DiffusionParameters["time_step"].GetInt();
 
         std::string method_name = DiffusionParameters["method"].GetString();
         

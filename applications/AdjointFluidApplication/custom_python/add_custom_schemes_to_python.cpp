@@ -9,6 +9,7 @@
 // Application includes
 #include "custom_python/add_custom_schemes_to_python.h"
 #include "custom_schemes/adjoint_bossak_scheme.h"
+#include "custom_schemes/convergence_criteria/adjoint_vel_pr_criteria.h"
 
 namespace Kratos
 {
@@ -28,6 +29,15 @@ void AddCustomSchemesToPython(pybind11::module& m)
         SchemeType>(m,"AdjointBossakScheme")
         .def(init<Parameters&, ResponseFunction::Pointer>())
         ;
+
+	// Convergence criteria
+    class_< AdjointVelPrCriteria< SparseSpaceType, LocalSpaceType >,
+            typename AdjointVelPrCriteria< SparseSpaceType, LocalSpaceType >::Pointer,
+            ConvergenceCriteria< SparseSpaceType, LocalSpaceType  >>
+            (m,"AdjointVelPrCriteria")
+            .def(init< double, double>())
+            .def("SetEchoLevel",&AdjointVelPrCriteria<SparseSpaceType, LocalSpaceType >::SetEchoLevel)
+            ;        
 }
 
 } // namespace Python

@@ -89,13 +89,15 @@ public:
         {
             "method": "singular_value_pressure_coupled",
             "beta": 0.0,
-            "epsilon": 1e-6
+            "epsilon": 1e-6,
+            "time_step": 0
         })");
 
         DiffusionParameters.ValidateAndAssignDefaults(default_params);
 
         mBeta = DiffusionParameters["beta"].GetDouble();
         mEpsilon = DiffusionParameters["epsilon"].GetDouble();
+        mTimeStep =  DiffusionParameters["time_step"].GetInteger();
 
         std::string method_name = DiffusionParameters["method"].GetString();
         
@@ -207,6 +209,7 @@ private:
     NumericalDiffusionMethod mNumericalDiffusionMethod = NumericalDiffusionMethod::singularValuePressureCoupled;
     double mBeta = 0.0;
     double mEpsilon = 1e-6;
+    int mTimeStep = 0;
     const double mTolerance = 1e-6;
     ///@}
     ///@name Private Operators
@@ -449,7 +452,7 @@ private:
         Matrix identity = identity_matrix<double>(vms_steady_term_primal_gradient.size1());
    
         Vector adjoint_values_vector;
-        rElement.GetValuesVector(adjoint_values_vector);
+        rElement.GetValuesVector(adjoint_values_vector, mTimeStep);
 
         BoundedVector<double, TLocalCoords> temp_1 = prod(vms_steady_term_primal_gradient, adjoint_values_vector);
         double const adjoint_energy = inner_prod(temp_1, adjoint_values_vector);

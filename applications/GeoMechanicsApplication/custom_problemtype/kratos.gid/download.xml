@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DownloadProblemtype version='1.0'>
+    <Program>
+        <Name>kratos</Name>
+        <Version>5.2.3</Version>
+        <ShortDescription>Kratos - Kratos is a framework for building multi-disciplinary finite element programs. It provides several tools for easy implementation of finite element applications and a common platform for natural interaction of the same in different ways.</ShortDescription>        
+    </Program>
+</DownloadProblemtype>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StrategyList>
+    <StrategyItem n="Explicit" pn="Explicit">
+        <!-- list of options to be filled -->
+        <parameter_list></parameter_list>
+        <linearSolvers></linearSolvers>
+        <schemes>
+            <scheme n="Symplectic_Euler" pn="Symplectic Euler">
+                <parameter_list></parameter_list>
+                <element_filters></element_filters>
+            </scheme>
+        </schemes>
+    </StrategyItem>
+</StrategyList>

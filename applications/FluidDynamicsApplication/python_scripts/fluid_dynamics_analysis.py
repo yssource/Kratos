@@ -13,35 +13,29 @@ class FluidDynamicsAnalysis(AnalysisStage):
     '''Main script for fluid dynamics simulations using the navier_stokes family of python solvers.'''
 
     def __init__(self,model,parameters):
-        # Create the ModelPart
-        # Note that this in temporary and will be done through the model in the future
-        model_part_name = parameters["problem_data"]["model_part_name"].GetString()
-        self.main_model_part = Kratos.ModelPart(model_part_name)
-        self.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.DOMAIN_SIZE,
-                                                  parameters["problem_data"]["domain_size"].GetInt())
+        # Deprecation warnings
+        solver_settings = parameters["solver_settings"]
+        if not solver_settings.Has("domain_size"):
+            Kratos.Logger.PrintInfo("FluidDynamicsAnalysis", "Using the old way to pass the domain_size, this will be removed!")
+            solver_settings.AddEmptyValue("domain_size")
+            solver_settings["domain_size"].SetInt(parameters["problem_data"]["domain_size"].GetInt())
 
-        super(FluidDynamicsAnalysis,self).__init__(model,parameters)
+        if not solver_settings.Has("model_part_name"):
+            Kratos.Logger.PrintInfo("FluidDynamicsAnalysis", "Using the old way to pass the model_part_name, this will be removed!")
+            solver_settings.AddEmptyValue("model_part_name")
+            solver_settings["model_part_name"].SetString(parameters["problem_data"]["model_part_name"].GetString())
 
-        ## Import parallel modules if needed
-        if (self.parallel_type == "MPI"):
+        # Import parallel modules if needed
+        # has to be done before the base-class constuctor is called (in which the solver is constructed)
+        if (parameters["problem_data"]["parallel_type"].GetString() == "MPI"):
             import KratosMultiphysics.MetisApplication as MetisApplication
             import KratosMultiphysics.TrilinosApplication as TrilinosApplication
 
+        super(FluidDynamicsAnalysis,self).__init__(model,parameters)
+
     def _CreateSolver(self):
         import python_solvers_wrapper_fluid
-        return python_solvers_wrapper_fluid.CreateSolver(self.main_model_part, self.project_parameters)
-
-    def Initialize(self):
-        # This function is temporary until restart saving is handled through process
-        self._SetUpRestart()
-        super(FluidDynamicsAnalysis, self).Initialize()
-
-    def OutputSolutionStep(self):
-        # This function is temporary until restart saving is handled through process
-        super(FluidDynamicsAnalysis, self).OutputSolutionStep()
-
-        if self.save_restart:
-            self.restart_utility.SaveRestart()
+        return python_solvers_wrapper_fluid.CreateSolver(self.model, self.project_parameters)
 
     def _CreateProcesses(self, parameter_name, initialization_order):
         """Create a list of Processes
@@ -96,25 +90,6 @@ class FluidDynamicsAnalysis(AnalysisStage):
 
         return output
 
-    def _SetUpRestart(self):
-        """Initialize self.restart_utility as a RestartUtility instance and check if we need to initialize the problem from a restart file."""
-        if self.project_parameters.Has("restart_settings"):
-            restart_settings = self.project_parameters["restart_settings"]
-            self.save_restart = restart_settings["save_restart"].GetBool()
-            restart_settings.RemoveValue("load_restart")
-            restart_settings.RemoveValue("save_restart")
-            restart_settings.AddValue("input_filename", self.project_parameters["problem_data"]["problem_name"])
-            restart_settings.AddValue("echo_level", self.project_parameters["problem_data"]["echo_level"])
-
-            if self.parallel_type == "OpenMP":
-                from restart_utility import RestartUtility as Restart
-            elif self.parallel_type == "MPI":
-                from trilinos_restart_utility import TrilinosRestartUtility as Restart
-
-            self.restart_utility = Restart(self.main_model_part,
-                                           self.project_parameters["restart_settings"])
-        else:
-            self.save_restart = False
 
     def _GetSimulationName(self):
         return "Fluid Dynamics Analysis"

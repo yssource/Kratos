@@ -44,19 +44,13 @@ class StructuralMechanicsAnalysis(AnalysisStage):
             solver_settings.AddEmptyValue("model_part_name")
             solver_settings["model_part_name"].SetString(project_parameters["problem_data"]["model_part_name"].GetString())
 
-        super(StructuralMechanicsAnalysis, self).__init__(model, project_parameters)
-
-        ## Import parallel modules if needed
-        if (self.parallel_type == "MPI"):
+        # Import parallel modules if needed
+        # has to be done before the base-class constuctor is called (in which the solver is constructed)
+        if (project_parameters["problem_data"]["parallel_type"].GetString() == "MPI"):
             import KratosMultiphysics.MetisApplication as MetisApplication
             import KratosMultiphysics.TrilinosApplication as TrilinosApplication
 
-
-    def OutputSolutionStep(self):
-        # This function is TEMPORARY until restart saving is handled through process
-        super(StructuralMechanicsAnalysis, self).OutputSolutionStep()
-
-        self._GetSolver().SaveRestart()
+        super(StructuralMechanicsAnalysis, self).__init__(model, project_parameters)
 
     #### Internal functions ####
     def _CreateSolver(self):
@@ -73,7 +67,7 @@ class StructuralMechanicsAnalysis(AnalysisStage):
         list_of_processes = super(StructuralMechanicsAnalysis, self)._CreateProcesses(parameter_name, initialization_order)
 
         if parameter_name == "processes":
-            processes_block_names = ["constraints_process_list", "loads_process_list", "list_other_processes", "json_output_process"
+            processes_block_names = ["constraints_process_list", "loads_process_list", "list_other_processes", "json_output_process",
                 "json_check_process", "check_analytic_results_process", "contact_process_list"]
             if len(list_of_processes) == 0: # Processes are given in the old format
                 KratosMultiphysics.Logger.PrintInfo("StructuralMechanicsAnalysis", "Using the old way to create the processes, this will be removed!")
@@ -142,7 +136,7 @@ if __name__ == "__main__":
     else: # using default name
         project_parameters_file_name = "ProjectParameters.json"
 
-    with open(parameter_file_name,'r') as parameter_file:
+    with open(project_parameters_file_name,'r') as parameter_file:
         parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
     model = KratosMultiphysics.Model()

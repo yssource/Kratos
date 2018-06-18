@@ -407,7 +407,7 @@ private:
                 // http://www.euclideanspace.com/maths/geometry/elements/plane/lineOnPlane/index.htm
                 // Projected vector = A
                 // Surface normal = B
-                Vector& A = ucsToBeProjectedOntoShell;
+                /*Vector& A = ucsToBeProjectedOntoShell;
                 const Vector& B = shellLocalAxis3;
                 double B_length = std::sqrt(inner_prod(B, B));
                 Vector ACrossB = Vector(MathUtils<double>::CrossProduct(A, B));
@@ -435,7 +435,7 @@ private:
                 if (mEchoLevel > 1)
                 {
                     std::cout << "\tModel part " << mrModelPart.Name() << ", element " << element.GetId() << " rotation = " << theta << std::endl;
-                }
+                }*/
 
             }// sub-modelpart element loop
 
@@ -588,9 +588,9 @@ private:
                 // use hard iterative approach
 
                 // create vector which we must be orthogonal to
-                orthogonal_vector = Vector(MathUtils<double>::CrossProduct(GlobalFiberDirection, correctedNormalVector));
+                /*orthogonal_vector = Vector(MathUtils<double>::CrossProduct(GlobalFiberDirection, correctedNormalVector));
 
-                theta = iterativelyDetermineBestAngle(localAxis1, localAxis3, orthogonal_vector,GlobalFiberDirection,element.GetId());
+                theta = iterativelyDetermineBestAngle(localAxis1, localAxis3, orthogonal_vector,GlobalFiberDirection,element.GetId());*/
                 break;
 
             case 2:
@@ -607,14 +607,14 @@ private:
                     //
                     // Using this option increases alignment accuracy but can also give 'harder' transitions
 
-                    rotation_axis = MathUtils<double>::CrossProduct(correctedNormalVector, localAxis3);
+                    /*rotation_axis = MathUtils<double>::CrossProduct(correctedNormalVector, localAxis3);
                     rotation_angle = inner_prod(correctedNormalVector, localAxis3);
                     if (std::abs(rotation_angle) < (1.0 - 1E-6)) // skip if already co-linear
                     {
                         rotation_angle = std::acos(rotation_angle);
                         R = setUpRotationMatrix(rotation_angle, rotation_axis);
                         localGlobalFiberDirection = prod(R, localGlobalFiberDirection);
-                    }
+                    }*/
                 }
 
 
@@ -758,7 +758,7 @@ private:
             }
             // Now we calculate the cross product of these two
             // and use it as the specified direction
-            globalVector = Vector(MathUtils<double>::CrossProduct(globalVector, localAxis1));
+            /*globalVector = Vector(MathUtils<double>::CrossProduct(globalVector, localAxis1));*/
         }
 
 
@@ -769,7 +769,7 @@ private:
         const Vector& A = globalVector;
         const Vector& B = localAxis3;
         double B_length = std::sqrt(inner_prod(B, B));
-        Vector ACrossB = Vector(MathUtils<double>::CrossProduct(A, B));
+        /*Vector ACrossB = Vector(MathUtils<double>::CrossProduct(A, B));
         ACrossB /= B_length;
         Vector projectedResult = Vector(MathUtils<double>::CrossProduct(B, ACrossB));
         projectedResult /= B_length;
@@ -788,7 +788,7 @@ private:
             theta *= -1.0;
         }
 
-        return theta;
+        return theta;*/
     }
 
     Matrix setUpRotationMatrix(double angle, Vector& rotation_axis)

@@ -45,8 +45,7 @@ void ALMVariablesCalculationProcess::Execute()
     ConditionsArrayType& conditions_array = mrThisModelPart.Conditions();
     
     #pragma omp parallel for reduction(+:total_volume_slave, total_area_slave, mean_young_modulus_slave, mean_nodal_h_slave, total_volume_master, total_area_master, mean_young_modulus_master, mean_nodal_h_master)
-    for(int i = 0; i < static_cast<int>(conditions_array.size()); ++i) 
-    {
+    for(int i = 0; i < static_cast<int>(conditions_array.size()); ++i) {
         auto it_cond = conditions_array.begin() + i;
         
         // We get the condition geometry
@@ -54,7 +53,8 @@ void ALMVariablesCalculationProcess::Execute()
         const unsigned num_nodes_geometry = r_this_geometry.size();
         
         // We get the values from the condition
-        Kratos::Properties& this_properties = it_cond->GetProperties();
+        Properties& this_properties = it_cond->GetProperties();
+
         const double young_modulus = this_properties[YOUNG_MODULUS];
         const double element_volume = it_cond->GetGeometry().Area();
         
@@ -62,23 +62,21 @@ void ALMVariablesCalculationProcess::Execute()
         const double condition_area = r_this_geometry.Area();
         const double nodal_condition_area = condition_area/num_nodes_geometry;
         
-        if (it_cond->Is(SLAVE) == true)
-        {
+        if (it_cond->Is(SLAVE)) {
             total_volume_slave += element_volume;
             total_area_slave += condition_area;
             mean_young_modulus_slave += young_modulus * element_volume;
             
-            for (unsigned int i_node = 0; i_node < num_nodes_geometry; i_node++)
+            for (IndexType i_node = 0; i_node < num_nodes_geometry; i_node++)
                 mean_nodal_h_slave += r_this_geometry[i_node].FastGetSolutionStepValue(mrNodalLengthVariable) * nodal_condition_area;
         }
         
-        if (it_cond->Is(MASTER) == true)
-        {
+        if (it_cond->Is(MASTER)) {
             total_volume_master += element_volume;
             total_area_master += condition_area;
             mean_young_modulus_master += young_modulus * element_volume;
             
-            for (unsigned int i_node = 0; i_node < num_nodes_geometry; i_node++)
+            for (IndexType i_node = 0; i_node < num_nodes_geometry; i_node++)
                 mean_nodal_h_master += r_this_geometry[i_node].FastGetSolutionStepValue(mrNodalLengthVariable) * nodal_condition_area;
         }
     }

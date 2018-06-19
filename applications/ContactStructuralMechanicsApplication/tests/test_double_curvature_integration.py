@@ -23,7 +23,7 @@ class TestDoubleCurvatureIntegration(KratosUnittest.TestCase):
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.ACCELERATION)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.REACTION)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)
-        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL_CONTACT_STRESS)
+        self.main_model_part.AddNodalSolutionStepVariable(ContactStructuralMechanicsApplication.LAGRANGE_MULTIPLIER_CONTACT_PRESSURE)
         self.main_model_part.AddNodalSolutionStepVariable(ContactStructuralMechanicsApplication.WEIGHTED_GAP)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NODAL_H)
 
@@ -32,7 +32,7 @@ class TestDoubleCurvatureIntegration(KratosUnittest.TestCase):
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.DISPLACEMENT_X, KratosMultiphysics.REACTION_X,self.main_model_part)
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.DISPLACEMENT_Y, KratosMultiphysics.REACTION_Y,self.main_model_part)
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.DISPLACEMENT_Z, KratosMultiphysics.REACTION_Z,self.main_model_part)
-        KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.NORMAL_CONTACT_STRESS, ContactStructuralMechanicsApplication.WEIGHTED_GAP, self.main_model_part)
+        KratosMultiphysics.VariableUtils().AddDof(ContactStructuralMechanicsApplication.LAGRANGE_MULTIPLIER_CONTACT_PRESSURE, ContactStructuralMechanicsApplication.WEIGHTED_GAP, self.main_model_part)
 
         if (self.main_model_part.HasSubModelPart("Contact")):
             interface_model_part = self.main_model_part.GetSubModelPart("Contact")
@@ -60,7 +60,7 @@ class TestDoubleCurvatureIntegration(KratosUnittest.TestCase):
         Preprocess = ContactStructuralMechanicsApplication.InterfacePreprocessCondition(self.main_model_part)
 
         interface_parameters = KratosMultiphysics.Parameters("""{"simplify_geometry": false}""")
-        Preprocess.GenerateInterfacePart3D(self.main_model_part, self.contact_model_part, interface_parameters)
+        Preprocess.GenerateInterfacePart3D(self.contact_model_part, interface_parameters)
 
         # We copy the conditions to the ContactSubModelPart
         for cond in self.contact_model_part.Conditions:

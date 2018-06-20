@@ -173,8 +173,6 @@ namespace Kratos
                 rSystemVec_Dx[i] = temp;
                 rSystemVec_b[i] = temp;
             }
-
-            std::cout << rSystemVec_b[3] << "\n";
         }
 
         KRATOS_TEST_CASE_IN_SUITE(ConvergenceCriteriaAbsolute1, KratosStructuralMechanicsFastSuite)
@@ -232,7 +230,6 @@ namespace Kratos
                                                     r_system_vector_Dx,
                                                     r_system_vector_b);
 
-                std::cout << counter << "\n";
                 counter += 1;
             }
             KRATOS_CHECK(is_converged);
@@ -290,7 +287,6 @@ namespace Kratos
                                                     r_system_vector_Dx,
                                                     r_system_vector_b);
 
-                std::cout << counter << "\n";
                 counter += 1;
             }
             KRATOS_CHECK(is_converged);
@@ -350,7 +346,6 @@ namespace Kratos
                                                     r_system_vector_Dx,
                                                     r_system_vector_b);
 
-                std::cout << counter << "\n";
                 counter += 1;
             }
             KRATOS_CHECK(is_converged);
@@ -409,7 +404,6 @@ namespace Kratos
                                                     r_system_vector_Dx,
                                                     r_system_vector_b);
 
-                std::cout << counter << "\n";
                 counter += 1;
             }
             KRATOS_CHECK(is_converged);

@@ -155,30 +155,33 @@ namespace Kratos
         // Natasha please implement this, think abt sth smart to set an apropriate solution
         void SetSolution(DofsArrayType& rDofSet,
                          TSystemVectorType& rSystemVec_Dx,
-                         TSystemVectorType& rSystemVec_b)
+                         TSystemVectorType& rSystemVec_b,
+                         int stepIndex, int k)
         {
+            double eps = 1e-9;
+            int start = 1024 * 1024 * 1024;
             for (auto& r_dof : rDofSet)
-                r_dof.GetSolutionStepValue() = 5.123; // TODO so far this is a random value
+                r_dof.GetSolutionStepValue() = 1 + (start >> (stepIndex * k)) * eps / (stepIndex + 2); // TODO so far this is a random value
 
             const std::size_t system_size = SparseSpaceType::Size(rSystemVec_Dx);
             KRATOS_ERROR_IF(system_size != SparseSpaceType::Size(rSystemVec_b))
-                << "Sytsem Vector sizes are inconsistent!" << std::endl;
+                << "System Vector sizes are inconsistent!" << std::endl;
 
-            for (std::size_t i=0; i< system_size; ++i)
+            for (std::size_t i = 0; i < system_size; ++i)
             {
-                rSystemVec_Dx[i] = -5.147;
-                rSystemVec_b[i] = 565.147;
+                double temp =  ((start >> (stepIndex * k)) / (stepIndex + 2) - (start >> ((stepIndex - 1) * k)) / (stepIndex + 1)) * eps; 
+                rSystemVec_Dx[i] = temp;
+                rSystemVec_b[i] = temp;
             }
+
+            std::cout << rSystemVec_b[3] << "\n";
         }
 
-        KRATOS_TEST_CASE_IN_SUITE(GeneralResudialConvergenceCriteriaTest1, KratosStructuralMechanicsFastSuite)
+        KRATOS_TEST_CASE_IN_SUITE(ConvergenceCriteriaAbsolute1, KratosStructuralMechanicsFastSuite)
         {
             DofsArrayType dofs_array;
             const std::size_t num_divisions = 10;
 
-            // Natasha even though I am initializing both b and Dx the implementation of the criteria should
-            // for now only consider b!
-            // In a second step we will make it more general that it can be used with either b or Dx
             TSystemMatrixPointerType p_dummy_system_matrix = SparseSpaceType::CreateEmptyMatrixPointer();
             TSystemVectorPointerType p_system_vector_b = SparseSpaceType::CreateEmptyVectorPointer();
             TSystemVectorPointerType p_system_vector_Dx = SparseSpaceType::CreateEmptyVectorPointer();
@@ -195,8 +198,8 @@ namespace Kratos
 
             Parameters default_params( R"({
                 "variables_to_separate" : ["VELOCITY", "ROTATION"],
-                "relative_convergence_tolerances" : [1e-8, 1e-9],
-                "absolut_convergence_tolerances" : [1e-10, 1e-11]
+                "relative_convergence_tolerances" : [1e-20, 1e-20],
+                "absolut_convergence_tolerances" : [1e-6, 1e-8]
             })" );
 
             const std::string name_remaining_dofs = "PRESSURE";
@@ -204,20 +207,19 @@ namespace Kratos
             ConvergenceCriteriaPointerType p_conv_crit = Kratos::make_unique<GenConvergenceCriteriaType>(
                 NewRatioTolerance, AlwaysConvergedNorm, default_params, name_remaining_dofs);
 
-            const std::size_t num_solution_steps = 5; // Natasha this should be used by "SetSolution"
-            // in order to set a solution that will make the problem converge
-
             p_conv_crit->Initialize(dummy_model_part);
 
             bool is_converged = false;
 
             std::size_t counter = 0;
+            std::size_t conv_iter = 9;
 
-            while(!is_converged)
+            while(counter <= conv_iter)
             {
+                KRATOS_CHECK_IS_FALSE(is_converged);
                 dummy_model_part.GetProcessInfo()[NL_ITERATION_NUMBER]++;
 
-                SetSolution(dofs_array, r_system_vector_Dx, r_system_vector_b);
+                SetSolution(dofs_array, r_system_vector_Dx, r_system_vector_b, counter, 3);
                 p_conv_crit->InitializeSolutionStep(dummy_model_part,
                                                     dofs_array,
                                                     r_system_matrix,
@@ -230,12 +232,187 @@ namespace Kratos
                                                     r_system_vector_Dx,
                                                     r_system_vector_b);
 
+                std::cout << counter << "\n";
                 counter += 1;
-
-                if (counter > 10) // TODO this is an intermediate solution until the criteria is implemented
-                    is_converged = true;
             }
+            KRATOS_CHECK(is_converged);
+        }
+        KRATOS_TEST_CASE_IN_SUITE(ConvergenceCriteriaAbsolute2, KratosStructuralMechanicsFastSuite)
+        {
+            DofsArrayType dofs_array;
+            const std::size_t num_divisions = 10;
+
+            TSystemMatrixPointerType p_dummy_system_matrix = SparseSpaceType::CreateEmptyMatrixPointer();
+            TSystemVectorPointerType p_system_vector_b = SparseSpaceType::CreateEmptyVectorPointer();
+            TSystemVectorPointerType p_system_vector_Dx = SparseSpaceType::CreateEmptyVectorPointer();
+
+            TSystemMatrixType& r_system_matrix = *p_dummy_system_matrix;
+            TSystemVectorType& r_system_vector_b = *p_system_vector_b;
+            TSystemVectorType& r_system_vector_Dx = *p_system_vector_Dx;
+
+            ModelPart dummy_model_part("dummy");
+            SetUpTest(dummy_model_part, dofs_array, r_system_vector_Dx, r_system_vector_b, num_divisions);
+
+            const TDataType NewRatioTolerance = 1e-7;
+            const TDataType AlwaysConvergedNorm = 1e-5;
+
+            Parameters default_params( R"({
+                "variables_to_separate" : [],
+                "relative_convergence_tolerances" : [],
+                "absolut_convergence_tolerances" : []
+            })" );
+
+            ConvergenceCriteriaPointerType p_conv_crit = Kratos::make_unique<GenConvergenceCriteriaType>(
+                NewRatioTolerance, AlwaysConvergedNorm, default_params);
+
+            p_conv_crit->Initialize(dummy_model_part);
+
+            bool is_converged = false;
+
+            std::size_t counter = 0;
+            std::size_t conv_iter = 6;
+
+            while(counter <= conv_iter)
+            {
+                KRATOS_CHECK_IS_FALSE(is_converged);
+                dummy_model_part.GetProcessInfo()[NL_ITERATION_NUMBER]++;
+
+                SetSolution(dofs_array, r_system_vector_Dx, r_system_vector_b, counter, 3);
+                p_conv_crit->InitializeSolutionStep(dummy_model_part,
+                                                    dofs_array,
+                                                    r_system_matrix,
+                                                    r_system_vector_Dx,
+                                                    r_system_vector_b);
+
+                is_converged = p_conv_crit->PostCriteria(dummy_model_part,
+                                                    dofs_array,
+                                                    r_system_matrix,
+                                                    r_system_vector_Dx,
+                                                    r_system_vector_b);
+
+                std::cout << counter << "\n";
+                counter += 1;
+            }
+            KRATOS_CHECK(is_converged);
+        }
+        KRATOS_TEST_CASE_IN_SUITE(ConvergenceCriteriaRelative1, KratosStructuralMechanicsFastSuite)
+        {
+            DofsArrayType dofs_array;
+            const std::size_t num_divisions = 10;
+
+            TSystemMatrixPointerType p_dummy_system_matrix = SparseSpaceType::CreateEmptyMatrixPointer();
+            TSystemVectorPointerType p_system_vector_b = SparseSpaceType::CreateEmptyVectorPointer();
+            TSystemVectorPointerType p_system_vector_Dx = SparseSpaceType::CreateEmptyVectorPointer();
+
+            TSystemMatrixType& r_system_matrix = *p_dummy_system_matrix;
+            TSystemVectorType& r_system_vector_b = *p_system_vector_b;
+            TSystemVectorType& r_system_vector_Dx = *p_system_vector_Dx;
+
+            ModelPart dummy_model_part("dummy");
+            SetUpTest(dummy_model_part, dofs_array, r_system_vector_Dx, r_system_vector_b, num_divisions);
+
+            const TDataType NewRatioTolerance = 1e-7;
+            const TDataType AlwaysConvergedNorm = 1e-5;
+
+            Parameters default_params( R"({
+                "variables_to_separate" : ["VELOCITY", "ROTATION"],
+                "relative_convergence_tolerances" : [1e-6, 1e-8],
+                "absolut_convergence_tolerances" : [1e-20, 1e-20]
+            })" );
+
+            const std::string name_remaining_dofs = "PRESSURE";
+
+            ConvergenceCriteriaPointerType p_conv_crit = Kratos::make_unique<GenConvergenceCriteriaType>(
+                NewRatioTolerance, AlwaysConvergedNorm, default_params, name_remaining_dofs);
+
+            p_conv_crit->Initialize(dummy_model_part);
+
+            bool is_converged = false;
+
+            std::size_t counter = 0;
+            std::size_t conv_iter = 9;
+
+            while(counter <= conv_iter)
+            {
+                KRATOS_CHECK_IS_FALSE(is_converged);
+                dummy_model_part.GetProcessInfo()[NL_ITERATION_NUMBER]++;
+
+                SetSolution(dofs_array, r_system_vector_Dx, r_system_vector_b, counter, 3);
+                p_conv_crit->InitializeSolutionStep(dummy_model_part,
+                                                    dofs_array,
+                                                    r_system_matrix,
+                                                    r_system_vector_Dx,
+                                                    r_system_vector_b);
+
+                is_converged = p_conv_crit->PostCriteria(dummy_model_part,
+                                                    dofs_array,
+                                                    r_system_matrix,
+                                                    r_system_vector_Dx,
+                                                    r_system_vector_b);
+
+                std::cout << counter << "\n";
+                counter += 1;
+            }
+            KRATOS_CHECK(is_converged);
         }
 
+        KRATOS_TEST_CASE_IN_SUITE(ConvergenceCriteriaRelative2, KratosStructuralMechanicsFastSuite)
+        {
+            DofsArrayType dofs_array;
+            const std::size_t num_divisions = 10;
+
+            TSystemMatrixPointerType p_dummy_system_matrix = SparseSpaceType::CreateEmptyMatrixPointer();
+            TSystemVectorPointerType p_system_vector_b = SparseSpaceType::CreateEmptyVectorPointer();
+            TSystemVectorPointerType p_system_vector_Dx = SparseSpaceType::CreateEmptyVectorPointer();
+
+            TSystemMatrixType& r_system_matrix = *p_dummy_system_matrix;
+            TSystemVectorType& r_system_vector_b = *p_system_vector_b;
+            TSystemVectorType& r_system_vector_Dx = *p_system_vector_Dx;
+
+            ModelPart dummy_model_part("dummy");
+            SetUpTest(dummy_model_part, dofs_array, r_system_vector_Dx, r_system_vector_b, num_divisions);
+
+            const TDataType NewRatioTolerance = 1e-5;
+            const TDataType AlwaysConvergedNorm = 1e-7;
+
+            Parameters default_params( R"({
+                "variables_to_separate" : [],
+                "relative_convergence_tolerances" : [],
+                "absolut_convergence_tolerances" : []
+            })" );
+
+            ConvergenceCriteriaPointerType p_conv_crit = Kratos::make_unique<GenConvergenceCriteriaType>(
+                NewRatioTolerance, AlwaysConvergedNorm, default_params);
+
+            p_conv_crit->Initialize(dummy_model_part);
+
+            bool is_converged = false;
+
+            std::size_t counter = 0;
+            std::size_t conv_iter = 6;
+
+            while(counter <= conv_iter)
+            {
+                KRATOS_CHECK_IS_FALSE(is_converged);
+                dummy_model_part.GetProcessInfo()[NL_ITERATION_NUMBER]++;
+
+                SetSolution(dofs_array, r_system_vector_Dx, r_system_vector_b, counter, 3);
+                p_conv_crit->InitializeSolutionStep(dummy_model_part,
+                                                    dofs_array,
+                                                    r_system_matrix,
+                                                    r_system_vector_Dx,
+                                                    r_system_vector_b);
+
+                is_converged = p_conv_crit->PostCriteria(dummy_model_part,
+                                                    dofs_array,
+                                                    r_system_matrix,
+                                                    r_system_vector_Dx,
+                                                    r_system_vector_b);
+
+                std::cout << counter << "\n";
+                counter += 1;
+            }
+            KRATOS_CHECK(is_converged);
+        }
     } // namespace Testing
 }  // namespace Kratos.

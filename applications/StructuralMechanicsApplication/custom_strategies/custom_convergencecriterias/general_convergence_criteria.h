@@ -51,7 +51,7 @@ namespace Kratos
   ///@name Kratos Globals
   ///@{
 
-  ///@}
+  //@}
   ///@name Type Definitions
   ///@{
 
@@ -157,7 +157,7 @@ public:
         mAbsResiduals.resize(num_vars_to_separate);
         mNumDofs.resize(num_vars_to_separate);
 
-        mIndexToNameMap[0] = (num_vars_to_separate > 1) ? OtherDofsName + std::string(": ") : ""; // Print nothing in case of no separation
+        namesToSeparate.push_back((num_vars_to_separate > 1) ? OtherDofsName + std::string(": ") : ""); // Print nothing in case of no separation
 
         mRatioTolerances[0] = NewRatioTolerance;
         mAbsTolerances[0] = AlwaysConvergedNorm;
@@ -171,7 +171,7 @@ public:
             const std::string& variable_name = rParameters["variables_to_separate"].GetArrayItem(reverse_idx).GetString();
             KeyType the_key;
 
-            mIndexToNameMap[i_var] = variable_name + std::string(": ") ;
+            namesToSeparate.push_back(variable_name + std::string(": ")) ;
 
             if (KratosComponents<DoubleVariableType>::Has(variable_name))
             {
@@ -305,17 +305,15 @@ public:
             // Take into account the size of the domain
             std::transform(mNumDofs.begin(), mNumDofs.end(), mNumDofs.begin(), sqrtFunction);
 
-
             // Computing the final residuals and checking for convergence
             // This is done on each rank, since the residuals were synchronized before
             std::vector<bool> conv_vec(num_vars_to_separate); // save the convegence info for plotting
             bool is_converged = true;
-            // @Natasha I changed this to a simple size-based loop, I think this is ok
             for (SizeType i=0; i<num_vars_to_separate; ++i)
             {
                 // TODO implement isZero()
                 if (mRatioResiduals[i] == 0.0) mRatioResiduals[i] = 1.0;
-                if (mNumDofs[i] == 0) mNumDofs[i] = 0; // this might be the case if no "other" dofs are present
+                if (mNumDofs[i] == 0) mNumDofs[i] = 1; // this might be the case if no "other" dofs are present
 
                 // Compute the final residuals
                 mRatioResiduals[i] = mAbsResiduals[i] / mRatioResiduals[i];
@@ -337,10 +335,8 @@ public:
 
             return is_converged;
         }
-        else
-        {
-            return true;
-        }
+
+        return true;
     }
 
     void Initialize(
@@ -455,7 +451,7 @@ protected:
     std::vector<SizeType> mNumDofs;
 
     std::unordered_map<KeyType, IndexType> mKeyToIndexMap;
-    std::unordered_map<IndexType, std::string> mIndexToNameMap;
+    std::vector<std::string> namesToSeparate;
 
     BasisType mBasisType;
 
@@ -482,13 +478,13 @@ protected:
         KRATOS_INFO("ConvergenceCriteria") << "Convergence Check; Iteration "
             << NonlinIterationNumber << "\n";
 
-        for (int i=num_vars_to_separate-1; i>-1; --i) // Print in reverse to have the "other dofs" at the end
+        for (int i = num_vars_to_separate - 1; i > -1; --i) // Print in reverse to have the "other dofs" at the end
         {
             std::stringstream conv_info;
             if (ConvergenceInfoVector[i]) conv_info << BOLDFONT(FGRN("converged"));
             else conv_info << BOLDFONT(FRED("not converged"));
 
-            KRATOS_INFO("") << "\t" << mIndexToNameMap[i] << conv_info.str()
+            std::cout << "\t" << namesToSeparate[i] << conv_info.str()
                 << " | ratio = " << mRatioResiduals[i] << "; exp.ratio = " << mRatioTolerances[i] << " | "
                 << "abs = "      << mAbsResiduals[i]   << "; exp.abs = "   << mAbsTolerances[i] << "\n";
         }

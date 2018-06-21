@@ -485,7 +485,7 @@ protected:
             if (ConvergenceInfoVector[i]) conv_info << BOLDFONT(FGRN("converged"));
             else conv_info << BOLDFONT(FRED("not converged"));
 
-            std::cout << "\t" << namesToSeparate[i] << conv_info.str()
+            std::cout << "\t" << namesToSeparate[i] << conv_info.str() // TODO_N this should go through KRATOS_INFO, didn't I do this initially?
                 << " | ratio = " << mRatioResiduals[i] << "; exp.ratio = " << mRatioTolerances[i] << " | "
                 << "abs = "      << mAbsResiduals[i]   << "; exp.abs = "   << mAbsTolerances[i] << "\n";
         }

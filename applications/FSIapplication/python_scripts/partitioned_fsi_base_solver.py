@@ -22,11 +22,11 @@ import KratosMultiphysics.MeshMovingApplication as KratosMeshMoving
 import KratosMultiphysics.FluidDynamicsApplication as KratosFluid
 import KratosMultiphysics.StructuralMechanicsApplication as KratosStructural
 
-def CreateSolver(structure_main_model_part, fluid_main_model_part, project_parameters):
-    return PartitionedFSIBaseSolver(structure_main_model_part, fluid_main_model_part, project_parameters)
+def CreateSolver(model, project_parameters):
+    return PartitionedFSIBaseSolver(model, project_parameters)
 
 class PartitionedFSIBaseSolver:
-    def __init__(self, structure_main_model_part, fluid_main_model_part, project_parameters):
+    def __init__(self, model, project_parameters):
 
         print("** Calling the partitioned FSI base solver constructor...")
 
@@ -41,8 +41,22 @@ class PartitionedFSIBaseSolver:
         if end_time_structure != end_time_fluid:
             raise("ERROR: Different final time among subdomains!")
 
-        self.structure_main_model_part = structure_main_model_part
-        self.fluid_main_model_part = fluid_main_model_part
+        self.model = model
+
+        solver_settings = project_parameters["fluid_solver_settings"]["solver_settings"]
+        problem_data = project_parameters["fluid_solver_settings"]["problem_data"]
+        if solver_settings.Has("model_part_name"):
+            self.fluid_model_part_name = solver_settings["model_part_name"].GetString()
+        elif problem_data.Has("model_part_name"):
+            self.fluid_model_part_name = problem_data["model_part_name"].GetString()
+            # Backwards compatibility: copy the name to the solver section so that the fluid solver can read it
+            solver_settings.AddEmptyValue("model_part_name")
+            solver_settings["model_part_name"].SetString(self.fluid_model_part_name)
+
+        # Backwards compatibility: copy the domain size to the solver section
+        if not solver_settings.Has("domain_size"):
+            solver_settings.AddEmptyValue("domain_size")
+            solver_settings["domain_size"].SetInt(problem_data["domain_size"].GetInt())
 
         # Time stepping checks (no sub-stepping between subdomains has been implemented yed)
         time_step_structure = project_parameters["structure_solver_settings"]["problem_data"]["time_step"].GetDouble()
@@ -96,8 +110,9 @@ class PartitionedFSIBaseSolver:
         print("* Structure solver constructed.")
 
         # Construct the fluid solver
-        self.fluid_solver = python_solvers_wrapper_fluid.CreateSolver(self.fluid_main_model_part,
+        self.fluid_solver = python_solvers_wrapper_fluid.CreateSolver(self.model,
                                                                       project_parameters["fluid_solver_settings"])
+
         print("* Fluid solver constructed.")
 
         # Construct the coupling partitioned strategy
@@ -153,6 +168,9 @@ class PartitionedFSIBaseSolver:
 
         # Import fluid model part
         self.fluid_solver.ImportModelPart()
+        self.fluid_solver.PrepareModelPart()
+
+        self.fluid_main_model_part = self.model.GetModelPart(self.fluid_model_part_name)
 
 
     def AddDofs(self):

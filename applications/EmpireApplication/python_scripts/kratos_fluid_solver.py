@@ -9,6 +9,7 @@ from co_simulation_base_solver import CoSimulationBaseSolver
 
 # Other imports
 from fluid_dynamics_analysis import FluidDynamicsAnalysis
+from io_factory import IOFactory
 
 def CreateSolver(model, custom_settings):
     return KratosFluidSolver(model, custom_settings)

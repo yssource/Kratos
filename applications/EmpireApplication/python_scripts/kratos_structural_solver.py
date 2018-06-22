@@ -9,6 +9,7 @@ from co_simulation_base_solver import CoSimulationBaseSolver
 
 # Other imports
 from structural_mechanics_analysis import StructuralMechanicsAnalysis
+from io_factory import IOFactory
 
 def CreateSolver(model, custom_settings):
     return KratosStructuralSolver(model, custom_settings)

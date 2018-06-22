@@ -7,6 +7,9 @@ import KratosMultiphysics.EmpireApplication as KratosEmpire
 # Importing the base class
 from co_simulation_base_solver import CoSimulationBaseSolver
 
+# Other imports
+from io_factory import IOFactory
+
 
 def CreateSolver(model, custom_settings):
     return KratosEmpireSolver(model, custom_settings)

@@ -34,7 +34,7 @@ void AssignMaterialOrientationUtility::Execute(Parameters MethodParameters)
     for (auto& r_elem : mrModelPart.Elements()) // TODO omp?
     {
         // TODO compute theta
-        double theta = 0.0;
+        double theta = 1.23456;
 
 
 
@@ -44,7 +44,7 @@ void AssignMaterialOrientationUtility::Execute(Parameters MethodParameters)
         r_elem.SetValue(MATERIAL_ORIENTATION_ANGLE, theta);
 
         KRATOS_INFO_IF("AssignMaterialOrientationUtility", mEchoLevel > 1)
-            << "Element " << element.GetId() << "; orientation = " << theta << std::endl;
+            << "Element #" << r_elem.GetId() << "; orientation = " << theta << std::endl;
     }
 }
 
@@ -55,10 +55,10 @@ void AssignMaterialOrientationUtility::WriteFiberAngles(const std::string& rFile
     if (element_data_file.is_open())
     {
         element_data_file << "Begin ElementalData MATERIAL_ORIENTATION_ANGLE" << std::endl;
-        for (auto& element : mrModelPart.Elements())
+        for (auto& r_elem : mrModelPart.Elements())
         {
-            element_data_file << "\t" << element.Id()
-                              << " " << element.GetValue(MATERIAL_ORIENTATION_ANGLE)
+            element_data_file << "\t" << r_elem.Id()
+                              << " " << r_elem.GetValue(MATERIAL_ORIENTATION_ANGLE)
                               << std::endl;
         }
         element_data_file << "End ElementalData" << std::endl;

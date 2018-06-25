@@ -14,8 +14,10 @@ class AssignMaterialDirectionStage(StructuralMechanicsAnalysis):
             self.FinalizeSolutionStep()
             self.OutputSolutionStep()
 
-    def Initialize(self):
-        super(AssignMaterialDirectionStage, self).Initialize()
+    def ModifyInitialProperties(self):
+        """Doing the orientation assigning here we should be able to use it right away
+        => the elements have it by the time they get initialized
+        """
 
         composite_property_alignment_settings_11 = KratosMultiphysics.Parameters("""
         {

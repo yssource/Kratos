@@ -165,6 +165,7 @@ private:
     ///@{
 
     ModelPart& mrModelPart;
+    int mEchoLevel = 0;
 
     ///@}
     ///@name Private Operators

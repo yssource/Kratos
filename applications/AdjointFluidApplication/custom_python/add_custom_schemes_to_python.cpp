@@ -8,7 +8,6 @@
 
 // Application includes
 #include "custom_python/add_custom_schemes_to_python.h"
-#include "custom_schemes/adjoint_bossak_scheme.h"
 #include "custom_schemes/convergence_criteria/adjoint_vel_pr_criteria.h"
 
 namespace Kratos
@@ -23,13 +22,6 @@ void AddCustomSchemesToPython(pybind11::module& m)
     typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
     typedef Scheme<SparseSpaceType, LocalSpaceType> SchemeType;
 
-    class_<
-        AdjointBossakScheme<SparseSpaceType, LocalSpaceType>,
-        typename AdjointBossakScheme<SparseSpaceType, LocalSpaceType>::Pointer,
-        SchemeType>(m,"AdjointBossakScheme")
-        .def(init<Parameters&, ResponseFunction::Pointer>())
-        ;
-
 	// Convergence criteria
     class_< AdjointVelPrCriteria< SparseSpaceType, LocalSpaceType >,
             typename AdjointVelPrCriteria< SparseSpaceType, LocalSpaceType >::Pointer,
@@ -37,7 +29,7 @@ void AddCustomSchemesToPython(pybind11::module& m)
             (m,"AdjointVelPrCriteria")
             .def(init< double, double>())
             .def("SetEchoLevel",&AdjointVelPrCriteria<SparseSpaceType, LocalSpaceType >::SetEchoLevel)
-            ;        
+            ;
 }
 
 } // namespace Python

@@ -26,11 +26,7 @@ if(NOT PYBIND11_CPP_STANDARD AND NOT CMAKE_CXX_STANDARD)
       set(PYBIND11_CPP_STANDARD -std=c++14)
     else()
       check_cxx_compiler_flag("-std=c++11" HAS_CPP11_FLAG)
-      if (HAS_CPP11_FLAG)
-        set(PYBIND11_CPP_STANDARD -std=c++11)
-      else()
-        message(FATAL_ERROR "Unsupported compiler -- pybind11 requires C++11 support!")
-      endif()
+      set(PYBIND11_CPP_STANDARD -std=c++11)
     endif()
   elseif(MSVC)
     set(PYBIND11_CPP_STANDARD /std:c++14)
@@ -82,8 +78,7 @@ function(_pybind11_add_lto_flags target_name prefer_thin_lto)
       endif()
     elseif (CMAKE_CXX_COMPILER_ID MATCHES "Intel")
       # Intel equivalent to LTO is called IPO
-      _pybind11_return_if_cxx_and_linker_flags_work(HAS_INTEL_IPO
-      "-ipo" "-ipo" PYBIND11_LTO_CXX_FLAGS PYBIND11_LTO_LINKER_FLAGS)
+      message("NOOOOPE")
     elseif(MSVC)
       # cmake only interprets libraries as linker flags when they start with a - (otherwise it
       # converts /LTCG to \LTCG as if it was a Windows path).  Luckily MSVC supports passing flags

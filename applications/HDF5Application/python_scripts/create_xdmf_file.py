@@ -3,19 +3,18 @@
 import KratosMultiphysics
 import KratosMultiphysics.HDF5Application as KratosHDF5
 import os, sys, h5py, xdmf
-import hdf5_defaults
 
 
-def GenerateXdmfConnectivities(file_name, prefixes):
+def GenerateXdmfConnectivities(file_name):
     with h5py.File(file_name, "r") as h5py_file:
-        has_xdmf = ("Xdmf" in h5py_file.get(prefixes["model_data"]).keys())
+        has_xdmf = ("Xdmf" in h5py_file.get('/ModelData').keys())
     if not has_xdmf:
-        KratosHDF5.HDF5XdmfConnectivitiesWriterProcess(file_name, prefixes["model_data"]).Execute()
+        KratosHDF5.HDF5XdmfConnectivitiesWriterProcess(file_name, "/ModelData").Execute()
 
 
-def GetSpatialGrid(h5py_file, prefixes):
-    elements_path = "%s/Xdmf/Elements/" % (prefixes["model_data"])
-    coordinates_path = "%s/Nodes/Local/Coordinates" % (prefixes["model_data"])
+def GetSpatialGrid(h5py_file):
+    elements_path = "/ModelData/Xdmf/Elements/"
+    coordinates_path = "/ModelData/Nodes/Local/Coordinates"
     spatial_grid = xdmf.SpatialGrid()
     coords_data = xdmf.HDF5UniformDataItem(h5py_file.get(coordinates_path))
     geom = xdmf.Geometry(coords_data)
@@ -32,8 +31,8 @@ def GetSpatialGrid(h5py_file, prefixes):
     return spatial_grid
 
 
-def GetNodalResults(h5py_file, prefixes):
-    nodal_results_path = "%s/NodalResults" % (prefixes["nodal_data"])
+def GetNodalResults(h5py_file):
+    nodal_results_path = "/ResultsData/NodalResults"
     results = []
     results_group = h5py_file.get(nodal_results_path)
     for variable_name in results_group.keys():
@@ -42,8 +41,8 @@ def GetNodalResults(h5py_file, prefixes):
             results.append(xdmf.NodalSolutionStepData(variable_name, data))
     return results
 
-def GetElementResults(h5py_file, prefixes):
-    element_results_path = "%s/ElementResults" % (prefixes["nodal_data"])
+def GetElementResults(h5py_file):
+    element_results_path = "/ResultsData/ElementResults"
     results = []
     if not element_results_path in h5py_file:
         return results
@@ -69,43 +68,41 @@ def GetListOfTimeLabels(file_name):
 
 
 def main():
-    paramters_file = sys.argv[1]
-    prefixes = hdf5_defaults.GetPrefixes(paramters_file)
-    file_name = "%s.h5" % prefixes["hdf_file"]
+    file_name = sys.argv[1]
     temporal_grid = xdmf.TemporalGrid()
-    GenerateXdmfConnectivities(file_name, prefixes)
+    GenerateXdmfConnectivities(file_name)
     # Get the initial spatial grid from the base file.
     with h5py.File(file_name, "r") as h5py_file:
-        current_spatial_grid = GetSpatialGrid(h5py_file, prefixes)
+        current_spatial_grid = GetSpatialGrid(h5py_file)
     for current_time in GetListOfTimeLabels(file_name):
         current_file_name = file_name.replace(".h5", "-" + current_time + ".h5")
         # Check if the current file has mesh information.
         with h5py.File(current_file_name, "r") as h5py_file:
-            has_mesh = (prefixes["model_data"] in h5py_file.keys())
-            has_data = (prefixes["nodal_data"] in h5py_file.keys())
+            has_mesh = ("ModelData" in h5py_file.keys())
+            has_data = ("/ResultsData" in h5py_file.keys())
         if not has_data:
             continue
         if has_mesh:
-            GenerateXdmfConnectivities(current_file_name, prefixes)
+            GenerateXdmfConnectivities(current_file_name)
         with h5py.File(current_file_name, "r") as h5py_file:
             if has_mesh:
                 # Update current spatial grid
-                current_spatial_grid = GetSpatialGrid(h5py_file, prefixes)
+                current_spatial_grid = GetSpatialGrid(h5py_file)
             # Initialize the current grid with the spatial grid.
             current_grid = xdmf.SpatialGrid()
             for grid in current_spatial_grid.grids:
                 current_grid.add_grid(xdmf.UniformGrid(grid.name, grid.geometry, grid.topology))
             # Add the (time-dependent) results.
-            for nodal_result in GetNodalResults(h5py_file, prefixes):
+            for nodal_result in GetNodalResults(h5py_file):
                 current_grid.add_attribute(nodal_result)
-            for element_result in GetElementResults(h5py_file, prefixes):
+            for element_result in GetElementResults(h5py_file):
                 current_grid.add_attribute(element_result)
         # Add the current grid to the temporal grid.
         temporal_grid.add_grid(xdmf.Time(current_time), current_grid)
     # Create the domain.
     domain = xdmf.Domain(temporal_grid)
     # Write.
-    xdmf_file_name = file_name.replace(".h5", "%s.xdmf" % (prefixes["model_data"][1:]))
+    xdmf_file_name = file_name.replace(".h5", ".xdmf")
     xdmf.ET.ElementTree(xdmf.Xdmf(domain).create_xml_element()).write(xdmf_file_name)
 
 

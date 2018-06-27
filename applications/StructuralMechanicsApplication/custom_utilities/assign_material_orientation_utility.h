@@ -54,7 +54,7 @@ namespace Kratos
 /// Short class definition.
 /** Detail class definition.
  */
-class AssignMaterialOrientationUtility
+class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) AssignMaterialOrientationUtility
 {
 public:
     ///@name Type Definitions

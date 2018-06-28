@@ -272,6 +272,54 @@ public:
         }
     }
 
+    void Calculate(const Variable<Matrix >& rVariable,
+                   Matrix& rOutput,
+                   const ProcessInfo& rCurrentProcessInfo) override
+    {
+        KRATOS_TRY;
+
+        if (rVariable == ARTIFICIAL_DIFFUSION_MATRIX)
+        {
+            const double artificial_diffusion = this->GetValue(ARTIFICIAL_DIFFUSION);
+            this->CalculateArtificialDiffusion(rOutput, artificial_diffusion);
+        }
+        else if (rVariable == VMS_STEADY_TERM_PRIMAL_GRADIENT_MATRIX)
+        {
+            this->CalculatePrimalGradientOfVMSSteadyTerm(rOutput, rCurrentProcessInfo);
+        }
+        else
+        {
+            KRATOS_ERROR<<"Calculate method for variable "<<rVariable<<" is not defined."<<std::endl;
+        }
+
+        KRATOS_CATCH("");
+    }
+
+    void GetValueOnIntegrationPoints(Variable<double> const& rVariable,
+                                     std::vector<double>& rValues,
+                                     ProcessInfo const& rCurrentProcessInfo) override
+    {
+        KRATOS_TRY
+
+        if (rVariable == ARTIFICIAL_DIFFUSION) {
+            const GeometryData::IntegrationMethod integration_method = this->GetIntegrationMethod();
+            const GeometryType& r_geometry = this->GetGeometry();
+            const unsigned int number_of_gauss_points = r_geometry.IntegrationPointsNumber(integration_method);
+
+            rValues.resize(number_of_gauss_points);
+
+            for (unsigned int g = 0; g < number_of_gauss_points; g++)
+            {
+                rValues[g] = this->GetValue(ARTIFICIAL_DIFFUSION);
+            }
+        } else
+        {
+            KRATOS_ERROR << "Variable "<<rVariable<<" doesn't have a predefined Gauss point calculation method.[ VMS Adjoint Element -> GetValueOnIntegrationPoints ]. " << std::endl;
+        }
+
+        KRATOS_CATCH("")
+    }
+
     void CalculateLocalSystem(MatrixType& rLeftHandSideMatrix,
             VectorType& rRightHandSideVector,
             ProcessInfo& rCurrentProcessInfo) override
@@ -1501,6 +1549,44 @@ protected:
             const ShapeFunctionDerivativesType& rDN_DX,
             const double Weight);
 
+
+    void CalculateArtificialDiffusion(MatrixType& rResult,
+                                      const double ArtificialDiffusion)
+    {
+        KRATOS_TRY;
+
+        // Get shape functions, shape function gradients and element volume (area in
+        // 2D). Only one integration point is used so the volume is its weight.
+        ShapeFunctionDerivativesType dn_dx;
+        array_1d< double, TNumNodes > n;
+        double volume;
+        GeometryUtils::CalculateGeometryData(this->GetGeometry(), dn_dx, n, volume);
+
+        if (rResult.size1() != TFluidLocalSize || rResult.size2() != TFluidLocalSize) {
+            rResult.resize(TFluidLocalSize, TFluidLocalSize, false);
+        }
+
+        rResult.clear();
+
+        for (IndexType a = 0; a < TNumNodes; ++a)
+        {
+            for (IndexType b = 0; b < TNumNodes; ++b)
+            {
+                // (dN_a/dx_k dN_b/dx_k)
+                double value = 0.0;
+                for (IndexType k = 0; k < TDim; k++)
+                    value += dn_dx(a,k) * dn_dx(b,k);
+
+                value *= (ArtificialDiffusion*volume);
+
+                for (IndexType i=0; i < TBlockSize; i++)
+                    rResult(a*TBlockSize+i,b*TBlockSize+i) += value;
+            }
+        }
+
+        KRATOS_CATCH("");
+    }
+
     /**
      * @brief Adds derivative of viscous term w.r.t a node's coordinate.
      *
@@ -1532,7 +1618,7 @@ private:
 
     friend class Serializer;
 
-    void ProcessSymmetricMatrices(ProcessInfo& rCurrentProcessInfo);
+    // void ProcessSymmetricMatrices(ProcessInfo& rCurrentProcessInfo);
 
     void save(Serializer& rSerializer) const override
     {

@@ -7,14 +7,14 @@ from co_simulation_base_solver import CoSimulationBaseSolver
 from convergence_accelerator_factory import CreateConvergenceAccelerator
 from convergence_criteria_factory import CreateConvergenceCriteria
 
-def CreateSolver(model, custom_settings):
-    return GaussSeidelStrongCouplingSolver(model, custom_settings)
+def CreateSolver(cosim_solver_settings):
+    return GaussSeidelStrongCouplingSolver(cosim_solver_settings)
 
 class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
     """The base class for the Python Solvers in the applications
     Changes to this BaseClass have to be discussed first!
     """
-    def __init__(self, model, settings):
+    def __init__(self, cosim_solver_settings):
         """The constructor of the PythonSolver-Object.
 
         It is intended to be called from the constructor
@@ -45,7 +45,7 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
     def AdvanceInTime(self, current_time):
         self.solver_1.AdvanceInTime(current_time)
         self.solver_2.AdvanceInTime(current_time)
-        self.convergence_accelerator.AdvaneTimeStep()
+        self.convergence_accelerator.AdvanceTimeStep()
         # TODO return time
 
     def Predict(self):

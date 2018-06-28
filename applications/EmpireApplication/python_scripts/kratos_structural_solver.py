@@ -11,14 +11,14 @@ from co_simulation_base_solver import CoSimulationBaseSolver
 from structural_mechanics_analysis import StructuralMechanicsAnalysis
 from io_factory import IOFactory
 
-def CreateSolver(model, custom_settings):
-    return KratosStructuralSolver(model, custom_settings)
+def CreateSolver(cosim_solver_settings):
+    return KratosStructuralSolver(cosim_solver_settings)
 
 class KratosStructuralSolver(CoSimulationBaseSolver):
     """The base class for the Python Solvers in the applications
     Changes to this BaseClass have to be discussed first!
     """
-    def __init__(self, model, settings):
+    def __init__(self, cosim_solver_settings):
         """The constructor of the PythonSolver-Object.
 
         It is intended to be called from the constructor

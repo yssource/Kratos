@@ -1,25 +1,23 @@
 from __future__ import print_function, absolute_import, division #makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
-import KratosMultiphysics
+available_solvers = {
+    "kratos_fluid" : "kratos_fluid_solver",
+    "kratos_structural" : "kratos_structural_solver",
+    "kratos_empire" : "kratos_empire_solver",
+    "gauss_seidel_strong_coupling" : "co_simulation_gauss_seidel_strong_coupling_solver",
+    "weak_coupling" : "co_simulation_weak_coupling_solver"
+}
 
+def CreateSolver(cosim_solver_settings):
 
-def CreateSolver(model, solver_settings):
+    solver_type = cosim_solver_settings["solver_type"]
 
-    if (type(model) != KratosMultiphysics.Model):
-        raise Exception("input is expected to be provided as a Kratos Model object")
-
-    if (type(solver_settings) != KratosMultiphysics.Parameters):
-        raise Exception("input is expected to be provided as a Kratos Parameters object")
-
-    parallelism = solver_settings["problem_data"]["parallel_type"].GetString()
-    solver_type = solver_settings["solver_settings"]["solver_type"].GetString()
-
-    if (solver_type == "co_simulation_gauss_seidel_strong_coupling_solver"):
-        solver_module_name = "co_simulation_gauss_seidel_strong_coupling_solver"
+    if solver_type in available_solvers:
+        solver_module = __import__(available_solvers[solver_type])
+        return solver_module.CreateSolver(cosim_solver_settings)
     else:
-        raise NameError("Requested solver not available")
-
-    solver_module = __import__(solver_module_name)
-    solver = solver_module.CreateSolver(model, solver_settings["solver_settings"])
-
-    return solver
+        err_msg  = 'The requested solver "' + solver_type + '" is not available!\n'
+        err_msg += 'The following solvers are available:\n'
+        for avail_solver in available_solvers:
+            err_msg += avail_solver + "\n"
+        raise NameError(err_msg)

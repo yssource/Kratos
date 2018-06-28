@@ -11,14 +11,14 @@ from co_simulation_base_solver import CoSimulationBaseSolver
 from fluid_dynamics_analysis import FluidDynamicsAnalysis
 from io_factory import IOFactory
 
-def CreateSolver(model, custom_settings):
-    return KratosFluidSolver(model, custom_settings)
+def CreateSolver(cosim_solver_settings):
+    return KratosFluidSolver(cosim_solver_settings)
 
 class KratosFluidSolver(CoSimulationBaseSolver):
     """The base class for the Python Solvers in the applications
     Changes to this BaseClass have to be discussed first!
     """
-    def __init__(self, model, settings):
+    def __init__(self, cosim_solver_settings):
         """The constructor of the PythonSolver-Object.
 
         It is intended to be called from the constructor

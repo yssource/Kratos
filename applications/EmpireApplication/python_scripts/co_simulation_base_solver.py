@@ -1,11 +1,13 @@
 from __future__ import print_function, absolute_import, division
 
-def CreateSolver(model, custom_settings):
-    return CoSimulationBaseSolver(model, custom_settings)
+def CreateSolver(cosim_solver_settings):
+    return CoSimulationBaseSolver(cosim_solver_settings)
 
 class CoSimulationBaseSolver(object):
     """The base class for the CoSimulation Solvers
     """
+    def __init__(self, cosim_solver_settings):
+        pass
 
     def Initialize(self):
         pass

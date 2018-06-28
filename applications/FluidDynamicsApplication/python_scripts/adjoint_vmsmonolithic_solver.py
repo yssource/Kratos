@@ -110,6 +110,11 @@ class AdjointVMSMonolithicSolver(AdjointFluidSolver):
             self.time_scheme = KratosMultiphysics.ResidualBasedAdjointSteadyScheme(self.settings["scheme_settings"], self.response_function)
         elif self.settings["scheme_settings"]["scheme_type"].GetString() == "bossak_old":
             self.time_scheme = KratosCFD.AdjointBossakScheme(self.settings["scheme_settings"], self.response_function)
+        elif self.settings["scheme_settings"]["scheme_type"].GetString() == "stabilized_bossak":
+            bossak_settings = self.settings["scheme_settings"]["bossak_scheme_settings"]
+            bossak_settings.AddEmptyValue("scheme_type")
+            bossak_settings["scheme_type"].SetString("bossak")
+            self.time_scheme = KratosCFD.StabilizedAdjointBossakScheme(self.settings["scheme_settings"], bossak_settings, self.response_function)
         else:
             raise Exception("invalid scheme_type: " + self.settings["scheme_settings"]["scheme_type"].GetString())
 

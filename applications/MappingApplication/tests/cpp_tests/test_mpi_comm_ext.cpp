@@ -75,6 +75,45 @@ namespace Kratos
         }
 #endif
 
+        KRATOS_TEST_CASE_IN_SUITE(MPICommunicatorSumAllVectorInt, KratosMappingAppFastSuite)
+        {
+            ModelPart dummy_model_part("dummy");
+
+            MPICommunicator comm_to_test(&dummy_model_part.GetNodalSolutionStepVariablesList());
+            int my_pid = comm_to_test.MyPID();
+            int n_ranks = comm_to_test.TotalProcesses();
+            double result_sum = n_ranks * (n_ranks - 1) / 2;
+
+            std::vector<int> dummy_vec(5, my_pid);
+            comm_to_test.SumAll(dummy_vec);
+
+            std::for_each(dummy_vec.begin(), dummy_vec.end(), [result_sum](double el) {
+                KRATOS_CHECK_DOUBLE_EQUAL(el, result_sum);
+            });
+
+        }
+
+#ifdef KRATOS_DEBUG
+        KRATOS_TEST_CASE_IN_SUITE(MPICommunicatorSumAllVectorInt, KratosMappingAppFastSuite)
+        {
+            ModelPart dummy_model_part("dummy");
+
+            MPICommunicator comm_to_test(&dummy_model_part.GetNodalSolutionStepVariablesList());
+            int my_pid = comm_to_test.MyPID();
+            std::vector<int> dummy_vec;
+
+            if (my_pid % 2 == 0) {
+                dummy_vec.resize(6);
+            } else {
+                dummy_vec.resize(5);
+            }
+
+            KRATOS_DEBUG_CHECK_EXCEPTION_IS_THROWN(comm_to_test.SumAll(dummy_vec),
+                "Error: The ModelPart named : \"Random\" was not found as SubModelPart of : \"Main\". The total input string was \"Main.Random\"");
+
+        }
+#endif
+
 #endif
 
     } // namespace Testing

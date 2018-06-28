@@ -182,9 +182,9 @@ namespace Kratos
             KRATOS_ERROR_IF(system_size != SparseSpaceType::Size(rSystemVec_b))
                 << "System Vector sizes are inconsistent!" << std::endl;
 
-            // Philip: I believe we can compute the displacement like this.
+            // We compute the displacement like this.
             // however, we probably can use this value for residuals as well, snce its just a decreasing series of numbers.
-            // temp = err - start * 2 ^ ( -k * (i + 1) ) / (i + 1)) * eps
+            // dx = err - start * 2 ^ ( -k * (i + 1) ) / (i + 1)) * eps
             double dx = err - errPrevious;
             for (std::size_t i = 0; i < system_size; ++i)
             {
@@ -213,6 +213,7 @@ namespace Kratos
             const TDataType AlwaysConvergedNorm = 1e-5;
 
             Parameters default_params( R"({
+                "basis_vector_type" : "solution_update",
                 "variables_to_separate" : ["VELOCITY", "ROTATION"],
                 "relative_convergence_tolerances" : [1e-20, 1e-20],
                 "absolut_convergence_tolerances" : [1e-6, 1e-8]
@@ -276,6 +277,7 @@ namespace Kratos
             const TDataType AlwaysConvergedNorm = 1e-5;
 
             Parameters default_params( R"({
+                "basis_vector_type" : "solution_update",
                 "variables_to_separate" : ["PRESSURE"],
                 "relative_convergence_tolerances" : [1e-20],
                 "absolut_convergence_tolerances" : [1e-6]
@@ -460,6 +462,7 @@ namespace Kratos
             const TDataType AlwaysConvergedNorm = 1e-7;
 
             Parameters default_params( R"({
+                "basis_vector_type" : "solution_update",
                 "variables_to_separate" : [],
                 "relative_convergence_tolerances" : [],
                 "absolut_convergence_tolerances" : []
@@ -517,6 +520,7 @@ namespace Kratos
             const TDataType AlwaysConvergedNorm = 1e-5;
 
             Parameters default_params( R"({
+                "basis_vector_type" : "solution_update",
                 "variables_to_separate" : ["PRESSURE"],
                 "relative_convergence_tolerances" : [1e-6],
                 "absolut_convergence_tolerances" : [1e-20]

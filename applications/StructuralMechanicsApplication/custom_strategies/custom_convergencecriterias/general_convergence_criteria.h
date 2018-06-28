@@ -30,6 +30,7 @@ Here is a list of files that you can look at for reference:
 
 // System includes
 #include <unordered_map>
+#include <limits>
 
 
 // External includes
@@ -310,11 +311,18 @@ public:
             // This is done on each rank, since the residuals were synchronized before
             std::vector<bool> conv_vec(num_vars_to_separate); // save the convegence info for plotting
             bool is_converged = true;
-            for (SizeType i=0; i<num_vars_to_separate; ++i)
+            
+            for (SizeType i = 0; i < num_vars_to_separate; ++i)
             {
-                // TODO_N implement isZero()
-                if (mRatioResiduals[i] == 0.0) mRatioResiduals[i] = 1.0;
-                if (mNumDofs[i] == 0) mNumDofs[i] = 1; // this might be the case if no "other" dofs are present
+                if ( isAlmostZero(mRatioResiduals[i]) )
+                {
+                    mRatioResiduals[i] = 1.0;
+                }
+                
+                if (mNumDofs[i] == 0)
+                {
+                    mNumDofs[i] = 1; // this might be the case if no "other" dofs are present
+                }
 
                 // Compute the final residuals
                 mRatioResiduals[i] = mAbsResiduals[i] / mRatioResiduals[i];
@@ -554,6 +562,9 @@ private:
     /// Copy constructor.
     GeneralConvergenceCriteria(GeneralConvergenceCriteria const& rOther){}
 
+    bool isAlmostZero( double a, double eps = std::numeric_limits<double>::epsilon() ) {
+        return std::abs(a) <= eps * std::abs(a);
+    }
 
     ///@}
 

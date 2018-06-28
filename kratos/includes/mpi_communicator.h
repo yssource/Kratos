@@ -280,9 +280,9 @@ public:
         int size = rValue.size();
 
 #ifdef KRATOS_DEBUG
-        int result;
-        MPI_Allreduce(&size, &result, 1, MPI_INT, MPI_BXOR, MPI_COMM_WORLD);
-        KRATOS_ERROR_IF_NOT(result != 0) << "Vectors have different sizes"
+        int sizeCheck;
+        MPI_Allreduce(&size, &sizeCheck, 1, MPI_INT, MPI_BXOR, MPI_COMM_WORLD);
+        KRATOS_ERROR_IF_NOT(sizeCheck != 0) << "Vectors have different sizes"
             << std::endl;
 #endif
 
@@ -293,6 +293,25 @@ public:
 
         return true;
     }
+    
+    bool SumAll(std::vector<int>& rValue) const override
+        {
+            int size = rValue.size();
+
+#ifdef KRATOS_DEBUG
+            int sizeCheck;
+            MPI_Allreduce(&size, &sizeCheck, 1, MPI_INT, MPI_BXOR, MPI_COMM_WORLD);
+            KRATOS_ERROR_IF_NOT(sizeCheck != 0) << "Vectors have different sizes"
+                                                << std::endl;
+#endif
+
+            std::vector<int> local_value = std::move(rValue);
+
+            rValue.resize(size);
+            MPI_Allreduce(local_value.data(), rValue.data(), size, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+            return true;
+        }
 
     bool MinAll(int& rValue) const override
     {
@@ -453,10 +472,8 @@ public:
                 if (position > send_buffer_size)
                     std::cout << rank << " Error in estimating send buffer size...." << std::endl;
 
-
                 int send_tag = i_color;
                 int receive_tag = i_color;
-
 
                 MPI_Sendrecv(send_buffer, send_buffer_size, MPI_DOUBLE, destination, send_tag, receive_buffer, receive_buffer_size, MPI_DOUBLE, destination, receive_tag,
                              MPI_COMM_WORLD, &status);

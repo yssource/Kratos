@@ -294,7 +294,7 @@ public:
 
             // Synchroizing them across ranks
             rModelPart.GetCommunicator().SumAll(residuals);
-            // rModelPart.GetCommunicator().SumAll(mNumDofs); // TODO_N this has to be implemented in the MPIComm
+            rModelPart.GetCommunicator().SumAll(mNumDofs);
 
             // Then afterwards split them again
             std::copy(residuals.begin(), residuals.begin() + num_vars_to_separate, mRatioResiduals.begin());

@@ -506,6 +506,14 @@ public:
         return true;
     }
 
+    virtual bool SumAll(std::vector<int>& rValue) const
+    {
+        // #if defined(KRATOS_USING_MPI )
+        // 	std::cout << "WARNING: Using serial communicator with MPI defined. Use ModelPart::SetCommunicator to set its communicator to MPICommunicator" << std::endl;
+        // #endif
+        return true;
+    }
+
     virtual bool MinAll(int& rValue) const
     {
         // #if defined(KRATOS_USING_MPI )

@@ -148,11 +148,12 @@ class TrilinosNavierStokesSolverMonolithic(navier_stokes_solver_vmsmonolithic.Na
                                                                self.settings["relative_pressure_tolerance"].GetDouble(),
                                                                self.settings["absolute_pressure_tolerance"].GetDouble())
 
+        (self.conv_criteria).SetEchoLevel(self.settings["echo_level"].GetInt())
+
         ## Creating the Trilinos time scheme
         if (self.settings["turbulence_model"].GetString() == "None"):
             if self.settings["consider_periodic_conditions"].GetBool() == True:
                 self.time_scheme = KratosTrilinos.TrilinosPredictorCorrectorVelocityBossakSchemeTurbulent(self.settings["alpha"].GetDouble(),
-                                                                                                          self.settings["move_mesh_strategy"].GetInt(),
                                                                                                           self.computing_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE],
                                                                                                           KratosCFD.PATCH_INDEX)
             else:

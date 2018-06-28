@@ -76,7 +76,7 @@ void VMSAdjointElement<2>::EquationIdVector(
     rResult[LocalIndex++] = this->GetGeometry()[iNode].GetDof(ADJOINT_FLUID_SCALAR_1)
         .EquationId();
   }
-  this->ProcessSymmetricMatrices(rCurrentProcessInfo);
+//   this->ProcessSymmetricMatrices(rCurrentProcessInfo);
 }
 
 template<>
@@ -102,7 +102,7 @@ void VMSAdjointElement<3>::EquationIdVector(
     rResult[LocalIndex++] = this->GetGeometry()[iNode].GetDof(ADJOINT_FLUID_SCALAR_1)
         .EquationId();
   }
-  this->ProcessSymmetricMatrices(rCurrentProcessInfo);
+//   this->ProcessSymmetricMatrices(rCurrentProcessInfo);
 }
 
 template<>
@@ -150,17 +150,17 @@ void VMSAdjointElement<3>::CalculateDeterminantOfJacobianDerivatives(
   const double x1 = this->GetGeometry()[1].X();
   const double x2 = this->GetGeometry()[2].X();
   const double x3 = this->GetGeometry()[3].X();
-  
+
   const double y0 = this->GetGeometry()[0].Y();
   const double y1 = this->GetGeometry()[1].Y();
   const double y2 = this->GetGeometry()[2].Y();
   const double y3 = this->GetGeometry()[3].Y();
-  
+
   const double z0 = this->GetGeometry()[0].Z();
   const double z1 = this->GetGeometry()[1].Z();
   const double z2 = this->GetGeometry()[2].Z();
   const double z3 = this->GetGeometry()[3].Z();
-        
+
   rDetJDerivatives[0] =-z1*y3 + z1*y2 + y3*z2 - y2*z3 + y1*z3 - y1*z2;
   rDetJDerivatives[1] =-z1*x2 + z1*x3 + x1*z2 - z2*x3 + x2*z3 - x1*z3;
   rDetJDerivatives[2] =-x2*y3 + y2*x3 - y1*x3 + x1*y3 + y1*x2 - x1*y2;
@@ -462,7 +462,7 @@ void VMSAdjointElement<3>::AddViscousTermDerivative(
 
 ///@} // Specialized implementations
 
-#include "symmetric_matrix.h"
+// #include "custom_utilities/symmetric_matrix.h"
 
 template class VMSAdjointElement<2> ;
 template class VMSAdjointElement<3> ;

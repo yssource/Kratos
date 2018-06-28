@@ -35,6 +35,7 @@
 #include "custom_strategies/strategies/residualbased_predictorcorrector_velocity_bdf_scheme_turbulent_no_reaction.h"
 #include "custom_strategies/strategies/gear_scheme.h"
 #include "custom_strategies/strategies/adjoint_bossak_scheme.h"
+#include "custom_strategies/strategies/stabilized_adjoint_bossak_scheme.h"
 
 // convergence criteria
 #include "custom_strategies/convergence_criteria/vel_pr_criteria.h"
@@ -147,6 +148,14 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
         typename AdjointBossakScheme<SparseSpaceType, LocalSpaceType>::Pointer,
         BaseSchemeType>(m,"AdjointBossakScheme")
         .def(init<Parameters&, ResponseFunction::Pointer>())
+        ;
+
+    // Stabilized adojoint fluid scheme
+    class_<
+        StabilizedAdjointBossakScheme<SparseSpaceType, LocalSpaceType>,
+        typename StabilizedAdjointBossakScheme<SparseSpaceType, LocalSpaceType>::Pointer,
+        BaseSchemeType>(m,"StabilizedAdjointBossakScheme")
+        .def(init<Parameters&, Parameters&, ResponseFunction::Pointer>())
         ;
 }
 

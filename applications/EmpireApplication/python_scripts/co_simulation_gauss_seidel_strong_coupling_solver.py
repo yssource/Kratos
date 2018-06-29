@@ -42,9 +42,9 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
         self.solver_1.FinalizeSolutionStep()
         self.solver_2.FinalizeSolutionStep()
 
-    def AdvanceInTime(self, current_time):
-        self.solver_1.AdvanceInTime(current_time)
-        self.solver_2.AdvanceInTime(current_time)
+    def AdvanceInTime(self):
+        self.solver_1.AdvanceInTime()
+        self.solver_2.AdvanceInTime()
         self.convergence_accelerator.AdvanceTimeStep()
         # TODO return time
 

@@ -1,11 +1,11 @@
 from __future__ import print_function, absolute_import, division #makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
 available_solvers = {
-    "kratos_fluid" : "kratos_fluid_solver",
-    "kratos_structural" : "kratos_structural_solver",
-    "kratos_empire" : "kratos_empire_solver",
-    "gauss_seidel_strong_coupling" : "co_simulation_gauss_seidel_strong_coupling_solver",
-    "weak_coupling" : "co_simulation_weak_coupling_solver"
+    "kratos_fluid"                   : "kratos_fluid_solver",
+    "kratos_structural"              : "kratos_structural_solver",
+    "kratos_empire"                  : "kratos_empire_solver",
+    "gauss_seidel_strong_coupling"   : "co_simulation_gauss_seidel_strong_coupling_solver",
+    "weak_coupling"                  : "co_simulation_weak_coupling_solver"
 }
 
 def CreateSolver(cosim_solver_settings):

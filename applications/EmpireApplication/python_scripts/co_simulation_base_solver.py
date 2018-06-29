@@ -5,6 +5,8 @@ def CreateSolver(cosim_solver_settings):
 
 class CoSimulationBaseSolver(object):
     """The base class for the CoSimulation Solvers
+    The intention is that every solver that derives from this class
+    can be used standalone.
     """
     def __init__(self, cosim_solver_settings):
         pass

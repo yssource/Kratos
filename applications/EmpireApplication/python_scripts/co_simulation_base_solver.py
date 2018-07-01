@@ -9,6 +9,9 @@ class CoSimulationBaseSolver(object):
     can be used standalone.
     """
     def __init__(self, cosim_solver_settings):
+        """Constructor of the Base-Solver
+        Deriving classes should call it in their constructors
+        """
         self.cosim_solver_settings = cosim_solver_settings
 
     def Initialize(self):

@@ -32,3 +32,18 @@ class KratosEmpireSolver(CoSimulationBaseSolver):
         """
         pass
 
+
+    def ImportData(self, DataName, FromClient):
+        raise NotImplementedError("This needs to be implemented!")
+    def ImportMesh(self, MeshName, FromClient):
+        raise NotImplementedError("This needs to be implemented!")
+
+    def ExportData(self, DataName, ToClient):
+        raise NotImplementedError("This needs to be implemented!")
+    def ExportMesh(self, MeshName, ToClient):
+        raise NotImplementedError("This needs to be implemented!")
+
+    def MakeDataAvailable(self, DataName, ToClient):
+        raise NotImplementedError("This needs to be implemented!")
+    def MakeMeshAvailable(self, MeshName, ToClient):
+        raise NotImplementedError("This needs to be implemented!")

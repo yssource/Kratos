@@ -1,5 +1,8 @@
 from __future__ import print_function, absolute_import, division #makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
+# Importing the base class of the cosim-solvers
+from co_simulation_base_solver import CoSimulationBaseSolver
+
 available_solvers = {
     "kratos_fluid"                 : "kratos_fluid_solver",
     "kratos_structural"            : "kratos_structural_solver",
@@ -9,6 +12,9 @@ available_solvers = {
 }
 
 def CreateSolver(cosim_solver_settings):
+    """This function creates and returns the solvers used for CoSimulation
+    New solvers have to be registered by adding them to "available_solvers"
+    """
     if (type(cosim_solver_settings) != dict):
         raise Exception("Input is expected to be provided as a python dictionary")
 
@@ -16,7 +22,12 @@ def CreateSolver(cosim_solver_settings):
 
     if solver_type in available_solvers:
         solver_module = __import__(available_solvers[solver_type])
-        return solver_module.CreateSolver(cosim_solver_settings)
+        solver = solver_module.CreateSolver(cosim_solver_settings)
+        if not isinstance(solver, CoSimulationBaseSolver):
+            err_msg  = 'The requested solver "' + solver_type
+            err_msg += '" does not derive from "CoSimulationBaseSolver"!'
+            raise Exception(err_msg)
+        return solver
     else:
         err_msg  = 'The requested solver "' + solver_type + '" is not available!\n'
         err_msg += 'The following solvers are available:\n'

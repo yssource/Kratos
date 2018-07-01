@@ -6,27 +6,22 @@ from co_simulation_base_solver import CoSimulationBaseSolver
 # other imports
 from convergence_accelerator_factory import CreateConvergenceAccelerator
 from convergence_criteria_factory import CreateConvergenceCriteria
+import io_factory
 
 def CreateSolver(cosim_solver_settings):
     return GaussSeidelStrongCouplingSolver(cosim_solver_settings)
 
 class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
-    """The base class for the Python Solvers in the applications
-    Changes to this BaseClass have to be discussed first!
-    """
     def __init__(self, cosim_solver_settings):
-        """The constructor of the PythonSolver-Object.
+        super(GaussSeidelStrongCouplingSolver, self).__init__(cosim_solver_settings)
 
-        It is intended to be called from the constructor
-        of deriving classes:
-        super(DerivedSolver, self).__init__(settings)
+        settings_solver_1 = self.cosim_solver_settings["solvers"][0]
+        settings_solver_2 = self.cosim_solver_settings["solvers"][1]
 
-        Keyword arguments:
-        self -- It signifies an instance of a class.
-        model -- The Model to be used
-        settings -- The solver settings used
-        """
-        pass
+        import python_solvers_wrapper_co_simulation as solvers_wrapper
+        self.solver_1 = solvers_wrapper.CreateSolver(settings_solver_1)
+        self.solver_2 = solvers_wrapper.CreateSolver(settings_solver_2)
+
 
     def Initialize(self):
         self.solver_1.Initialize()
@@ -46,7 +41,7 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
         self.solver_1.AdvanceInTime()
         self.solver_2.AdvanceInTime()
         self.convergence_accelerator.AdvanceTimeStep()
-        # TODO return time
+        # TODO return time and check if it is consistent!
 
     def Predict(self):
         self.solver_1.Predict()
@@ -74,21 +69,17 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
                 self.convergence_accelerator.ComputeUpdate(...)
 
 
-
-
-
-
     def ImportData(self, DataName, FromClient):
-        pass
+        raise NotImplementedError("This needs to be implemented!")
     def ImportMesh(self, MeshName, FromClient):
-        pass
+        raise NotImplementedError("This needs to be implemented!")
 
     def ExportData(self, DataName, ToClient):
-        pass
+        raise NotImplementedError("This needs to be implemented!")
     def ExportMesh(self, MeshName, ToClient):
-        pass
+        raise NotImplementedError("This needs to be implemented!")
 
     def MakeDataAvailable(self, DataName, ToClient):
-        pass
+        raise NotImplementedError("This needs to be implemented!")
     def MakeMeshAvailable(self, MeshName, ToClient):
-        pass
+        raise NotImplementedError("This needs to be implemented!")

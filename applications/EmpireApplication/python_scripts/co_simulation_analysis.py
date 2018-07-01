@@ -1,6 +1,5 @@
 from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
-
 class CoSimulationAnalysis(object):
     """The base class for the CoSimulation-AnalysisStage
     It mimicks the AnalysisStage of Kratos but does NOT derive from it
@@ -26,7 +25,6 @@ class CoSimulationAnalysis(object):
             self._GetSolver().SolveSolutionStep()
             self.FinalizeSolutionStep()
             self.OutputSolutionStep()
-
 
     def Initialize(self):
         self._GetSolver().Initialize()

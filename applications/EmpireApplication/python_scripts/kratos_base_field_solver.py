@@ -31,7 +31,9 @@ class KratosBaseFieldSolver(CoSimulationBaseSolver):
         self._GetAnalysisStage().Finalize()
 
     def AdvanceInTime(self, current_time):
-        return self._GetAnalysisStage()._GetSolver().AdvanceInTime(current_time)
+        new_time = self._GetAnalysisStage()._GetSolver().AdvanceInTime(current_time)
+        self._GetAnalysisStage().time = new_time # only needed to print the time correctly
+        return new_time
 
     def Predict(self):
         self._GetAnalysisStage()._GetSolver().Predict()

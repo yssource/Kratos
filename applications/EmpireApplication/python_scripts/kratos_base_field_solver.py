@@ -24,11 +24,8 @@ class KratosBaseFieldSolver(CoSimulationBaseSolver):
 
         self.project_parameters = KratosMultiphysics.Parameters(parameters)
 
-        print(self.project_parameters.PrettyPrintJsonString())
-        err
-
     def Initialize(self):
-        self._GetAnalysisStage().Run()
+        self._GetAnalysisStage().Initialize()
 
     def Finalize(self):
         self._GetAnalysisStage().Finalize()

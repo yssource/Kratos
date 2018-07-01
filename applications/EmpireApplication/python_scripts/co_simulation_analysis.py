@@ -37,8 +37,8 @@ class CoSimulationAnalysis(object):
         self._GetSolver().Initialize()
 
         ## Stepping and time settings
-        self.end_time = self.cosim_settings["problem_data"]["end_time"].GetDouble()
-        self.time = self.cosim_settings["problem_data"]["start_time"].GetDouble()
+        self.end_time = self.cosim_settings["problem_data"]["end_time"]
+        self.time = self.cosim_settings["problem_data"]["start_time"]
 
     def Finalize(self):
         self._GetSolver().Finalize()
@@ -54,7 +54,7 @@ class CoSimulationAnalysis(object):
         self._GetSolver().FinalizeSolutionStep()
 
     def OutputSolutionStep(self):
-        self._GetSolver.OutputSolutionStep()
+        self._GetSolver().OutputSolutionStep()
 
     def _GetSolver(self):
         if not hasattr(self, '_solver'):

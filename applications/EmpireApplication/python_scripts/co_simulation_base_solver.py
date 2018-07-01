@@ -9,7 +9,7 @@ class CoSimulationBaseSolver(object):
     can be used standalone.
     """
     def __init__(self, cosim_solver_settings):
-        pass
+        self.cosim_solver_settings = cosim_solver_settings
 
     def Initialize(self):
         pass
@@ -17,7 +17,7 @@ class CoSimulationBaseSolver(object):
     def Finalize(self):
         pass
 
-    def AdvanceInTime(self):
+    def AdvanceInTime(self, current_time):
         pass
 
     def Predict(self):
@@ -27,6 +27,9 @@ class CoSimulationBaseSolver(object):
         pass
 
     def FinalizeSolutionStep(self):
+        pass
+
+    def OutputSolutionStep(self):
         pass
 
     def SolveSolutionStep(self):

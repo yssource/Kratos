@@ -5,30 +5,14 @@ import KratosMultiphysics
 import KratosMultiphysics.StructuralMechanicsApplication as KratosStructural
 
 # Importing the base class
-from co_simulation_base_solver import CoSimulationBaseSolver
+from kratos_base_field_solver import KratosBaseFieldSolver
 
 # Other imports
 from structural_mechanics_analysis import StructuralMechanicsAnalysis
-from io_factory import IOFactory
 
 def CreateSolver(cosim_solver_settings):
     return KratosStructuralSolver(cosim_solver_settings)
 
-class KratosStructuralSolver(CoSimulationBaseSolver):
-    """The base class for the Python Solvers in the applications
-    Changes to this BaseClass have to be discussed first!
-    """
-    def __init__(self, cosim_solver_settings):
-        """The constructor of the PythonSolver-Object.
-
-        It is intended to be called from the constructor
-        of deriving classes:
-        super(DerivedSolver, self).__init__(settings)
-
-        Keyword arguments:
-        self -- It signifies an instance of a class.
-        model -- The Model to be used
-        settings -- The solver settings used
-        """
-        pass
-
+class KratosStructuralSolver(KratosBaseFieldSolver):
+    def _CreateAnalysisStage(self):
+        return StructuralMechanicsAnalysis(self.model, self.project_parameters)

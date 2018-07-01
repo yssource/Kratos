@@ -13,18 +13,13 @@ class CoSimulationAnalysis(object):
         self.cosim_settings = cosim_settings
 
     def Run(self):
-        """This function executes the entire AnalysisStage
-        It can be overridden by derived classes
-        """
         self.Initialize()
         self.RunSolutionLoop()
         self.Finalize()
 
     def RunSolutionLoop(self):
-        """This function executes the solution loop of the AnalysisStage
-        It can be overridden by derived classes
-        """
         while self.time < self.end_time:
+            self.step += 1
             self.time = self._GetSolver().AdvanceInTime(self.time)
             self.InitializeSolutionStep()
             self._GetSolver().Predict()
@@ -39,16 +34,15 @@ class CoSimulationAnalysis(object):
         ## Stepping and time settings
         self.end_time = self.cosim_settings["problem_data"]["end_time"]
         self.time = self.cosim_settings["problem_data"]["start_time"]
+        self.step = 0
 
     def Finalize(self):
         self._GetSolver().Finalize()
 
     def InitializeSolutionStep(self):
-        self._GetSolver().InitializeSolutionStep()
+        print("\x1b[1;34m", "\nCoSimulation:","\x1b[0m\x1b[1;1m", "time={0:.12g}".format(self.time), " | step=", self.step, "\x1b[0m")
 
-        # if self.is_printing_rank:
-        #     KratosMultiphysics.Logger.PrintInfo(self._GetSimulationName(), "STEP: ", self._GetSolver().GetComputingModelPart().ProcessInfo[KratosMultiphysics.STEP])
-        #     KratosMultiphysics.Logger.PrintInfo(self._GetSimulationName(), "TIME: ", self.time)
+        self._GetSolver().InitializeSolutionStep()
 
     def FinalizeSolutionStep(self):
         self._GetSolver().FinalizeSolutionStep()

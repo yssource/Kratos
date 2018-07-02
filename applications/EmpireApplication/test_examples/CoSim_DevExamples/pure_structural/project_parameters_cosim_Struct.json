@@ -8,6 +8,5 @@
     {
         "solver_type" : "kratos_structural",
         "input_file"  : "ProjectParametersStructural"
-
     }
 }

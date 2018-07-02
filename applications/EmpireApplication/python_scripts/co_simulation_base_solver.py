@@ -21,7 +21,7 @@ class CoSimulationBaseSolver(object):
         pass
 
     def AdvanceInTime(self, current_time):
-        pass
+        return current_time + self.cosim_solver_settings["time_step"] # needed if this solver is used as dummy
 
     def Predict(self):
         pass

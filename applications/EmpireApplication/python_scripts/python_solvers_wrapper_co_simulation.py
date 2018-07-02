@@ -4,6 +4,7 @@ from __future__ import print_function, absolute_import, division #makes KratosMu
 from co_simulation_base_solver import CoSimulationBaseSolver
 
 available_solvers = {
+    "dummy"                        : "co_simulation_base_solver",
     "kratos_fluid"                 : "kratos_fluid_solver",
     "kratos_structural"            : "kratos_structural_solver",
     "kratos_empire"                : "kratos_empire_solver",

@@ -3,7 +3,7 @@
 # Author: Wei He
 # Date: Feb. 20, 2017
 
-import numpy as np 
+import numpy as np
 from copy import deepcopy
 from collections import deque
 
@@ -12,46 +12,53 @@ from collections import deque
 # Reference: A.E.J. Bogaers et al. "Quasi-Newton methods for implicit black-box FSI coupling", Computational methods in applied mechanics and engineering. 279(2014) 113-132.
 class MVQN:
     ## The constructor.
-    # @param horizon Maximum number of vectors to be stored in each time step.    
+    # @param horizon Maximum number of vectors to be stored in each time step.
     # @param alpha Relaxation factor for computing the update, when no vectors available.
-    def __init__( self, horizon = 15, alpha = 0.3 ):
+    def __init__( self, convergence_accelerator_settings ):
+            if "horizon" in convergence_accelerator_settings:
+                horizon = convergence_accelerator_settings["horizon"]
+            else:
+                horizon = 15
+            if "alpha" in convergence_accelerator_settings:
+                self.alpha = convergence_accelerator_settings["alpha"]
+            else:
+                self.alpha = 0.3
             self.R = deque( maxlen = horizon )
             self.X = deque( maxlen = horizon )
-            self.alpha = alpha
             self.J = [] # size will be determined when first time get the input vector
             self.J_hat = []
             print("Quasi-Newton method: MVQN")
 
     ## ComputeUpdate(r, x)
-    # @param r residual r_k 
+    # @param r residual r_k
     # @param x solution x_k
     # Computes the approximated update in each iteration.
     def ComputeUpdate( self, r, x ):
             self.R.appendleft( deepcopy(r) )
             self.X.appendleft( deepcopy(x) )
             col = len(self.R) - 1
-            row = len(r)     
+            row = len(r)
             k = col
             print( "Number of new modes: ", col )
-            
+
             ## For the first iteration
             if k == 0:
               if self.J == []:
                 return self.alpha * r  # if no Jacobian, do relaxation
               else:
                 return np.linalg.solve( self.J, -r ) # use the Jacobian from previous step
-            
-            ## Let the initial Jacobian correspond to a constant relaxation 
+
+            ## Let the initial Jacobian correspond to a constant relaxation
             if self.J == []:
                 self.J = - np.identity( row ) / self.alpha # correspongding to constant relaxation
-            
-            
+
+
             ## Construct matrix V (differences of residuals)
             V = np.empty( shape = (col, row) ) # will be transposed later
             for i in range(0, col):
               V[i] = self.R[i] - self.R[i + 1]
             V = V.T
-            
+
             ## Construct matrix W(differences of intermediate solutions x)
             W = np.empty( shape = (col, row) ) # will be transposed later
             for i in range(0, col):
@@ -74,7 +81,7 @@ class MVQN:
     def AdvanceTimeStep( self ):
             if self.J == []:
               return
-     
+
             row = self.J.shape[0]
             col = self.J.shape[1]
             ## Assign J=J_hat
@@ -86,3 +93,6 @@ class MVQN:
             if self.R and self.X:
               self.R.clear()
               self.X.clear()
+
+def Create(convergence_accelerator_settings):
+    return MVQN(convergence_accelerator_settings)

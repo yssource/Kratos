@@ -14,10 +14,16 @@ class Aitken:
     ## The constructor.
     # @param init_alpha Initial relaxation factor in the first time step.
     # @param init_alpha_max Maximum relaxation factor for the first iteration in each time step
-    def __init__( self, init_alpha = 0.1, init_alpha_max = 0.45 ):
+    def __init__( self, convergence_accelerator_settings ):
             self.R = deque( maxlen = 2 )
-            self.init_alpha_max = init_alpha_max
-            self.alpha_old = init_alpha
+            if "init_alpha" in convergence_accelerator_settings:
+                self.alpha_old = convergence_accelerator_settings["init_alpha"]
+            else:
+                self.alpha_old = 0.1
+            if "init_alpha_max" in convergence_accelerator_settings:
+                self.init_alpha_max = convergence_accelerator_settings["init_alpha_max"]
+            else:
+                self.init_alpha_max = 0.45
             print("Quasi-Newton method: Aitken relaxation")
 
     ## ComputeUpdate(r, x)
@@ -53,3 +59,6 @@ class Aitken:
     # Finalizes the current time step and initializes the next time step.
     def AdvanceTimeStep( self ):
             print( "" )   # Do nothing for Aitken relaxation
+
+def Create(convergence_accelerator_settings):
+    return Aitken(convergence_accelerator_settings)

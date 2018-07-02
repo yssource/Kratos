@@ -12,7 +12,7 @@
         "convergence_accelerator_settings" :
         {
             "type"          : "aitken",
-            "solver_name"   : "dummy_2",
+            "solver_name"   : "dummy2",
             "data_name"     : "DISPLACEMENT",
             "geometry_name" : "dummy_smp",
             "io_type"       : "kratos_signal_io"
@@ -20,38 +20,67 @@
         "convergence_criteria_settings" :
         {
             "tolerance" : 1e-5,
-            "io_type"   : "kratos_signal_io",
+            "io_type"   : "kratos_signal",
             "data_list" :
             [
                 {
-                    "from_solver"   : "dummy_2",
+                    "from_solver"   : "dummy2",
                     "data_name"     : "DISPLACEMENT",
                     "geometry_name" : "dummy_smp"
                 }
             ]
         },
         "coupling_loop":
-        {
-
-        },
-        "solvers" :
         [
+        {
+            "name": "dummy1",
+            "output_data_list": [
+                {
+                    "to_solver": "dummy2",
+                    "data_name": "POINT_LOAD"
+                }
+            ],
+            "input_data_list": [
+                {
+                    "from_solver": "dummy2",
+                    "data_name": "DISPLACEMENT"
+                }
+            ]
+        },
+        {
+            "name": "dummy2",
+            "output_data_list": [
+                {
+                    "to_solver": "dummy1",
+                    "data_name": "DISPLACEMENT"
+                }
+            ],
+            "input_data_list": [
+                {
+                    "from_solver": "dummy1",
+                    "data_name": "POINT_LOAD"
+                }
+            ]
+        }
+        ],
+        "solvers" :
+        {
+            "dummy1":
             {
-                "name" : "dummy_1",
                 "solver_type" : "dummy",
                 "time_step"  : 0.05,
                 "geometry_list" : [
 
                 ]
             },
+            "dummy2" :
             {
-                "name" : "dummy_2",
                 "solver_type" : "dummy",
                 "time_step"  : 0.05,
                 "geometry_list" : [
 
                 ]
             }
-        ]
+        }
     }
 }

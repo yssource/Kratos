@@ -7,6 +7,7 @@ from co_simulation_base_solver import CoSimulationBaseSolver
 import co_sim_convergence_accelerator_factory as convergence_accelerator_factory
 import co_sim_convergence_criteria_factory as convergence_criteria_factory
 import io_factory
+import co_simulation_tools as cosim_tools
 
 def CreateSolver(cosim_solver_settings):
     return GaussSeidelStrongCouplingSolver(cosim_solver_settings)
@@ -18,62 +19,70 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
         if not len(self.cosim_solver_settings["solvers"]) == 2:
             raise Exception("Exactly two solvers have to be specified for the GaussSeidelStrongCouplingSolver!")
 
-        settings_solver_1 = self.cosim_solver_settings["solvers"][0]
-        settings_solver_2 = self.cosim_solver_settings["solvers"][1]
+        self.solver_names = []
+        self.solvers = {}
 
         import python_solvers_wrapper_co_simulation as solvers_wrapper
-        self.solver_1 = solvers_wrapper.CreateSolver(settings_solver_1)
-        self.solver_2 = solvers_wrapper.CreateSolver(settings_solver_2)
+
+        for solver_settings in self.cosim_solver_settings["coupling_loop"]:
+            solver_name = solver_settings["name"]
+            if solver_name in self.solver_names:
+                raise NameError('Solver name "' + solver_name + '" defined twice!')
+            self.solver_names.append(solver_name)
+            self.solvers[solver_name] = solvers_wrapper.CreateSolver(
+                self.cosim_solver_settings["solvers"][solver_name])
+
+        self.solver_cosim_details = cosim_tools.GetSolverCoSimulationDetails(
+            self.cosim_solver_settings["coupling_loop"])
 
     def Initialize(self):
-        self.solver_1.Initialize()
-        self.solver_2.Initialize()
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].Initialize()
 
-        # Initialize FSI
         self.num_coupling_iterations = self.cosim_solver_settings["num_coupling_iterations"]
         self.convergence_accelerator = convergence_accelerator_factory.CreateConvergenceAccelerator(
             self.cosim_solver_settings["convergence_accelerator_settings"])
         self.convergence_criteria = convergence_criteria_factory.CreateConvergenceCriteria(
-            self.cosim_solver_settings["convergence_criteria_settings"])
+            self.cosim_solver_settings["convergence_criteria_settings"], self.solvers)
 
     def Finalize(self):
-        self.solver_1.FinalizeSolutionStep()
-        self.solver_2.FinalizeSolutionStep()
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].Finalize()
 
     def AdvanceInTime(self, current_time):
-        new_time_1 = self.solver_1.AdvanceInTime(current_time)
-        new_time_2 = self.solver_2.AdvanceInTime(current_time)
+        new_time = self.solvers[self.solver_names[0]].AdvanceInTime(current_time)
+        for solver_name in self.solver_names[1:]:
+            new_time_2 = self.solvers[solver_name].AdvanceInTime(current_time)
+            if abs(new_time- new_time_2) > 1e-12:
+                raise Exception("Solver time mismatch")
+
         self.convergence_accelerator.AdvanceTimeStep()
 
-        if abs(new_time_1- new_time_2) > 1e-12:
-            raise Exception("Solver time mismatch")
-
-        return new_time_1
+        return new_time
 
     def Predict(self):
-        self.solver_1.Predict()
-        self.solver_2.Predict()
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].Predict()
 
     def InitializeSolutionStep(self):
-        self.solver_1.InitializeSolutionStep()
-        self.solver_2.InitializeSolutionStep()
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].InitializeSolutionStep()
 
     def FinalizeSolutionStep(self):
-        self.solver_1.FinalizeSolutionStep()
-        self.solver_2.FinalizeSolutionStep()
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].FinalizeSolutionStep()
 
     def SolveSolutionStep(self):
         for k in range(self.num_coupling_iterations):
-            self.solver_1.ImportData()
-            self.solver_1.SolveSolutionStep()
-            self.solver_1.ExportData()
-            self.solver_2.ImportData()
-            self.solver_2.SolveSolutionStep()
-            self.solver_2.ExportData()
+            for solver_name in self.solver_names:
+                solver = self.solvers[solver_name]
+                self.__SynchronizeInputData(solver, solver_name)
+                solver.SolveSolutionStep()
+                self.__SynchronizeOutputData(solver, solver_name)
             if self.convergence_criteria.IsConverged():
                 break
-            else:
-                self.convergence_accelerator.ComputeUpdate(...)
+            # else:
+            #     self.convergence_accelerator.ComputeUpdate(...)
 
 
     def ImportData(self, DataName, FromClient):
@@ -90,3 +99,15 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
         raise NotImplementedError("This needs to be implemented!")
     def MakeMeshAvailable(self, MeshName, ToClient):
         raise NotImplementedError("This needs to be implemented!")
+
+    def __SynchronizeInputData(self, solver, solver_name):
+        input_data_list = self.solver_cosim_details[solver_name]["input_data_list"]
+        for input_data in input_data_list:
+            from_solver = self.solvers[input_data["from_solver"]]
+            solver.ImportData(input_data["data_name"], from_solver)
+
+    def __SynchronizeOutputData(self, solver, solver_name):
+        output_data_list = self.solver_cosim_details[solver_name]["output_data_list"]
+        for output_data in output_data_list:
+            to_solver = self.solvers[output_data["to_solver"]]
+            solver.ImportData(output_data["data_name"], to_solver)

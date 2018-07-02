@@ -11,22 +11,46 @@
         "num_coupling_iterations" : 1,
         "convergence_accelerator_settings" :
         {
-            "type" : "aitken"
-
+            "type"          : "aitken",
+            "solver_name"   : "dummy_2",
+            "data_name"     : "DISPLACEMENT",
+            "geometry_name" : "dummy_smp",
+            "io_type"       : "kratos_signal_io"
         },
         "convergence_criteria_settings" :
+        {
+            "tolerance" : 1e-5,
+            "io_type"   : "kratos_signal_io",
+            "data_list" :
+            [
+                {
+                    "from_solver"   : "dummy_2",
+                    "data_name"     : "DISPLACEMENT",
+                    "geometry_name" : "dummy_smp"
+                }
+            ]
+        },
+        "coupling_loop":
         {
 
         },
         "solvers" :
         [
             {
+                "name" : "dummy_1",
                 "solver_type" : "dummy",
-                "time_step"  : 0.05
+                "time_step"  : 0.05,
+                "geometry_list" : [
+
+                ]
             },
             {
+                "name" : "dummy_2",
                 "solver_type" : "dummy",
-                "time_step"  : 0.05
+                "time_step"  : 0.05,
+                "geometry_list" : [
+
+                ]
             }
         ]
     }

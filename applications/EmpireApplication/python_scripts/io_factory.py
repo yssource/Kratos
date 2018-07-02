@@ -1,20 +1,25 @@
-from __future__ import print_function, absolute_import, division #makes KratosMultiphysics backward compatible with python 2.6 and 2.7
+from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
+available_ios = {
+    "kratos_field"  : "kratos_field_io",
+    "kratos_signal" : "kratos_signal_io"
+}
 
-def CreateIO(model, solver_settings):
+def CreateIO(io_settings):
+    """This function creates and returns the IO used for CoSimulation
+    New IOs have to be registered by adding them to "available_ios"
+    """
+    if (type(io_settings) != dict):
+        raise Exception("Input is expected to be provided as a python dictionary")
 
-    solver_type = solver_settings["solver_type"].GetString()
+    io_type = io_settings["io_type"]
 
-    if (solver_type == "kratos_fluid"):
-        solver_module_name = "kratos_fluid_solver"
-    elif (solver_type == "kratos_structural"):
-        solver_module_name = "kratos_structural_solver"
-    elif (solver_type == "kratos_empire"):
-        solver_module_name = "kratos_empire_solver"
+    if io_type in available_ios:
+        io_module = __import__(available_ios[io_type])
+        return io_module.Create(io_settings)
     else:
-        raise NameError("Requested solver not available")
-
-    solver_module = __import__(solver_module_name)
-    solver = solver_module.CreateSolver(model, solver_settings["solver_settings"])
-
-    return solver
+        err_msg  = 'The requested IO "' + io_type + '" is not available!\n'
+        err_msg += 'The following IOs are available:\n'
+        for avail_io in available_ios:
+            err_msg += "\t" + avail_io + "\n"
+        raise NameError(err_msg)

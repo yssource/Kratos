@@ -38,7 +38,7 @@ class CoSimulationAnalysis(object):
         self._GetSolver().Finalize()
 
     def InitializeSolutionStep(self):
-        print("\x1b[1;34m", "\nCoSimulation:","\x1b[0m\x1b[1;1m", "time={0:.12g}".format(self.time), " | step=", self.step, "\x1b[0m")
+        print("\x1b[1;34m", "\nCoSimulation:","\x1b[0m\x1b[1;1m", "time={0:.12g}".format(self.time), " | step="+ str(self.step), "\x1b[0m")
 
         self._GetSolver().InitializeSolutionStep()
 

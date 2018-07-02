@@ -74,15 +74,24 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
 
     def SolveSolutionStep(self):
         for k in range(self.num_coupling_iterations):
+            # print("\x1b[1;34m", "\tCoSimulation:","\x1b[0m\x1b[1;1m", "time={0:.12g}".format(self.time), " | step="+ str(self.step), "\x1b[0m")
+            print("    \x1b[1;36mCoupling iteration:\x1b[0m\x1b[1;1m", k+1, "/", self.num_coupling_iterations, "\x1b[0m")
             for solver_name in self.solver_names:
                 solver = self.solvers[solver_name]
                 self.__SynchronizeInputData(solver, solver_name)
                 solver.SolveSolutionStep()
                 self.__SynchronizeOutputData(solver, solver_name)
+
+            ## TODO print coupling information here => then it is printed all the time! .... possible? => maybe print from convergence criteria ...?
+
             if self.convergence_criteria.IsConverged():
+                print("    \x1b[1;32m##### CONVERGENCE AT INTERFACE WAS ACHIEVED ######\x1b[0m")
                 break
             # else:
             #     self.convergence_accelerator.ComputeUpdate(...)
+            if k+1 >= self.num_coupling_iterations:
+                print("    \x1b[1;31m##### CONVERGENCE AT INTERFACE WAS NOT ACHIEVED ######\x1b[0m")
+
 
 
     def ImportData(self, DataName, FromClient):

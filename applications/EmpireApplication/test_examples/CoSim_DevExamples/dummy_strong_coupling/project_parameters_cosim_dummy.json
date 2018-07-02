@@ -8,7 +8,7 @@
     {
         "solver_type" : "gauss_seidel_strong_coupling",
         "echo_level" : 0,
-        "num_coupling_iterations" : 1,
+        "num_coupling_iterations" : 5,
         "convergence_accelerator_settings" :
         {
             "type"          : "aitken",

@@ -2,7 +2,8 @@
     "problem_data" :
     {
         "start_time" : 0.0,
-        "end_time" : 1.0
+        "end_time" : 1.0,
+        "print_colors" : true
     },
     "solver_settings" :
     {

@@ -1,5 +1,8 @@
 from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
+import co_simulation_tools as cs_tools
+from co_simulation_tools import csprint, bold
+
 class CoSimulationAnalysis(object):
     """The base class for the CoSimulation-AnalysisStage
     It mimicks the AnalysisStage of Kratos but does NOT derive from it
@@ -10,6 +13,8 @@ class CoSimulationAnalysis(object):
             raise Exception("Input is expected to be provided as a python dictionary")
 
         self.cosim_settings = cosim_settings
+        if "print_colors" in self.cosim_settings["problem_data"]:
+            cs_tools.PRINT_COLORS = self.cosim_settings["problem_data"]["print_colors"]
 
     def Run(self):
         self.Initialize()
@@ -38,7 +43,7 @@ class CoSimulationAnalysis(object):
         self._GetSolver().Finalize()
 
     def InitializeSolutionStep(self):
-        print("\x1b[1;34m", "\nCoSimulation:","\x1b[0m\x1b[1;1m", "time={0:.12g}".format(self.time), " | step="+ str(self.step), "\x1b[0m")
+        csprint(0, bold("time={0:.12g}".format(self.time)+ " | step="+ str(self.step)))
 
         self._GetSolver().InitializeSolutionStep()
 
@@ -57,6 +62,6 @@ class CoSimulationAnalysis(object):
         """Create the solver
         """
         import python_solvers_wrapper_co_simulation as solvers_wrapper
-        return solvers_wrapper.CreateSolver(self.cosim_settings["solver_settings"])
+        return solvers_wrapper.CreateSolver(self.cosim_settings["solver_settings"], level=0)
 
 ## TODO add the if name==main stuff like in fluid and structure

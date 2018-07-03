@@ -8,13 +8,14 @@ import co_sim_convergence_accelerator_factory as convergence_accelerator_factory
 import co_sim_convergence_criteria_factory as convergence_criteria_factory
 import io_factory
 import co_simulation_tools as cosim_tools
+from co_simulation_tools import csprint, red, green, cyan, bold
 
-def CreateSolver(cosim_solver_settings):
-    return GaussSeidelStrongCouplingSolver(cosim_solver_settings)
+def CreateSolver(cosim_solver_settings, level):
+    return GaussSeidelStrongCouplingSolver(cosim_solver_settings, level)
 
 class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
-    def __init__(self, cosim_solver_settings):
-        super(GaussSeidelStrongCouplingSolver, self).__init__(cosim_solver_settings)
+    def __init__(self, cosim_solver_settings, level):
+        super(GaussSeidelStrongCouplingSolver, self).__init__(cosim_solver_settings, level)
 
         if not len(self.cosim_solver_settings["solvers"]) == 2:
             raise Exception("Exactly two solvers have to be specified for the GaussSeidelStrongCouplingSolver!")
@@ -30,7 +31,7 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
                 raise NameError('Solver name "' + solver_name + '" defined twice!')
             self.solver_names.append(solver_name)
             self.solvers[solver_name] = solvers_wrapper.CreateSolver(
-                self.cosim_solver_settings["solvers"][solver_name])
+                self.cosim_solver_settings["solvers"][solver_name], self.lvl)
 
         self.solver_cosim_details = cosim_tools.GetSolverCoSimulationDetails(
             self.cosim_solver_settings["coupling_loop"])
@@ -74,8 +75,7 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
 
     def SolveSolutionStep(self):
         for k in range(self.num_coupling_iterations):
-            # print("\x1b[1;34m", "\tCoSimulation:","\x1b[0m\x1b[1;1m", "time={0:.12g}".format(self.time), " | step="+ str(self.step), "\x1b[0m")
-            print("    \x1b[1;36mCoupling iteration:\x1b[0m\x1b[1;1m", k+1, "/", self.num_coupling_iterations, "\x1b[0m")
+            csprint(self.lvl, cyan("Coupling iteration: ")+bold(str(k+1)+" / " + str(self.num_coupling_iterations)))
             for solver_name in self.solver_names:
                 solver = self.solvers[solver_name]
                 self.__SynchronizeInputData(solver, solver_name)
@@ -85,12 +85,12 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
             ## TODO print coupling information here => then it is printed all the time! .... possible? => maybe print from convergence criteria ...?
 
             if self.convergence_criteria.IsConverged():
-                print("    \x1b[1;32m##### CONVERGENCE AT INTERFACE WAS ACHIEVED ######\x1b[0m")
+                csprint(self.lvl, green("##### CONVERGENCE AT INTERFACE WAS ACHIEVED #####"))
                 break
             # else:
             #     self.convergence_accelerator.ComputeUpdate(...)
             if k+1 >= self.num_coupling_iterations:
-                print("    \x1b[1;31m##### CONVERGENCE AT INTERFACE WAS NOT ACHIEVED ######\x1b[0m")
+                csprint(self.lvl, red("XXXXX CONVERGENCE AT INTERFACE WAS NOT ACHIEVED XXXXX"))
 
 
 

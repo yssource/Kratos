@@ -11,8 +11,7 @@ import io_factory
 
 class KratosBaseFieldSolver(CoSimulationBaseSolver):
     def __init__(self, cosim_solver_settings):
-        super(KratosBaseFieldSolver, self).__init__(cosim_solver_settings)
-
+        super(KratosBaseFieldSolver, self).__init__(cosim_solver_settings, level)
         self.model = KratosMultiphysics.Model()
 
         input_file_name = self.cosim_solver_settings["input_file"]

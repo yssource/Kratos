@@ -12,7 +12,7 @@ available_solvers = {
     "weak_coupling"                : "co_simulation_weak_coupling_solver"
 }
 
-def CreateSolver(cosim_solver_settings):
+def CreateSolver(cosim_solver_settings, level):
     """This function creates and returns the solvers used for CoSimulation
     New solvers have to be registered by adding them to "available_solvers"
     """
@@ -23,7 +23,7 @@ def CreateSolver(cosim_solver_settings):
 
     if solver_type in available_solvers:
         solver_module = __import__(available_solvers[solver_type])
-        solver = solver_module.CreateSolver(cosim_solver_settings)
+        solver = solver_module.CreateSolver(cosim_solver_settings, level+1)
         if not isinstance(solver, CoSimulationBaseSolver):
             err_msg  = 'The requested solver "' + solver_type
             err_msg += '" does not derive from "CoSimulationBaseSolver"!'

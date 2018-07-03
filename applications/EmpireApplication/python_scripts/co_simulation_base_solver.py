@@ -1,18 +1,19 @@
 from __future__ import print_function, absolute_import, division
 
-def CreateSolver(cosim_solver_settings):
-    return CoSimulationBaseSolver(cosim_solver_settings)
+def CreateSolver(cosim_solver_settings, level):
+    return CoSimulationBaseSolver(cosim_solver_settings, level)
 
 class CoSimulationBaseSolver(object):
     """The base class for the CoSimulation Solvers
     The intention is that every solver that derives from this class
     can be used standalone.
     """
-    def __init__(self, cosim_solver_settings):
+    def __init__(self, cosim_solver_settings, level):
         """Constructor of the Base-Solver
         Deriving classes should call it in their constructors
         """
         self.cosim_solver_settings = cosim_solver_settings
+        self.lvl = level
 
     def Initialize(self):
         pass

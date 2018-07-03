@@ -6,6 +6,8 @@ import numpy as np
 from numpy import linalg as la
 import math
 
+from co_simulation_tools import csprint, bold, green, red
+
 
 def CreateConvergenceCriteria(settings, solvers, level):
     return CoSimulationConvergenceCriteria(settings, solvers, level)
@@ -16,24 +18,40 @@ class CoSimulationConvergenceCriteria(object):
         self.io = io_factory.CreateIO(settings)
         self.solvers = solvers
         self.echo_level = 0
+        if "echo_level" in self.settings:
+            self.echo_level = self.settings["echo_level"]
         self.lvl = level
-        # self.counter = 0
+        self.tolerances = []
+        for data_entry in self.settings["data_list"]:
+            self.tolerances.append(data_entry["tolerance"])
+        data_size = len(self.settings["data_list"])
+
+    def InitializeSolutionStep(self):
+        self.old_data = [] # discard old data fields
+        for data_entry in self.settings["data_list"]:
+            self.old_data.append(self.__ImportData(data_entry))
 
     def IsConverged(self):
-        # self.counter += 1
-        # if self.counter > 3:
-        #     self.counter = 0
-        #     return True
-        # else:
-        #     return False
-        # import the data fields
-        for data in self.settings["data_list"]:
-            data_name = data["data_name"]
-            geometry_name = data["geometry_name"]
-            from_solver = data["from_solver"]
-            data = self.io.ImportData(data_name, geometry_name, self.solvers[from_solver])
+        convergence_list = []
+        idx = 0
+        for data_entry in self.settings["data_list"]:
+            residual = self.__ImportData(data_entry) - self.old_data[idx]
+            norm = la.norm(residual) / math.sqrt(residual.size)
+            convergence_list.append(norm < self.tolerances[idx])
+            if self.echo_level > 0:
+                info_msg  = 'Convergence for "'+bold(data_entry["data_name"])+'": '
+                if convergence_list[idx]:
+                    info_msg += green("ACHIEVED")
+                else:
+                    info_msg += red("NOT ACHIEVED")
+                info_msg += " : norm = " + str(norm) + " | tol = " + str(self.tolerances[idx])
+                csprint(self.lvl, info_msg)
+            idx += 1
 
-            # compute norms and stuff ...
+        return min(convergence_list) # return false if any of them did not converge!
 
-        return False
-        # return la.norm(data_field)/math.sqrt(data_field.size) < self.abs_tol
+    def __ImportData(self, data_entry):
+        data_name = data_entry["data_name"]
+        geometry_name = data_entry["geometry_name"]
+        from_solver = data_entry["from_solver"]
+        return self.io.ImportData(data_name, geometry_name, self.solvers[from_solver])

@@ -10,7 +10,7 @@ from co_simulation_base_solver import CoSimulationBaseSolver
 import io_factory
 
 class KratosBaseFieldSolver(CoSimulationBaseSolver):
-    def __init__(self, cosim_solver_settings):
+    def __init__(self, cosim_solver_settings, level):
         super(KratosBaseFieldSolver, self).__init__(cosim_solver_settings, level)
         self.model = KratosMultiphysics.Model()
 

@@ -1,0 +1,98 @@
+{
+    "problem_data" :
+    {
+        "start_time" : 0.0,
+        "end_time" : 1.0,
+        "print_colors" : true
+    },
+    "solver_settings" :
+    {
+        "solver_type" : "gauss_seidel_strong_coupling",
+        "echo_level" : 0,
+        "num_coupling_iterations" : 1,
+        "convergence_accelerator_settings" :
+        {
+            "type"          : "aitken",
+            "solver_name"   : "dummy2",
+            "data_name"     : "DISPLACEMENT",
+            "geometry_name" : "dummy_smp",
+            "io_type"       : "kratos_signal_io"
+        },
+        "convergence_criteria_settings" :
+        {
+            "io_type"   : "kratos_signal",
+            "echo_level": 1,
+            "data_list" :
+            [
+                {
+                    "from_solver"   : "dummy2",
+                    "data_name"     : "DISPLACEMENT",
+                    "geometry_name" : "Structure.DISPLACEMENT_Displacement_Auto1",
+                    "tolerance"     : 1e-5
+                },
+                {
+                    "from_solver"   : "dummy2",
+                    "data_name"     : "POINT_LOAD",
+                    "geometry_name" : "Structure.DISPLACEMENT_Displacement_Auto1",
+                    "tolerance"     : 1e-3
+                }
+            ]
+        },
+        "coupling_loop":
+        [
+        {
+            "name": "dummy1",
+            "output_data_list": [
+                {
+                    "to_solver": "dummy2",
+                    "data_name": "POINT_LOAD",
+                    "geometry_name" : "smp_1"
+                }
+            ],
+            "input_data_list": [
+                {
+                    "from_solver": "dummy2",
+                    "data_name": "DISPLACEMENT",
+                    "geometry_name" : "smp_1"
+                }
+            ]
+        },
+        {
+            "name": "dummy2",
+            "output_data_list": [
+                {
+                    "to_solver": "dummy1",
+                    "data_name": "DISPLACEMENT",
+                    "geometry_name" : "smp_2"
+                }
+            ],
+            "input_data_list": [
+                {
+                    "from_solver": "dummy1",
+                    "data_name": "POINT_LOAD",
+                    "geometry_name" : "smp_2"
+                }
+            ]
+        }
+        ],
+        "solvers" :
+        {
+            "dummy1":
+            {
+                "solver_type" : "kratos_structural",
+                "input_file"  : "ProjectParametersStructural",
+                "geometry_list" : [
+                    "smp_1"
+                ]
+            },
+            "dummy2" :
+            {
+                "solver_type" : "kratos_structural",
+                "input_file"  : "ProjectParametersStructural",
+                "geometry_list" : [
+                    "smp_2"
+                ]
+            }
+        }
+    }
+}

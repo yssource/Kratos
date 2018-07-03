@@ -68,6 +68,7 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
     def InitializeSolutionStep(self):
         for solver_name in self.solver_names:
             self.solvers[solver_name].InitializeSolutionStep()
+        self.convergence_criteria.InitializeSolutionStep()
 
     def FinalizeSolutionStep(self):
         for solver_name in self.solver_names:
@@ -78,9 +79,9 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
             csprint(self.lvl, cyan("Coupling iteration: ")+bold(str(k+1)+" / " + str(self.num_coupling_iterations)))
             for solver_name in self.solver_names:
                 solver = self.solvers[solver_name]
-                self.__SynchronizeInputData(solver, solver_name)
+                # self.__SynchronizeInputData(solver, solver_name)
                 solver.SolveSolutionStep()
-                self.__SynchronizeOutputData(solver, solver_name)
+                # self.__SynchronizeOutputData(solver, solver_name)
 
             ## TODO print coupling information here => then it is printed all the time! .... possible? => maybe print from convergence criteria ...?
             if self.convergence_criteria.IsConverged():

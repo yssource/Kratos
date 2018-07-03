@@ -8,7 +8,7 @@ import KratosMultiphysics.EmpireApplication
 from co_simulation_analysis import CoSimulationAnalysis
 import json
 
-parameter_file_name = "project_parameters_cosim_pure_Struct.json"
+parameter_file_name = "project_parameters_cosim_struct.json"
 
 with open(parameter_file_name, 'r') as parameter_file:
     cosim_parameters = json.load(parameter_file)

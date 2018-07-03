@@ -101,4 +101,4 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
         output_data_list = self.solver_cosim_details[solver_name]["output_data_list"]
         for output_data in output_data_list:
             to_solver = self.solvers[output_data["to_solver"]]
-            solver.ImportData(output_data["data_name"], to_solver)
+            solver.ExportData(output_data["data_name"], to_solver)

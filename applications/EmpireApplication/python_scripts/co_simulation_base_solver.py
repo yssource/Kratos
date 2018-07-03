@@ -1,5 +1,8 @@
 from __future__ import print_function, absolute_import, division
 
+# Other imports
+import io_factory
+
 def CreateSolver(cosim_solver_settings, level):
     return CoSimulationBaseSolver(cosim_solver_settings, level)
 
@@ -14,6 +17,10 @@ class CoSimulationBaseSolver(object):
         """
         self.cosim_solver_settings = cosim_solver_settings
         self.lvl = level
+
+        self.io = None
+        if "io_settings" in self.cosim_solver_settings:
+            self.io = io_factory.CreateIO(self.cosim_solver_settings["io_settings"])
 
     def Initialize(self):
         pass
@@ -39,17 +46,26 @@ class CoSimulationBaseSolver(object):
     def SolveSolutionStep(self):
         pass
 
-    def ImportData(self, DataName, FromClient):
-        pass
-    def ImportMesh(self, MeshName, FromClient):
-        pass
+    def ImportData(self, data_name, from_client):
+        if self.io:
+            self.io.ImportData(data_name, from_client)
+    def ImportMesh(self, mesh_name, from_client):
+        if self.io:
+            self.io.ImportMesh(mesh_name, from_client)
 
-    def ExportData(self, DataName, ToClient):
-        pass
-    def ExportMesh(self, MeshName, ToClient):
-        pass
+    def ExportData(self, data_name, to_client):
+        if self.io:
+            self.io.ExportData(data_name, to_client)
+    def ExportMesh(self, mesh_name, to_client):
+        if self.io:
+            self.io.ExportMesh(mesh_name, to_client)
 
-    def MakeDataAvailable(self, DataName, ToClient):
-        pass
-    def MakeMeshAvailable(self, MeshName, ToClient):
-        pass
+    def MakeDataAvailable(self, data_name, to_client):
+        if self.io:
+            self.io.MakeDataAvailable(data_name, to_client)
+    def MakeMeshAvailable(self, mesh_name, to_client):
+        if self.io:
+            self.io.MakeMeshAvailable(mesh_name, to_client)
+
+    def GetDataDefinition(self, data_name):
+        return self.cosim_solver_settings["data"][data_name]

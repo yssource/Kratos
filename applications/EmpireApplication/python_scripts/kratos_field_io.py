@@ -11,17 +11,28 @@ class KratosFieldIO(object):
     def __init__(self, settings):
         pass
 
-    def ImportData(self, DataName, FromClient):
+    def ImportData(self, data_name, from_client):
+        print("IN IMPORTDATA", data_name, from_client)
+
+
+
+
+
+
+
+
+
+
         pass
-    def ImportMesh(self, MeshName, FromClient):
+    def ImportMesh(self, mesh_name, from_client):
         pass
 
-    def ExportData(self, DataName, ToClient):
+    def ExportData(self, data_name, to_client):
         pass
-    def ExportMesh(self, MeshName, ToClient):
+    def ExportMesh(self, mesh_name, to_client):
         pass
 
-    def MakeDataAvailable(self, DataName, ToClient):
+    def MakeDataAvailable(self, data_name, to_client):
         pass
-    def MakeMeshAvailable(self, MeshName, ToClient):
+    def MakeMeshAvailable(self, mesh_name, to_client):
         pass

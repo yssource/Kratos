@@ -6,8 +6,6 @@ import KratosMultiphysics
 # Importing the base class
 from co_simulation_base_solver import CoSimulationBaseSolver
 
-# Other imports
-import io_factory
 
 class KratosBaseFieldSolver(CoSimulationBaseSolver):
     def __init__(self, cosim_solver_settings, level):
@@ -22,6 +20,7 @@ class KratosBaseFieldSolver(CoSimulationBaseSolver):
             parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
         self.project_parameters = KratosMultiphysics.Parameters(parameters)
+
 
     def Initialize(self):
         self._GetAnalysisStage().Initialize()
@@ -49,20 +48,6 @@ class KratosBaseFieldSolver(CoSimulationBaseSolver):
     def SolveSolutionStep(self):
         self._GetAnalysisStage()._GetSolver().SolveSolutionStep()
 
-    def ImportData(self, DataName, FromClient):
-        raise NotImplementedError("This needs to be implemented!")
-    def ImportMesh(self, MeshName, FromClient):
-        raise NotImplementedError("This needs to be implemented!")
-
-    def ExportData(self, DataName, ToClient):
-        raise NotImplementedError("This needs to be implemented!")
-    def ExportMesh(self, MeshName, ToClient):
-        raise NotImplementedError("This needs to be implemented!")
-
-    def MakeDataAvailable(self, DataName, ToClient):
-        raise NotImplementedError("This needs to be implemented!")
-    def MakeMeshAvailable(self, MeshName, ToClient):
-        raise NotImplementedError("This needs to be implemented!")
 
     def _GetAnalysisStage(self):
         if not hasattr(self, '_analysis_stage'):

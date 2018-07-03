@@ -16,25 +16,25 @@
             "solver_name"   : "dummy2",
             "data_name"     : "DISPLACEMENT",
             "geometry_name" : "dummy_smp",
-            "io_type"       : "kratos_signal_io"
+            "io_type"       : "kratos_signal"
         },
         "convergence_criteria_settings" :
         {
             "io_type"   : "kratos_signal",
-            "echo_level": 1,
+            "echo_level": 2,
             "data_list" :
             [
                 {
                     "from_solver"   : "dummy2",
-                    "data_name"     : "DISPLACEMENT",
-                    "geometry_name" : "Structure.DISPLACEMENT_Displacement_Auto1",
-                    "tolerance"     : 1e-5
+                    "data_name"     : "displacement",
+                    "abs_tolerance" : 1e-4,
+                    "rel_tolerance" : 1e-5
                 },
                 {
                     "from_solver"   : "dummy2",
-                    "data_name"     : "POINT_LOAD",
-                    "geometry_name" : "Structure.DISPLACEMENT_Displacement_Auto1",
-                    "tolerance"     : 1e-3
+                    "data_name"     : "point_load",
+                    "abs_tolerance" : 1e-6,
+                    "rel_tolerance" : 1e-7
                 }
             ]
         },
@@ -44,16 +44,16 @@
             "name": "dummy1",
             "output_data_list": [
                 {
-                    "to_solver": "dummy2",
-                    "data_name": "POINT_LOAD",
-                    "geometry_name" : "smp_1"
+                    "to_solver" : "dummy2",
+                    "data_name" : "reaction",
+                    "io_args"   : []
                 }
             ],
             "input_data_list": [
                 {
-                    "from_solver": "dummy2",
-                    "data_name": "DISPLACEMENT",
-                    "geometry_name" : "smp_1"
+                    "from_solver" : "dummy2",
+                    "data_name"   : "m_disp",
+                    "io_args"     : []
                 }
             ]
         },
@@ -61,16 +61,16 @@
             "name": "dummy2",
             "output_data_list": [
                 {
-                    "to_solver": "dummy1",
-                    "data_name": "DISPLACEMENT",
-                    "geometry_name" : "smp_2"
+                    "to_solver" : "dummy1",
+                    "data_name" : "displacement",
+                    "io_args"   : []
                 }
             ],
             "input_data_list": [
                 {
-                    "from_solver": "dummy1",
-                    "data_name": "POINT_LOAD",
-                    "geometry_name" : "smp_2"
+                    "from_solver" : "dummy1",
+                    "data_name"   : "point_load",
+                    "io_args"     : []
                 }
             ]
         }
@@ -81,17 +81,35 @@
             {
                 "solver_type" : "kratos_structural",
                 "input_file"  : "ProjectParametersStructural",
-                "geometry_list" : [
-                    "smp_1"
-                ]
+                "data" : {
+                    "m_disp" : {
+                        "geometry_name" : "Structure.DISPLACEMENT_Displacement_Auto1",
+                        "data_identifier" : "MESH_DISPLACEMENT"
+                    },
+                    "reaction" : {
+                        "geometry_name" : "Structure.DISPLACEMENT_Displacement_Auto1",
+                        "data_identifier" : "REACTION"
+                    }
+                }
             },
             "dummy2" :
             {
                 "solver_type" : "kratos_structural",
                 "input_file"  : "ProjectParametersStructural",
-                "geometry_list" : [
-                    "smp_2"
-                ]
+                "data" : {
+                    "displacement" : {
+                        "geometry_name" : "Structure.DISPLACEMENT_Displacement_Auto1",
+                        "data_identifier" : "DISPLACEMENT"
+                    },
+                    "point_load" : {
+                        "geometry_name" : "Structure.DISPLACEMENT_Displacement_Auto1",
+                        "data_identifier" : "POINT_LOAD"
+                    }
+                },
+                "io_settings":
+                {
+                    "io_type" : "kratos_field"
+                }
             }
         }
     }

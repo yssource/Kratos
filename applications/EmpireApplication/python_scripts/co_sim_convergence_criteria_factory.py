@@ -64,6 +64,5 @@ class CoSimulationConvergenceCriteria(object):
 
     def __ImportData(self, data_entry):
         data_name = data_entry["data_name"]
-        geometry_name = data_entry["geometry_name"]
         from_solver = data_entry["from_solver"]
-        return self.io.ImportData(data_name, geometry_name, self.solvers[from_solver])
+        return self.io.ImportData(data_name, self.solvers[from_solver])

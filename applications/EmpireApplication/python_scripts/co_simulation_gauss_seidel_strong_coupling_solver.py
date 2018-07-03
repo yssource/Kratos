@@ -79,9 +79,9 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
             csprint(self.lvl, cyan("Coupling iteration: ")+bold(str(k+1)+" / " + str(self.num_coupling_iterations)))
             for solver_name in self.solver_names:
                 solver = self.solvers[solver_name]
-                # self.__SynchronizeInputData(solver, solver_name)
+                self.__SynchronizeInputData(solver, solver_name)
                 solver.SolveSolutionStep()
-                # self.__SynchronizeOutputData(solver, solver_name)
+                self.__SynchronizeOutputData(solver, solver_name)
 
             if self.convergence_criteria.IsConverged():
                 csprint(self.lvl, green("##### CONVERGENCE AT INTERFACE WAS ACHIEVED #####"))
@@ -90,23 +90,6 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
             #     self.convergence_accelerator.ComputeUpdate(...)
             if k+1 >= self.num_coupling_iterations:
                 csprint(self.lvl, red("XXXXX CONVERGENCE AT INTERFACE WAS NOT ACHIEVED XXXXX"))
-
-
-
-    def ImportData(self, DataName, FromClient):
-        raise NotImplementedError("This needs to be implemented!")
-    def ImportMesh(self, MeshName, FromClient):
-        raise NotImplementedError("This needs to be implemented!")
-
-    def ExportData(self, DataName, ToClient):
-        raise NotImplementedError("This needs to be implemented!")
-    def ExportMesh(self, MeshName, ToClient):
-        raise NotImplementedError("This needs to be implemented!")
-
-    def MakeDataAvailable(self, DataName, ToClient):
-        raise NotImplementedError("This needs to be implemented!")
-    def MakeMeshAvailable(self, MeshName, ToClient):
-        raise NotImplementedError("This needs to be implemented!")
 
     def __SynchronizeInputData(self, solver, solver_name):
         input_data_list = self.solver_cosim_details[solver_name]["input_data_list"]

@@ -12,10 +12,14 @@ class KratosSignalIO(object):
     def __init__(self, settings):
         pass
 
-    def ImportData(self, data_name, geometry_name, from_client):
+    def ImportData(self, data_name, from_client):
         # TODO check if var in ModelPart!
+        data_definition = from_client.GetDataDefinition(data_name)
+        geometry_name = data_definition["geometry_name"]
+        var_name = data_definition["data_identifier"]
+
         model_part = from_client.model[geometry_name]
-        kratos_var = KratosMultiphysics.KratosGlobals.GetVariable(data_name)
+        kratos_var = KratosMultiphysics.KratosGlobals.GetVariable(var_name)
 
         if type(kratos_var) == KratosMultiphysics.DoubleVariable or type(kratos_var) == KratosMultiphysics.Array1DComponentVariable:
             data = ExtractData(model_part, kratos_var)

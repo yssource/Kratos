@@ -197,7 +197,14 @@ void ModelPartIO::WriteModelPart(ModelPart& rModelPart)
     BuiltinTimer timer;
     Internals::WriteVariablesList(*mpFile, mPrefix, rModelPart);
     Internals::WriteBufferSize(*mpFile, mPrefix, rModelPart.GetBufferSize());
-    WriteProperties(rModelPart.rProperties());
+    if (rModelPart.IsSubModelPart())
+    {
+        WriteProperties( rModelPart.GetParentModelPart()->rProperties());
+    }
+    else
+    {
+        WriteProperties(rModelPart.rProperties());
+    }
     Internals::WriteDataValueContainer(*mpFile, mPrefix + "/ProcessInfo", rModelPart.GetProcessInfo());
     rModelPart.Nodes().Sort(); // Avoid inadvertently reordering partway through
                                // the writing process.

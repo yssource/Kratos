@@ -9,7 +9,7 @@
     {
         "solver_type" : "gauss_seidel_strong_coupling",
         "echo_level" : 0,
-        "num_coupling_iterations" : 5,
+        "num_coupling_iterations" : 1,
         "convergence_accelerator_settings" :
         {
             "type"          : "aitken",
@@ -38,13 +38,15 @@
             "output_data_list": [
                 {
                     "to_solver": "dummy2",
-                    "data_name": "POINT_LOAD"
+                    "data_name": "POINT_LOAD",
+                    "geometry_name" : "smp_1"
                 }
             ],
             "input_data_list": [
                 {
                     "from_solver": "dummy2",
-                    "data_name": "DISPLACEMENT"
+                    "data_name": "DISPLACEMENT",
+                    "geometry_name" : "smp_1"
                 }
             ]
         },
@@ -53,13 +55,15 @@
             "output_data_list": [
                 {
                     "to_solver": "dummy1",
-                    "data_name": "DISPLACEMENT"
+                    "data_name": "DISPLACEMENT",
+                    "geometry_name" : "smp_2"
                 }
             ],
             "input_data_list": [
                 {
                     "from_solver": "dummy1",
-                    "data_name": "POINT_LOAD"
+                    "data_name": "POINT_LOAD",
+                    "geometry_name" : "smp_2"
                 }
             ]
         }
@@ -71,7 +75,7 @@
                 "solver_type" : "dummy",
                 "time_step"  : 0.05,
                 "geometry_list" : [
-
+                    "smp_1"
                 ]
             },
             "dummy2" :
@@ -79,7 +83,7 @@
                 "solver_type" : "dummy",
                 "time_step"  : 0.05,
                 "geometry_list" : [
-
+                    "smp_2"
                 ]
             }
         }

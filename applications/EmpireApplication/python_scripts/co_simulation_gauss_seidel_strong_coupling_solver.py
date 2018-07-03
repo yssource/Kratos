@@ -44,7 +44,7 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
         self.convergence_accelerator = convergence_accelerator_factory.CreateConvergenceAccelerator(
             self.cosim_solver_settings["convergence_accelerator_settings"])
         self.convergence_criteria = convergence_criteria_factory.CreateConvergenceCriteria(
-            self.cosim_solver_settings["convergence_criteria_settings"], self.solvers)
+            self.cosim_solver_settings["convergence_criteria_settings"], self.solvers, self.lvl)
 
     def Finalize(self):
         for solver_name in self.solver_names:
@@ -83,7 +83,6 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
                 self.__SynchronizeOutputData(solver, solver_name)
 
             ## TODO print coupling information here => then it is printed all the time! .... possible? => maybe print from convergence criteria ...?
-
             if self.convergence_criteria.IsConverged():
                 csprint(self.lvl, green("##### CONVERGENCE AT INTERFACE WAS ACHIEVED #####"))
                 break

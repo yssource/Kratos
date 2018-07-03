@@ -3,6 +3,8 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 # Importing the Kratos Library
 import KratosMultiphysics
 
+import numpy as np
+
 def Create(io_settings):
     return KratosSignalIO(io_settings)
 
@@ -11,6 +13,28 @@ class KratosSignalIO(object):
         pass
 
     def ImportData(self, data_name, geometry_name, from_client):
+        model_part = from_client.model[geometry_name]
+        kratos_var = KratosMultiphysics.KratosGlobals.GetVariable(data_name)
+
+        if type(kratos_var) == KratosMultiphysics.DoubleVariable:
+            data = __ExtractData(model_part, kratos_var)
+        elif type(kratos_var) == KratosMultiphysics.Array1DVariable3:
+            domain_size = model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]
+            if not domain_size in [1,2,3]:
+                raise Exception("DOMAIN_SIZE has to be 1, 2 or 3!")
+            data = np.array()
+            ext = ["_X", "_Y", "_Z"]
+            for i in range(domain_size):
+                component_var = KratosMultiphysics.KratosGlobals.GetVariable(kratos_var.Name()+ext[i])
+                data.append(__ExtractData(model_part, component_var))
+        elif type(kratos_var) == KratosMultiphysics.Array1DComponentVariable:
+            data = __ExtractData(model_part, kratos_var)
+        else:
+            err_msg  = 'Type of variable "' + kratos_var.Name() + '" is not valid\n'
+            err_msg += 'It can only be double, component or array3d!'
+            raise Exception(err_msg)
+
+        return data
 
 
 
@@ -21,8 +45,6 @@ class KratosSignalIO(object):
 
 
 
-
-        pass
     def ImportMesh(self, MeshName, FromClient):
         pass
 
@@ -35,3 +57,12 @@ class KratosSignalIO(object):
         pass
     def MakeMeshAvailable(self, MeshName, ToClient):
         pass
+
+    def __ExtractData(model_part, kratos_var):
+        num_nodes = model_part.NumberOfNodes()
+        data = np.zeros(num_nodes)
+        idx = 0
+        for node in model_part.Nodes:
+            data[idx] = node.GetSolutionStepValue(kratos_var)
+            idx += 1
+        return data

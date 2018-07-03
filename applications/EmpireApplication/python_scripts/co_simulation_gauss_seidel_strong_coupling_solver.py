@@ -58,6 +58,7 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
                 raise Exception("Solver time mismatch")
 
         self.convergence_accelerator.AdvanceTimeStep()
+        self.convergence_criteria.AdvanceInTime()
 
         return new_time
 
@@ -68,7 +69,6 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
     def InitializeSolutionStep(self):
         for solver_name in self.solver_names:
             self.solvers[solver_name].InitializeSolutionStep()
-        self.convergence_criteria.InitializeSolutionStep()
 
     def FinalizeSolutionStep(self):
         for solver_name in self.solver_names:
@@ -83,7 +83,6 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
                 solver.SolveSolutionStep()
                 # self.__SynchronizeOutputData(solver, solver_name)
 
-            ## TODO print coupling information here => then it is printed all the time! .... possible? => maybe print from convergence criteria ...?
             if self.convergence_criteria.IsConverged():
                 csprint(self.lvl, green("##### CONVERGENCE AT INTERFACE WAS ACHIEVED #####"))
                 break

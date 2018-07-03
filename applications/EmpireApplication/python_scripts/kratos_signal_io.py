@@ -42,7 +42,7 @@ class KratosSignalIO(object):
         pass
 
     def ExportData(self, DataName, ToClient):
-        pass
+        raise NotImplementedError("Implement me!")
     def ExportMesh(self, MeshName, ToClient):
         pass
 

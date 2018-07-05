@@ -3,7 +3,7 @@ from __future__ import print_function, absolute_import, division
 # Importing the base class
 from co_simulation_base_solver import CoSimulationBaseSolver
 
-# other imports
+# Other imports
 import co_simulation_convergence_accelerator_factory as convergence_accelerator_factory
 import co_simulation_convergence_criteria_factory as convergence_criteria_factory
 import co_simulation_tools as cosim_tools
@@ -45,7 +45,7 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
 
         self.num_coupling_iterations = self.cosim_solver_settings["num_coupling_iterations"]
         self.convergence_accelerator = convergence_accelerator_factory.CreateConvergenceAccelerator(
-            self.cosim_solver_settings["convergence_accelerator_settings"])
+            self.cosim_solver_settings["convergence_accelerator_settings"], self.solvers, self.cosim_solver_details, self.lvl)
         self.convergence_criteria = convergence_criteria_factory.CreateConvergenceCriteria(
             self.cosim_solver_settings["convergence_criteria_settings"], self.solvers, self.cosim_solver_details, self.lvl)
 
@@ -60,7 +60,7 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
             if abs(new_time- new_time_2) > 1e-12:
                 raise Exception("Solver time mismatch")
 
-        self.convergence_accelerator.AdvanceTimeStep()
+        self.convergence_accelerator.AdvanceInTime()
         self.convergence_criteria.AdvanceInTime()
 
         return new_time

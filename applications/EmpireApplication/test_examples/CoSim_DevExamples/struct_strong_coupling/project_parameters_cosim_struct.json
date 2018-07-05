@@ -64,7 +64,10 @@
             "output_data_list": [
                 {
                     "to_solver" : "dummy1",
-                    "data_name" : "displacement_1"
+                    "data_name" : "displacement_1",
+                    "io_settings"   : {
+                        "mapper_type" : "nearest_neighbor"
+                    }
                 },
                 {
                     "to_solver" : "dummy1",
@@ -76,7 +79,8 @@
                     "from_solver" : "dummy1",
                     "data_name"   : "load",
                     "io_settings"   : {
-                        "mapper_type" : "nearest_neighbor"
+                        "mapper_type" : "nearest_neighbor",
+                        "mapper_args" : ["add_values", "swap_sign"]
                     }
                 }
             ]
@@ -89,16 +93,17 @@
                 "solver_type" : "kratos_structural",
                 "input_file"  : "ProjectParametersStructural",
                 "io_settings" : {
-                    "io_type"     : "kratos_field"
+                    "io_type"     : "kratos_field",
+                    "echo_level"  : 3
                 },
                 "data" : {
                     "displacement_1" : {
                         "geometry_name" : "Structure.DISPLACEMENT_Displacement_Auto1",
-                        "data_identifier" : "MESH_DISPLACEMENT"
+                        "data_identifier" : "ANGULAR_VELOCITY"
                     },
                     "displacement_2" : {
                         "geometry_name" : "Structure.PointLoad3D_Load_on_points_Auto1",
-                        "data_identifier" : "MESH_DISPLACEMENT"
+                        "data_identifier" : "ANGULAR_VELOCITY"
                     },
                     "load" : {
                         "geometry_name" : "Structure.DISPLACEMENT_Displacement_Auto1",
@@ -111,7 +116,8 @@
                 "solver_type" : "kratos_structural",
                 "input_file"  : "ProjectParametersStructural",
                 "io_settings" : {
-                    "io_type"     : "kratos_field"
+                    "io_type"     : "kratos_field",
+                    "echo_level"  : 4
                 },
                 "data" : {
                     "displacement_1" : {

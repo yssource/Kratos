@@ -7,6 +7,7 @@ def GetSolverCoSimulationDetails(co_simulation_solver_settings):
     # TODO check if the data is consitently defined! => maybe do at another place though...
     # - input in one is output in another
     # - one IO is defined for each data_name
+    # - if the same data is defined multiple times
     return solver_cosim_details
 
 PRINT_COLORS = False # Global var to specify if colors should be printed

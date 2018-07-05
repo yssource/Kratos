@@ -32,7 +32,7 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
             self.solver_names.append(solver_name)
             self.cosim_solver_settings["solvers"][solver_name]["name"] = solver_name # adding the name such that the solver can identify itself
             self.solvers[solver_name] = solvers_wrapper.CreateSolver(
-                self.cosim_solver_settings["solvers"][solver_name], self.lvl)
+                self.cosim_solver_settings["solvers"][solver_name], self.lvl-1) # -1 to have solver prints on same lvl
 
         self.cosim_solver_details = cosim_tools.GetSolverCoSimulationDetails(
             self.cosim_solver_settings["coupling_loop"])

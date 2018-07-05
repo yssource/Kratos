@@ -14,6 +14,9 @@ class CoSimulationBaseIO(object):
         self.solver_name = solver_name
         self.cosim_solver_details = cosim_solver_details
         self.lvl = level
+        self.echo_level = 0
+        if "echo_level" in self.settings:
+            self.echo_level = self.settings["echo_level"]
 
     def ImportData(self, data_name, from_client):
         pass

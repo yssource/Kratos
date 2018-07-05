@@ -4,7 +4,9 @@ def GetSolverCoSimulationDetails(co_simulation_solver_settings):
     for solver_settings in co_simulation_solver_settings:
         solver_name = solver_settings["name"]
         solver_cosim_details[solver_name] = solver_settings
-
+    # TODO check if the data is consitently defined! => maybe do at another place though...
+    # - input in one is output in another
+    # - one IO is defined for each data_name
     return solver_cosim_details
 
 PRINT_COLORS = False # Global var to specify if colors should be printed

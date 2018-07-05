@@ -30,21 +30,25 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
             if solver_name in self.solver_names:
                 raise NameError('Solver name "' + solver_name + '" defined twice!')
             self.solver_names.append(solver_name)
+            self.cosim_solver_settings["solvers"][solver_name]["name"] = solver_name # adding the name such that the solver can identify itself
             self.solvers[solver_name] = solvers_wrapper.CreateSolver(
                 self.cosim_solver_settings["solvers"][solver_name], self.lvl)
 
-        self.solver_cosim_details = cosim_tools.GetSolverCoSimulationDetails(
+        self.cosim_solver_details = cosim_tools.GetSolverCoSimulationDetails(
             self.cosim_solver_settings["coupling_loop"])
 
     def Initialize(self):
         for solver_name in self.solver_names:
             self.solvers[solver_name].Initialize()
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].InitializeIO(self.solvers, self.cosim_solver_details)
+
 
         self.num_coupling_iterations = self.cosim_solver_settings["num_coupling_iterations"]
         self.convergence_accelerator = convergence_accelerator_factory.CreateConvergenceAccelerator(
             self.cosim_solver_settings["convergence_accelerator_settings"])
         self.convergence_criteria = convergence_criteria_factory.CreateConvergenceCriteria(
-            self.cosim_solver_settings["convergence_criteria_settings"], self.solvers, self.lvl)
+            self.cosim_solver_settings["convergence_criteria_settings"], self.solvers, self.cosim_solver_details, self.lvl)
 
     def Finalize(self):
         for solver_name in self.solver_names:
@@ -92,13 +96,13 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
                 csprint(self.lvl, red("XXXXX CONVERGENCE AT INTERFACE WAS NOT ACHIEVED XXXXX"))
 
     def __SynchronizeInputData(self, solver, solver_name):
-        input_data_list = self.solver_cosim_details[solver_name]["input_data_list"]
+        input_data_list = self.cosim_solver_details[solver_name]["input_data_list"]
         for input_data in input_data_list:
             from_solver = self.solvers[input_data["from_solver"]]
             solver.ImportData(input_data["data_name"], from_solver)
 
     def __SynchronizeOutputData(self, solver, solver_name):
-        output_data_list = self.solver_cosim_details[solver_name]["output_data_list"]
+        output_data_list = self.cosim_solver_details[solver_name]["output_data_list"]
         for output_data in output_data_list:
             to_solver = self.solvers[output_data["to_solver"]]
             solver.ExportData(output_data["data_name"], to_solver)

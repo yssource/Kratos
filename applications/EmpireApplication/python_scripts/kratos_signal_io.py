@@ -3,14 +3,16 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 # Importing the Kratos Library
 import KratosMultiphysics
 
+# Importing the base class
+from co_sim_base_io import CoSimulationBaseIO
+
+# Other imports
 import numpy as np
 
-def Create(io_settings):
-    return KratosSignalIO(io_settings)
+def Create(io_settings, solvers, solver_name, cosim_solver_details, level):
+    return KratosSignalIO(io_settings, solvers, solver_name, cosim_solver_details, level)
 
-class KratosSignalIO(object):
-    def __init__(self, settings):
-        pass
+class KratosSignalIO(CoSimulationBaseIO):
 
     def ImportData(self, data_name, from_client):
         # TODO check if var in ModelPart!

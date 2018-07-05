@@ -36,7 +36,14 @@ class SDofSolver(CoSimulationBaseSolver):
 
         self.initial_displacement = parameters["initial_values"]["displacement"]
         self.initial_velocity = parameters["initial_values"]["velocity"]
-        self.initial_acceleration = 0.0
+
+        self.force = parameters["boundary_conditions"]["external_load"]
+
+        #calculate initial acceleration
+        factor = self.force - self.stiffness * self.initial_displacement
+        self.initial_acceleration = (1/self.mass) * factor
+
+
 
         beta = 0.25 * (1- self.alpha_m + self.alpha_f)**2
         gamma =  0.50 - self.alpha_m + self.alpha_f
@@ -64,6 +71,11 @@ class SDofSolver(CoSimulationBaseSolver):
         if os.path.isfile("results_sdof.txt"):
             os.remove("results_sdof.txt")
 
+        #apply external load as initial impulse
+        self.load_vector = np.array([0,
+                                      0,
+                                      self.force])
+
 
     def OutputSolutionStep(self):
         with open("results_sdof.txt", "a") as results_sdof:
@@ -78,6 +90,7 @@ class SDofSolver(CoSimulationBaseSolver):
 
     def SolveSolutionStep(self):
         b = self.RHS_matrix @ self.x
-        #b += self.force_vector
+        #external load only for testing
+        b += self.load_vector
         self.dx = np.linalg.solve(self.LHS, b)
         print(self.dx)

@@ -9,7 +9,8 @@ available_solvers = {
     "kratos_structural"            : "kratos_structural_solver",
     "kratos_empire"                : "kratos_empire_solver",
     "gauss_seidel_strong_coupling" : "co_simulation_gauss_seidel_strong_coupling_solver",
-    "weak_coupling"                : "co_simulation_weak_coupling_solver"
+    "weak_coupling"                : "co_simulation_weak_coupling_solver",
+    "sdof"                         : "sdof_solver"
 }
 
 def CreateSolver(cosim_solver_settings, level):

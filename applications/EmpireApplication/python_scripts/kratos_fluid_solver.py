@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 
 # Importing the Kratos Library
 import KratosMultiphysics
-import KratosMultiphysics.FluidDynamicsAnalysis
+import KratosMultiphysics.FluidDynamicsApplication
 
 # Importing the base class
 from kratos_base_field_solver import KratosBaseFieldSolver
@@ -11,7 +11,7 @@ from kratos_base_field_solver import KratosBaseFieldSolver
 from fluid_dynamics_analysis import FluidDynamicsAnalysis
 
 def CreateSolver(cosim_solver_settings, level):
-    return KratosStructuralSolver(cosim_solver_settings, level)
+    return KratosFluidSolver(cosim_solver_settings, level)
 
 class KratosFluidSolver(KratosBaseFieldSolver):
     def _CreateAnalysisStage(self):

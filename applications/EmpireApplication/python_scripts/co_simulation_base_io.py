@@ -4,7 +4,7 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 import KratosMultiphysics
 import KratosMultiphysics.MappingApplication as KratosMapping
 
-def Create(io_settings, solvers, solver_name, cosim_solver_details, level):
+def Create(io_settings, solvers, solver_name, cosim_solver_details, level): # TODO is this dummy still needed?
     return CoSimulationBaseIO(io_settings, solvers, solver_names, cosim_solver_details, level)
 
 class CoSimulationBaseIO(object):

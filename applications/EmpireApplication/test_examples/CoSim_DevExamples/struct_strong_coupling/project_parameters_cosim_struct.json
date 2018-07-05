@@ -12,7 +12,7 @@
         "num_coupling_iterations" : 5,
         "convergence_accelerator_settings" :
         {
-            "type"          : "aitken",
+            "type"          : "mvqn",
             "solver_name"   : "dummy2",
             "data_name"     : "DISPLACEMENT",
             "geometry_name" : "dummy_smp",

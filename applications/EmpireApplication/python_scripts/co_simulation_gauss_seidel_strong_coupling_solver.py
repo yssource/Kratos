@@ -4,9 +4,8 @@ from __future__ import print_function, absolute_import, division
 from co_simulation_base_solver import CoSimulationBaseSolver
 
 # other imports
-import co_sim_convergence_accelerator_factory as convergence_accelerator_factory
-import co_sim_convergence_criteria_factory as convergence_criteria_factory
-import io_factory
+import co_simulation_convergence_accelerator_factory as convergence_accelerator_factory
+import co_simulation_convergence_criteria_factory as convergence_criteria_factory
 import co_simulation_tools as cosim_tools
 from co_simulation_tools import csprint, red, green, cyan, bold
 
@@ -91,7 +90,13 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
                 csprint(self.lvl, green("##### CONVERGENCE AT INTERFACE WAS ACHIEVED #####"))
                 break
             # else:
-            #     self.convergence_accelerator.ComputeUpdate(...)
+                ## ComputeUpdate(r, x)
+                # @param r residual r_k
+                # @param x solution x_k
+                # Computes the approximated update in each iteration.
+                def ComputeUpdate( self, r, x ):
+                    return delta_x
+                        #     self.convergence_accelerator.ComputeUpdate(...)
             if k+1 >= self.num_coupling_iterations:
                 csprint(self.lvl, red("XXXXX CONVERGENCE AT INTERFACE WAS NOT ACHIEVED XXXXX"))
 

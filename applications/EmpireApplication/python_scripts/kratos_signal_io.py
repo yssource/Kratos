@@ -4,7 +4,7 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 import KratosMultiphysics
 
 # Importing the base class
-from co_sim_base_io import CoSimulationBaseIO
+from co_simulation_base_io import CoSimulationBaseIO
 
 # Other imports
 import numpy as np

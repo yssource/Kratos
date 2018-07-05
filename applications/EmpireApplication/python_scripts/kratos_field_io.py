@@ -5,7 +5,7 @@ import KratosMultiphysics
 import KratosMultiphysics.MappingApplication as KratosMapping
 
 # Importing the base class
-from co_sim_base_io import CoSimulationBaseIO
+from co_simulation_base_io import CoSimulationBaseIO
 
 # Other imports
 from co_simulation_tools import csprint, bold, green, red
@@ -78,13 +78,15 @@ class KratosFieldIO(CoSimulationBaseIO):
             }""")
             mapper_settings["mapper_type"].SetString(data_entry["io_settings"]["mapper_type"])
             self.mappers[data_name] = KratosMapping.MapperFactory.CreateMapper(from_solver_mesh, to_solver_mesh, mapper_settings)
+
+            # Adding the mapper to the map, in case the same mapper is needed again later (=> same geometry)
             mapper_name_orig = from_solver_name + "_" + geometry_name_from
             mapper_name_dest = to_solver_name + "_" + geometry_name_to
             if not mapper_name_orig in self.mapper_geometries_map:
                 self.mapper_geometries_map[mapper_name_orig] = {}
             self.mapper_geometries_map[mapper_name_orig][mapper_name_dest] = self.mappers[data_name]
 
-        if inverse_map:
+        if inverse_map: # Swiching bcs the arguments for mapping don't change
             dest_var = KratosMultiphysics.KratosGlobals.GetVariable(data_definition_from["data_identifier"])
             orig_var = KratosMultiphysics.KratosGlobals.GetVariable(data_definition_to["data_identifier"])
         else:
@@ -92,13 +94,13 @@ class KratosFieldIO(CoSimulationBaseIO):
             dest_var = KratosMultiphysics.KratosGlobals.GetVariable(data_definition_to["data_identifier"])
 
         mapping_flags = KratosMultiphysics.Flags()
-
         if "mapper_args" in data_entry["io_settings"]:
             for flag_name in data_entry["io_settings"]["mapper_args"]:
                 mapping_flags |= self.mapper_flags[flag_name]
 
         self.mapping_options[data_name] = [orig_var, dest_var, mapping_flags]
 
+        # Printing information related to mapping
         if self.echo_level > 2:
             if mapper_exists_already:
                 info_msg  = bold("Existing mapper used") + ' for solver "' + self.solver_name + '": from "'

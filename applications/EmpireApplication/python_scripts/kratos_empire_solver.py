@@ -8,7 +8,7 @@ import KratosMultiphysics.EmpireApplication as KratosEmpire
 from co_simulation_base_solver import CoSimulationBaseSolver
 
 # Other imports
-from io_factory import IOFactory
+from co_simulation_io_factory import IOFactory
 
 
 def CreateSolver(cosim_solver_settings):

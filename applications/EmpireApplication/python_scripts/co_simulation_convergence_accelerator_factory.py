@@ -4,7 +4,7 @@ available_convergence_accelerators = {
     "constant" : "constant_convergence_accelerator",
     "aitken"   : "aitken",
     "iqnils"   : "iqnils",
-    "mvqn"     : "mvpn",
+    "mvqn"     : "mvqn",
 }
 
 def CreateConvergenceAccelerator(convergence_accelerator_settings):

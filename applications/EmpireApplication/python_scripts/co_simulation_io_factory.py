@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
 available_ios = {
-    "dummy"         : "co_sim_base_io",
+    "dummy"         : "co_simulation_base_io",
     "kratos_field"  : "kratos_field_io",
     "kratos_signal" : "kratos_signal_io"
 }

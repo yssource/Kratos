@@ -77,6 +77,10 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
         for solver_name in self.solver_names:
             self.solvers[solver_name].FinalizeSolutionStep()
 
+    def OutputSolutionStep(self):
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].OutputSolutionStep()
+
     def SolveSolutionStep(self):
         for k in range(self.num_coupling_iterations):
             csprint(self.lvl, cyan("Coupling iteration: ")+bold(str(k+1)+" / " + str(self.num_coupling_iterations)))

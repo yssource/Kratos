@@ -60,9 +60,17 @@ class ALENavierStokesSolverVMSMonolithic(navier_stokes_solver_vmsmonolithic.Navi
     def GetMeshMotionSolver(self):
         return self.ale_solver
 
-    def Solve(self):
-        self.GetMeshMotionSolver().Solve()
-        self.GetFluidSolver().Solve()
+    def SolveSolutionStep(self):
+        self.GetMeshMotionSolver().SolveSolutionStep()
+        for i in range(self.ale_solver.settings["ale_interface_parts"].size()):
+            part_name = self.ale_solver.settings["ale_interface_parts"][i].GetString()
+            part_nodes = self.main_model_part.GetSubModelPart(part_name).Nodes
+            KratosMultiphysics.VariableUtils().CopyVectorVar(KratosMultiphysics.MESH_VELOCITY, KratosMultiphysics.VELOCITY, part_nodes)
+            # KratosMultiphysics.VariableUtils().ApplyFixity(KratosMultiphysics.VELOCITY_X, True, part_nodes)
+            # KratosMultiphysics.VariableUtils().ApplyFixity(KratosMultiphysics.VELOCITY_Y, True, part_nodes)
+            # KratosMultiphysics.VariableUtils().ApplyFixity(KratosMultiphysics.VELOCITY_Z, True, part_nodes)
+
+        self.GetFluidSolver().SolveSolutionStep()
 
     def MoveMesh(self):
         self.GetMeshMotionSolver().MoveMesh()

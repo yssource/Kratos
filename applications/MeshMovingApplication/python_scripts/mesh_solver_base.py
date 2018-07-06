@@ -35,6 +35,7 @@ class MeshSolverBase(object):
         default_settings = KratosMultiphysics.Parameters("""
         {
             "solver_type" : "mesh_solver_structural_similarity",
+            "ale_interface_parts" : [],
             "buffer_size": 3,
             "echo_level": 0,
             "model_import_settings" : {
@@ -100,8 +101,11 @@ class MeshSolverBase(object):
     def GetEchoLevel(self):
         self.get_mesh_motion_solver().GetEchoLevel()
 
-    def Solve(self):
-        self.get_mesh_motion_solver().Solve()
+    def Predict(self):
+        self.get_mesh_motion_solver().Predict()
+
+    def SolveSolutionStep(self):
+        self.get_mesh_motion_solver().Solve() # Calling Solve bcs this is what is currently implemented in the MeshSolverStrategies
 
     def Clear(self):
         self.get_mesh_motion_solver().Clear()

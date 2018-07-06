@@ -7,7 +7,7 @@ from co_simulation_base_solver import CoSimulationBaseSolver
 import co_simulation_convergence_accelerator_factory as convergence_accelerator_factory
 import co_simulation_convergence_criteria_factory as convergence_criteria_factory
 import co_simulation_tools as cosim_tools
-from co_simulation_tools import csprint, red, green, cyan, bold
+from co_simulation_tools import csprint, red, green, cyan, bold, magenta
 
 def CreateSolver(cosim_solver_settings, level):
     return GaussSeidelStrongCouplingSolver(cosim_solver_settings, level)
@@ -36,6 +36,12 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
         self.cosim_solver_details = cosim_tools.GetSolverCoSimulationDetails(
             self.cosim_solver_settings["coupling_loop"])
 
+        # With this setting the coupling can start later
+        self.start_coupling_time = 0.0
+        if "start_coupling_time" in self.cosim_solver_settings:
+            self.start_coupling_time = self.cosim_solver_settings["start_coupling_time"]
+        self.coupling_start_printed = False
+
     def Initialize(self):
         for solver_name in self.solver_names:
             self.solvers[solver_name].Initialize()
@@ -54,16 +60,20 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
             self.solvers[solver_name].Finalize()
 
     def AdvanceInTime(self, current_time):
-        new_time = self.solvers[self.solver_names[0]].AdvanceInTime(current_time)
+        self.time = self.solvers[self.solver_names[0]].AdvanceInTime(current_time)
         for solver_name in self.solver_names[1:]:
-            new_time_2 = self.solvers[solver_name].AdvanceInTime(current_time)
-            if abs(new_time- new_time_2) > 1e-12:
+            time_other_solver = self.solvers[solver_name].AdvanceInTime(current_time)
+            if abs(self.time - time_other_solver) > 1e-12:
                 raise Exception("Solver time mismatch")
 
         self.convergence_accelerator.AdvanceInTime()
         self.convergence_criteria.AdvanceInTime()
 
-        return new_time
+        if self.start_coupling_time > 0.0 and self.time > self.start_coupling_time and not self.coupling_start_printed:
+            csprint(self.lvl, magenta("<< Starting Coupling >>"))
+            self.coupling_start_printed = True
+
+        return self.time
 
     def Predict(self):
         for solver_name in self.solver_names:
@@ -105,13 +115,15 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
                 csprint(self.lvl, red("XXXXX CONVERGENCE AT INTERFACE WAS NOT ACHIEVED XXXXX"))
 
     def __SynchronizeInputData(self, solver, solver_name):
-        input_data_list = self.cosim_solver_details[solver_name]["input_data_list"]
-        for input_data in input_data_list:
-            from_solver = self.solvers[input_data["from_solver"]]
-            solver.ImportData(input_data["data_name"], from_solver)
+        if (self.time - self.start_coupling_time) > 1e-12:
+            input_data_list = self.cosim_solver_details[solver_name]["input_data_list"]
+            for input_data in input_data_list:
+                from_solver = self.solvers[input_data["from_solver"]]
+                solver.ImportData(input_data["data_name"], from_solver)
 
     def __SynchronizeOutputData(self, solver, solver_name):
-        output_data_list = self.cosim_solver_details[solver_name]["output_data_list"]
-        for output_data in output_data_list:
-            to_solver = self.solvers[output_data["to_solver"]]
-            solver.ExportData(output_data["data_name"], to_solver)
+        if (self.time - self.start_coupling_time) > 1e-12:
+            output_data_list = self.cosim_solver_details[solver_name]["output_data_list"]
+            for output_data in output_data_list:
+                to_solver = self.solvers[output_data["to_solver"]]
+                solver.ExportData(output_data["data_name"], to_solver)

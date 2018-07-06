@@ -2,7 +2,7 @@
     "problem_data" :
     {
         "start_time" : 0.0,
-        "end_time" : 10.0,
+        "end_time" : 15.0,
         "print_colors" : true
     },
     "solver_settings" :
@@ -10,6 +10,7 @@
         "solver_type" : "gauss_seidel_strong_coupling",
         "echo_level" : 0,
         "num_coupling_iterations" : 1,
+        "start_coupling_time" : 0.0,
         "convergence_accelerator_settings" :
         {
             "type"          : "mvqn",
@@ -104,7 +105,7 @@
                     "data_name"   : "top_force",
                     "io_settings"   : {
                         "mapper_type" : "nearest_neighbor",
-                        "mapper_args" : ["add_values", "swap_sign"]
+                        "mapper_args" : ["add_values", "swap_sign", "conservative"]
                     }
                 },
                 {
@@ -112,7 +113,7 @@
                     "data_name"   : "back_force",
                     "io_settings"   : {
                         "mapper_type" : "nearest_neighbor",
-                        "mapper_args" : ["add_values", "swap_sign"]
+                        "mapper_args" : ["add_values", "swap_sign", "conservative"]
                     }
                 }
             ]

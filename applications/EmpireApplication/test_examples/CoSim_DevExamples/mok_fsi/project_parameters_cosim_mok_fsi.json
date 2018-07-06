@@ -1,0 +1,195 @@
+{
+    "problem_data" :
+    {
+        "start_time" : 0.0,
+        "end_time" : 10.0,
+        "print_colors" : true
+    },
+    "solver_settings" :
+    {
+        "solver_type" : "gauss_seidel_strong_coupling",
+        "echo_level" : 0,
+        "num_coupling_iterations" : 1,
+        "convergence_accelerator_settings" :
+        {
+            "type"          : "mvqn",
+            "solver_name"   : "structure",
+            "data_name"     : "DISPLACEMENT",
+            "geometry_name" : "dummy_smp",
+            "io_type"       : "kratos_signal"
+        },
+        "convergence_criteria_settings" :
+        {
+            "io_type"   : "kratos_signal",
+            "echo_level": 2,
+            "data_list" :
+            [
+                {
+                    "from_solver"   : "structure",
+                    "data_name"     : "front_disp",
+                    "abs_tolerance" : 1e-4,
+                    "rel_tolerance" : 1e-5
+                }
+            ]
+        },
+        "coupling_loop":
+        [
+        {
+            "name": "fluid",
+            "input_data_list": [
+                {
+                    "from_solver" : "structure",
+                    "data_name"   : "front_disp",
+                    "io_settings"   : {
+                        "mapper_type" : "nearest_neighbor"
+                    }
+                },
+                {
+                    "from_solver" : "structure",
+                    "data_name"   : "top_disp",
+                    "io_settings"   : {
+                        "mapper_type" : "nearest_neighbor"
+                    }
+                },
+                {
+                    "from_solver" : "structure",
+                    "data_name"   : "back_disp",
+                    "io_settings"   : {
+                        "mapper_type" : "nearest_neighbor"
+                    }
+                }
+            ],
+            "output_data_list": [
+                {
+                    "to_solver" : "fluid",
+                    "data_name"   : "front_force"
+                },
+                {
+                    "to_solver" : "fluid",
+                    "data_name"   : "top_force"
+                },
+                {
+                    "to_solver" : "fluid",
+                    "data_name"   : "back_force"
+                }
+            ]
+        },
+        {
+            "name": "structure",
+            "output_data_list": [
+                {
+                    "to_solver" : "fluid",
+                    "data_name"   : "front_disp"
+                },
+                {
+                    "to_solver" : "fluid",
+                    "data_name"   : "top_disp"
+                },
+                {
+                    "to_solver" : "fluid",
+                    "data_name"   : "back_disp"
+                }
+            ],
+            "input_data_list": [
+                {
+                    "from_solver" : "fluid",
+                    "data_name"   : "front_force",
+                    "io_settings"   : {
+                        "mapper_type" : "nearest_neighbor",
+                        "mapper_args" : ["swap_sign"]
+                    }
+                },
+                {
+                    "from_solver" : "fluid",
+                    "data_name"   : "top_force",
+                    "io_settings"   : {
+                        "mapper_type" : "nearest_neighbor",
+                        "mapper_args" : ["add_values", "swap_sign"]
+                    }
+                },
+                {
+                    "from_solver" : "fluid",
+                    "data_name"   : "back_force",
+                    "io_settings"   : {
+                        "mapper_type" : "nearest_neighbor",
+                        "mapper_args" : ["add_values", "swap_sign"]
+                    }
+                }
+            ]
+        }
+        ],
+        "solvers" :
+        {
+            "fluid":
+            {
+                "solver_type" : "kratos_fluid",
+                "input_file"  : "ProjectParametersCFD",
+                "io_settings" : {
+                    "io_type"     : "kratos_field",
+                    "echo_level"  : 4
+                },
+                "data" : {
+                    "front_disp" : {
+                        "geometry_name" : "FluidModelPart.NoSlip2D_Beam_front",
+                        "data_identifier" : "MESH_DISPLACEMENT"
+                    },
+                    "top_disp" : {
+                        "geometry_name" : "FluidModelPart.NoSlip2D_Beam_Top",
+                        "data_identifier" : "MESH_DISPLACEMENT"
+                    },
+                    "back_disp" : {
+                        "geometry_name" : "FluidModelPart.NoSlip2D_Beam_back",
+                        "data_identifier" : "MESH_DISPLACEMENT"
+                    },
+                    "front_force" : {
+                        "geometry_name" : "FluidModelPart.NoSlip2D_Beam_front",
+                        "data_identifier" : "REACTION"
+                    },
+                    "top_force" : {
+                        "geometry_name" : "FluidModelPart.NoSlip2D_Beam_Top",
+                        "data_identifier" : "REACTION"
+                    },
+                    "back_force" : {
+                        "geometry_name" : "FluidModelPart.NoSlip2D_Beam_back",
+                        "data_identifier" : "REACTION"
+                    }
+                }
+            },
+            "structure" :
+            {
+                "solver_type" : "kratos_structural",
+                "input_file"  : "ProjectParametersCSM",
+                "io_settings" : {
+                    "io_type"     : "kratos_field",
+                    "echo_level"  : 4
+                },
+                "data" : {
+                    "front_disp" : {
+                        "geometry_name" : "Structure.GENERIC_Beam",
+                        "data_identifier" : "DISPLACEMENT"
+                    },
+                    "top_disp" : {
+                        "geometry_name" : "Structure.GENERIC_Beam",
+                        "data_identifier" : "DISPLACEMENT"
+                    },
+                    "back_disp" : {
+                        "geometry_name" : "Structure.GENERIC_Beam",
+                        "data_identifier" : "DISPLACEMENT"
+                    },
+                    "front_force" : {
+                        "geometry_name" : "Structure.GENERIC_Beam",
+                        "data_identifier" : "POINT_LOAD"
+                    },
+                    "top_force" : {
+                        "geometry_name" : "Structure.GENERIC_Beam",
+                        "data_identifier" : "POINT_LOAD"
+                    },
+                    "back_force" : {
+                        "geometry_name" : "Structure.GENERIC_Beam",
+                        "data_identifier" : "POINT_LOAD"
+                    }
+                }
+            }
+        }
+    }
+}

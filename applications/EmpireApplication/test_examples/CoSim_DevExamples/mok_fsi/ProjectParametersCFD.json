@@ -28,14 +28,17 @@
     },
     "solver_settings"                  : {
         "solver_type"                  : "ale_monolithic",
-        "ale_settings"               :   {"solver_type" : "mesh_solver_structural_similarity"},
+        "ale_settings"               :   {
+            "solver_type" : "mesh_solver_structural_similarity",
+            "ale_interface_parts" : ["NoSlip2D_Beam_Top","NoSlip2D_Beam_back","NoSlip2D_Beam_front"]
+        },
         "domain_size"                  : 2,
         "model_part_name"              : "FluidModelPart",
         "model_import_settings"        : {
             "input_type"     : "mdpa",
             "input_filename" : "Mok_CFD"
         },
-        "echo_level"                  : 0,
+        "echo_level"                  : 1,
         "compute_reactions"           : true,
         "dynamic_tau"                 : 0.001,
         "oss_switch"                  : 0,
@@ -48,7 +51,7 @@
             "solver_type"         : "AMGCL"
         },
         "volume_model_part_name"      : "Parts_Fluid",
-        "skin_parts"                  : ["AutomaticInlet2D_Inlet","Outlet2D_Outlet","Slip2D","NoSlip2D_Beam_Top","NoSlip2D_Beam_back","NoSlip2D_Beam_front","NoSlip2D_Bottom"],
+        "skin_parts"                  : ["AutomaticInlet2D_Inlet","Outlet2D_Outlet","Slip2D_Top","NoSlip2D_Beam_Top","NoSlip2D_Beam_back","NoSlip2D_Beam_front","NoSlip2D_Bottom"],
         "no_skin_parts"               : [],
         "time_stepping"               : {
             "automatic_time_step" : false,
@@ -115,7 +118,7 @@
             "kratos_module" : "KratosMultiphysics.FluidDynamicsApplication",
             "process_name"  : "ApplySlipProcess",
             "Parameters"    : {
-                "model_part_name" : "Slip2D"
+                "model_part_name" : "Slip2D_Top"
             }
         }],
         "gravity"                          : [{
@@ -129,6 +132,98 @@
                 "constrained"     : false,
                 "direction"       : [0.0,-1.0,0.0]
             }
+        }],
+        "ale_boundary_conditions" : [{
+            "python_module" : "assign_vector_variable_process",
+            "kratos_module" : "KratosMultiphysics",
+            "help"          : "This process fixes the selected components of a given vector variable",
+            "process_name"  : "AssignVectorVariableProcess",
+            "Parameters"    : {
+                "mesh_id"         : 0,
+                "model_part_name" : "NoSlip2D_Beam_Top",
+                "variable_name"   : "MESH_DISPLACEMENT",
+                "constrained"      : [true, true, true],
+                "value"           : [0.0,0.0,0.0]
+            }
+
+        },{
+            "python_module" : "assign_vector_variable_process",
+            "kratos_module" : "KratosMultiphysics",
+            "help"          : "This process fixes the selected components of a given vector variable",
+            "process_name"  : "AssignVectorVariableProcess",
+            "Parameters"    : {
+                "mesh_id"         : 0,
+                "model_part_name" : "NoSlip2D_Beam_back",
+                "variable_name"   : "MESH_DISPLACEMENT",
+                "constrained"      : [true, true, true],
+                "value"           : [0.0,0.0,0.0]
+            }
+
+        },{
+            "python_module" : "assign_vector_variable_process",
+            "kratos_module" : "KratosMultiphysics",
+            "help"          : "This process fixes the selected components of a given vector variable",
+            "process_name"  : "AssignVectorVariableProcess",
+            "Parameters"    : {
+                "mesh_id"         : 0,
+                "model_part_name" : "NoSlip2D_Beam_front",
+                "variable_name"   : "MESH_DISPLACEMENT",
+                "constrained"      : [true, true, true],
+                "value"           : [0.0,0.0,0.0]
+            }
+
+        },{
+            "python_module" : "assign_vector_variable_process",
+            "kratos_module" : "KratosMultiphysics",
+            "help"          : "This process fixes the selected components of a given vector variable",
+            "process_name"  : "AssignVectorVariableProcess",
+            "Parameters"    : {
+                "mesh_id"         : 0,
+                "model_part_name" : "AutomaticInlet2D_Inlet",
+                "variable_name"   : "MESH_DISPLACEMENT",
+                "constrained"      : [true, false, true],
+                "value"           :  [0.0,0.0,0.0]
+            }
+
+        },{
+            "python_module" : "assign_vector_variable_process",
+            "kratos_module" : "KratosMultiphysics",
+            "help"          : "This process fixes the selected components of a given vector variable",
+            "process_name"  : "AssignVectorVariableProcess",
+            "Parameters"    : {
+                "mesh_id"         : 0,
+                "model_part_name" : "Outlet2D_Outlet",
+                "variable_name"   : "MESH_DISPLACEMENT",
+                "constrained"      : [true, false, true],
+                "value"           : [0.0,0.0,0.0]
+            }
+
+        },{
+            "python_module" : "assign_vector_variable_process",
+            "kratos_module" : "KratosMultiphysics",
+            "help"          : "This process fixes the selected components of a given vector variable",
+            "process_name"  : "AssignVectorVariableProcess",
+            "Parameters"    : {
+                "mesh_id"         : 0,
+                "model_part_name" : "NoSlip2D_Bottom",
+                "variable_name"   : "MESH_DISPLACEMENT",
+                "constrained"      : [true, true, true],
+                "value"           : [0.0,0.0,0.0]
+            }
+
+        },{
+            "python_module" : "assign_vector_variable_process",
+            "kratos_module" : "KratosMultiphysics",
+            "help"          : "This process fixes the selected components of a given vector variable",
+            "process_name"  : "AssignVectorVariableProcess",
+            "Parameters"    : {
+                "mesh_id"         : 0,
+                "model_part_name" : "Slip2D_Top",
+                "variable_name"   : "MESH_DISPLACEMENT",
+                "constrained"      : [false, true, true],
+                "value"           : [0.0,0.0,0.0]
+            }
+
         }],
         "auxiliar_process_list"            : []
     },

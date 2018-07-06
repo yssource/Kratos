@@ -24,6 +24,7 @@ class CoSimulationAnalysis(object):
     def RunSolutionLoop(self):
         print("")
         while self.time < self.end_time:
+            print("")
             self.step += 1
             self.time = self._GetSolver().AdvanceInTime(self.time)
             self.InitializeSolutionStep()

@@ -27,7 +27,8 @@
         "point_data_configuration"  : []
     },
     "solver_settings"                  : {
-        "solver_type"                  : "Monolithic",
+        "solver_type"                  : "ale_monolithic",
+        "ale_settings"               :   {"solver_type" : "mesh_solver_structural_similarity"},
         "domain_size"                  : 2,
         "model_part_name"              : "FluidModelPart",
         "model_import_settings"        : {

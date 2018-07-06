@@ -67,6 +67,7 @@ class KratosFieldIO(CoSimulationBaseIO):
         if name_origin in self.mapper_geometries_map: # if a mapper mapping from this geometry exists already
             if name_destination in self.mapper_geometries_map[name_origin]:
                 self.mappers[data_name] = self.mapper_geometries_map[name_origin][name_destination]
+                # TODO check also if the mapper type is the same!
                 mapper_exists_already = True
 
         if not mapper_exists_already:

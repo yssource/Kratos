@@ -130,26 +130,7 @@
                 "direction"       : [0.0,-1.0,0.0]
             }
         }],
-        "auxiliar_process_list"            : [{
-            "kratos_module" : "KratosMultiphysics.HDF5Application",
-            "python_module" : "single_mesh_temporal_output_process",
-            "help"          : "",
-            "process_name"  : "",
-            "Parameters" : {
-                "model_part_name" : "FluidModelPart",
-                "file_settings" : {
-                    "file_access_mode" : "truncate"
-                },
-                "model_part_output_settings" : {},
-                "nodal_results_settings" : {
-                    "list_of_variables": ["VELOCITY", "PRESSURE", "REACTION","MESH_DISPLACEMENT"]
-                },
-                "element_results_settings" : {},
-                "output_time_settings" : {
-                    "output_step_frequency": 1
-                }
-            }
-        }]
+        "auxiliar_process_list"            : []
     },
     "mapper_settings": [
         {

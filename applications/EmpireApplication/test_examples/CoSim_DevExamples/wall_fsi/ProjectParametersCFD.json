@@ -23,11 +23,12 @@
             "node_output"         : false,
             "skin_output"         : false,
             "plane_output"        : [],
-            "nodal_results"       : ["VELOCITY","PRESSURE"],
+            "nodal_results"       : ["VELOCITY","PRESSURE","MESH_DISPLACEMENT", "MESH_VELOCITY"],
             "gauss_point_results" : []
         },
         "point_data_configuration"  : []
-    },
+        },
+
     "restart_options"                  : {
         "SaveRestart"      : "False",
         "RestartFrequency" : 0,
@@ -35,7 +36,13 @@
         "Restart_Step"     : 0
     },
     "solver_settings"                  : {
-        "solver_type"                 : "Monolithic",
+        "solver_type"                 : "ale_monolithic",
+            "ale_settings"               :   {
+            "solver_type" : "mesh_solver_structural_similarity",
+            "ale_interface_parts" : ["NoSlip2D_FSI_Interface"]
+        },
+        "domain_size"                  : 2,
+        "model_part_name"              : "FluidModelPart",
         "model_import_settings"       : {
             "input_type"     : "mdpa",
             "input_filename" : "Wall_Fluid"

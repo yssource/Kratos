@@ -1,0 +1,118 @@
+{
+    "problem_data" :
+    {
+        "start_time" : 0.0,
+        "end_time" : 15.0,
+        "print_colors" : true
+    },
+    "solver_settings" :
+    {
+        "solver_type" : "gauss_seidel_strong_coupling",
+        "echo_level" : 0,
+        "num_coupling_iterations" : 1,
+        "start_coupling_time" : 0.0,
+        "convergence_accelerator_settings" :
+        {
+            "type"          : "mvqn",
+            "solver_name"   : "structure",
+            "data_name"     : "DISPLACEMENT",
+            "geometry_name" : "dummy_smp",
+            "io_type"       : "kratos_signal"
+        },
+        "convergence_criteria_settings" :
+        {
+            "io_type"   : "kratos_signal",
+            "echo_level": 2,
+            "data_list" :
+            [
+                {
+                    "from_solver"   : "structure",
+                    "data_name"     : "disp",
+                    "abs_tolerance" : 1e-4,
+                    "rel_tolerance" : 1e-5
+                }
+            ]
+        },
+        "coupling_loop":
+        [
+        {
+            "name": "fluid",
+            "input_data_list": [
+                {
+                    "from_solver" : "structure",
+                    "data_name"   : "disp",
+                    "io_settings"   : {
+                        "mapper_type" : "nearest_neighbor"
+                    }
+                }
+            ],
+            "output_data_list": [
+                {
+                    "to_solver" : "structure",
+                    "data_name"   : "force"
+                }
+            ]
+        },
+        {
+            "name": "structure",
+            "output_data_list": [
+                {
+                    "to_solver" : "fluid",
+                    "data_name"   : "disp"
+                }
+            ],
+            "input_data_list": [
+                {
+                    "from_solver" : "fluid",
+                    "data_name"   : "force",
+                    "io_settings"   : {
+                        "mapper_type" : "nearest_neighbor",
+                        "mapper_args" : ["swap_sign"]
+                    }
+                }
+            ]
+        }
+        ],
+        "solvers" :
+        {
+            "fluid":
+            {
+                "solver_type" : "kratos_fluid",
+                "input_file"  : "ProjectParametersCFD",
+                "io_settings" : {
+                    "io_type"     : "kratos_field",
+                    "echo_level"  : 4
+                },
+                "data" : {
+                    "disp" : {
+                        "geometry_name" : "NoSlip2D_FSI_Interface",
+                        "data_identifier" : "MESH_DISPLACEMENT"
+                    },
+                        "force" : {
+                        "geometry_name" : "NoSlip2D_FSI_Interface",
+                        "data_identifier" : "REACTION"
+                    }
+                }
+            },
+            "structure" :
+            {
+                "solver_type" : "kratos_structural",
+                "input_file"  : "ProjectParametersCSM",
+                "io_settings" : {
+                    "io_type"     : "kratos_field",
+                    "echo_level"  : 4
+                },
+                "data" : {
+                    "disp" : {
+                        "geometry_name" : "GENERIC_FSI_Interface",
+                        "data_identifier" : "DISPLACEMENT"
+                    },
+                        "force" : {
+                        "geometry_name" : "PointLoad2D_FSI_Interface",
+                        "data_identifier" : "POINT_LOAD"
+                    }
+                }
+            }
+        }
+    }
+}

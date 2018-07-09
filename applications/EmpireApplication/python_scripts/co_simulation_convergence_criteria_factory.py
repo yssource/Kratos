@@ -29,6 +29,7 @@ class CoSimulationConvergenceCriteria(object):
         data_size = len(self.settings["data_list"])
 
     def AdvanceInTime(self):
+        # Saving the previous data for the computation of the residual
         self.old_data = [] # discard old data fields
         for data_entry in self.settings["data_list"]:
             self.old_data.append(self.__ImportData(data_entry))

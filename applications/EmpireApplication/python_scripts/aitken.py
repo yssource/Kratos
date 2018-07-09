@@ -12,7 +12,7 @@ from collections import deque
 from co_simulation_base_convergence_accelerator import CoSimulationBaseConvergenceAccelerator
 
 # Other imports
-from co_simulation_tools import csprint, red, green, cyan, bold
+from co_simulation_tools import csprint, yellow
 
 def Create(settings, solvers, cosim_solver_details, level):
     return Aitken(settings, solvers, cosim_solver_details, level)
@@ -41,7 +41,7 @@ class Aitken(CoSimulationBaseConvergenceAccelerator):
     # @param r residual r_k
     # @param x solution x_k
     # Computes the approximated update in each iteration.
-    def ComputeUpdate( self, r, x ):
+    def _ComputeUpdate( self, r, x ):
         self.R.appendleft( deepcopy(r) )
         k = len( self.R ) - 1
         ## For the first iteration, do relaxation only
@@ -69,4 +69,5 @@ class Aitken(CoSimulationBaseConvergenceAccelerator):
     ## AdvanceInTime()
     # Finalizes the current time step and initializes the next time step.
     def AdvanceInTime( self ):
+        super(Aitken, self).AdvanceInTime()
         print( "" )   # Do nothing for Aitken relaxation

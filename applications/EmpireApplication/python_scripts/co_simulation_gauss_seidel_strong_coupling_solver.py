@@ -48,7 +48,6 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
         for solver_name in self.solver_names:
             self.solvers[solver_name].InitializeCoSimIO(self.solvers, self.cosim_solver_details)
 
-
         self.num_coupling_iterations = self.cosim_solver_settings["num_coupling_iterations"]
         self.convergence_accelerator = convergence_accelerator_factory.CreateConvergenceAccelerator(
             self.cosim_solver_settings["convergence_accelerator_settings"], self.solvers, self.cosim_solver_details, self.lvl)
@@ -103,14 +102,9 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
             if self.convergence_criteria.IsConverged():
                 csprint(self.lvl, green("##### CONVERGENCE AT INTERFACE WAS ACHIEVED #####"))
                 break
-            # # else:
-            #     ## ComputeUpdate(r, x)
-            #     # @param r residual r_k
-            #     # @param x solution x_k
-            #     # Computes the approximated update in each iteration.
-            #     def ComputeUpdate( self, r, x ):
-            #         return delta_x
-            #             #     self.convergence_accelerator.ComputeUpdate(...)
+            else:
+                self.convergence_accelerator.ComputeUpdate()
+
             if k+1 >= self.num_coupling_iterations:
                 csprint(self.lvl, red("XXXXX CONVERGENCE AT INTERFACE WAS NOT ACHIEVED XXXXX"))
 

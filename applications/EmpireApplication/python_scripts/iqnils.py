@@ -12,7 +12,7 @@ from collections import deque
 from co_simulation_base_convergence_accelerator import CoSimulationBaseConvergenceAccelerator
 
 # Other imports
-from co_simulation_tools import csprint, red, green, cyan, bold
+from co_simulation_tools import csprint, yellow
 
 def Create(settings, solvers, cosim_solver_details, level):
     return IQNILS(settings, solvers, cosim_solver_details, level)
@@ -55,7 +55,7 @@ class IQNILS(CoSimulationBaseConvergenceAccelerator):
     # @param r residual r_k
     # @param x solution x_k
     # Computes the approximated update in each iteration.
-    def ComputeUpdate( self, r, x ):
+    def _ComputeUpdate( self, r, x ):
         self.R.appendleft( deepcopy(r) )
         self.X.appendleft(    x + r    )  # r = x~ - x
         row = len(r)
@@ -143,6 +143,7 @@ class IQNILS(CoSimulationBaseConvergenceAccelerator):
     ## AdvanceInTime()
     # Finalizes the current time step and initializes the next time step.
     def AdvanceInTime( self ):
+        super(IQNILS, self).AdvanceInTime()
         if self.V_new != [] and self.W_new != []:
             self.v_old_matrices.appendleft( self.V_new )
             self.w_old_matrices.appendleft( self.W_new )

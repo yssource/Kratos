@@ -47,8 +47,35 @@ class KratosSignalIO(CoSimulationBaseIO):
     def ImportMesh(self, MeshName, FromClient):
         pass
 
-    def ExportData(self, DataName, ToClient):
-        raise NotImplementedError("Implement me!")
+    def ExportData(self, data_name, to_client, data):
+        # TODO check if var in ModelPart!
+        data_definition = to_client.GetDataDefinition(data_name)
+        geometry_name = data_definition["geometry_name"]
+        var_name = data_definition["data_identifier"]
+
+        model_part = to_client.model[geometry_name]
+        kratos_var = KratosMultiphysics.KratosGlobals.GetVariable(var_name)
+
+        if type(kratos_var) == KratosMultiphysics.DoubleVariable or type(kratos_var) == KratosMultiphysics.Array1DComponentVariable:
+            SetData(model_part, kratos_var, data)
+        elif type(kratos_var) == KratosMultiphysics.Array1DVariable3:
+            domain_size = model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]
+            if not domain_size in [1,2,3]:
+                raise Exception("DOMAIN_SIZE has to be 1, 2 or 3!")
+            num_nodes = model_part.NumberOfNodes()
+            if data.size != num_nodes*domain_size:
+                raise Exception("Size of data does not match number of nodes x domain size!")
+            ext = ["_X", "_Y", "_Z"]
+            for i in range(domain_size):
+                component_var = KratosMultiphysics.KratosGlobals.GetVariable(kratos_var.Name()+ext[i])
+                range_begin = i*num_nodes
+                range_end = (i+1)*num_nodes
+                SetData(model_part, component_var, data[range_begin:range_end])
+        else:
+            err_msg  = 'Type of variable "' + kratos_var.Name() + '" is not valid\n'
+            err_msg += 'It can only be double, component or array3d!'
+            raise Exception(err_msg)
+
     def ExportMesh(self, MeshName, ToClient):
         pass
 
@@ -60,8 +87,13 @@ class KratosSignalIO(CoSimulationBaseIO):
 def ExtractData(model_part, kratos_var):
     num_nodes = model_part.NumberOfNodes()
     data = np.zeros(num_nodes)
-    idx = 0
-    for node in model_part.Nodes:
+    for idx, node in zip(range(num_nodes), model_part.Nodes):
         data[idx] = node.GetSolutionStepValue(kratos_var)
-        idx += 1
     return data
+
+def SetData(model_part, kratos_var, data):
+    num_nodes = model_part.NumberOfNodes()
+    if data.size != num_nodes:
+        raise Exception("Size of data does not match number of nodes!")
+    for idx, node in zip(range(num_nodes), model_part.Nodes):
+        node.SetSolutionStepValue(kratos_var, data[idx])

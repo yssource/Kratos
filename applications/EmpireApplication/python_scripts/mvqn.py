@@ -45,7 +45,7 @@ class MVQN(CoSimulationBaseConvergenceAccelerator):
     # @param r residual r_k
     # @param x solution x_k
     # Computes the approximated update in each iteration.
-    def ComputeUpdate( self, r, x ):
+    def _ComputeUpdate( self, r, x ):
         self.R.appendleft( deepcopy(r) )
         self.X.appendleft( deepcopy(x) )
         col = len(self.R) - 1
@@ -91,6 +91,7 @@ class MVQN(CoSimulationBaseConvergenceAccelerator):
     ## AdvanceInTime()
     # Finalizes the current time step and initializes the next time step.
     def AdvanceInTime( self ):
+        super(MVQN, self).AdvanceInTime()
         if self.J == []:
             return
 

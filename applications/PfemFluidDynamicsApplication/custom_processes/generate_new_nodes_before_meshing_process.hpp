@@ -349,10 +349,27 @@ private:
     // }else if(boundaryNodes>1 && freesurfaceNodes>0 && rigidNodes>0){
     //   penalization=0.9;
     // }
+
     
-    if(freesurfaceNodes>0 && rigidNodes==0 && posX>0 && posY>0.4){
-      penalization=0;
-    }else if(freesurfaceNodes>1 && rigidNodes==0 && posX>0.9){
+
+    // //for h=0.3
+    // if(freesurfaceNodes>0 && rigidNodes==0 && posX>0 && posY>0.4){
+    //   penalization=0;
+    // }
+ 
+   //for h=0.15
+    // if(freesurfaceNodes>0 && rigidNodes==0 && posX>0 && posY>0.25){
+    //   penalization=0;
+    // }
+ // // for h=0.45
+ //    if(freesurfaceNodes>0 && rigidNodes==0 && posX>0 && posY>0.525){
+ //      penalization=0;
+ //    }
+    // //for h=0.60
+      if(freesurfaceNodes>0 && rigidNodes==0 && posX>0 && posY>0.65){
+        penalization=0;
+      }   
+    else if(freesurfaceNodes>1 && rigidNodes==0 && posX>0.9){
       penalization=0;
     }else if(freesurfaceNodes>0 && rigidNodes==0 && posX>0.9){
       penalization=0.85;

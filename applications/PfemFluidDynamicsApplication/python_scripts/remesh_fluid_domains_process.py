@@ -147,16 +147,16 @@ class RemeshFluidDomainsProcess(remesh_domains_process.RemeshDomainsProcess):
             self.Fig3   = open("Fig3.txt",'w')
 
         if(currentStep > 1 and self.fileTotalVolume is not None):
-            maxYprobe1isolated=0.1
-            maxYprobe1=0.1
-            maxYprobe2=0.1
-            maxYprobe3=0.1
-            maxYprobe4=0.1
-            maxYprobe5=0.1
-            maxYprobe6=0.1
-            maxYprobe7=0.1
-            maxYprobe8=0.1
-            maxYprobe9=0.1
+            maxYprobe1isolated=0.01
+            maxYprobe1=0.01
+            maxYprobe2=0.01
+            maxYprobe3=0.01
+            maxYprobe4=0.01
+            maxYprobe5=0.01
+            maxYprobe6=0.01
+            maxYprobe7=0.01
+            maxYprobe8=0.01
+            maxYprobe9=0.01
             maxFig3Y=0
             for node in self.main_model_part.Nodes:
                 if(node.X>1.87 and node.X<1.93):

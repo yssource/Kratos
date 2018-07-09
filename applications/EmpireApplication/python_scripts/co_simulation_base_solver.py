@@ -21,7 +21,7 @@ class CoSimulationBaseSolver(object):
     def Initialize(self):
         pass
 
-    def InitializeIO(self, solvers, cosim_solver_details):
+    def InitializeCoSimIO(self, solvers, cosim_solver_details):
         self.io = io_factory.CreateIO(self.cosim_solver_settings["io_settings"],
                                       solvers,
                                       self.cosim_solver_settings["name"],

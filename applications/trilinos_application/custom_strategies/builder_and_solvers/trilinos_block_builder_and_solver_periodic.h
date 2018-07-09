@@ -197,35 +197,37 @@ public:
         // Once the non-repeated EquationId are assigned and synchronized, copy the EquationId to the second node on each periodic pair
         for (ModelPart::ConditionIterator itCond = rModelPart.ConditionsBegin(); itCond != rModelPart.ConditionsEnd(); ++itCond)
         {
-            ModelPart::ConditionType::GeometryType& rGeom = itCond->GetGeometry();
-            if (rGeom.PointsNumber() == 2) // Regular 2-noded conditions
-            {
-                int Node0 = rGeom[0].Id();
-                int Node0Pair = rGeom[0].FastGetSolutionStepValue(mPeriodicIdVar);
-
-                int Node1 = rGeom[1].Id();
-                int Node1Pair = rGeom[1].FastGetSolutionStepValue(mPeriodicIdVar);
-                if ( Node0Pair == 0 || Node1Pair == 0 )
-                    KRATOS_THROW_ERROR(std::runtime_error,"ERROR: a periodic condition has no periodic pair ids assigned. Condition Id is: ",itCond->Id());
-
-                // If the nodes are marked as a periodic pair (this is to avoid acting on two-noded conditions that are not PeriodicCondition)
-                if ( ( Node0 == Node1Pair ) && ( Node1 == Node0Pair ) )
+            if (itCond->Is(PERIODIC)) {
+                ModelPart::ConditionType::GeometryType& rGeom = itCond->GetGeometry();
+                if (rGeom.PointsNumber() == 2) // Regular 2-noded conditions
                 {
-                    if ( Node0 < Node0Pair ) // If Node0 is the one with lower Id (the one that does not have an EquationId yet)
-                        CopyEquationId(rGeom[1],rGeom[0]);
-                    else
-                        CopyEquationId(rGeom[0],rGeom[1]);
+                    int Node0 = rGeom[0].Id();
+                    int Node0Pair = rGeom[0].FastGetSolutionStepValue(mPeriodicIdVar);
+
+                    int Node1 = rGeom[1].Id();
+                    int Node1Pair = rGeom[1].FastGetSolutionStepValue(mPeriodicIdVar);
+                    if ( Node0Pair == 0 || Node1Pair == 0 )
+                        KRATOS_THROW_ERROR(std::runtime_error,"ERROR: a periodic condition has no periodic pair ids assigned. Condition Id is: ",itCond->Id());
+
+                    // If the nodes are marked as a periodic pair (this is to avoid acting on two-noded conditions that are not PeriodicCondition)
+                    if ( ( Node0 == Node1Pair ) && ( Node1 == Node0Pair ) )
+                    {
+                        if ( Node0 < Node0Pair ) // If Node0 is the one with lower Id (the one that does not have an EquationId yet)
+                            CopyEquationId(rGeom[1],rGeom[0]);
+                        else
+                            CopyEquationId(rGeom[0],rGeom[1]);
+                    }
                 }
-            }
-            else if (rGeom.PointsNumber() == 4) // Special treatment for edge nodes
-            {
-                for (unsigned int i = 1; i < 4; i++)
-                    CopyEquationId(rGeom[0],rGeom[i]);
-            }
-            else if (rGeom.PointsNumber() == 8) // Special treatment for edge nodes
-            {
-                for (unsigned int i = 1; i < 8; i++)
-                    CopyEquationId(rGeom[0],rGeom[i]);
+                else if (rGeom.PointsNumber() == 4) // Special treatment for edge nodes
+                {
+                    for (unsigned int i = 1; i < 4; i++)
+                        CopyEquationId(rGeom[0],rGeom[i]);
+                }
+                else if (rGeom.PointsNumber() == 8) // Special treatment for edge nodes
+                {
+                    for (unsigned int i = 1; i < 8; i++)
+                        CopyEquationId(rGeom[0],rGeom[i]);
+                }
             }
         }
 
@@ -453,9 +455,9 @@ private:
 
         int* TotalExtraDofs = new int[NumProcs];
         for (int i = 0; i < NumProcs; i++) TotalExtraDofs[i] = 0;
-        
+
         this->mrComm.SumAll(ExtraDofs,TotalExtraDofs,NumProcs);
-        
+
         // free memory
         int LocalExtraDofs = TotalExtraDofs[this->mrComm.MyPID()];
         delete [] ExtraDofs;
@@ -482,7 +484,7 @@ private:
                 iNode->GetValue(mPeriodicIdVar) = 0;
             }
     }
-    
+
 
     /*@} */
     /**@name Private  Access */

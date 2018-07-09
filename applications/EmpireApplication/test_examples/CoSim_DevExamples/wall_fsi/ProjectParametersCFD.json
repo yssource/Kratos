@@ -79,7 +79,7 @@
         "Parameters"    : {
             "model_part_name" : "AutomaticInlet2D_Inlet",
             "variable_name"   : "VELOCITY",
-            "modulus"         : 51.3,
+            "modulus"         : 0.0,
             "direction"       : "automatic_inwards_normal",
             "interval"        : [0.0,"End"]
         }
@@ -200,7 +200,7 @@
         {
             "mapper_type": "nearest_neighbor",
             "interface_submodel_part_destination": "NoSlip2D_FSI_Interface",
-            "interface_submodel_part_origin": "PointLoad2D_FSI_Interface"
+            "interface_submodel_part_origin": "GENERIC_FSI_Interface"
          }
     ]
 }

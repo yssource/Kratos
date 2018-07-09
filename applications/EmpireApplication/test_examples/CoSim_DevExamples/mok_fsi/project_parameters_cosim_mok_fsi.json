@@ -62,15 +62,15 @@
             ],
             "output_data_list": [
                 {
-                    "to_solver" : "structure",
+                    "to_solver"   : "structure",
                     "data_name"   : "front_force"
                 },
                 {
-                    "to_solver" : "structure",
+                    "to_solver"   : "structure",
                     "data_name"   : "top_force"
                 },
                 {
-                    "to_solver" : "structure",
+                    "to_solver"   : "structure",
                     "data_name"   : "back_force"
                 }
             ]
@@ -79,15 +79,15 @@
             "name": "structure",
             "output_data_list": [
                 {
-                    "to_solver" : "fluid",
+                    "to_solver"   : "fluid",
                     "data_name"   : "front_disp"
                 },
                 {
-                    "to_solver" : "fluid",
+                    "to_solver"   : "fluid",
                     "data_name"   : "top_disp"
                 },
                 {
-                    "to_solver" : "fluid",
+                    "to_solver"   : "fluid",
                     "data_name"   : "back_disp"
                 }
             ],

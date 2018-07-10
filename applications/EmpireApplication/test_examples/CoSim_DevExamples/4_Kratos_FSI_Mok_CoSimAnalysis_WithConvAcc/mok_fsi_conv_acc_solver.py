@@ -97,6 +97,8 @@ class MokFSISolverWithCoSimSolvers(CoSimulationBaseSolver):
             if abs(self.time - time_other_solver) > 1e-12:
                 raise Exception("Solver time mismatch") # SubStepping not implemented!
 
+        self.convergence_accelerator.AdvanceInTime()
+
         return self.time
 
     def Predict(self):
@@ -121,6 +123,7 @@ class MokFSISolverWithCoSimSolvers(CoSimulationBaseSolver):
     def SolveSolutionStep(self):
         for k in range(self.num_coupling_iterations):
             csprint(self.lvl, cyan("Coupling iteration: ")+bold(str(k+1)+" / " + str(self.num_coupling_iterations)))
+            self.convergence_accelerator.SetPreviousSolution()
             self.convergence_criteria.SetPreviousSolution()
             # Apply Dirichlet B.C.'s from structural solver to mesh solver
             DisplacementToMesh(self.mapper_1)
@@ -136,31 +139,33 @@ class MokFSISolverWithCoSimSolvers(CoSimulationBaseSolver):
             # # Solver Structure
             self.solvers["structure"].SolveSolutionStep()
 
-            displacements = fsi_utilities.GetDisplacements(self.structural_model_part.GetSubModelPart("GENERIC_Beam").Nodes, 2)
+            # displacements = fsi_utilities.GetDisplacements(self.structural_model_part.GetSubModelPart("GENERIC_Beam").Nodes, 2)
 
-            # Compute Residual
-            old_residual = self.residual
-            self.residual = fsi_utilities.CalculateResidual(displacements,self.old_displacements)
+            # # Compute Residual
+            # old_residual = self.residual
+            # self.residual = fsi_utilities.CalculateResidual(displacements,self.old_displacements)
 
-            print("Norm Main Script:", fsi_utilities.Norm(self.residual))
-            print("Norm OldDisp MainScript:", fsi_utilities.Norm(self.old_displacements))
+            # print("Norm Main Script:", fsi_utilities.Norm(self.residual))
+            # print("Norm OldDisp MainScript:", fsi_utilities.Norm(self.old_displacements))
             if self.convergence_criteria.IsConverged():
                 csprint(self.lvl, green("##### CONVERGENCE AT INTERFACE WAS ACHIEVED #####"))
                 break
             else:
-                self.relaxation_coefficient = fsi_utilities.ComputeAitkenRelaxation(self.relaxation_coefficient, self.residual, old_residual, k)
-                relaxed_displacements = fsi_utilities.CalculateRelaxation(self.relaxation_coefficient, self.old_displacements, self.residual)
-                self.old_displacements = relaxed_displacements
-                fsi_utilities.SetDisplacements(relaxed_displacements, self.structural_model_part.GetSubModelPart("GENERIC_Beam").Nodes, 2)
+                self.convergence_accelerator.ComputeUpdate()
+            # else:
+            #     self.relaxation_coefficient = fsi_utilities.ComputeAitkenRelaxation(self.relaxation_coefficient, self.residual, old_residual, k)
+            #     relaxed_displacements = fsi_utilities.CalculateRelaxation(self.relaxation_coefficient, self.old_displacements, self.residual)
+            #     self.old_displacements = relaxed_displacements
+            #     fsi_utilities.SetDisplacements(relaxed_displacements, self.structural_model_part.GetSubModelPart("GENERIC_Beam").Nodes, 2)
 
             if k+1 >= self.num_coupling_iterations:
                 csprint(self.lvl, red("XXXXX CONVERGENCE AT INTERFACE WAS NOT ACHIEVED XXXXX"))
 
-            print("==========================================================")
-            print("COUPLING RESIDUAL = ", fsi_utilities.Norm(self.residual))
-            print("COUPLING ITERATION = ", k+1, "/", self.num_coupling_iterations)
-            print("RELAXATION COEFFICIENT = ", self.relaxation_coefficient)
-            print("==========================================================")
+            # print("==========================================================")
+            # print("COUPLING RESIDUAL = ", fsi_utilities.Norm(self.residual))
+            # print("COUPLING ITERATION = ", k+1, "/", self.num_coupling_iterations)
+            # print("RELAXATION COEFFICIENT = ", self.relaxation_coefficient)
+            # print("==========================================================")
 
         # for k in range(self.num_coupling_iterations):
         #     csprint(self.lvl, cyan("Coupling iteration: ")+bold(str(k+1)+" / " + str(self.num_coupling_iterations)))

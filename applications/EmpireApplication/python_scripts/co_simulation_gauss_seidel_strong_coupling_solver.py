@@ -40,7 +40,10 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
         self.start_coupling_time = 0.0
         if "start_coupling_time" in self.cosim_solver_settings:
             self.start_coupling_time = self.cosim_solver_settings["start_coupling_time"]
-        self.coupling_start_printed = False
+        if self.start_coupling_time > 0.0:
+            self.coupling_started = False
+        else:
+            self.coupling_started = True
 
     def Initialize(self):
         for solver_name in self.solver_names:
@@ -68,9 +71,9 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
         self.convergence_accelerator.AdvanceInTime()
         self.convergence_criteria.AdvanceInTime()
 
-        if self.start_coupling_time > 0.0 and self.time > self.start_coupling_time and not self.coupling_start_printed:
+        if not self.coupling_started and self.time > self.start_coupling_time:
             csprint(self.lvl, magenta("<< Starting Coupling >>"))
-            self.coupling_start_printed = True
+            self.coupling_started = True
 
         return self.time
 
@@ -109,14 +112,14 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
                 csprint(self.lvl, red("XXXXX CONVERGENCE AT INTERFACE WAS NOT ACHIEVED XXXXX"))
 
     def __SynchronizeInputData(self, solver, solver_name):
-        if (self.time - self.start_coupling_time) > 1e-12:
+        if self.coupling_started:
             input_data_list = self.cosim_solver_details[solver_name]["input_data_list"]
             for input_data in input_data_list:
                 from_solver = self.solvers[input_data["from_solver"]]
                 solver.ImportData(input_data["data_name"], from_solver)
 
     def __SynchronizeOutputData(self, solver, solver_name):
-        if (self.time - self.start_coupling_time) > 1e-12:
+        if self.coupling_started:
             output_data_list = self.cosim_solver_details[solver_name]["output_data_list"]
             for output_data in output_data_list:
                 to_solver = self.solvers[output_data["to_solver"]]

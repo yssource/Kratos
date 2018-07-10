@@ -16,8 +16,9 @@ class CoSimulationBaseConvergenceAccelerator(object):
 
     def AdvanceInTime(self):
         # Saving the previous data for the computation of the residual
+        # and the computation of the solution update
         previous_data = [] # discard previous data fields
-        self.data_sizes = []
+        self.data_sizes = [] # saving the sizes of the data to later split them again
         size_counter = 0
         for data_entry in self.settings["data_list"]:
             prev_data = self.__ImportData(data_entry)

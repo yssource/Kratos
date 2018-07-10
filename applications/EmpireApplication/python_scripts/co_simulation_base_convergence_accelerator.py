@@ -15,6 +15,9 @@ class CoSimulationBaseConvergenceAccelerator(object):
         self.io = co_simulation_io_factory.CreateIO(settings, solvers, "None", cosim_solver_details, level)
 
     def AdvanceInTime(self):
+        pass
+
+    def SetPreviousSolution(self):
         # Saving the previous data for the computation of the residual
         # and the computation of the solution update
         previous_data = [] # discard previous data fields
@@ -35,11 +38,11 @@ class CoSimulationBaseConvergenceAccelerator(object):
 
         combined_residuals = np.concatenate(new_data) - self.combined_prev_data
 
-        combined_data_update = self._ComputeUpdate(combined_residuals, self.combined_prev_data)
+        combined_new_data = self.combined_prev_data + self._ComputeUpdate(combined_residuals, self.combined_prev_data)
 
-        data_updates = np.split(combined_data_update, self.data_sizes)
+        updated_data = np.split(combined_new_data, self.data_sizes)
 
-        for data_entry, data_update in zip(self.settings["data_list"], data_updates):
+        for data_entry, data_update in zip(self.settings["data_list"], updated_data):
             self.__ExportData(data_entry, data_update)
 
     def ImportData(self, data_name, from_client):

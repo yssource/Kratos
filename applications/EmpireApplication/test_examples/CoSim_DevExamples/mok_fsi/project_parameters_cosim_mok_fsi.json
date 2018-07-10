@@ -1,8 +1,8 @@
 {
     "problem_data" :
     {
-        "start_time" : 0.0,
-        "end_time" : 15.0,
+        "start_time"   : 0.0,
+        "end_time"     : 15.0,
         "print_colors" : true
     },
     "solver_settings" :
@@ -18,16 +18,8 @@
             "data_list" :
             [
                 {
-                    "from_solver"   : "fluid",
+                    "from_solver"   : "structure",
                     "data_name"     : "front_disp"
-                },
-                {
-                    "from_solver"   : "fluid",
-                    "data_name"     : "top_disp"
-                },
-                {
-                    "from_solver"   : "fluid",
-                    "data_name"     : "back_disp"
                 }
             ]
         },
@@ -40,8 +32,8 @@
                 {
                     "from_solver"   : "structure",
                     "data_name"     : "front_disp",
-                    "abs_tolerance" : 1e-4,
-                    "rel_tolerance" : 1e-5
+                    "abs_tolerance" : 1e-5,
+                    "rel_tolerance" : 1e-4
                 }
             ]
         },
@@ -109,7 +101,7 @@
                     "data_name"   : "front_force",
                     "io_settings"   : {
                         "mapper_type" : "nearest_neighbor",
-                        "mapper_args" : ["swap_sign"]
+                        "mapper_args" : ["swap_sign", "conservative"]
                     }
                 },
                 {

@@ -1,7 +1,10 @@
 {
     "problem_data"             : {
         "problem_name"    : "Mok_CSM",
+        "model_part_name" : "Structure",
+        "domain_size"     : 3,
         "parallel_type"   : "OpenMP",
+        "time_step"       : 0.1,
         "start_time"      : 0.0,
         "end_time"        : 15,
         "echo_level"      : 0
@@ -12,14 +15,9 @@
         "analysis_type"                      : "non_linear",
         "time_integration_method"            : "implicit",
         "scheme_type"                        : "newmark",
-        "domain_size"                        : 3,
-        "model_part_name"                    : "Structure",
         "model_import_settings"              : {
             "input_type"     : "mdpa",
             "input_filename" : "Mok_CSM"
-        },
-        "time_stepping"               : {
-            "time_step"           : 0.1
         },
 		"line_search"                        : false,
         "compute_reactions"					 : false,
@@ -33,78 +31,90 @@
         "processes_sub_model_part_list"      : ["DISPLACEMENT_Boundary","ROTATION_Boundary","GENERIC_Beam"],
         "rotation_dofs"                      : true
     },
-    "processes" : {
-        "constraints_process_list" : [{
-            "python_module" : "assign_vector_variable_process",
-            "kratos_module" : "KratosMultiphysics",
-            "help"          : "This process fixes the selected components of a given vector variable",
-            "process_name"  : "AssignVectorVariableProcess",
-            "Parameters"    : {
-                "mesh_id"         : 0,
-                "model_part_name" : "DISPLACEMENT_Boundary",
-                "variable_name"   : "DISPLACEMENT",
-                "constrained"      : [true, true, true],
-                "value"           : [0.0,0.0,0.0]
-            }
+    "constraints_process_list" : [{
+        "python_module" : "assign_vector_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "help"          : "This process fixes the selected components of a given vector variable",
+        "process_name"  : "AssignVectorVariableProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "DISPLACEMENT_Boundary",
+            "variable_name"   : "DISPLACEMENT",
+            "constrained"      : [true, true, true],
+            "value"           : [0.0,0.0,0.0]
+        }
 
-            },
-            {
-            "python_module" : "assign_vector_variable_process",
-            "kratos_module" : "KratosMultiphysics",
-            "help"          : "This process fixes the selected components of a given vector variable",
-            "process_name"  : "AssignVectorVariableProcess",
-            "Parameters"    : {
-                "mesh_id"         : 0,
-                "model_part_name" : "GENERIC_Beam",
-                "variable_name"   : "DISPLACEMENT",
-                "constrained"      : [false, false, false],
-                "value"           : [0.0,0.0,0.0]
-            }
-
-            },
-            {
-            "python_module" : "assign_vector_variable_process",
-            "kratos_module" : "KratosMultiphysics",
-            "help"          : "This process fixes the selected components of a given vector variable",
-            "process_name"  : "AssignVectorVariableProcess",
-            "Parameters"    : {
-                "mesh_id"         : 0,
-                "model_part_name" : "ROTATION_Boundary",
-                "variable_name"   : "ROTATION",
-                "constrained"      : [true, true, true],
-                "value"           : [0.0,0.0,0.0]
-            }
-
-        }],
-        "loads_process_list"       : [{
-            "python_module"   : "process_factory",
-            "kratos_module" : "KratosMultiphysics",
-            "check"                 : "DirectorVectorNonZero direction",
-            "help"                  : "This process ",
-            "process_name"          : "ApplyConstantVectorValueProcess",
-            "Parameters"            : {
-                "mesh_id"         : 0,
-                "model_part_name" : "GENERIC_Beam",
-                "variable_name"   : "VOLUME_ACCELERATION",
-                "modulus"          : 0.0,
-                "direction"       : [0.0,-1.0,0.0]
-            }
         },
-            {
-            "python_module"   : "process_factory",
-            "kratos_module" : "KratosMultiphysics",
-            "check"                 : "DirectorVectorNonZero direction",
-            "help"                  : "This process ",
-            "process_name"          : "ApplyConstantVectorValueProcess",
-            "Parameters"            : {
-                "mesh_id"         : 0,
-                "model_part_name" : "GENERIC_Beam",
-                "variable_name"   : "POINT_LOAD",
-                "modulus"          : 0.00,
-                "direction"       : [1.0,1.0,1.0]
-            }
-        }]
+        {
+        "python_module" : "assign_vector_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "help"          : "This process fixes the selected components of a given vector variable",
+        "process_name"  : "AssignVectorVariableProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "GENERIC_Beam",
+            "variable_name"   : "DISPLACEMENT",
+            "constrained"      : [false, false, false],
+            "value"           : [0.0,0.0,0.0]
+        }
+
+        },
+        {
+        "python_module" : "assign_vector_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "help"          : "This process fixes the selected components of a given vector variable",
+        "process_name"  : "AssignVectorVariableProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "ROTATION_Boundary",
+            "variable_name"   : "ROTATION",
+            "constrained"      : [true, true, true],
+            "value"           : [0.0,0.0,0.0]
+        }
+
+    }],
+    "loads_process_list"       : [{
+        "python_module"   : "process_factory",
+        "kratos_module" : "KratosMultiphysics",
+        "check"                 : "DirectorVectorNonZero direction",
+        "help"                  : "This process ",
+        "process_name"          : "ApplyConstantVectorValueProcess",
+        "Parameters"            : {
+            "mesh_id"         : 0,
+            "model_part_name" : "GENERIC_Beam",
+            "variable_name"   : "VOLUME_ACCELERATION",
+            "modulus"          : 0.0,
+            "direction"       : [0.0,-1.0,0.0]
+        }
     },
+        {
+        "python_module"   : "process_factory",
+        "kratos_module" : "KratosMultiphysics",
+        "check"                 : "DirectorVectorNonZero direction",
+        "help"                  : "This process ",
+        "process_name"          : "ApplyConstantVectorValueProcess",
+        "Parameters"            : {
+            "mesh_id"         : 0,
+            "model_part_name" : "GENERIC_Beam",
+            "variable_name"   : "POINT_LOAD",
+            "modulus"          : 0.00,
+            "direction"       : [1.0,1.0,1.0]
+        }
+    },{
+        "python_module"  : "point_output_process",
+        "kratos_module"  : "KratosMultiphysics",
+        "process_name"   : "PointOutputProcess",
+        "Parameters"            : {
+            "position"         :   [0.499, 0.25, 0.0],
+            "model_part_name"  : "Structure",
+            "output_file_settings": {
+                "file_name"       : "node_output",
+                "write_buffer_size" : 1
+            },
+            "output_variables" : ["DISPLACEMENT"],
+            "entity_type"      : "node"
+        }
+    }],
     "output_configuration"     : {
         "result_file_configuration" : {
             "gidpost_flags"       : {

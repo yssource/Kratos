@@ -4,7 +4,6 @@ import co_simulation_io_factory
 
 import numpy as np
 from numpy import linalg as la
-import math
 
 from co_simulation_tools import csprint, bold, green, red
 
@@ -28,8 +27,8 @@ class CoSimulationConvergenceCriteria(object):
             self.rel_tolerances.append(data_entry["rel_tolerance"])
         data_size = len(self.settings["data_list"])
 
-    def AdvanceInTime(self):
-        # Saving the previous data for the computation of the residual
+    def SetPreviousSolution(self):
+        # Saving the previous data (at beginning of iteration) for the computation of the residual
         self.old_data = [] # discard old data fields
         for data_entry in self.settings["data_list"]:
             self.old_data.append(self.__ImportData(data_entry))
@@ -40,11 +39,12 @@ class CoSimulationConvergenceCriteria(object):
         for data_entry in self.settings["data_list"]:
             new_data = self.__ImportData(data_entry)
             residual = new_data - self.old_data[idx]
-            abs_norm = la.norm(residual) / math.sqrt(residual.size)
+            res_norm = la.norm(residual)
             norm_new_data = la.norm(new_data)
             if norm_new_data < 1e-15:
                 norm_new_data = 1.0 # to avoid division by zero
-            rel_norm = la.norm(residual) / norm_new_data
+            abs_norm = res_norm / np.sqrt(residual.size)
+            rel_norm = res_norm / norm_new_data
             convergence_list.append(abs_norm < self.abs_tolerances[idx] or rel_norm < self.rel_tolerances[idx])
             if self.echo_level > 0:
                 info_msg  = 'Convergence for "'+bold(data_entry["data_name"])+'": '

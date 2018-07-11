@@ -91,7 +91,6 @@ class MVQN(CoSimulationBaseConvergenceAccelerator):
     ## AdvanceInTime()
     # Finalizes the current time step and initializes the next time step.
     def AdvanceInTime( self ):
-        super(MVQN, self).AdvanceInTime()
         if self.J == []:
             return
 

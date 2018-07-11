@@ -69,7 +69,6 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
                 raise Exception("Solver time mismatch")
 
         self.convergence_accelerator.AdvanceInTime()
-        self.convergence_criteria.AdvanceInTime()
 
         if not self.coupling_started and self.time > self.start_coupling_time:
             csprint(self.lvl, magenta("<< Starting Coupling >>"))
@@ -96,6 +95,8 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
     def SolveSolutionStep(self):
         for k in range(self.num_coupling_iterations):
             csprint(self.lvl, cyan("Coupling iteration: ")+bold(str(k+1)+" / " + str(self.num_coupling_iterations)))
+            self.convergence_accelerator.SetPreviousSolution()
+            self.convergence_criteria.SetPreviousSolution()
             for solver_name in self.solver_names:
                 solver = self.solvers[solver_name]
                 self.__SynchronizeInputData(solver, solver_name)

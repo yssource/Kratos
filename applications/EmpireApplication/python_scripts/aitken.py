@@ -69,5 +69,4 @@ class Aitken(CoSimulationBaseConvergenceAccelerator):
     ## AdvanceInTime()
     # Finalizes the current time step and initializes the next time step.
     def AdvanceInTime( self ):
-        super(Aitken, self).AdvanceInTime()
         print( "" )   # Do nothing for Aitken relaxation

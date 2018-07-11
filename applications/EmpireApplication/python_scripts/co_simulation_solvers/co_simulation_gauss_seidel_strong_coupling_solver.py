@@ -1,11 +1,11 @@
 from __future__ import print_function, absolute_import, division
 
 # Importing the base class
-from co_simulation_base_solver import CoSimulationBaseSolver
+from co_simulation_solvers.co_simulation_base_solver import CoSimulationBaseSolver
 
 # Other imports
-import co_simulation_convergence_accelerator_factory as convergence_accelerator_factory
-import co_simulation_convergence_criteria_factory as convergence_criteria_factory
+import co_simulation_convergence_accelerators.co_simulation_convergence_accelerator_factory as convergence_accelerator_factory
+import co_simulation_convergence_criteria.co_simulation_convergence_criteria_factory as convergence_criteria_factory
 import co_simulation_tools as cosim_tools
 from co_simulation_tools import csprint, red, green, cyan, bold, magenta
 
@@ -68,8 +68,6 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
             if abs(self.time - time_other_solver) > 1e-12:
                 raise Exception("Solver time mismatch")
 
-        self.convergence_accelerator.AdvanceInTime()
-
         if not self.coupling_started and self.time > self.start_coupling_time:
             csprint(self.lvl, magenta("<< Starting Coupling >>"))
             self.coupling_started = True
@@ -87,6 +85,8 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseSolver):
     def FinalizeSolutionStep(self):
         for solver_name in self.solver_names:
             self.solvers[solver_name].FinalizeSolutionStep()
+
+        self.convergence_accelerator.FinalizeSolutionStep()
 
     def OutputSolutionStep(self):
         for solver_name in self.solver_names:

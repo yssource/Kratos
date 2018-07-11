@@ -1,6 +1,6 @@
 from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
-import co_simulation_io_factory
+import co_simulation_ios.co_simulation_io_factory as io_factory
 import numpy as np
 
 class CoSimulationBaseConvergenceAccelerator(object):
@@ -12,9 +12,9 @@ class CoSimulationBaseConvergenceAccelerator(object):
         self.echo_level = 0
         if "echo_level" in self.settings:
             self.echo_level = self.settings["echo_level"]
-        self.io = co_simulation_io_factory.CreateIO(settings, solvers, "None", cosim_solver_details, level)
+        self.io = io_factory.CreateIO(settings, solvers, "None", cosim_solver_details, level)
 
-    def AdvanceInTime(self):
+    def FinalizeSolutionStep(self):
         pass
 
     def SetPreviousSolution(self):

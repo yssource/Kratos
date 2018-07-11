@@ -140,9 +140,9 @@ class IQNILS(CoSimulationBaseConvergenceAccelerator):
 
                 return delta_x
 
-    ## AdvanceInTime()
+    ## FinalizeSolutionStep()
     # Finalizes the current time step and initializes the next time step.
-    def AdvanceInTime( self ):
+    def FinalizeSolutionStep( self ):
         if self.V_new != [] and self.W_new != []:
             self.v_old_matrices.appendleft( self.V_new )
             self.w_old_matrices.appendleft( self.W_new )

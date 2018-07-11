@@ -4,7 +4,7 @@
         "model_part_name" : "Structure",
         "domain_size"     : 3,
         "parallel_type"   : "OpenMP",
-        "time_step"       : 0.1,
+        "time_step"       : 0.001,
         "start_time"      : 0.0,
         "end_time"        : 15,
         "echo_level"      : 0

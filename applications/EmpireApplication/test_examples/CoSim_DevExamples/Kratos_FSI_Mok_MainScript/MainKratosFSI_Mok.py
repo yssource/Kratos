@@ -72,7 +72,7 @@ print("======================================================================")
 # ----- Setting up the time parameters -----
 start_time = 0.0
 end_time   = 15.0
-delta_time = 0.1
+delta_time = 0.001
 
 num_steps = int((end_time - start_time) / delta_time)
 round_val = fsi_utilities.TimeRoundValue(delta_time)

@@ -1,9 +1,5 @@
 from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
-# Adding the current directory to the path such that the modules can be imported with __import__
-import sys, os
-sys.path.append(os.path.dirname(__file__))
-
 available_ios = {
     "dummy"         : "co_simulation_base_io",
     "kratos_field"  : "kratos_field_io",

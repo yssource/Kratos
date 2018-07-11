@@ -3,10 +3,6 @@ from __future__ import print_function, absolute_import, division #makes KratosMu
 # Importing the base class of the cosim-solvers
 from co_simulation_solvers.co_simulation_base_solver import CoSimulationBaseSolver
 
-# Adding the current directory to the path such that the modules can be imported with __import__
-import sys, os
-sys.path.append(os.path.dirname(__file__))
-
 available_solvers = {
     "dummy"                        : "co_simulation_base_solver",
     "kratos_fluid"                 : "kratos_fluid_solver",

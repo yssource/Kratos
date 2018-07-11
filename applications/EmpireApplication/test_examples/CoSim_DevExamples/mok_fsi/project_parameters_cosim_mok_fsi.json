@@ -13,7 +13,40 @@
         "start_coupling_time" : 0.0,
         "predictor_settings" :
         {
-            "predictor_type" : "linear_derivative_based"
+            "predictor_type" : "linear_derivative_based",
+            "io_type"        : "kratos_signal",
+            "data_list"      : 
+            [
+                {
+                    "from_solver": "structure",
+                    "data_name"  : "front_disp"
+                },
+                {
+                    "from_solver": "structure",
+                    "data_name"  : "top_disp"
+                },
+                {
+                    "from_solver": "structure",
+                    "data_name"  : "back_disp"
+                }
+
+            ],
+            "derivative_list"      : 
+            [
+                {
+                    "from_solver": "structure",
+                    "data_name"  : "front_vel"
+                },
+                {
+                    "from_solver": "structure",
+                    "data_name"  : "top_vel"
+                },
+                {
+                    "from_solver": "structure",
+                    "data_name"  : "back_vel"
+                }
+
+            ]
         },
         "convergence_accelerator_settings" :
         {
@@ -196,6 +229,18 @@
                     "back_force" : {
                         "geometry_name" : "Structure.GENERIC_Beam",
                         "data_identifier" : "POINT_LOAD"
+                    },
+                    "front_vel" : {
+                        "geometry_name" : "Structure.GENERIC_Beam",
+                        "data_identifier" : "VELOCITY"
+                    },
+                    "top_vel" : {
+                        "geometry_name" : "Structure.GENERIC_Beam",
+                        "data_identifier" : "VELOCITY"
+                    },
+                    "back_vel" : {
+                        "geometry_name" : "Structure.GENERIC_Beam",
+                        "data_identifier" : "VELOCITY"
                     }
                 }
             }

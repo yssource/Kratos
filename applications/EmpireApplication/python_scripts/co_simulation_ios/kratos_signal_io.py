@@ -19,12 +19,15 @@ class KratosSignalIO(CoSimulationBaseIO):
         data_definition = from_client.GetDataDefinition(data_name)
         geometry_name = data_definition["geometry_name"]
         var_name = data_definition["data_identifier"]
+        buffer_index = 0
+        if "buffer_index" in data_definition:
+            buffer_index = data_definition["buffer_index"]
 
         model_part = from_client.model[geometry_name]
         kratos_var = KratosMultiphysics.KratosGlobals.GetVariable(var_name)
 
         if type(kratos_var) == KratosMultiphysics.DoubleVariable or type(kratos_var) == KratosMultiphysics.Array1DComponentVariable:
-            data = ExtractData(model_part, kratos_var)
+            data = ExtractData(model_part, kratos_var, buffer_index)
         elif type(kratos_var) == KratosMultiphysics.Array1DVariable3:
             domain_size = model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]
             if not domain_size in [1,2,3]:
@@ -36,7 +39,7 @@ class KratosSignalIO(CoSimulationBaseIO):
                 component_var = KratosMultiphysics.KratosGlobals.GetVariable(kratos_var.Name()+ext[i])
                 range_begin = i*num_nodes
                 range_end = (i+1)*num_nodes
-                data[range_begin:range_end] = ExtractData(model_part, component_var)
+                data[range_begin:range_end] = ExtractData(model_part, component_var, buffer_index)
         else:
             err_msg  = 'Type of variable "' + kratos_var.Name() + '" is not valid\n'
             err_msg += 'It can only be double, component or array3d!'
@@ -84,11 +87,11 @@ class KratosSignalIO(CoSimulationBaseIO):
     def MakeMeshAvailable(self, MeshName, ToClient):
         pass
 
-def ExtractData(model_part, kratos_var):
+def ExtractData(model_part, kratos_var, buffer_index):
     num_nodes = model_part.NumberOfNodes()
     data = np.zeros(num_nodes)
     for idx, node in zip(range(num_nodes), model_part.Nodes):
-        data[idx] = node.GetSolutionStepValue(kratos_var)
+        data[idx] = node.GetSolutionStepValue(kratos_var, buffer_index)
     return data
 
 def SetData(model_part, kratos_var, data):

@@ -88,9 +88,9 @@ class MVQN(CoSimulationBaseConvergenceAccelerator):
 
         return delta_x
 
-    ## AdvanceInTime()
+    ## FinalizeSolutionStep()
     # Finalizes the current time step and initializes the next time step.
-    def AdvanceInTime( self ):
+    def FinalizeSolutionStep( self ):
         if self.J == []:
             return
 

@@ -14,7 +14,7 @@ class CoSimulationBaseConvergenceAccelerator(object):
             self.echo_level = self.settings["echo_level"]
         self.io = io_factory.CreateIO(settings, solvers, "None", cosim_solver_details, level)
 
-    def AdvanceInTime(self):
+    def FinalizeSolutionStep(self):
         pass
 
     def SetPreviousSolution(self):

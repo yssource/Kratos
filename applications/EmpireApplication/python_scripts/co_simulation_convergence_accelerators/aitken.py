@@ -65,8 +65,3 @@ class Aitken(CoSimulationBaseConvergenceAccelerator):
         self.alpha_old = alpha
 
         return delta_x
-
-    ## AdvanceInTime()
-    # Finalizes the current time step and initializes the next time step.
-    def AdvanceInTime( self ):
-        print( "" )   # Do nothing for Aitken relaxation

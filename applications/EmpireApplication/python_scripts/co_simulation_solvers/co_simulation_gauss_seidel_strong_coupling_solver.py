@@ -1,11 +1,11 @@
 from __future__ import print_function, absolute_import, division
 
 # Importing the base class
-from co_simulation_base_solver import CoSimulationBaseSolver
+from co_simulation_solvers.co_simulation_base_solver import CoSimulationBaseSolver
 
 # Other imports
-import co_simulation_convergence_accelerator_factory as convergence_accelerator_factory
-import co_simulation_convergence_criteria_factory as convergence_criteria_factory
+import co_simulation_convergence_accelerators.co_simulation_convergence_accelerator_factory as convergence_accelerator_factory
+import co_simulation_convergence_criteria.co_simulation_convergence_criteria_factory as convergence_criteria_factory
 import co_simulation_tools as cosim_tools
 from co_simulation_tools import csprint, red, green, cyan, bold, magenta
 

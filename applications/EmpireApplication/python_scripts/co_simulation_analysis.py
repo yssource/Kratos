@@ -63,7 +63,7 @@ class CoSimulationAnalysis(object):
     def _CreateSolver(self):
         """Create the solver
         """
-        import python_solvers_wrapper_co_simulation as solvers_wrapper
+        import co_simulation_solvers.python_solvers_wrapper_co_simulation as solvers_wrapper
         return solvers_wrapper.CreateSolver(self.cosim_settings["solver_settings"], level=0)
 
 ## TODO add the if name==main stuff like in fluid and structure

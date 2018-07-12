@@ -64,6 +64,12 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
             csprint(self.lvl, magenta("<< Starting Coupling >>"))
             self.coupling_started = True
 
+        # if a predictor is used then the delta_time is set
+        # this is needed by some predictors
+        if self.predictor is not None:
+            delta_time = self.time - current_time
+            self.predictor.SetDeltaTime(delta_time)
+
         return self.time
 
     def Predict(self):

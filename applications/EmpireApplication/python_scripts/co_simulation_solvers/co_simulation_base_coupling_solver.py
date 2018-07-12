@@ -4,6 +4,7 @@ from __future__ import print_function, absolute_import, division
 from co_simulation_solvers.co_simulation_base_solver import CoSimulationBaseSolver
 
 # Other imports
+from co_simulation_predictors.co_simulation_predictor_factory import CreatePredictor
 import co_simulation_tools as cosim_tools
 from co_simulation_tools import csprint, red, green, cyan, bold, magenta
 
@@ -43,6 +44,11 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
         for solver_name in self.solver_names:
             self.solvers[solver_name].InitializeIO(self.solvers, self.cosim_solver_details)
 
+        self.predictor = None
+        if "predictor_settings" in self.cosim_solver_settings:
+            self.predictor = CreatePredictor(self.cosim_solver_settings["predictor_settings"],
+                                             self.solvers, self.cosim_solver_details, self.lvl)
+
     def Finalize(self):
         for solver_name in self.solver_names:
             self.solvers[solver_name].Finalize()
@@ -61,6 +67,9 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
         return self.time
 
     def Predict(self):
+        if self.predictor is not None:
+            self.predictor.Predict()
+
         for solver_name in self.solver_names:
             self.solvers[solver_name].Predict()
 

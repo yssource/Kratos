@@ -6,7 +6,6 @@ from co_simulation_solvers.co_simulation_base_coupling_solver import CoSimulatio
 # Other imports
 import co_simulation_convergence_accelerators.co_simulation_convergence_accelerator_factory as convergence_accelerator_factory
 import co_simulation_convergence_criteria.co_simulation_convergence_criteria_factory as convergence_criteria_factory
-from co_simulation_predictors.co_simulation_predictor_factory import CreatePredictor
 import co_simulation_tools as cosim_tools
 from co_simulation_tools import csprint, red, green, cyan, bold, magenta
 
@@ -30,17 +29,6 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
 
         self.convergence_criteria = convergence_criteria_factory.CreateConvergenceCriteria(
             self.cosim_solver_settings["convergence_criteria_settings"], self.solvers, self.cosim_solver_details, self.lvl)
-
-        self.predictor = None
-        if "predictor_settings" in self.cosim_solver_settings:
-            self.predictor = CreatePredictor(self.cosim_solver_settings["predictor_settings"],
-                                             self.solvers, self.cosim_solver_details, self.lvl)
-
-    def Predict(self):
-        if self.predictor is not None:
-            self.predictor.Predict()
-
-        super(GaussSeidelStrongCouplingSolver, self).Predict()
 
     def FinalizeSolutionStep(self):
         super(GaussSeidelStrongCouplingSolver, self).FinalizeSolutionStep()

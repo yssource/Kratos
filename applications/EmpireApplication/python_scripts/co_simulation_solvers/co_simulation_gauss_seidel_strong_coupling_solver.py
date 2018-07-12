@@ -6,8 +6,7 @@ from co_simulation_solvers.co_simulation_base_coupling_solver import CoSimulatio
 # Other imports
 from co_simulation_convergence_accelerators.co_simulation_convergence_accelerator_factory import CreateConvergenceAccelerator
 from co_simulation_convergence_criteria.co_simulation_convergence_criteria_factory import CreateConvergenceCriteria
-import co_simulation_tools as cosim_tools
-from co_simulation_tools import csprint, red, green, cyan, bold, magenta
+from co_simulation_tools import csprint, red, green, cyan, bold
 
 def CreateSolver(cosim_solver_settings, level):
     return GaussSeidelStrongCouplingSolver(cosim_solver_settings, level)
@@ -15,7 +14,7 @@ def CreateSolver(cosim_solver_settings, level):
 class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
     def __init__(self, cosim_solver_settings, level):
         if not len(cosim_solver_settings["solvers"]) == 2:
-            raise Exception("Exactly two solvers have to be specified for the GaussSeidelStrongCouplingSolver!")
+            raise Exception("Exactly two solvers have to be specified for the " + self.__class__.__name__ + "!")
 
         super(GaussSeidelStrongCouplingSolver, self).__init__(cosim_solver_settings, level)
 

@@ -42,7 +42,7 @@ class LinearDerivativeBasedPredictor(object):
 
         ########################################################
         # ATTENTION HAS TO BE TAKEN FROM SOLVERS!!!!!!!!    
-        time_step = 0.1
+        time_step = 0.01
         ########################################################
         #compute linear prediction
 

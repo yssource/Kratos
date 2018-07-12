@@ -7,14 +7,14 @@
         "time_step"       : 0.01,
         "start_time"      : 0.0,
         "end_time"        : 1.0,
-        "echo_level"      : 1
+        "echo_level"      : 0
     },
     "solver_settings"          : {
         "solver_type"                        : "Dynamic",
-        "echo_level"                         : 1,
+        "echo_level"                         : 0,
         "analysis_type"                      : "non_linear",
         "time_integration_method"            : "implicit",
-        "scheme_type"                        : "newmark",
+        "scheme_type"                        : "bossak",
         "model_import_settings"              : {
             "input_type"     : "mdpa",
             "input_filename" : "Wall_Structure"
@@ -23,11 +23,11 @@
             "materials_filename" : "StructuralMaterials.json"
         },
         "line_search"                        : false,
-        "convergence_criterion"              : "displacement_criterion",
-        "displacement_relative_tolerance"    : 1e-9,
-        "displacement_absolute_tolerance"    : 1e-9,
-        "residual_relative_tolerance"        : 1e-9,
-        "residual_absolute_tolerance"        : 1e-9,
+        "convergence_criterion"              : "residual_criterion",
+        "displacement_relative_tolerance"    : 1e-7,
+        "displacement_absolute_tolerance"    : 1e-7,
+        "residual_relative_tolerance"        : 1e-7,
+        "residual_absolute_tolerance"        : 1e-7,
         "max_iteration"                      : 200,
         "linear_solver_settings"             : {
             "solver_type" : "eigen_pardiso_lu",

@@ -294,12 +294,14 @@ public:
 		if(posX<-0.51 || posX>0.9){
 		  // Alpha*=1.1; //as it was in case d
 		  // Alpha*=1.15;//as it was in case 0.15b
-		  // Alpha*=1.1;//as for the best case of Hreservoir=0.3m
-		  Alpha*=1.13;
+		  // Alpha*=1.1;//as for the best case of Hreservoir=0.3m 
+		  // Alpha*=1.13;//as for the best case of Hreservoir=0.45,0.6m
+		  Alpha*=1.14;//as for the last case (C) of Hreservoir=0.15m
 		}else{
 		  // Alpha*=1.04;//as it was in case d; in case d, it was absent
 		  // Alpha*=1.05;//as for the best case of Hreservoir=0.3m
-		  Alpha*=1.08;
+		  // Alpha*=1.08;//as for the best case of Hreservoir=0.45,0.6m
+		  Alpha*=1.12;//as for the last case of Hreservoir=0.15m
 		}
 
 	      }else  if(dimension==3){

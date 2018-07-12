@@ -22,6 +22,9 @@ class LinearDerivativeBasedPredictor(object):
         if "echo_level" in self.settings:
             self.echo_level = self.settings["echo_level"]
 
+    def SetDeltaTime(self, delta_time):
+        self.delta_time = delta_time
+
     def Predict(self):
 
         data_sizes = [] # saving the sizes of the data to later split them again
@@ -34,21 +37,22 @@ class LinearDerivativeBasedPredictor(object):
             data_sizes.append(size_counter)
 
         combined_new_data = np.concatenate(new_data)
-        
+
         new_derivative = []
-        for data_entry in self.settings["derivative_list"]:    
+        for data_entry in self.settings["derivative_list"]:
             new_derivative.append(self.__ImportData(data_entry, 1))
         combined_new_derivative = np.concatenate(new_derivative)
 
+<<<<<<< HEAD
         ########################################################
         # ATTENTION HAS TO BE TAKEN FROM SOLVERS!!!!!!!!    
         time_step = 0.01
         ########################################################
+=======
+>>>>>>> f680a6c4f11ff9decbeb9c6460cb3338b3980555
         #compute linear prediction
-
-        combined_new_data += time_step * combined_new_derivative
+        combined_new_data += self.delta_time * combined_new_derivative
         updated_data = np.split(combined_new_data, data_sizes)
-
 
         for data_entry, data_update in zip(self.settings["data_list"], updated_data):
             self.__ExportData(data_entry, data_update)

@@ -1,0 +1,111 @@
+from __future__ import print_function, absolute_import, division
+
+# Importing the base class
+from co_simulation_solvers.co_simulation_base_solver import CoSimulationBaseSolver
+
+# Other imports
+from co_simulation_predictors.co_simulation_predictor_factory import CreatePredictor
+import co_simulation_tools as cosim_tools
+from co_simulation_tools import csprint, red, green, cyan, bold, magenta
+
+class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
+    def __init__(self, cosim_solver_settings, level):
+        super(CoSimulationBaseCouplingSolver, self).__init__(cosim_solver_settings, level)
+
+        self.solver_names = []
+        self.solvers = {}
+
+        import python_solvers_wrapper_co_simulation as solvers_wrapper
+
+        for solver_settings in self.cosim_solver_settings["coupling_loop"]:
+            solver_name = solver_settings["name"]
+            if solver_name in self.solver_names:
+                raise NameError('Solver name "' + solver_name + '" defined twice!')
+            self.solver_names.append(solver_name)
+            self.cosim_solver_settings["solvers"][solver_name]["name"] = solver_name # adding the name such that the solver can identify itself
+            self.solvers[solver_name] = solvers_wrapper.CreateSolver(
+                self.cosim_solver_settings["solvers"][solver_name], self.lvl-1) # -1 to have solver prints on same lvl
+
+        self.cosim_solver_details = cosim_tools.GetSolverCoSimulationDetails(
+            self.cosim_solver_settings["coupling_loop"])
+
+        # With this setting the coupling can start later
+        self.start_coupling_time = 0.0
+        if "start_coupling_time" in self.cosim_solver_settings:
+            self.start_coupling_time = self.cosim_solver_settings["start_coupling_time"]
+        if self.start_coupling_time > 0.0:
+            self.coupling_started = False
+        else:
+            self.coupling_started = True
+
+    def Initialize(self):
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].Initialize()
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].InitializeIO(self.solvers, self.cosim_solver_details)
+
+        self.predictor = None
+        if "predictor_settings" in self.cosim_solver_settings:
+            self.predictor = CreatePredictor(self.cosim_solver_settings["predictor_settings"],
+                                             self.solvers, self.cosim_solver_details, self.lvl)
+
+    def Finalize(self):
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].Finalize()
+
+    def AdvanceInTime(self, current_time):
+        self.time = self.solvers[self.solver_names[0]].AdvanceInTime(current_time)
+        for solver_name in self.solver_names[1:]:
+            time_other_solver = self.solvers[solver_name].AdvanceInTime(current_time)
+            if abs(self.time - time_other_solver) > 1e-12:
+                raise Exception("Solver time mismatch")
+
+        if not self.coupling_started and self.time > self.start_coupling_time:
+            csprint(self.lvl, magenta("<< Starting Coupling >>"))
+            self.coupling_started = True
+
+        # if a predictor is used then the delta_time is set
+        # this is needed by some predictors
+        if self.predictor is not None:
+            delta_time = self.time - current_time
+            self.predictor.SetDeltaTime(delta_time)
+
+        return self.time
+
+    def Predict(self):
+        if self.predictor is not None:
+            self.predictor.Predict()
+
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].Predict()
+
+    def InitializeSolutionStep(self):
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].InitializeSolutionStep()
+
+    def FinalizeSolutionStep(self):
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].FinalizeSolutionStep()
+
+    def OutputSolutionStep(self):
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].OutputSolutionStep()
+
+    def SolveSolutionStep(self):
+        err_msg  = 'Calling "SolveSolutionStep" of the "CoSimulationBaseCouplingSolver"!\n'
+        err_msg += 'This function has to be implemented in the derived class!'
+        raise Exception(err_msg)
+
+    def _SynchronizeInputData(self, solver, solver_name):
+        if self.coupling_started:
+            input_data_list = self.cosim_solver_details[solver_name]["input_data_list"]
+            for input_data in input_data_list:
+                from_solver = self.solvers[input_data["from_solver"]]
+                solver.ImportData(input_data["data_name"], from_solver)
+
+    def _SynchronizeOutputData(self, solver, solver_name):
+        if self.coupling_started:
+            output_data_list = self.cosim_solver_details[solver_name]["output_data_list"]
+            for output_data in output_data_list:
+                to_solver = self.solvers[output_data["to_solver"]]
+                solver.ExportData(output_data["data_name"], to_solver)

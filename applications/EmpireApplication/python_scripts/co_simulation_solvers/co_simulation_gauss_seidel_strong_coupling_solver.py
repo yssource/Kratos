@@ -4,8 +4,8 @@ from __future__ import print_function, absolute_import, division
 from co_simulation_solvers.co_simulation_base_coupling_solver import CoSimulationBaseCouplingSolver
 
 # Other imports
-import co_simulation_convergence_accelerators.co_simulation_convergence_accelerator_factory as convergence_accelerator_factory
-import co_simulation_convergence_criteria.co_simulation_convergence_criteria_factory as convergence_criteria_factory
+from co_simulation_convergence_accelerators.co_simulation_convergence_accelerator_factory import CreateConvergenceAccelerator
+from co_simulation_convergence_criteria.co_simulation_convergence_criteria_factory import CreateConvergenceCriteria
 import co_simulation_tools as cosim_tools
 from co_simulation_tools import csprint, red, green, cyan, bold, magenta
 
@@ -24,15 +24,16 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
 
         self.num_coupling_iterations = self.cosim_solver_settings["num_coupling_iterations"]
 
-        self.convergence_accelerator = convergence_accelerator_factory.CreateConvergenceAccelerator(
-            self.cosim_solver_settings["convergence_accelerator_settings"], self.solvers, self.cosim_solver_details, self.lvl)
+        self.convergence_accelerator = CreateConvergenceAccelerator(
+            self.cosim_solver_settings["convergence_accelerator_settings"],
+            self.solvers, self.cosim_solver_details, self.lvl)
 
-        self.convergence_criteria = convergence_criteria_factory.CreateConvergenceCriteria(
-            self.cosim_solver_settings["convergence_criteria_settings"], self.solvers, self.cosim_solver_details, self.lvl)
+        self.convergence_criteria = CreateConvergenceCriteria(
+            self.cosim_solver_settings["convergence_criteria_settings"],
+            self.solvers, self.cosim_solver_details, self.lvl)
 
     def FinalizeSolutionStep(self):
         super(GaussSeidelStrongCouplingSolver, self).FinalizeSolutionStep()
-
         self.convergence_accelerator.FinalizeSolutionStep()
 
     def SolveSolutionStep(self):

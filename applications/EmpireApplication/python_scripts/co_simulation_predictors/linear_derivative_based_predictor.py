@@ -43,13 +43,6 @@ class LinearDerivativeBasedPredictor(object):
             new_derivative.append(self.__ImportData(data_entry, 1))
         combined_new_derivative = np.concatenate(new_derivative)
 
-<<<<<<< HEAD
-        ########################################################
-        # ATTENTION HAS TO BE TAKEN FROM SOLVERS!!!!!!!!    
-        time_step = 0.01
-        ########################################################
-=======
->>>>>>> f680a6c4f11ff9decbeb9c6460cb3338b3980555
         #compute linear prediction
         combined_new_data += self.delta_time * combined_new_derivative
         updated_data = np.split(combined_new_data, data_sizes)

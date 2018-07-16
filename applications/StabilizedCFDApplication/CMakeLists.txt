@@ -11,7 +11,6 @@ set( KRATOS_STABILIZED_CFD_APPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/stabilized_cfd_application_variables.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/stabilized_cfd_python_application.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_utilities_to_python.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/turbulence_statistics_container.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/dss.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/dss_fic.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/dss_fic_limited.cpp

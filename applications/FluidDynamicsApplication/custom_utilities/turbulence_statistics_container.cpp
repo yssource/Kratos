@@ -11,7 +11,7 @@
 //
 
 #include "turbulence_statistics_container.h"
-#include "stabilized_cfd_application_variables.h"
+#include "fluid_dynamics_application_variables.h"
 #include "includes/model_part.h"
 
 #include <string>
@@ -64,7 +64,7 @@ void TurbulenceStatisticsContainer::AddStep(std::vector<double> &Values, unsigne
         Values[WUU] = 0.0;
         Values[WVV] = 0.0;
         Values[WWW] = 0.0;
-        
+
         Values[PDU_DX] = 0.0;
         Values[PDU_DY] = 0.0;
         Values[PDU_DZ] = 0.0;

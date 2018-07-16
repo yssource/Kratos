@@ -22,7 +22,7 @@
 #include "includes/variables.h"
 #include "includes/kratos_application.h"
 
-#include "custom_utilities/turbulence_statistics_container.h"
+//#include "custom_utilities/turbulence_statistics_container.h"
 
 namespace Kratos
 {
@@ -33,7 +33,7 @@ KRATOS_DEFINE_VARIABLE( double, MEAN_KINETIC_ENERGY )
 KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS( MEAN_VELOCITY )
 KRATOS_DEFINE_VARIABLE( double, MEAN_PRESSURE )
 KRATOS_DEFINE_VARIABLE( Matrix, VELOCITY_COVARIANCES )
-KRATOS_DEFINE_VARIABLE( TurbulenceStatisticsContainer::Pointer, TURBULENCE_STATISTICS )
+//KRATOS_DEFINE_VARIABLE( TurbulenceStatisticsContainer::Pointer, TURBULENCE_STATISTICS )
 KRATOS_DEFINE_VARIABLE( double, TRACE_XI )
 KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS( DIV_XI )
 KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS( MOMENTUM_PROJECTION )

@@ -12,7 +12,7 @@
 
 
 #include "dss.h"
-#include "custom_utilities/turbulence_statistics_container.h"
+//#include "custom_utilities/turbulence_statistics_container.h"
 #include "includes/cfd_variables.h"
 #include "../FluidDynamicsApplication/fluid_dynamics_application_variables.h"
 
@@ -484,7 +484,7 @@ void DSS<TDim>::GetValueOnIntegrationPoints(const Variable<array_1d<double, 3 > 
             this->SubscaleVelocity(g,rN,rDN_DX,rCurrentProcessInfo,rValues[g]);
         }
     }
-    else if (rVariable == MEAN_VELOCITY)
+/*    else if (rVariable == MEAN_VELOCITY)
     {
         unsigned int NumSteps = rCurrentProcessInfo.GetValue(RECORDED_STEPS);
         const DSS<TDim>* const_this = static_cast<const DSS<TDim>*>(this);
@@ -506,7 +506,7 @@ void DSS<TDim>::GetValueOnIntegrationPoints(const Variable<array_1d<double, 3 > 
 
             }
         }
-    }
+    }*/
     else if (rVariable == VORTICITY)
     {
         // Get Shape function data
@@ -612,7 +612,7 @@ void DSS<TDim>::GetValueOnIntegrationPoints(const Variable<double>& rVariable,
 //            this->GetValue(TURBULENCE_STATISTICS)->StoreInstantData(Values,g);
 //        }
     }
-    else if (rVariable == MEAN_KINETIC_ENERGY) // Turbulence statistics
+/*    else if (rVariable == MEAN_KINETIC_ENERGY) // Turbulence statistics
     {
         unsigned int NumSteps = rCurrentProcessInfo.GetValue(RECORDED_STEPS);
         if (NumSteps > 0)
@@ -685,8 +685,8 @@ void DSS<TDim>::GetValueOnIntegrationPoints(const Variable<double>& rVariable,
                 this->GetValue(TURBULENCE_STATISTICS)->AddStep(Values,g,NumSteps);
             }
         }
-    }
-    else if (rVariable == MEAN_PRESSURE)
+    }*/
+/*    else if (rVariable == MEAN_PRESSURE)
     {
         unsigned int NumSteps = rCurrentProcessInfo.GetValue(RECORDED_STEPS);
         const DSS<TDim>* const_this = static_cast<const DSS<TDim>*>(this);
@@ -701,7 +701,7 @@ void DSS<TDim>::GetValueOnIntegrationPoints(const Variable<double>& rVariable,
             for (unsigned int g = 0; g < NumGauss; g++)
                 rValues[g] = const_this->GetValue(TURBULENCE_STATISTICS)->GetValue(TSC::P,g,NumSteps);
         }
-    }
+    }*/
     else if (rVariable == Q_VALUE)
     {
 		Vector GaussWeights;
@@ -808,7 +808,7 @@ void DSS<TDim>::GetValueOnIntegrationPoints(const Variable<Matrix>& rVariable,
                                             std::vector<Matrix>& rValues,
                                             const ProcessInfo& rCurrentProcessInfo)
 {
-    if (rVariable == VELOCITY_COVARIANCES)
+/*    if (rVariable == VELOCITY_COVARIANCES)
     {
         unsigned int NumSteps = rCurrentProcessInfo.GetValue(RECORDED_STEPS);
         const DSS<TDim>* const_this = static_cast<const DSS<TDim>*>(this);
@@ -835,8 +835,7 @@ void DSS<TDim>::GetValueOnIntegrationPoints(const Variable<Matrix>& rVariable,
                 Covariances(2,2) = const_this->GetValue(TURBULENCE_STATISTICS)->GetValue(TSC::WW,g,NumSteps);
             }
         }
-    }
-
+    }*/
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -13,7 +13,6 @@
 #include "utilities/math_utils.h"
 
 #include "dss_fic.h"
-#include "custom_utilities/turbulence_statistics_container.h"
 #include "includes/cfd_variables.h"
 
 namespace Kratos

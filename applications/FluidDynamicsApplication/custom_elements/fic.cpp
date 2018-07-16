@@ -21,6 +21,8 @@
 #include "custom_utilities/element_size_calculator.h"
 #include "custom_utilities/fluid_element_time_integration_detail.h"
 
+#include "custom_utilities/turbulence_statistics_container.h"
+
 namespace Kratos
 {
 
@@ -127,7 +129,76 @@ void FIC<TElementData>::GetValueOnIntegrationPoints(
     std::vector<double>& rValues,
     ProcessInfo const& rCurrentProcessInfo)
 {
-    FluidElement<TElementData>::GetValueOnIntegrationPoints(rVariable,rValues,rCurrentProcessInfo);
+    if (rVariable == MEAN_KINETIC_ENERGY) // Turbulence statistics
+    {
+        unsigned int NumSteps = rCurrentProcessInfo.GetValue(RECORDED_STEPS);
+        if (NumSteps > 0)
+        {
+            // Get Shape function data
+            Vector gauss_weights;
+            Matrix shape_functions;
+            ShapeFunctionDerivativesArrayType shape_derivatives;
+            this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
+            const unsigned int number_of_gauss_points = gauss_weights.size();
+
+            TElementData data;
+            data.Initialize(*this, rCurrentProcessInfo);
+
+            // Prepare new set of data
+            rValues.resize(number_of_gauss_points);
+
+            typedef TurbulenceStatisticsContainer TSC;
+            std::vector<double> Values(TSC::NUM_DATA,0.0);
+
+            // Iterate over integration points to evaluate local contribution
+            for (unsigned int g = 0; g < number_of_gauss_points; g++) {
+
+                data.UpdateGeometryValues(g, gauss_weights[g], row(shape_functions, g), shape_derivatives[g]);
+                this->CalculateMaterialResponse(data);
+
+                Matrix Gradient = ZeroMatrix(3,3);
+                for (unsigned int n = 0; n < NumNodes; n++) {
+                    for (unsigned int i = 0; i < Dim; i++) {
+                        for (unsigned int j = 0; j < Dim; j++) {
+                            Gradient(i,j) += data.DN_DX(n,j) * data.Velocity(n,i);
+                        }
+                    }
+                }
+
+                array_1d<double,3> velocity = this->GetAtCoordinate(data.Velocity,data.N);
+                double pressure = this->GetAtCoordinate(data.Pressure, data.N);
+
+                Values[TSC::U] = velocity[0];
+                Values[TSC::V] = velocity[1];
+                Values[TSC::W] = velocity[2];
+
+                Values[TSC::P] = pressure;
+
+                Values[TSC::DU_DX] = Gradient(0,0);
+                Values[TSC::DU_DY] = Gradient(0,1);
+                Values[TSC::DU_DZ] = Gradient(0,2);
+
+                Values[TSC::DV_DX] = Gradient(1,0);
+                Values[TSC::DV_DY] = Gradient(1,1);
+                Values[TSC::DV_DZ] = Gradient(1,2);
+
+                Values[TSC::DW_DX] = Gradient(2,0);
+                Values[TSC::DW_DY] = Gradient(2,1);
+                Values[TSC::DW_DZ] = Gradient(2,2);
+
+                Values[TSC::Uss] = 0.0;
+                Values[TSC::Vss] = 0.0;
+                Values[TSC::Wss] = 0.0;
+
+                Values[TSC::Pss] = 0.0;
+
+                this->GetValue(TURBULENCE_STATISTICS)->AddStep(Values,g,NumSteps);
+            }
+        }
+    }
+    else {
+        FluidElement<TElementData>::GetValueOnIntegrationPoints(rVariable,rValues,rCurrentProcessInfo);
+    }
 }
 
 template <class TElementData>

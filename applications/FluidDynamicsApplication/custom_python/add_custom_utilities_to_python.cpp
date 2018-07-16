@@ -32,6 +32,7 @@
 #include "custom_utilities/integration_point_to_node_transformation_utility.h"
 #include "custom_utilities/periodic_condition_utilities.h"
 #include "custom_utilities/compressible_element_rotation_utility.h"
+#include "custom_utilities/turbulence_statistics_container.h"
 
 #include "utilities/split_tetrahedra.h"
 
@@ -94,7 +95,7 @@ void  AddCustomUtilitiesToPython(pybind11::module& m)
         .def("AddPeriodicVariable",AddVariableComponent)
     ;
 
-    // Base settings 
+    // Base settings
     typedef SolverSettings<SparseSpaceType,LocalSpaceType,LinearSolverType> BaseSettingsType;
 
     class_ < BaseSettingsType >(m, "BaseSettingsType" );
@@ -164,6 +165,9 @@ void  AddCustomUtilitiesToPython(pybind11::module& m)
     .def(init<const unsigned int,const Variable<double>&>())
     ;
 
+    class_<Variable<TurbulenceStatisticsContainer::Pointer>,VariableData>(m, "TurbulenceStatisticsContainerVariable")
+      .def( "__repr__", &Variable<TurbulenceStatisticsContainer::Pointer>::Info )
+      ;
 }
 
 }  // namespace Python.

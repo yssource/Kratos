@@ -23,7 +23,7 @@
 
 #include "linear_solvers/linear_solver.h"
 
-#include "custom_utilities/turbulence_statistics_container.h"
+//#include "custom_utilities/turbulence_statistics_container.h"
 
 namespace Kratos
 {
@@ -40,9 +40,9 @@ namespace Python
     //typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
     //typedef LinearSolver<SparseSpaceType, LocalSpaceType > LinearSolverType;
 
-    class_<Variable<TurbulenceStatisticsContainer::Pointer>,VariableData>(m, "TurbulenceStatisticsContainerVariable")
+/*    class_<Variable<TurbulenceStatisticsContainer::Pointer>,VariableData>(m, "TurbulenceStatisticsContainerVariable")
       .def( "__repr__", &Variable<TurbulenceStatisticsContainer::Pointer>::Info )
-      ;
+      ;*/
   }
 
 }  // namespace Python.

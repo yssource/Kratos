@@ -12,7 +12,6 @@
 
 
 #include "dynss.h"
-#include "custom_utilities/turbulence_statistics_container.h"
 #include "utilities/math_utils.h"
 
 namespace Kratos

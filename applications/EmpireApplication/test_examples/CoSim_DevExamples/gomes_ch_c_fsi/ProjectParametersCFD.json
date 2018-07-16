@@ -1,12 +1,12 @@
 {
     "problem_data"                     : {
-        "problem_name"    : "Wall_Fluid",
+        "problem_name"    : "Gomes_CH_C_2D_CFD",
         "model_part_name" : "MainModelPart",
         "domain_size"     : 2,
         "parallel_type"   : "OpenMP",
         "echo_level"      : 0,
         "start_time"      : 0.0,
-        "end_time"        : 15
+        "end_time"        : 1
     },
     "output_configuration"             : {
         "result_file_configuration" : {
@@ -16,19 +16,18 @@
                 "WriteConditionsFlag"   : "WriteConditions",
                 "MultiFileFlag"         : "SingleFile"
             },
-            "file_label"          : "time",
+            "file_label"          : "step",
             "output_control_type" : "step",
-            "output_frequency"    : 10,
+            "output_frequency"    : 1.0,
             "body_output"         : true,
             "node_output"         : false,
             "skin_output"         : false,
             "plane_output"        : [],
-            "nodal_results"       : ["VELOCITY","PRESSURE","MESH_DISPLACEMENT", "MESH_VELOCITY"],
+            "nodal_results"       : ["VELOCITY","PRESSURE","MESH_DISPLACEMENT"],
             "gauss_point_results" : []
         },
         "point_data_configuration"  : []
-        },
-
+    },
     "restart_options"                  : {
         "SaveRestart"      : "False",
         "RestartFrequency" : 0,
@@ -39,39 +38,39 @@
         "solver_type"                 : "ale_monolithic",
             "ale_settings"               :   {
             "solver_type" : "mesh_solver_structural_similarity",
-            "ale_interface_parts" : ["NoSlip2D_FSI_Interface"]
+            "ale_interface_parts" : ["NoSlip2D_FSI"]
         },
         "domain_size"                  : 2,
         "model_part_name"              : "FluidModelPart",
         "model_import_settings"       : {
             "input_type"     : "mdpa",
-            "input_filename" : "Wall_Fluid"
+            "input_filename" : "Gomes_CH_C_2D_CFD"
         },
         "echo_level"                  : 0,
-        "compute_reactions"           : true,
+        "compute_reactions"           : false,
         "dynamic_tau"                 : 1.0,
         "oss_switch"                  : 0,
         "maximum_iterations"          : 20,
-        "relative_velocity_tolerance" : 1e-8,
-        "absolute_velocity_tolerance" : 1e-8,
-        "relative_pressure_tolerance" : 1e-8,
-        "absolute_pressure_tolerance" : 1e-8,
+        "relative_velocity_tolerance" : 1e-7,
+        "absolute_velocity_tolerance" : 1e-7,
+        "relative_pressure_tolerance" : 1e-7,
+        "absolute_pressure_tolerance" : 1e-5,
         "linear_solver_settings"      : {
             "solver_type"         : "BICGSTABSolver",
             "max_iteration"       : 200,
-            "tolerance"           : 1e-10,
+            "tolerance"           : 1e-7,
             "preconditioner_type" : "ILU0Preconditioner",
             "scaling"             : false
         },
         "volume_model_part_name"      : "Parts_Fluid",
-        "skin_parts"                  : ["AutomaticInlet2D_Inlet","Outlet2D_Outlet","Slip2D","NoSlip2D_Interface","NoSlip2D_FSI_Interface"],
+        "skin_parts"                  : ["AutomaticInlet2D_Inlet","Outlet2D_Outlet","Slip2D","NoSlip2D_FSI"],
         "no_skin_parts"               : [],
         "time_stepping"               : {
             "automatic_time_step" : false,
-            "time_step"           : 0.005
+            "time_step"           : 0.001
         }
     },
-    "processes" : {
+"processes" : {
     "initial_conditions_process_list"  : [],
     "boundary_conditions_process_list" : [{
         "python_module" : "apply_inlet_process",
@@ -79,7 +78,7 @@
         "Parameters"    : {
             "model_part_name" : "AutomaticInlet2D_Inlet",
             "variable_name"   : "VELOCITY",
-            "modulus"         : 51.3,
+            "modulus"         : 1.07,
             "direction"       : "automatic_inwards_normal",
             "interval"        : [0.0,"End"]
         }
@@ -98,13 +97,7 @@
         "python_module" : "apply_noslip_process",
         "kratos_module" : "KratosMultiphysics.FluidDynamicsApplication",
         "Parameters"    : {
-            "model_part_name" : "NoSlip2D_Interface"
-        }
-    },{
-        "python_module" : "apply_noslip_process",
-        "kratos_module" : "KratosMultiphysics.FluidDynamicsApplication",
-        "Parameters"    : {
-            "model_part_name" : "NoSlip2D_FSI_Interface"
+            "model_part_name" : "NoSlip2D_FSI"
         }
     },{
         "python_module" : "apply_slip_process",
@@ -113,9 +106,8 @@
         "Parameters"    : {
             "model_part_name" : "Slip2D"
         }
-        
     }],
-        "gravity"                          : [{
+    "gravity"                          : [{
         "python_module" : "assign_vector_by_direction_process",
         "kratos_module" : "KratosMultiphysics",
         "process_name"  : "AssignVectorByDirectionProcess",
@@ -134,7 +126,7 @@
             "process_name"  : "AssignVectorVariableProcess",
             "Parameters"    : {
                 "mesh_id"         : 0,
-                "model_part_name" : "NoSlip2D_FSI_Interface",
+                "model_part_name" : "NoSlip2D_FSI",
                 "variable_name"   : "MESH_DISPLACEMENT",
                 "constrained"      : [true, true, true],
                 "value"           : [0.0,0.0,0.0]
@@ -174,19 +166,6 @@
             "process_name"  : "AssignVectorVariableProcess",
             "Parameters"    : {
                 "mesh_id"         : 0,
-                "model_part_name" : "NoSlip2D_Interface",
-                "variable_name"   : "MESH_DISPLACEMENT",
-                "constrained"      : [true, true, true],
-                "value"           : [0.0,0.0,0.0]
-            }
-
-        },{
-            "python_module" : "assign_vector_variable_process",
-            "kratos_module" : "KratosMultiphysics",
-            "help"          : "This process fixes the selected components of a given vector variable",
-            "process_name"  : "AssignVectorVariableProcess",
-            "Parameters"    : {
-                "mesh_id"         : 0,
                 "model_part_name" : "Slip2D_Walls",
                 "variable_name"   : "MESH_DISPLACEMENT",
                 "constrained"      : [true, true, true],
@@ -199,8 +178,8 @@
         "mapper_settings": [
         {
             "mapper_type": "nearest_neighbor",
-            "interface_submodel_part_destination": "NoSlip2D_FSI_Interface",
-            "interface_submodel_part_origin": "GENERIC_FSI_Interface"
+            "interface_submodel_part_destination": "NoSlip2D_FSI",
+            "interface_submodel_part_origin": "GENERIC_FSI"
          }
     ]
 }

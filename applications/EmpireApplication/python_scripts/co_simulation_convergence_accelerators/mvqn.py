@@ -33,7 +33,7 @@ class MVQN(CoSimulationBaseConvergenceAccelerator):
         if "alpha" in self.settings:
             self.alpha = self.settings["alpha"]
         else:
-            self.alpha = 0.3
+            self.alpha = 0.125
         self.R = deque( maxlen = horizon )
         self.X = deque( maxlen = horizon )
         self.J = [] # size will be determined when first time get the input vector

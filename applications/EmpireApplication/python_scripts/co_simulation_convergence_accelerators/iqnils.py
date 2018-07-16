@@ -30,7 +30,7 @@ class IQNILS(CoSimulationBaseConvergenceAccelerator):
         if "iteration_horizon" in self.settings:
             iteration_horizon = self.settings["iteration_horizon"]
         else:
-            iteration_horizon = 15
+            iteration_horizon = 20
         if "timestep_horizon" in self.settings:
             timestep_horizon = self.settings["timestep_horizon"]
         else:
@@ -38,7 +38,7 @@ class IQNILS(CoSimulationBaseConvergenceAccelerator):
         if "alpha" in self.settings:
             self.alpha = self.settings["alpha"]
         else:
-            self.alpha = 0.3
+            self.alpha = 0.125
 
         self.R = deque( maxlen = iteration_horizon )
         self.X = deque( maxlen = iteration_horizon )

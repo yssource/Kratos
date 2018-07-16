@@ -1,23 +1,23 @@
 {
     "problem_data"             : {
-        "problem_name"    : "Wall_Structure",
+        "problem_name"    : "Mok_CSM",
         "model_part_name" : "Structure",
         "domain_size"     : 2,
         "parallel_type"   : "OpenMP",
-        "time_step"       : 0.005,
+        "time_step"       : 0.01,
         "start_time"      : 0.0,
         "end_time"        : 1.0,
-        "echo_level"      : 0
+        "echo_level"      : 1
     },
     "solver_settings"          : {
         "solver_type"                        : "Dynamic",
-        "echo_level"                         : 0,
+        "echo_level"                         : 1,
         "analysis_type"                      : "non_linear",
         "time_integration_method"            : "implicit",
-        "scheme_type"                        : "bossak",
+        "scheme_type"                        : "newmark",
         "model_import_settings"              : {
             "input_type"     : "mdpa",
-            "input_filename" : "Wall_Structure"
+            "input_filename" : "Mok_CSM"
         },
         "material_import_settings"           : {
             "materials_filename" : "StructuralMaterials.json"
@@ -25,16 +25,16 @@
         "line_search"                        : false,
         "convergence_criterion"              : "residual_criterion",
         "displacement_relative_tolerance"    : 1e-7,
-        "displacement_absolute_tolerance"    : 1e-7,
+        "displacement_absolute_tolerance"    : 1e-9,
         "residual_relative_tolerance"        : 1e-7,
-        "residual_absolute_tolerance"        : 1e-7,
-        "max_iteration"                      : 200,
-        "linear_solver_settings"             : {
+        "residual_absolute_tolerance"        : 1e-9,
+        "max_iteration"                      : 20,
+                "linear_solver_settings"             : {
             "solver_type" : "eigen_pardiso_lu",
             "scaling"     : false
         },
         "problem_domain_sub_model_part_list" : ["Parts_Structure"],
-        "processes_sub_model_part_list"      : ["DISPLACEMENT_Dirichlet","PointLoad2D_FSI_Interface"],
+        "processes_sub_model_part_list"      : ["DISPLACEMENT_Dirichlet","GENERIC_FSI"],
         "rotation_dofs"                      : false
     },
     "constraints_process_list" : [{

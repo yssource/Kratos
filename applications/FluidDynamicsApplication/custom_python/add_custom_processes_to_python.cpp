@@ -31,6 +31,7 @@
 #include "custom_processes/embedded_postprocess_process.h"
 #include "custom_processes/embedded_skin_visualization_process.h"
 #include "custom_processes/move_rotor_process.h"
+#include "custom_processes/turbulence_statistics_process.h"
 #include "spaces/ublas_space.h"
 
 #include "solving_strategies/strategies/solving_strategy.h"
@@ -93,13 +94,13 @@ void AddCustomProcessesToPython(pybind11::module& m)
 
     class_<EmbeddedSkinVisualizationProcess, EmbeddedSkinVisualizationProcess::Pointer, Process>
     (m,"EmbeddedSkinVisualizationProcess")
-    .def(init < 
-        ModelPart&, 
-        ModelPart&, 
-        const std::vector<Variable <double> >, 
-        const std::vector<Variable< array_1d<double, 3> > >, 
-        const std::vector<VariableComponent<VectorComponentAdaptor< array_1d< double, 3> > > >, 
-        std::string, 
+    .def(init <
+        ModelPart&,
+        ModelPart&,
+        const std::vector<Variable <double> >,
+        const std::vector<Variable< array_1d<double, 3> > >,
+        const std::vector<VariableComponent<VectorComponentAdaptor< array_1d< double, 3> > > >,
+        std::string,
         const bool >())
     .def(init< ModelPart&, ModelPart&, Parameters& >())
     ;
@@ -110,6 +111,18 @@ void AddCustomProcessesToPython(pybind11::module& m)
     .def(init< ModelPart&, Parameters& >())
     ;
 
+
+    class_<TurbulenceStatisticsProcess, TurbulenceStatisticsProcess::Pointer, Process >(m,"TurbulenceStatisticsProcess")
+        .def(init< ModelPart::Pointer, double, bool >())
+        .def("Execute",&TurbulenceStatisticsProcess::Execute)
+        .def("ExecuteBeforeSolutionLoop",&TurbulenceStatisticsProcess::ExecuteBeforeSolutionLoop)
+        .def("ExecuteInitializeSolutionStep",&TurbulenceStatisticsProcess::ExecuteInitializeSolutionStep)
+        .def("ExecuteFinalizeSolutionStep",&TurbulenceStatisticsProcess::ExecuteFinalizeSolutionStep)
+        .def("ExecuteBeforeOutputStep",&TurbulenceStatisticsProcess::ExecuteBeforeOutputStep)
+        //.def("ExecuteAfterOutputStep",&TurbulenceStatisticsProcess::ExecuteAfterOutputStep)
+        .def("ExecuteFinalize",&TurbulenceStatisticsProcess::ExecuteFinalize)
+        //.def(self_ns::str(self))
+        ;
 }
 
 } // namespace Python.

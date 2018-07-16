@@ -570,7 +570,7 @@ void FIC<TElementData>::CalculateTau(
         Hvel = ElementSizeCalculator<Dim,NumNodes>::ProjectedElementSize(r_geometry,Velocity);
     }
 
-    double InvTau = rData.Density * ( c1 * rData.EffectiveViscosity / (Havg*Havg) + c2 * velocity_norm / Havg );
+    double InvTau = c1 * rData.EffectiveViscosity / (Havg*Havg) + rData.Density * c2 * velocity_norm / Havg;
     TauIncompr = 1.0/InvTau;
     TauMomentum = (Hvel / (rData.Density * c2 * velocity_norm) );
 

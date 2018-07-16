@@ -76,7 +76,6 @@ void VMSAdjointElement<2>::EquationIdVector(
     rResult[LocalIndex++] = this->GetGeometry()[iNode].GetDof(ADJOINT_FLUID_SCALAR_1)
         .EquationId();
   }
-//   this->ProcessSymmetricMatrices(rCurrentProcessInfo);
 }
 
 template<>
@@ -102,7 +101,6 @@ void VMSAdjointElement<3>::EquationIdVector(
     rResult[LocalIndex++] = this->GetGeometry()[iNode].GetDof(ADJOINT_FLUID_SCALAR_1)
         .EquationId();
   }
-//   this->ProcessSymmetricMatrices(rCurrentProcessInfo);
 }
 
 template<>
@@ -461,9 +459,6 @@ void VMSAdjointElement<3>::AddViscousTermDerivative(
 }
 
 ///@} // Specialized implementations
-
-// #include "custom_utilities/symmetric_matrix.h"
-
 template class VMSAdjointElement<2> ;
 template class VMSAdjointElement<3> ;
 

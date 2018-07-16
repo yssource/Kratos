@@ -28,6 +28,10 @@
 // Application includes
 #include "fluid_dynamics_application_variables.h"
 
+#ifdef EIGEN_ROOT
+    #include <Eigen/Eigenvalues>
+#endif
+
 namespace Kratos {
 
 ///@addtogroup AdjointFluidApplication
@@ -283,9 +287,34 @@ public:
             const double artificial_diffusion = this->GetValue(ARTIFICIAL_DIFFUSION);
             this->CalculateArtificialDiffusion(rOutput, artificial_diffusion);
         }
+        else if (rVariable == STABILIZATION_ANALYSIS_MATRICES)
+        {
+            this->ProcessSymmetricMatrices(rCurrentProcessInfo);
+        }
         else if (rVariable == VMS_STEADY_TERM_PRIMAL_GRADIENT_MATRIX)
         {
             this->CalculatePrimalGradientOfVMSSteadyTerm(rOutput, rCurrentProcessInfo);
+        }
+        else if (rVariable == VMS_VELOCITY_GRADIENT_TENSOR)
+        {
+            // Get shape functions, shape function gradients and element volume (area in
+            // 2D). Only one integration point is used so the volume is its weight.
+            ShapeFunctionDerivativesType dn_dx;
+            array_1d< double, TNumNodes > n;
+            double volume;
+            GeometryUtils::CalculateGeometryData(this->GetGeometry(), dn_dx, n, volume);
+
+            if (rOutput.size1() != TDim || rOutput.size2() != TDim) {
+                rOutput.resize(TDim, TDim, false);
+            }
+            rOutput.clear();
+
+            BoundedMatrix< double, TDim, TDim > DensityGradVel;
+            this->CalculateVelocityGradient(DensityGradVel, dn_dx);
+
+            for (IndexType i=0; i<TDim; i++)
+                for (IndexType j=0; j<TDim; j++)
+                    rOutput(i,j) = DensityGradVel(i,j);
         }
         else
         {
@@ -373,7 +402,8 @@ public:
 					      ProcessInfo& rCurrentProcessInfo) override
     {
         this->CalculatePrimalGradientOfVMSSteadyTerm(rLeftHandSideMatrix,rCurrentProcessInfo);
-        this->AddPrimalGradientOfVMSMassTerm(rLeftHandSideMatrix,ACCELERATION,-1.0,rCurrentProcessInfo);
+        const double& r_alpha_bossak = rCurrentProcessInfo[BOSSAK_ALPHA];
+        this->AddPrimalGradientOfVMSMassTerm(rLeftHandSideMatrix,ACCELERATION,-(1.0 - r_alpha_bossak),rCurrentProcessInfo);
         rLeftHandSideMatrix = trans(rLeftHandSideMatrix); // transpose
     }
 
@@ -1579,7 +1609,7 @@ protected:
 
                 value *= (ArtificialDiffusion*volume);
 
-                for (IndexType i=0; i < TBlockSize; i++)
+                for (IndexType i=0; i < TDim; i++)
                     rResult(a*TBlockSize+i,b*TBlockSize+i) += value;
             }
         }
@@ -1618,7 +1648,7 @@ private:
 
     friend class Serializer;
 
-    // void ProcessSymmetricMatrices(ProcessInfo& rCurrentProcessInfo);
+    #include "vms_adjoint_matrix_analysis.h"
 
     void save(Serializer& rSerializer) const override
     {

@@ -26,6 +26,9 @@ class AdjointVMSMonolithicSolver(AdjointFluidSolver):
             "response_function_settings" : {
                 "response_type" : "drag"
             },
+            "relative_tolerance"  : 1e-3,
+            "absolute_tolerance"  : 1e-6,
+            "maximum_iterations"  : 1000,
             "model_import_settings" : {
                 "input_type"     : "mdpa",
                 "input_filename" : "unknown_name"
@@ -104,6 +107,8 @@ class AdjointVMSMonolithicSolver(AdjointFluidSolver):
         else:
             raise Exception("invalid response_type: " + self.settings["response_function_settings"]["response_type"].GetString())
 
+        calculation_time_step = 1
+
         if self.settings["scheme_settings"]["scheme_type"].GetString() == "bossak":
             self.time_scheme = KratosMultiphysics.ResidualBasedAdjointBossakScheme(self.settings["scheme_settings"], self.response_function)
         elif self.settings["scheme_settings"]["scheme_type"].GetString() == "steady":
@@ -114,20 +119,43 @@ class AdjointVMSMonolithicSolver(AdjointFluidSolver):
             bossak_settings = self.settings["scheme_settings"]["bossak_scheme_settings"]
             bossak_settings.AddEmptyValue("scheme_type")
             bossak_settings["scheme_type"].SetString("bossak")
+            calculation_time_step = self.settings["scheme_settings"]["stabilization_settings"]["calculation_step"].GetInt()
             self.time_scheme = KratosCFD.StabilizedAdjointBossakScheme(self.settings["scheme_settings"], bossak_settings, self.response_function)
         else:
             raise Exception("invalid scheme_type: " + self.settings["scheme_settings"]["scheme_type"].GetString())
 
         builder_and_solver = KratosMultiphysics.ResidualBasedBlockBuilderAndSolver(self.linear_solver)
 
-        self.solver = KratosMultiphysics.ResidualBasedLinearStrategy(self.main_model_part,
-                                                                     self.time_scheme,
-                                                                     self.linear_solver,
-                                                                     builder_and_solver,
-                                                                     False,
-                                                                     False,
-                                                                     False,
-                                                                     False)
+        if calculation_time_step<0:
+            raise Exception("invalid calculation step. 1 >= \"calculation_step\" >= 0 [ %d < 0 ]" % calculation_time_step)
+        if calculation_time_step>1:
+            raise Exception("invalid calculation step. 1 >= \"calculation_step\" >= 0 [ %d > 1 ]" % calculation_time_step)
+
+        if calculation_time_step == 0:
+            # Creating the solution strategy
+            self.conv_criteria = KratosCFD.AdjointFluidConvergenceCriteria( \
+                                                         self.settings["relative_tolerance"].GetDouble(),
+                                                         self.settings["absolute_tolerance"].GetDouble())
+
+            self.solver = KratosMultiphysics.ResidualBasedNewtonRaphsonStrategy(\
+                                                                            self.main_model_part,
+                                                                            self.time_scheme,
+                                                                            self.linear_solver,
+                                                                            self.conv_criteria,
+                                                                            builder_and_solver,
+                                                                            self.settings["maximum_iterations"].GetInt(),
+                                                                            False,
+                                                                            False,
+                                                                            False)
+        else:
+            self.solver = KratosMultiphysics.ResidualBasedLinearStrategy(self.main_model_part,
+                                                                         self.time_scheme,
+                                                                         self.linear_solver,
+                                                                         builder_and_solver,
+                                                                         False,
+                                                                         False,
+                                                                         False,
+                                                                         False)
 
         (self.solver).SetEchoLevel(self.settings["echo_level"].GetInt())
 

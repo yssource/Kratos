@@ -39,6 +39,7 @@
 
 // convergence criteria
 #include "custom_strategies/convergence_criteria/vel_pr_criteria.h"
+#include "custom_strategies/convergence_criteria/adjoint_fluid_convergence_criteria.h"
 
 //linear solvers
 #include "linear_solvers/linear_solver.h"
@@ -157,6 +158,15 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
         BaseSchemeType>(m,"StabilizedAdjointBossakScheme")
         .def(init<Parameters&, Parameters&, ResponseFunction::Pointer>())
         ;
+
+    // Adjoint fluid convergence criteria
+    class_< AdjointFluidConvergenceCriteria< SparseSpaceType, LocalSpaceType >,
+            typename AdjointFluidConvergenceCriteria< SparseSpaceType, LocalSpaceType >::Pointer,
+            ConvergenceCriteria< SparseSpaceType, LocalSpaceType  >>
+            (m,"AdjointFluidConvergenceCriteria")
+            .def(init< double, double>())
+            .def("SetEchoLevel",&AdjointFluidConvergenceCriteria<SparseSpaceType, LocalSpaceType >::SetEchoLevel)
+            ;
 }
 
 }  // namespace Python.

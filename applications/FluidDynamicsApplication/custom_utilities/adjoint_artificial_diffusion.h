@@ -19,6 +19,10 @@
 #include <string>
 
 // External includes
+#ifdef EIGEN_ROOT
+    #include <Eigen/SVD>
+    #include <Eigen/Eigenvalues>
+#endif
 
 // Project includes
 #include "includes/define.h"
@@ -53,8 +57,13 @@ public:
     // TODO: To be removed once diffusion methods are validated. Only one diffusion method will be kept
     enum class ArtificialDiffusionMethods
     {
+#ifdef EIGEN_ROOT
+        singularValuePressureCoupled,
+#endif
         dynamicFullVMSSteadyMatrix,
-        dynamicFullMatrix
+        dynamicFullMatrix,
+        deltaEnergyFullMatrixFullTimeStepped,
+        deltaEnergyFullMatrixPartialTimeStepped
     };
 
     ///@}
@@ -75,13 +84,13 @@ public:
         Parameters default_params(R"(
         {
             "method"    : "PLEASE_SPECIFY_A_METHOD",
-            "time_step" : 0
+            "calculation_step" : 0
         })");
 
         rDiffusionParameters["stabilization_settings"].ValidateAndAssignDefaults(default_params);
 
         mEpsilon = rDiffusionParameters["stabilization_source_coefficient"].GetDouble();
-        mTimeStep =  rDiffusionParameters["stabilization_settings"]["time_step"].GetInt();
+        mTimeStep =  rDiffusionParameters["stabilization_settings"]["calculation_step"].GetInt();
 
         std::string method_name = rDiffusionParameters["stabilization_settings"]["method"].GetString();
 
@@ -89,8 +98,23 @@ public:
             mArtificialDiffusionMethod = ArtificialDiffusionMethods::dynamicFullVMSSteadyMatrix;
         else if (method_name=="dynamic_full_element_matrix")
             mArtificialDiffusionMethod = ArtificialDiffusionMethods::dynamicFullMatrix;
+        else if (method_name=="delta_energy_full_matrix_full_time_stepped")
+            mArtificialDiffusionMethod = ArtificialDiffusionMethods::deltaEnergyFullMatrixFullTimeStepped;
+        else if (method_name=="delta_energy_full_matrix_partial_time_stepped")
+            mArtificialDiffusionMethod = ArtificialDiffusionMethods::deltaEnergyFullMatrixPartialTimeStepped;
+#ifdef EIGEN_ROOT
+        else if (method_name=="singular_value_pressure_coupled") {
+            mArtificialDiffusionMethod = ArtificialDiffusionMethods::singularValuePressureCoupled;
+            rDiffusionParameters["stabilization_source_coefficient"].SetDouble(0.0);
+        }
+#endif
         else
-            KRATOS_ERROR<<"stabilization method only supports \"dynamic_full_vms_steady_element_matrix\" or \"dynamic_full_element_matrix\""<<rDiffusionParameters.PrettyPrintJsonString();
+        {
+            if (method_name=="singular_value_pressure_coupled")
+                KRATOS_ERROR<<"\"singular_value_pressure_coupled\" stabilization method is not compiled. Please compile Kratos with Eigen libraries.\n"<<rDiffusionParameters.PrettyPrintJsonString();
+            else
+                KRATOS_ERROR<<"stabilization method is not supported.\n"<<rDiffusionParameters.PrettyPrintJsonString();
+        }
 
         KRATOS_CATCH("");
 
@@ -117,6 +141,26 @@ public:
                                         rLHS_Contribution,
                                         rRHS_Contribution,
                                         rCurrentProcessInfo);
+            case ArtificialDiffusionMethods::deltaEnergyFullMatrixFullTimeStepped:
+                return CalculateArtificialDiffusionFullMatrixFullTimeStepped(
+                                        pCurrentElement,
+                                        rLHS_Contribution,
+                                        rRHS_Contribution,
+                                        rCurrentProcessInfo);
+            case ArtificialDiffusionMethods::deltaEnergyFullMatrixPartialTimeStepped:
+                return CalculateArtificialDiffusionFullMatrixPartialTimeStepped(
+                                        pCurrentElement,
+                                        rLHS_Contribution,
+                                        rRHS_Contribution,
+                                        rCurrentProcessInfo);
+#ifdef EIGEN_ROOT
+            case ArtificialDiffusionMethods::singularValuePressureCoupled:
+                return CalculateArtificialDiffusionSVMethodPressureCoupled(
+                                        pCurrentElement,
+                                        rLHS_Contribution,
+                                        rRHS_Contribution,
+                                        rCurrentProcessInfo);
+#endif
             default:
                 return 0.0;
         }
@@ -136,6 +180,96 @@ private:
     ///@}
     ///@name Private Operators
     ///@{
+
+#ifdef EIGEN_ROOT
+    double CalculateVelocityDivergence(Element::Pointer pCurrentElement, ProcessInfo& rCurrentProcessInfo)
+    {
+        MatrixType velocity_gradient;
+
+        pCurrentElement->Calculate(VMS_VELOCITY_GRADIENT_TENSOR, velocity_gradient, rCurrentProcessInfo);
+
+        double velocity_divergence = 0.0;
+        for (IndexType i=0;i<velocity_gradient.size1(); i++)
+            velocity_divergence += velocity_gradient(i,i);
+
+        return velocity_divergence;
+    }
+
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, 0, 4, 4>  CalculateSVMethodCharacteristicMatrix(
+                            Element::Pointer pCurrentElement,
+                            ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY;
+
+        const Geometry< Node<3> >& r_geometry = pCurrentElement->GetGeometry();
+        const unsigned int domain_size = r_geometry.WorkingSpaceDimension();
+
+        MatrixType velocity_gradient;
+
+        pCurrentElement->Calculate(VMS_VELOCITY_GRADIENT_TENSOR, velocity_gradient, rCurrentProcessInfo);
+
+        double velocity_divergence = 0.0;
+        for (IndexType i=0;i<domain_size; i++)
+            velocity_divergence += velocity_gradient(i,i);
+
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, 0, 4, 4>  characteristic_matrix;
+        characteristic_matrix.resize( domain_size+1, domain_size+1);
+        for (IndexType i=0; i < domain_size; i++)
+            characteristic_matrix(i,i) = 0.5 * velocity_divergence - velocity_gradient(i,i);
+        for (IndexType i=0; i < domain_size; i++)
+            for (IndexType j=i+1; j < domain_size; j++)
+            {
+                characteristic_matrix(i,j) =  velocity_gradient(i,j);
+                characteristic_matrix(j,i) =  velocity_gradient(j,i);
+            }
+
+        return characteristic_matrix;
+
+        KRATOS_CATCH("");
+    }
+
+    double CalculateArtificialDiffusionSVMethodPressureCoupled(
+                                        Element::Pointer pCurrentElement,
+                                        MatrixType& rLHS_Contribution,
+                                        VectorType& rRHS_Contribution,
+                                        ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY;
+
+        const Geometry< Node<3> >& r_geometry = pCurrentElement->GetGeometry();
+        const unsigned int domain_size = r_geometry.WorkingSpaceDimension();
+
+        auto  characteristic_matrix = CalculateSVMethodCharacteristicMatrix(pCurrentElement, rCurrentProcessInfo);
+
+        for (IndexType i=0; i < domain_size + 1; i++)
+        {
+            characteristic_matrix(domain_size, i) = 0.0;
+            characteristic_matrix(i, domain_size) = 0.0;
+        }
+
+        double velocity_divergence = CalculateVelocityDivergence(pCurrentElement, rCurrentProcessInfo);
+        characteristic_matrix(domain_size, domain_size) = 0.5 * velocity_divergence;
+
+        Eigen::JacobiSVD<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, 0, 4, 4>> svd(
+                characteristic_matrix,
+                Eigen::ComputeThinU | Eigen::ComputeThinV
+                );
+
+        const auto& S = svd.singularValues();
+
+        double volume = 1.0;
+        if (domain_size == 2)
+            volume = pCurrentElement->GetGeometry().Area();
+        else if (domain_size == 3)
+            volume = pCurrentElement->GetGeometry().Volume();
+
+        double artificial_diffusion = S[0];
+
+        return artificial_diffusion;
+
+        KRATOS_CATCH("");
+    }
+#endif
 
     double CalculateArtificialDiffusionDynamicFullVMSSteadyMatrix(
                                         Element::Pointer pCurrentElement,
@@ -191,6 +325,14 @@ private:
         pCurrentElement->SetValue(ADJOINT_ENERGY, adjoint_energy);
         pCurrentElement->SetValue(DIFFUSION_ENERGY, diffusion_energy);
 
+        double volume = 1.0;
+        if (domain_size == 2)
+            volume = pCurrentElement->GetGeometry().Area();
+        else if (domain_size == 3)
+            volume = pCurrentElement->GetGeometry().Volume();
+
+        artificial_diffusion /= volume;
+
         return artificial_diffusion;
 
         KRATOS_CATCH("");
@@ -243,6 +385,87 @@ private:
         }
 
         pCurrentElement->SetValue(ADJOINT_ENERGY, adjoint_energy);
+        pCurrentElement->SetValue(DIFFUSION_ENERGY, diffusion_energy);
+
+        double volume = 1.0;
+        if (domain_size == 2)
+            volume = pCurrentElement->GetGeometry().Area();
+        else if (domain_size == 3)
+            volume = pCurrentElement->GetGeometry().Volume();
+
+        artificial_diffusion /= volume;
+
+        return artificial_diffusion;
+
+        KRATOS_CATCH("");
+    }
+
+    double CalculateArtificialDiffusionFullMatrixFullTimeStepped(
+                                        Element::Pointer pCurrentElement,
+                                        MatrixType& rLHS_Contribution,
+                                        VectorType& rRHS_Contribution,
+                                        ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY;
+
+        return 0.0;
+
+        KRATOS_CATCH("");
+    }
+
+    double CalculateArtificialDiffusionFullMatrixPartialTimeStepped(
+                                        Element::Pointer pCurrentElement,
+                                        MatrixType& rLHS_Contribution,
+                                        VectorType& rRHS_Contribution,
+                                        ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY;
+
+        const Geometry< Node<3> >& r_geometry = pCurrentElement->GetGeometry();
+        const unsigned int domain_size = r_geometry.WorkingSpaceDimension();
+
+        double gauss_integration_weight = 0.0;
+
+        if (domain_size == 2)
+            gauss_integration_weight = r_geometry.Area();
+        else if (domain_size == 3)
+            gauss_integration_weight = r_geometry.Volume();
+
+        MatrixType numerical_diffusion_matrix;
+        pCurrentElement->SetValue(ARTIFICIAL_DIFFUSION, 1.0);
+        pCurrentElement->Calculate(ARTIFICIAL_DIFFUSION_MATRIX, numerical_diffusion_matrix, rCurrentProcessInfo);
+
+        Matrix identity = identity_matrix<double>(rLHS_Contribution.size1());
+        numerical_diffusion_matrix += mEpsilon*gauss_integration_weight*identity;
+
+        Vector adjoint_values_vector;
+        pCurrentElement->GetValuesVector(adjoint_values_vector, mTimeStep);
+
+        Vector temp_1;
+        temp_1.resize(adjoint_values_vector.size());
+
+        noalias(temp_1) = prod(rLHS_Contribution, adjoint_values_vector);
+        double const adjoint_energy_current = inner_prod(temp_1, adjoint_values_vector);
+
+        noalias(temp_1) = prod(numerical_diffusion_matrix, adjoint_values_vector);
+        double const diffusion_energy = inner_prod(temp_1,adjoint_values_vector);
+
+        pCurrentElement->GetValuesVector(adjoint_values_vector, mTimeStep + 1);
+        noalias(temp_1) = prod(rLHS_Contribution, adjoint_values_vector);
+        double const adjoint_energy_old = inner_prod(temp_1, adjoint_values_vector);
+
+        double delta_energy = adjoint_energy_current - adjoint_energy_old;
+
+        double artificial_diffusion = 0.0;
+
+        KRATOS_DEBUG_ERROR_IF(diffusion_energy < 0.0)<<" --- Diffusion energy cannot be negative or zero."<<std::endl;
+
+        if (delta_energy > 0.0)
+        {
+            artificial_diffusion = delta_energy/diffusion_energy;
+        }
+
+        pCurrentElement->SetValue(ADJOINT_ENERGY, delta_energy);
         pCurrentElement->SetValue(DIFFUSION_ENERGY, diffusion_energy);
 
         return artificial_diffusion;

@@ -97,6 +97,12 @@ public:
 
         BaseType::Initialize(rModelPart);
 
+        #pragma omp parallel for
+        for (int i = 0;i< static_cast<int>(rModelPart.Elements().size()); ++i)
+        {
+            auto ie = rModelPart.ElementsBegin() + i;
+            ie->SetValue(ARTIFICIAL_DIFFUSION, 0.0);
+        }
         // Allocate auxiliary memory.
         int num_threads = OpenMPUtils::GetNumThreads();
         mArtificialDiffusionMatrix.resize(num_threads);
@@ -127,13 +133,38 @@ public:
         // Contributions from the previos time step
         this->CalculatePreviousTimeStepContributions(pCurrentElement, rLHS_Contribution, rRHS_Contribution, rCurrentProcessInfo);
 
-        // Calculate artificial diffusion
-        this->CalculateArtificialDiffusionContribution(pCurrentElement, rLHS_Contribution, rRHS_Contribution, rCurrentProcessInfo);
-
         // Make the local contribution residual
         this->CalculateResidualLocalContributions(pCurrentElement, rLHS_Contribution, rRHS_Contribution, rCurrentProcessInfo);
 
+        pCurrentElement->SetValue(STABILIZATION_ANALYSIS_MATRIX_24, rLHS_Contribution);
+
+        // Calculate artificial diffusion
+        // this->CalculateArtificialDiffusionContribution(pCurrentElement, rLHS_Contribution, rRHS_Contribution, rCurrentProcessInfo);
+
         pCurrentElement->EquationIdVector(rEquationId, rCurrentProcessInfo);
+
+        KRATOS_CATCH("");
+    }
+
+    void FinalizeSolutionStep(
+                        ModelPart& rModelPart,
+                        SystemMatrixType& rA,
+                        SystemVectorType& rDx,
+                        SystemVectorType& rb) override
+    {
+        KRATOS_TRY;
+
+        BaseType::FinalizeSolutionStep(rModelPart, rA, rDx, rb);
+
+        ModelPart::ElementsContainerType& r_elements = rModelPart.Elements();
+        LocalSystemMatrixType dummy_matrix;
+
+        #pragma omp parallel for
+        for (int i=0; i < static_cast<int>(r_elements.size()); ++i)
+        {
+            auto r_element = r_elements.begin() + i;
+            r_element->Calculate(STABILIZATION_ANALYSIS_MATRICES, dummy_matrix, rModelPart.GetProcessInfo());
+        }
 
         KRATOS_CATCH("");
     }
@@ -203,8 +234,6 @@ protected:
         double coff = mStabilizationSourceCoefficient*mOverallDiffusionCoefficient*gauss_integration_weight;
 
         r_artificial_diffusion_matrix += coff*identity;
-
-        pCurrentElement->SetValue(ARTIFICIAL_DIFFUSION, artificial_diffusion);
 
         noalias(rLHS_Contribution) -= r_artificial_diffusion_matrix;
 

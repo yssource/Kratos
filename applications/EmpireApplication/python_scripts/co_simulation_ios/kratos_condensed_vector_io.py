@@ -93,7 +93,5 @@ def ExtractData(model_part, kratos_var):
 
 def SetData(model_part, kratos_var, data):
     num_nodes = model_part.NumberOfNodes()
-    if data.size != num_nodes:
-        raise Exception("Size of data does not match number of nodes!")
-    for idx, node in zip(range(num_nodes), model_part.Nodes):
-        node.SetSolutionStepValue(kratos_var, data[idx])
+    for node in zip(range(num_nodes), model_part.Nodes):
+        node.SetSolutionStepValue(kratos_var, data)

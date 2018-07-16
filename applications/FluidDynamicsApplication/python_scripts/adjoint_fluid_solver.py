@@ -22,7 +22,7 @@ class AdjointFluidSolver(PythonSolver):
         ## These should be defined in derived classes
         self.element_name = None
         self.condition_name = None
-        self.min_buffer_size = 2
+        self.min_buffer_size = 3
 
         # Either retrieve the model part from the model or create a new one
         model_part_name = self.settings["model_part_name"].GetString()

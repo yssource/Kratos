@@ -4,6 +4,14 @@ message("**** configuring KratosFluidDynamicsApplication ****")
 
 include_directories( ${CMAKE_SOURCE_DIR}/kratos )
 
+if( NOT DEFINED EIGEN_ROOT )
+  message("--- EIGEN_ROOT is not defined. FluidDynamicsApplication will compile with few adjoint transient stabilization methods.")
+else ( NOT DEFINED EIGEN_ROOT )
+  message("--- EIGEN_ROOT is defined. FluidDynamicsApplication will compile with all adjoint transient stabilization methods.")
+  include_directories( ${EIGEN_ROOT} )
+  add_definitions( -DEIGEN_ROOT )
+endif(NOT DEFINED EIGEN_ROOT)
+
 ## define application core sources (pure C++ parts)
 set( KRATOS_FLUID_DYNAMICS_APPLICATION_CORE_SOURCES
 

@@ -59,6 +59,7 @@ public:
     {
 #ifdef EIGEN_ROOT
         singularValuePressureCoupled,
+        fullMatrixEigen,
 #endif
         dynamicFullVMSSteadyMatrix,
         dynamicFullMatrix,
@@ -107,6 +108,8 @@ public:
             mArtificialDiffusionMethod = ArtificialDiffusionMethods::singularValuePressureCoupled;
             rDiffusionParameters["stabilization_source_coefficient"].SetDouble(0.0);
         }
+        else if (method_name=="full_matrix_eigen_method")
+            mArtificialDiffusionMethod = ArtificialDiffusionMethods::fullMatrixEigen;
 #endif
         else
         {
@@ -149,6 +152,12 @@ public:
                                         rCurrentProcessInfo);
             case ArtificialDiffusionMethods::deltaEnergyFullMatrixPartialTimeStepped:
                 return CalculateArtificialDiffusionFullMatrixPartialTimeStepped(
+                                        pCurrentElement,
+                                        rLHS_Contribution,
+                                        rRHS_Contribution,
+                                        rCurrentProcessInfo);
+            case ArtificialDiffusionMethods::fullMatrixEigen:
+                return CalculateArtificialDiffusionFullMatrixEigen(
                                         pCurrentElement,
                                         rLHS_Contribution,
                                         rRHS_Contribution,
@@ -269,6 +278,93 @@ private:
 
         KRATOS_CATCH("");
     }
+
+    double CalculateMaxEigenValue( const MatrixType& rMatrix)
+    {
+        const unsigned int matrix_size = rMatrix.size1();
+
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>  symmetric_matrix;
+        symmetric_matrix.resize(matrix_size, matrix_size);
+
+        for (unsigned int i = 0; i < matrix_size; i++)
+            for (unsigned int j = i; j < matrix_size; j++)
+            {
+                double value = 0.5*rMatrix(i,j) + 0.5*rMatrix(j,i);
+                symmetric_matrix(i,j) = value;
+                symmetric_matrix(j,i) = value;
+            }
+
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>> es(symmetric_matrix, false);
+        const auto& values = es.eigenvalues().real();
+
+        return values[values.size()-1];
+
+    }
+
+    double CalculateArtificialDiffusionFullMatrixEigen(
+                                        Element::Pointer pCurrentElement,
+                                        MatrixType& rLHS_Contribution,
+                                        VectorType& rRHS_Contribution,
+                                        ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY;
+
+        const Geometry< Node<3> >& r_geometry = pCurrentElement->GetGeometry();
+        const unsigned int domain_size = r_geometry.WorkingSpaceDimension();
+
+        double gauss_integration_weight = 0.0;
+
+        if (domain_size == 2)
+            gauss_integration_weight = r_geometry.Area();
+        else if (domain_size == 3)
+            gauss_integration_weight = r_geometry.Volume();
+
+        MatrixType numerical_diffusion_matrix;
+        pCurrentElement->SetValue(ARTIFICIAL_DIFFUSION, 1.0);
+        pCurrentElement->Calculate(ARTIFICIAL_DIFFUSION_MATRIX, numerical_diffusion_matrix, rCurrentProcessInfo);
+
+        Matrix identity = identity_matrix<double>(rLHS_Contribution.size1());
+        numerical_diffusion_matrix += mEpsilon*gauss_integration_weight*identity;
+
+        double previous_max_eigen_value = CalculateMaxEigenValue(rLHS_Contribution);
+        double previous_beta = 0.0;
+
+        // KRATOS_WATCH(pCurrentElement->Id());
+
+        if (previous_max_eigen_value < 0.0)
+            return 0.0;
+
+        double current_beta = 1.0;
+        double current_max_eigen_value = 0.0;
+
+        unsigned int max_iterations = 10;
+
+        double eigen_tolerance = 1e-6;
+        for (unsigned int itr=0; itr < max_iterations; ++itr)
+        {
+            current_max_eigen_value = CalculateMaxEigenValue(rLHS_Contribution - current_beta*numerical_diffusion_matrix);
+            double m = (current_max_eigen_value - previous_max_eigen_value)/(current_beta-previous_beta);
+            previous_beta = current_beta;
+
+            // KRATOS_WATCH(std::abs(current_max_eigen_value - previous_max_eigen_value));
+
+            if (std::abs(current_max_eigen_value - previous_max_eigen_value) < eigen_tolerance)
+                break;
+
+            previous_max_eigen_value = current_max_eigen_value;
+            current_beta -= current_max_eigen_value/m;
+            // std::cout<<"Itr: "<<itr<<", beta: "<<previous_beta<<", max_eigen: "<<previous_max_eigen_value<<std::endl;
+        }
+
+        pCurrentElement->SetValue(ADJOINT_ENERGY, current_max_eigen_value);
+
+        if (previous_beta > 0.0)
+            return previous_beta;
+        else
+            return 0.0;
+
+        KRATOS_CATCH("");
+    }
 #endif
 
     double CalculateArtificialDiffusionDynamicFullVMSSteadyMatrix(
@@ -325,13 +421,13 @@ private:
         pCurrentElement->SetValue(ADJOINT_ENERGY, adjoint_energy);
         pCurrentElement->SetValue(DIFFUSION_ENERGY, diffusion_energy);
 
-        double volume = 1.0;
-        if (domain_size == 2)
-            volume = pCurrentElement->GetGeometry().Area();
-        else if (domain_size == 3)
-            volume = pCurrentElement->GetGeometry().Volume();
+        // double volume = 1.0;
+        // if (domain_size == 2)
+        //     volume = pCurrentElement->GetGeometry().Area();
+        // else if (domain_size == 3)
+        //     volume = pCurrentElement->GetGeometry().Volume();
 
-        artificial_diffusion /= volume;
+        // artificial_diffusion /= volume;
 
         return artificial_diffusion;
 
@@ -387,13 +483,13 @@ private:
         pCurrentElement->SetValue(ADJOINT_ENERGY, adjoint_energy);
         pCurrentElement->SetValue(DIFFUSION_ENERGY, diffusion_energy);
 
-        double volume = 1.0;
-        if (domain_size == 2)
-            volume = pCurrentElement->GetGeometry().Area();
-        else if (domain_size == 3)
-            volume = pCurrentElement->GetGeometry().Volume();
+        // double volume = 1.0;
+        // if (domain_size == 2)
+        //     volume = pCurrentElement->GetGeometry().Area();
+        // else if (domain_size == 3)
+        //     volume = pCurrentElement->GetGeometry().Volume();
 
-        artificial_diffusion /= volume;
+        // artificial_diffusion /= volume;
 
         return artificial_diffusion;
 

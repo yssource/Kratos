@@ -133,13 +133,13 @@ public:
         // Contributions from the previos time step
         this->CalculatePreviousTimeStepContributions(pCurrentElement, rLHS_Contribution, rRHS_Contribution, rCurrentProcessInfo);
 
+        // Calculate artificial diffusion
+        this->CalculateArtificialDiffusionContribution(pCurrentElement, rLHS_Contribution, rRHS_Contribution, rCurrentProcessInfo);
+
         // Make the local contribution residual
         this->CalculateResidualLocalContributions(pCurrentElement, rLHS_Contribution, rRHS_Contribution, rCurrentProcessInfo);
 
         pCurrentElement->SetValue(STABILIZATION_ANALYSIS_MATRIX_24, rLHS_Contribution);
-
-        // Calculate artificial diffusion
-        // this->CalculateArtificialDiffusionContribution(pCurrentElement, rLHS_Contribution, rRHS_Contribution, rCurrentProcessInfo);
 
         pCurrentElement->EquationIdVector(rEquationId, rCurrentProcessInfo);
 

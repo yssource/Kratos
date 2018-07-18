@@ -696,8 +696,7 @@ void Matrix_10( Element::MatrixType& rMatrix,
     array_1d< double, TNumNodes > shape_function;
     double weight;
 
-    const double coeff = -(1-alpha)*gamma/(beta*delta_time);
-    //const double coeff = -gamma/(beta*delta_time);
+    const double coeff = -gamma/(beta*delta_time);
 
     GeometryUtils::CalculateGeometryData(this->GetGeometry(), shape_function_derivatives, shape_function, weight);
 
@@ -1066,8 +1065,7 @@ void Matrix_18( Element::MatrixType& rMatrix,
     array_1d< double, TNumNodes > shape_function;
     double weight;
 
-    const double coeff = -(1-alpha)*gamma/(beta*delta_time);
-    //const double coeff = -gamma/(beta*delta_time);
+    const double coeff = -gamma/(beta*delta_time);
 
     GeometryUtils::CalculateGeometryData(this->GetGeometry(), shape_function_derivatives, shape_function, weight);
 

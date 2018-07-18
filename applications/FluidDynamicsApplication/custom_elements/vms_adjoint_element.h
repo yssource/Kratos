@@ -402,8 +402,7 @@ public:
 					      ProcessInfo& rCurrentProcessInfo) override
     {
         this->CalculatePrimalGradientOfVMSSteadyTerm(rLeftHandSideMatrix,rCurrentProcessInfo);
-        const double& r_alpha_bossak = rCurrentProcessInfo[BOSSAK_ALPHA];
-        this->AddPrimalGradientOfVMSMassTerm(rLeftHandSideMatrix,ACCELERATION,-(1.0 - r_alpha_bossak),rCurrentProcessInfo);
+        this->AddPrimalGradientOfVMSMassTerm(rLeftHandSideMatrix,ACCELERATION,-1.0,rCurrentProcessInfo);
         rLeftHandSideMatrix = trans(rLeftHandSideMatrix); // transpose
     }
 

@@ -42,6 +42,11 @@ void NodalSolutionStepBossakIO::WriteNodalResults(NodesContainerType const& rNod
             .Execute<WriteVariableFunctor>(local_nodes, GetFile(), prefix,
                                            mAlphaBossak, info);
 
+    // Adding auxiliary acceleration for adjoint problem
+    RegisteredVariableLookup<Variable<array_1d<double, 3>>>("AUX_ADJOINT_ACCELERATION")
+        .Execute<WriteVariableFunctor>(local_nodes, GetFile(), prefix,
+                                        mAlphaBossak, info);
+
     // Write block partition.
     WritePartitionTable(GetFile(), prefix + "/NodalResults", info);
 
@@ -86,6 +91,15 @@ void SetDataBuffer(TVariableType const& rVariable,
             rData[i] =
                 (1.0 - AlphaBossak) * rNodes[i]->FastGetSolutionStepValue(rVariable, 0) +
                 AlphaBossak * rNodes[i]->FastGetSolutionStepValue(rVariable, 1);
+    }
+    else if (rVariable == AUX_ADJOINT_ACCELERATION)
+    {
+#pragma omp parallel for
+        for (int i = 0; i < static_cast<int>(rNodes.size()); ++i)
+        {
+            TVariableType const& rACCELERATION = KratosComponents<TVariableType>::Get("ACCELERATION");
+            rData[i] = rNodes[i]->FastGetSolutionStepValue(rACCELERATION);
+        }
     }
     else
     {

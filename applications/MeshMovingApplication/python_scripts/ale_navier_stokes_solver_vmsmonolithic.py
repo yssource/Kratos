@@ -28,11 +28,16 @@ class ALENavierStokesSolverVMSMonolithic(navier_stokes_solver_vmsmonolithic.Navi
         navier_stokes_settings["solver_type"].SetString("Monolithic")
         super(ALENavierStokesSolverVMSMonolithic, self).__init__(model_part, navier_stokes_settings)
         # create mesh motion solver
-        custom_settings.AddEmptyValue("problem_data")
-        custom_settings["problem_data"].AddEmptyValue("parallel_type")
-        custom_settings["problem_data"]["parallel_type"].SetString("OpenMP")
+        aux_mesh_solver_settings = KratosMultiphysics.Parameters("""{
+            "parallel_type" : "OpenMP"
+        }""")
+        custom_settings.AddValue("problem_data", aux_mesh_solver_settings)
+        print(custom_settings.PrettyPrintJsonString())
         custom_settings.AddValue("solver_settings", custom_settings["ale_settings"])
         custom_settings.RemoveValue("ale_settings")
+        # err
+
+        ## TODO add warning if "compute_reactions" is set to false!
 
         import python_solvers_wrapper_mesh_motion
         self.ale_solver = python_solvers_wrapper_mesh_motion.CreateSolver(self.main_model_part, custom_settings)

@@ -11,6 +11,27 @@
         "echo_level" : 0,
         "num_coupling_iterations" : 12,
         "start_coupling_time" : 0.0,
+        "predictor_settings" :
+        {
+            "predictor_type" : "linear_derivative_based",
+            "io_type"        : "kratos_signal",
+            "data_list"      : 
+            [
+                {
+                    "from_solver": "fluid",
+                    "data_name"  : "disp"
+                }
+
+            ],
+            "derivative_list"      : 
+            [
+                {
+                    "from_solver": "fluid",
+                    "data_name"  : "vel"
+                }
+
+            ]
+        },
         "convergence_accelerator_settings" :
         {
             "type"          : "iqnils",
@@ -100,6 +121,10 @@
                         "force" : {
                         "geometry_name" : "NoSlip2D_FSI_Interface",
                         "data_identifier" : "REACTION"
+                    },
+                        "vel" : {
+                        "geometry_name" : "NoSlip2D_FSI_Interface",
+                        "data_identifier" : "VELOCITY"
                     }
                 }
             },

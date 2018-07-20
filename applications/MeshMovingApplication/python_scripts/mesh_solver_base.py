@@ -75,6 +75,7 @@ class MeshSolverBase(object):
         self.mesh_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.MESH_RHS)
         if (self.settings["calculate_mesh_velocities"].GetBool() == True):
             self.mesh_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.MESH_VELOCITY)
+            self.mesh_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.MESH_ACCELERATION)
         self.print_on_rank_zero("::[MeshSolverBase]:: Variables ADDED.")
 
     def AddDofs(self):

@@ -27,7 +27,7 @@
         "point_data_configuration"  : []
     },
     "solver_settings"                  : {
-        "solver_type"                  : "ale_monolithic",
+        "solver_type"                  : "Monolithic",
         "ale_settings"               :   {
             "solver_type" : "mesh_solver_structural_similarity",
             "ale_interface_parts" : ["NoSlip2D_Beam_Top","NoSlip2D_Beam_back","NoSlip2D_Beam_front"]

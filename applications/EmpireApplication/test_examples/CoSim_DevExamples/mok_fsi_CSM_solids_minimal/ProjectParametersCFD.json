@@ -23,7 +23,7 @@
             "node_output"         : false,
             "skin_output"         : false,
             "plane_output"        : [],
-            "nodal_results"       : ["VELOCITY","PRESSURE","MESH_DISPLACEMENT"],
+            "nodal_results"       : ["VELOCITY","PRESSURE","MESH_DISPLACEMENT","MESH_VELOCITY"],
             "gauss_point_results" : []
         },
         "point_data_configuration"  : []
@@ -51,10 +51,10 @@
         "dynamic_tau"                 : 1.0,
         "oss_switch"                  : 0,
         "maximum_iterations"          : 10,
-        "relative_velocity_tolerance" : 1e-5,
-        "absolute_velocity_tolerance" : 1e-5,
-        "relative_pressure_tolerance" : 1e-5,
-        "absolute_pressure_tolerance" : 1e-5,
+        "relative_velocity_tolerance" : 1e-6,
+        "absolute_velocity_tolerance" : 1e-6,
+        "relative_pressure_tolerance" : 1e-6,
+        "absolute_pressure_tolerance" : 1e-6,
         "linear_solver_settings"      : {
             "solver_type"         : "BICGSTABSolver",
             "max_iteration"       : 200,
@@ -67,7 +67,7 @@
         "no_skin_parts"               : [],
         "time_stepping"               : {
             "automatic_time_step" : false,
-            "time_step"           : 0.01
+            "time_step"           : 0.1
         }
     },
  "processes" : {

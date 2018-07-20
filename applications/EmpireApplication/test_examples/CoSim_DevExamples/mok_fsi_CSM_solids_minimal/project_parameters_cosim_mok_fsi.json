@@ -2,7 +2,7 @@
     "problem_data" :
     {
         "start_time" : 0.0,
-        "end_time" : 15.0,
+        "end_time" : 25.0,
         "print_colors" : true
     },
     "solver_settings" :
@@ -10,7 +10,7 @@
         "solver_type" : "gauss_seidel_strong_coupling",
         "echo_level" : 0,
         "num_coupling_iterations" : 12,
-        "start_coupling_time" : 0,
+        "start_coupling_time" : 0.0,
         "predictor_settings" :
         {
             "predictor_type" : "linear_derivative_based",
@@ -122,7 +122,7 @@
                         "geometry_name" : "NoSlip2D_FSI",
                         "data_identifier" : "REACTION"
                     },
-                         "vel" : {
+                        "vel" : {
                         "geometry_name" : "NoSlip2D_FSI",
                         "data_identifier" : "VELOCITY"
                     }
@@ -144,6 +144,10 @@
                         "force" : {
                         "geometry_name" : "GENERIC_FSI",
                         "data_identifier" : "POINT_LOAD"
+                    },
+                         "vel" : {
+                        "geometry_name" : "GENERIC_FSI",
+                        "data_identifier" : "VELOCITY"
                     }
                 }
             }

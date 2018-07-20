@@ -4,7 +4,7 @@
         "model_part_name" : "Structure",
         "domain_size"     : 2,
         "parallel_type"   : "OpenMP",
-        "time_step"       : 0.001,
+        "time_step"       : 0.01,
         "start_time"      : 0.0,
         "end_time"        : 1.0,
         "echo_level"      : 1
@@ -24,10 +24,10 @@
         },
         "line_search"                        : false,
         "convergence_criterion"              : "residual_criterion",
-        "displacement_relative_tolerance"    : 0.0001,
-        "displacement_absolute_tolerance"    : 1e-9,
-        "residual_relative_tolerance"        : 0.0001,
-        "residual_absolute_tolerance"        : 1e-9,
+        "displacement_relative_tolerance"    : 1e-6,
+        "displacement_absolute_tolerance"    : 1e-6,
+        "residual_relative_tolerance"        : 1e-6,
+        "residual_absolute_tolerance"        : 1e-6,
         "max_iteration"                      : 10,
                 "linear_solver_settings"             : {
             "solver_type" : "eigen_pardiso_ldlt",

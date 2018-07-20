@@ -78,6 +78,7 @@ class AdjointVMSMonolithicSolver(AdjointFluidSolver):
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.ADJOINT_FLUID_VECTOR_2)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.ADJOINT_FLUID_VECTOR_3)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.AUX_ADJOINT_FLUID_VECTOR_1)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.AUX_ADJOINT_ACCELERATION)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.ADJOINT_FLUID_SCALAR_1)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.VISCOSITY)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.DENSITY)

@@ -13,12 +13,12 @@ double CalculateMatrixEnergy( const Vector& rVector1,
     return energy;
 }
 
-bool CalculateEigenValues( const Element::MatrixType& rMatrix,
+void CalculateEigenValues( const Element::MatrixType& rMatrix,
                            double& eigen_min,
                            double& eigen_max )
 {
     if (rMatrix.size1() != rMatrix.size2())
-        return false;
+        return;
 
     const unsigned int matrix_size = rMatrix.size1();
 
@@ -50,8 +50,6 @@ bool CalculateEigenValues( const Element::MatrixType& rMatrix,
         if (eigen_max < temp)
             eigen_max = temp;
     }
-
-    return true;
 }
 
 void CalculateTau( double& rTauOne,
@@ -1253,6 +1251,403 @@ void Matrix_22( Element::MatrixType& rMatrix,
     }
 }
 
+void Matrix_25( Element::MatrixType& rMatrix,
+                const ProcessInfo& rCurrentProcessInfo )
+{
+     KRATOS_TRY;
+
+    if (rMatrix.size1() != TCoordLocalSize || rMatrix.size2() != TCoordLocalSize)
+        rMatrix.resize(TCoordLocalSize,TCoordLocalSize,false);
+
+    rMatrix.clear();
+
+    // Get shape functions, shape function gradients and element volume (area in
+    // 2D). Only one integration point is used so the volume is its weight.
+    ShapeFunctionDerivativesType shape_function_derivatives;
+    array_1d< double, TNumNodes > shape_functions;
+    double volume;
+    GeometryUtils::CalculateGeometryData(this->GetGeometry(), shape_function_derivatives, shape_functions, volume);
+
+    // Density
+    double density;
+    this->EvaluateInPoint(density, DENSITY, shape_functions);
+
+    // Dynamic viscosity
+    double viscosity;
+    this->EvaluateInPoint(viscosity, VISCOSITY, shape_functions);
+    viscosity *= density;
+
+    // u
+    array_1d< double, TDim > velocity;
+    this->EvaluateInPoint(velocity, VELOCITY, shape_functions);
+
+    // a
+    array_1d< double, TDim > acceleration;
+    this->EvaluateInPoint(acceleration, AUX_ADJOINT_ACCELERATION, shape_functions);
+
+    array_1d<double, TNumNodes> acceleration_grad_shape_function_derivatives;
+    this->GetConvectionOperator(
+        acceleration_grad_shape_function_derivatives,
+        acceleration,
+        shape_function_derivatives);
+
+    array_1d<double, TNumNodes> velocity_grad_shape_function_derivatives;
+    this->GetConvectionOperator(
+        velocity_grad_shape_function_derivatives,
+        velocity,
+        shape_function_derivatives);
+
+    const double velocity_norm = norm_2(velocity);
+    const double elem_size = this->CalculateElementSize(volume);
+    double tau_one, tau_two;
+
+    this->CalculateStabilizationParameters(
+        tau_one,
+        tau_two,
+        velocity_norm,
+        elem_size,
+        density,
+        viscosity,
+        rCurrentProcessInfo
+    );
+
+    double tau_one_time_gradient;
+    this->CalculateTauOneTimeGradient(
+        tau_one_time_gradient,
+        tau_one,
+        density,
+        elem_size,
+        velocity_norm,
+        velocity,
+        acceleration
+    );
+
+    const double coeff = density * density;
+
+    for (unsigned int a = 0; a < TNumNodes; ++a)
+    {
+        for (unsigned int b = 0; b < TNumNodes; ++b)
+        {
+            for (unsigned i = 0; i < TDim; ++i)
+            {
+                double value = 0.0;
+                value += acceleration_grad_shape_function_derivatives[a] * tau_one * shape_functions[b];
+                value += velocity_grad_shape_function_derivatives[a] * tau_one_time_gradient * shape_functions[b];
+
+                rMatrix(a*TDim +i, b*TDim +i) = coeff * value * volume;
+            }
+        }
+    }
+
+    KRATOS_CATCH("");
+}
+
+void Matrix_26( Element::MatrixType& rMatrix,
+                const ProcessInfo& rCurrentProcessInfo )
+{
+     KRATOS_TRY;
+
+    if (rMatrix.size1() != TNumNodes || rMatrix.size2() != TCoordLocalSize)
+        rMatrix.resize(TNumNodes,TCoordLocalSize,false);
+
+    rMatrix.clear();
+
+    // Get shape functions, shape function gradients and element volume (area in
+    // 2D). Only one integration point is used so the volume is its weight.
+    ShapeFunctionDerivativesType shape_function_derivatives;
+    array_1d< double, TNumNodes > shape_functions;
+    double volume;
+    GeometryUtils::CalculateGeometryData(this->GetGeometry(), shape_function_derivatives, shape_functions, volume);
+
+    // Density
+    double density;
+    this->EvaluateInPoint(density, DENSITY, shape_functions);
+
+    // Dynamic viscosity
+    double viscosity;
+    this->EvaluateInPoint(viscosity, VISCOSITY, shape_functions);
+    viscosity *= density;
+
+    // u
+    array_1d< double, TDim > velocity;
+    this->EvaluateInPoint(velocity, VELOCITY, shape_functions);
+
+    // a
+    array_1d< double, TDim > acceleration;
+    this->EvaluateInPoint(acceleration, AUX_ADJOINT_ACCELERATION, shape_functions);
+
+    const double velocity_norm = norm_2(velocity);
+    const double elem_size = this->CalculateElementSize(volume);
+    double tau_one, tau_two;
+
+    this->CalculateStabilizationParameters(
+        tau_one,
+        tau_two,
+        velocity_norm,
+        elem_size,
+        density,
+        viscosity,
+        rCurrentProcessInfo
+    );
+
+    double tau_one_time_gradient;
+    this->CalculateTauOneTimeGradient(
+        tau_one_time_gradient,
+        tau_one,
+        density,
+        elem_size,
+        velocity_norm,
+        velocity,
+        acceleration
+    );
+
+    const double coeff = density;
+
+    for (unsigned int a = 0; a < TNumNodes; ++a)
+    {
+        for (unsigned int b = 0; b < TNumNodes; ++b)
+        {
+            for (unsigned j = 0; j < TDim; ++j)
+            {
+                double value = 0.0;
+
+                value += shape_function_derivatives(a,j) * tau_one_time_gradient * shape_functions(b);
+
+                rMatrix(a, b*TDim +j) = coeff * value * volume;
+            }
+        }
+    }
+
+    KRATOS_CATCH("");
+}
+
+void Matrix_27( Element::MatrixType& rMatrix,
+                const ProcessInfo& rCurrentProcessInfo )
+{
+     KRATOS_TRY;
+
+    if (rMatrix.size1() != TCoordLocalSize || rMatrix.size2() != TCoordLocalSize)
+        rMatrix.resize(TCoordLocalSize,TCoordLocalSize,false);
+
+    rMatrix.clear();
+
+    // Get shape functions, shape function gradients and element volume (area in
+    // 2D). Only one integration point is used so the volume is its weight.
+    ShapeFunctionDerivativesType shape_function_derivatives;
+    array_1d< double, TNumNodes > shape_functions;
+    double volume;
+    GeometryUtils::CalculateGeometryData(this->GetGeometry(), shape_function_derivatives, shape_functions, volume);
+
+    // Density
+    double density;
+    this->EvaluateInPoint(density, DENSITY, shape_functions);
+
+    // Dynamic viscosity
+    double viscosity;
+    this->EvaluateInPoint(viscosity, VISCOSITY, shape_functions);
+    viscosity *= density;
+
+    // u
+    array_1d< double, TDim > velocity;
+    this->EvaluateInPoint(velocity, VELOCITY, shape_functions);
+
+    // a
+    array_1d< double, TDim > acceleration;
+    this->EvaluateInPoint(acceleration, AUX_ADJOINT_ACCELERATION, shape_functions);
+
+    array_1d<double, TNumNodes> acceleration_grad_shape_function_derivatives;
+    this->GetConvectionOperator(
+        acceleration_grad_shape_function_derivatives,
+        acceleration,
+        shape_function_derivatives);
+
+    array_1d<double, TNumNodes> velocity_grad_shape_function_derivatives;
+    this->GetConvectionOperator(
+        velocity_grad_shape_function_derivatives,
+        velocity,
+        shape_function_derivatives);
+
+    const double velocity_norm = norm_2(velocity);
+    const double elem_size = this->CalculateElementSize(volume);
+    double tau_one, tau_two;
+
+    this->CalculateStabilizationParameters(
+        tau_one,
+        tau_two,
+        velocity_norm,
+        elem_size,
+        density,
+        viscosity,
+        rCurrentProcessInfo
+    );
+
+    double tau_one_time_gradient;
+    this->CalculateTauOneTimeGradient(
+        tau_one_time_gradient,
+        tau_one,
+        density,
+        elem_size,
+        velocity_norm,
+        velocity,
+        acceleration
+    );
+
+    BoundedMatrix<double, TNumNodes, TDim> tau_one_primal_derivatives;
+    this->CalculateTauOnePrimalDerivatives(
+        tau_one_primal_derivatives,
+        tau_one,
+        density,
+        elem_size,
+        velocity_norm,
+        shape_functions,
+        velocity
+    );
+
+    BoundedMatrix<double, TNumNodes, TDim> tau_one_time_gradient_primal_derivatives;
+    this->CalculateTauOneTimeGradientPrimalDerivatives(
+        tau_one_time_gradient_primal_derivatives,
+        tau_one,
+        density,
+        elem_size,
+        velocity_norm,
+        shape_functions,
+        velocity,
+        acceleration
+    );
+
+    const double coeff = density * density;
+
+    for (unsigned int a = 0; a < TNumNodes; ++a)
+    {
+        for (unsigned int c = 0; c < TNumNodes; ++c)
+        {
+            for (unsigned i = 0; i < TDim; ++i)
+            {
+                for (unsigned int k = 0; k < TDim; ++k)
+                {
+                    double value = 0.0;
+
+                    value += acceleration_grad_shape_function_derivatives[a] * tau_one_primal_derivatives(c,k) * velocity[i];
+                    value += shape_functions[c] * shape_function_derivatives(a,k) * tau_one_time_gradient * velocity[i];
+                    value += velocity_grad_shape_function_derivatives[a] * tau_one_time_gradient_primal_derivatives(c,k) * velocity[i];
+
+                    rMatrix(a*TDim+i, c*TDim + k) = coeff * value * volume;
+                }
+            }
+        }
+    }
+
+    KRATOS_CATCH("");
+}
+
+void Matrix_28( Element::MatrixType& rMatrix,
+                const ProcessInfo& rCurrentProcessInfo )
+{
+     KRATOS_TRY;
+
+    if (rMatrix.size1() != TNumNodes || rMatrix.size2() != TCoordLocalSize)
+        rMatrix.resize(TNumNodes,TCoordLocalSize,false);
+
+    rMatrix.clear();
+
+    // Get shape functions, shape function gradients and element volume (area in
+    // 2D). Only one integration point is used so the volume is its weight.
+    ShapeFunctionDerivativesType shape_function_derivatives;
+    array_1d< double, TNumNodes > shape_functions;
+    double volume;
+    GeometryUtils::CalculateGeometryData(this->GetGeometry(), shape_function_derivatives, shape_functions, volume);
+
+    // Density
+    double density;
+    this->EvaluateInPoint(density, DENSITY, shape_functions);
+
+    // Dynamic viscosity
+    double viscosity;
+    this->EvaluateInPoint(viscosity, VISCOSITY, shape_functions);
+    viscosity *= density;
+
+    // u
+    array_1d< double, TDim > velocity;
+    this->EvaluateInPoint(velocity, VELOCITY, shape_functions);
+
+    // a
+    array_1d< double, TDim > acceleration;
+    this->EvaluateInPoint(acceleration, AUX_ADJOINT_ACCELERATION, shape_functions);
+
+    array_1d<double, TNumNodes> velocity_grad_shape_function_derivatives;
+    this->GetConvectionOperator(
+        velocity_grad_shape_function_derivatives,
+        velocity,
+        shape_function_derivatives);
+
+    const double velocity_norm = norm_2(velocity);
+    const double elem_size = this->CalculateElementSize(volume);
+    double tau_one, tau_two;
+
+    this->CalculateStabilizationParameters(
+        tau_one,
+        tau_two,
+        velocity_norm,
+        elem_size,
+        density,
+        viscosity,
+        rCurrentProcessInfo
+    );
+
+    double tau_one_time_gradient;
+    this->CalculateTauOneTimeGradient(
+        tau_one_time_gradient,
+        tau_one,
+        density,
+        elem_size,
+        velocity_norm,
+        velocity,
+        acceleration
+    );
+
+    BoundedMatrix<double, TNumNodes, TDim> tau_one_primal_derivatives;
+    this->CalculateTauOnePrimalDerivatives(
+        tau_one_primal_derivatives,
+        tau_one,
+        density,
+        elem_size,
+        velocity_norm,
+        shape_functions,
+        velocity
+    );
+
+    BoundedMatrix<double, TNumNodes, TDim> tau_one_time_gradient_primal_derivatives;
+    this->CalculateTauOneTimeGradientPrimalDerivatives(
+        tau_one_time_gradient_primal_derivatives,
+        tau_one,
+        density,
+        elem_size,
+        velocity_norm,
+        shape_functions,
+        velocity,
+        acceleration
+    );
+
+    const double coeff = density;
+
+    for (unsigned int a = 0; a < TNumNodes; ++a)
+    {
+        for (unsigned int c = 0; c < TNumNodes; ++c)
+        {
+            for (unsigned int k = 0; k < TDim; ++k)
+            {
+                double value = 0.0;
+
+                value += velocity_grad_shape_function_derivatives[a] * tau_one_time_gradient_primal_derivatives(c,k);
+
+                rMatrix(a, c*TDim + k) = coeff * value * volume;
+            }
+        }
+    }
+
+    KRATOS_CATCH("");
+}
+
 void GetAdjointVelocity( BoundedVector<double, TCoordLocalSize>& rAdjointVelocity )
 {
     rAdjointVelocity.clear();
@@ -1297,7 +1692,6 @@ void ComputeMatrix( const unsigned int MatrixId,
     Variable<double> const* var_eigen_max{};
 
     double matrix_energy(0.0), eigen_min(0.0), eigen_max(0.0);
-    bool is_eigen_values_calculated = false;
 
     // Kuu matrices
     switch (MatrixId)
@@ -1506,15 +1900,13 @@ void ComputeMatrix( const unsigned int MatrixId,
         matrix_energy = CalculateMatrixEnergy(adjoint_pressure, current_matrix, adjoint_pressure);
     }
 
+    double alpha, beta, gamma, delta_time;
+    CalculateBossakSchemeConstants( alpha, beta, gamma, delta_time, rCurrentProcessInfo);
+
     // Validation matrices from the element code
     if (MatrixId == 23)
     {
-        double alpha, beta, gamma, delta_time;
-        CalculateBossakSchemeConstants( alpha, beta, gamma, delta_time, rCurrentProcessInfo);
-
         this->CalculatePrimalGradientOfVMSSteadyTerm(current_matrix, rCurrentProcessInfo);
-        VectorType adjoint_vector;
-        this->GetValuesVector(adjoint_vector);
         matrix_energy = (gamma/(beta*delta_time))*CalculateMatrixEnergy(adjoint_vector, current_matrix, adjoint_vector);
         var_matrix_energy = &STABILIZATION_ANALYSIS_MATRIX_23_ENERGY;
         var_eigen_min = &STABILIZATION_ANALYSIS_MATRIX_23_EIGEN_MIN;
@@ -1530,7 +1922,52 @@ void ComputeMatrix( const unsigned int MatrixId,
         var_eigen_max = &STABILIZATION_ANALYSIS_MATRIX_24_EIGEN_MAX;
     }
 
-    is_eigen_values_calculated = CalculateEigenValues(current_matrix, eigen_min, eigen_max);
+    if (MatrixId == 25)
+    {
+        this->Matrix_25(current_matrix, rCurrentProcessInfo);
+        matrix_energy = (gamma/(beta*delta_time))*CalculateMatrixEnergy(adjoint_velocity, current_matrix, adjoint_velocity);
+        var_matrix_energy = &STABILIZATION_ANALYSIS_MATRIX_25_ENERGY;
+        var_eigen_min = &STABILIZATION_ANALYSIS_MATRIX_25_EIGEN_MIN;
+        var_eigen_max = &STABILIZATION_ANALYSIS_MATRIX_25_EIGEN_MAX;
+    }
+
+    if (MatrixId == 26)
+    {
+        this->Matrix_26(current_matrix, rCurrentProcessInfo);
+        matrix_energy = (gamma/(beta*delta_time))*CalculateMatrixEnergy(adjoint_pressure, current_matrix, adjoint_velocity);
+        var_matrix_energy = &STABILIZATION_ANALYSIS_MATRIX_26_ENERGY;
+        var_eigen_min = &STABILIZATION_ANALYSIS_MATRIX_26_EIGEN_MIN;
+        var_eigen_max = &STABILIZATION_ANALYSIS_MATRIX_26_EIGEN_MAX;
+    }
+
+    if (MatrixId == 27)
+    {
+        this->Matrix_27(current_matrix, rCurrentProcessInfo);
+        matrix_energy = (gamma/(beta*delta_time))*CalculateMatrixEnergy(adjoint_velocity, current_matrix, adjoint_velocity);
+        var_matrix_energy = &STABILIZATION_ANALYSIS_MATRIX_27_ENERGY;
+        var_eigen_min = &STABILIZATION_ANALYSIS_MATRIX_27_EIGEN_MIN;
+        var_eigen_max = &STABILIZATION_ANALYSIS_MATRIX_27_EIGEN_MAX;
+    }
+
+    if (MatrixId == 28)
+    {
+        this->Matrix_28(current_matrix, rCurrentProcessInfo);
+        matrix_energy = (gamma/(beta*delta_time))*CalculateMatrixEnergy(adjoint_pressure, current_matrix, adjoint_velocity);
+        var_matrix_energy = &STABILIZATION_ANALYSIS_MATRIX_28_ENERGY;
+        var_eigen_min = &STABILIZATION_ANALYSIS_MATRIX_28_EIGEN_MIN;
+        var_eigen_max = &STABILIZATION_ANALYSIS_MATRIX_28_EIGEN_MAX;
+    }
+
+    if (MatrixId == 29)
+    {
+        current_matrix = this->GetValue(STABILIZATION_ANALYSIS_MATRIX_29);
+        matrix_energy = (gamma/(beta*delta_time))*CalculateMatrixEnergy(adjoint_vector, current_matrix, adjoint_vector);
+        var_matrix_energy = &STABILIZATION_ANALYSIS_MATRIX_29_ENERGY;
+        var_eigen_min = &STABILIZATION_ANALYSIS_MATRIX_29_EIGEN_MIN;
+        var_eigen_max = &STABILIZATION_ANALYSIS_MATRIX_29_EIGEN_MAX;
+    }
+
+    CalculateEigenValues(current_matrix, eigen_min, eigen_max);
 
     this->SetValue(*var_eigen_min, eigen_min);
     this->SetValue(*var_eigen_max, eigen_max);
@@ -1539,7 +1976,7 @@ void ComputeMatrix( const unsigned int MatrixId,
 
 void ProcessSymmetricMatrices(const ProcessInfo& rCurrentProcessInfo)
 {
-    for (unsigned int iMatrix = 1; iMatrix < 25; ++iMatrix)
+    for (unsigned int iMatrix = 1; iMatrix < 30; ++iMatrix)
     {
         ComputeMatrix(iMatrix, rCurrentProcessInfo);
     }

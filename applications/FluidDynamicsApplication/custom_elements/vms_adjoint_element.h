@@ -316,6 +316,10 @@ public:
                 for (IndexType j=0; j<TDim; j++)
                     rOutput(i,j) = DensityGradVel(i,j);
         }
+        else if (rVariable == VMS_ADJOINT_ENERGY_GENERATION_RATE_MATRIX)
+        {
+            this->CalculateAdjointEnergyGenerationRateMatrix(rOutput, rCurrentProcessInfo);
+        }
         else
         {
             KRATOS_ERROR<<"Calculate method for variable "<<rVariable<<" is not defined."<<std::endl;
@@ -679,20 +683,41 @@ protected:
         BoundedMatrix<double, TNumNodes, TDim> TauOneDeriv;
         BoundedMatrix<double, TNumNodes, TDim> TauTwoDeriv;
 
-        if (VelNorm > 0.0)
-        {
-            const double CoefOne =-2.0 * Density * TauOne * TauOne / (ElemSize * VelNorm);
-            const double CoefTwo = 0.5 * Density * ElemSize / VelNorm;
+        this->CalculateTauOnePrimalDerivatives(
+            TauOneDeriv,
+            TauOne,
+            Density,
+            ElemSize,
+            VelNorm,
+            N,
+            Velocity
+        );
 
-            for (IndexType i = 0; i < TNumNodes; ++i)
-            {
-                for (IndexType d = 0; d < TDim; ++d)
-                {
-                    TauOneDeriv(i,d) = CoefOne * N[i] * Velocity[d];
-                    TauTwoDeriv(i,d) = CoefTwo * N[i] * Velocity[d];
-                }
-            }
-        }
+        this->CalculateTauTwoPrimalDerivatives(
+            TauTwoDeriv,
+            Density,
+            ElemSize,
+            VelNorm,
+            N,
+            Velocity
+        );
+
+        // if (VelNorm > 0.0)
+        // {
+        //     const double CoefOne =-2.0 * Density * TauOne * TauOne / (ElemSize * VelNorm);
+        //     const double CoefTwo = 0.5 * Density * ElemSize / VelNorm;
+
+        //     for (IndexType i = 0; i < TNumNodes; ++i)
+        //     {
+        //         for (IndexType d = 0; d < TDim; ++d)
+        //         {
+        //             TauOneDeriv(i,d) = CoefOne * N[i] * Velocity[d];
+        //             TauTwoDeriv(i,d) = CoefTwo * N[i] * Velocity[d];
+        //         }
+        //     }
+        // }
+
+
 
         // rVariable (x)
         array_1d< double, TDim > X;
@@ -1019,20 +1044,39 @@ protected:
         BoundedMatrix<double, TNumNodes, TDim> TauOneDeriv;
         BoundedMatrix<double, TNumNodes, TDim> TauTwoDeriv;
 
-        if (VelNorm > 0.0)
-        {
-            double CoefOne =-2.0 * Density * TauOne * TauOne / (ElemSize * VelNorm);
-            double CoefTwo = 0.5 * Density * ElemSize / VelNorm;
+        this->CalculateTauOnePrimalDerivatives(
+            TauOneDeriv,
+            TauOne,
+            Density,
+            ElemSize,
+            VelNorm,
+            N,
+            Velocity
+        );
 
-            for (IndexType i = 0; i < TNumNodes; ++i)
-            {
-                for (IndexType d = 0; d < TDim; ++d)
-                {
-                    TauOneDeriv(i,d) = CoefOne * N[i] * Velocity[d];
-                    TauTwoDeriv(i,d) = CoefTwo * N[i] * Velocity[d];
-                }
-            }
-        }
+        this->CalculateTauTwoPrimalDerivatives(
+            TauTwoDeriv,
+            Density,
+            ElemSize,
+            VelNorm,
+            N,
+            Velocity
+        );
+
+        // if (VelNorm > 0.0)
+        // {
+        //     double CoefOne =-2.0 * Density * TauOne * TauOne / (ElemSize * VelNorm);
+        //     double CoefTwo = 0.5 * Density * ElemSize / VelNorm;
+
+        //     for (IndexType i = 0; i < TNumNodes; ++i)
+        //     {
+        //         for (IndexType d = 0; d < TDim; ++d)
+        //         {
+        //             TauOneDeriv(i,d) = CoefOne * N[i] * Velocity[d];
+        //             TauTwoDeriv(i,d) = CoefTwo * N[i] * Velocity[d];
+        //         }
+        //     }
+        // }
 
         // Here, -(\partial R / \partial W) is calculated. This is the discrete
         // derivative of the fluid residual w.r.t the fluid variables and therefore
@@ -1483,10 +1527,10 @@ protected:
     void CalculateStabilizationParameters(
             double& rTauOne,
             double& rTauTwo,
-            double VelNorm,
-            double ElemSize,
-            double Density,
-            double Viscosity,
+            const double VelNorm,
+            const double ElemSize,
+            const double Density,
+            const double Viscosity,
             const ProcessInfo& rCurrentProcessInfo)
     {
         // assume DELTA_TIME < 0 !!!
@@ -1578,6 +1622,438 @@ protected:
             const ShapeFunctionDerivativesType& rDN_DX,
             const double Weight);
 
+    void CalculateVelocityNormPrimalDerivatives(
+        BoundedMatrix<double, TNumNodes, TDim>& rVelocityNormPrimalDerivatives,
+        const double& rVelocityNorm,
+        const array_1d<double, TNumNodes>& rN,
+        const array_1d<double, TDim>& rVelocity)
+    {
+        KRATOS_TRY;
+
+        if (rVelocityNorm > 0.0)
+        {
+            for (IndexType i = 0; i < TNumNodes; ++i)
+                for (IndexType d = 0; d < TDim; ++d)
+                    rVelocityNormPrimalDerivatives(i,d) = rN[i] * rVelocity[d];
+
+            rVelocityNormPrimalDerivatives /= rVelocityNorm;
+        }
+        KRATOS_CATCH("");
+    }
+
+    void CalculateTauOnePrimalDerivatives(
+        BoundedMatrix<double, TNumNodes, TDim>& rTauOnePrimalDerivatives,
+        const double& rTauOne,
+        const double& rDensity,
+        const double& rElemSize,
+        const double& rVelocityNorm,
+        const array_1d<double, TNumNodes>& rN,
+        const array_1d<double, TDim>& rVelocity)
+    {
+        KRATOS_TRY;
+
+        this->CalculateVelocityNormPrimalDerivatives(
+            rTauOnePrimalDerivatives,
+            rVelocityNorm,
+            rN,
+            rVelocity
+        );
+
+        const double coeff =-2.0 * rDensity * rTauOne * rTauOne / rElemSize;
+
+        rTauOnePrimalDerivatives *= coeff;
+
+        KRATOS_CATCH("");
+    }
+
+    void CalculateTauTwoPrimalDerivatives(
+        BoundedMatrix<double, TNumNodes, TDim>& rTauTwoPrimalDerivatives,
+        const double& rDensity,
+        const double& rElemSize,
+        const double& rVelocityNorm,
+        const array_1d<double, TNumNodes>& rN,
+        const array_1d<double, TDim>& rVelocity)
+    {
+        KRATOS_TRY;
+
+        this->CalculateVelocityNormPrimalDerivatives(
+            rTauTwoPrimalDerivatives,
+            rVelocityNorm,
+            rN,
+            rVelocity
+        );
+
+        const double coeff = 0.5 * rDensity * rElemSize;
+
+        rTauTwoPrimalDerivatives *= coeff;
+
+        KRATOS_CATCH("");
+    }
+
+    void CalculateVelocityNormTimeGradient(
+        double& rVelocityNormTimeGradient,
+        const double& rVelocityNorm,
+        const array_1d<double, TDim>& rVelocity,
+        const array_1d<double, TDim>& rAcceleration)
+    {
+        KRATOS_TRY;
+
+        rVelocityNormTimeGradient = 0.0;
+        if (rVelocityNorm > 0.0)
+        {
+            for (unsigned int i=0; i < TDim; ++i)
+                rVelocityNormTimeGradient += rVelocity[i]*rAcceleration[i];
+
+            rVelocityNormTimeGradient /= rVelocityNorm;
+        }
+
+        KRATOS_CATCH("");
+    }
+
+    void CalculateVelocityNormTimeGradientPrimalDerivatives(
+        BoundedMatrix<double, TNumNodes, TDim>& rVelocityNormTimeGradientPrimalDerivatives,
+        const double& rVelocityNorm,
+        const array_1d<double, TNumNodes>& rN,
+        const array_1d<double, TDim>& rVelocity,
+        const array_1d<double, TDim>& rAcceleration)
+    {
+        KRATOS_TRY;
+
+        if (rVelocityNorm > 0.0 )
+        {
+            this->CalculateVelocityNormPrimalDerivatives(
+                rVelocityNormTimeGradientPrimalDerivatives,
+                rVelocityNorm,
+                rN,
+                rVelocity
+            );
+
+            double velocity_norm_time_gradient;
+            this->CalculateVelocityNormTimeGradient(
+                velocity_norm_time_gradient,
+                rVelocityNorm,
+                rVelocity,
+                rAcceleration
+            );
+
+            rVelocityNormTimeGradientPrimalDerivatives *= (-1.0) * velocity_norm_time_gradient / rVelocityNorm;
+
+            for (unsigned int i=0; i < TNumNodes; ++i)
+                for (unsigned int d=0; d < TDim; ++d)
+                    rVelocityNormTimeGradientPrimalDerivatives(i,d) += rN[i] * rAcceleration[d] / rVelocityNorm;
+        }
+
+        KRATOS_CATCH("");
+    }
+
+    void CalculateTauOneTimeGradient(
+        double& rTauOneTimeGradient,
+        const double& rTauOne,
+        const double& rDensity,
+        const double& rElemSize,
+        const double& rVelocityNorm,
+        const array_1d<double, TDim>& rVelocity,
+        const array_1d<double, TDim>& rAcceleration)
+    {
+        KRATOS_TRY;
+
+        this->CalculateVelocityNormTimeGradient(
+            rTauOneTimeGradient,
+            rVelocityNorm,
+            rVelocity,
+            rAcceleration
+        );
+
+        const double coeff =-2.0 * rDensity * rTauOne * rTauOne / rElemSize;
+
+        rTauOneTimeGradient *= coeff;
+
+        KRATOS_CATCH("");
+    }
+
+    void CalculateTauOneTimeGradientPrimalDerivatives(
+        BoundedMatrix<double, TNumNodes, TDim>& rTauOneTimeGradientPrimalDerivatives,
+        const double& rTauOne,
+        const double& rDensity,
+        const double& rElemSize,
+        const double& rVelocityNorm,
+        const array_1d<double, TNumNodes>& rN,
+        const array_1d<double, TDim>& rVelocity,
+        const array_1d<double, TDim>& rAcceleration)
+    {
+        KRATOS_TRY;
+
+        if (rVelocityNorm > 0.0)
+        {
+            this->CalculateTauOnePrimalDerivatives(
+                rTauOneTimeGradientPrimalDerivatives,
+                rTauOne,
+                rDensity,
+                rElemSize,
+                rVelocityNorm,
+                rN,
+                rVelocity
+            );
+
+            double velocity_norm_time_gradient;
+            this->CalculateVelocityNormTimeGradient(
+                velocity_norm_time_gradient,
+                rVelocityNorm,
+                rVelocity,
+                rAcceleration
+            );
+
+            rTauOneTimeGradientPrimalDerivatives *= (2.0 * velocity_norm_time_gradient);
+
+            BoundedMatrix<double, TNumNodes, TDim> velocity_norm_time_gradient_primal_derivatives;
+            this->CalculateVelocityNormTimeGradientPrimalDerivatives(
+                velocity_norm_time_gradient_primal_derivatives,
+                rVelocityNorm,
+                rN,
+                rVelocity,
+                rAcceleration
+            );
+
+            velocity_norm_time_gradient_primal_derivatives *= rTauOne;
+
+            rTauOneTimeGradientPrimalDerivatives += velocity_norm_time_gradient_primal_derivatives;
+
+            rTauOneTimeGradientPrimalDerivatives *= -2.0 * rDensity * rTauOne / rElemSize;
+        }
+
+        KRATOS_CATCH("");
+    }
+
+    void CalculateVMSMassMatrixTimeGradient(
+        MatrixType& rOutput,
+        const ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY;
+
+        if (rOutput.size1() != TFluidLocalSize || rOutput.size2() != TFluidLocalSize)
+            rOutput.resize(TFluidLocalSize,TFluidLocalSize,false);
+
+        rOutput.clear();
+
+        // Get shape functions, shape function gradients and element volume (area in
+        // 2D). Only one integration point is used so the volume is its weight.
+        ShapeFunctionDerivativesType shape_function_derivatives;
+        array_1d< double, TNumNodes > shape_functions;
+        double volume;
+        GeometryUtils::CalculateGeometryData(this->GetGeometry(), shape_function_derivatives, shape_functions, volume);
+
+        // Density
+        double density;
+        this->EvaluateInPoint(density, DENSITY, shape_functions);
+
+        // Dynamic viscosity
+        double viscosity;
+        this->EvaluateInPoint(viscosity, VISCOSITY, shape_functions);
+        viscosity *= density;
+
+        // u
+        array_1d< double, TDim > velocity;
+        this->EvaluateInPoint(velocity, VELOCITY, shape_functions);
+
+        // a
+        array_1d< double, TDim > acceleration;
+        this->EvaluateInPoint(acceleration, AUX_ADJOINT_ACCELERATION, shape_functions);
+
+        array_1d<double, TNumNodes> acceleration_grad_shape_function_derivatives;
+        this->GetConvectionOperator(
+            acceleration_grad_shape_function_derivatives,
+            acceleration,
+            shape_function_derivatives);
+
+        array_1d<double, TNumNodes> velocity_grad_shape_function_derivatives;
+        this->GetConvectionOperator(
+            velocity_grad_shape_function_derivatives,
+            velocity,
+            shape_function_derivatives);
+
+        const double velocity_norm = norm_2(velocity);
+        const double elem_size = this->CalculateElementSize(volume);
+        double tau_one, tau_two;
+
+        this->CalculateStabilizationParameters(
+            tau_one,
+            tau_two,
+            velocity_norm,
+            elem_size,
+            density,
+            viscosity,
+            rCurrentProcessInfo
+        );
+
+        double tau_one_time_gradient;
+        this->CalculateTauOneTimeGradient(
+            tau_one_time_gradient,
+            tau_one,
+            density,
+            elem_size,
+            velocity_norm,
+            velocity,
+            acceleration
+        );
+
+        const double coeff = density * density;
+
+        IndexType FirstRow(0), FirstCol(0);
+        // Loop over nodes
+        for (IndexType i = 0; i < TNumNodes; ++i)
+        {
+            for (IndexType j = 0; j < TNumNodes; ++j)
+            {
+                for (IndexType m = 0; m < TDim; ++m)
+                {
+                    // adding the terms coming from S_m time gradient
+                    double value = 0.0;
+                    value += acceleration_grad_shape_function_derivatives[i] * tau_one * shape_functions[j];
+                    value += velocity_grad_shape_function_derivatives[i] * tau_one_time_gradient * shape_functions[j];
+                    rOutput(FirstRow+m, FirstCol+m) = coeff * value * volume;
+
+                    // adding the terms coming from Q_m time gradient
+                    value = density * shape_function_derivatives(i, m) * tau_one_time_gradient * shape_functions[j];
+                    rOutput(FirstRow+TDim, FirstCol+m) = value * volume;
+                }
+                FirstCol += TBlockSize;
+            }  // Node block columns
+            FirstRow += TBlockSize;
+            FirstCol = 0;
+        }  // Node block rows
+
+        KRATOS_CATCH("");
+    }
+
+    void CalculateVMSMassMatrixTimeGradientPrimalDerivative(
+        MatrixType& rOutput,
+        const ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY;
+
+        if (rOutput.size1() != TFluidLocalSize || rOutput.size2() != TFluidLocalSize)
+            rOutput.resize(TFluidLocalSize,TFluidLocalSize,false);
+
+        rOutput.clear();
+
+        // Get shape functions, shape function gradients and element volume (area in
+        // 2D). Only one integration point is used so the volume is its weight.
+        ShapeFunctionDerivativesType shape_function_derivatives;
+        array_1d< double, TNumNodes > shape_functions;
+        double volume;
+        GeometryUtils::CalculateGeometryData(this->GetGeometry(), shape_function_derivatives, shape_functions, volume);
+
+        // Density
+        double density;
+        this->EvaluateInPoint(density, DENSITY, shape_functions);
+
+        // Dynamic viscosity
+        double viscosity;
+        this->EvaluateInPoint(viscosity, VISCOSITY, shape_functions);
+        viscosity *= density;
+
+        // u
+        array_1d< double, TDim > velocity;
+        this->EvaluateInPoint(velocity, VELOCITY, shape_functions);
+
+        // a
+        array_1d< double, TDim > acceleration;
+        this->EvaluateInPoint(acceleration, AUX_ADJOINT_ACCELERATION, shape_functions);
+
+        array_1d<double, TNumNodes> acceleration_grad_shape_function_derivatives;
+        this->GetConvectionOperator(
+            acceleration_grad_shape_function_derivatives,
+            acceleration,
+            shape_function_derivatives);
+
+        array_1d<double, TNumNodes> velocity_grad_shape_function_derivatives;
+        this->GetConvectionOperator(
+            velocity_grad_shape_function_derivatives,
+            velocity,
+            shape_function_derivatives);
+
+        const double velocity_norm = norm_2(velocity);
+        const double elem_size = this->CalculateElementSize(volume);
+        double tau_one, tau_two;
+
+        this->CalculateStabilizationParameters(
+            tau_one,
+            tau_two,
+            velocity_norm,
+            elem_size,
+            density,
+            viscosity,
+            rCurrentProcessInfo
+        );
+
+        double tau_one_time_gradient;
+        this->CalculateTauOneTimeGradient(
+            tau_one_time_gradient,
+            tau_one,
+            density,
+            elem_size,
+            velocity_norm,
+            velocity,
+            acceleration
+        );
+
+        BoundedMatrix<double, TNumNodes, TDim> tau_one_primal_derivatives;
+        this->CalculateTauOnePrimalDerivatives(
+            tau_one_primal_derivatives,
+            tau_one,
+            density,
+            elem_size,
+            velocity_norm,
+            shape_functions,
+            velocity
+        );
+
+        BoundedMatrix<double, TNumNodes, TDim> tau_one_time_gradient_primal_derivatives;
+        this->CalculateTauOneTimeGradientPrimalDerivatives(
+            tau_one_time_gradient_primal_derivatives,
+            tau_one,
+            density,
+            elem_size,
+            velocity_norm,
+            shape_functions,
+            velocity,
+            acceleration
+        );
+
+        const double coeff = density * density;
+
+        IndexType FirstRow(0), FirstCol(0);
+        // Loop over nodes
+        for (IndexType i = 0; i < TNumNodes; ++i)
+        {
+            for (IndexType j = 0; j < TNumNodes; ++j)
+            {
+                for (IndexType m = 0; m < TDim; ++m)
+                {
+                    for (IndexType n = 0; n < TDim; ++n)
+                    {
+                        // adding the terms coming from S_m time gradient
+                        double value = 0.0;
+
+                        value += acceleration_grad_shape_function_derivatives[i] * tau_one_primal_derivatives(j,n) * velocity[m];
+                        value += shape_functions[j] * shape_function_derivatives(i,n) * tau_one_time_gradient * velocity[m];
+                        value += velocity_grad_shape_function_derivatives[i] * tau_one_time_gradient_primal_derivatives(j,n) * velocity[m];
+
+                        rOutput(FirstRow+m, FirstCol+n) = coeff * value * volume;
+                    }
+
+                    // adding the terms coming from Q_m time gradient
+                    rOutput(FirstRow+TDim, FirstCol+m) =
+                        density * velocity_grad_shape_function_derivatives[i] * tau_one_time_gradient_primal_derivatives(j,m) * volume;
+                }
+                FirstCol += TBlockSize;
+            }  // Node block columns
+            FirstRow += TBlockSize;
+            FirstCol = 0;
+        }  // Node block rows
+
+        KRATOS_CATCH("");
+    }
 
     void CalculateArtificialDiffusion(MatrixType& rResult,
                                       const double ArtificialDiffusion)
@@ -1612,6 +2088,39 @@ protected:
                     rResult(a*TBlockSize+i,b*TBlockSize+i) += value;
             }
         }
+
+        KRATOS_CATCH("");
+    }
+
+    void CalculateAdjointEnergyGenerationRateMatrix( MatrixType& rResult, const ProcessInfo& rCurrentProcessInfo )
+    {
+
+        KRATOS_TRY;
+
+        // Get shape functions, shape function gradients and element volume (area in
+        // 2D). Only one integration point is used so the volume is its weight.
+        ShapeFunctionDerivativesType dn_dx;
+        array_1d< double, TNumNodes > n;
+        double volume;
+        GeometryUtils::CalculateGeometryData(this->GetGeometry(), dn_dx, n, volume);
+
+
+        if (rResult.size1() != TFluidLocalSize || rResult.size2() != TFluidLocalSize) {
+            rResult.resize(TFluidLocalSize, TFluidLocalSize, false);
+        }
+
+        rResult.clear();
+
+        // calculates \frac{\partial \underline{\tilde f}}{\partial \underline{\dot w}}
+        this->CalculatePrimalGradientOfVMSSteadyTerm(rResult,rCurrentProcessInfo);
+
+        MatrixType vms_mass_matrix_time_gradient;
+        this->CalculateVMSMassMatrixTimeGradient(vms_mass_matrix_time_gradient, rCurrentProcessInfo);
+
+        MatrixType vms_mass_matrix_time_gradient_primal_derivatives;
+        this->CalculateVMSMassMatrixTimeGradientPrimalDerivative(vms_mass_matrix_time_gradient_primal_derivatives, rCurrentProcessInfo);
+
+        noalias(rResult) += vms_mass_matrix_time_gradient + vms_mass_matrix_time_gradient_primal_derivatives;
 
         KRATOS_CATCH("");
     }

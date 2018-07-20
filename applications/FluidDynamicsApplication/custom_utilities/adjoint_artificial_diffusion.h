@@ -64,7 +64,9 @@ public:
         dynamicFullVMSSteadyMatrix,
         dynamicFullMatrix,
         deltaEnergyFullMatrixFullTimeStepped,
-        deltaEnergyFullMatrixPartialTimeStepped
+        deltaEnergyFullMatrixPartialTimeStepped,
+        energyGenerationRateWithAdjointVariables,
+        energyGenerationRateMatrix
     };
 
     ///@}
@@ -103,6 +105,10 @@ public:
             mArtificialDiffusionMethod = ArtificialDiffusionMethods::deltaEnergyFullMatrixFullTimeStepped;
         else if (method_name=="delta_energy_full_matrix_partial_time_stepped")
             mArtificialDiffusionMethod = ArtificialDiffusionMethods::deltaEnergyFullMatrixPartialTimeStepped;
+        else if (method_name=="energy_generation_rate_matrix")
+            mArtificialDiffusionMethod = ArtificialDiffusionMethods::energyGenerationRateMatrix;
+        else if (method_name=="energy_generation_rate_with_adjoint_variables")
+            mArtificialDiffusionMethod = ArtificialDiffusionMethods::energyGenerationRateWithAdjointVariables;
 #ifdef EIGEN_ROOT
         else if (method_name=="singular_value_pressure_coupled") {
             mArtificialDiffusionMethod = ArtificialDiffusionMethods::singularValuePressureCoupled;
@@ -158,6 +164,18 @@ public:
                                         rCurrentProcessInfo);
             case ArtificialDiffusionMethods::fullMatrixEigen:
                 return CalculateArtificialDiffusionFullMatrixEigen(
+                                        pCurrentElement,
+                                        rLHS_Contribution,
+                                        rRHS_Contribution,
+                                        rCurrentProcessInfo);
+            case ArtificialDiffusionMethods::energyGenerationRateWithAdjointVariables:
+                return CalculateArtificialDiffusionEnergyGenerationRateWithAdjointVariables(
+                                        pCurrentElement,
+                                        rLHS_Contribution,
+                                        rRHS_Contribution,
+                                        rCurrentProcessInfo);
+            case ArtificialDiffusionMethods::energyGenerationRateMatrix:
+                return CalculateArtificialDiffusionEnergyGenerationRateMatrix(
                                         pCurrentElement,
                                         rLHS_Contribution,
                                         rRHS_Contribution,
@@ -567,6 +585,74 @@ private:
         return artificial_diffusion;
 
         KRATOS_CATCH("");
+    }
+
+    double CalculateArtificialDiffusionEnergyGenerationRateWithAdjointVariables(
+                                        Element::Pointer pCurrentElement,
+                                        MatrixType& rLHS_Contribution,
+                                        VectorType& rRHS_Contribution,
+                                        ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY;
+
+        const Geometry< Node<3> >& r_geometry = pCurrentElement->GetGeometry();
+        const unsigned int domain_size = r_geometry.WorkingSpaceDimension();
+
+        double gauss_integration_weight = 0.0;
+
+        if (domain_size == 2)
+            gauss_integration_weight = r_geometry.Area();
+        else if (domain_size == 3)
+            gauss_integration_weight = r_geometry.Volume();
+
+        MatrixType numerical_diffusion_matrix;
+        pCurrentElement->SetValue(ARTIFICIAL_DIFFUSION, 1.0);
+        pCurrentElement->Calculate(ARTIFICIAL_DIFFUSION_MATRIX, numerical_diffusion_matrix, rCurrentProcessInfo);
+
+        Matrix identity = identity_matrix<double>(rLHS_Contribution.size1());
+        numerical_diffusion_matrix += mEpsilon*gauss_integration_weight*identity;
+
+        Vector adjoint_values_vector;
+        pCurrentElement->GetValuesVector(adjoint_values_vector, mTimeStep);
+
+        Vector temp_1;
+        temp_1.resize(adjoint_values_vector.size());
+
+        Matrix adjoint_energy_generation_matrix;
+        pCurrentElement->Calculate(VMS_ADJOINT_ENERGY_GENERATION_RATE_MATRIX, adjoint_energy_generation_matrix, rCurrentProcessInfo);
+
+        noalias(temp_1) = prod(adjoint_energy_generation_matrix, adjoint_values_vector);
+        double const adjoint_energy_rate = inner_prod(temp_1, adjoint_values_vector);
+
+        noalias(temp_1) = prod(numerical_diffusion_matrix, adjoint_values_vector);
+        double const diffusion_energy = inner_prod(temp_1,adjoint_values_vector);
+
+        double artificial_diffusion = 0.0;
+
+        KRATOS_DEBUG_ERROR_IF(diffusion_energy < 0.0)<<" --- Diffusion energy cannot be negative or zero."<<std::endl;
+
+        if (adjoint_energy_rate > 0.0)
+        {
+            artificial_diffusion = adjoint_energy_rate/diffusion_energy;
+        }
+
+        pCurrentElement->SetValue(ADJOINT_ENERGY, adjoint_energy_rate);
+        pCurrentElement->SetValue(DIFFUSION_ENERGY, diffusion_energy);
+
+        return artificial_diffusion;
+
+        KRATOS_WATCH("");
+    }
+
+    double CalculateArtificialDiffusionEnergyGenerationRateMatrix(
+                                        Element::Pointer pCurrentElement,
+                                        MatrixType& rLHS_Contribution,
+                                        VectorType& rRHS_Contribution,
+                                        ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY;
+
+        KRATOS_WATCH("");
     }
 
     ///@}

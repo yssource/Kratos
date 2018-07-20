@@ -2,48 +2,76 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 
 # Importing the Kratos Library
 import KratosMultiphysics
-import KratosMultiphysics.EmpireApplication as KratosEmpire
+import KratosMultiphysics.EmpireApplication
 
 # Importing the base class
-from co_simulation_base_solver import CoSimulationBaseSolver
+from co_simulation_solvers.co_simulation_base_solver import CoSimulationBaseSolver
 
 # Other imports
-from co_simulation_io_factory import IOFactory
+from co_simulation_tools import csprint, yellow
 
-
-def CreateSolver(cosim_solver_settings):
-    return KratosEmpireSolver(cosim_solver_settings)
 
 class KratosEmpireSolver(CoSimulationBaseSolver):
-    """The base class for the Python Solvers in the applications
-    Changes to this BaseClass have to be discussed first!
-    """
-    def __init__(cosim_solver_settings):
-        """The constructor of the PythonSolver-Object.
+    def __init__(self, cosim_solver_settings, level):
+        super(KratosEmpireSolver, self).__init__(cosim_solver_settings, level)
+        self.model = KratosMultiphysics.Model()
+        self.client_model_part = KratosMultiphysics.ModelPart("ClientModelPart")
+        self.model.AddModelPart(self.client_model_part)
 
-        It is intended to be called from the constructor
-        of deriving classes:
-        super(DerivedSolver, self).__init__(settings)
+        input_file_name = self.cosim_solver_settings["input_file"]
+        if not input_file_name.endswith(".json"):
+            input_file_name += ".json"
 
-        Keyword arguments:
-        self -- It signifies an instance of a class.
-        model -- The Model to be used
-        settings -- The solver settings used
-        """
-        pass
+        with open(input_file_name,'r') as parameter_file:
+            parameters = json.load(parameter_file)
 
+        self.client_xml_file_name = parameters["client_xml_file_name"]
+        self.time_step = parameters["time_step"] # dummy
 
-    def ImportData(self, DataName, FromClient):
-        raise NotImplementedError("This needs to be implemented!")
-    def ImportMesh(self, MeshName, FromClient):
-        raise NotImplementedError("This needs to be implemented!")
+    def Initialize(self):
+        csprint(self.lvl, yellow(self.__class__.__name__ + ":") + " Starting to initialize Empire")
+        import empire_wrapper
+        csprint(self.lvl, yellow(self.__class__.__name__ + ":") + " Wrapper-Import Successful")
+        empire = empire_wrapper.EmpireWrapper()
+        csprint(self.lvl, yellow(self.__class__.__name__ + ":") + " Wrapper Created")
+        empire.Connect(self.client_xml_file_name)
 
-    def ExportData(self, DataName, ToClient):
-        raise NotImplementedError("This needs to be implemented!")
-    def ExportMesh(self, MeshName, ToClient):
-        raise NotImplementedError("This needs to be implemented!")
+        empire.ReceiveMesh("client_mesh", self.client_model_part)
 
-    def MakeDataAvailable(self, DataName, ToClient):
-        raise NotImplementedError("This needs to be implemented!")
-    def MakeMeshAvailable(self, MeshName, ToClient):
-        raise NotImplementedError("This needs to be implemented!")
+    def Finalize(self):
+        self.empire.Disconnect()
+
+    def AdvanceInTime(self, current_time):
+        self.step_is_repeated = False
+        return current_time + self.delta_time # needed for some checks only
+
+    def ImportData(self, data_name, from_client):
+        '''This function first receives the data from Empire
+        Then it calls the BaseClass, i.e. the IO to do sth with
+        the data, e.g. mapping
+        '''
+        # the following is needed for iterative coupling to tell the client
+        # to repeat the same timestep
+        if self.step_is_repeated:
+            self.empire.SendConvergenceSignal(0) # 0 means that it is NOT converged
+        self.step_is_repeated = True
+
+        # receivedata
+
+        super(KratosEmpireSolver, self).ImportData(data_name, from_client)
+
+    def ExportData(self, data_name, to_client):
+        '''This function first calls the BaseClass, i.e. the IO to
+        do sth with the data, e.g. mapping
+        Then it calls Empire to send the data
+        '''
+        super(KratosEmpireSolver, self).ExportData(data_name, to_client)
+        # senddata
+
+    def FinalizeSolutionStep(self):
+        '''If this function is called then it means that either convergence is achieved
+        or the maximum number of iterations is achieved (in case of iterative coupling)
+        In either way and also for explicit coupling, here the connected client is
+        informed to advance in time
+        '''
+        self.empire.SendConvergenceSignal(1) # 1 means that it IS converged

@@ -133,6 +133,11 @@ public:
         // Contributions from the previos time step
         this->CalculatePreviousTimeStepContributions(pCurrentElement, rLHS_Contribution, rRHS_Contribution, rCurrentProcessInfo);
 
+        LocalSystemMatrixType matrix_29;
+        pCurrentElement->Calculate(VMS_ADJOINT_ENERGY_GENERATION_RATE_MATRIX,  matrix_29, rCurrentProcessInfo);
+
+        pCurrentElement->SetValue(STABILIZATION_ANALYSIS_MATRIX_29, matrix_29);
+
         // Calculate artificial diffusion
         this->CalculateArtificialDiffusionContribution(pCurrentElement, rLHS_Contribution, rRHS_Contribution, rCurrentProcessInfo);
 

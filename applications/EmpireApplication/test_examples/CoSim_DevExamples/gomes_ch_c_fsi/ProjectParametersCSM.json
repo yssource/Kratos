@@ -14,7 +14,7 @@
         "echo_level"                         : 1,
         "analysis_type"                      : "non_linear",
         "time_integration_method"            : "implicit",
-        "scheme_type"                        : "newmark",
+        "scheme_type"                        : "bossak",
         "model_import_settings"              : {
             "input_type"     : "mdpa",
             "input_filename" : "Gomes_CH_C_2D_CSM"

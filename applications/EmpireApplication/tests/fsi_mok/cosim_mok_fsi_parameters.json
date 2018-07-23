@@ -47,7 +47,7 @@
         "convergence_criteria_settings" :
         {
             "io_type"   : "kratos_signal",
-            "echo_level": 2,
+            "echo_level": 0,
             "data_list" :
             [
                 {
@@ -108,7 +108,7 @@
                 "input_file"  : "fsi_mok/ProjectParametersCFD",
                 "io_settings" : {
                     "io_type"     : "kratos_field",
-                    "echo_level"  : 4
+                    "echo_level"  : 0
                 },
                 "data" : {
                     "disp" : {
@@ -131,7 +131,7 @@
                 "input_file"  : "fsi_mok/ProjectParametersCSM",
                 "io_settings" : {
                     "io_type"     : "kratos_field",
-                    "echo_level"  : 4
+                    "echo_level"  : 0
                 },
                 "data" : {
                     "disp" : {

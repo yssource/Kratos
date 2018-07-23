@@ -32,7 +32,7 @@ class CoSimulationTestCase(KratosUnittest.TestCase):
         # # To avoid many prints
         # echo_level = self.project_parameters["problem_data"]["echo_level"].GetInt()
         # if (echo_level == 0):
-        #     KratosMultiphysics.Logger.GetDefaultOutput().SetSeverity(KratosMultiphysics.Logger.Severity.WARNING)
+        KratosMultiphysics.Logger.GetDefaultOutput().SetSeverity(KratosMultiphysics.Logger.Severity.WARNING)
 
     def runTest(self):
         CoSimulationAnalysis(self.cosim_parameters).Run()

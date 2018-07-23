@@ -30,12 +30,11 @@
 namespace Kratos {
 namespace Python {
 
-namespace py = pybind11;
-
 PYBIND11_MODULE(Kratos@{APP_NAME_CAMEL}Application,m)
 {
+    namespace py = pybind11;
 
-    class_<Kratos@{APP_NAME_CAMEL}Application,
+    py::class_<Kratos@{APP_NAME_CAMEL}Application,
         Kratos@{APP_NAME_CAMEL}Application::Pointer,
         KratosApplication>(m, "Kratos@{APP_NAME_CAMEL}Application")
         .def(py::init<>())

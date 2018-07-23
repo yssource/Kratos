@@ -27,7 +27,7 @@
 // Project includes
 #include "includes/define.h"
 #include "includes/kratos_parameters.h"
-#include "includes/svd_utils.h"
+#include "utilities/svd_utils.h"
 
 // Application includes
 #include "custom_elements/vms_adjoint_element.h"
@@ -670,7 +670,7 @@ private:
         Matrix adjoint_energy_generation_matrix;
         pCurrentElement->Calculate(VMS_ADJOINT_ENERGY_GENERATION_RATE_MATRIX, adjoint_energy_generation_matrix, rCurrentProcessInfo);
 
-        svd_utils.SingularValueDecomposition(adjoint_energy_generation_matrix, svd_u, svd_s, svd_v);
+        SVDUtils<double>::SingularValueDecomposition(adjoint_energy_generation_matrix, svd_u, svd_s, svd_v);
 
         return svd_s(0,0);
 

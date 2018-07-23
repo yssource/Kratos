@@ -22,8 +22,8 @@ class MeshSolverBase(object):
 
     This class defines the user interface to mesh motion solvers.
 
-    Derived classes must override the function _create_mesh_motion_solver()
-    to customize the mesh motion algorithm. The mesh motion solver and linear
+    Derived classes must override the function _create_mesh_motion_solving_strategy()
+    to customize the mesh motion algorithm. The mesh motion solving strategy and linear
     solver should always be retrieved using the getter functions. Only the
     member variables listed below should be accessed directly.
 
@@ -86,21 +86,21 @@ class MeshSolverBase(object):
 
 
     def Initialize(self):
-        self.get_mesh_motion_solver().Initialize()
+        self.get_mesh_motion_solving_strategy().Initialize()
         #self.neighbour_search.Execute()
         self.print_on_rank_zero("::[MeshSolverBase]:: Finished initialization.")
 
     def InitializeSolutionStep(self):
-        self.get_mesh_motion_solver().InitializeSolutionStep()
+        self.get_mesh_motion_solving_strategy().InitializeSolutionStep()
 
     def FinalizeSolutionStep(self):
-        self.get_mesh_motion_solver().FinalizeSolutionStep()
+        self.get_mesh_motion_solving_strategy().FinalizeSolutionStep()
 
     def SetEchoLevel(self, level):
-        self.get_mesh_motion_solver().SetEchoLevel(level)
+        self.get_mesh_motion_solving_strategy().SetEchoLevel(level)
 
     def GetEchoLevel(self):
-        self.get_mesh_motion_solver().GetEchoLevel()
+        self.get_mesh_motion_solving_strategy().GetEchoLevel()
 
     def Predict(self):
         self.get_mesh_motion_solver().Predict()
@@ -109,13 +109,13 @@ class MeshSolverBase(object):
         self.get_mesh_motion_solver().Solve() # Calling Solve bcs this is what is currently implemented in the MeshSolverStrategies
 
     def Clear(self):
-        self.get_mesh_motion_solver().Clear()
+        self.get_mesh_motion_solving_strategy().Clear()
 
     def Check(self):
-        self.get_mesh_motion_solver().Check()
+        self.get_mesh_motion_solving_strategy().Check()
 
     def MoveMesh(self):
-        self.get_mesh_motion_solver().MoveMesh()
+        self.get_mesh_motion_solving_strategy().MoveMesh()
 
     def ImportModelPart(self):
         """ Legacy function, use ReadModelPart and PrepareModelPartForSolver instead """
@@ -158,10 +158,10 @@ class MeshSolverBase(object):
             self._linear_solver = self._create_linear_solver()
         return self._linear_solver
 
-    def get_mesh_motion_solver(self):
-        if not hasattr(self, '_mesh_motion_solver'):
-            self._mesh_motion_solver = self._create_mesh_motion_solver()
-        return self._mesh_motion_solver
+    def get_mesh_motion_solving_strategy(self):
+        if not hasattr(self, '_mesh_motion_solving_strategy'):
+            self._mesh_motion_solving_strategy = self._create_mesh_motion_solving_strategy()
+        return self._mesh_motion_solving_strategy
 
     @classmethod
     def print_on_rank_zero(self, *args):
@@ -175,12 +175,12 @@ class MeshSolverBase(object):
         linear_solver = linear_solver_factory.ConstructSolver(self.settings["mesh_motion_linear_solver_settings"])
         return linear_solver
 
-    def _create_mesh_motion_solver(self):
-        """Create the mesh motion solver.
+    def _create_mesh_motion_solving_strategy(self):
+        """Create the mesh motion solving strategy.
 
-        The mesh motion solver must provide the functions defined in SolutionStrategy.
+        The mesh motion solving strategy must provide the functions defined in SolutionStrategy.
         """
-        raise Exception("Mesh motion solver must be created by the derived class.")
+        raise Exception("Mesh motion solving strategy must be created by the derived class.")
 
 
     def _set_and_fill_buffer(self):

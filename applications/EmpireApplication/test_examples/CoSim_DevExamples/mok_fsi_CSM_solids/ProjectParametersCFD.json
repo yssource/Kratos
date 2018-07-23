@@ -67,7 +67,7 @@
         "no_skin_parts"               : [],
         "time_stepping"               : {
             "automatic_time_step" : false,
-            "time_step"           : 0.01
+            "time_step"           : 0.1
         }
     },
  "processes" : {
@@ -202,7 +202,7 @@
                 "mesh_id"         : 0,
                 "model_part_name" : "Slip2D_Top",
                 "variable_name"   : "MESH_DISPLACEMENT",
-                "constrained"      : [true, true, true],
+                "constrained"      : [false, true, true],
                 "value"           : [0.0,0.0,0.0]
             }
 

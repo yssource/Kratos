@@ -4,7 +4,7 @@
         "model_part_name" : "Structure",
         "domain_size"     : 2,
         "parallel_type"   : "OpenMP",
-        "time_step"       : 0.01,
+        "time_step"       : 0.1,
         "start_time"      : 0.0,
         "end_time"        : 1.0,
         "echo_level"      : 1
@@ -14,7 +14,7 @@
         "echo_level"                         : 1,
         "analysis_type"                      : "non_linear",
         "time_integration_method"            : "implicit",
-        "scheme_type"                        : "newmark",
+        "scheme_type"                        : "bossak",
         "model_import_settings"              : {
             "input_type"     : "mdpa",
             "input_filename" : "Mok_CSM"
@@ -28,7 +28,7 @@
         "displacement_absolute_tolerance"    : 1e-9,
         "residual_relative_tolerance"        : 1e-7,
         "residual_absolute_tolerance"        : 1e-9,
-        "max_iteration"                      : 20,
+        "max_iteration"                      : 50,
                 "linear_solver_settings"             : {
             "solver_type" : "eigen_pardiso_lu",
             "scaling"     : false

@@ -3,6 +3,7 @@ import KratosMultiphysics
 
 import KratosMultiphysics.EmpireApplication
 import KratosMultiphysics.KratosUnittest as KratosUnittest
+import KratosMultiphysics.kratos_utilities as kratos_utils
 
 from co_simulation_analysis import CoSimulationAnalysis
 
@@ -20,6 +21,9 @@ class ControlledExecutionScope:
         os.chdir(self.currentPath)
 
 class CoSimulationTestCase(KratosUnittest.TestCase):
+    '''This class is the basis for the testing the framework
+    It can be used to test complete cases with the "CoSimulation-Analysis"
+    '''
 
     def createTest(self, parameter_file_name):
         with open(parameter_file_name + '_parameters.json', 'r') as parameter_file:
@@ -32,3 +36,8 @@ class CoSimulationTestCase(KratosUnittest.TestCase):
 
     def runTest(self):
         CoSimulationAnalysis(self.cosim_parameters).Run()
+
+    def _DeleteTimeFiles(self, directory):
+        for filename in os.listdir(directory):
+            if filename.endswith(".time"):
+                kratos_utils.DeleteFileIfExisting(os.path.join(directory,filename))

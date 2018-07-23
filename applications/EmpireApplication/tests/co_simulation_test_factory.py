@@ -14,9 +14,8 @@ class TestSmallCoSimulationCases(co_simulation_test_case.CoSimulationTestCase):
     '''
     def test_MokFSI(self):
         with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
-            self.createTest('fsi_mok/cosim_mok_fsi')
+            self.createTest("fsi_mok", "cosim_mok_fsi")
             self.runTest()
-            self._DeleteTimeFiles("fsi_mok")
 
 class TestCoSimulationCases(co_simulation_test_case.CoSimulationTestCase):
     '''This class contains "full" CoSimulation-Cases, too large for the nightly suite and therefore

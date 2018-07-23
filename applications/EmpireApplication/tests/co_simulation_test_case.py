@@ -25,8 +25,10 @@ class CoSimulationTestCase(KratosUnittest.TestCase):
     It can be used to test complete cases with the "CoSimulation-Analysis"
     '''
 
-    def createTest(self, parameter_file_name):
-        with open(parameter_file_name + '_parameters.json', 'r') as parameter_file:
+    def createTest(self, problem_dir_name, parameter_file_name):
+        self.problem_dir_name = problem_dir_name
+
+        with open(os.path.join(problem_dir_name, parameter_file_name + '_parameters.json'), 'r') as parameter_file:
             self.cosim_parameters = json.load(parameter_file)
 
         # # To avoid many prints
@@ -36,8 +38,4 @@ class CoSimulationTestCase(KratosUnittest.TestCase):
 
     def runTest(self):
         CoSimulationAnalysis(self.cosim_parameters).Run()
-
-    def _DeleteTimeFiles(self, directory):
-        for filename in os.listdir(directory):
-            if filename.endswith(".time"):
-                kratos_utils.DeleteFileIfExisting(os.path.join(directory,filename))
+        kratos_utils.DeleteTimeFiles(self.problem_dir_name)

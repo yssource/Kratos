@@ -2073,21 +2073,31 @@ protected:
 
         rResult.clear();
 
-        for (IndexType a = 0; a < TNumNodes; ++a)
+        IndexType FirstRow(0), FirstCol(0);
+        // Loop over nodes
+        for (IndexType i = 0; i < TNumNodes; ++i)
         {
-            for (IndexType b = 0; b < TNumNodes; ++b)
+            for (IndexType j = 0; j < TNumNodes; ++j)
             {
                 // (dN_a/dx_k dN_b/dx_k)
                 double value = 0.0;
                 for (IndexType k = 0; k < TDim; k++)
-                    value += dn_dx(a,k) * dn_dx(b,k);
+                    value += dn_dx(i,k) * dn_dx(j,k);
 
                 value *= (ArtificialDiffusion*volume);
 
-                for (IndexType i=0; i < TDim; i++)
-                    rResult(a*TBlockSize+i,b*TBlockSize+i) += value;
-            }
-        }
+                // adding UU terms
+                for (IndexType m = 0; m < TDim; ++m)
+                    rResult(FirstRow+m, FirstCol+m) = value;
+
+                // adding the PP terms
+                rResult(FirstRow+TDim, FirstCol+TDim) = value;
+
+                FirstCol += TBlockSize;
+            }  // Node block columns
+            FirstRow += TBlockSize;
+            FirstCol = 0;
+        }  // Node block rows
 
         KRATOS_CATCH("");
     }

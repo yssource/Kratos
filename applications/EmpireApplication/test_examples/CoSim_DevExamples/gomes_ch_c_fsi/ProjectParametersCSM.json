@@ -34,7 +34,7 @@
             "scaling"     : false
         },
         "problem_domain_sub_model_part_list" : ["Parts_Front","Parts_Tail","Parts_Back"],
-        "processes_sub_model_part_list"      : ["DISPLACEMENT_Dirichlet","SelfWeight2D_Front","SelfWeight2D_Tail","SelfWeight2D_Back","PointLoad2D_FSI"],
+        "processes_sub_model_part_list"      : ["DISPLACEMENT_Dirichlet","SelfWeight2D_Front","SelfWeight2D_Tail","SelfWeight2D_Back","PointLoad2D_FSI","GENERIC_FSI"],
         "rotation_dofs"                      : false
     },
     "constraints_process_list" : [{
@@ -81,17 +81,6 @@
             "direction"       : [1.0,0.0,0.0],
             "interval"        : [0.0,"End"]
         }
-    },{
-        "python_module" : "assign_vector_by_direction_to_condition_process",
-        "kratos_module" : "KratosMultiphysics",
-        "check"         : "DirectorVectorNonZero direction",
-        "Parameters"    : {
-            "model_part_name" : "PointLoad2D_FSI",
-            "variable_name"   : "POINT_LOAD",
-            "modulus"         : 0.0,
-            "direction"       : [1.0,1.0,0.0],
-            "interval"        : [0.0,"End"]
-        }
     }],
     "list_other_processes"     : [],
     "output_configuration"     : {
@@ -109,7 +98,7 @@
             "node_output"         : false,
             "skin_output"         : false,
             "plane_output"        : [],
-            "nodal_results"       : ["DISPLACEMENT","REACTION","VELOCITY","ACCELERATION"],
+            "nodal_results"       : ["DISPLACEMENT","REACTION","VELOCITY","ACCELERATION","POINT_LOAD"],
             "gauss_point_results" : []
         },
         "point_data_configuration"  : []

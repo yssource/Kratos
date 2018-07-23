@@ -103,10 +103,10 @@ class MeshSolverBase(object):
         self.get_mesh_motion_solving_strategy().GetEchoLevel()
 
     def Predict(self):
-        self.get_mesh_motion_solver().Predict()
+        self.get_mesh_motion_solving_strategy().Predict()
 
     def SolveSolutionStep(self):
-        self.get_mesh_motion_solver().Solve() # Calling Solve bcs this is what is currently implemented in the MeshSolverStrategies
+        self.get_mesh_motion_solving_strategy().Solve() # Calling Solve bcs this is what is currently implemented in the MeshSolverStrategies
 
     def Clear(self):
         self.get_mesh_motion_solving_strategy().Clear()

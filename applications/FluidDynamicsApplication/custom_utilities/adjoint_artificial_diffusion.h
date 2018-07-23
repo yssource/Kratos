@@ -27,6 +27,7 @@
 // Project includes
 #include "includes/define.h"
 #include "includes/kratos_parameters.h"
+#include "includes/svd_utils.h"
 
 // Application includes
 #include "custom_elements/vms_adjoint_element.h"
@@ -284,11 +285,11 @@ private:
 
         const auto& S = svd.singularValues();
 
-        double volume = 1.0;
-        if (domain_size == 2)
-            volume = pCurrentElement->GetGeometry().Area();
-        else if (domain_size == 3)
-            volume = pCurrentElement->GetGeometry().Volume();
+        // double volume = 1.0;
+        // if (domain_size == 2)
+        //     volume = pCurrentElement->GetGeometry().Area();
+        // else if (domain_size == 3)
+        //     volume = pCurrentElement->GetGeometry().Volume();
 
         double artificial_diffusion = S[0];
 
@@ -641,7 +642,7 @@ private:
 
         return artificial_diffusion;
 
-        KRATOS_WATCH("");
+        KRATOS_CATCH("");
     }
 
     double CalculateArtificialDiffusionEnergyGenerationRateMatrix(
@@ -652,7 +653,28 @@ private:
     {
         KRATOS_TRY;
 
-        KRATOS_WATCH("");
+        MatrixType svd_u;
+        MatrixType svd_v;
+        MatrixType svd_s;
+
+        unsigned int m_size = rLHS_Contribution.size1();
+
+        svd_u.resize( m_size, m_size, false);
+        svd_v.resize( m_size, m_size, false);
+        svd_s.resize( m_size, m_size, false);
+
+        svd_u.clear();
+        svd_v.clear();
+        svd_s.clear();
+
+        Matrix adjoint_energy_generation_matrix;
+        pCurrentElement->Calculate(VMS_ADJOINT_ENERGY_GENERATION_RATE_MATRIX, adjoint_energy_generation_matrix, rCurrentProcessInfo);
+
+        svd_utils.SingularValueDecomposition(adjoint_energy_generation_matrix, svd_u, svd_s, svd_v);
+
+        return svd_s(0,0);
+
+        KRATOS_CATCH("");
     }
 
     ///@}

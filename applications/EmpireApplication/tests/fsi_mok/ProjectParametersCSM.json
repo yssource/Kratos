@@ -54,7 +54,7 @@
         "loads_process_list"       : [],
         "list_other_processes"     : []
     },
-    "output_configuration"     : {
+    "_output_configuration"     : {
         "result_file_configuration" : {
             "gidpost_flags"       : {
                 "GiDPostMode"           : "GiD_PostBinary",

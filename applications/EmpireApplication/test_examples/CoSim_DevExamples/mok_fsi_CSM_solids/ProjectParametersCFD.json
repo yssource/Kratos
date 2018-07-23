@@ -35,7 +35,7 @@
         "Restart_Step"     : 0
     },
     "solver_settings"                  : {
-        "solver_type"                 : "ale_monolithic",
+        "solver_type"                 : "Monolithic",
             "ale_settings"               :   {
             "solver_type" : "mesh_solver_structural_similarity",
             "ale_interface_parts" : ["NoSlip2D_FSI"]

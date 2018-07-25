@@ -27,11 +27,26 @@ class CoSimulationConvergenceCriteria(object):
             self.rel_tolerances.append(data_entry["rel_tolerance"])
         data_size = len(self.settings["data_list"])
 
-    def SetPreviousSolution(self):
+    def Initialize(self):
+        pass
+
+    def Finalize(self):
+        pass
+
+    def InitializeSolutionStep(self):
+        pass
+
+    def FinalizeSolutionStep(self):
+        pass
+
+    def InitializeNonLinearIteration(self):
         # Saving the previous data (at beginning of iteration) for the computation of the residual
         self.old_data = [] # discard old data fields
         for data_entry in self.settings["data_list"]:
             self.old_data.append(self.__ImportData(data_entry))
+
+    def FinalizeNonLinearIteration(self):
+        pass
 
     def IsConverged(self):
         convergence_list = []

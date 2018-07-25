@@ -18,11 +18,12 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
 
         super(GaussSeidelStrongCouplingSolver, self).__init__(cosim_solver_settings, level)
 
+        self.num_coupling_iterations = self.cosim_solver_settings["num_coupling_iterations"]
+
     def Initialize(self):
         super(GaussSeidelStrongCouplingSolver, self).Initialize()
 
-        self.num_coupling_iterations = self.cosim_solver_settings["num_coupling_iterations"]
-
+        ## TODO move this to the constructor, this probably means modifying the constructors!
         self.convergence_accelerator = CreateConvergenceAccelerator(
             self.cosim_solver_settings["convergence_accelerator_settings"],
             self.solvers, self.cosim_solver_details, self.lvl)
@@ -31,20 +32,39 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
             self.cosim_solver_settings["convergence_criteria_settings"],
             self.solvers, self.cosim_solver_details, self.lvl)
 
+        self.convergence_accelerator.Initialize()
+        self.convergence_criteria.Initialize()
+
+    def Finalize(self):
+        super(GaussSeidelStrongCouplingSolver, self).Finalize()
+        self.convergence_accelerator.Finalize()
+        self.convergence_criteria.Finalize()
+
+    def InitializeSolutionStep(self):
+        super(GaussSeidelStrongCouplingSolver, self).InitializeSolutionStep()
+        self.convergence_accelerator.InitializeSolutionStep()
+        self.convergence_criteria.InitializeSolutionStep()
+
     def FinalizeSolutionStep(self):
         super(GaussSeidelStrongCouplingSolver, self).FinalizeSolutionStep()
         self.convergence_accelerator.FinalizeSolutionStep()
+        self.convergence_criteria.FinalizeSolutionStep()
 
     def SolveSolutionStep(self):
         for k in range(self.num_coupling_iterations):
             csprint(self.lvl, cyan("Coupling iteration: ")+bold(str(k+1)+" / " + str(self.num_coupling_iterations)))
-            self.convergence_accelerator.SetPreviousSolution()
-            self.convergence_criteria.SetPreviousSolution()
+
+            self.convergence_accelerator.InitializeNonLinearIteration()
+            self.convergence_criteria.InitializeNonLinearIteration()
+
             for solver_name in self.solver_names:
                 solver = self.solvers[solver_name]
                 self._SynchronizeInputData(solver, solver_name)
                 solver.SolveSolutionStep()
                 self._SynchronizeOutputData(solver, solver_name)
+
+            self.convergence_accelerator.FinalizeNonLinearIteration()
+            self.convergence_criteria.FinalizeNonLinearIteration()
 
             if self.convergence_criteria.IsConverged():
                 csprint(self.lvl, green("##### CONVERGENCE AT INTERFACE WAS ACHIEVED #####"))

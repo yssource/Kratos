@@ -14,10 +14,19 @@ class CoSimulationBaseConvergenceAccelerator(object):
             self.echo_level = self.settings["echo_level"]
         self.io = io_factory.CreateIO(settings, solvers, "None", cosim_solver_details, level)
 
+    def Initialize(self):
+        pass
+
+    def Finalize(self):
+        pass
+
+    def InitializeSolutionStep(self):
+        pass
+
     def FinalizeSolutionStep(self):
         pass
 
-    def SetPreviousSolution(self):
+    def InitializeNonLinearIteration(self):
         # Saving the previous data for the computation of the residual
         # and the computation of the solution update
         previous_data = [] # discard previous data fields
@@ -30,6 +39,9 @@ class CoSimulationBaseConvergenceAccelerator(object):
             self.data_sizes.append(size_counter)
 
         self.combined_prev_data = np.concatenate(previous_data)
+
+    def FinalizeNonLinearIteration(self):
+        pass
 
     def ComputeUpdate(self):
         new_data = []

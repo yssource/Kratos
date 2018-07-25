@@ -48,6 +48,7 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
         if "predictor_settings" in self.cosim_solver_settings:
             self.predictor = CreatePredictor(self.cosim_solver_settings["predictor_settings"],
                                              self.solvers, self.cosim_solver_details, self.lvl)
+            self.predictor.Initialize()
 
     def Finalize(self):
         for solver_name in self.solver_names:
@@ -86,6 +87,7 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
     def FinalizeSolutionStep(self):
         for solver_name in self.solver_names:
             self.solvers[solver_name].FinalizeSolutionStep()
+            self.predictor.FinalizeSolutionStep()
 
     def OutputSolutionStep(self):
         for solver_name in self.solver_names:
@@ -109,3 +111,5 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
             for output_data in output_data_list:
                 to_solver = self.solvers[output_data["to_solver"]]
                 solver.ExportData(output_data["data_name"], to_solver)
+
+    

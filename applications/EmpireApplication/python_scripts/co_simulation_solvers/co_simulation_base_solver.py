@@ -66,3 +66,7 @@ class CoSimulationBaseSolver(object):
 
     def GetDataDefinition(self, data_name):
         return self.cosim_solver_settings["data"][data_name]
+
+    def GetBufferSize(self):
+        raise Exception("GetBufferSize function must be implemented in derived class")
+        

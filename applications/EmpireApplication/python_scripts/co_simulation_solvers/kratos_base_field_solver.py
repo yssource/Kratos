@@ -23,6 +23,7 @@ class KratosBaseFieldSolver(CoSimulationBaseSolver):
 
     def Initialize(self):
         self._GetAnalysisStage().Initialize()
+        
 
     def Finalize(self):
         self._GetAnalysisStage().Finalize()
@@ -47,6 +48,8 @@ class KratosBaseFieldSolver(CoSimulationBaseSolver):
     def SolveSolutionStep(self):
         self._GetAnalysisStage()._GetSolver().SolveSolutionStep()
 
+    def GetBufferSize(self):
+        return self.model[self.project_parameters["solver_settings"]["model_part_name"]].GetBufferSize()
 
     def _GetAnalysisStage(self):
         if not hasattr(self, '_analysis_stage'):

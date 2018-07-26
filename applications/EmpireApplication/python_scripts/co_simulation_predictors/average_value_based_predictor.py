@@ -24,6 +24,7 @@ class AverageValuePredictor(CosimulationBasePredictor):
             self.beta = 0.5
 
     def Initialize(self):
+        # TODO this should be done in the Check fct!
         for solver in self.solvers.values():
             buffer_size = solver.GetBufferSize()
             if buffer_size < 2:

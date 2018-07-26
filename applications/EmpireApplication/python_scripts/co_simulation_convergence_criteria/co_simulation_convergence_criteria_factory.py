@@ -1,12 +1,10 @@
 from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
+# Other imports
 import co_simulation_ios.co_simulation_io_factory as io_factory
-
 import numpy as np
 from numpy import linalg as la
-
 from co_simulation_tools import classprint, bold, green, red
-
 
 def CreateConvergenceCriteria(settings, solvers, cosim_solver_details, level):
     return CoSimulationConvergenceCriteria(settings, solvers, cosim_solver_details, level)

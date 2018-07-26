@@ -1,12 +1,11 @@
 from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
+# Importing the base class
 from co_simulation_base_predictor import CosimulationBasePredictor
 
+# Other imports
 import numpy as np
-import co_simulation_ios.co_simulation_io_factory as io_factory
-
 from co_simulation_tools import classprint
-
 
 # Predictor implemented according to:
 # "A new staggered scheme for fluid-structure interaction"; W.G. Dettmer and D. Peric
@@ -23,7 +22,6 @@ class AverageValuePredictor(CosimulationBasePredictor):
             self.beta = self.settings["beta"]
         else:
             self.beta = 0.5
-
 
     def Initialize(self):
         for solver in self.solvers.values():

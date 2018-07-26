@@ -4,14 +4,13 @@ from __future__ import print_function, absolute_import, division
 # Author: Wei He
 # Date: Feb. 20, 2017
 
-import numpy as np
-from copy import deepcopy
-from collections import deque
-
 # Importing the base class
 from co_simulation_base_convergence_accelerator import CoSimulationBaseConvergenceAccelerator
 
 # Other imports
+import numpy as np
+from copy import deepcopy
+from collections import deque
 from co_simulation_tools import classprint
 
 def Create(settings, solvers, cosim_solver_details, level):

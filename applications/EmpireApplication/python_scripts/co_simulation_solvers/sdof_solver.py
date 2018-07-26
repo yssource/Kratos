@@ -1,17 +1,15 @@
 from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
-# Importing the Kratos Library
+# Importing the base class
+from co_simulation_base_solver import CoSimulationBaseSolver
+
+# Other imports
 import numpy as np
 import json
 import os
 
-# Importing the base class
-from co_simulation_base_solver import CoSimulationBaseSolver
-
-
 def CreateSolver(cosim_solver_settings, level):
     return SDofSolver(cosim_solver_settings, level)
-
 
 class SDofSolver(CoSimulationBaseSolver):
     def __init__(self, cosim_solver_settings, level):

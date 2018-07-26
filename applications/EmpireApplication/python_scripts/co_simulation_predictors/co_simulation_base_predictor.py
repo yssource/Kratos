@@ -1,9 +1,8 @@
 from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
+# Other imports
 import co_simulation_ios.co_simulation_io_factory as io_factory
-
 import numpy as np
-
 from co_simulation_tools import classprint, bold
 
 class CosimulationBasePredictor(object):

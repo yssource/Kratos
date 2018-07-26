@@ -1,16 +1,14 @@
 from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
+# Importing the base class
 from co_simulation_base_predictor import CosimulationBasePredictor
 
+# Other imports
 import numpy as np
-import co_simulation_ios.co_simulation_io_factory as io_factory
-
 from co_simulation_tools import classprint
-
 
 def Create(predictor_settings, solvers, cosim_solver_details, level):
     return StandardLinearPredictor(predictor_settings, solvers, cosim_solver_details, level)
-
 
 class StandardLinearPredictor(CosimulationBasePredictor):
     def Predict(self):

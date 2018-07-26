@@ -34,7 +34,8 @@ class StandardLinearPredictor(CosimulationBasePredictor):
         for data_entry, data_update in zip(self.settings["data_list"], updated_data):
             self._ExportData(data_entry, data_update)
 
-        classprint(self.lvl, self._Name(), "Computed prediction")
+        if self.echo_level > 3:
+            classprint(self.lvl, self._Name(), "Computed prediction")
 
     def _Name(self):
         return self.__class__.__name__

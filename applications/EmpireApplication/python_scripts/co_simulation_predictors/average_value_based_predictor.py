@@ -55,7 +55,8 @@ class AverageValuePredictor(CosimulationBasePredictor):
         for data_entry, data_update in zip(self.settings["data_list"], updated_data):
             self._ExportData(data_entry, data_update)
 
-        classprint(self.lvl, self._Name(), "Computed prediction with beta = ", str(self.beta))
+        if self.echo_level > 3:
+            classprint(self.lvl, self._Name(), "Computed prediction with beta = ", str(self.beta))
 
     def FinalizeSolutionStep(self):
         data_sizes = [] # saving the sizes of the data to later split them again

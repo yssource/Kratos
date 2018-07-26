@@ -57,6 +57,9 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
         for solver_name in self.solver_names:
             self.solvers[solver_name].Finalize()
 
+        if self.predictor is not None:
+            self.predictor.Finalize()
+
     def AdvanceInTime(self, current_time):
         self.time = self.solvers[self.solver_names[0]].AdvanceInTime(current_time)
         for solver_name in self.solver_names[1:]:
@@ -87,10 +90,13 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
         for solver_name in self.solver_names:
             self.solvers[solver_name].InitializeSolutionStep()
 
+        if self.predictor is not None:
+            self.predictor.InitializeSolutionStep()
+
     def FinalizeSolutionStep(self):
         for solver_name in self.solver_names:
             self.solvers[solver_name].FinalizeSolutionStep()
-            self.predictor.FinalizeSolutionStep()
+            self.predictor.FinalizeSolutionStep() # TODO fix this, neither should it be caled multiple times plus it must only be executed when there is a predictor!
 
     def OutputSolutionStep(self):
         for solver_name in self.solver_names:

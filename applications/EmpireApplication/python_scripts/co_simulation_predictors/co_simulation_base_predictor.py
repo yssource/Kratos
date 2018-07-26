@@ -26,12 +26,6 @@ class CosimulationBasePredictor(object):
     def FinalizeSolutionStep(self):
         pass
 
-    def InitializeNonLinearIteration(self):
-        pass
-
-    def FinalizeNonLinearIteration(self):
-        pass
-
     def SetDeltaTime(self, delta_time):
         self.delta_time = delta_time
 

@@ -39,8 +39,6 @@ class SDofSolver(CoSimulationBaseSolver):
         factor = self.force - self.stiffness * self.initial_displacement
         self.initial_acceleration = (1/self.mass) * factor
 
-
-
         beta = 0.25 * (1- self.alpha_m + self.alpha_f)**2
         gamma =  0.50 - self.alpha_m + self.alpha_f
 
@@ -55,7 +53,6 @@ class SDofSolver(CoSimulationBaseSolver):
                                      [-self.alpha_f * self.stiffness,
                                       -self.alpha_f * self.damping,
                                       -self.alpha_m * self.mass]])
-
 
     def Initialize(self):
         self.x = np.zeros(3)
@@ -74,13 +71,10 @@ class SDofSolver(CoSimulationBaseSolver):
                                      0,
                                      self.force])
 
-
     def OutputSolutionStep(self):
         with open("results_sdof.txt", "a") as results_sdof:
             #outputs displacements
             results_sdof.write(str(self.time) + "\t" + str(self.dx[0]) + "\n")
-        results_sdof.close()
-
 
     def AdvanceInTime(self, current_time):
         self.x = self.dx

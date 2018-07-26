@@ -11,7 +11,7 @@ from co_simulation_tools import couplingsolverprint, green
 def CreateSolver(cosim_solver_settings, level):
     return WeakCouplingSolver(cosim_solver_settings, level)
 
-class WeakCouplingSolver(CoSimulationBaseCouplingSolver):
+class WeakCouplingSolver(CoSimulationBaseCouplingSolver): ## TODO I think the name should contain GaussSeidel
     def SolveSolutionStep(self):
         for solver_name in self.solver_names:
             solver = self.solvers[solver_name]
@@ -19,7 +19,7 @@ class WeakCouplingSolver(CoSimulationBaseCouplingSolver):
             solver.SolveSolutionStep()
             self._SynchronizeOutputData(solver, solver_name)
 
-        couplingsolverprint(self.lvl, self._Name(), green("### SOLVED SYSTEM ###"))
+        couplingsolverprint(self.lvl, self._Name(), green("### SOLVED SYSTEM ###")) ## TODO leave this?
 
     def _Name(self):
         return self.__class__.__name__

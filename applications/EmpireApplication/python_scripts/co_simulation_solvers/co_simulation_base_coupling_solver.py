@@ -65,8 +65,9 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
                 raise Exception("Solver time mismatch")
 
         if not self.coupling_started and self.time > self.start_coupling_time:
-            couplingsolverprint(self.lvl, self._Name(), bold("Starting Coupling"))
             self.coupling_started = True
+            if self.echo_level > 0:
+                couplingsolverprint(self.lvl, self._Name(), bold("Starting Coupling"))
 
         # if a predictor is used then the delta_time is set
         # this is needed by some predictors

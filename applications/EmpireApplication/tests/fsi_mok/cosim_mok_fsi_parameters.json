@@ -35,7 +35,7 @@
         },
         "convergence_accelerator_settings" :
         {
-            "type"          : "iqnils",
+            "type"          : "mvqn",
             "io_type"       : "kratos_signal",
             "data_list" :
             [

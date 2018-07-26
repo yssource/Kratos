@@ -16,3 +16,7 @@ def CreateSolver(cosim_solver_settings, level):
 class KratosFluidSolver(KratosBaseFieldSolver):
     def _CreateAnalysisStage(self):
         return FluidDynamicsAnalysis(self.model, self.project_parameters)
+
+    def _Name(self):
+        return self.__class__.__name__
+

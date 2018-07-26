@@ -6,6 +6,8 @@ import KratosMultiphysics
 # Importing the base class
 from co_simulation_solvers.co_simulation_base_solver import CoSimulationBaseSolver
 
+from co_simulation_tools import solverprint, bold
+
 
 class KratosBaseFieldSolver(CoSimulationBaseSolver):
     def __init__(self, cosim_solver_settings, level):
@@ -23,7 +25,6 @@ class KratosBaseFieldSolver(CoSimulationBaseSolver):
 
     def Initialize(self):
         self._GetAnalysisStage().Initialize()
-        
 
     def Finalize(self):
         self._GetAnalysisStage().Finalize()
@@ -58,3 +59,8 @@ class KratosBaseFieldSolver(CoSimulationBaseSolver):
 
     def _CreateAnalysisStage(self):
         raise Exception("Creation of the AnalysisStage must be implemented in the derived class!")
+
+
+    def PrintInfo(self):
+        solverprint(self.lvl, "KratosSolver", bold(self._Name()))
+        ## TODO print additional stuff with higher echo-level

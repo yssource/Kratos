@@ -3,6 +3,8 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 import co_simulation_ios.co_simulation_io_factory as io_factory
 import numpy as np
 
+from co_simulation_tools import classprint, bold
+
 class CoSimulationBaseConvergenceAccelerator(object):
     def __init__(self, settings, solvers, cosim_solver_details, level):
         self.settings = settings
@@ -10,8 +12,6 @@ class CoSimulationBaseConvergenceAccelerator(object):
         self.cosim_solver_details = cosim_solver_details
         self.lvl = level
         self.echo_level = 0
-        if "echo_level" in self.settings:
-            self.echo_level = self.settings["echo_level"]
         self.io = io_factory.CreateIO(settings, solvers, "None", cosim_solver_details, level)
 
     def Initialize(self):
@@ -71,6 +71,18 @@ class CoSimulationBaseConvergenceAccelerator(object):
         pass
     def MakeMeshAvailable(self, mesh_name, to_client):
         pass
+
+    def PrintInfo(self):
+        '''Function to print Info abt the Object
+        Can be overridden in derived classes to print more information
+        '''
+        classprint(self.lvl, "Convergence Accelerator", bold(self._Name()))
+
+    def SetEchoLevel(self, level):
+        self.echo_level = level
+
+    def _Name(self):
+        raise Exception('"_Name" has to be implemented in the derived class!')
 
     def __ImportData(self, data_entry):
         data_name = data_entry["data_name"]

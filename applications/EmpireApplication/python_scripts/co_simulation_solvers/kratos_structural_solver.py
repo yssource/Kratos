@@ -16,3 +16,6 @@ def CreateSolver(cosim_solver_settings, level):
 class KratosStructuralSolver(KratosBaseFieldSolver):
     def _CreateAnalysisStage(self):
         return StructuralMechanicsAnalysis(self.model, self.project_parameters)
+
+    def _Name(self):
+        return self.__class__.__name__

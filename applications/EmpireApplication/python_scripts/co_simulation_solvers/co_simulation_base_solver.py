@@ -17,6 +17,9 @@ class CoSimulationBaseSolver(object):
         """
         self.cosim_solver_settings = cosim_solver_settings
         self.lvl = level
+        self.echo_level = 0
+        if "echo_level" in self.cosim_solver_settings:
+            self.echo_level = self.cosim_solver_settings["echo_level"]
 
     def Initialize(self):
         pass
@@ -69,4 +72,11 @@ class CoSimulationBaseSolver(object):
 
     def GetBufferSize(self):
         raise Exception("GetBufferSize function must be implemented in derived class")
-        
+
+    def PrintInfo(self):
+        '''This function can be filled if desired, e.g. to print settings at higher echo-levels
+        '''
+        pass
+
+    def SetEchoLevel(self, level):
+        self.echo_level = level

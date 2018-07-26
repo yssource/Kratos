@@ -49,7 +49,7 @@ class MVQN(CoSimulationBaseConvergenceAccelerator):
         col = len(self.R) - 1
         row = len(r)
         k = col
-        if self.echo_level > 1:
+        if self.echo_level > 3:
             classprint(self.lvl, self._Name(), "Number of new modes: ", col )
 
         ## For the first iteration
@@ -98,7 +98,7 @@ class MVQN(CoSimulationBaseConvergenceAccelerator):
         for i in range(0, row):
             for j in range(0, col):
                 self.J[i][j] = self.J_hat[i][j]
-        if self.echo_level > 1:
+        if self.echo_level > 3:
             classprint(self.lvl, self._Name(), "Jacobian matrix updated!")
         ## Clear the buffer
         if self.R and self.X:

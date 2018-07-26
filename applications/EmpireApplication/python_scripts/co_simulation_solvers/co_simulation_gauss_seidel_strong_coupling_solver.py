@@ -55,8 +55,9 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
 
     def SolveSolutionStep(self):
         for k in range(self.num_coupling_iterations):
-            couplingsolverprint(self.lvl, self._Name(),
-                                cyan("Coupling iteration:"), bold(str(k+1)+" / " + str(self.num_coupling_iterations)))
+            if self.echo_level > 0:
+                couplingsolverprint(self.lvl, self._Name(),
+                                    cyan("Coupling iteration:"), bold(str(k+1)+" / " + str(self.num_coupling_iterations)))
 
             self.convergence_accelerator.InitializeNonLinearIteration()
             self.convergence_criteria.InitializeNonLinearIteration()
@@ -71,12 +72,13 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
             self.convergence_criteria.FinalizeNonLinearIteration()
 
             if self.convergence_criteria.IsConverged():
-                couplingsolverprint(self.lvl, self._Name(), green("### CONVERGENCE WAS ACHIEVED ###"))
+                if self.echo_level > 0:
+                    couplingsolverprint(self.lvl, self._Name(), green("### CONVERGENCE WAS ACHIEVED ###"))
                 break
             else:
                 self.convergence_accelerator.ComputeUpdate()
 
-            if k+1 >= self.num_coupling_iterations:
+            if k+1 >= self.num_coupling_iterations and self.echo_level > 0:
                 couplingsolverprint(self.lvl, self._Name(), red("XXX CONVERGENCE WAS NOT ACHIEVED XXX"))
 
     def PrintInfo(self):

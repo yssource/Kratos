@@ -47,7 +47,7 @@ class Aitken(CoSimulationBaseConvergenceAccelerator):
         ## For the first iteration, do relaxation only
         if k == 0:
             alpha = min( self.alpha_old, self.init_alpha_max )
-            if self.echo_level > 1:
+            if self.echo_level > 3:
                 classprint(self.lvl, self._Name(), ": Doing relaxation in the first iteration with initial factor = " + "{0:.1g}".format(alpha))
             return alpha * r
         else:
@@ -55,7 +55,7 @@ class Aitken(CoSimulationBaseConvergenceAccelerator):
             numerator = np.inner( self.R[1], r_diff )
             denominator = np.inner( r_diff, r_diff )
             alpha = -self.alpha_old * numerator/denominator
-            if self.echo_level > 1:
+            if self.echo_level > 3:
                 classprint(self.lvl, self._Name(), ": Doing relaxation with factor = " + "{0:.1g}".format(alpha))
             if alpha > 20:
                 alpha = 20

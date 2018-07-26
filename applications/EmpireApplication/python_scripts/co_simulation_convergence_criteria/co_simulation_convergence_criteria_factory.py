@@ -59,14 +59,14 @@ class CoSimulationConvergenceCriteria(object):
             abs_norm = res_norm / np.sqrt(residual.size)
             rel_norm = res_norm / norm_new_data
             convergence_list.append(abs_norm < self.abs_tolerances[idx] or rel_norm < self.rel_tolerances[idx])
-            if self.echo_level > 0:
+            if self.echo_level > 1:
                 info_msg  = 'Convergence for "'+bold(data_entry["data_name"])+'": '
                 if convergence_list[idx]:
                     info_msg += green("ACHIEVED")
                 else:
                     info_msg += red("NOT ACHIEVED")
                 classprint(self.lvl, self._Name(), info_msg)
-            if self.echo_level > 1:
+            if self.echo_level > 2:
                 info_msg  = bold("abs_norm")+" = " + str(abs_norm) + " | "
                 info_msg += bold("abs_tol")+" = " + str(self.abs_tolerances[idx])
                 info_msg += " || "+bold("rel_norm")+" = " + str(rel_norm) + " | "

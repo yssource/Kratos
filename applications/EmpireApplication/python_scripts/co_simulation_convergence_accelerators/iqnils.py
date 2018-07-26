@@ -65,11 +65,11 @@ class IQNILS(CoSimulationBaseConvergenceAccelerator):
         if self.V_old == [] and self.W_old == []: # No previous vectors to reuse
             if k == 0:
                 ## For the first iteration in the first time step, do relaxation only
-                if self.echo_level > 1:
+                if self.echo_level > 3:
                     classprint(self.lvl, self._Name(), "Doing relaxation in the first iteration with factor = ", "{0:.1g}".format(self.alpha))
                 return self.alpha * r
             else:
-                if self.echo_level > 1:
+                if self.echo_level > 3:
                     classprint(self.lvl, self._Name(), "Doing multi-vector extrapolation")
                     classprint(self.lvl, self._Name(), "Number of new modes: ", col)
                 self.V_new = np.empty( shape = (col, row) ) # will be transposed later
@@ -99,7 +99,7 @@ class IQNILS(CoSimulationBaseConvergenceAccelerator):
                 return delta_x
         else:  # previous vectors can be reused
             if k == 0: # first iteration
-                if self.echo_level > 1:
+                if self.echo_level > 3:
                     classprint(self.lvl, self._Name(), "Using matrices from previous time steps")
                     classprint(self.lvl, self._Name(), "Number of previous matrices: ", num_old_matrices)
                 V = self.V_old
@@ -113,7 +113,7 @@ class IQNILS(CoSimulationBaseConvergenceAccelerator):
                 return delta_x
             else:
                 ## For other iterations, construct new V and W matrices and combine them with old ones
-                if self.echo_level > 1:
+                if self.echo_level > 3:
                     classprint(self.lvl, self._Name(), "Doing multi-vector extrapolation")
                     classprint(self.lvl, self._Name(), "Number of new modes: ", col)
                     classprint(self.lvl, self._Name(), "Number of previous matrices: ", num_old_matrices)
@@ -154,7 +154,7 @@ class IQNILS(CoSimulationBaseConvergenceAccelerator):
             self.W_old = np.concatenate( self.w_old_matrices, 1 )
         ## Clear the buffer
         if self.R and self.X:
-            if self.echo_level > 1:
+            if self.echo_level > 3:
                 classprint(self.lvl, self._Name(), "Cleaning")
             self.R.clear()
             self.X.clear()

@@ -44,10 +44,13 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
         for solver_name in self.solver_names:
             self.solvers[solver_name].InitializeIO(self.solvers, self.cosim_solver_details)
 
+        ## TODO move to constructor, might require some refactoring in the Predictor!
         self.predictor = None
         if "predictor_settings" in self.cosim_solver_settings:
             self.predictor = CreatePredictor(self.cosim_solver_settings["predictor_settings"],
                                              self.solvers, self.cosim_solver_details, self.lvl)
+            # self.predictor.SetEchoLevel(self.echo_level)
+
             self.predictor.Initialize()
 
     def Finalize(self):

@@ -12,8 +12,6 @@ class CoSimulationBaseConvergenceAccelerator(object):
         self.cosim_solver_details = cosim_solver_details
         self.lvl = level
         self.echo_level = 0
-        if "echo_level" in self.settings:
-            self.echo_level = self.settings["echo_level"]
         self.io = io_factory.CreateIO(settings, solvers, "None", cosim_solver_details, level)
 
     def Initialize(self):
@@ -79,6 +77,9 @@ class CoSimulationBaseConvergenceAccelerator(object):
         Can be overridden in derived classes to print more information
         '''
         classprint(self.lvl, "Convergence Accelerator", bold(self._Name()))
+
+    def SetEchoLevel(self, level):
+        self.echo_level = level
 
     def _Name(self):
         raise Exception('"_Name" has to be implemented in the derived class!')

@@ -17,8 +17,6 @@ class CoSimulationConvergenceCriteria(object):
         self.io = io_factory.CreateIO(settings, solvers, "None", cosim_solver_details, level)
         self.solvers = solvers
         self.echo_level = 0
-        if "echo_level" in self.settings:
-            self.echo_level = self.settings["echo_level"]
         self.lvl = level
         self.abs_tolerances = []
         self.rel_tolerances = []
@@ -85,6 +83,9 @@ class CoSimulationConvergenceCriteria(object):
 
     def PrintInfo(self):
         classprint(self.lvl, "Convergence Criteria", bold(self._Name()))
+
+    def SetEchoLevel(self, level):
+        self.echo_level = level
 
     def _Name(self):
         return self.__class__.__name__

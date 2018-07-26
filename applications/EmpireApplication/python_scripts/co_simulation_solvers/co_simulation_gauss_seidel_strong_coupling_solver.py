@@ -32,6 +32,9 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
             self.cosim_solver_settings["convergence_criteria_settings"],
             self.solvers, self.cosim_solver_details, self.lvl)
 
+        self.convergence_accelerator.SetEchoLevel(self.echo_level)
+        self.convergence_criteria.SetEchoLevel(self.echo_level)
+
         self.convergence_accelerator.Initialize()
         self.convergence_criteria.Initialize()
 

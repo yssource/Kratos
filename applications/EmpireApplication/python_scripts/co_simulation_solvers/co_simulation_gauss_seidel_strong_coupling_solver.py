@@ -88,5 +88,11 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
         self.convergence_accelerator.PrintInfo()
         self.convergence_criteria.PrintInfo()
 
+    def Check(self):
+        super(GaussSeidelStrongCouplingSolver, self).Check()
+
+        self.convergence_accelerator.Check()
+        self.convergence_criteria.Check()
+
     def _Name(self):
         return self.__class__.__name__

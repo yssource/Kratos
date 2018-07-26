@@ -40,6 +40,9 @@ class CosimulationBasePredictor(object):
         '''
         classprint(self.lvl, "Convergence Accelerator", bold(self._Name()))
 
+    def Check(self):
+        print("The predictors do not yet implement Check!")
+
     def SetEchoLevel(self, level):
         self.echo_level = level
 

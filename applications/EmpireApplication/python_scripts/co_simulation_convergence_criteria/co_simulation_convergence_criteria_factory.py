@@ -84,6 +84,9 @@ class CoSimulationConvergenceCriteria(object):
     def PrintInfo(self):
         classprint(self.lvl, "Convergence Criteria", bold(self._Name()))
 
+    def Check(self):
+        print("ConvCrit does not implement Check yet!")
+
     def SetEchoLevel(self, level):
         self.echo_level = level
 

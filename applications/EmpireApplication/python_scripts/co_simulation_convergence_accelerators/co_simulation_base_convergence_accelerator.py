@@ -84,6 +84,9 @@ class CoSimulationBaseConvergenceAccelerator(object):
     def _Name(self):
         raise Exception('"_Name" has to be implemented in the derived class!')
 
+    def Check(self):
+        print("ConvAcc does not yet implement Check")
+
     def __ImportData(self, data_entry):
         data_name = data_entry["data_name"]
         from_solver = data_entry["from_solver"]

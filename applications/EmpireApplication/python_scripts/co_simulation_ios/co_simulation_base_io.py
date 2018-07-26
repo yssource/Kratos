@@ -32,3 +32,12 @@ class CoSimulationBaseIO(object):
         pass
     def MakeMeshAvailable(self, mesh_name, to_client):
         pass
+
+    def SetEchoLevel(self, level):
+        self.echo_level = level
+
+    def PrintInfo(self):
+        print("IO does not yet implement PrintInfo!")
+
+    def Check(self):
+        print("IO does not yet implement Check!")

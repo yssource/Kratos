@@ -127,9 +127,10 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
             self.predictor.PrintInfo()
 
     def Check(self):
+        super(CoSimulationBaseCouplingSolver, self).Check()
+
         for solver_name in self.solver_names:
             self.solvers[solver_name].Check()
 
         if self.predictor is not None:
-            pass
-            # self.predictor.Check()
+            self.predictor.Check()

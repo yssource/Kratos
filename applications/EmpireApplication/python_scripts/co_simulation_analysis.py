@@ -39,6 +39,7 @@ class CoSimulationAnalysis(object):
 
     def Initialize(self):
         self._GetSolver().Initialize()
+        self._GetSolver().Check()
 
         if self.echo_level > 0:
             self._GetSolver().PrintInfo()

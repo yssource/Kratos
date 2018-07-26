@@ -1,7 +1,9 @@
 from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
 available_predictors = {
-    "linear_derivative_based"    : "linear_derivative_based_predictor"
+    "linear_derivative_based"    : "linear_derivative_based_predictor",
+    "average_value_based"        : "average_value_based_predictor",
+    "standard_linear"            : "standard_linear_predictor"
 }
 
 def CreatePredictor(predictor_settings, solvers, cosim_solver_details, level):

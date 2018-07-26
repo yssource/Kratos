@@ -76,7 +76,6 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
     def Predict(self):
         if self.predictor is not None:
             self.predictor.Predict()
-
         for solver_name in self.solver_names:
             self.solvers[solver_name].Predict()
 

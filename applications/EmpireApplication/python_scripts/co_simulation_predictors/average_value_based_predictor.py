@@ -5,7 +5,7 @@ from co_simulation_base_predictor import CosimulationBasePredictor
 import numpy as np
 import co_simulation_ios.co_simulation_io_factory as io_factory
 
-from co_simulation_tools import csprint, blue
+from co_simulation_tools import classprint
 
 
 # Predictor implemented according to:
@@ -63,8 +63,7 @@ class AverageValuePredictor(CosimulationBasePredictor):
         for data_entry, data_update in zip(self.settings["data_list"], updated_data):
             self._ExportData(data_entry, data_update)
 
-        csprint(self.lvl, blue("<< Compute prediction with average_value_predictor >>"))
-        csprint(self.lvl, blue("<< Averaging predicted values with beta = " + str(self.beta) +" >>"))
+        classprint(self.lvl, self._Name(), "Computed prediction with beta = ", str(self.beta))
 
     def FinalizeSolutionStep(self):
         data_sizes = [] # saving the sizes of the data to later split them again

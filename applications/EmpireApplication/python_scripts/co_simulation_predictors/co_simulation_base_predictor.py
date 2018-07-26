@@ -4,6 +4,8 @@ import co_simulation_ios.co_simulation_io_factory as io_factory
 
 import numpy as np
 
+from co_simulation_tools import classprint, bold
+
 class CosimulationBasePredictor(object):
     def __init__(self, settings, solvers, cosim_solver_details, level):
         self.settings = settings
@@ -38,7 +40,7 @@ class CosimulationBasePredictor(object):
         '''Function to print Info abt the Object
         Can be overridden in derived classes to print more information
         '''
-        classprint(self.lvl, "Convergence Accelerator", bold(self._Name()))
+        classprint(self.lvl, "Predictor", bold(self._Name()))
 
     def Check(self):
         print("The predictors do not yet implement Check!")

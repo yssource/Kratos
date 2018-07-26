@@ -8,7 +8,7 @@ from numpy import linalg as la
 
 from co_simulation_base_predictor import CosimulationBasePredictor
 
-from co_simulation_tools import csprint, blue
+from co_simulation_tools import classprint
 
 def Create(predictor_settings, solvers, cosim_solver_details, level):
     return LinearDerivativeBasedPredictor(predictor_settings, solvers, cosim_solver_details, level)
@@ -51,7 +51,7 @@ class LinearDerivativeBasedPredictor(CosimulationBasePredictor):
         for data_entry, data_update in zip(self.settings["data_list"], updated_data):
             self._ExportData(data_entry, data_update)
 
-        csprint(self.lvl, blue("<< Compute prediction with linear_derivative_based_predictor>>"))
+        classprint(self.lvl, self._Name(), "Computed prediction")
 
     def _Name(self):
         return self.__class__.__name__

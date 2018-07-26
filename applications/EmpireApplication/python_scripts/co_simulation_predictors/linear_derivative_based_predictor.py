@@ -15,17 +15,6 @@ def Create(predictor_settings, solvers, cosim_solver_details, level):
 
 
 class LinearDerivativeBasedPredictor(CosimulationBasePredictor):
-    def __init__(self, settings, solvers, cosim_solver_details, level):
-        super().__init__(settings, solvers, cosim_solver_details, level)
-        self.settings = settings
-        self.solvers = solvers
-        self.cosim_solver_details = cosim_solver_details
-        self.io = io_factory.CreateIO(settings, solvers, "None", cosim_solver_details, level)
-        self.lvl = level
-        self.echo_level = 0
-        if "echo_level" in self.settings:
-            self.echo_level = self.settings["echo_level"]
-
     def Predict(self):
 
         data_sizes = [] # saving the sizes of the data to later split them again

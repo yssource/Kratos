@@ -18,13 +18,7 @@ def Create(predictor_settings, solvers, cosim_solver_details, level):
 class AverageValuePredictor(CosimulationBasePredictor):
     # @param beta factor for weighting last and current value of the predicted values. Can be set in interval: [0, 1.0]
     def __init__(self, settings, solvers, cosim_solver_details, level):
-        super().__init__(settings, solvers, cosim_solver_details, level)    #Warum wird hier bei den anderen Klassen das Argument übergeben? Das ist nicht notwendig!
-        self.settings = settings
-        self.solvers = solvers
-        self.cosim_solver_details = cosim_solver_details
-        self.io = io_factory.CreateIO(settings, solvers, "None", cosim_solver_details, level)
-        self.lvl = level
-
+        super(AverageValuePredictor, self).__init__(settings, solvers, cosim_solver_details, level)    #Warum wird hier bei den anderen Klassen das Argument übergeben? Das ist nicht notwendig!
         if "beta" in self.settings:
             self.beta = self.settings["beta"]
         else:

@@ -3,6 +3,7 @@
     {
         "start_time" : 0.0,
         "end_time" : 15.0,
+        "echo_level" : 4,
         "print_colors" : true
     },
     "solver_settings" :
@@ -14,7 +15,7 @@
         {
             "predictor_type" : "average_value_based",
             "io_type"        : "kratos_signal",
-            "data_list"      : 
+            "data_list"      :
             [
                 {
                     "from_solver": "fluid",
@@ -22,7 +23,7 @@
                 }
 
             ],
-            "old_data_list"      : 
+            "old_data_list"      :
             [
                 {
                     "from_solver": "fluid",

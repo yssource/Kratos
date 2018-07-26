@@ -15,7 +15,7 @@
         "analysis_type"                      : "non_linear",
         "time_integration_method"            : "implicit",
         "scheme_type"                        : "bossak",
-        "buffer_size"                        : 3,      
+        "buffer_size"                        : 3,
         "model_import_settings"              : {
             "input_type"     : "mdpa",
             "input_filename" : "Wall_Structure"
@@ -31,7 +31,7 @@
         "residual_absolute_tolerance"        : 1e-7,
         "max_iteration"                      : 20,
         "linear_solver_settings"             : {
-            "solver_type" : "eigen_pardiso_lu",
+            "solver_type" : "Super LU",
             "scaling"     : false
         },
         "problem_domain_sub_model_part_list" : ["Parts_Structure"],

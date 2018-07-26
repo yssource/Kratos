@@ -49,7 +49,7 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
         if "predictor_settings" in self.cosim_solver_settings:
             self.predictor = CreatePredictor(self.cosim_solver_settings["predictor_settings"],
                                              self.solvers, self.cosim_solver_details, self.lvl)
-            # self.predictor.SetEchoLevel(self.echo_level)
+            self.predictor.SetEchoLevel(self.echo_level)
 
             self.predictor.Initialize()
 
@@ -124,6 +124,12 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
 
         if self.predictor is not None:
             couplingsolverprint(self.lvl, self._Name(), "Uses a Predictor:")
-            # self.predictor.PrintInfo()
+            self.predictor.PrintInfo()
 
+    def Check(self):
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].Check()
 
+        if self.predictor is not None:
+            pass
+            # self.predictor.Check()

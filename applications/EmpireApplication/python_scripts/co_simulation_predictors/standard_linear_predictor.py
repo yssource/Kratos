@@ -33,7 +33,7 @@ class StandardLinearPredictor(CosimulationBasePredictor):
             size_counter += data.size
             data_sizes.append(size_counter)
         self.combined_new_data = np.concatenate(new_data)
-        
+
         for data_entry in self.settings["old_data_list"]:
             old_data.append(self._ImportData(data_entry, 1))
         combined_old_data = np.concatenate(old_data)
@@ -46,4 +46,7 @@ class StandardLinearPredictor(CosimulationBasePredictor):
             self._ExportData(data_entry, data_update)
 
         csprint(self.lvl, blue("<< Compute prediction with standard_linear_predictor >>"))
+
+    def _Name(self):
+        return self.__class__.__name__
 

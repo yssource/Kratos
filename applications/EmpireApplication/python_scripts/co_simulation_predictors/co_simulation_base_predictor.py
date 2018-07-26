@@ -11,8 +11,6 @@ class CosimulationBasePredictor(object):
         self.cosim_solver_details = cosim_solver_details
         self.lvl = level
         self.echo_level = 0
-        if "echo_level" in self.settings:
-            self.echo_level = self.settings["echo_level"]
         self.io = io_factory.CreateIO(settings, solvers, "None", cosim_solver_details, level)
 
     def Initialize(self):
@@ -36,11 +34,23 @@ class CosimulationBasePredictor(object):
     def SetDeltaTime(self, delta_time):
         self.delta_time = delta_time
 
+    def PrintInfo(self):
+        '''Function to print Info abt the Object
+        Can be overridden in derived classes to print more information
+        '''
+        classprint(self.lvl, "Convergence Accelerator", bold(self._Name()))
+
+    def SetEchoLevel(self, level):
+        self.echo_level = level
+
+    def _Name(self):
+        raise Exception('"_Name" has to be implemented in the derived class!')
+
 
     #ATTENTION: Problem with private functions in classes:
     # _ private method -> when calling it in subclass _functionname
     # __very private method -> when calling it in subclass classname__function name might cause problems
-    
+
     def _ImportData(self, data_entry, buffer_index = 0):
         data_name = data_entry["data_name"]
         from_solver = data_entry["from_solver"]

@@ -53,4 +53,6 @@ class LinearDerivativeBasedPredictor(CosimulationBasePredictor):
 
         csprint(self.lvl, blue("<< Compute prediction with linear_derivative_based_predictor>>"))
 
-  
+    def _Name(self):
+        return self.__class__.__name__
+

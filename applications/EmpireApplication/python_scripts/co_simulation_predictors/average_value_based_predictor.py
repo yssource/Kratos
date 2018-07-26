@@ -81,4 +81,6 @@ class AverageValuePredictor(CosimulationBasePredictor):
         #average values weightend by beta
         self.combined_new_data = self.beta * combined_data + (1 - self.beta) * self.combined_new_data
 
-        
+    def _Name(self):
+        return self.__class__.__name__
+

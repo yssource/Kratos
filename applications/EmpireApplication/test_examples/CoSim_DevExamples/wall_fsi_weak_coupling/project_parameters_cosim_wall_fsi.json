@@ -7,79 +7,47 @@
     },
     "solver_settings" :
     {
-        "solver_type" : "gauss_seidel_strong_coupling",
+        "solver_type" : "weak_coupling",
         "echo_level" : 0,
-        "num_coupling_iterations" : 50,
         "start_coupling_time" : 0.0,
         "predictor_settings" :
         {
-            "predictor_type" : "linear_derivative_based",
+            "predictor_type" : "average_value_based",
             "io_type"        : "kratos_signal",
             "data_list"      : 
             [
                 {
                     "from_solver": "fluid",
-                    "data_name"  : "disp"
+                    "data_name"  : "force"
                 }
 
             ],
-            "derivative_list"      : 
+            "old_data_list"      : 
             [
                 {
                     "from_solver": "fluid",
-                    "data_name"  : "vel"
+                    "data_name"  : "force"
                 }
 
             ]
         },
-        "convergence_accelerator_settings" :
-        {
-            "type"          : "aitken",
-            "io_type"       : "kratos_signal",
-            "data_list" :
-            [
-                {
-                    "from_solver"   : "fluid",
-                    "data_name"     : "disp"
-                }
-            ]
-        },
-        "convergence_criteria_settings" :
-        {
-            "io_type"   : "kratos_signal",
-            "echo_level": 2,
-            "data_list" :
-            [
-                {
-                    "from_solver"   : "fluid",
-                    "data_name"     : "disp",
-                    "abs_tolerance" : 1e-7,
-                    "rel_tolerance" : 1e-7
-                }
-            ]
-        },
+
         "coupling_loop":
         [
         {
-            "name": "fluid",
+            "name": "structure",
             "input_data_list": [
                 {
-                    "from_solver" : "structure",
-                    "data_name"   : "disp"
+                    "from_solver" : "fluid",
+                    "data_name"   : "force",
+                    "io_settings"   : {
+                        "mapper_type" : "nearest_neighbor",
+                        "mapper_args" : ["swap_sign"]
+                    }
 
 
                 }
             ],
-            "output_data_list": [
-                {
-                    "to_solver" : "structure",
-                    "data_name"   : "force"
-
-                }
-            ]
-        },
-        {
-            "name": "structure",
             "output_data_list": [
                 {
                     "to_solver" : "fluid",
@@ -89,15 +57,22 @@
                     }
 
                 }
+            ]
+        },
+        {
+            "name": "fluid",
+            "output_data_list": [
+                {
+                    "to_solver" : "structure",
+                    "data_name"   : "force"
+
+                }
             ],
             "input_data_list": [
                 {
-                    "from_solver" : "fluid",
-                    "data_name"   : "force",
-                    "io_settings"   : {
-                        "mapper_type" : "nearest_neighbor",
-                        "mapper_args" : ["swap_sign", "conservative"]
-                    }
+                    "from_solver" : "structure",
+                    "data_name"   : "disp"
+
 
                 }
             ]
@@ -115,15 +90,15 @@
                 },
                 "data" : {
                     "disp" : {
-                        "geometry_name" : "NoSlip2D_FSI",
+                        "geometry_name" : "NoSlip2D_FSI_Interface",
                         "data_identifier" : "MESH_DISPLACEMENT"
                     },
                         "force" : {
-                        "geometry_name" : "NoSlip2D_FSI",
+                        "geometry_name" : "NoSlip2D_FSI_Interface",
                         "data_identifier" : "REACTION"
                     },
                         "vel" : {
-                        "geometry_name" : "NoSlip2D_FSI",
+                        "geometry_name" : "NoSlip2D_FSI_Interface",
                         "data_identifier" : "VELOCITY"
                     }
                 }
@@ -138,15 +113,15 @@
                 },
                 "data" : {
                     "disp" : {
-                        "geometry_name" : "GENERIC_FSI",
+                        "geometry_name" : "GENERIC_FSI_Interface",
                         "data_identifier" : "DISPLACEMENT"
                     },
                         "force" : {
-                        "geometry_name" : "GENERIC_FSI",
+                        "geometry_name" : "GENERIC_FSI_Interface",
                         "data_identifier" : "POINT_LOAD"
                     },
-                    "vel" : {
-                        "geometry_name" : "GENERIC_FSI",
+                         "vel" : {
+                        "geometry_name" : "GENERIC_FSI_Interface",
                         "data_identifier" : "VELOCITY"
                     }
                 }

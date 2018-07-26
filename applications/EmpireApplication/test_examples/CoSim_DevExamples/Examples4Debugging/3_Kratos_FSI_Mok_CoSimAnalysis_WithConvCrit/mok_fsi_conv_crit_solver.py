@@ -116,7 +116,7 @@ class MokFSISolverWithCoSimSolvers(CoSimulationBaseSolver):
 
     def SolveSolutionStep(self):
         for k in range(self.max_iter):
-            self.convergence_criteria.SetPreviousSolution()
+            self.convergence_criteria.InitializeNonLinearIteration()
             # Apply Dirichlet B.C.'s from structural solver to mesh solver
             DisplacementToMesh(self.mapper_1)
             DisplacementToMesh(self.mapper_2)

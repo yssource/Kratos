@@ -6,7 +6,7 @@ from co_simulation_solvers.co_simulation_base_coupling_solver import CoSimulatio
 # Other imports
 from co_simulation_convergence_accelerators.co_simulation_convergence_accelerator_factory import CreateConvergenceAccelerator
 from co_simulation_convergence_criteria.co_simulation_convergence_criteria_factory import CreateConvergenceCriteria
-from co_simulation_tools import csprint, red, green, cyan, bold
+from co_simulation_tools import couplingsolverprint, red, green, cyan, bold
 
 def CreateSolver(cosim_solver_settings, level):
     return GaussSeidelStrongCouplingSolver(cosim_solver_settings, level)
@@ -52,7 +52,8 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
 
     def SolveSolutionStep(self):
         for k in range(self.num_coupling_iterations):
-            csprint(self.lvl, cyan("Coupling iteration: ")+bold(str(k+1)+" / " + str(self.num_coupling_iterations)))
+            couplingsolverprint(self.lvl, self._Name(),
+                                cyan("Coupling iteration:"), bold(str(k+1)+" / " + str(self.num_coupling_iterations)))
 
             self.convergence_accelerator.InitializeNonLinearIteration()
             self.convergence_criteria.InitializeNonLinearIteration()
@@ -67,10 +68,20 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
             self.convergence_criteria.FinalizeNonLinearIteration()
 
             if self.convergence_criteria.IsConverged():
-                csprint(self.lvl, green("##### CONVERGENCE AT INTERFACE WAS ACHIEVED #####"))
+                couplingsolverprint(self.lvl, self._Name(), green("### CONVERGENCE WAS ACHIEVED ###"))
                 break
             else:
                 self.convergence_accelerator.ComputeUpdate()
 
             if k+1 >= self.num_coupling_iterations:
-                csprint(self.lvl, red("XXXXX CONVERGENCE AT INTERFACE WAS NOT ACHIEVED XXXXX"))
+                couplingsolverprint(self.lvl, self._Name(), red("XXX CONVERGENCE WAS NOT ACHIEVED XXX"))
+
+    def PrintInfo(self):
+        super(GaussSeidelStrongCouplingSolver, self).PrintInfo()
+
+        couplingsolverprint(self.lvl, self._Name(), "Uses the following objects:")
+        self.convergence_accelerator.PrintInfo()
+        self.convergence_criteria.PrintInfo()
+
+    def _Name(self):
+        return self.__class__.__name__

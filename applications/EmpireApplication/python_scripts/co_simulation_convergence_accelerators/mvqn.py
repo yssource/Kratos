@@ -12,7 +12,7 @@ from collections import deque
 from co_simulation_base_convergence_accelerator import CoSimulationBaseConvergenceAccelerator
 
 # Other imports
-from co_simulation_tools import csprint, yellow
+from co_simulation_tools import classprint
 
 def Create(settings, solvers, cosim_solver_details, level):
     return MVQN(settings, solvers, cosim_solver_details, level)
@@ -38,8 +38,6 @@ class MVQN(CoSimulationBaseConvergenceAccelerator):
         self.X = deque( maxlen = horizon )
         self.J = [] # size will be determined when first time get the input vector
         self.J_hat = []
-        csprint(self.lvl, yellow("Convergence Accelerator:") + " MVQN")
-
 
     ## ComputeUpdate(r, x)
     # @param r residual r_k
@@ -51,7 +49,8 @@ class MVQN(CoSimulationBaseConvergenceAccelerator):
         col = len(self.R) - 1
         row = len(r)
         k = col
-        print( "Number of new modes: ", col )
+        if self.echo_level > 1:
+            classprint(self.lvl, self._Name(), "Number of new modes: ", col )
 
         ## For the first iteration
         if k == 0:
@@ -63,7 +62,6 @@ class MVQN(CoSimulationBaseConvergenceAccelerator):
         ## Let the initial Jacobian correspond to a constant relaxation
         if self.J == []:
             self.J = - np.identity( row ) / self.alpha # correspongding to constant relaxation
-
 
         ## Construct matrix V (differences of residuals)
         V = np.empty( shape = (col, row) ) # will be transposed later
@@ -100,8 +98,12 @@ class MVQN(CoSimulationBaseConvergenceAccelerator):
         for i in range(0, row):
             for j in range(0, col):
                 self.J[i][j] = self.J_hat[i][j]
-        print( "Jacobian matrix updated!" )
+        if self.echo_level > 1:
+            classprint(self.lvl, self._Name(), "Jacobian matrix updated!")
         ## Clear the buffer
         if self.R and self.X:
             self.R.clear()
             self.X.clear()
+
+    def _Name(self):
+        return self.__class__.__name__

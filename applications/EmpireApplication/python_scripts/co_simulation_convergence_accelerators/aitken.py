@@ -12,7 +12,7 @@ from collections import deque
 from co_simulation_base_convergence_accelerator import CoSimulationBaseConvergenceAccelerator
 
 # Other imports
-from co_simulation_tools import csprint, yellow
+from co_simulation_tools import red, classprint
 
 def Create(settings, solvers, cosim_solver_details, level):
     return Aitken(settings, solvers, cosim_solver_details, level)
@@ -35,7 +35,7 @@ class Aitken(CoSimulationBaseConvergenceAccelerator):
             self.init_alpha_max = self.settings["init_alpha_max"]
         else:
             self.init_alpha_max = 0.45
-        csprint(self.lvl, yellow("Convergence Accelerator:") + " Aitken")
+
 
     ## ComputeUpdate(r, x)
     # @param r residual r_k
@@ -47,21 +47,28 @@ class Aitken(CoSimulationBaseConvergenceAccelerator):
         ## For the first iteration, do relaxation only
         if k == 0:
             alpha = min( self.alpha_old, self.init_alpha_max )
-            print( "Aitken: Doing relaxation in the first iteration with initial factor = ", alpha )
+            if self.echo_level > 1:
+                classprint(self.lvl, self._Name(), ": Doing relaxation in the first iteration with initial factor = " + "{0:.1g}".format(alpha))
             return alpha * r
         else:
             r_diff = self.R[0] - self.R[1]
             numerator = np.inner( self.R[1], r_diff )
             denominator = np.inner( r_diff, r_diff )
             alpha = -self.alpha_old * numerator/denominator
-            print( "Aitken: Doing relaxation with factor = ", alpha )
+            if self.echo_level > 1:
+                classprint(self.lvl, self._Name(), ": Doing relaxation with factor = " + "{0:.1g}".format(alpha))
             if alpha > 20:
                 alpha = 20
-                print( "WARNING: dynamic relaxation factor reaches upper bound: 20" )
+                if self.echo_level > 0:
+                    classprint(self.lvl, self._Name(), ": "+ red("WARNING: dynamic relaxation factor reaches upper bound: 20"))
             elif alpha < -2:
                 alpha = -2
-                print( "WARNING: dynamic relaxation factor reaches lower bound: -2" )
+                if self.echo_level > 0:
+                    classprint(self.lvl, self._Name(), ": " + red("WARNING: dynamic relaxation factor reaches lower bound: -2"))
             delta_x = alpha * self.R[0]
         self.alpha_old = alpha
 
         return delta_x
+
+    def _Name(self):
+        return self.__class__.__name__

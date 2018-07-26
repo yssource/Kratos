@@ -6,7 +6,7 @@ from co_simulation_solvers.co_simulation_base_solver import CoSimulationBaseSolv
 # Other imports
 from co_simulation_predictors.co_simulation_predictor_factory import CreatePredictor
 import co_simulation_tools as cosim_tools
-from co_simulation_tools import csprint, red, green, cyan, bold, magenta
+from co_simulation_tools import couplingsolverprint, bold
 
 class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
     def __init__(self, cosim_solver_settings, level):
@@ -62,7 +62,7 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
                 raise Exception("Solver time mismatch")
 
         if not self.coupling_started and self.time > self.start_coupling_time:
-            csprint(self.lvl, magenta("<< Starting Coupling >>"))
+            couplingsolverprint(self.lvl, self._Name(), bold("Starting Coupling"))
             self.coupling_started = True
 
         # if a predictor is used then the delta_time is set
@@ -112,4 +112,16 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
                 to_solver = self.solvers[output_data["to_solver"]]
                 solver.ExportData(output_data["data_name"], to_solver)
 
-    
+    def PrintInfo(self):
+        super(CoSimulationBaseCouplingSolver, self).PrintInfo()
+
+        couplingsolverprint(self.lvl, self._Name(), "Has the following participants:")
+
+        for solver_name in self.solver_names:
+            self.solvers[solver_name].PrintInfo()
+
+        if self.predictor is not None:
+            couplingsolverprint(self.lvl, self._Name(), "Uses a Predictor:")
+            # self.predictor.PrintInfo()
+
+

@@ -123,8 +123,8 @@ class MokFSISolverWithCoSimSolvers(CoSimulationBaseSolver):
     def SolveSolutionStep(self):
         for k in range(self.num_coupling_iterations):
             csprint(self.lvl, cyan("Coupling iteration: ")+bold(str(k+1)+" / " + str(self.num_coupling_iterations)))
-            self.convergence_accelerator.SetPreviousSolution()
-            self.convergence_criteria.SetPreviousSolution()
+            self.convergence_accelerator.InitializeNonLinearIteration()
+            self.convergence_criteria.InitializeNonLinearIteration()
             # Apply Dirichlet B.C.'s from structural solver to mesh solver
             DisplacementToMesh(self.mapper_1)
             DisplacementToMesh(self.mapper_2)

@@ -16,6 +16,10 @@ class CoSimulationAnalysis(object):
         if "print_colors" in self.cosim_settings["problem_data"]:
             cs_tools.PRINT_COLORS = self.cosim_settings["problem_data"]["print_colors"]
 
+        self.echo_level = 0
+        if "echo_level" in self.cosim_settings["problem_data"]:
+            self.echo_level = self.cosim_settings["problem_data"]["echo_level"]
+
     def Run(self):
         self.Initialize()
         self.RunSolutionLoop()
@@ -35,6 +39,9 @@ class CoSimulationAnalysis(object):
 
     def Initialize(self):
         self._GetSolver().Initialize()
+
+        if self.echo_level > 0:
+            self._GetSolver().PrintInfo()
 
         ## Stepping and time settings
         self.end_time = self.cosim_settings["problem_data"]["end_time"]

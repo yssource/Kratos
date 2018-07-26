@@ -69,4 +69,8 @@ class CoSimulationBaseSolver(object):
 
     def GetBufferSize(self):
         raise Exception("GetBufferSize function must be implemented in derived class")
-        
+
+    def PrintInfo(self):
+        '''This function can be filled if desired, e.g. to print settings at higher echo-levels
+        '''
+        pass

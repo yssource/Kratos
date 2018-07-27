@@ -21,7 +21,6 @@ class CoSimulationConvergenceCriteria(object):
         for data_entry in self.settings["data_list"]:
             self.abs_tolerances.append(data_entry["abs_tolerance"])
             self.rel_tolerances.append(data_entry["rel_tolerance"])
-        data_size = len(self.settings["data_list"])
 
     def Initialize(self):
         pass

@@ -10,7 +10,79 @@ def GetSolverCoSimulationDetails(co_simulation_solver_settings):
     # - if the same data is defined multiple times
     return solver_cosim_details
 
+
+class CoSimulationParameters(object):
+    """Object to mimic Kratos::Parameters
+    It works with a python-dictionary, thus it does not
+    need many of the auxilliary methods
+    """
+    def __init__(self):
+        pass
+
+    def ValidateAndAssignDefaults(self, defaults):
+        pass
+
+    def RecursivelyValidateAndAssignDefaults(self, defaults):
+        pass
+
+    def Merge(self):
+        """TODO: not really sure how to implement this, have to take a look at
+        the issue again
+        """
+        pass
+
+
+class CoSimulationSpace(object):
+    pass
+
+
+    def Barrier(self):
+        pass
+
+    def Rank(self):
+        return 0
+
+    def Size(self):
+        return 1
+
+class CoSimulationMPISpace(object):
+    """This required some MPI-commands exposed to Python
+    This is currently only available with Kratos,
+    i.e. MPI can only be used with Kratos Compiled in MPI
+    """
+
+    def __init__(self):
+        try:
+            import KratosMultiPhyiscs.mpi as mpi # TODO check if this is convenient
+        except ImportError:
+            raise Exception("Running in MPI currently requires Kratos-MPI!")
+
+        # Precompute rank and size such that they don't have to be recomputed all the time
+        self.comm_rank = ...
+        self.comm_size = ...
+
+        if self.comm_size < 2:
+            raise Exception("Running in MPI requires at least 2 processes!")
+
+    def Barrier(self):
+        err
+
+    def Rank(self):
+        return self.comm_rank
+
+    def Size(self):
+        return self.comm_size
+
+
+
+
+
+
+
+
+
 PRINT_COLORS = False # Global var to specify if colors should be printed
+PRINTING_RANK = True # Global var to specify if this rank is the printing one in MPI
 
 def color_string(string2color, color_code):
     if PRINT_COLORS:
@@ -59,7 +131,8 @@ def darkmagenta(string2color):
 
 SPACE = 4 * " "
 def csprint(level, *args):
-    print(level*SPACE + blue("<CS-"+str(level)+">"), " ".join(map(str,args)))
+    if PRINTING_RANK:
+        print(level*SPACE + blue("<CS-"+str(level)+">"), " ".join(map(str,args)))
 
 def solverprint(level, solver_name, *args):
     csprint(level, yellow(solver_name + ":"), *args)

@@ -15,6 +15,15 @@ class CoSimulationAnalysis(object):
         self.cosim_settings = cosim_settings
         if "print_colors" in self.cosim_settings["problem_data"]:
             cs_tools.PRINT_COLORS = self.cosim_settings["problem_data"]["print_colors"]
+        if "parallel_type" in self.cosim_settings["problem_data"]:
+            parallel_type = self.cosim_settings["problem_data"]["parallel_type"]
+            if parallel_type == "OpenMP":
+                cs_tools.PRINTING_RANK = True
+                # space = ...
+            elif parallel_type == "MPI":
+                err
+                # space = ...
+                cs_tools.PRINTING_RANK = (space.Rank == 0)
 
         self.echo_level = 0
         if "echo_level" in self.cosim_settings["problem_data"]:

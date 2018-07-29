@@ -75,7 +75,8 @@ class CoSimulationMPISpace(object):
 
 
 
-
+# Global Object for wrapping calls that are different in OpenMP/MPI
+COSIM_SPACE = CoSimulationSpace() # I think this works, could be overridden by the CoSimAnalysis
 
 
 

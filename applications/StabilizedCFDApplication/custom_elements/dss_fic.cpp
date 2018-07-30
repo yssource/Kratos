@@ -657,59 +657,67 @@ double DSS_FIC<TDim>::ProjectedSizeHexa(const array_1d<double,3> &rDirection)
     // NOTE: we use absolute values on all checks, this allows us to simplify the problem
     // to a single sector (otherwise we would start by determining in which of the eight sectors
     // given by +-x, +-y, +-z we have to look for the intersection).
-    array_1d<double,3> U = rDirection;
-    this->Normalize(U);
-
-    Geometry< Node<3> > &rGeom = this->GetGeometry();
-
-    array_1d<double,3> v10 = rGeom[1].Coordinates() - rGeom[0].Coordinates();
-    array_1d<double,3> v30 = rGeom[3].Coordinates() - rGeom[0].Coordinates();
-    array_1d<double,3> v40 = rGeom[4].Coordinates() - rGeom[0].Coordinates();
-
-    // Express U in the coordinate system defined by {v10,v30,v40}
-    Matrix Q = ZeroMatrix(3,3);
-    for (unsigned int i = 0; i < 3; i++)
+    double u_norm = this->Module(rDirection);
+    if (u_norm > 1e-12)
     {
-        Q(i,0) = v10[i];
-        Q(i,1) = v30[i];
-        Q(i,2) = v40[i];
-    }
+        array_1d<double,3> U = rDirection;
+        this->Normalize(U);
 
-    Matrix QInv;
-    double det;
-    MathUtils<double>::InvertMatrix(Q,QInv,det);
+        Geometry< Node<3> > &rGeom = this->GetGeometry();
 
-    array_1d<double,3> Uq(3,0.0);
-    for (unsigned int i = 0; i < 3; i++)
-    {
-        for (unsigned int j = 0; j < 3; j++)
+        array_1d<double,3> v10 = rGeom[1].Coordinates() - rGeom[0].Coordinates();
+        array_1d<double,3> v30 = rGeom[3].Coordinates() - rGeom[0].Coordinates();
+        array_1d<double,3> v40 = rGeom[4].Coordinates() - rGeom[0].Coordinates();
+
+        // Express U in the coordinate system defined by {v10,v30,v40}
+        Matrix Q = ZeroMatrix(3,3);
+        for (unsigned int i = 0; i < 3; i++)
         {
-            Uq[i] += QInv(i,j)*U[j];
+            Q(i,0) = v10[i];
+            Q(i,1) = v30[i];
+            Q(i,2) = v40[i];
         }
 
-        // Work in absolute values
-        Uq[i] = std::fabs(Uq[i]);
-    }
+        Matrix QInv;
+        double det;
+        MathUtils<double>::InvertMatrix(Q,QInv,det);
 
-    double max_v = Uq[0];
-    for (unsigned int d = 1; d < 3; d++)
-        if (Uq[d] > max_v)
-            max_v = Uq[d];
-
-    double scale = 1.0/max_v;
-    Uq *= scale;
-
-    // Undo the transform
-    for (unsigned int i = 0; i < 3; i++)
-    {
-        U[i] = 0.0;
-        for (unsigned int j = 0; j < 3; j++)
+        array_1d<double,3> Uq(3,0.0);
+        for (unsigned int i = 0; i < 3; i++)
         {
-            U[i] += Q(i,j)*Uq[j];
-        }
-    }
+            for (unsigned int j = 0; j < 3; j++)
+            {
+                Uq[i] += QInv(i,j)*U[j];
+            }
 
-    return this->Module(U);
+            // Work in absolute values
+            Uq[i] = std::fabs(Uq[i]);
+        }
+
+        double max_v = Uq[0];
+        for (unsigned int d = 1; d < 3; d++)
+            if (Uq[d] > max_v)
+                max_v = Uq[d];
+
+        double scale = 1.0/max_v;
+        Uq *= scale;
+
+        // Undo the transform
+        for (unsigned int i = 0; i < 3; i++)
+        {
+            U[i] = 0.0;
+            for (unsigned int j = 0; j < 3; j++)
+            {
+                U[i] += Q(i,j)*Uq[j];
+            }
+        }
+
+        return this->Module(U);
+    }
+    else
+    {
+        return 0.0;
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

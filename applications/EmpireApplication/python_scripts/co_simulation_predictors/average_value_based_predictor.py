@@ -36,7 +36,7 @@ class AverageValuePredictor(CosimulationBasePredictor):
         new_data = []
         size_counter = 0
         for data_entry in self.settings["data_list"]:
-            data = self._ImportData(data_entry, 0)    #besser?  data = super(AveragedTractionPredictor, self)._ImportData(data_entry, 0)
+            data = self._ImportData(data_entry, 0)   
             new_data.append(data)
             size_counter += data.size
             data_sizes.append(size_counter)
@@ -47,7 +47,7 @@ class AverageValuePredictor(CosimulationBasePredictor):
         data_sizes = [] # saving the sizes of the data to later split them again
         size_counter = 0
         old_data = []
-        for data_entry in self.settings["old_data_list"]:
+        for data_entry in self.settings["data_list"]:
             old_data.append(self._ImportData(data_entry, 1))
         combined_old_data = np.concatenate(old_data)
 

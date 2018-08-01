@@ -17,19 +17,19 @@ class StandardLinearPredictor(CosimulationBasePredictor):
         new_data = []
         old_data = []
         for data_entry in self.settings["data_list"]:
-            data = self._ImportData(data_entry, 0)    #besser?  data = super(AveragedTractionPredictor, self)._ImportData(data_entry, 0)
+            data = self._ImportData(data_entry, 0) 
             new_data.append(data)
             size_counter += data.size
             data_sizes.append(size_counter)
-        self.combined_new_data = np.concatenate(new_data)
+        combined_new_data = np.concatenate(new_data)
 
-        for data_entry in self.settings["old_data_list"]:
+        for data_entry in self.settings["data_list"]:
             old_data.append(self._ImportData(data_entry, 1))
         combined_old_data = np.concatenate(old_data)
 
         #compute prediction
-        self.combined_new_data = 2 * self.combined_new_data - combined_old_data
-        updated_data = np.split(self.combined_new_data, data_sizes)
+        combined_new_data = 2 * combined_new_data - combined_old_data
+        updated_data = np.split(combined_new_data, data_sizes)
 
         for data_entry, data_update in zip(self.settings["data_list"], updated_data):
             self._ExportData(data_entry, data_update)

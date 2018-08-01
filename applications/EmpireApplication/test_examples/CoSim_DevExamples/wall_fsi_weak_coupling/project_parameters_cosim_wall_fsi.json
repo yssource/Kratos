@@ -22,14 +22,6 @@
                     "data_name"  : "force"
                 }
 
-            ],
-            "old_data_list"      :
-            [
-                {
-                    "from_solver": "fluid",
-                    "data_name"  : "force"
-                }
-
             ]
         },
 

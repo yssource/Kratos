@@ -19,7 +19,5 @@ class WeakCouplingSolver(CoSimulationBaseCouplingSolver): ## TODO I think the na
             solver.SolveSolutionStep()
             self._SynchronizeOutputData(solver, solver_name)
 
-        couplingsolverprint(self.lvl, self._Name(), green("### SOLVED SYSTEM ###")) ## TODO leave this?
-
     def _Name(self):
         return self.__class__.__name__

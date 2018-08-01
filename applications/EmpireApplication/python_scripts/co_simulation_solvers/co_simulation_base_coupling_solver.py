@@ -96,7 +96,8 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
     def FinalizeSolutionStep(self):
         for solver_name in self.solver_names:
             self.solvers[solver_name].FinalizeSolutionStep()
-            self.predictor.FinalizeSolutionStep() # TODO fix this, neither should it be caled multiple times plus it must only be executed when there is a predictor!
+            if self.predictor is not None:
+                self.predictor.FinalizeSolutionStep() # TODO fix this, neither should it be caled multiple times plus it must only be executed when there is a predictor!
 
     def OutputSolutionStep(self):
         for solver_name in self.solver_names:

@@ -66,6 +66,7 @@ public:
             "scheme_type"                      : "stabilized_bossak",
             "overall_stabilization_coefficient": 0.0,
             "stabilization_source_coefficient" : 1.0,
+            "calculate_matrix_energies"        : true,
             "stabilization_settings"           : {},
             "bossak_scheme_settings"           : {}
         })");
@@ -76,6 +77,7 @@ public:
 
         mOverallDiffusionCoefficient = rParameters["overall_stabilization_coefficient"].GetDouble();
         mStabilizationSourceCoefficient = rParameters["stabilization_source_coefficient"].GetDouble();
+        mIsMatrixEnergiesCalculated = rParameters["calculate_matrix_energies"].GetBool();
 
         KRATOS_ERROR_IF(mOverallDiffusionCoefficient < 0.0)<<"Invalid overall stabilization coefficient. \"overall_stabilization_coefficient\" >= 0.0 [ "<<mOverallDiffusionCoefficient<< " < 0.0 ]";
         KRATOS_ERROR_IF(mStabilizationSourceCoefficient < 0.0)<<"Invalid stabilization source coefficient. \"stabilization_source_coefficient\" >= 0.0 [ "<<mStabilizationSourceCoefficient<< " < 0.0 ]";
@@ -161,14 +163,17 @@ public:
 
         BaseType::FinalizeSolutionStep(rModelPart, rA, rDx, rb);
 
-        ModelPart::ElementsContainerType& r_elements = rModelPart.Elements();
-        LocalSystemMatrixType dummy_matrix;
+        if (mIsMatrixEnergiesCalculated)
+            {
+            ModelPart::ElementsContainerType& r_elements = rModelPart.Elements();
+            LocalSystemMatrixType dummy_matrix;
 
-        #pragma omp parallel for
-        for (int i=0; i < static_cast<int>(r_elements.size()); ++i)
-        {
-            auto r_element = r_elements.begin() + i;
-            r_element->Calculate(STABILIZATION_ANALYSIS_MATRICES, dummy_matrix, rModelPart.GetProcessInfo());
+            #pragma omp parallel for
+            for (int i=0; i < static_cast<int>(r_elements.size()); ++i)
+            {
+                auto r_element = r_elements.begin() + i;
+                r_element->Calculate(STABILIZATION_ANALYSIS_MATRICES, dummy_matrix, rModelPart.GetProcessInfo());
+            }
         }
 
         KRATOS_CATCH("");
@@ -267,6 +272,7 @@ private:
         AdjointArtificialDiffusion mAdjointArtificialDiffusion;
         double mOverallDiffusionCoefficient;
         double mStabilizationSourceCoefficient;
+        bool mIsMatrixEnergiesCalculated;
     ///@}
     ///@name Member Variables
     ///@{

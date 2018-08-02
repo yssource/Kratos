@@ -41,11 +41,25 @@ class StabilizedFormulation(object):
         default_settings = KratosMultiphysics.Parameters(r"""{
             "formulation": "vms",
             "use_orthogonal_subscales": false,
+            "artificial_compressibility":
+            {
+                "use_artificial_compressibility": false,
+                "sound_velocity": 0.0
+            },
             "dynamic_tau": 0.01
         }""")
 
         settings.ValidateAndAssignDefaults(default_settings)
 
+        if settings["artificial_compressibility"]["use_artificial_compressibility"].GetBool():
+            sound_velocity = settings["artificial_compressibility"]["sound_velocity"].GetDouble()
+            default_sound_velocity = 1e+12
+            if sound_velocity == 0.0:
+                KratosMultiphysics.Logger.PrintWarning("NavierStokesVMSMonolithicSolver", "Sound velocity is not set. Using default sound velocity of %5.3e for artificial compressibility." % default_sound_velocity)
+                sound_velocity = default_sound_velocity
+            self.process_data[KratosMultiphysics.SOUND_VELOCITY] = sound_velocity
+
+        self.process_data[KratosMultiphysics.AC_SWITCH] = settings["artificial_compressibility"]["use_artificial_compressibility"].GetBool()
         self.element_name = "VMS"
 
         self.process_data[KratosMultiphysics.DYNAMIC_TAU] = settings["dynamic_tau"].GetDouble()

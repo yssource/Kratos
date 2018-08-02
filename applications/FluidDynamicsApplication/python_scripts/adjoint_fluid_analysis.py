@@ -45,7 +45,7 @@ class AdjointFluidAnalysis(AnalysisStage):
         super(AdjointFluidAnalysis, self).__init__(model, parameters)
 
     def Initialize(self):
-        super(self.__class__, self).Initialize()
+        super(AdjointFluidAnalysis, self).Initialize()
 
         # dummy time step to correctly calculate DELTA_TIME
         self._GetSolver().main_model_part.CloneTimeStep(self.time)

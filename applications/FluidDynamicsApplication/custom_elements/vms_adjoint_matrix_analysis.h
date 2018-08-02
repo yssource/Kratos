@@ -4,8 +4,8 @@ double CalculateMatrixEnergy( const Vector& rVector1,
                               const Element::MatrixType& rMatrix,
                               const Vector& rVector2 )
 {
-    KRATOS_ERROR_IF(rVector1.size() != rMatrix.size1())<<"Error calculating matrix energy. Vector 1 size and Matrix size doesn't match."<<std::endl;
-    KRATOS_ERROR_IF(rVector2.size() != rMatrix.size2())<<"Error calculating matrix energy. Vector 2 size and Matrix size doesn't match."<<std::endl;
+    KRATOS_ERROR_IF(rVector1.size() != rMatrix.size1())<<"Error calculating matrix energy. Vector 1 size [" << rVector1.size() << "] and Matrix size [" << rMatrix.size1() << "] doesn't match."<<std::endl;
+    KRATOS_ERROR_IF(rVector2.size() != rMatrix.size2())<<"Error calculating matrix energy. Vector 2 size [" << rVector2.size() << "] and Matrix size [" << rMatrix.size2() << "] doesn't match."<<std::endl;
 
     const Vector& temp = prod(trans(rMatrix), rVector1);
     double energy = inner_prod(temp, rVector2);

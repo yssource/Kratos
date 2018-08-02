@@ -354,20 +354,28 @@ public:
          These terms are not used in OSS, as they belong to the finite element
          space and cancel out with their projections.
          */
+        double ElemSize = this->ElementSize(Area);
+        double Viscosity = this->EffectiveViscosity(Density,N,DN_DX,ElemSize,rCurrentProcessInfo);
+
+        // Get Advective velocity
+        array_1d<double, 3 > AdvVel;
+        this->GetAdvectiveVel(AdvVel, N);
+
+        // stabilization parameters
+        double TauOne, TauTwo;
+        this->CalculateTau(TauOne,TauTwo,AdvVel,ElemSize,Density,Viscosity,rCurrentProcessInfo);
+
         const ProcessInfo& r_const_process_info = rCurrentProcessInfo;
+
+        if (r_const_process_info[AC_SWITCH])
+        {
+            const double SoundVelocity = r_const_process_info[SOUND_VELOCITY];
+            this->AddArtificialCompressibilityMassTerms(rMassMatrix, Density, SoundVelocity, N, Area);
+            this->AddArtificialCompressibilityMassStabTerms(rMassMatrix, Density, SoundVelocity, TauTwo, N, DN_DX, Area);
+        }
+
         if (r_const_process_info[OSS_SWITCH] != 1)
         {
-            double ElemSize = this->ElementSize(Area);
-            double Viscosity = this->EffectiveViscosity(Density,N,DN_DX,ElemSize,rCurrentProcessInfo);
-
-            // Get Advective velocity
-            array_1d<double, 3 > AdvVel;
-            this->GetAdvectiveVel(AdvVel, N);
-
-            // stabilization parameters
-            double TauOne, TauTwo;
-            this->CalculateTau(TauOne,TauTwo,AdvVel,ElemSize,Density,Viscosity,rCurrentProcessInfo);
-
             // Add dynamic stabilization terms ( all terms involving a delta(u) )
             this->AddMassStabTerms(rMassMatrix, Density, AdvVel, TauOne, N, DN_DX, Area);
         }
@@ -1171,6 +1179,65 @@ protected:
                     // Delta(u) * TauOne * Grad(q) in q * Div(u) block
                     rLHSMatrix(FirstRow + TDim, FirstCol + d) += Coef * Density * rShapeDeriv(i, d) * rShapeFunc[j];
                 }
+                // Update column index
+                FirstCol += BlockSize;
+            }
+            // Update matrix indices
+            FirstRow += BlockSize;
+            FirstCol = 0;
+        }
+    }
+
+    void AddArtificialCompressibilityMassStabTerms( MatrixType& rLHSMatrix,
+                                                    const double Density,
+                                                    const double SoundVelocity,
+                                                    const double TauTwo,
+                                                    const array_1d<double, TNumNodes>& rShapeFunc,
+                                                    const BoundedMatrix<double, TNumNodes, TDim>& rShapeDeriv,
+                                                    const double Weight)
+    {
+        const unsigned int BlockSize = TDim + 1;
+
+        const double Coef = Weight * TauTwo / ( Density * SoundVelocity * SoundVelocity );
+        unsigned int FirstRow(0), FirstCol(0);
+
+        // Note: Dof order is (vx,vy,[vz,]p) for each node
+        for (unsigned int i = 0; i < TNumNodes; ++i)
+        {
+            // Loop over columns
+            for (unsigned int j = 0; j < TNumNodes; ++j)
+            {
+                for (unsigned int d = 0; d < TDim; ++d) // iterate over dimensions for velocity Dofs in this node combination
+                {
+                    rLHSMatrix(FirstRow + d, FirstCol) += Coef * rShapeDeriv(i,d) * rShapeFunc[j];
+                }
+                // Update column index
+                FirstCol += BlockSize;
+            }
+            // Update matrix indices
+            FirstRow += BlockSize;
+            FirstCol = 0;
+        }
+    }
+
+    void AddArtificialCompressibilityMassTerms( MatrixType& rLHSMatrix,
+                                                const double Density,
+                                                const double SoundVelocity,
+                                                const array_1d<double, TNumNodes>& rShapeFunc,
+                                                const double Weight)
+    {
+        const unsigned int BlockSize = TDim + 1;
+        unsigned int FirstRow(0), FirstCol(0);
+
+        const double Coef = Weight / (Density * SoundVelocity * SoundVelocity) ;
+
+        // Note: Dof order is (vx,vy,[vz,]p) for each node
+        for (unsigned int i = 0; i < TNumNodes; ++i)
+        {
+            // Loop over columns
+            for (unsigned int j = 0; j < TNumNodes; ++j)
+            {
+                rLHSMatrix(FirstRow + TDim, FirstCol + TDim) +=  Coef * rShapeFunc[i] * rShapeFunc [j];
                 // Update column index
                 FirstCol += BlockSize;
             }

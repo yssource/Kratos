@@ -395,6 +395,86 @@ public:
     }
 
 
+    /**
+     * @brief Applies the dirichlet conditions specifically for mass matrix to output. This operation may be very heavy or completely
+     * unexpensive depending on the implementation choosen and on how the System Matrix is built.
+     * @details the rows and colums for Dirichlet conditions are set to zero
+     * @param pScheme The integration scheme considered
+     * @param rModelPart The model part of the problem to solve
+     * @param A The Mass matrix
+     */
+    void ApplyDirichletConditionsForMassMatrix(
+        typename TSchemeType::Pointer pScheme,
+        ModelPart& rModelPart,
+        TSystemMatrixType& A)
+    {
+        std::size_t system_size = A.size1();
+        std::vector<double> scaling_factors (system_size, 0.0f);
+
+        const int ndofs = static_cast<int>(BaseType::mDofSet.size());
+
+        //NOTE: dofs are assumed to be numbered consecutively in the BlockBuilderAndSolver
+        #pragma omp parallel for firstprivate(ndofs)
+        for(int k = 0; k<ndofs; k++)
+        {
+            typename DofsArrayType::iterator dof_iterator = BaseType::mDofSet.begin() + k;
+            if(dof_iterator->IsFixed())
+                scaling_factors[k] = 0.0f;
+            else
+                scaling_factors[k] = 1.0f;
+
+        }
+
+        double* Avalues = A.value_data().begin();
+        std::size_t* Arow_indices = A.index1_data().begin();
+        std::size_t* Acol_indices = A.index2_data().begin();
+
+        //detect if there is a line of all zeros and set the diagonal to a 1 if this happens
+        #pragma omp parallel for firstprivate(system_size)
+        for(int k = 0; k < static_cast<int>(system_size); ++k)
+        {
+            std::size_t col_begin = Arow_indices[k];
+            std::size_t col_end = Arow_indices[k+1];
+            bool empty = true;
+            for (std::size_t j = col_begin; j < col_end; ++j)
+            {
+                if(Avalues[j] != 0.0)
+                {
+                    empty = false;
+                    break;
+                }
+            }
+
+            if(empty == true)
+            {
+                A(k,k) = 0.0;
+            }
+        }
+
+        #pragma omp parallel for
+        for (int k = 0; k < static_cast<int>(system_size); ++k)
+        {
+            std::size_t col_begin = Arow_indices[k];
+            std::size_t col_end = Arow_indices[k+1];
+            double k_factor = scaling_factors[k];
+            if (k_factor == 0)
+            {
+                // zero out the whole row, except the diagonal
+                for (std::size_t j = col_begin; j < col_end; ++j)
+                    if (static_cast<int>(Acol_indices[j]) != k )
+                        Avalues[j] = 0.0;
+            }
+            else
+            {
+                // zero out the column which is associated with the zero'ed row
+                for (std::size_t j = col_begin; j < col_end; ++j)
+                    if(scaling_factors[ Acol_indices[j] ] == 0 )
+                        Avalues[j] = 0.0;
+            }
+        }
+    }
+
+
     ///@}
     ///@name Access
     ///@{
@@ -538,7 +618,6 @@ private:
         KRATOS_CATCH("")
 
     }
-
     ///@}
     ///@name Private Operations
     ///@{

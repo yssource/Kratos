@@ -471,6 +471,8 @@ class LinearMorMatrixOutputStrategy
 
         p_builder_and_solver->BuildMassMatrix(p_scheme, BaseType::GetModelPart(), rM, tmp);
 
+        p_builder_and_solver->ApplyDirichletConditionsForMassMatrix(p_scheme, BaseType::GetModelPart(), rM);
+
         p_builder_and_solver->BuildRHS(p_scheme, BaseType::GetModelPart(), rRHS);
 
         EchoInfo(0);

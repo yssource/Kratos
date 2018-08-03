@@ -1,0 +1,101 @@
+{
+    "problem_data"             : {
+        "problem_name"    : "23_periodicBenchmark",
+        "model_part_name" : "Structure",
+        "domain_size"     : 3,
+        "parallel_type"   : "OpenMP",
+        "time_step"       : 0.25,
+        "start_time"      : 0.0,
+        "end_time"        : 1.0,
+        "echo_level"      : 0
+    },
+    "solver_settings"          : {
+         "solver_type"                        : "Dynamic",
+        "echo_level"                         : 1,
+        "analysis_type"                      : "mor_linear_matrix_output",
+        "time_integration_method"            : "implicit",
+        "scheme_type"                        : "newmark",
+        "model_import_settings"              : {
+            "input_type"       : "mdpa",
+            "input_filename"   : "23_periodicBenchmark",
+            "input_file_label" : 0
+        },
+        "material_import_settings"           : {
+            "materials_filename" : "StructuralMaterials.json"
+        },
+        "line_search"                        : false,
+        "convergence_criterion"              : "residual_criterion",
+        "displacement_relative_tolerance"    : 0.001,
+        "displacement_absolute_tolerance"    : 1e-6,
+        "residual_relative_tolerance"        : 0.001,
+        "residual_absolute_tolerance"        : 1e-6,
+        "max_iteration"                      : 10,
+        "multi_point_constraints_used"       : false,
+        "reform_dofs_at_each_step"           : true,
+        "linear_solver_settings"      : {
+        "solver_type" : "AMGCL",
+                "smoother_type":"ilu0",
+                "krylov_type": "gmres",
+                "coarsening_type": "aggregation",
+                "max_iteration": 100,
+                "provide_coordinates": false,
+                "gmres_krylov_space_dimension": 25,
+                "verbosity" : 1,
+                "tolerance": 1e-9,
+                "scaling": false,
+                "block_size": 1,
+                "use_block_matrices_if_possible" : false,
+                "coarse_enough" : 5000 
+        },
+        "problem_domain_sub_model_part_list" : ["Parts_solid"],
+        "processes_sub_model_part_list"      : ["DISPLACEMENT_innerFixed"],
+        "rotation_dofs"                      : false
+    },
+    "constraints_process_list" : [{
+        "python_module" : "assign_vector_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "help"          : "This process fixes the selected components of a given vector variable",
+        "process_name"  : "AssignVectorVariableProcess",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "DISPLACEMENT_innerFixed",
+            "variable_name"   : "DISPLACEMENT",
+            "value"           : [0.0,0.0,0.0],
+            "interval"        : [0.0,"End"]
+        }
+    }],
+    "loads_process_list"       : [],
+    "output_configuration"     : {
+        "result_file_configuration" : {
+            "gidpost_flags"       : {
+                "GiDPostMode"           : "Ascii",
+                "WriteDeformedMeshFlag" : "WriteDeformed",
+                "WriteConditionsFlag"   : "WriteConditions",
+                "MultiFileFlag"         : "SingleFile"
+            },
+            "file_label"          : "step",
+            "output_control_type" : "step",
+            "output_frequency"    : 1,
+            "body_output"         : true,
+            "node_output"         : false,
+            "skin_output"         : false,
+            "plane_output"        : [],
+            "nodal_results"       : ["DISPLACEMENT","REACTION"],
+            "gauss_point_results" : ["VON_MISES_STRESS"]
+        },
+        "point_data_configuration"  : []
+    },
+    "restart_options"          : {
+        "SaveRestart"      : false,
+        "RestartFrequency" : 0,
+        "LoadRestart"      : false,
+        "Restart_Step"     : 0
+    },
+    "constraints_data"         : {
+        "incremental_load"         : false,
+        "incremental_displacement" : false
+    },
+    "material_import_settings" : {
+        "materials_filename" : "StructuralMaterials.json"
+    }
+}

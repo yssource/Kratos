@@ -17,5 +17,8 @@ class KratosStructuralSolver(KratosBaseFieldSolver):
     def _CreateAnalysisStage(self):
         return StructuralMechanicsAnalysis(self.model, self.project_parameters)
 
+    def _GetParallelType(self):
+        return self.project_parameters["problem_data"]["parallel_type"].GetString()
+
     def _Name(self):
         return self.__class__.__name__

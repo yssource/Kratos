@@ -1,7 +1,9 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
 import co_simulation_tools as cs_tools
-from co_simulation_tools import csprint, bold
+from co_simulation_tools import csprint, bold, CoSimulationMPISpace
+
+import sys
 
 class CoSimulationAnalysis(object):
     """The base class for the CoSimulation-AnalysisStage
@@ -13,17 +15,26 @@ class CoSimulationAnalysis(object):
             raise Exception("Input is expected to be provided as a python dictionary")
 
         self.cosim_settings = cosim_settings
+
         if "print_colors" in self.cosim_settings["problem_data"]:
             cs_tools.PRINT_COLORS = self.cosim_settings["problem_data"]["print_colors"]
+
+        self.flush_stdout = False
+
         if "parallel_type" in self.cosim_settings["problem_data"]:
             parallel_type = self.cosim_settings["problem_data"]["parallel_type"]
             if parallel_type == "OpenMP":
+                self.flush_stdout = True
                 cs_tools.PRINTING_RANK = True
-                # space = ...
             elif parallel_type == "MPI":
-                err
-                # space = ...
-                cs_tools.PRINTING_RANK = (space.Rank == 0)
+                self.flush_stdout = False
+                cs_tools.COSIM_SPACE = CoSimulationMPISpace()
+                cs_tools.PRINTING_RANK = (cs_tools.COSIM_SPACE.Rank() == 0)
+            else:
+                raise Exception('"parallel_type" can only be "OpenMP" or "MPI"!')
+
+        if "flush_terminal" in self.cosim_settings["problem_data"]:
+            self.flush_stdout = self.cosim_settings["problem_data"]["parallel_type"]
 
         self.echo_level = 0
         if "echo_level" in self.cosim_settings["problem_data"]:
@@ -46,6 +57,9 @@ class CoSimulationAnalysis(object):
             self.FinalizeSolutionStep()
             self.OutputSolutionStep()
 
+            if self.flush_stdout:
+                sys.stdout.flush()
+
     def Initialize(self):
         self._GetSolver().Initialize()
         self._GetSolver().Check()
@@ -57,6 +71,9 @@ class CoSimulationAnalysis(object):
         self.end_time = self.cosim_settings["problem_data"]["end_time"]
         self.time = self.cosim_settings["problem_data"]["start_time"]
         self.step = 0
+
+        if self.flush_stdout:
+            sys.stdout.flush()
 
     def Finalize(self):
         self._GetSolver().Finalize()

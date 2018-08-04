@@ -366,18 +366,19 @@ public:
         this->CalculateTau(TauOne,TauTwo,AdvVel,ElemSize,Density,Viscosity,rCurrentProcessInfo);
 
         const ProcessInfo& r_const_process_info = rCurrentProcessInfo;
+        const double SoundVelocity = r_const_process_info[SOUND_VELOCITY];
 
+        // Add artificial compresibility presure derivative term
         if (r_const_process_info[AC_SWITCH])
-        {
-            const double SoundVelocity = r_const_process_info[SOUND_VELOCITY];
             this->AddArtificialCompressibilityMassTerms(rMassMatrix, Density, SoundVelocity, N, Area);
-            this->AddArtificialCompressibilityMassStabTerms(rMassMatrix, Density, SoundVelocity, TauTwo, N, DN_DX, Area);
-        }
 
         if (r_const_process_info[OSS_SWITCH] != 1)
         {
             // Add dynamic stabilization terms ( all terms involving a delta(u) )
             this->AddMassStabTerms(rMassMatrix, Density, AdvVel, TauOne, N, DN_DX, Area);
+            // Add dynamic stabilization terms related to artificial compressibility
+            if (r_const_process_info[AC_SWITCH])
+                this->AddArtificialCompressibilityMassStabTerms(rMassMatrix, Density, SoundVelocity, TauTwo, N, DN_DX, Area);
         }
     }
 

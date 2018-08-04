@@ -148,6 +148,11 @@ public:
         KRATOS_CATCH("");
     }
 
+        void FinalizeSolutionStep(ModelPart& rModelPart) override
+    {
+        this->mIsActive = false;
+    }
+
     void Check(ModelPart const& rModelPart) override
     {
         KRATOS_TRY;
@@ -240,6 +245,7 @@ private:
     std::vector<std::string> mNodalSensitivityVariables;
     array_1d<double, TDim> mDragDirection;
     bool mIntegrateInTime;
+    bool mIsActive = true;
 
     ///@}
     ///@name Private Operators
@@ -278,6 +284,10 @@ private:
             rDerivativesOfDrag.resize(rDerivativesOfResidual.size1(), false);
 
         noalias(rDerivativesOfDrag) = prod(rDerivativesOfResidual, drag_flag_vector);
+        if (!mIsActive)
+        {
+            rDerivativesOfDrag.clear();
+        }
     }
 
     void SetNodalSensitivityVariableToZero(std::string const& rVariableName,

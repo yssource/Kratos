@@ -81,5 +81,3 @@ class KratosBaseFieldSolver(CoSimulationBaseSolver):
             warning_msg  = 'WARNING: Global "parallel_type" (OpenMP) is different '
             warning_msg += 'from local one (' + solver_parallel_type + ')!'
             solverprint(self.lvl, self._Name(), ": " + red(warning_msg))
-        else:
-            raise Exception("Something went wrong with the parallel_type!")

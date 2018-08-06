@@ -112,15 +112,15 @@
                 },
                 "data" : {
                     "disp" : {
-                        "geometry_name" : "NoSlip2D_FSI",
+                        "geometry_name" : "FluidModelPart.NoSlip2D_FSI",
                         "data_identifier" : "MESH_DISPLACEMENT"
                     },
                     "force" : {
-                        "geometry_name" : "NoSlip2D_FSI",
+                        "geometry_name" : "FluidModelPart.NoSlip2D_FSI",
                         "data_identifier" : "REACTION"
                     },
                     "vel" : {
-                        "geometry_name" : "NoSlip2D_FSI",
+                        "geometry_name" : "FluidModelPart.NoSlip2D_FSI",
                         "data_identifier" : "VELOCITY"
                     }
                 }

@@ -23,9 +23,8 @@ class TestCoSimulationCases(co_simulation_test_case.CoSimulationTestCase):
     '''
     def test_WallFSI(self):
         with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
-            # self.createTest('test_structural_mesh_motion_2d/rectangle_2D3N_test')
-            # self.runTest()
-            kratos_utils.DeleteFileIfExisting("./test_mdpa_files/rectangle_2D3N_test.time")
+            self.createTest("fsi_wall", "cosim_wall_weak_coupling_fsi")
+            self.runTest()
 
 if __name__ == '__main__':
     KratosUnittest.main()

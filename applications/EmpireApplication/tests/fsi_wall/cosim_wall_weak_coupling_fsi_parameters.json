@@ -1,0 +1,124 @@
+{
+    "problem_data" :
+    {
+        "start_time" : 0.0,
+        "end_time" : 15.0,
+        "echo_level" : 4,
+        "print_colors" : true
+    },
+    "solver_settings" :
+    {
+        "solver_type" : "gauss_seidel_weak_coupling",
+        "echo_level" : 0,
+        "start_coupling_time" : 0.0,
+        "predictor_settings" :
+        {
+            "predictor_type" : "average_value_based",
+            "io_type"        : "kratos_signal",
+            "data_list"      :
+            [
+                {
+                    "from_solver": "fluid",
+                    "data_name"  : "force"
+                }
+
+            ]
+        },
+
+        "coupling_loop":
+        [
+        {
+            "name": "structure",
+            "input_data_list": [
+                {
+                    "from_solver" : "fluid",
+                    "data_name"   : "force",
+                    "io_settings"   : {
+                        "mapper_type" : "nearest_neighbor",
+                        "mapper_args" : ["swap_sign"]
+                    }
+
+
+                }
+            ],
+            "output_data_list": [
+                {
+                    "to_solver" : "fluid",
+                    "data_name"   : "disp",
+                    "io_settings"   : {
+                        "mapper_type" : "nearest_neighbor"
+                    }
+
+                }
+            ]
+        },
+        {
+            "name": "fluid",
+            "output_data_list": [
+                {
+                    "to_solver" : "structure",
+                    "data_name"   : "force"
+
+                }
+            ],
+            "input_data_list": [
+                {
+                    "from_solver" : "structure",
+                    "data_name"   : "disp"
+
+
+                }
+            ]
+        }
+        ],
+        "solvers" :
+        {
+            "fluid":
+            {
+                "solver_type" : "kratos_fluid",
+                "input_file"  : "fsi_wall/ProjectParametersCFD",
+                "io_settings" : {
+                    "io_type"     : "kratos_field",
+                    "echo_level"  : 4
+                },
+                "data" : {
+                    "disp" : {
+                        "geometry_name" : "FluidModelPart.NoSlip2D_FSI_Interface",
+                        "data_identifier" : "MESH_DISPLACEMENT"
+                    },
+                        "force" : {
+                        "geometry_name" : "FluidModelPart.NoSlip2D_FSI_Interface",
+                        "data_identifier" : "REACTION"
+                    },
+                        "vel" : {
+                        "geometry_name" : "FluidModelPart.NoSlip2D_FSI_Interface",
+                        "data_identifier" : "VELOCITY"
+                    }
+                }
+            },
+            "structure" :
+            {
+                "solver_type" : "kratos_structural",
+                "input_file"  : "fsi_wall/ProjectParametersCSM",
+                "io_settings" : {
+                    "io_type"     : "kratos_field",
+                    "echo_level"  : 4
+                },
+                "data" : {
+                    "disp" : {
+                        "geometry_name" : "GENERIC_FSI_Interface",
+                        "data_identifier" : "DISPLACEMENT"
+                    },
+                        "force" : {
+                        "geometry_name" : "GENERIC_FSI_Interface",
+                        "data_identifier" : "POINT_LOAD"
+                    },
+                         "vel" : {
+                        "geometry_name" : "GENERIC_FSI_Interface",
+                        "data_identifier" : "VELOCITY"
+                    }
+                }
+            }
+        }
+    }
+}

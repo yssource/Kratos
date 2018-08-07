@@ -47,37 +47,37 @@ class CoSimulationSpace(object):
     def Size(self):
         return 1
 
-class CoSimulationMPISpace(object):
-    """This requires some MPI-commands exposed to Python
-    This is currently only available with Kratos,
-    i.e. MPI can only be used with Kratos compiled with MPI
-    """
-    try:
-        import KratosMultiphysics
-        from KratosMultiphysics.mpi import mpi
-    except ImportError:
-        raise Exception("Running in MPI currently requires Kratos-MPI!")
+# class CoSimulationMPISpace(object):
+#     """This requires some MPI-commands exposed to Python
+#     This is currently only available with Kratos,
+#     i.e. MPI can only be used with Kratos compiled with MPI
+#     """
+#     try:
+#         import KratosMultiphysics
+#         from KratosMultiphysics.mpi import mpi
+#     except ImportError:
+#         raise Exception("Running in MPI currently requires Kratos-MPI!")
 
-    def __init__(self):
+#     def __init__(self):
 
-        # Precompute rank and size such that they don't have to be recomputed all the time
-        self.comm_rank = self.mpi.rank
-        self.comm_size = self.mpi.size
+#         # Precompute rank and size such that they don't have to be recomputed all the time
+#         self.comm_rank = self.mpi.rank
+#         self.comm_size = self.mpi.size
 
-        if self.comm_size < 2:
-            raise Exception("Running in MPI requires at least 2 processes!")
+#         if self.comm_size < 2:
+#             raise Exception("Running in MPI requires at least 2 processes!")
 
-    def IsDistributed(self):
-        return True
+#     def IsDistributed(self):
+#         return True
 
-    def Barrier(self):
-        self.mpi.world.barrier()
+#     def Barrier(self):
+#         self.mpi.world.barrier()
 
-    def Rank(self):
-        return self.comm_rank
+#     def Rank(self):
+#         return self.comm_rank
 
-    def Size(self):
-        return self.comm_size
+#     def Size(self):
+#         return self.comm_size
 
 
 

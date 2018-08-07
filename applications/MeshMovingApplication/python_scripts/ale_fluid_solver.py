@@ -3,46 +3,47 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 # Importing the Kratos Library
 import KratosMultiphysics
 
-# Check that applications were imported in the main script
-KratosMultiphysics.CheckRegisteredApplications("MeshMovingApplication", "FluidDynamicsApplication","ExternalSolversApplication")
-
-# Import applications
-import KratosMultiphysics.MeshMovingApplication as MeshMovingApplication
-import KratosMultiphysics.FluidDynamicsApplication as FluidDynamicsApplication
-import KratosMultiphysics.ExternalSolversApplication as ExternalSolversApplication
-
 # Other imports
-import navier_stokes_solver_vmsmonolithic
-#import mesh_solver_base
+from python_solver import PythonSolver
 
 
 def CreateSolver(model, custom_settings):
-    return ALENavierStokesSolverVMSMonolithic(model, custom_settings)
+    '''This function creates the requested solver
+    If no "ale_settings" are specified a regular fluid-solver is created
+    '''
+    if custom_settings["solver_settings"].Has("ale_settings"):
+        return ALEFluidSolver(model, custom_settings)
+    else:
+        KratosMultiphysics.Logger.PrintInfo("ALEFluidSolver", "No ale settings found, creating a pure fluid solver")
+        KratosMultiphysics.CheckRegisteredApplications("FluidDynamicsApplication")
+        import python_solvers_wrapper_fluid
+        return python_solvers_wrapper_fluid.CreateSolver(model, custom_settings)
 
 
-class ALENavierStokesSolverVMSMonolithic(navier_stokes_solver_vmsmonolithic.NavierStokesSolverMonolithic):
+class ALEFluidSolver(PythonSolver):
     def __init__(self, model, custom_settings):
-        # remove the ale_settings so we can use the navier stokes constructor
-        fluid_settings = custom_settings.Clone()
-        fluid_solver_settings = fluid_settings["solver_settings"]
-        fluid_solver_settings.RemoveValue("ale_settings")
+        super(ALEFluidSolver, self).__init__(model, custom_settings["solver_settings"])
 
+        fluid_model_part_name = custom_settings["solver_settings"]["model_part_name"].GetString()
+        if not self.model.HasModelPart(fluid_model_part_name):
+            fluid_mesh_model_part = KratosMultiphysics.ModelPart(fluid_model_part_name)
+            self.model.AddModelPart(fluid_mesh_model_part)
+
+        ## Creating the fluid solver
+        self.fluid_solver = self._CreateFluidSolver(custom_settings)
+
+        ## Creating the mesh-motion solver
+        KratosMultiphysics.CheckRegisteredApplications("MeshMovingApplication")
         mesh_motion_settings = custom_settings.Clone()
+        # delete the (fluid) solver settings
         mesh_motion_settings.RemoveValue("solver_settings")
+        # add the ale solver settings as solver settings
         mesh_motion_settings.AddValue("solver_settings", custom_settings["solver_settings"]["ale_settings"])
         mesh_motion_solver_settings = mesh_motion_settings["solver_settings"]
 
-        fluid_model_part_name = fluid_solver_settings["model_part_name"].GetString()
-        if not model.HasModelPart(fluid_model_part_name):
-            fluid_mesh_model_part = KratosMultiphysics.ModelPart(fluid_model_part_name)
-            model.AddModelPart(fluid_mesh_model_part)
-
-        super(ALENavierStokesSolverVMSMonolithic, self).__init__(model, fluid_solver_settings)
-
-        # create mesh motion solver
         if not mesh_motion_solver_settings.Has("echo_level"):
             mesh_motion_solver_settings.AddEmptyValue("echo_level")
-            fluid_echo_lvl = fluid_solver_settings["echo_level"].GetInt()
+            fluid_echo_lvl = custom_settings["solver_settings"]["echo_level"].GetInt()
             mesh_motion_solver_settings["echo_level"].SetInt(fluid_echo_lvl)
 
         if mesh_motion_solver_settings.Has("model_part_name"):
@@ -50,18 +51,21 @@ class ALENavierStokesSolverVMSMonolithic(navier_stokes_solver_vmsmonolithic.Navi
                 raise Exception('Fluid- and Mesh-Solver have to use the same "model_part_name"!')
         else:
             mesh_motion_solver_settings.AddEmptyValue("model_part_name")
-            fluid_model_part_name = fluid_solver_settings["model_part_name"].GetString()
+            fluid_model_part_name = custom_settings["solver_settings"]["model_part_name"].GetString()
             mesh_motion_solver_settings["model_part_name"].SetString(fluid_model_part_name)
 
-        fluid_domain_size = fluid_solver_settings["domain_size"].GetInt()
         if mesh_motion_solver_settings.Has("domain_size"):
+            fluid_domain_size = custom_settings["solver_settings"]["domain_size"].GetInt()
             mesh_motion_domain_size = mesh_motion_solver_settings["domain_size"].GetInt()
             if not fluid_domain_size == mesh_motion_domain_size:
                 raise Exception('Fluid- and Mesh-Solver have to use the same "domain_size"!')
         else:
             mesh_motion_solver_settings.AddEmptyValue("domain_size")
+            fluid_domain_size = custom_settings["solver_settings"]["domain_size"].GetInt()
             mesh_motion_solver_settings["domain_size"].SetInt(fluid_domain_size)
 
+        # Get the names of the interface-parts for which the MESH_VELOCITY should be
+        # applied to the Fluid-VELOCITY
         self.ale_interface_part_names = []
         if mesh_motion_solver_settings.Has("ale_interface_parts"):
             for i in range(mesh_motion_solver_settings["ale_interface_parts"].size()):
@@ -74,10 +78,10 @@ class ALENavierStokesSolverVMSMonolithic(navier_stokes_solver_vmsmonolithic.Navi
 
         # Getting the min_buffer_size from both solvers
         # and assigning it to the fluid_solver, bcs this one handles the model_part
-        # self.min_buffer_size = max(super(ALENavierStokesSolverVMSMonolithic, self).GetMinimumBufferSize(),
-        #                                         self.mesh_motion_solver.GetMinimumBufferSize())
+        self.fluid_solver.min_buffer_size = max(self.fluid_solver.GetMinimumBufferSize(),
+                                                self.mesh_motion_solver.GetMinimumBufferSize())
 
-        self.is_printing_rank = super(ALENavierStokesSolverVMSMonolithic, self)._IsPrintingRank()
+        self.is_printing_rank = self.fluid_solver._IsPrintingRank()
 
         # TODO move to "Check"?
         if (self.mesh_motion_solver.settings["calculate_mesh_velocities"].GetBool() == False
@@ -85,7 +89,8 @@ class ALENavierStokesSolverVMSMonolithic(navier_stokes_solver_vmsmonolithic.Navi
             info_msg = "Mesh velocities are not being computed in the Mesh solver!"
             KratosMultiphysics.Logger.PrintInfo("::[ALEFluidSolver]::", info_msg)
 
-        if self.settings["compute_reactions"].GetBool() == False and self.is_printing_rank:
+        if (self.fluid_solver.settings["compute_reactions"].GetBool() == False
+            and self.is_printing_rank):
             info_msg = "Reactions are not being computed in the Fluid solver!"
             KratosMultiphysics.Logger.PrintInfo("::[ALEFluidSolver]::", info_msg)
 
@@ -94,60 +99,74 @@ class ALENavierStokesSolverVMSMonolithic(navier_stokes_solver_vmsmonolithic.Navi
 
     def AddVariables(self):
         self.mesh_motion_solver.AddVariables()
-        super(ALENavierStokesSolverVMSMonolithic, self).AddVariables()
-        print("::[ALENavierStokesSolverVMSMonolithic]:: Variables ADDED.")
+        self.fluid_solver.AddVariables()
+        if self.is_printing_rank:
+            KratosMultiphysics.Logger.PrintInfo("::[ALEFluidSolver]::", "Variables Added")
 
     def AddDofs(self):
         self.mesh_motion_solver.AddDofs()
-        super(ALENavierStokesSolverVMSMonolithic, self).AddDofs()
-        print("::[ALENavierStokesSolverVMSMonolithic]:: DOFs ADDED.")
-
-    def ImportModelPart(self):
-        super(ALENavierStokesSolverVMSMonolithic, self).ImportModelPart() # only ONE solver imports the ModelPart
-
-    def PrepareModelPart(self):
-        # Doing it ONLY for the fluid solver (since this contains filling the buffer)
-        super(ALENavierStokesSolverVMSMonolithic, self).PrepareModelPart()
-
-    def AdvanceInTime(self, current_time):
-        # Doing it ONLY for the fluid solver
-        return super(ALENavierStokesSolverVMSMonolithic, self).AdvanceInTime(current_time) # returning new time
+        self.fluid_solver.AddDofs()
+        if self.is_printing_rank:
+            KratosMultiphysics.Logger.PrintInfo("::[ALEFluidSolver]::", "DOFs Added")
 
     def Initialize(self):
         self.mesh_motion_solver.Initialize()
-        super(ALENavierStokesSolverVMSMonolithic, self).Initialize()
-        print("::[ALENavierStokesSolverVMSMonolithic]:: Finished initialization.")
+        self.fluid_solver.Initialize()
+        if self.is_printing_rank:
+            KratosMultiphysics.Logger.PrintInfo("::[ALEFluidSolver]::", "Finished initialization")
+
+    def ImportModelPart(self):
+        self.fluid_solver.ImportModelPart() # only ONE solver imports the ModelPart
+
+    def PrepareModelPart(self):
+        # Doing it ONLY for the fluid solver (since this contains filling the buffer)
+        return self.fluid_solver.PrepareModelPart()
+
+    def AdvanceInTime(self, current_time):
+        # Doing it ONLY for the fluid solver
+        return self.fluid_solver.AdvanceInTime(current_time)
 
     def Finalize(self):
         self.mesh_motion_solver.Finalize()
-        super(ALENavierStokesSolverVMSMonolithic, self).Finalize()
-        print("::[ALENavierStokesSolverVMSMonolithic]:: Finished initialization.")
+        self.fluid_solver.Finalize()
 
     def InitializeSolutionStep(self):
         self.mesh_motion_solver.InitializeSolutionStep()
-        super(ALENavierStokesSolverVMSMonolithic, self).InitializeSolutionStep()
+        self.fluid_solver.InitializeSolutionStep()
 
     def Predict(self):
         self.mesh_motion_solver.Predict()
-        super(ALENavierStokesSolverVMSMonolithic, self).Predict()
+        self.fluid_solver.Predict()
 
     def FinalizeSolutionStep(self):
         self.mesh_motion_solver.FinalizeSolutionStep()
-        super(ALENavierStokesSolverVMSMonolithic, self).FinalizeSolutionStep()
+        self.fluid_solver.FinalizeSolutionStep()
 
     def SolveSolutionStep(self):
-        self.GetMeshMotionSolver().SolveSolutionStep()
+        self.mesh_motion_solver.SolveSolutionStep()
+
         # Copy the MESH_VELOCITY to the VELOCITY (ALE) on the interface
-        for part_name in self.ale_interface_part_names:
-            part_nodes = self.GetComputingModelPart().GetSubModelPart(part_name).Nodes
+        for smp_name in self.ale_interface_part_names:
+            part_nodes = self.GetComputingModelPart().GetSubModelPart(smp_name).Nodes
             KratosMultiphysics.VariableUtils().CopyVectorVar(KratosMultiphysics.MESH_VELOCITY,
                                                              KratosMultiphysics.VELOCITY,
                                                              part_nodes)
 
-        self.GetFluidSolver().SolveSolutionStep()
+        self.fluid_solver.SolveSolutionStep()
+
+    def Check(self):
+        self.mesh_motion_solver.Check()
+        self.fluid_solver.Check()
+
+    def Clear(self):
+        self.mesh_motion_solver.Clear()
+        self.fluid_solver.Clear()
+
+    def GetComputingModelPart(self):
+        return self.mesh_motion_solver.GetComputingModelPart() # this is the same as the one used in Fluid
 
     def GetFluidSolver(self):
-        return super(ALENavierStokesSolverVMSMonolithic, self)
+        return self.fluid_solver
 
     def GetMeshMotionSolver(self):
         return self.mesh_motion_solver
@@ -155,13 +174,14 @@ class ALENavierStokesSolverVMSMonolithic(navier_stokes_solver_vmsmonolithic.Navi
     def MoveMesh(self):
         self.GetMeshMotionSolver().MoveMesh()
 
-    def GetComputingModelPart(self):
-        return self.mesh_motion_solver.GetComputingModelPart() # this is the same as the one used in Fluid
 
-    def Check(self):
-        self.mesh_motion_solver.Check()
-        super(ALENavierStokesSolverVMSMonolithic, self).Check()
-
-    def Clear(self):
-        self.mesh_motion_solver.Clear()
-        super(ALENavierStokesSolverVMSMonolithic, self).Clear()
+    def _CreateFluidSolver(self, custom_settings):
+        '''This function creates the fluid solver.
+        It can be overridden to create different fluid solvers
+        '''
+        KratosMultiphysics.CheckRegisteredApplications("FluidDynamicsApplication")
+        import python_solvers_wrapper_fluid
+        fluid_settings = custom_settings.Clone()
+        # remove the ale_settings so we can use the fluid_solver_wrapper constructor
+        fluid_settings["solver_settings"].RemoveValue("ale_settings")
+        return python_solvers_wrapper_fluid.CreateSolver(self.model, fluid_settings)

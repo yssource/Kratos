@@ -100,4 +100,20 @@ class CoSimulationAnalysis(object):
         import co_simulation_solvers.python_solvers_wrapper_co_simulation as solvers_wrapper
         return solvers_wrapper.CreateSolver(self.cosim_settings["solver_settings"], level=0)
 
-## TODO add the if name==main stuff like in fluid and structure
+if __name__ == '__main__':
+    from sys import argv
+    import json
+
+    if len(argv) != 2:
+        err_msg =  'Wrong number of input arguments!\n'
+        err_msg += 'Use this script in the following way:\n'
+        err_msg += '    "python co_simulation_analysis.py <cosim-parameter-file>.json"\n'
+        raise Exception(err_msg)
+
+    parameter_file_name = argv[1]
+
+    with open(parameter_file_name,'r') as parameter_file:
+        parameters = json.load(parameter_file)
+
+    simulation = CoSimulationAnalysis(parameters)
+    simulation.Run()

@@ -29,6 +29,12 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
         self.cosim_solver_details = cosim_tools.GetSolverCoSimulationDetails(
             self.cosim_solver_settings["coupling_loop"])
 
+        self.predictor = None
+        if "predictor_settings" in self.cosim_solver_settings:
+            self.predictor = CreatePredictor(self.cosim_solver_settings["predictor_settings"],
+                                             self.solvers, self.lvl)
+            self.predictor.SetEchoLevel(self.echo_level)
+
         # With this setting the coupling can start later
         self.start_coupling_time = 0.0
         if "start_coupling_time" in self.cosim_solver_settings:
@@ -46,13 +52,7 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
             # we use the Echo_level of the coupling solver, since IO is needed by the coupling
             # and not by the (physics-) solver
 
-        ## TODO move to constructor, might require some refactoring in the Predictor!
-        self.predictor = None
-        if "predictor_settings" in self.cosim_solver_settings:
-            self.predictor = CreatePredictor(self.cosim_solver_settings["predictor_settings"],
-                                             self.solvers, self.lvl)
-            self.predictor.SetEchoLevel(self.echo_level)
-
+        if self.predictor is not None:
             self.predictor.Initialize()
 
     def Finalize(self):

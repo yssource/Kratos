@@ -259,6 +259,3 @@ def Nodes(model_part):
 
 def NumberOfNodes(model_part):
     return len(Nodes(model_part)) # Mesh does currently not expose NumberOfNodes!
-
-
-

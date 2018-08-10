@@ -13,6 +13,10 @@ class CoSimulationBaseConvergenceAccelerator(object):
         self.lvl = level
         self.echo_level = 0
 
+        ## Here we preallocate the arrays that will be used to exchange data
+        num_data = len(self.settings["data_list"])
+        self.arrays = [np.array([]) for e in range(num_data)]
+
     def Initialize(self):
         pass
 
@@ -28,26 +32,24 @@ class CoSimulationBaseConvergenceAccelerator(object):
     def InitializeNonLinearIteration(self):
         # Saving the previous data for the computation of the residual
         # and the computation of the solution update
-        previous_data = [] # discard previous data fields
         self.data_sizes = [] # saving the sizes of the data to later split them again
         size_counter = 0
-        for data_entry in self.settings["data_list"]:
-            prev_data = self.__ImportData(data_entry)
-            previous_data.append(prev_data)
+        for i, data_entry in enumerate(self.settings["data_list"]):
+            self.__ImportData(data_entry, self.arrays[i])
             size_counter += prev_data.size
             self.data_sizes.append(size_counter)
 
-        self.combined_prev_data = np.concatenate(previous_data)
+        self.combined_prev_data = np.concatenate(self.arrays)
 
     def FinalizeNonLinearIteration(self):
         pass
 
     def ComputeUpdate(self):
         new_data = []
-        for data_entry in self.settings["data_list"]:
-            new_data.append(self.__ImportData(data_entry))
+        for i, data_entry in enumerate(self.settings["data_list"]):
+            self.__ImportData(data_entry, self.arrays[i])
 
-        combined_residuals = np.concatenate(new_data) - self.combined_prev_data
+        combined_residuals = np.concatenate(self.arrays) - self.combined_prev_data
 
         combined_new_data = self.combined_prev_data + self._ComputeUpdate(combined_residuals, self.combined_prev_data)
 
@@ -71,15 +73,24 @@ class CoSimulationBaseConvergenceAccelerator(object):
     def Check(self):
         print("ConvAcc does not yet implement Check")
 
-    def __ImportData(self, data_entry):
-        data_name = data_entry["data_name"]
-        from_solver = data_entry["from_solver"]
-        return self.io.ImportData(data_name, self.solvers[from_solver])
+    def __ImportData(self, data_entry, data_array):
+        data_settings = {
+            "data_format" : "numpy_array",
+            "data_name"   : data_entry["data_name"]
+        }
 
-    def __ExportData(self, data_entry, data_update):
-        data_name = data_entry["data_name"]
+        from_solver = data_entry["from_solver"]
+        self.solvers[from_solver].ExportData(data_settings, data_array)
+
+
+    def __ExportData(self, data_entry, data_array):
+        data_settings = {
+            "data_format" : "numpy_array",
+            "data_name"   : data_entry["data_name"]
+        }
+
         from_solver = data_entry["from_solver"] # This is "from_solver", bcs we give back the updated solution
-        return self.io.ExportData(data_name, self.solvers[from_solver], data_update)
+        self.solvers[from_solver].ImportData(data_settings, data_array)
 
     def _ComputeUpdate( self, residual, previous_data ):
         raise Exception('"_ComputeUpdate" has to be implemented in the derived class!')

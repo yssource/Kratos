@@ -15,7 +15,7 @@ class LinearDerivativeBasedPredictor(CosimulationBasePredictor):
         super(LinearDerivativeBasedPredictor, self).__init__(settings, solvers, level)
         # TODO add comment why we do this
         num_data = len(self.settings["data_list"])
-        self.data_arrays = [np.array([]) for e in range(num_data)]
+        self.data_arrays            = [np.array([]) for e in range(num_data)]
         self.derivative_data_arrays = [np.array([]) for e in range(num_data)] # Should this be velocity of mesh_velocity?
 
         # TODO check buffer size!
@@ -25,8 +25,8 @@ class LinearDerivativeBasedPredictor(CosimulationBasePredictor):
             solver = self.solvers[data_entry["solver"]]
             data_name = data_entry["data_name"]
             deriv_data_name = data_entry["derivative_data_name"]
-            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays[i], 1)
             cs_tools.ImportArrayFromSolver(solver, deriv_data_name, self.derivative_data_arrays[i], 1)
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays[i], 1)
 
             self.data_arrays[i] += solver.GetDeltaTime() * self.derivative_data_arrays[i]
 

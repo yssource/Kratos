@@ -48,7 +48,9 @@ class CoSimulationBaseConvergenceAccelerator(object):
     def ComputeUpdate(self):
         new_data = []
         for i, data_entry in enumerate(self.settings["data_list"]):
-            self.__ImportData(data_entry, self.arrays[i])
+            solver = self.solvers[data_entry["solver"]]
+            data_name = data_entry["data_name"]
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.arrays[i])
 
         combined_residuals = np.concatenate(self.arrays) - self.combined_prev_data
 

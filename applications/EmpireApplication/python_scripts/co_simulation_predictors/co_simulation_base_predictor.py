@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import, division  # makes these 
 
 # Other imports
 import numpy as np
-from co_simulation_tools import classprint, bold
+import co_simulation_tools as cs_tools
 
 class CosimulationBasePredictor(object):
     def __init__(self, settings, solvers, level):
@@ -33,7 +33,7 @@ class CosimulationBasePredictor(object):
         '''Function to print Info abt the Object
         Can be overridden in derived classes to print more information
         '''
-        classprint(self.lvl, "Predictor", bold(self._Name()))
+        cs_tools.classprint(self.lvl, "Predictor", cs_tools.bold(self._Name()))
 
     def Check(self):
         print("The predictors do not yet implement Check!")
@@ -46,7 +46,9 @@ class CosimulationBasePredictor(object):
 
     def _UpdateData(self, updated_data):
         for data_entry, data_update in zip(self.settings["data_list"], updated_data):
-            self._ExportData(data_entry, data_update)
+            solver = self.solvers[data_entry["solver"]]
+            data_name = data_entry["data_name"]
+            cs_tools.ExportArrayToSolver(solver, data_name, data_update)
 
         if self.echo_level > 3:
             cs_tools.classprint(self.lvl, self._Name(), "Computed prediction")

@@ -115,14 +115,22 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
             input_data_list = self.cosim_solver_details[solver_name]["input_data_list"]
             for input_data in input_data_list:
                 from_solver = self.solvers[input_data["from_solver"]]
-                solver.ImportData(input_data["data_name"], from_solver)
+                data_name = input_data["data_name"]
+                data_definition = from_solver.GetDataDefinition(data_name)
+                data_settings = { "data_format" : data_definition["data_format"],
+                                  "data_name"   : data_name }
+                solver.ImportData(data_settings, from_solver)
 
     def _SynchronizeOutputData(self, solver, solver_name):
         if self.coupling_started:
             output_data_list = self.cosim_solver_details[solver_name]["output_data_list"]
             for output_data in output_data_list:
                 to_solver = self.solvers[output_data["to_solver"]]
-                solver.ExportData(output_data["data_name"], to_solver)
+                data_name = output_data["data_name"]
+                data_definition = to_solver.GetDataDefinition(data_name)
+                data_settings = { "data_format" : data_definition["data_format"],
+                                  "data_name"   : data_name }
+                solver.ExportData(data_settings, to_solver)
 
     def PrintInfo(self):
         super(CoSimulationBaseCouplingSolver, self).PrintInfo()

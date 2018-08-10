@@ -59,31 +59,11 @@
         [
         {
             "name": "fluid",
-            "input_data_list": [
-                {
-                    "from_solver" : "structure",
-                    "data_name"   : "disp"
-                }
-            ],
-            "output_data_list": [
-                {
-                    "to_solver" : "structure",
-                    "data_name"   : "force"
-                }
-            ]
+            "input_data_list": [],
+            "output_data_list": []
         },
         {
             "name": "structure",
-            "output_data_list": [
-                {
-                    "to_solver" : "fluid",
-                    "data_name"   : "disp",
-                    "io_settings"   : {
-                        "mapper_type" : "nearest_neighbor"
-                    }
-
-                }
-            ],
             "input_data_list": [
                 {
                     "from_solver" : "fluid",
@@ -91,6 +71,16 @@
                     "io_settings"   : {
                         "mapper_type" : "nearest_neighbor",
                         "mapper_args" : ["swap_sign"]
+                    }
+
+                }
+            ],
+            "output_data_list": [
+                {
+                    "to_solver" : "fluid",
+                    "data_name"   : "disp",
+                    "io_settings"   : {
+                        "mapper_type" : "nearest_neighbor"
                     }
 
                 }

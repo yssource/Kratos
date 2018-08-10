@@ -1,9 +1,8 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
 # Other imports
-import co_simulation_ios.co_simulation_io_factory as io_factory
 import numpy as np
-from co_simulation_tools import classprint, bold
+import co_simulation_tools as cs_tools
 
 class CoSimulationBaseConvergenceAccelerator(object):
     def __init__(self, settings, solvers, cosim_solver_details, level):
@@ -35,8 +34,11 @@ class CoSimulationBaseConvergenceAccelerator(object):
         self.data_sizes = [] # saving the sizes of the data to later split them again
         size_counter = 0
         for i, data_entry in enumerate(self.settings["data_list"]):
-            self.__ImportData(data_entry, self.arrays[i])
-            size_counter += prev_data.size
+            solver = self.solvers[data_entry["solver"]]
+            data_name = data_entry["data_name"]
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.arrays[i])
+
+            size_counter += self.arrays[i].size
             self.data_sizes.append(size_counter)
 
         self.combined_prev_data = np.concatenate(self.arrays)
@@ -56,13 +58,15 @@ class CoSimulationBaseConvergenceAccelerator(object):
         updated_data = np.split(combined_new_data, self.data_sizes)
 
         for data_entry, data_update in zip(self.settings["data_list"], updated_data):
-            self.__ExportData(data_entry, data_update)
+            solver = self.solvers[data_entry["solver"]]
+            data_name = data_entry["data_name"]
+            cs_tools.ExportArrayToSolver(solver, data_name, data_update)
 
     def PrintInfo(self):
         '''Function to print Info abt the Object
         Can be overridden in derived classes to print more information
         '''
-        classprint(self.lvl, "Convergence Accelerator", bold(self._Name()))
+        cs_tools.classprint(self.lvl, "Convergence Accelerator", cs_tools.bold(self._Name()))
 
     def SetEchoLevel(self, level):
         self.echo_level = level
@@ -72,25 +76,6 @@ class CoSimulationBaseConvergenceAccelerator(object):
 
     def Check(self):
         print("ConvAcc does not yet implement Check")
-
-    def __ImportData(self, data_entry, data_array):
-        data_settings = {
-            "data_format" : "numpy_array",
-            "data_name"   : data_entry["data_name"]
-        }
-
-        from_solver = data_entry["from_solver"]
-        self.solvers[from_solver].ExportData(data_settings, data_array)
-
-
-    def __ExportData(self, data_entry, data_array):
-        data_settings = {
-            "data_format" : "numpy_array",
-            "data_name"   : data_entry["data_name"]
-        }
-
-        from_solver = data_entry["from_solver"] # This is "from_solver", bcs we give back the updated solution
-        self.solvers[from_solver].ImportData(data_settings, data_array)
 
     def _ComputeUpdate( self, residual, previous_data ):
         raise Exception('"_ComputeUpdate" has to be implemented in the derived class!')

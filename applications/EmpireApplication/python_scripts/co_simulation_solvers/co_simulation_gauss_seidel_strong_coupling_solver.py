@@ -20,11 +20,11 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
 
         self.convergence_accelerator = CreateConvergenceAccelerator(
             self.cosim_solver_settings["convergence_accelerator_settings"],
-            self.solvers, self.cosim_solver_details, self.lvl)
+            self.solvers, self.lvl)
 
         self.convergence_criteria = CreateConvergenceCriteria(
             self.cosim_solver_settings["convergence_criteria_settings"],
-            self.solvers, self.cosim_solver_details, self.lvl)
+            self.solvers, self.lvl)
 
         self.num_coupling_iterations = self.cosim_solver_settings["num_coupling_iterations"]
 

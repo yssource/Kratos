@@ -6,11 +6,11 @@ from numpy import linalg as la
 from co_simulation_tools import classprint, bold, green, red
 import co_simulation_tools as cs_tools
 
-def CreateConvergenceCriteria(settings, solvers, cosim_solver_details, level):
-    return CoSimulationConvergenceCriteria(settings, solvers, cosim_solver_details, level)
+def CreateConvergenceCriteria(settings, solvers, level):
+    return CoSimulationConvergenceCriteria(settings, solvers, level)
 
 class CoSimulationConvergenceCriteria(object):
-    def __init__(self, settings, solvers, cosim_solver_details, level):
+    def __init__(self, settings, solvers, level):
         self.settings = settings
         self.solvers = solvers
         self.echo_level = 0

@@ -5,10 +5,9 @@ import numpy as np
 import co_simulation_tools as cs_tools
 
 class CoSimulationBaseConvergenceAccelerator(object):
-    def __init__(self, settings, solvers, cosim_solver_details, level):
+    def __init__(self, settings, solvers, level):
         self.settings = settings
         self.solvers = solvers
-        self.cosim_solver_details = cosim_solver_details
         self.lvl = level
         self.echo_level = 0
 

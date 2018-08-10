@@ -7,12 +7,12 @@ from co_simulation_base_predictor import CosimulationBasePredictor
 import numpy as np
 import co_simulation_tools as cs_tools
 
-def Create(predictor_settings, solvers, cosim_solver_details, level):
-    return LinearDerivativeBasedPredictor(predictor_settings, solvers, cosim_solver_details, level)
+def Create(predictor_settings, solvers, level):
+    return LinearDerivativeBasedPredictor(predictor_settings, solvers, level)
 
 class LinearDerivativeBasedPredictor(CosimulationBasePredictor):
-    def __init__(self, settings, solvers, cosim_solver_details, level):
-        super(LinearDerivativeBasedPredictor, self).__init__(settings, solvers, cosim_solver_details, level)
+    def __init__(self, settings, solvers, level):
+        super(LinearDerivativeBasedPredictor, self).__init__(settings, solvers, level)
         # TODO add comment why we do this
         num_data = len(self.settings["data_list"])
         self.data_arrays = [np.array([]) for e in range(num_data)]

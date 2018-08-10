@@ -5,10 +5,9 @@ import numpy as np
 from co_simulation_tools import classprint, bold
 
 class CosimulationBasePredictor(object):
-    def __init__(self, settings, solvers, cosim_solver_details, level):
+    def __init__(self, settings, solvers, level):
         self.settings = settings
         self.solvers = solvers
-        self.cosim_solver_details = cosim_solver_details
         self.lvl = level
         self.echo_level = 0
 

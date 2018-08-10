@@ -7,12 +7,12 @@ from co_simulation_base_predictor import CosimulationBasePredictor
 import numpy as np
 from co_simulation_tools import classprint
 
-def Create(predictor_settings, solvers, cosim_solver_details, level):
-    return StandardLinearPredictor(predictor_settings, solvers, cosim_solver_details, level)
+def Create(predictor_settings, solvers, level):
+    return StandardLinearPredictor(predictor_settings, solvers, level)
 
 class StandardLinearPredictor(CosimulationBasePredictor):
-    def __init__(self, settings, solvers, cosim_solver_details, level):
-        super(StandardLinearPredictor, self).__init__(settings, solvers, cosim_solver_details, level)
+    def __init__(self, settings, solvers, level):
+        super(StandardLinearPredictor, self).__init__(settings, solvers, level)
         # TODO add comment why we do this
         num_data = len(self.settings["data_list"])
         self.data_arrays_t1 = [np.array([]) for e in range(num_data)]

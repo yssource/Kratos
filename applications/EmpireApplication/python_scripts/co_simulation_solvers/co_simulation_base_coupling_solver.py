@@ -50,7 +50,7 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
         self.predictor = None
         if "predictor_settings" in self.cosim_solver_settings:
             self.predictor = CreatePredictor(self.cosim_solver_settings["predictor_settings"],
-                                             self.solvers, self.cosim_solver_details, self.lvl)
+                                             self.solvers, self.lvl)
             self.predictor.SetEchoLevel(self.echo_level)
 
             self.predictor.Initialize()

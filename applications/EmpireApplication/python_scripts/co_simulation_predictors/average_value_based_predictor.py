@@ -11,19 +11,20 @@ from co_simulation_tools import classprint
 # "A new staggered scheme for fluid-structure interaction"; W.G. Dettmer and D. Peric
 # Numerical Methods in Engineering 2013; 93; 1-22
 
-def Create(predictor_settings, solvers, cosim_solver_details, level):
-    return AverageValuePredictor(predictor_settings, solvers, cosim_solver_details, level)
+def Create(predictor_settings, solvers, level):
+    return AverageValuePredictor(predictor_settings, solvers, level)
 
 class AverageValuePredictor(CosimulationBasePredictor):
     # @param beta factor for weighting last and current value of the predicted values. Can be set in interval: [0, 1.0]
-    def __init__(self, settings, solvers, cosim_solver_details, level):
-        super(AverageValuePredictor, self).__init__(settings, solvers, cosim_solver_details, level)
+    def __init__(self, settings, solvers, level):
+        super(AverageValuePredictor, self).__init__(settings, solvers, level)
         if "beta" in self.settings:
             self.beta = self.settings["beta"]
             if self.beta > 1.0:
                 raise Exception("Wrong value for beta. Admissible interval [0.0, 1.0]")
         else:
             self.beta = 0.5
+        # TODO check buffer_size
 
         # TODO add comment why we do this
         num_data = len(self.settings["data_list"])

@@ -13,8 +13,8 @@ from copy import deepcopy
 from collections import deque
 from co_simulation_tools import classprint
 
-def Create(settings, solvers, cosim_solver_details, level):
-    return MVQN(settings, solvers, cosim_solver_details, level)
+def Create(settings, solvers, level):
+    return MVQN(settings, solvers, level)
 
 ## Class MVQN.
 # This class contains the implementation of the MVQN method and helper functions.
@@ -23,8 +23,8 @@ class MVQN(CoSimulationBaseConvergenceAccelerator):
     ## The constructor.
     # @param horizon Maximum number of vectors to be stored in each time step.
     # @param alpha Relaxation factor for computing the update, when no vectors available.
-    def __init__( self, settings, solvers, cosim_solver_details, level ):
-        super(MVQN, self).__init__(settings, solvers, cosim_solver_details, level)
+    def __init__( self, settings, solvers, level ):
+        super(MVQN, self).__init__(settings, solvers, level)
         if "horizon" in self.settings:
             horizon = self.settings["horizon"]
         else:

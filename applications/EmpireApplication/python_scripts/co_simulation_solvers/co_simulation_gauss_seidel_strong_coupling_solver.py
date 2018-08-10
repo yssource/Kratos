@@ -18,6 +18,10 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
 
         super(GaussSeidelStrongCouplingSolver, self).__init__(cosim_solver_settings, level)
 
+        self.convergence_accelerator = CreateConvergenceAccelerator(
+            self.cosim_solver_settings["convergence_accelerator_settings"],
+            self.solvers, self.cosim_solver_details, self.lvl)
+
         self.convergence_criteria = CreateConvergenceCriteria(
             self.cosim_solver_settings["convergence_criteria_settings"],
             self.solvers, self.cosim_solver_details, self.lvl)
@@ -26,12 +30,6 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
 
     def Initialize(self):
         super(GaussSeidelStrongCouplingSolver, self).Initialize()
-
-        ## TODO move this to the constructor, this probably means modifying the constructors!
-        self.convergence_accelerator = CreateConvergenceAccelerator(
-            self.cosim_solver_settings["convergence_accelerator_settings"],
-            self.solvers, self.cosim_solver_details, self.lvl)
-
 
         self.convergence_accelerator.SetEchoLevel(self.echo_level)
         self.convergence_criteria.SetEchoLevel(self.echo_level)

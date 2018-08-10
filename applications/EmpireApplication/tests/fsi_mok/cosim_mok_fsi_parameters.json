@@ -18,7 +18,7 @@
             "data_list"      :
             [
                 {
-                    "from_solver": "fluid",
+                    "solver": "fluid",
                     "data_name"  : "disp"
                 }
 
@@ -26,7 +26,7 @@
             "derivative_list"      :
             [
                 {
-                    "from_solver": "fluid",
+                    "solver": "fluid",
                     "data_name"  : "vel"
                 }
 
@@ -38,7 +38,7 @@
             "data_list" :
             [
                 {
-                    "from_solver"   : "fluid",
+                    "solver"   : "fluid",
                     "data_name"     : "disp"
                 }
             ]
@@ -48,7 +48,7 @@
             "data_list" :
             [
                 {
-                    "from_solver"   : "fluid",
+                    "solver"   : "fluid",
                     "data_name"     : "disp",
                     "abs_tolerance" : 1e-5,
                     "rel_tolerance" : 1e-5
@@ -59,8 +59,8 @@
         [
         {
             "name": "fluid",
-            "input_data_list": [],
-            "output_data_list": []
+            "input_data_list"  : [],
+            "output_data_list" : []
         },
         {
             "name": "structure",

@@ -13,7 +13,6 @@ def CreateSolver(cosim_solver_settings, level):
 
 class SDofSolver(CoSimulationBaseSolver):
     def __init__(self, cosim_solver_settings, level):
-        # TODO this needs a buffer if it should be used with the predictors!
         super(SDofSolver, self).__init__(cosim_solver_settings, level)
 
         input_file_name = self.cosim_solver_settings["input_file"]
@@ -88,6 +87,9 @@ class SDofSolver(CoSimulationBaseSolver):
         #external load only for testing
         b += self.load_vector
         self.dx = np.linalg.solve(self.LHS, b)
+
+    def GetBufferSize(self):
+        return 1 # TODO make it use a buffer!
 
     def GetDeltaTime(self):
         return self.delta_t

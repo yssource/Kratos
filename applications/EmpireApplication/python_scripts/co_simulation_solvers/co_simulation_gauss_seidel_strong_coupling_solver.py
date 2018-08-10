@@ -28,12 +28,10 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
             self.solvers, self.lvl)
         self.convergence_criteria.SetEchoLevel(self.echo_level)
 
-
         self.num_coupling_iterations = self.cosim_solver_settings["num_coupling_iterations"]
 
     def Initialize(self):
         super(GaussSeidelStrongCouplingSolver, self).Initialize()
-
         self.convergence_accelerator.Initialize()
         self.convergence_criteria.Initialize()
 
@@ -89,7 +87,6 @@ class GaussSeidelStrongCouplingSolver(CoSimulationBaseCouplingSolver):
 
     def Check(self):
         super(GaussSeidelStrongCouplingSolver, self).Check()
-
         self.convergence_accelerator.Check()
         self.convergence_criteria.Check()
 

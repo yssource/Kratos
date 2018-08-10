@@ -6,15 +6,10 @@ available_ios = {
     "kratos_signal" : "kratos_signal_io"
 }
 
-def CreateIO(io_settings, solvers, solver_name, cosim_solver_details, level):
+def CreateIO(io_type, solvers, solver_name, cosim_solver_details, level):
     """This function creates and returns the IO used for CoSimulation
     New IOs have to be registered by adding them to "available_ios"
     """
-    if (type(io_settings) != dict):
-        raise Exception("Input is expected to be provided as a python dictionary")
-
-    io_type = io_settings["io_type"]
-
     if io_type in available_ios:
         io_module = __import__(available_ios[io_type])
         return io_module.Create(io_settings, solvers, solver_name, cosim_solver_details, level)

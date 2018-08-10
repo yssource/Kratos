@@ -15,8 +15,6 @@ class CoSimulationBaseIO(object):
         self.cosim_solver_details = cosim_solver_details
         self.lvl = level
         self.echo_level = 0
-        if "echo_level" in self.settings:
-            self.echo_level = self.settings["echo_level"]
 
     def ImportData(self, data_name, from_client):
         pass
@@ -26,11 +24,6 @@ class CoSimulationBaseIO(object):
     def ExportData(self, data_name, to_client):
         pass
     def ExportMesh(self, mesh_name, to_client):
-        pass
-
-    def MakeDataAvailable(self, data_name, to_client):
-        pass
-    def MakeMeshAvailable(self, mesh_name, to_client):
         pass
 
     def SetEchoLevel(self, level):

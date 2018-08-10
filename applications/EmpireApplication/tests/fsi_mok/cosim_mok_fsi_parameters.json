@@ -15,7 +15,6 @@
         "predictor_settings" :
         {
             "predictor_type" : "linear_derivative_based",
-            "io_type"        : "kratos_signal",
             "data_list"      :
             [
                 {
@@ -36,7 +35,6 @@
         "convergence_accelerator_settings" :
         {
             "type"          : "mvqn",
-            "io_type"       : "kratos_signal",
             "data_list" :
             [
                 {
@@ -47,7 +45,6 @@
         },
         "convergence_criteria_settings" :
         {
-            "io_type"   : "kratos_signal",
             "data_list" :
             [
                 {
@@ -106,10 +103,6 @@
             {
                 "solver_type" : "kratos_fluid",
                 "input_file"  : "fsi_mok/ProjectParametersCFD",
-                "io_settings" : {
-                    "io_type"     : "kratos_field",
-                    "echo_level"  : 0
-                },
                 "data" : {
                     "disp" : {
                         "geometry_name" : "FluidModelPart.NoSlip2D_FSI",
@@ -129,10 +122,6 @@
             {
                 "solver_type" : "kratos_structural",
                 "input_file"  : "fsi_mok/ProjectParametersCSM",
-                "io_settings" : {
-                    "io_type"     : "kratos_field",
-                    "echo_level"  : 0
-                },
                 "data" : {
                     "disp" : {
                         "geometry_name" : "GENERIC_FSI",

@@ -57,21 +57,6 @@ class CoSimulationBaseConvergenceAccelerator(object):
         for data_entry, data_update in zip(self.settings["data_list"], updated_data):
             self.__ExportData(data_entry, data_update)
 
-    def ImportData(self, data_name, from_client):
-        pass
-    def ImportMesh(self, mesh_name, from_client):
-        pass
-
-    def ExportData(self, data_name, to_client):
-        pass
-    def ExportMesh(self, mesh_name, to_client):
-        pass
-
-    def MakeDataAvailable(self, data_name, to_client):
-        pass
-    def MakeMeshAvailable(self, mesh_name, to_client):
-        pass
-
     def PrintInfo(self):
         '''Function to print Info abt the Object
         Can be overridden in derived classes to print more information

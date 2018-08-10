@@ -62,11 +62,6 @@ class CoSimulationBaseSolver(object):
     def ExportMesh(self, mesh_name, to_client):
         self.io.ExportMesh(mesh_name, to_client)
 
-    def MakeDataAvailable(self, data_name, to_client):
-        self.io.MakeDataAvailable(data_name, to_client)
-    def MakeMeshAvailable(self, mesh_name, to_client):
-        self.io.MakeMeshAvailable(mesh_name, to_client)
-
     def GetDataDefinition(self, data_name):
         return self.cosim_solver_settings["data"][data_name]
 

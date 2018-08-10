@@ -7,35 +7,29 @@ from co_simulation_base_predictor import CosimulationBasePredictor
 import numpy as np
 from co_simulation_tools import classprint
 
-def Create(predictor_settings, solvers, cosim_solver_details, level):
-    return StandardLinearPredictor(predictor_settings, solvers, cosim_solver_details, level)
+def Create(predictor_settings, solvers, level):
+    return StandardLinearPredictor(predictor_settings, solvers, level)
 
 class StandardLinearPredictor(CosimulationBasePredictor):
+    def __init__(self, settings, solvers, level):
+        super(StandardLinearPredictor, self).__init__(settings, solvers, level)
+        # TODO add comment why we do this
+        num_data = len(self.settings["data_list"])
+        self.data_arrays_t1 = [np.array([]) for e in range(num_data)]
+        self.data_arrays_t2 = [np.array([]) for e in range(num_data)]
+
+        # TODO check buffer size!
+
     def Predict(self):
-        data_sizes = [] # saving the sizes of the data to later split them again
-        size_counter = 0
-        new_data = []
-        old_data = []
-        for data_entry in self.settings["data_list"]:
-            data = self._ImportData(data_entry, 0) 
-            new_data.append(data)
-            size_counter += data.size
-            data_sizes.append(size_counter)
-        combined_new_data = np.concatenate(new_data)
+        for i, data_entry in enumerate(self.settings["data_list"]):
+            solver = self.solvers[data_entry["solver"]]
+            data_name = data_entry["data_name"]
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays_t1[i], 1) # should be 0/1 ?
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays_t2[i], 2) # should be 1/2 ?
 
-        for data_entry in self.settings["data_list"]:
-            old_data.append(self._ImportData(data_entry, 1))
-        combined_old_data = np.concatenate(old_data)
+            self.data_arrays_t1[i] = 2*self.data_arrays_t1[i] - data_arrays_t2[i]
 
-        #compute prediction
-        combined_new_data = 2 * combined_new_data - combined_old_data
-        updated_data = np.split(combined_new_data, data_sizes)
-
-        for data_entry, data_update in zip(self.settings["data_list"], updated_data):
-            self._ExportData(data_entry, data_update)
-
-        if self.echo_level > 3:
-            classprint(self.lvl, self._Name(), "Computed prediction")
+        self._UpdateData(self.data_arrays_t1)
 
     def _Name(self):
         return self.__class__.__name__

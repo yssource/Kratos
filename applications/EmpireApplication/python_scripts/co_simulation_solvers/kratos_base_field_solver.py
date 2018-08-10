@@ -33,6 +33,7 @@ class KratosBaseFieldSolver(CoSimulationBaseSolver):
     def AdvanceInTime(self, current_time):
         new_time = self._GetAnalysisStage()._GetSolver().AdvanceInTime(current_time)
         self._GetAnalysisStage().time = new_time # only needed to print the time correctly
+        self.delta_time = new_time - current_time
         return new_time
 
     def Predict(self):
@@ -53,6 +54,11 @@ class KratosBaseFieldSolver(CoSimulationBaseSolver):
     def GetBufferSize(self):
         model_part_name = self.project_parameters["solver_settings"]["model_part_name"].GetString()
         return self.model[model_part_name].GetBufferSize()
+
+    def GetDeltaTime(self):
+        if not hasattr(self, 'delta_time'):
+            raise Exception("DeltaTime can only be querried after it has been computed at least once")
+        return self.delta_time
 
     def _GetAnalysisStage(self):
         if not hasattr(self, '_analysis_stage'):
@@ -81,3 +87,6 @@ class KratosBaseFieldSolver(CoSimulationBaseSolver):
             warning_msg  = 'WARNING: Global "parallel_type" (OpenMP) is different '
             warning_msg += 'from local one (' + solver_parallel_type + ')!'
             solverprint(self.lvl, self._Name(), ": " + red(warning_msg))
+
+    def _GetIOName(self):
+        return "kratos"

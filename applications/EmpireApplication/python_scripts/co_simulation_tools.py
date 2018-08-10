@@ -8,7 +8,29 @@ def GetSolverCoSimulationDetails(co_simulation_solver_settings):
     # - input in one is output in another
     # - one IO is defined for each data_name
     # - if the same data is defined multiple times
+    # - check if data format has been specified
     return solver_cosim_details
+
+def ImportArrayFromSolver(solver, data_name, data_array, buffer_index=0):
+    data_settings = {
+        "data_format"  : "numpy_array",
+        "data_name"    : data_name,
+        "data_array"   : data_array,
+        "buffer_index" : buffer_index
+    }
+
+    solver.ExportData(data_settings, solver)
+
+def ExportArrayToSolver(solver, data_name, data_array, buffer_index=0):
+    data_settings = {
+        "data_format"  : "numpy_array",
+        "data_name"    : data_name,
+        "data_array"   : data_array,
+        "buffer_index" : buffer_index
+    }
+
+    solver.ImportData(data_settings, solver)
+
 
 
 class CoSimulationParameters(object):

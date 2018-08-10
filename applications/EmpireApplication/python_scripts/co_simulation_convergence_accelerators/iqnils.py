@@ -13,8 +13,8 @@ from copy import deepcopy
 from collections import deque
 from co_simulation_tools import classprint
 
-def Create(settings, solvers, cosim_solver_details, level):
-    return IQNILS(settings, solvers, cosim_solver_details, level)
+def Create(settings, solvers, level):
+    return IQNILS(settings, solvers, level)
 
 ## Class IQNILS.
 # This class contains the implementation of the IQN-ILS method and helper functions.
@@ -24,8 +24,8 @@ class IQNILS(CoSimulationBaseConvergenceAccelerator):
     # @param iteration_horizon Maximum number of vectors to be stored in each time step.
     # @param timestep_horizon Maximum number of time steps of which the vectors are used.
     # @param alpha Relaxation factor for computing the update, when no vectors available.
-    def __init__( self, settings, solvers, cosim_solver_details, level ):
-        super(IQNILS, self).__init__(settings, solvers, cosim_solver_details, level)
+    def __init__( self, settings, solvers, level ):
+        super(IQNILS, self).__init__(settings, solvers, level)
         if "iteration_horizon" in self.settings:
             iteration_horizon = self.settings["iteration_horizon"]
         else:

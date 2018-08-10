@@ -1,26 +1,27 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
 # Other imports
-import co_simulation_ios.co_simulation_io_factory as io_factory
 import numpy as np
 from numpy import linalg as la
 from co_simulation_tools import classprint, bold, green, red
+import co_simulation_tools as cs_tools
 
-def CreateConvergenceCriteria(settings, solvers, cosim_solver_details, level):
-    return CoSimulationConvergenceCriteria(settings, solvers, cosim_solver_details, level)
+def CreateConvergenceCriteria(settings, solvers, level):
+    return CoSimulationConvergenceCriteria(settings, solvers, level)
 
 class CoSimulationConvergenceCriteria(object):
-    def __init__(self, settings, solvers, cosim_solver_details, level):
+    def __init__(self, settings, solvers, level):
         self.settings = settings
-        self.io = io_factory.CreateIO(settings, solvers, "None", cosim_solver_details, level)
         self.solvers = solvers
         self.echo_level = 0
         self.lvl = level
-        self.abs_tolerances = []
-        self.rel_tolerances = []
-        for data_entry in self.settings["data_list"]:
-            self.abs_tolerances.append(data_entry["abs_tolerance"])
-            self.rel_tolerances.append(data_entry["rel_tolerance"])
+        self.abs_tolerances = [data_entry["abs_tolerance"] for data_entry in self.settings["data_list"]]
+        self.rel_tolerances = [data_entry["rel_tolerance"] for data_entry in self.settings["data_list"]]
+
+        ## Here we preallocate the arrays that will be used to exchange data
+        num_data = len(self.settings["data_list"])
+        self.old_data = [np.array([]) for e in range(num_data)]
+        self.new_data = np.array([])
 
     def Initialize(self):
         pass
@@ -36,47 +37,44 @@ class CoSimulationConvergenceCriteria(object):
 
     def InitializeNonLinearIteration(self):
         # Saving the previous data (at beginning of iteration) for the computation of the residual
-        self.old_data = [] # discard old data fields
-        for data_entry in self.settings["data_list"]:
-            self.old_data.append(self.__ImportData(data_entry))
+        for i, data_entry in enumerate(self.settings["data_list"]):
+            solver = self.solvers[data_entry["solver"]]
+            data_name = data_entry["data_name"]
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.old_data[i])
 
     def FinalizeNonLinearIteration(self):
         pass
 
     def IsConverged(self):
         convergence_list = []
-        idx = 0
-        for data_entry in self.settings["data_list"]:
-            new_data = self.__ImportData(data_entry)
-            residual = new_data - self.old_data[idx]
+        for i, data_entry in enumerate(self.settings["data_list"]):
+            solver = self.solvers[data_entry["solver"]]
+            data_name = data_entry["data_name"]
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.new_data)
+
+            residual = self.new_data - self.old_data[i]
             res_norm = la.norm(residual)
-            norm_new_data = la.norm(new_data)
+            norm_new_data = la.norm(self.new_data)
             if norm_new_data < 1e-15:
                 norm_new_data = 1.0 # to avoid division by zero
             abs_norm = res_norm / np.sqrt(residual.size)
             rel_norm = res_norm / norm_new_data
-            convergence_list.append(abs_norm < self.abs_tolerances[idx] or rel_norm < self.rel_tolerances[idx])
+            convergence_list.append(abs_norm < self.abs_tolerances[i] or rel_norm < self.rel_tolerances[i])
             if self.echo_level > 1:
                 info_msg  = 'Convergence for "'+bold(data_entry["data_name"])+'": '
-                if convergence_list[idx]:
+                if convergence_list[i]:
                     info_msg += green("ACHIEVED")
                 else:
                     info_msg += red("NOT ACHIEVED")
                 classprint(self.lvl, self._Name(), info_msg)
             if self.echo_level > 2:
                 info_msg  = bold("abs_norm")+" = " + str(abs_norm) + " | "
-                info_msg += bold("abs_tol")+" = " + str(self.abs_tolerances[idx])
+                info_msg += bold("abs_tol")+" = " + str(self.abs_tolerances[i])
                 info_msg += " || "+bold("rel_norm")+" = " + str(rel_norm) + " | "
-                info_msg += bold("rel_tol") +" = " + str(self.rel_tolerances[idx])
+                info_msg += bold("rel_tol") +" = " + str(self.rel_tolerances[i])
                 classprint(self.lvl, self._Name(), info_msg)
-            idx += 1
 
         return min(convergence_list) # return false if any of them did not converge!
-
-    def __ImportData(self, data_entry):
-        data_name = data_entry["data_name"]
-        from_solver = data_entry["from_solver"]
-        return self.io.ImportData(data_name, self.solvers[from_solver])
 
     def PrintInfo(self):
         classprint(self.lvl, "Convergence Criteria", bold(self._Name()))

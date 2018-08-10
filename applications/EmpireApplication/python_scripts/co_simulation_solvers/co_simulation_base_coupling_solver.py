@@ -29,6 +29,12 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
         self.cosim_solver_details = cosim_tools.GetSolverCoSimulationDetails(
             self.cosim_solver_settings["coupling_loop"])
 
+        self.predictor = None
+        if "predictor_settings" in self.cosim_solver_settings:
+            self.predictor = CreatePredictor(self.cosim_solver_settings["predictor_settings"],
+                                             self.solvers, self.lvl)
+            self.predictor.SetEchoLevel(self.echo_level)
+
         # With this setting the coupling can start later
         self.start_coupling_time = 0.0
         if "start_coupling_time" in self.cosim_solver_settings:
@@ -42,15 +48,11 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
         for solver_name in self.solver_names:
             self.solvers[solver_name].Initialize()
         for solver_name in self.solver_names:
-            self.solvers[solver_name].InitializeIO(self.solvers, self.cosim_solver_details)
+            self.solvers[solver_name].InitializeIO(self.solvers, self.cosim_solver_details, self.echo_level)
+            # we use the Echo_level of the coupling solver, since IO is needed by the coupling
+            # and not by the (physics-) solver
 
-        ## TODO move to constructor, might require some refactoring in the Predictor!
-        self.predictor = None
-        if "predictor_settings" in self.cosim_solver_settings:
-            self.predictor = CreatePredictor(self.cosim_solver_settings["predictor_settings"],
-                                             self.solvers, self.cosim_solver_details, self.lvl)
-            self.predictor.SetEchoLevel(self.echo_level)
-
+        if self.predictor is not None:
             self.predictor.Initialize()
 
     def Finalize(self):
@@ -96,8 +98,8 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
     def FinalizeSolutionStep(self):
         for solver_name in self.solver_names:
             self.solvers[solver_name].FinalizeSolutionStep()
-            if self.predictor is not None:
-                self.predictor.FinalizeSolutionStep() # TODO fix this, neither should it be caled multiple times plus it must only be executed when there is a predictor!
+        if self.predictor is not None:
+            self.predictor.FinalizeSolutionStep()
 
     def OutputSolutionStep(self):
         for solver_name in self.solver_names:
@@ -113,14 +115,22 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
             input_data_list = self.cosim_solver_details[solver_name]["input_data_list"]
             for input_data in input_data_list:
                 from_solver = self.solvers[input_data["from_solver"]]
-                solver.ImportData(input_data["data_name"], from_solver)
+                data_name = input_data["data_name"]
+                data_definition = from_solver.GetDataDefinition(data_name)
+                data_settings = { "data_format" : data_definition["data_format"],
+                                  "data_name"   : data_name }
+                solver.ImportData(data_settings, from_solver)
 
     def _SynchronizeOutputData(self, solver, solver_name):
         if self.coupling_started:
             output_data_list = self.cosim_solver_details[solver_name]["output_data_list"]
             for output_data in output_data_list:
                 to_solver = self.solvers[output_data["to_solver"]]
-                solver.ExportData(output_data["data_name"], to_solver)
+                data_name = output_data["data_name"]
+                data_definition = to_solver.GetDataDefinition(data_name)
+                data_settings = { "data_format" : data_definition["data_format"],
+                                  "data_name"   : data_name }
+                solver.ExportData(data_settings, to_solver)
 
     def PrintInfo(self):
         super(CoSimulationBaseCouplingSolver, self).PrintInfo()

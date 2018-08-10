@@ -13,8 +13,8 @@ from copy import deepcopy
 from collections import deque
 from co_simulation_tools import red, classprint
 
-def Create(settings, solvers, cosim_solver_details, level):
-    return Aitken(settings, solvers, cosim_solver_details, level)
+def Create(settings, solvers, level):
+    return Aitken(settings, solvers, level)
 
 ## Class Aitken.
 # This class contains the implementation of Aitken relaxation and helper functions.
@@ -23,8 +23,8 @@ class Aitken(CoSimulationBaseConvergenceAccelerator):
     ## The constructor.
     # @param init_alpha Initial relaxation factor in the first time step.
     # @param init_alpha_max Maximum relaxation factor for the first iteration in each time step
-    def __init__( self, settings, solvers, cosim_solver_details, level ):
-        super(Aitken, self).__init__(settings, solvers, cosim_solver_details, level)
+    def __init__( self, settings, solvers, level ):
+        super(Aitken, self).__init__(settings, solvers, level)
         self.R = deque( maxlen = 2 )
         if "init_alpha" in self.settings:
             self.alpha_old = self.settings["init_alpha"]

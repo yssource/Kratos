@@ -7,7 +7,7 @@ available_convergence_accelerators = {
     "mvqn"     : "mvqn",
 }
 
-def CreateConvergenceAccelerator(settings, solvers, cosim_solver_details, level):
+def CreateConvergenceAccelerator(settings, solvers, level):
     """This function creates and returns the convergence accelerator used for CoSimulation
     New convergence accelerators have to be registered by adding them to "available_convergence_accelerators"
     """
@@ -18,7 +18,7 @@ def CreateConvergenceAccelerator(settings, solvers, cosim_solver_details, level)
 
     if accelerator_type in available_convergence_accelerators:
         accelerator_module = __import__(available_convergence_accelerators[accelerator_type])
-        return accelerator_module.Create(settings, solvers, cosim_solver_details, level)
+        return accelerator_module.Create(settings, solvers, level)
     else:
         err_msg  = 'The requested convergence accelerator "' + accelerator_type + '" is not available!\n'
         err_msg += 'The following convergence accelerators are available:\n'

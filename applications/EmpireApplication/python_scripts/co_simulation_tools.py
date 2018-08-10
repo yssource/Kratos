@@ -10,18 +10,20 @@ def GetSolverCoSimulationDetails(co_simulation_solver_settings):
     # - if the same data is defined multiple times
     return solver_cosim_details
 
-def ImportArrayFromSolver(solver, data_name, data_array):
+def ImportArrayFromSolver(solver, data_name, data_array, buffer_index=0):
     data_settings = {
-        "data_format" : "numpy_array",
-        "data_name"   : data_name
+        "data_format"  : "numpy_array",
+        "data_name"    : data_name
+        "buffer_index" : buffer_index
     }
 
     solver.ExportData(data_settings, data_array)
 
-def ExportArrayToSolver(solver, data_name, data_array):
+def ExportArrayToSolver(solver, data_name, data_array, buffer_index=0):
     data_settings = {
-        "data_format" : "numpy_array",
-        "data_name"   : data_name
+        "data_format"  : "numpy_array",
+        "data_name"    : data_name
+        "buffer_index" : buffer_index
     }
 
     solver.ImportData(data_settings, data_array)

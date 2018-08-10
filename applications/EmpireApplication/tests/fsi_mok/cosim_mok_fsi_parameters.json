@@ -19,15 +19,8 @@
             [
                 {
                     "solver": "fluid",
-                    "data_name"  : "disp"
-                }
-
-            ],
-            "derivative_list"      :
-            [
-                {
-                    "solver": "fluid",
-                    "data_name"  : "vel"
+                    "data_name"  : "disp",
+                    "derivative_data_name"  : "vel"
                 }
 
             ]

@@ -5,38 +5,32 @@ from co_simulation_base_predictor import CosimulationBasePredictor
 
 # Other imports
 import numpy as np
-from co_simulation_tools import classprint
+import co_simulation_tools as cs_tools
 
 def Create(predictor_settings, solvers, cosim_solver_details, level):
     return LinearDerivativeBasedPredictor(predictor_settings, solvers, cosim_solver_details, level)
 
 class LinearDerivativeBasedPredictor(CosimulationBasePredictor):
+    def __init__(self, settings, solvers, cosim_solver_details, level):
+        super(LinearDerivativeBasedPredictor, self).__init__(settings, solvers, cosim_solver_details, level)
+        # TODO add comment why we do this
+        num_data = len(self.settings["data_list"])
+        self.data_arrays = [np.array([]) for e in range(num_data)]
+        self.derivative_data_arrays = [np.array([]) for e in range(num_data)] # Should this be velocity of mesh_velocity?
+
+        # TODO check buffer size!
+
     def Predict(self):
-        data_sizes = [] # saving the sizes of the data to later split them again
-        new_data = []
-        size_counter = 0
-        for data_entry in self.settings["data_list"]:
-            data = self._ImportData(data_entry, 1)
-            new_data.append(data)
-            size_counter += data.size
-            data_sizes.append(size_counter)
+        for i, data_entry in enumerate(self.settings["data_list"]):
+            solver = self.solvers[data_entry["solver"]]
+            data_name = data_entry["data_name"]
+            deriv_data_name = data_entry["derivative_data_name"]
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays[i], 1)
+            cs_tools.ImportArrayFromSolver(solver, deriv_data_name, self.derivative_data_arrays[i], 1)
 
-        combined_new_data = np.concatenate(new_data)
+            self.data_arrays[i] += solver.GetDeltaTime() * self.derivative_data_arrays[i]
 
-        new_derivative = []
-        for data_entry in self.settings["derivative_list"]:
-            new_derivative.append(self._ImportData(data_entry, 1))
-        combined_new_derivative = np.concatenate(new_derivative)
-
-        #compute linear prediction
-        combined_new_data += self.delta_time * combined_new_derivative
-        updated_data = np.split(combined_new_data, data_sizes)
-
-        for data_entry, data_update in zip(self.settings["data_list"], updated_data):
-            self._ExportData(data_entry, data_update)
-
-        if self.echo_level > 3:
-            classprint(self.lvl, self._Name(), "Computed prediction")
+        self._UpdateData(self.data_arrays)
 
     def _Name(self):
         return self.__class__.__name__

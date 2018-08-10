@@ -17,7 +17,7 @@ def Create(predictor_settings, solvers, cosim_solver_details, level):
 class AverageValuePredictor(CosimulationBasePredictor):
     # @param beta factor for weighting last and current value of the predicted values. Can be set in interval: [0, 1.0]
     def __init__(self, settings, solvers, cosim_solver_details, level):
-        super(AverageValuePredictor, self).__init__(settings, solvers, cosim_solver_details, level)   
+        super(AverageValuePredictor, self).__init__(settings, solvers, cosim_solver_details, level)
         if "beta" in self.settings:
             self.beta = self.settings["beta"]
             if self.beta > 1.0:
@@ -25,56 +25,32 @@ class AverageValuePredictor(CosimulationBasePredictor):
         else:
             self.beta = 0.5
 
-    def Initialize(self):
-        # TODO this should be done in the Check fct!
-        for solver in self.solvers.values():
-            buffer_size = solver.GetBufferSize()
-            if buffer_size < 2:
-                raise Exception("Minimum buffer size for this predictor is 2")
-
-        data_sizes = [] # saving the sizes of the data to later split them again
-        new_data = []
-        size_counter = 0
-        for data_entry in self.settings["data_list"]:
-            data = self._ImportData(data_entry, 0)   
-            new_data.append(data)
-            size_counter += data.size
-            data_sizes.append(size_counter)
-
-        self.combined_new_data = np.concatenate(new_data)
+        # TODO add comment why we do this
+        num_data = len(self.settings["data_list"])
+        self.data_arrays_prediction = [np.array([]) for e in range(num_data)]
+        self.data_arrays_aux = [np.array([]) for e in range(num_data)]
 
     def Predict(self):
-        data_sizes = [] # saving the sizes of the data to later split them again
-        size_counter = 0
-        old_data = []
-        for data_entry in self.settings["data_list"]:
-            old_data.append(self._ImportData(data_entry, 1))
-        combined_old_data = np.concatenate(old_data)
+        for i, data_entry in enumerate(self.settings["data_list"]):
+            solver = self.solvers[data_entry["solver"]]
+            data_name = data_entry["data_name"]
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays_prediction[i], 1) # should be 0/1 ?
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays_aux[i], 2) # should be 1/2 ?
 
-        #compute prediction
-        self.combined_new_data = 2 * self.combined_new_data - combined_old_data
-        updated_data = np.split(self.combined_new_data, data_sizes)
+            self.data_arrays_prediction[i] = 2*self.data_arrays_prediction[i] - data_arrays_aux[i]
 
-        for data_entry, data_update in zip(self.settings["data_list"], updated_data):
-            self._ExportData(data_entry, data_update)
-
-        if self.echo_level > 3:
-            classprint(self.lvl, self._Name(), "Computed prediction with beta = ", str(self.beta))
+        self._UpdateData(self.data_arrays_prediction)
 
     def FinalizeSolutionStep(self):
-        data_sizes = [] # saving the sizes of the data to later split them again
-        new_data = []
-        size_counter = 0
-        for data_entry in self.settings["data_list"]:
-            data = self._ImportData(data_entry, 0)
-            new_data.append(data)
-            size_counter += data.size
-            data_sizes.append(size_counter)
+        for i, data_entry in enumerate(self.settings["data_list"]):
+            solver = self.solvers[data_entry["solver"]]
+            data_name = data_entry["data_name"]
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays_aux[i], 0) # should be 1/2 ?
 
-        combined_data = np.concatenate(new_data)
+            self.data_arrays_aux[i] = self.beta * self.data_arrays_aux[i] + (1-self.beta) * data_arrays_prediction[i]
 
-        #average values weightend by beta
-        self.combined_new_data = self.beta * combined_data + (1 - self.beta) * self.combined_new_data
+        self._UpdateData(self.data_arrays_aux)
+
 
     def _Name(self):
         return self.__class__.__name__

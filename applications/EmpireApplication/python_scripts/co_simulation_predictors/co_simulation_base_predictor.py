@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
 # Other imports
-import co_simulation_ios.co_simulation_io_factory as io_factory
 import numpy as np
 from co_simulation_tools import classprint, bold
 
@@ -21,6 +20,9 @@ class CosimulationBasePredictor(object):
 
     def InitializeSolutionStep(self):
         pass
+
+    def Predict(self):
+        raise Exception('"Predict" has to be implemented in the derived class!')
 
     def FinalizeSolutionStep(self):
         pass
@@ -43,25 +45,9 @@ class CosimulationBasePredictor(object):
     def _Name(self):
         raise Exception('"_Name" has to be implemented in the derived class!')
 
+    def _UpdateData(self, updated_data):
+        for data_entry, data_update in zip(self.settings["data_list"], updated_data):
+            self._ExportData(data_entry, data_update)
 
-    #ATTENTION: Problem with private functions in classes:
-    # _ private method -> when calling it in subclass _functionname
-    # __very private method -> when calling it in subclass classname__function name might cause problems
-
-    def _ImportData(self, data_entry, buffer_index = 0):
-        data_name = data_entry["data_name"]
-        from_solver = data_entry["from_solver"]
-        data_definition = self.solvers[from_solver].GetDataDefinition(data_name)
-        old_buffer_index = 0
-        if "buffer_index" in data_definition:
-            old_buffer_index = data_definition["buffer_index"]
-        data_definition["buffer_index"] = buffer_index
-        data = self.io.ImportData(data_name, self.solvers[from_solver])
-        data_definition["buffer_index"] = old_buffer_index
-        return data
-
-    def _ExportData(self, data_entry, data_update):
-        data_name = data_entry["data_name"]
-        from_solver = data_entry["from_solver"] # This is "from_solver", bcs we give back the updated solution
-        return self.io.ExportData(data_name, self.solvers[from_solver], data_update)
-
+        if self.echo_level > 3:
+            cs_tools.classprint(self.lvl, self._Name(), "Computed prediction")

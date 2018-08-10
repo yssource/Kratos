@@ -12,7 +12,6 @@ class CosimulationBasePredictor(object):
         self.cosim_solver_details = cosim_solver_details
         self.lvl = level
         self.echo_level = 0
-        self.io = io_factory.CreateIO(settings, solvers, "None", cosim_solver_details, level)
 
     def Initialize(self):
         pass

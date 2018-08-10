@@ -4,12 +4,8 @@ from __future__ import print_function, absolute_import, division  # makes these 
 import KratosMultiphysics
 import KratosMultiphysics.MappingApplication as KratosMapping
 
-def Create(io_settings, solvers, solver_name, cosim_solver_details, level): # TODO is this dummy still needed?
-    return CoSimulationBaseIO(io_settings, solvers, solver_names, cosim_solver_details, level)
-
 class CoSimulationBaseIO(object):
-    def __init__(self, settings, solvers, solver_name, cosim_solver_details, level):
-        self.settings = settings
+    def __init__(self, solvers, solver_name, cosim_solver_details, level):
         self.solvers = solvers
         self.solver_name = solver_name
         self.cosim_solver_details = cosim_solver_details

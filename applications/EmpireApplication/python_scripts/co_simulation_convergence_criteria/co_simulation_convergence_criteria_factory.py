@@ -12,7 +12,6 @@ def CreateConvergenceCriteria(settings, solvers, cosim_solver_details, level):
 class CoSimulationConvergenceCriteria(object):
     def __init__(self, settings, solvers, cosim_solver_details, level):
         self.settings = settings
-        self.io = io_factory.CreateIO(settings, solvers, "None", cosim_solver_details, level)
         self.solvers = solvers
         self.echo_level = 0
         self.lvl = level

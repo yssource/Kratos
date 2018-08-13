@@ -173,6 +173,25 @@ class KratosIO(CoSimulationBaseIO):
 
                 mapper.Map(orig_var, dest_var, flags)
 
+        elif data_format == "single_value":
+            # TODO check if var in ModelPart!
+            # In this case the from_client is the solver itself
+            data_definition = from_client.GetDataDefinition(data_name)
+            geometry_name = data_definition["geometry_name"]
+            var_name = data_definition["data_identifier"]
+            value = data_settings["single_value"]
+
+            model_part = from_client.model[geometry_name]
+            kratos_var = KratosMultiphysics.KratosGlobals.GetVariable(var_name)
+
+            if type(kratos_var) == KratosMultiphysics.DoubleVariable or type(kratos_var) == KratosMultiphysics.Array1DComponentVariable:
+                for i, node in enumerate(Nodes(model_part)):
+                    node.SetSolutionStepValue(kratos_var, value)
+            else:
+                err_msg  = 'Type of variable "' + kratos_var.Name() + '" is not valid\n'
+                err_msg += 'It can only be double, component!'
+                raise Exception(err_msg)
+
         else:
             raise Exception("The requested data_format is not implemented in KratosIO!")
 

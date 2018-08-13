@@ -106,11 +106,11 @@
                 "data" : {
                     "disp" : {
                         "data_identifier" : "DISPLACEMENT",
-                        "data_format"     : "single_value"
+                        "data_format"     : "scalar_value"
                     },
                     "force" : {
                         "data_identifier" : "LOAD",
-                        "data_format"     : "single_value"
+                        "data_format"     : "scalar_value"
                     }
                 }
             }

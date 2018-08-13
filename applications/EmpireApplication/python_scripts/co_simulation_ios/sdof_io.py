@@ -32,6 +32,6 @@ class SDofIO(CoSimulationBaseIO):
 
         dx = 0.0 #sdof_solver.GetData(data_identifier)
 
-        data_settings["single_value"] = dx
+        data_settings["scalar_value"] = dx
 
         to_client.ImportData(data_settings, sdof_solver)

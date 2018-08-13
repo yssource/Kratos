@@ -21,13 +21,16 @@ class SDofIO(CoSimulationBaseIO):
 
         # Do sth with the data_array, sum etc ...?
 
-        sdof_solver.SetRHS(data_array) # this has to be somehow available, maybe through public interface?
+        data_identifier = data_settings["data_identifier"]
+        # sdof_solver.SetData(data_identifier, data)
 
 
     def ExportData(self, data_settings, to_client):
         sdof_solver = self.solvers[self.solver_name]
 
-        dx = sdof_solver.GetDx() # this has to be somehow available, maybe through public interface?
+        data_identifier = data_settings["data_identifier"]
+
+        dx = 0.0 #sdof_solver.GetData(data_identifier)
 
         data_settings["single_value"] = dx
 

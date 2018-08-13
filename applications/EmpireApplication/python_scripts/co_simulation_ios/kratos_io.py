@@ -185,7 +185,7 @@ class KratosIO(CoSimulationBaseIO):
             kratos_var = KratosMultiphysics.KratosGlobals.GetVariable(var_name)
 
             if type(kratos_var) == KratosMultiphysics.DoubleVariable or type(kratos_var) == KratosMultiphysics.Array1DComponentVariable:
-                for i, node in enumerate(Nodes(model_part)):
+                for node in Nodes(model_part):
                     node.SetSolutionStepValue(kratos_var, value)
             else:
                 err_msg  = 'Type of variable "' + kratos_var.Name() + '" is not valid\n'

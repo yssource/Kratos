@@ -94,6 +94,26 @@ class SDofSolver(CoSimulationBaseSolver):
     def GetDeltaTime(self):
         return self.delta_t
 
+    def SetData(self, identifier, data):
+        if identifier == "LOAD":
+            # self.RHS_matrix = ...
+            pass
+        elif identifier == "DISPLACEMENT":
+            # self... = ...
+            pass
+        else:
+            raise Exception("Identifier is unknown!")
+
+    def GetData(self, identifier):
+        if identifier == "LOAD":
+            # return self.RHS_matrix = ... ????
+            pass
+        elif identifier == "DISPLACEMENT":
+            #  return self... ????
+            pass
+        else:
+            raise Exception("Identifier is unknown!")
+
     def _GetIOName(self):
         return "sdof"
 

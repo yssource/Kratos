@@ -14,12 +14,19 @@ class SDofIO(CoSimulationBaseIO):
 
     def ImportData(self, data_settings, from_client):
         data_name = data_settings["data_name"]
+        io_settings = data_settings["io_settings"]
         data_array = np.array([])
         cs_tools.ImportArrayFromSolver(from_client, data_name, data_array)
 
         sdof_solver = self.solvers[self.solver_name]
 
         # Do sth with the data_array, sum etc ...?
+
+        value = sum(data_array) ...?
+
+        if "io_options" in io_settings:
+            if "swap_sign" in io_settings["io_options"]:
+                value *= -1.0
 
         data_identifier = data_settings["data_identifier"]
         # sdof_solver.SetData(data_identifier, data)

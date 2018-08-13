@@ -33,6 +33,8 @@ class SDofIO(CoSimulationBaseIO):
 
 
     def ExportData(self, data_settings, to_client):
+        if not data_settings["data_format"] == "scalar_value":
+            raise Exception('SDofIO can only handle scalar values')
         sdof_solver = self.solvers[self.solver_name]
 
         data_identifier = data_settings["data_identifier"]

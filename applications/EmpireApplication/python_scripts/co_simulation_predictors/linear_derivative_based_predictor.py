@@ -16,7 +16,7 @@ class LinearDerivativeBasedPredictor(CosimulationBasePredictor):
         # TODO add comment why we do this
         num_data = len(self.settings["data_list"])
         self.data_arrays            = [np.array([]) for e in range(num_data)]
-        self.derivative_data_arrays = [np.array([]) for e in range(num_data)] # Should this be velocity of mesh_velocity?
+        self.derivative_data_arrays = [np.array([]) for e in range(num_data)]
 
         # TODO check buffer size!
 

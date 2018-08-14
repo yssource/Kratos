@@ -15,8 +15,8 @@ class StandardLinearPredictor(CosimulationBasePredictor):
         super(StandardLinearPredictor, self).__init__(settings, solvers, level)
         # TODO add comment why we do this
         num_data = len(self.settings["data_list"])
+        self.data_arrays_t0 = [np.array([]) for e in range(num_data)]
         self.data_arrays_t1 = [np.array([]) for e in range(num_data)]
-        self.data_arrays_t2 = [np.array([]) for e in range(num_data)]
 
         # TODO check buffer size!
 
@@ -24,12 +24,12 @@ class StandardLinearPredictor(CosimulationBasePredictor):
         for i, data_entry in enumerate(self.settings["data_list"]):
             solver = self.solvers[data_entry["solver"]]
             data_name = data_entry["data_name"]
-            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays_t1[i], 1) # should be 0/1 ?
-            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays_t2[i], 2) # should be 1/2 ?
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays_t0[i], 0) 
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays_t1[i], 1) 
 
-            self.data_arrays_t1[i] = 2*self.data_arrays_t1[i] - data_arrays_t2[i]
+            self.data_arrays_t0[i] = 2*self.data_arrays_t0[i] - data_arrays_t1[i]
 
-        self._UpdateData(self.data_arrays_t1)
+        self._UpdateData(self.data_arrays_t0)
 
     def _Name(self):
         return self.__class__.__name__

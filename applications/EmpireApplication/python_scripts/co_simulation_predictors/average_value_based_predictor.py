@@ -35,8 +35,8 @@ class AverageValuePredictor(CosimulationBasePredictor):
         for i, data_entry in enumerate(self.settings["data_list"]):
             solver = self.solvers[data_entry["solver"]]
             data_name = data_entry["data_name"]
-            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays_prediction[i], 1) # should be 0/1 ?
-            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays_aux[i], 2) # should be 1/2 ?
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays_prediction[i], 0) 
+            cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays_aux[i], 1) 
 
             self.data_arrays_prediction[i] = 2*self.data_arrays_prediction[i] - self.data_arrays_aux[i]
 
@@ -48,9 +48,9 @@ class AverageValuePredictor(CosimulationBasePredictor):
             data_name = data_entry["data_name"]
             cs_tools.ImportArrayFromSolver(solver, data_name, self.data_arrays_aux[i], 0)
 
-            self.data_arrays_aux[i] *= self.beta + (1-self.beta) * self.data_arrays_prediction[i]
+            self.data_arrays_prediction[i] = self.beta * self.data_arrays_aux[i] + (1-self.beta) * self.data_arrays_prediction[i]
 
-        self._UpdateData(self.data_arrays_aux)
+        self._UpdateData(self.data_arrays_prediction)
 
 
     def _Name(self):

@@ -7,7 +7,7 @@
     "time_integration_parameters":{
         "alpha_m": -0.5,
         "alpha_f":  -0.5,
-        "time_step": 0.10
+        "time_step": 0.01
     },
      "initial_values":{
         "displacement": 0.0,
@@ -15,6 +15,6 @@
      },
      "boundary_conditions":{
         "external_load": 1.0
-     }   
+     }
 
 }

@@ -8,7 +8,7 @@ import KratosMultiphysics.EmpireApplication
 from co_simulation_analysis import CoSimulationAnalysis
 import json
 
-parameter_file_name = "project_parameters_cosim_pure_SDof.json"
+parameter_file_name = "project_parameters_cosim_pure_SDoF.json"
 parameter_file_name = "project_parameters_cosim_pure_fluid.json"
 parameter_file_name = "project_parameters_cosim_oscilating_cylinder_fsi.json"
 

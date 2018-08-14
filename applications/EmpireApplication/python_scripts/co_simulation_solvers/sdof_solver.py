@@ -13,7 +13,7 @@ def CreateSolver(cosim_solver_settings, level):
 
 class SDofSolver(CoSimulationBaseSolver):
     def __init__(self, cosim_solver_settings, level):
-        super(SDofSolver, self).__init__(cosim_solver_settings, level)
+        super(SDofSolver, self).__init__(cosim_solver_settings, level, buffer_size=3)
 
         input_file_name = self.cosim_solver_settings["input_file"]
         if not input_file_name.endswith(".json"):
@@ -54,8 +54,11 @@ class SDofSolver(CoSimulationBaseSolver):
                                       -self.alpha_f * self.damping,
                                       -self.alpha_m * self.mass]])
 
+        self.buffer_size = buffer_size
+
     def Initialize(self):
-        self.x = np.zeros(3)
+        self.x = np.zeros((3, self.buffer_size))
+
         initial_values = np.array([self.initial_displacement,
                                    self.initial_velocity,
                                    self.initial_acceleration])
@@ -77,40 +80,68 @@ class SDofSolver(CoSimulationBaseSolver):
             results_sdof.write(str(self.time) + "\t" + str(self.dx[0]) + "\n")
 
     def AdvanceInTime(self, current_time):
-        self.x = self.dx
+        # similar to the Kratos CloneTimeStep function
+        # advances values along the buffer axis (so rolling columns) using numpy's roll
+        self.x = np.roll(self.x,1,axis=1)
+        # overwriting at the buffer_idx=0 the newest values
+        #buffer_idx = 0
+        #self.x[:,buffer_idx] = self.dx
+        self.x[:,0] = self.dx
+
         self.time = current_time + self.delta_t
         return self.time
 
     def SolveSolutionStep(self):
-        b = self.RHS_matrix @ self.x
+        b = self.RHS_matrix @ self.x[:,0]
 
         #external load only for testing
         b += self.load_vector
         self.dx = np.linalg.solve(self.LHS, b)
 
     def GetBufferSize(self):
-        return 1 # TODO make it use a buffer!
+        return self.buffer_size
 
     def GetDeltaTime(self):
         return self.delta_t
 
+    def GetSolutionStepValue(identifier, buffer_idx=0):
+        if identifier == "DISPLACMENT":
+            return self.x[:,buffer_idx][0]
+        elif identifier == "VELOCITY":
+            return self.x[:,buffer_idx][1]
+        elif identifier == "ACCELERATION":
+            return self.x[:,buffer_idx][2]
+        else:
+            raise Exception("Identifier is unknown!")
+
+    def SetSolutionStepValue(identifier, value, buffer_idx=0):
+        if identifier == "DISPLACMENT":
+            self.x[:,buffer_idx][0] = value
+        elif identifier == "VELOCITY":
+            self.x[:,buffer_idx][1] = value
+        elif identifier == "ACCELERATION":
+            self.x[:,buffer_idx][2] = value
+        else:
+            raise Exception("Identifier is unknown!")
+
     def SetData(self, identifier, data):
         if identifier == "LOAD":
-            # self.RHS_matrix = ...
-            pass
+            # last index is the external force
+            self.load_vector[-1] = data
         elif identifier == "DISPLACEMENT":
-            # self... = ...
-            pass
+            # first index is displacement
+            # maybe use buffer index
+            self.SetSolutionStepValue("DISPLACEMENT", data,0)
         else:
             raise Exception("Identifier is unknown!")
 
     def GetData(self, identifier):
         if identifier == "LOAD":
-            # return self.RHS_matrix = ... ????
-            pass
+            # last index is the external force
+            return self.load_vector[-1]
         elif identifier == "DISPLACEMENT":
-            #  return self... ????
-            pass
+            # first index is displacement
+            return self.GetSolutionStepValue("DISPLACEMENT",0)
         else:
             raise Exception("Identifier is unknown!")
 

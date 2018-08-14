@@ -20,7 +20,7 @@ class AverageValuePredictor(CosimulationBasePredictor):
         super(AverageValuePredictor, self).__init__(settings, solvers, level)
         if "beta" in self.settings:
             self.beta = self.settings["beta"]
-            if self.beta > 1.0:
+            if self.beta > 1.0 or self.beta < 0:
                 raise Exception("Wrong value for beta. Admissible interval [0.0, 1.0]")
         else:
             self.beta = 0.5

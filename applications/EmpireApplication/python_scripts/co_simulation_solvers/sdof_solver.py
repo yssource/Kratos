@@ -12,8 +12,8 @@ def CreateSolver(cosim_solver_settings, level):
     return SDofSolver(cosim_solver_settings, level)
 
 class SDofSolver(CoSimulationBaseSolver):
-    def __init__(self, cosim_solver_settings, level):
-        super(SDofSolver, self).__init__(cosim_solver_settings, level, buffer_size=3)
+    def __init__(self, cosim_solver_settings, level, buffer_size=3):
+        super(SDofSolver, self).__init__(cosim_solver_settings, level)
 
         input_file_name = self.cosim_solver_settings["input_file"]
         if not input_file_name.endswith(".json"):

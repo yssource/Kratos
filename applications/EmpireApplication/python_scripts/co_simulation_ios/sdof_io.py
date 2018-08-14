@@ -20,16 +20,14 @@ class SDofIO(CoSimulationBaseIO):
 
         sdof_solver = self.solvers[self.solver_name]
 
-        # Do sth with the data_array, sum etc ...?
-
-        value = sum(data_array) ...?
+        value = sum(data_array)
 
         if "io_options" in io_settings:
             if "swap_sign" in io_settings["io_options"]:
                 value *= -1.0
 
         data_identifier = data_settings["data_identifier"]
-        # sdof_solver.SetData(data_identifier, data)
+        sdof_solver.SetData(data_identifier, value)
 
 
     def ExportData(self, data_settings, to_client):
@@ -39,8 +37,8 @@ class SDofIO(CoSimulationBaseIO):
 
         data_identifier = data_settings["data_identifier"]
 
-        dx = 0.0 #sdof_solver.GetData(data_identifier)
+        x = sdof_solver.GetData(data_identifier)
 
-        data_settings["scalar_value"] = dx
+        data_settings["scalar_value"] = x
 
         to_client.ImportData(data_settings, sdof_solver)

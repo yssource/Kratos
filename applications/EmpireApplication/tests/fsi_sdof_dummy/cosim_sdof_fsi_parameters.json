@@ -19,8 +19,8 @@
             [
                 {
                     "solver": "fluid",
-                    "data_name"  : "disp",
-                    "derivative_data_name"  : "vel"
+                    "data_name"  : "disp_y",
+                    "derivative_data_name"  : "vel_y"
                 }
 
             ]
@@ -32,7 +32,7 @@
             [
                 {
                     "solver"   : "fluid",
-                    "data_name"     : "disp"
+                    "data_name"     : "disp_y"
                 }
             ]
         },
@@ -42,7 +42,7 @@
             [
                 {
                     "solver"   : "fluid",
-                    "data_name"     : "disp",
+                    "data_name"     : "disp_y",
                     "abs_tolerance" : 1e-5,
                     "rel_tolerance" : 1e-5
                 }
@@ -60,7 +60,7 @@
             "input_data_list": [
                 {
                     "from_solver" : "fluid",
-                    "data_name"   : "force",
+                    "data_name"   : "force_y",
                     "io_settings"   : {
                         "io_options" : ["swap_sign"]
                     }
@@ -70,7 +70,7 @@
             "output_data_list": [
                 {
                     "to_solver" : "fluid",
-                    "data_name"   : "disp",
+                    "data_name"   : "disp_y",
                     "io_settings"   : { }
                 }
             ]
@@ -83,19 +83,19 @@
                 "solver_type" : "kratos_fluid",
                 "input_file"  : "fsi_mok/ProjectParametersCFD",
                 "data" : {
-                    "disp" : {
+                    "disp_y" : {
                         "geometry_name"   : "FluidModelPart.NoSlip2D_FSI",
-                        "data_identifier" : "MESH_DISPLACEMENT",
+                        "data_identifier" : "MESH_DISPLACEMENT_Y",
                         "data_format"     : "kratos_modelpart"
                     },
-                    "force" : {
+                    "force_y" : {
                         "geometry_name"   : "FluidModelPart.NoSlip2D_FSI",
-                        "data_identifier" : "REACTION",
+                        "data_identifier" : "REACTION_Y",
                         "data_format"     : "kratos_modelpart"
                     },
-                    "vel" : {
+                    "vel_y" : {
                         "geometry_name"   : "FluidModelPart.NoSlip2D_FSI",
-                        "data_identifier" : "VELOCITY",
+                        "data_identifier" : "VELOCITY_Y",
                         "data_format"     : "kratos_modelpart"
                     }
                 }

@@ -7,6 +7,6 @@
     "solver_settings" :
     {
         "solver_type" : "sdof",
-        "input_file"  : "ProjectParametersSDof"
+        "input_file"  : "ProjectParametersSDoF"
     }
 }

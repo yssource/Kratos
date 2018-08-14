@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
 # Importing the base class
-from co_simulation_base_solver import CoSimulationBaseSolver
+from co_simulation_solvers.co_simulation_base_solver import CoSimulationBaseSolver
 
 # Other imports
 import numpy as np
@@ -9,11 +9,11 @@ import json
 import os
 
 def CreateSolver(cosim_solver_settings, level):
-    return SDofSolver(cosim_solver_settings, level)
+    return SDoFSolver(cosim_solver_settings, level)
 
-class SDofSolver(CoSimulationBaseSolver):
+class SDoFSolver(CoSimulationBaseSolver):
     def __init__(self, cosim_solver_settings, level, buffer_size=3):
-        super(SDofSolver, self).__init__(cosim_solver_settings, level)
+        super(SDoFSolver, self).__init__(cosim_solver_settings, level)
 
         input_file_name = self.cosim_solver_settings["input_file"]
         if not input_file_name.endswith(".json"):
@@ -92,7 +92,9 @@ class SDofSolver(CoSimulationBaseSolver):
         return self.time
 
     def SolveSolutionStep(self):
-        b = self.RHS_matrix @ self.x[:,0]
+        ## PMT: ToDo: check with Andreas what this intends to do
+        #b = self.RHS_matrix @ self.x[:,0]
+        b = np.dot(self.RHS_matrix,self.x[:,0])
 
         #external load only for testing
         b += self.load_vector
@@ -104,8 +106,8 @@ class SDofSolver(CoSimulationBaseSolver):
     def GetDeltaTime(self):
         return self.delta_t
 
-    def GetSolutionStepValue(identifier, buffer_idx=0):
-        if identifier == "DISPLACMENT":
+    def GetSolutionStepValue(self, identifier, buffer_idx=0):
+        if identifier == "DISPLACEMENT":
             return self.x[:,buffer_idx][0]
         elif identifier == "VELOCITY":
             return self.x[:,buffer_idx][1]
@@ -114,8 +116,8 @@ class SDofSolver(CoSimulationBaseSolver):
         else:
             raise Exception("Identifier is unknown!")
 
-    def SetSolutionStepValue(identifier, value, buffer_idx=0):
-        if identifier == "DISPLACMENT":
+    def SetSolutionStepValue(self, identifier, value, buffer_idx=0):
+        if identifier == "DISPLACEMENT":
             self.x[:,buffer_idx][0] = value
         elif identifier == "VELOCITY":
             self.x[:,buffer_idx][1] = value

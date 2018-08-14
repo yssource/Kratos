@@ -7,10 +7,10 @@ from co_simulation_base_io import CoSimulationBaseIO
 import numpy as np
 import co_simulation_tools as cs_tools
 
-def Create(io_settings, solvers, solver_name, cosim_solver_details, level):
-    return SDofIO(io_settings, solvers, solver_name, cosim_solver_details, level)
+def Create(solvers, solver_name, cosim_solver_details, level):
+    return SDoFIO(solvers, solver_name, cosim_solver_details, level)
 
-class SDofIO(CoSimulationBaseIO):
+class SDoFIO(CoSimulationBaseIO):
 
     def ImportData(self, data_settings, from_client):
         data_name = data_settings["data_name"]
@@ -19,6 +19,7 @@ class SDofIO(CoSimulationBaseIO):
         cs_tools.ImportArrayFromSolver(from_client, data_name, data_array)
 
         sdof_solver = self.solvers[self.solver_name]
+        sdof_data_settings = sdof_solver.GetDataDefinition(data_settings["data_name"])
 
         value = sum(data_array)
 
@@ -26,16 +27,20 @@ class SDofIO(CoSimulationBaseIO):
             if "swap_sign" in io_settings["io_options"]:
                 value *= -1.0
 
-        data_identifier = data_settings["data_identifier"]
+        data_identifier = sdof_data_settings["data_identifier"]
         sdof_solver.SetData(data_identifier, value)
 
 
     def ExportData(self, data_settings, to_client):
-        if not data_settings["data_format"] == "scalar_value":
-            raise Exception('SDofIO can only handle scalar values')
+        sdof_solver = self.solvers[self.solver_name]
+        sdof_data_settings = sdof_solver.GetDataDefinition(data_settings["data_name"])
+
+        if not sdof_data_settings["data_format"] == "scalar_value":
+            raise Exception('SDoFIO can only handle scalar values')
         sdof_solver = self.solvers[self.solver_name]
 
-        data_identifier = data_settings["data_identifier"]
+        data_identifier = sdof_data_settings["data_identifier"]
+
 
         x = sdof_solver.GetData(data_identifier)
 

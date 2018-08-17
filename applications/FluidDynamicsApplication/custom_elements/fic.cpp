@@ -228,6 +228,7 @@ void FIC<TElementData>::GetValueOnIntegrationPoints(
                 
                 rValues[g] = TauIncompr;
             }
+        }
     }
     else {
         FluidElement<TElementData>::GetValueOnIntegrationPoints(rVariable,rValues,rCurrentProcessInfo);

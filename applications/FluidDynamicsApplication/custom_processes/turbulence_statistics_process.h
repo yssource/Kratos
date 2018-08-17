@@ -147,7 +147,6 @@ public:
             ProcessInfo& rProcessInfo = mpModelPart->GetProcessInfo();
             //for ( ModelPart::ElementIterator i = mpModelPart->GetCommunicator().LocalMesh().ElementsBegin();
             //      i != mpModelPart->GetCommunicator().LocalMesh().ElementsEnd(); i++)
-            #pragma omp parallel for
             for (int j = 0; j < static_cast<int>(mpModelPart->GetCommunicator().LocalMesh().Elements().size()); j++)
             {
                 auto i = mpModelPart->GetCommunicator().LocalMesh().ElementsBegin() + j;
@@ -198,7 +197,6 @@ public:
         //for ( ModelPart::ElementIterator i = mpModelPart->GetCommunicator().LocalMesh().ElementsBegin();
         //      i != mpModelPart->GetCommunicator().LocalMesh().ElementsEnd(); i++)
         //{
-        #pragma omp parallel for
         for (int j = 0; j < static_cast<int>(mpModelPart->GetCommunicator().LocalMesh().Elements().size()); j++)
         {
             auto i = mpModelPart->GetCommunicator().LocalMesh().ElementsBegin() + j;

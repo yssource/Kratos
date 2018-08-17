@@ -196,6 +196,39 @@ void FIC<TElementData>::GetValueOnIntegrationPoints(
             }
         }
     }
+    else if (rVariable == TAU)
+    {
+        unsigned int NumSteps = rCurrentProcessInfo.GetValue(RECORDED_STEPS);
+        if (NumSteps > 0)
+        {
+            // Get Shape function data
+            Vector gauss_weights;
+            Matrix shape_functions;
+            ShapeFunctionDerivativesArrayType shape_derivatives;
+            this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
+            const unsigned int number_of_gauss_points = gauss_weights.size();
+
+            TElementData data;
+            data.Initialize(*this, rCurrentProcessInfo);
+
+            // Prepare new set of data
+            rValues.resize(number_of_gauss_points);
+            
+            // Iterate over integration points to evaluate local contribution
+            for (unsigned int g = 0; g < number_of_gauss_points; g++)
+            {
+                data.UpdateGeometryValues(g, gauss_weights[g], row(shape_functions, g), shape_derivatives[g]);
+                this->CalculateMaterialResponse(data);
+
+                double TauIncompr;
+                double TauMomentum;
+                array_1d<double,3> convective_velocity = this->GetAtCoordinate(data.Velocity,data.N) - this->GetAtCoordinate(data.MeshVelocity,data.N);
+                array_1d<double,3> TauGrad(3,0.0);
+                this->CalculateTau(data,convective_velocity,TauIncompr,TauMomentum,TauGrad);
+                
+                rValues[g] = TauIncompr;
+            }
+    }
     else {
         FluidElement<TElementData>::GetValueOnIntegrationPoints(rVariable,rValues,rCurrentProcessInfo);
     }

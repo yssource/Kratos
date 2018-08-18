@@ -34,6 +34,7 @@ class SDoFIO(CoSimulationBaseIO):
     def ExportData(self, data_settings, to_client):
         sdof_solver = self.solvers[self.solver_name]
         sdof_data_settings = sdof_solver.GetDataDefinition(data_settings["data_name"])
+        sdof_data_settings["data_name"] = data_settings["data_name"]
 
         if not sdof_data_settings["data_format"] == "scalar_value":
             raise Exception('SDoFIO can only handle scalar values')
@@ -41,9 +42,8 @@ class SDoFIO(CoSimulationBaseIO):
 
         data_identifier = sdof_data_settings["data_identifier"]
 
-
         x = sdof_solver.GetData(data_identifier)
 
-        data_settings["scalar_value"] = x
+        sdof_data_settings["scalar_value"] = x
 
-        to_client.ImportData(data_settings, sdof_solver)
+        to_client.ImportData(sdof_data_settings, to_client)

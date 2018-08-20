@@ -27,7 +27,9 @@ class controlledExecutionScope:
 
 def assertAlmostEqual(a, b, tol=7):
     if abs(a-b) > 10**(-tol):
-        raise RuntimeError("ERROR: "+str(a)+"!="+str(b))
+        msg = "ERROR: "+str(a)+"!="+str(b)
+        print("#####", msg)
+        raise RuntimeError(msg)
 
 def assertEqualSignificantDigits(a, b, digits=7):
     epsilon = 10 ** (-digits)
@@ -51,13 +53,15 @@ class StructuralResponseFunctionTestFactory():
     file_name = None
 
     def test_execution(self):
+        print("\n\n\n", self.file_name, "\n\n\n")
+
         with controlledExecutionScope(_get_test_working_dir()):
             with open(self.file_name + "_parameters.json",'r') as parameter_file:
                 parameters = KratosMultiphysics.Parameters( parameter_file.read())
 
             # To avoid many prints
-            if (parameters["problem_data"]["echo_level"].GetInt() == 0):
-                KratosMultiphysics.Logger.GetDefaultOutput().SetSeverity(KratosMultiphysics.Logger.Severity.WARNING)
+            #if (parameters["problem_data"]["echo_level"].GetInt() == 0):
+            #    KratosMultiphysics.Logger.GetDefaultOutput().SetSeverity(KratosMultiphysics.Logger.Severity.WARNING)
 
             problem_name = parameters["problem_data"]["problem_name"].GetString()
             model_part = KratosMultiphysics.ModelPart(problem_name)

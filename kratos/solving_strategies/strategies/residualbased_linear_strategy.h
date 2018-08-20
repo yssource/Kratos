@@ -572,6 +572,8 @@ public:
             TSparseSpace::SetToZero(rb);
             p_builder_and_solver->BuildRHSAndSolve(p_scheme, BaseType::GetModelPart(), rA, rDx, rb);
         }
+        KRATOS_WATCH(rb)
+        KRATOS_WATCH(rDx)
 
         // Debugging info
         EchoInfo();

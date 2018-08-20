@@ -101,6 +101,8 @@ class StructuralMechanicsAdjointStaticSolver(structural_mechanics_solver.Mechani
             print("###########################")
             print(self.get_mechanical_solution_strategy().GetSystemMatrix())
             print(self.get_mechanical_solution_strategy().GetSystemVector())
+            print("Result")
+            print(self.main_model_part.Nodes[5].GetSolutionStepValue(StructuralMechanicsApplication.ADJOINT_DISPLACEMENT_Z))
         #after adjoint solution, calculate sensitivities
         self.response_function.UpdateSensitivities()
 

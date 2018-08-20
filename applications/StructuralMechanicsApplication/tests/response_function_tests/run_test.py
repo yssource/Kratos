@@ -119,17 +119,17 @@ class TestAdjointDisplacementResponseFunction(StructuralResponseFunctionTestFact
     file_name = "adjoint_displacement_response"
     def check_adjoint_results(self):
         model_part = self.response_function.adjoint_analysis.model.GetModelPart("rectangular_plate_structure")
-        assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_X), 0.002066210153607285)
-        assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Y), -0.011029965375808417)
-        assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Z), 848937255296856.5, 0)
-        assertAlmostEqual(model_part.Nodes[4].GetSolutionStepValue(ADJOINT_ROTATION_Y), 1074072620275636.6, 1)
+        assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_X), 0.0, 12)
+        assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Y), 0.0, 12)
+        assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Z), 0.012125502238309537)
+        assertAlmostEqual(model_part.Nodes[4].GetSolutionStepValue(ADJOINT_ROTATION_Y), -0.029186453309188263)
 
         assertAlmostEqual(self.value, 0.12125502238309535)
 
         nodeId = 4
-        assertAlmostEqual(self.gradient[nodeId][0], 4606630193431041.0, 1)
-        assertAlmostEqual(self.gradient[nodeId][1], -3437439892577506.5, 1)
-        assertAlmostEqual(self.gradient[nodeId][2], 109416816589.21535, 3)
+        assertAlmostEqual(self.gradient[nodeId][0], -0.22649691062364785)
+        assertAlmostEqual(self.gradient[nodeId][1], 0.03549149963347915)
+        assertAlmostEqual(self.gradient[nodeId][2], -2.4598478882490207e-06, 9)
 
 class TestAdjointStressResponseFunction(StructuralResponseFunctionTestFactory):
     file_name = "adjoint_stress_response"
@@ -137,15 +137,15 @@ class TestAdjointStressResponseFunction(StructuralResponseFunctionTestFactory):
         model_part = self.response_function.adjoint_analysis.model.GetModelPart("rectangular_plate_structure")
         assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_X), 0.0, 12)
         assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Y), 0.0, 12)
-        assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Z), -9.214139010814566)
-        assertAlmostEqual(model_part.Nodes[4].GetSolutionStepValue(ADJOINT_ROTATION_Y), -10.067366766435335)
+        assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Z), -0.0823339298948347)
+        assertAlmostEqual(model_part.Nodes[4].GetSolutionStepValue(ADJOINT_ROTATION_Y), 0.5348048603644553)
 
         assertAlmostEqual(self.value, -0.8233392989483465)
 
         nodeId = 4
-        assertAlmostEqual(self.gradient[nodeId][0], -44.75162477207098)
-        assertAlmostEqual(self.gradient[nodeId][1], 35.41550784871731)
-        assertAlmostEqual(self.gradient[nodeId][2], -0.001090572613458298, 9)
+        assertAlmostEqual(self.gradient[nodeId][0], 0.3527576390219701)
+        assertAlmostEqual(self.gradient[nodeId][1], -0.6917252774393834)
+        assertAlmostEqual(self.gradient[nodeId][2], 1.1013492791909624e-05, 9)
 
 
 if __name__ == "__main__":

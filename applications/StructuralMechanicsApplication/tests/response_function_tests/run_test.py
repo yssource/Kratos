@@ -41,10 +41,10 @@ def assertEqualSignificantDigits(a, b, digits=7):
         raise RuntimeError("ERROR: "+str(a)+"!="+str(b))
 
 def check_primal_results(model_part):
-    assertEqualSignificantDigits(model_part.Nodes[5].GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_X), 0.0)
-    assertEqualSignificantDigits(model_part.Nodes[5].GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_Y), 0.0)
-    assertEqualSignificantDigits(model_part.Nodes[5].GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_Z), 0.0023682621559198303)
-    assertEqualSignificantDigits(model_part.Nodes[4].GetSolutionStepValue(KratosMultiphysics.ROTATION_Y), -0.005700479161950828)
+    assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_X), 0.0)
+    assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_Y), 0.0)
+    assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(KratosMultiphysics.DISPLACEMENT_Z), 0.0023682621559198303)
+    assertAlmostEqual(model_part.Nodes[4].GetSolutionStepValue(KratosMultiphysics.ROTATION_Y), -0.005700479161950828)
 
 class StructuralResponseFunctionTestFactory():
 
@@ -104,44 +104,45 @@ class TestAdjointStrainEnergyResponseFunction(StructuralResponseFunctionTestFact
     file_name = "adjoint_strain_energy_response"
 
     def check_adjoint_results(self):
-        assertEqualSignificantDigits(self.value, 0.011841310779599155)
+        assertAlmostEqual(self.value, 0.011841310779599155)
 
         nodeId = 4
-        assertEqualSignificantDigits(self.gradient[nodeId][0], -0.02211883892695645, 7)
-        assertEqualSignificantDigits(self.gradient[nodeId][1], 0.0034659667625643337, 7)
-        assertEqualSignificantDigits(self.gradient[nodeId][2], -3.942528133752394e-07, 7)
+        assertAlmostEqual(self.gradient[nodeId][0], -0.02211883892695645)
+        assertAlmostEqual(self.gradient[nodeId][1], 0.0034659667625643337)
+        assertAlmostEqual(self.gradient[nodeId][2], -3.942528133752394e-07, 12)
 
 class TestAdjointDisplacementResponseFunction(StructuralResponseFunctionTestFactory):
     file_name = "adjoint_displacement_response"
     def check_adjoint_results(self):
         model_part = self.response_function.adjoint_analysis.model.GetModelPart("rectangular_plate_structure")
-        assertEqualSignificantDigits(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_X), 0.00011007358655353125)
-        assertEqualSignificantDigits(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Y), -0.00019567412134447555)
-        assertEqualSignificantDigits(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Z), -3216405525244.02)
-        assertEqualSignificantDigits(model_part.Nodes[4].GetSolutionStepValue(ADJOINT_ROTATION_Y), 8198364044238.647)
+        assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_X), 0.00011007358655353125)
+        assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Y), -0.00019567412134447555)
+        assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Z), -3216405525244.02, 0)
+        assertAlmostEqual(model_part.Nodes[4].GetSolutionStepValue(ADJOINT_ROTATION_Y), 8198364044238.647, 1)
 
-        assertEqualSignificantDigits(self.value, 0.0023682621559198303)
+        assertAlmostEqual(self.value, 0.0023682621559198303)
 
         nodeId = 4
-        assertEqualSignificantDigits(self.gradient[nodeId][0], 35162269878424.273, 7)
-        assertEqualSignificantDigits(self.gradient[nodeId][1], 4507732710819.046, 7)
-        assertEqualSignificantDigits(self.gradient[nodeId][2], 1125096436.1808963, 7)
+        assertAlmostEqual(self.gradient[nodeId][0], 35162269878424.273, 1)
+        assertAlmostEqual(self.gradient[nodeId][1], 4507732710819.046, 1)
+        assertAlmostEqual(self.gradient[nodeId][2], 1125096436.1808963, 3)
 
 class TestAdjointStressResponseFunction(StructuralResponseFunctionTestFactory):
     file_name = "adjoint_stress_response"
     def check_adjoint_results(self):
         model_part = self.response_function.adjoint_analysis.model.GetModelPart("rectangular_plate_structure")
-        assertEqualSignificantDigits(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_X), -3.4423476111614904e-17)
-        assertEqualSignificantDigits(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Y), 6.278340199159814e-17)
-        assertEqualSignificantDigits(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Z), 0.9126590318076583)
-        assertEqualSignificantDigits(model_part.Nodes[4].GetSolutionStepValue(ADJOINT_ROTATION_Y), -1.6105506659693518)
+        assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_X), -3.4423476111614904e-17, 12)
+        assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Y), 6.278340199159814e-17, 12)
+        assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Z), 0.9126590318076583)
+        assertAlmostEqual(model_part.Nodes[4].GetSolutionStepValue(ADJOINT_ROTATION_Y), -1.6105506659693518)
 
-        assertEqualSignificantDigits(self.value, -0.8233392989483465)
+    def
+        assertAlmostEqual(self.value, -0.8233392989483465)
 
         nodeId = 4
-        assertEqualSignificantDigits(self.gradient[nodeId][0], -8.480870212810133, 7)
-        assertEqualSignificantDigits(self.gradient[nodeId][1], -2.6870951672193213, 7)
-        assertEqualSignificantDigits(self.gradient[nodeId][2], -0.0002913758359272386, 7)
+        assertAlmostEqual(self.gradient[nodeId][0], -8.480870212810133)
+        assertAlmostEqual(self.gradient[nodeId][1], -2.6870951672193213)
+        assertAlmostEqual(self.gradient[nodeId][2], -0.0002913758359272386, 9)
 
 
 if __name__ == "__main__":

@@ -109,7 +109,7 @@ class TestAdjointStrainEnergyResponseFunction(StructuralResponseFunctionTestFact
         nodeId = 4
         assertAlmostEqual(self.gradient[nodeId][0], -0.02211883892695645)
         assertAlmostEqual(self.gradient[nodeId][1], 0.0034659667625643337)
-        assertAlmostEqual(self.gradient[nodeId][2], -3.942528133752394e-07, 12)
+        assertAlmostEqual(self.gradient[nodeId][2], -3.942528133752394e-07, 10)
 
 class TestAdjointDisplacementResponseFunction(StructuralResponseFunctionTestFactory):
     file_name = "adjoint_displacement_response"
@@ -136,7 +136,6 @@ class TestAdjointStressResponseFunction(StructuralResponseFunctionTestFactory):
         assertAlmostEqual(model_part.Nodes[5].GetSolutionStepValue(ADJOINT_DISPLACEMENT_Z), 0.9126590318076583)
         assertAlmostEqual(model_part.Nodes[4].GetSolutionStepValue(ADJOINT_ROTATION_Y), -1.6105506659693518)
 
-    def
         assertAlmostEqual(self.value, -0.8233392989483465)
 
         nodeId = 4

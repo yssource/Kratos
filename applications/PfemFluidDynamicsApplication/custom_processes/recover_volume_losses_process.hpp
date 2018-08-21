@@ -116,113 +116,120 @@ namespace Kratos
       double initialVolume=0;
       double currentVolume=0;
       double volumeLoss=0;
+      // if(currentTime<2.5){
+      // 	currentVolume=ModelerUtils.ComputeModelPartVolume(mrModelPart);
+      // 	mrRemesh.Info->InitialMeshVolume=currentVolume;
+      // 	initialVolume=ModelerUtils.ComputeModelPartVolume(mrModelPart);
+      // 	std::cout<<" InitialVolume "<<initialVolume<<" currentVolume "<<currentVolume<<std::endl;
+      // }
+      if(currentTime<10.0){
 	
-      if(currentTime<=2*timeInterval){
-	initialVolume=ModelerUtils.ComputeModelPartVolume(mrModelPart);
-	if( mEchoLevel > 0 )
-	  std::cout<<"setting                                InitialVolume "<<initialVolume<<std::endl;
-	mrRemesh.Info->SetInitialMeshVolume(initialVolume);
-      }
-
-      if(currentTime>2*timeInterval){
-
-	initialVolume=mrRemesh.Info->InitialMeshVolume;
-	currentVolume=ModelerUtils.ComputeModelPartVolume(mrModelPart);
-	volumeLoss=initialVolume-currentVolume;
-	if( mEchoLevel > 0 ){
-	  std::cout<<" InitialVolume "<<initialVolume<<" currentVolume "<<currentVolume<<"-->  volumeLoss "<<volumeLoss<<std::endl;
+	if(currentTime<=2*timeInterval){
+	  initialVolume=ModelerUtils.ComputeModelPartVolume(mrModelPart);
+	  if( mEchoLevel > 0 )
+	    std::cout<<"setting                                InitialVolume "<<initialVolume<<std::endl;
+	  mrRemesh.Info->SetInitialMeshVolume(initialVolume);
 	}
-	double freeSurfaceLength=0;
 
-	/////////////////////////        compute the free-surface length         /////////////////////////
-	ModelPart::ElementsContainerType::iterator element_begin = mrModelPart.ElementsBegin();	  
-	//ModelPart::NodesContainerType::iterator nodes_begin = mrModelPart.NodesBegin();
-	const unsigned int nds = element_begin->GetGeometry().size();
-	for(ModelPart::ElementsContainerType::const_iterator ie = element_begin; ie != mrModelPart.ElementsEnd(); ie++)
-	  {
-	    unsigned int freesurfaceNodes=0;
-	    double freeSurfaceElementalSize=0;
-	    for(unsigned int pn=0; pn<nds; pn++)
-	      {
-		// if(ie->GetGeometry()[pn].Is(FREE_SURFACE)){
-		if(ie->GetGeometry()[pn].Is(BOUNDARY) && ie->GetGeometry()[pn].IsNot(RIGID) && ie->GetGeometry()[pn].Is(FLUID)){
-		  freesurfaceNodes++;
+	if(currentTime>2*timeInterval){
+
+	  initialVolume=mrRemesh.Info->InitialMeshVolume;
+	  currentVolume=ModelerUtils.ComputeModelPartVolume(mrModelPart);
+	  volumeLoss=initialVolume-currentVolume;
+	  if( mEchoLevel > 0 ){
+	    std::cout<<" InitialVolume "<<initialVolume<<" currentVolume "<<currentVolume<<"-->  volumeLoss "<<volumeLoss<<std::endl;
+	  }
+	  double freeSurfaceLength=0;
+
+	  /////////////////////////        compute the free-surface length         /////////////////////////
+	  ModelPart::ElementsContainerType::iterator element_begin = mrModelPart.ElementsBegin();	  
+	  //ModelPart::NodesContainerType::iterator nodes_begin = mrModelPart.NodesBegin();
+	  const unsigned int nds = element_begin->GetGeometry().size();
+	  for(ModelPart::ElementsContainerType::const_iterator ie = element_begin; ie != mrModelPart.ElementsEnd(); ie++)
+	    {
+	      unsigned int freesurfaceNodes=0;
+	      double freeSurfaceElementalSize=0;
+	      for(unsigned int pn=0; pn<nds; pn++)
+		{
+		  // if(ie->GetGeometry()[pn].Is(FREE_SURFACE)){
+		  if(ie->GetGeometry()[pn].Is(BOUNDARY) && ie->GetGeometry()[pn].IsNot(RIGID) && ie->GetGeometry()[pn].Is(FLUID)){
+		    freesurfaceNodes++;
+		  }
 		}
-	      }
-	    if(dimension==2 && freesurfaceNodes==2){
-	      array_1d<double,3> CoorDifference(3,0.0);
-	      if(ie->GetGeometry()[0].Is(BOUNDARY) && ie->GetGeometry()[0].IsNot(RIGID) &&
-		 ie->GetGeometry()[1].Is(BOUNDARY) && ie->GetGeometry()[1].IsNot(RIGID))
-		noalias(CoorDifference) = ie->GetGeometry()[1].Coordinates() - ie->GetGeometry()[0].Coordinates();
+	      if(dimension==2 && freesurfaceNodes==2){
+		array_1d<double,3> CoorDifference(3,0.0);
+		if(ie->GetGeometry()[0].Is(BOUNDARY) && ie->GetGeometry()[0].IsNot(RIGID) &&
+		   ie->GetGeometry()[1].Is(BOUNDARY) && ie->GetGeometry()[1].IsNot(RIGID))
+		  noalias(CoorDifference) = ie->GetGeometry()[1].Coordinates() - ie->GetGeometry()[0].Coordinates();
 		// CoorDifference = ie->GetGeometry()[1].Coordinates() - ie->GetGeometry()[0].Coordinates();
-	      if(ie->GetGeometry()[0].Is(BOUNDARY) && ie->GetGeometry()[0].IsNot(RIGID) &&
-		 ie->GetGeometry()[2].Is(BOUNDARY) && ie->GetGeometry()[2].IsNot(RIGID))
-		noalias(CoorDifference) = ie->GetGeometry()[2].Coordinates() - ie->GetGeometry()[0].Coordinates();
+		if(ie->GetGeometry()[0].Is(BOUNDARY) && ie->GetGeometry()[0].IsNot(RIGID) &&
+		   ie->GetGeometry()[2].Is(BOUNDARY) && ie->GetGeometry()[2].IsNot(RIGID))
+		  noalias(CoorDifference) = ie->GetGeometry()[2].Coordinates() - ie->GetGeometry()[0].Coordinates();
 		// CoorDifference = ie->GetGeometry()[2].Coordinates() - ie->GetGeometry()[0].Coordinates();
-	      if(ie->GetGeometry()[1].Is(BOUNDARY) && ie->GetGeometry()[1].IsNot(RIGID) &&
-		 ie->GetGeometry()[2].Is(BOUNDARY) && ie->GetGeometry()[2].IsNot(RIGID))
-		noalias(CoorDifference) = ie->GetGeometry()[1].Coordinates() - ie->GetGeometry()[2].Coordinates();
+		if(ie->GetGeometry()[1].Is(BOUNDARY) && ie->GetGeometry()[1].IsNot(RIGID) &&
+		   ie->GetGeometry()[2].Is(BOUNDARY) && ie->GetGeometry()[2].IsNot(RIGID))
+		  noalias(CoorDifference) = ie->GetGeometry()[1].Coordinates() - ie->GetGeometry()[2].Coordinates();
 		// CoorDifference = ie->GetGeometry()[1].Coordinates() - ie->GetGeometry()[2].Coordinates();
 
-	      double SquaredLength = CoorDifference[0]*CoorDifference[0] + CoorDifference[1]*CoorDifference[1];
-	      freeSurfaceElementalSize=sqrt(SquaredLength);
-	      // std::cout<<"length "<<freeSurfaceElementalSize<<std::endl;
+		double SquaredLength = CoorDifference[0]*CoorDifference[0] + CoorDifference[1]*CoorDifference[1];
+		freeSurfaceElementalSize=sqrt(SquaredLength);
+		// std::cout<<"length "<<freeSurfaceElementalSize<<std::endl;
 
-	    }
-	    if(dimension==3){
-	      if(ie->GetGeometry()[0].Is(BOUNDARY) && ie->GetGeometry()[0].IsNot(RIGID) &&
-		 ie->GetGeometry()[1].Is(BOUNDARY) && ie->GetGeometry()[1].IsNot(RIGID) &&
-		 ie->GetGeometry()[2].Is(BOUNDARY) && ie->GetGeometry()[2].IsNot(RIGID)){
-		freeSurfaceElementalSize=Compute3dArea(ie->GetGeometry()[0].Coordinates(),
-						       ie->GetGeometry()[1].Coordinates(),
-						       ie->GetGeometry()[2].Coordinates());
 	      }
-	      if(ie->GetGeometry()[0].Is(BOUNDARY) && ie->GetGeometry()[0].IsNot(RIGID) &&
-		 ie->GetGeometry()[1].Is(BOUNDARY) && ie->GetGeometry()[1].IsNot(RIGID) &&
-		 ie->GetGeometry()[3].Is(BOUNDARY) && ie->GetGeometry()[3].IsNot(RIGID)){
-		freeSurfaceElementalSize=Compute3dArea(ie->GetGeometry()[0].Coordinates(),
-						       ie->GetGeometry()[1].Coordinates(),
-						       ie->GetGeometry()[3].Coordinates());
-	      }
-	      if(ie->GetGeometry()[0].Is(BOUNDARY) && ie->GetGeometry()[0].IsNot(RIGID) &&
-		 ie->GetGeometry()[2].Is(BOUNDARY) && ie->GetGeometry()[2].IsNot(RIGID) &&
-		 ie->GetGeometry()[3].Is(BOUNDARY) && ie->GetGeometry()[3].IsNot(RIGID)){
-		freeSurfaceElementalSize=Compute3dArea(ie->GetGeometry()[0].Coordinates(),
-						       ie->GetGeometry()[2].Coordinates(),
-						       ie->GetGeometry()[3].Coordinates());
-	      }
-	      if(ie->GetGeometry()[1].Is(BOUNDARY) && ie->GetGeometry()[1].IsNot(RIGID) &&
-		 ie->GetGeometry()[2].Is(BOUNDARY) && ie->GetGeometry()[2].IsNot(RIGID) &&
-		 ie->GetGeometry()[3].Is(BOUNDARY) && ie->GetGeometry()[3].IsNot(RIGID)){
-		freeSurfaceElementalSize=Compute3dArea(ie->GetGeometry()[1].Coordinates(),
-						       ie->GetGeometry()[2].Coordinates(),
-						       ie->GetGeometry()[3].Coordinates());
-	      }
-	    }
-	    freeSurfaceLength+=freeSurfaceElementalSize;
-	  }
-
-	if(freeSurfaceLength==0){
-	  freeSurfaceLength=1.0;
-	}
-	double offset=volumeLoss/freeSurfaceLength;
-	// if( mEchoLevel > 0 )
-	std::cout<<"freeSurface length "<<freeSurfaceLength<<"  offset "<<offset<<std::endl;
-
-	for(ModelPart::NodesContainerType::iterator i_node = mrModelPart.NodesBegin() ; i_node != mrModelPart.NodesEnd() ; i_node++)
-	  {
-	    if(i_node->Is(BOUNDARY) && i_node->IsNot(RIGID)){
-	      array_1d<double, 3>  Normal(3,0.0);
-	      Normal    =i_node->FastGetSolutionStepValue(NORMAL);
-	      i_node->X()+=Normal[0]*offset;
-	      i_node->Y()+=Normal[1]*offset;
 	      if(dimension==3){
-		i_node->Z()+=Normal[2]*offset;
+		if(ie->GetGeometry()[0].Is(BOUNDARY) && ie->GetGeometry()[0].IsNot(RIGID) &&
+		   ie->GetGeometry()[1].Is(BOUNDARY) && ie->GetGeometry()[1].IsNot(RIGID) &&
+		   ie->GetGeometry()[2].Is(BOUNDARY) && ie->GetGeometry()[2].IsNot(RIGID)){
+		  freeSurfaceElementalSize=Compute3dArea(ie->GetGeometry()[0].Coordinates(),
+							 ie->GetGeometry()[1].Coordinates(),
+							 ie->GetGeometry()[2].Coordinates());
+		}
+		if(ie->GetGeometry()[0].Is(BOUNDARY) && ie->GetGeometry()[0].IsNot(RIGID) &&
+		   ie->GetGeometry()[1].Is(BOUNDARY) && ie->GetGeometry()[1].IsNot(RIGID) &&
+		   ie->GetGeometry()[3].Is(BOUNDARY) && ie->GetGeometry()[3].IsNot(RIGID)){
+		  freeSurfaceElementalSize=Compute3dArea(ie->GetGeometry()[0].Coordinates(),
+							 ie->GetGeometry()[1].Coordinates(),
+							 ie->GetGeometry()[3].Coordinates());
+		}
+		if(ie->GetGeometry()[0].Is(BOUNDARY) && ie->GetGeometry()[0].IsNot(RIGID) &&
+		   ie->GetGeometry()[2].Is(BOUNDARY) && ie->GetGeometry()[2].IsNot(RIGID) &&
+		   ie->GetGeometry()[3].Is(BOUNDARY) && ie->GetGeometry()[3].IsNot(RIGID)){
+		  freeSurfaceElementalSize=Compute3dArea(ie->GetGeometry()[0].Coordinates(),
+							 ie->GetGeometry()[2].Coordinates(),
+							 ie->GetGeometry()[3].Coordinates());
+		}
+		if(ie->GetGeometry()[1].Is(BOUNDARY) && ie->GetGeometry()[1].IsNot(RIGID) &&
+		   ie->GetGeometry()[2].Is(BOUNDARY) && ie->GetGeometry()[2].IsNot(RIGID) &&
+		   ie->GetGeometry()[3].Is(BOUNDARY) && ie->GetGeometry()[3].IsNot(RIGID)){
+		  freeSurfaceElementalSize=Compute3dArea(ie->GetGeometry()[1].Coordinates(),
+							 ie->GetGeometry()[2].Coordinates(),
+							 ie->GetGeometry()[3].Coordinates());
+		}
+	      }
+	      freeSurfaceLength+=freeSurfaceElementalSize;
+	    }
+
+	  if(freeSurfaceLength==0){
+	    freeSurfaceLength=1.0;
+	  }
+	  double offset=volumeLoss/freeSurfaceLength;
+	  // if( mEchoLevel > 0 )
+	  std::cout<<"freeSurface length "<<freeSurfaceLength<<"  offset "<<offset<<std::endl;
+
+	  for(ModelPart::NodesContainerType::iterator i_node = mrModelPart.NodesBegin() ; i_node != mrModelPart.NodesEnd() ; i_node++)
+	    {
+	      if(i_node->Is(BOUNDARY) && i_node->IsNot(RIGID)){
+		array_1d<double, 3>  Normal(3,0.0);
+		Normal    =i_node->FastGetSolutionStepValue(NORMAL);
+		i_node->X()+=Normal[0]*offset;
+		i_node->Y()+=Normal[1]*offset;
+		if(dimension==3){
+		  i_node->Z()+=Normal[2]*offset;
+		}
 	      }
 	    }
-	  }
+	}
       }
-
  
       if( mEchoLevel > 0 )
 	std::cout<<" RECOVER VOLUME LOSSES ]; "<<std::endl;

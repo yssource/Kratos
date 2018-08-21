@@ -352,15 +352,12 @@ private:
 
     
 
-    // //for h=0.3
-    // if(freesurfaceNodes>0 && rigidNodes==0 && posX>0 && posY>0.4){
-    //   penalization=0;
-    // }
  
-   //for h=0.15
-    if(freesurfaceNodes>0 && rigidNodes==0 && posX>0 && posY>0.25){
-      penalization=0;
-    }
+ 
+   // //for h=0.15
+   //  if(freesurfaceNodes>0 && rigidNodes==0 && posX>0 && posY>0.25){
+   //    penalization=0;
+   //  }
  // // for h=0.45
  //    if(freesurfaceNodes>0 && rigidNodes==0 && posX>0 && posY>0.525){
  //      penalization=0;
@@ -369,12 +366,16 @@ private:
       // if(freesurfaceNodes>0 && rigidNodes==0 && posX>0 && posY>0.65){
       //   penalization=0;
       // }   
-    else if(freesurfaceNodes>1 && rigidNodes==0 && posX>0.9){
+   //for h=0.3
+    if(freesurfaceNodes>0 && rigidNodes==0 && posX>3.0 && posY>0.45){
+      penalization=0;
+    } else if(freesurfaceNodes>1 && rigidNodes==0 && posX>0.9){
       penalization=0;
     }else if(freesurfaceNodes>0 && rigidNodes==0 && posX>0.9){
       penalization=0.85;
-    // } else if(boundaryNodes>1 && freesurfaceNodes>0 && rigidNodes>0){//used for the case of h=0.45m and h=0.6m
-    } else if(boundaryNodes>1 && freesurfaceNodes>0 && rigidNodes>0  && posX<-0.25){//used for the case (C) of h=0.15m
+    } else if(boundaryNodes>1 && freesurfaceNodes>0 && rigidNodes>0){//used for the case of h=0.45m and h=0.6m
+  //   }
+ // else if(boundaryNodes>1 && freesurfaceNodes>0 && rigidNodes>0  && posX<-0.25){//used for the case (C) of h=0.15m
       penalization=0;
     }
 

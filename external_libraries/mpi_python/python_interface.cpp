@@ -41,7 +41,7 @@ PYBIND11_MODULE(mpipython, m)
     // note that for the functions returning a vector the conversion to a python-list is automatically
     // done by pybind, see https://github.com/pybind/pybind11/blob/master/docs/advanced/cast/stl.rst
 
-    const auto py_mpi = py::class_<PythonMPI>(m,"PythonMPI")
+    py::class_<PythonMPI>(m,"PythonMPI")
     .def_property_readonly("rank",FRank)
     .def_property_readonly("size",FSize)
     .def("gather", &PythonMPI::gather<double>)
@@ -51,12 +51,6 @@ PYBIND11_MODULE(mpipython, m)
     .def("allgather",&PythonMPI::allgather<double>)
     .def("allgather",&PythonMPI::allgather<int>)
     .def_property_readonly("world",&PythonMPI::GetWorld,py::return_value_policy::reference_internal )
-    ;
-
-    py::enum_<PythonMPI::MPI_Operation>(py_mpi, "MPI_op")
-    .value("MAX", PythonMPI::MPI_Operation::MAX)
-    .value("MIN", PythonMPI::MPI_Operation::MIN)
-    .value("SUM", PythonMPI::MPI_Operation::SUM)
     ;
 
     m.def("GetMPIInterface",&GetMPIInterface,py::return_value_policy::reference);

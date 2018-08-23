@@ -6,7 +6,7 @@ available_predictors = {
     "standard_linear"            : "standard_linear_predictor"
 }
 
-def CreatePredictor(predictor_settings, solvers, cosim_solver_details, level):
+def CreatePredictor(predictor_settings, solvers, level):
     """This function creates and returns the Predictor used for CoSimulation
     New Predictors have to be registered by adding them to "available_predictors"
     """
@@ -17,7 +17,7 @@ def CreatePredictor(predictor_settings, solvers, cosim_solver_details, level):
 
     if predictor_type in available_predictors:
         predictor_module = __import__(available_predictors[predictor_type])
-        return predictor_module.Create(predictor_settings, solvers, cosim_solver_details, level)
+        return predictor_module.Create(predictor_settings, solvers, level)
     else:
         err_msg  = 'The requested Predictor "' + predictor_type + '" is not available!\n'
         err_msg += 'The following Predictors are available:\n'

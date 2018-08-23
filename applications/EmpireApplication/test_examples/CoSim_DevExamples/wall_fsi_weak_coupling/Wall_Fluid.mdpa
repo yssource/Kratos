@@ -14721,13 +14721,13 @@ Begin SubModelPart NoSlip2D_FSI_Interface // Group FSI_Interface // Subtree NoSl
           365
     End SubModelPartConditions
 End SubModelPart
-Begin SubModelPart Slip2D // Condition Slip2D
-    Begin SubModelPartNodes
-    End SubModelPartNodes
-    Begin SubModelPartElements
-    End SubModelPartElements
-    Begin SubModelPartConditions
-    End SubModelPartConditions
+//Begin SubModelPart Slip2D // Condition Slip2D
+//    Begin SubModelPartNodes
+//    End SubModelPartNodes
+//    Begin SubModelPartElements
+//    End SubModelPartElements
+//    Begin SubModelPartConditions
+//    End SubModelPartConditions
     Begin SubModelPart Slip2D_Walls // Group Walls // Subtree Slip2D
         Begin SubModelPartNodes
                 1
@@ -14894,4 +14894,4 @@ Begin SubModelPart Slip2D // Condition Slip2D
               126
         End SubModelPartConditions
     End SubModelPart
-End SubModelPart
+//End SubModelPart

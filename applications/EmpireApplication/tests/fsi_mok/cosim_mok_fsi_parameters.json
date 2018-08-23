@@ -15,20 +15,12 @@
         "predictor_settings" :
         {
             "predictor_type" : "linear_derivative_based",
-            "io_type"        : "kratos_signal",
             "data_list"      :
             [
                 {
-                    "from_solver": "fluid",
-                    "data_name"  : "disp"
-                }
-
-            ],
-            "derivative_list"      :
-            [
-                {
-                    "from_solver": "fluid",
-                    "data_name"  : "vel"
+                    "solver": "fluid",
+                    "data_name"  : "disp",
+                    "derivative_data_name"  : "vel"
                 }
 
             ]
@@ -36,22 +28,20 @@
         "convergence_accelerator_settings" :
         {
             "type"          : "mvqn",
-            "io_type"       : "kratos_signal",
             "data_list" :
             [
                 {
-                    "from_solver"   : "fluid",
+                    "solver"   : "fluid",
                     "data_name"     : "disp"
                 }
             ]
         },
         "convergence_criteria_settings" :
         {
-            "io_type"   : "kratos_signal",
             "data_list" :
             [
                 {
-                    "from_solver"   : "fluid",
+                    "solver"   : "fluid",
                     "data_name"     : "disp",
                     "abs_tolerance" : 1e-5,
                     "rel_tolerance" : 1e-5
@@ -62,31 +52,11 @@
         [
         {
             "name": "fluid",
-            "input_data_list": [
-                {
-                    "from_solver" : "structure",
-                    "data_name"   : "disp"
-                }
-            ],
-            "output_data_list": [
-                {
-                    "to_solver" : "structure",
-                    "data_name"   : "force"
-                }
-            ]
+            "input_data_list"  : [],
+            "output_data_list" : []
         },
         {
             "name": "structure",
-            "output_data_list": [
-                {
-                    "to_solver" : "fluid",
-                    "data_name"   : "disp",
-                    "io_settings"   : {
-                        "mapper_type" : "nearest_neighbor"
-                    }
-
-                }
-            ],
             "input_data_list": [
                 {
                     "from_solver" : "fluid",
@@ -94,6 +64,16 @@
                     "io_settings"   : {
                         "mapper_type" : "nearest_neighbor",
                         "mapper_args" : ["swap_sign"]
+                    }
+
+                }
+            ],
+            "output_data_list": [
+                {
+                    "to_solver" : "fluid",
+                    "data_name"   : "disp",
+                    "io_settings"   : {
+                        "mapper_type" : "nearest_neighbor"
                     }
 
                 }
@@ -106,22 +86,21 @@
             {
                 "solver_type" : "kratos_fluid",
                 "input_file"  : "fsi_mok/ProjectParametersCFD",
-                "io_settings" : {
-                    "io_type"     : "kratos_field",
-                    "echo_level"  : 0
-                },
                 "data" : {
                     "disp" : {
-                        "geometry_name" : "NoSlip2D_FSI",
-                        "data_identifier" : "MESH_DISPLACEMENT"
+                        "geometry_name"   : "FluidModelPart.NoSlip2D_FSI",
+                        "data_identifier" : "MESH_DISPLACEMENT",
+                        "data_format"     : "kratos_modelpart"
                     },
                     "force" : {
-                        "geometry_name" : "NoSlip2D_FSI",
-                        "data_identifier" : "REACTION"
+                        "geometry_name"   : "FluidModelPart.NoSlip2D_FSI",
+                        "data_identifier" : "REACTION",
+                        "data_format"     : "kratos_modelpart"
                     },
                     "vel" : {
-                        "geometry_name" : "NoSlip2D_FSI",
-                        "data_identifier" : "VELOCITY"
+                        "geometry_name"   : "FluidModelPart.NoSlip2D_FSI",
+                        "data_identifier" : "VELOCITY",
+                        "data_format"     : "kratos_modelpart"
                     }
                 }
             },
@@ -129,22 +108,21 @@
             {
                 "solver_type" : "kratos_structural",
                 "input_file"  : "fsi_mok/ProjectParametersCSM",
-                "io_settings" : {
-                    "io_type"     : "kratos_field",
-                    "echo_level"  : 0
-                },
                 "data" : {
                     "disp" : {
-                        "geometry_name" : "GENERIC_FSI",
-                        "data_identifier" : "DISPLACEMENT"
+                        "geometry_name"   : "GENERIC_FSI",
+                        "data_identifier" : "DISPLACEMENT",
+                        "data_format"     : "kratos_modelpart"
                     },
                     "force" : {
-                        "geometry_name" : "GENERIC_FSI",
-                        "data_identifier" : "POINT_LOAD"
+                        "geometry_name"   : "GENERIC_FSI",
+                        "data_identifier" : "POINT_LOAD",
+                        "data_format"     : "kratos_modelpart"
                     },
                     "vel" : {
-                        "geometry_name" : "GENERIC_FSI",
-                        "data_identifier" : "VELOCITY"
+                        "geometry_name"   : "GENERIC_FSI",
+                        "data_identifier" : "VELOCITY",
+                        "data_format"     : "kratos_modelpart"
                     }
                 }
             }

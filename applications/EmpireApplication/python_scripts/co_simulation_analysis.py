@@ -3,6 +3,8 @@ from __future__ import print_function, absolute_import, division  # makes these 
 import co_simulation_tools as cs_tools
 from co_simulation_tools import csprint, bold
 
+import sys
+
 class CoSimulationAnalysis(object):
     """The base class for the CoSimulation-AnalysisStage
     It mimicks the AnalysisStage of Kratos but does NOT derive from it
@@ -13,17 +15,26 @@ class CoSimulationAnalysis(object):
             raise Exception("Input is expected to be provided as a python dictionary")
 
         self.cosim_settings = cosim_settings
+
         if "print_colors" in self.cosim_settings["problem_data"]:
             cs_tools.PRINT_COLORS = self.cosim_settings["problem_data"]["print_colors"]
+
+        self.flush_stdout = False
+
         if "parallel_type" in self.cosim_settings["problem_data"]:
             parallel_type = self.cosim_settings["problem_data"]["parallel_type"]
             if parallel_type == "OpenMP":
+                self.flush_stdout = True
                 cs_tools.PRINTING_RANK = True
-                # space = ...
             elif parallel_type == "MPI":
-                err
-                # space = ...
-                cs_tools.PRINTING_RANK = (space.Rank == 0)
+                self.flush_stdout = False
+                cs_tools.COSIM_SPACE = CoSimulationMPISpace()
+                cs_tools.PRINTING_RANK = (cs_tools.COSIM_SPACE.Rank() == 0)
+            else:
+                raise Exception('"parallel_type" can only be "OpenMP" or "MPI"!')
+
+        if "flush_terminal" in self.cosim_settings["problem_data"]:
+            self.flush_stdout = self.cosim_settings["problem_data"]["parallel_type"]
 
         self.echo_level = 0
         if "echo_level" in self.cosim_settings["problem_data"]:
@@ -46,6 +57,9 @@ class CoSimulationAnalysis(object):
             self.FinalizeSolutionStep()
             self.OutputSolutionStep()
 
+            if self.flush_stdout:
+                sys.stdout.flush()
+
     def Initialize(self):
         self._GetSolver().Initialize()
         self._GetSolver().Check()
@@ -57,6 +71,9 @@ class CoSimulationAnalysis(object):
         self.end_time = self.cosim_settings["problem_data"]["end_time"]
         self.time = self.cosim_settings["problem_data"]["start_time"]
         self.step = 0
+
+        if self.flush_stdout:
+            sys.stdout.flush()
 
     def Finalize(self):
         self._GetSolver().Finalize()
@@ -83,4 +100,20 @@ class CoSimulationAnalysis(object):
         import co_simulation_solvers.python_solvers_wrapper_co_simulation as solvers_wrapper
         return solvers_wrapper.CreateSolver(self.cosim_settings["solver_settings"], level=0)
 
-## TODO add the if name==main stuff like in fluid and structure
+if __name__ == '__main__':
+    from sys import argv
+    import json
+
+    if len(argv) != 2:
+        err_msg =  'Wrong number of input arguments!\n'
+        err_msg += 'Use this script in the following way:\n'
+        err_msg += '    "python co_simulation_analysis.py <cosim-parameter-file>.json"\n'
+        raise Exception(err_msg)
+
+    parameter_file_name = argv[1]
+
+    with open(parameter_file_name,'r') as parameter_file:
+        parameters = json.load(parameter_file)
+
+    simulation = CoSimulationAnalysis(parameters)
+    simulation.Run()

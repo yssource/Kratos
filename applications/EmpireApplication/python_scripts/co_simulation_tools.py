@@ -8,7 +8,29 @@ def GetSolverCoSimulationDetails(co_simulation_solver_settings):
     # - input in one is output in another
     # - one IO is defined for each data_name
     # - if the same data is defined multiple times
+    # - check if data format has been specified
     return solver_cosim_details
+
+def ImportArrayFromSolver(solver, data_name, data_array, buffer_index=0):
+    data_settings = {
+        "data_format"  : "numpy_array",
+        "data_name"    : data_name,
+        "data_array"   : data_array,
+        "buffer_index" : buffer_index
+    }
+
+    solver.ExportData(data_settings, solver)
+
+def ExportArrayToSolver(solver, data_name, data_array, buffer_index=0):
+    data_settings = {
+        "data_format"  : "numpy_array",
+        "data_name"    : data_name,
+        "data_array"   : data_array,
+        "buffer_index" : buffer_index
+    }
+
+    solver.ImportData(data_settings, solver)
+
 
 
 class CoSimulationParameters(object):
@@ -35,6 +57,8 @@ class CoSimulationParameters(object):
 class CoSimulationSpace(object):
     pass
 
+    def IsDistributed(self):
+        return False
 
     def Barrier(self):
         pass
@@ -45,33 +69,37 @@ class CoSimulationSpace(object):
     def Size(self):
         return 1
 
-class CoSimulationMPISpace(object):
-    """This required some MPI-commands exposed to Python
-    This is currently only available with Kratos,
-    i.e. MPI can only be used with Kratos Compiled in MPI
-    """
+# class CoSimulationMPISpace(object):
+#     """This requires some MPI-commands exposed to Python
+#     This is currently only available with Kratos,
+#     i.e. MPI can only be used with Kratos compiled with MPI
+#     """
+#     try:
+#         import KratosMultiphysics
+#         from KratosMultiphysics.mpi import mpi
+#     except ImportError:
+#         raise Exception("Running in MPI currently requires Kratos-MPI!")
 
-    def __init__(self):
-        try:
-            import KratosMultiPhyiscs.mpi as mpi # TODO check if this is convenient
-        except ImportError:
-            raise Exception("Running in MPI currently requires Kratos-MPI!")
+#     def __init__(self):
 
-        # Precompute rank and size such that they don't have to be recomputed all the time
-        self.comm_rank = ...
-        self.comm_size = ...
+#         # Precompute rank and size such that they don't have to be recomputed all the time
+#         self.comm_rank = self.mpi.rank
+#         self.comm_size = self.mpi.size
 
-        if self.comm_size < 2:
-            raise Exception("Running in MPI requires at least 2 processes!")
+#         if self.comm_size < 2:
+#             raise Exception("Running in MPI requires at least 2 processes!")
 
-    def Barrier(self):
-        err
+#     def IsDistributed(self):
+#         return True
 
-    def Rank(self):
-        return self.comm_rank
+#     def Barrier(self):
+#         self.mpi.world.barrier()
 
-    def Size(self):
-        return self.comm_size
+#     def Rank(self):
+#         return self.comm_rank
+
+#     def Size(self):
+#         return self.comm_size
 
 
 
@@ -134,6 +162,7 @@ SPACE = 4 * " "
 def csprint(level, *args):
     if PRINTING_RANK:
         print(level*SPACE + blue("<CS-"+str(level)+">"), " ".join(map(str,args)))
+    COSIM_SPACE.Barrier()
 
 def solverprint(level, solver_name, *args):
     csprint(level, yellow(solver_name + ":"), *args)

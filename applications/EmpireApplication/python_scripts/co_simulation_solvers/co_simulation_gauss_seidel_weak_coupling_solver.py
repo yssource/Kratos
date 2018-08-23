@@ -9,9 +9,9 @@ from co_simulation_convergence_criteria.co_simulation_convergence_criteria_facto
 from co_simulation_tools import couplingsolverprint, green
 
 def CreateSolver(cosim_solver_settings, level):
-    return WeakCouplingSolver(cosim_solver_settings, level)
+    return GaussSeidelWeakCouplingSolver(cosim_solver_settings, level)
 
-class WeakCouplingSolver(CoSimulationBaseCouplingSolver): ## TODO I think the name should contain GaussSeidel
+class GaussSeidelWeakCouplingSolver(CoSimulationBaseCouplingSolver): ## TODO I think the name should contain GaussSeidel
     def SolveSolutionStep(self):
         for solver_name in self.solver_names:
             solver = self.solvers[solver_name]

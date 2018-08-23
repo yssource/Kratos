@@ -1,10 +1,11 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
 available_convergence_accelerators = {
-    "constant" : "constant_convergence_accelerator",
-    "aitken"   : "aitken",
-    "iqnils"   : "iqnils",
-    "mvqn"     : "mvqn",
+    "constant_relaxation"  : "constant",
+    "aitken"               : "aitken",
+    "iqnils"               : "iqnils",
+    "mvqn"                 : "mvqn",
+    "anderson"             : "anderson"
 }
 
 def CreateConvergenceAccelerator(settings, solvers, cosim_solver_details, level):

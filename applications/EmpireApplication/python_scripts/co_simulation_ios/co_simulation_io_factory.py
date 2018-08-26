@@ -2,7 +2,8 @@ from __future__ import print_function, absolute_import, division  # makes these 
 
 available_ios = {
     "kratos" : "kratos_io",
-    "sdof"   : "sdof_io"
+    "sdof"   : "sdof_io",
+    "mdof"   : "mdof_io"
 }
 
 def CreateIO(io_name, solvers, solver_name, cosim_solver_details, level):

@@ -14,12 +14,12 @@ class CoSimulationBaseIO(object):
 
     def ImportData(self, data_settings, from_client):
         pass
-    def ImportMesh(self, mesh_name, from_client):
+    def ImportMesh(self, data_settings, from_client):
         pass
 
     def ExportData(self, data_settings, to_client):
         pass
-    def ExportMesh(self, mesh_name, to_client):
+    def ExportMesh(self, data_settings, to_client):
         pass
 
     def SetEchoLevel(self, level):

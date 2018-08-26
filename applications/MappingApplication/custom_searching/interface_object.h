@@ -83,8 +83,8 @@ public:
     {
         Node_Coords,
         Geometry_Center,
-        Element_Center,
-        Condition_Center
+        IGA_Element,
+        IGA_Condition
     };
 
     ///@}

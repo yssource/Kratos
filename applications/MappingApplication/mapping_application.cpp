@@ -35,6 +35,7 @@
 
 #include "custom_mappers/nearest_neighbor_mapper.h"
 #include "custom_mappers/nearest_element_mapper.h"
+#include "custom_mappers/iga_visualization_mapper.h"
 
 // Macro to register the mapper WITHOUT MPI
 #define KRATOS_REGISTER_MAPPER_SERIAL(MapperType, MapperName)                                         \
@@ -105,6 +106,8 @@ void KratosMappingApplication::Register()
     // registering the mappers using the registration-macro
     KRATOS_REGISTER_MAPPER(NearestNeighborMapper, "nearest_neighbor");
     KRATOS_REGISTER_MAPPER(NearestElementMapper,  "nearest_element");
+
+    KRATOS_REGISTER_MAPPER_SERIAL(NearestElementMapper,  "iga_visualization");
 
     KRATOS_REGISTER_VARIABLE( INTERFACE_EQUATION_ID )
 

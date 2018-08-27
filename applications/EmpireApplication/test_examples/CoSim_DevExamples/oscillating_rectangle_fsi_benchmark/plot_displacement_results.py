@@ -20,7 +20,7 @@ from pylab import *
 # ======================================================
 import json
 
-file2read = "results_sdof.txt"
+file2read = "results_sdof.dat"
 # ======================================================
 
 # read the file

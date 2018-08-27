@@ -12,7 +12,7 @@ def CreateSolver(cosim_solver_settings, level):
     return SDoFSolver(cosim_solver_settings, level)
 
 class SDoFSolver(CoSimulationBaseSolver):
-    def __init__(self, cosim_solver_settings, level, buffer_size=3):
+    def __init__(self, cosim_solver_settings, level):
         super(SDoFSolver, self).__init__(cosim_solver_settings, level)
 
         input_file_name = self.cosim_solver_settings["input_file"]
@@ -54,7 +54,9 @@ class SDoFSolver(CoSimulationBaseSolver):
                                       -self.alpha_f * self.damping,
                                       -self.alpha_m * self.mass]])
 
-        self.buffer_size = buffer_size
+        self.buffer_size = parameters["solver_parameters"]["buffer_size"]
+
+        self.output_file_name = parameters["output_parameters"]["file_name"]
 
     def Initialize(self):
         self.x = np.zeros((3, self.buffer_size))
@@ -66,8 +68,8 @@ class SDoFSolver(CoSimulationBaseSolver):
 
         #x and dx contain: [displacement, velocity, acceleration]
 
-        if os.path.isfile("results_sdof.txt"):
-            os.remove("results_sdof.txt")
+        if os.path.isfile(self.output_file_name):
+            os.remove(self.output_file_name)
 
         #apply external load as an initial impulse
         self.load_vector = np.array([0,
@@ -75,7 +77,7 @@ class SDoFSolver(CoSimulationBaseSolver):
                                      self.force])
 
     def OutputSolutionStep(self):
-        with open("results_sdof.txt", "a") as results_sdof:
+        with open(self.output_file_name, "a") as results_sdof:
             #outputs displacements
             results_sdof.write(str(self.time) + "\t" + str(self.dx[0]) + "\n")
 
@@ -152,4 +154,3 @@ class SDoFSolver(CoSimulationBaseSolver):
 
     def _Name(self):
         return self.__class__.__name__
-

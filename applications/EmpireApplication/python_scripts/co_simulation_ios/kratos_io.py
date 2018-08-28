@@ -262,71 +262,53 @@ class KratosIO(CoSimulationBaseIO):
             raise Exception("The requested data_format is not implemented in KratosIO!")
 
     def ExportMesh(self, data_settings, to_client):
-        raise Exception('"ExportMesh" is not fully implemented!')
 
         data_format = data_settings["data_format"]
+        data_name = data_settings["data_name"]
 
-        if data_format == "numpy_array":
+        if data_format == "numpy_array_mesh":
             # In this case the to_client is the solver itself
             data_definition = to_client.GetDataDefinition(data_name)
             geometry_name = data_definition["geometry_name"]
             model_part = to_client.model[geometry_name]
 
-            mesh_array = data_settings["mesh_array"]
-
             num_nodes = NumberOfNodes(model_part)
             num_elements = NumberOfElements(model_part)
-            # required_size = num_nodes * domain_size
-            # if not data_array.size == required_size:
-            #     # data_array = np.resize(data_array, (1,required_size))
-            #     data_array.resize(required_size, refcheck=False)
 
-            # # TODO check if var in ModelPart!
-            # var_name = data_definition["data_identifier"]
-            # buffer_index = data_settings["buffer_index"]
+            node_coords = np.zeros(num_nodes * 3)
+            node_IDs = np.zeros(num_nodes, dtype=int)
 
-            # kratos_var = KratosMultiphysics.KratosGlobals.GetVariable(var_name)
+            for i, node in enumerate(Nodes(model_part)):
+                node_coords[i]  = node.X
+                node_coords[i+1]  = node.Y
+                node_coords[i+2]  = node.Z
+                node_IDs[i] = node.Id
 
-            # if type(kratos_var) == KratosMultiphysics.DoubleVariable or type(kratos_var) == KratosMultiphysics.Array1DComponentVariable:
-            #     required_size = NumberOfNodes(model_part)
-            #     if not data_array.size == required_size:
-            #         # data_array = np.resize(data_array, (1,required_size))
-            #         data_array.resize(required_size, refcheck=False)
-            #     ExtractData(model_part, kratos_var, data_array, buffer_index)
-            # elif type(kratos_var) == KratosMultiphysics.Array1DVariable3:
-            #     domain_size = model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]
-            #     if not domain_size in [1,2,3]:
-            #         raise Exception("DOMAIN_SIZE has to be 1, 2 or 3!")
+            num_nodes_per_element = []
+            element_table = []
 
+            for i, elem in enumerate(Elements(model_part)):
+                num_nodes_per_element.append(len(elem.GetNodes()))
+                for node in elem.GetNodes():
+                    element_table.append(node.Id)
 
-            #     ext = ["_X", "_Y", "_Z"]
-            #     for i in range(domain_size):
-            #         component_var = KratosMultiphysics.KratosGlobals.GetVariable(kratos_var.Name()+ext[i])
-            #         range_begin = i*num_nodes
-            #         range_end = (i+1)*num_nodes
-            #         ExtractData(model_part, component_var, data_array[range_begin:range_end], buffer_index)
-            # else:
-            #     err_msg  = 'Type of variable "' + kratos_var.Name() + '" is not valid\n'
-            #     err_msg += 'It can only be double, component or array3d!'
-            #     raise Exception(err_msg)
+            num_nodes_per_element = np.array(num_nodes_per_element)
+            element_table = np.array(element_table)
+
+            numpy_mesh = {
+                "num_nodes" : num_nodes,
+                "num_elements" : num_elements,
+                "node_coords" : node_coords,
+                "node_IDs" : node_IDs,
+                "num_nodes_per_element" : num_nodes_per_element,
+                "element_table" : element_table
+            }
+
+            data_settings["mesh"] = numpy_mesh
 
         else:
             raise Exception("The requested data_format is not implemented in KratosIO!")
 
-            #     def _get_mesh(self, model_part, num_nodes, num_elements, node_coords, node_IDs, num_nodes_per_element, element_table):
-            # num_nodes.append(model_part.NumberOfNodes())
-            # num_elements.append(model_part.NumberOfElements())
-
-            # for node in model_part.Nodes:
-            #     node_coords.append(node.X)
-            #     node_coords.append(node.Y)
-            #     node_coords.append(node.Z)
-            #     node_IDs.append(node.Id)
-
-            # for elem in model_part.Elements:
-            #     num_nodes_per_element.append(len(elem.GetNodes()))
-            #     for node in elem.GetNodes():
-            #         element_table.append(node.Id)
 
 def ExtractData(model_part, kratos_var, data_array, buffer_index):
     for i, node in enumerate(Nodes(model_part)):

@@ -15,28 +15,37 @@ class MDoFIO(CoSimulationBaseIO):
     def ImportData(self, data_settings, from_client):
         # 1. Check if a mapping for this client and the reqested geometry exists
         # optional: set up the mapping if it does not yet exist
-        if not:
-            from_client.ExportMesh(data_settings, from_client)
-            SetupMapping(...)
+
+        print(data_settings)
+        mesh_export_setting = {
+            "data_name" : data_settings["data_name"],
+            "data_format" : "numpy_array_mesh"
+        }
+        from_client.ExportMesh(mesh_export_setting, from_client)
+
+        print(mesh_export_setting)
+        err
+        # # if not:
+        # #     SetupMapping(...)
 
 
 
-        data_name = data_settings["data_name"]
-        io_settings = data_settings["io_settings"]
-        data_array = np.array([])
-        cs_tools.ImportArrayFromSolver(from_client, data_name, data_array)
+        # data_name = data_settings["data_name"]
+        # io_settings = data_settings["io_settings"]
+        # data_array = np.array([])
+        # cs_tools.ImportArrayFromSolver(from_client, data_name, data_array)
 
-        sdof_solver = self.solvers[self.solver_name]
-        sdof_data_settings = sdof_solver.GetDataDefinition(data_settings["data_name"])
+        # sdof_solver = self.solvers[self.solver_name]
+        # sdof_data_settings = sdof_solver.GetDataDefinition(data_settings["data_name"])
 
-        value = sum(data_array)
+        # value = sum(data_array)
 
-        if "io_options" in io_settings:
-            if "swap_sign" in io_settings["io_options"]:
-                value *= -1.0
+        # if "io_options" in io_settings:
+        #     if "swap_sign" in io_settings["io_options"]:
+        #         value *= -1.0
 
-        data_identifier = sdof_data_settings["data_identifier"]
-        sdof_solver.SetData(data_identifier, value)
+        # data_identifier = sdof_data_settings["data_identifier"]
+        # sdof_solver.SetData(data_identifier, value)
 
 
     def ExportData(self, data_settings, to_client):

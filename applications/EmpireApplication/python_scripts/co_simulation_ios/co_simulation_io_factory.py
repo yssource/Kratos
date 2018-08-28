@@ -17,7 +17,7 @@ def CreateIO(io_name, solvers, solver_name, cosim_solver_details, level):
     onlyfiles = [print(f) for f in listdir(os.path.dirname(os.path.abspath(__file__))) if f.endswith("_io.py")]
 
     if io_name in available_ios:
-        io_module = __import__("available_ios[io_name]")
+        io_module = __import__(available_ios[io_name])
         return io_module.Create(solvers, solver_name, cosim_solver_details, level)
     else:
         err_msg  = 'The requested IO "' + io_name + '" is not available!\n'

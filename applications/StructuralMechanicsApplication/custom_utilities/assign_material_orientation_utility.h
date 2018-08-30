@@ -25,6 +25,8 @@
 // Project includes
 #include "includes/model_part.h"
 #include "includes/kratos_parameters.h"
+//#include "math_utils.h"
+#include "structural_mechanics_application_variables.h"
 
 
 namespace Kratos
@@ -170,6 +172,8 @@ private:
     ///@}
     ///@name Private Operators
     ///@{
+    
+    void CheckAndReadVectors(Parameters ThisParameters, const std::string KeyName, Vector3& rVector);
 
 
     ///@}

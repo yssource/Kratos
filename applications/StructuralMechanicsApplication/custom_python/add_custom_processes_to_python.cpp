@@ -23,6 +23,7 @@
 #include "custom_processes/prism_neighbours_process.h"
 #include "custom_processes/postprocess_eigenvalues_process.h"
 #include "custom_processes/total_structural_mass_process.h"
+#include "custom_processes/compute_center_of_gravity_process.h"
 #include "custom_processes/shell_to_solid_shell_process.h"
 #include "custom_processes/solid_shell_thickness_compute_process.h"
 #include "custom_processes/spr_error_process.h"
@@ -41,6 +42,10 @@ void  AddCustomProcessesToPython(pybind11::module& m)
         .def(init<ModelPart&, Parameters>());
 
     class_<TotalStructuralMassProcess, TotalStructuralMassProcess::Pointer, Process>(m,"TotalStructuralMassProcess")
+        .def(init<ModelPart&>())
+        ;
+
+    class_<ComputeCenterOfGravityProcess, ComputeCenterOfGravityProcess::Pointer, Process>(m,"ComputeCenterOfGravityProcess")
         .def(init<ModelPart&>())
         ;
 

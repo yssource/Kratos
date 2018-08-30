@@ -54,6 +54,7 @@ PYBIND11_MODULE(KratosStructuralMechanicsApplication,m)
 
     // General pourpose
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, INTEGRATION_ORDER); // The integration order considered on the element
+    KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, CENTER_OF_GRAVITY);
 
     //registering variables in python
     // Generalized eigenvalue problem

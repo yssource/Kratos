@@ -149,7 +149,7 @@ KratosStructuralMechanicsApplication::KratosStructuralMechanicsApplication()
       mAdjointFiniteDifferenceCrBeamElement(),
       mAdjointFiniteDifferenceTrussElement(),
       mAdjointFiniteDifferenceTrussLinearElement(),
-    
+
       /* CONDITIONS */
       // Adding point load conditions
       mPointLoadCondition2D1N(0, Condition::GeometryType::Pointer(new Point2D<NodeType >(Condition::GeometryType::PointsArrayType(1)))),
@@ -186,6 +186,7 @@ void KratosStructuralMechanicsApplication::Register() {
 
     // General pourpose
     KRATOS_REGISTER_VARIABLE(INTEGRATION_ORDER); // The integration order considered on the element
+    KRATOS_REGISTER_VARIABLE(CENTER_OF_GRAVITY);
 
     // Generalized eigenvalue problem
     KRATOS_REGISTER_VARIABLE(BUILD_LEVEL)
@@ -538,7 +539,7 @@ void KratosStructuralMechanicsApplication::Register() {
     KRATOS_REGISTER_CONSTITUTIVE_LAW("LinearJ2PlasticityPlaneStrain2DLaw", mLinearJ2PlasticityPlaneStrain2D);
     KRATOS_REGISTER_CONSTITUTIVE_LAW("LinearJ2Plasticity3DLaw", mLinearJ2Plasticity3D);
     KRATOS_REGISTER_CONSTITUTIVE_LAW("LinearIsotropicDamage3DLaw", mLinearIsotropicDamage3D);
-	
+
 	// damage and plasticity
 	KRATOS_REGISTER_CONSTITUTIVE_LAW("SmallStrainIsotropicPlasticityFactory3D", mSmallStrainIsotropicPlasticityFactory3D);
     KRATOS_REGISTER_CONSTITUTIVE_LAW("SmallStrainIsotropicDamageFactory3D", mSmallStrainIsotropicDamageFactory3D);

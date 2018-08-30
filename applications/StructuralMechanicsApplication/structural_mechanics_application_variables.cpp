@@ -17,6 +17,7 @@ typedef std::size_t IndexType;
 
 // General pourpose
 KRATOS_CREATE_VARIABLE(int, INTEGRATION_ORDER); // The integration order considered on the element
+KRATOS_CREATE_3D_VARIABLE_WITH_COMPONENTS(CENTER_OF_GRAVITY)
 
 // Generalized eigenvalue problem
 KRATOS_CREATE_VARIABLE(int, BUILD_LEVEL)

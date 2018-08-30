@@ -48,6 +48,7 @@ ComputeHessianSolMetricProcess<TDim, TVarType>::ComputeHessianSolMetricProcess(
             "interpolation"                        : "Linear"
         }
     })" );
+
     ThisParameters.ValidateAndAssignDefaults(default_parameters);
         
     mMinSize = ThisParameters["minimal_size"].GetDouble();
@@ -64,10 +65,10 @@ ComputeHessianSolMetricProcess<TDim, TVarType>::ComputeHessianSolMetricProcess(
         mBoundLayer = default_parameters["anisotropy_parameters"]["boundary_layer_max_distance"].GetDouble();
         mInterpolation = ConvertInter(default_parameters["anisotropy_parameters"]["interpolation"].GetString());
     } else {
-        mRatioReferenceVariable = ThisParameters["hessian_strategy_parameters"]["reference_variable_name"].GetString();
         mEstimateInterpError = ThisParameters["hessian_strategy_parameters"]["estimate_interpolation_error"].GetBool();
         mInterpError = ThisParameters["hessian_strategy_parameters"]["interpolation_error"].GetDouble();
         mMeshConstant = ThisParameters["hessian_strategy_parameters"]["mesh_dependent_constant"].GetDouble();
+        mRatioReferenceVariable = ThisParameters["anisotropy_parameters"]["reference_variable_name"].GetString();
         mAnisotropicRatio = ThisParameters["anisotropy_parameters"]["hmin_over_hmax_anisotropic_ratio"].GetDouble();
         mBoundLayer = ThisParameters["anisotropy_parameters"]["boundary_layer_max_distance"].GetDouble();
         mInterpolation = ConvertInter(ThisParameters["anisotropy_parameters"]["interpolation"].GetString());
@@ -103,8 +104,10 @@ void ComputeHessianSolMetricProcess<TDim, TVarType>::Execute()
         KRATOS_DEBUG_ERROR_IF_NOT(it_node->SolutionStepsDataHas(NODAL_H)) << "ERROR:: NODAL_H not defined for node " << it_node->Id();
         const double nodal_h = it_node->FastGetSolutionStepValue(NODAL_H);            
         
-        const double element_min_size = ((element_min_size > nodal_h) && mEnforceCurrent) ? nodal_h : mMinSize;
-        const double element_max_size = ((element_max_size > nodal_h) && mEnforceCurrent) ? nodal_h : mMaxSize;
+        double element_min_size = mMinSize;
+        if ((element_min_size > nodal_h) && mEnforceCurrent) element_min_size = nodal_h;
+        double element_max_size = mMaxSize;
+        if ((element_max_size > nodal_h) && mEnforceCurrent) element_max_size = nodal_h;
 
         // Isotropic by default
         double ratio = 1.0;

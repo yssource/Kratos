@@ -276,7 +276,7 @@
             "output_file_name" : "fsi_sdof_drag_rectangle/FluidModelPart.Drag_structure_drag.dat",
             "reference_file_name" : "fsi_sdof_drag_rectangle/FluidModelPart.Drag_structure_drag_ref.dat",
             "comparison_type" : "dat_file",
-            "decimal_places" : 6
+            "decimal_places" : 3
             }
         }]
     }

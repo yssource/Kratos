@@ -270,10 +270,13 @@ class KratosIO(CoSimulationBaseIO):
                 csprint(self.lvl, info_msg)
 
     def __GetKratosVariable(self, var_name):
+        # TODO properly check which one is faster
         if not var_name in self.kratos_vars:
             self.kratos_vars[var_name] = KratosMultiphysics.KratosGlobals.GetVariable(var_name)
 
         return self.kratos_vars[var_name]
+
+        # return KratosMultiphysics.KratosGlobals.GetVariable(var_name)
 
 
 def ExtractData(model_part, kratos_var, data_array, buffer_index):

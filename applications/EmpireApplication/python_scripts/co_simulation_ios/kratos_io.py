@@ -262,14 +262,20 @@ class KratosIO(CoSimulationBaseIO):
                 if data_definition_from["type_of_quantity"] == "nodal_point":
                     redistribution_tolerance = 1e-8
                     redistribution_max_iters = 50
+                    geometry_name = data_definition_from["geometry_name"]
                     # Convert the nodal point quantities to distributed quantities before mapping
-                    KratosMultiphysics.VariableRedistributionUtility.DistributePointValues(
-                        from_client.model[data_definition_from["geometry_name"]],
-                        var_origin,
-                        KratosMultiphysics.VAUX_EQ_TRACTION,
-                        redistribution_tolerance,
-                        redistribution_max_iters)
+                    # KratosMultiphysics.VariableRedistributionUtility.DistributePointValues(
+                    #     from_client.model[geometry_name],
+                    #     var_origin,
+                    #     KratosMultiphysics.VAUX_EQ_TRACTION,
+                    #     redistribution_tolerance,
+                    #     redistribution_max_iters)
                     var_origin_for_mapping = KratosMultiphysics.VAUX_EQ_TRACTION
+                    if self.echo_level > -1:
+                        info_msg  = bold("Distributing Point Values of ")
+                        info_msg += bold("Variable: ") + var_origin.Name()
+                        info_msg += bold(" On: ") + geometry_name
+                        csprint(self.lvl, info_msg)
 
             distribute_on_dest=False
             if "type_of_quantity" in data_definition_to:
@@ -283,11 +289,17 @@ class KratosIO(CoSimulationBaseIO):
                 mapper.Map(var_origin_for_mapping, var_dest_for_mapping, mapper_flags)
 
             if distribute_on_dest:
+                geometry_name = data_definition_to["geometry_name"]
                 # Convert the transferred traction loads to point loads
-                KratosMultiphysics.VariableRedistributionUtility.ConvertDistributedValuesToPoint(
-                    to_client.model[data_definition_to["geometry_name"]],
-                    KratosMultiphysics.VAUX_EQ_TRACTION,
-                    var_dest)
+                # KratosMultiphysics.VariableRedistributionUtility.ConvertDistributedValuesToPoint(
+                #     to_client.model[geometry_name],
+                #     KratosMultiphysics.VAUX_EQ_TRACTION,
+                #     var_dest)
+                if self.echo_level > -1:
+                    info_msg  = bold("Converting Distributed-Values to Point-Values ")
+                    info_msg += bold("Variable: ") + var_dest.Name()
+                    info_msg += bold(" On: ") + geometry_name
+                    csprint(self.lvl, info_msg)
 
             if self.echo_level > 3:
                 pre_string = ""

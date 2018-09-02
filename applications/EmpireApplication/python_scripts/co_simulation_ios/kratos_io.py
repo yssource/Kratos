@@ -227,11 +227,11 @@ class KratosIO(CoSimulationBaseIO):
             self.mappers[geometry_name_from][geometry_name_to] = mapper
 
             # Printing information related to mapping
-            # if self.echo_level > 2:
-            info_msg  = bold("Mapper created") + ' for solver "' + self.solver_name + '": from "'
-            info_msg += from_client._Name() + ':' + geometry_name_from + '" to "'
-            info_msg += to_client._Name() + ':' + geometry_name_to + '"'
-            csprint(self.lvl, info_msg)
+            if self.echo_level > 2:
+                info_msg  = bold("Mapper created") + ' for solver "' + self.solver_name + '": from "'
+                info_msg += from_client._Name() + ':' + geometry_name_from + '" to "'
+                info_msg += to_client._Name() + ':' + geometry_name_to + '"'
+                csprint(self.lvl, info_msg)
 
         return mapper, is_inverse_mapper
 

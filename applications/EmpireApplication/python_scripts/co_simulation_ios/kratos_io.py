@@ -250,25 +250,44 @@ class KratosIO(CoSimulationBaseIO):
                 var_origin = self.__GetKratosVariable(data_definition_from["data_identifier"])
                 var_dest = self.__GetKratosVariable(data_definition_to["data_identifier"])
 
+            var_origin_for_mapping = var_origin
+            var_dest_for_mapping = var_dest
+
             mapper_flags = KratosMultiphysics.Flags()
             if "mapper_args" in data_settings["io_settings"]:
                 for flag_name in data_settings["io_settings"]["mapper_args"]:
                     mapper_flags |= self.mapper_flags[flag_name]
 
-            # if "type_of_quantity" in data_definition_from:
-            #     if data_definition_from["type_of_quantity"] == "nodal_point"
-            #         # Convert the nodal point quantities to distributed quantities before mapping
-            #     KratosMultiphysics.VariableRedistributionUtility.DistributePointValues(
-            #         from_client.model[data_definition_from["geometry_name"]
-            #         KratosMultiphysics.REACTION,
-            #         KratosMultiphysics.VAUX_EQ_TRACTION,
-            #         redistribution_tolerance,
-            #         redistribution_max_iters)
+            if "type_of_quantity" in data_definition_from:
+                if data_definition_from["type_of_quantity"] == "nodal_point":
+                    redistribution_tolerance = 1e-8
+                    redistribution_max_iters = 50
+                    # Convert the nodal point quantities to distributed quantities before mapping
+                    KratosMultiphysics.VariableRedistributionUtility.DistributePointValues(
+                        from_client.model[data_definition_from["geometry_name"]],
+                        var_origin,
+                        KratosMultiphysics.VAUX_EQ_TRACTION,
+                        redistribution_tolerance,
+                        redistribution_max_iters)
+                    var_origin_for_mapping = KratosMultiphysics.VAUX_EQ_TRACTION
+
+            distribute_on_dest=False
+            if "type_of_quantity" in data_definition_to:
+                if data_definition_to["type_of_quantity"] == "nodal_point":
+                    var_dest_for_mapping = KratosMultiphysics.VAUX_EQ_TRACTION
+                    distribute_on_dest = True
 
             if is_inverse_mapper:
-                mapper.InverseMap(var_origin, var_dest, mapper_flags)
+                mapper.InverseMap(var_origin_for_mapping, var_dest_for_mapping, mapper_flags)
             else:
-                mapper.Map(var_origin, var_dest, mapper_flags)
+                mapper.Map(var_origin_for_mapping, var_dest_for_mapping, mapper_flags)
+
+            if distribute_on_dest:
+                # Convert the transferred traction loads to point loads
+                KratosMultiphysics.VariableRedistributionUtility.ConvertDistributedValuesToPoint(
+                    to_client.model[data_definition_to["geometry_name"]],
+                    KratosMultiphysics.VAUX_EQ_TRACTION,
+                    var_dest)
 
             if self.echo_level > 3:
                 pre_string = ""

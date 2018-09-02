@@ -19,28 +19,31 @@ class KratosIO(CoSimulationBaseIO):
         super(KratosIO, self).__init__(solvers, solver_name, cosim_solver_details, level)
         # Setting up the Mappers
 
-        input_data_list = self.cosim_solver_details[self.solver_name]["input_data_list"]
-        output_data_list = self.cosim_solver_details[self.solver_name]["output_data_list"]
+        # input_data_list = self.cosim_solver_details[self.solver_name]["input_data_list"]
+        # output_data_list = self.cosim_solver_details[self.solver_name]["output_data_list"]
 
         self.mappers = {}
-        self.mapping_options = {}
-        self.mapper_geometries_map = {}
+        # self.mapping_options = {}
+        # self.mapper_geometries_map = {}
         self.mapper_flags = {
             "add_values" : KratosMapping.Mapper.ADD_VALUES,
             "swap_sign" : KratosMapping.Mapper.SWAP_SIGN,
-            "conservative" : KratosMapping.Mapper.CONSERVATIVE,
+            "conservative" : KratosMapping.Mapper.CONSERVATIVE
         }
 
-        for input_data in input_data_list:
-            if not "io_settings" in input_data: # skip if no IO is defined
-                continue
-            self.__SetupMapper(input_data, input_data["from_solver"], self.solver_name, False)
+        self.kratos_vars = {} # dict storing name-KratosVars,
+        # hopefully faster than accessing KratosComponents all the time
+
+        # for input_data in input_data_list:
+        #     if not "io_settings" in input_data: # skip if no IO is defined
+        #         continue
+        #     self.__SetupMapper(input_data, input_data["from_solver"], self.solver_name, False)
 
 
-        for output_data in output_data_list:
-            if not "io_settings" in output_data: # skip if no IO is defined
-                continue
-            self.__SetupMapper(output_data, self.solver_name, output_data["to_solver"], True)
+        # for output_data in output_data_list:
+        #     if not "io_settings" in output_data: # skip if no IO is defined
+        #         continue
+        #     self.__SetupMapper(output_data, self.solver_name, output_data["to_solver"], True)
 
 
     def __SetupMapper(self, data_entry, from_solver_name, to_solver_name, inverse_map):
@@ -134,7 +137,7 @@ class KratosIO(CoSimulationBaseIO):
             data_array = data_settings["data_array"]
 
             model_part = from_client.model[geometry_name]
-            kratos_var = KratosMultiphysics.KratosGlobals.GetVariable(var_name)
+            kratos_var = self.__GetKratosVariable(var_name)
 
             if type(kratos_var) == KratosMultiphysics.DoubleVariable or type(kratos_var) == KratosMultiphysics.Array1DComponentVariable:
                 SetData(model_part, kratos_var, data_array)
@@ -147,7 +150,7 @@ class KratosIO(CoSimulationBaseIO):
                     raise Exception("Size of data does not match number of nodes x domain size!")
                 ext = ["_X", "_Y", "_Z"]
                 for i in range(domain_size):
-                    component_var = KratosMultiphysics.KratosGlobals.GetVariable(kratos_var.Name()+ext[i])
+                    component_var = self.__GetKratosVariable(kratos_var.Name()+ext[i])
                     range_begin = i*num_nodes
                     range_end = (i+1)*num_nodes
                     SetData(model_part, component_var, data_array[range_begin:range_end])
@@ -157,21 +160,8 @@ class KratosIO(CoSimulationBaseIO):
                 raise Exception(err_msg)
 
         elif data_format == "kratos_modelpart":
-            ## TODO check why the incoming client is not used!
-            if data_name in self.mappers: # check if this IO-instance has the mapper for the data
-                mapper = self.mappers[data_name]
-
-                orig_var = self.mapping_options[data_name][0]
-                dest_var = self.mapping_options[data_name][1]
-                flags    = self.mapping_options[data_name][2]
-
-                if self.echo_level > 3:
-                    info_msg  = bold("Mapping with: ")
-                    info_msg += bold("Origin_Variable: ") + orig_var.Name() + " | "
-                    info_msg += bold("Destination_Variable: ") + dest_var.Name()
-                    csprint(self.lvl, info_msg)
-
-                mapper.Map(orig_var, dest_var, flags)
+            to_client = self.solvers[self.solver_name]
+            self.__Map(from_client, to_client, data_settings)
 
         elif data_format == "scalar_value":
             # TODO check if var in ModelPart!
@@ -182,7 +172,7 @@ class KratosIO(CoSimulationBaseIO):
             value = data_settings["scalar_value"]
 
             model_part = from_client.model[geometry_name]
-            kratos_var = KratosMultiphysics.KratosGlobals.GetVariable(var_name)
+            kratos_var = self.__GetKratosVariable(var_name)
 
             if type(kratos_var) == KratosMultiphysics.DoubleVariable or type(kratos_var) == KratosMultiphysics.Array1DComponentVariable:
                 for node in Nodes(model_part):
@@ -211,7 +201,7 @@ class KratosIO(CoSimulationBaseIO):
             buffer_index = data_settings["buffer_index"]
 
             model_part = to_client.model[geometry_name]
-            kratos_var = KratosMultiphysics.KratosGlobals.GetVariable(var_name)
+            kratos_var = self.__GetKratosVariable(var_name)
 
             if type(kratos_var) == KratosMultiphysics.DoubleVariable or type(kratos_var) == KratosMultiphysics.Array1DComponentVariable:
                 required_size = NumberOfNodes(model_part)
@@ -232,7 +222,7 @@ class KratosIO(CoSimulationBaseIO):
 
                 ext = ["_X", "_Y", "_Z"]
                 for i in range(domain_size):
-                    component_var = KratosMultiphysics.KratosGlobals.GetVariable(kratos_var.Name()+ext[i])
+                    component_var = self.__GetKratosVariable(kratos_var.Name()+ext[i])
                     range_begin = i*num_nodes
                     range_end = (i+1)*num_nodes
                     ExtractData(model_part, component_var, data_array[range_begin:range_end], buffer_index)
@@ -242,21 +232,8 @@ class KratosIO(CoSimulationBaseIO):
                 raise Exception(err_msg)
 
         elif data_format == "kratos_modelpart":
-            ## TODO check why the incoming client is not used!
-            if data_name in self.mappers: # check if this IO-instance has the mapper for the data => I think this is not needed any more
-                mapper = self.mappers[data_name]
-
-                orig_var = self.mapping_options[data_name][0]
-                dest_var = self.mapping_options[data_name][1]
-                flags    = self.mapping_options[data_name][2]
-
-                if self.echo_level > 3:
-                    info_msg  = bold("Inverse-Mapping with: ")
-                    info_msg += bold("Origin_Variable: ") + orig_var.Name() + " | "
-                    info_msg += bold("Destination_Variable: ") + dest_var.Name()
-                    csprint(self.lvl, info_msg)
-
-                mapper.InverseMap(orig_var, dest_var, flags)
+            from_client = self.solvers[self.solver_name]
+            self.__Map(from_client, to_client, data_settings)
 
         else:
             raise Exception("The requested data_format is not implemented in KratosIO!")
@@ -308,6 +285,90 @@ class KratosIO(CoSimulationBaseIO):
 
         else:
             raise Exception("The requested data_format is not implemented in KratosIO!")
+
+    def __GetMapper(self, from_client, to_client, data_settings):
+        data_name = data_settings["data_name"]
+        data_definition_from = from_client.GetDataDefinition(data_name)
+        data_definition_to   = to_client.GetDataDefinition(data_name)
+
+        geometry_name_from = data_definition_from["geometry_name"]
+        geometry_name_to = data_definition_to["geometry_name"]
+
+        mapper = None
+        is_inverse_mapper = False
+        if geometry_name_from in self.mappers: # a "Map"-Mapper exists
+            if geometry_name_to in self.mappers[geometry_name_from]:
+                mapper = self.mappers[geometry_name_from][geometry_name_to]
+
+        if mapper == None and geometry_name_to in self.mappers: # an "InverseMap"-Mapper exists
+            if geometry_name_from in self.mappers[geometry_name_to]:
+                mapper = self.mappers[geometry_name_to][geometry_name_from]
+                is_inverse_mapper = True
+
+        if mapper == None: # no mapper for this geometry-pair exists, initializing a "Map"-Mapper
+            if not geometry_name_from in self.mappers:
+                self.mappers[geometry_name_from] = {}
+
+
+            client_mesh_from = from_client.model[geometry_name_from]
+            client_mesh_to = to_client.model[geometry_name_to]
+
+            mapper_settings = KratosMultiphysics.Parameters("""{
+                "mapper_type" : ""
+            }""")
+            mapper_settings["mapper_type"].SetString(data_settings["io_settings"]["mapper_type"])
+            mapper = KratosMapping.MapperFactory.CreateMapper(client_mesh_from, client_mesh_to, mapper_settings)
+
+            self.mappers[geometry_name_from][geometry_name_to] = mapper
+
+            # Printing information related to mapping
+            # if self.echo_level > 2:
+            info_msg  = bold("Mapper created") + ' for solver "' + self.solver_name + '": from "'
+            info_msg += from_client._Name() + ':' + geometry_name_from + '" to "'
+            info_msg += to_client._Name() + ':' + geometry_name_to + '"'
+            csprint(self.lvl, info_msg)
+
+        return mapper, is_inverse_mapper
+
+    def __Map(self, from_client, to_client, data_settings):
+            mapper, is_inverse_mapper = self.__GetMapper(from_client, to_client, data_settings)
+
+            data_name = data_settings["data_name"]
+
+            data_definition_from = from_client.GetDataDefinition(data_name)
+            data_definition_to = to_client.GetDataDefinition(data_name)
+
+            var_from = self.__GetKratosVariable(data_definition_from["data_identifier"])
+            var_to = self.__GetKratosVariable(data_definition_to["data_identifier"])
+
+            mapper_flags = KratosMultiphysics.Flags()
+            if "mapper_args" in data_settings["io_settings"]:
+                for flag_name in data_settings["io_settings"]["mapper_args"]:
+                    mapper_flags |= self.mapper_flags[flag_name]
+
+            if is_inverse_mapper:
+                mapper.InverseMap(var_to, var_from, mapper_flags)
+            else:
+                mapper.Map(var_from, var_to, mapper_flags)
+
+            if self.echo_level > 3:
+                if is_inverse_mapper:
+                    info_msg  = bold("Inverse-Mapping with: ")
+                    info_msg += bold("Origin_Variable: ") + var_to.Name() + " | "
+                    info_msg += bold("Destination_Variable: ") + var_from.Name() + " | "
+                else:
+                    info_msg  = bold("Mapping with: ")
+                    info_msg += bold("Origin_Variable: ") + var_from.Name() + " | "
+                    info_msg += bold("Destination_Variable: ") + var_to.Name()
+                if "mapper_args" in data_settings["io_settings"]:
+                    info_msg += " | " + bold("Mapper-Flags: ") + ", ".join(data_settings["io_settings"]["mapper_args"])
+                csprint(self.lvl, info_msg)
+
+    def __GetKratosVariable(self, var_name):
+        if not var_name in self.kratos_vars:
+            self.kratos_vars[var_name] = KratosMultiphysics.KratosGlobals.GetVariable(var_name)
+
+        return self.kratos_vars[var_name]
 
 
 def ExtractData(model_part, kratos_var, data_array, buffer_index):

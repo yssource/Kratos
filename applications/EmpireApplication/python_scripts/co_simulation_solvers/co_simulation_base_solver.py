@@ -25,7 +25,7 @@ class CoSimulationBaseSolver(object):
     def Initialize(self):
         pass
 
-    def InitializeIO(self, solvers, cosim_solver_details, io_echo_level):
+    def InitializeIO(self, solvers, io_echo_level):
         solver_name = self.cosim_solver_settings["name"]
         if self.io_is_initialized:
             raise Exception('IO for "' + solver_name + '" is already initialized!')
@@ -33,7 +33,6 @@ class CoSimulationBaseSolver(object):
         self.io = io_factory.CreateIO(self._GetIOName(),
                                       solvers,
                                       solver_name,
-                                      cosim_solver_details,
                                       self.lvl)
         self.io.SetEchoLevel(io_echo_level)
         self.io_is_initialized = True

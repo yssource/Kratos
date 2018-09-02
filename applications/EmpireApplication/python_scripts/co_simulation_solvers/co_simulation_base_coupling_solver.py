@@ -48,7 +48,7 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
         for solver_name in self.solver_names:
             self.solvers[solver_name].Initialize()
         for solver_name in self.solver_names:
-            self.solvers[solver_name].InitializeIO(self.solvers, self.cosim_solver_details, self.echo_level)
+            self.solvers[solver_name].InitializeIO(self.solvers, self.echo_level)
             # we use the Echo_level of the coupling solver, since IO is needed by the coupling
             # and not by the (physics-) solver
 

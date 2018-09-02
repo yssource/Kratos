@@ -7,8 +7,8 @@ from co_simulation_base_io import CoSimulationBaseIO
 import numpy as np
 import co_simulation_tools as cs_tools
 
-def Create(solvers, solver_name, cosim_solver_details, level):
-    return MDoFIO(solvers, solver_name, cosim_solver_details, level)
+def Create(solvers, solver_name, level):
+    return MDoFIO(solvers, solver_name, level)
 
 class MDoFIO(CoSimulationBaseIO):
 

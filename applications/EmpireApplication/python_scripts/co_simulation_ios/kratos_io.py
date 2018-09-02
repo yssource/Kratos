@@ -11,12 +11,12 @@ from co_simulation_base_io import CoSimulationBaseIO
 import numpy as np
 from co_simulation_tools import csprint, bold, green, red
 
-def Create(solvers, solver_name, cosim_solver_details, level):
-    return KratosIO(solvers, solver_name, cosim_solver_details, level)
+def Create(solvers, solver_name, level):
+    return KratosIO(solvers, solver_name, level)
 
 class KratosIO(CoSimulationBaseIO):
-    def __init__(self, solvers, solver_name, cosim_solver_details, level):
-        super(KratosIO, self).__init__(solvers, solver_name, cosim_solver_details, level)
+    def __init__(self, solvers, solver_name, level):
+        super(KratosIO, self).__init__(solvers, solver_name, level)
 
         self.mappers = {}
         self.mapper_flags = {

@@ -243,28 +243,40 @@ class KratosIO(CoSimulationBaseIO):
             data_definition_from = from_client.GetDataDefinition(data_name)
             data_definition_to = to_client.GetDataDefinition(data_name)
 
-            var_from = self.__GetKratosVariable(data_definition_from["data_identifier"])
-            var_to = self.__GetKratosVariable(data_definition_to["data_identifier"])
+            if is_inverse_mapper:
+                var_origin = self.__GetKratosVariable(data_definition_to["data_identifier"])
+                var_dest = self.__GetKratosVariable(data_definition_from["data_identifier"])
+            else:
+                var_origin = self.__GetKratosVariable(data_definition_from["data_identifier"])
+                var_dest = self.__GetKratosVariable(data_definition_to["data_identifier"])
 
             mapper_flags = KratosMultiphysics.Flags()
             if "mapper_args" in data_settings["io_settings"]:
                 for flag_name in data_settings["io_settings"]["mapper_args"]:
                     mapper_flags |= self.mapper_flags[flag_name]
 
+            # if "type_of_quantity" in data_definition_from:
+            #     if data_definition_from["type_of_quantity"] == "nodal_point"
+            #         # Convert the nodal point quantities to distributed quantities before mapping
+            #     KratosMultiphysics.VariableRedistributionUtility.DistributePointValues(
+            #         from_client.model[data_definition_from["geometry_name"]
+            #         KratosMultiphysics.REACTION,
+            #         KratosMultiphysics.VAUX_EQ_TRACTION,
+            #         redistribution_tolerance,
+            #         redistribution_max_iters)
+
             if is_inverse_mapper:
-                mapper.InverseMap(var_to, var_from, mapper_flags)
+                mapper.InverseMap(var_origin, var_dest, mapper_flags)
             else:
-                mapper.Map(var_from, var_to, mapper_flags)
+                mapper.Map(var_origin, var_dest, mapper_flags)
 
             if self.echo_level > 3:
+                pre_string = ""
                 if is_inverse_mapper:
-                    info_msg  = bold("Inverse-Mapping with: ")
-                    info_msg += bold("Origin_Variable: ") + var_to.Name() + " | "
-                    info_msg += bold("Destination_Variable: ") + var_from.Name() + " | "
-                else:
-                    info_msg  = bold("Mapping with: ")
-                    info_msg += bold("Origin_Variable: ") + var_from.Name() + " | "
-                    info_msg += bold("Destination_Variable: ") + var_to.Name()
+                    pre_string = "Inverse-"
+                info_msg  = bold(pre_string+"Mapping with: ")
+                info_msg += bold("Origin_Variable: ") + var_origin.Name() + " | "
+                info_msg += bold("Destination_Variable: ") + var_dest.Name()
                 if "mapper_args" in data_settings["io_settings"]:
                     info_msg += " | " + bold("Mapper-Flags: ") + ", ".join(data_settings["io_settings"]["mapper_args"])
                 csprint(self.lvl, info_msg)

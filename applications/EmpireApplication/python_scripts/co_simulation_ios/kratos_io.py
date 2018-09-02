@@ -279,9 +279,9 @@ class KratosIO(CoSimulationBaseIO):
             node_IDs = np.zeros(num_nodes, dtype=int)
 
             for i, node in enumerate(Nodes(model_part)):
-                node_coords[i]  = node.X
-                node_coords[i+1]  = node.Y
-                node_coords[i+2]  = node.Z
+                node_coords[i*3]    = node.X
+                node_coords[i*3+1]  = node.Y
+                node_coords[i*3+2]  = node.Z
                 node_IDs[i] = node.Id
 
             num_nodes_per_element = []

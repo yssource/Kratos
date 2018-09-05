@@ -6,7 +6,7 @@
         "parallel_type"   : "OpenMP",
         "time_step"       : 0.02,
         "start_time"      : 0.0,
-        "end_time"        : 1.0,
+        "end_time"        : 3,
         "echo_level"      : 0
     },
     "solver_settings"          : {
@@ -62,7 +62,7 @@
             "file_label"          : "step",
             "output_control_type" : "step",
             "output_frequency"    : 1,
-            "body_output"         : true,
+            "body_output"         : false,
             "node_output"         : false,
             "skin_output"         : false,
             "plane_output"        : [],

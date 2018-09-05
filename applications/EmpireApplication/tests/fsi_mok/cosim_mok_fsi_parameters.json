@@ -94,7 +94,7 @@
                     },
                     "force" : {
                         "geometry_name"   : "FluidModelPart.NoSlip2D_FSI",
-                        "type_of_quantity": "nodal_point",
+                        "type_of_quantity": "nodal_pointl",
                         "data_identifier" : "REACTION",
                         "data_format"     : "kratos_modelpart"
                     },
@@ -118,7 +118,7 @@
                     "force" : {
                         "geometry_name"   : "GENERIC_FSI",
                         "data_identifier" : "POINT_LOAD",
-                        "type_of_quantity": "nodal_point",
+                        "type_of_quantity": "nodal_pointl",
                         "data_format"     : "kratos_modelpart"
                     },
                     "vel" : {

@@ -1,10 +1,7 @@
 {
     "problem_data"             : {
         "problem_name"    : "Wall_Structure",
-        "model_part_name" : "Structure",
-        "domain_size"     : 2,
         "parallel_type"   : "OpenMP",
-        "time_step"       : 0.02,
         "start_time"      : 0.0,
         "end_time"        : 3,
         "echo_level"      : 0
@@ -16,12 +13,17 @@
         "time_integration_method"            : "implicit",
         "scheme_type"                        : "bossak",
         "buffer_size"                        : 3,
+        "domain_size"                        : 2,
+        "model_part_name"                    : "Structure",
         "model_import_settings"              : {
             "input_type"     : "mdpa",
             "input_filename" : "fsi_wall/Wall_Structure"
         },
         "material_import_settings"           : {
             "materials_filename" : "fsi_wall/StructuralMaterials.json"
+        },
+        "time_stepping" : {
+            "time_step"       : 0.02
         },
         "line_search"                        : false,
         "convergence_criterion"              : "residual_criterion",
@@ -38,20 +40,22 @@
         "processes_sub_model_part_list"      : ["DISPLACEMENT_Dirichlet","PointLoad2D_FSI_Interface"],
         "rotation_dofs"                      : false
     },
-    "constraints_process_list" : [{
-        "python_module" : "assign_vector_variable_process",
-        "kratos_module" : "KratosMultiphysics",
-        "Parameters"    : {
-            "model_part_name" : "DISPLACEMENT_Dirichlet",
-            "variable_name"   : "DISPLACEMENT",
-            "constrained"     : [true,true,true],
-            "value"           : [0.0,0.0,0.0],
-            "interval"        : [0.0,"End"]
-        }
-    }],
-    "loads_process_list"       : [],
-    "list_other_processes"     : [],
-    "output_configuration"     : {
+    "processes" : {
+        "constraints_process_list" : [{
+            "python_module" : "assign_vector_variable_process",
+            "kratos_module" : "KratosMultiphysics",
+            "Parameters"    : {
+                "model_part_name" : "DISPLACEMENT_Dirichlet",
+                "variable_name"   : "DISPLACEMENT",
+                "constrained"     : [true,true,true],
+                "value"           : [0.0,0.0,0.0],
+                "interval"        : [0.0,"End"]
+            }
+        }],
+        "loads_process_list"       : [],
+        "list_other_processes"     : []
+    },
+    "_output_configuration"     : {
         "result_file_configuration" : {
             "gidpost_flags"       : {
                 "GiDPostMode"           : "GiD_PostBinary",

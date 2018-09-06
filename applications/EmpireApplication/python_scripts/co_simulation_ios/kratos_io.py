@@ -264,12 +264,13 @@ class KratosIO(CoSimulationBaseIO):
                     redistribution_max_iters = 50
                     geometry_name = data_definition_from["geometry_name"]
                     # Convert the nodal point quantities to distributed quantities before mapping
-                    # KratosMultiphysics.VariableRedistributionUtility.DistributePointValues(
-                    #     from_client.model[geometry_name],
-                    #     var_origin,
-                    #     KratosMultiphysics.VAUX_EQ_TRACTION,
-                    #     redistribution_tolerance,
-                    #     redistribution_max_iters)
+                    errr #Talk to Philipp befoe using this => VAUX_EQ_TRACTION has to be added to the ModelPart!
+                    KratosMultiphysics.VariableRedistributionUtility.DistributePointValues(
+                        from_client.model[geometry_name],
+                        var_origin,
+                        KratosMultiphysics.VAUX_EQ_TRACTION,
+                        redistribution_tolerance,
+                        redistribution_max_iters)
                     var_origin_for_mapping = KratosMultiphysics.VAUX_EQ_TRACTION
                     if self.echo_level > -1:
                         info_msg  = bold("Distributing Point Values of ")
@@ -291,10 +292,10 @@ class KratosIO(CoSimulationBaseIO):
             if distribute_on_dest:
                 geometry_name = data_definition_to["geometry_name"]
                 # Convert the transferred traction loads to point loads
-                # KratosMultiphysics.VariableRedistributionUtility.ConvertDistributedValuesToPoint(
-                #     to_client.model[geometry_name],
-                #     KratosMultiphysics.VAUX_EQ_TRACTION,
-                #     var_dest)
+                KratosMultiphysics.VariableRedistributionUtility.ConvertDistributedValuesToPoint(
+                    to_client.model[geometry_name],
+                    KratosMultiphysics.VAUX_EQ_TRACTION,
+                    var_dest)
                 if self.echo_level > -1:
                     info_msg  = bold("Converting Distributed-Values to Point-Values ")
                     info_msg += bold("Variable: ") + var_dest.Name()

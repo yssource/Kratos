@@ -182,6 +182,8 @@ class TestComputeCenterOfGravity(KratosUnittest.TestCase):
         self._add_dofs(mp)
         self._create_shell_elements(mp)
 
+        # local changes
+
         mass_process = StructuralMechanicsApplication.ComputeCenterOfGravityProcess(mp)
         mass_process.Execute()
         total_mass = mp.ProcessInfo[StructuralMechanicsApplication.CENTER_OF_GRAVITY]

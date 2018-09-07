@@ -23,13 +23,17 @@ class TestKratosSolver(co_simulation_test_case.CoSimulationTestCase):
             kratos_utils.DeleteFileIfExisting("./test_mdpa_files/rectangle_2D3N_test.time")
 
 
-class TestSDofSolver(co_simulation_test_case.CoSimulationTestCase):
-    def test_SDofSolver(self):
+class TestSDoFSolver(co_simulation_test_case.CoSimulationTestCase):
+    def test_SDoFSolver(self):
         with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
-            # self.createTest('test_structural_mesh_motion_2d/rectangle_2D3N_test')
-            # self.runTest()
-            kratos_utils.DeleteFileIfExisting("./test_mdpa_files/rectangle_2D3N_test.time")
+            self.createTest("sdof_solver", "cosim_sdof")
+            self.runTest()
 
+# class TestMDoFSolver(co_simulation_test_case.CoSimulationTestCase):
+#     def test_MDoFSolver(self):
+#         with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
+#             self.createTest("mdof_solver", "mdof")
+#             self.runTest()
 
 class TestEmpireSolver(co_simulation_test_case.CoSimulationTestCase):
     def test_EmpireSolverWrapper(self):

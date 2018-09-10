@@ -39,3 +39,9 @@ class CoSimulationTestCase(KratosUnittest.TestCase):
     def runTest(self):
         CoSimulationAnalysis(self.cosim_parameters).Run()
         kratos_utils.DeleteTimeFiles(self.problem_dir_name)
+
+    # called only once for this class, opposed of tearDown()
+    @classmethod
+    def tearDownClass(cls):
+        # Cleaning
+        kratos_utils.DeleteDirectoryIfExisting("__pycache__")

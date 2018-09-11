@@ -150,7 +150,8 @@ public:
 
         void FinalizeSolutionStep(ModelPart& rModelPart) override
     {
-        this->mIsActive = false;
+        // Uncomment this to activate dirac drag calculation
+        // this->mIsActive = false;
     }
 
     void Check(ModelPart const& rModelPart) override

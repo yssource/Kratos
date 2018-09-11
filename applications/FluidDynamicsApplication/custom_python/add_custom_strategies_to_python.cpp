@@ -155,7 +155,7 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
         StabilizedAdjointBossakScheme<SparseSpaceType, LocalSpaceType>,
         typename StabilizedAdjointBossakScheme<SparseSpaceType, LocalSpaceType>::Pointer,
         BaseSchemeType>(m,"StabilizedAdjointBossakScheme")
-        .def(init<Parameters&, Parameters&, ResponseFunction::Pointer>())
+        .def(init<Parameters&, Parameters&, AdjointResponseFunction::Pointer>())
         ;
 
     // Adjoint fluid convergence criteria

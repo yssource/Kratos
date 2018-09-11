@@ -125,13 +125,12 @@ public:
         KRATOS_CATCH("");
     }
 
-        void FinalizeSolutionStep(ModelPart& rModelPart) override
+    void FinalizeSolutionStep() override
     {
         // Uncomment this to activate dirac drag calculation
         // this->mIsActive = false;
     }
 
-    void Check(ModelPart const& rModelPart) override
     void CalculateGradient(const Element& rAdjointElement,
                            const Matrix& rResidualGradient,
                            Vector& rResponseGradient,

@@ -115,7 +115,7 @@ public:
         mAdjointSecondDerivsVector.resize(num_threads);
         mAdjointAuxiliaryVector.resize(num_threads);
 
-        this->mpResponseFunction->Initialize(rModelPart);
+        this->mpResponseFunction->Initialize();
 
         ProcessInfo& r_current_process_info = rModelPart.GetProcessInfo();
         r_current_process_info[BOSSAK_ALPHA] = mAlphaBossak;

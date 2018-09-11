@@ -56,7 +56,7 @@ public:
     ///@{
 
     /// Constructor.
-    StabilizedAdjointBossakScheme(Parameters& rParameters, Parameters& rParametersBossak, ResponseFunction::Pointer pResponseFunction):
+    StabilizedAdjointBossakScheme(Parameters& rParameters, Parameters& rParametersBossak, AdjointResponseFunction::Pointer pResponseFunction):
         ResidualBasedAdjointBossakScheme<TSparseSpace, TDenseSpace>(rParametersBossak, pResponseFunction),
         mAdjointArtificialDiffusion()
     {

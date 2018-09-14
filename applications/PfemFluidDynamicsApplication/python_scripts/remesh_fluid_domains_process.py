@@ -75,9 +75,18 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
     def ExecuteInitialize(self):
 
         self.fileTotalVolume = None
-        #self.probe1 = None
-        #self.probe2 = None
-        #self.probe3 = None
+        self.probe1isolated = None
+        self.probe1 = None
+        self.probe2 = None
+        self.probe3 = None
+        self.probe4 = None
+        self.probe5 = None
+        self.probe6 = None
+        self.probe7 = None
+        self.probe8 = None
+        self.probe9 = None
+
+        print("::[FLUID Meshing_Process]:: meshing frequency", self.meshing_frequency)
 
         # check restart
         self.restart = False
@@ -90,7 +99,12 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
             else:
                 self.next_meshing = self.main_model_part.ProcessInfo[KratosMultiphysics.STEP] + self.meshing_frequency
         else:
-            self.meshing_output = self.meshing_frequency
+            self.step_count = self.main_model_part.ProcessInfo[KratosMultiphysics.STEP]
+            if self.meshing_control_is_time:
+                self.next_meshing  = self.main_model_part.ProcessInfo[KratosMultiphysics.TIME] + self.meshing_frequency
+            else:
+                self.next_meshing = self.main_model_part.ProcessInfo[KratosMultiphysics.STEP] + self.meshing_frequency
+            #self.meshing_output = self.meshing_frequency
 
 
         self.main_model_part.ProcessInfo.SetValue(KratosDelaunay.INITIALIZED_DOMAINS, False);
@@ -171,35 +185,84 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
         currentTime=self.main_model_part.ProcessInfo[KratosMultiphysics.TIME]
         currentStep=self.main_model_part.ProcessInfo[KratosMultiphysics.STEP]
 
-        if currentStep >= 2 and self.fileTotalVolume is None and self.write_total_volume:
+        if currentStep >= 2 and self.fileTotalVolume is None:
             self.fileTotalVolume = open("totalVolumeBeforeMeshing.txt",'w')
-            #self.probe1 = open("probe1.txt",'w')
-            #self.probe2 = open("probe2.txt",'w')
-            #self.probe3 = open("probe3.txt",'w')
+            self.probe1isolated = open("probe1isolated.txt",'w')
+            self.probe1 = open("probe1.txt",'w')
+            self.probe2 = open("probe2.txt",'w')
+            self.probe3 = open("probe3.txt",'w')
+            self.probe4 = open("probe4.txt",'w')
+            self.probe5 = open("probe5.txt",'w')
+            self.probe6 = open("probe6.txt",'w')
+            self.probe7 = open("probe7.txt",'w')
+            self.probe8 = open("probe8.txt",'w')
+            self.probe9 = open("probe9.txt",'w')
 
         if(currentStep > 1 and self.fileTotalVolume is not None):
-            #maxYprobe1=0.1
-            #maxYprobe2=0.1
-            #maxYprobe3=0.1
-            #for node in self.main_model_part.Nodes:
-                #if(node.IsNot(KratosMultiphysics.ISOLATED)):
-                    #if(node.X>5.9 and node.X<6.1):
-                        #if(node.Y>maxYprobe1):
-                            #maxYprobe1=node.Y
-                    #if(node.X>8.9 and node.X<9.1):
-                        #if(node.Y>maxYprobe2):
-                            #maxYprobe2=node.Y
-                    #if(node.X>11.9 and node.X<12.1):
-                        #if(node.Y>maxYprobe3):
-                            #maxYprobe3=node.Y
+            maxYprobe1isolated=0.1
+            maxYprobe1=0.1
+            maxYprobe2=0.1
+            maxYprobe3=0.1
+            maxYprobe4=0.1
+            maxYprobe5=0.1
+            maxYprobe6=0.1
+            maxYprobe7=0.1
+            maxYprobe8=0.1
+            maxYprobe9=0.1
+            for node in self.main_model_part.Nodes:
+                if(node.X>1.87 and node.X<1.93):
+                    if(node.Y>maxYprobe1isolated):
+                        maxYprobe1isolated=node.Y
+                if(node.IsNot(KratosMultiphysics.ISOLATED)):
+                    if(node.X>1.87 and node.X<1.93):
+                        if(node.Y>maxYprobe1):
+                            maxYprobe1=node.Y
+                    if(node.X>3.07 and node.X<3.13):
+                        if(node.Y>maxYprobe2):
+                            maxYprobe2=node.Y
+                    if(node.X>5.97 and node.X<6.03):
+                        if(node.Y>maxYprobe3):
+                            maxYprobe3=node.Y
+                    if(node.X>8.77 and node.X<8.83):
+                        if(node.Y>maxYprobe4):
+                            maxYprobe4=node.Y
+                    if(node.X>11.27 and node.X<11.33):
+                        if(node.Y>maxYprobe5):
+                            maxYprobe5=node.Y
+                    if(node.X>16.77 and node.X<16.83):
+                        if(node.Y>maxYprobe6):
+                            maxYprobe6=node.Y
+                    if(node.X>21.97 and node.X<22.03):
+                        if(node.Y>maxYprobe7):
+                            maxYprobe7=node.Y
+                    if(node.X>26.57 and node.X<26.63):
+                        if(node.Y>maxYprobe8):
+                            maxYprobe8=node.Y
+                    if(node.X>32.47 and node.X<32.53):
+                        if(node.Y>maxYprobe9):
+                            maxYprobe9=node.Y
 
-            #outstring = str(currentTime) + " " +  str(maxYprobe1) + "\n"
-            #self.probe1.write(outstring)
-            #outstring = str(currentTime) + " " +  str(maxYprobe2) + "\n"
-            #self.probe2.write(outstring)
-            #outstring = str(currentTime) + " " +  str(maxYprobe3) + "\n"
-            #self.probe3.write(outstring)
-
+            outstring = str(currentTime) + " " +  str(maxYprobe1isolated) + "\n"
+            self.probe1isolated.write(outstring)
+            outstring = str(currentTime) + " " +  str(maxYprobe1) + "\n"
+            self.probe1.write(outstring)
+            outstring = str(currentTime) + " " +  str(maxYprobe2) + "\n"
+            self.probe2.write(outstring)
+            outstring = str(currentTime) + " " +  str(maxYprobe3) + "\n"
+            self.probe3.write(outstring)
+            outstring = str(currentTime) + " " +  str(maxYprobe4) + "\n"
+            self.probe4.write(outstring)
+            outstring = str(currentTime) + " " +  str(maxYprobe5) + "\n"
+            self.probe5.write(outstring)
+            outstring = str(currentTime) + " " +  str(maxYprobe6) + "\n"
+            self.probe6.write(outstring)
+            outstring = str(currentTime) + " " +  str(maxYprobe7) + "\n"
+            self.probe7.write(outstring)
+            outstring = str(currentTime) + " " +  str(maxYprobe8) + "\n"
+            self.probe8.write(outstring)
+            outstring = str(currentTime) + " " +  str(maxYprobe9) + "\n"
+            self.probe9.write(outstring)
+            
             for domain in self.meshing_domains:
                 if(domain.Active()):
                     domain.ComputeAverageMeshParameters()
@@ -219,12 +282,13 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
         if(currentStep == 1):
             for node in self.main_model_part.Nodes:
                 node.SetSolutionStepValue(KratosMultiphysics.VOLUME_ACCELERATION,volume_acceleration)
-
-        if(self.remesh_domains_active):
-            if( self.meshing_before_output ):
-                if(self.IsMeshingStep()):
+  
+        if(self.remesh_domains_active or currentStep == 1):
+            if( self.meshing_before_output or currentStep == 1):
+                if(self.IsMeshingStep() or currentStep == 1):
                     if(self.echo_level>1):
                         print("::[Remesh_Fluid_Domains_Process]:: RemeshFluidDomains ")
+                    print("--> Remesh Fluid Domain at", currentTime, 's')
                     self.RemeshFluidDomains()
 
         if(currentStep > 1 and self.fileTotalVolume is not None):
@@ -243,19 +307,31 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
                     self.fileTotalVolume.write(outstring)
         if self.fileTotalVolume is not None:
             self.fileTotalVolume.flush()
-            #self.probe1.flush()
-            #self.probe2.flush()
-            #self.probe3.flush()
+            self.probe1isolated.flush()
+            self.probe1.flush()
+            self.probe2.flush()
+            self.probe3.flush()
+            self.probe4.flush()
+            self.probe5.flush()
+            self.probe6.flush()
+            self.probe7.flush()
+            self.probe8.flush()
+            self.probe9.flush()
 
 
     def ExecuteFinalize(self):
         if self.fileTotalVolume is not None:
             self.fileTotalVolume.close()
-            #self.probe1.close()
-            #self.probe2.close()
-            #self.probe3.close()
-
-
+            self.probe1isolated.close()
+            self.probe1.close()
+            self.probe2.close()
+            self.probe3.close()
+            self.probe4.close()
+            self.probe5.close()
+            self.probe6.close()
+            self.probe7.close()
+            self.probe8.close()
+            self.probe9.close()
       #if(self.main_model_part.ProcessInfo[KratosMultiphysics.STEP] == 1):
           #  for node in self.main_model_part.Nodes:
            #     if (node.Is(KratosMultiphysics.FLUID)):

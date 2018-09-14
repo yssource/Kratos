@@ -393,6 +393,12 @@ private:
 	if(in->Is(TO_ERASE)){
 	  any_node_removed = true;
 	}
+	// double posX=in->X();
+	// if(posX>1 && in->IsNot(RIGID)){
+	//   in->Set(TO_ERASE);
+	//   any_node_removed = true;
+
+	// }
 	bool on_contact_tip = false;
 	bool contact_active = false;
 
@@ -417,8 +423,9 @@ private:
 	    // unsigned int rigidNeighNodes=0;
 
 	    if(in->Is(FREE_SURFACE)){// it must be more difficult to erase a free_surface node, otherwise, lot of volume is lost
-	      radius = 0.5  * initialMeanRadius;//compared with element radius
-	      // radius = 0.4  * initialMeanRadius;//compared with element radius
+	      // radius = 0.5  * initialMeanRadius;//compared with element radius //in m015 this option was active
+	      radius = 0.4  * initialMeanRadius;//as for the best case of Hreservoir=0.3m
+	      // radius = 0.35  * initialMeanRadius;//compared with element radius
 	      WeakPointerVector< Node < 3 > >& neighb_nodes = in->GetValue(NEIGHBOUR_NODES);
 	      unsigned int countRigid=0;
 	      for (WeakPointerVector< Node <3> >::iterator nn = neighb_nodes.begin();nn != neighb_nodes.end(); nn++)

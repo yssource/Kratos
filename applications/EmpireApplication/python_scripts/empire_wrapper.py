@@ -1,11 +1,11 @@
-from __future__ import print_function, absolute_import, division #makes KratosMultiphysics backward compatible with python 2.6 and 2.7
-# import libraries
-from KratosMultiphysics import *
-from KratosMultiphysics.EmpireApplication import *
-import ctypes as ctp
-import os
+from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
-CheckForPreviousImport()
+# Importing the Kratos Library
+import KratosMultiphysics
+
+# Other imports
+import ctypes as ctp
+
 
 # TODO check if variables are in MP!
 
@@ -14,12 +14,12 @@ class EmpireWrapper:
     # storage for the instance reference
     __instance = None
 
-    def __init__(self):
+    def __init__(self, echo_level=0):
         """ Create singleton instance """
         # Check whether we already have an instance
         if EmpireWrapper.__instance is None:
             # Create and remember instance
-            EmpireWrapper.__instance = EmpireWrapper.__EmpireWrapper()
+            EmpireWrapper.__instance = EmpireWrapper.__EmpireWrapper(echo_level)
 
     def __getattr__(self, attr):
         """ Delegate access to implementation """
@@ -34,24 +34,29 @@ class EmpireWrapper:
         # Implemented as Singleton, bcs otherwise the EMPIRE library can be imported several times
         ##### Constructor #####
         # -------------------------------------------------------------------------------------------------
-        def __init__(self):
+        def __init__(self, echo_level):
             self.model_parts = {}
             self._load_empire_library()
+            self.echo_level = echo_level
         # -------------------------------------------------------------------------------------------------
 
         ##### Public Functions #####
         # -------------------------------------------------------------------------------------------------
         def Connect(self, xml_input_file):
             ''' Establishes the necessary connection with the Emperor '''
+            info_msg  = 'Attempting to connect with xml-file "'
+            info_msg += xml_input_file + '"'
+            KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', info_msg)
             self.libempire_api.EMPIRE_API_Connect(xml_input_file.encode())
-            print("::EMPIRE:: Connected")
+            KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Successfully connected')
         # -------------------------------------------------------------------------------------------------
 
         # -------------------------------------------------------------------------------------------------
         def Disconnect(self):
             ''' Performs disconnection and finalization operations to the Emperor '''
+            KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Attempting to disconnect')
             self.libempire_api.EMPIRE_API_Disconnect()
-            print("::EMPIRE:: Disconnected")
+            KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Successfully disconnected')
         # -------------------------------------------------------------------------------------------------
 
         # -------------------------------------------------------------------------------------------------
@@ -86,12 +91,15 @@ class EmpireWrapper:
             c_numNodesPerElem = (ctp.c_int * len(numNodesPerElem))(*numNodesPerElem)
             c_elemTable = (ctp.c_int * len(elemTable))(*elemTable)
 
+            if self.echo_level > 0:
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Attempting to send mesh "' + mesh_name + '"')
             # send mesh to Emperor
             self.libempire_api.EMPIRE_API_sendMesh("mesh_name.encode()",
                                                 c_numNodes[0], c_numElems[0],
                                                 c_nodeCoors, c_nodeIDs,
                                                 c_numNodesPerElem, c_elemTable)
-            print("::EMPIRE:: Sent Mesh")
+            if self.echo_level > 0:
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Sucessfully sent mesh')
         # -------------------------------------------------------------------------------------------------
 
         # -------------------------------------------------------------------------------------------------
@@ -119,10 +127,14 @@ class EmpireWrapper:
             c_numNodesPerElem = ctp.pointer(ctp.pointer(ctp.c_int(0)))
             c_elemTable = ctp.pointer(ctp.pointer(ctp.c_int(0)))
 
+            if self.echo_level > 0:
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Attempting to receive mesh "' + mesh_name + '"')
             self.libempire_api.EMPIRE_API_recvMesh(mesh_name.encode(),
                                                    c_numNodes, c_numElems,
                                                    c_nodeCoors, c_nodeIDs,
                                                    c_numNodesPerElem, c_elemTable)
+            if self.echo_level > 0:
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Sucessfully received mesh')
 
             numNodes = c_numNodes.contents.value
             numElems = c_numElems.contents.value
@@ -132,7 +144,6 @@ class EmpireWrapper:
             elemTable = c_elemTable.contents
 
             self._set_mesh(model_part, numNodes, numElems, nodeCoors, nodeIDs, numNodesPerElem, elemTable)
-            print("::EMPIRE:: Received Mesh")
         # -------------------------------------------------------------------------------------------------
 
         # -------------------------------------------------------------------------------------------------
@@ -159,8 +170,15 @@ class EmpireWrapper:
             c_data_field = (ctp.c_double * len(data_field))(*data_field)
             c_size = len(c_data_field)
 
+            if self.echo_level > 1:
+                info_msg  = 'Attempting to send data-field "' + data_field_name
+                info_msg += '" for mesh "' + mesh_name + '"\n                '
+                info_msg += 'With Kratos-Vars: ' + ", ".join([var.Name() for var in kratos_variables])
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', info_msg)
             # send data field to EMPIRE
             self.libempire_api.EMPIRE_API_sendDataField("data_field_name.encode()", c_size, c_data_field)
+            if self.echo_level > 1:
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Successfully sent data-field')
         # -------------------------------------------------------------------------------------------------
 
         # -------------------------------------------------------------------------------------------------
@@ -189,8 +207,15 @@ class EmpireWrapper:
             c_size_data_field = ctp.c_int(size_data_field)
             c_data_field = (ctp.c_double * size_data_field)(0)
 
+            if self.echo_level > 1:
+                info_msg  = 'Attempting to receive data-field "' + data_field_name
+                info_msg += '" for mesh "' + mesh_name + '"\n                '
+                info_msg += 'With Kratos-Vars: ' + ", ".join([var.Name() for var in kratos_variables])
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', info_msg)
             # receive data field from empire
             self.libempire_api.EMPIRE_API_recvDataField(data_field_name.encode(), c_size_data_field, c_data_field)
+            if self.echo_level > 1:
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Successfully received data-field')
 
             self._set_data_field(model_part, kratos_variables, c_data_field, sizes_of_variables)
         # -------------------------------------------------------------------------------------------------
@@ -209,7 +234,11 @@ class EmpireWrapper:
             c_signal = (ctp.c_double * len(array_to_send))(*array_to_send)
             c_size = len(c_signal)
 
+            if self.echo_level > 1:
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Attempting to send array "' + array_name + '"')
             self.libempire_api.EMPIRE_API_sendSignal_double(array_name.encode(), c_size, c_signal)
+            if self.echo_level > 1:
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Successfully sent array')
         # -------------------------------------------------------------------------------------------------
 
         # -------------------------------------------------------------------------------------------------
@@ -225,7 +254,11 @@ class EmpireWrapper:
             # initialize vector storing the values
             c_signal = (ctp.c_double * array_size)(0)
 
+            if self.echo_level > 1:
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Attempting to receive array "' + array_name + '"')
             self.libempire_api.EMPIRE_API_recvSignal_double(array_name.encode(), array_size, c_signal)
+            if self.echo_level > 1:
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Successfully received array')
 
             return self._convert_to_list(array_size, c_signal)
         # -------------------------------------------------------------------------------------------------
@@ -234,10 +267,13 @@ class EmpireWrapper:
         def SendConvergenceSignal(self, signal):
             ''' Send the convergence signal of an loop
             \param[in] signal 1 means convergence, 0 means non-convergence
-
             void EMPIRE_API_sendConvergenceSignal(int signal); '''
 
-            return self.libempire_api.EMPIRE_API_sendConvergenceSignal(signal)
+            if self.echo_level > 1:
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Attempting to send convergence-signal')
+            self.libempire_api.EMPIRE_API_sendConvergenceSignal(signal)
+            if self.echo_level > 1:
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Successfully sent convergence-signal')
         # -------------------------------------------------------------------------------------------------
 
         # -------------------------------------------------------------------------------------------------
@@ -247,7 +283,12 @@ class EmpireWrapper:
 
             int EMPIRE_API_recvConvergenceSignal(); '''
 
-            return self.libempire_api.EMPIRE_API_recvConvergenceSignal()
+            if self.echo_level > 1:
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Attempting to receive convergence-signal')
+            signal = self.libempire_api.EMPIRE_API_recvConvergenceSignal()
+            if self.echo_level > 1:
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Successfully received convergence-signal')
+            return signal
         # -------------------------------------------------------------------------------------------------
 
         ##### Private Functions #####
@@ -256,15 +297,19 @@ class EmpireWrapper:
             if hasattr(self, 'libempire_api'): # the library has been loaded already
                 raise ImportError("The EMPIRE library must be loaded only once!")
 
+            import os
+
             if "EMPIRE_API_LIBSO_ON_MACHINE" not in os.environ:
                 raise ImportError("The EMPIRE environment is not set!")
 
+            KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Attempting to load empire-api')
             try: # OpenMPI
                 self.libempire_api = ctp.CDLL(os.environ['EMPIRE_API_LIBSO_ON_MACHINE'], ctp.RTLD_GLOBAL)
-                print("::EMPIRE:: Using standard OpenMPI")
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Using standard OpenMPI')
             except: # Intel MPI or OpenMPI compiled with "–disable-dlopen" option
                 self.libempire_api = ctp.cdll.LoadLibrary(os.environ['EMPIRE_API_LIBSO_ON_MACHINE'])
-                print("::EMPIRE:: Using Intel MPI or OpenMPI compiled with \"–disable-dlopen\" option")
+                KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Using Intel MPI or OpenMPI compiled with "–disable-dlopen" option')
+            KratosMultiphysics.Logger.PrintInfo('EMPIRE-Wrapper', 'Successfully loaded empire-api')
         # -------------------------------------------------------------------------------------------------
 
         # -------------------------------------------------------------------------------------------------
@@ -302,7 +347,6 @@ class EmpireWrapper:
                 model_part.CreateNewNode(node_IDs[i], node_coords[3*i+0], node_coords[3*i+1], node_coords[3*i+2]) # Id, X, Y, Z
 
             # Create dummy Property for Element
-            model_part.AddProperties(Properties(1))
             prop = model_part.GetProperties()[1]
 
             element_table_counter = 0
@@ -313,7 +357,7 @@ class EmpireWrapper:
                     name_element = "Element2D2N"
                 elif num_nodes_element == 3:
                     name_element = "Element2D3N"
-                elif num_nodes_element == 4: # TODO how to distinguish from Tetras?
+                elif num_nodes_element == 4:
                     name_element = "Element2D4N"
                 else:
                     raise Exception("Wrong number of nodes for creating the element")
@@ -328,6 +372,12 @@ class EmpireWrapper:
 
         # -------------------------------------------------------------------------------------------------
         def _get_data_field(self, model_part, kratos_variables):
+            for var in kratos_variables:
+                if not model_part.HasNodalSolutionStepVariable(var):
+                    err_msg  = 'ModelPart "' + model_part.Name + '" does not have'
+                    err_msg += ' "' + var.Name() + '" as SolutionStepVariable!'
+                    raise Exception(err_msg)
+
             sizes_of_variables = self._sizes_of_variables(model_part, kratos_variables)
             self._check_size_of_variables(sizes_of_variables)
 
@@ -336,13 +386,9 @@ class EmpireWrapper:
 
             data_field = [0.0] * (num_nodes * sum_sizes) # preallocate
 
-            node_i = 0
-            for node in model_part.Nodes:
+            for node_i, node in enumerate(model_part.Nodes):
                 size_index = 0
-                for var_index in range(len(kratos_variables)):
-                    size_of_variable = sizes_of_variables[var_index]
-                    variable = kratos_variables[var_index]
-
+                for size_of_variable, variable in zip(sizes_of_variables, kratos_variables):
                     data_value = node.GetSolutionStepValue(variable)
 
                     if size_of_variable == 1:
@@ -352,7 +398,6 @@ class EmpireWrapper:
                         for k in range(size_of_variable):
                             data_field[node_i * sum_sizes + size_index] = data_value[k]
                             size_index += 1
-                node_i += 1
 
             return data_field
         # -------------------------------------------------------------------------------------------------
@@ -363,25 +408,26 @@ class EmpireWrapper:
             if len(data_field) != model_part.NumberOfNodes() * sum(size_of_variables):
                 raise Exception("received data field has wrong size!")
 
+            for var in kratos_variables:
+                if not model_part.HasNodalSolutionStepVariable(var):
+                    err_msg  = 'ModelPart "' + model_part.Name + '" does not have'
+                    err_msg += ' "' + var.Name() + '" as SolutionStepVariable!'
+                    raise Exception(err_msg)
+
             # Preallocate values
             values = []
             for size_of_variable in size_of_variables:
                 if size_of_variable > 1:
-                    values.append(Vector(size_of_variable))
+                    values.append(KratosMultiphysics.Vector(size_of_variable))
                 else:
                     values.append(0.0)
 
             sum_sizes = sum(size_of_variables)
 
-            node_i = 0
             # assign values to nodes of interface for current time step
-            for node in model_part.Nodes:
+            for node_i, node in enumerate(model_part.Nodes):
                 size_index = 0
-                for var_index in range(len(kratos_variables)):
-                    size_of_variable = size_of_variables[var_index]
-                    variable = kratos_variables[var_index]
-                    value = values[var_index] # get the preallocated object
-
+                for size_of_variable, variable, value in zip(size_of_variables, kratos_variables, values):
                     if size_of_variable == 1:
                         value = data_field[sum_sizes * node_i + size_index]
                         size_index += 1
@@ -391,8 +437,6 @@ class EmpireWrapper:
                             size_index += 1
 
                     node.SetSolutionStepValue(variable, 0, value)
-
-                node_i =+ 1
         # -------------------------------------------------------------------------------------------------
 
         # -------------------------------------------------------------------------------------------------

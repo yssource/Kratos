@@ -347,4 +347,4 @@ def Elements(model_part):
     return model_part.GetCommunicator().LocalMesh().Elements
 
 def NumberOfElements(model_part):
-    return len(Elements(model_part)) # Mesh does currently not expose NumberOfNodes!
+    return len(Elements(model_part)) # Mesh does currently not expose NumberOfElements!

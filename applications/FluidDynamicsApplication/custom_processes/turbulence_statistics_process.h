@@ -52,10 +52,11 @@ public:
     ///@{
 
     /// Default constructor.
-    TurbulenceStatisticsProcess(ModelPart::Pointer pModelPart,
+    TurbulenceStatisticsProcess(ModelPart& rModelPart,
                                 double StartTime,
                                 bool ResetContainers):
-        mpModelPart(pModelPart),
+        Process(),
+        mrModelPart(rModelPart),
         mStartTime(StartTime),
         mResetContainers(ResetContainers)
     {}
@@ -96,21 +97,21 @@ public:
         // Skip this step if we are reading from a restart file and we already recorded results before
         if ( mResetContainers )
         {
-            mpModelPart->GetProcessInfo()[RECORDED_STEPS] = 0;
+            mrModelPart.GetProcessInfo()[RECORDED_STEPS] = 0;
 
-//            for ( ModelPart::NodeIterator i = mpModelPart->GetCommunicator().LocalMesh().NodesBegin();
-//                  i != mpModelPart->GetCommunicator().LocalMesh().NodesEnd(); i++)
+//            for ( ModelPart::NodeIterator i = mrModelPart.GetCommunicator().LocalMesh().NodesBegin();
+//                  i != mrModelPart.GetCommunicator().LocalMesh().NodesEnd(); i++)
 //            {
 //                i->GetValue(MEAN_VELOCITY) = array_1d<double,3>(3,0.0);
 //                i->GetValue(MEAN_PRESSURE) = 0.0;
 //                i->GetValue(VELOCITY_COVARIANCES).resize(3,3);
 //                noalias( i->GetValue(VELOCITY_COVARIANCES) ) = ZeroMatrix(3,3);
 //            }
-            //for ( ModelPart::ElementIterator i = mpModelPart->GetCommunicator().LocalMesh().ElementsBegin();
-            //      i != mpModelPart->GetCommunicator().LocalMesh().ElementsEnd(); i++)
-            for (int j = 0; j < static_cast<int>(mpModelPart->GetCommunicator().LocalMesh().Elements().size()); j++)
+            //for ( ModelPart::ElementIterator i = mrModelPart.GetCommunicator().LocalMesh().ElementsBegin();
+            //      i != mrModelPart.GetCommunicator().LocalMesh().ElementsEnd(); i++)
+            for (int j = 0; j < static_cast<int>(mrModelPart.GetCommunicator().LocalMesh().Elements().size()); j++)
             {
-                auto i = mpModelPart->GetCommunicator().LocalMesh().ElementsBegin() + j;
+                auto i = mrModelPart.GetCommunicator().LocalMesh().ElementsBegin() + j;
                 unsigned int NumGauss = i->GetGeometry().IntegrationPointsNumber(i->GetIntegrationMethod());
                 i->GetValue(TURBULENCE_STATISTICS) = TurbulenceStatisticsContainer::Pointer( new TurbulenceStatisticsContainer(NumGauss) );
             }
@@ -128,12 +129,12 @@ public:
      */
     virtual void ExecuteFinalizeSolutionStep() override
     {
-        if ( mpModelPart->GetProcessInfo()[TIME] >= mStartTime)
+        if ( mrModelPart.GetProcessInfo()[TIME] >= mStartTime)
         {
-            mpModelPart->GetProcessInfo()[RECORDED_STEPS]++;
+            mrModelPart.GetProcessInfo()[RECORDED_STEPS]++;
 
-//            for ( ModelPart::NodeIterator i = mpModelPart->GetCommunicator().LocalMesh().NodesBegin();
-//                  i != mpModelPart->GetCommunicator().LocalMesh().NodesEnd(); i++)
+//            for ( ModelPart::NodeIterator i = mrModelPart.GetCommunicator().LocalMesh().NodesBegin();
+//                  i != mrModelPart.GetCommunicator().LocalMesh().NodesEnd(); i++)
 //            {
 //                const array_1d<double,3>& rU = i->FastGetSolutionStepValue(VELOCITY);
 
@@ -144,12 +145,12 @@ public:
 //            }
 
             std::vector<double> out;
-            ProcessInfo& rProcessInfo = mpModelPart->GetProcessInfo();
-            //for ( ModelPart::ElementIterator i = mpModelPart->GetCommunicator().LocalMesh().ElementsBegin();
-            //      i != mpModelPart->GetCommunicator().LocalMesh().ElementsEnd(); i++)
-            for (int j = 0; j < static_cast<int>(mpModelPart->GetCommunicator().LocalMesh().Elements().size()); j++)
+            const ProcessInfo& rProcessInfo = mrModelPart.GetProcessInfo();
+            //for ( ModelPart::ElementIterator i = mrModelPart.GetCommunicator().LocalMesh().ElementsBegin();
+            //      i != mrModelPart.GetCommunicator().LocalMesh().ElementsEnd(); i++)
+            for (int j = 0; j < static_cast<int>(mrModelPart.GetCommunicator().LocalMesh().Elements().size()); j++)
             {
-                auto i = mpModelPart->GetCommunicator().LocalMesh().ElementsBegin() + j;
+                auto i = mrModelPart.GetCommunicator().LocalMesh().ElementsBegin() + j;
                 i->GetValueOnIntegrationPoints(MEAN_KINETIC_ENERGY,out,rProcessInfo);
             }
         }
@@ -161,12 +162,12 @@ public:
 //     */
 //    virtual void ExecuteBeforeOutputStep()
 //    {
-//        if ( mpModelPart->GetProcessInfo()[TIME] >= mStartTime )
+//        if ( mrModelPart.GetProcessInfo()[TIME] >= mStartTime )
 //        {
-//            double NumSteps = double(mpModelPart->GetProcessInfo()[RECORDED_STEPS]);
+//            double NumSteps = double(mrModelPart.GetProcessInfo()[RECORDED_STEPS]);
 
-//            for ( ModelPart::NodeIterator i = mpModelPart->GetCommunicator().LocalMesh().NodesBegin();
-//                  i != mpModelPart->GetCommunicator().LocalMesh().NodesEnd(); i++)
+//            for ( ModelPart::NodeIterator i = mrModelPart.GetCommunicator().LocalMesh().NodesBegin();
+//                  i != mrModelPart.GetCommunicator().LocalMesh().NodesEnd(); i++)
 //            {
 //                i->FastGetSolutionStepValue(MEAN_VELOCITY) = i->GetValue(MEAN_VELOCITY) / NumSteps;
 //                i->FastGetSolutionStepValue(MEAN_PRESSURE) = i->GetValue(MEAN_PRESSURE) / NumSteps;
@@ -184,7 +185,7 @@ public:
 //                        CVuj(m,n) -= MeanU[m]*MeanU[n];
 //            }
 
-//            TurbulenceStatisticsContainer::DumpData(*mpModelPart);
+//            TurbulenceStatisticsContainer::DumpData(mrModelPart);
 //        }
 //    }
 
@@ -194,16 +195,16 @@ public:
     virtual void ExecuteBeforeOutputStep() override
     {
         std::vector<double> out;
-        //for ( ModelPart::ElementIterator i = mpModelPart->GetCommunicator().LocalMesh().ElementsBegin();
-        //      i != mpModelPart->GetCommunicator().LocalMesh().ElementsEnd(); i++)
+        //for ( ModelPart::ElementIterator i = mrModelPart.GetCommunicator().LocalMesh().ElementsBegin();
+        //      i != mrModelPart.GetCommunicator().LocalMesh().ElementsEnd(); i++)
         //{
-        for (int j = 0; j < static_cast<int>(mpModelPart->GetCommunicator().LocalMesh().Elements().size()); j++)
+        for (int j = 0; j < static_cast<int>(mrModelPart.GetCommunicator().LocalMesh().Elements().size()); j++)
         {
-            auto i = mpModelPart->GetCommunicator().LocalMesh().ElementsBegin() + j;
-            i->GetValueOnIntegrationPoints(TAU,out,mpModelPart->GetProcessInfo());
+            auto i = mrModelPart.GetCommunicator().LocalMesh().ElementsBegin() + j;
+            i->GetValueOnIntegrationPoints(TAU,out,mrModelPart.GetProcessInfo());
         }
 
-        TurbulenceStatisticsContainer::DumpInstantData(*mpModelPart);
+        TurbulenceStatisticsContainer::DumpInstantData(mrModelPart);
     }
 
 
@@ -212,12 +213,12 @@ public:
      */
     virtual void ExecuteFinalize() override
     {
-        if ( mpModelPart->GetProcessInfo()[TIME] >= mStartTime)
+        if ( mrModelPart.GetProcessInfo()[TIME] >= mStartTime)
         {
-//            double NumSteps = double(mpModelPart->GetProcessInfo()[RECORDED_STEPS]);
+//            double NumSteps = double(mrModelPart.GetProcessInfo()[RECORDED_STEPS]);
 
-//            for ( ModelPart::NodeIterator i = mpModelPart->GetCommunicator().LocalMesh().NodesBegin();
-//                  i != mpModelPart->GetCommunicator().LocalMesh().NodesEnd(); i++)
+//            for ( ModelPart::NodeIterator i = mrModelPart.GetCommunicator().LocalMesh().NodesBegin();
+//                  i != mrModelPart.GetCommunicator().LocalMesh().NodesEnd(); i++)
 //            {
 //                // We use the relationship var(u) = mean(u^2) - mean(u)^2
 //                Matrix& CVuj = i->GetValue(VELOCITY_COVARIANCES);
@@ -231,7 +232,7 @@ public:
 //                i->GetValue(MEAN_PRESSURE) /= NumSteps;
 //            }
 
-            TurbulenceStatisticsContainer::DumpData(*mpModelPart);
+            TurbulenceStatisticsContainer::DumpData(mrModelPart);
         }
     }
 
@@ -280,7 +281,7 @@ private:
     ///@name Static Member Variables
     ///@{
 
-    ModelPart::Pointer mpModelPart;
+    ModelPart& mrModelPart;
 
     const double mStartTime;
 

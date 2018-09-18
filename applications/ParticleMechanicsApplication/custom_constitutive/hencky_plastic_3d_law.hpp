@@ -7,12 +7,12 @@
 //  License:		BSD License
 //					Kratos default license: kratos/license.txt
 //
-//  Main authors:    Ilaria Iaconeta
+//  Main authors:    Ilaria Iaconeta, Bodhinanda Chandra
 //
+
 
 #if !defined (KRATOS_HENCKY_PLASTIC_3D_LAW_H_INCLUDED)
 #define KRATOS_HENCKY_PLASTIC_3D_LAW_H_INCLUDED
-
 
 // System includes
 
@@ -52,6 +52,12 @@ protected:
         Matrix  Isochoric;
         Matrix  Volumetric;
         Matrix  Plastic;
+    };
+
+    struct PlasticMaterialResponseVariables
+    {
+        Matrix  TrialLeftStretchTensor;
+        Matrix  InverseTrialLeftStretchTensor;
     };
 
 
@@ -233,7 +239,7 @@ protected:
     ///@}
     ///@name Protected member Variables
     ///@{
-    double mPlasticRegion;
+    unsigned int mPlasticRegion;
     Matrix mPlasticDeformationGradient;
     Matrix mElasticLeftCauchyGreen;
 
@@ -259,6 +265,8 @@ protected:
     virtual Matrix SetConstitutiveMatrixToAppropiateDimension(Matrix& rConstitutiveMatrix, const Matrix& rElastoPlasticTangentMatrix);
 
     virtual Vector SetStressMatrixToAppropiateVectorDimension(Vector& rStressVector, const Matrix& rStressMatrix );
+
+    virtual Matrix SetMatrixToAppropriateDimension(Matrix& rConstitutiveMatrix);
 
     virtual void CorrectDomainPressure( Matrix& rStressMatrix, const MaterialResponseVariables& rElasticVariables);
 
@@ -345,7 +353,6 @@ protected:
 
     virtual void CalculatePrincipalStressTrial(const MaterialResponseVariables & rElasticVariables,Parameters & rValues, const MPMFlowRule::RadialReturnVariables& rReturnMappingVariables,
             Matrix& rNewElasticLeftCauchyGreen, Matrix& rStressMatrix);
-
 
     /**
      * This function is designed to be called when before the material response

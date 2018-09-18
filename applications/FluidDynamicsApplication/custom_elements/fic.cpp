@@ -213,7 +213,7 @@ void FIC<TElementData>::GetValueOnIntegrationPoints(
 
             // Prepare new set of data
             rValues.resize(number_of_gauss_points);
-            
+
             // Iterate over integration points to evaluate local contribution
             for (unsigned int g = 0; g < number_of_gauss_points; g++)
             {
@@ -225,7 +225,7 @@ void FIC<TElementData>::GetValueOnIntegrationPoints(
                 array_1d<double,3> convective_velocity = this->GetAtCoordinate(data.Velocity,data.N) - this->GetAtCoordinate(data.MeshVelocity,data.N);
                 array_1d<double,3> TauGrad(3,0.0);
                 this->CalculateTau(data,convective_velocity,TauIncompr,TauMomentum,TauGrad);
-                
+
                 rValues[g] = TauIncompr;
             }
         }
@@ -606,7 +606,7 @@ void FIC<TElementData>::CalculateTau(
 
     const double density = this->GetAtCoordinate(rData.Density,rData.N);
     const double viscosity = this->GetAtCoordinate(rData.EffectiveViscosity,rData.N);
-    
+
     double InvTau = c1 * viscosity / (Havg*Havg) + density * c2 * velocity_norm / Havg;
     TauIncompr = 1.0/InvTau;
     TauMomentum = (Hvel / (density * c2 * velocity_norm) );

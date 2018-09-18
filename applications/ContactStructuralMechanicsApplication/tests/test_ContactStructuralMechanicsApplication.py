@@ -27,10 +27,12 @@ from test_dynamic_search import TestDynamicSearch as TTestDynamicSearch
 from test_mortar_mapper import TestMortarMapping as TTestMortarMapping
 
 # Mesh tying tests
-from SmallTests import SimplePatchTestTwoDMeshTying      as TSimplePatchTestTwoDMeshTying
-from SmallTests import SimpleSlopePatchTestTwoDMeshTying as TSimpleSlopePatchTestTwoDMeshTying
-from SmallTests import SimplestPatchTestThreeDMeshTying  as TSimplestPatchTestThreeDMeshTying
-from SmallTests import SimplePatchTestThreeDMeshTying    as TSimplePatchTestThreeDMeshTying
+from SmallTests import SimplePatchTestTwoDMeshTying            as TSimplePatchTestTwoDMeshTying
+from SmallTests import SimpleSlopePatchTestTwoDMeshTying       as TSimpleSlopePatchTestTwoDMeshTying
+from SmallTests import SimplestPatchTestThreeDMeshTying        as TSimplestPatchTestThreeDMeshTying
+from SmallTests import SimplestPatchTestThreeDTriQuadMeshTying as TSimplestPatchTestThreeDTriQuadMeshTying
+from SmallTests import SimplestPatchTestThreeDQuadTriMeshTying as TSimplestPatchTestThreeDQuadTriMeshTying
+from SmallTests import SimplePatchTestThreeDMeshTying          as TSimplePatchTestThreeDMeshTying
 
 # ALM frictionless tests
 from SmallTests import ALMHyperSimplePatchTestContact                      as TALMHyperSimplePatchTestContact
@@ -98,6 +100,7 @@ from ValidationTests import ALMIroningTestContact    as TALMIroningTestContact
 from ValidationTests import ALMIroningDieTestContact as TALMIroningDieTestContact
 from ValidationTests import ALMLargeDisplacementPatchTestTetra as TALMLargeDisplacementPatchTestTetra
 from ValidationTests import ALMLargeDisplacementPatchTestHexa as TALMLargeDisplacementPatchTestHexa
+from ValidationTests import ALMMultiLayerContactTest as TALMMultiLayerContactTest
 
 # Components ALM frictionless tests
 from ValidationTests import ComponentsALMTaylorPatchDynamicTestContact as TComponentsALMTaylorPatchDynamicTestContact
@@ -105,8 +108,9 @@ from ValidationTests import ComponentsALMMeshMovingMatchingTestContact    as TCo
 from ValidationTests import ComponentsALMMeshMovingNotMatchingTestContact as TComponentsALMMeshMovingNotMatchingTestContact
 from ValidationTests import ComponentsALMLargeDisplacementPatchTestTetra as TComponentsALMLargeDisplacementPatchTestTetra
 from ValidationTests import ComponentsALMLargeDisplacementPatchTestHexa as TComponentsALMLargeDisplacementPatchTestHexa
+from ValidationTests import ComponentsALMMultiLayerContactTest as TComponentsALMMultiLayerContactTest
 
-def AssambleTestSuites():
+def AssembleTestSuites():
     ''' Populates the test suites to run.
 
     Populates the test suites to run. At least, it should pupulate the suites:
@@ -131,6 +135,8 @@ def AssambleTestSuites():
     smallSuite.addTest(TSimplePatchTestTwoDMeshTying('test_execution'))
     smallSuite.addTest(TSimpleSlopePatchTestTwoDMeshTying('test_execution'))
     smallSuite.addTest(TSimplestPatchTestThreeDMeshTying('test_execution'))
+    smallSuite.addTest(TSimplestPatchTestThreeDTriQuadMeshTying('test_execution'))
+    smallSuite.addTest(TSimplestPatchTestThreeDQuadTriMeshTying('test_execution'))
     smallSuite.addTest(TSimplePatchTestThreeDMeshTying('test_execution'))
 
     # ALM frictionless tests
@@ -225,6 +231,7 @@ def AssambleTestSuites():
     #validationSuite.addTest(TALMIroningDieTestContact('test_execution'))
     validationSuite.addTest(TALMLargeDisplacementPatchTestTetra('test_execution'))
     validationSuite.addTest(TALMLargeDisplacementPatchTestHexa('test_execution'))
+    validationSuite.addTest(TALMMultiLayerContactTest('test_execution'))
     
     # Components ALM frictionless tests
     validationSuite.addTest(TComponentsALMTaylorPatchDynamicTestContact('test_execution'))
@@ -232,6 +239,7 @@ def AssambleTestSuites():
     validationSuite.addTest(TComponentsALMMeshMovingNotMatchingTestContact('test_execution'))
     validationSuite.addTest(TComponentsALMLargeDisplacementPatchTestTetra('test_execution'))
     validationSuite.addTest(TComponentsALMLargeDisplacementPatchTestHexa('test_execution'))
+    validationSuite.addTest(TComponentsALMMultiLayerContactTest('test_execution'))
 
     # Create a test suit that contains all the tests:
     allSuite = suites['all']
@@ -246,6 +254,8 @@ def AssambleTestSuites():
             TSimplePatchTestTwoDMeshTying,
             TSimpleSlopePatchTestTwoDMeshTying,
             TSimplestPatchTestThreeDMeshTying,
+            TSimplestPatchTestThreeDTriQuadMeshTying,
+            TSimplestPatchTestThreeDQuadTriMeshTying,
             TSimplePatchTestThreeDMeshTying,
             TALMHyperSimplePatchTestContact,
             TALMHyperSimpleSlopePatchTestContact,
@@ -299,16 +309,18 @@ def AssambleTestSuites():
             TLargeDisplacementPatchTestHexa,
             TALMLargeDisplacementPatchTestTetra,
             TALMLargeDisplacementPatchTestHexa,
+            TALMMultiLayerContactTest,
             TComponentsALMTaylorPatchDynamicTestContact,
             TComponentsALMMeshMovingMatchingTestContact,
             TComponentsALMMeshMovingNotMatchingTestContact,
             TComponentsALMLargeDisplacementPatchTestTetra,
             TComponentsALMLargeDisplacementPatchTestHexa,
+            TComponentsALMMultiLayerContactTest,
         ])
     )
 
     return suites
 
 if __name__ == '__main__':
-    KratosUnittest.runTests(AssambleTestSuites())
+    KratosUnittest.runTests(AssembleTestSuites())
     run_cpp_unit_tests.run()

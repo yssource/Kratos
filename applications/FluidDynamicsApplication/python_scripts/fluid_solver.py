@@ -113,7 +113,7 @@ class FluidSolver(PythonSolver):
         if self._TimeBufferIsInitialized():
             is_converged = self.solver.SolveSolutionStep()
             if not is_converged and self._IsPrintingRank():
-                msg  = "Fluid solver did not converge for iteration " + str(self.main_model_part.ProcessInfo[KratosMultiphysics.STEP]) + "\n"
+                msg  = "Fluid solver did not converge for step " + str(self.main_model_part.ProcessInfo[KratosMultiphysics.STEP]) + "\n"
                 msg += "corresponding to time " + str(self.main_model_part.ProcessInfo[KratosMultiphysics.TIME]) + "\n"
                 KratosMultiphysics.Logger.PrintWarning("FluidSolver",msg)
 
@@ -126,21 +126,6 @@ class FluidSolver(PythonSolver):
 
     def Clear(self):
         (self.solver).Clear()
-
-    def Solve(self):
-        message = "".join([
-            "Calling FluidSolver.Solve() method, which is deprecated\n",
-            "Please call the individual methods instead:\n",
-            "solver.InitializeSolutionStep()\n",
-            "solver.Predict()\n",
-            "solver.SolveSolutionStep()\n",
-            "solver.FinalizeSolutionStep()\n"]
-        )
-        KratosMultiphysics.Logger.PrintWarning("FluidSolver",message)
-        self.InitializeSolutionStep()
-        self.Predict()
-        self.SolveSolutionStep()
-        self.FinalizeSolutionStep()
 
     def GetComputingModelPart(self):
         if not self.main_model_part.HasSubModelPart("fluid_computational_model_part"):

@@ -2166,7 +2166,7 @@ private:
 
     friend class Serializer;
 
-    #include "vms_adjoint_matrix_analysis.h"
+    #include "vms_adjoint_energy_generation_matrix_analysis.h"
 
     void save(Serializer& rSerializer) const override
     {

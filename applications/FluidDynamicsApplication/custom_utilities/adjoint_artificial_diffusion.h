@@ -60,12 +60,10 @@ public:
     {
 #ifdef EIGEN_ROOT
         singularValuePressureCoupled,
-        fullMatrixEigen,
+        VMSSteadyTermMatrixEigen,
 #endif
         dynamicFullVMSSteadyMatrix,
         dynamicFullMatrix,
-        deltaEnergyFullMatrixFullTimeStepped,
-        deltaEnergyFullMatrixPartialTimeStepped,
         energyGenerationRateWithAdjointVariables,
         energyGenerationRateMatrix
     };
@@ -96,27 +94,38 @@ public:
         mEpsilon = rDiffusionParameters["stabilization_source_coefficient"].GetDouble();
         mTimeStep =  rDiffusionParameters["stabilization_settings"]["calculation_step"].GetInt();
 
+        KRATOS_INFO("Adjoint Stabilization")<<"--- Using stabilization source coefficient of "<<mEpsilon<<"."<<std::endl;
+        KRATOS_INFO("Adjoint Stabilization")<<"--- Using time step "<<mTimeStep<<"."<<std::endl;
+
         std::string method_name = rDiffusionParameters["stabilization_settings"]["method"].GetString();
 
         if (method_name=="dynamic_full_vms_steady_element_matrix")
+        {
             mArtificialDiffusionMethod = ArtificialDiffusionMethods::dynamicFullVMSSteadyMatrix;
-        else if (method_name=="dynamic_full_element_matrix")
-            mArtificialDiffusionMethod = ArtificialDiffusionMethods::dynamicFullMatrix;
-        else if (method_name=="delta_energy_full_matrix_full_time_stepped")
-            mArtificialDiffusionMethod = ArtificialDiffusionMethods::deltaEnergyFullMatrixFullTimeStepped;
-        else if (method_name=="delta_energy_full_matrix_partial_time_stepped")
-            mArtificialDiffusionMethod = ArtificialDiffusionMethods::deltaEnergyFullMatrixPartialTimeStepped;
+            KRATOS_INFO("Adjoint Stabilization")<<"--- Using VMS Steady Element matrix for stabilization."<<std::endl;
+        }
         else if (method_name=="energy_generation_rate_matrix")
+        {
             mArtificialDiffusionMethod = ArtificialDiffusionMethods::energyGenerationRateMatrix;
+            KRATOS_INFO("Adjoint Stabilization")<<"--- Using energy generation rate matrix for stabilization."<<std::endl;
+        }
         else if (method_name=="energy_generation_rate_with_adjoint_variables")
+        {
             mArtificialDiffusionMethod = ArtificialDiffusionMethods::energyGenerationRateWithAdjointVariables;
+            KRATOS_INFO("Adjoint Stabilization")<<"--- Using energy generation rate matrix with adjoint variables for stabilization."<<std::endl;
+        }
 #ifdef EIGEN_ROOT
-        else if (method_name=="singular_value_pressure_coupled") {
+        else if (method_name=="singular_value_pressure_coupled")
+        {
             mArtificialDiffusionMethod = ArtificialDiffusionMethods::singularValuePressureCoupled;
             rDiffusionParameters["stabilization_source_coefficient"].SetDouble(0.0);
+            KRATOS_INFO("Adjoint Stabilization")<<"--- Using singular value method with pressure coupling for stabilization."<<std::endl;
         }
-        else if (method_name=="full_matrix_eigen_method")
-            mArtificialDiffusionMethod = ArtificialDiffusionMethods::fullMatrixEigen;
+        else if (method_name=="vms_steady_term_matrix_eigen")
+        {
+            mArtificialDiffusionMethod = ArtificialDiffusionMethods::VMSSteadyTermMatrixEigen;
+            KRATOS_INFO("Adjoint Stabilization")<<"--- Using VMS Steady Element matrix eigen values for stabilization."<<std::endl;
+        }
 #endif
         else
         {
@@ -145,30 +154,6 @@ public:
                                         rLHS_Contribution,
                                         rRHS_Contribution,
                                         rCurrentProcessInfo);
-            case ArtificialDiffusionMethods::dynamicFullMatrix:
-                return CalculateArtificialDiffusionDynamicFullMatrix(
-                                        pCurrentElement,
-                                        rLHS_Contribution,
-                                        rRHS_Contribution,
-                                        rCurrentProcessInfo);
-            case ArtificialDiffusionMethods::deltaEnergyFullMatrixFullTimeStepped:
-                return CalculateArtificialDiffusionFullMatrixFullTimeStepped(
-                                        pCurrentElement,
-                                        rLHS_Contribution,
-                                        rRHS_Contribution,
-                                        rCurrentProcessInfo);
-            case ArtificialDiffusionMethods::deltaEnergyFullMatrixPartialTimeStepped:
-                return CalculateArtificialDiffusionFullMatrixPartialTimeStepped(
-                                        pCurrentElement,
-                                        rLHS_Contribution,
-                                        rRHS_Contribution,
-                                        rCurrentProcessInfo);
-            case ArtificialDiffusionMethods::fullMatrixEigen:
-                return CalculateArtificialDiffusionFullMatrixEigen(
-                                        pCurrentElement,
-                                        rLHS_Contribution,
-                                        rRHS_Contribution,
-                                        rCurrentProcessInfo);
             case ArtificialDiffusionMethods::energyGenerationRateWithAdjointVariables:
                 return CalculateArtificialDiffusionEnergyGenerationRateWithAdjointVariables(
                                         pCurrentElement,
@@ -184,6 +169,12 @@ public:
 #ifdef EIGEN_ROOT
             case ArtificialDiffusionMethods::singularValuePressureCoupled:
                 return CalculateArtificialDiffusionSVMethodPressureCoupled(
+                                        pCurrentElement,
+                                        rLHS_Contribution,
+                                        rRHS_Contribution,
+                                        rCurrentProcessInfo);
+            case ArtificialDiffusionMethods::VMSSteadyTermMatrixEigen:
+                return CalculateArtificialDiffusionVMSSteadyTermMatrixEigen(
                                         pCurrentElement,
                                         rLHS_Contribution,
                                         rRHS_Contribution,
@@ -285,12 +276,6 @@ private:
 
         const auto& S = svd.singularValues();
 
-        // double volume = 1.0;
-        // if (domain_size == 2)
-        //     volume = pCurrentElement->GetGeometry().Area();
-        // else if (domain_size == 3)
-        //     volume = pCurrentElement->GetGeometry().Volume();
-
         double artificial_diffusion = S[0];
 
         return artificial_diffusion;
@@ -320,7 +305,7 @@ private:
 
     }
 
-    double CalculateArtificialDiffusionFullMatrixEigen(
+    double CalculateArtificialDiffusionVMSSteadyTermMatrixEigen(
                                         Element::Pointer pCurrentElement,
                                         MatrixType& rLHS_Contribution,
                                         VectorType& rRHS_Contribution,
@@ -338,49 +323,22 @@ private:
         else if (domain_size == 3)
             gauss_integration_weight = r_geometry.Volume();
 
-        MatrixType numerical_diffusion_matrix;
-        pCurrentElement->SetValue(ARTIFICIAL_DIFFUSION, 1.0);
-        pCurrentElement->Calculate(ARTIFICIAL_DIFFUSION_MATRIX, numerical_diffusion_matrix, rCurrentProcessInfo);
+        Matrix vms_steady_term_primal_gradient;
+        pCurrentElement->Calculate(VMS_STEADY_TERM_PRIMAL_GRADIENT_MATRIX,
+                                   vms_steady_term_primal_gradient,
+                                   rCurrentProcessInfo);
 
-        Matrix identity = identity_matrix<double>(rLHS_Contribution.size1());
-        numerical_diffusion_matrix += mEpsilon*gauss_integration_weight*identity;
+        double vms_steady_term_max_eigen_value = CalculateMaxEigenValue(vms_steady_term_primal_gradient);
 
-        double previous_max_eigen_value = CalculateMaxEigenValue(rLHS_Contribution);
-        double previous_beta = 0.0;
+        pCurrentElement->SetValue(STABILIZATION_ANALYSIS_MATRIX_CUSTOM, vms_steady_term_primal_gradient);
 
-        // KRATOS_WATCH(pCurrentElement->Id());
+        pCurrentElement->SetValue(ADJOINT_ENERGY, vms_steady_term_max_eigen_value);
 
-        if (previous_max_eigen_value < 0.0)
-            return 0.0;
+        double numerical_diffusion = 0.0;
+        if (vms_steady_term_max_eigen_value > 0)
+            numerical_diffusion = vms_steady_term_max_eigen_value/(mEpsilon*gauss_integration_weight);
 
-        double current_beta = 1.0;
-        double current_max_eigen_value = 0.0;
-
-        unsigned int max_iterations = 10;
-
-        double eigen_tolerance = 1e-6;
-        for (unsigned int itr=0; itr < max_iterations; ++itr)
-        {
-            current_max_eigen_value = CalculateMaxEigenValue(rLHS_Contribution - current_beta*numerical_diffusion_matrix);
-            double m = (current_max_eigen_value - previous_max_eigen_value)/(current_beta-previous_beta);
-            previous_beta = current_beta;
-
-            // KRATOS_WATCH(std::abs(current_max_eigen_value - previous_max_eigen_value));
-
-            if (std::abs(current_max_eigen_value - previous_max_eigen_value) < eigen_tolerance)
-                break;
-
-            previous_max_eigen_value = current_max_eigen_value;
-            current_beta -= current_max_eigen_value/m;
-            // std::cout<<"Itr: "<<itr<<", beta: "<<previous_beta<<", max_eigen: "<<previous_max_eigen_value<<std::endl;
-        }
-
-        pCurrentElement->SetValue(ADJOINT_ENERGY, current_max_eigen_value);
-
-        if (previous_beta > 0.0)
-            return previous_beta;
-        else
-            return 0.0;
+        return numerical_diffusion;
 
         KRATOS_CATCH("");
     }
@@ -430,157 +388,14 @@ private:
 
         double artificial_diffusion = 0.0;
 
-        KRATOS_DEBUG_ERROR_IF(diffusion_energy < 0.0)<<" --- Diffusion energy cannot be negative or zero."<<std::endl;
+        KRATOS_ERROR_IF(diffusion_energy < 0.0)<<" --- Diffusion energy cannot be negative or zero."<<std::endl;
 
-        if (adjoint_energy > 0.0)
+        if (std::abs(adjoint_energy) > 1e-3)
         {
-            artificial_diffusion = adjoint_energy/diffusion_energy;
+            artificial_diffusion = std::abs(adjoint_energy/diffusion_energy);
         }
 
         pCurrentElement->SetValue(ADJOINT_ENERGY, adjoint_energy);
-        pCurrentElement->SetValue(DIFFUSION_ENERGY, diffusion_energy);
-
-        // double volume = 1.0;
-        // if (domain_size == 2)
-        //     volume = pCurrentElement->GetGeometry().Area();
-        // else if (domain_size == 3)
-        //     volume = pCurrentElement->GetGeometry().Volume();
-
-        // artificial_diffusion /= volume;
-
-        return artificial_diffusion;
-
-        KRATOS_CATCH("");
-    }
-
-    double CalculateArtificialDiffusionDynamicFullMatrix(
-                                        Element::Pointer pCurrentElement,
-                                        MatrixType& rLHS_Contribution,
-                                        VectorType& rRHS_Contribution,
-                                        ProcessInfo& rCurrentProcessInfo)
-    {
-        KRATOS_TRY;
-
-        const Geometry< Node<3> >& r_geometry = pCurrentElement->GetGeometry();
-        const unsigned int domain_size = r_geometry.WorkingSpaceDimension();
-
-        double gauss_integration_weight = 0.0;
-
-        if (domain_size == 2)
-            gauss_integration_weight = r_geometry.Area();
-        else if (domain_size == 3)
-            gauss_integration_weight = r_geometry.Volume();
-
-        MatrixType numerical_diffusion_matrix;
-        pCurrentElement->SetValue(ARTIFICIAL_DIFFUSION, 1.0);
-        pCurrentElement->Calculate(ARTIFICIAL_DIFFUSION_MATRIX, numerical_diffusion_matrix, rCurrentProcessInfo);
-
-        Matrix identity = identity_matrix<double>(rLHS_Contribution.size1());
-        numerical_diffusion_matrix += mEpsilon*gauss_integration_weight*identity;
-
-        Vector adjoint_values_vector;
-        pCurrentElement->GetValuesVector(adjoint_values_vector, mTimeStep);
-
-        Vector temp_1;
-        temp_1.resize(adjoint_values_vector.size());
-
-        noalias(temp_1) = prod(rLHS_Contribution, adjoint_values_vector);
-        double const adjoint_energy = inner_prod(temp_1, adjoint_values_vector);
-
-        noalias(temp_1) = prod(numerical_diffusion_matrix, adjoint_values_vector);
-        double const diffusion_energy = inner_prod(temp_1,adjoint_values_vector);
-
-        double artificial_diffusion = 0.0;
-
-        KRATOS_DEBUG_ERROR_IF(diffusion_energy < 0.0)<<" --- Diffusion energy cannot be negative or zero."<<std::endl;
-
-        if (adjoint_energy > 0.0)
-        {
-            artificial_diffusion = adjoint_energy/diffusion_energy;
-        }
-
-        pCurrentElement->SetValue(ADJOINT_ENERGY, adjoint_energy);
-        pCurrentElement->SetValue(DIFFUSION_ENERGY, diffusion_energy);
-
-        // double volume = 1.0;
-        // if (domain_size == 2)
-        //     volume = pCurrentElement->GetGeometry().Area();
-        // else if (domain_size == 3)
-        //     volume = pCurrentElement->GetGeometry().Volume();
-
-        // artificial_diffusion /= volume;
-
-        return artificial_diffusion;
-
-        KRATOS_CATCH("");
-    }
-
-    double CalculateArtificialDiffusionFullMatrixFullTimeStepped(
-                                        Element::Pointer pCurrentElement,
-                                        MatrixType& rLHS_Contribution,
-                                        VectorType& rRHS_Contribution,
-                                        ProcessInfo& rCurrentProcessInfo)
-    {
-        KRATOS_TRY;
-
-        return 0.0;
-
-        KRATOS_CATCH("");
-    }
-
-    double CalculateArtificialDiffusionFullMatrixPartialTimeStepped(
-                                        Element::Pointer pCurrentElement,
-                                        MatrixType& rLHS_Contribution,
-                                        VectorType& rRHS_Contribution,
-                                        ProcessInfo& rCurrentProcessInfo)
-    {
-        KRATOS_TRY;
-
-        const Geometry< Node<3> >& r_geometry = pCurrentElement->GetGeometry();
-        const unsigned int domain_size = r_geometry.WorkingSpaceDimension();
-
-        double gauss_integration_weight = 0.0;
-
-        if (domain_size == 2)
-            gauss_integration_weight = r_geometry.Area();
-        else if (domain_size == 3)
-            gauss_integration_weight = r_geometry.Volume();
-
-        MatrixType numerical_diffusion_matrix;
-        pCurrentElement->SetValue(ARTIFICIAL_DIFFUSION, 1.0);
-        pCurrentElement->Calculate(ARTIFICIAL_DIFFUSION_MATRIX, numerical_diffusion_matrix, rCurrentProcessInfo);
-
-        Matrix identity = identity_matrix<double>(rLHS_Contribution.size1());
-        numerical_diffusion_matrix += mEpsilon*gauss_integration_weight*identity;
-
-        Vector adjoint_values_vector;
-        pCurrentElement->GetValuesVector(adjoint_values_vector, mTimeStep);
-
-        Vector temp_1;
-        temp_1.resize(adjoint_values_vector.size());
-
-        noalias(temp_1) = prod(rLHS_Contribution, adjoint_values_vector);
-        double const adjoint_energy_current = inner_prod(temp_1, adjoint_values_vector);
-
-        noalias(temp_1) = prod(numerical_diffusion_matrix, adjoint_values_vector);
-        double const diffusion_energy = inner_prod(temp_1,adjoint_values_vector);
-
-        pCurrentElement->GetValuesVector(adjoint_values_vector, mTimeStep + 1);
-        noalias(temp_1) = prod(rLHS_Contribution, adjoint_values_vector);
-        double const adjoint_energy_old = inner_prod(temp_1, adjoint_values_vector);
-
-        double delta_energy = adjoint_energy_current - adjoint_energy_old;
-
-        double artificial_diffusion = 0.0;
-
-        KRATOS_DEBUG_ERROR_IF(diffusion_energy < 0.0)<<" --- Diffusion energy cannot be negative or zero."<<std::endl;
-
-        if (delta_energy > 0.0)
-        {
-            artificial_diffusion = delta_energy/diffusion_energy;
-        }
-
-        pCurrentElement->SetValue(ADJOINT_ENERGY, delta_energy);
         pCurrentElement->SetValue(DIFFUSION_ENERGY, diffusion_energy);
 
         return artificial_diffusion;
@@ -621,6 +436,7 @@ private:
 
         Matrix adjoint_energy_generation_matrix;
         pCurrentElement->Calculate(VMS_ADJOINT_ENERGY_GENERATION_RATE_MATRIX, adjoint_energy_generation_matrix, rCurrentProcessInfo);
+        pCurrentElement->SetValue(STABILIZATION_ANALYSIS_MATRIX_CUSTOM, adjoint_energy_generation_matrix);
 
         noalias(temp_1) = prod(adjoint_energy_generation_matrix, adjoint_values_vector);
         double const adjoint_energy_rate = inner_prod(temp_1, adjoint_values_vector);
@@ -630,12 +446,10 @@ private:
 
         double artificial_diffusion = 0.0;
 
-        KRATOS_DEBUG_ERROR_IF(diffusion_energy < 0.0)<<" --- Diffusion energy cannot be negative or zero."<<std::endl;
+        KRATOS_ERROR_IF(diffusion_energy < 0.0)<<" --- Diffusion energy cannot be negative or zero."<<std::endl;
 
         if (adjoint_energy_rate > 0.0)
-        {
             artificial_diffusion = adjoint_energy_rate/diffusion_energy;
-        }
 
         pCurrentElement->SetValue(ADJOINT_ENERGY, adjoint_energy_rate);
         pCurrentElement->SetValue(DIFFUSION_ENERGY, diffusion_energy);

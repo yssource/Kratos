@@ -135,18 +135,15 @@ public:
         // Contributions from the previos time step
         this->CalculatePreviousTimeStepContributions(pCurrentElement, rLHS_Contribution, rRHS_Contribution, rCurrentProcessInfo);
 
-        LocalSystemMatrixType matrix_29;
-        pCurrentElement->Calculate(VMS_ADJOINT_ENERGY_GENERATION_RATE_MATRIX,  matrix_29, rCurrentProcessInfo);
-
-        pCurrentElement->SetValue(STABILIZATION_ANALYSIS_MATRIX_29, matrix_29);
+        pCurrentElement->SetValue(STABILIZATION_ANALYSIS_MATRIX_LHS_BEFORE_STABILIZATION, rLHS_Contribution);
 
         // Calculate artificial diffusion
         this->CalculateArtificialDiffusionContribution(pCurrentElement, rLHS_Contribution, rRHS_Contribution, rCurrentProcessInfo);
 
+        pCurrentElement->SetValue(STABILIZATION_ANALYSIS_MATRIX_LHS_AFTER_STABILIZATION, rLHS_Contribution);
+
         // Make the local contribution residual
         this->CalculateResidualLocalContributions(pCurrentElement, rLHS_Contribution, rRHS_Contribution, rCurrentProcessInfo);
-
-        pCurrentElement->SetValue(STABILIZATION_ANALYSIS_MATRIX_24, rLHS_Contribution);
 
         pCurrentElement->EquationIdVector(rEquationId, rCurrentProcessInfo);
 
@@ -164,7 +161,7 @@ public:
         BaseType::FinalizeSolutionStep(rModelPart, rA, rDx, rb);
 
         if (mIsMatrixEnergiesCalculated)
-            {
+        {
             ModelPart::ElementsContainerType& r_elements = rModelPart.Elements();
             LocalSystemMatrixType dummy_matrix;
 
@@ -239,11 +236,16 @@ protected:
         artificial_diffusion *= mOverallDiffusionCoefficient;
         pCurrentElement->SetValue(ARTIFICIAL_DIFFUSION, artificial_diffusion);
         pCurrentElement->Calculate(ARTIFICIAL_DIFFUSION_MATRIX, r_artificial_diffusion_matrix, rCurrentProcessInfo);
+        pCurrentElement->SetValue(STABILIZATION_ANALYSIS_MATRIX_PURE_DIFFUSION, r_artificial_diffusion_matrix);
 
         LocalSystemMatrixType identity = identity_matrix<double>(rLHS_Contribution.size1());
-        double coff = mStabilizationSourceCoefficient*mOverallDiffusionCoefficient*gauss_integration_weight;
+        double coeff = mStabilizationSourceCoefficient*mOverallDiffusionCoefficient*gauss_integration_weight;
 
-        r_artificial_diffusion_matrix += coff*identity;
+        pCurrentElement->SetValue(STABILIZATION_ANALYSIS_MATRIX_GAUSS_POINT_INTEGRATION_WEIGHT, gauss_integration_weight);
+
+        r_artificial_diffusion_matrix += coeff*identity;
+
+        pCurrentElement->SetValue(STABILIZATION_ANALYSIS_MATRIX_DIFFUSION, r_artificial_diffusion_matrix);
 
         noalias(rLHS_Contribution) -= r_artificial_diffusion_matrix;
 

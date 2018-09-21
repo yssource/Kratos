@@ -61,6 +61,7 @@ public:
 #ifdef EIGEN_ROOT
         singularValuePressureCoupled,
         VMSSteadyTermMatrixEigen,
+        EnergyGenerationRateMatrixEigen,
 #endif
         dynamicFullVMSSteadyMatrix,
         dynamicFullMatrix,
@@ -126,6 +127,11 @@ public:
             mArtificialDiffusionMethod = ArtificialDiffusionMethods::VMSSteadyTermMatrixEigen;
             KRATOS_INFO("Adjoint Stabilization")<<"--- Using VMS Steady Element matrix eigen values for stabilization."<<std::endl;
         }
+        else if (method_name=="energy_generation_rate_matrix_eigen")
+        {
+            mArtificialDiffusionMethod = ArtificialDiffusionMethods::EnergyGenerationRateMatrixEigen;
+            KRATOS_INFO("Adjoint Stabilization")<<"--- Using Energy generation rate matrix eigen values for stabilization."<<std::endl;
+        }
 #endif
         else
         {
@@ -175,6 +181,12 @@ public:
                                         rCurrentProcessInfo);
             case ArtificialDiffusionMethods::VMSSteadyTermMatrixEigen:
                 return CalculateArtificialDiffusionVMSSteadyTermMatrixEigen(
+                                        pCurrentElement,
+                                        rLHS_Contribution,
+                                        rRHS_Contribution,
+                                        rCurrentProcessInfo);
+            case ArtificialDiffusionMethods::EnergyGenerationRateMatrixEigen:
+                return CalculateArtificialDiffusionEnergyGenerationRateMatrixEigen(
                                         pCurrentElement,
                                         rLHS_Contribution,
                                         rRHS_Contribution,
@@ -305,11 +317,9 @@ private:
 
     }
 
-    double CalculateArtificialDiffusionVMSSteadyTermMatrixEigen(
+    double CalculateArtificialDiffusionBasedOnMatrixMaxEigenValue(
                                         Element::Pointer pCurrentElement,
-                                        MatrixType& rLHS_Contribution,
-                                        VectorType& rRHS_Contribution,
-                                        ProcessInfo& rCurrentProcessInfo)
+                                        Matrix const& custom_matrix)
     {
         KRATOS_TRY;
 
@@ -323,22 +333,52 @@ private:
         else if (domain_size == 3)
             gauss_integration_weight = r_geometry.Volume();
 
+        double custom_matrix_max_eigen_value = CalculateMaxEigenValue(custom_matrix);
+
+        pCurrentElement->SetValue(STABILIZATION_ANALYSIS_MATRIX_CUSTOM, custom_matrix);
+        pCurrentElement->SetValue(ADJOINT_ENERGY, custom_matrix_max_eigen_value);
+
+        double numerical_diffusion = 0.0;
+        if (custom_matrix_max_eigen_value > 0)
+            numerical_diffusion = custom_matrix_max_eigen_value/(mEpsilon*gauss_integration_weight);
+
+        return numerical_diffusion;
+
+        KRATOS_CATCH("");
+    }
+
+    double CalculateArtificialDiffusionEnergyGenerationRateMatrixEigen(
+                                        Element::Pointer pCurrentElement,
+                                        MatrixType& rLHS_Contribution,
+                                        VectorType& rRHS_Contribution,
+                                        ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY;
+
         Matrix vms_steady_term_primal_gradient;
         pCurrentElement->Calculate(VMS_STEADY_TERM_PRIMAL_GRADIENT_MATRIX,
                                    vms_steady_term_primal_gradient,
                                    rCurrentProcessInfo);
 
-        double vms_steady_term_max_eigen_value = CalculateMaxEigenValue(vms_steady_term_primal_gradient);
+        return CalculateArtificialDiffusionBasedOnMatrixMaxEigenValue(pCurrentElement, vms_steady_term_primal_gradient);
 
-        pCurrentElement->SetValue(STABILIZATION_ANALYSIS_MATRIX_CUSTOM, vms_steady_term_primal_gradient);
+        KRATOS_CATCH("");
+    }
 
-        pCurrentElement->SetValue(ADJOINT_ENERGY, vms_steady_term_max_eigen_value);
+    double CalculateArtificialDiffusionVMSSteadyTermMatrixEigen(
+                                        Element::Pointer pCurrentElement,
+                                        MatrixType& rLHS_Contribution,
+                                        VectorType& rRHS_Contribution,
+                                        ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY;
 
-        double numerical_diffusion = 0.0;
-        if (vms_steady_term_max_eigen_value > 0)
-            numerical_diffusion = vms_steady_term_max_eigen_value/(mEpsilon*gauss_integration_weight);
+        Matrix adjoint_energy_generation_matrix;
+        pCurrentElement->Calculate(VMS_ADJOINT_ENERGY_GENERATION_RATE_MATRIX,
+                                   adjoint_energy_generation_matrix,
+                                   rCurrentProcessInfo);
 
-        return numerical_diffusion;
+        return CalculateArtificialDiffusionBasedOnMatrixMaxEigenValue(pCurrentElement, adjoint_energy_generation_matrix);
 
         KRATOS_CATCH("");
     }

@@ -6,7 +6,7 @@ import KratosMultiphysics.EmpireApplication
 import KratosMultiphysics.KratosUnittest as KratosUnittest
 
 from co_simulation_solver_test_factory import TestKratosSolver
-from co_simulation_solver_test_factory import TestSDofSolver
+from co_simulation_solver_test_factory import TestSDoFSolver
 from co_simulation_solver_test_factory import TestEmpireSolver
 from co_simulation_test_factory import TestSmallCoSimulationCases
 from co_simulation_test_factory import TestCoSimulationCases
@@ -33,7 +33,7 @@ def AssembleTestSuites():
 
     smallSuite = suites['small'] # These tests are executed by the continuous integration tool
     smallSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TestKratosSolver]))
-    smallSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TestSDofSolver]))
+    smallSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TestSDoFSolver]))
     smallSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TestEmpireSolver]))
 
     nightSuite = suites['nightly'] # These tests are executed in the nightly build

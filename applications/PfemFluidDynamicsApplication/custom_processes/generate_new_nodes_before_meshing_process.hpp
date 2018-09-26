@@ -505,9 +505,12 @@ private:
     unsigned int freesurfaceNodes=0;
     unsigned int inletNodes=0;
     bool toEraseNodeFound=false;
-
+   double posX=1.0;
+    double posY=1.0;
     for(unsigned int pn=0; pn<nds; pn++)
       {
+	posX=Element[pn].X();
+	posY=Element[pn].Y();
 	if(Element[pn].Is(RIGID)){
 	  rigidNodes++;
 	}
@@ -525,6 +528,8 @@ private:
     double   limitEdgeLength=1.25*mrRemesh.Refine->CriticalRadius;
     double safetyCoefficient3D=1.6;
     double penalization=1.0;
+    double boundaryNodes=rigidNodes+freesurfaceNodes;
+
     if(rigidNodes>2){
       penalization=0.7;
       if(inletNodes>0){
@@ -535,6 +540,19 @@ private:
       penalization=0;
     }else if(freesurfaceNodes>0){
       penalization=0.95;
+    }
+
+    //for h=0.3
+    if(freesurfaceNodes>0 && rigidNodes==0 && posX>2.0 && posY>0.4){
+      penalization=0;
+    } else if(freesurfaceNodes>1 && rigidNodes==0 && posX>0.9){
+      penalization=0;
+    }else if(freesurfaceNodes>0 && rigidNodes==0 && posX>0.9){
+      penalization=0.85;
+    } else if(boundaryNodes>1 && freesurfaceNodes>0 && rigidNodes>0){//used for the case of h=0.45m and h=0.6m
+      //   }
+      // else if(boundaryNodes>1 && freesurfaceNodes>0 && rigidNodes>0  && posX<-0.25){//used for the case (C) of h=0.15m
+      penalization=0;
     }
 
     // if(freesurfaceNodes>2){

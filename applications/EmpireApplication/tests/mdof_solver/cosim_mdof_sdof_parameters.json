@@ -2,13 +2,13 @@
     "problem_data" :
     {
         "start_time" : 0.0,
-        "end_time" : 1.0,
+        "end_time" : 4,
         "echo_level" : 0,
         "print_colors" : true
     },
     "solver_settings" :
     {
-        "solver_type" : "mdof",
-        "input_file"  : "mdof_solver/ProjectParametersMDoF"
+        "solver_type" : "mdof_sdof",
+        "input_file"  : "mdof_solver/ProjectParametersMDoFSDoF"
     }
 }

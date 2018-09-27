@@ -31,7 +31,7 @@ class MDoFSolver(CoSimulationBaseSolver):
         ##
         #PMT: to do for (dt, mM, mB, mK, pInf, vu0, vv0, va0)
         # time step
-        self.dt = dt
+        self.dt = parameters["time_integration_parameters"]["time_step"]
 
         # mass, damping and spring stiffness
         self.M = model['M']
@@ -41,6 +41,7 @@ class MDoFSolver(CoSimulationBaseSolver):
         # what to do with model["nodal_coordinates?"]
 
         # generalized alpha parameters (to ensure unconditional stability, 2nd order accuracy)
+        pInf = parameters["time_integration_parameters"]["p_inf"]
         self.alphaM = (2.0 * pInf - 1.0) / (pInf + 1.0)
         self.alphaF = pInf / (pInf + 1.0)
         self.beta = 0.25 * (1 - self.alphaM + self.alphaF)**2
@@ -76,9 +77,9 @@ class MDoFSolver(CoSimulationBaseSolver):
 
 		#structure
         # initial displacement, velocity and acceleration
-        self.u0 = vu0
-        self.v0 = vv0
-        self.a0 = va0
+        self.u0 = model['initial_values']['displacement']
+        self.v0 = model['initial_values']['velocity']
+        self.a0 = model['initial_values']['acceleration']
 
         # initial displacement, velocity and acceleration
         self.u1 = self.u0
@@ -89,14 +90,19 @@ class MDoFSolver(CoSimulationBaseSolver):
         self.f0 = np.dot(self.M,self.a0) + np.dot(self.B,self.v0) + np.dot(self.K,self.u0)
         self.f1 = np.dot(self.M,self.a1) + np.dot(self.B,self.v1) + np.dot(self.K,self.u1)
 
+        # initial force
+        self.force = model['initial_values']['external_load']
+
     def Initialize(self):
-        self.x = np.zeros((3, self.buffer_size))
+        # 1st dimension: variables: disp, acc, vel
+        # 2nd dimension: buffer size
+        # 3rd dimension: number of dofs
+        self.x = np.zeros((3, self.buffer_size, len(self.u0)))
 
         # PMT: check if this syntax is still ok for MDoF
-        initial_values = np.array([self.initial_displacement,
-                                   self.initial_velocity,
-                                   self.initial_acceleration])
-        self.dx = initial_values
+        self.dx = np.array([self.u0,
+                            self.v0,
+                            self.a0])
 
         #x and dx contain: [displacement, velocity, acceleration]
 
@@ -104,9 +110,7 @@ class MDoFSolver(CoSimulationBaseSolver):
             os.remove(self.output_file_name)
 
         #apply external load as an initial impulse
-        self.load_vector = np.array([0,
-                                     0,
-                                     self.force])
+        self.load_vector = self.force
 
     ## PMT this is new for MDoF, maybe do it for SDoF as well
     def Predict(self):
@@ -115,21 +119,40 @@ class MDoFSolver(CoSimulationBaseSolver):
     def OutputSolutionStep(self):
         # PMT: check if this syntax is still ok for MDoF
 
+        print("dx: ", self.dx)
+        ##err
         with open(self.output_file_name, "a") as results_sdof:
             #outputs displacements
-            results_sdof.write(str(self.time) + "\t" + str(self.dx[0]) + "\n")
+            results_sdof.write(str(self.time) + "\t" + str(self.dx[0][-1]) + "\n")
 
     def AdvanceInTime(self, current_time):
         # PMT: check if this syntax is still ok for MDoF
 
         # similar to the Kratos CloneTimeStep function
         # advances values along the buffer axis (so rolling columns) using numpy's roll
+
+        print("time: ", current_time + self.dt)
+        print("x: ", self.x)
         self.x = np.roll(self.x,1,axis=1)
         # overwriting at the buffer_idx=0 the newest values
         #buffer_idx = 0
         #self.x[:,buffer_idx] = self.dx
-        self.x[:,0] = self.dx
 
+        # print("##shape ", self.x.shape)
+        # print(self.x[0,0,0])
+        # print(self.dx[0])
+        # print(self.x[1,0,0])
+        # print(self.dx[1])
+        # print(self.x[2,0,0])
+        # print(self.dx[2])
+
+        self.dx[0] = self.u1
+        self.dx[1] = self.v1
+        self.dx[2] = self.a1
+
+        self.x[0,0,:] = self.dx[0]
+        self.x[1,0,:] = self.dx[1]
+        self.x[2,0,:] = self.dx[2]
         ##
         # PMT: this might be needed
         # update displacement, velocity and acceleration
@@ -140,14 +163,14 @@ class MDoFSolver(CoSimulationBaseSolver):
         # update the force
         self.f0 = self.f1
 
-
-        self.time = current_time + self.delta_t
+        self.time = current_time + self.dt
         return self.time
 
     def SolveSolutionStep(self):
         # sys of eq reads: LHS * u1 = RHS
 
-        F = (1.0 - self.alphaF) * f1 + self.alphaF * self.f0
+        #F = (1.0 - self.alphaF) * f1 + self.alphaF * self.f0
+        F = (1.0 - self.alphaF) * self.load_vector + self.alphaF * self.f0
 
         LHS = self.a1h * self.M + self.a2h * self.B + self.a3h * self.K
         RHS = np.dot(self.M,(self.a1m * self.u0 + self.a2m * self.v0 + self.a3m * self.a0))
@@ -155,7 +178,8 @@ class MDoFSolver(CoSimulationBaseSolver):
         RHS += np.dot(self.a1k * self.K, self.u0) + F
 
         # update self.f1
-        self.f1 = f1
+        #self.f1 = f1
+        self.f1 = self.load_vector
 
         # updates self.u1,v1,a1
         self.u1 = np.linalg.solve(LHS, RHS)
@@ -166,7 +190,7 @@ class MDoFSolver(CoSimulationBaseSolver):
         return self.buffer_size
 
     def GetDeltaTime(self):
-        return self.delta_t
+        return self.dt
 
     def GetSolutionStepValue(self, identifier, buffer_idx=0):
         # PMT: check if this syntax is still ok for MDoF

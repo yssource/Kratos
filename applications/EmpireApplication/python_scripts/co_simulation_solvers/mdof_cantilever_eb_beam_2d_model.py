@@ -231,3 +231,13 @@ class MDoFCantileverEBBeam2DModel(MDoFSolver):
 
     def _Name(self):
         return self.__class__.__name__
+
+    # PMT: to be implemented
+    def _DofList(self):
+        '''
+        A DoF list saying which DoF entry
+        what kind of deformation it represents
+        In this case probably:
+        ["DeltaX","ThethaY","DeltaX","ThethaY",...]
+        '''
+        pass

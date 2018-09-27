@@ -19,7 +19,7 @@ class MDoFSDoFModel(MDoFSolver):
     """
     def __init__(self, cosim_solver_settings, level):
 
-        input_file_name = self.cosim_solver_settings["input_file"]
+        input_file_name = cosim_solver_settings["input_file"]
         if not input_file_name.endswith(".json"):
             input_file_name += ".json"
 
@@ -65,6 +65,13 @@ class MDoFSDoFModel(MDoFSolver):
         model.update({'B': np.array([[b]])})
         # check if this is needed
         model.update({'nodal_coordinates': nodal_coordinates})
+
+        model.update({'initial_values':
+                        {'displacement' : np.array([parameters["initial_values"]["displacement"]]),
+                         'velocity'     : np.array([parameters["initial_values"]["velocity"]]),
+                         'acceleration' : np.array([parameters["initial_values"]["acceleration"]]),
+                         'external_load' : np.array([parameters["initial_values"]["external_load"]])
+                         }})
 
         super(MDoFSDoFModel, self).__init__(model, cosim_solver_settings, level)
 

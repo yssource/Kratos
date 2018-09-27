@@ -29,11 +29,11 @@ class TestSDoFSolver(co_simulation_test_case.CoSimulationTestCase):
             self.createTest("sdof_solver", "cosim_sdof")
             self.runTest()
 
-# class TestMDoFSolver(co_simulation_test_case.CoSimulationTestCase):
-#     def test_MDoFSolver(self):
-#         with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
-#             self.createTest("mdof_solver", "mdof")
-#             self.runTest()
+class TestMDoFSolver(co_simulation_test_case.CoSimulationTestCase):
+    def test_MDoFSolver(self):
+        with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
+            self.createTest("mdof_solver", "cosim_mdof_sdof")
+            self.runTest()
 
 class TestEmpireSolver(co_simulation_test_case.CoSimulationTestCase):
     def test_EmpireSolverWrapper(self):

@@ -1,0 +1,26 @@
+{
+    "system_parameters":{
+        "mass"              : 1.0,
+        "target_frequency"  : 2.0,
+        "damping_ratio"     : 0.0,
+        "level_height"      : 3.5,
+        "number_of_levels"  : 1
+    },
+    "time_integration_parameters":{
+        "p_inf": 0.15,
+        "time_step": 0.01
+    },
+     "initial_values":{
+        "displacement": 0.5,
+        "velocity": 0.0,
+        "acceleration": 0.0,
+        "external_load": 0.0
+     },
+     "solver_parameters": {
+         "buffer_size": 3
+     },
+     "output_parameters":{
+        "file_name": "mdof_solver/results_mdof_sdof.dat"
+     }
+
+}

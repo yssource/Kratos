@@ -38,7 +38,7 @@
         "solver_type"                  : "ale_monolithic",
         "ale_settings"                 : {
             "solver_type"         : "mesh_solver_structural_similarity",
-            "ale_interface_parts" : ["NoSlip2D_Beam_Top","NoSlip2D_Beam_back","NoSlip2D_Beam_front"]
+            "ale_boundary_parts" : ["NoSlip2D_Beam_Top","NoSlip2D_Beam_back","NoSlip2D_Beam_front"]
         },
         "model_import_settings"        : {
             "input_type"     : "mdpa",

@@ -37,7 +37,7 @@
         "solver_type"                     : "Monolithic",
 		"ale_settings"                     :{
             "solver_type" : "mesh_solver_structural_similarity",
-            "ale_interface_parts" : ["NoSlip2D_structure"],
+            "ale_boundary_parts" : ["NoSlip2D_structure"],
             "mesh_motion_linear_solver_settings" : {
                 "solver_type" : "AMGCL",
                 "smoother_type":"ilu0",

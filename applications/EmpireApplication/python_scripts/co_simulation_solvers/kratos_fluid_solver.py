@@ -3,6 +3,11 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 # Importing the Kratos Library
 import KratosMultiphysics
 import KratosMultiphysics.FluidDynamicsApplication
+try:
+    import KratosMultiphysics.MeshMovingApplication
+    KratosMultiphysics.Logger.PrintInfo("MeshMovingApplication", "succesfully imported")
+except ImportError:
+    KratosMultiphysics.Logger.PrintInfo("MeshMovingApplication", "not imported")
 
 # Importing the base class
 from kratos_base_field_solver import KratosBaseFieldSolver

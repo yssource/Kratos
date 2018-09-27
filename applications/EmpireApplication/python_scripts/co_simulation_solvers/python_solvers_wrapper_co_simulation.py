@@ -11,7 +11,20 @@ available_solvers = {
     "gauss_seidel_strong_coupling" : "co_simulation_gauss_seidel_strong_coupling_solver",
     "gauss_seidel_weak_coupling"   : "co_simulation_gauss_seidel_weak_coupling_solver",
     "sdof"                         : "sdof_solver",
-    "mdof"                         : "mdof_solver"
+    # PMT: mdof should become mdof_base_solver
+    "mdof"                         : "mdof_solver",
+    # PMT: the following should be later called models
+    '''
+    maybe move into a separate directory?
+    there will be responsible for assembling the system matrices for
+    mass, stiffness, damping based upon certain modeling asssumptions
+    an sdof using the mdof solve for checks
+    '''
+    "mdof_sdof"                    : "mdof_sdof_model",
+    # various mdof models
+    "mdof_bridge_2dof"             : "mdof_bridge_2dof_model",
+    "mdof_cantilever_shear_2d"     : "mdof_cantilever_shear_2d_model",
+    "mdof_cantilever_eb_beam_2d"   : "mdof_cantilever_eb_beam_2d_model"
 }
 
 def CreateSolver(cosim_solver_settings, level):

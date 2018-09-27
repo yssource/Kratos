@@ -8,11 +8,11 @@ import numpy as np
 import json
 import os
 
-def CreateSolver(cosim_solver_settings, level):
-    return MDoFSolver(cosim_solver_settings, level)
+def CreateSolver(model, cosim_solver_settings, level):
+    return MDoFSolver(model, cosim_solver_settings, level)
 
 class MDoFSolver(CoSimulationBaseSolver):
-    def __init__(self, cosim_solver_settings, level):
+    def __init__(self, model, cosim_solver_settings, level):
         super(MDoFSolver, self).__init__(cosim_solver_settings, level)
 
         input_file_name = self.cosim_solver_settings["input_file"]
@@ -34,9 +34,11 @@ class MDoFSolver(CoSimulationBaseSolver):
         self.dt = dt
 
         # mass, damping and spring stiffness
-        self.M = mM
-        self.B = mB
-        self.K = mK
+        self.M = model['M']
+        self.B = model['B']
+        self.K = model['K']
+
+        # what to do with model["nodal_coordinates?"]
 
         # generalized alpha parameters (to ensure unconditional stability, 2nd order accuracy)
         self.alphaM = (2.0 * pInf - 1.0) / (pInf + 1.0)

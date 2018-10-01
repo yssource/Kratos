@@ -63,6 +63,12 @@ PYBIND11_MODULE(mpipython, m)
     .def_property_readonly("world",&PythonMPI::GetWorld,py::return_value_policy::reference_internal )
     ;
 
+    py::enum_<PythonMPI::MPI_Operation>(py_mpi, "MPI_op")
+    .value("MAX", PythonMPI::MPI_Operation::MAX)
+    .value("MIN", PythonMPI::MPI_Operation::MIN)
+    .value("SUM", PythonMPI::MPI_Operation::SUM)
+    ;
+
     m.def("GetMPIInterface",&GetMPIInterface,py::return_value_policy::reference);
 }
 

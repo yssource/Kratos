@@ -5,9 +5,38 @@ import KratosMultiphysics.EmpireApplication
 import KratosMultiphysics.KratosUnittest as KratosUnittest
 import KratosMultiphysics.kratos_utilities as kratos_utils
 
+from compare_two_files_check_process import CompareTwoFilesCheckProcess
+
 import os
 
 import co_simulation_test_case
+
+def compareResults(reference_file, results_file):
+    settings_check_process = KratosMultiphysics.Parameters("""
+    {
+        "reference_file_name"   : "",
+        "output_file_name"      : "",
+        "remove_output_file"    : true,
+        "comparison_type"     : "dat_file",
+        "remove_output_file"    : true,
+        "decimal_places"      : 5
+    }
+    """)
+
+    settings_check_process["reference_file_name"].SetString(reference_file)
+    settings_check_process["output_file_name"].SetString(results_file)
+
+    # creating a dummy model
+    test_model = KratosMultiphysics.Model()
+    check_process = CompareTwoFilesCheckProcess(test_model, settings_check_process)
+
+    check_process.ExecuteInitialize()
+    check_process.ExecuteBeforeSolutionLoop()
+    check_process.ExecuteInitializeSolutionStep()
+    check_process.ExecuteFinalizeSolutionStep()
+    check_process.ExecuteBeforeOutputStep()
+    check_process.ExecuteAfterOutputStep()
+    check_process.ExecuteFinalize()
 
 class TestKratosSolver(co_simulation_test_case.CoSimulationTestCase):
     def test_KratosStructuralMechanicsSolver(self):
@@ -22,18 +51,43 @@ class TestKratosSolver(co_simulation_test_case.CoSimulationTestCase):
             # self.runTest()
             kratos_utils.DeleteFileIfExisting("./test_mdpa_files/rectangle_2D3N_test.time")
 
-
 class TestSDoFSolver(co_simulation_test_case.CoSimulationTestCase):
     def test_SDoFSolver(self):
         with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
+            folder_name = "sdof_solver"
             self.createTest("sdof_solver", "cosim_sdof")
             self.runTest()
+            reference_file = os.path.join(folder_name,"results_sdof_ref.dat")
+            result_file = os.path.join(folder_name,"results_sdof.dat")
+            compareResults(reference_file, result_file)
 
 class TestMDoFSolver(co_simulation_test_case.CoSimulationTestCase):
-    def test_MDoFSolver(self):
+    def test_MDoFSDoFModel(self):
         with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
-            self.createTest("mdof_solver", "cosim_mdof_sdof")
+            folder_name = "mdof_solver"
+            self.createTest(folder_name, "cosim_mdof_sdof")
             self.runTest()
+            reference_file = os.path.join(folder_name,"results_mdof_sdof_ref.dat")
+            result_file = os.path.join(folder_name,"results_mdof_sdof.dat")
+            compareResults(reference_file, result_file)
+
+    def test_MDoFCantileverShear2DModel(self):
+        with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
+            folder_name = "mdof_solver"
+            self.createTest(folder_name, "cosim_mdof_cantilever_shear_2d")
+            self.runTest()
+            reference_file = os.path.join(folder_name,"results_mdof_cantilever_shear_2d_ref.dat")
+            result_file = os.path.join(folder_name,"results_mdof_cantilever_shear_2d.dat")
+            compareResults(reference_file, result_file)
+
+    def test_MDoFBridge2DoFModel(self):
+        with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
+            folder_name = "mdof_solver"
+            self.createTest(folder_name, "cosim_mdof_bridge_2dof")
+            self.runTest()
+            reference_file = os.path.join(folder_name,"results_mdof_bridge_2dof_ref.dat")
+            result_file = os.path.join(folder_name,"results_mdof_bridge_2dof.dat")
+            compareResults(reference_file, result_file)
 
 class TestEmpireSolver(co_simulation_test_case.CoSimulationTestCase):
     def test_EmpireSolverWrapper(self):

@@ -1,0 +1,28 @@
+{
+    "system_parameters":{
+        "density"           : 5.0,
+        "area"              : 10.0,
+        "target_frequency"  : 1.0,
+        "target_mode"       : 1,
+        "damping_ratio"     : 0.025,
+        "level_height"      : 3.5,
+        "number_of_levels"  : 3
+    },
+    "initial_conditions":{
+        "displacement": "2*x+1",
+        "velocity": "none",
+        "acceleration": "none",
+        "external_load": "none"
+     },
+    "time_integration_parameters":{
+        "p_inf": 0.15,
+        "time_step": 0.01
+    },
+     "solver_parameters": {
+         "buffer_size": 3
+     },
+     "output_parameters":{
+        "file_name": "mdof_solver/results_mdof_cantilever_shear_2d.dat"
+     }
+
+}

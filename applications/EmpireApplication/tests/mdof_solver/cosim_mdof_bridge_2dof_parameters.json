@@ -2,13 +2,13 @@
     "problem_data" :
     {
         "start_time" : 0.0,
-        "end_time" : 5.0,
+        "end_time" : 4,
         "echo_level" : 0,
         "print_colors" : true
     },
     "solver_settings" :
     {
-        "solver_type" : "sdof",
-        "input_file"  : "sdof_solver/ProjectParametersSDoF"
+        "solver_type" : "mdof_bridge_2dof",
+        "input_file"  : "mdof_solver/ProjectParametersMDoFBridge2DoFModel"
     }
 }

@@ -77,9 +77,11 @@ class MDoFSolver(CoSimulationBaseSolver):
 
 		#structure
         # initial displacement, velocity and acceleration
-        self.u0 = model['initial_values']['displacement']
-        self.v0 = model['initial_values']['velocity']
-        self.a0 = model['initial_values']['acceleration']
+        self.u0 = model['initial_conditions']['displacement']
+        self.v0 = model['initial_conditions']['velocity']
+        self.a0 = model['initial_conditions']['acceleration']
+        # initial force
+        self.force = model['initial_conditions']['external_load']
 
         # initial displacement, velocity and acceleration
         self.u1 = self.u0
@@ -89,9 +91,6 @@ class MDoFSolver(CoSimulationBaseSolver):
 		# force from a previous time step (initial force)
         self.f0 = np.dot(self.M,self.a0) + np.dot(self.B,self.v0) + np.dot(self.K,self.u0)
         self.f1 = np.dot(self.M,self.a1) + np.dot(self.B,self.v1) + np.dot(self.K,self.u1)
-
-        # initial force
-        self.force = model['initial_values']['external_load']
 
     def Initialize(self):
         # 1st dimension: variables: disp, acc, vel
@@ -118,12 +117,9 @@ class MDoFSolver(CoSimulationBaseSolver):
 
     def OutputSolutionStep(self):
         # PMT: check if this syntax is still ok for MDoF
-
-        print("dx: ", self.dx)
-        ##err
         with open(self.output_file_name, "a") as results_sdof:
             #outputs displacements
-            results_sdof.write(str(self.time) + "\t" + str(self.dx[0][-1]) + "\n")
+            results_sdof.write(str(self.time) + "\t" + " ".join(str(value) for value in self.dx[0]) + "\n")
 
     def AdvanceInTime(self, current_time):
         # PMT: check if this syntax is still ok for MDoF
@@ -131,20 +127,10 @@ class MDoFSolver(CoSimulationBaseSolver):
         # similar to the Kratos CloneTimeStep function
         # advances values along the buffer axis (so rolling columns) using numpy's roll
 
-        print("time: ", current_time + self.dt)
-        print("x: ", self.x)
         self.x = np.roll(self.x,1,axis=1)
         # overwriting at the buffer_idx=0 the newest values
         #buffer_idx = 0
         #self.x[:,buffer_idx] = self.dx
-
-        # print("##shape ", self.x.shape)
-        # print(self.x[0,0,0])
-        # print(self.dx[0])
-        # print(self.x[1,0,0])
-        # print(self.dx[1])
-        # print(self.x[2,0,0])
-        # print(self.dx[2])
 
         self.dx[0] = self.u1
         self.dx[1] = self.v1
@@ -193,7 +179,10 @@ class MDoFSolver(CoSimulationBaseSolver):
         return self.dt
 
     def GetSolutionStepValue(self, identifier, buffer_idx=0):
+        #
         # PMT: check if this syntax is still ok for MDoF
+        #
+
         if identifier == "DISPLACEMENT":
             return self.x[:,buffer_idx][0]
         elif identifier == "VELOCITY":
@@ -204,7 +193,10 @@ class MDoFSolver(CoSimulationBaseSolver):
             raise Exception("Identifier is unknown!")
 
     def SetSolutionStepValue(self, identifier, value, buffer_idx=0):
+        #
         # PMT: check if this syntax is still ok for MDoF
+        #
+
         if identifier == "DISPLACEMENT":
             self.x[:,buffer_idx][0] = value
         elif identifier == "VELOCITY":
@@ -215,7 +207,10 @@ class MDoFSolver(CoSimulationBaseSolver):
             raise Exception("Identifier is unknown!")
 
     def SetData(self, identifier, data):
+        #
         # PMT: check if this syntax is still ok for MDoF
+        #
+
         if identifier == "LOAD":
             # last index is the external force
             self.load_vector[-1] = data
@@ -227,7 +222,10 @@ class MDoFSolver(CoSimulationBaseSolver):
             raise Exception("Identifier is unknown!")
 
     def GetData(self, identifier):
+        #
         # PMT: check if this syntax is still ok for MDoF
+        #
+
         if identifier == "LOAD":
             # last index is the external force
             return self.load_vector[-1]

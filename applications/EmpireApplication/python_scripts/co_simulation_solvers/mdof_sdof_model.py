@@ -66,11 +66,11 @@ class MDoFSDoFModel(MDoFSolver):
         # check if this is needed
         model.update({'nodal_coordinates': nodal_coordinates})
 
-        model.update({'initial_values':
-                        {'displacement' : np.array([parameters["initial_values"]["displacement"]]),
-                         'velocity'     : np.array([parameters["initial_values"]["velocity"]]),
-                         'acceleration' : np.array([parameters["initial_values"]["acceleration"]]),
-                         'external_load' : np.array([parameters["initial_values"]["external_load"]])
+        model.update({'initial_conditions':
+                        {'displacement' : np.array([parameters["initial_conditions"]["displacement"]]),
+                         'velocity'     : np.array([parameters["initial_conditions"]["velocity"]]),
+                         'acceleration' : np.array([parameters["initial_conditions"]["acceleration"]]),
+                         'external_load' : np.array([parameters["initial_conditions"]["external_load"]])
                          }})
 
         super(MDoFSDoFModel, self).__init__(model, cosim_solver_settings, level)

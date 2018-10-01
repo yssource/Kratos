@@ -11,6 +11,10 @@ from functools import partial
 import json
 import os
 
+# For numerically evaluating a symbolic input
+from sympy import symbols
+from sympy.core import sympify
+
 def CreateSolver(cosim_solver_settings, level):
     return MDoFCantileverEBBeam2DModel(cosim_solver_settings, level)
 
@@ -27,7 +31,7 @@ class MDoFCantileverEBBeam2DModel(MDoFSolver):
     """
     def __init__(self, cosim_solver_settings, level):
 
-        input_file_name = self.cosim_solver_settings["input_file"]
+        input_file_name = cosim_solver_settings["input_file"]
         if not input_file_name.endswith(".json"):
             input_file_name += ".json"
 
@@ -48,7 +52,16 @@ class MDoFCantileverEBBeam2DModel(MDoFSolver):
             "number_of_levels"  : 3
         }
 
-        maybe initial conditions should be added as well
+        example of initial conditions:
+        "initial_conditions":
+        {
+            "displacement"  : "2*x+1",
+            "velocity"      : "none",
+            "acceleration"  : "none",
+            "external_force": "none"
+        }
+
+        check out the function self._SetupInitialValues
         '''
 
         rho = parameters["system_parameters"]["density"]
@@ -78,6 +91,10 @@ class MDoFCantileverEBBeam2DModel(MDoFSolver):
         model.update({'B': b})
         # check if this is needed
         model.update({'nodal_coordinates': nodal_coordinates})
+
+        initial_conditions = self._SetupInitialValues(parameters['initial_conditions'],
+                                                      nodal_coordinates['y0'])
+        model.update({'initial_conditions': initial_conditions})
 
         super(MDoFCantileverEBBeam2DModel, self).__init__(model, cosim_solver_settings, level)
 
@@ -241,3 +258,28 @@ class MDoFCantileverEBBeam2DModel(MDoFSolver):
         ["DeltaX","ThethaY","DeltaX","ThethaY",...]
         '''
         pass
+
+    # PMT: to extend to be more rebust, generic, permit multiple variables
+    # for now suitable for a '1d' (so line-type) model
+
+    # wil NOT be ok for EB Beam - update, taken from Shear model
+    def _SetupInitialValues(self, initial_values, height_coordinates):
+        '''
+        Loops over the prescribed values for
+        displacement, velocity, acceleration, external load
+        and generates an array depending on the input:
+        'none' or a symbolic expression as a function of height (param x)
+        '''
+        for key, value in initial_values.items():
+            if value.lower() == "none":
+                value = np.zeros(len(height_coordinates))
+            else:
+                # evaluate numerically the symbolic function
+                input_str = value
+                x = symbols('x')
+                sympified_expr = sympify(input_str)
+                value = np.array([sympified_expr.evalf(subs={x:num_val}) for num_val in height_coordinates], dtype='float64')
+
+            initial_values[key] = value
+
+        return initial_values

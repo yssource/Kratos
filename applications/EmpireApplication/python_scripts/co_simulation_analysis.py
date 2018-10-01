@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
 import co_simulation_tools as cs_tools
-from co_simulation_tools import csprint, bold
+from co_simulation_tools import csprint, bold, CheckCoSimulationSettings
 
 import sys
 
@@ -13,6 +13,8 @@ class CoSimulationAnalysis(object):
     def __init__(self, cosim_settings):
         if (type(cosim_settings) != dict):
             raise Exception("Input is expected to be provided as a python dictionary")
+
+        CheckCoSimulationSettings(cosim_settings)
 
         self.cosim_settings = cosim_settings
 

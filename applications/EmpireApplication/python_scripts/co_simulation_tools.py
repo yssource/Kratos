@@ -6,12 +6,41 @@ def GetSolverCoSimulationDetails(co_simulation_solver_settings):
     for solver_settings in co_simulation_solver_settings:
         solver_name = solver_settings["name"]
         solver_cosim_details[solver_name] = solver_settings
+    return solver_cosim_details
+
+def CheckCoSimulationSettings(co_simulation_settings):
     # TODO check if the data is consitently defined! => maybe do at another place though...
     # - input in one is output in another
     # - one IO is defined for each data_name
     # - if the same data is defined multiple times
     # - check if data format has been specified
-    return solver_cosim_details
+
+    if not "problem_data" in co_simulation_settings:
+        raise Exception('"problem_data" not existing in settings!')
+    if not "solver_settings" in co_simulation_settings:
+        raise Exception('"solver_settings" not existing in settings!')
+
+    problem_data = co_simulation_settings["problem_data"]
+    if not "start_time" in problem_data:
+        raise Exception('"start_time" not defined in "problem_data"!')
+    start_time = problem_data["start_time"]
+    if not type(start_time) is float:
+        raise Exception('"start_time" has to be defined as a float!')
+    if start_time < 0.0:
+        raise Exception('"start_time" has to be >= 0.0!')
+
+    if not "end_time" in problem_data:
+        raise Exception('"end_time" not defined in "problem_data"!')
+    end_time = problem_data["end_time"]
+    if not type(start_time) is float:
+        raise Exception('"end_time" has to be defined as a float!')
+    if start_time < 0.0:
+        raise Exception('"end_time" has to be >= 0.0!')
+    if start_time > end_time:
+        raise Exception('"end_time" has to be > "start_time"!')
+
+
+
 
 def ImportArrayFromSolver(solver, data_name, data_array, buffer_index=0):
     data_settings = {

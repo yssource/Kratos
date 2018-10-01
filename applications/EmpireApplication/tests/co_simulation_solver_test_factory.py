@@ -11,6 +11,14 @@ import os
 
 import co_simulation_test_case
 
+try:
+    import scipy
+    import sympy
+    scipy_and_sympy_available = True
+except ImportError:
+    scipy_and_sympy_available = False
+
+
 def compareResults(reference_file, results_file):
     settings_check_process = KratosMultiphysics.Parameters("""
     {
@@ -72,6 +80,8 @@ class TestMDoFSolver(co_simulation_test_case.CoSimulationTestCase):
             compareResults(reference_file, result_file)
 
     def test_MDoFCantileverShear2DModel(self):
+        if not scipy_and_sympy_available:
+            self.skipTest("Scipy/Sympy not available")
         with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
             folder_name = "mdof_solver"
             self.createTest(folder_name, "cosim_mdof_cantilever_shear_2d")
@@ -81,6 +91,8 @@ class TestMDoFSolver(co_simulation_test_case.CoSimulationTestCase):
             compareResults(reference_file, result_file)
 
     def test_MDoFBridge2DoFModel(self):
+        if not scipy_and_sympy_available:
+            self.skipTest("Scipy/Sympy not available")
         with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
             folder_name = "mdof_solver"
             self.createTest(folder_name, "cosim_mdof_bridge_2dof")

@@ -28,6 +28,7 @@ class CoSimulationAnalysis(object):
                 cs_tools.PRINTING_RANK = True
             elif parallel_type == "MPI":
                 self.flush_stdout = False
+                from co_simulation_mpi_space import CoSimulationMPISpace
                 cs_tools.COSIM_SPACE = CoSimulationMPISpace()
                 cs_tools.PRINTING_RANK = (cs_tools.COSIM_SPACE.Rank() == 0)
             else:

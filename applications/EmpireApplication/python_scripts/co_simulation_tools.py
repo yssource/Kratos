@@ -70,7 +70,8 @@ def RecursivelyValidateAndAssignDefaults(defaults, settings):
 
 
 class CoSimulationSpace(object):
-    pass
+
+    mpi_op_types = ["min", "max", "sum"]
 
     def IsDistributed(self):
         return False
@@ -83,6 +84,80 @@ class CoSimulationSpace(object):
 
     def Size(self):
         return 1
+
+    def BroadCast(self, val_to_broadcast, rank_to_broadcast_from):
+        self._CheckInputFor_BroadCast(val_to_broadcast, rank_to_broadcast_from)
+        return val_to_broadcast
+
+    def Gather(self, my_value, rank_to_gather_on):
+        self._CheckInputFor_Gather(my_value, rank_to_gather_on)
+        return [my_value] # the mpi-call also returns a list
+
+    def AllGather(self, my_value):
+        self._CheckInputFor_AllGather(my_value)
+        return [my_value] # the mpi-call also returns a list
+
+    def GatherV(self, my_values, rank_to_gather_on):
+        self._CheckInputFor_GatherV(my_values, rank_to_gather_on)
+        return [my_value] # the mpi-call also returns a list of lists
+
+    def Scatter(self, vals_to_scatter, rank_to_scatter_from):
+        self._CheckInputFor_Scatter(vals_to_scatter, rank_to_scatter_from)
+        return vals_to_scatter[self.Rank]
+
+    def ScatterV(self, vals_to_scatter, rank_to_scatter_from):
+        self._CheckInputFor_ScatterV(vals_to_scatter, rank_to_scatter_from)
+        return vals_to_scatter[self.Rank]
+
+    def Reduce(self, my_value, rank_to_reduce_on, mpi_op):
+        self._CheckInputFor_Reduce(my_value, rank_to_reduce_on, mpi_op)
+        return my_value
+
+    def AllReduce(self, my_value, rank_to_reduce_on, mpi_op):
+        self._CheckInputFor_AllReduce(my_value, rank_to_reduce_on, mpi_op)
+        return my_value
+
+    def _CheckInputFor_BroadCast(val_to_broadcast, rank_to_broadcast_from):
+        if not type(val_to_broadcast) is int or not type(val_to_broadcast) is float:
+            raise Exception('Acceptable types are "int" and "float"')
+
+    def _CheckInputFor_Gather(my_value, rank_to_gather_on):
+        if not type(val_to_broadcast) is int or not type(val_to_broadcast) is float:
+            raise Exception('Acceptable types are "int" and "float"')
+
+    def _CheckInputFor_AllGather(my_value):
+        if not type(val_to_broadcast) is int or not type(val_to_broadcast) is float:
+            raise Exception('Acceptable types are "int" and "float"')
+
+    def _CheckInputFor_GatherV(my_values, rank_to_gather_on):
+        if not type(my_values) is list:
+            raise Exception('Acceptable types are "list"')
+
+    def _CheckInputFor_Scatter(vals_to_scatter, rank_to_scatter_from):
+        if not type(my_values) is list:
+            raise Exception('Acceptable types are "list"')
+        if len(vals_to_scatter) != self.Size():
+            raise Exception('The number of values to scatter is different from Size!')
+        if not type(vals_to_scatter[self.Rank]) is list:
+            raise Exception('Acceptable types are "list of lists"')
+
+    def _CheckInputFor_ScatterV(vals_to_scatter, rank_to_scatter_from):
+        if not type(my_values) is list:
+            raise Exception('Acceptable types are "list"')
+        if len(vals_to_scatter) != self.Size():
+            raise Exception('The number of values to scatter is different from Size!')
+
+    def _CheckInputFor_Reduce(my_value, rank_to_reduce_on, mpi_op):
+        if not type(val_to_broadcast) is int or not type(val_to_broadcast) is float:
+            raise Exception('Acceptable types are "int" and "float"')
+        if not mpi_op in self.mpi_op_types:
+            raise Exception('Acceptable operations are ' + str(self.mpi_op_types))
+
+    def _CheckInputFor_AllReduce(my_value, rank_to_reduce_on, mpi_op):
+        if not type(val_to_broadcast) is int or not type(val_to_broadcast) is float:
+            raise Exception('Acceptable types are "int" and "float"')
+        if not mpi_op in self.mpi_op_types:
+            raise Exception('Acceptable operations are ' + str(self.mpi_op_types))
 
 
 # Global Object for wrapping calls that are different in OpenMP/MPI

@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import, division  # makes these 
 
 # Importing the base class
 from co_simulation_solvers.co_simulation_base_solver import CoSimulationBaseSolver
-from co_simulation_tools import ValidateAndAssignDefaults
+from co_simulation_tools import RecursivelyValidateAndAssignDefaults
 
 # Other imports
 import numpy as np
@@ -44,7 +44,7 @@ class MDoFSolver(CoSimulationBaseSolver):
                     "file_name": "results_mdof.dat"
                 }}""")
 
-        ValidateAndAssignDefaults(default_settings, parameters)
+        RecursivelyValidateAndAssignDefaults(default_settings, parameters)
 
         ##
         #PMT: paramaters received from parameters JSON string ->

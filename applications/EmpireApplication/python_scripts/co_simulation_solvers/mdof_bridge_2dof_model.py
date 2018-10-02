@@ -111,7 +111,8 @@ class MDoFBridge2DoFModel(MDoFSolver):
                          [0, 2 * xi_r * np.sqrt(m_r * k_r)]])
 
     def _GetIOName(self):
-        return "mdof_bridge_2dof_model"
+        #return "mdof_bridge_2dof_model"
+        return "mdof"
 
     def _Name(self):
         return self.__class__.__name__

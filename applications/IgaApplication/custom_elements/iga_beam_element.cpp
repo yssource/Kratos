@@ -1,0 +1,105 @@
+/*
+//  KRATOS  _____________
+//         /  _/ ____/   |
+//         / // / __/ /| |
+//       _/ // /_/ / ___ |
+//      /___/\____/_/  |_| Application
+//
+//  Main authors:   Lukas Rauch
+*/
+
+// System includes
+#include "includes/define.h"
+#include "includes/variables.h"
+
+// External includes
+
+// Project includes
+#include "iga_beam_element.h"
+#include "iga_application_variables.h"
+
+namespace Kratos {
+
+Element::Pointer IgaBeamElement::Create(
+    IndexType NewId,
+    NodesArrayType const& ThisNodes,
+    PropertiesType::Pointer pProperties) const
+{
+    auto geometry = GetGeometry().Create(ThisNodes);
+
+    return Kratos::make_shared<IgaBeamElement>(NewId, geometry,
+        pProperties);
+}
+
+void IgaBeamElement::GetDofList(
+    DofsVectorType& rElementalDofList,
+    ProcessInfo& rCurrentProcessInfo)
+{
+    KRATOS_TRY;
+
+    rElementalDofList.resize(NumberOfDofs());
+
+    for (std::size_t i = 0; i < NumberOfNodes(); i++) {
+        SetDof(rElementalDofList, i, 0, DISPLACEMENT_X);
+        SetDof(rElementalDofList, i, 1, DISPLACEMENT_Y);
+        SetDof(rElementalDofList, i, 2, DISPLACEMENT_Z);
+        SetDof(rElementalDofList, i, 3, DISPLACEMENT_ROTATION);
+    }
+
+    KRATOS_CATCH("")
+}
+
+void IgaBeamElement::EquationIdVector(
+    EquationIdVectorType& rResult,
+    ProcessInfo& rCurrentProcessInfo)
+{
+    KRATOS_TRY;
+
+    rResult.resize(NumberOfDofs());
+
+    for (std::size_t i = 0; i < NumberOfNodes(); i++) {
+        SetEquationId(rResult, i, 0, DISPLACEMENT_X);
+        SetEquationId(rResult, i, 1, DISPLACEMENT_Y);
+        SetEquationId(rResult, i, 2, DISPLACEMENT_Z);
+        SetEquationId(rResult, i, 3, DISPLACEMENT_ROTATION);
+    }
+
+    KRATOS_CATCH("")
+}
+
+void IgaBeamElement::Initialize()
+{
+}
+
+void IgaBeamElement::CalculateAll(
+    MatrixType& rLeftHandSideMatrix,
+    VectorType& rRightHandSideVector,
+    ProcessInfo& rCurrentProcessInfo,
+    const bool ComputeLeftHandSide,
+    const bool ComputeRightHandSide)
+{
+    KRATOS_TRY;
+
+    // get integration data
+    
+    const double& integration_weight = GetValue(INTEGRATION_WEIGHT);
+    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+
+    // get properties
+    const auto& properties = GetProperties();
+
+    const double E = properties[YOUNG_MODULUS];
+    const double A = properties[CROSS_AREA];
+    const double prestress = properties[PRESTRESS_CAUCHY];
+
+    // TODO: Add stiffness andd force
+
+    KRATOS_CATCH("")
+}
+
+void IgaBeamElement::PrintInfo(std::ostream& rOStream) const
+{
+    rOStream << "\"IgaBeamElement\" #" << Id();
+}
+
+} // namespace Kratos

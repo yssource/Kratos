@@ -2,6 +2,7 @@ from __future__ import print_function, absolute_import, division  # makes these 
 
 # Importing the base class
 from co_simulation_solvers.co_simulation_base_solver import CoSimulationBaseSolver
+from co_simulation_tools import ValidateAndAssignDefaults
 
 # Other imports
 import numpy as np
@@ -21,6 +22,29 @@ class MDoFSolver(CoSimulationBaseSolver):
 
         with open(input_file_name,'r') as ProjectParameters:
             parameters = json.load(ProjectParameters)
+
+        # specify default needed keys
+        default_entries = ("time_integration_parameters",
+                           "solver_parameters",
+                           "output_parameters")
+
+        # actually retaining only default ones
+        # others passed down by the model dict
+        parameters = {key: value for key, value in parameters.items() if key in default_entries}
+
+        default_settings = json.loads("""{
+                "time_integration_parameters":{
+                    "p_inf"     : 0.15,
+                    "time_step" : 0.01
+                },
+                "solver_parameters":{
+                    "buffer_size": 3
+                },
+                "output_parameters":{
+                    "file_name": "results_mdof.dat"
+                }}""")
+
+        ValidateAndAssignDefaults(default_settings, parameters)
 
         ##
         #PMT: paramaters received from parameters JSON string ->

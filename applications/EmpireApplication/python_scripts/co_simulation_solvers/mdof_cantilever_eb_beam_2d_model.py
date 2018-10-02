@@ -2,6 +2,7 @@ from __future__ import print_function, absolute_import, division  # makes these 
 
 # Importing the base class
 from co_simulation_solvers.mdof_solver import MDoFSolver
+from co_simulation_tools import ValidateAndAssignDefaults
 
 # Other imports
 import numpy as np
@@ -38,31 +39,28 @@ class MDoFCantileverEBBeam2DModel(MDoFSolver):
         with open(input_file_name,'r') as ProjectParameters:
             parameters = json.load(ProjectParameters)
 
-        '''
-        sample json input for the model (system) should be
+        default_settings = json.loads("""{
+                "system_parameters":{
+                    "density"           : 5.0,
+                    "area"              : 10.0,
+                    "target_frequency"  : 1.0,
+                    "target_mode"       : 1,
+                    "damping_ratio"     : 0.05,
+                    "level_height"      : 3.5,
+                    "number_of_levels"  : 3
+                },
+                "initial_conditions":{
+                    "displacement"  : "none",
+                    "velocity"      : "none",
+                    "acceleration"  : "none",
+                    "external_force": "none"
+                },
+                "time_integration_parameters":{},
+                "solver_parameters":{},
+                "output_parameters":{}
+            }""")
 
-        "system_parameters":
-        {
-            "density"           : 5.0,
-            "area"              : 10.0,
-            "target_frequency"  : 1.0,
-            "target_mode"       : 1,
-            "damping_ratio"     : 0.05,
-            "level_height"      : 3.5,
-            "number_of_levels"  : 3
-        }
-
-        example of initial conditions:
-        "initial_conditions":
-        {
-            "displacement"  : "2*x+1",
-            "velocity"      : "none",
-            "acceleration"  : "none",
-            "external_force": "none"
-        }
-
-        check out the function self._SetupInitialValues
-        '''
+        ValidateAndAssignDefaults(default_settings, parameters)
 
         rho = parameters["system_parameters"]["density"]
         area = parameters["system_parameters"]["area"]

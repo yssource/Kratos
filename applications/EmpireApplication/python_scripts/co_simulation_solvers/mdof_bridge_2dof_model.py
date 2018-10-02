@@ -2,6 +2,7 @@ from __future__ import print_function, absolute_import, division  # makes these 
 
 # Importing the base class
 from co_simulation_solvers.mdof_solver import MDoFSolver
+from co_simulation_tools import ValidateAndAssignDefaults
 
 # Other imports
 import numpy as np
@@ -28,25 +29,26 @@ class MDoFBridge2DoFModel(MDoFSolver):
         with open(input_file_name,'r') as ProjectParameters:
             parameters = json.load(ProjectParameters)
 
-        '''
-        sample json input for the model (system) should be
+        default_settings = json.loads("""{
+                "system_parameters":{
+                    "length_of_section" : 0.625,
+                    "help"              : "1st value - translational dof, 2nd value - rotational dof",
+                    "mass_per_length"   : [5.83, 0.034],
+                    "target_frequency"  : [2.93, 2.64],
+                    "damping_log_decr"  : [0.05, 0.107]
+                },
+                "initial_conditions":{
+                    "displacement"      : [0.1, 0.025],
+                    "velocity"          : [0.0, 0.0],
+                    "acceleration"      : [0.0, 0.0],
+                    "external_load"     : [0.0, 0.0]
+                },
+                "time_integration_parameters":{},
+                "solver_parameters":{},
+                "output_parameters":{}
+            }""")
 
-        "system_parameters":
-        {
-            "length_of_section" : 0.625,
-            "help"              : "1st value - translational dof, 2nd value - rotational dof",
-            'mass_per_length"   : [5.83, 0.034],
-            "target_frequency"  : [2.93, 2.64],
-            "damping_log_decr"  : [0.05, 0.107]
-        },
-        "initial_conditions":
-        {
-            "displacement"      : [0.1, 0.025],
-            "velocity"          : [0.0, 0.0],
-            "acceleration"      : [0.0, 0.0],
-            "external_load"     : [0.0, 0.0]
-        }
-        '''
+        ValidateAndAssignDefaults(default_settings, parameters)
 
         l = parameters["system_parameters"]["length_of_section"]
 

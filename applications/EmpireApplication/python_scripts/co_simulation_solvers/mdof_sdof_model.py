@@ -2,6 +2,7 @@ from __future__ import print_function, absolute_import, division  # makes these 
 
 # Importing the base class
 from co_simulation_solvers.mdof_solver import MDoFSolver
+from co_simulation_tools import ValidateAndAssignDefaults
 
 # Other imports
 import numpy as np
@@ -26,20 +27,26 @@ class MDoFSDoFModel(MDoFSolver):
         with open(input_file_name,'r') as ProjectParameters:
             parameters = json.load(ProjectParameters)
 
-        '''
-        sample json input for the model (system) should be
+        default_settings = json.loads("""{
+                "system_parameters":{
+                    "mass"              : 1.0,
+                    "target_frequency"  : 1.5,
+                    "damping_ratio"     : 0.05,
+                    "level_height"      : 3.5,
+                    "number_of_levels"  : 1
+                },
+                "initial_conditions":{
+                    "displacement"  : 0.5,
+                    "velocity"      : 0.0,
+                    "acceleration"  : 0.0,
+                    "external_load" : 0.0
+                },
+                "time_integration_parameters":{},
+                "solver_parameters":{},
+                "output_parameters":{}
+            }""")
 
-        "system_parameters":
-        {
-            "mass"              : 1.0,
-            "target_frequency"  : 1.5,
-            "damping_ratio"     : 0.05,
-            "level_height"      : 3.5,
-            "number_of_levels"  : 1
-        }
-
-        maybe initial conditions should be added as well
-        '''
+        ValidateAndAssignDefaults(default_settings, parameters)
 
         m = parameters["system_parameters"]["mass"]
         target_freq = parameters["system_parameters"]["target_frequency"]

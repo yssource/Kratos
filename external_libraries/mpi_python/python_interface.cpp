@@ -41,7 +41,7 @@ PYBIND11_MODULE(mpipython, m)
     // note that for the functions returning a vector the conversion to a python-list is automatically
     // done by pybind, see https://github.com/pybind/pybind11/blob/master/docs/advanced/cast/stl.rst
 
-    py::class_<PythonMPI>(m,"PythonMPI")
+    const auto py_mpi = py::class_<PythonMPI>(m,"PythonMPI")
     .def_property_readonly("rank",FRank)
     .def_property_readonly("size",FSize)
     .def("broadcast",&PythonMPI::broadcast<double>)

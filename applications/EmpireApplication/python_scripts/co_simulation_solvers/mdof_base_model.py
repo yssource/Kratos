@@ -6,8 +6,7 @@ import numpy as np
 import json
 import os
 
-def CreateModel(model_settings):
-    return MDoFBaseModel(model_settings)
+# PMT create a nice base class, cleanup, check if needed
 
 class MDoFBaseModel(object):
     '''
@@ -43,19 +42,16 @@ class MDoFBaseModel(object):
         """
         """
         pass
-        return None
 
     def _CalculateMass(self):
         """
         """
         pass
-        return None
 
     def _CalculateStiffness(self):
         """
         """
         pass
-        return None
 
     def _CalculateDamping(self):
         """

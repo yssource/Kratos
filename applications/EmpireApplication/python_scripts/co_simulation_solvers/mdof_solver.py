@@ -25,110 +25,51 @@ class MDoFSolver(CoSimulationBaseSolver):
 
         # creating model using a certain module
         model_module = __import__("mdof_" + parameters["model_parameters"]["type"] + "_model")
-        model = model_module.CreateModel(parameters["model_parameters"])
+        self.model = model_module.CreateModel(parameters["model_parameters"])
 
-        default_solver_settings = json.loads("""{
+        # creating model using a certain module
+        scheme_module = __import__("time_integration_" + parameters["time_integration_scheme_parameters"]["type"] + "_scheme")
+        self.scheme = scheme_module.CreateScheme(parameters["time_integration_scheme_parameters"])
+
+        default_solver_settings = {
                     "buffer_size": 3
-                }""")
-        default_output_settings = json.loads("""{
+                }
+        default_output_settings = {
                     "file_name": "results_mdof.dat"
-                }""")
+                }
 
+        # solver settings
         RecursivelyValidateAndAssignDefaults(default_solver_settings, parameters["solver_parameters"])
+        # output settings
         RecursivelyValidateAndAssignDefaults(default_output_settings, parameters["output_parameters"])
-
-        ##
-        #PMT: paramaters received from parameters JSON string ->
 
         self.buffer_size = parameters["solver_parameters"]["buffer_size"]
         self.output_file_name = parameters["output_parameters"]["file_name"]
 
-        ##
-        #PMT: to do for (dt, mM, mB, mK, pInf, vu0, vv0, va0)
-        # time step
-        self.dt = parameters["time_integration_scheme_parameters"]["time_step"]
-
-        # mass, damping and spring stiffness
-        self.M = model.m
-        self.B = model.b
-        self.K = model.k
-
-        # what to do with model["nodal_coordinates?"]
-
-        # generalized alpha parameters (to ensure unconditional stability, 2nd order accuracy)
-        pInf = parameters["time_integration_scheme_parameters"]["settings"]["p_inf"]
-        self.alphaM = (2.0 * pInf - 1.0) / (pInf + 1.0)
-        self.alphaF = pInf / (pInf + 1.0)
-        self.beta = 0.25 * (1 - self.alphaM + self.alphaF)**2
-        self.gamma = 0.5 - self.alphaM + self.alphaF
-
-        # coefficients for LHS
-        self.a1h = (1.0 - self.alphaM) / (self.beta * self.dt**2)
-        self.a2h = (1.0 - self.alphaF) * self.gamma / (self.beta * self.dt)
-        self.a3h = 1.0 - self.alphaF
-
-        # coefficients for mass
-        self.a1m = self.a1h
-        self.a2m = self.a1h * self.dt
-        self.a3m = (1.0 - self.alphaM - 2.0 * self.beta) / (2.0 * self.beta)
-
-        #coefficients for damping
-        self.a1b = (1.0 - self.alphaF) * self.gamma / (self.beta * self.dt)
-        self.a2b = (1.0 - self.alphaF) * self.gamma / self.beta - 1.0
-        self.a3b = (1.0 - self.alphaF) * (0.5 * self.gamma / self.beta - 1.0) * self.dt
-
-        # coefficient for stiffness
-        self.a1k = -1.0 * self.alphaF
-
-        # coefficients for velocity update
-        self.a1v = self.gamma / (self.beta * self.dt)
-        self.a2v = 1.0 - self.gamma / self.beta
-        self.a3v = (1.0 - self.gamma / (2 * self.beta)) * self.dt
-
-        # coefficients for acceleration update
-        self.a1a = self.a1v / (self.dt * self.gamma)
-        self.a2a = -1.0 / (self.beta * self.dt)
-        self.a3a = 1.0 - 1.0 / (2.0 * self.beta)
-
-		#structure
-        # initial displacement, velocity and acceleration
-        self.u0 = model.u0
-        self.v0 = model.v0
-        self.a0 = model.a0
-        # initial force
-        self.force = model.f0
-
-        # initial displacement, velocity and acceleration
-        self.u1 = self.u0
-        self.v1 = self.v0
-        self.a1 = self.a0
-
-		# force from a previous time step (initial force)
-        self.f0 = np.dot(self.M,self.a0) + np.dot(self.B,self.v0) + np.dot(self.K,self.u0)
-        self.f1 = np.dot(self.M,self.a1) + np.dot(self.B,self.v1) + np.dot(self.K,self.u1)
+        # PMT this might not be needed
+        self.load_vector = None
 
     def Initialize(self):
-        # 1st dimension: variables: disp, acc, vel
-        # 2nd dimension: buffer size
-        # 3rd dimension: number of dofs
-        self.x = np.zeros((3, self.buffer_size, len(self.u0)))
-
-        # PMT: check if this syntax is still ok for MDoF
-        self.dx = np.array([self.u0,
-                            self.v0,
-                            self.a0])
-
-        #x and dx contain: [displacement, velocity, acceleration]
-
         if os.path.isfile(self.output_file_name):
             os.remove(self.output_file_name)
 
-        #apply external load as an initial impulse
-        self.load_vector = self.force
+        # 1st dimension: variables: disp, acc, vel
+        # 2nd dimension: buffer size
+        # 3rd dimension: number of dofs
+        self.x = np.zeros((3, self.buffer_size, len(self.model.u0)))
 
-    ## PMT this is new for MDoF, maybe do it for SDoF as well
+        # initialize scheme parameters
+        self.scheme.Initialize(self.model)
+
+        self.dx = np.array([self.scheme.GetDisplacement(),
+                            self.scheme.GetVelocity(),
+                            self.scheme.GetAcceleration()])
+
+        # PMT is this needed?
+        self.load_vector = self.scheme.GetLoad()
+
     def Predict(self):
-        return 2.0 * self.u1 - self.u0
+        return self.scheme.Predict()
 
     def OutputSolutionStep(self):
         # PMT: check if this syntax is still ok for MDoF
@@ -147,51 +88,31 @@ class MDoFSolver(CoSimulationBaseSolver):
         #buffer_idx = 0
         #self.x[:,buffer_idx] = self.dx
 
-        self.dx[0] = self.u1
-        self.dx[1] = self.v1
-        self.dx[2] = self.a1
+        self.dx[0] = self.scheme.GetPreviousDisplacement()
+        self.dx[1] = self.scheme.GetPreviousVelocity()
+        self.dx[2] = self.scheme.GetPreviousAcceleration()
 
         self.x[0,0,:] = self.dx[0]
         self.x[1,0,:] = self.dx[1]
         self.x[2,0,:] = self.dx[2]
-        ##
-        # PMT: this might be needed
+
         # update displacement, velocity and acceleration
-        self.u0 = self.u1
-        self.v0 = self.v1
-        self.a0 = self.a1
+        self.scheme.AdvanceScheme()
+        self.time = current_time + self.scheme.dt
 
-        # update the force
-        self.f0 = self.f1
-
-        self.time = current_time + self.dt
         return self.time
 
     def SolveSolutionStep(self):
         # sys of eq reads: LHS * u1 = RHS
-
-        #F = (1.0 - self.alphaF) * f1 + self.alphaF * self.f0
-        F = (1.0 - self.alphaF) * self.load_vector + self.alphaF * self.f0
-
-        LHS = self.a1h * self.M + self.a2h * self.B + self.a3h * self.K
-        RHS = np.dot(self.M,(self.a1m * self.u0 + self.a2m * self.v0 + self.a3m * self.a0))
-        RHS += np.dot(self.B,(self.a1b * self.u0 + self.a2b * self.v0 + self.a3b * self.a0))
-        RHS += np.dot(self.a1k * self.K, self.u0) + F
-
-        # update self.f1
-        #self.f1 = f1
-        self.f1 = self.load_vector
-
-        # updates self.u1,v1,a1
-        self.u1 = np.linalg.solve(LHS, RHS)
-        self.v1 = self.a1v * (self.u1 - self.u0) + self.a2v * self.v0 + self.a3v * self.a0
-        self.a1 = self.a1a * (self.u1 - self.u0) + self.a2a * self.v0 + self.a3a * self.a0
+        self.scheme.Solve(self.model)
+        # from u1 determine v1, a1
+        self.scheme.UpdateDerivedValues()
 
     def GetBufferSize(self):
         return self.buffer_size
 
     def GetDeltaTime(self):
-        return self.dt
+        return self.scheme.dt
 
     def GetSolutionStepValue(self, identifier, buffer_idx=0):
         #

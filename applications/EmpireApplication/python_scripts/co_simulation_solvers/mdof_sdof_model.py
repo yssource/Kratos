@@ -35,7 +35,6 @@ class MDoFSDoFModel(MDoFBaseModel):
                 }
             }
 
-
         RecursivelyValidateAndAssignDefaults(default_settings, model_settings)
 
         m = model_settings["system_parameters"]["mass"]

@@ -92,7 +92,7 @@ def ValidateAndAssignDefaults(defaults, settings, recursive=False):
         if key_d not in settings: # add the default in case the setting is not present
             settings[key_d] = val_d
         elif recursive and type(val_d) is dict:
-            RecursivelyValidateAndAssignDefaults(val_d, val)
+            RecursivelyValidateAndAssignDefaults(val_d, settings[key_d])
 
 def RecursivelyValidateAndAssignDefaults(defaults, settings):
     ValidateAndAssignDefaults(defaults, settings, recursive=True)

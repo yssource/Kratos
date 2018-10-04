@@ -46,28 +46,28 @@ def compareResults(reference_file, results_file):
     check_process.ExecuteAfterOutputStep()
     check_process.ExecuteFinalize()
 
-# class TestKratosSolver(co_simulation_test_case.CoSimulationTestCase):
-#     def test_KratosStructuralMechanicsSolver(self):
-#         with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
-#             # self.createTest('test_structural_mesh_motion_2d/rectangle_2D3N_test')
-#             # self.runTest()
-#             kratos_utils.DeleteFileIfExisting("./test_mdpa_files/rectangle_2D3N_test.time")
+class TestKratosSolver(co_simulation_test_case.CoSimulationTestCase):
+    def test_KratosStructuralMechanicsSolver(self):
+        with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
+            # self.createTest('test_structural_mesh_motion_2d/rectangle_2D3N_test')
+            # self.runTest()
+            kratos_utils.DeleteFileIfExisting("./test_mdpa_files/rectangle_2D3N_test.time")
 
-#     def test_KratosFluidDynamicsSolver(self):
-#         with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
-#             # self.createTest('test_structural_mesh_motion_2d/rectangle_2D3N_test')
-#             # self.runTest()
-#             kratos_utils.DeleteFileIfExisting("./test_mdpa_files/rectangle_2D3N_test.time")
+    def test_KratosFluidDynamicsSolver(self):
+        with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
+            # self.createTest('test_structural_mesh_motion_2d/rectangle_2D3N_test')
+            # self.runTest()
+            kratos_utils.DeleteFileIfExisting("./test_mdpa_files/rectangle_2D3N_test.time")
 
-# class TestSDoFSolver(co_simulation_test_case.CoSimulationTestCase):
-#     def test_SDoFSolver(self):
-#         with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
-#             folder_name = "sdof_solver"
-#             self.createTest("sdof_solver", "cosim_sdof")
-#             self.runTest()
-#             reference_file = os.path.join(folder_name,"results_sdof_ref.dat")
-#             result_file = os.path.join(folder_name,"results_sdof.dat")
-#             compareResults(reference_file, result_file)
+class TestSDoFSolver(co_simulation_test_case.CoSimulationTestCase):
+    def test_SDoFSolver(self):
+        with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
+            folder_name = "sdof_solver"
+            self.createTest("sdof_solver", "cosim_sdof")
+            self.runTest()
+            reference_file = os.path.join(folder_name,"results_sdof_ref.dat")
+            result_file = os.path.join(folder_name,"results_sdof.dat")
+            compareResults(reference_file, result_file)
 
 class TestMDoFSolver(co_simulation_test_case.CoSimulationTestCase):
     def test_MDoFSDoFModel(self):
@@ -101,14 +101,14 @@ class TestMDoFSolver(co_simulation_test_case.CoSimulationTestCase):
             result_file = os.path.join(folder_name,"results_mdof_bridge_2dof.dat")
             compareResults(reference_file, result_file)
 
-# class TestEmpireSolver(co_simulation_test_case.CoSimulationTestCase):
-#     def test_EmpireSolverWrapper(self):
-#         if "EMPIRE_API_LIBSO_ON_MACHINE" not in os.environ:
-#             self.skipTest("EMPIRE is not available")
-#         with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
-#             # self.createTest('test_structural_mesh_motion_2d/rectangle_2D3N_test')
-#             # self.runTest()
-#             kratos_utils.DeleteFileIfExisting("./test_mdpa_files/rectangle_2D3N_test.time")
+class TestEmpireSolver(co_simulation_test_case.CoSimulationTestCase):
+    def test_EmpireSolverWrapper(self):
+        if "EMPIRE_API_LIBSO_ON_MACHINE" not in os.environ:
+            self.skipTest("EMPIRE is not available")
+        with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
+            # self.createTest('test_structural_mesh_motion_2d/rectangle_2D3N_test')
+            # self.runTest()
+            kratos_utils.DeleteFileIfExisting("./test_mdpa_files/rectangle_2D3N_test.time")
 
 
 if __name__ == '__main__':

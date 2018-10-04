@@ -17,7 +17,9 @@ class CoSimulationBaseSolver(object):
         """
         self.cosim_solver_settings = cosim_solver_settings
         self.lvl = level
-        self.echo_level = self.cosim_solver_settings["echo_level"]
+        self.echo_level = 0
+        if "echo_level" in self.cosim_solver_settings:
+            self.echo_level = self.cosim_solver_settings["echo_level"]
         self.io_is_initialized = False
 
     def Initialize(self):

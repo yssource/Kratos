@@ -8,36 +8,148 @@ def GetSolverCoSimulationDetails(co_simulation_solver_settings):
         solver_cosim_details[solver_name] = solver_settings
     return solver_cosim_details
 
-def CheckCoSimulationSettings(co_simulation_settings):
+def CheckCoSimulationSettingsAndAssignDefaults(co_simulation_settings):
     # TODO check if the data is consitently defined! => maybe do at another place though...
     # - input in one is output in another
     # - one IO is defined for each data_name
     # - if the same data is defined multiple times
     # - check if data format has been specified
 
-    if not "problem_data" in co_simulation_settings:
-        raise Exception('"problem_data" not existing in settings!')
-    if not "solver_settings" in co_simulation_settings:
-        raise Exception('"solver_settings" not existing in settings!')
+    def CheckIfEntryExists(key, dict_name, dict_to_check):
+        if not key in dict_to_check:
+            raise Exception('"' + key + '" not existing in "' + dict_name + '"!')
 
+    def CheckSolverSetting(solvers):
+        solver_data_dict = {}
+        data_default = {
+            "geometry_name"   : "UNSPECIFIED",
+            "data_identifier" : "UNSPECIFIED",
+            "data_format"     : "UNSPECIFIED",
+            "type_of_quantity": "undefined"
+        }
+        for solver_name, solver_definition in solvers.items():
+            CheckIfEntryExists("data", solver_name, solver_definition)
+            solver_data_dict[solver_name] = solver_definition["data"].keys()
+            for data_name, data_def in solver_definition["data"].items():
+                ValidateAndAssignDefaults(data_default, data_def)
+                for data_key, data_val in data_def.items():
+                    if data_val == "UNSPECIFIED":
+                        err_msg  = '"' + data_key + '" not specified for data "'
+                        err_msg += data_name + '" of solver "' + solver_name + '"'
+                        raise Exception(err_msg)
+
+        return solver_data_dict
+
+    def CheckCouplingLoop(coupling_loop, solver_data_dict):
+        def CheckInputDataList(input_data_list, solver_name, solver_data_dict):
+            input_data_list_default = {
+                "from_solver" : "UNSPECIFIED",
+                "data_name"   : "UNSPECIFIED",
+                "io_settings" : { }
+            }
+            for data in input_data_list:
+                ValidateAndAssignDefaults(input_data_list_default, data)
+                from_solver = data["from_solver"]
+                data_name   = data["data_name"]
+                if from_solver == "UNSPECIFIED":
+                    err_msg  = '"from_solver" not specified for solver "'
+                    err_msg += solver_name + '" in "coupling_loop"!'
+                    raise Exception(err_msg)
+                if data_name == "UNSPECIFIED":
+                    err_msg  = '"data_name" not specified for solver "'
+                    err_msg += solver_name + '" in "coupling_loop"!'
+                    raise Exception(err_msg)
+                if from_solver not in solver_data_dict:
+                    raise Exception('the solver with name "' + from_solver + '" was not specified under "solvers"!')
+                if data_name not in solver_data_dict[solver_name]: # checking myself
+                    err_msg  = 'the solver with name "' + solver_name
+                    err_msg += '" does not have the data "' + data_name + '"!'
+                    raise Exception(err_msg)
+                if data_name not in solver_data_dict[from_solver]: # checking the other solver
+                    err_msg  = 'the solver with name "' + from_solver
+                    err_msg += '" does not have the data "' + data_name + '"!'
+                    raise Exception(err_msg)
+
+        def CheckOutputDataList(output_data_list, solver_name, solver_data_dict):
+            output_data_list_default = {
+                "to_solver" : "UNSPECIFIED",
+                "data_name"   : "UNSPECIFIED",
+                "io_settings" : { }
+            }
+            for data in output_data_list:
+                ValidateAndAssignDefaults(output_data_list_default, data)
+                to_solver = data["to_solver"]
+                data_name = data["data_name"]
+                if to_solver == "UNSPECIFIED":
+                    err_msg  = '"to_solver" not specified for solver "'
+                    err_msg += solver_name + '" in "coupling_loop"!'
+                    raise Exception(err_msg)
+                if data_name == "UNSPECIFIED":
+                    err_msg  = '"data_name" not specified for solver "'
+                    err_msg += solver_name + '" in "coupling_loop"!'
+                    raise Exception(err_msg)
+                if to_solver not in solver_data_dict:
+                    raise Exception('the solver with name "' + to_solver + '" was not specified under "solvers"!')
+                if data_name not in solver_data_dict[solver_name]: # checking myself
+                    err_msg  = 'the solver with name "' + solver_name
+                    err_msg += '" does not have the data "' + data_name + '"!'
+                    raise Exception(err_msg)
+                if data_name not in solver_data_dict[to_solver]: # checking the other solver
+                    err_msg  = 'the solver with name "' + to_solver
+                    err_msg += '" does not have the data "' + data_name + '"!'
+                    raise Exception(err_msg)
+
+        solver_default = {
+            "name" : "UNSPECIFIED",
+            "input_data_list"  : [],
+            "output_data_list" : []
+        }
+        for solver_i, solver in enumerate(coupling_loop):
+            ValidateAndAssignDefaults(solver_default, solver)
+            solver_name = solver["name"]
+            if solver_name == "UNSPECIFIED":
+                raise Exception('"name" not specified for solver ' + str(solver_i) + ' in "coupling_loop"!')
+            if solver_name not in solver_data_dict:
+                raise Exception('the solver with name "' + solver_name + '" was not specified under "solvers"!')
+            CheckInputDataList(solver["input_data_list"], solver_name, solver_data_dict)
+            CheckOutputDataList(solver["output_data_list"], solver_name, solver_data_dict)
+
+    problem_data_defaults = {
+        "start_time"    : -1.0,
+        "end_time"      : -1.0,
+        "echo_level"    : 0,
+        "parallel_type" : "OpenMP",
+        "print_colors"  : False,
+        "flush_stdout"  : False
+    }
+
+    # checking "problem_data"
+    CheckIfEntryExists("problem_data", "co_simulation_settings", co_simulation_settings)
     problem_data = co_simulation_settings["problem_data"]
-    if not "start_time" in problem_data:
-        raise Exception('"start_time" not defined in "problem_data"!')
+
+    ValidateAndAssignDefaults(problem_data_defaults, co_simulation_settings["problem_data"])
+
     start_time = problem_data["start_time"]
-    if not type(start_time) is float:
-        raise Exception('"start_time" has to be defined as a float!')
     if start_time < 0.0:
         raise Exception('"start_time" has to be >= 0.0!')
 
-    if not "end_time" in problem_data:
-        raise Exception('"end_time" not defined in "problem_data"!')
     end_time = problem_data["end_time"]
-    if not type(start_time) is float:
-        raise Exception('"end_time" has to be defined as a float!')
-    if start_time < 0.0:
+    if end_time < 0.0:
         raise Exception('"end_time" has to be >= 0.0!')
     if start_time > end_time:
         raise Exception('"end_time" has to be > "start_time"!')
+
+    # checking "solver_settings"
+    CheckIfEntryExists("solver_settings", "co_simulation_settings", co_simulation_settings)
+    solver_settings = co_simulation_settings["solver_settings"]
+
+    CheckIfEntryExists("solver_type", "solver_settings", solver_settings)
+
+    # This is only existing in a coupled simulation
+    if "coupling_loop" in solver_settings:
+        solver_data_dict = CheckSolverSetting(solver_settings["solvers"])
+        CheckIfEntryExists("solvers", "solver_settings", solver_settings)
+        CheckCouplingLoop(solver_settings["coupling_loop"], solver_data_dict)
 
 
 

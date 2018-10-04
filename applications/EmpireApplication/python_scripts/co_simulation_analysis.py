@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
 import co_simulation_tools as cs_tools
-from co_simulation_tools import csprint, bold, CheckCoSimulationSettings
+from co_simulation_tools import csprint, bold, CheckCoSimulationSettingsAndAssignDefaults
 
 import sys
 
@@ -14,34 +14,26 @@ class CoSimulationAnalysis(object):
         if (type(cosim_settings) != dict):
             raise Exception("Input is expected to be provided as a python dictionary")
 
-        CheckCoSimulationSettings(cosim_settings)
+        CheckCoSimulationSettingsAndAssignDefaults(cosim_settings)
 
+        problem_data = cosim_settings["problem_data"]
         self.cosim_settings = cosim_settings
 
-        if "print_colors" in self.cosim_settings["problem_data"]:
-            cs_tools.PRINT_COLORS = self.cosim_settings["problem_data"]["print_colors"]
+        cs_tools.PRINT_COLORS = problem_data["print_colors"]
 
-        self.flush_stdout = False
+        parallel_type = problem_data["parallel_type"]
+        if parallel_type == "OpenMP":
+            self.flush_stdout = True
+            cs_tools.PRINTING_RANK = True
+        elif parallel_type == "MPI":
+            from co_simulation_mpi_space import CoSimulationMPISpace
+            cs_tools.COSIM_SPACE = CoSimulationMPISpace()
+            cs_tools.PRINTING_RANK = (cs_tools.COSIM_SPACE.Rank() == 0)
+        else:
+            raise Exception('"parallel_type" can only be "OpenMP" or "MPI"!')
 
-        if "parallel_type" in self.cosim_settings["problem_data"]:
-            parallel_type = self.cosim_settings["problem_data"]["parallel_type"]
-            if parallel_type == "OpenMP":
-                self.flush_stdout = True
-                cs_tools.PRINTING_RANK = True
-            elif parallel_type == "MPI":
-                self.flush_stdout = False
-                from co_simulation_mpi_space import CoSimulationMPISpace
-                cs_tools.COSIM_SPACE = CoSimulationMPISpace()
-                cs_tools.PRINTING_RANK = (cs_tools.COSIM_SPACE.Rank() == 0)
-            else:
-                raise Exception('"parallel_type" can only be "OpenMP" or "MPI"!')
-
-        if "flush_terminal" in self.cosim_settings["problem_data"]:
-            self.flush_stdout = self.cosim_settings["problem_data"]["parallel_type"]
-
-        self.echo_level = 0
-        if "echo_level" in self.cosim_settings["problem_data"]:
-            self.echo_level = self.cosim_settings["problem_data"]["echo_level"]
+        self.flush_stdout = problem_data["flush_stdout"]
+        self.echo_level = problem_data["echo_level"]
 
     def Run(self):
         self.Initialize()

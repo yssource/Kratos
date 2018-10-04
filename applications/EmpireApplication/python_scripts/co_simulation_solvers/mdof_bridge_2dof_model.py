@@ -1,18 +1,18 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
 # Importing the base class
-from co_simulation_solvers.mdof_solver import MDoFSolver
-from co_simulation_tools import ValidateAndAssignDefaults
+from co_simulation_solvers.mdof_base_model import MDoFBaseModel
+from co_simulation_tools import RecursivelyValidateAndAssignDefaults
 
 # Other imports
 import numpy as np
 import json
 import os
 
-def CreateSolver(cosim_solver_settings, level):
-    return MDoFBridge2DoFModel(cosim_solver_settings, level)
+def CreateModel(model_settings):
+    return MDoFBridge2DoFModel(model_settings)
 
-class MDoFBridge2DoFModel(MDoFSolver):
+class MDoFBridge2DoFModel(MDoFBaseModel):
     """
     MDoF model - 2DoF for a bridge section
 
@@ -20,71 +20,63 @@ class MDoFBridge2DoFModel(MDoFSolver):
     For this model it is assumed that
     inertia, stiffness and damping are decoupled
     """
-    def __init__(self, cosim_solver_settings, level):
+    def __init__(self, model_settings):
 
-        input_file_name = cosim_solver_settings["input_file"]
-        if not input_file_name.endswith(".json"):
-            input_file_name += ".json"
-
-        with open(input_file_name,'r') as ProjectParameters:
-            parameters = json.load(ProjectParameters)
-
-        default_settings = json.loads("""{
+        default_settings = {
+                "type" : "bridge_2dof",
                 "system_parameters":{
-                    "length_of_section" : 0.625,
+                    "length_of_section" : 0.75,
                     "help"              : "1st value - translational dof, 2nd value - rotational dof",
-                    "mass_per_length"   : [5.83, 0.034],
-                    "target_frequency"  : [2.93, 2.64],
-                    "damping_log_decr"  : [0.05, 0.107]
+                    "mass_per_length"   : [5.0, 0.025],
+                    "target_frequency"  : [2.75, 2],
+                    "damping_log_decr"  : [0.05, 0.10]
                 },
                 "initial_conditions":{
-                    "displacement"      : [0.1, 0.025],
+                    "displacement"      : [0.05, 0.35],
                     "velocity"          : [0.0, 0.0],
                     "acceleration"      : [0.0, 0.0],
-                    "external_load"     : [0.0, 0.0]
-                },
-                "time_integration_parameters":{},
-                "solver_parameters":{},
-                "output_parameters":{}
-            }""")
+                    "external_force"    : [0.0, 0.0]
+                }
+            }
 
-        ValidateAndAssignDefaults(default_settings, parameters)
+        RecursivelyValidateAndAssignDefaults(default_settings, model_settings)
 
-        l = parameters["system_parameters"]["length_of_section"]
+        l = model_settings["system_parameters"]["length_of_section"]
 
         # heave (translation)
         # mass over unit length as input
 
-        m = parameters["system_parameters"]["mass_per_length"][0]
+        m = model_settings["system_parameters"]["mass_per_length"][0]
         m_h = m * l
-        f_h = parameters["system_parameters"]["target_frequency"][0]
+        f_h = model_settings["system_parameters"]["target_frequency"][0]
         k_h = m_h * ((2 * np.pi * f_h) ** 2)
-        logd_h = parameters["system_parameters"]["damping_log_decr"][0]
+        logd_h = model_settings["system_parameters"]["damping_log_decr"][0]
 
         # pitch (rotation)
         # inertia over unit length as input
-        I = parameters["system_parameters"]["mass_per_length"][1]
+        I = model_settings["system_parameters"]["mass_per_length"][1]
         m_r = I * l
-        f_r = parameters["system_parameters"]["target_frequency"][1]
+        f_r = model_settings["system_parameters"]["target_frequency"][1]
         k_r = m_r * ((2 * np.pi * f_r) ** 2)
-        logd_r = parameters["system_parameters"]["damping_log_decr"][1]
+        logd_r = model_settings["system_parameters"]["damping_log_decr"][1]
 
-        m = self._CalculateMass(m_h, m_r)
-        k = self._CalculateStiffness(k_h, k_r)
-        b = self._CalculateDamping(m_h, m_r,
+        self.m = self._CalculateMass(m_h, m_r)
+        self.k = self._CalculateStiffness(k_h, k_r)
+        self.b = self._CalculateDamping(m_h, m_r,
                                    k_h, k_r,
                                    logd_h, logd_r)
 
-        # creating a model dictionary to pass to base class constructor
-        model = {}
-        model.update({'M': m})
-        model.update({'K': k})
-        model.update({'B': b})
+        # needed as placeholder
+        self.nodal_coordinates = {"x0": None,
+                            "y0": None,
+                            "x": None,
+                            "y": None}
 
-        initial_conditions = self._SetupInitialValues(parameters['initial_conditions'])
-        model.update({'initial_conditions': initial_conditions})
-
-        super(MDoFBridge2DoFModel, self).__init__(model, cosim_solver_settings, level)
+        initial_values = self._SetupInitialValues(model_settings['initial_conditions'])
+        self.u0 = initial_values["displacement"]
+        self.v0 = initial_values["velocity"]
+        self.a0 = initial_values["acceleration"]
+        self.f0 = initial_values["external_force"]
 
     def _CalculateMass(self, m_h, m_r):
         """

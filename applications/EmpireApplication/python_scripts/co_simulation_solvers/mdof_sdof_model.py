@@ -1,86 +1,66 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
 # Importing the base class
-from co_simulation_solvers.mdof_solver import MDoFSolver
-from co_simulation_tools import ValidateAndAssignDefaults
+from co_simulation_solvers.mdof_base_model import MDoFBaseModel
+from co_simulation_tools import RecursivelyValidateAndAssignDefaults
 
 # Other imports
 import numpy as np
 import json
 import os
 
-def CreateSolver(cosim_solver_settings, level):
-    return MDoFSDoFModel(cosim_solver_settings, level)
+def CreateModel(model_settings):
+    return MDoFSDoFModel(model_settings)
 
-class MDoFSDoFModel(MDoFSolver):
+class MDoFSDoFModel(MDoFBaseModel):
     """
     A single-degree-of-freedom SDoF model
 
     Using for testing of the MDoF solver
     """
-    def __init__(self, cosim_solver_settings, level):
+    def __init__(self, model_settings):
 
-        input_file_name = cosim_solver_settings["input_file"]
-        if not input_file_name.endswith(".json"):
-            input_file_name += ".json"
-
-        with open(input_file_name,'r') as ProjectParameters:
-            parameters = json.load(ProjectParameters)
-
-        default_settings = json.loads("""{
+        default_settings = {
+                "type" : "sdof",
                 "system_parameters":{
                     "mass"              : 1.0,
-                    "target_frequency"  : 1.5,
-                    "damping_ratio"     : 0.05,
-                    "level_height"      : 3.5,
-                    "number_of_levels"  : 1
+                    "target_frequency"  : 2.0,
+                    "damping_ratio"     : 0.0
                 },
                 "initial_conditions":{
                     "displacement"  : 0.5,
                     "velocity"      : 0.0,
                     "acceleration"  : 0.0,
-                    "external_load" : 0.0
-                },
-                "time_integration_parameters":{},
-                "solver_parameters":{},
-                "output_parameters":{}
-            }""")
+                    "external_force": 0.0
+                }
+            }
 
-        ValidateAndAssignDefaults(default_settings, parameters)
 
-        m = parameters["system_parameters"]["mass"]
-        target_freq = parameters["system_parameters"]["target_frequency"]
-        zeta = parameters["system_parameters"]["damping_ratio"]
+        RecursivelyValidateAndAssignDefaults(default_settings, model_settings)
+
+        m = model_settings["system_parameters"]["mass"]
+        target_freq = model_settings["system_parameters"]["target_frequency"]
+        zeta = model_settings["system_parameters"]["damping_ratio"]
 
         k = self._CalculateStiffness(m, target_freq)
         b = self._CalculateDamping(m, k, zeta)
 
-        level_height = parameters["system_parameters"]["level_height"]
-        num_of_levels = parameters["system_parameters"]["number_of_levels"]
-
-        height_coordinates = self._GetNodalCoordinates(level_height, num_of_levels)
-
-        nodal_coordinates = {"x0": np.zeros(len(height_coordinates)),
-                            "y0": height_coordinates,
+        # needed as placeholder
+        self.nodal_coordinates = {"x0": None,
+                            "y0": None,
                             "x": None,
                             "y": None}
 
-        # creating a model dictionary to pass to base class constructor
-        model = {}
-        model.update({'M': np.array([[m]])})
-        model.update({'K': np.array([[k]])})
-        model.update({'B': np.array([[b]])})
-        # check if this is needed
-        model.update({'nodal_coordinates': nodal_coordinates})
+        # mass, stiffness and damping matrices
+        self.m = np.array([[m]])
+        self.k = np.array([[k]])
+        self.b = np.array([[b]])
 
-        model.update({'initial_conditions':
-                        {'displacement' : np.array([parameters["initial_conditions"]["displacement"]]),
-                         'velocity'     : np.array([parameters["initial_conditions"]["velocity"]]),
-                         'acceleration' : np.array([parameters["initial_conditions"]["acceleration"]]),
-                         'external_load' : np.array([parameters["initial_conditions"]["external_load"]])
-                         }})
-
-        super(MDoFSDoFModel, self).__init__(model, cosim_solver_settings, level)
+        # initial conditions - displacement, velocity, acceleration, external force
+        self.u0 = np.array([model_settings["initial_conditions"]["displacement"]])
+        self.v0 = np.array([model_settings["initial_conditions"]["velocity"]])
+        self.a0 = np.array([model_settings["initial_conditions"]["acceleration"]])
+        self.f0 = np.array([model_settings["initial_conditions"]["external_force"]])
 
     def _CalculateStiffness(self, m, target_freq):
         """
@@ -93,10 +73,6 @@ class MDoFSDoFModel(MDoFSolver):
         Calculate damping b
         """
         return zeta * 2.0 * np.sqrt(m * k)
-
-    def _GetNodalCoordinates(self, level_height, num_of_levels):
-        nodal_coordinates = level_height * np.arange(1,num_of_levels+1)
-        return nodal_coordinates
 
     def _GetIOName(self):
         return "mdof_sdof_model"

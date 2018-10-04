@@ -8,7 +8,7 @@
     },
     "solver_settings" :
     {
-        "solver_type" : "mdof_bridge_2dof",
+        "solver_type" : "mdof",
         "input_file"  : "mdof_solver/ProjectParametersMDoFBridge2DoFModel"
     }
 }

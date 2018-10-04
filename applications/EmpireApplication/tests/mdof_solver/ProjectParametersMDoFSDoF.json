@@ -1,20 +1,24 @@
 {
-    "system_parameters":{
-        "mass"              : 1.0,
-        "target_frequency"  : 2.0,
-        "damping_ratio"     : 0.0,
-        "level_height"      : 3.5,
-        "number_of_levels"  : 1
+    "model_parameters": {
+        "type" : "sdof",
+        "system_parameters":{
+            "mass"              : 1.0,
+            "target_frequency"  : 2.0,
+            "damping_ratio"     : 0.0
+        },
+        "initial_conditions":{
+            "displacement"  : 0.5,
+            "velocity"      : 0.025,
+            "acceleration"  : 0.001,
+            "external_force": 0.15
+         }
     },
-    "initial_conditions":{
-        "displacement"  : 0.5,
-        "velocity"      : 0.0,
-        "acceleration"  : 0.0,
-        "external_load" : 0.0
-     },
-    "time_integration_parameters":{
-        "p_inf"     : 0.15,
-        "time_step" : 0.01
+    "time_integration_scheme_parameters":{
+        "type" : "generalized_apha",
+        "time_step" : 0.01,
+        "settings": {
+            "p_inf" : 0.15
+        }
     },
      "solver_parameters": {
          "buffer_size": 3

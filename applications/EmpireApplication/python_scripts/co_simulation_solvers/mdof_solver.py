@@ -9,11 +9,11 @@ import numpy as np
 import json
 import os
 
-def CreateSolver(model, cosim_solver_settings, level):
-    return MDoFSolver(model, cosim_solver_settings, level)
+def CreateSolver(cosim_solver_settings, level):
+    return MDoFSolver(cosim_solver_settings, level)
 
 class MDoFSolver(CoSimulationBaseSolver):
-    def __init__(self, model, cosim_solver_settings, level):
+    def __init__(self, cosim_solver_settings, level):
         super(MDoFSolver, self).__init__(cosim_solver_settings, level)
 
         input_file_name = self.cosim_solver_settings["input_file"]
@@ -23,28 +23,19 @@ class MDoFSolver(CoSimulationBaseSolver):
         with open(input_file_name,'r') as ProjectParameters:
             parameters = json.load(ProjectParameters)
 
-        # specify default needed keys
-        default_entries = ("time_integration_parameters",
-                           "solver_parameters",
-                           "output_parameters")
+        # creating model using a certain module
+        model_module = __import__("mdof_" + parameters["model_parameters"]["type"] + "_model")
+        model = model_module.CreateModel(parameters["model_parameters"])
 
-        # actually retaining only default ones
-        # others passed down by the model dict
-        parameters = {key: value for key, value in parameters.items() if key in default_entries}
-
-        default_settings = json.loads("""{
-                "time_integration_parameters":{
-                    "p_inf"     : 0.15,
-                    "time_step" : 0.01
-                },
-                "solver_parameters":{
+        default_solver_settings = json.loads("""{
                     "buffer_size": 3
-                },
-                "output_parameters":{
+                }""")
+        default_output_settings = json.loads("""{
                     "file_name": "results_mdof.dat"
-                }}""")
+                }""")
 
-        RecursivelyValidateAndAssignDefaults(default_settings, parameters)
+        RecursivelyValidateAndAssignDefaults(default_solver_settings, parameters["solver_parameters"])
+        RecursivelyValidateAndAssignDefaults(default_output_settings, parameters["output_parameters"])
 
         ##
         #PMT: paramaters received from parameters JSON string ->
@@ -55,17 +46,17 @@ class MDoFSolver(CoSimulationBaseSolver):
         ##
         #PMT: to do for (dt, mM, mB, mK, pInf, vu0, vv0, va0)
         # time step
-        self.dt = parameters["time_integration_parameters"]["time_step"]
+        self.dt = parameters["time_integration_scheme_parameters"]["time_step"]
 
         # mass, damping and spring stiffness
-        self.M = model['M']
-        self.B = model['B']
-        self.K = model['K']
+        self.M = model.m
+        self.B = model.b
+        self.K = model.k
 
         # what to do with model["nodal_coordinates?"]
 
         # generalized alpha parameters (to ensure unconditional stability, 2nd order accuracy)
-        pInf = parameters["time_integration_parameters"]["p_inf"]
+        pInf = parameters["time_integration_scheme_parameters"]["settings"]["p_inf"]
         self.alphaM = (2.0 * pInf - 1.0) / (pInf + 1.0)
         self.alphaF = pInf / (pInf + 1.0)
         self.beta = 0.25 * (1 - self.alphaM + self.alphaF)**2
@@ -101,11 +92,11 @@ class MDoFSolver(CoSimulationBaseSolver):
 
 		#structure
         # initial displacement, velocity and acceleration
-        self.u0 = model['initial_conditions']['displacement']
-        self.v0 = model['initial_conditions']['velocity']
-        self.a0 = model['initial_conditions']['acceleration']
+        self.u0 = model.u0
+        self.v0 = model.v0
+        self.a0 = model.a0
         # initial force
-        self.force = model['initial_conditions']['external_load']
+        self.force = model.f0
 
         # initial displacement, velocity and acceleration
         self.u1 = self.u0

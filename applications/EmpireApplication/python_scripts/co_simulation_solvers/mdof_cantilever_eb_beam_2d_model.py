@@ -1,8 +1,8 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
 # Importing the base class
-from co_simulation_solvers.mdof_solver import MDoFSolver
-from co_simulation_tools import ValidateAndAssignDefaults
+from co_simulation_solvers.mdof_base_model import MDoFBaseModel
+from co_simulation_tools import RecursivelyValidateAndAssignDefaults
 
 # Other imports
 import numpy as np
@@ -16,10 +16,10 @@ import os
 from sympy import symbols
 from sympy.core import sympify
 
-def CreateSolver(cosim_solver_settings, level):
-    return MDoFCantileverEBBeam2DModel(cosim_solver_settings, level)
+def CreateSolver(model_settings):
+    return MDoFCantileverEBBeam2DModel(model_settings)
 
-class MDoFCantileverEBBeam2DModel(MDoFSolver):
+class MDoFCantileverEBBeam2DModel(MDoFBaseModel):
     """
     A multi-degree-of-freedom MDoF model assuming
     bending-type deformations using the Euler-Bernoulli
@@ -30,16 +30,10 @@ class MDoFCantileverEBBeam2DModel(MDoFSolver):
     stiffness and damping is a premise. For other cases
     this model is not adequate and changes need to be done.
     """
-    def __init__(self, cosim_solver_settings, level):
+    def __init__(self, model_settings):
 
-        input_file_name = cosim_solver_settings["input_file"]
-        if not input_file_name.endswith(".json"):
-            input_file_name += ".json"
-
-        with open(input_file_name,'r') as ProjectParameters:
-            parameters = json.load(ProjectParameters)
-
-        default_settings = json.loads("""{
+        default_settings = {
+                "type": "cantilever_eb_beam_2d",
                 "system_parameters":{
                     "density"           : 5.0,
                     "area"              : 10.0,
@@ -54,52 +48,41 @@ class MDoFCantileverEBBeam2DModel(MDoFSolver):
                     "velocity"      : "none",
                     "acceleration"  : "none",
                     "external_force": "none"
-                },
-                "time_integration_parameters":{},
-                "solver_parameters":{},
-                "output_parameters":{}
-            }""")
+                }
+            }
 
-        ValidateAndAssignDefaults(default_settings, parameters)
+        RecursivelyValidateAndAssignDefaults(default_settings, model_settings)
 
-        rho = parameters["system_parameters"]["density"]
-        area = parameters["system_parameters"]["area"]
-        target_freq = parameters["system_parameters"]["target_frequency"]
+        rho = model_settings["system_parameters"]["density"]
+        area = model_settings["system_parameters"]["area"]
+        target_freq = model_settings["system_parameters"]["target_frequency"]
         # adjust index
-        target_mode = parameters["system_parameters"]["target_mode"] - 1
-        zeta = parameters["system_parameters"]["damping_ratio"]
-        level_height = parameters["system_parameters"]["level_height"]
-        num_of_levels = parameters["system_parameters"]["number_of_levels"]
+        target_mode = model_settings["system_parameters"]["target_mode"] - 1
+        zeta = model_settings["system_parameters"]["damping_ratio"]
+        level_height = model_settings["system_parameters"]["level_height"]
+        num_of_levels = model_settings["system_parameters"]["number_of_levels"]
 
-        m = self._CalculateMass(rho, area, level_height, num_of_levels)
-        k = self._CalculateStiffness(m, level_height, num_of_levels, target_freq, target_mode)
-        b = self._CalculateDamping(m, k, zeta)
+        self.m = self._CalculateMass(rho, area, level_height, num_of_levels)
+        self.k = self._CalculateStiffness(self.m, level_height, num_of_levels, target_freq, target_mode)
+        self.b = self._CalculateDamping(self.m, self.k, zeta)
 
         height_coordinates = self._GetNodalCoordinates(level_height, num_of_levels)
 
-        nodal_coordinates = {"x0": np.zeros(len(height_coordinates)),
-                            "y0": height_coordinates,
-                            "x": None,
-                            "y": None}
+        self.nodal_coordinates = {'x0': np.zeros(len(height_coordinates)),
+                             'y0': height_coordinates,
+                             'x': None,
+                             'y': None}
 
-        # creating a model dictionary to pass to base class constructor
-        model = {}
-        model.update({'M': m})
-        model.update({'K': k})
-        model.update({'B': b})
-        # check if this is needed
-        model.update({'nodal_coordinates': nodal_coordinates})
-
-        initial_conditions = self._SetupInitialValues(parameters['initial_conditions'],
-                                                      nodal_coordinates['y0'])
-        model.update({'initial_conditions': initial_conditions})
-
-        super(MDoFCantileverEBBeam2DModel, self).__init__(model, cosim_solver_settings, level)
+        initial_values = self._SetupInitialValues(model_settings['initial_conditions'],
+                                                  self.nodal_coordinates['y0'])
+        self.u0 = initial_values["displacement"]
+        self.v0 = initial_values["velocity"]
+        self.a0 = initial_values["acceleration"]
+        self.f0 = initial_values["external_force"]
 
     def _GetNodalCoordinates(self, level_height, num_of_levels):
         nodal_coordinates = level_height * np.arange(1,num_of_levels+1)
         return nodal_coordinates
-
 
     def _CalculateMass(self, rho, area, level_height, num_of_levels):
         """

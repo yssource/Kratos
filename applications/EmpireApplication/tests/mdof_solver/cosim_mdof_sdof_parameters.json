@@ -8,7 +8,7 @@
     },
     "solver_settings" :
     {
-        "solver_type" : "mdof_sdof",
+        "solver_type" : "mdof",
         "input_file"  : "mdof_solver/ProjectParametersMDoFSDoF"
     }
 }

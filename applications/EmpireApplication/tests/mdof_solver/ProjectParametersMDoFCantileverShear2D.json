@@ -1,22 +1,28 @@
 {
-    "system_parameters":{
-        "density"           : 5.0,
-        "area"              : 10.0,
-        "target_frequency"  : 1.0,
-        "target_mode"       : 1,
-        "damping_ratio"     : 0.025,
-        "level_height"      : 3.5,
-        "number_of_levels"  : 3
+    "model_parameters": {
+        "type" : "cantilever_shear_2d",
+        "system_parameters":{
+            "density"           : 5.0,
+            "area"              : 10.0,
+            "target_frequency"  : 1.0,
+            "target_mode"       : 1,
+            "damping_ratio"     : 0.025,
+            "level_height"      : 3.5,
+            "number_of_levels"  : 3
+        },
+        "initial_conditions":{
+            "displacement"      : "2*x+1",
+            "velocity"          : "0.1*(3*x+1.5)",
+            "acceleration"      : "0.01*(1.5*x+1.2)",
+            "external_force"    : "0.15*(1.75*x+1.7)"
+        }
     },
-    "initial_conditions":{
-        "displacement": "2*x+1",
-        "velocity": "none",
-        "acceleration": "none",
-        "external_load": "none"
-     },
-    "time_integration_parameters":{
-        "p_inf": 0.15,
-        "time_step": 0.01
+    "time_integration_scheme_parameters":{
+        "type" : "generalized_apha",
+        "time_step" : 0.01,
+        "settings": {
+            "p_inf" : 0.15
+        }
     },
      "solver_parameters": {
          "buffer_size": 3

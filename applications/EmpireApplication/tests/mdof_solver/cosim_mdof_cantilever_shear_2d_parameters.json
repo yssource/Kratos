@@ -8,7 +8,7 @@
     },
     "solver_settings" :
     {
-        "solver_type" : "mdof_cantilever_shear_2d",
+        "solver_type" : "mdof",
         "input_file"  : "mdof_solver/ProjectParametersMDoFCantileverShear2D"
     }
 }

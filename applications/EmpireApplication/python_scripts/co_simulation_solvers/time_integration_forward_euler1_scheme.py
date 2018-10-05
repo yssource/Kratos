@@ -29,7 +29,6 @@ class TimeIntegrationForwardEuler1Scheme(TimeIntegrationBaseScheme):
 
         RecursivelyValidateAndAssignDefaults(default_settings, scheme_settings)
 
-        # generalized alpha parameters (to ensure unconditional stability, 2nd order accuracy)
         # time step
         self.dt = scheme_settings["time_step"]
 

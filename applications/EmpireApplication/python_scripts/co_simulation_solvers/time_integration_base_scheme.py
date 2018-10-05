@@ -14,7 +14,6 @@ class TimeIntegrationBaseScheme(object):
         default_settings = None
 
         # time step
-        # PMT maybe add a possibility for non-zero initial time?
         self.dt = None
 
         # placeholders initial values and predictions

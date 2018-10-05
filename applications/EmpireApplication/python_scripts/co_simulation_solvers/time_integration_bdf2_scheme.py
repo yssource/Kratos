@@ -10,11 +10,11 @@ import json
 import os
 
 def CreateScheme(scheme_settings):
-    return TimeIntegrationForwardEuler1Scheme(scheme_settings)
+    return TimeIntegrationBDF2Scheme(scheme_settings)
 
 # PMT to be checked, seems to be written acceleration based, might need correction
 
-class TimeIntegrationForwardEuler1Scheme(TimeIntegrationBaseScheme):
+class TimeIntegrationBDF2Scheme(TimeIntegrationBaseScheme):
     """
     A single-degree-of-freedom SDoF model
 
@@ -23,14 +23,20 @@ class TimeIntegrationForwardEuler1Scheme(TimeIntegrationBaseScheme):
     def __init__(self, scheme_settings):
 
         default_settings = {
-                "type" : "forward_euler1",
+                "type" : "bdf2",
                 "time_step" : 0.01,
+                "settings" : {
+                    "alpha_m"   : -0.5,
+                    "alpha_f"   : -0.5
+                }
             }
 
         RecursivelyValidateAndAssignDefaults(default_settings, scheme_settings)
 
         # time step
         self.dt = scheme_settings["time_step"]
+        self.alpha_m = scheme_settings["settings"]["alpha_m"]
+        self.alpha_f = scheme_settings["settings"]["alpha_f"]
 
         # placeholders initial values and predictions
         # initial displacement, velocity and acceleration

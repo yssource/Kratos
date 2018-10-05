@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import, division  # makes these 
 
 # Importing the base class
 from co_simulation_solvers.co_simulation_base_solver import CoSimulationBaseSolver
-from co_simulation_tools import ValidateAndAssignDefaults
+from co_simulation_tools import RecursivelyValidateAndAssignDefaults
 
 # Other imports
 import numpy as np
@@ -23,7 +23,7 @@ class SDoFSolver(CoSimulationBaseSolver):
         with open(input_file_name,'r') as ProjectParameters:
             parameters = json.load(ProjectParameters)
 
-        default_settings = json.loads("""{
+        default_settings = {
                 "system_parameters":{
                     "mass"      : 100.0,
                     "stiffness" : 4000.0,
@@ -47,9 +47,9 @@ class SDoFSolver(CoSimulationBaseSolver):
                 },
                 "output_parameters":{
                     "file_name" : "sdof_solver/results_sdof.dat"
-                }}""")
+                }}
 
-        ValidateAndAssignDefaults(default_settings, parameters)
+        RecursivelyValidateAndAssignDefaults(default_settings, parameters)
 
         self.mass = parameters["system_parameters"]["mass"]
         self.stiffness = parameters["system_parameters"]["stiffness"]

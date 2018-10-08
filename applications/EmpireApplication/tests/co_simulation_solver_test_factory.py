@@ -35,8 +35,7 @@ def compareResults(reference_file, results_file):
     settings_check_process["output_file_name"].SetString(results_file)
 
     # creating a dummy model
-    test_model = KratosMultiphysics.Model()
-    check_process = CompareTwoFilesCheckProcess(test_model, settings_check_process)
+    check_process = CompareTwoFilesCheckProcess(settings_check_process)
 
     check_process.ExecuteInitialize()
     check_process.ExecuteBeforeSolutionLoop()

@@ -22,9 +22,9 @@ def CheckCoSimulationSettingsAndAssignDefaults(co_simulation_settings):
     def CheckSolverSetting(solvers):
         solver_data_dict = {}
         data_default = {
-            "geometry_name"   : "UNSPECIFIED",
             "data_identifier" : "UNSPECIFIED",
             "data_format"     : "UNSPECIFIED",
+            "geometry_name"   : "undefined",
             "type_of_quantity": "undefined"
         }
         for solver_name, solver_definition in solvers.items():
@@ -32,11 +32,16 @@ def CheckCoSimulationSettingsAndAssignDefaults(co_simulation_settings):
             solver_data_dict[solver_name] = solver_definition["data"].keys()
             for data_name, data_def in solver_definition["data"].items():
                 ValidateAndAssignDefaults(data_default, data_def)
+                keys_to_pop = []
                 for data_key, data_val in data_def.items():
                     if data_val == "UNSPECIFIED":
                         err_msg  = '"' + data_key + '" not specified for data "'
                         err_msg += data_name + '" of solver "' + solver_name + '"'
                         raise Exception(err_msg)
+                    elif data_val == "undefined":
+                        keys_to_pop.append(data_key)
+                for key in keys_to_pop: # removing the undefined values again
+                    data_def.pop(key)
 
         return solver_data_dict
 

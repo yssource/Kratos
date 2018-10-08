@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
 # Importing the base class
-from co_simulation_solvers.time_integration_base_scheme import TimeIntegrationBaseScheme
+from time_integration_base_scheme import TimeIntegrationBaseScheme
 from co_simulation_tools import RecursivelyValidateAndAssignDefaults
 
 # Other imports
@@ -10,11 +10,11 @@ import json
 import os
 
 def CreateScheme(scheme_settings):
-    return TimeIntegrationForwardEuler1Scheme(scheme_settings)
+    return TimeIntegrationBackwardEuler1Scheme(scheme_settings)
 
 # PMT to be checked, seems to be written acceleration based, might need correction
 
-class TimeIntegrationForwardEuler1Scheme(TimeIntegrationBaseScheme):
+class TimeIntegrationBackwardEuler1Scheme(TimeIntegrationBaseScheme):
     """
     A single-degree-of-freedom SDoF model
 
@@ -23,12 +23,13 @@ class TimeIntegrationForwardEuler1Scheme(TimeIntegrationBaseScheme):
     def __init__(self, scheme_settings):
 
         default_settings = {
-                "type" : "forward_euler1",
+                "type" : "backward_euler1",
                 "time_step" : 0.01,
             }
 
         RecursivelyValidateAndAssignDefaults(default_settings, scheme_settings)
 
+        # generalized alpha parameters (to ensure unconditional stability, 2nd order accuracy)
         # time step
         self.dt = scheme_settings["time_step"]
 
@@ -69,12 +70,12 @@ class TimeIntegrationForwardEuler1Scheme(TimeIntegrationBaseScheme):
     def _AssembleLHS(self, model):
         """
         """
-        return model.m
+        return model.m + np.dot(model.b, self.dt) + np.dot(model.k, self.dt ** 2)
 
     def _AssembleRHS(self, model):
         """
         """
-        RHS = self.force - np.dot(model.b, self.v0) - np.dot(model.k, self.u0)
+        RHS = self.force - np.dot(model.b, self.v1) - np.dot(model.k, self.u1)  - np.dot(model.k, self.v1 * self.dt)
         # PMT might be a problem, as it seems to be solving for accelerations
         #self.an0 =  np.linalg.solve(LHS, RHS)
         # should be displacement based

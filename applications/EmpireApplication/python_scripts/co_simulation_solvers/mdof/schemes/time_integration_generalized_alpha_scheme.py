@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
 # Importing the base class
-from co_simulation_solvers.time_integration_base_scheme import TimeIntegrationBaseScheme
+from time_integration_base_scheme import TimeIntegrationBaseScheme
 from co_simulation_tools import RecursivelyValidateAndAssignDefaults
 
 # Other imports

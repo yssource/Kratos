@@ -4,6 +4,10 @@ from __future__ import print_function, absolute_import, division  # makes these 
 from co_simulation_solvers.co_simulation_base_solver import CoSimulationBaseSolver
 from co_simulation_tools import RecursivelyValidateAndAssignDefaults
 
+# Importing models and schemes
+from co_simulation_solvers.mdof.solver_models import *
+from co_simulation_solvers.mdof.schemes import *
+
 # Other imports
 import numpy as np
 import json

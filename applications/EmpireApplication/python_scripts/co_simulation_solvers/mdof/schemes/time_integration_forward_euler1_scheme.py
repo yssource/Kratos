@@ -29,63 +29,26 @@ class TimeIntegrationForwardEuler1Scheme(TimeIntegrationBaseScheme):
 
         RecursivelyValidateAndAssignDefaults(default_settings, scheme_settings)
 
-        # time step
-        self.dt = scheme_settings["time_step"]
-
-        # placeholders initial values and predictions
-        # initial displacement, velocity and acceleration
-        self.u0 = None
-        self.v0 = None
-        self.a0 = None
-
-        # initial displacement, velocity and acceleration
-        self.u1 = self.u0
-        self.v1 = self.v0
-        self.a1 = self.a0
-
-        self.force = None
-
-    def Initialize(self, model):
-        """
-        """
-        # initial displacement, velocity and acceleration
-        self.u0 = model.u0
-        self.v0 = model.v0
-        self.a0 = model.a0
-        # initial force
-        # PMT is this needed/correct like this?
-        self.force = model.f0
-
-        # initial displacement, velocity and acceleration
-        self.u1 = self.u0
-        self.v1 = self.v0
-        self.a1 = self.a0
-
-    def Predict(self):
-        """
-        """
-        return 2.0 * self.u1 - self.u0
+        super(TimeIntegrationForwardEuler1Scheme, self).__init__(scheme_settings)
 
     def _AssembleLHS(self, model):
         """
         """
-        return model.m
+        return (model.m + model.b * self.dt + model.k * self.dt**2)
 
     def _AssembleRHS(self, model):
         """
         """
-        RHS = self.force - np.dot(model.b, self.v0) - np.dot(model.k, self.u0)
-        # PMT might be a problem, as it seems to be solving for accelerations
-        #self.an0 =  np.linalg.solve(LHS, RHS)
-        # should be displacement based
-        # also check indexing u0 vs u1 which is new-old
+        self.f0 = self.force
 
-        # and here an update of self.f1
-        self.f1 = self.force
+        RHS = self.f0 * self.dt**2
+        RHS -= np.dot(- 2 * model.m - model.b * self.dt, self.u1)
+        RHS -= np.dot(model.m, self.u2)
+
         return RHS
 
     def UpdateDerivedValues(self):
         """
         """
-        self.u0 = self.u1 + self.dt * self.v1
-        self.v0 = self.v1 + self.dt * self.a1
+        self.v0 = (self.u0 - self.u1) / self.dt
+        self.a0 = (self.u0 - 2 * self.u1 + self.u2) / self.dt**2

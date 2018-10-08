@@ -116,9 +116,9 @@ class MDoFSolver(CoSimulationBaseSolver):
         #buffer_idx = 0
         #self.x[:,buffer_idx] = self.dx
 
-        self.dx[0] = self.scheme.GetPreviousDisplacement()
-        self.dx[1] = self.scheme.GetPreviousVelocity()
-        self.dx[2] = self.scheme.GetPreviousAcceleration()
+        self.dx[0] = self.scheme.GetDisplacement()
+        self.dx[1] = self.scheme.GetVelocity()
+        self.dx[2] = self.scheme.GetAcceleration()
 
         self.x[0,0,:] = self.dx[0]
         self.x[1,0,:] = self.dx[1]

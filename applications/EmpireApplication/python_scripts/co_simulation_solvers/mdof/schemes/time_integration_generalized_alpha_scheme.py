@@ -66,23 +66,6 @@ class TimeIntegrationGeneralizedAlphaScheme(TimeIntegrationBaseScheme):
         self.a2a = -1.0 / (self.beta * self.dt)
         self.a3a = 1.0 - 1.0 / (2.0 * self.beta)
 
-        # placeholders initial values and predictions
-        # initial displacement, velocity and acceleration
-        self.u0 = None
-        self.v0 = None
-        self.a0 = None
-
-        # initial displacement, velocity and acceleration
-        self.u1 = self.u0
-        self.v1 = self.v0
-        self.a1 = self.a0
-
-		# force from a previous time step (initial force)
-        self.f0 = None
-        self.f1 = None
-
-        self.force = None
-
     def Initialize(self, model):
         """
         """
@@ -103,11 +86,6 @@ class TimeIntegrationGeneralizedAlphaScheme(TimeIntegrationBaseScheme):
         self.f0 = np.dot(model.m,self.a0) + np.dot(model.b,self.v0) + np.dot(model.k,self.u0)
         self.f1 = np.dot(model.m,self.a1) + np.dot(model.b,self.v1) + np.dot(model.k,self.u1)
 
-    def Predict(self):
-        """
-        """
-        return 2.0 * self.u1 - self.u0
-
     def _AssembleLHS(self, model):
         """
         """
@@ -121,17 +99,17 @@ class TimeIntegrationGeneralizedAlphaScheme(TimeIntegrationBaseScheme):
         # should be AssembleRHS(self, model, f1)
         #F = (1.0 - self.alphaF) * f1 + self.alphaF * self.f0
 
-        f = (1.0 - self.alphaF) * self.force + self.alphaF * self.f0
-        RHS = np.dot(model.m,(self.a1m * self.u0 + self.a2m * self.v0 + self.a3m * self.a0))
-        RHS += np.dot(model.b,(self.a1b * self.u0 + self.a2b * self.v0 + self.a3b * self.a0))
-        RHS += np.dot(self.a1k * model.k, self.u0) + f
+        f = (1.0 - self.alphaF) * self.force + self.alphaF * self.f1
+        RHS = np.dot(model.m,(self.a1m * self.u1 + self.a2m * self.v1 + self.a3m * self.a1))
+        RHS += np.dot(model.b,(self.a1b * self.u1 + self.a2b * self.v1 + self.a3b * self.a1))
+        RHS += np.dot(self.a1k * model.k, self.u1) + f
 
         # and here an update of self.f1
-        self.f1 = self.force
+        self.f0 = self.force
         return RHS
 
     def UpdateDerivedValues(self):
         """
         """
-        self.v1 = self.a1v * (self.u1 - self.u0) + self.a2v * self.v0 + self.a3v * self.a0
-        self.a1 = self.a1a * (self.u1 - self.u0) + self.a2a * self.v0 + self.a3a * self.a0
+        self.v0 = self.a1v * (self.u0 - self.u1) + self.a2v * self.v1 + self.a3v * self.a1
+        self.a0 = self.a1a * (self.u0 - self.u1) + self.a2a * self.v1 + self.a3a * self.a1

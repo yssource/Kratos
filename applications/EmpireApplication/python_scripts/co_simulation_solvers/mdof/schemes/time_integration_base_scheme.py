@@ -18,28 +18,54 @@ class TimeIntegrationBaseScheme(object):
 
         # placeholders initial values and predictions
         # initial displacement, velocity and acceleration
+
+        # u0 -> u(current-)0
         self.u0 = None
         self.v0 = None
         self.a0 = None
+
+        # initial displacement, velocity and acceleration
+        # u1 -> u(current-)1
+        self.u1 = self.u0
+        self.v1 = self.v0
+        self.a1 = self.a0
+
+        # u2 -> u(current-)2
+        self.u2 = self.u1
+        self.v2 = self.v1
+        self.a2 = self.a1
+
+		# force from a previous time step (initial force)
+        self.f0 = None
+        self.f1 = None
+        self.f2 = None
+
+    def Initialize(self, model):
+        """
+        """
+        # initial displacement, velocity and acceleration
+        self.u0 = model.u0
+        self.v0 = model.v0
+        self.a0 = model.a0
+        # initial force
+        # PMT is this needed/correct like this?
+        self.force = model.f0
 
         # initial displacement, velocity and acceleration
         self.u1 = self.u0
         self.v1 = self.v0
         self.a1 = self.a0
 
-		# force from a previous time step (initial force)
-        self.f0 = None
-        self.f1 = None
+        self.u2 = self.u1
+        self.v2 = self.v1
+        self.a2 = self.a1
 
-    def Initialize(self, model):
-        """
-        """
-        pass
+        self.f0 = self.force
 
     def Predict(self):
         """
         """
-        return 2.0 * self.u1 - self.u0
+        return 2.0 * self.u0 - self.u1
 
     def _AssembleLHS(self, model):
         """
@@ -55,7 +81,7 @@ class TimeIntegrationBaseScheme(object):
         # sys of eq reads: LHS * u1 = RHS
         LHS = self._AssembleLHS(model)
         RHS = self._AssembleRHS(model)
-        self.u1 = np.linalg.solve(LHS, RHS)
+        self.u0 = np.linalg.solve(LHS, RHS)
 
     def UpdateDerivedValues(self):
         """
@@ -80,6 +106,11 @@ class TimeIntegrationBaseScheme(object):
         """
         return self.a0
 
+    def GetLoad(self):
+        """
+        """
+        return self.f0
+
     def GetPreviousDisplacement(self):
         """
         """
@@ -95,15 +126,19 @@ class TimeIntegrationBaseScheme(object):
         """
         return self.a1
 
-    def GetLoad(self):
+    def GetPreviousLoad(self):
         """
         """
-        return self.f0
+        return self.f1
 
     def AdvanceScheme(self):
-        self.u0 = self.u1
-        self.v0 = self.v1
-        self.a0 = self.a1
 
-        # update the force
-        self.f0 = self.f1
+        self.u2 = self.u1
+        self.v2 = self.v1
+        self.a2 = self.a1
+        self.f2 = self.f1
+
+        self.u1 = self.u0
+        self.v1 = self.v0
+        self.a1 = self.a0
+        self.f1 = self.f0

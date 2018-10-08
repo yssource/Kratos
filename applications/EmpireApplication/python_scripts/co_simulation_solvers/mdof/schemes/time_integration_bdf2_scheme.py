@@ -67,11 +67,6 @@ class TimeIntegrationBDF2Scheme(TimeIntegrationBaseScheme):
         self.v1 = self.v0
         self.a1 = self.a0
 
-    def Predict(self):
-        """
-        """
-        return 2.0 * self.u1 - self.u0
-
     def _AssembleLHS(self, model):
         """
         """

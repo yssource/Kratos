@@ -6,7 +6,7 @@ import co_simulation_ios.co_simulation_io_factory as io_factory
 def CreateSolver(cosim_solver_settings, level):
     return CoSimulationBaseSolver(cosim_solver_settings, level)
 
-class CoSimulationBaseSolver(object):
+class CoSimulationBasePhysicsSolver(object):
     """The base class for the CoSimulation Solvers
     The intention is that every solver that derives from this class
     can be used standalone.
@@ -23,58 +23,70 @@ class CoSimulationBaseSolver(object):
         self.io_is_initialized = False
 
     def Initialize(self):
-        pass
+        if self.__IsSolvingRank():
+            self._Initialize()
 
     def InitializeIO(self, solvers, io_echo_level):
-        solver_name = self.cosim_solver_settings["name"]
-        if self.io_is_initialized:
-            raise Exception('IO for "' + solver_name + '" is already initialized!')
+        if self.__IsSolvingRank():
+            solver_name = self.cosim_solver_settings["name"]
+            if self.io_is_initialized:
+                raise Exception('IO for "' + solver_name + '" is already initialized!')
 
-        self.io = io_factory.CreateIO(self._GetIOName(),
-                                      solvers,
-                                      solver_name,
-                                      self.lvl)
-        self.io.SetEchoLevel(io_echo_level)
-        self.io_is_initialized = True
+            self.io = io_factory.CreateIO(self._GetIOName(),
+                                        solvers,
+                                        solver_name,
+                                        self.lvl)
+            self.io.SetEchoLevel(io_echo_level)
+            self.io_is_initialized = True
 
     def Finalize(self):
-        pass
+        if self.__IsSolvingRank():
+            self._Finalize()
 
     def AdvanceInTime(self, current_time):
         return current_time + self.cosim_solver_settings["time_step"] # needed if this solver is used as dummy
 
     def Predict(self):
-        pass
+        if self.__IsSolvingRank():
+            self._Predict()
 
     def InitializeSolutionStep(self):
-        pass
+        if self.__IsSolvingRank():
+            self._InitializeSolutionStep()
 
     def FinalizeSolutionStep(self):
-        pass
+        if self.__IsSolvingRank():
+            self._FinalizeSolutionStep()
 
     def OutputSolutionStep(self):
-        pass
+        if self.__IsSolvingRank():
+            self._OutputSolutionStep()
 
     def SolveSolutionStep(self):
-        pass
+        if self.__IsSolvingRank():
+            self._SolveSolutionStep()
 
     def ImportData(self, data_name, from_client):
-        if not self.io_is_initialized:
-            raise Exception('IO for "' + solver_name + '" is not initialized!')
-        self.io.ImportData(data_name, from_client)
+        if self.__IsSolvingRank():
+            if not self.io_is_initialized:
+                raise Exception('IO for "' + solver_name + '" is not initialized!')
+            self.io.ImportData(data_name, from_client)
     def ImportMesh(self, mesh_name, from_client):
-        if not self.io_is_initialized:
-            raise Exception('IO for "' + solver_name + '" is not initialized!')
-        self.io.ImportMesh(mesh_name, from_client)
+        if self.__IsSolvingRank():
+            if not self.io_is_initialized:
+                raise Exception('IO for "' + solver_name + '" is not initialized!')
+            self.io.ImportMesh(mesh_name, from_client)
 
     def ExportData(self, data_name, to_client):
-        if not self.io_is_initialized:
-            raise Exception('IO for "' + solver_name + '" is not initialized!')
-        self.io.ExportData(data_name, to_client)
+        if self.__IsSolvingRank():
+            if not self.io_is_initialized:
+                raise Exception('IO for "' + solver_name + '" is not initialized!')
+            self.io.ExportData(data_name, to_client)
     def ExportMesh(self, mesh_name, to_client):
-        if not self.io_is_initialized:
-            raise Exception('IO for "' + solver_name + '" is not initialized!')
-        self.io.ExportMesh(mesh_name, to_client)
+        if self.__IsSolvingRank():
+            if not self.io_is_initialized:
+                raise Exception('IO for "' + solver_name + '" is not initialized!')
+            self.io.ExportMesh(mesh_name, to_client)
 
     def GetDataDefinition(self, data_name):
         return self.cosim_solver_settings["data"][data_name]
@@ -96,11 +108,8 @@ class CoSimulationBaseSolver(object):
     def Check(self):
         print("!!!WARNING!!! your solver does not implement Check!!!")
 
-    def IsDistributed(self):
-        '''Returns whether this solver is executed distributed Aka MPI-parallel
-        '''
-        return False
-
     def _GetIOName(self):
         raise Exception('"_GetIOName" function must be implemented in derived class!')
 
+    def __IsSolvingRank(self):
+        return self.IsDistributed or (co_simulation_tools.COSIM_SPACE.Rank() == 0)

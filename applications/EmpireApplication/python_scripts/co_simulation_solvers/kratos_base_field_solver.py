@@ -88,5 +88,8 @@ class KratosBaseFieldSolver(CoSimulationBaseSolver):
             warning_msg += 'from local one (' + solver_parallel_type + ')!'
             solverprint(self.lvl, self._Name(), ": " + red(warning_msg))
 
+    def IsDistributed(self):
+        return (self._GetParallelType() == "MPI")
+
     def _GetIOName(self):
         return "kratos"

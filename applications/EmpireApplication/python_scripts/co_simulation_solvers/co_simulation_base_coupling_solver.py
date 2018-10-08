@@ -154,3 +154,6 @@ class CoSimulationBaseCouplingSolver(CoSimulationBaseSolver):
 
         if self.predictor is not None:
             self.predictor.Check()
+
+    def IsDistributed(self):
+        return True

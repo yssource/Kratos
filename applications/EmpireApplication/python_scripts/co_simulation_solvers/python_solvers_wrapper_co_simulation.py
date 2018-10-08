@@ -3,44 +3,20 @@ from __future__ import print_function, absolute_import, division #makes KratosMu
 # Importing the base class of the cosim-solvers
 from co_simulation_solvers.co_simulation_base_solver import CoSimulationBaseSolver
 
-'''
-maybe move into a separate directory?
-there will be responsible for assembling the system matrices for
-mass, stiffness, damping based upon certain modeling asssumptions
-an sdof using the mdof solve for checks
-'''
-
-available_solvers = {
-    "dummy"                        : "co_simulation_base_solver",
-    "kratos_fluid"                 : "kratos_fluid_solver",
-    "kratos_structural"            : "kratos_structural_solver",
-    "kratos_empire"                : "kratos_empire_solver",
-    "gauss_seidel_strong_coupling" : "co_simulation_gauss_seidel_strong_coupling_solver",
-    "gauss_seidel_weak_coupling"   : "co_simulation_gauss_seidel_weak_coupling_solver",
-    "sdof"                         : "sdof_solver",
-    "mdof"                         : "mdof_solver"
-}
-
 def CreateSolver(cosim_solver_settings, level):
     """This function creates and returns the solvers used for CoSimulation
-    New solvers have to be registered by adding them to "available_solvers"
+    The solver-module has to be on the PYTHONPATH
+    Naming-Convention: The module-file has to end with "_solver"
     """
     if (type(cosim_solver_settings) != dict):
         raise Exception("Input is expected to be provided as a python dictionary")
 
-    solver_type = cosim_solver_settings["solver_type"]
+    solver_module_name = cosim_solver_settings["solver_type"] + "_solver"
 
-    if solver_type in available_solvers:
-        solver_module = __import__(available_solvers[solver_type])
-        solver = solver_module.CreateSolver(cosim_solver_settings, level+1)
-        if not isinstance(solver, CoSimulationBaseSolver):
-            err_msg  = 'The requested solver "' + solver_type
-            err_msg += '" does not derive from "CoSimulationBaseSolver"!'
-            raise Exception(err_msg)
-        return solver
-    else:
-        err_msg  = 'The requested solver "' + solver_type + '" is not available!\n'
-        err_msg += 'The following solvers are available:\n'
-        for avail_solver in available_solvers:
-            err_msg += "\t" + avail_solver + "\n"
-        raise NameError(err_msg)
+    solver_module = __import__(solver_module_name)
+    solver = solver_module.CreateSolver(cosim_solver_settings, level+1)
+    if not isinstance(solver, CoSimulationBaseSolver):
+        err_msg  = 'The requested solver "' + solver_type
+        err_msg += '" does not derive from "CoSimulationBaseSolver"!'
+        raise Exception(err_msg)
+    return solver

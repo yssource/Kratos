@@ -11,7 +11,7 @@ from co_simulation_tools import couplingsolverprint, green
 def CreateSolver(cosim_solver_settings, level):
     return GaussSeidelWeakCouplingSolver(cosim_solver_settings, level)
 
-class GaussSeidelWeakCouplingSolver(CoSimulationBaseCouplingSolver): ## TODO I think the name should contain GaussSeidel
+class GaussSeidelWeakCouplingSolver(CoSimulationBaseCouplingSolver):
     def SolveSolutionStep(self):
         for solver_name in self.solver_names:
             solver = self.solvers[solver_name]

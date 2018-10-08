@@ -1,28 +1,14 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
-available_convergence_accelerators = {
-    "constant_relaxation"  : "constant",
-    "aitken"               : "aitken",
-    "iqnils"               : "iqnils",
-    "mvqn"                 : "mvqn",
-    "anderson"             : "anderson"
-}
-
-def CreateConvergenceAccelerator(settings, solvers, level):
-    """This function creates and returns the convergence accelerator used for CoSimulation
-    New convergence accelerators have to be registered by adding them to "available_convergence_accelerators"
+def CreateConvergenceAccelerator(convergence_accelerator_settings, solvers, level):
+    """This function creates and returns the Convergence Accelerator used for CoSimulation
+    The convergence-accelerator-module has to be on the PYTHONPATH
+    Naming-Convention: The module-file has to end with "_convergence_accelerator"
     """
-    if (type(settings) != dict):
+    if (type(convergence_accelerator_settings) != dict):
         raise Exception("Input is expected to be provided as a python dictionary")
 
-    accelerator_type = settings["type"]
+    conv_acc_module_name = convergence_accelerator_settings["type"] + "_convergence_accelerator"
 
-    if accelerator_type in available_convergence_accelerators:
-        accelerator_module = __import__(available_convergence_accelerators[accelerator_type])
-        return accelerator_module.Create(settings, solvers, level)
-    else:
-        err_msg  = 'The requested convergence accelerator "' + accelerator_type + '" is not available!\n'
-        err_msg += 'The following convergence accelerators are available:\n'
-        for avail_accelerator in available_convergence_accelerators:
-            err_msg += "\t" + avail_accelerator + "\n"
-        raise NameError(err_msg)
+    accelerator_module = __import__(conv_acc_module_name)
+    return accelerator_module.Create(convergence_accelerator_settings, solvers, level)

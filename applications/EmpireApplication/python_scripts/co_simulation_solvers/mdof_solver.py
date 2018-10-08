@@ -13,16 +13,6 @@ import numpy as np
 import json
 import os
 
-available_mdof_models = ["sdof",
-                         "cantilever_shear_2d",
-                         "cantilever_eb_beam_2d",
-                         "bridge_2dof"]
-
-available_schemes = ["forward_euler1",
-                     "euler12",
-                     "generalized_alpha",
-                     "bdf2"]
-
 def CreateSolver(cosim_solver_settings, level):
     return MDoFSolver(cosim_solver_settings, level)
 
@@ -39,23 +29,11 @@ class MDoFSolver(CoSimulationBaseSolver):
 
         # creating model using a certain module
         model_type = parameters["model_parameters"]["type"]
-        if not(model_type in available_mdof_models):
-            err_msg  = 'The requested mdof model "' + model_type + '" is not available!\n'
-            err_msg += 'The following mdof models are available:\n'
-            for avail_model in available_mdof_models:
-                err_msg += "\t" + avail_model + "\n"
-            raise NameError(err_msg)
         model_module = __import__("mdof_" + model_type + "_model")
         self.model = model_module.CreateModel(parameters["model_parameters"])
 
         # creating model using a certain module
         scheme_type = parameters["time_integration_scheme_parameters"]["type"]
-        if not(scheme_type in available_schemes):
-            err_msg  = 'The requested time integration scheme "' + model_type + '" is not available!\n'
-            err_msg += 'The following time integration schemes are available:\n'
-            for avail_scheme in available_schemes:
-                err_msg += "\t" + avail_scheme + "\n"
-            raise NameError(err_msg)
         scheme_module = __import__("time_integration_" + scheme_type + "_scheme")
         self.scheme = scheme_module.CreateScheme(parameters["time_integration_scheme_parameters"])
 

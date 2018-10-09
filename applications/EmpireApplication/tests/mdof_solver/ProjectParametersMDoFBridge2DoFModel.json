@@ -17,8 +17,8 @@
     },
     "time_integration_scheme_parameters":{
         "type" : "generalized_alpha",
-        "time_step" : 0.01,
         "settings": {
+            "time_step" : 0.01,
             "p_inf" : 0.15
         }
     },

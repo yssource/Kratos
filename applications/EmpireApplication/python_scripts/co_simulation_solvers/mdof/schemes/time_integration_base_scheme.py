@@ -1,5 +1,8 @@
 from __future__ import print_function, absolute_import, division  # makes these scripts backward compatible with python 2.6 and 2.7
 
+# Importing tools
+from co_simulation_tools import ValidateAndAssignDefaults
+
 # Other imports
 import numpy as np
 import json
@@ -10,6 +13,14 @@ class TimeIntegrationBaseScheme(object):
     """
     def __init__(self, scheme_settings):
 
+        default_settings = {
+                "time_step"     : 0.01,
+                "buffer_size"   : 1,
+                "nr_of_dofs"    : 2
+            }
+
+        ValidateAndAssignDefaults(default_settings, scheme_settings)
+
         # time step
         self.dt = scheme_settings["time_step"]
 
@@ -17,10 +28,10 @@ class TimeIntegrationBaseScheme(object):
         # 2nd dimension: buffer size -> needed by the scheme NOT user-specified
         # see distinction to the buffer size for the solver which IS user-specified
         # 3rd dimension: number of dofs
-        self.buffer_size = scheme_settings["settings"]["buffer_size"]
+        self.buffer_size = scheme_settings["buffer_size"]
         self.buffer = np.zeros((4,
                                 self.buffer_size,
-                                scheme_settings["settings"]["nr_of_dofs"]))
+                                scheme_settings["nr_of_dofs"]))
 
         # u0 -> u(current-)0
         # u1 -> u(current-)1

@@ -2,7 +2,9 @@ from __future__ import print_function, absolute_import, division  # makes these 
 
 # Importing the base class
 from time_integration_base_scheme import TimeIntegrationBaseScheme
-from co_simulation_tools import RecursivelyValidateAndAssignDefaults
+
+# Importing tools
+from co_simulation_tools import ValidateAndAssignDefaults
 
 # Other imports
 import numpy as np
@@ -23,18 +25,18 @@ class TimeIntegrationForwardEuler1Scheme(TimeIntegrationBaseScheme):
     def __init__(self, scheme_settings):
 
         default_settings = {
-                "type"          : "forward_euler1",
-                "time_step"     : 0.01,
-                "settings": {
-                    "nr_of_dofs"    : 1,
-                    "buffer_size"   : 3
-                }
+                "type"      : "forward_euler1",
+                "settings"  : {}
             }
 
-        RecursivelyValidateAndAssignDefaults(default_settings, scheme_settings)
+        ValidateAndAssignDefaults(default_settings, scheme_settings)
+
+        # add buffer size - this is not user-specified
+        # each derived scheme specifies it
+        scheme_settings["settings"].update({"buffer_size":3})
 
         # base scheme settings
-        super(TimeIntegrationForwardEuler1Scheme, self).__init__(scheme_settings)
+        super(TimeIntegrationForwardEuler1Scheme, self).__init__(scheme_settings["settings"])
 
     def _AssembleLHS(self, model):
         """

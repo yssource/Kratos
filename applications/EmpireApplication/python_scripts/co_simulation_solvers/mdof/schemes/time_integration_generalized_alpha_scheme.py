@@ -2,7 +2,9 @@ from __future__ import print_function, absolute_import, division  # makes these 
 
 # Importing the base class
 from time_integration_base_scheme import TimeIntegrationBaseScheme
-from co_simulation_tools import RecursivelyValidateAndAssignDefaults
+
+# Importing tools
+from co_simulation_tools import ValidateAndAssignDefaults
 
 # Other imports
 import numpy as np
@@ -21,22 +23,30 @@ class TimeIntegrationGeneralizedAlphaScheme(TimeIntegrationBaseScheme):
     def __init__(self, scheme_settings):
 
         default_settings = {
-                "type" : "generalized_alpha",
-                "time_step" : 0.01,
-                "settings": {
-                    "p_inf" : 0.15,
-                    "nr_of_dofs"    : 1,
-                    "buffer_size"   : 2
-                }
+                "type"      : "generalized_alpha",
+                "settings"  : {}
             }
 
-        RecursivelyValidateAndAssignDefaults(default_settings, scheme_settings)
+        ValidateAndAssignDefaults(default_settings, scheme_settings)
+
+        # validate, assign and remove custom settings
+        key = "p_inf"
+        if key in scheme_settings["settings"].keys():
+            pInf = scheme_settings["settings"]["p_inf"]
+            scheme_settings["settings"].pop("p_inf")
+        else:
+            err_msg  = 'The item with name "' + key + '" is not present '
+            err_msg += 'in the settings\n'
+            raise Exception(err_msg)
+
+        # add buffer size - this is not user-specified
+        # each derived scheme specifies it
+        scheme_settings["settings"].update({"buffer_size":2})
 
         # base scheme settings
-        super(TimeIntegrationGeneralizedAlphaScheme, self).__init__(scheme_settings)
+        super(TimeIntegrationGeneralizedAlphaScheme, self).__init__(scheme_settings["settings"])
 
         # custom scheme settiungs
-        pInf = scheme_settings["settings"]["p_inf"]
         self.alphaM = (2.0 * pInf - 1.0) / (pInf + 1.0)
         self.alphaF = pInf / (pInf + 1.0)
         self.beta = 0.25 * (1 - self.alphaM + self.alphaF)**2

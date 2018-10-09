@@ -31,10 +31,10 @@ class TestCoSimulationCases(co_simulation_test_case.CoSimulationTestCase):
             self.createTest("fsi_sdof_drag_rectangle", "cosim_sdof_drag_rectangle_fsi")
             self.runTest()
 
-    def test_MDoFDragPitchRectangleFSI(self):
-        with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
-            self.createTest("fsi_mdof_drag_pitch_rectangle", "cosim_mdof_drag_pitch_rectangle_fsi")
-            self.runTest()
+    # def test_MDoFDragPitchRectangleFSI(self):
+    #     with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
+    #         self.createTest("fsi_mdof_drag_pitch_rectangle", "cosim_mdof_drag_pitch_rectangle_fsi")
+    #         self.runTest()
 
 if __name__ == '__main__':
     KratosUnittest.main()

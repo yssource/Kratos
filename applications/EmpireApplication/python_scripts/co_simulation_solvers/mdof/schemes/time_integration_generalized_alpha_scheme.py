@@ -35,8 +35,8 @@ class TimeIntegrationGeneralizedAlphaScheme(TimeIntegrationBaseScheme):
             pInf = scheme_settings["settings"]["p_inf"]
             scheme_settings["settings"].pop("p_inf")
         else:
-            err_msg  = 'The item with name "' + key + '" is not present '
-            err_msg += 'in the settings\n'
+            err_msg  = 'The item with name "' + key
+            err_msg += '" is not present in the settings\n'
             raise Exception(err_msg)
 
         # add buffer size - this is not user-specified

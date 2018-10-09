@@ -77,6 +77,15 @@ class TestMDoFSolver(co_simulation_test_case.CoSimulationTestCase):
             result_file = os.path.join(folder_name,"results_mdof_sdof.dat")
             compareResults(reference_file, result_file)
 
+    def test_MDoFGenericModel(self):
+        with co_simulation_test_case.ControlledExecutionScope(os.path.dirname(os.path.realpath(__file__))):
+            folder_name = "mdof_solver"
+            self.createTest(folder_name, "cosim_mdof_generic")
+            self.runTest()
+            reference_file = os.path.join(folder_name,"results_mdof_generic_ref.dat")
+            result_file = os.path.join(folder_name,"results_mdof_generic.dat")
+            compareResults(reference_file, result_file)
+
     def test_MDoFCantileverShear2DModel(self):
         if not scipy_and_sympy_available:
             self.skipTest("Scipy/Sympy not available")

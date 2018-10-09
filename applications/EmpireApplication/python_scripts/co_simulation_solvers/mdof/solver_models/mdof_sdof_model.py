@@ -16,7 +16,7 @@ class MDoFSDoFModel(MDoFBaseModel):
     """
     A single-degree-of-freedom SDoF model
 
-    Using for testing of the MDoF solver
+    Uses the MDoF solver
     """
     def __init__(self, model_settings):
 

@@ -57,7 +57,6 @@ class MDoFBaseModel(object):
         """
         """
         pass
-        return None
 
     def _Name(self):
         return self.__class__.__name__
@@ -66,10 +65,8 @@ class MDoFBaseModel(object):
         """
         """
         pass
-        return None
 
     def _SetupInitialValues(self):
         """
         """
         pass
-        return None

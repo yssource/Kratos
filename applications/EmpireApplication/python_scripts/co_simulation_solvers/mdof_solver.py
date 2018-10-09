@@ -35,6 +35,12 @@ class MDoFSolver(CoSimulationBaseSolver):
         # creating model using a certain module
         scheme_type = parameters["time_integration_scheme_parameters"]["type"]
         scheme_module = __import__("time_integration_" + scheme_type + "_scheme")
+        # adding the number of dofs for the constructor of the scheme
+        nr_of_dofs = len(self.model.u0)
+        if "settings" in parameters["time_integration_scheme_parameters"]:
+            parameters["time_integration_scheme_parameters"]["settings"].update({"nr_of_dofs":len(self.model.u0)})
+        else:
+            parameters["time_integration_scheme_parameters"].update({"settings":{"nr_of_dofs":len(self.model.u0)}})
         self.scheme = scheme_module.CreateScheme(parameters["time_integration_scheme_parameters"])
 
         default_solver_settings = {
@@ -55,21 +61,18 @@ class MDoFSolver(CoSimulationBaseSolver):
         # PMT this might not be needed
         self.load_vector = None
 
+        # 1st dimension: variables: disp, acc, vel
+        # 2nd dimension: buffer size -> specified by user
+        # see distinction to the buffer size for the scheme which is scheme-specific
+        # 3rd dimension: number of dofs
+        self.buffer = np.zeros((3, self.buffer_size, nr_of_dofs))
+
     def Initialize(self):
         if os.path.isfile(self.output_file_name):
             os.remove(self.output_file_name)
 
-        # 1st dimension: variables: disp, acc, vel
-        # 2nd dimension: buffer size
-        # 3rd dimension: number of dofs
-        self.x = np.zeros((3, self.buffer_size, len(self.model.u0)))
-
         # initialize scheme parameters
         self.scheme.Initialize(self.model)
-
-        self.dx = np.array([self.scheme.GetDisplacement(),
-                            self.scheme.GetVelocity(),
-                            self.scheme.GetAcceleration()])
 
         # PMT is this needed?
         self.load_vector = self.scheme.GetLoad()
@@ -78,29 +81,19 @@ class MDoFSolver(CoSimulationBaseSolver):
         return self.scheme.Predict()
 
     def OutputSolutionStep(self):
-        # PMT: check if this syntax is still ok for MDoF
         with open(self.output_file_name, "a") as results_sdof:
-            #outputs displacements
-            results_sdof.write(str(self.time) + "\t" + " ".join(str(value) for value in self.dx[0]) + "\n")
+            # outputs (generic) displacements for each dof
+            results_sdof.write(str(self.time) + "\t" + " ".join(str(value) for value in self.buffer[0,0,:]) + "\n")
 
     def AdvanceInTime(self, current_time):
-        # PMT: check if this syntax is still ok for MDoF
-
         # similar to the Kratos CloneTimeStep function
         # advances values along the buffer axis (so rolling columns) using numpy's roll
 
-        self.x = np.roll(self.x,1,axis=1)
+        self.buffer = np.roll(self.buffer,1,axis=1)
         # overwriting at the buffer_idx=0 the newest values
-        #buffer_idx = 0
-        #self.x[:,buffer_idx] = self.dx
-
-        self.dx[0] = self.scheme.GetDisplacement()
-        self.dx[1] = self.scheme.GetVelocity()
-        self.dx[2] = self.scheme.GetAcceleration()
-
-        self.x[0,0,:] = self.dx[0]
-        self.x[1,0,:] = self.dx[1]
-        self.x[2,0,:] = self.dx[2]
+        self.buffer[0,0,:] = self.scheme.GetDisplacement()
+        self.buffer[1,0,:] = self.scheme.GetVelocity()
+        self.buffer[2,0,:] = self.scheme.GetAcceleration()
 
         # update displacement, velocity and acceleration
         self.scheme.AdvanceScheme()
@@ -121,30 +114,24 @@ class MDoFSolver(CoSimulationBaseSolver):
         return self.scheme.dt
 
     def GetSolutionStepValue(self, identifier, buffer_idx=0):
-        #
-        # PMT: check if this syntax is still ok for MDoF
-        #
-
+        # PMT: what should be get: the buffer value in solver or scheme?
         if identifier == "DISPLACEMENT":
-            return self.x[:,buffer_idx][0]
+            return self.buffer[0,buffer_idx,:]
         elif identifier == "VELOCITY":
-            return self.x[:,buffer_idx][1]
+            return self.buffer[1,buffer_idx,:]
         elif identifier == "ACCELERATION":
-            return self.x[:,buffer_idx][2]
+            return self.buffer[2,buffer_idx,:]
         else:
             raise Exception("Identifier is unknown!")
 
     def SetSolutionStepValue(self, identifier, value, buffer_idx=0):
-        #
-        # PMT: check if this syntax is still ok for MDoF
-        #
-
+        # PMT: what should be set: the buffer value in solver or scheme?
         if identifier == "DISPLACEMENT":
-            self.x[:,buffer_idx][0] = value
+            self.buffer[0,buffer_idx,:] = value
         elif identifier == "VELOCITY":
-            self.x[:,buffer_idx][1] = value
+            self.buffer[1,buffer_idx,:] = value
         elif identifier == "ACCELERATION":
-            self.x[:,buffer_idx][2] = value
+            self.buffer[2,buffer_idx,:] = value
         else:
             raise Exception("Identifier is unknown!")
 
@@ -159,7 +146,7 @@ class MDoFSolver(CoSimulationBaseSolver):
         elif identifier == "DISPLACEMENT":
             # first index is displacement
             # maybe use buffer index
-            self.SetSolutionStepValue("DISPLACEMENT", data,0)
+            self.SetSolutionStepValue("DISPLACEMENT", data)
         else:
             raise Exception("Identifier is unknown!")
 
@@ -173,7 +160,7 @@ class MDoFSolver(CoSimulationBaseSolver):
             return self.load_vector[-1]
         elif identifier == "DISPLACEMENT":
             # first index is displacement
-            return self.GetSolutionStepValue("DISPLACEMENT",0)
+            return self.GetSolutionStepValue("DISPLACEMENT")
         else:
             raise Exception("Identifier is unknown!")
 

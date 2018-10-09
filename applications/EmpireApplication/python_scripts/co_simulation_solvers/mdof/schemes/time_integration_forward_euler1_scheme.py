@@ -23,12 +23,17 @@ class TimeIntegrationForwardEuler1Scheme(TimeIntegrationBaseScheme):
     def __init__(self, scheme_settings):
 
         default_settings = {
-                "type" : "forward_euler1",
-                "time_step" : 0.01,
+                "type"          : "forward_euler1",
+                "time_step"     : 0.01,
+                "settings": {
+                    "nr_of_dofs"    : 1,
+                    "buffer_size"   : 3
+                }
             }
 
         RecursivelyValidateAndAssignDefaults(default_settings, scheme_settings)
 
+        # base scheme settings
         super(TimeIntegrationForwardEuler1Scheme, self).__init__(scheme_settings)
 
     def _AssembleLHS(self, model):
@@ -39,16 +44,16 @@ class TimeIntegrationForwardEuler1Scheme(TimeIntegrationBaseScheme):
     def _AssembleRHS(self, model):
         """
         """
-        self.f0 = self.force
+        self.buffer[3,0,:] = self.force
 
-        RHS = self.f0 * self.dt**2
-        RHS -= np.dot(- 2 * model.m - model.b * self.dt, self.u1)
-        RHS -= np.dot(model.m, self.u2)
+        RHS = self.buffer[3,0,:] * self.dt**2
+        RHS -= np.dot(- 2 * model.m - model.b * self.dt, self.buffer[0,1,:])
+        RHS -= np.dot(model.m, self.buffer[0,2,:])
 
         return RHS
 
     def UpdateDerivedValues(self):
         """
         """
-        self.v0 = (self.u0 - self.u1) / self.dt
-        self.a0 = (self.u0 - 2 * self.u1 + self.u2) / self.dt**2
+        self.buffer[1,0,:] = (self.buffer[0,0,:] - self.buffer[0,1,:]) / self.dt
+        self.buffer[2,0,:] = (self.buffer[0,0,:] - 2 * self.buffer[0,1,:] + self.buffer[0,2,:]) / self.dt**2

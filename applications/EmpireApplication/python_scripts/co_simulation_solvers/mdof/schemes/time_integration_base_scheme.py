@@ -10,62 +10,42 @@ class TimeIntegrationBaseScheme(object):
     """
     def __init__(self, scheme_settings):
 
-        # provide and validate default setttings
-        #default_settings = None
-
         # time step
-        self.dt = None
+        self.dt = scheme_settings["time_step"]
 
-        # placeholders initial values and predictions
-        # initial displacement, velocity and acceleration
+        # 1st dimension: variables: disp, acc, vel, force
+        # 2nd dimension: buffer size -> needed by the scheme NOT user-specified
+        # see distinction to the buffer size for the solver which IS user-specified
+        # 3rd dimension: number of dofs
+        self.buffer_size = scheme_settings["settings"]["buffer_size"]
+        self.buffer = np.zeros((4,
+                                self.buffer_size,
+                                scheme_settings["settings"]["nr_of_dofs"]))
 
         # u0 -> u(current-)0
-        self.u0 = None
-        self.v0 = None
-        self.a0 = None
-
-        # initial displacement, velocity and acceleration
         # u1 -> u(current-)1
-        self.u1 = self.u0
-        self.v1 = self.v0
-        self.a1 = self.a0
+        # ... i-th...
+        # ui -> u(current-)i
 
-        # u2 -> u(current-)2
-        self.u2 = self.u1
-        self.v2 = self.v1
-        self.a2 = self.a1
-
-		# force from a previous time step (initial force)
-        self.f0 = None
-        self.f1 = None
-        self.f2 = None
+        # PMT check if this is needed
+        self.force = None
 
     def Initialize(self, model):
         """
         """
-        # initial displacement, velocity and acceleration
-        self.u0 = model.u0
-        self.v0 = model.v0
-        self.a0 = model.a0
-        # initial force
-        # PMT is this needed/correct like this?
+        for idx in range(self.buffer_size):
+            self.buffer[0,idx,:] = model.u0
+            self.buffer[1,idx,:] = model.v0
+            self.buffer[2,idx,:] = model.a0
+            self.buffer[3,idx,:] = model.f0
+
+        # PMT check if this is needed
         self.force = model.f0
-
-        # initial displacement, velocity and acceleration
-        self.u1 = self.u0
-        self.v1 = self.v0
-        self.a1 = self.a0
-
-        self.u2 = self.u1
-        self.v2 = self.v1
-        self.a2 = self.a1
-
-        self.f0 = self.force
 
     def Predict(self):
         """
         """
-        return 2.0 * self.u0 - self.u1
+        return 2.0 * self.buffer[0,0,:] - self.buffer[0,1,:]
 
     def _AssembleLHS(self, model):
         """
@@ -78,67 +58,59 @@ class TimeIntegrationBaseScheme(object):
         pass
 
     def Solve(self, model):
-        # sys of eq reads: LHS * u1 = RHS
+        # sys of eq reads: LHS * u0 = RHS
         LHS = self._AssembleLHS(model)
         RHS = self._AssembleRHS(model)
-        self.u0 = np.linalg.solve(LHS, RHS)
+        self.buffer[0,0,:] = np.linalg.solve(LHS, RHS)
 
     def UpdateDerivedValues(self):
         """
         """
         pass
 
-    # PMT check indices
-    # u0 -> current
-    # u1 -> old? rather new? being solved for
     def GetDisplacement(self):
         """
         """
-        return self.u0
+        return self.buffer[0,0,:]
 
     def GetVelocity(self):
         """
         """
-        return self.v0
+        return self.buffer[1,0,:]
 
     def GetAcceleration(self):
         """
         """
-        return self.a0
+        return self.buffer[2,0,:]
 
     def GetLoad(self):
         """
         """
-        return self.f0
+        return self.buffer[3,0,:]
 
     def GetPreviousDisplacement(self):
         """
         """
-        return self.u1
+        return self.buffer[0,1,:]
 
     def GetPreviousVelocity(self):
         """
         """
-        return self.v1
+        return self.buffer[1,1,:]
 
     def GetPreviousAcceleration(self):
         """
         """
-        return self.a1
+        return self.buffer[2,1,:]
 
     def GetPreviousLoad(self):
         """
         """
-        return self.f1
+        return self.buffer[3,1,:]
 
     def AdvanceScheme(self):
-
-        self.u2 = self.u1
-        self.v2 = self.v1
-        self.a2 = self.a1
-        self.f2 = self.f1
-
-        self.u1 = self.u0
-        self.v1 = self.v0
-        self.a1 = self.a0
-        self.f1 = self.f0
+        for idx in range(self.buffer_size-1):
+            self.buffer[0,-1-idx,:] = self.buffer[0,-1-(idx+1),:]
+            self.buffer[1,-1-idx,:] = self.buffer[1,-1-(idx+1),:]
+            self.buffer[2,-1-idx,:] = self.buffer[2,-1-(idx+1),:]
+            self.buffer[3,-1-idx,:] = self.buffer[3,-1-(idx+1),:]

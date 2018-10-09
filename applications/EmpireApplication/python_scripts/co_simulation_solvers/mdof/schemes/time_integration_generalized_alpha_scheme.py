@@ -24,14 +24,18 @@ class TimeIntegrationGeneralizedAlphaScheme(TimeIntegrationBaseScheme):
                 "type" : "generalized_alpha",
                 "time_step" : 0.01,
                 "settings": {
-                    "p_inf" : 0.15
+                    "p_inf" : 0.15,
+                    "nr_of_dofs"    : 1,
+                    "buffer_size"   : 2
                 }
             }
 
         RecursivelyValidateAndAssignDefaults(default_settings, scheme_settings)
 
-        # time step
-        self.dt = scheme_settings["time_step"]
+        # base scheme settings
+        super(TimeIntegrationGeneralizedAlphaScheme, self).__init__(scheme_settings)
+
+        # custom scheme settiungs
         pInf = scheme_settings["settings"]["p_inf"]
         self.alphaM = (2.0 * pInf - 1.0) / (pInf + 1.0)
         self.alphaF = pInf / (pInf + 1.0)
@@ -66,42 +70,15 @@ class TimeIntegrationGeneralizedAlphaScheme(TimeIntegrationBaseScheme):
         self.a2a = -1.0 / (self.beta * self.dt)
         self.a3a = 1.0 - 1.0 / (2.0 * self.beta)
 
-        # initial displacement, velocity and acceleration
-        self.u0 = None
-        self.v0 = None
-        self.a0 = None
-        # initial force
-        # PMT is this needed/correct like this?
-        self.force = None
-
-        # initial displacement, velocity and acceleration
-        self.u1 = self.u0
-        self.v1 = self.v0
-        self.a1 = self.a0
-
-		# force from a previous time step (initial force)
-        self.f0 = None
-        self.f1 = None
-
     def Initialize(self, model):
         """
         """
-        # initial displacement, velocity and acceleration
-        self.u0 = model.u0
-        self.v0 = model.v0
-        self.a0 = model.a0
-        # initial force
-        # PMT is this needed/correct like this?
-        self.force = model.f0
+        # call function from base
+        super(TimeIntegrationGeneralizedAlphaScheme, self).Initialize(model)
 
-        # initial displacement, velocity and acceleration
-        self.u1 = self.u0
-        self.v1 = self.v0
-        self.a1 = self.a0
-
-		# force from a previous time step (initial force)
-        self.f0 = np.dot(model.m,self.a0) + np.dot(model.b,self.v0) + np.dot(model.k,self.u0)
-        self.f1 = np.dot(model.m,self.a1) + np.dot(model.b,self.v1) + np.dot(model.k,self.u1)
+		# overwrite with scheme-specific values
+        self.buffer[3,0,:] = np.dot(model.m,self.buffer[2,0,:]) + np.dot(model.b,self.buffer[1,0,:]) + np.dot(model.k,self.buffer[0,0,:])
+        self.buffer[3,1,:] = np.dot(model.m,self.buffer[2,1,:]) + np.dot(model.b,self.buffer[1,1,:]) + np.dot(model.k,self.buffer[0,1,:])
 
     def _AssembleLHS(self, model):
         """
@@ -116,17 +93,16 @@ class TimeIntegrationGeneralizedAlphaScheme(TimeIntegrationBaseScheme):
         # should be AssembleRHS(self, model, f1)
         #F = (1.0 - self.alphaF) * f1 + self.alphaF * self.f0
 
-        f = (1.0 - self.alphaF) * self.force + self.alphaF * self.f1
-        RHS = np.dot(model.m,(self.a1m * self.u1 + self.a2m * self.v1 + self.a3m * self.a1))
-        RHS += np.dot(model.b,(self.a1b * self.u1 + self.a2b * self.v1 + self.a3b * self.a1))
-        RHS += np.dot(self.a1k * model.k, self.u1) + f
+        f = (1.0 - self.alphaF) * self.force + self.alphaF * self.buffer[3,1,:]
+        RHS = np.dot(model.m,(self.a1m * self.buffer[0,1,:] + self.a2m * self.buffer[1,1,:] + self.a3m * self.buffer[2,1,:]))
+        RHS += np.dot(model.b,(self.a1b * self.buffer[0,1,:] + self.a2b * self.buffer[1,1,:] + self.a3b * self.buffer[2,1,:]))
+        RHS += np.dot(self.a1k * model.k, self.buffer[0,1,:]) + f
 
-        # and here an update of self.f1
-        self.f0 = self.force
+        self.buffer[3,0,:] = self.force
         return RHS
 
     def UpdateDerivedValues(self):
         """
         """
-        self.v0 = self.a1v * (self.u0 - self.u1) + self.a2v * self.v1 + self.a3v * self.a1
-        self.a0 = self.a1a * (self.u0 - self.u1) + self.a2a * self.v1 + self.a3a * self.a1
+        self.buffer[1,0,:] = self.a1v * (self.buffer[0,0,:] - self.buffer[0,1,:]) + self.a2v * self.buffer[1,1,:] + self.a3v * self.buffer[2,1,:]
+        self.buffer[2,0,:] = self.a1a * (self.buffer[0,0,:] - self.buffer[0,1,:]) + self.a2a * self.buffer[1,1,:] + self.a3a * self.buffer[2,1,:]

@@ -25,10 +25,15 @@ class TimeIntegrationEuler12Scheme(TimeIntegrationBaseScheme):
         default_settings = {
                 "type" : "euler12",
                 "time_step" : 0.01,
+                "settings": {
+                    "nr_of_dofs"    : 1,
+                    "buffer_size"   : 3
+                }
             }
 
         RecursivelyValidateAndAssignDefaults(default_settings, scheme_settings)
 
+        # base scheme settings
         super(TimeIntegrationEuler12Scheme, self).__init__(scheme_settings)
 
     def _AssembleLHS(self, model):
@@ -39,16 +44,16 @@ class TimeIntegrationEuler12Scheme(TimeIntegrationBaseScheme):
     def _AssembleRHS(self, model):
         """
         """
-        self.f0 = self.force
+        self.buffer[3,0,:] = self.force
 
-        RHS = self.f1 * self.dt**2
-        RHS += np.dot(2 * model.m - model.k * self.dt**2, self.u1)
-        RHS += np.dot(- model.m + 0.5 * model.b * self.dt, self.u2)
+        RHS = self.buffer[3,1,:] * self.dt**2
+        RHS += np.dot(2 * model.m - model.k * self.dt**2, self.buffer[0,1,:])
+        RHS += np.dot(- model.m + 0.5 * model.b * self.dt, self.buffer[0,2,:])
 
         return RHS
 
     def UpdateDerivedValues(self):
         """
         """
-        self.v0 = (self.u0 - self. u2) * 0.5 / self.dt
-        self.a0 = (self.u0 - 2 * self.u1 + self.u2) / self.dt**2
+        self.buffer[1,0,:] = (self.buffer[0,0,:] - self.buffer[0,2,:]) * 0.5 / self.dt
+        self.buffer[2,0,:] = (self.buffer[0,0,:] - 2 * self.buffer[0,1,:] + self.buffer[0,2,:]) / self.dt**2

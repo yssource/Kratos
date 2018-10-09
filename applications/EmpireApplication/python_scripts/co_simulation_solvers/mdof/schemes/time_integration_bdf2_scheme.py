@@ -26,30 +26,15 @@ class TimeIntegrationBDF2Scheme(TimeIntegrationBaseScheme):
                 "type" : "bdf2",
                 "time_step" : 0.01,
                 "settings" : {
-                    "alpha_m"   : -0.5,
-                    "alpha_f"   : -0.5
+                    "nr_of_dofs"    : 1,
+                    "buffer_size"   : 4
                 }
             }
 
         RecursivelyValidateAndAssignDefaults(default_settings, scheme_settings)
 
-        # time step
-        self.dt = scheme_settings["time_step"]
-        self.alpha_m = scheme_settings["settings"]["alpha_m"]
-        self.alpha_f = scheme_settings["settings"]["alpha_f"]
-
-        # placeholders initial values and predictions
-        # initial displacement, velocity and acceleration
-        self.u0 = None
-        self.v0 = None
-        self.a0 = None
-
-        # initial displacement, velocity and acceleration
-        self.u1 = self.u0
-        self.v1 = self.v0
-        self.a1 = self.a0
-
-        self.force = None
+        # base scheme settings
+        super(TimeIntegrationBDF2Scheme, self).__init__(scheme_settings)
 
     def Initialize(self, model):
         """

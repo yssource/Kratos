@@ -93,7 +93,7 @@ class AlgorithmSteepestDescent(OptimizationAlgorithm):
 
             timer.StartNewLap()
 
-            self.__initializeNewShape()
+            # self.__initializeNewShape()
 
             self.__analyzeShape()
 
@@ -114,10 +114,10 @@ class AlgorithmSteepestDescent(OptimizationAlgorithm):
         self.DataLogger.FinalizeDataLogging()
         self.Analyzer.FinalizeAfterOptimizationLoop()
 
-    # --------------------------------------------------------------------------
-    def __initializeNewShape(self):
-        self.ModelPartController.UpdateMeshAccordingInputVariable(SHAPE_UPDATE)
-        self.ModelPartController.SetReferenceMeshToMesh()
+    # # --------------------------------------------------------------------------
+    # def __initializeNewShape(self):
+    #     self.ModelPartController.UpdateMeshAccordingInputVariable(SHAPE_UPDATE)
+    #     self.ModelPartController.SetReferenceMeshToMesh()
 
     # --------------------------------------------------------------------------
     def __analyzeShape(self):
@@ -125,7 +125,7 @@ class AlgorithmSteepestDescent(OptimizationAlgorithm):
         self.Communicator.requestValueOf(self.only_obj["identifier"].GetString())
         self.Communicator.requestGradientOf(self.only_obj["identifier"].GetString())
 
-        self.Analyzer.AnalyzeDesignAndReportToCommunicator(self.DesignSurface, self.optimization_iteration, self.Communicator)
+        self.Analyzer.AnalyzeDesignAndReportToCommunicator(self.DesignSurface, self.optimization_iteration, self.Communicator, self.ModelPartController)
 
         objGradientDict = self.Communicator.getStandardizedGradient(self.only_obj["identifier"].GetString())
         WriteDictionaryDataOnNodalVariable(objGradientDict, self.OptimizationModelPart, DF1DX)

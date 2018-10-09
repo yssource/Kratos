@@ -22,7 +22,7 @@ class AnalyzerBaseClass:
         pass
 
     # --------------------------------------------------------------------------
-    def AnalyzeDesignAndReportToCommunicator(self, current_design, optimization_iteration, communicator):
+    def AnalyzeDesignAndReportToCommunicator(self, current_design, optimization_iteration, communicator, model_part_controller):
         raise RuntimeError("Analyzer base class is called. Please check your implementation of the function >> AnalyzeDesignAndReportToCommunicator << .")
 
     # --------------------------------------------------------------------------

@@ -77,7 +77,7 @@ class CustomSU2Analyzer(AnalyzerBaseClass):
         csm_response.Initialize()
 
     # --------------------------------------------------------------------------------------------------
-    def AnalyzeDesignAndReportToCommunicator(self, current_design, optimization_iteration, communicator):
+    def AnalyzeDesignAndReportToCommunicator(self, current_design, optimization_iteration, communicator, model_part_controller):
 
         # Update fluid mesh (structure is controlled by the optimization algorithm)
         self.cfd_interface_mdpa.ProcessInfo[TIME] = optimization_iteration
@@ -116,6 +116,9 @@ class CustomSU2Analyzer(AnalyzerBaseClass):
                 update_mesh = False
                 [pressure_gradient] = self.interface_su2.ComputeGradient(["SURFACE_TOTAL_PRESSURE"], update_mesh, optimization_iteration)
 
+                # file_with_pressures = "DESIGNS/DSN_"+str(1).zfill(3)+"/ADJOINT_SURFACE_TOTAL_PRESSURE/surface_adjoint.csv"
+                # pressure_gradient = self.interface_su2.ReadNodalValuesFromCSVFile(file_with_pressures,0,[9,10,11],2)
+
                 WriteDictionaryDataOnNodalVariable(pressure_gradient, self.cfd_mdpa, DF1DX)
                 if parameters["optimization_settings"]["design_variables"]["damping"]["perform_damping"].GetBool():
                     self.cfd_interface_damping_utils.DampNodalVariable(DF1DX)
@@ -130,6 +133,10 @@ class CustomSU2Analyzer(AnalyzerBaseClass):
         self.cfd_interface_gid_output.PrintOutput()
         self.cfd_interface_gid_output.ExecuteFinalizeSolutionStep()
 
+        # Update CSM mesh
+        model_part_controller.UpdateMeshAccordingInputVariable(SHAPE_UPDATE)
+        model_part_controller.SetReferenceMeshToMesh()
+
         # Compute CSM
         if communicator.isRequestingValueOf("strain_energy") or \
            communicator.isRequestingGradientOf("strain_energy"):
@@ -141,7 +148,7 @@ class CustomSU2Analyzer(AnalyzerBaseClass):
 
             # Read / calculate fluid forces
             file_with_pressures = "DESIGNS/DSN_"+str(1).zfill(3)+"/DIRECT/surface_flow.csv"
-            pressure_values = self.interface_su2.ReadNodalValueFromCSVFile(file_with_pressures,0,4,True)
+            pressure_values = self.interface_su2.ReadNodalValuesFromCSVFile(file_with_pressures,0,[4],1)
 
             GeometryUtilities(self.cfd_interface_mdpa).ComputeUnitSurfaceNormals()
 

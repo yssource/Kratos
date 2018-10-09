@@ -33,7 +33,7 @@ class KratosInternalAnalyzer( (__import__("analyzer_base")).AnalyzerBaseClass ):
         for response in self.response_function_list.values():
             response.Initialize()
     # --------------------------------------------------------------------------
-    def AnalyzeDesignAndReportToCommunicator( self, currentDesign, optimizationIteration, communicator ):
+    def AnalyzeDesignAndReportToCommunicator( self, currentDesign, optimizationIteration, communicator, model_part_controller ):
 
         for identifier, response in self.response_function_list.items():
 

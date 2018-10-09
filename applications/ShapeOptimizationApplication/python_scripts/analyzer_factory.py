@@ -37,9 +37,9 @@ class Analyzer:
         self.external_analyzer.InitializeBeforeOptimizationLoop()
 
     # --------------------------------------------------------------------------
-    def AnalyzeDesignAndReportToCommunicator(self, current_design, unique_iterator, communicator):
-        self.internal_analyzer.AnalyzeDesignAndReportToCommunicator(current_design, unique_iterator, communicator)
-        self.external_analyzer.AnalyzeDesignAndReportToCommunicator(current_design, unique_iterator, communicator)
+    def AnalyzeDesignAndReportToCommunicator(self, current_design, unique_iterator, communicator, model_part_controller):
+        self.internal_analyzer.AnalyzeDesignAndReportToCommunicator(current_design, unique_iterator, communicator, model_part_controller)
+        self.external_analyzer.AnalyzeDesignAndReportToCommunicator(current_design, unique_iterator, communicator, model_part_controller)
 
         self.__ResetPossibleShapeModificationsFromAnalysis()
 

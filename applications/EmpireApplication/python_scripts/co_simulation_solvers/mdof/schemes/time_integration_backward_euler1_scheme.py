@@ -34,7 +34,7 @@ class TimeIntegrationBackwardEuler1Scheme(TimeIntegrationBaseScheme):
     def _AssembleLHS(self, model):
         """
         """
-        return (model.m)
+        return model.m
 
     def _AssembleRHS(self, model):
         """

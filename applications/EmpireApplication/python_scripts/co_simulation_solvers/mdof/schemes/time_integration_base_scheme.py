@@ -11,7 +11,7 @@ class TimeIntegrationBaseScheme(object):
     def __init__(self, scheme_settings):
 
         # provide and validate default setttings
-        default_settings = None
+        #default_settings = None
 
         # time step
         self.dt = None

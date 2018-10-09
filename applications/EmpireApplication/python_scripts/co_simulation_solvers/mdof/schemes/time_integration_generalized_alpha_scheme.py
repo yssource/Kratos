@@ -66,6 +66,23 @@ class TimeIntegrationGeneralizedAlphaScheme(TimeIntegrationBaseScheme):
         self.a2a = -1.0 / (self.beta * self.dt)
         self.a3a = 1.0 - 1.0 / (2.0 * self.beta)
 
+        # initial displacement, velocity and acceleration
+        self.u0 = None
+        self.v0 = None
+        self.a0 = None
+        # initial force
+        # PMT is this needed/correct like this?
+        self.force = None
+
+        # initial displacement, velocity and acceleration
+        self.u1 = self.u0
+        self.v1 = self.v0
+        self.a1 = self.a0
+
+		# force from a previous time step (initial force)
+        self.f0 = None
+        self.f1 = None
+
     def Initialize(self, model):
         """
         """

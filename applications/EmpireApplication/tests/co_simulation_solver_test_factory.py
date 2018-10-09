@@ -24,7 +24,6 @@ def compareResults(reference_file, results_file):
     {
         "reference_file_name"   : "",
         "output_file_name"      : "",
-        "remove_output_file"    : true,
         "comparison_type"     : "dat_file",
         "remove_output_file"    : true,
         "decimal_places"      : 5

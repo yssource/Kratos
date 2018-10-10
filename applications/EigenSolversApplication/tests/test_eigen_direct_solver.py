@@ -15,7 +15,7 @@ class TestEigenDirectSolver(KratosUnittest.TestCase):
 
         space = KratosMultiphysics.UblasSparseSpace()
 
-        settings = KratosMultiphysics.Parameters('{ "solver_type" : "' + solver_type + '" }')
+        settings = KratosMultiphysics.Parameters('{ "solver_type" : "' + solver_type + '", "out_of_core" : true }')
 
         solver = ConstructSolver(settings)
 

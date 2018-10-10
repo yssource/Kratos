@@ -2,7 +2,7 @@
     "su2_interface_settings" : {
         "su2_related": {
             "config_file"                 : "CFD_ubend_flow.cfg",
-            "number_of_cores"             : 8,
+            "number_of_cores"             : 10,
             "gradient_method"             : "DISCRETE_ADJOINT",
             "write_frequency_adjoint_run" : 1000,
             "mesh_file"                   : "CFD_ubend.su2",
@@ -53,7 +53,14 @@
                 "use_kratos" : false,
                 "project_gradient_on_surface_normals" : false
         }],
-        "constraints" : [],
+        "constraints" : [{
+            "identifier" : "strain_energy",
+            "type"       : "<",
+            "reference"  : "specified_value",
+            "reference_value" : 0.00006,
+            "use_kratos" : false,
+            "project_gradient_on_surface_normals" : false
+        }],
         "design_variables" : {
             "type"                               : "vertex_morphing",
             "optimization_model_part_name"       : "CSM_model_thin",
@@ -93,7 +100,9 @@
             }
         },
         "optimization_algorithm" : {
-            "name"                    : "steepest_descent",
+            "name"                    : "penalized_projection",
+            "correction_scaling"      : 0.1,
+            "use_adaptive_correction" : true,
             "max_iterations"          : 100,
             "relative_tolerance"      : -1e-0,
             "line_search" : {
@@ -109,6 +118,8 @@
             "design_output_mode"      : "WriteDesignSurface",
             "nodal_results"           : [ "DF1DX",
                                           "DF1DX_MAPPED",
+                                          "DC1DX",
+                                          "DC1DX_MAPPED",
                                           "SEARCH_DIRECTION",
                                           "CONTROL_POINT_UPDATE",
                                           "CONTROL_POINT_CHANGE",

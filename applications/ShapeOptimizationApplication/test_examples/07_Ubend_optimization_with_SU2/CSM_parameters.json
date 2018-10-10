@@ -19,7 +19,7 @@
             "input_type"     : "use_input_model_part",
             "input_filename" : "CSM_model_thin"
         },
-            "material_import_settings" :{
+        "material_import_settings" :{
             "materials_filename": "CSM_material_data.json"
         },
         "line_search"                        : false,

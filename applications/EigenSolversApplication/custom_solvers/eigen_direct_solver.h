@@ -68,6 +68,12 @@ struct SparseLU : public SolverType<scalar_t>
     using TSolver = Eigen::SparseLU<typename SolverType<scalar_t>::TSparseMatrix>;
 
     static constexpr auto Name = "SparseLU";
+
+    static void Setup(
+        TSolver& solver,
+        Parameters& settings)
+    {
+    }
 };
 
 template <typename scalar_t>
@@ -76,6 +82,12 @@ struct SparseQR : SolverType<scalar_t>
     using TSolver = Eigen::SparseQR<typename SolverType<scalar_t>::TSparseMatrix, Eigen::COLAMDOrdering<int>>;
 
     static constexpr auto Name = "SparseQR";
+
+    static void Setup(
+        TSolver& solver,
+        Parameters& settings)
+    {
+    }
 };
 
 #if defined EIGEN_USE_MKL_ALL
@@ -85,6 +97,15 @@ struct PardisoLLT : SolverType<scalar_t>
     using TSolver = Eigen::PardisoLLT<typename SolverType<scalar_t>::TSparseMatrix>;
 
     static constexpr auto Name = "PardisoLLT";
+
+    static void Setup(
+        TSolver& solver,
+        Parameters& settings)
+    {
+        if (settings.Has("out_of_core") && settings["out_of_core"].GetBool()) {
+            solver.pardisoParameterArray()[59] = 1;
+        }
+    }
 };
 
 template <typename scalar_t>
@@ -93,6 +114,15 @@ struct PardisoLDLT : SolverType<scalar_t>
     using TSolver = Eigen::PardisoLDLT<typename SolverType<scalar_t>::TSparseMatrix>;
 
     static constexpr auto Name = "PardisoLDLT";
+
+    static void Setup(
+        TSolver& solver,
+        Parameters& settings)
+    {
+        if (settings.Has("out_of_core") && settings["out_of_core"].GetBool()) {
+            solver.pardisoParameterArray()[59] = 1;
+        }
+    }
 };
 
 template <typename scalar_t>
@@ -101,6 +131,15 @@ struct PardisoLU : SolverType<scalar_t>
     using TSolver = Eigen::PardisoLU<typename SolverType<scalar_t>::TSparseMatrix>;
 
     static constexpr auto Name = "PardisoLU";
+
+    static void Setup(
+        TSolver& solver,
+        Parameters& settings)
+    {
+        if (settings.Has("out_of_core") && settings["out_of_core"].GetBool()) {
+            solver.pardisoParameterArray()[59] = 1;
+        }
+    }
 };
 #endif
 
@@ -118,6 +157,8 @@ class EigenDirectSolver
 
     EigenDirectSolver(const EigenDirectSolver &Other);
 
+    bool m_out_of_core = false;
+
   public:
     KRATOS_CLASS_POINTER_DEFINITION(EigenDirectSolver);
 
@@ -133,7 +174,11 @@ class EigenDirectSolver
 
     EigenDirectSolver() {}
 
-    EigenDirectSolver(Parameters settings) : BaseType(settings) {}
+    EigenDirectSolver(Parameters settings)
+        : BaseType(settings)
+    {
+        TSolverType::Setup(m_solver, settings);
+    }
 
     ~EigenDirectSolver() override {}
 

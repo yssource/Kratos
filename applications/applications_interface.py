@@ -44,6 +44,7 @@ Import_ContactStructuralMechanicsApplication = False
 Import_KratosMappingApplication = False
 Import_ConstitutiveModelsApplication = False
 Import_ShallowWaterApplication = False
+Import_ChimeraApplication = False
 Import_DelaunayMeshingApplication = False
 Import_FluidRveLagrangeMultipliersApplication=False
 Import_PoromechanicsApplication = False
@@ -92,6 +93,7 @@ print("Import_ContactStructuralMechanicsApplication: False")
 print("Import_KratosMappingApplication: False")
 print("Import_ConstitutiveModelsApplication: False")
 print("Import_ShallowWaterApplication: False")
+print("Import_ChimeraApplication: False")
 print("Import_DelaunayMeshingApplication: False")
 print("Import_PoromechanicsApplication: False")
 print("Import_FluidTransportApplication: False")
@@ -143,6 +145,7 @@ def ImportApplications(kernel, applications_path=application_directory):
     print("Import_KratosMappingApplication: " + str(Import_KratosMappingApplication))
     print("Import_ConstitutiveModelsApplication: " + str(Import_ConstitutiveModelsApplication))
     print("Import_ShallowWaterApplication: " + str(Import_ShallowWaterApplication))
+    print("Import_ChimeraApplication: " + str(Import_ChimeraApplication))
     print("Import_DelaunayMeshingApplication: " + str(Import_DelaunayMeshingApplication))
     print("Import_PoromechanicsApplication: " + str(Import_PoromechanicsApplication))
     print("Import_FluidTransportApplication: " + str(Import_FluidTransportApplication))
@@ -510,6 +513,14 @@ def ImportApplications(kernel, applications_path=application_directory):
         kernel.AddApplication(shallow_water_application)
         print("KratosShallowWaterApplication Succesfully imported")
 
+    if(Import_ChimeraApplication):
+        print("importing KratosChimeraApplication ...")
+        sys.path.append(applications_path + '/ChimeraApplication/python_scripts')
+        from KratosChimeraApplication import *
+        chimera_application = KratosChimeraApplication()
+        kernel.AddApplication(chimera_application)
+        print("KratosChimeraApplication Succesfully imported")
+
     if(Import_DelaunayMeshingApplication):
         print("importing KratosDelaunayMeshingApplication ...")
         sys.path.append(applications_path + '/DelaunayMeshing/python_scripts')
@@ -620,6 +631,8 @@ def ImportApplications(kernel, applications_path=application_directory):
         kernel.InitializeApplication(constitutive_models_application)
     if(Import_ShallowWaterApplication):
         kernel.InitializeApplication(shallow_water_application)
+    if(Import_ChimeraApplication):
+        kernel.InitializeApplication(chimera_application)
     if(Import_DelaunayMeshingApplication):
         kernel.InitializeApplication(delaunay_meshing_application)
     if(Import_PoromechanicsApplication):

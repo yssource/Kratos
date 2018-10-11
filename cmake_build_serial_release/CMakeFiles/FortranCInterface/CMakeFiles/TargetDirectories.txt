@@ -1,0 +1,5 @@
+/home/rishithe/software/Kratos_Hon/cmake_build_serial_release/CMakeFiles/FortranCInterface/CMakeFiles/edit_cache.dir
+/home/rishithe/software/Kratos_Hon/cmake_build_serial_release/CMakeFiles/FortranCInterface/CMakeFiles/FortranCInterface.dir
+/home/rishithe/software/Kratos_Hon/cmake_build_serial_release/CMakeFiles/FortranCInterface/CMakeFiles/myfort.dir
+/home/rishithe/software/Kratos_Hon/cmake_build_serial_release/CMakeFiles/FortranCInterface/CMakeFiles/rebuild_cache.dir
+/home/rishithe/software/Kratos_Hon/cmake_build_serial_release/CMakeFiles/FortranCInterface/CMakeFiles/symbols.dir

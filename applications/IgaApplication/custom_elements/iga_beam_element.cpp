@@ -80,6 +80,8 @@ void IgaBeamElement::CalculateAll(
 {
     KRATOS_TRY;
 
+    auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
+
     // get integration data
     
     const double integration_weight = GetValue(INTEGRATION_WEIGHT);

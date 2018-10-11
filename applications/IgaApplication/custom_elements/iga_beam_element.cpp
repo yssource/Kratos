@@ -80,6 +80,7 @@ void IgaBeamElement::CalculateAll(
 {
     KRATOS_TRY;
 
+    // temporary debug data
     auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
 
     // get integration data

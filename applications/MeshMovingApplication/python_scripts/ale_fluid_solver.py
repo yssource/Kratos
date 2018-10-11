@@ -38,7 +38,10 @@ class ALEFluidSolver(PythonSolver):
             KratosMultiphysics.Logger.PrintInfo("::[ALEFluidSolver]::", info_msg)
 
         ## Creating the fluid solver
-        self.fluid_solver = self._CreateFluidSolver(solver_settings, parallelism)
+        if solver_settings.Has("implementation"):
+            self.fluid_solver = self._CreateChimeraSolver(solver_settings, parallelism)
+        else:
+            self.fluid_solver = self._CreateFluidSolver(solver_settings, parallelism)
 
         ## Creating the mesh-motion solver
         if not mesh_motion_solver_settings.Has("echo_level"):
@@ -176,6 +179,13 @@ class ALEFluidSolver(PythonSolver):
         KratosMultiphysics.CheckRegisteredApplications("FluidDynamicsApplication")
         import python_solvers_wrapper_fluid
         return python_solvers_wrapper_fluid.CreateSolverByParameters(
+            self.model, solver_settings, parallelism)
+
+    def _CreateChimeraSolver(self, solver_settings, parallelism):
+        #import KratosMultiphysics.ChimeraApplication
+        KratosMultiphysics.CheckRegisteredApplications("ChimeraApplication")
+        import python_solvers_wrapper_fluid_chimera
+        return python_solvers_wrapper_fluid_chimera.CreateSolverByParameters(
             self.model, solver_settings, parallelism)
 
     def _ApplyALEBoundaryCondition(self):

@@ -18,17 +18,17 @@ from fluid_dynamics_analysis import FluidDynamicsAnalysis
 from fluid_chimera_analysis import FluidChimeraAnalysis
 
 def CreateSolver(cosim_solver_settings, level):
-    return KratosFluidSolver(cosim_solver_settings, level)
+    return KratosChimeraSolver(cosim_solver_settings, level)
 
-class KratosFluidSolver(KratosBaseFieldSolver):
+class KratosChimeraSolver(KratosBaseFieldSolver):
     def _CreateAnalysisStage(self):
         return FluidChimeraAnalysis(self.model, self.project_parameters)
 
     def _GetParallelType(self):
         return self.project_parameters["problem_data"]["parallel_type"].GetString()
     
-    def SolveSolutionStep(self):
-        self._GetAnalysisStage()._GetSolver().SolveSolutionStep()
+    #def SolveSolutionStep(self):
+     #   self._GetAnalysisStage()._GetSolver().SolveSolutionStep()
 
     def _Name(self):
         return self.__class__.__name__

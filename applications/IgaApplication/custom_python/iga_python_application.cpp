@@ -28,13 +28,13 @@ PYBIND11_MODULE(KratosIgaApplication, m)
 {
     namespace py = pybind11;
 
-    py::class_<KratosIgaApplication, KratosIgaApplication::Pointer, 
+    py::class_<KratosIgaApplication, KratosIgaApplication::Pointer,
         KratosApplication>(m, "KratosIgaApplication")
         .def(py::init<>())
     ;
 
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, NURBS_CONTROL_POINT_WEIGHT)
-    
+
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, COORDINATES)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, TANGENTS)
 
@@ -50,6 +50,8 @@ PYBIND11_MODULE(KratosIgaApplication, m)
 
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, DISPLACEMENT_ROTATION)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, REACTION_ROTATION)
+
+    KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, DEBUG_EXPECTED_DATA)
 
     AddCustomUtilitiesToPython(m);
 }

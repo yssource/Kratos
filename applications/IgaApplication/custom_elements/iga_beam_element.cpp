@@ -82,7 +82,7 @@ void IgaBeamElement::CalculateAll(
 
     // get integration data
     
-    const double& integration_weight = GetValue(INTEGRATION_WEIGHT);
+    const double integration_weight = GetValue(INTEGRATION_WEIGHT);
     Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
 
     // get properties

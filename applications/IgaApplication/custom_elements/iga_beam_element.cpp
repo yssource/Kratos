@@ -40,10 +40,10 @@ void IgaBeamElement::GetDofList(
     rElementalDofList.resize(NumberOfDofs());
 
     for (std::size_t i = 0; i < NumberOfNodes(); i++) {
-        SetDof(rElementalDofList, i, 0, DISPLACEMENT_X);
-        SetDof(rElementalDofList, i, 1, DISPLACEMENT_Y);
-        SetDof(rElementalDofList, i, 2, DISPLACEMENT_Z);
-        SetDof(rElementalDofList, i, 3, DISPLACEMENT_ROTATION);
+        SetElementDof(rElementalDofList, i, 0, DISPLACEMENT_X);
+        SetElementDof(rElementalDofList, i, 1, DISPLACEMENT_Y);
+        SetElementDof(rElementalDofList, i, 2, DISPLACEMENT_Z);
+        SetElementDof(rElementalDofList, i, 3, DISPLACEMENT_ROTATION);
     }
 
     KRATOS_CATCH("")

@@ -148,6 +148,7 @@ public:
             const ProcessInfo& rProcessInfo = mrModelPart.GetProcessInfo();
             //for ( ModelPart::ElementIterator i = mrModelPart.GetCommunicator().LocalMesh().ElementsBegin();
             //      i != mrModelPart.GetCommunicator().LocalMesh().ElementsEnd(); i++)
+            #pragma omp parallel for
             for (int j = 0; j < static_cast<int>(mrModelPart.GetCommunicator().LocalMesh().Elements().size()); j++)
             {
                 auto i = mrModelPart.GetCommunicator().LocalMesh().ElementsBegin() + j;
@@ -198,6 +199,7 @@ public:
         //for ( ModelPart::ElementIterator i = mrModelPart.GetCommunicator().LocalMesh().ElementsBegin();
         //      i != mrModelPart.GetCommunicator().LocalMesh().ElementsEnd(); i++)
         //{
+        #pragma omp parallel for
         for (int j = 0; j < static_cast<int>(mrModelPart.GetCommunicator().LocalMesh().Elements().size()); j++)
         {
             auto i = mrModelPart.GetCommunicator().LocalMesh().ElementsBegin() + j;

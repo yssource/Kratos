@@ -97,6 +97,9 @@ void IgaBeamElement::CalculateAll(
 
     // TODO: Add stiffness andd force
 
+    std::cout << expected_data["t"].GetDouble() << std::endl;
+    std::cout << expected_data["external_forces"].GetVector() << std::endl;
+
     KRATOS_CATCH("")
 }
 

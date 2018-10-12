@@ -8,8 +8,8 @@
 //  Main authors:   Thomas Oberbichler
 */
 
-#if !defined(KRATOS_IGA_SHELL_RM_ELEMENT_H_INCLUDED)
-#define KRATOS_IGA_SHELL_RM_ELEMENT_H_INCLUDED
+#if !defined(KRATOS_IGA_SHELL_5P_ELEMENT_H_INCLUDED)
+#define KRATOS_IGA_SHELL_5P_ELEMENT_H_INCLUDED
 
 // System includes
 #include "includes/define.h"
@@ -24,15 +24,15 @@
 namespace Kratos
 {
 
-class IgaShellRMElement
+class IgaShell5PElement
     : public IgaBaseElement<5>
 {
 public:
-    KRATOS_CLASS_POINTER_DEFINITION( IgaShellRMElement );
+    KRATOS_CLASS_POINTER_DEFINITION( IgaShell5PElement );
 
     using IgaBaseElementType::IgaBaseElementType;
 
-    ~IgaShellRMElement() override
+    ~IgaShell5PElement() override
     {
     };
 
@@ -63,4 +63,4 @@ public:
 
 } // namespace Kratos
 
-#endif // !defined(KRATOS_IGA_SHELL_RM_ELEMENT_H_INCLUDED)
+#endif // !defined(KRATOS_IGA_SHELL_5P_ELEMENT_H_INCLUDED)

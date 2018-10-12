@@ -15,23 +15,23 @@
 // External includes
 
 // Project includes
-#include "iga_shell_rm_element.h"
+#include "iga_shell_5P_element.h"
 #include "iga_application_variables.h"
 
 namespace Kratos {
 
-Element::Pointer IgaShellRMElement::Create(
+Element::Pointer IgaShell5PElement::Create(
     IndexType NewId,
     NodesArrayType const& ThisNodes,
     PropertiesType::Pointer pProperties) const
 {
     auto geometry = GetGeometry().Create(ThisNodes);
 
-    return Kratos::make_shared<IgaShellRMElement>(NewId, geometry,
+    return Kratos::make_shared<IgaShell5PElement>(NewId, geometry,
         pProperties);
 }
 
-void IgaShellRMElement::GetDofList(
+void IgaShell5PElement::GetDofList(
     DofsVectorType& rElementalDofList,
     ProcessInfo& rCurrentProcessInfo)
 {
@@ -40,17 +40,17 @@ void IgaShellRMElement::GetDofList(
     rElementalDofList.resize(NumberOfDofs());
 
     for (std::size_t i = 0; i < NumberOfNodes(); i++) {
-        SetDof(rElementalDofList, i, 0, DISPLACEMENT_X);
-        SetDof(rElementalDofList, i, 1, DISPLACEMENT_Y);
-        SetDof(rElementalDofList, i, 2, DISPLACEMENT_Z);
-        SetDof(rElementalDofList, i, 3, SHEAR_A);
-        SetDof(rElementalDofList, i, 4, SHEAR_B);
+        SetElementDof(rElementalDofList, i, 0, DISPLACEMENT_X);
+        SetElementDof(rElementalDofList, i, 1, DISPLACEMENT_Y);
+        SetElementDof(rElementalDofList, i, 2, DISPLACEMENT_Z);
+        SetElementDof(rElementalDofList, i, 3, SHEAR_A);
+        SetElementDof(rElementalDofList, i, 4, SHEAR_B);
     }
 
     KRATOS_CATCH("")
 }
 
-void IgaShellRMElement::EquationIdVector(
+void IgaShell5PElement::EquationIdVector(
     EquationIdVectorType& rResult,
     ProcessInfo& rCurrentProcessInfo)
 {
@@ -59,21 +59,21 @@ void IgaShellRMElement::EquationIdVector(
     rResult.resize(NumberOfDofs());
 
     for (std::size_t i = 0; i < NumberOfNodes(); i++) {
-        SetEquationId(rResult, i, 0, DISPLACEMENT_X);
-        SetEquationId(rResult, i, 1, DISPLACEMENT_Y);
-        SetEquationId(rResult, i, 2, DISPLACEMENT_Z);
-        SetEquationId(rResult, i, 3, SHEAR_A);
-        SetEquationId(rResult, i, 4, SHEAR_B);
+        SetElementEquationId(rResult, i, 0, DISPLACEMENT_X);
+        SetElementEquationId(rResult, i, 1, DISPLACEMENT_Y);
+        SetElementEquationId(rResult, i, 2, DISPLACEMENT_Z);
+        SetElementEquationId(rResult, i, 3, SHEAR_A);
+        SetElementEquationId(rResult, i, 4, SHEAR_B);
     }
 
     KRATOS_CATCH("")
 }
 
-void IgaShellRMElement::Initialize()
+void IgaShell5PElement::Initialize()
 {
 }
 
-void IgaShellRMElement::CalculateAll(
+void IgaShell5PElement::CalculateAll(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo,
@@ -96,9 +96,9 @@ void IgaShellRMElement::CalculateAll(
     KRATOS_CATCH("")
 }
 
-void IgaShellRMElement::PrintInfo(std::ostream& rOStream) const
+void IgaShell5PElement::PrintInfo(std::ostream& rOStream) const
 {
-    rOStream << "\"IgaShellRMElement\" #" << Id();
+    rOStream << "\"IgaShell5PElement\" #" << Id();
 }
 
 } // namespace Kratos

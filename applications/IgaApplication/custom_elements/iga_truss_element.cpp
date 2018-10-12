@@ -42,9 +42,9 @@ void IgaTrussElement::GetDofList(
     rElementalDofList.resize(NumberOfDofs());
 
     for (std::size_t i = 0; i < NumberOfNodes(); i++) {
-        SetDof(rElementalDofList, i, 0, DISPLACEMENT_X);
-        SetDof(rElementalDofList, i, 1, DISPLACEMENT_Y);
-        SetDof(rElementalDofList, i, 2, DISPLACEMENT_Z);
+        SetElementDof(rElementalDofList, i, 0, DISPLACEMENT_X);
+        SetElementDof(rElementalDofList, i, 1, DISPLACEMENT_Y);
+        SetElementDof(rElementalDofList, i, 2, DISPLACEMENT_Z);
     }
 
     KRATOS_CATCH("")
@@ -59,9 +59,9 @@ void IgaTrussElement::EquationIdVector(
     rResult.resize(NumberOfDofs());
 
     for (std::size_t i = 0; i < NumberOfNodes(); i++) {
-        SetEquationId(rResult, i, 0, DISPLACEMENT_X);
-        SetEquationId(rResult, i, 1, DISPLACEMENT_Y);
-        SetEquationId(rResult, i, 2, DISPLACEMENT_Z);
+        SetElementEquationId(rResult, i, 0, DISPLACEMENT_X);
+        SetElementEquationId(rResult, i, 1, DISPLACEMENT_Y);
+        SetElementEquationId(rResult, i, 2, DISPLACEMENT_Z);
     }
 
     KRATOS_CATCH("")
@@ -72,11 +72,11 @@ void IgaTrussElement::Initialize()
     mReferenceBaseVector = GetActualBaseVector();
 }
 
-IgaTrussElement::Vector3D IgaTrussElement::GetActualBaseVector() const
+IgaTrussElement::Vector3 IgaTrussElement::GetActualBaseVector() const
 {
     const Matrix& DN_De = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
 
-    Vector3D actual_base_vector = ZeroVector(3);
+    Vector3 actual_base_vector = ZeroVector(3);
 
     for (std::size_t i = 0; i < NumberOfNodes(); i++)
     {
@@ -112,7 +112,7 @@ void IgaTrussElement::CalculateAll(
 
     // compute base vectors
 
-    const Vector3D actual_base_vector = GetActualBaseVector();
+    const Vector3 actual_base_vector = GetActualBaseVector();
 
     const double reference_a = norm_2(mReferenceBaseVector);
     const double actual_a = norm_2(actual_base_vector);
@@ -130,7 +130,7 @@ void IgaTrussElement::CalculateAll(
         reference_aa;
 
     for (std::size_t r = 0; r < NumberOfDofs(); r++) {
-        const std::size_t dof_type_r = GetDofType(r);
+        const std::size_t dof_type_r = GetDofTypeIndex(r);
         const std::size_t shape_index_r = GetShapeIndex(r);
 
         const double epsilon_var_r = actual_base_vector[dof_type_r] *
@@ -138,7 +138,7 @@ void IgaTrussElement::CalculateAll(
 
         if (ComputeLeftHandSide) {
             for (std::size_t s = 0; s < NumberOfDofs(); s++) {
-                const std::size_t dof_type_s = GetDofType(s);
+                const std::size_t dof_type_s = GetDofTypeIndex(s);
                 const std::size_t shape_index_s = GetShapeIndex(s);
 
                 const double epsilon_var_s =

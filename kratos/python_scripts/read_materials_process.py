@@ -169,7 +169,7 @@ class ReadMaterialsProcess(KratosMultiphysics.Process):
         if (mat.Has("constitutive_law")):
             constitutive_law = self._GetConstitutiveLaw( mat["constitutive_law"]["name"].GetString() )
 
-            prop.SetValue(KratosMultiphysics.CONSTITUTIVE_LAW, constitutive_law.Clone())
+            prop.SetValue(KratosMultiphysics.CONSTITUTIVE_LAW, constitutive_law.Create(mat["constitutive_law"]))
         else:
             KratosMultiphysics.Logger.PrintWarning("::[Reading materials process]:: ", "Not constitutive law defined for material ID: ", property_id)
 

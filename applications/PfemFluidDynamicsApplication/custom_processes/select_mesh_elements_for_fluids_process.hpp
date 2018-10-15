@@ -307,9 +307,9 @@ public:
 
 
 		if(posX<-0.51){
-		  Alpha*=1.2;
+		  Alpha*=1.25;
 		}else if(posX>0.9){
-		  Alpha*=1.1; 
+		  Alpha*=1.15; 
 		}else{
 		  Alpha*=1.05;
 		}

@@ -85,15 +85,6 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
         self.probe7 = None
         self.probe8 = None
         self.probe9 = None
-        self.probe1v = None
-        self.probe2v= None
-        self.probe3v = None
-        self.probe4v = None
-        self.probe5v = None
-        self.probe6v = None
-        self.probe7v = None
-        self.probe8v = None
-        self.probe9v = None
 
         print("::[FLUID Meshing_Process]:: meshing frequency", self.meshing_frequency)
 
@@ -192,7 +183,7 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
 
         self.step_count += 1
         currentTime=self.main_model_part.ProcessInfo[KratosMultiphysics.TIME]
-        currentStep=self.main_model_part.ProcessInfo[KratosMultiphysics.STEP]
+        currentStep=self.main_model_part.ProcessInfo[KratosMultiphysics.STEP]                
 
         if currentStep >= 2 and self.fileTotalVolume is None:
             self.fileTotalVolume = open("totalVolumeBeforeMeshing.txt",'w')
@@ -206,70 +197,18 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
             self.probe7 = open("probe7.txt",'w')
             self.probe8 = open("probe8.txt",'w')
             self.probe9 = open("probe9.txt",'w')
-            self.probe1v = open("probe1v.txt",'w')
-            self.probe2v = open("probe2v.txt",'w')
-            self.probe3v = open("probe3v.txt",'w')
-            self.probe4v = open("probe4v.txt",'w')
-            self.probe5v = open("probe5v.txt",'w')
-            self.probe6v = open("probe6v.txt",'w')
-            self.probe7v = open("probe7v.txt",'w')
-            self.probe8v = open("probe8v.txt",'w')
-            self.probe9v = open("probe9v.txt",'w')
 
         if(currentStep > 1 and self.fileTotalVolume is not None):
             maxYprobe1isolated=0.1
-            tolerance=0.015
-
-
-
-        if(currentStep > 1 and self.fileTotalVolume is not None):
-            maxYprobe1isolated=0.1
-            #x1=-0.60
-            #x2=-0.65
-            #x3=-0.7
-            #x4=-0.75
-            #x5=-0.8
-            #x6=-0.85
-            #x7=-0.9
-            #x8=-0.95
-            #x9=-1.0
-            #x1=-1.05
-            #x2=-1.1
-            #x3=-1.15
-            #x4=-1.2
-            #x5=-1.25
-            #x6=-1.3
-            #x7=-1.35
-            #x8=-1.4
-            #x9=-1.45
-            x1=-1.50
-            x2=-1.55
-            x3=-1.60
-            x4=-1.65
-            x5=-1.70
-            x6=-1.75
-            x7=-1.8
-            x8=-1.85
-            x9=-1.9
-            maxYprobe1=-x1*0.577350269
-            maxYprobe2=-x2*0.577350269
-            maxYprobe3=-x3*0.577350269
-            maxYprobe4=-x4*0.577350269
-            maxYprobe5=-x5*0.577350269
-            maxYprobe6=-x6*0.577350269
-            maxYprobe7=-x7*0.577350269
-            maxYprobe8=-x8*0.577350269
-            maxYprobe9=-x9*0.577350269
-            v1=0
-            v2=0
-            v3=0
-            v4=0
-            v5=0
-            v6=0
-            v7=0
-            v8=0
-            v9=0
-
+            maxYprobe1=0.1
+            maxYprobe2=0.1
+            maxYprobe3=0.1
+            maxYprobe4=0.1
+            maxYprobe5=0.1
+            maxYprobe6=0.1
+            maxYprobe7=0.1
+            maxYprobe8=0.1
+            maxYprobe9=0.1
             for node in self.main_model_part.Nodes:
                 if(node.X>1.87 and node.X<1.93):
                     if(node.Y>maxYprobe1isolated):
@@ -278,41 +217,30 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
                     if(node.X>1.87 and node.X<1.93):
                         if(node.Y>maxYprobe1):
                             maxYprobe1=node.Y
-                            v1=node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)+node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_y)
                     if(node.X>3.07 and node.X<3.13):
                         if(node.Y>maxYprobe2):
                             maxYprobe2=node.Y
-                            v2=node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)+node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_y)
                     if(node.X>5.97 and node.X<6.03):
                         if(node.Y>maxYprobe3):
                             maxYprobe3=node.Y
-                            v3=node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)+node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_y)
                     if(node.X>8.77 and node.X<8.83):
                         if(node.Y>maxYprobe4):
                             maxYprobe4=node.Y
-                            v4=node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)+node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_y)
                     if(node.X>11.27 and node.X<11.33):
                         if(node.Y>maxYprobe5):
                             maxYprobe5=node.Y
-                            v5=node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)+node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_y)
                     if(node.X>16.77 and node.X<16.83):
                         if(node.Y>maxYprobe6):
                             maxYprobe6=node.Y
-                            v6=node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)+node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_y)
                     if(node.X>21.97 and node.X<22.03):
                         if(node.Y>maxYprobe7):
                             maxYprobe7=node.Y
-                            v7=node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)+node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_y)
                     if(node.X>26.57 and node.X<26.63):
                         if(node.Y>maxYprobe8):
                             maxYprobe8=node.Y
-                            v8=node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)+node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_y)
                     if(node.X>32.47 and node.X<32.53):
                         if(node.Y>maxYprobe9):
                             maxYprobe9=node.Y
-                            v9=node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)+node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y)*node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_y)
-
-           
 
             outstring = str(currentTime) + " " +  str(maxYprobe1isolated) + "\n"
             self.probe1isolated.write(outstring)
@@ -334,25 +262,7 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
             self.probe8.write(outstring)
             outstring = str(currentTime) + " " +  str(maxYprobe9) + "\n"
             self.probe9.write(outstring)
-            outstring = str(currentTime) + " " +  str(v1) + "\n"
-            self.probe1v.write(outstring)
-            outstring = str(currentTime) + " " +  str(v2) + "\n"
-            self.probe2v.write(outstring)
-            outstring = str(currentTime) + " " +  str(v3) + "\n"
-            self.probe3v.write(outstring)
-            outstring = str(currentTime) + " " +  str(v4) + "\n"
-            self.probe4v.write(outstring)
-            outstring = str(currentTime) + " " +  str(v5) + "\n"
-            self.probe5v.write(outstring)
-            outstring = str(currentTime) + " " +  str(v6) + "\n"
-            self.probe6v.write(outstring)
-            outstring = str(currentTime) + " " +  str(v7) + "\n"
-            self.probe7v.write(outstring)
-            outstring = str(currentTime) + " " +  str(v8) + "\n"
-            self.probe8v.write(outstring)
-            outstring = str(currentTime) + " " +  str(v9) + "\n"
-            self.probe9v.write(outstring)
-            
+  
             for domain in self.meshing_domains:
                 if(domain.Active()):
                     domain.ComputeAverageMeshParameters()
@@ -407,15 +317,7 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
             self.probe7.flush()
             self.probe8.flush()
             self.probe9.flush()
-            self.probe1v.flush()
-            self.probe2v.flush()
-            self.probe3v.flush()
-            self.probe4v.flush()
-            self.probe5v.flush()
-            self.probe6v.flush()
-            self.probe7v.flush()
-            self.probe8v.flush()
-            self.probe9v.flush()
+
 
     def ExecuteFinalize(self):
         if self.fileTotalVolume is not None:
@@ -430,15 +332,6 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
             self.probe7.close()
             self.probe8.close()
             self.probe9.close()
-            self.probe1v.close()
-            self.probe2v.close()
-            self.probe3v.close()
-            self.probe4v.close()
-            self.probe5v.close()
-            self.probe6v.close()
-            self.probe7v.close()
-            self.probe8v.close()
-            self.probe9v.close()
       #if(self.main_model_part.ProcessInfo[KratosMultiphysics.STEP] == 1):
           #  for node in self.main_model_part.Nodes:
            #     if (node.Is(KratosMultiphysics.FLUID)):

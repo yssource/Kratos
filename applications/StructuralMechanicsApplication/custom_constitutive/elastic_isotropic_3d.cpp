@@ -212,9 +212,7 @@ Matrix& ElasticIsotropic3D::CalculateValue(
     Matrix& rValue
     )
 {
-    if (rThisVariable == CONSTITUTIVE_MATRIX ||
-        rThisVariable == CONSTITUTIVE_MATRIX_PK2 ||
-        rThisVariable == CONSTITUTIVE_MATRIX_KIRCHHOFF) {
+    if (rThisVariable == CONSTITUTIVE_MATRIX) {
         this->CalculateElasticMatrix(rValue, rParameterValues);
     }
 

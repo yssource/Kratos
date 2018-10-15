@@ -1081,6 +1081,7 @@ void BaseSolidElement::CalculateConstitutiveVariables(
     )
 {
     // Here we essentially set the input parameters
+    rValues.SetShapeFunctionsValues(rThisKinematicVariables.N); // Shape functions
     rValues.SetDeterminantF(rThisKinematicVariables.detF); // Assuming the determinant is computed somewhere else
     rValues.SetDeformationGradientF(rThisKinematicVariables.F); //F computed somewhere else
 

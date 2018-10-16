@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import, division #makes KratosMu
 
 import KratosMultiphysics
 
-def CreateSolverByParameters(model, custom_settings,parallelism):
+def CreateSolverByParameters(model, solver_settings,parallelism):
 
     solver_type = solver_settings["solver_type"].GetString()
 
@@ -23,7 +23,7 @@ def CreateSolverByParameters(model, custom_settings,parallelism):
         raise Exception("parallelism is neither OpenMP nor MPI")
 
     solver_module = __import__(solver_module_name)
-    solver = solver_module.CreateSolver(model, custom_settings["solver_settings"])
+    solver = solver_module.CreateSolver(model, solver_settings)
 
     return solver
 
@@ -41,7 +41,7 @@ def CreateSolver(model, custom_settings):
     if solver_settings.Has("ale_settings"):
         KratosMultiphysics.CheckRegisteredApplications("MeshMovingApplication")
         from KratosMultiphysics import MeshMovingApplication
-        import ale_fluid_solver
-        return ale_fluid_solver.CreateSolver(model, solver_settings, parallelism)
+        import ale_chimera_solver
+        return ale_chimera_solver.CreateSolver(model, solver_settings, parallelism)
 
     return CreateSolverByParameters(model, solver_settings, parallelism)

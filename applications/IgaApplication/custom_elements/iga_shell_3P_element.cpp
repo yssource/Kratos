@@ -17,7 +17,7 @@
 // Project includes
 #include "iga_shell_3P_element.h"
 #include "iga_application_variables.h"
-#include "iga_debug.h"
+#include "custom_utilities/iga_debug.h"
 
 namespace Kratos {
 

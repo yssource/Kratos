@@ -37,7 +37,33 @@ private:
         Vector3 a11;
         Vector3 a12;
         Vector3 a22;
+
+        Vector3 gab;
+
+        Vector3 bv;
+
+        static Configuration Zero()
+        {
+            Configuration configuration;
+            configuration.a1.clear();
+            configuration.a2.clear();
+            configuration.a3.clear();
+            configuration.a11.clear();
+            configuration.a12.clear();
+            configuration.a22.clear();
+            configuration.gab.clear();
+            configuration.bv.clear();
+            return configuration;
+        }
     };
+
+private:
+    Configuration m_reference_configuration;
+
+private:
+    Configuration ComputeReferenceConfiguration();
+
+    Configuration ComputeActualConfiguration();
 
 public:
     KRATOS_CLASS_POINTER_DEFINITION( IgaShell3PElement );

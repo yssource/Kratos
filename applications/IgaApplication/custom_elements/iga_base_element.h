@@ -246,7 +246,7 @@ protected:
         return DofIndex / DofsPerNode();
     }
 
-    Vector3 cross(
+    Vector3 Cross(
         const Vector3& u,
         const Vector3& v)
     {

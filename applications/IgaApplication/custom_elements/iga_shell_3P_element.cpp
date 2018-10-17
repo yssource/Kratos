@@ -17,6 +17,7 @@
 // Project includes
 #include "iga_shell_3P_element.h"
 #include "iga_application_variables.h"
+#include "custom_utilities/grid.h"
 #include "custom_utilities/iga_debug.h"
 
 namespace Kratos {
@@ -70,7 +71,83 @@ void IgaShell3PElement::Initialize()
 {
     KRATOS_TRY;
 
+    m_reference_configuration = ComputeReferenceConfiguration();
+
     KRATOS_CATCH("")
+}
+
+IgaShell3PElement::Configuration
+IgaShell3PElement::ComputeReferenceConfiguration()
+{
+    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+
+    Configuration ref;
+
+    ref.a1.clear();
+    ref.a2.clear();
+    ref.a3.clear();
+    ref.a11.clear();
+    ref.a12.clear();
+    ref.a22.clear();
+
+    for (std::size_t i = 0; i < NumberOfNodes(); i++) {
+        const Node<3>& node = GetGeometry()[i];
+
+        ref.a1 += shape_derivatives(0, i) * node.GetInitialPosition();
+        ref.a2 += shape_derivatives(1, i) * node.GetInitialPosition();
+        ref.a11 += shape_derivatives(2, i) * node.GetInitialPosition();
+        ref.a12 += shape_derivatives(3, i) * node.GetInitialPosition();
+        ref.a22 += shape_derivatives(4, i) * node.GetInitialPosition();
+    }
+
+    MathUtils<double>::UnitCrossProduct(ref.a3, ref.a1, ref.a2);
+
+    ref.gab[0] = inner_prod(ref.a1, ref.a1);
+    ref.gab[1] = inner_prod(ref.a2, ref.a2);
+    ref.gab[2] = inner_prod(ref.a1, ref.a2);
+
+    ref.bv[0] = inner_prod(ref.a11, ref.a3);
+    ref.bv[1] = inner_prod(ref.a12, ref.a3);
+    ref.bv[2] = inner_prod(ref.a22, ref.a3);
+
+    return ref;
+}
+
+IgaShell3PElement::Configuration
+IgaShell3PElement::ComputeActualConfiguration()
+{
+    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+
+    Configuration act;
+
+    act.a1.clear();
+    act.a2.clear();
+    act.a3.clear();
+    act.a11.clear();
+    act.a12.clear();
+    act.a22.clear();
+
+    for (std::size_t i = 0; i < NumberOfNodes(); i++) {
+        const Node<3>& node = GetGeometry()[i];
+
+        act.a1 += shape_derivatives(0, i) * node.Coordinates();
+        act.a2 += shape_derivatives(1, i) * node.Coordinates();
+        act.a11 += shape_derivatives(2, i) * node.Coordinates();
+        act.a12 += shape_derivatives(3, i) * node.Coordinates();
+        act.a22 += shape_derivatives(4, i) * node.Coordinates();
+    }
+
+    MathUtils<double>::UnitCrossProduct(act.a3, act.a1, act.a2);
+
+    act.gab[0] = inner_prod(act.a1, act.a1);
+    act.gab[1] = inner_prod(act.a2, act.a2);
+    act.gab[2] = inner_prod(act.a1, act.a2);
+
+    act.bv[0] = inner_prod(act.a11, act.a3);
+    act.bv[1] = inner_prod(act.a12, act.a3);
+    act.bv[2] = inner_prod(act.a22, act.a3);
+
+    return act;
 }
 
 void IgaShell3PElement::CalculateAll(
@@ -82,8 +159,10 @@ void IgaShell3PElement::CalculateAll(
 {
     KRATOS_TRY;
 
+    #ifdef KRATOS_DEBUG
     // temporary debug data
     auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
+    #endif
 
     // get integration data
 
@@ -102,352 +181,290 @@ void IgaShell3PElement::CalculateAll(
     // material matrices
 
     BoundedMatrix<double, 3, 3> db;
-    db.clear();
-    db(0, 0) = 1.0;
-    db(0, 1) = poisson_ratio;
-    db(1, 0) = poisson_ratio;
-    db(1, 1) = 1.0;
-    db(2, 2) = (1.0 - poisson_ratio) / 2.0;
-    db *= E * pow(thickness, 3) / (12.0 * (1.0 - poisson_ratio * poisson_ratio));
+    {
+        db.clear();
+        db(0, 0) = 1.0;
+        db(0, 1) = poisson_ratio;
+        db(1, 0) = poisson_ratio;
+        db(1, 1) = 1.0;
+        db(2, 2) = (1.0 - poisson_ratio) / 2.0;
+        db *= E * pow(thickness, 3) /
+            (12.0 * (1.0 - poisson_ratio * poisson_ratio));
+    }
 
     BoundedMatrix<double, 3, 3> dm;
-    dm.clear();
-    dm(0, 0) = 1.0;
-    dm(0, 1) = poisson_ratio;
-    dm(1, 0) = poisson_ratio;
-    dm(1, 1) = 1.0;
-    dm(2, 2) = (1.0 - poisson_ratio) / 2.0;
-    dm *= E * thickness / (1.0 - poisson_ratio * poisson_ratio);
+    {
+        dm.clear();
+        dm(0, 0) = 1.0;
+        dm(0, 1) = poisson_ratio;
+        dm(1, 0) = poisson_ratio;
+        dm(1, 1) = 1.0;
+        dm(2, 2) = (1.0 - poisson_ratio) / 2.0;
+        dm *= E * thickness / (1.0 - poisson_ratio * poisson_ratio);
+    }
 
+    #ifdef KRATOS_DEBUG
     IgaDebug::CheckMatrix(expected_data, "_Db", db);
     IgaDebug::CheckMatrix(expected_data, "_Dm", dm);
+    #endif
 
     // reference and actual configuration
 
-    Configuration ref;
-    Configuration act;
+    Configuration& ref = m_reference_configuration;
+    Configuration act = ComputeActualConfiguration();
 
-    ref.a1.clear();
-    ref.a2.clear();
-
-    act.a1.clear();
-    act.a2.clear();
-
-    ref.a11.clear();
-    ref.a12.clear();
-    ref.a22.clear();
-
-    act.a11.clear();
-    act.a12.clear();
-    act.a22.clear();
-
-    for (std::size_t i = 0; i < NumberOfNodes(); i++) {
-        const Node<3>& node = GetGeometry()[i];
-        ref.a1 += shape_derivatives(0, i) * node.GetInitialPosition();
-        ref.a2 += shape_derivatives(1, i) * node.GetInitialPosition();
-        ref.a11 += shape_derivatives(2, i) * node.GetInitialPosition();
-        ref.a12 += shape_derivatives(3, i) * node.GetInitialPosition();
-        ref.a22 += shape_derivatives(4, i) * node.GetInitialPosition();
-    }
-
-    for (std::size_t i = 0; i < NumberOfNodes(); i++) {
-        const Node<3>& node = GetGeometry()[i];
-        act.a1 += shape_derivatives(0, i) * node.Coordinates();
-        act.a2 += shape_derivatives(1, i) * node.Coordinates();
-        act.a11 += shape_derivatives(2, i) * node.Coordinates();
-        act.a12 += shape_derivatives(3, i) * node.Coordinates();
-        act.a22 += shape_derivatives(4, i) * node.Coordinates();
-    }
-
-    Vector3 ref_gab;
-    ref_gab(0) = inner_prod(ref.a1, ref.a1);
-    ref_gab(1) = inner_prod(ref.a2, ref.a2);
-    ref_gab(2) = inner_prod(ref.a1, ref.a2);
-
-    Vector3 act_gab;
-    act_gab(0) = inner_prod(act.a1, act.a1);
-    act_gab(1) = inner_prod(act.a2, act.a2);
-    act_gab(2) = inner_prod(act.a1, act.a2);
-
-    IgaDebug::CheckVector(expected_data, "gab_ref", ref_gab);
+    #ifdef KRATOS_DEBUG
+    IgaDebug::CheckVector(expected_data, "gab_ref", ref.gab);
     IgaDebug::CheckVector(expected_data, "g1", act.a1);
     IgaDebug::CheckVector(expected_data, "g2", act.a2);
 
-    Vector3 a1_x_a2;
-    MathUtils<double>::CrossProduct(a1_x_a2, ref.a1, ref.a2);
+    IgaDebug::CheckVector(expected_data, "bv_ref", ref.bv);
+    IgaDebug::CheckVector(expected_data, "bv", act.bv);
+    #endif
+
+    Vector3 a1_x_a2 = Cross(ref.a1, ref.a2);
     double dA = MathUtils<double>::Norm(a1_x_a2);
-
-    MathUtils<double>::UnitCrossProduct(ref.a3, ref.a1, ref.a2);
-    MathUtils<double>::UnitCrossProduct(act.a3, act.a1, act.a2);
-
-    Vector3 ref_bv;
-    ref_bv[0] = inner_prod(ref.a11, ref.a3);
-    ref_bv[1] = inner_prod(ref.a12, ref.a3);
-    ref_bv[2] = inner_prod(ref.a22, ref.a3);
-
-    Vector3 act_bv;
-    act_bv[0] = inner_prod(act.a11, act.a3);
-    act_bv[1] = inner_prod(act.a12, act.a3);
-    act_bv[2] = inner_prod(act.a22, act.a3);
-
-    IgaDebug::CheckVector(expected_data, "bv_ref", ref_bv);
-    IgaDebug::CheckVector(expected_data, "bv", act_bv);
 
     // transformation matrix
 
-    Vector3 e1 = ref.a1 / MathUtils<double>::Norm(ref.a1);
-    Vector3 e2 = ref.a2 - inner_prod(ref.a2, e1) * e1;
-    e2 /= MathUtils<double>::Norm(e2);
-
-    Vector3 g_ab_con;
-    g_ab_con[0] = ref_gab[1] / (ref_gab[0] * ref_gab[1] - ref_gab[2] * ref_gab[2]);
-    g_ab_con[1] = ref_gab[0] / (ref_gab[0] * ref_gab[1] - ref_gab[2] * ref_gab[2]);
-    g_ab_con[2] = -ref_gab[2] / (ref_gab[0] * ref_gab[1] - ref_gab[2] * ref_gab[2]);
-
-    Vector3 g_con1 = g_ab_con[0] * ref.a1 + g_ab_con[2] * ref.a2;
-    Vector3 g_con2 = g_ab_con[2] * ref.a1 + g_ab_con[1] * ref.a2;
-
-    double eg11 = inner_prod(e1, g_con1);
-    double eg12 = inner_prod(e1, g_con2);
-    double eg21 = inner_prod(e2, g_con1);
-    double eg22 = inner_prod(e2, g_con2);
-
     BoundedMatrix<double, 3, 3> Tm;
-    Tm(0, 0) = eg11 * eg11;
-    Tm(0, 1) = eg12 * eg12;
-    Tm(0, 2) = 2 * eg11 * eg12;
-    Tm(1, 0) = eg21 * eg21;
-    Tm(1, 1) = eg22 * eg22;
-    Tm(1, 2) = 2 * eg21 * eg22;
-    Tm(2, 0) = 2 * eg11 * eg21;
-    Tm(2, 1) = 2 * eg12 * eg22;
-    Tm(2, 2) = 2 * (eg11 * eg22 + eg12 * eg21);
+    {
+        Vector3 e1 = ref.a1 / MathUtils<double>::Norm(ref.a1);
+        Vector3 e2 = ref.a2 - inner_prod(ref.a2, e1) * e1;
+        e2 /= MathUtils<double>::Norm(e2);
 
+        const double det = ref.gab[0] * ref.gab[1] - ref.gab[2] * ref.gab[2];
+
+        Vector3 g_ab_con;
+        g_ab_con[0] = ref.gab[1] / det;
+        g_ab_con[1] = ref.gab[0] / det;
+        g_ab_con[2] = -ref.gab[2] / det;
+
+        const Vector3 g_con1 = g_ab_con[0] * ref.a1 + g_ab_con[2] * ref.a2;
+        const Vector3 g_con2 = g_ab_con[2] * ref.a1 + g_ab_con[1] * ref.a2;
+
+        const double eg11 = inner_prod(e1, g_con1);
+        const double eg12 = inner_prod(e1, g_con2);
+        const double eg21 = inner_prod(e2, g_con1);
+        const double eg22 = inner_prod(e2, g_con2);
+
+        Tm(0, 0) = eg11 * eg11;
+        Tm(0, 1) = eg12 * eg12;
+        Tm(0, 2) = 2 * eg11 * eg12;
+        Tm(1, 0) = eg21 * eg21;
+        Tm(1, 1) = eg22 * eg22;
+        Tm(1, 2) = 2 * eg21 * eg22;
+        Tm(2, 0) = 2 * eg11 * eg21;
+        Tm(2, 1) = 2 * eg12 * eg22;
+        Tm(2, 2) = 2 * (eg11 * eg22 + eg12 * eg21);
+    }
+
+    #ifdef KRATOS_DEBUG
     IgaDebug::CheckMatrix(expected_data, "Tm", Tm);
+    #endif
 
     // strain and curvature
 
-    Vector3 E_cu = 0.5 * (act_gab - ref_gab);
-    Vector3 K_cu = act_bv - ref_bv;
+    const Vector3 E_cu = 0.5 * (act.gab - ref.gab);
+    const Vector3 K_cu = act.bv - ref.bv;
 
-    Vector3 E_ca = prod(Tm, E_cu);
-    Vector3 K_ca = prod(Tm, K_cu);
+    const Vector3 E_ca = prod(Tm, E_cu);
+    const Vector3 K_ca = prod(Tm, K_cu);
 
+    #ifdef KRATOS_DEBUG
     IgaDebug::CheckVector(expected_data, "E_cu", E_cu);
     IgaDebug::CheckVector(expected_data, "K_cu", K_cu);
     IgaDebug::CheckVector(expected_data, "E_ca", E_ca);
     IgaDebug::CheckVector(expected_data, "K_ca", K_ca);
-
-    Vector3 dE_cu;
-    Vector3 dK_cu;
+    #endif
 
     vector<double> S_g3dg3(NumberOfDofs());
     vector<double> S_g3dg3lg3_3(NumberOfDofs());
-    matrix<double> S_dg_1(3, NumberOfDofs());
-    matrix<double> S_dg_2(3, NumberOfDofs());
-    matrix<double> S_dg3(3, NumberOfDofs());
-    matrix<double> S_dE_ca(3, NumberOfDofs());
-    matrix<double> S_dK_ca(3, NumberOfDofs());
-    matrix<double> S_dn(3, NumberOfDofs());
+    std::vector<Vector3> S_dg3(NumberOfDofs());
+    std::vector<Vector3> S_dE_ca(NumberOfDofs());
+    std::vector<Vector3> S_dK_ca(NumberOfDofs());
+    std::vector<Vector3> S_dn(NumberOfDofs());
 
-    S_g3dg3.clear();
-    S_g3dg3lg3_3.clear();
-    S_dg_1.clear();
-    S_dg_2.clear();
-    S_dg3.clear();
-    S_dE_ca.clear();
-    S_dK_ca.clear();
-    S_dn.clear();
+    Grid<Vector3> S_ddE_ca(NumberOfDofs(), NumberOfDofs());
+    Grid<Vector3> S_ddK_ca(NumberOfDofs(), NumberOfDofs());
 
+    for (std::size_t r = 0; r < NumberOfDofs(); r++) {
+        const std::size_t shape_index_r = GetShapeIndex(r);
+        const std::size_t dof_type_index_r = GetDofTypeIndex(r);
 
-    double lg3_3 = dA * dA * dA;
-    double lg3_5 = dA * dA * dA * dA * dA;
-    double inv_lg3 = 1.0 / dA;
-    double inv_lg3_3 = 1.0 / lg3_3;
-    double inv_lg3_5 = 1.0 / lg3_5;
+        Vector3 S_dg_1;
+        Vector3 S_dg_2;
 
-    for(std::size_t r = 0; r < NumberOfDofs(); r++) {
-        std::size_t shape_index_r = GetShapeIndex(r);
-        std::size_t dof_type_index_r = GetDofTypeIndex(r);
+        S_dg_1.clear();
+        S_dg_2.clear();
 
-        S_dg_1(dof_type_index_r, r) = shape_derivatives(0, shape_index_r);
-        S_dg_2(dof_type_index_r, r) = shape_derivatives(1, shape_index_r);
+        S_dg_1[dof_type_index_r] = shape_derivatives(0, shape_index_r);
+        S_dg_2[dof_type_index_r] = shape_derivatives(1, shape_index_r);
 
         // strain
+        Vector3 dE_cu;
         dE_cu[0] = shape_derivatives(0, shape_index_r) * act.a1[dof_type_index_r];
         dE_cu[1] = shape_derivatives(1, shape_index_r) * act.a2[dof_type_index_r];
-        dE_cu[2] = 0.5 * (shape_derivatives(0, shape_index_r) * act.a2[dof_type_index_r] + act.a1[dof_type_index_r] * shape_derivatives(1, shape_index_r));
+        dE_cu[2] = 0.5 * (
+                   shape_derivatives(0, shape_index_r) * act.a2[dof_type_index_r] +
+                   shape_derivatives(1, shape_index_r) * act.a1[dof_type_index_r]);
 
-        S_dE_ca(0, r) = Tm(0, 0) * dE_cu[0] + Tm(0, 1) * dE_cu[1] + Tm(0, 2) * dE_cu[2];
-        S_dE_ca(1, r) = Tm(1, 0) * dE_cu[0] + Tm(1, 1) * dE_cu[1] + Tm(1, 2) * dE_cu[2];
-        S_dE_ca(2, r) = Tm(2, 0) * dE_cu[0] + Tm(2, 1) * dE_cu[1] + Tm(2, 2) * dE_cu[2];
+        S_dE_ca[r] = prod(Tm, dE_cu);
 
         // curvature
-        S_dg3(0, r) = S_dg_1(1, r) * act.a2[2] - S_dg_1(2, r) * act.a2[1] + act.a1(1) * S_dg_2(2, r) - act.a1[2] * S_dg_2(1, r);
-        S_dg3(1, r) = S_dg_1(2, r) * act.a2[0] - S_dg_1(0, r) * act.a2[2] + act.a1(2) * S_dg_2(0, r) - act.a1[0] * S_dg_2(2, r);
-        S_dg3(2, r) = S_dg_1(0, r) * act.a2[1] - S_dg_1(1, r) * act.a2[0] + act.a1(0) * S_dg_2(1, r) - act.a1[1] * S_dg_2(0, r);
+        S_dg3[r] = Cross(S_dg_1, act.a2) + Cross(act.a1, S_dg_2);
 
-        S_g3dg3[r] = a1_x_a2[0] * S_dg3(0, r)+a1_x_a2[1] * S_dg3(1, r)+a1_x_a2[2] * S_dg3(2, r);
-        S_g3dg3lg3_3[r] = S_g3dg3[r] * inv_lg3_3;
+        S_g3dg3[r] = inner_prod(a1_x_a2, S_dg3[r]);
+        S_g3dg3lg3_3[r] = S_g3dg3[r] / std::pow(dA, 3);
 
-        S_dn(0, r) = S_dg3(0, r) * inv_lg3 - a1_x_a2[0] * S_g3dg3lg3_3[r];
-        S_dn(1, r) = S_dg3(1, r) * inv_lg3 - a1_x_a2[1] * S_g3dg3lg3_3[r];
-        S_dn(2, r) = S_dg3(2, r) * inv_lg3 - a1_x_a2[2] * S_g3dg3lg3_3[r];
+        S_dn[r] = S_dg3[r] / dA - a1_x_a2 * S_g3dg3lg3_3[r];
 
-        dK_cu[0] = shape_derivatives(2, shape_index_r) * act.a3[dof_type_index_r] + act.a11[0] * S_dn(0, r) + act.a11[1] * S_dn(1, r) + act.a11[2] * S_dn(2, r);
-        dK_cu[1] = shape_derivatives(3, shape_index_r) * act.a3[dof_type_index_r] + act.a12[0] * S_dn(0, r) + act.a12[1] * S_dn(1, r) + act.a12[2] * S_dn(2, r);
-        dK_cu[2] = shape_derivatives(4, shape_index_r) * act.a3[dof_type_index_r] + act.a22[0] * S_dn(0, r) + act.a22[1] * S_dn(1, r) + act.a22[2] * S_dn(2, r);
+        Vector3 dK_cu;
+        dK_cu[0] = shape_derivatives(2, shape_index_r) * act.a3[dof_type_index_r] +
+                   inner_prod(act.a11, S_dn[r]);
+        dK_cu[1] = shape_derivatives(3, shape_index_r) * act.a3[dof_type_index_r] +
+                   inner_prod(act.a12, S_dn[r]);
+        dK_cu[2] = shape_derivatives(4, shape_index_r) * act.a3[dof_type_index_r] +
+                   inner_prod(act.a22, S_dn[r]);
 
-        S_dK_ca(0, r) = Tm(0, 0) * dK_cu[0] + Tm(0, 1) * dK_cu[1] + Tm(0, 2) * dK_cu[2];
-        S_dK_ca(1, r) = Tm(1, 0) * dK_cu[0] + Tm(1, 1) * dK_cu[1] + Tm(1, 2) * dK_cu[2];
-        S_dK_ca(2, r) = Tm(2, 0) * dK_cu[0] + Tm(2, 1) * dK_cu[1] + Tm(2, 2) * dK_cu[2];
+        S_dK_ca[r] = prod(Tm, dK_cu);
     }
 
-    IgaDebug::CheckMatrix(expected_data, "S_dg_1", S_dg_1);
-    IgaDebug::CheckMatrix(expected_data, "S_dg_2", S_dg_2);
+    for (std::size_t r = 0; r < NumberOfDofs(); r++) {
+        const std::size_t shape_index_r = GetShapeIndex(r);
+        const std::size_t dof_type_index_r = GetDofTypeIndex(r);
 
-
-    matrix<double> S_ddE_ca_1(NumberOfDofs(),NumberOfDofs());
-    matrix<double> S_ddE_ca_2(NumberOfDofs(),NumberOfDofs());
-    matrix<double> S_ddE_ca_3(NumberOfDofs(),NumberOfDofs());
-    matrix<double> S_ddK_ca_1(NumberOfDofs(),NumberOfDofs());
-    matrix<double> S_ddK_ca_2(NumberOfDofs(),NumberOfDofs());
-    matrix<double> S_ddK_ca_3(NumberOfDofs(),NumberOfDofs());
-    
-    S_ddE_ca_1.clear();
-    S_ddE_ca_2.clear();
-    S_ddE_ca_3.clear();
-    S_ddK_ca_1.clear();
-    S_ddK_ca_2.clear();
-    S_ddK_ca_3.clear();
-
-
-    for(std::size_t r = 0; r < NumberOfDofs(); r++) {
-        std::size_t shape_index_r = GetShapeIndex(r);
-        std::size_t dof_type_index_r = GetDofTypeIndex(r);
-
-        for(std::size_t s = 0; s <= r; s++) {
-            std::size_t shape_index_s = GetShapeIndex(s);
-            std::size_t dof_type_index_s = GetDofTypeIndex(s);
+        for (std::size_t s = 0; s <= r; s++) {
+            const std::size_t shape_index_s = GetShapeIndex(s);
+            const std::size_t dof_type_index_s = GetDofTypeIndex(s);
 
             // strain
-            Vector3 ddE_cu;
 
             if (dof_type_index_r == dof_type_index_s) {
-                ddE_cu[0] = shape_derivatives(0, shape_index_r) * shape_derivatives(0, shape_index_s);
-                ddE_cu[1] = shape_derivatives(1, shape_index_r) * shape_derivatives(1, shape_index_s);
-                ddE_cu[2] = 0.5 * (shape_derivatives(0, shape_index_r)*shape_derivatives(1, shape_index_s)+shape_derivatives(1, shape_index_r)*shape_derivatives(0, shape_index_s));
+                Vector3 ddE_cu;
+
+                ddE_cu[0] = shape_derivatives(0, shape_index_r) *
+                            shape_derivatives(0, shape_index_s);
+                ddE_cu[1] = shape_derivatives(1, shape_index_r) *
+                            shape_derivatives(1, shape_index_s);
+                ddE_cu[2] = 0.5 * (
+                            shape_derivatives(0, shape_index_r) *
+                            shape_derivatives(1, shape_index_s) +
+                            shape_derivatives(1, shape_index_r) *
+                            shape_derivatives(0, shape_index_s));
+
+                S_ddE_ca(r, s) = prod(Tm, ddE_cu);
             } else {
-                ddE_cu.clear();
+                S_ddE_ca(r, s).clear();
             }
 
-            S_ddE_ca_1(r, s) = Tm(0, 0) * ddE_cu[0] + Tm(0, 1) * ddE_cu[1] + Tm(0, 2) * ddE_cu[2];
-            S_ddE_ca_2(r, s) = Tm(1, 0) * ddE_cu[0] + Tm(1, 1) * ddE_cu[1] + Tm(1, 2) * ddE_cu[2];
-            S_ddE_ca_3(r, s) = Tm(2, 0) * ddE_cu[0] + Tm(2, 1) * ddE_cu[1] + Tm(2, 2) * ddE_cu[2];
-
             // curvature
+
             Vector3 ddg3;
             ddg3.clear();
-            auto dirt = 4-dof_type_index_r-dof_type_index_s;
-            auto ddir = dof_type_index_r-dof_type_index_s;
-            if(dof_type_index_r + 1 == dof_type_index_s)   ddg3[dirt-1] =  shape_derivatives(0, shape_index_r)*shape_derivatives(1, shape_index_s)-shape_derivatives(0, shape_index_s)*shape_derivatives(1, shape_index_r);
-            else if(dof_type_index_r== dof_type_index_s+2) ddg3[dirt-1] =  shape_derivatives(0, shape_index_r)*shape_derivatives(1, shape_index_s)-shape_derivatives(0, shape_index_s)*shape_derivatives(1, shape_index_r);
-            else if(dof_type_index_r== dof_type_index_s+1) ddg3[dirt-1] = -shape_derivatives(0, shape_index_r)*shape_derivatives(1, shape_index_s)+shape_derivatives(0, shape_index_s)*shape_derivatives(1, shape_index_r);
-            else if(dof_type_index_r + 2 == dof_type_index_s) ddg3[dirt-1] = -shape_derivatives(0, shape_index_r)*shape_derivatives(1, shape_index_s)+shape_derivatives(0, shape_index_s)*shape_derivatives(1, shape_index_r);
 
-            double c = -( ddg3[0]*a1_x_a2[0] + ddg3[1]*a1_x_a2[1] + ddg3[2]*a1_x_a2[2]
-                + S_dg3(0,r)*S_dg3(0,s) + S_dg3(1,r)*S_dg3(1,s) + S_dg3(2,r)*S_dg3(2,s)
-                )*inv_lg3_3;
+            if (dof_type_index_r != dof_type_index_s) {
+                const std::size_t ddg3_i =
+                    3 - dof_type_index_r - dof_type_index_s;
 
-            double d = 3.0*S_g3dg3[r]*S_g3dg3[s]*inv_lg3_5;
+                const double ddg3_value =
+                    shape_derivatives(0, shape_index_r) *
+                    shape_derivatives(1, shape_index_s) -
+                    shape_derivatives(0, shape_index_s) *
+                    shape_derivatives(1, shape_index_r);
 
-            Vector3 ddn;
-            ddn.clear();
-            ddn[0] = ddg3[0] * inv_lg3 - S_g3dg3lg3_3[s] * S_dg3(0, r) - S_g3dg3lg3_3[r] * S_dg3(0, s) + (c + d) * a1_x_a2[0];
-            ddn[1] = ddg3[1] * inv_lg3 - S_g3dg3lg3_3[s] * S_dg3(1, r) - S_g3dg3lg3_3[r] * S_dg3(1, s) + (c + d) * a1_x_a2[1];
-            ddn[2] = ddg3[2] * inv_lg3 - S_g3dg3lg3_3[s] * S_dg3(2, r) - S_g3dg3lg3_3[r] * S_dg3(2, s) + (c + d) * a1_x_a2[2];
+                if ((dof_type_index_s == dof_type_index_r + 1) ||
+                    (dof_type_index_r == dof_type_index_s + 2)) {
+                    ddg3[ddg3_i] = ddg3_value;
+                } else {
+                    ddg3[ddg3_i] = -ddg3_value;
+                }
+            }
+
+            const double c = -(inner_prod(ddg3, a1_x_a2) +
+                               inner_prod(S_dg3[r], S_dg3[s])) / std::pow(dA, 3);
+
+            const double d = 3.0 * S_g3dg3[r] * S_g3dg3[s] / std::pow(dA, 5);
+
+            const Vector3 ddn = ddg3 / dA - S_g3dg3lg3_3[s] * S_dg3[r] -
+                S_g3dg3lg3_3[r] * S_dg3[s] + (c + d) * a1_x_a2;
 
             Vector3 ddK_cu;
-            ddK_cu.clear();
-            ddK_cu[0] = shape_derivatives(2, shape_index_r)*S_dn(dof_type_index_r,s) + shape_derivatives(2, shape_index_s)*S_dn(dof_type_index_s,r)
-                        + act.a11[0]*ddn[0] + act.a11[1]*ddn[1] + act.a11[2]*ddn[2];
-            ddK_cu[1] = shape_derivatives(3, shape_index_r)*S_dn(dof_type_index_r,s) + shape_derivatives(3, shape_index_s)*S_dn(dof_type_index_s,r)
-                        + act.a12[0]*ddn[0] + act.a12[1]*ddn[1] + act.a12[2]*ddn[2];
-            ddK_cu[2] = shape_derivatives(4, shape_index_r)*S_dn(dof_type_index_r,s) + shape_derivatives(4, shape_index_s)*S_dn(dof_type_index_s,r)
-                        + act.a22[0]*ddn[0] + act.a22[1]*ddn[1] + act.a22[2]*ddn[2];
+            ddK_cu[0] = shape_derivatives(2, shape_index_r) *
+                S_dn[s][dof_type_index_r] +
+                shape_derivatives(2, shape_index_s) *
+                S_dn[r][dof_type_index_s] +
+                act.a11[0] * ddn[0] +
+                act.a11[1] * ddn[1] +
+                act.a11[2] * ddn[2];
+            ddK_cu[1] = shape_derivatives(3, shape_index_r) *
+                S_dn[s][dof_type_index_r] +
+                shape_derivatives(3, shape_index_s) *
+                S_dn[r][dof_type_index_s] +
+                act.a12[0] * ddn[0] +
+                act.a12[1] * ddn[1] +
+                act.a12[2] * ddn[2];
+            ddK_cu[2] = shape_derivatives(4, shape_index_r) *
+                S_dn[s][dof_type_index_r] +
+                shape_derivatives(4, shape_index_s) *
+                S_dn[r][dof_type_index_s] +
+                act.a22[0] * ddn[0] +
+                act.a22[1] * ddn[1] +
+                act.a22[2] * ddn[2];
 
-            S_ddK_ca_1(r,s) = Tm(0,0)*ddK_cu[0] + Tm(0,1)*ddK_cu[1] + Tm(0,2)*ddK_cu[2];
-            S_ddK_ca_2(r,s) = Tm(1,0)*ddK_cu[0] + Tm(1,1)*ddK_cu[1] + Tm(1,2)*ddK_cu[2];
-            S_ddK_ca_3(r,s) = Tm(2,0)*ddK_cu[0] + Tm(2,1)*ddK_cu[1] + Tm(2,2)*ddK_cu[2];
+            S_ddK_ca(r, s) = prod(Tm, ddK_cu);
         }
     }
 
-    IgaDebug::CheckLowerMatrix(expected_data, "S_ddE_ca_1", S_ddE_ca_1);
-    IgaDebug::CheckLowerMatrix(expected_data, "S_ddE_ca_2", S_ddE_ca_2);
-    IgaDebug::CheckLowerMatrix(expected_data, "S_ddE_ca_3", S_ddE_ca_3);
+    #ifdef KRATOS_DEBUG
+    IgaDebug::CheckLowerGridComponent(expected_data, "S_ddE_ca_1", S_ddE_ca, 0);
+    IgaDebug::CheckLowerGridComponent(expected_data, "S_ddE_ca_2", S_ddE_ca, 1);
+    IgaDebug::CheckLowerGridComponent(expected_data, "S_ddE_ca_3", S_ddE_ca, 2);
 
-    IgaDebug::CheckLowerMatrix(expected_data, "S_ddK_ca_1", S_ddK_ca_1);
-    IgaDebug::CheckLowerMatrix(expected_data, "S_ddK_ca_2", S_ddK_ca_2);
-    IgaDebug::CheckLowerMatrix(expected_data, "S_ddK_ca_3", S_ddK_ca_3);
+    IgaDebug::CheckLowerGridComponent(expected_data, "S_ddK_ca_1", S_ddK_ca, 0);
+    IgaDebug::CheckLowerGridComponent(expected_data, "S_ddK_ca_2", S_ddK_ca, 1);
+    IgaDebug::CheckLowerGridComponent(expected_data, "S_ddK_ca_3", S_ddK_ca, 2);
+    #endif
 
-
-    matrix<double> S_kem(NumberOfDofs(),NumberOfDofs());
-    matrix<double> S_keb(NumberOfDofs(),NumberOfDofs());
-    matrix<double> S_dK(NumberOfDofs(),NumberOfDofs());
-    matrix<double> S_ddK(NumberOfDofs(),NumberOfDofs());
-    matrix<double> S_ddK_1(NumberOfDofs(),NumberOfDofs());
-    vector<double> S_fiem(NumberOfDofs());
-    vector<double> S_fieb(NumberOfDofs());
-
-    Vector3 N_ca;
-    Vector3 M_ca;
-
-    axpy_prod(dm, E_ca, N_ca, true);
-    axpy_prod(db, K_ca, M_ca, true);
+    const Vector3 N_ca = prod(dm, E_ca);
+    const Vector3 M_ca = prod(db, K_ca);
 
     for(std::size_t r = 0; r < NumberOfDofs(); r++) {
-        Vector3 dN_ca;
-        dN_ca[0] = dm(0,0)*S_dE_ca(0,r) + dm(0,1)*S_dE_ca(1,r) + dm(0,2)*S_dE_ca(2,r);
-        dN_ca[1] = dm(1,0)*S_dE_ca(0,r) + dm(1,1)*S_dE_ca(1,r) + dm(1,2)*S_dE_ca(2,r);
-        dN_ca[2] = dm(2,0)*S_dE_ca(0,r) + dm(2,1)*S_dE_ca(1,r) + dm(2,2)*S_dE_ca(2,r);
+        const Vector3 dN_ca = prod(dm, S_dE_ca[r]);
+        const Vector3 dM_ca = prod(db, S_dK_ca[r]);
 
-        Vector3 dM_ca;
-        dM_ca[0] = db(0,0)*S_dK_ca(0,r) + db(0,1)*S_dK_ca(1,r) + db(0,2)*S_dK_ca(2,r);
-        dM_ca[1] = db(1,0)*S_dK_ca(0,r) + db(1,1)*S_dK_ca(1,r) + db(1,2)*S_dK_ca(2,r);
-        dM_ca[2] = db(2,0)*S_dK_ca(0,r) + db(2,1)*S_dK_ca(1,r) + db(2,2)*S_dK_ca(2,r);
+        if (ComputeLeftHandSide) {
+            for (std::size_t s = 0; s < NumberOfDofs(); s++) {
+                // membrane stiffness
+                const double S_kem = inner_prod(dN_ca, S_dE_ca[s]) +
+                                     inner_prod(N_ca, S_ddE_ca(r, s));
 
-        for(std::size_t s = 0; s < NumberOfDofs(); s++) {
-            // membrane stiffness
-            S_kem(r,s) = dN_ca[0]*S_dE_ca(0,s) + dN_ca[1]*S_dE_ca(1,s) + dN_ca[2]*S_dE_ca(2,s)
-                    + N_ca[0]*S_ddE_ca_1(r,s) + N_ca[1]*S_ddE_ca_2(r,s) + N_ca[2]*S_ddE_ca_3(r,s);
-            S_kem(s,r) = S_kem(r,s);
-            // bending stiffness
-            S_keb(r,s) = dM_ca[0]*S_dK_ca(0,s) + dM_ca[1]*S_dK_ca(1,s) + dM_ca[2]*S_dK_ca(2,s)
-                    + M_ca[0]*S_ddK_ca_1(r,s) + M_ca[1]*S_ddK_ca_2(r,s) + M_ca[2]*S_ddK_ca_3(r,s);
-            S_keb(s,r) = S_keb(r,s);
+                // bending stiffness
+                const double S_keb = inner_prod(dM_ca, S_dK_ca[s]) +
+                                     inner_prod(M_ca, S_ddK_ca(r, s));
 
-            S_dK(r,s)=dM_ca[0]*S_dK_ca(0,s) + dM_ca[1]*S_dK_ca(1,s) + dM_ca[2]*S_dK_ca(2,s);
-            S_dK(s,r) = S_dK(r,s);
+                rLeftHandSideMatrix(r, s) = (S_kem + S_keb) * dA;
 
-            S_ddK(r,s)=M_ca[0]*S_ddK_ca_1(r,s) + M_ca[1]*S_ddK_ca_2(r,s) + M_ca[2]*S_ddK_ca_3(r,s);
-            S_ddK(s,r) = S_ddK(r,s);
-
-            S_ddK_1(r,s)=M_ca[0]*S_ddK_ca_1(r,s);
-            S_ddK_1(s,r) = S_ddK_1(r,s);
-            S_ddK_ca_1(s,r) = S_ddK_ca_1(r,s);
-            S_ddK_ca_2(s,r) = S_ddK_ca_2(r,s);
-            S_ddK_ca_3(s,r) = S_ddK_ca_3(r,s);
+                // symmetry
+                rLeftHandSideMatrix(s, r) = rLeftHandSideMatrix(r, s);
+            }
         }
 
-        S_fiem(r) = -(N_ca[0]*S_dE_ca(0,r) + N_ca[1]*S_dE_ca(1,r) + N_ca[2]*S_dE_ca(2,r));
-        S_fieb(r) = -(M_ca[0]*S_dK_ca(0,r) + M_ca[1]*S_dK_ca(1,r) + M_ca[2]*S_dK_ca(2,r));
-   }
+        if (ComputeRightHandSide) {
+            rRightHandSideVector[r] = -dA * (inner_prod(N_ca, S_dE_ca[r]) +
+                inner_prod(M_ca, S_dK_ca[r]));
+        }
+    }
 
-    matrix<double> gke = (S_kem+S_keb)*dA;
-    vector<double> fie = (S_fiem+S_fieb)*dA;
+    #ifdef KRATOS_DEBUG
+    if (ComputeLeftHandSide) {
+        IgaDebug::CheckLowerMatrix(expected_data, "_gke", rLeftHandSideMatrix);
+    }
 
-    IgaDebug::CheckLowerMatrix(expected_data, "_gke", gke);
-    IgaDebug::CheckVector(expected_data, "_fie", fie);
+    if (ComputeRightHandSide) {
+        IgaDebug::CheckVector(expected_data, "_fie", rRightHandSideVector);
+    }
+    #endif
 
     KRATOS_CATCH("")
 }

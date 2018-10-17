@@ -25,6 +25,13 @@ private:
     }
 
 public:
+    Grid()
+    : m_size1(0)
+    , m_size2(0)
+    , m_values(0)
+    {
+    }
+
     Grid(
         const int Size1,
         const int Size2)

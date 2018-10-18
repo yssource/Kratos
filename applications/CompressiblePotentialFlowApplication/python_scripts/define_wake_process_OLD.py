@@ -18,13 +18,11 @@ class DefineWakeProcess(KratosMultiphysics.Process):
             {
                 "mesh_id"                       : 0,
                 "model_part_name"               : "please specify the model part that contains the kutta nodes",
-                "upper_surface_model_part_name" : "please specify the model part that contains the upper surface nodes",
-                "lower_surface_model_part_name" : "please specify the model part that contains the lower surface nodes",
                 "fluid_part_name"               : "MainModelPart",
                 "direction"                     : [1.0,0.0,0.0],
                 "stl_filename"                  : "please specify name of stl file",
                 "epsilon"    : 1e-9,
-                "AOAdeg" : 3
+                "AOAdeg" : 0
             }
             """)
 
@@ -36,7 +34,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
         #convert angle to radians
         self.AOArad = self.AOAdeg*pi/180       
  
-        #'''
+        '''
         self.direction = KratosMultiphysics.Vector(3)
         self.direction[0] = settings["direction"][0].GetDouble()*cos(self.AOArad)
         self.direction[2] = settings["direction"][0].GetDouble()*sin(self.AOArad)
@@ -57,8 +55,8 @@ class DefineWakeProcess(KratosMultiphysics.Process):
 
         self.kutta_model_part =         Model[settings["model_part_name"].GetString()]
         self.fluid_model_part =         Model[settings["fluid_part_name"].GetString()]
-        self.upper_surface_model_part = Model[settings["upper_surface_model_part_name"].GetString()]
-        self.lower_surface_model_part = Model[settings["lower_surface_model_part_name"].GetString()]
+        #self.upper_surface_model_part = Model[settings["upper_surface_model_part_name"].GetString()]
+        #self.lower_surface_model_part = Model[settings["lower_surface_model_part_name"].GetString()]
         
         # Neigbour search tool instance
         AvgElemNum = 10
@@ -77,15 +75,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
             y1 = node.Y
             z1 = node.Z
             
-        #print('Selecting upper surface nodes...')
-        #for node in self.upper_surface_model_part.Nodes:
-        #    node.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.UPPER_SURFACE, 1)
-        print('Selecting lower surface nodes...')
-        for node in self.lower_surface_model_part.Nodes:
-            node.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.LOWER_SURFACE, 1)
-        print('Finishied selecting lower surface nodes...')    
-        
-            
+                   
 
         #find wake node in the outflow boundary
         pos = 0    
@@ -94,12 +84,12 @@ class DefineWakeProcess(KratosMultiphysics.Process):
 
         #compute the distances of the elements of the wake, and decide which ones are wak    
         if(self.fluid_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE] == 2): #2D case
-            self.projection = KratosMultiphysics.Matrix(2,2)
-            self.projection[0,0] = 1.0
-            self.projection[0,1] = 0.0
-            self.projection[1,1] = 1.0
-            self.projection[1,0] = 0.0
-            self.fluid_model_part.ProcessInfo.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.UPPER_PROJECTION,self.projection)
+            #self.projection = KratosMultiphysics.Matrix(2,2)
+            #self.projection[0,0] = 1.0
+            #self.projection[0,1] = 0.0
+            #self.projection[1,1] = 1.0
+            #self.projection[1,0] = 0.0
+            #self.fluid_model_part.ProcessInfo.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.UPPER_PROJECTION,self.projection)
             
             xn = KratosMultiphysics.Vector(3)
             
@@ -113,10 +103,8 @@ class DefineWakeProcess(KratosMultiphysics.Process):
             for node in self.kutta_model_part.Nodes:
                 x0 = node.X
                 y0 = node.Y
-                print('Kutta Node')
-                print('x0 = ', x0)
-                print('y0 = ', y0)
-                for elem in self.fluid_model_part.Elements:                      
+                for elem in self.fluid_model_part.Elements:  
+                    
     
                     #check in the potentially active portion
                     potentially_active_portion = False
@@ -125,13 +113,10 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                         xn[1] = elnode.Y - y0
                         xn[2] = 0.0
                         dx = xn[0]*self.direction[0] + xn[1]*self.direction[1]
-                        dy = xn[0]*self.n[0] + xn[1]*self.n[1]
                         if(dx > 0): 
                             potentially_active_portion = True
                             break
                         if(elnode.Is(KratosMultiphysics.STRUCTURE)): ##all nodes that touch the kutta nodes are potentiallyactive
-                            print('dx = ', dx)
-                            print('dy = ', dy)
                             potentially_active_portion = True
                             break
                         
@@ -151,7 +136,6 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                             #if(xn[0] < 0 and xn[1] > 0 and xn[1] < 0.0001):#for high angles of attack
                             if(xn[0] < 0 and d > 0 and d < 0.0002):#for high angles of attack (selecting nodes in the lower surface)
                                 d = -self.epsilon
-                                print('WAKE CONDITION MODE FOR HIGH ANGLES OF ATTACK')
                                 print(elnode)
                             #    print(elnode.X - x0)
                             distances[counter] = d
@@ -166,7 +150,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                                 npos += 1
                                 
                         if(nneg>0 and npos>0):
-                            #elem.Set(KratosMultiphysics.MARKER,True)
+                            elem.Set(KratosMultiphysics.MARKER,True)
                             counter = 0
                             for elnode in elem.GetNodes():
                                 #test to check whether the value of the distance affects the solution. IT DOES!

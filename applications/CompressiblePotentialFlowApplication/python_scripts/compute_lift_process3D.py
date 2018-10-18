@@ -61,12 +61,17 @@ class ComputeLiftProcess3D(KratosMultiphysics.Process):
         else:
             self.reference_area =  383 #m² # WRONG 489.89 m² 
         
-        self.AOAdeg             = 3#5#°
+        self.AOAdeg             = 0#°
         
         #convert angle from degrees to radians
         self.AOArad = self.AOAdeg*pi/180  
 
   
+    #def Execute(self):
+        #for node in self.lower_surface_model_part.Nodes:
+            #node.Set(KratosMultiphysics.BOUNDARY,True)
+    
+    
     def ExecuteFinalize(self):
          print('COMPUTE LIFT')
 
@@ -78,8 +83,8 @@ class ComputeLiftProcess3D(KratosMultiphysics.Process):
          for cond in itertools.chain(self.upper_surface_model_part.Conditions,self.lower_surface_model_part.Conditions):
            n = cond.GetValue(NORMAL)
            cp = cond.GetValue(PRESSURE)
-           print(n)
-           print(cp)
+           #print(n)
+           #print(cp)
            
            #if(cp > -100.0):
            rx += n[0]*cp
@@ -88,7 +93,7 @@ class ComputeLiftProcess3D(KratosMultiphysics.Process):
            counter +=1
 
          
-         print('Looped over ', counter, ' lifting conditions.')
+         #print('Looped over ', counter, ' lifting conditions.')
          RZ = rz/self.reference_area
          RX = rx/self.reference_area
          RY = ry/self.reference_area

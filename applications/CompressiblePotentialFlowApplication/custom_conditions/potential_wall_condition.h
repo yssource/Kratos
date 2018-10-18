@@ -403,7 +403,7 @@ public:
             const array_1d<double,3>& v = this->GetValue(VELOCITY);
             const double value = density*inner_prod(v, An)/static_cast<double>(TNumNodes);
 
-            //std::cout << "WAKE COJNDITION! THERE SHOULD BE ONLY TWO = " << this->Id()  << std::endl;
+            // std::cout << "WAKE COJNDITION! THERE SHOULD BE ONLY TWO = " << this->Id()  << std::endl;
             // for(unsigned int i=0; i<2*TNumNodes; ++i)
             // {
             //     rRightHandSideVector[i] = value;
@@ -417,7 +417,7 @@ public:
             for (unsigned int i = 0; i < TNumNodes; i++)
             {
                 if(distances[i] > 0)
-                    rRightHandSideVector[i] = 0;//value;
+                    rRightHandSideVector[i] = 0;
                 else
                     rRightHandSideVector[i] = 0;
             }
@@ -426,7 +426,7 @@ public:
             for (unsigned int i = 0; i < TNumNodes; i++)
             {
                 if(distances[i] < 0)
-                    rRightHandSideVector[TNumNodes+i] = 0;//value;
+                    rRightHandSideVector[TNumNodes+i] = 0;
                 else
                     rRightHandSideVector[TNumNodes+i] = 0;
             }

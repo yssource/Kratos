@@ -20,7 +20,6 @@
 #include "custom_utilities/formfinding_io_utility.h"
 #include "custom_utilities/assign_material_orientation_utility.h"
 
-
 namespace Kratos
 {
 namespace Python

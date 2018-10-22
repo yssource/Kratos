@@ -251,12 +251,6 @@ public:
                               VectorType &rRightHandSideVector,
                               ProcessInfo &rCurrentProcessInfo) override
     {
-        if (rLeftHandSideMatrix.size1() != TNumNodes)
-            rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
-        if (rRightHandSideVector.size() != TNumNodes)
-            rRightHandSideVector.resize(TNumNodes, false);
-        rLeftHandSideMatrix.clear();
-
         array_1d<double, 3> An;
         if (TDim == 2)
             CalculateNormal2D(An);
@@ -265,10 +259,79 @@ public:
 
         const PotentialWallCondition &r_this = *this;
         const array_1d<double, 3> &v = r_this.GetValue(VELOCITY_INFINITY);
-        const double value = -inner_prod(v, An) / static_cast<double>(TNumNodes);
+        const double value = inner_prod(v, An) / static_cast<double>(TNumNodes);
 
-        for (unsigned int i = 0; i < TNumNodes; ++i)
-            rRightHandSideVector[i] = value;
+        ElementPointerType pElem = pGetElement();
+
+        if (pElem->IsNot(MARKER)) //normal element (non-wake) - eventually an embedded
+        {
+            if (rLeftHandSideMatrix.size1() != TNumNodes)
+                rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
+            if (rRightHandSideVector.size() != TNumNodes)
+                rRightHandSideVector.resize(TNumNodes, false);
+            rLeftHandSideMatrix.clear();
+
+            for (unsigned int i = 0; i < TNumNodes; ++i)
+                rRightHandSideVector[i] = value;
+
+            // std::cout << "Condition " << this->Id() << std::endl;
+            // std::cout << "rRightHandSideVector =  " << rRightHandSideVector << std::endl;
+        }
+        else //it is a wake outlet condition
+        {
+            std::cout << "WAKE NEUMANN CONDITION # " << this->Id() << std::endl;
+            if (rLeftHandSideMatrix.size1() != 2 * TNumNodes)
+                rLeftHandSideMatrix.resize(2 * TNumNodes, 2 * TNumNodes, false);
+            if (rRightHandSideVector.size() != 2 * TNumNodes)
+                rRightHandSideVector.resize(2 * TNumNodes, false);
+            rLeftHandSideMatrix.clear();
+
+            array_1d<double,TNumNodes> distances;
+            GetWakeDistances(distances);
+
+            double d0 = std::abs(distances[0]);
+            double d1 = std::abs(distances[1]);
+
+            double l = CalculateLenght();
+            //d0 = l - abs(distances[1]);
+
+            array_1d<double, 4> integrals(4,0.0);
+            integrals[0] = 2*d0/l - d0*d0/(l*l);
+            integrals[1] = d0*d0/(l*l);
+            integrals[2] = d1*d1/(l*l);//1 - integrals[0];
+            integrals[3] = 2*d1/l - d1*d1/(l*l);//1 - integrals[1];
+
+            // std::cout << "integrals[3] =  " << integrals[3] << std::endl;
+
+            // std::cout << "length =  " << l << std::endl;
+            // std::cout << "distances =  " << distances << std::endl;
+            // std::cout << "d0 =  " << d0 << std::endl;
+            // std::cout << "d1 =  " << d1 << std::endl;
+            // std::cout << "value =  " << value << std::endl;
+            // for (unsigned int i = 0; i < 4; i++)
+            //     std::cout << "Integrals = # [" << i << "] = " << integrals[i] << std::endl;
+
+            //positive part
+            double epsilonTolerance = 1e-5;
+            for (unsigned int i = 0; i < TNumNodes; i++)
+            {
+                if(distances[i] > 0)
+                    rRightHandSideVector[i] = value;//(1-integrals[2])*value;//std::abs( integrals[0] * value )< epsilonTolerance ? 1e-4 * value :integrals[0] * value ;
+                else
+                    rRightHandSideVector[i] = value;//0; //integrals[1] * value;
+            }
+
+            //negative part - sign is opposite to the previous case
+            for (unsigned int i = 0; i < TNumNodes; i++)
+            {
+                if(distances[i] < 0)
+                    rRightHandSideVector[TNumNodes+i] = value;// integrals[3]*value;//std::abs( integrals[3] * value )< epsilonTolerance ? 1e-4 * value :integrals[3] * value;
+                else
+                    rRightHandSideVector[TNumNodes+i] = value;//0; //integrals[2] * value;
+            }
+            for (unsigned int i = 0; i < 4; i++)
+                std::cout << "rRightHandSideVector [" << i << "] = " << rRightHandSideVector[i] << std::endl;
+        }
     }
 
     /// Check that all data required by this condition is available and reasonable
@@ -318,11 +381,42 @@ public:
         void EquationIdVector(EquationIdVectorType& rResult,
                                       ProcessInfo& rCurrentProcessInfo) override
         {
-            if (rResult.size() != TNumNodes)
-                rResult.resize(TNumNodes, false);
+            ElementPointerType pElem = pGetElement();
 
-            for (unsigned int i = 0; i < TNumNodes; i++)
-                rResult[i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
+            if(pElem->IsNot(MARKER))//normal element
+            {
+                if (rResult.size() != TNumNodes)
+                    rResult.resize(TNumNodes, false);
+
+                for (unsigned int i = 0; i < TNumNodes; i++)
+                    rResult[i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
+            }
+            else//wake element
+            {
+                if (rResult.size() != 2 * TNumNodes)
+                    rResult.resize(2 * TNumNodes, false);
+
+                array_1d<double,TNumNodes> distances;
+                GetWakeDistances(distances);
+
+                //positive part
+                for (unsigned int i = 0; i < TNumNodes; i++)
+                {
+                    if (distances[i] > 0)
+                        rResult[i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
+                    else
+                        rResult[i] = GetGeometry()[i].GetDof(NEGATIVE_FACE_PRESSURE, 0).EquationId();
+                }
+
+                //negative part - sign is opposite to the previous case
+                for (unsigned int i = 0; i < TNumNodes; i++)
+                {
+                    if (distances[i] < 0)
+                        rResult[TNumNodes + i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
+                    else
+                        rResult[TNumNodes + i] = GetGeometry()[i].GetDof(NEGATIVE_FACE_PRESSURE, 0).EquationId();
+                }
+            }
         }
 
 
@@ -334,12 +428,42 @@ public:
         void GetDofList(DofsVectorType& ConditionDofList,
                                 ProcessInfo& CurrentProcessInfo) override
         {
-            if (ConditionDofList.size() != TNumNodes)
-                ConditionDofList.resize(TNumNodes);
+            ElementPointerType pElem = pGetElement();
 
-            for (unsigned int i = 0; i < TNumNodes; i++)
-                ConditionDofList[i] = GetGeometry()[i].pGetDof(POSITIVE_FACE_PRESSURE);
+            if(pElem->IsNot(MARKER))//normal element
+            {            
+                if (ConditionDofList.size() != TNumNodes)
+                    ConditionDofList.resize(TNumNodes);
 
+                for (unsigned int i = 0; i < TNumNodes; i++)
+                    ConditionDofList[i] = GetGeometry()[i].pGetDof(POSITIVE_FACE_PRESSURE);
+            }
+            else//wake element
+            {
+                if (ConditionDofList.size() != 2*TNumNodes)
+                ConditionDofList.resize(2*TNumNodes);
+
+                array_1d<double,TNumNodes> distances;
+                GetWakeDistances(distances);
+
+                //positive part
+                for (unsigned int i = 0; i < TNumNodes; i++)
+                {
+                    if(distances[i] > 0)
+                        ConditionDofList[i] = GetGeometry()[i].pGetDof(POSITIVE_FACE_PRESSURE);
+                    else
+                        ConditionDofList[i] = GetGeometry()[i].pGetDof(NEGATIVE_FACE_PRESSURE);
+                }
+
+                //negative part - sign is opposite to the previous case
+                for (unsigned int i = 0; i < TNumNodes; i++)
+                {
+                    if(distances[i] < 0)
+                        ConditionDofList[TNumNodes+i] = GetGeometry()[i].pGetDof(POSITIVE_FACE_PRESSURE);
+                    else
+                        ConditionDofList[TNumNodes+i] = GetGeometry()[i].pGetDof(NEGATIVE_FACE_PRESSURE);
+                }
+            }
         }
 
         void FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) override
@@ -349,10 +473,6 @@ public:
             pElem->GetValueOnIntegrationPoints(PRESSURE, rValues, rCurrentProcessInfo);
             this->SetValue(PRESSURE,rValues[0]);
         }
-
-
-
-
 
         ///@}
         ///@name Access
@@ -410,6 +530,11 @@ protected:
         ///@name Protected Operators
         ///@{
 
+        void GetWakeDistances(array_1d<double,TNumNodes>& distances)
+        {
+            for (unsigned int i = 0; i < TNumNodes; i++)
+                distances[i] = GetGeometry()[i].GetSolutionStepValue(DISTANCE);
+        }
 
         ///@}
         ///@name Protected Operations
@@ -512,6 +637,16 @@ private:
 
             MathUtils<double>::CrossProduct(An, v1, v2);
             An *= 0.5;
+        }
+
+        double CalculateLenght()
+        {
+            Geometry<Node<3>> &pGeometry = this->GetGeometry();
+
+            double x10 = pGeometry[1].X() - pGeometry[0].X();
+            double y10 = pGeometry[1].Y() - pGeometry[0].Y();
+
+            return sqrt(x10 * x10 + y10 * y10);
         }
 
         ///@}

@@ -57,10 +57,14 @@ class DefineWakeProcess(KratosMultiphysics.Process):
         #mark as STRUCTURE and deactivate the elements that touch the kutta node
         for node in self.kutta_model_part.Nodes:
             node.Set(KratosMultiphysics.STRUCTURE)
+            x1 = node.X
+            y1 = node.Y
+            z1 = node.Z
             
 
 
-            
+         #find wake node in the outflow boundary
+        pos = 0    
         print(self.kutta_model_part)            
         
 
@@ -110,6 +114,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                             if(abs(d) < self.epsilon):
                                 d = self.epsilon
                             distances[counter] = d
+                            elnode.SetSolutionStepValue(KratosMultiphysics.DISTANCE,distances[counter])
                             counter += 1
 
                         npos = 0
@@ -124,16 +129,42 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                             elem.Set(KratosMultiphysics.MARKER,True)
                             counter = 0
                             for elnode in elem.GetNodes():
-                                elnode.SetSolutionStepValue(KratosMultiphysics.DISTANCE,0,distances[counter])
+                                elnode.SetSolutionStepValue(KratosMultiphysics.DISTANCE,distances[counter])
                                 counter+=1
+                                dx = elnode.X - x1
+                                dy = elnode.Y - y1
+                                dz = elnode.Z - z1
+                                tmp = dx*self.direction[0] + dy*self.direction[1] + dz*self.direction[2]
+                                if(tmp > pos):
+                                   pos = tmp                               
                             elem.SetValue(KratosMultiphysics.ELEMENTAL_DISTANCES,distances)
+                                
                             
                             #for elnode in elem.GetNodes():
                                 #if elnode.Is(KratosMultiphysics.STRUCTURE):
                                     #elem.Set(KratosMultiphysics.ACTIVE,False)
                                     #elem.Set(KratosMultiphysics.MARKER,False)
                                     
-
+            #'''
+            #find the wake elements at the outflow boundary
+            for elem in self.fluid_model_part.Elements:
+                #if(elem.Is(KratosMultiphysics.MARKER)):
+                    counter = 0
+                    for elnode in elem.GetNodes():
+                        dx = elnode.X - x1
+                        dy = elnode.Y - y1
+                        dz = elnode.Z - z1
+                        tmp = dx*self.direction[0] + dy*self.direction[1] + dz*self.direction[2]
+                        
+                        if(tmp > pos-1e-9):
+                            counter +=1
+                    # if(counter > 1):
+                    #     elem.Set(KratosMultiphysics.BOUNDARY,True)
+                    #     print('outlet boundary element found')
+                    #     print(elem)
+                    #     print(tmp)
+                        
+            #'''
                             
         else: #3D case
             import numpy

@@ -23,6 +23,7 @@ class LaplacianSolver:
             "absolute_tolerance": 1e-9,
             "maximum_iterations": 1,
             "compute_reactions": false,
+            "compute_condition_number": false,
             "reform_dofs_at_each_step": false,
             "calculate_solution_norm" : false,
             "volume_model_part_name" : "volume_model_part",
@@ -139,6 +140,71 @@ class LaplacianSolver:
         
     def Solve(self):
         (self.solver).Solve()
+        b = self.solver.GetSystemVector()
+        print(b)
+        
+        A = self.solver.GetSystemMatrix()
+        print(A[0,0])
+        print(A)
+        print(A.Size1())
+        fem_file = open("fem.dat",'a')
+        fem_file.write('\n\nMATRIX:\n')
+        fem_file.write('  \nIDS\t')
+        for i in range(A.Size1()):
+            fem_file.write('{0:5d}\t'.format(i+1))
+        fem_file.write('  b\t')
+        for i in range(A.Size1()):
+            fem_file.write('\n{0:5d}\t'.format(i+1))
+            for j in range(A.Size2()):
+                fem_file.write('{0:5.2f},\t'.format(2*A[i,j]))
+            fem_file.write('{0:5.2f}\t'.format(2*b[i]))
+        fem_file.flush()
+            
+            
+        
+        #if(self.settings["compute_condition_number"].GetBool() == True):
+        import eigen_solver_factory
+        settings_max = KratosMultiphysics.Parameters("""
+        {
+            "solver_type"             : "power_iteration_highest_eigenvalue_solver",
+            "max_iteration"           : 10000,
+            "tolerance"               : 1e-9,
+            "required_eigen_number"   : 1,
+            "verbosity"               : 0,
+            "linear_solver_settings"  : {
+                "solver_type"             : "SuperLUSolver",
+                "max_iteration"           : 500,
+                "tolerance"               : 1e-9,
+                "scaling"                 : false,
+                "verbosity"               : 0
+            }
+        }
+        """)
+        eigen_solver_max = eigen_solver_factory.ConstructSolver(settings_max)
+        settings_min = KratosMultiphysics.Parameters("""
+        {
+            "solver_type"             : "power_iteration_eigenvalue_solver",
+            "max_iteration"           : 10000,
+            "tolerance"               : 1e-9,
+            "required_eigen_number"   : 1,
+            "verbosity"               : 0,
+            "linear_solver_settings"  : {
+                "solver_type"             : "SuperLUSolver",
+                "max_iteration"           : 500,
+                "tolerance"               : 1e-9,
+                "scaling"                 : false,
+                "verbosity"               : 0
+            }
+        }
+        """)
+        eigen_solver_min = eigen_solver_factory.ConstructSolver(settings_min)
+        condition_number = KratosMultiphysics.ConditionNumberUtility().GetConditionNumber(self.solver.GetSystemMatrix(), eigen_solver_max, eigen_solver_min)
+        print('condition_number = {:.2e}'.format(condition_number))
+        loads_file = open("loads.dat",'a')
+        loads_file.write('{0:15.2e}\t'.format(condition_number))
+        loads_file.flush()
+        
+        
 
     #
     def SetEchoLevel(self, level):

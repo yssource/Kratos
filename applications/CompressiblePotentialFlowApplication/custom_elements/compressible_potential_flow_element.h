@@ -20,6 +20,8 @@
 #include <iostream>
 #include <algorithm>
 
+#include <fstream>
+
 // External includes
 
 
@@ -292,8 +294,7 @@ public:
         for(unsigned int i=0; i<NumNodes; i++)
         {
             data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
-        }
-        
+        }       
         
         //TEST:
         bool kutta_element = false;
@@ -304,6 +305,20 @@ public:
                 break;
             }
 
+        bool lower_face_element = false;
+        int counter = 0;
+        for(unsigned int i=0; i<NumNodes; ++i)
+        {
+            if(GetGeometry()[i].Is(BOUNDARY))
+                counter+=1;
+            
+            if(counter > 1)
+            {
+                lower_face_element = true;
+                break;
+            }
+        }
+
         if(this->IsNot(MARKER))//normal element (non-wake) - eventually an embedded
         {
             if(rLeftHandSideMatrix.size1() != NumNodes || rLeftHandSideMatrix.size2() != NumNodes)
@@ -313,7 +328,7 @@ public:
             rLeftHandSideMatrix.clear();
 
             ComputeLHSGaussPointContribution(data.vol,rLeftHandSideMatrix,data);
-                        
+
             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
             
         }
@@ -363,13 +378,26 @@ public:
             Matrix lhs_positive = ZeroMatrix(NumNodes,NumNodes);
             Matrix lhs_negative = ZeroMatrix(NumNodes,NumNodes);
             
-            for(unsigned int i=0; i<nsubdivisions; ++i)
-            {
-                if(PartitionsSign[i] > 0)
-                    ComputeLHSGaussPointContribution(Volumes[i],lhs_positive,data);
-                else
-                    ComputeLHSGaussPointContribution(Volumes[i],lhs_negative,data);
-            }
+            // for(unsigned int i=0; i<nsubdivisions; ++i)
+            // {
+            //     if(PartitionsSign[i] > 0)
+            //         ComputeLHSGaussPointContribution(Volumes[i],lhs_positive,data);
+            //     else
+            //         ComputeLHSGaussPointContribution(Volumes[i],lhs_negative,data);
+            // }
+
+            // for(unsigned int i=0; i<nsubdivisions; ++i)
+            // {
+            //     if(PartitionsSign[i] > 0)
+            //         ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
+            //     else
+            //         ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
+            // }
+            ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
+            ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
+
+            std::cout << "\nlhs_positive " << lhs_positive << std::endl;
+            std::cout << "\nlhs_negative " << lhs_negative << std::endl;
 
             //also next version works - NON SYMMETRIC - but it does not require a penalty
 //                 array_1d<double,Dim> n = prod(data.DN_DX,data.distances); //rCurrentProcessInfo[VELOCITY]; 
@@ -381,17 +409,21 @@ public:
 //                 bounded_matrix<double,Dim,Dim> P = IdentityMatrix(Dim,Dim) - nn;
 //                 noalias(tmp) = prod(data.DN_DX,P);
 //                 bounded_matrix<double,NumNodes,NumNodes> tangent_constraint = /*1e3**/data.vol*prod(tmp, trans(data.DN_DX));
-                if(kutta_element == true)
+                if(this->Is(BOUNDARY))
+                    std::cout << "BOUNDARY " << this->Info()  << std::endl;
+                if((kutta_element == true && lower_face_element == true) || this->Is(BOUNDARY))
+                //if(kutta_element == true || this->Is(BOUNDARY))
                 {
+                    std::cout << "DECOUPLED ELEMENT " << this->Id()  << std::endl;
                     for(unsigned int i=0; i<NumNodes; ++i)
                     {
                         for(unsigned int j=0; j<NumNodes; ++j)
                         {
-                            rLeftHandSideMatrix(i,j)            =  lhs_positive(i,j); 
-                            rLeftHandSideMatrix(i,j+NumNodes)   =  0.0; 
-                            
-                            rLeftHandSideMatrix(i+NumNodes,j+NumNodes) =  lhs_negative(i,j); 
-                            rLeftHandSideMatrix(i+NumNodes,j)          =  0.0; 
+                            rLeftHandSideMatrix(i, j) = lhs_positive(i, j);
+                            rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
+
+                            rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = lhs_negative(i, j);
+                            rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
                         }
                     }
                 }
@@ -409,7 +441,7 @@ public:
                         }
                     }
                     
-                
+                    double beta = 1e0;
                     //side1  -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
                     for(unsigned int i=0; i<NumNodes; ++i)
                     {
@@ -417,8 +449,8 @@ public:
                         {
                                 for(unsigned int j=0; j<NumNodes; ++j)
                                 {
-                                    rLeftHandSideMatrix(i,j)          = lhs_positive(i,j); 
-                                    rLeftHandSideMatrix(i,j+NumNodes) = -lhs_positive(i,j); 
+                                    rLeftHandSideMatrix(i,j)          = beta*lhs_positive(i,j); 
+                                    rLeftHandSideMatrix(i,j+NumNodes) = -beta*lhs_positive(i,j); 
                                 }
                         }
                     }
@@ -430,8 +462,8 @@ public:
                         {   
                             for(unsigned int j=0; j<NumNodes; ++j)
                                 {
-                                    rLeftHandSideMatrix(i+NumNodes,j+NumNodes) = lhs_negative(i,j);
-                                    rLeftHandSideMatrix(i+NumNodes,j) = -lhs_negative(i,j); 
+                                    rLeftHandSideMatrix(i+NumNodes,j+NumNodes) = beta*lhs_negative(i,j);
+                                    rLeftHandSideMatrix(i+NumNodes,j) = -beta*lhs_negative(i,j); 
                                 }
                         }
                     }
@@ -440,6 +472,80 @@ public:
             GetValuesOnSplitElement(split_element_values, data.distances);
             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix,split_element_values);
         }
+
+        std::ofstream fem_file;
+
+        fem_file.open("fem.dat", std::ios::out | std::ios::app);
+        fem_file << "\n\nElement " << this->Id();
+        for(unsigned int i = 0; i<NumNodes; i++)
+            fem_file << "\n\tNode " << i+1 << " = " << GetGeometry()[i].Coordinates();
+
+        if (this->IsNot(MARKER))
+        {
+            fem_file << "\n\n\tIDS ";
+            for (unsigned int i = 0; i < NumNodes; i++)
+                fem_file << "\t" << GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId() + 1;
+
+            for (unsigned int i = 0; i < rLeftHandSideMatrix.size1(); i++)
+            {
+                fem_file << "\n\t" << GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId() + 1;
+                for (unsigned int j = 0; j < rLeftHandSideMatrix.size2(); j++)
+                    fem_file << "\t" << std::setprecision(2) << 2 * rLeftHandSideMatrix(i, j);
+            }
+        }
+        else
+        {
+            array_1d<double,NumNodes> distances;
+            GetWakeDistances(distances);
+
+            fem_file << "\n\n\tIDS ";
+            //positive part
+            for (unsigned int i = 0; i < NumNodes; i++)
+            {
+                if(distances[i] > 0)
+                    fem_file << "\t" << GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId()+1;
+                else
+                    fem_file << "\t" << GetGeometry()[i].GetDof(NEGATIVE_FACE_PRESSURE,0).EquationId()+1;
+            }
+
+            //negative part - sign is opposite to the previous case
+            for (unsigned int i = 0; i < NumNodes; i++)
+            {
+                if(distances[i] < 0)
+                    fem_file << "\t" << GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId()+1;
+                else
+                    fem_file << "\t" << GetGeometry()[i].GetDof(NEGATIVE_FACE_PRESSURE,0).EquationId()+1;
+            }
+
+            for (unsigned int i = 0; i < rLeftHandSideMatrix.size1(); i++)
+            {
+                if(i<NumNodes)
+                    if(distances[i] > 0)
+                        fem_file << "\n\t" << GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId() + 1;
+                    else
+                        fem_file << "\n\t" << GetGeometry()[i].GetDof(NEGATIVE_FACE_PRESSURE).EquationId() + 1;
+                else
+                    if(distances[i-NumNodes]<0)
+                        fem_file << "\n\t" << GetGeometry()[i-NumNodes].GetDof(POSITIVE_FACE_PRESSURE).EquationId() + 1;
+                    else
+                        fem_file << "\n\t" << GetGeometry()[i-NumNodes].GetDof(NEGATIVE_FACE_PRESSURE).EquationId() + 1;
+
+                for (unsigned int j = 0; j < rLeftHandSideMatrix.size2(); j++)
+                    fem_file << "\t" << std::setprecision(2) << 2 * rLeftHandSideMatrix(i, j);
+            }
+        }
+
+        fem_file.close();
+
+        // std::cout << "Element " << this->Id() << std::endl;
+
+        // std::cout << "GetGeometry() " << GetGeometry() << std::endl;
+
+        // std::cout << "DN_DX " << data.DN_DX << std::endl;
+
+        // std::cout << "vol " << data.vol << std::endl;
+        // std::cout << "rLeftHandSideMatrix " << rLeftHandSideMatrix << std::endl;
+        // std::cout << " "  << std::endl;
         
     }
 
@@ -601,6 +707,9 @@ protected:
         const ElementalData<NumNodes, Dim> &data)
     {
         noalias(lhs) += weight * prod(data.DN_DX, trans(data.DN_DX));
+        std::cout << "\nweight " << weight << std::endl;
+        std::cout << "\ndata.DN_DX " << data.DN_DX << std::endl;
+        std::cout << "\nlhs " << lhs << std::endl;
     }
 
     void ComputeRHSGaussPointContribution(
@@ -644,7 +753,7 @@ protected:
         if (this->IsNot(MARKER) && active == true)
             ComputeVelocityNormalElement(velocity);
         else if (active == true && this->Is(MARKER))
-            ComputeVelocityUpperWakeElement(velocity);
+            ComputeVelocityLowerWakeElement(velocity);
     }
 
     void ComputeVelocityNormalElement(array_1d<double,Dim>& velocity)
@@ -658,7 +767,7 @@ protected:
         for (unsigned int i = 0; i < NumNodes; i++)
             data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
 
-        noalias(velocity) = -prod(trans(data.DN_DX), data.phis);
+        noalias(velocity) = prod(trans(data.DN_DX), data.phis);
     }
 
     void ComputeVelocityUpperWakeElement(array_1d<double,Dim>& velocity)
@@ -680,7 +789,7 @@ protected:
                 data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
         }
 
-        noalias(velocity) = -prod(trans(data.DN_DX), data.phis);
+        noalias(velocity) = prod(trans(data.DN_DX), data.phis);
     }
 
     void ComputeVelocityLowerWakeElement(array_1d<double,Dim>& velocity)
@@ -702,7 +811,7 @@ protected:
                 data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
         }
 
-        noalias(velocity) = -prod(trans(data.DN_DX), data.phis);
+        noalias(velocity) = prod(trans(data.DN_DX), data.phis);
     }
 
     void CheckWakeCondition()

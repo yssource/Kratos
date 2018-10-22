@@ -139,6 +139,7 @@ class TestComputeCenterOfGravity(KratosUnittest.TestCase):
         elem4.SetValue(KratosMultiphysics.NODAL_MASS,78.234)
 
         mass_process = StructuralMechanicsApplication.ComputeCenterOfGravityProcess(mp)
+        print("printing cog for nodal mass")
         mass_process.Execute()
         total_mass = mp.ProcessInfo[StructuralMechanicsApplication.CENTER_OF_GRAVITY]
 
@@ -165,6 +166,7 @@ class TestComputeCenterOfGravity(KratosUnittest.TestCase):
             elem = mp.CreateNewElement("CrLinearBeamElement3D2N", i+1, [i+1,i+2], mp.GetProperties()[0])
 
         mass_process = StructuralMechanicsApplication.ComputeCenterOfGravityProcess(mp)
+        print("printing cog for beam mass")
         mass_process.Execute()
         total_mass = mp.ProcessInfo[StructuralMechanicsApplication.CENTER_OF_GRAVITY]
 
@@ -185,6 +187,7 @@ class TestComputeCenterOfGravity(KratosUnittest.TestCase):
         # local changes
 
         mass_process = StructuralMechanicsApplication.ComputeCenterOfGravityProcess(mp)
+        print("printing cog for shell mass")
         mass_process.Execute()
         total_mass = mp.ProcessInfo[StructuralMechanicsApplication.CENTER_OF_GRAVITY]
 
@@ -203,6 +206,7 @@ class TestComputeCenterOfGravity(KratosUnittest.TestCase):
         self._create_shell_elements(mp)
 
         mass_process = StructuralMechanicsApplication.ComputeCenterOfGravityProcess(mp)
+        print("printing cog for orthotropic shell mass")
         mass_process.Execute()
         total_mass = mp.ProcessInfo[StructuralMechanicsApplication.CENTER_OF_GRAVITY]
 
@@ -232,6 +236,7 @@ class TestComputeCenterOfGravity(KratosUnittest.TestCase):
         mp.CreateNewElement("TotalLagrangianElement2D3N", 4, [4,1,5], mp.GetProperties()[1])
 
         mass_process = StructuralMechanicsApplication.ComputeCenterOfGravityProcess(mp)
+        print("printing cog for solid mass")
         mass_process.Execute()
         total_mass = mp.ProcessInfo[StructuralMechanicsApplication.CENTER_OF_GRAVITY]
 

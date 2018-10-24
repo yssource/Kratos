@@ -245,6 +245,18 @@ protected:
     {
         return DofIndex / DofsPerNode();
     }
+
+    Vector3 Cross(
+        const Vector3& u,
+        const Vector3& v)
+    {
+        Vector3 result;
+        result[0] = u[1] * v[2] - u[2] * v[1];
+        result[1] = u[2] * v[0] - u[0] * v[2];
+        result[2] = u[0] * v[1] - u[1] * v[0];
+
+        return result;
+    }
 };
 
 } // namespace Kratos

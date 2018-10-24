@@ -15,6 +15,8 @@ set(KRATOS_IGA_APPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_utilities_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/iga_truss_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/iga_beam_element.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/iga_shell_3P_element.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/iga_shell_5P_element.cpp
     # utilities
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/iga_flags.cpp
     # elements

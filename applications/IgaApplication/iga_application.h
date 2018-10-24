@@ -24,6 +24,8 @@
 
 #include "custom_elements/iga_truss_element.h"
 #include "custom_elements/iga_beam_element.h"
+#include "custom_elements/iga_shell_3P_element.h"
+#include "custom_elements/iga_shell_5P_element.h"
 #include "custom_elements/shell_kl_discrete_element.h"
 
 namespace Kratos {
@@ -163,6 +165,8 @@ private:
 
     const IgaTrussElement mIgaTrussElement;
     const IgaBeamElement mIgaBeamElement;
+    const IgaShell3PElement mIgaShell3PElement;
+    const IgaShell5PElement mIgaShell5PElement;
     const ShellKLDiscreteElement mShellKLDiscreteElement;
 
     ///@}

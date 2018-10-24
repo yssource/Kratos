@@ -24,6 +24,10 @@ KratosIgaApplication::KratosIgaApplication()
         new Geometry<Node<3>>(Element::GeometryType::PointsArrayType(1))))
     , mIgaBeamElement(0, Element::GeometryType::Pointer(
         new Geometry<Node<3>>(Element::GeometryType::PointsArrayType(1))))
+    , mIgaShell3PElement(0, Element::GeometryType::Pointer(
+        new Geometry<Node<3>>(Element::GeometryType::PointsArrayType(1))))
+    , mIgaShell5PElement(0, Element::GeometryType::Pointer(
+        new Geometry<Node<3>>(Element::GeometryType::PointsArrayType(1))))
     , mShellKLDiscreteElement(0, Element::GeometryType::Pointer(
         new Geometry<Node<3>>(Element::GeometryType::PointsArrayType(1))))
 {
@@ -35,6 +39,8 @@ void KratosIgaApplication::Register() {
 
     KRATOS_REGISTER_ELEMENT("IgaTrussElement", mIgaTrussElement)
     KRATOS_REGISTER_ELEMENT("IgaBeamElement", mIgaBeamElement)
+    KRATOS_REGISTER_ELEMENT("IgaShell3PElement", mIgaShell3PElement)
+    KRATOS_REGISTER_ELEMENT("IgaShell5PElement", mIgaShell5PElement)
     KRATOS_REGISTER_ELEMENT("ShellKLDiscreteElement", mShellKLDiscreteElement)
 }
 

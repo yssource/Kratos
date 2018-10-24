@@ -30,8 +30,15 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
         self.velocity_infinity[2] = settings["velocity_infinity"][2].GetDouble()
         #self.density_infinity = settings["density_infinity"].GetDouble() #TODO: must read this from the properties
         self.inlet_phi = settings["inlet_phi"].GetDouble()
+
+        self.penalty = 1e0
+        self.peso = 0e0
+        self.penalty2 = 1
         
         self.model_part.ProcessInfo.SetValue(CompressiblePotentialFlowApplication.VELOCITY_INFINITY,self.velocity_infinity)
+        self.model_part.ProcessInfo.SetValue(KratosMultiphysics.INITIAL_PENALTY,self.penalty)
+        self.model_part.ProcessInfo.SetValue(KratosMultiphysics.WATER_PRESSURE,self.peso)
+        self.model_part.ProcessInfo.SetValue(KratosMultiphysics.MIU,self.penalty2)
         
         
         

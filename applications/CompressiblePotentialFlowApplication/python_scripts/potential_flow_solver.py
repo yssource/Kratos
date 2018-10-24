@@ -59,13 +59,21 @@ class LaplacianSolver:
     def AddVariables(self):
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.POSITIVE_FACE_PRESSURE)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NEGATIVE_FACE_PRESSURE)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NODAL_H)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.DISTANCE)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.VELOCITY_INFINITY)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.VELOCITY_LOWER)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.PRESSURE_LOWER)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.UPPER_SURFACE)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.LOWER_SURFACE)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.TEMPERATURE)
         
     def AddDofs(self):
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.POSITIVE_FACE_PRESSURE, self.main_model_part)
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.NEGATIVE_FACE_PRESSURE, self.main_model_part)
+        KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.NODAL_H, self.main_model_part)
+
         
     def Initialize(self):
         time_scheme = KratosMultiphysics.ResidualBasedIncrementalUpdateStaticScheme()
@@ -139,6 +147,48 @@ class LaplacianSolver:
         
     def Solve(self):
         (self.solver).Solve()
+        '''
+        import eigen_solver_factory
+        settings_max = KratosMultiphysics.Parameters("""
+        {
+            "solver_type"             : "power_iteration_highest_eigenvalue_solver",
+            "max_iteration"           : 10000,
+            "tolerance"               : 1e-9,
+            "required_eigen_number"   : 1,
+            "verbosity"               : 0,
+            "linear_solver_settings"  : {
+                "solver_type"             : "SuperLUSolver",
+                "max_iteration"           : 500,
+                "tolerance"               : 1e-9,
+                "scaling"                 : false,
+                "verbosity"               : 0
+            }
+        }
+        """)
+        eigen_solver_max = eigen_solver_factory.ConstructSolver(settings_max)
+        settings_min = KratosMultiphysics.Parameters("""
+        {
+            "solver_type"             : "power_iteration_eigenvalue_solver",
+            "max_iteration"           : 10000,
+            "tolerance"               : 1e-9,
+            "required_eigen_number"   : 1,
+            "verbosity"               : 0,
+            "linear_solver_settings"  : {
+                "solver_type"             : "SuperLUSolver",
+                "max_iteration"           : 500,
+                "tolerance"               : 1e-9,
+                "scaling"                 : false,
+                "verbosity"               : 0
+            }
+        }
+        """)
+        eigen_solver_min = eigen_solver_factory.ConstructSolver(settings_min)
+        condition_number = KratosMultiphysics.ConditionNumberUtility().GetConditionNumber(self.solver.GetSystemMatrix(), eigen_solver_max, eigen_solver_min)
+        print('condition_number = {:.2e}'.format(condition_number))
+        loads_file = open("loads.dat",'a')
+        loads_file.write('{0:15.2e}\t'.format(condition_number))
+        loads_file.flush()
+        '''
 
     #
     def SetEchoLevel(self, level):

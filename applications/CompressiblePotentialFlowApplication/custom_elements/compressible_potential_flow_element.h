@@ -190,29 +190,59 @@ public:
         }
         else//wake element
         {
-            if (rResult.size() != 2*NumNodes)
-                rResult.resize(2*NumNodes, false);
-
-            array_1d<double,NumNodes> distances;
-            GetWakeDistances(distances);
-
-            //positive part
-            for (unsigned int i = 0; i < NumNodes; i++)
+            if(this->Is(ISOLATED))
             {
-                if(distances[i] > 0)
-                    rResult[i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
-                else
-                    rResult[i] = GetGeometry()[i].GetDof(NEGATIVE_FACE_PRESSURE,0).EquationId();
-            }
+                if (rResult.size() != 2 * NumNodes)
+                    rResult.resize(2 * NumNodes, false);
 
-            //negative part - sign is opposite to the previous case
-            for (unsigned int i = 0; i < NumNodes; i++)
-            {
-                if(distances[i] < 0)
-                    rResult[NumNodes+i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
-                else
-                    rResult[NumNodes+i] = GetGeometry()[i].GetDof(NEGATIVE_FACE_PRESSURE,0).EquationId();
+                array_1d<double, NumNodes> distances;
+                GetWakeDistances(distances);
+
+                //positive part
+                for (unsigned int i = 0; i < NumNodes; i++)
+                {
+                    if (distances[i] > 0)
+                        rResult[i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
+                    else
+                        rResult[i] = GetGeometry()[i].GetDof(NODAL_H).EquationId();
+                }
+
+                //negative part - sign is opposite to the previous case
+                for (unsigned int i = 0; i < NumNodes; i++)
+                {
+                    if (distances[i] < 0)
+                        rResult[NumNodes + i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
+                    else
+                        rResult[NumNodes + i] = GetGeometry()[i].GetDof(NODAL_H).EquationId();
+                }
             }
+            else
+            {
+                if (rResult.size() != 2 * NumNodes)
+                    rResult.resize(2 * NumNodes, false);
+
+                array_1d<double, NumNodes> distances;
+                GetWakeDistances(distances);
+
+                //positive part
+                for (unsigned int i = 0; i < NumNodes; i++)
+                {
+                    if (distances[i] > 0)
+                        rResult[i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
+                    else
+                        rResult[i] = GetGeometry()[i].GetDof(NEGATIVE_FACE_PRESSURE, 0).EquationId();
+                }
+
+                //negative part - sign is opposite to the previous case
+                for (unsigned int i = 0; i < NumNodes; i++)
+                {
+                    if (distances[i] < 0)
+                        rResult[NumNodes + i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
+                    else
+                        rResult[NumNodes + i] = GetGeometry()[i].GetDof(NEGATIVE_FACE_PRESSURE, 0).EquationId();
+                }
+            }
+            
         }
 
 
@@ -236,29 +266,62 @@ public:
         }
         else//wake element
         {
-            if (rElementalDofList.size() != 2*NumNodes)
-                rElementalDofList.resize(2*NumNodes);
-
-            array_1d<double,NumNodes> distances;
-            GetWakeDistances(distances);
-
-            //positive part
-            for (unsigned int i = 0; i < NumNodes; i++)
+            if(this->Is(ISOLATED))
             {
-                if(distances[i] > 0)
-                    rElementalDofList[i] = GetGeometry()[i].pGetDof(POSITIVE_FACE_PRESSURE);
-                else
-                    rElementalDofList[i] = GetGeometry()[i].pGetDof(NEGATIVE_FACE_PRESSURE);
-            }
+                std::cout << "GETDOF ISOLATED ELEMENT " << this->Id()  << std::endl;
 
-            //negative part - sign is opposite to the previous case
-            for (unsigned int i = 0; i < NumNodes; i++)
-            {
-                if(distances[i] < 0)
-                    rElementalDofList[NumNodes+i] = GetGeometry()[i].pGetDof(POSITIVE_FACE_PRESSURE);
-                else
-                    rElementalDofList[NumNodes+i] = GetGeometry()[i].pGetDof(NEGATIVE_FACE_PRESSURE);
+                if (rElementalDofList.size() != 2 * NumNodes)
+                    rElementalDofList.resize(2 * NumNodes);
+
+                array_1d<double, NumNodes> distances;
+                GetWakeDistances(distances);
+
+                //positive part
+                for (unsigned int i = 0; i < NumNodes; i++)
+                {
+                    if (distances[i] > 0)
+                        rElementalDofList[i] = GetGeometry()[i].pGetDof(POSITIVE_FACE_PRESSURE);
+                    else
+                        rElementalDofList[i] = GetGeometry()[i].pGetDof(NODAL_H);
+                }
+
+                //negative part - sign is opposite to the previous case
+                for (unsigned int i = 0; i < NumNodes; i++)
+                {
+                    if (distances[i] < 0)
+                        rElementalDofList[NumNodes + i] = GetGeometry()[i].pGetDof(POSITIVE_FACE_PRESSURE);
+                    else
+                        rElementalDofList[NumNodes + i] = GetGeometry()[i].pGetDof(NODAL_H);
+                }
             }
+            else
+            {
+                if (rElementalDofList.size() != 2 * NumNodes)
+                    rElementalDofList.resize(2 * NumNodes);
+
+                array_1d<double, NumNodes> distances;
+                GetWakeDistances(distances);
+
+                //positive part
+                for (unsigned int i = 0; i < NumNodes; i++)
+                {
+                    if (distances[i] > 0)
+                        rElementalDofList[i] = GetGeometry()[i].pGetDof(POSITIVE_FACE_PRESSURE);
+                    else
+                        rElementalDofList[i] = GetGeometry()[i].pGetDof(NEGATIVE_FACE_PRESSURE);
+                }
+
+                //negative part - sign is opposite to the previous case
+                for (unsigned int i = 0; i < NumNodes; i++)
+                {
+                    if (distances[i] < 0)
+                        rElementalDofList[NumNodes + i] = GetGeometry()[i].pGetDof(POSITIVE_FACE_PRESSURE);
+                    else
+                        rElementalDofList[NumNodes + i] = GetGeometry()[i].pGetDof(NEGATIVE_FACE_PRESSURE);
+                }
+
+            }
+            
         }
     }
 
@@ -296,13 +359,27 @@ public:
         
         
         //TEST:
-        bool kutta_element = false;
-        for(unsigned int i=0; i<NumNodes; ++i)
-            if(GetGeometry()[i].Is(STRUCTURE))
-            {
-                kutta_element = true;
-                break;
-            }
+        // bool kutta_element = false;
+        // for(unsigned int i=0; i<NumNodes; ++i)
+        //     if(GetGeometry()[i].Is(STRUCTURE))
+        //     {
+        //         kutta_element = true;
+        //         break;
+        //     }
+
+        // bool lower_face_element = false;
+        // int counter = 0;
+        // for(unsigned int i=0; i<NumNodes; ++i)
+        // {
+        //     if(GetGeometry()[i].Is(BOUNDARY))
+        //         counter+=1;
+            
+        //     if(counter > 1)
+        //     {
+        //         lower_face_element = true;
+        //         break;
+        //     }
+        // }
 
         if(this->IsNot(MARKER))//normal element (non-wake) - eventually an embedded
         {
@@ -312,10 +389,36 @@ public:
                 rRightHandSideVector.resize(NumNodes,false);
             rLeftHandSideMatrix.clear();
 
-            ComputeLHSGaussPointContribution(data.vol,rLeftHandSideMatrix,data);
-                        
+            ComputeLHSGaussPointContribution(data.vol, rLeftHandSideMatrix, data);
+
+            // if (this->Is(ISOLATED))
+            // {
+            //     std::cout << " ISOLATED ELEMENT " << this->Id() << std::endl;
+            //     std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
+            //     Matrix lhs_penalty = ZeroMatrix(NumNodes, NumNodes);
+
+            //     bounded_matrix<double, 2, 1> chord_normal;
+
+            //     chord_normal(0, 0) = rCurrentProcessInfo[Y1];
+            //     chord_normal(1, 0) = rCurrentProcessInfo[Y2];
+
+            //     Matrix projection = prod(data.DN_DX, chord_normal);
+
+            //     double penalty = rCurrentProcessInfo[INITIAL_PENALTY];
+            //     double penalty2 = 1.0;//rCurrentProcessInfo[MIU] / data.vol;
+
+            //     std::cout << " chord_normal(0, 0) = " << chord_normal(0, 0) << std::endl;
+            //     std::cout << " chord_normal(1, 0) = " << chord_normal(1, 0) << std::endl;
+            //     std::cout << " penalty = " << penalty << std::endl;
+            //     std::cout << " penalty2 = " << penalty2 << std::endl;
+
+            //     noalias(lhs_penalty) = penalty2 * penalty * data.vol * prod(projection, trans(projection));
+
+            //     rLeftHandSideMatrix = lhs_penalty;
+            //     std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
+            // }
+
             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
-            
         }
         else //it is a wake element
         {
@@ -363,13 +466,31 @@ public:
             Matrix lhs_positive = ZeroMatrix(NumNodes,NumNodes);
             Matrix lhs_negative = ZeroMatrix(NumNodes,NumNodes);
             
-            for(unsigned int i=0; i<nsubdivisions; ++i)
-            {
-                if(PartitionsSign[i] > 0)
-                    ComputeLHSGaussPointContribution(Volumes[i],lhs_positive,data);
-                else
-                    ComputeLHSGaussPointContribution(Volumes[i],lhs_negative,data);
-            }
+            // for(unsigned int i=0; i<nsubdivisions; ++i)
+            // {
+            //     if(PartitionsSign[i] > 0)
+            //         ComputeLHSGaussPointContribution(Volumes[i],lhs_positive,data);
+            //     else
+            //         ComputeLHSGaussPointContribution(Volumes[i],lhs_negative,data);
+            // }
+
+            ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
+            ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
+
+            Matrix lhs_penalty = ZeroMatrix(NumNodes,NumNodes);
+
+            bounded_matrix<double, 2, 1 > chord_normal;
+
+            chord_normal(0,0) = rCurrentProcessInfo[Y1];
+            chord_normal(1,0) = rCurrentProcessInfo[Y2];
+
+            Matrix projection = prod(data.DN_DX,chord_normal);
+
+            noalias(lhs_penalty) = data.vol * prod(projection, trans(projection));
+
+            double penalty = rCurrentProcessInfo[INITIAL_PENALTY];
+            double peso = rCurrentProcessInfo[WATER_PRESSURE];
+            double penalty2 = 1;//rCurrentProcessInfo[MIU]/data.vol;
 
             //also next version works - NON SYMMETRIC - but it does not require a penalty
 //                 array_1d<double,Dim> n = prod(data.DN_DX,data.distances); //rCurrentProcessInfo[VELOCITY]; 
@@ -381,61 +502,104 @@ public:
 //                 bounded_matrix<double,Dim,Dim> P = IdentityMatrix(Dim,Dim) - nn;
 //                 noalias(tmp) = prod(data.DN_DX,P);
 //                 bounded_matrix<double,NumNodes,NumNodes> tangent_constraint = /*1e3**/data.vol*prod(tmp, trans(data.DN_DX));
-                if(kutta_element == true)
+                // if(this->Is(BOUNDARY))
+                //     std::cout << "BOUNDARY " << this->Info()  << std::endl;
+                
+                //if(kutta_element == true)// && lower_face_element == true)
+                if(this->Is(STRUCTURE))
                 {
-                    for(unsigned int i=0; i<NumNodes; ++i)
+                    for(unsigned int i = 0; i<NumNodes; ++i)
+                        GetGeometry()[i].GetSolutionStepValue(TEMPERATURE) = 30.0;
+                    //std::cout << "chord_normal = " << chord_normal << std::endl;
+
+                    // for(unsigned int i=0; i<nsubdivisions; ++i)
+                    // {
+                    //     if(PartitionsSign[i] > 0)
+                    //         ComputeLHSGaussPointContribution(Volumes[i],lhs_positive,data);
+                    //     else
+                    //         ComputeLHSGaussPointContribution(Volumes[i],lhs_negative,data);
+                    // }
+                    // ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
+                    // ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
+                    // std::cout << "KUTTA ELEMENT " << this->Id()  << std::endl;
+                    // std::cout << "penalty = " << penalty  << std::endl;
+                    // std::cout << "peso = " << peso  << std::endl;
+                    // std::cout << "penalty2 = " << penalty2  << std::endl;
+                    if(this->Is(MODIFIED))
                     {
-                        for(unsigned int j=0; j<NumNodes; ++j)
+                        std::cout << "WAKE KUTTA MODIFIED ELEMENT " << this->Id()  << std::endl;
+                        for (unsigned int i = 0; i < NumNodes; ++i)
                         {
-                            rLeftHandSideMatrix(i,j)            =  lhs_positive(i,j); 
-                            rLeftHandSideMatrix(i,j+NumNodes)   =  0.0; 
-                            
-                            rLeftHandSideMatrix(i+NumNodes,j+NumNodes) =  lhs_negative(i,j); 
-                            rLeftHandSideMatrix(i+NumNodes,j)          =  0.0; 
+                            for (unsigned int j = 0; j < NumNodes; ++j)
+                            {
+                                rLeftHandSideMatrix(i, j) = lhs_positive(i, j);
+                                rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
+
+                                rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = lhs_negative(i, j);
+                                rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
+                            }
+                        }
+
+                    }
+                    else
+                    {
+                        for (unsigned int i = 0; i < NumNodes; ++i)
+                        {
+                            for (unsigned int j = 0; j < NumNodes; ++j)
+                            {
+                                rLeftHandSideMatrix(i, j) = peso * lhs_positive(i, j) + penalty2 * penalty * lhs_penalty(i, j);
+                                rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
+
+                                rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = peso * lhs_negative(i, j) + penalty2 * penalty * lhs_penalty(i, j);
+                                rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
+                            }
+
+                            // //side1  -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
+                            // if (data.distances[i] < 0)
+                            // {
+                            //     for (unsigned int j = 0; j < NumNodes; ++j)
+                            //         rLeftHandSideMatrix(i, j + NumNodes) = -peso * lhs_positive(i, j) + penalty2 * penalty * lhs_penalty(i, j);
+                            // }
+                            // else //side2 -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
+                            // {
+                            //     for (unsigned int j = 0; j < NumNodes; ++j)
+                            //         rLeftHandSideMatrix(i + NumNodes, j) = -peso * lhs_negative(i, j) + penalty2 * penalty * lhs_penalty(i, j);
+                            // }
                         }
                     }
                 }
                 else
                 {
+                    // ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
+                    // ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
+                    if(this->Is(ISOLATED))
+                        std::cout << "WAKE ISOLATED ELEMENT " << this->Id()  << std::endl;
+                    double beta = 1e0;
                     for(unsigned int i=0; i<NumNodes; ++i)
                     {
                         for(unsigned int j=0; j<NumNodes; ++j)
                         {
-                            rLeftHandSideMatrix(i,j)                   =  lhs_positive(i,j); 
+                            rLeftHandSideMatrix(i,j)                   =  beta*lhs_positive(i,j); 
                             rLeftHandSideMatrix(i,j+NumNodes)          =  0.0; 
                             
-                            rLeftHandSideMatrix(i+NumNodes,j+NumNodes) =  lhs_negative(i,j); 
+                            rLeftHandSideMatrix(i+NumNodes,j+NumNodes) =  beta*lhs_negative(i,j); 
                             rLeftHandSideMatrix(i+NumNodes,j)          =  0.0; 
                         }
-                    }
-                    
-                
-                    //side1  -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
-                    for(unsigned int i=0; i<NumNodes; ++i)
-                    {
+
+                        //side1  -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
                         if(data.distances[i]<0)
                         {
-                                for(unsigned int j=0; j<NumNodes; ++j)
-                                {
-                                    rLeftHandSideMatrix(i,j)          = lhs_positive(i,j); 
-                                    rLeftHandSideMatrix(i,j+NumNodes) = -lhs_positive(i,j); 
-                                }
-                        }
-                    }
-                    
-                    //side2 -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
-                    for(unsigned int i=0; i<NumNodes; ++i)
-                    {                            
-                        if(data.distances[i]>0)
-                        {   
                             for(unsigned int j=0; j<NumNodes; ++j)
-                                {
-                                    rLeftHandSideMatrix(i+NumNodes,j+NumNodes) = lhs_negative(i,j);
-                                    rLeftHandSideMatrix(i+NumNodes,j) = -lhs_negative(i,j); 
-                                }
+                                rLeftHandSideMatrix(i,j+NumNodes) = -beta*lhs_positive(i,j); 
                         }
-                    }
+                        else //side2 -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
+                        {
+                            for(unsigned int j=0; j<NumNodes; ++j)
+                                rLeftHandSideMatrix(i+NumNodes,j) = -beta*lhs_negative(i,j); 
+                        }
+                    }                  
                 }
+                
             Vector split_element_values(NumNodes*2);
             GetValuesOnSplitElement(split_element_values, data.distances);
             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix,split_element_values);
@@ -512,8 +676,21 @@ public:
         if (rVariable == PRESSURE)
         {
             double p = 0.0;
-            p = ComputePressure(rCurrentProcessInfo);
+            p = ComputePressureUpper(rCurrentProcessInfo);
             rValues[0] = p;
+        }
+        else if (rVariable == PRESSURE_LOWER)
+        {
+            double p = 0.0;
+            p = ComputePressureLower(rCurrentProcessInfo);
+            rValues[0] = p;
+        }
+        else if (rVariable == THICKNESS)
+        {
+            if(this->IsNot(MARKER))
+                rValues[0] = 0;
+            else
+                rValues[0] = 10.0;
         }
     }
 
@@ -527,7 +704,15 @@ public:
         {
             array_1d<double,3> v(3,0.0);
             array_1d<double,Dim> vaux;
-            ComputeVelocity(vaux);
+            ComputeVelocityUpper(vaux);
+            for(unsigned int k=0; k<Dim; k++) v[k] = vaux[k];
+            rValues[0] = v;
+        }
+        else if (rVariable == VELOCITY_LOWER)
+        {
+            array_1d<double,3> v(3,0.0);
+            array_1d<double,Dim> vaux;
+            ComputeVelocityLower(vaux);
             for(unsigned int k=0; k<Dim; k++) v[k] = vaux[k];
             rValues[0] = v;
         }
@@ -614,26 +799,49 @@ protected:
 
     void GetValuesOnSplitElement(Vector& split_element_values, const array_1d<double,NumNodes>& distances )
     {
-
-        for (unsigned int i = 0; i < NumNodes; i++)
+        if(this->Is(ISOLATED))
         {
-            if(distances[i] > 0)
-                split_element_values[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
-            else
-                split_element_values[i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
+            for (unsigned int i = 0; i < NumNodes; i++)
+            {
+                if (distances[i] > 0)
+                    split_element_values[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+                else
+                    split_element_values[i] = GetGeometry()[i].FastGetSolutionStepValue(NODAL_H);
+            }
+
+            //negative part - sign is opposite to the previous case
+            for (unsigned int i = 0; i < NumNodes; i++)
+            {
+                if (distances[i] < 0)
+                    split_element_values[NumNodes + i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+                else
+                    split_element_values[NumNodes + i] = GetGeometry()[i].FastGetSolutionStepValue(NODAL_H);
+            }
+        }
+        else
+        {
+                for (unsigned int i = 0; i < NumNodes; i++)
+            {
+                if (distances[i] > 0)
+                    split_element_values[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+                else
+                    split_element_values[i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
+            }
+
+            //negative part - sign is opposite to the previous case
+            for (unsigned int i = 0; i < NumNodes; i++)
+            {
+                if (distances[i] < 0)
+                    split_element_values[NumNodes + i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+                else
+                    split_element_values[NumNodes + i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
+            }
         }
 
-        //negative part - sign is opposite to the previous case
-        for (unsigned int i = 0; i < NumNodes; i++)
-        {
-            if(distances[i] < 0)
-                split_element_values[NumNodes+i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
-            else
-                split_element_values[NumNodes+i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
-        }
+        
     }
 
-    void ComputeVelocity(array_1d<double,Dim>& velocity)
+    void ComputeVelocityUpper(array_1d<double,Dim>& velocity)
     {
         velocity.clear();
 
@@ -645,6 +853,20 @@ protected:
             ComputeVelocityNormalElement(velocity);
         else if (active == true && this->Is(MARKER))
             ComputeVelocityUpperWakeElement(velocity);
+    }
+
+    void ComputeVelocityLower(array_1d<double,Dim>& velocity)
+    {
+        velocity.clear();
+
+        bool active = true;
+        if ((this)->IsDefined(ACTIVE))
+            active = (this)->Is(ACTIVE);
+
+        if (this->IsNot(MARKER) && active == true)
+            ComputeVelocityNormalElement(velocity);
+        else if (active == true && this->Is(MARKER))
+            ComputeVelocityLowerWakeElement(velocity);
     }
 
     void ComputeVelocityNormalElement(array_1d<double,Dim>& velocity)
@@ -671,13 +893,27 @@ protected:
         array_1d<double, NumNodes> distances;
         GetWakeDistances(distances);
 
-        //taking only positive part
-        for (unsigned int i = 0; i < NumNodes; i++)
+        if(this->Is(ISOLATED))
         {
-            if (distances[i] > 0)
-                data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
-            else
-                data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
+            //taking only positive part
+            for (unsigned int i = 0; i < NumNodes; i++)
+            {
+                if (distances[i] > 0)
+                    data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+                else
+                    data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(NODAL_H);
+            }
+        }
+        else
+        {
+            //taking only positive part
+            for (unsigned int i = 0; i < NumNodes; i++)
+            {
+                if (distances[i] > 0)
+                    data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+                else
+                    data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
+            }
         }
 
         noalias(velocity) = -prod(trans(data.DN_DX), data.phis);
@@ -693,15 +929,29 @@ protected:
         array_1d<double, NumNodes> distances;
         GetWakeDistances(distances);
 
-        //taking only negative part
-        for (unsigned int i = 0; i < NumNodes; i++)
+        if(this->Is(ISOLATED))
         {
-            if (distances[i] < 0)
-                data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
-            else
-                data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
+            //taking only negative part
+            for (unsigned int i = 0; i < NumNodes; i++)
+            {
+                if (distances[i] < 0)
+                    data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+                else
+                    data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(NODAL_H);
+            }
         }
-
+        else
+        {
+            //taking only negative part
+            for (unsigned int i = 0; i < NumNodes; i++)
+            {
+                if (distances[i] < 0)
+                    data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+                else
+                    data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
+            }
+        }
+        
         noalias(velocity) = -prod(trans(data.DN_DX), data.phis);
     }
 
@@ -719,7 +969,7 @@ protected:
             std::cout << "WAKE CONDITION NOT FULFILLED IN ELEMENT # " << this->Id() << std::endl;
     }
 
-    double ComputePressure(const ProcessInfo& rCurrentProcessInfo)
+    double ComputePressureUpper(const ProcessInfo& rCurrentProcessInfo)
     {
         double pressure = 0.0;
 
@@ -730,7 +980,23 @@ protected:
         if (active && !this->Is(MARKER))
             pressure = ComputePressureNormalElement(rCurrentProcessInfo);
         else if (active == true && this->Is(MARKER))
-            pressure = ComputePressureWakeElement(rCurrentProcessInfo);
+            pressure = ComputePressureUpperWakeElement(rCurrentProcessInfo);
+
+        return pressure;
+    }
+
+    double ComputePressureLower(const ProcessInfo& rCurrentProcessInfo)
+    {
+        double pressure = 0.0;
+
+        bool active = true;
+        if ((this)->IsDefined(ACTIVE))
+            active = (this)->Is(ACTIVE);
+
+        if (active && !this->Is(MARKER))
+            pressure = ComputePressureNormalElement(rCurrentProcessInfo);
+        else if (active == true && this->Is(MARKER))
+            pressure = ComputePressureLowerWakeElement(rCurrentProcessInfo);
 
         return pressure;
     }
@@ -753,7 +1019,25 @@ protected:
         return pressure;
     }
 
-    double ComputePressureWakeElement(const ProcessInfo& rCurrentProcessInfo)
+    double ComputePressureUpperWakeElement(const ProcessInfo& rCurrentProcessInfo)
+    {
+        double pressure = 0.0;
+        const array_1d<double, 3> vinfinity = rCurrentProcessInfo[VELOCITY_INFINITY];
+        const double vinfinity_norm2 = inner_prod(vinfinity, vinfinity);
+
+        KRATOS_ERROR_IF(vinfinity_norm2 < std::numeric_limits<double>::epsilon())
+            << "Error on element -> " << this->Id() << "\n"
+            << "vinfinity_norm2 must be larger than zero." << std::endl;
+
+        array_1d<double, Dim> v;
+        ComputeVelocityUpperWakeElement(v);
+
+        pressure = (vinfinity_norm2 - inner_prod(v, v)) / vinfinity_norm2; //0.5*(norm_2(vinfinity) - norm_2(v));
+
+        return pressure;
+    }
+
+    double ComputePressureLowerWakeElement(const ProcessInfo& rCurrentProcessInfo)
     {
         double pressure = 0.0;
         const array_1d<double, 3> vinfinity = rCurrentProcessInfo[VELOCITY_INFINITY];

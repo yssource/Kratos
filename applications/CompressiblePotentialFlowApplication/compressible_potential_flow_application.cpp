@@ -43,6 +43,10 @@ void KratosCompressiblePotentialFlowApplication::Register()
 
         // Register Variables (defined in compressible_potential_flow_application_variables.h)
         KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS(VELOCITY_INFINITY);
+        KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS(VELOCITY_LOWER);
+        KRATOS_REGISTER_VARIABLE(PRESSURE_LOWER);
+        KRATOS_REGISTER_VARIABLE(UPPER_SURFACE);
+        KRATOS_REGISTER_VARIABLE(LOWER_SURFACE);
 
         //Register elements
         KRATOS_REGISTER_ELEMENT("CompressiblePotentialFlowElement2D3N",mCompressiblePotentialFlowElement2D3N); //this is the name the element should have according to the naming convention

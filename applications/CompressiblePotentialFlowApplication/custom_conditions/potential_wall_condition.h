@@ -344,10 +344,13 @@ public:
 
         void FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) override
         {
-            std::vector<double> rValues;
+            std::vector<double> pressure_up;
             ElementPointerType pElem = pGetElement();
-            pElem->GetValueOnIntegrationPoints(PRESSURE, rValues, rCurrentProcessInfo);
-            this->SetValue(PRESSURE,rValues[0]);
+            pElem->GetValueOnIntegrationPoints(PRESSURE, pressure_up, rCurrentProcessInfo);
+            this->SetValue(PRESSURE,pressure_up[0]);
+            std::vector<double> pressure_low;
+            pElem->GetValueOnIntegrationPoints(PRESSURE_LOWER, pressure_low, rCurrentProcessInfo);
+            this->SetValue(PRESSURE_LOWER,pressure_low[0]);
         }
 
 

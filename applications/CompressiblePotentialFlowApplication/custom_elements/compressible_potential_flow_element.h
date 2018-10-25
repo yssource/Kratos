@@ -391,32 +391,32 @@ public:
 
             ComputeLHSGaussPointContribution(data.vol, rLeftHandSideMatrix, data);
 
-            // if (this->Is(ISOLATED))
-            // {
-            //     std::cout << " ISOLATED ELEMENT " << this->Id() << std::endl;
-            //     std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
-            //     Matrix lhs_penalty = ZeroMatrix(NumNodes, NumNodes);
+            if (this->Is(THERMAL))
+            {
+                //std::cout << " THERMAL ELEMENT " << this->Id() << std::endl;
+                //std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
+                Matrix lhs_penalty = ZeroMatrix(NumNodes, NumNodes);
 
-            //     bounded_matrix<double, 2, 1> chord_normal;
+                bounded_matrix<double, 2, 1> chord_normal;
 
-            //     chord_normal(0, 0) = rCurrentProcessInfo[Y1];
-            //     chord_normal(1, 0) = rCurrentProcessInfo[Y2];
+                chord_normal(0, 0) = rCurrentProcessInfo[Y1];
+                chord_normal(1, 0) = rCurrentProcessInfo[Y2];
 
-            //     Matrix projection = prod(data.DN_DX, chord_normal);
+                Matrix projection = prod(data.DN_DX, chord_normal);
 
-            //     double penalty = rCurrentProcessInfo[INITIAL_PENALTY];
-            //     double penalty2 = 1.0;//rCurrentProcessInfo[MIU] / data.vol;
+                double penalty = rCurrentProcessInfo[INITIAL_PENALTY];
+                double penalty2 = rCurrentProcessInfo[MIU] / data.vol;
 
-            //     std::cout << " chord_normal(0, 0) = " << chord_normal(0, 0) << std::endl;
-            //     std::cout << " chord_normal(1, 0) = " << chord_normal(1, 0) << std::endl;
-            //     std::cout << " penalty = " << penalty << std::endl;
-            //     std::cout << " penalty2 = " << penalty2 << std::endl;
+                // std::cout << " chord_normal(0, 0) = " << chord_normal(0, 0) << std::endl;
+                // std::cout << " chord_normal(1, 0) = " << chord_normal(1, 0) << std::endl;
+                // std::cout << " penalty = " << penalty << std::endl;
+                // std::cout << " penalty2 = " << penalty2 << std::endl;
 
-            //     noalias(lhs_penalty) = penalty2 * penalty * data.vol * prod(projection, trans(projection));
+                noalias(lhs_penalty) = penalty2 * penalty * data.vol * prod(projection, trans(projection));
 
-            //     rLeftHandSideMatrix = lhs_penalty;
-            //     std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
-            // }
+                rLeftHandSideMatrix += lhs_penalty;
+                //std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
+            }
 
             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
         }
@@ -628,7 +628,32 @@ public:
             active = (this)->Is(ACTIVE);
 
         if (this->Is(MARKER) && active == true)
+        {
             CheckWakeCondition();
+
+            const array_1d<double, 3> vinfinity = rCurrentProcessInfo[VELOCITY_INFINITY];
+            const double vinfinity_norm = sqrt(inner_prod(vinfinity, vinfinity));
+
+            array_1d<double, NumNodes> distances;
+            GetWakeDistances(distances);
+
+            for (unsigned int i = 0; i < NumNodes; i++)
+            {
+                if (distances[i] > 0)
+                {
+                    GetGeometry()[i].GetSolutionStepValue(POTENTIAL_JUMP) = 2.0/vinfinity_norm*(
+                        GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE) -
+                        GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE));
+                }
+                else
+                {
+                    GetGeometry()[i].GetSolutionStepValue(POTENTIAL_JUMP) = 2.0/vinfinity_norm*(
+                        GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE) -
+                        GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE));
+                }
+                
+            }
+        }
     }
 
     /**
@@ -687,10 +712,14 @@ public:
         }
         else if (rVariable == THICKNESS)
         {
-            if(this->IsNot(MARKER))
-                rValues[0] = 0;
-            else
+            if(this->Is(THERMAL))
+                rValues[0] = 30.0;
+            else if(this->Is(MODIFIED))
+                rValues[0] = 20.0;
+            else if(this->Is(MARKER))
                 rValues[0] = 10.0;
+            else
+                rValues[0] = 0.0;
         }
     }
 

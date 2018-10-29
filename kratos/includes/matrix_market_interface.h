@@ -38,6 +38,7 @@ extern "C"
 }
 
 #include <boost/numeric/ublas/matrix_sparse.hpp>
+//#include <float.h>
 
 
 // Project includes
@@ -315,6 +316,10 @@ template <typename CompressedMatrixType> inline bool WriteMatrixMarketMatrix(con
     // Write MM file sizes
     mm_write_mtx_crd_size(f, M.size1(), M.size2(), nnz);
 
+    //int Digs = DBL_DECIMAL_DIG;
+
+    std::cout << "\n\n ENTERING MATRIX MARKET "<< std::endl;
+
     if (Symmetric)
     {
         typename CompressedMatrixType::iterator1 a_iterator = M.begin1();
@@ -330,7 +335,7 @@ template <typename CompressedMatrixType> inline bool WriteMatrixMarketMatrix(con
                 int I = a_iterator.index1(), J = row_iterator.index2();
 
                 if (I >= J)
-                    if (fprintf(f, "%d %d %g\n", I + 1, J + 1, *row_iterator) < 0)
+                    if (fprintf(f, "%d %d %.17g\n", I + 1, J + 1, *row_iterator) < 0)
                     {
                         printf("WriteMatrixMarketMatrix(): unable to write data.\n");
                         fclose(f);
@@ -355,7 +360,7 @@ template <typename CompressedMatrixType> inline bool WriteMatrixMarketMatrix(con
             {
                 int I = a_iterator.index1(), J = row_iterator.index2();
 
-                if (fprintf(f, "%d %d %g\n", I + 1, J + 1, *row_iterator) < 0)
+                if (fprintf(f, "%d %d %.17g\n", I + 1, J + 1, *row_iterator) < 0)
                 {
                     printf("WriteMatrixMarketMatrix(): unable to write data.\n");
                     fclose(f);

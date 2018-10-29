@@ -773,6 +773,7 @@ private:
         }
         if (this->GetEchoLevel() == 4) //print to matrix market file
         {
+            std::cout << "\n\n ENTERING ECHO LEVEL 4 "<< std::endl;
             std::stringstream matrix_market_name;
             matrix_market_name << "A_" << BaseType::GetModelPart().GetProcessInfo()[TIME] <<  ".mm";
             TSparseSpace::WriteMatrixMarketMatrix((char*) (matrix_market_name.str()).c_str(), rA, false);

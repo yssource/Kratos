@@ -75,7 +75,7 @@ class LaplacianSolver:
     def AddDofs(self):
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.POSITIVE_FACE_PRESSURE, self.main_model_part)
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.NEGATIVE_FACE_PRESSURE, self.main_model_part)
-        KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.NODAL_H, self.main_model_part)
+        #KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.NODAL_H, self.main_model_part)
 
         
     def Initialize(self):
@@ -191,7 +191,7 @@ class LaplacianSolver:
         loads_file = open("loads.dat",'a')
         loads_file.write('{0:15.2e}\t'.format(condition_number))
         loads_file.flush()
-        '''
+        #'''
 
     #
     def SetEchoLevel(self, level):

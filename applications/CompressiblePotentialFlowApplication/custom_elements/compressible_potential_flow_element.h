@@ -346,16 +346,33 @@ public:
         VectorType& rRightHandSideVector,
         ProcessInfo& rCurrentProcessInfo) override
     {
+        const auto& r_geom = GetGeometry();
+        const auto& r_process_info = rCurrentProcessInfo;
+
         ElementalData<NumNodes,Dim> data;
 
         //calculate shape functions
-        GeometryUtils::CalculateGeometryData(GetGeometry(), data.DN_DX, data.N, data.vol);
+        GeometryUtils::CalculateGeometryData(r_geom, data.DN_DX, data.N, data.vol);
 
         //gather nodal data
         for(unsigned int i=0; i<NumNodes; i++)
         {
-            data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+            data.phis[i] = r_geom[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
         }
+
+        if(rLeftHandSideMatrix.size1() != NumNodes || rLeftHandSideMatrix.size2() != NumNodes)
+            rLeftHandSideMatrix.resize(NumNodes,NumNodes,false);
+        if(rRightHandSideVector.size() != NumNodes)
+            rRightHandSideVector.resize(NumNodes,false);
+        rLeftHandSideMatrix.clear();
+        rRightHandSideVector.clear();
+
+        //ComputeLHSGaussPointContribution(data.vol, rLeftHandSideMatrix, data);
+        noalias(rLeftHandSideMatrix) = data.vol * prod(data.DN_DX, trans(data.DN_DX));
+
+        noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
+    }
+
         
         
         //TEST:
@@ -381,231 +398,243 @@ public:
         //     }
         // }
 
-        if(this->IsNot(MARKER))//normal element (non-wake) - eventually an embedded
-        {
-            if(rLeftHandSideMatrix.size1() != NumNodes || rLeftHandSideMatrix.size2() != NumNodes)
-                rLeftHandSideMatrix.resize(NumNodes,NumNodes,false);
-            if(rRightHandSideVector.size() != NumNodes)
-                rRightHandSideVector.resize(NumNodes,false);
-            rLeftHandSideMatrix.clear();
+        // if(this->IsNot(MARKER))//normal element (non-wake) - eventually an embedded
+        // {
+        //     if(rLeftHandSideMatrix.size1() != NumNodes || rLeftHandSideMatrix.size2() != NumNodes)
+        //         rLeftHandSideMatrix.resize(NumNodes,NumNodes,false);
+        //     if(rRightHandSideVector.size() != NumNodes)
+        //         rRightHandSideVector.resize(NumNodes,false);
+        //     rLeftHandSideMatrix.clear();
 
-            ComputeLHSGaussPointContribution(data.vol, rLeftHandSideMatrix, data);
+        //     ComputeLHSGaussPointContribution(data.vol, rLeftHandSideMatrix, data);
 
-            if (this->Is(THERMAL))
-            {
-                //std::cout << " THERMAL ELEMENT " << this->Id() << std::endl;
-                //std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
-                Matrix lhs_penalty = ZeroMatrix(NumNodes, NumNodes);
+        //     // if (this->Is(THERMAL))
+        //     // {
+        //     //     // std::cout << "\n\n THERMAL ELEMENT " << this->Id() << std::endl;
+        //     //     // std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
+        //     //     Matrix lhs_penalty = ZeroMatrix(NumNodes, NumNodes);
 
-                bounded_matrix<double, 2, 1> chord_normal;
+        //     //     bounded_matrix<double, 2, 1> chord_normal;
 
-                chord_normal(0, 0) = rCurrentProcessInfo[Y1];
-                chord_normal(1, 0) = rCurrentProcessInfo[Y2];
+        //     //     chord_normal(0, 0) = rCurrentProcessInfo[Y1];
+        //     //     chord_normal(1, 0) = rCurrentProcessInfo[Y2];
 
-                Matrix projection = prod(data.DN_DX, chord_normal);
+        //     //     Matrix projection = prod(data.DN_DX, chord_normal);
 
-                double penalty = rCurrentProcessInfo[INITIAL_PENALTY];
-                double penalty2 = rCurrentProcessInfo[MIU] / data.vol;
+        //     //     double penalty = rCurrentProcessInfo[INITIAL_PENALTY];
+        //     //     double penalty2 = rCurrentProcessInfo[MIU] / data.vol;
 
-                // std::cout << " chord_normal(0, 0) = " << chord_normal(0, 0) << std::endl;
-                // std::cout << " chord_normal(1, 0) = " << chord_normal(1, 0) << std::endl;
-                // std::cout << " penalty = " << penalty << std::endl;
-                // std::cout << " penalty2 = " << penalty2 << std::endl;
+        //     //     // std::cout << " chord_normal(0, 0) = " << chord_normal(0, 0) << std::endl;
+        //     //     // std::cout << " chord_normal(1, 0) = " << chord_normal(1, 0) << std::endl;
+        //     //     // std::cout << " penalty = " << penalty << std::endl;
+        //     //     // std::cout << " penalty2 = " << penalty2 << std::endl;
 
-                noalias(lhs_penalty) = penalty2 * penalty * data.vol * prod(projection, trans(projection));
+        //     //     noalias(lhs_penalty) = penalty2 * penalty * data.vol * prod(projection, trans(projection));
 
-                rLeftHandSideMatrix += lhs_penalty;
-                //std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
-            }
+        //     //     rLeftHandSideMatrix += lhs_penalty;
+        //     //     // std::cout << "\n lhs_penalty = " << lhs_penalty << std::endl;
+        //     //     // std::cout << "\n rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
+        //     // }
 
-            noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
-        }
-        else //it is a wake element
-        {
-            GetWakeDistances(data.distances);
+        //     noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
+
+        //     // if(this-> Id() == 300)
+        //     // {
+        //     //     std::cout.precision(17);
+        //     //     std::cout << "\n\n TEST "  << std::endl;
+        //     //     std::cout << "\n\n rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
+        //     //     //rLeftHandSideMatrix(2,2) += 1.000001;
+        //     //     std::cout << "\n\n rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
+        //     //     std::cout << "\n\n rLeftHandSideMatrix = " << rLeftHandSideMatrix(2,2) << std::endl;
+        //     // }
+        // }
+//         else //it is a wake element
+//         {
+//             GetWakeDistances(data.distances);
             
-            //note that the lhs and rhs have double the size!!
-            if(rLeftHandSideMatrix.size1() != 2*NumNodes || rLeftHandSideMatrix.size2() != 2*NumNodes)
-                rLeftHandSideMatrix.resize(2*NumNodes,2*NumNodes,false);
-            if(rRightHandSideVector.size() != 2*NumNodes)
-                rRightHandSideVector.resize(2*NumNodes,false);
-            rLeftHandSideMatrix.clear();
+//             //note that the lhs and rhs have double the size!!
+//             if(rLeftHandSideMatrix.size1() != 2*NumNodes || rLeftHandSideMatrix.size2() != 2*NumNodes)
+//                 rLeftHandSideMatrix.resize(2*NumNodes,2*NumNodes,false);
+//             if(rRightHandSideVector.size() != 2*NumNodes)
+//                 rRightHandSideVector.resize(2*NumNodes,false);
+//             rLeftHandSideMatrix.clear();
             
-            //subdivide the element
-            constexpr unsigned int nvolumes = 3*(Dim-1);
-            bounded_matrix<double,NumNodes, Dim > Points;
-            array_1d<double,nvolumes> Volumes;
-            bounded_matrix<double, nvolumes, NumNodes > GPShapeFunctionValues;
-            array_1d<double,nvolumes> PartitionsSign;
-            std::vector<Matrix> GradientsValue(nvolumes);
-            bounded_matrix<double,nvolumes, 2> NEnriched;
+//             // //subdivide the element
+//             // constexpr unsigned int nvolumes = 3*(Dim-1);
+//             // bounded_matrix<double,NumNodes, Dim > Points;
+//             // array_1d<double,nvolumes> Volumes;
+//             // bounded_matrix<double, nvolumes, NumNodes > GPShapeFunctionValues;
+//             // array_1d<double,nvolumes> PartitionsSign;
+//             // std::vector<Matrix> GradientsValue(nvolumes);
+//             // bounded_matrix<double,nvolumes, 2> NEnriched;
             
-            for(unsigned int i=0; i<GradientsValue.size(); ++i)
-                GradientsValue[i].resize(2,Dim,false);
+//             // for(unsigned int i=0; i<GradientsValue.size(); ++i)
+//             //     GradientsValue[i].resize(2,Dim,false);
            
             
             
-            for(unsigned int i = 0; i<NumNodes; ++i)
-            {
-                const array_1d<double, 3>& coords = GetGeometry()[i].Coordinates();
-                for(unsigned int k = 0; k<Dim; ++k)
-                {
-                    Points(i, k) = coords[k];
-                }
-            }
+//             // for(unsigned int i = 0; i<NumNodes; ++i)
+//             // {
+//             //     const array_1d<double, 3>& coords = GetGeometry()[i].Coordinates();
+//             //     for(unsigned int k = 0; k<Dim; ++k)
+//             //     {
+//             //         Points(i, k) = coords[k];
+//             //     }
+//             // }
             
-            const unsigned int nsubdivisions = EnrichmentUtilities::CalculateEnrichedShapeFuncions(Points,
-                                                                                            data.DN_DX,
-                                                                                            data.distances,
-                                                                                            Volumes, 
-                                                                                            GPShapeFunctionValues, 
-                                                                                            PartitionsSign, 
-                                                                                            GradientsValue, 
-                                                                                            NEnriched);
-            //compute the lhs and rhs that would correspond to it not being divided
-            Matrix lhs_positive = ZeroMatrix(NumNodes,NumNodes);
-            Matrix lhs_negative = ZeroMatrix(NumNodes,NumNodes);
+//             // const unsigned int nsubdivisions = EnrichmentUtilities::CalculateEnrichedShapeFuncions(Points,
+//             //                                                                                 data.DN_DX,
+//             //                                                                                 data.distances,
+//             //                                                                                 Volumes, 
+//             //                                                                                 GPShapeFunctionValues, 
+//             //                                                                                 PartitionsSign, 
+//             //                                                                                 GradientsValue, 
+//             //                                                                                 NEnriched);
+//             //compute the lhs and rhs that would correspond to it not being divided
+//             Matrix lhs_positive = ZeroMatrix(NumNodes,NumNodes);
+//             Matrix lhs_negative = ZeroMatrix(NumNodes,NumNodes);
             
-            // for(unsigned int i=0; i<nsubdivisions; ++i)
-            // {
-            //     if(PartitionsSign[i] > 0)
-            //         ComputeLHSGaussPointContribution(Volumes[i],lhs_positive,data);
-            //     else
-            //         ComputeLHSGaussPointContribution(Volumes[i],lhs_negative,data);
-            // }
+//             // for(unsigned int i=0; i<nsubdivisions; ++i)
+//             // {
+//             //     if(PartitionsSign[i] > 0)
+//             //         ComputeLHSGaussPointContribution(Volumes[i],lhs_positive,data);
+//             //     else
+//             //         ComputeLHSGaussPointContribution(Volumes[i],lhs_negative,data);
+//             // }
 
-            ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
-            ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
+//             ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
+//             ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
 
-            Matrix lhs_penalty = ZeroMatrix(NumNodes,NumNodes);
+//             Matrix lhs_penalty = ZeroMatrix(NumNodes,NumNodes);
 
-            bounded_matrix<double, 2, 1 > chord_normal;
+//             bounded_matrix<double, 2, 1 > chord_normal;
 
-            chord_normal(0,0) = rCurrentProcessInfo[Y1];
-            chord_normal(1,0) = rCurrentProcessInfo[Y2];
+//             chord_normal(0,0) = rCurrentProcessInfo[Y1];
+//             chord_normal(1,0) = rCurrentProcessInfo[Y2];
 
-            Matrix projection = prod(data.DN_DX,chord_normal);
+//             Matrix projection = prod(data.DN_DX,chord_normal);
 
-            noalias(lhs_penalty) = data.vol * prod(projection, trans(projection));
+//             noalias(lhs_penalty) = data.vol * prod(projection, trans(projection));
 
-            double penalty = rCurrentProcessInfo[INITIAL_PENALTY];
-            double peso = rCurrentProcessInfo[WATER_PRESSURE];
-            double penalty2 = 1;//rCurrentProcessInfo[MIU]/data.vol;
+//             double penalty = rCurrentProcessInfo[INITIAL_PENALTY];
+//             double peso = rCurrentProcessInfo[WATER_PRESSURE];
+//             double penalty2 = 1;//rCurrentProcessInfo[MIU]/data.vol;
 
-            //also next version works - NON SYMMETRIC - but it does not require a penalty
-//                 array_1d<double,Dim> n = prod(data.DN_DX,data.distances); //rCurrentProcessInfo[VELOCITY]; 
-//                 n /= norm_2(n);
-//                 bounded_matrix<double,Dim,Dim> nn = outer_prod(n,n);
-//                 bounded_matrix<double,NumNodes,Dim> tmp = prod(data.DN_DX,nn);
-//                 bounded_matrix<double,NumNodes,NumNodes> constraint = data.vol*prod(tmp, trans(data.DN_DX));
-//                                 
-//                 bounded_matrix<double,Dim,Dim> P = IdentityMatrix(Dim,Dim) - nn;
-//                 noalias(tmp) = prod(data.DN_DX,P);
-//                 bounded_matrix<double,NumNodes,NumNodes> tangent_constraint = /*1e3**/data.vol*prod(tmp, trans(data.DN_DX));
-                // if(this->Is(BOUNDARY))
-                //     std::cout << "BOUNDARY " << this->Info()  << std::endl;
+//             //also next version works - NON SYMMETRIC - but it does not require a penalty
+// //                 array_1d<double,Dim> n = prod(data.DN_DX,data.distances); //rCurrentProcessInfo[VELOCITY]; 
+// //                 n /= norm_2(n);
+// //                 bounded_matrix<double,Dim,Dim> nn = outer_prod(n,n);
+// //                 bounded_matrix<double,NumNodes,Dim> tmp = prod(data.DN_DX,nn);
+// //                 bounded_matrix<double,NumNodes,NumNodes> constraint = data.vol*prod(tmp, trans(data.DN_DX));
+// //                                 
+// //                 bounded_matrix<double,Dim,Dim> P = IdentityMatrix(Dim,Dim) - nn;
+// //                 noalias(tmp) = prod(data.DN_DX,P);
+// //                 bounded_matrix<double,NumNodes,NumNodes> tangent_constraint = /*1e3**/data.vol*prod(tmp, trans(data.DN_DX));
+//                 // if(this->Is(BOUNDARY))
+//                 //     std::cout << "BOUNDARY " << this->Info()  << std::endl;
                 
-                //if(kutta_element == true)// && lower_face_element == true)
-                if(this->Is(STRUCTURE))
-                {
-                    for(unsigned int i = 0; i<NumNodes; ++i)
-                        GetGeometry()[i].GetSolutionStepValue(TEMPERATURE) = 30.0;
-                    //std::cout << "chord_normal = " << chord_normal << std::endl;
+//                 //if(kutta_element == true)// && lower_face_element == true)
+//                 if(this->Is(STRUCTURE))
+//                 {
+//                     for(unsigned int i = 0; i<NumNodes; ++i)
+//                         GetGeometry()[i].GetSolutionStepValue(TEMPERATURE) = 30.0;
+//                     //std::cout << "chord_normal = " << chord_normal << std::endl;
 
-                    // for(unsigned int i=0; i<nsubdivisions; ++i)
-                    // {
-                    //     if(PartitionsSign[i] > 0)
-                    //         ComputeLHSGaussPointContribution(Volumes[i],lhs_positive,data);
-                    //     else
-                    //         ComputeLHSGaussPointContribution(Volumes[i],lhs_negative,data);
-                    // }
-                    // ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
-                    // ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
-                    // std::cout << "KUTTA ELEMENT " << this->Id()  << std::endl;
-                    // std::cout << "penalty = " << penalty  << std::endl;
-                    // std::cout << "peso = " << peso  << std::endl;
-                    // std::cout << "penalty2 = " << penalty2  << std::endl;
-                    if(this->Is(MODIFIED))
-                    {
-                        std::cout << "WAKE KUTTA MODIFIED ELEMENT " << this->Id()  << std::endl;
-                        for (unsigned int i = 0; i < NumNodes; ++i)
-                        {
-                            for (unsigned int j = 0; j < NumNodes; ++j)
-                            {
-                                rLeftHandSideMatrix(i, j) = lhs_positive(i, j);
-                                rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
+//                     // for(unsigned int i=0; i<nsubdivisions; ++i)
+//                     // {
+//                     //     if(PartitionsSign[i] > 0)
+//                     //         ComputeLHSGaussPointContribution(Volumes[i],lhs_positive,data);
+//                     //     else
+//                     //         ComputeLHSGaussPointContribution(Volumes[i],lhs_negative,data);
+//                     // }
+//                     // ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
+//                     // ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
+//                     // std::cout << "KUTTA ELEMENT " << this->Id()  << std::endl;
+//                     // std::cout << "penalty = " << penalty  << std::endl;
+//                     // std::cout << "peso = " << peso  << std::endl;
+//                     // std::cout << "penalty2 = " << penalty2  << std::endl;
+//                     if(this->Is(MODIFIED))
+//                     {
+//                         std::cout << "WAKE KUTTA MODIFIED ELEMENT " << this->Id()  << std::endl;
+//                         for (unsigned int i = 0; i < NumNodes; ++i)
+//                         {
+//                             for (unsigned int j = 0; j < NumNodes; ++j)
+//                             {
+//                                 rLeftHandSideMatrix(i, j) = lhs_positive(i, j);
+//                                 rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
 
-                                rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = lhs_negative(i, j);
-                                rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
-                            }
-                        }
+//                                 rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = lhs_negative(i, j);
+//                                 rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
+//                             }
+//                         }
 
-                    }
-                    else
-                    {
-                        for (unsigned int i = 0; i < NumNodes; ++i)
-                        {
-                            for (unsigned int j = 0; j < NumNodes; ++j)
-                            {
-                                rLeftHandSideMatrix(i, j) = peso * lhs_positive(i, j) + penalty2 * penalty * lhs_penalty(i, j);
-                                rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
+//                     }
+//                     else
+//                     {
+//                         std::cout << "WAKE KUTTA PENALTY ELEMENT " << this->Id()  << std::endl;
+//                         for (unsigned int i = 0; i < NumNodes; ++i)
+//                         {
+//                             for (unsigned int j = 0; j < NumNodes; ++j)
+//                             {
+//                                 rLeftHandSideMatrix(i, j) = peso * lhs_positive(i, j) + penalty2 * penalty * lhs_penalty(i, j);
+//                                 rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
 
-                                rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = peso * lhs_negative(i, j) + penalty2 * penalty * lhs_penalty(i, j);
-                                rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
-                            }
+//                                 rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = peso * lhs_negative(i, j) + penalty2 * penalty * lhs_penalty(i, j);
+//                                 rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
+//                             }
 
-                            // //side1  -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
-                            // if (data.distances[i] < 0)
-                            // {
-                            //     for (unsigned int j = 0; j < NumNodes; ++j)
-                            //         rLeftHandSideMatrix(i, j + NumNodes) = -peso * lhs_positive(i, j) + penalty2 * penalty * lhs_penalty(i, j);
-                            // }
-                            // else //side2 -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
-                            // {
-                            //     for (unsigned int j = 0; j < NumNodes; ++j)
-                            //         rLeftHandSideMatrix(i + NumNodes, j) = -peso * lhs_negative(i, j) + penalty2 * penalty * lhs_penalty(i, j);
-                            // }
-                        }
-                    }
-                }
-                else
-                {
-                    // ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
-                    // ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
-                    if(this->Is(ISOLATED))
-                        std::cout << "WAKE ISOLATED ELEMENT " << this->Id()  << std::endl;
-                    double beta = 1e0;
-                    for(unsigned int i=0; i<NumNodes; ++i)
-                    {
-                        for(unsigned int j=0; j<NumNodes; ++j)
-                        {
-                            rLeftHandSideMatrix(i,j)                   =  beta*lhs_positive(i,j); 
-                            rLeftHandSideMatrix(i,j+NumNodes)          =  0.0; 
+//                             // //side1  -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
+//                             // if (data.distances[i] < 0)
+//                             // {
+//                             //     for (unsigned int j = 0; j < NumNodes; ++j)
+//                             //         rLeftHandSideMatrix(i, j + NumNodes) = -peso * lhs_positive(i, j) + penalty2 * penalty * lhs_penalty(i, j);
+//                             // }
+//                             // else //side2 -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
+//                             // {
+//                             //     for (unsigned int j = 0; j < NumNodes; ++j)
+//                             //         rLeftHandSideMatrix(i + NumNodes, j) = -peso * lhs_negative(i, j) + penalty2 * penalty * lhs_penalty(i, j);
+//                             // }
+//                         }
+//                     }
+//                 }
+//                 else
+//                 {
+//                     // ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
+//                     // ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
+//                     if(this->Is(ISOLATED))
+//                         std::cout << "WAKE ISOLATED ELEMENT " << this->Id()  << std::endl;
+//                     double beta = 1e0;
+//                     for(unsigned int i=0; i<NumNodes; ++i)
+//                     {
+//                         for(unsigned int j=0; j<NumNodes; ++j)
+//                         {
+//                             rLeftHandSideMatrix(i,j)                   =  beta*lhs_positive(i,j); 
+//                             rLeftHandSideMatrix(i,j+NumNodes)          =  0.0; 
                             
-                            rLeftHandSideMatrix(i+NumNodes,j+NumNodes) =  beta*lhs_negative(i,j); 
-                            rLeftHandSideMatrix(i+NumNodes,j)          =  0.0; 
-                        }
+//                             rLeftHandSideMatrix(i+NumNodes,j+NumNodes) =  beta*lhs_negative(i,j); 
+//                             rLeftHandSideMatrix(i+NumNodes,j)          =  0.0; 
+//                         }
 
-                        //side1  -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
-                        if(data.distances[i]<0)
-                        {
-                            for(unsigned int j=0; j<NumNodes; ++j)
-                                rLeftHandSideMatrix(i,j+NumNodes) = -beta*lhs_positive(i,j); 
-                        }
-                        else //side2 -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
-                        {
-                            for(unsigned int j=0; j<NumNodes; ++j)
-                                rLeftHandSideMatrix(i+NumNodes,j) = -beta*lhs_negative(i,j); 
-                        }
-                    }                  
-                }
+//                         //side1  -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
+//                         if(data.distances[i]<0)
+//                         {
+//                             for(unsigned int j=0; j<NumNodes; ++j)
+//                                 rLeftHandSideMatrix(i,j+NumNodes) = -beta*lhs_positive(i,j); 
+//                         }
+//                         else //side2 -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
+//                         {
+//                             for(unsigned int j=0; j<NumNodes; ++j)
+//                                 rLeftHandSideMatrix(i+NumNodes,j) = -beta*lhs_negative(i,j); 
+//                         }
+//                     }                  
+//                 }
                 
-            Vector split_element_values(NumNodes*2);
-            GetValuesOnSplitElement(split_element_values, data.distances);
-            noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix,split_element_values);
-        }
+//             Vector split_element_values(NumNodes*2);
+//             GetValuesOnSplitElement(split_element_values, data.distances);
+//             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix,split_element_values);
+//         }
         
-    }
+//    }
 
 
     /**
@@ -616,6 +645,7 @@ public:
      */
     void CalculateRightHandSide(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo) override
     {
+        std::cout << " ENTERING CALCULATE RIGHTHANDSIDE "  << std::endl;
         //TODO: improve speed
         Matrix tmp;
         CalculateLocalSystem(tmp, rRightHandSideVector, rCurrentProcessInfo);
@@ -804,7 +834,7 @@ protected:
     ///@}
     ///@name Protected Operators
     ///@{
-    void GetWakeDistances(array_1d<double,NumNodes>& distances)
+    void GetWakeDistances(array_1d<double,NumNodes>& distances) const
     {
         noalias(distances) = GetValue(ELEMENTAL_DISTANCES);
     }

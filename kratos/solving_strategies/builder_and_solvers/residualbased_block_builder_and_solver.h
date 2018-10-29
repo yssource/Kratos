@@ -35,6 +35,9 @@
 #include "utilities/openmp_utils.h"
 #include "includes/kratos_flags.h"
 
+#include <iostream>
+#include <fstream>
+
 namespace Kratos
 {
 
@@ -400,6 +403,36 @@ public:
         Timer::Start("Solve");
 
         SystemSolveWithPhysics(A, Dx, b, rModelPart);
+
+        // std::ofstream afile;
+        // afile.precision(17);
+        // afile.open("A.txt");
+
+        // for(unsigned int i=0; i<A.size1(); i++)
+        // {
+        //     for(unsigned int j=0; j<A.size2(); j++)
+        //     {
+        //         afile  << A( i , j) << "\t";
+        //     }
+        //     afile << "\n";
+        // }
+        // afile.close();
+
+        // std::ofstream bfile;
+        // bfile.precision(17);
+        // bfile.open("b.txt");
+
+        // for(unsigned int i=0; i<b.size(); i++)
+        //     bfile  << b( i ) << "\n";
+        // bfile.close();
+
+        // std::ofstream testfile;
+        // testfile.precision(17);
+        // testfile.open("test.txt");
+        // testfile << A( 200, 200);
+        // testfile.close();
+            
+                
 
         Timer::Stop("Solve");
         const double stop_solve = OpenMPUtils::GetCurrentTime();

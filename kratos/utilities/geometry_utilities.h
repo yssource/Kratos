@@ -46,7 +46,7 @@ public:
      * @param the volume of the element
      */
     static inline void CalculateGeometryData(
-        Element::GeometryType& geom,
+        const Element::GeometryType& geom,
         BoundedMatrix<double,4,3>& DN_DX,
         array_1d<double,4>& N,
         double& Volume)
@@ -119,7 +119,7 @@ public:
      * @param the volume of the element
      */
     static inline void CalculateGeometryData(
-        Element::GeometryType& geom,
+        const Element::GeometryType& geom,
         BoundedMatrix<double,3,2>& DN_DX,
         array_1d<double,3>& N,
         double& Area)
@@ -203,7 +203,7 @@ public:
 
 
     static inline void CalculateGeometryData(
-        Element::GeometryType& geom,
+        const Element::GeometryType& geom,
         BoundedMatrix<double,2,1>& DN_DX,
         array_1d<double,2>& N,
         double& Area)

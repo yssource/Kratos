@@ -349,6 +349,9 @@ public:
 		Alpha*=1.15;
 	      }
 
+	      // Alpha*=0.96; //alpha=1.2
+	      // Alpha*=1.04; //alpha=1.3
+	      // Alpha*=1.08; //alpha=1.35
 	      // Alpha*=1.175;
 
 	      bool accepted=false;

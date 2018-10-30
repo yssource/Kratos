@@ -20,10 +20,10 @@
 
 // Project includes
 #include "includes/define.h"
-#include "includes/kratos_parameters.h"
 #include "includes/kratos_components.h"
 #include "includes/shared_pointers.h"
 #include "linear_solvers/preconditioner.h"
+
 #include "spaces/ublas_space.h"
 
 namespace Kratos

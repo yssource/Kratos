@@ -12,12 +12,8 @@
 //
 //
 
-
-
 #if !defined(KRATOS_MPI_COMMUNICATOR_H_INCLUDED )
 #define  KRATOS_MPI_COMMUNICATOR_H_INCLUDED
-
-
 
 // System includes
 #include <string>
@@ -25,16 +21,12 @@
 #include <sstream>
 #include <cstddef>
 
-
 // External includes
-
-
+#include "mpi.h"
 
 // Project includes
 #include "includes/define.h"
 #include "includes/model_part.h"
-#include "mpi.h"
-
 #include "utilities/openmp_utils.h"
 
 #define CUSTOMTIMER 1

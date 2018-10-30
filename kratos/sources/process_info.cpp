@@ -10,12 +10,9 @@
 //  Main authors:    Pooyan Dadvand
 //
 
-
 // System includes
 
-
 // External includes
-
 
 // Project includes
 #include "includes/process_info.h"

@@ -12,7 +12,6 @@
 
 // System includes
 #include <string>
-#include <iostream>
 #include <vector>
 
 // External includes

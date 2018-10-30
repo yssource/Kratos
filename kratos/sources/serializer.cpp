@@ -10,11 +10,10 @@
 //  Main authors:    Pooyan Dadvand
 //
 
-
 #include "includes/serializer.h"
-#include "containers/model.h"
-#include "containers/variable.h"
 #include "includes/kratos_components.h"
+#include "includes/model_part.h"
+#include "containers/variable.h"
 
 
 namespace Kratos

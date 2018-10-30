@@ -10,29 +10,14 @@
 //  Main authors:    Pooyan Dadvand
 //
 
-
-
-
-
-
-
-
-
-
-
-
 #if !defined(KRATOS_RADIATION_SETTINGS_INCLUDED )
 #define  KRATOS_RADIATION_SETTINGS_INCLUDED
-
-
 
 // System includes
 #include <string>
 #include <iostream>
 
-
 // External includes
-
 
 // Project includes
 #include "includes/define.h"

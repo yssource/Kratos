@@ -14,15 +14,11 @@
 #if !defined(KRATOS_POOL_OBJECT_H_INCLUDED )
 #define  KRATOS_POOL_OBJECT_H_INCLUDED
 
-
-
 // System includes
 #include <string>
 #include <iostream>
 
-
 // External includes
-
 
 // Project includes
 #include "includes/define.h"

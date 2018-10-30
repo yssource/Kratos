@@ -10,35 +10,17 @@
 //  Main authors:    Pooyan Dadvand
 //
 
-
-
-
-
-
-
-
-
-
-
-
 #if !defined(KRATOS_REORDER_CONSECUTIVE_MODEL_PART_IO_H_INCLUDED )
 #define  KRATOS_REORDER_CONSECUTIVE_MODEL_PART_IO_H_INCLUDED
 
-
-
 // System includes
 #include <string>
-#include <fstream>
-#include <set>
-
 
 // External includes
-
 
 // Project includes
 #include "includes/define.h"
 #include "includes/model_part_io.h"
-#include "utilities/timer.h"
 
 
 namespace Kratos

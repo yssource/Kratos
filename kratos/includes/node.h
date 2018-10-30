@@ -11,19 +11,14 @@
 //                   Riccardo Rossi
 //
 
-
 #if !defined(KRATOS_NODE_H_INCLUDED )
 #define  KRATOS_NODE_H_INCLUDED
 
 // System includes
 #include <string>
 #include <iostream>
-#include <sstream>
-#include <cstddef>
-
 
 // External includes
-
 
 // Project includes
 #include "includes/define.h"
@@ -41,12 +36,8 @@
 #include "omp.h"
 #endif
 
-
 namespace Kratos
 {
-
-class Element;
-
 ///@name Kratos Globals
 ///@{
 

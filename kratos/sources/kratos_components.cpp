@@ -10,21 +10,9 @@
 //  Main authors:    Pooyan Dadvand
 //
 
-
-
-
-
-
-
-
-
-
-
-
 // System includes
 
 // External includes
-
 
 // Project includes
 #include "includes/kratos_components.h"
@@ -32,6 +20,7 @@
 #include "includes/condition.h"
 #include "includes/constitutive_law.h"
 #include "utilities/quaternion.h"
+
 
 namespace Kratos
 {

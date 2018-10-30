@@ -11,11 +11,8 @@
 //                   Riccardo Rossi
 //
 
-
 #if !defined(KRATOS_PROPERTIES_H_INCLUDED )
 #define  KRATOS_PROPERTIES_H_INCLUDED
-
-
 
 // System includes
 #include <string>
@@ -23,9 +20,7 @@
 #include <cstddef>
 #include <unordered_map>
 
-
 // External includes
-
 
 // Project includes
 #include "includes/define.h"

@@ -11,12 +11,10 @@
 //
 //
 
-
 // System includes
-
+#include <string>
 
 // External includes
-
 
 // Project includes
 #include "includes/code_location.h"

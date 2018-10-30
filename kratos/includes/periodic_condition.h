@@ -10,16 +10,6 @@
 //  Main authors:    Jordi Cotela
 //
 
-
-
-
-
-
-
-
-
-
-
 #ifndef KRATOS_PERIODIC_CONDITION_H
 #define	KRATOS_PERIODIC_CONDITION_H
 
@@ -29,9 +19,7 @@
 #include <sstream>
 #include <cstddef>
 
-
 // External includes
-
 
 // Project includes
 #include "includes/define.h"

@@ -10,16 +10,6 @@
 //  Main authors:    Pooyan Dadvand
 //
 
-
-
-
-
-
-
-
-
-
-
 #include "utilities/timer.h"
 
 

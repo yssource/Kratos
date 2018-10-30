@@ -16,8 +16,9 @@
 
 // Project includes
 #include "includes/define.h"
-#include "includes/mapping_variables.h"
 #include "includes/kernel.h"
+#include "includes/mapping_variables.h"
+
 
 namespace Kratos
 {

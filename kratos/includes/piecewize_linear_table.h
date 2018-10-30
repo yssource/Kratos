@@ -15,15 +15,11 @@
 #if !defined(KRATOS_PIECEWIZE_LINEAR_TABLE_H_INCLUDED )
 #define  KRATOS_PIECEWIZE_LINEAR_TABLE_H_INCLUDED
 
-
-
 // System includes
 #include <string>
 #include <iostream>
 
-
 // External includes
-
 
 // Project includes
 #include "includes/define.h"

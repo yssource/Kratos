@@ -18,8 +18,6 @@
 // Project includes
 #include "includes/prime_numbers.h"
 
-
-
 namespace Kratos
 {
 	std::size_t PrimeNumbers::FindGreaterEqualPrecalculatedPrimeNumber(std::size_t TheNumber) {

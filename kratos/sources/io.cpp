@@ -10,18 +10,6 @@
 //  Main authors:    Pooyan Dadvand
 //
 
-
-
-
-
-
-
-
-
-
-
-
-
 // Project includes
 #include "includes/io.h"
 namespace Kratos

@@ -11,13 +11,17 @@
 //                   Riccardo Rossi
 //
 
+// System includes
+#include <unordered_set>
+
+// External includes
+
 // Project includes
 #include "includes/model_part_io.h"
 #include "input_output/logger.h"
 #include "utilities/quaternion.h"
 #include "utilities/openmp_utils.h"
 #include "utilities/compare_elements_and_conditions_utility.h"
-#include<unordered_set>
 
 namespace Kratos
 {

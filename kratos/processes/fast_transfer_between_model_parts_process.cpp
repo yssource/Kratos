@@ -17,7 +17,6 @@
 
 // Project includes
 #include "processes/fast_transfer_between_model_parts_process.h"
-#include "utilities/openmp_utils.h"
 
 namespace Kratos
 {

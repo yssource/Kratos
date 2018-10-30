@@ -12,17 +12,13 @@
 
 // System includes
 #include <string>
-#include <iostream>
-#include <vector>
 
 // External includes
 
 // Project includes
 #include "includes/define.h"
-#include "includes/mat_variables.h"
 #include "includes/kernel.h"
-#include "includes/node.h"
-
+#include "includes/mat_variables.h"
 #include "includes/kratos_flags.h"
 
 //commented variables are defined in the variables.h and variables.cpp

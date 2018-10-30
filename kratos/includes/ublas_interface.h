@@ -10,25 +10,10 @@
 //  Main authors:    Pooyan Dadvand
 //
 
-
-
-
-
-
-
-
-
-
-
 #if !defined(KRATOS_UBLAS_INTERFACE_H_INCLUDED )
 #define  KRATOS_UBLAS_INTERFACE_H_INCLUDED
 
-
-
 // System includes
-#include <string>
-#include <iostream>
-
 
 // External includes
 #ifdef KRATOS_USE_AMATRIX   // This macro definition is for the migration period and to be removed afterward please do not use it 
@@ -46,7 +31,6 @@
     #include <boost/numeric/ublas/triangular.hpp>
 	#include <boost/numeric/ublas/lu.hpp>
 #endif // ifdef KRATOS_USE_AMATRIX
-
 
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>

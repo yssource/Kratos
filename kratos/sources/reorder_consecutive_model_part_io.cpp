@@ -10,20 +10,8 @@
 //  Main authors:    Pooyan Dadvand
 //
 
-
-
-
-
-
-
-
-
-
-
-
 // Project includes
 #include "includes/reorder_consecutive_model_part_io.h"
-
 
 
 namespace Kratos

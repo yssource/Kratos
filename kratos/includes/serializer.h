@@ -15,24 +15,19 @@
 #define  KRATOS_SERIALIZER_H_INCLUDED
 
 // System includes
-#include <string>
-#include <cstring>
-#include <iostream>
-#include <map>
-#include <unordered_map>
 #include <set>
-#include <sstream>
+#include <string>
 #include <fstream>
+#include <iostream>
+#include <unordered_map>
 
 // External includes
 
 // Project includes
 #include "includes/define.h"
-#include "includes/ublas_interface.h"
 #include "containers/array_1d.h"
 #include "containers/weak_pointer_vector.h"
-//#include "containers/model.h"
-// #include "containers/variable.h"
+
 
 #define KRATOS_SERIALIZATION_DIRECT_LOAD(type)                           \
     void load(std::string const & rTag, type& rValue)                \

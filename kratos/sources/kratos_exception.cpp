@@ -11,21 +11,16 @@
 //                   Pooyan Dadvand 
 //
 
-
 // System includes
-
 
 // External includes 
 
-
 // Project includes
-#include "includes/define.h"
 #include "includes/kratos_exception.h"
 
 
 namespace Kratos
 {
-
 	KratosException::KratosException() 
 		: std::exception(), mWhat("Unknown Error"), mWhere("Unknown origin"), mMessage("Unknown Error")
 	{

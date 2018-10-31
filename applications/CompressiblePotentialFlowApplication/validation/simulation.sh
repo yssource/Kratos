@@ -12,7 +12,7 @@ GITBRANCH=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
 Input_Dir=/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement
 
 #Parameters
-Number_Of_Refinements=1
+Number_Of_Refinements=4
 Number_Of_AOAS=1
 
 Initial_AOA=5.0
@@ -44,12 +44,14 @@ cd generate_mdpas/
 #Run Kratos
 cd ..
 rm -rf $Work_Dir/plots/data/cl_*
+rm -rf $Work_Dir/plots/cd/data/cd_*
 
 rm -rf $Work_Dir/plots/cp/data/AOA*
 rm $Work_Dir/plots/cp/cp_*
 rm $Work_Dir/plots/cp/plots/*
 
 rm $Work_Dir/plots/figures.tex
+rm $Work_Dir/plots/cd/figures_cd.tex
 #rm plots/cp/figures.tex
 
 rm $Work_Dir/plots/results/*
@@ -64,6 +66,8 @@ rm cp*
 
 cd $Work_Dir/plots/
 pdflatex -interaction=batchmode main.tex
+cd $Work_Dir/plots/cd
+pdflatex -interaction=batchmode main_cd.tex
 cd $Work_Dir/aoa/
 pdflatex -interaction=batchmode cl_aoa.tex
 #cd ../cp/

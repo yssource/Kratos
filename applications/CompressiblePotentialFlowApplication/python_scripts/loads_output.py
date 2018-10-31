@@ -34,6 +34,18 @@ def write_figures(cl_data_directory_name, AOA, work_dir):
                        )
     figures_file.flush()
 
+def write_figures_cd(cd_data_directory_name, AOA, work_dir):
+    with open(work_dir + 'plots/cd/figures_cd.tex', 'a') as cd_figures_file:
+        cd_figures_file.write('\n\pgfplotsset{table/search path={' + cd_data_directory_name + '},}\n\n' +
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + cd_data_directory_name + '/cd.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$}\n' +
+                           '\t\label{fig:cd_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n'
+                           )
+        cd_figures_file.flush()
+
 def write_cl(cl,work_dir):
     cl_aoa_file = open(work_dir + 'plots/aoa/cl_aoa.dat','a')
     cl_aoa_file.write('{0:15f}\n'.format(cl))

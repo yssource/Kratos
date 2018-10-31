@@ -37,6 +37,11 @@ cl_file = open(cl_results_file_name,'w')
 cl_file.flush()
 cl_results_directory_name = work_dir + 'plots/data/cl'
 
+cd_results_file_name = work_dir + 'plots/cd/data/cd/cd_results.dat'
+with open(cd_results_file_name, 'w') as cd_file:
+    cd_file.flush()
+cd_results_directory_name = work_dir + 'plots/cd/data/cd'
+
 aoa_results_file_name = work_dir + 'plots/aoa/cl_aoa.dat'
 cl_aoa_file = open(aoa_results_file_name,'w')
 cl_aoa_file.flush()
@@ -55,6 +60,7 @@ for j in range(Number_Of_AOAS):
 
     mesh_refinement_file_name = work_dir + 'plots/results/mesh_refinement_AOA_' + str(AOA)
     cl_data_directory_name = 'data/cl_AOA_' + str(AOA)
+    cd_data_directory_name = 'data/cd_AOA_' + str(AOA)
     loads_output.write_header(work_dir)
 
     cp_data_directory_start = work_dir + 'plots/cp/data/AOA_' + str(AOA)
@@ -256,9 +262,17 @@ for j in range(Number_Of_AOAS):
         process.ExecuteFinalize()
     
     os.rename(work_dir + "mesh_refinement_loads.dat", mesh_refinement_file_name)
+    
     loads_output.write_figures(cl_data_directory_name, AOA, work_dir)
+    loads_output.write_figures_cd(cd_data_directory_name, AOA, work_dir)
+    
     shutil.copytree(cl_results_directory_name, work_dir + 'plots/' + cl_data_directory_name)
     os.remove(cl_results_file_name)
+
+    shutil.copytree(cd_results_directory_name, work_dir + 'plots/cd/' + cd_data_directory_name)
+    os.remove(cd_results_file_name)
+
+
     cp_final_file_name = work_dir + 'plots/cp/cp_AOA_' + str(AOA) + '.pdf'
     merger.write(cp_final_file_name)
     AOA += AOA_Increment

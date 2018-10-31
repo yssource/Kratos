@@ -43,14 +43,14 @@ cd generate_mdpas/
 
 #Run Kratos
 cd ..
-rm -rf $Work_Dir/plots/data/cl_*
+rm -rf $Work_Dir/plots/cl/data/cl_*
 rm -rf $Work_Dir/plots/cd/data/cd_*
 
 rm -rf $Work_Dir/plots/cp/data/AOA*
 rm $Work_Dir/plots/cp/cp_*
 rm $Work_Dir/plots/cp/plots/*
 
-rm $Work_Dir/plots/figures.tex
+rm $Work_Dir/plots/cl/figures_cl.tex
 rm $Work_Dir/plots/cd/figures_cd.tex
 #rm plots/cp/figures.tex
 
@@ -64,8 +64,8 @@ source generate_mdpas/unset_parameters.sh
 #rm mdpas/*
 rm cp*
 
-cd $Work_Dir/plots/
-pdflatex -interaction=batchmode main.tex
+cd $Work_Dir/plots/cl
+pdflatex -interaction=batchmode main_cl.tex
 cd $Work_Dir/plots/cd
 pdflatex -interaction=batchmode main_cd.tex
 cd $Work_Dir/aoa/

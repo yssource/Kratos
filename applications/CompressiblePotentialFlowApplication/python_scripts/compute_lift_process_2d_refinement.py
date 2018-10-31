@@ -133,12 +133,12 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         with open(self.work_dir + "plots/results/all_cases.dat",'a') as aoa_file:
             aoa_file.write('{0:16.2e} {1:15f} {2:15f} {3:15f} {4:15f} {5:15f}\n'.format(NumberOfNodes, Cl, Cl_low, Cd, Cd_low, RZ))
             aoa_file.flush()
-        
-        cl_results_file_name = self.work_dir + "plots/data/cl/cl_results.dat"
+
+        cl_results_file_name = self.work_dir + "plots/cl/data/cl/cl_results.dat"
         with open(cl_results_file_name,'a') as cl_file:
             cl_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, Cl))
             cl_file.flush()
-
+        
         cd_results_file_name = self.work_dir + "plots/cd/data/cd/cd_results.dat"
         with open(cd_results_file_name,'a') as cd_file:
             cd_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, Cd))

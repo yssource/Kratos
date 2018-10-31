@@ -32,10 +32,10 @@ work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
 input_mdpa_path = work_dir + 'mdpas/'
 output_gid_path = '/media/inigo/10740FB2740F9A1C/Outputs/03_MeshRefinement/'
 
-cl_results_file_name = work_dir + 'plots/data/cl/cl_results.dat'
-cl_file = open(cl_results_file_name,'w')
-cl_file.flush()
-cl_results_directory_name = work_dir + 'plots/data/cl'
+cl_results_file_name = work_dir + 'plots/cl/data/cl/cl_results.dat'
+with open(cl_results_file_name,'w') as cl_file:
+    cl_file.flush()
+cl_results_directory_name = work_dir + 'plots/cl/data/cl'
 
 cd_results_file_name = work_dir + 'plots/cd/data/cd/cd_results.dat'
 with open(cd_results_file_name, 'w') as cd_file:
@@ -263,10 +263,10 @@ for j in range(Number_Of_AOAS):
     
     os.rename(work_dir + "mesh_refinement_loads.dat", mesh_refinement_file_name)
     
-    loads_output.write_figures(cl_data_directory_name, AOA, work_dir)
+    loads_output.write_figures_cl(cl_data_directory_name, AOA, work_dir)
     loads_output.write_figures_cd(cd_data_directory_name, AOA, work_dir)
     
-    shutil.copytree(cl_results_directory_name, work_dir + 'plots/' + cl_data_directory_name)
+    shutil.copytree(cl_results_directory_name, work_dir + 'plots/cl/' + cl_data_directory_name)
     os.remove(cl_results_file_name)
 
     shutil.copytree(cd_results_directory_name, work_dir + 'plots/cd/' + cd_data_directory_name)

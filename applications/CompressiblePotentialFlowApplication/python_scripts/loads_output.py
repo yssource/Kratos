@@ -22,17 +22,17 @@ def write_case(case, AOA, FarField_MeshSize, Airfoil_MeshSize,work_dir):
     aoa_file.write('{0:4d} {1:6.2f} {2:15.2f} {3:15.2e}'.format(case, AOA, FarField_MeshSize, Airfoil_MeshSize))
     aoa_file.flush()
 
-def write_figures(cl_data_directory_name, AOA, work_dir):
-    figures_file = open(work_dir + 'plots/figures.tex', 'a')
-    figures_file.write('\n\pgfplotsset{table/search path={' + cl_data_directory_name + '},}\n\n' +
-                       '\\begin{figure}\n' +
-                       '\t\centering\n' +
-                       '\t\input{' + cl_data_directory_name + '/cl.tikz}\n' +
-                       '\t\caption{$\\alpha = ' + str(AOA) + '\degree$}\n' +
-                       '\t\label{fig:cl_AOA_' + str(AOA) + '}\n' +
-                       '\end{figure}\n'
-                       )
-    figures_file.flush()
+def write_figures_cl(cl_data_directory_name, AOA, work_dir):
+    with open(work_dir + 'plots/cl/figures_cl.tex', 'a') as cl_figures_file:
+        cl_figures_file.write('\n\pgfplotsset{table/search path={' + cl_data_directory_name + '},}\n\n' +
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + cl_data_directory_name + '/cl.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$}\n' +
+                           '\t\label{fig:cl_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n'
+                           )
+        cl_figures_file.flush()
 
 def write_figures_cd(cd_data_directory_name, AOA, work_dir):
     with open(work_dir + 'plots/cd/figures_cd.tex', 'a') as cd_figures_file:

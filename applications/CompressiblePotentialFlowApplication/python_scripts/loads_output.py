@@ -1,15 +1,15 @@
 def write_header(work_dir):
     refinement_file = open(work_dir + "mesh_refinement_loads.dat",'w') 
     refinement_file.write("FULL POTENTIAL APPLICATION LOADS FILE\n\n")
-    refinement_file.write('%4s %6s %15s %15s %15s %15s %15s %15s %15s %15s\n\n' % 
-                          ("Case", "AOA", "FF_MS", "A_MS", "# Nodes", "Cl_u", "Cl_l", "Cd_u", "Cd_l", "Rz"))
+    refinement_file.write('%4s %6s %15s %15s %15s %15s %15s %15s %15s %15s %15s\n\n' % 
+                          ("Case", "AOA", "FF_MS", "A_MS", "# Nodes", "Cl_u", "Cl_l", "Cl_jump", "Cd_u", "Cd_l", "Rz"))
     refinement_file.flush()
 
 def write_header_all_cases(work_dir):
     aoa_file = open(work_dir + "plots/results/all_cases.dat",'w') 
     aoa_file.write("FULL POTENTIAL APPLICATION ALL CASES LOADS FILE\n\n")
     aoa_file.write('%4s %6s %15s %15s %15s %15s %15s %15s %15s %15s %15s\n\n' % 
-                          ("Case", "AOA", "FF_MS", "A_MS", "Cl_jump", "# Nodes", "Cl_u", "Cl_l", "Cd_u", "Cd_l", "Rz"))
+                          ("Case", "AOA", "FF_MS", "A_MS", "# Nodes", "Cl_u", "Cl_l", "Cl_jump", "Cd_u", "Cd_l", "Rz"))
     aoa_file.flush()
 
 

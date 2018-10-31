@@ -35,6 +35,11 @@ output_gid_path = '/media/inigo/10740FB2740F9A1C/Outputs/03_MeshRefinement/'
 cl_results_file_name = work_dir + 'plots/cl/data/cl/cl_results.dat'
 with open(cl_results_file_name,'w') as cl_file:
     cl_file.flush()
+
+cl_far_field_results_file_name = work_dir + 'plots/cl/data/cl/cl_jump_results.dat'
+with open(cl_far_field_results_file_name,'w') as cl_jump_file:
+    cl_jump_file.flush()
+
 cl_results_directory_name = work_dir + 'plots/cl/data/cl'
 
 cd_results_file_name = work_dir + 'plots/cd/data/cd/cd_results.dat'

@@ -68,7 +68,7 @@ cd $Work_Dir/plots/cl
 pdflatex -interaction=batchmode main_cl.tex
 cd $Work_Dir/plots/cd
 pdflatex -interaction=batchmode main_cd.tex
-cd $Work_Dir/aoa/
+cd $Work_Dir/plots/aoa/
 pdflatex -interaction=batchmode cl_aoa.tex
 #cd ../cp/
 #pdflatex -interaction=batchmode cp.tex

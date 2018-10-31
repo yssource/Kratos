@@ -20,6 +20,7 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
                 "model_part_name":"PLEASE_CHOOSE_MODEL_PART_NAME",
                 "upper_surface_model_part_name" : "please specify the model part that contains the upper surface nodes",
                 "lower_surface_model_part_name" : "please specify the model part that contains the lower surface nodes",
+                "far_field_model_part_name"   : "PotentialWallCondition2D_Far_field_Auto1",
                 "mesh_id": 0,
                 "velocity_infinity": [1.0,0.0,0],
                 "reference_area": 1
@@ -27,16 +28,17 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
 
         settings.ValidateAndAssignDefaults(default_parameters)
 
+        self.fluid_model_part = Model[settings["model_part_name"].GetString()]
         self.upper_surface_model_part = Model[settings["upper_surface_model_part_name"].GetString()]
         self.lower_surface_model_part = Model[settings["lower_surface_model_part_name"].GetString()]
+        self.far_field_model_part = Model[settings["far_field_model_part_name"].GetString()]
+
         self.velocity_infinity = [0,0,0]
         self.velocity_infinity[0] = settings["velocity_infinity"][0].GetDouble()
         self.velocity_infinity[1] = settings["velocity_infinity"][1].GetDouble()
         self.velocity_infinity[2] = settings["velocity_infinity"][2].GetDouble()
+
         self.reference_area =  settings["reference_area"].GetDouble()
-        
-        self.fluid_model_part = Model[settings["model_part_name"].GetString()]
-        
 
     def ExecuteFinalizeSolutionStep(self):
         print('COMPUTE LIFT')
@@ -122,22 +124,35 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         print("\nLift_Difference = ", Cl - Cl_low)
         #print('Mach = ', self.velocity_infinity[0]/340)
         
+        
+        for node in self.far_field_model_part.Nodes:
+            jump = node.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.POTENTIAL_JUMP)
+            if(abs(jump - 1e-8) > 1e-7):
+                far_field_lift = jump
+                print('Far field computed lift = ', far_field_lift)
+                break
+
         NumberOfNodes = 0
         for node in self.fluid_model_part.Nodes:
             NumberOfNodes +=1
     
         with open (self.work_dir + "mesh_refinement_loads.dat",'a') as loads_file:
-            loads_file.write('{0:16.2e} {1:15f} {2:15f} {3:15f} {4:15f} {5:15f}\n'.format(NumberOfNodes, Cl, Cl_low, Cd, Cd_low, RZ))
+            loads_file.write('{0:16.2e} {1:15f} {2:15f} {3:15f} {4:15f} {5:15f} {6:15f}\n'.format(NumberOfNodes, Cl, Cl_low, far_field_lift, Cd, Cd_low, RZ))
             loads_file.flush()
 
         with open(self.work_dir + "plots/results/all_cases.dat",'a') as aoa_file:
-            aoa_file.write('{0:16.2e} {1:15f} {2:15f} {3:15f} {4:15f} {5:15f}\n'.format(NumberOfNodes, Cl, Cl_low, Cd, Cd_low, RZ))
+            aoa_file.write('{0:16.2e} {1:15f} {2:15f} {3:15f} {4:15f} {5:15f} {6:15f}\n'.format(NumberOfNodes, Cl, Cl_low, far_field_lift, Cd, Cd_low, RZ))
             aoa_file.flush()
 
         cl_results_file_name = self.work_dir + "plots/cl/data/cl/cl_results.dat"
         with open(cl_results_file_name,'a') as cl_file:
             cl_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, Cl))
             cl_file.flush()
+
+        cl_far_field_results_file_name = self.work_dir + "plots/cl/data/cl/cl_jump_results.dat"
+        with open(cl_far_field_results_file_name,'a') as cl_jump_file:
+            cl_jump_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, far_field_lift))
+            cl_jump_file.flush()
         
         cd_results_file_name = self.work_dir + "plots/cd/data/cd/cd_results.dat"
         with open(cd_results_file_name,'a') as cd_file:

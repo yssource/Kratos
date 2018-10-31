@@ -189,9 +189,9 @@ class LaplacianSolver:
         condition_number = KratosMultiphysics.ConditionNumberUtility().GetConditionNumber(self.solver.GetSystemMatrix(), eigen_solver_max, eigen_solver_min)
         print('condition_number = {:.2e}'.format(condition_number))
         loads_file = open("loads.dat",'a')
-        loads_file.write('{0:15.2e}\t'.format(condition_number))
+        loads_file.write('\n{0:15.2e}\t'.format(condition_number))
         loads_file.flush()
-        '''
+        #'''
 
     #
     def SetEchoLevel(self, level):

@@ -1,6 +1,7 @@
 import KratosMultiphysics
 import KratosMultiphysics.CompressiblePotentialFlowApplication as CompressiblePotentialFlowApplication
 #from CompressiblePotentialFlowApplication import*
+import math
 
 def Factory(settings, Model):
     if( not isinstance(settings,KratosMultiphysics.Parameters) ):
@@ -31,7 +32,7 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
         #self.density_infinity = settings["density_infinity"].GetDouble() #TODO: must read this from the properties
         self.inlet_phi = settings["inlet_phi"].GetDouble()
 
-        self.penalty = 0e0
+        self.penalty = 1e0
         self.peso = 1e0
         self.penalty2 = 1
         
@@ -81,5 +82,16 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
         
     def ExecuteInitializeSolutionStep(self):
         self.Execute()
+
+    def ExecuteFinalizeSolutionStep(self):
+        
+        for node in self.model_part.Nodes:
+            if(abs(node.GetSolutionStepValue(KratosMultiphysics.TEMPERATURE) - 5.0) < 1e-5):
+                lift = node.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.POTENTIAL_JUMP)
+                break
+
+        aoa_file = open("plots/results/all_cases.dat",'a')
+        aoa_file.write('{0:16f}'.format(lift))
+        aoa_file.flush()
         
         

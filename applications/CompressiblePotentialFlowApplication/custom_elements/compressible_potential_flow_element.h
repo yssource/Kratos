@@ -367,32 +367,32 @@ public:
 
             ComputeLHSGaussPointContribution(data.vol, rLeftHandSideMatrix, data);
 
-            // if (this->Is(THERMAL))
-            // {
-            //     //std::cout << " THERMAL ELEMENT " << this->Id() << std::endl;
-            //     //std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
-            //     Matrix lhs_penalty = ZeroMatrix(NumNodes, NumNodes);
+            if (this->Is(THERMAL))
+            {
+                //std::cout << " THERMAL ELEMENT " << this->Id() << std::endl;
+                //std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
+                Matrix lhs_penalty = ZeroMatrix(NumNodes, NumNodes);
 
-            //     bounded_matrix<double, 2, 1> chord_normal;
+                bounded_matrix<double, 2, 1> chord_normal;
 
-            //     chord_normal(0, 0) = rCurrentProcessInfo[Y1];
-            //     chord_normal(1, 0) = rCurrentProcessInfo[Y2];
+                chord_normal(0, 0) = rCurrentProcessInfo[Y1];
+                chord_normal(1, 0) = rCurrentProcessInfo[Y2];
 
-            //     Matrix projection = prod(data.DN_DX, chord_normal);
+                Matrix projection = prod(data.DN_DX, chord_normal);
 
-            //     double penalty = rCurrentProcessInfo[INITIAL_PENALTY];
-            //     double penalty2 = rCurrentProcessInfo[MIU] / data.vol;
+                double penalty = rCurrentProcessInfo[INITIAL_PENALTY];
+                double penalty2 = rCurrentProcessInfo[MIU] / data.vol;
 
-            //     // std::cout << " chord_normal(0, 0) = " << chord_normal(0, 0) << std::endl;
-            //     // std::cout << " chord_normal(1, 0) = " << chord_normal(1, 0) << std::endl;
-            //     // std::cout << " penalty = " << penalty << std::endl;
-            //     // std::cout << " penalty2 = " << penalty2 << std::endl;
+                // std::cout << " chord_normal(0, 0) = " << chord_normal(0, 0) << std::endl;
+                // std::cout << " chord_normal(1, 0) = " << chord_normal(1, 0) << std::endl;
+                // std::cout << " penalty = " << penalty << std::endl;
+                // std::cout << " penalty2 = " << penalty2 << std::endl;
 
-            //     noalias(lhs_penalty) = penalty2 * penalty * data.vol * prod(projection, trans(projection));
+                noalias(lhs_penalty) = penalty2 * penalty * data.vol * prod(projection, trans(projection));
 
-            //     rLeftHandSideMatrix += lhs_penalty;
-            //     //std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
-            // }
+                rLeftHandSideMatrix += lhs_penalty;
+                //std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
+            }
 
             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
         }
@@ -465,20 +465,20 @@ public:
                     }
 
                 }
-                else
-                {
-                    for (unsigned int i = 0; i < NumNodes; ++i)
-                    {
-                        for (unsigned int j = 0; j < NumNodes; ++j)
-                        {
-                            rLeftHandSideMatrix(i, j) = peso * lhs_positive(i, j) + penalty2 * penalty * lhs_penalty(i, j);
-                            rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
+                // else
+                // {
+                //     for (unsigned int i = 0; i < NumNodes; ++i)
+                //     {
+                //         for (unsigned int j = 0; j < NumNodes; ++j)
+                //         {
+                //             rLeftHandSideMatrix(i, j) = peso * lhs_positive(i, j) + penalty2 * penalty * lhs_penalty(i, j);
+                //             rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
 
-                            rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = peso * lhs_negative(i, j) + penalty2 * penalty * lhs_penalty(i, j);
-                            rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
-                        }
-                    }
-                }
+                //             rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = peso * lhs_negative(i, j) + penalty2 * penalty * lhs_penalty(i, j);
+                //             rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
+                //         }
+                //     }
+                // }
             }
             else
             {

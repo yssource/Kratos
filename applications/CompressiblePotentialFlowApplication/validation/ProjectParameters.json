@@ -52,7 +52,7 @@
     },
     "initial_conditions_process_list"  : [],
     "boundary_conditions_process_list" : [{
-        "python_module" : "apply_far_field_process",
+        "python_module" : "apply_far_field_process_2d_refinement",
         "kratos_module" : "KratosMultiphysics.CompressiblePotentialFlowApplication",
         "process_name"  : "FarFieldProcess",
         "Parameters"    : {

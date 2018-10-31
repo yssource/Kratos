@@ -52,10 +52,14 @@ rm $Work_Dir/plots/cp/plots/*
 
 rm $Work_Dir/plots/cl/figures_cl.tex
 rm $Work_Dir/plots/cd/figures_cd.tex
-#rm plots/cp/figures.tex
+
+rm -rf $Work_Dir/plots/far_field/data/AOA*
+rm $Work_Dir/plots/far_field/far_field_*
+rm $Work_Dir/plots/far_field/plots/*
 
 rm $Work_Dir/plots/results/*
 rm -rf /media/inigo/10740FB2740F9A1C/Outputs/03_MeshRefinement/*
+
 python3 MeshRefinement.py #> $NEWFILE
 
 source generate_mdpas/unset_parameters.sh
@@ -63,6 +67,7 @@ source generate_mdpas/unset_parameters.sh
 #rm $Input_Dir/generate_mdpas/output_salome/*
 #rm mdpas/*
 rm cp*
+rm far*
 
 cd $Work_Dir/plots/cl
 pdflatex -interaction=batchmode main_cl.tex

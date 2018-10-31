@@ -348,9 +348,14 @@ public:
             ElementPointerType pElem = pGetElement();
             pElem->GetValueOnIntegrationPoints(PRESSURE, pressure_up, rCurrentProcessInfo);
             this->SetValue(PRESSURE,pressure_up[0]);
+
             std::vector<double> pressure_low;
             pElem->GetValueOnIntegrationPoints(PRESSURE_LOWER, pressure_low, rCurrentProcessInfo);
             this->SetValue(PRESSURE_LOWER,pressure_low[0]);
+
+            std::vector< array_1d<double,3> > velocity;
+            pElem->GetValueOnIntegrationPoints(VELOCITY, velocity, rCurrentProcessInfo);
+            this->SetValue(VELOCITY,velocity[0]);
         }
 
 

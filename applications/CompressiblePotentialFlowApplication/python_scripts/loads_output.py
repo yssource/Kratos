@@ -64,3 +64,16 @@ def write_cp_figures(cp_data_directory_name, AOA, case, Airfoil_MeshSize,  FarFi
                        )
     figures_file.flush()
 
+def write_figures_far_field(far_field_data_directory_name, AOA, case, Airfoil_MeshSize,  FarField_MeshSize, work_dir):
+    figures_file = open(work_dir + 'plots/far_field/figures_far_field.tex', 'w')
+    figures_file.write('\n\pgfplotsset{table/search path={' + far_field_data_directory_name + '},}\n\n' +
+                       '\\begin{figure}\n' +
+                       '\t\centering\n' +
+                       '\t\input{' + far_field_data_directory_name + '/velocity.tikz}\n' +
+                       '\t\caption{$\\alpha = ' + str(AOA) + '\degree$, case = ' + str(case) + 
+                       ' Far field mesh size = ' + str(FarField_MeshSize) + ' Airfoil mesh size = ' + str(Airfoil_MeshSize)+ '}\n' +
+                       '\t\label{fig:cp_AOA_' + str(AOA) + '}\n' +
+                       '\end{figure}\n'
+                       )
+    figures_file.flush()
+

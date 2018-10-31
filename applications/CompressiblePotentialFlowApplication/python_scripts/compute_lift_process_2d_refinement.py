@@ -53,7 +53,7 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
 
         self.work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
         cp_results_file_name = self.work_dir + 'plots/cp/data/0_original/cp_results.dat'
-        cp_file = open(cp_results_file_name,'a')
+        cp_file = open(cp_results_file_name,'w')
 
         #cp_coordinates_file_name = 'plots/cp/data/0_original/coordinates.dat'
         #coordinates_file = open(cp_coordinates_file_name,'a')

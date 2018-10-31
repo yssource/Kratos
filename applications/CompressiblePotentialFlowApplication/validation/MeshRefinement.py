@@ -54,6 +54,7 @@ cl_aoa_file.flush()
 loads_output.write_header_all_cases(work_dir)
 
 merger_global = PdfFileMerger()
+merger_global_far_field = PdfFileMerger()
 
 case = 0
 AOA = Initial_AOA
@@ -62,6 +63,7 @@ for j in range(Number_Of_AOAS):
     FarField_MeshSize = Initial_FarField_MeshSize
 
     merger = PdfFileMerger()
+    merger_local_far_field = PdfFileMerger()
 
     mesh_refinement_file_name = work_dir + 'plots/results/mesh_refinement_AOA_' + str(AOA)
     cl_data_directory_name = 'data/cl_AOA_' + str(AOA)
@@ -70,6 +72,9 @@ for j in range(Number_Of_AOAS):
 
     cp_data_directory_start = work_dir + 'plots/cp/data/AOA_' + str(AOA)
     os.mkdir(cp_data_directory_start)
+
+    far_field_data_directory_start = work_dir + 'plots/far_field/data/AOA_' + str(AOA)
+    os.mkdir(far_field_data_directory_start)
 
     cl_aoa_file = open(aoa_results_file_name,'a')
     cl_aoa_file.write('{0:15f}'.format(AOA))
@@ -81,15 +86,14 @@ for j in range(Number_Of_AOAS):
         print("\n\tCase ", case, "\n")
         loads_output.write_case(case, AOA, FarField_MeshSize, Airfoil_MeshSize, work_dir)
 
-        cp_results_file_name = work_dir + 'plots/cp/data/0_original/cp_results.dat'
-        cp_file = open(cp_results_file_name,'w')
-        cp_file.flush()
-        cp_coordinates_file_name = work_dir + 'plots/cp/data/0_original/coordinates.dat'
-        cp_coordinates = open(cp_coordinates_file_name,'w')
-        cp_coordinates.flush()
         cp_results_directory_name = work_dir + 'plots/cp/data/0_original'
         cp_data_directory_name = cp_data_directory_start + '/Case_' + str(case) + '_AOA_' + str(
                 AOA) + '_Far_Field_Mesh_Size_' + str(FarField_MeshSize) + '_Airfoil_Mesh_Size_' + str(Airfoil_MeshSize)
+
+        far_field_results_directory_name = work_dir + 'plots/far_field/data/0_original'
+        far_field_data_directory_name = far_field_data_directory_start + '/Case_' + str(case) + '_AOA_' + str(
+                AOA) + '_Far_Field_Mesh_Size_' + str(FarField_MeshSize) + '_Airfoil_Mesh_Size_' + str(Airfoil_MeshSize)
+
 
         ## Parse the ProjectParameters
         #parameter_file = open("ProjectParameters_compressibility.json",'r')
@@ -244,19 +248,31 @@ for j in range(Number_Of_AOAS):
 
         gid_output.ExecuteFinalize()
 
+        #output cp
         loads_output.write_cp_figures(cp_data_directory_name, AOA, case, Airfoil_MeshSize, FarField_MeshSize, work_dir)
-
         shutil.copytree(cp_results_directory_name, cp_data_directory_name)
 
         latex = subprocess.Popen(['pdflatex', '-interaction=batchmode',work_dir + 'plots/cp/cp.tex'])
         latex.communicate()
-        #path = "/home/inigo/simulations/naca0012/07_salome/01_MeshRefinement/"
 
         cp_file_name = work_dir + 'plots/cp/plots/cp_Case_' + str(case) + '_AOA_' + str(
                 AOA) + '_Far_Field_Mesh_Size_' + str(FarField_MeshSize) + '_Airfoil_Mesh_Size_' + str(Airfoil_MeshSize) + '.pdf'
         shutil.copyfile('cp.pdf',cp_file_name)
         merger.append(PdfFileReader(cp_file_name), 'case_' + str(case))
         merger_global.append(PdfFileReader(cp_file_name), 'case_' + str(case))
+
+        #output far field
+        loads_output.write_figures_far_field(far_field_data_directory_name, AOA, case, Airfoil_MeshSize,  FarField_MeshSize, work_dir)
+        shutil.copytree(far_field_results_directory_name, far_field_data_directory_name)
+
+        latex_far_field = subprocess.Popen(['pdflatex', '-interaction=batchmode',work_dir + 'plots/far_field/far_field.tex'])
+        latex_far_field.communicate()
+
+        far_field_file_name = work_dir + 'plots/far_field/plots/velocity_Case_' + str(case) + '_AOA_' + str(
+                AOA) + '_Far_Field_Mesh_Size_' + str(FarField_MeshSize) + '_Airfoil_Mesh_Size_' + str(Airfoil_MeshSize) + '.pdf'
+        shutil.copyfile('far_field.pdf',far_field_file_name)
+        merger_local_far_field.append(PdfFileReader(far_field_file_name), 'case_' + str(case))
+        merger_global_far_field.append(PdfFileReader(far_field_file_name), 'case_' + str(case))
 
         Airfoil_MeshSize /= Airfoil_Refinement_Factor
         FarField_MeshSize /= FarField_Refinement_Factor
@@ -280,7 +296,13 @@ for j in range(Number_Of_AOAS):
 
     cp_final_file_name = work_dir + 'plots/cp/cp_AOA_' + str(AOA) + '.pdf'
     merger.write(cp_final_file_name)
+
+    far_field_file_name = work_dir + 'plots/far_field/far_field_AOA_' + str(AOA) + '.pdf'
+    merger_local_far_field.write(far_field_file_name)
     AOA += AOA_Increment
 
 cp_final_global_file_name = work_dir + 'plots/cp/cp_all.pdf'
 merger_global.write(cp_final_global_file_name)
+
+far_field_global_file_name = work_dir + 'plots/far_field/far_field_all.pdf'
+merger_global_far_field.write(far_field_global_file_name)

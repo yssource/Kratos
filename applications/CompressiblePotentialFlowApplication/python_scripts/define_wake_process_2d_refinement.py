@@ -161,7 +161,6 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                         counter = 0
                         for elnode in elem.GetNodes():
                             elnode.SetSolutionStepValue(KratosMultiphysics.DISTANCE, 0, distances[counter])
-                            elnode.SetSolutionStepValue(KratosMultiphysics.TEMPERATURE,0,5.0)
                             counter += 1
                             if(elnode.Is(KratosMultiphysics.STRUCTURE)):
                                 #selecting Kutta elements

@@ -29,8 +29,10 @@ Initial_FarField_MeshSize = TBD
 FarField_Refinement_Factor = TBD
 
 work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
-input_mdpa_path = work_dir + 'mdpas/'
+input_mdpa_path = work_dir + 'mdpas_aoa5/'
 output_gid_path = '/media/inigo/10740FB2740F9A1C/Outputs/03_MeshRefinement/'
+latex_output = open(work_dir + '/plots/latex_output.txt', 'w')
+latex_output.flush()
 
 cl_results_file_name = work_dir + 'plots/cl/data/cl/cl_results.dat'
 with open(cl_results_file_name,'w') as cl_file:
@@ -260,7 +262,7 @@ for j in range(Number_Of_AOAS):
         loads_output.write_cp_figures(cp_data_directory_name, AOA, case, Airfoil_MeshSize, FarField_MeshSize, work_dir)
         shutil.copytree(cp_results_directory_name, cp_data_directory_name)
 
-        latex = subprocess.Popen(['pdflatex', '-interaction=batchmode',work_dir + 'plots/cp/cp.tex'])
+        latex = subprocess.Popen(['pdflatex', '-interaction=batchmode', work_dir + 'plots/cp/cp.tex'], stdout=latex_output)
         latex.communicate()
 
         cp_file_name = work_dir + 'plots/cp/plots/cp_Case_' + str(case) + '_AOA_' + str(
@@ -273,10 +275,10 @@ for j in range(Number_Of_AOAS):
         loads_output.write_figures_far_field(far_field_data_directory_name, AOA, case, Airfoil_MeshSize,  FarField_MeshSize, work_dir)
         shutil.copytree(far_field_results_directory_name, far_field_data_directory_name)
 
-        latex_far_field = subprocess.Popen(['pdflatex', '-interaction=batchmode',work_dir + 'plots/far_field/main_far_field_x.tex'])
+        latex_far_field = subprocess.Popen(['pdflatex', '-interaction=batchmode',work_dir + 'plots/far_field/main_far_field_x.tex'], stdout=latex_output)
         latex_far_field.communicate()
 
-        latex_far_field = subprocess.Popen(['pdflatex', '-interaction=batchmode',work_dir + 'plots/far_field/main_far_field_y.tex'])
+        latex_far_field = subprocess.Popen(['pdflatex', '-interaction=batchmode',work_dir + 'plots/far_field/main_far_field_y.tex'], stdout=latex_output)
         latex_far_field.communicate()
 
         far_field_x_file_name = work_dir + 'plots/far_field/plots/velocity_x_Case_' + str(case) + '_AOA_' + str(

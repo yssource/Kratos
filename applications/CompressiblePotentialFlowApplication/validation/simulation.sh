@@ -25,10 +25,10 @@ Initial_FarField_MeshSize=2.0
 FarField_Refinement_Factor=1.0
 
 DATE=`date '+%Y%m%d_%H%M%S'`
-FILE=terminal_outputs/output_terminal.txt
+FILE=${Input_Dir}/plots/output_terminal.txt
 NAME=${FILE%.*}
 EXT=${FILE#*.}
-NEWFILE=${NAME}_${DATE}.${EXT}
+NEWFILE=${NAME}_${DATE}_${GITBRANCH}.${EXT}
 
 #Set the parameters
 source generate_mdpas/set_parameters.sh
@@ -60,9 +60,10 @@ rm $Work_Dir/plots/far_field/far_field_*
 rm $Work_Dir/plots/far_field/plots/*
 
 rm $Work_Dir/plots/results/*
+rm $Work_Dir/plots/output_terminal_*
 rm -rf /media/inigo/10740FB2740F9A1C/Outputs/03_MeshRefinement/*
 
-python3 MeshRefinement.py #> $NEWFILE
+unbuffer python3 MeshRefinement.py 2>&1 | tee $NEWFILE
 
 source generate_mdpas/unset_parameters.sh
 
@@ -70,16 +71,15 @@ source generate_mdpas/unset_parameters.sh
 #rm mdpas/*
 rm cp*
 rm main*
-rm tex*
 
 cd $Work_Dir/plots/cl
-pdflatex -interaction=batchmode main_cl.tex
+pdflatex -interaction=batchmode main_cl.tex > main_cl_out.txt
 cd $Work_Dir/plots/cd
-pdflatex -interaction=batchmode main_cd.tex
+pdflatex -interaction=batchmode main_cd.tex > main_cd_out.txt
 cd $Work_Dir/plots/aoa/
-pdflatex -interaction=batchmode cl_aoa.tex
+pdflatex -interaction=batchmode cl_aoa.tex > main_aoa_out.txt
 cd $Work_Dir/plots/condition_number/
-pdflatex -interaction=batchmode main_condition.tex
+pdflatex -interaction=batchmode main_condition.tex > main_condition_out.txt
 #cd ../cp/
 #pdflatex -interaction=batchmode cp.tex
 DIRECTORY=/media/inigo/10740FB2740F9A1C/Old_Outputs/03_MeshRefinement

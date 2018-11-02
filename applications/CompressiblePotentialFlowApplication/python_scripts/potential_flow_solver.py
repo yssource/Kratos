@@ -154,9 +154,6 @@ class LaplacianSolver:
 
         self.ComputeConditionNumber()
 
-        
-            
-
     def SetEchoLevel(self, level):
         (self.solver).SetEchoLevel(level)
 

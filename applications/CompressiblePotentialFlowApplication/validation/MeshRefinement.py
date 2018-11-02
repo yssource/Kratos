@@ -54,7 +54,8 @@ cl_aoa_file.flush()
 loads_output.write_header_all_cases(work_dir)
 
 merger_global = PdfFileMerger()
-merger_global_far_field = PdfFileMerger()
+merger_global_far_field_x = PdfFileMerger()
+merger_global_far_field_y = PdfFileMerger()
 
 case = 0
 AOA = Initial_AOA
@@ -63,7 +64,8 @@ for j in range(Number_Of_AOAS):
     FarField_MeshSize = Initial_FarField_MeshSize
 
     merger = PdfFileMerger()
-    merger_local_far_field = PdfFileMerger()
+    merger_local_far_field_x = PdfFileMerger()
+    merger_local_far_field_y = PdfFileMerger()
 
     mesh_refinement_file_name = work_dir + 'plots/results/mesh_refinement_AOA_' + str(AOA)
     cl_data_directory_name = 'data/cl_AOA_' + str(AOA)
@@ -265,14 +267,23 @@ for j in range(Number_Of_AOAS):
         loads_output.write_figures_far_field(far_field_data_directory_name, AOA, case, Airfoil_MeshSize,  FarField_MeshSize, work_dir)
         shutil.copytree(far_field_results_directory_name, far_field_data_directory_name)
 
-        latex_far_field = subprocess.Popen(['pdflatex', '-interaction=batchmode',work_dir + 'plots/far_field/far_field.tex'])
+        latex_far_field = subprocess.Popen(['pdflatex', '-interaction=batchmode',work_dir + 'plots/far_field/main_far_field_x.tex'])
         latex_far_field.communicate()
 
-        far_field_file_name = work_dir + 'plots/far_field/plots/velocity_Case_' + str(case) + '_AOA_' + str(
+        latex_far_field = subprocess.Popen(['pdflatex', '-interaction=batchmode',work_dir + 'plots/far_field/main_far_field_y.tex'])
+        latex_far_field.communicate()
+
+        far_field_x_file_name = work_dir + 'plots/far_field/plots/velocity_x_Case_' + str(case) + '_AOA_' + str(
                 AOA) + '_Far_Field_Mesh_Size_' + str(FarField_MeshSize) + '_Airfoil_Mesh_Size_' + str(Airfoil_MeshSize) + '.pdf'
-        shutil.copyfile('far_field.pdf',far_field_file_name)
-        merger_local_far_field.append(PdfFileReader(far_field_file_name), 'case_' + str(case))
-        merger_global_far_field.append(PdfFileReader(far_field_file_name), 'case_' + str(case))
+        shutil.copyfile('main_far_field_x.pdf',far_field_x_file_name)
+        merger_local_far_field_x.append(PdfFileReader(far_field_x_file_name), 'case_' + str(case))
+        merger_global_far_field_x.append(PdfFileReader(far_field_x_file_name), 'case_' + str(case))
+
+        far_field_y_file_name = work_dir + 'plots/far_field/plots/velocity_y_Case_' + str(case) + '_AOA_' + str(
+                AOA) + '_Far_Field_Mesh_Size_' + str(FarField_MeshSize) + '_Airfoil_Mesh_Size_' + str(Airfoil_MeshSize) + '.pdf'
+        shutil.copyfile('main_far_field_y.pdf',far_field_y_file_name)
+        merger_local_far_field_y.append(PdfFileReader(far_field_y_file_name), 'case_' + str(case))
+        merger_global_far_field_y.append(PdfFileReader(far_field_y_file_name), 'case_' + str(case))
 
         Airfoil_MeshSize /= Airfoil_Refinement_Factor
         FarField_MeshSize /= FarField_Refinement_Factor
@@ -293,16 +304,22 @@ for j in range(Number_Of_AOAS):
     shutil.copytree(cd_results_directory_name, work_dir + 'plots/cd/' + cd_data_directory_name)
     os.remove(cd_results_file_name)
 
-
     cp_final_file_name = work_dir + 'plots/cp/cp_AOA_' + str(AOA) + '.pdf'
     merger.write(cp_final_file_name)
 
-    far_field_file_name = work_dir + 'plots/far_field/far_field_AOA_' + str(AOA) + '.pdf'
-    merger_local_far_field.write(far_field_file_name)
+    far_field_x_final_file_name = work_dir + 'plots/far_field/far_field_x_AOA_' + str(AOA) + '.pdf'
+    merger_local_far_field_x.write(far_field_x_final_file_name)
+
+    far_field_y_final_file_name = work_dir + 'plots/far_field/far_field_y_AOA_' + str(AOA) + '.pdf'
+    merger_local_far_field_y.write(far_field_y_final_file_name)
+
     AOA += AOA_Increment
 
 cp_final_global_file_name = work_dir + 'plots/cp/cp_all.pdf'
 merger_global.write(cp_final_global_file_name)
 
-far_field_global_file_name = work_dir + 'plots/far_field/far_field_all.pdf'
-merger_global_far_field.write(far_field_global_file_name)
+far_field_x_global_file_name = work_dir + 'plots/far_field/far_field_x_all.pdf'
+merger_global_far_field_x.write(far_field_x_global_file_name)
+
+far_field_y_global_file_name = work_dir + 'plots/far_field/far_field_y_all.pdf'
+merger_global_far_field_y.write(far_field_y_global_file_name)

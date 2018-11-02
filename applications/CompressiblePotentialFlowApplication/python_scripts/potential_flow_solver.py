@@ -23,6 +23,7 @@ class LaplacianSolver:
             "absolute_tolerance": 1e-9,
             "maximum_iterations": 1,
             "compute_reactions": false,
+            "compute_condition_number": false,
             "reform_dofs_at_each_step": false,
             "calculate_solution_norm" : false,
             "volume_model_part_name" : "volume_model_part",
@@ -150,54 +151,83 @@ class LaplacianSolver:
         
     def Solve(self):
         (self.solver).Solve()
-        '''
-        import eigen_solver_factory
-        settings_max = KratosMultiphysics.Parameters("""
-        {
-            "solver_type"             : "power_iteration_highest_eigenvalue_solver",
-            "max_iteration"           : 10000,
-            "tolerance"               : 1e-9,
-            "required_eigen_number"   : 1,
-            "verbosity"               : 0,
-            "linear_solver_settings"  : {
-                "solver_type"             : "SuperLUSolver",
-                "max_iteration"           : 500,
-                "tolerance"               : 1e-9,
-                "scaling"                 : false,
-                "verbosity"               : 0
-            }
-        }
-        """)
-        eigen_solver_max = eigen_solver_factory.ConstructSolver(settings_max)
-        settings_min = KratosMultiphysics.Parameters("""
-        {
-            "solver_type"             : "power_iteration_eigenvalue_solver",
-            "max_iteration"           : 10000,
-            "tolerance"               : 1e-9,
-            "required_eigen_number"   : 1,
-            "verbosity"               : 0,
-            "linear_solver_settings"  : {
-                "solver_type"             : "SuperLUSolver",
-                "max_iteration"           : 500,
-                "tolerance"               : 1e-9,
-                "scaling"                 : false,
-                "verbosity"               : 0
-            }
-        }
-        """)
-        eigen_solver_min = eigen_solver_factory.ConstructSolver(settings_min)
-        condition_number = KratosMultiphysics.ConditionNumberUtility().GetConditionNumber(self.solver.GetSystemMatrix(), eigen_solver_max, eigen_solver_min)
-        print('condition_number = {:.2e}'.format(condition_number))
-        loads_file = open("loads.dat",'a')
-        loads_file.write('{0:15.2e}\t'.format(condition_number))
-        loads_file.flush()
-        '''
 
-    #
+        self.ComputeConditionNumber()
+
+        
+            
+
     def SetEchoLevel(self, level):
         (self.solver).SetEchoLevel(level)
 
-    #
     def Clear(self):
         (self.solver).Clear()
+
+    def ComputeConditionNumber(self):
+        number_of_nodes = self.main_model_part.NumberOfNodes()
+        self.work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
+
+        if(number_of_nodes < 1e2):
+
+            print('\nComputing condition number . . .\n')
+
+            import eigen_solver_factory
+            settings_max = KratosMultiphysics.Parameters("""
+            {
+                "solver_type"             : "power_iteration_highest_eigenvalue_solver",
+                "max_iteration"           : 10000,
+                "tolerance"               : 1e-9,
+                "required_eigen_number"   : 1,
+                "verbosity"               : 0,
+                "linear_solver_settings"  : {
+                    "solver_type"             : "SuperLUSolver",
+                    "max_iteration"           : 500,
+                    "tolerance"               : 1e-9,
+                    "scaling"                 : false,
+                    "verbosity"               : 0
+                }
+            }
+            """)
+            eigen_solver_max = eigen_solver_factory.ConstructSolver(settings_max)
+            settings_min = KratosMultiphysics.Parameters("""
+            {
+                "solver_type"             : "power_iteration_eigenvalue_solver",
+                "max_iteration"           : 10000,
+                "tolerance"               : 1e-9,
+                "required_eigen_number"   : 1,
+                "verbosity"               : 0,
+                "linear_solver_settings"  : {
+                    "solver_type"             : "SuperLUSolver",
+                    "max_iteration"           : 500,
+                    "tolerance"               : 1e-9,
+                    "scaling"                 : false,
+                    "verbosity"               : 0
+                }
+            }
+            """)
+
+            eigen_solver_min = eigen_solver_factory.ConstructSolver(settings_min)
+            condition_number = KratosMultiphysics.ConditionNumberUtility().GetConditionNumber(self.solver.GetSystemMatrix(), eigen_solver_max, eigen_solver_min)
+
+            print('condition_number = {:.2e}'.format(condition_number))
+
+            with open (self.work_dir + "mesh_refinement_loads.dat",'a') as loads_file:
+                loads_file.write('{0:16.2e}'.format(condition_number))
+                loads_file.flush()
+
+            with open (self.work_dir + "plots/results/all_cases.dat",'a') as all_cases_file:
+                all_cases_file.write('{0:16.2e}'.format(condition_number))
+                all_cases_file.flush()
+
+            print('\nComputing condition number finished . . .\n')
+        else:
+            with open (self.work_dir + "mesh_refinement_loads.dat",'a') as loads_file:
+                loads_file.write('%16s' % ("Not Comp."))
+                loads_file.flush()
+
+            with open (self.work_dir + "plots/results/all_cases.dat",'a') as all_cases_file:
+                all_cases_file.write('%16s' % ("Not Comp."))
+                all_cases_file.flush()
+
+
 

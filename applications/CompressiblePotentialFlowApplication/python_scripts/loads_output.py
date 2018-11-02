@@ -1,15 +1,15 @@
 def write_header(work_dir):
     refinement_file = open(work_dir + "mesh_refinement_loads.dat",'w') 
     refinement_file.write("FULL POTENTIAL APPLICATION LOADS FILE\n\n")
-    refinement_file.write('%4s %6s %15s %15s %15s %15s %15s %15s %15s %15s %15s\n\n' % 
-                          ("Case", "AOA", "FF_MS", "A_MS", "# Nodes", "Cl_u", "Cl_l", "Cl_jump", "Cd_u", "Cd_l", "Rz"))
+    refinement_file.write('%4s %6s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s\n\n' % 
+                          ("Case", "AOA", "FF_MS", "A_MS", "Con Numb", "# Nodes", "Cl_u", "Cl_l", "Cl_jump", "Cd_u", "Cd_l", "Rz"))
     refinement_file.flush()
 
 def write_header_all_cases(work_dir):
     aoa_file = open(work_dir + "plots/results/all_cases.dat",'w') 
     aoa_file.write("FULL POTENTIAL APPLICATION ALL CASES LOADS FILE\n\n")
-    aoa_file.write('%4s %6s %15s %15s %15s %15s %15s %15s %15s %15s %15s\n\n' % 
-                          ("Case", "AOA", "FF_MS", "A_MS", "# Nodes", "Cl_u", "Cl_l", "Cl_jump", "Cd_u", "Cd_l", "Rz"))
+    aoa_file.write('%4s %6s %15s %15s %15s %15s %15s %15s %15s %15s %15s %15s\n\n' % 
+                          ("Case", "AOA", "FF_MS", "A_MS", "Con Numb", "# Nodes", "Cl_u", "Cl_l", "Cl_jump", "Cd_u", "Cd_l", "Rz"))
     aoa_file.flush()
 
 
@@ -65,15 +65,55 @@ def write_cp_figures(cp_data_directory_name, AOA, case, Airfoil_MeshSize,  FarFi
     figures_file.flush()
 
 def write_figures_far_field(far_field_data_directory_name, AOA, case, Airfoil_MeshSize,  FarField_MeshSize, work_dir):
-    figures_file = open(work_dir + 'plots/far_field/figures_far_field.tex', 'w')
-    figures_file.write('\n\pgfplotsset{table/search path={' + far_field_data_directory_name + '},}\n\n' +
-                       '\\begin{figure}\n' +
-                       '\t\centering\n' +
-                       '\t\input{' + far_field_data_directory_name + '/velocity.tikz}\n' +
-                       '\t\caption{$\\alpha = ' + str(AOA) + '\degree$, case = ' + str(case) + 
-                       ' Far field mesh size = ' + str(FarField_MeshSize) + ' Airfoil mesh size = ' + str(Airfoil_MeshSize)+ '}\n' +
-                       '\t\label{fig:cp_AOA_' + str(AOA) + '}\n' +
-                       '\end{figure}\n'
-                       )
-    figures_file.flush()
+    with open(work_dir + 'plots/far_field/figures_far_field_x.tex', 'w') as figures_file_x:
+        figures_file_x.write('\n\pgfplotsset{table/search path={' + far_field_data_directory_name + '},}\n\n' +
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + far_field_data_directory_name + '/velocity_norm_x.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$, case = ' + str(case) + 
+                           ' Far field mesh size = ' + str(FarField_MeshSize) + ' Airfoil mesh size = ' + str(Airfoil_MeshSize)+ '}\n' +
+                           '\t\label{fig:velocity_norm_x_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n\n'
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + far_field_data_directory_name + '/velocity_u_x.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$, case = ' + str(case) + 
+                           ' Far field mesh size = ' + str(FarField_MeshSize) + ' Airfoil mesh size = ' + str(Airfoil_MeshSize)+ '}\n' +
+                           '\t\label{fig:velocity_u_x_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n\n'
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + far_field_data_directory_name + '/velocity_v_x.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$, case = ' + str(case) + 
+                           ' Far field mesh size = ' + str(FarField_MeshSize) + ' Airfoil mesh size = ' + str(Airfoil_MeshSize)+ '}\n' +
+                           '\t\label{fig:velocity_v_x_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n'
+                           )
+        figures_file_x.flush()
+
+    with open(work_dir + 'plots/far_field/figures_far_field_y.tex', 'w') as figures_file_y:
+        figures_file_y.write('\n\pgfplotsset{table/search path={' + far_field_data_directory_name + '},}\n\n' +
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + far_field_data_directory_name + '/velocity_norm_y.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$, case = ' + str(case) + 
+                           ' Far field mesh size = ' + str(FarField_MeshSize) + ' Airfoil mesh size = ' + str(Airfoil_MeshSize)+ '}\n' +
+                           '\t\label{fig:velocity_norm_y_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n\n'
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + far_field_data_directory_name + '/velocity_u_y.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$, case = ' + str(case) + 
+                           ' Far field mesh size = ' + str(FarField_MeshSize) + ' Airfoil mesh size = ' + str(Airfoil_MeshSize)+ '}\n' +
+                           '\t\label{fig:velocity_u_y_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n\n'
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + far_field_data_directory_name + '/velocity_v_y.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$, case = ' + str(case) + 
+                           ' Far field mesh size = ' + str(FarField_MeshSize) + ' Airfoil mesh size = ' + str(Airfoil_MeshSize)+ '}\n' +
+                           '\t\label{fig:velocity_v_y_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n'
+                           )
+        figures_file_y.flush()
 

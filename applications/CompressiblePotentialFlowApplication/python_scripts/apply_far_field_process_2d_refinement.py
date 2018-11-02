@@ -1,5 +1,6 @@
 import KratosMultiphysics
 import KratosMultiphysics.CompressiblePotentialFlowApplication as CompressiblePotentialFlowApplication
+import numpy as np
 #from CompressiblePotentialFlowApplication import*
 
 def Factory(settings, Model):
@@ -85,28 +86,91 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
     def ExecuteFinalizeSolutionStep(self):
 
         self.work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
-        velocity_results_file_name = self.work_dir + 'plots/far_field/data/0_original/velocity_results.dat'
-        velocity_file = open(velocity_results_file_name,'w')
+
+        velocity_norm_x_results_file_name = self.work_dir + 'plots/far_field/data/0_original/velocity_norm_x_results.dat'
+        velocity_norm_x_file = open(velocity_norm_x_results_file_name,'w')
+
+        velocity_u_x_results_file_name = self.work_dir + 'plots/far_field/data/0_original/velocity_u_x_results.dat'
+        velocity_u_x_file = open(velocity_u_x_results_file_name,'w')
+
+        velocity_v_x_results_file_name = self.work_dir + 'plots/far_field/data/0_original/velocity_v_x_results.dat'
+        velocity_v_x_file = open(velocity_v_x_results_file_name,'w')
+
+
+        velocity_norm_y_results_file_name = self.work_dir + 'plots/far_field/data/0_original/velocity_norm_y_results.dat'
+        velocity_norm_y_file = open(velocity_norm_y_results_file_name,'w')
+
+        velocity_u_y_results_file_name = self.work_dir + 'plots/far_field/data/0_original/velocity_u_y_results.dat'
+        velocity_u_y_file = open(velocity_u_y_results_file_name,'w')
+
+        velocity_v_y_results_file_name = self.work_dir + 'plots/far_field/data/0_original/velocity_v_y_results.dat'
+        velocity_v_y_file = open(velocity_v_y_results_file_name,'w')
 
         velocity_far_field = KratosMultiphysics.Vector(3)
 
         for cond in self.model_part.Conditions:
             velocity_far_field = cond.GetValue(KratosMultiphysics.VELOCITY)
+            velocity_norm = np.linalg.norm(velocity_far_field)
+            
             x = 0.5*(cond.GetNodes()[1].X0+cond.GetNodes()[0].X0)
-            velocity_file.write('{0:15f} {1:15f}\n'.format(x, velocity_far_field[0]))
+            y = 0.5*(cond.GetNodes()[1].Y0+cond.GetNodes()[0].Y0)
+            
+            velocity_norm_x_file.write('{0:15f} {1:15f}\n'.format(x, velocity_norm))
+            velocity_u_x_file.write('{0:15f} {1:15f}\n'.format(x, velocity_far_field[0]))
+            velocity_v_x_file.write('{0:15f} {1:15f}\n'.format(x, velocity_far_field[1]))
 
-        velocity_file.flush()
-        velocity_file.close()
+            velocity_norm_y_file.write('{0:15f} {1:15f}\n'.format(y, velocity_norm))
+            velocity_u_y_file.write('{0:15f} {1:15f}\n'.format(y, velocity_far_field[0]))
+            velocity_v_y_file.write('{0:15f} {1:15f}\n'.format(y, velocity_far_field[1]))
+            
 
-        self.work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
+        velocity_norm_x_file.flush()
+        velocity_norm_x_file.close()
+        
+        velocity_u_x_file.flush()
+        velocity_u_x_file.close()
 
-        far_field_tikz_file_name = self.work_dir + "plots/far_field/data/0_original/velocity.tikz"
-        with open(far_field_tikz_file_name,'w') as far_field_tikz_file:
-            far_field_tikz_file.write('\\begin{tikzpicture}\n' +
+        velocity_v_x_file.flush()
+        velocity_v_x_file.close()
+
+        velocity_norm_y_file.flush()
+        velocity_norm_y_file.close()
+        
+        velocity_u_y_file.flush()
+        velocity_u_y_file.close()
+
+        velocity_v_y_file.flush()
+        velocity_v_y_file.close()
+
+        velocity_norm_x_tikz_file_name = self.work_dir + "plots/far_field/data/0_original/velocity_norm_x.tikz"
+        with open(velocity_norm_x_tikz_file_name,'w') as velocity_norm_x_tikz_file:
+            velocity_norm_x_tikz_file.write('\\begin{tikzpicture}\n' +
             '\\begin{axis}[\n' +
-            '\t    title={Far field velocity x},\n' +
+            '\t    title={Far field velocity norm(x)},\n' +
             '\t    xlabel={$x$},\n' +
-            '\t    ylabel={velocity x},\n' +
+            '\t    ylabel={velocity norm(x)},\n' +
+            '\t    ymajorgrids=true,\n' +
+            '\t    xmajorgrids=true,\n' +
+            '\t    grid style=dashed,\n' +
+            '\t    width=12cm\n' +
+            ']\n\n' +
+            '\\addplot[\n' +
+            '\t    only marks,\n' +
+            '\t    color=black,\n' +
+            '\t    mark=*,\n' +
+            '\t    ]\n' +
+            '\t    table {velocity_norm_x_results.dat};  \n' +
+            '\t\end{axis}\n' +
+            '\t\end{tikzpicture}')
+            velocity_norm_x_tikz_file.flush()
+
+        velocity_u_x_tikz_file_name = self.work_dir + "plots/far_field/data/0_original/velocity_u_x.tikz"
+        with open(velocity_u_x_tikz_file_name,'w') as velocity_u_x_tikz_file:
+            velocity_u_x_tikz_file.write('\\begin{tikzpicture}\n' +
+            '\\begin{axis}[\n' +
+            '\t    title={Far field velocity u(x)},\n' +
+            '\t    xlabel={$x$},\n' +
+            '\t    ylabel={u(x)},\n' +
             '\t    ymajorgrids=true,\n' +
             '\t    xmajorgrids=true,\n' +
             '\t    grid style=dashed,\n' +
@@ -117,7 +181,95 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
             '\t    color=blue,\n' +
             '\t    mark=*,\n' +
             '\t    ]\n' +
-            '\t    table {velocity_results.dat};  \n' +
+            '\t    table {velocity_u_x_results.dat};  \n' +
             '\t\end{axis}\n' +
             '\t\end{tikzpicture}')
-            far_field_tikz_file.flush()
+            velocity_u_x_tikz_file.flush()
+
+        velocity_v_x_tikz_file_name = self.work_dir + "plots/far_field/data/0_original/velocity_v_x.tikz"
+        with open(velocity_v_x_tikz_file_name,'w') as velocity_v_x_tikz_file:
+            velocity_v_x_tikz_file.write('\\begin{tikzpicture}\n' +
+            '\\begin{axis}[\n' +
+            '\t    title={Far field velocity v(x)},\n' +
+            '\t    xlabel={$x$},\n' +
+            '\t    ylabel={v(x)},\n' +
+            '\t    ymajorgrids=true,\n' +
+            '\t    xmajorgrids=true,\n' +
+            '\t    grid style=dashed,\n' +
+            '\t    width=12cm\n' +
+            ']\n\n' +
+            '\\addplot[\n' +
+            '\t    only marks,\n' +
+            '\t    color=red,\n' +
+            '\t    mark=*,\n' +
+            '\t    ]\n' +
+            '\t    table {velocity_v_x_results.dat};  \n' +
+            '\t\end{axis}\n' +
+            '\t\end{tikzpicture}')
+            velocity_v_x_tikz_file.flush()
+
+        velocity_norm_y_tikz_file_name = self.work_dir + "plots/far_field/data/0_original/velocity_norm_y.tikz"
+        with open(velocity_norm_y_tikz_file_name,'w') as velocity_norm_y_tikz_file:
+            velocity_norm_y_tikz_file.write('\\begin{tikzpicture}\n' +
+            '\\begin{axis}[\n' +
+            '\t    title={Far field velocity norm(y)},\n' +
+            '\t    xlabel={$y$},\n' +
+            '\t    ylabel={velocity norm(y)},\n' +
+            '\t    ymajorgrids=true,\n' +
+            '\t    xmajorgrids=true,\n' +
+            '\t    grid style=dashed,\n' +
+            '\t    width=12cm\n' +
+            ']\n\n' +
+            '\\addplot[\n' +
+            '\t    only marks,\n' +
+            '\t    color=black,\n' +
+            '\t    mark=*,\n' +
+            '\t    ]\n' +
+            '\t    table {velocity_norm_y_results.dat};  \n' +
+            '\t\end{axis}\n' +
+            '\t\end{tikzpicture}')
+            velocity_norm_y_tikz_file.flush()
+
+        velocity_u_y_tikz_file_name = self.work_dir + "plots/far_field/data/0_original/velocity_u_y.tikz"
+        with open(velocity_u_y_tikz_file_name,'w') as velocity_u_y_tikz_file:
+            velocity_u_y_tikz_file.write('\\begin{tikzpicture}\n' +
+            '\\begin{axis}[\n' +
+            '\t    title={Far field velocity u(y)},\n' +
+            '\t    xlabel={$y$},\n' +
+            '\t    ylabel={u(y)},\n' +
+            '\t    ymajorgrids=true,\n' +
+            '\t    xmajorgrids=true,\n' +
+            '\t    grid style=dashed,\n' +
+            '\t    width=12cm\n' +
+            ']\n\n' +
+            '\\addplot[\n' +
+            '\t    only marks,\n' +
+            '\t    color=blue,\n' +
+            '\t    mark=*,\n' +
+            '\t    ]\n' +
+            '\t    table {velocity_u_y_results.dat};  \n' +
+            '\t\end{axis}\n' +
+            '\t\end{tikzpicture}')
+            velocity_u_y_tikz_file.flush()
+
+        velocity_v_y_tikz_file_name = self.work_dir + "plots/far_field/data/0_original/velocity_v_y.tikz"
+        with open(velocity_v_y_tikz_file_name,'w') as velocity_v_y_tikz_file:
+            velocity_v_y_tikz_file.write('\\begin{tikzpicture}\n' +
+            '\\begin{axis}[\n' +
+            '\t    title={Far field velocity v(y)},\n' +
+            '\t    xlabel={$y$},\n' +
+            '\t    ylabel={v(y)},\n' +
+            '\t    ymajorgrids=true,\n' +
+            '\t    xmajorgrids=true,\n' +
+            '\t    grid style=dashed,\n' +
+            '\t    width=12cm\n' +
+            ']\n\n' +
+            '\\addplot[\n' +
+            '\t    only marks,\n' +
+            '\t    color=red,\n' +
+            '\t    mark=*,\n' +
+            '\t    ]\n' +
+            '\t    table {velocity_v_y_results.dat};  \n' +
+            '\t\end{axis}\n' +
+            '\t\end{tikzpicture}')
+            velocity_v_y_tikz_file.flush()

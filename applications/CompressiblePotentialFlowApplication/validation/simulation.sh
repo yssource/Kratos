@@ -12,7 +12,7 @@ GITBRANCH=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
 Input_Dir=/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement
 
 #Parameters
-Number_Of_Refinements=4
+Number_Of_Refinements=2
 Number_Of_AOAS=1
 
 Initial_AOA=5.0
@@ -67,7 +67,8 @@ source generate_mdpas/unset_parameters.sh
 #rm $Input_Dir/generate_mdpas/output_salome/*
 #rm mdpas/*
 rm cp*
-rm far*
+rm main*
+rm tex*
 
 cd $Work_Dir/plots/cl
 pdflatex -interaction=batchmode main_cl.tex

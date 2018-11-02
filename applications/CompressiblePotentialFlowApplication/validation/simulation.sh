@@ -59,6 +59,10 @@ rm -rf $Work_Dir/plots/far_field/data/AOA*
 rm $Work_Dir/plots/far_field/far_field_*
 rm $Work_Dir/plots/far_field/plots/*
 
+rm -rf $Work_Dir/plots/potential_jump/data/AOA*
+rm $Work_Dir/plots/potential_jump/jump_*
+rm $Work_Dir/plots/potential_jump/plots/*
+
 rm $Work_Dir/plots/results/*
 rm $Work_Dir/plots/output_terminal_*
 rm -rf /media/inigo/10740FB2740F9A1C/Outputs/03_MeshRefinement/*

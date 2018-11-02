@@ -161,6 +161,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                         counter = 0
                         for elnode in elem.GetNodes():
                             elnode.SetSolutionStepValue(KratosMultiphysics.DISTANCE, 0, distances[counter])
+                            self.wake_model_part.Nodes.append(elnode)
                             counter += 1
                             if(elnode.Is(KratosMultiphysics.STRUCTURE)):
                                 #selecting Kutta elements
@@ -171,3 +172,42 @@ class DefineWakeProcess(KratosMultiphysics.Process):
 
     def ExecuteInitialize(self):
         self.Execute()
+
+    def ExecuteFinalizeSolutionStep(self):
+
+        self.work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
+
+        potential_jump_results_file_name = self.work_dir + 'plots/potential_jump/data/jump/potential_jump_results.dat'
+        with open(potential_jump_results_file_name,'w') as potential_jump_file:
+
+            for node in self.wake_model_part.GetNodes():
+                x = node.X
+                jump = node.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.POTENTIAL_JUMP)
+
+                potential_jump_file.write('{0:15f} {1:15f}\n'.format(x, jump))
+
+            potential_jump_file.flush()
+
+        potential_jump_tikz_file_name = self.work_dir + "plots/potential_jump/data/jump/jump.tikz"
+        with open(potential_jump_tikz_file_name,'w') as jump_tikz_file:
+            jump_tikz_file.write('\\begin{tikzpicture}\n' +
+            '\\begin{axis}[\n' +
+            '\t    title={Potential jump(x)},\n' +
+            '\t    xlabel={$x$},\n' +
+            '\t    ylabel={Potential Jump(x)},\n' +
+            '\t    ymajorgrids=true,\n' +
+            '\t    xmajorgrids=true,\n' +
+            '\t    grid style=dashed,\n' +
+            '\t    width=12cm\n' +
+            ']\n\n' +
+            '\\addplot[\n' +
+            '\t    only marks,\n' +
+            '\t    color=black,\n' +
+            '\t    mark=*,\n' +
+            '\t    ]\n' +
+            '\t    table {potential_jump_results.dat};  \n' +
+            '\t\end{axis}\n' +
+            '\t\end{tikzpicture}')
+            jump_tikz_file.flush()
+
+

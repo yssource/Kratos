@@ -63,6 +63,7 @@ loads_output.write_header_all_cases(work_dir)
 merger_global = PdfFileMerger()
 merger_global_far_field_x = PdfFileMerger()
 merger_global_far_field_y = PdfFileMerger()
+merger_global_jump = PdfFileMerger()
 
 case = 0
 AOA = Initial_AOA
@@ -73,6 +74,7 @@ for j in range(Number_Of_AOAS):
     merger = PdfFileMerger()
     merger_local_far_field_x = PdfFileMerger()
     merger_local_far_field_y = PdfFileMerger()
+    merger_local_jump = PdfFileMerger()
 
     mesh_refinement_file_name = work_dir + 'plots/results/mesh_refinement_AOA_' + str(AOA)
     cl_data_directory_name = 'data/cl_AOA_' + str(AOA)
@@ -85,6 +87,9 @@ for j in range(Number_Of_AOAS):
 
     far_field_data_directory_start = work_dir + 'plots/far_field/data/AOA_' + str(AOA)
     os.mkdir(far_field_data_directory_start)
+
+    jump_data_directory_start = work_dir + 'plots/potential_jump/data/AOA_' + str(AOA)
+    os.mkdir(jump_data_directory_start)
 
     cl_aoa_file = open(aoa_results_file_name,'a')
     cl_aoa_file.write('{0:15f}'.format(AOA))
@@ -104,6 +109,9 @@ for j in range(Number_Of_AOAS):
         far_field_data_directory_name = far_field_data_directory_start + '/Case_' + str(case) + '_AOA_' + str(
                 AOA) + '_Far_Field_Mesh_Size_' + str(FarField_MeshSize) + '_Airfoil_Mesh_Size_' + str(Airfoil_MeshSize)
 
+        jump_results_directory_name = work_dir + 'plots/potential_jump/data/jump'
+        jump_data_directory_name = jump_data_directory_start + '/Case_' + str(case) + '_AOA_' + str(
+                AOA) + '_Far_Field_Mesh_Size_' + str(FarField_MeshSize) + '_Airfoil_Mesh_Size_' + str(Airfoil_MeshSize)
 
         ## Parse the ProjectParameters
         #parameter_file = open("ProjectParameters_compressibility.json",'r')
@@ -293,6 +301,19 @@ for j in range(Number_Of_AOAS):
         merger_local_far_field_y.append(PdfFileReader(far_field_y_file_name), 'case_' + str(case))
         merger_global_far_field_y.append(PdfFileReader(far_field_y_file_name), 'case_' + str(case))
 
+        #output jump
+        loads_output.write_jump_figures(jump_data_directory_name, AOA, case, Airfoil_MeshSize, FarField_MeshSize, work_dir)
+        shutil.copytree(jump_results_directory_name, jump_data_directory_name)
+
+        latex = subprocess.Popen(['pdflatex', '-interaction=batchmode', work_dir + 'plots/potential_jump/main_jump.tex'], stdout=latex_output)
+        latex.communicate()
+
+        jump_file_name = work_dir + 'plots/potential_jump/plots/jump_Case_' + str(case) + '_AOA_' + str(
+                AOA) + '_Far_Field_Mesh_Size_' + str(FarField_MeshSize) + '_Airfoil_Mesh_Size_' + str(Airfoil_MeshSize) + '.pdf'
+        shutil.copyfile('main_jump.pdf',jump_file_name)
+        merger_local_jump.append(PdfFileReader(jump_file_name), 'case_' + str(case))
+        merger_global_jump.append(PdfFileReader(jump_file_name), 'case_' + str(case))
+
         Airfoil_MeshSize /= Airfoil_Refinement_Factor
         FarField_MeshSize /= FarField_Refinement_Factor
         
@@ -325,6 +346,9 @@ for j in range(Number_Of_AOAS):
     far_field_y_final_file_name = work_dir + 'plots/far_field/far_field_y_AOA_' + str(AOA) + '.pdf'
     merger_local_far_field_y.write(far_field_y_final_file_name)
 
+    jump_final_file_name = work_dir + 'plots/potential_jump/jump_AOA_' + str(AOA) + '.pdf'
+    merger_local_jump.write(jump_final_file_name)
+
     AOA += AOA_Increment
 
 cp_final_global_file_name = work_dir + 'plots/cp/cp_all.pdf'
@@ -335,3 +359,6 @@ merger_global_far_field_x.write(far_field_x_global_file_name)
 
 far_field_y_global_file_name = work_dir + 'plots/far_field/far_field_y_all.pdf'
 merger_global_far_field_y.write(far_field_y_global_file_name)
+
+jump_final_global_file_name = work_dir + 'plots/potential_jump/jump_all.pdf'
+merger_global_jump.write(jump_final_global_file_name)

@@ -48,8 +48,13 @@ with open(cd_results_file_name, 'w') as cd_file:
 cd_results_directory_name = work_dir + 'plots/cd/data/cd'
 
 aoa_results_file_name = work_dir + 'plots/aoa/cl_aoa.dat'
-cl_aoa_file = open(aoa_results_file_name,'w')
-cl_aoa_file.flush()
+with open(aoa_results_file_name,'w') as cl_aoa_file:
+    cl_aoa_file.flush()
+
+condition_results_file_name = work_dir + 'plots/condition_number/data/condition/condition_results.dat'
+with open(condition_results_file_name, 'w') as condition_file:
+    condition_file.flush()
+condition_results_directory_name = work_dir + 'plots/condition_number/data/condition'
 
 loads_output.write_header_all_cases(work_dir)
 
@@ -70,6 +75,7 @@ for j in range(Number_Of_AOAS):
     mesh_refinement_file_name = work_dir + 'plots/results/mesh_refinement_AOA_' + str(AOA)
     cl_data_directory_name = 'data/cl_AOA_' + str(AOA)
     cd_data_directory_name = 'data/cd_AOA_' + str(AOA)
+    condition_data_directory_name = 'data/condition_AOA_' + str(AOA)
     loads_output.write_header(work_dir)
 
     cp_data_directory_start = work_dir + 'plots/cp/data/AOA_' + str(AOA)
@@ -297,12 +303,16 @@ for j in range(Number_Of_AOAS):
     
     loads_output.write_figures_cl(cl_data_directory_name, AOA, work_dir)
     loads_output.write_figures_cd(cd_data_directory_name, AOA, work_dir)
+    loads_output.write_figures_condition(condition_data_directory_name, AOA, work_dir)
     
     shutil.copytree(cl_results_directory_name, work_dir + 'plots/cl/' + cl_data_directory_name)
     os.remove(cl_results_file_name)
 
     shutil.copytree(cd_results_directory_name, work_dir + 'plots/cd/' + cd_data_directory_name)
     os.remove(cd_results_file_name)
+
+    shutil.copytree(condition_results_directory_name, work_dir + 'plots/condition_number/' + condition_data_directory_name)
+    os.remove(condition_results_file_name)
 
     cp_final_file_name = work_dir + 'plots/cp/cp_AOA_' + str(AOA) + '.pdf'
     merger.write(cp_final_file_name)

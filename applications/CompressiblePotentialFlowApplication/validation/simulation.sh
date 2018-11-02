@@ -45,6 +45,7 @@ cd generate_mdpas/
 cd ..
 rm -rf $Work_Dir/plots/cl/data/cl_*
 rm -rf $Work_Dir/plots/cd/data/cd_*
+rm -rf $Work_Dir/plots/condition_number/data/condition_*
 
 rm -rf $Work_Dir/plots/cp/data/AOA*
 rm $Work_Dir/plots/cp/cp_*
@@ -52,6 +53,7 @@ rm $Work_Dir/plots/cp/plots/*
 
 rm $Work_Dir/plots/cl/figures_cl.tex
 rm $Work_Dir/plots/cd/figures_cd.tex
+rm $Work_Dir/plots/condition_number/figures_condition.tex
 
 rm -rf $Work_Dir/plots/far_field/data/AOA*
 rm $Work_Dir/plots/far_field/far_field_*
@@ -76,6 +78,8 @@ cd $Work_Dir/plots/cd
 pdflatex -interaction=batchmode main_cd.tex
 cd $Work_Dir/plots/aoa/
 pdflatex -interaction=batchmode cl_aoa.tex
+cd $Work_Dir/plots/condition_number/
+pdflatex -interaction=batchmode main_condition.tex
 #cd ../cp/
 #pdflatex -interaction=batchmode cp.tex
 DIRECTORY=/media/inigo/10740FB2740F9A1C/Old_Outputs/03_MeshRefinement

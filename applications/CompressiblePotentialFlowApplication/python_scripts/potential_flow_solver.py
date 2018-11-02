@@ -164,10 +164,10 @@ class LaplacianSolver:
         (self.solver).Clear()
 
     def ComputeConditionNumber(self):
-        number_of_nodes = self.main_model_part.NumberOfNodes()
+        NumberOfNodes = self.main_model_part.NumberOfNodes()
         self.work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
 
-        if(number_of_nodes < 1e2):
+        if(NumberOfNodes < 1e5):
 
             print('\nComputing condition number . . .\n')
 
@@ -218,6 +218,11 @@ class LaplacianSolver:
             with open (self.work_dir + "plots/results/all_cases.dat",'a') as all_cases_file:
                 all_cases_file.write('{0:16.2e}'.format(condition_number))
                 all_cases_file.flush()
+
+            condition_results_file_name = self.work_dir + "plots/condition_number/data/condition/condition_results.dat"
+            with open(condition_results_file_name,'a') as condition_file:
+                condition_file.write('{0:16.2e} {1:16.2e}\n'.format(NumberOfNodes, condition_number))
+                condition_file.flush()
 
             print('\nComputing condition number finished . . .\n')
         else:

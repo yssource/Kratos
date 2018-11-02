@@ -132,9 +132,7 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
                 print('Far field computed lift = ', far_field_lift)
                 break
 
-        NumberOfNodes = 0
-        for node in self.fluid_model_part.Nodes:
-            NumberOfNodes +=1
+        NumberOfNodes = self.fluid_model_part.NumberOfNodes()
     
         with open (self.work_dir + "mesh_refinement_loads.dat",'a') as loads_file:
             loads_file.write('{0:16.2e} {1:15f} {2:15f} {3:15f} {4:15f} {5:15f} {6:15f}\n'.format(NumberOfNodes, Cl, Cl_low, far_field_lift, Cd, Cd_low, RZ))

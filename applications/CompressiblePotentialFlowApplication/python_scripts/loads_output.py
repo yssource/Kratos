@@ -46,6 +46,18 @@ def write_figures_cd(cd_data_directory_name, AOA, work_dir):
                            )
         cd_figures_file.flush()
 
+def write_figures_condition(condition_data_directory_name, AOA, work_dir):
+    with open(work_dir + 'plots/condition_number/figures_condition.tex', 'a') as condition_figures_file:
+        condition_figures_file.write('\n\pgfplotsset{table/search path={' + condition_data_directory_name + '},}\n\n' +
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + condition_data_directory_name + '/condition.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$}\n' +
+                           '\t\label{fig:condition_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n'
+                           )
+        condition_figures_file.flush()
+
 def write_cl(cl,work_dir):
     cl_aoa_file = open(work_dir + 'plots/aoa/cl_aoa.dat','a')
     cl_aoa_file.write('{0:15f}\n'.format(cl))

@@ -367,33 +367,6 @@ public:
 
             ComputeLHSGaussPointContribution(data.vol, rLeftHandSideMatrix, data);
 
-            // if (this->Is(THERMAL))
-            // {
-            //     //std::cout << " THERMAL ELEMENT " << this->Id() << std::endl;
-            //     //std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
-            //     Matrix lhs_penalty = ZeroMatrix(NumNodes, NumNodes);
-
-            //     bounded_matrix<double, 2, 1> chord_normal;
-
-            //     chord_normal(0, 0) = rCurrentProcessInfo[Y1];
-            //     chord_normal(1, 0) = rCurrentProcessInfo[Y2];
-
-            //     Matrix projection = prod(data.DN_DX, chord_normal);
-
-            //     double penalty = rCurrentProcessInfo[INITIAL_PENALTY];
-            //     double penalty2 = rCurrentProcessInfo[MIU] / data.vol;
-
-            //     // std::cout << " chord_normal(0, 0) = " << chord_normal(0, 0) << std::endl;
-            //     // std::cout << " chord_normal(1, 0) = " << chord_normal(1, 0) << std::endl;
-            //     // std::cout << " penalty = " << penalty << std::endl;
-            //     // std::cout << " penalty2 = " << penalty2 << std::endl;
-
-            //     noalias(lhs_penalty) = penalty2 * penalty * data.vol * prod(projection, trans(projection));
-
-            //     rLeftHandSideMatrix += lhs_penalty;
-            //     //std::cout << " rLeftHandSideMatrix = " << rLeftHandSideMatrix << std::endl;
-            // }
-
             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
         }
         else //it is a wake element
@@ -406,95 +379,74 @@ public:
             if(rRightHandSideVector.size() != 2*NumNodes)
                 rRightHandSideVector.resize(2*NumNodes,false);
             rLeftHandSideMatrix.clear();
+
+            //subdivide the element
+            constexpr unsigned int nvolumes = 3*(Dim-1);
+            bounded_matrix<double,NumNodes, Dim > Points;
+            array_1d<double,nvolumes> Volumes;
+            bounded_matrix<double, nvolumes, NumNodes > GPShapeFunctionValues;
+            array_1d<double,nvolumes> PartitionsSign;
+            std::vector<Matrix> GradientsValue(nvolumes);
+            bounded_matrix<double,nvolumes, 2> NEnriched;
             
-            //compute the lhs and rhs that would correspond to it not being divided
+            for(unsigned int i=0; i<GradientsValue.size(); ++i)
+                GradientsValue[i].resize(2,Dim,false);
+
+            for(unsigned int i = 0; i<NumNodes; ++i)
+            {
+                const array_1d<double, 3>& coords = GetGeometry()[i].Coordinates();
+                for(unsigned int k = 0; k<Dim; ++k)
+                {
+                    Points(i, k) = coords[k];
+                }
+            }
+            
+            const unsigned int nsubdivisions = EnrichmentUtilities::CalculateEnrichedShapeFuncions(Points,
+                                                                                            data.DN_DX,
+                                                                                            data.distances,
+                                                                                            Volumes, 
+                                                                                            GPShapeFunctionValues, 
+                                                                                            PartitionsSign, 
+                                                                                            GradientsValue, 
+                                                                                            NEnriched);
+            //compute the lhs and rhs that would correspond to it being divided
             Matrix lhs_positive = ZeroMatrix(NumNodes,NumNodes);
             Matrix lhs_negative = ZeroMatrix(NumNodes,NumNodes);
+            for(unsigned int i=0; i<nsubdivisions; ++i)
+            {
+                if(PartitionsSign[i] > 0)
+                    ComputeLHSGaussPointContribution(Volumes[i],lhs_positive,data);
+                else
+                    ComputeLHSGaussPointContribution(Volumes[i],lhs_negative,data);
+            }
 
-            ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
-            ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
-
-            Matrix lhs_penalty = ZeroMatrix(NumNodes,NumNodes);
-
-            bounded_matrix<double, 2, 1 > chord_normal;
-
-            chord_normal(0,0) = rCurrentProcessInfo[Y1];
-            chord_normal(1,0) = rCurrentProcessInfo[Y2];
-
-            Matrix projection = prod(data.DN_DX,chord_normal);
-
-            noalias(lhs_penalty) = data.vol * prod(projection, trans(projection));
-
-            double penalty = rCurrentProcessInfo[INITIAL_PENALTY];
-            double peso = rCurrentProcessInfo[WATER_PRESSURE];
-            double penalty2 = 1;//rCurrentProcessInfo[MIU]/data.vol;
-
-                
             if(this->Is(STRUCTURE))
             {
                 for(unsigned int i = 0; i<NumNodes; ++i)
                     GetGeometry()[i].GetSolutionStepValue(TEMPERATURE) = 30.0;
-                //std::cout << "chord_normal = " << chord_normal << std::endl;
 
-                // for(unsigned int i=0; i<nsubdivisions; ++i)
-                // {
-                //     if(PartitionsSign[i] > 0)
-                //         ComputeLHSGaussPointContribution(Volumes[i],lhs_positive,data);
-                //     else
-                //         ComputeLHSGaussPointContribution(Volumes[i],lhs_negative,data);
-                // }
-                // ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
-                // ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
-                // std::cout << "KUTTA ELEMENT " << this->Id()  << std::endl;
-                // std::cout << "penalty = " << penalty  << std::endl;
-                // std::cout << "peso = " << peso  << std::endl;
-                // std::cout << "penalty2 = " << penalty2  << std::endl;
-                if(this->Is(MODIFIED))
+                for (unsigned int i = 0; i < NumNodes; ++i)
                 {
-                    std::cout << "WAKE KUTTA MODIFIED ELEMENT " << this->Id()  << std::endl;
-                    for (unsigned int i = 0; i < NumNodes; ++i)
+                    for (unsigned int j = 0; j < NumNodes; ++j)
                     {
-                        for (unsigned int j = 0; j < NumNodes; ++j)
-                        {
-                            rLeftHandSideMatrix(i, j) = lhs_positive(i, j);
-                            rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
+                        rLeftHandSideMatrix(i, j) = lhs_positive(i, j);
+                        rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
 
-                            rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = lhs_negative(i, j);
-                            rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
-                        }
-                    }
-
-                }
-                else
-                {
-                    for (unsigned int i = 0; i < NumNodes; ++i)
-                    {
-                        for (unsigned int j = 0; j < NumNodes; ++j)
-                        {
-                            rLeftHandSideMatrix(i, j) = peso * lhs_positive(i, j) + penalty2 * penalty * lhs_penalty(i, j);
-                            rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
-
-                            rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = peso * lhs_negative(i, j) + penalty2 * penalty * lhs_penalty(i, j);
-                            rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
-                        }
+                        rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = lhs_negative(i, j);
+                        rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
                     }
                 }
             }
             else
             {
-                // ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
-                // ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
-                if(this->Is(ISOLATED))
-                    std::cout << "WAKE ISOLATED ELEMENT " << this->Id()  << std::endl;
-                double beta = 1e0;
                 for(unsigned int i=0; i<NumNodes; ++i)
                 {
                     for(unsigned int j=0; j<NumNodes; ++j)
                     {
-                        rLeftHandSideMatrix(i,j)                   =  beta*lhs_positive(i,j); 
+                        rLeftHandSideMatrix(i,j)                   =  lhs_positive(i,j); 
                         rLeftHandSideMatrix(i,j+NumNodes)          =  0.0; 
                         
-                        rLeftHandSideMatrix(i+NumNodes,j+NumNodes) =  beta*lhs_negative(i,j); 
+                        rLeftHandSideMatrix(i+NumNodes,j+NumNodes) =  lhs_negative(i,j); 
                         rLeftHandSideMatrix(i+NumNodes,j)          =  0.0; 
                     }
 
@@ -502,16 +454,15 @@ public:
                     if(data.distances[i]<0)
                     {
                         for(unsigned int j=0; j<NumNodes; ++j)
-                            rLeftHandSideMatrix(i,j+NumNodes) = -beta*lhs_positive(i,j); 
+                            rLeftHandSideMatrix(i,j+NumNodes) = -lhs_positive(i,j); 
                     }
                     else //side2 -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
                     {
                         for(unsigned int j=0; j<NumNodes; ++j)
-                            rLeftHandSideMatrix(i+NumNodes,j) = -beta*lhs_negative(i,j); 
+                            rLeftHandSideMatrix(i+NumNodes,j) = -lhs_negative(i,j); 
                     }
                 }                  
             }
-            
             Vector split_element_values(NumNodes*2);
             GetValuesOnSplitElement(split_element_values, data.distances);
             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix,split_element_values);

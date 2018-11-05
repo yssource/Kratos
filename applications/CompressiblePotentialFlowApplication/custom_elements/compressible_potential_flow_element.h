@@ -380,45 +380,12 @@ public:
                 rRightHandSideVector.resize(2*NumNodes,false);
             rLeftHandSideMatrix.clear();
 
-            //subdivide the element
-            constexpr unsigned int nvolumes = 3*(Dim-1);
-            bounded_matrix<double,NumNodes, Dim > Points;
-            array_1d<double,nvolumes> Volumes;
-            bounded_matrix<double, nvolumes, NumNodes > GPShapeFunctionValues;
-            array_1d<double,nvolumes> PartitionsSign;
-            std::vector<Matrix> GradientsValue(nvolumes);
-            bounded_matrix<double,nvolumes, 2> NEnriched;
-            
-            for(unsigned int i=0; i<GradientsValue.size(); ++i)
-                GradientsValue[i].resize(2,Dim,false);
-
-            for(unsigned int i = 0; i<NumNodes; ++i)
-            {
-                const array_1d<double, 3>& coords = GetGeometry()[i].Coordinates();
-                for(unsigned int k = 0; k<Dim; ++k)
-                {
-                    Points(i, k) = coords[k];
-                }
-            }
-            
-            const unsigned int nsubdivisions = EnrichmentUtilities::CalculateEnrichedShapeFuncions(Points,
-                                                                                            data.DN_DX,
-                                                                                            data.distances,
-                                                                                            Volumes, 
-                                                                                            GPShapeFunctionValues, 
-                                                                                            PartitionsSign, 
-                                                                                            GradientsValue, 
-                                                                                            NEnriched);
             //compute the lhs and rhs that would correspond to it being divided
             Matrix lhs_positive = ZeroMatrix(NumNodes,NumNodes);
             Matrix lhs_negative = ZeroMatrix(NumNodes,NumNodes);
-            for(unsigned int i=0; i<nsubdivisions; ++i)
-            {
-                if(PartitionsSign[i] > 0)
-                    ComputeLHSGaussPointContribution(Volumes[i],lhs_positive,data);
-                else
-                    ComputeLHSGaussPointContribution(Volumes[i],lhs_negative,data);
-            }
+
+            ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
+            ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
 
             if(this->Is(STRUCTURE))
             {

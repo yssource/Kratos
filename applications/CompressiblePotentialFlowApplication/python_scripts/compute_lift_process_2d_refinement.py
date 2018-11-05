@@ -138,6 +138,15 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
                 break
 
         relative_error_jump = abs(far_field_lift - self.cl_reference)/abs(self.cl_reference)*100.0
+
+        #compute the internal energy
+        internal_energy_tmp = 0.0
+        for element in self.fluid_model_part.Elements:
+            internal_energy_tmp += element.GetValue(KratosMultiphysics.INTERNAL_ENERGY)
+
+        internal_energy = math.sqrt(internal_energy_tmp)
+        print('internal energy =', internal_energy)
+
         NumberOfNodes = self.fluid_model_part.NumberOfNodes()
     
         with open (self.work_dir + "mesh_refinement_loads.dat",'a') as loads_file:

@@ -484,6 +484,32 @@ public:
                 
             }
         }
+
+        //Compute element internal energy
+        VectorType rRightHandSideVector;
+        this->CalculateRightHandSide(rRightHandSideVector, rCurrentProcessInfo);
+
+        ElementalData<NumNodes,Dim> data;
+
+        double internal_energy = 0.0;
+
+        if(this->IsNot(MARKER))//normal element (non-wake) - eventually an embedded
+        {
+            //gather nodal data
+            for(unsigned int i=0; i<NumNodes; i++)
+            {
+                data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+            }
+            internal_energy = inner_prod(rRightHandSideVector, data.phis)*(-0.5);
+        }
+        else
+        {
+            GetWakeDistances(data.distances);
+            Vector split_element_values(NumNodes*2);
+            GetValuesOnSplitElement(split_element_values, data.distances);
+            internal_energy = inner_prod(rRightHandSideVector, split_element_values)*(-0.5);
+        }
+        this->SetValue(INTERNAL_ENERGY,internal_energy);
     }
 
     /**

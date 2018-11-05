@@ -130,7 +130,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                         xn[2] = 0.0
                         d = xn[0]*self.n[0] + xn[1]*self.n[1]
                         if(abs(d) < self.epsilon):
-                            d = self.epsilon
+                            d = -self.epsilon
                         if(d<0 and
                             elnode.IsNot(KratosMultiphysics.STRUCTURE) and
                             elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.UPPER_SURFACE) == True):

@@ -31,8 +31,8 @@ FarField_Refinement_Factor = TBD
 work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
 input_mdpa_path = work_dir + 'mdpas_all_aoa/'
 output_gid_path = '/media/inigo/10740FB2740F9A1C/Outputs/03_MeshRefinement/'
-with open(work_dir + '/plots/latex_output.txt', 'w') as latex_output:
-    latex_output.flush()
+latex_output = open(work_dir + '/plots/latex_output.txt', 'w')
+latex_output.flush()
 
 cl_results_file_name = work_dir + 'plots/cl/data/cl/cl_results.dat'
 cl_far_field_results_file_name = work_dir + 'plots/cl/data/cl/cl_jump_results.dat'

@@ -280,6 +280,8 @@ public:
                     it->GetGeometry()[i_node].UnSetLock();
                     ++local_index; // pressure dof
                 }
+
+                it->FinalizeSolutionStep(rModelPart.GetProcessInfo());
             }
         }
         // Loop over conditions.

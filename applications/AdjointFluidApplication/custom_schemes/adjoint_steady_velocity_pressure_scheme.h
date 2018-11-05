@@ -234,10 +234,10 @@ public:
 
         if (rModelPart.NodesBegin()->SolutionStepsDataHas(ADJOINT_VELOCITY) == false)
             KRATOS_ERROR << "Nodal solution steps data missing variable: " << ADJOINT_VELOCITY << std::endl;
-        
+
         if (rModelPart.NodesBegin()->SolutionStepsDataHas(ADJOINT_PRESSURE) == false)
             KRATOS_ERROR << "Nodal solution steps data missing variable: " << ADJOINT_PRESSURE << std::endl;
-        
+
         if (rModelPart.NodesBegin()->SolutionStepsDataHas(ACCELERATION) == false)
             KRATOS_ERROR << "Nodal solution steps data missing variable: " << ACCELERATION << std::endl;
 
@@ -399,6 +399,14 @@ private:
     ///@}
     ///@name Private Operators
     ///@{
+
+    void CalculateReynoldsStressTensorContributions(Element::Pointer pCurrentElement,
+                                                    LocalSystemMatrixType& rLHS_Contribution,
+                                                    Element::EquationIdVectorType& rEquationId,
+                                                    ProcessInfo& rCurrentProcessInfo)
+    {
+
+    }
 
     ///@}
     ///@name Private Operations

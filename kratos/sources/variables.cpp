@@ -485,6 +485,12 @@ KRATOS_CREATE_VARIABLE(double, SEARCH_RADIUS)
 KRATOS_CREATE_VARIABLE(double, INTEGRATION_WEIGHT)
 KRATOS_CREATE_3D_VARIABLE_WITH_COMPONENTS(INTEGRATION_COORDINATES)
 KRATOS_CREATE_VARIABLE(TableStreamUtility::Pointer, TABLE_UTILITY )
+KRATOS_CREATE_VARIABLE(Matrix, MATRIX_VELOCITY_GRADIENT_TENSOR)
+KRATOS_CREATE_VARIABLE(Matrix, MATRIX_VELOCITY_DIDACTIC_PRODUCT)
+KRATOS_CREATE_VARIABLE(Vector, VECTOR_PRESSURE_GRADIENT)
+KRATOS_CREATE_VARIABLE(Vector, TURBULENT_KINEMATIC_VISCOSITY)
+KRATOS_CREATE_VARIABLE(double, TURBULENT_KINETIC_ENERGY)
+
 
 //------------------------------------------------------------------------------//
 //------------------------------------------------------------------------------//
@@ -507,7 +513,7 @@ KratosApplication::KratosApplication(const std::string ApplicationName)
       mSurfaceCondition3D8N( 0, GeometryType::Pointer(new Quadrilateral3D8<NodeType >(GeometryType::PointsArrayType(8)))),
       mSurfaceCondition3D9N( 0, GeometryType::Pointer(new Quadrilateral3D9<NodeType >(GeometryType::PointsArrayType(9)))),
 
-      // Master-Slave Constraint 
+      // Master-Slave Constraint
       mMasterSlaveConstraint(),
       mLinearMasterSlaveConstraint(),
 
@@ -523,12 +529,12 @@ KratosApplication::KratosApplication(const std::string ApplicationName)
       mCondition3D8N( 0, GeometryType::Pointer(new Quadrilateral3D8<NodeType >(GeometryType::PointsArrayType(8)))),
       mCondition3D9N( 0, GeometryType::Pointer(new Quadrilateral3D9<NodeType >(GeometryType::PointsArrayType(9)))),
       // Deprecated conditions end
-      
+
       // Periodic conditions
       mPeriodicCondition( 0, GeometryType::Pointer(new Line2D2<NodeType >(GeometryType::PointsArrayType(2)))),
       mPeriodicConditionEdge( 0, GeometryType::Pointer(new Quadrilateral3D4<NodeType >(GeometryType::PointsArrayType(4)))),
       mPeriodicConditionCorner( 0, GeometryType::Pointer(new Hexahedra3D8<NodeType >(GeometryType::PointsArrayType(8)))),
-      
+
       // Elements
       mElement2D2N( 0, GeometryType::Pointer(new Line2D2<NodeType >(GeometryType::PointsArrayType(2)))),
       mElement2D3N( 0, GeometryType::Pointer(new Triangle2D3<NodeType >(GeometryType::PointsArrayType(3)))),
@@ -539,7 +545,7 @@ KratosApplication::KratosApplication(const std::string ApplicationName)
       mElement3D6N( 0, GeometryType::Pointer(new Prism3D6<NodeType >(GeometryType::PointsArrayType(6)))),
       mElement3D8N( 0, GeometryType::Pointer(new Hexahedra3D8<NodeType >(GeometryType::PointsArrayType(8)))),
       mElement3D10N( 0, GeometryType::Pointer(new Tetrahedra3D10<NodeType >(GeometryType::PointsArrayType(10)))),
-      
+
       // Components
       mpVariableData(KratosComponents<VariableData>::pGetComponents()),
       mpIntVariables(KratosComponents<Variable<int> >::pGetComponents()),
@@ -1004,6 +1010,11 @@ void KratosApplication::RegisterVariables() {
 
     KRATOS_REGISTER_VARIABLE(TABLE_UTILITY)
 
+    KRATOS_REGISTER_VARIABLE(MATRIX_VELOCITY_GRADIENT_TENSOR)
+    KRATOS_REGISTER_VARIABLE(MATRIX_VELOCITY_DIDACTIC_PRODUCT)
+    KRATOS_REGISTER_VARIABLE(VECTOR_PRESSURE_GRADIENT)
+    KRATOS_REGISTER_VARIABLE(TURBULENT_KINEMATIC_VISCOSITY)
+    KRATOS_REGISTER_VARIABLE(TURBULENT_KINETIC_ENERGY)
 
     //Register objects with general definition
     Serializer::Register("Node", NodeType());
@@ -1068,7 +1079,7 @@ void KratosApplication::RegisterVariables() {
     KRATOS_REGISTER_ELEMENT("Element3D6N", mElement3D6N)
     KRATOS_REGISTER_ELEMENT("Element3D8N", mElement3D8N)
     KRATOS_REGISTER_ELEMENT("Element3D10N", mElement3D10N)
-    
+
     //Register general geometries:
 
     //Points:

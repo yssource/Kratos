@@ -1504,6 +1504,11 @@ protected:
 
     ///@}
 
+    void FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) override
+    {
+        this->ProcessMatrices(rCurrentProcessInfo);
+    }
+
 private:
 
     ///@name Member Variables
@@ -1514,6 +1519,8 @@ private:
     ///@{
 
     friend class Serializer;
+
+    #include "vms_adjoint_matrix_analysis.h"
 
     void save(Serializer& rSerializer) const override
     {

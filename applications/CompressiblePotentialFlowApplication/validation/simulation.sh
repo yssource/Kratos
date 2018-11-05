@@ -12,16 +12,16 @@ GITBRANCH=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
 Input_Dir=/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement
 
 #Parameters
-Number_Of_Refinements=9
-Number_Of_AOAS=16
+Number_Of_Refinements=2
+Number_Of_AOAS=1
 
-Initial_AOA=0.0
+Initial_AOA=5.0
 AOA_Increment=1.0
 
 Initial_Airfoil_MeshSize=1.024e-2
 Airfoil_Refinement_Factor=2.0
 
-Initial_FarField_MeshSize=0.5
+Initial_FarField_MeshSize=2.0
 FarField_Refinement_Factor=1.0
 
 DATE=`date '+%Y%m%d_%H%M%S'`
@@ -63,6 +63,9 @@ rm -rf $Work_Dir/plots/potential_jump/data/AOA*
 rm $Work_Dir/plots/potential_jump/jump_*
 rm $Work_Dir/plots/potential_jump/plots/*
 
+rm -rf $Work_Dir/plots/cl_error/data/cl_*
+rm $Work_Dir/plots/cl_error/figures_cl_error.tex
+
 rm $Work_Dir/plots/results/*
 rm $Work_Dir/plots/output_terminal_*
 rm -rf /media/inigo/10740FB2740F9A1C/Outputs/03_MeshRefinement/*
@@ -78,6 +81,8 @@ rm main*
 
 cd $Work_Dir/plots/cl
 pdflatex -interaction=batchmode main_cl.tex > main_cl_out.txt
+cd $Work_Dir/plots/cl_error
+pdflatex -interaction=batchmode main_cl_error.tex > main_cl_error.txt
 cd $Work_Dir/plots/cd
 pdflatex -interaction=batchmode main_cd.tex > main_cd_out.txt
 cd $Work_Dir/plots/aoa/

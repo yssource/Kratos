@@ -23,6 +23,7 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
                 "far_field_model_part_name"   : "PotentialWallCondition2D_Far_field_Auto1",
                 "mesh_id": 0,
                 "velocity_infinity": [1.0,0.0,0],
+                "angle_of_attack": 0.0,
                 "reference_area": 1
             }  """)
 
@@ -39,6 +40,8 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         self.velocity_infinity[2] = settings["velocity_infinity"][2].GetDouble()
 
         self.reference_area =  settings["reference_area"].GetDouble()
+        self.aoa = settings["angle_of_attack"].GetDouble()
+        self.cl_reference = loads_output.read_cl_reference(self.aoa)
 
     def ExecuteFinalizeSolutionStep(self):
         print('COMPUTE LIFT')
@@ -109,6 +112,8 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         Cd = RX
 
         self.Cl = Cl
+
+        relative_error = abs(Cl - self.cl_reference)/abs(self.cl_reference)*100.0
         
         Cl_low = RY_low
         Cd_low = RX_low
@@ -132,14 +137,15 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
                 print('Far field computed lift = ', far_field_lift)
                 break
 
+        relative_error_jump = abs(far_field_lift - self.cl_reference)/abs(self.cl_reference)*100.0
         NumberOfNodes = self.fluid_model_part.NumberOfNodes()
     
         with open (self.work_dir + "mesh_refinement_loads.dat",'a') as loads_file:
-            loads_file.write('{0:16.2e} {1:15f} {2:15f} {3:15f} {4:15f} {5:15f} {6:15f}\n'.format(NumberOfNodes, Cl, Cl_low, far_field_lift, Cd, Cd_low, RZ))
+            loads_file.write('{0:16.2e} {1:15f} {2:15f} {3:15f} {4:15f} {5:15f} {6:15f}\n'.format(NumberOfNodes, Cl, Cl_low, far_field_lift, self.cl_reference, Cd, Cd_low, RZ))
             loads_file.flush()
 
         with open(self.work_dir + "plots/results/all_cases.dat",'a') as aoa_file:
-            aoa_file.write('{0:16.2e} {1:15f} {2:15f} {3:15f} {4:15f} {5:15f} {6:15f}\n'.format(NumberOfNodes, Cl, Cl_low, far_field_lift, Cd, Cd_low, RZ))
+            aoa_file.write('{0:16.2e} {1:15f} {2:15f} {3:15f} {4:15f} {5:15f} {6:15f}\n'.format(NumberOfNodes, Cl, Cl_low, far_field_lift, self.cl_reference, Cd, Cd_low, RZ))
             aoa_file.flush()
 
         cl_results_file_name = self.work_dir + "plots/cl/data/cl/cl_results.dat"
@@ -147,16 +153,25 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
             cl_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, Cl))
             cl_file.flush()
 
+        cl_error_results_file_name = self.work_dir + "plots/cl_error/data/cl/cl_error_results.dat"
+        with open(cl_error_results_file_name,'a') as cl_error_file:
+            cl_error_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, relative_error))
+            cl_error_file.flush()
+
         cl_far_field_results_file_name = self.work_dir + "plots/cl/data/cl/cl_jump_results.dat"
         with open(cl_far_field_results_file_name,'a') as cl_jump_file:
             cl_jump_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, far_field_lift))
             cl_jump_file.flush()
+
+        cl_far_field_error_results_file_name = self.work_dir + "plots/cl_error/data/cl/cl_jump_error_results.dat"
+        with open(cl_far_field_error_results_file_name,'a') as cl_jump_error_file:
+            cl_jump_error_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, relative_error_jump))
+            cl_jump_error_file.flush()
         
         cd_results_file_name = self.work_dir + "plots/cd/data/cd/cd_results.dat"
         with open(cd_results_file_name,'a') as cd_file:
             cd_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, Cd))
             cd_file.flush()
-        #print("{:.2e}".format(NumberOfNodes))
 
         cp_tikz_file_name = self.work_dir + "plots/cp/data/0_original/cp.tikz"
         with open(cp_tikz_file_name,'w') as cp_tikz_file:

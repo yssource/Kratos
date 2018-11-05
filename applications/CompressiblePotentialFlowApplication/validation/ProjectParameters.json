@@ -83,6 +83,7 @@
             "upper_surface_model_part_name" : "Body2D_UpperSurface",
             "lower_surface_model_part_name" : "Body2D_LowerSurface",
             "far_field_model_part_name"   : "PotentialWallCondition2D_Far_field_Auto1",
+            "angle_of_attack": 0.0,
             "velocity_infinity" : [10.0,0.0,0.0]
         }
     },{

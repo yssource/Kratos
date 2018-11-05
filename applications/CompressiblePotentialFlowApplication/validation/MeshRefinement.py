@@ -29,14 +29,17 @@ Initial_FarField_MeshSize = TBD
 FarField_Refinement_Factor = TBD
 
 work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
-input_mdpa_path = work_dir + 'mdpas_all_aoa/'
+input_mdpa_path = work_dir + 'mdpas_aoa5_far_field_2.0/'
 output_gid_path = '/media/inigo/10740FB2740F9A1C/Outputs/03_MeshRefinement/'
 latex_output = open(work_dir + '/plots/latex_output.txt', 'w')
 latex_output.flush()
 
 cl_results_file_name = work_dir + 'plots/cl/data/cl/cl_results.dat'
+cl_error_results_file_name = work_dir + 'plots/cl_error/data/cl/cl_error_results.dat'
 cl_far_field_results_file_name = work_dir + 'plots/cl/data/cl/cl_jump_results.dat'
+cl_far_field_error_results_file_name = work_dir + 'plots/cl_error/data/cl/cl_jump_error_results.dat'
 cl_results_directory_name = work_dir + 'plots/cl/data/cl'
+cl_error_results_directory_name = work_dir + 'plots/cl_error/data/cl'
 cd_results_file_name = work_dir + 'plots/cd/data/cd/cd_results.dat'
 cd_results_directory_name = work_dir + 'plots/cd/data/cd'
 condition_results_file_name = work_dir + 'plots/condition_number/data/condition/condition_results.dat'
@@ -67,6 +70,9 @@ for j in range(Number_Of_AOAS):
     with open(cl_results_file_name,'w') as cl_file:
         cl_file.flush()
 
+    with open(cl_error_results_file_name,'w') as cl_error_file:
+        cl_error_file.flush()
+
     with open(cl_far_field_results_file_name,'w') as cl_jump_file:
         cl_jump_file.flush()
 
@@ -78,6 +84,7 @@ for j in range(Number_Of_AOAS):
 
     mesh_refinement_file_name = work_dir + 'plots/results/mesh_refinement_AOA_' + str(AOA)
     cl_data_directory_name = 'data/cl_AOA_' + str(AOA)
+    cl_error_data_directory_name = 'data/cl_error_AOA_' + str(AOA)
     cd_data_directory_name = 'data/cd_AOA_' + str(AOA)
     condition_data_directory_name = 'data/condition_AOA_' + str(AOA)
     loads_output.write_header(work_dir)
@@ -142,6 +149,7 @@ for j in range(Number_Of_AOAS):
                 AOA) + '_Far_Field_Mesh_Size_' + str(FarField_MeshSize) + '_Airfoil_Mesh_Size_' + str(Airfoil_MeshSize)
 
         ProjectParameters["solver_settings"]["model_import_settings"]["input_filename"].SetString(mdpa_file_name)
+        ProjectParameters["boundary_conditions_process_list"][2]["Parameters"]["angle_of_attack"].SetDouble(AOA)
 
         ## Solver construction    
         solver = potential_flow_solver.CreateSolver(main_model_part, ProjectParameters["solver_settings"])
@@ -325,12 +333,17 @@ for j in range(Number_Of_AOAS):
     os.rename(work_dir + "mesh_refinement_loads.dat", mesh_refinement_file_name)
     
     loads_output.write_figures_cl(cl_data_directory_name, AOA, work_dir)
+    loads_output.write_figures_cl_error(cl_error_data_directory_name, AOA, work_dir)
     loads_output.write_figures_cd(cd_data_directory_name, AOA, work_dir)
     loads_output.write_figures_condition(condition_data_directory_name, AOA, work_dir)
     
     shutil.copytree(cl_results_directory_name, work_dir + 'plots/cl/' + cl_data_directory_name)
     os.remove(cl_results_file_name)
     os.remove(cl_far_field_results_file_name)
+
+    shutil.copytree(cl_error_results_directory_name, work_dir + 'plots/cl_error/' + cl_error_data_directory_name)
+    os.remove(cl_error_results_file_name)
+    os.remove(cl_far_field_error_results_file_name)
 
     shutil.copytree(cd_results_directory_name, work_dir + 'plots/cd/' + cd_data_directory_name)
     os.remove(cd_results_file_name)

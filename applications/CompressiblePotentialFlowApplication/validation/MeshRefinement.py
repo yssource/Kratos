@@ -31,32 +31,20 @@ FarField_Refinement_Factor = TBD
 work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
 input_mdpa_path = work_dir + 'mdpas_all_aoa/'
 output_gid_path = '/media/inigo/10740FB2740F9A1C/Outputs/03_MeshRefinement/'
-latex_output = open(work_dir + '/plots/latex_output.txt', 'w')
-latex_output.flush()
+with open(work_dir + '/plots/latex_output.txt', 'w') as latex_output:
+    latex_output.flush()
 
 cl_results_file_name = work_dir + 'plots/cl/data/cl/cl_results.dat'
-with open(cl_results_file_name,'w') as cl_file:
-    cl_file.flush()
-
 cl_far_field_results_file_name = work_dir + 'plots/cl/data/cl/cl_jump_results.dat'
-with open(cl_far_field_results_file_name,'w') as cl_jump_file:
-    cl_jump_file.flush()
-
 cl_results_directory_name = work_dir + 'plots/cl/data/cl'
-
 cd_results_file_name = work_dir + 'plots/cd/data/cd/cd_results.dat'
-with open(cd_results_file_name, 'w') as cd_file:
-    cd_file.flush()
 cd_results_directory_name = work_dir + 'plots/cd/data/cd'
+condition_results_file_name = work_dir + 'plots/condition_number/data/condition/condition_results.dat'
+condition_results_directory_name = work_dir + 'plots/condition_number/data/condition'
 
 aoa_results_file_name = work_dir + 'plots/aoa/cl_aoa.dat'
 with open(aoa_results_file_name,'w') as cl_aoa_file:
     cl_aoa_file.flush()
-
-condition_results_file_name = work_dir + 'plots/condition_number/data/condition/condition_results.dat'
-with open(condition_results_file_name, 'w') as condition_file:
-    condition_file.flush()
-condition_results_directory_name = work_dir + 'plots/condition_number/data/condition'
 
 loads_output.write_header_all_cases(work_dir)
 
@@ -75,6 +63,18 @@ for j in range(Number_Of_AOAS):
     merger_local_far_field_x = PdfFileMerger()
     merger_local_far_field_y = PdfFileMerger()
     merger_local_jump = PdfFileMerger()
+
+    with open(cl_results_file_name,'w') as cl_file:
+        cl_file.flush()
+
+    with open(cl_far_field_results_file_name,'w') as cl_jump_file:
+        cl_jump_file.flush()
+
+    with open(cd_results_file_name, 'w') as cd_file:
+        cd_file.flush()
+
+    with open(condition_results_file_name, 'w') as condition_file:
+        condition_file.flush()
 
     mesh_refinement_file_name = work_dir + 'plots/results/mesh_refinement_AOA_' + str(AOA)
     cl_data_directory_name = 'data/cl_AOA_' + str(AOA)

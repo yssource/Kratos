@@ -330,6 +330,7 @@ for j in range(Number_Of_AOAS):
     
     shutil.copytree(cl_results_directory_name, work_dir + 'plots/cl/' + cl_data_directory_name)
     os.remove(cl_results_file_name)
+    os.remove(cl_far_field_results_file_name)
 
     shutil.copytree(cd_results_directory_name, work_dir + 'plots/cd/' + cd_data_directory_name)
     os.remove(cd_results_file_name)

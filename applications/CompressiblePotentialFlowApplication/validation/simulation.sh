@@ -12,14 +12,14 @@ GITBRANCH=$(git symbolic-ref HEAD | sed -e 's,.*/\(.*\),\1,')
 Input_Dir=/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement
 
 #Parameters
-Number_Of_Refinements=2
+Number_Of_Refinements=9
 Number_Of_AOAS=1
 
 Initial_AOA=5.0
 AOA_Increment=1.0
 
-Initial_Airfoil_MeshSize=1.024e-2
-Airfoil_Refinement_Factor=2.0
+Initial_Airfoil_MeshSize=4e-5
+Airfoil_Refinement_Factor=0.5
 
 Initial_FarField_MeshSize=2.0
 FarField_Refinement_Factor=1.0
@@ -44,16 +44,17 @@ cd generate_mdpas/
 #Run Kratos
 cd ..
 rm -rf $Work_Dir/plots/cl/data/cl_*
+rm $Work_Dir/plots/cl/figures_cl.tex
+
 rm -rf $Work_Dir/plots/cd/data/cd_*
+rm $Work_Dir/plots/cd/figures_cd.tex
+
 rm -rf $Work_Dir/plots/condition_number/data/condition_*
+rm $Work_Dir/plots/condition_number/figures_condition.tex
 
 rm -rf $Work_Dir/plots/cp/data/AOA*
 rm $Work_Dir/plots/cp/cp_*
 rm $Work_Dir/plots/cp/plots/*
-
-rm $Work_Dir/plots/cl/figures_cl.tex
-rm $Work_Dir/plots/cd/figures_cd.tex
-rm $Work_Dir/plots/condition_number/figures_condition.tex
 
 rm -rf $Work_Dir/plots/far_field/data/AOA*
 rm $Work_Dir/plots/far_field/far_field_*
@@ -66,6 +67,12 @@ rm $Work_Dir/plots/potential_jump/plots/*
 rm -rf $Work_Dir/plots/cl_error/data/cl_*
 rm $Work_Dir/plots/cl_error/figures_cl_error.tex
 
+rm -rf $Work_Dir/plots/energy/data/energy_*
+rm $Work_Dir/plots/energy/figures_energy.tex
+
+rm -rf $Work_Dir/plots/error/data/error_*
+rm $Work_Dir/plots/error/figures_error.tex
+
 rm $Work_Dir/plots/results/*
 rm $Work_Dir/plots/output_terminal_*
 rm -rf /media/inigo/10740FB2740F9A1C/Outputs/03_MeshRefinement/*
@@ -74,7 +81,7 @@ unbuffer python3 MeshRefinement.py 2>&1 | tee $NEWFILE
 
 source generate_mdpas/unset_parameters.sh
 
-#rm $Input_Dir/generate_mdpas/output_salome/*
+rm $Input_Dir/output_salome/*
 #rm mdpas/*
 rm cp*
 rm main*
@@ -82,7 +89,11 @@ rm main*
 cd $Work_Dir/plots/cl
 pdflatex -interaction=batchmode main_cl.tex > main_cl_out.txt
 cd $Work_Dir/plots/cl_error
-pdflatex -interaction=batchmode main_cl_error.tex > main_cl_error.txt
+pdflatex -interaction=batchmode main_cl_error.tex > main_cl_error_out.txt
+cd $Work_Dir/plots/energy
+pdflatex -interaction=batchmode main_energy.tex > main_energy_out.txt
+cd $Work_Dir/plots/error
+pdflatex -interaction=batchmode main_error.tex > main_energy_out.txt
 cd $Work_Dir/plots/cd
 pdflatex -interaction=batchmode main_cd.tex > main_cd_out.txt
 cd $Work_Dir/plots/aoa/

@@ -1,5 +1,6 @@
 from KratosMultiphysics import *
 import KratosMultiphysics
+import KratosMultiphysics.CompressiblePotentialFlowApplication as CompressiblePotentialFlowApplication
 from numpy import *
 import itertools
 import loads_output
@@ -24,6 +25,9 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
                 "mesh_id": 0,
                 "velocity_infinity": [1.0,0.0,0],
                 "angle_of_attack": 0.0,
+                "airfoil_meshsize": 1.0,
+                "energy_reference": 1.0,
+                "potential_energy_reference": 1.0,
                 "reference_area": 1
             }  """)
 
@@ -42,6 +46,14 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         self.reference_area =  settings["reference_area"].GetDouble()
         self.aoa = settings["angle_of_attack"].GetDouble()
         self.cl_reference = loads_output.read_cl_reference(self.aoa)
+        self.mesh_size = settings["airfoil_meshsize"].GetDouble()
+        print('mesh size =', self.mesh_size)
+
+        self.energy_reference = settings["energy_reference"].GetDouble()
+        print('self.energy_reference = ', self.energy_reference)
+
+        self.total_potential_energy_reference = settings["potential_energy_reference"].GetDouble()
+        print('self.total_potential_energy_reference = ', self.total_potential_energy_reference)
 
     def ExecuteFinalizeSolutionStep(self):
         print('COMPUTE LIFT')
@@ -65,7 +77,6 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
             number_of_conditions += 1
 
         factor = math.floor(number_of_conditions / 7000+1)
-        
         
         condition_counter = 0
         for cond in itertools.chain(self.upper_surface_model_part.Conditions, self.lower_surface_model_part.Conditions):
@@ -139,13 +150,37 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
 
         relative_error_jump = abs(far_field_lift - self.cl_reference)/abs(self.cl_reference)*100.0
 
-        #compute the internal energy
-        internal_energy_tmp = 0.0
+        #compute the internal energy norm and relative error
+        internal_energy_sum = 0.0
         for element in self.fluid_model_part.Elements:
-            internal_energy_tmp += element.GetValue(KratosMultiphysics.INTERNAL_ENERGY)
+            internal_energy_sum += element.GetValue(KratosMultiphysics.INTERNAL_ENERGY)
 
-        internal_energy = math.sqrt(internal_energy_tmp)
-        print('internal energy =', internal_energy)
+        internal_energy_norm = math.sqrt(internal_energy_sum)
+        print('internal_energy_norm =', internal_energy_norm)
+
+        if(abs(self.energy_reference - 1.0) < 1e-7):
+            energy_relative_error = 0.0
+            self.fluid_model_part.ProcessInfo.SetValue(CompressiblePotentialFlowApplication.ENERGY_NORM_REFERENCE,internal_energy_norm)
+        else:
+            energy_relative_error = abs(internal_energy_norm - self.energy_reference)/abs(self.energy_reference)
+
+        print('energy_relative_error =', energy_relative_error)
+
+        external_energy_sum = 0.0
+        for cond in self.far_field_model_part.Conditions:
+            external_energy_sum += cond.GetValue(EXTERNAL_ENERGY)
+
+        total_potential_energy = internal_energy_sum - external_energy_sum
+        print('\n external_energy_sum =', external_energy_sum)
+        print('\n internal_energy_sum =', internal_energy_sum)
+        print('\n total_potential_energy =', total_potential_energy)
+        if(abs(self.total_potential_energy_reference - 1.0) < 1e-7):
+            relative_error_energy_norm = 0.0
+            self.fluid_model_part.ProcessInfo.SetValue(CompressiblePotentialFlowApplication.POTENTIAL_ENERGY_REFERENCE,total_potential_energy)
+        else:
+            relative_error_energy_norm = (math.sqrt(abs(total_potential_energy)) - math.sqrt(abs(self.total_potential_energy_reference)))/abs(self.energy_reference)
+        
+        print('\nrelative_error_energy_norm = ', relative_error_energy_norm)
 
         NumberOfNodes = self.fluid_model_part.NumberOfNodes()
     
@@ -166,6 +201,16 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         with open(cl_error_results_file_name,'a') as cl_error_file:
             cl_error_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, relative_error))
             cl_error_file.flush()
+
+        energy_results_file_name = self.work_dir + "plots/energy/data/energy/energy_results.dat"
+        with open(energy_results_file_name,'a') as energy_file:
+            energy_file.write('{0:16.6e} {1:16.6e}\n'.format(self.mesh_size, energy_relative_error))
+            energy_file.flush()
+
+        error_results_file_name = self.work_dir + "plots/error/data/error/error_results.dat"
+        with open(error_results_file_name,'a') as error_file:
+            error_file.write('{0:16.6e} {1:16.6e}\n'.format(self.mesh_size, relative_error_energy_norm))
+            error_file.flush()
 
         cl_far_field_results_file_name = self.work_dir + "plots/cl/data/cl/cl_jump_results.dat"
         with open(cl_far_field_results_file_name,'a') as cl_jump_file:

@@ -45,6 +45,30 @@ def write_figures_cl_error(cl_error_data_directory_name, AOA, work_dir):
                            '\end{figure}\n'
                            )
         cl_error_figures_file.flush()
+    
+def write_figures_energy(energy_data_directory_name, AOA, work_dir):
+    with open(work_dir + 'plots/energy/figures_energy.tex', 'a') as energy_figures_file:
+        energy_figures_file.write('\n\pgfplotsset{table/search path={' + energy_data_directory_name + '},}\n\n' +
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + energy_data_directory_name + '/energy.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$}\n' +
+                           '\t\label{fig:energy_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n'
+                           )
+        energy_figures_file.flush()
+
+def write_figures_error(error_data_directory_name, AOA, work_dir):
+    with open(work_dir + 'plots/error/figures_error.tex', 'a') as error_figures_file:
+        error_figures_file.write('\n\pgfplotsset{table/search path={' + error_data_directory_name + '},}\n\n' +
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + error_data_directory_name + '/error.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$}\n' +
+                           '\t\label{fig:error_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n'
+                           )
+        error_figures_file.flush()
 
 def write_figures_cd(cd_data_directory_name, AOA, work_dir):
     with open(work_dir + 'plots/cd/figures_cd.tex', 'a') as cd_figures_file:

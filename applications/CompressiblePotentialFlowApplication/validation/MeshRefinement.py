@@ -29,19 +29,28 @@ Initial_FarField_MeshSize = TBD
 FarField_Refinement_Factor = TBD
 
 work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
-input_mdpa_path = work_dir + 'mdpas_aoa5_far_field_2.0/'
+input_mdpa_path = work_dir + 'mdpas_aoa5_far_field_2.0_reverse/'
 output_gid_path = '/media/inigo/10740FB2740F9A1C/Outputs/03_MeshRefinement/'
 latex_output = open(work_dir + '/plots/latex_output.txt', 'w')
 latex_output.flush()
 
 cl_results_file_name = work_dir + 'plots/cl/data/cl/cl_results.dat'
-cl_error_results_file_name = work_dir + 'plots/cl_error/data/cl/cl_error_results.dat'
 cl_far_field_results_file_name = work_dir + 'plots/cl/data/cl/cl_jump_results.dat'
-cl_far_field_error_results_file_name = work_dir + 'plots/cl_error/data/cl/cl_jump_error_results.dat'
 cl_results_directory_name = work_dir + 'plots/cl/data/cl'
+
+cl_error_results_file_name = work_dir + 'plots/cl_error/data/cl/cl_error_results.dat'
+cl_far_field_error_results_file_name = work_dir + 'plots/cl_error/data/cl/cl_jump_error_results.dat'
 cl_error_results_directory_name = work_dir + 'plots/cl_error/data/cl'
+
+energy_results_file_name = work_dir + 'plots/energy/data/energy/energy_results.dat'
+energy_results_directory_name = work_dir + 'plots/energy/data/energy'
+
+error_results_file_name = work_dir + 'plots/error/data/error/error_results.dat'
+error_results_directory_name = work_dir + 'plots/error/data/error'
+
 cd_results_file_name = work_dir + 'plots/cd/data/cd/cd_results.dat'
 cd_results_directory_name = work_dir + 'plots/cd/data/cd'
+
 condition_results_file_name = work_dir + 'plots/condition_number/data/condition/condition_results.dat'
 condition_results_directory_name = work_dir + 'plots/condition_number/data/condition'
 
@@ -73,6 +82,12 @@ for j in range(Number_Of_AOAS):
     with open(cl_error_results_file_name,'w') as cl_error_file:
         cl_error_file.flush()
 
+    with open(energy_results_file_name,'w') as energy_file:
+        energy_file.flush()
+
+    with open(error_results_file_name,'w') as error_file:
+        error_file.flush()
+
     with open(cl_far_field_results_file_name,'w') as cl_jump_file:
         cl_jump_file.flush()
 
@@ -85,6 +100,8 @@ for j in range(Number_Of_AOAS):
     mesh_refinement_file_name = work_dir + 'plots/results/mesh_refinement_AOA_' + str(AOA)
     cl_data_directory_name = 'data/cl_AOA_' + str(AOA)
     cl_error_data_directory_name = 'data/cl_error_AOA_' + str(AOA)
+    energy_data_directory_name = 'data/energy_AOA_' + str(AOA)
+    error_data_directory_name = 'data/error_AOA_' + str(AOA)
     cd_data_directory_name = 'data/cd_AOA_' + str(AOA)
     condition_data_directory_name = 'data/condition_AOA_' + str(AOA)
     loads_output.write_header(work_dir)
@@ -103,6 +120,10 @@ for j in range(Number_Of_AOAS):
     cl_aoa_file.flush()
 
     os.mkdir(output_gid_path + 'AOA_' + str(AOA))
+
+    energy_reference = 1.0
+    potential_energy_reference = 1.0
+    counter = 0.0
 
     for i in range(Number_Of_Refinements):
         print("\n\tCase ", case, "\n")
@@ -150,7 +171,10 @@ for j in range(Number_Of_AOAS):
 
         ProjectParameters["solver_settings"]["model_import_settings"]["input_filename"].SetString(mdpa_file_name)
         ProjectParameters["boundary_conditions_process_list"][2]["Parameters"]["angle_of_attack"].SetDouble(AOA)
-
+        ProjectParameters["boundary_conditions_process_list"][2]["Parameters"]["airfoil_meshsize"].SetDouble(Airfoil_MeshSize)
+        ProjectParameters["boundary_conditions_process_list"][2]["Parameters"]["energy_reference"].SetDouble(energy_reference)
+        ProjectParameters["boundary_conditions_process_list"][2]["Parameters"]["potential_energy_reference"].SetDouble(potential_energy_reference)
+        
         ## Solver construction    
         solver = potential_flow_solver.CreateSolver(main_model_part, ProjectParameters["solver_settings"])
 
@@ -322,10 +346,17 @@ for j in range(Number_Of_AOAS):
         merger_local_jump.append(PdfFileReader(jump_file_name), 'case_' + str(case))
         merger_global_jump.append(PdfFileReader(jump_file_name), 'case_' + str(case))
 
+        print('counter = ', counter)
+        if(counter < 1):
+            energy_reference = main_model_part.ProcessInfo[ENERGY_NORM_REFERENCE]
+            potential_energy_reference = main_model_part.ProcessInfo[POTENTIAL_ENERGY_REFERENCE]
+            print('potential_energy_reference final = ', potential_energy_reference)
+
         Airfoil_MeshSize /= Airfoil_Refinement_Factor
         FarField_MeshSize /= FarField_Refinement_Factor
         
         case +=1
+        counter +=1.0
     
     for process in list_of_processes:
         process.ExecuteFinalize()
@@ -336,6 +367,8 @@ for j in range(Number_Of_AOAS):
     loads_output.write_figures_cl_error(cl_error_data_directory_name, AOA, work_dir)
     loads_output.write_figures_cd(cd_data_directory_name, AOA, work_dir)
     loads_output.write_figures_condition(condition_data_directory_name, AOA, work_dir)
+    loads_output.write_figures_energy(energy_data_directory_name, AOA, work_dir)
+    loads_output.write_figures_error(error_data_directory_name, AOA, work_dir)
     
     shutil.copytree(cl_results_directory_name, work_dir + 'plots/cl/' + cl_data_directory_name)
     os.remove(cl_results_file_name)
@@ -344,6 +377,12 @@ for j in range(Number_Of_AOAS):
     shutil.copytree(cl_error_results_directory_name, work_dir + 'plots/cl_error/' + cl_error_data_directory_name)
     os.remove(cl_error_results_file_name)
     os.remove(cl_far_field_error_results_file_name)
+
+    shutil.copytree(energy_results_directory_name, work_dir + 'plots/energy/' + energy_data_directory_name)
+    os.remove(energy_results_file_name)
+
+    shutil.copytree(error_results_directory_name, work_dir + 'plots/error/' + error_data_directory_name)
+    os.remove(error_results_file_name)
 
     shutil.copytree(cd_results_directory_name, work_dir + 'plots/cd/' + cd_data_directory_name)
     os.remove(cd_results_file_name)

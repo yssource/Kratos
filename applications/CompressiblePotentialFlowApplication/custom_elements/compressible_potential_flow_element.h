@@ -497,9 +497,7 @@ public:
         {
             //gather nodal data
             for(unsigned int i=0; i<NumNodes; i++)
-            {
                 data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
-            }
             internal_energy = inner_prod(rRightHandSideVector, data.phis)*(-0.5);
         }
         else

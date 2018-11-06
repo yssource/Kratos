@@ -356,6 +356,37 @@ public:
             std::vector< array_1d<double,3> > velocity;
             pElem->GetValueOnIntegrationPoints(VELOCITY, velocity, rCurrentProcessInfo);
             this->SetValue(VELOCITY,velocity[0]);
+
+            for(unsigned int i=0; i<TNumNodes; ++i)
+            {
+                if(GetGeometry()[i].Is(INLET))
+                {
+                    this->Set(INLET);
+                    break;
+                }
+            }
+
+            //Compute condition's external energy
+            if(this->Is(INLET))
+            {
+                //Dirichlet nodes do not contribute to the external energy
+                this->SetValue(EXTERNAL_ENERGY, 0.0);
+            }
+            else
+            {
+                //gather nodal data
+                array_1d<double, TNumNodes> phis;
+                for (unsigned int i = 0; i < TNumNodes; i++)
+                    phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+
+                //compute RHS
+                VectorType rRightHandSideVector;
+                MatrixType rLeftHandSideMatrix;
+                this->CalculateLocalSystem(rLeftHandSideMatrix, rRightHandSideVector, rCurrentProcessInfo);
+                const double external_energy = inner_prod(rRightHandSideVector, phis);
+
+                this->SetValue(EXTERNAL_ENERGY, external_energy);
+            }
         }
 
 

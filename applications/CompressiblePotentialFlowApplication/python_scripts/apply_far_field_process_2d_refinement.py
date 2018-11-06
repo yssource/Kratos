@@ -79,6 +79,7 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
             if(tmp < pos+1e-9):
                 node.Fix(KratosMultiphysics.POSITIVE_FACE_PRESSURE)
                 node.SetSolutionStepValue(KratosMultiphysics.POSITIVE_FACE_PRESSURE,0,self.inlet_phi)
+                node.Set(KratosMultiphysics.INLET, True)
         
     def ExecuteInitializeSolutionStep(self):
         self.Execute()

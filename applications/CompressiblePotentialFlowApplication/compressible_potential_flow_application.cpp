@@ -50,6 +50,8 @@ void KratosCompressiblePotentialFlowApplication::Register()
         KRATOS_REGISTER_VARIABLE(UPPER_WAKE);
         KRATOS_REGISTER_VARIABLE(LOWER_WAKE);
         KRATOS_REGISTER_VARIABLE(POTENTIAL_JUMP);
+        KRATOS_REGISTER_VARIABLE(ENERGY_NORM_REFERENCE);
+        KRATOS_REGISTER_VARIABLE(POTENTIAL_ENERGY_REFERENCE);
 
         //Register elements
         KRATOS_REGISTER_ELEMENT("CompressiblePotentialFlowElement2D3N",mCompressiblePotentialFlowElement2D3N); //this is the name the element should have according to the naming convention

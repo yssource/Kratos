@@ -140,7 +140,7 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         print("\nLift_Difference = ", Cl - Cl_low)
         #print('Mach = ', self.velocity_infinity[0]/340)
         
-        
+        far_field_lift = 0.0
         for node in self.far_field_model_part.Nodes:
             jump = node.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.POTENTIAL_JUMP)
             if(abs(jump - 1e-8) > 1e-7):
@@ -155,33 +155,24 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         for element in self.fluid_model_part.Elements:
             internal_energy_sum += element.GetValue(KratosMultiphysics.INTERNAL_ENERGY)
 
-        internal_energy_norm = math.sqrt(internal_energy_sum)
-        print('internal_energy_norm =', internal_energy_norm)
-
         if(abs(self.energy_reference - 1.0) < 1e-7):
-            energy_relative_error = 0.0
-            self.fluid_model_part.ProcessInfo.SetValue(CompressiblePotentialFlowApplication.ENERGY_NORM_REFERENCE,internal_energy_norm)
+            relative_error_energy_norm = 0.0
+            self.fluid_model_part.ProcessInfo.SetValue(CompressiblePotentialFlowApplication.ENERGY_NORM_REFERENCE,internal_energy_sum)
         else:
-            energy_relative_error = abs(internal_energy_norm - self.energy_reference)/abs(self.energy_reference)
-
-        print('energy_relative_error =', energy_relative_error)
+            relative_error_energy_norm = math.sqrt(abs(internal_energy_sum - self.energy_reference)/abs(self.energy_reference))
 
         external_energy_sum = 0.0
         for cond in self.far_field_model_part.Conditions:
             external_energy_sum += cond.GetValue(EXTERNAL_ENERGY)
 
         total_potential_energy = internal_energy_sum - external_energy_sum
-        print('\n external_energy_sum =', external_energy_sum)
-        print('\n internal_energy_sum =', internal_energy_sum)
-        print('\n total_potential_energy =', total_potential_energy)
+
         if(abs(self.total_potential_energy_reference - 1.0) < 1e-7):
-            relative_error_energy_norm = 0.0
+            relative_error_energy_norm_variant = 0.0
             self.fluid_model_part.ProcessInfo.SetValue(CompressiblePotentialFlowApplication.POTENTIAL_ENERGY_REFERENCE,total_potential_energy)
         else:
-            relative_error_energy_norm = (math.sqrt(abs(total_potential_energy)) - math.sqrt(abs(self.total_potential_energy_reference)))/abs(self.energy_reference)
+            relative_error_energy_norm_variant = math.sqrt(abs(total_potential_energy - self.total_potential_energy_reference)/abs(self.energy_reference))
         
-        print('\nrelative_error_energy_norm = ', relative_error_energy_norm)
-
         NumberOfNodes = self.fluid_model_part.NumberOfNodes()
     
         with open (self.work_dir + "mesh_refinement_loads.dat",'a') as loads_file:
@@ -202,15 +193,26 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
             cl_error_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, relative_error))
             cl_error_file.flush()
 
-        energy_results_file_name = self.work_dir + "plots/energy/data/energy/energy_results.dat"
-        with open(energy_results_file_name,'a') as energy_file:
-            energy_file.write('{0:16.6e} {1:16.6e}\n'.format(self.mesh_size, energy_relative_error))
-            energy_file.flush()
+        if(abs(self.energy_reference - 1.0) > 1e-7):
+            energy_h_results_file_name = self.work_dir + "plots/relative_error_energy_norm/data/energy/energy_h_results.dat"
+            with open(energy_h_results_file_name,'a') as energy_h_file:
+                energy_h_file.write('{0:16.6e} {1:16.6e}\n'.format(self.mesh_size, relative_error_energy_norm))
+                energy_h_file.flush()
 
-        error_results_file_name = self.work_dir + "plots/error/data/error/error_results.dat"
-        with open(error_results_file_name,'a') as error_file:
-            error_file.write('{0:16.6e} {1:16.6e}\n'.format(self.mesh_size, relative_error_energy_norm))
-            error_file.flush()
+            energy_n_results_file_name = self.work_dir + "plots/relative_error_energy_norm/data/energy/energy_n_results.dat"
+            with open(energy_n_results_file_name,'a') as energy_n_file:
+                energy_n_file.write('{0:16.6e} {1:16.6e}\n'.format(NumberOfNodes, relative_error_energy_norm))
+                energy_n_file.flush()
+
+            energy_variant_h_file_name = self.work_dir + "plots/relative_error_energy_norm/data/energy/energy_variant_h_results.dat"
+            with open(energy_variant_h_file_name,'a') as energy_variant_h_file:
+                energy_variant_h_file.write('{0:16.6e} {1:16.6e}\n'.format(self.mesh_size, relative_error_energy_norm_variant))
+                energy_variant_h_file.flush()
+
+            energy_variant_n_file_name = self.work_dir + "plots/relative_error_energy_norm/data/energy/energy_variant_n_results.dat"
+            with open(energy_variant_n_file_name,'a') as energy_variant_n_file:
+                energy_variant_n_file.write('{0:16.6e} {1:16.6e}\n'.format(NumberOfNodes, relative_error_energy_norm_variant))
+                energy_variant_n_file.flush()
 
         cl_far_field_results_file_name = self.work_dir + "plots/cl/data/cl/cl_jump_results.dat"
         with open(cl_far_field_results_file_name,'a') as cl_jump_file:

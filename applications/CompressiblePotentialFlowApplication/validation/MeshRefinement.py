@@ -42,11 +42,11 @@ cl_error_results_file_name = work_dir + 'plots/cl_error/data/cl/cl_error_results
 cl_far_field_error_results_file_name = work_dir + 'plots/cl_error/data/cl/cl_jump_error_results.dat'
 cl_error_results_directory_name = work_dir + 'plots/cl_error/data/cl'
 
-energy_results_file_name = work_dir + 'plots/energy/data/energy/energy_results.dat'
-energy_results_directory_name = work_dir + 'plots/energy/data/energy'
-
-error_results_file_name = work_dir + 'plots/error/data/error/error_results.dat'
-error_results_directory_name = work_dir + 'plots/error/data/error'
+energy_h_results_file_name = work_dir + 'plots/relative_error_energy_norm/data/energy/energy_h_results.dat'
+energy_n_results_file_name = work_dir + 'plots/relative_error_energy_norm/data/energy/energy_n_results.dat'
+energy_variant_h_results_file_name = work_dir + 'plots/relative_error_energy_norm/data/energy/energy_variant_h_results.dat'
+energy_variant_n_results_file_name = work_dir + 'plots/relative_error_energy_norm/data/energy/energy_variant_n_results.dat'
+energy_results_directory_name = work_dir + 'plots/relative_error_energy_norm/data/energy'
 
 cd_results_file_name = work_dir + 'plots/cd/data/cd/cd_results.dat'
 cd_results_directory_name = work_dir + 'plots/cd/data/cd'
@@ -82,11 +82,17 @@ for j in range(Number_Of_AOAS):
     with open(cl_error_results_file_name,'w') as cl_error_file:
         cl_error_file.flush()
 
-    with open(energy_results_file_name,'w') as energy_file:
+    with open(energy_h_results_file_name,'w') as energy_file:
         energy_file.flush()
 
-    with open(error_results_file_name,'w') as error_file:
-        error_file.flush()
+    with open(energy_n_results_file_name,'w') as energy_file:
+        energy_file.flush()
+
+    with open(energy_variant_h_results_file_name,'w') as energy_file:
+        energy_file.flush()
+
+    with open(energy_variant_n_results_file_name,'w') as energy_file:
+        energy_file.flush()
 
     with open(cl_far_field_results_file_name,'w') as cl_jump_file:
         cl_jump_file.flush()
@@ -101,7 +107,6 @@ for j in range(Number_Of_AOAS):
     cl_data_directory_name = 'data/cl_AOA_' + str(AOA)
     cl_error_data_directory_name = 'data/cl_error_AOA_' + str(AOA)
     energy_data_directory_name = 'data/energy_AOA_' + str(AOA)
-    error_data_directory_name = 'data/error_AOA_' + str(AOA)
     cd_data_directory_name = 'data/cd_AOA_' + str(AOA)
     condition_data_directory_name = 'data/condition_AOA_' + str(AOA)
     loads_output.write_header(work_dir)
@@ -346,11 +351,9 @@ for j in range(Number_Of_AOAS):
         merger_local_jump.append(PdfFileReader(jump_file_name), 'case_' + str(case))
         merger_global_jump.append(PdfFileReader(jump_file_name), 'case_' + str(case))
 
-        print('counter = ', counter)
         if(counter < 1):
             energy_reference = main_model_part.ProcessInfo[ENERGY_NORM_REFERENCE]
             potential_energy_reference = main_model_part.ProcessInfo[POTENTIAL_ENERGY_REFERENCE]
-            print('potential_energy_reference final = ', potential_energy_reference)
 
         Airfoil_MeshSize /= Airfoil_Refinement_Factor
         FarField_MeshSize /= FarField_Refinement_Factor
@@ -368,7 +371,6 @@ for j in range(Number_Of_AOAS):
     loads_output.write_figures_cd(cd_data_directory_name, AOA, work_dir)
     loads_output.write_figures_condition(condition_data_directory_name, AOA, work_dir)
     loads_output.write_figures_energy(energy_data_directory_name, AOA, work_dir)
-    loads_output.write_figures_error(error_data_directory_name, AOA, work_dir)
     
     shutil.copytree(cl_results_directory_name, work_dir + 'plots/cl/' + cl_data_directory_name)
     os.remove(cl_results_file_name)
@@ -378,11 +380,11 @@ for j in range(Number_Of_AOAS):
     os.remove(cl_error_results_file_name)
     os.remove(cl_far_field_error_results_file_name)
 
-    shutil.copytree(energy_results_directory_name, work_dir + 'plots/energy/' + energy_data_directory_name)
-    os.remove(energy_results_file_name)
-
-    shutil.copytree(error_results_directory_name, work_dir + 'plots/error/' + error_data_directory_name)
-    os.remove(error_results_file_name)
+    shutil.copytree(energy_results_directory_name, work_dir + 'plots/relative_error_energy_norm/' + energy_data_directory_name)
+    os.remove(energy_h_results_file_name)
+    os.remove(energy_n_results_file_name)
+    os.remove(energy_variant_h_results_file_name)
+    os.remove(energy_variant_n_results_file_name)
 
     shutil.copytree(cd_results_directory_name, work_dir + 'plots/cd/' + cd_data_directory_name)
     os.remove(cd_results_file_name)

@@ -67,11 +67,8 @@ rm $Work_Dir/plots/potential_jump/plots/*
 rm -rf $Work_Dir/plots/cl_error/data/cl_*
 rm $Work_Dir/plots/cl_error/figures_cl_error.tex
 
-rm -rf $Work_Dir/plots/energy/data/energy_*
-rm $Work_Dir/plots/energy/figures_energy.tex
-
-rm -rf $Work_Dir/plots/error/data/error_*
-rm $Work_Dir/plots/error/figures_error.tex
+rm -rf $Work_Dir/plots/relative_error_energy_norm/data/energy_*
+rm $Work_Dir/plots/relative_error_energy_norm/figures_*
 
 rm $Work_Dir/plots/results/*
 rm $Work_Dir/plots/output_terminal_*
@@ -81,7 +78,7 @@ unbuffer python3 MeshRefinement.py 2>&1 | tee $NEWFILE
 
 source generate_mdpas/unset_parameters.sh
 
-rm $Input_Dir/output_salome/*
+#rm $Input_Dir/output_salome/*
 #rm mdpas/*
 rm cp*
 rm main*
@@ -90,10 +87,8 @@ cd $Work_Dir/plots/cl
 pdflatex -interaction=batchmode main_cl.tex > main_cl_out.txt
 cd $Work_Dir/plots/cl_error
 pdflatex -interaction=batchmode main_cl_error.tex > main_cl_error_out.txt
-cd $Work_Dir/plots/energy
+cd $Work_Dir/plots/relative_error_energy_norm
 pdflatex -interaction=batchmode main_energy.tex > main_energy_out.txt
-cd $Work_Dir/plots/error
-pdflatex -interaction=batchmode main_error.tex > main_energy_out.txt
 cd $Work_Dir/plots/cd
 pdflatex -interaction=batchmode main_cd.tex > main_cd_out.txt
 cd $Work_Dir/plots/aoa/

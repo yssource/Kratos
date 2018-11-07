@@ -32,9 +32,22 @@ public:
 
     using IgaBaseElementType::IgaBaseElementType;
 
-    ~IgaBeamElement() override
-    {
-    };
+    // IgaBaseElement();
+    // IgaBeamElement(
+    //     int _ID, 
+    //     Part* _Part_Prt,
+    //     std::vector<Node*> _Node_Vec,
+    //     MaterialBasis* _Mat_Prt,
+    //     PropertyIgaBeamElement* _Prop_Prt,
+    //     Nurbs1D* _Nurbs_Curve,
+    //     int _knotspan_index, 
+    //     std::vector<std::vector<double,2>> _phi_axis_n,
+    //     std::vector<double,3> _t0,
+    //     std::vector<EvalPtBasis*> _eval_points, 
+    //     KnotSpan_Belonging _elementbelongig=INS, 
+    //     PropertyNURBS_Curve_Stab* _prop_stab=0 )
+
+    ~IgaBeamElement() override;
 
     Element::Pointer Create(
         IndexType NewId,
@@ -59,7 +72,113 @@ public:
         const bool ComputeRightHandSide) override;
 
     void PrintInfo(std::ostream& rOStream) const override;
-};
+
+    void IgaBeamElement::GetDofTypesPerNode(
+        std::vector<int>& _act_dofs); 
+
+    void IgaBeamElement::ComputeGeometryInitial(
+            Vector& r1,
+            Vector& r2,
+            double& a_ini,
+            double& b_ini) ;
+
+    void IgaBeamElement::ComputeGeometryInitial(
+            Vector& r1,
+            Vector& r2,
+            Vector& r3,
+            double& a_ini,
+            double& b_ini) ;
+
+    void IgaBeamElement::ComputeGeometryReference(
+            Vector3& R1,
+            Vector3& R2, 
+            double& A, 
+            double& B);
+
+    void IgaBeamElement::ComputeGeometryReference(
+            Vector& R1,
+            Vector& R2,
+            Vector& R3,
+            double& A,
+            double& B) ;
+                
+    void IgaBeamElement::ComputeGeometryActual(
+            Vector3& r1,
+            Vector3& r2,
+            double& a,
+            double& b) ; 
+
+    void IgaBeamElement::ComputeGeometryActual(
+            Vector& r1,
+            Vector& r2,
+            Vector& r3,
+            double& a,
+            double& b) ;
+
+    void IgaBeamElement::ComputeCrossSectionGeometryReference(
+            BoundedVector<double,3>& R1,
+            BoundedVector<double,3>& R2,
+            BoundedVector<double,3>& T0_vec,
+            Vector3 n_act,
+            Vector3 v_act,
+            Vector3 n0,
+            Vector3 v0,
+            Vector3 B_n,
+            double C_12,
+            double C_13,
+            double Phi,
+            double Phi_0_der) ;
+
+    void IgaBeamElement::ComputePhiReferenceProperty(
+        double Phi,
+        double Phi_0_der) ;
+
+    void IgaBeamElement::GetDofsPerNode(
+        std::vector<int>& _act_dofs) ;
+
+    // Vector IgaBeamElement::GetElementResult(
+    //     node_result_type _type); 
+
+    Vector IgaBeamElement::CoumputeEplsilonDof(Vector& _r1) ;
+
+    Vector IgaBeamElement::ComputePhieDof(Vector& _func) ;
+
+    void IgaBeamElement::ComputeMatrixLambda(
+        BoundedMatrix<double,3,3>& _matrix_lambda,
+        BoundedVector<double,3> _vec1,
+        BoundedVector<double,3> _vec2) ;
+
+    void IgaBeamElement::StffnessMatrixElementLinear(
+        double _emod,
+        double _gmod,
+        double _area,
+        double _m_inert_n,
+        double _m_inert_v,
+        double _mt_inert,
+        double _dl,
+            MatrixType& gke) ; 
+
+    void IgaBeamElement::ElementStiffnessMatrixNonlinear(
+    double _emod,
+    double _gmod,
+    double _area,
+    double _m_inert_y,
+    double _m_inert_z,
+    double _mt_inert,
+    double _dl,
+        MatrixType& _gke,
+        VectorType& _gfie) ; 
+
+
+
+
+
+// Adition Math_utilities
+BoundedMatrix<double,3,3> CrossProductVectorMatrix(
+    BoundedVector<double,3> vec,
+    BoundedMatrix<double,3,3> mat) ;
+    
+}; // class IgaBeamElement
 
 } // namespace Kratos
 

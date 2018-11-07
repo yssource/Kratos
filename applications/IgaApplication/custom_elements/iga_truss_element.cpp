@@ -13,7 +13,6 @@
 // System includes
 #include "includes/define.h"
 #include "includes/variables.h"
-
 // External includes
 
 // Project includes

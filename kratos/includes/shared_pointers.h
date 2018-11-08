@@ -34,7 +34,9 @@ using unique_ptr = std::unique_ptr<T>;
 
 template<typename C, typename...Args>
 shared_ptr<C> make_shared(Args &&...args) {
-    return std::make_shared<C>(std::forward<Args>(args)...);
+	MemoryUsageInfo::GetMemoryUsageInfoByClassName("shared_ptr").mInstances++;
+	return shared_ptr<C>(new C(std::forward<Args>(args)...));
+	//return std::make_shared<C>(std::forward<Args>(args)...);
 
 }
 
@@ -97,6 +99,7 @@ inline std::ostream &operator<<(std::ostream &rOStream,
 
 
 #define KRATOS_CLASS_POINTER_DEFINITION(a) typedef Kratos::shared_ptr<a > Pointer; \
+static std::string GetClassName() {return #a;}\
 static MemoryUsageInfo& GetClassMemoryUsageInfo(){\
 	static MemoryUsageInfo& memory_usage_info = MemoryUsageInfo::GetMemoryUsageInfoByClassName(#a);\
 	return memory_usage_info;\
@@ -118,16 +121,33 @@ void operator delete(void* p)\
 	GetClassMemoryUsageInfo().mInstances--;\
 	::operator delete(p);\
 }\
+\
+void operator delete[](void* p)\
+{\
+	GetClassMemoryUsageInfo().mInstances--;\
+	::operator delete[](p);\
+}\
 void* operator new(size_t sz, void* ptr)\
 {\
 	GetClassMemoryUsageInfo().mInstances++;\
-	return ::operator new(sz);\
+	return ::operator new(sz,ptr);\
 }\
 \
 void* operator new[](size_t sz, void* ptr)\
 {\
 	GetClassMemoryUsageInfo().mInstances++;\
 	return ::operator new[](sz,ptr);\
+}\
+void operator delete(void* p, void* ptr)\
+{\
+	GetClassMemoryUsageInfo().mInstances--;\
+	::operator delete(p,ptr);\
+}\
+\
+void operator delete[](void* p, void* ptr)\
+{\
+	GetClassMemoryUsageInfo().mInstances--;\
+	::operator delete[](p,ptr);\
 }\
 typedef Kratos::shared_ptr<a > SharedPointer; \
 typedef Kratos::weak_ptr<a > WeakPointer; \

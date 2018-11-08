@@ -1,0 +1,79 @@
+{
+    "problem_data"                     : {
+        "problem_name"    : "naca0012",
+        "model_part_name" : "MainModelPart",
+        "domain_size"     : 2,
+        "parallel_type"   : "OpenMP",
+        "echo_level"      : 0,
+        "start_time"      : 0.0,
+        "end_time"        : 1
+    },
+    "output_configuration"             : {
+        "result_file_configuration" : {
+            "gidpost_flags"       : {
+                "GiDPostMode"           : "GiD_PostBinary",
+                "WriteDeformedMeshFlag" : "WriteDeformed",
+                "WriteConditionsFlag"   : "WriteConditions",
+                "MultiFileFlag"         : "SingleFile"
+            },
+            "file_label"          : "step",
+            "output_control_type" : "step",
+            "output_frequency"    : 1,
+            "body_output"         : true,
+            "node_output"         : false,
+            "skin_output"         : false,
+            "plane_output"        : [],
+            "nodal_results"       : ["POSITIVE_FACE_PRESSURE","NEGATIVE_FACE_PRESSURE","TEMPERATURE","UPPER_SURFACE","LOWER_SURFACE","DISTANCE","NODAL_H","UPPER_WAKE","LOWER_WAKE","POTENTIAL_JUMP"],
+            "gauss_point_results" : ["PRESSURE","VELOCITY","VELOCITY_LOWER","PRESSURE_LOWER","THICKNESS"]
+        },
+        "point_data_configuration"  : []
+    },
+    "restart_options"                  : {
+        "SaveRestart"      : "False",
+        "RestartFrequency" : 0,
+        "LoadRestart"      : "False",
+        "Restart_Step"     : 0
+    },
+    "solver_settings"                  : {
+        "solver_type"            : "Potential_flow",
+        "model_import_settings"  : {
+            "input_type"     : "mdpa",
+            "input_filename" : "naca0012"
+        },
+        "maximum_iterations"     : 10,
+        "echo_level"             : 1,
+        "linear_solver_settings"  : {
+                "solver_type"             : "eigen_pardiso_lu",
+                "verbosity"               : 10
+        },
+        "volume_model_part_name" : "Parts_Parts_Auto1",
+        "skin_parts"             : ["PotentialWallCondition2D_Far_field_Auto1"],
+        "no_skin_parts"          : []
+    },
+    "initial_conditions_process_list"  : [],
+    "boundary_conditions_process_list" : [{
+        "python_module" : "apply_far_field_process_2d_refinement_rectangle",
+        "kratos_module" : "KratosMultiphysics.CompressiblePotentialFlowApplication",
+        "process_name"  : "FarFieldProcess",
+        "Parameters"    : {
+            "mesh_id"           : 0,
+            "model_part_name"   : "PotentialWallCondition2D_Far_field_Auto1",
+            "inlet_phi"         : 0.0,
+            "velocity_infinity" : [200.0,0.0,0.0]
+        }
+    },{
+        "python_module" : "compute_lift_process_2d_refinement_rectangle",
+        "kratos_module" : "KratosMultiphysics.CompressiblePotentialFlowApplication",
+        "process_name"  : "ComputeLiftProcess3D",
+        "Parameters"    : {
+            "mesh_id"         : 0,
+            "model_part_name" : "MainModelPart",
+            "far_field_model_part_name"   : "PotentialWallCondition2D_Far_field_Auto1",
+            "angle_of_attack": 0.0,
+            "meshsize": 1.0,
+            "energy_reference": 1.0,
+            "potential_energy_reference": 1.0,
+            "velocity_infinity" : [10.0,0.0,0.0]
+        }
+    }]
+}

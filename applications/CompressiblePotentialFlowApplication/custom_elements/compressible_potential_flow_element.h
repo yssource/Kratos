@@ -368,6 +368,13 @@ public:
             ComputeLHSGaussPointContribution(data.vol, rLeftHandSideMatrix, data);
 
             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
+
+            //Source term
+            const double value = -(2*data.vol) / static_cast<double>(NumNodes);
+
+            for (unsigned int i = 0; i < NumNodes; ++i)
+                rRightHandSideVector[i] += value;
+
         }
         else //it is a wake element
         {
@@ -487,7 +494,11 @@ public:
 
         //Compute element internal energy
         VectorType rRightHandSideVector;
-        this->CalculateRightHandSide(rRightHandSideVector, rCurrentProcessInfo);
+        MatrixType rLeftHandSideMatrix;
+        this->CalculateLocalSystem(rLeftHandSideMatrix, rRightHandSideVector, rCurrentProcessInfo);
+
+        VectorType tmp;
+        tmp.resize(NumNodes,false);
 
         ElementalData<NumNodes,Dim> data;
 
@@ -498,14 +509,19 @@ public:
             //gather nodal data
             for(unsigned int i=0; i<NumNodes; i++)
                 data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
-            internal_energy = inner_prod(rRightHandSideVector, data.phis)*(-0.5);
+            
+            noalias(tmp) = prod(rLeftHandSideMatrix, data.phis);
+            internal_energy = 0.5*inner_prod(tmp, data.phis);
+
         }
         else
         {
             GetWakeDistances(data.distances);
             Vector split_element_values(NumNodes*2);
             GetValuesOnSplitElement(split_element_values, data.distances);
-            internal_energy = inner_prod(rRightHandSideVector, split_element_values)*(-0.5);
+
+            noalias(tmp) = prod(rLeftHandSideMatrix, split_element_values);
+            internal_energy = 0.5*inner_prod(rRightHandSideVector, split_element_values);
         }
         this->SetValue(INTERNAL_ENERGY,internal_energy);
     }
@@ -763,7 +779,7 @@ protected:
         for (unsigned int i = 0; i < NumNodes; i++)
             data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
 
-        noalias(velocity) = -prod(trans(data.DN_DX), data.phis);
+        noalias(velocity) = prod(trans(data.DN_DX), data.phis);
     }
 
     void ComputeVelocityUpperWakeElement(array_1d<double,Dim>& velocity)
@@ -799,7 +815,7 @@ protected:
             }
         }
 
-        noalias(velocity) = -prod(trans(data.DN_DX), data.phis);
+        noalias(velocity) = prod(trans(data.DN_DX), data.phis);
     }
 
     void ComputeVelocityLowerWakeElement(array_1d<double,Dim>& velocity)
@@ -835,7 +851,7 @@ protected:
             }
         }
         
-        noalias(velocity) = -prod(trans(data.DN_DX), data.phis);
+        noalias(velocity) = prod(trans(data.DN_DX), data.phis);
     }
 
     void CheckWakeCondition()

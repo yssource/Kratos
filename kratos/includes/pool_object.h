@@ -63,7 +63,7 @@ namespace Kratos
       ///@{
 
       /// Pointer definition of PoolObject
-      KRATOS_CLASS_POINTER_DEFINITION(PoolObject);
+      // KRATOS_CLASS_POINTER_DEFINITION(PoolObject);
 
       ///@}
       ///@name Life Cycle

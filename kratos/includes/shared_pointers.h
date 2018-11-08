@@ -129,7 +129,6 @@ void* operator new[](size_t sz, void* ptr)\
 	GetClassMemoryUsageInfo().mInstances++;\
 	return ::operator new[](sz,ptr);\
 }\
-using a::operator delete;\
 typedef Kratos::shared_ptr<a > SharedPointer; \
 typedef Kratos::weak_ptr<a > WeakPointer; \
 typedef Kratos::unique_ptr<a > UniquePointer\

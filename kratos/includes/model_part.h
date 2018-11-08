@@ -104,7 +104,7 @@ public:
     ///@{
 
     /// Pointer definition of ModelPart
-    //KRATOS_CLASS_POINTER_DEFINITION(ModelPart); //INTENTIONALLY REMOVING DEFINITION - DO NOT UNCOMMENT
+    KRATOS_CLASS_POINTER_DEFINITION(ModelPart); //INTENTIONALLY REMOVING DEFINITION - DO NOT UNCOMMENT
 
     typedef std::size_t IndexType;
 

@@ -90,6 +90,7 @@ PYBIND11_MODULE(Kratos, m)
     AddNodeToPython(m);
     AddPropertiesToPython(m);
     AddMeshToPython(m);
+    AddMemoryInfoToPython(m);
 
     AddCFDVariablesToPython(m);
     AddDEMVariablesToPython(m);

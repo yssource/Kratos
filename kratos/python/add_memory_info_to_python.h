@@ -15,6 +15,12 @@
 #define  KRATOS_ADD_MEMORY_INFO_TO_PYTHON_H_INCLUDED
 
 
+// System includes
+#include <pybind11/pybind11.h>
+
+// External includes
+
+
 // Project includes
 
 
@@ -24,7 +30,7 @@ namespace Kratos
 namespace Python
 {
 
-void  AddMemoryInfoToPython();
+void  AddMemoryInfoToPython(pybind11::module& m);
 
 }  // namespace Python.
 

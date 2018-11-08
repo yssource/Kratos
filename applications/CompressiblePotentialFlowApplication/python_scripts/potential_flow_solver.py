@@ -169,7 +169,7 @@ class LaplacianSolver:
         NumberOfNodes = self.main_model_part.NumberOfNodes()
         self.work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
 
-        if(NumberOfNodes < 1e1):
+        if(NumberOfNodes < 5.1e3):
 
             print('\nComputing condition number . . .\n')
 

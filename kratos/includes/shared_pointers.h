@@ -16,6 +16,7 @@
 
 /* System includes */
 #include <utility>
+#include <map>
 
 /* External includes */
 #include <memory>
@@ -64,10 +65,75 @@ shared_ptr<C> const_pointer_cast(Args &&...args) {
 // }
 } // namespace Kratos
 
+class MemoryUsageInfo {
+public:
+	int mBytes;
+	int mInstances;
+	static MemoryUsageInfo& GetMemoryUsageInfoByClassName(std::string const& ClassName) {
+		return AllClasesMemoryUsageInfoByName()[ClassName];
+	}
+	
+	static std::map<std::string, MemoryUsageInfo>& AllClasesMemoryUsageInfoByName() {
+		static std::map<std::string, MemoryUsageInfo> memory_usage;
+		return memory_usage;
+	}
+
+	static std::string GetListOfAllAllocatedObjects() {
+		auto& memory_usage_info_map = AllClasesMemoryUsageInfoByName();
+		std::stringstream buffer;
+		for (auto& i : memory_usage_info_map) {
+			buffer << i.second.mInstances << " " << i.first << " : " << i.second.mBytes << " Bytes" << std::endl;
+		}
+		return buffer.str();
+	}
+};
+
+/// output stream function
+inline std::ostream &operator<<(std::ostream &rOStream,
+	const MemoryUsageInfo &rThis) {
+
+	return rOStream;
+}
+
 
 #define KRATOS_CLASS_POINTER_DEFINITION(a) typedef Kratos::shared_ptr<a > Pointer; \
+static MemoryUsageInfo& GetClassMemoryUsageInfo(){\
+	static MemoryUsageInfo& memory_usage_info = MemoryUsageInfo::GetMemoryUsageInfoByClassName(#a);\
+	return memory_usage_info;\
+}\
+void* operator new(size_t sz)\
+{\
+	GetClassMemoryUsageInfo().mInstances++;\
+	return ::operator new(sz);\
+}\
+\
+void* operator new[](size_t sz)\
+{\
+	GetClassMemoryUsageInfo().mInstances++;\
+	return ::operator new[](sz);\
+}\
+\
+void operator delete(void* p)\
+{\
+	GetClassMemoryUsageInfo().mInstances--;\
+	::operator delete(p);\
+}\
+void* operator new(size_t sz, void* ptr)\
+{\
+	GetClassMemoryUsageInfo().mInstances++;\
+	return ::operator new(sz);\
+}\
+\
+void* operator new[](size_t sz, void* ptr)\
+{\
+	GetClassMemoryUsageInfo().mInstances++;\
+	return ::operator new[](sz,ptr);\
+}\
+using a::operator delete;\
 typedef Kratos::shared_ptr<a > SharedPointer; \
 typedef Kratos::weak_ptr<a > WeakPointer; \
-typedef Kratos::unique_ptr<a > UniquePointer
+typedef Kratos::unique_ptr<a > UniquePointer\
+
+
 
 #endif /* KRATOS_MEMORY_H_INCLUDED  defined */

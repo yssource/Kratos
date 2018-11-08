@@ -15,6 +15,7 @@
 #include <pybind11/pybind11.h>
 
 // Project includes
+#include "includes/define_python.h"
 #include "includes/memory_info.h"
 
 namespace Kratos
@@ -32,6 +33,7 @@ void  AddMemoryInfoToPython(pybind11::module& m)
     .def(init<>())
     .def_static("GetPeakMemoryUsage", &MemoryInfo::GetPeakMemoryUsage)
 	.def_static("GetCurrentMemoryUsage", &MemoryInfo::GetCurrentMemoryUsage)
+	.def_static("GetListOfAllAllocatedObjects", MemoryUsageInfo::GetListOfAllAllocatedObjects)
     ;
 }
 

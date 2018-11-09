@@ -29,12 +29,13 @@ Initial_FarField_MeshSize = TBD
 FarField_Refinement_Factor = TBD
 
 work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
-input_mdpa_path = work_dir + 'mdpas_aoa5_far_field_2.0/'
+input_mdpa_path = work_dir + 'mdpas_all_aoa_reverse/'
 output_gid_path = '/media/inigo/10740FB2740F9A1C/Outputs/03_MeshRefinement/'
 latex_output = open(work_dir + '/plots/latex_output.txt', 'w')
 latex_output.flush()
 
 cl_results_file_name = work_dir + 'plots/cl/data/cl/cl_results.dat'
+cl_reference_file_name = work_dir + 'plots/cl/data/cl/cl_reference.dat'
 cl_far_field_results_file_name = work_dir + 'plots/cl/data/cl/cl_jump_results.dat'
 cl_results_directory_name = work_dir + 'plots/cl/data/cl'
 
@@ -78,6 +79,9 @@ for j in range(Number_Of_AOAS):
 
     with open(cl_results_file_name,'w') as cl_file:
         cl_file.flush()
+
+    with open(cl_reference_file_name,'w') as cl_reference_file:
+        cl_reference_file.flush()
 
     with open(cl_error_results_file_name,'w') as cl_error_file:
         cl_error_file.flush()
@@ -354,6 +358,8 @@ for j in range(Number_Of_AOAS):
         if(counter < 1):
             energy_reference = main_model_part.ProcessInfo[ENERGY_NORM_REFERENCE]
             potential_energy_reference = main_model_part.ProcessInfo[POTENTIAL_ENERGY_REFERENCE]
+            for process in list_of_processes:
+                process.ExecuteFinalize()
 
         Airfoil_MeshSize /= Airfoil_Refinement_Factor
         FarField_MeshSize /= FarField_Refinement_Factor
@@ -361,8 +367,7 @@ for j in range(Number_Of_AOAS):
         case +=1
         counter +=1.0
     
-    for process in list_of_processes:
-        process.ExecuteFinalize()
+    
     
     os.rename(work_dir + "mesh_refinement_loads.dat", mesh_refinement_file_name)
     
@@ -374,6 +379,7 @@ for j in range(Number_Of_AOAS):
     
     shutil.copytree(cl_results_directory_name, work_dir + 'plots/cl/' + cl_data_directory_name)
     os.remove(cl_results_file_name)
+    os.remove(cl_reference_file_name)
     os.remove(cl_far_field_results_file_name)
 
     shutil.copytree(cl_error_results_directory_name, work_dir + 'plots/cl_error/' + cl_error_data_directory_name)

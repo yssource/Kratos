@@ -124,8 +124,11 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
 
         self.Cl = Cl
 
-        relative_error = abs(Cl - self.cl_reference)/abs(self.cl_reference)*100.0
-        
+        if(abs(self.cl_reference) < 1e-6):
+            relative_error = abs(Cl)*100.0
+        else:
+            relative_error = abs(Cl - self.cl_reference)/abs(self.cl_reference)*100.0
+
         Cl_low = RY_low
         Cd_low = RX_low
 
@@ -148,7 +151,13 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
                 print('Far field computed lift = ', far_field_lift)
                 break
 
-        relative_error_jump = abs(far_field_lift - self.cl_reference)/abs(self.cl_reference)*100.0
+        if(Cl*far_field_lift < 0):
+            far_field_lift *= -1.0
+
+        if(abs(self.cl_reference) < 1e-6):
+            relative_error_jump = abs(far_field_lift)*100.0
+        else:
+            relative_error_jump = abs(far_field_lift - self.cl_reference)/abs(self.cl_reference)*100.0
 
         #compute the internal energy norm and relative error
         internal_energy_sum = 0.0
@@ -187,6 +196,11 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         with open(cl_results_file_name,'a') as cl_file:
             cl_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, Cl))
             cl_file.flush()
+
+        cl_reference_file_name = self.work_dir + "plots/cl/data/cl/cl_reference.dat"
+        with open(cl_reference_file_name,'a') as cl_reference_file:
+            cl_reference_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, self.cl_reference))
+            cl_reference_file.flush()
 
         cl_error_results_file_name = self.work_dir + "plots/cl_error/data/cl/cl_error_results.dat"
         with open(cl_error_results_file_name,'a') as cl_error_file:

@@ -152,6 +152,13 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
             '\t    ylabel={velocity norm(x)},\n' +
             '\t    ymajorgrids=true,\n' +
             '\t    xmajorgrids=true,\n' +
+            '\t    y tick label style={ \n' +
+            '\t        /pgf/number format/.cd, \n' + 
+            '\t            fixed,\n' + 
+            '\t            fixed zerofill,\n' + 
+            '\t            precision=5,\n' + 
+            '\t        /tikz/.cd \n' + 
+            '\t    },\n' + 
             '\t    grid style=dashed,\n' +
             '\t    width=12cm\n' +
             ']\n\n' +
@@ -174,6 +181,13 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
             '\t    ylabel={u(x)},\n' +
             '\t    ymajorgrids=true,\n' +
             '\t    xmajorgrids=true,\n' +
+            '\t    y tick label style={ \n' +
+            '\t        /pgf/number format/.cd, \n' + 
+            '\t            fixed,\n' + 
+            '\t            fixed zerofill,\n' + 
+            '\t            precision=5,\n' + 
+            '\t        /tikz/.cd \n' + 
+            '\t    },\n' +
             '\t    grid style=dashed,\n' +
             '\t    width=12cm\n' +
             ']\n\n' +
@@ -196,6 +210,13 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
             '\t    ylabel={v(x)},\n' +
             '\t    ymajorgrids=true,\n' +
             '\t    xmajorgrids=true,\n' +
+            '\t    y tick label style={ \n' +
+            '\t        /pgf/number format/.cd, \n' + 
+            '\t            fixed,\n' + 
+            '\t            fixed zerofill,\n' + 
+            '\t            precision=5,\n' + 
+            '\t        /tikz/.cd \n' + 
+            '\t    },\n' +
             '\t    grid style=dashed,\n' +
             '\t    width=12cm\n' +
             ']\n\n' +
@@ -218,6 +239,13 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
             '\t    ylabel={velocity norm(y)},\n' +
             '\t    ymajorgrids=true,\n' +
             '\t    xmajorgrids=true,\n' +
+            '\t    y tick label style={ \n' +
+            '\t        /pgf/number format/.cd, \n' + 
+            '\t            fixed,\n' + 
+            '\t            fixed zerofill,\n' + 
+            '\t            precision=5,\n' + 
+            '\t        /tikz/.cd \n' + 
+            '\t    },\n' +
             '\t    grid style=dashed,\n' +
             '\t    width=12cm\n' +
             ']\n\n' +
@@ -240,6 +268,13 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
             '\t    ylabel={u(y)},\n' +
             '\t    ymajorgrids=true,\n' +
             '\t    xmajorgrids=true,\n' +
+            '\t    y tick label style={ \n' +
+            '\t        /pgf/number format/.cd, \n' + 
+            '\t            fixed,\n' + 
+            '\t            fixed zerofill,\n' + 
+            '\t            precision=5,\n' + 
+            '\t        /tikz/.cd \n' + 
+            '\t    },\n' +
             '\t    grid style=dashed,\n' +
             '\t    width=12cm\n' +
             ']\n\n' +
@@ -262,6 +297,13 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
             '\t    ylabel={v(y)},\n' +
             '\t    ymajorgrids=true,\n' +
             '\t    xmajorgrids=true,\n' +
+            '\t    y tick label style={ \n' +
+            '\t        /pgf/number format/.cd, \n' + 
+            '\t            fixed,\n' + 
+            '\t            fixed zerofill,\n' + 
+            '\t            precision=5,\n' + 
+            '\t        /tikz/.cd \n' + 
+            '\t    },\n' +
             '\t    grid style=dashed,\n' +
             '\t    width=12cm\n' +
             ']\n\n' +

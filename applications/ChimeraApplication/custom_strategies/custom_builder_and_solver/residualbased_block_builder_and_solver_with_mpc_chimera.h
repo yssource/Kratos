@@ -698,7 +698,6 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 
                                     for (auto localSlaveEqIdOther : localNodalSlaveEquationIds)
                                     {
-                                        std::vector<std::size_t>::iterator itOther = std::find(localNodalSlaveEquationIds.begin(), localNodalSlaveEquationIds.end(), localSlaveEqIdOther);
                                         int slaveIndexOther = std::distance(localNodalSlaveEquationIds.begin(), it);
                                         double constantOther = mpcData->mSlaveEquationIdConstantsUpdate[slaveEquationIds[slaveIndexOther]];
                                         RHS_Contribution(localMasterEqId) -= LHS_Contribution(localSlaveEqId, localSlaveEqIdOther) * masterI.second * constantOther;
@@ -1119,7 +1118,6 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                         slaveNodeId = slaveDofMap.first;
                         slaveDofKey = slaveDofMap.second;
                         Node<3> &slaveNode = r_model_part.Nodes()[slaveNodeId];
-                        Node<3>::DofsContainerType::iterator idof = slaveNode.GetDofs().find(slaveDofKey);
                         nodalMass = slaveNode.FastGetSolutionStepValue(NODAL_MASS);
                         NodalNormalComponent = mpcData->mSlaveDofToNodalNormalMap[slaveDofMap];
 

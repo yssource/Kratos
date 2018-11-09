@@ -20,10 +20,9 @@ class ALEFluidSolver(PythonSolver):
         self.mesh_motion_solver_settings = solver_settings["ale_settings"].Clone()
         solver_settings.RemoveValue("ale_settings")
 
-        self.fluid_model_part_name = solver_settings["model_part_name"].GetString()
-        if not self.model.HasModelPart(self.fluid_model_part_name):
-            fluid_mesh_model_part = KratosMultiphysics.ModelPart(self.fluid_model_part_name)
-            self.model.AddModelPart(fluid_mesh_model_part)
+        fluid_model_part_name = solver_settings["model_part_name"].GetString()
+        if not self.model.HasModelPart(fluid_model_part_name):
+            model.CreateModelPart(fluid_model_part_name)
 
         ## Checking if reactions are being computed in the fluid
         if solver_settings.Has("compute_reactions"):

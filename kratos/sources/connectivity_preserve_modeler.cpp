@@ -37,16 +37,6 @@ void ConnectivityPreserveModeler::GenerateModelPart(
 {
     KRATOS_TRY;
 
-    KRATOS_ERROR_IF(rOriginModelPart.IsSubModelPart())
-        << "ConnectivityPreserveModeler expects to work on root modelparts. "
-        << "This is not the case for the ORIGIN model part named: "
-        << rOriginModelPart.Name() << std::endl;
-
-    KRATOS_ERROR_IF(rDestinationModelPart.IsSubModelPart())
-        << "ConnectivityPreserveModeler expects to work on root modelparts. "
-        << "This is not the case for the DESTINATION model part named: "
-        << rDestinationModelPart.Name() << std::endl;
-
     this->CheckVariableLists(rOriginModelPart, rDestinationModelPart);
 
     this->ResetModelPart(rDestinationModelPart);
@@ -144,10 +134,9 @@ void ConnectivityPreserveModeler::DuplicateElements(
     for (auto i_elem = rOriginModelPart.ElementsBegin(); i_elem != rOriginModelPart.ElementsEnd(); ++i_elem)
     {
         Properties::Pointer properties = i_elem->pGetProperties();
-        Element::Pointer p_element = rReferenceElement.Create(i_elem->Id(), i_elem->GetGeometry(), properties);
 
         // Reuse the geometry of the old element (to save memory)
-        p_element->pGetGeometry() = i_elem->pGetGeometry();
+        Element::Pointer p_element = rReferenceElement.Create(i_elem->Id(), i_elem->pGetGeometry(), properties);
 
         temp_elements.push_back(p_element);
     }
@@ -167,10 +156,9 @@ void ConnectivityPreserveModeler::DuplicateConditions(
     for (auto i_cond = rOriginModelPart.ConditionsBegin(); i_cond != rOriginModelPart.ConditionsEnd(); ++i_cond)
     {
         Properties::Pointer properties = i_cond->pGetProperties();
-        Condition::Pointer p_condition = rReferenceBoundaryCondition.Create(i_cond->Id(), i_cond->GetGeometry(), properties);
 
         // Reuse the geometry of the old element (to save memory)
-        p_condition->pGetGeometry() = i_cond->pGetGeometry();
+        Condition::Pointer p_condition = rReferenceBoundaryCondition.Create(i_cond->Id(), i_cond->pGetGeometry(), properties);
 
         temp_conditions.push_back(p_condition);
     }

@@ -75,3 +75,5 @@ class FixVectorVariableProcess(KratosMultiphysics.Process):
     def ExecuteFinalize(self):
         for process in self.aux_processes:
             process.ExecuteFinalize()
+
+

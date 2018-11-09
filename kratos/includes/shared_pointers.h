@@ -20,10 +20,11 @@
 
 /* External includes */
 #include <memory>
+#include <includes/kratos_export_api.h>
 
 namespace Kratos {
 
-class MemoryUsageInfo {
+class KRATOS_API(KRATOS_CORE) MemoryUsageInfo {
 public:
 	int mBytes;
 	int mInstances;
@@ -60,6 +61,7 @@ using unique_ptr = std::unique_ptr<T>;
 template<typename C, typename...Args>
 shared_ptr<C> make_shared(Args &&...args) {
 	MemoryUsageInfo::GetMemoryUsageInfoByClassName("shared_ptr").mInstances++;
+	MemoryUsageInfo::GetMemoryUsageInfoByClassName("shared_ptr").mBytes+=sizeof(shared_ptr<C>);
 	return shared_ptr<C>(new C(std::forward<Args>(args)...));
 	//return std::make_shared<C>(std::forward<Args>(args)...);
 

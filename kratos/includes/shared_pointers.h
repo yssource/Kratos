@@ -23,6 +23,31 @@
 
 namespace Kratos {
 
+class MemoryUsageInfo {
+public:
+	int mBytes;
+	int mInstances;
+	static MemoryUsageInfo& GetMemoryUsageInfoByClassName(std::string const& ClassName) {
+		return AllClasesMemoryUsageInfoByName()[ClassName];
+	}
+	
+	static std::map<std::string, MemoryUsageInfo>& AllClasesMemoryUsageInfoByName() {
+		static std::map<std::string, MemoryUsageInfo> memory_usage;
+		return memory_usage;
+	}
+
+	static std::string GetListOfAllAllocatedObjects() {
+		auto& memory_usage_info_map = AllClasesMemoryUsageInfoByName();
+		std::stringstream buffer;
+		for (auto& i : memory_usage_info_map) {
+			buffer << i.second.mInstances << " " << i.first << " : " << i.second.mBytes << " Bytes" << std::endl;
+		}
+		return buffer.str();
+	}
+};
+
+
+
 template<class T>
 using shared_ptr = std::shared_ptr<T>; //std::shared_ptr<T>;
 
@@ -61,41 +86,19 @@ shared_ptr<C> const_pointer_cast(Args &&...args) {
     return std::const_pointer_cast<C>(std::forward<Args>(args)...);
 }
 
-// template<typename C, typename...Args>
-// shared_ptr<C> reinterpret_pointer_cast(Args &&...args) {
-//     return std::reinterpret_pointer_cast<C>(std::forward<Args>(args)...);
-// }
-} // namespace Kratos
-
-class MemoryUsageInfo {
-public:
-	int mBytes;
-	int mInstances;
-	static MemoryUsageInfo& GetMemoryUsageInfoByClassName(std::string const& ClassName) {
-		return AllClasesMemoryUsageInfoByName()[ClassName];
-	}
-	
-	static std::map<std::string, MemoryUsageInfo>& AllClasesMemoryUsageInfoByName() {
-		static std::map<std::string, MemoryUsageInfo> memory_usage;
-		return memory_usage;
-	}
-
-	static std::string GetListOfAllAllocatedObjects() {
-		auto& memory_usage_info_map = AllClasesMemoryUsageInfoByName();
-		std::stringstream buffer;
-		for (auto& i : memory_usage_info_map) {
-			buffer << i.second.mInstances << " " << i.first << " : " << i.second.mBytes << " Bytes" << std::endl;
-		}
-		return buffer.str();
-	}
-};
-
 /// output stream function
 inline std::ostream &operator<<(std::ostream &rOStream,
 	const MemoryUsageInfo &rThis) {
 
 	return rOStream;
 }
+// template<typename C, typename...Args>
+// shared_ptr<C> reinterpret_pointer_cast(Args &&...args) {
+//     return std::reinterpret_pointer_cast<C>(std::forward<Args>(args)...);
+// }
+} // namespace Kratos
+
+
 
 
 #define KRATOS_CLASS_POINTER_DEFINITION(a) typedef Kratos::shared_ptr<a > Pointer; \

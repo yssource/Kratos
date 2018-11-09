@@ -236,17 +236,6 @@ class ApplyChimeraProcessMonolithic : public Process
 
 		std::size_t counter = 0;
 
-//#pragma omp parallel for firstprivate(results, N)
-		//MY NEW LOOP: reset the visited flag
-
-	/*
-	   for (int i = 0; i < n_boundary_nodes; i++)
-		{
-			ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin() + i;
-			Node<3>::Pointer p_boundary_node = *(iparticle.base());
-			p_boundary_node->Set(VISITED, false);
-		}
-    */
 		for (int i = 0; i < n_boundary_nodes; i++)
 		{
 			ModelPart::NodesContainerType::iterator iparticle = rBoundaryModelPart.NodesBegin() + i;
@@ -289,10 +278,10 @@ class ApplyChimeraProcessMonolithic : public Process
 			p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(1) = 0.0;
 
 			if (TDim == 3)
-				{
-					p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0) = 0.0;
-					p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(1) = 0.0;
-				}
+			{
+				p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0) = 0.0;
+				p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(1) = 0.0;
+			}
 
 			if (pressure_coupling == "all")
 			{	p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0) = 0.0;

@@ -38,13 +38,13 @@ class ChimeraWithVTKoutput(FluidChimeraAnalysis):
         self.vtkOutput_background = kchim.VtkOutput(background,"nnn",self.parameters["output_configuration"])
         self.vtkOutput_patch = kchim.VtkOutput(self.patch,"nnn",self.parameters["output_configuration"])
         #self.vtkOutput_structure = kchim.VtkOutput(self.structure,"nnn",self.parameters["output_configuration"])
-    
+        self.step=0
     def RunSolutionLoop(self):
         """
         this function never called !!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
-        So need to add patch movemnt inside Co simulation analysis
+        So need to add patch movemnt inside Co simulation analysis , call Initialise solution step here and translate or rotate patch there
         """
-        self.step=0
+        
         while self.time < self.end_time:
             self.time = self._GetSolver().AdvanceInTime(self.time)
             Dt = self.parameters["solver_settings"]["time_stepping"]["time_step"].GetDouble()
@@ -57,11 +57,11 @@ class ChimeraWithVTKoutput(FluidChimeraAnalysis):
     def OutputSolutionStep(self):
         super(ChimeraWithVTKoutput,self).OutputSolutionStep()
         
-        #if(self.step%200==0):
-        self.vtkOutput_background.PrintOutput()
-        self.vtkOutput_patch.PrintOutput()
+        if(self.step%100==0):
+            self.vtkOutput_background.PrintOutput()
+            self.vtkOutput_patch.PrintOutput()
         #self.vtkOutput_structure.PrintOutput()
-        #self.step+=1
+        self.step+=1
 
 
 class KratosChimeraSolver(KratosBaseFieldSolver):

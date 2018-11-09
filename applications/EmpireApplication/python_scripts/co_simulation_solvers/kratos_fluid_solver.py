@@ -33,7 +33,7 @@ class FluidDynamicsAnalysisWithVTK(FluidDynamicsAnalysis):
 
     def OutputSolutionStep(self):
         super(FluidDynamicsAnalysisWithVTK,self).OutputSolutionStep()
-        if(self.step%100==0):
+        if(self.step%1==0):
             self.VtkOut.PrintOutput()
         self.step+=1
 

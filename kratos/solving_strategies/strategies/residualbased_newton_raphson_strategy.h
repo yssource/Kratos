@@ -210,7 +210,7 @@ class ResidualBasedNewtonRaphsonStrategy
 
         // Saving the scheme
         mpScheme = pScheme;
-
+        
         // Saving the linear solver
         mpLinearSolver = pNewLinearSolver;
 

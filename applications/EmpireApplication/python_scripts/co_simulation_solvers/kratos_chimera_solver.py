@@ -57,10 +57,9 @@ class ChimeraWithVTKoutput(FluidChimeraAnalysis):
     def OutputSolutionStep(self):
         super(ChimeraWithVTKoutput,self).OutputSolutionStep()
         
-        if(self.step%100==0):
+        if(self.step%1==0):
             self.vtkOutput_background.PrintOutput()
             self.vtkOutput_patch.PrintOutput()
-        #self.vtkOutput_structure.PrintOutput()
         self.step+=1
 
 

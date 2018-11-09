@@ -303,14 +303,15 @@ class ApplyChimeraProcessMonolithic : public Process
 				} // end of loop over host element nodes
 
 				// Setting the buffer 1 same buffer 0 
-				p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(1) += geom[i].GetDof(VELOCITY_X).GetSolutionStepValue(1) * N[i];
-				p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(1) += geom[i].GetDof(VELOCITY_Y).GetSolutionStepValue(1) * N[i];
+				p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(0);
+				p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(0);
 				//p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(0);
 				//p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(0);
 				if (TDim == 3)
 					p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0);
 
 				p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(1) = p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0);
+				
 			}
 			p_boundary_node->Set(VISITED, true);
 

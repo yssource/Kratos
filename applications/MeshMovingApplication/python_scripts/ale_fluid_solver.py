@@ -82,6 +82,8 @@ class ALEFluidSolver(PythonSolver):
 
         if self.is_printing_rank:
             KratosMultiphysics.Logger.PrintInfo("::[ALEFluidSolver]::", "Construction finished")
+        
+        self.fluid_model_part_name = fluid_model_part_name
 
     def AddVariables(self):
         #self.mesh_motion_solver.AddVariables()

@@ -369,11 +369,11 @@ public:
 
             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
 
-            //Source term
-            const double value = -(2*data.vol) / static_cast<double>(NumNodes);
+            // //Source term
+            // const double value = -(2*data.vol) / static_cast<double>(NumNodes);
 
-            for (unsigned int i = 0; i < NumNodes; ++i)
-                rRightHandSideVector[i] += value;
+            // for (unsigned int i = 0; i < NumNodes; ++i)
+            //     rRightHandSideVector[i] += value;
 
         }
         else //it is a wake element

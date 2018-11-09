@@ -26,8 +26,10 @@ namespace Kratos {
 
 class KRATOS_API(KRATOS_CORE) MemoryUsageInfo {
 public:
-	int mBytes;
-	int mInstances;
+	int mCreatedBytes;
+	int mCurrentInstances;
+	int mCreatedInstances;
+	int mDeletedInstances;
 	static MemoryUsageInfo& GetMemoryUsageInfoByClassName(std::string const& ClassName) {
 		return AllClasesMemoryUsageInfoByName()[ClassName];
 	}
@@ -41,9 +43,18 @@ public:
 		auto& memory_usage_info_map = AllClasesMemoryUsageInfoByName();
 		std::stringstream buffer;
 		for (auto& i : memory_usage_info_map) {
-			buffer << i.second.mInstances << " " << i.first << " : " << i.second.mBytes << " Bytes" << std::endl;
+			buffer << i.second.mCurrentInstances << " " << i.first << " (" << i.second.mCreatedInstances << " [" << i.second.mCreatedBytes << "Bytes] created and " << i.second.mDeletedInstances  << " deleted)" << std::endl;
 		}
 		return buffer.str();
+	}
+	void Add(int NumberOfInstances, int Size) {
+		mCurrentInstances += NumberOfInstances;
+		mCreatedInstances += NumberOfInstances;
+		mCreatedBytes += Size;
+	}
+	void Delete(int NumberOfInstances) {
+		mCurrentInstances -= NumberOfInstances;
+		mDeletedInstances += NumberOfInstances;
 	}
 };
 
@@ -60,8 +71,7 @@ using unique_ptr = std::unique_ptr<T>;
 
 template<typename C, typename...Args>
 shared_ptr<C> make_shared(Args &&...args) {
-	MemoryUsageInfo::GetMemoryUsageInfoByClassName("shared_ptr").mInstances++;
-	MemoryUsageInfo::GetMemoryUsageInfoByClassName("shared_ptr").mBytes+=sizeof(shared_ptr<C>);
+	MemoryUsageInfo::GetMemoryUsageInfoByClassName("shared_ptr").Add(1, sizeof(shared_ptr<C>));
 	return shared_ptr<C>(new C(std::forward<Args>(args)...));
 	//return std::make_shared<C>(std::forward<Args>(args)...);
 
@@ -111,47 +121,47 @@ static MemoryUsageInfo& GetClassMemoryUsageInfo(){\
 }\
 void* operator new(size_t sz)\
 {\
-	GetClassMemoryUsageInfo().mInstances++;\
+	GetClassMemoryUsageInfo().Add(1, sz);\
 	return ::operator new(sz);\
 }\
 \
 void* operator new[](size_t sz)\
 {\
-	GetClassMemoryUsageInfo().mInstances++;\
+	GetClassMemoryUsageInfo().Add(1, sz);\
 	return ::operator new[](sz);\
 }\
 \
 void operator delete(void* p)\
 {\
-	GetClassMemoryUsageInfo().mInstances--;\
+	GetClassMemoryUsageInfo().Delete(1);\
 	::operator delete(p);\
 }\
 \
 void operator delete[](void* p)\
 {\
-	GetClassMemoryUsageInfo().mInstances--;\
+	GetClassMemoryUsageInfo().Delete(1);\
 	::operator delete[](p);\
 }\
 void* operator new(size_t sz, void* ptr)\
 {\
-	GetClassMemoryUsageInfo().mInstances++;\
+	GetClassMemoryUsageInfo().Add(1, sz);\
 	return ::operator new(sz,ptr);\
 }\
 \
 void* operator new[](size_t sz, void* ptr)\
 {\
-	GetClassMemoryUsageInfo().mInstances++;\
+	GetClassMemoryUsageInfo().Add(1, sz);\
 	return ::operator new[](sz,ptr);\
 }\
 void operator delete(void* p, void* ptr)\
 {\
-	GetClassMemoryUsageInfo().mInstances--;\
+	GetClassMemoryUsageInfo().Delete(1);\
 	::operator delete(p,ptr);\
 }\
 \
 void operator delete[](void* p, void* ptr)\
 {\
-	GetClassMemoryUsageInfo().mInstances--;\
+	GetClassMemoryUsageInfo().Delete(1);\
 	::operator delete[](p,ptr);\
 }\
 typedef Kratos::shared_ptr<a > SharedPointer; \

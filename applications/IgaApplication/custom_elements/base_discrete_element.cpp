@@ -43,6 +43,7 @@ namespace Kratos
     void BaseDiscreteElement::InitializeMaterial()
     {
         KRATOS_TRY
+        
 
         if (GetProperties()[CONSTITUTIVE_LAW] != nullptr) {
             mConstitutiveLawVector[0] = GetProperties()[CONSTITUTIVE_LAW]->Clone();

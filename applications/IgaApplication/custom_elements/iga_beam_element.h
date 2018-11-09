@@ -148,6 +148,56 @@ public:
         BoundedVector<double,3> _vec1,
         BoundedVector<double,3> _vec2) ;
 
+    void IgaBeamElement::ComputeMatrixLambdaFirstDerivative(
+        BoundedMatrix<double,3,3>& _matrix_lambda_der,
+        BoundedVector<double,3> _vec1,
+        BoundedVector<double,3> _vec2,
+        BoundedVector<double,3> _vec1_der,
+        BoundedVector<double,3> _vec2_der) ;
+
+    void IgaBeamElement::ComputeMatrixLambdaSecondDerivative(
+        BoundedMatrix<double,3,3>& _matrix_lambda_derder,
+        BoundedVector<double,3> _vec1,
+        BoundedVector<double,3> _vec2,
+        BoundedVector<double,3> _vec1_der1,
+        BoundedVector<double,3> _vec2_der1,
+        BoundedVector<double,3> _vec1_der2,
+        BoundedVector<double,3> _vec2_der2) ;
+
+    void IgaBeamElement::ComputeMatrixLambdaVariation(
+        Matrix& _matrix_lambda_var,
+        BoundedVector<double,3> _vec1,
+        BoundedVector<double,3> _vec2,
+        BoundedVector<double,3> _vec2_var) ;
+
+    void IgaBeamElement::ComputeMatrixLambdaFirstDerivativeVariation(
+        Matrix _matrix_lambda_der1var,
+        BoundedVector<double,3> _vec1,
+        BoundedVector<double,3> _vec2,
+        BoundedVector<double,3> _vec1der1,
+        BoundedVector<double,3> _vec2der1,
+        Vector _vec2var,
+        Vector _vec2der1var) ;
+
+    void IgaBeamElement::ComputeMatrixLambdaSecondDerivativeVariation(
+        Matrix& _matrix_lambda_der2var,
+        BoundedVector<double,3> _vec1,
+        BoundedVector<double,3> _vec2,
+        BoundedVector<double,3> _vec1der1,
+        BoundedVector<double,3> _vec2der1,
+        BoundedVector<double,3> _vec1der2,
+        BoundedVector<double,3> _vec2der2,
+        Vector _vec2var,
+        Vector _vec2der1var,
+        Vector _vec2der2var) ; 
+
+    void IgaBeamElement::ComputeMatrixLambdaSecondVariation(
+        Matrix& _matrix_lambda_second_variation,
+        BoundedVector<double,3> _vec1,
+        BoundedVector<double,3> _vec2,
+        Vector _vec2var1,
+        Matrix _vec2var2) ;
+
     void IgaBeamElement::StffnessMatrixElementLinear(
         double _emod,
         double _gmod,
@@ -177,6 +227,14 @@ public:
 BoundedMatrix<double,3,3> CrossProductVectorMatrix(
     BoundedVector<double,3> vec,
     BoundedMatrix<double,3,3> mat) ;
+
+Matrix IgaBeamElement::CrossProductVectorMatrix(
+    Vector vec,
+    Matrix mat) ;
+
+BoundedMatrix<double,3,3> IgaBeamElement::CrossProductMatrixVector(
+    BoundedMatrix<double,3,3> mat,
+    BoundedVector<double,3> vec) ;
     
 }; // class IgaBeamElement
 

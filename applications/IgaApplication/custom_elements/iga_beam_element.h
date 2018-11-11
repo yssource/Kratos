@@ -198,6 +198,17 @@ public:
         Vector _vec2var1,
         Matrix _vec2var2) ;
 
+    void IgaBeamElement::ComputeMatrixLambdaFirstDerivativeSecondVariation(
+        Matrix _matrix_lambda_der1var2,
+        BoundedVector<double,3> _vec1,
+        BoundedVector<double,3> _vec2,
+        BoundedVector<double,3> _vec1der1,
+        BoundedVector<double,3> _vec2der1,
+        Vector _vec2var1,
+        Matrix _vec2var2,
+        Vector _vec2der1var1,
+        Matrix _vec2der1var2) ;
+
     void IgaBeamElement::StffnessMatrixElementLinear(
         double _emod,
         double _gmod,

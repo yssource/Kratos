@@ -1,5 +1,5 @@
 #Parameters
-Number_Of_Refinements=1
+Number_Of_Refinements=3
 Number_Of_AOAS=1
 
 Initial_AOA=0.0

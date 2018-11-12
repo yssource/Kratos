@@ -27,4 +27,4 @@ mkdir -p ${DIRECTORY}_${DATE}_${GITBRANCH}
 mkdir -p ${DIRECTORY}_${DATE}_${GITBRANCH}/output_gid
 cd ../..
 cp -r $Work_Dir/plots/ ${DIRECTORY}_${DATE}_${GITBRANCH}
-cp -r /media/inigo/10740FB2740F9A1C/Outputs/03_MeshRefinement/A* ${DIRECTORY}_${DATE}_${GITBRANCH}/output_gid
+cp -r /media/inigo/10740FB2740F9A1C/Outputs/07_MeshRefinement/A* ${DIRECTORY}_${DATE}_${GITBRANCH}/output_gid

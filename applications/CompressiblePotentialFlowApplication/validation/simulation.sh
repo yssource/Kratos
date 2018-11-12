@@ -3,6 +3,15 @@
 #run this file using the command:
 # bash simulation.sh
 
+#Going to the current directory
+echo "The previous current working directory: $PWD"
+
+SCRIPT=`realpath $0`
+SCRIPTPATH=`dirname $SCRIPT`
+cd $SCRIPTPATH
+
+echo "The current working directory: $PWD"
+
 #Setting paths
 source scripts/preamble.sh
 

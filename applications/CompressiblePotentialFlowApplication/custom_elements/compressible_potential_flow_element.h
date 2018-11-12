@@ -10,7 +10,7 @@
 //  Main authors:    Riccardo Rossi
 //
 
-#if !defined(KRATOS_COMPRESSIBLE_POTENTIAL_FLOW_ELEMENT_H_INCLUDED )
+#if !defined(KRATOS_COMPRESSIBLE_POTENTIAL_FLOW_ELEMENT_H_INCLUDED)
 #define KRATOS_COMPRESSIBLE_POTENTIAL_FLOW_ELEMENT_H_INCLUDED
 
 // #define SYMMETRIC_CONSTRAINT_APPLICATION
@@ -21,7 +21,6 @@
 #include <algorithm>
 
 // External includes
-
 
 // Project includes
 #include "includes/element.h"
@@ -51,23 +50,20 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-template< int Dim, int NumNodes >
+template <int Dim, int NumNodes>
 class CompressiblePotentialFlowElement : public Element
 {
-public:
-
+  public:
     template <unsigned int TNumNodes, unsigned int TDim>
     struct ElementalData
     {
-        array_1d<double,TNumNodes> phis, distances;
+        array_1d<double, TNumNodes> phis, distances;
         double rho;
         double vol;
 
-        bounded_matrix<double, TNumNodes, TDim > DN_DX;
-        array_1d<double, TNumNodes > N;
+        bounded_matrix<double, TNumNodes, TDim> DN_DX;
+        array_1d<double, TNumNodes> N;
     };
-
-
 
     ///@name Type Definitions
     ///@{
@@ -86,42 +82,42 @@ public:
     /**
      * Constructor.
      */
-    CompressiblePotentialFlowElement(IndexType NewId = 0) {};
+    CompressiblePotentialFlowElement(IndexType NewId = 0){};
 
     /**
      * Constructor using an array of nodes
      */
-    CompressiblePotentialFlowElement(IndexType NewId, const NodesArrayType& ThisNodes):Element(NewId, ThisNodes) {};
+    CompressiblePotentialFlowElement(IndexType NewId, const NodesArrayType &ThisNodes) : Element(NewId, ThisNodes){};
 
     /**
      * Constructor using Geometry
      */
-    CompressiblePotentialFlowElement(IndexType NewId, GeometryType::Pointer pGeometry):Element(NewId, pGeometry) {};
+    CompressiblePotentialFlowElement(IndexType NewId, GeometryType::Pointer pGeometry) : Element(NewId, pGeometry){};
 
     /**
      * Constructor using Properties
      */
-    CompressiblePotentialFlowElement(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties):Element(NewId, pGeometry, pProperties) {};
+    CompressiblePotentialFlowElement(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties) : Element(NewId, pGeometry, pProperties){};
 
     /**
      * Copy Constructor
      */
-    CompressiblePotentialFlowElement(CompressiblePotentialFlowElement const& rOther) {};
+    CompressiblePotentialFlowElement(CompressiblePotentialFlowElement const &rOther){};
 
     /**
      * Destructor
      */
-    ~CompressiblePotentialFlowElement() override {};
+    ~CompressiblePotentialFlowElement() override{};
 
     ///@}
     ///@name Operators
     ///@{
 
     /// Assignment operator.
-    CompressiblePotentialFlowElement & operator=(CompressiblePotentialFlowElement const& rOther)
+    CompressiblePotentialFlowElement &operator=(CompressiblePotentialFlowElement const &rOther)
     {
         BaseType::operator=(rOther);
-        Flags::operator =(rOther);
+        Flags::operator=(rOther);
         return *this;
     }
 
@@ -136,7 +132,7 @@ public:
      * @param pProperties: the properties assigned to the new element
      * @return a Pointer to the new element
      */
-    Element::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const override
+    Element::Pointer Create(IndexType NewId, NodesArrayType const &ThisNodes, PropertiesType::Pointer pProperties) const override
     {
         KRATOS_TRY
         return Element::Pointer(new CompressiblePotentialFlowElement(NewId, GetGeometry().Create(ThisNodes), pProperties));
@@ -164,7 +160,7 @@ public:
      * @param pProperties: the properties assigned to the new element
      * @return a Pointer to the new element
      */
-    Element::Pointer Clone(IndexType NewId, NodesArrayType const& ThisNodes) const override
+    Element::Pointer Clone(IndexType NewId, NodesArrayType const &ThisNodes) const override
     {
         KRATOS_TRY
         return Element::Pointer(new CompressiblePotentialFlowElement(NewId, GetGeometry().Create(ThisNodes), pGetProperties()));
@@ -177,20 +173,19 @@ public:
      * @param rResult: the elemental equation ID vector
      * @param rCurrentProcessInfo: the current process info instance
      */
-    void EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo) override
+    void EquationIdVector(EquationIdVectorType &rResult, ProcessInfo &CurrentProcessInfo) override
     {
-        if(this->IsNot(MARKER)) //normal element
+        if (this->IsNot(MARKER)) //normal element
         {
             if (rResult.size() != NumNodes)
                 rResult.resize(NumNodes, false);
 
             for (unsigned int i = 0; i < NumNodes; i++)
                 rResult[i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
-
         }
-        else//wake element
+        else //wake element
         {
-            if(this->Is(ISOLATED))
+            if (this->Is(ISOLATED))
             {
                 if (rResult.size() != 2 * NumNodes)
                     rResult.resize(2 * NumNodes, false);
@@ -242,21 +237,17 @@ public:
                         rResult[NumNodes + i] = GetGeometry()[i].GetDof(NEGATIVE_FACE_PRESSURE, 0).EquationId();
                 }
             }
-            
         }
-
-
     }
-
 
     /**
      * determines the elemental list of DOFs
      * @param ElementalDofList: the list of DOFs
      * @param rCurrentProcessInfo: the current process info instance
      */
-    void GetDofList(DofsVectorType& rElementalDofList, ProcessInfo& CurrentProcessInfo) override
+    void GetDofList(DofsVectorType &rElementalDofList, ProcessInfo &CurrentProcessInfo) override
     {
-        if(this->IsNot(MARKER)) //normal element
+        if (this->IsNot(MARKER)) //normal element
         {
             if (rElementalDofList.size() != NumNodes)
                 rElementalDofList.resize(NumNodes);
@@ -264,11 +255,11 @@ public:
             for (unsigned int i = 0; i < NumNodes; i++)
                 rElementalDofList[i] = GetGeometry()[i].pGetDof(POSITIVE_FACE_PRESSURE);
         }
-        else//wake element
+        else //wake element
         {
-            if(this->Is(ISOLATED))
+            if (this->Is(ISOLATED))
             {
-                std::cout << "GETDOF ISOLATED ELEMENT " << this->Id()  << std::endl;
+                std::cout << "GETDOF ISOLATED ELEMENT " << this->Id() << std::endl;
 
                 if (rElementalDofList.size() != 2 * NumNodes)
                     rElementalDofList.resize(2 * NumNodes);
@@ -319,12 +310,9 @@ public:
                     else
                         rElementalDofList[NumNodes + i] = GetGeometry()[i].pGetDof(NEGATIVE_FACE_PRESSURE);
                 }
-
             }
-            
         }
     }
-
 
     /**
      * ELEMENTS inherited from this class have to implement next
@@ -342,61 +330,88 @@ public:
      * @param rCurrentProcessInfo: the current process info instance
      */
     void CalculateLocalSystem(
-        MatrixType& rLeftHandSideMatrix,
-        VectorType& rRightHandSideVector,
-        ProcessInfo& rCurrentProcessInfo) override
+        MatrixType &rLeftHandSideMatrix,
+        VectorType &rRightHandSideVector,
+        ProcessInfo &rCurrentProcessInfo) override
     {
-        ElementalData<NumNodes,Dim> data;
+        ElementalData<NumNodes, Dim> data;
 
         //calculate shape functions
         GeometryUtils::CalculateGeometryData(GetGeometry(), data.DN_DX, data.N, data.vol);
 
         //gather nodal data
-        for(unsigned int i=0; i<NumNodes; i++)
+        for (unsigned int i = 0; i < NumNodes; i++)
         {
             data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
         }
 
-        if(this->IsNot(MARKER))//normal element (non-wake) - eventually an embedded
+        if (this->IsNot(MARKER)) //normal element (non-wake) - eventually an embedded
         {
-            if(rLeftHandSideMatrix.size1() != NumNodes || rLeftHandSideMatrix.size2() != NumNodes)
-                rLeftHandSideMatrix.resize(NumNodes,NumNodes,false);
-            if(rRightHandSideVector.size() != NumNodes)
-                rRightHandSideVector.resize(NumNodes,false);
+            if (rLeftHandSideMatrix.size1() != NumNodes || rLeftHandSideMatrix.size2() != NumNodes)
+                rLeftHandSideMatrix.resize(NumNodes, NumNodes, false);
+            if (rRightHandSideVector.size() != NumNodes)
+                rRightHandSideVector.resize(NumNodes, false);
             rLeftHandSideMatrix.clear();
 
             ComputeLHSGaussPointContribution(data.vol, rLeftHandSideMatrix, data);
 
             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
-
-            // //Source term
-            // const double value = -(2*data.vol) / static_cast<double>(NumNodes);
-
-            // for (unsigned int i = 0; i < NumNodes; ++i)
-            //     rRightHandSideVector[i] += value;
-
         }
         else //it is a wake element
         {
             GetWakeDistances(data.distances);
-            
+
             //note that the lhs and rhs have double the size!!
-            if(rLeftHandSideMatrix.size1() != 2*NumNodes || rLeftHandSideMatrix.size2() != 2*NumNodes)
-                rLeftHandSideMatrix.resize(2*NumNodes,2*NumNodes,false);
-            if(rRightHandSideVector.size() != 2*NumNodes)
-                rRightHandSideVector.resize(2*NumNodes,false);
+            if (rLeftHandSideMatrix.size1() != 2 * NumNodes || rLeftHandSideMatrix.size2() != 2 * NumNodes)
+                rLeftHandSideMatrix.resize(2 * NumNodes, 2 * NumNodes, false);
+            if (rRightHandSideVector.size() != 2 * NumNodes)
+                rRightHandSideVector.resize(2 * NumNodes, false);
             rLeftHandSideMatrix.clear();
 
-            //compute the lhs and rhs that would correspond to it being divided
-            Matrix lhs_positive = ZeroMatrix(NumNodes,NumNodes);
-            Matrix lhs_negative = ZeroMatrix(NumNodes,NumNodes);
+            //subdivide the element
+            constexpr unsigned int nvolumes = 3 * (Dim - 1);
+            bounded_matrix<double, NumNodes, Dim> Points;
+            array_1d<double, nvolumes> Volumes;
+            bounded_matrix<double, nvolumes, NumNodes> GPShapeFunctionValues;
+            array_1d<double, nvolumes> PartitionsSign;
+            std::vector<Matrix> GradientsValue(nvolumes);
+            bounded_matrix<double, nvolumes, 2> NEnriched;
 
-            ComputeLHSGaussPointContribution(data.vol,lhs_positive,data);
-            ComputeLHSGaussPointContribution(data.vol,lhs_negative,data);
-
-            if(this->Is(STRUCTURE))
+            for (unsigned int i = 0; i < GradientsValue.size(); ++i)
+                GradientsValue[i].resize(2, Dim, false);
+            for (unsigned int i = 0; i < NumNodes; ++i)
             {
-                for(unsigned int i = 0; i<NumNodes; ++i)
+                const array_1d<double, 3> &coords = GetGeometry()[i].Coordinates();
+                for (unsigned int k = 0; k < Dim; ++k)
+                {
+                    Points(i, k) = coords[k];
+                }
+            }
+
+            const unsigned int nsubdivisions = EnrichmentUtilities::CalculateEnrichedShapeFuncions(Points,
+                                                                                                   data.DN_DX,
+                                                                                                   data.distances,
+                                                                                                   Volumes,
+                                                                                                   GPShapeFunctionValues,
+                                                                                                   PartitionsSign,
+                                                                                                   GradientsValue,
+                                                                                                   NEnriched);
+
+            //compute the lhs and rhs that would correspond to it being divided
+            Matrix lhs_positive = ZeroMatrix(NumNodes, NumNodes);
+            Matrix lhs_negative = ZeroMatrix(NumNodes, NumNodes);
+
+            for (unsigned int i = 0; i < nsubdivisions; ++i)
+            {
+                if (PartitionsSign[i] > 0)
+                    ComputeLHSGaussPointContribution(Volumes[i], lhs_positive, data);
+                else
+                    ComputeLHSGaussPointContribution(Volumes[i], lhs_negative, data);
+            }
+
+            if (this->Is(STRUCTURE))
+            {
+                for (unsigned int i = 0; i < NumNodes; ++i)
                     GetGeometry()[i].GetSolutionStepValue(TEMPERATURE) = 30.0;
 
                 for (unsigned int i = 0; i < NumNodes; ++i)
@@ -413,37 +428,35 @@ public:
             }
             else
             {
-                for(unsigned int i=0; i<NumNodes; ++i)
+                for (unsigned int i = 0; i < NumNodes; ++i)
                 {
-                    for(unsigned int j=0; j<NumNodes; ++j)
+                    for (unsigned int j = 0; j < NumNodes; ++j)
                     {
-                        rLeftHandSideMatrix(i,j)                   =  lhs_positive(i,j); 
-                        rLeftHandSideMatrix(i,j+NumNodes)          =  0.0; 
-                        
-                        rLeftHandSideMatrix(i+NumNodes,j+NumNodes) =  lhs_negative(i,j); 
-                        rLeftHandSideMatrix(i+NumNodes,j)          =  0.0; 
+                        rLeftHandSideMatrix(i, j) = lhs_positive(i, j);
+                        rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
+
+                        rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = lhs_negative(i, j);
+                        rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
                     }
 
                     //side1  -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
-                    if(data.distances[i]<0)
+                    if (data.distances[i] < 0)
                     {
-                        for(unsigned int j=0; j<NumNodes; ++j)
-                            rLeftHandSideMatrix(i,j+NumNodes) = -lhs_positive(i,j); 
+                        for (unsigned int j = 0; j < NumNodes; ++j)
+                            rLeftHandSideMatrix(i, j + NumNodes) = -lhs_positive(i, j);
                     }
                     else //side2 -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
                     {
-                        for(unsigned int j=0; j<NumNodes; ++j)
-                            rLeftHandSideMatrix(i+NumNodes,j) = -lhs_negative(i,j); 
+                        for (unsigned int j = 0; j < NumNodes; ++j)
+                            rLeftHandSideMatrix(i + NumNodes, j) = -lhs_negative(i, j);
                     }
-                }                  
+                }
             }
-            Vector split_element_values(NumNodes*2);
+            Vector split_element_values(NumNodes * 2);
             GetValuesOnSplitElement(split_element_values, data.distances);
-            noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix,split_element_values);
+            noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, split_element_values);
         }
-        
     }
-
 
     /**
      * this is called during the assembling process in order
@@ -451,14 +464,14 @@ public:
      * @param rRightHandSideVector: the elemental right hand side vector
      * @param rCurrentProcessInfo: the current process info instance
      */
-    void CalculateRightHandSide(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo) override
+    void CalculateRightHandSide(VectorType &rRightHandSideVector, ProcessInfo &rCurrentProcessInfo) override
     {
         //TODO: improve speed
         Matrix tmp;
         CalculateLocalSystem(tmp, rRightHandSideVector, rCurrentProcessInfo);
     }
 
-    void FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) override
+    void FinalizeSolutionStep(ProcessInfo &rCurrentProcessInfo) override
     {
         bool active = true;
         if ((this)->IsDefined(ACTIVE))
@@ -478,17 +491,12 @@ public:
             {
                 if (distances[i] > 0)
                 {
-                    GetGeometry()[i].GetSolutionStepValue(POTENTIAL_JUMP) = 2.0/vinfinity_norm*(
-                        GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE) -
-                        GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE));
+                    GetGeometry()[i].GetSolutionStepValue(POTENTIAL_JUMP) = 2.0 / vinfinity_norm * (GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE) - GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE));
                 }
                 else
                 {
-                    GetGeometry()[i].GetSolutionStepValue(POTENTIAL_JUMP) = 2.0/vinfinity_norm*(
-                        GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE) -
-                        GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE));
+                    GetGeometry()[i].GetSolutionStepValue(POTENTIAL_JUMP) = 2.0 / vinfinity_norm * (GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE) - GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE));
                 }
-                
             }
         }
 
@@ -498,32 +506,31 @@ public:
         this->CalculateLocalSystem(rLeftHandSideMatrix, rRightHandSideVector, rCurrentProcessInfo);
 
         VectorType tmp;
-        tmp.resize(NumNodes,false);
+        tmp.resize(NumNodes, false);
 
-        ElementalData<NumNodes,Dim> data;
+        ElementalData<NumNodes, Dim> data;
 
         double internal_energy = 0.0;
 
-        if(this->IsNot(MARKER))//normal element (non-wake) - eventually an embedded
+        if (this->IsNot(MARKER)) //normal element (non-wake) - eventually an embedded
         {
             //gather nodal data
-            for(unsigned int i=0; i<NumNodes; i++)
+            for (unsigned int i = 0; i < NumNodes; i++)
                 data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
-            
-            noalias(tmp) = prod(rLeftHandSideMatrix, data.phis);
-            internal_energy = 0.5*inner_prod(tmp, data.phis);
 
+            noalias(tmp) = prod(rLeftHandSideMatrix, data.phis);
+            internal_energy = 0.5 * inner_prod(tmp, data.phis);
         }
         else
         {
             GetWakeDistances(data.distances);
-            Vector split_element_values(NumNodes*2);
+            Vector split_element_values(NumNodes * 2);
             GetValuesOnSplitElement(split_element_values, data.distances);
 
             noalias(tmp) = prod(rLeftHandSideMatrix, split_element_values);
-            internal_energy = 0.5*inner_prod(rRightHandSideVector, split_element_values);
+            internal_energy = 0.5 * inner_prod(rRightHandSideVector, split_element_values);
         }
-        this->SetValue(INTERNAL_ENERGY,internal_energy);
+        this->SetValue(INTERNAL_ENERGY, internal_energy);
     }
 
     /**
@@ -535,7 +542,7 @@ public:
      * @param rCurrentProcessInfo
      * this method is: MANDATORY
      */
-    int Check(const ProcessInfo& rCurrentProcessInfo) override
+    int Check(const ProcessInfo &rCurrentProcessInfo) override
     {
 
         KRATOS_TRY
@@ -562,11 +569,12 @@ public:
         KRATOS_CATCH("");
     }
 
-    void GetValueOnIntegrationPoints(const Variable<double>& rVariable,
-            std::vector<double>& rValues,
-            const ProcessInfo& rCurrentProcessInfo) override
+    void GetValueOnIntegrationPoints(const Variable<double> &rVariable,
+                                     std::vector<double> &rValues,
+                                     const ProcessInfo &rCurrentProcessInfo) override
     {
-        if(rValues.size() != 1) rValues.resize(1);
+        if (rValues.size() != 1)
+            rValues.resize(1);
 
         if (rVariable == PRESSURE)
         {
@@ -582,51 +590,51 @@ public:
         }
         else if (rVariable == THICKNESS)
         {
-            if(this->Is(THERMAL))
+            if (this->Is(THERMAL))
                 rValues[0] = 30.0;
-            else if(this->Is(MODIFIED))
+            else if (this->Is(MODIFIED))
                 rValues[0] = 20.0;
-            else if(this->Is(MARKER))
+            else if (this->Is(MARKER))
                 rValues[0] = 10.0;
             else
                 rValues[0] = 0.0;
         }
     }
 
-    void GetValueOnIntegrationPoints(const Variable<array_1d<double,3> >& rVariable,
-            std::vector< array_1d<double,3> >& rValues,
-            const ProcessInfo& rCurrentProcessInfo) override
+    void GetValueOnIntegrationPoints(const Variable<array_1d<double, 3>> &rVariable,
+                                     std::vector<array_1d<double, 3>> &rValues,
+                                     const ProcessInfo &rCurrentProcessInfo) override
     {
-        if(rValues.size() != 1) rValues.resize(1);
+        if (rValues.size() != 1)
+            rValues.resize(1);
 
         if (rVariable == VELOCITY)
         {
-            array_1d<double,3> v(3,0.0);
-            array_1d<double,Dim> vaux;
+            array_1d<double, 3> v(3, 0.0);
+            array_1d<double, Dim> vaux;
             ComputeVelocityUpper(vaux);
-            for(unsigned int k=0; k<Dim; k++) v[k] = vaux[k];
+            for (unsigned int k = 0; k < Dim; k++)
+                v[k] = vaux[k];
             rValues[0] = v;
         }
         else if (rVariable == VELOCITY_LOWER)
         {
-            array_1d<double,3> v(3,0.0);
-            array_1d<double,Dim> vaux;
+            array_1d<double, 3> v(3, 0.0);
+            array_1d<double, Dim> vaux;
             ComputeVelocityLower(vaux);
-            for(unsigned int k=0; k<Dim; k++) v[k] = vaux[k];
+            for (unsigned int k = 0; k < Dim; k++)
+                v[k] = vaux[k];
             rValues[0] = v;
         }
     }
-
 
     ///@}
     ///@name Access
     ///@{
 
-
     ///@}
     ///@name Inquiry
     ///@{
-
 
     ///@}
     ///@name Input and output
@@ -640,21 +648,19 @@ public:
         return buffer.str();
     }
 
-/// Print information about this object.
+    /// Print information about this object.
 
-    void PrintInfo(std::ostream& rOStream) const override
+    void PrintInfo(std::ostream &rOStream) const override
     {
         rOStream << "CompressiblePotentialFlowElement #" << Id();
     }
 
-/// Print object's data.
+    /// Print object's data.
 
-    void PrintData(std::ostream& rOStream) const override
+    void PrintData(std::ostream &rOStream) const override
     {
         pGetGeometry()->PrintData(rOStream);
     }
-
-
 
     ///@}
     ///@name Friends
@@ -662,8 +668,7 @@ public:
 
     ///@}
 
-protected:
-
+  protected:
     ///@name Protected static Member Variables
     ///@{
 
@@ -674,7 +679,7 @@ protected:
     ///@}
     ///@name Protected Operators
     ///@{
-    void GetWakeDistances(array_1d<double,NumNodes>& distances)
+    void GetWakeDistances(array_1d<double, NumNodes> &distances)
     {
         noalias(distances) = GetValue(ELEMENTAL_DISTANCES);
     }
@@ -696,9 +701,9 @@ protected:
         noalias(rhs) -= weight * prod(data.DN_DX, grad);
     }
 
-    void GetValuesOnSplitElement(Vector& split_element_values, const array_1d<double,NumNodes>& distances )
+    void GetValuesOnSplitElement(Vector &split_element_values, const array_1d<double, NumNodes> &distances)
     {
-        if(this->Is(ISOLATED))
+        if (this->Is(ISOLATED))
         {
             for (unsigned int i = 0; i < NumNodes; i++)
             {
@@ -719,7 +724,7 @@ protected:
         }
         else
         {
-                for (unsigned int i = 0; i < NumNodes; i++)
+            for (unsigned int i = 0; i < NumNodes; i++)
             {
                 if (distances[i] > 0)
                     split_element_values[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
@@ -736,11 +741,9 @@ protected:
                     split_element_values[NumNodes + i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
             }
         }
-
-        
     }
 
-    void ComputeVelocityUpper(array_1d<double,Dim>& velocity)
+    void ComputeVelocityUpper(array_1d<double, Dim> &velocity)
     {
         velocity.clear();
 
@@ -754,7 +757,7 @@ protected:
             ComputeVelocityUpperWakeElement(velocity);
     }
 
-    void ComputeVelocityLower(array_1d<double,Dim>& velocity)
+    void ComputeVelocityLower(array_1d<double, Dim> &velocity)
     {
         velocity.clear();
 
@@ -768,7 +771,7 @@ protected:
             ComputeVelocityLowerWakeElement(velocity);
     }
 
-    void ComputeVelocityNormalElement(array_1d<double,Dim>& velocity)
+    void ComputeVelocityNormalElement(array_1d<double, Dim> &velocity)
     {
         ElementalData<NumNodes, Dim> data;
 
@@ -782,7 +785,7 @@ protected:
         noalias(velocity) = prod(trans(data.DN_DX), data.phis);
     }
 
-    void ComputeVelocityUpperWakeElement(array_1d<double,Dim>& velocity)
+    void ComputeVelocityUpperWakeElement(array_1d<double, Dim> &velocity)
     {
         ElementalData<NumNodes, Dim> data;
 
@@ -792,7 +795,7 @@ protected:
         array_1d<double, NumNodes> distances;
         GetWakeDistances(distances);
 
-        if(this->Is(ISOLATED))
+        if (this->Is(ISOLATED))
         {
             //taking only positive part
             for (unsigned int i = 0; i < NumNodes; i++)
@@ -818,7 +821,7 @@ protected:
         noalias(velocity) = prod(trans(data.DN_DX), data.phis);
     }
 
-    void ComputeVelocityLowerWakeElement(array_1d<double,Dim>& velocity)
+    void ComputeVelocityLowerWakeElement(array_1d<double, Dim> &velocity)
     {
         ElementalData<NumNodes, Dim> data;
 
@@ -828,7 +831,7 @@ protected:
         array_1d<double, NumNodes> distances;
         GetWakeDistances(distances);
 
-        if(this->Is(ISOLATED))
+        if (this->Is(ISOLATED))
         {
             //taking only negative part
             for (unsigned int i = 0; i < NumNodes; i++)
@@ -850,7 +853,7 @@ protected:
                     data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
             }
         }
-        
+
         noalias(velocity) = prod(trans(data.DN_DX), data.phis);
     }
 
@@ -868,7 +871,7 @@ protected:
             std::cout << "WAKE CONDITION NOT FULFILLED IN ELEMENT # " << this->Id() << std::endl;
     }
 
-    double ComputePressureUpper(const ProcessInfo& rCurrentProcessInfo)
+    double ComputePressureUpper(const ProcessInfo &rCurrentProcessInfo)
     {
         double pressure = 0.0;
 
@@ -884,7 +887,7 @@ protected:
         return pressure;
     }
 
-    double ComputePressureLower(const ProcessInfo& rCurrentProcessInfo)
+    double ComputePressureLower(const ProcessInfo &rCurrentProcessInfo)
     {
         double pressure = 0.0;
 
@@ -900,7 +903,7 @@ protected:
         return pressure;
     }
 
-    double ComputePressureNormalElement(const ProcessInfo& rCurrentProcessInfo)
+    double ComputePressureNormalElement(const ProcessInfo &rCurrentProcessInfo)
     {
         double pressure = 0.0;
         const array_1d<double, 3> vinfinity = rCurrentProcessInfo[VELOCITY_INFINITY];
@@ -918,7 +921,7 @@ protected:
         return pressure;
     }
 
-    double ComputePressureUpperWakeElement(const ProcessInfo& rCurrentProcessInfo)
+    double ComputePressureUpperWakeElement(const ProcessInfo &rCurrentProcessInfo)
     {
         double pressure = 0.0;
         const array_1d<double, 3> vinfinity = rCurrentProcessInfo[VELOCITY_INFINITY];
@@ -936,7 +939,7 @@ protected:
         return pressure;
     }
 
-    double ComputePressureLowerWakeElement(const ProcessInfo& rCurrentProcessInfo)
+    double ComputePressureLowerWakeElement(const ProcessInfo &rCurrentProcessInfo)
     {
         double pressure = 0.0;
         const array_1d<double, 3> vinfinity = rCurrentProcessInfo[VELOCITY_INFINITY];
@@ -972,18 +975,13 @@ protected:
 
     ///@}
 
-private:
-
+  private:
     ///@name Static Member Variables
     ///@{
-
-
 
     ///@}
     ///@name Member Variables
     ///@{
-
-
 
     ///@}
     ///@name Private Operators
@@ -999,14 +997,14 @@ private:
 
     friend class Serializer;
 
-    void save(Serializer& rSerializer) const override
+    void save(Serializer &rSerializer) const override
     {
-        KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Element );
+        KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Element);
     }
 
-    void load(Serializer& rSerializer) override
+    void load(Serializer &rSerializer) override
     {
-        KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Element );
+        KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Element);
     }
 
     ///@}

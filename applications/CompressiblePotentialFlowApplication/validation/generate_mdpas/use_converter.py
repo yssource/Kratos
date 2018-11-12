@@ -21,8 +21,8 @@ Initial_FarField_MeshSize = TBD
 FarField_Refinement_Factor = TBD
 
 
-output_salome_path = "/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/output_salome/"
-output_mdpa_path = "/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/mdpas/"
+output_salome_path = "/home/inigo/simulations/naca0012/07_salome/07_MeshRefinement/output_salome/"
+output_mdpa_path = "/home/inigo/simulations/naca0012/07_salome/07_MeshRefinement/mdpas/"
 
 case = 0
 AOA = Initial_AOA

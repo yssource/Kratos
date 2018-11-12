@@ -175,7 +175,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
 
     def ExecuteFinalizeSolutionStep(self):
 
-        self.work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
+        self.work_dir = '/home/inigo/simulations/naca0012/07_salome/07_MeshRefinement/'
 
         potential_jump_results_file_name = self.work_dir + 'plots/potential_jump/data/jump/potential_jump_results.dat'
         with open(potential_jump_results_file_name,'w') as potential_jump_file:

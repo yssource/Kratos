@@ -22,7 +22,7 @@ cd $Work_Dir/plots/condition_number/
 pdflatex -interaction=batchmode main_condition.tex > main_condition_out.txt
 
 #Copying results
-DIRECTORY=/media/inigo/10740FB2740F9A1C/Implementations_testing/05_MeshRefinement
+DIRECTORY=/media/inigo/10740FB2740F9A1C/Implementations_testing/07_MeshRefinement
 mkdir -p ${DIRECTORY}_${DATE}_${GITBRANCH}
 mkdir -p ${DIRECTORY}_${DATE}_${GITBRANCH}/output_gid
 cd ../..

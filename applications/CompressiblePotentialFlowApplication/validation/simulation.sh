@@ -27,15 +27,13 @@ cd generate_mdpas/
 #rm $Work_Dir/mdpas/*
 #python3 use_converter.py
 
-#Removing plots
 cd ..
-source scripts/removing_before_kratos_run.sh
 
 #Run Kratos
-unbuffer python3 MeshRefinement.py 2>&1 | tee $NEWFILE
+source scripts/wake_implementation01.sh
+source scripts/wake_implementation02.sh
 
 source generate_mdpas/unset_parameters.sh
 
-#Remove plots after run, run latex and copy results
-source scripts/run_latex.sh
+
 

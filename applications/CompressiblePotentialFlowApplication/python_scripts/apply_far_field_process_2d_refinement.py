@@ -86,7 +86,7 @@ class ApplyFarFieldProcess(KratosMultiphysics.Process):
         
     def ExecuteFinalizeSolutionStep(self):
 
-        self.work_dir = '/home/inigo/simulations/naca0012/07_salome/07_MeshRefinement/'
+        self.work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
 
         velocity_norm_x_results_file_name = self.work_dir + 'plots/far_field/data/0_original/velocity_norm_x_results.dat'
         velocity_norm_x_file = open(velocity_norm_x_results_file_name,'w')

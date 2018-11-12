@@ -40,6 +40,10 @@
             "input_type"     : "mdpa",
             "input_filename" : "naca0012"
         },
+        "element_replace_settings": {
+                    "element_name":"ELEMENT TBD",
+                    "condition_name": "PotentialWallCondition2D2N"
+        },
         "maximum_iterations"     : 10,
         "echo_level"             : 1,
         "linear_solver_settings"  : {
@@ -62,7 +66,7 @@
             "velocity_infinity" : [10.0,0.0,0.0]
         }
     },{
-        "python_module" : "define_wake_process_2d_refinement",
+        "python_module" : "WAKE PROCESS TBD",
         "kratos_module" : "KratosMultiphysics.CompressiblePotentialFlowApplication",
         "process_name"  : "DefineWakeProcess",
         "Parameters"    : {

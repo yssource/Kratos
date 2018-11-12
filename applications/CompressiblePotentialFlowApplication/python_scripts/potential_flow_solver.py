@@ -33,6 +33,10 @@ class LaplacianSolver:
                     "input_type": "mdpa",
                     "input_filename": "unknown_name"
             },
+            "element_replace_settings": {
+                    "element_name":"CompressiblePotentialFlowElement2D3N",
+                    "condition_name": "PotentialWallCondition2D2N"
+            },
             "linear_solver_settings": {
                     "solver_type": "AMGCL",
                     "max_iteration": 400,
@@ -110,24 +114,18 @@ class LaplacianSolver:
             throw_errors = False
             KratosMultiphysics.TetrahedralMeshOrientationCheck(self.main_model_part,throw_errors).Execute()
             #here we replace the dummy elements we read with proper elements
-            self.settings.AddEmptyValue("element_replace_settings")
             if(self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE] == 3):
+                self.settings.AddEmptyValue("element_replace_settings")
                 self.settings["element_replace_settings"] = KratosMultiphysics.Parameters("""
                     {
                     "element_name":"CompressiblePotentialFlowElement3D4N",
                     "condition_name": "PotentialWallCondition3D3N"
                     }
                     """)
-            elif(self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE] == 2):
-                self.settings["element_replace_settings"] = KratosMultiphysics.Parameters("""
-                    {
-                    "element_name":"CompressiblePotentialFlowElement2D3N",
-                    "condition_name": "PotentialWallCondition2D2N"
-                    }
-                    """)
-            else:
+            elif(self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE] != 2):
                 raise Exception("Domain size is not 2 or 3!!")
             
+            print('self.settings["element_replace_settings"] =', self.settings["element_replace_settings"])
             KratosMultiphysics.ReplaceElementsAndConditionsProcess(self.main_model_part, self.settings["element_replace_settings"]).Execute()
             
         else:
@@ -167,7 +165,7 @@ class LaplacianSolver:
 
     def ComputeConditionNumber(self):
         NumberOfNodes = self.main_model_part.NumberOfNodes()
-        self.work_dir = '/home/inigo/simulations/naca0012/07_salome/07_MeshRefinement/'
+        self.work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
         #self.work_dir = '/home/inigo/simulations/naca0012/07_salome/06_Rectangle/'
 
         if(NumberOfNodes < 5.1e3):

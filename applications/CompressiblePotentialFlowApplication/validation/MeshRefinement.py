@@ -29,7 +29,7 @@ Initial_FarField_MeshSize = TBD
 FarField_Refinement_Factor = TBD
 
 work_dir = '/home/inigo/simulations/naca0012/07_salome/07_MeshRefinement/'
-input_mdpa_path = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/mdpas_all_aoa/'
+input_mdpa_path = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/mdpas_all_aoa_reverse/'
 output_gid_path = '/media/inigo/10740FB2740F9A1C/Outputs/07_MeshRefinement/'
 latex_output = open(work_dir + '/plots/latex_output.txt', 'w')
 latex_output.flush()

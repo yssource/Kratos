@@ -4,7 +4,7 @@ export LD_LIBRARY_PATH=""
 
 #Setting paths
 source /home/inigo/Documents/paths/salomeConverter.sh
-source /home/inigo/Documents/paths/kratosWake01.sh
+source /home/inigo/Documents/paths/kratosMaster.sh
 source /home/inigo/intel/mkl/bin/mklvars.sh intel64 lp64
 
 echo "PYTHONPATH = $PYTHONPATH"

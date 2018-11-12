@@ -134,7 +134,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                         if(d<0 and
                             elnode.IsNot(KratosMultiphysics.STRUCTURE) and
                             elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.UPPER_SURFACE) == True):
-                            d = self.epsilon
+                            d = -self.epsilon
                             print('\ndetected upper surface node')
                             print(elnode)
                         if( xn[0] < 0 and 

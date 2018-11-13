@@ -168,7 +168,7 @@ class LaplacianSolver:
         self.work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
         #self.work_dir = '/home/inigo/simulations/naca0012/07_salome/06_Rectangle/'
 
-        if(NumberOfNodes < 5.1e3):
+        if(NumberOfNodes < 5.0e4):
 
             print('\nComputing condition number . . .\n')
 

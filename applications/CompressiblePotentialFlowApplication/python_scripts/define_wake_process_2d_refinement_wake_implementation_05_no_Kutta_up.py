@@ -163,9 +163,12 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                             elnode.SetSolutionStepValue(KratosMultiphysics.DISTANCE, 0, distances[counter])
                             self.wake_model_part.Nodes.append(elnode)
                             counter += 1
-                            if(elnode.Is(KratosMultiphysics.STRUCTURE)):
+                            #In this implementation 05 Kutta elements are not selected
+                            #i.e. the wake condition is applied in all of the elements
+                            #It is left here commented to remember the change
+                            #if(elnode.Is(KratosMultiphysics.STRUCTURE)):
                                 #selecting Kutta elements
-                                elem.Set(KratosMultiphysics.STRUCTURE)
+                                #elem.Set(KratosMultiphysics.STRUCTURE)
                         elem.SetValue(KratosMultiphysics.ELEMENTAL_DISTANCES, distances)
         print('...Selecting wake elements finished...')
 

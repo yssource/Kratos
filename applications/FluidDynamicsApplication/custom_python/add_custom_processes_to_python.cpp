@@ -122,8 +122,8 @@ void AddCustomProcessesToPython(pybind11::module& m)
     ;
 
 
-    class_<TurbulenceStatisticsProcess, TurbulenceStatisticsProcess::Pointer, Process >(m,"TurbulenceStatisticsProcess")
-        .def(init< ModelPart&, double, bool >())
+    py::class_<TurbulenceStatisticsProcess, TurbulenceStatisticsProcess::Pointer, Process >(m,"TurbulenceStatisticsProcess")
+        .def(py::init< ModelPart&, double, bool >())
         .def("Execute",&TurbulenceStatisticsProcess::Execute)
         .def("ExecuteBeforeSolutionLoop",&TurbulenceStatisticsProcess::ExecuteBeforeSolutionLoop)
         .def("ExecuteInitializeSolutionStep",&TurbulenceStatisticsProcess::ExecuteInitializeSolutionStep)

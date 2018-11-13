@@ -171,7 +171,7 @@ void  AddCustomUtilitiesToPython(pybind11::module& m)
         .def(py::init<const unsigned int,const Variable<double>&>())
         ;
 
-    class_<Variable<TurbulenceStatisticsContainer::Pointer>,VariableData>(m, "TurbulenceStatisticsContainerVariable")
+    py::class_<Variable<TurbulenceStatisticsContainer::Pointer>,VariableData>(m, "TurbulenceStatisticsContainerVariable")
       .def( "__repr__", &Variable<TurbulenceStatisticsContainer::Pointer>::Info )
       ;
 }

@@ -200,6 +200,7 @@ def write_figures_far_field(far_field_data_directory_name, AOA, case, Airfoil_Me
         figures_file_y.flush()
 
 def read_cl_reference(AOA):
+    #values computed with the panel method from xfoil
     if(abs(AOA - 0.0) < 1e-3):
         return 0.0
     elif(abs(AOA - 1.0) < 1e-3):

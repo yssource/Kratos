@@ -159,17 +159,21 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                         elem.Set(KratosMultiphysics.MARKER, True)
                         self.wake_model_part.Elements.append(elem)
                         counter = 0
+                        counter_airfoil_nodes = 0
                         for elnode in elem.GetNodes():
                             elnode.SetSolutionStepValue(KratosMultiphysics.DISTANCE, 0, distances[counter])
                             self.wake_model_part.Nodes.append(elnode)
                             counter += 1
-                            #In this implementation 05 Kutta elements are not selected
-                            #i.e. the wake condition is applied in all of the elements
-                            #It is left here commented to remember the change
-                            #if(elnode.Is(KratosMultiphysics.STRUCTURE)):
-                                #selecting Kutta elements
-                                #elem.Set(KratosMultiphysics.STRUCTURE)
+                            #In this implementation 07 only one Kutta element is selected
+                            if(elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.UPPER_SURFACE) == True
+                                or elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.LOWER_SURFACE) == True):
+                                counter_airfoil_nodes += 1
                         elem.SetValue(KratosMultiphysics.ELEMENTAL_DISTANCES, distances)
+                        if(counter_airfoil_nodes > 1):
+                            #selecting Kutta elements
+                            elem.Set(KratosMultiphysics.STRUCTURE)
+                            print('airfoil element found = ', elem)
+
         print('...Selecting wake elements finished...')
 
 

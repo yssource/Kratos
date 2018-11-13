@@ -13,7 +13,7 @@ unbuffer python3 MeshRefinement.py 2>&1 | tee $NEWFILE
 sed 's|'"$Element"'|'"ELEMENT TBD"'|g' -i /$ProjectParameters_File_Path
 sed 's|'"$WakeProcess"'|'"WAKE PROCESS TBD"'|g' -i /$ProjectParameters_File_Path
 
-OUTPUTNAME=wake_implementation_03_no_cutting_no_penalty_TE_up
+OUTPUTNAME=wake_implementation_05_no_cutting_no_penalty_no_Kutta_TE_up
 #Remove plots after run, run latex and copy results
 source scripts/run_latex.sh
 

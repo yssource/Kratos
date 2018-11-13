@@ -210,20 +210,31 @@ class LaplacianSolver:
             eigen_solver_min = eigen_solver_factory.ConstructSolver(settings_min)
             condition_number = KratosMultiphysics.ConditionNumberUtility().GetConditionNumber(self.solver.GetSystemMatrix(), eigen_solver_max, eigen_solver_min)
 
-            print('condition_number = {:.2e}'.format(condition_number))
+            if(abs(condition_number - 1.0) < 1e-4):
+                print('Singular System. Not able to compute Condition Number. Zero EigenValue')
+                with open (self.work_dir + "mesh_refinement_loads.dat",'a') as loads_file:
+                    loads_file.write('%16s' % ("Zero Eigen"))
+                    loads_file.flush()
 
-            with open (self.work_dir + "mesh_refinement_loads.dat",'a') as loads_file:
-                loads_file.write('{0:16.2e}'.format(condition_number))
-                loads_file.flush()
+                with open (self.work_dir + "plots/results/all_cases.dat",'a') as all_cases_file:
+                    all_cases_file.write('%16s' % ("Zero Eigen"))
+                    all_cases_file.flush()
 
-            with open (self.work_dir + "plots/results/all_cases.dat",'a') as all_cases_file:
-                all_cases_file.write('{0:16.2e}'.format(condition_number))
-                all_cases_file.flush()
+            else:
+                print('condition_number = {:.2e}'.format(condition_number))
 
-            condition_results_file_name = self.work_dir + "plots/condition_number/data/condition/condition_results.dat"
-            with open(condition_results_file_name,'a') as condition_file:
-                condition_file.write('{0:16.2e} {1:16.2e}\n'.format(NumberOfNodes, condition_number))
-                condition_file.flush()
+                with open (self.work_dir + "mesh_refinement_loads.dat",'a') as loads_file:
+                    loads_file.write('{0:16.2e}'.format(condition_number))
+                    loads_file.flush()
+
+                with open (self.work_dir + "plots/results/all_cases.dat",'a') as all_cases_file:
+                    all_cases_file.write('{0:16.2e}'.format(condition_number))
+                    all_cases_file.flush()
+
+                condition_results_file_name = self.work_dir + "plots/condition_number/data/condition/condition_results.dat"
+                with open(condition_results_file_name,'a') as condition_file:
+                    condition_file.write('{0:16.2e} {1:16.2e}\n'.format(NumberOfNodes, condition_number))
+                    condition_file.flush()
 
             print('\nComputing condition number finished . . .\n')
         else:

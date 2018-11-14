@@ -30,6 +30,7 @@
 #include "custom_elements/compressible_potential_flow_element.h"
 #include "custom_elements/compressible_potential_flow_element_wake_implementation_01_cutting_no_penalty.h"
 #include "custom_elements/compressible_potential_flow_element_wake_implementation_03_no_cutting_no_penalty.h"
+#include "custom_elements/compressible_potential_flow_element_wake_implementation_09_no_cutting_no_penalty_half_kutta.h"
 #include "custom_conditions/potential_wall_condition.h"
 
 namespace Kratos {
@@ -193,6 +194,9 @@ private:
 
 		const CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty<2,3>
 				mCompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty2D3N;
+
+		const CompressiblePotentialFlowElementWakeImplementation09NoCuttingNoPenaltyHalfKutta<2,3>
+				mCompressiblePotentialFlowElementWakeImplementation09NoCuttingNoPenaltyHalfKutta2D3N;
 
 
 	///@}

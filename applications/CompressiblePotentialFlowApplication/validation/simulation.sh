@@ -30,14 +30,16 @@ cd generate_mdpas/
 cd ..
 
 #Run Kratos
-source scripts/wake_implementation01.sh
-source scripts/wake_implementation02.sh
-source scripts/wake_implementation03.sh
-source scripts/wake_implementation04.sh
-source scripts/wake_implementation05.sh
-source scripts/wake_implementation06.sh
-source scripts/wake_implementation07.sh
-source scripts/wake_implementation08.sh
+#source scripts/wake_implementation01.sh
+#source scripts/wake_implementation02.sh
+#source scripts/wake_implementation03.sh
+#source scripts/wake_implementation04.sh
+#source scripts/wake_implementation05.sh
+#source scripts/wake_implementation06.sh
+#source scripts/wake_implementation07.sh
+#source scripts/wake_implementation08.sh
+source scripts/wake_implementation09.sh
+source scripts/wake_implementation10.sh
 
 source generate_mdpas/unset_parameters.sh
 

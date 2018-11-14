@@ -32,6 +32,7 @@ KratosCompressiblePotentialFlowApplication::KratosCompressiblePotentialFlowAppli
     mCompressiblePotentialFlowElement2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mCompressiblePotentialFlowElementWakeImplementation01CuttingNoPenalty2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mCompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+    mCompressiblePotentialFlowElementWakeImplementation09NoCuttingNoPenaltyHalfKutta2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mCompressiblePotentialFlowElement3D4N(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
     mPotentialWallCondition2D2N(0, Element::GeometryType::Pointer(new Line2D2<Node<3> >(Element::GeometryType::PointsArrayType(2)))),
     mPotentialWallCondition3D3N(0, Element::GeometryType::Pointer(new Triangle3D3<Node<3> >(Element::GeometryType::PointsArrayType(3))))
@@ -64,6 +65,9 @@ void KratosCompressiblePotentialFlowApplication::Register()
 
         KRATOS_REGISTER_ELEMENT("CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty2D3N",
                                 mCompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty2D3N); //this is the name the element should have according to the naming convention
+
+        KRATOS_REGISTER_ELEMENT("CompressiblePotentialFlowElementWakeImplementation09NoCuttingNoPenaltyHalfKutta2D3N",
+                                mCompressiblePotentialFlowElementWakeImplementation09NoCuttingNoPenaltyHalfKutta2D3N); //this is the name the element should have according to the naming convention
 
 
 

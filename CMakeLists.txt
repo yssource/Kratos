@@ -13,8 +13,8 @@ endif(POLICY CMP0022)
 
 # Set here the version number **** only update upon tagging a release!
 set (KratosMultiphysics_MAJOR_VERSION 6)
-set (KratosMultiphysics_MINOR_VERSION 0)
-set (KratosMultiphysics_PATCH_VERSION 0)
+set (KratosMultiphysics_MINOR_VERSION 1)
+set (KratosMultiphysics_PATCH_VERSION Dev)
 
 # Define custom compiler build types
 set( CMAKE_CONFIGURATION_TYPES Release RelWithDebInfo Debug FullDebug Custom)

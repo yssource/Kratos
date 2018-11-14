@@ -27,6 +27,7 @@
 
 // Application includes
 #include "adjoint_fluid_application_variables.h"
+#include "reynolds_stress_tensor.h"
 
 namespace Kratos {
 
@@ -1506,7 +1507,12 @@ protected:
 
     void FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) override
     {
-        this->ProcessMatrices(rCurrentProcessInfo);
+        // this->ProcessMatrices(rCurrentProcessInfo);
+        // if (this->Id()== 4)
+        // {
+        //     ReynoldsStressTensor<TDim> mTest(*this);
+        //     mTest.test();
+        // }
     }
 
 private:

@@ -77,15 +77,15 @@ public:
         std::vector<int>& _act_dofs); 
 
     void IgaBeamElement::ComputeGeometryInitial(
-            Vector& r1,
-            Vector& r2,
+            Vector3& r1,
+            Vector3& r2,
             double& a_ini,
             double& b_ini) ;
 
     void IgaBeamElement::ComputeGeometryInitial(
-            Vector& r1,
-            Vector& r2,
-            Vector& r3,
+            Vector3& r1,
+            Vector3& r2,
+            Vector3& r3,
             double& a_ini,
             double& b_ini) ;
 
@@ -96,9 +96,9 @@ public:
             double& B);
 
     void IgaBeamElement::ComputeGeometryReference(
-            Vector& R1,
-            Vector& R2,
-            Vector& R3,
+            Vector3& R1,
+            Vector3& R2,
+            Vector3& R3,
             double& A,
             double& B) ;
                 
@@ -109,16 +109,16 @@ public:
             double& b) ; 
 
     void IgaBeamElement::ComputeGeometryActual(
-            Vector& r1,
-            Vector& r2,
-            Vector& r3,
+            Vector3& r1,
+            Vector3& r2,
+            Vector3& r3,
             double& a,
             double& b) ;
 
     void IgaBeamElement::ComputeCrossSectionGeometryReference(
-            BoundedVector<double,3>& R1,
-            BoundedVector<double,3>& R2,
-            BoundedVector<double,3>& T0_vec,
+            Vector3& R1,
+            Vector3& R2,
+            Vector3& T0_vec,
             Vector3 n_act,
             Vector3 v_act,
             Vector3 n0,
@@ -130,8 +130,8 @@ public:
             double Phi_0_der) ;
 
     void IgaBeamElement::ComputePhiReferenceProperty(
-        double Phi,
-        double Phi_0_der) ;
+        double& Phi,
+        double& Phi_0_der) ;
 
     void IgaBeamElement::GetDofsPerNode(
         std::vector<int>& _act_dofs) ;
@@ -229,6 +229,15 @@ public:
     double _dl,
         MatrixType& _gke,
         VectorType& _gfie) ; 
+
+    void IgaBeamElement::ComputeMatrixRodriues(
+        BoundedMatrix<double,3,3>& _matrix_rodrigues,
+        BoundedVector<double,3> _vec) ;
+
+    void IgaBeamElement::ComputeMatrixRodriuesDerivative(
+        BoundedMatrix<double,3,3>& _matrix_rodrigues_der,
+        BoundedVector<double,3> _vec,
+        BoundedVector<double,3> _vec_der) ;
 
 
 

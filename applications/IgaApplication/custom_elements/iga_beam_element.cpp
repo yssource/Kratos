@@ -95,6 +95,7 @@ void IgaBeamElement::CalculateAll(
 
     // get integration data
     
+    Vector t0 = GetValue(T0);
     const double integration_weight = GetValue(INTEGRATION_WEIGHT);
     Vector& shape_function_values = GetValue(SHAPE_FUNCTION_VALUES);
     Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
@@ -109,7 +110,7 @@ void IgaBeamElement::CalculateAll(
     const double _area = properties[CROSS_AREA];
     const double prestress = properties[PRESTRESS_CAUCHY];
     const double Phi = properties[PHI]; 
-    const double Phi_der_0 = properties[PHI_0_DER];
+    const double Phi_der = properties[PHI_0_DER];
     const double _m_inert_y = properties[MOMENT_OF_INERTIA_Y];
     const double _m_inert_z = properties[MOMENT_OF_INERTIA_Z];
     const double _mt_inert = properties[MOMENT_OF_INERTIA_T];
@@ -149,8 +150,6 @@ void IgaBeamElement::CalculateAll(
     ElementStiffnessMatrixNonlinear(_emod, _gmod, _area, _m_inert_y, _m_inert_z, _mt_inert, integration_weight, _gke, _gfie);
     // IgaDebug::CheckVector(expected_data,"stiffness", _gke);
     // IgaDebug::CheckVector(expected_data,"external_force", _gkfi);
-
-
 
 
 
@@ -346,8 +345,8 @@ void IgaBeamElement::StffnessMatrixElementLinear(
     double Phi;
     double Phi_der;
 
-    Vector r_1;   // 1st Derivative of the Curve Deformed Config. 
-    Vector r_2;   // 2nd DErivative of the Curve Deformed Config.
+    Vector3 r_1;   // 1st Derivative of the Curve Deformed Config. 
+    Vector3 r_2;   // 2nd DErivative of the Curve Deformed Config.
     double a;               // Length of the Base Vector in Deformed Config.
     double b;               // Curvatur Including the Metric in Defomred Config. 
     double b_n;
@@ -452,6 +451,9 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
         MatrixType& _gke,
         VectorType& _gfie){
         
+    // tmporary debug data
+    auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
+    Vector t0 = GetValue(T0);
 
     // SetUp empty stiffness Matrix
     // Matrix _gke;
@@ -473,12 +475,12 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
 // //###################
 
     // declaration
-    Vector R_1;   // 1st Derivative of the Curve Undeformed Config
-    Vector R_2;   // 2nd Derivative of the Curve Undeformed Config
+    Vector3 R1;   // 1st Derivative of the Curve Undeformed Config
+    Vector3 R2;   // 2nd Derivative of the Curve Undeformed Config
     double A;               // Length of the Base Vector
     double B;               // Curvature Including the Metric
-    Vector r_1;   // 1st Derivative of the Curve Deformed Config. 
-    Vector r_2;   // 2nd DErivative of the Curve Deformed Config.
+    Vector3 r1;   // 1st Derivative of the Curve Deformed Config. 
+    Vector3 r2;   // 2nd DErivative of the Curve Deformed Config.
     double a;               // Length of the Base Vector in Deformed Config.
     double b;               // Curvatur Including the Metric in Defomred Config. 
 
@@ -499,12 +501,12 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
 // Declaration of Pricipal Axis
 //# TODO ### How to use Vector3. Do i need to #include vector.h ?
 
-    Vector3 N;     // Principal Axis 1 of Cross Section in UNdeformed Config.
-    Vector3 V;   // Prinzipal Axis 2 of Cross Section in UNdeformed Config. 
-    Vector3 n;   // Principal Axis 1 Of Cross Section in Defomred Config.
-    Vector3 v;  // Principal Axis 2 of Cross Section in Deformed Config. 
-    Vector3 N0;    // Principal Axis 1 of Cross Section in Reference Config. 
-    Vector3 V0;    // Principal Axis 2 of Cross Section in Reference Config. 
+    BoundedVector<double,3> N;     // Principal Axis 1 of Cross Section in UNdeformed Config.
+    BoundedVector<double,3> V;   // Prinzipal Axis 2 of Cross Section in UNdeformed Config. 
+    BoundedVector<double,3> n;   // Principal Axis 1 Of Cross Section in Defomred Config.
+    BoundedVector<double,3> v;  // Principal Axis 2 of Cross Section in Deformed Config. 
+    BoundedVector<double,3> N0;    // Principal Axis 1 of Cross Section in Reference Config. 
+    BoundedVector<double,3> V0;    // Principal Axis 2 of Cross Section in Reference Config. 
 
 
     // Material And Cross Section
@@ -555,9 +557,9 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     Matrix ket(NumberOfDofs(), NumberOfDofs()); 
 
 
-//     // Compute the Vectors R1 R2 and the Lentghts A and B in undeformed and deformed state
-//     ComputeGeometryReference(_u_act, deriv1, deriv2, R_1, R_2, A, B);
-//     ComputeGeometryActual(_u_act, deriv1, deriv2, r_1, r_2, a, b); 
+   // Compute the Vectors R1 R2 and the Lentghts A and B in undeformed and deformed state
+    ComputeGeometryReference(R1, R2, A, B);
+    ComputeGeometryActual(r1, r1, a, b);
 
 
     // get Previous Results
@@ -576,7 +578,45 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     Phi = 0;
     Phi_der = 0;
 
+
+    double R1_dL = norm_2(R1);
+
+    // Compute Matrix Lambda 
+
+    BoundedMatrix<double,3,3> matrix_lambda;
+    BoundedVector<double,3> T_vec = R1 / R1_dL;
     
+    ComputeMatrixLambda(matrix_lambda, t0, T_vec);
+    IgaDebug::CheckMatrix(expected_data, "MATRIX_LAMBDA", matrix_lambda);
+
+    // Compute Matrix Lambda first Derivative
+
+    BoundedMatrix<double,3,3> matrix_lambda_der1;
+    BoundedVector<double,3> t_der1;
+    BoundedVector<double,3> t0_der1;
+    t0_der1.clear();
+
+    t_der1 = R2 / R1_dL - inner_prod(R1, R2) / std::pow(R1_dL,3) * R1;
+    ComputeMatrixLambdaFirstDerivative(matrix_lambda_der1, t0, T_vec, t0_der1, t_der1);
+    IgaDebug::CheckMatrix(expected_data, "MATRIX_LAMBDA_DER", matrix_lambda_der1);
+
+    BoundedMatrix<double,3,3> matrix_rodrigues;
+    matrix_rodrigues.clear();
+    ComputeMatrixRodriues(matrix_rodrigues, T_vec);
+    IgaDebug::CheckMatrix(expected_data, "MATRIX_RODRIGUES", matrix_rodrigues);
+
+    BoundedMatrix<double,3,3> matrix_rodrigues_der; 
+    matrix_rodrigues_der.clear();
+    ComputeMatrixRodriuesDerivative(matrix_rodrigues_der, T_vec, t_der1);
+    IgaDebug::CheckMatrix(expected_data, "MATRIX_RODRIGUES_DERIVATIVE", matrix_rodrigues_der);
+
+
+    // # TODO MORGEN ###
+
+
+
+
+
 
 
 
@@ -617,8 +657,8 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
      */
 //#--------------------------------------------------------------------------------
 void IgaBeamElement::ComputeGeometryInitial(
-        Vector& r1,
-        Vector& r2,
+        Vector3& r1,
+        Vector3& r2,
         double& a_ini,
         double& b_ini)
 {
@@ -692,9 +732,9 @@ void IgaBeamElement::ComputeGeometryInitial(
      */
 //#--------------------------------------------------------------------------------
 void IgaBeamElement::ComputeGeometryInitial(
-        Vector& r1,
-        Vector& r2,
-        Vector& r3,
+        Vector3& r1,
+        Vector3& r2,
+        Vector3& r3,
         double& a_ini,
         double& b_ini)
 {
@@ -837,9 +877,9 @@ void IgaBeamElement::ComputeGeometryReference(
 //#--------------------------------------------------------------------------------
 
 void IgaBeamElement::ComputeGeometryReference(
-        Vector& R1,
-        Vector& R2,
-        Vector& R3,
+        Vector3& R1,
+        Vector3& R2,
+        Vector3& R3,
         double& A,
         double& B){
 
@@ -970,9 +1010,9 @@ void IgaBeamElement::ComputeGeometryActual(
 //#--------------------------------------------------------------------------------
 
 void IgaBeamElement::ComputeGeometryActual(
-        Vector& r1,
-        Vector& r2,
-        Vector& r3,
+        Vector3& r1,
+        Vector3& r2,
+        Vector3& r3,
         double& a,
         double& b)
 {    
@@ -1030,9 +1070,9 @@ void IgaBeamElement::ComputeGeometryActual(
      */
 //#--------------------------------------------------------------------------------
 void IgaBeamElement::ComputeCrossSectionGeometryReference(
-        BoundedVector<double,3>& R1,
-        BoundedVector<double,3>& R2,
-        BoundedVector<double,3>& T0_vec,
+        Vector3& R1,
+        Vector3& R2,
+        Vector3& T0_vec,
         Vector3 n_act,
         Vector3 v_act,
         Vector3 n0,
@@ -1048,22 +1088,39 @@ void IgaBeamElement::ComputeCrossSectionGeometryReference(
 
     BoundedMatrix<double,3,3> mat_lamb;
     BoundedMatrix<double,3,3> mat_lamb_deriv;
-    BoundedMatrix<double,3,3> mat_rod;
     BoundedMatrix<double,3,3> mat_rod_deriv;
     BoundedMatrix<double,3,3> mat_Ax1;
     mat_Ax1.clear();
+    BoundedMatrix<double,3,3> matrix_rodrigues;
+
+    matrix_rodrigues.clear();
+
+
 
     double R1_dl = norm_2(R1);
 
-    BoundedVector<double,3> T_deriv;
-    BoundedVector<double,3> T0_deriv;
-    T0_deriv.clear(); 
+    BoundedVector<double,3> T_der;
+    BoundedVector<double,3> T0_der;
+    T0_der.clear(); 
 
-    T_deriv = R2/R1_dl - inner_prod(R1,R2) / std::pow(R1_dl,3) * R1; 
+    T_der = R2 / R1_dl - inner_prod(R1, R2) / std::pow(R1_dl, 3) * R1; 
+    BoundedVector<double,3> T_vec = R1 / R1_dl;
 
     BoundedVector<double,3> _T_vec = R1/R1_dl; 
 
-    //# TODO ### Continue with function [ mal_lambda]
+    double alpha;
+    alpha = acos(inner_prod(T0_vec, T_vec) / norm_2(T0_vec) / norm_2(T_vec));
+
+    double alpha_der;
+    alpha_der = - 1.0 / (std::sqrt(1-std::pow(inner_prod(T0_vec, T_vec) / norm_2(T0_vec) / norm_2(T_vec), 2))) 
+                * (inner_prod(T0_vec, T_der) / norm_2(T0_vec) / norm_2(T_vec)
+                - inner_prod(T0_vec, T_vec) / norm_2(T0_vec) / std::pow(norm_2(T_vec), 3)
+                * inner_prod(T_vec, T_der));
+    
+    ComputeMatrixRodriues(matrix_rodrigues, T_vec);
+
+ 
+
 
 
 
@@ -1160,17 +1217,9 @@ Vector IgaBeamElement::CoumputeEplsilonDof(Vector& _r1)
      */
 //#--------------------------------------------------------------------------------
 void IgaBeamElement::ComputePhiReferenceProperty(
-        double Phi,
-        double Phi_0_der)
-{
-    // Define Variables
-    double phi_0;
-    double phi_1;
-    double diff_phi;
-    double u_0;
-    double u_1;
-    int n_size;
-    
+        double& Phi,
+        double& Phi_0_der)
+{   
     // Construct Vector of Temporarry dislplacements
     array_1d<double,4> tmp_ini_disp; 
     // Get Shape Function Derivatieves from the Element
@@ -1275,7 +1324,7 @@ void IgaBeamElement::ComputeMatrixLambda(
         for (int i = 0; i < 3; i++) {_matrix_lambda(i,i) = inner_prod(_vec1, _vec2) ;}
         // Cross Product Vector - Matrix [hardcoded Implementation] /# TODO ### Mit Karat Function ersetzen
         _matrix_lambda += CrossProductVectorMatrix(Cross(_vec1, _vec2), matrix_identity);
-        _matrix_lambda += outer_prod(vec1_x_vec2, vec1_x_vec2);
+        matrix_lambda_tmp += outer_prod(vec1_x_vec2, vec1_x_vec2);
 
         tmp = 1.0 / (1.0 + inner_prod(_vec1, _vec2)); 
         matrix_lambda_tmp = matrix_lambda_tmp * tmp; 
@@ -1342,8 +1391,8 @@ void IgaBeamElement::ComputeMatrixLambdaFirstDerivative(
     _matrix_lambda_der += outer_prod(T1_x_T2, T1_x_T2) * tmp;
     tmp = 1.0/(1.0 + T1_T2);
     
-    _matrix_lambda_der += outer_prod(T_x_der, T1_x_T2);
-    _matrix_lambda_der += outer_prod(T1_x_T2, T_x_der);
+    _matrix_lambda_der += outer_prod(T_x_der, T1_x_T2) * tmp;
+    _matrix_lambda_der += outer_prod(T1_x_T2, T_x_der) * tmp;
 }
 
 //#################################################################################
@@ -2471,6 +2520,98 @@ void IgaBeamElement::ComputeMatrixLambdaFirstDerivativeSecondVariation(
         }
     }
 }
+
+//#################################################################################
+//#################################################################################
+//#
+//#                        +++ Compute Matrix Rodrigueas +++
+//#
+//#################################################################################
+//#################################################################################
+//#
+/** Computes the Variation of the Deriative of the Rotation Matrix Lambda (vec1 --> Vec2)
+     * 
+     * @param[in]   _matrix_rodrigues   Rotaition Matrix 
+     * @param[in]   _vec1               initial Vector
+     * @param[in]   _phi                actual Vector
+     * 
+     * @param[return]   Matrix to Transform from vec1 to vec2
+     * 
+     * @author L.Rauch (11/2018)
+     * 
+     * @note   A.Bauer (11/2014)
+     */
+//#--------------------------------------------------------------------------------
+void IgaBeamElement::ComputeMatrixRodriues(
+    BoundedMatrix<double,3,3>& _matrix_rodrigues,
+    BoundedVector<double,3> _vec)
+    {
+        // Get Phi fro the Model Geometry
+        // get properties
+        const auto& properties = GetProperties();
+        const double phi = properties[PHI]; 
+
+        // double phi;
+        // double phi_0_der;
+        // ComputePhiReferenceProperty(phi, phi_0_der);
+
+        _matrix_rodrigues.clear();
+        BoundedMatrix<double,3,3> matrix_identity = IdentityMatrix(3);    // ZeroMatrix(3,3);
+
+        for (int i = 0; i < 3; i++)
+            _matrix_rodrigues(i,i) += cos(phi);
+
+        _matrix_rodrigues += CrossProductVectorMatrix(_vec, matrix_identity) * sin(phi); 
+    }
+
+//#################################################################################
+//#################################################################################
+//#
+//#                        +++ Compute Matrix Rodrigues Derivative +++
+//#
+//#################################################################################
+//#################################################################################
+//#
+/** Computes the Variation of the Deriative of the Rotation Matrix Lambda (vec1 --> Vec2)
+     * 
+     * @param[in]   _matrix_rodrigues_derivative   Rotaition Matrix 
+     * @param[in]   _vec1               initial Vector
+     * @param[in]   _vec1_der           initial Vector
+     * @param[in]   _phi                actual Vector
+     * @param[in]   _phi_der            actual Vector
+     * 
+     * @param[return]   Matrix to Transform from vec1 to vec2
+     * 
+     * @author L.Rauch (11/2018)
+     * 
+     * @note   A.Bauer (11/2014)
+     */
+//#--------------------------------------------------------------------------------
+void IgaBeamElement::ComputeMatrixRodriuesDerivative(
+    BoundedMatrix<double,3,3>& _matrix_rodrigues_der,
+    BoundedVector<double,3> _vec,
+    BoundedVector<double,3> _vec_der)
+{
+    // Get Debug Information
+    // Get Phi fro the Model Geometry
+    // get properties
+    const auto& properties = GetProperties();
+    const double phi = properties[PHI]; 
+    const double phi_der = properties[PHI_0_DER];
+    
+    // double phi;
+    // double phi_der;
+    // ComputePhiReferenceProperty(phi, phi_der);
+
+    BoundedMatrix<double,3,3> matrix_identity = IdentityMatrix(3);  // ZeroMatrix(3,3);
+
+    for (int i = 0; i < 3; i++)
+        _matrix_rodrigues_der(i,i) = -phi_der * sin(phi);
+
+    _matrix_rodrigues_der += CrossProductVectorMatrix(_vec, matrix_identity) * cos(phi) * phi_der;
+    _matrix_rodrigues_der += CrossProductVectorMatrix(_vec_der, matrix_identity) * sin(phi);
+}
+
 
 
 

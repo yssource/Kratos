@@ -61,5 +61,3 @@ kratos/includes/kratos_version.h
 
 *.h~
 *.cpp~
-
-applications/python_scripts/beam_profiles\.csv

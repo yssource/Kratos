@@ -80,6 +80,8 @@ class LaplacianSolver:
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.EXTERNAL_ENERGY)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.ENERGY_NORM_REFERENCE)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.POTENTIAL_ENERGY_REFERENCE)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.TRAILING_EDGE)
 
         
     def AddDofs(self):
@@ -168,7 +170,7 @@ class LaplacianSolver:
         self.work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
         #self.work_dir = '/home/inigo/simulations/naca0012/07_salome/06_Rectangle/'
 
-        if(NumberOfNodes < 5.0e4):
+        if(NumberOfNodes < 5.0e1):
 
             print('\nComputing condition number . . .\n')
 

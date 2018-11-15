@@ -87,8 +87,10 @@ class DefineWakeProcess(KratosMultiphysics.Process):
         #Selecting upper and lower surface nodes
         for node in self.upper_surface_model_part.Nodes:
             node.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.UPPER_SURFACE, True)
+            node.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL, True)
         for node in self.lower_surface_model_part.Nodes:
             node.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.LOWER_SURFACE, True)
+            node.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL, True)
 
         #compute the distances of the elements of the wake, and decide which ones are wake
         xn = KratosMultiphysics.Vector(3)

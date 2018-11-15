@@ -179,18 +179,26 @@ endif(DEFINED KRATOS_INSTALL_PREFIX)
 # Set kratos specific module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules")
 
+# Pybind11
+include(pybind11Tools)
+
 if(USE_COTIRE MATCHES ON)
     include(cotire)
 endif(USE_COTIRE MATCHES ON)
-
-################### PYBIND11
-include(pybind11Tools)
 
 # Reset pybind11 config and remove -LTO on FullDebug to speedup linking time,
 if(CMAKE_BUILD_TYPE MATCHES FullDebug)
     set(PYBIND11_LTO_CXX_FLAGS "" CACHE INTERNAL "")
     set(PYBIND11_LTO_LINKER_FLAGS "" CACHE INTERNAL "")
 endif(CMAKE_BUILD_TYPE MATCHES FullDebug)
+
+# Set installation directory
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/bin/${CMAKE_SYSTEM_NAME}" )
+    message("-------------------------------- Standard install dir ${CMAKE_INSTALL_PREFIX}")
+else(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    message("-------------------------------- User defined install dir ${CMAKE_INSTALL_PREFIX}")
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 # *****************************
 # Find all dependencies
@@ -401,14 +409,6 @@ endif(${INSTALL_RUNKRATOS} MATCHES ON )
 if(${MPI_NEEDED} MATCHES ON )
     add_subdirectory(external_libraries/mpi_python)
 endif(${MPI_NEEDED} MATCHES ON )
-
-# Set installation directory
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/bin/${CMAKE_SYSTEM_NAME}" )
-    message("-------------------------------- Standard install dir ${CMAKE_INSTALL_PREFIX}")
-else(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    message("-------------------------------- User defined install dir ${CMAKE_INSTALL_PREFIX}")
-endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 # Install Files
 install(FILES "${CMAKE_SOURCE_DIR}/kratos/python_interface/__init__.py" DESTINATION KratosMultiphysics )

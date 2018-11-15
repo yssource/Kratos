@@ -33,6 +33,12 @@ void  AddCustomUtilitiesToPython(pybind11::module& m)
         .def("ReadPrestressData",&FormfindingIOUtility::ReadPrestressData )
         .def("PrintPrestressData",&FormfindingIOUtility::PrintPrestressData )
         ;
+
+    py::class_<AssignMaterialOrientationUtility>(m,"AssignMaterialOrientationUtility")
+        .def(py::init<ModelPart&>())
+        .def("Execute",&AssignMaterialOrientationUtility::Execute)
+        .def("WriteFiberAngles",&AssignMaterialOrientationUtility::WriteFiberAngles )
+        ;
 }
 
 }  // namespace Python.

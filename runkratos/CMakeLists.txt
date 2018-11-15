@@ -8,7 +8,7 @@ include(InstallRequiredSystemLibraries)
 
 ## generate variables with the sources
 set( EMBEDDED_PYTHON_SOURCES
- 	${CMAKE_CURRENT_SOURCE_DIR}/krun_main.cpp
+ 	${CMAKE_CURRENT_SOURCE_DIR}/runkratos.cpp
      )
 
 

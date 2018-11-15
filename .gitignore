@@ -16,7 +16,6 @@ packaging_aux/kratos.conf
 KratosMultiphysics/*
 libpython*
 libs/*
-runkratos
 script.py
 
 # Version

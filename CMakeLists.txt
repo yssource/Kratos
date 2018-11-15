@@ -234,14 +234,14 @@ if(${USE_CUDA} MATCHES ON)
 endif(${USE_CUDA} MATCHES ON)
 
 # Follow the symbolic links for the python lib only if needed
-if(${INSTALL_EMBEDDED_PYTHON} MATCHES ON )
+if(${INSTALL_RUNKRATOS} MATCHES ON )
     foreach( l ${PYTHON_LIBRARIES})
         get_filename_component(python_lib ${l} REALPATH)
         set(PYTHON_LIBRARIES_REALPATH ${PYTHON_LIBRARIES_REALPATH} ${python_lib})
     endforeach(l)
 
     set(PYTHON_LIBRARIES ${PYTHON_LIBRARIES_REALPATH} CACHE STRING "exact file of the PYTHON library" FORCE)
-endif(${INSTALL_EMBEDDED_PYTHON} MATCHES ON )
+endif(${INSTALL_RUNKRATOS} MATCHES ON )
 
 # Enable BLAS and LAPACK
 set(BLAS_INCLUDE_NEEDED OFF)
@@ -393,9 +393,9 @@ if(DEFINED KRATOS_EXTERNAL_APPLICATION_DIR)
 endif(DEFINED KRATOS_EXTERNAL_APPLICATION_DIR)
 
 # Embedded python - compiles "krun and packages the python lib needed"
-if(${INSTALL_EMBEDDED_PYTHON} MATCHES ON )
-    add_subdirectory(embedded_python)
-endif(${INSTALL_EMBEDDED_PYTHON} MATCHES ON )
+if(${INSTALL_RUNKRATOS} MATCHES ON )
+    add_subdirectory(runkratos)
+endif(${INSTALL_RUNKRATOS} MATCHES ON )
 
 # Mpi
 if(${MPI_NEEDED} MATCHES ON )

@@ -195,7 +195,7 @@ endif(CMAKE_BUILD_TYPE MATCHES FullDebug)
 # Set installation directory
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     # Setting the cache path prevents it to change in case someone 'make' after modifying this file and not reconfiguring
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/bin/${CMAKE_SYSTEM_NAME}" CACHE PATH "Default Install path" FORCE)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/bin/${CMAKE_SYSTEM_NAME}/${CMAKE_BUILD_TYPE}" CACHE PATH "Default Install path" FORCE)
     message("-------------------------------- Standard install dir ${CMAKE_INSTALL_PREFIX}")
 else(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     message("-------------------------------- User defined install dir ${CMAKE_INSTALL_PREFIX}")
@@ -370,7 +370,7 @@ message( " ")
 
 ######################################################################################
 
-#include internal dependencies
+# Include dir for external libraries
 include_directories( ${CMAKE_SOURCE_DIR}/external_libraries )
 
 # defines needed
@@ -388,18 +388,34 @@ add_subdirectory(kratos)
 
 # Applications
 # Internal applicatons work as usual.
-add_subdirectory(applications)
+# add_subdirectory(applications)
+
+# Experimental: Add applications by directory instead of ON OFF
+message("Adding applications:")
+if(DEFINED KRATOS_APPLICATIONS)
+    foreach(APPLICATION_DIR ${KRATOS_APPLICATIONS})
+        message("\t${APPLICATION_DIR}")
+    endforeach(APPLICATION_DIR ${KRATOS_APPLICATIONS})
+endif(DEFINED KRATOS_APPLICATIONS)
+
+message("Configuring applications")
+if(DEFINED KRATOS_APPLICATIONS)
+    foreach(APPLICATION_DIR ${KRATOS_APPLICATIONS})
+        add_subdirectory(applications/${APPLICATION_DIR})
+    endforeach(APPLICATION_DIR ${KRATOS_APPLICATIONS})
+endif(DEFINED KRATOS_APPLICATIONS)
 
 # External applications
 # if -DKRATOS_EXTERNAL_APPLICATION_DIR is defined iterate over all the directories and look for applications
 # in them
-if(DEFINED KRATOS_EXTERNAL_APPLICATION_DIR)
-    foreach(APPLICATION_EXTERNAL_DIR ${KRATOS_EXTERNAL_APPLICATION_DIR})
-        get_filename_component(APPLICATION_EXTERNAL_FOLDER ${APPLICATION_EXTERNAL_DIR} NAME)
-        message("Trying to add external application directory '${APPLICATION_EXTERNAL_FOLDER}' located in '${APPLICATION_EXTERNAL_DIR}'")
-        add_subdirectory(${APPLICATION_EXTERNAL_DIR} ${CMAKE_CURRENT_BINARY_DIR}/${APPLICATION_EXTERNAL_FOLDER})
-    endforeach(APPLICATION_EXTERNAL_DIR ${KRATOS_EXTERNAL_APPLICATION_DIR})
-endif(DEFINED KRATOS_EXTERNAL_APPLICATION_DIR)
+# message("Adding external applications")
+# if(DEFINED KRATOS_EXTERNAL_APPLICATION_DIR)
+#     foreach(APPLICATION_EXTERNAL_DIR ${KRATOS_EXTERNAL_APPLICATION_DIR})
+#         get_filename_component(APPLICATION_EXTERNAL_FOLDER ${APPLICATION_EXTERNAL_DIR} NAME)
+#         message("\t - Adding ${KRATOS_EXTERNAL_APPLICATION_DIR}/${APPLICATION_EXTERNAL_FOLDER}")
+#         add_subdirectory(${APPLICATION_EXTERNAL_DIR} ${CMAKE_CURRENT_BINARY_DIR}/${APPLICATION_EXTERNAL_FOLDER})
+#     endforeach(APPLICATION_EXTERNAL_DIR ${KRATOS_EXTERNAL_APPLICATION_DIR})
+# endif(DEFINED KRATOS_EXTERNAL_APPLICATION_DIR)
 
 # Embedded python - compiles "krun and packages the python lib needed"
 if(${INSTALL_RUNKRATOS} MATCHES ON )

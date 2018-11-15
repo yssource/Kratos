@@ -10,8 +10,8 @@
 //  Main authors:    Riccardo Rossi
 //
 
-#if !defined(KRATOS_COMPRESSIBLE_POTENTIAL_FLOW_ELEMENT_03_H_INCLUDED)
-#define KRATOS_COMPRESSIBLE_POTENTIAL_FLOW_ELEMENT_03_H_INCLUDED
+#if !defined(KRATOS_COMPRESSIBLE_POTENTIAL_FLOW_ELEMENT_11_H_INCLUDED)
+#define KRATOS_COMPRESSIBLE_POTENTIAL_FLOW_ELEMENT_11_H_INCLUDED
 
 // #define SYMMETRIC_CONSTRAINT_APPLICATION
 
@@ -51,7 +51,7 @@ namespace Kratos
 ///@{
 
 template <int Dim, int NumNodes>
-class CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty : public Element
+class CompressiblePotentialFlowElementWakeImplementation11NoAirfoil : public Element
 {
   public:
     template <unsigned int TNumNodes, unsigned int TDim>
@@ -72,8 +72,8 @@ class CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty : p
 
     ///@}
     ///@name Pointer Definitions
-    /// Pointer definition of CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty
-    KRATOS_CLASS_POINTER_DEFINITION(CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty);
+    /// Pointer definition of CompressiblePotentialFlowElementWakeImplementation11NoAirfoil
+    KRATOS_CLASS_POINTER_DEFINITION(CompressiblePotentialFlowElementWakeImplementation11NoAirfoil);
 
     ///@}
     ///@name Life Cycle
@@ -82,39 +82,39 @@ class CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty : p
     /**
      * Constructor.
      */
-    CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty(IndexType NewId = 0){};
+    CompressiblePotentialFlowElementWakeImplementation11NoAirfoil(IndexType NewId = 0){};
 
     /**
      * Constructor using an array of nodes
      */
-    CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty(IndexType NewId, const NodesArrayType &ThisNodes) : Element(NewId, ThisNodes){};
+    CompressiblePotentialFlowElementWakeImplementation11NoAirfoil(IndexType NewId, const NodesArrayType &ThisNodes) : Element(NewId, ThisNodes){};
 
     /**
      * Constructor using Geometry
      */
-    CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty(IndexType NewId, GeometryType::Pointer pGeometry) : Element(NewId, pGeometry){};
+    CompressiblePotentialFlowElementWakeImplementation11NoAirfoil(IndexType NewId, GeometryType::Pointer pGeometry) : Element(NewId, pGeometry){};
 
     /**
      * Constructor using Properties
      */
-    CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties) : Element(NewId, pGeometry, pProperties){};
+    CompressiblePotentialFlowElementWakeImplementation11NoAirfoil(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties) : Element(NewId, pGeometry, pProperties){};
 
     /**
      * Copy Constructor
      */
-    CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty(CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty const &rOther){};
+    CompressiblePotentialFlowElementWakeImplementation11NoAirfoil(CompressiblePotentialFlowElementWakeImplementation11NoAirfoil const &rOther){};
 
     /**
      * Destructor
      */
-    ~CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty() override{};
+    ~CompressiblePotentialFlowElementWakeImplementation11NoAirfoil() override{};
 
     ///@}
     ///@name Operators
     ///@{
 
     /// Assignment operator.
-    CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty &operator=(CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty const &rOther)
+    CompressiblePotentialFlowElementWakeImplementation11NoAirfoil &operator=(CompressiblePotentialFlowElementWakeImplementation11NoAirfoil const &rOther)
     {
         BaseType::operator=(rOther);
         Flags::operator=(rOther);
@@ -135,7 +135,7 @@ class CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty : p
     Element::Pointer Create(IndexType NewId, NodesArrayType const &ThisNodes, PropertiesType::Pointer pProperties) const override
     {
         KRATOS_TRY
-        return Element::Pointer(new CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty(NewId, GetGeometry().Create(ThisNodes), pProperties));
+        return Element::Pointer(new CompressiblePotentialFlowElementWakeImplementation11NoAirfoil(NewId, GetGeometry().Create(ThisNodes), pProperties));
         KRATOS_CATCH("");
     }
 
@@ -149,7 +149,7 @@ class CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty : p
     Element::Pointer Create(IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const override
     {
         KRATOS_TRY
-        return Element::Pointer(new CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty(NewId, pGeom, pProperties));
+        return Element::Pointer(new CompressiblePotentialFlowElementWakeImplementation11NoAirfoil(NewId, pGeom, pProperties));
         KRATOS_CATCH("");
     }
 
@@ -163,7 +163,7 @@ class CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty : p
     Element::Pointer Clone(IndexType NewId, NodesArrayType const &ThisNodes) const override
     {
         KRATOS_TRY
-        return Element::Pointer(new CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty(NewId, GetGeometry().Create(ThisNodes), pGetProperties()));
+        return Element::Pointer(new CompressiblePotentialFlowElementWakeImplementation11NoAirfoil(NewId, GetGeometry().Create(ThisNodes), pGetProperties()));
         KRATOS_CATCH("");
     }
 
@@ -315,49 +315,33 @@ class CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty : p
             ComputeLHSGaussPointContribution(data.vol, lhs_positive, data);
             ComputeLHSGaussPointContribution(data.vol, lhs_negative, data);
 
-            if (this->Is(STRUCTURE))
-            {
-                for (unsigned int i = 0; i < NumNodes; ++i)
+            //Looping over rows
+            for (unsigned int i = 0; i < NumNodes; ++i)
+            {   //Looping over columngs
+                for (unsigned int j = 0; j < NumNodes; ++j)
+                {   //Filling the diagonal blocks (i.e. decoupling upper and lower fields)
+                    rLeftHandSideMatrix(i, j) = lhs_positive(i, j);
+                    rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
+
+                    rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = lhs_negative(i, j);
+                    rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
+                }
+
+                if (data.distances[i] < 0.0 && !GetGeometry()[i].FastGetSolutionStepValue(AIRFOIL))
+                {//side1  -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs and not on the airfoil nodes
+                    //Marking nodes where the wake constraint is applied
                     GetGeometry()[i].GetSolutionStepValue(TEMPERATURE) = 30.0;
-
-                for (unsigned int i = 0; i < NumNodes; ++i)
-                {
                     for (unsigned int j = 0; j < NumNodes; ++j)
-                    {
-                        rLeftHandSideMatrix(i, j) = lhs_positive(i, j);
-                        rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
-
-                        rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = lhs_negative(i, j);
-                        rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
-                    }
+                        rLeftHandSideMatrix(i, j + NumNodes) = -lhs_positive(i, j);
+                }
+                else if(data.distances[i] > 0.0 && !GetGeometry()[i].FastGetSolutionStepValue(AIRFOIL))
+                {//side2 -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs and not on the airfoil nodes
+                    GetGeometry()[i].GetSolutionStepValue(TEMPERATURE) = 30.0;
+                    for (unsigned int j = 0; j < NumNodes; ++j)
+                        rLeftHandSideMatrix(i + NumNodes, j) = -lhs_negative(i, j);
                 }
             }
-            else
-            {
-                for (unsigned int i = 0; i < NumNodes; ++i)
-                {
-                    for (unsigned int j = 0; j < NumNodes; ++j)
-                    {
-                        rLeftHandSideMatrix(i, j) = lhs_positive(i, j);
-                        rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
 
-                        rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = lhs_negative(i, j);
-                        rLeftHandSideMatrix(i + NumNodes, j) = 0.0;
-                    }
-
-                    //side1  -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
-                    if (data.distances[i] < 0)
-                    {
-                        for (unsigned int j = 0; j < NumNodes; ++j)
-                            rLeftHandSideMatrix(i, j + NumNodes) = -lhs_positive(i, j);
-                    }
-                    else //side2 -assign constraint only on the NEGATIVE_FACE_PRESSURE dofs
-                    {
-                        for (unsigned int j = 0; j < NumNodes; ++j)
-                            rLeftHandSideMatrix(i + NumNodes, j) = -lhs_negative(i, j);
-                    }
-                }
-            }
             Vector split_element_values(NumNodes * 2);
             GetValuesOnSplitElement(split_element_values, data.distances);
             noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, split_element_values);
@@ -455,12 +439,12 @@ class CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty : p
 
         if (this->Id() < 1)
         {
-            KRATOS_THROW_ERROR(std::logic_error, "CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty found with Id 0 or negative", "")
+            KRATOS_THROW_ERROR(std::logic_error, "CompressiblePotentialFlowElementWakeImplementation11NoAirfoil found with Id 0 or negative", "")
         }
 
         if (this->GetGeometry().Area() <= 0)
         {
-            std::cout << "error on CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty -> " << this->Id() << std::endl;
+            std::cout << "error on CompressiblePotentialFlowElementWakeImplementation11NoAirfoil -> " << this->Id() << std::endl;
             KRATOS_THROW_ERROR(std::logic_error, "Area cannot be less than or equal to 0", "")
         }
 
@@ -550,7 +534,7 @@ class CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty : p
     std::string Info() const override
     {
         std::stringstream buffer;
-        buffer << "CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty #" << Id();
+        buffer << "CompressiblePotentialFlowElementWakeImplementation11NoAirfoil #" << Id();
         return buffer.str();
     }
 
@@ -558,7 +542,7 @@ class CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty : p
 
     void PrintInfo(std::ostream &rOStream) const override
     {
-        rOStream << "CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty #" << Id();
+        rOStream << "CompressiblePotentialFlowElementWakeImplementation11NoAirfoil #" << Id();
     }
 
     /// Print object's data.
@@ -891,7 +875,7 @@ class CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty : p
 
     ///@}
 
-}; // Class CompressiblePotentialFlowElementWakeImplementation03NoCuttingNoPenalty
+}; // Class CompressiblePotentialFlowElementWakeImplementation11NoAirfoil
 
 ///@}
 

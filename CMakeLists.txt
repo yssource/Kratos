@@ -371,8 +371,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     add_definitions( -fPIC )
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
-# include subdirectories
+# External librarie included subdirectories
 add_subdirectory(external_libraries/gidpost)
+add_subdirectory(external_libraries/triangle)
+
 add_subdirectory(kratos)
 
 # Applications
@@ -389,10 +391,6 @@ if(DEFINED KRATOS_EXTERNAL_APPLICATION_DIR)
         add_subdirectory(${APPLICATION_EXTERNAL_DIR} ${CMAKE_CURRENT_BINARY_DIR}/${APPLICATION_EXTERNAL_FOLDER})
     endforeach(APPLICATION_EXTERNAL_DIR ${KRATOS_EXTERNAL_APPLICATION_DIR})
 endif(DEFINED KRATOS_EXTERNAL_APPLICATION_DIR)
-
-# Compiling the triangle library
-add_subdirectory(${CMAKE_SOURCE_DIR}/external_libraries/triangle)
-
 
 # Embedded python - compiles "krun and packages the python lib needed"
 if(${INSTALL_EMBEDDED_PYTHON} MATCHES ON )
@@ -419,7 +417,6 @@ install(FILES "${CMAKE_SOURCE_DIR}/kratos/python_interface/kratos_globals.py" DE
 install(FILES "${CMAKE_SOURCE_DIR}/kratos/python_interface/application_importer.py" DESTINATION KratosMultiphysics )
 install(FILES "${CMAKE_SOURCE_DIR}/kratos/python_interface/kratos_unittest.py" DESTINATION KratosMultiphysics RENAME KratosUnittest.py )
 install(FILES "${CMAKE_SOURCE_DIR}/kratos/python_interface/KratosLoader.py" DESTINATION KratosMultiphysics RENAME KratosUnittest.py )
-
 
 # Install the libraries in the libs folder
 install(FILES ${Boost_LIBRARIES} DESTINATION libs)

@@ -9,14 +9,10 @@ cmake_build/*
 !cmake_build/example_configure.bat.do_not_touch
 !cmake_build/example_configure.sh.do_not_touch
 packaging/*
-packaging_aux/KratosLoader.py
-packaging_aux/kratos.conf
 
 # Compile and install directories
-KratosMultiphysics/*
-libpython*
-libs/*
-script.py
+bin
+build
 
 # Version
 kratos/includes/kratos_version.h

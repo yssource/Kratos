@@ -53,7 +53,7 @@ else(NOT CMAKE_BUILD_TYPE)
     endif(FOUND_MODE EQUAL -1)
 endif(NOT CMAKE_BUILD_TYPE)
 
-# Get subversion data. This is done automagically by the cmakes
+# Generate the export header for win.
 include (GenerateExportHeader)
 
 # Search the SHA1 Associated with the commit in the HEAD

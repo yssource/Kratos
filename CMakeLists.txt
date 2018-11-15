@@ -405,13 +405,12 @@ if(${MPI_NEEDED} MATCHES ON )
 endif(${MPI_NEEDED} MATCHES ON )
 
 # Set installation directory
-if(DEFINED KRATOS_INSTALL_PREFIX)
-    set(CMAKE_INSTALL_PREFIX ${KRATOS_INSTALL_PREFIX} )
-    message("-------------------------------- user defined install dir ${CMAKE_INSTALL_PREFIX}")
-else(DEFINED KRATOS_INSTALL_PREFIX)
-    set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR} )
-    message("--------------------------------  standard install dir ${CMAKE_INSTALL_PREFIX}")
-endif(DEFINED KRATOS_INSTALL_PREFIX)
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/bin/${CMAKE_SYSTEM_NAME}" )
+    message("-------------------------------- Standard install dir ${CMAKE_INSTALL_PREFIX}")
+else(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    message("-------------------------------- User defined install dir ${CMAKE_INSTALL_PREFIX}")
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 
 ################################################################################

@@ -426,7 +426,6 @@ install(FILES "${CMAKE_SOURCE_DIR}/kratos/python_interface/kratos_unittest.py" D
 install(FILES "${CMAKE_SOURCE_DIR}/kratos/python_interface/KratosLoader.py" DESTINATION KratosMultiphysics RENAME KratosLoader.py )
 
 # Install the libraries in the libs folder
-install(FILES ${Boost_LIBRARIES} DESTINATION libs)
 install(FILES ${EXTRA_INSTALL_LIBS} DESTINATION libs)
 
 # Install BLAS and LAPACK
@@ -439,11 +438,11 @@ endif(${BLAS_INCLUDE_NEEDED} MATCHES ON )
 
 # Kratos Testing. Install everything except sources
 if(${INSTALL_TESTING_FILES} MATCHES ON )
-  install(DIRECTORY ${CMAKE_SOURCE_DIR}/kratos/tests/ DESTINATION ${CMAKE_INSTALL_PREFIX}/kratos/tests
-    PATTERN "*.git" EXCLUDE
-    PATTERN "*.c"   EXCLUDE
-    PATTERN "*.h"   EXCLUDE
-    PATTERN "*.cpp" EXCLUDE
-    PATTERN "*.hpp" EXCLUDE
-  )
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/kratos/tests/ DESTINATION ${CMAKE_INSTALL_PREFIX}/kratos/tests
+        PATTERN "*.git" EXCLUDE
+        PATTERN "*.c"   EXCLUDE
+        PATTERN "*.h"   EXCLUDE
+        PATTERN "*.cpp" EXCLUDE
+        PATTERN "*.hpp" EXCLUDE
+    )
 endif(${INSTALL_TESTING_FILES} MATCHES ON)

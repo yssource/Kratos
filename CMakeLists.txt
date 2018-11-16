@@ -377,35 +377,39 @@ add_subdirectory(external_libraries/triangle)
 add_subdirectory(kratos)
 
 # Applications
-# Internal applicatons work as usual.
-# add_subdirectory(applications)
-
-# Experimental: Add applications by directory instead of ON OFF
-message("Adding applications:")
+# Add kratos applications by directory (Kratos apps, located in ./applications)
+message("This kratos applications will be compiled:")
 if(DEFINED KRATOS_APPLICATIONS)
-    foreach(APPLICATION_DIR ${KRATOS_APPLICATIONS})
-        message("\t${APPLICATION_DIR}")
-    endforeach(APPLICATION_DIR ${KRATOS_APPLICATIONS})
+    foreach(APPLICATION_PATH ${KRATOS_APPLICATIONS})
+        message("\t${APPLICATION_PATH}")
+    endforeach(APPLICATION_PATH ${KRATOS_APPLICATIONS})
 endif(DEFINED KRATOS_APPLICATIONS)
 
-message("Configuring applications")
+# Add external applications by directory (Thrid party apps, located elsewhere)
+message("This external applications will be compiled:")
+if(DEFINED KRATOS_EXTERNAL_APPLICATIONS)
+    foreach(APPLICATION_PATH ${KRATOS_EXTERNAL_APPLICATIONS})
+        get_filename_component(APPLICATION_NAME ${APPLICATION_PATH} NAME)
+        message("\t${APPLICATION_NAME}")
+    endforeach(APPLICATION_PATH ${KRATOS_EXTERNAL_APPLICATIONS})
+endif(DEFINED KRATOS_EXTERNAL_APPLICATIONS)
+
+# Configure kratos applications
+message("Configuring kratos applications:")
 if(DEFINED KRATOS_APPLICATIONS)
-    foreach(APPLICATION_DIR ${KRATOS_APPLICATIONS})
-        add_subdirectory(applications/${APPLICATION_DIR})
-    endforeach(APPLICATION_DIR ${KRATOS_APPLICATIONS})
+    foreach(APPLICATION_PATH ${KRATOS_APPLICATIONS})
+        add_subdirectory(applications/${APPLICATION_PATH})
+    endforeach(APPLICATION_PATH ${KRATOS_APPLICATIONS})
 endif(DEFINED KRATOS_APPLICATIONS)
 
-# External applications
-# if -DKRATOS_EXTERNAL_APPLICATION_DIR is defined iterate over all the directories and look for applications
-# in them
-# message("Adding external applications")
-# if(DEFINED KRATOS_EXTERNAL_APPLICATION_DIR)
-#     foreach(APPLICATION_EXTERNAL_DIR ${KRATOS_EXTERNAL_APPLICATION_DIR})
-#         get_filename_component(APPLICATION_EXTERNAL_FOLDER ${APPLICATION_EXTERNAL_DIR} NAME)
-#         message("\t - Adding ${KRATOS_EXTERNAL_APPLICATION_DIR}/${APPLICATION_EXTERNAL_FOLDER}")
-#         add_subdirectory(${APPLICATION_EXTERNAL_DIR} ${CMAKE_CURRENT_BINARY_DIR}/${APPLICATION_EXTERNAL_FOLDER})
-#     endforeach(APPLICATION_EXTERNAL_DIR ${KRATOS_EXTERNAL_APPLICATION_DIR})
-# endif(DEFINED KRATOS_EXTERNAL_APPLICATION_DIR)
+# Configure kratos applications
+message("Configuring external applications:")
+if(DEFINED KRATOS_EXTERNAL_APPLICATIONS)
+    foreach(APPLICATION_PATH ${KRATOS_EXTERNAL_APPLICATIONS})
+        get_filename_component(APPLICATION_NAME ${APPLICATION_PATH} NAME)
+        add_subdirectory(${APPLICATION_PATH} ${CMAKE_CURRENT_BINARY_DIR}/applications/${APPLICATION_NAME})
+    endforeach(APPLICATION_PATH ${KRATOS_EXTERNAL_APPLICATIONS})
+endif(DEFINED KRATOS_EXTERNAL_APPLICATIONS)
 
 # Embedded python - compiles "krun and packages the python lib needed"
 if(${INSTALL_RUNKRATOS} MATCHES ON )

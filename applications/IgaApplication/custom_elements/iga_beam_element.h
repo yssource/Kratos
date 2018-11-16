@@ -116,22 +116,41 @@ public:
             double& b) ;
 
     void IgaBeamElement::ComputeCrossSectionGeometryReference(
-            Vector3& R1,
-            Vector3& R2,
-            Vector3& T0_vec,
-            Vector3 n_act,
-            Vector3 v_act,
-            Vector3 n0,
-            Vector3 v0,
-            Vector3 B_n,
-            double C_12,
-            double C_13,
-            double Phi,
-            double Phi_0_der) ;
+        Vector3 R1,
+        Vector3 R2,
+        Vector3& n_act,
+        Vector3& v_act,
+        Vector3 T0,
+        Vector3& N0,
+        Vector3& V0,
+        double& B_n,
+        double& B_v,
+        double& C_12,
+        double& C_13,
+        double Phi,
+        double Phi_der) ;
+
+void IgaBeamElement::ComputeCrossSectionGeometryActual(
+        Vector3 _R1,
+        Vector3 _R2,
+        Vector3 _r1,
+        Vector3 _r2,
+        Vector3 _N0,
+        Vector3 _V0,
+        Vector3& _n_act,
+        Vector3& _v_act,
+        double& _b_n,
+        double& _b_v,
+        double& _c_12,
+        double& _c_13,
+        double Phi,
+        double Phi_der,
+        double phi,
+        double phi_der) ;
 
     void IgaBeamElement::ComputePhiReferenceProperty(
-        double& Phi,
-        double& Phi_0_der) ;
+        double& phi,
+        double& phi_0_der) ;
 
     void IgaBeamElement::GetDofsPerNode(
         std::vector<int>& _act_dofs) ;
@@ -230,14 +249,17 @@ public:
         MatrixType& _gke,
         VectorType& _gfie) ; 
 
-    void IgaBeamElement::ComputeMatrixRodriues(
+    void IgaBeamElement::ComputeMatrixRodriuez(
         BoundedMatrix<double,3,3>& _matrix_rodrigues,
-        BoundedVector<double,3> _vec) ;
+        BoundedVector<double,3> _vec,
+        double phi) ;
 
-    void IgaBeamElement::ComputeMatrixRodriuesDerivative(
+    void IgaBeamElement::ComputeMatrixRodriuezFirstDerivative(
         BoundedMatrix<double,3,3>& _matrix_rodrigues_der,
         BoundedVector<double,3> _vec,
-        BoundedVector<double,3> _vec_der) ;
+        BoundedVector<double,3> _vec_der,
+        double phi,
+        double phi_der) ;
 
 
 

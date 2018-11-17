@@ -278,6 +278,12 @@ void MonolithicWallCondition<TDim,TNumNodes>::ApplyNeumannCondition(MatrixType &
         // CAUTION: "Jacobian" is 2.0*A for triangles but 0.5*A for lines
         double J = (TDim == 2) ? 0.5*A : 2.0*A;
 
+        // // KRATOS_WATCH(this->GetValue(NEIGHBOUR_ELEMENTS));
+
+        // Vector turbulent_coefficients = this->GetValue(NEIGHBOUR_ELEMENTS)[0].GetValue(TURBULENT_KINEMATIC_VISCOSITY);
+        // double turbulent_kinetic_energy = this->GetValue(NEIGHBOUR_ELEMENTS)[0].GetValue(TURBULENT_KINETIC_ENERGY);
+        // double vis = this->GetValue(NEIGHBOUR_ELEMENTS)[0].GetValue(VISCOSITY);
+
         for (unsigned int g = 0; g < NumGauss; g++)
         {
             Vector N = row(NContainer,g);
@@ -330,6 +336,27 @@ void MonolithicWallCondition<TDim,TNumNodes>::ApplyNeumannCondition(MatrixType &
                     }
                 }
             }
+
+            // BoundedMatrix<double, TNumNodes, TDim> velocity;
+            // BoundedMatrix<double, TNumNodes, TDim> integration_matrix;
+            // for (unsigned int i = 0; i < TNumNodes; ++i)
+            // {
+            //     array_1d< double, 3 > & rVel = this->GetGeometry()[i].FastGetSolutionStepValue(VELOCITY);
+            //     for (unsigned int j = 0; j < TDim; ++j)
+            //     {
+            //         velocity(i,j) = rVel[j];
+            //         integration_matrix(i,j) = N[i]*Normal[j];
+            //     }
+
+            // }
+
+            // ReynoldsStressTensor<TDim, TNumNodes> reynolds_stress_tensor_module(
+            //     velocity, integration_matrix, turbulent_coefficients, this->GetGeometry(),
+            //     turbulent_kinetic_energy, -Density, Weight, vis);
+            // reynolds_stress_tensor_module.AddReynoldsStressTensorVelocityContributionLHS(
+            //     rLocalMatrix);
+            // reynolds_stress_tensor_module.AddReynoldsStressTensorVelocityContributionRHS(
+            //     rLocalVector);
         }
     }
 }

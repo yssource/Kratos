@@ -1,10 +1,10 @@
-//    |  /           | 
-//    ' /   __| _` | __|  _ \   __| 
+//    |  /           |
+//    ' /   __| _` | __|  _ \   __|
 //    . \  |   (   | |   (   |\__ \.
-//   _|\_\_|  \__,_|\__|\___/ ____/ 
-//                   Multi-Physics  
+//   _|\_\_|  \__,_|\__|\___/ ____/
+//                   Multi-Physics
 //
-//  License:		 BSD License 
+//  License:		 BSD License
 //					 Kratos default license: kratos/license.txt
 //
 //  Main authors:    Jordi Cotela
@@ -31,6 +31,7 @@
 #include "fluid_dynamics_application_variables.h"
 #include "includes/deprecated_variables.h"
 #include "includes/cfd_variables.h"
+#include "../../AdjointFluidApplication/custom_elements/reynolds_stress_tensor.h"
 
 namespace Kratos
 {
@@ -191,7 +192,7 @@ public:
     {
         return Kratos::make_shared< MonolithicWallCondition >(NewId, pGeom, pProperties);
     }
-    
+
     /**
      * Clones the selected element variables, creating a new one
      * @param NewId the ID of the new element
@@ -199,14 +200,14 @@ public:
      * @param pProperties the properties assigned to the new element
      * @return a Pointer to the new element
      */
-    
+
     Condition::Pointer Clone(IndexType NewId, NodesArrayType const& rThisNodes) const override
     {
         Condition::Pointer pNewCondition = Create(NewId, GetGeometry().Create( rThisNodes ), pGetProperties() );
-        
+
         pNewCondition->SetData(this->GetData());
         pNewCondition->SetFlags(this->GetFlags());
-        
+
         return pNewCondition;
     }
 

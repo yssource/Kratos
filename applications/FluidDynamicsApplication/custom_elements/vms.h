@@ -35,6 +35,8 @@
 // Application includes
 #include "fluid_dynamics_application_variables.h"
 
+#include "../../AdjointFluidApplication/custom_elements/reynolds_stress_tensor.h"
+
 namespace Kratos
 {
 
@@ -433,6 +435,25 @@ public:
             U[LocalIndex] = this->GetGeometry()[iNode].FastGetSolutionStepValue(PRESSURE); // Pressure Dof
             ++LocalIndex;
         }
+
+        BoundedMatrix<double, TNumNodes, TDim> velocity;
+        for (unsigned int i = 0; i < TNumNodes; ++i)
+        {
+            array_1d< double, 3 > & rVel = this->GetGeometry()[i].FastGetSolutionStepValue(VELOCITY);
+            for (unsigned int j = 0; j < TDim; ++j)
+                velocity(i,j) = rVel[j];
+
+        }
+        Vector turbulent_coefficients = this->GetValue(TURBULENT_KINEMATIC_VISCOSITY);
+
+        ReynoldsStressTensor<TDim, TNumNodes> reynolds_stress_tensor_module(
+            velocity, DN_DX, turbulent_coefficients, this->GetGeometry(),
+            this->GetValue(TURBULENT_KINETIC_ENERGY), Density, Area);
+
+        reynolds_stress_tensor_module.AddReynoldsStressTensorVelocityContributionLHS(
+            rDampingMatrix);
+        // reynolds_stress_tensor_module.AddReynoldsStressTensorVelocityContributionRHS(
+        //     rRightHandSideVector);
 
         noalias(rRightHandSideVector) -= prod(rDampingMatrix, U);
     }

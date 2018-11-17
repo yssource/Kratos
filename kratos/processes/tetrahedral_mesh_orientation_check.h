@@ -67,7 +67,7 @@ public:
      */
     TetrahedralMeshOrientationCheck(ModelPart& rModelPart,
                                     bool ThrowErrors,
-                                    Flags options = NOT_COMPUTE_NODAL_NORMALS | NOT_COMPUTE_CONDITION_NORMALS | NOT_ASSIGN_NEIGHBOUR_ELEMENTS_TO_CONDITIONS
+                                    Flags options = NOT_COMPUTE_NODAL_NORMALS | NOT_COMPUTE_CONDITION_NORMALS | ASSIGN_NEIGHBOUR_ELEMENTS_TO_CONDITIONS
                                     ):
         Process(),
         mrModelPart(rModelPart),
@@ -78,7 +78,7 @@ public:
     }
 
     TetrahedralMeshOrientationCheck(ModelPart& rModelPart,
-                                    Flags options = NOT_COMPUTE_NODAL_NORMALS | NOT_COMPUTE_CONDITION_NORMALS | NOT_ASSIGN_NEIGHBOUR_ELEMENTS_TO_CONDITIONS
+                                    Flags options = NOT_COMPUTE_NODAL_NORMALS | NOT_COMPUTE_CONDITION_NORMALS | ASSIGN_NEIGHBOUR_ELEMENTS_TO_CONDITIONS
                                     ):
         Process(),
         mrModelPart(rModelPart),

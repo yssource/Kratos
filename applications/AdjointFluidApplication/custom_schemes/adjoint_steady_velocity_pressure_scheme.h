@@ -400,14 +400,6 @@ private:
     ///@name Private Operators
     ///@{
 
-    void CalculateReynoldsStressTensorContributions(Element::Pointer pCurrentElement,
-                                                    LocalSystemMatrixType& rLHS_Contribution,
-                                                    Element::EquationIdVectorType& rEquationId,
-                                                    ProcessInfo& rCurrentProcessInfo)
-    {
-
-    }
-
     ///@}
     ///@name Private Operations
     ///@{

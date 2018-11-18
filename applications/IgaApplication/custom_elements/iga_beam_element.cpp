@@ -439,7 +439,7 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     double _m_inert_y,
     double _m_inert_z,
     double _mt_inert,
-    double _dl,
+    double _dL,
         MatrixType& _gke,
         VectorType& _gfie){
         
@@ -460,17 +460,6 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     double emod_I_n = _emod * _m_inert_z;
     double emod_I_v = _emod * _m_inert_y; 
     double gmod_It = _gmod * _mt_inert; 
-
-    // Prestress
-    //# TODO ### Introduce Presstress 
-    // double prestress = [var properties] -> [ get_act_Presstress() ];    // Prestress in Normal Direction
-    // double prestress_bend_n = [var propperties] -> [ get_act_Presstress_bend_n() bzw. get_act_Presstress_bend1() ];      // Prestress arround Z Axis
-    // double prestress_bend_v = [ var propperties ] -> [ get_act_Presstress_bend_v()];     // Prestress arrund the Y Axis
-    // double prestress_tor = [ var propperties ] -> [ get_act_Presstress_Tor() ];      // Torsional Presstress
-    // bool prestress_bend1_auto = prop_prt -> GetPrestressBend1Auto(); 
-    // bool prestress_bend2_auto = prop_prt -> GetPrestressBend2Auto();
-    // bool prestress_tor_auto = prop_prt -> GetPrestressTorAuto(); 
-
 
     // Declarate Empty Stiffness Matixes
 
@@ -537,8 +526,12 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     double phi_der = 0;
 
     ComputePhiReferenceProperty(phi, phi_der);
+
     IgaDebug::CheckDouble(expected_data, "phi",phi);
+    LOG("[+] phi");   // Debug Check
     IgaDebug::CheckDouble(expected_data, "phi_der",phi_der);
+    LOG("[+] phi_der");   // Debug Check
+
  
     // Further Declarations
     double B_n;
@@ -560,6 +553,74 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     ComputeCrossSectionGeometryReference(R1, R2, N, V, T0_vec, N0, V0, B_n, B_v, C_12, C_13, Phi, Phi_der);   
     ComputeCrossSectionGeometryActual(R1, R2, r1, r2, N0, V0, N, v, b_n, b_v, c_12, c_13, Phi, Phi_der, phi, phi_der);
 
+    _dL = A;
+    double Apow2 = std::pow(A,2);
+    double Apow4 = std::pow(A,4);
+    double apow2 = std::pow(a,2);
+
+    // Prestress
+    //# TODO ### Introduce Presstress 
+    double prestress = 0;              // = [var properties] -> [ get_act_Presstress() ];    // Prestress in Normal Direction
+    double prestress_bend1 = 0;        // = [var propperties] -> [ get_act_Presstress_bend_n() bzw. get_act_Presstress_bend1() ];      // Prestress arround Z Axis
+    double prestress_bend2 = 0;        // [ var propperties ] -> [ get_act_Presstress_bend_v()];     // Prestress arrund the Y Axis
+    double prestress_tor = 0;          // var propperties ] -> [ get_act_Presstress_Tor() ];      // Torsional Presstress
+
+    // Set falgs
+    // # TODO ### Set Presstress options
+    bool prestress_bend1_auto = false;
+    bool prestress_bend2_auto = false;
+    bool prestesss_tor_auto   = false;
+
+    if (prestress_bend1_auto)
+        B_n = 0.00;
+    if (prestress_bend2_auto)
+        B_v = 0.00;
+    if (prestesss_tor_auto){
+        C_12 = 0.00;
+        C_13 = 0.00;
+    }
+
+     // Stresses
+     double E11_m = 0.5 * (apow2 - Apow2);      // Green_Lagrange Formulation
+     double E11_cur_n = (b_n - B_n);
+     double E11_cur_v = (b_v - B_v); 
+     double E12       = (c_12 - C_12);
+     double E13       = (c_13 - C_13);
+
+     double S11_m = prestress * _area + E11_m * emod_A / Apow2;         // Normal Force
+     double S11_n = prestress_bend1 + E11_cur_n * emod_I_v / Apow2;     // Bending Moment n
+     double S11_v = prestress_bend2 + E11_cur_n * emod_I_n / Apow2;     // Bending Moment v
+     double S12   = 0.5 * (- prestress_tor + E12 * gmod_It / A);        // 0.5 torsional Moment 
+     double S13   = 0.5 * (+ prestress_tor + E13 * gmod_It / A);        // 0.5 torsional Moment
+
+    // 1st Variation
+    // Variation of the axial Strain
+    Vector eps_dof = ComputeEpsilonFirstDerivative(r1);
+    IgaDebug::CheckVector(expected_data, "EPSILON_DOF", eps_dof);
+    LOG("[+] eps_dof");   // Debug Check
+
+    eps_dof = eps_dof / Apow2;
+
+    // 2nd Variation
+    // Variation of axial Strain
+    Matrix eps_dof_2 = ComputeEpsilonSecondDerivative(r1);
+    IgaDebug::CheckMatrix(expected_data, "EPSILON_DOF_2", eps_dof_2);
+    LOG("[+] eps_dof_2");   // Debug Check
+
+    eps_dof_2 = eps_dof_2 / Apow4;
+    
+    // Variation Of Curvature
+    Vector curve_dof_n;
+    Vector curve_dof_v;
+    Matrix curve_dof_n_2;
+    Matrix curve_dof_v_2;
+
+    // Varation of Torsion
+    Vector torsion_dof_n;       // E12
+    Vector torsion_dof_v;       // E13
+    Matrix torsion_dof_n_2;
+    Matrix torsion_dof_v_2;
+
 
 
 
@@ -575,7 +636,7 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
 //     // std::cout << expected_data["t"].GetDouble() << std::endl;
 //     // std::cout << expected_data["external_forces"].GetVector() << std::endl;
 
-    // KRATOS_CATCH("")
+    // KRATOS_CATCH("
 }
 
 //#################################################################################
@@ -1404,27 +1465,96 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
      * @note   A.Bauer (10/2014)
      */
 //#--------------------------------------------------------------------------------
-Vector IgaBeamElement::CoumputeEplsilonDof(Vector& _r1)
+Vector IgaBeamElement::ComputeEpsilonFirstDerivative(Vector3 _r1)
 {
-    int n_dof = NumberOfDofs() ; //# TODO ### n_dof = NumberOfDofs * P_Deg ### P_Deg = Nurbs_Curve->get_P_Deg();
-    
     Vector epsilon_var;
-    epsilon_var.resize(n_dof);
+    epsilon_var.resize(NumberOfDofs());
+    epsilon_var.clear();
     double r1_L2 = norm_2(_r1);
 
-    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // get the degree of Freedom per Node
+    std::vector<int> act_dofs; 
+    GetDofTypesPerNode(act_dofs);
+    int number_dofs_per_node = act_dofs.size();
 
-    for (int i = 0; i < n_dof; i++)
-    {
-        int xyz_r = i%NumberOfDofs();
-        int r = i/NumberOfDofs();
+    Matrix shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
 
-        if  (xyz_r > 2)
-            epsilon_var[i] = 0;
-        else
-            epsilon_var[i] = _r1[xyz_r] * shape_derivatives(0,r);
-    }
+    for (int r = 0; r < NumberOfDofs(); r++)
+        {
+            int xyz_r = r % number_dofs_per_node;
+            int i = r / number_dofs_per_node;
+
+            if  (xyz_r > 2)
+                epsilon_var(r) = 0;
+            else
+                epsilon_var(r) = _r1[xyz_r] * shape_derivatives(0,i);
+        }
     return epsilon_var;
+}
+
+//#################################################################################
+//#################################################################################
+//#
+//#                  +++ Compute Epsilon Second Variation +++
+//#
+//#################################################################################
+//#################################################################################
+//#
+/** Computes the second Variation of the axial Strain
+     * 
+     * @param[in]       _r1                         1st Derivative of the Curvature
+     * 
+     * 
+     * @param[return]   Vector with the 2nd Variation of the Normal Strain
+     * 
+     * @author L.Rauch (10/2018)
+     * 
+     * @note   A.Bauer (03/2015)
+     */
+//#--------------------------------------------------------------------------------
+Matrix IgaBeamElement::ComputeEpsilonSecondDerivative(Vector3 _r1)
+{
+    Matrix epsilon_var_2;
+    epsilon_var_2.resize(NumberOfDofs(), NumberOfDofs());
+    epsilon_var_2.clear();
+
+    // get the degree of Freedom per Node
+    std::vector<int> act_dofs; 
+    GetDofTypesPerNode(act_dofs);
+    int number_dofs_per_node = act_dofs.size();
+
+    Matrix shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+
+    for (int r = 0; r < NumberOfDofs(); r++){
+
+        int xyz_r = r % number_dofs_per_node;
+        int i = r / number_dofs_per_node;
+
+        if (xyz_r > 2)
+        {
+            for (int s = 0; s < NumberOfDofs(); s++)
+                epsilon_var_2(r,s) = 0.00;
+        }
+        else    
+        {
+            for (int s = 0; s < NumberOfDofs(); s++){
+                
+                int xyz_s = s % number_dofs_per_node;
+                int j = s / number_dofs_per_node;
+
+                if (xyz_s > 2)
+                    epsilon_var_2(r,s) = 0.00;
+                else
+                {
+                    if (xyz_r == xyz_s)
+                        epsilon_var_2(r,s) = shape_derivatives(0,i) * shape_derivatives(0,j);
+                    else
+                        epsilon_var_2(r,s) = 0.00;
+                }
+            }
+        }   
+    }
+    return epsilon_var_2;
 }
 
 //#################################################################################
@@ -1917,10 +2047,10 @@ void IgaBeamElement::ComputeMatrixLambdaSecondVariation(
         for (int r = 0; r < NumberOfDofs(); r++){       //in the case
             for (int s = 0; s < NumberOfDofs(); s++){   //in the case
 
-                int xyzr = r % number_dofs_per_node;        //0 -->disp_x; 1 -->disp_y; 2 -->disp_z
-                int xyzs = s % number_dofs_per_node;    //0 -->disp_x; 1 -->disp_y; 2 -->disp_z
+                int xyz_r = r % number_dofs_per_node;        //0 -->disp_x; 1 -->disp_y; 2 -->disp_z
+                int xyz_s = s % number_dofs_per_node;    //0 -->disp_x; 1 -->disp_y; 2 -->disp_z
 
-                if (xyzr > 2 || xyzs > 2)
+                if (xyz_r > 2 || xyz_s > 2)
                     vec1_vec2var2(r, s) += 0;
                 else
                     vec1_vec2var2(r, s) += _vec2var2(t * NumberOfDofs() + r, s) * _vec1[t];
@@ -2833,7 +2963,123 @@ void IgaBeamElement::ComputeMatrixRodriuezFirstDerivative(
     _matrix_rodriguez_der += CrossProductVectorMatrix(_vec_der, matrix_identity) * sin(phi);
 }
 
+//#################################################################################
+//#################################################################################
+//#
+//#                        +++ Compute Dof Nonlinear  +++
+//#
+//#################################################################################
+//#################################################################################
+//#
+/** Computes the Variation of the Deriative of the Rotation Matrix Lambda (vec1 --> Vec2)
+     * 
+     * @param[in] 
+     * @param[in] 
+     * @param[in] 
+     * 
+     * 
+     * @author L.Rauch (11/2018)
+     * 
+     * @note   A.Bauer (03/2015)
+     */
+//#--------------------------------------------------------------------------------
+void IgaBeamElement::ComputeDofNonlinear(
+    Vector& _curve_var1_n,
+    Vector& _curve_var1_v,
+    Vector& _tor_var1_n,
+    Vector& _tor_var1_v,
+    Matrix& _curve_var2_n,
+    Matrix& _curve_var2_v,
+    Matrix& _tor_var2_n,
+    Matrix& _tor_var2_v,
+    Vector3 _R1,
+    Vector3 _R2,
+    Vector3 _r1,
+    Vector3 _r2,
+    Vector3 _N0,
+    Vector3 _V0,
+    Vector  _func,
+    double  _Phi,
+    double  _Phi_der,
+    double  _phi,
+    double  _phi_der,
+    Matrix  _shape_derivative)
+{
+    _curve_var1_n.resize(NumberOfDofs());
+    _curve_var1_v.resize(NumberOfDofs());
+    _curve_var2_v.resize(NumberOfDofs(), NumberOfDofs());
+    _curve_var2_n.resize(NumberOfDofs(), NumberOfDofs());
+    _tor_var1_n.resize(NumberOfDofs());
+    _tor_var1_v.resize(NumberOfDofs());
+    _tor_var2_n.resize(NumberOfDofs(), NumberOfDofs());
+    _tor_var2_v.resize(NumberOfDofs(), NumberOfDofs());
+   
+    _curve_var1_n.clear();
+    _curve_var1_v.clear();
+    _curve_var2_n.clear();
+    _curve_var2_v.clear();
+    _tor_var1_n.clear();
+    _tor_var1_v.clear();
+    _tor_var2_n.clear();
+    _tor_var2_v.clear();
 
+    // Declarations
+    Vector3 T_;
+    Vector3 t_ = 0;
+    Vector3 T0_der1 = 0;
+    Vector3 T_der1  = 0;
+    Vector3 t_der1  = 0;
+    Vector  t_var1;
+    Vector  t_var2;
+    Vector  t_der1var1;
+    Vector  t_der1var2;
+    Matrix  matrix_lambda;
+    Matrix  matrix_lambda_der1;
+    Matrix  matrix_lambda_var1;
+    Matrix  matrix_lambda_var2;
+    Matrix  matrix_lambda_der1var1;
+    Matrix  matrix_lambda_der1var2;
+    Matrix  matrix_LAMBDA;
+    Matrix  matrix_LAMBDA_der1;
+    Matrix  matrix_rodriguez;
+    Matrix  matrix_rodriguez_der1;
+    Matrix  matrix_rodriguez_var1;
+    Matrix  matrix_rodriguez_var2;
+    Matrix  matrix_rodriguez_der1var1;
+    Matrix  matrix_rodriguez_der1var2;
+    Matrix  matrix_RODRIGUEZ;
+    Matrix  matrix_RODRIGUEZ_der1;
+
+    t_var1.clear();
+    t_var2.clear();
+    t_der1var1.clear();
+    t_der1var2.clear();
+    matrix_lambda.clear();
+    matrix_lambda_der1.clear();
+    matrix_lambda_var1.clear();
+    matrix_lambda_var2.clear();
+    matrix_lambda_der1var1.clear();
+    matrix_lambda_der1var2.clear();
+    matrix_LAMBDA.clear();
+    matrix_LAMBDA_der1.clear();
+    matrix_rodriguez.clear();
+    matrix_rodriguez_der1.clear();
+    matrix_rodriguez_var1.clear();
+    matrix_rodriguez_var2.clear();
+    matrix_rodriguez_der1var1.clear();
+    matrix_rodriguez_der1var2.clear();
+    matrix_RODRIGUEZ.clear();
+    matrix_RODRIGUEZ_der1.clear();
+
+    t_ = _r1 / norm_2(_r1);
+    T_ = _R1 / norm_2(_R1);
+    t_der1 = _r2 / norm_2(_r1) - inner_prod(_r1, _r2) / std::pow(norm_2(_r1), 3) * _r1;
+    T_der1 = _R2 / norm_2(_R1) - inner_prod(_R1, _R2) / std::pow(norm_2(_R1), 3) * _R1;
+
+
+    
+
+}
 
 
 

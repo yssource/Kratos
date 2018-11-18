@@ -158,7 +158,9 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
     // Vector IgaBeamElement::GetElementResult(
     //     node_result_type _type); 
 
-    Vector IgaBeamElement::CoumputeEplsilonDof(Vector& _r1) ;
+    Vector IgaBeamElement::ComputeEpsilonFirstDerivative(Vector3 _r1) ;
+
+    Matrix IgaBeamElement::ComputeEpsilonSecondDerivative(Vector3 _r1) ;
 
     Vector IgaBeamElement::ComputePhieDof(Vector& _func) ;
 
@@ -245,7 +247,7 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
     double _m_inert_y,
     double _m_inert_z,
     double _mt_inert,
-    double _dl,
+    double _dL,
         MatrixType& _gke,
         VectorType& _gfie) ; 
 
@@ -260,6 +262,28 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
         BoundedVector<double,3> _vec_der,
         double phi,
         double phi_der) ;
+
+    void IgaBeamElement::ComputeDofNonlinear(
+        Vector& _curve_var1_n,
+        Vector& _curve_var1_v,
+        Vector& _tor_var1_n,
+        Vector& _tor_var1_v,
+        Matrix& _curve_var2_n,
+        Matrix& _curve_var2_v,
+        Matrix& _tor_var2_n,
+        Matrix& _tor_var2_v,
+        Vector3 _R1,
+        Vector3 _R2,
+        Vector3 _r1,
+        Vector3 _r2,
+        Vector3 _N0,
+        Vector3 _V0,
+        Vector  _func,
+        double  _Phi,
+        double  _Phi_der,
+        double  _phi,
+        double  _phi_der,
+        Matrix  _shape_derivative) ;
 
 
 

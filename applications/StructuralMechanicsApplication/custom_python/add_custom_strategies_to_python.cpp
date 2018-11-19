@@ -130,8 +130,8 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
         ;
 
 
-    class_< LinearMorMatrixOutputStrategyType, typename LinearMorMatrixOutputStrategyType::Pointer, BaseSolvingStrategyType >(m,"LinearMorMatrixOutputStrategyType")
-        .def(init < ModelPart&, BaseSchemeType::Pointer, LinearSolverPointer, bool >())
+    py::class_< LinearMorMatrixOutputStrategyType, typename LinearMorMatrixOutputStrategyType::Pointer, BaseSolvingStrategyType >(m,"LinearMorMatrixOutputStrategyType")
+        .def(py::init < ModelPart&, BaseSchemeType::Pointer, LinearSolverPointer, bool >())
         ;
 
     //********************************************************************

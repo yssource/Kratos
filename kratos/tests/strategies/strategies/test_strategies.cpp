@@ -20,6 +20,7 @@
 
 /* Utility includes */
 #include "includes/define.h"
+#include "containers/model.h"
 #include "includes/model_part.h"
 #include "spaces/ublas_space.h"
 
@@ -100,7 +101,7 @@ namespace Kratos
             NodeType::Pointer pnode = ModelPart.CreateNewNode(1, 0.0, 0.0, 0.0);
             std::vector<NodeType::Pointer> geom(1);
             geom[0] = pnode;
-            GeometryType::Pointer pgeom = Kratos::make_shared<GeometryType>(geom);
+            GeometryType::Pointer pgeom = Kratos::make_shared<GeometryType>(PointerVector<NodeType>{geom});
             Element::Pointer pelem = Kratos::make_shared<TestElement>(1, pgeom, ThisResidualType);
             ModelPart.AddElement(pelem);
             
@@ -133,11 +134,13 @@ namespace Kratos
          * Checks if the Linear strategy performs correctly the resolution of the system
          */
         
-        KRATOS_TEST_CASE_IN_SUITE(DisplacementLinearStrategy, KratosCoreStrategiesFastSuite) 
+        KRATOS_TEST_CASE_IN_SUITE(DisplacementLinearStrategy, KratosCoreFastSuite)
         {
+            Model current_model;
+
             constexpr double tolerance = 1e-6;
             
-            ModelPart model_part("Main");
+            ModelPart& model_part = current_model.CreateModelPart("Main");
             
             SchemeType::Pointer pscheme = SchemeType::Pointer( new ResidualBasedIncrementalUpdateStaticSchemeType() );
             LinearSolverType::Pointer psolver = LinearSolverType::Pointer( new SkylineLUFactorizationSolverType() );
@@ -171,11 +174,13 @@ namespace Kratos
          * Checks if the Newton Rapshon strategy performs correctly the resolution of the system
          */
         
-        KRATOS_TEST_CASE_IN_SUITE(DisplacementNRStrategy, KratosCoreStrategiesFastSuite) 
+        KRATOS_TEST_CASE_IN_SUITE(DisplacementNRStrategy, KratosCoreFastSuite)
         {
+            Model current_model;
+            
             constexpr double tolerance = 1e-6;
             
-            ModelPart model_part("Main");
+            ModelPart& model_part = current_model.CreateModelPart("Main");
             
             SchemeType::Pointer pscheme = SchemeType::Pointer( new ResidualBasedIncrementalUpdateStaticSchemeType() );
             LinearSolverType::Pointer psolver = LinearSolverType::Pointer( new SkylineLUFactorizationSolverType() );

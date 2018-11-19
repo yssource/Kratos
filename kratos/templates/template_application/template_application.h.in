@@ -26,7 +26,6 @@
 // Project includes
 #include "includes/define.h"
 #include "includes/kratos_application.h"
-#include "includes/variables.h"
 
 
 namespace Kratos {
@@ -70,7 +69,7 @@ public:
 	Kratos@{APP_NAME_CAMEL}Application();
 
 	/// Destructor.
-	virtual ~Kratos@{APP_NAME_CAMEL}Application(){}
+	~Kratos@{APP_NAME_CAMEL}Application() override {}
 
 
 	///@}

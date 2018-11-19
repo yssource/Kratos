@@ -82,14 +82,17 @@ class LaplacianSolver:
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.POTENTIAL_ENERGY_REFERENCE)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.TRAILING_EDGE)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.DEACTIVATED_WAKE)
 
-        
     def AddDofs(self):
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.POSITIVE_FACE_PRESSURE, self.main_model_part)
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.NEGATIVE_FACE_PRESSURE, self.main_model_part)
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.NODAL_H, self.main_model_part)
 
-        
+        KratosMultiphysics.VariableUtils().SetNonHistoricalVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.TRAILING_EDGE, 0, self.main_model_part.GetNodes())
+        KratosMultiphysics.VariableUtils().SetNonHistoricalVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA, 0, self.main_model_part.GetNodes())
+
     def Initialize(self):
         time_scheme = KratosMultiphysics.ResidualBasedIncrementalUpdateStaticScheme()
         move_mesh_flag = False #USER SHOULD NOT CHANGE THIS
@@ -170,7 +173,7 @@ class LaplacianSolver:
         self.work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
         #self.work_dir = '/home/inigo/simulations/naca0012/07_salome/06_Rectangle/'
 
-        if(NumberOfNodes < 5.0e1):
+        if(NumberOfNodes < 5.0e4):
 
             print('\nComputing condition number . . .\n')
 

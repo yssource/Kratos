@@ -71,6 +71,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
             if(unode.X > pos):
                 pos = unode.X
                 te_node = unode
+                unode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.TRAILING_EDGE, True)
 
         print('kutta node = ', te_node)
         self.kutta_model_part.Nodes.append(te_node)
@@ -87,8 +88,10 @@ class DefineWakeProcess(KratosMultiphysics.Process):
         #Selecting upper and lower surface nodes
         for node in self.upper_surface_model_part.Nodes:
             node.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.UPPER_SURFACE, True)
+            node.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL, True)
         for node in self.lower_surface_model_part.Nodes:
             node.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.LOWER_SURFACE, True)
+            node.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL, True)
 
         #compute the distances of the elements of the wake, and decide which ones are wake
         xn = KratosMultiphysics.Vector(3)
@@ -130,7 +133,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                         xn[2] = 0.0
                         d = xn[0]*self.n[0] + xn[1]*self.n[1]
                         if(abs(d) < self.epsilon):
-                            d = self.epsilon
+                            d = -self.epsilon
                         if(d<0 and
                             elnode.IsNot(KratosMultiphysics.STRUCTURE) and
                             elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.UPPER_SURFACE) == True):
@@ -156,25 +159,63 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                             npos += 1
 
                     if(nneg > 0 and npos > 0):
-                        #elem.Set(KratosMultiphysics.MARKER, True)
+                        elem.Set(KratosMultiphysics.MARKER, True)
                         self.wake_model_part.Elements.append(elem)
                         counter = 0
-                        counter_airfoil_nodes = 0
                         for elnode in elem.GetNodes():
                             elnode.SetSolutionStepValue(KratosMultiphysics.DISTANCE, 0, distances[counter])
                             self.wake_model_part.Nodes.append(elnode)
                             counter += 1
-                            #In this implementation 07 only one Kutta element is selected
-                            if(elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.UPPER_SURFACE) == True
-                                or elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.LOWER_SURFACE) == True):
-                                counter_airfoil_nodes += 1
+                            #In this implementation 15 trailing edge elements elements are selected
+                            if(elnode.Is(KratosMultiphysics.STRUCTURE)):
+                                #selecting Kutta elements
+                                elem.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.TRAILING_EDGE, True)
+                                self.trailing_edge_model_part.Elements.append(elem)
                         elem.SetValue(KratosMultiphysics.ELEMENTAL_DISTANCES, distances)
-                        if(counter_airfoil_nodes > 1):
-                            #selecting Kutta elements
-                            elem.Set(KratosMultiphysics.STRUCTURE)
-                            print('airfoil element found = ', elem)
-
         print('...Selecting wake elements finished...')
+
+
+        #Select the element with a face to the airfoil as kutta and unmark it
+        for elem in self.trailing_edge_model_part.Elements:
+            counter_kutta_nodes = 0
+            for elnode in elem.GetNodes():
+                if(elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL) == True):
+                    elnode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA, True)
+                    counter_kutta_nodes += 1
+            if(counter_kutta_nodes > 1):
+                elem.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA, True)
+                elem.Set(KratosMultiphysics.MARKER, False)
+                for elnode in elem.GetNodes():
+                    elnode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA, True)
+        
+        number_of_trailing_edge_elements = self.trailing_edge_model_part.NumberOfElements()
+        print('number_of_trailing_edge_elements = ', number_of_trailing_edge_elements)
+
+        for i in range(number_of_trailing_edge_elements - 2):
+            #Select the adyecent element also as KUTTA and unmark them
+            for elem in self.trailing_edge_model_part.Elements:
+                counter_kutta_nodes = 0
+                #Loop over the nodes of the element
+                for elnode in elem.GetNodes():
+                    #Check whether the node is Kutta or not
+                    if(elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA) == True):
+                        counter_kutta_nodes += 1
+                if(counter_kutta_nodes > 1):
+                    elem.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA, True)
+                    elem.Set(KratosMultiphysics.MARKER, False)
+                    for elnode in elem.GetNodes():
+                        self.kutta_model_part.Nodes.append(elnode)
+
+            for node in self.kutta_model_part.GetNodes():
+                node.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA, True)
+
+        #Deactivate the rest of the kutta elements
+        for elem in self.trailing_edge_model_part.Elements:
+            if(elem.GetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA) == False):
+                elem.Set(KratosMultiphysics.STRUCTURE)
+                #elem.Set(KratosMultiphysics.ACTIVE, False)
+                #for elnode in elem.GetNodes():
+                #    elnode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.DEACTIVATED_WAKE, True)
 
 
     def ExecuteInitialize(self):

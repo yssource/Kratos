@@ -256,10 +256,10 @@ endif(${USE_CUDA} MATCHES ON)
 
 # Follow the symbolic links for the python lib only if needed
 if(${INSTALL_RUNKRATOS} MATCHES ON )
-    foreach( l ${PYTHON_LIBRARIES})
-        get_filename_component(python_lib ${l} REALPATH)
+    foreach( library ${PYTHON_LIBRARIES})
+        get_filename_component(python_lib ${library} REALPATH)
         set(PYTHON_LIBRARIES_REALPATH ${PYTHON_LIBRARIES_REALPATH} ${python_lib})
-    endforeach(l)
+    endforeach(library)
 
     set(PYTHON_LIBRARIES ${PYTHON_LIBRARIES_REALPATH} CACHE STRING "exact file of the PYTHON library" FORCE)
 endif(${INSTALL_RUNKRATOS} MATCHES ON )
@@ -278,45 +278,6 @@ endif(${EXTERNAL_SOLVERS_APPLICATION} MATCHES ON )
 if(${USE_TETGEN_NONFREE_TPL} MATCHES ON )
     find_package(Tetgen REQUIRED)
 endif(${USE_TETGEN_NONFREE_TPL} MATCHES ON )
-
-# Find BLAS and LAPACK
-
-# Linux needs Fortran
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    enable_language( Fortran )
-    include(FortranCInterface)
-    FortranCInterface_HEADER(FC.h MACRO_NAMESPACE "FC_")
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-
-# Linking to the absolute value of the blas
-find_package(BLAS REQUIRED)
-include_directories(${BLAS_INCLUDE_DIRS})
-
-foreach( l ${BLAS_LIBRARIES})
-    get_filename_component(aaa ${l} REALPATH)
-    set(BLAS_LIBRARIES_REALPATH ${BLAS_LIBRARIES_REALPATH} ${aaa})
-endforeach(l)
-
-set(BLAS_LIBRARIES ${BLAS_LIBRARIES_REALPATH} CACHE STRING "exact file of the blas library" FORCE)
-link_directories(${BLAS_LIBRARIES})
-
-set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${BLAS_LINKER_FLAGS}" CACHE STRING "Linker flags for shared libs" FORCE)
-message("linker flags with blas =" ${BLAS_LINKER_FLAGS})
-message("BLA_VENDOR = " ${BLA_VENDOR})
-
-# Linking to the absolute value of the lapack
-find_package(LAPACK REQUIRED)
-message("LAPACK = " ${LAPACK_LIBRARIES})
-foreach( l ${LAPACK_LIBRARIES})
-    get_filename_component(aux ${l} REALPATH)
-    set(LAPACK_LIBRARIES_REALPATH ${LAPACK_LIBRARIES_REALPATH} ${aux})
-endforeach(l)
-
-set(LAPACK_LIBRARIES ${LAPACK_LIBRARIES_REALPATH} CACHE STRING "exact file of the lapack library" FORCE)
-message("LAPACK modified = " ${LAPACK_LIBRARIES})
-
-include_directories(${LAPACK_INCLUDE_DIRS})
-link_directories(${LAPACK_LIBRARIES})
 
 # Enable MPI
 if(${METIS_APPLICATION} MATCHES ON )
@@ -357,12 +318,12 @@ else( ZLIB_FOUND )
 endif( ZLIB_FOUND )
 
 # including the AMatrix
-if( AMATRIX_DIR )
-    message("AMATRIX_DIR : ${AMATRIX_DIR}")
+if( DEFINED ENV{AMATRIX_DIR} )
+    message("-- AMatrix found : ${AMATRIX_DIR}")
     include_directories ( "${AMATRIX_DIR}/include" )
     add_definitions(-DKRATOS_USE_AMATRIX)
 else()
-    message( "AMatrix not found. Please define the AMATRIX_DIR pointing to the AMatrix root directory.")
+    message( "-- AMatrix not found. Please define the AMATRIX_DIR pointing to the AMatrix root directory.")
 endif()
 
 ######################################################################################

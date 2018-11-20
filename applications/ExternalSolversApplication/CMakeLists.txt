@@ -9,6 +9,46 @@ include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/custom_external_libraries )
 ################### PYBIND11
 include(pybind11Tools)
 
+
+# Find BLAS and LAPACK
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
+
+# Linux needs Fortran
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    enable_language( Fortran )
+    include(FortranCInterface)
+    FortranCInterface_HEADER(FC.h MACRO_NAMESPACE "FC_")
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+# Linking to the absolute value of the blas
+include_directories(${BLAS_INCLUDE_DIRS})
+
+foreach(library ${BLAS_LIBRARIES})
+    get_filename_component(blas_library ${library} REALPATH)
+    set(BLAS_LIBRARIES_REALPATH ${BLAS_LIBRARIES_REALPATH} ${blas_library})
+endforeach(library)
+
+set(BLAS_LIBRARIES ${BLAS_LIBRARIES_REALPATH} CACHE STRING "exact file of the blas library" FORCE)
+link_directories(${BLAS_LIBRARIES})
+
+set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${BLAS_LINKER_FLAGS}" CACHE STRING "Linker flags for shared libs" FORCE)
+message("linker flags with blas =" ${BLAS_LINKER_FLAGS})
+message("BLA_VENDOR = " ${BLA_VENDOR})
+
+# Linking to the absolute value of the lapack
+message("LAPACK = " ${LAPACK_LIBRARIES})
+foreach(library ${LAPACK_LIBRARIES})
+    get_filename_component(lapack_library ${library} REALPATH)
+    set(LAPACK_LIBRARIES_REALPATH ${LAPACK_LIBRARIES_REALPATH} ${lapack_library})
+endforeach(library)
+
+set(LAPACK_LIBRARIES ${LAPACK_LIBRARIES_REALPATH} CACHE STRING "exact file of the lapack library" FORCE)
+message("LAPACK modified = " ${LAPACK_LIBRARIES})
+
+include_directories(${LAPACK_INCLUDE_DIRS})
+link_directories(${LAPACK_LIBRARIES})
+
 # ##add subdirectories for compilation of dependent libraries
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/custom_external_libraries/SuperLU_4.3)
 
@@ -28,14 +68,6 @@ else(${INCLUDE_PASTIX} MATCHES ON)
     set(PASTIX_LINK_LIB "")
 endif(${INCLUDE_PASTIX} MATCHES ON)
 
-# if(${INCLUDE_FEAST} MATCHES ON)
-#   if (NOT DEFINED FEAST_ROOT)
-#     set(FEAST_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/custom_external_libraries/FEAST/3.0 )
-#   endif(NOT DEFINED FEAST_ROOT)
-#   include_directories( ${FEAST_ROOT}/include )
-#   link_directories( ${FEAST_ROOT}/lib/x64 )
-#   add_definitions(-DINCLUDE_FEAST)
-# endif(${INCLUDE_FEAST} MATCHES ON)
 if(${INCLUDE_FEAST} MATCHES ON)
   include(CMakeAddFortranSubdirectory)
   cmake_add_fortran_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/custom_external_libraries/FEAST NO_EXTERNAL_INSTALL )

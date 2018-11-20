@@ -16,6 +16,9 @@ set (KratosMultiphysics_MAJOR_VERSION 6)
 set (KratosMultiphysics_MINOR_VERSION 1)
 set (KratosMultiphysics_PATCH_VERSION Dev)
 
+# Set kratos specific module path
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules")
+
 # Include cmake modules
 include(DownloadLib)
 
@@ -172,12 +175,14 @@ endif(${MSVC14})
 
 # If no test policy enable by default
 if(NOT DEFINED KRATOS_BUILD_TESTING)
-    message("KRATOS_BUILD_TESTING not defined. Setting to ON")
     set (KRATOS_BUILD_TESTING ON)
 endif(NOT DEFINED KRATOS_BUILD_TESTING)
 
-# Set kratos specific module path
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules")
+if(${KRATOS_BUILD_TESTING} MATCHES ON)
+    message("-- Kratos Tests are: Enabled")
+else(${KRATOS_BUILD_TESTING} MATCHES ON)
+    message("-- Kratos Tests are: Disabled")
+endif(${KRATOS_BUILD_TESTING} MATCHES ON)
 
 # Pybind11
 include(pybind11Tools)

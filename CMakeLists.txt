@@ -176,12 +176,6 @@ if(NOT DEFINED KRATOS_BUILD_TESTING)
     set (KRATOS_BUILD_TESTING ON)
 endif(NOT DEFINED KRATOS_BUILD_TESTING)
 
-# If install prefix is set, install all the files.
-if(DEFINED KRATOS_INSTALL_PREFIX)
-    set(INSTALL_TESTING_FILES ON)
-    set(INSTALL_PYTHON_FILES ON)
-endif(DEFINED KRATOS_INSTALL_PREFIX)
-
 # Set kratos specific module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules")
 

@@ -233,10 +233,10 @@ endif(${KRATOS_EXCLUDE_OPENMP} MATCHES ON)
 # Finding and including BOOST library (version should not matter anymore)
 find_package(Boost)
 
-if(Boost_FOUND)
+if(NOT DEFINED Boost_FOUND)
     DownloadLib("Boost" "https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.zip")
     set(BOOST_ROOT "${CMAKE_SOURCE_DIR}/external_libraries/boost_1_67_0")
-endif(Boost_FOUND)
+endif(NOT DEFINED Boost_FOUND)
 
 # If not found, download:
 

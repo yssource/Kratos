@@ -128,6 +128,14 @@ endif(USE_COTIRE MATCHES ON)
 
 install(TARGETS KratosExternalSolversApplication DESTINATION libs )
 
+# Install BLAS and LAPACK
+if(${BLAS_INCLUDE_NEEDED} MATCHES ON )
+    message("-- Installed BLAS = " ${BLAS_LIBRARIES})
+    install(FILES ${BLAS_LIBRARIES} DESTINATION libs)
+    message("-- Installed LAPACK = " ${LAPACK_LIBRARIES})
+    install(FILES ${LAPACK_LIBRARIES} DESTINATION libs)
+endif(${BLAS_INCLUDE_NEEDED} MATCHES ON )
+
 # Add to the KratosMultiphisics Python module
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/ExternalSolversApplication.py" DESTINATION KratosMultiphysics )
 

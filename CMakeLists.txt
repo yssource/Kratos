@@ -346,7 +346,7 @@ add_subdirectory(kratos)
 
 # Applications
 # Add kratos applications by directory (Kratos apps, located in ./applications)
-message("This kratos applications will be compiled:")
+message("-- This kratos applications will be compiled:")
 if(DEFINED ENV{KRATOS_INT_APP})
     foreach(APPLICATION_PATH $ENV{KRATOS_INT_APP})
         message("\t${APPLICATION_PATH}")
@@ -354,7 +354,7 @@ if(DEFINED ENV{KRATOS_INT_APP})
 endif(DEFINED ENV{KRATOS_INT_APP})
 
 # Add external applications by directory (Thrid party apps, located elsewhere)
-message("This external applications will be compiled:")
+message("-- This external applications will be compiled:")
 if(DEFINED ENV{KRATOS_EXT_APP})
     foreach(APPLICATION_PATH $ENV{KRATOS_EXT_APP})
         get_filename_component(APPLICATION_NAME ${APPLICATION_PATH} NAME)
@@ -363,7 +363,7 @@ if(DEFINED ENV{KRATOS_EXT_APP})
 endif(DEFINED ENV{KRATOS_EXT_APP})
 
 # Configure kratos applications
-message("Configuring kratos applications:")
+message("-- Configuring kratos applications:")
 if(DEFINED ENV{KRATOS_INT_APP})
     foreach(APPLICATION_PATH $ENV{KRATOS_INT_APP})
         add_subdirectory(applications/${APPLICATION_PATH})
@@ -371,7 +371,7 @@ if(DEFINED ENV{KRATOS_INT_APP})
 endif(DEFINED ENV{KRATOS_INT_APP})
 
 # Configure kratos applications
-message("Configuring external applications:")
+message("-- Configuring external applications:")
 if(DEFINED ENV{KRATOS_EXT_APP})
     foreach(APPLICATION_PATH $ENV{KRATOS_EXT_APP})
         get_filename_component(APPLICATION_NAME ${APPLICATION_PATH} NAME)
@@ -399,14 +399,6 @@ install(FILES "${CMAKE_SOURCE_DIR}/kratos/python_interface/KratosLoader.py" DEST
 
 # Install the libraries in the libs folder
 install(FILES ${EXTRA_INSTALL_LIBS} DESTINATION libs)
-
-# Install BLAS and LAPACK
-if(${BLAS_INCLUDE_NEEDED} MATCHES ON )
-    message("installed BLAS = " ${BLAS_LIBRARIES})
-    install(FILES ${BLAS_LIBRARIES} DESTINATION libs)
-    message("installed LAPACK = " ${LAPACK_LIBRARIES})
-    install(FILES ${LAPACK_LIBRARIES} DESTINATION libs)
-endif(${BLAS_INCLUDE_NEEDED} MATCHES ON )
 
 # Kratos Testing. Install everything except sources
 if(${INSTALL_TESTING_FILES} MATCHES ON )

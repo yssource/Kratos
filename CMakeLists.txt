@@ -16,6 +16,9 @@ set (KratosMultiphysics_MAJOR_VERSION 6)
 set (KratosMultiphysics_MINOR_VERSION 1)
 set (KratosMultiphysics_PATCH_VERSION Dev)
 
+# Include cmake modules
+include(DownloadLib)
+
 # Define custom compiler build types
 set( CMAKE_CONFIGURATION_TYPES Release RelWithDebInfo Debug FullDebug Custom)
 set( BASIC_DEBUG_FLAGS "${CMAKE_CXX_FLAGS_DEBUG}")
@@ -36,27 +39,7 @@ set( CMAKE_EXE_LINKER_FLAGS_CUSTOM "" )
 set( CMAKE_MODULE_LINKER_FLAGS_FULLDEBUG "${CMAKE_MODULE_LINKER_FLAGS}")
 set( CMAKE_MODULE_LINKER_FLAGS_CUSTOM "${CMAKE_MODULE_LINKER_FLAGS}")
 
-# Enable COTIRE
-if(USE_COTIRE MATCHES ON)
-    set(CMAKE_SKIP_RPATH ON)
-endif(USE_COTIRE MATCHES ON)
-
-# If build mode is not defined, assume Release
-if(NOT CMAKE_BUILD_TYPE)
-    message("Undefined CMAKE_BUILD_TYPE, building in 'Release' mode.")
-    set(CMAKE_BUILD_TYPE Release)
-else(NOT CMAKE_BUILD_TYPE)
-    list(FIND CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE} FOUND_MODE)
-    if(FOUND_MODE EQUAL -1)
-        message("Unknown CMAKE_BUILD_TYPE '${CMAKE_BUILD_TYPE}', using 'Release'.")
-        set(CMAKE_BUILD_TYPE Release)
-    endif(FOUND_MODE EQUAL -1)
-endif(NOT CMAKE_BUILD_TYPE)
-
-# Generate the export header for win.
-include (GenerateExportHeader)
-
-# Search the SHA1 Associated with the commit in the HEAD
+# Search Git and the SHA1 Associated with the commit in the HEAD
 find_package(Git)
 if(GIT_FOUND)
     execute_process(
@@ -69,17 +52,43 @@ else(GIT_FOUND)
     set (KratosMultiphysics_SHA1_NUMBER 0)
 endif(GIT_FOUND)
 
-set (KratosMultiphysics_BUILD_TYPE ${CMAKE_BUILD_TYPE})
-if( ${CMAKE_BUILD_TYPE} MATCHES "Release" )
-    set (KratosMultiphysics_BUILD_SUFFIX "")
-else( ${CMAKE_BUILD_TYPE} MATCHES "Release" )
-    set (KratosMultiphysics_BUILD_SUFFIX "-${CMAKE_BUILD_TYPE}" )
-endif( ${CMAKE_BUILD_TYPE} MATCHES "Release" )
+# Enable COTIRE
+if(USE_COTIRE MATCHES ON)
+    set(CMAKE_SKIP_RPATH ON)
+endif(USE_COTIRE MATCHES ON)
+
+# If build mode is not defined, assume Release
+if(DEFINED ENV{KRATOS_BUILD_TYPE})
+    list(FIND CMAKE_CONFIGURATION_TYPES $ENV{KRATOS_BUILD_TYPE} FOUND_MODE)
+    if(FOUND_MODE EQUAL -1)
+        message("Unknown CMAKE_BUILD_TYPE '${CMAKE_BUILD_TYPE}', using 'Release'.")
+        set(CMAKE_BUILD_TYPE Release)
+    else(FOUND_MODE EQUAL -1)
+        set(CMAKE_BUILD_TYPE $ENV{KRATOS_BUILD_TYPE})
+    endif(FOUND_MODE EQUAL -1)
+else(DEFINED ENV{KRATOS_BUILD_TYPE})
+    message("Undefined CMAKE_BUILD_TYPE, building in 'Release' mode.")
+    set(CMAKE_BUILD_TYPE Release)
+endif(DEFINED ENV{KRATOS_BUILD_TYPE})
+
+# Configure files depending on the build type
+set(KratosMultiphysics_BUILD_TYPE ${CMAKE_BUILD_TYPE})
+if(${CMAKE_BUILD_TYPE} MATCHES "Release")
+    set(KratosMultiphysics_BUILD_SUFFIX "")
+else(${CMAKE_BUILD_TYPE} MATCHES "Release")
+    set(KratosMultiphysics_BUILD_SUFFIX "-${CMAKE_BUILD_TYPE}")
+endif(${CMAKE_BUILD_TYPE} MATCHES "Release")
 
 configure_file(
     "${PROJECT_SOURCE_DIR}/kratos_version.h.in"
     "${PROJECT_SOURCE_DIR}/kratos/includes/kratos_version.h"
 )
+
+# Echo build type
+message("-- The build type selected is: ${CMAKE_BUILD_TYPE}")
+
+# Generate the export header for win.
+include (GenerateExportHeader)
 
 # Set compiler flags
 if(${CMAKE_COMPILER_IS_GNUCXX})
@@ -89,7 +98,6 @@ if(${CMAKE_COMPILER_IS_GNUCXX})
     endif()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -funroll-loops -Wall")
     set(CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
-    message("additional default options were set for gcc")
 endif(${CMAKE_COMPILER_IS_GNUCXX})
 
 if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -97,7 +105,6 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC  -funroll-loops -Wall -Wno-unused-local-typedef -Wno-unknown-pragmas")
         set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -fPIC -funroll-loops -Wall -Wno-unknown-pragmas")
         set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
-        message("additional default options were set for clang compiler")
     endif(${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
     if(${CMAKE_CXX_COMPILER_ID} MATCHES Intel)
         if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 18.0)
@@ -108,20 +115,19 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC  -funroll-loops -lpthread -wd654 -wd10010")
         set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -fPIC -funroll-loops -lpthread -wd654 -wd10010")
         set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
-        message("additional default options were set for intel compiler")
     endif(${CMAKE_CXX_COMPILER_ID} MATCHES Intel)
 else(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     if(${CMAKE_C_COMPILER} MATCHES "icc.*$")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC  -funroll-loops")
         set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -fPIC -funroll-loops")
         set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
-        message("additional default options were set for intel compiler")
     endif(${CMAKE_C_COMPILER} MATCHES "icc.*$")
 endif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 # Print the message with the custom compiler flags
-message("CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
-message("CMAKE_C_FLAGS = ${CMAKE_C_FLAGS}")
+message("-- Additional default options were set for ${CMAKE_CXX_COMPILER_ID} compiler:")
+message("\tCMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
+message("\tCMAKE_C_FLAGS = ${CMAKE_C_FLAGS}")
 
 # Old non-compatible versions of VS
 if(${MSVC80})
@@ -227,6 +233,13 @@ endif(${KRATOS_EXCLUDE_OPENMP} MATCHES ON)
 
 # Finding and including BOOST library (version should not matter anymore)
 find_package(Boost)
+
+if(Boost_FOUND)
+    DownloadLib("Boost" "https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.zip")
+    set(BOOST_ROOT "${CMAKE_SOURCE_DIR}/external_libraries/boost_1_67_0")
+endif(Boost_FOUND)
+
+# If not found, download:
 
 set(Boost_USE_STATIC_LIBS   OFF)
 set(Boost_USE_MULTITHREADED ON)
@@ -353,11 +366,6 @@ else()
     message( "AMatrix not found. Please define the AMATRIX_DIR pointing to the AMatrix root directory.")
 endif()
 
-# Echo user options
-message( " ")
-message("CMAKE_BUILD_TYPE ........ ${CMAKE_BUILD_TYPE}")
-message( " ")
-
 ######################################################################################
 
 # Include dir for external libraries
@@ -379,37 +387,37 @@ add_subdirectory(kratos)
 # Applications
 # Add kratos applications by directory (Kratos apps, located in ./applications)
 message("This kratos applications will be compiled:")
-if(DEFINED KRATOS_APPLICATIONS)
-    foreach(APPLICATION_PATH ${KRATOS_APPLICATIONS})
+if(DEFINED ENV{KRATOS_INT_APP})
+    foreach(APPLICATION_PATH $ENV{KRATOS_INT_APP})
         message("\t${APPLICATION_PATH}")
-    endforeach(APPLICATION_PATH ${KRATOS_APPLICATIONS})
-endif(DEFINED KRATOS_APPLICATIONS)
+    endforeach(APPLICATION_PATH $ENV{KRATOS_INT_APP})
+endif(DEFINED ENV{KRATOS_INT_APP})
 
 # Add external applications by directory (Thrid party apps, located elsewhere)
 message("This external applications will be compiled:")
-if(DEFINED KRATOS_EXTERNAL_APPLICATIONS)
-    foreach(APPLICATION_PATH ${KRATOS_EXTERNAL_APPLICATIONS})
+if(DEFINED ENV{KRATOS_EXT_APP})
+    foreach(APPLICATION_PATH $ENV{KRATOS_EXT_APP})
         get_filename_component(APPLICATION_NAME ${APPLICATION_PATH} NAME)
         message("\t${APPLICATION_NAME}")
-    endforeach(APPLICATION_PATH ${KRATOS_EXTERNAL_APPLICATIONS})
-endif(DEFINED KRATOS_EXTERNAL_APPLICATIONS)
+    endforeach(APPLICATION_PATH $ENV{KRATOS_EXT_APP})
+endif(DEFINED ENV{KRATOS_EXT_APP})
 
 # Configure kratos applications
 message("Configuring kratos applications:")
-if(DEFINED KRATOS_APPLICATIONS)
-    foreach(APPLICATION_PATH ${KRATOS_APPLICATIONS})
+if(DEFINED ENV{KRATOS_INT_APP})
+    foreach(APPLICATION_PATH $ENV{KRATOS_INT_APP})
         add_subdirectory(applications/${APPLICATION_PATH})
-    endforeach(APPLICATION_PATH ${KRATOS_APPLICATIONS})
-endif(DEFINED KRATOS_APPLICATIONS)
+    endforeach(APPLICATION_PATH $ENV{KRATOS_INT_APP})
+endif(DEFINED ENV{KRATOS_INT_APP})
 
 # Configure kratos applications
 message("Configuring external applications:")
-if(DEFINED KRATOS_EXTERNAL_APPLICATIONS)
-    foreach(APPLICATION_PATH ${KRATOS_EXTERNAL_APPLICATIONS})
+if(DEFINED ENV{KRATOS_EXT_APP})
+    foreach(APPLICATION_PATH $ENV{KRATOS_EXT_APP})
         get_filename_component(APPLICATION_NAME ${APPLICATION_PATH} NAME)
         add_subdirectory(${APPLICATION_PATH} ${CMAKE_CURRENT_BINARY_DIR}/applications/${APPLICATION_NAME})
-    endforeach(APPLICATION_PATH ${KRATOS_EXTERNAL_APPLICATIONS})
-endif(DEFINED KRATOS_EXTERNAL_APPLICATIONS)
+    endforeach(APPLICATION_PATH $ENV{KRATOS_EXT_APP})
+endif(DEFINED ENV{KRATOS_EXT_APP})
 
 # Embedded python - compiles "krun and packages the python lib needed"
 if(${INSTALL_RUNKRATOS} MATCHES ON )

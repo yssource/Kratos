@@ -174,7 +174,7 @@ for j in range(Number_Of_AOAS):
         Model = {ProjectParameters["problem_data"]["model_part_name"].GetString() : main_model_part}
 
         #Set Mesh input_filename
-        #mdpa_file_name = "Meshes/naca0012Mesh" +str(case)
+        #mdpa_file_name = input_mdpa_path + "naca0012Mesh" +str(case)
         mdpa_file_name = input_mdpa_path + 'naca0012_Case_' + str(case) + '_AOA_' + str(
                 AOA) + '_Far_Field_Mesh_Size_' + str(FarField_MeshSize) + '_Airfoil_Mesh_Size_' + str(Airfoil_MeshSize)
 
@@ -197,7 +197,7 @@ for j in range(Number_Of_AOAS):
 
         
         ## Set output name
-        #problem_name = output_gid_path + ProjectParameters["problem_data"]["problem_name"].GetString()+ "Mesh" + str(case)
+        #problem_name = output_gid_path + 'AOA_' + str(AOA) + '/' + ProjectParameters["problem_data"]["problem_name"].GetString()+ "Mesh" + str(case)
         problem_name = output_gid_path + 'AOA_' + str(AOA) + '/' + ProjectParameters["problem_data"]["problem_name"].GetString()+ '_Case_' + str(case) + '_AOA_' + str(
                 AOA) + '_Far_Field_Mesh_Size_' + str(FarField_MeshSize) + '_Airfoil_Mesh_Size_' + str(Airfoil_MeshSize)
 

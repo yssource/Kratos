@@ -13,7 +13,7 @@ unbuffer python3 MeshRefinement.py 2>&1 | tee $NEWFILE
 sed 's|'"$Element"'|'"ELEMENT TBD"'|g' -i /$ProjectParameters_File_Path
 sed 's|'"$WakeProcess"'|'"WAKE PROCESS TBD"'|g' -i /$ProjectParameters_File_Path
 
-OUTPUTNAME=wake_implementation_16_no_corner_TE_down
+OUTPUTNAME=wake_implementation_18_no_corner_one_structure_TE_down
 #Remove plots after run, run latex and copy results
 source scripts/run_latex.sh
 

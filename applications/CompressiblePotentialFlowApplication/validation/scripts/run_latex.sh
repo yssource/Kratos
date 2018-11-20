@@ -23,6 +23,7 @@ pdflatex -interaction=batchmode main_condition.tex > main_condition_out.txt
 
 #Copying results
 DIRECTORY=/media/inigo/10740FB2740F9A1C/Implementations_testing/05_MeshRefinement
+DATE=`date '+%Y%m%d_%H%M%S'`
 mkdir -p ${DIRECTORY}_${DATE}_${GITBRANCH}_${OUTPUTNAME}
 mkdir -p ${DIRECTORY}_${DATE}_${GITBRANCH}_${OUTPUTNAME}/output_gid
 

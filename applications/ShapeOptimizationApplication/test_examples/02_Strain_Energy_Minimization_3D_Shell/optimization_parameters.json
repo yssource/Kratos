@@ -48,12 +48,12 @@
             "type"                               : "vertex_morphing",
             "filter" : {
                 "filter_function_type"       : "linear",
-                "filter_radius"              : 3.0,
+                "filter_radius"              : 6.0,
                 "max_nodes_in_filter_radius" : 10000
             }
         },
         "optimization_algorithm" : {
-            "name"                : "steepest_descent",
+            "name"                : "conjugate_gradient",
             "max_iterations"      : 100,
             "relative_tolerance"  : 1e-1,
             "line_search" : {
@@ -70,9 +70,7 @@
             "nodal_results"           : [ "NORMALIZED_SURFACE_NORMAL",
                                           "DF1DX",
                                           "DF1DX_MAPPED",
-                                          "CONTROL_POINT_UPDATE",
                                           "CONTROL_POINT_CHANGE",
-                                          "SHAPE_UPDATE",
                                           "SHAPE_CHANGE" ],
             "output_format" : {
                 "name": "gid"

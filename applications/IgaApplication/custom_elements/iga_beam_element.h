@@ -297,15 +297,122 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
         Vector3 _r2,
         Vector3 _N0,
         Vector3 _V0,
-        Vector  _func,
         double  _Phi,
         double  _Phi_der,
         double  _phi,
-        double  _phi_der,
-        Matrix  _shape_derivative) ;
+        double  _phi_der) ;
 
 
+    void comp_T_var(
+        const Vector3& r1,
+        std::vector<Vector3>& t_var);
 
+    void comp_T_var_var(
+        const Vector3& r1,
+        std::vector<Vector3>& t_var_var);
+
+    void comp_T_der_var(
+        const Vector3& r1,
+        const Vector3& r2,
+        std::vector<Vector3>& t_der_var);
+
+    void comp_T_der_var_var(
+        const Vector3& r1,
+        const Vector3& r2,
+        std::vector<Vector3>& t_der_var_var);
+
+    BoundedMatrix<double, 3, 3> cross_v_identity(
+        const Vector3& v);
+
+    void comp_rodrigues(
+        const Vector3& v,
+        const double& phi,
+        BoundedMatrix<double, 3, 3>& rodrigues);
+
+    void comp_rodrigues_der(
+        const Vector3& v,
+        const Vector3& v_der,
+        const double& phi,
+        const double& phi_der,
+        BoundedMatrix<double, 3, 3>& rodrigues_der);
+
+    void comp_rodrigues_der_var(
+        const Vector3& v,
+        const std::vector<Vector3>& v_var,
+        const Vector3& v_der,
+        const std::vector<Vector3>& v_der_var,
+        const double& phi,
+        const double& phi_der,
+        std::vector<BoundedMatrix<double, 3, 3>>& rodrigues_der_var);
+
+    void comp_rodrigues_der_var_var(
+        const Vector3& v, 
+        const std::vector<Vector3>& v_var, 
+        const std::vector<Vector3>& v_var_var, 
+        const Vector3& v_der, 
+        const std::vector<Vector3>& v_der_var, 
+        const std::vector<Vector3>& v_der_var_var, 
+        const double& phi, 
+        const double& phi_der, 
+        std::vector<BoundedMatrix<double, 3, 3>>& rodrigues_der_var_var);
+
+    void comp_rodrigues_var(
+        const Vector3& v,
+        const std::vector<Vector3>& v_var, 
+        const double& phi, 
+        std::vector<BoundedMatrix<double, 3, 3>>& rodrigues_var);
+
+    void comp_rodrigues_var_var(
+        const Vector3& v, 
+        const std::vector<Vector3>& v_var, 
+        const std::vector<Vector3>& v_var_var, 
+        const double& phi, 
+        std::vector<BoundedMatrix<double, 3, 3>>& rodrigues_var_var);
+
+    void comp_lambda(
+        const Vector3& v1,
+        const Vector3& v2,
+        BoundedMatrix<double, 3, 3>& lambda);
+
+    void comp_lambda_var(
+        const Vector3& v1,
+        const Vector3& v2,
+        const std::vector<Vector3>& v2_var,
+        std::vector<BoundedMatrix<double, 3, 3>>& lambda_var);
+
+    void comp_lambda_var_var(
+        const Vector3& v1,
+        const Vector3& v2,
+        const std::vector<Vector3>& v2_var,
+        const std::vector<Vector3>& v2_var_var,
+        std::vector<BoundedMatrix<double, 3, 3>>& lambda_var_var);
+
+    void comp_lambda_der(
+        const Vector3& v1,
+        const Vector3& v1_der,
+        const Vector3& v2,
+        const Vector3& v2_der,
+        BoundedMatrix<double, 3, 3>& lambda_der);
+
+    void comp_lambda_der_var(
+        const Vector3& v1,
+        const Vector3& v1_der,
+        const Vector3& v2,
+        const std::vector<Vector3>& v2_var,
+        const Vector3& v2_der,
+        const std::vector<Vector3>& v2_der_var,
+        std::vector<BoundedMatrix<double, 3, 3>>& lambda_der_var);
+
+    void comp_lambda_der_var_var(
+        const Vector3& v1,
+        const Vector3& v1_der,
+        const Vector3& v2,
+        const std::vector<Vector3>& v2_var,
+        const std::vector<Vector3>& v2_var_var,
+        const Vector3& v2_der,
+        const std::vector<Vector3>& v2_der_var,
+        const std::vector<Vector3>& v2_der_var_var,
+        std::vector<BoundedMatrix<double, 3, 3>>& lambda_der_var_var);
 
 
 // Adition Math_utilities

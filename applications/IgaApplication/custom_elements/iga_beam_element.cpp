@@ -628,6 +628,7 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     Matrix torsion_dof_v_2;
 
 
+    ComputeDofNonlinear(curve_dof_n, curve_dof_v, torsion_dof_n, torsion_dof_v, curve_dof_n_2, curve_dof_v_2, torsion_dof_n_2, torsion_dof_v_2, R1, R2, r1, r2, N0, V0, Phi, Phi_der, phi, phi_der);
 
 
 
@@ -3360,12 +3361,10 @@ void IgaBeamElement::ComputeDofNonlinear(
     Vector3 _r2,
     Vector3 _N0,
     Vector3 _V0,
-    Vector  _func,
     double  _Phi,
     double  _Phi_der,
     double  _phi,
-    double  _phi_der,
-    Matrix  _shape_derivative)
+    double  _phi_der)
 {
     _curve_var1_n.resize(NumberOfDofs());
     _curve_var1_v.resize(NumberOfDofs());
@@ -3387,49 +3386,49 @@ void IgaBeamElement::ComputeDofNonlinear(
 
     // Declarations
     Vector3 T_;
-    Vector3 t_ = 0;
-    Vector3 T0_der1 = 0;
-    Vector3 T_der1  = 0;
-    Vector3 t_der1  = 0;
-    Vector  t_var1;
-    Vector  t_var2;
-    Vector  t_der1var1;
-    Vector  t_der1var2;
-    Matrix  matrix_lambda;
-    Matrix  matrix_lambda_der1;
-    Matrix  matrix_lambda_var1;
-    Matrix  matrix_lambda_var2;
-    Matrix  matrix_lambda_der1var1;
-    Matrix  matrix_lambda_der1var2;
-    Matrix  matrix_LAMBDA;
-    Matrix  matrix_LAMBDA_der1;
-    Matrix  matrix_rodriguez;
-    Matrix  matrix_rodriguez_der1;
-    Matrix  matrix_rodriguez_var1;
-    Matrix  matrix_rodriguez_var2;
-    Matrix  matrix_rodriguez_der1var1;
-    Matrix  matrix_rodriguez_der1var2;
-    Matrix  matrix_RODRIGUEZ;
-    Matrix  matrix_RODRIGUEZ_der1;
+    Vector3 t_;
+    Vector3 T0_der1;
+    Vector3 T_der1;
+    Vector3 t_der1;
+    std::vector<Vector3> t_var1(NumberOfDofs());
+    std::vector<Vector3> t_var2(NumberOfDofs() * NumberOfDofs());
+    std::vector<Vector3> t_der1var1(NumberOfDofs());
+    std::vector<Vector3> t_der1var2(NumberOfDofs() * NumberOfDofs());
+    BoundedMatrix<double, 3, 3>  matrix_lambda;
+    BoundedMatrix<double, 3, 3>  matrix_lambda_der1;
+    std::vector<BoundedMatrix<double, 3, 3>>  matrix_lambda_var1(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>>  matrix_lambda_var2(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>>  matrix_lambda_der1var1(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>>  matrix_lambda_der1var2(NumberOfDofs() * NumberOfDofs());
+    BoundedMatrix<double, 3, 3>  matrix_LAMBDA;
+    BoundedMatrix<double, 3, 3>  matrix_LAMBDA_der1;
+    BoundedMatrix<double, 3, 3>  matrix_rodriguez;
+    BoundedMatrix<double, 3, 3>  matrix_rodriguez_der1;
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_rodriguez_var1(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_rodriguez_var2(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_rodriguez_der1var1(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_rodriguez_der1var2(NumberOfDofs() * NumberOfDofs());
+    BoundedMatrix<double, 3, 3>  matrix_RODRIGUEZ;
+    BoundedMatrix<double, 3, 3>  matrix_RODRIGUEZ_der1;
 
-    t_var1.clear();
-    t_var2.clear();
-    t_der1var1.clear();
-    t_der1var2.clear();
+    // t_var1.clear();
+    // t_var2.clear();
+    // t_der1var1.clear();
+    // t_der1var2.clear();
     matrix_lambda.clear();
     matrix_lambda_der1.clear();
-    matrix_lambda_var1.clear();
-    matrix_lambda_var2.clear();
-    matrix_lambda_der1var1.clear();
-    matrix_lambda_der1var2.clear();
+    // matrix_lambda_var1.clear();
+    // matrix_lambda_var2.clear();
+    // matrix_lambda_der1var1.clear();
+    // matrix_lambda_der1var2.clear();
     matrix_LAMBDA.clear();
     matrix_LAMBDA_der1.clear();
     matrix_rodriguez.clear();
     matrix_rodriguez_der1.clear();
-    matrix_rodriguez_var1.clear();
-    matrix_rodriguez_var2.clear();
-    matrix_rodriguez_der1var1.clear();
-    matrix_rodriguez_der1var2.clear();
+    // matrix_rodriguez_var1.clear();
+    // matrix_rodriguez_var2.clear();
+    // matrix_rodriguez_der1var1.clear();
+    // matrix_rodriguez_der1var2.clear();
     matrix_RODRIGUEZ.clear();
     matrix_RODRIGUEZ_der1.clear();
 
@@ -3440,6 +3439,47 @@ void IgaBeamElement::ComputeDofNonlinear(
 
 
     
+    comp_T_var(_r1, t_var1);
+    comp_T_der_var(_r1,_r2, t_der1var1);
+    comp_T_var_var(_r1, t_var2);
+    comp_T_der_var_var(_r1,_r2, t_der1var2);
+
+    auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
+    IgaDebug::CheckVectorVar(expected_data, "t_var", t_var1);
+    IgaDebug::CheckVectorVar(expected_data, "t_der_var", t_der1var1);
+    IgaDebug::CheckVectorVarVar(expected_data, "t_var_var", t_var2);
+    IgaDebug::CheckVectorVarVar(expected_data, "t_der_var_var", t_der1var2);
+
+    comp_rodrigues(t_, _phi, matrix_rodriguez);
+    comp_rodrigues_der(t_, t_der1, _phi, _phi_der, matrix_rodriguez_der1);
+    comp_rodrigues_der_var(t_, t_var1, t_der1, t_der1var1, _phi, _phi_der, matrix_rodriguez_der1var1);
+    comp_rodrigues_der_var_var(t_, t_var1, t_var2, t_der1, t_der1var1, t_der1var2, _phi, _phi_der, matrix_rodriguez_der1var2);
+    comp_rodrigues_var(t_, t_var1, _phi, matrix_rodriguez_var1);
+    comp_rodrigues_var_var(t_, t_var1, t_var2, _phi, matrix_rodriguez_var2);
+
+    IgaDebug::CheckMatrix(expected_data, "mat_rod", matrix_rodriguez);
+    IgaDebug::CheckMatrix(expected_data, "mat_rod_der", matrix_rodriguez_der1);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_der_var", matrix_rodriguez_der1var1);
+    IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_der_var_var", matrix_rodriguez_der1var2);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_var", matrix_rodriguez_var1);
+    IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_var_var", matrix_rodriguez_var2);
+
+    comp_lambda(T_, t_, matrix_lambda);
+    comp_lambda_der(T_, T_der1, t_, t_der1, matrix_lambda_der1);
+    // comp_lambda(t0_0, T_, matrix_LAMBDA);
+    // comp_lambda_der(t0_0, T_, T0_der1, T_der1, matrix_LAMBDA_der1);
+    comp_lambda_var(T_, t_, t_var1, matrix_lambda_var1);
+    comp_lambda_der_var(T_, T_der1, t_, t_var1, t_der1, t_der1var1, matrix_lambda_der1var1);
+
+    comp_lambda_var_var(T_, t_, t_var1, t_var2, matrix_lambda_var2);
+    comp_lambda_der_var_var(T_, T_der1, t_, t_var1, t_var2, t_der1, t_der1var1, t_der1var2, matrix_lambda_der1var2);
+    
+    IgaDebug::CheckMatrix(expected_data, "mat_lam", matrix_lambda);
+    IgaDebug::CheckMatrix(expected_data, "mat_lam_der", matrix_lambda_der1);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_lam_var", matrix_lambda_var1);
+    IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_var_var", matrix_lambda_var2);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_lam_der_var", matrix_lambda_der1var1);
+    IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_der_var_var", matrix_lambda_der1var2);
 
 }
 
@@ -3653,5 +3693,766 @@ void IgaBeamElement::PrintInfo(std::ostream& rOStream) const
 
 
 // }
+
+void IgaBeamElement::comp_T_var(
+    const Vector3& r1,
+    std::vector<Vector3>& t_var)
+{
+    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+
+    double r1_dL = norm_2(r1);
+
+    for (std::size_t r = 0; r != NumberOfDofs(); ++r) { 
+        std::size_t xyz_r = GetDofTypeIndex(r);
+
+        if (xyz_r != 3) {
+            std::size_t i = GetShapeIndex(r);
+
+            Vector3 r1_var;
+            r1_var.clear();
+
+            r1_var[xyz_r] = shape_derivatives(0, i);
+
+            double r1_r1_var = inner_prod(r1, r1_var);
+            
+            t_var[r] = r1_var / r1_dL - r1 * r1_r1_var / std::pow(r1_dL, 3);
+        } else {
+            t_var[r].clear();
+        }
+    }
+}
+
+void IgaBeamElement::comp_T_var_var(
+    const Vector3& r1,
+    std::vector<Vector3>& t_var_var)
+{
+    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+
+    double r1_dL = norm_2(r1);
+    double r1_pow3 = pow(r1_dL, 3);
+    double r1_pow5 = pow(r1_dL, 5);
+    
+    std::vector<Vector3> r1_var(NumberOfDofs());
+
+    for (std::size_t i = 0; i != NumberOfNodes(); ++i) {
+        std::size_t r = i * DofsPerNode();
+        
+        r1_var[r + 0].clear();
+        r1_var[r + 1].clear();
+        r1_var[r + 2].clear();
+        r1_var[r + 3].clear();
+
+        r1_var[r + 0](0) = shape_derivatives(0, i);
+        r1_var[r + 1](1) = shape_derivatives(0, i);
+        r1_var[r + 2](2) = shape_derivatives(0, i);
+    }
+
+    Vector r1_r1_var(NumberOfDofs());
+
+    for (std::size_t r = 0; r != NumberOfDofs(); ++r) { 
+        std::size_t xyz_r = GetDofTypeIndex(r);
+
+        if (xyz_r == 3) {
+            r1_r1_var[r] = 0;
+        } else {
+            r1_r1_var[r] = inner_prod(r1_var[r], r1);
+        }
+    }
+
+    for (std::size_t r = 0; r != NumberOfDofs(); ++r) { 
+        std::size_t xyz_r = GetDofTypeIndex(r);
+
+        for (std::size_t s = 0; s != NumberOfDofs(); ++s) { 
+            std::size_t xyz_s = GetDofTypeIndex(s);
+
+            if (xyz_r != 3 && xyz_s != 3) {
+                double r1_var_r1_var = inner_prod(r1_var[r], r1_var[s]);
+
+                t_var_var[r * NumberOfDofs() + s] = 3 * ((r1_r1_var[r] * r1_r1_var[s]) * r1) / r1_pow5 + (-(r1_var[r] * r1_r1_var[s]) - (r1_var[s] * r1_r1_var[r])) / r1_pow3 - (r1_var_r1_var * r1) / r1_pow3;
+            } else {
+                t_var_var[r * NumberOfDofs() + s].clear();
+            }
+        }
+    }
+}
+
+void IgaBeamElement::comp_T_der_var(
+    const Vector3& r1,
+    const Vector3& r2,
+    std::vector<Vector3>& t_der_var)
+{
+    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+
+    double r1r11 = inner_prod(r1, r2);
+    double r11r11 = inner_prod(r2, r2);
+    double r1_dL = norm_2(r1);
+    
+    std::vector<Vector3> r1_var(NumberOfDofs());
+    
+    for (size_t i = 0; i != NumberOfNodes(); ++i) {
+        size_t r = i * DofsPerNode();
+        
+        r1_var[r + 0].clear();
+        r1_var[r + 1].clear();
+        r1_var[r + 2].clear();
+        r1_var[r + 3].clear();
+
+        r1_var[r + 0](0) = shape_derivatives(0, i);
+        r1_var[r + 1](1) = shape_derivatives(0, i);
+        r1_var[r + 2](2) = shape_derivatives(0, i);
+    }
+    
+    std::vector<Vector3> r11_var(NumberOfDofs());
+    
+    for (size_t r = 0; r != NumberOfDofs(); ++r) { 
+        for (size_t t = 0; t != 3; ++t) {
+            size_t xyz_r = GetDofTypeIndex(r);
+            size_t i = GetShapeIndex(r);
+            if (t == xyz_r) {
+                r11_var[r][t] = shape_derivatives(1, i);
+            } else {
+                r11_var[r][t] = 0;
+            }
+        }
+    }
+
+    Vector r1_r1_var(NumberOfDofs());
+    Vector r11_r1_var(NumberOfDofs());
+    Vector r1_r11_var(NumberOfDofs());
+    
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t xyz_r = GetDofTypeIndex(r);
+
+        if (xyz_r > 2) {
+            r1_r1_var[r] = 0;
+            r11_r1_var[r] = 0;
+            r1_r11_var[r] = 0;
+        } else {
+            r1_r1_var[r] = inner_prod(r1_var[r], r1);
+            r11_r1_var[r] = inner_prod(r1_var[r], r2);
+            r1_r11_var[r] = inner_prod(r11_var[r], r1);
+        }
+    }
+    
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t xyz_r = GetDofTypeIndex(r);
+
+        if (xyz_r > 2) {
+            t_der_var[r].clear();
+        } else {
+            t_der_var[r] = r11_var[r] / r1_dL - r2 * r1_r1_var[r] / pow(r1_dL, 3) + 3 * r1_r1_var[r] * r1r11 * r1 / pow(r1_dL, 5) - 1.0 / pow(r1_dL, 3) * (r1_var[r] * r1r11 + (r1_r11_var[r] + r11_r1_var[r]) * r1);
+        }
+    }
+}
+
+void IgaBeamElement::comp_T_der_var_var(
+    const Vector3& r1,
+    const Vector3& r2,
+    std::vector<Vector3>& t_der_var_var)
+{
+    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+
+    double r1r11 = inner_prod(r1, r2);
+    double r11r11 = inner_prod(r2, r2);
+    double r1_dL = norm_2(r1);
+    
+    double r1_pow3 = pow(r1_dL, 3);
+    double r1_pow5 = pow(r1_dL, 5);
+    double r1_pow7 = pow(r1_dL, 7);
+
+    std::vector<Vector3> r1_var(NumberOfDofs());
+    std::vector<Vector3> r11_var(NumberOfDofs());
+    
+    for (size_t r = 0; r != NumberOfDofs(); ++r) { 
+        for (size_t t = 0; t != 3; ++t) {
+            size_t xyz = GetDofTypeIndex(r);
+            size_t i = GetShapeIndex(r);
+            if (t == xyz) {
+                r1_var[r][t] = shape_derivatives(0, i);
+                r11_var[r][t] = shape_derivatives(1, i);
+            } else {
+                r1_var[r][t] = 0;
+                r11_var[r][t] = 0;
+            }
+        }
+    }
+
+    Vector r1_r1_var(NumberOfDofs());
+    Vector r11_r1_var(NumberOfDofs());
+    Vector r1_r11_var(NumberOfDofs());
+    
+    for (size_t r = 0; r != NumberOfDofs(); ++r) { 
+        size_t xyz = GetDofTypeIndex(r);
+
+        if (xyz > 2) {
+            r1_r1_var[r] = 0;
+        } else {
+            r1_r1_var[r] = inner_prod(r1_var[r], r1);
+            r11_r1_var[r] = inner_prod(r2, r1_var[r]);
+            r1_r11_var[r] = inner_prod(r1, r11_var[r]);
+        }
+    }
+    
+    Vector r1_var_r1_var(NumberOfDofs() * NumberOfDofs());
+    Vector r1_var_r11_var(NumberOfDofs() * NumberOfDofs());
+    Vector r11_var_r1_var(NumberOfDofs() * NumberOfDofs());
+
+    for (size_t r = 0; r != NumberOfDofs(); ++r) { 
+        for (size_t s = 0; s != NumberOfDofs(); ++s) { 
+            r1_var_r1_var[r * NumberOfDofs() + s] = inner_prod(r1_var[r], r1_var[s]);
+            r1_var_r11_var[r * NumberOfDofs() + s] = inner_prod(r1_var[r], r11_var[s]);
+            r11_var_r1_var[r * NumberOfDofs() + s] = inner_prod(r11_var[r], r1_var[s]);
+        }
+    }
+    
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t xyzr = GetDofTypeIndex(r);
+
+        for (size_t s = 0; s != NumberOfDofs(); ++s) {
+            size_t xyzs = GetDofTypeIndex(s);
+
+            if (xyzr != 3 && xyzs != 3) {
+                t_der_var_var[r * NumberOfDofs() + s] = (-(r11_var[r] * r1_r1_var[s]) - (r11_var[s] * r1_r1_var[r]) - r2 * r1_var_r1_var[r * NumberOfDofs() + s]) / r1_pow3;
+                t_der_var_var[r * NumberOfDofs() + s] += 3 * ((r1_r1_var[r] * r2 * r1_r1_var[s])) / r1_pow5;
+                t_der_var_var[r * NumberOfDofs() + s] += 3 * ((r1_var_r1_var[r * NumberOfDofs() + s] * r1r11 * r1)) / r1_pow5;
+                t_der_var_var[r * NumberOfDofs() + s] += 3 * ((r1_r1_var[r] * (r11_r1_var[s] + r1_r11_var[s]) * r1)) / r1_pow5;
+                t_der_var_var[r * NumberOfDofs() + s] += 3 * ((r1_r1_var[r] * r1_var[s]) * r1r11) / r1_pow5;
+                t_der_var_var[r * NumberOfDofs() + s] += 3 * ((r1_r1_var[s] * r1_var[r]) * r1r11) / r1_pow5;
+                t_der_var_var[r * NumberOfDofs() + s] += -15 * (r1_r1_var[r] * r1_r1_var[s]) * r1r11 * r1 / r1_pow7;
+                t_der_var_var[r * NumberOfDofs() + s] += (-(r1_var_r11_var[r * NumberOfDofs() + s] + r11_var_r1_var[r * NumberOfDofs() + s]) * r1 - ((r1_r11_var[r] + r11_r1_var[r]) * r1_var[s]) - ((r1_r11_var[s] + r11_r1_var[s]) * r1_var[r])) / r1_pow3;
+                t_der_var_var[r * NumberOfDofs() + s] += 3 * ((r1_r1_var[s] * (r11_r1_var[r] + r1_r11_var[r]) * r1)) / r1_pow5;
+            } else {
+                t_der_var_var[r * NumberOfDofs() + s].clear();
+            }
+        }
+    }
+}
+
+BoundedMatrix<double, 3, 3> IgaBeamElement::cross_v_identity(
+    const Vector3& v)
+{
+    BoundedMatrix<double, 3, 3> result;
+
+    result(0, 0) = 0.0;
+    result(0, 1) = -v(2);
+    result(0, 2) = v(1);
+    result(1, 0) = v(2);
+    result(1, 1) = 0.0;
+    result(1, 2) = -v(0);
+    result(2, 0) = -v(1);
+    result(2, 1) = v(0);
+    result(2, 2) = 0.0;
+
+    return result;
+}
+
+void IgaBeamElement::comp_rodrigues(
+    const Vector3& v,
+    const double& phi,
+    BoundedMatrix<double, 3, 3>& rodrigues)
+{
+    double sin_phi = std::sin(phi);
+    double cos_phi = std::cos(phi);
+    
+    rodrigues = cos_phi * IdentityMatrix(3) + cross_v_identity(sin_phi * v);
+}
+
+// check!
+void IgaBeamElement::comp_rodrigues_der(
+    const Vector3& v,
+    const Vector3& v_der,
+    const double& phi,
+    const double& phi_der,
+    BoundedMatrix<double, 3, 3>& rodrigues_der)
+{
+    double sin_phi = std::sin(phi);
+    double cos_phi = std::cos(phi);
+    
+    auto c_v = cross_v_identity(v);
+    auto c_d = cross_v_identity(v_der);
+
+    rodrigues_der = cos_phi * phi_der * c_v + sin_phi * (c_d - phi_der * IdentityMatrix(3));
+}
+
+// check!
+void IgaBeamElement::comp_rodrigues_der_var(
+    const Vector3& v,
+    const std::vector<Vector3>& v_var,
+    const Vector3& v_der,
+    const std::vector<Vector3>& v_der_var,
+    const double& phi,
+    const double& phi_der,
+    std::vector<BoundedMatrix<double, 3, 3>>& rodrigues_der_var)
+{
+    Vector& shape = GetValue(SHAPE_FUNCTION_VALUES);
+    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+
+    double sin_phi = std::sin(phi);
+    double cos_phi = std::cos(phi);
+    
+    auto c_v = cross_v_identity(v);
+    auto c_d = cross_v_identity(v_der);
+
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t i = GetShapeIndex(r);
+
+        double phi_r = shape[i];
+        double phi_der_r = shape_derivatives(0, i);
+        BoundedMatrix<double, 3, 3> c_vr = cross_v_identity(v_var[r]);
+        BoundedMatrix<double, 3, 3> c_dr = cross_v_identity(v_der_var[r]);
+
+        if (GetDofTypeIndex(r) == 3) {
+            rodrigues_der_var[r] = (-phi_der_r * sin_phi - phi_der * cos_phi * phi_r) * IdentityMatrix(3) + (phi_der_r * cos_phi - phi_der * sin_phi * phi_r) * c_v + cos_phi * phi_r * c_d;
+        } else {
+            rodrigues_der_var[r] = cos_phi * phi_der * c_vr + sin_phi * c_dr;
+        }
+    }      
+}
+
+// check!
+void IgaBeamElement::comp_rodrigues_der_var_var(
+    const Vector3& v, 
+    const std::vector<Vector3>& v_var, 
+    const std::vector<Vector3>& v_var_var, 
+    const Vector3& v_der, 
+    const std::vector<Vector3>& v_der_var, 
+    const std::vector<Vector3>& v_der_var_var, 
+    const double& phi, 
+    const double& phi_der, 
+    std::vector<BoundedMatrix<double, 3, 3>>& rodrigues_der_var_var)
+{
+    Vector& shape = GetValue(SHAPE_FUNCTION_VALUES);
+    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+
+    double sin_phi = std::sin(phi);
+    double cos_phi = std::cos(phi);
+    
+    auto c_v = cross_v_identity(v);
+    auto c_d = cross_v_identity(v_der);
+    
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t i = GetShapeIndex(r);
+
+        double phi_r = GetDofTypeIndex(r) == 3 ? shape[i] : 0.0;
+        double phi_der_r = GetDofTypeIndex(r) == 3 ? shape_derivatives(0, i) : 0.0;
+
+        BoundedMatrix<double, 3, 3> c_vr = cross_v_identity(v_var[r]);
+        BoundedMatrix<double, 3, 3> c_dr = cross_v_identity(v_der_var[r]);
+
+        for (size_t s = 0; s != NumberOfDofs(); ++s) {
+            size_t j = GetShapeIndex(s);
+
+            size_t rs = r * NumberOfDofs() + s;
+
+            double phi_s = GetDofTypeIndex(s) == 3 ? shape[j] : 0.0;
+            double phi_der_s = GetDofTypeIndex(s) == 3 ? shape_derivatives(0, j) : 0.0;
+            
+            BoundedMatrix<double, 3, 3> c_vs = cross_v_identity(v_var[s]);
+            BoundedMatrix<double, 3, 3> c_ds = cross_v_identity(v_der_var[s]);
+            
+            BoundedMatrix<double, 3, 3> c_vrs = cross_v_identity(v_var_var[rs]);
+            BoundedMatrix<double, 3, 3> c_drs = cross_v_identity(v_der_var_var[rs]);
+
+            rodrigues_der_var_var[rs] = -(phi_der_r * phi_s * cos_phi + phi_der_s * phi_r * cos_phi - sin_phi * phi_der * phi_r * phi_s) * IdentityMatrix(3) -(phi_der_r * phi_s + phi_der_s * phi_r) * sin_phi * c_v + cos_phi * (phi_der_r * c_vs + phi_der_s * c_vr - phi_der * phi_r * phi_s * c_v + phi_der * c_vrs + phi_r * c_ds + phi_s * c_dr) - sin_phi * (phi_der * (phi_r * c_vs + phi_s * c_vr) + phi_r * phi_s * c_d) + sin_phi * c_drs;
+        }
+    }
+}
+
+// check!
+void IgaBeamElement::comp_rodrigues_var(
+    const Vector3& v,
+    const std::vector<Vector3>& v_var, 
+    const double& phi, 
+    std::vector<BoundedMatrix<double, 3, 3>>& rodrigues_var)
+{
+    Vector& shape = GetValue(SHAPE_FUNCTION_VALUES);
+
+    double sin_phi = std::sin(phi);
+    double cos_phi = std::cos(phi);    
+
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        rodrigues_var[r] = sin_phi * cross_v_identity(v_var[r]);
+
+        if (GetDofTypeIndex(r) == 3) {
+            size_t i = GetShapeIndex(r);
+            
+            rodrigues_var[r] += cos_phi * shape[i] * cross_v_identity(v) - sin_phi * shape[i] * IdentityMatrix(3);
+        }
+    }
+}
+
+// check!
+void IgaBeamElement::comp_rodrigues_var_var(
+    const Vector3& v, 
+    const std::vector<Vector3>& v_var, 
+    const std::vector<Vector3>& v_var_var, 
+    const double& phi, 
+    std::vector<BoundedMatrix<double, 3, 3>>& rodrigues_var_var)
+{
+    Vector& shape = GetValue(SHAPE_FUNCTION_VALUES);
+
+    BoundedMatrix<double, 3, 3> c_v = cross_v_identity(v);
+
+    double sin_phi = std::sin(phi);
+    double cos_phi = std::cos(phi);
+
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t i = GetShapeIndex(r);
+
+        double phi_r = GetDofTypeIndex(r) == 3 ? shape[i] : 0.0;
+        BoundedMatrix<double, 3, 3> c_vr = cross_v_identity(v_var[r]);
+
+        for (size_t s = 0; s != NumberOfDofs(); ++s) {
+            size_t j = GetShapeIndex(s);
+            
+            size_t rs = r * NumberOfDofs() + s;
+
+            double phi_s = GetDofTypeIndex(s) == 3 ? shape[j] : 0.0;
+
+            BoundedMatrix<double, 3, 3> c_vs = cross_v_identity(v_var[s]);
+
+            BoundedMatrix<double, 3, 3> c_vrs = cross_v_identity(v_var_var[rs]);
+
+            rodrigues_var_var[rs] = -cos_phi * phi_r * phi_s * IdentityMatrix(3);
+            
+            if (GetDofTypeIndex(r) == 3 || GetDofTypeIndex(s) == 3) {
+                rodrigues_var_var[rs] += cos_phi * (phi_r * c_vs + phi_s * c_vr) - sin_phi * phi_r * phi_s * c_v;
+            } else {
+                rodrigues_var_var[rs] += sin_phi * c_vrs;
+            }
+        }
+    }
+}
+
+// check!
+void IgaBeamElement::comp_lambda(
+    const Vector3& v1,
+    const Vector3& v2,
+    BoundedMatrix<double, 3, 3>& lambda)
+{
+    Vector3 v1_x_v2 = Cross(v1, v2);
+    double v1_d_v2 = inner_prod(v1, v2);
+
+    lambda = v1_d_v2 * IdentityMatrix(3) + cross_v_identity(v1_x_v2);
+
+    if (v1_d_v2 + 1.0 > 1e-7) {
+        lambda += outer_prod(v1_x_v2, v1_x_v2) * 1.0 / (1.0 + v1_d_v2);
+    } else {
+        double l_v1_x_v2 = norm_2(v1_x_v2);
+
+        Vector3 e_hat = v1_x_v2;
+
+        if (l_v1_x_v2 > 1e-7) {
+            e_hat /= l_v1_x_v2;
+            lambda += outer_prod(e_hat, e_hat) * (1 - v1_d_v2);
+        }
+    }
+}
+
+// check!
+void IgaBeamElement::comp_lambda_var(
+    const Vector3& v1,
+    const Vector3& v2,
+    const std::vector<Vector3>& v2_var,
+    std::vector<BoundedMatrix<double, 3, 3>>& lambda_var)
+{
+    using std::pow;
+
+    Vector3 v1_x_v2 = Cross(v1, v2);
+    double T0_T = inner_prod(v1, v2);
+    double d = 1.0 / (1.0 + T0_T);
+
+    BoundedMatrix<double, 3, 3> c_1 = cross_v_identity(v1);
+
+    for (size_t r = 0; r != NumberOfDofs(); ++r)
+    {            
+        if (GetDofTypeIndex(r) != 3) {
+            Vector3 v1_x_v2_var = Cross(v1, v2_var[r]);
+            double t0_t_var = inner_prod(v2_var[r], v1);
+
+            BoundedMatrix<double, 3, 3> o = outer_prod(v1_x_v2_var, v1_x_v2);
+
+            lambda_var[r] = t0_t_var * IdentityMatrix(3) + cross_v_identity(v1_x_v2_var) - t0_t_var * pow(d, 2) * outer_prod(v1_x_v2, v1_x_v2) + d * (o + trans(o));
+        } else {
+            lambda_var[r].clear();
+        }
+    }
+}
+
+void IgaBeamElement::comp_lambda_var_var(
+    const Vector3& v1,
+    const Vector3& v2,
+    const std::vector<Vector3>& v2_var,
+    const std::vector<Vector3>& v2_var_var,
+    std::vector<BoundedMatrix<double, 3, 3>>& lambda_var_var)
+{        
+    Vector3 cross_vec1_vec2 = Cross(v1, v2);
+
+    Vector T0_T_var(NumberOfDofs());
+
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t xyz = GetDofTypeIndex(r);
+
+        if (xyz > 2) {
+            T0_T_var[r] = 0;
+        } else {
+            T0_T_var[r] = inner_prod(v2_var[r], v1);
+        }
+    }
+
+    double T0_T = inner_prod(v1, v2);
+
+    Vector T0_T_var_var(NumberOfDofs() * NumberOfDofs());
+    
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t xyzr = GetDofTypeIndex(r);
+
+        for (size_t s = 0; s != NumberOfDofs(); ++s) {
+            size_t xyzs = GetDofTypeIndex(s);
+
+            if (xyzr > 2 || xyzs > 2) {
+                T0_T_var_var[r * NumberOfDofs() + s] = 0;
+            } else {
+                T0_T_var_var[r * NumberOfDofs() + s] = inner_prod(v2_var_var[r * NumberOfDofs() + s], v1);
+            }
+        }
+    }
+    
+    std::vector<Vector3> cross_vec1_vec2_var(NumberOfDofs());
+    
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t xyz = GetDofTypeIndex(r);
+
+        if (xyz > 2) {
+            cross_vec1_vec2_var[r].clear();
+        } else {
+            cross_vec1_vec2_var[r] = prod(cross_v_identity(v1), v2_var[r]);
+        }
+    }
+    
+    std::vector<Vector3> cross_vec1_vec2_var_var(NumberOfDofs() * NumberOfDofs());
+    
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t xyz_r = GetDofTypeIndex(r);
+
+        for (size_t s = 0; s != NumberOfDofs(); ++s) {
+            size_t xyz_s = GetDofTypeIndex(s);
+        
+            if (xyz_r > 2 || xyz_s > 2) {
+                cross_vec1_vec2_var_var[r * NumberOfDofs() + s].clear();
+            } else {
+                cross_vec1_vec2_var_var[r * NumberOfDofs() + s] = prod(cross_v_identity(v1), v2_var_var[r * NumberOfDofs() + s]);
+            }
+        }
+    }
+
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t xyz_r = GetDofTypeIndex(r);
+
+        for (size_t s = 0; s != NumberOfDofs(); ++s) {
+            size_t xyz_s = GetDofTypeIndex(s);
+            
+            if (xyz_r > 2 || xyz_s > 2) {
+                lambda_var_var[r * NumberOfDofs() + s].clear();
+            } else {
+                lambda_var_var[r * NumberOfDofs() + s] = T0_T_var_var[r * NumberOfDofs() + s] * IdentityMatrix(3);
+                    
+                lambda_var_var[r * NumberOfDofs() + s] += cross_v_identity(cross_vec1_vec2_var_var[r * NumberOfDofs() + s]);
+
+                for (size_t i = 0; i < 3; i++) {
+                    for (size_t j = 0; j < 3; j++) {
+                        lambda_var_var[r * NumberOfDofs() + s](i, j) += 2 * T0_T_var[r] * T0_T_var[s] / pow(1.0 + T0_T, 3) - T0_T_var_var[r * NumberOfDofs() + s] / pow(1.0 + T0_T, 2);
+                    }
+                }
+
+                lambda_var_var[r * NumberOfDofs() + s] += -T0_T_var[r] / pow(1.0 + T0_T, 2) * (outer_prod(cross_vec1_vec2_var[s], cross_vec1_vec2) + outer_prod(cross_vec1_vec2, cross_vec1_vec2_var[s])) - T0_T_var[s] / pow(1.0 + T0_T, 2) * (outer_prod(cross_vec1_vec2_var[r], cross_vec1_vec2) + outer_prod(cross_vec1_vec2, cross_vec1_vec2_var[r]));
+                lambda_var_var[r * NumberOfDofs() + s] += 1.0 / (1.0 + T0_T) * (outer_prod(cross_vec1_vec2_var_var[r * NumberOfDofs() + s], cross_vec1_vec2) + outer_prod(cross_vec1_vec2_var[r], cross_vec1_vec2_var[s]) + outer_prod(cross_vec1_vec2_var[s], cross_vec1_vec2_var[r]) + outer_prod(cross_vec1_vec2, cross_vec1_vec2_var_var[s * NumberOfDofs() + r]));
+            }
+        }
+    }
+}
+
+// check!
+void IgaBeamElement::comp_lambda_der(
+    const Vector3& v1,
+    const Vector3& v1_der,
+    const Vector3& v2,
+    const Vector3& v2_der,
+    BoundedMatrix<double, 3, 3>& lambda_der)
+{
+    using std::pow;
+
+    double T0_T  = inner_prod(v1, v2);
+    double T0_T_1 = inner_prod(v1, v2_der) + inner_prod(v1_der, v2);
+    Vector3 T0xT = Cross(v1, v2);
+    Vector3 T0xT_1 = Cross(v1, v2_der) + Cross(v1_der, v2);
+
+    double d = 1.0 / (1.0 + T0_T);
+
+    BoundedMatrix<double, 3, 3> o = outer_prod(T0xT_1, T0xT) + outer_prod(T0xT, T0xT_1);
+
+    lambda_der = T0_T_1 * IdentityMatrix(3) + cross_v_identity(T0xT_1) - T0_T_1 * pow(d, 2) * outer_prod(T0xT, T0xT) + d * o;
+}
+
+// check!
+void IgaBeamElement::comp_lambda_der_var(
+    const Vector3& v1,
+    const Vector3& v1_der,
+    const Vector3& v2,
+    const std::vector<Vector3>& v2_var,
+    const Vector3& v2_der,
+    const std::vector<Vector3>& v2_der_var,
+    std::vector<BoundedMatrix<double, 3, 3>>& lambda_der_var)
+{
+    double T0_T  = inner_prod(v1, v2);
+    double T0_T1 = inner_prod(v1, v2_der);
+    double T01_T = inner_prod(v1_der, v2);
+    
+    Vector3 cross_vec1_vec2 = Cross(v1, v2);
+    Vector3 cross_vec1_vec2_der = Cross(v1, v2_der);
+    Vector3 cross_vec1_der_vec2 = Cross(v1_der, v2);
+    
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t xyz = GetDofTypeIndex(r);
+    
+        if (xyz > 2) {
+            lambda_der_var[r].clear();
+        } else {
+            Vector3 cross_vec1_vec2_var = prod(cross_v_identity(v1), v2_var[r]);
+            Vector3 cross_vec1_vec2_der_var = prod(cross_v_identity(v1), v2_der_var[r]);
+            Vector3 cross_vec1_der_vec2_var = prod(cross_v_identity(v1_der), v2_var[r]);
+            
+            double T0_T_var = inner_prod(v2_var[r], v1);
+            double T0_T_der_var = inner_prod(v2_der_var[r], v1);
+            double T0_der_T_var = inner_prod(v2_var[r], v1_der);
+            
+            lambda_der_var[r] = (T0_T_der_var + T0_der_T_var) * IdentityMatrix(3);
+            lambda_der_var[r] += cross_v_identity(cross_vec1_vec2_der_var) + cross_v_identity(cross_vec1_der_vec2_var);
+            lambda_der_var[r] += (2 * (T0_T_var) * (T0_T1 + T01_T) / pow(1.0 + T0_T, 3) - (T0_T_der_var + T0_der_T_var) / pow(1.0 + T0_T, 2)) * outer_prod(cross_vec1_vec2, cross_vec1_vec2);
+            lambda_der_var[r] += -(T0_T1 + T01_T) / pow(1.0 + T0_T, 2) * (outer_prod(cross_vec1_vec2_var, cross_vec1_vec2) + outer_prod(cross_vec1_vec2, cross_vec1_vec2_var));
+            lambda_der_var[r] += -(T0_T_var) / pow(1.0 + T0_T, 2) * (outer_prod(cross_vec1_vec2_der + cross_vec1_der_vec2, cross_vec1_vec2) + outer_prod(cross_vec1_vec2, cross_vec1_vec2_der + cross_vec1_der_vec2));
+            lambda_der_var[r] += 1.0 / (1.0 + T0_T) * (outer_prod(cross_vec1_vec2_der_var + cross_vec1_der_vec2_var, cross_vec1_vec2) + outer_prod(cross_vec1_vec2_var, cross_vec1_vec2_der + cross_vec1_der_vec2) + outer_prod(cross_vec1_vec2_der + cross_vec1_der_vec2, cross_vec1_vec2_var) + outer_prod(cross_vec1_vec2, cross_vec1_vec2_der_var + cross_vec1_der_vec2_var));
+        }
+    }
+}
+
+// check!
+void IgaBeamElement::comp_lambda_der_var_var(
+    const Vector3& v1,
+    const Vector3& v1_der,
+    const Vector3& v2,
+    const std::vector<Vector3>& v2_var,
+    const std::vector<Vector3>& v2_var_var,
+    const Vector3& v2_der,
+    const std::vector<Vector3>& v2_der_var,
+    const std::vector<Vector3>& v2_der_var_var,
+    std::vector<BoundedMatrix<double, 3, 3>>& lambda_der_var_var)
+{
+    double T0_T = inner_prod(v1,v2);
+    double T0_T1 = inner_prod(v1, v2_der);
+    double T01_T = inner_prod(v1_der, v2);
+    double T0_T_1 = T0_T1 + T01_T;
+    
+    std::vector<Vector3> T0xvec2_var(NumberOfDofs());
+    std::vector<Vector3> T0xvec2_der_var(NumberOfDofs());
+    std::vector<Vector3> T0_derxvec2_var(NumberOfDofs());
+
+    Vector3 T0xvec2 = Cross(v1, v2);
+    Vector3 T0xvec2_der = Cross(v1, v2_der);
+    Vector3 T0_derxvec2 = Cross(v1_der, v2);
+
+    Vector T0_T_var(NumberOfDofs());
+    Vector T0_der_T_var(NumberOfDofs());
+    Vector T0_T_der_var(NumberOfDofs());
+
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t xyz = GetDofTypeIndex(r);
+
+        if (xyz > 2) {
+            T0_T_var[r] = 0;
+            T0_der_T_var[r] = 0;
+            T0_T_der_var[r] = 0;
+        } else {
+            T0_T_var[r] = inner_prod(v2_var[r], v1);
+            T0_der_T_var[r] = inner_prod(v2_var[r], v1_der);
+            T0_T_der_var[r] = inner_prod(v2_der_var[r], v1);
+        }
+    }
+    
+    Vector T0_T_var_var(NumberOfDofs() * NumberOfDofs());
+    Vector T0_T_der_var_var(NumberOfDofs() * NumberOfDofs());
+    Vector T0_der_T_var_var(NumberOfDofs() * NumberOfDofs());
+
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t xyzr = GetDofTypeIndex(r);
+
+        for (size_t s = 0; s != NumberOfDofs(); ++s) {
+            size_t xyzs = GetDofTypeIndex(s);
+
+            if (xyzr > 2 || xyzs > 2) {
+                T0_T_var_var[r * NumberOfDofs() + s] = 0;
+            } else {
+                T0_T_var_var[r * NumberOfDofs() + s] = inner_prod(v2_var_var[r * NumberOfDofs() + s], v1);
+                T0_T_der_var_var[r * NumberOfDofs() + s] = inner_prod(v2_der_var_var[r * NumberOfDofs() + s], v1);
+                T0_der_T_var_var[r * NumberOfDofs() + s] = inner_prod(v2_var_var[r * NumberOfDofs() + s], v1_der);
+            }
+        }
+    }
+    
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t xyz_r = GetDofTypeIndex(r);
+
+        if (xyz_r > 2) {
+            T0xvec2_var[r].clear();
+        } else {
+            T0xvec2_var[r] = prod(cross_v_identity(v1), v2_var[r]);
+            T0xvec2_der_var[r] = prod(cross_v_identity(v1), v2_der_var[r]);
+            T0_derxvec2_var[r] = prod(cross_v_identity(v1_der), v2_var[r]);
+        }
+    }
+    
+    std::vector<Vector3> T0xvec2_var_var(NumberOfDofs() * NumberOfDofs());
+    std::vector<Vector3> T0xvec2_der_var_var(NumberOfDofs() * NumberOfDofs());
+    std::vector<Vector3> T0_derxvec2_var_var(NumberOfDofs() * NumberOfDofs());
+
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t xyz_r = GetDofTypeIndex(r);
+
+        for (size_t s = 0; s != NumberOfDofs(); ++s) {
+            size_t xyz_s = GetDofTypeIndex(s);
+
+            if (xyz_r < 3 || xyz_s < 3) {
+                T0xvec2_var_var[r * NumberOfDofs() + s] = prod(cross_v_identity(v1), v2_var_var[r * NumberOfDofs() + s]);
+                T0xvec2_der_var_var[r * NumberOfDofs() + s] = prod(cross_v_identity(v1), v2_der_var_var[r * NumberOfDofs() + s]);
+                T0_derxvec2_var_var[r * NumberOfDofs() + s] = prod(cross_v_identity(v1_der), v2_var_var[r * NumberOfDofs() + s]);
+            } else {
+                T0xvec2_var_var[r * NumberOfDofs() + s].clear();
+                T0xvec2_der_var_var[r * NumberOfDofs() + s].clear();
+                T0_derxvec2_var_var[r * NumberOfDofs() + s].clear();
+            }
+        }
+    }
+
+    for (size_t r = 0; r != NumberOfDofs(); ++r) {
+        size_t xyz_r = GetDofTypeIndex(r);
+
+        for (size_t s = 0; s != NumberOfDofs(); ++s) {
+            size_t xyz_s = GetDofTypeIndex(s);
+
+            lambda_der_var_var[r * NumberOfDofs() + s] = (T0_T_der_var_var[r * NumberOfDofs() + s] + T0_der_T_var_var[r * NumberOfDofs() + s]) * IdentityMatrix(3);
+            lambda_der_var_var[r * NumberOfDofs() + s] += cross_v_identity(T0xvec2_der_var_var[r * NumberOfDofs() + s] + T0_derxvec2_var_var[r * NumberOfDofs() + s]);
+
+            if (xyz_r != 3 && xyz_s != 3) {
+                lambda_der_var_var[r * NumberOfDofs() + s] += (2 * (T0_T_var[r] * (T0_T_der_var[s] + T0_der_T_var[s]) + T0_T_1 * T0_T_var_var[r * NumberOfDofs() + s]) / pow(1.0 + T0_T, 3) - 6 * T0_T_1 * T0_T_var[r] * T0_T_var[s] / pow(1.0 + T0_T, 4) - (T0_T_der_var_var[r * NumberOfDofs() + s] + T0_der_T_var_var[r * NumberOfDofs() + s]) / pow(1.0 + T0_T, 2) + 2 * (T0_T_der_var[r] + T0_der_T_var[r]) * T0_T_var[s] / pow(1.0 + T0_T, 3)) * outer_prod(T0xvec2, T0xvec2);
+                lambda_der_var_var[r * NumberOfDofs() + s] += (2 * T0_T_var[r] * T0_T_1 / pow(1.0 + T0_T, 3) - (T0_T_der_var[r] + T0_der_T_var[r]) / pow(1.0 + T0_T, 2)) * (outer_prod(T0xvec2_var[s], T0xvec2) + outer_prod(T0xvec2, T0xvec2_var[s])) + (2 * T0_T_var[s] * T0_T_1 / pow(1.0 + T0_T, 3) - (T0_T_der_var[s] + T0_der_T_var[s]) / pow(1.0 + T0_T, 2)) * (outer_prod(T0xvec2_var[r], T0xvec2) + outer_prod(T0xvec2, T0xvec2_var[r]));
+                lambda_der_var_var[r * NumberOfDofs() + s] += -T0_T_1 / pow(1.0 + T0_T, 2) * (outer_prod(T0xvec2_var_var[r * NumberOfDofs() + s], T0xvec2) + outer_prod(T0xvec2_var[r], T0xvec2_var[s]) + outer_prod(T0xvec2_var[s], T0xvec2_var[r]) + outer_prod(T0xvec2, T0xvec2_var_var[r * NumberOfDofs() + s]));
+                lambda_der_var_var[r * NumberOfDofs() + s] += (-T0_T_var_var[r * NumberOfDofs() + s] / pow(1.0 + T0_T, 2) + 2 * T0_T_var[r] * T0_T_var[s] / pow(1.0 + T0_T, 3)) * (outer_prod(T0xvec2_der + T0_derxvec2, T0xvec2) + outer_prod(T0xvec2, T0xvec2_der + T0_derxvec2));
+                lambda_der_var_var[r * NumberOfDofs() + s] += (-T0_T_var[r] / pow(1.0 + T0_T, 2)) * (outer_prod(T0xvec2_der_var[s] + T0_derxvec2_var[s], T0xvec2) + outer_prod(T0xvec2_var[s], T0xvec2_der + T0_derxvec2) + outer_prod(T0xvec2_der + T0_derxvec2, T0xvec2_var[s]) + outer_prod(T0xvec2, T0xvec2_der_var[s] + T0_derxvec2_var[s]));
+                lambda_der_var_var[r * NumberOfDofs() + s] += (-T0_T_var[s] / pow(1.0 + T0_T, 2)) * (outer_prod(T0xvec2_der_var[r] + T0_derxvec2_var[r], T0xvec2) + outer_prod(T0xvec2_var[r], T0xvec2_der + T0_derxvec2) + outer_prod(T0xvec2_der + T0_derxvec2, T0xvec2_var[r]) + outer_prod(T0xvec2, T0xvec2_der_var[r] + T0_derxvec2_var[r]));
+                lambda_der_var_var[r * NumberOfDofs() + s] += 1.0 / (1.0 + T0_T) * (outer_prod(T0xvec2_der_var_var[r * NumberOfDofs() + s] + T0_derxvec2_var_var[r * NumberOfDofs() + s], T0xvec2) + outer_prod(T0xvec2_var_var[r * NumberOfDofs() + s], T0xvec2_der + T0_derxvec2) + outer_prod(T0xvec2_der_var[s] + T0_derxvec2_var[s], T0xvec2_var[r]) + outer_prod(T0xvec2_var[s], T0xvec2_der_var[r] + T0_derxvec2_var[r]) + outer_prod(T0xvec2_der_var[r] + T0_derxvec2_var[r], T0xvec2_var[s]) + outer_prod(T0xvec2_var[r], T0xvec2_der_var[s] + T0_derxvec2_var[s]) + outer_prod(T0xvec2_der+ T0_derxvec2, T0xvec2_var_var[r * NumberOfDofs() + s]) + outer_prod(T0xvec2, T0xvec2_der_var_var[r * NumberOfDofs() + s] + T0_derxvec2_var_var[r * NumberOfDofs() + s]));
+            }
+        }
+    }
+}
 
 } // namespace Kratos

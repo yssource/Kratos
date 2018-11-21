@@ -230,6 +230,20 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
         Vector _vec2der1var1,
         Matrix _vec2der1var2) ;
 
+    void IgaBeamElement::ComputeMatrixLambdaAll(
+        Matrix& _matrix_lambda_var1,
+        Matrix& _matrix_lambda_var2,
+        Matrix& _matrix_lambda_der1_var1,
+        Matrix& _matrix_lambda_der1_var2,
+        Vector3 _vec1,
+        Vector3 _vec2,
+        Vector3 _vec1_der1,
+        Vector3 _vec2_der1,
+        Vector  _vec2_var1,
+        Vector  _vec2_der1_var1,
+        Matrix  _vec2_var2,
+        Matrix  _vec2_der1_var2) ;
+
     void IgaBeamElement::StffnessMatrixElementLinear(
         double _emod,
         double _gmod,
@@ -262,6 +276,11 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
         BoundedVector<double,3> _vec_der,
         double phi,
         double phi_der) ;
+
+    void IgaBeamElement::ComputeTVariation(
+        Vector& _t_var,
+        Vector  _r1,
+        Matrix  _deriv);
 
     void IgaBeamElement::ComputeDofNonlinear(
         Vector& _curve_var1_n,

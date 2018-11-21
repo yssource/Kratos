@@ -89,7 +89,6 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
 
         self.optimization_iteration = 0
         self.num_function_calls = 0
-        self.num_gradient_calls = 0
 
         def function_wrapper(X):
 
@@ -101,6 +100,29 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
                 node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[dx,dy,dz])
 
             self.Mapper.Map(CONTROL_POINT_CHANGE, SHAPE_CHANGE)
+
+            # # Mapping of update
+            # for counter, node in enumerate(self.DesignSurface.Nodes):
+            #     [dx_old,dy_old,dz_old] = node.GetSolutionStepValue(CONTROL_POINT_CHANGE)
+
+            #     [dx,dy,dz] = X[(3*counter):(3*counter+3)]
+            #     node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[dx,dy,dz])
+
+            #     x_update = [dx-dx_old,dy-dy_old,dz-dz_old]
+            #     node.SetSolutionStepValue(CONTROL_POINT_UPDATE,x_update)
+
+            # self.Mapper.Map(CONTROL_POINT_UPDATE, SHAPE_UPDATE)
+
+            # for node in self.DesignSurface.Nodes:
+            #     shape_change = node.GetSolutionStepValue(SHAPE_CHANGE)
+            #     shape_udpate = node.GetSolutionStepValue(SHAPE_UPDATE)
+
+            #     new_shape_change = [0,0,0]
+            #     new_shape_change[0] = shape_change[0] + shape_udpate[0]
+            #     new_shape_change[1] = shape_change[1] + shape_udpate[1]
+            #     new_shape_change[2] = shape_change[2] + shape_udpate[2]
+
+            #     node.SetSolutionStepValue(SHAPE_CHANGE, new_shape_change)
 
             # Initialize new shape
             for counter, node in enumerate(self.DesignSurface.Nodes):
@@ -128,7 +150,6 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
             WriteDictionaryDataOnNodalVariable(gradient_from_kratos, self.OptimizationModelPart, DF1DX)
 
             # Mapping
-            self.Mapper.Update()
             self.Mapper.InverseMap(DF1DX, DF1DX_MAPPED)
 
             gradient = np.zeros_like(X)
@@ -149,6 +170,9 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
                 node.Y0 = node.Y
                 node.Z0 = node.Z
 
+            # if self.num_function_calls%10==0:
+            #     gradient = np.zeros_like(X)
+
             # Return value
             return value, gradient
 
@@ -159,65 +183,48 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
             # self.DataLogger.LogCurrentDesign(self.optimization_iteration)
 
         # Run optimization
-        res = minimize(function_wrapper, X0, method='CG', jac=True, callback=log_function, options={"disp": True})
+        res = minimize(function_wrapper, X0, method='CG', jac=True, callback=log_function, options={'disp': True})
+
+        # # Run optimization in a loop with restart and update of mapping matrix
+        # X0_new = X0
+        # for itr in range(1,10):
+
+        #     res = minimize(function_wrapper, X0_new, method='CG', jac=True, callback=log_function, options={'disp': True})
+
+        #     if res["success"] and res["njev"]<9:
+        #         break
+
+        #     X0_new = res['x']
+
+        #     # Update mesh
+        #     for counter, node in enumerate(self.DesignSurface.Nodes):
+        #         [dx,dy,dz] = X0_new[(3*counter):(3*counter+3)]
+
+        #         # Update Coordinates
+        #         node.X = node.X0 + dx
+        #         node.Y = node.Y0 + dy
+        #         node.Z = node.Z0 + dz
+
+        #         # Update Reference mesh
+        #         node.X0 = node.X
+        #         node.Y0 = node.Y
+        #         node.Z0 = node.Z
+
+        #     self.Mapper.Update()
+
+        #     # Reset mesh udpate
+        #     for counter, node in enumerate(self.DesignSurface.Nodes):
+        #         [dx,dy,dz] = X0_new[(3*counter):(3*counter+3)]
+
+        #         node.X = node.X - dx
+        #         node.Y = node.Y - dy
+        #         node.Z = node.Z - dz
+
+        #         node.X0 = node.X
+        #         node.Y0 = node.Y
+        #         node.Z0 = node.Z
 
         print(res)
-
-
-
-
-
-
-        # for self.optimization_iteration in range(1,self.maxIterations):
-        #     print("\n>===================================================================")
-        #     print("> ",timer.GetTimeStamp(),": Starting optimization iteration ",self.optimization_iteration)
-        #     print(">===================================================================\n")
-
-        #     timer.StartNewLap()
-
-        #     # Initialize new shape
-        #     self.ModelPartController.UpdateMeshAccordingInputVariable(SHAPE_UPDATE)
-        #     self.ModelPartController.SetReferenceMeshToMesh()
-
-        #     # Analyze shape
-        #     self.Communicator.initializeCommunication()
-        #     self.Communicator.requestValueOf(self.only_obj["identifier"].GetString())
-        #     self.Communicator.requestGradientOf(self.only_obj["identifier"].GetString())
-
-        #     self.Analyzer.AnalyzeDesignAndReportToCommunicator(self.DesignSurface, self.optimization_iteration, self.Communicator)
-
-        #     objGradientDict = self.Communicator.getStandardizedGradient(self.only_obj["identifier"].GetString())
-        #     WriteDictionaryDataOnNodalVariable(objGradientDict, self.OptimizationModelPart, DF1DX)
-
-        #     if self.only_obj["project_gradient_on_surface_normals"].GetBool():
-        #         self.ModelPartController.ComputeUnitSurfaceNormals()
-        #         self.ModelPartController.ProjectNodalVariableOnUnitSurfaceNormals(DF1DX)
-
-        #     self.ModelPartController.DampNodalVariableIfSpecified(DF1DX)
-
-        #     # Compute shape update
-        #     self.Mapper.Update()
-        #     self.Mapper.InverseMap(DF1DX, DF1DX_MAPPED)
-
-        #     self.OptimizationUtilities.ComputeSearchDirectionSteepestDescent()
-        #     self.OptimizationUtilities.ComputeControlPointUpdate()
-
-        #     self.Mapper.Map(CONTROL_POINT_UPDATE, SHAPE_UPDATE)
-
-        #     self.ModelPartController.DampNodalVariableIfSpecified(SHAPE_UPDATE)
-
-        #     # Log current optimization step
-        #     additional_values_to_log = {}
-        #     additional_values_to_log["step_size"] = self.algorithm_settings["line_search"]["step_size"].GetDouble()
-        #     self.DataLogger.LogCurrentValues(self.optimization_iteration, additional_values_to_log)
-        #     self.DataLogger.LogCurrentDesign(self.optimization_iteration)
-
-        #     print("\n> Time needed for current optimization step = ", timer.GetLapTime(), "s")
-        #     print("> Time needed for total optimization so far = ", timer.GetTotalTime(), "s")
-
-        #     # Determine absolute changes
-        #     self.OptimizationUtilities.AddFirstVariableToSecondVariable(CONTROL_POINT_UPDATE, CONTROL_POINT_CHANGE)
-        #     self.OptimizationUtilities.AddFirstVariableToSecondVariable(SHAPE_UPDATE, SHAPE_CHANGE)
 
     # --------------------------------------------------------------------------
     def FinalizeOptimizationLoop(self):

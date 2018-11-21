@@ -21,6 +21,7 @@ from design_logger_unv import DesignLoggerUNV
 from design_logger_vtk import DesignLoggerVTK
 
 from value_logger_steepest_descent import ValueLoggerSteepestDescent
+from value_logger_conjugate_gradient import ValueLoggerConjugateGradient
 from value_logger_penalized_projection import ValueLoggerPenalizedProjection
 from value_logger_trust_region import ValueLoggerTrustRegion
 
@@ -47,6 +48,8 @@ class DataLogger():
         AlgorithmName = self.OptimizationSettings["optimization_algorithm"]["name"].GetString()
         if AlgorithmName == "steepest_descent":
             return ValueLoggerSteepestDescent( self.Communicator, self.OptimizationSettings )
+        if AlgorithmName == "conjugate_gradient":
+            return ValueLoggerConjugateGradient( self.Communicator, self.OptimizationSettings )
         elif AlgorithmName == "penalized_projection":
             return ValueLoggerPenalizedProjection( self.Communicator, self.OptimizationSettings )
         elif AlgorithmName == "trust_region":

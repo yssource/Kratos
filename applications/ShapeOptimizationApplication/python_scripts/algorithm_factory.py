@@ -13,6 +13,7 @@ from __future__ import print_function, absolute_import, division
 
 # Additional imports
 from algorithm_steepest_descent import AlgorithmSteepestDescent
+from algorithm_conjugate_gradient import AlgorithmConjugateGradient
 from algorithm_penalized_projection import AlgorithmPenalizedProjection
 from algorithm_trust_region import AlgorithmTrustRegion
 
@@ -25,6 +26,11 @@ def CreateOptimizationAlgorithm(optimization_settings, analyzer, communicator, m
                                         analyzer,
                                         communicator,
                                         model_part_controller)
+    if algorithm_name == "conjugate_gradient":
+        return AlgorithmConjugateGradient(optimization_settings,
+                                          analyzer,
+                                          communicator,
+                                          model_part_controller)
     elif algorithm_name == "penalized_projection":
         return AlgorithmPenalizedProjection(optimization_settings,
                                             analyzer,

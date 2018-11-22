@@ -101,6 +101,9 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
 
             self.Mapper.Map(CONTROL_POINT_CHANGE, SHAPE_CHANGE)
 
+            self.ModelPartController.DampNodalVariableIfSpecified(SHAPE_CHANGE)
+
+
             # # Mapping of update
             # for counter, node in enumerate(self.DesignSurface.Nodes):
             #     [dx_old,dy_old,dz_old] = node.GetSolutionStepValue(CONTROL_POINT_CHANGE)
@@ -151,6 +154,8 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
 
             # Mapping
             self.Mapper.InverseMap(DF1DX, DF1DX_MAPPED)
+            self.ModelPartController.DampNodalVariableIfSpecified(DF1DX_MAPPED)
+            self.Mapper.Update()
 
             gradient = np.zeros_like(X)
             for counter, node in enumerate(self.DesignSurface.Nodes):

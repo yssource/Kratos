@@ -37,6 +37,8 @@ KratosCompressiblePotentialFlowApplication::KratosCompressiblePotentialFlowAppli
     mCompressiblePotentialFlowElementWakeImplementation13NoTe2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mCompressiblePotentialFlowElementWakeImplementation15NoCorner2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mCompressiblePotentialFlowElementWakeImplementation16NoCornerTeDown2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+    mCompressiblePotentialFlowElementWakeImplementation19NoCornerZeroVelocity2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+    mCompressiblePotentialFlowElementWakeImplementation21NoCornerVariation2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mCompressiblePotentialFlowElement3D4N(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
     mPotentialWallCondition2D2N(0, Element::GeometryType::Pointer(new Line2D2<Node<3> >(Element::GeometryType::PointsArrayType(2)))),
     mPotentialWallCondition3D3N(0, Element::GeometryType::Pointer(new Triangle3D3<Node<3> >(Element::GeometryType::PointsArrayType(3))))
@@ -63,6 +65,8 @@ void KratosCompressiblePotentialFlowApplication::Register()
         KRATOS_REGISTER_VARIABLE(TRAILING_EDGE);
         KRATOS_REGISTER_VARIABLE(KUTTA);
         KRATOS_REGISTER_VARIABLE(DEACTIVATED_WAKE);
+        KRATOS_REGISTER_VARIABLE(ALL_TRAILING_EDGE);
+        KRATOS_REGISTER_VARIABLE(ZERO_VELOCITY_CONDITION);
 
         //Register elements
         KRATOS_REGISTER_ELEMENT("CompressiblePotentialFlowElement2D3N",mCompressiblePotentialFlowElement2D3N); //this is the name the element should have according to the naming convention
@@ -89,6 +93,11 @@ void KratosCompressiblePotentialFlowApplication::Register()
         KRATOS_REGISTER_ELEMENT("CompressiblePotentialFlowElementWakeImplementation16NoCornerTeDown2D3N",
                                 mCompressiblePotentialFlowElementWakeImplementation16NoCornerTeDown2D3N); //this is the name the element should have according to the naming convention
 
+        KRATOS_REGISTER_ELEMENT("CompressiblePotentialFlowElementWakeImplementation19NoCornerZeroVelocity2D3N",
+                                mCompressiblePotentialFlowElementWakeImplementation19NoCornerZeroVelocity2D3N); //this is the name the element should have according to the naming convention
+
+        KRATOS_REGISTER_ELEMENT("CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation2D3N",
+                                mCompressiblePotentialFlowElementWakeImplementation21NoCornerVariation2D3N); //this is the name the element should have according to the naming convention
 
 
         //Register conditions

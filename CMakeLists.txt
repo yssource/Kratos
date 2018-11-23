@@ -201,9 +201,9 @@ endif(CMAKE_BUILD_TYPE MATCHES FullDebug)
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     # Setting the cache path prevents it to change in case someone 'make' after modifying this file and not reconfiguring
     set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/bin/${CMAKE_SYSTEM_NAME}/${CMAKE_BUILD_TYPE}" CACHE PATH "Default Install path" FORCE)
-    message("-------------------------------- Standard install dir ${CMAKE_INSTALL_PREFIX}")
+    message("-- Standard install dir ${CMAKE_INSTALL_PREFIX}")
 else(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    message("-------------------------------- User defined install dir ${CMAKE_INSTALL_PREFIX}")
+    message("-- User defined install dir ${CMAKE_INSTALL_PREFIX}")
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 # *****************************
@@ -211,17 +211,16 @@ endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 # *****************************
 
 # Find and include OpenMP if possible
-message(KRATOS_EXCLUDE_OPENMP ${KRATOS_EXCLUDE_OPENMP})
 if(${KRATOS_EXCLUDE_OPENMP} MATCHES ON)
-    message("**********************************************************")
-    message("OpenMP calculation was excluced artificially. Remove the var")
-    message("KRATOS_EXCLUDE_OPENMP from the configuration script or set it to off to include it")
-    message("**********************************************************")
+    message("****************************************************************************************")
+    message("** OpenMP calculation was excluced artificially. Remove the var                       **")
+    message("** KRATOS_EXCLUDE_OPENMP from the configuration script or set it to off to include it **")
+    message("****************************************************************************************")
     if(${CMAKE_CXX_COMPILER_ID} MATCHES Intel)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -diag-disable 3180 ") # Disabling warning abt unrecognized omp pragmas
     endif(${CMAKE_CXX_COMPILER_ID} MATCHES Intel)
 else(${KRATOS_EXCLUDE_OPENMP} MATCHES ON)
-    message("OpenMP included")
+    message("-- OpenMP included")
     find_package(OpenMP)
     if (OPENMP_FOUND)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -246,8 +245,8 @@ set(Boost_REALPATH ON)
 
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
-message("Boost Include: ${Boost_INCLUDE_DIRS}")
-message("Boost Linkdir: ${Boost_LIBRARY_DIRS}")
+message("-- Boost Include: ${Boost_INCLUDE_DIRS}")
+message("-- Boost Linkdir: ${Boost_LIBRARY_DIRS}")
 
 # Find CUDA
 if(${USE_CUDA} MATCHES ON)

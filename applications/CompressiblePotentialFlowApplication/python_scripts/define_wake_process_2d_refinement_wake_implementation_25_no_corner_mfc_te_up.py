@@ -223,15 +223,70 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                 #    elnode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.DEACTIVATED_WAKE, True)
 
         for elem in self.all_trailing_edge_model_part.Elements:
-            elem.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.ALL_TRAILING_EDGE, True)
-            counter_airfoil_nodes = 0
-            for elnode in elem.GetNodes():
-                if(elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL) == True):
-                    counter_airfoil_nodes += 1
-            if(counter_airfoil_nodes > 1):
-                elem.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.ZERO_VELOCITY_CONDITION, True)
+            if (elem.GetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA) == True):
+                elem.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.ALL_TRAILING_EDGE, True)
+                counter_airfoil_nodes = 0
                 for elnode in elem.GetNodes():
-                    elnode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.ZERO_VELOCITY_CONDITION, True)
+                    if(elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL) == True):
+                        counter_airfoil_nodes += 1
+                if(counter_airfoil_nodes > 1):
+                    elem.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.ZERO_VELOCITY_CONDITION, True)
+                    for elnode in elem.GetNodes():
+                        if (elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL) == False):
+                            elnode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.ZERO_VELOCITY_CONDITION, True)
+                            master = elnode
+                        if (elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL) == True
+                            and elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.TRAILING_EDGE) == False):
+                            elnode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA, True)
+                            slave1 = elnode
+                        if (elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL) == True
+                            and elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.TRAILING_EDGE) == True):
+                            elnode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA, True)
+                            slave2 = elnode
+
+        #'''
+        slaves = []
+        for elem in self.trailing_edge_model_part.Elements:
+            if(elem.Is(KratosMultiphysics.STRUCTURE)):
+                for elnode in elem.GetNodes():
+                    if (elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.TRAILING_EDGE) == True):
+                        master = elnode
+                    else:
+                        slaves.append(elnode)
+                        print(elnode)
+                    
+        print('slaves =', slaves)
+        #'''
+        self.fluid_model_part.CreateNewMasterSlaveConstraint("LinearMasterSlaveConstraint", 1, 
+                                                master, KratosMultiphysics.NEGATIVE_FACE_PRESSURE, #master 
+                                                slaves[0], KratosMultiphysics.POSITIVE_FACE_PRESSURE, 1.0, 0) #slave
+
+        self.fluid_model_part.CreateNewMasterSlaveConstraint("LinearMasterSlaveConstraint", 2, 
+                                                master, KratosMultiphysics.NEGATIVE_FACE_PRESSURE, #master 
+                                                slaves[1], KratosMultiphysics.NEGATIVE_FACE_PRESSURE, 1.0, 0) #slave
+        '''
+        for i in range(2):
+            self.fluid_model_part.CreateNewMasterSlaveConstraint("LinearMasterSlaveConstraint", i+1, 
+                                                master, KratosMultiphysics.NEGATIVE_FACE_PRESSURE, #master 
+                                                slaves[i], KratosMultiphysics.POSITIVE_FACE_PRESSURE, 1.0, 0) #slave
+        '''
+
+
+        #Example
+        '''
+        self.mp.CreateNewMasterSlaveConstraint("LinearMasterSlaveConstraint", 2, 
+                                                self.mp.Nodes[16], KratosMultiphysics.DISPLACEMENT_X, #master 
+                                                self.mp.Nodes[6], KratosMultiphysics.DISPLACEMENT_X, 1.0, 0) #slave
+        '''
+        '''
+        self.fluid_model_part.CreateNewMasterSlaveConstraint("LinearMasterSlaveConstraint", 1, 
+                                                master, KratosMultiphysics.POSITIVE_FACE_PRESSURE, #master 
+                                                slave1, KratosMultiphysics.POSITIVE_FACE_PRESSURE, 1.0, 0) #slave
+        
+        self.fluid_model_part.CreateNewMasterSlaveConstraint("LinearMasterSlaveConstraint", 2, 
+                                                master, KratosMultiphysics.POSITIVE_FACE_PRESSURE, #master 
+                                                slave2, KratosMultiphysics.POSITIVE_FACE_PRESSURE, 1.0, 0) #slave
+        #'''
 
     def ExecuteInitialize(self):
         self.Execute()

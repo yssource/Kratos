@@ -10,8 +10,8 @@
 //  Main authors:    Riccardo Rossi
 //
 
-#if !defined(KRATOS_COMPRESSIBLE_POTENTIAL_FLOW_ELEMENT_21_H_INCLUDED)
-#define KRATOS_COMPRESSIBLE_POTENTIAL_FLOW_ELEMENT_21_H_INCLUDED
+#if !defined(KRATOS_COMPRESSIBLE_POTENTIAL_FLOW_ELEMENT_25_H_INCLUDED)
+#define KRATOS_COMPRESSIBLE_POTENTIAL_FLOW_ELEMENT_25_H_INCLUDED
 
 // #define SYMMETRIC_CONSTRAINT_APPLICATION
 
@@ -51,7 +51,7 @@ namespace Kratos
 ///@{
 
 template <int Dim, int NumNodes>
-class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : public Element
+class CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc : public Element
 {
   public:
     template <unsigned int TNumNodes, unsigned int TDim>
@@ -72,8 +72,8 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
 
     ///@}
     ///@name Pointer Definitions
-    /// Pointer definition of CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation
-    KRATOS_CLASS_POINTER_DEFINITION(CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation);
+    /// Pointer definition of CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc
+    KRATOS_CLASS_POINTER_DEFINITION(CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc);
 
     ///@}
     ///@name Life Cycle
@@ -82,39 +82,39 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
     /**
      * Constructor.
      */
-    CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation(IndexType NewId = 0){};
+    CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc(IndexType NewId = 0){};
 
     /**
      * Constructor using an array of nodes
      */
-    CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation(IndexType NewId, const NodesArrayType &ThisNodes) : Element(NewId, ThisNodes){};
+    CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc(IndexType NewId, const NodesArrayType &ThisNodes) : Element(NewId, ThisNodes){};
 
     /**
      * Constructor using Geometry
      */
-    CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation(IndexType NewId, GeometryType::Pointer pGeometry) : Element(NewId, pGeometry){};
+    CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc(IndexType NewId, GeometryType::Pointer pGeometry) : Element(NewId, pGeometry){};
 
     /**
      * Constructor using Properties
      */
-    CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties) : Element(NewId, pGeometry, pProperties){};
+    CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties) : Element(NewId, pGeometry, pProperties){};
 
     /**
      * Copy Constructor
      */
-    CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation(CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation const &rOther){};
+    CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc(CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc const &rOther){};
 
     /**
      * Destructor
      */
-    ~CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation() override{};
+    ~CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc() override{};
 
     ///@}
     ///@name Operators
     ///@{
 
     /// Assignment operator.
-    CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation &operator=(CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation const &rOther)
+    CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc &operator=(CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc const &rOther)
     {
         BaseType::operator=(rOther);
         Flags::operator=(rOther);
@@ -135,7 +135,7 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
     Element::Pointer Create(IndexType NewId, NodesArrayType const &ThisNodes, PropertiesType::Pointer pProperties) const override
     {
         KRATOS_TRY
-        return Element::Pointer(new CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation(NewId, GetGeometry().Create(ThisNodes), pProperties));
+        return Element::Pointer(new CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc(NewId, GetGeometry().Create(ThisNodes), pProperties));
         KRATOS_CATCH("");
     }
 
@@ -149,7 +149,7 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
     Element::Pointer Create(IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const override
     {
         KRATOS_TRY
-        return Element::Pointer(new CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation(NewId, pGeom, pProperties));
+        return Element::Pointer(new CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc(NewId, pGeom, pProperties));
         KRATOS_CATCH("");
     }
 
@@ -163,7 +163,7 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
     Element::Pointer Clone(IndexType NewId, NodesArrayType const &ThisNodes) const override
     {
         KRATOS_TRY
-        return Element::Pointer(new CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation(NewId, GetGeometry().Create(ThisNodes), pGetProperties()));
+        return Element::Pointer(new CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc(NewId, GetGeometry().Create(ThisNodes), pGetProperties()));
         KRATOS_CATCH("");
     }
 
@@ -180,28 +180,10 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
             if (rResult.size() != NumNodes)
                 rResult.resize(NumNodes, false);
 
-            const CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation &r_this = *this;
-            const int &kutta = r_this.GetValue(KUTTA);
-            const int &zero_velocity_condition = r_this.GetValue(ZERO_VELOCITY_CONDITION);
-
-            if(kutta == 0)
+            if(this->GetValue(KUTTA) == 0)
             {
-                if(zero_velocity_condition == 0)
-                {
-                    for (unsigned int i = 0; i < NumNodes; i++)
-                        rResult[i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
-                }
-                else
-                {
-                    if (rResult.size() != 2 * NumNodes)
-                        rResult.resize(2 * NumNodes, false);
-
-                    for (unsigned int i = 0; i < NumNodes; i++)
-                    {
-                        rResult[i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
-                        rResult[i + NumNodes] = GetGeometry()[i].GetDof(NODAL_H).EquationId();
-                    }
-                }
+                for (unsigned int i = 0; i < NumNodes; i++)
+                    rResult[i] = GetGeometry()[i].GetDof(POSITIVE_FACE_PRESSURE).EquationId();
             }
             else
             {
@@ -257,30 +239,11 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
         {
             if (rElementalDofList.size() != NumNodes)
                 rElementalDofList.resize(NumNodes);
-
-            const CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation &r_this = *this;
-            const int &kutta = r_this.GetValue(KUTTA);
-            const int &zero_velocity_condition = r_this.GetValue(ZERO_VELOCITY_CONDITION);
             
-            if(kutta == 0)
+            if(this->GetValue(KUTTA) == 0)
             {
-                if(!zero_velocity_condition)
-                {
-                    for (unsigned int i = 0; i < NumNodes; i++)
-                        rElementalDofList[i] = GetGeometry()[i].pGetDof(POSITIVE_FACE_PRESSURE);
-                }
-                else
-                {
-                    if (rElementalDofList.size() != 2 * NumNodes)
-                        rElementalDofList.resize(2 * NumNodes);
-
-                    for (unsigned int i = 0; i < NumNodes; i++)
-                    {
-                        rElementalDofList[i] = GetGeometry()[i].pGetDof(POSITIVE_FACE_PRESSURE);
-                        rElementalDofList[i + NumNodes] = GetGeometry()[i].pGetDof(NODAL_H);
-                    }
-                }
-                
+                for (unsigned int i = 0; i < NumNodes; i++)
+                    rElementalDofList[i] = GetGeometry()[i].pGetDof(POSITIVE_FACE_PRESSURE);
             }
             else
             {
@@ -294,6 +257,7 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
                     else
                         rElementalDofList[i] = GetGeometry()[i].pGetDof(NEGATIVE_FACE_PRESSURE);
                 }
+                std::cout << "Getting Dofs Example = "<< rElementalDofList << std::endl;
             }
         }
         else //wake element
@@ -324,6 +288,11 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
         }
     }
 
+    // void Initialize() override
+    // {
+    //     std::cout << "Initializing " << std::endl;
+    // }
+
     /**
      * ELEMENTS inherited from this class have to implement next
      * CalculateLocalSystem, CalculateLeftHandSide and CalculateRightHandSide methods
@@ -349,104 +318,23 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
         //calculate shape functions
         GeometryUtils::CalculateGeometryData(GetGeometry(), data.DN_DX, data.N, data.vol);
 
-        const CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation &r_this = *this;
-        const int &kutta = r_this.GetValue(KUTTA);
-        const int &zero_velocity_condition = r_this.GetValue(ZERO_VELOCITY_CONDITION);
-
         //gather nodal data
-        if(kutta == 0)
+        for (unsigned int i = 0; i < NumNodes; i++)
         {
-            //gather nodal data
-            for (unsigned int i = 0; i < NumNodes; i++)
-                data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
-        }
-        else
-        {
-            array_1d<double, NumNodes> distances;
-            GetWakeDistances(distances);
-            //taking only negative part
-            for (unsigned int i = 0; i < NumNodes; i++)
-            {
-                if(distances[i] < 0)
-                    data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
-                else
-                    data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(NEGATIVE_FACE_PRESSURE);
-            }
+            data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
         }
 
         if (this->IsNot(MARKER)) //normal element (non-wake) - eventually an embedded
         {
-            if(zero_velocity_condition == 0)
-            {
-                if (rLeftHandSideMatrix.size1() != NumNodes || rLeftHandSideMatrix.size2() != NumNodes)
+            if (rLeftHandSideMatrix.size1() != NumNodes || rLeftHandSideMatrix.size2() != NumNodes)
                 rLeftHandSideMatrix.resize(NumNodes, NumNodes, false);
-                if (rRightHandSideVector.size() != NumNodes)
-                    rRightHandSideVector.resize(NumNodes, false);
-                rLeftHandSideMatrix.clear();
+            if (rRightHandSideVector.size() != NumNodes)
+                rRightHandSideVector.resize(NumNodes, false);
+            rLeftHandSideMatrix.clear();
 
-                ComputeLHSGaussPointContribution(data.vol, rLeftHandSideMatrix, data);
+            ComputeLHSGaussPointContribution(data.vol, rLeftHandSideMatrix, data);
 
-                noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
-            }
-            else
-            {
-                //note that the lhs and rhs have double the size!!
-                if (rLeftHandSideMatrix.size1() != 2 * NumNodes || rLeftHandSideMatrix.size2() != 2 * NumNodes)
-                    rLeftHandSideMatrix.resize(2 * NumNodes, 2 * NumNodes, false);
-                if (rRightHandSideVector.size() != 2 * NumNodes)
-                    rRightHandSideVector.resize(2 * NumNodes, false);
-                rLeftHandSideMatrix.clear();
-                rRightHandSideVector.clear();
-
-                Matrix lhs_total = ZeroMatrix(NumNodes, NumNodes);
-                ComputeLHSGaussPointContribution(data.vol, lhs_total, data);
-
-                for (unsigned int i = 0; i < NumNodes; ++i)
-                {
-                    std::cout << "node " << GetGeometry()[i] << std::endl;
-                    for (unsigned int j = 0; j < NumNodes; ++j)
-                    {
-                        rLeftHandSideMatrix(i, j) = lhs_total(i, j);
-                        rLeftHandSideMatrix(i, j + NumNodes) = 0.0;
-
-                        //rLeftHandSideMatrix(i + NumNodes, j + NumNodes) = 1.0; //lhs_total(i, j);
-                        //rLeftHandSideMatrix(i + NumNodes, j) = -lhs_total(i, j);
-                    }
-                    // rLeftHandSideMatrix(i + NumNodes, i + NumNodes) = 1.0;
-                    // rLeftHandSideMatrix(i + NumNodes, i) = -1.0;
-                }
-
-                rLeftHandSideMatrix(2 + NumNodes, 2 + NumNodes) = 1.0;
-                // rLeftHandSideMatrix(2 + NumNodes, 2) = -1.0;
-
-                for (unsigned int j = 0; j < NumNodes; ++j)
-                {
-                    rLeftHandSideMatrix(0, j + NumNodes) = -lhs_total(0, j);
-                    rLeftHandSideMatrix(1, j + NumNodes) = -lhs_total(1, j);
-                    rLeftHandSideMatrix(2, j + NumNodes) = -lhs_total(2, j);
-
-                    rLeftHandSideMatrix(0 + NumNodes , j + NumNodes) = lhs_total(0, j);
-                    rLeftHandSideMatrix(1 + NumNodes , j + NumNodes) = lhs_total(1, j);
-                    //rLeftHandSideMatrix(2 + NumNodes , j + NumNodes) = 1.0;
-                    //rLeftHandSideMatrix(2 + NumNodes , j) = -lhs_total(2, j);
-                    // rLeftHandSideMatrix(1 , j + NumNodes) = -lhs_total(1, j);
-                    // rLeftHandSideMatrix(0 + NumNodes, j) = -lhs_total(0, j);
-                }
-
-                for (unsigned int i = 0; i < 2 * NumNodes; ++i)
-                {
-                    std::cout << "rLeftHandSideMatrix =";
-
-                    for (unsigned int j = 0; j < 2 * NumNodes; ++j)
-                        std::cout << "  " << rLeftHandSideMatrix(i, j);
-
-                    std::cout << std::endl;
-                }
-
-                
-            }
-            
-            
+            noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
         }
         else //it is a wake element
         {
@@ -638,24 +526,24 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
 
         double internal_energy = 0.0;
 
-        // if (this->IsNot(MARKER)) //normal element (non-wake) - eventually an embedded
-        // {
-        //     //gather nodal data
-        //     for (unsigned int i = 0; i < NumNodes; i++)
-        //         data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
+        if (this->IsNot(MARKER)) //normal element (non-wake) - eventually an embedded
+        {
+            //gather nodal data
+            for (unsigned int i = 0; i < NumNodes; i++)
+                data.phis[i] = GetGeometry()[i].FastGetSolutionStepValue(POSITIVE_FACE_PRESSURE);
 
-        //     noalias(tmp) = prod(rLeftHandSideMatrix, data.phis);
-        //     internal_energy = 0.5 * inner_prod(tmp, data.phis);
-        // }
-        // else
-        // {
-        //     GetWakeDistances(data.distances);
-        //     Vector split_element_values(NumNodes * 2);
-        //     GetValuesOnSplitElement(split_element_values, data.distances);
+            noalias(tmp) = prod(rLeftHandSideMatrix, data.phis);
+            internal_energy = 0.5 * inner_prod(tmp, data.phis);
+        }
+        else
+        {
+            GetWakeDistances(data.distances);
+            Vector split_element_values(NumNodes * 2);
+            GetValuesOnSplitElement(split_element_values, data.distances);
 
-        //     noalias(tmp) = prod(rLeftHandSideMatrix, split_element_values);
-        //     internal_energy = 0.5 * inner_prod(rRightHandSideVector, split_element_values);
-        // }
+            noalias(tmp) = prod(rLeftHandSideMatrix, split_element_values);
+            internal_energy = 0.5 * inner_prod(rRightHandSideVector, split_element_values);
+        }
         this->SetValue(INTERNAL_ENERGY, internal_energy);
     }
 
@@ -675,12 +563,12 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
 
         if (this->Id() < 1)
         {
-            KRATOS_THROW_ERROR(std::logic_error, "CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation found with Id 0 or negative", "")
+            KRATOS_THROW_ERROR(std::logic_error, "CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc found with Id 0 or negative", "")
         }
 
         if (this->GetGeometry().Area() <= 0)
         {
-            std::cout << "error on CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation -> " << this->Id() << std::endl;
+            std::cout << "error on CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc -> " << this->Id() << std::endl;
             KRATOS_THROW_ERROR(std::logic_error, "Area cannot be less than or equal to 0", "")
         }
 
@@ -738,10 +626,6 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
             rValues[0] = this->GetValue(TRAILING_EDGE);
         else if(rVariable == KUTTA)
             rValues[0] = this->GetValue(KUTTA);
-        else if(rVariable == ALL_TRAILING_EDGE)
-            rValues[0] = this->GetValue(ALL_TRAILING_EDGE);
-        else if(rVariable == ZERO_VELOCITY_CONDITION)
-            rValues[0] = this->GetValue(ZERO_VELOCITY_CONDITION);
     }
 
     void GetValueOnIntegrationPoints(const Variable<array_1d<double, 3>> &rVariable,
@@ -787,7 +671,7 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
     std::string Info() const override
     {
         std::stringstream buffer;
-        buffer << "CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation #" << Id();
+        buffer << "CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc #" << Id();
         return buffer.str();
     }
 
@@ -795,7 +679,7 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
 
     void PrintInfo(std::ostream &rOStream) const override
     {
-        rOStream << "CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation #" << Id();
+        rOStream << "CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc #" << Id();
     }
 
     /// Print object's data.
@@ -899,10 +783,7 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
         //calculate shape functions
         GeometryUtils::CalculateGeometryData(GetGeometry(), data.DN_DX, data.N, data.vol);
 
-        const CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation &r_this = *this;
-        const int &kutta = r_this.GetValue(KUTTA);
-
-        if(kutta == 0)
+        if(this->GetValue(KUTTA) == 0)
         {
             //gather nodal data
             for (unsigned int i = 0; i < NumNodes; i++)
@@ -1146,7 +1027,7 @@ class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation : pu
 
     ///@}
 
-}; // Class CompressiblePotentialFlowElementWakeImplementation21NoCornerVariation
+}; // Class CompressiblePotentialFlowElementWakeImplementation25NoCornerMfc
 
 ///@}
 

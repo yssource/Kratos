@@ -46,6 +46,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
         self.wake_model_part = self.fluid_model_part.CreateSubModelPart("wake_modelpart")
         self.kutta_model_part = self.fluid_model_part.CreateSubModelPart("kutta_model_part")
         self.trailing_edge_model_part = self.fluid_model_part.CreateSubModelPart("trailing_edge_model_part")
+        self.all_trailing_edge_model_part = self.fluid_model_part.CreateSubModelPart("all_trailing_edge_model_part")
         self.penalty_model_part = self.fluid_model_part.CreateSubModelPart("penalty_model_part")
 
         KratosMultiphysics.NormalCalculationUtils().CalculateOnSimplex(self.fluid_model_part,
@@ -73,10 +74,10 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                 te_node = unode
 
         for unode in self.upper_surface_model_part.Nodes:
-            if(unode.X > pos):
+            if(unode.X > pos - 1e-9):
                 unode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.TRAILING_EDGE, True)
-                #node.Fix(KratosMultiphysics.NODAL_H)
-                #node.SetSolutionStepValue(KratosMultiphysics.NODAL_H,0, 500.0)
+                #unode.Fix(KratosMultiphysics.NODAL_H)
+                #unode.SetSolutionStepValue(KratosMultiphysics.NODAL_H,0, 507.85)
 
         print('kutta node = ', te_node)
         self.kutta_model_part.Nodes.append(te_node)
@@ -117,6 +118,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                     #all nodes that touch the kutta nodes are potentiallyactive
                     if(elnode.Is(KratosMultiphysics.STRUCTURE)):
                         potentially_active_portion = True
+                        self.all_trailing_edge_model_part.Elements.append(elem)
                         break
                 for elnode in elem.GetNodes():
                     #compute x distance
@@ -223,6 +225,23 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                 #for elnode in elem.GetNodes():
                 #    elnode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.DEACTIVATED_WAKE, True)
 
+        for elem in self.all_trailing_edge_model_part.Elements:
+            if(elem.GetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA) == False):
+                elem.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.ALL_TRAILING_EDGE, True)
+                counter_airfoil_nodes = 0
+                for elnode in elem.GetNodes():
+                    if(elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL) == True):
+                        counter_airfoil_nodes += 1
+                if(counter_airfoil_nodes > 1):
+                    elem.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.ZERO_VELOCITY_CONDITION, True)
+                    counter = 0
+                    #for elnode in elem.GetNodes():
+                    #    print(elnode)
+                    #    elnode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.ZERO_VELOCITY_CONDITION, True)
+                    #    if(counter > 1):
+                    #        elnode.Fix(KratosMultiphysics.NODAL_H)
+                    #        elnode.SetSolutionStepValue(KratosMultiphysics.NODAL_H,0, 507.84)
+                    #    counter += 1
 
     def ExecuteInitialize(self):
         self.Execute()

@@ -84,6 +84,8 @@ class LaplacianSolver:
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.TRAILING_EDGE)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.DEACTIVATED_WAKE)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.ALL_TRAILING_EDGE)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.CompressiblePotentialFlowApplication.ZERO_VELOCITY_CONDITION)
 
     def AddDofs(self):
         KratosMultiphysics.VariableUtils().AddDof(KratosMultiphysics.POSITIVE_FACE_PRESSURE, self.main_model_part)
@@ -96,11 +98,14 @@ class LaplacianSolver:
     def Initialize(self):
         time_scheme = KratosMultiphysics.ResidualBasedIncrementalUpdateStaticScheme()
         move_mesh_flag = False #USER SHOULD NOT CHANGE THIS
+
+        builder_and_solver = KratosMultiphysics.ResidualBasedBlockBuilderAndSolverWithConstraints(self.linear_solver)
         
         self.solver = KratosMultiphysics.ResidualBasedLinearStrategy(
             self.main_model_part, 
             time_scheme, 
             self.linear_solver,
+            builder_and_solver,
             self.settings["compute_reactions"].GetBool(), 
             self.settings["reform_dofs_at_each_step"].GetBool(), 
             self.settings["calculate_solution_norm"].GetBool(), 
@@ -173,7 +178,10 @@ class LaplacianSolver:
         self.work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
         #self.work_dir = '/home/inigo/simulations/naca0012/07_salome/06_Rectangle/'
 
-        if(NumberOfNodes < 5.0e4):
+        Size1 = self.solver.GetSystemMatrix()
+        print('Size1 =',Size1.Size1())
+
+        if(NumberOfNodes < 5.0e1):
 
             print('\nComputing condition number . . .\n')
 

@@ -110,6 +110,20 @@ class DefineWakeProcess(KratosMultiphysics.Process):
             x0 = node.X
             y0 = node.Y
             for elem in self.fluid_model_part.Elements:
+                #Computing distance to te
+                x_center = 0.0
+                y_center = 0.0
+                for snode in elem.GetNodes():
+                    x_center += snode.X / 3.0
+                    y_center += snode.Y / 3.0
+
+                dx = x_center - x0
+                dy = y_center - y0
+
+                distance = math.sqrt(dx*dx + dy*dy)
+
+                elem.SetValue(KratosMultiphysics.DISTANCE, distance)
+
                 #check in the potentially active portion
                 potentially_active_portion = False
                 for elnode in elem.GetNodes():
@@ -223,15 +237,16 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                 #    elnode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.DEACTIVATED_WAKE, True)
 
         for elem in self.all_trailing_edge_model_part.Elements:
-            elem.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.ALL_TRAILING_EDGE, True)
-            counter_airfoil_nodes = 0
-            for elnode in elem.GetNodes():
-                if(elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL) == True):
-                    counter_airfoil_nodes += 1
-            if(counter_airfoil_nodes > 1):
-                elem.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.ZERO_VELOCITY_CONDITION, True)
+            #if (elem.GetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.KUTTA) == True):
+                elem.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.ALL_TRAILING_EDGE, True)
+                counter_airfoil_nodes = 0
                 for elnode in elem.GetNodes():
-                    elnode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.ZERO_VELOCITY_CONDITION, True)
+                    if(elnode.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.AIRFOIL) == True):
+                        counter_airfoil_nodes += 1
+                if(counter_airfoil_nodes > 1):
+                    elem.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.ZERO_VELOCITY_CONDITION, True)
+
+
 
     def ExecuteInitialize(self):
         self.Execute()

@@ -41,15 +41,23 @@ cd ..
 #source scripts/wake_implementation09.sh
 #source scripts/wake_implementation10.sh
 
+#source scripts/wake_implementation15.sh
+#source scripts/wake_implementation16.sh
+#source scripts/wake_implementation17.sh
+#source scripts/wake_implementation18.sh
+
 #TO BE RUN
 #source scripts/wake_implementation11.sh
 #source scripts/wake_implementation12.sh
 #source scripts/wake_implementation13.sh
 #source scripts/wake_implementation14.sh
-source scripts/wake_implementation15.sh
-source scripts/wake_implementation16.sh
-source scripts/wake_implementation17.sh
-source scripts/wake_implementation18.sh
+
+#source scripts/wake_implementation19.sh
+#source scripts/wake_implementation23.sh
+#source scripts/wake_implementation21.sh
+
+#source scripts/wake_implementation25.sh
+source scripts/wake_implementation27.sh
 
 source generate_mdpas/unset_parameters.sh
 

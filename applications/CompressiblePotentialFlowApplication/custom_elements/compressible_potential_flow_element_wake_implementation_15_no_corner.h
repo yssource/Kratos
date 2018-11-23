@@ -620,6 +620,10 @@ class CompressiblePotentialFlowElementWakeImplementation15NoCorner : public Elem
             rValues[0] = this->GetValue(TRAILING_EDGE);
         else if(rVariable == KUTTA)
             rValues[0] = this->GetValue(KUTTA);
+        else if(rVariable == ALL_TRAILING_EDGE)
+            rValues[0] = this->GetValue(ALL_TRAILING_EDGE);
+        else if(rVariable == ZERO_VELOCITY_CONDITION)
+            rValues[0] = this->GetValue(ZERO_VELOCITY_CONDITION);
     }
 
     void GetValueOnIntegrationPoints(const Variable<array_1d<double, 3>> &rVariable,

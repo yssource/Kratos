@@ -71,7 +71,12 @@ class DefineWakeProcess(KratosMultiphysics.Process):
             if(unode.X > pos):
                 pos = unode.X
                 te_node = unode
+        
+        for unode in self.upper_surface_model_part.Nodes:
+            if(unode.X > pos - 1e-9):
                 unode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.TRAILING_EDGE, True)
+                #node.Fix(KratosMultiphysics.NODAL_H)
+                #node.SetSolutionStepValue(KratosMultiphysics.NODAL_H,0, 500.0)
 
         print('kutta node = ', te_node)
         self.kutta_model_part.Nodes.append(te_node)

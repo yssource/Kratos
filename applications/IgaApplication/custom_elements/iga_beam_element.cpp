@@ -102,7 +102,7 @@ void IgaBeamElement::CalculateAll(
     Vector& shape_function_values = GetValue(SHAPE_FUNCTION_VALUES);
     Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
     /// Testprit
-    IgaDebug::CheckVector(expected_data,"shape_0", shape_function_values);
+    // IgaDebug::CheckVector(expected_data,"shape_0", shape_function_values);
 
     // get properties
     const auto& properties = GetProperties();
@@ -144,10 +144,10 @@ void IgaBeamElement::CalculateAll(
     // IgaDebug::CheckVector(expected_data,"external_force", _gkfi);
 
 
-    Vector t_var;
-    ComputeTVariation(t_var, r1, shape_derivatives);
-    IgaDebug:: CheckVector(expected_data, "T_VAR", t_var);
-    LOG("[+] t_var check");   // Debug Check
+    std::vector<Vector3> t_var1(NumberOfDofs());
+    comp_T_var(r1, t_var1);
+    IgaDebug:: CheckVectorVar(expected_data, "T_VAR", t_var1);
+    // LOG("[+] t_var check");   // Debug Check
     
 
 
@@ -515,14 +515,14 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     ComputeGeometryActual(r1, r2, a, b);
 
     /// Debug Check
-    IgaDebug::CheckVector(expected_data, "R_1", R1);
-    IgaDebug::CheckVector(expected_data, "R_2", R2); 
-    IgaDebug::CheckDouble(expected_data, "A", A);
-    IgaDebug::CheckDouble(expected_data, "B", B);    
-    IgaDebug::CheckVector(expected_data, "r_1", r1);
-    IgaDebug::CheckVector(expected_data, "r_2", r2);
-    IgaDebug::CheckDouble(expected_data, "a", a);
-    IgaDebug::CheckDouble(expected_data, "b", b);
+    // IgaDebug::CheckVector(expected_data, "R_1", R1);
+    // IgaDebug::CheckVector(expected_data, "R_2", R2); 
+    // IgaDebug::CheckDouble(expected_data, "A", A);
+    // IgaDebug::CheckDouble(expected_data, "B", B);    
+    // IgaDebug::CheckVector(expected_data, "r_1", r1);
+    // IgaDebug::CheckVector(expected_data, "r_2", r2);
+    // IgaDebug::CheckDouble(expected_data, "a", a);
+    // IgaDebug::CheckDouble(expected_data, "b", b);
 
     // get Rotations
     double Phi = GetValue(PHI);
@@ -533,10 +533,10 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
 
     ComputePhiReferenceProperty(phi, phi_der);
 
-    IgaDebug::CheckDouble(expected_data, "phi",phi);
-    LOG("[+] phi");   // Debug Check
-    IgaDebug::CheckDouble(expected_data, "phi_der",phi_der);
-    LOG("[+] phi_der");   // Debug Check
+    // IgaDebug::CheckDouble(expected_data, "phi",phi);
+    // LOG("[+] phi");   // Debug Check
+    // IgaDebug::CheckDouble(expected_data, "phi_der",phi_der);
+    // LOG("[+] phi_der");   // Debug Check
 
  
     // Further Declarations
@@ -602,16 +602,16 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     // 1st Variation
     // Variation of the axial Strain
     Vector eps_dof = ComputeEpsilonFirstDerivative(r1);
-    IgaDebug::CheckVector(expected_data, "EPSILON_DOF", eps_dof);
-    LOG("[+] eps_dof");   // Debug Check
+    // IgaDebug::CheckVector(expected_data, "EPSILON_DOF", eps_dof);
+    // LOG("[+] eps_dof");   // Debug Check
 
     eps_dof = eps_dof / Apow2;
 
     // 2nd Variation
     // Variation of axial Strain
     Matrix eps_dof_2 = ComputeEpsilonSecondDerivative(r1);
-    IgaDebug::CheckMatrix(expected_data, "EPSILON_DOF_2", eps_dof_2);
-    LOG("[+] eps_dof_2");   // Debug Check
+    // IgaDebug::CheckMatrix(expected_data, "EPSILON_DOF_2", eps_dof_2);
+    // LOG("[+] eps_dof_2");   // Debug Check
 
     eps_dof_2 = eps_dof_2 / Apow4;
     
@@ -1116,29 +1116,29 @@ void IgaBeamElement::ComputeCrossSectionGeometryReference(
     // Compute Matrix Lambda 
     BoundedMatrix<double,3,3> matrix_lambda;
     matrix_lambda.clear();
-    ComputeMatrixLambda(matrix_lambda, T0_vec, T_vec);
-    LOG("[+](ref) matrix_LAMBDA check");   // Debug Check
+    comp_lambda(T0_vec, T_vec, matrix_lambda);
+    // LOG("[+](ref) matrix_LAMBDA check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_LAMBDA_REF", matrix_lambda);
 
     // Compute Matrix Lambda first Derivative
     BoundedMatrix<double,3,3> matrix_lambda_der1;
     matrix_lambda_der1.clear();
-    ComputeMatrixLambdaFirstDerivative(matrix_lambda_der1, T0_vec, T_vec, T0_der1, T_der1);
-    LOG("[+](ref) matrix_LAMBDA_DER check");   // Debug Check
+    comp_lambda_der(T0_vec, T0_der1, T_vec, T_der1, matrix_lambda_der1);
+    // LOG("[+](ref) matrix_LAMBDA_DER check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_LAMBDA_DER_REF", matrix_lambda_der1);
 
     // Compute Matrix rodriguez
     BoundedMatrix<double,3,3> matrix_rodriguez;
     matrix_rodriguez.clear();
-    ComputeMatrixRodriuez(matrix_rodriguez, T_vec, Phi);
-    LOG("[+](ref) matrix_RODRIGUEZ check");   // Debug Check
+    comp_rodrigues(T_vec, Phi, matrix_rodriguez);
+    // LOG("[+](ref) matrix_RODRIGUEZ check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_RODRIGUEZ_REF", matrix_rodriguez);
 
     // Compute Matrix rodriguez first Derivative
     BoundedMatrix<double,3,3> matrix_rodriguez_der1; 
     matrix_rodriguez_der1.clear();
-    ComputeMatrixRodriuezFirstDerivative(matrix_rodriguez_der1, T_vec, T_der1, Phi, Phi_der);
-    LOG("[+](ref) matrix_rodriguez_DERIVATIVE check");   // Debug Check
+    comp_rodrigues_der(T_vec, T_der1, Phi, Phi_der, matrix_rodriguez_der1);
+    // LOG("[+](ref) matrix_rodriguez_DERIVATIVE check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_RODRIGUEZ_DER_REF", matrix_rodriguez_der1);
 
     _n_act.clear();
@@ -1288,38 +1288,38 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
     matrix_rodriguez_der1.clear();
 
     // Compute Matrix Lambda / Lambda_der
-    ComputeMatrixLambda(matrix_LAMBDA, T0_vec, T_vec);
-    LOG("[+](actual) matrix_LAMBDA check");   // Debug Check
+    comp_lambda(T0_vec, T_vec, matrix_LAMBDA);
+    // LOG("[+](actual) matrix_LAMBDA check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_LAMBDA_ACTUAL", matrix_LAMBDA);
     
-    ComputeMatrixLambda(matrix_lambda, T_vec,  t_vec);
-    LOG("[+](actual) matrix_lambda check");   // Debug Check
+    comp_lambda(T_vec,  t_vec, matrix_lambda);
+    // LOG("[+](actual) matrix_lambda check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_lambda_ACTUAL", matrix_lambda);
 
-    ComputeMatrixLambdaFirstDerivative(matrix_LAMBDA_der1, T0_vec, T_vec, T0_der1, T_der1);
-    LOG("[+](actual) matrix_LAMBDA_der check");   // Debug Check
+    comp_lambda_der(T0_vec, T0_der1, T_vec, T_der1, matrix_LAMBDA_der1);
+    // LOG("[+](actual) matrix_LAMBDA_der check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_LAMBDA_DER_ACTUAL", matrix_LAMBDA_der1);
 
-    ComputeMatrixLambdaFirstDerivative(matrix_lambda_der1, T_vec,  t_vec, T_der1,  t_der1);
-    LOG("[+](actual) matrix_lambda_der check");   // Debug Check
+    comp_lambda_der(T_vec, T_der1,  t_vec,  t_der1, matrix_lambda_der1);
+    // LOG("[+](actual) matrix_lambda_der check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_lambda_DER_ACTUAL", matrix_lambda_der1);
 
 
     // Compute Matrix Rodriguez / rodriguez_der
-    ComputeMatrixRodriuez(matrix_RODRIGUEZ, T_vec, Phi);
-    LOG("[+](actual) matrix_RODRIGUEZ check");   // Debug Check
+    comp_rodrigues(T_vec, Phi, matrix_RODRIGUEZ);
+    // LOG("[+](actual) matrix_RODRIGUEZ check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_RODRIGUEZ_ACTUAL", matrix_RODRIGUEZ);
 
-    ComputeMatrixRodriuez(matrix_rodriguez, t_vec, phi);
-    LOG("[+](actual) matrix_rodriguez check");   // Debug Check
+    comp_rodrigues(t_vec, phi, matrix_rodriguez);
+    // LOG("[+](actual) matrix_rodriguez check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_rodriguez_ACTUAL", matrix_rodriguez);
 
-    ComputeMatrixRodriuezFirstDerivative(matrix_RODRIGUEZ_der1, T_vec, T_der1, Phi, Phi_der);
-    LOG("[+](actual) matrix_RODRIGUEZ_der1 (actual) check");   // Debug Check
+    comp_rodrigues_der(T_vec, T_der1, Phi, Phi_der, matrix_RODRIGUEZ_der1);
+    // LOG("[+](actual) matrix_RODRIGUEZ_der1 (actual) check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_RODRIGUEZ_DER_ACTUAL", matrix_RODRIGUEZ_der1);
 
-    ComputeMatrixRodriuezFirstDerivative(matrix_rodriguez_der1, t_vec, t_der1, phi, phi_der);
-    LOG("[+](actual) matrix_rodriguez_der1 (actual) check");   // Debug Check
+    comp_rodrigues_der(t_vec, t_der1, phi, phi_der, matrix_rodriguez_der1);
+    // LOG("[+](actual) matrix_rodriguez_der1 (actual) check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_rodriguez_DER_ACTUAL", matrix_rodriguez_der1);
     
     BoundedMatrix<double,3,3> matrix_RODRIGUEZ_LAMBDA;
@@ -1647,1683 +1647,6 @@ Vector IgaBeamElement::ComputePhieDof(Vector& _func)
     return phi_var;
 }
 
-//#################################################################################
-//#################################################################################
-//#
-//#                        +++ Compute Matrix Lambda +++
-//#
-//#################################################################################
-//#################################################################################
-//#
-/** Computes the Rotation Matrix Lambda (vec1 --> Vec2)
-     * 
-     * @param[in]   _matrix_lambda      (empty) Rotaition Matrix 
-     * @param[in]   _vec1               initial Vector
-     * @param[in]   _vec2               actual Vector
-     * 
-     * @param[return]   Matrix to Transform from vec1 to vec2
-     * 
-     * @author L.Rauch (11/2018)
-     * 
-     * @note   A.Bauer (11/2014)
-     */
-//#--------------------------------------------------------------------------------
-
-void IgaBeamElement::ComputeMatrixLambda(
-    BoundedMatrix<double,3,3>& _matrix_lambda,
-    BoundedVector<double,3> _vec1,
-    BoundedVector<double,3> _vec2)
-{
-    _matrix_lambda.clear();      // initialization by 0
-
-    // Create Temporary Varables
-    BoundedMatrix<double,3,3> matrix_lambda_tmp;
-    matrix_lambda_tmp.clear();
-    double tmp;
-    BoundedMatrix<double,3,3> matrix_identity = IdentityMatrix(3);    // ZeroMatrix(3,3);
-
-    // Compute CrossProduct between Vector 1 and Vector 2
-    BoundedVector<double,3> vec1_x_vec2 = Cross(_vec1, _vec2);
-    double l_vec1_x_vec2 = norm_2(vec1_x_vec2);
-    BoundedVector<double,3> e_hat = vec1_x_vec2;
-
-    double l_tol_crossprodunct = 1.0e-12;  // Tollerance for Crossproduct beeing numericaly Zero
-    double tol = 1.0e-8;        // Tollerance for Inner Product if not defined bevore
-
-    if (l_vec1_x_vec2 > l_tol_crossprodunct) e_hat = e_hat/l_vec1_x_vec2;
-    
-    if (inner_prod(_vec1, _vec2) > tol)
-    {
-        for (int i = 0; i < 3; i++) {_matrix_lambda(i,i) = inner_prod(_vec1, _vec2) ;}
-        // Cross Product Vector - Matrix [hardcoded Implementation] /# TODO ### Mit Karat Function ersetzen
-        _matrix_lambda += CrossProductVectorMatrix(Cross(_vec1, _vec2), matrix_identity);
-        matrix_lambda_tmp += outer_prod(vec1_x_vec2, vec1_x_vec2);
-
-        tmp = 1.0 / (1.0 + inner_prod(_vec1, _vec2)); 
-        matrix_lambda_tmp = matrix_lambda_tmp * tmp; 
-        _matrix_lambda += matrix_lambda_tmp;
-    }
-    else
-    {
-        for (int i = 0; i < 3; i++){
-            for (int j = 0; j < 3; j++){
-                _matrix_lambda(i,j) = (e_hat(i) * e_hat(j)) * (1 - inner_prod(_vec1, _vec2)) + inner_prod(_vec1, _vec2) * matrix_identity(i,j); 
-            }
-        } 
-        _matrix_lambda += CrossProductVectorMatrix(vec1_x_vec2, matrix_identity);
-    }
-}
-
-//#################################################################################
-//#################################################################################
-//#
-//#                   +++ Compute Matrix Lambda First Derivative +++
-//#
-//#################################################################################
-//#################################################################################
-//#
-/** Computes the derivative of the Rotation Matrix Lambda (vec1 --> Vec2)
-     * 
-     * @param[in]   _matrix_lambda      (empty) Rotaition Matrix 
-     * @param[in]   _vec1               initial Vector
-     * @param[in]   _vec2               actual Vector
-     * 
-     * @param[return]   Matrix to Transform from vec1 to vec2
-     * 
-     * @author L.Rauch (11/2018)
-     * 
-     * @note   A.Bauer (11/2014)
-     */
-//#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeMatrixLambdaFirstDerivative(
-    BoundedMatrix<double,3,3>& _matrix_lambda_der,
-    BoundedVector<double,3> _vec1,
-    BoundedVector<double,3> _vec2,
-    BoundedVector<double,3> _vec1_der,
-    BoundedVector<double,3> _vec2_der)
-{
-    _matrix_lambda_der.clear(); // initializing by 0
-
-    double tmp; 
-
-    BoundedMatrix<double,3,3> matrix_identity = IdentityMatrix(3); 
-
-    double T1_T2     = inner_prod(_vec1, _vec2); 
-    double T1_T2_der = inner_prod(_vec1, _vec2_der);
-    double T1_der_T2 = inner_prod(_vec1_der, _vec2); 
-    BoundedVector<double,3> T1_x_T2     = Cross(_vec1, _vec2);
-    BoundedVector<double,3> T1_x_T2_der = Cross(_vec1, _vec2_der);
-    BoundedVector<double,3> T1_der_x_T2 = Cross(_vec1_der, _vec2);
-    BoundedVector<double,3> T_x_der = T1_x_T2_der + T1_der_x_T2;
-
-    for (size_t i = 0; i < 3; i++) {_matrix_lambda_der(i,i) = T1_T2_der + T1_der_T2; }
-
-    _matrix_lambda_der += CrossProductVectorMatrix(T_x_der, matrix_identity);
-    tmp = -(T1_T2_der + T1_der_T2)/std::pow((1.0 + T1_T2),2);
-    
-    _matrix_lambda_der += outer_prod(T1_x_T2, T1_x_T2) * tmp;
-    tmp = 1.0/(1.0 + T1_T2);
-    
-    _matrix_lambda_der += outer_prod(T_x_der, T1_x_T2) * tmp;
-    _matrix_lambda_der += outer_prod(T1_x_T2, T_x_der) * tmp;
-}
-
-//#################################################################################
-//#################################################################################
-//#
-//#                   +++ Compute Matrix Lambda Second Derivative +++
-//#
-//#################################################################################
-//#################################################################################
-//#
-/** Computes the second derivative of the Rotation Matrix Lambda (vec1 --> Vec2)
-     * 
-     * @param[in]   _matrix_lambda      (empty) Rotaition Matrix 
-     * @param[in]   _vec1               initial Vector
-     * @param[in]   _vec2               actual Vector
-     * 
-     * @param[return]   Matrix to Transform from vec1 to vec2
-     * 
-     * @author L.Rauch (11/2018)
-     * 
-     * @note   A.Bauer (02/2018)
-     */
-//#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeMatrixLambdaSecondDerivative(
-    BoundedMatrix<double,3,3>& _matrix_lambda_derder,
-    BoundedVector<double,3> _vec1,
-    BoundedVector<double,3> _vec2,
-    BoundedVector<double,3> _vec1_der1,
-    BoundedVector<double,3> _vec2_der1,
-    BoundedVector<double,3> _vec1_der2,
-    BoundedVector<double,3> _vec2_der2)
-{
-    // Initialise final Matrix Labda 2nd Defivative
-    _matrix_lambda_derder.clear();
-    double tmp; 
-
-    // Define Identity Matrix
-    BoundedMatrix<double,3,3> matrix_identity = IdentityMatrix(3);
-
-    double T1_T2 = inner_prod(_vec1, _vec2);
-    double T1_T2_der = inner_prod(_vec1, _vec2_der1);
-    double T1_der_T2 = inner_prod(_vec1_der1, _vec2);
-    double T1_der_T2_der = inner_prod(_vec1_der1, _vec2_der1);
-    double T1_derder_T2 = inner_prod(_vec1_der2, _vec2);
-    double T1_T2_derder = inner_prod(_vec1, _vec2_der2);
-    double T1_T2_der_T1_der_T2 = T1_T2_der + T1_der_T2; 
-    double T1_T2_dereder_T1_derder_T2 = T1_derder_T2 + 2* T1_der_T2_der + T1_T2_derder;
-
-    BoundedVector<double,3> T1_x_T2 = Cross(_vec1, _vec2);
-    BoundedVector<double,3> T1_x_T2_der = Cross(_vec1, _vec2_der1);
-    BoundedVector<double,3> T1_der_x_T2 = Cross(_vec1_der1, _vec2);
-    BoundedVector<double,3> T1_der_x_T2_der = Cross(_vec1_der1, _vec2_der1);
-    BoundedVector<double,3> T1_x_T2_derder = Cross(_vec1, _vec2_der2);
-    BoundedVector<double,3> T1_derder_x_T2 = Cross(_vec1_der2, _vec2); 
-    BoundedVector<double,3> T1_x_T2_der_T1_der_x_T2 = T1_x_T2_der + T1_der_x_T2; 
-    BoundedVector<double,3> T1_x_T2_derder_T1_derder_x_T2 = T1_x_T2_derder + 2* T1_der_x_T2_der + T1_derder_x_T2;
-
-    for (int i = 0; i < 3; i++) {_matrix_lambda_derder(i,i) = T1_T2_dereder_T1_derder_T2; }
-
-    _matrix_lambda_derder += CrossProductVectorMatrix(T1_x_T2_derder_T1_derder_x_T2, matrix_identity);
-    tmp = 2* std::pow(T1_T2_der_T1_der_T2, 2) / std::pow(1.0 + T1_T2, 3) - T1_T2_dereder_T1_derder_T2 / std::pow(1.0 + T1_T2, 2);
-
-    _matrix_lambda_derder += outer_prod(T1_x_T2, T1_x_T2) * tmp;
-    tmp = - T1_T2_der_T1_der_T2 / std::pow(1.0 + T1_T2, 2) * 2;
-
-    _matrix_lambda_derder += outer_prod(T1_x_T2_der_T1_der_x_T2, T1_x_T2) * tmp;
-    _matrix_lambda_derder += outer_prod(T1_x_T2, T1_x_T2_der_T1_der_x_T2) * tmp;
-    tmp = 1.0 / (1.0 + T1_T2);
-
-    _matrix_lambda_derder += outer_prod(T1_x_T2_derder_T1_derder_x_T2, T1_x_T2) * tmp;
-    _matrix_lambda_derder += outer_prod(T1_x_T2_der_T1_der_x_T2, T1_x_T2_der_T1_der_x_T2) * tmp; 
-    _matrix_lambda_derder += outer_prod(T1_x_T2, T1_x_T2_derder_T1_derder_x_T2) * tmp;
-}
-
-//#################################################################################
-//#################################################################################
-//#
-//#                   +++ Compute Matrix Lambda Variation +++
-//#
-//#################################################################################
-//#################################################################################
-//#
-/** Computes the Variation of the Rotation Matrix Lambda (vec1 --> Vec2)
-     * 
-     * @param[in]   _matrix_lambda_var  (empty) Rotaition Matrix 
-     * @param[in]   _vec1               initial Vector
-     * @param[in]   _vec2               actual Vector
-     * 
-     * @param[return]   Matrix to Transform from vec1 to vec2
-     * 
-     * @author L.Rauch (11/2018)
-     * 
-     * @note   A.Bauer (11/2014)
-     */
-//#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeMatrixLambdaVariation(
-    Matrix& _matrix_lambda_var,
-    BoundedVector<double,3> _vec1,
-    BoundedVector<double,3> _vec2,
-    BoundedVector<double,3> _vec2_var)
-{
-    // Initialize Matrix Lambda Variation
-    double T1_T2 = inner_prod(_vec1, _vec2);
-    _matrix_lambda_var.resize(3 * NumberOfDofs(), 3);
-    _matrix_lambda_var.clear(); 
-
-    // Make Identity Matrix
-    BoundedMatrix<double,3,3> matrix_identity = IdentityMatrix(3); 
-    
-    std::vector<int> act_dofs; 
-    GetDofTypesPerNode(act_dofs);
-    int number_dofs_per_node = act_dofs.size();
-
-    int permutation[3][3][3];
-    for (int i = 0; i < 3; i++){
-        for (int j = 0; j < 3; j++){
-            for (int k = 0; k < 3; k++){
-
-                permutation[i][j][k] = 0;
-            }
-        }
-    }
-    permutation[0][1][2]=1;
-    permutation[2][0][1]=1;
-    permutation[1][2][0]=1;
-
-    permutation[0][2][1]=-1;
-    permutation[1][0][2]=-1;
-    permutation[2][1][0]=-1;
-
-    Vector vec1_x_vec2;
-    Vector vec1_x_vec2_var;
-
-    vec1_x_vec2.resize(3 * NumberOfDofs());
-    vec1_x_vec2_var.resize(3 * NumberOfDofs());
-
-    vec1_x_vec2.clear();
-    vec1_x_vec2_var.clear();
-
-    vec1_x_vec2 =Cross(_vec1, _vec2);
-
-    for (size_t t = 0; t < 3; t++){     // in the Case
-        for (int r = 0; r < NumberOfDofs(); r++)
-        {
-            int xyz = r % number_dofs_per_node; // 0 --> disp_x, 1 --> disp_y, 2 --> disp_z
-            for (size_t u = 0; u < 3; u++){
-                for (size_t k = 0; k < 3; k++){
-                    if (xyz > 2)
-                        vec1_x_vec2_var[t * NumberOfDofs() + r] += 0;
-                    else
-                        vec1_x_vec2_var[t * NumberOfDofs() + r] += permutation[t][k][u] * _vec1[k] * _vec2_var[u * NumberOfDofs() * r]; 
-                }
-            }
-        }
-    }
-    
-    Vector T1_T2_var;
-    T1_T2_var.resize(NumberOfDofs());
-    T1_T2_var.clear();
-
-    for (size_t t = 0; t < 3; t++){
-        for (int r = NumberOfDofs(); r < 3; r++)     // in the Case
-        {
-            int xyz = r % number_dofs_per_node;     // 0 --> disp_x, 1 --> disp_y, 2 --> disp_z
-            
-            if (xyz > 2)
-                T1_T2_var(r) += 0;
-            else
-                T1_T2_var(r) = _vec2_var[3 * NumberOfDofs() + r] * _vec1[t];
-        } 
-    }
-
-    for (size_t t = 0; t < 3; t++){     // in the Case
-        for (size_t u = 0; u < 3; u++){
-            for (int r = 0; NumberOfDofs() < 3; u++)
-            {
-                int xyz = r % number_dofs_per_node; // 0 --> disp_x, 1 --> disp_y, 2 --> disp_z
-                int i = r / number_dofs_per_node; 
-                if (t == u)
-                {
-                    if (xyz > 2)
-                        _matrix_lambda_var(t * NumberOfDofs() + r, u) += 0;
-                    else
-                        _matrix_lambda_var(t * NumberOfDofs() + r, u) += T1_T2_var(r); 
-                }
-            for (int k = 0; k < 3; k++)
-            {
-                _matrix_lambda_var(t * NumberOfDofs() + r, u) += permutation[t][k][u] * vec1_x_vec2_var[r + k* NumberOfDofs()];
-            }
-            _matrix_lambda_var(t * NumberOfDofs() + r, u) += - T1_T2_var[r] / std::pow(1.0 + T1_T2, 2) * (vec1_x_vec2[t] * vec1_x_vec2[u]);
-            _matrix_lambda_var(t * NumberOfDofs() + r, u) += + 1.0 / (1.0 + T1_T2) * (vec1_x_vec2_var[t * NumberOfDofs() +r] * vec1_x_vec2[u] + vec1_x_vec2[t] * vec1_x_vec2_var[u * NumberOfDofs() + r]); 
-            }
-        }
-    }
-}
-
-//#################################################################################
-//#################################################################################
-//#
-//#           +++ Compute Matrix Lambda second Variation +++
-//#
-//#################################################################################
-//#################################################################################
-//#
-/** Computes the Variation of the Deriative of the Rotation Matrix Lambda (vec1 --> Vec2)
-     * 
-     * @param[in]   _matrx_lamda_varvar  (empty) Rotaition Matrix 
-     * @param[in]   _vec1               initial Vector
-     * @param[in]   _vec2               actual Vector
-     * 
-     * @param[return]   Matrix to Transform from vec1 to vec2
-     * 
-     * @author L.Rauch (11/2018)
-     * 
-     * @note   A.Bauer (11/2014)
-     */
-//#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeMatrixLambdaSecondVariation(
-    Matrix& _matrx_lamda_varvar,
-    BoundedVector<double,3> _vec1,
-    BoundedVector<double,3> _vec2,
-    Vector _vec2var1,
-    Matrix _vec2var2)
-{
-    _matrx_lamda_varvar.resize(3 * NumberOfDofs(), 3 * NumberOfDofs()); 
-    _matrx_lamda_varvar.clear();
-
-    // get the degree of Freedom per Node
-    std::vector<int> act_dofs; 
-    GetDofTypesPerNode(act_dofs);
-    int number_dofs_per_node = act_dofs.size();
-
-    double T1_T2 = inner_prod(_vec1, _vec2);
-
-    int permutation[3][3][3]; 
-    for (int i = 0; i < 3; i++){
-        for (int j = 0; j < 3; j++){
-            for (int k = 0; k < 3; k++){
-
-                permutation[i][j][k] = 0;
-            }
-        }
-    }
-    permutation[0][1][2] = +1;
-    permutation[2][0][1] = +1;
-    permutation[1][2][0] = +1;
-
-    permutation[0][2][1] = -1;
-    permutation[1][0][2] = -1;
-    permutation[2][1][0] = -1;
-
-    Vector vec1_x_vec2;    
-    Vector vec1_x_vec2var1;
-    Matrix vec1_x_vec2var2;
-
-    vec1_x_vec2.resize(3);    
-    vec1_x_vec2var1.resize(3 * NumberOfDofs());
-    vec1_x_vec2var2.resize(3 * NumberOfDofs(), NumberOfDofs());
-
-    vec1_x_vec2.clear();    
-    vec1_x_vec2var1.clear();
-    vec1_x_vec2var2.clear();
-
-    vec1_x_vec2 = Cross(_vec1, _vec2);
-
-    Vector vec1_vec2var1;
-    vec1_vec2var1.resize(NumberOfDofs());
-    vec1_vec2var1.clear();
-
-    for (size_t t = 0; t < 3; t++){     //in the case
-        for (int r = 0; r < NumberOfDofs(); r++){
-
-            int xyz = r % number_dofs_per_node;     //0 -->disp_x; 1 -->disp_y; 2 -->disp_z
-            if (xyz > 2)
-                vec1_vec2var1[r] = 0;
-            else
-                vec1_vec2var1[r] += _vec2var1(t * NumberOfDofs() + r) * _vec1[t];
-        }
-    }
-
-    Matrix vec1_vec2var2;
-    vec1_vec2var2.resize(NumberOfDofs(), NumberOfDofs());
-    vec1_vec2var2.clear();
-
-    for (size_t t = 0; t < 3; t++){
-        for (int r = 0; r < NumberOfDofs(); r++){       //in the case
-            for (int s = 0; s < NumberOfDofs(); s++){   //in the case
-
-                int xyz_r = r % number_dofs_per_node;        //0 -->disp_x; 1 -->disp_y; 2 -->disp_z
-                int xyz_s = s % number_dofs_per_node;    //0 -->disp_x; 1 -->disp_y; 2 -->disp_z
-
-                if (xyz_r > 2 || xyz_s > 2)
-                    vec1_vec2var2(r, s) += 0;
-                else
-                    vec1_vec2var2(r, s) += _vec2var2(t * NumberOfDofs() + r, s) * _vec1[t];
-            }
-        }
-    }
-
-    for (size_t t = 0; t < 3; t++){         //in the case
-        for (int r = 0; r < NumberOfDofs(); r++){
-            for (size_t u = 0; u < 3; u++){
-                for (size_t k = 0; k < 3; k++){
-
-                    int xyz_r = r % number_dofs_per_node;     //0 -->disp_x; 1 -->disp_y; 2 -->disp_z
-                    if (xyz_r > 2)
-                        vec1_x_vec2var1[t * NumberOfDofs() + r] = 0;
-                    else
-                        vec1_x_vec2var1[t * NumberOfDofs() + r] += permutation[t][k][u] * _vec1[k] * _vec2var1[u * NumberOfDofs() + r]; 
-                }
-            }
-        }
-    }
-    for (size_t t = 0; t < 3; t++){             //in the case
-        for (size_t u = 0; u < 3; u++){                //in the case
-            for (int r = 0; r < NumberOfDofs(); r++){
-                for (int s = 0; s < NumberOfDofs(); s++){
-                    for (size_t k = 0; k < 3; k++){
-
-                        int xyz_r = r % number_dofs_per_node;   //0 -->disp_x; 1 -->disp_y; 2 -->disp_z; 3 --> rot_tan
-                        int xyz_s = s % number_dofs_per_node;   //0 -->disp_x; 1 -->disp_y; 2 -->disp_z; 3 --> rot_tan
-                        if (xyz_r >2 || xyz_s > 2)
-                            vec1_x_vec2var2(t * NumberOfDofs() + r, s) += 0;
-                        else
-                            vec1_x_vec2var2(t * NumberOfDofs() + r, s) += permutation[t][k][u] * _vec1[k] * _vec2var2(u * NumberOfDofs() + r,s);
-                    }
-                }
-            }
-        }
-    }
-    for (size_t t = 0; t < 3; t++){             //in the case
-        for (size_t u = 0; u < 3; u++){                //in the case
-            for (int r = 0; r < NumberOfDofs(); r++){
-                for (int s = 0; s < NumberOfDofs(); s++){
-
-                    int xyz_r = r % number_dofs_per_node;   //0 -->disp_x; 1 -->disp_y; 2 -->disp_z; 3 --> rot_tan
-                    int xyz_s = s % number_dofs_per_node;   //0 -->disp_x; 1 -->disp_y; 2 -->disp_z; 3 --> rot_tan
-                    if (xyz_r > 2 || xyz_s > 2)
-                        _matrx_lamda_varvar(t*NumberOfDofs()+r, u*NumberOfDofs()+s) = 0;
-                    else
-                    {
-                        if (t == u)
-                            _matrx_lamda_varvar(t*NumberOfDofs()+r, u*NumberOfDofs()+s) += vec1_vec2var2(r,s);
-                        else
-                        {
-                            for (int k = 0; k < 3; k++)
-                                _matrx_lamda_varvar(t*NumberOfDofs()+r, u*NumberOfDofs()+s) += permutation[t][k][u] * vec1_x_vec2var2(k * NumberOfDofs() + r, s);
-                        }
-                        _matrx_lamda_varvar(t*NumberOfDofs()+r, u*NumberOfDofs()+s) += (2 * vec1_vec2var1[r] * vec1_vec2var1[s] / std::pow(1.0 + T1_T2,3)
-                                                                                    - vec1_vec2var2(r,s) / std::pow(1.0 + T1_T2, 2))
-                                                                                    * vec1_x_vec2[t] * vec1_x_vec2[u] ;
-                                                                                                         
-                        _matrx_lamda_varvar(t*NumberOfDofs()+r, u*NumberOfDofs()+s) += - vec1_vec2var1[r] / std::pow(1.0 + T1_T2,2)
-                                                                                    * (vec1_x_vec2var1[t * NumberOfDofs() + s] * vec1_x_vec2[u]
-                                                                                    + vec1_x_vec2[t] * vec1_x_vec2var1[u * NumberOfDofs() + s])
-                                                                                    - vec1_vec2var1[s] / std::pow(1.0 + T1_T2, 2)
-                                                                                    * (vec1_x_vec2var1[t * NumberOfDofs() + r] * vec1_x_vec2[u]
-                                                                                    + vec1_x_vec2[t] * vec1_x_vec2var1[u * NumberOfDofs() + r]);
-
-                        _matrx_lamda_varvar(t*NumberOfDofs()+r, u*NumberOfDofs()+s) += 1.0/ (1.0 + T1_T2)
-                                                                                    * (vec1_x_vec2var2(t * NumberOfDofs() + r, s) * vec1_x_vec2[u * NumberOfDofs() + s]
-                                                                                    + vec1_x_vec2var1[t * NumberOfDofs() + r] * vec1_x_vec2var1[u * NumberOfDofs() + s]
-                                                                                    + vec1_x_vec2var1[t * NumberOfDofs() + s] * vec1_x_vec2var1[u * NumberOfDofs() + r]
-                                                                                    + vec1_x_vec2[t] * vec1_x_vec2var2(u * NumberOfDofs() + s, r));
-                    }
-                }
-            }
-        }
-    }
-
-}
-
-//#################################################################################
-//#################################################################################
-//#
-//#           +++ Compute Matrix Lambda first Derivative Variation +++
-//#
-//#################################################################################
-//#################################################################################
-//#
-/** Computes the Variation of the Deriative of the Rotation Matrix Lambda (vec1 --> Vec2)
-     * 
-     * @param[in]   _matrix_lambda_der_var  (empty) Rotaition Matrix 
-     * @param[in]   _vec1               initial Vector
-     * @param[in]   _vec2               actual Vector
-     * 
-     * @param[return]   Matrix to Transform from vec1 to vec2
-     * 
-     * @author L.Rauch (11/2018)
-     * 
-     * @note   A.Bauer (11/2014)
-     */
-//#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeMatrixLambdaFirstDerivativeVariation(
-    Matrix _matrix_lambda_der1var,
-    BoundedVector<double,3> _vec1,
-    BoundedVector<double,3> _vec2,
-    BoundedVector<double,3> _vec1der1,
-    BoundedVector<double,3> _vec2der1,
-    Vector _vec2var,
-    Vector _vec2der1var)
-{
-    _matrix_lambda_der1var.resize(3 * NumberOfDofs(), 3);
-    _matrix_lambda_der1var.clear();   // initialization by 0        
-    
-    std::vector<int> act_dofs; 
-    GetDofTypesPerNode(act_dofs);
-    int number_dofs_per_node = act_dofs.size();
-
-    double T1_T2 = inner_prod(_vec1, _vec2);
-    double T1_T2der1 = inner_prod(_vec1, _vec2der1);
-    double T1der1_T2 = inner_prod(_vec1der1, _vec2);
-
-     int permutation[3][3][3];
-     for (int i = 0; i < 3; i++){
-           for (int j =0 ; j < 3; j++){
-                  for (int k =0 ; k <3 ; k++){
-                      permutation[i][j][k] = 0;
-            }
-        }
-     }
-    permutation[0][1][2] = 1;
-    permutation[2][0][1] = 1;
-    permutation[1][2][0] = 1;
-
-    permutation[0][2][1] = -1;
-    permutation[1][0][2] = -1;
-    permutation[2][1][0] = -1;
-
-    Vector vec1_x_vec2;         
-    Vector vec1_x_vec2der1;     
-    Vector vec1der1_x_vec2;    
-    Vector vec1_x_vec2var;     
-    Vector vec1_x_vec2der1var; 
-    Vector vec1der1_x_vec2var; 
-
-    vec1_x_vec2.resize(3);       
-    vec1_x_vec2der1.resize(3);   
-    vec1der1_x_vec2.resize(3);   
-    vec1_x_vec2var.resize(NumberOfDofs() * 3);    
-    vec1_x_vec2der1var.resize(NumberOfDofs() * 3);
-    vec1der1_x_vec2var.resize(NumberOfDofs() * 3);
-
-    vec1_x_vec2.clear();       
-    vec1_x_vec2der1.clear();   
-    vec1der1_x_vec2.clear();   
-    vec1_x_vec2var.clear();    
-    vec1_x_vec2der1var.clear();
-    vec1der1_x_vec2var.clear();
-
-    vec1_x_vec2 = Cross(_vec1, _vec2);
-    vec1_x_vec2der1 = Cross(_vec1, _vec2der1);
-    vec1der1_x_vec2 = Cross(_vec1der1, _vec2); 
-
-    for (size_t t = 0; t < 3; t++){
-        for (int r = 0; r < NumberOfDofs(); r++){
-            for (size_t u = 0; u < 3; u++){
-                for (size_t k = 0; k < 3; k++){
-
-                    int xyz = r % number_dofs_per_node; 
-                    if (xyz > 2)
-                    {
-                        vec1_x_vec2var[t * NumberOfDofs() + r] += 0; 
-                        vec1_x_vec2der1var[t * NumberOfDofs() + r] += 0; 
-                        vec1der1_x_vec2var[t * NumberOfDofs() + r] += 0; 
-                    }
-                    else
-                    { 
-                        vec1_x_vec2var[t * NumberOfDofs() + r] += permutation[t][k][u] * _vec1[k] * _vec2var[u * NumberOfDofs() + r]; 
-                        vec1_x_vec2der1var[t * NumberOfDofs() + r] += permutation[t][k][u] * _vec1[k] * _vec2der1var[u * NumberOfDofs() + r];
-                        vec1der1_x_vec2var[t * NumberOfDofs() + r] += permutation[t][k][u] * _vec1der1[k] * _vec2var[u * NumberOfDofs() + r];
-                    }
-                }
-            }
-        }
-    }
-    Vector vec1_vec2var;    
-    Vector vec1_vec2der1var;
-    Vector vec1der1_vec2var;
-
-    vec1_vec2var.resize(NumberOfDofs());    
-    vec1_vec2der1var.resize(NumberOfDofs());
-    vec1der1_vec2var.resize(NumberOfDofs());
-
-    vec1_vec2var.clear();    
-    vec1_vec2der1var.clear();
-    vec1der1_vec2var.clear();
-
-    for (size_t t = 0; t < 3; t++){
-        for (int r = 0; r < NumberOfDofs(); r++){
-            
-            int xyz = r % number_dofs_per_node; 
-            if (xyz > 2)
-            {
-                vec1_vec2var[r] += 0;
-                vec1_vec2der1var[r] += 0;
-                vec1der1_vec2var[r] += 0;
-            }
-            else
-             {
-                 vec1_vec2var[r] += _vec2var[t * NumberOfNodes() + r] * _vec1[t];
-                 vec1_vec2der1var[r] += _vec2der1var[t * NumberOfDofs() +r] * _vec1[t];
-                 vec1der1_vec2var[r] += _vec2var[t * NumberOfDofs() + r] * _vec1der1[t];
-             }
-        }
-    }
-
-    for (size_t t = 0; t < 3; t++){         //in the case
-        for (size_t u = 0; u < 3; u ++){
-            for (int r = 0; r < NumberOfDofs(); r ++){
-
-                int xyz = r % number_dofs_per_node;       //0 -->disp_x; 1 -->disp_y; 2 -->disp_z
-                if (xyz >2)
-                    _matrix_lambda_der1var(t * NumberOfDofs() + r, u)  += 0;
-                else
-                {
-                    if (t == u)
-                        _matrix_lambda_der1var(t * NumberOfDofs() + r, u) += vec1_vec2der1var[r] + vec1der1_vec2var[r];
-                    else
-                    {
-                        for (int k = 0; k < 3; k++)
-                        {
-                            _matrix_lambda_der1var(t * NumberOfDofs() + r, u)   += permutation[t][k][u] * vec1_x_vec2der1var[k * NumberOfDofs() + r] 
-                                                                                +  permutation[t][k][u] * vec1der1_x_vec2var[k * NumberOfDofs() + r];
-                        }
-                    }
-                _matrix_lambda_der1var(t * NumberOfDofs() + r, u)   += (2 * vec1_vec2var[r]) * (T1_T2der1 + T1der1_T2) / std::pow(1.0 + T1_T2, 3)
-                                                                    - (vec1_vec2der1var[r] + vec1der1_vec2var[r]) / std::pow(1.0 + T1_T2,2)
-                                                                    * vec1_x_vec2[t] * vec1_x_vec2[u];
-
-                _matrix_lambda_der1var(t * NumberOfNodes() + r, u)  += - (T1_T2der1 + T1der1_T2) / std::pow(1.0 + T1_T2, 2)
-                                                                    * (vec1_x_vec2var[t * NumberOfDofs() + r] * vec1_x_vec2[u]
-                                                                    + vec1_x_vec2[t] * vec1_x_vec2var[u * NumberOfDofs() + r]) ;
-
-                _matrix_lambda_der1var(t * NumberOfDofs() + r, u)   += - (vec1_vec2var[r] / std::pow(1.0 + T1_T2, 2)
-                                                                    * (vec1_x_vec2der1[t] + vec1der1_x_vec2[t])
-                                                                    * vec1_x_vec2[u] + vec1_x_vec2[t]
-                                                                    + (vec1_x_vec2der1[u] + vec1der1_x_vec2[u]));
-
-                _matrix_lambda_der1var(t * NumberOfDofs() + r, u)   += 1.0 / (1.0 + T1_T2)
-                                                                    * ((vec1_x_vec2der1var[t * NumberOfDofs() +r] 
-                                                                    + vec1der1_x_vec2var[t + NumberOfDofs() + r]) * vec1_x_vec2[u] 
-                                                                    + vec1_x_vec2var[t * NumberOfDofs() + r] * (vec1_x_vec2der1[u] + vec1der1_x_vec2[u])
-                                                                    + vec1_x_vec2var[u * NumberOfDofs() + r] * (vec1_x_vec2der1[t] + vec1der1_x_vec2[t]) 
-                                                                    + vec1_x_vec2[t] * (vec1_x_vec2der1var[u * NumberOfDofs() + r] + vec1der1_x_vec2var[u * NumberOfDofs() + r]));
-                }
-            }
-        }
-    }
-}
-
-
-
-//#################################################################################
-//#################################################################################
-//#
-//#           +++ Compute Matrix Lambda second Derivative Variation +++
-//#
-//#################################################################################
-//#################################################################################
-//#
-/** Computes the Variation of the Deriative of the Rotation Matrix Lambda (vec1 --> Vec2)
-     * 
-     * @param[in]   _matrix_lambda_der2var  (empty) Rotaition Matrix 
-     * @param[in]   _vec1               initial Vector
-     * @param[in]   _vec2               actual Vector
-     * 
-     * @param[return]   Matrix to Transform from vec1 to vec2
-     * 
-     * @author L.Rauch (11/2018)
-     * 
-     * @note   A.Bauer (02/2018)
-     */
-//#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeMatrixLambdaSecondDerivativeVariation(
-    Matrix& _matrix_lambda_der2var,
-    BoundedVector<double,3> _vec1,
-    BoundedVector<double,3> _vec2,
-    BoundedVector<double,3> _vec1der1,
-    BoundedVector<double,3> _vec2der1,
-    BoundedVector<double,3> _vec1der2,
-    BoundedVector<double,3> _vec2der2,
-    Vector _vec2var,
-    Vector _vec2der1var,
-    Vector _vec2der2var)
-{
-    _matrix_lambda_der2var.resize(3 * NumberOfDofs(), 3);
-    _matrix_lambda_der2var.clear();   // initialization by 0
-
-    std::vector<int> act_dofs; 
-    GetDofTypesPerNode(act_dofs);
-    int number_dofs_per_node = act_dofs.size();
-
-    double T1_T2 = inner_prod(_vec1, _vec2);
-    double T1_T2der1 = inner_prod(_vec1, _vec2der1);
-    double T1der1_T2 = inner_prod(_vec1der1, _vec2);
-    double T1_T2der2 = inner_prod(_vec1, _vec2der2);
-    double T1der2_T2 = inner_prod(_vec1der2, _vec2);
-    double T1der1_T2der1 = inner_prod(_vec1der1, _vec2der1);
-    double T1_T2der1_T1der1_T2 = T1_T2der1 + T1der1_T2; 
-    double T1_T2der2_T1der2_T2 = T1_T2der2 + 2 * T1der1_T2der1 + T1der2_T2;
-
-    int permutation[3][3][3]; 
-    for (int i = 0; i < 3; i++){
-        for (int j = 0; j < 3; j++){
-            for (int k = 0; k < 3; k++){
-
-                permutation[i][j][k] = 0;
-            }
-        }
-    }
-    permutation[0][1][2] = +1;
-    permutation[2][0][1] = +1;
-    permutation[1][2][0] = +1;
-
-    permutation[0][2][1] = -1;
-    permutation[1][0][2] = -1;
-    permutation[2][1][0] = -1;
-
-    Vector vec1_x_vec2var;              // T x t,r = (T x r),r
-    Vector vec1_x_vec2der1var;          // T x t,1,r
-    Vector vec1der1_x_vec2var;          // T,1 x t,r
-    Vector vec1der2_x_vec2var;          // T,2 x t,r
-    Vector vec1der1_x_vec2der1var;      // T,1 x t,1,r
-    Vector vec1_x_vec2der2var;          // T x t,2,r
-    Vector vec1_x_vec2;                 // T x t
-    Vector vec1_x_vec2der1;             // T x t,1
-    Vector vec1der1_x_vec2;             // T,1 x t
-    Vector vec1_x_vec2der2;             // T x t,2
-    Vector vec1der2_x_vec2;             // T,2 x t
-    Vector vec1der1_x_vec2der1;         // T,1 x t,1
-    Vector vec1_x_vec2_der1;            // (T x t),1
-    Vector vec1_x_vec2_der2;            // (T x t),2
-    Vector vec1_x_vec2_der1var;         // (T x t),1,r
-    Vector vec1_x_vec2_der2var;         // (T x t),2,r
-
-    vec1_x_vec2var.resize(3 * NumberOfDofs()) ;        
-    vec1_x_vec2der1var.resize(3 * NumberOfDofs());    
-    vec1der1_x_vec2var.resize(3 * NumberOfDofs());    
-    vec1der2_x_vec2var.resize(3 * NumberOfDofs());    
-    vec1der1_x_vec2der1var.resize(3 * NumberOfDofs());
-    vec1_x_vec2der2var.resize(3 * NumberOfDofs());    
-    vec1_x_vec2.resize(3);           
-    vec1_x_vec2der1.resize(3);       
-    vec1der1_x_vec2.resize(3);       
-    vec1_x_vec2der2.resize(3);       
-    vec1der2_x_vec2.resize(3);       
-    vec1der1_x_vec2der1.resize(3);   
-    vec1_x_vec2_der1.resize(3);      
-    vec1_x_vec2_der2.resize(3);      
-    vec1_x_vec2_der1var.resize(3 * NumberOfDofs());   
-    vec1_x_vec2_der2var.resize(3 * NumberOfDofs());
-       
-    vec1_x_vec2var.clear();        
-    vec1_x_vec2der1var.clear();    
-    vec1der1_x_vec2var.clear();    
-    vec1der2_x_vec2var.clear();    
-    vec1der1_x_vec2der1var.clear();
-    vec1_x_vec2der2var.clear();    
-    vec1_x_vec2.clear();           
-    vec1_x_vec2der1.clear();       
-    vec1der1_x_vec2.clear();       
-    vec1_x_vec2der2.clear();       
-    vec1der2_x_vec2.clear();       
-    vec1der1_x_vec2der1.clear();   
-    vec1_x_vec2_der1.clear();      
-    vec1_x_vec2_der2.clear();      
-    vec1_x_vec2_der1var.clear();   
-    vec1_x_vec2_der2var.clear();    
-
-    vec1_x_vec2 = Cross(_vec1, _vec2);
-    vec1_x_vec2der1 = Cross(_vec1, _vec2der1);
-    vec1der1_x_vec2 = Cross(_vec1der1, _vec2);
-    vec1_x_vec2der2 = Cross(_vec1, _vec2der2);
-    vec1der2_x_vec2 = Cross(_vec1der2, _vec2);
-    vec1der1_x_vec2der1 = Cross(_vec1der1, _vec2der1);
-    vec1_x_vec2_der1 = vec1_x_vec2der1 + vec1der1_x_vec2; 
-    vec1_x_vec2_der2 = vec1_x_vec2der2 + 2 * vec1der1_x_vec2der1 + vec1der2_x_vec2; 
-
-    for (size_t t = 0; t < 3; t++){
-        for (int r = 0; r < NumberOfDofs(); r++){
-            for (size_t u = 0; u < 3; u++){
-                for (size_t k = 0; k < 3; k++){
-
-                    int xyz = r % number_dofs_per_node;
-                    if (xyz > 2)
-                    {
-                        vec1_x_vec2var[t * NumberOfDofs() + r] = 0; 
-                        vec1_x_vec2der1var[t * NumberOfDofs() + r] = 0;
-                        vec1der1_x_vec2var[t * NumberOfDofs() + r] = 0;
-                        vec1der2_x_vec2var[t * NumberOfDofs() + r] = 0;
-                        vec1der1_x_vec2der1var[t * NumberOfDofs() + r] = 0;
-                        vec1_x_vec2der2var[t * NumberOfDofs() + r] = 0;
-                    }
-                    else
-                    {
-                        vec1_x_vec2var[t * NumberOfDofs() + r] += permutation [t][k][u] * _vec1[k] * _vec2var[u * NumberOfDofs() + r];
-                        vec1_x_vec2der1var[t * NumberOfDofs() + r] += permutation [t][k][u] * _vec1[k] * _vec2der1var[u * NumberOfDofs() + r];
-                        vec1der1_x_vec2var[t * NumberOfDofs() + r] += permutation [t][k][u] * _vec1der1[k] * _vec2var[u * NumberOfDofs() + r];
-                        vec1der2_x_vec2var[t * NumberOfDofs() + r] += permutation [t][k][u] * _vec1der2[k] * _vec2var[u * NumberOfDofs() + r];
-                        vec1der1_x_vec2der1var[t * NumberOfDofs() + r] += permutation [t][k][u] * _vec1der1[k] * _vec2der1var[u * NumberOfDofs() + r];
-                        vec1_x_vec2der2var[t * NumberOfDofs() + r] += permutation [t][k][u] * _vec1[k] * _vec2der2var[u * NumberOfDofs() + r];
-                    }
-                }
-            }
-        }
-    }
-    vec1_x_vec2_der1var = vec1_x_vec2der1var + vec1der1_x_vec2var;
-    vec1_x_vec2_der2var = vec1der2_x_vec2var + 2 * vec1der1_x_vec2der1var + vec1_x_vec2der2var;
-
-    Vector vec1_vec2var;         
-    Vector vec1_vec2der1var;         
-    Vector vec1der1_vec2var;         
-    Vector vec1der2_vec2var;          
-    Vector vec1der1_vec2der1var;
-    Vector vec1_vec2der2var;      
-
-    vec1_vec2var.resize(NumberOfDofs());        
-    vec1_vec2der1var.resize(NumberOfDofs());    
-    vec1der1_vec2var.resize(NumberOfDofs());    
-    vec1der2_vec2var.resize(NumberOfDofs());    
-    vec1der1_vec2der1var.resize(NumberOfDofs());
-    vec1_vec2der2var.resize(NumberOfDofs());    
-
-    vec1_vec2var.clear();
-    vec1_vec2der1var.clear();
-    vec1der1_vec2var.clear();
-    vec1der2_vec2var.clear();
-    vec1der1_vec2der1var.clear();
-    vec1_vec2der2var.clear();
-
-    for (size_t t = 0; t < 3; t++){
-        for (int r = 0; r < NumberOfDofs(); r++)     // in the case
-        {
-            int xyz = r % number_dofs_per_node;     // 0 --> disp_x, 1 --> disp_y, 2 --> disp_z
-            if (xyz > 2)
-            {
-                vec1_vec2var(r) += 0;        
-                vec1_vec2der1var(r) += 0;    
-                vec1der1_vec2var(r) += 0;    
-                vec1der2_vec2var(r) += 0;    
-                vec1der1_vec2der1var(r) += 0;
-                vec1_vec2der2var(r) += 0;    
-            }
-            else
-            {   // if (t == xyz)
-                vec1_vec2var(r) += _vec2var[t * NumberOfDofs() + r] * _vec1[t];
-                vec1_vec2der1var(r) += _vec2der1var[t * NumberOfDofs() + r] * _vec1[t];
-                vec1der1_vec2var(r) += _vec2var[t * NumberOfDofs() + r] * _vec1der1[t];
-                vec1der2_vec2var(r) += _vec2var[t * NumberOfDofs() + r] * _vec1der2[t];
-                vec1der1_vec2der1var(r) += _vec2der1var[t * NumberOfDofs() + r] * _vec1der1[t];
-                vec1_vec2der2var(r) += _vec2der2var[t * NumberOfDofs() + r] * _vec1[t];               
-            }
-        }
-    }
-    Vector T1_T2_der1var;
-    Vector T1_T2_der2var;
-    T1_T2_der1var.resize(NumberOfDofs());
-    T1_T2_der2var.resize(NumberOfDofs());
-    T1_T2_der1var.clear();
-    T1_T2_der2var.clear();
-
-    T1_T2_der1var = vec1_vec2der1var + vec1der1_vec2var; 
-    T1_T2_der2var = vec1der2_vec2var + 2* vec1der1_vec2der1var + vec1_vec2der2var;
-
-    double T1_T2_plus1_pow2_inv = 1.0 / std::pow(1.0 + T1_T2, 2); 
-    double T1_T2_plus1_pow3_inv = 1.0 / std::pow(1.0 + T1_T2, 3); 
-    double T1_T2_plus1_pow4_inv = 1.0 / std::pow(1.0 + T1_T2, 4); 
-
-    for (size_t t = 0; t < 3; t++){
-        for (size_t u = 0; u < 3; u++){
-            for (int r = 0; r < NumberOfDofs(); r++){
-
-                int xyz = r % number_dofs_per_node; 
-                if (xyz > 2)
-                {
-                    _matrix_lambda_der2var(t * NumberOfDofs() + r, u) += 0;
-                }
-                else
-                {
-                    if (t == u)
-                        _matrix_lambda_der2var(t * NumberOfDofs() + r, u) += T1_T2_der2var[r];
-                    else
-                    {
-                        for (int k = 0; k < 3; k++)
-                            _matrix_lambda_der2var(t * NumberOfDofs() + r, u) += permutation[t][k][u] * vec1_x_vec2_der2var[r + k * NumberOfDofs()]; 
-                    }
-                }
-                _matrix_lambda_der2var(t * NumberOfDofs() + r, u)   += (- T1_T2_der2var[r] * T1_T2_plus1_pow2_inv 
-                                                                    + 2 * (vec1_vec2var[r] * T1_T2der2_T1der2_T2 
-                                                                    + 2 * T1_T2_der1var[r] * T1_T2der1_T1der1_T2) * T1_T2_plus1_pow3_inv 
-                                                                    - 6 * (std::pow(T1_T2der1_T1der1_T2, 2) * vec1_vec2var[r]) * T1_T2_plus1_pow4_inv) 
-                                                                    * vec1_x_vec2[t] * vec1_x_vec2[u];
-                                                                                   
-                _matrix_lambda_der2var(t * NumberOfDofs() + r, u)   += (- T1_T2der2_T1der2_T2 * T1_T2_plus1_pow2_inv 
-                                                                    + 2 * std::pow(T1_T2der1_T1der1_T2, 2) * T1_T2_plus1_pow3_inv) 
-                                                                    * (vec1_x_vec2var[t * NumberOfDofs() + r] 
-                                                                    * vec1_x_vec2[u] + vec1_x_vec2[t] 
-                                                                    * vec1_x_vec2var[u * NumberOfDofs() + r]);
-
-                _matrix_lambda_der2var(t * NumberOfDofs() + r, u)   += (4 * T1_T2der1_T1der1_T2 * vec1_vec2var[r] * T1_T2_plus1_pow3_inv
-                                                                    - 2 * T1_T2_der1var[r]  * T1_T2_plus1_pow2_inv)
-                                                                    * (vec1_x_vec2_der1[t] * vec1_x_vec2[u]
-                                                                    + vec1_x_vec2[t] * vec1_x_vec2_der1[u]);
-
-                _matrix_lambda_der2var(t * NumberOfDofs() + r, u)   += (-2) * T1_T2der1_T1der1_T2 * T1_T2_plus1_pow2_inv
-                                                                    * (vec1_x_vec2_der1var[t * NumberOfDofs() + r] * vec1_x_vec2[u]
-                                                                    + vec1_x_vec2_der1[t] * vec1_x_vec2var[u * NumberOfDofs() + r]
-                                                                    + vec1_x_vec2var[t * NumberOfDofs() + r] * vec1_x_vec2_der1[u]
-                                                                    + vec1_x_vec2[t] * vec1_x_vec2_der1var[u * NumberOfDofs() + r]); 
-                
-                _matrix_lambda_der2var(t * NumberOfDofs() + r, u)   += - vec1_vec2var[r] * T1_T2_plus1_pow2_inv
-                                                                    * (vec1_x_vec2_der2[t] * vec1_x_vec2[u]
-                                                                    + 2 * vec1_x_vec2_der1[t] * vec1_x_vec2_der1[u]
-                                                                    + vec1_x_vec2[t] * vec1_x_vec2_der2[u]) ;
-                
-                _matrix_lambda_der2var(t * NumberOfDofs() + r, u)   += 1.0 / (1.0 + T1_T2) * vec1_x_vec2_der2var[t * NumberOfDofs() + r]
-                                                                    * vec1_x_vec2[u] + vec1_x_vec2_der2[t] * vec1_vec2var[u * NumberOfDofs() + r]
-                                                                    + 2 * vec1_x_vec2_der1var[t * NumberOfDofs() + r] * vec1_x_vec2_der1[u]
-                                                                    + 2 * vec1_x_vec2_der1[t] * vec1_x_vec2_der1var[u * NumberOfDofs() + r]
-                                                                    + vec1_x_vec2var[t * NumberOfDofs() + r] * vec1_x_vec2_der2[u]
-                                                                    + vec1_x_vec2[t] * vec1_x_vec2_der2var[u * NumberOfDofs() + r];
-
-            }
-        }
-    }
-}
-
-//#################################################################################
-//#################################################################################
-//#
-//#           +++ Compute Matrix Lambda first Derivative second Variation +++
-//#
-//#################################################################################
-//#################################################################################
-//#
-/** Computes the Variation of the Deriative of the Rotation Matrix Lambda (vec1 --> Vec2)
-     * 
-     * @param[in]   _matrix_lambda_der1var2  (empty) Rotaition Matrix 
-     * @param[in]   _vec1               initial Vector
-     * @param[in]   _vec2               actual Vector
-     * 
-     * @param[return]   Matrix to Transform from vec1 to vec2
-     * 
-     * @author L.Rauch (11/2018)
-     * 
-     * @note   A.Bauer (02/2018)
-     */
-//#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeMatrixLambdaFirstDerivativeSecondVariation(
-    Matrix _matrix_lambda_der1var2,
-    BoundedVector<double,3> _vec1,
-    BoundedVector<double,3> _vec2,
-    BoundedVector<double,3> _vec1der1,
-    BoundedVector<double,3> _vec2der1,
-    Vector _vec2var1,
-    Matrix _vec2var2,
-    Vector _vec2der1var1,
-    Matrix _vec2der1var2)
-{
-    _matrix_lambda_der1var2.resize(3 * NumberOfDofs(), 3 * NumberOfDofs());
-    _matrix_lambda_der1var2.clear();
-
-    std::vector<int> act_dofs; 
-    GetDofTypesPerNode(act_dofs);
-    int number_dofs_per_node = act_dofs.size();
-
-    double T1_T2 = inner_prod(_vec1, _vec2);
-    double T1_T2der1 = inner_prod(_vec1, _vec2der1);
-    double T1der1_T2 = inner_prod(_vec1der1, _vec2);
-    double T1_T2der1_T1der1_T2 = T1_T2der1 + T1der1_T2;
-
-    int permutation[3][3][3];
-    for (int i=0; i<3; i++){
-        for (int j = 0; j < 3; j++) {
-            for (int k = 0; k < 3; k++) {
-                permutation[i][j][k] = 0;
-            }
-        }
-    }
-    permutation[0][1][2] = 1;
-    permutation[2][0][1] = 1;
-    permutation[1][2][0] = 1;
-
-    permutation[0][2][1] = -1;
-    permutation[1][0][2] = -1;
-    permutation[2][1][0] = -1;
-
-    Vector vec1_x_vec2;         
-    Vector vec1_x_vec2der1;     
-    Vector vec1der1_x_vec2;    
-    Vector vec1_x_vec2var1;    
-    Vector vec1_x_vec2der1var1;
-    Vector vec1der1_x_vec2var1;
-
-    vec1_x_vec2.resize(3);        
-    vec1_x_vec2der1.resize(3);    
-    vec1der1_x_vec2.resize(3);    
-    vec1_x_vec2var1.resize(3 * NumberOfDofs());    
-    vec1_x_vec2der1var1.resize(3 * NumberOfDofs());
-    vec1der1_x_vec2var1.resize(3 * NumberOfDofs());
-
-    vec1_x_vec2.clear();        
-    vec1_x_vec2der1.clear();    
-    vec1der1_x_vec2.clear();    
-    vec1_x_vec2var1.clear();    
-    vec1_x_vec2der1var1.clear();
-    vec1der1_x_vec2var1.clear();
-
-    vec1_x_vec2 = Cross(_vec1, _vec2);
-    vec1_x_vec2der1 = Cross(_vec1, _vec2der1);
-    vec1der1_x_vec2 = Cross(_vec1der1, _vec2);
-
-    Vector vec1_vec2var1; 
-    Vector vec1_vec2der1var1;
-    Vector vec1der1_vec2var1; 
-
-    vec1_vec2var1.resize(NumberOfDofs());
-    vec1_vec2der1var1.resize(NumberOfDofs());
-    vec1der1_vec2var1.resize(NumberOfDofs());
-
-    vec1_vec2var1.clear();
-    vec1_vec2der1var1.clear();
-    vec1der1_vec2var1.clear();
-
-    for (size_t t = 0; t < 3; t++){
-        for (int r = 0; r < NumberOfDofs(); r++){
-            
-            int xyz = r % number_dofs_per_node;
-            if (xyz > 2)
-            {
-                vec1_vec2var1[r] += 0; 
-                vec1_vec2der1var1[r] += 0;
-                vec1der1_vec2var1[r] += 0;
-            }
-            else
-            {
-                vec1_vec2var1[r] += _vec2var1[t * NumberOfDofs() + r] * _vec1[t];
-                vec1_vec2der1var1[r] += _vec2der1var1[t * NumberOfDofs() + r] * _vec1[t];
-                vec1der1_vec2var1[r] += _vec2var1[t * NumberOfDofs() + r] * _vec1der1[t];
-            }
-        }
-    }
-
-    Matrix vec1_vec2var2;
-    Matrix vec1_vec2der1var2;
-    Matrix vec1der1_vec2var2;
-
-    vec1_vec2var2.resize(NumberOfDofs(), NumberOfDofs());
-    vec1_vec2der1var2.resize(NumberOfDofs(), NumberOfDofs());
-    vec1der1_vec2var2.resize(NumberOfDofs(), NumberOfDofs());
-
-    vec1_vec2var2.clear();
-    vec1_vec2der1var2.clear();
-    vec1der1_vec2var2.clear();
-
-    for (size_t t = 0; t < 3; t++){         // in the case 
-        for (int r = 0; r < NumberOfDofs(); r++){
-            int xyz_r = r % number_dofs_per_node;   // 0 -->disp_x; 1 -->disp_y; 2 -->disp_z; 3 --> rot_tan
-            // int i = r / number_dofs_per_node;       // index of the shape functions
-
-            for (int s = 0; s < NumberOfDofs(); s++){
-                int xyz_s = s % number_dofs_per_node;   // 0 -->disp_x; 1 -->disp_y; 2 -->disp_z; 3--> rot_tan
-                // int j = s / number_dofs_per_node;       // index of the shape functions
-
-                if (xyz_r >2 || xyz_s >2)
-                {
-                    vec1_vec2var2(r, s) = 0;
-                }
-                else
-                {
-                    vec1_vec2var2(r, s) += _vec2var2(t * NumberOfDofs() + r, s) * _vec1[t];
-                    vec1_vec2der1var2(r, s) += _vec2der1var2(t * NumberOfDofs() + r, s) * _vec1[t]; 
-                    vec1der1_vec2var2(r, s) += _vec2var2(t * NumberOfDofs() + r, s) * _vec1der1[t];
-                }
-            }
-        }
-    }
-    for (size_t t = 0; t < 3; t++){
-        for (int r = 0; r < NumberOfDofs(); r++){
-            int xyz_r = r % number_dofs_per_node;        // 0 -->disp_x; 1 -->disp_y; 2 -->disp_z
-
-            for (size_t u = 0; u < 3; u++){
-
-                if (xyz_r > 2)
-                {
-                    vec1_x_vec2var1[t * NumberOfDofs() + r] += 0;
-                }
-                else
-                {
-                    for (size_t k = 0; k < 3; k++)
-                    {
-                        vec1_x_vec2var1(t * NumberOfDofs() + r) += permutation[t][u][k] * _vec1[k] * _vec2var1[u * NumberOfDofs() + r];
-                        vec1_x_vec2der1var1(t * NumberOfDofs() + r) += permutation[t][k][u] * _vec1[k] * _vec2der1var1[u * NumberOfDofs() + r];
-                        vec1der1_x_vec2var1(t * NumberOfDofs() + r) += permutation[t][k][k] * _vec1der1[k] * _vec2var1[u * NumberOfDofs() + r];
-                    }
-                }
-            }
-        }
-    }
-    Matrix vec1_x_vec2var2;
-    Matrix vec1_x_vec2der1var2;
-    Matrix vec1der1_x_vec2var2;
-
-    vec1_x_vec2var2.resize(3 * NumberOfDofs(), NumberOfDofs());
-    vec1_x_vec2der1var2.resize(3 * NumberOfDofs(), NumberOfDofs());
-    vec1der1_x_vec2var2.resize(3 * NumberOfDofs(), NumberOfDofs());
-
-    vec1_x_vec2var2.clear();
-    vec1_x_vec2der1var2.clear();
-    vec1der1_x_vec2var2.clear();
-
-    for (size_t t = 0; t < 3; t++){
-        for (size_t u = 0; u < 3; u++){
-            for (int r = 0; r < NumberOfDofs(); r++){
-                for (int s = 0; s < NumberOfDofs(); s++){
-
-                    int xyz_r = r % number_dofs_per_node; 
-                    int xyz_s = s % number_dofs_per_node;
-                    if (xyz_r > 2 || xyz_s > 2) 
-                    {
-                        for (size_t k = 0; k < 3; k++)
-                        {
-                            vec1_x_vec2var2(t * NumberOfDofs() + r, s)      += permutation[t][k][u] * _vec1[k] * _vec2var2(u * NumberOfDofs() + r, s);
-                            vec1_x_vec2der1var2(t * NumberOfDofs() + r, s)  += permutation[t][k][u] * _vec1[k] * _vec2der1var2(u * NumberOfDofs() + r, s);
-                            vec1der1_x_vec2var2(t * NumberOfDofs() + r, s)  += permutation[t][k][u] * _vec1der1[k] * _vec2var2(u * NumberOfDofs() + r, s);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    for (size_t t = 0; t < 3; t++){
-        for (size_t u = 0; u < 3; u++){
-            for (int s = 0; s < NumberOfDofs(); s++){
-                for (int r = 0; r < NumberOfDofs(); r++){
-
-                    int xyz_r = r % number_dofs_per_node;   //0 -->disp_x; 1 -->disp_y; 2 -->disp_z; 3 --> rot_tan
-                    int xyz_s = s % number_dofs_per_node;   //0 -->disp_x; 1 -->disp_y; 2 -->disp_z; 3 --> rot_tan
-
-                    if (t == u)
-                    {
-                        if (xyz_r > 2 || xyz_s > 2) 
-                            _matrix_lambda_der1var2(t * NumberOfDofs() + r, u * NumberOfDofs() + s) += 0;
-                        else
-                            _matrix_lambda_der1var2(t * NumberOfDofs() + r, u * NumberOfDofs() + s) += vec1_vec2der1var2(r, s) + vec1der1_vec2var2(r, s);
-                    }
-                    else
-                    {
-                        if (xyz_r > 2 || xyz_s > 2)
-                            for (int k = 0; k < 3; k++)
-                                _matrix_lambda_der1var2(t * NumberOfDofs() + r, s) += 0;
-                        else
-                        {
-                            for (int k = 0; k < 3; k++)
-                                _matrix_lambda_der1var2(t * NumberOfDofs() + r, s)  += permutation[t][k][u] * vec1_x_vec2der1var2(k * NumberOfDofs() + r, s)
-                                                                                    +  permutation[t][k][u] * vec1der1_x_vec2var2(k * NumberOfDofs() + r, s);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    for (size_t t = 0; t < 3; t++){
-        for (size_t u = 0; u < 3; u++){
-            for (int r = 0; r < NumberOfDofs(); r ++){
-                for (int s = 0; s < NumberOfDofs(); r++){
-
-                    int xyz_r = r % number_dofs_per_node;       //0 ->disp_x; 1 ->disp_y; 2 ->disp_z; 3 -> rot_tan
-                    int xyz_s = s % number_dofs_per_node;       //0 ->disp_x; 1 ->disp_y; 2 ->disp_z; 3 -> rot_tan
-                    if (xyz_r > 2 || xyz_s > 2)
-                        _matrix_lambda_der1var2(t*NumberOfDofs()+r, u*NumberOfDofs()+s) += 0;
-                    else 
-                    {
-                        _matrix_lambda_der1var2(t*NumberOfDofs()+r, u*NumberOfDofs()+s) += (2 * (vec1_vec2var1[r] * (vec1_vec2der1var1[s] + vec1der1_vec2var1[s])
-                                                                                        +  T1_T2der1_T1der1_T2 * vec1_vec2var2(r,s)) / std::pow(1.0 * T1_T2, 3)
-                                                                                        -  6 * T1_T2der1_T1der1_T2 * vec1_vec2var1[r] * vec1_vec2var1[s] / std::pow(1.0 + T1_T2, 2)
-                                                                                        -  (vec1_vec2der1var2(r,s) + vec1der1_vec2var2(r,s)) / std::pow(1.0 + T1_T2, 2)
-                                                                                        +  2 * (vec1_vec2der1var1[r] + vec1der1_vec2var1[r]) * vec1_vec2var1[s] / std::pow(1.0 + T1_T2, 3))
-                                                                                        *  vec1_x_vec2[t] * vec1_x_vec2[u]; 
-
-                        _matrix_lambda_der1var2(t*NumberOfDofs()+r, u*NumberOfDofs()+s) += (2 * vec1_vec2var1[r] * T1_T2der1_T1der1_T2 / std::pow(1.0 * T1_T2, 3)
-                                                                                        -  (vec1_vec2der1var1[r] + vec1der1_vec2var1[r]) / std::pow(1.0 + T1_T2, 2))
-                                                                                        *  (vec1_x_vec2var1[t * NumberOfDofs() + s] * vec1_x_vec2[u] + vec1_x_vec2[t] * vec1_x_vec2var1[u * NumberOfDofs() + s])
-                                                                                        +  (2 * vec1_vec2var1[s] * T1_T2der1_T1der1_T2 / std::pow(1.0 + T1_T2, 3)
-                                                                                        -  ( vec1_vec2der1var1[s] + vec1der1_vec2var1[s]) / std::pow(1.0 + T1_T2, 2))
-                                                                                        *  (vec1_x_vec2var1[t * NumberOfDofs() + r] * vec1_x_vec2[u] + vec1_x_vec2[t] * vec1_x_vec2var1[u * NumberOfDofs() + r]);
-                        
-                        _matrix_lambda_der1var2(t*NumberOfDofs()+r, u*NumberOfDofs()+s) += T1_T2der1_T1der1_T2 / std::pow(1.0 + T1_T2, 2)
-                                                                                        + (vec1_x_vec2var2(t * NumberOfDofs() + r, s) * vec1_x_vec2[u]
-                                                                                        +  vec1_x_vec2var1(t * NumberOfDofs() + r) * vec1_x_vec2var1(u * NumberOfDofs() + s)
-                                                                                        +  vec1_x_vec2var1(t * NumberOfDofs() + s) * vec1_x_vec2var1(u * NumberOfDofs() + r)
-                                                                                        +  vec1_x_vec2[t] * vec1_x_vec2var2(u * NumberOfDofs() + r, s));     // Chaneg of r, s _var2
-                        
-                        _matrix_lambda_der1var2(t*NumberOfDofs()+r, u*NumberOfDofs()+s) += (- vec1_vec2var2(r, s) / std::pow(1.0 + T1_T2, 2)
-                                                                                        +  2 * vec1_vec2var1[r] * vec1_vec2var1[s] / std::pow(1.0 + T1_T2, 3))
-                                                                                        *  ((vec1_x_vec2der1[t] + vec1der1_x_vec2[t]) * vec1_x_vec2[u]
-                                                                                        +  vec1_x_vec2[t] * (vec1_x_vec2der1[u] + vec1der1_x_vec2[u]));
-                        
-                        _matrix_lambda_der1var2(t*NumberOfDofs()+r, u*NumberOfDofs()+s) += (- vec1_vec2var1[r] / std::pow(1.0 + T1_T2, 2))
-                                                                                        *  ((vec1_x_vec2der1var1[t * NumberOfDofs() + s] + vec1der1_x_vec2var1[t * NumberOfDofs() + s]) * vec1_x_vec2[u]
-                                                                                        +  vec1_x_vec2var1[t * NumberOfDofs() + s] * (vec1_x_vec2der1[u] + vec1der1_x_vec2[u])
-                                                                                        +  vec1_x_vec2var1[u * NumberOfDofs() + s] * (vec1_x_vec2der1[t] + vec1der1_x_vec2[t])
-                                                                                        +  (vec1_x_vec2der1var1[u * NumberOfDofs() + s] + vec1der1_x_vec2var1[u * NumberOfDofs() + s]) * vec1_x_vec2[t]);
-                        
-                        _matrix_lambda_der1var2(t*NumberOfDofs()+r, u*NumberOfDofs()+s) += (- vec1_vec2var1[s] / std::pow(1.0 + T1_T2, 2))
-                                                                                        *  ((vec1_x_vec2der1var1[t * NumberOfDofs() + r] + vec1der1_x_vec2var1[t * NumberOfDofs() + r]) * vec1_x_vec2[u]
-                                                                                        +  vec1_x_vec2var1[t * NumberOfDofs() + r] * (vec1_x_vec2der1[u] + vec1der1_x_vec2[u])
-                                                                                        +  vec1_x_vec2var1[u * NumberOfDofs() + r] * (vec1_x_vec2der1[t] + vec1der1_x_vec2[t])
-                                                                                        +  (vec1_x_vec2der1var1[u * NumberOfDofs() + r] + vec1der1_x_vec2var1[u * NumberOfDofs() + r]) * vec1_x_vec2[t]);
-                        
-                        _matrix_lambda_der1var2(t*NumberOfDofs()+r, u*NumberOfDofs()+s) +=1.0 / (1.0 + T1_T2)
-                                                                                        * ((vec1_x_vec2der1var2(t * NumberOfDofs() + r, s) + vec1der1_x_vec2var2(t * NumberOfDofs() + r, s))
-                                                                                        * vec1_x_vec2[u] + vec1_x_vec2var2(t * NumberOfDofs() + r, s) * (vec1_x_vec2der1[u] + vec1der1_x_vec2[u])
-                                                                                        + vec1_x_vec2var1[u * NumberOfDofs() + r] * (vec1_x_vec2der1var1[t * NumberOfDofs() + s] + vec1der1_x_vec2var1[t * NumberOfDofs() + s])
-                                                                                        + vec1_x_vec2var1[t * NumberOfDofs() + s] * (vec1_x_vec2der1var1[u * NumberOfDofs() + r] + vec1der1_x_vec2var1[u * NumberOfDofs() + r])
-                                                                                        + vec1_x_vec2var1[u * NumberOfDofs() + s] * (vec1_x_vec2der1var1[t * NumberOfDofs() + r] + vec1der1_x_vec2var1[t * NumberOfDofs() + r])
-                                                                                        + vec1_x_vec2var1[t * NumberOfDofs() + r] * (vec1_x_vec2der1var1[u * NumberOfDofs() + s] + vec1der1_x_vec2var1[u * NumberOfDofs() + s])
-                                                                                        + (vec1_x_vec2der1[t] + vec1der1_x_vec2[t]) * vec1_x_vec2var2(u * NumberOfDofs() + r, s)
-                                                                                        + vec1_x_vec2[t] * ( vec1_x_vec2der1var2(u * NumberOfDofs() + r, s) + vec1der1_x_vec2var2(u * NumberOfNodes() + r, s)));
-
-                    }
-                }
-            }
-        }
-    }
-}
-
-//#################################################################################
-//#################################################################################
-//#
-//#                        +++ Compute Matrix Lambda All +++
-//#
-//#################################################################################
-//#################################################################################
-//#
-/** Computes the Variation of the Deriative of the Rotation Matrix Lambda (vec1 --> Vec2)
-     * 
-     * @param[in]   _matrix_lambda     Rotaition Matrix 
-     * @param[in]   _vec1
-     * @param[in]   _phi
-     * 
-     * @param[return]   Matrix to Transform from vec1 to vec2
-     * 
-     * @author L.Rauch (11/2018)
-     * 
-     * @note   A.Bauer (11/2014)
-     */
-//#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeMatrixLambdaAll(
-    Matrix& _matrix_lambda_var1,
-    Matrix& _matrix_lambda_var2,
-    Matrix& _matrix_lambda_der1_var1,
-    Matrix& _matrix_lambda_der1_var2,
-    Vector3 _vec1,
-    Vector3 _vec2,
-    Vector3 _vec1_der1,
-    Vector3 _vec2_der1,
-    Vector  _vec2_var1,
-    Vector  _vec2_der1_var1,
-    Matrix  _vec2_var2,
-    Matrix  _vec2_der1_var2)
-{
-    _matrix_lambda_var1.resize(3 * NumberOfDofs(), 3);
-    _matrix_lambda_var2.resize(3 * NumberOfDofs(), 3 * NumberOfDofs());
-    _matrix_lambda_der1_var1.resize(3 * NumberOfDofs(), 3);
-    _matrix_lambda_der1_var2.resize(3 * NumberOfDofs(), 3 * NumberOfDofs());
-
-    _matrix_lambda_var1.clear();
-    _matrix_lambda_var2.clear();
-    _matrix_lambda_der1_var1.clear();
-    _matrix_lambda_der1_var2.clear();
-
-    double vec1_vec2 = inner_prod(_vec1, _vec2);
-    double vec1_vec2der1 = inner_prod(_vec1, _vec2_der1);
-    double vec1der1_vec2 = inner_prod(_vec1_der1, _vec2);
-    double vec1_vec2der1_vec1der1_vec2 = vec1_vec2der1 + vec1der1_vec2;
-
-    int permutation[3][3][3];
-    for (int i = 0; i < 3; i++){
-        for (int j = 0; j < 3; j++){
-            for (int k = 0; k < 3; k++){
-
-                permutation[i][j][k] = 0.00;
-            }
-        }
-    }
-     permutation[0][1][2] = +1;
-     permutation[2][0][1] = +1;
-     permutation[1][2][0] = +1;
-
-     permutation[0][2][1] = -1;
-     permutation[1][0][2] = -1;
-     permutation[2][1][0] = -1;  
-
-    Vector vec1_x_vec2;
-    Vector vec1_x_vec2der1;
-    Vector vec1der1_x_vec2;
-    Vector vec1_x_vec2var1;
-    Vector vec1_x_vec2der1var1;
-    Vector vec1der1_x_vec2var1;
-
-    vec1_x_vec2.resize(3);
-    vec1_x_vec2der1.resize(3);
-    vec1der1_x_vec2.resize(3);
-    vec1_x_vec2var1.resize(3 * NumberOfDofs());
-    vec1_x_vec2der1var1.resize(3 * NumberOfDofs());
-    vec1der1_x_vec2var1.resize(3 * NumberOfDofs());
-
-    vec1_x_vec2.clear();
-    vec1_x_vec2der1.clear();
-    vec1der1_x_vec2.clear();
-    vec1_x_vec2var1.clear();
-    vec1_x_vec2der1var1.clear();
-    vec1der1_x_vec2var1.clear();
-
-    vec1_x_vec2 = Cross(_vec1, _vec2);
-    vec1_x_vec2der1 = Cross(_vec1, _vec2_der1);
-    vec1der1_x_vec2 = Cross(_vec1_der1, _vec2);
-
-    Vector vec1_vec2var1;
-    Vector vec1_vec2der1var1;
-    Vector vec1der1_vec2var1;
-
-    vec1_vec2var1.resize(NumberOfDofs());
-    vec1_vec2der1var1.resize(NumberOfDofs());
-    vec1der1_vec2var1.resize(NumberOfDofs());
-
-    vec1_vec2var1.clear();
-    vec1_vec2der1var1.clear();
-    vec1der1_vec2var1.clear();
-
-    // get the degree of Freedom per Node
-    std::vector<int> act_dofs; 
-    GetDofTypesPerNode(act_dofs);
-    int number_dofs_per_node = act_dofs.size();
-
-    for (size_t t = 0; t < 3; t++){
-        for (int r = 0; r < NumberOfDofs(); r++){
-
-            int xyz = r % number_dofs_per_node;
-            
-            if (xyz > 2)
-            {
-                vec1_vec2var1[r] += 0.00;
-                vec1_vec2der1var1[r] += 0.00;
-                vec1der1_vec2var1[r] += 0.00;
-            }
-            else
-            {
-                vec1_vec2var1[r] += _vec2_var1[t * NumberOfDofs() + r] * _vec1[t];
-                vec1_vec2der1var1[r] += _vec2_der1_var1[t * NumberOfDofs() + r] * _vec1[t];
-                vec1der1_vec2var1[r] += _vec2_var1[t * NumberOfDofs() + r] * _vec1_der1[t];
-            }
-        }
-    }
-
-    Matrix vec1_vec2var2;
-    Matrix vec1_vec2der1var2;
-    Matrix vec1der1_vec2var2;
-
-    vec1_vec2var2.resize(NumberOfDofs(), NumberOfDofs());
-    vec1_vec2der1var2.resize(NumberOfDofs(), NumberOfDofs());
-    vec1der1_vec2var2.resize(NumberOfDofs(), NumberOfDofs());
-
-    vec1_vec2var2.clear();
-    vec1_vec2der1var2.clear();
-    vec1der1_vec2var2.clear();
-
-    for (size_t t = 0; t < 3; t++){
-        for (int r = 0; r < NumberOfDofs(); r++){
-            int xyz_r = r % number_dofs_per_node;
-            int i = r / number_dofs_per_node;
-
-            for (int s = 0; s < NumberOfDofs(); s++){
-                int xyz_s = s % number_dofs_per_node;
-                int j = s / number_dofs_per_node;
-
-                if (xyz_r > 2 || xyz_s > 2)
-                    vec1_vec2var2(r,s) = 0.00;
-                else
-                {
-                    vec1_vec2var2(r,s) += _vec2_var2(t * NumberOfDofs() + r, s) * _vec1[t];
-                    vec1_vec2der1var2(r,s) += _vec2_der1_var2(t * NumberOfDofs() + r, s) * _vec1[t];
-                    vec1der1_vec2var2(r,s) += _vec2_var2(t * NumberOfDofs() + r, s) * _vec1_der1[t];
-                }
-            }
-        }
-    }
-       
-    for (size_t t = 0; t < 3; t++){
-        for (int r = 0; r < NumberOfDofs(); r++){
-            int xyz_r = r % number_dofs_per_node;
-
-            for (size_t u = 0; u < 3; u++)
-            {
-                if (xyz_r > 2)
-                {
-                vec1_x_vec2var1[t * NumberOfDofs() + r] = 0.00;
-                }
-                else
-                {
-                    for (size_t k = 0; k < 3; k++)
-                    {
-                        vec1_x_vec2var1[t * NumberOfDofs() + r] += permutation[t][k][u] * _vec1[k] * _vec2_var1[u * NumberOfDofs() + r];
-                        vec1_x_vec2der1var1[t * NumberOfDofs() + r] += permutation[t][k][u] * _vec1[k] * _vec2_der1_var1[u * NumberOfDofs() + r];
-                        vec1der1_x_vec2var1[t * NumberOfDofs() + r] += permutation[t][k][u] * _vec1_der1[k] * _vec2_var1[u * NumberOfDofs() + r];
-                    }
-                }
-            }
-        }
-    }
-
-    Matrix vec1_x_vec2var2;
-    Matrix vec1_x_vec2der1var2;
-    Matrix vec1der1_x_vec2var2;
-
-    vec1_x_vec2var2.resize(3 * NumberOfDofs(), NumberOfDofs());
-    vec1_x_vec2der1var2.resize(3 * NumberOfDofs(), NumberOfDofs());
-    vec1der1_x_vec2var2.resize(3 * NumberOfDofs(), NumberOfDofs());
-
-    vec1_x_vec2var2.clear();
-    vec1_x_vec2der1var2.clear();
-    vec1der1_x_vec2var2.clear();
-
-    for (size_t t = 0; t < 3; t++){
-        for (size_t u = 0; u < 3; u++){
-            for (int r = 0; r < NumberOfDofs(); r++){
-                int xyz_r = r % number_dofs_per_node;
-
-                for (int s = 0; s < NumberOfDofs(); s++){
-                    int xyz_s = s % number_dofs_per_node; 
-
-                    if (xyz_r < 3 || xyz_s < 3)
-                    {
-                        for (size_t k = 0; k < 3; k++)
-                        {
-                            vec1_x_vec2var2(t * NumberOfDofs() + r, s) += permutation[t][k][u] * _vec1[k] * _vec2_var2(u * NumberOfDofs() + r, s);
-                            vec1_x_vec2der1var2(t * NumberOfDofs() + r, s) += permutation[t][k][u] * _vec1[k] * _vec2_der1_var2(u * NumberOfDofs() + r, s);
-                            vec1der1_x_vec2var2(t * NumberOfDofs() + r, s) += permutation[t][k][u] * _vec1_der1[k] * _vec2_var2(u * NumberOfDofs() + r, s);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    for (size_t t = 0; t < 3; t++){
-        for (size_t u = 0; u < 3; u++){
-            for (int r = 0; r < NumberOfDofs(); r++){
-                int xyz = r % number_dofs_per_node;
-
-                if (xyz > 2) 
-                {
-                    _matrix_lambda_var1(t * NumberOfDofs() + r, u) += 0.00;
-                }
-                else
-                {
-                    if (t == u)
-                    {
-                        _matrix_lambda_var1(t * NumberOfDofs() + r, u) += vec1_vec2var1[r];
-                        _matrix_lambda_der1_var1(t * NumberOfDofs() + r, u) += vec1_vec2der1var1[r] * vec1der1_vec2var1[r];
-                    }
-                    else
-                    {
-                        for (int k = 0; k < 3; k++)
-                        {
-                            _matrix_lambda_var1(t * NumberOfDofs() + r, u) += permutation[t][k][u] * vec1_x_vec2der1var1[k * NumberOfDofs() + r];
-                            _matrix_lambda_der1_var1(t * NumberOfDofs() + r, u) += permutation[t][k][u] * vec1_x_vec2der1var1[k * NumberOfDofs() + r] + permutation[t][k][u] * vec1der1_x_vec2var1[k * NumberOfDofs() + r];
-                        }
-                    }
-                // Matrix lambdar Variation
-                _matrix_lambda_var1(t * NumberOfDofs() + r, u) += - vec1_vec2var1[r] / std::pow(1.0 + vec1_vec2, 2) * (vec1_x_vec2[t] * vec1_x_vec2[u]);
-                _matrix_lambda_var1(t * NumberOfDofs() + r, u) += + 1.0 / (1.0 + vec1_vec2) 
-                                                                * (vec1_x_vec2[u] * vec1_x_vec2var1[t * NumberOfDofs() + r] 
-                                                                +  vec1_x_vec2[t] * vec1_x_vec2var1[u * NumberOfDofs() + r]);
-                // Matrix lambdar 1st Derivative 1st Variation
-                _matrix_lambda_der1_var1(t*NumberOfDofs()+r,u) += (2 * vec1_vec2var1[r] * (vec1_vec2der1 + vec1der1_vec2) / std::pow(1.0 + vec1_vec2, 3) 
-                                                                - (vec1_vec2der1var1[r] + vec1der1_vec2var1[r]) / std::pow(1.0 + vec1_vec2, 2))
-                                                                * vec1_x_vec2[t] * vec1_x_vec2[2];
-                }
-            }
-        }
-    }
-
-
-}
-
-
-
-
-//#################################################################################
-//#################################################################################
-//#
-//#                        +++ Compute Matrix Rodrigueas +++
-//#
-//#################################################################################
-//#################################################################################
-//#
-/** Computes the Variation of the Deriative of the Rotation Matrix Lambda (vec1 --> Vec2)
-     * 
-     * @param[in]   _matrix_rodriguez   Rotaition Matrix 
-     * @param[in]   _vec1               initial Vector
-     * @param[in]   _phi                actual Vector
-     * 
-     * @param[return]   Matrix to Transform from vec1 to vec2
-     * 
-     * @author L.Rauch (11/2018)
-     * 
-     * @note   A.Bauer (11/2014)
-     */
-//#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeMatrixRodriuez(
-    BoundedMatrix<double,3,3>& _matrix_rodriguez,
-    BoundedVector<double,3> _vec,
-    double phi)
-    {
-        _matrix_rodriguez.clear();
-        BoundedMatrix<double,3,3> matrix_identity = IdentityMatrix(3);    // ZeroMatrix(3,3);
-
-        for (int i = 0; i < 3; i++)
-            _matrix_rodriguez(i,i) += cos(phi);
-
-        _matrix_rodriguez += CrossProductVectorMatrix(_vec, matrix_identity) * sin(phi); 
-    }
-
-//#################################################################################
-//#################################################################################
-//#
-//#                        +++ Compute Matrix rodriguez Derivative +++
-//#
-//#################################################################################
-//#################################################################################
-//#
-/** Computes the Variation of the Deriative of the Rotation Matrix Lambda (vec1 --> Vec2)
-     * 
-     * @param[in]   _matrix_rodriguez_derivative   Rotaition Matrix 
-     * @param[in]   _vec1               initial Vector
-     * @param[in]   _vec1_der           initial Vector
-     * @param[in]   _phi                actual Vector
-     * @param[in]   _phi_der            actual Vector
-     * 
-     * @param[return]   Matrix to Transform from vec1 to vec2
-     * 
-     * @author L.Rauch (11/2018)
-     * 
-     * @note   A.Bauer (11/2014)
-     */
-//#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeMatrixRodriuezFirstDerivative(
-    BoundedMatrix<double,3,3>& _matrix_rodriguez_der,
-    BoundedVector<double,3> _vec,
-    BoundedVector<double,3> _vec_der,
-    double phi,
-    double phi_der)
-{
-    _matrix_rodriguez_der.clear();
-
-    BoundedMatrix<double,3,3> matrix_identity = IdentityMatrix(3);  // ZeroMatrix(3,3);
-
-    for (int i = 0; i < 3; i++)
-        _matrix_rodriguez_der(i,i) = -phi_der * sin(phi);
-
-    _matrix_rodriguez_der += CrossProductVectorMatrix(_vec, matrix_identity) * cos(phi) * phi_der;
-    _matrix_rodriguez_der += CrossProductVectorMatrix(_vec_der, matrix_identity) * sin(phi);
-}
-
-//#################################################################################
-//#################################################################################
-//#
-//#                      +++ Compute T Variation +++
-//#
-//#################################################################################
-//#################################################################################
-//#
-/** Computes the
-     * 
-     * @return
-     * 
-     * @param[in]  
-     * @param[out]            
-     * 
-     * @author L.Rauch (11/2018)
-     * 
-     * @note by A.Bauer (11/2014)
-     */
-//#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeTVariation(
-    Vector& _t_var,
-    Vector  _r1,
-    Matrix  _deriv)
-{
-    _t_var.resize(3 * NumberOfDofs());
-    _t_var.clear();
-
-    // get the degree of Freedom per Node
-    std::vector<int> act_dofs; 
-    GetDofTypesPerNode(act_dofs);
-    int number_dofs_per_node = act_dofs.size();
-
-    double r1_dL = norm_2(_r1);
-    double r1_dLpow3 = std::pow(r1_dL,3);
-
-    Vector r1_var;
-    r1_var.resize(3 * NumberOfDofs());
-    r1_var.clear();
-
-    for (int t = 0; t < 3; t++){
-        for (int r = 0; r < NumberOfDofs(); r++){
-
-            int xyz = r % number_dofs_per_node;
-            int i = r / number_dofs_per_node;
-            if (t == xyz){
-
-                r1_var(t * NumberOfDofs() + r) = _deriv(0,i);
-            }
-        }
-    }
-
-    Vector r1_r1_var;
-    r1_r1_var.resize(NumberOfDofs());
-    r1_r1_var.clear();
-
-    for (int t = 0; t < 3; t++){
-        for (int r = 0; r < NumberOfDofs(); r++)
-        {
-            r1_r1_var(r) += r1_var[t * NumberOfDofs() + r] * _r1[t];
-        }
-    }
-
-    for (int t = 0; t < 3; t++){
-        for (int r = 0; r < NumberOfDofs(); r++)
-        {
-            _t_var(t * NumberOfDofs() + r) += r1_var[t * NumberOfDofs() + r] / r1_dL - _r1[t] * r1_r1_var[r] / r1_dLpow3;
-        }
-    }
-}
-
-//#################################################################################
-//#################################################################################
-//#
-//#                      +++ Compute Matrix Lambda +++
-//#
-//#################################################################################
-//#################################################################################
-//#
-/** Computes the
-     * 
-     * @return
-     * 
-     * @param[in]  
-     * @param[out]            
-     * 
-     * @author L.Rauch (11/2018)
-     * 
-     * @note by A.Bauer (11/2014)
-     */
-//#--------------------------------------------------------------------------------
 
 
 //#################################################################################
@@ -3390,6 +1713,13 @@ void IgaBeamElement::ComputeDofNonlinear(
     Vector3 T0_der1;
     Vector3 T_der1;
     Vector3 t_der1;
+
+    T_.clear();
+    t_.clear();
+    T0_der1.clear();
+    T_der1.clear();
+    t_der1.clear();
+
     std::vector<Vector3> t_var1(NumberOfDofs());
     std::vector<Vector3> t_var2(NumberOfDofs() * NumberOfDofs());
     std::vector<Vector3> t_der1var1(NumberOfDofs());
@@ -3445,10 +1775,10 @@ void IgaBeamElement::ComputeDofNonlinear(
     comp_T_der_var_var(_r1,_r2, t_der1var2);
 
     auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
-    IgaDebug::CheckVectorVar(expected_data, "t_var", t_var1);
-    IgaDebug::CheckVectorVar(expected_data, "t_der_var", t_der1var1);
-    IgaDebug::CheckVectorVarVar(expected_data, "t_var_var", t_var2);
-    IgaDebug::CheckVectorVarVar(expected_data, "t_der_var_var", t_der1var2);
+    IgaDebug::CheckVectorVar(expected_data, "T_VAR", t_var1);
+    IgaDebug::CheckVectorVar(expected_data, "T_DER_VAR", t_der1var1);
+    IgaDebug::CheckVectorVarVar(expected_data, "T_VAR_VAR", t_var2);
+    IgaDebug::CheckVectorVarVar(expected_data, "T_DER_VAR_VAR", t_der1var2);
 
     comp_rodrigues(t_, _phi, matrix_rodriguez);
     comp_rodrigues_der(t_, t_der1, _phi, _phi_der, matrix_rodriguez_der1);
@@ -3456,31 +1786,276 @@ void IgaBeamElement::ComputeDofNonlinear(
     comp_rodrigues_der_var_var(t_, t_var1, t_var2, t_der1, t_der1var1, t_der1var2, _phi, _phi_der, matrix_rodriguez_der1var2);
     comp_rodrigues_var(t_, t_var1, _phi, matrix_rodriguez_var1);
     comp_rodrigues_var_var(t_, t_var1, t_var2, _phi, matrix_rodriguez_var2);
+    comp_rodrigues(T_, _Phi, matrix_RODRIGUEZ);
+    comp_rodrigues_der(T_, T_der1, _Phi, _Phi_der, matrix_RODRIGUEZ_der1);
 
-    IgaDebug::CheckMatrix(expected_data, "mat_rod", matrix_rodriguez);
-    IgaDebug::CheckMatrix(expected_data, "mat_rod_der", matrix_rodriguez_der1);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_der_var", matrix_rodriguez_der1var1);
-    IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_der_var_var", matrix_rodriguez_der1var2);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_var", matrix_rodriguez_var1);
-    IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_var_var", matrix_rodriguez_var2);
+    IgaDebug::CheckMatrix(expected_data, "MAT_rodriguez", matrix_rodriguez);
+    IgaDebug::CheckMatrix(expected_data, "MAT_rodriguez_DER", matrix_rodriguez_der1);
+    IgaDebug::CheckMatrixVar(expected_data, "MAT_rodriguez_DER_VAR", matrix_rodriguez_der1var1);
+    IgaDebug::CheckMatrixVarVar(expected_data, "MAT_rodriguez_DER_VAR_VAR", matrix_rodriguez_der1var2);
+    IgaDebug::CheckMatrixVar(expected_data, "MAT_rodriguez_VAR", matrix_rodriguez_var1);
+    IgaDebug::CheckMatrixVarVar(expected_data, "MAT_rodriguez_VAR_VAR", matrix_rodriguez_var2);
+    IgaDebug::CheckMatrix(expected_data, "MAT_RODRIGUEZ", matrix_RODRIGUEZ);
+    IgaDebug::CheckMatrix(expected_data, "MAT_RODRIGUEZ_DER", matrix_RODRIGUEZ_der1);
 
+    // Get Axis Value t0_0
+    Vector3 T_0 = GetValue(T0);
+    
     comp_lambda(T_, t_, matrix_lambda);
+    comp_lambda(T_0, T_, matrix_LAMBDA);
     comp_lambda_der(T_, T_der1, t_, t_der1, matrix_lambda_der1);
-    // comp_lambda(t0_0, T_, matrix_LAMBDA);
-    // comp_lambda_der(t0_0, T_, T0_der1, T_der1, matrix_LAMBDA_der1);
+    comp_lambda_der(T_0, T0_der1, T_ , T_der1, matrix_LAMBDA_der1);
     comp_lambda_var(T_, t_, t_var1, matrix_lambda_var1);
     comp_lambda_der_var(T_, T_der1, t_, t_var1, t_der1, t_der1var1, matrix_lambda_der1var1);
-
     comp_lambda_var_var(T_, t_, t_var1, t_var2, matrix_lambda_var2);
     comp_lambda_der_var_var(T_, T_der1, t_, t_var1, t_var2, t_der1, t_der1var1, t_der1var2, matrix_lambda_der1var2);
     
-    IgaDebug::CheckMatrix(expected_data, "mat_lam", matrix_lambda);
-    IgaDebug::CheckMatrix(expected_data, "mat_lam_der", matrix_lambda_der1);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_lam_var", matrix_lambda_var1);
-    IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_var_var", matrix_lambda_var2);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_lam_der_var", matrix_lambda_der1var1);
-    IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_der_var_var", matrix_lambda_der1var2);
+    IgaDebug::CheckMatrix(expected_data, "MAT_lambda", matrix_lambda);
+    IgaDebug::CheckMatrix(expected_data, "MAT_LAMBDA", matrix_LAMBDA);
+    IgaDebug::CheckMatrix(expected_data, "MAT_lambda_DER", matrix_lambda_der1);
+    IgaDebug::CheckMatrix(expected_data, "MAT_LAMBDA_DER", matrix_LAMBDA_der1);
+    IgaDebug::CheckMatrixVar(expected_data, "MAT_lambda_VAR", matrix_lambda_var1);
+    IgaDebug::CheckMatrixVar(expected_data, "MAT_lambda_DER_VAR", matrix_lambda_der1var1);
+    IgaDebug::CheckMatrixVarVar(expected_data, "MAT_lambda_VAR_VAR", matrix_lambda_var2);
+    IgaDebug::CheckMatrixVarVar(expected_data, "MAT_lambda_DER_VAR_VAR", matrix_lambda_der1var2);
 
+
+    // Configuration of A_i,1 --> _der
+    BoundedMatrix<double,3,3> matrix_Rod_Lam_der;
+    BoundedMatrix<double,3,3> matrix_Rod_der_Lam;
+    BoundedMatrix<double,3,3> matrix_Rod_Lam;
+    BoundedMatrix<double,3,3> matrix_RodLam_der;
+
+    matrix_Rod_Lam_der.clear();
+    matrix_Rod_der_Lam.clear();
+    matrix_Rod_Lam.clear();
+    matrix_RodLam_der.clear();
+
+    for (size_t t = 0; t < 3; t++){
+        for (size_t u = 0; u < 3; u++){
+            for (size_t k = 0; k < 3; k++){
+
+                matrix_Rod_Lam(t,u)     += matrix_RODRIGUEZ(t,k) * matrix_LAMBDA(k,u);
+                matrix_Rod_Lam_der(t,u) += matrix_RODRIGUEZ(t,k) * matrix_LAMBDA_der1(k,u);
+                matrix_Rod_der_Lam(t,u) += matrix_RODRIGUEZ_der1(t,k) * matrix_LAMBDA(k,u);
+            }
+        }
+    }
+    matrix_RodLam_der = matrix_Rod_Lam_der + matrix_Rod_der_Lam;
+    IgaDebug::CheckMatrix(expected_data, "mat_RodLam_der", matrix_RodLam_der);
+
+    BoundedMatrix<double,3,3> matrix_lam_Rod_Lam_der;
+    BoundedMatrix<double,3,3> matrix_lam_Rod_der_Lam;
+    BoundedMatrix<double,3,3> matrix_lam_Rod_Lam;
+    BoundedMatrix<double,3,3> matrix_lam_der_Rod_Lam;
+    BoundedMatrix<double,3,3> matrix_lamRodLam_der;
+
+     matrix_lam_Rod_Lam_der.clear();
+     matrix_lam_Rod_der_Lam.clear();
+     matrix_lam_Rod_Lam.clear();
+     matrix_lam_der_Rod_Lam.clear();
+     matrix_lamRodLam_der.clear();
+
+    for (size_t t = 0; t < 3; t++){
+        for (size_t u = 0; u < 3; u++){
+            for (size_t k = 0; k < 3; k++){
+
+                matrix_lam_Rod_Lam(t,u)     += matrix_lambda(t,k) * matrix_Rod_Lam(k,u);
+                matrix_lam_Rod_Lam_der(t,u) += matrix_lambda(t,k) * matrix_Rod_Lam_der(k,u);
+                matrix_lam_Rod_der_Lam(t,u) += matrix_lambda(t,k) * matrix_Rod_der_Lam(k,u);
+                matrix_lam_der_Rod_Lam(t,u) += matrix_lambda_der1(t,k) * matrix_Rod_Lam(k,u);
+            }
+        }
+    }
+    matrix_lamRodLam_der    = matrix_lam_Rod_Lam_der 
+                            + matrix_lam_Rod_der_Lam 
+                            + matrix_lam_der_Rod_Lam;
+    IgaDebug::CheckMatrix(expected_data, "mat_lamRodLam_der", matrix_lamRodLam_der);
+
+    BoundedMatrix<double,3,3> matrix_rod_lam_Rod_Lam_der;
+    BoundedMatrix<double,3,3> matrix_rod_lam_Rod_der_Lam;
+    BoundedMatrix<double,3,3> matrix_rod_lam_der_Rod_Lam;
+    BoundedMatrix<double,3,3> matrix_rod_der_lam_Rod_Lam;
+    BoundedMatrix<double,3,3> matrix_rod_lam_Rod_Lam;
+    BoundedMatrix<double,3,3> matrix_rodlamRodLam_der;
+
+    matrix_rod_lam_Rod_Lam_der.clear(); 
+    matrix_rod_lam_Rod_der_Lam.clear(); 
+    matrix_rod_lam_der_Rod_Lam.clear(); 
+    matrix_rod_der_lam_Rod_Lam.clear(); 
+    matrix_rod_lam_Rod_Lam.clear(); 
+    matrix_rodlamRodLam_der.clear();
+
+    for (size_t t = 0; t < 3; t++){
+        for (size_t u = 0; u < 3; u++){
+            for (size_t k = 0; k < 3; k++){
+
+                matrix_rod_lam_Rod_Lam(t,u)     += matrix_rodriguez(t,k) * matrix_lam_Rod_Lam(k,u);
+                matrix_rod_lam_Rod_Lam_der(t,u) += matrix_rodriguez(t,k) * matrix_lam_Rod_Lam_der(k,u);
+                matrix_rod_lam_Rod_der_Lam(t,u) += matrix_rodriguez(t,k) * matrix_lam_Rod_der_Lam(k,u);
+                matrix_rod_lam_der_Rod_Lam(t,u) += matrix_rodriguez(t,k) * matrix_lam_der_Rod_Lam(k,u);
+                matrix_rod_der_lam_Rod_Lam(t,u) += matrix_rodriguez_der1(t,k) * matrix_lam_Rod_Lam(k,u);
+            }
+        }
+    }
+    matrix_rodlamRodLam_der = matrix_rod_lam_Rod_Lam_der 
+                            + matrix_rod_lam_Rod_der_Lam
+                            + matrix_rod_lam_der_Rod_Lam
+                            + matrix_rod_der_lam_Rod_Lam;
+
+    IgaDebug::CheckMatrix(expected_data, "mat_rodlamRodLam_der", matrix_rodlamRodLam_der);
+    
+
+    // Variation of A_i,1 --> _der_var
+
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_lam_var_Rod_Lam_der(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_lam_var_Rod_der_Lam(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_lam_der_var_Rod_Lam(NumberOfDofs()); 
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_lam_var_Rod_Lam(NumberOfDofs());
+
+    for (size_t r = 0; r != NumberOfDofs(); r++)
+    {
+        if (GetDofTypeIndex(r) != 3) 
+        {
+            matrix_lam_var_Rod_Lam[r]     = prod(matrix_lambda_var1[r], matrix_Rod_Lam);
+            matrix_lam_var_Rod_Lam_der[r] = prod(matrix_lambda_var1[r], matrix_Rod_Lam_der);
+            matrix_lam_var_Rod_der_Lam[r] = prod(matrix_lambda_var1[r], matrix_Rod_der_Lam);
+            matrix_lam_der_var_Rod_Lam[r] = prod(matrix_lambda_der1var1[r], matrix_Rod_Lam);
+        }
+        else
+        {
+            matrix_lam_var_Rod_Lam[r].clear();
+            matrix_lam_var_Rod_Lam_der[r].clear();
+            matrix_lam_var_Rod_der_Lam[r].clear();
+            matrix_lam_der_var_Rod_Lam[r].clear();
+        }
+    }
+
+    IgaDebug::CheckMatrixVar(expected_data, "mat_lam_var_Rod_Lam", matrix_lam_var_Rod_Lam);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_lam_var_Rod_Lam_der", matrix_lam_var_Rod_Lam_der);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_lam_var_Rod_der_Lam", matrix_lam_var_Rod_der_Lam);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_lam_der_var_Rod_Lam", matrix_lam_der_var_Rod_Lam);
+
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_rod_var_lam_Rod_Lam_der(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_rod_var_lam_Rod_der_Lam(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_rod_var_lam_der_Rod_Lam(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_rod_der_var_lam_Rod_Lam(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_rod_der_lam_var_Rod_Lam(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_rod_lam_der_var_Rod_Lam(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_rod_lam_var_Rod_der_Lam(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_rod_lam_var_Rod_Lam_der(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_rod_lam_var_Rod_Lam(NumberOfDofs());
+    std::vector<BoundedMatrix<double, 3, 3>> matrix_rod_var_lam_Rod_Lam(NumberOfDofs());
+
+    for (size_t r = 0; r != NumberOfDofs(); r++)
+    {
+            matrix_rod_var_lam_Rod_Lam_der[r] = prod(matrix_rodriguez_var1[r], matrix_lam_Rod_Lam_der);
+            matrix_rod_var_lam_Rod_der_Lam[r] = prod(matrix_rodriguez_var1[r], matrix_lam_Rod_der_Lam);
+            matrix_rod_var_lam_der_Rod_Lam[r] = prod(matrix_rodriguez_var1[r], matrix_lam_der_Rod_Lam);
+            matrix_rod_der_var_lam_Rod_Lam[r] = prod(matrix_rodriguez_der1var1[r], matrix_lam_Rod_Lam);
+            matrix_rod_der_lam_var_Rod_Lam[r] = prod(matrix_rodriguez_der1, matrix_lam_var_Rod_Lam[r]);
+            matrix_rod_lam_der_var_Rod_Lam[r] = prod(matrix_rodriguez, matrix_lam_der_var_Rod_Lam[r]);
+            matrix_rod_lam_var_Rod_der_Lam[r] = prod(matrix_rodriguez, matrix_lam_var_Rod_der_Lam[r]);
+            matrix_rod_lam_var_Rod_Lam_der[r] = prod(matrix_rodriguez, matrix_lam_var_Rod_Lam_der[r]);
+            matrix_rod_lam_var_Rod_Lam[r]     = prod(matrix_rodriguez, matrix_lam_var_Rod_Lam[r]);
+            matrix_rod_var_lam_Rod_Lam[r]     = prod(matrix_rodriguez_var1[r], matrix_lam_Rod_Lam);
+    }
+    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_var_lam_Rod_Lam_der", matrix_rod_var_lam_Rod_Lam_der);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_var_lam_Rod_der_Lam", matrix_rod_var_lam_Rod_der_Lam);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_var_lam_der_Rod_Lam", matrix_rod_var_lam_der_Rod_Lam);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_der_var_lam_Rod_Lam", matrix_rod_der_var_lam_Rod_Lam);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_der_lam_var_Rod_Lam", matrix_rod_der_lam_var_Rod_Lam);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_lam_der_var_Rod_Lam", matrix_rod_lam_der_var_Rod_Lam);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_lam_var_Rod_der_Lam", matrix_rod_lam_var_Rod_der_Lam);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_lam_var_Rod_Lam_der", matrix_rod_lam_var_Rod_Lam_der);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_lam_var_Rod_Lam", matrix_rod_lam_var_Rod_Lam);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_var_lam_Rod_Lam", matrix_rod_var_lam_Rod_Lam);
+
+    std::vector<BoundedMatrix<double,3,3>>  matrix_rodlamRodLam_der_var(NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_rodlamRodLam_var(NumberOfDofs());
+
+    for (size_t r = 0; r != NumberOfDofs(); r++)
+    {   
+    matrix_rodlamRodLam_der_var[r]  = matrix_rod_var_lam_Rod_Lam_der[r]
+                                    + matrix_rod_var_lam_Rod_der_Lam[r]
+                                    + matrix_rod_var_lam_der_Rod_Lam[r]
+                                    + matrix_rod_der_var_lam_Rod_Lam[r]
+                                    + matrix_rod_der_lam_var_Rod_Lam[r]
+                                    + matrix_rod_lam_der_var_Rod_Lam[r]
+                                    + matrix_rod_lam_var_Rod_der_Lam[r]
+                                    + matrix_rod_lam_var_Rod_Lam_der[r];
+    matrix_rodlamRodLam_var[r]  = matrix_rod_lam_var_Rod_Lam[r] + matrix_rod_var_lam_Rod_Lam[r];
+    }
+
+    IgaDebug::CheckMatrixVar(expected_data, "mat_rodlamRodLam_der_var", matrix_rodlamRodLam_der_var);
+    IgaDebug::CheckMatrixVar(expected_data, "mat_rodlamRodLam_var", matrix_rodlamRodLam_var);
+
+
+    // 2nd variation of A_i,1 ->_der_var_var
+
+    std::vector<BoundedMatrix<double,3,3>> matrix_lam_var_var_Rod_Lam(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_lam_var_var_Rod_der_Lam(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_lam_var_var_Rod_Lam_der(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_lam_der_var_var_Rod_Lam(NumberOfDofs() * NumberOfDofs());
+
+    for (size_t r = 0; r != NumberOfDofs(); r++){
+        for (size_t s = 0; s != NumberOfDofs(); s++)
+        {
+        matrix_lam_var_var_Rod_Lam[r * NumberOfDofs() +s]     = prod(matrix_lambda_var2[r * NumberOfDofs() +s], matrix_Rod_Lam);
+        matrix_lam_var_var_Rod_der_Lam[r * NumberOfDofs() +s] = prod(matrix_lambda_var2[r * NumberOfDofs() +s], matrix_Rod_der_Lam);
+        matrix_lam_var_var_Rod_Lam_der[r * NumberOfDofs() +s] = prod(matrix_lambda_var2[r * NumberOfDofs() +s], matrix_Rod_Lam_der);
+        matrix_lam_der_var_var_Rod_Lam[r * NumberOfDofs() +s] = prod(matrix_lambda_der1var2[r * NumberOfDofs() +s], matrix_Rod_Lam);
+        }
+    }
+
+    IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_var_var_Rod_Lam", matrix_lam_var_var_Rod_Lam);
+    IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_var_var_Rod_der_Lam", matrix_lam_var_var_Rod_der_Lam);
+    IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_var_var_Rod_Lam_der", matrix_lam_var_var_Rod_Lam_der);
+    IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_der_var_var_Rod_Lam", matrix_lam_der_var_var_Rod_Lam);
+
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_der_lam_var_var_Rod_Lam(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_lam_der_var_var_Rod_Lam(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_lam_var_var_Rod_der_Lam(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_lam_var_var_Rod_Lam_der(NumberOfDofs() * NumberOfDofs());
+    
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_der_var_lam_var_Rod_Lam(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_var_lam_der_var_Rod_Lam(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_var_lam_var_Rod_der_Lam(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_var_lam_var_Rod_Lam_der(NumberOfDofs() * NumberOfDofs());
+
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_der_var_var_lam_Rod_Lam(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_var_var_lam_der_Rod_Lam(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_var_var_lam_Rod_der_Lam(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_var_var_lam_Rod_Lam_der(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_lam_var_var_Rod_Lam(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_var_lam_var_Rod_Lam(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_rod_var_var_lam_Rod_Lam(NumberOfDofs() * NumberOfDofs());
+
+    for (size_t r = 0; r != NumberOfDofs(); r ++){
+
+        for (size_t s = 0; s != NumberOfDofs(); s++){
+
+        matrix_rod_der_lam_var_var_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_der1, matrix_lam_var_var_Rod_Lam[r * NumberOfDofs() + s]);
+        matrix_rod_lam_der_var_var_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez, matrix_lam_der_var_var_Rod_Lam[r * NumberOfDofs() + s]);
+        matrix_rod_lam_var_var_Rod_der_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez, matrix_lam_var_var_Rod_der_Lam[r * NumberOfDofs() + s]);
+        matrix_rod_lam_var_var_Rod_Lam_der[r * NumberOfDofs() + s] = prod(matrix_rodriguez, matrix_lam_var_var_Rod_Lam_der[r * NumberOfDofs() + s]);
+
+        matrix_rod_der_var_lam_var_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_der1var1[r], matrix_lam_var_Rod_Lam[r]);
+        matrix_rod_var_lam_der_var_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var1[r], matrix_lam_der_var_Rod_Lam[r]);
+        matrix_rod_var_lam_var_Rod_der_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var1[r], matrix_lam_var_Rod_der_Lam[r]);
+        matrix_rod_var_lam_var_Rod_Lam_der[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var1[r], matrix_lam_var_Rod_Lam_der[r]);
+
+        matrix_rod_der_var_var_lam_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_der1var2[r * NumberOfDofs() + s], matrix_lam_Rod_Lam);
+        matrix_rod_var_var_lam_der_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var2[r * NumberOfDofs() + s], matrix_lam_der_Rod_Lam);
+        matrix_rod_var_var_lam_Rod_der_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var2[r * NumberOfDofs() + s], matrix_lam_Rod_der_Lam);
+        matrix_rod_var_var_lam_Rod_Lam_der[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var2[r * NumberOfDofs() + s], matrix_lam_Rod_Lam_der);
+        matrix_rod_lam_var_var_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez, matrix_lam_var_var_Rod_Lam[r * NumberOfDofs() + s]);
+        matrix_rod_var_lam_var_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var1[r], matrix_lam_var_Rod_Lam[r]);
+        matrix_rod_var_var_lam_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var2[r * NumberOfDofs() + s], matrix_lam_Rod_Lam);
+        }
+    }
+
+    //# TODO ### Output testen
 }
 
 
@@ -3669,30 +2244,7 @@ void IgaBeamElement::PrintInfo(std::ostream& rOStream) const
     rOStream << "\"IgaBeamElement\" #" << Id();
 }
 
-//#################################################################################
-//#################################################################################
-//#
-//#                          +++ Claculate Dead Load +++
-//#
-//#################################################################################
-//#################################################################################
-//#
-/** Computes the dead Load Vecotor aof an Element
-     * 
-     * @param[in]   _dead_load      // Dead Load Object
-     * @param[out]  lokal_load_vec  // Element Load Vector
-     * 
-     * @author L.Rauch (10/2018)
-     * 
-     * @note   A.Bauer (10/2014)
-     */
-//#--------------------------------------------------------------------------------
-// void IgaBeamElement::CalculateDeadLoad(
 
-// )
-
-
-// }
 
 void IgaBeamElement::comp_T_var(
     const Vector3& r1,
@@ -4185,35 +2737,35 @@ void IgaBeamElement::comp_lambda_var_var(
     const std::vector<Vector3>& v2_var,
     const std::vector<Vector3>& v2_var_var,
     std::vector<BoundedMatrix<double, 3, 3>>& lambda_var_var)
-{        
+{
     Vector3 cross_vec1_vec2 = Cross(v1, v2);
-
+ 
     Vector T0_T_var(NumberOfDofs());
-
+ 
     for (size_t r = 0; r != NumberOfDofs(); ++r) {
         size_t xyz = GetDofTypeIndex(r);
-
+ 
         if (xyz > 2) {
             T0_T_var[r] = 0;
         } else {
             T0_T_var[r] = inner_prod(v2_var[r], v1);
         }
     }
-
+ 
     double T0_T = inner_prod(v1, v2);
-
-    Vector T0_T_var_var(NumberOfDofs() * NumberOfDofs());
+ 
+    Matrix T0_T_var_var(NumberOfDofs(), NumberOfDofs());
     
     for (size_t r = 0; r != NumberOfDofs(); ++r) {
         size_t xyzr = GetDofTypeIndex(r);
-
+ 
         for (size_t s = 0; s != NumberOfDofs(); ++s) {
             size_t xyzs = GetDofTypeIndex(s);
-
+ 
             if (xyzr > 2 || xyzs > 2) {
-                T0_T_var_var[r * NumberOfDofs() + s] = 0;
+                T0_T_var_var(r, s) = 0;
             } else {
-                T0_T_var_var[r * NumberOfDofs() + s] = inner_prod(v2_var_var[r * NumberOfDofs() + s], v1);
+                T0_T_var_var(r, s) = inner_prod(v2_var_var[r * NumberOfDofs() + s], v1);
             }
         }
     }
@@ -4222,7 +2774,7 @@ void IgaBeamElement::comp_lambda_var_var(
     
     for (size_t r = 0; r != NumberOfDofs(); ++r) {
         size_t xyz = GetDofTypeIndex(r);
-
+ 
         if (xyz > 2) {
             cross_vec1_vec2_var[r].clear();
         } else {
@@ -4234,7 +2786,7 @@ void IgaBeamElement::comp_lambda_var_var(
     
     for (size_t r = 0; r != NumberOfDofs(); ++r) {
         size_t xyz_r = GetDofTypeIndex(r);
-
+ 
         for (size_t s = 0; s != NumberOfDofs(); ++s) {
             size_t xyz_s = GetDofTypeIndex(s);
         
@@ -4245,32 +2797,26 @@ void IgaBeamElement::comp_lambda_var_var(
             }
         }
     }
-
+ 
     for (size_t r = 0; r != NumberOfDofs(); ++r) {
         size_t xyz_r = GetDofTypeIndex(r);
-
+ 
         for (size_t s = 0; s != NumberOfDofs(); ++s) {
             size_t xyz_s = GetDofTypeIndex(s);
             
             if (xyz_r > 2 || xyz_s > 2) {
                 lambda_var_var[r * NumberOfDofs() + s].clear();
             } else {
-                lambda_var_var[r * NumberOfDofs() + s] = T0_T_var_var[r * NumberOfDofs() + s] * IdentityMatrix(3);
-                    
+                lambda_var_var[r * NumberOfDofs() + s] = T0_T_var_var(r, s) * IdentityMatrix(3);
                 lambda_var_var[r * NumberOfDofs() + s] += cross_v_identity(cross_vec1_vec2_var_var[r * NumberOfDofs() + s]);
-
-                for (size_t i = 0; i < 3; i++) {
-                    for (size_t j = 0; j < 3; j++) {
-                        lambda_var_var[r * NumberOfDofs() + s](i, j) += 2 * T0_T_var[r] * T0_T_var[s] / pow(1.0 + T0_T, 3) - T0_T_var_var[r * NumberOfDofs() + s] / pow(1.0 + T0_T, 2);
-                    }
-                }
-
+                lambda_var_var[r * NumberOfDofs() + s] += (2 * T0_T_var[r] * T0_T_var[s] / pow(1.0 + T0_T, 3) - T0_T_var_var(r, s) / pow(1.0 + T0_T, 2)) *  outer_prod(cross_vec1_vec2, cross_vec1_vec2);
                 lambda_var_var[r * NumberOfDofs() + s] += -T0_T_var[r] / pow(1.0 + T0_T, 2) * (outer_prod(cross_vec1_vec2_var[s], cross_vec1_vec2) + outer_prod(cross_vec1_vec2, cross_vec1_vec2_var[s])) - T0_T_var[s] / pow(1.0 + T0_T, 2) * (outer_prod(cross_vec1_vec2_var[r], cross_vec1_vec2) + outer_prod(cross_vec1_vec2, cross_vec1_vec2_var[r]));
                 lambda_var_var[r * NumberOfDofs() + s] += 1.0 / (1.0 + T0_T) * (outer_prod(cross_vec1_vec2_var_var[r * NumberOfDofs() + s], cross_vec1_vec2) + outer_prod(cross_vec1_vec2_var[r], cross_vec1_vec2_var[s]) + outer_prod(cross_vec1_vec2_var[s], cross_vec1_vec2_var[r]) + outer_prod(cross_vec1_vec2, cross_vec1_vec2_var_var[s * NumberOfDofs() + r]));
             }
         }
     }
 }
+
 
 // check!
 void IgaBeamElement::comp_lambda_der(
@@ -4370,8 +2916,8 @@ void IgaBeamElement::comp_lambda_der_var_var(
 
         if (xyz > 2) {
             T0_T_var[r] = 0;
-            T0_der_T_var[r] = 0;
-            T0_T_der_var[r] = 0;
+            T0_der_T_var[r] = 0; // das hat...
+            T0_T_der_var[r] = 0; // ...gefehlt
         } else {
             T0_T_var[r] = inner_prod(v2_var[r], v1);
             T0_der_T_var[r] = inner_prod(v2_var[r], v1_der);
@@ -4379,9 +2925,9 @@ void IgaBeamElement::comp_lambda_der_var_var(
         }
     }
     
-    Vector T0_T_var_var(NumberOfDofs() * NumberOfDofs());
-    Vector T0_T_der_var_var(NumberOfDofs() * NumberOfDofs());
-    Vector T0_der_T_var_var(NumberOfDofs() * NumberOfDofs());
+    Matrix T0_T_var_var(NumberOfDofs(), NumberOfDofs());
+    Matrix T0_T_der_var_var(NumberOfDofs(), NumberOfDofs());
+    Matrix T0_der_T_var_var(NumberOfDofs(), NumberOfDofs());
 
     for (size_t r = 0; r != NumberOfDofs(); ++r) {
         size_t xyzr = GetDofTypeIndex(r);
@@ -4390,11 +2936,13 @@ void IgaBeamElement::comp_lambda_der_var_var(
             size_t xyzs = GetDofTypeIndex(s);
 
             if (xyzr > 2 || xyzs > 2) {
-                T0_T_var_var[r * NumberOfDofs() + s] = 0;
+                T0_T_var_var(r, s) = 0;
+                T0_T_der_var_var(r, s) = 0;
+                T0_der_T_var_var(r, s) = 0;
             } else {
-                T0_T_var_var[r * NumberOfDofs() + s] = inner_prod(v2_var_var[r * NumberOfDofs() + s], v1);
-                T0_T_der_var_var[r * NumberOfDofs() + s] = inner_prod(v2_der_var_var[r * NumberOfDofs() + s], v1);
-                T0_der_T_var_var[r * NumberOfDofs() + s] = inner_prod(v2_var_var[r * NumberOfDofs() + s], v1_der);
+                T0_T_var_var(r, s) = inner_prod(v2_var_var[r * NumberOfDofs() + s], v1);
+                T0_T_der_var_var(r, s) = inner_prod(v2_der_var_var[r * NumberOfDofs() + s], v1);
+                T0_der_T_var_var(r, s) = inner_prod(v2_var_var[r * NumberOfDofs() + s], v1_der);
             }
         }
     }
@@ -4439,14 +2987,14 @@ void IgaBeamElement::comp_lambda_der_var_var(
         for (size_t s = 0; s != NumberOfDofs(); ++s) {
             size_t xyz_s = GetDofTypeIndex(s);
 
-            lambda_der_var_var[r * NumberOfDofs() + s] = (T0_T_der_var_var[r * NumberOfDofs() + s] + T0_der_T_var_var[r * NumberOfDofs() + s]) * IdentityMatrix(3);
+            lambda_der_var_var[r * NumberOfDofs() + s] = (T0_T_der_var_var(r, s) + T0_der_T_var_var(r, s)) * IdentityMatrix(3);
             lambda_der_var_var[r * NumberOfDofs() + s] += cross_v_identity(T0xvec2_der_var_var[r * NumberOfDofs() + s] + T0_derxvec2_var_var[r * NumberOfDofs() + s]);
 
             if (xyz_r != 3 && xyz_s != 3) {
-                lambda_der_var_var[r * NumberOfDofs() + s] += (2 * (T0_T_var[r] * (T0_T_der_var[s] + T0_der_T_var[s]) + T0_T_1 * T0_T_var_var[r * NumberOfDofs() + s]) / pow(1.0 + T0_T, 3) - 6 * T0_T_1 * T0_T_var[r] * T0_T_var[s] / pow(1.0 + T0_T, 4) - (T0_T_der_var_var[r * NumberOfDofs() + s] + T0_der_T_var_var[r * NumberOfDofs() + s]) / pow(1.0 + T0_T, 2) + 2 * (T0_T_der_var[r] + T0_der_T_var[r]) * T0_T_var[s] / pow(1.0 + T0_T, 3)) * outer_prod(T0xvec2, T0xvec2);
+                lambda_der_var_var[r * NumberOfDofs() + s] += (2 * (T0_T_var[r] * (T0_T_der_var[s] + T0_der_T_var[s]) + T0_T_1 * T0_T_var_var(r, s)) / pow(1.0 + T0_T, 3) - 6 * T0_T_1 * T0_T_var[r] * T0_T_var[s] / pow(1.0 + T0_T, 4) - (T0_T_der_var_var(r, s) + T0_der_T_var_var(r, s)) / pow(1.0 + T0_T, 2) + 2 * (T0_T_der_var[r] + T0_der_T_var[r]) * T0_T_var[s] / pow(1.0 + T0_T, 3)) * outer_prod(T0xvec2, T0xvec2);
                 lambda_der_var_var[r * NumberOfDofs() + s] += (2 * T0_T_var[r] * T0_T_1 / pow(1.0 + T0_T, 3) - (T0_T_der_var[r] + T0_der_T_var[r]) / pow(1.0 + T0_T, 2)) * (outer_prod(T0xvec2_var[s], T0xvec2) + outer_prod(T0xvec2, T0xvec2_var[s])) + (2 * T0_T_var[s] * T0_T_1 / pow(1.0 + T0_T, 3) - (T0_T_der_var[s] + T0_der_T_var[s]) / pow(1.0 + T0_T, 2)) * (outer_prod(T0xvec2_var[r], T0xvec2) + outer_prod(T0xvec2, T0xvec2_var[r]));
                 lambda_der_var_var[r * NumberOfDofs() + s] += -T0_T_1 / pow(1.0 + T0_T, 2) * (outer_prod(T0xvec2_var_var[r * NumberOfDofs() + s], T0xvec2) + outer_prod(T0xvec2_var[r], T0xvec2_var[s]) + outer_prod(T0xvec2_var[s], T0xvec2_var[r]) + outer_prod(T0xvec2, T0xvec2_var_var[r * NumberOfDofs() + s]));
-                lambda_der_var_var[r * NumberOfDofs() + s] += (-T0_T_var_var[r * NumberOfDofs() + s] / pow(1.0 + T0_T, 2) + 2 * T0_T_var[r] * T0_T_var[s] / pow(1.0 + T0_T, 3)) * (outer_prod(T0xvec2_der + T0_derxvec2, T0xvec2) + outer_prod(T0xvec2, T0xvec2_der + T0_derxvec2));
+                lambda_der_var_var[r * NumberOfDofs() + s] += (-T0_T_var_var(r, s) / pow(1.0 + T0_T, 2) + 2 * T0_T_var[r] * T0_T_var[s] / pow(1.0 + T0_T, 3)) * (outer_prod(T0xvec2_der + T0_derxvec2, T0xvec2) + outer_prod(T0xvec2, T0xvec2_der + T0_derxvec2));
                 lambda_der_var_var[r * NumberOfDofs() + s] += (-T0_T_var[r] / pow(1.0 + T0_T, 2)) * (outer_prod(T0xvec2_der_var[s] + T0_derxvec2_var[s], T0xvec2) + outer_prod(T0xvec2_var[s], T0xvec2_der + T0_derxvec2) + outer_prod(T0xvec2_der + T0_derxvec2, T0xvec2_var[s]) + outer_prod(T0xvec2, T0xvec2_der_var[s] + T0_derxvec2_var[s]));
                 lambda_der_var_var[r * NumberOfDofs() + s] += (-T0_T_var[s] / pow(1.0 + T0_T, 2)) * (outer_prod(T0xvec2_der_var[r] + T0_derxvec2_var[r], T0xvec2) + outer_prod(T0xvec2_var[r], T0xvec2_der + T0_derxvec2) + outer_prod(T0xvec2_der + T0_derxvec2, T0xvec2_var[r]) + outer_prod(T0xvec2, T0xvec2_der_var[r] + T0_derxvec2_var[r]));
                 lambda_der_var_var[r * NumberOfDofs() + s] += 1.0 / (1.0 + T0_T) * (outer_prod(T0xvec2_der_var_var[r * NumberOfDofs() + s] + T0_derxvec2_var_var[r * NumberOfDofs() + s], T0xvec2) + outer_prod(T0xvec2_var_var[r * NumberOfDofs() + s], T0xvec2_der + T0_derxvec2) + outer_prod(T0xvec2_der_var[s] + T0_derxvec2_var[s], T0xvec2_var[r]) + outer_prod(T0xvec2_var[s], T0xvec2_der_var[r] + T0_derxvec2_var[r]) + outer_prod(T0xvec2_der_var[r] + T0_derxvec2_var[r], T0xvec2_var[s]) + outer_prod(T0xvec2_var[r], T0xvec2_der_var[s] + T0_derxvec2_var[s]) + outer_prod(T0xvec2_der+ T0_derxvec2, T0xvec2_var_var[r * NumberOfDofs() + s]) + outer_prod(T0xvec2, T0xvec2_der_var_var[r * NumberOfDofs() + s] + T0_derxvec2_var_var[r * NumberOfDofs() + s]));

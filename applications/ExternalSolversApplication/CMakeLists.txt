@@ -33,18 +33,18 @@ set(BLAS_LIBRARIES ${BLAS_LIBRARIES_REALPATH} CACHE STRING "exact file of the bl
 link_directories(${BLAS_LIBRARIES})
 
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${BLAS_LINKER_FLAGS}" CACHE STRING "Linker flags for shared libs" FORCE)
-message("linker flags with blas =" ${BLAS_LINKER_FLAGS})
-message("BLA_VENDOR = " ${BLA_VENDOR})
+message("-- Linker flags added with blas =" ${BLAS_LINKER_FLAGS})
+message("-- Blad Vendor (BLA_VENDOR) = " ${BLA_VENDOR})
 
 # Linking to the absolute value of the lapack
-message("LAPACK = " ${LAPACK_LIBRARIES})
+message("-- LAPACK = " ${LAPACK_LIBRARIES})
 foreach(library ${LAPACK_LIBRARIES})
     get_filename_component(lapack_library ${library} REALPATH)
     set(LAPACK_LIBRARIES_REALPATH ${LAPACK_LIBRARIES_REALPATH} ${lapack_library})
 endforeach(library)
 
 set(LAPACK_LIBRARIES ${LAPACK_LIBRARIES_REALPATH} CACHE STRING "exact file of the lapack library" FORCE)
-message("LAPACK modified = " ${LAPACK_LIBRARIES})
+message("-- LAPACK modified = " ${LAPACK_LIBRARIES})
 
 include_directories(${LAPACK_INCLUDE_DIRS})
 link_directories(${LAPACK_LIBRARIES})
@@ -58,7 +58,7 @@ if(${INCLUDE_PASTIX} MATCHES ON)
     FIND_LIBRARY(PASTIX_LINK_LIB pastix  ${PASTIX_INSTALL_DIR})
     FIND_LIBRARY(SCOTCH_ERR_LIB scotcherr ${SCOTCH_INSTALL_DIR})
     FIND_LIBRARY(SCOTCH_LIB scotch  ${SCOTCH_INSTALL_DIR})
-    message("pastix library found =" ${PASTIX_LINK_LIB})
+    message("-- Pastix library found =" ${PASTIX_LINK_LIB})
     add_definitions( -DFORCE_NOMPI )
     add_library(kratos_pastix STATIC custom_external_libraries/solvePASTIX.c  )
     target_link_libraries(kratos_pastix  ${PASTIX_LINK_LIB} ${SCOTCH_LIB} ${SCOTCH_ERR_LIB} rt  ${BLAS_LIBRARIES} )

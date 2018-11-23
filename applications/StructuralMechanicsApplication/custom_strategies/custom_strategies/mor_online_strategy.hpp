@@ -10,8 +10,8 @@
 //  Main authors:    Riccardo Rossi
 //
 
-#if !defined(LINEAR_MOR_MATRIX_OUTPUT_STRATEGY)
-#define LINEAR_MOR_MATRIX_OUTPUT_STRATEGY
+#if !defined(MOR_ONLINE_STRATEGY)
+#define MOR_ONLINE_STRATEGY
 
 // System includes
 
@@ -25,6 +25,7 @@
 
 //default builder and solver
 #include "custom_strategies/custom_builder_and_solvers/mass_and_stiffness_builder_and_solver.hpp"
+#include "custom_strategies/custom_strategies/mor_offline_strategy.hpp"
 
 namespace Kratos
 {
@@ -50,28 +51,34 @@ namespace Kratos
 ///@{
 
 /**
- * @class LinearMorMatrixOutputStrategy
+ * @class MorOnlineStrategy
  * @ingroup KratosCore
- * @brief This is the linear MOR matrix output strategy
- * @details This strategy builds the K and M matrices and outputs them
- * @author Aditya Ghantasala
+ * @brief This is the MOR online strategy
+ * @details The strategy calls an offline MOR strategy and solves the reduced system
+ * @author Quirin Aumann
  */
 template <class TSparseSpace,
           class TDenseSpace,  // = DenseSpace<double>,
           class TLinearSolver //= LinearSolver<TSparseSpace,TDenseSpace>
           >
-class LinearMorMatrixOutputStrategy
+class MorOnlineStrategy
     : public SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver>
 {
   public:
     ///@name Type Definitions
     ///@{
     // Counted pointer of ClassName
-    KRATOS_CLASS_POINTER_DEFINITION(LinearMorMatrixOutputStrategy);
+    KRATOS_CLASS_POINTER_DEFINITION(MorOnlineStrategy);
 
     typedef SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver> BaseType;
 
-    typedef MassAndStiffnessBuilderAndSolver< TSparseSpace, TDenseSpace, TLinearSolver > TBuilderAndSolverType;
+    // typedef MassAndStiffnessBuilderAndSolver< TSparseSpace, TDenseSpace, TLinearSolver > TBuilderAndSolverType;
+
+    // typedef LinearMorMatrixOutputStrategy< TSparseSpace, TDenseSpace, TLinearSolver > TOfflineStrategyType;
+
+    typedef MorOfflineStrategy< TSparseSpace, TDenseSpace, TLinearSolver > TOfflineStrategyType;
+
+    typedef typename BaseType::TBuilderAndSolverType TBuilderAndSolverType;
 
     typedef typename BaseType::TDataType TDataType;
 
@@ -106,10 +113,13 @@ class LinearMorMatrixOutputStrategy
      * @param pScheme The integration schemed
      * @param MoveMeshFlag The flag that allows to move the mesh
      */
-    LinearMorMatrixOutputStrategy(
+    MorOnlineStrategy(
         ModelPart& rModelPart,
         typename TSchemeType::Pointer pScheme,
         typename TLinearSolver::Pointer pNewLinearSolver,
+        typename TBuilderAndSolverType::Pointer pBuilderAndSolver,
+        typename BaseType::Pointer pOfflineStrategy,
+        vector< double > samplingPoints,
         bool MoveMeshFlag = false)
         : SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(rModelPart, MoveMeshFlag)
     {
@@ -119,16 +129,23 @@ class LinearMorMatrixOutputStrategy
         mpScheme = pScheme;
 
 
-        // Setting up the default builder and solver
-         mpBuilderAndSolver = typename TBuilderAndSolverType::Pointer(
-            new TBuilderAndSolverType(pNewLinearSolver)); 
+        // Setting up the default builder and solver -> is this needed?
+        //  mpBuilderAndSolver = typename TBuilderAndSolverType::Pointer(
+        //     new TBuilderAndSolverType(pNewLinearSolver)); 
+        mpBuilderAndSolver = pBuilderAndSolver;
 
         // Saving the linear solver
-        mpLinearSolver = pNewLinearSolver;            
+        mpLinearSolver = pNewLinearSolver;
+
+        // Setting the offline strategy
+        // mpOfflineStrategy = pOfflineStrategy;
+        mpOfflineStrategy = typename TOfflineStrategyType::Pointer(
+            new TOfflineStrategyType( rModelPart, pScheme, pNewLinearSolver, samplingPoints, MoveMeshFlag ));
 
         // Set flags to start correcty the calculations
         mSolutionStepIsInitialized = false;
         mInitializeWasPerformed = false;
+        mReformDofSetAtEachStep = false;
 
         // Tells to the builder and solver if the reactions have to be Calculated or not
         GetBuilderAndSolver()->SetCalculateReactionsFlag(false);
@@ -140,11 +157,11 @@ class LinearMorMatrixOutputStrategy
         // Set EchoLevel to the default value (only time is displayed)
         SetEchoLevel(1);
 
-        // By default the matrices are rebuilt at each iteration
-        this->SetRebuildLevel(2);
+        // Do not rebuild the stiffness matrix
+        this->SetRebuildLevel(0);
 
-        mpA = TSparseSpace::CreateEmptyMatrixPointer();
-        mpM = TSparseSpace::CreateEmptyMatrixPointer();
+        mpA = TSparseSpace::CreateEmptyMatrixPointer(); //stiffness
+        mpM = TSparseSpace::CreateEmptyMatrixPointer(); //mass
         mpRHS = TSparseSpace::CreateEmptyVectorPointer();
 
         KRATOS_CATCH("");
@@ -154,7 +171,7 @@ class LinearMorMatrixOutputStrategy
      * @brief Destructor.
      * @details In trilinos third party library, the linear solver's preconditioner should be freed before the system matrix. We control the deallocation order with Clear().
      */
-    ~LinearMorMatrixOutputStrategy() override
+    ~MorOnlineStrategy() override
     {
         Clear();
     }
@@ -193,6 +210,16 @@ class LinearMorMatrixOutputStrategy
     typename TBuilderAndSolverType::Pointer GetBuilderAndSolver()
     {
         return mpBuilderAndSolver;
+    };
+
+    void SetOfflineStrategy(typename TOfflineStrategyType::Pointer pNewOfflineStrategy)
+    {
+        mpOfflineStrategy = pNewOfflineStrategy;
+    };
+
+    typename TOfflineStrategyType::Pointer GetOfflineStrategy()
+    {
+        return mpOfflineStrategy;
     };
 
     /**
@@ -245,7 +272,7 @@ class LinearMorMatrixOutputStrategy
     void SetEchoLevel(int Level) override
     {
         BaseType::mEchoLevel = Level;
-        GetBuilderAndSolver()->SetEchoLevel(Level);
+        // GetBuilderAndSolver()->SetEchoLevel(Level);
     }
 
     //*********************************************************************************
@@ -255,34 +282,34 @@ class LinearMorMatrixOutputStrategy
      * @brief Operation to predict the solution ... if it is not called a trivial predictor is used in which the
     values of the solution step of interest are assumed equal to the old values
      */
-    void Predict() override
-    {
-        KRATOS_TRY
-        //OPERATIONS THAT SHOULD BE DONE ONCE - internal check to avoid repetitions
-        //if the operations needed were already performed this does nothing
-        if (mInitializeWasPerformed == false)
-            Initialize();
+    // void Predict() override
+    // {
+    //     KRATOS_TRY
+    //     //OPERATIONS THAT SHOULD BE DONE ONCE - internal check to avoid repetitions
+    //     //if the operations needed were already performed this does nothing
+    //     if (mInitializeWasPerformed == false)
+    //         Initialize();
 
-        //initialize solution step
-        if (mSolutionStepIsInitialized == false)
-            InitializeSolutionStep();
+    //     //initialize solution step
+    //     if (mSolutionStepIsInitialized == false)
+    //         InitializeSolutionStep();
 
-        TSystemMatrixType& rA  = *mpA;
-        TSystemMatrixType& rM = *mpM;
-        TSystemVectorType& rRHS  = *mpRHS;
+    //     TSystemMatrixType& rA  = *mpA;
+    //     TSystemMatrixType& rM = *mpM;
+    //     TSystemVectorType& rRHS  = *mpRHS;
 
-        DofsArrayType& r_dof_set = GetBuilderAndSolver()->GetDofSet();
+    //     DofsArrayType& r_dof_set = GetBuilderAndSolver()->GetDofSet();
 
-        GetScheme()->Predict(BaseType::GetModelPart(), r_dof_set, rA, rRHS, rRHS);
+    //     GetScheme()->Predict(BaseType::GetModelPart(), r_dof_set, rA, rRHS, rRHS);
 
-        GetScheme()->Predict(BaseType::GetModelPart(), r_dof_set, rM, rRHS, rRHS);
+    //     GetScheme()->Predict(BaseType::GetModelPart(), r_dof_set, rM, rRHS, rRHS);
 
-        //move the mesh if needed
-        if (this->MoveMeshFlag() == true)
-            BaseType::MoveMesh();
+    //     //move the mesh if needed
+    //     if (this->MoveMeshFlag() == true)
+    //         BaseType::MoveMesh();
 
-        KRATOS_CATCH("")
-    }
+    //     KRATOS_CATCH("")
+    // }
 
     /**
      * @brief Initialization of member variables and prior operations
@@ -293,8 +320,10 @@ class LinearMorMatrixOutputStrategy
 
         if (mInitializeWasPerformed == false)
         {
+            std::cout << "this is the mor_online_strategy.Initialize() inner loop" << std::endl;
             //pointers needed in the solution
             typename TSchemeType::Pointer p_scheme = GetScheme();
+            typename TOfflineStrategyType::Pointer p_offline_strategy = GetOfflineStrategy();
 
             //Initialize The Scheme - OPERATIONS TO BE DONE ONCE
             if (p_scheme->SchemeIsInitialized() == false)
@@ -307,6 +336,19 @@ class LinearMorMatrixOutputStrategy
             //Initialize The Conditions - OPERATIONS TO BE DONE ONCE
             if (p_scheme->ConditionsAreInitialized() == false)
                 p_scheme->InitializeConditions(BaseType::GetModelPart());
+
+            //Initialize offline strategy
+            // if (p_offline_strategy->GetInitializePerformedFlag() == false)
+            p_offline_strategy->Initialize();
+
+            p_offline_strategy->Solve();
+            // KRATOS_WATCH(p_offline_strategy->GetSystemMatrix())
+            // KRATOS_WATCH(p_offline_strategy->GetMassMatrix())
+            // KRATOS_WATCH(p_offline_strategy->GetSystemVector())
+            // KRATOS_WATCH(p_offline_strategy->GetMr())
+            // KRATOS_WATCH(p_offline_strategy->GetAr())
+            // KRATOS_WATCH(p_offline_strategy->GetRHSr())
+            // KRATOS_WATCH(p_offline_strategy->GetBasis())
 
             mInitializeWasPerformed = true;
         }
@@ -323,7 +365,7 @@ class LinearMorMatrixOutputStrategy
 
         // if the preconditioner is saved between solves, it
         // should be cleared here.
-        GetBuilderAndSolver()->GetLinearSystemSolver()->Clear();
+        // GetBuilderAndSolver()->GetLinearSystemSolver()->Clear();
 
         if (mpA != nullptr)
             SparseSpaceType::Clear(mpA);
@@ -333,8 +375,8 @@ class LinearMorMatrixOutputStrategy
             SparseSpaceType::Clear(mpRHS);
 
         //setting to zero the internal flag to ensure that the dof sets are recalculated
-        GetBuilderAndSolver()->SetDofSetIsInitializedFlag(false);
-        GetBuilderAndSolver()->Clear();
+        // GetBuilderAndSolver()->SetDofSetIsInitializedFlag(false);
+        // GetBuilderAndSolver()->Clear();
         GetScheme()->Clear();
 
         mInitializeWasPerformed = false;
@@ -456,26 +498,58 @@ class LinearMorMatrixOutputStrategy
      */
     bool SolveSolutionStep() override
     {
-        typename TSchemeType::Pointer p_scheme = GetScheme();
-        typename TBuilderAndSolverType::Pointer p_builder_and_solver = GetBuilderAndSolver();
-        TSystemMatrixType& rA  = *mpA;
-        TSystemMatrixType& rM = *mpM;
-        TSystemVectorType& rRHS  = *mpRHS;
+        // typename TSchemeType::Pointer p_scheme = GetScheme();
+        // typename TBuilderAndSolverType::Pointer p_builder_and_solver = GetBuilderAndSolver();
+        // TSystemMatrixType& rA  = *mpA;
+        // TSystemMatrixType& rM = *mpM;
+        // TSystemVectorType& rRHS  = *mpRHS;
 
-        TSystemVectorType tmp(rA.size1(), 0.0);
+        // TSystemVectorType tmp(rA.size1(), 0.0);
 
-        p_builder_and_solver->BuildStiffnessMatrix(p_scheme, BaseType::GetModelPart(), rA, tmp);
+        // p_builder_and_solver->BuildStiffnessMatrix(p_scheme, BaseType::GetModelPart(), rA, tmp);
 
-        // Applying the Dirichlet Boundary conditions
-        p_builder_and_solver->ApplyDirichletConditions(p_scheme, BaseType::GetModelPart(), rA, tmp, rRHS);  
+        // // Applying the Dirichlet Boundary conditions
+        // p_builder_and_solver->ApplyDirichletConditions(p_scheme, BaseType::GetModelPart(), rA, tmp, rRHS);  
 
-        p_builder_and_solver->BuildMassMatrix(p_scheme, BaseType::GetModelPart(), rM, tmp);
+        // p_builder_and_solver->BuildMassMatrix(p_scheme, BaseType::GetModelPart(), rM, tmp);
 
-        p_builder_and_solver->ApplyDirichletConditionsForMassMatrix(p_scheme, BaseType::GetModelPart(), rM);
+        // p_builder_and_solver->ApplyDirichletConditionsForMassMatrix(p_scheme, BaseType::GetModelPart(), rM);
 
-        p_builder_and_solver->BuildRHS(p_scheme, BaseType::GetModelPart(), rRHS);
+        // p_builder_and_solver->BuildRHS(p_scheme, BaseType::GetModelPart(), rRHS);
 
-        EchoInfo(0);
+        // EchoInfo(0);
+
+        typename TOfflineStrategyType::Pointer p_offline_strategy = GetOfflineStrategy();
+        auto& r_process_info = BaseType::GetModelPart().GetProcessInfo();
+        double excitation_frequency = r_process_info[TIME];
+
+        TSystemMatrixType r_Mr = p_offline_strategy->GetMr();
+        TSystemMatrixType r_Ar = p_offline_strategy->GetAr();
+        TSystemVectorType r_RHSr = p_offline_strategy->GetRHSr();
+        TSystemMatrixType r_basis = p_offline_strategy->GetBasis();
+
+        const unsigned int system_size = r_basis.size1();
+        const unsigned int system_size_r = r_basis.size2();
+        // KRATOS_WATCH(system_size)
+        // KRATOS_WATCH(system_size_r)
+
+        TSystemVectorType displacement_reduced;
+        displacement_reduced.resize( system_size_r, false );
+        displacement_reduced = ZeroVector( system_size_r );
+        auto kdyn = SparseSpaceType::CreateEmptyMatrixPointer();
+        auto& r_kdyn = *kdyn;
+        SparseSpaceType::Resize(r_kdyn, system_size_r, system_size_r);
+
+        r_kdyn = r_Ar - ( std::pow( excitation_frequency, 2.0 ) * r_Mr );
+
+        GetBuilderAndSolver()->GetLinearSystemSolver()->Solve( r_kdyn, displacement_reduced, r_RHSr );
+
+        TSystemVectorType displacement;
+        displacement.resize( system_size, false );
+        displacement = ZeroVector( system_size );
+
+        displacement = prod( r_basis, displacement_reduced );
+        AssignVariables(displacement);
 
         return false;
     }
@@ -522,13 +596,6 @@ class LinearMorMatrixOutputStrategy
         TSystemMatrixType &mA = *mpA;
 
         return mA;
-    }
-
-    TSystemMatrixType &GetMassMatrix()
-    {
-        TSystemMatrixType &mM = *mpM;
-
-        return mM;
     }
 
     /**
@@ -592,10 +659,17 @@ class LinearMorMatrixOutputStrategy
     typename TLinearSolver::Pointer mpLinearSolver; /// The pointer to the linear solver considered
     typename TSchemeType::Pointer mpScheme; /// The pointer to the time scheme employed
     typename TBuilderAndSolverType::Pointer mpBuilderAndSolver; /// The pointer to the builder and solver employe
+    typename TOfflineStrategyType::Pointer mpOfflineStrategy;
 
     TSystemVectorPointerType mpRHS; /// The RHS vector of the system of equations
     TSystemMatrixPointerType mpA; /// The Stiffness matrix of the system of equations
     TSystemMatrixPointerType mpM; /// The Mass matrix of the system of equations
+    
+    // reduced matrices
+    // TSystemVectorPointerType mpRHSr; //reduced RHS
+    // TSystemMatrixPointerType mpAr;
+    // TSystemMatrixPointerType mpMr;
+    // TSystemMatrixPointerType mpBasis;
 
     /**
      * @brief Flag telling if it is needed to reform the DofSet at each
@@ -662,6 +736,27 @@ class LinearMorMatrixOutputStrategy
         }
     }
 
+    void AssignVariables(TSystemVectorType& rDisplacement, int step=0)
+    {
+        auto& r_model_part = BaseType::GetModelPart();
+        for( auto& node : r_model_part.Nodes() )
+        {
+            ModelPart::NodeType::DofsContainerType& rNodeDofs = node.GetDofs();
+            
+            for( auto it_dof = std::begin(rNodeDofs); it_dof != std::end(rNodeDofs); it_dof++ )
+            {
+                if( !it_dof->IsFixed() )
+                {
+                    it_dof->GetSolutionStepValue(step) = rDisplacement(it_dof->EquationId());
+                }
+                else
+                {
+                    it_dof->GetSolutionStepValue(step) = 0.0;
+                }
+            }
+        }
+    }
+
     ///@}
     ///@name Private Operations
     ///@{
@@ -682,11 +777,11 @@ class LinearMorMatrixOutputStrategy
      * Copy constructor.
      */
 
-    LinearMorMatrixOutputStrategy(const LinearMorMatrixOutputStrategy &Other){};
+    MorOnlineStrategy(const MorOnlineStrategy &Other){};
 
     ///@}
 
-}; /* Class LinearMorMatrixOutputStrategy */
+}; /* Class MorOnlineStrategy */
 
 ///@}
 
@@ -697,4 +792,4 @@ class LinearMorMatrixOutputStrategy
 
 } /* namespace Kratos. */
 
-#endif /* LINEAR_MOR_MATRIX_OUTPUT_STRATEGY  defined */
+#endif /* MOR_ONLINE_STRATEGY  defined */

@@ -25,6 +25,8 @@
 #include "custom_strategies/custom_strategies/formfinding_updated_reference_strategy.hpp"
 #include "custom_strategies/custom_strategies/mechanical_explicit_strategy.hpp"
 #include "custom_strategies/custom_strategies/linear_mor_matrix_output_strategy.hpp"
+#include "custom_strategies/custom_strategies/mor_online_strategy.hpp"
+#include "custom_strategies/custom_strategies/mor_offline_strategy.hpp"
 
 // Schemes
 #include "custom_strategies/custom_schemes/residual_based_relaxation_scheme.hpp"
@@ -39,6 +41,7 @@
 #include "custom_strategies/custom_convergencecriterias/error_mesh_criteria.h"
 
 // Builders and solvers
+#include "custom_strategies/custom_builder_and_solvers/mass_and_stiffness_builder_and_solver.hpp"
 
 // Linear solvers
 #include "linear_solvers/linear_solver.h"
@@ -72,7 +75,8 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
     typedef FormfindingUpdatedReferenceStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType > FormfindingUpdatedReferenceStrategyType;
     typedef MechanicalExplicitStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType > MechanicalExplicitStrategyType;
     typedef LinearMorMatrixOutputStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType > LinearMorMatrixOutputStrategyType;
-
+    typedef MorOnlineStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType > MorOnlineStrategyType;
+    typedef MorOfflineStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType > MorOfflineStrategyType;
 
     // Custom scheme types
     typedef ResidualBasedRelaxationScheme< SparseSpaceType, LocalSpaceType >  ResidualBasedRelaxationSchemeType;
@@ -87,6 +91,7 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
     typedef ErrorMeshCriteria< SparseSpaceType,  LocalSpaceType > ErrorMeshCriteriaType;
 
     // Custom builder and solvers types
+    typedef MassAndStiffnessBuilderAndSolver< SparseSpaceType, LocalSpaceType, LinearSolverType > MassAndStiffnessBuilderAndSolverType;
 
     //********************************************************************
     //*************************STRATEGY CLASSES***************************
@@ -130,8 +135,16 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
         ;
 
 
-    py::class_< LinearMorMatrixOutputStrategyType, typename LinearMorMatrixOutputStrategyType::Pointer, BaseSolvingStrategyType >(m,"LinearMorMatrixOutputStrategyType")
+    py::class_< LinearMorMatrixOutputStrategyType, typename LinearMorMatrixOutputStrategyType::Pointer, BaseSolvingStrategyType >(m,"LinearMorMatrixOutputStrategy")
         .def(py::init < ModelPart&, BaseSchemeType::Pointer, LinearSolverPointer, bool >())
+        ;
+
+    py::class_< MorOnlineStrategyType, typename MorOnlineStrategyType::Pointer, BaseSolvingStrategyType >(m,"MorOnlineStrategy")
+        .def(py::init < ModelPart&, BaseSchemeType::Pointer, LinearSolverPointer, BuilderAndSolverPointer, BaseSolvingStrategyType::Pointer, vector<double>, bool >())
+        ;
+
+    py::class_< MorOfflineStrategyType, typename MorOfflineStrategyType::Pointer, BaseSolvingStrategyType >(m,"MorOfflineStrategy")
+        .def(py::init < ModelPart&, BaseSchemeType::Pointer, LinearSolverPointer, vector<double>, bool >())
         ;
 
     //********************************************************************
@@ -183,6 +196,9 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
     //********************************************************************
     //*************************BUILDER AND SOLVER*************************
     //********************************************************************
+    py::class_< MassAndStiffnessBuilderAndSolverType, typename MassAndStiffnessBuilderAndSolverType::Pointer, BuilderAndSolverType >(m, "MassAndStiffnessBuilderAndSolver")
+        .def(py::init < LinearSolverPointer >())
+        ;
 }
 
 }  // namespace Python.

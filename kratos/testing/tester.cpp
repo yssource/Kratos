@@ -208,6 +208,13 @@ namespace Kratos
 			rOStream << "    Total of " << GetInstance().mTestSuites.size() << " Test Suites";
 		}
 
+		void Tester::DisableAllTestCases()
+		{
+			for (auto i_test = GetInstance().mTestCases.begin();
+			i_test != GetInstance().mTestCases.end(); i_test++)
+				i_test->second->Disable();
+		}
+
 		void Tester::UnSelectAllTestCases()
 		{
 			for (auto i_test = GetInstance().mTestCases.begin();

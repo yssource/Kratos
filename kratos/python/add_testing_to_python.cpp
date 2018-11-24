@@ -49,6 +49,7 @@ void  AddTestingToPython(pybind11::module& m) {
         // Utils
         .def_static("NumberOfFailedTestCases", &Testing::Tester::NumberOfFailedTestCases)
         .def_static("ResetAllTestCasesResults", &Testing::Tester::ResetAllTestCasesResults)
+        .def_static("DisableAllTestCases", &Testing::Tester::DisableAllTestCases)
 
         // Info
         .def_static("ListOfAllTestCases", ListOfAllTestCases)

@@ -87,6 +87,7 @@ namespace Kratos
 			///@{
 
 			static void ResetAllTestCasesResults();
+			static void DisableAllTestCases();
 
 			static int RunAllTestCases();
 

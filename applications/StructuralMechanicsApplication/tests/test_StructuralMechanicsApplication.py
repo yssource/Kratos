@@ -408,6 +408,7 @@ def AssembleTestSuites():
 
 
 if __name__ == '__main__':
+    # this is actually called!
     KratosMultiphysics.Logger.PrintInfo("Unittests", "\nRunning cpp unit tests ...")
     run_cpp_unit_tests.run()
     KratosMultiphysics.Logger.PrintInfo("Unittests", "Finished running cpp unit tests!")
@@ -424,5 +425,10 @@ if __name__ == '__main__':
         KratosMultiphysics.Logger.PrintInfo("Unittests", "mpi is not available!")
 
     KratosMultiphysics.Logger.PrintInfo("Unittests", "\nRunning python tests ...")
-    KratosUnittest.runTests(AssembleTestSuites())
+    rc = KratosUnittest.runTests(AssembleTestSuites())
+    print(rc)
+    import sys
+    sys.exit(rc)
+    # errrrrrr
+    print("lol")
     KratosMultiphysics.Logger.PrintInfo("Unittests", "Finished python tests!")

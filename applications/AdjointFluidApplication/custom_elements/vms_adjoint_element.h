@@ -1510,8 +1510,28 @@ protected:
         // this->ProcessMatrices(rCurrentProcessInfo);
         // if (this->Id()== 4)
         // {
-        //     ReynoldsStressTensor<TDim> mTest(*this);
-        //     mTest.test();
+        //     double Area;
+        //     array_1d<double, TNumNodes> N;
+        //     BoundedMatrix<double, TNumNodes, TDim> DN_DX;
+        //     GeometryUtils::CalculateGeometryData(this->GetGeometry(), DN_DX, N, Area);
+
+        //     // Calculate this element's fluid properties
+        //     double Density;
+        //     this->EvaluateInPoint(Density, DENSITY, N);
+
+        //     BoundedMatrix<double, TNumNodes, TDim> velocity;
+        //     for (unsigned int i = 0; i < TNumNodes; ++i)
+        //     {
+        //         array_1d< double, 3 > & rVel = this->GetGeometry()[i].FastGetSolutionStepValue(VELOCITY);
+        //         for (unsigned int j = 0; j < TDim; ++j)
+        //             velocity(i,j) = rVel[j];
+        //     }            
+
+        //     Vector turbulent_coefficients = this->GetValue(REYNOLDS_STRESS_MODEL_COEFFICIENTS);
+        //     ReynoldsStressTensor<TDim, TNumNodes> reynolds_stress_tensor_module(
+        //             velocity, DN_DX, turbulent_coefficients, this->GetGeometry(),
+        //             1.0, 2.0, Density, Area);            
+        //     reynolds_stress_tensor_module.test();
         // }
     }
 

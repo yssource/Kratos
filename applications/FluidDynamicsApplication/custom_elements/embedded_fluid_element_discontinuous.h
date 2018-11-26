@@ -362,6 +362,18 @@ protected:
         const EmbeddedDiscontinuousElementData& rData) const;
 
     /**
+    * This method adds the symmetric contribution of the momentum pressure term contribution.
+    * It is added to the mass conservation equation and preserves the mass flux at the embedded boundaries.
+    * @param rLHS reference to the LHS matrix
+    * @param rRHS reference to the RHS vector
+    * @param rData reference to element data structure
+    */
+    void AddMassConservationBoundaryContribution(
+        MatrixType &rLHS,
+        VectorType &rRHS,
+        const EmbeddedDiscontinuousElementData &rData) const;
+
+    /**
      * This method computes the penalty coefficient for the Nitsche normal imposition
      * @param rData reference to element data structure
      */

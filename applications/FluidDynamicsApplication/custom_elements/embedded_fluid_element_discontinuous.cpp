@@ -144,6 +144,7 @@ void EmbeddedFluidElementDiscontinuous<TBaseElement>::CalculateLocalSystem(
         AddNormalSymmetricCounterpartContribution(rLeftHandSideMatrix, rRightHandSideVector, data); // NOTE: IMPLEMENT THE SKEW-SYMMETRIC ADJOINT IF IT IS NEEDED IN THE FUTURE. CREATE A IS_SKEW_SYMMETRIC ELEMENTAL FLAG.
         AddTangentialPenaltyContribution(rLeftHandSideMatrix, rRightHandSideVector, data);
         AddTangentialSymmetricCounterpartContribution(rLeftHandSideMatrix, rRightHandSideVector, data); // NOTE: IMPLEMENT THE SKEW-SYMMETRIC ADJOINT IF IT IS NEEDED IN THE FUTURE. CREATE A IS_SKEW_SYMMETRIC ELEMENTAL FLAG.
+        AddMassConservationBoundaryContribution(rLeftHandSideMatrix, rRightHandSideVector, data);
     }
 }
 
@@ -869,7 +870,76 @@ void EmbeddedFluidElementDiscontinuous<TBaseElement>::AddTangentialSymmetricCoun
 }
 
 template <class TBaseElement>
-double EmbeddedFluidElementDiscontinuous<TBaseElement>::ComputeNormalPenaltyCoefficient(const EmbeddedDiscontinuousElementData& rData) const
+void EmbeddedFluidElementDiscontinuous<TBaseElement>::AddMassConservationBoundaryContribution(
+    MatrixType &rLHS,
+    VectorType &rRHS,
+    const EmbeddedDiscontinuousElementData &rData) const
+{
+    // Obtain the previous iteration velocity solution
+    array_1d<double,LocalSize> values;
+    this->GetCurrentValuesVector(rData, values);
+
+    // If there is embedded velocity, substract it to the previous iteration solution
+    if (this->Has(EMBEDDED_VELOCITY)) {
+        const array_1d<double, 3 >& embedded_vel = this->GetValue(EMBEDDED_VELOCITY);
+        array_1d<double, LocalSize> embedded_vel_exp(LocalSize, 0.0);
+
+        for (unsigned int i = 0; i < NumNodes; ++i) {
+            for (unsigned int comp = 0; comp < Dim; ++comp) {
+                embedded_vel_exp(i*BlockSize + comp) = embedded_vel(comp);
+            }
+        }
+
+        noalias(values) -= embedded_vel_exp;
+    }
+
+    // Compute the positive side LHS and RHS contributions
+    const unsigned int number_of_positive_interface_integration_points = rData.PositiveInterfaceWeights.size();
+    for (unsigned int g = 0; g < number_of_positive_interface_integration_points; ++g) {
+        // Get the Gauss pt. data
+        const double weight = rData.PositiveInterfaceWeights[g];
+        const auto aux_N = row(rData.PositiveInterfaceN, g);
+        const auto &aux_unit_normal = rData.PositiveInterfaceUnitNormals[g];
+
+        // Compute the Gauss pt. LHS contribution
+        for (unsigned int i = 0; i < NumNodes; ++i){
+            for (unsigned int j = 0; j < NumNodes; ++j){
+                const unsigned int row = i * BlockSize + Dim;
+                for (unsigned int n = 0; n < Dim; ++n){
+                    const unsigned int col = j * BlockSize + n;
+                    const double aux = weight*aux_N(i)*aux_unit_normal(n)*aux_unit_normal(n)*aux_N(j); 
+                    rLHS(row, col) += aux;
+                    rRHS(row) -= aux*values(col);
+                }
+            }
+        }
+    }
+
+    // Compute the negative side LHS and RHS contributions
+    const unsigned int number_of_negative_interface_integration_points = rData.NegativeInterfaceWeights.size();
+    for (unsigned int g = 0; g < number_of_negative_interface_integration_points; ++g) {
+        // Get the Gauss pt. data
+        const double weight = rData.NegativeInterfaceWeights[g];
+        const auto aux_N = row(rData.NegativeInterfaceN, g);
+        const auto &aux_unit_normal = rData.NegativeInterfaceUnitNormals[g];
+
+        // Compute the Gauss pt. LHS contribution
+        for (unsigned int i = 0; i < NumNodes; ++i){
+            for (unsigned int j = 0; j < NumNodes; ++j){
+                const unsigned int row = i * BlockSize + Dim;
+                for (unsigned int n = 0; n < Dim; ++n){
+                    const unsigned int col = j * BlockSize + n;
+                    const double aux = weight*aux_N(i)*aux_unit_normal(n)*aux_unit_normal(n)*aux_N(j);
+                    rLHS(row, col) += aux;
+                    rRHS(row) -= aux*values(col);
+                }
+            }
+        }
+    }
+}
+
+template <class TBaseElement>
+double EmbeddedFluidElementDiscontinuous<TBaseElement>::ComputeNormalPenaltyCoefficient(const EmbeddedDiscontinuousElementData &rData) const
 {
     // Compute the element average velocity norm
     double v_norm = 0.0;

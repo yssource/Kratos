@@ -145,7 +145,7 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
             self.Communicator.initializeCommunication()
             self.Communicator.requestValueOf(self.only_obj["identifier"].GetString())
             self.Communicator.requestGradientOf(self.only_obj["identifier"].GetString())
-            self.Analyzer.AnalyzeDesignAndReportToCommunicator(self.DesignSurface, self.optimization_iteration, self.Communicator)
+            self.Analyzer.AnalyzeDesignAndReportToCommunicator(self.DesignSurface, self.num_function_calls, self.Communicator)
 
             value = self.Communicator.getStandardizedValue(self.only_obj["identifier"].GetString())
 
@@ -155,7 +155,7 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
             # Mapping
             self.Mapper.InverseMap(DF1DX, DF1DX_MAPPED)
             self.ModelPartController.DampNodalVariableIfSpecified(DF1DX_MAPPED)
-            self.Mapper.Update()
+            # self.Mapper.Update()
 
             gradient = np.zeros_like(X)
             for counter, node in enumerate(self.DesignSurface.Nodes):

@@ -322,6 +322,10 @@ class PfemFluidSolver:
         #split_elements = KratosPfemFluid.SplitElementsProcess(self.main_model_part,self.settings["echo_level"].GetInt())
         #split_elements.ExecuteInitialize()
 
+    def AdaptTimeStepProcess(self):
+        adaptive_time_interval = KratosPfemFluid.AdaptiveTimeIntervalProcess(self.main_model_part,self.settings["echo_level"].GetInt())
+        adaptive_time_interval.Execute()
+
     def Predict(self):
         pass
         #self.fluid_solver.Predict()

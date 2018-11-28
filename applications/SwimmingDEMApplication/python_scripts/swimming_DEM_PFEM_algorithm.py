@@ -112,6 +112,9 @@ class Algorithm(BaseAlgorithm):
         self.fluid_solution.FinalizeSolutionStep()
         self.projection_module.UpdateDatabase(self.h_min)
 
+    def ManageFluidDEMTimeStep(self):
+        self.fluid_solution.solver.AdaptTimeStepProcess()
+        self.Dt = self.fluid_solution.main_model_part.ProcessInfo[KratosMultiphysics.DELTA_TIME]
 
     def GetFirstStepForFluidComputation(self):
         return 1;

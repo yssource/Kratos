@@ -603,6 +603,9 @@ class Algorithm(object):
         self.analytic_face_watcher.MakeMeasurements()
         self.analytic_particle_watcher.MakeMeasurements()
 
+    def ManageFluidDEMTimeStep(self):
+        pass
+
     def RunMainTemporalLoop(self):
         coupling_level_type = self.pp.CFD_DEM["coupling_level_type"].GetInt()
         project_at_every_substep_option = self.pp.CFD_DEM["project_at_every_substep_option"].GetBool()
@@ -612,6 +615,8 @@ class Algorithm(object):
         interaction_start_time = self.pp.CFD_DEM["interaction_start_time"].GetDouble()
 
         while self.TheSimulationMustGoOn():
+
+            self.ManageFluidDEMTimeStep()
 
             self.time = self.time + self.Dt
             self.step += 1

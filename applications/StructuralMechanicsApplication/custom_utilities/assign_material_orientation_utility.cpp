@@ -18,7 +18,8 @@
 // Project includes
 #include "assign_material_orientation_utility.h"
 #include "structural_mechanics_application_variables.h"
-#include <math.h>
+
+
 namespace Kratos
 {
 
@@ -35,8 +36,9 @@ void AssignMaterialOrientationUtility::Execute(Parameters MethodParameters)
 
 	//Normalize global_vector
 	global_vector /= std::sqrt(inner_prod(global_vector, global_vector));
+	//global_vector /=  norm_2(global_vector); TODO
 
-	auto current_process_info = mrModelPart.GetProcessInfo();
+	const auto& r_process_info = mrModelPart.GetProcessInfo();
 
 	// Declare working variables
 	Matrix LCSOrientation;
@@ -55,7 +57,10 @@ void AssignMaterialOrientationUtility::Execute(Parameters MethodParameters)
 		global_vector_copy = global_vector;
 
 		// get local axis in cartesian coordinates
-		element.Calculate(LOCAL_ELEMENT_ORIENTATION, LCSOrientation, current_process_info);
+		element.Calculate(LOCAL_ELEMENT_ORIENTATION, LCSOrientation, r_process_info);
+		// TODO this should in the future directly get LOCAL_AXIS_1 etc from the elements:
+		// element.CalculateOnIntegrationPoints(LOCAL_AXIS_1, vec, r_process_info);
+
 
 		// get element local axis vectors (global cartesian)
 		for (size_t i = 0; i < 3; i++)
@@ -87,7 +92,6 @@ void AssignMaterialOrientationUtility::Execute(Parameters MethodParameters)
 		}
 		else
 		{
-
 			// Second, project the global vector onto the shell surface
 			// http://www.euclideanspace.com/maths/geometry/elements/plane/lineOnPlane/index.htm
 			// vector to be projected = A
@@ -104,6 +108,7 @@ void AssignMaterialOrientationUtility::Execute(Parameters MethodParameters)
 
 			// Third, find the angle between our projected direction and the
 			// current shell localAxis1
+			//TODO use Math_utils::VectorsAngle for this?
 			double cosTheta = inner_prod(localAxis1, projectedResult);
 			double theta = std::acos(cosTheta);
 			// make sure the angle is positively defined according to right
@@ -125,14 +130,14 @@ void AssignMaterialOrientationUtility::Execute(Parameters MethodParameters)
 
 void AssignMaterialOrientationUtility::CheckAndReadVectors(Parameters ThisParameters, const std::string KeyName, Vector3 &rVector)
 {
-	
+
 
 	if (ThisParameters[KeyName].size() != 3)
 	{
 		KRATOS_ERROR << "\" " << KeyName << "\" is not of size 3" << std::endl;
 	}
 
-	
+
 	rVector[0] = ThisParameters[KeyName][0].GetDouble();
 	rVector[1] = ThisParameters[KeyName][1].GetDouble();
 	rVector[2] = ThisParameters[KeyName][2].GetDouble();

@@ -143,6 +143,8 @@ void IgaBeamElement::CalculateAll(
     // IgaDebug::CheckVector(expected_data,"stiffness", _gke);
     // IgaDebug::CheckVector(expected_data,"external_force", _gkfi);
 
+
+
     
     KRATOS_CATCH("");
 }
@@ -450,30 +452,39 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
 
     // Membrane Stiffness Matrix
     Matrix kem(NumberOfDofs(), NumberOfDofs());
+    kem.clear();
 
     // Bendign Stiffness Matrix (Principal Axis N)
     Matrix keb_n(NumberOfDofs(), NumberOfDofs());
+    keb_n.clear();
 
     // Bendign Stiffness Matrix (Principal Axis V)
     Matrix keb_v(NumberOfDofs(), NumberOfDofs());
+    keb_v.clear();
 
     // Bending Membrane Interaction Stiffness Matrix (Pricipal Axis N) 
     Matrix keb_ekn(NumberOfDofs(), NumberOfDofs());
+    keb_ekn.clear();
 
     // Bending Membrane Interaction Stiffness Matrix (Principal Axis V)
     Matrix keb_ekv(NumberOfDofs(), NumberOfDofs());
+    keb_ekv.clear();
 
     // Ineraction Bending Stiffness
     Matrix keb_knkv(NumberOfDofs(), NumberOfDofs());
+    keb_knkv.clear();
 
     // Torsional Stiffness
     Matrix ket_n(NumberOfDofs(), NumberOfDofs()); 
+    ket_n.clear();
 
     // Torsional Stiffness 
     Matrix ket_v(NumberOfDofs(), NumberOfDofs());
+    ket_v.clear();
 
     // Torsional Stiffness
     Matrix ket(NumberOfDofs(), NumberOfDofs()); 
+    ket.clear();
 
     // Declarations 
     Vector3 R1;
@@ -493,15 +504,15 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     ComputeGeometryReference(R1, R2, A, B);
     ComputeGeometryActual(r1, r2, a, b);
 
-    /// Debug Check
-    // IgaDebug::CheckVector(expected_data, "R_1", R1);
-    // IgaDebug::CheckVector(expected_data, "R_2", R2); 
-    // IgaDebug::CheckDouble(expected_data, "A", A);
-    // IgaDebug::CheckDouble(expected_data, "B", B);    
-    // IgaDebug::CheckVector(expected_data, "r_1", r1);
-    // IgaDebug::CheckVector(expected_data, "r_2", r2);
-    // IgaDebug::CheckDouble(expected_data, "a", a);
-    // IgaDebug::CheckDouble(expected_data, "b", b);
+    // Debug Check
+    IgaDebug::CheckVector(expected_data, "R_1", R1);
+    IgaDebug::CheckVector(expected_data, "R_2", R2); 
+    IgaDebug::CheckDouble(expected_data, "A", A);
+    IgaDebug::CheckDouble(expected_data, "B", B);    
+    IgaDebug::CheckVector(expected_data, "r_1", r1);
+    IgaDebug::CheckVector(expected_data, "r_2", r2);
+    IgaDebug::CheckDouble(expected_data, "a", a);
+    IgaDebug::CheckDouble(expected_data, "b", b);
 
     // get Rotations
     double Phi = GetValue(PHI);
@@ -512,9 +523,9 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
 
     ComputePhiReferenceProperty(phi, phi_der);
 
-    // IgaDebug::CheckDouble(expected_data, "phi",phi);
+    IgaDebug::CheckDouble(expected_data, "phi",phi);
     // LOG("[+] phi");   // Debug Check
-    // IgaDebug::CheckDouble(expected_data, "phi_der",phi_der);
+    IgaDebug::CheckDouble(expected_data, "phi_der",phi_der);
     // LOG("[+] phi_der");   // Debug Check
 
  
@@ -535,8 +546,19 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     Vector3 N0;    // Principal Axis 1 of Cross Section in Reference Config. 
     Vector3 V0;    // Principal Axis 2 of Cross Section in Reference Config. 
 
-    ComputeCrossSectionGeometryReference(R1, R2, N, V, T0_vec, N0, V0, B_n, B_v, C_12, C_13, Phi, Phi_der);   
+    ComputeCrossSectionGeometryReference(R1, R2, N, V, T0_vec, N0, V0, B_n, B_v, C_12, C_13, Phi, Phi_der);
+
+    IgaDebug::CheckVector(expected_data, "N0_reference", N0);
+    IgaDebug::CheckVector(expected_data, "V0_reference", V0);
+    
     ComputeCrossSectionGeometryActual(R1, R2, r1, r2, N0, V0, N, v, b_n, b_v, c_12, c_13, Phi, Phi_der, phi, phi_der);
+
+    IgaDebug::CheckDouble(expected_data, "b_n", b_n); // checked
+    IgaDebug::CheckDouble(expected_data, "b_v", b_v); // checked
+    IgaDebug::CheckDouble(expected_data, "C_12", C_12); // Checked
+    IgaDebug::CheckDouble(expected_data, "c_12", c_12);
+    IgaDebug::CheckDouble(expected_data, "C_13", C_13);  // Checked
+    IgaDebug::CheckDouble(expected_data, "c_13", c_13);
 
     _dL = A;
     double Apow2 = std::pow(A,2);
@@ -572,9 +594,12 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
      double E12       = (c_12 - C_12);
      double E13       = (c_13 - C_13);
 
+    IgaDebug::CheckDouble(expected_data, "E12", E12);
+
+
      double S11_m = prestress * _area + E11_m * emod_A / Apow2;         // Normal Force
      double S11_n = prestress_bend1 + E11_cur_n * emod_I_v / Apow2;     // Bending Moment n
-     double S11_v = prestress_bend2 + E11_cur_n * emod_I_n / Apow2;     // Bending Moment v
+     double S11_v = prestress_bend2 + E11_cur_v * emod_I_n / Apow2;     // Bending Moment v
      double S12   = 0.5 * (- prestress_tor + E12 * gmod_It / A);        // 0.5 torsional Moment 
      double S13   = 0.5 * (+ prestress_tor + E13 * gmod_It / A);        // 0.5 torsional Moment
 
@@ -595,15 +620,15 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     eps_dof_2 = eps_dof_2 / Apow4;
     
     // Variation Of Curvature
-    std::vector<double> curve_dof_n;
-    std::vector<double> curve_dof_v;
+    Vector curve_dof_n;
+    Vector curve_dof_v;
     
     Matrix curve_dof_n_2;
     Matrix curve_dof_v_2;
 
     // Varation of Torsion
-    std::vector<double> torsion_dof_n;       // E12
-    std::vector<double> torsion_dof_v;       // E13
+    Vector torsion_dof_n;       // E12
+    Vector torsion_dof_v;       // E13
     Matrix torsion_dof_n_2;
     Matrix torsion_dof_v_2;
 
@@ -619,6 +644,81 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     IgaDebug::CheckMatrix(expected_data, "tor_dof_n_2", torsion_dof_n_2);
     IgaDebug::CheckMatrix(expected_data, "tor_dof_v_2", torsion_dof_v_2);
 
+
+    curve_dof_n = curve_dof_n / Apow2;
+    curve_dof_v = curve_dof_v / Apow2;
+    torsion_dof_n = torsion_dof_n / A;
+    torsion_dof_v = torsion_dof_v / A;
+    curve_dof_n_2 = curve_dof_n_2 / Apow4;
+    curve_dof_v_2 = curve_dof_v_2 / Apow4;
+    torsion_dof_n_2 = torsion_dof_n_2 / Apow2;
+    torsion_dof_v_2 = torsion_dof_v_2 / Apow2;
+
+    // Stiffness Matrix of the Membran Part 
+    for (size_t r = 0; r != NumberOfDofs(); r++){
+        for (size_t s = 0; s != NumberOfDofs(); s++){
+            kem(r,s) = emod_A * eps_dof[r] * eps_dof[s] + eps_dof_2(r,s) * S11_m;
+        }
+    }
+    IgaDebug::CheckMatrix(expected_data, "kem", kem);
+
+    // Stiffness Matrix of the Bending Part
+    for (size_t r = 0; r != NumberOfDofs(); r++){
+        for (size_t s = 0; s != NumberOfDofs(); s++){
+            keb_n(r,s) = emod_I_v * curve_dof_n[r] * curve_dof_n[s] + curve_dof_n_2(r,s) * S11_n;
+        }
+    }
+    IgaDebug::CheckMatrix(expected_data, "keb_n", keb_n);
+
+    // Stiffness Matrix of the Bending Part
+    IgaDebug::CheckDouble(expected_data, "emod_I_n", emod_I_n);
+    IgaDebug::CheckDouble(expected_data, "S11_v", S11_v);
+
+    for (size_t r = 0; r != NumberOfDofs(); r++){
+        for (size_t s = 0; s != NumberOfDofs(); s++){
+            keb_v(r,s) = emod_I_n * curve_dof_v[r] * curve_dof_v[s] + curve_dof_v_2(r,s) * S11_v;
+        }
+    }
+    IgaDebug::CheckMatrix(expected_data, "keb_v", keb_v);
+
+    // Stiffness Matrix of the Torsion Part
+    for (size_t r = 0; r != NumberOfDofs(); r++){
+        for (size_t s = 0; s != NumberOfDofs(); s++){
+            ket_n(r,s) = 0.50 * gmod_It * torsion_dof_n[r] * torsion_dof_n[s] + torsion_dof_n_2(r,s) * S12;
+        }
+    }    
+    IgaDebug::CheckDouble(expected_data, "gmod_It", gmod_It);
+    IgaDebug::CheckDouble(expected_data, "S12", S12);
+    IgaDebug::CheckMatrix(expected_data, "ket_n", ket_n);
+
+
+    // Stiffness Matrix of the Torsion Part
+    for (size_t r = 0; r != NumberOfDofs(); r++){
+        for (size_t s = 0; s != NumberOfDofs(); s++){
+            ket_v(r,s) = 0.50 * gmod_It * torsion_dof_v[r] * torsion_dof_v[s] + torsion_dof_v_2(r,s) * S13;
+        }
+    }
+    IgaDebug::CheckMatrix(expected_data, "ket_v", ket_v);
+
+    // Compute the final Element Stiffness MAtrix
+    _gke.clear();
+    _gke = kem;
+    _gke += keb_n;
+    _gke += keb_v;
+    _gke += ket_n;
+    _gke += ket_v;
+
+    _gfie.clear();
+    _gfie  = S11_m * eps_dof;
+    _gfie += S11_n * curve_dof_n;
+    _gfie += S11_v * curve_dof_v;
+    _gfie += S12 * torsion_dof_n;
+    _gfie += S13 * torsion_dof_v;
+
+    _gfie = - _gfie;
+
+    IgaDebug::CheckMatrix(expected_data, "stiffness", _gke);
+    IgaDebug::CheckVector(expected_data, "external_forces", _gfie);
 
 
 //     // std::cout << expected_data["t"].GetDouble() << std::endl;
@@ -1082,8 +1182,8 @@ void IgaBeamElement::ComputeCrossSectionGeometryReference(
     // Import Debug data
     auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
 
-    Vector T0_vec = GetValue(T0);
-    Vector N0_vec = GetValue(N0);
+    _T0 = GetValue(T0);
+    _N0 = GetValue(N0);
 
     double R1_dL = norm_2(_R1);
     BoundedVector<double,3> T_der1;
@@ -1097,14 +1197,14 @@ void IgaBeamElement::ComputeCrossSectionGeometryReference(
     // Compute Matrix Lambda 
     BoundedMatrix<double,3,3> matrix_lambda;
     matrix_lambda.clear();
-    comp_lambda(T0_vec, T_vec, matrix_lambda);
+    comp_lambda(_T0, T_vec, matrix_lambda);
     // LOG("[+](ref) matrix_LAMBDA check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_LAMBDA_REF", matrix_lambda);
 
     // Compute Matrix Lambda first Derivative
     BoundedMatrix<double,3,3> matrix_lambda_der1;
     matrix_lambda_der1.clear();
-    comp_lambda_der(T0_vec, T0_der1, T_vec, T_der1, matrix_lambda_der1);
+    comp_lambda_der(_T0, T0_der1, T_vec, T_der1, matrix_lambda_der1);
     // LOG("[+](ref) matrix_LAMBDA_DER check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_LAMBDA_DER_REF", matrix_lambda_der1);
 
@@ -1125,14 +1225,14 @@ void IgaBeamElement::ComputeCrossSectionGeometryReference(
     _n_act.clear();
 
     // Unit T0 vector (normalisation if not already normalized)
-    _T0 = T0_vec / norm_2(T0_vec);
+    _T0 = _T0 / norm_2(_T0);
 
     // Projection in Perpendicular Area
-    N0_vec = N0_vec - inner_prod(_T0, N0_vec) * _T0;
-    _V0 = Cross(_T0, N0_vec);
+    _N0 = _N0 - inner_prod(_T0, _N0) * _T0;
+    _V0 = Cross(_T0, _N0);
 
     // Normalize the Vectors N and V
-    _N0 = N0_vec / norm_2(N0_vec);
+    _N0 = _N0 / norm_2(_N0);
     _V0 = _V0 / norm_2(_V0); 
 
     BoundedVector<double,3> n_tmp;
@@ -1233,7 +1333,7 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
     auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
 
     Vector T0_vec = GetValue(T0);
-    Vector N0_vec = GetValue(N0);
+    // Vector N0_vec = GetValue(N0);
 
     double R1_dL = norm_2(_R1);
     double r1_dL = norm_2(_r1);
@@ -1303,6 +1403,9 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
     // LOG("[+](actual) matrix_rodriguez_der1 (actual) check");   // Debug Check
     IgaDebug::CheckMatrix(expected_data, "MATRIX_rodriguez_DER_ACTUAL", matrix_rodriguez_der1);
     
+
+
+
     BoundedMatrix<double,3,3> matrix_RODRIGUEZ_LAMBDA;
     BoundedMatrix<double,3,3> matrix_RODRIGUEZ_LAMBDA_der1;
     BoundedMatrix<double,3,3> matrix_RODRIGUEZ_der1_LAMBDA;
@@ -1320,6 +1423,10 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
             }
         }
     }
+    IgaDebug::CheckMatrix(expected_data, "mat_Rod_Lam", matrix_RODRIGUEZ_LAMBDA);
+    IgaDebug::CheckMatrix(expected_data, "mat_Rod_Lam_der", matrix_RODRIGUEZ_LAMBDA_der1);
+    IgaDebug::CheckMatrix(expected_data, "mat_Rod_der_Lam", matrix_RODRIGUEZ_der1_LAMBDA);
+
 
     BoundedMatrix<double,3,3> matrix_lambda_RODRIGUEZ_LAMBDA;
     BoundedMatrix<double,3,3> matrix_lambda_RODRIGUEZ_LAMBDA_der1;
@@ -1337,10 +1444,15 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
                 matrix_lambda_RODRIGUEZ_LAMBDA(t,u)      += matrix_lambda(t,k) * matrix_RODRIGUEZ_LAMBDA(k,u);
                 matrix_lambda_RODRIGUEZ_LAMBDA_der1(t,u) += matrix_lambda(t,k) * matrix_RODRIGUEZ_LAMBDA_der1(k,u);
                 matrix_lambda_RODRIGUEZ_der1_LAMBDA(t,u) += matrix_lambda(t,k) * matrix_RODRIGUEZ_der1_LAMBDA(k,u);
-                matrix_lambda_der1_RODRIGUEZ_LAMBDA(t,u) += matrix_lambda_der1(t,u) * matrix_RODRIGUEZ_LAMBDA(k,u);
+                matrix_lambda_der1_RODRIGUEZ_LAMBDA(t,u) += matrix_lambda_der1(t,k) * matrix_RODRIGUEZ_LAMBDA(k,u);
             }
         }
     }
+    IgaDebug::CheckMatrix(expected_data, "mat_lam_Rod_Lam", matrix_lambda_RODRIGUEZ_LAMBDA);
+    IgaDebug::CheckMatrix(expected_data, "mat_lam_Rod_Lam_der", matrix_lambda_RODRIGUEZ_LAMBDA_der1);
+    IgaDebug::CheckMatrix(expected_data, "mat_lam_Rod_der_Lam", matrix_lambda_RODRIGUEZ_der1_LAMBDA);
+    IgaDebug::CheckMatrix(expected_data, "mat_lam_der_Rod_Lam", matrix_lambda_der1_RODRIGUEZ_LAMBDA);
+
 
     BoundedMatrix<double,3,3> matrix_rodriguez_lambda_RODRIGUEZ_LAMBDA;
     BoundedMatrix<double,3,3> matrix_rodriguez_lambda_RODRIGUEZ_LAMBDA_der1;
@@ -1374,7 +1486,12 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
             }
         }
     }
-
+    IgaDebug::CheckMatrix(expected_data, "mat_rod_lam_Rod_Lam_der", matrix_rodriguez_lambda_RODRIGUEZ_LAMBDA_der1);
+    IgaDebug::CheckMatrix(expected_data, "mat_rod_lam_Rod_der_Lam", matrix_rodriguez_lambda_RODRIGUEZ_der1_LAMBDA);
+    IgaDebug::CheckMatrix(expected_data, "mat_rod_lam_der_Rod_Lam", matrix_rodriguez_lambda_der1_RODRIGUEZ_LAMBDA);
+    IgaDebug::CheckMatrix(expected_data, "mat_rod_der_lam_Rod_Lam", matrix_rodriguez_der1_lambda_RODRIGUEZ_LAMBDA);
+    IgaDebug::CheckMatrix(expected_data, "mat_rod_lam_Rod_Lam", matrix_rodriguez_lambda_RODRIGUEZ_LAMBDA);
+   
     BoundedMatrix<double,3,3> matrix_summ_rod_lam_ROD_LAM;
     matrix_summ_rod_lam_ROD_LAM.clear();
     matrix_summ_rod_lam_ROD_LAM = matrix_rodriguez_lambda_RODRIGUEZ_LAMBDA_der1
@@ -1382,25 +1499,39 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
                                 + matrix_rodriguez_lambda_der1_RODRIGUEZ_LAMBDA
                                 + matrix_rodriguez_der1_lambda_RODRIGUEZ_LAMBDA;
 
+    IgaDebug::CheckMatrix(expected_data, "mat_rodlamRodLam_der", matrix_summ_rod_lam_ROD_LAM);
+    
+    
     Vector3 a21;
     Vector3 a31;
     a21.clear();
     a31.clear();
+    _n_act.clear();
+    _v_act.clear();
 
     for (int i = 0; i < 3; i++){
         for (int j = 0; j < 3; j++){
 
             a21[i] += matrix_summ_rod_lam_ROD_LAM(i,j) * _N0[j];
             a31[i] += matrix_summ_rod_lam_ROD_LAM(i,j) * _V0[j];
-            _n_act[i] += matrix_summ_rod_lam_ROD_LAM(i,j) * _N0[j];
-            _v_act[i] += matrix_summ_rod_lam_ROD_LAM(i,j) * _N0[j];
+            _n_act[i] += matrix_rodriguez_lambda_RODRIGUEZ_LAMBDA(i,j) * _N0[j];
+            _v_act[i] += matrix_rodriguez_lambda_RODRIGUEZ_LAMBDA(i,j) * _V0[j];
         }
     }
+    IgaDebug::CheckVector(expected_data, "a21", a21);
+    IgaDebug::CheckVector(expected_data, "a31", a31);
+    IgaDebug::CheckVector(expected_data, "_r1", _r1);
+    IgaDebug::CheckVector(expected_data, "_n_act", _n_act);
+    IgaDebug::CheckVector(expected_data, "_v_act", _v_act);
 
     _b_n = inner_prod(a21, _r1);
     _b_v = inner_prod(a31, _r1);
     _c_12 = inner_prod(a31, _n_act);
     _c_13 = inner_prod(a21, _v_act);
+
+    IgaDebug::CheckDouble(expected_data, "c_12", _c_12);
+    IgaDebug::CheckDouble(expected_data, "c_13", _c_13);
+
 }
 
 
@@ -1651,10 +1782,10 @@ Vector IgaBeamElement::ComputePhieDof(Vector& _func)
      */
 //#--------------------------------------------------------------------------------
 void IgaBeamElement::ComputeDofNonlinear(
-    std::vector<double>& _curve_var_n,
-    std::vector<double>& _curve_var_v,
-    std::vector<double>& _tor_var_n,
-    std::vector<double>& _tor_var_v,
+    Vector& _curve_var_n,
+    Vector& _curve_var_v,
+    Vector& _tor_var_n,
+    Vector& _tor_var_v,
     Matrix& _curve_var_var_n,
     Matrix& _curve_var_var_v,
     Matrix& _tor_var_var_n,

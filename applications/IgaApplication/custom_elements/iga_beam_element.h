@@ -283,10 +283,10 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
         Matrix  _deriv);
 
     void IgaBeamElement::ComputeDofNonlinear(
-    std::vector<double>& _curve_var_n,
-    std::vector<double>& _curve_var_v,
-    std::vector<double>& _tor_var_n,
-    std::vector<double>& _tor_var_v,
+    Vector& _curve_var_n,
+    Vector& _curve_var_v,
+    Vector& _tor_var_n,
+    Vector& _tor_var_v,
     Matrix& _curve_var_var_n,
     Matrix& _curve_var_var_v,
     Matrix& _tor_var_var_n,

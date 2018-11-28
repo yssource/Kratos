@@ -143,29 +143,6 @@ void IgaBeamElement::CalculateAll(
     // IgaDebug::CheckVector(expected_data,"stiffness", _gke);
     // IgaDebug::CheckVector(expected_data,"external_force", _gkfi);
 
-
-    std::vector<Vector3> t_var1(NumberOfDofs());
-    comp_T_var(r1, t_var1);
-    IgaDebug:: CheckVectorVar(expected_data, "T_VAR", t_var1);
-    // LOG("[+] t_var check");   // Debug Check
-    
-
-
-
-
-//# Testarea ###
-    // Vector3 coords;     // Coordinates of the Nodes
-    // Vector coords2;
-    // for (size_t i = 0; i < NumberOfNodes(); i++){
-    //         coords = GetGeometry()[i].GetInitialPosition();
-    //         coords2 = GetGeometry()[i].GetInitialPosition();
-    //         std::cout << "GetGeometry: " << GetGeometry()[i] << std::endl;
-    //         std::cout << "coords: " << coords << std::endl;
-    //         std::cout << "coords2: " << coords2 << std::endl;
-    // }
-
-    // std::cout << "GetGeometry().size() = " << GetGeometry().size() << std::endl;
-
     
     KRATOS_CATCH("");
 }
@@ -447,7 +424,9 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     double _mt_inert,
     double _dL,
         MatrixType& _gke,
-        VectorType& _gfie){
+        VectorType& _gfie)
+    {
+    KRATOS_TRY;
         
     // tmporary debug data
     auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
@@ -616,34 +595,36 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     eps_dof_2 = eps_dof_2 / Apow4;
     
     // Variation Of Curvature
-    Vector curve_dof_n;
-    Vector curve_dof_v;
+    std::vector<double> curve_dof_n;
+    std::vector<double> curve_dof_v;
+    
     Matrix curve_dof_n_2;
     Matrix curve_dof_v_2;
 
     // Varation of Torsion
-    Vector torsion_dof_n;       // E12
-    Vector torsion_dof_v;       // E13
+    std::vector<double> torsion_dof_n;       // E12
+    std::vector<double> torsion_dof_v;       // E13
     Matrix torsion_dof_n_2;
     Matrix torsion_dof_v_2;
 
 
     ComputeDofNonlinear(curve_dof_n, curve_dof_v, torsion_dof_n, torsion_dof_v, curve_dof_n_2, curve_dof_v_2, torsion_dof_n_2, torsion_dof_v_2, R1, R2, r1, r2, N0, V0, Phi, Phi_der, phi, phi_der);
-
-
-
-
-
-
-
-
+    
+    IgaDebug::CheckVector(expected_data, "curv_dof_n", curve_dof_n);
+    IgaDebug::CheckVector(expected_data, "curv_dof_v", curve_dof_v);
+    IgaDebug::CheckVector(expected_data, "torsion_dof_n", torsion_dof_n);
+    IgaDebug::CheckVector(expected_data, "torsion_dof_v", torsion_dof_v);
+    IgaDebug::CheckMatrix(expected_data, "curv_dof_n_2", curve_dof_n_2);
+    IgaDebug::CheckMatrix(expected_data, "curv_dof_v_2", curve_dof_v_2);
+    IgaDebug::CheckMatrix(expected_data, "tor_dof_n_2", torsion_dof_n_2);
+    IgaDebug::CheckMatrix(expected_data, "tor_dof_v_2", torsion_dof_v_2);
 
 
 
 //     // std::cout << expected_data["t"].GetDouble() << std::endl;
 //     // std::cout << expected_data["external_forces"].GetVector() << std::endl;
 
-    // KRATOS_CATCH("
+    KRATOS_CATCH("")
 }
 
 //#################################################################################
@@ -1670,14 +1651,14 @@ Vector IgaBeamElement::ComputePhieDof(Vector& _func)
      */
 //#--------------------------------------------------------------------------------
 void IgaBeamElement::ComputeDofNonlinear(
-    Vector& _curve_var1_n,
-    Vector& _curve_var1_v,
-    Vector& _tor_var1_n,
-    Vector& _tor_var1_v,
-    Matrix& _curve_var2_n,
-    Matrix& _curve_var2_v,
-    Matrix& _tor_var2_n,
-    Matrix& _tor_var2_v,
+    std::vector<double>& _curve_var_n,
+    std::vector<double>& _curve_var_v,
+    std::vector<double>& _tor_var_n,
+    std::vector<double>& _tor_var_v,
+    Matrix& _curve_var_var_n,
+    Matrix& _curve_var_var_v,
+    Matrix& _tor_var_var_n,
+    Matrix& _tor_var_var_v,
     Vector3 _R1,
     Vector3 _R2,
     Vector3 _r1,
@@ -1689,23 +1670,6 @@ void IgaBeamElement::ComputeDofNonlinear(
     double  _phi,
     double  _phi_der)
 {
-    _curve_var1_n.resize(NumberOfDofs());
-    _curve_var1_v.resize(NumberOfDofs());
-    _curve_var2_v.resize(NumberOfDofs(), NumberOfDofs());
-    _curve_var2_n.resize(NumberOfDofs(), NumberOfDofs());
-    _tor_var1_n.resize(NumberOfDofs());
-    _tor_var1_v.resize(NumberOfDofs());
-    _tor_var2_n.resize(NumberOfDofs(), NumberOfDofs());
-    _tor_var2_v.resize(NumberOfDofs(), NumberOfDofs());
-   
-    _curve_var1_n.clear();
-    _curve_var1_v.clear();
-    _curve_var2_n.clear();
-    _curve_var2_v.clear();
-    _tor_var1_n.clear();
-    _tor_var1_v.clear();
-    _tor_var2_n.clear();
-    _tor_var2_v.clear();
 
     // Declarations
     Vector3 T_;
@@ -1775,10 +1739,10 @@ void IgaBeamElement::ComputeDofNonlinear(
     comp_T_der_var_var(_r1,_r2, t_der1var2);
 
     auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
-    IgaDebug::CheckVectorVar(expected_data, "T_VAR", t_var1);
-    IgaDebug::CheckVectorVar(expected_data, "T_DER_VAR", t_der1var1);
-    IgaDebug::CheckVectorVarVar(expected_data, "T_VAR_VAR", t_var2);
-    IgaDebug::CheckVectorVarVar(expected_data, "T_DER_VAR_VAR", t_der1var2);
+    // IgaDebug::CheckVectorVar(expected_data, "T_VAR", t_var1);
+    // IgaDebug::CheckVectorVar(expected_data, "T_DER_VAR", t_der1var1);
+    // IgaDebug::CheckVectorVarVar(expected_data, "T_VAR_VAR", t_var2);
+    // IgaDebug::CheckVectorVarVar(expected_data, "T_DER_VAR_VAR", t_der1var2);
 
     comp_rodrigues(t_, _phi, matrix_rodriguez);
     comp_rodrigues_der(t_, t_der1, _phi, _phi_der, matrix_rodriguez_der1);
@@ -1789,14 +1753,14 @@ void IgaBeamElement::ComputeDofNonlinear(
     comp_rodrigues(T_, _Phi, matrix_RODRIGUEZ);
     comp_rodrigues_der(T_, T_der1, _Phi, _Phi_der, matrix_RODRIGUEZ_der1);
 
-    IgaDebug::CheckMatrix(expected_data, "MAT_rodriguez", matrix_rodriguez);
-    IgaDebug::CheckMatrix(expected_data, "MAT_rodriguez_DER", matrix_rodriguez_der1);
-    IgaDebug::CheckMatrixVar(expected_data, "MAT_rodriguez_DER_VAR", matrix_rodriguez_der1var1);
-    IgaDebug::CheckMatrixVarVar(expected_data, "MAT_rodriguez_DER_VAR_VAR", matrix_rodriguez_der1var2);
-    IgaDebug::CheckMatrixVar(expected_data, "MAT_rodriguez_VAR", matrix_rodriguez_var1);
-    IgaDebug::CheckMatrixVarVar(expected_data, "MAT_rodriguez_VAR_VAR", matrix_rodriguez_var2);
-    IgaDebug::CheckMatrix(expected_data, "MAT_RODRIGUEZ", matrix_RODRIGUEZ);
-    IgaDebug::CheckMatrix(expected_data, "MAT_RODRIGUEZ_DER", matrix_RODRIGUEZ_der1);
+    // IgaDebug::CheckMatrix(expected_data, "MAT_rodriguez", matrix_rodriguez);
+    // IgaDebug::CheckMatrix(expected_data, "MAT_rodriguez_DER", matrix_rodriguez_der1);
+    // IgaDebug::CheckMatrixVar(expected_data, "MAT_rodriguez_DER_VAR", matrix_rodriguez_der1var1);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "MAT_rodriguez_DER_VAR_VAR", matrix_rodriguez_der1var2);
+    // IgaDebug::CheckMatrixVar(expected_data, "MAT_rodriguez_VAR", matrix_rodriguez_var1);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "MAT_rodriguez_VAR_VAR", matrix_rodriguez_var2);
+    // IgaDebug::CheckMatrix(expected_data, "MAT_RODRIGUEZ", matrix_RODRIGUEZ);
+    // IgaDebug::CheckMatrix(expected_data, "MAT_RODRIGUEZ_DER", matrix_RODRIGUEZ_der1);
 
     // Get Axis Value t0_0
     Vector3 T_0 = GetValue(T0);
@@ -1810,14 +1774,14 @@ void IgaBeamElement::ComputeDofNonlinear(
     comp_lambda_var_var(T_, t_, t_var1, t_var2, matrix_lambda_var2);
     comp_lambda_der_var_var(T_, T_der1, t_, t_var1, t_var2, t_der1, t_der1var1, t_der1var2, matrix_lambda_der1var2);
     
-    IgaDebug::CheckMatrix(expected_data, "MAT_lambda", matrix_lambda);
-    IgaDebug::CheckMatrix(expected_data, "MAT_LAMBDA", matrix_LAMBDA);
-    IgaDebug::CheckMatrix(expected_data, "MAT_lambda_DER", matrix_lambda_der1);
-    IgaDebug::CheckMatrix(expected_data, "MAT_LAMBDA_DER", matrix_LAMBDA_der1);
-    IgaDebug::CheckMatrixVar(expected_data, "MAT_lambda_VAR", matrix_lambda_var1);
-    IgaDebug::CheckMatrixVar(expected_data, "MAT_lambda_DER_VAR", matrix_lambda_der1var1);
-    IgaDebug::CheckMatrixVarVar(expected_data, "MAT_lambda_VAR_VAR", matrix_lambda_var2);
-    IgaDebug::CheckMatrixVarVar(expected_data, "MAT_lambda_DER_VAR_VAR", matrix_lambda_der1var2);
+    // IgaDebug::CheckMatrix(expected_data, "MAT_lambda", matrix_lambda);
+    // IgaDebug::CheckMatrix(expected_data, "MAT_LAMBDA", matrix_LAMBDA);
+    // IgaDebug::CheckMatrix(expected_data, "MAT_lambda_DER", matrix_lambda_der1);
+    // IgaDebug::CheckMatrix(expected_data, "MAT_LAMBDA_DER", matrix_LAMBDA_der1);
+    // IgaDebug::CheckMatrixVar(expected_data, "MAT_lambda_VAR", matrix_lambda_var1);
+    // IgaDebug::CheckMatrixVar(expected_data, "MAT_lambda_DER_VAR", matrix_lambda_der1var1);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "MAT_lambda_VAR_VAR", matrix_lambda_var2);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "MAT_lambda_DER_VAR_VAR", matrix_lambda_der1var2);
 
 
     // Configuration of A_i,1 --> _der
@@ -1842,7 +1806,7 @@ void IgaBeamElement::ComputeDofNonlinear(
         }
     }
     matrix_RodLam_der = matrix_Rod_Lam_der + matrix_Rod_der_Lam;
-    IgaDebug::CheckMatrix(expected_data, "mat_RodLam_der", matrix_RodLam_der);
+    // IgaDebug::CheckMatrix(expected_data, "mat_RodLam_der", matrix_RodLam_der);
 
     BoundedMatrix<double,3,3> matrix_lam_Rod_Lam_der;
     BoundedMatrix<double,3,3> matrix_lam_Rod_der_Lam;
@@ -1870,7 +1834,7 @@ void IgaBeamElement::ComputeDofNonlinear(
     matrix_lamRodLam_der    = matrix_lam_Rod_Lam_der 
                             + matrix_lam_Rod_der_Lam 
                             + matrix_lam_der_Rod_Lam;
-    IgaDebug::CheckMatrix(expected_data, "mat_lamRodLam_der", matrix_lamRodLam_der);
+    // IgaDebug::CheckMatrix(expected_data, "mat_lamRodLam_der", matrix_lamRodLam_der);
 
     BoundedMatrix<double,3,3> matrix_rod_lam_Rod_Lam_der;
     BoundedMatrix<double,3,3> matrix_rod_lam_Rod_der_Lam;
@@ -1903,7 +1867,7 @@ void IgaBeamElement::ComputeDofNonlinear(
                             + matrix_rod_lam_der_Rod_Lam
                             + matrix_rod_der_lam_Rod_Lam;
 
-    IgaDebug::CheckMatrix(expected_data, "mat_rodlamRodLam_der", matrix_rodlamRodLam_der);
+    // IgaDebug::CheckMatrix(expected_data, "mat_rodlamRodLam_der", matrix_rodlamRodLam_der);
     
 
     // Variation of A_i,1 --> _der_var
@@ -1931,10 +1895,10 @@ void IgaBeamElement::ComputeDofNonlinear(
         }
     }
 
-    IgaDebug::CheckMatrixVar(expected_data, "mat_lam_var_Rod_Lam", matrix_lam_var_Rod_Lam);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_lam_var_Rod_Lam_der", matrix_lam_var_Rod_Lam_der);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_lam_var_Rod_der_Lam", matrix_lam_var_Rod_der_Lam);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_lam_der_var_Rod_Lam", matrix_lam_der_var_Rod_Lam);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_lam_var_Rod_Lam", matrix_lam_var_Rod_Lam);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_lam_var_Rod_Lam_der", matrix_lam_var_Rod_Lam_der);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_lam_var_Rod_der_Lam", matrix_lam_var_Rod_der_Lam);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_lam_der_var_Rod_Lam", matrix_lam_der_var_Rod_Lam);
 
     std::vector<BoundedMatrix<double, 3, 3>> matrix_rod_var_lam_Rod_Lam_der(NumberOfDofs());
     std::vector<BoundedMatrix<double, 3, 3>> matrix_rod_var_lam_Rod_der_Lam(NumberOfDofs());
@@ -1960,16 +1924,16 @@ void IgaBeamElement::ComputeDofNonlinear(
             matrix_rod_lam_var_Rod_Lam[r]     = prod(matrix_rodriguez, matrix_lam_var_Rod_Lam[r]);
             matrix_rod_var_lam_Rod_Lam[r]     = prod(matrix_rodriguez_var1[r], matrix_lam_Rod_Lam);
     }
-    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_var_lam_Rod_Lam_der", matrix_rod_var_lam_Rod_Lam_der);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_var_lam_Rod_der_Lam", matrix_rod_var_lam_Rod_der_Lam);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_var_lam_der_Rod_Lam", matrix_rod_var_lam_der_Rod_Lam);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_der_var_lam_Rod_Lam", matrix_rod_der_var_lam_Rod_Lam);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_der_lam_var_Rod_Lam", matrix_rod_der_lam_var_Rod_Lam);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_lam_der_var_Rod_Lam", matrix_rod_lam_der_var_Rod_Lam);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_lam_var_Rod_der_Lam", matrix_rod_lam_var_Rod_der_Lam);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_lam_var_Rod_Lam_der", matrix_rod_lam_var_Rod_Lam_der);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_lam_var_Rod_Lam", matrix_rod_lam_var_Rod_Lam);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_rod_var_lam_Rod_Lam", matrix_rod_var_lam_Rod_Lam);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_rod_var_lam_Rod_Lam_der", matrix_rod_var_lam_Rod_Lam_der);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_rod_var_lam_Rod_der_Lam", matrix_rod_var_lam_Rod_der_Lam);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_rod_var_lam_der_Rod_Lam", matrix_rod_var_lam_der_Rod_Lam);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_rod_der_var_lam_Rod_Lam", matrix_rod_der_var_lam_Rod_Lam);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_rod_der_lam_var_Rod_Lam", matrix_rod_der_lam_var_Rod_Lam);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_rod_lam_der_var_Rod_Lam", matrix_rod_lam_der_var_Rod_Lam);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_rod_lam_var_Rod_der_Lam", matrix_rod_lam_var_Rod_der_Lam);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_rod_lam_var_Rod_Lam_der", matrix_rod_lam_var_Rod_Lam_der);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_rod_lam_var_Rod_Lam", matrix_rod_lam_var_Rod_Lam);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_rod_var_lam_Rod_Lam", matrix_rod_var_lam_Rod_Lam);
 
     std::vector<BoundedMatrix<double,3,3>>  matrix_rodlamRodLam_der_var(NumberOfDofs());
     std::vector<BoundedMatrix<double,3,3>> matrix_rodlamRodLam_var(NumberOfDofs());
@@ -1987,8 +1951,8 @@ void IgaBeamElement::ComputeDofNonlinear(
     matrix_rodlamRodLam_var[r]  = matrix_rod_lam_var_Rod_Lam[r] + matrix_rod_var_lam_Rod_Lam[r];
     }
 
-    IgaDebug::CheckMatrixVar(expected_data, "mat_rodlamRodLam_der_var", matrix_rodlamRodLam_der_var);
-    IgaDebug::CheckMatrixVar(expected_data, "mat_rodlamRodLam_var", matrix_rodlamRodLam_var);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_rodlamRodLam_der_var", matrix_rodlamRodLam_der_var);
+    // IgaDebug::CheckMatrixVar(expected_data, "mat_rodlamRodLam_var", matrix_rodlamRodLam_var);
 
 
     // 2nd variation of A_i,1 ->_der_var_var
@@ -2008,10 +1972,10 @@ void IgaBeamElement::ComputeDofNonlinear(
         }
     }
 
-    IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_var_var_Rod_Lam", matrix_lam_var_var_Rod_Lam);
-    IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_var_var_Rod_der_Lam", matrix_lam_var_var_Rod_der_Lam);
-    IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_var_var_Rod_Lam_der", matrix_lam_var_var_Rod_Lam_der);
-    IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_der_var_var_Rod_Lam", matrix_lam_der_var_var_Rod_Lam);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_var_var_Rod_Lam", matrix_lam_var_var_Rod_Lam);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_var_var_Rod_der_Lam", matrix_lam_var_var_Rod_der_Lam);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_var_var_Rod_Lam_der", matrix_lam_var_var_Rod_Lam_der);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_lam_der_var_var_Rod_Lam", matrix_lam_der_var_var_Rod_Lam);
 
     std::vector<BoundedMatrix<double,3,3>> matrix_rod_der_lam_var_var_Rod_Lam(NumberOfDofs() * NumberOfDofs());
     std::vector<BoundedMatrix<double,3,3>> matrix_rod_lam_der_var_var_Rod_Lam(NumberOfDofs() * NumberOfDofs());
@@ -2040,23 +2004,170 @@ void IgaBeamElement::ComputeDofNonlinear(
         matrix_rod_lam_var_var_Rod_der_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez, matrix_lam_var_var_Rod_der_Lam[r * NumberOfDofs() + s]);
         matrix_rod_lam_var_var_Rod_Lam_der[r * NumberOfDofs() + s] = prod(matrix_rodriguez, matrix_lam_var_var_Rod_Lam_der[r * NumberOfDofs() + s]);
 
-        matrix_rod_der_var_lam_var_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_der1var1[r], matrix_lam_var_Rod_Lam[r]);
-        matrix_rod_var_lam_der_var_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var1[r], matrix_lam_der_var_Rod_Lam[r]);
-        matrix_rod_var_lam_var_Rod_der_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var1[r], matrix_lam_var_Rod_der_Lam[r]);
-        matrix_rod_var_lam_var_Rod_Lam_der[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var1[r], matrix_lam_var_Rod_Lam_der[r]);
+        matrix_rod_der_var_lam_var_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_der1var1[r], matrix_lam_var_Rod_Lam[s]);
+        matrix_rod_var_lam_der_var_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var1[r], matrix_lam_der_var_Rod_Lam[s]);
+        matrix_rod_var_lam_var_Rod_der_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var1[r], matrix_lam_var_Rod_der_Lam[s]);
+        matrix_rod_var_lam_var_Rod_Lam_der[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var1[r], matrix_lam_var_Rod_Lam_der[s]);
 
         matrix_rod_der_var_var_lam_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_der1var2[r * NumberOfDofs() + s], matrix_lam_Rod_Lam);
         matrix_rod_var_var_lam_der_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var2[r * NumberOfDofs() + s], matrix_lam_der_Rod_Lam);
         matrix_rod_var_var_lam_Rod_der_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var2[r * NumberOfDofs() + s], matrix_lam_Rod_der_Lam);
         matrix_rod_var_var_lam_Rod_Lam_der[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var2[r * NumberOfDofs() + s], matrix_lam_Rod_Lam_der);
         matrix_rod_lam_var_var_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez, matrix_lam_var_var_Rod_Lam[r * NumberOfDofs() + s]);
-        matrix_rod_var_lam_var_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var1[r], matrix_lam_var_Rod_Lam[r]);
+        matrix_rod_var_lam_var_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var1[r], matrix_lam_var_Rod_Lam[s]);
         matrix_rod_var_var_lam_Rod_Lam[r * NumberOfDofs() + s] = prod(matrix_rodriguez_var2[r * NumberOfDofs() + s], matrix_lam_Rod_Lam);
         }
     }
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_der_lam_var_var_Rod_Lam", matrix_rod_der_lam_var_var_Rod_Lam);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_lam_der_var_var_Rod_Lam", matrix_rod_lam_der_var_var_Rod_Lam);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_lam_var_var_Rod_der_Lam", matrix_rod_lam_var_var_Rod_der_Lam);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_lam_var_var_Rod_Lam_der", matrix_rod_lam_var_var_Rod_Lam_der);
 
-    //# TODO ### Output testen
-}
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_der_var_lam_var_Rod_Lam", matrix_rod_der_var_lam_var_Rod_Lam);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_var_lam_der_var_Rod_Lam", matrix_rod_var_lam_der_var_Rod_Lam);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_var_lam_var_Rod_der_Lam", matrix_rod_var_lam_var_Rod_der_Lam);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_var_lam_var_Rod_Lam_der", matrix_rod_var_lam_var_Rod_Lam_der);
+
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_der_var_var_lam_Rod_Lam", matrix_rod_der_var_var_lam_Rod_Lam);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_var_var_lam_der_Rod_Lam", matrix_rod_var_var_lam_der_Rod_Lam);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_var_var_lam_Rod_der_Lam", matrix_rod_var_var_lam_Rod_der_Lam);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_var_var_lam_Rod_Lam_der", matrix_rod_var_var_lam_Rod_Lam_der);
+
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_lam_var_var_Rod_Lam", matrix_rod_lam_var_var_Rod_Lam);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_var_lam_var_Rod_Lam", matrix_rod_var_lam_var_Rod_Lam);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rod_var_var_lam_Rod_Lam", matrix_rod_var_var_lam_Rod_Lam);
+
+    
+    Vector3 vec_n;
+    Vector3 vec_v;
+
+    vec_n = prod(matrix_rod_lam_Rod_Lam, _N0);
+    vec_v = prod(matrix_rod_lam_Rod_Lam, _V0);
+    // IgaDebug::CheckVector(expected_data, "vec_n", vec_n);
+    // IgaDebug::CheckVector(expected_data, "vec_v", vec_v);
+
+    std::vector<Vector3> vec_n_var(NumberOfDofs());
+    std::vector<Vector3> vec_v_var(NumberOfDofs());
+
+    for (size_t r = 0; r != NumberOfDofs(); r++)
+    {
+        vec_n_var[r] = prod(matrix_rodlamRodLam_var[r], _N0);
+        vec_v_var[r] = prod(matrix_rodlamRodLam_var[r], _V0);
+    }
+    // IgaDebug::CheckVectorVar(expected_data, "vec_n_var", vec_n_var);
+    // IgaDebug::CheckVectorVar(expected_data, "vec_v_var", vec_v_var);
+
+    std::vector<BoundedMatrix<double,3,3>> matrix_rodlamRodLam_var_var(NumberOfDofs() * NumberOfDofs());
+    std::vector<BoundedMatrix<double,3,3>> matrix_rodlamRodLam_der_var_var(NumberOfDofs() * NumberOfDofs());
+
+
+    for (size_t r = 0; r != NumberOfDofs(); r ++){
+        for (size_t s = 0; s != NumberOfDofs(); s++){
+
+            matrix_rodlamRodLam_var_var[r * NumberOfDofs() + s]     = matrix_rod_lam_var_var_Rod_Lam[r * NumberOfDofs() +s] 
+                                                                    + matrix_rod_var_lam_var_Rod_Lam[r * NumberOfDofs() +s]
+                                                                    + matrix_rod_var_lam_var_Rod_Lam[s * NumberOfDofs() +r]
+                                                                    + matrix_rod_var_var_lam_Rod_Lam[r * NumberOfDofs() +s];
+
+            matrix_rodlamRodLam_der_var_var[r * NumberOfDofs() + s] = matrix_rod_der_lam_var_var_Rod_Lam[r * NumberOfDofs() + s]
+                                                                    + matrix_rod_lam_der_var_var_Rod_Lam[r * NumberOfDofs() + s]
+                                                                    + matrix_rod_lam_var_var_Rod_der_Lam[r * NumberOfDofs() + s]
+                                                                    + matrix_rod_lam_var_var_Rod_Lam_der[r * NumberOfDofs() + s]
+                                                                
+                                                                    + matrix_rod_der_var_lam_var_Rod_Lam[r * NumberOfDofs() + s]
+                                                                    + matrix_rod_var_lam_der_var_Rod_Lam[r * NumberOfDofs() + s]
+                                                                    + matrix_rod_var_lam_var_Rod_der_Lam[r * NumberOfDofs() + s]
+                                                                    + matrix_rod_var_lam_var_Rod_Lam_der[r * NumberOfDofs() + s]    
+                                                                
+                                                                    + matrix_rod_der_var_lam_var_Rod_Lam[s * NumberOfDofs() + r]
+                                                                    + matrix_rod_var_lam_der_var_Rod_Lam[s * NumberOfDofs() + r]
+                                                                    + matrix_rod_var_lam_var_Rod_der_Lam[s * NumberOfDofs() + r]
+                                                                    + matrix_rod_var_lam_var_Rod_Lam_der[s * NumberOfDofs() + r]
+
+                                                                    + matrix_rod_der_var_var_lam_Rod_Lam[s * NumberOfDofs() + r]
+                                                                    + matrix_rod_var_var_lam_der_Rod_Lam[s * NumberOfDofs() + r]
+                                                                    + matrix_rod_var_var_lam_Rod_der_Lam[s * NumberOfDofs() + r]
+                                                                    + matrix_rod_var_var_lam_Rod_Lam_der[s * NumberOfDofs() + r];
+        }
+    }
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rodlamRodLam_var_var", matrix_rodlamRodLam_var_var);
+    // IgaDebug::CheckMatrixVarVar(expected_data, "mat_rodlamRodLam_der_var_var", matrix_rodlamRodLam_der_var_var);
+
+    std::vector<Vector3> vec_n_var_var(NumberOfDofs() * NumberOfDofs());
+    std::vector<Vector3> vec_v_var_var(NumberOfDofs() * NumberOfDofs());
+
+    for (size_t r = 0; r != NumberOfDofs(); r++){
+        for (size_t s = 0; s != NumberOfDofs(); s++)
+        {
+            vec_n_var_var[r * NumberOfDofs() + s] = prod(matrix_rodlamRodLam_var_var[r * NumberOfDofs() + s], _N0);
+            vec_v_var_var[r * NumberOfDofs() + s] = prod(matrix_rodlamRodLam_var_var[r * NumberOfDofs() + s], _V0);
+        }
+    }
+    // IgaDebug::CheckVectorVarVar(expected_data, "vec_n_var_var", vec_n_var_var);
+    // IgaDebug::CheckVectorVarVar(expected_data, "vec_v_var_var", vec_v_var_var);
+
+    std::vector<Vector3> r1_var(NumberOfDofs());
+
+    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    
+    for (size_t r = 0; r != NumberOfDofs(); ++r) { 
+        for (size_t t = 0; t != 3; ++t) {
+            size_t xyz = GetDofTypeIndex(r);
+            size_t i = GetShapeIndex(r);
+            if (t == xyz) {
+                r1_var[r][t] = shape_derivatives(0, i);
+            } else {
+                r1_var[r][t] = 0;
+            }
+        }
+    }
+
+    _curve_var_n.resize(NumberOfDofs());
+    _curve_var_v.resize(NumberOfDofs());
+    _curve_var_var_n.resize(NumberOfDofs(), NumberOfDofs());
+    _curve_var_var_v.resize(NumberOfDofs(), NumberOfDofs());
+    _tor_var_n.resize(NumberOfDofs());
+    _tor_var_v.resize(NumberOfDofs());
+    _tor_var_var_n.resize(NumberOfDofs(), NumberOfDofs());
+    _tor_var_var_v.resize(NumberOfDofs(), NumberOfDofs());
+   
+    for (size_t r = 0; r != NumberOfDofs(); r++)
+    {
+        _curve_var_n[r] = inner_prod(prod(matrix_rodlamRodLam_der_var[r], _N0), _r1) + inner_prod(prod(matrix_rodlamRodLam_der, _N0), r1_var[r]);
+        _curve_var_v[r] = inner_prod(prod(matrix_rodlamRodLam_der_var[r], _V0), _r1) + inner_prod(prod(matrix_rodlamRodLam_der, _V0), r1_var[r]);
+        _tor_var_n[r]   = inner_prod(prod(matrix_rodlamRodLam_der_var[r], _V0), vec_n) + inner_prod(prod(matrix_rodlamRodLam_der, _V0), vec_n_var[r]);
+        _tor_var_v[r]   = inner_prod(prod(matrix_rodlamRodLam_der_var[r], _N0), vec_v) + inner_prod(prod(matrix_rodlamRodLam_der, _N0), vec_v_var[r]);
+
+        for (size_t s = 0; s != NumberOfDofs(); s++)
+        {
+            _curve_var_var_n(r,s)   = inner_prod(prod(matrix_rodlamRodLam_der_var_var[r * NumberOfDofs() + s], _N0), _r1)
+                                    + inner_prod(prod(matrix_rodlamRodLam_der_var[r], _N0), r1_var[s])
+                                    + inner_prod(prod(matrix_rodlamRodLam_der_var[s], _N0), r1_var[r]);
+                                  
+            _curve_var_var_v(r,s)   = inner_prod(prod(matrix_rodlamRodLam_der_var_var[r * NumberOfDofs() + s], _V0), _r1)
+                                    + inner_prod(prod(matrix_rodlamRodLam_der_var[r], _V0), r1_var[s])
+                                    + inner_prod(prod(matrix_rodlamRodLam_der_var[s], _V0), r1_var[r]);
+
+            _tor_var_var_n(r,s)     = inner_prod(prod(matrix_rodlamRodLam_der_var_var[r * NumberOfDofs() + s], _V0), vec_n)
+                                    + inner_prod(prod(matrix_rodlamRodLam_der_var[r], _V0), vec_n_var[s])
+                                    + inner_prod(prod(matrix_rodlamRodLam_der_var[s], _V0), vec_n_var[r])
+                                    + inner_prod(prod(matrix_rodlamRodLam_der, _V0), vec_n_var_var[r * NumberOfDofs() + s]);
+            
+            _tor_var_var_v(r,s)     = inner_prod(prod(matrix_rodlamRodLam_der_var_var[r * NumberOfDofs() + s], _N0), vec_v)
+                                    + inner_prod(prod(matrix_rodlamRodLam_der_var[r], _N0), vec_v_var[s])
+                                    + inner_prod(prod(matrix_rodlamRodLam_der_var[s], _N0), vec_v_var[r])
+                                    + inner_prod(prod(matrix_rodlamRodLam_der, _N0), vec_v_var_var[r * NumberOfDofs() + s]);
+        }
+    }
+    // IgaDebug::CheckVector(expected_data, "_cur_var_n", _curve_var_n);
+    // IgaDebug::CheckVector(expected_data, "_cur_var_v", _curve_var_v);
+    // IgaDebug::CheckVector(expected_data, "_tor_var_n", _tor_var_n);
+    // IgaDebug::CheckVector(expected_data, "_tor_var_v", _tor_var_v);
+    // IgaDebug::CheckMatrix(expected_data, "_cur_var_n_2", _curve_var_var_n);
+    // IgaDebug::CheckMatrix(expected_data, "_cur_var_v_2", _curve_var_var_v);
+    // IgaDebug::CheckMatrix(expected_data, "_tor_var_n_2", _tor_var_var_n);
+    // IgaDebug::CheckMatrix(expected_data, "_tor_var_v_2", _tor_var_var_v);
+  }
 
 
 

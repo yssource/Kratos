@@ -77,7 +77,7 @@ class Algorithm(object):
                             )
         
         structures_nodal_results = ["VOLUME_ACCELERATION","DEM_SURFACE_LOAD"]
-        dem_nodal_results = []
+        dem_nodal_results = ["TOTAL_FORCES"]
         clusters_nodal_results = []
         rigid_faces_nodal_results = ["DEM_NODAL_AREA"]
         mixed_nodal_results = ["DISPLACEMENT","VELOCITY"]
@@ -115,14 +115,14 @@ class Algorithm(object):
         self.skin_mp = self.structural_mp.GetSubModelPart("DetectedByProcessSkinModelPart")
         dem_walls_mp = self.dem_solution.rigid_face_model_part
         props = Kratos.Properties(0)
-        props[Dem.WALL_FRICTION] = 0.5773502691896257
+        props[Dem.WALL_FRICTION] = -0.5773502691896257
         props[Dem.WALL_COHESION] = 0.0
         props[Dem.COMPUTE_WEAR] = False
         props[Dem.SEVERITY_OF_WEAR] = 0.001
         props[Dem.IMPACT_WEAR_SEVERITY] = 0.001
         props[Dem.BRINELL_HARDNESS] = 200.0
-        props[Kratos.YOUNG_MODULUS] = 1e20
-        props[Kratos.POISSON_RATIO] = 0.25
+        props[Kratos.YOUNG_MODULUS] = 3.4e9 #1e20
+        props[Kratos.POISSON_RATIO] = 0.2 #0.25
         dem_walls_mp.AddProperties(props)
         DemFem.DemStructuresCouplingUtilities().TransferStructuresSkinToDem(self.skin_mp, dem_walls_mp, props)
 

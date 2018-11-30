@@ -685,12 +685,15 @@ namespace Kratos {
     }
 
     void ContinuumExplicitSolverStrategy::FinalizeSolutionStep() {
+        
         BaseType::FinalizeSolutionStep();
         FinalizeSolutionStepFEM();
 
         ProcessInfo& r_process_info = GetModelPart().GetProcessInfo();
+        const int number_of_particles = (int) mListOfSphericContinuumParticles.size();
+        
         if (r_process_info[COMPUTE_STRESS_TENSOR_OPTION]) {
-            const int number_of_particles = (int) mListOfSphericContinuumParticles.size();
+            
             #pragma omp parallel
             {
                 #pragma omp for
@@ -705,6 +708,15 @@ namespace Kratos {
                 for (int i = 0; i < number_of_particles; i++) {
                     mListOfSphericContinuumParticles[i]->GetStressTensorFromNeighbourStep3();
                 }
+            }
+        }
+        
+        // EXXON SIMULATIONS ONLY!!!!
+        #pragma omp parallel
+        {
+            #pragma omp for
+            for (int i = 0; i < number_of_particles; i++) {
+                mListOfSphericContinuumParticles[i]->RemoveSpheresInsideInnerHole();
             }
         }
     }

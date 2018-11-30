@@ -6,7 +6,11 @@ It works with a simple 2D cantilever example, fixed on one side and a load appli
 # Note that this has to be on the path in order to work, or you manually specify the path
 import kratos_io_utilities as kratos_utils
 import global_utilities as global_utils
+from math import log10, floor
 import os
+
+def round_to_1(x):
+    return round(x, -int(floor(log10(abs(x)))))
 
 Number_Of_Refinements = TBD
 Number_Of_AOAS = TBD
@@ -31,6 +35,9 @@ for j in range(Number_Of_AOAS):
     Airfoil_MeshSize = Initial_Airfoil_MeshSize
     FarField_MeshSize = Initial_FarField_MeshSize
     for i in range(Number_Of_Refinements):
+        #round(Airfoil_MeshSize, 1)
+        Airfoil_MeshSize = round_to_1(Airfoil_MeshSize)
+        print('Airfoil_MeshSize', Airfoil_MeshSize)
         model = kratos_utils.MainModelPart() # Main mesh object to which we will add the submeshes (Kratos Name: ModelPart)
 
         # Specifying the names of the submeshes (Kratos Name: SubModelPart)
@@ -77,10 +84,19 @@ for j in range(Number_Of_AOAS):
         mdpa_info = "mdpa for demonstration purposes"
         mdpa_file_name = output_mdpa_path + 'naca0012_Case_' + str(case) + '_AOA_' + str(
             AOA) + '_Far_Field_Mesh_Size_' + str(FarField_MeshSize) + '_Airfoil_Mesh_Size_' + str(Airfoil_MeshSize)
+
+        
         
         model.WriteMesh(mdpa_file_name, mdpa_info)
-
-        Airfoil_MeshSize /= Airfoil_Refinement_Factor
+        '''
+        if(case % 2 == 0):
+            Airfoil_Refinement_Factor_Effective = 2
+        else:
+            Airfoil_Refinement_Factor_Effective = 5
+        '''
+        Airfoil_MeshSize *= Airfoil_Refinement_Factor
         FarField_MeshSize /= FarField_Refinement_Factor
         case += 1
     AOA += AOA_Increment
+
+

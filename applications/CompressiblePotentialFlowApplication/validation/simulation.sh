@@ -21,11 +21,12 @@ source generate_mdpas/set_parameters.sh
 cd generate_mdpas/
 
 #Run salome: generate geometry and mesh
-#python3 runSalome.py
+rm $Input_Dir/output_salome/*
+python3 runSalome.py
 
 #Convert salomes mesh into mdpa
-#rm $Work_Dir/mdpas/*
-#python3 use_converter.py
+rm $Work_Dir/mdpas/*
+python3 use_converter.py
 
 cd ..
 
@@ -43,7 +44,7 @@ cd ..
 
 #source scripts/wake_implementation15.sh
 #source scripts/wake_implementation16.sh
-#source scripts/wake_implementation17.sh
+source scripts/wake_implementation17.sh
 #source scripts/wake_implementation18.sh
 
 #TO BE RUN
@@ -57,7 +58,7 @@ cd ..
 #source scripts/wake_implementation21.sh
 
 #source scripts/wake_implementation25.sh
-source scripts/wake_implementation27.sh
+#source scripts/wake_implementation27.sh
 
 source generate_mdpas/unset_parameters.sh
 

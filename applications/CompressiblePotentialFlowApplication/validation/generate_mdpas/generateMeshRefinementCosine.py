@@ -22,9 +22,10 @@ Initial_FarField_MeshSize = TBD
 FarField_Refinement_Factor = TBD
 
 Ratio = 1.1
+Growth_Rate = 0.05
 
-Domain_Length = 100.0
-Domain_Width = 100.0
+Domain_Length = 200.0
+Domain_Width = 200.0
 
 path = os.getcwd()
 output_path = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/output_salome'
@@ -149,7 +150,7 @@ for j in range(Number_Of_AOAS):
         NETGEN_2D_Parameters_1.SetSecondOrder( 0 )
         NETGEN_2D_Parameters_1.SetOptimize( 1 )
         NETGEN_2D_Parameters_1.SetFineness( 5 )
-        NETGEN_2D_Parameters_1.SetGrowthRate( 0.05 )
+        NETGEN_2D_Parameters_1.SetGrowthRate( Growth_Rate )
         NETGEN_2D_Parameters_1.SetNbSegPerEdge( 3 )
         NETGEN_2D_Parameters_1.SetNbSegPerRadius( 5 )
         NETGEN_2D_Parameters_1.SetUseSurfaceCurvature( 1 )
@@ -230,7 +231,13 @@ for j in range(Number_Of_AOAS):
         except:
             print 'ExportPartToDAT() failed. Invalid file name?'
 
-        Airfoil_MeshSize /= Airfoil_Refinement_Factor
+        '''
+        if(case % 2 == 0):
+            Airfoil_Refinement_Factor_Effective = Airfoil_Refinement_Factor
+        else:
+            Airfoil_Refinement_Factor_Effective = 0.2
+        '''
+        Airfoil_MeshSize *= Airfoil_Refinement_Factor
         FarField_MeshSize /= FarField_Refinement_Factor
         case +=1
     AOA += AOA_Increment

@@ -28,6 +28,7 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
                 "airfoil_meshsize": 1.0,
                 "energy_reference": 1.0,
                 "potential_energy_reference": 1.0,
+                "cl_ok_reference": 1.0,
                 "reference_area": 1
             }  """)
 
@@ -54,6 +55,9 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
 
         self.total_potential_energy_reference = settings["potential_energy_reference"].GetDouble()
         print('self.total_potential_energy_reference = ', self.total_potential_energy_reference)
+
+        self.cl_ok_reference = settings["cl_ok_reference"].GetDouble()
+        print('self.cl_ok_reference = ', self.cl_ok_reference)
 
     def ExecuteFinalizeSolutionStep(self):
         print('COMPUTE LIFT')
@@ -129,6 +133,12 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         else:
             relative_error = abs(Cl - self.cl_reference)/abs(self.cl_reference)*100.0
 
+        if(abs(self.cl_ok_reference - 1.0) < 1e-7):
+            relative_error_ok = 0.0
+            self.fluid_model_part.ProcessInfo.SetValue(K0,Cl)
+        else:
+            relative_error_ok = abs(Cl - self.cl_ok_reference)/abs(self.cl_ok_reference)
+
         Cl_low = RY_low
         Cd_low = RX_low
 
@@ -197,15 +207,42 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
             cl_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, Cl))
             cl_file.flush()
 
+        cl_results_h_file_name = self.work_dir + "plots/cl/data/cl/cl_results_h.dat"
+        with open(cl_results_h_file_name,'a') as cl_file:
+            cl_file.write('{0:16.2e} {1:15f}\n'.format(self.mesh_size, Cl))
+            cl_file.flush()
+
         cl_reference_file_name = self.work_dir + "plots/cl/data/cl/cl_reference.dat"
         with open(cl_reference_file_name,'a') as cl_reference_file:
             cl_reference_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, self.cl_reference))
+            cl_reference_file.flush()
+
+        cl_reference_h_file_name = self.work_dir + "plots/cl/data/cl/cl_reference_h.dat"
+        with open(cl_reference_h_file_name,'a') as cl_reference_file:
+            cl_reference_file.write('{0:16.2e} {1:15f}\n'.format(self.mesh_size, self.cl_reference))
             cl_reference_file.flush()
 
         cl_error_results_file_name = self.work_dir + "plots/cl_error/data/cl/cl_error_results.dat"
         with open(cl_error_results_file_name,'a') as cl_error_file:
             cl_error_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, relative_error))
             cl_error_file.flush()
+
+        cl_error_results_h_file_name = self.work_dir + "plots/cl_error/data/cl/cl_error_results_h.dat"
+        with open(cl_error_results_h_file_name,'a') as cl_error_file:
+            cl_error_file.write('{0:16.2e} {1:15f}\n'.format(self.mesh_size, relative_error))
+            cl_error_file.flush()
+
+        cl_error_results_h_log_file_name = self.work_dir + "plots/cl_error/data/cl/cl_error_results_h_log.dat"
+        with open(cl_error_results_h_log_file_name,'a') as cl_error_file:
+            cl_error_file.write('{0:16.2e} {1:15f}\n'.format(self.mesh_size, relative_error/100.0))
+            cl_error_file.flush()
+
+        if(abs(self.cl_ok_reference - 1.0) > 1e-7):
+            cl_error_results_h_log_file_name = self.work_dir + "plots/cl_error/data/cl/cl_error_results_h_log_ok.dat"
+            with open(cl_error_results_h_log_file_name,'a') as cl_error_file:
+                cl_error_file.write('{0:16.2e} {1:15f}\n'.format(self.mesh_size, relative_error_ok))
+                cl_error_file.flush()
+
 
         if(abs(self.energy_reference - 1.0) > 1e-7):
             energy_h_results_file_name = self.work_dir + "plots/relative_error_energy_norm/data/energy/energy_h_results.dat"
@@ -233,9 +270,24 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
             cl_jump_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, far_field_lift))
             cl_jump_file.flush()
 
+        cl_far_field_results_h_file_name = self.work_dir + "plots/cl/data/cl/cl_jump_results_h.dat"
+        with open(cl_far_field_results_h_file_name,'a') as cl_jump_file:
+            cl_jump_file.write('{0:16.2e} {1:15f}\n'.format(self.mesh_size, far_field_lift))
+            cl_jump_file.flush()
+
         cl_far_field_error_results_file_name = self.work_dir + "plots/cl_error/data/cl/cl_jump_error_results.dat"
         with open(cl_far_field_error_results_file_name,'a') as cl_jump_error_file:
             cl_jump_error_file.write('{0:16.2e} {1:15f}\n'.format(NumberOfNodes, relative_error_jump))
+            cl_jump_error_file.flush()
+
+        cl_far_field_error_results_h_file_name = self.work_dir + "plots/cl_error/data/cl/cl_jump_error_results_h.dat"
+        with open(cl_far_field_error_results_h_file_name,'a') as cl_jump_error_file:
+            cl_jump_error_file.write('{0:16.2e} {1:15f}\n'.format(self.mesh_size, relative_error_jump))
+            cl_jump_error_file.flush()
+
+        cl_far_field_error_results_h_log_file_name = self.work_dir + "plots/cl_error/data/cl/cl_jump_error_results_h_log.dat"
+        with open(cl_far_field_error_results_h_log_file_name,'a') as cl_jump_error_file:
+            cl_jump_error_file.write('{0:16.2e} {1:15f}\n'.format(self.mesh_size, relative_error_jump/100.0))
             cl_jump_error_file.flush()
         
         cd_results_file_name = self.work_dir + "plots/cd/data/cd/cd_results.dat"

@@ -34,12 +34,56 @@ def write_figures_cl(cl_data_directory_name, AOA, work_dir):
                            )
         cl_figures_file.flush()
 
+    with open(work_dir + 'plots/cl/figures_cl_h.tex', 'a') as cl_figures_file:
+        cl_figures_file.write('\n\pgfplotsset{table/search path={' + cl_data_directory_name + '},}\n\n' +
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + cl_data_directory_name + '/clh.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$}\n' +
+                           '\t\label{fig:cl_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n'
+                           )
+        cl_figures_file.flush()
+
 def write_figures_cl_error(cl_error_data_directory_name, AOA, work_dir):
     with open(work_dir + 'plots/cl_error/figures_cl_error.tex', 'a') as cl_error_figures_file:
         cl_error_figures_file.write('\n\pgfplotsset{table/search path={' + cl_error_data_directory_name + '},}\n\n' +
                            '\\begin{figure}\n' +
                            '\t\centering\n' +
                            '\t\input{' + cl_error_data_directory_name + '/cl_error.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$}\n' +
+                           '\t\label{fig:cl_error_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n'
+                           )
+        cl_error_figures_file.flush()
+
+    with open(work_dir + 'plots/cl_error/figures_cl_error_h.tex', 'a') as cl_error_figures_file:
+        cl_error_figures_file.write('\n\pgfplotsset{table/search path={' + cl_error_data_directory_name + '},}\n\n' +
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + cl_error_data_directory_name + '/cl_error_h.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$}\n' +
+                           '\t\label{fig:cl_error_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n'
+                           )
+        cl_error_figures_file.flush()
+
+    with open(work_dir + 'plots/cl_error/figures_cl_error_h_log.tex', 'a') as cl_error_figures_file:
+        cl_error_figures_file.write('\n\pgfplotsset{table/search path={' + cl_error_data_directory_name + '},}\n\n' +
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + cl_error_data_directory_name + '/cl_error_h_log.tikz}\n' +
+                           '\t\caption{$\\alpha = ' + str(AOA) + '\degree$}\n' +
+                           '\t\label{fig:cl_error_AOA_' + str(AOA) + '}\n' +
+                           '\end{figure}\n'
+                           )
+        cl_error_figures_file.flush()
+
+    with open(work_dir + 'plots/cl_error/figures_cl_error_h_log_ok.tex', 'a') as cl_error_figures_file:
+        cl_error_figures_file.write('\n\pgfplotsset{table/search path={' + cl_error_data_directory_name + '},}\n\n' +
+                           '\\begin{figure}\n' +
+                           '\t\centering\n' +
+                           '\t\input{' + cl_error_data_directory_name + '/cl_error_h_log_ok.tikz}\n' +
                            '\t\caption{$\\alpha = ' + str(AOA) + '\degree$}\n' +
                            '\t\label{fig:cl_error_AOA_' + str(AOA) + '}\n' +
                            '\end{figure}\n'

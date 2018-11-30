@@ -1,14 +1,16 @@
 #Removing files
-#rm $Input_Dir/output_salome/*
-#rm $Input_Dir/mdpas/*
 rm cp*
 rm main*
 
 #Running Latex
 cd $Work_Dir/plots/cl
 pdflatex -interaction=batchmode main_cl.tex > main_cl_out.txt
+pdflatex -interaction=batchmode main_cl_h.tex > main_cl_h_out.txt
 cd $Work_Dir/plots/cl_error
 pdflatex -interaction=batchmode main_cl_error.tex > main_cl_error_out.txt
+pdflatex -interaction=batchmode main_cl_error_h.tex > main_cl_error_h_out.txt
+pdflatex -interaction=batchmode main_cl_error_h_log.tex > main_cl_error_h_log_out.txt
+pdflatex -interaction=batchmode main_cl_error_h_log_ok.tex > main_cl_error_h_log_ok_out.txt
 cd $Work_Dir/plots/relative_error_energy_norm
 pdflatex -interaction=batchmode main_energy_h.tex > main_energy_h_out.txt
 pdflatex -interaction=batchmode main_energy_n.tex > main_energy_n_out.txt

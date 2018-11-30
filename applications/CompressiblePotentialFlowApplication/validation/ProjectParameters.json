@@ -75,7 +75,7 @@
             "upper_surface_model_part_name" : "Body2D_UpperSurface",
             "lower_surface_model_part_name" : "Body2D_LowerSurface",
             "direction"       : [1.0,0.0,0.0],
-            "epsilon"         : 1e-8
+            "epsilon"         : 1e-9
         }
     },{
         "python_module" : "compute_lift_process_2d_refinement",
@@ -91,6 +91,7 @@
             "airfoil_meshsize": 1.0,
             "energy_reference": 1.0,
             "potential_energy_reference": 1.0,
+            "cl_ok_reference": 1.0,
             "velocity_infinity" : [10.0,0.0,0.0]
         }
     },{

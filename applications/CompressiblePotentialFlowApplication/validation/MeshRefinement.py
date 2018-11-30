@@ -13,6 +13,10 @@ import shutil
 import subprocess
 from PyPDF2 import PdfFileReader, PdfFileMerger
 from math import *
+from math import log10, floor
+
+def round_to_1(x):
+    return round(x, -int(floor(log10(abs(x)))))
 ######################################################################################
 ######################################################################################
 ######################################################################################
@@ -29,18 +33,26 @@ Initial_FarField_MeshSize = TBD
 FarField_Refinement_Factor = TBD
 
 work_dir = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/'
-input_mdpa_path = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/mdpas_all_aoa_reverse/'
+input_mdpa_path = '/home/inigo/simulations/naca0012/07_salome/05_MeshRefinement/mdpas/'
 output_gid_path = '/media/inigo/10740FB2740F9A1C/Outputs/05_MeshRefinement/'
 latex_output = open(work_dir + '/plots/latex_output.txt', 'w')
 latex_output.flush()
 
 cl_results_file_name = work_dir + 'plots/cl/data/cl/cl_results.dat'
+cl_results_h_file_name = work_dir + 'plots/cl/data/cl/cl_results_h.dat'
 cl_reference_file_name = work_dir + 'plots/cl/data/cl/cl_reference.dat'
+cl_reference_h_file_name = work_dir + 'plots/cl/data/cl/cl_reference_h.dat'
 cl_far_field_results_file_name = work_dir + 'plots/cl/data/cl/cl_jump_results.dat'
+cl_far_field_results_h_file_name = work_dir + 'plots/cl/data/cl/cl_jump_results_h.dat'
 cl_results_directory_name = work_dir + 'plots/cl/data/cl'
 
 cl_error_results_file_name = work_dir + 'plots/cl_error/data/cl/cl_error_results.dat'
+cl_error_results_h_file_name = work_dir + 'plots/cl_error/data/cl/cl_error_results_h.dat'
+cl_error_results_h_log_file_name = work_dir + 'plots/cl_error/data/cl/cl_error_results_h_log.dat'
+cl_error_results_h_log_ok_file_name = work_dir + 'plots/cl_error/data/cl/cl_error_results_h_log_ok.dat'
 cl_far_field_error_results_file_name = work_dir + 'plots/cl_error/data/cl/cl_jump_error_results.dat'
+cl_far_field_error_results_h_file_name = work_dir + 'plots/cl_error/data/cl/cl_jump_error_results_h.dat'
+cl_far_field_error_results_h_log_file_name = work_dir + 'plots/cl_error/data/cl/cl_jump_error_results_h_log.dat'
 cl_error_results_directory_name = work_dir + 'plots/cl_error/data/cl'
 
 energy_h_results_file_name = work_dir + 'plots/relative_error_energy_norm/data/energy/energy_h_results.dat'
@@ -80,10 +92,22 @@ for j in range(Number_Of_AOAS):
     with open(cl_results_file_name,'w') as cl_file:
         cl_file.flush()
 
+    with open(cl_results_h_file_name,'w') as cl_file:
+        cl_file.flush()
+
     with open(cl_reference_file_name,'w') as cl_reference_file:
         cl_reference_file.flush()
 
+    with open(cl_reference_h_file_name,'w') as cl_reference_file:
+        cl_reference_file.flush()
+
     with open(cl_error_results_file_name,'w') as cl_error_file:
+        cl_error_file.flush()
+
+    with open(cl_error_results_h_file_name,'w') as cl_error_file:
+        cl_error_file.flush()
+
+    with open(cl_error_results_h_log_ok_file_name,'w') as cl_error_file:
         cl_error_file.flush()
 
     with open(energy_h_results_file_name,'w') as energy_file:
@@ -99,6 +123,9 @@ for j in range(Number_Of_AOAS):
         energy_file.flush()
 
     with open(cl_far_field_results_file_name,'w') as cl_jump_file:
+        cl_jump_file.flush()
+
+    with open(cl_far_field_results_h_file_name,'w') as cl_jump_file:
         cl_jump_file.flush()
 
     with open(cd_results_file_name, 'w') as cd_file:
@@ -132,9 +159,11 @@ for j in range(Number_Of_AOAS):
 
     energy_reference = 1.0
     potential_energy_reference = 1.0
+    cl_ok_reference = 1.0
     counter = 0.0
 
     for i in range(Number_Of_Refinements):
+        Airfoil_MeshSize = round_to_1(Airfoil_MeshSize)
         print("\n\tCase ", case, "\n")
         loads_output.write_case(case, AOA, FarField_MeshSize, Airfoil_MeshSize, work_dir)
 
@@ -183,6 +212,7 @@ for j in range(Number_Of_AOAS):
         ProjectParameters["boundary_conditions_process_list"][2]["Parameters"]["airfoil_meshsize"].SetDouble(Airfoil_MeshSize)
         ProjectParameters["boundary_conditions_process_list"][2]["Parameters"]["energy_reference"].SetDouble(energy_reference)
         ProjectParameters["boundary_conditions_process_list"][2]["Parameters"]["potential_energy_reference"].SetDouble(potential_energy_reference)
+        ProjectParameters["boundary_conditions_process_list"][2]["Parameters"]["cl_ok_reference"].SetDouble(cl_ok_reference)
         
         ## Solver construction    
         solver = potential_flow_solver.CreateSolver(main_model_part, ProjectParameters["solver_settings"])
@@ -358,10 +388,17 @@ for j in range(Number_Of_AOAS):
         if(counter < 1):
             energy_reference = main_model_part.ProcessInfo[ENERGY_NORM_REFERENCE]
             potential_energy_reference = main_model_part.ProcessInfo[POTENTIAL_ENERGY_REFERENCE]
+            cl_ok_reference = main_model_part.ProcessInfo[K0]
             for process in list_of_processes:
                 process.ExecuteFinalize()
 
-        Airfoil_MeshSize /= Airfoil_Refinement_Factor
+        '''
+        if(case % 2 == 0):
+            Airfoil_Refinement_Factor_Effective = 2
+        else:
+            Airfoil_Refinement_Factor_Effective = 5
+        '''
+        Airfoil_MeshSize *= Airfoil_Refinement_Factor
         FarField_MeshSize /= FarField_Refinement_Factor
         
         case +=1
@@ -384,7 +421,12 @@ for j in range(Number_Of_AOAS):
 
     shutil.copytree(cl_error_results_directory_name, work_dir + 'plots/cl_error/' + cl_error_data_directory_name)
     os.remove(cl_error_results_file_name)
+    os.remove(cl_error_results_h_file_name)
+    os.remove(cl_error_results_h_log_file_name)
+    os.remove(cl_error_results_h_log_ok_file_name)
     os.remove(cl_far_field_error_results_file_name)
+    os.remove(cl_far_field_error_results_h_file_name)
+    os.remove(cl_far_field_error_results_h_log_file_name)
 
     shutil.copytree(energy_results_directory_name, work_dir + 'plots/relative_error_energy_norm/' + energy_data_directory_name)
     os.remove(energy_h_results_file_name)

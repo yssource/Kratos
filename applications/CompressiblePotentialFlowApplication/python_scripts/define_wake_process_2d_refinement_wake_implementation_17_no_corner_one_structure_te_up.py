@@ -73,7 +73,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                 te_node = unode
         
         for unode in self.upper_surface_model_part.Nodes:
-            if(unode.X > pos - 1e-9):
+            if(unode.X > pos - 1e-10):
                 unode.SetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.TRAILING_EDGE, True)
                 #node.Fix(KratosMultiphysics.NODAL_H)
                 #node.SetSolutionStepValue(KratosMultiphysics.NODAL_H,0, 500.0)
@@ -237,7 +237,8 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                 x = node.X
                 jump = node.GetSolutionStepValue(KratosMultiphysics.CompressiblePotentialFlowApplication.POTENTIAL_JUMP)
 
-                potential_jump_file.write('{0:15f} {1:15f}\n'.format(x, jump))
+                if(abs(jump) > 1e-7):
+                    potential_jump_file.write('{0:15f} {1:15f}\n'.format(x, jump))
 
             potential_jump_file.flush()
 

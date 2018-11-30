@@ -1,5 +1,5 @@
 rm -rf $Work_Dir/plots/cl/data/cl_*
-rm $Work_Dir/plots/cl/figures_cl.tex
+rm $Work_Dir/plots/cl/figures_cl*
 
 rm -rf $Work_Dir/plots/cd/data/cd_*
 rm $Work_Dir/plots/cd/figures_cd.tex
@@ -20,7 +20,7 @@ rm $Work_Dir/plots/potential_jump/jump_*
 rm $Work_Dir/plots/potential_jump/plots/*
 
 rm -rf $Work_Dir/plots/cl_error/data/cl_*
-rm $Work_Dir/plots/cl_error/figures_cl_error.tex
+rm $Work_Dir/plots/cl_error/figures_cl_error*
 
 rm -rf $Work_Dir/plots/relative_error_energy_norm/data/energy_*
 rm $Work_Dir/plots/relative_error_energy_norm/figures_*

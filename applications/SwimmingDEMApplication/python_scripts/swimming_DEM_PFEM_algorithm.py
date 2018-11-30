@@ -114,7 +114,7 @@ class Algorithm(BaseAlgorithm):
 
     def ManageFluidDEMTimeStep(self):
         self.fluid_solution.solver.AdaptTimeStepProcess()
-        self.Dt = self.fluid_solution.main_model_part.ProcessInfo[KratosMultiphysics.DELTA_TIME]
+        self.Dt = self.fluid_solution.main_model_part.ProcessInfo[DELTA_TIME]
 
     def GetFirstStepForFluidComputation(self):
         return 1;

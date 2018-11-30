@@ -178,7 +178,7 @@ class Algorithm(object):
         Add("store_fluid_pressure_option").SetBool(False)
         Add("laplacian_calculation_type").SetInt(0)
         Add("faxen_terms_type").SetInt(0)
-        Add("material_acceleration_calculation_type").SetInt(1)
+        Add("material_acceleration_calculation_type").SetInt(8)
         Add("faxen_force_type").SetInt(0)
         Add("vorticity_calculation_type").SetInt(5)
         Add("print_FLUID_VEL_PROJECTED_RATE_option").SetBool(False)
@@ -618,10 +618,15 @@ class Algorithm(object):
 
             self.ManageFluidDEMTimeStep()
 
+
             self.time = self.time + self.Dt
             self.step += 1
             self.CloneTimeStep()
             self.TellTime(self.time)
+
+            print("time: ",self.time)
+            print("used time step: ",self.Dt)
+
 
             if coupling_scheme_type == "UpdatedDEM":
                 time_final_DEM_substepping = self.time + self.Dt

@@ -585,7 +585,7 @@ public:
     ///@{
 
     /// Turn back information as a string.
-    virtual std::string Info() const
+    virtual std::string Info() const override
     {
         std::stringstream buffer;
         buffer << "TwoStepVPStrategy" ;
@@ -593,10 +593,10 @@ public:
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const {rOStream << "TwoStepVPStrategy";}
+    virtual void PrintInfo(std::ostream& rOStream) const override {rOStream << "TwoStepVPStrategy";}
 
     /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const {}
+    virtual void PrintData(std::ostream& rOStream) const override {}
 
 
     ///@}
@@ -695,6 +695,9 @@ protected:
 
       double DvErrorNorm = 0;
       ConvergedMomentum = this->CheckVelocityConvergence(NormDv,DvErrorNorm);
+
+      KRATOS_INFO("TwoStepVPStrategy") << "iteration("<<it<<") Velocity error: "<< DvErrorNorm <<" velTol: " << mVelocityTolerance<< std::endl;
+
       // Check convergence
       if(it==maxIt-1){
 
@@ -735,6 +738,7 @@ protected:
 
       double DpErrorNorm = 0;
       ConvergedContinuity = this->CheckPressureConvergence(NormDp,DpErrorNorm);
+          KRATOS_INFO("TwoStepVPStrategy") <<"       iteration("<<it<<") Pressure error: "<<DpErrorNorm <<" presTol: "<<mPressureTolerance << std::endl;
 
       // Check convergence
       if(it==maxIt-1){

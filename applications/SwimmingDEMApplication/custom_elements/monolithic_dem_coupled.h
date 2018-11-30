@@ -712,6 +712,7 @@ public:
         {
             this->GetGeometry()[iNode].SetLock();
             this->GetGeometry()[iNode].FastGetSolutionStepValue(FLUID_FRACTION_OLD) =  this->GetGeometry()[iNode].FastGetSolutionStepValue(FLUID_FRACTION);
+            this->GetGeometry()[iNode].FastGetSolutionStepValue(FLUID_FRACTION_RATE_OLD) =  this->GetGeometry()[iNode].FastGetSolutionStepValue(FLUID_FRACTION_RATE);
             this->GetGeometry()[iNode].UnSetLock();
         }
     }

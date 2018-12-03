@@ -11,7 +11,7 @@ except ImportError:
     missing_applications_message.append("AdjointFluidApplication")
 
 import KratosMultiphysics.KratosUnittest as KratosUnittest
-import random
+import random, numpy
 
 @KratosUnittest.skipUnless(have_required_applications," ".join(missing_applications_message))
 class AdjointVMSElement2D(KratosUnittest.TestCase):
@@ -41,17 +41,33 @@ class AdjointVMSElement2D(KratosUnittest.TestCase):
         self.vms_element = self.model_part.GetElement(1)
         self.adjoint_element = self.model_part.GetElement(2)
 
-        coeffs = Vector(9)
-        for i in range(9):
-            coeffs[i] = random.random()
+        reynolds_stress_tensor = numpy.zeros((3,3))
+        symmetric_velocity_gradient = numpy.zeros((3,3))
+        for i in range(2):
+            for j in range(2):
+                reynolds_stress_tensor[i,j] = -random.random()
+                symmetric_velocity_gradient[i,j] = random.random()
+        reynolds_stress_tensor = 0.5 * (reynolds_stress_tensor + reynolds_stress_tensor.transpose())
+        symmetric_velocity_gradient = 0.5 * (symmetric_velocity_gradient + symmetric_velocity_gradient.transpose())
+        symmetric_velocity_gradient = symmetric_velocity_gradient - (1.0/3.0) * symmetric_velocity_gradient.trace() * numpy.eye(3)
+        turbulent_kinetic_energy = -0.5 * reynolds_stress_tensor.trace()
+        deviotoric_reynolds_stress_tensor = reynolds_stress_tensor + (2.0/3.0) * turbulent_kinetic_energy * numpy.eye(3)
         turbulent_kinematic_viscosity = random.random()
-        turbulent_kinetic_energy = random.random()
+        deviatoric_non_linear_reynolds_stress_tensor = deviotoric_reynolds_stress_tensor - turbulent_kinematic_viscosity * symmetric_velocity_gradient
 
-        self.vms_element.SetValue(REYNOLDS_STRESS_MODEL_COEFFICIENTS, coeffs)
+        residual = reynolds_stress_tensor - (turbulent_kinematic_viscosity * symmetric_velocity_gradient - (2.0/3.0) * turbulent_kinetic_energy * numpy.eye(3) + deviatoric_non_linear_reynolds_stress_tensor)
+        numpy.testing.assert_almost_equal(numpy.linalg.norm(residual), 0.0)
+
+        reynolds_stress_model_coefficients = Vector(9)
+        deviatoric_non_linear_reynolds_stress_tensor = list(deviatoric_non_linear_reynolds_stress_tensor.ravel())
+        for i in range(9):
+            reynolds_stress_model_coefficients[i] = deviatoric_non_linear_reynolds_stress_tensor[i]
+        
+        self.vms_element.SetValue(REYNOLDS_STRESS_MODEL_COEFFICIENTS, reynolds_stress_model_coefficients)
         self.vms_element.SetValue(TURBULENT_KINETIC_ENERGY, turbulent_kinetic_energy)
         self.vms_element.SetValue(TURBULENT_KINEMATIC_VISCOSITY, turbulent_kinematic_viscosity)
 
-        self.adjoint_element.SetValue(REYNOLDS_STRESS_MODEL_COEFFICIENTS, coeffs)
+        self.adjoint_element.SetValue(REYNOLDS_STRESS_MODEL_COEFFICIENTS, reynolds_stress_model_coefficients)
         self.adjoint_element.SetValue(TURBULENT_KINETIC_ENERGY, turbulent_kinetic_energy)
         self.adjoint_element.SetValue(TURBULENT_KINEMATIC_VISCOSITY, turbulent_kinematic_viscosity)
 

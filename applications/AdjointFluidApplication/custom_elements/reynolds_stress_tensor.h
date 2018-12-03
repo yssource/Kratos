@@ -3,7 +3,7 @@
 //  License:		 BSD License
 //					 license: AdjointFluidApplication/license.txt
 //
-//  Main authors:    Michael Andre, https://github.com/msandre
+//  Main authors:    Suneth Warnakulasuriya, https://github.com/sunethwarna
 //
 
 #if !defined(KRATOS_REYNOLDS_STRESS_TENSOR_H_INCLUDED)
@@ -75,103 +75,6 @@ public:
             << mCoefficients.size() << " coefficients.]";
     }
 
-    void test()
-    {
-        ShapeParameter Deriv;
-        Deriv.NodeIndex = 2;
-        Deriv.Direction = 0;
-        const double delta = 1e-12;
-
-        BoundedMatrix<double, TDim, TDim> matrix_0;
-        BoundedMatrix<double, TDim, TDim> matrix_1;
-        BoundedMatrix<double, TDim, TDim> matrix_fd;
-        BoundedMatrix<double, TDim, TDim> analytical_matrix_output;
-
-        Vector coffs;
-        coffs.resize(9);
-        coffs[0] = 3.0;
-        coffs[1] = 5.0;
-        coffs[2] = 7.0;
-        coffs[4] = 11.0;
-        coffs[5] = 13.0;
-        coffs[6] = 17.0;
-        coffs[7] = 19.0;
-        coffs[8] = 23.0;
-
-        mCoefficients = coffs;
-
-        CalculateReynoldsStressTensor(matrix_0);
-        CalculateReynoldsStressTensorPrimalDerivative(Deriv, analytical_matrix_output);
-        mVelocity(Deriv.NodeIndex, Deriv.Direction) += delta;
-        CalculateReynoldsStressTensor(matrix_1);
-        mVelocity(Deriv.NodeIndex, Deriv.Direction) -= delta;
-        CalculateFDMatrixSensitivity(matrix_0, matrix_1, delta, matrix_fd);
-        AssertMatrices(analytical_matrix_output, matrix_fd);
-
-        array_1d<double, TNumNodes> N;
-        CalculateReynoldsStressTensorShapeDerivative(Deriv, analytical_matrix_output);
-        const double edge_length = mGeometry.MinEdgeLength() * 1e-8;
-        mGeometry[Deriv.NodeIndex].Coordinates()[Deriv.Direction] += edge_length;
-        GeometryUtils::CalculateGeometryData(mGeometry, mIntegrationMatrix, N, mGaussPointWeight);
-        CalculateReynoldsStressTensor(matrix_1);
-        mGeometry[Deriv.NodeIndex].Coordinates()[Deriv.Direction] -= edge_length;
-        CalculateFDMatrixSensitivity(matrix_0, matrix_1, edge_length, matrix_fd);
-        AssertMatrices(analytical_matrix_output, matrix_fd);
-
-    }
-
-    void CalculateFDMatrixSensitivity(const BoundedMatrix<double, TDim, TDim> matrix_0,
-                                      const BoundedMatrix<double, TDim, TDim> matrix_1,
-                                      const double epsilon,
-                                      BoundedMatrix<double, TDim, TDim>& rOutput)
-    {
-        rOutput = matrix_1 - matrix_0;
-        rOutput *= (1.0 / epsilon);
-    }
-
-    void AssertMatrices(const BoundedMatrix<double, TDim, TDim> matrix_0,
-                        BoundedMatrix<double, TDim, TDim> matrix_1)
-    {
-        KRATOS_WATCH(matrix_0);
-        KRATOS_WATCH(matrix_1);
-        const double tol = 2e-3;
-        for (unsigned int i = 0; i < TDim; i++)
-            for (unsigned int j = 0; j < TDim; j++)
-            {
-                if (matrix_1(i, j) == 0)
-                {
-                    if (std::abs(matrix_0(i, j)) > 1e-6)
-                    {
-                        std::cout << "Test Failed." << std::endl;
-                        std::cout << "Matrix 0:" << matrix_0 << std::endl;
-                        std::cout << "Matrix 1:" << matrix_1 << std::endl;
-
-                        std::cout << std::scientific << matrix_0(i, j)
-                                  << "!=" << matrix_1(i, j) << std::endl;
-
-                        std::exit(-1);
-                    }
-                }
-                else
-                {
-                    const double relative_tolerance =
-                        std::abs((matrix_0(i, j) - matrix_1(i, j)) / matrix_1(i, j));
-                    if (relative_tolerance > tol)
-                    {
-                        std::cout << "Test Failed." << std::endl;
-                        std::cout << "Matrix 0:" << matrix_0 << std::endl;
-                        std::cout << "Matrix 1:" << matrix_1 << std::endl;
-
-                        std::cout << std::scientific << matrix_0(i, j)
-                                  << "!=" << matrix_1(i, j)
-                                  << "[ difference = " << relative_tolerance
-                                  << "]" << std::endl;
-                        std::exit(-1);
-                    }
-                }
-            }
-    }
-
     void AddReynoldsStressTensorVelocityContributionLHS(Matrix& rLeftHandSideMatrix)
     {
         KRATOS_TRY
@@ -225,8 +128,8 @@ public:
 
         BoundedMatrix<double, TDim, TDim> reynolds_stress_tensor;
         reynolds_stress_tensor.clear();
-        AddHydrostaticReynoldsStressTensor(mVelocity, reynolds_stress_tensor);
-        AddDeviatoricReynoldsStressTensorNonLinearPart(mVelocity, reynolds_stress_tensor);
+        // AddHydrostaticReynoldsStressTensor(reynolds_stress_tensor);
+        // AddDeviatoricReynoldsStressTensorNonLinearPart(reynolds_stress_tensor);
 
         for (unsigned int a = 0; a < TNumNodes; ++a)
         {
@@ -308,7 +211,7 @@ public:
                         for (unsigned int l = 0; l < TDim; ++l)
                         {
                             valim += mIntegrationMatrix(a, l) *
-                                     ReynoldsStressTensorValue(l, i) * DetJ0_deriv;
+                                     ReynoldsStressTensorValue(l, i) * DetJ0_deriv * 0.5;
                             valim += mIntegrationMatrix(a, l) *
                                      ReynoldsStressTensorDerivative(l, i) * mGaussPointWeight;
                             valim += DN_DX_Deriv(a, l) *
@@ -326,29 +229,29 @@ public:
     void CalculateReynoldsStressTensor(BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         rOutput.clear();
-        AddDeviatoricReynoldsStressTensorLinearPart(mVelocity, rOutput);
-        AddDeviatoricReynoldsStressTensorNonLinearPart(mVelocity, rOutput);
-        AddHydrostaticReynoldsStressTensor(mVelocity, rOutput);
+        AddDeviatoricReynoldsStressTensorLinearPart(rOutput);
+        // AddDeviatoricReynoldsStressTensorNonLinearPart(rOutput);
+        // AddHydrostaticReynoldsStressTensor(rOutput);
     }
 
     void CalculateReynoldsStressTensorPrimalDerivative(const ShapeParameter& Deriv,
                                                        BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         rOutput.clear();
-        AddDeviatoricReynoldsStressTensorLinearPartPrimalDerivative(Deriv, mVelocity, rOutput);
-        AddDeviatoricReynoldsStressTensorNonLinearPartPrimalDerivative(
-            Deriv, mVelocity, rOutput);
-        AddHydrostaticReynoldsStressTensorPrimalDerivative(Deriv, mVelocity, rOutput);
+        AddDeviatoricReynoldsStressTensorLinearPartPrimalDerivative(Deriv, rOutput);
+        // AddDeviatoricReynoldsStressTensorNonLinearPartPrimalDerivative(
+        //     Deriv, rOutput);
+        // AddHydrostaticReynoldsStressTensorPrimalDerivative(Deriv, rOutput);
     }
 
     void CalculateReynoldsStressTensorShapeDerivative(const ShapeParameter& Deriv,
                                                       BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         rOutput.clear();
-        AddDeviatoricReynoldsStressTensorLinearPartShapeDerivative(Deriv, mVelocity, rOutput);
-        AddDeviatoricReynoldsStressTensorNonLinearPartShapeDerivative(
-            Deriv, mVelocity, rOutput);
-        AddHydrostaticReynoldsStressTensorShapeDerivative(Deriv, mVelocity, rOutput);
+        AddDeviatoricReynoldsStressTensorLinearPartShapeDerivative(Deriv, rOutput);
+        // AddDeviatoricReynoldsStressTensorNonLinearPartShapeDerivative(
+        //     Deriv, rOutput);
+        // AddHydrostaticReynoldsStressTensorShapeDerivative(Deriv, rOutput);
     }
 
 private:
@@ -363,53 +266,12 @@ private:
     double mTurbulentKineticEnergy;
     double mTurbulentKinematicViscosity;
 
-    double CalculateMatrixElementProductSum(BoundedMatrix<double, TDim, TDim> matrix_1,
-                                            BoundedMatrix<double, TDim, TDim> matrix_2)
-    {
-        double result = 0.0;
-        for (unsigned int i = 0; i < TDim; ++i)
-            for (unsigned int j = 0; j < TDim; ++j)
-                result += matrix_1(i, j) * matrix_2(i, j);
-
-        return result;
-    }
-
     double CalculateMatrixTrace(const Matrix& rMatrix)
     {
         double result = 0.0;
         for (unsigned int i = 0; i < rMatrix.size1(); i++)
             result += rMatrix(i, i);
         return result;
-    }
-
-    void CalculateTwoMatrixProductDerivative(
-        const BoundedMatrix<double, TDim, TDim>& rMatrix1,
-        const BoundedMatrix<double, TDim, TDim>& rMatrix1Derivative,
-        const BoundedMatrix<double, TDim, TDim>& rMatrix2,
-        const BoundedMatrix<double, TDim, TDim>& rMatrix2Derivative,
-        BoundedMatrix<double, TDim, TDim>& rOutput)
-    {
-        rOutput.clear();
-        rOutput = prod(rMatrix1, rMatrix2Derivative) + prod(rMatrix1Derivative, rMatrix2);
-    }
-
-    void CalculateThreeMatrixProductDerivative(
-        const BoundedMatrix<double, TDim, TDim>& rMatrix1,
-        const BoundedMatrix<double, TDim, TDim>& rMatrix1Derivative,
-        const BoundedMatrix<double, TDim, TDim>& rMatrix2,
-        const BoundedMatrix<double, TDim, TDim>& rMatrix2Derivative,
-        const BoundedMatrix<double, TDim, TDim>& rMatrix3,
-        const BoundedMatrix<double, TDim, TDim>& rMatrix3Derivative,
-        BoundedMatrix<double, TDim, TDim>& rOutput)
-    {
-        rOutput.clear();
-        BoundedMatrix<double, TDim, TDim> temp;
-        temp = prod(rMatrix2, rMatrix3);
-        rOutput += prod(rMatrix1Derivative, temp);
-        temp = prod(rMatrix2Derivative, rMatrix3);
-        rOutput += prod(rMatrix1, temp);
-        temp = prod(rMatrix2, rMatrix3Derivative);
-        rOutput += prod(rMatrix1, temp);
     }
 
     void CalculateSymmetricVelocityGradientPrimalDerivative(
@@ -458,7 +320,6 @@ private:
 
         GeometricalSensitivityUtility geom_sensitivity(rJ, rDN_De);
 
-        KRATOS_WATCH(rDN_DX0_deriv);
         geom_sensitivity.CalculateSensitivity(Deriv, rDetJ0_deriv, rDN_DX0_deriv);
 
         KRATOS_CATCH("")
@@ -490,67 +351,6 @@ private:
         KRATOS_CATCH("")
     }
 
-    void CalculateAntiSymmetricVelocityGradientShapeDerivative(
-        const ShapeParameter Deriv, BoundedMatrix<double, TDim, TDim>& rOutput)
-    {
-        KRATOS_TRY
-
-        rOutput.clear();
-
-        Matrix DN_DX0_deriv(TNumNodes, TDim);
-        double DetJ0_deriv;
-        CalculateShapeFunctionDerivativeShapeDerivatives(0, Deriv, DetJ0_deriv, DN_DX0_deriv);
-
-        for (unsigned int i = 0; i < TDim; i++)
-            for (unsigned int j = 0; j < TDim; j++)
-            {
-                for (unsigned int d = 0; d < TNumNodes; d++)
-                {
-                    rOutput(i, j) += mVelocity(d, i) * DN_DX0_deriv(d, j);
-                    rOutput(i, j) -= mVelocity(d, j) * DN_DX0_deriv(d, i);
-                }
-            }
-
-        rOutput *= 0.5;
-
-        KRATOS_CATCH("")
-    }
-
-    void CalculateAntiSymmetricVelocityGradientPrimalDerivative(
-        const ShapeParameter Deriv, BoundedMatrix<double, TDim, TDim>& rOutput)
-    {
-        KRATOS_TRY
-
-        rOutput.clear();
-
-        const std::size_t c = Deriv.NodeIndex;
-        const std::size_t k = Deriv.Direction;
-
-        for (unsigned int i = 0; i < TDim; ++i)
-            for (unsigned int j = 0; j < TDim; ++j)
-            {
-                if (i == k)
-                    rOutput(i, j) += mIntegrationMatrix(c, j);
-                if (j == k)
-                    rOutput(i, j) -= mIntegrationMatrix(c, i);
-            }
-
-        rOutput *= 0.5;
-
-        KRATOS_CATCH("")
-    }
-
-    double CalculateFrobeniusNormSquareDerivative(const BoundedMatrix<double, TDim, TDim>& rMatrix,
-                                                  const BoundedMatrix<double, TDim, TDim>& rMatrixDeriv)
-    {
-        double rOutput = 0.0;
-        for (unsigned int i = 0; i < TDim; i++)
-            for (unsigned int j = 0; j < TDim; j++)
-                rOutput += rMatrix(i, j) * rMatrixDeriv(i, j);
-
-        return rOutput * 2.0;
-    }
-
     void CalculateSymmetricVelocityGradient(const BoundedMatrix<double, TNumNodes, TDim>& velocity,
                                             BoundedMatrix<double, TDim, TDim>& rOutput)
     {
@@ -571,28 +371,7 @@ private:
         KRATOS_CATCH("")
     }
 
-    void CalculateAntiSymmetricVelocityGradient(const BoundedMatrix<double, TNumNodes, TDim>& velocity,
-                                                BoundedMatrix<double, TDim, TDim>& rOutput)
-    {
-        KRATOS_TRY
-
-        rOutput.clear();
-
-        for (unsigned int i = 0; i < TDim; i++)
-            for (unsigned int j = 0; j < TDim; j++)
-                for (unsigned int d = 0; d < TNumNodes; d++)
-                {
-                    rOutput(i, j) += mIntegrationMatrix(d, j) * velocity(d, i);
-                    rOutput(i, j) -= mIntegrationMatrix(d, i) * velocity(d, j);
-                }
-
-        rOutput *= 0.5;
-
-        KRATOS_CATCH("")
-    }
-
     void AddDeviatoricReynoldsStressTensorNonLinearPart(
-        const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
         BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         KRATOS_TRY
@@ -611,7 +390,6 @@ private:
     }
 
     void AddDeviatoricReynoldsStressTensorLinearPart(
-        const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
         BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         KRATOS_TRY
@@ -619,7 +397,7 @@ private:
         IdentityMatrix mIdentity(TDim);
 
         BoundedMatrix<double, TDim, TDim> SymmetricVelGrad;
-        CalculateSymmetricVelocityGradient(rVelocity, SymmetricVelGrad);
+        CalculateSymmetricVelocityGradient(this->mVelocity, SymmetricVelGrad);
 
         rOutput += mTurbulentKinematicViscosity *
                    (SymmetricVelGrad -
@@ -628,8 +406,7 @@ private:
         KRATOS_CATCH("")
     }
 
-    void AddHydrostaticReynoldsStressTensor(const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
-                                            BoundedMatrix<double, TDim, TDim>& rOutput)
+    void AddHydrostaticReynoldsStressTensor(BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         KRATOS_TRY
 
@@ -641,7 +418,6 @@ private:
 
     void AddHydrostaticReynoldsStressTensorPrimalDerivative(
         const ShapeParameter& Deriv,
-        const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
         BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         KRATOS_TRY
@@ -651,7 +427,6 @@ private:
 
     void AddHydrostaticReynoldsStressTensorShapeDerivative(
         const ShapeParameter& Deriv,
-        const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
         BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         KRATOS_TRY
@@ -661,7 +436,6 @@ private:
 
     void AddDeviatoricReynoldsStressTensorNonLinearPartPrimalDerivative(
         const ShapeParameter& Deriv,
-        const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
         BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         KRATOS_TRY
@@ -671,7 +445,6 @@ private:
 
     void AddDeviatoricReynoldsStressTensorNonLinearPartShapeDerivative(
         const ShapeParameter& Deriv,
-        const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
         BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         KRATOS_TRY
@@ -681,7 +454,6 @@ private:
 
     void AddDeviatoricReynoldsStressTensorLinearPartPrimalDerivative(
         const ShapeParameter& Deriv,
-        const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
         BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         KRATOS_TRY
@@ -701,7 +473,6 @@ private:
 
     void AddDeviatoricReynoldsStressTensorLinearPartShapeDerivative(
         const ShapeParameter& Deriv,
-        const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
         BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         KRATOS_TRY

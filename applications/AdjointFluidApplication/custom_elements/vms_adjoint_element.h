@@ -1507,7 +1507,7 @@ protected:
 
     void FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) override
     {
-        // this->ProcessMatrices(rCurrentProcessInfo);
+        this->ProcessMatrices(rCurrentProcessInfo);
         // if (this->Id()== 4)
         // {
         //     double Area;
@@ -1525,12 +1525,12 @@ protected:
         //         array_1d< double, 3 > & rVel = this->GetGeometry()[i].FastGetSolutionStepValue(VELOCITY);
         //         for (unsigned int j = 0; j < TDim; ++j)
         //             velocity(i,j) = rVel[j];
-        //     }            
+        //     }
 
         //     Vector turbulent_coefficients = this->GetValue(REYNOLDS_STRESS_MODEL_COEFFICIENTS);
         //     ReynoldsStressTensor<TDim, TNumNodes> reynolds_stress_tensor_module(
         //             velocity, DN_DX, turbulent_coefficients, this->GetGeometry(),
-        //             1.0, 2.0, Density, Area);            
+        //             1.0, 2.0, Density, Area);
         //     reynolds_stress_tensor_module.test();
         // }
     }

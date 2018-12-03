@@ -22,6 +22,8 @@ cd $Work_Dir/plots/aoa/
 pdflatex -interaction=batchmode cl_aoa.tex > main_aoa_out.txt
 cd $Work_Dir/plots/condition_number/
 pdflatex -interaction=batchmode main_condition.tex > main_condition_out.txt
+cd $Work_Dir/plots/cl_error_domain_size/
+pdflatex -interaction=batchmode cl_domain.tex > cl_domain_out.txt
 
 #Copying results
 DIRECTORY=/media/inigo/10740FB2740F9A1C/Implementations_testing/05_MeshRefinement
@@ -30,5 +32,5 @@ mkdir -p ${DIRECTORY}_${DATE}_${GITBRANCH}_${OUTPUTNAME}
 mkdir -p ${DIRECTORY}_${DATE}_${GITBRANCH}_${OUTPUTNAME}/output_gid
 
 cp -r $Work_Dir/plots/ ${DIRECTORY}_${DATE}_${GITBRANCH}_${OUTPUTNAME}
-cp -r /media/inigo/10740FB2740F9A1C/Outputs/05_MeshRefinement/A* ${DIRECTORY}_${DATE}_${GITBRANCH}_${OUTPUTNAME}/output_gid
+cp -r /media/inigo/10740FB2740F9A1C/Outputs/05_MeshRefinement/* ${DIRECTORY}_${DATE}_${GITBRANCH}_${OUTPUTNAME}/output_gid
 

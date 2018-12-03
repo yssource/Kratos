@@ -28,6 +28,9 @@ python3 runSalome.py
 rm $Work_Dir/mdpas/*
 python3 use_converter.py
 
+#Save mdpas file in a copy
+source save_mdpas.sh
+
 cd ..
 
 #Run Kratos

@@ -8,14 +8,17 @@ rm -rf $Work_Dir/plots/condition_number/data/condition_*
 rm $Work_Dir/plots/condition_number/figures_condition.tex
 
 rm -rf $Work_Dir/plots/cp/data/AOA*
+rm -rf $Work_Dir/plots/cp/data/D*
 rm $Work_Dir/plots/cp/cp_*
 rm $Work_Dir/plots/cp/plots/*
 
 rm -rf $Work_Dir/plots/far_field/data/AOA*
+rm -rf $Work_Dir/plots/far_field/data/D*
 rm $Work_Dir/plots/far_field/far_field_*
 rm $Work_Dir/plots/far_field/plots/*
 
 rm -rf $Work_Dir/plots/potential_jump/data/AOA*
+rm -rf $Work_Dir/plots/potential_jump/data/D*
 rm $Work_Dir/plots/potential_jump/jump_*
 rm $Work_Dir/plots/potential_jump/plots/*
 

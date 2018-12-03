@@ -45,7 +45,7 @@ public:
 
     constexpr static unsigned int TCoordLocalSize = TDim * TNumNodes;
 
-    constexpr static double INV_TDIM = 1.0 / TDim;
+    constexpr static double INV_TDIM = 1.0 / 3.0;
 
     ReynoldsStressTensor(BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
                          BoundedMatrix<double, TNumNodes, TDim>& rIntegrationMatrix,
@@ -651,48 +651,58 @@ private:
     {
         KRATOS_TRY
 
-        IdentityMatrix mIdentity(TDim);
-        BoundedMatrix<double, TDim, TDim> temp;
+        BoundedMatrix<double, 3, 3> reynolds_stress_tensor;
 
-        BoundedMatrix<double, TDim, TDim> SymmetricVelGrad;
-        CalculateSymmetricVelocityGradient(rVelocity, SymmetricVelGrad);
-        BoundedMatrix<double, TDim, TDim> AntiSymmetricVelGrad;
-        CalculateAntiSymmetricVelocityGradient(rVelocity, AntiSymmetricVelGrad);
+        for (unsigned int i = 0; i <  3; i++)
+            for (unsigned int j = 0; j < 3; j++)
+                reynolds_stress_tensor(i,j) = mCoefficients[i*3 + j];
 
-        const double symmetric_frobenius_norm_square =
-            std::pow(norm_frobenius(SymmetricVelGrad), 2);
-        const double anti_symmetric_frobenius_norm_square =
-            std::pow(norm_frobenius(AntiSymmetricVelGrad), 2);
+        for (unsigned int i = 0; i < TDim; i++)
+            for (unsigned int j = 0; j < TDim; j++)
+                rOutput(i,j) += reynolds_stress_tensor(i,j);
 
-        double coefficient = mCoefficients[8] * std::pow(mCoefficients[0], 2);
-        rOutput -= coefficient * mCoefficients[1] *
-                   (prod(SymmetricVelGrad, SymmetricVelGrad) -
-                    INV_TDIM * symmetric_frobenius_norm_square * mIdentity);
-        rOutput -= coefficient * mCoefficients[2] * prod(AntiSymmetricVelGrad, SymmetricVelGrad);
-        rOutput += coefficient * mCoefficients[2] * prod(SymmetricVelGrad, AntiSymmetricVelGrad);
+        // The code for non-linear eddy viscosity turbulence modelling
+        // IdentityMatrix mIdentity(TDim);
+        // BoundedMatrix<double, TDim, TDim> temp;
 
-        rOutput -= coefficient * mCoefficients[3] *
-                   (prod(AntiSymmetricVelGrad, trans(AntiSymmetricVelGrad)) -
-                    INV_TDIM * anti_symmetric_frobenius_norm_square * mIdentity);
+        // BoundedMatrix<double, TDim, TDim> SymmetricVelGrad;
+        // CalculateSymmetricVelocityGradient(rVelocity, SymmetricVelGrad);
+        // BoundedMatrix<double, TDim, TDim> AntiSymmetricVelGrad;
+        // CalculateAntiSymmetricVelocityGradient(rVelocity, AntiSymmetricVelGrad);
 
-        coefficient = mCoefficients[8] * std::pow(mCoefficients[0], 3);
-        temp = prod(SymmetricVelGrad, AntiSymmetricVelGrad);
-        rOutput -= coefficient * mCoefficients[4] * prod(SymmetricVelGrad, temp);
-        temp = prod(SymmetricVelGrad, SymmetricVelGrad);
-        rOutput += coefficient * mCoefficients[4] * prod(AntiSymmetricVelGrad, temp);
+        // const double symmetric_frobenius_norm_square =
+        //     std::pow(norm_frobenius(SymmetricVelGrad), 2);
+        // const double anti_symmetric_frobenius_norm_square =
+        //     std::pow(norm_frobenius(AntiSymmetricVelGrad), 2);
 
-        temp = prod(AntiSymmetricVelGrad, AntiSymmetricVelGrad);
-        rOutput -= coefficient * mCoefficients[5] * prod(temp, SymmetricVelGrad);
-        rOutput += coefficient * mCoefficients[5] * (2 * INV_TDIM) *
-                   CalculateMatrixTrace(prod(temp, SymmetricVelGrad)) * mIdentity;
-        temp = prod(SymmetricVelGrad, AntiSymmetricVelGrad);
-        rOutput -= coefficient * mCoefficients[5] * prod(temp, AntiSymmetricVelGrad);
+        // double coefficient = mCoefficients[8] * std::pow(mCoefficients[0], 2);
+        // rOutput -= coefficient * mCoefficients[1] *
+        //            (prod(SymmetricVelGrad, SymmetricVelGrad) -
+        //             INV_TDIM * symmetric_frobenius_norm_square * mIdentity);
+        // rOutput -= coefficient * mCoefficients[2] * prod(AntiSymmetricVelGrad, SymmetricVelGrad);
+        // rOutput += coefficient * mCoefficients[2] * prod(SymmetricVelGrad, AntiSymmetricVelGrad);
 
-        rOutput -= coefficient *
-                   (mCoefficients[6] * symmetric_frobenius_norm_square +
-                    mCoefficients[7] * anti_symmetric_frobenius_norm_square) *
-                   (SymmetricVelGrad -
-                    INV_TDIM * CalculateMatrixTrace(SymmetricVelGrad) * mIdentity);
+        // rOutput -= coefficient * mCoefficients[3] *
+        //            (prod(AntiSymmetricVelGrad, trans(AntiSymmetricVelGrad)) -
+        //             INV_TDIM * anti_symmetric_frobenius_norm_square * mIdentity);
+
+        // coefficient = mCoefficients[8] * std::pow(mCoefficients[0], 3);
+        // temp = prod(SymmetricVelGrad, AntiSymmetricVelGrad);
+        // rOutput -= coefficient * mCoefficients[4] * prod(SymmetricVelGrad, temp);
+        // temp = prod(SymmetricVelGrad, SymmetricVelGrad);
+        // rOutput += coefficient * mCoefficients[4] * prod(AntiSymmetricVelGrad, temp);
+
+        // temp = prod(AntiSymmetricVelGrad, AntiSymmetricVelGrad);
+        // rOutput -= coefficient * mCoefficients[5] * prod(temp, SymmetricVelGrad);
+        // rOutput += coefficient * mCoefficients[5] * (2 * INV_TDIM) *
+        //            CalculateMatrixTrace(prod(temp, SymmetricVelGrad)) * mIdentity;
+        // temp = prod(SymmetricVelGrad, AntiSymmetricVelGrad);
+        // rOutput -= coefficient * mCoefficients[5] * prod(temp, AntiSymmetricVelGrad);
+
+        // rOutput -= coefficient *
+        //                        (mCoefficients[6] * symmetric_frobenius_norm_square +
+        //                         mCoefficients[7] * anti_symmetric_frobenius_norm_square) *
+        //     (SymmetricVelGrad - INV_TDIM * CalculateMatrixTrace(SymmetricVelGrad) * mIdentity);
 
         KRATOS_CATCH("")
     }

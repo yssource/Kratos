@@ -41,6 +41,20 @@ class AdjointVMSElement2D(KratosUnittest.TestCase):
         self.vms_element = self.model_part.GetElement(1)
         self.adjoint_element = self.model_part.GetElement(2)
 
+        coeffs = Vector(9)
+        for i in range(9):
+            coeffs[i] = random.random()
+        turbulent_kinematic_viscosity = random.random()
+        turbulent_kinetic_energy = random.random()
+
+        self.vms_element.SetValue(REYNOLDS_STRESS_MODEL_COEFFICIENTS, coeffs)
+        self.vms_element.SetValue(TURBULENT_KINETIC_ENERGY, turbulent_kinetic_energy)
+        self.vms_element.SetValue(TURBULENT_KINEMATIC_VISCOSITY, turbulent_kinematic_viscosity)
+
+        self.adjoint_element.SetValue(REYNOLDS_STRESS_MODEL_COEFFICIENTS, coeffs)
+        self.adjoint_element.SetValue(TURBULENT_KINETIC_ENERGY, turbulent_kinetic_energy)
+        self.adjoint_element.SetValue(TURBULENT_KINEMATIC_VISCOSITY, turbulent_kinematic_viscosity)
+
         self._AssignSolutionStepData1(0)
         self._AssignSolutionStepData2(1)
 

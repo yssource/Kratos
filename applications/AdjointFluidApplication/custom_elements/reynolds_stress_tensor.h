@@ -47,23 +47,26 @@ public:
 
     constexpr static double INV_TDIM = 1.0 / 3.0;
 
-    ReynoldsStressTensor(BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
-                         BoundedMatrix<double, TNumNodes, TDim>& rIntegrationMatrix,
-                         Vector& rCoefficients,
+    ReynoldsStressTensor(Vector& rCoefficients,
                          Geometry<Node<3>>& rGeometry,
                          double TurbulentKineticEnergy,
                          double TurbulentKinematicViscosity,
-                         double Density,
-                         double GaussPointWeight)
-        : mVelocity(rVelocity),
-          mIntegrationMatrix(rIntegrationMatrix),
-          mCoefficients(rCoefficients),
-          mGeometry(rGeometry)
+                         double Density)
+        : mCoefficients(rCoefficients), mGeometry(rGeometry)
     {
         mTurbulentKineticEnergy = TurbulentKineticEnergy;
         mTurbulentKinematicViscosity = TurbulentKinematicViscosity;
         mDensity = Density;
-        mGaussPointWeight = GaussPointWeight;
+
+        for (unsigned int i = 0; i < TNumNodes; ++i)
+        {
+            array_1d<double, 3>& rVel = mGeometry[i].FastGetSolutionStepValue(VELOCITY);
+            for (unsigned int j = 0; j < TDim; ++j)
+                mVelocity(i, j) = rVel[j];
+        }
+
+        array_1d<double, TNumNodes> N;
+        GeometryUtils::CalculateGeometryData(mGeometry, mIntegrationMatrix, N, mGaussPointWeight);
 
         KRATOS_ERROR_IF(mCoefficients.size() != 9)
             << "Non-linear eddy viscosity Reynold's stress model needs to have "
@@ -97,78 +100,24 @@ public:
 
         mCoefficients = coffs;
 
-        std::cout << "1.1" << std::endl;
         CalculateReynoldsStressTensor(matrix_0);
-        std::cout << "1.2" << std::endl;
         CalculateReynoldsStressTensorPrimalDerivative(Deriv, analytical_matrix_output);
-        std::cout << "1.3" << std::endl;
         mVelocity(Deriv.NodeIndex, Deriv.Direction) += delta;
-        std::cout << "1.4" << std::endl;
         CalculateReynoldsStressTensor(matrix_1);
-        std::cout << "1.5" << std::endl;
         mVelocity(Deriv.NodeIndex, Deriv.Direction) -= delta;
-        std::cout << "1.6" << std::endl;
         CalculateFDMatrixSensitivity(matrix_0, matrix_1, delta, matrix_fd);
-        std::cout << "1.7" << std::endl;
         AssertMatrices(analytical_matrix_output, matrix_fd);
-        std::cout << "1.8" << std::endl;
 
         array_1d<double, TNumNodes> N;
-        std::cout << "1.9" << std::endl;
         CalculateReynoldsStressTensorShapeDerivative(Deriv, analytical_matrix_output);
-        std::cout << "1.10" << std::endl;
         const double edge_length = mGeometry.MinEdgeLength() * 1e-8;
-        std::cout << "1.11" << std::endl;
         mGeometry[Deriv.NodeIndex].Coordinates()[Deriv.Direction] += edge_length;
-        std::cout << "1.12" << std::endl;
         GeometryUtils::CalculateGeometryData(mGeometry, mIntegrationMatrix, N, mGaussPointWeight);
-        std::cout << "1.13" << std::endl;
         CalculateReynoldsStressTensor(matrix_1);
-        std::cout << "1.14" << std::endl;
         mGeometry[Deriv.NodeIndex].Coordinates()[Deriv.Direction] -= edge_length;
-        std::cout << "1.15" << std::endl;
         CalculateFDMatrixSensitivity(matrix_0, matrix_1, edge_length, matrix_fd);
-        std::cout << "1.16" << std::endl;
         AssertMatrices(analytical_matrix_output, matrix_fd);
-        std::cout << "1.17" << std::endl;
 
-        // test sensitivity of symmetric gradient of velocity gradient
-        // CalculateSymmetricVelocityGradientShapeDerivative(Deriv, analytical_matrix_output);
-        // CalculateSymmetricVelocityGradient(velocity_0, matrix_0);
-        // auto& rGeom = mrCurrentElement.GetGeometry();
-        // double edge_length = rGeom.MinEdgeLength()*1e-8;
-        // rGeom[Deriv.NodeIndex].Coordinates()[Deriv.Direction] += edge_length;
-        // GeometryUtils::CalculateGeometryData(mrCurrentElement.GetGeometry(), mIntegrationMatrix, mN, mGaussPointWeight);
-        // CalculateSymmetricVelocityGradient(velocity_0, matrix_1);
-        // CalculateFDMatrixSensitivity(matrix_0, matrix_1, edge_length, matrix_fd);
-        // AssertMatrices(analytical_matrix_output, matrix_fd);
-
-        // CalculateAntiSymmetricVelocityGradientShapeDerivative(Deriv, analytical_matrix_output);
-        // CalculateAntiSymmetricVelocityGradient(velocity_0, matrix_0);
-        // auto& rGeom = mrCurrentElement.GetGeometry();
-        // double edge_length = rGeom.MinEdgeLength()*1e-8;
-        // rGeom[Deriv.NodeIndex].Coordinates()[Deriv.Direction] += edge_length;
-        // GeometryUtils::CalculateGeometryData(mrCurrentElement.GetGeometry(), mIntegrationMatrix, mN, mGaussPointWeight);
-        // CalculateAntiSymmetricVelocityGradient(velocity_0, matrix_1);
-        // CalculateFDMatrixSensitivity(matrix_0, matrix_1, edge_length, matrix_fd);
-        // AssertMatrices(analytical_matrix_output, matrix_fd);
-
-        // CalculateAntiSymmetricVelocityGradientPrimalDerivative(Deriv,
-        // analytical_matrix_output); CalculateAntiSymmetricVelocityGradient(velocity_0,
-        // matrix_0); CalculateAntiSymmetricVelocityGradient(velocity_1,
-        // matrix_1); CalculateFDMatrixSensitivity(matrix_0, matrix_1, delta,
-        // matrix_fd); AssertMatrices(analytical_matrix_output, matrix_fd);
-
-        // double norm_0_val = norm_frobenius(matrix_0);
-        // norm_0_val *= norm_0_val;
-        // double norm_1_val = norm_frobenius(matrix_1);
-        // norm_1_val *= norm_1_val;
-
-        // double fd_sensitivity = (norm_1_val - norm_0_val)/delta;
-        // double analytical_sensitivity;
-        // CalculateFrobeniusNormSquareDerivative(matrix_0, analytical_matrix_output, analytical_sensitivity);
-        // if (std::abs((analytical_sensitivity-fd_sensitivity)/fd_sensitivity) > 1e-3)
-        //     std::cout<<std::scientific<<fd_sensitivity<<", "<<analytical_sensitivity<<std::endl;
     }
 
     void CalculateFDMatrixSensitivity(const BoundedMatrix<double, TDim, TDim> matrix_0,
@@ -276,7 +225,7 @@ public:
 
         BoundedMatrix<double, TDim, TDim> reynolds_stress_tensor;
         reynolds_stress_tensor.clear();
-        AddHydrostaticReynoldsStressTensor(reynolds_stress_tensor);
+        AddHydrostaticReynoldsStressTensor(mVelocity, reynolds_stress_tensor);
         AddDeviatoricReynoldsStressTensorNonLinearPart(mVelocity, reynolds_stress_tensor);
 
         for (unsigned int a = 0; a < TNumNodes; ++a)
@@ -304,6 +253,8 @@ public:
         {
             for (unsigned int k = 0; k < TDim; ++k)
             {
+                Deriv.NodeIndex = c;
+                Deriv.Direction = k;
                 this->CalculateReynoldsStressTensorPrimalDerivative(
                     Deriv, ReynoldsStressTensorDerivative);
                 for (unsigned int a = 0; a < TNumNodes; ++a)
@@ -333,7 +284,7 @@ public:
         ShapeParameter Deriv;
         BoundedMatrix<double, TDim, TDim> ReynoldsStressTensorValue;
         BoundedMatrix<double, TDim, TDim> ReynoldsStressTensorDerivative;
-        Matrix DN_DX_Deriv;
+        Matrix DN_DX_Deriv(TNumNodes, TDim);
         double DetJ0_deriv;
 
         this->CalculateReynoldsStressTensor(ReynoldsStressTensorValue);
@@ -364,24 +315,12 @@ public:
                                      ReynoldsStressTensorValue(l, i) * mGaussPointWeight;
                         }
 
-                        rShapeDerivativesMatrix(r * TCoordLocalSize + m,
-                                                a * TBlockSize + i) += mDensity * valim;
+                        rShapeDerivativesMatrix(r * TDim + m,
+                                                a * TBlockSize + i) -= mDensity * valim;
                     }
                 }
             }
         }
-    }
-
-    void AddReynoldsStressTensorConditionVelocityContribution()
-    {
-    }
-
-    void AddReynoldsStressTensorPrimalDerivativeConditionContribution()
-    {
-    }
-
-    void AddReynoldsStressTensorShapeDerivativeConditionContribution()
-    {
     }
 
     void CalculateReynoldsStressTensor(BoundedMatrix<double, TDim, TDim>& rOutput)
@@ -389,28 +328,34 @@ public:
         rOutput.clear();
         AddDeviatoricReynoldsStressTensorLinearPart(mVelocity, rOutput);
         AddDeviatoricReynoldsStressTensorNonLinearPart(mVelocity, rOutput);
-        AddHydrostaticReynoldsStressTensor(rOutput);
+        AddHydrostaticReynoldsStressTensor(mVelocity, rOutput);
     }
 
     void CalculateReynoldsStressTensorPrimalDerivative(const ShapeParameter& Deriv,
                                                        BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         rOutput.clear();
-        CalculateReynoldsStressTensorPrimalDerivative(Deriv, mVelocity, rOutput);
+        AddDeviatoricReynoldsStressTensorLinearPartPrimalDerivative(Deriv, mVelocity, rOutput);
+        AddDeviatoricReynoldsStressTensorNonLinearPartPrimalDerivative(
+            Deriv, mVelocity, rOutput);
+        AddHydrostaticReynoldsStressTensorPrimalDerivative(Deriv, mVelocity, rOutput);
     }
 
     void CalculateReynoldsStressTensorShapeDerivative(const ShapeParameter& Deriv,
                                                       BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         rOutput.clear();
-        CalculateReynoldsStressTensorShapeDerivative(Deriv, mVelocity, rOutput);
+        AddDeviatoricReynoldsStressTensorLinearPartShapeDerivative(Deriv, mVelocity, rOutput);
+        AddDeviatoricReynoldsStressTensorNonLinearPartShapeDerivative(
+            Deriv, mVelocity, rOutput);
+        AddHydrostaticReynoldsStressTensorShapeDerivative(Deriv, mVelocity, rOutput);
     }
 
 private:
     ///@name Member Variables
     ///@{
-    BoundedMatrix<double, TNumNodes, TDim>& mVelocity;
-    BoundedMatrix<double, TNumNodes, TDim>& mIntegrationMatrix;
+    BoundedMatrix<double, TNumNodes, TDim> mVelocity;
+    BoundedMatrix<double, TNumNodes, TDim> mIntegrationMatrix;
     Vector& mCoefficients;
     Geometry<Node<3>>& mGeometry;
     double mDensity;
@@ -498,22 +443,23 @@ private:
     {
         KRATOS_TRY
 
-        const auto& r_geom = mGeometry;
+        const auto& rGeom = mGeometry;
 
-        const auto integration_method =
-            IntegrationUtilities::GetIntegrationMethodForExactMassMatrixEvaluation(r_geom);
+        Geometry<Point>::JacobiansType J;
+        rGeom.Jacobian(J, GeometryData::GI_GAUSS_1);
 
-        Matrix J0(TDim, TDim);
-        Matrix DN_DX0_deriv;
-        const auto& integration_points = r_geom.IntegrationPoints(integration_method);
+        Geometry<Point>::ShapeFunctionsGradientsType DN_De;
+        DN_De = rGeom.ShapeFunctionsLocalGradients(GeometryData::GI_GAUSS_1);
 
-        GeometryUtils::JacobianOnInitialConfiguration(
-            r_geom, integration_points[IntegrationPointIndex], J0);
-        const Matrix& rDN_De =
-            r_geom.ShapeFunctionsLocalGradients(integration_method)[IntegrationPointIndex];
+        GeometricalSensitivityUtility::ShapeFunctionsGradientType DN_DX_deriv;
 
-        GeometricalSensitivityUtility geometrical_sensitivity(J0, rDN_De);
-        geometrical_sensitivity.CalculateSensitivity(Deriv, rDetJ0_deriv, rDN_DX0_deriv);
+        const Matrix& rJ = J[0];
+        const Matrix& rDN_De = DN_De[0];
+
+        GeometricalSensitivityUtility geom_sensitivity(rJ, rDN_De);
+
+        KRATOS_WATCH(rDN_DX0_deriv);
+        geom_sensitivity.CalculateSensitivity(Deriv, rDetJ0_deriv, rDN_DX0_deriv);
 
         KRATOS_CATCH("")
     }
@@ -525,17 +471,17 @@ private:
 
         rOutput.clear();
 
-        Matrix rDN_DX0_deriv;
+        Matrix DN_DX0_deriv(TNumNodes, TDim);
         double DetJ0_deriv;
-        CalculateShapeFunctionDerivativeShapeDerivatives(0, Deriv, DetJ0_deriv, rDN_DX0_deriv);
+        CalculateShapeFunctionDerivativeShapeDerivatives(0, Deriv, DetJ0_deriv, DN_DX0_deriv);
 
         for (unsigned int i = 0; i < TDim; i++)
             for (unsigned int j = 0; j < TDim; j++)
             {
                 for (unsigned int d = 0; d < TNumNodes; d++)
                 {
-                    rOutput(i, j) += mVelocity(d, i) * rDN_DX0_deriv(d, j);
-                    rOutput(i, j) += mVelocity(d, j) * rDN_DX0_deriv(d, i);
+                    rOutput(i, j) += mVelocity(d, i) * DN_DX0_deriv(d, j);
+                    rOutput(i, j) += mVelocity(d, j) * DN_DX0_deriv(d, i);
                 }
             }
 
@@ -551,17 +497,17 @@ private:
 
         rOutput.clear();
 
-        Matrix rDN_DX0_deriv;
+        Matrix DN_DX0_deriv(TNumNodes, TDim);
         double DetJ0_deriv;
-        CalculateShapeFunctionDerivativeShapeDerivatives(0, Deriv, DetJ0_deriv, rDN_DX0_deriv);
+        CalculateShapeFunctionDerivativeShapeDerivatives(0, Deriv, DetJ0_deriv, DN_DX0_deriv);
 
         for (unsigned int i = 0; i < TDim; i++)
             for (unsigned int j = 0; j < TDim; j++)
             {
                 for (unsigned int d = 0; d < TNumNodes; d++)
                 {
-                    rOutput(i, j) += mVelocity(d, i) * rDN_DX0_deriv(d, j);
-                    rOutput(i, j) -= mVelocity(d, j) * rDN_DX0_deriv(d, i);
+                    rOutput(i, j) += mVelocity(d, i) * DN_DX0_deriv(d, j);
+                    rOutput(i, j) -= mVelocity(d, j) * DN_DX0_deriv(d, i);
                 }
             }
 
@@ -653,56 +599,13 @@ private:
 
         BoundedMatrix<double, 3, 3> reynolds_stress_tensor;
 
-        for (unsigned int i = 0; i <  3; i++)
+        for (unsigned int i = 0; i < 3; i++)
             for (unsigned int j = 0; j < 3; j++)
-                reynolds_stress_tensor(i,j) = mCoefficients[i*3 + j];
+                reynolds_stress_tensor(i, j) = mCoefficients[i * 3 + j];
 
         for (unsigned int i = 0; i < TDim; i++)
             for (unsigned int j = 0; j < TDim; j++)
-                rOutput(i,j) += reynolds_stress_tensor(i,j);
-
-        // The code for non-linear eddy viscosity turbulence modelling
-        // IdentityMatrix mIdentity(TDim);
-        // BoundedMatrix<double, TDim, TDim> temp;
-
-        // BoundedMatrix<double, TDim, TDim> SymmetricVelGrad;
-        // CalculateSymmetricVelocityGradient(rVelocity, SymmetricVelGrad);
-        // BoundedMatrix<double, TDim, TDim> AntiSymmetricVelGrad;
-        // CalculateAntiSymmetricVelocityGradient(rVelocity, AntiSymmetricVelGrad);
-
-        // const double symmetric_frobenius_norm_square =
-        //     std::pow(norm_frobenius(SymmetricVelGrad), 2);
-        // const double anti_symmetric_frobenius_norm_square =
-        //     std::pow(norm_frobenius(AntiSymmetricVelGrad), 2);
-
-        // double coefficient = mCoefficients[8] * std::pow(mCoefficients[0], 2);
-        // rOutput -= coefficient * mCoefficients[1] *
-        //            (prod(SymmetricVelGrad, SymmetricVelGrad) -
-        //             INV_TDIM * symmetric_frobenius_norm_square * mIdentity);
-        // rOutput -= coefficient * mCoefficients[2] * prod(AntiSymmetricVelGrad, SymmetricVelGrad);
-        // rOutput += coefficient * mCoefficients[2] * prod(SymmetricVelGrad, AntiSymmetricVelGrad);
-
-        // rOutput -= coefficient * mCoefficients[3] *
-        //            (prod(AntiSymmetricVelGrad, trans(AntiSymmetricVelGrad)) -
-        //             INV_TDIM * anti_symmetric_frobenius_norm_square * mIdentity);
-
-        // coefficient = mCoefficients[8] * std::pow(mCoefficients[0], 3);
-        // temp = prod(SymmetricVelGrad, AntiSymmetricVelGrad);
-        // rOutput -= coefficient * mCoefficients[4] * prod(SymmetricVelGrad, temp);
-        // temp = prod(SymmetricVelGrad, SymmetricVelGrad);
-        // rOutput += coefficient * mCoefficients[4] * prod(AntiSymmetricVelGrad, temp);
-
-        // temp = prod(AntiSymmetricVelGrad, AntiSymmetricVelGrad);
-        // rOutput -= coefficient * mCoefficients[5] * prod(temp, SymmetricVelGrad);
-        // rOutput += coefficient * mCoefficients[5] * (2 * INV_TDIM) *
-        //            CalculateMatrixTrace(prod(temp, SymmetricVelGrad)) * mIdentity;
-        // temp = prod(SymmetricVelGrad, AntiSymmetricVelGrad);
-        // rOutput -= coefficient * mCoefficients[5] * prod(temp, AntiSymmetricVelGrad);
-
-        // rOutput -= coefficient *
-        //                        (mCoefficients[6] * symmetric_frobenius_norm_square +
-        //                         mCoefficients[7] * anti_symmetric_frobenius_norm_square) *
-        //     (SymmetricVelGrad - INV_TDIM * CalculateMatrixTrace(SymmetricVelGrad) * mIdentity);
+                rOutput(i, j) += reynolds_stress_tensor(i, j);
 
         KRATOS_CATCH("")
     }
@@ -725,18 +628,58 @@ private:
         KRATOS_CATCH("")
     }
 
-    void AddHydrostaticReynoldsStressTensor(BoundedMatrix<double, TDim, TDim>& rOutput)
+    void AddHydrostaticReynoldsStressTensor(const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
+                                            BoundedMatrix<double, TDim, TDim>& rOutput)
     {
         KRATOS_TRY
 
         IdentityMatrix mIdentity(TDim);
-
         rOutput -= 2 * INV_TDIM * mTurbulentKineticEnergy * mIdentity;
 
         KRATOS_CATCH("")
     }
 
-    void CalculateReynoldsStressTensorPrimalDerivative(
+    void AddHydrostaticReynoldsStressTensorPrimalDerivative(
+        const ShapeParameter& Deriv,
+        const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
+        BoundedMatrix<double, TDim, TDim>& rOutput)
+    {
+        KRATOS_TRY
+        // Nothing to add, since hydro static part of the reynolds stress tensor is constant
+        KRATOS_CATCH("")
+    }
+
+    void AddHydrostaticReynoldsStressTensorShapeDerivative(
+        const ShapeParameter& Deriv,
+        const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
+        BoundedMatrix<double, TDim, TDim>& rOutput)
+    {
+        KRATOS_TRY
+        // Nothing to add, since hydro static part of the reynolds stress tensor is constant
+        KRATOS_CATCH("")
+    }
+
+    void AddDeviatoricReynoldsStressTensorNonLinearPartPrimalDerivative(
+        const ShapeParameter& Deriv,
+        const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
+        BoundedMatrix<double, TDim, TDim>& rOutput)
+    {
+        KRATOS_TRY
+        // Nothing to add, since non-linear part of the reynolds stress tensor is constant
+        KRATOS_CATCH("")
+    }
+
+    void AddDeviatoricReynoldsStressTensorNonLinearPartShapeDerivative(
+        const ShapeParameter& Deriv,
+        const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
+        BoundedMatrix<double, TDim, TDim>& rOutput)
+    {
+        KRATOS_TRY
+        // Nothing to add, since non-linear part of the reynolds stress tensor is constant
+        KRATOS_CATCH("")
+    }
+
+    void AddDeviatoricReynoldsStressTensorLinearPartPrimalDerivative(
         const ShapeParameter& Deriv,
         const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
         BoundedMatrix<double, TDim, TDim>& rOutput)
@@ -744,98 +687,19 @@ private:
         KRATOS_TRY
 
         IdentityMatrix mIdentity(TDim);
-        BoundedMatrix<double, TDim, TDim> temp;
 
-        rOutput.clear();
+        BoundedMatrix<double, TDim, TDim> SymmetricVelGradPrimalDerivative;
+        CalculateSymmetricVelocityGradientPrimalDerivative(
+            Deriv, SymmetricVelGradPrimalDerivative);
 
-        BoundedMatrix<double, TDim, TDim> SymmetricVelGrad;
-        CalculateSymmetricVelocityGradient(rVelocity, SymmetricVelGrad);
-        BoundedMatrix<double, TDim, TDim> AntiSymmetricVelGrad;
-        CalculateAntiSymmetricVelocityGradient(rVelocity, AntiSymmetricVelGrad);
-        BoundedMatrix<double, TDim, TDim> SymmetricVelGradDerivative;
-        CalculateSymmetricVelocityGradientPrimalDerivative(Deriv, SymmetricVelGradDerivative);
-        BoundedMatrix<double, TDim, TDim> AntiSymmetricVelGradDerivative;
-        CalculateAntiSymmetricVelocityGradientPrimalDerivative(
-            Deriv, AntiSymmetricVelGradDerivative);
-
-        const double symmetric_frobenius_norm_square =
-            std::pow(norm_frobenius(SymmetricVelGrad), 2);
-        const double anti_symmetric_frobenius_norm_square =
-            std::pow(norm_frobenius(AntiSymmetricVelGrad), 2);
-        const double symmetric_frobenius_norm_square_derivative =
-            CalculateFrobeniusNormSquareDerivative(SymmetricVelGrad, SymmetricVelGradDerivative);
-        const double anti_symmetric_frobenius_norm_square_derivative =
-            CalculateFrobeniusNormSquareDerivative(
-                AntiSymmetricVelGrad, AntiSymmetricVelGradDerivative);
-
-        double coefficient = -mCoefficients[8] * mCoefficients[0];
-
-        rOutput +=
-            (coefficient - coefficient * std::pow(mCoefficients[0], 2) *
-                               (mCoefficients[6] * symmetric_frobenius_norm_square +
-                                mCoefficients[7] * anti_symmetric_frobenius_norm_square)) *
-            (SymmetricVelGradDerivative -
-             INV_TDIM * mIntegrationMatrix(Deriv.NodeIndex, Deriv.Direction) * mIdentity);
-        temp = SymmetricVelGrad - INV_TDIM * CalculateMatrixTrace(SymmetricVelGrad) * mIdentity;
-        rOutput -= coefficient * std::pow(mCoefficients[0], 2) * mCoefficients[6] *
-                   symmetric_frobenius_norm_square_derivative * temp;
-        rOutput -= coefficient * std::pow(mCoefficients[0], 2) * mCoefficients[7] *
-                   anti_symmetric_frobenius_norm_square_derivative * temp;
-
-        coefficient = mCoefficients[8] * std::pow(mCoefficients[0], 2);
-
-        CalculateTwoMatrixProductDerivative(
-            SymmetricVelGrad, SymmetricVelGradDerivative, SymmetricVelGrad,
-            SymmetricVelGradDerivative, temp);
-        rOutput += coefficient * mCoefficients[1] *
-                   (temp - INV_TDIM * symmetric_frobenius_norm_square_derivative * mIdentity);
-
-        CalculateTwoMatrixProductDerivative(
-            AntiSymmetricVelGrad, AntiSymmetricVelGradDerivative,
-            SymmetricVelGrad, SymmetricVelGradDerivative, temp);
-        rOutput += coefficient * mCoefficients[2] * (temp);
-        CalculateTwoMatrixProductDerivative(
-            SymmetricVelGrad, SymmetricVelGradDerivative, AntiSymmetricVelGrad,
-            AntiSymmetricVelGradDerivative, temp);
-        rOutput -= coefficient * mCoefficients[2] * (temp);
-
-        CalculateTwoMatrixProductDerivative(
-            AntiSymmetricVelGrad, AntiSymmetricVelGradDerivative,
-            -AntiSymmetricVelGrad, -AntiSymmetricVelGradDerivative, temp);
-        rOutput += coefficient * mCoefficients[3] *
-                   (temp - INV_TDIM * anti_symmetric_frobenius_norm_square_derivative * mIdentity);
-
-        coefficient = mCoefficients[8] * std::pow(mCoefficients[0], 3);
-        CalculateThreeMatrixProductDerivative(
-            SymmetricVelGrad, SymmetricVelGradDerivative, SymmetricVelGrad,
-            SymmetricVelGradDerivative, AntiSymmetricVelGrad,
-            AntiSymmetricVelGradDerivative, temp);
-        rOutput += coefficient * mCoefficients[4] * (temp);
-        CalculateThreeMatrixProductDerivative(
-            AntiSymmetricVelGrad, AntiSymmetricVelGradDerivative,
-            SymmetricVelGrad, SymmetricVelGradDerivative, SymmetricVelGrad,
-            SymmetricVelGradDerivative, temp);
-        rOutput -= coefficient * mCoefficients[4] * (temp);
-
-        CalculateThreeMatrixProductDerivative(
-            AntiSymmetricVelGrad, AntiSymmetricVelGradDerivative,
-            AntiSymmetricVelGrad, AntiSymmetricVelGradDerivative,
-            SymmetricVelGrad, SymmetricVelGradDerivative, temp);
-        rOutput += coefficient * mCoefficients[5] * (temp);
-        rOutput -= coefficient * mCoefficients[5] * 2 * INV_TDIM *
-                   CalculateMatrixTrace(temp) * mIdentity;
-        CalculateThreeMatrixProductDerivative(
-            SymmetricVelGrad, SymmetricVelGradDerivative, AntiSymmetricVelGrad,
-            AntiSymmetricVelGradDerivative, AntiSymmetricVelGrad,
-            AntiSymmetricVelGradDerivative, temp);
-        rOutput += coefficient * mCoefficients[5] * (temp);
-
-        rOutput *= -1.0;
+        rOutput += mTurbulentKinematicViscosity *
+                   (SymmetricVelGradPrimalDerivative -
+                    INV_TDIM * CalculateMatrixTrace(SymmetricVelGradPrimalDerivative) * mIdentity);
 
         KRATOS_CATCH("")
     }
 
-    void CalculateReynoldsStressTensorShapeDerivative(
+    void AddDeviatoricReynoldsStressTensorLinearPartShapeDerivative(
         const ShapeParameter& Deriv,
         const BoundedMatrix<double, TNumNodes, TDim>& rVelocity,
         BoundedMatrix<double, TDim, TDim>& rOutput)
@@ -843,92 +707,13 @@ private:
         KRATOS_TRY
 
         IdentityMatrix mIdentity(TDim);
-        BoundedMatrix<double, TDim, TDim> temp;
 
-        rOutput.clear();
+        BoundedMatrix<double, TDim, TDim> SymmetricVelGradShapeDerivative;
+        CalculateSymmetricVelocityGradientShapeDerivative(Deriv, SymmetricVelGradShapeDerivative);
 
-        BoundedMatrix<double, TDim, TDim> SymmetricVelGrad;
-        CalculateSymmetricVelocityGradient(rVelocity, SymmetricVelGrad);
-        BoundedMatrix<double, TDim, TDim> AntiSymmetricVelGrad;
-        CalculateAntiSymmetricVelocityGradient(rVelocity, AntiSymmetricVelGrad);
-        BoundedMatrix<double, TDim, TDim> SymmetricVelGradDerivative;
-        CalculateSymmetricVelocityGradientShapeDerivative(Deriv, SymmetricVelGradDerivative);
-        BoundedMatrix<double, TDim, TDim> AntiSymmetricVelGradDerivative;
-        CalculateAntiSymmetricVelocityGradientShapeDerivative(
-            Deriv, AntiSymmetricVelGradDerivative);
-
-        const double symmetric_frobenius_norm_square =
-            std::pow(norm_frobenius(SymmetricVelGrad), 2);
-        const double anti_symmetric_frobenius_norm_square =
-            std::pow(norm_frobenius(AntiSymmetricVelGrad), 2);
-        const double symmetric_frobenius_norm_square_derivative =
-            CalculateFrobeniusNormSquareDerivative(SymmetricVelGrad, SymmetricVelGradDerivative);
-        const double anti_symmetric_frobenius_norm_square_derivative =
-            CalculateFrobeniusNormSquareDerivative(
-                AntiSymmetricVelGrad, AntiSymmetricVelGradDerivative);
-
-        double coefficient = -mCoefficients[8] * mCoefficients[0];
-        rOutput +=
-            (coefficient - coefficient * std::pow(mCoefficients[0], 2) *
-                               (mCoefficients[6] * symmetric_frobenius_norm_square +
-                                mCoefficients[7] * anti_symmetric_frobenius_norm_square)) *
-            (SymmetricVelGradDerivative -
-             INV_TDIM * CalculateMatrixTrace(SymmetricVelGradDerivative) * mIdentity);
-        temp = SymmetricVelGrad - INV_TDIM * CalculateMatrixTrace(SymmetricVelGrad) * mIdentity;
-        rOutput -= coefficient * std::pow(mCoefficients[0], 2) * mCoefficients[6] *
-                   symmetric_frobenius_norm_square_derivative * temp;
-        rOutput -= coefficient * std::pow(mCoefficients[0], 2) * mCoefficients[7] *
-                   anti_symmetric_frobenius_norm_square_derivative * temp;
-
-        coefficient = mCoefficients[8] * std::pow(mCoefficients[0], 2);
-
-        CalculateTwoMatrixProductDerivative(
-            SymmetricVelGrad, SymmetricVelGradDerivative, SymmetricVelGrad,
-            SymmetricVelGradDerivative, temp);
-        rOutput += coefficient * mCoefficients[1] *
-                   (temp - INV_TDIM * symmetric_frobenius_norm_square_derivative * mIdentity);
-
-        CalculateTwoMatrixProductDerivative(
-            AntiSymmetricVelGrad, AntiSymmetricVelGradDerivative,
-            SymmetricVelGrad, SymmetricVelGradDerivative, temp);
-        rOutput += coefficient * mCoefficients[2] * (temp);
-        CalculateTwoMatrixProductDerivative(
-            SymmetricVelGrad, SymmetricVelGradDerivative, AntiSymmetricVelGrad,
-            AntiSymmetricVelGradDerivative, temp);
-        rOutput -= coefficient * mCoefficients[2] * (temp);
-
-        CalculateTwoMatrixProductDerivative(
-            AntiSymmetricVelGrad, AntiSymmetricVelGradDerivative,
-            -AntiSymmetricVelGrad, -AntiSymmetricVelGradDerivative, temp);
-        rOutput += coefficient * mCoefficients[3] *
-                   (temp - INV_TDIM * anti_symmetric_frobenius_norm_square_derivative * mIdentity);
-
-        coefficient = mCoefficients[8] * std::pow(mCoefficients[0], 3);
-        CalculateThreeMatrixProductDerivative(
-            SymmetricVelGrad, SymmetricVelGradDerivative, SymmetricVelGrad,
-            SymmetricVelGradDerivative, AntiSymmetricVelGrad,
-            AntiSymmetricVelGradDerivative, temp);
-        rOutput += coefficient * mCoefficients[4] * (temp);
-        CalculateThreeMatrixProductDerivative(
-            AntiSymmetricVelGrad, AntiSymmetricVelGradDerivative,
-            SymmetricVelGrad, SymmetricVelGradDerivative, SymmetricVelGrad,
-            SymmetricVelGradDerivative, temp);
-        rOutput -= coefficient * mCoefficients[4] * (temp);
-
-        CalculateThreeMatrixProductDerivative(
-            AntiSymmetricVelGrad, AntiSymmetricVelGradDerivative,
-            AntiSymmetricVelGrad, AntiSymmetricVelGradDerivative,
-            SymmetricVelGrad, SymmetricVelGradDerivative, temp);
-        rOutput += coefficient * mCoefficients[5] * (temp);
-        rOutput -= coefficient * mCoefficients[5] * 2 * INV_TDIM *
-                   CalculateMatrixTrace(temp) * mIdentity;
-        CalculateThreeMatrixProductDerivative(
-            SymmetricVelGrad, SymmetricVelGradDerivative, AntiSymmetricVelGrad,
-            AntiSymmetricVelGradDerivative, AntiSymmetricVelGrad,
-            AntiSymmetricVelGradDerivative, temp);
-        rOutput += coefficient * mCoefficients[5] * (temp);
-
-        rOutput *= (-1.0);
+        rOutput += mTurbulentKinematicViscosity *
+                   (SymmetricVelGradShapeDerivative -
+                    INV_TDIM * CalculateMatrixTrace(SymmetricVelGradShapeDerivative) * mIdentity);
 
         KRATOS_CATCH("")
     }

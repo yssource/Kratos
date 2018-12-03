@@ -1054,6 +1054,13 @@ protected:
         // Viscous term
         this->AddViscousTerm(rAdjointMatrix,DN_DX,Viscosity * Volume);
 
+        // Adding Reynold's Stress Tensor contributions
+        Vector turbulent_coefficients = this->GetValue(REYNOLDS_STRESS_MODEL_COEFFICIENTS);
+        ReynoldsStressTensor<TDim, TNumNodes> reynolds_stress_tensor_module(
+            turbulent_coefficients, this->GetGeometry(),
+            this->GetValue(TURBULENT_KINETIC_ENERGY), this->GetValue(TURBULENT_KINEMATIC_VISCOSITY), Density);
+        reynolds_stress_tensor_module.AddReynoldsStressTensorPrimalDerivativeContributionLHS(rAdjointMatrix, rCurrentProcessInfo);
+
         // change the sign for consistency with definition
         noalias(rAdjointMatrix) = -rAdjointMatrix;
 
@@ -1305,6 +1312,13 @@ protected:
                 rShapeDerivativesMatrix(iCoord,k) = ResidualDerivative[k];
         }
 
+        // Adding Reynold's Stress Tensor contributions
+        Vector turbulent_coefficients = this->GetValue(REYNOLDS_STRESS_MODEL_COEFFICIENTS);
+        ReynoldsStressTensor<TDim, TNumNodes> reynolds_stress_tensor_module(
+            turbulent_coefficients, this->GetGeometry(),
+            this->GetValue(TURBULENT_KINETIC_ENERGY), this->GetValue(TURBULENT_KINEMATIC_VISCOSITY), Density);
+        reynolds_stress_tensor_module.AddReynoldsStressTensorShapeDerivativeContribution(rShapeDerivativesMatrix, rCurrentProcessInfo);
+
         KRATOS_CATCH("")
     }
 
@@ -1507,7 +1521,7 @@ protected:
 
     void FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) override
     {
-        this->ProcessMatrices(rCurrentProcessInfo);
+        // this->ProcessMatrices(rCurrentProcessInfo);
         // if (this->Id()== 4)
         // {
         //     double Area;
@@ -1519,18 +1533,10 @@ protected:
         //     double Density;
         //     this->EvaluateInPoint(Density, DENSITY, N);
 
-        //     BoundedMatrix<double, TNumNodes, TDim> velocity;
-        //     for (unsigned int i = 0; i < TNumNodes; ++i)
-        //     {
-        //         array_1d< double, 3 > & rVel = this->GetGeometry()[i].FastGetSolutionStepValue(VELOCITY);
-        //         for (unsigned int j = 0; j < TDim; ++j)
-        //             velocity(i,j) = rVel[j];
-        //     }
-
         //     Vector turbulent_coefficients = this->GetValue(REYNOLDS_STRESS_MODEL_COEFFICIENTS);
         //     ReynoldsStressTensor<TDim, TNumNodes> reynolds_stress_tensor_module(
-        //             velocity, DN_DX, turbulent_coefficients, this->GetGeometry(),
-        //             1.0, 2.0, Density, Area);
+        //             turbulent_coefficients, this->GetGeometry(),
+        //             31.0, 2.0, Density);
         //     reynolds_stress_tensor_module.test();
         // }
     }

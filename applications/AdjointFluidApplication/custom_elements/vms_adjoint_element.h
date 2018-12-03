@@ -1522,23 +1522,6 @@ protected:
     void FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) override
     {
         // this->ProcessMatrices(rCurrentProcessInfo);
-        // if (this->Id()== 4)
-        // {
-        //     double Area;
-        //     array_1d<double, TNumNodes> N;
-        //     BoundedMatrix<double, TNumNodes, TDim> DN_DX;
-        //     GeometryUtils::CalculateGeometryData(this->GetGeometry(), DN_DX, N, Area);
-
-        //     // Calculate this element's fluid properties
-        //     double Density;
-        //     this->EvaluateInPoint(Density, DENSITY, N);
-
-        //     Vector turbulent_coefficients = this->GetValue(REYNOLDS_STRESS_MODEL_COEFFICIENTS);
-        //     ReynoldsStressTensor<TDim, TNumNodes> reynolds_stress_tensor_module(
-        //             turbulent_coefficients, this->GetGeometry(),
-        //             31.0, 2.0, Density);
-        //     reynolds_stress_tensor_module.test();
-        // }
     }
 
 private:

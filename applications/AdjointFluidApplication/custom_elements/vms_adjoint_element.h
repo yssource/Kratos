@@ -1316,8 +1316,10 @@ protected:
         Vector turbulent_coefficients = this->GetValue(REYNOLDS_STRESS_MODEL_COEFFICIENTS);
         ReynoldsStressTensor<TDim, TNumNodes> reynolds_stress_tensor_module(
             turbulent_coefficients, this->GetGeometry(),
-            this->GetValue(TURBULENT_KINETIC_ENERGY), this->GetValue(TURBULENT_KINEMATIC_VISCOSITY), Density);
-        reynolds_stress_tensor_module.AddReynoldsStressTensorShapeDerivativeContribution(rShapeDerivativesMatrix, rCurrentProcessInfo);
+            this->GetValue(TURBULENT_KINETIC_ENERGY),
+            this->GetValue(TURBULENT_KINEMATIC_VISCOSITY), Density);
+        reynolds_stress_tensor_module.AddReynoldsStressTensorShapeDerivativeContribution(
+            rShapeDerivativesMatrix, rCurrentProcessInfo);
 
         KRATOS_CATCH("")
     }

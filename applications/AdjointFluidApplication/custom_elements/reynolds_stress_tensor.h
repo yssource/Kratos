@@ -128,8 +128,8 @@ public:
 
         BoundedMatrix<double, TDim, TDim> reynolds_stress_tensor;
         reynolds_stress_tensor.clear();
-        // AddHydrostaticReynoldsStressTensor(reynolds_stress_tensor);
-        // AddDeviatoricReynoldsStressTensorNonLinearPart(reynolds_stress_tensor);
+        AddHydrostaticReynoldsStressTensor(reynolds_stress_tensor);
+        AddDeviatoricReynoldsStressTensorNonLinearPart(reynolds_stress_tensor);
 
         for (unsigned int a = 0; a < TNumNodes; ++a)
         {
@@ -239,9 +239,9 @@ public:
     {
         rOutput.clear();
         AddDeviatoricReynoldsStressTensorLinearPartPrimalDerivative(Deriv, rOutput);
-        // AddDeviatoricReynoldsStressTensorNonLinearPartPrimalDerivative(
-        //     Deriv, rOutput);
-        // AddHydrostaticReynoldsStressTensorPrimalDerivative(Deriv, rOutput);
+        AddDeviatoricReynoldsStressTensorNonLinearPartPrimalDerivative(
+            Deriv, rOutput);
+        AddHydrostaticReynoldsStressTensorPrimalDerivative(Deriv, rOutput);
     }
 
     void CalculateReynoldsStressTensorShapeDerivative(const ShapeParameter& Deriv,
@@ -249,9 +249,9 @@ public:
     {
         rOutput.clear();
         AddDeviatoricReynoldsStressTensorLinearPartShapeDerivative(Deriv, rOutput);
-        // AddDeviatoricReynoldsStressTensorNonLinearPartShapeDerivative(
-        //     Deriv, rOutput);
-        // AddHydrostaticReynoldsStressTensorShapeDerivative(Deriv, rOutput);
+        AddDeviatoricReynoldsStressTensorNonLinearPartShapeDerivative(
+            Deriv, rOutput);
+        AddHydrostaticReynoldsStressTensorShapeDerivative(Deriv, rOutput);
     }
 
 private:

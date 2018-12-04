@@ -58,11 +58,11 @@ class AdjointVMSElement2D(KratosUnittest.TestCase):
         residual = reynolds_stress_tensor - (turbulent_kinematic_viscosity * symmetric_velocity_gradient - (2.0/3.0) * turbulent_kinetic_energy * numpy.eye(3) + deviatoric_non_linear_reynolds_stress_tensor)
         numpy.testing.assert_almost_equal(numpy.linalg.norm(residual), 0.0)
 
-        reynolds_stress_model_coefficients = Vector(9)
+        reynolds_stress_model_coefficients = self._zeroVector(9)
         deviatoric_non_linear_reynolds_stress_tensor = list(deviatoric_non_linear_reynolds_stress_tensor.ravel())
         for i in range(9):
             reynolds_stress_model_coefficients[i] = deviatoric_non_linear_reynolds_stress_tensor[i]
-        
+
         self.vms_element.SetValue(REYNOLDS_STRESS_MODEL_COEFFICIENTS, reynolds_stress_model_coefficients)
         self.vms_element.SetValue(TURBULENT_KINETIC_ENERGY, turbulent_kinetic_energy)
         self.vms_element.SetValue(TURBULENT_KINEMATIC_VISCOSITY, turbulent_kinematic_viscosity)
@@ -256,10 +256,11 @@ class AdjointVMSElement2D(KratosUnittest.TestCase):
         SecondDerivatives = Vector(9)
         self.model_part.ProcessInfo[DELTA_TIME] = self.delta_time
         self.vms_element.CalculateMassMatrix(Mass,self.model_part.ProcessInfo)
+        self.vms_element.CalculateLocalSystem(LHS,RHS,self.model_part.ProcessInfo)
         self.vms_element.CalculateLocalVelocityContribution(LHS,RHS,self.model_part.ProcessInfo)
         self.vms_element.GetFirstDerivativesVector(FirstDerivatives,0)
         self.vms_element.GetSecondDerivativesVector(SecondDerivatives,0)
-        res0 = LHS * FirstDerivatives + Mass * SecondDerivatives
+        res0 = -1.0*RHS + Mass * SecondDerivatives
         # finite difference approximation
         h = 0.00000001
         FDShapeDerivativeMatrix = Matrix(6,9)
@@ -269,9 +270,10 @@ class AdjointVMSElement2D(KratosUnittest.TestCase):
             x = node.X
             node.X = x+h
             self.vms_element.CalculateMassMatrix(Mass,self.model_part.ProcessInfo)
+            self.vms_element.CalculateLocalSystem(LHS,RHS,self.model_part.ProcessInfo)
             self.vms_element.CalculateLocalVelocityContribution(LHS,RHS,self.model_part.ProcessInfo)
             node.X = x
-            res = LHS * FirstDerivatives + Mass * SecondDerivatives
+            res = -1.0*RHS + Mass * SecondDerivatives
             for j in range(9):
                 FDShapeDerivativeMatrix[row_index,j] = -(res[j] - res0[j]) / h
             row_index = row_index + 1
@@ -279,9 +281,10 @@ class AdjointVMSElement2D(KratosUnittest.TestCase):
             y = node.Y
             node.Y = y+h
             self.vms_element.CalculateMassMatrix(Mass,self.model_part.ProcessInfo)
+            self.vms_element.CalculateLocalSystem(LHS,RHS,self.model_part.ProcessInfo)
             self.vms_element.CalculateLocalVelocityContribution(LHS,RHS,self.model_part.ProcessInfo)
             node.Y = y
-            res = LHS * FirstDerivatives + Mass * SecondDerivatives
+            res = -1.0*RHS + Mass * SecondDerivatives
             for j in range(9):
                 FDShapeDerivativeMatrix[row_index,j] = -(res[j] - res0[j]) / h
             row_index = row_index + 1

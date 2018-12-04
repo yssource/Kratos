@@ -308,12 +308,12 @@ class PfemFluidSolver:
         self.fluid_solver.Initialize()
 
     def InitializeSolutionStep(self):
-        #self.fluid_solver.InitializeSolutionStep()
+        #TODO: this should only be called when doing PFEM-DEM
+        self.fluid_solver.InitializeSolutionStep()
 
         #adaptive_time_interval = KratosPfemFluid.AdaptiveTimeIntervalProcess(self.main_model_part,self.settings["echo_level"].GetInt())
         #adaptive_time_interval.Execute()
 
-        pass
         #unactive_peak_elements = False
         #unactive_sliver_elements = False
         #set_active_flag = KratosPfemFluid.SetActiveFlagProcess(self.main_model_part,unactive_peak_elements,unactive_sliver_elements,self.settings["echo_level"].GetInt())

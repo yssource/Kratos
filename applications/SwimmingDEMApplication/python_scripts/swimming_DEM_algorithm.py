@@ -634,21 +634,6 @@ class Algorithm(object):
             else:
                 time_final_DEM_substepping = self.time
 
-            #self.PerformEmbeddedOperations() TO-DO: it's crashing
-
-            self.UpdateALEMeshMovement(self.time)
-
-            # solving the fluid part
-            if self.step >= self.GetFirstStepForFluidComputation():
-                self.FluidSolve(
-                    self.time,
-                    solve_system=self.fluid_solve_counter.Tick() and not self.stationarity
-                    )
-
-            # assessing stationarity
-                if self.stationarity_counter.Tick():
-                    self.AssessStationarity()
-
             # printing if required
 
             if self.particles_results_counter.Tick():
@@ -679,6 +664,9 @@ class Algorithm(object):
 
             Say('Solving DEM... (', self.spheres_model_part.NumberOfElements(0), 'elements )')
             first_dem_iter = True
+
+            # Save Initial Fluid Fraction
+            self.SaveInitialFluidFraction()
 
             for self.time_dem in self.yield_DEM_time(
                     self.time_dem,
@@ -756,6 +744,21 @@ class Algorithm(object):
                 #Phantom
                 self.disperse_phase_solution.RunAnalytics(self.time, is_time_to_print=self.analytic_data_counter.Tick())
 
+            #self.PerformEmbeddedOperations() TO-DO: it's crashing
+
+            self.UpdateALEMeshMovement(self.time)
+
+            # solving the fluid part
+            if self.step >= self.GetFirstStepForFluidComputation():
+                self.FluidSolve(
+                    self.time,
+                    solve_system=self.fluid_solve_counter.Tick() and not self.stationarity
+                    )
+
+            # assessing stationarity
+                if self.stationarity_counter.Tick():
+                    self.AssessStationarity()
+
             #### PRINTING GRAPHS ####
             os.chdir(self.graphs_path)
             # measuring mean velocities in a certain control volume (the 'velocity trap')
@@ -805,6 +808,9 @@ class Algorithm(object):
             self.fluid_solution.fluid_solver.Solve()
         else:
             Say("Skipping solving system...\n")
+
+    def SaveInitialFluidFraction(self):
+        pass
 
     def PerformZeroStepInitializations(self):
         pass

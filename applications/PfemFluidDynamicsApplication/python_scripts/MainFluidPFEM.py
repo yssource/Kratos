@@ -205,6 +205,9 @@ class Solution(object):
 
         self.model_processes.ExecuteBeforeSolutionLoop()
 
+        # Initialize Nodal_Area
+        self.InitializeNodalArea()
+
         self.GraphicalOutputExecuteBeforeSolutionLoop()
 
         # Set time settings
@@ -378,6 +381,9 @@ class Solution(object):
         if( report ):
             used_time = time_fp - time_ip
             print("::[PFEM Simulation]:: [ %.2f" % round(used_time,2),"s", process," ] ")
+
+    def InitializeNodalArea(self):
+        pass
 
     def CalculateNodalArea(self):
         pass

@@ -313,6 +313,18 @@ public:
 
     void InitializeSolutionStep() override
     {
+      ModelPart& rModelPart = BaseType::GetModelPart();
+      ProcessInfo& rCurrentProcessInfo = rModelPart.GetProcessInfo();
+      const double TimeStep = rCurrentProcessInfo[DELTA_TIME];
+
+      for (ModelPart::NodeIterator i = rModelPart.NodesBegin(); i != rModelPart.NodesEnd(); ++i)
+      {
+        const double& currentFluidFraction = (i)->FastGetSolutionStepValue(FLUID_FRACTION);
+        const double& previousFluidFraction = (i)->FastGetSolutionStepValue(FLUID_FRACTION_OLD);
+        double& currentFluidFractionRate = (i)->FastGetSolutionStepValue(FLUID_FRACTION_RATE);
+
+        currentFluidFractionRate = (currentFluidFraction - previousFluidFraction)/TimeStep;
+      }
     }
 
 
@@ -371,7 +383,7 @@ public:
 	    double & CurrentPressureAcceleration  = (i)->FastGetSolutionStepValue(PRESSURE_ACCELERATION, 0);
 	    CurrentPressureAcceleration = (CurrentPressureVelocity-PreviousPressureVelocity)/timeInterval;
 	  }
-	  
+
         }
     }
 
@@ -424,15 +436,12 @@ public:
 	    double  & PreviousPressure     = (i)->FastGetSolutionStepValue(PRESSURE, 1);
 	    double  & CurrentPressureVelocity  = (i)->FastGetSolutionStepValue(PRESSURE_VELOCITY, 0);
 	    double & CurrentPressureAcceleration  = (i)->FastGetSolutionStepValue(PRESSURE_ACCELERATION, 0);
-	    
-	    CurrentPressureAcceleration = CurrentPressureVelocity/timeInterval;
-	    
-	    CurrentPressureVelocity = (CurrentPressure-PreviousPressure)/timeInterval;
-	    
-	    CurrentPressureAcceleration += -CurrentPressureVelocity/timeInterval;
 
-	    double& previousFluidFraction = (i)->FastGetSolutionStepValue(FLUID_FRACTION_OLD);
-	    previousFluidFraction=(i)->FastGetSolutionStepValue(FLUID_FRACTION);
+	    CurrentPressureAcceleration = CurrentPressureVelocity/timeInterval;
+
+	    CurrentPressureVelocity = (CurrentPressure-PreviousPressure)/timeInterval;
+
+	    CurrentPressureAcceleration += -CurrentPressureVelocity/timeInterval;
 	  }
 
 
@@ -509,10 +518,6 @@ public:
 	  array_1d<double, 3 > & CurrentDisplacement  = (i)->FastGetSolutionStepValue(DISPLACEMENT, 0);
 	  array_1d<double, 3 > & PreviousDisplacement = (i)->FastGetSolutionStepValue(DISPLACEMENT, 1);
 
-	  const double& currentFluidFraction = (i)->FastGetSolutionStepValue(FLUID_FRACTION);
-	  const double& previousFluidFraction = (i)->FastGetSolutionStepValue(FLUID_FRACTION_OLD);
-	  double& currentFluidFractionRate = (i)->FastGetSolutionStepValue(FLUID_FRACTION_RATE);
-
 	  /* if( i->IsFixed(DISPLACEMENT_X) == false ) */
 	  CurrentDisplacement[0] = 0.5* TimeStep *(CurrentVelocity[0]+PreviousVelocity[0]) + PreviousDisplacement[0];
 
@@ -521,8 +526,6 @@ public:
 
 	  /* if( i->IsFixed(DISPLACEMENT_Z) == false ) */
 	  CurrentDisplacement[2] = 0.5* TimeStep *(CurrentVelocity[2]+PreviousVelocity[2]) + PreviousDisplacement[2];
-
-	  currentFluidFractionRate = (currentFluidFraction - previousFluidFraction)/TimeStep;
         }
     }
 

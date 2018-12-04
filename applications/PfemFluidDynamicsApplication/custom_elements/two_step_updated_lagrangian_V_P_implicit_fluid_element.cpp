@@ -12,7 +12,7 @@
 
 // External includes
 
-// Project includes 
+// Project includes
 #include "custom_elements/two_step_updated_lagrangian_V_P_implicit_fluid_element.h"
 #include "includes/cfd_variables.h"
 #include <math.h>
@@ -1923,12 +1923,13 @@ namespace Kratos {
 	  double StabLaplacianWeight=Tau*GaussWeight;
 	  this->ComputeStabLaplacianMatrix(rLeftHandSideMatrix,rDN_DX,StabLaplacianWeight);
 
-    double FluidFractionRateNew = 0.0;
-    double FluidFractionRateOld = 0.0;
+    // double FluidFractionRateNew = 0.0;
+    // double FluidFractionRateOld = 0.0;
     this->EvaluateInPoint(FluidFraction,FLUID_FRACTION,N);
-    this->EvaluateInPoint(FluidFractionRateNew,FLUID_FRACTION_RATE,N);
-    this->EvaluateInPoint(FluidFractionRateOld,FLUID_FRACTION_RATE_OLD,N);
-    FluidFractionRate=0.5*FluidFractionRateNew+0.5*FluidFractionRateOld; 
+    this->EvaluateInPoint(FluidFractionRate,FLUID_FRACTION_RATE,N);
+    // this->EvaluateInPoint(FluidFractionRateNew,FLUID_FRACTION_RATE,N);
+    // this->EvaluateInPoint(FluidFractionRateOld,FLUID_FRACTION_RATE_OLD,N);
+    // FluidFractionRate=0.5*FluidFractionRateNew+0.5*FluidFractionRateOld;
     if(std::abs(FluidFraction) < 1.0e-12)
     {
       FluidFraction = 1.0;
@@ -1940,7 +1941,7 @@ namespace Kratos {
 	      // RHS contribution
 	      // Velocity divergence
 	      rRightHandSideVector[i] += GaussWeight * N[i] * rElementalVariables.VolumetricDefRate;
-	      
+
 	      if(currentTime>0.02)
 		rRightHandSideVector[i] += GaussWeight * N[i] * FluidFractionRate / FluidFraction;
 
@@ -1965,7 +1966,7 @@ namespace Kratos {
       MatrixType BulkMatrixConsistent = ZeroMatrix(NumNodes,NumNodes);
       double lumpedBulkCoeff =totalVolume/(VolumetricCoeff);
       double lumpedBulkStabCoeff=lumpedBulkCoeff*Tau*Density/TimeStep;
-      
+
         if(currentTime>0.02){
           VectorType FluidFractionRateValues= ZeroVector(NumNodes);
         VectorType FluidFractionRateOldValues= ZeroVector(NumNodes);

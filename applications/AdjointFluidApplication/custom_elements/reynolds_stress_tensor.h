@@ -230,8 +230,8 @@ public:
     {
         rOutput.clear();
         AddDeviatoricReynoldsStressTensorLinearPart(rOutput);
-        // AddDeviatoricReynoldsStressTensorNonLinearPart(rOutput);
-        // AddHydrostaticReynoldsStressTensor(rOutput);
+        AddDeviatoricReynoldsStressTensorNonLinearPart(rOutput);
+        AddHydrostaticReynoldsStressTensor(rOutput);
     }
 
     void CalculateReynoldsStressTensorPrimalDerivative(const ShapeParameter& Deriv,

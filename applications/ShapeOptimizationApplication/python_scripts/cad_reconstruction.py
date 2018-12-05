@@ -1,0 +1,524 @@
+# ==============================================================================
+#  KratosShapeOptimizationApplication
+#
+#  License:         BSD License
+#                   license: ShapeOptimizationApplication/license.txt
+#
+#  Main authors:    Baumgaertner Daniel, https://github.com/dbaumgaertner
+#                   Oberbichler Thomas, https://github.com/oberbichler
+#
+# ==============================================================================
+
+# importing the Kratos Library
+import KratosMultiphysics
+import KratosMultiphysics.ShapeOptimizationApplication as KratosShape
+import KratosMultiphysics.MeshingApplication as KratosMeshingApp
+import KratosMultiphysics.StructuralMechanicsApplication as KratosCSM
+
+# check that KratosMultiphysics was imported in the main script
+KratosMultiphysics.CheckForPreviousImport()
+
+# Import ANurbs library
+import ANurbs as an
+import numpy as np
+import numpy.linalg as la
+
+# Additional imports
+import time
+import os
+
+# ==============================================================================
+class CADMapper:
+    # --------------------------------------------------------------------------
+    def __init__(self, fe_model, cad_model, parameters):
+        self.fe_model = fe_model
+        self.cad_model = cad_model
+        self.parameters = parameters
+
+        self.point_pairs = []
+        self.sorted_point_pairs = []
+
+        self.fe_model_part = None
+        self.assembler = None
+        self.solution_x = None
+        self.solution_y = None
+        self.solution_z = None
+
+    # --------------------------------------------------------------------------
+    def Initialize(self):
+        print("\n> Starting preprocessing...")
+        start_time = time.time()
+
+        # Create results folder
+        output_dir = self.parameters["output"]["results_directory"].GetString()
+        if not os.path.exists( output_dir ):
+            os.makedirs( output_dir )
+
+        # Read FE data
+        fem_input_filename = self.parameters["inpute"]["fem_filename"].GetString()
+        name_variable_to_map = self.parameters["inpute"]["variable_to_map"].GetString()
+        variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
+
+        self.fe_model_part = self.fe_model.CreateModelPart("origin_part")
+        self.fe_model_part.AddNodalSolutionStepVariable(variable_to_map)
+
+        model_part_io = KratosMultiphysics.ModelPartIO(fem_input_filename[:-5])
+        model_part_io.ReadModelPart(self.fe_model_part)
+
+        # Refine if specified
+        prop_id = 1
+        prop = self.fe_model_part.Properties[prop_id]
+        mat = KratosCSM.LinearElasticPlaneStress2DLaw()
+        prop.SetValue(KratosMultiphysics.CONSTITUTIVE_LAW, mat.Clone())
+
+        refinement_level = self.parameters["inpute"]["fe_refinement_level"].GetInt()
+        for refinement_level in range(0,refinement_level):
+
+            number_of_avg_elems = 10
+            number_of_avg_nodes = 10
+            nodal_neighbour_search = KratosMultiphysics.FindNodalNeighboursProcess(self.fe_model_part, number_of_avg_elems, number_of_avg_nodes)
+            neighbour_calculator = KratosMultiphysics.FindElementalNeighboursProcess(self.fe_model_part,2,10)
+            nodal_neighbour_search.Execute()
+            neighbour_calculator.Execute()
+
+            for elem in self.fe_model_part.Elements:
+                elem.SetValue(KratosMultiphysics.SPLIT_ELEMENT,True)
+
+            refine_on_reference = False
+            interpolate_internal_variables = True
+            Refine = KratosMeshingApp.LocalRefineTriangleMesh(self.fe_model_part)
+            Refine.LocalRefineMesh(refine_on_reference, interpolate_internal_variables)
+
+        # Output FE-data with projected points
+        output_dir = self.parameters["output"]["results_directory"].GetString()
+        fem_output_filename = "fe_model_used_for_reconstruction"
+        fem_output_filename_with_path = os.path.join(output_dir,fem_output_filename)
+        nodal_variables = [self.parameters["inpute"]["variable_to_map"].GetString()]
+        self.__OutputFEData(self.fe_model_part, fem_output_filename_with_path, nodal_variables)
+
+        # Read CAD data
+        cad_filename = self.parameters["inpute"]["cad_filename"].GetString()
+        self.cad_model = an.Model.open(cad_filename)
+
+        print("> Preprocessing finished in " ,round( time.time()-start_time, 3 ), " s.")
+        print("\n> Starting projection of points...")
+        start_time = time.time()
+
+        # Identify point pairs
+        projection = PointsProjection(self.fe_model_part.Nodes, self.cad_model, self.parameters["points_projection"])
+        self.point_pairs, self.sorted_point_pairs = projection.Run()
+
+        print("> Projection of points finished in " ,round( time.time()-start_time, 3 ), " s.")
+        print("\n> Initializing assembly...")
+        start_time = time.time()
+
+        # Initialize Assembly
+        self.assembler = Assembler(self.fe_model_part.Nodes, self.cad_model, self.sorted_point_pairs, variable_to_map)
+        self.assembler.Initialize()
+
+        print("> Initialization of assembly finished in " ,round( time.time()-start_time, 3 ), " s.")
+
+    # --------------------------------------------------------------------------
+    def Map(self):
+        print("\n> Starting assembly....")
+        start_time = time.time()
+
+        # Assemble
+        self.assembler.AssembleSystemWithoutIntegration()
+
+        lhs = self.assembler.GetLHS()
+        rhs_x, rhs_y, rhs_z = self.assembler.GetRHS()
+
+        print("> Number of equations: ", lhs.shape[0])
+        print("> Number of relevant control points: ", lhs.shape[1])
+
+        print("> Finished assembly in " ,round( time.time()-start_time, 3 ), " s.")
+        print("\n> Starting system solution....")
+        start_time = time.time()
+
+        # self.solution_x, r, _, _ = la.lstsq(lhs, rhs_x, rcond=None)
+        # self.solution_y, r, _, _ = la.lstsq(lhs, rhs_y, rcond=None)
+        # self.solution_z, r, _, _ = la.lstsq(lhs, rhs_z, rcond=None)
+
+        lhs_T = np.transpose(lhs)
+
+        rhs_modified_x = np.dot(lhs_T,rhs_x)
+        rhs_modified_y = np.dot(lhs_T,rhs_y)
+        rhs_modified_z = np.dot(lhs_T,rhs_z)
+
+        B = np.dot(lhs_T, lhs)
+
+        # Beta regularization
+        B_diag = np.diag(B)
+        for i in range(B_diag.shape[0]):
+            entry = B[i,i]
+
+            # regularization
+            B[i,i] += 0.001
+
+            if entry == 0:
+                raise RuntimeError
+                print(i)
+                print("Zero on main diagonal found")
+
+
+        self.solution_x = la.solve(B,rhs_modified_x)
+        self.solution_y = la.solve(B,rhs_modified_y)
+        self.solution_z = la.solve(B,rhs_modified_z)
+
+        print("> Finished system solution in " ,round( time.time()-start_time, 3 ), " s.")
+
+    # --------------------------------------------------------------------------
+    def Finalize(self):
+        print("\n> Finalizing mapping....")
+        start_time = time.time()
+
+        pole_update = list(zip(self.solution_x, self.solution_y, self.solution_z))
+        dof_ids = self.assembler.GetDofIds()
+        dofs = self.assembler.GetDofs()
+
+        # Upate cad model
+        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+            surface_geometry = face_i.surface_geometry_3d().geometry
+
+            for r in range(surface_geometry.NbPolesU):
+                for s in range(surface_geometry.NbPolesV):
+                    dof_i = (face_itr,r,s)
+                    if dof_i in dofs:
+                        dof_id = dof_ids[dof_i]
+                        pole_coords = surface_geometry.Pole(r,s)
+                        new_pole_coords = pole_coords + pole_update[dof_id]
+                        surface_geometry.SetPole(r,s,new_pole_coords)
+
+        # Output cad model
+        output_dir = self.parameters["output"]["results_directory"].GetString()
+        output_filename = self.parameters["output"]["resulting_geometry_filename"].GetString()
+        output_filename_with_path = os.path.join(output_dir,output_filename)
+        self.cad_model.save(output_filename_with_path)
+
+        print("> Finished finalization of mapping in " ,round( time.time()-start_time, 3 ), " s.")
+
+    # --------------------------------------------------------------------------
+    @staticmethod
+    def __OutputFEData(model_part, fem_output_filename, nodal_variables):
+        from gid_output import GiDOutput
+        nodal_results=nodal_variables
+        gauss_points_results=[]
+        VolumeOutput = True
+        GiDPostMode = "Binary"
+        GiDWriteMeshFlag = False
+        GiDWriteConditionsFlag = True
+        GiDMultiFileFlag = "Single"
+
+        gig_io = GiDOutput(fem_output_filename, VolumeOutput, GiDPostMode, GiDMultiFileFlag, GiDWriteMeshFlag, GiDWriteConditionsFlag)
+        gig_io.initialize_results(model_part)
+        gig_io.write_results(1, model_part, nodal_results, gauss_points_results)
+        gig_io.finalize_results()
+
+# ==============================================================================
+class PointsProjection:
+    # --------------------------------------------------------------------------
+    def __init__(self, fe_node_set, cad_model, parameters):
+        self.fe_node_set = fe_node_set
+        self.cad_model = cad_model
+
+        self.tesselation_tolerance = parameters["boundary_tessellation_tolerance"].GetDouble()
+        self.bounding_box_tolerance = parameters["patch_bounding_box_tolerance"].GetDouble()
+
+    # --------------------------------------------------------------------------
+    def Run(self):
+        point_pairs = []
+        for node_i in self.fe_node_set:
+            point_pairs.append([])
+
+        sorted_point_pairs = []
+        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+            sorted_point_pairs.append([])
+
+        tessellation = an.CurveTessellation2D()
+
+        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+
+            print("> Processing face ",face_itr)
+
+            surface = face_i.surface_3d()
+            projection = an.PointOnSurfaceProjection3D(surface)
+
+            boundary_polygon = []
+            for trim in face_i.trims():
+                tessellation.Compute(trim.curve_2d(), self.tesselation_tolerance)
+                for i in range(tessellation.NbPoints):
+                    boundary_polygon.append(tessellation.Point(i))
+
+            # Bounding box and scaling as the bounding box is based on a simple pointwise discretization of surface
+            min_x, min_y, min_z, max_x, max_y, max_z = projection.BoundingBox
+            bounding_box_tolerance = 1
+            min_x -= bounding_box_tolerance
+            min_y -= bounding_box_tolerance
+            min_z -= bounding_box_tolerance
+            max_x += bounding_box_tolerance
+            max_y += bounding_box_tolerance
+            max_z += bounding_box_tolerance
+
+            for node_itr, node_i in enumerate(self.fe_node_set):
+
+                node_coords_i = [node_i.X0, node_i.Y0, node_i.Z0]
+
+                # Points outside bounding box are not considered
+                if node_coords_i[0] < min_x or max_x < node_coords_i[0]:
+                    continue
+                if node_coords_i[1] < min_y or max_y < node_coords_i[1]:
+                    continue
+                if node_coords_i[2] < min_z or max_z < node_coords_i[2]:
+                    continue
+
+                projection.Compute(Point=node_coords_i)
+                projected_point_i = projection.Point
+                projected_point_uv = np.array([projection.ParameterU, projection.ParameterV])
+
+                is_inside = self.__Contains(projected_point_uv, boundary_polygon, self.tesselation_tolerance*1.1)
+                if is_inside:
+                    point_pairs[node_itr].append([projected_point_i, projected_point_uv, face_itr])
+                    sorted_point_pairs[face_itr].append([node_itr, projected_point_i, projected_point_uv])
+
+        # Check results
+        for itr, entry in enumerate(point_pairs):
+            if len(entry) == 0:
+                print("> WARNING: Missing point pair for point: ", itr)
+
+        # i = 0
+        # for itr, entry in enumerate(point_pairs):
+        #     if len(entry) >= 1:
+        #         for (x, y, z), _, face_itr in entry:
+        #             self.cad_model.add({
+        #                 'Key': f'Point3D<{i}>',
+        #                 'Type': 'Point3D',
+        #                 'Location': [x, y, z],
+        #                 'Layer': f'PointPairs{face_itr}',
+        #             })
+        #             i += 1
+        #     if len(entry) == 0:
+        #         print("> WARNING: Missing point pair for point: ", itr)
+
+        # for face_itr, entry in enumerate(sorted_point_pairs):
+        #         for node_itr, (x, y, z), _ in entry:
+        #             self.cad_model.add({
+        #                 'Key': f'Point3D<{i}>',
+        #                 'Type': 'Point3D',
+        #                 'Location': [x, y, z],
+        #                 'Layer': f'PointPairs{face_itr}',
+        #             })
+        #             i += 1
+
+        # Some additional output
+        # # Output FE-data with projected points
+        # for node_itr, node_i in enumerate(self.fe_node_set):
+        #     node_coords_i = node_coords[node_itr]
+        #     projected_point_i = point_pairs[node_itr][0]
+        #     distance = projected_point_i - node_coords_i
+        #     node_i.SetSolutionStepValue(CONTROL_POINT_UPDATE,[distance[0],distance[1],distance[2]])
+
+        # output_dir = self.parameters["output"]["results_directory"].GetString()
+        # fem_output_filename = "fe_model_used_for_reconstruction"
+        # fem_output_filename_with_path = os.path.join(output_dir,fem_output_filename)
+        # nodal_variables = [self.parameters["inpute"]["update_variable_name"].GetString(), "CONTROL_POINT_UPDATE"]
+        # OutputFEData(self.fe_model_part, fem_output_filename_with_path, nodal_variables)
+
+        return point_pairs, sorted_point_pairs
+
+    # --------------------------------------------------------------------------
+    @classmethod
+    def __Contains(cls, point, polygon, tolerance):
+        inside = False
+
+        i = 0
+        j = len(polygon) - 1
+
+        while i < len(polygon):
+            U0 = polygon[i]
+            U1 = polygon[j]
+
+            if cls.__IsPointOnLine(point, U0, U1, tolerance):
+                return True
+
+            if point[1] < U1[1]:
+                if U0[1] <= point[1]:
+                    lhs = (point[1] - U0[1])*(U1[0] - U0[0])
+                    rhs = (point[0] - U0[0])*(U1[1] - U0[1])
+                    if lhs > rhs:
+                        inside = not inside
+            elif point[1] < U0[1]:
+                lhs = (point[1] - U0[1]) * (U1[0] - U0[0])
+                rhs = (point[0] - U0[0]) * (U1[1] - U0[1])
+                if (lhs < rhs):
+                    inside = not inside
+
+            j = i
+            i += 1
+
+        return inside
+
+    # --------------------------------------------------------------------------
+    @staticmethod
+    def __IsPointOnLine(point, line_a, line_b, tolerance):
+        pa = line_a - point
+        ab = line_b - line_a
+
+        ab2 = ab @ ab
+
+        if ab2 == 0:
+            if pa @ pa < tolerance:
+                return True
+            else:
+                return False
+
+        cross = pa[0] * ab[1] - pa[1] * ab[0]
+
+        if cross**2 / ab2 < tolerance**2:
+            ap_dot_ab = -pa @ ab
+            d = np.sign(ap_dot_ab) * ap_dot_ab**2 / ab2
+
+            if d < -tolerance**2:
+                return False
+
+            if d > ab2 + tolerance**2 + 2 * ab2 * tolerance:
+                return False
+
+            return True
+
+        return False
+
+# ==============================================================================
+class Assembler():
+    # --------------------------------------------------------------------------
+    def __init__(self, fe_node_set, cad_model, sorted_point_pairs, variable_to_map):
+        self.fe_node_set = fe_node_set
+        self.cad_model = cad_model
+        self.sorted_point_pairs = sorted_point_pairs
+        self.variable_to_map = variable_to_map
+
+        self.dof_ids ={}
+        self.dofs = []
+        self.eq_ids ={}
+        self.eqs = []
+
+        self.lhs = np.zeros((0, 0))
+        self.rhs_x = np.zeros(0)
+        self.rhs_y = np.zeros(0)
+        self.rhs_z = np.zeros(0)
+
+    # --------------------------------------------------------------------------
+    def Initialize(self):
+        # Assign dof and equation ids
+        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+
+            surface_geometry = face_i.surface_geometry_3d().geometry
+            shape_function = an.SurfaceShapeEvaluator(DegreeU=surface_geometry.DegreeU, DegreeV=surface_geometry.DegreeV, Order=0)
+
+            for node_itr, xyz, (u,v) in self.sorted_point_pairs[face_itr]:
+                shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
+
+                _ = self.__GetEqId((face_itr,node_itr))
+
+                for j, (r, s) in enumerate(shape_function.NonzeroPoleIndices):
+                    _ = self.__GetDofId((face_itr,r,s))
+
+        num_equations = len(self.eqs)
+        num_relevant_control_points = len(self.dofs)
+
+        # Initilize equation system
+        self.lhs = np.zeros((num_equations, num_relevant_control_points))
+        self.rhs_x = np.zeros(num_equations)
+        self.rhs_y = np.zeros(num_equations)
+        self.rhs_z = np.zeros(num_equations)
+
+        # # testing
+        # print(point_pairs[0])
+        # print("-------------")
+        # for i in range(num_control_points):
+        #     if lhs[0,i] != 0:
+        #         print("###")
+        #         print(i)
+        #         print(GetDof(i))
+        #         print(lhs[0,i])
+
+        # surface_geometry = model.of_type('BrepFace')[8].surface_geometry_3d().geometry
+        # shape_function = an.SurfaceShapeEvaluator(DegreeU=surface_geometry.DegreeU, DegreeV=surface_geometry.DegreeV, Order=0)
+        # u = point_pairs[0][0][1][0]
+        # v = point_pairs[0][0][1][1]
+        # shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
+
+    # --------------------------------------------------------------------------
+    def AssembleSystemWithoutIntegration(self):
+
+        rhs_values = []
+        for node in self.fe_node_set:
+            rhs_values.append(node.GetSolutionStepValue(self.variable_to_map))
+
+        # Assemble both lhs and rhs
+        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+
+            surface_geometry = face_i.surface_geometry_3d().geometry
+            shape_function = an.SurfaceShapeEvaluator(DegreeU=surface_geometry.DegreeU, DegreeV=surface_geometry.DegreeV, Order=0)
+
+            for node_itr, xyz, (u,v) in self.sorted_point_pairs[face_itr]:
+                shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
+
+                eq_id = self.__GetEqId((face_itr,node_itr))
+
+                self.rhs_x[eq_id] = rhs_values[node_itr][0]
+                self.rhs_y[eq_id] = rhs_values[node_itr][1]
+                self.rhs_z[eq_id] = rhs_values[node_itr][2]
+
+                for j, (r, s) in enumerate(shape_function.NonzeroPoleIndices):
+
+                    dof_id = self.__GetDofId((face_itr,r,s))
+                    self.lhs[eq_id, dof_id] = shape_function(0, j)
+
+    # --------------------------------------------------------------------------
+    def GetDofs(self):
+        if self.dofs == None:
+            raise Exception("> Assembler:: No dofs specified yet! First initialize assembler.")
+        return self.dofs
+
+    # --------------------------------------------------------------------------
+    def GetDofIds(self):
+        if self.dofs == None:
+            raise Exception("> Assembler:: No dof ids specified yet! First initialize assembler.")
+        return self.dof_ids
+
+    # --------------------------------------------------------------------------
+    def GetLHS(self):
+        if self.lhs.shape[0] == 0:
+            raise Exception("> Assembler:: No lhs specified yet! First initialize assembler.")
+        return self.lhs
+
+    # --------------------------------------------------------------------------
+    def GetRHS(self):
+        if self.rhs_x.shape[0] == 0 or self.rhs_y.shape[0] == 0 or self.rhs_z.shape[0] == 0:
+            raise Exception("> Assembler:: No rhs specified yet! First initialize assembler.")
+        return self.rhs_x, self.rhs_y, self.rhs_z
+
+    # --------------------------------------------------------------------------
+    def __GetDofId(self, dof):
+        if dof not in self.dof_ids:
+            self.dof_ids[dof] = len(self.dof_ids)
+            self.dofs.append(dof)
+        return self.dof_ids[dof]
+
+    # --------------------------------------------------------------------------
+    def __GetDof(self, index):
+        return self.dofs[index]
+
+    # --------------------------------------------------------------------------
+    def __GetEqId(self, eq):
+        if eq not in self.eq_ids:
+            self.eq_ids[eq] = len(self.eq_ids)
+            self.eqs.append(eq)
+        return self.eq_ids[eq]
+
+    # --------------------------------------------------------------------------
+    def __GetEq(self, index):
+        return self.eqs[index]
+
+# ==============================================================================

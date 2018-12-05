@@ -316,15 +316,22 @@ public:
       ModelPart& rModelPart = BaseType::GetModelPart();
       ProcessInfo& rCurrentProcessInfo = rModelPart.GetProcessInfo();
       const double TimeStep = rCurrentProcessInfo[DELTA_TIME];
-
+      std::cout<<"COMPUTE FLUID FRACTION RATE    "<<std::endl;
       for (ModelPart::NodeIterator i = rModelPart.NodesBegin(); i != rModelPart.NodesEnd(); ++i)
       {
+        // unsigned int idNode=(i)->Id();
         const double& currentFluidFraction = (i)->FastGetSolutionStepValue(FLUID_FRACTION);
         const double& previousFluidFraction = (i)->FastGetSolutionStepValue(FLUID_FRACTION_OLD);
         double& currentFluidFractionRate = (i)->FastGetSolutionStepValue(FLUID_FRACTION_RATE);
+        if(previousFluidFraction!=1 && currentFluidFraction!=1){
+            currentFluidFractionRate = (currentFluidFraction - previousFluidFraction)/TimeStep;
+            // std::cout<<"node "<<idNode<<"  previous FF= "<<previousFluidFraction<<" new FF= "<<currentFluidFraction<<" FFrate= "<<currentFluidFractionRate<<std::endl; 
+        }else{
+          currentFluidFractionRate=0;
+        }
 
-        currentFluidFractionRate = (currentFluidFraction - previousFluidFraction)/TimeStep;
       }
+
     }
 
 

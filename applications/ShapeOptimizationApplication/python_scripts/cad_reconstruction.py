@@ -135,8 +135,7 @@ class CADMapper:
 
             if entry == 0:
                 raise RuntimeError
-                print(i)
-                print("Zero on main diagonal found")
+                print("Zero on main diagonal found at position",i,".")
 
         # Nonlinear solution iterations
         for solution_itr in range(1,self.parameters["solution"]["iterations"].GetInt()+1):
@@ -147,9 +146,9 @@ class CADMapper:
             print("\n> Starting system solution ....")
             start_time = time.time()
 
-            solution_x = la.solve(lhs,-rhs[:,0])
-            solution_y = la.solve(lhs,-rhs[:,1])
-            solution_z = la.solve(lhs,-rhs[:,2])
+            solution_x = la.solve(lhs,rhs[:,0])
+            solution_y = la.solve(lhs,rhs[:,1])
+            solution_z = la.solve(lhs,rhs[:,2])
 
             print("> Finished system solution in" ,round( time.time()-start_time, 3 ), " s.")
 
@@ -275,6 +274,8 @@ class ConditionsFactory:
 
         tessellation = an.CurveTessellation2D()
 
+        boundary_nodes_counter = 1
+
         for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
 
             print("> Processing face ",face_itr)
@@ -293,13 +294,12 @@ class ConditionsFactory:
 
             # Bounding box and scaling as the bounding box is based on a simple pointwise discretization of surface
             min_x, min_y, min_z, max_x, max_y, max_z = projection.BoundingBox
-            bounding_box_tolerance = 1
-            min_x -= bounding_box_tolerance
-            min_y -= bounding_box_tolerance
-            min_z -= bounding_box_tolerance
-            max_x += bounding_box_tolerance
-            max_y += bounding_box_tolerance
-            max_z += bounding_box_tolerance
+            min_x -= self.bounding_box_tolerance
+            min_y -= self.bounding_box_tolerance
+            min_z -= self.bounding_box_tolerance
+            max_x += self.bounding_box_tolerance
+            max_y += self.bounding_box_tolerance
+            max_z += self.bounding_box_tolerance
 
             for node_itr, node_i in enumerate(self.fe_node_set):
 
@@ -316,7 +316,7 @@ class ConditionsFactory:
                 projection.Compute(Point=node_coords_i)
                 projected_point_uv = np.array([projection.ParameterU, projection.ParameterV])
 
-                is_inside = self.__Contains(projected_point_uv, boundary_polygon, self.tesselation_tolerance*1.1)
+                is_inside, is_on_boundary = self.__Contains(projected_point_uv, boundary_polygon, self.tesselation_tolerance*1.1)
                 if is_inside:
                     u = projected_point_uv[0]
                     v = projected_point_uv[1]
@@ -327,7 +327,19 @@ class ConditionsFactory:
                     for i in range(shape_function.NbNonzeroPoles):
                         shape_function_values[i] = shape_function(0,i)
 
-                    new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, self.variable_to_map)
+                    # Introduce a possible penalty factor for nodes on boundary
+                    penalty_fac = 1.0
+                    if is_on_boundary:
+                        penalty_fac = 1.0
+                        self.cad_model.add({
+                            'Key': f'Point3D<{boundary_nodes_counter}>',
+                            'Type': 'Point3D',
+                            'Location': node_coords_i,
+                            'Layer': "boundary_nodes",
+                        })
+                        boundary_nodes_counter += 1
+
+                    new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, self.variable_to_map, penalty_fac)
                     conditions[face_itr].append(new_condition)
 
                     projected_point_i = projection.Point
@@ -382,6 +394,7 @@ class ConditionsFactory:
     @classmethod
     def __Contains(cls, point, polygon, tolerance):
         inside = False
+        on_boundary = False
 
         i = 0
         j = len(polygon) - 1
@@ -391,7 +404,7 @@ class ConditionsFactory:
             U1 = polygon[j]
 
             if cls.__IsPointOnLine(point, U0, U1, tolerance):
-                return True
+                return True, True
 
             if point[1] < U1[1]:
                 if U0[1] <= point[1]:
@@ -408,7 +421,7 @@ class ConditionsFactory:
             j = i
             i += 1
 
-        return inside
+        return inside, on_boundary
 
     # --------------------------------------------------------------------------
     @staticmethod

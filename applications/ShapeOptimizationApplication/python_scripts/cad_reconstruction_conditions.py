@@ -22,37 +22,20 @@ class DisplacementMappingCondition:
         self.variabl_to_map = variabl_to_map
 
         self.local_system_size = len(nonzero_pole_indices)
+        node_initial_coords = np.array([self.fe_node.X, self.fe_node.Y, self.fe_node.Z])
+        nodal_update =  np.array(self.fe_node.GetSolutionStepValue(self.variabl_to_map))
+        self.fe_node_coords = node_initial_coords + nodal_update
 
     # --------------------------------------------------------------------------
     def CalculateLHS(self):
-        local_lhs = np.zeros((self.local_system_size, self.local_system_size))
-
-        for i in range(self.local_system_size):
-            for j in range(self.local_system_size):
-                local_lhs[i, j] = self.shape_functions[i] * self.shape_functions[j]
-
-        return local_lhs
+        return np.outer(self.shape_functions, self.shape_functions)
 
     # --------------------------------------------------------------------------
     def CalculateRHS(self):
-        local_rhs = np.zeros((self.local_system_size, 3))
-        node_coords = np.array([self.fe_node.X, self.fe_node.Y, self.fe_node.Z])
-        nodal_update =  np.array(self.fe_node.GetSolutionStepValue(self.variabl_to_map))
-
         pole_coords = np.zeros((self.local_system_size, 3))
         for i, (r,s) in enumerate(self.nonzero_pole_indices):
             pole_coords[i,:] = self.surface_geometry.Pole(r,s)
 
-        for i in range(self.local_system_size):
-
-            fem_contribution = self.shape_functions[i] * (node_coords + nodal_update)
-
-            cad_contribution = np.zeros(3)
-            for j in range(self.local_system_size):
-                cad_contribution += self.shape_functions[i] * self.shape_functions[j] * pole_coords[j]
-
-            local_rhs[i] = -(cad_contribution - fem_contribution)
-
-        return local_rhs
+        return np.outer(self.shape_functions, self.shape_functions)@pole_coords - np.outer(self.shape_functions, self.fe_node_coords)
 
 # ==============================================================================

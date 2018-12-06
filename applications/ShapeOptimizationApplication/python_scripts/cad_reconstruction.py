@@ -147,9 +147,9 @@ class CADMapper:
             print("\n> Starting system solution ....")
             start_time = time.time()
 
-            solution_x = la.solve(lhs,rhs[:,0])
-            solution_y = la.solve(lhs,rhs[:,1])
-            solution_z = la.solve(lhs,rhs[:,2])
+            solution_x = la.solve(lhs,-rhs[:,0])
+            solution_y = la.solve(lhs,-rhs[:,1])
+            solution_z = la.solve(lhs,-rhs[:,2])
 
             print("> Finished system solution in" ,round( time.time()-start_time, 3 ), " s.")
 
@@ -323,9 +323,9 @@ class ConditionsFactory:
                     shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
                     nonzero_pole_indices = shape_function.NonzeroPoleIndices
 
-                    shape_function_values = []
-                    for i in range(len(nonzero_pole_indices)):
-                        shape_function_values.append(shape_function(0,i))
+                    shape_function_values = np.empty(shape_function.NbNonzeroPoles, dtype=float)
+                    for i in range(shape_function.NbNonzeroPoles):
+                        shape_function_values[i] = shape_function(0,i)
 
                     new_condition = DisplacementMappingCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, self.variable_to_map)
                     conditions[face_itr].append(new_condition)

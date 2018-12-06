@@ -104,7 +104,7 @@ class CADMapper:
             self.conditions.append([])
 
         condition_factory = ConditionsFactory(self.fe_model_part.Nodes, self.cad_model, self.parameters)
-        condition_factory.CreateDisplacementMappingConditions(self.conditions)
+        condition_factory.CreateDistanceMinimizationConditions(self.conditions)
 
         print("> Finished creation of conditions in" ,round( time.time()-start_time, 3 ), " s.")
         print("\n> Initializing assembly...")
@@ -266,8 +266,8 @@ class ConditionsFactory:
         self.bounding_box_tolerance = parameters["points_projection"]["patch_bounding_box_tolerance"].GetDouble()
 
     # --------------------------------------------------------------------------
-    def CreateDisplacementMappingConditions(self, conditions):
-        from cad_reconstruction_conditions import DisplacementMappingCondition
+    def CreateDistanceMinimizationConditions(self, conditions):
+        from cad_reconstruction_conditions import DistanceMinimizationCondition
 
         point_pairs = []
         for node_i in self.fe_node_set:
@@ -327,7 +327,7 @@ class ConditionsFactory:
                     for i in range(shape_function.NbNonzeroPoles):
                         shape_function_values[i] = shape_function(0,i)
 
-                    new_condition = DisplacementMappingCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, self.variable_to_map)
+                    new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, self.variable_to_map)
                     conditions[face_itr].append(new_condition)
 
                     projected_point_i = projection.Point

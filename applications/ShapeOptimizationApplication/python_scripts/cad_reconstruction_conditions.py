@@ -12,7 +12,7 @@
 import numpy as np
 
 # ==============================================================================
-class DisplacementMappingCondition:
+class DistanceMinimizationCondition:
     # --------------------------------------------------------------------------
     def __init__(self, fe_node, surface_geometry, nonzero_pole_indices, shape_functions, variabl_to_map):
         self.fe_node = fe_node

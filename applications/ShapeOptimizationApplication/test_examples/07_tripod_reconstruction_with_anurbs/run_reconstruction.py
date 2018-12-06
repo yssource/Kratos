@@ -27,6 +27,11 @@ parameters = KratosMultiphysics.Parameters("""
         "boundary_tessellation_tolerance" : 0.01,
         "patch_bounding_box_tolerance"    : 1.0
     },
+    "solution" :
+    {
+        "iterations"    : 3,
+        "test_solution" : true
+    },
     "output":
     {
         "results_directory"           : "01_Results",

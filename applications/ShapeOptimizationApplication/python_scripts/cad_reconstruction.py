@@ -38,9 +38,6 @@ class CADMapper:
         self.conditions = []
         self.fe_model_part = None
         self.assembler = None
-        self.solution_x = None
-        self.solution_y = None
-        self.solution_z = None
 
     # --------------------------------------------------------------------------
     def Initialize(self):
@@ -98,7 +95,7 @@ class CADMapper:
         cad_filename = self.parameters["inpute"]["cad_filename"].GetString()
         self.cad_model = an.Model.open(cad_filename)
 
-        print("> Preprocessing finished in " ,round( time.time()-start_time, 3 ), " s.")
+        print("> Preprocessing finished in" ,round( time.time()-start_time, 3 ), " s.")
         print("\n> Starting creation of conditions...")
         start_time = time.time()
 
@@ -109,7 +106,7 @@ class CADMapper:
         condition_factory = ConditionsFactory(self.fe_model_part.Nodes, self.cad_model, self.parameters)
         condition_factory.CreateDisplacementMappingConditions(self.conditions)
 
-        print("> Finished creation of conditions in " ,round( time.time()-start_time, 3 ), " s.")
+        print("> Finished creation of conditions in" ,round( time.time()-start_time, 3 ), " s.")
         print("\n> Initializing assembly...")
         start_time = time.time()
 
@@ -117,37 +114,15 @@ class CADMapper:
         self.assembler = Assembler(self.fe_model_part.Nodes, self.cad_model, self.conditions)
         self.assembler.Initialize()
 
-        print("> Initialization of assembly finished in " ,round( time.time()-start_time, 3 ), " s.")
+        print("> Initialization of assembly finished in" ,round( time.time()-start_time, 3 ), " s.")
 
     # --------------------------------------------------------------------------
     def Map(self):
-        print("\n> Starting assembly....")
-        start_time = time.time()
-
         # Assemble
-        self.assembler.AssembleConditions()
-
-        lhs = self.assembler.GetLHS()
-        rhs= self.assembler.GetRHS()
+        lhs, rhs = self.assembler.AssembleSystem()
 
         print("> Number of equations: ", lhs.shape[0])
         print("> Number of relevant control points: ", lhs.shape[1])
-
-        print("> Finished assembly in " ,round( time.time()-start_time, 3 ), " s.")
-        print("\n> Starting system solution....")
-        start_time = time.time()
-
-        # self.solution_x, r, _, _ = la.lstsq(lhs, rhs_x, rcond=None)
-        # self.solution_y, r, _, _ = la.lstsq(lhs, rhs_y, rcond=None)
-        # self.solution_z, r, _, _ = la.lstsq(lhs, rhs_z, rcond=None)
-
-        # lhs_T = np.transpose(lhs)
-
-        # rhs_modified_x = np.dot(lhs_T,rhs_x)
-        # rhs_modified_y = np.dot(lhs_T,rhs_y)
-        # rhs_modified_z = np.dot(lhs_T,rhs_z)
-
-        # B = np.dot(lhs_T, lhs)
 
         # Beta regularization
         lhs_diag = np.diag(lhs)
@@ -162,23 +137,73 @@ class CADMapper:
                 print(i)
                 print("Zero on main diagonal found")
 
+        # Nonlinear solution iterations
+        for solution_itr in range(1,self.parameters["solution"]["iterations"].GetInt()+1):
+            print("\n> ----------------------------------------------------")
+            print("> Starting solution iteration", solution_itr,"...")
+            start_time = time.time()
 
-        self.solution_x = la.solve(lhs,rhs[:,0])
-        self.solution_y = la.solve(lhs,rhs[:,1])
-        self.solution_z = la.solve(lhs,rhs[:,2])
+            print("\n> Starting system solution ....")
+            start_time = time.time()
 
-        print("> Finished system solution in " ,round( time.time()-start_time, 3 ), " s.")
+            solution_x = la.solve(lhs,rhs[:,0])
+            solution_y = la.solve(lhs,rhs[:,1])
+            solution_z = la.solve(lhs,rhs[:,2])
+
+            print("> Finished system solution in" ,round( time.time()-start_time, 3 ), " s.")
+
+            if self.parameters["solution"]["test_solution"].GetBool():
+                # Test solution quality
+                test_rhs = np.zeros(rhs.shape)
+                test_rhs[:,0] = lhs.dot(solution_x)
+                test_rhs[:,1] = lhs.dot(solution_y)
+                test_rhs[:,2] = lhs.dot(solution_z)
+
+                delta = rhs-test_rhs
+                delta_combined = np.append(delta[:,0], [delta[:,1], delta[:,2]])
+                error_norm = la.norm(delta_combined)
+                print("\n> Error in linear solution = ",error_norm)
+
+                # Test residuals
+                rhs_combined = np.append(rhs[:,0], [rhs[:,1], rhs[:,2]])
+                error_norm = la.norm(rhs_combined)
+                print("> RHS before current solution iteration = ",error_norm)
+
+            self.__UpdateCADModel(solution_x, solution_y, solution_z)
+
+            if self.parameters["solution"]["test_solution"].GetBool() or self.parameters["solution"]["iterations"].GetInt()>1:
+                rhs = self.assembler.AssembleRHS()
+
+            if self.parameters["solution"]["test_solution"].GetBool():
+                rhs_combined = np.append(rhs[:,0], [rhs[:,1], rhs[:,2]])
+                error_norm = la.norm(rhs_combined)
+                print("\n> RHS after current solution iteration = ",error_norm)
+
+            print("\n> Finished solution iteration in" ,round( time.time()-start_time, 3 ), " s.")
+            print("> ----------------------------------------------------")
 
     # --------------------------------------------------------------------------
     def Finalize(self):
         print("\n> Finalizing mapping....")
         start_time = time.time()
 
-        pole_update = list(zip(self.solution_x, self.solution_y, self.solution_z))
+        # Output cad model
+        output_dir = self.parameters["output"]["results_directory"].GetString()
+        output_filename = self.parameters["output"]["resulting_geometry_filename"].GetString()
+        output_filename_with_path = os.path.join(output_dir,output_filename)
+        self.cad_model.save(output_filename_with_path)
+
+        print("> Finished finalization of mapping in" ,round( time.time()-start_time, 3 ), " s.")
+
+    # --------------------------------------------------------------------------
+    def __UpdateCADModel(self, solution_x, solution_y, solution_z):
+        print("\n> Updating cad database....")
+        start_time = time.time()
+
+        pole_update = list(zip(solution_x, solution_y, solution_z))
         dof_ids = self.assembler.GetDofIds()
         dofs = self.assembler.GetDofs()
 
-        # Upate cad model
         for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
             surface_geometry = face_i.surface_geometry_3d().geometry
 
@@ -191,13 +216,7 @@ class CADMapper:
                         new_pole_coords = pole_coords + pole_update[dof_id]
                         surface_geometry.SetPole(r,s,new_pole_coords)
 
-        # Output cad model
-        output_dir = self.parameters["output"]["results_directory"].GetString()
-        output_filename = self.parameters["output"]["resulting_geometry_filename"].GetString()
-        output_filename_with_path = os.path.join(output_dir,output_filename)
-        self.cad_model.save(output_filename_with_path)
-
-        print("> Finished finalization of mapping in " ,round( time.time()-start_time, 3 ), " s.")
+        print("> Finished updating cad database in" ,round( time.time()-start_time, 3 ), " s.")
 
     # --------------------------------------------------------------------------
     @staticmethod
@@ -451,7 +470,12 @@ class Assembler():
         # shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
 
     # --------------------------------------------------------------------------
-    def AssembleConditions(self):
+    def AssembleSystem(self):
+        print("\n> Starting assembly....")
+        start_time = time.time()
+
+        self.lhs.fill(0)
+
         for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
 
             print("Processing face", face_itr, "with", len(self.conditions[face_itr]), "conditions.")
@@ -472,6 +496,39 @@ class Assembler():
                     for j, dof_id_j in enumerate(global_dof_ids):
                         self.lhs[dof_id_i, dof_id_j] += local_lhs[i,j]
 
+        print("> Finished assembly in" ,round( time.time()-start_time, 3 ), " s.")
+
+        return self.lhs, self.rhs
+
+    # --------------------------------------------------------------------------
+    def AssembleRHS(self):
+        print("\n> Starting to assemble RHS....")
+        start_time = time.time()
+
+        self.rhs.fill(0)
+
+        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+
+            print("Processing face", face_itr, "with", len(self.conditions[face_itr]), "conditions.")
+
+            for condition in self.conditions[face_itr]:
+
+                local_lhs = condition.CalculateLHS()
+                local_rhs = condition.CalculateRHS()
+
+                nonzero_pole_indices = condition.nonzero_pole_indices
+
+                global_dof_ids = []
+                for j, (r, s) in enumerate(nonzero_pole_indices):
+                    global_dof_ids.append(self.__GetDofId((face_itr,r,s)))
+
+                for i, dof_id_i in enumerate(global_dof_ids):
+                    self.rhs[dof_id_i,:] += local_rhs[i,:]
+
+        print("> Finished assembling RHS in" ,round( time.time()-start_time, 3 ), " s.")
+
+        return self.rhs
+
     # --------------------------------------------------------------------------
     def GetDofs(self):
         if self.dofs == None:
@@ -483,18 +540,6 @@ class Assembler():
         if self.dofs == None:
             raise Exception("> Assembler:: No dof ids specified yet! First initialize assembler.")
         return self.dof_ids
-
-    # --------------------------------------------------------------------------
-    def GetLHS(self):
-        if self.lhs.shape[0] == 0:
-            raise Exception("> Assembler:: No lhs specified yet! First initialize assembler.")
-        return self.lhs
-
-    # --------------------------------------------------------------------------
-    def GetRHS(self):
-        if self.rhs.shape[0] == 0:
-            raise Exception("> Assembler:: No rhs specified yet! First initialize assembler.")
-        return self.rhs
 
     # --------------------------------------------------------------------------
     def __GetDofId(self, dof):

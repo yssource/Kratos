@@ -35,9 +35,7 @@ class CADMapper:
         self.cad_model = cad_model
         self.parameters = parameters
 
-        self.point_pairs = []
-        self.sorted_point_pairs = []
-
+        self.conditions = []
         self.fe_model_part = None
         self.assembler = None
         self.solution_x = None
@@ -101,19 +99,22 @@ class CADMapper:
         self.cad_model = an.Model.open(cad_filename)
 
         print("> Preprocessing finished in " ,round( time.time()-start_time, 3 ), " s.")
-        print("\n> Starting projection of points...")
+        print("\n> Starting creation of conditions...")
         start_time = time.time()
 
-        # Identify point pairs
-        projection = PointsProjection(self.fe_model_part.Nodes, self.cad_model, self.parameters["points_projection"])
-        self.point_pairs, self.sorted_point_pairs = projection.Run()
+        # Create conditions
+        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+            self.conditions.append([])
 
-        print("> Projection of points finished in " ,round( time.time()-start_time, 3 ), " s.")
+        condition_factory = ConditionsFactory(self.fe_model_part.Nodes, self.cad_model, self.parameters)
+        condition_factory.CreateDisplacementMappingConditions(self.conditions)
+
+        print("> Finished creation of conditions in " ,round( time.time()-start_time, 3 ), " s.")
         print("\n> Initializing assembly...")
         start_time = time.time()
 
         # Initialize Assembly
-        self.assembler = Assembler(self.fe_model_part.Nodes, self.cad_model, self.sorted_point_pairs, variable_to_map)
+        self.assembler = Assembler(self.fe_model_part.Nodes, self.cad_model, self.conditions)
         self.assembler.Initialize()
 
         print("> Initialization of assembly finished in " ,round( time.time()-start_time, 3 ), " s.")
@@ -124,10 +125,10 @@ class CADMapper:
         start_time = time.time()
 
         # Assemble
-        self.assembler.AssembleSystemWithoutIntegration()
+        self.assembler.AssembleConditions()
 
         lhs = self.assembler.GetLHS()
-        rhs_x, rhs_y, rhs_z = self.assembler.GetRHS()
+        rhs= self.assembler.GetRHS()
 
         print("> Number of equations: ", lhs.shape[0])
         print("> Number of relevant control points: ", lhs.shape[1])
@@ -140,21 +141,21 @@ class CADMapper:
         # self.solution_y, r, _, _ = la.lstsq(lhs, rhs_y, rcond=None)
         # self.solution_z, r, _, _ = la.lstsq(lhs, rhs_z, rcond=None)
 
-        lhs_T = np.transpose(lhs)
+        # lhs_T = np.transpose(lhs)
 
-        rhs_modified_x = np.dot(lhs_T,rhs_x)
-        rhs_modified_y = np.dot(lhs_T,rhs_y)
-        rhs_modified_z = np.dot(lhs_T,rhs_z)
+        # rhs_modified_x = np.dot(lhs_T,rhs_x)
+        # rhs_modified_y = np.dot(lhs_T,rhs_y)
+        # rhs_modified_z = np.dot(lhs_T,rhs_z)
 
-        B = np.dot(lhs_T, lhs)
+        # B = np.dot(lhs_T, lhs)
 
         # Beta regularization
-        B_diag = np.diag(B)
-        for i in range(B_diag.shape[0]):
-            entry = B[i,i]
+        lhs_diag = np.diag(lhs)
+        for i in range(lhs_diag.shape[0]):
+            entry = lhs[i,i]
 
             # regularization
-            B[i,i] += 0.001
+            lhs[i,i] += 0.001
 
             if entry == 0:
                 raise RuntimeError
@@ -162,9 +163,9 @@ class CADMapper:
                 print("Zero on main diagonal found")
 
 
-        self.solution_x = la.solve(B,rhs_modified_x)
-        self.solution_y = la.solve(B,rhs_modified_y)
-        self.solution_z = la.solve(B,rhs_modified_z)
+        self.solution_x = la.solve(lhs,rhs[:,0])
+        self.solution_y = la.solve(lhs,rhs[:,1])
+        self.solution_z = la.solve(lhs,rhs[:,2])
 
         print("> Finished system solution in " ,round( time.time()-start_time, 3 ), " s.")
 
@@ -216,30 +217,34 @@ class CADMapper:
         gig_io.finalize_results()
 
 # ==============================================================================
-class PointsProjection:
+class ConditionsFactory:
     # --------------------------------------------------------------------------
     def __init__(self, fe_node_set, cad_model, parameters):
         self.fe_node_set = fe_node_set
         self.cad_model = cad_model
 
-        self.tesselation_tolerance = parameters["boundary_tessellation_tolerance"].GetDouble()
-        self.bounding_box_tolerance = parameters["patch_bounding_box_tolerance"].GetDouble()
+        name_variable_to_map = parameters["inpute"]["variable_to_map"].GetString()
+        self.variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
+
+        self.tesselation_tolerance = parameters["points_projection"]["boundary_tessellation_tolerance"].GetDouble()
+        self.bounding_box_tolerance = parameters["points_projection"]["patch_bounding_box_tolerance"].GetDouble()
 
     # --------------------------------------------------------------------------
-    def Run(self):
+    def CreateDisplacementMappingConditions(self, conditions):
+        from cad_reconstruction_conditions import DisplacementMappingCondition
+
         point_pairs = []
         for node_i in self.fe_node_set:
             point_pairs.append([])
-
-        sorted_point_pairs = []
-        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
-            sorted_point_pairs.append([])
 
         tessellation = an.CurveTessellation2D()
 
         for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
 
             print("> Processing face ",face_itr)
+
+            surface_geometry = face_i.surface_geometry_3d().geometry
+            shape_function = an.SurfaceShapeEvaluator(DegreeU=surface_geometry.DegreeU, DegreeV=surface_geometry.DegreeV, Order=0)
 
             surface = face_i.surface_3d()
             projection = an.PointOnSurfaceProjection3D(surface)
@@ -273,13 +278,24 @@ class PointsProjection:
                     continue
 
                 projection.Compute(Point=node_coords_i)
-                projected_point_i = projection.Point
                 projected_point_uv = np.array([projection.ParameterU, projection.ParameterV])
 
                 is_inside = self.__Contains(projected_point_uv, boundary_polygon, self.tesselation_tolerance*1.1)
                 if is_inside:
-                    point_pairs[node_itr].append([projected_point_i, projected_point_uv, face_itr])
-                    sorted_point_pairs[face_itr].append([node_itr, projected_point_i, projected_point_uv])
+                    u = projected_point_uv[0]
+                    v = projected_point_uv[1]
+                    shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
+                    nonzero_pole_indices = shape_function.NonzeroPoleIndices
+
+                    shape_function_values = []
+                    for i in range(len(nonzero_pole_indices)):
+                        shape_function_values.append(shape_function(0,i))
+
+                    new_condition = DisplacementMappingCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, self.variable_to_map)
+                    conditions[face_itr].append(new_condition)
+
+                    projected_point_i = projection.Point
+                    point_pairs[node_itr].append(projected_point_i)
 
         # Check results
         for itr, entry in enumerate(point_pairs):
@@ -300,7 +316,7 @@ class PointsProjection:
         #     if len(entry) == 0:
         #         print("> WARNING: Missing point pair for point: ", itr)
 
-        # for face_itr, entry in enumerate(sorted_point_pairs):
+        # for face_itr, entry in enumerate(conditions):
         #         for node_itr, (x, y, z), _ in entry:
         #             self.cad_model.add({
         #                 'Key': f'Point3D<{i}>',
@@ -324,7 +340,7 @@ class PointsProjection:
         # nodal_variables = [self.parameters["inpute"]["update_variable_name"].GetString(), "CONTROL_POINT_UPDATE"]
         # OutputFEData(self.fe_model_part, fem_output_filename_with_path, nodal_variables)
 
-        return point_pairs, sorted_point_pairs
+        return conditions
 
     # --------------------------------------------------------------------------
     @classmethod
@@ -391,11 +407,10 @@ class PointsProjection:
 # ==============================================================================
 class Assembler():
     # --------------------------------------------------------------------------
-    def __init__(self, fe_node_set, cad_model, sorted_point_pairs, variable_to_map):
+    def __init__(self, fe_node_set, cad_model, conditions):
         self.fe_node_set = fe_node_set
         self.cad_model = cad_model
-        self.sorted_point_pairs = sorted_point_pairs
-        self.variable_to_map = variable_to_map
+        self.conditions = conditions
 
         self.dof_ids ={}
         self.dofs = []
@@ -403,34 +418,21 @@ class Assembler():
         self.eqs = []
 
         self.lhs = np.zeros((0, 0))
-        self.rhs_x = np.zeros(0)
-        self.rhs_y = np.zeros(0)
-        self.rhs_z = np.zeros(0)
+        self.rhs = np.zeros((0, 0))
 
     # --------------------------------------------------------------------------
     def Initialize(self):
         # Assign dof and equation ids
         for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
-
-            surface_geometry = face_i.surface_geometry_3d().geometry
-            shape_function = an.SurfaceShapeEvaluator(DegreeU=surface_geometry.DegreeU, DegreeV=surface_geometry.DegreeV, Order=0)
-
-            for node_itr, xyz, (u,v) in self.sorted_point_pairs[face_itr]:
-                shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
-
-                _ = self.__GetEqId((face_itr,node_itr))
-
-                for j, (r, s) in enumerate(shape_function.NonzeroPoleIndices):
+            for condition in self.conditions[face_itr]:
+                for (r, s) in condition.nonzero_pole_indices:
                     _ = self.__GetDofId((face_itr,r,s))
 
-        num_equations = len(self.eqs)
-        num_relevant_control_points = len(self.dofs)
+        num_dofs = len(self.dofs)
 
         # Initilize equation system
-        self.lhs = np.zeros((num_equations, num_relevant_control_points))
-        self.rhs_x = np.zeros(num_equations)
-        self.rhs_y = np.zeros(num_equations)
-        self.rhs_z = np.zeros(num_equations)
+        self.lhs = np.zeros((num_dofs, num_dofs))
+        self.rhs = np.zeros((num_dofs, 3))
 
         # # testing
         # print(point_pairs[0])
@@ -449,31 +451,26 @@ class Assembler():
         # shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
 
     # --------------------------------------------------------------------------
-    def AssembleSystemWithoutIntegration(self):
-
-        rhs_values = []
-        for node in self.fe_node_set:
-            rhs_values.append(node.GetSolutionStepValue(self.variable_to_map))
-
-        # Assemble both lhs and rhs
+    def AssembleConditions(self):
         for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
 
-            surface_geometry = face_i.surface_geometry_3d().geometry
-            shape_function = an.SurfaceShapeEvaluator(DegreeU=surface_geometry.DegreeU, DegreeV=surface_geometry.DegreeV, Order=0)
+            print("Processing face", face_itr, "with", len(self.conditions[face_itr]), "conditions.")
 
-            for node_itr, xyz, (u,v) in self.sorted_point_pairs[face_itr]:
-                shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
+            for condition in self.conditions[face_itr]:
 
-                eq_id = self.__GetEqId((face_itr,node_itr))
+                local_lhs = condition.CalculateLHS()
+                local_rhs = condition.CalculateRHS()
 
-                self.rhs_x[eq_id] = rhs_values[node_itr][0]
-                self.rhs_y[eq_id] = rhs_values[node_itr][1]
-                self.rhs_z[eq_id] = rhs_values[node_itr][2]
+                nonzero_pole_indices = condition.nonzero_pole_indices
 
-                for j, (r, s) in enumerate(shape_function.NonzeroPoleIndices):
+                global_dof_ids = []
+                for j, (r, s) in enumerate(nonzero_pole_indices):
+                    global_dof_ids.append(self.__GetDofId((face_itr,r,s)))
 
-                    dof_id = self.__GetDofId((face_itr,r,s))
-                    self.lhs[eq_id, dof_id] = shape_function(0, j)
+                for i, dof_id_i in enumerate(global_dof_ids):
+                    self.rhs[dof_id_i,:] += local_rhs[i,:]
+                    for j, dof_id_j in enumerate(global_dof_ids):
+                        self.lhs[dof_id_i, dof_id_j] += local_lhs[i,j]
 
     # --------------------------------------------------------------------------
     def GetDofs(self):
@@ -495,9 +492,9 @@ class Assembler():
 
     # --------------------------------------------------------------------------
     def GetRHS(self):
-        if self.rhs_x.shape[0] == 0 or self.rhs_y.shape[0] == 0 or self.rhs_z.shape[0] == 0:
+        if self.rhs.shape[0] == 0:
             raise Exception("> Assembler:: No rhs specified yet! First initialize assembler.")
-        return self.rhs_x, self.rhs_y, self.rhs_z
+        return self.rhs
 
     # --------------------------------------------------------------------------
     def __GetDofId(self, dof):
@@ -509,16 +506,5 @@ class Assembler():
     # --------------------------------------------------------------------------
     def __GetDof(self, index):
         return self.dofs[index]
-
-    # --------------------------------------------------------------------------
-    def __GetEqId(self, eq):
-        if eq not in self.eq_ids:
-            self.eq_ids[eq] = len(self.eq_ids)
-            self.eqs.append(eq)
-        return self.eq_ids[eq]
-
-    # --------------------------------------------------------------------------
-    def __GetEq(self, index):
-        return self.eqs[index]
 
 # ==============================================================================

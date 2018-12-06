@@ -125,12 +125,13 @@ class CADMapper:
         print("> Number of relevant control points: ", lhs.shape[1])
 
         # Beta regularization
+        beta = self.parameters["regularization"]["beta"].GetDouble()
         lhs_diag = np.diag(lhs)
         for i in range(lhs_diag.shape[0]):
             entry = lhs[i,i]
 
             # regularization
-            lhs[i,i] += 0.001
+            lhs[i,i] += beta
 
             if entry == 0:
                 raise RuntimeError
@@ -173,6 +174,22 @@ class CADMapper:
 
             if self.parameters["solution"]["test_solution"].GetBool() or self.parameters["solution"]["iterations"].GetInt()>1:
                 rhs = self.assembler.AssembleRHS()
+
+                # Varying contribution of beta regularization is neglected as each solution iteration may be seen indendently
+                # in terms of minimization of the control point displacement
+
+                # dof_ids = self.assembler.GetDofIds()
+                # dofs = self.assembler.GetDofs()
+
+                # for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+                #     surface_geometry = face_i.surface_geometry_3d().geometry
+
+                #     for r in range(surface_geometry.NbPolesU):
+                #         for s in range(surface_geometry.NbPolesV):
+                #             dof_i = (face_itr,r,s)
+                #             if dof_i in dofs:
+                #                 dof_id = dof_ids[dof_i]
+                #                 rhs[dof_id,:] += beta*absolute_pole_update[dof_id,:]
 
             if self.parameters["solution"]["test_solution"].GetBool():
                 rhs_combined = np.append(rhs[:,0], [rhs[:,1], rhs[:,2]])

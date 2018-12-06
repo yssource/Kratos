@@ -29,8 +29,12 @@ parameters = KratosMultiphysics.Parameters("""
     },
     "solution" :
     {
-        "iterations"    : 3,
+        "iterations"    : 1,
         "test_solution" : true
+    },
+    "regularization" :
+    {
+        "beta" : 0.001
     },
     "output":
     {

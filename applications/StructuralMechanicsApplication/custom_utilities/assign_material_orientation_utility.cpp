@@ -35,8 +35,7 @@ void AssignMaterialOrientationUtility::Execute(Parameters MethodParameters)
 	CheckAndReadVectors(specific_parameters, "global_fiber_direction", global_vector);
 
 	//Normalize global_vector
-	global_vector /= std::sqrt(inner_prod(global_vector, global_vector));
-	//global_vector /=  norm_2(global_vector); TODO
+	global_vector /=  norm_2(global_vector); 
 
 	const auto& r_process_info = mrModelPart.GetProcessInfo();
 
@@ -45,7 +44,7 @@ void AssignMaterialOrientationUtility::Execute(Parameters MethodParameters)
 	Vector3 localAxis1 = ZeroVector(3);
 	Vector3 localAxis2 = ZeroVector(3);
 	Vector3 localAxis3 = ZeroVector(3);
-
+	
 	// declaration of copy of global_vector
 	Vector3 global_vector_copy;
 
@@ -58,22 +57,21 @@ void AssignMaterialOrientationUtility::Execute(Parameters MethodParameters)
 
 		// get local axis in cartesian coordinates
 		element.Calculate(LOCAL_ELEMENT_ORIENTATION, LCSOrientation, r_process_info);
-		// TODO this should in the future directly get LOCAL_AXIS_1 etc from the elements:
-		// element.CalculateOnIntegrationPoints(LOCAL_AXIS_1, vec, r_process_info);
+		std::vector<Vector3> local_axis1;
+		std::vector<Vector3> local_axis2;
+		std::vector<Vector3> local_axis3;
+		element.CalculateOnIntegrationPoints(LOCAL_AXIS_1, local_axis1 , r_process_info);
+		element.CalculateOnIntegrationPoints(LOCAL_AXIS_2, local_axis2 , r_process_info);
+		element.CalculateOnIntegrationPoints(LOCAL_AXIS_3, local_axis3 , r_process_info);
 
-
-		// get element local axis vectors (global cartesian)
-		for (size_t i = 0; i < 3; i++)
-		{
-			localAxis1[i] = LCSOrientation(0, i);
-			localAxis2[i] = LCSOrientation(1, i);
-			localAxis3[i] = LCSOrientation(2, i);
-		}
+		localAxis1 = local_axis1[0];
+		localAxis2 = local_axis2[0];
+		localAxis3 = local_axis3[0];
 
 		// normalise local axis vectors (global cartesian)
-		localAxis1 /= std::sqrt(inner_prod(localAxis1, localAxis1));
-		localAxis2 /= std::sqrt(inner_prod(localAxis2, localAxis2));
-		localAxis3 /= std::sqrt(inner_prod(localAxis3, localAxis3));
+		localAxis1 /= norm_2(localAxis1);
+		localAxis2 /= norm_2(localAxis2);
+		localAxis3 /= norm_2(localAxis3);
 
 		// (Abaqus default projection)
 		// http://130.149.89.49:2080/v6.8/books/gsa/default.htm?startat=ch05s03.html
@@ -104,13 +102,11 @@ void AssignMaterialOrientationUtility::Execute(Parameters MethodParameters)
 			Vector3 projectedResult;
 			MathUtils<double>::CrossProduct(projectedResult, B, ACrossB);
 			//noramlize projected result
-			projectedResult /= std::sqrt(inner_prod(projectedResult, projectedResult));
+			projectedResult /= norm_2(projectedResult);
 
 			// Third, find the angle between our projected direction and the
 			// current shell localAxis1
-			//TODO use Math_utils::VectorsAngle for this?
-			double cosTheta = inner_prod(localAxis1, projectedResult);
-			double theta = std::acos(cosTheta);
+			double theta = MathUtils<double>::VectorsAngle (localAxis1, projectedResult );
 			// make sure the angle is positively defined according to right
 			// hand rule
 			double dotCheck = inner_prod(localAxis2, projectedResult);

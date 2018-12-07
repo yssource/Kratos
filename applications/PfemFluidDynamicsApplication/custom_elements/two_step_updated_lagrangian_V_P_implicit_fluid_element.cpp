@@ -1867,7 +1867,6 @@ namespace Kratos {
     const unsigned int NumGauss = GaussWeights.size();
 
     double TimeStep=rCurrentProcessInfo[DELTA_TIME];
-    double currentTime=rCurrentProcessInfo[TIME];
     double theta=this->GetThetaContinuity();
     double ElemSize = this->ElementSize();
 
@@ -1923,14 +1922,9 @@ namespace Kratos {
 	  double StabLaplacianWeight=Tau*GaussWeight;
 	  this->ComputeStabLaplacianMatrix(rLeftHandSideMatrix,rDN_DX,StabLaplacianWeight);
 
-    // double FluidFractionRateNew = 0.0;
-    // double FluidFractionRateOld = 0.0;
     this->EvaluateInPoint(FluidFraction,FLUID_FRACTION,N);
     this->EvaluateInPoint(FluidFractionRate,FLUID_FRACTION_RATE,N);
-    // this->EvaluateInPoint(FluidFractionRateNew,FLUID_FRACTION_RATE,N);
-    // this->EvaluateInPoint(FluidFractionRateOld,FLUID_FRACTION_RATE_OLD,N);
-    // FluidFractionRate=0.5*FluidFractionRateNew+0.5*FluidFractionRateOld;
-    if(std::abs(FluidFraction) < 1.0e-12)
+    if(std::abs(FluidFraction) < 1.0e-15)
     {
       FluidFraction = 1.0;
       FluidFractionRate = 0.0;
@@ -1941,9 +1935,7 @@ namespace Kratos {
 	      // RHS contribution
 	      // Velocity divergence
 	      rRightHandSideVector[i] += GaussWeight * N[i] * rElementalVariables.VolumetricDefRate;
-
-	      if(currentTime>0.02)
-		rRightHandSideVector[i] += GaussWeight * N[i] * FluidFractionRate / FluidFraction;
+		    rRightHandSideVector[i] += GaussWeight * N[i] * FluidFractionRate / FluidFraction;
 
 	      this->AddStabilizationNodalTermsRHS(rRightHandSideVector,Tau,Density,GaussWeight,rDN_DX,i);
 	    }
@@ -1966,20 +1958,6 @@ namespace Kratos {
       MatrixType BulkMatrixConsistent = ZeroMatrix(NumNodes,NumNodes);
       double lumpedBulkCoeff =totalVolume/(VolumetricCoeff);
       double lumpedBulkStabCoeff=lumpedBulkCoeff*Tau*Density/TimeStep;
-
-        if(currentTime>0.02){
-          VectorType FluidFractionRateValues= ZeroVector(NumNodes);
-        VectorType FluidFractionRateOldValues= ZeroVector(NumNodes);
-        this->GetFluidFractionRateValues(FluidFractionRateValues);
-        this->GetFluidFractionRateOldValues(FluidFractionRateOldValues);
-        noalias(FluidFractionRateValues)-=FluidFractionRateOldValues;
-
-        double fluidFractionStabCoeff=totalVolume*Tau*Density/ (FluidFraction*TimeStep);
-        MatrixType FluidFractionRateMatrix = ZeroMatrix(NumNodes,NumNodes);
-        this->ComputeBulkMatrixLump(FluidFractionRateMatrix,fluidFractionStabCoeff);
-        if(currentTime>0.02)
-        noalias(rRightHandSideVector) += prod(FluidFractionRateMatrix,FluidFractionRateValues);
-        }
 
       this->ComputeBulkMatrixLump(BulkMatrix,lumpedBulkCoeff);
       // this->ComputeBulkMatrixConsistent(BulkMatrixConsistent,lumpedBulkCoeff);

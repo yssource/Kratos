@@ -1924,6 +1924,21 @@ namespace Kratos {
 
     this->EvaluateInPoint(FluidFraction,FLUID_FRACTION,N);
     this->EvaluateInPoint(FluidFractionRate,FLUID_FRACTION_RATE,N);
+
+    bool wallElement = false;
+    for (SizeType i = 0; i < NumNodes; ++i)
+	  {
+      if(rGeom[i].Is(RIGID))
+      {
+        wallElement=true;
+        break;
+      }
+    }
+    if(wallElement==true)
+    {
+      this->EvaluatePropertyFromANotRigidNode(FluidFractionRate,FLUID_FRACTION_RATE);
+    }
+
     if(std::abs(FluidFraction) < 1.0e-12)
     {
       FluidFraction = 1.0;

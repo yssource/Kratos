@@ -106,9 +106,18 @@ class Algorithm(BaseAlgorithm):
             self.fluid_solution.main_model_part.CloneTimeStep(self.time)
 
     def FluidSolve(self, time = 'None', solve_system = True):
-
+                
+        print("InitializeSolutionStep() ")
         self.fluid_solution.InitializeSolutionStep()
+        print("SolveSolutionStep() ")
         self.fluid_solution.SolveSolutionStep()
+        # print("FinalizeSolutionStep() ")
+        # self.fluid_solution.FinalizeSolutionStep()
+        # self.projection_module.UpdateDatabase(self.h_min)
+
+
+    def FinalizeFluidSolution(self):
+        print("FinalizeSolutionStep() ")
         self.fluid_solution.FinalizeSolutionStep()
         self.projection_module.UpdateDatabase(self.h_min)
 

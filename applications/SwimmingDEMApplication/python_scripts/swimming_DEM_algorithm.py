@@ -606,6 +606,9 @@ class Algorithm(object):
     def ManageFluidDEMTimeStep(self):
         pass
 
+    def FinalizeFluidSolution(self):
+        pass
+
     def RunMainTemporalLoop(self):
         coupling_level_type = self.pp.CFD_DEM["coupling_level_type"].GetInt()
         project_at_every_substep_option = self.pp.CFD_DEM["project_at_every_substep_option"].GetBool()
@@ -667,7 +670,7 @@ class Algorithm(object):
 
             # Save Initial Fluid Fraction
             self.SaveInitialFluidFraction()
-
+            printNow=False
             for self.time_dem in self.yield_DEM_time(
                     self.time_dem,
                     time_final_DEM_substepping,
@@ -725,14 +728,15 @@ class Algorithm(object):
                         self.spheres_model_part,
                         self.cluster_model_part,
                         self.disperse_phase_solution.creator_destructor)
-
                 if self.print_counter_updated_fluid.Tick():
-
-                    if coupling_level_type:
-                        self.projection_module.ComputePostProcessResults(
-                            self.spheres_model_part.ProcessInfo)
-
-                    self.post_utils.Writeresults(self.time_dem)
+                    printNow=True
+                # if self.print_counter_updated_fluid.Tick():
+                #     print("print_counter_updated_fluid.Tick() ")
+                #     if coupling_level_type:
+                #         self.projection_module.ComputePostProcessResults(
+                #             self.spheres_model_part.ProcessInfo)
+                #     print("Writeresults ")
+                #     self.post_utils.Writeresults(self.time_dem)
 
                 first_dem_iter = False
 
@@ -746,7 +750,11 @@ class Algorithm(object):
 
             #self.PerformEmbeddedOperations() TO-DO: it's crashing
 
+            print("UpdateALEMeshMovement ")
             self.UpdateALEMeshMovement(self.time)
+
+            print("FluidSolve ")
+
 
             # solving the fluid part
             if self.step >= self.GetFirstStepForFluidComputation():
@@ -755,10 +763,23 @@ class Algorithm(object):
                     solve_system=self.fluid_solve_counter.Tick() and not self.stationarity
                     )
 
+            if printNow:
+                print("print_counter_updated_fluid.Tick() ")
+                if coupling_level_type:
+                    self.projection_module.ComputePostProcessResults(
+                        self.spheres_model_part.ProcessInfo)
+                print("Writeresults ")
+                self.post_utils.Writeresults(self.time_dem)
+
+            if self.step >= self.GetFirstStepForFluidComputation():
+                self.FinalizeFluidSolution()    
+
             # assessing stationarity
                 if self.stationarity_counter.Tick():
                     self.AssessStationarity()
 
+
+            print("FluidSolve done ")
             #### PRINTING GRAPHS ####
             os.chdir(self.graphs_path)
             # measuring mean velocities in a certain control volume (the 'velocity trap')

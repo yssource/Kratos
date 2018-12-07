@@ -263,6 +263,33 @@ namespace Kratos {
   }
 
   template< unsigned int TDim >
+  void TwoStepUpdatedLagrangianElement<TDim>::GetFluidFractionRateValues(Vector& rValues)
+  {
+    GeometryType& rGeom = this->GetGeometry();
+    const SizeType NumNodes = rGeom.PointsNumber();
+
+    if (rValues.size() != NumNodes) rValues.resize(NumNodes);
+
+    for (SizeType i = 0; i < NumNodes; ++i){
+      rValues[i] = rGeom[i].FastGetSolutionStepValue(FLUID_FRACTION_RATE);
+    }
+  }
+
+
+  template< unsigned int TDim >
+  void TwoStepUpdatedLagrangianElement<TDim>::GetFluidFractionRateOldValues(Vector& rValues)
+  {
+    GeometryType& rGeom = this->GetGeometry();
+    const SizeType NumNodes = rGeom.PointsNumber();
+
+    if (rValues.size() != NumNodes) rValues.resize(NumNodes);
+
+    for (SizeType i = 0; i < NumNodes; ++i){
+      rValues[i] = rGeom[i].FastGetSolutionStepValue(FLUID_FRACTION_RATE_OLD);
+    }
+  }
+
+  template< unsigned int TDim >
   void TwoStepUpdatedLagrangianElement<TDim>::GetDensityValues(Vector& rValues,
 							       const int Step)
   {
@@ -1345,34 +1372,34 @@ namespace Kratos {
   }
 
 
-  template < >
-  double TwoStepUpdatedLagrangianElement<2>::CalcNormalProjectionDefRate(const VectorType &SpatialDefRate,
-									 const array_1d<double, 3> NormalVector)
-  {
-
-    double NormalProjSpatialDefRate=NormalVector[0]*SpatialDefRate[0]*NormalVector[0]+
-      NormalVector[1]*SpatialDefRate[1]*NormalVector[1]+
-      2*NormalVector[0]*SpatialDefRate[2]*NormalVector[1];
-
-    return NormalProjSpatialDefRate;
+  template < >  
+  double TwoStepUpdatedLagrangianElement<2>::CalcNormalProjectionDefRate(const VectorType &SpatialDefRate, 
+									 const array_1d<double, 3> NormalVector) 
+  { 
+   
+    double NormalProjSpatialDefRate=NormalVector[0]*SpatialDefRate[0]*NormalVector[0]+ 
+      NormalVector[1]*SpatialDefRate[1]*NormalVector[1]+ 
+      2*NormalVector[0]*SpatialDefRate[2]*NormalVector[1]; 
+ 
+    return NormalProjSpatialDefRate; 
+  } 
+ 
+  template < >  
+  double TwoStepUpdatedLagrangianElement<3>::CalcNormalProjectionDefRate(const VectorType &SpatialDefRate, 
+									 const array_1d<double, 3> NormalVector) 
+  { 
+   
+    double  NormalProjSpatialDefRate=NormalVector[0]*SpatialDefRate[0]*NormalVector[0]+ 
+      NormalVector[1]*SpatialDefRate[1]*NormalVector[1]+ 
+      NormalVector[2]*SpatialDefRate[2]*NormalVector[2]+ 
+      2*NormalVector[0]*SpatialDefRate[3]*NormalVector[1]+ 
+      2*NormalVector[0]*SpatialDefRate[4]*NormalVector[2]+ 
+      2*NormalVector[1]*SpatialDefRate[5]*NormalVector[2]; 
+   
+    return NormalProjSpatialDefRate; 
   }
 
-  template < >
-  double TwoStepUpdatedLagrangianElement<3>::CalcNormalProjectionDefRate(const VectorType &SpatialDefRate,
-									 const array_1d<double, 3> NormalVector)
-  {
-
-    double  NormalProjSpatialDefRate=NormalVector[0]*SpatialDefRate[0]*NormalVector[0]+
-      NormalVector[1]*SpatialDefRate[1]*NormalVector[1]+
-      NormalVector[2]*SpatialDefRate[2]*NormalVector[2]+
-      2*NormalVector[0]*SpatialDefRate[3]*NormalVector[1]+
-      2*NormalVector[0]*SpatialDefRate[4]*NormalVector[2]+
-      2*NormalVector[1]*SpatialDefRate[5]*NormalVector[2];
-
-    return NormalProjSpatialDefRate;
-  }
-
-
+  
   template < >
   double TwoStepUpdatedLagrangianElement<2>::CalcNormalProjectionDefRate(VectorType &SpatialDefRate)
   {
@@ -1612,9 +1639,9 @@ namespace Kratos {
     return std::sqrt(2.0*NormS);
   }
 
+  
 
-
-
+  
 
   template< unsigned int TDim >
   void TwoStepUpdatedLagrangianElement<TDim>::ComputeLumpedMassMatrix(Matrix& rMassMatrix,
@@ -1804,7 +1831,7 @@ namespace Kratos {
   }
 
 
-
+ 
   template< unsigned int TDim >
   void TwoStepUpdatedLagrangianElement<TDim>::ComputeBulkMatrix(Matrix& BulkMatrix,
 								const ShapeFunctionsType& rN,

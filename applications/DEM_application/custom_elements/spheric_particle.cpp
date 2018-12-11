@@ -1597,16 +1597,7 @@ void SphericParticle::AddUpForcesAndProject(double OldCoordSystem[3][3],
 
         LocalContactForce[index] = LocalElasticContactForce[index] + ViscoDampingLocalContactForce[index] + other_ball_to_ball_forces[index];
     }
-    
-    if (this->Id() == 20000005) {
-        KRATOS_WATCH(LocalElasticContactForce[0])
-        KRATOS_WATCH(LocalElasticContactForce[1])
-        KRATOS_WATCH(LocalElasticContactForce[2])
-        KRATOS_WATCH(ViscoDampingLocalContactForce[0])
-        KRATOS_WATCH(ViscoDampingLocalContactForce[1])
-        KRATOS_WATCH(ViscoDampingLocalContactForce[2])
-    }
-    
+
     LocalContactForce[2] -= cohesive_force;
 
     DEM_ADD_SECOND_TO_FIRST(LocalElasticContactForce, other_ball_to_ball_forces);
@@ -1643,15 +1634,6 @@ void SphericParticle::AddUpMomentsAndProject(double LocalCoordSystem[3][3],
         //LocalViscoRotationalMoment[index] = 0.0;
         //
         LocalContactRotationalMoment[index] = LocalElasticRotationalMoment[index] + LocalViscoRotationalMoment[index];
-    }
-    
-    if (this->Id() == 20000000003) {
-        KRATOS_WATCH(LocalElasticRotationalMoment[0])
-        KRATOS_WATCH(LocalElasticRotationalMoment[1])
-        KRATOS_WATCH(LocalElasticRotationalMoment[2])
-        KRATOS_WATCH(LocalViscoRotationalMoment[0])
-        KRATOS_WATCH(LocalViscoRotationalMoment[1])
-        KRATOS_WATCH(LocalViscoRotationalMoment[2])
     }
 
     GeometryFunctions::VectorLocal2Global(LocalCoordSystem, LocalContactRotationalMoment, GlobalContactRotationalMoment);

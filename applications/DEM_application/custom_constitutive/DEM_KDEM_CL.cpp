@@ -341,6 +341,7 @@ namespace Kratos {
 
         KRATOS_TRY
         //double LocalRotationalMoment[3]     = {0.0};
+        //return;
         double LocalDeltaRotatedAngle[3]    = {0.0};
         double LocalDeltaAngularVelocity[3] = {0.0};
         
@@ -404,6 +405,7 @@ namespace Kratos {
                                           double calculation_area, Matrix* mSymmStressTensor, SphericContinuumParticle* element1,
                                           SphericContinuumParticle* element2, const ProcessInfo& r_process_info, const int i_neighbor_count, const double indentation) {
 
+        return;
         if (!r_process_info[POISSON_EFFECT_OPTION]) return;
         if (element1->mIniNeighbourFailureId[i_neighbor_count] > 0  &&  indentation < 0.0) return;
 
@@ -453,6 +455,7 @@ namespace Kratos {
                                                               SphericContinuumParticle* element1,
                                                               SphericContinuumParticle* element2) {
 
+        return;
         if (element1->mSymmStressTensor == NULL) return;
         //if(element1->IsSkin() || element2->IsSkin()) return;
 

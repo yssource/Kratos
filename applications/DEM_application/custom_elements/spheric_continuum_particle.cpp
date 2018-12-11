@@ -720,7 +720,10 @@ namespace Kratos {
         
         const double X_coord = this->GetGeometry()[0].Coordinates()[0];;
         const double Z_coord = this->GetGeometry()[0].Coordinates()[2];
-        const double inner_radius = 0.00366; //0.0036847 is the exact value;
+        double inner_radius = 0.00366; //0.0036847 is the exact value; SMALLER HOLE
+        const bool bigger_hole = true;
+        
+        if (bigger_hole) inner_radius = 0.012;
 
         if (sqrt(X_coord * X_coord + Z_coord * Z_coord) < inner_radius) this->Set(TO_ERASE, true);
     }

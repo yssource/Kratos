@@ -323,10 +323,14 @@ public:
         const double& currentFluidFraction = (i)->FastGetSolutionStepValue(FLUID_FRACTION);
         const double& previousFluidFraction = (i)->FastGetSolutionStepValue(FLUID_FRACTION_OLD);
         double& currentFluidFractionRate = (i)->FastGetSolutionStepValue(FLUID_FRACTION_RATE);
-        if(std::abs(previousFluidFraction-1.0)>1.0e-15 && std::abs(currentFluidFraction-1.0)>1.0e-15)
+        if(std::abs(previousFluidFraction-1.0)>1.0e-15 && std::abs(currentFluidFraction-1.0)>1.0e-15){
           currentFluidFractionRate = (currentFluidFraction - previousFluidFraction)/TimeStep;
-        else
+		if((i)->Is(FREE_SURFACE)){
+		currentFluidFractionRate*=0.5;
+		}
+        }else{
           currentFluidFractionRate = 0.0;
+}
       }
 
     }

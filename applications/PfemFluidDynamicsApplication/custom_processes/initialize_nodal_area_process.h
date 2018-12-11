@@ -160,7 +160,7 @@ public:
                 Geometry< Node<3> >& geom = i->GetGeometry();
 
                 vol = GeometryUtils::CalculateVolume3D(geom);
-                vol *= 0.25;
+                //vol *= 0.25;
 
                 geom[0].FastGetSolutionStepValue(NODAL_AREA) += vol;
                 geom[1].FastGetSolutionStepValue(NODAL_AREA) += vol;

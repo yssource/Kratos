@@ -212,7 +212,7 @@ class Algorithm(object):
         Add("print_CONDUCTIVITY_option").SetBool(False)
         Add("filter_velocity_option").SetBool(False)
         Add("print_PARTICLE_VEL_option").SetBool(False)
-        Add("apply_time_filter_to_fluid_fraction_option").SetBool(False)
+        Add("apply_time_filter_to_fluid_fraction_option").SetBool(True)
         Add("full_particle_history_watcher").SetString("Empty")
         Add("prerun_fluid_file_name").SetString("")
         Add("frame_of_reference_type").SetInt(0)
@@ -772,7 +772,7 @@ class Algorithm(object):
                 self.post_utils.Writeresults(self.time_dem)
 
             if self.step >= self.GetFirstStepForFluidComputation():
-                self.FinalizeFluidSolution()    
+                self.FinalizeFluidSolution()
 
             # assessing stationarity
                 if self.stationarity_counter.Tick():

@@ -1035,7 +1035,7 @@ class DEMFEMProcedures(object):
 
     def close_balls_graph_files(self, spheres_model_part):
 
-        for mesh_number in range(0, self.spheres_model_part.NumberOfSubModelParts()):
+        for smp in self.spheres_model_part.SubModelParts:
             if smp[FORCE_INTEGRATION_GROUP]:
                 identifier = smp[IDENTIFIER]
                 self.particle_graph_forces[identifier].close()
@@ -1089,13 +1089,13 @@ class DEMFEMProcedures(object):
 
     def FinalizeGraphs(self, RigidFace_model_part):
 
-        if not "TestType" in self.DEM_parameters.keys():
+        if self.TestType == "None":
             self.close_graph_files(RigidFace_model_part)
 
     def PrintBallsGraph(self, time):
 
-        if not "TestType" in self.DEM_parameters.keys():
-
+        if self.TestType == "None":
+            
             if self.balls_graph_counter == self.graph_frequency:
                 self.balls_graph_counter = 0
 
@@ -1118,7 +1118,7 @@ class DEMFEMProcedures(object):
 
     def FinalizeBallsGraphs(self, spheres_model_part):
 
-        if not "TestType" in self.DEM_parameters.keys():
+        if self.TestType == "None":
             self.close_balls_graph_files(spheres_model_part)
 
     def ApplyNodalRotation(self, time):

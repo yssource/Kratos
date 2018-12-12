@@ -27,10 +27,12 @@ class ValueLoggerConjugateGradient( ValueLogger ):
         with open(self.complete_log_file_name, 'w') as csvfile:
             historyWriter = csv.writer(csvfile, delimiter=',',quotechar='|',quoting=csv.QUOTE_MINIMAL)
             row = []
-            row.append("{:>4s}".format("itr"))
+            row.append("{:>8s}".format("outer_itr"))
+            row.append("{:>8s}".format("inner_itr"))
             row.append("{:>20s}".format("f"))
             row.append("{:>12s}".format("df_abs[%]"))
             row.append("{:>12s}".format("df_rel[%]"))
+            row.append("{:>13s}".format("norm_df"))
             row.append("{:>25s}".format("time_stamp"))
             historyWriter.writerow(row)
 
@@ -47,13 +49,14 @@ class ValueLoggerConjugateGradient( ValueLogger ):
         with open(self.complete_log_file_name, 'a') as csvfile:
             historyWriter = csv.writer(csvfile, delimiter=',',quotechar='|',quoting=csv.QUOTE_MINIMAL)
             row = []
-            row.append(str("{:>4d}".format(self.current_iteration)))
+            row.append(str(" {:>8d}".format(self.value_history["outer_iter"][self.current_iteration])))
+            row.append(str(" {:>8d}".format(self.current_iteration)))
 
             objective_id = self.specified_objectives[0]["identifier"].GetString()
             row.append(str("{:>20f}".format(self.value_history[objective_id][self.current_iteration])))
             row.append(str("{:>12f}".format(self.value_history["abs_change_obj"][self.current_iteration])))
             row.append(str("{:>12f}".format(self.value_history["rel_change_obj"][self.current_iteration])))
-
+            row.append(" {:> .5E}".format(self.value_history["norm_obj_gradient"][self.current_iteration]))
             row.append("{:>25}".format(Timer().GetTimeStamp()))
             historyWriter.writerow(row)
 

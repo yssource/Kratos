@@ -29,7 +29,7 @@ from scipy.optimize import minimize
 # ==============================================================================
 class AlgorithmConjugateGradient(OptimizationAlgorithm):
     # --------------------------------------------------------------------------
-    def __init__(self, OptimizationSettings, Analyzer, Communicator, ModelPartController):
+    def __init__(self, optimization_settings, analyzer, communicator, model_part_controller):
         default_algorithm_settings = Parameters("""
         {
             "name"               : "steepest_descent",
@@ -41,22 +41,29 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
                 "step_size"                  : 1.0
             }
         }""")
-        self.algorithm_settings =  OptimizationSettings["optimization_algorithm"]
+        self.algorithm_settings =  optimization_settings["optimization_algorithm"]
         self.algorithm_settings.RecursivelyValidateAndAssignDefaults(default_algorithm_settings)
 
-        self.Analyzer = Analyzer
-        self.Communicator = Communicator
-        self.ModelPartController = ModelPartController
+        self.optimization_settings = optimization_settings
+        self.mapper_settings = optimization_settings["design_variables"]["filter"]
 
-        self.objectives = OptimizationSettings["objectives"]
-        self.constraints = OptimizationSettings["constraints"]
+        self.analyzer = analyzer
+        self.communicator = communicator
+        self.model_part_controller = model_part_controller
 
-        self.OptimizationModelPart = ModelPartController.GetOptimizationModelPart()
-        self.DesignSurface = ModelPartController.GetDesignSurface()
+        self.design_surface = None
+        self.mapper = None
+        self.data_logger = None
+        self.optimization_utilities = None
 
-        self.Mapper = mapper_factory.CreateMapper(self.DesignSurface, self.DesignSurface, OptimizationSettings["design_variables"]["filter"])
-        self.DataLogger = data_logger_factory.CreateDataLogger(ModelPartController, Communicator, OptimizationSettings)
+        self.objectives = optimization_settings["objectives"]
+        self.constraints = optimization_settings["constraints"]
 
+        self.max_iterations = self.algorithm_settings["max_iterations"].GetInt() + 1
+        self.relative_tolerance = self.algorithm_settings["relative_tolerance"].GetDouble()
+
+        self.optimization_model_part = model_part_controller.GetOptimizationModelPart()
+        self.optimization_model_part.AddNodalSolutionStepVariable(SEARCH_DIRECTION)
 
     # --------------------------------------------------------------------------
     def CheckApplicability(self):
@@ -67,56 +74,67 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
 
     # --------------------------------------------------------------------------
     def InitializeOptimizationLoop(self):
-        self.only_obj = self.objectives[0]
+        self.model_part_controller.ImportOptimizationModelPart()
+        self.model_part_controller.InitializeMeshController()
 
-        self.maxIterations = self.algorithm_settings["max_iterations"].GetInt() + 1
-        self.relativeTolerance = self.algorithm_settings["relative_tolerance"].GetDouble()
+        self.analyzer.InitializeBeforeOptimizationLoop()
 
-        self.ModelPartController.InitializeMeshController()
-        self.Mapper.Initialize()
-        self.Analyzer.InitializeBeforeOptimizationLoop()
-        self.DataLogger.InitializeDataLogging()
+        self.design_surface = self.model_part_controller.GetDesignSurface()
+
+        self.mapper = mapper_factory.CreateMapper(self.design_surface, self.design_surface, self.mapper_settings)
+        self.mapper.Initialize()
+
+        self.data_logger = data_logger_factory.CreateDataLogger(self.model_part_controller, self.communicator, self.optimization_settings)
+        self.data_logger.InitializeDataLogging()
+
+        self.optimization_utilities = OptimizationUtilities(self.design_surface, self.optimization_settings)
 
     # --------------------------------------------------------------------------
     def RunOptimizationLoop(self):
         timer = Timer()
         timer.StartTimer()
 
-        self.num_nodes = self.DesignSurface.NumberOfNodes()
+        self.num_nodes = self.design_surface.NumberOfNodes()
         self.num_dv = 3*self.num_nodes
 
         X0 = np.zeros(self.num_dv)
 
-        self.optimization_iteration = 0
+        self.optimization_iteration = 1
         self.num_function_calls = 0
 
         def function_wrapper(X):
 
             self.num_function_calls = self.num_function_calls+1
 
-            # Mapping
-            for counter, node in enumerate(self.DesignSurface.Nodes):
+            # if self.num_function_calls == 3:
+            #     # Mapping
+            #     for counter, node in enumerate(self.design_surface.Nodes):
+            #         [dx,dy,dz] = X[(3*counter):(3*counter+3)]
+            #         node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[0.0001*dx,0.0001*dy,0.0001*dz])
+            # else:
+                # Mapping
+            for counter, node in enumerate(self.design_surface.Nodes):
                 [dx,dy,dz] = X[(3*counter):(3*counter+3)]
                 node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[dx,dy,dz])
 
-            self.Mapper.Map(CONTROL_POINT_CHANGE, SHAPE_CHANGE)
+            self.mapper.Map(CONTROL_POINT_CHANGE, SHAPE_CHANGE)
 
-            self.ModelPartController.DampNodalVariableIfSpecified(SHAPE_CHANGE)
+            self.model_part_controller.DampNodalVariableIfSpecified(SHAPE_CHANGE)
 
 
             # # Mapping of update
-            # for counter, node in enumerate(self.DesignSurface.Nodes):
+            # for counter, node in enumerate(self.design_surface.Nodes):
             #     [dx_old,dy_old,dz_old] = node.GetSolutionStepValue(CONTROL_POINT_CHANGE)
-
+#
             #     [dx,dy,dz] = X[(3*counter):(3*counter+3)]
             #     node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[dx,dy,dz])
 
             #     x_update = [dx-dx_old,dy-dy_old,dz-dz_old]
             #     node.SetSolutionStepValue(CONTROL_POINT_UPDATE,x_update)
 
-            # self.Mapper.Map(CONTROL_POINT_UPDATE, SHAPE_UPDATE)
+            # self.mapper.Map(CONTROL_POINT_UPDATE, SHAPE_UPDATE)
 
-            # for node in self.DesignSurface.Nodes:
+            # for node in self.design_surface.Nodes:
             #     shape_change = node.GetSolutionStepValue(SHAPE_CHANGE)
             #     shape_udpate = node.GetSolutionStepValue(SHAPE_UPDATE)
 
@@ -128,7 +146,7 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
             #     node.SetSolutionStepValue(SHAPE_CHANGE, new_shape_change)
 
             # Initialize new shape
-            for counter, node in enumerate(self.DesignSurface.Nodes):
+            for counter, node in enumerate(self.design_surface.Nodes):
                 [dx,dy,dz] = node.GetSolutionStepValue(SHAPE_CHANGE)
 
                 # Update Coordinates
@@ -142,30 +160,37 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
                 node.Z0 = node.Z
 
             # Analyze shape
-            self.Communicator.initializeCommunication()
-            self.Communicator.requestValueOf(self.only_obj["identifier"].GetString())
-            self.Communicator.requestGradientOf(self.only_obj["identifier"].GetString())
-            self.Analyzer.AnalyzeDesignAndReportToCommunicator(self.DesignSurface, self.num_function_calls, self.Communicator)
+            self.communicator.initializeCommunication()
+            self.communicator.requestValueOf(self.objectives[0]["identifier"].GetString())
+            self.communicator.requestGradientOf(self.objectives[0]["identifier"].GetString())
+            self.analyzer.AnalyzeDesignAndReportToCommunicator(self.design_surface, self.num_function_calls, self.communicator)
 
-            value = self.Communicator.getStandardizedValue(self.only_obj["identifier"].GetString())
+            value = self.communicator.getStandardizedValue(self.objectives[0]["identifier"].GetString())
 
-            gradient_from_kratos = self.Communicator.getStandardizedGradient(self.only_obj["identifier"].GetString())
-            WriteDictionaryDataOnNodalVariable(gradient_from_kratos, self.OptimizationModelPart, DF1DX)
+            gradient_from_kratos = self.communicator.getStandardizedGradient(self.objectives[0]["identifier"].GetString())
+            WriteDictionaryDataOnNodalVariable(gradient_from_kratos, self.optimization_model_part, DF1DX)
 
             # Mapping
-            self.Mapper.InverseMap(DF1DX, DF1DX_MAPPED)
-            self.ModelPartController.DampNodalVariableIfSpecified(DF1DX_MAPPED)
-            # self.Mapper.Update()
+            self.model_part_controller.DampNodalVariableIfSpecified(DF1DX)
+            self.mapper.InverseMap(DF1DX, DF1DX_MAPPED)
+            # self.mapper.Update()
 
             gradient = np.zeros_like(X)
-            for counter, node in enumerate(self.DesignSurface.Nodes):
+            for counter, node in enumerate(self.design_surface.Nodes):
                 gradient[(3*counter):(3*counter+3)] = node.GetSolutionStepValue(DF1DX_MAPPED)
 
-            self.DataLogger.LogCurrentValues(self.num_function_calls, {})
-            self.DataLogger.LogCurrentDesign(self.num_function_calls)
+
+            norm_obj_gradient = self.optimization_utilities.ComputeL2NormOfNodalVariable(DF1DX_MAPPED)
+
+            additional_values_to_log = {}
+            additional_values_to_log["norm_obj_gradient"] = norm_obj_gradient
+            additional_values_to_log["outer_iter"] = self.optimization_iteration
+
+            self.data_logger.LogCurrentValues(self.num_function_calls, additional_values_to_log)
+            self.data_logger.LogCurrentDesign(self.num_function_calls)
 
             # Reset mesh udpate
-            for counter, node in enumerate(self.DesignSurface.Nodes):
+            for counter, node in enumerate(self.design_surface.Nodes):
                 [dx,dy,dz] = node.GetSolutionStepValue(SHAPE_CHANGE)
 
                 node.X = node.X - dx
@@ -183,9 +208,10 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
 
         def log_function(X):
             self.optimization_iteration = self.optimization_iteration+1
+            print("##################################################################### Starting opt step: ",self.optimization_iteration)
 
-            # self.DataLogger.LogCurrentValues(self.optimization_iteration, {})
-            # self.DataLogger.LogCurrentDesign(self.optimization_iteration)
+            # self.data_logger.LogCurrentValues(self.optimization_iteration, {})
+            # self.data_logger.LogCurrentDesign(self.optimization_iteration)
 
         # Run optimization
         res = minimize(function_wrapper, X0, method='CG', jac=True, callback=log_function, options={'disp': True})
@@ -202,7 +228,7 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
         #     X0_new = res['x']
 
         #     # Update mesh
-        #     for counter, node in enumerate(self.DesignSurface.Nodes):
+        #     for counter, node in enumerate(self.design_surface.Nodes):
         #         [dx,dy,dz] = X0_new[(3*counter):(3*counter+3)]
 
         #         # Update Coordinates
@@ -215,10 +241,10 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
         #         node.Y0 = node.Y
         #         node.Z0 = node.Z
 
-        #     self.Mapper.Update()
+        #     self.mapper.Update()
 
         #     # Reset mesh udpate
-        #     for counter, node in enumerate(self.DesignSurface.Nodes):
+        #     for counter, node in enumerate(self.design_surface.Nodes):
         #         [dx,dy,dz] = X0_new[(3*counter):(3*counter+3)]
 
         #         node.X = node.X - dx
@@ -233,7 +259,7 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
 
     # --------------------------------------------------------------------------
     def FinalizeOptimizationLoop(self):
-        self.DataLogger.FinalizeDataLogging()
-        self.Analyzer.FinalizeAfterOptimizationLoop()
+        self.data_logger.FinalizeDataLogging()
+        self.analyzer.FinalizeAfterOptimizationLoop()
 
 # ==============================================================================

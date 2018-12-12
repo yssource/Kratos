@@ -16,6 +16,7 @@ from algorithm_steepest_descent import AlgorithmSteepestDescent
 from algorithm_conjugate_gradient import AlgorithmConjugateGradient
 from algorithm_penalized_projection import AlgorithmPenalizedProjection
 from algorithm_trust_region import AlgorithmTrustRegion
+from algorithm_bead_optimization import AlgorithmBeadOptimization
 
 # ==============================================================================
 def CreateOptimizationAlgorithm(optimization_settings, analyzer, communicator, model_part_controller):
@@ -41,6 +42,11 @@ def CreateOptimizationAlgorithm(optimization_settings, analyzer, communicator, m
                                     analyzer,
                                     communicator,
                                     model_part_controller)
+    elif algorithm_name == "bead_optimization":
+        return AlgorithmBeadOptimization(optimization_settings,
+                                         analyzer,
+                                         communicator,
+                                         model_part_controller)
     else:
         raise NameError("The following optimization algorithm is not supported by the algorithm factory: " + algorithm_name)
 

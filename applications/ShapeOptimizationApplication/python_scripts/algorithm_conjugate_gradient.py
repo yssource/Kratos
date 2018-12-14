@@ -32,11 +32,12 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
     def __init__(self, optimization_settings, analyzer, communicator, model_part_controller):
         default_algorithm_settings = Parameters("""
         {
-            "name"               : "steepest_descent",
-            "max_iterations"     : 100,
-            "relative_tolerance" : 1e-3,
+            "name"                  : "conjugate_gradient",
+            "max_iterations"        : 100,
+            "relative_tolerance"    : 1e-3,
             "update_mapping_matrix" : true,
             "fix_boundaries"        : [],
+            "gradient_tolerance"    : 1e-6,
             "line_search" : {
                 "line_search_type"           : "manual_stepping",
                 "normalize_search_direction" : true,
@@ -96,7 +97,7 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
         VariableUtils().SetFlag(BOUNDARY, False, self.optimization_model_part.Nodes)
 
         radius = self.mapper_settings["filter_radius"].GetDouble()
-        search_based_functions = SearchBasedFunctions(self.optimization_model_part)
+        search_based_functions = SearchBasedFunctions(self.design_surface)
 
         for itr in range(self.algorithm_settings["fix_boundaries"].size()):
             sub_model_part_name = self.algorithm_settings["fix_boundaries"][itr].GetString()

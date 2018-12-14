@@ -35,6 +35,8 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
             "name"               : "steepest_descent",
             "max_iterations"     : 100,
             "relative_tolerance" : 1e-3,
+            "update_mapping_matrix" : true,
+            "fix_boundaries"        : [],
             "line_search" : {
                 "line_search_type"           : "manual_stepping",
                 "normalize_search_direction" : true,
@@ -61,6 +63,7 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
 
         self.max_iterations = self.algorithm_settings["max_iterations"].GetInt() + 1
         self.relative_tolerance = self.algorithm_settings["relative_tolerance"].GetDouble()
+        self.update_mapping_matrix = self.algorithm_settings["update_mapping_matrix"].GetBool()
 
         self.optimization_model_part = model_part_controller.GetOptimizationModelPart()
         self.optimization_model_part.AddNodalSolutionStepVariable(SEARCH_DIRECTION)
@@ -89,6 +92,17 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
 
         self.optimization_utilities = OptimizationUtilities(self.design_surface, self.optimization_settings)
 
+        # Identify fixed design areas (geometric constraints)
+        VariableUtils().SetFlag(BOUNDARY, False, self.optimization_model_part.Nodes)
+
+        radius = self.mapper_settings["filter_radius"].GetDouble()
+        search_based_functions = SearchBasedFunctions(self.optimization_model_part)
+
+        for itr in range(self.algorithm_settings["fix_boundaries"].size()):
+            sub_model_part_name = self.algorithm_settings["fix_boundaries"][itr].GetString()
+            node_set = self.optimization_model_part.GetSubModelPart(sub_model_part_name).Nodes
+            search_based_functions.FlagNodesInRadius(node_set, BOUNDARY, radius)
+
     # --------------------------------------------------------------------------
     def RunOptimizationLoop(self):
         timer = Timer()
@@ -114,8 +128,12 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
             # else:
                 # Mapping
             for counter, node in enumerate(self.design_surface.Nodes):
-                [dx,dy,dz] = X[(3*counter):(3*counter+3)]
-                node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[dx,dy,dz])
+                if node.Is(BOUNDARY):
+                    # Enforce geometric constraint
+                    node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[0.0, 0.0, 0.0])
+                else:
+                    [dx,dy,dz] = X[(3*counter):(3*counter+3)]
+                    node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[dx,dy,dz])
 
             self.mapper.Map(CONTROL_POINT_CHANGE, SHAPE_CHANGE)
 
@@ -173,7 +191,6 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
             # Mapping
             self.model_part_controller.DampNodalVariableIfSpecified(DF1DX)
             self.mapper.InverseMap(DF1DX, DF1DX_MAPPED)
-            # self.mapper.Update()
 
             gradient = np.zeros_like(X)
             for counter, node in enumerate(self.design_surface.Nodes):
@@ -207,6 +224,9 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
             return value, gradient
 
         def log_function(X):
+            if self.update_mapping_matrix:
+                self.mapper.Update()
+
             self.optimization_iteration = self.optimization_iteration+1
             print("##################################################################### Starting opt step: ",self.optimization_iteration)
 

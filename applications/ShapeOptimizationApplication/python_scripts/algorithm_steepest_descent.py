@@ -29,10 +29,12 @@ class AlgorithmSteepestDescent(OptimizationAlgorithm):
     def __init__(self, optimization_settings, analyzer, communicator, model_part_controller):
         default_algorithm_settings = Parameters("""
         {
-            "name"               : "steepest_descent",
-            "max_iterations"     : 100,
-            "relative_tolerance" : 1e-3,
-            "gradient_tolerance" : 1e-5,
+            "name"                  : "steepest_descent",
+            "max_iterations"        : 100,
+            "relative_tolerance"    : 1e-3,
+            "gradient_tolerance"    : 1e-5,
+            "update_mapping_matrix" : true,
+            "fix_boundaries"        : [],
             "line_search" : {
                 "line_search_type"           : "manual_stepping",
                 "normalize_search_direction" : true,
@@ -65,6 +67,7 @@ class AlgorithmSteepestDescent(OptimizationAlgorithm):
         self.max_iterations = self.algorithm_settings["max_iterations"].GetInt() + 1
         self.relative_tolerance = self.algorithm_settings["relative_tolerance"].GetDouble()
         self.gradient_tolerance = self.algorithm_settings["gradient_tolerance"].GetDouble()
+        self.update_mapping_matrix = self.algorithm_settings["update_mapping_matrix"].GetBool()
         self.line_search_type = self.algorithm_settings["line_search"]["line_search_type"].GetString()
         self.approximation_tolerance = self.algorithm_settings["line_search"]["approximation_tolerance"].GetDouble()
         self.step_size = self.algorithm_settings["line_search"]["step_size"].GetDouble()
@@ -97,6 +100,17 @@ class AlgorithmSteepestDescent(OptimizationAlgorithm):
         self.data_logger.InitializeDataLogging()
 
         self.optimization_utilities = OptimizationUtilities(self.design_surface, self.optimization_settings)
+
+        # Identify fixed design areas (geometric constraints)
+        VariableUtils().SetFlag(BOUNDARY, False, self.optimization_model_part.Nodes)
+
+        radius = self.mapper_settings["filter_radius"].GetDouble()
+        search_based_functions = SearchBasedFunctions(self.optimization_model_part)
+
+        for itr in range(self.algorithm_settings["fix_boundaries"].size()):
+            sub_model_part_name = self.algorithm_settings["fix_boundaries"][itr].GetString()
+            node_set = self.optimization_model_part.GetSubModelPart(sub_model_part_name).Nodes
+            search_based_functions.FlagNodesInRadius(node_set, BOUNDARY, radius)
 
     # --------------------------------------------------------------------------
     def RunOptimizationLoop(self):
@@ -197,11 +211,17 @@ class AlgorithmSteepestDescent(OptimizationAlgorithm):
 
     # --------------------------------------------------------------------------
     def __computeShapeUpdate(self):
-        self.mapper.Update()
+        if self.update_mapping_matrix:
+            self.mapper.Update()
         self.mapper.InverseMap(DF1DX, DF1DX_MAPPED)
 
         self.optimization_utilities.ComputeSearchDirectionSteepestDescent()
         self.optimization_utilities.ComputeControlPointUpdate(self.step_size)
+
+        # Enforce geometric constraint
+        for node in self.design_surface.Nodes:
+            if node.Is(BOUNDARY):
+                node.SetSolutionStepValue(CONTROL_POINT_UPDATE,[0.0, 0.0, 0.0])
 
         self.mapper.Map(CONTROL_POINT_UPDATE, SHAPE_UPDATE)
         self.model_part_controller.DampNodalVariableIfSpecified(SHAPE_UPDATE)

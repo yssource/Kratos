@@ -42,7 +42,7 @@ namespace Kratos {
 
         BaseType::InitializeDEMElements();
         BaseType::InitializeFEMElements();
-        BaseType::InitializeSolutionStep();
+        InitializeSolutionStep();
         BaseType::ApplyInitialConditions();
 
         RebuildListOfSphericParticles <SphericContinuumParticle> (r_model_part.GetCommunicator().LocalMesh().Elements(), mListOfSphericContinuumParticles);
@@ -223,7 +223,7 @@ namespace Kratos {
 
                 ComputeNewNeighboursHistoricalData();
 
-                MarkNewSkinParticles();
+                //MarkNewSkinParticles();
 
                 r_process_info[SEARCH_CONTROL] = 2;
             } else {
@@ -683,14 +683,18 @@ namespace Kratos {
 
         KRATOS_CATCH("")
     }
-
-    void ContinuumExplicitSolverStrategy::FinalizeSolutionStep() {
-        BaseType::FinalizeSolutionStep();
-        FinalizeSolutionStepFEM();
-
+    
+    void ContinuumExplicitSolverStrategy::InitializeSolutionStep() {
+    
+        BaseType::InitializeSolutionStep();
+        
         ProcessInfo& r_process_info = GetModelPart().GetProcessInfo();
+        const int number_of_particles = (int) mListOfSphericContinuumParticles.size();
+        
+        MarkNewSkinParticles();
+        
         if (r_process_info[COMPUTE_STRESS_TENSOR_OPTION]) {
-            const int number_of_particles = (int) mListOfSphericContinuumParticles.size();
+            
             #pragma omp parallel
             {
                 #pragma omp for
@@ -705,6 +709,49 @@ namespace Kratos {
                 for (int i = 0; i < number_of_particles; i++) {
                     mListOfSphericContinuumParticles[i]->GetStressTensorFromNeighbourStep3();
                 }
+            }
+        }
+    }
+
+    void ContinuumExplicitSolverStrategy::FinalizeSolutionStep() {
+        
+        BaseType::FinalizeSolutionStep();
+        FinalizeSolutionStepFEM();
+
+        /*ProcessInfo& r_process_info = GetModelPart().GetProcessInfo();
+            const int number_of_particles = (int) mListOfSphericContinuumParticles.size();
+        
+        if (r_process_info[COMPUTE_STRESS_TENSOR_OPTION]) {
+            
+            #pragma omp parallel
+            {
+                #pragma omp for
+                for (int i = 0; i < number_of_particles; i++) {
+                    mListOfSphericContinuumParticles[i]->GetStressTensorFromNeighbourStep1();
+                }
+                #pragma omp for
+                for (int i = 0; i < number_of_particles; i++) {
+                    mListOfSphericContinuumParticles[i]->GetStressTensorFromNeighbourStep2();
+                }
+                #pragma omp for
+                for (int i = 0; i < number_of_particles; i++) {
+                    mListOfSphericContinuumParticles[i]->GetStressTensorFromNeighbourStep3();
+                }
+            }
+        }*/
+        
+        // EXXON SIMULATIONS ONLY!!!!
+
+		const bool exxon_simulation = false;
+
+		if (!exxon_simulation) return;
+
+        const int number_of_particles = (int) mListOfSphericContinuumParticles.size();
+        #pragma omp parallel
+        {
+            #pragma omp for
+            for (int i = 0; i < number_of_particles; i++) {
+                mListOfSphericContinuumParticles[i]->RemoveSpheresInsideInnerHole();
             }
         }
     }

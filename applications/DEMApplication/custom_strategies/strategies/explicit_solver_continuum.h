@@ -79,6 +79,7 @@ namespace Kratos {
         void CalculateMeanContactArea();
         void SetInitialDemContacts();
         void SetInitialFemContacts();
+        void InitializeSolutionStep();
         void FinalizeSolutionStep() override;
         void FinalizeSolutionStepFEM();
         void MarkNewSkinParticles();

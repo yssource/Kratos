@@ -313,8 +313,27 @@ public:
 
     void InitializeSolutionStep() override
     {
-    }
+      ModelPart& rModelPart = BaseType::GetModelPart();
+      ProcessInfo& rCurrentProcessInfo = rModelPart.GetProcessInfo();
+      const double TimeStep = rCurrentProcessInfo[DELTA_TIME];
+      std::cout<<"COMPUTE FLUID FRACTION RATE    "<<std::endl;
+      for (ModelPart::NodeIterator i = rModelPart.NodesBegin(); i != rModelPart.NodesEnd(); ++i)
+      {
+        // unsigned int idNode=(i)->Id();
+        const double& currentFluidFraction = (i)->FastGetSolutionStepValue(FLUID_FRACTION);
+        const double& previousFluidFraction = (i)->FastGetSolutionStepValue(FLUID_FRACTION_OLD);
+        double& currentFluidFractionRate = (i)->FastGetSolutionStepValue(FLUID_FRACTION_RATE);
+        if(std::abs(previousFluidFraction-1.0)>1.0e-15 && std::abs(currentFluidFraction-1.0)>1.0e-15){
+          currentFluidFractionRate = (currentFluidFraction - previousFluidFraction)/TimeStep;
+		if((i)->Is(FREE_SURFACE)){
+		currentFluidFractionRate*=0.5;
+		}
+        }else{
+          currentFluidFractionRate = 0.0;
+}
+      }
 
+    }
 
     void UpdateTopology(ModelPart& rModelPart, unsigned int echoLevel)
     {
@@ -371,7 +390,7 @@ public:
 	    double & CurrentPressureAcceleration  = (i)->FastGetSolutionStepValue(PRESSURE_ACCELERATION, 0);
 	    CurrentPressureAcceleration = (CurrentPressureVelocity-PreviousPressureVelocity)/timeInterval;
 	  }
-	  
+
         }
     }
 
@@ -424,15 +443,12 @@ public:
 	    double  & PreviousPressure     = (i)->FastGetSolutionStepValue(PRESSURE, 1);
 	    double  & CurrentPressureVelocity  = (i)->FastGetSolutionStepValue(PRESSURE_VELOCITY, 0);
 	    double & CurrentPressureAcceleration  = (i)->FastGetSolutionStepValue(PRESSURE_ACCELERATION, 0);
-	    
-	    CurrentPressureAcceleration = CurrentPressureVelocity/timeInterval;
-	    
-	    CurrentPressureVelocity = (CurrentPressure-PreviousPressure)/timeInterval;
-	    
-	    CurrentPressureAcceleration += -CurrentPressureVelocity/timeInterval;
 
-	    double& previousFluidFraction = (i)->FastGetSolutionStepValue(FLUID_FRACTION_OLD);
-	    previousFluidFraction=(i)->FastGetSolutionStepValue(FLUID_FRACTION);
+	    CurrentPressureAcceleration = CurrentPressureVelocity/timeInterval;
+
+	    CurrentPressureVelocity = (CurrentPressure-PreviousPressure)/timeInterval;
+
+	    CurrentPressureAcceleration += -CurrentPressureVelocity/timeInterval;
 	  }
 
 
@@ -509,10 +525,6 @@ public:
 	  array_1d<double, 3 > & CurrentDisplacement  = (i)->FastGetSolutionStepValue(DISPLACEMENT, 0);
 	  array_1d<double, 3 > & PreviousDisplacement = (i)->FastGetSolutionStepValue(DISPLACEMENT, 1);
 
-	  const double& currentFluidFraction = (i)->FastGetSolutionStepValue(FLUID_FRACTION);
-	  const double& previousFluidFraction = (i)->FastGetSolutionStepValue(FLUID_FRACTION_OLD);
-	  double& currentFluidFractionRate = (i)->FastGetSolutionStepValue(FLUID_FRACTION_RATE);
-
 	  /* if( i->IsFixed(DISPLACEMENT_X) == false ) */
 	  CurrentDisplacement[0] = 0.5* TimeStep *(CurrentVelocity[0]+PreviousVelocity[0]) + PreviousDisplacement[0];
 
@@ -521,8 +533,6 @@ public:
 
 	  /* if( i->IsFixed(DISPLACEMENT_Z) == false ) */
 	  CurrentDisplacement[2] = 0.5* TimeStep *(CurrentVelocity[2]+PreviousVelocity[2]) + PreviousDisplacement[2];
-
-	  currentFluidFractionRate = (currentFluidFraction - previousFluidFraction)/TimeStep;
         }
     }
 
@@ -585,7 +595,7 @@ public:
     ///@{
 
     /// Turn back information as a string.
-    virtual std::string Info() const
+    virtual std::string Info() const override
     {
         std::stringstream buffer;
         buffer << "TwoStepVPStrategy" ;
@@ -593,10 +603,10 @@ public:
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const {rOStream << "TwoStepVPStrategy";}
+    virtual void PrintInfo(std::ostream& rOStream) const override {rOStream << "TwoStepVPStrategy";}
 
     /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const {}
+    virtual void PrintData(std::ostream& rOStream) const override {}
 
 
     ///@}
@@ -695,6 +705,9 @@ protected:
 
       double DvErrorNorm = 0;
       ConvergedMomentum = this->CheckVelocityConvergence(NormDv,DvErrorNorm);
+
+      KRATOS_INFO("TwoStepVPStrategy") << "iteration("<<it<<") Velocity error: "<< DvErrorNorm <<" velTol: " << mVelocityTolerance<< std::endl;
+
       // Check convergence
       if(it==maxIt-1){
 
@@ -735,6 +748,7 @@ protected:
 
       double DpErrorNorm = 0;
       ConvergedContinuity = this->CheckPressureConvergence(NormDp,DpErrorNorm);
+          KRATOS_INFO("TwoStepVPStrategy") <<"       iteration("<<it<<") Pressure error: "<<DpErrorNorm <<" presTol: "<<mPressureTolerance << std::endl;
 
       // Check convergence
       if(it==maxIt-1){

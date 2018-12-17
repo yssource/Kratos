@@ -431,7 +431,7 @@ def ConstructListsOfVariablesForCoupling(pp):
         pp.coupling_dem_vars += [REYNOLDS_NUMBER]
 
     if pp.CFD_DEM["apply_time_filter_to_fluid_fraction_option"].GetBool():
-        pp.time_filtered_vars += [FLUID_FRACTION_FILTERED]
+        pp.time_filtered_vars += [FLUID_FRACTION_FILTERED] # FLUID_FRACTION??
 
     if pp.CFD_DEM["filter_velocity_option"].GetBool():
         pp.time_filtered_vars += [PARTICLE_VEL_FILTERED]

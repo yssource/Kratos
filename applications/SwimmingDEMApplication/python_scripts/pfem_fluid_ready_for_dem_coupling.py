@@ -68,9 +68,15 @@ class Solution(MainFluidPFEM.Solution):
 
         self.AddFluidVariablesBySwimmingDEMAlgorithm()
 
-    def CalculateNodalArea(self):
+    def InitializeNodalArea(self):
+        print("              INITIALIZE        NODAL AREA PROCESS                     ")
+        #KratosMultiphysics.CalculateNodalAreaProcess(self.main_model_part,self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]).Execute()
+        KratosPfemFluid.InitializeNodalAreaProcess(self.main_model_part,self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]).Execute()
+        #TODO: prepare a process to set nodal area at isolated nodes
 
-        KratosMultiphysics.CalculateNodalAreaProcess(self.main_model_part,self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]).Execute()
+    def CalculateNodalArea(self):
+        KratosPfemFluid.InitializeNodalAreaProcess(self.main_model_part,self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]).Execute()
+        #KratosMultiphysics.CalculateNodalAreaProcess(self.main_model_part,self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]).Execute()
 
     def AddFluidVariablesBySwimmingDEMAlgorithm(self):
         self.vars_man.AddNodalVariables(self.main_model_part, self.pp.fluid_vars)

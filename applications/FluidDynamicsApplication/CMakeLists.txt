@@ -18,6 +18,7 @@ set( KRATOS_FLUID_DYNAMICS_APPLICATION_CORE_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/element_size_calculator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/statistics_record.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/vorticity_utilities.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/acceleration_limitation_utilities.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/turbulence_statistics_container.cpp
 
   # elements
@@ -55,6 +56,7 @@ set( KRATOS_FLUID_DYNAMICS_APPLICATION_CORE_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/navier_stokes_wall_condition.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/embedded_ausas_navier_stokes_wall_condition.cpp
 
+
   # fluid constitutive laws
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/fluid_constitutive_law.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/bingham_3d_law.cpp
@@ -62,6 +64,7 @@ set( KRATOS_FLUID_DYNAMICS_APPLICATION_CORE_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/euler_3d_law.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/newtonian_2d_law.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/newtonian_3d_law.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/newtonian_two_fluid_2d_law.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/newtonian_two_fluid_3d_law.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/herschel_bulkley_3d_law.cpp
 
@@ -69,6 +72,7 @@ set( KRATOS_FLUID_DYNAMICS_APPLICATION_CORE_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_processes/boussinesq_force_process.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_processes/distance_modification_process.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_processes/embedded_skin_visualization_process.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_processes/mass_conservation_check_process.cpp
 )
 
 ## define python interface sources
@@ -124,7 +128,7 @@ install(TARGETS KratosFluidDynamicsCore DESTINATION libs )
 install(TARGETS KratosFluidDynamicsApplication DESTINATION libs )
 
 # Add to the KratosMultiphisics Python module
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/FluidDynamicsApplication.py" DESTINATION KratosMultiphysics )
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/python_scripts/__init__.py" DESTINATION KratosMultiphysics/FluidDynamicsApplication )
 
 if(${INSTALL_PYTHON_FILES} MATCHES ON)
   get_filename_component (CURRENT_DIR_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)

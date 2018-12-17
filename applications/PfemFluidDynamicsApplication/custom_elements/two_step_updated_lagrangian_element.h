@@ -131,8 +131,6 @@ namespace Kratos
 
       typedef PointerVectorSet<Dof<double>, IndexedObject> DofsArrayType;
 
-      typedef VectorMap<IndexType, DataValueContainer> SolutionStepsElementalDataContainerType;
-
       /// Type for shape function values container
       typedef Kratos::Vector ShapeFunctionsType;
 
@@ -420,8 +418,12 @@ namespace Kratos
 			    const int Step);
       
       void GetPressureValues(Vector& rValues,
-			     const int Step = 0);
-      
+			     const int Step = 0);      
+
+      void GetFluidFractionRateValues(Vector& rValues);
+ 
+      void GetFluidFractionRateOldValues(Vector& rValues);
+
       void GetDensityValues(Vector& rValues,
 			    const int Step = 0);
 

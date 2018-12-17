@@ -178,7 +178,7 @@ class Algorithm(object):
         Add("store_fluid_pressure_option").SetBool(False)
         Add("laplacian_calculation_type").SetInt(0)
         Add("faxen_terms_type").SetInt(0)
-        Add("material_acceleration_calculation_type").SetInt(1)
+        Add("material_acceleration_calculation_type").SetInt(8)
         Add("faxen_force_type").SetInt(0)
         Add("vorticity_calculation_type").SetInt(5)
         Add("print_FLUID_VEL_PROJECTED_RATE_option").SetBool(False)
@@ -212,7 +212,7 @@ class Algorithm(object):
         Add("print_CONDUCTIVITY_option").SetBool(False)
         Add("filter_velocity_option").SetBool(False)
         Add("print_PARTICLE_VEL_option").SetBool(False)
-        Add("apply_time_filter_to_fluid_fraction_option").SetBool(False)
+        Add("apply_time_filter_to_fluid_fraction_option").SetBool(True)
         Add("full_particle_history_watcher").SetString("Empty")
         Add("prerun_fluid_file_name").SetString("")
         Add("frame_of_reference_type").SetInt(0)
@@ -459,7 +459,7 @@ class Algorithm(object):
         self.step       = 0
         self.time       = self.pp.Start_time
         self.Dt         = self.pp.Dt
-        self.final_time = self.pp.CFD_DEM["FinalTime"].GetDouble()
+        self.end_time = self.pp.CFD_DEM["FinalTime"].GetDouble()
         self.DEM_step   = 0
         self.time_dem   = 0.0
         self.Dt_DEM     = self.spheres_model_part.ProcessInfo.GetValue(DELTA_TIME)
@@ -482,7 +482,7 @@ class Algorithm(object):
         self.mat_deriv_averager           = SDP.Averager(1, 3)
         self.laplacian_averager           = SDP.Averager(1, 3)
 
-        self.report.total_steps_expected = int(self.final_time / self.Dt_DEM)
+        self.report.total_steps_expected = int(self.end_time / self.Dt_DEM)
 
         Say(self.report.BeginReport(self.timer))
 
@@ -507,7 +507,7 @@ class Algorithm(object):
             gauge = analytics.Gauge(
                 self.fluid_model_part,
                 self.Dt,
-                self.final_time,
+                self.end_time,
                 variables_to_measure,
                 steps_between_measurements
                 )
@@ -592,7 +592,7 @@ class Algorithm(object):
             self.calculate_distance_process.Execute()
 
     def TheSimulationMustGoOn(self):
-        return self.time <= self.final_time
+        return self.time <= self.end_time
 
     def GetAnalyticFacesModelParts(self):
         analytic_face_submodelpart_number = 1
@@ -602,6 +602,12 @@ class Algorithm(object):
     def MakeAnalyticsMeasurements(self):
         self.analytic_face_watcher.MakeMeasurements()
         self.analytic_particle_watcher.MakeMeasurements()
+
+    def ManageFluidDEMTimeStep(self):
+        pass
+
+    def FinalizeFluidSolution(self):
+        pass
 
     def RunMainTemporalLoop(self):
         coupling_level_type = self.pp.CFD_DEM["coupling_level_type"].GetInt()
@@ -613,31 +619,23 @@ class Algorithm(object):
 
         while self.TheSimulationMustGoOn():
 
+            self.ManageFluidDEMTimeStep()
+
+
             self.time = self.time + self.Dt
             self.step += 1
             self.CloneTimeStep()
             self.TellTime(self.time)
+
+            print("time: ",self.time)
+            print("used time step: ",self.Dt)
+
 
             if coupling_scheme_type == "UpdatedDEM":
                 time_final_DEM_substepping = self.time + self.Dt
 
             else:
                 time_final_DEM_substepping = self.time
-
-            #self.PerformEmbeddedOperations() TO-DO: it's crashing
-
-            self.UpdateALEMeshMovement(self.time)
-
-            # solving the fluid part
-            if self.step >= self.GetFirstStepForFluidComputation():
-                self.FluidSolve(
-                    self.time,
-                    solve_system=self.fluid_solve_counter.Tick() and not self.stationarity
-                    )
-
-            # assessing stationarity
-                if self.stationarity_counter.Tick():
-                    self.AssessStationarity()
 
             # printing if required
 
@@ -670,6 +668,9 @@ class Algorithm(object):
             Say('Solving DEM... (', self.spheres_model_part.NumberOfElements(0), 'elements )')
             first_dem_iter = True
 
+            # Save Initial Fluid Fraction
+            self.SaveInitialFluidFraction()
+            printNow=False
             for self.time_dem in self.yield_DEM_time(
                     self.time_dem,
                     time_final_DEM_substepping,
@@ -727,14 +728,15 @@ class Algorithm(object):
                         self.spheres_model_part,
                         self.cluster_model_part,
                         self.disperse_phase_solution.creator_destructor)
-
                 if self.print_counter_updated_fluid.Tick():
-
-                    if coupling_level_type:
-                        self.projection_module.ComputePostProcessResults(
-                            self.spheres_model_part.ProcessInfo)
-
-                    self.post_utils.Writeresults(self.time_dem)
+                    printNow=True
+                # if self.print_counter_updated_fluid.Tick():
+                #     print("print_counter_updated_fluid.Tick() ")
+                #     if coupling_level_type:
+                #         self.projection_module.ComputePostProcessResults(
+                #             self.spheres_model_part.ProcessInfo)
+                #     print("Writeresults ")
+                #     self.post_utils.Writeresults(self.time_dem)
 
                 first_dem_iter = False
 
@@ -746,6 +748,38 @@ class Algorithm(object):
                 #Phantom
                 self.disperse_phase_solution.RunAnalytics(self.time, is_time_to_print=self.analytic_data_counter.Tick())
 
+            #self.PerformEmbeddedOperations() TO-DO: it's crashing
+
+            print("UpdateALEMeshMovement ")
+            self.UpdateALEMeshMovement(self.time)
+
+            print("FluidSolve ")
+
+
+            # solving the fluid part
+            if self.step >= self.GetFirstStepForFluidComputation():
+                self.FluidSolve(
+                    self.time,
+                    solve_system=self.fluid_solve_counter.Tick() and not self.stationarity
+                    )
+
+            if printNow:
+                print("print_counter_updated_fluid.Tick() ")
+                if coupling_level_type:
+                    self.projection_module.ComputePostProcessResults(
+                        self.spheres_model_part.ProcessInfo)
+                print("Writeresults ")
+                self.post_utils.Writeresults(self.time_dem)
+
+            if self.step >= self.GetFirstStepForFluidComputation():
+                self.FinalizeFluidSolution()
+
+            # assessing stationarity
+                if self.stationarity_counter.Tick():
+                    self.AssessStationarity()
+
+
+            print("FluidSolve done ")
             #### PRINTING GRAPHS ####
             os.chdir(self.graphs_path)
             # measuring mean velocities in a certain control volume (the 'velocity trap')
@@ -795,6 +829,9 @@ class Algorithm(object):
             self.fluid_solution.fluid_solver.Solve()
         else:
             Say("Skipping solving system...\n")
+
+    def SaveInitialFluidFraction(self):
+        pass
 
     def PerformZeroStepInitializations(self):
         pass
@@ -942,7 +979,7 @@ class Algorithm(object):
         # Warning: this estimation is based on a constant time step for DEM.
         # This is usually the case, but could not be so.
         # A more robust implementation is needed!
-        N_steps = int(self.final_time / self.pp.CFD_DEM["MaxTimeStep"].GetDouble()) + 20
+        N_steps = int(self.end_time / self.pp.CFD_DEM["MaxTimeStep"].GetDouble()) + 20
         not_neglecting_history_force = self.pp.CFD_DEM["basset_force_type"].GetInt() > 0
         using_hinsberg_method = (
             self.pp.CFD_DEM["basset_force_type"].GetInt() >= 3 or

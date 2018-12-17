@@ -36,6 +36,7 @@
 #include "custom_processes/embedded_skin_visualization_process.h"
 #include "custom_processes/integration_point_statistics_process.h"
 #include "custom_processes/move_rotor_process.h"
+#include "custom_processes/mass_conservation_check_process.h"
 #include "custom_processes/turbulence_statistics_process.h"
 #include "spaces/ublas_space.h"
 
@@ -121,6 +122,16 @@ void AddCustomProcessesToPython(pybind11::module& m)
     .def(py::init< ModelPart&, Parameters& >())
     ;
 
+    py::class_<MassConservationCheckProcess, MassConservationCheckProcess::Pointer, Process>
+    (m,"MassConservationCheckProcess")
+    .def(py::init < ModelPart&, const int, const bool, const bool >())
+    .def(py::init< ModelPart&, Parameters& >())
+    .def("GetUpdateStatus", &MassConservationCheckProcess::GetUpdateStatus)
+    .def("GetPositiveVolume", &MassConservationCheckProcess::GetPositiveVolume)
+    .def("GetNegativeVolume", &MassConservationCheckProcess::GetNegativeVolume)
+    .def("GetInitialPositiveVolume", &MassConservationCheckProcess::GetInitialPositiveVolume)
+    .def("GetInitialNegativeVolume", &MassConservationCheckProcess::GetInitialNegativeVolume)
+    ;
 
     py::class_<TurbulenceStatisticsProcess, TurbulenceStatisticsProcess::Pointer, Process >(m,"TurbulenceStatisticsProcess")
         .def(py::init< ModelPart&, double, bool >())

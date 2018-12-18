@@ -572,8 +572,8 @@ namespace Kratos {
 
         if (*mSkinSphere) return;
 
-        for (unsigned int i = 0; i < (int)mIniNeighbourFailureId.size(); i++) {
-            if (IniNeighbourFailureId[i] > 0) {
+        for (unsigned int i = 0; i < (unsigned) mIniNeighbourFailureId.size(); i++) {
+            if (mIniNeighbourFailureId[i] > 0) {
                 *mSkinSphere = 1.0;
                 break;
             }

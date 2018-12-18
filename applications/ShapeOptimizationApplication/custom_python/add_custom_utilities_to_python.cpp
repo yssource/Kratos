@@ -166,7 +166,7 @@ void  AddCustomUtilitiesToPython(pybind11::module& m)
     // ========================================================================
     py::class_<GeometryUtilities >(m, "GeometryUtilities")
         .def(py::init<ModelPart&>())
-        .def("ComputeUnitSurfaceNormals", &GeometryUtilities::ComputeUnitSurfaceNormals)
+        .def("ComputeUnitSurfaceNormals", &GeometryUtilities::ComputeUnitSurfaceNormals, py::arg("use_elements") = false)
         .def("ProjectNodalVariableOnUnitSurfaceNormals", &GeometryUtilities::ProjectNodalVariableOnUnitSurfaceNormals)
         .def("ExtractBoundaryNodes", &GeometryUtilities::ExtractBoundaryNodes)
         ;

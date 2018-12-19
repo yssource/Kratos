@@ -15,9 +15,6 @@ import KratosMultiphysics.ShapeOptimizationApplication as KratosShape
 import KratosMultiphysics.MeshingApplication as KratosMeshingApp
 import KratosMultiphysics.StructuralMechanicsApplication as KratosCSM
 
-# check that KratosMultiphysics was imported in the main script
-KratosMultiphysics.CheckForPreviousImport()
-
 # Import ANurbs library
 import ANurbs as an
 import numpy as np
@@ -103,7 +100,7 @@ class CADMapper:
         for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
             self.conditions.append([])
 
-        condition_factory = ConditionsFactory(self.fe_model_part.Nodes, self.cad_model, self.parameters)
+        condition_factory = ConditionsFactory(self.fe_model_part, self.cad_model, self.parameters)
         condition_factory.CreateDistanceMinimizationConditions(self.conditions)
 
         print("> Finished creation of conditions in" ,round( time.time()-start_time, 3 ), " s.")
@@ -254,8 +251,8 @@ class CADMapper:
 # ==============================================================================
 class ConditionsFactory:
     # --------------------------------------------------------------------------
-    def __init__(self, fe_node_set, cad_model, parameters):
-        self.fe_node_set = fe_node_set
+    def __init__(self, fe_model_part, cad_model, parameters):
+        self.fe_model_part = fe_model_part
         self.cad_model = cad_model
 
         name_variable_to_map = parameters["inpute"]["variable_to_map"].GetString()
@@ -269,7 +266,7 @@ class ConditionsFactory:
         from cad_reconstruction_conditions import DistanceMinimizationCondition
 
         point_pairs = []
-        for node_i in self.fe_node_set:
+        for node_i in self.fe_model_part.Nodes:
             point_pairs.append([])
 
         tessellation = an.CurveTessellation2D()
@@ -301,7 +298,7 @@ class ConditionsFactory:
             max_y += self.bounding_box_tolerance
             max_z += self.bounding_box_tolerance
 
-            for node_itr, node_i in enumerate(self.fe_node_set):
+            for node_itr, node_i in enumerate(self.fe_model_part.Nodes):
 
                 node_coords_i = [node_i.X0, node_i.Y0, node_i.Z0]
 
@@ -376,7 +373,7 @@ class ConditionsFactory:
 
         # Some additional output
         # # Output FE-data with projected points
-        # for node_itr, node_i in enumerate(self.fe_node_set):
+        # for node_itr, node_i in enumerate(self.fe_model_part.Nodes):
         #     node_coords_i = node_coords[node_itr]
         #     projected_point_i = point_pairs[node_itr][0]
         #     distance = projected_point_i - node_coords_i
@@ -506,11 +503,14 @@ class Assembler():
 
         self.lhs.fill(0)
 
+        total_num_conditions = 0
+
         for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
 
             print("Processing face", face_itr, "with", len(self.conditions[face_itr]), "conditions.")
 
             for condition in self.conditions[face_itr]:
+                total_num_conditions += 1
 
                 local_lhs = condition.CalculateLHS()
                 local_rhs = condition.CalculateRHS()
@@ -526,6 +526,7 @@ class Assembler():
                     for j, dof_id_j in enumerate(global_dof_ids):
                         self.lhs[dof_id_i, dof_id_j] += local_lhs[i,j]
 
+        print("Total number of conditions = ",total_num_conditions)
         print("> Finished assembly in" ,round( time.time()-start_time, 3 ), " s.")
 
         return self.lhs, self.rhs

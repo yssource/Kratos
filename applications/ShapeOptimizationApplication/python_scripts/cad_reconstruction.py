@@ -127,12 +127,12 @@ class CADMapper:
         for i in range(lhs_diag.shape[0]):
             entry = lhs[i,i]
 
+            if abs(entry) < 1e-12:
+                print("WARNING!!!!Zero on main diagonal found at position",i,".")
+
             # regularization
             lhs[i,i] += beta
 
-            if entry == 0:
-                raise RuntimeError
-                print("Zero on main diagonal found at position",i,".")
 
         # Nonlinear solution iterations
         for solution_itr in range(1,self.parameters["solution"]["iterations"].GetInt()+1):
@@ -143,30 +143,24 @@ class CADMapper:
             print("\n> Starting system solution ....")
             start_time = time.time()
 
-            solution_x = la.solve(lhs,rhs[:,0])
-            solution_y = la.solve(lhs,rhs[:,1])
-            solution_z = la.solve(lhs,rhs[:,2])
+            solution = la.solve(lhs,rhs)
 
             print("> Finished system solution in" ,round( time.time()-start_time, 3 ), " s.")
 
             if self.parameters["solution"]["test_solution"].GetBool():
                 # Test solution quality
                 test_rhs = np.zeros(rhs.shape)
-                test_rhs[:,0] = lhs.dot(solution_x)
-                test_rhs[:,1] = lhs.dot(solution_y)
-                test_rhs[:,2] = lhs.dot(solution_z)
+                test_rhs[:] = lhs.dot(solution)
 
                 delta = rhs-test_rhs
-                delta_combined = np.append(delta[:,0], [delta[:,1], delta[:,2]])
-                error_norm = la.norm(delta_combined)
+                error_norm = la.norm(delta)
                 print("\n> Error in linear solution = ",error_norm)
 
                 # Test residuals
-                rhs_combined = np.append(rhs[:,0], [rhs[:,1], rhs[:,2]])
-                error_norm = la.norm(rhs_combined)
+                error_norm = la.norm(rhs)
                 print("> RHS before current solution iteration = ",error_norm)
 
-            self.__UpdateCADModel(solution_x, solution_y, solution_z)
+            self.__UpdateCADModel(solution)
 
             if self.parameters["solution"]["test_solution"].GetBool() or self.parameters["solution"]["iterations"].GetInt()>1:
                 rhs = self.assembler.AssembleRHS()
@@ -188,8 +182,7 @@ class CADMapper:
                 #                 rhs[dof_id,:] += beta*absolute_pole_update[dof_id,:]
 
             if self.parameters["solution"]["test_solution"].GetBool():
-                rhs_combined = np.append(rhs[:,0], [rhs[:,1], rhs[:,2]])
-                error_norm = la.norm(rhs_combined)
+                error_norm = la.norm(rhs)
                 print("\n> RHS after current solution iteration = ",error_norm)
 
             print("\n> Finished solution iteration in" ,round( time.time()-start_time, 3 ), " s.")
@@ -209,11 +202,10 @@ class CADMapper:
         print("> Finished finalization of mapping in" ,round( time.time()-start_time, 3 ), " s.")
 
     # --------------------------------------------------------------------------
-    def __UpdateCADModel(self, solution_x, solution_y, solution_z):
+    def __UpdateCADModel(self, solution):
         print("\n> Updating cad database....")
         start_time = time.time()
 
-        pole_update = list(zip(solution_x, solution_y, solution_z))
         dof_ids = self.assembler.GetDofIds()
         dofs = self.assembler.GetDofs()
 
@@ -222,11 +214,19 @@ class CADMapper:
 
             for r in range(surface_geometry.NbPolesU):
                 for s in range(surface_geometry.NbPolesV):
-                    dof_i = (face_itr,r,s)
-                    if dof_i in dofs:
-                        dof_id = dof_ids[dof_i]
+                    dof_i_x = (face_itr,r,s,"x")
+                    dof_i_y = (face_itr,r,s,"y")
+                    dof_i_z = (face_itr,r,s,"z")
+
+                    if dof_i_x in dofs:
+                        dof_id_x = dof_ids[dof_i_x]
+                        dof_id_y = dof_ids[dof_i_y]
+                        dof_id_z = dof_ids[dof_i_z]
+
                         pole_coords = surface_geometry.Pole(r,s)
-                        new_pole_coords = pole_coords + pole_update[dof_id]
+                        pole_update = np.array([solution[dof_id_x], solution[dof_id_y], solution[dof_id_z]])
+
+                        new_pole_coords = pole_coords + pole_update
                         surface_geometry.SetPole(r,s,new_pole_coords)
 
         print("> Finished updating cad database in" ,round( time.time()-start_time, 3 ), " s.")
@@ -472,13 +472,15 @@ class Assembler():
         for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
             for condition in self.conditions[face_itr]:
                 for (r, s) in condition.nonzero_pole_indices:
-                    _ = self.__GetDofId((face_itr,r,s))
+                    _ = self.__GetDofId((face_itr,r,s,"x"))
+                    _ = self.__GetDofId((face_itr,r,s,"y"))
+                    _ = self.__GetDofId((face_itr,r,s,"z"))
 
         num_dofs = len(self.dofs)
 
         # Initilize equation system
         self.lhs = np.zeros((num_dofs, num_dofs))
-        self.rhs = np.zeros((num_dofs, 3))
+        self.rhs = np.zeros(num_dofs)
 
         # # testing
         # print(point_pairs[0])
@@ -519,12 +521,24 @@ class Assembler():
 
                 global_dof_ids = []
                 for j, (r, s) in enumerate(nonzero_pole_indices):
-                    global_dof_ids.append(self.__GetDofId((face_itr,r,s)))
+                    global_dof_ids.append(self.__GetDofId((face_itr,r,s,"x")))
 
-                for i, dof_id_i in enumerate(global_dof_ids):
-                    self.rhs[dof_id_i,:] += local_rhs[i,:]
-                    for j, dof_id_j in enumerate(global_dof_ids):
-                        self.lhs[dof_id_i, dof_id_j] += local_lhs[i,j]
+                for j, (r, s) in enumerate(nonzero_pole_indices):
+                    global_dof_ids.append(self.__GetDofId((face_itr,r,s,"y")))
+
+                for j, (r, s) in enumerate(nonzero_pole_indices):
+                    global_dof_ids.append(self.__GetDofId((face_itr,r,s,"z")))
+
+
+                self.lhs[np.ix_(global_dof_ids, global_dof_ids)] += local_lhs
+                self.rhs[global_dof_ids] += local_rhs
+
+
+
+                # for i, dof_id_i in enumerate(global_dof_ids):
+                #     self.rhs[dof_id_i] += local_rhs[i]
+                #     for j, dof_id_j in enumerate(global_dof_ids):
+                #         self.lhs[dof_id_i, dof_id_j] += local_lhs[i,j]
 
         print("Total number of conditions = ",total_num_conditions)
         print("> Finished assembly in" ,round( time.time()-start_time, 3 ), " s.")
@@ -544,17 +558,21 @@ class Assembler():
 
             for condition in self.conditions[face_itr]:
 
-                local_lhs = condition.CalculateLHS()
                 local_rhs = condition.CalculateRHS()
 
                 nonzero_pole_indices = condition.nonzero_pole_indices
 
                 global_dof_ids = []
                 for j, (r, s) in enumerate(nonzero_pole_indices):
-                    global_dof_ids.append(self.__GetDofId((face_itr,r,s)))
+                    global_dof_ids.append(self.__GetDofId((face_itr,r,s,"x")))
 
-                for i, dof_id_i in enumerate(global_dof_ids):
-                    self.rhs[dof_id_i,:] += local_rhs[i,:]
+                for j, (r, s) in enumerate(nonzero_pole_indices):
+                    global_dof_ids.append(self.__GetDofId((face_itr,r,s,"y")))
+
+                for j, (r, s) in enumerate(nonzero_pole_indices):
+                    global_dof_ids.append(self.__GetDofId((face_itr,r,s,"z")))
+
+                self.rhs[global_dof_ids] += local_rhs
 
         print("> Finished assembling RHS in" ,round( time.time()-start_time, 3 ), " s.")
 

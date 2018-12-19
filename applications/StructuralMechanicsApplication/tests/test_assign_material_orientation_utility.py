@@ -6,6 +6,34 @@ import KratosMultiphysics.KratosUnittest as KratosUnittest
 
 from math import sqrt, sin, cos, pi, exp, atan
 
+def WriteGiDOutput(model_part):
+    from gid_output_process import GiDOutputProcess
+    gid_output = GiDOutputProcess(model_part,
+        "local_axis_"+model_part.Name,
+        KratosMultiphysics.Parameters("""
+            {
+                "result_file_configuration" : {
+                    "gidpost_flags": {
+                        "GiDPostMode"           : "GiD_PostAscii",
+                        "WriteDeformedMeshFlag" : "WriteUndeformed",
+                        "WriteConditionsFlag"   : "WriteConditions",
+                        "MultiFileFlag"         : "SingleFile"
+                    },
+                    "nodal_results"       : [],
+                    "gauss_point_results" : ["LOCAL_AXIS_1","LOCAL_AXIS_2","LOCAL_AXIS_3",
+                                             "LOCAL_MATERIAL_AXIS_1", "LOCAL_MATERIAL_AXIS_2"]
+                }
+            }
+            """)
+        )
+
+    gid_output.ExecuteInitialize()
+    gid_output.ExecuteBeforeSolutionLoop()
+    gid_output.ExecuteInitializeSolutionStep()
+    gid_output.PrintOutput()
+    gid_output.ExecuteFinalizeSolutionStep()
+    gid_output.ExecuteFinalize()
+
 class TestAssignMaterialOrientation(KratosUnittest.TestCase):
     # muting the output
     KratosMultiphysics.Logger.GetDefaultOutput().SetSeverity(KratosMultiphysics.Logger.Severity.WARNING)
@@ -35,7 +63,7 @@ class TestAssignMaterialOrientation(KratosUnittest.TestCase):
 
 
     def _create_shell_nodes(self,mp):
-       
+
         mp.CreateNewNode(1, 0.0, 0.0, 0.0)
         mp.CreateNewNode(2, 0.3, 0.0, 0.0)
         mp.CreateNewNode(3, 0.3, 0.2, 0.0)
@@ -47,7 +75,7 @@ class TestAssignMaterialOrientation(KratosUnittest.TestCase):
         mp.CreateNewNode(9, 0.0, 0.5, 0.0)
 
     def _create_shell_elements(self,mp,element_name = "ShellThinElementCorotational3D4N"):
-    
+
         mp.CreateNewElement(element_name, 1, [1,2,3,4], mp.GetProperties()[1])
         mp.CreateNewElement(element_name, 2, [2,5,6,3], mp.GetProperties()[1])
         mp.CreateNewElement(element_name, 3, [3,6,7,8], mp.GetProperties()[1])
@@ -79,9 +107,9 @@ class TestAssignMaterialOrientation(KratosUnittest.TestCase):
         mat_orient_assign_util.Execute(composite_property_alignment_settings_11)
         for elem in mp.Elements:
             angle_theta = elem.GetValue(StructuralMechanicsApplication.MATERIAL_ORIENTATION_ANGLE)
-            print(angle_theta)
             self.assertAlmostEqual(pi/4, angle_theta)
-            
+        WriteGiDOutput(mp)
+
 
 if __name__ == '__main__':
     KratosUnittest.main()

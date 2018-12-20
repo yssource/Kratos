@@ -46,7 +46,7 @@ class DistanceMinimizationCondition:
         for i, (r,s) in enumerate(self.nonzero_pole_indices):
             pole_coords[i,:] = self.surface_geometry.Pole(r,s)
 
-        local_rhs = -self.penalty_fac * (np.outer(self.shape_functions, self.shape_functions) @ pole_coords - np.outer(self.shape_functions, self.fe_node_coords))
+        local_rhs = -self.penalty_fac * np.outer(self.shape_functions, (self.shape_functions @ pole_coords - self.fe_node_coords))
 
         return local_rhs.T.flatten()
 
@@ -118,7 +118,7 @@ class PositionEnforcementCondition:
         for i, (r,s) in enumerate(self.nonzero_pole_indices):
             pole_coords[i,:] = self.surface_geometry.Pole(r,s)
 
-        local_rhs = -self.penalty_fac * (np.outer(self.shape_functions, self.shape_functions) @ pole_coords - np.outer(self.shape_functions, self.target_position))
+        local_rhs = -self.penalty_fac * np.outer(self.shape_functions, (self.shape_functions @ pole_coords - self.target_position))
 
         return local_rhs.T.flatten()
 

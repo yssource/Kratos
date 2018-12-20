@@ -102,6 +102,8 @@ class CADMapper:
 
         condition_factory = ConditionsFactory(self.fe_model_part, self.cad_model, self.parameters)
         condition_factory.CreateDistanceMinimizationConditions(self.conditions)
+        condition_factory.CreateTangentEnforcementConditions(self.conditions)
+        # condition_factory.CreateRotationCouplingConditions(self.conditions)
 
         print("> Finished creation of conditions in" ,round( time.time()-start_time, 3 ), " s.")
         print("\n> Initializing assembly...")
@@ -127,8 +129,8 @@ class CADMapper:
         for i in range(lhs_diag.shape[0]):
             entry = lhs[i,i]
 
-            if abs(entry) < 1e-12:
-                print("WARNING!!!!Zero on main diagonal found at position",i,".")
+            # if abs(entry) < 1e-12:
+            #     print("WARNING!!!!Zero on main diagonal found at position",i,".")
 
             # regularization
             lhs[i,i] += beta
@@ -261,6 +263,8 @@ class ConditionsFactory:
         self.tesselation_tolerance = parameters["points_projection"]["boundary_tessellation_tolerance"].GetDouble()
         self.bounding_box_tolerance = parameters["points_projection"]["patch_bounding_box_tolerance"].GetDouble()
 
+        self.penalty_factor = parameters["boundary_conditions"]["penalty_factor"].GetDouble()
+
     # --------------------------------------------------------------------------
     def CreateDistanceMinimizationConditions(self, conditions):
         from cad_reconstruction_conditions import DistanceMinimizationCondition
@@ -386,6 +390,206 @@ class ConditionsFactory:
         # OutputFEData(self.fe_model_part, fem_output_filename_with_path, nodal_variables)
 
         return conditions
+
+ # --------------------------------------------------------------------------
+    def CreateTangentEnforcementConditions(self, conditions):
+        from cad_reconstruction_conditions import TangentEnforcementCondition
+
+        points_counter = 1
+
+        face_id_to_itr = {}
+        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+            face_id_to_itr[face_i.key] = face_itr
+
+        # Create corresponding points
+        for edge_itr, edge_i in enumerate(self.cad_model.of_type('BrepEdge')):
+
+            print("> Processing edge ",edge_itr)
+
+            adjacent_faces = edge_i.faces()
+            num_adjacent_faces = len(adjacent_faces)
+
+            if num_adjacent_faces == 1:
+                # Skip non coupling-edges
+                pass
+            elif num_adjacent_faces == 2:
+
+                face_a = adjacent_faces[0]
+                face_b = adjacent_faces[1]
+
+                face_a_itr = face_id_to_itr[adjacent_faces[0].key]
+                face_b_itr = face_id_to_itr[adjacent_faces[1].key]
+
+                surface_geometry_a = face_a.surface_geometry_3d().geometry
+
+                surface_geometry_b = face_b.surface_geometry_3d().geometry
+
+                list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i)
+
+                for itr, [x,y,z] in enumerate(list_of_points):
+                    self.cad_model.add({
+                        'Key': f'CouplingPoint3D<{points_counter}>',
+                        'Type': 'Point3D',
+                        'Location': [x, y, z],
+                        'Layer': 'CouplingPoints',
+                    })
+
+                    shape_function_a = an.SurfaceShapeEvaluator(DegreeU=surface_geometry_a.DegreeU, DegreeV=surface_geometry_a.DegreeV, Order=1)
+                    shape_function_b = an.SurfaceShapeEvaluator(DegreeU=surface_geometry_b.DegreeU, DegreeV=surface_geometry_b.DegreeV, Order=1)
+
+                    # Create conditions to enforce t1 on both face a and face b
+                    u_a = list_of_parameters_a[itr][0]
+                    v_a = list_of_parameters_a[itr][1]
+                    shape_function_a.Compute(surface_geometry_a.KnotsU, surface_geometry_a.KnotsV, u_a, v_a)
+                    nonzero_pole_indices_a = shape_function_a.NonzeroPoleIndices
+
+                    shape_function_derivatives_u_a = np.empty(shape_function_a.NbNonzeroPoles, dtype=float)
+                    shape_function_derivatives_v_a = np.empty(shape_function_a.NbNonzeroPoles, dtype=float)
+                    for i in range(shape_function_a.NbNonzeroPoles):
+                        shape_function_derivatives_u_a[i] = shape_function_a(1,i)
+                        shape_function_derivatives_v_a[i] = shape_function_a(2,i)
+
+                    u_b = list_of_parameters_b[itr][0]
+                    v_b = list_of_parameters_b[itr][1]
+                    shape_function_b.Compute(surface_geometry_b.KnotsU, surface_geometry_b.KnotsV, u_b, v_b)
+                    nonzero_pole_indices_b = shape_function_b.NonzeroPoleIndices
+
+                    shape_function_derivatives_u_b = np.empty(shape_function_b.NbNonzeroPoles, dtype=float)
+                    shape_function_derivatives_v_b = np.empty(shape_function_b.NbNonzeroPoles, dtype=float)
+                    for i in range(shape_function_b.NbNonzeroPoles):
+                        shape_function_derivatives_u_b[i] = shape_function_b(1,i)
+                        shape_function_derivatives_v_b[i] = shape_function_b(2,i)
+
+                    target_normal = [0.0, 0.0, 1.0]
+
+                    new_condition_a = TangentEnforcementCondition(target_normal, surface_geometry_a, nonzero_pole_indices_a, shape_function_derivatives_u_a, shape_function_derivatives_v_a, self.penalty_factor)
+                    conditions[face_a_itr].append(new_condition_a)
+
+
+                    new_condition_b = TangentEnforcementCondition(target_normal, surface_geometry_b, nonzero_pole_indices_b, shape_function_derivatives_u_b, shape_function_derivatives_v_b, self.penalty_factor)
+                    conditions[face_b_itr].append(new_condition_b)
+
+                    # pole_coords = np.zeros((len(nonzero_pole_indices_a), 3))
+                    # for i, (r,s) in enumerate(nonzero_pole_indices_a):
+                    #     pole_coords[i,:] = surface_geometry_a.Pole(r,s)
+
+                    # a1 = shape_function_derivatives_u_a @ pole_coords
+
+                    # pole_coords = np.zeros((len(nonzero_pole_indices_b), 3))
+                    # for i, (r,s) in enumerate(nonzero_pole_indices_b):
+                    #     pole_coords[i,:] = surface_geometry_b.Pole(r,s)
+
+                    # a2 = shape_function_derivatives_u_b @ pole_coords
+
+
+                    # self.cad_model.add({
+                    #     'Key': f'a1_a<{points_counter}>',
+                    #     'Type': 'Line3D',
+                    #     'Start': [x,y,z],
+                    #     'End': [x + a1[0],y + a1[1], z + a1[2]],
+                    #     'Layer': 'a1_a',
+                    # })
+
+                    points_counter += 1
+
+            else:
+                raise RuntimeError("Max number of adjacent has to be 2!!")
+
+
+
+        # print("\n> ----------------------------------------------------")
+        # print("> Starting mapping ...")
+        # start_time = time.time()
+
+
+        # print("User specified parameter search radius!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
+        # mapper_parameters = KratosMultiphysics.Parameters("""{
+        #     "mapper_type" : "nearest_element",
+        #     "search_radius" : 1.0
+        #     }""")
+        # mapper_tool = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, mapper_parameters )
+
+
+        # print("> Finished creating mapper in " ,round( time.time()-start_time, 3 ), " s.")
+        # start_time = time.time()
+
+
+        # mapper_tool.Map( KratosShape.NORMALIZED_SURFACE_NORMAL, KratosShape.NORMALIZED_SURFACE_NORMAL )
+        # mapper_tool.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
+
+
+
+        # print("> Finished mapping in " ,round( time.time()-start_time, 3 ), " s.")
+        # print("\n> ----------------------------------------------------")
+
+
+
+        # new_condition.SetRotation()
+
+    # --------------------------------------------------------------------------
+    @staticmethod
+    def __CreateIntegrationPointsForEdge(edge):
+
+        projection_tolerance = 0.01 # Sollte Zeichengenaigkeit sein
+
+        trim_a, trim_b = edge.trims()
+
+        curve_3d_a = trim_a.curve_3d()
+        curve_3d_b = trim_b.curve_3d()
+
+        projection_a = an.PointOnCurveProjection3D(Curve=curve_3d_a, Tolerance=projection_tolerance)
+        projection_b = an.PointOnCurveProjection3D(Curve=curve_3d_b, Tolerance=projection_tolerance)
+
+        spans_on_curve_b = [span_b.T0 for span_b in curve_3d_b.Spans()]
+
+        for span_a in curve_3d_a.Spans():
+            t_a = span_a.T0
+            point = curve_3d_a.PointAt(t_a)
+            projection_b.Compute(point)
+            t_b = projection_b.Parameter
+
+            spans_on_curve_b.append(t_b)
+
+        spans_on_curve_b.append(trim_b.curve_3d().Domain.T1)
+
+        spans_on_curve_b.sort()
+
+        face_a, face_b = edge.faces()
+
+        surface_3d_a = face_a.surface_geometry_3d().geometry
+        surface_3d_b = face_b.surface_geometry_3d().geometry
+
+        degree = max(surface_3d_a.DegreeU, surface_3d_a.DegreeV, surface_3d_b.DegreeU, surface_3d_b.DegreeV) + 1
+
+        list_of_points = []
+        list_of_parameters_a = []
+        list_of_parameters_b = []
+        list_of_weights = []
+
+        for t0_b, t1_b in zip(spans_on_curve_b, spans_on_curve_b[1:]):
+            span_b = an.Interval(t0_b, t1_b)
+
+            print("Here some parameter is defined!!!!!!!!!")
+            if span_b.Length < 1e-7:
+                continue
+
+            for t_b, weight in an.IntegrationPoints.Points1D(degree, span_b):
+                point, tangent = curve_3d_b.DerivativesAt(t_b, 1)
+                list_of_points.append(point)
+
+                projection_a.Compute(point)
+                t_a = projection_a.Parameter
+
+                u_a, v_a = trim_a.curve_2d().PointAt(t_a)
+                u_b, v_b = trim_b.curve_2d().PointAt(t_b)
+
+                list_of_parameters_a.append((u_a, v_a))
+                list_of_parameters_b.append((u_b, v_b))
+                list_of_weights.append(weight * la.norm(tangent))
+
+        return list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_weights
+
 
     # --------------------------------------------------------------------------
     @classmethod

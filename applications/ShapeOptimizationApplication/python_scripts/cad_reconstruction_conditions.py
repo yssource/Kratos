@@ -46,8 +46,46 @@ class DistanceMinimizationCondition:
         for i, (r,s) in enumerate(self.nonzero_pole_indices):
             pole_coords[i,:] = self.surface_geometry.Pole(r,s)
 
-        local_rhs = -self.penalty_fac * (np.outer(self.shape_functions, self.shape_functions)@pole_coords - np.outer(self.shape_functions, self.fe_node_coords))
+        local_rhs = -self.penalty_fac * (np.outer(self.shape_functions, self.shape_functions) @ pole_coords - np.outer(self.shape_functions, self.fe_node_coords))
 
         return local_rhs.T.flatten()
+
+# ==============================================================================
+class TangentEnforcementCondition:
+    # --------------------------------------------------------------------------
+    def __init__(self, target_normal, surface_geometry, nonzero_pole_indices, shape_function_derivatives_u, shape_function_derivatives_v, penalty_factor):
+        self.target_normal = target_normal
+        self.surface_geometry = surface_geometry
+        self.nonzero_pole_indices = nonzero_pole_indices
+        self.shape_function_derivatives_u = shape_function_derivatives_u
+        self.shape_function_derivatives_v = shape_function_derivatives_v
+        self.penalty_factor = penalty_factor
+
+        self.local_system_size = 3*len(nonzero_pole_indices)
+        self.block_size = len(nonzero_pole_indices)
+
+    # --------------------------------------------------------------------------
+    def CalculateLHS(self):
+        term1 = np.outer(self.shape_function_derivatives_u,self.target_normal)
+        term1 = term1.T.flatten()
+
+        term2 = np.outer(self.shape_function_derivatives_v,self.target_normal)
+        term2 = term2.T.flatten()
+
+        return self.penalty_factor * np.outer(term1,term1) + self.penalty_factor * np.outer(term2,term2)
+
+    # --------------------------------------------------------------------------
+    def CalculateRHS(self):
+        pole_coords = np.zeros((self.block_size, 3))
+        for i, (r,s) in enumerate(self.nonzero_pole_indices):
+            pole_coords[i,:] = self.surface_geometry.Pole(r,s)
+
+        a1 = self.shape_function_derivatives_u @ pole_coords
+        a2 = self.shape_function_derivatives_v @ pole_coords
+
+        local_rhs_1 = - self.penalty_factor * np.outer(self.shape_function_derivatives_u,self.target_normal) * (a1 @ self.target_normal)
+        local_rhs_2 = - self.penalty_factor * np.outer(self.shape_function_derivatives_v,self.target_normal) * (a2 @ self.target_normal)
+
+        return local_rhs_1.T.flatten() + local_rhs_2.T.flatten()
 
 # ==============================================================================

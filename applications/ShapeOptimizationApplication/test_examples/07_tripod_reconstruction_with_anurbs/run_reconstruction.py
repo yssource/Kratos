@@ -1,11 +1,6 @@
 # importing the Kratos Library
 import KratosMultiphysics
 import KratosMultiphysics.ShapeOptimizationApplication as KratosShape
-import KratosMultiphysics.MeshingApplication as KratosMeshingApp
-import KratosMultiphysics.StructuralMechanicsApplication as KratosCSM
-
-# check that KratosMultiphysics was imported in the main script
-KratosMultiphysics.CheckForPreviousImport()
 
 # Additional imports
 import time
@@ -26,6 +21,10 @@ parameters = KratosMultiphysics.Parameters("""
     {
         "boundary_tessellation_tolerance" : 0.01,
         "patch_bounding_box_tolerance"    : 1.0
+    },
+    "boundary_conditions" :
+    {
+        "penalty_factor" : 1000
     },
     "solution" :
     {

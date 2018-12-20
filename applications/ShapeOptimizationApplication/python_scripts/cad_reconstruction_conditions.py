@@ -89,3 +89,38 @@ class TangentEnforcementCondition:
         return local_rhs_1.T.flatten() + local_rhs_2.T.flatten()
 
 # ==============================================================================
+class PositionEnforcementCondition:
+    # --------------------------------------------------------------------------
+    def __init__(self, target_disp, target_position, surface_geometry, nonzero_pole_indices, shape_functions, penalty_factor):
+        self.target_position = target_position
+        self.target_disp = target_disp
+        self.surface_geometry = surface_geometry
+        self.nonzero_pole_indices = nonzero_pole_indices
+        self.shape_functions = shape_functions
+        self.penalty_fac = penalty_factor
+
+        self.local_system_size = 3*len(nonzero_pole_indices)
+        self.block_size = len(nonzero_pole_indices)
+
+    # --------------------------------------------------------------------------
+    def CalculateLHS(self):
+        local_lhs = np.zeros([self.local_system_size,self.local_system_size])
+
+        local_lhs[0:self.block_size,0:self.block_size] = self.penalty_fac * np.outer(self.shape_functions, self.shape_functions)
+        local_lhs[self.block_size:2*self.block_size,self.block_size:2*self.block_size] = local_lhs[0:self.block_size,0:self.block_size]
+        local_lhs[2*self.block_size:3*self.block_size,2*self.block_size:3*self.block_size] = local_lhs[0:self.block_size,0:self.block_size]
+
+        return local_lhs
+
+    # --------------------------------------------------------------------------
+    def CalculateRHS(self):
+        pole_coords = np.zeros((self.block_size, 3))
+        for i, (r,s) in enumerate(self.nonzero_pole_indices):
+            pole_coords[i,:] = self.surface_geometry.Pole(r,s)
+
+        local_rhs = -self.penalty_fac * (np.outer(self.shape_functions, self.shape_functions) @ pole_coords - np.outer(self.shape_functions, self.target_position))
+
+        return local_rhs.T.flatten()
+
+
+# ==============================================================================

@@ -121,8 +121,7 @@ class CADMapper:
 
         condition_factory = ConditionsFactory(self.fe_model_part, self.cad_model, self.parameters)
         condition_factory.CreateDistanceMinimizationConditions(self.conditions)
-        condition_factory.CreateTangentEnforcementConditions(self.conditions)
-        # condition_factory.CreateRotationCouplingConditions(self.conditions)
+        condition_factory.CreateEnforcementConditions(self.conditions)
 
         print("> Finished creation of conditions in" ,round( time.time()-start_time, 3 ), " s.")
         print("\n> Initializing assembly...")
@@ -282,7 +281,8 @@ class ConditionsFactory:
         self.tesselation_tolerance = parameters["points_projection"]["boundary_tessellation_tolerance"].GetDouble()
         self.bounding_box_tolerance = parameters["points_projection"]["patch_bounding_box_tolerance"].GetDouble()
 
-        self.penalty_factor = parameters["boundary_conditions"]["penalty_factor"].GetDouble()
+        self.penalty_factor_tangent_enforcement = parameters["boundary_conditions"]["penalty_factor_tangent_enforcement"].GetDouble()
+        self.penalty_factor_position_enforcement = parameters["boundary_conditions"]["penalty_factor_position_enforcement"].GetDouble()
 
     # --------------------------------------------------------------------------
     def CreateDistanceMinimizationConditions(self, conditions):
@@ -411,8 +411,8 @@ class ConditionsFactory:
         return conditions
 
  # --------------------------------------------------------------------------
-    def CreateTangentEnforcementConditions(self, conditions):
-        from cad_reconstruction_conditions import TangentEnforcementCondition
+    def CreateEnforcementConditions(self, conditions):
+        from cad_reconstruction_conditions import TangentEnforcementCondition, PositionEnforcementCondition
 
         point_counter = 1
 
@@ -451,12 +451,12 @@ class ConditionsFactory:
                 destination_mdpa.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE)
 
                 for itr, [x,y,z] in enumerate(list_of_points):
-                    self.cad_model.add({
-                        'Key': f'CouplingPoint3D<{point_counter}>',
-                        'Type': 'Point3D',
-                        'Location': [x, y, z],
-                        'Layer': 'CouplingPoints',
-                    })
+                    # self.cad_model.add({
+                    #     'Key': f'CouplingPoint3D<{point_counter}>',
+                    #     'Type': 'Point3D',
+                    #     'Location': [x, y, z],
+                    #     'Layer': 'CouplingPoints',
+                    # })
                     destination_mdpa.CreateNewNode(itr, x, y, z)
                     point_counter += 1
 
@@ -482,9 +482,11 @@ class ConditionsFactory:
                     shape_function_a.Compute(surface_geometry_a.KnotsU, surface_geometry_a.KnotsV, u_a, v_a)
                     nonzero_pole_indices_a = shape_function_a.NonzeroPoleIndices
 
+                    shape_function_values_a = np.empty(shape_function_a.NbNonzeroPoles, dtype=float)
                     shape_function_derivatives_u_a = np.empty(shape_function_a.NbNonzeroPoles, dtype=float)
                     shape_function_derivatives_v_a = np.empty(shape_function_a.NbNonzeroPoles, dtype=float)
                     for i in range(shape_function_a.NbNonzeroPoles):
+                        shape_function_values_a[i] = shape_function_a(0,i)
                         shape_function_derivatives_u_a[i] = shape_function_a(1,i)
                         shape_function_derivatives_v_a[i] = shape_function_a(2,i)
 
@@ -493,20 +495,43 @@ class ConditionsFactory:
                     shape_function_b.Compute(surface_geometry_b.KnotsU, surface_geometry_b.KnotsV, u_b, v_b)
                     nonzero_pole_indices_b = shape_function_b.NonzeroPoleIndices
 
+                    shape_function_values_b = np.empty(shape_function_b.NbNonzeroPoles, dtype=float)
                     shape_function_derivatives_u_b = np.empty(shape_function_b.NbNonzeroPoles, dtype=float)
                     shape_function_derivatives_v_b = np.empty(shape_function_b.NbNonzeroPoles, dtype=float)
                     for i in range(shape_function_b.NbNonzeroPoles):
+                        shape_function_values_b[i] = shape_function_b(0,i)
                         shape_function_derivatives_u_b[i] = shape_function_b(1,i)
                         shape_function_derivatives_v_b[i] = shape_function_b(2,i)
 
+
+                    # Tangents enforcement
                     target_normal = node.GetSolutionStepValue(KratosShape.NORMALIZED_SURFACE_NORMAL)
 
-                    new_condition_a = TangentEnforcementCondition(target_normal, surface_geometry_a, nonzero_pole_indices_a, shape_function_derivatives_u_a, shape_function_derivatives_v_a, self.penalty_factor)
+                    new_condition_a = TangentEnforcementCondition(target_normal, surface_geometry_a, nonzero_pole_indices_a, shape_function_derivatives_u_a, shape_function_derivatives_v_a, self.penalty_factor_tangent_enforcement)
                     conditions[face_a_itr].append(new_condition_a)
 
-                    new_condition_b = TangentEnforcementCondition(target_normal, surface_geometry_b, nonzero_pole_indices_b, shape_function_derivatives_u_b, shape_function_derivatives_v_b, self.penalty_factor)
+                    new_condition_b = TangentEnforcementCondition(target_normal, surface_geometry_b, nonzero_pole_indices_b, shape_function_derivatives_u_b, shape_function_derivatives_v_b, self.penalty_factor_tangent_enforcement)
                     conditions[face_b_itr].append(new_condition_b)
 
+                    # Positions enforcement
+                    target_displacement = node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)
+                    target_position = np.array([node.X+target_displacement[0], node.Y+target_displacement[1], node.Z+target_displacement[2]])
+
+                    new_condition_a = PositionEnforcementCondition(target_displacement, target_position, surface_geometry_a, nonzero_pole_indices_a, shape_function_values_a, self.penalty_factor_position_enforcement)
+                    conditions[face_a_itr].append(new_condition_a)
+
+                    new_condition_b = PositionEnforcementCondition(target_displacement, target_position, surface_geometry_b, nonzero_pole_indices_b, shape_function_values_b, self.penalty_factor_position_enforcement)
+                    conditions[face_b_itr].append(new_condition_b)
+
+
+
+                    # point_counter += 1
+                    # self.cad_model.add({
+                    #     'Key': f'target_position<{point_counter}>',
+                    #     'Type': 'Point3D',
+                    #     'Location': [target_position[0],target_position[1],target_position[2]],
+                    #     'Layer': 'boundary_target_pos',
+                    # })
 
 
                     # pole_coords = np.zeros((len(nonzero_pole_indices_a), 3))

@@ -24,7 +24,8 @@ parameters = KratosMultiphysics.Parameters("""
     },
     "boundary_conditions" :
     {
-        "penalty_factor" : 10
+        "penalty_factor_tangent_enforcement"  : 10,
+        "penalty_factor_position_enforcement" : 100
     },
     "solution" :
     {
@@ -33,7 +34,7 @@ parameters = KratosMultiphysics.Parameters("""
     },
     "regularization" :
     {
-        "beta" : 0.01
+        "beta" : 0.001
     },
     "output":
     {

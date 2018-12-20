@@ -14,6 +14,7 @@ import KratosMultiphysics
 import KratosMultiphysics.ShapeOptimizationApplication as KratosShape
 import KratosMultiphysics.MeshingApplication as KratosMeshingApp
 import KratosMultiphysics.StructuralMechanicsApplication as KratosCSM
+import KratosMultiphysics.MappingApplication as KratosMapping
 
 # Import ANurbs library
 import ANurbs as an
@@ -52,7 +53,10 @@ class CADMapper:
         variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
 
         self.fe_model_part = self.fe_model.CreateModelPart("origin_part")
+        self.fe_model_part.ProcessInfo.SetValue(KratosMultiphysics.DOMAIN_SIZE, 3)
         self.fe_model_part.AddNodalSolutionStepVariable(variable_to_map)
+        self.fe_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)
+        self.fe_model_part.AddNodalSolutionStepVariable(KratosShape.NORMALIZED_SURFACE_NORMAL)
 
         model_part_io = KratosMultiphysics.ModelPartIO(fem_input_filename[:-5])
         model_part_io.ReadModelPart(self.fe_model_part)
@@ -81,11 +85,26 @@ class CADMapper:
             Refine = KratosMeshingApp.LocalRefineTriangleMesh(self.fe_model_part)
             Refine.LocalRefineMesh(refine_on_reference, interpolate_internal_variables)
 
+        # Compute average surface normals of target design
+        for node in self.fe_model_part.Nodes:
+            shape_update = node.GetSolutionStepValue(variable_to_map)
+            node.X += shape_update[0]
+            node.Y += shape_update[1]
+            node.Z += shape_update[2]
+
+        KratosShape.GeometryUtilities(self.fe_model_part).ComputeUnitSurfaceNormals(True)
+
+        for node in self.fe_model_part.Nodes:
+            shape_update = node.GetSolutionStepValue(variable_to_map)
+            node.X -= shape_update[0]
+            node.Y -= shape_update[1]
+            node.Z -= shape_update[2]
+
         # Output FE-data with projected points
         output_dir = self.parameters["output"]["results_directory"].GetString()
         fem_output_filename = "fe_model_used_for_reconstruction"
         fem_output_filename_with_path = os.path.join(output_dir,fem_output_filename)
-        nodal_variables = [self.parameters["inpute"]["variable_to_map"].GetString()]
+        nodal_variables = [self.parameters["inpute"]["variable_to_map"].GetString(), "NORMAL", "NORMALIZED_SURFACE_NORMAL"]
         self.__OutputFEData(self.fe_model_part, fem_output_filename_with_path, nodal_variables)
 
         # Read CAD data
@@ -330,15 +349,15 @@ class ConditionsFactory:
 
                     # Introduce a possible penalty factor for nodes on boundary
                     penalty_fac = 1.0
-                    if is_on_boundary:
-                        penalty_fac = 1.0
-                        self.cad_model.add({
-                            'Key': f'Point3D<{boundary_nodes_counter}>',
-                            'Type': 'Point3D',
-                            'Location': node_coords_i,
-                            'Layer': "boundary_nodes",
-                        })
-                        boundary_nodes_counter += 1
+                    # if is_on_boundary:
+                    #     penalty_fac = 1.0
+                        # self.cad_model.add({
+                        #     'Key': f'Point3D<{boundary_nodes_counter}>',
+                        #     'Type': 'Point3D',
+                        #     'Location': node_coords_i,
+                        #     'Layer': "boundary_nodes",
+                        # })
+                        # boundary_nodes_counter += 1
 
                     new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, self.variable_to_map, penalty_fac)
                     conditions[face_itr].append(new_condition)
@@ -395,7 +414,7 @@ class ConditionsFactory:
     def CreateTangentEnforcementConditions(self, conditions):
         from cad_reconstruction_conditions import TangentEnforcementCondition
 
-        points_counter = 1
+        point_counter = 1
 
         face_id_to_itr = {}
         for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
@@ -421,23 +440,43 @@ class ConditionsFactory:
                 face_b_itr = face_id_to_itr[adjacent_faces[1].key]
 
                 surface_geometry_a = face_a.surface_geometry_3d().geometry
-
                 surface_geometry_b = face_b.surface_geometry_3d().geometry
 
                 list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i)
 
+                # Collect integration points in model part
+                temp_model = KratosMultiphysics.Model()
+                destination_mdpa = temp_model.CreateModelPart("temp_model_part")
+                destination_mdpa.AddNodalSolutionStepVariable(KratosShape.NORMALIZED_SURFACE_NORMAL)
+                destination_mdpa.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE)
+
                 for itr, [x,y,z] in enumerate(list_of_points):
                     self.cad_model.add({
-                        'Key': f'CouplingPoint3D<{points_counter}>',
+                        'Key': f'CouplingPoint3D<{point_counter}>',
                         'Type': 'Point3D',
                         'Location': [x, y, z],
                         'Layer': 'CouplingPoints',
                     })
+                    destination_mdpa.CreateNewNode(itr, x, y, z)
+                    point_counter += 1
+
+                # Map information from fem to integration points using element based mapper
+                mapper_parameters = KratosMultiphysics.Parameters("""{
+                    "mapper_type" : "nearest_element",
+                    "search_radius" : 1.0
+                }""")
+
+                mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, mapper_parameters )
+                mapper.Map( KratosShape.NORMALIZED_SURFACE_NORMAL, KratosShape.NORMALIZED_SURFACE_NORMAL )
+                mapper.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
+
+                # Create conditions
+                for itr, node in enumerate(destination_mdpa.Nodes):
 
                     shape_function_a = an.SurfaceShapeEvaluator(DegreeU=surface_geometry_a.DegreeU, DegreeV=surface_geometry_a.DegreeV, Order=1)
                     shape_function_b = an.SurfaceShapeEvaluator(DegreeU=surface_geometry_b.DegreeU, DegreeV=surface_geometry_b.DegreeV, Order=1)
 
-                    # Create conditions to enforce t1 on both face a and face b
+                    # Create conditions to enforce t1 and t2 on both face a and face b
                     u_a = list_of_parameters_a[itr][0]
                     v_a = list_of_parameters_a[itr][1]
                     shape_function_a.Compute(surface_geometry_a.KnotsU, surface_geometry_a.KnotsV, u_a, v_a)
@@ -460,14 +499,15 @@ class ConditionsFactory:
                         shape_function_derivatives_u_b[i] = shape_function_b(1,i)
                         shape_function_derivatives_v_b[i] = shape_function_b(2,i)
 
-                    target_normal = [0.0, 0.0, 1.0]
+                    target_normal = node.GetSolutionStepValue(KratosShape.NORMALIZED_SURFACE_NORMAL)
 
                     new_condition_a = TangentEnforcementCondition(target_normal, surface_geometry_a, nonzero_pole_indices_a, shape_function_derivatives_u_a, shape_function_derivatives_v_a, self.penalty_factor)
                     conditions[face_a_itr].append(new_condition_a)
 
-
                     new_condition_b = TangentEnforcementCondition(target_normal, surface_geometry_b, nonzero_pole_indices_b, shape_function_derivatives_u_b, shape_function_derivatives_v_b, self.penalty_factor)
                     conditions[face_b_itr].append(new_condition_b)
+
+
 
                     # pole_coords = np.zeros((len(nonzero_pole_indices_a), 3))
                     # for i, (r,s) in enumerate(nonzero_pole_indices_a):
@@ -490,7 +530,6 @@ class ConditionsFactory:
                     #     'Layer': 'a1_a',
                     # })
 
-                    points_counter += 1
 
             else:
                 raise RuntimeError("Max number of adjacent has to be 2!!")

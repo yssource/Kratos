@@ -10,12 +10,16 @@ from cad_reconstruction import CADMapper
 # Parameters
 parameters = KratosMultiphysics.Parameters("""
 {
-    "inpute" :
+    "input" :
     {
         "cad_filename"                  : "tripod.iga",
         "fem_filename"                  : "tripod.mdpa",
         "fe_refinement_level"           : 0,
         "variable_to_map"               : "SHAPE_CHANGE"
+    },
+    "method" :
+    {
+        "apply_integration" : true
     },
     "points_projection" :
     {
@@ -34,7 +38,7 @@ parameters = KratosMultiphysics.Parameters("""
     },
     "regularization" :
     {
-        "beta" : 0.001
+        "beta" : 0.000001
     },
     "output":
     {

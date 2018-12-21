@@ -48,8 +48,8 @@ class CADMapper:
             os.makedirs( output_dir )
 
         # Read FE data
-        fem_input_filename = self.parameters["inpute"]["fem_filename"].GetString()
-        name_variable_to_map = self.parameters["inpute"]["variable_to_map"].GetString()
+        fem_input_filename = self.parameters["input"]["fem_filename"].GetString()
+        name_variable_to_map = self.parameters["input"]["variable_to_map"].GetString()
         variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
 
         self.fe_model_part = self.fe_model.CreateModelPart("origin_part")
@@ -67,7 +67,7 @@ class CADMapper:
         mat = KratosCSM.LinearElasticPlaneStress2DLaw()
         prop.SetValue(KratosMultiphysics.CONSTITUTIVE_LAW, mat.Clone())
 
-        refinement_level = self.parameters["inpute"]["fe_refinement_level"].GetInt()
+        refinement_level = self.parameters["input"]["fe_refinement_level"].GetInt()
         for refinement_level in range(0,refinement_level):
 
             number_of_avg_elems = 10
@@ -104,11 +104,11 @@ class CADMapper:
         output_dir = self.parameters["output"]["results_directory"].GetString()
         fem_output_filename = "fe_model_used_for_reconstruction"
         fem_output_filename_with_path = os.path.join(output_dir,fem_output_filename)
-        nodal_variables = [self.parameters["inpute"]["variable_to_map"].GetString(), "NORMAL", "NORMALIZED_SURFACE_NORMAL"]
+        nodal_variables = [self.parameters["input"]["variable_to_map"].GetString(), "NORMAL", "NORMALIZED_SURFACE_NORMAL"]
         self.__OutputFEData(self.fe_model_part, fem_output_filename_with_path, nodal_variables)
 
         # Read CAD data
-        cad_filename = self.parameters["inpute"]["cad_filename"].GetString()
+        cad_filename = self.parameters["input"]["cad_filename"].GetString()
         self.cad_model = an.Model.open(cad_filename)
 
         print("> Preprocessing finished in" ,round( time.time()-start_time, 3 ), " s.")
@@ -120,7 +120,11 @@ class CADMapper:
             self.conditions.append([])
 
         condition_factory = ConditionsFactory(self.fe_model_part, self.cad_model, self.parameters)
-        condition_factory.CreateDistanceMinimizationConditions(self.conditions)
+
+        if self.parameters["method"]["apply_integration"].GetBool():
+            condition_factory.CreateDistanceMinimizationWithIntegrationConditions(self.conditions)
+        else:
+            condition_factory.CreateDistanceMinimizationConditions(self.conditions)
         condition_factory.CreateEnforcementConditions(self.conditions)
 
         print("> Finished creation of conditions in" ,round( time.time()-start_time, 3 ), " s.")
@@ -275,7 +279,7 @@ class ConditionsFactory:
         self.fe_model_part = fe_model_part
         self.cad_model = cad_model
 
-        name_variable_to_map = parameters["inpute"]["variable_to_map"].GetString()
+        name_variable_to_map = parameters["input"]["variable_to_map"].GetString()
         self.variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
 
         self.tesselation_tolerance = parameters["points_projection"]["boundary_tessellation_tolerance"].GetDouble()
@@ -348,9 +352,9 @@ class ConditionsFactory:
                         shape_function_values[i] = shape_function(0,i)
 
                     # Introduce a possible penalty factor for nodes on boundary
-                    penalty_fac = 1.0
+                    weight = 1.0
                     # if is_on_boundary:
-                    #     penalty_fac = 1.0
+                    #     weight = 1.0
                         # self.cad_model.add({
                         #     'Key': f'Point3D<{boundary_nodes_counter}>',
                         #     'Type': 'Point3D',
@@ -359,7 +363,7 @@ class ConditionsFactory:
                         # })
                         # boundary_nodes_counter += 1
 
-                    new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, self.variable_to_map, penalty_fac)
+                    new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, self.variable_to_map, weight)
                     conditions[face_itr].append(new_condition)
 
                     projected_point_i = projection.Point
@@ -405,16 +409,75 @@ class ConditionsFactory:
         # output_dir = self.parameters["output"]["results_directory"].GetString()
         # fem_output_filename = "fe_model_used_for_reconstruction"
         # fem_output_filename_with_path = os.path.join(output_dir,fem_output_filename)
-        # nodal_variables = [self.parameters["inpute"]["update_variable_name"].GetString(), "CONTROL_POINT_UPDATE"]
+        # nodal_variables = [self.parameters["input"]["update_variable_name"].GetString(), "CONTROL_POINT_UPDATE"]
         # OutputFEData(self.fe_model_part, fem_output_filename_with_path, nodal_variables)
+
+        return conditions
+
+    # --------------------------------------------------------------------------
+    def CreateDistanceMinimizationWithIntegrationConditions(self, conditions):
+        from cad_reconstruction_conditions import DistanceMinimizationCondition
+
+        total_area = 0
+
+        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+
+            print("> Processing face ",face_itr)
+
+            surface_geometry = face_i.surface_geometry_3d().geometry
+            shape_function = an.SurfaceShapeEvaluator(DegreeU=surface_geometry.DegreeU, DegreeV=surface_geometry.DegreeV, Order=0)
+
+            list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i)
+
+            # Collect integration points in model part
+            temp_model = KratosMultiphysics.Model()
+            destination_mdpa = temp_model.CreateModelPart("temp_model_part")
+            destination_mdpa.AddNodalSolutionStepVariable(KratosShape.NORMALIZED_SURFACE_NORMAL)
+            destination_mdpa.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE)
+
+            for itr, [x,y,z] in enumerate(list_of_points):
+                # self.cad_model.add({
+                #     'Key': f'FaceIntegrationPoint3D<{face_itr},{itr}>',
+                #     'Type': 'Point3D',
+                #     'Location': [x, y, z],
+                #     'Layer': 'FaceIntegrationPoints',
+                # })
+                destination_mdpa.CreateNewNode(itr, x, y, z)
+
+            # Map information from fem to integration points using element based mapper
+            mapper_parameters = KratosMultiphysics.Parameters("""{
+                "mapper_type" : "nearest_element",
+                "search_radius" : 1.0
+            }""")
+
+            mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, mapper_parameters )
+            mapper.Map( self.variable_to_map, self.variable_to_map )
+
+            # Create conditions
+            for itr, node_i in enumerate(destination_mdpa.Nodes):
+
+                [u,v] = list_of_parameters[itr]
+                weight = list_of_integration_weights[itr]
+
+                total_area += weight
+
+                shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
+                nonzero_pole_indices = shape_function.NonzeroPoleIndices
+
+                shape_function_values = np.empty(shape_function.NbNonzeroPoles, dtype=float)
+                for i in range(shape_function.NbNonzeroPoles):
+                    shape_function_values[i] = shape_function(0,i)
+
+                new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, self.variable_to_map, weight)
+                conditions[face_itr].append(new_condition)
+
+        print("> Total area of cad surface = ",total_area,"\n")
 
         return conditions
 
  # --------------------------------------------------------------------------
     def CreateEnforcementConditions(self, conditions):
         from cad_reconstruction_conditions import TangentEnforcementCondition, PositionEnforcementCondition
-
-        point_counter = 1
 
         face_id_to_itr = {}
         for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
@@ -452,13 +515,12 @@ class ConditionsFactory:
 
                 for itr, [x,y,z] in enumerate(list_of_points):
                     # self.cad_model.add({
-                    #     'Key': f'CouplingPoint3D<{point_counter}>',
+                    #     'Key': f'CouplingPoint3D<{face_itr},{itr}>',
                     #     'Type': 'Point3D',
                     #     'Location': [x, y, z],
                     #     'Layer': 'CouplingPoints',
                     # })
                     destination_mdpa.CreateNewNode(itr, x, y, z)
-                    point_counter += 1
 
                 # Map information from fem to integration points using element based mapper
                 mapper_parameters = KratosMultiphysics.Parameters("""{
@@ -559,38 +621,6 @@ class ConditionsFactory:
             else:
                 raise RuntimeError("Max number of adjacent has to be 2!!")
 
-
-
-        # print("\n> ----------------------------------------------------")
-        # print("> Starting mapping ...")
-        # start_time = time.time()
-
-
-        # print("User specified parameter search radius!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-
-        # mapper_parameters = KratosMultiphysics.Parameters("""{
-        #     "mapper_type" : "nearest_element",
-        #     "search_radius" : 1.0
-        #     }""")
-        # mapper_tool = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, mapper_parameters )
-
-
-        # print("> Finished creating mapper in " ,round( time.time()-start_time, 3 ), " s.")
-        # start_time = time.time()
-
-
-        # mapper_tool.Map( KratosShape.NORMALIZED_SURFACE_NORMAL, KratosShape.NORMALIZED_SURFACE_NORMAL )
-        # mapper_tool.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
-
-
-
-        # print("> Finished mapping in " ,round( time.time()-start_time, 3 ), " s.")
-        # print("\n> ----------------------------------------------------")
-
-
-
-        # new_condition.SetRotation()
-
     # --------------------------------------------------------------------------
     @staticmethod
     def __CreateIntegrationPointsForEdge(edge):
@@ -639,7 +669,7 @@ class ConditionsFactory:
                 continue
 
             for t_b, weight in an.IntegrationPoints.Points1D(degree, span_b):
-                point, tangent = curve_3d_b.DerivativesAt(t_b, 1)
+                point, a1 = curve_3d_b.DerivativesAt(t_b, 1)
                 list_of_points.append(point)
 
                 projection_a.Compute(point)
@@ -650,10 +680,85 @@ class ConditionsFactory:
 
                 list_of_parameters_a.append((u_a, v_a))
                 list_of_parameters_b.append((u_b, v_b))
-                list_of_weights.append(weight * la.norm(tangent))
+                list_of_weights.append(weight * la.norm(a1))
 
         return list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_weights
 
+    # --------------------------------------------------------------------------
+    @staticmethod
+    def __CreateIntegrationPointsForFace(face):
+        surface_geometry = face.surface_geometry_3d().geometry
+
+        print("Here there is some parameter....")
+        drawing_tolerance = 0.01
+
+        clipper = an.TrimmedSurfaceClipping3D(Tolerance=drawing_tolerance, Scale=drawing_tolerance/100.0)
+        integration_points = an.PolygonIntegrationPoints()
+        tessellation = an.PolygonTessellation()
+
+        clipper.Clear()
+
+        for loop in face.loops():
+            clipper.BeginLoop()
+
+            for trim in loop.trims():
+                clipper.AddCurve(trim.curve_2d())
+
+            clipper.EndLoop()
+
+        clipper.Compute(surface_geometry)
+
+        degree_u = surface_geometry.DegreeU
+        degree_v = surface_geometry.DegreeV
+
+        degree = max(degree_u, degree_v) + 1
+
+        list_of_points = []
+        list_of_parameters = []
+        list_of_weights = []
+
+        for i in range(clipper.NbSpansU):
+            for j in range(clipper.NbSpansV):
+                if clipper.SpanTrimType(i, j) == an.Empty:
+                    continue
+
+                if clipper.SpanTrimType(i, j) == an.Full:
+                    for u, v, weight in an.IntegrationPoints.Points2D(degree_u+1, degree_v+1, clipper.SpanU(i), clipper.SpanV(j)):
+                        [x,y,z], a1, a2  = surface_geometry.DerivativesAt(u, v, 1)
+
+                        # self.cad_model.add({
+                        #     'Key': f'IntegrationPoint{face_itr}{pt_i}',
+                        #     'Type': 'Point3D',
+                        #     'Location': [x, y, z],
+                        #     'Color': '#0000ff',
+                        #     'Layer': 'Full',
+                        # })
+
+                        list_of_points.append([x,y,z])
+                        list_of_parameters.append((u, v))
+                        list_of_weights.append(weight * la.norm(np.cross(a1,a2)))
+                else:
+                    for polygon_i, polygon in enumerate(clipper.SpanPolygons(i, j)):
+                        integration_points.Compute(degree, polygon)
+
+                        for k in range(integration_points.NbIntegrationPoints):
+                            u, v, weight = integration_points.IntegrationPoint(k)
+
+                            [x,y,z], a1, a2  = surface_geometry.DerivativesAt(u, v, 1)
+
+                            # self.cad_model.add({
+                            #     'Key': f'IntegrationPoint{face_itr}{pt_i}',
+                            #     'Type': 'Point3D',
+                            #     'Location': [x, y, z],
+                            #     'Color': '#ff0000',
+                            #     'Layer': 'Quad3D',
+                            # })
+
+                            list_of_points.append([x,y,z])
+                            list_of_parameters.append((u, v))
+                            list_of_weights.append(weight * la.norm(np.cross(a1,a2)))
+
+        return list_of_points, list_of_parameters, list_of_weights
 
     # --------------------------------------------------------------------------
     @classmethod

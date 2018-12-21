@@ -689,7 +689,7 @@ class ConditionsFactory:
     def __CreateIntegrationPointsForFace(face):
         surface_geometry = face.surface_geometry_3d().geometry
 
-        print("Here there is some parameter....")
+        print("Here there is some parameter!!!!")
         drawing_tolerance = 0.01
 
         clipper = an.TrimmedSurfaceClipping3D(Tolerance=drawing_tolerance, Scale=drawing_tolerance/100.0)

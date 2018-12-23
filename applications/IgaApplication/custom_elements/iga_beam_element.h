@@ -261,9 +261,9 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
     double _m_inert_y,
     double _m_inert_z,
     double _mt_inert,
-    double _dL,
         MatrixType& _gke,
-        VectorType& _gfie) ; 
+        VectorType& _gfie,
+        double& _dL) ; 
 
     void IgaBeamElement::ComputeMatrixRodriuez(
         BoundedMatrix<double,3,3>& _matrix_rodrigues,
@@ -303,40 +303,37 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
     double  _phi_der) ;
 
 
-    void comp_T_var(
+    void ComputeTVar(
         const Vector3& r1,
         std::vector<Vector3>& t_var);
 
-    void comp_T_var_var(
+    void ComputeTVarVar(
         const Vector3& r1,
         std::vector<Vector3>& t_var_var);
 
-    void comp_T_der_var(
+    void ComputeTDerVar(
         const Vector3& r1,
         const Vector3& r2,
         std::vector<Vector3>& t_der_var);
 
-    void comp_T_der_var_var(
+    void ComputeTDerVarVar(
         const Vector3& r1,
         const Vector3& r2,
         std::vector<Vector3>& t_der_var_var);
 
-    BoundedMatrix<double, 3, 3> cross_v_identity(
-        const Vector3& v);
-
-    void comp_rodrigues(
+    void ComputeRodrigues(
         const Vector3& v,
         const double& phi,
         BoundedMatrix<double, 3, 3>& rodrigues);
 
-    void comp_rodrigues_der(
+    void ComputeRodriguesDer(
         const Vector3& v,
         const Vector3& v_der,
         const double& phi,
         const double& phi_der,
         BoundedMatrix<double, 3, 3>& rodrigues_der);
 
-    void comp_rodrigues_der_var(
+    void ComputeRodriguesDerVar(
         const Vector3& v,
         const std::vector<Vector3>& v_var,
         const Vector3& v_der,
@@ -345,7 +342,7 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
         const double& phi_der,
         std::vector<BoundedMatrix<double, 3, 3>>& rodrigues_der_var);
 
-    void comp_rodrigues_der_var_var(
+    void ComputeRodriguesDerVarVar(
         const Vector3& v, 
         const std::vector<Vector3>& v_var, 
         const std::vector<Vector3>& v_var_var, 
@@ -356,45 +353,45 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
         const double& phi_der, 
         std::vector<BoundedMatrix<double, 3, 3>>& rodrigues_der_var_var);
 
-    void comp_rodrigues_var(
+    void ComputeRodriguesVar(
         const Vector3& v,
         const std::vector<Vector3>& v_var, 
         const double& phi, 
         std::vector<BoundedMatrix<double, 3, 3>>& rodrigues_var);
 
-    void comp_rodrigues_var_var(
+    void ComputeRodriguesVarVar(
         const Vector3& v, 
         const std::vector<Vector3>& v_var, 
         const std::vector<Vector3>& v_var_var, 
         const double& phi, 
         std::vector<BoundedMatrix<double, 3, 3>>& rodrigues_var_var);
 
-    void comp_lambda(
+    void ComputeLambda(
         const Vector3& v1,
         const Vector3& v2,
         BoundedMatrix<double, 3, 3>& lambda);
 
-    void comp_lambda_var(
+    void ComputeLambdaVar(
         const Vector3& v1,
         const Vector3& v2,
         const std::vector<Vector3>& v2_var,
         std::vector<BoundedMatrix<double, 3, 3>>& lambda_var);
 
-    void comp_lambda_var_var(
+    void ComputeLambdaVarVar(
         const Vector3& v1,
         const Vector3& v2,
         const std::vector<Vector3>& v2_var,
         const std::vector<Vector3>& v2_var_var,
         std::vector<BoundedMatrix<double, 3, 3>>& lambda_var_var);
 
-    void comp_lambda_der(
+    void ComputeLambdaDer(
         const Vector3& v1,
         const Vector3& v1_der,
         const Vector3& v2,
         const Vector3& v2_der,
         BoundedMatrix<double, 3, 3>& lambda_der);
 
-    void comp_lambda_der_var(
+    void ComputeLambdaDerVar(
         const Vector3& v1,
         const Vector3& v1_der,
         const Vector3& v2,
@@ -403,7 +400,7 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
         const std::vector<Vector3>& v2_der_var,
         std::vector<BoundedMatrix<double, 3, 3>>& lambda_der_var);
 
-    void comp_lambda_der_var_var(
+    void ComputeLambdaDerVarVar(
         const Vector3& v1,
         const Vector3& v1_der,
         const Vector3& v2,
@@ -419,6 +416,9 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
 BoundedMatrix<double,3,3> CrossProductVectorMatrix(
     BoundedVector<double,3> vec,
     BoundedMatrix<double,3,3> mat) ;
+
+BoundedMatrix<double, 3, 3> CrossVectorIdentity(
+    const Vector3& v);
 
 Matrix IgaBeamElement::CrossProductVectorMatrix(
     Vector vec,

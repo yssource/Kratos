@@ -34,6 +34,7 @@
 #include "external_includes/epetra_default_utility.h"
 #include "external_includes/aztec_solver.h"
 #include "external_includes/amesos_solver.h"
+#include "external_includes/amesos2_solver.h"
 #include "external_includes/ml_solver.h"
 
 #include "external_includes/amgcl_mpi_solver.h"
@@ -83,6 +84,15 @@ void  AddLinearSolvers(pybind11::module& m)
         .def(py::init<Parameters>())
         .def_static("HasSolver", &AmesosSolverType::HasSolver)
         ;
+
+    typedef Amesos2Solver<TrilinosSparseSpaceType, TrilinosLocalSpaceType > Amesos2SolverType;
+    py::class_<Amesos2SolverType, typename Amesos2SolverType::Pointer, TrilinosLinearSolverType >
+    (m,"Amesos2Solver").def( py::init<const std::string&, Teuchos::ParameterList& >())
+    .def(py::init<Parameters>())
+    .def(py::init<Parameters>())
+    .def_static("HasSolver", &Amesos2SolverType::HasSolver)
+    ;
+
 
     typedef MultiLevelSolver<TrilinosSparseSpaceType, TrilinosLocalSpaceType > MLSolverType;
     py::class_<MLSolverType, typename MLSolverType::Pointer, TrilinosLinearSolverType >

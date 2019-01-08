@@ -68,6 +68,8 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
 
         self.optimization_model_part = model_part_controller.GetOptimizationModelPart()
         self.optimization_model_part.AddNodalSolutionStepVariable(SEARCH_DIRECTION)
+        self.optimization_model_part.AddNodalSolutionStepVariable(VECTOR_VARIABLE)
+        self.optimization_model_part.AddNodalSolutionStepVariable(VECTOR_VARIABLE_MAPPED)
 
     # --------------------------------------------------------------------------
     def CheckApplicability(self):
@@ -95,14 +97,10 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
 
         # Identify fixed design areas (geometric constraints)
         VariableUtils().SetFlag(BOUNDARY, False, self.optimization_model_part.Nodes)
-
-        radius = self.mapper_settings["filter_radius"].GetDouble()
-        search_based_functions = SearchBasedFunctions(self.design_surface)
-
         for itr in range(self.algorithm_settings["fix_boundaries"].size()):
             sub_model_part_name = self.algorithm_settings["fix_boundaries"][itr].GetString()
             node_set = self.optimization_model_part.GetSubModelPart(sub_model_part_name).Nodes
-            search_based_functions.FlagNodesInRadius(node_set, BOUNDARY, radius)
+            VariableUtils().SetFlag(BOUNDARY, True, node_set)
 
     # --------------------------------------------------------------------------
     def RunOptimizationLoop(self):
@@ -122,12 +120,8 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
             self.num_function_calls = self.num_function_calls+1
 
             for counter, node in enumerate(self.design_surface.Nodes):
-                if node.Is(BOUNDARY):
-                    # Enforce geometric constraint
-                    node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[0.0, 0.0, 0.0])
-                else:
-                    [dx,dy,dz] = X[(3*counter):(3*counter+3)]
-                    node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[dx,dy,dz])
+                [dx,dy,dz] = X[(3*counter):(3*counter+3)]
+                node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[dx,dy,dz])
 
             self.mapper.Map(CONTROL_POINT_CHANGE, SHAPE_CHANGE)
 
@@ -222,7 +216,85 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
             for counter, node in enumerate(self.design_surface.Nodes):
                 gradient[(3*counter):(3*counter+3)] = node.GetSolutionStepValue(DF1DX_MAPPED)
 
-            norm_obj_gradient = self.optimization_utilities.ComputeL2NormOfNodalVariable(DF1DX_MAPPED)
+
+
+
+
+
+            # Perform projection to consider boundaries
+            new_timer = Timer()
+            new_timer.StartTimer()
+
+            num_design_nodes = self.design_surface.NumberOfNodes()
+            dJds = np.zeros(num_design_nodes*3)
+            num_boundary_nodes = 0
+
+            for itr, node in enumerate(self.design_surface.Nodes):
+                temp_vec = node.GetSolutionStepValue(DF1DX_MAPPED)
+                dJds[3*itr+0] = temp_vec[0]
+                dJds[3*itr+1] = temp_vec[1]
+                dJds[3*itr+2] = temp_vec[2]
+
+                if node.Is(BOUNDARY):
+                    num_boundary_nodes += 1
+
+            Cm = np.zeros((num_boundary_nodes*3,num_design_nodes*3))
+
+            boundar_node_index = 0
+
+            for row_itr, node in enumerate(self.design_surface.Nodes):
+                if node.Is(BOUNDARY):
+                    node.SetSolutionStepValue(VECTOR_VARIABLE,[1,1,1])
+                    self.mapper.InverseMap(VECTOR_VARIABLE, VECTOR_VARIABLE_MAPPED)
+
+                    node.SetSolutionStepValue(VECTOR_VARIABLE,[0,0,0])
+
+                    for coll_itr, coll_node in enumerate(self.design_surface.Nodes):
+                        another_temp_vec = coll_node.GetSolutionStepValue(VECTOR_VARIABLE_MAPPED)
+
+                        Cm[3*boundar_node_index+0,3*coll_itr+0] = another_temp_vec[0]
+                        Cm[3*boundar_node_index+1,3*coll_itr+1] = another_temp_vec[1]
+                        Cm[3*boundar_node_index+2,3*coll_itr+2] = another_temp_vec[2]
+
+                    boundar_node_index += 1
+
+            print("\n> Time needed for preparation of projection vectors and matrices = ", new_timer.GetLapTime(), "s")
+
+            new_timer.StartNewLap()
+
+            Cm_transpose = Cm.transpose()
+
+            print("\n> Time needed for computation of transpose = ", new_timer.GetLapTime(), "s")
+
+            new_timer.StartNewLap()
+
+            # lambda_fac = np.linalg.solve(np.dot(Cm,Cm_transpose), np.dot(Cm,dJds))
+            lambda_fac = np.linalg.lstsq(Cm_transpose, dJds)[0]
+
+            print("\n> Time needed for solution of projection equation = ", new_timer.GetLapTime(), "s")
+
+            new_timer.StartNewLap()
+
+            p = dJds - np.dot(Cm_transpose, lambda_fac)
+
+            print("\n> Time needed for compuation of p = ", new_timer.GetLapTime(), "s")
+
+            # Store computed search direction (inverse of descent direction)
+            for itr, node in enumerate(self.design_surface.Nodes):
+                temp_vec = [p[3*itr+0], p[3*itr+1], p[3*itr+2]]
+                node.SetSolutionStepValue(SEARCH_DIRECTION,temp_vec)
+
+
+
+
+
+
+
+
+
+
+
+            norm_obj_gradient = self.optimization_utilities.ComputeL2NormOfNodalVariable(SEARCH_DIRECTION)
 
             additional_values_to_log = {}
             additional_values_to_log["norm_obj_gradient"] = norm_obj_gradient
@@ -243,7 +315,7 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
                 node.Z0 = node.Z
 
             # Return value
-            return gradient
+            return p
 
         def log_function(X):
             if self.update_mapping_matrix:

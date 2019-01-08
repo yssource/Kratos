@@ -259,7 +259,7 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
         # lambda_fac = np.linalg.solve(Cm@Cm_transpose, Cm@dJds)
         lambda_fac = np.linalg.lstsq(Cm_transpose, dJds)[0]
 
-        p = -1 * (np.eye(num_design_nodes*3)@dJds - Cm_transpose@lambda_fac)
+        p = -1 * ( np.dot(np.eye(num_design_nodes*3), dJds) - np.dot(Cm_transpose, lambda_fac) )
 
         max_norm = np.linalg.norm(p,np.inf)
         if self.normalize_search_direction:

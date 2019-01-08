@@ -221,6 +221,9 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
 
 
         # Perform projection
+        new_timer = Timer()
+        new_timer.StartTimer()
+
         num_design_nodes = self.design_surface.NumberOfNodes()
         dJds = np.zeros(num_design_nodes*3)
         num_boundary_nodes = 0
@@ -254,12 +257,27 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
 
                 boundar_node_index += 1
 
+        print("\n> Time needed for preparation of projection vectors and matrices = ", new_timer.GetLapTime(), "s")
+
+        new_timer.StartNewLap()
+
         Cm_transpose = Cm.transpose()
 
-        # lambda_fac = np.linalg.solve(Cm@Cm_transpose, Cm@dJds)
+        print("\n> Time needed for computation of transpose = ", new_timer.GetLapTime(), "s")
+
+        new_timer.StartNewLap()
+
+        # lambda_fac = np.linalg.solve(np.dot(Cm,Cm_transpose), np.dot(Cm,dJds))
         lambda_fac = np.linalg.lstsq(Cm_transpose, dJds)[0]
 
-        p = -1 * ( np.dot(np.eye(num_design_nodes*3), dJds) - np.dot(Cm_transpose, lambda_fac) )
+        print("\n> Time needed for solution of projection equation = ", new_timer.GetLapTime(), "s")
+
+        new_timer.StartNewLap()
+
+        p = -1 * ( dJds - np.dot(Cm_transpose, lambda_fac) )
+
+        print("\n> Time needed for compuation of p = ", new_timer.GetLapTime(), "s")
+
 
         max_norm = np.linalg.norm(p,np.inf)
         if self.normalize_search_direction:

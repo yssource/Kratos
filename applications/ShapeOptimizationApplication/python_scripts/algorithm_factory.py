@@ -15,6 +15,7 @@ from __future__ import print_function, absolute_import, division
 from algorithm_steepest_descent import AlgorithmSteepestDescent
 from algorithm_conjugate_gradient import AlgorithmConjugateGradient
 from algorithm_penalized_projection import AlgorithmPenalizedProjection
+from algorithm_steepest_descent_with_projection import AlgorithmSteepestDescentWithProjection
 from algorithm_trust_region import AlgorithmTrustRegion
 from algorithm_bead_optimization import AlgorithmBeadOptimization
 
@@ -24,6 +25,11 @@ def CreateOptimizationAlgorithm(optimization_settings, analyzer, communicator, m
 
     if algorithm_name == "steepest_descent":
         return AlgorithmSteepestDescent(optimization_settings,
+                                        analyzer,
+                                        communicator,
+                                        model_part_controller)
+    if algorithm_name == "steepest_descent_with_projection":
+        return AlgorithmSteepestDescentWithProjection(optimization_settings,
                                         analyzer,
                                         communicator,
                                         model_part_controller)

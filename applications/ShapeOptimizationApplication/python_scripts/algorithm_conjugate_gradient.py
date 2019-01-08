@@ -121,13 +121,6 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
 
             self.num_function_calls = self.num_function_calls+1
 
-            # if self.num_function_calls == 3:
-            #     # Mapping
-            #     for counter, node in enumerate(self.design_surface.Nodes):
-            #         [dx,dy,dz] = X[(3*counter):(3*counter+3)]
-            #         node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[0.0001*dx,0.0001*dy,0.0001*dz])
-            # else:
-                # Mapping
             for counter, node in enumerate(self.design_surface.Nodes):
                 if node.Is(BOUNDARY):
                     # Enforce geometric constraint
@@ -140,29 +133,61 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
 
             self.model_part_controller.DampNodalVariableIfSpecified(SHAPE_CHANGE)
 
+            # Initialize new shape
+            for counter, node in enumerate(self.design_surface.Nodes):
+                [dx,dy,dz] = node.GetSolutionStepValue(SHAPE_CHANGE)
 
-            # # Mapping of update
-            # for counter, node in enumerate(self.design_surface.Nodes):
-            #     [dx_old,dy_old,dz_old] = node.GetSolutionStepValue(CONTROL_POINT_CHANGE)
-#
-            #     [dx,dy,dz] = X[(3*counter):(3*counter+3)]
-            #     node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[dx,dy,dz])
+                # Update Coordinates
+                node.X = node.X0 + dx
+                node.Y = node.Y0 + dy
+                node.Z = node.Z0 + dz
 
-            #     x_update = [dx-dx_old,dy-dy_old,dz-dz_old]
-            #     node.SetSolutionStepValue(CONTROL_POINT_UPDATE,x_update)
+                # Update Reference mesh
+                node.X0 = node.X
+                node.Y0 = node.Y
+                node.Z0 = node.Z
 
-            # self.mapper.Map(CONTROL_POINT_UPDATE, SHAPE_UPDATE)
+            # Analyze shape
+            self.communicator.initializeCommunication()
+            self.communicator.requestValueOf(self.objectives[0]["identifier"].GetString())
+            self.analyzer.AnalyzeDesignAndReportToCommunicator(self.design_surface, self.num_function_calls, self.communicator)
 
-            # for node in self.design_surface.Nodes:
-            #     shape_change = node.GetSolutionStepValue(SHAPE_CHANGE)
-            #     shape_udpate = node.GetSolutionStepValue(SHAPE_UPDATE)
+            value = self.communicator.getStandardizedValue(self.objectives[0]["identifier"].GetString())
 
-            #     new_shape_change = [0,0,0]
-            #     new_shape_change[0] = shape_change[0] + shape_udpate[0]
-            #     new_shape_change[1] = shape_change[1] + shape_udpate[1]
-            #     new_shape_change[2] = shape_change[2] + shape_udpate[2]
+            # Log data
+            additional_values_to_log = {}
+            additional_values_to_log["norm_obj_gradient"] = 0.0
+            additional_values_to_log["outer_iter"] = self.optimization_iteration
 
-            #     node.SetSolutionStepValue(SHAPE_CHANGE, new_shape_change)
+            self.data_logger.LogCurrentValues(self.num_function_calls, additional_values_to_log)
+            self.data_logger.LogCurrentDesign(self.num_function_calls)
+
+            # Reset mesh udpate
+            for counter, node in enumerate(self.design_surface.Nodes):
+                [dx,dy,dz] = node.GetSolutionStepValue(SHAPE_CHANGE)
+
+                node.X = node.X - dx
+                node.Y = node.Y - dy
+                node.Z = node.Z - dz
+                node.X0 = node.X
+                node.Y0 = node.Y
+                node.Z0 = node.Z
+
+            return value
+
+        def gradient_wrapper(X):
+
+            for counter, node in enumerate(self.design_surface.Nodes):
+                if node.Is(BOUNDARY):
+                    # Enforce geometric constraint
+                    node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[0.0, 0.0, 0.0])
+                else:
+                    [dx,dy,dz] = X[(3*counter):(3*counter+3)]
+                    node.SetSolutionStepValue(CONTROL_POINT_CHANGE,[dx,dy,dz])
+
+            self.mapper.Map(CONTROL_POINT_CHANGE, SHAPE_CHANGE)
+
+            self.model_part_controller.DampNodalVariableIfSpecified(SHAPE_CHANGE)
 
             # Initialize new shape
             for counter, node in enumerate(self.design_surface.Nodes):
@@ -197,7 +222,6 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
             for counter, node in enumerate(self.design_surface.Nodes):
                 gradient[(3*counter):(3*counter+3)] = node.GetSolutionStepValue(DF1DX_MAPPED)
 
-
             norm_obj_gradient = self.optimization_utilities.ComputeL2NormOfNodalVariable(DF1DX_MAPPED)
 
             additional_values_to_log = {}
@@ -205,7 +229,7 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
             additional_values_to_log["outer_iter"] = self.optimization_iteration
 
             self.data_logger.LogCurrentValues(self.num_function_calls, additional_values_to_log)
-            self.data_logger.LogCurrentDesign(self.num_function_calls)
+            self.data_logger.LogCurrentDesign(1000+self.num_function_calls)
 
             # Reset mesh udpate
             for counter, node in enumerate(self.design_surface.Nodes):
@@ -218,63 +242,20 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
                 node.Y0 = node.Y
                 node.Z0 = node.Z
 
-            # if self.num_function_calls%10==0:
-            #     gradient = np.zeros_like(X)
-
             # Return value
-            return value, gradient
+            return gradient
 
         def log_function(X):
             if self.update_mapping_matrix:
                 self.mapper.Update()
 
+            self.data_logger.LogCurrentDesign(3000+self.optimization_iteration)
+
             self.optimization_iteration = self.optimization_iteration+1
             print("##################################################################### Starting opt step: ",self.optimization_iteration)
 
-            # self.data_logger.LogCurrentValues(self.optimization_iteration, {})
-            # self.data_logger.LogCurrentDesign(self.optimization_iteration)
-
         # Run optimization
-        res = minimize(function_wrapper, X0, method='CG', jac=True, callback=log_function, options={'disp': True})
-
-        # # Run optimization in a loop with restart and update of mapping matrix
-        # X0_new = X0
-        # for itr in range(1,10):
-
-        #     res = minimize(function_wrapper, X0_new, method='CG', jac=True, callback=log_function, options={'disp': True})
-
-        #     if res["success"] and res["njev"]<9:
-        #         break
-
-        #     X0_new = res['x']
-
-        #     # Update mesh
-        #     for counter, node in enumerate(self.design_surface.Nodes):
-        #         [dx,dy,dz] = X0_new[(3*counter):(3*counter+3)]
-
-        #         # Update Coordinates
-        #         node.X = node.X0 + dx
-        #         node.Y = node.Y0 + dy
-        #         node.Z = node.Z0 + dz
-
-        #         # Update Reference mesh
-        #         node.X0 = node.X
-        #         node.Y0 = node.Y
-        #         node.Z0 = node.Z
-
-        #     self.mapper.Update()
-
-        #     # Reset mesh udpate
-        #     for counter, node in enumerate(self.design_surface.Nodes):
-        #         [dx,dy,dz] = X0_new[(3*counter):(3*counter+3)]
-
-        #         node.X = node.X - dx
-        #         node.Y = node.Y - dy
-        #         node.Z = node.Z - dz
-
-        #         node.X0 = node.X
-        #         node.Y0 = node.Y
-        #         node.Z0 = node.Z
+        res = minimize(function_wrapper, X0, method='CG', jac=gradient_wrapper, callback=log_function, options={'disp': True})
 
         print(res)
 

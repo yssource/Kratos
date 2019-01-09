@@ -71,6 +71,7 @@
             "nodal_results"           : [ "NORMALIZED_SURFACE_NORMAL",
                                           "DF1DX",
                                           "DF1DX_MAPPED",
+                                          "NODAL_VAUX",
                                           "SEARCH_DIRECTION",
                                           "CONTROL_POINT_UPDATE",
                                           "CONTROL_POINT_CHANGE",

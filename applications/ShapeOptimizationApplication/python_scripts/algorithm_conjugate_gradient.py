@@ -171,6 +171,10 @@ class AlgorithmConjugateGradient(OptimizationAlgorithm):
 
         def gradient_wrapper(X):
 
+            # CG starts with call of gradient function
+            if self.num_function_calls == 0:
+                self.num_function_calls = self.num_function_calls+1
+
             for counter, node in enumerate(self.design_surface.Nodes):
                 if node.Is(BOUNDARY):
                     # Enforce geometric constraint

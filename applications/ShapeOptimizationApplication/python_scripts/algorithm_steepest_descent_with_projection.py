@@ -81,6 +81,7 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
         self.optimization_model_part.AddNodalSolutionStepVariable(SEARCH_DIRECTION)
         self.optimization_model_part.AddNodalSolutionStepVariable(VECTOR_VARIABLE)
         self.optimization_model_part.AddNodalSolutionStepVariable(VECTOR_VARIABLE_MAPPED)
+        self.optimization_model_part.AddNodalSolutionStepVariable(NODAL_VAUX)
 
     # --------------------------------------------------------------------------
     def CheckApplicability(self):
@@ -267,8 +268,15 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
 
         new_timer.StartNewLap()
 
-        # lambda_fac = np.linalg.solve(np.dot(Cm,Cm_transpose), np.dot(Cm,dJds))
-        lambda_fac = np.linalg.lstsq(Cm_transpose, dJds)[0]
+        lambda_fac = np.linalg.solve(np.dot(Cm,Cm_transpose), np.dot(Cm,dJds))
+        # lambda_fac = np.linalg.lstsq(Cm_transpose, dJds)[0]
+
+        # plot lambda
+        boundary_node_itr = 0
+        for node in self.design_surface.Nodes:
+            if node.Is(BOUNDARY):
+                node.SetSolutionStepValue(NODAL_VAUX,lambda_fac[(3*boundary_node_itr):(3*boundary_node_itr+3)].tolist())
+                boundary_node_itr += 1
 
         print("\n> Time needed for solution of projection equation = ", new_timer.GetLapTime(), "s")
 
@@ -277,7 +285,6 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
         p = -1 * ( dJds - np.dot(Cm_transpose, lambda_fac) )
 
         print("\n> Time needed for compuation of p = ", new_timer.GetLapTime(), "s")
-
 
         max_norm = np.linalg.norm(p,np.inf)
         if self.normalize_search_direction:

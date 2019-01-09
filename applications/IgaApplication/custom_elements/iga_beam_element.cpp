@@ -93,16 +93,16 @@ void IgaBeamElement::CalculateAll(
 {
     KRATOS_TRY;
 
-    // tmporary debug data
+    // temporary debug data
     // auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
    
 
     // get integration data
     
-    Vector3 t0 = GetValue(T0);
-    // Linearize t0 
-    double t0_L = norm_2(t0);
-    t0 = t0/t0_L;
+    // Vector3 t0 = GetValue(T0);
+    // // Linearize t0 
+    // double t0_L = norm_2(t0);
+    // t0 = t0/t0_L;
 
     // const double& integration_weight = GetValue(INTEGRATION_WEIGHT);
     Vector& shape_function_values = GetValue(SHAPE_FUNCTION_VALUES);
@@ -121,19 +121,6 @@ void IgaBeamElement::CalculateAll(
     const double _m_inert_z = properties[MOMENT_OF_INERTIA_Z];
     const double _mt_inert = properties[MOMENT_OF_INERTIA_T];
 
-    // // Reference and Actual Configuration
-    // Vector3 R1;
-    // Vector3 R2;
-    // double A;
-    // double B;
-    // Vector3 r1;
-    // Vector3 r2;
-    // double a;
-    // double b;
-
-    // ComputeGeometryReference(R1, R2, A, B);
-    // ComputeGeometryActual(r1, r2, a, b);
-
     // Create empty Stiffness Matrix
     MatrixType _gke; 
     VectorType _gfie; 
@@ -142,7 +129,6 @@ void IgaBeamElement::CalculateAll(
     double _dL;
 
     ElementStiffnessMatrixNonlinear(_emod, _gmod, _area, _m_inert_y, _m_inert_z, _mt_inert, _gke, _gfie, _dL);
-    
     // IgaDebug::CheckMatrix(expected_data, "stiffness", _gke);
     // IgaDebug::CheckVector(expected_data, "external_forces", _gfie);
     // LOG("GaussPonitStiffnessMatrixCheck! ");
@@ -151,20 +137,18 @@ void IgaBeamElement::CalculateAll(
 
     double integration_weight = GetValue(INTEGRATION_WEIGHT);
     double mult = integration_weight *_dL; 
+    // IgaDebug::CheckDouble(expected_data, "mult", mult);
+    // IgaDebug::CheckDouble(expected_data, "dL", _dL);
+    // LOG("Integration weight: " << integration_weight);
     // LOG("Länge dL: " << _dL);
-
-        
     // LOG("Domain: " << knot_vec[knot_vec.size() - 1] - knot_vec[0]);
-
-    _gke = mult * _gke;
-    _gfie= mult * _gfie;
 
     // IgaDebug::CheckMatrix(expected_data, "TeilMatrix", _gke);
     // IgaDebug::CheckVector(expected_data, "TeilMatrixRechts", _gfie);
+    // LOG("Teilmatrix: " << _gke)
 
-
-    rLeftHandSideMatrix = _gke;
-    rRightHandSideVector = _gfie;
+    rLeftHandSideMatrix = mult * _gke;
+    rRightHandSideVector = mult * _gfie;
 
     // LOG("rLeftHandSideMatrix: ");
     // LOG(rLeftHandSideMatrix);
@@ -1018,6 +1002,9 @@ void IgaBeamElement::ComputeCrossSectionGeometryReference(
     // Linearize t0 	
     double t0_L = norm_2(_T0);
     _T0 = _T0/t0_L;
+    // Linearize N0
+    double n0_L = norm_2(_N0);
+    _N0 = _N0/n0_L;
 
     double R1_dL = norm_2(_R1);
     BoundedVector<double,3> T_der1;
@@ -1159,8 +1146,7 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
     // auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
 
     Vector T0_vec = GetValue(T0);
-    // Vector N0_vec = GetValue(N0);
-        // Linearize t0 
+    // Linearize t0 
     double t0_L = norm_2(T0_vec);
     T0_vec = T0_vec/t0_L;
 

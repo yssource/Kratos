@@ -95,8 +95,9 @@ public:
     /// Default constructors
     explicit ALMFrictionalMortarConvergenceCriteria(
         const bool PrintingOutput = false,
+        const bool ComputeDynamicFactor = false,
         const bool GiDIODebug = false
-        ) : BaseMortarConvergenceCriteria< TSparseSpace, TDenseSpace >(GiDIODebug),
+        ) : BaseMortarConvergenceCriteria< TSparseSpace, TDenseSpace >(ComputeDynamicFactor, GiDIODebug),
         mPrintingOutput(PrintingOutput),
         mTableIsInitialized(false)
     {

@@ -163,3 +163,19 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
 
         # We call to the base process
         super(ExplicitPenaltyContactProcess, self).ExecuteFinalize()
+
+    def _compute_search(self):
+        """ This method return if the serach must be computed
+
+        Keyword arguments:
+        self -- It signifies an instance of a class.
+        """
+        # TODO: Adding a proper check for explicit computations
+        if self._get_if_is_interval():
+            self.database_step += 1
+            global_step = self.main_model_part.ProcessInfo[KM.STEP]
+            database_step_update = self.settings["search_parameters"]["database_step_update"].GetInt()
+            if self.database_step >= database_step_update or global_step == 1:
+                return True
+            else:
+                return False

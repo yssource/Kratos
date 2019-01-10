@@ -45,7 +45,7 @@ void ComputeDynamicFactorProcess::Execute()
             const double previous_gap = it_node->FastGetSolutionStepValue(WEIGHTED_GAP, 1)/nodal_area;
 
             // If we change from a situation of not contact toa  one of contact
-            if (current_gap < distance_threshold && previous_gap > previous_gap) {
+            if (current_gap < distance_threshold && previous_gap > current_gap) {
                 double dynamic_factor = std::abs(current_gap - distance_threshold)/std::abs(current_gap - previous_gap);
                 dynamic_factor = (dynamic_factor > 1.0) ? 1.0 :dynamic_factor;
                 KRATOS_DEBUG_ERROR_IF(dynamic_factor <= 0.0) << "DYNAMIC_FACTOR cannot be negative" << std::endl; // NOTE: THIS IS SUPPOSED TO BE IMPOSSIBLE (WE ARE USING ABS VALUES!!!!)

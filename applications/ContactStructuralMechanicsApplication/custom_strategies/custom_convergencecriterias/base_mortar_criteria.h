@@ -144,7 +144,7 @@ public:
             ComputeNodesMeanNormalModelPartWithPairedNormal(rModelPart); // Update normal of the conditions
 
         const bool adapt_penalty = process_info.Has(ADAPT_PENALTY) ? process_info.GetValue(ADAPT_PENALTY) : false;
-        const bool dynamic_case = rModelPart.NodesBegin()->SolutionStepsDataHas(VELOCITY_X);
+        const bool dynamic_case = rModelPart.HasNodalSolutionStepVariable(VELOCITY);
 
         /* Compute weighthed gap */
         if (adapt_penalty || dynamic_case) {

@@ -24,11 +24,6 @@ void ComputeDynamicFactorProcess::Execute()
 {
     KRATOS_TRY;
 
-    // We initialize the zero vector
-    const double distance_threshold = 0.0;
-//     ProcessInfo& r_process_info = mrThisModelPart.GetProcessInfo();
-//     const double distance_threshold = r_process_info[DISTANCE_THRESHOLD]; // TODO: Think about this!!!!!
-
     // We iterate over the node
     NodesArrayType& r_nodes_array = mrThisModelPart.Nodes();
     const auto it_node_begin = r_nodes_array.begin();
@@ -40,14 +35,13 @@ void ComputeDynamicFactorProcess::Execute()
         // Computing only on SLAVE nodes
         if (it_node->Is(SLAVE)) {
             // Weighted values
-            const double nodal_area = it_node->GetValue(NODAL_AREA);
-            const double current_gap = it_node->FastGetSolutionStepValue(WEIGHTED_GAP)/nodal_area;
-            const double previous_gap = it_node->FastGetSolutionStepValue(WEIGHTED_GAP, 1)/nodal_area;
+            const double current_gap = it_node->FastGetSolutionStepValue(WEIGHTED_GAP);
+            const double previous_gap = it_node->FastGetSolutionStepValue(WEIGHTED_GAP, 1);
 
             // If we change from a situation of not contact toa  one of contact
-            if (current_gap < distance_threshold && previous_gap > current_gap) {
-                double dynamic_factor = std::abs(current_gap - distance_threshold)/std::abs(current_gap - previous_gap);
-                dynamic_factor = (dynamic_factor > 1.0) ? 1.0 :dynamic_factor;
+            if (current_gap < 0.0 && previous_gap > 0.0) {
+                double dynamic_factor = std::abs(current_gap)/std::abs(current_gap - previous_gap);
+                dynamic_factor = (dynamic_factor > 1.0) ? 1.0 : dynamic_factor;
                 KRATOS_DEBUG_ERROR_IF(dynamic_factor <= 0.0) << "DYNAMIC_FACTOR cannot be negative" << std::endl; // NOTE: THIS IS SUPPOSED TO BE IMPOSSIBLE (WE ARE USING ABS VALUES!!!!)
                 it_node->SetValue(DYNAMIC_FACTOR, dynamic_factor);
             } else {

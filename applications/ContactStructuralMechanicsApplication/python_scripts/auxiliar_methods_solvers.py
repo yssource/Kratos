@@ -55,6 +55,21 @@ def AuxiliarContactSettings():
 
     return contact_settings
 
+def AuxiliarExplicitContactSettings():
+    contact_settings = KM.Parameters("""
+    {
+        "contact_settings" :
+        {
+            "mortar_type"                                       : "",
+            "ensure_contact"                                    : false,
+            "frictional_decomposed"                             : true,
+            "silent_strategy"                                   : true
+        }
+    }
+    """)
+
+    return contact_settings
+
 def AuxiliarSetSettings(settings, contact_settings):
     if settings["clear_storage"].GetBool() == False:
         print_on_rank_zero("Clear storage", "Storage must be cleared each step. Switching to True")

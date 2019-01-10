@@ -16,10 +16,19 @@ def CreateSolver(model, custom_settings):
     # Solvers for OpenMP parallelism
     if (parallelism == "OpenMP"):
         if (solver_type == "dynamic" or solver_type == "Dynamic"):
-            solver_module_name = "contact_structural_mechanics_implicit_dynamic_solver"
+            time_integration_method = solver_settings["time_integration_method"].GetString()
+            if (time_integration_method == "implicit"):
+                solver_module_name = "contact_structural_mechanics_implicit_dynamic_solver"
+            elif ( time_integration_method == "explicit"):
+                solver_module_name = "contact_structural_mechanics_explicit_dynamic_solver"
+            else:
+                err_msg =  "The requested time integration method \"" + time_integration_method + "\" is not in the python solvers wrapper\n"
+                err_msg += "Available options are: \"implicit\", \"explicit\""
+                raise Exception(err_msg)
 
         elif (solver_type == "static" or solver_type == "Static"):
             solver_module_name = "contact_structural_mechanics_static_solver"
+
         else:
             raise Exception("The requested solver type is not in the python solvers wrapper")
 

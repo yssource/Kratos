@@ -197,6 +197,7 @@ void  AddCustomUtilitiesToPython(pybind11::module& m)
     .def("CalculateMeanNodalH",&ContactUtilities::CalculateMeanNodalH)
     .def("CalculateMinimalNodalH",&ContactUtilities::CalculateMinimalNodalH)
     .def("CheckActivity",&ContactUtilities::CheckActivity)
+    .def("ComputeExplicitContributionConditions",&ContactUtilities::ComputeExplicitContributionConditions)
     ;
 
     // Active set utilities

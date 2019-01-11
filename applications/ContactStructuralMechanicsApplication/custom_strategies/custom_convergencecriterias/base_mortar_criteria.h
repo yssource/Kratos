@@ -18,6 +18,7 @@
 
 /* Project includes */
 #include "contact_structural_mechanics_application_variables.h"
+#include "custom_utilities/contact_utilities.h"
 #include "utilities/mortar_utilities.h"
 #include "utilities/variable_utils.h"
 #include "custom_processes/aalm_adapt_penalty_value_process.h"
@@ -151,14 +152,8 @@ public:
             // Set to zero the weighted gap
             ResetWeightedGap(rModelPart);
 
-            ConditionsArrayType& r_conditions_array = rModelPart.GetSubModelPart("ComputingContact").Conditions();
-            const auto it_cond_begin = r_conditions_array.begin();
-
-            KRATOS_TRACE_IF("Empty model part", r_conditions_array.size() == 0) << "YOUR COMPUTING CONTACT MODEL PART IS EMPTY" << std::endl;
-
-            #pragma omp parallel for
-            for(int i = 0; i < static_cast<int>(r_conditions_array.size()); ++i)
-                (it_cond_begin + i)->AddExplicitContribution(process_info);
+            // Compute the contribution
+            ContactUtilities::ComputeExplicitContributionConditions(rModelPart.GetSubModelPart("ComputingContact"));
         }
 
         // In dynamic case
@@ -206,13 +201,8 @@ public:
         // Set to zero the weighted gap
         ResetWeightedGap(rModelPart);
 
-        ConditionsArrayType& r_conditions_array = rModelPart.GetSubModelPart("ComputingContact").Conditions();
-
-        KRATOS_TRACE_IF("Empty model part", r_conditions_array.size() == 0) << "WARNING:: YOUR COMPUTING CONTACT MODEL PART IS EMPTY" << std::endl;
-
-        #pragma omp parallel for
-        for(int i = 0; i < static_cast<int>(r_conditions_array.size()); ++i)
-            (r_conditions_array.begin() + i)->AddExplicitContribution(rModelPart.GetProcessInfo());
+        // Compute the contribution
+        ContactUtilities::ComputeExplicitContributionConditions(rModelPart.GetSubModelPart("ComputingContact"));
 
         // GiD IO for debugging
         if (mIODebug) {

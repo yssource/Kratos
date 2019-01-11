@@ -69,7 +69,7 @@ class ContactExplicitMechanicalSolver(structural_mechanics_explicit_dynamic_solv
         super(ContactExplicitMechanicalSolver, self).Initialize() # The mechanical solver is created here.
 
         # No verbosity from strategy
-        if self.contact_settings["silent_strategy"].GetBool() is True:
+        if self.contact_settings["silent_strategy"].GetBool():
             mechanical_solution_strategy = self.get_mechanical_solution_strategy()
             mechanical_solution_strategy.SetEchoLevel(0)
 

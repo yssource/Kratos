@@ -64,7 +64,7 @@ def AuxiliarExplicitContactSettings():
             "mortar_type"                                       : "",
             "compute_dynamic_factor"                            : true,
             "ensure_contact"                                    : false,
-            "silent_strategy"                                   : true
+            "silent_strategy"                                   : false
         }
     }
     """)

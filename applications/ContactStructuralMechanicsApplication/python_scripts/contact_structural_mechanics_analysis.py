@@ -26,8 +26,18 @@ class ContactStructuralMechanicsAnalysis(BaseClass):
         super(ContactStructuralMechanicsAnalysis, self).Initialize()
         self._GetSolver().SetEchoLevel(self.echo_level)
         # To avoid many prints
-        if (self.echo_level == 0):
+        if self.echo_level == 0:
             KM.Logger.GetDefaultOutput().SetSeverity(KM.Logger.Severity.WARNING)
+
+    def OutputSolutionStep(self):
+        """This function printed / writes output files after the solution of a step
+        """
+        # Informing the output will be created
+        KM.Logger.PrintWarning(self.__get_simulation_name_output(), "STEP: ", self._GetSolver().GetComputingModelPart().ProcessInfo[KM.STEP])
+        KM.Logger.PrintWarning(self.__get_simulation_name_output(), "TIME: ", self.time)
+
+        # Creating output
+        super(ContactStructuralMechanicsAnalysis, self).OutputSolutionStep()
 
     #### Internal functions ####
     def _CreateSolver(self):
@@ -38,6 +48,9 @@ class ContactStructuralMechanicsAnalysis(BaseClass):
 
     def _GetSimulationName(self):
         return "::[KCSM Simulation]:: "
+
+    def __get_simulation_name_output(self):
+        return "::[KCSM Simulation: Output]:: "
 
 if __name__ == "__main__":
     from sys import argv

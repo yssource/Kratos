@@ -33,7 +33,7 @@ void ComputeDynamicFactorProcess::Execute()
         auto it_node = it_node_begin + i;
 
         // Computing only on SLAVE nodes
-        if (it_node->Is(SLAVE)) {
+        if (it_node->Is(SLAVE) && it_node->Is(ACTIVE)) {
             // Weighted values
             const double current_gap = it_node->FastGetSolutionStepValue(WEIGHTED_GAP);
             const double previous_gap = it_node->FastGetSolutionStepValue(WEIGHTED_GAP, 1);

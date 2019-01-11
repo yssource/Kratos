@@ -277,6 +277,33 @@ public:
             it_node->SetValue(DELTA_COORDINATES, new_delta_disp);
         }
     }
+
+    /**
+     * @brief It checks the activity of the current contact simulation
+     * @param rThisModelPart The modelpart to update
+     */
+    static inline void CheckActivity(ModelPart& rThisModelPart)
+    {
+        // Iterate over the nodes
+        NodesArrayType& r_nodes_array = rThisModelPart.Nodes();
+
+        // Node iterator
+        const auto it_node_begin = r_nodes_array.begin();
+
+        // We compute the half jump
+        IndexType aux_check = 0;
+        #pragma omp parallel for reduction(+:aux_check)
+        for(int i = 0; i < static_cast<int>(r_nodes_array.size()); ++i)  {
+            auto it_node = it_node_begin + i;
+            if (it_node->Is(SLAVE)) {
+                if (it_node->Is(ACTIVE)) {
+                    aux_check += 1;
+                }
+            }
+        }
+
+        KRATOS_ERROR_IF(aux_check == 0) << "CONTACT LOST::ARE YOU SURE YOU ARE SUPPOSED TO HAVE CONTACT?" << std::endl;
+    }
     
     /**
      * @brief It calculates the center updated in u_n+1/2

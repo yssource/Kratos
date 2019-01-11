@@ -84,6 +84,12 @@ class ContactExplicitMechanicalSolver(structural_mechanics_explicit_dynamic_solv
         is_converged = self.get_mechanical_solution_strategy().SolveSolutionStep()
         return is_converged
 
+    def ExecuteFinalizeSolutionStep(self):
+        super(ContactExplicitMechanicalSolver, self).ExecuteFinalizeSolutionStep()
+        if self.contact_settings["ensure_contact"].GetBool():
+            computing_model_part = self.GetComputingModelPart()
+            CSMA.ContactUtilities.CheckActivity(computing_model_part)
+
     def ComputeDeltaTime(self):
         # TODO: Add specific methods for updating the contact delta time
         return super(ContactExplicitMechanicalSolver, self).ComputeDeltaTime()

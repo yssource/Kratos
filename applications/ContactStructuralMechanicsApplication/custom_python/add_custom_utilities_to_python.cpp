@@ -196,6 +196,7 @@ void  AddCustomUtilitiesToPython(pybind11::module& m)
     .def("CalculateMaxNodalH",&ContactUtilities::CalculateMaxNodalH)
     .def("CalculateMeanNodalH",&ContactUtilities::CalculateMeanNodalH)
     .def("CalculateMinimalNodalH",&ContactUtilities::CalculateMinimalNodalH)
+    .def("CheckActivity",&ContactUtilities::CheckActivity)
     ;
 
     // Active set utilities

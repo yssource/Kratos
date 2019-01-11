@@ -32,9 +32,18 @@ class ContactStructuralMechanicsAnalysis(BaseClass):
     def OutputSolutionStep(self):
         """This function printed / writes output files after the solution of a step
         """
-        # Informing the output will be created
-        KM.Logger.PrintWarning(self.__get_simulation_name_output(), "STEP: ", self._GetSolver().GetComputingModelPart().ProcessInfo[KM.STEP])
-        KM.Logger.PrintWarning(self.__get_simulation_name_output(), "TIME: ", self.time)
+
+        # First we check if one of the output processes will print output in this step this is done to save computation in case none of them will print
+        is_output_step = False
+        for output_process in self._GetListOfOutputProcesses():
+            if output_process.IsOutputStep():
+                is_output_step = True
+                break
+
+        if is_output_step:
+            # Informing the output will be created
+            KM.Logger.PrintWarning(self.__get_simulation_name_output(), "STEP: ", self._GetSolver().GetComputingModelPart().ProcessInfo[KM.STEP])
+            KM.Logger.PrintWarning(self.__get_simulation_name_output(), "TIME: ", self.time)
 
         # Creating output
         super(ContactStructuralMechanicsAnalysis, self).OutputSolutionStep()

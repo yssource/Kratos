@@ -300,7 +300,14 @@ void BaseShellElement::CalculateRightHandSide(VectorType& rRightHandSideVector,
 
 void BaseShellElement::CalculateMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo)
 {
-    // TODO unify implementation and move it to BaseClass
+    const bool use_lumped_mass_matrix = false; // this will come from somewhere else in the future, you can just use it like this for now
+
+    if (use_lumped_mass_matrix) {
+        // to be implemented ...
+    }
+    else { // consistent mass matrix
+        // to be implemented ...
+    }
 }
 
 void BaseShellElement::CalculateDampingMatrix(

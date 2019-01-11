@@ -100,6 +100,9 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
         # We call to the base process
         super(ExplicitPenaltyContactProcess, self).ExecuteInitialize()
 
+        # Create the dynamic factor process
+        self.dynamic_factor_process = CSMA.ComputeDynamicFactorProcess(self.main_model_part)
+
     def ExecuteBeforeSolutionLoop(self):
         """ This method is executed before starting the time loop
 
@@ -133,6 +136,9 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
             CSMA.ActiveSetUtilities.ComputePenaltyFrictionlessActiveSet(self.main_model_part)
         else:
             CSMA.ActiveSetUtilities.ComputePenaltyFrictionalActiveSet(self.main_model_part)
+
+        # Update the dynamic factors
+        self.dynamic_factor_process.Execute()
 
     def ExecuteBeforeOutputStep(self):
         """ This method is executed right before the ouput process computation

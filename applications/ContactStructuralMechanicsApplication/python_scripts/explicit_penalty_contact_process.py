@@ -135,21 +135,22 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
         # We call to the base process
         super(ExplicitPenaltyContactProcess, self).ExecuteFinalizeSolutionStep()
 
-        # Updating value of weighted gap
-        KM.VariableUtils().SetVariable(CSMA.WEIGHTED_GAP, 0.0, self.computing_model_part.Nodes);
-        CSMA.ContactUtilities.ComputeExplicitContributionConditions(self.computing_model_part)
+        if self._get_if_is_interval():
+            # Updating value of weighted gap
+            KM.VariableUtils().SetVariable(CSMA.WEIGHTED_GAP, 0.0, self.computing_model_part.Nodes);
+            CSMA.ContactUtilities.ComputeExplicitContributionConditions(self.computing_model_part)
 
-        # Calling for the active set utilities (to activate deactivate nodes)
-        if self.contact_settings["contact_type"].GetString() == "Frictionless":
-            CSMA.ActiveSetUtilities.ComputePenaltyFrictionlessActiveSet(self.computing_model_part)
-        else:
-            CSMA.ActiveSetUtilities.ComputePenaltyFrictionalActiveSet(self.computing_model_part)
+            # Calling for the active set utilities (to activate deactivate nodes)
+            if self.contact_settings["contact_type"].GetString() == "Frictionless":
+                CSMA.ActiveSetUtilities.ComputePenaltyFrictionlessActiveSet(self.computing_model_part)
+            else:
+                CSMA.ActiveSetUtilities.ComputePenaltyFrictionalActiveSet(self.computing_model_part)
 
-        # Activate/deactivate conditions
-        CSMA.ContactUtilities.ActivateConditionWithActiveNodes(self.computing_model_part)
+            # Activate/deactivate conditions
+            CSMA.ContactUtilities.ActivateConditionWithActiveNodes(self.computing_model_part)
 
-        # Update the dynamic factors
-        self.dynamic_factor_process.Execute()
+            # Update the dynamic factors
+            self.dynamic_factor_process.Execute()
 
     def ExecuteBeforeOutputStep(self):
         """ This method is executed right before the ouput process computation

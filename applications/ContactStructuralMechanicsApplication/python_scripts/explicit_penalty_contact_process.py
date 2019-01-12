@@ -100,6 +100,10 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
         # We call to the base process
         super(ExplicitPenaltyContactProcess, self).ExecuteInitialize()
 
+        # Setting NL_ITERATION_NUMBER (used in some utilities)
+        process_info = self.main_model_part.ProcessInfo
+        process_info[KM.NL_ITERATION_NUMBER] = 1
+
         # Create the dynamic factor process
         self.dynamic_factor_process = CSMA.ComputeDynamicFactorProcess(self.main_model_part)
 

@@ -321,20 +321,22 @@ public:
     std::string Info() const override
     {
         std::stringstream buffer;
-        buffer << "PenaltyMethodFrictionalMortarContactCondition #" << Id();
+        buffer << "PenaltyMethodFrictionalMortarContactCondition #" << this->Id();
         return buffer.str();
     }
 
     /// Print information about this object.
     void PrintInfo(std::ostream& rOStream) const override
     {
-        rOStream << "PenaltyMethodFrictionalMortarContactCondition #" << Id();
+        rOStream << "PenaltyMethodFrictionalMortarContactCondition #" << this->Id();
     }
 
     /// Print object's data.
     void PrintData(std::ostream& rOStream) const override
     {
-        pGetGeometry()->PrintData(rOStream);
+        PrintInfo(rOStream);
+        this->GetGeometry().PrintData(rOStream);
+        this->GetPairedGeometry().PrintData(rOStream);
     }
 
     ///@}

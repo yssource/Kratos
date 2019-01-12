@@ -267,20 +267,22 @@ public:
     std::string Info() const override
     {
         std::stringstream buffer;
-        buffer << "AugmentedLagrangianMethodFrictionlessMortarContactCondition #" << Id();
+        buffer << "AugmentedLagrangianMethodFrictionlessMortarContactCondition #" << this->Id();
         return buffer.str();
     }
 
     /// Print information about this object.
     void PrintInfo(std::ostream& rOStream) const override
     {
-        rOStream << "AugmentedLagrangianMethodFrictionlessMortarContactCondition #" << Id();
+        rOStream << "AugmentedLagrangianMethodFrictionlessMortarContactCondition #" << this->Id();
     }
 
     /// Print object's data.
     void PrintData(std::ostream& rOStream) const override
     {
-        pGetGeometry()->PrintData(rOStream);
+        PrintInfo(rOStream);
+        this->GetGeometry().PrintData(rOStream);
+        this->GetPairedGeometry().PrintData(rOStream);
     }
 
     ///@}

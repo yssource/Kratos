@@ -1,4 +1,4 @@
-// KRATOS  ___|  |       |       |
+// // KRATOS  ___|  |       |       |
 //       \___ \  __|  __| |   |  __| __| |   |  __| _` | |
 //           | |   |    |   | (    |   |   | |   (   | |
 //       _____/ \__|_|   \__,_|\___|\__|\__,_|_|  \__,_|_| MECHANICS
@@ -293,20 +293,22 @@ public:
     std::string Info() const override
     {
         std::stringstream buffer;
-        buffer << "PenaltyMethodFrictionlessMortarContactCondition #" << Id();
+        buffer << "PenaltyMethodFrictionlessMortarContactCondition #" << this->Id();
         return buffer.str();
     }
 
     /// Print information about this object.
     void PrintInfo(std::ostream& rOStream) const override
     {
-        rOStream << "PenaltyMethodFrictionlessMortarContactCondition #" << Id();
+        rOStream << "PenaltyMethodFrictionlessMortarContactCondition #" << this->Id();
     }
 
     /// Print object's data.
     void PrintData(std::ostream& rOStream) const override
     {
-        pGetGeometry()->PrintData(rOStream);
+        PrintInfo(rOStream);
+        this->GetGeometry().PrintData(rOStream);
+        this->GetPairedGeometry().PrintData(rOStream);
     }
 
     ///@}

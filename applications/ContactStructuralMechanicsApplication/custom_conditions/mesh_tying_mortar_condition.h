@@ -379,20 +379,22 @@ public:
     std::string Info() const override
     {
         std::stringstream buffer;
-        buffer << "MeshTyingMortarCondition #" << Id();
+        buffer << "MeshTyingMortarCondition #" << this->Id();
         return buffer.str();
     }
 
     /// Print information about this object.
     void PrintInfo(std::ostream& rOStream) const override
     {
-        rOStream << "MeshTyingMortarCondition #" << Id();
+        rOStream << "MeshTyingMortarCondition #" << this->Id();
     }
 
     /// Print object's data.
     void PrintData(std::ostream& rOStream) const override
     {
-        pGetGeometry()->PrintData(rOStream);
+        PrintInfo(rOStream);
+        this->GetGeometry().PrintData(rOStream);
+        this->GetPairedGeometry().PrintData(rOStream);
     }
 
     ///@}

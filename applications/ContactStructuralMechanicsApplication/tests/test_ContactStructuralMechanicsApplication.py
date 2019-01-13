@@ -54,6 +54,7 @@ from SmallTests import ALMThreeDPatchNotMatchingTestContact                as TA
 
 # Penalty frictionless tests
 from SmallTests import PenaltyThreeDSimplestPatchMatchingTestContact as TPenaltyThreeDSimplestPatchMatchingTestContact
+from NightlyTests import ExplicitPenaltyThreeDSimplestPatchMatchingTestContact as TExplicitPenaltyThreeDSimplestPatchMatchingTestContact
 
 # Components ALM frictionless tests
 from SmallTests import ComponentsALMHyperSimpleTrianglePatchTestContact              as TComponentsALMHyperSimpleTrianglePatchTestContact
@@ -132,6 +133,9 @@ def AssembleTestSuites():
     # Create a test suit with the selected tests (Small tests):
     smallSuite = suites['small']
 
+    # Create a test suit with the selected tests plus all small tests
+    nightSuite = suites['nightly']
+
     # Test ProcessFactoryUtility
     smallSuite.addTest(TTestProcessFactory('test_process_factory'))
     smallSuite.addTest(TTestProcessFactory('test_processes_list_factory'))
@@ -164,6 +168,7 @@ def AssembleTestSuites():
 
     # Penalty frictionless tests
     smallSuite.addTest(TPenaltyThreeDSimplestPatchMatchingTestContact('test_execution'))
+    nightSuite.addTest(TExplicitPenaltyThreeDSimplestPatchMatchingTestContact('test_execution'))
 
     # Components ALM frictionless tests
     smallSuite.addTest(TComponentsALMHyperSimpleTrianglePatchTestContact('test_execution'))
@@ -185,8 +190,7 @@ def AssembleTestSuites():
     # ALM frictional tests
     smallSuite.addTest(TALMHyperSimplePatchFrictionalTestContact('test_execution'))
 
-    # Create a test suit with the selected tests plus all small tests
-    nightSuite = suites['nightly']
+    # Fill with all small tests
     nightSuite.addTests(smallSuite)
 
     # Exact integration tests
@@ -284,6 +288,7 @@ def AssembleTestSuites():
             TALMTThreeDPatchMatchingTestContact,
             TALMThreeDPatchNotMatchingTestContact,
             TPenaltyThreeDSimplestPatchMatchingTestContact,
+            TExplicitPenaltyThreeDSimplestPatchMatchingTestContact,
             TComponentsALMHyperSimpleTrianglePatchTestContact,
             TComponentsALMHyperSimplePatchTestContact,
             TComponentsALMHyperSimpleSlopePatchTestContact,

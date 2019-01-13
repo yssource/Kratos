@@ -91,7 +91,7 @@ void PenaltyMethodFrictionalMortarContactCondition<TDim,TNumNodes,TNormalVariati
     BaseType::FinalizeSolutionStep(rCurrentProcessInfo);
 
     // We "save" the mortar operator for the next step
-    // The slave r_geometry
+    // The slave geometry
     GeometryType& slave_geometry = this->GetGeometry();
     const array_1d<double, 3>& normal_slave = this->GetValue(NORMAL);
 
@@ -109,7 +109,7 @@ void PenaltyMethodFrictionalMortarContactCondition<TDim,TNumNodes,TNormalVariati
     // If we consider the normal variation
     const NormalDerivativesComputation consider_normal_variation = static_cast<NormalDerivativesComputation>(rCurrentProcessInfo[CONSIDER_NORMAL_VARIATION]);
 
-    // The master r_geometry
+    // The master geometry
     GeometryType& master_geometry = this->GetPairedGeometry();
 
     // The normal of the master condition

@@ -89,7 +89,7 @@ double PenaltyMethodFrictionalMortarContactAxisymCondition<TNumNodes,TNormalVari
 /***********************************************************************************/
 /***********************************************************************************/
 
-template class PenaltyMethodFrictionalMortarContactAxisymCondition<2, false, 2>;
-template class PenaltyMethodFrictionalMortarContactAxisymCondition<2, true,  2>;
+template class PenaltyMethodFrictionalMortarContactAxisymCondition<2, false>;
+template class PenaltyMethodFrictionalMortarContactAxisymCondition<2, true>;
 
 } // Namespace Kratos

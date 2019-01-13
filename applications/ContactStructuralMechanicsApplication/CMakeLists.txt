@@ -52,8 +52,8 @@ set( KRATOS_CONTACT_STRUCTURAL_MECHANICS_APPLICATION_SOURCES
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/penalty_frictionless_mortar_contact_axisym_condition.cpp # Frictionless (penalty) axisym
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/ALM_frictional_mortar_contact_condition.cpp # Frictional
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/ALM_frictional_mortar_contact_axisym_condition.cpp # Frictional axisym
-#   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/penalty_frictional_mortar_contact_condition.cpp # Frictional (penalty)
-#   ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/penalty_frictional_mortar_contact_axisym_condition.cpp # Frictional (penalty) axisym
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/penalty_frictional_mortar_contact_condition.cpp # Frictional (penalty)
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/penalty_frictional_mortar_contact_axisym_condition.cpp # Frictional (penalty) axisym
 )
 
 if(${KRATOS_BUILD_TESTING} MATCHES ON)

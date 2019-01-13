@@ -999,16 +999,16 @@ template class MortarContactCondition<3, 4, FrictionalCase::FRICTIONLESS_PENALTY
 template class MortarContactCondition<3, 3, FrictionalCase::FRICTIONLESS_PENALTY, true, 4>;
 template class MortarContactCondition<3, 4, FrictionalCase::FRICTIONLESS_PENALTY, true, 3>;
 
-// // Frictional penalty cases
-// template class MortarContactCondition<2, 2, FrictionalCase::FRICTIONAL_PENALTY, false, 2>;
-// template class MortarContactCondition<3, 3, FrictionalCase::FRICTIONAL_PENALTY, false, 3>;
-// template class MortarContactCondition<3, 4, FrictionalCase::FRICTIONAL_PENALTY, false, 4>;
-// template class MortarContactCondition<3, 3, FrictionalCase::FRICTIONAL_PENALTY, false, 4>;
-// template class MortarContactCondition<3, 4, FrictionalCase::FRICTIONAL_PENALTY, false, 3>;
-// template class MortarContactCondition<2, 2, FrictionalCase::FRICTIONAL_PENALTY, true, 2>;
-// template class MortarContactCondition<3, 3, FrictionalCase::FRICTIONAL_PENALTY, true, 3>;
-// template class MortarContactCondition<3, 4, FrictionalCase::FRICTIONAL_PENALTY, true, 4>;
-// template class MortarContactCondition<3, 3, FrictionalCase::FRICTIONAL_PENALTY, true, 4>;
-// template class MortarContactCondition<3, 4, FrictionalCase::FRICTIONAL_PENALTY, true, 3>;
+// Frictional penalty cases
+template class MortarContactCondition<2, 2, FrictionalCase::FRICTIONAL_PENALTY, false, 2>;
+template class MortarContactCondition<3, 3, FrictionalCase::FRICTIONAL_PENALTY, false, 3>;
+template class MortarContactCondition<3, 4, FrictionalCase::FRICTIONAL_PENALTY, false, 4>;
+template class MortarContactCondition<3, 3, FrictionalCase::FRICTIONAL_PENALTY, false, 4>;
+template class MortarContactCondition<3, 4, FrictionalCase::FRICTIONAL_PENALTY, false, 3>;
+template class MortarContactCondition<2, 2, FrictionalCase::FRICTIONAL_PENALTY, true, 2>;
+template class MortarContactCondition<3, 3, FrictionalCase::FRICTIONAL_PENALTY, true, 3>;
+template class MortarContactCondition<3, 4, FrictionalCase::FRICTIONAL_PENALTY, true, 4>;
+template class MortarContactCondition<3, 3, FrictionalCase::FRICTIONAL_PENALTY, true, 4>;
+template class MortarContactCondition<3, 4, FrictionalCase::FRICTIONAL_PENALTY, true, 3>;
 
 } // Namespace Kratos

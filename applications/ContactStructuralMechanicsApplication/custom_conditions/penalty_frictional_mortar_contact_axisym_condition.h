@@ -98,9 +98,9 @@ public:
 
     typedef Line2D2<Point>                                                                                           DecompositionType;
 
-    typedef DerivativeDataFrictional<2, TNumNodes, TNormalVariation>                                                DerivativeDataType;
+    typedef DerivativeDataFrictional<2, TNumNodes, TNormalVariation, TNumNodesMaster>                               DerivativeDataType;
 
-    static constexpr IndexType MatrixSize = 2 * (TNumNodes + TNumNodes) + TNumNodes;
+    static constexpr IndexType MatrixSize = 2 * (TNumNodes + TNumNodesMaster);
 
     ///@}
     ///@name Life Cycle

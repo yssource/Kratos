@@ -6,13 +6,13 @@ import KratosMultiphysics.StructuralMechanicsApplication as SMA
 import KratosMultiphysics.ContactStructuralMechanicsApplication as CSMA
 
 def Factory(settings, Model):
-    if(type(settings) != KM.Parameters):
+    if not isinstance(settings, KM.Parameters):
         raise Exception("Expected input shall be a Parameters object, encapsulating a json string")
     return ExplicitPenaltyContactProcess(Model, settings["Parameters"])
 
 import sys
 
-import penalty_contact_process
+import KratosMultiphysics.ContactStructuralMechanicsApplication.penalty_contact_process as penalty_contact_process
 
 class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProcess):
     """This class is used in order to compute the contact using a mortar penalty formulation in explicit integration schemes

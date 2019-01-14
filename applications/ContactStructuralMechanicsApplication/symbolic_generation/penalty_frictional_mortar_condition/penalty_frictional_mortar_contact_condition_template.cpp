@@ -303,32 +303,27 @@ void PenaltyMethodFrictionalMortarContactCondition<TDim,TNumNodes,TNormalVariati
         const BoundedMatrix<double, TNumNodes, TNumNodes> DeltaDOperator = DOperator - mPreviousMortarOperators.DOperator;
         const BoundedMatrix<double, TNumNodes, TNumNodes> DeltaMOperator = MOperator - mPreviousMortarOperators.MOperator;
 
-        // Old coordinates
-        const BoundedMatrix<double, TNumNodes, TDim> x1_old = MortarUtilities::GetCoordinates<TDim,TNumNodes>(slave_geometry, false, 1);
-        const BoundedMatrix<double, TNumNodes, TDim> x2_old = MortarUtilities::GetCoordinates<TDim,TNumNodes>(master_geometry, false, 1);
-
-        const BoundedMatrix<double, TNumNodes, TDim> D_x1_old_M_x2_old = prod(DOperator, x1_old) - prod(MOperator, x2_old);
-
+        // Delta objetive gap and slip
         const BoundedMatrix<double, TNumNodes, TDim> delta_D_x1_M_x2 = prod(DeltaDOperator, x1) - prod(DeltaMOperator, x2);
 
-        // The tangent matrix
-        const BoundedMatrix<double, TNumNodes, TDim> tangent_slave = MortarUtilities::ComputeTangentMatrix<TNumNodes, TDim>(slave_geometry);
-
         // The estimation of the slip time derivative
-        const BoundedMatrix<double, TNumNodes, TDim> slip_time_derivative = (D_x1_old_M_x2_old - D_x1_M_x2)/delta_time - delta_D_x1_M_x2/delta_time;
+        const BoundedMatrix<double, TNumNodes, TDim> slip_time_derivative = - delta_D_x1_M_x2/delta_time;
 
         for (IndexType i_node = 0; i_node < TNumNodes; ++i_node) {
-            // We compute the tangent
-            const array_1d<double, TDim>& tangent_node = row(tangent_slave, i_node);
+            // We compute the tangent component
             const array_1d<double, TDim>& slip_time_derivative_node = row(slip_time_derivative, i_node);
-            const double slip_node = delta_time * inner_prod(tangent_node, slip_time_derivative_node);
+            const array_1d<double, 3>& r_normal = slave_geometry[i_node].FastGetSolutionStepValue(NORMAL);
+            array_1d<double, 2> normal;
+            for (IndexType i_dim = 0; i_dim < TDim; ++i_dim)
+                normal[i_dim] = r_normal[i_dim];
+            const array_1d<double, TDim> slip_node = - delta_time * (slip_time_derivative_node - inner_prod(normal, slip_time_derivative_node) * normal);
 
             // The weighted slip
-            array_1d<double, 3>& weighted_slip = slave_geometry[i_node].FastGetSolutionStepValue(WEIGHTED_SLIP);
+            array_1d<double, 3>& r_weighted_slip = slave_geometry[i_node].FastGetSolutionStepValue(WEIGHTED_SLIP);
 
             for (IndexType i_dim = 0; i_dim < TDim; ++i_dim) {
                 #pragma omp atomic
-                weighted_slip[i_dim] += slip_node * tangent_node[i_dim];
+                r_weighted_slip[i_dim] += slip_node[i_dim];
             }
         }
 

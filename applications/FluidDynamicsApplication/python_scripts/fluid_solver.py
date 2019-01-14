@@ -61,13 +61,23 @@ class FluidSolver(PythonSolver):
         self._ImportModelPart(self.main_model_part,self.settings["model_import_settings"])
 
     def PrepareModelPart(self):
+
+        print(" --- Entered function PrepareModelPart(self) of FluidSolver --- ")
+
         if not self.main_model_part.ProcessInfo[KratosMultiphysics.IS_RESTARTED]:
+            print(" --- PrepareModelPart(self) of FluidSolver : CP 1 --- ")
             ## Replace default elements and conditions
             self._ReplaceElementsAndConditions()
+
+            print(" --- PrepareModelPart(self) of FluidSolver : CP 2 --- ")
             ## Executes the check and prepare model process
             self._ExecuteCheckAndPrepare()
+
+            print(" --- PrepareModelPart(self) of FluidSolver : CP 3 --- ")
             ## Set buffer size
             self.main_model_part.SetBufferSize(self.min_buffer_size)
+
+            print(" --- PrepareModelPart(self) of FluidSolver : CP 4 --- ")
 
         if self._IsPrintingRank():
             KratosMultiphysics.Logger.PrintInfo("FluidSolver", "Model reading finished.")
@@ -142,10 +152,15 @@ class FluidSolver(PythonSolver):
         #return settings
 
     def _ReplaceElementsAndConditions(self):
+
+        print(" --- Entered function _ReplaceElementsAndConditions(self) of FluidSolver --- ")
+
         ## Get number of nodes and domain size
         elem_num_nodes = self._GetElementNumNodes()
         cond_num_nodes = self._GetConditionNumNodes()
         domain_size = self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE]
+
+        print(" --- _ReplaceElementsAndConditions(self) of FluidSolver : CP 1 --- ")
 
         ## If there are no elements and/or conditions, default to triangles/tetra meshes to avoid breaking the ReplaceElementsAndConditionsProcess
         ## This only affects the input name (if there are no elements or conditions to replace, nothing is replaced).
@@ -153,6 +168,8 @@ class FluidSolver(PythonSolver):
             elem_num_nodes = domain_size + 1
         if cond_num_nodes == 0:
             cond_num_nodes = domain_size
+
+        print(" --- _ReplaceElementsAndConditions(self) of FluidSolver : CP 2 --- ")
 
         ## Complete the element name
         if (self.element_name is not None):
@@ -166,14 +183,20 @@ class FluidSolver(PythonSolver):
         else:
             raise Exception("There is no condition name. Define the self.condition_name string variable in your derived solver.")
 
+        print(" --- _ReplaceElementsAndConditions(self) of FluidSolver : CP 3 --- ")
+
         ## Set the element and condition names in the Json parameters
         #self.settings["element_replace_settings"] = KratosMultiphysics.Parameters("""{}""")
         self.settings.AddValue("element_replace_settings", KratosMultiphysics.Parameters("""{}"""))
         self.settings["element_replace_settings"].AddEmptyValue("element_name").SetString(new_elem_name)
         self.settings["element_replace_settings"].AddEmptyValue("condition_name").SetString(new_cond_name)
 
+        print(" --- _ReplaceElementsAndConditions(self) of FluidSolver : CP 4 --- ")
+
         ## Call the replace elements and conditions process
         KratosMultiphysics.ReplaceElementsAndConditionsProcess(self.main_model_part, self.settings["element_replace_settings"]).Execute()
+
+        print(" --- _ReplaceElementsAndConditions(self) of FluidSolver : CP 5 --- ")
 
     def _GetElementNumNodes(self):
         if self.main_model_part.NumberOfElements() != 0:

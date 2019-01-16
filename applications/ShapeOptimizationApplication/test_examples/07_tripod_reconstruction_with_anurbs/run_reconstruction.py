@@ -17,19 +17,41 @@ parameters = KratosMultiphysics.Parameters("""
         "fe_refinement_level"           : 0,
         "variable_to_map"               : "SHAPE_CHANGE"
     },
-    "method" :
+    "conditions" :
     {
-        "apply_integration" : true
+        "apply_integral_method" : false,
+        "faces" :
+        {
+            "curvature" :
+            {
+                "apply_curvature_minimization" : false,
+                "penalty_factor"               : 1e-1
+            },
+            "mechanical" :
+            {
+                "apply_KL_shell"      : false,
+                "exclusive_face_list" : [],
+                "penalty_factor"      : 100.0
+            }
+        },
+        "edges" :
+        {
+            "fe_based" :
+            {
+                "apply_enforcement_conditions"        : true,
+                "penalty_factor_tangent_enforcement"  : 10,
+                "penalty_factor_position_enforcement" : 100
+            },
+            "coupling" :
+            {
+                "apply_coupling_conditions" : false
+            }
+        }
     },
     "points_projection" :
     {
         "boundary_tessellation_tolerance" : 0.01,
         "patch_bounding_box_tolerance"    : 1.0
-    },
-    "boundary_conditions" :
-    {
-        "penalty_factor_tangent_enforcement"  : 10,
-        "penalty_factor_position_enforcement" : 100
     },
     "solution" :
     {

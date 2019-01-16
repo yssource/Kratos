@@ -1,7 +1,6 @@
 from __future__ import print_function, absolute_import, division
 
 import KratosMultiphysics
-import KratosMultiphysics.mpi as mpi
 
 class LegacyMPICommInterface(object):
 
@@ -120,5 +119,3 @@ class LegacyMPIPythonInterface(object):
     def allgather_int(self, comm_wrapper, local_value):
         wraper_list = [local_value,]
         return comm_wrapper.GetWithDeprecationWarning("allgather_int").AllGatherInts(wraper_list)
-
-

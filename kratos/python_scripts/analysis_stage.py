@@ -20,7 +20,7 @@ class AnalysisStage(object):
         project_parameters -- The ProjectParameters used
         """
 
-        input( " PAUSE1 ")
+        print( " PAUSE1 ")
 
         if (type(model) != KratosMultiphysics.Model):
             raise Exception("Input is expected to be provided as a Kratos Model object")
@@ -28,7 +28,7 @@ class AnalysisStage(object):
         if (type(project_parameters) != KratosMultiphysics.Parameters):
             raise Exception("Input is expected to be provided as a Kratos Parameters object")
 
-        input( " PAUSE2 ")
+        print( " PAUSE2 ")
 
         self.model = model
         self.project_parameters = project_parameters
@@ -37,7 +37,7 @@ class AnalysisStage(object):
         self.echo_level = self.project_parameters["problem_data"]["echo_level"].GetInt()
         self.parallel_type = self.project_parameters["problem_data"]["parallel_type"].GetString()
 
-        input( " PAUSE3 ")
+        print( " PAUSE3 ")
 
         if (self.parallel_type == "MPI"):
             import KratosMultiphysics.mpi as KratosMPI

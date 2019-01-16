@@ -106,6 +106,7 @@ class NavierStokesMPITwoFluidsSolver(navier_stokes_two_fluids_solver.NavierStoke
             KratosMultiphysics.Logger.PrintInfo("NavierStokesMPITwoFluidsSolver","Variables for the Trilinos Two Fluid solver added correctly.")
 
     def ImportModelPart(self):
+        KratosMPI.mpi.world.barrier()
         print(" ImportModelPart of MPI solver ")
         ## Construct the Trilinos import model part utility
         self.trilinos_model_part_importer = trilinos_import_model_part_utility.TrilinosImportModelPartUtility(self.main_model_part, self.settings)

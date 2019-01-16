@@ -19,11 +19,16 @@ class AnalysisStage(object):
         model -- The Model to be used
         project_parameters -- The ProjectParameters used
         """
+
+        input( " PAUSE1 ")
+
         if (type(model) != KratosMultiphysics.Model):
             raise Exception("Input is expected to be provided as a Kratos Model object")
 
         if (type(project_parameters) != KratosMultiphysics.Parameters):
             raise Exception("Input is expected to be provided as a Kratos Parameters object")
+
+        input( " PAUSE2 ")
 
         self.model = model
         self.project_parameters = project_parameters
@@ -32,6 +37,8 @@ class AnalysisStage(object):
         self.echo_level = self.project_parameters["problem_data"]["echo_level"].GetInt()
         self.parallel_type = self.project_parameters["problem_data"]["parallel_type"].GetString()
 
+        input( " PAUSE3 ")
+
         if (self.parallel_type == "MPI"):
             import KratosMultiphysics.mpi as KratosMPI
             self.is_printing_rank = (KratosMPI.mpi.rank == 0)
@@ -39,6 +46,9 @@ class AnalysisStage(object):
             self.is_printing_rank = True
 
         self._GetSolver().AddVariables() # this creates the solver and adds the variables
+
+        KratosMPI.mpi.world.barrier()
+        print( " End of Construct of Analysis stage")
 
     def Run(self):
         """This function executes the entire AnalysisStage
@@ -65,6 +75,8 @@ class AnalysisStage(object):
         Usage: It is designed to be called ONCE, BEFORE the execution of the solution-loop
         This function has to be implemented in deriving classes!
         """
+        import KratosMultiphysics.mpi as KratosMPI
+
         KratosMPI.mpi.world.barrier()
         print( "Before ImportModelPart()" )
         self._GetSolver().ImportModelPart()

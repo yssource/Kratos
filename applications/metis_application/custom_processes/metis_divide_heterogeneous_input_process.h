@@ -139,8 +139,12 @@ public:
 
         ConvertKratosToCSRFormat(KratosFormatNodeConnectivities, &NodeIndices, &NodeConnectivities);
 
+        KRATOS_WATCH( "---------------- EXECUTE of MetisDivideHeterogeneousInputProcess ---------------- CP 1a -------" )
+
         std::vector<idxtype> NodePartition;
         PartitionNodes(NumNodes,NodeIndices,NodeConnectivities,NodePartition);
+
+        KRATOS_WATCH( "---------------- EXECUTE of MetisDivideHeterogeneousInputProcess ---------------- CP 1b -------" )
 
         // Free some memory we no longer need
         delete [] NodeIndices;

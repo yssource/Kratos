@@ -65,8 +65,16 @@ class AnalysisStage(object):
         Usage: It is designed to be called ONCE, BEFORE the execution of the solution-loop
         This function has to be implemented in deriving classes!
         """
+        KratosMPI.mpi.world.barrier()
+        print( "Before ImportModelPart()" )
         self._GetSolver().ImportModelPart()
+
+        KratosMPI.mpi.world.barrier()
+        print( "Before PrepareModelPart()" )
         self._GetSolver().PrepareModelPart()
+
+        KratosMPI.mpi.world.barrier()
+        print( "Before AddDofs()" )
         self._GetSolver().AddDofs()
 
         self.ModifyInitialProperties()

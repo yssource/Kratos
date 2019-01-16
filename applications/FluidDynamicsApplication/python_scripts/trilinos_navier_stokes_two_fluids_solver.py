@@ -8,6 +8,7 @@ import KratosMultiphysics.mpi as KratosMPI                          # MPI-python
 KratosMultiphysics.CheckRegisteredApplications("FluidDynamicsApplication","MetisApplication","TrilinosApplication")
 
 # Import applications
+import KratosMultiphysics.MetisApplication as KratosMetis
 import KratosMultiphysics.TrilinosApplication as KratosTrilinos     # MPI solvers
 import KratosMultiphysics.FluidDynamicsApplication as KratosFluid   # Fluid dynamics application
 
@@ -16,6 +17,10 @@ import navier_stokes_two_fluids_solver
 import trilinos_import_model_part_utility
 
 def CreateSolver(model, custom_settings):
+
+    for i in range(10):
+        print( " CreateSolver " )
+
     return NavierStokesMPITwoFluidsSolver(model, custom_settings)
 
 class NavierStokesMPITwoFluidsSolver(navier_stokes_two_fluids_solver.NavierStokesTwoFluidsSolver):

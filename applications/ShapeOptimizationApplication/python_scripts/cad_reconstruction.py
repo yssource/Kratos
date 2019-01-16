@@ -635,21 +635,23 @@ class ConditionsFactory:
 
                     # Tangents enforcement
                     target_normal = node.GetSolutionStepValue(KratosShape.NORMALIZED_SURFACE_NORMAL)
+                    weight = penalty_factor_tangent_enforcement * integration_weight
 
-                    new_condition_a = TangentEnforcementCondition(target_normal, surface_geometry_a, nonzero_pole_indices_a, shape_function_derivatives_u_a, shape_function_derivatives_v_a, penalty_factor_tangent_enforcement)
+                    new_condition_a = TangentEnforcementCondition(target_normal, surface_geometry_a, nonzero_pole_indices_a, shape_function_derivatives_u_a, shape_function_derivatives_v_a, weight)
                     conditions[face_a_itr].append(new_condition_a)
 
-                    new_condition_b = TangentEnforcementCondition(target_normal, surface_geometry_b, nonzero_pole_indices_b, shape_function_derivatives_u_b, shape_function_derivatives_v_b, penalty_factor_tangent_enforcement)
+                    new_condition_b = TangentEnforcementCondition(target_normal, surface_geometry_b, nonzero_pole_indices_b, shape_function_derivatives_u_b, shape_function_derivatives_v_b, weight)
                     conditions[face_b_itr].append(new_condition_b)
 
                     # Positions enforcement
                     target_displacement = node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)
                     target_position = np.array([node.X+target_displacement[0], node.Y+target_displacement[1], node.Z+target_displacement[2]])
+                    weight = penalty_factor_position_enforcement * integration_weight
 
-                    new_condition_a = PositionEnforcementCondition(target_displacement, target_position, surface_geometry_a, nonzero_pole_indices_a, shape_function_values_a, penalty_factor_position_enforcement)
+                    new_condition_a = PositionEnforcementCondition(target_displacement, target_position, surface_geometry_a, nonzero_pole_indices_a, shape_function_values_a, weight)
                     conditions[face_a_itr].append(new_condition_a)
 
-                    new_condition_b = PositionEnforcementCondition(target_displacement, target_position, surface_geometry_b, nonzero_pole_indices_b, shape_function_values_b, penalty_factor_position_enforcement)
+                    new_condition_b = PositionEnforcementCondition(target_displacement, target_position, surface_geometry_b, nonzero_pole_indices_b, shape_function_values_b, weight)
                     conditions[face_b_itr].append(new_condition_b)
 
                     # point_counter += 1

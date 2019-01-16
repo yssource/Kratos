@@ -100,7 +100,7 @@ class NavierStokesMPITwoFluidsSolver(navier_stokes_two_fluids_solver.NavierStoke
         super(NavierStokesMPITwoFluidsSolver, self).AddVariables()
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.PARTITION_INDEX)
 
-        # KratosMPI.mpi.world.barrier()
+        KratosMPI.mpi.world.barrier()
 
         if self._IsPrintingRank():
             KratosMultiphysics.Logger.PrintInfo("NavierStokesMPITwoFluidsSolver","Variables for the Trilinos Two Fluid solver added correctly.")
@@ -110,13 +110,14 @@ class NavierStokesMPITwoFluidsSolver(navier_stokes_two_fluids_solver.NavierStoke
         ## Construct the Trilinos import model part utility
         self.trilinos_model_part_importer = trilinos_import_model_part_utility.TrilinosImportModelPartUtility(self.main_model_part, self.settings)
 
+        KratosMPI.mpi.world.barrier()
         print(" ImportModelPart of MPI solver --- before METIS --- ")
 
         ## Execute the Metis partitioning and reading
         self.trilinos_model_part_importer.ImportModelPart()
 
         print(" ImportModelPart of MPI solver --- after METIS --- ")
-
+        KratosMPI.mpi.world.barrier()
         ## Sets DENSITY, VISCOSITY and SOUND_VELOCITY
 
         if self._IsPrintingRank():

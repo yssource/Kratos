@@ -68,13 +68,22 @@ class TrilinosImportModelPartUtility():
 
                 # Original .mdpa file reading
                 model_part_io = KratosMultiphysics.ReorderConsecutiveModelPartIO(input_filename)
+                verbosity = 4
 
                 if not partition_in_memory:
                     ## Serial partition of the original .mdpa file
                     if KratosMPI.mpi.rank == 0:
+                        print( "Import_Model_Part : Before KratosMetis.MetisDivideHeterogeneousInputProcess")
+                        KratosMPI.mpi.world.barrier()
+                        print( "number_of_partitions = " + str(number_of_partitions) )
+                        print( "domain_size = " + str(domain_size) )
+                        print( "verbosity = " + str(verbosity) )
+                        print( "sync_conditions = " + str(sync_conditions) )
+                        KratosMPI.mpi.world.barrier()
                         partitioner = KratosMetis.MetisDivideHeterogeneousInputProcess(model_part_io, number_of_partitions , domain_size, verbosity, sync_conditions)
                         partitioner.Execute()
-
+                        KratosMPI.mpi.world.barrier()
+                        print( "Import_Model_Part : Before KratosMetis.MetisDivideHeterogeneousInputProcess")
                         KratosMultiphysics.Logger.PrintInfo("::[TrilinosImportModelPartUtility]::", "Metis divide finished.")
                 else:
                     # Create a second io that does not reorder the parts while reading from memory

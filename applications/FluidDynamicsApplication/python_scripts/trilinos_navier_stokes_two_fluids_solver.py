@@ -110,14 +110,15 @@ class NavierStokesMPITwoFluidsSolver(navier_stokes_two_fluids_solver.NavierStoke
         ## Construct the Trilinos import model part utility
         self.trilinos_model_part_importer = trilinos_import_model_part_utility.TrilinosImportModelPartUtility(self.main_model_part, self.settings)
 
-        KratosMPI.mpi.world.barrier()
-        print(" ImportModelPart of MPI solver --- before METIS --- ")
 
+        print(" ImportModelPart of MPI solver --- before METIS --- ")
+        KratosMPI.mpi.world.barrier()
+        print(" Inside barrier ")
         ## Execute the Metis partitioning and reading
         self.trilinos_model_part_importer.ImportModelPart()
-
-        print(" ImportModelPart of MPI solver --- after METIS --- ")
         KratosMPI.mpi.world.barrier()
+        print(" ImportModelPart of MPI solver --- after METIS --- ")
+
         ## Sets DENSITY, VISCOSITY and SOUND_VELOCITY
 
         if self._IsPrintingRank():

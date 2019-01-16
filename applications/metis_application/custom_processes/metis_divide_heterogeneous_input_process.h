@@ -119,6 +119,8 @@ public:
     {
         // Read nodal graph from input
 
+        KRATOS_WATCH( "---------------- EXECUTE of MetisDivideHeterogeneousInputProcess ----------------------------" )
+
         IO::ConnectivitiesContainerType KratosFormatNodeConnectivities;
 
         SizeType NumNodes = BaseType::mrIO.ReadNodalGraph(KratosFormatNodeConnectivities);
@@ -133,6 +135,8 @@ public:
         idxtype* NodeIndices = 0;
         idxtype* NodeConnectivities = 0;
 
+        KRATOS_WATCH( "---------------- EXECUTE of MetisDivideHeterogeneousInputProcess ---------------- CP 1 -------" )
+
         ConvertKratosToCSRFormat(KratosFormatNodeConnectivities, &NodeIndices, &NodeConnectivities);
 
         std::vector<idxtype> NodePartition;
@@ -141,6 +145,8 @@ public:
         // Free some memory we no longer need
         delete [] NodeIndices;
         delete [] NodeConnectivities;
+
+        KRATOS_WATCH( "---------------- EXECUTE of MetisDivideHeterogeneousInputProcess ---------------- CP 2 -------" )
 
         // Partition elements
         IO::ConnectivitiesContainerType ElementConnectivities;
@@ -155,6 +161,8 @@ public:
 
             KRATOS_THROW_ERROR(std::runtime_error,Msg.str(),"");
         }
+
+        KRATOS_WATCH( "---------------- EXECUTE of MetisDivideHeterogeneousInputProcess ---------------- CP 3 -------" )
 
         std::vector<idxtype> ElementPartition;
 
@@ -177,6 +185,8 @@ public:
             KRATOS_THROW_ERROR(std::runtime_error,Msg.str(),"");
         }
 
+        KRATOS_WATCH( "---------------- EXECUTE of MetisDivideHeterogeneousInputProcess ---------------- CP 4 -------" )
+
         std::vector<idxtype> ConditionPartition;
 
         if (mSynchronizeConditions)
@@ -188,10 +198,14 @@ public:
         // Hanging nodes should be avoided, as they can cause problems when setting the Dofs
         RedistributeHangingNodes(NodePartition,ElementPartition,ElementConnectivities,ConditionPartition,ConditionConnectivities);
 
+        KRATOS_WATCH( "---------------- EXECUTE of MetisDivideHeterogeneousInputProcess ---------------- CP 5 -------" )
+
         // Coloring
         GraphType DomainGraph = zero_matrix<int>(mNumberOfPartitions);
         CalculateDomainsGraph(DomainGraph,NumElements,ElementConnectivities,NodePartition,ElementPartition);
         CalculateDomainsGraph(DomainGraph,NumConditions,ConditionConnectivities,NodePartition,ConditionPartition);
+
+        KRATOS_WATCH( "---------------- EXECUTE of MetisDivideHeterogeneousInputProcess ---------------- CP 6 -------" )
 
         int NumColors;
         GraphType ColoredDomainGraph;
@@ -202,10 +216,12 @@ public:
             KRATOS_WATCH(NumColors);
         }
 
-	if (mVerbosity > 2)
-	{
+        KRATOS_WATCH( "---------------- EXECUTE of MetisDivideHeterogeneousInputProcess ---------------- CP 7 -------" )
+
+	    if (mVerbosity > 2)
+	    {
             KRATOS_WATCH(ColoredDomainGraph);
-	}
+	    }
 
         // Write partition info into separate input files
         IO::PartitionIndicesContainerType nodes_all_partitions;
@@ -216,6 +232,8 @@ public:
         DividingNodes(nodes_all_partitions, ElementConnectivities, ConditionConnectivities, NodePartition, ElementPartition, ConditionPartition);
         DividingElements(elements_all_partitions, ElementPartition);
         DividingConditions(conditions_all_partitions, ConditionPartition);
+
+        KRATOS_WATCH( "---------------- EXECUTE of MetisDivideHeterogeneousInputProcess ---------------- CP 8 -------" )
 
         if (mVerbosity > 1)
         {
@@ -229,6 +247,8 @@ public:
             }
         }
 
+        KRATOS_WATCH( "---------------- EXECUTE of MetisDivideHeterogeneousInputProcess ---------------- CP 9 -------" )
+
         IO::PartitionIndicesType io_nodes_partitions(NodePartition.begin(), NodePartition.end());
         IO::PartitionIndicesType io_elements_partitions(ElementPartition.begin(), ElementPartition.end());
         IO::PartitionIndicesType io_conditions_partitions(ConditionPartition.begin(), ConditionPartition.end());
@@ -237,6 +257,8 @@ public:
         mrIO.DivideInputToPartitions(mNumberOfPartitions, ColoredDomainGraph,
                                      io_nodes_partitions, io_elements_partitions, io_conditions_partitions,
                                      nodes_all_partitions, elements_all_partitions, conditions_all_partitions);
+
+        KRATOS_WATCH( "---------------- EXECUTE of MetisDivideHeterogeneousInputProcess ---------------- Ende -------" )
     }
 
     ///@}

@@ -94,6 +94,10 @@ class TrilinosNavierStokesSolverMonolithic(navier_stokes_solver_vmsmonolithic.Na
 
 
     def AddVariables(self):
+
+        for i in range(5):
+            print("   ------------   Start  AddVariables(self)  ------------   ")
+
         ## Add variables from the base class
         super(TrilinosNavierStokesSolverMonolithic, self).AddVariables()
 
@@ -104,6 +108,9 @@ class TrilinosNavierStokesSolverMonolithic(navier_stokes_solver_vmsmonolithic.Na
         if self._IsPrintingRank():
             #TODO: CHANGE THIS ONCE THE MPI LOGGER IS IMPLEMENTED
             KratosMultiphysics.Logger.Print("Variables for the VMS fluid Trilinos solver added correctly in each processor.")
+
+        for i in range(5):
+            print("   ------------   End  AddVariables(self)  ------------   ")
 
     def ImportModelPart(self):
         ## Construct the Trilinos import model part utility

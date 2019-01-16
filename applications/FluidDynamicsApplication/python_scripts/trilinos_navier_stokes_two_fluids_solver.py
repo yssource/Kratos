@@ -97,6 +97,10 @@ class NavierStokesMPITwoFluidsSolver(navier_stokes_two_fluids_solver.NavierStoke
 
     def AddVariables(self):
         print(" AddVariables of MPI solver ")
+
+        for i in range(5):
+            print("   ------------   Start  AddVariables(self)  ------------   ")
+
         super(NavierStokesMPITwoFluidsSolver, self).AddVariables()
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.PARTITION_INDEX)
 
@@ -104,6 +108,9 @@ class NavierStokesMPITwoFluidsSolver(navier_stokes_two_fluids_solver.NavierStoke
 
         if self._IsPrintingRank():
             KratosMultiphysics.Logger.PrintInfo("NavierStokesMPITwoFluidsSolver","Variables for the Trilinos Two Fluid solver added correctly.")
+
+        for i in range(5):
+            print("   ------------   End  AddVariables(self)  ------------   ")
 
     def ImportModelPart(self):
         KratosMPI.mpi.world.barrier()

@@ -49,6 +49,9 @@ class AnalysisStage(object):
 
         self._GetSolver().AddVariables() # this creates the solver and adds the variables
 
+        for i in range(15):
+            print( " PAUSE5 ")
+
         KratosMPI.mpi.world.barrier()
         print( " End of Construct of Analysis stage")
 

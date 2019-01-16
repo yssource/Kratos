@@ -11,8 +11,6 @@ from fluid_solver import FluidSolver
 
 # from KratosMultiphysics.FluidDynamicsApplication import *
 
-
-
 def CreateSolver(model, custom_settings):
     return NavierStokesTwoFluidsSolver(model, custom_settings)
 
@@ -68,6 +66,8 @@ class NavierStokesTwoFluidsSolver(FluidSolver):
     def __init__(self, model, custom_settings):
         super(NavierStokesTwoFluidsSolver,self).__init__(model,custom_settings)
 
+        print(" Constructor of solver ")
+
         self.element_name = "TwoFluidNavierStokes"
         self.condition_name = "NavierStokesWallCondition"
 
@@ -84,6 +84,7 @@ class NavierStokesTwoFluidsSolver(FluidSolver):
         KratosMultiphysics.Logger.PrintInfo("NavierStokesTwoFluidsSolver", "Construction of NavierStokesTwoFluidsSolver finished.")
 
     def AddVariables(self):
+        print(" Adding variables ")
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.DENSITY)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.DYNAMIC_VISCOSITY)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.PRESSURE)
@@ -105,6 +106,7 @@ class NavierStokesTwoFluidsSolver(FluidSolver):
         KratosMultiphysics.Logger.PrintInfo("NavierStokesTwoFluidsSolver", "Fluid solver variables added correctly.")
 
     def PrepareModelPart(self):
+        print(" PrepareModelPart of solver ")
         super(NavierStokesTwoFluidsSolver, self).PrepareModelPart()
         if not self.main_model_part.ProcessInfo[KratosMultiphysics.IS_RESTARTED]:
             ## Setting the nodal distance
@@ -115,6 +117,7 @@ class NavierStokesTwoFluidsSolver(FluidSolver):
             self._set_constitutive_law()
 
     def Initialize(self):
+        print(" Initialize of solver ")
         self.computing_model_part = self.GetComputingModelPart()
 
         ## Construct the linear solver
@@ -172,6 +175,7 @@ class NavierStokesTwoFluidsSolver(FluidSolver):
         KratosMultiphysics.Logger.PrintInfo("NavierStokesTwoFluidsSolver", "Solver initialization finished.")
 
     def InitializeSolutionStep(self):
+        print(" InitializeSolutionStep of solver ")
         if self._TimeBufferIsInitialized():
             (self.bdf_process).Execute()                    # Recompute the BDF2 coefficients
             (self.level_set_convection_process).Execute()   # Convect the level-set according to the previous step velocity
@@ -180,12 +184,14 @@ class NavierStokesTwoFluidsSolver(FluidSolver):
             (self.solver).InitializeSolutionStep()          # Initialize the solver current step
 
     def FinalizeSolutionStep(self):
+        print(" FinalizeSolutionStep of solver ")
         if self._TimeBufferIsInitialized():
             (self.solver).FinalizeSolutionStep()
             (self.accelerationLimitationUtility).Execute()
 
 
     def _set_physical_properties(self):
+        print(" _set_physical_properties of solver ")
         # Get fluid 1 and 2 properties
         properties_1 = self.main_model_part.Properties[1]
         properties_2 = self.main_model_part.Properties[2]
@@ -214,6 +220,7 @@ class NavierStokesTwoFluidsSolver(FluidSolver):
                 node.SetSolutionStepValue(KratosMultiphysics.DYNAMIC_VISCOSITY, mu_2)
 
     def _set_constitutive_law(self):
+        print(" _set_constitutive_law of solver ")
         # Construct the two fluids constitutive law
         if(self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE] == 3):
             self.main_model_part.Properties[1][KratosMultiphysics.CONSTITUTIVE_LAW] = KratosCFD.NewtonianTwoFluid3DLaw()
@@ -221,6 +228,7 @@ class NavierStokesTwoFluidsSolver(FluidSolver):
             self.main_model_part.Properties[1][KratosMultiphysics.CONSTITUTIVE_LAW] = KratosCFD.NewtonianTwoFluid2DLaw()
 
     def _set_distance_function(self):
+        print(" _set_distance_function of solver ")
         ## Set the nodal distance function
         if (self.settings["distance_reading_settings"]["import_mode"].GetString() == "from_GiD_file"):
             import read_distance_from_file
@@ -230,6 +238,7 @@ class NavierStokesTwoFluidsSolver(FluidSolver):
             KratosMultiphysics.Logger.PrintInfo("Navier Stokes Embedded Solver","Distance function taken from the .mdpa input file.")
 
     def _set_level_set_convection_process(self):
+        print(" _set_level_set_convection_process of solver ")
         # Construct the level set convection process
         if self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE] == 2:
             level_set_convection_process = KratosMultiphysics.LevelSetConvectionProcess2D(
@@ -245,6 +254,7 @@ class NavierStokesTwoFluidsSolver(FluidSolver):
         return level_set_convection_process
 
     def _set_variational_distance_process(self):
+        print(" _set_variational_distance_process of solver ")
         # Construct the variational distance calculation process
         maximum_iterations = 2 #TODO: Make this user-definable
         if self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE] == 2:

@@ -75,6 +75,7 @@ class NavierStokesMPITwoFluidsSolver(navier_stokes_two_fluids_solver.NavierStoke
     def __init__(self, model, custom_settings):
         # the constructor of the "grand-parent" (jumping constructor of parent) is called to avoid conflicts in attribute settings
         super(navier_stokes_two_fluids_solver.NavierStokesTwoFluidsSolver, self).__init__(model,custom_settings)
+        print(" Constructor of MPI solver ")
 
         self.element_name = "TwoFluidNavierStokes"
         self.condition_name = "NavierStokesWallCondition"
@@ -86,6 +87,7 @@ class NavierStokesMPITwoFluidsSolver(navier_stokes_two_fluids_solver.NavierStoke
             self.element_name = "TwoFluidNavierStokes"
 
         ## Construct the linear solver
+        print(" Linear Solver Factor called of MPI solver ")
         import trilinos_linear_solver_factory
         self.trilinos_linear_solver = trilinos_linear_solver_factory.ConstructSolver(self.settings["linear_solver_settings"])
 
@@ -94,20 +96,27 @@ class NavierStokesMPITwoFluidsSolver(navier_stokes_two_fluids_solver.NavierStoke
 
 
     def AddVariables(self):
-
+        print(" AddVariables of MPI solver ")
         super(NavierStokesMPITwoFluidsSolver, self).AddVariables()
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.PARTITION_INDEX)
 
-        KratosMPI.mpi.world.barrier()
+        # KratosMPI.mpi.world.barrier()
 
         if self._IsPrintingRank():
             KratosMultiphysics.Logger.PrintInfo("NavierStokesMPITwoFluidsSolver","Variables for the Trilinos Two Fluid solver added correctly.")
 
     def ImportModelPart(self):
+        print(" ImportModelPart of MPI solver ")
         ## Construct the Trilinos import model part utility
         self.trilinos_model_part_importer = trilinos_import_model_part_utility.TrilinosImportModelPartUtility(self.main_model_part, self.settings)
+
+        print(" ImportModelPart of MPI solver --- before METIS --- ")
+
         ## Execute the Metis partitioning and reading
         self.trilinos_model_part_importer.ImportModelPart()
+
+        print(" ImportModelPart of MPI solver --- after METIS --- ")
+
         ## Sets DENSITY, VISCOSITY and SOUND_VELOCITY
 
         if self._IsPrintingRank():
@@ -115,11 +124,13 @@ class NavierStokesMPITwoFluidsSolver(navier_stokes_two_fluids_solver.NavierStoke
             KratosMultiphysics.Logger.PrintInfo("NavierStokesMPITwoFluidsSolver","MPI model reading finished.")
 
     def PrepareModelPart(self):
+        print(" PrepareModelPart of MPI solver ")
         super(NavierStokesMPITwoFluidsSolver,self).PrepareModelPart()
         ## Construct Trilinos the communicators
         self.trilinos_model_part_importer.CreateCommunicators()
 
     def AddDofs(self):
+        print(" AddDofs of MPI solver ")
         super(NavierStokesMPITwoFluidsSolver, self).AddDofs()
         KratosMPI.mpi.world.barrier()
 
@@ -128,7 +139,7 @@ class NavierStokesMPITwoFluidsSolver(navier_stokes_two_fluids_solver.NavierStoke
 
 
     def Initialize(self):
-
+        print(" Initialize of MPI solver ")
         ## Construct the communicator
         self.EpetraCommunicator = KratosTrilinos.CreateCommunicator()
 
@@ -202,6 +213,7 @@ class NavierStokesMPITwoFluidsSolver(navier_stokes_two_fluids_solver.NavierStoke
 
 
     def _set_level_set_convection_process(self):
+        print(" _set_level_set_convection_process of MPI solver ")
         # Construct the level set convection process
         if self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE] == 2:
             level_set_convection_process = KratosTrilinos.TrilinosLevelSetConvectionProcess2D(
@@ -220,6 +232,7 @@ class NavierStokesMPITwoFluidsSolver(navier_stokes_two_fluids_solver.NavierStoke
 
 
     def _set_variational_distance_process(self):
+        print(" _set_variational_distance_process of MPI solver ")
         # Construct the variational distance calculation process
         maximum_iterations = 2
         if self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE] == 2:

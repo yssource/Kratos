@@ -48,18 +48,23 @@ class CADMapper:
             os.makedirs( output_dir )
 
         # Read FE data
-        fem_input_filename = self.parameters["input"]["fem_filename"].GetString()
+        fe_model_part_name = "origin_part"
         name_variable_to_map = self.parameters["input"]["variable_to_map"].GetString()
         variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
 
-        self.fe_model_part = self.fe_model.CreateModelPart("origin_part")
-        self.fe_model_part.ProcessInfo.SetValue(KratosMultiphysics.DOMAIN_SIZE, 3)
-        self.fe_model_part.AddNodalSolutionStepVariable(variable_to_map)
-        self.fe_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)
-        self.fe_model_part.AddNodalSolutionStepVariable(KratosShape.NORMALIZED_SURFACE_NORMAL)
+        if self.fe_model.HasModelPart(fe_model_part_name):
+            self.fe_model_part = self.fe_model.GetModelPart(fe_model_part_name)
+        else:
 
-        model_part_io = KratosMultiphysics.ModelPartIO(fem_input_filename[:-5])
-        model_part_io.ReadModelPart(self.fe_model_part)
+            self.fe_model_part = self.fe_model.CreateModelPart(fe_model_part_name)
+            self.fe_model_part.ProcessInfo.SetValue(KratosMultiphysics.DOMAIN_SIZE, 3)
+            self.fe_model_part.AddNodalSolutionStepVariable(variable_to_map)
+            self.fe_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)
+            self.fe_model_part.AddNodalSolutionStepVariable(KratosShape.NORMALIZED_SURFACE_NORMAL)
+
+            fem_input_filename = self.parameters["input"]["fem_filename"].GetString()
+            model_part_io = KratosMultiphysics.ModelPartIO(fem_input_filename[:-5])
+            model_part_io.ReadModelPart(self.fe_model_part)
 
         # Refine if specified
         prop_id = 1

@@ -45,6 +45,8 @@ class AnalysisStage(object):
         else:
             self.is_printing_rank = True
 
+        print( " PAUSE4 ")
+
         self._GetSolver().AddVariables() # this creates the solver and adds the variables
 
         KratosMPI.mpi.world.barrier()

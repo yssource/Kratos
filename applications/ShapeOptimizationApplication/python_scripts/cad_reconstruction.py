@@ -603,6 +603,8 @@ class ConditionsFactory:
                 # Create conditions
                 for itr, node in enumerate(destination_mdpa.Nodes):
 
+                    integration_weight = list_of_integration_weights[itr]
+
                     shape_function_a = an.SurfaceShapeEvaluator(DegreeU=surface_geometry_a.DegreeU, DegreeV=surface_geometry_a.DegreeV, Order=1)
                     shape_function_b = an.SurfaceShapeEvaluator(DegreeU=surface_geometry_b.DegreeU, DegreeV=surface_geometry_b.DegreeV, Order=1)
 

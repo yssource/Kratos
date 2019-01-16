@@ -126,11 +126,15 @@ class CADMapper:
 
         condition_factory = ConditionsFactory(self.fe_model_part, self.cad_model, self.parameters)
 
-        if self.parameters["method"]["apply_integration"].GetBool():
+        if self.parameters["conditions"]["apply_integral_method"].GetBool():
             condition_factory.CreateDistanceMinimizationWithIntegrationConditions(self.conditions)
         else:
             condition_factory.CreateDistanceMinimizationConditions(self.conditions)
-        condition_factory.CreateEnforcementConditions(self.conditions)
+        if self.parameters["conditions"]["faces"]["curvature"]["apply_curvature_minimization"].GetBool() or \
+           self.parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].GetBool():
+            condition_factory.CreateFaceConditions(self.conditions)
+        if self.parameters["conditions"]["edges"]["fe_based"]["apply_enforcement_conditions"].GetBool():
+            condition_factory.CreateEnforcementConditions(self.conditions)
 
         print("> Finished creation of conditions in" ,round( time.time()-start_time, 3 ), " s.")
         print("\n> Initializing assembly...")
@@ -156,12 +160,11 @@ class CADMapper:
         for i in range(lhs_diag.shape[0]):
             entry = lhs[i,i]
 
-            # if abs(entry) < 1e-12:
-            #     print("WARNING!!!!Zero on main diagonal found at position",i,".")
+            if abs(entry) < 1e-12:
+                print("WARNING!!!!Zero on main diagonal found at position",i,". Make sure to include beta regularization.")
 
             # regularization
             lhs[i,i] += beta
-
 
         # Nonlinear solution iterations
         for solution_itr in range(1,self.parameters["solution"]["iterations"].GetInt()+1):
@@ -283,19 +286,17 @@ class ConditionsFactory:
     def __init__(self, fe_model_part, cad_model, parameters):
         self.fe_model_part = fe_model_part
         self.cad_model = cad_model
-
-        name_variable_to_map = parameters["input"]["variable_to_map"].GetString()
-        self.variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
-
-        self.tesselation_tolerance = parameters["points_projection"]["boundary_tessellation_tolerance"].GetDouble()
-        self.bounding_box_tolerance = parameters["points_projection"]["patch_bounding_box_tolerance"].GetDouble()
-
-        self.penalty_factor_tangent_enforcement = parameters["boundary_conditions"]["penalty_factor_tangent_enforcement"].GetDouble()
-        self.penalty_factor_position_enforcement = parameters["boundary_conditions"]["penalty_factor_position_enforcement"].GetDouble()
+        self.parameters = parameters
 
     # --------------------------------------------------------------------------
     def CreateDistanceMinimizationConditions(self, conditions):
         from cad_reconstruction_conditions import DistanceMinimizationCondition
+
+        name_variable_to_map = self.parameters["input"]["variable_to_map"].GetString()
+        variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
+
+        tesselation_tolerance = self.parameters["points_projection"]["boundary_tessellation_tolerance"].GetDouble()
+        bounding_box_tolerance = self.parameters["points_projection"]["patch_bounding_box_tolerance"].GetDouble()
 
         point_pairs = []
         for node_i in self.fe_model_part.Nodes:
@@ -317,18 +318,18 @@ class ConditionsFactory:
 
             boundary_polygon = []
             for trim in face_i.trims():
-                tessellation.Compute(trim.curve_2d(), self.tesselation_tolerance)
+                tessellation.Compute(trim.curve_2d(), tesselation_tolerance)
                 for i in range(tessellation.NbPoints):
                     boundary_polygon.append(tessellation.Point(i))
 
             # Bounding box and scaling as the bounding box is based on a simple pointwise discretization of surface
             min_x, min_y, min_z, max_x, max_y, max_z = projection.BoundingBox
-            min_x -= self.bounding_box_tolerance
-            min_y -= self.bounding_box_tolerance
-            min_z -= self.bounding_box_tolerance
-            max_x += self.bounding_box_tolerance
-            max_y += self.bounding_box_tolerance
-            max_z += self.bounding_box_tolerance
+            min_x -= bounding_box_tolerance
+            min_y -= bounding_box_tolerance
+            min_z -= bounding_box_tolerance
+            max_x += bounding_box_tolerance
+            max_y += bounding_box_tolerance
+            max_z += bounding_box_tolerance
 
             for node_itr, node_i in enumerate(self.fe_model_part.Nodes):
 
@@ -345,7 +346,7 @@ class ConditionsFactory:
                 projection.Compute(Point=node_coords_i)
                 projected_point_uv = np.array([projection.ParameterU, projection.ParameterV])
 
-                is_inside, is_on_boundary = self.__Contains(projected_point_uv, boundary_polygon, self.tesselation_tolerance*1.1)
+                is_inside, is_on_boundary = self.__Contains(projected_point_uv, boundary_polygon, tesselation_tolerance*1.1)
                 if is_inside:
                     u = projected_point_uv[0]
                     v = projected_point_uv[1]
@@ -368,7 +369,7 @@ class ConditionsFactory:
                         # })
                         # boundary_nodes_counter += 1
 
-                    new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, self.variable_to_map, weight)
+                    new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, variable_to_map, weight)
                     conditions[face_itr].append(new_condition)
 
                     projected_point_i = projection.Point
@@ -456,7 +457,7 @@ class ConditionsFactory:
             }""")
 
             mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, mapper_parameters )
-            mapper.Map( self.variable_to_map, self.variable_to_map )
+            mapper.Map( variable_to_map, variable_to_map )
 
             # Create conditions
             for itr, node_i in enumerate(destination_mdpa.Nodes):
@@ -473,16 +474,78 @@ class ConditionsFactory:
                 for i in range(shape_function.NbNonzeroPoles):
                     shape_function_values[i] = shape_function(0,i)
 
-                new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, self.variable_to_map, weight)
+                new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, variable_to_map, weight)
                 conditions[face_itr].append(new_condition)
 
         print("> Total area of cad surface = ",total_area,"\n")
 
         return conditions
 
+    # --------------------------------------------------------------------------
+    def CreateFaceConditions(self, conditions):
+        from cad_reconstruction_conditions import CurvatureMinimizationConditionWithAD,  KLShellConditionWithAD
+
+        apply_curvature_min = self.parameters["conditions"]["faces"]["curvature"]["apply_curvature_minimization"].GetBool()
+        curvature_penalty_fac = self.parameters["conditions"]["faces"]["curvature"]["penalty_factor"].GetDouble()
+
+        apply_kl_shell = self.parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].GetBool()
+        shell_penalty_fac = self.parameters["conditions"]["faces"]["mechanical"]["penalty_factor"].GetDouble()
+        exclusive_face_list = self.parameters["conditions"]["faces"]["mechanical"]["exclusive_face_list"].GetVector()
+
+        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+
+            print("> Processing face ",face_itr)
+
+            if len(exclusive_face_list) != 0:
+                if face_itr not in exclusive_face_list:
+                    continue
+
+            surface_geometry = face_i.surface_geometry_3d().geometry
+            shape_function = an.SurfaceShapeEvaluator(DegreeU=surface_geometry.DegreeU, DegreeV=surface_geometry.DegreeV, Order=2)
+
+            list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i)
+
+            # Create conditions
+            for itr in range(len(list_of_points)):
+
+                [u,v] = list_of_parameters[itr]
+                weight = list_of_integration_weights[itr]
+
+                shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
+                nonzero_pole_indices = shape_function.NonzeroPoleIndices
+
+                shape_function_values = np.empty(shape_function.NbNonzeroPoles, dtype=float)
+                shape_function_derivatives_u = np.empty(shape_function.NbNonzeroPoles, dtype=float)
+                shape_function_derivatives_v = np.empty(shape_function.NbNonzeroPoles, dtype=float)
+                shape_function_derivatives_uu = np.empty(shape_function.NbNonzeroPoles, dtype=float)
+                shape_function_derivatives_uv = np.empty(shape_function.NbNonzeroPoles, dtype=float)
+                shape_function_derivatives_vv = np.empty(shape_function.NbNonzeroPoles, dtype=float)
+                for i in range(shape_function.NbNonzeroPoles):
+                    shape_function_values[i] = shape_function(0,i)
+                    shape_function_derivatives_u[i] = shape_function(1,i)
+                    shape_function_derivatives_v[i] = shape_function(2,i)
+                    shape_function_derivatives_uu[i] = shape_function(3,i)
+                    shape_function_derivatives_uv[i] = shape_function(4,i)
+                    shape_function_derivatives_vv[i] = shape_function(5,i)
+
+                if apply_curvature_min:
+                    weight = curvature_penalty_fac * weight
+                    new_condition = CurvatureMinimizationConditionWithAD(surface_geometry, nonzero_pole_indices, shape_function_derivatives_u, shape_function_derivatives_v, shape_function_derivatives_uu, shape_function_derivatives_uv, shape_function_derivatives_vv, weight)
+                    conditions[face_itr].append(new_condition)
+
+                if apply_kl_shell:
+                    weight = shell_penalty_fac * weight
+                    new_condition = KLShellConditionWithAD(surface_geometry, nonzero_pole_indices, shape_function_derivatives_u, shape_function_derivatives_v, shape_function_derivatives_uu, shape_function_derivatives_uv, shape_function_derivatives_vv, weight)
+                    conditions[face_itr].append(new_condition)
+
+        return conditions
+
  # --------------------------------------------------------------------------
     def CreateEnforcementConditions(self, conditions):
         from cad_reconstruction_conditions import TangentEnforcementCondition, PositionEnforcementCondition
+
+        penalty_factor_tangent_enforcement = self.parameters["conditions"]["edges"]["fe_based"]["penalty_factor_tangent_enforcement"].GetDouble()
+        penalty_factor_position_enforcement = self.parameters["conditions"]["edges"]["fe_based"]["penalty_factor_position_enforcement"].GetDouble()
 
         face_id_to_itr = {}
         for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
@@ -570,27 +633,24 @@ class ConditionsFactory:
                         shape_function_derivatives_u_b[i] = shape_function_b(1,i)
                         shape_function_derivatives_v_b[i] = shape_function_b(2,i)
 
-
                     # Tangents enforcement
                     target_normal = node.GetSolutionStepValue(KratosShape.NORMALIZED_SURFACE_NORMAL)
 
-                    new_condition_a = TangentEnforcementCondition(target_normal, surface_geometry_a, nonzero_pole_indices_a, shape_function_derivatives_u_a, shape_function_derivatives_v_a, self.penalty_factor_tangent_enforcement)
+                    new_condition_a = TangentEnforcementCondition(target_normal, surface_geometry_a, nonzero_pole_indices_a, shape_function_derivatives_u_a, shape_function_derivatives_v_a, penalty_factor_tangent_enforcement)
                     conditions[face_a_itr].append(new_condition_a)
 
-                    new_condition_b = TangentEnforcementCondition(target_normal, surface_geometry_b, nonzero_pole_indices_b, shape_function_derivatives_u_b, shape_function_derivatives_v_b, self.penalty_factor_tangent_enforcement)
+                    new_condition_b = TangentEnforcementCondition(target_normal, surface_geometry_b, nonzero_pole_indices_b, shape_function_derivatives_u_b, shape_function_derivatives_v_b, penalty_factor_tangent_enforcement)
                     conditions[face_b_itr].append(new_condition_b)
 
                     # Positions enforcement
                     target_displacement = node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)
                     target_position = np.array([node.X+target_displacement[0], node.Y+target_displacement[1], node.Z+target_displacement[2]])
 
-                    new_condition_a = PositionEnforcementCondition(target_displacement, target_position, surface_geometry_a, nonzero_pole_indices_a, shape_function_values_a, self.penalty_factor_position_enforcement)
+                    new_condition_a = PositionEnforcementCondition(target_displacement, target_position, surface_geometry_a, nonzero_pole_indices_a, shape_function_values_a, penalty_factor_position_enforcement)
                     conditions[face_a_itr].append(new_condition_a)
 
-                    new_condition_b = PositionEnforcementCondition(target_displacement, target_position, surface_geometry_b, nonzero_pole_indices_b, shape_function_values_b, self.penalty_factor_position_enforcement)
+                    new_condition_b = PositionEnforcementCondition(target_displacement, target_position, surface_geometry_b, nonzero_pole_indices_b, shape_function_values_b, penalty_factor_position_enforcement)
                     conditions[face_b_itr].append(new_condition_b)
-
-
 
                     # point_counter += 1
                     # self.cad_model.add({
@@ -621,7 +681,6 @@ class ConditionsFactory:
                     #     'End': [x + a1[0],y + a1[1], z + a1[2]],
                     #     'Layer': 'a1_a',
                     # })
-
 
             else:
                 raise RuntimeError("Max number of adjacent has to be 2!!")

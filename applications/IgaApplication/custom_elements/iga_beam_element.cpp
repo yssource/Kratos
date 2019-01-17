@@ -139,8 +139,8 @@ void IgaBeamElement::CalculateAll(
     auto lhs = mult * _gke;
     auto rhs = mult * _gfie;
 
-    LOG("lhs " << lhs);
-    LOG("rhs " << rhs);
+    // LOG("lhs " << lhs);
+    // LOG("rhs " << rhs);
     // LOG("Länge N0: " << GetValue(N0));
     // for (size_t r = 0; r != NumberOfDofs(); r++)
     // {
@@ -334,12 +334,12 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     
     // LOG("R1 " << R1);
     // LOG("R2 " << R2);
-    LOG("A " << A);
-    LOG("B " << B);
-    LOG("r1 " << r1);
-    LOG("r2 " << r2);
-    LOG("a " << a);
-    LOG("b " << b);
+    // LOG("A " << A);
+    // LOG("B " << B);
+    // LOG("r1 " << r1);
+    // LOG("r2 " << r2);
+    // LOG("a " << a);
+    // LOG("b " << b);
     
     // // Debug Check
     // IgaDebug::CheckVector(expected_data, "R_1", R1);
@@ -386,8 +386,8 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     ComputeCrossSectionGeometryReference(R1, R2, N, V, T0_vec, N0, V0, B_n, B_v, C_12, C_13, Phi, Phi_der);
     // IgaDebug::CheckVector(expected_data, "N0_reference", N0);
     // IgaDebug::CheckVector(expected_data, "V0_reference", V0);
-    LOG("B_n " << B_n);
-    LOG("B_v " << B_v);
+    // LOG("B_n " << B_n);
+    // LOG("B_v " << B_v);
     // LOG("C_12 " << C_12);
     // LOG("C_13 " << C_13);
 
@@ -398,8 +398,8 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     // IgaDebug::CheckDouble(expected_data, "C_12", C_12); // Checked
     // IgaDebug::CheckDouble(expected_data, "c_12", c_12);
     // IgaDebug::CheckDouble(expected_data, "C_13", C_13);  // Checked
-    LOG("b_n " << b_n);
-    LOG("b_v " << b_v);
+    // LOG("b_n " << b_n);
+    // LOG("b_v " << b_v);
     // LOG("c_12 " << c_12);
     // LOG("c_13 " << c_13);
     // LOG("c_12 " << c_12);
@@ -409,11 +409,11 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     double Apow2 = std::pow(A,2);
     double Apow4 = std::pow(A,4);
     double apow2 = std::pow(a,2);
-    LOG("Apow2 " << Apow2);
-    LOG("Apow4 " << Apow4);
-    LOG("apow2 " << apow2);
+    // LOG("Apow2 " << Apow2);
+    // LOG("Apow4 " << Apow4);
+    // LOG("apow2 " << apow2);
 
-    LOG("_dL " << _dL);
+    // LOG("_dL " << _dL);
     // Prestress
     //# TODO ### Introduce Presstress
     double prestress = 0;              // = [var properties] -> [ get_act_Presstress() ];    // Prestress in Normal Direction
@@ -443,9 +443,9 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
      double E12       = (c_12 - C_12);
      double E13       = (c_13 - C_13);
 
-    LOG("E11_m " << E11_m);
-    LOG("E11_cur_n " << E11_cur_n);
-    LOG("E11_cur_v " << E11_cur_v);
+    // LOG("E11_m " << E11_m);
+    // LOG("E11_cur_n " << E11_cur_n);
+    // LOG("E11_cur_v " << E11_cur_v);
     // LOG("E12 " << E12);
     // LOG("E13 " << E13);
 
@@ -457,9 +457,9 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
      double S11_v = prestress_bend2 + E11_cur_v * emod_I_n / Apow2;     // Bending Moment v
      double S12   = 0.5 * (- prestress_tor + E12 * gmod_It / A);        // 0.5 torsional Moment
      double S13   = 0.5 * (+ prestress_tor + E13 * gmod_It / A);        // 0.5 torsional Moment
-    LOG("S11_m " << S11_m);
-    LOG("S11_n " << S11_n);
-    LOG("S11_v " << S11_v);
+    // LOG("S11_m " << S11_m);
+    // LOG("S11_n " << S11_n);
+    // LOG("S11_v " << S11_v);
     // LOG("S12 " << S12);
     // LOG("S13 " << S13);
 
@@ -468,14 +468,14 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     // Variation of the axial Strain
     Vector eps_dof = ComputeEpsilonFirstDerivative(r1);
     eps_dof = eps_dof / Apow2;
-    LOG("eps_dof " << eps_dof);
+    // LOG("eps_dof " << eps_dof);
     
 
     // 2nd Variation
     // Variation of axial Strain
     Matrix eps_dof_2 = ComputeEpsilonSecondDerivative(r1);
     eps_dof_2 = eps_dof_2 / Apow4;
-    LOG("eps_dof_2 " << eps_dof_2);
+    // LOG("eps_dof_2 " << eps_dof_2);
 
 
     // Variation Of Curvature
@@ -511,14 +511,14 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     torsion_dof_n_2 = torsion_dof_n_2 / Apow2;
     torsion_dof_v_2 = torsion_dof_v_2 / Apow2;
 
-    LOG("curve_dof_n " << curve_dof_n);
-    LOG("curve_dof_v " << curve_dof_v);
-    LOG("curve_dof_n_2 " << curve_dof_n_2);
-    LOG("curve_dof_v_2 " << curve_dof_v_2);
-    LOG("torsion_dof_n " << torsion_dof_n);
-    LOG("torsion_dof_v " << torsion_dof_v);
-    LOG("torsion_dof_n_2 " << torsion_dof_n_2);
-    LOG("torsion_dof_v_2 " << torsion_dof_v_2);
+    // LOG("curve_dof_n " << curve_dof_n);
+    // LOG("curve_dof_v " << curve_dof_v);
+    // LOG("curve_dof_n_2 " << curve_dof_n_2);
+    // LOG("curve_dof_v_2 " << curve_dof_v_2);
+    // LOG("torsion_dof_n " << torsion_dof_n);
+    // LOG("torsion_dof_v " << torsion_dof_v);
+    // LOG("torsion_dof_n_2 " << torsion_dof_n_2);
+    // LOG("torsion_dof_v_2 " << torsion_dof_v_2);
 
     // Stiffness Matrix of the Membran Part
     for (size_t r = 0; r != NumberOfDofs(); r++){
@@ -526,7 +526,7 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
             kem(r,s) = emod_A * eps_dof[r] * eps_dof[s] + eps_dof_2(r,s) * S11_m;
         }
     }
-    LOG("kem " << kem);
+    // LOG("kem " << kem);
 
     // Stiffness Matrix of the Bending Part
     for (size_t r = 0; r != NumberOfDofs(); r++){
@@ -534,7 +534,7 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
             keb_n(r,s) = emod_I_v * curve_dof_n[r] * curve_dof_n[s] + curve_dof_n_2(r,s) * S11_n;
         }
     }
-    LOG("keb_n " << keb_n);
+    // LOG("keb_n " << keb_n);
 
 
     // Stiffness Matrix of the Bending Part
@@ -543,7 +543,7 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
             keb_v(r,s) = emod_I_n * curve_dof_v[r] * curve_dof_v[s] + curve_dof_v_2(r,s) * S11_v;
         }
     }
-    LOG("keb_v " << keb_v);
+    // LOG("keb_v " << keb_v);
 
 
     // Stiffness Matrix of the Torsion Part
@@ -552,7 +552,7 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
             ket_n(r,s) = 0.50 * gmod_It * torsion_dof_n[r] * torsion_dof_n[s] + torsion_dof_n_2(r,s) * S12;
         }
     }
-    LOG("ket_n " << ket_n);
+    // LOG("ket_n " << ket_n);
 
 
     // Stiffness Matrix of the Torsion Part
@@ -561,7 +561,7 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
             ket_v(r,s) = 0.50 * gmod_It * torsion_dof_v[r] * torsion_dof_v[s] + torsion_dof_v_2(r,s) * S13;
         }
     }
-    LOG("ket_v "<< ket_v);
+    // LOG("ket_v "<< ket_v);
 
 
     // IgaDebug::CheckMatrix(expected_data, "kem", kem);
@@ -580,7 +580,7 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     _gke += ket_n;
     _gke += ket_v;
 
-    LOG("_gke " << _gke);
+    // LOG("_gke " << _gke);
 
     _gfie.clear();
     _gfie  = S11_m * eps_dof;
@@ -589,11 +589,11 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
     _gfie += S12 * torsion_dof_n;
     _gfie += S13 * torsion_dof_v;
 
-    LOG("_gfie " << _gfie);
+    // LOG("_gfie " << _gfie);
 
     _gfie = - _gfie;
 
-    LOG("_gfie " << _gfie);
+    // LOG("_gfie " << _gfie);
 
     // IgaDebug::CheckMatrix(expected_data, "stiffness", _gke);
     // IgaDebug::CheckVector(expected_data, "external_forces", _gfie);
@@ -641,13 +641,13 @@ void IgaBeamElement::ComputeGeometryInitial(
     Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
 
     // Get previous Results
-    Vector3 coords;         // Create the Coordinats Vector of the Nodes
+    Vector3 coords;         // Create the coordinates Vector of the Nodes
     Vector3 tmp_disp_ini;       // Create the initial Displacement Vector of the Nodes
 
 
     for (size_t i = 0; i < NumberOfNodes(); i++){
         coords = GetGeometry()[i].GetInitialPosition();
-        tmp_disp_ini = 0; //# TODO ### Get.Geometry INITIAL DISPLACEMENTS + GetGeometry()[i].FastGetSolutionStepValue(PREDISPLACEMENT);
+        tmp_disp_ini = 0; 
 
         coords[0] += tmp_disp_ini[0];
         coords[1] += tmp_disp_ini[1];
@@ -725,7 +725,7 @@ void IgaBeamElement::ComputeGeometryInitial(
 
     for (size_t i = 0; i < NumberOfNodes(); i++){
         coords = GetGeometry()[i].GetInitialPosition();
-        tmp_disp_ini = 0; //# TODO ### Get.Geometry INITIAL DISPLACEMENTS + GetGeometry()[i].FastGetSolutionStepValue(PREDISPLACEMENT);
+        tmp_disp_ini = 0; 
 
         coords[0] += tmp_disp_ini[0];
         coords[1] += tmp_disp_ini[1];
@@ -743,7 +743,7 @@ void IgaBeamElement::ComputeGeometryInitial(
         r3[1] += shape_derivatives(2,i) * coords[1];
         r3[2] += shape_derivatives(2,i) * coords[2];
     }
-    // Set Tollerance if not done bevore
+    // Set tolerance if not done bevor
     float tol = 1.0e-8;
 
     a_ini = norm_2(r1);     // Length of the base Vector

@@ -148,38 +148,41 @@ class CADMapper:
 
     # --------------------------------------------------------------------------
     def Map(self):
-        # Assemble
-        lhs, rhs = self.assembler.AssembleSystem()
-
-        print("> Number of equations: ", lhs.shape[0])
-        print("> Number of relevant control points: ", lhs.shape[1])
-
-        # Beta regularization
-        beta = self.parameters["regularization"]["beta"].GetDouble()
-        lhs_diag = np.diag(lhs)
-        for i in range(lhs_diag.shape[0]):
-            entry = lhs[i,i]
-
-            if abs(entry) < 1e-12:
-                print("WARNING!!!!Zero on main diagonal found at position",i,". Make sure to include beta regularization.")
-
-            # regularization
-            lhs[i,i] += beta
 
         # Nonlinear solution iterations
         for solution_itr in range(1,self.parameters["solution"]["iterations"].GetInt()+1):
+
+            # Assemble
+            lhs, rhs = self.assembler.AssembleSystem()
+
+            if solution_itr == 0:
+                print("> Number of equations: ", lhs.shape[0])
+                print("> Number of relevant control points: ", lhs.shape[1])
+
             print("\n> ----------------------------------------------------")
             print("> Starting solution iteration", solution_itr,"...")
-            start_time = time.time()
+            start_time_iteration = time.time()
 
             print("\n> Starting system solution ....")
-            start_time = time.time()
+            start_time_solution = time.time()
+
+            # Beta regularization
+            beta = self.parameters["regularization"]["beta"].GetDouble()
+            lhs_diag = np.diag(lhs)
+            for i in range(lhs_diag.shape[0]):
+                entry = lhs[i,i]
+                # if abs(entry) < 1e-12:
+                #     print("WARNING!!!!Zero on main diagonal found at position",i,". Make sure to include beta regularization.")
+                lhs[i,i] += beta
 
             solution = la.solve(lhs,rhs)
 
-            print("> Finished system solution in" ,round( time.time()-start_time, 3 ), " s.")
+            print("> Finished system solution in" ,round( time.time()-start_time_solution, 3 ), " s.")
+
+            self.__UpdateCADModel(solution)
 
             if self.parameters["solution"]["test_solution"].GetBool():
+
                 # Test solution quality
                 test_rhs = np.zeros(rhs.shape)
                 test_rhs[:] = lhs.dot(solution)
@@ -192,10 +195,11 @@ class CADMapper:
                 error_norm = la.norm(rhs)
                 print("> RHS before current solution iteration = ",error_norm)
 
-            self.__UpdateCADModel(solution)
-
-            if self.parameters["solution"]["test_solution"].GetBool() or self.parameters["solution"]["iterations"].GetInt()>1:
+                # Test rhs after update
                 rhs = self.assembler.AssembleRHS()
+
+                error_norm = la.norm(rhs)
+                print("\n> RHS after current solution iteration = ",error_norm)
 
                 # Varying contribution of beta regularization is neglected as each solution iteration may be seen indendently
                 # in terms of minimization of the control point displacement
@@ -213,11 +217,7 @@ class CADMapper:
                 #                 dof_id = dof_ids[dof_i]
                 #                 rhs[dof_id,:] += beta*absolute_pole_update[dof_id,:]
 
-            if self.parameters["solution"]["test_solution"].GetBool():
-                error_norm = la.norm(rhs)
-                print("\n> RHS after current solution iteration = ",error_norm)
-
-            print("\n> Finished solution iteration in" ,round( time.time()-start_time, 3 ), " s.")
+            print("\n> Finished solution iteration in" ,round( time.time()-start_time_iteration, 3 ), " s.")
             print("> ----------------------------------------------------")
 
     # --------------------------------------------------------------------------
@@ -948,6 +948,7 @@ class Assembler():
         start_time = time.time()
 
         self.lhs.fill(0)
+        self.rhs.fill(0)
 
         total_num_conditions = 0
 
@@ -958,8 +959,7 @@ class Assembler():
             for condition in self.conditions[face_itr]:
                 total_num_conditions += 1
 
-                local_lhs = condition.CalculateLHS()
-                local_rhs = condition.CalculateRHS()
+                local_lhs, local_rhs = condition.CalculateLocalSystem()
 
                 nonzero_pole_indices = condition.nonzero_pole_indices
 
@@ -976,13 +976,6 @@ class Assembler():
 
                 self.lhs[np.ix_(global_dof_ids, global_dof_ids)] += local_lhs
                 self.rhs[global_dof_ids] += local_rhs
-
-
-
-                # for i, dof_id_i in enumerate(global_dof_ids):
-                #     self.rhs[dof_id_i] += local_rhs[i]
-                #     for j, dof_id_j in enumerate(global_dof_ids):
-                #         self.lhs[dof_id_i, dof_id_j] += local_lhs[i,j]
 
         print("Total number of conditions = ",total_num_conditions)
         print("> Finished assembly in" ,round( time.time()-start_time, 3 ), " s.")

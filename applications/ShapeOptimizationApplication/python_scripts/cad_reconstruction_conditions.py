@@ -52,6 +52,25 @@ class DistanceMinimizationCondition:
 
         return local_rhs.T.flatten()
 
+    # --------------------------------------------------------------------------
+    def CalculateLocalSystem(self):
+        # LHS
+        local_lhs = np.zeros([self.local_system_size,self.local_system_size])
+
+        local_lhs[0:self.block_size,0:self.block_size] = self.weight * np.outer(self.shape_functions, self.shape_functions)
+        local_lhs[self.block_size:2*self.block_size,self.block_size:2*self.block_size] = local_lhs[0:self.block_size,0:self.block_size]
+        local_lhs[2*self.block_size:3*self.block_size,2*self.block_size:3*self.block_size] = local_lhs[0:self.block_size,0:self.block_size]
+
+        # RHS
+        pole_coords = np.zeros((self.block_size, 3))
+        for i, (r,s) in enumerate(self.nonzero_pole_indices):
+            pole_coords[i,:] = self.surface_geometry.Pole(r,s)
+
+        local_rhs = -self.weight * np.outer(self.shape_functions, (self.shape_functions @ pole_coords - self.fe_node_coords))
+        local_rhs = local_rhs.T.flatten()
+
+        return local_lhs, local_rhs
+
 # ==============================================================================
 class PositionEnforcementCondition:
     # --------------------------------------------------------------------------
@@ -85,6 +104,25 @@ class PositionEnforcementCondition:
         local_rhs = -self.penalty_fac * np.outer(self.shape_functions, (self.shape_functions @ pole_coords - self.target_position))
 
         return local_rhs.T.flatten()
+
+    # --------------------------------------------------------------------------
+    def CalculateLocalSystem(self):
+        # LHS
+        local_lhs = np.zeros([self.local_system_size,self.local_system_size])
+
+        local_lhs[0:self.block_size,0:self.block_size] = self.penalty_fac * np.outer(self.shape_functions, self.shape_functions)
+        local_lhs[self.block_size:2*self.block_size,self.block_size:2*self.block_size] = local_lhs[0:self.block_size,0:self.block_size]
+        local_lhs[2*self.block_size:3*self.block_size,2*self.block_size:3*self.block_size] = local_lhs[0:self.block_size,0:self.block_size]
+
+        # RHS
+        pole_coords = np.zeros((self.block_size, 3))
+        for i, (r,s) in enumerate(self.nonzero_pole_indices):
+            pole_coords[i,:] = self.surface_geometry.Pole(r,s)
+
+        local_rhs = -self.penalty_fac * np.outer(self.shape_functions, (self.shape_functions @ pole_coords - self.target_position))
+        local_rhs = local_rhs.T.flatten()
+
+        return local_lhs, local_rhs
 
 # ==============================================================================
 class TangentEnforcementCondition:
@@ -123,6 +161,32 @@ class TangentEnforcementCondition:
         local_rhs_2 = - self.penalty_factor * np.outer(self.shape_function_derivatives_v,self.target_normal) * (a2 @ self.target_normal)
 
         return local_rhs_1.T.flatten() + local_rhs_2.T.flatten()
+
+    # --------------------------------------------------------------------------
+    def CalculateLocalSystem(self):
+        # LHS
+        term1 = np.outer(self.shape_function_derivatives_u,self.target_normal)
+        term1 = term1.T.flatten()
+
+        term2 = np.outer(self.shape_function_derivatives_v,self.target_normal)
+        term2 = term2.T.flatten()
+
+        local_lhs = self.penalty_factor * np.outer(term1,term1) + self.penalty_factor * np.outer(term2,term2)
+
+        # RHS
+        pole_coords = np.zeros((self.block_size, 3))
+        for i, (r,s) in enumerate(self.nonzero_pole_indices):
+            pole_coords[i,:] = self.surface_geometry.Pole(r,s)
+
+        a1 = self.shape_function_derivatives_u @ pole_coords
+        a2 = self.shape_function_derivatives_v @ pole_coords
+
+        local_rhs_1 = - self.penalty_factor * np.outer(self.shape_function_derivatives_u,self.target_normal) * (a1 @ self.target_normal)
+        local_rhs_2 = - self.penalty_factor * np.outer(self.shape_function_derivatives_v,self.target_normal) * (a2 @ self.target_normal)
+
+        local_rhs = local_rhs_1.T.flatten() + local_rhs_2.T.flatten()
+
+        return local_lhs, local_rhs
 
 # ==============================================================================
 class ReconstructionConditionWithADBase():
@@ -243,6 +307,28 @@ class TangentEnforcementConditionWithAD( ReconstructionConditionWithADBase ):
 
         return rhs_new
 
+    # --------------------------------------------------------------------------
+    def CalculateLocalSystem(self):
+        a1 = super().ComputeActualHyperJet(self.shape_function_derivatives_u)
+        a2 = super().ComputeActualHyperJet(self.shape_function_derivatives_v)
+
+        f_1 = self.penalty_factor * np.dot(a1,self.target_normal)**2 / 2
+        f_2 = self.penalty_factor * np.dot(a2,self.target_normal)**2 / 2
+
+        # LHS
+        local_lhs_1 = f_1.h
+        local_lhs_2 = f_2.h
+
+        lhs_new = local_lhs_1 + local_lhs_2
+
+        # RHS
+        local_rhs_1 = - f_1.g
+        local_rhs_2 = - f_2.g
+
+        rhs_new = local_rhs_1 + local_rhs_2
+
+        return lhs_new, rhs_new
+
 # ==============================================================================
 class CurvatureMinimizationConditionWithAD( ReconstructionConditionWithADBase ):
     # --------------------------------------------------------------------------
@@ -323,6 +409,41 @@ class CurvatureMinimizationConditionWithAD( ReconstructionConditionWithADBase ):
         local_rhs_3 = - f_3.g
 
         return local_rhs_1 + local_rhs_2 + local_rhs_3
+
+    # --------------------------------------------------------------------------
+    def CalculateLocalSystem(self):
+        a1 = super().ComputeActualHyperJet(self.shape_function_derivatives_u)
+        a2 = super().ComputeActualHyperJet(self.shape_function_derivatives_v)
+        a1_1 = super().ComputeActualHyperJet(self.shape_function_derivatives_uu)
+        a1_2 = super().ComputeActualHyperJet(self.shape_function_derivatives_uv)
+        a2_2 = super().ComputeActualHyperJet(self.shape_function_derivatives_vv)
+
+        a3 = np.cross(a1,a2)
+        a3 /= np.linalg.norm(a3)
+
+        b11 = np.dot(a1_1,a3)
+        b12 = np.dot(a1_2,a3)
+        b22 = np.dot(a2_2,a3)
+
+        f_1 = self.penalty_factor * (self.B11 - b11)**2 / 2
+        f_2 = self.penalty_factor * (self.B12 - b12)**2 / 2
+        f_3 = self.penalty_factor * (self.B22 - b22)**2 / 2
+
+        # LHS
+        local_lhs_1 = f_1.h
+        local_lhs_2 = f_2.h
+        local_lhs_3 = f_3.h
+
+        local_lhs = local_lhs_1 + local_lhs_2 + local_lhs_3
+
+        # RHS
+        local_rhs_1 = - f_1.g
+        local_rhs_2 = - f_2.g
+        local_rhs_3 = - f_3.g
+
+        local_rhs = local_rhs_1 + local_rhs_2 + local_rhs_3
+
+        return local_lhs, local_rhs
 
 # ==============================================================================
 class KLShellConditionWithAD( ReconstructionConditionWithADBase ):
@@ -458,5 +579,43 @@ class KLShellConditionWithAD( ReconstructionConditionWithADBase ):
             f_act -= n[k] * eps[k].g + m[k] * kap[k].g
 
         return self.penalty_factor * self.dA * f_act
+
+    # --------------------------------------------------------------------------
+    def CalculateLocalSystem(self):
+        B11, B12, B22 = self.B11, self.B12, self.B22
+        A11, A22, A12 = self.A11, self.A22, self.A12
+
+        a1 =super().ComputeActualHyperJet(self.shape_function_derivatives_u)
+        a2 =super().ComputeActualHyperJet(self.shape_function_derivatives_v)
+        a1_1 =super().ComputeActualHyperJet(self.shape_function_derivatives_uu)
+        a1_2 =super().ComputeActualHyperJet(self.shape_function_derivatives_uv)
+        a2_2 =super().ComputeActualHyperJet(self.shape_function_derivatives_vv)
+
+        a3 = np.cross(a1,a2)
+        a3 /= np.linalg.norm(a3)
+
+        a11, a22, a12 = np.dot(a1, a1), np.dot(a2, a2), np.dot(a1, a2)
+        b11, b12, b22 = np.dot([a1_1, a1_2, a2_2], a3)
+
+        eps = np.dot(self.Tm, [a11 - A11, a22 - A22, a12 - A12]) / 2
+        kap = np.dot(self.Tm, [B11 - b11, B12 - b12, B22 - b22])
+
+        n = np.dot(self.Dm, [j.f for j in eps])
+        m = np.dot(self.Db, [j.f for j in kap])
+
+        f_act = np.zeros(self.local_system_size)
+        k_act = np.zeros((self.local_system_size, self.local_system_size))
+        for k in range(3):
+            f_act -= n[k] * eps[k].g + m[k] * kap[k].g
+            for l in range(3):
+                k_act += np.outer(eps[k].g, eps[l].g) * self.Dm[k, l]
+                k_act += np.outer(kap[k].g, kap[l].g) * self.Db[k, l]
+
+            k_act += n[k] * eps[k].h + m[k] * kap[k].h
+
+        local_lhs = self.penalty_factor * self.dA * k_act
+        local_rhs = self.penalty_factor * self.dA * f_act
+
+        return local_lhs, local_rhs
 
 # ==============================================================================

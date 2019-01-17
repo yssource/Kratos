@@ -490,15 +490,18 @@ class ConditionsFactory:
 
         apply_kl_shell = self.parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].GetBool()
         shell_penalty_fac = self.parameters["conditions"]["faces"]["mechanical"]["penalty_factor"].GetDouble()
-        exclusive_face_list = self.parameters["conditions"]["faces"]["mechanical"]["exclusive_face_list"].GetVector()
+
+        list_of_exclusive_faces = []
+        for itr in range(self.parameters["conditions"]["faces"]["mechanical"]["exclusive_face_list"].size()):
+            list_of_exclusive_faces.append(self.parameters["conditions"]["faces"]["mechanical"]["exclusive_face_list"][itr].GetString())
 
         for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
 
             print("> Processing face ",face_itr)
 
-            if len(exclusive_face_list) != 0:
-                if face_itr not in exclusive_face_list:
-                    continue
+            # Skip faces if exclusive face list is specified (if list is empty, use all faces)
+            if face_i.key not in list_of_exclusive_faces:
+                continue
 
             surface_geometry = face_i.surface_geometry_3d().geometry
             shape_function = an.SurfaceShapeEvaluator(DegreeU=surface_geometry.DegreeU, DegreeV=surface_geometry.DegreeV, Order=2)

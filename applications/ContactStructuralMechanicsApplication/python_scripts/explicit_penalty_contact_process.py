@@ -69,6 +69,10 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
                 "debug_mode"                          : false,
                 "check_gap"                           : "check_mapping"
             },
+            "advance_explicit_parameters" : {
+                "manual_impact_time_duration" : true,
+                "impact_time_duration"        : 1.0e-6
+            },
             "advance_ALM_parameters" : {
                 "manual_ALM"                  : false,
                 "stiffness_factor"            : 1.0,
@@ -102,6 +106,9 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
         # Setting NL_ITERATION_NUMBER (used in some utilities)
         process_info = self.main_model_part.ProcessInfo
         process_info[KM.NL_ITERATION_NUMBER] = 1
+
+        if self.contact_settings["advance_explicit_parameters"]["manual_impact_time_duration"].GetBool():
+            process_info[CSMA.IMPACT_TIME_DURATION] = self.contact_settings["advance_explicit_parameters"]["impact_time_duration"].GetDouble()
 
         # Create the dynamic factor process
         self.dynamic_factor_process = CSMA.ComputeDynamicFactorProcess(self.main_model_part)

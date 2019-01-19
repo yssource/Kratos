@@ -160,9 +160,24 @@ void IgaBeamElement::ComputeCrossSectionGeometryActual(
 
     Vector IgaBeamElement::ComputeEpsilonFirstDerivative(Vector3 _r1) ;
 
-    Matrix IgaBeamElement::ComputeEpsilonSecondDerivative(Vector3 _r1) ;
+    Matrix IgaBeamElement::ComputeEpsilonSecondDerivative();        //change 17.11   (Vector3 _r1) ;
 
-    Vector IgaBeamElement::ComputePhieDof(Vector& _func) ;
+    void IgaBeamElement::ComputeRotationalDof(
+    VectorType& _curv_var_t,
+    VectorType& _curv_var_n,
+    VectorType& _curv_var_v,
+    Vector3 _R1,
+    Vector3 _r1,
+    Vector3 _N0,
+    Vector3 _V0,
+    Vector3 _N_ref,
+    Vector3 _V_ref,
+    Vector3 _n_act,
+    Vector3 _v_act,
+    double _Phi,
+    double _phi ) ;
+
+    // Vector IgaBeamElement::ComputePhiDof(Vector& _func) ;        //changes 17.11     funktion nicht benötigt
 
     void IgaBeamElement::ComputeMatrixLambda(
         BoundedMatrix<double,3,3>& _matrix_lambda,
@@ -427,6 +442,11 @@ Matrix IgaBeamElement::CrossProductVectorMatrix(
 BoundedMatrix<double,3,3> IgaBeamElement::CrossProductMatrixVector(
     BoundedMatrix<double,3,3> mat,
     BoundedVector<double,3> vec) ;
+
+
+
+void IgaBeamElement::CalculateLoadMoment( ) ;
+
     
 }; // class IgaBeamElement
 

@@ -133,6 +133,8 @@ class AleFluidSolver(PythonSolver):
 
     def ImportModelPart(self):
         self.fluid_solver.ImportModelPart() # only ONE solver imports the ModelPart
+        #TODO set the to-skip-option
+        self.mesh_motion_solver.ImportModelPart()
 
     def PrepareModelPart(self):
         # Doing it ONLY for the fluid solver (since this contains filling the buffer)

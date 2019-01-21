@@ -75,6 +75,7 @@ class MeshSolverBase(PythonSolver):
             raise Exception('Please provide the domain size as the "domain_size" (int) parameter!')
 
         self.mesh_model_part.ProcessInfo.SetValue(KratosMultiphysics.DOMAIN_SIZE, domain_size)
+        self.mesh_model_part.CreateSubModelPart("mesh_motion_computing_model_part")
 
         self.print_on_rank_zero("::[MeshSolverBase]:: Construction finished")
 
@@ -101,31 +102,31 @@ class MeshSolverBase(PythonSolver):
 
         return new_time
 
-    def Initialize(self):
-        self.get_mesh_motion_solving_strategy().Initialize()
-        #self.neighbour_search.Execute()
-        self.print_on_rank_zero("::[MeshSolverBase]:: Finished initialization.")
+    # def Initialize(self):
+    #     self.get_mesh_motion_solving_strategy().Initialize()
+    #     #self.neighbour_search.Execute()
+    #     self.print_on_rank_zero("::[MeshSolverBase]:: Finished initialization.")
 
-    def InitializeSolutionStep(self):
-        self.get_mesh_motion_solving_strategy().InitializeSolutionStep()
+    # def InitializeSolutionStep(self):
+    #     self.get_mesh_motion_solving_strategy().InitializeSolutionStep()
 
-    def FinalizeSolutionStep(self):
-        self.get_mesh_motion_solving_strategy().FinalizeSolutionStep()
+    # def FinalizeSolutionStep(self):
+    #     self.get_mesh_motion_solving_strategy().FinalizeSolutionStep()
 
-    def Predict(self):
-        self.get_mesh_motion_solving_strategy().Predict()
+    # def Predict(self):
+    #     self.get_mesh_motion_solving_strategy().Predict()
 
-    def SolveSolutionStep(self):
-        self.get_mesh_motion_solving_strategy().Solve() # Calling Solve bcs this is what is currently implemented in the MeshSolverStrategies
+    # def SolveSolutionStep(self):
+    #     self.get_mesh_motion_solving_strategy().Solve() # Calling Solve bcs this is what is currently implemented in the MeshSolverStrategies
 
-    def SetEchoLevel(self, level):
-        self.get_mesh_motion_solving_strategy().SetEchoLevel(level)
+    # def SetEchoLevel(self, level):
+    #     self.get_mesh_motion_solving_strategy().SetEchoLevel(level)
 
-    def GetEchoLevel(self):
-        self.get_mesh_motion_solving_strategy().GetEchoLevel()
+    # def GetEchoLevel(self):
+    #     self.get_mesh_motion_solving_strategy().GetEchoLevel()
 
-    def Clear(self):
-        self.get_mesh_motion_solving_strategy().Clear()
+    # def Clear(self):
+    #     self.get_mesh_motion_solving_strategy().Clear()
 
     def GetMinimumBufferSize(self):
         buffer_size = 0
@@ -144,40 +145,40 @@ class MeshSolverBase(PythonSolver):
 
     def ImportModelPart(self):
         # we can use the default implementation in the base class
-        self._ImportModelPart(self.mesh_model_part,self.settings["model_import_settings"])
+        self._ImportModelPart(self.mesh_model_part, self.settings["model_import_settings"])
 
     def PrepareModelPart(self):
         if not self.mesh_model_part.ProcessInfo[KratosMultiphysics.IS_RESTARTED]:
             self._set_and_fill_buffer()
 
     def GetComputingModelPart(self):
-        return self.mesh_model_part
+        return self.mesh_model_part.GetSubModelPart("mesh_motion_computing_model_part")
 
-    #### Specific internal functions ####
+    # #### Specific internal functions ####
 
-    def get_linear_solver(self):
-        if not hasattr(self, '_linear_solver'):
-            self._linear_solver = self._create_linear_solver()
-        return self._linear_solver
+    # def get_linear_solver(self):
+    #     if not hasattr(self, '_linear_solver'):
+    #         self._linear_solver = self._create_linear_solver()
+    #     return self._linear_solver
 
-    def get_mesh_motion_solving_strategy(self):
-        if not hasattr(self, '_mesh_motion_solving_strategy'):
-            self._mesh_motion_solving_strategy = self._create_mesh_motion_solving_strategy()
-        return self._mesh_motion_solving_strategy
+    # def get_mesh_motion_solving_strategy(self):
+    #     if not hasattr(self, '_mesh_motion_solving_strategy'):
+    #         self._mesh_motion_solving_strategy = self._create_mesh_motion_solving_strategy()
+    #     return self._mesh_motion_solving_strategy
 
-    #### Private functions ####
+    # #### Private functions ####
 
-    def _create_linear_solver(self):
-        import linear_solver_factory
-        linear_solver = linear_solver_factory.ConstructSolver(self.settings["mesh_motion_linear_solver_settings"])
-        return linear_solver
+    # def _create_linear_solver(self):
+    #     import linear_solver_factory
+    #     linear_solver = linear_solver_factory.ConstructSolver(self.settings["mesh_motion_linear_solver_settings"])
+    #     return linear_solver
 
-    def _create_mesh_motion_solving_strategy(self):
-        """Create the mesh motion solving strategy.
+    # def _create_mesh_motion_solving_strategy(self):
+    #     """Create the mesh motion solving strategy.
 
-        The mesh motion solving strategy must provide the functions defined in SolutionStrategy.
-        """
-        raise Exception("Mesh motion solving strategy must be created by the derived class.")
+    #     The mesh motion solving strategy must provide the functions defined in SolutionStrategy.
+    #     """
+    #     raise Exception("Mesh motion solving strategy must be created by the derived class.")
 
     def _set_and_fill_buffer(self):
         """Prepare nodal solution step data containers and time step information. """

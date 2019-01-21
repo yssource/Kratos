@@ -25,6 +25,50 @@ class MeshSolverLaplacian(MeshSolverBase):
         super(MeshSolverLaplacian, self).__init__(mesh_model_part, custom_settings)
         print("::[MeshSolverLaplacian]:: Construction finished")
 
+    def ImportModelpart(self):
+        super(MeshSolverLaplacian, self).ImportModelpart()
+
+        # TODO I think this should be done in initialize, bcs of the ALE-solver ...?
+
+        self.laplacian_elements_part = self.main_model_part.CreateSubModelpart("LaplacianMMElements")
+
+        con_pres_mod_settings = KratosMultiphysics.Parameters("""
+        {
+            "element_name"              : "LaplacianMeshMovingElement",
+            "duplicate_sub_model_parts" : false
+        }""")
+
+        modeler = KratosMultiphysics.ConnectivityPreserveModeler()
+        modeler.GenerateModelPart(self.main_model_part,
+                                  self.laplacian_elements_part,
+                                  con_pres_mod_settings)
+
+    # def Initialize(self):
+    #     self.get_mesh_motion_solving_strategy().Initialize()
+    #     #self.neighbour_search.Execute()
+    #     self.print_on_rank_zero("::[MeshSolverBase]:: Finished initialization.")
+
+    # def InitializeSolutionStep(self):
+    #     self.get_mesh_motion_solving_strategy().InitializeSolutionStep()
+
+    # def FinalizeSolutionStep(self):
+    #     self.get_mesh_motion_solving_strategy().FinalizeSolutionStep()
+
+    # def Predict(self):
+    #     self.get_mesh_motion_solving_strategy().Predict()
+
+    # def SolveSolutionStep(self):
+    #     self.get_mesh_motion_solving_strategy().Solve() # Calling Solve bcs this is what is currently implemented in the MeshSolverStrategies
+
+    # def SetEchoLevel(self, level):
+    #     self.get_mesh_motion_solving_strategy().SetEchoLevel(level)
+
+    # def GetEchoLevel(self):
+    #     self.get_mesh_motion_solving_strategy().GetEchoLevel()
+
+    # def Clear(self):
+    #     self.get_mesh_motion_solving_strategy().Clear()
+
     def _create_mesh_motion_solving_strategy(self):
         linear_solver = self.get_linear_solver()
         time_order = self.settings["time_order"].GetInt()

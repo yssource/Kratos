@@ -72,7 +72,7 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
                 "check_gap"                           : "check_mapping"
             },
             "advance_explicit_parameters" : {
-                "manual_impact_time_duration" : false,
+                "manual_impact_time_duration" : true,
                 "impact_time_duration"        : 1.0e-6
             },
             "advance_ALM_parameters" : {

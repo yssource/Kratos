@@ -2,6 +2,7 @@ from __future__ import print_function, absolute_import, division #makes KratosMu
 # Importing the Kratos Library
 import KratosMultiphysics as KM
 
+import KratosMultiphysics.StructuralMechanicsApplication as SMA
 import KratosMultiphysics.ContactStructuralMechanicsApplication as CSMA
 
 def Factory(settings, Model):
@@ -114,6 +115,9 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
         # Setting the impact time duration
         if self.contact_settings["advance_explicit_parameters"]["manual_impact_time_duration"].GetBool():
             process_info[CSMA.IMPACT_TIME_DURATION] = self.contact_settings["advance_explicit_parameters"]["impact_time_duration"].GetDouble()
+        else:
+            max_delta_time = SMA.CalculateDeltaTime(self.computing_model_part, 2.0, 1.0e-3, 1.0)
+            process_info[CSMA.IMPACT_TIME_DURATION] = max_delta_time
 
         # Create the dynamic factor process
         self.dynamic_factor_process = CSMA.ComputeDynamicFactorProcess(self.main_model_part)

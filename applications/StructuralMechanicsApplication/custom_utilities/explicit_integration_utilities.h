@@ -61,6 +61,7 @@ namespace ExplicitIntegrationUtilities
 
     /**
      * @brief This method computes the necessry delta time to avoid numerical instabilities
+     * @details About mass scaling on https://caeai.com/blog/what-mass-scaling-and-when-it-appropriate-explicit-dynamics-analysis
      * @param rModelPart The model of the problem to solve
      * @param ThisParameters The configuration parameters
      * @return The critical delta time

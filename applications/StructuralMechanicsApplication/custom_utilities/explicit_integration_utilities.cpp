@@ -70,6 +70,9 @@ double CalculateDeltaTime(
                 }
                 ++iteration;
             }
+
+            // Save mass scaling
+            // TODO: Finish this!!!!
         }
     } else {
         stable_delta_time = InnerCalculateDeltaTime(rModelPart, time_step_prediction_level, max_delta_time, safety_factor, mass_factor);

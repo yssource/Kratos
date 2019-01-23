@@ -116,7 +116,8 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
         if self.contact_settings["advance_explicit_parameters"]["manual_impact_time_duration"].GetBool():
             process_info[CSMA.IMPACT_TIME_DURATION] = self.contact_settings["advance_explicit_parameters"]["impact_time_duration"].GetDouble()
         else:
-            max_delta_time = SMA.CalculateDeltaTime(self.computing_model_part, 2.0, 1.0e-3, 1.0)
+            empty_settings = KM.Parameters("""{}""")
+            max_delta_time = SMA.CalculateDeltaTime(self.computing_model_part, empty_settings)
             process_info[CSMA.IMPACT_TIME_DURATION] = max_delta_time
 
         # Create the dynamic factor process

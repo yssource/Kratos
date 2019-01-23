@@ -19,6 +19,7 @@
 //Utilities
 #include "custom_utilities/formfinding_io_utility.h"
 #include "custom_utilities/explicit_integration_utilities.h"
+#include "custom_utilities/rayleigh_damping_coefficients_utilities.h"
 
 namespace Kratos {
 namespace Python {
@@ -35,6 +36,8 @@ void  AddCustomUtilitiesToPython(pybind11::module& m)
         ;
 
     m.def("CalculateDeltaTime",&ExplicitIntegrationUtilities::CalculateDeltaTime);
+
+    m.def("ComputeDampingCoefficients",&RayleighDampingCoefficientsUtilities::ComputeDampingCoefficients);
 }
 
 }  // namespace Python.

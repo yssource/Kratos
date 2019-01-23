@@ -22,7 +22,7 @@
 
 // Project includes
 #include "iga_base_element.h"
-#include "iga_beam_element.h"
+#include "iga_beam_moment_condition.h"
 #include "iga_application_variables.h"
 #include "custom_elements/base_discrete_element.h"
 #include "custom_utilities/iga_debug.h"
@@ -33,18 +33,18 @@
 
 namespace Kratos {
 
-Element::Pointer IgaBeamElement::Create(
+Element::Pointer IgaBeamMomentCondition::Create(
     IndexType NewId,
     NodesArrayType const& ThisNodes,
     PropertiesType::Pointer pProperties) const
 {
     auto geometry = GetGeometry().Create(ThisNodes);
 
-    return Kratos::make_shared<IgaBeamElement>(NewId, geometry,
+    return Kratos::make_shared<IgaBeamMomentCondition>(NewId, geometry,
         pProperties);
 }
 
-void IgaBeamElement::GetDofList(
+void IgaBeamMomentCondition::GetDofList(
     DofsVectorType& rElementalDofList,
     ProcessInfo& rCurrentProcessInfo)
 {
@@ -62,7 +62,7 @@ KRATOS_TRY;
 KRATOS_CATCH("")
 }
 
-void IgaBeamElement::EquationIdVector(
+void IgaBeamMomentCondition::EquationIdVector(
     EquationIdVectorType& rResult,
     ProcessInfo& rCurrentProcessInfo)
 {
@@ -80,11 +80,11 @@ KRATOS_TRY;
 KRATOS_CATCH("")
 }
 
-void IgaBeamElement::Initialize()
+void IgaBeamMomentCondition::Initialize()
 {
 }
 
-void IgaBeamElement::CalculateAll(
+void IgaBeamMomentCondition::CalculateAll(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo,
@@ -96,66 +96,17 @@ KRATOS_TRY;
     // temporary debug data
     // auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
 
+// Create empty left-hand-side matrix
+rLeftHandSideMatrix.resize(NumberOfDofs(), NumberOfDofs()); 
+rLeftHandSideMatrix.clear();
+rRightHandSideVector.clear();
+// get properties
+const auto& properties = GetProperties();
 
-    // get integration data
+const Vector3 load_vec         = properties[LOAD_VECTOR_MOMENT];        //TODO: könnte eigentlich auch direkt in der Funktion abgerufen werden
 
-    // const double& integration_weight = GetValue(INTEGRATION_WEIGHT);
-    Vector& shape_function_values = GetValue(SHAPE_FUNCTION_VALUES);
-    Matrix& shape_derivatives     = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
 
-    // get properties
-    const auto& properties = GetProperties();
-
-    const double _emod          = properties[YOUNG_MODULUS];
-    const double _gmod          = properties[SHEAR_MODULUS];
-    const double _area          = properties[CROSS_AREA];
-    const double prestress      = properties[PRESTRESS_CAUCHY];
-    const double Phi            = properties[PHI];
-    const double Phi_der        = properties[PHI_0_DER];
-    const double _m_inert_y     = properties[MOMENT_OF_INERTIA_Y];
-    const double _m_inert_z     = properties[MOMENT_OF_INERTIA_Z];
-    const double _mt_inert      = properties[MOMENT_OF_INERTIA_T];
-
-    // Create empty Stiffness Matrix
-    MatrixType _gke;
-    VectorType _gfie;
-    _gke.clear();
-    _gfie.clear();
-    double _dL;
-
-    ElementStiffnessMatrixNonlinear(_emod, _gmod, _area, _m_inert_y, _m_inert_z, _mt_inert, _gke, _gfie, _dL);
-    // IgaDebug::CheckMatrix(expected_data, "stiffness", _gke);
-    // IgaDebug::CheckVector(expected_data, "external_forces", _gfie);
-    // LOG("GaussPonitStiffnessMatrixCheck! ");
-
-    // transformation into Geometrical Space
-    double integration_weight = GetValue(INTEGRATION_WEIGHT);
-    double mult = integration_weight * _dL;
-    // IgaDebug::CheckDouble(expected_data, "dL", _dL);
-    // IgaDebug::CheckDouble(expected_data, "mult", mult);
-    // LOG("Integration weight: " << integration_weight);
-    // LOG("Länge dL: " << _dL);
-
-    auto lhs = mult * _gke;
-    auto rhs = mult * _gfie;
-    // LOG("lhs " << lhs);
-    // LOG("rhs " << rhs);
-    // LOG("Länge N0: " << GetValue(N0));
-    // for (size_t r = 0; r != NumberOfDofs(); r++)
-    // {
-    //     LOG("rhs(" << r << ") " << rhs(r) );
-    // }
-    // IgaDebug::CheckMatrix(expected_data, "TeilMatrix", lhs);
-    // IgaDebug::CheckVector(expected_data, "TeilMatrixRechts", rhs);
-    // LOG("Teilmatrix: " << _gke)
-
-    rLeftHandSideMatrix = mult * _gke;
-    rRightHandSideVector = mult * _gfie;
-
-    // // LOG("rLeftHandSideMatrix: ");
-    // LOG(rLeftHandSideMatrix);
-    // LOG("rRightHandSideVector: ");
-    // LOG(rRightHandSideVector);
+CalculateLoadMoment(rRightHandSideVector, load_vec); 
 
 
 
@@ -182,7 +133,7 @@ KRATOS_CATCH("");
      */
 // #--------------------------------------------------------------------------------
 
-void IgaBeamElement::GetDofTypesPerNode(
+void IgaBeamMomentCondition::GetDofTypesPerNode(
     std::vector<int>& _act_dofs)
 {
 KRATOS_TRY;
@@ -213,7 +164,7 @@ KRATOS_CATCH("");
      */
 // #--------------------------------------------------------------------------------
 
-IgaBeamElement::~IgaBeamElement(void)    //TODO das hier von Thomas erklären lassen. (müsste ein "destructor" sein)
+IgaBeamMomentCondition::~IgaBeamMomentCondition(void)    //TODO das hier von Thomas erklären lassen. (müsste ein "destructor" sein)
 {
 }
 
@@ -239,7 +190,7 @@ IgaBeamElement::~IgaBeamElement(void)    //TODO das hier von Thomas erklären la
      * @note
      */
 //#--------------------------------------------------------------------------------
-void IgaBeamElement::ElementStiffnessMatrixNonlinear(
+void IgaBeamMomentCondition::ElementStiffnessMatrixNonlinear(
     double _emod,
     double _gmod,
     double _area,
@@ -633,7 +584,7 @@ KRATOS_CATCH("")
      * @note by A.Bauer (10/2017)
      */
 //#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeGeometryInitial(
+void IgaBeamMomentCondition::ComputeGeometryInitial(
         Vector3& r1,
         Vector3& r2,
         double& a_ini,
@@ -712,7 +663,7 @@ KRATOS_CATCH("");
      * @note by A.Bauer (02/2017)
      */
 //#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeGeometryInitial(
+void IgaBeamMomentCondition::ComputeGeometryInitial(
         Vector3& r1,
         Vector3& r2,
         Vector3& r3,
@@ -796,7 +747,7 @@ KRATOS_CATCH("");
      * @note by A.Bauer (10/2014)
      */
 //#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeGeometryReference(
+void IgaBeamMomentCondition::ComputeGeometryReference(
         Vector3& R1,
         Vector3& R2,
         double& A,
@@ -864,7 +815,7 @@ KRATOS_CATCH("");
      */
 //#--------------------------------------------------------------------------------
 
-void IgaBeamElement::ComputeGeometryReference(
+void IgaBeamMomentCondition::ComputeGeometryReference(
         Vector3& R1,
         Vector3& R2,
         Vector3& R3,
@@ -935,7 +886,7 @@ KRATOS_CATCH("");
 //      */
 // //#--------------------------------------------------------------------------------
 
-void IgaBeamElement::ComputeGeometryActual(
+void IgaBeamMomentCondition::ComputeGeometryActual(
         Vector3& r1,
         Vector3& r2,
         double& a,
@@ -1008,7 +959,7 @@ KRATOS_CATCH("");
      */
 //#--------------------------------------------------------------------------------
 
-void IgaBeamElement::ComputeGeometryActual(
+void IgaBeamMomentCondition::ComputeGeometryActual(
         Vector3& r1,
         Vector3& r2,
         Vector3& r3,
@@ -1072,7 +1023,7 @@ KRATOS_CATCH("");
      * @note   A.Bauer (10/2014)
      */
 //#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeCrossSectionGeometryReference(
+void IgaBeamMomentCondition::ComputeCrossSectionGeometryReference(
     Vector3 _R1,
     Vector3 _R2,
         Vector3& _n_act,
@@ -1220,7 +1171,7 @@ KRATOS_CATCH("");
      * @note   A.Bauer (10/2014)
      */
 //#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeCrossSectionGeometryActual(
+void IgaBeamMomentCondition::ComputeCrossSectionGeometryActual(
     Vector3 _R1,
     Vector3 _R2,
     Vector3 _r1,
@@ -1417,7 +1368,7 @@ KRATOS_CATCH("");
      * @note   A.Bauer (10/2014)
      */
 //#--------------------------------------------------------------------------------
-Vector IgaBeamElement::ComputeEpsilonFirstDerivative(Vector3 _r1)
+Vector IgaBeamMomentCondition::ComputeEpsilonFirstDerivative(Vector3 _r1)
 {
 KRATOS_TRY;
 
@@ -1469,7 +1420,7 @@ KRATOS_CATCH("");
      * @note   A.Bauer (03/2015)
      */
 //#--------------------------------------------------------------------------------
-Matrix IgaBeamElement::ComputeEpsilonSecondDerivative( )  // Vector3 _r1)     //change 17.11  r1 aus dem input nehmen
+Matrix IgaBeamMomentCondition::ComputeEpsilonSecondDerivative( )  // Vector3 _r1)     //change 17.11  r1 aus dem input nehmen
 {
 KRATOS_TRY;
 
@@ -1537,7 +1488,7 @@ KRATOS_CATCH("");
      * @note   A.Bauer (10/2014)
      */
 //#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputePhiReferenceProperty(
+void IgaBeamMomentCondition::ComputePhiReferenceProperty(
         double& phi,
         double& phi_0_der)
 {
@@ -1584,7 +1535,7 @@ KRATOS_CATCH("");
      * @note   A.Bauer (06/2014)
      */
 //#--------------------------------------------------------------------------------
-// Vector IgaBeamElement::ComputePhiDof(Vector& _func)
+// Vector IgaBeamMomentCondition::ComputePhiDof(Vector& _func)
 // {
 //     int n_dof = NumberOfDofs();  // * P_Deg; //# TODO ### P_Deg in Kratos
 //     Vector phi_var;     // Variation of the Axial Strain
@@ -1622,7 +1573,7 @@ KRATOS_CATCH("");
      * @note
      */
 //#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeRotationalDof(
+void IgaBeamMomentCondition::ComputeRotationalDof(
     VectorType& _curv_var_t,
     VectorType& _curv_var_n,
     VectorType& _curv_var_v,
@@ -1797,7 +1748,7 @@ KRATOS_CATCH("");
      * @note   A.Bauer (03/2015)
      */
 //#--------------------------------------------------------------------------------
-void IgaBeamElement::ComputeDofNonlinear(
+void IgaBeamMomentCondition::ComputeDofNonlinear(
         Vector& _curve_var_n,
         Vector& _curve_var_v,
         Vector& _tor_var_n,
@@ -2268,7 +2219,7 @@ KRATOS_CATCH("");
  * @param[in]   mat     Input Matrix [3,3]
  * @return      vec_mat Output Matrix [3,3]
  */
-BoundedMatrix<double,3,3> IgaBeamElement::CrossProductVectorMatrix(
+BoundedMatrix<double,3,3> IgaBeamMomentCondition::CrossProductVectorMatrix(
     BoundedVector<double,3> vec,
     BoundedMatrix<double,3,3> mat)
 {
@@ -2312,7 +2263,7 @@ KRATOS_CATCH("")
  * @param[in]   mat     Input Matrix [n.a, n.a]
  * @return      vec_mat Output Matrix [n.a, n.a]
  */
-Matrix IgaBeamElement::CrossProductVectorMatrix(
+Matrix IgaBeamMomentCondition::CrossProductVectorMatrix(
     Vector vec,
     Matrix mat)
 {
@@ -2398,7 +2349,7 @@ KRATOS_CATCH("")
  * @param[in]   mat     Input Matrix [3,3]
  * @return      vec_mat Output Matrix [3,3]
  */
-BoundedMatrix<double,3,3> IgaBeamElement::CrossProductMatrixVector(
+BoundedMatrix<double,3,3> IgaBeamMomentCondition::CrossProductMatrixVector(
     BoundedMatrix<double,3,3> mat,
     BoundedVector<double,3> vec)
 {
@@ -2436,7 +2387,7 @@ KRATOS_TRY;
 KRATOS_CATCH("")
 }
 
-void IgaBeamElement::ComputeTVar(
+void IgaBeamMomentCondition::ComputeTVar(
         const Vector3& r1,
     std::vector<Vector3>& t_var)
 {
@@ -2467,7 +2418,7 @@ KRATOS_TRY;
 KRATOS_CATCH("");
 }
 
-void IgaBeamElement::ComputeTVarVar(
+void IgaBeamMomentCondition::ComputeTVarVar(
         const Vector3& r1,
     std::vector<Vector3>& t_var_var)
 {
@@ -2524,7 +2475,7 @@ KRATOS_TRY;
 KRATOS_CATCH("");
 }
 
-void IgaBeamElement::ComputeTDerVar(
+void IgaBeamMomentCondition::ComputeTDerVar(
     const Vector3& r1,
     const Vector3& r2,
         std::vector<Vector3>& t_der_var)
@@ -2596,7 +2547,7 @@ KRATOS_TRY;
 KRATOS_CATCH("");
 }
 
-void IgaBeamElement::ComputeTDerVarVar(
+void IgaBeamMomentCondition::ComputeTDerVarVar(
     const Vector3& r1,
     const Vector3& r2,
         std::vector<Vector3>& t_der_var_var)
@@ -2682,7 +2633,7 @@ KRATOS_TRY;
 KRATOS_CATCH("");
 }
 
-BoundedMatrix<double, 3, 3> IgaBeamElement::CrossVectorIdentity(
+BoundedMatrix<double, 3, 3> IgaBeamMomentCondition::CrossVectorIdentity(
         const Vector3& v)
 {
 KRATOS_TRY;
@@ -2703,7 +2654,7 @@ KRATOS_TRY;
 KRATOS_CATCH("");
 }
 
-void IgaBeamElement::ComputeRodrigues(
+void IgaBeamMomentCondition::ComputeRodrigues(
     const Vector3& v,
     const double& phi,
         BoundedMatrix<double, 3, 3>& rodrigues)
@@ -2719,7 +2670,7 @@ KRATOS_CATCH("");
 }
 
 // check!
-void IgaBeamElement::ComputeRodriguesDer(
+void IgaBeamMomentCondition::ComputeRodriguesDer(
     const Vector3& v,
     const Vector3& v_der,
     const double& phi,
@@ -2739,7 +2690,7 @@ KRATOS_CATCH("");
 }
 
 // check!
-void IgaBeamElement::ComputeRodriguesDerVar(
+void IgaBeamMomentCondition::ComputeRodriguesDerVar(
     const Vector3& v,
     const std::vector<Vector3>& v_var,
     const Vector3& v_der,
@@ -2777,7 +2728,7 @@ KRATOS_CATCH("");
 }
 
 // check!
-void IgaBeamElement::ComputeRodriguesDerVarVar(
+void IgaBeamMomentCondition::ComputeRodriguesDerVarVar(
     const Vector3& v,
     const std::vector<Vector3>& v_var,
     const std::vector<Vector3>& v_var_var,
@@ -2829,7 +2780,7 @@ KRATOS_CATCH("");
 }
 
 // check!
-void IgaBeamElement::ComputeRodriguesVar(
+void IgaBeamMomentCondition::ComputeRodriguesVar(
     const Vector3& v,
     const std::vector<Vector3>& v_var,
     const double& phi,
@@ -2855,7 +2806,7 @@ KRATOS_CATCH("");
 }
 
 // check!
-void IgaBeamElement::ComputeRodriguesVarVar(
+void IgaBeamMomentCondition::ComputeRodriguesVarVar(
     const Vector3& v,
     const std::vector<Vector3>& v_var,
     const std::vector<Vector3>& v_var_var,
@@ -2901,7 +2852,7 @@ KRATOS_CATCH("");
 }
 
 // check!
-void IgaBeamElement::ComputeLambda(
+void IgaBeamMomentCondition::ComputeLambda(
     const Vector3& v1,
     const Vector3& v2,
         BoundedMatrix<double, 3, 3>& lambda)
@@ -2928,7 +2879,7 @@ KRATOS_CATCH("");
 }
 
 // check!
-void IgaBeamElement::ComputeLambdaVar(
+void IgaBeamMomentCondition::ComputeLambdaVar(
     const Vector3& v1,
     const Vector3& v2,
     const std::vector<Vector3>& v2_var,
@@ -2960,7 +2911,7 @@ KRATOS_TRY;
 KRATOS_CATCH("");
 }
 
-void IgaBeamElement::ComputeLambdaVarVar(
+void IgaBeamMomentCondition::ComputeLambdaVarVar(
     const Vector3& v1,
     const Vector3& v2,
     const std::vector<Vector3>& v2_var,
@@ -3051,7 +3002,7 @@ KRATOS_CATCH("");
 
 
 // check!
-void IgaBeamElement::ComputeLambdaDer(
+void IgaBeamMomentCondition::ComputeLambdaDer(
     const Vector3& v1,
     const Vector3& v1_der,
     const Vector3& v2,
@@ -3077,7 +3028,7 @@ KRATOS_CATCH("");
 }
 
 // check!
-void IgaBeamElement::ComputeLambdaDerVar(
+void IgaBeamMomentCondition::ComputeLambdaDerVar(
     const Vector3& v1,
     const Vector3& v1_der,
     const Vector3& v2,
@@ -3122,7 +3073,7 @@ KRATOS_CATCH("");
 }
 
 // check!
-void IgaBeamElement::ComputeLambdaDerVarVar(
+void IgaBeamMomentCondition::ComputeLambdaDerVarVar(
     const Vector3& v1,
     const Vector3& v1_der,
     const Vector3& v2,
@@ -3249,107 +3200,103 @@ KRATOS_CATCH("");
 
 // LOADS________________________________________________________________________________________________
 
-// void IgaBeamElement::CalculateLoadMoment( )
-// {
-// KRATOS_TRY;
-
-//     //Predefinition
-//     double _mom_laod;
-//     // loadType* element_load_type;
-//     std::vector<double> _local_load_vec(NumberOfNodes()*4);
-//     _local_load_vec.clear();
-//     Vector3 direction;                      
-//     direction.clear();
-//     double factor;
-
-//     // TODO Get Load Direction!
-//     direction /= norm_2(direction); 
-
-
-//     // Get Shape Functions
-//     Vector& shape_function_values = GetValue(SHAPE_FUNCTION_VALUES);
-//     Matrix& shape_derivatives     = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-//     //Get Tangent Vector
-//     Vector3 T0_vec = GetValue(T0);
-//     // Normalize t0
-//     double t0_L = norm_2(T0_vec);
-//     T0_vec = T0_vec/t0_L;
-//     // get Rotations
-//     double Phi      = GetValue(PHI);
-//     double Phi_der  = GetValue(PHI_0_DER);
-//     double phi      = 0;
-//     double phi_der  = 0;
-    
-//     // Declarations
-//     Vector3 R1;
-//     Vector3 R2;
-//     double A;
-//     double B;
-//     Vector3 r1;
-//     Vector3 r2;
-//     double a;
-//     double b;
-//     R1.clear();
-//     R2.clear();
-//     r1.clear();
-//     r2.clear();
-    
-//     double B_n;
-//     double B_v;
-//     double C_12;
-//     double C_13;
-//     double b_n;
-//     double b_v;
-//     double c_12;
-//     double c_13;
-
-//     Vector3 N;     // Principal Axis 1 of Cross Section in Undeformed Config.
-//     Vector3 V;   // Prinzipal Axis 2 of Cross Section in Undeformed Config.
-//     Vector3 n;   // Principal Axis 1 Of Cross Section in Deformed Config.
-//     Vector3 v;  // Principal Axis 2 of Cross Section in Deformed Config.
-//     Vector3 N0;    // Principal Axis 1 of Cross Section in Reference Config.
-//     Vector3 V0;    // Principal Axis 2 of Cross Section in Reference Config.
-
-//     VectorType curv_var_t;
-//     VectorType curv_var_n;
-//     VectorType curv_var_v;
-
-//    // Compute the Vectors R1 R2 and the length A and B in undeformed and deformed state
-//     ComputeGeometryReference(R1, R2, A, B);
-//     ComputeGeometryActual(r1, r2, a, b);
-//     ComputeCrossSectionGeometryReference(R1, R2, N, V, T0_vec, N0, V0, B_n, B_v, C_12, C_13, Phi, Phi_der);
-//     ComputeCrossSectionGeometryActual(R1, R2, r1, r2, N0, V0, n, v, b_n, b_v, c_12, c_13, Phi, Phi_der, phi, phi_der);
-//     ComputePhiReferenceProperty(phi, phi_der);
-//     ComputeRotationalDof( curv_var_t, curv_var_n, curv_var_v, R1, r1, N0, V0, N, V, n, v, Phi, phi );
-
-//     Vector3 t = r1 / norm_2(r1);
-
-//     double fac_t;
-//     double fac_n;
-//     double fac_v;
-
-//     fac_t = inner_prod(t, direction) * factor;
-//     fac_n = inner_prod(n, direction) * factor;
-//     fac_v = inner_prod(v, direction) * factor;
-
-//     for(size_t k = 0; k != NumberOfDofs(); k++)
-//     {
-//         _local_load_vec[k] = curv_var_t[k] * fac_t + curv_var_n[k] * fac_n + curv_var_v[k] * fac_v;
-//     }
-
-
-// KRATOS_CATCH(""); 
-// }
-
-
-
-
-
-
-
-void IgaBeamElement::PrintInfo(std::ostream& rOStream) const
+void IgaBeamMomentCondition::CalculateLoadMoment(
+    VectorType& _local_load_vec,
+        Vector3 _load_vec)
 {
-    rOStream << "\"IgaBeamElement\" #" << Id();
+KRATOS_TRY;
+
+    // resize loadvector
+    _local_load_vec .resize(NumberOfDofs());
+    _local_load_vec.clear();
+
+    // Get Shape Functions
+    Vector& shape_function_values = GetValue(SHAPE_FUNCTION_VALUES);
+    Matrix& shape_derivatives     = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    //Get Tangent Vector
+    Vector3 T0_vec = GetValue(T0);
+    // Normalize t0
+    double t0_L = norm_2(T0_vec);
+    T0_vec = T0_vec/t0_L;
+    // get Rotations
+    double Phi      = GetValue(PHI);
+    double Phi_der  = GetValue(PHI_0_DER);
+    double phi      = 0;
+    double phi_der  = 0;
+    
+    // Declarations
+    Vector3 R1;
+    Vector3 R2;
+    double A;
+    double B;
+    Vector3 r1;
+    Vector3 r2;
+    double a;
+    double b;
+    R1.clear();
+    R2.clear();
+    r1.clear();
+    r2.clear();
+    
+    double B_n;
+    double B_v;
+    double C_12;
+    double C_13;
+    double b_n;
+    double b_v;
+    double c_12;
+    double c_13;
+
+    Vector3 N;     // Principal Axis 1 of Cross Section in Undeformed Config.
+    Vector3 V;   // Prinzipal Axis 2 of Cross Section in Undeformed Config.
+    Vector3 n;   // Principal Axis 1 Of Cross Section in Deformed Config.
+    Vector3 v;  // Principal Axis 2 of Cross Section in Deformed Config.
+    Vector3 N0;    // Principal Axis 1 of Cross Section in Reference Config.
+    Vector3 V0;    // Principal Axis 2 of Cross Section in Reference Config.
+
+    VectorType curv_var_t;
+    VectorType curv_var_n;
+    VectorType curv_var_v;
+
+   // Compute the Vectors R1 R2 and the length A and B in undeformed and deformed state
+    ComputeGeometryReference(R1, R2, A, B);
+    ComputeGeometryActual(r1, r2, a, b);
+    ComputeCrossSectionGeometryReference(R1, R2, N, V, T0_vec, N0, V0, B_n, B_v, C_12, C_13, Phi, Phi_der);
+    ComputeCrossSectionGeometryActual(R1, R2, r1, r2, N0, V0, n, v, b_n, b_v, c_12, c_13, Phi, Phi_der, phi, phi_der);
+    ComputePhiReferenceProperty(phi, phi_der);
+    ComputeRotationalDof( curv_var_t, curv_var_n, curv_var_v, R1, r1, N0, V0, N, V, n, v, Phi, phi );
+
+    // normalize base vectors
+    Vector3 t = r1 / norm_2(r1);
+    n /= norm_2(n);
+    v /= norm_2(v);
+
+    double fac_t;
+    double fac_n;
+    double fac_v;
+
+    fac_t = inner_prod(t, _load_vec);        //TODO check if right length
+    fac_n = inner_prod(n, _load_vec);
+    fac_v = inner_prod(v, _load_vec);
+
+    for(size_t k = 0; k != NumberOfDofs(); k++)
+    {
+        _local_load_vec[k] = curv_var_t[k] * fac_t + curv_var_n[k] * fac_n + curv_var_v[k] * fac_v;
+    }
+
+
+KRATOS_CATCH(""); 
+}
+
+
+
+
+
+
+
+void IgaBeamMomentCondition::PrintInfo(std::ostream& rOStream) const
+{
+    rOStream << "\"IgaBeamMomentCondition\" #" << Id();
 }
 
 } // namespace Kratos

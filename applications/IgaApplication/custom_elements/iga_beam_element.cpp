@@ -126,7 +126,7 @@ KRATOS_TRY;
     ElementStiffnessMatrixNonlinear(_emod, _gmod, _area, _m_inert_y, _m_inert_z, _mt_inert, _gke, _gfie, _dL);
     // IgaDebug::CheckMatrix(expected_data, "stiffness", _gke);
     // IgaDebug::CheckVector(expected_data, "external_forces", _gfie);
-    // // LOG("GaussPonitStiffnessMatrixCheck! ");
+    // LOG("GaussPonitStiffnessMatrixCheck! ");
 
     // transformation into Geometrical Space
     double integration_weight = GetValue(INTEGRATION_WEIGHT);
@@ -138,8 +138,8 @@ KRATOS_TRY;
 
     auto lhs = mult * _gke;
     auto rhs = mult * _gfie;
-    // LOG("lhs " << lhs);
-    // LOG("rhs " << rhs);
+    LOG("lhs " << lhs);
+    LOG("rhs " << rhs);
     // LOG("Länge N0: " << GetValue(N0));
     // for (size_t r = 0; r != NumberOfDofs(); r++)
     // {
@@ -149,8 +149,8 @@ KRATOS_TRY;
     // IgaDebug::CheckVector(expected_data, "TeilMatrixRechts", rhs);
     // LOG("Teilmatrix: " << _gke)
 
-    // rLeftHandSideMatrix = mult * _gke;
-    // rRightHandSideVector = mult * _gfie;
+    rLeftHandSideMatrix = mult * _gke;
+    rRightHandSideVector = mult * _gfie;
     // // LOG("rLeftHandSideMatrix: ");
     // LOG(rLeftHandSideMatrix);
     // LOG("rRightHandSideVector: ");
@@ -161,9 +161,9 @@ KRATOS_TRY;
     // yaml.write("rRightHandSideVector", rRightHandSideVector)
     // yaml.write("rLeftHandSideMatrix", rLeftHandSideMatrix)
 
-    VectorType _curv_var_t;
-    VectorType _curv_var_n;
-    VectorType _curv_var_v;
+    // VectorType _curv_var_t;
+    // VectorType _curv_var_n;
+    // VectorType _curv_var_v;
 
 
 
@@ -263,7 +263,7 @@ void IgaBeamElement::ElementStiffnessMatrixNonlinear(
 KRATOS_TRY;
 
     // temporary debug data
-    auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
+    // auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
     Vector3 T0_vec = GetValue(T0);
     // Normalize t0
     double t0_L = norm_2(T0_vec);
@@ -482,7 +482,7 @@ KRATOS_TRY;
     // 2nd Variation
     // Variation of axial Strain
     Matrix eps_dof_2 = ComputeEpsilonSecondDerivative();        //    r1);      change 17.11
-    eps_dof_2 = eps_dof_2 / Apow4;
+    eps_dof_2 = eps_dof_2 / Apow2;
     // LOG("eps_dof_2 " << eps_dof_2);
 
 
@@ -514,10 +514,10 @@ KRATOS_TRY;
     curve_dof_v = curve_dof_v / Apow2;
     torsion_dof_n = torsion_dof_n / A;
     torsion_dof_v = torsion_dof_v / A;
-    curve_dof_n_2 = curve_dof_n_2 / Apow4;
-    curve_dof_v_2 = curve_dof_v_2 / Apow4;
-    torsion_dof_n_2 = torsion_dof_n_2 / Apow2;
-    torsion_dof_v_2 = torsion_dof_v_2 / Apow2;
+    curve_dof_n_2 = curve_dof_n_2 / Apow2;
+    curve_dof_v_2 = curve_dof_v_2 / Apow2;
+    torsion_dof_n_2 = torsion_dof_n_2 / A;
+    torsion_dof_v_2 = torsion_dof_v_2 / A;
 
     // LOG("curve_dof_n " << curve_dof_n);
     // LOG("curve_dof_v " << curve_dof_v);
@@ -607,14 +607,14 @@ KRATOS_TRY;
     // IgaDebug::CheckVector(expected_data, "external_forces", _gfie);
 
 
-    VectorType _curv_var_t;
-    VectorType _curv_var_n;
-    VectorType _curv_var_v;
-    ComputeRotationalDof(_curv_var_t, _curv_var_n, _curv_var_v, R1, r1, N0, V0, N, V, n, v, Phi, phi );
+    // VectorType _curv_var_t;
+    // VectorType _curv_var_n;
+    // VectorType _curv_var_v;
+    // ComputeRotationalDof(_curv_var_t, _curv_var_n, _curv_var_v, R1, r1, N0, V0, N, V, n, v, Phi, phi );
 
-    IgaDebug::CheckVector(expected_data, "_curv_var_t", _curv_var_t);
-    IgaDebug::CheckVector(expected_data, "_curv_var_n", _curv_var_n);
-    IgaDebug::CheckVector(expected_data, "_curv_var_v", _curv_var_v);
+    // IgaDebug::CheckVector(expected_data, "_curv_var_t", _curv_var_t);
+    // IgaDebug::CheckVector(expected_data, "_curv_var_n", _curv_var_n);
+    // IgaDebug::CheckVector(expected_data, "_curv_var_v", _curv_var_v);
 
 
 

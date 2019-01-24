@@ -596,7 +596,8 @@ KRATOS_TRY;
     r2.resize(3);
     r2.clear();
 
-    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
 
     // Get previous Results
     Vector3 coords;         // Create the coordinates Vector of the Nodes
@@ -611,13 +612,13 @@ KRATOS_TRY;
         coords[1] += tmp_disp_ini[1];
         coords[2] += tmp_disp_ini[2];
 
-        r1[0] += shape_derivatives(0,i) * coords[0];
-        r1[1] += shape_derivatives(0,i) * coords[1];
-        r1[2] += shape_derivatives(0,i) * coords[2];
+        r1[0] += shape_derivatives_1[i] * coords[0];
+        r1[1] += shape_derivatives_1[i] * coords[1];
+        r1[2] += shape_derivatives_1[i] * coords[2];
 
-        r2[0] += shape_derivatives(1,i) * coords[0];
-        r2[1] += shape_derivatives(1,i) * coords[1];
-        r2[2] += shape_derivatives(1,i) * coords[2];
+        r2[0] += shape_derivatives_2[i] * coords[0];
+        r2[1] += shape_derivatives_2[i] * coords[1];
+        r2[2] += shape_derivatives_2[i] * coords[2];
     }
     // Set Tollerance if not done bevore
     float tol = 1.0e-8;
@@ -678,7 +679,10 @@ KRATOS_TRY;
     r3.resize(3);
     r3.clear();
 
-    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
+    Vector& shape_derivatives_3 = GetValue(SHAPE_FUNCTION_LOCAL_DER_3);
 
     // Get previous Results
     Vector3 coords;         // Create the Coordinats Vector of the Nodes
@@ -693,17 +697,17 @@ KRATOS_TRY;
         coords[1] += tmp_disp_ini[1];
         coords[2] += tmp_disp_ini[2];
 
-        r1[0] += shape_derivatives(0,i) * coords[0];
-        r1[1] += shape_derivatives(0,i) * coords[1];
-        r1[2] += shape_derivatives(0,i) * coords[2];
+        r1[0] += shape_derivatives_1[i] * coords[0];
+        r1[1] += shape_derivatives_1[i] * coords[1];
+        r1[2] += shape_derivatives_1[i] * coords[2];
 
-        r2[0] += shape_derivatives(1,i) * coords[0];
-        r2[1] += shape_derivatives(1,i) * coords[1];
-        r2[2] += shape_derivatives(1,i) * coords[2];
+        r2[0] += shape_derivatives_2[i] * coords[0];
+        r2[1] += shape_derivatives_2[i] * coords[1];
+        r2[2] += shape_derivatives_2[i] * coords[2];
 
-        r3[0] += shape_derivatives(2,i) * coords[0];
-        r3[1] += shape_derivatives(2,i) * coords[1];
-        r3[2] += shape_derivatives(2,i) * coords[2];
+        r3[0] += shape_derivatives_3[i] * coords[0];
+        r3[1] += shape_derivatives_3[i] * coords[1];
+        r3[2] += shape_derivatives_3[i] * coords[2];
     }
     // Set tolerance if not done bevor
     float tol = 1.0e-8;
@@ -760,15 +764,17 @@ KRATOS_TRY;
     R2.clear();     // Clear 2nd Derivative of the Curve
 
     // Get the 1st and 2nd Shape Function Deriatides from the ModelPart
-    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
     
     // Computation of the Basis Functions
     for (size_t i = 0; i < NumberOfNodes(); i++){
 
         const Node<3>& node = GetGeometry()[i];
 
-        R1 += shape_derivatives(0,i) * node.GetInitialPosition();
-        R2 += shape_derivatives(1,i) * node.GetInitialPosition();
+        R1 += shape_derivatives_1[i] * node.GetInitialPosition();
+        R2 += shape_derivatives_2[i] * node.GetInitialPosition();
     }
 
     // Set Tollerance if not done bevore
@@ -831,15 +837,19 @@ KRATOS_TRY;
     R3.clear();        // Clears 3rd Derivative of the Curve
 
     Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
+    Vector& shape_derivatives_3 = GetValue(SHAPE_FUNCTION_LOCAL_DER_3);
+
 
     Vector3 coords;     // Coordinates of the Node
 
     for (size_t i = 0; i < NumberOfNodes(); i++){
         const Node<3>& node = GetGeometry()[i];
 
-        R1 += shape_derivatives(0,i) * node.GetInitialPosition();
-        R2 += shape_derivatives(1,i) * node.GetInitialPosition();
-        R3 += shape_derivatives(2,i) * node.GetInitialPosition();
+        R1 += shape_derivatives_1[i] * node.GetInitialPosition();
+        R2 += shape_derivatives_2[i] * node.GetInitialPosition();
+        R3 += shape_derivatives_3[i] * node.GetInitialPosition();
     }
 
     A = norm_2(R1);       // Length of base Vector A
@@ -899,15 +909,18 @@ KRATOS_TRY;
     r2.clear();         // Clear the 2nd Derivative of the Curve
 
     // Compute the Basis Functions
-    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
+
     // LOG("shape_derivateivs " << shape_derivatives);
 
     // Compute actual Geometry at each Node
     for (size_t i = 0; i < NumberOfNodes(); i++){
         const Node<3>& node = GetGeometry()[i];
 
-        r1 += shape_derivatives(0,i) * node.Coordinates();
-        r2 += shape_derivatives(1,i) * node.Coordinates();
+        r1 += shape_derivatives_1[i] * node.Coordinates();
+        r2 += shape_derivatives_2[i] * node.Coordinates();
 
         // LOG(node.Coordinates());
     }
@@ -975,14 +988,18 @@ KRATOS_TRY;
     r3.clear();        // Clears 3rd Derivative of the Curve
 
     // Compute the Basis Functions
-    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
+    Vector& shape_derivatives_3 = GetValue(SHAPE_FUNCTION_LOCAL_DER_3);
+
 
     for (size_t i = 0; i < NumberOfNodes(); i++){
         const Node<3>& node = GetGeometry()[i];
 
-        r1 += shape_derivatives(0,i) * node.Coordinates();
-        r2 += shape_derivatives(1,i) * node.Coordinates();
-        r3 += shape_derivatives(2,i) * node.Coordinates();
+        r1 += shape_derivatives_1[i] * node.Coordinates();
+        r2 += shape_derivatives_2[i] * node.Coordinates();
+        r3 += shape_derivatives_3[i] * node.Coordinates();
     }
 
     a = norm_2(r1);       // Length of the Base Vector in Deformed State
@@ -1382,7 +1399,9 @@ KRATOS_TRY;
     GetDofTypesPerNode(act_dofs);
     int number_dofs_per_node = act_dofs.size();
 
-    Matrix shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+
 
     for (int r = 0; r < NumberOfDofs(); r++)
         {
@@ -1392,7 +1411,7 @@ KRATOS_TRY;
             if  (xyz_r > 2)
                 epsilon_var(r) = 0;
             else
-                epsilon_var(r) = _r1[xyz_r] * shape_derivatives(0,i);
+                epsilon_var(r) = _r1[xyz_r] * shape_derivatives_1[i];
         }
     return epsilon_var;
 
@@ -1432,7 +1451,8 @@ KRATOS_TRY;
     GetDofTypesPerNode(act_dofs);
     int number_dofs_per_node = act_dofs.size();
 
-    Matrix shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
 
     for (int r = 0; r < NumberOfDofs(); r++){
 
@@ -1456,7 +1476,7 @@ KRATOS_TRY;
                 else
                 {
                     if (xyz_r == xyz_s)
-                        epsilon_var_2(r,s) = shape_derivatives(0,i) * shape_derivatives(0,j);
+                        epsilon_var_2(r,s) = shape_derivatives_1[i] * shape_derivatives_1[j];
                     else
                         epsilon_var_2(r,s) = 0.00;
                 }
@@ -1499,7 +1519,8 @@ KRATOS_TRY;
 
     // Get Shape Function Derivatieves from the Element
     Vector& shape_function = GetValue(SHAPE_FUNCTION_VALUES);
-    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
 
     std::vector<int> act_dofs;
     GetDofTypesPerNode(act_dofs);
@@ -1510,7 +1531,7 @@ KRATOS_TRY;
         tmp_ini_disp = GetGeometry()[i].FastGetSolutionStepValue(DISPLACEMENT_ROTATION);
 
         phi += shape_function(i) * tmp_ini_disp;
-        phi_0_der += shape_derivatives(0,i) * tmp_ini_disp;
+        phi_0_der += shape_derivatives_1[i] * tmp_ini_disp;
     }
 
 KRATOS_CATCH("");
@@ -1590,7 +1611,8 @@ void IgaBeamMomentCondition::ComputeRotationalDof(
 KRATOS_TRY;
     // Get Shape Functions
     Vector& shape_function_values = GetValue(SHAPE_FUNCTION_VALUES);
-    Matrix& shape_derivatives     = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix& shape_derivatives     = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
 
     _curv_var_t.resize(NumberOfDofs());
     _curv_var_n.resize(NumberOfDofs());
@@ -2140,14 +2162,16 @@ KRATOS_TRY;
 
     std::vector<Vector3> r1_var(NumberOfDofs());
 
-    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
+
 
     for (size_t r = 0; r != NumberOfDofs(); ++r) {
         for (size_t t = 0; t != 3; ++t) {
             size_t xyz = GetDofTypeIndex(r);
             size_t i = GetShapeIndex(r);
             if (t == xyz) {
-                r1_var[r][t] = shape_derivatives(0, i);
+                r1_var[r][t] = shape_derivatives_1[i];
             } else {
                 r1_var[r][t] = 0;
             }
@@ -2392,7 +2416,8 @@ void IgaBeamMomentCondition::ComputeTVar(
 {
 KRATOS_TRY;
 
-    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
 
     double r1_dL = norm_2(r1);
 
@@ -2405,7 +2430,7 @@ KRATOS_TRY;
             Vector3 r1_var;
             r1_var.clear();
 
-            r1_var[xyz_r] = shape_derivatives(0, i);
+            r1_var[xyz_r] = shape_derivatives_1[i];
 
             double r1_r1_var = inner_prod(r1, r1_var);
 
@@ -2423,7 +2448,8 @@ void IgaBeamMomentCondition::ComputeTVarVar(
 {
 KRATOS_TRY;
 
-    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
 
     double r1_dL = norm_2(r1);
     double r1_pow3 = pow(r1_dL, 3);
@@ -2439,9 +2465,9 @@ KRATOS_TRY;
         r1_var[r + 2].clear();
         r1_var[r + 3].clear();
 
-        r1_var[r + 0](0) = shape_derivatives(0, i);
-        r1_var[r + 1](1) = shape_derivatives(0, i);
-        r1_var[r + 2](2) = shape_derivatives(0, i);
+        r1_var[r + 0](0) = shape_derivatives_1[i];
+        r1_var[r + 1](1) = shape_derivatives_1[i];
+        r1_var[r + 2](2) = shape_derivatives_1[i];
     }
 
     Vector r1_r1_var(NumberOfDofs());
@@ -2481,7 +2507,10 @@ void IgaBeamMomentCondition::ComputeTDerVar(
 {
 KRATOS_TRY;
 
-    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);   
+
 
     double r1r11 = inner_prod(r1, r2);
     double r11r11 = inner_prod(r2, r2);
@@ -2497,9 +2526,9 @@ KRATOS_TRY;
         r1_var[r + 2].clear();
         r1_var[r + 3].clear();
 
-        r1_var[r + 0](0) = shape_derivatives(0, i);
-        r1_var[r + 1](1) = shape_derivatives(0, i);
-        r1_var[r + 2](2) = shape_derivatives(0, i);
+        r1_var[r + 0](0) = shape_derivatives_1[i];
+        r1_var[r + 1](1) = shape_derivatives_1[i];
+        r1_var[r + 2](2) = shape_derivatives_1[i];
     }
 
     std::vector<Vector3> r11_var(NumberOfDofs());
@@ -2509,7 +2538,7 @@ KRATOS_TRY;
             size_t xyz_r = GetDofTypeIndex(r);
             size_t i = GetShapeIndex(r);
             if (t == xyz_r) {
-                r11_var[r][t] = shape_derivatives(1, i);
+                r11_var[r][t] = shape_derivatives_2[i];
             } else {
                 r11_var[r][t] = 0;
             }
@@ -2553,7 +2582,10 @@ void IgaBeamMomentCondition::ComputeTDerVarVar(
 {
 KRATOS_TRY;
 
-    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);   
+
 
     double r1r11 = inner_prod(r1, r2);
     double r11r11 = inner_prod(r2, r2);
@@ -2571,8 +2603,8 @@ KRATOS_TRY;
             size_t xyz = GetDofTypeIndex(r);
             size_t i = GetShapeIndex(r);
             if (t == xyz) {
-                r1_var[r][t] = shape_derivatives(0, i);
-                r11_var[r][t] = shape_derivatives(1, i);
+                r1_var[r][t] = shape_derivatives_1[i];
+                r11_var[r][t] = shape_derivatives_2[i];
             } else {
                 r1_var[r][t] = 0;
                 r11_var[r][t] = 0;
@@ -2701,7 +2733,9 @@ void IgaBeamMomentCondition::ComputeRodriguesDerVar(
 KRATOS_TRY;
 
     Vector& shape = GetValue(SHAPE_FUNCTION_VALUES);
-    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
+
 
     double sin_phi = std::sin(phi);
     double cos_phi = std::cos(phi);
@@ -2713,7 +2747,7 @@ KRATOS_TRY;
         size_t i = GetShapeIndex(r);
 
         double phi_r = shape[i];
-        double phi_der_r = shape_derivatives(0, i);
+        double phi_der_r = shape_derivatives_1[i];
         BoundedMatrix<double, 3, 3> c_vr = CrossVectorIdentity(v_var[r]);
         BoundedMatrix<double, 3, 3> c_dr = CrossVectorIdentity(v_der_var[r]);
 
@@ -2741,7 +2775,9 @@ void IgaBeamMomentCondition::ComputeRodriguesDerVarVar(
 KRATOS_TRY;
 
     Vector& shape = GetValue(SHAPE_FUNCTION_VALUES);
-    Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
+
 
     double sin_phi = std::sin(phi);
     double cos_phi = std::cos(phi);
@@ -2753,7 +2789,7 @@ KRATOS_TRY;
         size_t i = GetShapeIndex(r);
 
         double phi_r = GetDofTypeIndex(r) == 3 ? shape[i] : 0.0;
-        double phi_der_r = GetDofTypeIndex(r) == 3 ? shape_derivatives(0, i) : 0.0;
+        double phi_der_r = GetDofTypeIndex(r) == 3 ? shape_derivatives_1[i] : 0.0;
 
         BoundedMatrix<double, 3, 3> c_vr = CrossVectorIdentity(v_var[r]);
         BoundedMatrix<double, 3, 3> c_dr = CrossVectorIdentity(v_der_var[r]);
@@ -2764,7 +2800,7 @@ KRATOS_TRY;
             size_t rs = r * NumberOfDofs() + s;
 
             double phi_s = GetDofTypeIndex(s) == 3 ? shape[j] : 0.0;
-            double phi_der_s = GetDofTypeIndex(s) == 3 ? shape_derivatives(0, j) : 0.0;
+            double phi_der_s = GetDofTypeIndex(s) == 3 ? shape_derivatives_1[j] : 0.0;
 
             BoundedMatrix<double, 3, 3> c_vs = CrossVectorIdentity(v_var[s]);
             BoundedMatrix<double, 3, 3> c_ds = CrossVectorIdentity(v_der_var[s]);
@@ -3210,8 +3246,8 @@ KRATOS_TRY;
     _local_load_vec.clear();
 
     // Get Shape Functions
-    Vector& shape_function_values = GetValue(SHAPE_FUNCTION_VALUES);
-    Matrix& shape_derivatives     = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
+    // Vector& shape_function_values = GetValue(SHAPE_FUNCTION_VALUES);
+    // Matrix& shape_derivatives     = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
     //Get Tangent Vector
     Vector3 T0_vec = GetValue(T0);
     // Normalize t0

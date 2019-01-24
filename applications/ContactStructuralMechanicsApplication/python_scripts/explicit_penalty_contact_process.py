@@ -65,7 +65,7 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
                 "bucket_size"                         : 4,
                 "dynamic_search"                      : false,
                 "static_check_movement"               : false,
-                "database_step_update"                : 1,
+                "database_step_update"                : 100,
                 "consider_gap_threshold"              : false,
                 "debug_mode"                          : false,
                 "predict_correct_lagrange_multiplier" : false,

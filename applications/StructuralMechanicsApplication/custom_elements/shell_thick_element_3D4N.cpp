@@ -454,40 +454,42 @@ void ShellThickElement3D4N::FinalizeSolutionStep(ProcessInfo& rCurrentProcessInf
 
 void ShellThickElement3D4N::CalculateMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo)
 {
-    if((rMassMatrix.size1() != 24) || (rMassMatrix.size2() != 24))
-        rMassMatrix.resize(24, 24, false);
-    noalias(rMassMatrix) = ZeroMatrix(24, 24);
+    // if((rMassMatrix.size1() != 24) || (rMassMatrix.size2() != 24))
+    //     rMassMatrix.resize(24, 24, false);
+    // noalias(rMassMatrix) = ZeroMatrix(24, 24);
 
     // Compute the local coordinate system.
 
     ShellQ4_LocalCoordinateSystem referenceCoordinateSystem(
         mpCoordinateTransformation->CreateReferenceCoordinateSystem() );
 
-    // lumped area
+    BaseShellElement::TCalculateMassMatrix(rMassMatrix, rCurrentProcessInfo, referenceCoordinateSystem);
 
-    double lump_area = referenceCoordinateSystem.Area() / 4.0;
+    // // lumped area
 
-    // Calculate avarage mass per unit area
-    double av_mass_per_unit_area = 0.0;
-    for(SizeType i = 0; i < 4; i++)
-        av_mass_per_unit_area += mSections[i]->CalculateMassPerUnitArea(GetProperties());
-    av_mass_per_unit_area /= 4.0;
+    // double lump_area = referenceCoordinateSystem.Area() / 4.0;
 
-    // Gauss Loop
+    // // Calculate avarage mass per unit area
+    // double av_mass_per_unit_area = 0.0;
+    // for(SizeType i = 0; i < 4; i++)
+    //     av_mass_per_unit_area += mSections[i]->CalculateMassPerUnitArea(GetProperties());
+    // av_mass_per_unit_area /= 4.0;
 
-    for(SizeType i = 0; i < 4; i++)
-    {
-        SizeType index = i * 6;
+    // // Gauss Loop
 
-        double nodal_mass = av_mass_per_unit_area * lump_area;
+    // for(SizeType i = 0; i < 4; i++)
+    // {
+    //     SizeType index = i * 6;
 
-        // translational mass
-        rMassMatrix(index, index)            = nodal_mass;
-        rMassMatrix(index + 1, index + 1)    = nodal_mass;
-        rMassMatrix(index + 2, index + 2)    = nodal_mass;
+    //     double nodal_mass = av_mass_per_unit_area * lump_area;
 
-        // rotational mass - neglected for the moment...
-    }
+    //     // translational mass
+    //     rMassMatrix(index, index)            = nodal_mass;
+    //     rMassMatrix(index + 1, index + 1)    = nodal_mass;
+    //     rMassMatrix(index + 2, index + 2)    = nodal_mass;
+
+    //     // rotational mass - neglected for the moment...
+    // }
 }
 
 // =====================================================================================

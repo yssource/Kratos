@@ -101,9 +101,8 @@ rLeftHandSideMatrix.resize(NumberOfDofs(), NumberOfDofs());
 rLeftHandSideMatrix.clear();
 rRightHandSideVector.clear();
 // get properties
-const auto& properties = GetProperties();
-
-const Vector3 load_vec         = properties[LOAD_VECTOR_MOMENT];        //TODO: könnte eigentlich auch direkt in der Funktion abgerufen werden
+const auto& properties  = GetProperties();
+const Vector3 load_vec  = properties[LOAD_VECTOR_MOMENT];        //TODO: könnte eigentlich auch direkt in der Funktion abgerufen werden
 
 
 CalculateLoadMoment(rRightHandSideVector, load_vec); 

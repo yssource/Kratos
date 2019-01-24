@@ -447,6 +447,9 @@ BoundedMatrix<double,3,3> IgaBeamElement::CrossProductMatrixVector(
 
 void IgaBeamElement::CalculateLoadMoment( ) ;
 
+void IgaBeamElement::ComputeStressNonlinear(Vector3& _m, Vector3& _t, Vector3& _q, double _u, Vector3& _n_act) ;
+
+
     
 }; // class IgaBeamElement
 

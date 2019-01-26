@@ -17,6 +17,7 @@
 // Project includes
 #include "geometries/point.h"
 #include "custom_utilities/explicit_integration_utilities.h"
+#include "custom_utilities/structural_mechanics_element_utilities.h"
 #include "structural_mechanics_application_variables.h"
 
 namespace Kratos
@@ -60,11 +61,11 @@ double CalculateDeltaTime(
     // Actaully compute the value
     if (compute_mass_factor) {
         int iteration = 1;
-        stable_delta_time = InnerCalculateDeltaTime(rModelPart, time_step_prediction_level, max_delta_time, safety_factor, mass_factor);
+        stable_delta_time = InnerCalculateDeltaTime(rModelPart, time_step_prediction_level, max_delta_time, safety_factor);
         if (stable_delta_time < desired_delta_time) {
             while (iteration < max_number_of_iterations) {
                 mass_factor *= std::pow(desired_delta_time/stable_delta_time, 2);
-                stable_delta_time = InnerCalculateDeltaTime(rModelPart, time_step_prediction_level, max_delta_time, safety_factor, mass_factor);
+                stable_delta_time = InnerCalculateDeltaTime(rModelPart, time_step_prediction_level, max_delta_time, safety_factor);
                 KRATOS_INFO("ExplicitIntegrationUtilities") << "ITERATION NUMBER: " << iteration << "\tMass factor: " << mass_factor << "\tCurrent delta time: " << stable_delta_time << "\tDesired delta time:" << desired_delta_time << "\t RATIO: " << stable_delta_time/desired_delta_time << std::endl;
                 if (stable_delta_time > desired_delta_time) {
                     break;
@@ -76,7 +77,7 @@ double CalculateDeltaTime(
             // TODO: Finish this!!!!
         }
     } else {
-        stable_delta_time = InnerCalculateDeltaTime(rModelPart, time_step_prediction_level, max_delta_time, safety_factor, mass_factor);
+        stable_delta_time = InnerCalculateDeltaTime(rModelPart, time_step_prediction_level, max_delta_time, safety_factor);
     }
 
     if (stable_delta_time < max_delta_time) {
@@ -99,8 +100,7 @@ double InnerCalculateDeltaTime(
     ModelPart& rModelPart,
     const double TimeStepPredictionLevel,
     const double MaxDeltaTime,
-    const double SafetyFactor,
-    const double MassFactor
+    const double SafetyFactor
     )
 {
     KRATOS_TRY
@@ -159,7 +159,7 @@ double InnerCalculateDeltaTime(
 
         // Getting density
         if (r_properties.Has(DENSITY)) {
-            rho = MassFactor * r_properties[DENSITY];
+            rho = StructuralMechanicsElementUtilities::GetDensityForMassMatrixComputation(*(*it_elem.base()));
         } else {
             check_has_all_variables = false;
         }

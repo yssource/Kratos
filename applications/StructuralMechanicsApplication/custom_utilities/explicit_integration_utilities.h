@@ -77,15 +77,13 @@ namespace ExplicitIntegrationUtilities
      * @param TimeStepPredictionLevel The prediction level
      * @param MaxDeltaTime The max delta time
      * @param SafetyFactor The safety factor
-     * @param MassFactor The factor that multiplies the mass
      * @return The critical delta time
      */
     double KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) InnerCalculateDeltaTime(
         ModelPart& rModelPart,
         const double TimeStepPredictionLevel,
         const double MaxDeltaTime,
-        const double SafetyFactor,
-        const double MassFactor
+        const double SafetyFactor
         );
 
 }; // namespace ExplicitIntegrationUtilities

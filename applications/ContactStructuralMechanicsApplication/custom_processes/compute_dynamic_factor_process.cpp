@@ -50,8 +50,9 @@ void ComputeDynamicFactorProcess::Execute()
         // Computing only on SLAVE nodes
         if (it_node->Is(SLAVE) && it_node->Is(ACTIVE)) {
             // Weighted values
-            const double current_gap  = it_node->FastGetSolutionStepValue(WEIGHTED_GAP);
-            const double previous_gap = it_node->FastGetSolutionStepValue(WEIGHTED_GAP, 1);
+            const double normal_area  = it_node->GetValue(NODAL_AREA);
+            const double current_gap  = it_node->FastGetSolutionStepValue(WEIGHTED_GAP)/normal_area;
+            const double previous_gap = it_node->FastGetSolutionStepValue(WEIGHTED_GAP, 1)/normal_area;
 
             // Computing actual logistic factor
             if (max_gap_threshold < 0.0 && current_gap <= 0.0) {

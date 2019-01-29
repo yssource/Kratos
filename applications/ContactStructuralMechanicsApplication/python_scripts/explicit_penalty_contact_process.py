@@ -73,8 +73,8 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
             },
             "advance_explicit_parameters" : {
                 "manual_max_gap_theshold" : true,
-                "max_gap_threshold"       : 1.0e-3,
-                "max_gap_factor"          : 1.0e3
+                "max_gap_threshold"       : 1.0e-1,
+                "max_gap_factor"          : 1.0e4
             },
             "advance_ALM_parameters" : {
                 "manual_ALM"                  : false,
@@ -258,6 +258,10 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
         # We set a minimum value
         if process_info[KM.INITIAL_PENALTY] < sys.float_info.epsilon:
             process_info[KM.INITIAL_PENALTY] = 1.0e13
+
+        # Setting on nodes
+        initial_penalty = process_info[KM.INITIAL_PENALTY]
+        KM.VariableUtils().SetNonHistoricalVariable(KM.INITIAL_PENALTY, initial_penalty, self.computing_model_part.Nodes)
 
         # We print the parameters considered
         KM.Logger.PrintInfo("INITIAL_PENALTY: ", "{:.2e}".format(process_info[KM.INITIAL_PENALTY]))

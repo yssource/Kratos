@@ -58,7 +58,7 @@ void ComputeDynamicFactorProcess::Execute()
             // Computing actual logistic factor
             if (max_gap_threshold > 0.0 && current_gap <= 0.0) {
                 logistic_factor = ComputeLogisticFactor(max_gap_threshold, current_gap);
-                it_node->SetValue(INITIAL_PENALTY, common_epsilon * logistic_factor * max_gap_factor);
+                it_node->SetValue(INITIAL_PENALTY, common_epsilon * (1.0 + logistic_factor * max_gap_factor));
             } else {
                 it_node->SetValue(INITIAL_PENALTY, common_epsilon);
             }

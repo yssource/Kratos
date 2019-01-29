@@ -69,7 +69,7 @@ def AuxiliarExplicitContactSettings():
             "compute_dynamic_factor"                            : true,
             "ensure_contact"                                    : false,
             "silent_strategy"                                   : false,
-            "delta_time_factor_for_contact"                     : 1.0e0
+            "delta_time_factor_for_contact"                     : 5.0e-1
         }
     }
     """)

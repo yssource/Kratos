@@ -52,6 +52,7 @@ void ComputeDynamicFactorProcess::Execute()
             // Weighted values
             const double normal_area  = it_node->GetValue(NODAL_AREA);
             const double current_gap  = it_node->FastGetSolutionStepValue(WEIGHTED_GAP)/normal_area;
+            it_node->SetValue(NORMAL_GAP, current_gap);
             const double previous_gap = it_node->FastGetSolutionStepValue(WEIGHTED_GAP, 1)/normal_area;
 
             // Computing actual logistic factor

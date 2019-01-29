@@ -48,7 +48,7 @@ class ContactExplicitMechanicalSolver(structural_mechanics_explicit_dynamic_solv
                 self.dynamic_settings["damping_settings"]["determine_rayleigh_damping_settings"]["write_on_properties"].SetBool(True)
 
         # Getting delta_time_factor_for_contact
-        self.delta_time_factor_for_contact = self.dynamic_settings["delta_time_factor_for_contact"].GetDouble()
+        self.delta_time_factor_for_contact = self.contact_settings["delta_time_factor_for_contact"].GetDouble()
 
         # Setting echo level
         self.echo_level =  self.settings["echo_level"].GetInt()

@@ -56,7 +56,7 @@ void ComputeDynamicFactorProcess::Execute()
             const double previous_gap = it_node->FastGetSolutionStepValue(WEIGHTED_GAP, 1)/normal_area;
 
             // Computing actual logistic factor
-            if (max_gap_threshold < 0.0 && current_gap <= 0.0) {
+            if (max_gap_threshold > 0.0 && current_gap <= 0.0) {
                 logistic_factor = ComputeLogisticFactor(max_gap_threshold, current_gap);
                 it_node->SetValue(INITIAL_PENALTY, common_epsilon * logistic_factor * max_gap_factor);
             } else {
@@ -99,7 +99,7 @@ double ComputeDynamicFactorProcess::ComputeLogisticFactor(
     const double CurrentGap
     )
 {
-    const double exponent_factor = - 6.0 * (CurrentGap/MaxGapThreshold);
+    const double exponent_factor = - 6.0 * (std::abs(CurrentGap)/MaxGapThreshold);
     return (1.0/(1.0 + std::exp(exponent_factor)));
 }
 

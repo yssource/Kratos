@@ -84,7 +84,7 @@ double ComputeDynamicFactorProcess::ComputeLogisticFactor(
     )
 {
     const double exponent_factor = - ExponentFactor * (std::abs(CurrentGap)/MaxGapThreshold);
-    return (1.0/(1.0 + std::exp(exponent_factor)));
+    return (2.0/(1.0 + std::exp(exponent_factor)) - 1.0);
 }
 
 } /// namespace Kratos

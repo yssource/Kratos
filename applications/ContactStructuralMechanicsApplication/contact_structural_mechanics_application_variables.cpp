@@ -54,4 +54,5 @@ KRATOS_CREATE_VARIABLE( std::string, TYING_VARIABLE )                           
 
 /* Explicit simulation */
 KRATOS_CREATE_VARIABLE( double, MAX_GAP_THRESHOLD )                             // The gap considered as threshold to rescale penalty
+KRATOS_CREATE_VARIABLE( double, LOGISTIC_EXPONENT_FACTOR )                      // The factor considered on the logistic function
 }

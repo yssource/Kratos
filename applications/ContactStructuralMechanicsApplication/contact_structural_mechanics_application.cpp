@@ -154,6 +154,7 @@ void KratosContactStructuralMechanicsApplication::Register()
 
     /* For mesh tying mortar condition */
     KRATOS_REGISTER_VARIABLE( MAX_GAP_THRESHOLD )                                     // The gap considered as threshold to rescale penalty
+    KRATOS_REGISTER_VARIABLE( LOGISTIC_EXPONENT_FACTOR )                              // The factor considered on the logistic function
 
     // CONDITIONS
     // Mesh tying mortar condition

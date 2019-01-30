@@ -71,10 +71,12 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
                 "predict_correct_lagrange_multiplier" : false,
                 "check_gap"                           : "check_mapping"
             },
-            "advance_explicit_parameters" : {
-                "manual_max_gap_theshold" : true,
-                "max_gap_threshold"       : 1.0e-1,
-                "max_gap_factor"          : 1.0e4
+            "advance_explicit_parameters"  : {
+                "manual_max_gap_theshold"  : false,
+                "automatic_gap_factor"     : 1.0e-1,
+                "max_gap_threshold"        : 1.0e-1,
+                "max_gap_factor"           : 1.0e9,
+                "logistic_exponent_factor" : 6.0
             },
             "advance_ALM_parameters" : {
                 "manual_ALM"                  : false,
@@ -113,13 +115,14 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
         process_info = self.main_model_part.ProcessInfo
         process_info[KM.NL_ITERATION_NUMBER] = 1
 
-        # Setting the impact time duration
+        # Setting the gap threshold and relative variables
+        process_info[CSMA.LOGISTIC_EXPONENT_FACTOR] = self.contact_settings["advance_explicit_parameters"]["logistic_exponent_factor"].GetDouble()
         if self.contact_settings["advance_explicit_parameters"]["manual_max_gap_theshold"].GetBool():
             process_info[CSMA.MAX_GAP_THRESHOLD] = self.contact_settings["advance_explicit_parameters"]["max_gap_threshold"].GetDouble()
         else:
             empty_settings = KM.Parameters("""{}""")
             mean_nodal_h = CSMA.ContactUtilities.CalculateMeanNodalH(self.computing_model_part)
-            process_info[CSMA.MAX_GAP_THRESHOLD] = mean_nodal_h
+            process_info[CSMA.MAX_GAP_THRESHOLD] = mean_nodal_h * self.contact_settings["advance_explicit_parameters"]["automatic_gap_factor"].GetDouble()
 
         # Create the dynamic factor process
         self.dynamic_factor_process = CSMA.ComputeDynamicFactorProcess(self.main_model_part)
@@ -250,7 +253,7 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
             self.alm_var_process = CSMA.ALMVariablesCalculationProcess(self._get_process_model_part(), KM.NODAL_H, alm_var_parameters)
             self.alm_var_process.Execute()
             # We rescale, the process is designed for ALM formulation
-            process_info[KM.INITIAL_PENALTY] = 1.0e0 * process_info[KM.INITIAL_PENALTY]
+            process_info[KM.INITIAL_PENALTY] = 1.0e-2 * process_info[KM.INITIAL_PENALTY]
         else:
             # We set the values in the process info
             process_info[KM.INITIAL_PENALTY] = self.contact_settings["advance_ALM_parameters"]["penalty"].GetDouble()

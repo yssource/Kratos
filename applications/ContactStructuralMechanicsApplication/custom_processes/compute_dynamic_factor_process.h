@@ -222,10 +222,12 @@ private:
      * @details Look in https://en.wikipedia.org/wiki/Logistic_function
      * @param MaxGapThreshold The maximum gap considered for the interpolation
      * @param CurrentGap The current gap
+     * @param ExponentFactor The value used to set the maximum
      */
     double ComputeLogisticFactor(
         const double MaxGapThreshold,
-        const double CurrentGap
+        const double CurrentGap,
+        const double ExponentFactor = 6.0
         );
 
     ///@}

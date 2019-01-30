@@ -32,6 +32,7 @@ void ComputeDynamicFactorProcess::Execute()
     double logistic_factor = 1.0;
 
     // Impact time duration
+    const double logistic_exponent_factor = r_process_info.Has(LOGISTIC_EXPONENT_FACTOR) ? r_process_info[LOGISTIC_EXPONENT_FACTOR] : 6.0;
     const double max_gap_factor = r_process_info.Has(MAX_GAP_FACTOR) ? r_process_info[MAX_GAP_FACTOR] : 1.0;
     const double max_gap_threshold = r_process_info.Has(MAX_GAP_THRESHOLD) ? r_process_info[MAX_GAP_THRESHOLD] : 0.0;
     const double common_epsilon = r_process_info[INITIAL_PENALTY];
@@ -54,7 +55,7 @@ void ComputeDynamicFactorProcess::Execute()
 
             // Computing actual logistic factor
             if (max_gap_threshold > 0.0 && current_gap <= 0.0) {
-                logistic_factor = ComputeLogisticFactor(max_gap_threshold, current_gap);
+                logistic_factor = ComputeLogisticFactor(max_gap_threshold, current_gap, logistic_exponent_factor);
                 it_node->SetValue(INITIAL_PENALTY, common_epsilon * (1.0 + logistic_factor * max_gap_factor));
             } else {
                 it_node->SetValue(INITIAL_PENALTY, common_epsilon);
@@ -93,10 +94,11 @@ void ComputeDynamicFactorProcess::ExecuteInitialize()
 
 double ComputeDynamicFactorProcess::ComputeLogisticFactor(
     const double MaxGapThreshold,
-    const double CurrentGap
+    const double CurrentGap,
+    const double ExponentFactor
     )
 {
-    const double exponent_factor = - 6.0 * (std::abs(CurrentGap)/MaxGapThreshold);
+    const double exponent_factor = - ExponentFactor * (std::abs(CurrentGap)/MaxGapThreshold);
     return (1.0/(1.0 + std::exp(exponent_factor)));
 }
 

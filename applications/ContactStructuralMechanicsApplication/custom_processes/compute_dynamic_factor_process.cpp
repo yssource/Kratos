@@ -83,7 +83,7 @@ double ComputeDynamicFactorProcess::ComputeLogisticFactor(
     const double ExponentFactor
     )
 {
-    const double exponent_factor = - ExponentFactor * (std::abs(CurrentGap)/MaxGapThreshold);
+    const double exponent_factor = - ExponentFactor * (std::abs(CurrentGap)/MaxGapThreshold - 1.0);
     return (1.0/(1.0 + std::exp(exponent_factor)));
 }
 

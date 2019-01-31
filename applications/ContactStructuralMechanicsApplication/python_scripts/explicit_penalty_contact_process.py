@@ -74,8 +74,8 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
             "advance_explicit_parameters"  : {
                 "manual_max_gap_theshold"  : false,
                 "automatic_gap_factor"     : 1.0e-1,
-                "max_gap_threshold"        : 1.0e-1,
-                "max_gap_factor"           : 1.0e9,
+                "max_gap_threshold"        : 5.0e-2,
+                "max_gap_factor"           : 1.0e2,
                 "logistic_exponent_factor" : 6.0
             },
             "advance_ALM_parameters" : {
@@ -117,6 +117,7 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
 
         # Setting the gap threshold and relative variables
         process_info[CSMA.LOGISTIC_EXPONENT_FACTOR] = self.contact_settings["advance_explicit_parameters"]["logistic_exponent_factor"].GetDouble()
+        process_info[CSMA.MAX_GAP_FACTOR] = self.contact_settings["advance_explicit_parameters"]["max_gap_factor"].GetDouble()
         if self.contact_settings["advance_explicit_parameters"]["manual_max_gap_theshold"].GetBool():
             process_info[CSMA.MAX_GAP_THRESHOLD] = self.contact_settings["advance_explicit_parameters"]["max_gap_threshold"].GetDouble()
         else:
@@ -253,14 +254,14 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
             self.alm_var_process = CSMA.ALMVariablesCalculationProcess(self._get_process_model_part(), KM.NODAL_H, alm_var_parameters)
             self.alm_var_process.Execute()
             # We rescale, the process is designed for ALM formulation
-            process_info[KM.INITIAL_PENALTY] = 1.0e-2 * process_info[KM.INITIAL_PENALTY]
+            process_info[KM.INITIAL_PENALTY] = 1.0e-4 * process_info[KM.INITIAL_PENALTY]
         else:
             # We set the values in the process info
             process_info[KM.INITIAL_PENALTY] = self.contact_settings["advance_ALM_parameters"]["penalty"].GetDouble()
 
         # We set a minimum value
         if process_info[KM.INITIAL_PENALTY] < sys.float_info.epsilon:
-            process_info[KM.INITIAL_PENALTY] = 1.0e13
+            process_info[KM.INITIAL_PENALTY] = 1.0e8
 
         # Setting on nodes
         initial_penalty = process_info[KM.INITIAL_PENALTY]

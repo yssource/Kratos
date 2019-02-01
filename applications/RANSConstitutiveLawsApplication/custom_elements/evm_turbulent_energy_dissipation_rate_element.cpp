@@ -45,47 +45,53 @@ namespace Kratos
 /**
  * Constructor.
  */
-EvmTurbulentEnergyDissipationRateElement::EvmTurbulentEnergyDissipationRateElement(IndexType NewId)
-    : Element(NewId) 
+template<unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::EvmTurbulentEnergyDissipationRateElement(IndexType NewId)
+    : RANSConstitutiveElement<TDim, TNumNodes>(NewId)
 {
 }
 
 /**
  * Constructor using an array of nodes
  */
-EvmTurbulentEnergyDissipationRateElement::EvmTurbulentEnergyDissipationRateElement(IndexType NewId, const NodesArrayType& ThisNodes)
-    : Element(NewId, ThisNodes) 
+template<unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::EvmTurbulentEnergyDissipationRateElement(IndexType NewId, const NodesArrayType& ThisNodes)
+    : RANSConstitutiveElement<TDim, TNumNodes>(NewId, ThisNodes)
 {
 }
 
 /**
  * Constructor using Geometry
  */
-EvmTurbulentEnergyDissipationRateElement::EvmTurbulentEnergyDissipationRateElement(IndexType NewId, GeometryType::Pointer pGeometry)
-    : Element(NewId, pGeometry) 
+template<unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::EvmTurbulentEnergyDissipationRateElement(IndexType NewId, GeometryType::Pointer pGeometry)
+    : RANSConstitutiveElement<TDim, TNumNodes>(NewId, pGeometry)
 {
 }
 
 /**
  * Constructor using Properties
  */
-EvmTurbulentEnergyDissipationRateElement::EvmTurbulentEnergyDissipationRateElement(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
-    : Element(NewId, pGeometry, pProperties) 
+template<unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::EvmTurbulentEnergyDissipationRateElement(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
+    : RANSConstitutiveElement<TDim, TNumNodes>(NewId, pGeometry, pProperties)
 {
 }
 
 /**
  * Copy Constructor
  */
-EvmTurbulentEnergyDissipationRateElement::EvmTurbulentEnergyDissipationRateElement(EvmTurbulentEnergyDissipationRateElement const& rOther)
-    : Element(rOther) 
+template<unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::EvmTurbulentEnergyDissipationRateElement(EvmTurbulentEnergyDissipationRateElement const& rOther)
+    : RANSConstitutiveElement<TDim, TNumNodes>(rOther)
 {
 }
 
 /**
  * Destructor
  */
-EvmTurbulentEnergyDissipationRateElement::~EvmTurbulentEnergyDissipationRateElement()
+template<unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::~EvmTurbulentEnergyDissipationRateElement()
 {
 }
 
@@ -94,7 +100,8 @@ EvmTurbulentEnergyDissipationRateElement::~EvmTurbulentEnergyDissipationRateElem
 ///@{
 
 /// Assignment operator.
-EvmTurbulentEnergyDissipationRateElement & EvmTurbulentEnergyDissipationRateElement::operator=(EvmTurbulentEnergyDissipationRateElement const& rOther)
+template<unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes> & EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::operator=(EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes> const& rOther)
 {
     BaseType::operator=(rOther);
     Flags::operator =(rOther);
@@ -118,13 +125,14 @@ EvmTurbulentEnergyDissipationRateElement & EvmTurbulentEnergyDissipationRateElem
  * @param pProperties: the properties assigned to the new element
  * @return a Pointer to the new element
  */
-Element::Pointer EvmTurbulentEnergyDissipationRateElement::Create(
+template<unsigned int TDim, unsigned int TNumNodes>
+Element::Pointer EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::Create(
     IndexType NewId,
     NodesArrayType const& ThisNodes,
     PropertiesType::Pointer pProperties) const
 {
     KRATOS_TRY
-    return Kratos::make_shared<EvmTurbulentEnergyDissipationRateElement>(NewId, GetGeometry().Create(ThisNodes), pProperties);
+    return Kratos::make_shared<EvmTurbulentEnergyDissipationRateElement>(NewId, Element::GetGeometry().Create(ThisNodes), pProperties);
     KRATOS_CATCH("");
 }
 
@@ -135,7 +143,8 @@ Element::Pointer EvmTurbulentEnergyDissipationRateElement::Create(
  * @param pProperties: the properties assigned to the new element
  * @return a Pointer to the new element
  */
-Element::Pointer EvmTurbulentEnergyDissipationRateElement::Create(
+template<unsigned int TDim, unsigned int TNumNodes>
+Element::Pointer EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::Create(
     IndexType NewId,
     GeometryType::Pointer pGeom,
     PropertiesType::Pointer pProperties) const
@@ -152,10 +161,11 @@ Element::Pointer EvmTurbulentEnergyDissipationRateElement::Create(
  * @param pProperties: the properties assigned to the new element
  * @return a Pointer to the new element
  */
-Element::Pointer EvmTurbulentEnergyDissipationRateElement::Clone(IndexType NewId, NodesArrayType const& ThisNodes) const
+template<unsigned int TDim, unsigned int TNumNodes>
+Element::Pointer EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::Clone(IndexType NewId, NodesArrayType const& ThisNodes) const
 {
     KRATOS_TRY
-    return Kratos::make_shared<EvmTurbulentEnergyDissipationRateElement>(NewId, GetGeometry().Create(ThisNodes), pGetProperties());
+    return Kratos::make_shared<EvmTurbulentEnergyDissipationRateElement>(NewId, Element::GetGeometry().Create(ThisNodes), Element::pGetProperties());
     KRATOS_CATCH("");
 }
 
@@ -165,14 +175,15 @@ Element::Pointer EvmTurbulentEnergyDissipationRateElement::Clone(IndexType NewId
  * @param rResult: the elemental equation ID vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateElement::EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo)
 {
-    unsigned int number_of_nodes = GetGeometry().PointsNumber();
+    unsigned int number_of_nodes = Element::GetGeometry().PointsNumber();
     if (rResult.size() != number_of_nodes)
         rResult.resize(number_of_nodes, false);
 
       for (unsigned int i = 0; i < number_of_nodes; i++)
-    rResult[i] = GetGeometry()[i].GetDof(TURBULENT_ENERGY_DISSIPATION_RATE).EquationId();
+    rResult[i] = Element::GetGeometry()[i].GetDof(TURBULENT_ENERGY_DISSIPATION_RATE).EquationId();
 
 
 }
@@ -182,14 +193,15 @@ void EvmTurbulentEnergyDissipationRateElement::EquationIdVector(EquationIdVector
  * @param ElementalDofList: the list of DOFs
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateElement::GetDofList(DofsVectorType& rElementalDofList, ProcessInfo& CurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::GetDofList(DofsVectorType& rElementalDofList, ProcessInfo& CurrentProcessInfo)
 {
-    unsigned int number_of_nodes = GetGeometry().PointsNumber();
+    unsigned int number_of_nodes = Element::GetGeometry().PointsNumber();
     if (rElementalDofList.size() != number_of_nodes)
         rElementalDofList.resize(number_of_nodes);
 
       for (unsigned int i = 0; i < number_of_nodes; i++)
-    rElementalDofList[i] = GetGeometry()[i].pGetDof(TURBULENT_ENERGY_DISSIPATION_RATE);
+    rElementalDofList[i] = Element::GetGeometry()[i].pGetDof(TURBULENT_ENERGY_DISSIPATION_RATE);
 
 
 }
@@ -209,7 +221,8 @@ void EvmTurbulentEnergyDissipationRateElement::GetDofList(DofsVectorType& rEleme
  * @param rRightHandSideVector: the elemental right hand side
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateElement::CalculateLocalSystem(
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::CalculateLocalSystem(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo)
@@ -222,7 +235,8 @@ void EvmTurbulentEnergyDissipationRateElement::CalculateLocalSystem(
  * @param rLeftHandSideMatrix: the elemental left hand side matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateElement::CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
 {
 }
 
@@ -232,7 +246,8 @@ void EvmTurbulentEnergyDissipationRateElement::CalculateLeftHandSide(MatrixType&
  * @param rRightHandSideVector: the elemental right hand side vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateElement::CalculateRightHandSide(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
 }
 
@@ -243,7 +258,8 @@ void EvmTurbulentEnergyDissipationRateElement::CalculateRightHandSide(VectorType
  * @param rRightHandSideVector: the elemental right hand side
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateElement::CalculateFirstDerivativesContributions(
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::CalculateFirstDerivativesContributions(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo)
@@ -260,7 +276,8 @@ void EvmTurbulentEnergyDissipationRateElement::CalculateFirstDerivativesContribu
  * @param rLeftHandSideMatrix: the elemental left hand side matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateElement::CalculateFirstDerivativesLHS(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::CalculateFirstDerivativesLHS(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
 {
     if (rLeftHandSideMatrix.size1() != 0)
         rLeftHandSideMatrix.resize(0, 0, false);
@@ -272,7 +289,8 @@ void EvmTurbulentEnergyDissipationRateElement::CalculateFirstDerivativesLHS(Matr
  * @param rRightHandSideVector: the elemental right hand side vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateElement::CalculateFirstDerivativesRHS(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::CalculateFirstDerivativesRHS(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
     if (rRightHandSideVector.size() != 0)
         rRightHandSideVector.resize(0, false);
@@ -295,7 +313,8 @@ void EvmTurbulentEnergyDissipationRateElement::CalculateFirstDerivativesRHS(Vect
  * @param rRightHandSideVector: the elemental right hand side
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateElement::CalculateSecondDerivativesContributions(
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::CalculateSecondDerivativesContributions(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo)
@@ -312,7 +331,8 @@ void EvmTurbulentEnergyDissipationRateElement::CalculateSecondDerivativesContrib
  * @param rLeftHandSideMatrix: the elemental left hand side matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateElement::CalculateSecondDerivativesLHS(
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::CalculateSecondDerivativesLHS(
     MatrixType& rLeftHandSideMatrix,
     ProcessInfo& rCurrentProcessInfo)
 {
@@ -326,7 +346,8 @@ void EvmTurbulentEnergyDissipationRateElement::CalculateSecondDerivativesLHS(
  * @param rRightHandSideVector: the elemental right hand side vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateElement::CalculateSecondDerivativesRHS(
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::CalculateSecondDerivativesRHS(
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo)
 {
@@ -340,7 +361,8 @@ void EvmTurbulentEnergyDissipationRateElement::CalculateSecondDerivativesRHS(
  * @param rMassMatrix: the elemental mass matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateElement::CalculateMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo)
 {
     if (rMassMatrix.size1() != 0)
         rMassMatrix.resize(0, 0, false);
@@ -352,7 +374,8 @@ void EvmTurbulentEnergyDissipationRateElement::CalculateMassMatrix(MatrixType& r
  * @param rDampingMatrix: the elemental damping matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateElement::CalculateDampingMatrix(MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo)
 {
     if (rDampingMatrix.size1() != 0)
         rDampingMatrix.resize(0, 0, false);
@@ -367,7 +390,8 @@ void EvmTurbulentEnergyDissipationRateElement::CalculateDampingMatrix(MatrixType
  * @param rCurrentProcessInfo
  * this method is: MANDATORY
  */
-int EvmTurbulentEnergyDissipationRateElement::Check(const ProcessInfo& rCurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+int EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::Check(const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY
 
@@ -397,22 +421,25 @@ int EvmTurbulentEnergyDissipationRateElement::Check(const ProcessInfo& rCurrentP
 
 /// Turn back information as a string.
 
-std::string EvmTurbulentEnergyDissipationRateElement::Info() const {
+template<unsigned int TDim, unsigned int TNumNodes>
+std::string EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::Info() const {
     std::stringstream buffer;
-    buffer << "EvmTurbulentEnergyDissipationRateElement #" << Id();
+    buffer << "EvmTurbulentEnergyDissipationRateElement #" << Element::Id();
     return buffer.str();
 }
 
 /// Print information about this object.
 
-void EvmTurbulentEnergyDissipationRateElement::PrintInfo(std::ostream& rOStream) const {
-    rOStream << "EvmTurbulentEnergyDissipationRateElement #" << Id();
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::PrintInfo(std::ostream& rOStream) const {
+    rOStream << "EvmTurbulentEnergyDissipationRateElement #" << Element::Id();
 }
 
 /// Print object's data.
 
-void EvmTurbulentEnergyDissipationRateElement::PrintData(std::ostream& rOStream) const {
-    pGetGeometry()->PrintData(rOStream);
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::PrintData(std::ostream& rOStream) const {
+    Element::pGetGeometry()->PrintData(rOStream);
 }
 
 ///@}
@@ -469,7 +496,8 @@ void EvmTurbulentEnergyDissipationRateElement::PrintData(std::ostream& rOStream)
 ///@name Serialization
 ///@{
 
-void EvmTurbulentEnergyDissipationRateElement::save(Serializer& rSerializer) const
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::save(Serializer& rSerializer) const
 {
     KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Element );
 
@@ -477,7 +505,8 @@ void EvmTurbulentEnergyDissipationRateElement::save(Serializer& rSerializer) con
     // To be completed with the class member list
 }
 
-void EvmTurbulentEnergyDissipationRateElement::load(Serializer& rSerializer)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>::load(Serializer& rSerializer)
 {
     KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Element );
 
@@ -506,15 +535,25 @@ void EvmTurbulentEnergyDissipationRateElement::load(Serializer& rSerializer)
 ///@{
 
 /// input stream function
-inline std::istream & operator >> (std::istream& rIStream, EvmTurbulentEnergyDissipationRateElement& rThis);
+template<unsigned int TDim, unsigned int TNumNodes>
+inline std::istream & operator >> (std::istream& rIStream, EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>& rThis);
 
 /// output stream function
-inline std::ostream & operator << (std::ostream& rOStream, const EvmTurbulentEnergyDissipationRateElement& rThis)
+template<unsigned int TDim, unsigned int TNumNodes>
+inline std::ostream & operator << (std::ostream& rOStream, const EvmTurbulentEnergyDissipationRateElement<TDim, TNumNodes>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << " : " << std::endl;
     rThis.PrintData(rOStream);
     return rOStream;
 }
+
+// Class template instantiation
+
+template class EvmTurbulentEnergyDissipationRateElement<2, 3>;
+template class EvmTurbulentEnergyDissipationRateElement<3, 4>;
+template class EvmTurbulentEnergyDissipationRateElement<2, 4>;
+template class EvmTurbulentEnergyDissipationRateElement<3, 8>;
+
 
 } // namespace Kratos.

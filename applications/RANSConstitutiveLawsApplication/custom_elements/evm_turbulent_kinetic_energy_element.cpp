@@ -12,17 +12,13 @@
 
 // System includes
 
-
 // External includes
 
-
 // Include Base h
-#include "custom_elements/evm_turbulent_kinetic_energy_element.h"
-
+#include "evm_turbulent_kinetic_energy_element.h"
 
 namespace Kratos
 {
-
 ///@name Kratos Globals
 ///@{
 
@@ -45,47 +41,57 @@ namespace Kratos
 /**
  * Constructor.
  */
-EvmTurbulentKineticEnergyElement::EvmTurbulentKineticEnergyElement(IndexType NewId)
-    : Element(NewId) 
+template <unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::EvmTurbulentKineticEnergyElement(IndexType NewId)
+    : RANSConstitutiveElement<TDim, TNumNodes>(NewId)
 {
 }
 
 /**
  * Constructor using an array of nodes
  */
-EvmTurbulentKineticEnergyElement::EvmTurbulentKineticEnergyElement(IndexType NewId, const NodesArrayType& ThisNodes)
-    : Element(NewId, ThisNodes) 
+template <unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::EvmTurbulentKineticEnergyElement(
+    IndexType NewId, const NodesArrayType& ThisNodes)
+    : RANSConstitutiveElement<TDim, TNumNodes>(NewId, ThisNodes)
 {
 }
 
 /**
  * Constructor using Geometry
  */
-EvmTurbulentKineticEnergyElement::EvmTurbulentKineticEnergyElement(IndexType NewId, GeometryType::Pointer pGeometry)
-    : Element(NewId, pGeometry) 
+template <unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::EvmTurbulentKineticEnergyElement(
+    IndexType NewId, GeometryType::Pointer pGeometry)
+    : RANSConstitutiveElement<TDim, TNumNodes>(NewId, pGeometry)
 {
 }
 
 /**
  * Constructor using Properties
  */
-EvmTurbulentKineticEnergyElement::EvmTurbulentKineticEnergyElement(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
-    : Element(NewId, pGeometry, pProperties) 
+template <unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::EvmTurbulentKineticEnergyElement(
+    IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
+    : RANSConstitutiveElement<TDim, TNumNodes>(NewId, pGeometry, pProperties)
 {
 }
 
 /**
  * Copy Constructor
  */
-EvmTurbulentKineticEnergyElement::EvmTurbulentKineticEnergyElement(EvmTurbulentKineticEnergyElement const& rOther)
-    : Element(rOther) 
+template <unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::EvmTurbulentKineticEnergyElement(
+    EvmTurbulentKineticEnergyElement<TDim, TNumNodes> const& rOther)
+    : RANSConstitutiveElement<TDim, TNumNodes>(rOther)
 {
 }
 
 /**
  * Destructor
  */
-EvmTurbulentKineticEnergyElement::~EvmTurbulentKineticEnergyElement()
+template <unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::~EvmTurbulentKineticEnergyElement()
 {
 }
 
@@ -94,10 +100,12 @@ EvmTurbulentKineticEnergyElement::~EvmTurbulentKineticEnergyElement()
 ///@{
 
 /// Assignment operator.
-EvmTurbulentKineticEnergyElement & EvmTurbulentKineticEnergyElement::operator=(EvmTurbulentKineticEnergyElement const& rOther)
+template <unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentKineticEnergyElement<TDim, TNumNodes>& EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::operator=(
+    EvmTurbulentKineticEnergyElement<TDim, TNumNodes> const& rOther)
 {
     BaseType::operator=(rOther);
-    Flags::operator =(rOther);
+    Flags::operator=(rOther);
     // mpProperties = rOther.mpProperties;
     return *this;
 }
@@ -118,13 +126,13 @@ EvmTurbulentKineticEnergyElement & EvmTurbulentKineticEnergyElement::operator=(E
  * @param pProperties: the properties assigned to the new element
  * @return a Pointer to the new element
  */
-Element::Pointer EvmTurbulentKineticEnergyElement::Create(
-    IndexType NewId,
-    NodesArrayType const& ThisNodes,
-    PropertiesType::Pointer pProperties) const
+template <unsigned int TDim, unsigned int TNumNodes>
+Element::Pointer EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::Create(
+    IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const
 {
     KRATOS_TRY
-    return Kratos::make_shared<EvmTurbulentKineticEnergyElement>(NewId, GetGeometry().Create(ThisNodes), pProperties);
+    return Kratos::make_shared<EvmTurbulentKineticEnergyElement>(
+        NewId, Element::GetGeometry().Create(ThisNodes), pProperties);
     KRATOS_CATCH("");
 }
 
@@ -135,10 +143,9 @@ Element::Pointer EvmTurbulentKineticEnergyElement::Create(
  * @param pProperties: the properties assigned to the new element
  * @return a Pointer to the new element
  */
-Element::Pointer EvmTurbulentKineticEnergyElement::Create(
-    IndexType NewId,
-    GeometryType::Pointer pGeom,
-    PropertiesType::Pointer pProperties) const
+template <unsigned int TDim, unsigned int TNumNodes>
+Element::Pointer EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::Create(
+    IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const
 {
     KRATOS_TRY
     return Kratos::make_shared<EvmTurbulentKineticEnergyElement>(NewId, pGeom, pProperties);
@@ -152,10 +159,13 @@ Element::Pointer EvmTurbulentKineticEnergyElement::Create(
  * @param pProperties: the properties assigned to the new element
  * @return a Pointer to the new element
  */
-Element::Pointer EvmTurbulentKineticEnergyElement::Clone(IndexType NewId, NodesArrayType const& ThisNodes) const
+template <unsigned int TDim, unsigned int TNumNodes>
+Element::Pointer EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::Clone(
+    IndexType NewId, NodesArrayType const& ThisNodes) const
 {
     KRATOS_TRY
-    return Kratos::make_shared<EvmTurbulentKineticEnergyElement>(NewId, GetGeometry().Create(ThisNodes), pGetProperties());
+    return Kratos::make_shared<EvmTurbulentKineticEnergyElement>(
+        NewId, Element::GetGeometry().Create(ThisNodes), Element::pGetProperties());
     KRATOS_CATCH("");
 }
 
@@ -165,16 +175,16 @@ Element::Pointer EvmTurbulentKineticEnergyElement::Clone(IndexType NewId, NodesA
  * @param rResult: the elemental equation ID vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentKineticEnergyElement::EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::EquationIdVector(
+    EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo)
 {
-    unsigned int number_of_nodes = GetGeometry().PointsNumber();
+    unsigned int number_of_nodes = Element::GetGeometry().PointsNumber();
     if (rResult.size() != number_of_nodes)
         rResult.resize(number_of_nodes, false);
 
-      for (unsigned int i = 0; i < number_of_nodes; i++)
-    rResult[i] = GetGeometry()[i].GetDof(TURBULENT_KINETIC_ENERGY).EquationId();
-
-
+    for (unsigned int i = 0; i < number_of_nodes; i++)
+        rResult[i] = Element::GetGeometry()[i].GetDof(TURBULENT_KINETIC_ENERGY).EquationId();
 }
 
 /**
@@ -182,23 +192,23 @@ void EvmTurbulentKineticEnergyElement::EquationIdVector(EquationIdVectorType& rR
  * @param ElementalDofList: the list of DOFs
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentKineticEnergyElement::GetDofList(DofsVectorType& rElementalDofList, ProcessInfo& CurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::GetDofList(DofsVectorType& rElementalDofList,
+                                                                   ProcessInfo& CurrentProcessInfo)
 {
-    unsigned int number_of_nodes = GetGeometry().PointsNumber();
+    unsigned int number_of_nodes = Element::GetGeometry().PointsNumber();
     if (rElementalDofList.size() != number_of_nodes)
         rElementalDofList.resize(number_of_nodes);
 
-      for (unsigned int i = 0; i < number_of_nodes; i++)
-    rElementalDofList[i] = GetGeometry()[i].pGetDof(TURBULENT_KINETIC_ENERGY);
-
-
+    for (unsigned int i = 0; i < number_of_nodes; i++)
+        rElementalDofList[i] = Element::GetGeometry()[i].pGetDof(TURBULENT_KINETIC_ENERGY);
 }
 
 /**
  * ELEMENTS inherited from this class have to implement next
- * CalculateLocalSystem, CalculateLeftHandSide and CalculateRightHandSide methods
- * they can be managed internally with a private method to do the same calculations
- * only once: MANDATORY
+ * CalculateLocalSystem, CalculateLeftHandSide and CalculateRightHandSide
+ * methods they can be managed internally with a private method to do the same
+ * calculations only once: MANDATORY
  */
 
 /**
@@ -209,10 +219,9 @@ void EvmTurbulentKineticEnergyElement::GetDofList(DofsVectorType& rElementalDofL
  * @param rRightHandSideVector: the elemental right hand side
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentKineticEnergyElement::CalculateLocalSystem(
-    MatrixType& rLeftHandSideMatrix,
-    VectorType& rRightHandSideVector,
-    ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::CalculateLocalSystem(
+    MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
 }
 
@@ -222,7 +231,9 @@ void EvmTurbulentKineticEnergyElement::CalculateLocalSystem(
  * @param rLeftHandSideMatrix: the elemental left hand side matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentKineticEnergyElement::CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::CalculateLeftHandSide(
+    MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
 {
 }
 
@@ -232,7 +243,9 @@ void EvmTurbulentKineticEnergyElement::CalculateLeftHandSide(MatrixType& rLeftHa
  * @param rRightHandSideVector: the elemental right hand side vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentKineticEnergyElement::CalculateRightHandSide(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::CalculateRightHandSide(
+    VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
 }
 
@@ -243,10 +256,9 @@ void EvmTurbulentKineticEnergyElement::CalculateRightHandSide(VectorType& rRight
  * @param rRightHandSideVector: the elemental right hand side
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentKineticEnergyElement::CalculateFirstDerivativesContributions(
-    MatrixType& rLeftHandSideMatrix,
-    VectorType& rRightHandSideVector,
-    ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::CalculateFirstDerivativesContributions(
+    MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
     if (rLeftHandSideMatrix.size1() != 0)
         rLeftHandSideMatrix.resize(0, 0, false);
@@ -260,7 +272,9 @@ void EvmTurbulentKineticEnergyElement::CalculateFirstDerivativesContributions(
  * @param rLeftHandSideMatrix: the elemental left hand side matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentKineticEnergyElement::CalculateFirstDerivativesLHS(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::CalculateFirstDerivativesLHS(
+    MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
 {
     if (rLeftHandSideMatrix.size1() != 0)
         rLeftHandSideMatrix.resize(0, 0, false);
@@ -272,7 +286,9 @@ void EvmTurbulentKineticEnergyElement::CalculateFirstDerivativesLHS(MatrixType& 
  * @param rRightHandSideVector: the elemental right hand side vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentKineticEnergyElement::CalculateFirstDerivativesRHS(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::CalculateFirstDerivativesRHS(
+    VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
     if (rRightHandSideVector.size() != 0)
         rRightHandSideVector.resize(0, false);
@@ -287,7 +303,6 @@ void EvmTurbulentKineticEnergyElement::CalculateFirstDerivativesRHS(VectorType& 
  * CalculateSecondDerivativesLHS, CalculateSecondDerivativesRHS methods are : OPTIONAL
  */
 
-
 /**
  * this is called during the assembling process in order
  * to calculate the second derivative contributions for the LHS and RHS
@@ -295,10 +310,9 @@ void EvmTurbulentKineticEnergyElement::CalculateFirstDerivativesRHS(VectorType& 
  * @param rRightHandSideVector: the elemental right hand side
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentKineticEnergyElement::CalculateSecondDerivativesContributions(
-    MatrixType& rLeftHandSideMatrix,
-    VectorType& rRightHandSideVector,
-    ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::CalculateSecondDerivativesContributions(
+    MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
     if (rLeftHandSideMatrix.size1() != 0)
         rLeftHandSideMatrix.resize(0, 0, false);
@@ -312,9 +326,9 @@ void EvmTurbulentKineticEnergyElement::CalculateSecondDerivativesContributions(
  * @param rLeftHandSideMatrix: the elemental left hand side matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentKineticEnergyElement::CalculateSecondDerivativesLHS(
-    MatrixType& rLeftHandSideMatrix,
-    ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::CalculateSecondDerivativesLHS(
+    MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
 {
     if (rLeftHandSideMatrix.size1() != 0)
         rLeftHandSideMatrix.resize(0, 0, false);
@@ -326,9 +340,9 @@ void EvmTurbulentKineticEnergyElement::CalculateSecondDerivativesLHS(
  * @param rRightHandSideVector: the elemental right hand side vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentKineticEnergyElement::CalculateSecondDerivativesRHS(
-    VectorType& rRightHandSideVector,
-    ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::CalculateSecondDerivativesRHS(
+    VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
     if (rRightHandSideVector.size() != 0)
         rRightHandSideVector.resize(0, false);
@@ -340,7 +354,9 @@ void EvmTurbulentKineticEnergyElement::CalculateSecondDerivativesRHS(
  * @param rMassMatrix: the elemental mass matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentKineticEnergyElement::CalculateMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::CalculateMassMatrix(
+    MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo)
 {
     if (rMassMatrix.size1() != 0)
         rMassMatrix.resize(0, 0, false);
@@ -352,29 +368,34 @@ void EvmTurbulentKineticEnergyElement::CalculateMassMatrix(MatrixType& rMassMatr
  * @param rDampingMatrix: the elemental damping matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentKineticEnergyElement::CalculateDampingMatrix(MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::CalculateDampingMatrix(
+    MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo)
 {
     if (rDampingMatrix.size1() != 0)
         rDampingMatrix.resize(0, 0, false);
 }
 
 /**
- * This method provides the place to perform checks on the completeness of the input
- * and the compatibility with the problem options as well as the contitutive laws selected
- * It is designed to be called only once (or anyway, not often) typically at the beginning
- * of the calculations, so to verify that nothing is missing from the input
- * or that no common error is found.
+ * This method provides the place to perform checks on the completeness of the
+ * input and the compatibility with the problem options as well as the
+ * contitutive laws selected It is designed to be called only once (or anyway,
+ * not often) typically at the beginning of the calculations, so to verify that
+ * nothing is missing from the input or that no common error is found.
  * @param rCurrentProcessInfo
  * this method is: MANDATORY
  */
-int EvmTurbulentKineticEnergyElement::Check(const ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+int EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::Check(const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY
 
-    KRATOS_ERROR_IF(this->Id() < 1) <<"EvmTurbulentKineticEnergyElement found with Id 0 or negative" << std::endl;
+    KRATOS_ERROR_IF(this->Id() < 1)
+        << "EvmTurbulentKineticEnergyElement found with Id 0 or negative" << std::endl;
 
-    KRATOS_ERROR_IF(this->GetGeometry().Area() <= 0) << "On EvmTurbulentKineticEnergyElement -> "
-        << this->Id() <<  "; Area cannot be less than or equal to 0" << std::endl;
+    KRATOS_ERROR_IF(this->Element::GetGeometry().Area() <= 0)
+        << "On EvmTurbulentKineticEnergyElement -> " << this->Id()
+        << "; Area cannot be less than or equal to 0" << std::endl;
 
     return 0;
 
@@ -385,11 +406,9 @@ int EvmTurbulentKineticEnergyElement::Check(const ProcessInfo& rCurrentProcessIn
 ///@name Access
 ///@{
 
-
 ///@}
 ///@name Inquiry
 ///@{
-
 
 ///@}
 ///@name Input and output
@@ -397,22 +416,28 @@ int EvmTurbulentKineticEnergyElement::Check(const ProcessInfo& rCurrentProcessIn
 
 /// Turn back information as a string.
 
-std::string EvmTurbulentKineticEnergyElement::Info() const {
+template <unsigned int TDim, unsigned int TNumNodes>
+std::string EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::Info() const
+{
     std::stringstream buffer;
-    buffer << "EvmTurbulentKineticEnergyElement #" << Id();
+    buffer << "EvmTurbulentKineticEnergyElement #" << Element::Id();
     return buffer.str();
 }
 
 /// Print information about this object.
 
-void EvmTurbulentKineticEnergyElement::PrintInfo(std::ostream& rOStream) const {
-    rOStream << "EvmTurbulentKineticEnergyElement #" << Id();
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::PrintInfo(std::ostream& rOStream) const
+{
+    rOStream << "EvmTurbulentKineticEnergyElement #" << Element::Id();
 }
 
 /// Print object's data.
 
-void EvmTurbulentKineticEnergyElement::PrintData(std::ostream& rOStream) const {
-    pGetGeometry()->PrintData(rOStream);
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::PrintData(std::ostream& rOStream) const
+{
+    Element::pGetGeometry()->PrintData(rOStream);
 }
 
 ///@}
@@ -469,17 +494,19 @@ void EvmTurbulentKineticEnergyElement::PrintData(std::ostream& rOStream) const {
 ///@name Serialization
 ///@{
 
-void EvmTurbulentKineticEnergyElement::save(Serializer& rSerializer) const
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::save(Serializer& rSerializer) const
 {
-    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Element );
+    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Element);
 
     // List
     // To be completed with the class member list
 }
 
-void EvmTurbulentKineticEnergyElement::load(Serializer& rSerializer)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::load(Serializer& rSerializer)
 {
-    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Element );
+    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Element);
 
     // List
     // To be completed with the class member list
@@ -506,15 +533,28 @@ void EvmTurbulentKineticEnergyElement::load(Serializer& rSerializer)
 ///@{
 
 /// input stream function
-inline std::istream & operator >> (std::istream& rIStream, EvmTurbulentKineticEnergyElement& rThis);
+
+template <unsigned int TDim, unsigned int TNumNodes>
+inline std::istream& operator>>(std::istream& rIStream,
+                                EvmTurbulentKineticEnergyElement<TDim, TNumNodes>& rThis);
 
 /// output stream function
-inline std::ostream & operator << (std::ostream& rOStream, const EvmTurbulentKineticEnergyElement& rThis)
+
+template <unsigned int TDim, unsigned int TNumNodes>
+inline std::ostream& operator<<(std::ostream& rOStream,
+                                const EvmTurbulentKineticEnergyElement<TDim, TNumNodes>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << " : " << std::endl;
     rThis.PrintData(rOStream);
     return rOStream;
 }
+
+// Class template instantiation
+
+template class EvmTurbulentKineticEnergyElement<2, 3>;
+template class EvmTurbulentKineticEnergyElement<3, 4>;
+template class EvmTurbulentKineticEnergyElement<2, 4>;
+template class EvmTurbulentKineticEnergyElement<3, 8>;
 
 } // namespace Kratos.

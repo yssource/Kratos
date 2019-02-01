@@ -67,7 +67,7 @@ class CADMapper:
             model_part_io.ReadModelPart(self.fe_model_part)
 
         # Refine if specified
-        prop_id = 1
+        prop_id = 0
         prop = self.fe_model_part.Properties[prop_id]
         mat = KratosCSM.LinearElasticPlaneStress2DLaw()
         prop.SetValue(KratosMultiphysics.CONSTITUTIVE_LAW, mat.Clone())
@@ -156,7 +156,7 @@ class CADMapper:
             # Assemble
             lhs, rhs = self.assembler.AssembleSystem()
 
-            if solution_itr == 0:
+            if solution_itr == 1:
                 print("> Number of equations: ", lhs.shape[0])
                 print("> Number of relevant control points: ", lhs.shape[1])
 
@@ -361,14 +361,7 @@ class ConditionsFactory:
                     # Introduce a possible penalty factor for nodes on boundary
                     weight = 1.0
                     # if is_on_boundary:
-                    #     weight = 1.0
-                        # self.cad_model.add({
-                        #     'Key': f'Point3D<{boundary_nodes_counter}>',
-                        #     'Type': 'Point3D',
-                        #     'Location': node_coords_i,
-                        #     'Layer': "boundary_nodes",
-                        # })
-                        # boundary_nodes_counter += 1
+                    #     self.cad_model.Add(an.Point3D(location=node_coords_i))
 
                     new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, variable_to_map, weight)
                     conditions[face_itr].append(new_condition)

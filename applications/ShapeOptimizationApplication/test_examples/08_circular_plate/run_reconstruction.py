@@ -30,7 +30,7 @@ parameters = KratosMultiphysics.Parameters("""
             "mechanical" :
             {
                 "apply_KL_shell"      : true,
-                "exclusive_face_list" : ["Rhino<7e2776a7-e81d-40b4-b02a-490be79f42ab>.BrepFace<0>"],
+                "exclusive_face_list" : ["Rhino<5b74e2e3-fd33-446e-a112-0480ea75a27d>.BrepFace<7>"],
                 "penalty_factor"      : 100.0
             }
         },

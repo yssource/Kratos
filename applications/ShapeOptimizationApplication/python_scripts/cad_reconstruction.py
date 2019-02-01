@@ -242,14 +242,15 @@ class CADMapper:
         dof_ids = self.assembler.GetDofIds()
         dofs = self.assembler.GetDofs()
 
-        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
-            surface_geometry = face_i.Data().Geometry().Data()
+        for surface_i in self.cad_model.GetByType('SurfaceGeometry3D'):
+            surface_geometry = surface_i.Data()
+            surface_geometry_key = surface_i.Key()
 
             for r in range(surface_geometry.NbPolesU()):
                 for s in range(surface_geometry.NbPolesV()):
-                    dof_i_x = (face_itr,r,s,"x")
-                    dof_i_y = (face_itr,r,s,"y")
-                    dof_i_z = (face_itr,r,s,"z")
+                    dof_i_x = (surface_geometry_key,r,s,"x")
+                    dof_i_y = (surface_geometry_key,r,s,"y")
+                    dof_i_z = (surface_geometry_key,r,s,"z")
 
                     if dof_i_x in dofs:
                         dof_id_x = dof_ids[dof_i_x]
@@ -911,11 +912,12 @@ class Assembler():
     def Initialize(self):
         # Assign dof and equation ids
         for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+            surface_geometry_key = face_i.Data().Geometry().Key()
             for condition in self.conditions[face_itr]:
                 for (r, s) in condition.nonzero_pole_indices:
-                    _ = self.__GetDofId((face_itr,r,s,"x"))
-                    _ = self.__GetDofId((face_itr,r,s,"y"))
-                    _ = self.__GetDofId((face_itr,r,s,"z"))
+                    _ = self.__GetDofId((surface_geometry_key,r,s,"x"))
+                    _ = self.__GetDofId((surface_geometry_key,r,s,"y"))
+                    _ = self.__GetDofId((surface_geometry_key,r,s,"z"))
 
         num_dofs = len(self.dofs)
 
@@ -952,6 +954,7 @@ class Assembler():
         for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
 
             print("Processing face", face_itr, "with", len(self.conditions[face_itr]), "conditions.")
+            surface_geometry_key = face_i.Data().Geometry().Key()
 
             for condition in self.conditions[face_itr]:
                 total_num_conditions += 1
@@ -962,13 +965,13 @@ class Assembler():
 
                 global_dof_ids = []
                 for j, (r, s) in enumerate(nonzero_pole_indices):
-                    global_dof_ids.append(self.__GetDofId((face_itr,r,s,"x")))
+                    global_dof_ids.append(self.__GetDofId((surface_geometry_key,r,s,"x")))
 
                 for j, (r, s) in enumerate(nonzero_pole_indices):
-                    global_dof_ids.append(self.__GetDofId((face_itr,r,s,"y")))
+                    global_dof_ids.append(self.__GetDofId((surface_geometry_key,r,s,"y")))
 
                 for j, (r, s) in enumerate(nonzero_pole_indices):
-                    global_dof_ids.append(self.__GetDofId((face_itr,r,s,"z")))
+                    global_dof_ids.append(self.__GetDofId((surface_geometry_key,r,s,"z")))
 
 
                 self.lhs[np.ix_(global_dof_ids, global_dof_ids)] += local_lhs
@@ -989,6 +992,7 @@ class Assembler():
         for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
 
             print("Processing face", face_itr, "with", len(self.conditions[face_itr]), "conditions.")
+            surface_geometry_key = face_i.Data().Geometry().Key()
 
             for condition in self.conditions[face_itr]:
 
@@ -998,13 +1002,13 @@ class Assembler():
 
                 global_dof_ids = []
                 for j, (r, s) in enumerate(nonzero_pole_indices):
-                    global_dof_ids.append(self.__GetDofId((face_itr,r,s,"x")))
+                    global_dof_ids.append(self.__GetDofId((surface_geometry_key,r,s,"x")))
 
                 for j, (r, s) in enumerate(nonzero_pole_indices):
-                    global_dof_ids.append(self.__GetDofId((face_itr,r,s,"y")))
+                    global_dof_ids.append(self.__GetDofId((surface_geometry_key,r,s,"y")))
 
                 for j, (r, s) in enumerate(nonzero_pole_indices):
-                    global_dof_ids.append(self.__GetDofId((face_itr,r,s,"z")))
+                    global_dof_ids.append(self.__GetDofId((surface_geometry_key,r,s,"z")))
 
                 self.rhs[global_dof_ids] += local_rhs
 

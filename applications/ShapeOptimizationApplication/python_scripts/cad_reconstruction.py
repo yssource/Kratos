@@ -114,14 +114,15 @@ class CADMapper:
 
         # Read CAD data
         cad_filename = self.parameters["input"]["cad_filename"].GetString()
-        self.cad_model = an.Model.open(cad_filename)
+        self.cad_model = an.Model()
+        self.cad_model.Load(cad_filename)
 
         print("> Preprocessing finished in" ,round( time.time()-start_time, 3 ), " s.")
         print("\n> Starting creation of conditions...")
         start_time = time.time()
 
         # Create conditions
-        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
             self.conditions.append([])
 
         condition_factory = ConditionsFactory(self.fe_model_part, self.cad_model, self.parameters)
@@ -207,8 +208,8 @@ class CADMapper:
                 # dof_ids = self.assembler.GetDofIds()
                 # dofs = self.assembler.GetDofs()
 
-                # for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
-                #     surface_geometry = face_i.surface_geometry_3d().geometry
+                # for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+                #     surface_geometry = face_i.Data().Geometry().Data()
 
                 #     for r in range(surface_geometry.NbPolesU):
                 #         for s in range(surface_geometry.NbPolesV):
@@ -229,7 +230,7 @@ class CADMapper:
         output_dir = self.parameters["output"]["results_directory"].GetString()
         output_filename = self.parameters["output"]["resulting_geometry_filename"].GetString()
         output_filename_with_path = os.path.join(output_dir,output_filename)
-        self.cad_model.save(output_filename_with_path)
+        self.cad_model.Save(output_filename_with_path)
 
         print("> Finished finalization of mapping in" ,round( time.time()-start_time, 3 ), " s.")
 
@@ -241,11 +242,11 @@ class CADMapper:
         dof_ids = self.assembler.GetDofIds()
         dofs = self.assembler.GetDofs()
 
-        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
-            surface_geometry = face_i.surface_geometry_3d().geometry
+        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+            surface_geometry = face_i.Data().Geometry().Data()
 
-            for r in range(surface_geometry.NbPolesU):
-                for s in range(surface_geometry.NbPolesV):
+            for r in range(surface_geometry.NbPolesU()):
+                for s in range(surface_geometry.NbPolesV()):
                     dof_i_x = (face_itr,r,s,"x")
                     dof_i_y = (face_itr,r,s,"y")
                     dof_i_z = (face_itr,r,s,"z")
@@ -306,24 +307,24 @@ class ConditionsFactory:
 
         boundary_nodes_counter = 1
 
-        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
 
             print("> Processing face ",face_itr)
 
-            surface_geometry = face_i.surface_geometry_3d().geometry
-            shape_function = an.SurfaceShapeEvaluator(DegreeU=surface_geometry.DegreeU, DegreeV=surface_geometry.DegreeV, Order=0)
+            surface_geometry = face_i.Data().Geometry().Data()
+            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry.DegreeU(), degreeV=surface_geometry.DegreeV(), order=0)
 
-            surface = face_i.surface_3d()
+            surface = an.Surface3D(face_i.Data().Geometry())
             projection = an.PointOnSurfaceProjection3D(surface)
 
             boundary_polygon = []
-            for trim in face_i.trims():
-                tessellation.Compute(trim.curve_2d(), tesselation_tolerance)
-                for i in range(tessellation.NbPoints):
+            for trim in face_i.Data().Trims():
+                tessellation.Compute(an.Curve2D(trim.Data().Geometry()), tesselation_tolerance)
+                for i in range(tessellation.NbPoints()):
                     boundary_polygon.append(tessellation.Point(i))
 
             # Bounding box and scaling as the bounding box is based on a simple pointwise discretization of surface
-            min_x, min_y, min_z, max_x, max_y, max_z = projection.BoundingBox
+            min_x, min_y, min_z, max_x, max_y, max_z = projection.BoundingBox()
             min_x -= bounding_box_tolerance
             min_y -= bounding_box_tolerance
             min_z -= bounding_box_tolerance
@@ -343,18 +344,18 @@ class ConditionsFactory:
                 if node_coords_i[2] < min_z or max_z < node_coords_i[2]:
                     continue
 
-                projection.Compute(Point=node_coords_i)
-                projected_point_uv = np.array([projection.ParameterU, projection.ParameterV])
+                projection.Compute(point=node_coords_i)
+                projected_point_uv = np.array([projection.ParameterU(), projection.ParameterV()])
 
                 is_inside, is_on_boundary = self.__Contains(projected_point_uv, boundary_polygon, tesselation_tolerance*1.1)
                 if is_inside:
                     u = projected_point_uv[0]
                     v = projected_point_uv[1]
-                    shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
-                    nonzero_pole_indices = shape_function.NonzeroPoleIndices
+                    shape_function.Compute(surface_geometry.KnotsU(), surface_geometry.KnotsV(), u, v)
+                    nonzero_pole_indices = shape_function.NonzeroPoleIndices()
 
-                    shape_function_values = np.empty(shape_function.NbNonzeroPoles, dtype=float)
-                    for i in range(shape_function.NbNonzeroPoles):
+                    shape_function_values = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
+                    for i in range(shape_function.NbNonzeroPoles()):
                         shape_function_values[i] = shape_function(0,i)
 
                     # Introduce a possible penalty factor for nodes on boundary
@@ -424,14 +425,17 @@ class ConditionsFactory:
     def CreateDistanceMinimizationWithIntegrationConditions(self, conditions):
         from cad_reconstruction_conditions import DistanceMinimizationCondition
 
+        name_variable_to_map = self.parameters["input"]["variable_to_map"].GetString()
+        variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
+
         total_area = 0
 
-        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
 
             print("> Processing face ",face_itr)
 
-            surface_geometry = face_i.surface_geometry_3d().geometry
-            shape_function = an.SurfaceShapeEvaluator(DegreeU=surface_geometry.DegreeU, DegreeV=surface_geometry.DegreeV, Order=0)
+            surface_geometry = face_i.Data().Geometry().Data()
+            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry.DegreeU(), degreeV=surface_geometry.DegreeV(), order=0)
 
             list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i)
 
@@ -467,11 +471,11 @@ class ConditionsFactory:
 
                 total_area += weight
 
-                shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
-                nonzero_pole_indices = shape_function.NonzeroPoleIndices
+                shape_function.Compute(surface_geometry.KnotsU(), surface_geometry.KnotsV(), u, v)
+                nonzero_pole_indices = shape_function.NonzeroPoleIndices()
 
-                shape_function_values = np.empty(shape_function.NbNonzeroPoles, dtype=float)
-                for i in range(shape_function.NbNonzeroPoles):
+                shape_function_values = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
+                for i in range(shape_function.NbNonzeroPoles()):
                     shape_function_values[i] = shape_function(0,i)
 
                 new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, variable_to_map, weight)
@@ -495,16 +499,16 @@ class ConditionsFactory:
         for itr in range(self.parameters["conditions"]["faces"]["mechanical"]["exclusive_face_list"].size()):
             list_of_exclusive_faces.append(self.parameters["conditions"]["faces"]["mechanical"]["exclusive_face_list"][itr].GetString())
 
-        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
 
             print("> Processing face ",face_itr)
 
             # Skip faces if exclusive face list is specified (if list is empty, use all faces)
-            if face_i.key not in list_of_exclusive_faces:
+            if face_i.Key() not in list_of_exclusive_faces:
                 continue
 
-            surface_geometry = face_i.surface_geometry_3d().geometry
-            shape_function = an.SurfaceShapeEvaluator(DegreeU=surface_geometry.DegreeU, DegreeV=surface_geometry.DegreeV, Order=2)
+            surface_geometry = face_i.Data().Geometry().Data()
+            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry.DegreeU(), degreeV=surface_geometry.DegreeV(), order=2)
 
             list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i)
 
@@ -514,16 +518,16 @@ class ConditionsFactory:
                 [u,v] = list_of_parameters[itr]
                 weight = list_of_integration_weights[itr]
 
-                shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
-                nonzero_pole_indices = shape_function.NonzeroPoleIndices
+                shape_function.Compute(surface_geometry.KnotsU(), surface_geometry.KnotsV(), u, v)
+                nonzero_pole_indices = shape_function.NonzeroPoleIndices()
 
-                shape_function_values = np.empty(shape_function.NbNonzeroPoles, dtype=float)
-                shape_function_derivatives_u = np.empty(shape_function.NbNonzeroPoles, dtype=float)
-                shape_function_derivatives_v = np.empty(shape_function.NbNonzeroPoles, dtype=float)
-                shape_function_derivatives_uu = np.empty(shape_function.NbNonzeroPoles, dtype=float)
-                shape_function_derivatives_uv = np.empty(shape_function.NbNonzeroPoles, dtype=float)
-                shape_function_derivatives_vv = np.empty(shape_function.NbNonzeroPoles, dtype=float)
-                for i in range(shape_function.NbNonzeroPoles):
+                shape_function_values = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
+                shape_function_derivatives_u = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
+                shape_function_derivatives_v = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
+                shape_function_derivatives_uu = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
+                shape_function_derivatives_uv = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
+                shape_function_derivatives_vv = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
+                for i in range(shape_function.NbNonzeroPoles()):
                     shape_function_values[i] = shape_function(0,i)
                     shape_function_derivatives_u[i] = shape_function(1,i)
                     shape_function_derivatives_v[i] = shape_function(2,i)
@@ -551,15 +555,15 @@ class ConditionsFactory:
         penalty_factor_position_enforcement = self.parameters["conditions"]["edges"]["fe_based"]["penalty_factor_position_enforcement"].GetDouble()
 
         face_id_to_itr = {}
-        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
-            face_id_to_itr[face_i.key] = face_itr
+        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+            face_id_to_itr[face_i.Key()] = face_itr
 
         # Create corresponding points
-        for edge_itr, edge_i in enumerate(self.cad_model.of_type('BrepEdge')):
+        for edge_itr, edge_i in enumerate(self.cad_model.GetByType('BrepEdge')):
 
             print("> Processing edge ",edge_itr)
 
-            adjacent_faces = edge_i.faces()
+            adjacent_faces = edge_i.Data().Faces()
             num_adjacent_faces = len(adjacent_faces)
 
             if num_adjacent_faces == 1:
@@ -570,11 +574,11 @@ class ConditionsFactory:
                 face_a = adjacent_faces[0]
                 face_b = adjacent_faces[1]
 
-                face_a_itr = face_id_to_itr[adjacent_faces[0].key]
-                face_b_itr = face_id_to_itr[adjacent_faces[1].key]
+                face_a_itr = face_id_to_itr[adjacent_faces[0].Key()]
+                face_b_itr = face_id_to_itr[adjacent_faces[1].Key()]
 
-                surface_geometry_a = face_a.surface_geometry_3d().geometry
-                surface_geometry_b = face_b.surface_geometry_3d().geometry
+                surface_geometry_a = face_a.Data().Geometry().Data()
+                surface_geometry_b = face_b.Data().Geometry().Data()
 
                 list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i)
 
@@ -608,32 +612,32 @@ class ConditionsFactory:
 
                     integration_weight = list_of_integration_weights[itr]
 
-                    shape_function_a = an.SurfaceShapeEvaluator(DegreeU=surface_geometry_a.DegreeU, DegreeV=surface_geometry_a.DegreeV, Order=1)
-                    shape_function_b = an.SurfaceShapeEvaluator(DegreeU=surface_geometry_b.DegreeU, DegreeV=surface_geometry_b.DegreeV, Order=1)
+                    shape_function_a = an.SurfaceShapeEvaluator(degreeU=surface_geometry_a.DegreeU(), degreeV=surface_geometry_a.DegreeV(), order=1)
+                    shape_function_b = an.SurfaceShapeEvaluator(degreeU=surface_geometry_b.DegreeU(), degreeV=surface_geometry_b.DegreeV(), order=1)
 
                     # Create conditions to enforce t1 and t2 on both face a and face b
                     u_a = list_of_parameters_a[itr][0]
                     v_a = list_of_parameters_a[itr][1]
-                    shape_function_a.Compute(surface_geometry_a.KnotsU, surface_geometry_a.KnotsV, u_a, v_a)
-                    nonzero_pole_indices_a = shape_function_a.NonzeroPoleIndices
+                    shape_function_a.Compute(surface_geometry_a.KnotsU(), surface_geometry_a.KnotsV(), u_a, v_a)
+                    nonzero_pole_indices_a = shape_function_a.NonzeroPoleIndices()
 
-                    shape_function_values_a = np.empty(shape_function_a.NbNonzeroPoles, dtype=float)
-                    shape_function_derivatives_u_a = np.empty(shape_function_a.NbNonzeroPoles, dtype=float)
-                    shape_function_derivatives_v_a = np.empty(shape_function_a.NbNonzeroPoles, dtype=float)
-                    for i in range(shape_function_a.NbNonzeroPoles):
+                    shape_function_values_a = np.empty(shape_function_a.NbNonzeroPoles(), dtype=float)
+                    shape_function_derivatives_u_a = np.empty(shape_function_a.NbNonzeroPoles(), dtype=float)
+                    shape_function_derivatives_v_a = np.empty(shape_function_a.NbNonzeroPoles(), dtype=float)
+                    for i in range(shape_function_a.NbNonzeroPoles()):
                         shape_function_values_a[i] = shape_function_a(0,i)
                         shape_function_derivatives_u_a[i] = shape_function_a(1,i)
                         shape_function_derivatives_v_a[i] = shape_function_a(2,i)
 
                     u_b = list_of_parameters_b[itr][0]
                     v_b = list_of_parameters_b[itr][1]
-                    shape_function_b.Compute(surface_geometry_b.KnotsU, surface_geometry_b.KnotsV, u_b, v_b)
-                    nonzero_pole_indices_b = shape_function_b.NonzeroPoleIndices
+                    shape_function_b.Compute(surface_geometry_b.KnotsU(), surface_geometry_b.KnotsV(), u_b, v_b)
+                    nonzero_pole_indices_b = shape_function_b.NonzeroPoleIndices()
 
-                    shape_function_values_b = np.empty(shape_function_b.NbNonzeroPoles, dtype=float)
-                    shape_function_derivatives_u_b = np.empty(shape_function_b.NbNonzeroPoles, dtype=float)
-                    shape_function_derivatives_v_b = np.empty(shape_function_b.NbNonzeroPoles, dtype=float)
-                    for i in range(shape_function_b.NbNonzeroPoles):
+                    shape_function_values_b = np.empty(shape_function_b.NbNonzeroPoles(), dtype=float)
+                    shape_function_derivatives_u_b = np.empty(shape_function_b.NbNonzeroPoles(), dtype=float)
+                    shape_function_derivatives_v_b = np.empty(shape_function_b.NbNonzeroPoles(), dtype=float)
+                    for i in range(shape_function_b.NbNonzeroPoles()):
                         shape_function_values_b[i] = shape_function_b(0,i)
                         shape_function_derivatives_u_b[i] = shape_function_b(1,i)
                         shape_function_derivatives_v_b[i] = shape_function_b(2,i)
@@ -698,34 +702,34 @@ class ConditionsFactory:
 
         projection_tolerance = 0.01 # Sollte Zeichengenaigkeit sein
 
-        trim_a, trim_b = edge.trims()
+        trim_a, trim_b = edge.Data().Trims()
 
-        curve_3d_a = trim_a.curve_3d()
-        curve_3d_b = trim_b.curve_3d()
+        curve_3d_a = an.CurveOnSurface3D(trim_a.Data().Geometry().Data(), trim_a.Data().Face().Data().Geometry().Data(), trim_a.Data().Geometry().Data().Domain())
+        curve_3d_b = an.CurveOnSurface3D(trim_b.Data().Geometry().Data(), trim_b.Data().Face().Data().Geometry().Data(), trim_b.Data().Geometry().Data().Domain())
 
-        projection_a = an.PointOnCurveProjection3D(Curve=curve_3d_a, Tolerance=projection_tolerance)
-        projection_b = an.PointOnCurveProjection3D(Curve=curve_3d_b, Tolerance=projection_tolerance)
+        projection_a = an.PointOnCurveProjection3D(curve=curve_3d_a, tolerance=projection_tolerance)
+        projection_b = an.PointOnCurveProjection3D(curve=curve_3d_b, tolerance=projection_tolerance)
 
-        spans_on_curve_b = [span_b.T0 for span_b in curve_3d_b.Spans()]
+        spans_on_curve_b = [span_b.T0() for span_b in curve_3d_b.Spans()]
 
         for span_a in curve_3d_a.Spans():
-            t_a = span_a.T0
+            t_a = span_a.T0()
             point = curve_3d_a.PointAt(t_a)
             projection_b.Compute(point)
-            t_b = projection_b.Parameter
+            t_b = projection_b.Parameter()
 
             spans_on_curve_b.append(t_b)
 
-        spans_on_curve_b.append(trim_b.curve_3d().Domain.T1)
+        spans_on_curve_b.append(curve_3d_b.Domain().T1())
 
         spans_on_curve_b.sort()
 
-        face_a, face_b = edge.faces()
+        face_a, face_b = edge.Data().Faces()
 
-        surface_3d_a = face_a.surface_geometry_3d().geometry
-        surface_3d_b = face_b.surface_geometry_3d().geometry
+        surface_3d_a = face_a.Data().Geometry().Data()
+        surface_3d_b = face_b.Data().Geometry().Data()
 
-        degree = max(surface_3d_a.DegreeU, surface_3d_a.DegreeV, surface_3d_b.DegreeU, surface_3d_b.DegreeV) + 1
+        degree = max(surface_3d_a.DegreeU(), surface_3d_a.DegreeV(), surface_3d_b.DegreeU(), surface_3d_b.DegreeV()) + 1
 
         list_of_points = []
         list_of_parameters_a = []
@@ -736,7 +740,7 @@ class ConditionsFactory:
             span_b = an.Interval(t0_b, t1_b)
 
             print("Here some parameter is defined!!!!!!!!!")
-            if span_b.Length < 1e-7:
+            if span_b.Length() < 1e-7:
                 continue
 
             for t_b, weight in an.IntegrationPoints.Points1D(degree, span_b):
@@ -744,10 +748,10 @@ class ConditionsFactory:
                 list_of_points.append(point)
 
                 projection_a.Compute(point)
-                t_a = projection_a.Parameter
+                t_a = projection_a.Parameter()
 
-                u_a, v_a = trim_a.curve_2d().PointAt(t_a)
-                u_b, v_b = trim_b.curve_2d().PointAt(t_b)
+                u_a, v_a = trim_a.Data().Geometry().Data().PointAt(t_a)
+                u_b, v_b = trim_b.Data().Geometry().Data().PointAt(t_b)
 
                 list_of_parameters_a.append((u_a, v_a))
                 list_of_parameters_b.append((u_b, v_b))
@@ -758,29 +762,29 @@ class ConditionsFactory:
     # --------------------------------------------------------------------------
     @staticmethod
     def __CreateIntegrationPointsForFace(face):
-        surface_geometry = face.surface_geometry_3d().geometry
+        surface_geometry = face.Data().Geometry().Data()
 
         print("Here there is some parameter!!!!")
         drawing_tolerance = 0.01
 
-        clipper = an.TrimmedSurfaceClipping3D(Tolerance=drawing_tolerance, Scale=drawing_tolerance/100.0)
+        clipper = an.TrimmedSurfaceClipping(tolerance=drawing_tolerance, scale=drawing_tolerance/100.0)
         integration_points = an.PolygonIntegrationPoints()
-        tessellation = an.PolygonTessellation()
+        tessellation = an.PolygonTessellation3D()
 
         clipper.Clear()
 
-        for loop in face.loops():
+        for loop in face.Data().Loops():
             clipper.BeginLoop()
 
-            for trim in loop.trims():
-                clipper.AddCurve(trim.curve_2d())
+            for trim in loop.Data().Trims():
+                clipper.AddCurve(an.Curve2D(trim.Data().Geometry()))
 
             clipper.EndLoop()
 
-        clipper.Compute(surface_geometry)
+        clipper.Compute(surface_geometry.SpansU(), surface_geometry.SpansV())
 
-        degree_u = surface_geometry.DegreeU
-        degree_v = surface_geometry.DegreeV
+        degree_u = surface_geometry.DegreeU()
+        degree_v = surface_geometry.DegreeV()
 
         degree = max(degree_u, degree_v) + 1
 
@@ -788,8 +792,8 @@ class ConditionsFactory:
         list_of_parameters = []
         list_of_weights = []
 
-        for i in range(clipper.NbSpansU):
-            for j in range(clipper.NbSpansV):
+        for i in range(clipper.NbSpansU()):
+            for j in range(clipper.NbSpansV()):
                 if clipper.SpanTrimType(i, j) == an.Empty:
                     continue
 
@@ -812,7 +816,7 @@ class ConditionsFactory:
                     for polygon_i, polygon in enumerate(clipper.SpanPolygons(i, j)):
                         integration_points.Compute(degree, polygon)
 
-                        for k in range(integration_points.NbIntegrationPoints):
+                        for k in range(integration_points.NbIntegrationPoints()):
                             u, v, weight = integration_points.IntegrationPoint(k)
 
                             [x,y,z], a1, a2  = surface_geometry.DerivativesAt(u, v, 1)
@@ -913,7 +917,7 @@ class Assembler():
     # --------------------------------------------------------------------------
     def Initialize(self):
         # Assign dof and equation ids
-        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
             for condition in self.conditions[face_itr]:
                 for (r, s) in condition.nonzero_pole_indices:
                     _ = self.__GetDofId((face_itr,r,s,"x"))
@@ -936,11 +940,11 @@ class Assembler():
         #         print(GetDof(i))
         #         print(lhs[0,i])
 
-        # surface_geometry = model.of_type('BrepFace')[8].surface_geometry_3d().geometry
+        # surface_geometry = model.GetByType('BrepFace')[8].Data().Geometry().Data()
         # shape_function = an.SurfaceShapeEvaluator(DegreeU=surface_geometry.DegreeU, DegreeV=surface_geometry.DegreeV, Order=0)
         # u = point_pairs[0][0][1][0]
         # v = point_pairs[0][0][1][1]
-        # shape_function.Compute(surface_geometry.KnotsU, surface_geometry.KnotsV, u, v)
+        # shape_function.Compute(surface_geometry.KnotsU(), surface_geometry.KnotsV(), u, v)
 
     # --------------------------------------------------------------------------
     def AssembleSystem(self):
@@ -952,7 +956,7 @@ class Assembler():
 
         total_num_conditions = 0
 
-        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
 
             print("Processing face", face_itr, "with", len(self.conditions[face_itr]), "conditions.")
 
@@ -989,7 +993,7 @@ class Assembler():
 
         self.rhs.fill(0)
 
-        for face_itr, face_i in enumerate(self.cad_model.of_type('BrepFace')):
+        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
 
             print("Processing face", face_itr, "with", len(self.conditions[face_itr]), "conditions.")
 

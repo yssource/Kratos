@@ -65,7 +65,7 @@ class ExplicitMechanicalSolver(structural_mechanics_solver.MechanicalSolver):
         super(ExplicitMechanicalSolver, self).AddDofs()
         self._add_dynamic_dofs()
         self.print_on_rank_zero("::[ExplicitMechanicalSolver]:: DOF's ADDED")
-
+            
     def ComputeDeltaTime(self):
         if self.dynamic_settings["time_step_prediction_level"].GetInt() > 1:
             self.delta_time = StructuralMechanicsApplication.CalculateDeltaTime(self.GetComputingModelPart(), self.delta_time_settings)

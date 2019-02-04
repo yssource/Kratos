@@ -268,6 +268,8 @@ void EvmKEpsilonElement<TDim, TNumNodes>::CalculateRightHandSide(
     const double von_karman = rCurrentProcessInfo[WALL_VON_KARMAN];
     const double C_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
     const double C1 = rCurrentProcessInfo[TURBULENCE_RANS_C1];
+    const double mixing_length = rCurrentProcessInfo[TURBULENT_MIXING_LENGTH];
+    const double turbulent_viscosity_fraction = rCurrentProcessInfo[TURBULENT_VISCOSITY_FRACTION];
 
     for (unsigned int g = 0; g < num_gauss_points; g++)
     {
@@ -310,8 +312,14 @@ void EvmKEpsilonElement<TDim, TNumNodes>::CalculateRightHandSide(
             y_plus = velocity_magnitude / u_tau;
 
         const double f_mu = 1 - std::exp(-0.0115 * y_plus);
-        const double nu_t = C_mu * f_mu * std::pow(tke, 2.0) / epsilon;
-        const double gamma = epsilon / tke;
+
+        // calculating limited mixing length
+        double temp_tke = C_mu * f_mu * std::pow(tke, 1.5);
+        const double limited_mixing_length = (temp_tke < epsilon * mixing_length) ? temp_tke / epsilon : mixing_length;
+
+        const double nu_min = nu * turbulent_viscosity_fraction;
+        const double nu_t = (nu_min < limited_mixing_length * std::pow(tke, 0.5)) ? limited_mixing_length * std::pow(tke, 0.5) : nu_min;
+        const double gamma = C_mu * f_mu * tke / nu_t;
 
         BoundedMatrix<double, TDim, TDim> velocity_gradient_matrix;
         velocity_gradient_matrix.clear();
@@ -516,6 +524,8 @@ void EvmKEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(
     const double C2 = rCurrentProcessInfo[TURBULENCE_RANS_C2];
     const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
     const double epsilon_sigma = rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
+    const double mixing_length = rCurrentProcessInfo[TURBULENT_MIXING_LENGTH];
+    const double turbulent_viscosity_fraction = rCurrentProcessInfo[TURBULENT_VISCOSITY_FRACTION];
 
     for (unsigned int g = 0; g < num_gauss_points; g++)
     {
@@ -559,8 +569,14 @@ void EvmKEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(
 
         const double f_mu = 1 - std::exp(-0.0115 * y_plus);
         const double f2 = 1 - 0.22 * std::exp(std::pow(tke, 2) / (6.0 * nu * epsilon));
-        const double nu_t = C_mu * f_mu * std::pow(tke, 2.0) / epsilon;
-        const double gamma = epsilon / tke;
+
+        // calculating limited mixing length
+        double temp_tke = C_mu * f_mu * std::pow(tke, 1.5);
+        const double limited_mixing_length = (temp_tke < epsilon * mixing_length) ? temp_tke / epsilon : mixing_length;
+
+        const double nu_min = nu * turbulent_viscosity_fraction;
+        const double nu_t = (nu_min < limited_mixing_length * std::pow(tke, 0.5)) ? limited_mixing_length * std::pow(tke, 0.5) : nu_min;
+        const double gamma = C_mu * f_mu * tke / nu_t;
 
         for (unsigned int a = 0; a < TNumNodes; a++)
         {

@@ -23,6 +23,7 @@
 // Project includes
 #include "includes/element.h"
 #include "includes/properties.h"
+#include "utilities/brent_iteration.h"
 
 #include "custom_elements/rans_constitutive_element.h"
 #include "rans_constitutive_laws_application_variables.h"

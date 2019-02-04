@@ -247,6 +247,96 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::CalculateRightHandSide(
     VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
+    KRATOS_TRY
+
+    BaseType::CalculateRightHandSide(rRightHandSideVector, rCurrentProcessInfo);
+
+    // Get Shape function data
+    Vector GaussWeights;
+    Matrix ShapeFunctions;
+    ShapeFunctionDerivativesArrayType ShapeDerivatives;
+    this->CalculateGeometryData(GaussWeights, ShapeFunctions, ShapeDerivatives);
+    const unsigned int num_gauss_points = GaussWeights.size();
+
+    const GeometryType rGeom = this->GetGeometry();
+
+    const double beta = rCurrentProcessInfo[WALL_SMOOTHNESS_BETA];
+    const double von_karman = rCurrentProcessInfo[WALL_VON_KARMAN];
+    const double C_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
+    const double C1 = rCurrentProcessInfo[TURBULENCE_RANS_C1];
+    const double C2 = rCurrentProcessInfo[TURBULENCE_RANS_C2];
+    const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
+
+    for (unsigned int g = 0; g < num_gauss_points; g++)
+    {
+        const auto& r_shape_derivatives = ShapeDerivatives[g];
+
+        double velocity_divergence = 0.0;
+        double epsilon = 0.0;
+        double tke = 0.0;
+        double wall_distance = 0.0;
+        double nu = 0.0;
+        double gamma = 0.0;
+        array_1d<double, 3> velocity  = ZeroVector(3);
+
+        for (unsigned int c = 0; c < TNumNodes; c++)
+        {
+            const array_1d<double,3>& r_velocity = rGeom[c].FastGetSolutionStepValue(VELOCITY);
+            for (unsigned int k = 0; k < TDim; k++)
+            {
+                velocity_divergence += r_shape_derivatives(c,k) * r_velocity[k];
+            }
+
+            epsilon += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
+            tke += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
+            wall_distance += ShapeFunctions(g, c) * rGeom[c].GetValue(WALL_DISTANCE);
+            nu += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(VISCOSITY);
+            velocity += ShapeFunctions(g, c) * r_velocity;
+        }
+
+        const double velocity_magnitude = norm_2(velocity);
+        auto log_law_wall_function = [velocity_magnitude, von_karman, wall_distance, nu, beta](double u_tau)
+        {
+            return u_tau - velocity_magnitude / ((1.0/von_karman) * std::log(u_tau * wall_distance / nu) + beta);
+        };
+
+        const double iterTol = 1e-5;
+        const double maxIter = 10;
+        const double u_tau = BrentIteration::FindRoot(log_law_wall_function, 1e-6, 300.0 * nu / wall_distance, iterTol, maxIter);
+        double y_plus = u_tau * wall_distance / nu;
+
+        if (y_plus < 11.06)
+            y_plus = velocity_magnitude / u_tau;
+
+        const double f_mu = 1 - std::exp(-0.0115 * y_plus);
+        const double nu_t = C_mu * f_mu * std::pow(tke, 2.0) / epsilon;
+
+        BoundedMatrix<double, TDim, TDim> velocity_gradient_matrix;
+        velocity_gradient_matrix.clear();
+        for (unsigned int c = 0; c < TNumNodes; c++)
+        {
+            const array_1d<double,3>& r_velocity = rGeom[c].FastGetSolutionStepValue(VELOCITY);
+            for (unsigned int i = 0; i < TDim; i++)
+            {
+                for (unsigned int j = 0; j < TDim; j++)
+                {
+                    velocity_gradient_matrix(i,j) += r_shape_derivatives(c, j) * r_velocity[i];
+                }
+            }
+        }
+
+        BoundedMatrix<double, TDim, TDim> temp;
+        noalias(temp) = velocity_gradient_matrix + trans(velocity_gradient_matrix);
+        const double norm_f = std::pow(norm_frobenius(temp), 2.0);
+
+        for (unsigned int a = 0; a < TNumNodes; a++)
+        {
+            rRightHandSideVector[a] += GaussWeights[g] * ShapeFunctions(g, a) * 0.5 * nu_t * norm_f;
+        }
+
+    }
+
+    KRATOS_CATCH("");
 }
 
 /**
@@ -358,8 +448,28 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::CalculateMassMatrix(
     MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo)
 {
-    if (rMassMatrix.size1() != 0)
-        rMassMatrix.resize(0, 0, false);
+    KRATOS_TRY
+
+    BaseType::CalculateMassMatrix(rMassMatrix, rCurrentProcessInfo);
+
+    // Get Shape function data
+    Vector GaussWeights;
+    Matrix ShapeFunctions;
+    ShapeFunctionDerivativesArrayType ShapeDerivatives;
+    this->CalculateGeometryData(GaussWeights, ShapeFunctions, ShapeDerivatives);
+    const unsigned int num_gauss_points = GaussWeights.size();
+
+
+    for (unsigned int a = 0; a < TNumNodes; a++)
+    {
+        for (unsigned int b = 0; b < TNumNodes; b++)
+        {
+            for (unsigned int g = 0; g < num_gauss_points; g++)
+                rMassMatrix(a,b) += GaussWeights[g] * ShapeFunctions(g, a) * ShapeFunctions(g, b);
+        }
+    }
+
+    KRATOS_CATCH("");
 }
 
 /**
@@ -372,8 +482,91 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void EvmTurbulentKineticEnergyElement<TDim, TNumNodes>::CalculateDampingMatrix(
     MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo)
 {
-    if (rDampingMatrix.size1() != 0)
-        rDampingMatrix.resize(0, 0, false);
+    KRATOS_TRY
+
+    BaseType::CalculateDampingMatrix(rDampingMatrix, rCurrentProcessInfo);
+
+    // Get Shape function data
+    Vector GaussWeights;
+    Matrix ShapeFunctions;
+    ShapeFunctionDerivativesArrayType ShapeDerivatives;
+    this->CalculateGeometryData(GaussWeights, ShapeFunctions, ShapeDerivatives);
+    const unsigned int num_gauss_points = GaussWeights.size();
+
+    const GeometryType rGeom = this->GetGeometry();
+
+    const double beta = rCurrentProcessInfo[WALL_SMOOTHNESS_BETA];
+    const double von_karman = rCurrentProcessInfo[WALL_VON_KARMAN];
+    const double C_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
+    const double C1 = rCurrentProcessInfo[TURBULENCE_RANS_C1];
+    const double C2 = rCurrentProcessInfo[TURBULENCE_RANS_C2];
+    const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
+
+    for (unsigned int g = 0; g < num_gauss_points; g++)
+    {
+        const auto& r_shape_derivatives = ShapeDerivatives[g];
+
+        double velocity_divergence = 0.0;
+        double epsilon = 0.0;
+        double tke = 0.0;
+        double wall_distance = 0.0;
+        double nu = 0.0;
+        array_1d<double, 3> velocity  = ZeroVector(3);
+
+        for (unsigned int c = 0; c < TNumNodes; c++)
+        {
+            const array_1d<double,3>& r_velocity = rGeom[c].FastGetSolutionStepValue(VELOCITY);
+            for (unsigned int k = 0; k < TDim; k++)
+            {
+                velocity_divergence += r_shape_derivatives(c,k) * r_velocity[k];
+            }
+
+            epsilon += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
+            tke += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
+            wall_distance += ShapeFunctions(g, c) * rGeom[c].GetValue(WALL_DISTANCE);
+            nu += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(VISCOSITY);
+            velocity += ShapeFunctions(g, c) * r_velocity;
+        }
+
+        const double velocity_magnitude = norm_2(velocity);
+        auto log_law_wall_function = [velocity_magnitude, von_karman, wall_distance, nu, beta](double u_tau)
+        {
+            return u_tau - velocity_magnitude / ((1.0/von_karman) * std::log(u_tau * wall_distance / nu) + beta);
+        };
+
+        const double iterTol = 1e-5;
+        const double maxIter = 10;
+        const double u_tau = BrentIteration::FindRoot(log_law_wall_function, 1e-6, 300.0 * nu / wall_distance, iterTol, maxIter);
+        double y_plus = u_tau * wall_distance / nu;
+
+        if (y_plus < 11.06)
+            y_plus = velocity_magnitude / u_tau;
+
+        const double f_mu = 1 - std::exp(-0.0115 * y_plus);
+        const double f2 = 1 - 0.22 * std::exp(std::pow(tke, 2) / (6.0 * nu * epsilon));
+        const double nu_t = C_mu * f_mu * std::pow(tke, 2.0) / epsilon;
+        const double gamma = epsilon / tke;
+
+        for (unsigned int a = 0; a < TNumNodes; a++)
+        {
+            for (unsigned int b = 0; b < TNumNodes; b++)
+            {
+                double value = 0.0;
+
+                value += velocity_divergence;
+                value += gamma;
+                value += 2.0 * nu / std::pow(wall_distance, 2.0);
+                value *= ShapeFunctions(g, a) * ShapeFunctions(g, b);
+
+                for (unsigned int i = 0; i < TDim; i++)
+                    value += (nu_t / tke_sigma) * r_shape_derivatives(a, i) * r_shape_derivatives(b, i);
+
+                rDampingMatrix(a,b) += GaussWeights[g] * value;
+            }
+        }
+    }
+
+    KRATOS_CATCH("");
 }
 
 /**

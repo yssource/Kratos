@@ -74,9 +74,8 @@ class DistanceMinimizationCondition:
 # ==============================================================================
 class PositionEnforcementCondition:
     # --------------------------------------------------------------------------
-    def __init__(self, target_disp, target_position, surface_geometry, nonzero_pole_indices, shape_functions, penalty_factor):
+    def __init__(self, target_position, surface_geometry, nonzero_pole_indices, shape_functions, penalty_factor):
         self.target_position = target_position
-        self.target_disp = target_disp
         self.surface_geometry = surface_geometry
         self.nonzero_pole_indices = nonzero_pole_indices
         self.shape_functions = shape_functions

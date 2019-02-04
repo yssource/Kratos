@@ -651,10 +651,10 @@ class ConditionsFactory:
                     target_position = np.array([node.X+target_displacement[0], node.Y+target_displacement[1], node.Z+target_displacement[2]])
                     weight = penalty_factor_position_enforcement * integration_weight
 
-                    new_condition_a = PositionEnforcementCondition(target_displacement, target_position, surface_geometry_a, nonzero_pole_indices_a, shape_function_values_a, weight)
+                    new_condition_a = PositionEnforcementCondition(target_position, surface_geometry_a, nonzero_pole_indices_a, shape_function_values_a, weight)
                     conditions[face_a_itr].append(new_condition_a)
 
-                    new_condition_b = PositionEnforcementCondition(target_displacement, target_position, surface_geometry_b, nonzero_pole_indices_b, shape_function_values_b, weight)
+                    new_condition_b = PositionEnforcementCondition(target_position, surface_geometry_b, nonzero_pole_indices_b, shape_function_values_b, weight)
                     conditions[face_b_itr].append(new_condition_b)
 
                     # point_counter += 1

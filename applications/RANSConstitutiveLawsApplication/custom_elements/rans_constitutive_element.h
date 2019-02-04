@@ -254,6 +254,12 @@ public:
         ProcessInfo& rCurrentProcessInfo) override;
 
     /**
+     * @brief GetIntegrationMethod Return the integration order to be used.
+     * @return Gauss Order
+     */
+    GeometryData::IntegrationMethod GetIntegrationMethod() const override;
+
+    /**
      * this is called during the assembling process in order
      * to calculate the elemental left hand side matrix for the first derivatives constributions
      * @param rLeftHandSideMatrix: the elemental left hand side matrix

@@ -438,6 +438,12 @@ int RANSConstitutiveElement<TDim, TNumNodes>::Check(const ProcessInfo& rCurrentP
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
+GeometryData::IntegrationMethod RANSConstitutiveElement<TDim, TNumNodes>::GetIntegrationMethod() const
+{
+    return GeometryData::GI_GAUSS_2;
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
 void RANSConstitutiveElement<TDim, TNumNodes>::CalculateGeometryData(
     Vector& rGaussWeights, Matrix& rNContainer, ShapeFunctionDerivativesArrayType& rDN_DX) const
 {

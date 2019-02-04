@@ -179,12 +179,14 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void EvmKEpsilonElement<TDim, TNumNodes>::EquationIdVector(
     EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo)
 {
-    unsigned int number_of_nodes = Element::GetGeometry().PointsNumber();
-    if (rResult.size() != number_of_nodes)
-        rResult.resize(number_of_nodes, false);
+    if (rResult.size() != TLocalSize)
+        rResult.resize(TLocalSize, false);
 
-    for (unsigned int i = 0; i < number_of_nodes; i++)
-        rResult[i] = Element::GetGeometry()[i].GetDof(TURBULENT_KINETIC_ENERGY).EquationId();
+    for (unsigned int i = 0; i < TNumNodes; i++)
+    {
+        rResult[i * TBlockSize] = Element::GetGeometry()[i].GetDof(TURBULENT_KINETIC_ENERGY).EquationId();
+        rResult[i * TBlockSize + 1] = Element::GetGeometry()[i].GetDof(TURBULENT_ENERGY_DISSIPATION_RATE).EquationId();
+    }
 }
 
 /**
@@ -196,12 +198,14 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void EvmKEpsilonElement<TDim, TNumNodes>::GetDofList(DofsVectorType& rElementalDofList,
                                                                    ProcessInfo& CurrentProcessInfo)
 {
-    unsigned int number_of_nodes = Element::GetGeometry().PointsNumber();
-    if (rElementalDofList.size() != number_of_nodes)
-        rElementalDofList.resize(number_of_nodes);
+    if (rElementalDofList.size() != TLocalSize)
+        rElementalDofList.resize(TLocalSize);
 
-    for (unsigned int i = 0; i < number_of_nodes; i++)
-        rElementalDofList[i] = Element::GetGeometry()[i].pGetDof(TURBULENT_KINETIC_ENERGY);
+    for (unsigned int i = 0; i < TNumNodes; i++)
+    {
+        rElementalDofList[i * TBlockSize] = Element::GetGeometry()[i].pGetDof(TURBULENT_KINETIC_ENERGY);
+        rElementalDofList[i * TBlockSize + 1] = Element::GetGeometry()[i].pGetDof(TURBULENT_ENERGY_DISSIPATION_RATE);
+    }
 }
 
 /**

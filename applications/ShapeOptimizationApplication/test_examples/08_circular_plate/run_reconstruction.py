@@ -12,7 +12,7 @@ parameters = KratosMultiphysics.Parameters("""
 {
     "input" :
     {
-        "cad_filename"                  : "plate_fine.iga",
+        "cad_filename"                  : "plate_fine_embedded.iga",
         "fem_filename"                  : "plate.mdpa",
         "fe_refinement_level"           : 0,
         "variable_to_map"               : "SHAPE_CHANGE"
@@ -31,7 +31,13 @@ parameters = KratosMultiphysics.Parameters("""
             {
                 "apply_KL_shell"      : true,
                 "exclusive_face_list" : ["Rhino<5b74e2e3-fd33-446e-a112-0480ea75a27d>.BrepFace<7>"],
-                "penalty_factor"      : 100.0
+                "penalty_factor"      : 1e3
+            },
+            "rigid" :
+            {
+                "apply_rigid_conditions" : true,
+                "exclusive_face_list"    : ["Rhino<5b74e2e3-fd33-446e-a112-0480ea75a27d>.BrepFace<5>.Hole"],
+                "penalty_factor"         : 1e5
             }
         },
         "edges" :

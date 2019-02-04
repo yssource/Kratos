@@ -134,6 +134,8 @@ class CADMapper:
         if self.parameters["conditions"]["faces"]["curvature"]["apply_curvature_minimization"].GetBool() or \
            self.parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].GetBool():
             condition_factory.CreateFaceConditions(self.conditions)
+        if self.parameters["conditions"]["faces"]["rigid"]["apply_rigid_conditions"].GetBool():
+            condition_factory.CreateRigidConditions(self.conditions)
         if self.parameters["conditions"]["edges"]["fe_based"]["apply_enforcement_conditions"].GetBool():
             condition_factory.CreateEnforcementConditions(self.conditions)
 
@@ -306,9 +308,12 @@ class ConditionsFactory:
 
         tessellation = an.CurveTessellation2D()
 
-        boundary_nodes_counter = 1
-
         for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+
+            # Skipp embedded faces to not have two identical contributions from the same unknowns (embedded faces share the unkonws of a given geometry)
+            if face_i.Attributes().HasTag('Embedded'):
+                print(f'Skip {face_i.Key()}')
+                continue
 
             print("> Processing face ",face_itr)
 
@@ -538,6 +543,125 @@ class ConditionsFactory:
                     weight = shell_penalty_fac * weight
                     new_condition = KLShellConditionWithAD(surface_geometry, nonzero_pole_indices, shape_function_derivatives_u, shape_function_derivatives_v, shape_function_derivatives_uu, shape_function_derivatives_uv, shape_function_derivatives_vv, weight)
                     conditions[face_itr].append(new_condition)
+
+        return conditions
+
+ # --------------------------------------------------------------------------
+    def CreateRigidConditions(self, conditions):
+        from cad_reconstruction_conditions import PositionEnforcementCondition
+
+        list_of_exclusive_faces = []
+        for itr in range(self.parameters["conditions"]["faces"]["rigid"]["exclusive_face_list"].size()):
+            list_of_exclusive_faces.append(self.parameters["conditions"]["faces"]["rigid"]["exclusive_face_list"][itr].GetString())
+
+        penalty_fac = self.parameters["conditions"]["faces"]["rigid"]["penalty_factor"].GetDouble()
+        tesselation_tolerance = self.parameters["points_projection"]["boundary_tessellation_tolerance"].GetDouble()
+        bounding_box_tolerance = self.parameters["points_projection"]["patch_bounding_box_tolerance"].GetDouble()
+        name_variable_to_map = self.parameters["input"]["variable_to_map"].GetString()
+        variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
+
+        relevant_fe_points = []
+        relevant_fe_points_displaced = []
+        relevant_cad_uvs = []
+
+        tessellation = an.CurveTessellation2D()
+
+        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+
+            print("> Processing face ",face_itr)
+
+            # Skip faces if exclusive face list is specified (if list is empty, use all faces)
+            if face_i.Key() not in list_of_exclusive_faces:
+                continue
+
+            surface_geometry = face_i.Data().Geometry().Data()
+            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry.DegreeU(), degreeV=surface_geometry.DegreeV(), order=0)
+
+            surface = an.Surface3D(face_i.Data().Geometry())
+            projection = an.PointOnSurfaceProjection3D(surface)
+
+            boundary_polygon = []
+            for trim in face_i.Data().Trims():
+                tessellation.Compute(an.Curve2D(trim.Data().Geometry()), tesselation_tolerance)
+                for i in range(tessellation.NbPoints()):
+                    boundary_polygon.append(tessellation.Point(i))
+
+            # Bounding box and scaling as the bounding box is based on a simple pointwise discretization of surface
+            min_x, min_y, min_z, max_x, max_y, max_z = projection.BoundingBox()
+            min_x -= bounding_box_tolerance
+            min_y -= bounding_box_tolerance
+            min_z -= bounding_box_tolerance
+            max_x += bounding_box_tolerance
+            max_y += bounding_box_tolerance
+            max_z += bounding_box_tolerance
+
+            for node_itr, node_i in enumerate(self.fe_model_part.Nodes):
+
+                node_coords_i = np.array([node_i.X0, node_i.Y0, node_i.Z0])
+
+                # Points outside bounding box are not considered
+                if node_coords_i[0] < min_x or max_x < node_coords_i[0]:
+                    continue
+                if node_coords_i[1] < min_y or max_y < node_coords_i[1]:
+                    continue
+                if node_coords_i[2] < min_z or max_z < node_coords_i[2]:
+                    continue
+
+                projection.Compute(point=node_coords_i)
+                projected_point_uv = np.array([projection.ParameterU(), projection.ParameterV()])
+
+                is_inside, is_on_boundary = self.__Contains(projected_point_uv, boundary_polygon, tesselation_tolerance*1.1)
+                if is_inside:
+
+                    relevant_fe_points.append(node_coords_i)
+                    relevant_fe_points_displaced.append( node_coords_i + np.array(node_i.GetSolutionStepValue(variable_to_map)) )
+                    relevant_cad_uvs.append(projected_point_uv)
+
+            # Analyze rigid body movement
+            import numpy.matlib
+
+            num_nodes = len(relevant_fe_points)
+
+            A = np.array(relevant_fe_points)
+            B = relevant_fe_points_displaced
+
+            centroid_A = np.mean(A, axis=0)
+            centroid_B = np.mean(B, axis=0)
+
+            H = np.transpose( (A - np.matlib.repmat(centroid_A, num_nodes, 1)) ) @ (B - np.matlib.repmat(centroid_B, num_nodes, 1))
+
+            # Note that the definition of V is different to Matlab
+            # Matlab: X = U*S*V'
+            # Numpy: X = U*S*V
+            U, S, V = np.linalg.svd(H)
+
+            # Rotation matrix
+            R = np.transpose(V) @ np.transpose(U)
+
+            if np.linalg.det(R)<0:
+                print("> Reflection occured and was corrected!")
+                R[:,2] = -R[:,2]
+
+            # Translation vector
+            t = - np.inner(R, centroid_A) + np.transpose(centroid_B)
+
+            # Rigid motion
+            rigididly_displaced_points = A @ np.transpose(R) + np.matlib.repmat(t, num_nodes, 1)
+
+            for node_coords_disp, rigididly_displaced_point_coords, projected_point_uv in zip(relevant_fe_points_displaced, rigididly_displaced_points,relevant_cad_uvs):
+                self.cad_model.Add(an.Point3D(location=node_coords_disp))
+
+                u = projected_point_uv[0]
+                v = projected_point_uv[1]
+                shape_function.Compute(surface_geometry.KnotsU(), surface_geometry.KnotsV(), u, v)
+                nonzero_pole_indices = shape_function.NonzeroPoleIndices()
+
+                shape_function_values = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
+                for i in range(shape_function.NbNonzeroPoles()):
+                    shape_function_values[i] = shape_function(0,i)
+
+                new_condition = PositionEnforcementCondition(rigididly_displaced_point_coords, surface_geometry, nonzero_pole_indices, shape_function_values, penalty_fac)
+                conditions[face_itr].append(new_condition)
 
         return conditions
 

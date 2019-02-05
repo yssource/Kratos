@@ -45,54 +45,61 @@ namespace Kratos
 /**
  * Constructor.
  */
-EvmTurbulentEnergyDissipationRateWallCondition::EvmTurbulentEnergyDissipationRateWallCondition(IndexType NewId)
-    : Condition(NewId) 
+template<unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::EvmTurbulentEnergyDissipationRateWallCondition(IndexType NewId)
+    : Condition(NewId)
 {
 }
 
 /**
  * Constructor using an array of nodes
  */
-EvmTurbulentEnergyDissipationRateWallCondition::EvmTurbulentEnergyDissipationRateWallCondition(IndexType NewId, const NodesArrayType& ThisNodes)
-    : Condition(NewId, ThisNodes) 
+template<unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::EvmTurbulentEnergyDissipationRateWallCondition(IndexType NewId, const NodesArrayType& ThisNodes)
+    : Condition(NewId, ThisNodes)
 {
 }
 
 /**
  * Constructor using Geometry
  */
-EvmTurbulentEnergyDissipationRateWallCondition::EvmTurbulentEnergyDissipationRateWallCondition(IndexType NewId, GeometryType::Pointer pGeometry)
-    : Condition(NewId, pGeometry) 
+template<unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::EvmTurbulentEnergyDissipationRateWallCondition(IndexType NewId, GeometryType::Pointer pGeometry)
+    : Condition(NewId, pGeometry)
 {
 }
 
 /**
  * Constructor using Properties
  */
-EvmTurbulentEnergyDissipationRateWallCondition::EvmTurbulentEnergyDissipationRateWallCondition(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
-    : Condition(NewId, pGeometry, pProperties) 
+template<unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::EvmTurbulentEnergyDissipationRateWallCondition(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
+    : Condition(NewId, pGeometry, pProperties)
 {
 }
 
 /**
  * Copy Constructor
  */
-EvmTurbulentEnergyDissipationRateWallCondition::EvmTurbulentEnergyDissipationRateWallCondition(EvmTurbulentEnergyDissipationRateWallCondition const& rOther)
-    : Condition(rOther) 
+template<unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::EvmTurbulentEnergyDissipationRateWallCondition(EvmTurbulentEnergyDissipationRateWallCondition const& rOther)
+    : Condition(rOther)
 {
 }
 
 /**
  * Destructor
  */
-EvmTurbulentEnergyDissipationRateWallCondition::~EvmTurbulentEnergyDissipationRateWallCondition() { }
+template<unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::~EvmTurbulentEnergyDissipationRateWallCondition() { }
 
 ///@}
 ///@name Operators
 ///@{
 
 /// Assignment operator.
-EvmTurbulentEnergyDissipationRateWallCondition & EvmTurbulentEnergyDissipationRateWallCondition::operator=(EvmTurbulentEnergyDissipationRateWallCondition const& rOther)
+template<unsigned int TDim, unsigned int TNumNodes>
+EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes> & EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::operator=(EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes> const& rOther)
 {
     BaseType::operator=(rOther);
     Flags::operator =(rOther);
@@ -116,7 +123,8 @@ EvmTurbulentEnergyDissipationRateWallCondition & EvmTurbulentEnergyDissipationRa
  * @param pProperties: the properties assigned to the new condition
  * @return a Pointer to the new condition
  */
-Condition::Pointer EvmTurbulentEnergyDissipationRateWallCondition::Create(
+template<unsigned int TDim, unsigned int TNumNodes>
+Condition::Pointer EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::Create(
     IndexType NewId,
     NodesArrayType const& ThisNodes,
     PropertiesType::Pointer pProperties) const
@@ -134,7 +142,8 @@ Condition::Pointer EvmTurbulentEnergyDissipationRateWallCondition::Create(
  * @param pProperties: the properties assigned to the new condition
  * @return a Pointer to the new condition
  */
-Condition::Pointer EvmTurbulentEnergyDissipationRateWallCondition::Create(
+template<unsigned int TDim, unsigned int TNumNodes>
+Condition::Pointer EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::Create(
     IndexType NewId,
     GeometryType::Pointer pGeom,
     PropertiesType::Pointer pProperties) const
@@ -152,7 +161,8 @@ Condition::Pointer EvmTurbulentEnergyDissipationRateWallCondition::Create(
  * @param pProperties: the properties assigned to the new condition
  * @return a Pointer to the new condition
  */
-Condition::Pointer EvmTurbulentEnergyDissipationRateWallCondition::Clone(IndexType NewId, NodesArrayType const& ThisNodes) const
+template<unsigned int TDim, unsigned int TNumNodes>
+Condition::Pointer EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::Clone(IndexType NewId, NodesArrayType const& ThisNodes) const
 {
     KRATOS_TRY
     return Kratos::make_shared<EvmTurbulentEnergyDissipationRateWallCondition>(NewId, GetGeometry().Create(ThisNodes), pGetProperties());
@@ -165,7 +175,8 @@ Condition::Pointer EvmTurbulentEnergyDissipationRateWallCondition::Clone(IndexTy
  * @param rResult: the condition equation ID vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateWallCondition::EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo)
 {
     unsigned int number_of_nodes = GetGeometry().PointsNumber();
     if (rResult.size() != number_of_nodes)
@@ -182,7 +193,8 @@ void EvmTurbulentEnergyDissipationRateWallCondition::EquationIdVector(EquationId
  * @param ConditionDofList: the list of DOFs
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateWallCondition::GetDofList(DofsVectorType& rConditionDofList, ProcessInfo& CurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::GetDofList(DofsVectorType& rConditionDofList, ProcessInfo& CurrentProcessInfo)
 {
     unsigned int number_of_nodes = GetGeometry().PointsNumber();
     if (rConditionDofList.size() != number_of_nodes)
@@ -209,7 +221,8 @@ void EvmTurbulentEnergyDissipationRateWallCondition::GetDofList(DofsVectorType& 
  * @param rRightHandSideVector: the condition right hand side
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateWallCondition::CalculateLocalSystem(
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::CalculateLocalSystem(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo)
@@ -222,7 +235,8 @@ void EvmTurbulentEnergyDissipationRateWallCondition::CalculateLocalSystem(
  * @param rLeftHandSideMatrix: the condition left hand side matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateWallCondition::CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
 {
 }
 
@@ -232,7 +246,8 @@ void EvmTurbulentEnergyDissipationRateWallCondition::CalculateLeftHandSide(Matri
  * @param rRightHandSideVector: the condition right hand side vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateWallCondition::CalculateRightHandSide(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
 }
 
@@ -243,7 +258,8 @@ void EvmTurbulentEnergyDissipationRateWallCondition::CalculateRightHandSide(Vect
  * @param rRightHandSideVector: the condition right hand side
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateWallCondition::CalculateFirstDerivativesContributions(
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::CalculateFirstDerivativesContributions(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo)
@@ -260,7 +276,8 @@ void EvmTurbulentEnergyDissipationRateWallCondition::CalculateFirstDerivativesCo
  * @param rLeftHandSideMatrix: the condition left hand side matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateWallCondition::CalculateFirstDerivativesLHS(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::CalculateFirstDerivativesLHS(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
 {
     if (rLeftHandSideMatrix.size1() != 0)
         rLeftHandSideMatrix.resize(0, 0, false);
@@ -272,7 +289,8 @@ void EvmTurbulentEnergyDissipationRateWallCondition::CalculateFirstDerivativesLH
  * @param rRightHandSideVector: the condition right hand side vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateWallCondition::CalculateFirstDerivativesRHS(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::CalculateFirstDerivativesRHS(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
     if (rRightHandSideVector.size() != 0)
     rRightHandSideVector.resize(0, false);
@@ -295,7 +313,8 @@ void EvmTurbulentEnergyDissipationRateWallCondition::CalculateFirstDerivativesRH
  * @param rRightHandSideVector: the condition right hand side
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateWallCondition::CalculateSecondDerivativesContributions(
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::CalculateSecondDerivativesContributions(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo)
@@ -312,7 +331,8 @@ void EvmTurbulentEnergyDissipationRateWallCondition::CalculateSecondDerivativesC
  * @param rLeftHandSideMatrix: the condition left hand side matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateWallCondition::CalculateSecondDerivativesLHS(
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::CalculateSecondDerivativesLHS(
     MatrixType& rLeftHandSideMatrix,
     ProcessInfo& rCurrentProcessInfo)
 {
@@ -326,7 +346,8 @@ void EvmTurbulentEnergyDissipationRateWallCondition::CalculateSecondDerivativesL
  * @param rRightHandSideVector: the condition right hand side vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateWallCondition::CalculateSecondDerivativesRHS(
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::CalculateSecondDerivativesRHS(
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo)
 {
@@ -340,7 +361,8 @@ void EvmTurbulentEnergyDissipationRateWallCondition::CalculateSecondDerivativesR
  * @param rMassMatrix: the condition mass matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateWallCondition::CalculateMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo)
 {
     if (rMassMatrix.size1() != 0)
         rMassMatrix.resize(0, 0, false);
@@ -352,7 +374,8 @@ void EvmTurbulentEnergyDissipationRateWallCondition::CalculateMassMatrix(MatrixT
  * @param rDampingMatrix: the condition damping matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-void EvmTurbulentEnergyDissipationRateWallCondition::CalculateDampingMatrix(MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo)
 {
     if (rDampingMatrix.size1() != 0)
         rDampingMatrix.resize(0, 0, false);
@@ -367,7 +390,8 @@ void EvmTurbulentEnergyDissipationRateWallCondition::CalculateDampingMatrix(Matr
  * @param rCurrentProcessInfo
  * this method is: MANDATORY
  */
-int EvmTurbulentEnergyDissipationRateWallCondition::Check(const ProcessInfo& rCurrentProcessInfo)
+template<unsigned int TDim, unsigned int TNumNodes>
+int EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::Check(const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY
 
@@ -397,7 +421,8 @@ int EvmTurbulentEnergyDissipationRateWallCondition::Check(const ProcessInfo& rCu
 
 /// Turn back information as a string.
 
-std::string EvmTurbulentEnergyDissipationRateWallCondition::Info() const {
+template<unsigned int TDim, unsigned int TNumNodes>
+std::string EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::Info() const {
     std::stringstream buffer;
     buffer << "EvmTurbulentEnergyDissipationRateWallCondition #" << Id();
     return buffer.str();
@@ -405,13 +430,15 @@ std::string EvmTurbulentEnergyDissipationRateWallCondition::Info() const {
 
 /// Print information about this object.
 
-void EvmTurbulentEnergyDissipationRateWallCondition::PrintInfo(std::ostream& rOStream) const {
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::PrintInfo(std::ostream& rOStream) const {
     rOStream << "EvmTurbulentEnergyDissipationRateWallCondition #" << Id();
 }
 
 /// Print object's data.
 
-void EvmTurbulentEnergyDissipationRateWallCondition::PrintData(std::ostream& rOStream) const {
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::PrintData(std::ostream& rOStream) const {
     pGetGeometry()->PrintData(rOStream);
 }
 
@@ -469,14 +496,16 @@ void EvmTurbulentEnergyDissipationRateWallCondition::PrintData(std::ostream& rOS
 ///@name Serialization
 ///@{
 
-void EvmTurbulentEnergyDissipationRateWallCondition::save(Serializer& rSerializer) const {
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::save(Serializer& rSerializer) const {
     KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Condition );
 
     // List
     // To be completed with the class member list
 }
 
-void EvmTurbulentEnergyDissipationRateWallCondition::load(Serializer& rSerializer) {
+template<unsigned int TDim, unsigned int TNumNodes>
+void EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>::load(Serializer& rSerializer) {
     KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Condition );
 
     // List
@@ -504,14 +533,21 @@ void EvmTurbulentEnergyDissipationRateWallCondition::load(Serializer& rSerialize
 ///@{
 
 /// input stream function
-inline std::istream & operator >> (std::istream& rIStream, EvmTurbulentEnergyDissipationRateWallCondition& rThis);
+template<unsigned int TDim, unsigned int TNumNodes>
+inline std::istream & operator >> (std::istream& rIStream, EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>& rThis);
 
 /// output stream function
-inline std::ostream & operator << (std::ostream& rOStream, const EvmTurbulentEnergyDissipationRateWallCondition& rThis) {
+template<unsigned int TDim, unsigned int TNumNodes>
+inline std::ostream & operator << (std::ostream& rOStream, const EvmTurbulentEnergyDissipationRateWallCondition<TDim, TNumNodes>& rThis) {
     rThis.PrintInfo(rOStream);
     rOStream << " : " << std::endl;
     rThis.PrintData(rOStream);
     return rOStream;
 }
+
+// Class template instantiation
+
+template class EvmTurbulentEnergyDissipationRateWallCondition<2, 2>;
+template class EvmTurbulentEnergyDissipationRateWallCondition<3, 3>;
 
 } // namespace Kratos.

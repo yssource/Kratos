@@ -47,7 +47,7 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-
+template<unsigned int TDim, unsigned int TNumNodes>
 class EvmTurbulentEnergyDissipationRateWallCondition : public Condition
 {
 public:

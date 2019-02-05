@@ -29,13 +29,13 @@ parameters = KratosMultiphysics.Parameters("""
             },
             "mechanical" :
             {
-                "apply_KL_shell"      : true,
+                "apply_KL_shell"      : false,
                 "exclusive_face_list" : ["Rhino<5b74e2e3-fd33-446e-a112-0480ea75a27d>.BrepFace<7>"],
                 "penalty_factor"      : 1e3
             },
             "rigid" :
             {
-                "apply_rigid_conditions" : true,
+                "apply_rigid_conditions" : false,
                 "exclusive_face_list"    : ["Rhino<5b74e2e3-fd33-446e-a112-0480ea75a27d>.BrepFace<5>.Hole"],
                 "penalty_factor"         : 1e5
             }
@@ -46,7 +46,9 @@ parameters = KratosMultiphysics.Parameters("""
             {
                 "apply_enforcement_conditions"        : true,
                 "penalty_factor_tangent_enforcement"  : 1000,
-                "penalty_factor_position_enforcement" : 1000
+                "penalty_factor_position_enforcement" : 1000,
+                "apply_corner_enforcement_conditions" : true,
+                "penalty_factor_corner_enforcement"   : 10000
             },
             "coupling" :
             {

@@ -138,6 +138,8 @@ class CADMapper:
             condition_factory.CreateRigidConditions(self.conditions)
         if self.parameters["conditions"]["edges"]["fe_based"]["apply_enforcement_conditions"].GetBool():
             condition_factory.CreateEnforcementConditions(self.conditions)
+        if self.parameters["conditions"]["edges"]["fe_based"]["apply_corner_enforcement_conditions"].GetBool():
+            condition_factory.CreateCornerEnforcementConditions(self.conditions)
 
         print("> Finished creation of conditions in" ,round( time.time()-start_time, 3 ), " s.")
         print("\n> Initializing assembly...")
@@ -546,7 +548,7 @@ class ConditionsFactory:
 
         return conditions
 
- # --------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def CreateRigidConditions(self, conditions):
         from cad_reconstruction_conditions import PositionEnforcementCondition
 
@@ -649,7 +651,7 @@ class ConditionsFactory:
             rigididly_displaced_points = A @ np.transpose(R) + np.matlib.repmat(t, num_nodes, 1)
 
             for node_coords_disp, rigididly_displaced_point_coords, projected_point_uv in zip(relevant_fe_points_displaced, rigididly_displaced_points,relevant_cad_uvs):
-                self.cad_model.Add(an.Point3D(location=node_coords_disp))
+                # self.cad_model.Add(an.Point3D(location=node_coords_disp))
 
                 u = projected_point_uv[0]
                 v = projected_point_uv[1]
@@ -707,12 +709,8 @@ class ConditionsFactory:
                 destination_mdpa.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE)
 
                 for itr, [x,y,z] in enumerate(list_of_points):
-                    # self.cad_model.add({
-                    #     'Key': f'CouplingPoint3D<{face_itr},{itr}>',
-                    #     'Type': 'Point3D',
-                    #     'Location': [x, y, z],
-                    #     'Layer': 'CouplingPoints',
-                    # })
+                    point_ptr = self.cad_model.Add(an.Point3D(location=[x, y, z]))
+                    point_ptr.Attributes().SetLayer('CouplingPoints')
                     destination_mdpa.CreateNewNode(itr, x, y, z)
 
                 # Map information from fem to integration points using element based mapper
@@ -781,15 +779,6 @@ class ConditionsFactory:
                     new_condition_b = PositionEnforcementCondition(target_position, surface_geometry_b, nonzero_pole_indices_b, shape_function_values_b, weight)
                     conditions[face_b_itr].append(new_condition_b)
 
-                    # point_counter += 1
-                    # self.cad_model.add({
-                    #     'Key': f'target_position<{point_counter}>',
-                    #     'Type': 'Point3D',
-                    #     'Location': [target_position[0],target_position[1],target_position[2]],
-                    #     'Layer': 'boundary_target_pos',
-                    # })
-
-
                     # pole_coords = np.zeros((len(nonzero_pole_indices_a), 3))
                     # for i, (r,s) in enumerate(nonzero_pole_indices_a):
                     #     pole_coords[i,:] = surface_geometry_a.Pole(r,s)
@@ -802,7 +791,6 @@ class ConditionsFactory:
 
                     # a2 = shape_function_derivatives_u_b @ pole_coords
 
-
                     # self.cad_model.add({
                     #     'Key': f'a1_a<{points_counter}>',
                     #     'Type': 'Line3D',
@@ -813,6 +801,150 @@ class ConditionsFactory:
 
             else:
                 raise RuntimeError("Max number of adjacent has to be 2!!")
+
+
+ # --------------------------------------------------------------------------
+    def CreateCornerEnforcementConditions(self, conditions):
+        # This conditions assumes an integration weight of 1 and other than that uses the penalty factors from the tangent and position enforcement
+        from cad_reconstruction_conditions import TangentEnforcementCondition, PositionEnforcementCondition
+
+        penalty_factor = self.parameters["conditions"]["edges"]["fe_based"]["penalty_factor_corner_enforcement"].GetDouble()
+
+        face_id_to_itr = {}
+        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+            face_id_to_itr[face_i.Key()] = face_itr
+
+        corner_points = []
+        corner_point_faces = []
+        corner_point_parameters = []
+        considered_point_ids = []
+
+        # Identifying corner points on each edge on each face and corresponding geometry information (avoiding duplications)
+        for edge_itr, edge_i in enumerate(self.cad_model.GetByType('BrepEdge')):
+
+            print("> Processing edge ",edge_itr)
+
+            adjacent_faces = edge_i.Data().Faces()
+            num_adjacent_faces = len(adjacent_faces)
+
+            if num_adjacent_faces == 1:
+                # Skip non coupling-edges
+                pass
+            elif num_adjacent_faces == 2:
+                face_a = adjacent_faces[0]
+                face_b = adjacent_faces[1]
+
+                # Collect corner points
+                corner_points_a, corner_points_b, parameters_a, parameters_b = self.__IdentifyStartAndEndPoint(edge_i)
+
+                coordinate_tolerance = 10
+
+                # Rounded values for comparison
+                start_point_a = np.around(corner_points_a[0], decimals=coordinate_tolerance).tolist()
+                end_point_a = np.around(corner_points_a[1], decimals=coordinate_tolerance).tolist()
+
+                start_point_b = np.around(corner_points_b[0], decimals=coordinate_tolerance).tolist()
+                end_point_b = np.around(corner_points_b[1], decimals=coordinate_tolerance).tolist()
+
+                # Start point on face a
+                considered_point_1_id = (start_point_a[0], start_point_a[1], start_point_a[2], face_a.Key())
+
+                if considered_point_1_id not in considered_point_ids:
+                    considered_point_ids.append(considered_point_1_id)
+                    corner_points.append(corner_points_a[0])
+                    corner_point_faces.append(face_a)
+                    corner_point_parameters.append(parameters_a[0])
+
+                # End point on face a
+                considered_point_3_id = (end_point_a[0], end_point_a[1], end_point_a[2], face_a.Key())
+
+                if considered_point_3_id not in considered_point_ids:
+                    considered_point_ids.append(considered_point_3_id)
+                    corner_points.append(corner_points_a[1])
+                    corner_point_faces.append(face_a)
+                    corner_point_parameters.append(parameters_a[1])
+
+                # Start point on face b
+                considered_point_2_id = (start_point_b[0], start_point_b[1], start_point_b[2], face_b.Key())
+
+                if considered_point_2_id not in considered_point_ids:
+                    considered_point_ids.append(considered_point_2_id)
+                    corner_points.append(corner_points_b[0])
+                    corner_point_faces.append(face_b)
+                    corner_point_parameters.append(parameters_b[0])
+
+                # End point on face b
+                considered_point_4_id = (end_point_b[0], end_point_b[1], end_point_b[2], face_b.Key())
+
+                if considered_point_4_id not in considered_point_ids:
+                    considered_point_ids.append(considered_point_4_id)
+                    corner_points.append(corner_points_b[1])
+                    corner_point_faces.append(face_b)
+                    corner_point_parameters.append(parameters_b[1])
+            else:
+                raise RuntimeError("Max number of adjacent has to be 2!!")
+
+        # Collect corner points in model part
+        temp_model = KratosMultiphysics.Model()
+        destination_mdpa = temp_model.CreateModelPart("temp_model_part")
+        destination_mdpa.AddNodalSolutionStepVariable(KratosShape.NORMALIZED_SURFACE_NORMAL)
+        destination_mdpa.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE)
+
+        for itr, [x,y,z] in enumerate(corner_points):
+            point_ptr = self.cad_model.Add(an.Point3D(location=[x, y, z]))
+            point_ptr.Attributes().SetLayer('CornerPoints')
+            destination_mdpa.CreateNewNode(itr+1, x, y, z)
+
+        # Map information from fem to corner points using element based mapper
+        mapper_parameters = KratosMultiphysics.Parameters("""{
+            "mapper_type" : "nearest_element",
+            "search_radius" : 1.0
+        }""")
+
+        mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, mapper_parameters )
+        mapper.Map( KratosShape.NORMALIZED_SURFACE_NORMAL, KratosShape.NORMALIZED_SURFACE_NORMAL )
+        mapper.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
+
+        # Create conditions for each corner point
+        for itr, node in enumerate(destination_mdpa.Nodes):
+            integration_weight = 1
+
+            face = corner_point_faces[itr]
+            face_key = face.Key()
+            face_itr = face_id_to_itr[face_key]
+
+            surface_geometry = face.Data().Geometry().Data()
+            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry.DegreeU(), degreeV=surface_geometry.DegreeV(), order=1)
+
+            # Create conditions to enforce t1 and t2 on both face a and face b
+            u = corner_point_parameters[itr][0]
+            v = corner_point_parameters[itr][1]
+
+            shape_function.Compute(surface_geometry.KnotsU(), surface_geometry.KnotsV(), u, v)
+            nonzero_pole_indices = shape_function.NonzeroPoleIndices()
+
+            shape_function_values = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
+            shape_function_derivatives_u = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
+            shape_function_derivatives_v = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
+            for i in range(shape_function.NbNonzeroPoles()):
+                shape_function_values[i] = shape_function(0,i)
+                shape_function_derivatives_u[i] = shape_function(1,i)
+                shape_function_derivatives_v[i] = shape_function(2,i)
+
+            # Tangents enforcement
+            target_normal = node.GetSolutionStepValue(KratosShape.NORMALIZED_SURFACE_NORMAL)
+            weight = penalty_factor * integration_weight
+
+            new_condition = TangentEnforcementCondition(target_normal, surface_geometry, nonzero_pole_indices, shape_function_derivatives_u, shape_function_derivatives_v, weight)
+            conditions[face_itr].append(new_condition)
+
+            # Positions enforcement
+            target_displacement = node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)
+            target_position = np.array([node.X+target_displacement[0], node.Y+target_displacement[1], node.Z+target_displacement[2]])
+            weight = penalty_factor * integration_weight
+
+            new_condition = PositionEnforcementCondition(target_position, surface_geometry, nonzero_pole_indices, shape_function_values, weight)
+            conditions[face_itr].append(new_condition)
 
     # --------------------------------------------------------------------------
     @staticmethod
@@ -952,6 +1084,45 @@ class ConditionsFactory:
                             list_of_weights.append(weight * la.norm(np.cross(a1,a2)))
 
         return list_of_points, list_of_parameters, list_of_weights
+
+    # --------------------------------------------------------------------------
+    @staticmethod
+    def __IdentifyStartAndEndPoint(edge):
+        trim_a, trim_b = edge.Data().Trims()
+
+        curve_3d_a = an.CurveOnSurface3D(trim_a.Data().Geometry().Data(), trim_a.Data().Face().Data().Geometry().Data(), trim_a.Data().Geometry().Data().Domain())
+        curve_3d_b = an.CurveOnSurface3D(trim_b.Data().Geometry().Data(), trim_b.Data().Face().Data().Geometry().Data(), trim_b.Data().Geometry().Data().Domain())
+
+        t0_a = trim_a.Data().Geometry().Data().Domain().T0()
+        t1_a = trim_a.Data().Geometry().Data().Domain().T1()
+
+        t0_b = trim_b.Data().Geometry().Data().Domain().T0()
+        t1_b = trim_b.Data().Geometry().Data().Domain().T1()
+
+        start_point_a = curve_3d_a.PointAt(t0_a)
+        end_point_a = curve_3d_a.PointAt(t1_a)
+
+        start_point_b = curve_3d_b.PointAt(t0_b)
+        end_point_b = curve_3d_b.PointAt(t1_b)
+
+        list_of_parameters_a = []
+        list_of_parameters_b = []
+
+        # Parameters for start point
+        u_start_a, v_start_a = trim_a.Data().Geometry().Data().PointAt(t0_a)
+        u_start_b, v_start_b = trim_b.Data().Geometry().Data().PointAt(t0_b)
+
+        list_of_parameters_a.append((u_start_a, v_start_a))
+        list_of_parameters_b.append((u_start_b, v_start_b))
+
+        # Parameters for end point
+        u_end_a, v_end_a = trim_a.Data().Geometry().Data().PointAt(t1_a)
+        u_end_b, v_end_b = trim_b.Data().Geometry().Data().PointAt(t1_b)
+
+        list_of_parameters_a.append((u_end_a, v_end_a))
+        list_of_parameters_b.append((u_end_b, v_end_b))
+
+        return  [start_point_a, end_point_a], [start_point_b, end_point_b], list_of_parameters_a, list_of_parameters_b
 
     # --------------------------------------------------------------------------
     @classmethod

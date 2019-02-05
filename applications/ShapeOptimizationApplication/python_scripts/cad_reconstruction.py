@@ -667,7 +667,7 @@ class ConditionsFactory:
 
         return conditions
 
- # --------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def CreateEnforcementConditions(self, conditions):
         from cad_reconstruction_conditions import TangentEnforcementCondition, PositionEnforcementCondition
 
@@ -802,8 +802,7 @@ class ConditionsFactory:
             else:
                 raise RuntimeError("Max number of adjacent has to be 2!!")
 
-
- # --------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     def CreateCornerEnforcementConditions(self, conditions):
         # This conditions assumes an integration weight of 1 and other than that uses the penalty factors from the tangent and position enforcement
         from cad_reconstruction_conditions import TangentEnforcementCondition, PositionEnforcementCondition

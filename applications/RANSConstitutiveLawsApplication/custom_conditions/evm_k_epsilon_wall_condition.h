@@ -21,7 +21,7 @@
 
 
 // Project includes
-#include "includes/condition.h"
+#include "includes/deprecated_variables.h"
 #include "rans_constitutive_laws_application_variables.h"
 
 
@@ -58,6 +58,32 @@ public:
     ///@{
 
     typedef Condition BaseType;
+
+    typedef Node < 3 > NodeType;
+
+    typedef Properties PropertiesType;
+
+    typedef Geometry<NodeType> GeometryType;
+
+    typedef Geometry<NodeType>::PointsArrayType NodesArrayType;
+
+    typedef Vector VectorType;
+
+    typedef Matrix MatrixType;
+
+    typedef std::size_t IndexType;
+
+    typedef std::size_t SizeType;
+
+    typedef std::vector<std::size_t> EquationIdVectorType;
+
+    typedef std::vector< Dof<double>::Pointer > DofsVectorType;
+
+    typedef PointerVectorSet<Dof<double>, IndexedObject> DofsArrayType;
+
+    static constexpr unsigned int TBlockSize = 2;
+
+    static constexpr unsigned int TLocalSize = TNumNodes * TBlockSize;
 
     ///@}
     ///@name Pointer Definitions
@@ -334,6 +360,8 @@ protected:
     ///@}
     ///@name Protected Operations
     ///@{
+
+        void CalculateNormal(array_1d<double,3>& An );
 
     ///@}
     ///@name Protected  Access

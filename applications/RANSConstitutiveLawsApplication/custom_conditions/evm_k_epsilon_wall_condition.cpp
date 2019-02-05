@@ -178,14 +178,14 @@ Condition::Pointer EvmKEpsilonWallCondition<TDim, TNumNodes>::Clone(IndexType Ne
 template<unsigned int TDim, unsigned int TNumNodes>
 void EvmKEpsilonWallCondition<TDim, TNumNodes>::EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo)
 {
-    unsigned int number_of_nodes = GetGeometry().PointsNumber();
-    if (rResult.size() != number_of_nodes)
-        rResult.resize(number_of_nodes, false);
+    if (rResult.size() != TLocalSize)
+        rResult.resize(TLocalSize, false);
 
-      for (unsigned int i = 0; i < number_of_nodes; i++)
-    rResult[i] = GetGeometry()[i].GetDof(TURBULENT_ENERGY_DISSIPATION_RATE).EquationId();
-
-
+    for (unsigned int i = 0; i < TNumNodes; i++)
+    {
+        rResult[i * TBlockSize] = GetGeometry()[i].GetDof(TURBULENT_KINETIC_ENERGY).EquationId();
+        rResult[i * TBlockSize + 1] = GetGeometry()[i].GetDof(TURBULENT_ENERGY_DISSIPATION_RATE).EquationId();
+    }
 }
 
 /**
@@ -196,14 +196,14 @@ void EvmKEpsilonWallCondition<TDim, TNumNodes>::EquationIdVector(EquationIdVecto
 template<unsigned int TDim, unsigned int TNumNodes>
 void EvmKEpsilonWallCondition<TDim, TNumNodes>::GetDofList(DofsVectorType& rConditionDofList, ProcessInfo& CurrentProcessInfo)
 {
-    unsigned int number_of_nodes = GetGeometry().PointsNumber();
-    if (rConditionDofList.size() != number_of_nodes)
-        rConditionDofList.resize(number_of_nodes);
+    if (rConditionDofList.size() != TLocalSize)
+        rConditionDofList.resize(TLocalSize);
 
-      for (unsigned int i = 0; i < number_of_nodes; i++)
-    rConditionDofList[i] = GetGeometry()[i].pGetDof(TURBULENT_ENERGY_DISSIPATION_RATE);
-
-
+    for (unsigned int i = 0; i < TNumNodes; i++)
+    {
+        rConditionDofList[i * TBlockSize] = GetGeometry()[i].pGetDof(TURBULENT_KINETIC_ENERGY);
+        rConditionDofList[i * TBlockSize + 1] = GetGeometry()[i].pGetDof(TURBULENT_ENERGY_DISSIPATION_RATE);
+    }
 }
 
 /**
@@ -249,6 +249,58 @@ void EvmKEpsilonWallCondition<TDim, TNumNodes>::CalculateLeftHandSide(MatrixType
 template<unsigned int TDim, unsigned int TNumNodes>
 void EvmKEpsilonWallCondition<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
+    KRATOS_TRY
+
+    if (rRightHandSideVector.size() != TLocalSize)
+        rRightHandSideVector.resize(TLocalSize, false);
+
+    rRightHandSideVector.clear();
+
+    if (this->GetValue(IS_STRUCTURE) != 0.0){
+
+        const double C_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
+        const double epsilon_sigma = rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
+
+        const GeometryType& rGeom = this->GetGeometry();
+        const GeometryType::IntegrationPointsArrayType& IntegrationPoints = rGeom.IntegrationPoints(GeometryData::GI_GAUSS_2);
+        const unsigned int NumGauss = IntegrationPoints.size();
+
+        MatrixType NContainer = rGeom.ShapeFunctionsValues(GeometryData::GI_GAUSS_2);
+
+        array_1d<double,3> Normal;
+        this->CalculateNormal(Normal); //this already contains the area
+        double A = std::sqrt(Normal[0]*Normal[0]+Normal[1]*Normal[1]+Normal[2]*Normal[2]);
+        Normal /= A;
+
+        // CAUTION: "Jacobian" is 2.0*A for triangles but 0.5*A for lines
+        double J = (TDim == 2) ? 0.5*A : 2.0*A;
+
+        for (unsigned int g = 0; g < NumGauss; g++)
+        {
+            Vector N = row(NContainer,g);
+            double Weight = J * IntegrationPoints[g].Weight();
+
+            double tke = 0.0;
+            double nu = 0.0;
+            for (unsigned int j = 0; j < TNumNodes; j++)
+            {
+                tke += N[j] * rGeom[j].FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
+                nu += N[j] * rGeom[j].FastGetSolutionStepValue(VISCOSITY);
+            }
+
+            const double utau = std::pow(C_mu, 0.25) * std::pow(tke, 0.5);
+            const double yplus = 11.06;
+
+            const double value = std::pow(utau, 5.0) / (yplus * nu * epsilon_sigma);
+
+            for (unsigned int j = 0; j < TNumNodes; j++)
+            {
+                rRightHandSideVector[j * TBlockSize + 1] += Weight * N[j] * value;
+            }
+        }
+    }
+
+    KRATOS_CATCH("");
 }
 
 /**
@@ -462,6 +514,35 @@ void EvmKEpsilonWallCondition<TDim, TNumNodes>::PrintData(std::ostream& rOStream
 ///@}
 ///@name Protected Operations
 ///@{
+
+template <>
+void EvmKEpsilonWallCondition<2,2>::CalculateNormal(array_1d<double,3>& An)
+{
+    Geometry<Node<3> >& pGeometry = this->GetGeometry();
+
+    An[0] =   pGeometry[1].Y() - pGeometry[0].Y();
+    An[1] = - (pGeometry[1].X() - pGeometry[0].X());
+    An[2] =    0.00;
+
+}
+
+template <>
+void EvmKEpsilonWallCondition<3,3>::CalculateNormal(array_1d<double,3>& An )
+{
+    Geometry<Node<3> >& pGeometry = this->GetGeometry();
+
+    array_1d<double,3> v1,v2;
+    v1[0] = pGeometry[1].X() - pGeometry[0].X();
+    v1[1] = pGeometry[1].Y() - pGeometry[0].Y();
+    v1[2] = pGeometry[1].Z() - pGeometry[0].Z();
+
+    v2[0] = pGeometry[2].X() - pGeometry[0].X();
+    v2[1] = pGeometry[2].Y() - pGeometry[0].Y();
+    v2[2] = pGeometry[2].Z() - pGeometry[0].Z();
+
+    MathUtils<double>::CrossProduct(An,v1,v2);
+    An *= 0.5;
+}
 
 ///@}
 ///@name Protected  Access

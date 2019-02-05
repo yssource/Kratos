@@ -47,7 +47,7 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-template<unsigned int TDim, unsigned int TNumNodes>
+template<unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
 class RANSConstitutiveElement : public Element
 {
 public:
@@ -92,8 +92,6 @@ public:
 
     /// Type for an array of shape function gradient matrices
     typedef GeometryType::ShapeFunctionsGradientsType ShapeFunctionDerivativesArrayType;
-
-    static constexpr unsigned int TBlockSize = 1;
 
     static constexpr unsigned int TLocalSize = TNumNodes * TBlockSize;
 

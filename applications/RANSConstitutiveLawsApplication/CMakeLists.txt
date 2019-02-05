@@ -16,6 +16,7 @@ set( KRATOS_RANS_CONSTITUTIVE_LAWS_APPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/rans_constitutive_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/evm_k_epsilon_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_conditions/evm_k_epsilon_wall_condition.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_processes/turbulence_evm_k_epsilon_process.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_strategies_to_python.cpp
 )
 

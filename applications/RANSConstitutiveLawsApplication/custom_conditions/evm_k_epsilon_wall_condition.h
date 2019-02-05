@@ -10,8 +10,8 @@
 //  Main authors:    , KratosAppGenerator
 //
 
-#if !defined(KRATOS_EVM_K_EPSILON_ELEMENT_H_INCLUDED )
-#define KRATOS_EVM_K_EPSILON_ELEMENT_H_INCLUDED
+#if !defined(KRATOS_EVM_K_EPSILON_WALL_CONDITION_H_INCLUDED )
+#define KRATOS_EVM_K_EPSILON_WALL_CONDITION_H_INCLUDED
 
 
 // System includes
@@ -21,11 +21,7 @@
 
 
 // Project includes
-#include "includes/element.h"
-#include "includes/properties.h"
-#include "utilities/brent_iteration.h"
-
-#include "custom_elements/rans_constitutive_element.h"
+#include "includes/condition.h"
 #include "rans_constitutive_laws_application_variables.h"
 
 
@@ -52,7 +48,7 @@ namespace Kratos
 ///@{
 
 template<unsigned int TDim, unsigned int TNumNodes>
-class EvmKEpsilonElement : public RANSConstitutiveElement<TDim, TNumNodes, 2>
+class EvmKEpsilonWallCondition : public Condition
 {
 public:
 
@@ -61,56 +57,12 @@ public:
     ///@name Type Definitions
     ///@{
 
-    typedef RANSConstitutiveElement<TDim, TNumNodes, 2> BaseType;
-
-    /// Node type (default is: Node<3>)
-    typedef Node<3> NodeType;
-
-    /**
-     * Properties are used to store any parameters
-     * related to the constitutive law
-     */
-    typedef Properties PropertiesType;
-
-    /// Geometry type (using with given NodeType)
-    typedef Geometry<NodeType> GeometryType;
-
-    /// Definition of nodes container type, redefined from GeometryType
-    typedef Geometry<NodeType>::PointsArrayType NodesArrayType;
-
-    /// Vector type for local contributions to the linear system
-    typedef Vector VectorType;
-
-    /// Matrix type for local contributions to the linear system
-    typedef Matrix MatrixType;
-
-    typedef std::size_t IndexType;
-
-    typedef std::size_t SizeType;
-
-    typedef std::vector<std::size_t> EquationIdVectorType;
-
-    typedef std::vector< Dof<double>::Pointer > DofsVectorType;
-
-    typedef PointerVectorSet<Dof<double>, IndexedObject> DofsArrayType;
-
-    /// Type for shape function values container
-    typedef MatrixRow< Matrix > ShapeFunctionsType;
-
-    /// Type for a matrix containing the shape function gradients
-    typedef Kratos::Matrix ShapeFunctionDerivativesType;
-
-    /// Type for an array of shape function gradient matrices
-    typedef GeometryType::ShapeFunctionsGradientsType ShapeFunctionDerivativesArrayType;
-
-    static constexpr unsigned int TBlockSize = 2;
-
-    static constexpr unsigned int TLocalSize = TNumNodes * TBlockSize;
+    typedef Condition BaseType;
 
     ///@}
     ///@name Pointer Definitions
-    /// Pointer definition of EvmKEpsilonElement
-    KRATOS_CLASS_POINTER_DEFINITION(EvmKEpsilonElement);
+    /// Pointer definition of EvmKEpsilonWallCondition
+    KRATOS_CLASS_POINTER_DEFINITION(EvmKEpsilonWallCondition);
 
     ///@}
     ///@name Life Cycle
@@ -119,93 +71,93 @@ public:
     /**
      * Constructor.
      */
-    EvmKEpsilonElement(IndexType NewId = 0);
+    EvmKEpsilonWallCondition(IndexType NewId = 0);
 
     /**
      * Constructor using an array of nodes
      */
-    EvmKEpsilonElement(IndexType NewId, const NodesArrayType& ThisNodes);
+    EvmKEpsilonWallCondition(IndexType NewId, const NodesArrayType& ThisNodes);
 
     /**
      * Constructor using Geometry
      */
-    EvmKEpsilonElement(IndexType NewId, GeometryType::Pointer pGeometry);
+    EvmKEpsilonWallCondition(IndexType NewId, GeometryType::Pointer pGeometry);
 
     /**
      * Constructor using Properties
      */
-    EvmKEpsilonElement(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties);
+    EvmKEpsilonWallCondition(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties);
 
     /**
      * Copy Constructor
      */
-    EvmKEpsilonElement(EvmKEpsilonElement const& rOther);
+    EvmKEpsilonWallCondition(EvmKEpsilonWallCondition const& rOther);
 
     /**
      * Destructor
      */
-    ~EvmKEpsilonElement() override;
+    ~EvmKEpsilonWallCondition() override;
 
     ///@}
     ///@name Operators
     ///@{
 
     /// Assignment operator.
-    EvmKEpsilonElement & operator=(EvmKEpsilonElement const& rOther);
+    EvmKEpsilonWallCondition & operator=(EvmKEpsilonWallCondition const& rOther);
 
     ///@}
     ///@name Operations
     ///@{
 
     /**
-     * ELEMENTS inherited from this class have to implement next
+     * CONDITIONS inherited from this class have to implement next
      * Create and Clone methods: MANDATORY
      */
 
     /**
-     * creates a new element pointer
-     * @param NewId: the ID of the new element
-     * @param ThisNodes: the nodes of the new element
-     * @param pProperties: the properties assigned to the new element
-     * @return a Pointer to the new element
+     * creates a new condition pointer
+     * @param NewId: the ID of the new condition
+     * @param ThisNodes: the nodes of the new condition
+     * @param pProperties: the properties assigned to the new condition
+     * @return a Pointer to the new condition
      */
-    Element::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const override;
+    Condition::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const override;
 
     /**
-     * creates a new element pointer
-     * @param NewId: the ID of the new element
+     * creates a new condition pointer
+     * @param NewId: the ID of the new condition
      * @param pGeom: the geometry to be employed
-     * @param pProperties: the properties assigned to the new element
-     * @return a Pointer to the new element
+     * @param pProperties: the properties assigned to the new condition
+     * @return a Pointer to the new condition
      */
-    Element::Pointer Create(IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const override;
+    Condition::Pointer Create(IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const override;
 
     /**
-     * creates a new element pointer and clones the previous element data
-     * @param NewId: the ID of the new element
-     * @param ThisNodes: the nodes of the new element
-     * @param pProperties: the properties assigned to the new element
-     * @return a Pointer to the new element
+     * creates a new condition pointer and clones the previous condition data
+     * @param NewId: the ID of the new condition
+     * @param ThisNodes: the nodes of the new condition
+     * @param pProperties: the properties assigned to the new condition
+     * @return a Pointer to the new condition
      */
-    Element::Pointer Clone(IndexType NewId, NodesArrayType const& ThisNodes) const override;
+    Condition::Pointer Clone(IndexType NewId, NodesArrayType const& ThisNodes) const override;
 
     /**
-     * this determines the elemental equation ID vector for all elemental
+     * this determines the condition equation ID vector for all condition
      * DOFs
-     * @param rResult: the elemental equation ID vector
+     * @param rResult: the condition equation ID vector
      * @param rCurrentProcessInfo: the current process info instance
      */
     void EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo) override;
 
     /**
-     * determines the elemental list of DOFs
-     * @param ElementalDofList: the list of DOFs
+     * determines the condition list of DOFs
+     * @param rConditionDofList: the list of DOFs
      * @param rCurrentProcessInfo: the current process info instance
      */
-    void GetDofList(DofsVectorType& rElementalDofList, ProcessInfo& CurrentProcessInfo) override;
+    void GetDofList(DofsVectorType& rConditionDofList, ProcessInfo& CurrentProcessInfo) override;
 
     /**
-     * ELEMENTS inherited from this class have to implement next
+     * CONDITIONS inherited from this class have to implement next
      * CalculateLocalSystem, CalculateLeftHandSide and CalculateRightHandSide methods
      * they can be managed internally with a private method to do the same calculations
      * only once: MANDATORY
@@ -213,10 +165,10 @@ public:
 
     /**
      * this is called during the assembling process in order
-     * to calculate all elemental contributions to the global system
+     * to calculate all condition contributions to the global system
      * matrix and the right hand side
-     * @param rLeftHandSideMatrix: the elemental left hand side matrix
-     * @param rRightHandSideVector: the elemental right hand side
+     * @param rLeftHandSideMatrix: the condition left hand side matrix
+     * @param rRightHandSideVector: the condition right hand side
      * @param rCurrentProcessInfo: the current process info instance
      */
     void CalculateLocalSystem(
@@ -226,16 +178,16 @@ public:
 
     /**
      * this is called during the assembling process in order
-     * to calculate the elemental left hand side matrix only
-     * @param rLeftHandSideMatrix: the elemental left hand side matrix
+     * to calculate the condition left hand side matrix only
+     * @param rLeftHandSideMatrix: the condition left hand side matrix
      * @param rCurrentProcessInfo: the current process info instance
      */
     void CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo) override;
 
     /**
      * this is called during the assembling process in order
-     * to calculate the elemental right hand side vector only
-     * @param rRightHandSideVector: the elemental right hand side vector
+     * to calculate the condition right hand side vector only
+     * @param rRightHandSideVector: the condition right hand side vector
      * @param rCurrentProcessInfo: the current process info instance
      */
     void CalculateRightHandSide(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo) override;
@@ -243,8 +195,8 @@ public:
     /**
      * this is called during the assembling process in order
      * to calculate the first derivatives contributions for the LHS and RHS
-     * @param rLeftHandSideMatrix: the elemental left hand side matrix
-     * @param rRightHandSideVector: the elemental right hand side
+     * @param rLeftHandSideMatrix: the condition left hand side matrix
+     * @param rRightHandSideVector: the condition right hand side
      * @param rCurrentProcessInfo: the current process info instance
      */
     void CalculateFirstDerivativesContributions(
@@ -254,23 +206,23 @@ public:
 
     /**
      * this is called during the assembling process in order
-     * to calculate the elemental left hand side matrix for the first derivatives constributions
-     * @param rLeftHandSideMatrix: the elemental left hand side matrix
+     * to calculate the condition left hand side matrix for the first derivatives constributions
+     * @param rLeftHandSideMatrix: the condition left hand side matrix
      * @param rCurrentProcessInfo: the current process info instance
      */
     void CalculateFirstDerivativesLHS(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo) override;
 
     /**
      * this is called during the assembling process in order
-     * to calculate the elemental right hand side vector for the first derivatives constributions
-     * @param rRightHandSideVector: the elemental right hand side vector
+     * to calculate the condition right hand side vector for the first derivatives constributions
+     * @param rRightHandSideVector: the condition right hand side vector
      * @param rCurrentProcessInfo: the current process info instance
      */
     void CalculateFirstDerivativesRHS(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo) override;
 
     /**
-     * ELEMENTS inherited from this class must implement this methods
-     * if they need to add dynamic element contributions
+     * CONDITIONS inherited from this class must implement this methods
+     * if they need to add dynamic condition contributions
      * note: second derivatives means the accelerations if the displacements are the dof of the analysis
      * note: time integration parameters must be set in the rCurrentProcessInfo before calling these methods
      * CalculateSecondDerivativesContributions,
@@ -281,8 +233,8 @@ public:
     /**
      * this is called during the assembling process in order
      * to calculate the second derivative contributions for the LHS and RHS
-     * @param rLeftHandSideMatrix: the elemental left hand side matrix
-     * @param rRightHandSideVector: the elemental right hand side
+     * @param rLeftHandSideMatrix: the condition left hand side matrix
+     * @param rRightHandSideVector: the condition right hand side
      * @param rCurrentProcessInfo: the current process info instance
      */
     void CalculateSecondDerivativesContributions(
@@ -292,8 +244,8 @@ public:
 
     /**
      * this is called during the assembling process in order
-     * to calculate the elemental left hand side matrix for the second derivatives constributions
-     * @param rLeftHandSideMatrix: the elemental left hand side matrix
+     * to calculate the condition left hand side matrix for the second derivatives constributions
+     * @param rLeftHandSideMatrix: the condition left hand side matrix
      * @param rCurrentProcessInfo: the current process info instance
      */
     void CalculateSecondDerivativesLHS(
@@ -302,8 +254,8 @@ public:
 
     /**
      * this is called during the assembling process in order
-     * to calculate the elemental right hand side vector for the second derivatives constributions
-     * @param rRightHandSideVector: the elemental right hand side vector
+     * to calculate the condition right hand side vector for the second derivatives constributions
+     * @param rRightHandSideVector: the condition right hand side vector
      * @param rCurrentProcessInfo: the current process info instance
      */
     void CalculateSecondDerivativesRHS(
@@ -312,16 +264,16 @@ public:
 
     /**
      * this is called during the assembling process in order
-     * to calculate the elemental mass matrix
-     * @param rMassMatrix: the elemental mass matrix
+     * to calculate the condition mass matrix
+     * @param rMassMatrix: the condition mass matrix
      * @param rCurrentProcessInfo: the current process info instance
      */
     void CalculateMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo) override;
 
     /**
      * this is called during the assembling process in order
-     * to calculate the elemental damping matrix
-     * @param rDampingMatrix: the elemental damping matrix
+     * to calculate the condition damping matrix
+     * @param rDampingMatrix: the condition damping matrix
      * @param rCurrentProcessInfo: the current process info instance
      */
     void CalculateDampingMatrix(MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo) override;
@@ -441,7 +393,7 @@ private:
 
     ///@}
 
-}; // Class EvmTurbulentKineticEnergyElement
+}; // Class EvmKEpsilonWallCondition
 
 ///@}
 
@@ -456,4 +408,4 @@ private:
 
 } // namespace Kratos.
 
-#endif // KRATOS_EVM_K_EPSILON_ELEMENT_H_INCLUDED  defined
+#endif // KRATOS_EVM_K_EPSILON_WALL_CONDITION_H_INCLUDED  defined

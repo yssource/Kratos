@@ -43,7 +43,7 @@ namespace Kratos
  */
 template <unsigned int TDim, unsigned int TNumNodes>
 EvmKEpsilonElement<TDim, TNumNodes>::EvmKEpsilonElement(IndexType NewId)
-    : RANSConstitutiveElement<TDim, TNumNodes>(NewId)
+    : RANSConstitutiveElement<TDim, TNumNodes, 2>(NewId)
 {
 }
 
@@ -53,7 +53,7 @@ EvmKEpsilonElement<TDim, TNumNodes>::EvmKEpsilonElement(IndexType NewId)
 template <unsigned int TDim, unsigned int TNumNodes>
 EvmKEpsilonElement<TDim, TNumNodes>::EvmKEpsilonElement(
     IndexType NewId, const NodesArrayType& ThisNodes)
-    : RANSConstitutiveElement<TDim, TNumNodes>(NewId, ThisNodes)
+    : RANSConstitutiveElement<TDim, TNumNodes, 2>(NewId, ThisNodes)
 {
 }
 
@@ -63,7 +63,7 @@ EvmKEpsilonElement<TDim, TNumNodes>::EvmKEpsilonElement(
 template <unsigned int TDim, unsigned int TNumNodes>
 EvmKEpsilonElement<TDim, TNumNodes>::EvmKEpsilonElement(
     IndexType NewId, GeometryType::Pointer pGeometry)
-    : RANSConstitutiveElement<TDim, TNumNodes>(NewId, pGeometry)
+    : RANSConstitutiveElement<TDim, TNumNodes, 2>(NewId, pGeometry)
 {
 }
 
@@ -73,7 +73,7 @@ EvmKEpsilonElement<TDim, TNumNodes>::EvmKEpsilonElement(
 template <unsigned int TDim, unsigned int TNumNodes>
 EvmKEpsilonElement<TDim, TNumNodes>::EvmKEpsilonElement(
     IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
-    : RANSConstitutiveElement<TDim, TNumNodes>(NewId, pGeometry, pProperties)
+    : RANSConstitutiveElement<TDim, TNumNodes, 2>(NewId, pGeometry, pProperties)
 {
 }
 
@@ -83,7 +83,7 @@ EvmKEpsilonElement<TDim, TNumNodes>::EvmKEpsilonElement(
 template <unsigned int TDim, unsigned int TNumNodes>
 EvmKEpsilonElement<TDim, TNumNodes>::EvmKEpsilonElement(
     EvmKEpsilonElement<TDim, TNumNodes> const& rOther)
-    : RANSConstitutiveElement<TDim, TNumNodes>(rOther)
+    : RANSConstitutiveElement<TDim, TNumNodes, 2>(rOther)
 {
 }
 

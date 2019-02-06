@@ -140,6 +140,8 @@ class CADMapper:
             condition_factory.CreateEnforcementConditions(self.conditions)
         if self.parameters["conditions"]["edges"]["fe_based"]["apply_corner_enforcement_conditions"].GetBool():
             condition_factory.CreateCornerEnforcementConditions(self.conditions)
+        if self.parameters["regularization"]["alpha"].GetDouble() != 0:
+            condition_factory.CreateAlphaRegularizationConditions(self.conditions)
 
         print("> Finished creation of conditions in" ,round( time.time()-start_time, 3 ), " s.")
         print("\n> Initializing assembly...")
@@ -294,6 +296,10 @@ class ConditionsFactory:
         self.cad_model = cad_model
         self.parameters = parameters
 
+        self.bounding_box_tolerance = self.parameters["point_search"]["patch_bounding_box_tolerance"].GetDouble()
+        self.boundary_tessellation_tolerance = self.parameters["point_search"]["boundary_tessellation_tolerance"].GetDouble()
+        self.boundary_polygons = None
+
     # --------------------------------------------------------------------------
     def CreateDistanceMinimizationConditions(self, conditions):
         from cad_reconstruction_conditions import DistanceMinimizationCondition
@@ -301,14 +307,11 @@ class ConditionsFactory:
         name_variable_to_map = self.parameters["input"]["variable_to_map"].GetString()
         variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
 
-        tesselation_tolerance = self.parameters["points_projection"]["boundary_tessellation_tolerance"].GetDouble()
-        bounding_box_tolerance = self.parameters["points_projection"]["patch_bounding_box_tolerance"].GetDouble()
+        boundary_polygons = self.__GetBoundaryPolygons()
 
         point_pairs = []
         for node_i in self.fe_model_part.Nodes:
             point_pairs.append([])
-
-        tessellation = an.CurveTessellation2D()
 
         for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
 
@@ -325,20 +328,14 @@ class ConditionsFactory:
             surface = an.Surface3D(face_i.Data().Geometry())
             projection = an.PointOnSurfaceProjection3D(surface)
 
-            boundary_polygon = []
-            for trim in face_i.Data().Trims():
-                tessellation.Compute(an.Curve2D(trim.Data().Geometry()), tesselation_tolerance)
-                for i in range(tessellation.NbPoints()):
-                    boundary_polygon.append(tessellation.Point(i))
-
             # Bounding box and scaling as the bounding box is based on a simple pointwise discretization of surface
             min_x, min_y, min_z, max_x, max_y, max_z = projection.BoundingBox()
-            min_x -= bounding_box_tolerance
-            min_y -= bounding_box_tolerance
-            min_z -= bounding_box_tolerance
-            max_x += bounding_box_tolerance
-            max_y += bounding_box_tolerance
-            max_z += bounding_box_tolerance
+            min_x -= self.bounding_box_tolerance
+            min_y -= self.bounding_box_tolerance
+            min_z -= self.bounding_box_tolerance
+            max_x += self.bounding_box_tolerance
+            max_y += self.bounding_box_tolerance
+            max_z += self.bounding_box_tolerance
 
             for node_itr, node_i in enumerate(self.fe_model_part.Nodes):
 
@@ -355,7 +352,7 @@ class ConditionsFactory:
                 projection.Compute(point=node_coords_i)
                 projected_point_uv = np.array([projection.ParameterU(), projection.ParameterV()])
 
-                is_inside, is_on_boundary = self.__Contains(projected_point_uv, boundary_polygon, tesselation_tolerance*1.1)
+                is_inside, is_on_boundary = self.__Contains(projected_point_uv, boundary_polygons[face_itr], self.boundary_tessellation_tolerance*1.1)
                 if is_inside:
                     u = projected_point_uv[0]
                     v = projected_point_uv[1]
@@ -557,16 +554,14 @@ class ConditionsFactory:
             list_of_exclusive_faces.append(self.parameters["conditions"]["faces"]["rigid"]["exclusive_face_list"][itr].GetString())
 
         penalty_fac = self.parameters["conditions"]["faces"]["rigid"]["penalty_factor"].GetDouble()
-        tesselation_tolerance = self.parameters["points_projection"]["boundary_tessellation_tolerance"].GetDouble()
-        bounding_box_tolerance = self.parameters["points_projection"]["patch_bounding_box_tolerance"].GetDouble()
         name_variable_to_map = self.parameters["input"]["variable_to_map"].GetString()
         variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
+
+        boundary_polygons = self.__GetBoundaryPolygons()
 
         relevant_fe_points = []
         relevant_fe_points_displaced = []
         relevant_cad_uvs = []
-
-        tessellation = an.CurveTessellation2D()
 
         for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
 
@@ -582,20 +577,14 @@ class ConditionsFactory:
             surface = an.Surface3D(face_i.Data().Geometry())
             projection = an.PointOnSurfaceProjection3D(surface)
 
-            boundary_polygon = []
-            for trim in face_i.Data().Trims():
-                tessellation.Compute(an.Curve2D(trim.Data().Geometry()), tesselation_tolerance)
-                for i in range(tessellation.NbPoints()):
-                    boundary_polygon.append(tessellation.Point(i))
-
             # Bounding box and scaling as the bounding box is based on a simple pointwise discretization of surface
             min_x, min_y, min_z, max_x, max_y, max_z = projection.BoundingBox()
-            min_x -= bounding_box_tolerance
-            min_y -= bounding_box_tolerance
-            min_z -= bounding_box_tolerance
-            max_x += bounding_box_tolerance
-            max_y += bounding_box_tolerance
-            max_z += bounding_box_tolerance
+            min_x -= self.bounding_box_tolerance
+            min_y -= self.bounding_box_tolerance
+            min_z -= self.bounding_box_tolerance
+            max_x += self.bounding_box_tolerance
+            max_y += self.bounding_box_tolerance
+            max_z += self.bounding_box_tolerance
 
             for node_itr, node_i in enumerate(self.fe_model_part.Nodes):
 
@@ -612,9 +601,8 @@ class ConditionsFactory:
                 projection.Compute(point=node_coords_i)
                 projected_point_uv = np.array([projection.ParameterU(), projection.ParameterV()])
 
-                is_inside, is_on_boundary = self.__Contains(projected_point_uv, boundary_polygon, tesselation_tolerance*1.1)
+                is_inside, is_on_boundary = self.__Contains(projected_point_uv, boundary_polygons[face_itr], self.boundary_tessellation_tolerance*1.1)
                 if is_inside:
-
                     relevant_fe_points.append(node_coords_i)
                     relevant_fe_points_displaced.append( node_coords_i + np.array(node_i.GetSolutionStepValue(variable_to_map)) )
                     relevant_cad_uvs.append(projected_point_uv)
@@ -944,6 +932,89 @@ class ConditionsFactory:
 
             new_condition = PositionEnforcementCondition(target_position, surface_geometry, nonzero_pole_indices, shape_function_values, weight)
             conditions[face_itr].append(new_condition)
+
+    # --------------------------------------------------------------------------
+    def CreateAlphaRegularizationConditions(self, conditions):
+        from cad_reconstruction_conditions import AlphaRegularizationCondition
+
+        alpha = self.parameters["regularization"]["alpha"].GetDouble()
+
+        boundary_polygons = self.__GetBoundaryPolygons()
+
+        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+
+            # Skipp embedded faces to not have two identical contributions from the same unknowns (embedded faces share the unkonws of a given geometry)
+            if face_i.Attributes().HasTag('Embedded'):
+                print(f'Skip {face_i.Key()}')
+                continue
+
+            surface_geometry = face_i.Data().Geometry().Data()
+            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry.DegreeU(), degreeV=surface_geometry.DegreeV(), order=0)
+
+            deg_u = surface_geometry.DegreeU()
+            deg_v = surface_geometry.DegreeV()
+            knot_vec_u = surface_geometry.KnotsU()
+            knot_vec_v = surface_geometry.KnotsV()
+
+            # Compute Grevillle abscissa
+            pole_indices = []
+            greville_points = []
+            greville_abscissa_parameters = []
+
+            for r in range(surface_geometry.NbPolesU()):
+                for s in range(surface_geometry.NbPolesV()):
+                    u_value = 0.0
+                    v_value = 0.0
+
+                    for p_index in range(0,deg_u):
+                        u_value += knot_vec_u[r+p_index]
+                    u_value /= deg_u
+
+                    for q_index in range(0,deg_v):
+                        v_value += knot_vec_v[s+q_index]
+                    v_value /= deg_v
+
+                    is_inside, is_on_boundary = self.__Contains((u_value,v_value), boundary_polygons[face_itr], self.boundary_tessellation_tolerance*1.1)
+
+                    # Only control points within the visible surface shall be considered
+                    if is_inside:
+                        pole_indices.append((r,s))
+                        greville_abscissa_parameters.append((u_value,v_value))
+                        greville_points.append(surface_geometry.PointAt(u_value, v_value))
+                        # point_ptr = self.cad_model.Add(an.Point3D(location=grevile_point))
+                        # point_ptr.Attributes().SetLayer('GrevillePoints')
+
+            # Create condition for each of the relevant control points
+            for pole_id, grevile_point, greville_params in zip(pole_indices, greville_points, greville_abscissa_parameters):
+                u = greville_params[0]
+                v = greville_params[1]
+
+                shape_function.Compute(surface_geometry.KnotsU(), surface_geometry.KnotsV(), u, v)
+                nonzero_pole_indices = shape_function.NonzeroPoleIndices()
+
+                shape_function_values = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
+                for i in range(shape_function.NbNonzeroPoles()):
+                    shape_function_values[i] = shape_function(0,i)
+
+                new_condition = AlphaRegularizationCondition(pole_id, greville_params, surface_geometry, nonzero_pole_indices, shape_function_values, alpha)
+                conditions[face_itr].append(new_condition)
+
+        return conditions
+
+    # --------------------------------------------------------------------------
+    def __GetBoundaryPolygons(self):
+        if self.boundary_polygons is None:
+            tessellation = an.CurveTessellation2D()
+
+            self.boundary_polygons = [[] for entry in self.cad_model.GetByType('BrepFace')]
+            for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+
+                for trim in face_i.Data().Trims():
+                    tessellation.Compute(an.Curve2D(trim.Data().Geometry()), self.boundary_tessellation_tolerance)
+                    for i in range(tessellation.NbPoints()):
+                        self.boundary_polygons[face_itr].append(tessellation.Point(i))
+
+        return self.boundary_polygons
 
     # --------------------------------------------------------------------------
     @staticmethod

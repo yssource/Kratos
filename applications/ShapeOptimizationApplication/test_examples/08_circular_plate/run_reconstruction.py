@@ -56,7 +56,7 @@ parameters = KratosMultiphysics.Parameters("""
             }
         }
     },
-    "points_projection" :
+    "point_search" :
     {
         "boundary_tessellation_tolerance" : 0.01,
         "patch_bounding_box_tolerance"    : 1.0
@@ -68,7 +68,8 @@ parameters = KratosMultiphysics.Parameters("""
     },
     "regularization" :
     {
-        "beta" : 0.001
+        "alpha" : 0.1,
+        "beta"  : 0.001
     },
     "output":
     {

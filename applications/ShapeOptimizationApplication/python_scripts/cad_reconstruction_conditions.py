@@ -618,3 +618,67 @@ class KLShellConditionWithAD( ReconstructionConditionWithADBase ):
         return local_lhs, local_rhs
 
 # ==============================================================================
+class AlphaRegularizationCondition:
+    # --------------------------------------------------------------------------
+    def __init__(self, target_pole_indices, greville_params, surface_geometry, nonzero_pole_indices_of_greville_point, shape_functions, alpha):
+        self.target_pole_indices = target_pole_indices
+        self.greville_params = greville_params
+        self.surface_geometry = surface_geometry
+        self.nonzero_pole_indices = nonzero_pole_indices_of_greville_point
+        self.shape_functions = shape_functions
+        self.alpha = alpha
+
+        self.local_system_size = 3*len(self.nonzero_pole_indices)
+        self.block_size = len(self.nonzero_pole_indices)
+
+    # --------------------------------------------------------------------------
+    def CalculateRHS(self):
+        pole_coords = self.surface_geometry.Pole(self.target_pole_indices[0],self.target_pole_indices[1])
+        greville_point_coords = self.surface_geometry.PointAt(self.greville_params[0], self.greville_params[1])
+
+        tpole_local_system_id = self.nonzero_pole_indices.index(self.target_pole_indices)
+
+        distance_vector = pole_coords-greville_point_coords
+        distance_vector = np.array(distance_vector)
+
+        I = np.zeros(self.block_size)
+        I[tpole_local_system_id] = 1
+        IminN =  (I - self.shape_functions)
+
+        # RHS
+        local_rhs = np.zeros(self.local_system_size)
+        local_rhs[0*self.block_size:1*self.block_size] -= self.alpha * IminN * distance_vector[0]
+        local_rhs[1*self.block_size:2*self.block_size] -= self.alpha * IminN * distance_vector[1]
+        local_rhs[2*self.block_size:3*self.block_size] -= self.alpha * IminN * distance_vector[2]
+
+        return local_rhs
+
+    # --------------------------------------------------------------------------
+    def CalculateLocalSystem(self):
+        pole_coords = self.surface_geometry.Pole(self.target_pole_indices[0],self.target_pole_indices[1])
+        greville_point_coords = self.surface_geometry.PointAt(self.greville_params[0], self.greville_params[1])
+
+        distance_vector = pole_coords-greville_point_coords
+        distance_vector = np.array(distance_vector)
+
+        tpole_local_system_id = self.nonzero_pole_indices.index(self.target_pole_indices)
+
+        I = np.zeros(self.block_size)
+        I[tpole_local_system_id] = 1
+        IminN =  (I - self.shape_functions)
+
+        # RHS
+        local_rhs = np.zeros(self.local_system_size)
+        local_rhs[0*self.block_size:1*self.block_size] -= self.alpha * IminN * distance_vector[0]
+        local_rhs[1*self.block_size:2*self.block_size] -= self.alpha * IminN * distance_vector[1]
+        local_rhs[2*self.block_size:3*self.block_size] -= self.alpha * IminN * distance_vector[2]
+
+        # LHS
+        local_lhs = np.zeros([self.local_system_size,self.local_system_size])
+        local_lhs[0*self.block_size:1*self.block_size,0*self.block_size:1*self.block_size] = self.alpha * np.outer(IminN, IminN)
+        local_lhs[1*self.block_size:2*self.block_size,1*self.block_size:2*self.block_size] = local_lhs[0:self.block_size,0:self.block_size]
+        local_lhs[2*self.block_size:3*self.block_size,2*self.block_size:3*self.block_size] = local_lhs[0:self.block_size,0:self.block_size]
+
+        return local_lhs, local_rhs
+
+# ==============================================================================

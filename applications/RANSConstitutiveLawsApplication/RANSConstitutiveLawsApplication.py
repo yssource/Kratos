@@ -8,4 +8,5 @@ application = KratosRANSConstitutiveLawsApplication()
 application_name = "KratosRANSConstitutiveLawsApplication"
 application_folder = "RANSConstitutiveLawsApplication"
 
-KM._ImportApplicationAsModule(application, application_name, application_folder, __path__)
+from .. import application_importer
+application_importer.ImportApplication(application, application_name, application_folder, __path__)

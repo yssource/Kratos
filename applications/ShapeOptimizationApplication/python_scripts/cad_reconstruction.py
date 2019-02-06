@@ -300,6 +300,10 @@ class ConditionsFactory:
         self.boundary_tessellation_tolerance = self.parameters["point_search"]["boundary_tessellation_tolerance"].GetDouble()
         self.boundary_polygons = None
 
+        self.face_id_to_itr = {}
+        for face_itr, face_i in enumerate(cad_model.GetByType('BrepFace')):
+            self.face_id_to_itr[face_i.Key()] = face_itr
+
     # --------------------------------------------------------------------------
     def CreateDistanceMinimizationConditions(self, conditions):
         from cad_reconstruction_conditions import DistanceMinimizationCondition
@@ -662,10 +666,6 @@ class ConditionsFactory:
         penalty_factor_tangent_enforcement = self.parameters["conditions"]["edges"]["fe_based"]["penalty_factor_tangent_enforcement"].GetDouble()
         penalty_factor_position_enforcement = self.parameters["conditions"]["edges"]["fe_based"]["penalty_factor_position_enforcement"].GetDouble()
 
-        face_id_to_itr = {}
-        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
-            face_id_to_itr[face_i.Key()] = face_itr
-
         # Create corresponding points
         for edge_itr, edge_i in enumerate(self.cad_model.GetByType('BrepEdge')):
 
@@ -682,8 +682,8 @@ class ConditionsFactory:
                 face_a = adjacent_faces[0]
                 face_b = adjacent_faces[1]
 
-                face_a_itr = face_id_to_itr[adjacent_faces[0].Key()]
-                face_b_itr = face_id_to_itr[adjacent_faces[1].Key()]
+                face_a_itr = self.face_id_to_itr[adjacent_faces[0].Key()]
+                face_b_itr = self.face_id_to_itr[adjacent_faces[1].Key()]
 
                 surface_geometry_a = face_a.Data().Geometry().Data()
                 surface_geometry_b = face_b.Data().Geometry().Data()
@@ -708,8 +708,10 @@ class ConditionsFactory:
                 }""")
 
                 mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, mapper_parameters )
-                mapper.Map( KratosShape.NORMALIZED_SURFACE_NORMAL, KratosShape.NORMALIZED_SURFACE_NORMAL )
-                mapper.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
+                if penalty_factor_position_enforcement > 0:
+                    mapper.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
+                if penalty_factor_tangent_enforcement > 0:
+                    mapper.Map( KratosShape.NORMALIZED_SURFACE_NORMAL, KratosShape.NORMALIZED_SURFACE_NORMAL )
 
                 # Create conditions
                 for itr, node in enumerate(destination_mdpa.Nodes):
@@ -746,26 +748,28 @@ class ConditionsFactory:
                         shape_function_derivatives_u_b[i] = shape_function_b(1,i)
                         shape_function_derivatives_v_b[i] = shape_function_b(2,i)
 
-                    # Tangents enforcement
-                    target_normal = node.GetSolutionStepValue(KratosShape.NORMALIZED_SURFACE_NORMAL)
-                    weight = penalty_factor_tangent_enforcement * integration_weight
-
-                    new_condition_a = TangentEnforcementCondition(target_normal, surface_geometry_a, nonzero_pole_indices_a, shape_function_derivatives_u_a, shape_function_derivatives_v_a, weight)
-                    conditions[face_a_itr].append(new_condition_a)
-
-                    new_condition_b = TangentEnforcementCondition(target_normal, surface_geometry_b, nonzero_pole_indices_b, shape_function_derivatives_u_b, shape_function_derivatives_v_b, weight)
-                    conditions[face_b_itr].append(new_condition_b)
-
                     # Positions enforcement
-                    target_displacement = node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)
-                    target_position = np.array([node.X+target_displacement[0], node.Y+target_displacement[1], node.Z+target_displacement[2]])
-                    weight = penalty_factor_position_enforcement * integration_weight
+                    if penalty_factor_position_enforcement > 0:
+                        target_displacement = node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)
+                        target_position = np.array([node.X+target_displacement[0], node.Y+target_displacement[1], node.Z+target_displacement[2]])
+                        weight = penalty_factor_position_enforcement * integration_weight
 
-                    new_condition_a = PositionEnforcementCondition(target_position, surface_geometry_a, nonzero_pole_indices_a, shape_function_values_a, weight)
-                    conditions[face_a_itr].append(new_condition_a)
+                        new_condition_a = PositionEnforcementCondition(target_position, surface_geometry_a, nonzero_pole_indices_a, shape_function_values_a, weight)
+                        conditions[face_a_itr].append(new_condition_a)
 
-                    new_condition_b = PositionEnforcementCondition(target_position, surface_geometry_b, nonzero_pole_indices_b, shape_function_values_b, weight)
-                    conditions[face_b_itr].append(new_condition_b)
+                        new_condition_b = PositionEnforcementCondition(target_position, surface_geometry_b, nonzero_pole_indices_b, shape_function_values_b, weight)
+                        conditions[face_b_itr].append(new_condition_b)
+
+                    # Tangents enforcement
+                    if penalty_factor_tangent_enforcement > 0:
+                        target_normal = node.GetSolutionStepValue(KratosShape.NORMALIZED_SURFACE_NORMAL)
+                        weight = penalty_factor_tangent_enforcement * integration_weight
+
+                        new_condition_a = TangentEnforcementCondition(target_normal, surface_geometry_a, nonzero_pole_indices_a, shape_function_derivatives_u_a, shape_function_derivatives_v_a, weight)
+                        conditions[face_a_itr].append(new_condition_a)
+
+                        new_condition_b = TangentEnforcementCondition(target_normal, surface_geometry_b, nonzero_pole_indices_b, shape_function_derivatives_u_b, shape_function_derivatives_v_b, weight)
+                        conditions[face_b_itr].append(new_condition_b)
 
                     # pole_coords = np.zeros((len(nonzero_pole_indices_a), 3))
                     # for i, (r,s) in enumerate(nonzero_pole_indices_a):
@@ -796,10 +800,6 @@ class ConditionsFactory:
         from cad_reconstruction_conditions import TangentEnforcementCondition, PositionEnforcementCondition
 
         penalty_factor = self.parameters["conditions"]["edges"]["fe_based"]["penalty_factor_corner_enforcement"].GetDouble()
-
-        face_id_to_itr = {}
-        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
-            face_id_to_itr[face_i.Key()] = face_itr
 
         corner_points = []
         corner_point_faces = []
@@ -889,8 +889,8 @@ class ConditionsFactory:
         }""")
 
         mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, mapper_parameters )
-        mapper.Map( KratosShape.NORMALIZED_SURFACE_NORMAL, KratosShape.NORMALIZED_SURFACE_NORMAL )
         mapper.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
+        mapper.Map( KratosShape.NORMALIZED_SURFACE_NORMAL, KratosShape.NORMALIZED_SURFACE_NORMAL )
 
         # Create conditions for each corner point
         for itr, node in enumerate(destination_mdpa.Nodes):
@@ -898,7 +898,7 @@ class ConditionsFactory:
 
             face = corner_point_faces[itr]
             face_key = face.Key()
-            face_itr = face_id_to_itr[face_key]
+            face_itr = self.face_id_to_itr[face_key]
 
             surface_geometry = face.Data().Geometry().Data()
             shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry.DegreeU(), degreeV=surface_geometry.DegreeV(), order=1)

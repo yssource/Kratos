@@ -32,6 +32,7 @@
 #include "solving_strategies/convergencecriterias/displacement_criteria.h"
 #include "solving_strategies/schemes/residualbased_incrementalupdate_static_scheme.h"
 #include "processes/process.h"
+#include "processes/variational_distance_calculation_process.h"
 
 namespace Kratos
 {
@@ -90,6 +91,7 @@ namespace Kratos
       typedef typename BuilderAndSolverType::Pointer BuilderAndSolverPointerType;
       typedef ConvergenceCriteria< TSparseSpace, TDenseSpace > ConvergenceCriteriaType;
       typedef typename ConvergenceCriteriaType::Pointer ConvergenceCriteriaPointerType;
+      typedef ModelPart::NodesContainerType NodesArrayType;
 
       /// Pointer definition of TurbulenceEvmKEpsilonProcess
       KRATOS_CLASS_POINTER_DEFINITION(TurbulenceEvmKEpsilonProcess);
@@ -200,6 +202,7 @@ namespace Kratos
       ModelPart& mrModelPart;
       Parameters& mrParameters;
       TLinearSolver& mrLinearSolver;
+      VariationalDistanceCalculationProcess<TDim, TSparseSpace,TDenseSpace, TLinearSolver> mDistanceCalculator;
 
       ///@}
       ///@name Private Operators
@@ -210,6 +213,9 @@ namespace Kratos
       ///@name Private Operations
       ///@{
 
+      void CalculateWallDistances();
+
+      // void AssignBoundaryConditions();
 
       ///@}
       ///@name Private  Access

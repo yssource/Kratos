@@ -126,24 +126,18 @@ public:
         SelectBasisVectorType(ThisParameters["basis_vector_type"].GetString());
         this->SetEchoLevel(ThisParameters["echo_level"].GetInt());
 
-        const SizeType num_vars_to_separate = ThisParameters["variables_to_separate"].size() + 1; // +1 bcs the "remaining" dofs are at pos 0
-        const SizeType num_rel_tolerances = ThisParameters["relative_tolerances"].size();
-        const SizeType num_abs_tolerances = ThisParameters["absolute_tolerances"].size();
+        const SizeType num_vars_to_separate = ThisParameters["variables_to_separate"].size() + 1; // +1 bcs of the other dofs
 
-        // Size check // TODO add +1!
-        KRATOS_ERROR_IF(num_vars_to_separate != num_rel_tolerances)
+        // Size check // TODO add "+1" in description!
+        KRATOS_ERROR_IF(num_vars_to_separate != ThisParameters["relative_tolerances"].size())
             << "Your list of variables is not the same size as the list of "
             << "relative_tolerances" << std::endl;
-        KRATOS_ERROR_IF(num_vars_to_separate != num_abs_tolerances)
+        KRATOS_ERROR_IF(num_vars_to_separate != ThisParameters["absolute_tolerances"].size())
             << "Your list of variables is not the same size as the list of "
             << "absolute_tolerances" << std::endl;
 
         mRelativeTolerances.resize(num_vars_to_separate);
         mAbsoluteTolerances.resize(num_vars_to_separate);
-
-        mRelativeResiduals.resize(num_vars_to_separate);
-        mAbsoluteResiduals.resize(num_vars_to_separate);
-        mNumDofs.resize(num_vars_to_separate);
 
         mVariableNames.resize(num_vars_to_separate);
         mVariableNames[num_vars_to_separate-1] = ThisParameters["other_dofs_name"].GetString();
@@ -171,7 +165,7 @@ public:
                 variable_key = KratosComponents< ComponentVariableType >::Get(r_variable_name+std::string("_Z")).Key();
                 mKeyToIndexMap[variable_key] = i_var;
             }
-            else if (KratosComponents< ComponentVariableType >::Has(r_variable_name)) {//case of component variable)
+            else if (KratosComponents< ComponentVariableType >::Has(r_variable_name)) {
                 variable_key = KratosComponents< ComponentVariableType >::Get(r_variable_name).Key();
                 mKeyToIndexMap[variable_key] = i_var;
             }
@@ -206,71 +200,55 @@ public:
     {
         const TSystemVectorType& r_vec = (mBasisVectorType == BasisVectorType::RESIDUAL) ? b : Dx;
 
-        if (SparseSpaceType::Size(r_vec) != 0) { // if we are solving for something
+        // first check if we are solving for something
+        if (SparseSpaceType::Size(r_vec) == 0) return true;
 
-            // Initialize the vectors
-            std::fill(mRelativeResiduals.begin(), mRelativeResiduals.end(), TDataType());
-            std::fill(mAbsoluteResiduals.begin(), mAbsoluteResiduals.end(), TDataType());
-            std::fill(mNumDofs.begin(), mNumDofs.end(), int());
+        const SizeType num_vars_to_separate = mVariableNames.size();
 
-            const SizeType num_vars_to_separate = mVariableNames.size();
+        // Initialize the vectors holding the residuals
+        std::vector<TDataType> relative_residuals(num_vars_to_separate, TDataType());
+        std::vector<TDataType> absolute_residuals(num_vars_to_separate, TDataType());
+        std::vector<int> num_dofs(num_vars_to_separate, int());
 
-            // Calculate the residuals
-            const bool is_mpi_execution = rModelPart.GetCommunicator().TotalProcesses() > 1;
-            const bool separate_variables = num_vars_to_separate > 1;
+        // Calculate the residuals
+        const bool is_mpi_execution = rModelPart.GetCommunicator().TotalProcesses() > 1;
+        const bool separate_variables = num_vars_to_separate > 1;
 
-            if (is_mpi_execution) {
-                const double rank = rModelPart.GetCommunicator().MyPID(); // To compare with PARTITION_INDEX, which is a double variable
-                if (separate_variables) {
-                    CalculateSeparatedResidualsMPI(rDofSet, r_vec, rank);
-                } else {
-                    CalculateResidualsMPI(rDofSet, r_vec, rank);
-                }
+        if (is_mpi_execution) {
+            const double rank = rModelPart.GetCommunicator().MyPID(); // To compare with PARTITION_INDEX, which is a double variable
+            if (separate_variables) {
+                CalculateSeparatedResidualsMPI(rDofSet, r_vec, relative_residuals, absolute_residuals, num_dofs, rank);
             } else {
-                if (separate_variables) {
-                    CalculateSeparatedResiduals(rDofSet, r_vec);
-                } else {
-                    CalculateResiduals(rDofSet, r_vec);
-                }
+                CalculateResidualsMPI(rDofSet, r_vec, relative_residuals, absolute_residuals, num_dofs, rank);
             }
-
-            FinalizeResidualsCalculation();
-
-            // Computing the final residuals and checking for convergence
-            // This is done on each rank, since the residuals were synchronized before
-            std::vector<bool> conv_vec(num_vars_to_separate); // save the convegence info for plotting
-            bool is_converged = true;
-
-            for (SizeType i=0; i<num_vars_to_separate; ++i) {
-                if (IsAlmostZero(mRelativeResiduals[i])) {
-                    mRelativeResiduals[i] = 1.0;
-                }
-
-                if (mNumDofs[i] == 0) {
-                    mNumDofs[i] = 1; // this might be the case if no "other" dofs are present
-                }
-
-                // Compute the final residuals
-                mRelativeResiduals[i] = mAbsoluteResiduals[i] / mRelativeResiduals[i];
-                mAbsoluteResiduals[i] /= mNumDofs[i];
-
-                // Check each variable for convergence
-                conv_vec[i] = mRelativeResiduals[i] < mRelativeTolerances[i] ||
-                              mAbsoluteResiduals[i] < mAbsoluteTolerances[i];
-
-                is_converged = is_converged && conv_vec[i]; // Check overall convergence
+        } else {
+            if (separate_variables) {
+                CalculateSeparatedResiduals(rDofSet, r_vec, relative_residuals, absolute_residuals, num_dofs);
+            } else {
+                CalculateResiduals(rDofSet, r_vec, relative_residuals, absolute_residuals, num_dofs);
             }
-
-            // Printing information abt current residuals
-            if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0) {
-                const int nonlin_iteration_number = rModelPart.GetProcessInfo()[NL_ITERATION_NUMBER];
-                PrintConvergenceInfo(is_converged, conv_vec, nonlin_iteration_number);
-            }
-
-            return is_converged;
         }
 
-        return true;
+        FinalizeResidualsCalculation(relative_residuals, absolute_residuals, num_dofs);
+
+        // This is done on each rank, since the residuals were synchronized before
+        std::vector<bool> conv_vec(num_vars_to_separate); // save the convegence info for plotting
+        bool is_converged = true;
+
+        for (SizeType i=0; i<num_vars_to_separate; ++i) {
+            // Check each variable for convergence
+            conv_vec[i] = relative_residuals[i] < mRelativeTolerances[i] ||
+                          absolute_residuals[i] < mAbsoluteTolerances[i];
+
+            is_converged = is_converged && conv_vec[i]; // Check overall convergence
+        }
+
+        if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0) {
+            const int nonlin_iteration_number = rModelPart.GetProcessInfo()[NL_ITERATION_NUMBER];
+            PrintConvergenceInfo(is_converged, conv_vec, relative_residuals, absolute_residuals, nonlin_iteration_number);
+        }
+
+        return is_converged;
     }
 
     /**
@@ -328,12 +306,6 @@ private:
     std::vector<TDataType> mRelativeTolerances;
     std::vector<TDataType> mAbsoluteTolerances;
 
-    ///// Refactor to not have them as members => should also simplify life
-    std::vector<TDataType> mRelativeResiduals;
-    std::vector<TDataType> mAbsoluteResiduals;
-    std::vector<int> mNumDofs;
-    //////
-
     std::unordered_map<KeyType, IndexType> mKeyToIndexMap;
     std::vector<std::string> mVariableNames;
 
@@ -347,7 +319,10 @@ private:
 
     void CalculateResiduals(
         const DofsArrayType& rDofSet,
-        const TSystemVectorType& rVector)
+        const TSystemVectorType& rVector,
+        std::vector<TDataType>& rRelativeResiduals,
+        std::vector<TDataType>& rAbsoluteResiduals,
+        std::vector<int>& rNumDofs)
     {
         #pragma omp parallel for
         for (int i=0; i<static_cast<int>(rDofSet.size()); ++i) {
@@ -362,9 +337,9 @@ private:
 
                 #pragma omp critical
                 {
-                    mRelativeResiduals[0] += dof_value * dof_value;
-                    mAbsoluteResiduals[0] += dof_incr * dof_incr;
-                    ++mNumDofs[0];
+                    rRelativeResiduals[0] += dof_value * dof_value;
+                    rAbsoluteResiduals[0] += dof_incr * dof_incr;
+                    ++rNumDofs[0];
                 }
             }
         }
@@ -372,9 +347,13 @@ private:
 
     void CalculateSeparatedResiduals(
         const DofsArrayType& rDofSet,
-        const TSystemVectorType& rVector)
+        const TSystemVectorType& rVector,
+        std::vector<TDataType>& rRelativeResiduals,
+        std::vector<TDataType>& rAbsoluteResiduals,
+        std::vector<int>& rNumDofs)
     {
         const IndexType other_dofs_vec_index = mVariableNames.size()-1;
+
         #pragma omp parallel for
         for (int i=0; i<static_cast<int>(rDofSet.size()); ++i) {
             IndexType vec_index;
@@ -397,9 +376,9 @@ private:
 
                 #pragma omp critical
                 {
-                    mRelativeResiduals[vec_index] += dof_value * dof_value;
-                    mAbsoluteResiduals[vec_index] += dof_incr * dof_incr;
-                    ++mNumDofs[vec_index];
+                    rRelativeResiduals[vec_index] += dof_value * dof_value;
+                    rAbsoluteResiduals[vec_index] += dof_incr * dof_incr;
+                    ++rNumDofs[vec_index];
                 }
             }
         }
@@ -408,6 +387,9 @@ private:
     void CalculateResidualsMPI(
         const DofsArrayType& rDofSet,
         const TSystemVectorType& rVector,
+        std::vector<TDataType>& rRelativeResiduals,
+        std::vector<TDataType>& rAbsoluteResiduals,
+        std::vector<int>& rNumDofs,
         const double Rank)
     {
         #pragma omp parallel for
@@ -423,21 +405,25 @@ private:
 
                 #pragma omp critical
                 {
-                    mRelativeResiduals[0] += dof_value * dof_value;
-                    mAbsoluteResiduals[0] += dof_incr * dof_incr;
-                    ++mNumDofs[0];
+                    rRelativeResiduals[0] += dof_value * dof_value;
+                    rAbsoluteResiduals[0] += dof_incr * dof_incr;
+                    ++rNumDofs[0];
                 }
             }
         }
-
+        SynchronizeResiduals(rRelativeResiduals, rAbsoluteResiduals, rNumDofs);
     }
 
     void CalculateSeparatedResidualsMPI(
         const DofsArrayType& rDofSet,
         const TSystemVectorType& rVector,
+        std::vector<TDataType>& rRelativeResiduals,
+        std::vector<TDataType>& rAbsoluteResiduals,
+        std::vector<int>& rNumDofs,
         const double Rank)
     {
         const IndexType other_dofs_vec_index = mVariableNames.size()-1;
+
         #pragma omp parallel for
         for (int i=0; i<static_cast<int>(rDofSet.size()); ++i) {
             IndexType vec_index;
@@ -460,40 +446,63 @@ private:
 
                 #pragma omp critical
                 {
-                    mRelativeResiduals[vec_index] += dof_value * dof_value;
-                    mAbsoluteResiduals[vec_index] += dof_incr * dof_incr;
-                    ++mNumDofs[vec_index];
+                    rRelativeResiduals[vec_index] += dof_value * dof_value;
+                    rAbsoluteResiduals[vec_index] += dof_incr * dof_incr;
+                    ++rNumDofs[vec_index];
                 }
             }
         }
+        SynchronizeResiduals(rRelativeResiduals, rAbsoluteResiduals, rNumDofs);
     }
 
-    void SynchronizeResiduals()
+    void SynchronizeResiduals(
+        std::vector<TDataType>& rRelativeResiduals,
+        std::vector<TDataType>& rAbsoluteResiduals,
+        std::vector<int>& rNumDofs)
     {
-        const SizeType num_vars_to_separate = mVariableNames.size();
+        const SizeType num_vars_to_separate = rNumDofs.size();
 
         // concatenate the vectors to have only one call to MPI
-        std::vector<TDataType> residuals = mRelativeResiduals;
+        std::vector<TDataType> residuals = rRelativeResiduals;
         residuals.reserve(2 * num_vars_to_separate);
-        std::copy(mAbsoluteResiduals.begin(), mAbsoluteResiduals.end(), residuals.begin() + num_vars_to_separate);
+        std::copy(rAbsoluteResiduals.begin(), rAbsoluteResiduals.end(), residuals.begin() + num_vars_to_separate);
 
         // Synchroizing them across ranks // TODO use data-communicator
         // rModelPart.GetCommunicator().SumAll(residuals);
-        // rModelPart.GetCommunicator().SumAll(mNumDofs);
+        // rModelPart.GetCommunicator().SumAll(rNumDofs);
 
         // Then afterwards split them again
-        std::copy(residuals.begin(), residuals.begin() + num_vars_to_separate, mRelativeResiduals.begin());
-        std::copy(residuals.begin() + num_vars_to_separate, residuals.end(), mAbsoluteResiduals.begin());
+        std::copy(residuals.begin(), residuals.begin() + num_vars_to_separate, rRelativeResiduals.begin());
+        std::copy(residuals.begin() + num_vars_to_separate, residuals.end(), rAbsoluteResiduals.begin());
     }
 
-    void FinalizeResidualsCalculation()
+    void FinalizeResidualsCalculation(
+        std::vector<TDataType>& rRelativeResiduals,
+        std::vector<TDataType>& rAbsoluteResiduals,
+        std::vector<int>& rNumDofs)
     {
         auto sqrt_fct = [](const TDataType & el) -> TDataType { return std::sqrt(el); };
         // Finish applying the L2-Norm
-        std::transform(mRelativeResiduals.begin(), mRelativeResiduals.end(), mRelativeResiduals.begin(), sqrt_fct);
-        std::transform(mAbsoluteResiduals.begin(), mAbsoluteResiduals.end(), mAbsoluteResiduals.begin(), sqrt_fct);
+        std::transform(rRelativeResiduals.begin(), rRelativeResiduals.end(), rRelativeResiduals.begin(), sqrt_fct);
+        std::transform(rAbsoluteResiduals.begin(), rAbsoluteResiduals.end(), rAbsoluteResiduals.begin(), sqrt_fct);
         // Take into account the size of the domain
-        std::transform(mNumDofs.begin(), mNumDofs.end(), mNumDofs.begin(), sqrt_fct);
+        std::transform(rNumDofs.begin(), rNumDofs.end(), rNumDofs.begin(), sqrt_fct);
+
+        const SizeType num_vars_to_separate = rNumDofs.size();
+
+        for (SizeType i=0; i<num_vars_to_separate; ++i) {
+            if (IsAlmostZero(rRelativeResiduals[i])) {
+                rRelativeResiduals[i] = 1.0;
+            }
+
+            if (rNumDofs[i] == 0) {
+                rNumDofs[i] = 1; // this might be the case if no "other" dofs are present
+            }
+
+            // Compute the final residuals
+            rRelativeResiduals[i]  = rAbsoluteResiduals[i] / rRelativeResiduals[i];
+            rAbsoluteResiduals[i] /= rNumDofs[i];
+        }
     }
 
     bool IsAlmostZero(
@@ -523,6 +532,8 @@ private:
     */
     void PrintConvergenceInfo(const bool IsConverged,
                               const std::vector<bool>& rConvergenceInfoVector,
+                              const std::vector<TDataType>& rRelativeResiduals,
+                              const std::vector<TDataType>& rAbsoluteResiduals,
                               const int NonlinIterationNumber) const
     {
         KRATOS_INFO("ConvergenceCriteria") << "Convergence Check; Iteration "
@@ -539,8 +550,8 @@ private:
             }
 
             KRATOS_INFO("ConvergenceCriteria") << "\t" << mVariableNames[i] << ": "<< conv_info.str()
-                << " | ratio = " << mRelativeResiduals[i] << "; exp.ratio = " << mRelativeTolerances[i] << " | "
-                << "abs = "      << mAbsoluteResiduals[i] << "; exp.abs = "   << mAbsoluteTolerances[i] << "\n";
+                << " | ratio = " << rRelativeResiduals[i] << "; exp.ratio = " << mRelativeTolerances[i] << " | "
+                << "abs = "      << rAbsoluteResiduals[i] << "; exp.abs = "   << mAbsoluteTolerances[i] << "\n";
         }
 
         if (IsConverged) {

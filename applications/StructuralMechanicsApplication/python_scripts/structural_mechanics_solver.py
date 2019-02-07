@@ -67,14 +67,7 @@ class MechanicalSolver(PythonSolver):
             "clear_storage": false,
             "move_mesh_flag": true,
             "multi_point_constraints_used": true,
-            "convergence_criteria_settings" : {
-                "convergence_criterion" : "residual",
-                "displacement_relative_tolerance": 1.0e-4,
-                "displacement_absolute_tolerance": 1.0e-9,
-                "rotation_relative_tolerance":     1.0e-4,
-                "rotation_absolute_tolerance":     1.0e-9,
-                "print_colors" : true
-            },
+            "convergence_criteria_settings" : { },
             "max_iteration": 10,
             "linear_solver_settings": { },
             "problem_domain_sub_model_part_list": ["solid"],
@@ -103,6 +96,32 @@ class MechanicalSolver(PythonSolver):
             warning += 'which is only needed if you use the "python_solvers_wrapper_structural". \nPlease remove it '
             warning += 'from the "solver settings" if you dont use this wrapper, this check will be removed soon!\n'
             self.print_warning_on_rank_zero("Time integration method", warning)
+        if not custom_settings.Has("convergence_criteria_settings"): # convergence-criteria-settings are given in old format
+            new_settings = KratosMultiphysics.Parameters("""{ }""")
+
+            if custom_settings.Has("convergence_criterion"):
+                new_settings.AddValue("convergence_criterion", custom_settings["convergence_criterion"])
+                custom_settings.RemoveValue("convergence_criterion")
+
+            if custom_settings.Has("displacement_relative_tolerance"):
+                new_settings.AddValue("displacement_relative_tolerance", custom_settings["displacement_relative_tolerance"])
+                custom_settings.RemoveValue("displacement_relative_tolerance")
+
+            if custom_settings.Has("displacement_absolute_tolerance"):
+                new_settings.AddValue("displacement_absolute_tolerance", custom_settings["displacement_absolute_tolerance"])
+                custom_settings.RemoveValue("displacement_absolute_tolerance")
+
+            if custom_settings.Has("residual_relative_tolerance"):
+                new_settings.AddValue("rotation_relative_tolerance", custom_settings["residual_relative_tolerance"])
+                custom_settings.RemoveValue("residual_relative_tolerance")
+
+            if custom_settings.Has("residual_absolute_tolerance"):
+                new_settings.AddValue("rotation_absolute_tolerance", custom_settings["residual_absolute_tolerance"])
+                custom_settings.RemoveValue("residual_absolute_tolerance")
+
+            custom_settings.AddValue("convergence_criteria_settings", new_settings)
+
+            # TODO throw warning
 
         # Overwrite the default settings with user-provided parameters.
         self.settings.ValidateAndAssignDefaults(default_settings)
@@ -394,20 +413,44 @@ class MechanicalSolver(PythonSolver):
 
     def _get_convergence_criterion_settings(self):
         # Create an auxiliary Kratos parameters object to store the convergence settings.
-        conv_params = KratosMultiphysics.Parameters("{}")
-        conv_params.AddValue("convergence_criterion",self.settings["convergence_criterion"])
-        conv_params.AddValue("rotation_dofs",self.settings["rotation_dofs"])
+        conv_params_defaults = KratosMultiphysics.Parameters("""{
+            "convergence_criterion"           : "residual_criterion",
+            "displacement_relative_tolerance" : 1.0e-4,
+            "displacement_absolute_tolerance" : 1.0e-9,
+            "rotation_relative_tolerance"     : 1.0e-4,
+            "rotation_absolute_tolerance"     : 1.0e-9,
+            "print_colors"                    : true
+        }""")
+
+        self.settings["convergence_criteria_settings"].ValidateAndAssignDefaults(conv_params_defaults)
+        conv_crit_settings = self.settings["convergence_criteria_settings"]
+
+        # Settings used by the general convergence-criteria
+        conv_params = KratosMultiphysics.Parameters("""{
+            "variables_to_separate" : [],
+            "relative_tolerances"   : [],
+            "absolute_tolerances"   : [],
+            "other_dofs_name"       : "DISPLACEMENT"
+        }""");
+
+        conv_params.AddValue("convergence_criterion", conv_crit_settings["convergence_criterion"])
+        conv_params.AddValue("print_colors", conv_crit_settings["print_colors"])
         conv_params.AddValue("echo_level",self.settings["echo_level"])
-        conv_params.AddValue("displacement_relative_tolerance",self.settings["displacement_relative_tolerance"])
-        conv_params.AddValue("displacement_absolute_tolerance",self.settings["displacement_absolute_tolerance"])
-        conv_params.AddValue("residual_relative_tolerance",self.settings["residual_relative_tolerance"])
-        conv_params.AddValue("residual_absolute_tolerance",self.settings["residual_absolute_tolerance"])
+
+        conv_params["relative_tolerances"].Append(conv_crit_settings["displacement_relative_tolerance"].GetDouble())
+        conv_params["absolute_tolerances"].Append(conv_crit_settings["displacement_absolute_tolerance"].GetDouble())
+
+        if self.settings["rotation_dofs"].GetBool():
+            conv_params["variables_to_separate"].Append("DISPLACEMENT")
+            conv_params["relative_tolerances"].Append(conv_crit_settings["rotation_relative_tolerance"].GetDouble())
+            conv_params["absolute_tolerances"].Append(conv_crit_settings["rotation_absolute_tolerance"].GetDouble())
+            conv_params["other_dofs_name"].SetString("ROTATION")
 
         return conv_params
 
     def _create_convergence_criterion(self):
         import convergence_criteria_factory
-        convergence_criterion = convergence_criteria_factory.convergence_criterion(self.settings)
+        convergence_criterion = convergence_criteria_factory.convergence_criterion(self._get_convergence_criterion_settings())
         return convergence_criterion.mechanical_convergence_criterion
 
     def _create_linear_solver(self):

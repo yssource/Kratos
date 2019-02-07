@@ -9,49 +9,31 @@ import KratosMultiphysics.MappingApplication as KratosMapping
 
 # Convergence criteria class
 class convergence_criterion:
-    def __init__(self, solver_settings):
+    def __init__(self, convergence_criterion_parameters):
         # Note that all the convergence settings are introduced via a Kratos parameters object.
-
-        convergence_criterion_parameters = solver_settings["convergence_criteria_settings"]
 
         echo_level = 1#convergence_criterion_parameters["echo_level"].GetInt()
         convergence_crit = convergence_criterion_parameters["convergence_criterion"].GetString()
-
-        D_RT = convergence_criterion_parameters["displacement_relative_tolerance"].GetDouble()
-        D_AT = convergence_criterion_parameters["displacement_absolute_tolerance"].GetDouble()
-        R_RT = convergence_criterion_parameters["rotation_relative_tolerance"].GetDouble()
-        R_AT = convergence_criterion_parameters["rotation_absolute_tolerance"].GetDouble()
+        convergence_criterion_parameters.RemoveValue("convergence_criterion")
 
         if(echo_level >= 1):
             KratosMultiphysics.Logger.PrintInfo("::[Mechanical Solver]:: ", "CONVERGENCE CRITERION : " +
-                  convergence_criterion_parameters["convergence_criterion"].GetString())
+                  convergence_crit)
 
-        convergence_crit_settings = KratosMultiphysics.Parameters("""{
-            "basis_vector_type"     : "",
-            "variables_to_separate" : [],
-            "relative_tolerances"   : [],
-            "absolute_tolerances"   : [],
-            "other_dofs_name"       : "DISPLACEMENT",
-            "print_colors"          : false
-        }""");
-
-        convergence_crit_settings["basis_vector_type"].SetString(convergence_crit)
-        convergence_crit_settings["print_colors"].SetBool(convergence_criterion_parameters["print_colors"].GetBool())
-
-        convergence_crit_settings["relative_tolerances"].Append(D_RT)
-        convergence_crit_settings["absolute_tolerances"].Append(D_AT)
-
-        if solver_settings["rotation_dofs"].GetBool():
-            convergence_crit_settings["variables_to_separate"].Append("DISPLACEMENT")
-            convergence_crit_settings["relative_tolerances"].Append(D_RT)
-            convergence_crit_settings["absolute_tolerances"].Append(D_AT)
-            convergence_crit_settings["other_dofs_name"].SetString("ROTATION")
-
-        print(convergence_crit_settings.PrettyPrintJsonString())
+        print(convergence_criterion_parameters.PrettyPrintJsonString())
         print("starting....")
 
-        self.mechanical_convergence_criterion = KratosMapping.GeneralConvergenceCriteria(convergence_crit_settings)
-        self.mechanical_convergence_criterion.SetEchoLevel(echo_level)
+        if(convergence_crit == "residual_criterion"):
+            convergence_criterion_parameters.AddEmptyValue("basis_vector_type").SetString("residual")
+            self.mechanical_convergence_criterion = KratosMapping.GeneralConvergenceCriteria(convergence_criterion_parameters)
+            self.mechanical_convergence_criterion.SetEchoLevel(echo_level)
+
+        elif(convergence_crit == "displacement_criterion"):
+            convergence_criterion_parameters.AddEmptyValue("basis_vector_type").SetString("solution_update")
+            self.mechanical_convergence_criterion = KratosMapping.GeneralConvergenceCriteria(convergence_criterion_parameters)
+            self.mechanical_convergence_criterion.SetEchoLevel(echo_level)
+        else:
+            errrrr
 
         # elif(convergence_crit == "and_criterion"):
         #     err

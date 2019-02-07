@@ -121,19 +121,20 @@ public:
 
         ThisParameters.ValidateAndAssignDefaults(default_params);
 
+        mPrintColors = ThisParameters["print_colors"].GetBool();
         SelectBasisVectorType(ThisParameters["basis_vector_type"].GetString());
 
         const SizeType num_vars_to_separate = ThisParameters["variables_to_separate"].size() + 1; // +1 bcs the "remaining" dofs are at pos 0
-        const SizeType num_rel_tolerances = ThisParameters["relative_convergence_tolerances"].size();
-        const SizeType num_abs_tolerances = ThisParameters["absolut_convergence_tolerances"].size();
+        const SizeType num_rel_tolerances = ThisParameters["relative_tolerances"].size();
+        const SizeType num_abs_tolerances = ThisParameters["absolute_tolerances"].size();
 
-        // Size check
+        // Size check // TODO add +1!
         KRATOS_ERROR_IF(num_vars_to_separate != num_rel_tolerances)
             << "Your list of variables is not the same size as the list of "
             << "relative_tolerances" << std::endl;
         KRATOS_ERROR_IF(num_vars_to_separate != num_abs_tolerances)
             << "Your list of variables is not the same size as the list of "
-            << "absolut_tolerances" << std::endl;
+            << "absolute_tolerances" << std::endl;
 
         mRelativeTolerances.resize(num_vars_to_separate);
         mAbsoluteTolerances.resize(num_vars_to_separate);
@@ -143,11 +144,15 @@ public:
         mNumDofs.resize(num_vars_to_separate);
 
         mVariableNames.resize(num_vars_to_separate);
+        mVariableNames[num_vars_to_separate-1] = ThisParameters["other_dofs_name"].GetString();
+        mOtherDofsVecIndex = num_vars_to_separate-1;
 
         for (IndexType i_var=0; i_var<num_vars_to_separate; ++i_var) {
-            mRelativeTolerances[i_var] = ThisParameters["relative_convergence_tolerances"].GetArrayItem(i_var).GetDouble();
-            mAbsoluteTolerances[i_var] = ThisParameters["absolut_convergence_tolerances"].GetArrayItem(i_var).GetDouble();
+            mRelativeTolerances[i_var] = ThisParameters["relative_tolerances"].GetArrayItem(i_var).GetDouble();
+            mAbsoluteTolerances[i_var] = ThisParameters["absolute_tolerances"].GetArrayItem(i_var).GetDouble();
+        }
 
+        for (IndexType i_var=0; i_var<num_vars_to_separate-1; ++i_var) {
             const std::string& r_variable_name = ThisParameters["variables_to_separate"].GetArrayItem(i_var).GetString();
             KeyType variable_key;
 
@@ -175,9 +180,6 @@ public:
             }
         }
 
-        mVariableNames[num_vars_to_separate-1] = ThisParameters["other_dofs_name"].GetString();
-        mOtherDofsVecIndex = num_vars_to_separate-1;
-
         // TODO test if a component and its Array are specified!
     }
 
@@ -188,6 +190,11 @@ public:
     ///@name Operations
     ///@{
 
+    void Initialize(ModelPart& rModelPart) override
+    {
+        BaseType::Initialize(rModelPart);
+    }
+
     bool PostCriteria(
         ModelPart& rModelPart,
         DofsArrayType& rDofSet,
@@ -196,21 +203,10 @@ public:
         const TSystemVectorType& b
     ) override
     {
-        // Natasha we will use this to print whether convergence has been achieved or not
-        // I think it is quite cool :D
-        // KRATOS_INFO("CONVERGENCE_CRITERIA") << "Some regular print" << std::endl;
-        // KRATOS_INFO("CONVERGENCE_CRITERIA") << BOLDFONT("Some regular print") << std::endl;
-        // KRATOS_INFO("CONVERGENCE_CRITERIA") << FGRN("Some regular print") << std::endl;
-        // KRATOS_INFO("CONVERGENCE_CRITERIA") << BOLDFONT(FRED("   Not achieved")) << std::endl;
-        // KRATOS_INFO("CONVERGENCE_CRITERIA") << BOLDFONT(FBLU("   Not achieved")) << std::endl;
-        // KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FYEL("   Not achieved")) << std::endl;
-        // KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FMAG("   Not achieved")) << std::endl;
-        // KRATOS_INFO("CONVERGENCE_CRITERIA") << UNDL(FCYN("   Not achieved")) << std::endl;
-
         const TSystemVectorType& r_vec = (mBasisVectorType == BasisVectorType::RESIDUAL) ? b : Dx;
 
-        if (SparseSpaceType::Size(r_vec) != 0) // if we are solving for something
-        {
+        if (SparseSpaceType::Size(r_vec) != 0) { // if we are solving for something
+
             // Initialize the vectors
             std::fill(mRelativeResiduals.begin(), mRelativeResiduals.end(), TDataType());
             std::fill(mAbsoluteResiduals.begin(), mAbsoluteResiduals.end(), TDataType());
@@ -276,41 +272,6 @@ public:
         return true;
     }
 
-    void Initialize(ModelPart& rModelPart) override
-    {
-        BaseType::Initialize(rModelPart);
-
-        // static std::stringstream buffer;
-        // LoggerOutput::Pointer p_output(new LoggerTableOutput(buffer, {"Time Step", "Iteration Number        ", "Convergence        ", "Is converged"}));
-        // Logger::AddOutput(p_output);
-        // p_output->WriteHeader();
-
-        // for (int i=0; i<5; ++i)
-        // {
-
-        //     LoggerMessage message1("Time Step");
-        //     message1 << "445";
-        //     LoggerMessage message2("Iteration Number");
-        //     message2 << "159";
-        //     LoggerMessage message3("Convergence");
-        //     message3 << "yuhu";
-        //     LoggerMessage message4("Is converged");
-        //     message4 << "NO";
-
-        //     p_output->WriteMessage(message1);
-        //     p_output->WriteMessage(message2);
-        //     p_output->WriteMessage(message3);
-        //     p_output->WriteMessage(message4);
-
-        //     // Logger("Time Step") << 123 << std::endl;
-        //     // Logger("Iteration Number") << 55 << std::endl;
-        //     // Logger("Convergence") << "NO" << std::endl;
-        //     // Logger("Is converged") << "Maybe" << std::endl;
-
-        //     std::cout << buffer.str() << std::endl;
-        // }
-    }
-
     /**
      * This function is designed to be called once to perform all the checks needed
      * on the input provided. Checks can be "expensive" as the function is designed
@@ -323,6 +284,11 @@ public:
         KRATOS_TRY
 
         BaseType::Check(rModelPart);
+
+        if (rModelPart.GetCommunicator().TotalProcesses() > 1) { // mpi-execution
+            KRATOS_ERROR_IF_NOT(rModelPart.HasNodalSolutionStepVariable(PARTITION_INDEX))
+                << "PARTITION_INDEX is not a solutionstep-variable!" << std::endl;
+        }
 
         // TODO check if the variables that are being checked here are in the ModelPart!
         // TODO check if the variables that are being checked here Dofs!
@@ -556,26 +522,41 @@ private:
                               const std::vector<bool>& rConvergenceInfoVector,
                               const int NonlinIterationNumber) const
     {
-        const int num_vars_to_separate = mRelativeResiduals.size();
-
         KRATOS_INFO("ConvergenceCriteria") << "Convergence Check; Iteration "
             << NonlinIterationNumber << "\n";
 
-        for (int i = num_vars_to_separate - 1; i > -1; --i) // Print in reverse to have the "other dofs" at the end
-        {
+        for (IndexType i=0; i<mVariableNames.size(); ++i) {
             std::stringstream conv_info;
-            if (rConvergenceInfoVector[i]) conv_info << BOLDFONT(FGRN("converged"));
-            else conv_info << BOLDFONT(FRED("not converged"));
+            if (rConvergenceInfoVector[i]) {
+                if (mPrintColors) conv_info << BOLDFONT(FGRN("converged"));
+                else conv_info << "converged";
+            } else {
+                if (mPrintColors) conv_info << BOLDFONT(FRED("not converged"));
+                else conv_info << "not converged";
+            }
 
-            KRATOS_INFO("ConvergenceCriteria") << "\t" << mVariableNames[i] << conv_info.str()
+            KRATOS_INFO("ConvergenceCriteria") << "\t" << mVariableNames[i] << ": "<< conv_info.str()
                 << " | ratio = " << mRelativeResiduals[i] << "; exp.ratio = " << mRelativeTolerances[i] << " | "
-                << "abs = "      << mAbsoluteResiduals[i]   << "; exp.abs = "   << mAbsoluteTolerances[i] << "\n";
+                << "abs = "      << mAbsoluteResiduals[i] << "; exp.abs = "   << mAbsoluteTolerances[i] << "\n";
         }
 
-        if (IsConverged)
-            KRATOS_INFO("ConvergenceCriteria") << BOLDFONT(FGRN("Convergence is achieved in Iteration ")) << NonlinIterationNumber << std::endl; // TODO most likely remove the color
-        else
-            KRATOS_INFO("ConvergenceCriteria") << BOLDFONT(FRED("Convergence is not achieved in Iteration ")) << NonlinIterationNumber << std::endl; // TODO most likely remove the color
+        if (IsConverged) {
+            if (mPrintColors) {
+                KRATOS_INFO("ConvergenceCriteria") << BOLDFONT(FGRN("Convergence is achieved in Iteration "))
+                    << NonlinIterationNumber << std::endl;
+            } else {
+                KRATOS_INFO("ConvergenceCriteria") << "Convergence is achieved in Iteration "
+                    << NonlinIterationNumber << std::endl;
+            }
+        } else {
+            if (mPrintColors) {
+            KRATOS_INFO("ConvergenceCriteria") << BOLDFONT(FRED("Convergence is not achieved in Iteration "))
+                << NonlinIterationNumber << std::endl;
+            } else {
+            KRATOS_INFO("ConvergenceCriteria") << "Convergence is not achieved in Iteration "
+                << NonlinIterationNumber << std::endl;
+            }
+        }
     }
 
     ///@}

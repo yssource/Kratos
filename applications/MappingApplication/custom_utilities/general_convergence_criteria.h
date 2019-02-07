@@ -550,8 +550,8 @@ private:
             }
 
             KRATOS_INFO("ConvergenceCriteria") << "\t" << mVariableNames[i] << ": "<< conv_info.str()
-                << " | ratio = " << rRelativeResiduals[i] << "; exp.ratio = " << mRelativeTolerances[i] << " | "
-                << "abs = "      << rAbsoluteResiduals[i] << "; exp.abs = "   << mAbsoluteTolerances[i] << "\n";
+                << " | rel = " << rRelativeResiduals[i] << "; exp.rel = " << mRelativeTolerances[i] << " | "
+                << "abs = "    << rAbsoluteResiduals[i] << "; exp.abs = "   << mAbsoluteTolerances[i] << "\n";
         }
 
         if (IsConverged) {
@@ -612,5 +612,3 @@ private:
 }  // namespace Kratos.
 
 #endif // KRATOS_GENERAL_CONVERGENCE_CRITERIA_H_INCLUDED  defined
-
-

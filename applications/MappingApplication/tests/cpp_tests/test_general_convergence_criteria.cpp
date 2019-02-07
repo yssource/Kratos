@@ -209,17 +209,12 @@ KRATOS_TEST_CASE_IN_SUITE(ConvergenceCriteriaAbsoluteVelocityRotation, KratosStr
     ModelPart& dummy_model_part = current_model.CreateModelPart("dummy");
     SetUpTest(dummy_model_part, dofs_array, r_system_vector_Dx, r_system_vector_b, num_divisions);
 
-    const TDataType NewRatioTolerance = 1e-7;
-    const TDataType AlwaysConvergedNorm = 1e-5;
-
     Parameters default_params( R"({
         "basis_vector_type" : "solution_update",
         "variables_to_separate" : ["VELOCITY", "ROTATION"],
         "relative_convergence_tolerances" : [1e-20, 1e-20],
         "absolut_convergence_tolerances" : [1e-6, 1e-8]
     })" );
-
-    const std::string name_remaining_dofs = "PRESSURE";
 
     ConvergenceCriteriaPointerType p_conv_crit = Kratos::make_unique<GenConvergenceCriteriaType>(
         default_params);
@@ -274,17 +269,12 @@ KRATOS_TEST_CASE_IN_SUITE(ConvergenceCriteriaAbsolutePressure, KratosStructuralM
     ModelPart& dummy_model_part = current_model.CreateModelPart("dummy");
     SetUpTest(dummy_model_part, dofs_array, r_system_vector_Dx, r_system_vector_b, num_divisions);
 
-    const TDataType NewRatioTolerance = 1e-7;
-    const TDataType AlwaysConvergedNorm = 1e-5;
-
     Parameters default_params( R"({
         "basis_vector_type" : "solution_update",
         "variables_to_separate" : ["PRESSURE"],
         "relative_convergence_tolerances" : [1e-20],
         "absolut_convergence_tolerances" : [1e-6]
     })" );
-
-    const std::string name_remaining_dofs = "VELOCITY_AND_ROTATION";
 
     ConvergenceCriteriaPointerType p_conv_crit = Kratos::make_unique<GenConvergenceCriteriaType>(
         default_params);
@@ -338,9 +328,6 @@ KRATOS_TEST_CASE_IN_SUITE(ConvergenceCriteriaAbsoluteNoSeparate, KratosStructura
     Model current_model;
     ModelPart& dummy_model_part = current_model.CreateModelPart("dummy");
     SetUpTest(dummy_model_part, dofs_array, r_system_vector_Dx, r_system_vector_b, num_divisions);
-
-    const TDataType NewRatioTolerance = 1e-7;
-    const TDataType AlwaysConvergedNorm = 1e-5;
 
     Parameters default_params( R"({
         "basis_vector_type" : "solution_update",
@@ -400,17 +387,12 @@ KRATOS_TEST_CASE_IN_SUITE(ConvergenceCriteriaRelativeVelocityRotation, KratosStr
     ModelPart& dummy_model_part = current_model.CreateModelPart("dummy");
     SetUpTest(dummy_model_part, dofs_array, r_system_vector_Dx, r_system_vector_b, num_divisions);
 
-    const TDataType NewRatioTolerance = 1e-7;
-    const TDataType AlwaysConvergedNorm = 1e-5;
-
     Parameters default_params( R"({
         "basis_vector_type" : "solution_update",
         "variables_to_separate" : ["VELOCITY", "ROTATION"],
         "relative_convergence_tolerances" : [1e-6, 1e-8],
         "absolut_convergence_tolerances" : [1e-20, 1e-20]
     })" );
-
-    const std::string name_remaining_dofs = "PRESSURE";
 
     ConvergenceCriteriaPointerType p_conv_crit = Kratos::make_unique<GenConvergenceCriteriaType>(
         default_params);
@@ -461,9 +443,6 @@ KRATOS_TEST_CASE_IN_SUITE(ConvergenceCriteriaRelativeNoSeparate, KratosStructura
     Model current_model;
     ModelPart& dummy_model_part = current_model.CreateModelPart("dummy");
     SetUpTest(dummy_model_part, dofs_array, r_system_vector_Dx, r_system_vector_b, num_divisions);
-
-    const TDataType NewRatioTolerance = 1e-5;
-    const TDataType AlwaysConvergedNorm = 1e-7;
 
     Parameters default_params( R"({
         "basis_vector_type" : "solution_update",
@@ -522,18 +501,12 @@ KRATOS_TEST_CASE_IN_SUITE(ConvergenceCriteriaRelativePressure, KratosStructuralM
     ModelPart& dummy_model_part = current_model.CreateModelPart("dummy");
     SetUpTest(dummy_model_part, dofs_array, r_system_vector_Dx, r_system_vector_b, num_divisions);
 
-    const TDataType NewRatioTolerance = 1e-7;
-    const TDataType AlwaysConvergedNorm = 1e-5;
-
     Parameters default_params( R"({
         "basis_vector_type" : "solution_update",
         "variables_to_separate" : ["PRESSURE"],
         "relative_convergence_tolerances" : [1e-6],
         "absolut_convergence_tolerances" : [1e-20]
     })" );
-
-    const std::string name_remaining_dofs = "VELOCITY_AND_ROTATION";
-
 
     ConvergenceCriteriaPointerType p_conv_crit = Kratos::make_unique<GenConvergenceCriteriaType>(
         default_params);

@@ -147,7 +147,6 @@ public:
 
         mVariableNames.resize(num_vars_to_separate);
         mVariableNames[num_vars_to_separate-1] = ThisParameters["other_dofs_name"].GetString();
-        mOtherDofsVecIndex = num_vars_to_separate-1;
 
         for (IndexType i_var=0; i_var<num_vars_to_separate; ++i_var) {
             mRelativeTolerances[i_var] = ThisParameters["relative_tolerances"].GetArrayItem(i_var).GetDouble();
@@ -329,17 +328,17 @@ private:
     std::vector<TDataType> mRelativeTolerances;
     std::vector<TDataType> mAbsoluteTolerances;
 
+    ///// Refactor to not have them as members => should also simplify life
     std::vector<TDataType> mRelativeResiduals;
     std::vector<TDataType> mAbsoluteResiduals;
-
     std::vector<int> mNumDofs;
+    //////
 
     std::unordered_map<KeyType, IndexType> mKeyToIndexMap;
     std::vector<std::string> mVariableNames;
 
     BasisVectorType mBasisVectorType;
 
-    IndexType mOtherDofsVecIndex = 0;
     bool mPrintColors = false;
 
     ///@}
@@ -375,6 +374,7 @@ private:
         const DofsArrayType& rDofSet,
         const TSystemVectorType& rVector)
     {
+        const IndexType other_dofs_vec_index = mVariableNames.size()-1;
         #pragma omp parallel for
         for (int i=0; i<static_cast<int>(rDofSet.size()); ++i) {
             IndexType vec_index;
@@ -393,7 +393,7 @@ private:
                 // If the key for which we want to get the index does not exist, we get 0,
                 // which corresponds to the "remaining" dofs
                 // at and count have constant (worst case linear) complexity, so this should be fine since the map is small
-                vec_index = (mKeyToIndexMap.count(dof_var_key)) ? mKeyToIndexMap.at(dof_var_key) : mOtherDofsVecIndex;
+                vec_index = (mKeyToIndexMap.count(dof_var_key)) ? mKeyToIndexMap.at(dof_var_key) : other_dofs_vec_index;
 
                 #pragma omp critical
                 {
@@ -437,6 +437,7 @@ private:
         const TSystemVectorType& rVector,
         const double Rank)
     {
+        const IndexType other_dofs_vec_index = mVariableNames.size()-1;
         #pragma omp parallel for
         for (int i=0; i<static_cast<int>(rDofSet.size()); ++i) {
             IndexType vec_index;
@@ -455,7 +456,7 @@ private:
                 // If the key for which we want to get the index does not exist, we get 0,
                 // which corresponds to the "remaining" dofs
                 // at and count have constant (worst case linear) complexity, so this should be fine since the map is small
-                vec_index = (mKeyToIndexMap.count(dof_var_key)) ? mKeyToIndexMap.at(dof_var_key) : mOtherDofsVecIndex;
+                vec_index = (mKeyToIndexMap.count(dof_var_key)) ? mKeyToIndexMap.at(dof_var_key) : other_dofs_vec_index;
 
                 #pragma omp critical
                 {

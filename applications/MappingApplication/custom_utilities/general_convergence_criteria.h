@@ -116,13 +116,15 @@ public:
             "relative_tolerances"   : [],
             "absolute_tolerances"   : [],
             "other_dofs_name"       : "Other-Dofs",
-            "print_colors"          : false
+            "print_colors"          : false,
+            "echo_level"            : 0
         })" );
 
         ThisParameters.ValidateAndAssignDefaults(default_params);
 
         mPrintColors = ThisParameters["print_colors"].GetBool();
         SelectBasisVectorType(ThisParameters["basis_vector_type"].GetString());
+        this->SetEchoLevel(ThisParameters["echo_level"].GetInt());
 
         const SizeType num_vars_to_separate = ThisParameters["variables_to_separate"].size() + 1; // +1 bcs the "remaining" dofs are at pos 0
         const SizeType num_rel_tolerances = ThisParameters["relative_tolerances"].size();

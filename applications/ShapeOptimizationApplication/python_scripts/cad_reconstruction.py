@@ -399,9 +399,10 @@ class ConditionsFactory:
 
             print("> Processing face ",face_itr)
 
-            surface_geometry = face_i.Data().Geometry().Data()
-            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry.DegreeU(), degreeV=surface_geometry.DegreeV(), order=0)
+            surface_geometry = face_i.Data().Geometry()
+            surface_geometry_data = surface_geometry.Data()
 
+            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry_data.DegreeU(), degreeV=surface_geometry_data.DegreeV(), order=0)
             surface = an.Surface3D(face_i.Data().Geometry())
             projection = an.PointOnSurfaceProjection3D(surface)
 
@@ -433,7 +434,7 @@ class ConditionsFactory:
                 if is_inside:
                     u = projected_point_uv[0]
                     v = projected_point_uv[1]
-                    shape_function.Compute(surface_geometry.KnotsU(), surface_geometry.KnotsV(), u, v)
+                    shape_function.Compute(surface_geometry_data.KnotsU(), surface_geometry_data.KnotsV(), u, v)
                     nonzero_pole_indices = shape_function.NonzeroPoleIndices()
 
                     shape_function_values = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
@@ -509,8 +510,10 @@ class ConditionsFactory:
 
             print("> Processing face ",face_itr)
 
-            surface_geometry = face_i.Data().Geometry().Data()
-            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry.DegreeU(), degreeV=surface_geometry.DegreeV(), order=0)
+            surface_geometry = face_i.Data().Geometry()
+            surface_geometry_data = face_i.Data().Geometry().Data()
+
+            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry_data.DegreeU(), degreeV=surface_geometry_data.DegreeV(), order=0)
 
             list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i)
 
@@ -546,7 +549,7 @@ class ConditionsFactory:
 
                 total_area += weight
 
-                shape_function.Compute(surface_geometry.KnotsU(), surface_geometry.KnotsV(), u, v)
+                shape_function.Compute(surface_geometry_data.KnotsU(), surface_geometry_data.KnotsV(), u, v)
                 nonzero_pole_indices = shape_function.NonzeroPoleIndices()
 
                 shape_function_values = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
@@ -582,8 +585,10 @@ class ConditionsFactory:
             if face_i.Key() not in list_of_exclusive_faces:
                 continue
 
-            surface_geometry = face_i.Data().Geometry().Data()
-            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry.DegreeU(), degreeV=surface_geometry.DegreeV(), order=2)
+            surface_geometry = face_i.Data().Geometry()
+            surface_geometry_data = face_i.Data().Geometry().Data()
+
+            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry_data.DegreeU(), degreeV=surface_geometry_data.DegreeV(), order=2)
 
             list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i)
 
@@ -593,7 +598,7 @@ class ConditionsFactory:
                 [u,v] = list_of_parameters[itr]
                 weight = list_of_integration_weights[itr]
 
-                shape_function.Compute(surface_geometry.KnotsU(), surface_geometry.KnotsV(), u, v)
+                shape_function.Compute(surface_geometry_data.KnotsU(), surface_geometry_data.KnotsV(), u, v)
                 nonzero_pole_indices = shape_function.NonzeroPoleIndices()
 
                 shape_function_values = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
@@ -648,8 +653,10 @@ class ConditionsFactory:
             if face_i.Key() not in list_of_exclusive_faces:
                 continue
 
-            surface_geometry = face_i.Data().Geometry().Data()
-            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry.DegreeU(), degreeV=surface_geometry.DegreeV(), order=0)
+            surface_geometry = face_i.Data().Geometry()
+            surface_geometry_data = face_i.Data().Geometry().Data()
+
+            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry_data.DegreeU(), degreeV=surface_geometry_data.DegreeV(), order=0)
 
             surface = an.Surface3D(face_i.Data().Geometry())
             projection = an.PointOnSurfaceProjection3D(surface)
@@ -720,7 +727,7 @@ class ConditionsFactory:
 
                 u = projected_point_uv[0]
                 v = projected_point_uv[1]
-                shape_function.Compute(surface_geometry.KnotsU(), surface_geometry.KnotsV(), u, v)
+                shape_function.Compute(surface_geometry_data.KnotsU(), surface_geometry_data.KnotsV(), u, v)
                 nonzero_pole_indices = shape_function.NonzeroPoleIndices()
 
                 shape_function_values = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
@@ -758,8 +765,10 @@ class ConditionsFactory:
                 face_a_itr = self.face_id_to_itr[adjacent_faces[0].Key()]
                 face_b_itr = self.face_id_to_itr[adjacent_faces[1].Key()]
 
-                surface_geometry_a = face_a.Data().Geometry().Data()
-                surface_geometry_b = face_b.Data().Geometry().Data()
+                surface_geometry_a = face_a.Data().Geometry()
+                surface_geometry_b = face_b.Data().Geometry()
+                surface_geometry_data_a = face_a.Data().Geometry().Data()
+                surface_geometry_data_b = face_b.Data().Geometry().Data()
 
                 list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i)
 
@@ -791,13 +800,13 @@ class ConditionsFactory:
 
                     integration_weight = list_of_integration_weights[itr]
 
-                    shape_function_a = an.SurfaceShapeEvaluator(degreeU=surface_geometry_a.DegreeU(), degreeV=surface_geometry_a.DegreeV(), order=1)
-                    shape_function_b = an.SurfaceShapeEvaluator(degreeU=surface_geometry_b.DegreeU(), degreeV=surface_geometry_b.DegreeV(), order=1)
+                    shape_function_a = an.SurfaceShapeEvaluator(degreeU=surface_geometry_data_a.DegreeU(), degreeV=surface_geometry_data_a.DegreeV(), order=1)
+                    shape_function_b = an.SurfaceShapeEvaluator(degreeU=surface_geometry_data_b.DegreeU(), degreeV=surface_geometry_data_b.DegreeV(), order=1)
 
                     # Create conditions to enforce t1 and t2 on both face a and face b
                     u_a = list_of_parameters_a[itr][0]
                     v_a = list_of_parameters_a[itr][1]
-                    shape_function_a.Compute(surface_geometry_a.KnotsU(), surface_geometry_a.KnotsV(), u_a, v_a)
+                    shape_function_a.Compute(surface_geometry_data_a.KnotsU(), surface_geometry_data_a.KnotsV(), u_a, v_a)
                     nonzero_pole_indices_a = shape_function_a.NonzeroPoleIndices()
 
                     shape_function_values_a = np.empty(shape_function_a.NbNonzeroPoles(), dtype=float)
@@ -810,7 +819,7 @@ class ConditionsFactory:
 
                     u_b = list_of_parameters_b[itr][0]
                     v_b = list_of_parameters_b[itr][1]
-                    shape_function_b.Compute(surface_geometry_b.KnotsU(), surface_geometry_b.KnotsV(), u_b, v_b)
+                    shape_function_b.Compute(surface_geometry_data_b.KnotsU(), surface_geometry_data_b.KnotsV(), u_b, v_b)
                     nonzero_pole_indices_b = shape_function_b.NonzeroPoleIndices()
 
                     shape_function_values_b = np.empty(shape_function_b.NbNonzeroPoles(), dtype=float)
@@ -973,14 +982,16 @@ class ConditionsFactory:
             face_key = face.Key()
             face_itr = self.face_id_to_itr[face_key]
 
-            surface_geometry = face.Data().Geometry().Data()
-            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry.DegreeU(), degreeV=surface_geometry.DegreeV(), order=1)
+            surface_geometry = face.Data().Geometry()
+            surface_geometry_data = face.Data().Geometry().Data()
+
+            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry_data.DegreeU(), degreeV=surface_geometry_data.DegreeV(), order=1)
 
             # Create conditions to enforce t1 and t2 on both face a and face b
             u = corner_point_parameters[itr][0]
             v = corner_point_parameters[itr][1]
 
-            shape_function.Compute(surface_geometry.KnotsU(), surface_geometry.KnotsV(), u, v)
+            shape_function.Compute(surface_geometry_data.KnotsU(), surface_geometry_data.KnotsV(), u, v)
             nonzero_pole_indices = shape_function.NonzeroPoleIndices()
 
             shape_function_values = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
@@ -1021,21 +1032,23 @@ class ConditionsFactory:
                 print(f'Skip {face_i.Key()}')
                 continue
 
-            surface_geometry = face_i.Data().Geometry().Data()
-            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry.DegreeU(), degreeV=surface_geometry.DegreeV(), order=0)
+            surface_geometry = face_i.Data().Geometry()
+            surface_geometry_data = face_i.Data().Geometry().Data()
 
-            deg_u = surface_geometry.DegreeU()
-            deg_v = surface_geometry.DegreeV()
-            knot_vec_u = surface_geometry.KnotsU()
-            knot_vec_v = surface_geometry.KnotsV()
+            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry_data.DegreeU(), degreeV=surface_geometry_data.DegreeV(), order=0)
+
+            deg_u = surface_geometry_data.DegreeU()
+            deg_v = surface_geometry_data.DegreeV()
+            knot_vec_u = surface_geometry_data.KnotsU()
+            knot_vec_v = surface_geometry_data.KnotsV()
 
             # Compute Grevillle abscissa
             pole_indices = []
             greville_points = []
             greville_abscissa_parameters = []
 
-            for r in range(surface_geometry.NbPolesU()):
-                for s in range(surface_geometry.NbPolesV()):
+            for r in range(surface_geometry_data.NbPolesU()):
+                for s in range(surface_geometry_data.NbPolesV()):
                     u_value = 0.0
                     v_value = 0.0
 
@@ -1053,7 +1066,7 @@ class ConditionsFactory:
                     if is_inside:
                         pole_indices.append((r,s))
                         greville_abscissa_parameters.append((u_value,v_value))
-                        greville_points.append(surface_geometry.PointAt(u_value, v_value))
+                        greville_points.append(surface_geometry_data.PointAt(u_value, v_value))
                         # point_ptr = self.cad_model.Add(an.Point3D(location=grevile_point))
                         # point_ptr.Attributes().SetLayer('GrevillePoints')
 
@@ -1062,7 +1075,7 @@ class ConditionsFactory:
                 u = greville_params[0]
                 v = greville_params[1]
 
-                shape_function.Compute(surface_geometry.KnotsU(), surface_geometry.KnotsV(), u, v)
+                shape_function.Compute(surface_geometry_data.KnotsU(), surface_geometry_data.KnotsV(), u, v)
                 nonzero_pole_indices = shape_function.NonzeroPoleIndices()
 
                 shape_function_values = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
@@ -1340,7 +1353,6 @@ class Assembler():
 
         self.dof_ids ={}
         self.dofs = []
-        self.eq_ids ={}
         self.eqs = []
 
         self.lhs = np.zeros((0, 0))
@@ -1348,36 +1360,17 @@ class Assembler():
 
     # --------------------------------------------------------------------------
     def Initialize(self):
-        # Assign dof and equation ids
-        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
-            surface_geometry_key = face_i.Data().Geometry().Key()
-            for condition in self.conditions[face_itr]:
-                for (r, s) in condition.nonzero_pole_indices:
-                    _ = self.__GetDofId((surface_geometry_key,r,s,"x"))
-                    _ = self.__GetDofId((surface_geometry_key,r,s,"y"))
-                    _ = self.__GetDofId((surface_geometry_key,r,s,"z"))
+        # Assign dof ids
+        for conditions_face_i in self.conditions:
+            for condition in conditions_face_i:
+                for dof in condition.dof_list:
+                    _ = self.__GetDofId(dof)
 
         num_dofs = len(self.dofs)
 
         # Initilize equation system
         self.lhs = np.zeros((num_dofs, num_dofs))
         self.rhs = np.zeros(num_dofs)
-
-        # # testing
-        # print(point_pairs[0])
-        # print("-------------")
-        # for i in range(num_control_points):
-        #     if lhs[0,i] != 0:
-        #         print("###")
-        #         print(i)
-        #         print(GetDof(i))
-        #         print(lhs[0,i])
-
-        # surface_geometry = model.GetByType('BrepFace')[8].Data().Geometry().Data()
-        # shape_function = an.SurfaceShapeEvaluator(DegreeU=surface_geometry.DegreeU, DegreeV=surface_geometry.DegreeV, Order=0)
-        # u = point_pairs[0][0][1][0]
-        # v = point_pairs[0][0][1][1]
-        # shape_function.Compute(surface_geometry.KnotsU(), surface_geometry.KnotsV(), u, v)
 
     # --------------------------------------------------------------------------
     def AssembleSystem(self):
@@ -1392,28 +1385,18 @@ class Assembler():
         for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
 
             print("Processing face", face_itr, "with", len(self.conditions[face_itr]), "conditions.")
-            surface_geometry_key = face_i.Data().Geometry().Key()
 
             for condition in self.conditions[face_itr]:
                 total_num_conditions += 1
 
-                local_lhs, local_rhs = condition.CalculateLocalSystem()
-
-                nonzero_pole_indices = condition.nonzero_pole_indices
+                condition_lhs, condition_rhs, condition_dof_list = condition.CalculateLocalSystem()
 
                 global_dof_ids = []
-                for j, (r, s) in enumerate(nonzero_pole_indices):
-                    global_dof_ids.append(self.__GetDofId((surface_geometry_key,r,s,"x")))
+                for dof in condition_dof_list:
+                    global_dof_ids.append(self.__GetDofId(dof))
 
-                for j, (r, s) in enumerate(nonzero_pole_indices):
-                    global_dof_ids.append(self.__GetDofId((surface_geometry_key,r,s,"y")))
-
-                for j, (r, s) in enumerate(nonzero_pole_indices):
-                    global_dof_ids.append(self.__GetDofId((surface_geometry_key,r,s,"z")))
-
-
-                self.lhs[np.ix_(global_dof_ids, global_dof_ids)] += local_lhs
-                self.rhs[global_dof_ids] += local_rhs
+                self.lhs[np.ix_(global_dof_ids, global_dof_ids)] += condition_lhs
+                self.rhs[global_dof_ids] += condition_rhs
 
         print("Total number of conditions = ",total_num_conditions)
         print("> Finished assembly in" ,round( time.time()-start_time, 3 ), " s.")
@@ -1430,23 +1413,14 @@ class Assembler():
         for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
 
             print("Processing face", face_itr, "with", len(self.conditions[face_itr]), "conditions.")
-            surface_geometry_key = face_i.Data().Geometry().Key()
 
             for condition in self.conditions[face_itr]:
 
-                local_rhs = condition.CalculateRHS()
-
-                nonzero_pole_indices = condition.nonzero_pole_indices
+                local_rhs, condition_dof_list = condition.CalculateRHS()
 
                 global_dof_ids = []
-                for j, (r, s) in enumerate(nonzero_pole_indices):
-                    global_dof_ids.append(self.__GetDofId((surface_geometry_key,r,s,"x")))
-
-                for j, (r, s) in enumerate(nonzero_pole_indices):
-                    global_dof_ids.append(self.__GetDofId((surface_geometry_key,r,s,"y")))
-
-                for j, (r, s) in enumerate(nonzero_pole_indices):
-                    global_dof_ids.append(self.__GetDofId((surface_geometry_key,r,s,"z")))
+                for dof in condition_dof_list:
+                    global_dof_ids.append(self.__GetDofId(dof))
 
                 self.rhs[global_dof_ids] += local_rhs
 

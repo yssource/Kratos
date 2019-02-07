@@ -67,11 +67,14 @@ class MechanicalSolver(PythonSolver):
             "clear_storage": false,
             "move_mesh_flag": true,
             "multi_point_constraints_used": true,
-            "convergence_criterion": "residual_criterion",
-            "displacement_relative_tolerance": 1.0e-4,
-            "displacement_absolute_tolerance": 1.0e-9,
-            "residual_relative_tolerance": 1.0e-4,
-            "residual_absolute_tolerance": 1.0e-9,
+            "convergence_criteria_settings" : {
+                "convergence_criterion" : "residual",
+                "displacement_relative_tolerance": 1.0e-4,
+                "displacement_absolute_tolerance": 1.0e-9,
+                "rotation_relative_tolerance":     1.0e-4,
+                "rotation_absolute_tolerance":     1.0e-9,
+                "print_colors" : true
+            },
             "max_iteration": 10,
             "linear_solver_settings": { },
             "problem_domain_sub_model_part_list": ["solid"],
@@ -404,7 +407,7 @@ class MechanicalSolver(PythonSolver):
 
     def _create_convergence_criterion(self):
         import convergence_criteria_factory
-        convergence_criterion = convergence_criteria_factory.convergence_criterion(self._get_convergence_criterion_settings())
+        convergence_criterion = convergence_criteria_factory.convergence_criterion(self.settings)
         return convergence_criterion.mechanical_convergence_criterion
 
     def _create_linear_solver(self):

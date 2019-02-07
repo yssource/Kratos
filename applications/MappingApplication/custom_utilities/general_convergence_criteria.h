@@ -178,7 +178,7 @@ public:
             }
             else {
                 KRATOS_ERROR << "Only Double (e.g. PRESSURE), Array3D (e.g. VELOCITY) or Component "
-                    << "(e.g. VELOCITY_X) variables are allowed in the variables list" << std::endl;
+                    << "(e.g. DISPLACEMENT_X) variables are allowed in the variables list" << std::endl;
             }
         }
 

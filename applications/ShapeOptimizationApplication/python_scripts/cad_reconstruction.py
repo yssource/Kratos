@@ -29,6 +29,79 @@ import os
 class CADMapper:
     # --------------------------------------------------------------------------
     def __init__(self, fe_model, cad_model, parameters):
+        default_parameters = KratosMultiphysics.Parameters("""
+        {
+            "input" :
+            {
+                "cad_filename"                  : "plate_fine_embedded.iga",
+                "fem_filename"                  : "plate.mdpa",
+                "fe_refinement_level"           : 0,
+                "variable_to_map"               : "SHAPE_CHANGE"
+            },
+            "conditions" :
+            {
+                "apply_integral_method" : false,
+                "faces" :
+                {
+                    "curvature" :
+                    {
+                        "apply_curvature_minimization" : false,
+                        "penalty_factor"               : 1e-1
+                    },
+                    "mechanical" :
+                    {
+                        "apply_KL_shell"      : false,
+                        "exclusive_face_list" : [],
+                        "penalty_factor"      : 1e3
+                    },
+                    "rigid" :
+                    {
+                        "apply_rigid_conditions" : false,
+                        "exclusive_face_list"    : [],
+                        "penalty_factor"         : 1e3
+                    }
+                },
+                "edges" :
+                {
+                    "fe_based" :
+                    {
+                        "apply_enforcement_conditions"        : false,
+                        "penalty_factor_position_enforcement" : 1e3,
+                        "penalty_factor_tangent_enforcement"  : 1e3,
+                        "apply_corner_enforcement_conditions" : false,
+                        "penalty_factor_corner_enforcement"   : 1e4
+                    },
+                    "coupling" :
+                    {
+                        "apply_coupling_conditions"            : false,
+                        "penalty_factor_displacement_coupling" : 1e3,
+                        "penalty_factor_rotation_coupling"     : 1e3
+                    }
+                }
+            },
+            "point_search" :
+            {
+                "boundary_tessellation_tolerance" : 0.01,
+                "patch_bounding_box_tolerance"    : 1.0
+            },
+            "solution" :
+            {
+                "iterations"    : 1,
+                "test_solution" : true
+            },
+            "regularization" :
+            {
+                "alpha" : 0.1,
+                "beta"  : 0.001
+            },
+            "output":
+            {
+                "results_directory"           : "01_Results",
+                "resulting_geometry_filename" : "reconstructed_geometry.iga"
+            }
+        }""")
+        parameters.RecursivelyValidateAndAssignDefaults(default_parameters)
+
         self.fe_model = fe_model
         self.cad_model = cad_model
         self.parameters = parameters
@@ -114,8 +187,8 @@ class CADMapper:
 
         # Read CAD data
         cad_filename = self.parameters["input"]["cad_filename"].GetString()
-        self.cad_model = an.Model()
-        self.cad_model.Load(cad_filename)
+        if len(self.cad_model.GetByType('BrepFace')) == 0:
+            self.cad_model.Load(cad_filename)
 
         print("> Preprocessing finished in" ,round( time.time()-start_time, 3 ), " s.")
         print("\n> Starting creation of conditions...")

@@ -292,7 +292,7 @@ void EvmKEpsilonElement<TDim, TNumNodes>::CalculateRightHandSide(
 
             epsilon += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
             tke += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
-            wall_distance += ShapeFunctions(g, c) * rGeom[c].GetValue(WALL_DISTANCE);
+            wall_distance += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(DISTANCE);
             nu += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(VISCOSITY);
             velocity += ShapeFunctions(g, c) * r_velocity;
         }
@@ -548,7 +548,7 @@ void EvmKEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(
 
             epsilon += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
             tke += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
-            wall_distance += ShapeFunctions(g, c) * rGeom[c].GetValue(WALL_DISTANCE);
+            wall_distance += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(DISTANCE);
             nu += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(VISCOSITY);
             velocity += ShapeFunctions(g, c) * r_velocity;
         }

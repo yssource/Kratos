@@ -24,6 +24,7 @@
 #include "custom_utilities/mapper_factory.h"
 #include "custom_utilities/mapper_flags.h"
 #include "custom_utilities/mapper_typedefs.h"
+#include "custom_utilities/general_convergence_criteria.h"
 
 // Mappers
 #include "custom_mappers/nearest_neighbor_mapper.h"
@@ -167,6 +168,25 @@ void  AddCustomMappersToPython(pybind11::module& m)
         .def_static("CreateMPIMapper", &MapperFactory::CreateMapper<MPISparseSpaceType, DenseSpaceType>)
 #endif
     ;
+
+    typedef ConvergenceCriteria< SparseSpaceType, DenseSpaceType > ConvergenceCriteriaType;
+    typedef GeneralConvergenceCriteria< SparseSpaceType, DenseSpaceType > GeneralConvergenceCriteriaType;
+    py::class_< GeneralConvergenceCriteriaType,typename GeneralConvergenceCriteriaType::Pointer,ConvergenceCriteriaType>(m,"GeneralConvergenceCriteria")
+        .def(py::init< double, double, const std::string& >())
+        .def(py::init< double, double, const std::string&, bool >())
+        .def(py::init< Parameters >())
+        ;
+
+#ifdef KRATOS_USING_MPI // mpi-parallel compilation
+    // typedef ConvergenceCriteria< MPISparseSpaceType, DenseSpaceType > TrilinosConvergenceCriteriaType;
+    // typedef GeneralConvergenceCriteria< MPISparseSpaceType, DenseSpaceType > TrilinosGeneralConvergenceCriteriaType;
+    // py::class_< TrilinosGeneralConvergenceCriteriaType,typename TrilinosGeneralConvergenceCriteriaType::Pointer,TrilinosConvergenceCriteriaType>(m,"TrilinosGeneralConvergenceCriteriaType")
+    //     .def(py::init< double, double, const std::string& >())
+    //     .def(py::init< double, double, const std::string&, bool >())
+    //     .def(py::init< Parameters >())
+    //     ;
+#endif
+
 }
 
 }  // namespace Python.

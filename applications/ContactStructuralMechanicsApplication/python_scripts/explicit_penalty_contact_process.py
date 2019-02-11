@@ -242,6 +242,13 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
         # We call the process info
         process_info = self.main_model_part.ProcessInfo
 
+        # Compute delta time factor
+        delta_time_settings = KM.Parameters("""{}""")
+        delta_time = process_info[KM.DELTA_TIME]
+        critical_delta_time = SMA.CalculateDeltaTime(self.main_model_part, delta_time_settings)
+        factor_delta_time = delta_time/critical_delta_time
+
+        # Compute the initial penalty
         if not self.contact_settings["advance_ALM_parameters"]["manual_ALM"].GetBool():
             # We compute NODAL_H that can be used in the search and some values computation
             self.find_nodal_h = KM.FindNodalHProcess(self.computing_model_part)
@@ -254,14 +261,14 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
             self.alm_var_process = CSMA.ALMVariablesCalculationProcess(self._get_process_model_part(), KM.NODAL_H, alm_var_parameters)
             self.alm_var_process.Execute()
             # We rescale, the process is designed for ALM formulation
-            process_info[KM.INITIAL_PENALTY] = 1.0e-4 * process_info[KM.INITIAL_PENALTY]
+            process_info[KM.INITIAL_PENALTY] = 1.0e-3 * factor_delta_time * process_info[KM.INITIAL_PENALTY]
         else:
             # We set the values in the process info
             process_info[KM.INITIAL_PENALTY] = self.contact_settings["advance_ALM_parameters"]["penalty"].GetDouble()
 
         # We set a minimum value
         if process_info[KM.INITIAL_PENALTY] < sys.float_info.epsilon:
-            process_info[KM.INITIAL_PENALTY] = 1.0e8
+            process_info[KM.INITIAL_PENALTY] = 1.0e9
 
         # Setting on nodes
         initial_penalty = process_info[KM.INITIAL_PENALTY]

@@ -13,8 +13,8 @@ parameters = KratosMultiphysics.Parameters("""
 {
     "input" :
     {
-        "cad_filename"                  : "plate_fine_embedded.iga",
-        "fem_filename"                  : "plate.mdpa",
+        "cad_filename"                  : "plate_fine_rotated.iga",
+        "fem_filename"                  : "plate_rotated.mdpa",
         "fe_refinement_level"           : 0,
         "variable_to_map"               : "SHAPE_CHANGE"
     },
@@ -31,13 +31,13 @@ parameters = KratosMultiphysics.Parameters("""
             "mechanical" :
             {
                 "apply_KL_shell"      : false,
-                "exclusive_face_list" : ["Rhino<5b74e2e3-fd33-446e-a112-0480ea75a27d>.BrepFace<7>"],
+                "exclusive_face_list" : ["Rhino<9f4d24e9-d364-41c2-8a1b-a28ccee54f7b>.BrepFace<0>"],
                 "penalty_factor"      : 1e3
             },
             "rigid" :
             {
                 "apply_rigid_conditions" : false,
-                "exclusive_face_list"    : ["Rhino<5b74e2e3-fd33-446e-a112-0480ea75a27d>.BrepFace<5>.Hole"],
+                "exclusive_face_list"    : ["Rhino<9f4d24e9-d364-41c2-8a1b-a28ccee54f7b>.BrepFace<2>.Hole"],
                 "penalty_factor"         : 1e5
             }
         },
@@ -102,6 +102,8 @@ fe_model_part.AddNodalSolutionStepVariable(KratosShape.NORMALIZED_SURFACE_NORMAL
 model_part_io = KratosMultiphysics.ModelPartIO(fem_input_filename[:-5])
 model_part_io.ReadModelPart(fe_model_part)
 
+KratosShape.GeometryUtilities(fe_model_part).ComputeUnitSurfaceNormals(True)
+
 # Create some displacement field
 for node in fe_model_part.GetSubModelPart("all_faces").Nodes:
     import math
@@ -121,14 +123,16 @@ for node in fe_model_part.GetSubModelPart("all_faces").Nodes:
     b = -2*a*outer_parabula_radius
     c = a*outer_parabula_radius**2
 
-    x = math.sqrt(node.X**2 + node.Y**2)
+    x = math.sqrt(node.X**2 + node.Y**2 + node.Z**2)
 
     if x <= outer_parabula_radius:
-        y = a*x**2 + b*x + c
+        height = a*x**2 + b*x + c
     else:
-        y = 0
+        height = 0
 
-    node.SetSolutionStepValue(variable_to_map, [0,0,y])
+    normal = node.GetSolutionStepValue(KratosShape.NORMALIZED_SURFACE_NORMAL)
+
+    node.SetSolutionStepValue(variable_to_map, [normal[0]*height,normal[1]*height,normal[2]*height])
 
 
 print("\n\n========================================================================================================")

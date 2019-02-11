@@ -186,13 +186,32 @@ with suppress_stdout():
     TestResults(pole_coordinates, "06")
 
 # =======================================================================================================
+# Test 7: basic coupling conditions
+# =======================================================================================================
+print("\n> Starting test 7...")
+with suppress_stdout():
+
+    with open("parameters.json",'r') as parameter_file:
+        parameters = KratosMultiphysics.Parameters(parameter_file.read())
+
+    parameters["conditions"]["edges"]["coupling"]["apply_coupling_conditions"].SetBool(True)
+
+    # Mapping
+    cad_model = an.Model()
+    PerformMapping(cad_model, fe_model)
+
+    # Actual test
+    pole_coordinates = ExtractResults(cad_model)
+    TestResults(pole_coordinates, "07")
+
+# =======================================================================================================
 # Test time
 # =======================================================================================================
 print("\n> Starting time...")
 time_for_complete_test = time.time() - start_time
 relative_time_ratio = time_for_complete_test / time_for_first_test
 
-reference_ratio = 9.9
+reference_ratio = 11.2
 
 if abs(relative_time_ratio - reference_ratio) / relative_time_ratio > 0.10:
     raise RuntimeError("Test took unexpectedly long!")
@@ -204,5 +223,5 @@ os.remove("cad_reconstruction_process_test.post.lst")
 os.remove("plate.time")
 shutil.rmtree("01_Results")
 
-print("\n> Test Successfull!\n")
+print("\n> Test Successfully finished in " + str(round(time_for_complete_test,2)) + " s!\n")
 # =======================================================================================================

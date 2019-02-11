@@ -86,16 +86,17 @@ public:
                                  std::vector<ModelPart>& rWallConditionsModelPartList,
                                  std::vector<ModelPart>& rInletConditionsModelPartList,
                                  std::vector<ModelPart>& rOutletConditionsModelPartList)
-        : mrModelPart(rModelPart),
+        : Process(),
+          mrModelPart(rModelPart),
           mrParameters(rParameters),
           mrWallConditionsModelPartList(rWallConditionsModelPartList),
           mrInletConditionsModelPartList(rInletConditionsModelPartList),
           mrOutletConditionsModelPartList(rOutletConditionsModelPartList)
-    {
-    }
+    {}
 
     /// Destructor.
-    ~TurbulenceEddyViscosityModel() override;
+    ~TurbulenceEddyViscosityModel() override
+    {}
 
     ///@}
     ///@name Operators
@@ -144,15 +145,6 @@ public:
     ///@}
     ///@name Input and output
     ///@{
-
-    /// Turn back information as a string.
-    std::string Info() const override;
-
-    /// Print information about this object.
-    void PrintInfo(std::ostream& rOStream) const override;
-
-    /// Print object's data.
-    void PrintData(std::ostream& rOStream) const override;
 
     ///@}
     ///@name Friends
@@ -249,12 +241,6 @@ private:
     ///@}
     ///@name Un accessible methods
     ///@{
-
-    /// Assignment operator.
-    TurbulenceEddyViscosityModel& operator=(TurbulenceEddyViscosityModel const& rOther);
-
-    /// Copy constructor.
-    TurbulenceEddyViscosityModel(TurbulenceEddyViscosityModel const& rOther);
 
     ///@}
 

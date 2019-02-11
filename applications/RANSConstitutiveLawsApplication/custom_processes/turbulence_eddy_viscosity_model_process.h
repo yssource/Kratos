@@ -25,6 +25,8 @@
 #include "processes/process.h"
 #include "processes/variational_distance_calculation_process.h"
 #include "includes/cfd_variables.h"
+#include "../custom_strategies/general_convergence_criteria.h"
+#include "../custom_strategies/residual_based_bossak_velocity_scheme.h"
 
 namespace Kratos
 {
@@ -198,13 +200,6 @@ protected:
 
         KRATOS_CATCH("");
     }
-
-    void GenerateModelPart(ModelPart& rOriginModelPart,
-                           ModelPart& rDestinationModelPart,
-                           const Element& rReferenceElement,
-                           const Condition& rReferenceCondition);
-
-    void GenerateSolutionStrategies();
 
     ///@}
     ///@name Protected  Access

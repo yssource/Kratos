@@ -213,6 +213,8 @@ class CADMapper:
             condition_factory.CreateEnforcementConditions(self.conditions)
         if self.parameters["conditions"]["edges"]["fe_based"]["apply_corner_enforcement_conditions"].GetBool():
             condition_factory.CreateCornerEnforcementConditions(self.conditions)
+        if self.parameters["conditions"]["edges"]["coupling"]["apply_coupling_conditions"].GetBool():
+            condition_factory.CreateCouplingConditions(self.conditions)
         if self.parameters["regularization"]["alpha"].GetDouble() != 0:
             condition_factory.CreateAlphaRegularizationConditions(self.conditions)
 
@@ -770,7 +772,7 @@ class ConditionsFactory:
                 surface_geometry_data_a = face_a.Data().Geometry().Data()
                 surface_geometry_data_b = face_b.Data().Geometry().Data()
 
-                list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i)
+                list_of_points, list_of_parameters_a, list_of_parameters_b, _, _, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i)
 
                 # Collect integration points in model part
                 temp_model = KratosMultiphysics.Model()
@@ -1018,6 +1020,105 @@ class ConditionsFactory:
             conditions[face_itr].append(new_condition)
 
     # --------------------------------------------------------------------------
+    def CreateCouplingConditions(self, conditions):
+        from cad_reconstruction_conditions import DisplacementCouplingCondition, RotationCouplingConditionWithAD
+
+        penalty_factor_displacement = self.parameters["conditions"]["edges"]["coupling"]["penalty_factor_displacement_coupling"].GetDouble()
+        penalty_factor_rotation = self.parameters["conditions"]["edges"]["coupling"]["penalty_factor_rotation_coupling"].GetDouble()
+
+        # Create corresponding points
+        for edge_itr, edge_i in enumerate(self.cad_model.GetByType('BrepEdge')):
+
+            adjacent_faces = edge_i.Data().Faces()
+            num_adjacent_faces = len(adjacent_faces)
+
+            if num_adjacent_faces == 1:
+                # Skip non coupling-edges
+                pass
+            elif num_adjacent_faces == 2:
+
+                face_a = adjacent_faces[0]
+                face_b = adjacent_faces[1]
+
+                face_a_itr = self.face_id_to_itr[adjacent_faces[0].Key()]
+                face_b_itr = self.face_id_to_itr[adjacent_faces[1].Key()]
+
+                surface_geometry_a = face_a.Data().Geometry()
+                surface_geometry_b = face_b.Data().Geometry()
+                surface_geometry_data_a = face_a.Data().Geometry().Data()
+                surface_geometry_data_b = face_b.Data().Geometry().Data()
+
+                trim_a, _ = edge_i.Data().Trims()
+                edge_curve_a = an.CurveOnSurface3D(trim_a.Data().Geometry().Data(), trim_a.Data().Face().Data().Geometry().Data(), trim_a.Data().Geometry().Data().Domain())
+
+                list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_curve_parameters_a, _, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i)
+
+                # Create conditions
+                for (u_a, v_a), (u_b, v_b), t_a, integration_weight in zip(list_of_parameters_a, list_of_parameters_b, list_of_curve_parameters_a, list_of_integration_weights):
+
+                    shape_function_a = an.SurfaceShapeEvaluator(degreeU=surface_geometry_data_a.DegreeU(), degreeV=surface_geometry_data_a.DegreeV(), order=1)
+                    shape_function_b = an.SurfaceShapeEvaluator(degreeU=surface_geometry_data_b.DegreeU(), degreeV=surface_geometry_data_b.DegreeV(), order=1)
+
+                    # Create conditions to enforce t1 and t2 on both face a and face b
+                    shape_function_a.Compute(surface_geometry_data_a.KnotsU(), surface_geometry_data_a.KnotsV(), u_a, v_a)
+                    nonzero_pole_indices_a = shape_function_a.NonzeroPoleIndices()
+
+                    shape_function_values_a = np.empty(shape_function_a.NbNonzeroPoles(), dtype=float)
+                    shape_function_derivatives_u_a = np.empty(shape_function_a.NbNonzeroPoles(), dtype=float)
+                    shape_function_derivatives_v_a = np.empty(shape_function_a.NbNonzeroPoles(), dtype=float)
+                    for i in range(shape_function_a.NbNonzeroPoles()):
+                        shape_function_values_a[i] = shape_function_a(0,i)
+                        shape_function_derivatives_u_a[i] = shape_function_a(1,i)
+                        shape_function_derivatives_v_a[i] = shape_function_a(2,i)
+
+                    shape_function_b.Compute(surface_geometry_data_b.KnotsU(), surface_geometry_data_b.KnotsV(), u_b, v_b)
+                    nonzero_pole_indices_b = shape_function_b.NonzeroPoleIndices()
+
+                    shape_function_values_b = np.empty(shape_function_b.NbNonzeroPoles(), dtype=float)
+                    shape_function_derivatives_u_b = np.empty(shape_function_b.NbNonzeroPoles(), dtype=float)
+                    shape_function_derivatives_v_b = np.empty(shape_function_b.NbNonzeroPoles(), dtype=float)
+                    for i in range(shape_function_b.NbNonzeroPoles()):
+                        shape_function_values_b[i] = shape_function_b(0,i)
+                        shape_function_derivatives_u_b[i] = shape_function_b(1,i)
+                        shape_function_derivatives_v_b[i] = shape_function_b(2,i)
+
+                    _, T2_edge = edge_curve_a.DerivativesAt(t_a, order=1)
+                    T2_edge /= np.linalg.norm(T2_edge)
+
+                    # displacement coupling condition
+                    if penalty_factor_displacement > 0:
+                        weight = penalty_factor_displacement * integration_weight
+
+                        new_condition = DisplacementCouplingCondition( surface_geometry_a,
+                                                                       surface_geometry_b,
+                                                                       nonzero_pole_indices_a,
+                                                                       nonzero_pole_indices_b,
+                                                                       shape_function_values_a,
+                                                                       shape_function_values_b,
+                                                                       weight )
+                        conditions[face_a_itr].append(new_condition)
+
+                    # rotation coupling condition
+                    if penalty_factor_rotation > 0:
+                        weight = penalty_factor_rotation * integration_weight
+
+                        new_condition = RotationCouplingConditionWithAD( surface_geometry_a,
+                                                                         surface_geometry_b,
+                                                                         T2_edge,
+                                                                         nonzero_pole_indices_a,
+                                                                         nonzero_pole_indices_b,
+                                                                         shape_function_values_a,
+                                                                         shape_function_values_b,
+                                                                         shape_function_derivatives_u_a,
+                                                                         shape_function_derivatives_u_b,
+                                                                         shape_function_derivatives_v_a,
+                                                                         shape_function_derivatives_v_b,
+                                                                         weight )
+                        conditions[face_a_itr].append(new_condition)
+            else:
+                raise RuntimeError("Max number of adjacent has to be 2!!")
+
+    # --------------------------------------------------------------------------
     def CreateAlphaRegularizationConditions(self, conditions):
         from cad_reconstruction_conditions import AlphaRegularizationCondition
 
@@ -1140,6 +1241,8 @@ class ConditionsFactory:
         list_of_points = []
         list_of_parameters_a = []
         list_of_parameters_b = []
+        list_of_curve_parameters_a = []
+        list_of_curve_parameters_b = []
         list_of_weights = []
 
         for t0_b, t1_b in zip(spans_on_curve_b, spans_on_curve_b[1:]):
@@ -1161,9 +1264,11 @@ class ConditionsFactory:
 
                 list_of_parameters_a.append((u_a, v_a))
                 list_of_parameters_b.append((u_b, v_b))
+                list_of_curve_parameters_a.append(t_a)
+                list_of_curve_parameters_b.append(t_b)
                 list_of_weights.append(weight * la.norm(a1))
 
-        return list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_weights
+        return list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_curve_parameters_a, list_of_curve_parameters_b, list_of_weights
 
     # --------------------------------------------------------------------------
     @staticmethod

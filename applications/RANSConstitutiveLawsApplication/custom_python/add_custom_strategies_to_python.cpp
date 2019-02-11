@@ -11,50 +11,46 @@
 //                   Author2 Fullname
 //
 
-
 // System includes
-
 
 // External includes
 #include <pybind11/pybind11.h>
 
-
 // Project includes
-#include "includes/define_python.h"
 #include "custom_python/add_custom_strategies_to_python.h"
+#include "includes/define_python.h"
+#include "includes/kratos_parameters.h"
 
 #include "spaces/ublas_space.h"
 
-//strategies
+// strategies
+#include "custom_strategies/residual_based_bossak_velocity_scheme.h"
 #include "solving_strategies/strategies/solving_strategy.h"
 
-//linear solvers
+// linear solvers
 #include "linear_solvers/linear_solver.h"
 
-
-namespace Kratos {
-namespace Python {
-
-void  AddCustomStrategiesToPython(pybind11::module& m)
+namespace Kratos
+{
+namespace Python
+{
+void AddCustomStrategiesToPython(pybind11::module& m)
 {
     namespace py = pybind11;
 
     typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
     typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
 
-    typedef LinearSolver<SparseSpaceType, LocalSpaceType > LinearSolverType;
-    typedef SolvingStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType > BaseSolvingStrategyType;
-    typedef Scheme< SparseSpaceType, LocalSpaceType > BaseSchemeType;
+    // typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
+    // typedef SolvingStrategy<SparseSpaceType, LocalSpaceType, LinearSolverType> BaseSolvingStrategyType;
+    typedef Scheme<SparseSpaceType, LocalSpaceType> BaseSchemeType;
 
     //********************************************************************
     //********************************************************************
-    //  py::class_< TestStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType>,
-    //  		TestStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType>::Pointer,
-    //          BaseSolvingStrategyType>(m, "TestStrategy")
-    //  	.def(py::init<ModelPart&, LinearSolverType::Pointer, int, int, bool >() )
-    //  	.def("MoveNodes",&TestStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType >::MoveNodes)
-    //  	;
-
+    typedef ResidualBasedBossakVelocityScheme<SparseSpaceType, LocalSpaceType> ResidualBasedBossakVelocityScheme;
+    py::class_<ResidualBasedBossakVelocityScheme, typename ResidualBasedBossakVelocityScheme::Pointer, BaseSchemeType>(
+        m, "ResidualBasedBossakVelocityScheme")
+        .def(py::init<Kratos::Parameters>());
 }
 
 } // namespace Python.

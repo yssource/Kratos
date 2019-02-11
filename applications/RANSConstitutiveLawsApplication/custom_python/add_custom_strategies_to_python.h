@@ -11,8 +11,8 @@
 //                   Author2 Fullname
 //
 
-#if !defined(KRATOS_STRATEGIES_PYTHON_H_INCLUDED )
-#define  KRATOS_STRATEGIES_PYTHON_H_INCLUDED
+#if !defined(KRATOS_RANS_STRATEGIES_PYTHON_H_INCLUDED )
+#define  KRATOS_RANS_STRATEGIES_PYTHON_H_INCLUDED
 
 
 // System includes
@@ -33,4 +33,4 @@ void  AddCustomStrategiesToPython(pybind11::module& m);
 }  // namespace Python.
 }  // namespace Kratos.
 
-#endif // KRATOS_STRATEGIES_PYTHON_H_INCLUDED  defined
+#endif // KRATOS_RANS_STRATEGIES_PYTHON_H_INCLUDED  defined

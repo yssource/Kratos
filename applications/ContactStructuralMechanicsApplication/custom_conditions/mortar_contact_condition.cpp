@@ -372,7 +372,7 @@ void MortarContactCondition<TDim, TNumNodes, TFrictional, TNormalVariation, TNum
                     rDerivativeData.ResetDerivatives();
 
                     // We compute the local coordinates
-                    const PointType local_point_decomp = integration_points_slave[point_number].Coordinates();
+                    const PointType local_point_decomp = PointType(integration_points_slave[point_number].Coordinates());
                     PointType local_point_parent;
                     PointType gp_global;
                     decomp_geom.GlobalCoordinates(gp_global, local_point_decomp);

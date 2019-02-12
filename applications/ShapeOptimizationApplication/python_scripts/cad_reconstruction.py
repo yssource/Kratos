@@ -106,9 +106,10 @@ class CADMapper:
         self.cad_model = cad_model
         self.parameters = parameters
 
-        self.conditions = []
+        self.conditions = {}
         self.fe_model_part = None
         self.assembler = None
+        self.fe_point_parametric = None
 
     # --------------------------------------------------------------------------
     def Initialize(self):
@@ -195,8 +196,8 @@ class CADMapper:
         start_time = time.time()
 
         # Create conditions
-        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
-            self.conditions.append([])
+        for face_i in self.cad_model.GetByType('BrepFace'):
+            self.conditions[face_i.Key()] = []
 
         condition_factory = ConditionsFactory(self.fe_model_part, self.cad_model, self.parameters)
 
@@ -217,6 +218,8 @@ class CADMapper:
             condition_factory.CreateCouplingConditions(self.conditions)
         if self.parameters["regularization"]["alpha"].GetDouble() != 0:
             condition_factory.CreateAlphaRegularizationConditions(self.conditions)
+
+        self.fe_point_parametric = condition_factory.GetFEPointParametrization()
 
         print("> Finished creation of conditions in" ,round( time.time()-start_time, 3 ), " s.")
         print("\n> Initializing assembly...")
@@ -285,19 +288,6 @@ class CADMapper:
 
                 # Varying contribution of beta regularization is neglected as each solution iteration may be seen indendently
                 # in terms of minimization of the control point displacement
-
-                # dof_ids = self.assembler.GetDofIds()
-                # dofs = self.assembler.GetDofs()
-
-                # for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
-                #     surface_geometry = face_i.Data().Geometry().Data()
-
-                #     for r in range(surface_geometry.NbPolesU):
-                #         for s in range(surface_geometry.NbPolesV):
-                #             dof_i = (face_itr,r,s)
-                #             if dof_i in dofs:
-                #                 dof_id = dof_ids[dof_i]
-                #                 rhs[dof_id,:] += beta*absolute_pole_update[dof_id,:]
 
             print("\n> Finished solution iteration in" ,round( time.time()-start_time_iteration, 3 ), " s.")
             print("> ----------------------------------------------------")
@@ -375,9 +365,7 @@ class ConditionsFactory:
         self.boundary_tessellation_tolerance = self.parameters["point_search"]["boundary_tessellation_tolerance"].GetDouble()
         self.boundary_polygons = None
 
-        self.face_id_to_itr = {}
-        for face_itr, face_i in enumerate(cad_model.GetByType('BrepFace')):
-            self.face_id_to_itr[face_i.Key()] = face_itr
+        self.fe_point_parametrization = None
 
     # --------------------------------------------------------------------------
     def CreateDistanceMinimizationConditions(self, conditions):
@@ -386,116 +374,39 @@ class ConditionsFactory:
         name_variable_to_map = self.parameters["input"]["variable_to_map"].GetString()
         variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
 
-        boundary_polygons = self.__GetBoundaryPolygons()
+        fe_point_parametric = self.GetFEPointParametrization()
 
-        point_pairs = []
-        for node_i in self.fe_model_part.Nodes:
-            point_pairs.append([])
+        for entry in fe_point_parametric:
 
-        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+            node = entry["node"]
+            node_coords = [node.X0, node.Y0, node.Z0]
+            list_of_faces = entry["faces"]
+            list_of_parameters = entry["parameters"]
 
-            # Skipp embedded faces to not have two identical contributions from the same unknowns (embedded faces share the unkonws of a given geometry)
-            if face_i.Attributes().HasTag('Embedded'):
-                print(f'Skip {face_i.Key()}')
-                continue
+            if len(list_of_faces) == 0:
+                pass
 
-            print("> Processing face ",face_itr)
+            for face, (u,v) in zip(list_of_faces, list_of_parameters):
 
-            surface_geometry = face_i.Data().Geometry()
-            surface_geometry_data = surface_geometry.Data()
+                surface_geometry = face.Data().Geometry()
+                surface_geometry_data = surface_geometry.Data()
 
-            shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry_data.DegreeU(), degreeV=surface_geometry_data.DegreeV(), order=0)
-            surface = an.Surface3D(face_i.Data().Geometry())
-            projection = an.PointOnSurfaceProjection3D(surface)
+                shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry_data.DegreeU(), degreeV=surface_geometry_data.DegreeV(), order=0)
+                shape_function.Compute(surface_geometry_data.KnotsU(), surface_geometry_data.KnotsV(), u, v)
+                nonzero_pole_indices = shape_function.NonzeroPoleIndices()
 
-            # Bounding box and scaling as the bounding box is based on a simple pointwise discretization of surface
-            min_x, min_y, min_z, max_x, max_y, max_z = projection.BoundingBox()
-            min_x -= self.bounding_box_tolerance
-            min_y -= self.bounding_box_tolerance
-            min_z -= self.bounding_box_tolerance
-            max_x += self.bounding_box_tolerance
-            max_y += self.bounding_box_tolerance
-            max_z += self.bounding_box_tolerance
+                shape_function_values = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
+                for i in range(shape_function.NbNonzeroPoles()):
+                    shape_function_values[i] = shape_function(0,i)
 
-            for node_itr, node_i in enumerate(self.fe_model_part.Nodes):
+                # One might introduce a possible penalty factor for nodes on boundary
+                weight = 1.0
+                # if is_on_boundary:
+                # point_ptr = self.cad_model.Add(an.Point3D(location=node_coords))
+                # point_ptr.Attributes().SetLayer('FEPointsInside')
 
-                node_coords_i = [node_i.X0, node_i.Y0, node_i.Z0]
-
-                # Points outside bounding box are not considered
-                if node_coords_i[0] < min_x or max_x < node_coords_i[0]:
-                    continue
-                if node_coords_i[1] < min_y or max_y < node_coords_i[1]:
-                    continue
-                if node_coords_i[2] < min_z or max_z < node_coords_i[2]:
-                    continue
-
-                projection.Compute(point=node_coords_i)
-                projected_point_uv = np.array([projection.ParameterU(), projection.ParameterV()])
-
-                is_inside, is_on_boundary = self.__Contains(projected_point_uv, boundary_polygons[face_itr], self.boundary_tessellation_tolerance*1.1)
-                if is_inside:
-                    u = projected_point_uv[0]
-                    v = projected_point_uv[1]
-                    shape_function.Compute(surface_geometry_data.KnotsU(), surface_geometry_data.KnotsV(), u, v)
-                    nonzero_pole_indices = shape_function.NonzeroPoleIndices()
-
-                    shape_function_values = np.empty(shape_function.NbNonzeroPoles(), dtype=float)
-                    for i in range(shape_function.NbNonzeroPoles()):
-                        shape_function_values[i] = shape_function(0,i)
-
-                    # Introduce a possible penalty factor for nodes on boundary
-                    weight = 1.0
-                    # if is_on_boundary:
-                    #     self.cad_model.Add(an.Point3D(location=node_coords_i))
-
-                    new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, variable_to_map, weight)
-                    conditions[face_itr].append(new_condition)
-
-                    projected_point_i = projection.Point
-                    point_pairs[node_itr].append(projected_point_i)
-
-        # Check results
-        for itr, entry in enumerate(point_pairs):
-            if len(entry) == 0:
-                print("> WARNING: Missing point pair for point: ", itr)
-
-        # i = 0
-        # for itr, entry in enumerate(point_pairs):
-        #     if len(entry) >= 1:
-        #         for (x, y, z), _, face_itr in entry:
-        #             self.cad_model.add({
-        #                 'Key': f'Point3D<{i}>',
-        #                 'Type': 'Point3D',
-        #                 'Location': [x, y, z],
-        #                 'Layer': f'PointPairs{face_itr}',
-        #             })
-        #             i += 1
-        #     if len(entry) == 0:
-        #         print("> WARNING: Missing point pair for point: ", itr)
-
-        # for face_itr, entry in enumerate(conditions):
-        #         for node_itr, (x, y, z), _ in entry:
-        #             self.cad_model.add({
-        #                 'Key': f'Point3D<{i}>',
-        #                 'Type': 'Point3D',
-        #                 'Location': [x, y, z],
-        #                 'Layer': f'PointPairs{face_itr}',
-        #             })
-        #             i += 1
-
-        # Some additional output
-        # # Output FE-data with projected points
-        # for node_itr, node_i in enumerate(self.fe_model_part.Nodes):
-        #     node_coords_i = node_coords[node_itr]
-        #     projected_point_i = point_pairs[node_itr][0]
-        #     distance = projected_point_i - node_coords_i
-        #     node_i.SetSolutionStepValue(CONTROL_POINT_UPDATE,[distance[0],distance[1],distance[2]])
-
-        # output_dir = self.parameters["output"]["results_directory"].GetString()
-        # fem_output_filename = "fe_model_used_for_reconstruction"
-        # fem_output_filename_with_path = os.path.join(output_dir,fem_output_filename)
-        # nodal_variables = [self.parameters["input"]["update_variable_name"].GetString(), "CONTROL_POINT_UPDATE"]
-        # OutputFEData(self.fe_model_part, fem_output_filename_with_path, nodal_variables)
+                new_condition = DistanceMinimizationCondition(node, surface_geometry, nonzero_pole_indices, shape_function_values, variable_to_map, weight)
+                conditions[face.Key()].append(new_condition)
 
         return conditions
 
@@ -508,9 +419,9 @@ class ConditionsFactory:
 
         total_area = 0
 
-        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+        for face_i in self.cad_model.GetByType('BrepFace'):
 
-            print("> Processing face ",face_itr)
+            print("> Processing face ",face_i.Key())
 
             surface_geometry = face_i.Data().Geometry()
             surface_geometry_data = face_i.Data().Geometry().Data()
@@ -526,12 +437,6 @@ class ConditionsFactory:
             destination_mdpa.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE)
 
             for itr, [x,y,z] in enumerate(list_of_points):
-                # self.cad_model.add({
-                #     'Key': f'FaceIntegrationPoint3D<{face_itr},{itr}>',
-                #     'Type': 'Point3D',
-                #     'Location': [x, y, z],
-                #     'Layer': 'FaceIntegrationPoints',
-                # })
                 destination_mdpa.CreateNewNode(itr, x, y, z)
 
             # Map information from fem to integration points using element based mapper
@@ -559,7 +464,7 @@ class ConditionsFactory:
                     shape_function_values[i] = shape_function(0,i)
 
                 new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, variable_to_map, weight)
-                conditions[face_itr].append(new_condition)
+                conditions[face_i.Key()].append(new_condition)
 
         print("> Total area of cad surface = ",total_area,"\n")
 
@@ -579,9 +484,9 @@ class ConditionsFactory:
         for itr in range(self.parameters["conditions"]["faces"]["mechanical"]["exclusive_face_list"].size()):
             list_of_exclusive_faces.append(self.parameters["conditions"]["faces"]["mechanical"]["exclusive_face_list"][itr].GetString())
 
-        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+        for face_i in self.cad_model.GetByType('BrepFace'):
 
-            print("> Processing face ",face_itr)
+            print("> Processing face ",face_i.Key())
 
             # Skip faces if exclusive face list is specified (if list is empty, use all faces)
             if face_i.Key() not in list_of_exclusive_faces:
@@ -620,12 +525,12 @@ class ConditionsFactory:
                 if apply_curvature_min:
                     weight = curvature_penalty_fac * weight
                     new_condition = CurvatureMinimizationConditionWithAD(surface_geometry, nonzero_pole_indices, shape_function_derivatives_u, shape_function_derivatives_v, shape_function_derivatives_uu, shape_function_derivatives_uv, shape_function_derivatives_vv, weight)
-                    conditions[face_itr].append(new_condition)
+                    conditions[face_i.Key()].append(new_condition)
 
                 if apply_kl_shell:
                     weight = shell_penalty_fac * weight
                     new_condition = KLShellConditionWithAD(surface_geometry, nonzero_pole_indices, shape_function_derivatives_u, shape_function_derivatives_v, shape_function_derivatives_uu, shape_function_derivatives_uv, shape_function_derivatives_vv, weight)
-                    conditions[face_itr].append(new_condition)
+                    conditions[face_i.Key()].append(new_condition)
 
         return conditions
 
@@ -647,9 +552,9 @@ class ConditionsFactory:
         relevant_fe_points_displaced = []
         relevant_cad_uvs = []
 
-        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+        for face_i in self.cad_model.GetByType('BrepFace'):
 
-            print("> Processing face ",face_itr)
+            print("> Processing face ",face_i.Key())
 
             # Skip faces if exclusive face list is specified (if list is empty, use all faces)
             if face_i.Key() not in list_of_exclusive_faces:
@@ -687,7 +592,7 @@ class ConditionsFactory:
                 projection.Compute(point=node_coords_i)
                 projected_point_uv = np.array([projection.ParameterU(), projection.ParameterV()])
 
-                is_inside, is_on_boundary = self.__Contains(projected_point_uv, boundary_polygons[face_itr], self.boundary_tessellation_tolerance*1.1)
+                is_inside, is_on_boundary = self.__Contains(projected_point_uv, boundary_polygons[face_i.Key()], self.boundary_tessellation_tolerance*1.1)
                 if is_inside:
                     relevant_fe_points.append(node_coords_i)
                     relevant_fe_points_displaced.append( node_coords_i + np.array(node_i.GetSolutionStepValue(variable_to_map)) )
@@ -737,7 +642,7 @@ class ConditionsFactory:
                     shape_function_values[i] = shape_function(0,i)
 
                 new_condition = PositionEnforcementCondition(rigididly_displaced_point_coords, surface_geometry, nonzero_pole_indices, shape_function_values, penalty_fac)
-                conditions[face_itr].append(new_condition)
+                conditions[face_i.Key()].append(new_condition)
 
         return conditions
 
@@ -763,9 +668,6 @@ class ConditionsFactory:
 
                 face_a = adjacent_faces[0]
                 face_b = adjacent_faces[1]
-
-                face_a_itr = self.face_id_to_itr[adjacent_faces[0].Key()]
-                face_b_itr = self.face_id_to_itr[adjacent_faces[1].Key()]
 
                 surface_geometry_a = face_a.Data().Geometry()
                 surface_geometry_b = face_b.Data().Geometry()
@@ -839,10 +741,10 @@ class ConditionsFactory:
                         weight = penalty_factor_position_enforcement * integration_weight
 
                         new_condition_a = PositionEnforcementCondition(target_position, surface_geometry_a, nonzero_pole_indices_a, shape_function_values_a, weight)
-                        conditions[face_a_itr].append(new_condition_a)
+                        conditions[face_a.Key()].append(new_condition_a)
 
                         new_condition_b = PositionEnforcementCondition(target_position, surface_geometry_b, nonzero_pole_indices_b, shape_function_values_b, weight)
-                        conditions[face_b_itr].append(new_condition_b)
+                        conditions[face_b.Key()].append(new_condition_b)
 
                     # Tangents enforcement
                     if penalty_factor_tangent_enforcement > 0:
@@ -850,10 +752,10 @@ class ConditionsFactory:
                         weight = penalty_factor_tangent_enforcement * integration_weight
 
                         new_condition_a = TangentEnforcementCondition(target_normal, surface_geometry_a, nonzero_pole_indices_a, shape_function_derivatives_u_a, shape_function_derivatives_v_a, weight)
-                        conditions[face_a_itr].append(new_condition_a)
+                        conditions[face_a.Key()].append(new_condition_a)
 
                         new_condition_b = TangentEnforcementCondition(target_normal, surface_geometry_b, nonzero_pole_indices_b, shape_function_derivatives_u_b, shape_function_derivatives_v_b, weight)
-                        conditions[face_b_itr].append(new_condition_b)
+                        conditions[face_b.Key()].append(new_condition_b)
 
                     # pole_coords = np.zeros((len(nonzero_pole_indices_a), 3))
                     # for i, (r,s) in enumerate(nonzero_pole_indices_a):
@@ -981,8 +883,6 @@ class ConditionsFactory:
             integration_weight = 1
 
             face = corner_point_faces[itr]
-            face_key = face.Key()
-            face_itr = self.face_id_to_itr[face_key]
 
             surface_geometry = face.Data().Geometry()
             surface_geometry_data = face.Data().Geometry().Data()
@@ -1009,7 +909,7 @@ class ConditionsFactory:
             weight = penalty_factor * integration_weight
 
             new_condition = TangentEnforcementCondition(target_normal, surface_geometry, nonzero_pole_indices, shape_function_derivatives_u, shape_function_derivatives_v, weight)
-            conditions[face_itr].append(new_condition)
+            conditions[face.Key()].append(new_condition)
 
             # Positions enforcement
             target_displacement = node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)
@@ -1017,7 +917,7 @@ class ConditionsFactory:
             weight = penalty_factor * integration_weight
 
             new_condition = PositionEnforcementCondition(target_position, surface_geometry, nonzero_pole_indices, shape_function_values, weight)
-            conditions[face_itr].append(new_condition)
+            conditions[face.Key()].append(new_condition)
 
     # --------------------------------------------------------------------------
     def CreateCouplingConditions(self, conditions):
@@ -1039,9 +939,6 @@ class ConditionsFactory:
 
                 face_a = adjacent_faces[0]
                 face_b = adjacent_faces[1]
-
-                face_a_itr = self.face_id_to_itr[adjacent_faces[0].Key()]
-                face_b_itr = self.face_id_to_itr[adjacent_faces[1].Key()]
 
                 surface_geometry_a = face_a.Data().Geometry()
                 surface_geometry_b = face_b.Data().Geometry()
@@ -1096,7 +993,7 @@ class ConditionsFactory:
                                                                        shape_function_values_a,
                                                                        shape_function_values_b,
                                                                        weight )
-                        conditions[face_a_itr].append(new_condition)
+                        conditions[face_a.Key()].append(new_condition)
 
                     # rotation coupling condition
                     if penalty_factor_rotation > 0:
@@ -1114,7 +1011,7 @@ class ConditionsFactory:
                                                                          shape_function_derivatives_v_a,
                                                                          shape_function_derivatives_v_b,
                                                                          weight )
-                        conditions[face_a_itr].append(new_condition)
+                        conditions[face_a.Key()].append(new_condition)
             else:
                 raise RuntimeError("Max number of adjacent has to be 2!!")
 
@@ -1126,7 +1023,7 @@ class ConditionsFactory:
 
         boundary_polygons = self.__GetBoundaryPolygons()
 
-        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+        for face_i in self.cad_model.GetByType('BrepFace'):
 
             # Skipp embedded faces to not have two identical contributions from the same unknowns (embedded faces share the unkonws of a given geometry)
             if face_i.Attributes().HasTag('Embedded'):
@@ -1161,7 +1058,7 @@ class ConditionsFactory:
                         v_value += knot_vec_v[s+q_index]
                     v_value /= deg_v
 
-                    is_inside, is_on_boundary = self.__Contains((u_value,v_value), boundary_polygons[face_itr], self.boundary_tessellation_tolerance*1.1)
+                    is_inside, is_on_boundary = self.__Contains((u_value,v_value), boundary_polygons[face_i.Key()], self.boundary_tessellation_tolerance*1.1)
 
                     # Only control points within the visible surface shall be considered
                     if is_inside:
@@ -1184,22 +1081,94 @@ class ConditionsFactory:
                     shape_function_values[i] = shape_function(0,i)
 
                 new_condition = AlphaRegularizationCondition(pole_id, greville_params, surface_geometry, nonzero_pole_indices, shape_function_values, alpha)
-                conditions[face_itr].append(new_condition)
+                conditions[face_i.Key()].append(new_condition)
 
         return conditions
+
+    # --------------------------------------------------------------------------
+    def GetFEPointParametrization(self):
+        if self.fe_point_parametrization is not None:
+            return self.fe_point_parametrization
+        else:
+            self.fe_point_parametrization = self.__ParametrizeFEPoints()
+            return self.fe_point_parametrization
+
+    # --------------------------------------------------------------------------
+    def __ParametrizeFEPoints(self):
+        self.fe_point_parametrization = []
+        for node_i in self.fe_model_part.Nodes:
+            self.fe_point_parametrization.append({"node": node_i , "faces": [], "parameters": [], "is_on_boundary": False})
+
+        boundary_polygons = self.__GetBoundaryPolygons()
+
+        for face_i in self.cad_model.GetByType('BrepFace'):
+
+            # Skipp embedded faces to not have two identical contributions from the same unknowns (embedded faces share the unkonws of a given geometry)
+            if face_i.Attributes().HasTag('Embedded'):
+                print(f'Skip {face_i.Key()}')
+                continue
+
+            surface = an.Surface3D(face_i.Data().Geometry())
+            projection = an.PointOnSurfaceProjection3D(surface)
+
+            # Bounding box and scaling as the bounding box is based on a simple pointwise discretization of surface
+            min_x, min_y, min_z, max_x, max_y, max_z = projection.BoundingBox()
+            min_x -= self.bounding_box_tolerance
+            min_y -= self.bounding_box_tolerance
+            min_z -= self.bounding_box_tolerance
+            max_x += self.bounding_box_tolerance
+            max_y += self.bounding_box_tolerance
+            max_z += self.bounding_box_tolerance
+
+            for node_itr, node_i in enumerate(self.fe_model_part.Nodes):
+
+                node_coords_i = [node_i.X0, node_i.Y0, node_i.Z0]
+
+                # Points outside bounding box are not considered
+                if node_coords_i[0] < min_x or max_x < node_coords_i[0]:
+                    continue
+                if node_coords_i[1] < min_y or max_y < node_coords_i[1]:
+                    continue
+                if node_coords_i[2] < min_z or max_z < node_coords_i[2]:
+                    continue
+
+                projection.Compute(point=node_coords_i)
+                projected_point_uv = np.array([projection.ParameterU(), projection.ParameterV()])
+
+                is_inside, is_on_boundary = self.__Contains(projected_point_uv, boundary_polygons[face_i.Key()], self.boundary_tessellation_tolerance*1.1)
+                if is_inside:
+                    self.fe_point_parametrization[node_itr]["faces"].append(face_i)
+                    self.fe_point_parametrization[node_itr]["parameters"].append(projected_point_uv)
+                    self.fe_point_parametrization[node_itr]["is_on_boundary"] = is_on_boundary
+
+        # Check results
+        for entry in self.fe_point_parametrization:
+            node = entry["node"]
+            list_of_faces = entry["faces"]
+            if len(list_of_faces) == 0:
+                print("> WARNING: Missing point pair for point: ", node.Id)
+                point_ptr = self.cad_model.Add(an.Point3D(location=[node.X, node.Y, node.Z]))
+                point_ptr.Attributes().SetLayer('FEPointsWithNoCADPartner')
+
+        return self.fe_point_parametrization
 
     # --------------------------------------------------------------------------
     def __GetBoundaryPolygons(self):
         if self.boundary_polygons is None:
             tessellation = an.CurveTessellation2D()
 
-            self.boundary_polygons = [[] for entry in self.cad_model.GetByType('BrepFace')]
-            for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+            self.boundary_polygons = {face.Key(): [] for face in self.cad_model.GetByType('BrepFace')}
+            for face_i in self.cad_model.GetByType('BrepFace'):
 
                 for trim in face_i.Data().Trims():
                     tessellation.Compute(an.Curve2D(trim.Data().Geometry()), self.boundary_tessellation_tolerance)
                     for i in range(tessellation.NbPoints()):
-                        self.boundary_polygons[face_itr].append(tessellation.Point(i))
+                        self.boundary_polygons[face_i.Key()].append(tessellation.Point(i))
+
+                        # (u,v) = tessellation.Point(i)
+                        # point = face_i.Data().Geometry().Data().PointAt(u,v)
+                        # point_ptr = self.cad_model.Add(an.Point3D(location=point))
+
 
         return self.boundary_polygons
 
@@ -1312,14 +1281,6 @@ class ConditionsFactory:
                     for u, v, weight in an.IntegrationPoints.Points2D(degree_u+1, degree_v+1, clipper.SpanU(i), clipper.SpanV(j)):
                         [x,y,z], a1, a2  = surface_geometry.DerivativesAt(u, v, 1)
 
-                        # self.cad_model.add({
-                        #     'Key': f'IntegrationPoint{face_itr}{pt_i}',
-                        #     'Type': 'Point3D',
-                        #     'Location': [x, y, z],
-                        #     'Color': '#0000ff',
-                        #     'Layer': 'Full',
-                        # })
-
                         list_of_points.append([x,y,z])
                         list_of_parameters.append((u, v))
                         list_of_weights.append(weight * la.norm(np.cross(a1,a2)))
@@ -1331,14 +1292,6 @@ class ConditionsFactory:
                             u, v, weight = integration_points.IntegrationPoint(k)
 
                             [x,y,z], a1, a2  = surface_geometry.DerivativesAt(u, v, 1)
-
-                            # self.cad_model.add({
-                            #     'Key': f'IntegrationPoint{face_itr}{pt_i}',
-                            #     'Type': 'Point3D',
-                            #     'Location': [x, y, z],
-                            #     'Color': '#ff0000',
-                            #     'Layer': 'Quad3D',
-                            # })
 
                             list_of_points.append([x,y,z])
                             list_of_parameters.append((u, v))
@@ -1466,7 +1419,7 @@ class Assembler():
     # --------------------------------------------------------------------------
     def Initialize(self):
         # Assign dof ids
-        for conditions_face_i in self.conditions:
+        for conditions_face_i in self.conditions.values():
             for condition in conditions_face_i:
                 for dof in condition.dof_list:
                     _ = self.__GetDofId(dof)
@@ -1487,11 +1440,12 @@ class Assembler():
 
         total_num_conditions = 0
 
-        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+        for face in self.cad_model.GetByType('BrepFace'):
+            face_key = face.Key()
 
-            print("Processing face", face_itr, "with", len(self.conditions[face_itr]), "conditions.")
+            print("Processing face", face_key, "with", len(self.conditions[face_key]), "conditions.")
 
-            for condition in self.conditions[face_itr]:
+            for condition in self.conditions[face_key]:
                 total_num_conditions += 1
 
                 condition_lhs, condition_rhs, condition_dof_list = condition.CalculateLocalSystem()
@@ -1515,11 +1469,12 @@ class Assembler():
 
         self.rhs.fill(0)
 
-        for face_itr, face_i in enumerate(self.cad_model.GetByType('BrepFace')):
+        for face in self.cad_model.GetByType('BrepFace'):
+            face_key = face.Key()
 
-            print("Processing face", face_itr, "with", len(self.conditions[face_itr]), "conditions.")
+            print("Processing face", face_key, "with", len(self.conditions[face_key]), "conditions.")
 
-            for condition in self.conditions[face_itr]:
+            for condition in self.conditions[face_key]:
 
                 local_rhs, condition_dof_list = condition.CalculateRHS()
 

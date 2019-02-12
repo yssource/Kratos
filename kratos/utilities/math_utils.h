@@ -274,7 +274,6 @@ public:
      * @param InputMatrix The matrix to invert
      * @return InvertMatrix: The inverted matrix
      */
-
     template<unsigned int TDim>
     static inline BoundedMatrix<TDataType, TDim, TDim> InvertMatrix(
             const BoundedMatrix<TDataType, TDim, TDim>& InputMatrix,
@@ -440,10 +439,10 @@ public:
      * @param InvertedMatrix Is the inverse of the input matrix
      * @param InputMatrixDet Is the determinant of the input matrix
      */
-
+    template<class TMatrix1, class TMatrix2>
     static void InvertMatrix(
-        const MatrixType& InputMatrix,
-        MatrixType& InvertedMatrix,
+        const TMatrix1& InputMatrix,
+        TMatrix2& InvertedMatrix,
         TDataType& InputMatrixDet
         )
     {
@@ -497,15 +496,15 @@ public:
     }
 
     /**
-     * It inverts matrices of order 2 //VERIFIED!!!
+     * @brief It inverts matrices of order 2
      * @param InputMatrix Is the input matrix (unchanged at output)
      * @param InvertedMatrix Is the inverse of the input matrix
      * @param InputMatrixDet Is the determinant of the input matrix
      */
-
+    template<class TMatrix1, class TMatrix2>
     static void InvertMatrix2(
-        const MatrixType& InputMatrix,
-        MatrixType& InvertedMatrix,
+        const TMatrix1& InputMatrix,
+        TMatrix2& InvertedMatrix,
         TDataType& InputMatrixDet
         )
     {
@@ -529,15 +528,15 @@ public:
     }
 
     /**
-     * It inverts matrices of order 3 //VERIFIED!!!
+     * @brief It inverts matrices of order 3
      * @param InputMatrix Is the input matrix (unchanged at output)
      * @param InvertedMatrix Is the inverse of the input matrix
      * @param InputMatrixDet Is the determinant of the input matrix
      */
-
+    template<class TMatrix1, class TMatrix2>
     static void InvertMatrix3(
-        const MatrixType& InputMatrix,
-        MatrixType& InvertedMatrix,
+        const TMatrix1& InputMatrix,
+        TMatrix2& InvertedMatrix,
         TDataType& InputMatrixDet
         )
     {
@@ -574,15 +573,15 @@ public:
     }
 
     /**
-     * It inverts matrices of order 4
+     * @brief It inverts matrices of order 4
      * @param InputMatrix Is the input matrix (unchanged at output)
      * @param InvertedMatrix Is the inverse of the input matrix
      * @param InputMatrixDet Is the determinant of the input matrix
      */
-
+    template<class TMatrix1, class TMatrix2>
     static void InvertMatrix4(
-        const MatrixType& InputMatrix,
-        MatrixType& InvertedMatrix,
+        const TMatrix1& InputMatrix,
+        TMatrix2& InvertedMatrix,
         TDataType& InputMatrixDet
         )
     {

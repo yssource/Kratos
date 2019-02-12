@@ -75,6 +75,7 @@ with suppress_stdout():
 
     parameters["solution"]["iterations"].SetInt(3)
     parameters["solution"]["test_solution"].SetBool(True)
+    parameters["output"]["results_directory"].SetString("Results_Test_1")
 
     # Mapping
     cad_model = an.Model()
@@ -98,6 +99,7 @@ with suppress_stdout():
     parameters["regularization"]["alpha"].SetDouble(0.1)
     parameters["conditions"]["edges"]["fe_based"]["apply_enforcement_conditions"].SetBool(True)
     parameters["conditions"]["edges"]["fe_based"]["apply_corner_enforcement_conditions"].SetBool(True)
+    parameters["output"]["results_directory"].SetString("Results_Test_2")
 
     # Mapping
     cad_model = an.Model()
@@ -118,6 +120,7 @@ with suppress_stdout():
         parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
     parameters["conditions"]["apply_integral_method"].SetBool(True)
+    parameters["output"]["results_directory"].SetString("Results_Test_3")
 
     # Mapping
     cad_model = an.Model()
@@ -138,6 +141,7 @@ with suppress_stdout():
         parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
     parameters["conditions"]["faces"]["curvature"]["apply_curvature_minimization"].SetBool(True)
+    parameters["output"]["results_directory"].SetString("Results_Test_4")
 
     # Mapping
     cad_model = an.Model()
@@ -157,6 +161,7 @@ with suppress_stdout():
         parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
     parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].SetBool(True)
+    parameters["output"]["results_directory"].SetString("Results_Test_5")
 
     # Mapping
     cad_model = an.Model()
@@ -176,6 +181,7 @@ with suppress_stdout():
         parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
     parameters["conditions"]["faces"]["rigid"]["apply_rigid_conditions"].SetBool(True)
+    parameters["output"]["results_directory"].SetString("Results_Test_6")
 
     # Mapping
     cad_model = an.Model()
@@ -195,6 +201,7 @@ with suppress_stdout():
         parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
     parameters["conditions"]["edges"]["coupling"]["apply_coupling_conditions"].SetBool(True)
+    parameters["output"]["results_directory"].SetString("Results_Test_7")
 
     # Mapping
     cad_model = an.Model()
@@ -221,7 +228,13 @@ if abs(relative_time_ratio - reference_ratio) / relative_time_ratio > 0.10:
 # =======================================================================================================
 os.remove("cad_reconstruction_process_test.post.lst")
 os.remove("plate.time")
-shutil.rmtree("01_Results")
+shutil.rmtree("Results_Test_1")
+shutil.rmtree("Results_Test_2")
+shutil.rmtree("Results_Test_3")
+shutil.rmtree("Results_Test_4")
+shutil.rmtree("Results_Test_5")
+shutil.rmtree("Results_Test_6")
+shutil.rmtree("Results_Test_7")
 
 print("\n> Test Successfully finished in " + str(round(time_for_complete_test,2)) + " s!\n")
 # =======================================================================================================

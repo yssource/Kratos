@@ -76,7 +76,7 @@ public:
     ///@{
 
     /**
-     * Default constructor
+     * @brief Default constructor
      * @param rModelPart The model part of the problem
      * @param pScheme The integration scheme
      * @param CalculateReactions The flag for the reaction calculation
@@ -89,15 +89,12 @@ public:
         bool CalculateReactions = false,
         bool ReformDofSetAtEachStep = false,
         bool MoveMeshFlag = true)
-        : SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(rModelPart, MoveMeshFlag) {
+        : SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(rModelPart, MoveMeshFlag),
+          mpScheme(pScheme),
+          mReformDofSetAtEachStep(ReformDofSetAtEachStep),
+          mCalculateReactionsFlag(CalculateReactions)
+    {
         KRATOS_TRY
-
-        // Set flags to default values
-        this->mCalculateReactionsFlag = CalculateReactions;
-        this->mReformDofSetAtEachStep = ReformDofSetAtEachStep;
-
-        // Saving the scheme
-        this->mpScheme = pScheme;
 
         // Set EchoLevel to the default value (only time is displayed)
         BaseType::SetEchoLevel(1);
@@ -220,9 +217,10 @@ public:
             // Initialize The Conditions- OPERATIONS TO BE DONE ONCE
             if (!pScheme->ConditionsAreInitialized())pScheme->InitializeConditions(r_model_part);
 
-            // Set Nodal Mass to zero
+            // Set Nodal Mass and Damping to zero
             NodesArrayType& r_nodes = r_model_part.Nodes();
             VariableUtils().SetNonHistoricalVariable(NODAL_MASS, 0.0, r_nodes);
+            VariableUtils().SetNonHistoricalVariable(NODAL_DISPLACEMENT_DAMPING, 0.0, r_nodes);
 
             // Iterate over the elements
             ElementsArrayType& r_elements = r_model_part.Elements();
@@ -235,6 +233,7 @@ public:
             if (has_dof_for_rot_z) {
                 const array_1d<double, 3> zero_array = ZeroVector(3);
                 VariableUtils().SetNonHistoricalVariable(NODAL_INERTIA, zero_array, r_nodes);
+                VariableUtils().SetNonHistoricalVariable(NODAL_ROTATIONAL_DAMPING, zero_array, r_nodes);
 
                 #pragma omp parallel for firstprivate(dummy_vector)
                 for (int i = 0; i < static_cast<int>(r_elements.size()); ++i) {
@@ -275,18 +274,27 @@ public:
         TSystemVectorType rDx = TSystemVectorType();
         TSystemVectorType rb = TSystemVectorType();
 
-        // initial operations ... things that are constant over the Solution Step
+        // Initial operations ... things that are constant over the Solution Step
         pScheme->InitializeSolutionStep(r_model_part, matrix_a_dummy, rDx, rb);
 
-        if (BaseType::mRebuildLevel > 0) {
+        if (BaseType::mRebuildLevel > 0) { // TODO: Right now is computed in the Initialize() because is always zero, the option to set the RebuildLevel should be added in the constructor or in some place
             ProcessInfo& r_current_process_info = r_model_part.GetProcessInfo();
             ElementsArrayType& r_elements = r_model_part.Elements();
             const auto it_elem_begin = r_elements.begin();
+
+            // Set Nodal Mass and Damping to zero
+            NodesArrayType& r_nodes = r_model_part.Nodes();
+            VariableUtils().SetNonHistoricalVariable(NODAL_MASS, 0.0, r_nodes);
+            VariableUtils().SetNonHistoricalVariable(NODAL_DISPLACEMENT_DAMPING, 0.0, r_nodes);
 
             Vector dummy_vector;
             // If we consider the rotation DoF
             const bool has_dof_for_rot_z = r_model_part.Nodes().begin()->HasDofFor(ROTATION_Z);
             if (has_dof_for_rot_z) {
+                const array_1d<double, 3> zero_array = ZeroVector(3);
+                VariableUtils().SetNonHistoricalVariable(NODAL_INERTIA, zero_array, r_nodes);
+                VariableUtils().SetNonHistoricalVariable(NODAL_ROTATIONAL_DAMPING, zero_array, r_nodes);
+
                 #pragma omp parallel for firstprivate(dummy_vector)
                 for (int i = 0; i < static_cast<int>(r_elements.size()); ++i) {
                     // Getting nodal mass and inertia from element
@@ -295,7 +303,7 @@ public:
                     auto it_elem = it_elem_begin + i;
                     it_elem->AddExplicitContribution(dummy_vector, RESIDUAL_VECTOR, NODAL_INERTIA, r_current_process_info);
                 }
-            } else { // Only NODAL_MASS is needed
+            } else { // Only NODAL_MASS and NODAL_DISPLACEMENT_DAMPING are needed
                 #pragma omp parallel for firstprivate(dummy_vector)
                 for (int i = 0; i < static_cast<int>(r_elements.size()); ++i) {
                     // Getting nodal mass and inertia from element
@@ -461,6 +469,14 @@ private:
     ///@name Private Operations
     ///@{
 
+    /**
+     * @brief This method computes the reactions of the problem
+     * @param pScheme The pointer to the integration scheme used
+     * @param rModelPart The model part which defines the problem
+     * @param rA The LHS of the system (empty)
+     * @param rDx The solution of the system (empty)
+     * @param rb The RHS of the system (empty)
+     */
     void CalculateReactions(
         typename TSchemeType::Pointer pScheme,
         ModelPart& rModelPart,
@@ -542,6 +558,9 @@ protected:
     ///@name Protected member Variables
     ///@{
 
+    /**
+     * @brief The pointer to the integration scheme
+     */
     typename TSchemeType::Pointer mpScheme;
 
     /**
@@ -551,7 +570,7 @@ protected:
         - false => form just one (more efficient)
         Default = false
     */
-    bool mReformDofSetAtEachStep;
+    bool mReformDofSetAtEachStep = false;
 
     /**
      * @brief Flag telling if it is needed or not to compute the reactions

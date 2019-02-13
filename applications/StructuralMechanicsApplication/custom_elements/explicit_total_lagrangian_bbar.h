@@ -214,16 +214,6 @@ public:
         ) override;
 
     /**
-     * @brief This is called during the assembling process in order to calculate the elemental left hand side matrix only
-     * @param rLeftHandSideMatrix the elemental left hand side matrix
-     * @param rCurrentProcessInfo the current process info instance
-     */
-    void CalculateLeftHandSide(
-        MatrixType& rLeftHandSideMatrix,
-        ProcessInfo& rCurrentProcessInfo
-        ) override;
-
-    /**
       * @brief This is called during the assembling process in order to calculate the elemental right hand side vector only
       * @param rRightHandSideVector the elemental right hand side vector
       * @param rCurrentProcessInfo the current process info instance
@@ -659,15 +649,15 @@ protected:
      */
     struct ConstitutiveVariables
     {
-        Vector StrainVector(StrainSize);
-        Vector StressVector(StrainSize);
-        Matrix D(StrainSize, StrainSize);
+        Vector StrainVector;
+        Vector StressVector;
+        Matrix D;
 
         /**
          * @brief The default constructor
          * @param StrainSize The size of the strain vector in Voigt notation
          */
-        ConstitutiveVariables(const SizeType StrainSize)
+        ConstitutiveVariables()
         {
             StrainVector = ZeroVector(StrainSize);
             StressVector = ZeroVector(StrainSize);
@@ -756,14 +746,14 @@ protected:
         const ConstitutiveLaw::StressMeasure ThisStressMeasure = ConstitutiveLaw::StressMeasure_PK2
         );
 
-    void Calculate2DB(
-        BoundedMatrix<double, 3, 2 * NumberOfNodes>& rB,
-        const Matrix& rF,
-        const BoundedMatrix<double, TNumNodes, TDim>& rDN_DX
-        );
-
-    void Calculate3DB(
-        BoundedMatrix<double, 6, 3 * NumberOfNodes>& rB,
+    /**
+     * @brief This method computes the deformation matrix
+     * @param rB The deformation matrix
+     * @param rF The deformation gradient
+     * @param rDN_DX The shape functions derivatives
+     */
+    void CalculateB(
+        BoundedMatrix<double, StrainSize, TDim * TNumNodes>& rB,
         const Matrix& rF,
         const BoundedMatrix<double, TNumNodes, TDim>& rDN_DX
         );
@@ -847,25 +837,6 @@ protected:
         const double IntegrationWeight
         ) const;
 
-    /**
-     * @brief This functions computes the integration weight to consider
-     * @param ThisIntegrationMethod The array containing the integration points
-     * @param PointNumber The id of the integration point considered
-     * @param detJ The determinant of the jacobian of the element
-     */
-    double GetIntegrationWeight(
-        const GeometryType::IntegrationPointsArrayType& rThisIntegrationPoints,
-        const IndexType PointNumber,
-        const double detJ
-        ) const;
-
-    /**
-    * @brief This function computes the shape gradient of mass matrix
-    * @param rMassMatrix The mass matrix
-    * @param Deriv The shape parameter
-    */
-    void CalculateShapeGradientOfMassMatrix(MatrixType& rMassMatrix, ShapeParameter Deriv) const;
-
     ///@}
     ///@name Protected  Access
     ///@{
@@ -947,19 +918,15 @@ private:
     {
         const GeometryType::IntegrationPointsArrayType& integration_points = GetGeometry().IntegrationPoints( this->GetIntegrationMethod() );
 
-        const SizeType number_of_nodes = GetGeometry().size();
-        const SizeType dimension = GetGeometry().WorkingSpaceDimension();
-        const SizeType strain_size = mConstitutiveLawVector[0]->GetStrainSize();
-
-        KinematicVariables this_kinematic_variables(strain_size, dimension, number_of_nodes);
-        ConstitutiveVariables this_constitutive_variables(strain_size);
+        KinematicVariables this_kinematic_variables = KinematicVariables();
+        ConstitutiveVariables this_constitutive_variables = ConstitutiveVariables();
 
         // Create constitutive law parameters:
         ConstitutiveLaw::Parameters Values(GetGeometry(),GetProperties(),rCurrentProcessInfo);
 
         // Set constitutive law flags:
         Flags& ConstitutiveLawOptions=Values.GetOptions();
-        ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN, UseElementProvidedStrain());
+        ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN, false);
         ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS, true);
         ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR, false);
 

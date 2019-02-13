@@ -120,6 +120,7 @@ set( KRATOS_STRUCTURAL_MECHANICS_APPLICATION_CORE
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/updated_lagrangian.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/axisym_updated_lagrangian.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/small_displacement_bbar.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/explicit_total_lagrangian_bbar.cpp
 
   # Adding the SPRISM element
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/solid_shell_element_sprism_3D6N.cpp

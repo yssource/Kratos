@@ -66,6 +66,7 @@
 #include "custom_elements/updated_lagrangian.h"
 #include "custom_elements/axisym_updated_lagrangian.h"
 #include "custom_elements/small_displacement_bbar.h"
+#include "custom_elements/explicit_total_lagrangian_bbar.h"
 
 /* CONDITIONS */
 #include "custom_conditions/base_load_condition.h"
@@ -310,7 +311,6 @@ private:
     const CrBeamElement2D2N mCrBeamElement2D2N;
     const CrBeamElementLinear2D2N mCrLinearBeamElement2D2N;
 
-
     // Adding the shells elements
     const IsotropicShellElement mIsotropicShellElement3D3N;
     const ShellThickElement3D4N mShellThickElement3D4N;
@@ -375,6 +375,8 @@ private:
     const AxisymTotalLagrangian mAxisymTotalLagrangian2D6N;
     const AxisymTotalLagrangian mAxisymTotalLagrangian2D8N;
     const AxisymTotalLagrangian mAxisymTotalLagrangian2D9N;
+
+    const ExplicitTotalLagrangianBbar<3, 8> mExplicitTotalLagrangianBbar3D8N;
 
     // Updated lagrangian
     const UpdatedLagrangian mUpdatedLagrangian2D3N;

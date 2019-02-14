@@ -128,6 +128,32 @@ public:
     ///@{
 
     /**
+     * @brief Creates a new element
+     * @param NewId The Id of the new created element
+     * @param pGeom The pointer to the geometry of the element
+     * @param pProperties The pointer to property
+     * @return The pointer to the created element
+     */
+    Element::Pointer Create(
+        IndexType NewId,
+        GeometryType::Pointer pGeom,
+        PropertiesType::Pointer pProperties
+        ) const override;
+
+    /**
+     * @brief Creates a new element
+     * @param NewId The Id of the new created element
+     * @param ThisNodes The array containing nodes
+     * @param pProperties The pointer to property
+     * @return The pointer to the created element
+     */
+    Element::Pointer Create(
+        IndexType NewId,
+        NodesArrayType const& ThisNodes,
+        PropertiesType::Pointer pProperties
+        ) const override;
+
+    /**
      * @brief Called to initialize the element.
      * @warning Must be called before any calculation is done
      */
@@ -583,14 +609,14 @@ public:
     std::string Info() const override
     {
         std::stringstream buffer;
-        buffer << "Base Solid Element #" << Id() << "\nConstitutive law: " << mConstitutiveLawVector[0]->Info();
+        buffer << "Explicit Total Lagrangian Bbar element #" << Id();
         return buffer.str();
     }
 
     /// Print information about this object.
     void PrintInfo(std::ostream& rOStream) const override
     {
-        rOStream << "Base Solid Element #" << Id() << "\nConstitutive law: " << mConstitutiveLawVector[0]->Info();
+        rOStream << "Explicit Total Lagrangian Bbar element #" << Id();
     }
 
     /// Print object's data.

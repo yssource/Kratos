@@ -23,6 +23,25 @@
 
 namespace Kratos
 {
+
+template< const SizeType TDim, const SizeType TNumNodes>
+Element::Pointer ExplicitTotalLagrangianBbar<TDim, TNumNodes>::Create( IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties ) const
+{
+    return Kratos::make_shared<ExplicitTotalLagrangianBbar<TDim, TNumNodes>>( NewId, GetGeometry().Create( ThisNodes ), pProperties );
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template< const SizeType TDim, const SizeType TNumNodes>
+Element::Pointer ExplicitTotalLagrangianBbar<TDim, TNumNodes>::Create( IndexType NewId,  GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties ) const
+{
+    return Kratos::make_shared<ExplicitTotalLagrangianBbar<TDim, TNumNodes>>( NewId, pGeom, pProperties );
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
 template< const SizeType TDim, const SizeType TNumNodes>
 void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::Initialize()
 {

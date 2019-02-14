@@ -532,7 +532,7 @@ void KratosStructuralMechanicsApplication::Register() {
     KRATOS_REGISTER_ELEMENT("AxisymTotalLagrangianElement2D9N", mAxisymTotalLagrangian2D9N)
 
     /* Explicit BBar version */
-    KRATOS_REGISTER_ELEMENT("ExplicitTotalLagrangianBbar3D8N", mExplicitTotalLagrangianBbar3D8N)
+    KRATOS_REGISTER_ELEMENT("ExplicitTotalLagrangianBbarElement3D8N", mExplicitTotalLagrangianBbar3D8N)
 
     // Updated lagrangian elements
     /* Regular version */

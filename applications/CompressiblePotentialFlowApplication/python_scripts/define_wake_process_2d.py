@@ -19,10 +19,9 @@ class DefineWakeProcess(KratosMultiphysics.Process):
             {
                 "mesh_id"                   : 0,
                 "model_part_name"           : "please specify the model part that contains the kutta nodes",
-                "upper_surface_model_part_name" : "please specify the model part that contains the upper surface nodes",
-                "lower_surface_model_part_name" : "please specify the model part that contains the lower surface nodes",
                 "fluid_part_name"           : "MainModelPart",
-                "wake_direction"                 : [1.0,0.0,0.0],
+                "trailing_edge_model_part_name" : "specify",
+                "wake_direction"            : [1.0,0.0,0.0],
                 "epsilon"    : 1e-9
             }
             """)
@@ -47,17 +46,25 @@ class DefineWakeProcess(KratosMultiphysics.Process):
 
         self.epsilon = settings["epsilon"].GetDouble()
 
-        self.upper_surface_model_part = Model[settings["upper_surface_model_part_name"].GetString(
-        )]
-        self.lower_surface_model_part = Model[settings["lower_surface_model_part_name"].GetString(
-        )]
-
         self.fluid_model_part = Model[settings["fluid_part_name"].GetString()].GetRootModelPart()
-        self.trailing_edge_model_part = self.fluid_model_part.CreateSubModelPart(
-            "trailing_edge_model_part")
 
         KratosMultiphysics.NormalCalculationUtils().CalculateOnSimplex(self.fluid_model_part,
                                                                        self.fluid_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE])
+        # Save trailing edge node
+        trailing_edge_mode_part = Model[settings["trailing_edge_model_part_name"].GetString()]
+        if not trailing_edge_mode_part.NumberOfNodes() == 1:
+            errrrrror
+
+        # self.trailing_edge_node = trailing_edge_mode_part.Nodes.__iter__().__next__()
+
+        for node in trailing_edge_mode_part.Nodes:
+            self.trailing_edge_node = node
+            break
+
+        self.__SelectTrailingEdgeNode()
+        self.__Mark()
+        self.__ReplaceElements()
+        self.__FindNodalNeighbors()
 
         # Neigbour search tool instance
         AvgElemNum = 10
@@ -66,6 +73,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
             self.fluid_model_part, AvgElemNum, AvgNodeNum)
         # Find neighbours
         nodal_neighbour_search.Execute()
+
 
     def ExecuteInitialize(self):
         # Save the trailing edge for further computations
@@ -76,6 +84,29 @@ class DefineWakeProcess(KratosMultiphysics.Process):
         self.MarkKuttaElements()
         # Mark the trailing edge element that is further downstream as wake
         self.MarkWakeTEElement()
+
+    def __ReplaceElements(self):
+        wake_elements_model_part = self.fluid_model_part.CreateSubModelPart("wake_elements")
+        trailing_edge_model_part = self.fluid_model_part.CreateSubModelPart("trailing_edge_elements")
+        kutta_elements_model_part = self.fluid_model_part.CreateSubModelPart("kutta_elements")
+
+        flag_to_elements_map = {
+            CPFApp.WAKE : ["WakeElem", wake_elements_model_part]
+            CPFApp.KUTTA : ["KuttaElem", trailing_edge_model_part]
+            CPFApp.TRAILING_EDGE : ["TrailingEdgeElem", kutta_elements_model_part]
+        }
+
+        for elem in self.fluid_model_part.Elements:
+            for flag in flag_to_elements_map:
+                if elem.Is(flag):
+                    the_id = elem.Id
+                    the_properties = elem.Properties
+                    the_node_ids = [node.Id for node in elem.GetNodes()]
+                    self.fluid_model_part.RemoveElement(elem)
+                    new_elem_name = flag_to_elements_map[flag][0]
+                    sub_model_part = flag_to_elements_map[flag][1]
+                    sub_model_part.CreateNewElement(new_elem_name, the_id, the_node_ids, the_properties)
+
 
     def SaveTrailingEdgeNode(self):
         # This function finds and saves the trailing edge for further computations

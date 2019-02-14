@@ -511,6 +511,31 @@ private:
 
         const int number_of_constraints = static_cast<int>(rModelPart.MasterSlaveConstraints().size());
 
+        // Setting to zero the slave dofs
+        #pragma omp parallel firstprivate(slave_equation_dofs)
+        {
+            #pragma omp for schedule(guided, 512)
+            for (int i_const = 0; i_const < number_of_constraints; ++i_const) {
+                auto it_const = rModelPart.MasterSlaveConstraints().begin() + i_const;
+
+                // Detect if the constraint is active or not. If the user did not make any choice the constraint
+                // It is active by default
+                bool constraint_is_active = true;
+                if (it_const->IsDefined(ACTIVE))
+                    constraint_is_active = it_const->Is(ACTIVE);
+
+                if (constraint_is_active) {
+                    slave_equation_dofs = it_const->GetSlaveDofsVector();
+
+                    for (IndexType i = 0; i < slave_equation_dofs.size(); ++i) {
+                        #pragma omp critical
+                        slave_equation_dofs[i]->GetSolutionStepValue() = 0.0;
+                    }
+                }
+            }
+        }
+
+        // Adding MPC contribution
         #pragma omp parallel firstprivate(transformation_matrix, constant_vector, slave_equation_dofs, master_equation_dofs)
         {
             #pragma omp for schedule(guided, 512)
@@ -542,8 +567,8 @@ private:
                     noalias(slave_dofs_values) = prod(transformation_matrix, master_dofs_values) + constant_vector;
 
                     for (IndexType i = 0; i < slave_equation_dofs.size(); ++i) {
-//                         #pragma omp critical // We can assume that the dofs are not duplicated in the MPC
-                        slave_equation_dofs[i]->GetSolutionStepValue() = slave_dofs_values[i];
+                        #pragma omp atomic
+                        slave_equation_dofs[i]->GetSolutionStepValue() += slave_dofs_values[i];
                     }
                 }
             }

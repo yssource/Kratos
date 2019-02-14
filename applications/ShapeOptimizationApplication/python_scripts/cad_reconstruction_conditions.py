@@ -231,8 +231,8 @@ class TangentEnforcementConditionWithAD( ReconstructionConditionWithAD ):
         a1 = super().ComputeActualJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_u)
         a2 = super().ComputeActualJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_v)
 
-        f_1 = self.penalty_factor * np.dot(a1,self.target_normal)**2 / 2
-        f_2 = self.penalty_factor * np.dot(a2,self.target_normal)**2 / 2
+        f_1 = self.penalty_factor * np.dot(a1,self.target_normal)**2 * 0.5
+        f_2 = self.penalty_factor * np.dot(a2,self.target_normal)**2 * 0.5
 
         local_rhs_1 = - f_1.g
         local_rhs_2 = - f_2.g
@@ -273,8 +273,8 @@ class TangentEnforcementConditionWithAD( ReconstructionConditionWithAD ):
         a1 = super().ComputeActualHyperJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_u)
         a2 = super().ComputeActualHyperJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_v)
 
-        f_1 = self.penalty_factor * np.dot(a1,self.target_normal)**2 / 2
-        f_2 = self.penalty_factor * np.dot(a2,self.target_normal)**2 / 2
+        f_1 = self.penalty_factor * np.dot(a1,self.target_normal)**2 * 0.5
+        f_2 = self.penalty_factor * np.dot(a2,self.target_normal)**2 * 0.5
 
         # LHS
         local_lhs_1 = f_1.h
@@ -590,9 +590,9 @@ class CurvatureMinimizationConditionWithAD( ReconstructionConditionWithAD ):
         b12 = np.dot(a1_2,a3)
         b22 = np.dot(a2_2,a3)
 
-        f_1 = self.penalty_factor * (self.B11 - b11)**2 / 2
-        f_2 = self.penalty_factor * (self.B12 - b12)**2 / 2
-        f_3 = self.penalty_factor * (self.B22 - b22)**2 / 2
+        f_1 = self.penalty_factor * (self.B11 - b11)**2 * 0.5
+        f_2 = self.penalty_factor * (self.B12 - b12)**2 * 0.5
+        f_3 = self.penalty_factor * (self.B22 - b22)**2 * 0.5
 
         local_rhs_1 = - f_1.g
         local_rhs_2 = - f_2.g
@@ -617,9 +617,9 @@ class CurvatureMinimizationConditionWithAD( ReconstructionConditionWithAD ):
         b12 = np.dot(a1_2,a3)
         b22 = np.dot(a2_2,a3)
 
-        f_1 = self.penalty_factor * (self.B11 - b11)**2 / 2
-        f_2 = self.penalty_factor * (self.B12 - b12)**2 / 2
-        f_3 = self.penalty_factor * (self.B22 - b22)**2 / 2
+        f_1 = self.penalty_factor * (self.B11 - b11)**2 * 0.5
+        f_2 = self.penalty_factor * (self.B12 - b12)**2 * 0.5
+        f_3 = self.penalty_factor * (self.B22 - b22)**2 * 0.5
 
         # LHS
         local_lhs_1 = f_1.h
@@ -679,13 +679,13 @@ class KLShellConditionWithAD( ReconstructionConditionWithAD ):
         self.Dm = np.array([
             [1.0, poissonsratio, 0],
             [poissonsratio, 1.0, 0],
-            [0, 0, (1.0 - poissonsratio) / 2.0],
+            [0, 0, (1.0 - poissonsratio) * 0.5],
         ]) * youngsmodulus * thickness / (1.0 - np.power(poissonsratio,2))
 
         self.Db = np.array([
             [1.0, poissonsratio, 0],
             [poissonsratio, 1.0, 0],
-            [0, 0, (1.0 - poissonsratio) / 2.0],
+            [0, 0, (1.0 - poissonsratio) * 0.5],
         ]) * youngsmodulus * np.power(thickness, 3) / (12.0 * (1.0 - np.power(poissonsratio,2)))
 
         # Transformation
@@ -728,7 +728,7 @@ class KLShellConditionWithAD( ReconstructionConditionWithAD ):
         a11, a22, a12 = np.dot(a1, a1), np.dot(a2, a2), np.dot(a1, a2)
         b11, b12, b22 = np.dot([a1_1, a1_2, a2_2], a3)
 
-        eps = np.dot(self.Tm, [a11 - A11, a22 - A22, a12 - A12]) / 2
+        eps = np.dot(self.Tm, [a11 - A11, a22 - A22, a12 - A12]) * 0.5
         kap = np.dot(self.Tm, [B11 - b11, B12 - b12, B22 - b22])
 
         n = np.dot(self.Dm, [j.f for j in eps])
@@ -759,7 +759,7 @@ class KLShellConditionWithAD( ReconstructionConditionWithAD ):
         a11, a22, a12 = np.dot(a1, a1), np.dot(a2, a2), np.dot(a1, a2)
         b11, b12, b22 = np.dot([a1_1, a1_2, a2_2], a3)
 
-        eps = np.dot(self.Tm, [a11 - A11, a22 - A22, a12 - A12]) / 2
+        eps = np.dot(self.Tm, [a11 - A11, a22 - A22, a12 - A12]) * 0.5
         kap = np.dot(self.Tm, [B11 - b11, B12 - b12, B22 - b22])
 
         n = np.dot(self.Dm, [j.f for j in eps])

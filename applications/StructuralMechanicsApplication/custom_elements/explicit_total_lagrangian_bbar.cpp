@@ -113,15 +113,20 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::InitializeSolutionStep( Proce
     // Reading integration points
     const GeometryType::IntegrationPointsArrayType& integration_points = r_geometry.IntegrationPoints(mThisIntegrationMethod);
 
+    bool compute_initialization;
     for ( IndexType point_number = 0; point_number < mConstitutiveLawVector.size(); ++point_number ) {
-        // Compute element kinematics B, F, DN_DX ...
-        CalculateKinematicVariables(this_kinematic_variables, point_number, mThisIntegrationMethod);
+        compute_initialization = mConstitutiveLawVector[point_number]->Has(REQUIRES_MATERIAL_INITIALIZATION) ? mConstitutiveLawVector[point_number]->GetValue(REQUIRES_MATERIAL_INITIALIZATION, compute_initialization) : true;
 
-        // Compute constitutive law variables
-        SetConstitutiveVariables(this_kinematic_variables, this_constitutive_variables, Values, point_number, integration_points);
+        if (compute_initialization) {
+            // Compute element kinematics B, F, DN_DX ...
+            CalculateKinematicVariables(this_kinematic_variables, point_number, mThisIntegrationMethod);
 
-        // Call the constitutive law to update material variables
-        mConstitutiveLawVector[point_number]->InitializeMaterialResponse(Values, ConstitutiveLaw::StressMeasure_PK2);
+            // Compute constitutive law variables
+            SetConstitutiveVariables(this_kinematic_variables, this_constitutive_variables, Values, point_number, integration_points);
+
+            // Call the constitutive law to update material variables
+            mConstitutiveLawVector[point_number]->InitializeMaterialResponse(Values, ConstitutiveLaw::StressMeasure_PK2);
+        }
     }
 }
 
@@ -171,15 +176,20 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::FinalizeSolutionStep( Process
     // Reading integration points
     const GeometryType::IntegrationPointsArrayType& integration_points = r_geometry.IntegrationPoints(mThisIntegrationMethod);
 
+    bool compute_finalization;
     for ( IndexType point_number = 0; point_number < mConstitutiveLawVector.size(); ++point_number ) {
-        // Compute element kinematics B, F, DN_DX ...
-        CalculateKinematicVariables(this_kinematic_variables, point_number, mThisIntegrationMethod);
+         compute_finalization = mConstitutiveLawVector[point_number]->Has(REQUIRES_MATERIAL_FINALIZATION) ? mConstitutiveLawVector[point_number]->GetValue(REQUIRES_MATERIAL_FINALIZATION, compute_finalization) : true;
 
-        // Compute constitutive law variables
-        SetConstitutiveVariables(this_kinematic_variables, this_constitutive_variables, Values, point_number, integration_points);
+        if (compute_finalization) {
+            // Compute element kinematics B, F, DN_DX ...
+            CalculateKinematicVariables(this_kinematic_variables, point_number, mThisIntegrationMethod);
 
-        // Call the constitutive law to update material variables
-        mConstitutiveLawVector[point_number]->FinalizeMaterialResponse(Values, ConstitutiveLaw::StressMeasure_PK2);
+            // Compute constitutive law variables
+            SetConstitutiveVariables(this_kinematic_variables, this_constitutive_variables, Values, point_number, integration_points);
+
+            // Call the constitutive law to update material variables
+            mConstitutiveLawVector[point_number]->FinalizeMaterialResponse(Values, ConstitutiveLaw::StressMeasure_PK2);
+        }
     }
 }
 

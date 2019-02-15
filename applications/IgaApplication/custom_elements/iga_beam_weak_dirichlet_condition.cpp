@@ -15,23 +15,23 @@
 // External includes
 
 // Project includes
-#include "iga_beam_ad_element.h"
+#include "iga_beam_weak_dirichlet_condition.h"
 #include "iga_application_variables.h"
 
 namespace Kratos {
 
-Element::Pointer IgaBeamADElement::Create(
+Element::Pointer IgaBeamWeakDirichletCondition::Create(
     IndexType NewId,
     NodesArrayType const& ThisNodes,
     PropertiesType::Pointer pProperties) const
 {
     auto geometry = GetGeometry().Create(ThisNodes);
 
-    return Kratos::make_shared<IgaBeamADElement>(NewId, geometry,
+    return Kratos::make_shared<IgaBeamWeakDirichletCondition>(NewId, geometry,
         pProperties);
 }
 
-void IgaBeamADElement::GetDofList(
+void IgaBeamWeakDirichletCondition::GetDofList(
     DofsVectorType& rElementalDofList,
     ProcessInfo& rCurrentProcessInfo)
 {
@@ -49,7 +49,7 @@ void IgaBeamADElement::GetDofList(
     KRATOS_CATCH("")
 }
 
-void IgaBeamADElement::EquationIdVector(
+void IgaBeamWeakDirichletCondition::EquationIdVector(
     EquationIdVectorType& rResult,
     ProcessInfo& rCurrentProcessInfo)
 {
@@ -67,12 +67,12 @@ void IgaBeamADElement::EquationIdVector(
     KRATOS_CATCH("")
 }
 
-void IgaBeamADElement::Initialize()
+void IgaBeamWeakDirichletCondition::Initialize()
 {
     
 }
 
-void IgaBeamADElement::CalculateAll(
+void IgaBeamWeakDirichletCondition::CalculateAll(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo,
@@ -129,6 +129,7 @@ void IgaBeamADElement::CalculateAll(
 
     // reference configuration FIXME: move this section to Initialize()
 
+    const Vector3d X = ComputeRefBaseVector(0, shape_functions, GetGeometry());
     const Vector3d A1 = ComputeRefBaseVector(1, shape_functions, GetGeometry());
     const Vector3d A1_1 = ComputeRefBaseVector(2, shape_functions, GetGeometry());
 
@@ -148,9 +149,11 @@ void IgaBeamADElement::CalculateAll(
     const Matrix3d Rod_1_Lam = Rod_1 * Lam;
     const Matrix3d Rod_Lam_1 = Rod * Lam_1;
 
+    const Vector3d Y = Rod_Lam * A02.transpose();
     const Vector3d A2 = Rod_Lam * A02.transpose();
     const Vector3d A2_1 = Rod_1_Lam * A02.transpose() + Rod_Lam_1 * A02.transpose();
 
+    const Vector3d Z = Rod_Lam * A03.transpose();
     const Vector3d A3 = Rod_Lam * A03.transpose();
     const Vector3d A3_1 = Rod_1_Lam * A03.transpose() + Rod_Lam_1 * A03.transpose();
 
@@ -168,6 +171,7 @@ void IgaBeamADElement::CalculateAll(
     const auto phi = ComputeActValue(DISPLACEMENT_ROTATION, 0, shape_functions, GetGeometry());
     const auto phi_1 = ComputeActValue(DISPLACEMENT_ROTATION, 1, shape_functions, GetGeometry());    
 
+    const auto x = ComputeActBaseVector(1, shape_functions, GetGeometry());
     const auto a1 = ComputeActBaseVector(1, shape_functions, GetGeometry());
     const auto a1_1 = ComputeActBaseVector(2, shape_functions, GetGeometry());
 
@@ -189,9 +193,11 @@ void IgaBeamADElement::CalculateAll(
 
     const auto xform = rod_1_lam * Rod_Lam + rod_lam_1 * Rod_Lam + rod_lam * Rod_1_Lam + rod_lam * Rod_Lam_1;
 
+    const auto y = rod_lam * A2.transpose();
     const auto a2 = rod_lam * A2.transpose();
     const auto a2_1 = xform * A02.transpose();
 
+    const auto z = rod_lam * A3.transpose();
     const auto a3 = rod_lam * A3.transpose();
     const auto a3_1 = xform * A03.transpose();
 
@@ -201,30 +207,54 @@ void IgaBeamADElement::CalculateAll(
     const auto c12 = a3_1.dot(a2);
     const auto c13 = a2_1.dot(a3);
 
+
+    // const auto u_xzz = x - X;
+    // const auto v_xyz = y - Y;
+    // const auto w_xyz = z - Z;
+
+    const auto A22 = A2.dot(A2);
+    const auto A22_length = sqrt(A22);
+    const auto N = A2 / A22_length;
+
+    const auto A33 = A3.dot(A3);
+    const auto A33_length = sqrt(33);
+    const auto V = A3 / A33_length;
+
+    const auto a22 = a2.dot(a2);
+    const auto a22_length = sqrt(a22);
+    const auto n = a2 / a22_length;
+
+    const auto a33 = a3.dot(a3);
+    const auto a33_length = sqrt(a33);
+    const auto v = a3 / a33_length;
+
+    const auto alpha_2 = atan2(a1.dot(N), a1.dot(T));
+    const auto alpha_3 = atan2(a1.dot(V), a1.dot(T));
+
     // inner energy
 
-    const auto eps11 = Tm * (a11 - A11) / 2;
-    const auto kap2  = Tm * (b2  - B2 );
-    const auto kap3  = Tm * (b3  - B3 );
-    const auto kap12 = Ts * (c12 - C12);
-    const auto kap13 = Ts * (c13 - C13);
+    // const auto eps11 = Tm * (a11 - A11) / 2;
+    // const auto kap2  = Tm * (b2  - B2 );
+    // const auto kap3  = Tm * (b3  - B3 );
+    // const auto kap12 = Ts * (c12 - C12);
+    // const auto kap13 = Ts * (c13 - C13);
 
-    const auto dP = 0.5 * (pow(eps11, 2) * ea +
-                           pow(kap2 , 2) * ei3 +
-                           pow(kap3 , 2) * ei2 +
-                           pow(kap12, 2) * gi1 * 0.5 +
-                           pow(kap13, 2) * gi1 * 0.5) * A * integration_weight;
+    // const auto dP = 0.5 * (pow(eps11, 2) * ea +
+    //                        pow(kap2 , 2) * ei3 +
+    //                        pow(kap3 , 2) * ei2 +
+    //                        pow(kap12, 2) * gi1 * 0.5 +
+    //                        pow(kap13, 2) * gi1 * 0.5) * A * integration_weight;
 
 
-    MapMatrix(rLeftHandSideMatrix) = dP.h();
-    MapVector(rRightHandSideVector) = -dP.g();
+    // MapMatrix(rLeftHandSideMatrix) = dP.h();
+    // MapVector(rRightHandSideVector) = -dP.g();
 
     KRATOS_CATCH("")
 }
 
-void IgaBeamADElement::PrintInfo(std::ostream& rOStream) const
+void IgaBeamWeakDirichletCondition::PrintInfo(std::ostream& rOStream) const
 {
-    rOStream << "\"IgaBeamADElement\" #" << Id();
+    rOStream << "\"IgaBeamWeakDirichletCondition\" #" << Id();
 }
 
 } // namespace Kratos

@@ -9,8 +9,9 @@
 //                  Lukas Rauch
 */
 
-#if !defined(KRATOS_IGA_BEAM_AD_ELEMENT_H_INCLUDED)
-#define KRATOS_IGA_BEAM_AD_ELEMENT_H_INCLUDED
+#if !defined(KRATOS_IGA_BEAM_WEAK_DIRICHLET_CONDITION_H_INCLUDED)
+#define KRATOS_IGA_BEAM_WEAK_DIRICHLET_CONDITION_H_INCLUDED
+
 
 // System includes
 #include "includes/define.h"
@@ -27,15 +28,15 @@
 namespace Kratos
 {
 
-class IgaBeamADElement
+class IgaBeamWeakDirichletCondition
     : public IgaBaseElement<4>
 {
 public:
-    KRATOS_CLASS_POINTER_DEFINITION( IgaBeamADElement );
+    KRATOS_CLASS_POINTER_DEFINITION( IgaBeamWeakDirichletCondition );
 
     using IgaBaseElementType::IgaBaseElementType;
 
-    ~IgaBeamADElement() override
+    ~IgaBeamWeakDirichletCondition() override
     {
     };
 

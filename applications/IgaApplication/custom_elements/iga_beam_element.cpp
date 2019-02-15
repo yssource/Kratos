@@ -568,20 +568,20 @@ KRATOS_TRY;
 
     // Compute the final Element Stiffness Matrix
     _gke.clear();
-    _gke  = kem;
-    _gke += keb_n;
-    _gke += keb_v;
-    _gke += ket_n;
-    _gke += ket_v;
+    _gke  = (kem
+           + keb_n
+           + keb_v
+           + ket_n
+           + ket_v);
 
     // LOG("_gke " << _gke);
 
     _gfie.clear();
-    _gfie  = S11_m * eps_dof;
-    _gfie += S11_n * curve_dof_n;
-    _gfie += S11_v * curve_dof_v;
-    _gfie += S12 * torsion_dof_n;
-    _gfie += S13 * torsion_dof_v;
+    _gfie  = (S11_m * eps_dof
+           +  S11_n * curve_dof_n
+           +  S11_v * curve_dof_v
+           +  S12 * torsion_dof_n
+           +  S13 * torsion_dof_v);
 
     // LOG("_gfie " << _gfie);
 

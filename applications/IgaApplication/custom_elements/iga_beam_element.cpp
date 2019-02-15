@@ -96,13 +96,6 @@ KRATOS_TRY;
     // temporary debug data
     // auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
 
-
-    // get integration data
-
-    // const double& integration_weight = GetValue(INTEGRATION_WEIGHT);
-    // Vector& shape_function_values = GetValue(SHAPE_FUNCTION_VALUES);
-    // Matrix& shape_derivatives     = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-
     // get properties
     const auto& properties = GetProperties();
 
@@ -111,7 +104,7 @@ KRATOS_TRY;
     const double _area          = properties[CROSS_AREA];
     const double prestress      = properties[PRESTRESS_CAUCHY];
     const double Phi            = properties[PHI];
-    const double Phi_der        = properties[PHI_0_DER];
+    const double Phi_der        = properties[PHI_DER_1];
     const double _m_inert_y     = properties[MOMENT_OF_INERTIA_Y];
     const double _m_inert_z     = properties[MOMENT_OF_INERTIA_Z];
     const double _mt_inert      = properties[MOMENT_OF_INERTIA_T];
@@ -194,7 +187,7 @@ KRATOS_TRY;
     _act_dofs[1] = DISPLACEMENT_Y;
     _act_dofs[2] = DISPLACEMENT_Z;
     if(dof_node == 4 ) _act_dofs[3] = DISPLACEMENT_ROTATION;
-    
+
 KRATOS_CATCH("");
 }
 
@@ -202,7 +195,7 @@ KRATOS_CATCH("");
 // #################################################################################
 // #
 // #                          +++ Iga_Beam_Element +++
-// #    
+// #
 // #################################################################################
 // #################################################################################
 // #
@@ -329,7 +322,7 @@ KRATOS_TRY;
     ComputeGeometryReference(R1, R2, A, B);
     ComputeGeometryActual(r1, r2, a, b);
 
-    
+
     // LOG("R1 " << R1);
     // LOG("R2 " << R2);
     // LOG("A " << A);
@@ -338,7 +331,7 @@ KRATOS_TRY;
     // LOG("r2 " << r2);
     // LOG("a " << a);
     // LOG("b " << b);
-    
+
     // // Debug Check
     // IgaDebug::CheckVector(expected_data, "R_1", R1);
     // IgaDebug::CheckVector(expected_data, "R_2", R2);
@@ -351,7 +344,7 @@ KRATOS_TRY;
 
     // get Rotations
     double Phi      = GetValue(PHI);
-    double Phi_der  = GetValue(PHI_0_DER);
+    double Phi_der  = GetValue(PHI_DER_1);
 
     double phi      = 0;
     double phi_der  = 0;
@@ -388,6 +381,7 @@ KRATOS_TRY;
     // LOG("B_v " << B_v);
     // LOG("C_12 " << C_12);
     // LOG("C_13 " << C_13);
+    // LOG("R1_ " << R1);
 
 
     ComputeCrossSectionGeometryActual(R1, R2, r1, r2, N0, V0, n, v, b_n, b_v, c_12, c_13, Phi, Phi_der, phi, phi_der);
@@ -402,6 +396,8 @@ KRATOS_TRY;
     // LOG("c_13 " << c_13);
     // LOG("c_12 " << c_12);
     // LOG("c_12 " << c_12);
+    // LOG("r1_ " << r1);
+    // LOG("r2_ " << r2);
 
     _dL = A;
     double Apow2 = std::pow(A,2);
@@ -467,7 +463,7 @@ KRATOS_TRY;
     Vector eps_dof = ComputeEpsilonFirstDerivative(r1);
     eps_dof = eps_dof / Apow2;
     // LOG("eps_dof " << eps_dof);
-    
+
 
     // 2nd Variation
     // Variation of axial Strain
@@ -605,7 +601,7 @@ KRATOS_TRY;
     // IgaDebug::CheckVector(expected_data, "_curv_var_t", _curv_var_t);
     // IgaDebug::CheckVector(expected_data, "_curv_var_n", _curv_var_n);
     // IgaDebug::CheckVector(expected_data, "_curv_var_v", _curv_var_v);
-  
+
 KRATOS_CATCH("")
 }
 
@@ -647,8 +643,8 @@ KRATOS_TRY;
     r2.clear();
 
     // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
-    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
 
 
     // Get previous Results
@@ -658,7 +654,7 @@ KRATOS_TRY;
 
     for (size_t i = 0; i < NumberOfNodes(); i++){
         coords = GetGeometry()[i].GetInitialPosition();
-        tmp_disp_ini = 0; 
+        tmp_disp_ini = 0;
 
         coords[0] += tmp_disp_ini[0];
         coords[1] += tmp_disp_ini[1];
@@ -732,9 +728,9 @@ KRATOS_TRY;
     r3.clear();
 
     // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
-    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);   
-    Vector& shape_derivatives_3 = GetValue(SHAPE_FUNCTION_LOCAL_DER_3);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
+    Vector& shape_derivatives_3 = GetValue(SHAPE_FUNCTION_LOCAL_DER_3);
 
 
     // Get previous Results
@@ -744,7 +740,7 @@ KRATOS_TRY;
 
     for (size_t i = 0; i < NumberOfNodes(); i++){
         coords = GetGeometry()[i].GetInitialPosition();
-        tmp_disp_ini = 0; 
+        tmp_disp_ini = 0;
 
         coords[0] += tmp_disp_ini[0];
         coords[1] += tmp_disp_ini[1];
@@ -818,10 +814,10 @@ KRATOS_TRY;
 
     // Get the 1st and 2nd Shape Function Deriatides from the ModelPart
     // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
-    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
 
-    
+
     // Computation of the Basis Functions
     for (size_t i = 0; i < NumberOfNodes(); i++){
 
@@ -891,9 +887,9 @@ KRATOS_TRY;
     R3.clear();        // Clears 3rd Derivative of the Curve
 
     // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
-    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);   
-    Vector& shape_derivatives_3 = GetValue(SHAPE_FUNCTION_LOCAL_DER_3);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
+    Vector& shape_derivatives_3 = GetValue(SHAPE_FUNCTION_LOCAL_DER_3);
 
 
     Vector3 coords;     // Coordinates of the Node
@@ -964,8 +960,8 @@ KRATOS_TRY;
 
     // Compute the Basis Functions
     // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
-    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
 
     // LOG("shape_derivateivs " << shape_derivatives);
 
@@ -1043,9 +1039,9 @@ KRATOS_TRY;
 
     // Compute the Basis Functions
     // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
-    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);   
-    Vector& shape_derivatives_3 = GetValue(SHAPE_FUNCTION_LOCAL_DER_3);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
+    Vector& shape_derivatives_3 = GetValue(SHAPE_FUNCTION_LOCAL_DER_3);
 
 
     for (size_t i = 0; i < NumberOfNodes(); i++){
@@ -1446,7 +1442,7 @@ KRATOS_TRY;
     epsilon_var.resize(NumberOfDofs());
     epsilon_var.clear();
     // double r1_L2 = norm_2(_r1);                  //change 17.11
-    // // TODO warum muss hier das r1_L2 rein ? 
+    // // TODO warum muss hier das r1_L2 rein ?
 
     // get the degree of Freedom per Node
     std::vector<int> act_dofs;
@@ -1454,7 +1450,7 @@ KRATOS_TRY;
     int number_dofs_per_node = act_dofs.size();
 
     // Matrix shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
 
 
     for (int r = 0; r < NumberOfDofs(); r++)
@@ -1506,7 +1502,7 @@ KRATOS_TRY;
     int number_dofs_per_node = act_dofs.size();
 
     // Matrix shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
 
 
     for (int r = 0; r < NumberOfDofs(); r++){
@@ -1555,7 +1551,7 @@ KRATOS_CATCH("");
      *
      * @param[in]
      * @param[out]  Phi          // Phi Reference
-     * @param[out]  Phi_0_der    // Phi Initial
+     * @param[out]  Phi_der_1    // Phi Initial
      *
      * @author L.Rauch (10/2018)
      *
@@ -1564,18 +1560,18 @@ KRATOS_CATCH("");
 //#--------------------------------------------------------------------------------
 void IgaBeamElement::ComputePhiReferenceProperty(
         double& phi,
-        double& phi_0_der)
+        double& phi_der_1)
 {
 KRATOS_TRY;
     // Construct Vector of Temporarry dislplacements
     double tmp_ini_disp;
     phi = 0;
-    phi_0_der = 0;
+    phi_der_1 = 0;
 
     // Get Shape Function Derivatieves from the Element
     Vector& shape_function = GetValue(SHAPE_FUNCTION_VALUES);
     // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
 
 
     std::vector<int> act_dofs;
@@ -1587,7 +1583,7 @@ KRATOS_TRY;
         tmp_ini_disp = GetGeometry()[i].FastGetSolutionStepValue(DISPLACEMENT_ROTATION);
 
         phi += shape_function(i) * tmp_ini_disp;
-        phi_0_der += shape_derivatives_1[i] * tmp_ini_disp;
+        phi_der_1 += shape_derivatives_1[i] * tmp_ini_disp;
     }
 
 KRATOS_CATCH("");
@@ -1634,14 +1630,14 @@ KRATOS_CATCH("");
 //#################################################################################
 //#################################################################################
 //#
-//#                             +++ Compute Rotational DOF +++     
+//#                             +++ Compute Rotational DOF +++
 //#
 //#################################################################################
 //#################################################################################
 //#
 /**     Computes the variation of the corvature
      *
-     * @param[in]      
+     * @param[in]
      * @param[out] vector with the variations of the curvature
      *
      * @author L.Rauch (01/2019)
@@ -2218,7 +2214,7 @@ KRATOS_TRY;
     std::vector<Vector3> r1_var(NumberOfDofs());
 
     // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
 
 
     for (size_t r = 0; r != NumberOfDofs(); ++r) {
@@ -2472,7 +2468,7 @@ void IgaBeamElement::ComputeTVar(
 KRATOS_TRY;
 
     // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
 
 
     double r1_dL = norm_2(r1);
@@ -2505,7 +2501,7 @@ void IgaBeamElement::ComputeTVarVar(
 KRATOS_TRY;
 
     // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
 
 
     double r1_dL = norm_2(r1);
@@ -2565,8 +2561,8 @@ void IgaBeamElement::ComputeTDerVar(
 KRATOS_TRY;
 
     // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
-    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
 
 
     double r1r11 = inner_prod(r1, r2);
@@ -2640,8 +2636,8 @@ void IgaBeamElement::ComputeTDerVarVar(
 KRATOS_TRY;
 
     // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
-    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
 
 
     double r1r11 = inner_prod(r1, r2);
@@ -2791,7 +2787,7 @@ KRATOS_TRY;
 
     Vector& shape = GetValue(SHAPE_FUNCTION_VALUES);
     // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
 
 
     double sin_phi = std::sin(phi);
@@ -2833,7 +2829,7 @@ KRATOS_TRY;
 
     Vector& shape = GetValue(SHAPE_FUNCTION_VALUES);
     // Matrix& shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);   
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
 
 
     double sin_phi = std::sin(phi);
@@ -2985,7 +2981,7 @@ KRATOS_TRY;
     double T0_T = inner_prod(v1, v2);
     double d = 1.0 / (1.0 + T0_T);
 
-    BoundedMatrix<double, 3, 3> c_1 = CrossVectorIdentity(v1);          // TODO wird c_1 hier wirklich gebraucht? 
+    BoundedMatrix<double, 3, 3> c_1 = CrossVectorIdentity(v1);          // TODO wird c_1 hier wirklich gebraucht?
 
     for (size_t r = 0; r != NumberOfDofs(); ++r)
     {
@@ -3285,115 +3281,153 @@ KRATOS_TRY;
             }
         }
     }
-KRATOS_CATCH("");    
-}
-
-
-
-// LOADS________________________________________________________________________________________________
-
-// void IgaBeamElement::CalculateLoadMoment( )
-// {
-// KRATOS_TRY;
-
-//     //Predefinition
-//     double _mom_laod;
-//     // loadType* element_load_type;
-//     std::vector<double> _local_load_vec(NumberOfNodes()*4);
-//     _local_load_vec.clear();
-//     Vector3 direction;                      
-//     direction.clear();
-//     double factor;
-
-//     // TODO Get Load Direction!
-//     direction /= norm_2(direction); 
-
-
-//     // Get Shape Functions
-//     Vector& shape_function_values = GetValue(SHAPE_FUNCTION_VALUES);
-//     Matrix& shape_derivatives     = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-//     //Get Tangent Vector
-//     Vector3 T0_vec = GetValue(T0);
-//     // Normalize t0
-//     double t0_L = norm_2(T0_vec);
-//     T0_vec = T0_vec/t0_L;
-//     // get Rotations
-//     double Phi      = GetValue(PHI);
-//     double Phi_der  = GetValue(PHI_0_DER);
-//     double phi      = 0;
-//     double phi_der  = 0;
-    
-//     // Declarations
-//     Vector3 R1;
-//     Vector3 R2;
-//     double A;
-//     double B;
-//     Vector3 r1;
-//     Vector3 r2;
-//     double a;
-//     double b;
-//     R1.clear();
-//     R2.clear();
-//     r1.clear();
-//     r2.clear();
-    
-//     double B_n;
-//     double B_v;
-//     double C_12;
-//     double C_13;
-//     double b_n;
-//     double b_v;
-//     double c_12;
-//     double c_13;
-
-//     Vector3 N;     // Principal Axis 1 of Cross Section in Undeformed Config.
-//     Vector3 V;   // Prinzipal Axis 2 of Cross Section in Undeformed Config.
-//     Vector3 n;   // Principal Axis 1 Of Cross Section in Deformed Config.
-//     Vector3 v;  // Principal Axis 2 of Cross Section in Deformed Config.
-//     Vector3 N0;    // Principal Axis 1 of Cross Section in Reference Config.
-//     Vector3 V0;    // Principal Axis 2 of Cross Section in Reference Config.
-
-//     VectorType curv_var_t;
-//     VectorType curv_var_n;
-//     VectorType curv_var_v;
-
-//    // Compute the Vectors R1 R2 and the length A and B in undeformed and deformed state
-//     ComputeGeometryReference(R1, R2, A, B);
-//     ComputeGeometryActual(r1, r2, a, b);
-//     ComputeCrossSectionGeometryReference(R1, R2, N, V, T0_vec, N0, V0, B_n, B_v, C_12, C_13, Phi, Phi_der);
-//     ComputeCrossSectionGeometryActual(R1, R2, r1, r2, N0, V0, n, v, b_n, b_v, c_12, c_13, Phi, Phi_der, phi, phi_der);
-//     ComputePhiReferenceProperty(phi, phi_der);
-//     ComputeRotationalDof( curv_var_t, curv_var_n, curv_var_v, R1, r1, N0, V0, N, V, n, v, Phi, phi );
-
-//     Vector3 t = r1 / norm_2(r1);
-
-//     double fac_t;
-//     double fac_n;
-//     double fac_v;
-
-//     fac_t = inner_prod(t, direction) * factor;
-//     fac_n = inner_prod(n, direction) * factor;
-//     fac_v = inner_prod(v, direction) * factor;
-
-//     for(size_t k = 0; k != NumberOfDofs(); k++)
-//     {
-//         _local_load_vec[k] = curv_var_t[k] * fac_t + curv_var_n[k] * fac_n + curv_var_v[k] * fac_v;
-//     }
-
-
-// KRATOS_CATCH(""); 
-// }
-
-void IgaBeamElement::ComputeStressNonlinear(Vector3& _m, Vector3& _t, Vector3& _q, double _u, Vector3& _n_act)
-{
-KRATOS_TRY
-    
-
 KRATOS_CATCH("");
 }
 
 
 
+
+void IgaBeamElement::ComputeStressNonlinear( )
+{
+KRATOS_TRY
+    double stress_normal;
+    double stress_moment_1;
+    double stress_moment_2;
+    double stress_shear_1;
+    double stress_shear_2;
+    double stress_torsion;
+    double stress_3D;
+
+    // Get shape function derivatives
+    Vector& shape_function      = GetValue(SHAPE_FUNCTION_VALUES);
+    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+    Vector& shape_derivatives_2 = GetValue(SHAPE_FUNCTION_LOCAL_DER_2);
+    Vector& shape_derivatives_3 = GetValue(SHAPE_FUNCTION_LOCAL_DER_3);
+
+    // Properties
+    const auto& properties = GetProperties();
+
+    // Get material properties
+    const double emod         = properties[YOUNG_MODULUS];
+    const double gmod         = properties[SHEAR_MODULUS];
+    const double nue          = properties[POISSON_RATIO];
+
+    // Get cross section properties
+    const double area         = properties[CROSS_AREA];
+    const double m_inert_y    = properties[MOMENT_OF_INERTIA_Y];
+    const double m_inert_z    = properties[MOMENT_OF_INERTIA_Z];
+    const double m_inert_t    = properties[MOMENT_OF_INERTIA_T];
+
+    // Material and crosssection
+    const double emod_A       = emod * area;
+    const double emod_I_v     = emod * m_inert_z;
+    const double emod_I_n     = emod * m_inert_y;
+    const double gmod_I_t     = gmod * m_inert_t;
+
+    // Get Prestress
+    const double prestress        = 0;
+    const double prestress_bend_1 = 0;
+    const double prestress_bend_2 = 0;
+    const double prestress_tor    = 0; 
+    bool prestress_bend_1_auto  = false;
+    bool prestress_bend_2_auto  = false;
+    bool prestress_tor_auto     = false;
+    
+    // Get initial geometry
+    Vector3 T0_vec      = GetValue(T0);
+    T0_vec             /= norm_2(T0_vec);
+    const double Phi          = GetValue(PHI);
+    const double Phi_der_1    = GetValue(PHI_DER_1);
+    const double Phi_der_2    = GetValue(PHI_DER_2);
+
+    Vector3 N0;     // Principal Axis 1 of Cross Section in Reference Config.
+    Vector3 V0;     // Principal Axis 2 of Cross Section in Reference Config.
+    Vector3 N;      // Principal Axis 1 of Cross Section in Undeformed Config.
+    Vector3 V;      // Prinzipal Axis 2 of Cross Section in Undeformed Config.
+    Vector3 R1;     // 1st derivative of the curve undeformed config
+    Vector3 R2;     // 2nd derivative of the curve undeformed config
+    Vector3 R3;     // 3rd derivative of the curve undeformed config
+    R1.clear();
+    R2.clear();
+    double A;
+    double B;
+    double B_n;
+    double B_v;
+    double C_12;
+    double C_13;
+    ComputeGeometryReference(R1, R2, R3, A, B);
+    ComputeCrossSectionGeometryReference(R1, R2, N, V, T0_vec, N0, V0, B_n, B_v, C_12, C_13, Phi, Phi_der_1);
+
+    double Apow2     = std::pow(A,2);
+
+    Vector3 r1;     // 1st derivative of the curve deformed config
+    Vector3 r2;     // 2nd derivative of the curve deformed config
+    Vector3 r3;     // 3rd derivative of the curve deformed config
+    r1.clear();
+    r2.clear();
+    double a;
+    double b;
+    Vector3 n;      // Principal Axis 1 Of Cross Section in Deformed Config.
+    Vector3 v;      // Principal Axis 2 of Cross Section in Deformed Config.
+    double b_n;
+    double b_v;
+    double c_12;
+    double c_13;
+    double phi          = 0;
+    double phi_der_1    = 0;
+    ComputePhiReferenceProperty(phi, phi_der_1);
+    ComputeGeometryActual(r1, r2, r3, a, b);
+    ComputeCrossSectionGeometryActual(R1, R2, r1, r2, N0, V0, n, v, b_n, b_v, c_12, c_13, Phi, Phi_der_1, phi, phi_der_1);
+
+    Vector eps_dof = ComputeEpsilonFirstDerivative(r1);
+
+
+
+
+KRATOS_CATCH("");
+}
+
+
+void IgaBeamElement::ComputeShearForcesNonlinear( 
+    Vector shear_forces_n, 
+    Vector shear_forces_v, 
+        Vector3 _N0,
+        Vector3 _V0,
+        Vector3 _R1,
+        Vector3 _R2,
+        Vector3 _R3,
+        Vector3 _r1,
+        Vector3 _r2,
+        Vector3 _r3, 
+        double  _Phi,
+        double  _Phi_der1,
+        double  _Phi_der2,
+        double  _phi_der,
+        double  _phi_der1,
+        double  _phi_der2,
+        bool _prestress_bend1_auto,
+        bool _prestress_bend2_auto )
+{
+KRATOS_TRY
+    BoundedMatrix<double,3,3> matrix_lam;
+    BoundedMatrix<double,3,3> matrix_lam_der;
+    BoundedMatrix<double,3,3> matrix_lam_derder;
+    BoundedMatrix<double,3,3> matrix_rod;
+    BoundedMatrix<double,3,3> matrix_rod_der;
+    BoundedMatrix<double,3,3> matrix_rod_derder;
+    BoundedMatrix<double,3,3> matrix_Lam;
+    BoundedMatrix<double,3,3> matrix_Lam_der;
+    BoundedMatrix<double,3,3> matrix_Lam_derder;
+    BoundedMatrix<double,3,3> matrix_Rod;
+    BoundedMatrix<double,3,3> matrix_Rod_der;
+    BoundedMatrix<double,3,3> matrix_Rod_derder;
+
+    double R1_dL    = norm_2(_R1);
+    double r1_dL    = norm_2(_r1);
+
+
+KRATOS_CATCH("");
+}
 
 
 

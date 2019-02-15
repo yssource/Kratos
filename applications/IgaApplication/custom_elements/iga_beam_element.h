@@ -447,7 +447,27 @@ BoundedMatrix<double,3,3> IgaBeamElement::CrossProductMatrixVector(
 
 void IgaBeamElement::CalculateLoadMoment( ) ;
 
-void IgaBeamElement::ComputeStressNonlinear(Vector3& _m, Vector3& _t, Vector3& _q, double _u, Vector3& _n_act) ;
+void IgaBeamElement::ComputeStressNonlinear( ) ;
+
+void IgaBeamElement::ComputeShearForcesNonlinear( 
+    Vector shear_forces_n, 
+    Vector shear_forces_v, 
+        Vector3 _N0,
+        Vector3 _V0,
+        Vector3 _R1,
+        Vector3 _R2,
+        Vector3 _R3,
+        Vector3 _r1,
+        Vector3 _r2,
+        Vector3 _r3, 
+        double  _Phi,
+        double  _Phi_der1,
+        double  _Phi_der2,
+        double  _phi_der,
+        double  _phi_der1,
+        double  _phi_der2,
+        bool _prestress_bend1_auto,
+        bool _prestress_bend2_auto ) ;
 
 
     

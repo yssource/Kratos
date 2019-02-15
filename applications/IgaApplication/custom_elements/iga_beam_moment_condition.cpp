@@ -301,7 +301,7 @@ KRATOS_TRY;
 
     // get Rotations
     double Phi      = GetValue(PHI);
-    double Phi_der  = GetValue(PHI_0_DER);
+    double Phi_der  = GetValue(PHI_DER_1);
 
     double phi      = 0;
     double phi_der  = 0;
@@ -1500,7 +1500,7 @@ KRATOS_CATCH("");
      *
      * @param[in]
      * @param[out]  Phi          // Phi Reference
-     * @param[out]  Phi_0_der    // Phi Initial
+     * @param[out]  Phi_der_1    // Phi Initial
      *
      * @author L.Rauch (10/2018)
      *
@@ -1509,13 +1509,13 @@ KRATOS_CATCH("");
 //#--------------------------------------------------------------------------------
 void IgaBeamMomentCondition::ComputePhiReferenceProperty(
         double& phi,
-        double& phi_0_der)
+        double& phi_der_1)
 {
 KRATOS_TRY;
     // Construct Vector of Temporarry dislplacements
     double tmp_ini_disp;
     phi = 0;
-    phi_0_der = 0;
+    phi_der_1 = 0;
 
     // Get Shape Function Derivatieves from the Element
     Vector& shape_function = GetValue(SHAPE_FUNCTION_VALUES);
@@ -1531,7 +1531,7 @@ KRATOS_TRY;
         tmp_ini_disp = GetGeometry()[i].FastGetSolutionStepValue(DISPLACEMENT_ROTATION);
 
         phi += shape_function(i) * tmp_ini_disp;
-        phi_0_der += shape_derivatives_1[i] * tmp_ini_disp;
+        phi_der_1 += shape_derivatives_1[i] * tmp_ini_disp;
     }
 
 KRATOS_CATCH("");
@@ -1636,6 +1636,10 @@ KRATOS_TRY;
     T_ = _R1 / norm_2(_R1);
     t_ = _r1 / norm_2(_r1);
     ComputeTVar(_r1, t_var);
+    // LOG("T_ " << T_);
+    // LOG("t_ " << t_);
+    // LOG("t_var " << t_var);
+
 
     BoundedMatrix<double, 3, 3>  matrix_Lam;
     BoundedMatrix<double, 3, 3>  matrix_lam;
@@ -1648,9 +1652,18 @@ KRATOS_TRY;
     ComputeLambda(T_, t_, matrix_lam);
     ComputeLambdaVar(T_, t_, t_var, matrix_lam_var);
 
+    // LOG("matrix_lam " << matrix_lam);
+    // LOG("matrix_lam_var " << matrix_lam_var);
+    // LOG("matrix_Lam " << matrix_Lam);
+
     ComputeRodrigues(T_, _Phi, matrix_Rod);
     ComputeRodrigues(t_, _phi, matrix_rod);
     ComputeRodriguesVar(t_, t_var, _phi, matrix_rod_var);
+
+    // LOG("matrix_rod " << matrix_rod);
+    // LOG("matrix_rod_var " << matrix_rod_var);
+    // LOG("matrix_Rod " << matrix_Rod);
+
 
     BoundedMatrix<double,3,3> matrix_Rod_Lam;
     matrix_Rod_Lam.clear();
@@ -1663,6 +1676,7 @@ KRATOS_TRY;
             }
         }
     }
+    // LOG("matrix_Rod_Lam " << matrix_Rod_Lam);
 
     BoundedMatrix<double,3,3> matrix_lam_Rod_Lam;
     matrix_lam_Rod_Lam.clear();
@@ -1675,6 +1689,7 @@ KRATOS_TRY;
             }
         }
     }
+    // LOG("matrix_lam_Rod_Lam " << matrix_lam_Rod_Lam);
 
     std::vector<BoundedMatrix<double, 3, 3>> matrix_lam_var_Rod_Lam(NumberOfDofs());
 
@@ -1689,6 +1704,7 @@ KRATOS_TRY;
             matrix_lam_var_Rod_Lam[r].clear();
         }
     }
+    // LOG("matrix_lam_var_Rod_Lam " << matrix_lam_var_Rod_Lam); 
 
     std::vector<BoundedMatrix<double, 3, 3>> matrix_rod_lam_var_Rod_Lam(NumberOfDofs());
     std::vector<BoundedMatrix<double, 3, 3>> matrix_rod_var_lam_Rod_Lam(NumberOfDofs());
@@ -1698,6 +1714,8 @@ KRATOS_TRY;
             matrix_rod_lam_var_Rod_Lam[r]     = prod(matrix_rod, matrix_lam_var_Rod_Lam[r]);
             matrix_rod_var_lam_Rod_Lam[r]     = prod(matrix_rod_var[r], matrix_lam_Rod_Lam);
     }
+    // LOG("matrix_rod_lam_var_Rod_Lam " << matrix_rod_lam_var_Rod_Lam);
+    // LOG("matrix_rod_var_lam_Rod_Lam " << matrix_rod_var_lam_Rod_Lam);
 
     std::vector<BoundedMatrix<double,3,3>> matrix_rodlamRodLam_var(NumberOfDofs());
 
@@ -1714,6 +1732,9 @@ KRATOS_TRY;
         vec_n_var[r] = prod(matrix_rodlamRodLam_var[r], _N0);
         vec_v_var[r] = prod(matrix_rodlamRodLam_var[r], _V0);
     }
+    // LOG("vec_n_var " << vec_n_var);
+    // LOG("vec_v_var " << vec_v_var);
+
 
     std::vector<Vector3> vec_n_x_vec_n_var(NumberOfDofs());
     std::vector<Vector3> vec_v_x_vec_v_var(NumberOfDofs());
@@ -1731,6 +1752,9 @@ KRATOS_TRY;
         //     vec_v_x_vec_v_var[r].clear();
         // }
     }
+    // LOG("vec_n_x_vec_n_var " << vec_n_x_vec_n_var);
+    // LOG("vec_v_x_vec_v_var " << vec_v_x_vec_v_var);
+
 
     double sqrt_n_t = std::sqrt(1-std::pow(inner_prod(Cross(_n_act, (_n_act - _N_ref)),T_),2 ));
     double sqrt_n_v = std::sqrt(1-std::pow(inner_prod(Cross(_n_act, (_n_act - _N_ref)),_V_ref),2 ));
@@ -3255,7 +3279,7 @@ KRATOS_TRY;
     T0_vec = T0_vec/t0_L;
     // get Rotations
     double Phi      = GetValue(PHI);
-    double Phi_der  = GetValue(PHI_0_DER);
+    double Phi_der  = GetValue(PHI_DER_1);
     double phi      = 0;
     double phi_der  = 0;
     
@@ -3300,6 +3324,10 @@ KRATOS_TRY;
     ComputeCrossSectionGeometryActual(R1, R2, r1, r2, N0, V0, n, v, b_n, b_v, c_12, c_13, Phi, Phi_der, phi, phi_der);
     ComputePhiReferenceProperty(phi, phi_der);
     ComputeRotationalDof( curv_var_t, curv_var_n, curv_var_v, R1, r1, N0, V0, N, V, n, v, Phi, phi );
+    // LOG("R1" << R1);
+    // LOG("r1" << r1);
+    // LOG("r2" << r2);
+
 
     // normalize base vectors
     Vector3 t = r1 / norm_2(r1);
@@ -3313,11 +3341,28 @@ KRATOS_TRY;
     fac_t = inner_prod(t, _load_vec);        //TODO check if right length
     fac_n = inner_prod(n, _load_vec);
     fac_v = inner_prod(v, _load_vec);
+    // LOG("_load_vec " << _load_vec);
+    // LOG("fac_t " << fac_t);
+    // LOG("fac_n " << fac_n);
+    // LOG("fac_v " << fac_v);
+
 
     for(size_t k = 0; k != NumberOfDofs(); k++)
     {
         _local_load_vec[k] = curv_var_t[k] * fac_t + curv_var_n[k] * fac_n + curv_var_v[k] * fac_v;
+        // _local_load_vec[k] = 0;
     }
+
+    // LOG("curv_var_t : " << curv_var_t); 
+    // LOG("curv_var_n : " << curv_var_n); 
+    // LOG("curv_var_v : " << curv_var_v); 
+    // LOG("Load Vector: " << _local_load_vec); 
+
+// // get properties
+//     const auto& properties  = GetProperties();
+//     const double moment  = properties[LOAD_MOMENT];        //TODO: könnte eigentlich auch direkt in der Funktion abgerufen werden
+
+//     _local_load_vec[NumberOfDofs() -2] = moment;
 
 
 KRATOS_CATCH(""); 

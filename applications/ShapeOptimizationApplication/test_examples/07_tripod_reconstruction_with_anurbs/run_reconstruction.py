@@ -6,16 +6,16 @@ import KratosMultiphysics.ShapeOptimizationApplication as KratosShape
 import time
 import os
 from cad_reconstruction import CADMapper
+import ANurbs as an
 
 # Parameters
 parameters = KratosMultiphysics.Parameters("""
 {
     "input" :
     {
-        "cad_filename"                  : "tripod.iga",
+        "cad_filename"                  : "tripod_coarse.iga",
         "fem_filename"                  : "tripod.mdpa",
-        "fe_refinement_level"           : 0,
-        "variable_to_map"               : "SHAPE_CHANGE"
+        "fe_refinement_level"           : 0
     },
     "conditions" :
     {
@@ -31,36 +31,60 @@ parameters = KratosMultiphysics.Parameters("""
             {
                 "apply_KL_shell"      : false,
                 "exclusive_face_list" : [],
-                "penalty_factor"      : 100.0
+                "penalty_factor"      : 1e1
             }
         },
         "edges" :
         {
             "fe_based" :
             {
-                "apply_enforcement_conditions"        : true,
-                "penalty_factor_tangent_enforcement"  : 10,
-                "penalty_factor_position_enforcement" : 100
+                "apply_enforcement_conditions"        : false,
+                "penalty_factor_position_enforcement" : 1e1,
+                "penalty_factor_tangent_enforcement"  : 1e2,
+                "apply_corner_enforcement_conditions" : false,
+                "penalty_factor_corner_enforcement"   : 1e4
             },
             "coupling" :
             {
-                "apply_coupling_conditions" : false
+                "apply_coupling_conditions"            : true,
+                "penalty_factor_displacement_coupling" : 1e4,
+                "penalty_factor_rotation_coupling"     : 1e4
             }
         }
     },
-    "points_projection" :
+    "drawing_parameters" :
     {
-        "boundary_tessellation_tolerance" : 0.01,
-        "patch_bounding_box_tolerance"    : 1.0
+        "cad_drawing_tolerance"           : 1e-3,
+        "boundary_tessellation_tolerance" : 1e-2,
+        "patch_bounding_box_tolerance"    : 1.0,
+        "min_span_length"                 : 1e-7
     },
     "solution" :
     {
         "iterations"    : 1,
-        "test_solution" : true
+        "test_solution" : false
     },
     "regularization" :
     {
-        "beta" : 0.000001
+        "alpha"             : 1.0,
+        "beta"              : 0.001,
+        "include_all_poles" : false
+    },
+    "refinement" :
+    {
+        "a_posteriori" :
+        {
+            "apply_a_posteriori_refinement" : true,
+            "max_levels_of_refinement"      : 8,
+            "mininimum_knot_distance"       : 0.8,
+            "fe_point_distance_tolerance"   : 0.1,
+            "disp_coupling_tolerance"       : 0.005,
+            "rot_coupling_tolerance"        : 0.2
+        },
+        "a_priori" :
+        {
+            "apply_a_priori_refinement" : false
+        }
     },
     "output":
     {
@@ -69,6 +93,8 @@ parameters = KratosMultiphysics.Parameters("""
     }
 }""")
 
+fe_model = KratosMultiphysics.Model()
+cad_model = an.Model()
 
 print("\n\n========================================================================================================")
 print("> Start reconstruction...")
@@ -76,14 +102,8 @@ print("=========================================================================
 
 start_time = time.time()
 
-fe_model = KratosMultiphysics.Model()
-cad_model = None
-
 cad_mapper = CADMapper(fe_model, cad_model, parameters)
-
-cad_mapper.Initialize()
-cad_mapper.Map()
-cad_mapper.Finalize()
+cad_mapper.RunMappingProcess()
 
 print("\n========================================================================================================")
 print("> Finished reconstruction in " ,round( time.time()-start_time, 3 ), " s.")

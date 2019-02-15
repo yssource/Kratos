@@ -26,6 +26,7 @@ def suppress_stdout():
 
 def PerformMapping(cad_model, fe_model):
     cad_mapper = CADMapper(fe_model, cad_model, parameters)
+    cad_mapper.ReadModelData()
     cad_mapper.Initialize()
     cad_mapper.Map()
     cad_mapper.Finalize()

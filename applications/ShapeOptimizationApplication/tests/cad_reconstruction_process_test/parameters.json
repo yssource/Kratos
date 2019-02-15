@@ -3,8 +3,7 @@
 {
     "cad_filename"                  : "plate.iga",
     "fem_filename"                  : "plate.mdpa",
-    "fe_refinement_level"           : 0,
-    "variable_to_map"               : "SHAPE_CHANGE"
+    "fe_refinement_level"           : 0
 },
 "conditions" :
 {
@@ -47,10 +46,12 @@
         }
     }
 },
-"point_search" :
+"drawing_parameters" :
 {
+    "cad_drawing_tolerance"           : 1e-3,
     "boundary_tessellation_tolerance" : 0.5,
-    "patch_bounding_box_tolerance"    : 2.0
+    "patch_bounding_box_tolerance"    : 2.0,
+    "min_span_length"                 : 1e-7
 },
 "solution" :
 {

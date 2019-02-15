@@ -15,8 +15,7 @@ parameters = KratosMultiphysics.Parameters("""
     {
         "cad_filename"                  : "plate_fine_rotated.iga",
         "fem_filename"                  : "plate_rotated.mdpa",
-        "fe_refinement_level"           : 0,
-        "variable_to_map"               : "SHAPE_CHANGE"
+        "fe_refinement_level"           : 0
     },
     "conditions" :
     {
@@ -59,10 +58,12 @@ parameters = KratosMultiphysics.Parameters("""
             }
         }
     },
-    "point_search" :
+    "drawing_parameters" :
     {
-        "boundary_tessellation_tolerance" : 0.01,
-        "patch_bounding_box_tolerance"    : 1.0
+        "cad_drawing_tolerance"           : 1e-3,
+        "boundary_tessellation_tolerance" : 1e-2,
+        "patch_bounding_box_tolerance"    : 1.0,
+        "min_span_length"                 : 1e-7
     },
     "solution" :
     {
@@ -89,16 +90,13 @@ print("> Start some preprocessing...")
 print("========================================================================================================")
 
 # Read FE data
-fem_input_filename = parameters["input"]["fem_filename"].GetString()
-name_variable_to_map = parameters["input"]["variable_to_map"].GetString()
-variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
-
 fe_model_part = fe_model.CreateModelPart("origin_part")
 fe_model_part.ProcessInfo.SetValue(KratosMultiphysics.DOMAIN_SIZE, 3)
-fe_model_part.AddNodalSolutionStepVariable(variable_to_map)
+fe_model_part.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE)
 fe_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)
 fe_model_part.AddNodalSolutionStepVariable(KratosShape.NORMALIZED_SURFACE_NORMAL)
 
+fem_input_filename = parameters["input"]["fem_filename"].GetString()
 model_part_io = KratosMultiphysics.ModelPartIO(fem_input_filename[:-5])
 model_part_io.ReadModelPart(fe_model_part)
 
@@ -112,7 +110,7 @@ for node in fe_model_part.GetSubModelPart("all_faces").Nodes:
     # inner_ring_radius = 20
     # sigma = inner_ring_radius/2
     # gauss_value = amplitude*math.exp(-(node.X**2/(2*sigma**2)+node.Y**2/(2*sigma**2)))
-    # node.SetSolutionStepValue(variable_to_map, [0,0,gauss_value])
+    # node.SetSolutionStepValue(KratosShape.SHAPE_CHANGE, [0,0,gauss_value])
 
     amplitude = 25
     inner_parabula_radius = 5
@@ -132,7 +130,7 @@ for node in fe_model_part.GetSubModelPart("all_faces").Nodes:
 
     normal = node.GetSolutionStepValue(KratosShape.NORMALIZED_SURFACE_NORMAL)
 
-    node.SetSolutionStepValue(variable_to_map, [normal[0]*height,normal[1]*height,normal[2]*height])
+    node.SetSolutionStepValue(KratosShape.SHAPE_CHANGE, [normal[0]*height,normal[1]*height,normal[2]*height])
 
 
 print("\n\n========================================================================================================")
@@ -142,10 +140,7 @@ print("=========================================================================
 start_time = time.time()
 
 cad_mapper = CADMapper(fe_model, cad_model, parameters)
-
-cad_mapper.Initialize()
-cad_mapper.Map()
-cad_mapper.Finalize()
+cad_mapper.RunMappingProcess()
 
 print("\n========================================================================================================")
 print("> Finished reconstruction in " ,round( time.time()-start_time, 3 ), " s.")

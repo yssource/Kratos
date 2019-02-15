@@ -22,8 +22,7 @@ import numpy as np
 import numpy.linalg as la
 
 # Additional imports
-import time
-import os
+import time, os, shutil
 
 # ==============================================================================
 class CADMapper:
@@ -35,8 +34,7 @@ class CADMapper:
             {
                 "cad_filename"                  : "plate_fine_embedded.iga",
                 "fem_filename"                  : "plate.mdpa",
-                "fe_refinement_level"           : 0,
-                "variable_to_map"               : "SHAPE_CHANGE"
+                "fe_refinement_level"           : 0
             },
             "conditions" :
             {
@@ -79,10 +77,12 @@ class CADMapper:
                     }
                 }
             },
-            "point_search" :
+            "drawing_parameters" :
             {
-                "boundary_tessellation_tolerance" : 0.01,
-                "patch_bounding_box_tolerance"    : 1.0
+                "cad_drawing_tolerance"           : 1e-3,
+                "boundary_tessellation_tolerance" : 1e-2,
+                "patch_bounding_box_tolerance"    : 1.0,
+                "min_span_length"                 : 1e-7
             },
             "solution" :
             {
@@ -91,8 +91,25 @@ class CADMapper:
             },
             "regularization" :
             {
-                "alpha" : 0.1,
-                "beta"  : 0.001
+                "alpha"             : 0.1,
+                "beta"              : 0.001,
+                "include_all_poles" : false
+            },
+            "refinement" :
+            {
+                "a_posteriori" :
+                {
+                    "apply_a_posteriori_refinement" : false,
+                    "max_levels_of_refinement"      : 3,
+                    "mininimum_knot_distance"       : 1.0,
+                    "fe_point_distance_tolerance"   : 0.01,
+                    "disp_coupling_tolerance"       : 0.01,
+                    "rot_coupling_tolerance"        : 0.5
+                },
+                "a_priori" :
+                {
+                    "apply_a_priori_refinement" : false
+                }
             },
             "output":
             {
@@ -106,42 +123,81 @@ class CADMapper:
         self.cad_model = cad_model
         self.parameters = parameters
 
-        self.conditions = {}
-        self.fe_model_part = None
-        self.assembler = None
-        self.fe_point_parametric = None
-
-    # --------------------------------------------------------------------------
-    def Initialize(self):
-        print("\n> Starting preprocessing...")
-        start_time = time.time()
-
-        # Create results folder
-        output_dir = self.parameters["output"]["results_directory"].GetString()
-        if not os.path.exists( output_dir ):
-            os.makedirs( output_dir )
-
-        # Read FE data
         fe_model_part_name = "origin_part"
-        name_variable_to_map = self.parameters["input"]["variable_to_map"].GetString()
-        variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
-
         if self.fe_model.HasModelPart(fe_model_part_name):
+            self.fe_model_part_has_to_be_read = False
             self.fe_model_part = self.fe_model.GetModelPart(fe_model_part_name)
         else:
-
+            self.fe_model_part_has_to_be_read = True
             self.fe_model_part = self.fe_model.CreateModelPart(fe_model_part_name)
             self.fe_model_part.ProcessInfo.SetValue(KratosMultiphysics.DOMAIN_SIZE, 3)
-            self.fe_model_part.AddNodalSolutionStepVariable(variable_to_map)
+            self.fe_model_part.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE)
             self.fe_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)
             self.fe_model_part.AddNodalSolutionStepVariable(KratosShape.NORMALIZED_SURFACE_NORMAL)
+            self.fe_model_part.AddNodalSolutionStepVariable(KratosShape.FITTING_ERROR)
 
+        self.filename_fem_for_reconstruction = "fe_model_used_for_reconstruction"
+        self.filename_fem_for_quality_evaluation = "fe_model_with_reconstruction_quality"
+
+        self.assembler = None
+        self.conditions = {}
+        self.fe_point_parametric = None
+        self.absolute_pole_displacement = None
+
+    # --------------------------------------------------------------------------
+    def RunMappingProcess(self):
+        output_dir = self.parameters["output"]["results_directory"].GetString()
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
+
+        self.ReadModelData()
+
+        apply_a_posteriori_refinement = self.parameters["refinement"]["a_posteriori"]["apply_a_posteriori_refinement"].GetBool()
+        max_iterations = self.parameters["refinement"]["a_posteriori"]["max_levels_of_refinement"].GetInt()
+        resulting_cad_filename = self.parameters["output"]["resulting_geometry_filename"].GetString()
+
+        if apply_a_posteriori_refinement:
+            for itr in range(max_iterations):
+
+                print("\n\n========================================================================================================")
+                print("> Starting a posteriori refinement level " +  str(itr+1) + "...")
+                print("========================================================================================================")
+
+                self.Initialize()
+                self.Map()
+                self.Finalize()
+
+                cad_model, nothing_to_refine = self.ResetDisplacementsAndRefineCadModel()
+
+                # Rename result files of this iteration
+                if max_iterations > 1:
+                    case_directory = os.getcwd()
+                    os.chdir(self.parameters["output"]["results_directory"].GetString())
+                    os.rename(self.filename_fem_for_quality_evaluation+".post.bin", self.filename_fem_for_quality_evaluation+"_level_"+str(itr+1)+".post.bin")
+                    os.rename(resulting_cad_filename, resulting_cad_filename.replace(".iga","_level_"+str(itr+1)+".iga"))
+                    os.chdir(case_directory)
+
+                if nothing_to_refine:
+                    break
+                else:
+                    self.__SaveCadModel("a_posteriori_refinement_level_"+str(itr+1)+".iga")
+        else:
+            self.Initialize()
+            self.Map()
+            self.Finalize()
+
+    # --------------------------------------------------------------------------
+    def ReadModelData(self):
+        print("\n> Starting to read model data...")
+
+        # Read FEM data
+        if self.fe_model_part_has_to_be_read:
             fem_input_filename = self.parameters["input"]["fem_filename"].GetString()
             model_part_io = KratosMultiphysics.ModelPartIO(fem_input_filename[:-5])
             model_part_io.ReadModelPart(self.fe_model_part)
 
         # Refine if specified
-        prop_id = 0
+        prop_id = 1
         prop = self.fe_model_part.Properties[prop_id]
         mat = KratosCSM.LinearElasticPlaneStress2DLaw()
         prop.SetValue(KratosMultiphysics.CONSTITUTIVE_LAW, mat.Clone())
@@ -166,7 +222,7 @@ class CADMapper:
 
         # Compute average surface normals of target design
         for node in self.fe_model_part.Nodes:
-            shape_update = node.GetSolutionStepValue(variable_to_map)
+            shape_update = node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)
             node.X += shape_update[0]
             node.Y += shape_update[1]
             node.Z += shape_update[2]
@@ -174,52 +230,40 @@ class CADMapper:
         KratosShape.GeometryUtilities(self.fe_model_part).ComputeUnitSurfaceNormals(True)
 
         for node in self.fe_model_part.Nodes:
-            shape_update = node.GetSolutionStepValue(variable_to_map)
+            shape_update = node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)
             node.X -= shape_update[0]
             node.Y -= shape_update[1]
             node.Z -= shape_update[2]
-
-        # Output FE-data with projected points
-        output_dir = self.parameters["output"]["results_directory"].GetString()
-        fem_output_filename = "fe_model_used_for_reconstruction"
-        fem_output_filename_with_path = os.path.join(output_dir,fem_output_filename)
-        nodal_variables = [self.parameters["input"]["variable_to_map"].GetString(), "NORMAL", "NORMALIZED_SURFACE_NORMAL"]
-        self.__OutputFEData(self.fe_model_part, fem_output_filename_with_path, nodal_variables)
 
         # Read CAD data
         cad_filename = self.parameters["input"]["cad_filename"].GetString()
         if len(self.cad_model.GetByType('BrepFace')) == 0:
             self.cad_model.Load(cad_filename)
 
-        print("> Preprocessing finished in" ,round( time.time()-start_time, 3 ), " s.")
+        start_time = time.time()
+        print("> Finished reading of model data in" ,round( time.time()-start_time, 3 ), " s.")
+
+    # --------------------------------------------------------------------------
+    def Initialize(self):
+        # Initialize (reset) class attributes
+        self.assembler = None
+        self.conditions = {}
+        self.fe_point_parametric = None
+        self.absolute_pole_displacement = None
+
+        # Create results folder
+        output_dir = self.parameters["output"]["results_directory"].GetString()
+        if not os.path.exists( output_dir ):
+            os.makedirs( output_dir )
+
+        # Output FE-data with projected points
+        nodal_variables = ["SHAPE_CHANGE", "NORMAL", "NORMALIZED_SURFACE_NORMAL"]
+        self.__OutputFEData(self.fe_model_part, self.filename_fem_for_reconstruction, nodal_variables)
+
         print("\n> Starting creation of conditions...")
         start_time = time.time()
 
-        # Create conditions
-        for face_i in self.cad_model.GetByType('BrepFace'):
-            self.conditions[face_i.Key()] = []
-
-        condition_factory = ConditionsFactory(self.fe_model_part, self.cad_model, self.parameters)
-
-        if self.parameters["conditions"]["apply_integral_method"].GetBool():
-            condition_factory.CreateDistanceMinimizationWithIntegrationConditions(self.conditions)
-        else:
-            condition_factory.CreateDistanceMinimizationConditions(self.conditions)
-        if self.parameters["conditions"]["faces"]["curvature"]["apply_curvature_minimization"].GetBool() or \
-           self.parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].GetBool():
-            condition_factory.CreateFaceConditions(self.conditions)
-        if self.parameters["conditions"]["faces"]["rigid"]["apply_rigid_conditions"].GetBool():
-            condition_factory.CreateRigidConditions(self.conditions)
-        if self.parameters["conditions"]["edges"]["fe_based"]["apply_enforcement_conditions"].GetBool():
-            condition_factory.CreateEnforcementConditions(self.conditions)
-        if self.parameters["conditions"]["edges"]["fe_based"]["apply_corner_enforcement_conditions"].GetBool():
-            condition_factory.CreateCornerEnforcementConditions(self.conditions)
-        if self.parameters["conditions"]["edges"]["coupling"]["apply_coupling_conditions"].GetBool():
-            condition_factory.CreateCouplingConditions(self.conditions)
-        if self.parameters["regularization"]["alpha"].GetDouble() != 0:
-            condition_factory.CreateAlphaRegularizationConditions(self.conditions)
-
-        self.fe_point_parametric = condition_factory.GetFEPointParametrization()
+        self.__CreateConditions()
 
         print("> Finished creation of conditions in" ,round( time.time()-start_time, 3 ), " s.")
         print("\n> Initializing assembly...")
@@ -233,7 +277,6 @@ class CADMapper:
 
     # --------------------------------------------------------------------------
     def Map(self):
-
         # Nonlinear solution iterations
         for solution_itr in range(1,self.parameters["solution"]["iterations"].GetInt()+1):
 
@@ -265,6 +308,7 @@ class CADMapper:
             print("> Finished system solution in" ,round( time.time()-start_time_solution, 3 ), " s.")
 
             self.__UpdateCADModel(solution)
+            self.__ComputeAbsolutePoleDisplacements(solution)
 
             if self.parameters["solution"]["test_solution"].GetBool():
 
@@ -298,12 +342,192 @@ class CADMapper:
         start_time = time.time()
 
         # Output cad model
-        output_dir = self.parameters["output"]["results_directory"].GetString()
         output_filename = self.parameters["output"]["resulting_geometry_filename"].GetString()
-        output_filename_with_path = os.path.join(output_dir,output_filename)
-        self.cad_model.Save(output_filename_with_path)
+        self.__SaveCadModel(output_filename)
 
         print("> Finished finalization of mapping in" ,round( time.time()-start_time, 3 ), " s.")
+
+    # --------------------------------------------------------------------------
+    def ResetDisplacementsAndRefineCadModel(self):
+        fe_point_distance_tolerance = self.parameters["refinement"]["a_posteriori"]["fe_point_distance_tolerance"].GetDouble() # in given length unit
+        disp_coupling_tolerance = self.parameters["refinement"]["a_posteriori"]["disp_coupling_tolerance"].GetDouble() # in given length unit
+        rot_coupling_tolerance = self.parameters["refinement"]["a_posteriori"]["rot_coupling_tolerance"].GetDouble() # in degree
+
+        exist_intervals_to_refine = False
+        is_fe_point_distance_satisfied = True
+        is_disp_coupling_satisfied = True
+        is_rot_coupling_satisfied = True
+
+        # Identify spots to refine
+        intervals_along_u_to_refine = {geometry.Key(): [] for geometry in self.cad_model.GetByType('SurfaceGeometry3D')}
+        intervals_along_v_to_refine = {geometry.Key(): [] for geometry in self.cad_model.GetByType('SurfaceGeometry3D')}
+
+        # First identify spots where distance to fe points exceeds limit)
+        for entry in self.fe_point_parametric:
+
+            node = entry["node"]
+            shape_update = node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)
+            node_target_position = np.array([node.X0 + shape_update[0], node.Y0 + shape_update[1], node.Z0 + shape_update[2]])
+
+            list_of_faces = entry["faces"]
+            list_of_parameters = entry["parameters"]
+
+            for face, (u,v) in zip(list_of_faces, list_of_parameters):
+                geometry = face.Data().Geometry()
+                geometry_data = geometry.Data()
+
+                distance = geometry_data.PointAt(u, v) - node_target_position
+
+                node.SetSolutionStepValue(KratosShape.FITTING_ERROR, distance.tolist())
+
+                if np.linalg.norm(distance) > fe_point_distance_tolerance:
+                    is_fe_point_distance_satisfied = False
+                    exist_intervals_to_refine = self.__AddUIntervalToList(geometry, u, v, intervals_along_u_to_refine)
+                    exist_intervals_to_refine = self.__AddVIntervalToList(geometry, u, v, intervals_along_v_to_refine)
+
+          # Output fitting error
+        nodal_variables = ["SHAPE_CHANGE", "FITTING_ERROR"]
+        self.__OutputFEData(self.fe_model_part, self.filename_fem_for_quality_evaluation, nodal_variables)
+
+        # Then identify spots where coupling or enforcement conditions are not met
+        from cad_reconstruction_conditions import DisplacementCouplingCondition, RotationCouplingConditionWithAD
+        for conditions_face_i in self.conditions.values():
+            for condition in conditions_face_i:
+                if isinstance(condition, DisplacementCouplingCondition) or isinstance(condition, RotationCouplingConditionWithAD):
+                    geometry_a = condition.geometry_a
+                    geometry_b = condition.geometry_b
+                    (u_a,v_a) = condition.parameters_a
+                    (u_b,v_b) = condition.parameters_b
+
+                    is_spot_to_be_refined = False
+
+                    if isinstance(condition, DisplacementCouplingCondition):
+                        delta_disp = np.linalg.norm(condition.CalculateQualityIndicator())
+                        if delta_disp > disp_coupling_tolerance:
+                            is_disp_coupling_satisfied = False
+                            is_spot_to_be_refined = True
+                            print("delta_disp =", delta_disp)
+
+                    if isinstance(condition, RotationCouplingConditionWithAD):
+                        delta_rot = condition.CalculateQualityIndicator() * 180 / np.pi
+                        if delta_rot > rot_coupling_tolerance:
+                            is_rot_coupling_satisfied = False
+                            is_spot_to_be_refined = True
+                            print("delta_rot =", delta_rot)
+
+                    if is_spot_to_be_refined:
+                        # Geometry a
+                        exist_intervals_to_refine = self.__AddUIntervalToList(geometry_a, u_a, v_a, intervals_along_u_to_refine)
+                        exist_intervals_to_refine = self.__AddVIntervalToList(geometry_a, u_a, v_a, intervals_along_v_to_refine)
+
+                        # Geometry b
+                        exist_intervals_to_refine = self.__AddUIntervalToList(geometry_b, u_b, v_b, intervals_along_u_to_refine)
+                        exist_intervals_to_refine = self.__AddVIntervalToList(geometry_b, u_b, v_b, intervals_along_v_to_refine)
+
+        self.ResetPoleDisplacements()
+
+        # Read original cad file
+        nothing_to_refine = False
+
+        if is_fe_point_distance_satisfied and is_disp_coupling_satisfied and is_rot_coupling_satisfied:
+            print("\n> Refinement reached convergence! Nothing to refine anymore.")
+            nothing_to_refine = True
+
+        elif exist_intervals_to_refine == False:
+            print("\n> WARNING!!!! Refinement did not converge but finished as knot tolerance was reached for U- and V-Direction.")
+            nothing_to_refine = True
+
+        else:
+            for face in self.cad_model.GetByType('BrepFace'):
+                print("> Refining face ",face.Key())
+                geometry = face.Data().Geometry()
+
+                u_intervals = intervals_along_u_to_refine[geometry.Key()]
+                if len(u_intervals) > 0:
+                    u_interval_centers = [(interval[0]+interval[1])/2.0 for interval in u_intervals]
+                    u_interval_centers = list(set(u_interval_centers)) # Remove duplicated entries
+                    u_interval_centers.sort() # Sort in ascending order
+
+                    print(u_interval_centers)
+
+                    refined_geometry = an.KnotRefinement.InsertKnotsU(geometry.Data(), u_interval_centers)
+                    self.cad_model.Replace(geometry.Key(), refined_geometry)
+                else:
+                    print("> Nothing to refine in U-driection!")
+
+                v_intervals = intervals_along_v_to_refine[geometry.Key()]
+                if len(v_intervals) > 0:
+                    v_interval_centers = [(interval[0]+interval[1])/2.0 for interval in v_intervals]
+                    v_interval_centers = list(set(v_interval_centers)) # Remove duplicated entries
+                    v_interval_centers.sort() # Sort in ascending order
+
+                    print(v_interval_centers)
+
+                    refined_geometry = an.KnotRefinement.InsertKnotsV(geometry.Data(), v_interval_centers)
+                    self.cad_model.Replace(geometry.Key(), refined_geometry)
+                else:
+                    print("> Nothing to refine in V-driection!")
+
+        return self.cad_model, nothing_to_refine
+
+    # --------------------------------------------------------------------------
+    def ResetPoleDisplacements(self):
+        dof_ids = self.assembler.GetDofIds()
+        dofs = self.assembler.GetDofs()
+
+        for surface_i in self.cad_model.GetByType('SurfaceGeometry3D'):
+            surface_geometry = surface_i.Data()
+            surface_geometry_key = surface_i.Key()
+
+            for r in range(surface_geometry.NbPolesU()):
+                for s in range(surface_geometry.NbPolesV()):
+                    dof_i_x = (surface_geometry_key,r,s,"x")
+                    dof_i_y = (surface_geometry_key,r,s,"y")
+                    dof_i_z = (surface_geometry_key,r,s,"z")
+
+                    if dof_i_x in dofs:
+                        dof_id_x = dof_ids[dof_i_x]
+                        dof_id_y = dof_ids[dof_i_y]
+                        dof_id_z = dof_ids[dof_i_z]
+
+                        pole_coords = surface_geometry.Pole(r,s)
+                        pole_update = np.array([self.absolute_pole_displacement[dof_id_x], self.absolute_pole_displacement[dof_id_y], self.absolute_pole_displacement[dof_id_z]])
+
+                        new_pole_coords = pole_coords - pole_update
+                        surface_geometry.SetPole(r,s,new_pole_coords)
+
+    # --------------------------------------------------------------------------
+    def __CreateConditions(self):
+        for face_i in self.cad_model.GetByType('BrepFace'):
+            self.conditions[face_i.Key()] = []
+
+        condition_factory = ConditionsFactory(self.fe_model_part, self.cad_model, self.parameters)
+
+        if self.parameters["conditions"]["apply_integral_method"].GetBool():
+            condition_factory.CreateDistanceMinimizationWithIntegrationConditions(self.conditions)
+        else:
+            condition_factory.CreateDistanceMinimizationConditions(self.conditions)
+        if self.parameters["conditions"]["faces"]["curvature"]["apply_curvature_minimization"].GetBool() or \
+           self.parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].GetBool():
+            condition_factory.CreateFaceConditions(self.conditions)
+        if self.parameters["conditions"]["faces"]["rigid"]["apply_rigid_conditions"].GetBool():
+            condition_factory.CreateRigidConditions(self.conditions)
+        if self.parameters["conditions"]["edges"]["fe_based"]["apply_enforcement_conditions"].GetBool():
+            condition_factory.CreateEnforcementConditions(self.conditions)
+        if self.parameters["conditions"]["edges"]["fe_based"]["apply_corner_enforcement_conditions"].GetBool():
+            condition_factory.CreateCornerEnforcementConditions(self.conditions)
+        if self.parameters["conditions"]["edges"]["coupling"]["apply_coupling_conditions"].GetBool():
+            condition_factory.CreateCouplingConditions(self.conditions)
+        if self.parameters["regularization"]["alpha"].GetDouble() != 0:
+            condition_factory.CreateAlphaRegularizationConditions(self.conditions)
+
+        self.fe_point_parametric = condition_factory.GetFEPointParametrization()
+
+    # --------------------------------------------------------------------------
+    def __SaveCadModel(self, filename):
+        output_dir = self.parameters["output"]["results_directory"].GetString()
+        output_filename_with_path = os.path.join(output_dir,filename)
+        self.cad_model.Save(output_filename_with_path)
 
     # --------------------------------------------------------------------------
     def __UpdateCADModel(self, solution):
@@ -337,8 +561,61 @@ class CADMapper:
         print("> Finished updating cad database in" ,round( time.time()-start_time, 3 ), " s.")
 
     # --------------------------------------------------------------------------
-    @staticmethod
-    def __OutputFEData(model_part, fem_output_filename, nodal_variables):
+    def __ComputeAbsolutePoleDisplacements(self, delta):
+        if self.absolute_pole_displacement is None:
+            self.absolute_pole_displacement = delta
+        else:
+            self.absolute_pole_displacement += delta
+
+    # --------------------------------------------------------------------------
+    def __AddUIntervalToList(self, geometry, u, v, interval_list):
+        intervall_added = False
+        min_dist = self.parameters["refinement"]["a_posteriori"]["mininimum_knot_distance"].GetDouble()
+
+        start_span = an.Knots.UpperSpan(geometry.Data().DegreeU(), geometry.Data().KnotsU(), u)
+        end_span = start_span+1
+        u_start = geometry.Data().KnotsU()[start_span]
+        u_end = geometry.Data().KnotsU()[end_span]
+
+        # Avoid refining knots that are close together within a specified tolerance
+        # comparisons are made in given length unit
+        p_start = geometry.Data().PointAt(u_start, v)
+        p_end = geometry.Data().PointAt(u_end, v)
+        distance = p_end - p_start
+        if np.dot(distance, distance) >= min_dist**2 :
+            intervall_added = True
+            u_interval = (u_start, u_end)
+            interval_list[geometry.Key()].append(u_interval)
+
+        return intervall_added
+
+    # --------------------------------------------------------------------------
+    def __AddVIntervalToList(self, geometry, u , v, interval_list):
+        intervall_added = False
+        min_dist = self.parameters["refinement"]["a_posteriori"]["mininimum_knot_distance"].GetDouble()
+
+        start_span = an.Knots.UpperSpan(geometry.Data().DegreeV(), geometry.Data().KnotsV(), v)
+        end_span = start_span+1
+        v_start = geometry.Data().KnotsV()[start_span]
+        v_end = geometry.Data().KnotsV()[end_span]
+
+        # Avoid refining knots that are close together within a specified tolerance
+        # comparisons are made in given length unit
+        p_start = geometry.Data().PointAt(u, v_start)
+        p_end = geometry.Data().PointAt(u, v_end)
+        distance = p_end - p_start
+        if np.dot(distance, distance) >= min_dist**2 :
+            intervall_added = True
+            v_interval = (v_start, v_end)
+            interval_list[geometry.Key()].append(v_interval)
+
+        return intervall_added
+
+    # --------------------------------------------------------------------------
+    def __OutputFEData(self, model_part, fem_output_filename, nodal_variables):
+        output_dir = self.parameters["output"]["results_directory"].GetString()
+        fem_output_filename_with_path = os.path.join(output_dir,fem_output_filename)
+
         from gid_output import GiDOutput
         nodal_results=nodal_variables
         gauss_points_results=[]
@@ -348,7 +625,7 @@ class CADMapper:
         GiDWriteConditionsFlag = True
         GiDMultiFileFlag = "Single"
 
-        gig_io = GiDOutput(fem_output_filename, VolumeOutput, GiDPostMode, GiDMultiFileFlag, GiDWriteMeshFlag, GiDWriteConditionsFlag)
+        gig_io = GiDOutput(fem_output_filename_with_path, VolumeOutput, GiDPostMode, GiDMultiFileFlag, GiDWriteMeshFlag, GiDWriteConditionsFlag)
         gig_io.initialize_results(model_part)
         gig_io.write_results(1, model_part, nodal_results, gauss_points_results)
         gig_io.finalize_results()
@@ -361,18 +638,14 @@ class ConditionsFactory:
         self.cad_model = cad_model
         self.parameters = parameters
 
-        self.bounding_box_tolerance = self.parameters["point_search"]["patch_bounding_box_tolerance"].GetDouble()
-        self.boundary_tessellation_tolerance = self.parameters["point_search"]["boundary_tessellation_tolerance"].GetDouble()
+        self.bounding_box_tolerance = self.parameters["drawing_parameters"]["patch_bounding_box_tolerance"].GetDouble()
+        self.boundary_tessellation_tolerance = self.parameters["drawing_parameters"]["boundary_tessellation_tolerance"].GetDouble()
         self.boundary_polygons = None
-
         self.fe_point_parametrization = None
 
     # --------------------------------------------------------------------------
     def CreateDistanceMinimizationConditions(self, conditions):
         from cad_reconstruction_conditions import DistanceMinimizationCondition
-
-        name_variable_to_map = self.parameters["input"]["variable_to_map"].GetString()
-        variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
 
         fe_point_parametric = self.GetFEPointParametrization()
 
@@ -405,7 +678,7 @@ class ConditionsFactory:
                 # point_ptr = self.cad_model.Add(an.Point3D(location=node_coords))
                 # point_ptr.Attributes().SetLayer('FEPointsInside')
 
-                new_condition = DistanceMinimizationCondition(node, surface_geometry, nonzero_pole_indices, shape_function_values, variable_to_map, weight)
+                new_condition = DistanceMinimizationCondition(node, surface_geometry, nonzero_pole_indices, shape_function_values, KratosShape.SHAPE_CHANGE, weight)
                 conditions[face.Key()].append(new_condition)
 
         return conditions
@@ -414,9 +687,7 @@ class ConditionsFactory:
     def CreateDistanceMinimizationWithIntegrationConditions(self, conditions):
         from cad_reconstruction_conditions import DistanceMinimizationCondition
 
-        name_variable_to_map = self.parameters["input"]["variable_to_map"].GetString()
-        variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
-
+        drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
         total_area = 0
 
         for face_i in self.cad_model.GetByType('BrepFace'):
@@ -428,7 +699,7 @@ class ConditionsFactory:
 
             shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry_data.DegreeU(), degreeV=surface_geometry_data.DegreeV(), order=0)
 
-            list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i)
+            list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i, drawing_tolerance)
 
             # Collect integration points in model part
             temp_model = KratosMultiphysics.Model()
@@ -446,7 +717,7 @@ class ConditionsFactory:
             }""")
 
             mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, mapper_parameters )
-            mapper.Map( variable_to_map, variable_to_map )
+            mapper.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
 
             # Create conditions
             for itr, node_i in enumerate(destination_mdpa.Nodes):
@@ -463,7 +734,7 @@ class ConditionsFactory:
                 for i in range(shape_function.NbNonzeroPoles()):
                     shape_function_values[i] = shape_function(0,i)
 
-                new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, variable_to_map, weight)
+                new_condition = DistanceMinimizationCondition(node_i, surface_geometry, nonzero_pole_indices, shape_function_values, KratosShape.SHAPE_CHANGE, weight)
                 conditions[face_i.Key()].append(new_condition)
 
         print("> Total area of cad surface = ",total_area,"\n")
@@ -474,9 +745,9 @@ class ConditionsFactory:
     def CreateFaceConditions(self, conditions):
         from cad_reconstruction_conditions import CurvatureMinimizationConditionWithAD,  KLShellConditionWithAD
 
+        drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
         apply_curvature_min = self.parameters["conditions"]["faces"]["curvature"]["apply_curvature_minimization"].GetBool()
         curvature_penalty_fac = self.parameters["conditions"]["faces"]["curvature"]["penalty_factor"].GetDouble()
-
         apply_kl_shell = self.parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].GetBool()
         shell_penalty_fac = self.parameters["conditions"]["faces"]["mechanical"]["penalty_factor"].GetDouble()
 
@@ -489,7 +760,7 @@ class ConditionsFactory:
             print("> Processing face ",face_i.Key())
 
             # Skip faces if exclusive face list is specified (if list is empty, use all faces)
-            if face_i.Key() not in list_of_exclusive_faces:
+            if len(list_of_exclusive_faces) > 0 and face_i.Key() not in list_of_exclusive_faces:
                 continue
 
             surface_geometry = face_i.Data().Geometry()
@@ -497,7 +768,7 @@ class ConditionsFactory:
 
             shape_function = an.SurfaceShapeEvaluator(degreeU=surface_geometry_data.DegreeU(), degreeV=surface_geometry_data.DegreeV(), order=2)
 
-            list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i)
+            list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i, drawing_tolerance)
 
             # Create conditions
             for itr in range(len(list_of_points)):
@@ -543,10 +814,8 @@ class ConditionsFactory:
             list_of_exclusive_faces.append(self.parameters["conditions"]["faces"]["rigid"]["exclusive_face_list"][itr].GetString())
 
         penalty_fac = self.parameters["conditions"]["faces"]["rigid"]["penalty_factor"].GetDouble()
-        name_variable_to_map = self.parameters["input"]["variable_to_map"].GetString()
-        variable_to_map = KratosMultiphysics.KratosGlobals.GetVariable(name_variable_to_map)
 
-        boundary_polygons = self.__GetBoundaryPolygons()
+        boundary_polygons = self.GetBoundaryPolygons()
 
         relevant_fe_points = []
         relevant_fe_points_displaced = []
@@ -595,7 +864,7 @@ class ConditionsFactory:
                 is_inside, is_on_boundary = self.__Contains(projected_point_uv, boundary_polygons[face_i.Key()], self.boundary_tessellation_tolerance*1.1)
                 if is_inside:
                     relevant_fe_points.append(node_coords_i)
-                    relevant_fe_points_displaced.append( node_coords_i + np.array(node_i.GetSolutionStepValue(variable_to_map)) )
+                    relevant_fe_points_displaced.append( node_coords_i + np.array(node_i.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)) )
                     relevant_cad_uvs.append(projected_point_uv)
 
             # Analyze rigid body movement
@@ -650,6 +919,8 @@ class ConditionsFactory:
     def CreateEnforcementConditions(self, conditions):
         from cad_reconstruction_conditions import TangentEnforcementCondition, PositionEnforcementCondition
 
+        drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
+        min_span_length = self.parameters["drawing_parameters"]["min_span_length"].GetDouble()
         penalty_factor_tangent_enforcement = self.parameters["conditions"]["edges"]["fe_based"]["penalty_factor_tangent_enforcement"].GetDouble()
         penalty_factor_position_enforcement = self.parameters["conditions"]["edges"]["fe_based"]["penalty_factor_position_enforcement"].GetDouble()
 
@@ -674,7 +945,7 @@ class ConditionsFactory:
                 surface_geometry_data_a = face_a.Data().Geometry().Data()
                 surface_geometry_data_b = face_b.Data().Geometry().Data()
 
-                list_of_points, list_of_parameters_a, list_of_parameters_b, _, _, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i)
+                list_of_points, list_of_parameters_a, list_of_parameters_b, _, _, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i, drawing_tolerance, min_span_length)
 
                 # Collect integration points in model part
                 temp_model = KratosMultiphysics.Model()
@@ -683,8 +954,8 @@ class ConditionsFactory:
                 destination_mdpa.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE)
 
                 for itr, [x,y,z] in enumerate(list_of_points):
-                    point_ptr = self.cad_model.Add(an.Point3D(location=[x, y, z]))
-                    point_ptr.Attributes().SetLayer('CouplingPoints')
+                    # point_ptr = self.cad_model.Add(an.Point3D(location=[x, y, z]))
+                    # point_ptr.Attributes().SetLayer('CouplingPoints')
                     destination_mdpa.CreateNewNode(itr, x, y, z)
 
                 # Map information from fem to integration points using element based mapper
@@ -756,27 +1027,6 @@ class ConditionsFactory:
 
                         new_condition_b = TangentEnforcementCondition(target_normal, surface_geometry_b, nonzero_pole_indices_b, shape_function_derivatives_u_b, shape_function_derivatives_v_b, weight)
                         conditions[face_b.Key()].append(new_condition_b)
-
-                    # pole_coords = np.zeros((len(nonzero_pole_indices_a), 3))
-                    # for i, (r,s) in enumerate(nonzero_pole_indices_a):
-                    #     pole_coords[i,:] = surface_geometry_a.Pole(r,s)
-
-                    # a1 = shape_function_derivatives_u_a @ pole_coords
-
-                    # pole_coords = np.zeros((len(nonzero_pole_indices_b), 3))
-                    # for i, (r,s) in enumerate(nonzero_pole_indices_b):
-                    #     pole_coords[i,:] = surface_geometry_b.Pole(r,s)
-
-                    # a2 = shape_function_derivatives_u_b @ pole_coords
-
-                    # self.cad_model.add({
-                    #     'Key': f'a1_a<{points_counter}>',
-                    #     'Type': 'Line3D',
-                    #     'Start': [x,y,z],
-                    #     'End': [x + a1[0],y + a1[1], z + a1[2]],
-                    #     'Layer': 'a1_a',
-                    # })
-
             else:
                 raise RuntimeError("Max number of adjacent has to be 2!!")
 
@@ -923,6 +1173,8 @@ class ConditionsFactory:
     def CreateCouplingConditions(self, conditions):
         from cad_reconstruction_conditions import DisplacementCouplingCondition, RotationCouplingConditionWithAD
 
+        drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
+        min_span_length = self.parameters["drawing_parameters"]["min_span_length"].GetDouble()
         penalty_factor_displacement = self.parameters["conditions"]["edges"]["coupling"]["penalty_factor_displacement_coupling"].GetDouble()
         penalty_factor_rotation = self.parameters["conditions"]["edges"]["coupling"]["penalty_factor_rotation_coupling"].GetDouble()
 
@@ -948,7 +1200,11 @@ class ConditionsFactory:
                 trim_a, _ = edge_i.Data().Trims()
                 edge_curve_a = an.CurveOnSurface3D(trim_a.Data().Geometry().Data(), trim_a.Data().Face().Data().Geometry().Data(), trim_a.Data().Geometry().Data().Domain())
 
-                list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_curve_parameters_a, _, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i)
+                list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_curve_parameters_a, _, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i, drawing_tolerance, min_span_length)
+
+                # for point in list_of_points:
+                #     point_ptr = self.cad_model.Add(an.Point3D(location=point))
+                #     point_ptr.Attributes().SetLayer('CouplingPoints')
 
                 # Create conditions
                 for (u_a, v_a), (u_b, v_b), t_a, integration_weight in zip(list_of_parameters_a, list_of_parameters_b, list_of_curve_parameters_a, list_of_integration_weights):
@@ -988,6 +1244,8 @@ class ConditionsFactory:
 
                         new_condition = DisplacementCouplingCondition( surface_geometry_a,
                                                                        surface_geometry_b,
+                                                                       (u_a, v_a),
+                                                                       (u_b, v_b),
                                                                        nonzero_pole_indices_a,
                                                                        nonzero_pole_indices_b,
                                                                        shape_function_values_a,
@@ -1001,6 +1259,8 @@ class ConditionsFactory:
 
                         new_condition = RotationCouplingConditionWithAD( surface_geometry_a,
                                                                          surface_geometry_b,
+                                                                         (u_a, v_a),
+                                                                         (u_b, v_b),
                                                                          T2_edge,
                                                                          nonzero_pole_indices_a,
                                                                          nonzero_pole_indices_b,
@@ -1021,7 +1281,7 @@ class ConditionsFactory:
 
         alpha = self.parameters["regularization"]["alpha"].GetDouble()
 
-        boundary_polygons = self.__GetBoundaryPolygons()
+        boundary_polygons = self.GetBoundaryPolygons()
 
         for face_i in self.cad_model.GetByType('BrepFace'):
 
@@ -1061,7 +1321,7 @@ class ConditionsFactory:
                     is_inside, is_on_boundary = self.__Contains((u_value,v_value), boundary_polygons[face_i.Key()], self.boundary_tessellation_tolerance*1.1)
 
                     # Only control points within the visible surface shall be considered
-                    if is_inside:
+                    if is_inside or self.parameters["regularization"]["include_all_poles"].GetBool():
                         pole_indices.append((r,s))
                         greville_abscissa_parameters.append((u_value,v_value))
                         greville_points.append(surface_geometry_data.PointAt(u_value, v_value))
@@ -1090,16 +1350,16 @@ class ConditionsFactory:
         if self.fe_point_parametrization is not None:
             return self.fe_point_parametrization
         else:
-            self.fe_point_parametrization = self.__ParametrizeFEPoints()
+            self.fe_point_parametrization = self.__CreateFEPointParametrization()
             return self.fe_point_parametrization
 
     # --------------------------------------------------------------------------
-    def __ParametrizeFEPoints(self):
+    def __CreateFEPointParametrization(self):
         self.fe_point_parametrization = []
         for node_i in self.fe_model_part.Nodes:
             self.fe_point_parametrization.append({"node": node_i , "faces": [], "parameters": [], "is_on_boundary": False})
 
-        boundary_polygons = self.__GetBoundaryPolygons()
+        boundary_polygons = self.GetBoundaryPolygons()
 
         for face_i in self.cad_model.GetByType('BrepFace'):
 
@@ -1153,30 +1413,35 @@ class ConditionsFactory:
         return self.fe_point_parametrization
 
     # --------------------------------------------------------------------------
-    def __GetBoundaryPolygons(self):
-        if self.boundary_polygons is None:
-            tessellation = an.CurveTessellation2D()
+    def GetBoundaryPolygons(self):
+        if self.boundary_polygons is not None:
+            return self.boundary_polygons
+        else:
+            self.boundary_polygons = self.__CreateBoundaryPolygons()
+            return self.boundary_polygons
 
-            self.boundary_polygons = {face.Key(): [] for face in self.cad_model.GetByType('BrepFace')}
-            for face_i in self.cad_model.GetByType('BrepFace'):
+    # --------------------------------------------------------------------------
+    def __CreateBoundaryPolygons(self):
+        self.boundary_polygons = {face.Key(): [] for face in self.cad_model.GetByType('BrepFace')}
 
-                for trim in face_i.Data().Trims():
-                    tessellation.Compute(an.Curve2D(trim.Data().Geometry()), self.boundary_tessellation_tolerance)
-                    for i in range(tessellation.NbPoints()):
-                        self.boundary_polygons[face_i.Key()].append(tessellation.Point(i))
+        tessellation = an.CurveTessellation2D()
+        for face_i in self.cad_model.GetByType('BrepFace'):
 
-                        # (u,v) = tessellation.Point(i)
-                        # point = face_i.Data().Geometry().Data().PointAt(u,v)
-                        # point_ptr = self.cad_model.Add(an.Point3D(location=point))
+            for trim in face_i.Data().Trims():
+                tessellation.Compute(an.Curve2D(trim.Data().Geometry()), self.boundary_tessellation_tolerance)
+                for i in range(tessellation.NbPoints()):
+                    self.boundary_polygons[face_i.Key()].append(tessellation.Point(i))
 
+                    # (u,v) = tessellation.Point(i)
+                    # point = face_i.Data().Geometry().Data().PointAt(u,v)
+                    # point_ptr = self.cad_model.Add(an.Point3D(location=point))
 
         return self.boundary_polygons
 
     # --------------------------------------------------------------------------
     @staticmethod
-    def __CreateIntegrationPointsForEdge(edge):
-
-        projection_tolerance = 0.01 # Sollte Zeichengenaigkeit sein
+    def __CreateIntegrationPointsForEdge(edge, drawing_tolerance, min_span_length):
+        projection_tolerance = drawing_tolerance * 10
 
         trim_a, trim_b = edge.Data().Trims()
 
@@ -1217,8 +1482,7 @@ class ConditionsFactory:
         for t0_b, t1_b in zip(spans_on_curve_b, spans_on_curve_b[1:]):
             span_b = an.Interval(t0_b, t1_b)
 
-            print("Here some parameter is defined!!!!!!!!!")
-            if span_b.Length() < 1e-7:
+            if span_b.Length() < min_span_length:
                 continue
 
             for t_b, weight in an.IntegrationPoints.Points1D(degree, span_b):
@@ -1241,13 +1505,10 @@ class ConditionsFactory:
 
     # --------------------------------------------------------------------------
     @staticmethod
-    def __CreateIntegrationPointsForFace(face):
+    def __CreateIntegrationPointsForFace(face, drawing_tolerance):
         surface_geometry = face.Data().Geometry().Data()
 
-        print("Here there is some parameter!!!!")
-        drawing_tolerance = 0.01
-
-        clipper = an.TrimmedSurfaceClipping(tolerance=drawing_tolerance, scale=drawing_tolerance/100.0)
+        clipper = an.TrimmedSurfaceClipping(tolerance=drawing_tolerance*10, scale=drawing_tolerance/10.0)
         integration_points = an.PolygonIntegrationPoints()
         tessellation = an.PolygonTessellation3D()
 

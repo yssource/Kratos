@@ -293,9 +293,11 @@ class TangentEnforcementConditionWithAD( ReconstructionConditionWithAD ):
 # ==============================================================================
 class DisplacementCouplingCondition(ReconstructionCondition):
     # --------------------------------------------------------------------------
-    def __init__(self, geometry_a, geometry_b, nonzero_pole_ids_a, nonzero_pole_ids_b, shape_functions_a, shape_functions_b, penalty_factor):
-        self.geometry_data_a =geometry_a.Data()
-        self.geometry_data_b =geometry_b.Data()
+    def __init__(self, geometry_a, geometry_b, parameters_a, parameters_b, nonzero_pole_ids_a, nonzero_pole_ids_b, shape_functions_a, shape_functions_b, penalty_factor):
+        self.geometry_a = geometry_a
+        self.geometry_b = geometry_b
+        self.parameters_a = parameters_a
+        self.parameters_b = parameters_b
         self.nonzero_pole_ids_a = nonzero_pole_ids_a
         self.nonzero_pole_ids_b = nonzero_pole_ids_b
         self.shape_functions_a = shape_functions_a
@@ -311,8 +313,14 @@ class DisplacementCouplingCondition(ReconstructionCondition):
         self.block_size_a = len(nonzero_pole_ids_a)
         self.block_size_b = len(nonzero_pole_ids_b)
 
-        self.pos_0_a = super().ComputeActual(self.geometry_data_a, nonzero_pole_ids_a, shape_functions_a)
-        self.pos_0_b = super().ComputeActual(self.geometry_data_b, nonzero_pole_ids_b, shape_functions_b)
+        self.pos_0_a = super().ComputeActual(self.geometry_a.Data(), nonzero_pole_ids_a, shape_functions_a)
+        self.pos_0_b = super().ComputeActual(self.geometry_b.Data(), nonzero_pole_ids_b, shape_functions_b)
+
+    # --------------------------------------------------------------------------
+    def CalculateQualityIndicator(self):
+        disp_a = super().ComputeActual(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_functions_a) - self.pos_0_a
+        disp_b = super().ComputeActual(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_functions_b) - self.pos_0_b
+        return disp_a - disp_b
 
     # --------------------------------------------------------------------------
     def CalculateRHS(self):
@@ -327,8 +335,8 @@ class DisplacementCouplingCondition(ReconstructionCondition):
         N_ab[3*self.block_size_a+2*self.block_size_b:3*self.block_size_a+3*self.block_size_b] -= self.shape_functions_b
 
         # RHS
-        disp_a = super().ComputeActual(self.geometry_data_a, self.nonzero_pole_ids_a, self.shape_functions_a) - self.pos_0_a
-        disp_b = super().ComputeActual(self.geometry_data_b, self.nonzero_pole_ids_b, self.shape_functions_b) - self.pos_0_b
+        disp_a = super().ComputeActual(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_functions_a) - self.pos_0_a
+        disp_b = super().ComputeActual(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_functions_b) - self.pos_0_b
         delta = disp_a - disp_b
 
         # a
@@ -384,8 +392,8 @@ class DisplacementCouplingCondition(ReconstructionCondition):
 class DisplacementCouplingConditionWithAD(ReconstructionConditionWithAD):
     # --------------------------------------------------------------------------
     def __init__(self, geometry_a, geometry_b, nonzero_pole_ids_a, nonzero_pole_ids_b, shape_functions_a, shape_functions_b, penalty_factor):
-        self.geometry_data_a =geometry_a.Data()
-        self.geometry_data_b =geometry_b.Data()
+        self.geometry_a = geometry_a
+        self.geometry_b = geometry_b
         self.nonzero_pole_ids_a = nonzero_pole_ids_a
         self.nonzero_pole_ids_b = nonzero_pole_ids_b
         self.shape_functions_a = shape_functions_a
@@ -401,13 +409,13 @@ class DisplacementCouplingConditionWithAD(ReconstructionConditionWithAD):
         self.block_size_a = len(nonzero_pole_ids_a)
         self.block_size_b = len(nonzero_pole_ids_b)
 
-        self.pos_0_a = super().ComputeActual(self.geometry_data_a, nonzero_pole_ids_a, shape_functions_a)
-        self.pos_0_b = super().ComputeActual(self.geometry_data_b, nonzero_pole_ids_b, shape_functions_b)
+        self.pos_0_a = super().ComputeActual(self.geometry_a.Data(), nonzero_pole_ids_a, shape_functions_a)
+        self.pos_0_b = super().ComputeActual(self.geometry_b.Data(), nonzero_pole_ids_b, shape_functions_b)
 
     # --------------------------------------------------------------------------
     def CalculateRHS(self):
-        pos_a = super().ComputeActualJet(self.geometry_data_a, self.nonzero_pole_ids_a, self.shape_functions_a)
-        pos_b = super().ComputeActualJet(self.geometry_data_b, self.nonzero_pole_ids_b, self.shape_functions_b)
+        pos_a = super().ComputeActualJet(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_functions_a)
+        pos_b = super().ComputeActualJet(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_functions_b)
 
         len_a = len(pos_a[0])
         len_b = len(pos_b[0])
@@ -425,8 +433,8 @@ class DisplacementCouplingConditionWithAD(ReconstructionConditionWithAD):
 
     # --------------------------------------------------------------------------
     def CalculateLocalSystem(self):
-        pos_a = super().ComputeActualHyperJet(self.geometry_data_a, self.nonzero_pole_ids_a, self.shape_functions_a)
-        pos_b = super().ComputeActualHyperJet(self.geometry_data_b, self.nonzero_pole_ids_b, self.shape_functions_b)
+        pos_a = super().ComputeActualHyperJet(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_functions_a)
+        pos_b = super().ComputeActualHyperJet(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_functions_b)
 
         len_a = len(pos_a[0])
         len_b = len(pos_b[0])
@@ -446,9 +454,11 @@ class DisplacementCouplingConditionWithAD(ReconstructionConditionWithAD):
 # ==============================================================================
 class RotationCouplingConditionWithAD(ReconstructionConditionWithAD):
     # --------------------------------------------------------------------------
-    def __init__(self, geometry_a, geometry_b, T2_edge, nonzero_pole_ids_a, nonzero_pole_ids_b, shape_functions_a, shape_functions_b, shape_function_derivatives_u_a, shape_function_derivatives_u_b, shape_function_derivatives_v_a, shape_function_derivatives_v_b, penalty_factor):
-        self.geometry_data_a =geometry_a.Data()
-        self.geometry_data_b =geometry_b.Data()
+    def __init__(self, geometry_a, geometry_b, parameters_a, parameters_b, T2_edge, nonzero_pole_ids_a, nonzero_pole_ids_b, shape_functions_a, shape_functions_b, shape_function_derivatives_u_a, shape_function_derivatives_u_b, shape_function_derivatives_v_a, shape_function_derivatives_v_b, penalty_factor):
+        self.geometry_a = geometry_a
+        self.geometry_b = geometry_b
+        self.parameters_a = parameters_a
+        self.parameters_b = parameters_b
         self.T2_edge = T2_edge
         self.nonzero_pole_ids_a = nonzero_pole_ids_a
         self.nonzero_pole_ids_b = nonzero_pole_ids_b
@@ -469,25 +479,48 @@ class RotationCouplingConditionWithAD(ReconstructionConditionWithAD):
         self.block_size_a = len(nonzero_pole_ids_a)
         self.block_size_b = len(nonzero_pole_ids_b)
 
-        A1_a = super().ComputeActual(self.geometry_data_a, self.nonzero_pole_ids_a, self.shape_function_derivatives_u_a)
-        A2_a = super().ComputeActual(self.geometry_data_a, self.nonzero_pole_ids_a, self.shape_function_derivatives_v_a)
+        A1_a = super().ComputeActual(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_u_a)
+        A2_a = super().ComputeActual(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_v_a)
         A3_a = np.cross(A1_a, A2_a)
         self.A3_a = A3_a / np.linalg.norm(A3_a)
 
-        A1_b = super().ComputeActual(self.geometry_data_b, self.nonzero_pole_ids_b, self.shape_function_derivatives_u_b)
-        A2_b = super().ComputeActual(self.geometry_data_b, self.nonzero_pole_ids_b, self.shape_function_derivatives_v_b)
+        A1_b = super().ComputeActual(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_u_b)
+        A2_b = super().ComputeActual(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_v_b)
         A3_b = np.cross(A1_b, A2_b)
         self.A3_b = A3_b / np.linalg.norm(A3_b)
 
     # --------------------------------------------------------------------------
-    def CalculateRHS(self):
-        a1_a = super().ComputeActualJet(self.geometry_data_a, self.nonzero_pole_ids_a, self.shape_function_derivatives_u_a)
-        a2_a = super().ComputeActualJet(self.geometry_data_a, self.nonzero_pole_ids_a, self.shape_function_derivatives_v_a)
+    def CalculateQualityIndicator(self):
+        a1_a = super().ComputeActual(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_u_a)
+        a2_a = super().ComputeActual(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_v_a)
         a3_a = np.cross(a1_a, a2_a)
         a3_a = a3_a / np.linalg.norm(a3_a)
 
-        a1_b = super().ComputeActualJet(self.geometry_data_b, self.nonzero_pole_ids_b, self.shape_function_derivatives_u_b)
-        a2_b = super().ComputeActualJet(self.geometry_data_b, self.nonzero_pole_ids_b, self.shape_function_derivatives_v_b)
+        a1_b = super().ComputeActual(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_u_b)
+        a2_b = super().ComputeActual(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_v_b)
+        a3_b = np.cross(a1_b, a2_b)
+        a3_b = a3_b / np.linalg.norm(a3_b)
+
+        w_a = a3_a - self.A3_a
+        w_b = a3_b - self.A3_b
+
+        omega_a = np.cross(self.A3_a, w_a)
+        omega_b = np.cross(self.A3_b, w_b)
+
+        angle_a = np.arcsin(np.dot(omega_a, self.T2_edge))
+        angle_b = np.arcsin(np.dot(omega_b, self.T2_edge))
+
+        return angle_a - angle_b
+
+    # --------------------------------------------------------------------------
+    def CalculateRHS(self):
+        a1_a = super().ComputeActualJet(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_u_a)
+        a2_a = super().ComputeActualJet(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_v_a)
+        a3_a = np.cross(a1_a, a2_a)
+        a3_a = a3_a / np.linalg.norm(a3_a)
+
+        a1_b = super().ComputeActualJet(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_u_b)
+        a2_b = super().ComputeActualJet(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_v_b)
         a3_b = np.cross(a1_b, a2_b)
         a3_b = a3_b / np.linalg.norm(a3_b)
 
@@ -513,13 +546,13 @@ class RotationCouplingConditionWithAD(ReconstructionConditionWithAD):
 
     # --------------------------------------------------------------------------
     def CalculateLocalSystem(self):
-        a1_a = super().ComputeActualHyperJet(self.geometry_data_a, self.nonzero_pole_ids_a, self.shape_function_derivatives_u_a)
-        a2_a = super().ComputeActualHyperJet(self.geometry_data_a, self.nonzero_pole_ids_a, self.shape_function_derivatives_v_a)
+        a1_a = super().ComputeActualHyperJet(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_u_a)
+        a2_a = super().ComputeActualHyperJet(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_v_a)
         a3_a = np.cross(a1_a, a2_a)
         a3_a = a3_a / np.linalg.norm(a3_a)
 
-        a1_b = super().ComputeActualHyperJet(self.geometry_data_b, self.nonzero_pole_ids_b, self.shape_function_derivatives_u_b)
-        a2_b = super().ComputeActualHyperJet(self.geometry_data_b, self.nonzero_pole_ids_b, self.shape_function_derivatives_v_b)
+        a1_b = super().ComputeActualHyperJet(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_u_b)
+        a2_b = super().ComputeActualHyperJet(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_v_b)
         a3_b = np.cross(a1_b, a2_b)
         a3_b = a3_b / np.linalg.norm(a3_b)
 

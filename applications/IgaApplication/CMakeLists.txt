@@ -2,9 +2,12 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 message("**** configuring KratosIgaApplication ****")
 
+add_definitions( -DEIGEN_DEFAULT_TO_ROW_MAJOR )
+
 include_directories(
     ${CMAKE_SOURCE_DIR}/kratos
     ${ANURBS_ROOT}/include
+    SYSTEM ${EIGEN_ROOT}
 )
 
 # generate variables with the sources
@@ -15,6 +18,7 @@ set(KRATOS_IGA_APPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_utilities_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/iga_truss_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/iga_beam_element.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/iga_beam_ad_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/iga_beam_moment_condition.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/iga_shell_3P_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/iga_shell_5P_element.cpp

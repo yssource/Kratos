@@ -18,6 +18,8 @@
 
 
 // Project includes
+#include "geometries/triangle_2d_3.h"
+#include "geometries/tetrahedra_3d_4.h"
 #include "rans_constitutive_laws_application.h"
 #include "rans_constitutive_laws_application_variables.h"
 
@@ -25,7 +27,11 @@
 namespace Kratos {
 
 KratosRANSConstitutiveLawsApplication::KratosRANSConstitutiveLawsApplication():
-    KratosApplication("RANSConstitutiveLawsApplication")
+    KratosApplication("RANSConstitutiveLawsApplication"),
+    mKEpsilon2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+    mKEpsilon3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
+    mKEpsilonWallCondition2D(0, Element::GeometryType::Pointer( new Line2D2<Node<3> >( Element::GeometryType::PointsArrayType( 2 ) ) ) ),
+    mKEpsilonWallCondition3D(0, Element::GeometryType::Pointer( new Triangle3D3<Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) )
     {}
 
 void KratosRANSConstitutiveLawsApplication::Register()
@@ -49,7 +55,13 @@ void KratosRANSConstitutiveLawsApplication::Register()
     KRATOS_REGISTER_VARIABLE( TURBULENT_VISCOSITY_FRACTION )
     KRATOS_REGISTER_VARIABLE( TURBULENT_KINETIC_ENERGY_SIGMA )
     KRATOS_REGISTER_VARIABLE( TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA )
-
     KRATOS_REGISTER_VARIABLE( ELEMENT_DERIVATIVES_DOFS_EXTENSION )
+
+    // Register Elements
+    KRATOS_REGISTER_ELEMENT("KEPSILON2D3N",mKEpsilon2D);
+    KRATOS_REGISTER_ELEMENT("KEPSILON3D4N",mKEpsilon3D);
+
+    KRATOS_REGISTER_CONDITION("KEpsilonWallCondition2D2N", mKEpsilonWallCondition2D);
+    KRATOS_REGISTER_CONDITION("KEpsilonWallCondition3D3N", mKEpsilonWallCondition2D);
 }
 }  // namespace Kratos.

@@ -10,23 +10,20 @@
 //  Main authors:    @{KRATOS_APP_AUTHOR}
 //
 
-
-#if !defined(KRATOS_RANS_CONSTITUTIVE_LAWS_APPLICATION_H_INCLUDED )
-#define  KRATOS_RANS_CONSTITUTIVE_LAWS_APPLICATION_H_INCLUDED
-
+#if !defined(KRATOS_RANS_CONSTITUTIVE_LAWS_APPLICATION_H_INCLUDED)
+#define KRATOS_RANS_CONSTITUTIVE_LAWS_APPLICATION_H_INCLUDED
 
 // System includes
 
-
 // External includes
 
-
 // Project includes
+#include "custom_conditions/evm_k_epsilon_wall_condition.h"
+#include "custom_elements/evm_k_epsilon_element.h"
 #include "includes/kratos_application.h"
 
-
-namespace Kratos {
-
+namespace Kratos
+{
 ///@name Kratos Globals
 ///@{
 
@@ -48,8 +45,9 @@ namespace Kratos {
 
 /// Short class definition.
 /** Detail class definition.
-*/
-class KratosRANSConstitutiveLawsApplication : public KratosApplication {
+ */
+class KratosRANSConstitutiveLawsApplication : public KratosApplication
+{
 public:
     ///@name Type Definitions
     ///@{
@@ -65,12 +63,13 @@ public:
     KratosRANSConstitutiveLawsApplication();
 
     /// Destructor.
-    ~KratosRANSConstitutiveLawsApplication() override {}
+    ~KratosRANSConstitutiveLawsApplication() override
+    {
+    }
 
     ///@}
     ///@name Operators
     ///@{
-
 
     ///@}
     ///@name Operations
@@ -82,11 +81,9 @@ public:
     ///@name Access
     ///@{
 
-
     ///@}
     ///@name Inquiry
     ///@{
-
 
     ///@}
     ///@name Input and output
@@ -108,8 +105,8 @@ public:
     ///// Print object's data.
     void PrintData(std::ostream& rOStream) const override
     {
-          KRATOS_WATCH("in my application");
-          KRATOS_WATCH(KratosComponents<VariableData>::GetComponents().size() );
+        KRATOS_WATCH("in my application");
+        KRATOS_WATCH(KratosComponents<VariableData>::GetComponents().size());
 
         rOStream << "Variables:" << std::endl;
         KratosComponents<VariableData>().PrintData(rOStream);
@@ -125,43 +122,35 @@ public:
     ///@name Friends
     ///@{
 
-
     ///@}
 
 protected:
     ///@name Protected static Member Variables
     ///@{
 
-
     ///@}
     ///@name Protected member Variables
     ///@{
-
 
     ///@}
     ///@name Protected Operators
     ///@{
 
-
     ///@}
     ///@name Protected Operations
     ///@{
-
 
     ///@}
     ///@name Protected  Access
     ///@{
 
-
     ///@}
     ///@name Protected Inquiry
     ///@{
 
-
     ///@}
     ///@name Protected LifeCycle
     ///@{
-
 
     ///@}
 
@@ -175,28 +164,29 @@ private:
     ///@name Member Variables
     ///@{
 
-    // const Elem2D   mElem2D;
-    // const Elem3D   mElem3D;
+    /// k-epsilon turbulence model elements
+    const EvmKEpsilonElement<2, 3> mKEpsilon2D;
+    const EvmKEpsilonElement<3, 4> mKEpsilon3D;
+
+    /// k-epsilon turbulence model conditions
+    const EvmKEpsilonWallCondition<2, 2> mKEpsilonWallCondition2D;
+    const EvmKEpsilonWallCondition<3, 3> mKEpsilonWallCondition3D;
 
     ///@}
     ///@name Private Operators
     ///@{
 
-
     ///@}
     ///@name Private Operations
     ///@{
-
 
     ///@}
     ///@name Private  Access
     ///@{
 
-
     ///@}
     ///@name Private Inquiry
     ///@{
-
 
     ///@}
     ///@name Un accessible methods
@@ -208,17 +198,14 @@ private:
     /// Copy constructor.
     KratosRANSConstitutiveLawsApplication(KratosRANSConstitutiveLawsApplication const& rOther);
 
-
     ///@}
 
 }; // Class KratosRANSConstitutiveLawsApplication
 
 ///@}
 
-
 ///@name Type Definitions
 ///@{
-
 
 ///@}
 ///@name Input and output
@@ -226,7 +213,6 @@ private:
 
 ///@}
 
-
-}  // namespace Kratos.
+} // namespace Kratos.
 
 #endif // KRATOS_RANS_CONSTITUTIVE_LAWS_APPLICATION_H_INCLUDED  defined

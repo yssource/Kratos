@@ -19,14 +19,13 @@
 // External includes
 
 // Project includes
+#include "../custom_strategies/residual_based_bossak_velocity_scheme.h"
 #include "../rans_constitutive_laws_application_variables.h"
-#include "custom_turbulence_eddy_viscosity_models/eddy_viscosity_model.h"
+#include "includes/cfd_variables.h"
 #include "includes/define.h"
+#include "includes/model_part.h"
 #include "processes/process.h"
 #include "processes/variational_distance_calculation_process.h"
-#include "includes/cfd_variables.h"
-#include "../custom_strategies/general_convergence_criteria.h"
-#include "../custom_strategies/residual_based_bossak_velocity_scheme.h"
 
 namespace Kratos
 {
@@ -75,8 +74,6 @@ public:
     ///@name Type Definitions
     ///@{
 
-    typedef TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver> ModelType;
-
     typedef ModelPart::NodesContainerType NodesArrayType;
 
     /// Pointer definition of TurbulenceEddyViscosityModelProcess
@@ -89,12 +86,12 @@ public:
     /// Constructor
     TurbulenceEddyViscosityModelProcess(ModelPart& rModelPart,
                                         Parameters& rParameters,
-                                        TLinearSolver& rLinearSolver);
+                                        typename TLinearSolver::Pointer pLinearSolver);
 
     /// Destructor.
     ~TurbulenceEddyViscosityModelProcess() override
     {
-        delete mpEddyViscosityModel;
+        delete mpDistanceCalculator;
     }
 
     ///@}
@@ -107,39 +104,9 @@ public:
 
     void ExecuteInitialize() override;
 
-    void ExecuteBeforeSolutionLoop() override
-    {
-      mpEddyViscosityModel->ExecuteBeforeSolutionLoop();
-    }
-
     void ExecuteInitializeSolutionStep() override;
 
     void Execute() override;
-
-    void ExecuteFinalizeSolutionStep() override
-    {
-      mpEddyViscosityModel->ExecuteFinalizeSolutionStep();
-    }
-
-    void ExecuteBeforeOutputStep() override
-    {
-      mpEddyViscosityModel->ExecuteBeforeOutputStep();
-    }
-
-    void ExecuteAfterOutputStep() override
-    {
-      mpEddyViscosityModel->ExecuteAfterOutputStep();
-    }
-
-    void ExecuteFinalize()
-    {
-      mpEddyViscosityModel->ExecuteFinalize();
-    }
-
-    int Check() override
-    {
-      return mpEddyViscosityModel->Check();
-    }
 
     ///@}
     ///@name Access
@@ -175,7 +142,11 @@ protected:
     ///@}
     ///@name Protected member Variables
     ///@{
+    ModelPart& mrModelPart;
+    Parameters& mrParameters;
+    typename TLinearSolver::Pointer mpLinearSolver;
 
+    ModelPart* mpTurbulenceModelPart;
     ///@}
     ///@name Protected Operators
     ///@{
@@ -188,15 +159,57 @@ protected:
     {
         KRATOS_TRY;
 
+        std::cout<<"Suneth InitializeTurbulenceModelPart 1\n";
+
+        KRATOS_INFO("TurbulenceModel")
+            << "Initializing turbulence model part\n";
+
         KRATOS_ERROR_IF(mrModelPart.HasSubModelPart("TurbulenceModelPart")) << "TurbulenceEddyViscosityModelProcess: TurbulenceModelPart is already found."
                                                                             << std::endl;
         mrModelPart.CreateSubModelPart("TurbulenceModelPart");
-        mrTurbulenceModelPart = mrModelPart.GetSubModelPart("TurbulenceModelPart");
+        mpTurbulenceModelPart =
+            &mrModelPart.GetSubModelPart("TurbulenceModelPart");
 
-        const Element& rElem = mpEddyViscosityModel->GetReferenceElement();
-        const Condition& rCond = mpEddyViscosityModel->GetReferenceCondition();
+        const Element* p_elem = this->GetReferenceElement();
+        const Condition* p_cond = this->GetReferenceCondition();
 
-        this->GenerateModelPart(mrModelPart, mrTurbulenceModelPart, rElem, rCond);
+        std::cout<<"Suneth InitializeTurbulenceModelPart 2\n";
+
+        this->GenerateModelPart(mrModelPart, *mpTurbulenceModelPart, *p_elem, *p_cond);
+
+        std::cout<<"Suneth InitializeTurbulenceModelPart 3\n";
+
+        KRATOS_CATCH("");
+    }
+
+    virtual const Element* GetReferenceElement() const
+    {
+        return NULL;
+    }
+    virtual const Condition* GetReferenceCondition() const
+    {
+        return NULL;
+    }
+
+    virtual void UpdateFluidViscosity()
+    {
+        KRATOS_TRY
+
+        NodesArrayType& nodes = mpTurbulenceModelPart->Nodes();
+
+// Modifying viscosity of the nodes with the calculated turbulent viscosity
+#pragma omp parallel for
+        for (int i = 0; i < static_cast<int>(nodes.size()); ++i)
+        {
+            auto it_node = nodes.begin() + i;
+            const double kinematic_viscosity =
+                it_node->FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
+            const double turbulent_viscosity =
+                it_node->FastGetSolutionStepValue(TURBULENT_VISCOSITY);
+
+            double& effective_viscosity = it_node->FastGetSolutionStepValue(VISCOSITY);
+            effective_viscosity = kinematic_viscosity + turbulent_viscosity;
+        }
 
         KRATOS_CATCH("");
     }
@@ -223,18 +236,7 @@ private:
     ///@name Member Variables
     ///@{
 
-    ModelPart& mrModelPart;
-    Parameters& mrParameters;
-    TLinearSolver& mrLinearSolver;
-    TurbulenceEddyViscosityModel* mpEddyViscosityModel;
-
-    ModelPart mrTurbulenceModelPart;
-
-    VariationalDistanceCalculationProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver> mDistanceCalculator;
-
-    std::vector<ModelPart> mInletConditionsList;
-    std::vector<ModelPart> mOutletConditionsList;
-    std::vector<ModelPart> mWallConditionsList;
+    VariationalDistanceCalculationProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>* mpDistanceCalculator;
 
     bool mIsMeshMoving;
 
@@ -246,7 +248,38 @@ private:
     ///@name Private Operations
     ///@{
 
+    void GenerateModelPart(ModelPart& rOriginModelPart,
+                           ModelPart& rDestinationModelPart,
+                           const Element& rReferenceElement,
+                           const Condition& rReferenceCondition);
+
     void CalculateWallDistances();
+
+    void InitializeNodeFlags(const Parameters& rParameters, const Flags& rFlag)
+    {
+        KRATOS_TRY
+
+        for (std::size_t i = 0; i < rParameters.size(); ++i)
+        {
+            std::string model_part_name = rParameters.GetArrayItem(i).GetString();
+            KRATOS_WATCH(mrModelPart.GetSubModelPartNames());
+            KRATOS_ERROR_IF(!mrModelPart.HasSubModelPart(model_part_name))
+                << "TurbulenceEddyViscosityModelProcess: Wall condition "
+                << model_part_name << " not found." << std::endl;
+            ModelPart& current_model_part = mrModelPart.GetSubModelPart(model_part_name);
+
+            NodesArrayType& nodes_array = current_model_part.Nodes();
+
+#pragma omp parallel for
+            for (int i = 0; i < static_cast<int>(nodes_array.size()); ++i)
+            {
+                auto it_node = nodes_array.begin() + i;
+                it_node->Set(rFlag, true);
+            }
+        }
+
+        KRATOS_CATCH("");
+    }
 
     // void AssignBoundaryConditions();
 

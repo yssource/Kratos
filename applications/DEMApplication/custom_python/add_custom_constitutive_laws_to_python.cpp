@@ -16,6 +16,7 @@
 #include "../custom_constitutive/DEM_D_Hertz_viscous_Coulomb_CL.h"
 #include "../custom_constitutive/DEM_D_Hertz_viscous_Coulomb_Nestle_CL.h"
 #include "../custom_constitutive/DEM_D_Bentonite_Colloid_CL.h"
+#include "../custom_constitutive/DEM_electromagnetic_CL.h"
 #include "../custom_constitutive/DEM_D_Linear_viscous_Coulomb_2D_CL.h"
 #include "../custom_constitutive/DEM_D_Hertz_viscous_Coulomb_2D_CL.h"
 #include "../custom_constitutive/DEM_D_JKR_cohesive_law.h"
@@ -68,6 +69,10 @@ void AddCustomConstitutiveLawsToPython(pybind11::module& m) {
         ;
 
     py::class_<DEM_D_Bentonite_Colloid, DEM_D_Bentonite_Colloid::Pointer, DEMDiscontinuumConstitutiveLaw>(m, "DEM_D_Bentonite_Colloid")
+        .def(py::init<>())
+        ;
+
+    py::class_<DEM_electromagnetic, DEM_electromagnetic::Pointer, DEMDiscontinuumConstitutiveLaw>(m, "DEM_electromagnetic")
         .def(py::init<>())
         ;
 

@@ -417,6 +417,19 @@ void  AddCustomUtilitiesToPython(pybind11::module& m){
         .def("AddDEMVariablesToImpose", &BinBasedDEMFluidCoupledMapping <2,SphericParticle> ::AddDEMVariablesToImpose)
         ;
 
+    // py::class_<BinBasedDEMFluidCoupledMapping <2, IonParticle> > (m, "BinBasedIonDEMFluidCoupledMapping2D")
+    //     .def(py::init<Parameters&>())
+    //     .def("InterpolateFromFluidMesh", &BinBasedDEMFluidCoupledMapping <2,IonParticle> ::InterpolateFromFluidMesh)
+    //     .def("ImposeFlowOnDEMFromField", &BinBasedDEMFluidCoupledMapping <2,IonParticle> ::ImposeFlowOnDEMFromField)
+    //     .def("ImposeVelocityOnDEMFromFieldToSlipVelocity", &BinBasedDEMFluidCoupledMapping <2,IonParticle> ::ImposeVelocityOnDEMFromFieldToSlipVelocity)
+    //     .def("InterpolateFromDEMMesh", &BinBasedDEMFluidCoupledMapping <2,IonParticle> ::InterpolateFromDEMMesh)
+    //     .def("HomogenizeFromDEMMesh", &BinBasedDEMFluidCoupledMapping <2,IonParticle> ::HomogenizeFromDEMMesh)
+    //     .def("ComputePostProcessResults", &BinBasedDEMFluidCoupledMapping <2,IonParticle> ::ComputePostProcessResults)
+    //     .def("AddDEMCouplingVariable", &BinBasedDEMFluidCoupledMapping <2,IonParticle> ::AddDEMCouplingVariable)
+    //     .def("AddFluidCouplingVariable", &BinBasedDEMFluidCoupledMapping <2,IonParticle> ::AddFluidCouplingVariable)
+    //     .def("AddDEMVariablesToImpose", &BinBasedDEMFluidCoupledMapping <2,IonParticle> ::AddDEMVariablesToImpose)
+    //     ;
+
     py::class_<BinBasedDEMFluidCoupledMapping <2, NanoParticle> > (m, "BinBasedNanoDEMFluidCoupledMapping2D")
         .def(py::init<Parameters&>())
         .def("InterpolateFromFluidMesh", &BinBasedDEMFluidCoupledMapping <2,NanoParticle> ::InterpolateFromFluidMesh)
@@ -445,6 +458,23 @@ void  AddCustomUtilitiesToPython(pybind11::module& m){
         .def("AddDEMVariablesToImpose", &BinBasedDEMFluidCoupledMapping <3,SphericParticle> ::AddDEMVariablesToImpose)
         .def("AddFluidVariableToBeTimeFiltered", &BinBasedDEMFluidCoupledMapping <3,SphericParticle> ::AddFluidVariableToBeTimeFiltered)
         ;
+
+    // py::class_<BinBasedDEMFluidCoupledMapping <3, IonParticle> > (m, "BinBasedIonDEMFluidCoupledMapping3D")
+    //     .def(py::init<Parameters&>())
+    //     .def("InterpolateVelocityOnSlipVelocity", &BinBasedDEMFluidCoupledMapping <3,IonParticle> ::InterpolateVelocityOnSlipVelocity)
+    //     .def("InterpolateFromFluidMesh", &BinBasedDEMFluidCoupledMapping <3,IonParticle> ::InterpolateFromFluidMesh)
+    //     .def("InterpolateFromNewestFluidMesh", &BinBasedDEMFluidCoupledMapping <3,IonParticle> ::InterpolateFromNewestFluidMesh)
+    //     .def("ImposeFlowOnDEMFromField", &BinBasedDEMFluidCoupledMapping <3,IonParticle> ::ImposeFlowOnDEMFromField)
+    //     .def("ImposeVelocityOnDEMFromFieldToSlipVelocity", &BinBasedDEMFluidCoupledMapping <3,IonParticle> ::ImposeVelocityOnDEMFromFieldToSlipVelocity)
+    //     .def("InterpolateFromDEMMesh", &BinBasedDEMFluidCoupledMapping <3,IonParticle> ::InterpolateFromDEMMesh)
+    //     .def("HomogenizeFromDEMMesh", &BinBasedDEMFluidCoupledMapping <3,IonParticle> ::HomogenizeFromDEMMesh)
+    //     .def("ComputePostProcessResults", &BinBasedDEMFluidCoupledMapping <3,IonParticle> ::ComputePostProcessResults)
+    //     .def("AddDEMCouplingVariable", &BinBasedDEMFluidCoupledMapping <3,IonParticle> ::AddDEMCouplingVariable)
+    //     .def("AddFluidCouplingVariable", &BinBasedDEMFluidCoupledMapping <3,IonParticle> ::AddFluidCouplingVariable)
+    //     .def("AddFluidCouplingVariable", &BinBasedDEMFluidCoupledMapping <3,IonParticle> ::AddFluidCouplingVariable)
+    //     .def("AddDEMVariablesToImpose", &BinBasedDEMFluidCoupledMapping <3,IonParticle> ::AddDEMVariablesToImpose)
+    //     .def("AddFluidVariableToBeTimeFiltered", &BinBasedDEMFluidCoupledMapping <3,IonParticle> ::AddFluidVariableToBeTimeFiltered)
+    //     ;
 
     py::class_<BinBasedDEMFluidCoupledMapping <3, NanoParticle> > (m, "BinBasedNanoDEMFluidCoupledMapping3D")
         .def(py::init<Parameters&>())

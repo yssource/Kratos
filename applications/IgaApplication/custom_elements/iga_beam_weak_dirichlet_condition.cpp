@@ -69,7 +69,7 @@ void IgaBeamWeakDirichletCondition::EquationIdVector(
 
 void IgaBeamWeakDirichletCondition::Initialize()
 {
-    
+
 }
 
 void IgaBeamWeakDirichletCondition::CalculateAll(
@@ -89,9 +89,9 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     KRATOS_TRY;
 
     // get integration weight
-    
+
     const double& integration_weight = GetValue(INTEGRATION_WEIGHT);
-    
+
     // get shape functions
 
     BeamUtilities::Matrix<3, Dynamic> shape_functions(3, NumberOfNodes());
@@ -129,7 +129,7 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
 
     // reference configuration FIXME: move this section to Initialize()
 
-    const Vector3d X = ComputeRefBaseVector(0, shape_functions, GetGeometry());
+    const auto X = ComputeRefBaseVector(0, shape_functions, GetGeometry());
     const Vector3d A1 = ComputeRefBaseVector(1, shape_functions, GetGeometry());
     const Vector3d A1_1 = ComputeRefBaseVector(2, shape_functions, GetGeometry());
 
@@ -149,11 +149,11 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const Matrix3d Rod_1_Lam = Rod_1 * Lam;
     const Matrix3d Rod_Lam_1 = Rod * Lam_1;
 
-    const Vector3d Y = Rod_Lam * A02.transpose();
+    const auto Y = Rod_Lam * A02.transpose();
     const Vector3d A2 = Rod_Lam * A02.transpose();
     const Vector3d A2_1 = Rod_1_Lam * A02.transpose() + Rod_Lam_1 * A02.transpose();
 
-    const Vector3d Z = Rod_Lam * A03.transpose();
+    const auto Z = Rod_Lam * A03.transpose();
     const Vector3d A3 = Rod_Lam * A03.transpose();
     const Vector3d A3_1 = Rod_1_Lam * A03.transpose() + Rod_Lam_1 * A03.transpose();
 
@@ -169,7 +169,7 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     // actual configuration
 
     const auto phi = ComputeActValue(DISPLACEMENT_ROTATION, 0, shape_functions, GetGeometry());
-    const auto phi_1 = ComputeActValue(DISPLACEMENT_ROTATION, 1, shape_functions, GetGeometry());    
+    const auto phi_1 = ComputeActValue(DISPLACEMENT_ROTATION, 1, shape_functions, GetGeometry());
 
     const auto x = ComputeActBaseVector(1, shape_functions, GetGeometry());
     const auto a1 = ComputeActBaseVector(1, shape_functions, GetGeometry());
@@ -208,9 +208,9 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const auto c13 = a2_1.dot(a3);
 
 
-    // const auto u_xzz = x - X;
-    // const auto v_xyz = y - Y;
-    // const auto w_xyz = z - Z;
+    const auto u_xyz = x - X;
+    const auto v_xyz = y - Y;
+    const auto w_xyz = z - Z;
 
     const auto A22 = A2.dot(A2);
     const auto A22_length = sqrt(A22);
@@ -228,12 +228,33 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const auto a33_length = sqrt(a33);
     const auto v = a3 / a33_length;
 
-    const auto alpha_2 = atan2(a1.dot(N), a1.dot(T));
-    const auto alpha_3 = atan2(a1.dot(V), a1.dot(T));
+    const auto tmp_N = a1.dot(N);
+    const auto tmp_V = a1.dot(V);
+    const auto tmp_T = a1.dot(T);
 
-    // inner energy
+    //TODO:  Speicherformat anpassen!
+    // const auto alpha_2 = HyperJet::atan2(tmp_N, tmp_T);
+    // const auto alpha_3 = atan2(a1.dot(V), a1.dot(T));
 
-    // const auto eps11 = Tm * (a11 - A11) / 2;
+      // inner energy 
+    auto const penalty_x = GetValue(DISPLACEMENT_PENALTY_X);
+    auto const penalty_y = GetValue(DISPLACEMENT_PENALTY_Y);
+    auto const penalty_z = GetValue(DISPLACEMENT_PENALTY_Z);
+    auto const penalty_a2 = GetValue(DISPLACEMENT_PENALTY_ALPHA_2);
+    auto const penalty_a3 = GetValue(DISPLACEMENT_PENALTY_ALPHA_3);
+
+    const auto dP_x = 0.5 * ( u_xyz.dot(u_xyz)) * penalty_x ;
+    const auto dP_y = 0.5 * ( v_xyz.dot(v_xyz)) * penalty_y ;
+    const auto dP_z = 0.5 * ( w_xyz.dot(w_xyz)) * penalty_z ;
+
+    // const auto dP_alpha = 0.5 * (alpha_2.dot(alpha_2) * penalty_a2
+    //                            + alpha_3.dot(alpha_3) * penalty_a3); 
+
+
+    MapMatrix(rLeftHandSideMatrix) = dP_x.h() + dP_y.h() + dP_z.h() /*+ dP_alpha.h() */ ;
+    MapVector(rRightHandSideVector) = (dP_x.g() + dP_y.g() + dP_z.g()) /*+ dP_alpha.g() */;
+
+        // const auto eps11 = Tm * (a11 - A11) / 2;
     // const auto kap2  = Tm * (b2  - B2 );
     // const auto kap3  = Tm * (b3  - B3 );
     // const auto kap12 = Ts * (c12 - C12);
@@ -244,10 +265,6 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     //                        pow(kap3 , 2) * ei2 +
     //                        pow(kap12, 2) * gi1 * 0.5 +
     //                        pow(kap13, 2) * gi1 * 0.5) * A * integration_weight;
-
-
-    // MapMatrix(rLeftHandSideMatrix) = dP.h();
-    // MapVector(rRightHandSideVector) = -dP.g();
 
     KRATOS_CATCH("")
 }

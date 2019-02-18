@@ -94,8 +94,11 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::InitializeSolutionStep( Proce
     KinematicVariables this_kinematic_variables = KinematicVariables();
     ConstitutiveVariables this_constitutive_variables = ConstitutiveVariables();
 
+    // Getting geometry
+    const GeometryType& r_geometry = this->GetGeometry();
+
     // Create constitutive law parameters:
-    ConstitutiveLaw::Parameters Values(this->GetGeometry(),this->GetProperties(),rCurrentProcessInfo);
+    ConstitutiveLaw::Parameters Values(r_geometry,this->GetProperties(),rCurrentProcessInfo);
 
     // Set constitutive law flags:
     Flags& ConstitutiveLawOptions=Values.GetOptions();
@@ -108,10 +111,10 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::InitializeSolutionStep( Proce
     Values.SetConstitutiveMatrix(this_constitutive_variables.D);
 
     // Reading integration points
-    const GeometryType& r_geometry = this->GetGeometry();
+    const GeometryType::IntegrationPointsArrayType& integration_points = r_geometry.IntegrationPoints(this->GetIntegrationMethod());
 
-    // Reading integration points
-    const GeometryType::IntegrationPointsArrayType& integration_points = r_geometry.IntegrationPoints(mThisIntegrationMethod);
+    // Shape functions
+    const Matrix& rNValues = r_geometry.ShapeFunctionsValues(this->GetIntegrationMethod());
 
     bool compute_initialization;
     for ( IndexType point_number = 0; point_number < mConstitutiveLawVector.size(); ++point_number ) {
@@ -119,7 +122,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::InitializeSolutionStep( Proce
 
         if (compute_initialization) {
             // Compute element kinematics B, F, DN_DX ...
-            CalculateKinematicVariables(this_kinematic_variables, point_number, mThisIntegrationMethod);
+            CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod(), rNValues);
 
             // Compute constitutive law variables
             SetConstitutiveVariables(this_kinematic_variables, this_constitutive_variables, Values, point_number, integration_points);
@@ -173,8 +176,11 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::FinalizeSolutionStep( Process
     // Reading integration points
     const GeometryType& r_geometry = this->GetGeometry();
 
+    // Shape functions
+    const Matrix& rNValues = r_geometry.ShapeFunctionsValues(this->GetIntegrationMethod());
+
     // Reading integration points
-    const GeometryType::IntegrationPointsArrayType& integration_points = r_geometry.IntegrationPoints(mThisIntegrationMethod);
+    const GeometryType::IntegrationPointsArrayType& integration_points = r_geometry.IntegrationPoints(this->GetIntegrationMethod());
 
     bool compute_finalization;
     for ( IndexType point_number = 0; point_number < mConstitutiveLawVector.size(); ++point_number ) {
@@ -182,7 +188,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::FinalizeSolutionStep( Process
 
         if (compute_finalization) {
             // Compute element kinematics B, F, DN_DX ...
-            CalculateKinematicVariables(this_kinematic_variables, point_number, mThisIntegrationMethod);
+            CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod(), rNValues);
 
             // Compute constitutive law variables
             SetConstitutiveVariables(this_kinematic_variables, this_constitutive_variables, Values, point_number, integration_points);
@@ -204,7 +210,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::InitializeMaterial()
     if ( this->GetProperties()[CONSTITUTIVE_LAW] != nullptr ) {
         const GeometryType& r_geometry = this->GetGeometry();
         const Properties& r_properties = this->GetProperties();
-        const auto& N_values = r_geometry.ShapeFunctionsValues(mThisIntegrationMethod);
+        const auto& N_values = r_geometry.ShapeFunctionsValues(this->GetIntegrationMethod());
         for ( IndexType point_number = 0; point_number < mConstitutiveLawVector.size(); ++point_number ) {
             mConstitutiveLawVector[point_number] = this->GetProperties()[CONSTITUTIVE_LAW]->Clone();
             mConstitutiveLawVector[point_number]->InitializeMaterial( r_properties, r_geometry, row(N_values , point_number ));
@@ -226,7 +232,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::ResetConstitutiveLaw()
     if ( this->GetProperties()[CONSTITUTIVE_LAW] != nullptr ) {
         const GeometryType& r_geometry = this->GetGeometry();
         const Properties& r_properties = this->GetProperties();
-        const auto& N_values = r_geometry.ShapeFunctionsValues(mThisIntegrationMethod);
+        const auto& N_values = r_geometry.ShapeFunctionsValues(this->GetIntegrationMethod());
         for ( IndexType point_number = 0; point_number < mConstitutiveLawVector.size(); ++point_number )
             mConstitutiveLawVector[point_number]->ResetMaterial( r_properties,  r_geometry, row( N_values, point_number ) );
     }
@@ -250,7 +256,7 @@ Element::Pointer ExplicitTotalLagrangianBbar<TDim, TNumNodes>::Clone (
     p_new_elem->Set(Flags(*this));
 
     // Currently selected integration methods
-    p_new_elem->SetIntegrationMethod(mThisIntegrationMethod);
+    p_new_elem->SetIntegrationMethod(this->GetIntegrationMethod());
 
     // The vector containing the constitutive laws
     p_new_elem->SetConstitutiveLawVector(mConstitutiveLawVector);
@@ -421,12 +427,13 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateRightHandSide(
     if ( rRightHandSideVector.size() != ElementSize )
         rRightHandSideVector.resize( ElementSize, false );
 
-    rRightHandSideVector = ZeroVector( ElementSize ); //resetting RHS
+    noalias(rRightHandSideVector) = ZeroVector( ElementSize ); //resetting RHS
 
     // Reading integration points
-    const GeometryType::IntegrationPointsArrayType& integration_points = this->GetGeometry().IntegrationPoints(this->GetIntegrationMethod());
+    auto& r_geometry = this->GetGeometry();
+    const GeometryType::IntegrationPointsArrayType& integration_points = r_geometry.IntegrationPoints(this->GetIntegrationMethod());
 
-    ConstitutiveLaw::Parameters Values(this->GetGeometry(),this->GetProperties(),rCurrentProcessInfo);
+    ConstitutiveLaw::Parameters Values(r_geometry, this->GetProperties(),rCurrentProcessInfo);
 
     // Set constitutive law flags:
     Flags& ConstitutiveLawOptions=Values.GetOptions();
@@ -436,6 +443,9 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateRightHandSide(
 
     // If strain has to be computed inside of the constitutive law with PK2
     Values.SetStrainVector(this_constitutive_variables.StrainVector); //this is the input  parameter
+
+    // Shape functions
+    const Matrix& rNValues = r_geometry.ShapeFunctionsValues(this->GetIntegrationMethod());
 
     // Some declarations
     const bool has_thickness = this->GetProperties().Has( THICKNESS ) ?  true : false;
@@ -448,7 +458,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateRightHandSide(
         noalias(body_force) = this->GetBodyForce(integration_points, point_number);
 
         // Compute element kinematics B, F, DN_DX ...
-        this->CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod());
+        this->CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod(), rNValues);
 
         // Compute material reponse
         this->CalculateConstitutiveVariables(this_kinematic_variables, this_constitutive_variables, Values, point_number, integration_points, ConstitutiveLaw::StressMeasure_PK2);
@@ -461,58 +471,6 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateRightHandSide(
 
         this->CalculateAndAddResidualVector(rRightHandSideVector, this_kinematic_variables, rCurrentProcessInfo, body_force, this_constitutive_variables.StressVector, integration_weight);
     }
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
-template< const SizeType TDim, const SizeType TNumNodes>
-void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateMassMatrix(
-    MatrixType& rMassMatrix,
-    ProcessInfo& rCurrentProcessInfo
-    )
-{
-    KRATOS_TRY;
-
-    // Clear matrix
-    if (rMassMatrix.size1() != ElementSize || rMassMatrix.size2() != ElementSize)
-        rMassMatrix.resize( ElementSize, ElementSize, false );
-    rMassMatrix = ZeroMatrix( ElementSize, ElementSize );
-
-    // Checking density
-    KRATOS_ERROR_IF_NOT(this->GetProperties().Has(DENSITY)) << "DENSITY has to be provided for the calculation of the MassMatrix!" << std::endl;
-
-    // LUMPED MASS MATRIX
-    array_1d<double, ElementSize> temp_vector;
-    CalculateLumpedMassVector(temp_vector);
-    for (IndexType i = 0; i < ElementSize; ++i)
-        rMassMatrix(i, i) = temp_vector[i];
-
-    KRATOS_CATCH("");
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
-template< const SizeType TDim, const SizeType TNumNodes>
-void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateDampingMatrix(
-    MatrixType& rDampingMatrix,
-    ProcessInfo& rCurrentProcessInfo
-    )
-{
-    // Clear matrix
-    if (rDampingMatrix.size1() != ElementSize || rDampingMatrix.size2() != ElementSize)
-        rDampingMatrix.resize( ElementSize, ElementSize, false );
-    rDampingMatrix = ZeroMatrix( ElementSize, ElementSize );
-
-    // Checking density
-    KRATOS_ERROR_IF_NOT(this->GetProperties().Has(DENSITY)) << "DENSITY has to be provided for the calculation of the MassMatrix!" << std::endl;
-
-    // LUMPED DAMPING MATRIX
-    array_1d<double, ElementSize> temp_vector;
-    CalculateLumpedDampingVector(temp_vector, rCurrentProcessInfo);
-    for (IndexType i = 0; i < ElementSize; ++i)
-        rDampingMatrix(i, i) = temp_vector[i];
 }
 
 /***********************************************************************************/
@@ -582,7 +540,8 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    const GeometryType::IntegrationPointsArrayType &integration_points = this->GetGeometry().IntegrationPoints(this->GetIntegrationMethod());
+    auto& r_geometry = this->GetGeometry();
+    const GeometryType::IntegrationPointsArrayType &integration_points = r_geometry.IntegrationPoints(this->GetIntegrationMethod());
 
     if ( rOutput.size() != integration_points.size() )
         rOutput.resize( integration_points.size() );
@@ -613,7 +572,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
             ConstitutiveVariables this_constitutive_variables = ConstitutiveVariables();
 
             // Create constitutive law parameters:
-            ConstitutiveLaw::Parameters Values(this->GetGeometry(),this->GetProperties(),rCurrentProcessInfo);
+            ConstitutiveLaw::Parameters Values(r_geometry,this->GetProperties(),rCurrentProcessInfo);
 
             // Set constitutive law flags:
             Flags& ConstitutiveLawOptions=Values.GetOptions();
@@ -622,14 +581,17 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
             ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR, false);
 
             // Reading integration points
-            const GeometryType::IntegrationPointsArrayType& integration_points = this->GetGeometry().IntegrationPoints(this->GetIntegrationMethod());
+            const GeometryType::IntegrationPointsArrayType& integration_points = r_geometry.IntegrationPoints(this->GetIntegrationMethod());
+
+            // Shape functions
+            const Matrix& rNValues = r_geometry.ShapeFunctionsValues(this->GetIntegrationMethod());
 
             // If strain has to be computed inside of the constitutive law with PK2
             Values.SetStrainVector(this_constitutive_variables.StrainVector); //this is the input  parameter
 
             for (IndexType point_number = 0; point_number < integration_points.size(); ++point_number) {
                 // Compute element kinematics B, F, DN_DX ...
-                CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod());
+                CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod(), rNValues);
 
                 // Compute constitutive law variables
                 SetConstitutiveVariables(this_kinematic_variables, this_constitutive_variables, Values, point_number, integration_points);
@@ -644,8 +606,11 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
             KinematicVariables this_kinematic_variables = KinematicVariables();
             ConstitutiveVariables this_constitutive_variables = ConstitutiveVariables();
 
+            // Shape functions
+            const Matrix& rNValues = r_geometry.ShapeFunctionsValues(this->GetIntegrationMethod());
+
             // Create constitutive law parameters:
-            ConstitutiveLaw::Parameters Values(this->GetGeometry(),this->GetProperties(),rCurrentProcessInfo);
+            ConstitutiveLaw::Parameters Values(r_geometry,this->GetProperties(),rCurrentProcessInfo);
 
             // Set constitutive law flags:
             Flags& ConstitutiveLawOptions=Values.GetOptions();
@@ -657,7 +622,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
 
             for (IndexType point_number = 0; point_number < integration_points.size(); ++point_number) {
                 // Compute element kinematics B, F, DN_DX ...
-                CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod());
+                CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod(), rNValues);
 
                 // Compute material reponse
                 CalculateConstitutiveVariables(this_kinematic_variables, this_constitutive_variables, Values, point_number, integration_points, ConstitutiveLaw::StressMeasure_PK2);
@@ -699,7 +664,8 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    const GeometryType::IntegrationPointsArrayType &integration_points = this->GetGeometry().IntegrationPoints(this->GetIntegrationMethod());
+    auto& r_geometry = this->GetGeometry();
+    const GeometryType::IntegrationPointsArrayType &integration_points = r_geometry.IntegrationPoints(this->GetIntegrationMethod());
 
     const SizeType number_of_integration_points = integration_points.size();
     if ( rOutput.size() != number_of_integration_points )
@@ -713,7 +679,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
 
             for (IndexType point_number = 0; point_number < number_of_integration_points; ++point_number) {
                 Point global_point;
-                this->GetGeometry().GlobalCoordinates(global_point, integration_points[point_number]);
+                r_geometry.GlobalCoordinates(global_point, integration_points[point_number]);
                 rOutput[point_number] = global_point.Coordinates();
             }
         } else {
@@ -732,7 +698,8 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    const GeometryType::IntegrationPointsArrayType &integration_points = this->GetGeometry().IntegrationPoints(this->GetIntegrationMethod());
+    auto& r_geometry = this->GetGeometry();
+    const GeometryType::IntegrationPointsArrayType &integration_points = r_geometry.IntegrationPoints(this->GetIntegrationMethod());
 
     const SizeType number_of_integration_points = integration_points.size();
     if (rOutput.size() != number_of_integration_points)
@@ -755,7 +722,8 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    const GeometryType::IntegrationPointsArrayType& integration_points = this->GetGeometry().IntegrationPoints( this->GetIntegrationMethod() );
+    auto& r_geometry = this->GetGeometry();
+    const GeometryType::IntegrationPointsArrayType& integration_points = r_geometry.IntegrationPoints( this->GetIntegrationMethod() );
 
     const SizeType number_of_integration_points = integration_points.size();
     if ( rOutput.size() != number_of_integration_points )
@@ -780,7 +748,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
             ConstitutiveVariables this_constitutive_variables = ConstitutiveVariables();
 
             // Create constitutive law parameters:
-            ConstitutiveLaw::Parameters Values(this->GetGeometry(),this->GetProperties(),rCurrentProcessInfo);
+            ConstitutiveLaw::Parameters Values(r_geometry,this->GetProperties(),rCurrentProcessInfo);
 
             // Set constitutive law flags:
             Flags& ConstitutiveLawOptions=Values.GetOptions();
@@ -790,10 +758,13 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
 
             Values.SetStrainVector(this_constitutive_variables.StrainVector);
 
+            // Shape functions
+            const Matrix& rNValues = r_geometry.ShapeFunctionsValues(this->GetIntegrationMethod());
+
             // Reading integration points
             for ( IndexType point_number = 0; point_number < number_of_integration_points; ++point_number ) {
                 // Compute element kinematics B, F, DN_DX ...
-                CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod());
+                CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod(), rNValues);
 
                 //call the constitutive law to update material variables
                 if( rVariable == CAUCHY_STRESS_VECTOR) {
@@ -815,7 +786,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
             ConstitutiveVariables this_constitutive_variables = ConstitutiveVariables();
 
             // Create constitutive law parameters:
-            ConstitutiveLaw::Parameters Values(this->GetGeometry(),this->GetProperties(),rCurrentProcessInfo);
+            ConstitutiveLaw::Parameters Values(r_geometry,this->GetProperties(),rCurrentProcessInfo);
 
             // Set constitutive law flags:
             Flags &ConstitutiveLawOptions=Values.GetOptions();
@@ -827,10 +798,13 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
 
             const ConstitutiveLaw::StressMeasure this_stress_measure = rVariable == GREEN_LAGRANGE_STRAIN_VECTOR ? ConstitutiveLaw::StressMeasure_PK2 : ConstitutiveLaw::StressMeasure_Kirchhoff;
 
+            // Shape functions
+            const Matrix& rNValues = r_geometry.ShapeFunctionsValues(this->GetIntegrationMethod());
+
             //reading integration points
             for ( IndexType point_number = 0; point_number < number_of_integration_points; ++point_number ) {
                 // Compute element kinematics B, F, DN_DX ...
-                CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod());
+                CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod(),rNValues);
 
                 // Compute material reponse
                 CalculateConstitutiveVariables(this_kinematic_variables, this_constitutive_variables, Values, point_number, integration_points, this_stress_measure);
@@ -856,7 +830,8 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    const GeometryType::IntegrationPointsArrayType& integration_points = this->GetGeometry().IntegrationPoints( this->GetIntegrationMethod() );
+    auto& r_geometry = this->GetGeometry();
+    const GeometryType::IntegrationPointsArrayType& integration_points = r_geometry.IntegrationPoints( this->GetIntegrationMethod() );
 
     if ( rOutput.size() != integration_points.size() )
         rOutput.resize( integration_points.size() );
@@ -895,17 +870,21 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateOnIntegrationPoints(
                 rOutput[point_number] = MathUtils<double>::StrainVectorToTensor(strain_vector[point_number]);
             }
         } else if ( rVariable == DEFORMATION_GRADIENT ) { // VARIABLE SET FOR TRANSFER PURPOUSES
+
+            // Shape functions
+            const Matrix& rNValues = r_geometry.ShapeFunctionsValues(this->GetIntegrationMethod());
+
             // Create and initialize element variables:
             KinematicVariables this_kinematic_variables = KinematicVariables();
             ConstitutiveVariables this_constitutive_variables = ConstitutiveVariables();
 
             // Create constitutive law parameters:
-            ConstitutiveLaw::Parameters Values(this->GetGeometry(),this->GetProperties(),rCurrentProcessInfo);
+            ConstitutiveLaw::Parameters Values(r_geometry,this->GetProperties(),rCurrentProcessInfo);
 
             // Reading integration points
             for ( IndexType point_number = 0; point_number < mConstitutiveLawVector.size(); ++point_number ) {
                 // Compute element kinematics B, F, DN_DX ...
-                CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod());
+                CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod(), rNValues);
 
                 if( rOutput[point_number].size2() != this_kinematic_variables.F.size2() )
                     rOutput[point_number].resize( this_kinematic_variables.F.size1() , this_kinematic_variables.F.size2() , false );
@@ -1079,7 +1058,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::GetValueOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
+    this->CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
 }
 
 /***********************************************************************************/
@@ -1092,7 +1071,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::GetValueOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
+    this->CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
 }
 
 /***********************************************************************************/
@@ -1105,7 +1084,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::GetValueOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
+    this->CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
 }
 
 /***********************************************************************************/
@@ -1118,7 +1097,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::GetValueOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
+    this->CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
 }
 
 /***********************************************************************************/
@@ -1131,7 +1110,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::GetValueOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
+    this->CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
 }
 
 /***********************************************************************************/
@@ -1144,7 +1123,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::GetValueOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
+    this->CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
 }
 
 /***********************************************************************************/
@@ -1157,7 +1136,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::GetValueOnIntegrationPoints(
     const ProcessInfo& rCurrentProcessInfo
     )
 {
-    CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
+    this->CalculateOnIntegrationPoints( rVariable, rValues, rCurrentProcessInfo );
 }
 
 /***********************************************************************************/
@@ -1238,20 +1217,29 @@ template< const SizeType TDim, const SizeType TNumNodes>
 void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateKinematicVariables(
     KinematicVariables& rThisKinematicVariables,
     const IndexType PointNumber,
-    const GeometryType::IntegrationMethod& rIntegrationMethod
+    const GeometryType::IntegrationMethod& rIntegrationMethod,
+    const Matrix& rNValues
     )
 {
     // Shape functions
-    auto& r_geom = this->GetGeometry();
-    rThisKinematicVariables.N = row(r_geom.ShapeFunctionsValues(rIntegrationMethod), PointNumber);
+    auto& r_geometry = this->GetGeometry();
+    rThisKinematicVariables.N = row(rNValues, PointNumber);
 
     rThisKinematicVariables.detJ0 = this->CalculateDerivativesOnReferenceConfiguration(rThisKinematicVariables.J0, rThisKinematicVariables.InvJ0, rThisKinematicVariables.DN_DX, PointNumber, rIntegrationMethod);
     KRATOS_ERROR_IF(rThisKinematicVariables.detJ0 < 0.0) << "WARNING:: ELEMENT ID: " << this->Id() << " INVERTED. DETJ0: " << rThisKinematicVariables.detJ0 << std::endl;
 
-    BoundedMatrix<double, TDim, TDim> J;
-    GeometryUtils::DirectJacobianOnCurrentConfiguration(r_geom, r_geom.IntegrationPoints(rIntegrationMethod)[PointNumber], J);
-
-    GeometryUtils::DeformationGradient(J, rThisKinematicVariables.InvJ0, rThisKinematicVariables.F);
+//     BoundedMatrix<double, TDim, TDim> J;
+//     GeometryUtils::DirectJacobianOnCurrentConfiguration(r_geometry, r_geometry.IntegrationPoints(rIntegrationMethod)[PointNumber], J);
+//     GeometryUtils::DeformationGradient(J, rThisKinematicVariables.InvJ0, rThisKinematicVariables.F);
+    noalias(rThisKinematicVariables.F) = ZeroMatrix(TDim, TDim);
+    for (IndexType i_node = 0; i_node < TNumNodes; ++i_node) {
+        const array_1d<double, 3>& r_coordinates = r_geometry[i_node].Coordinates();
+        for (IndexType i_dim = 0; i_dim < TDim; ++i_dim) {
+            for (IndexType j_dim = 0; j_dim < TDim; ++j_dim) {
+                rThisKinematicVariables.F(i_dim, j_dim) += rThisKinematicVariables.DN_DX(i_node, j_dim) * r_coordinates[i_dim];
+            }
+        }
+    }
     CalculateB(rThisKinematicVariables.B, rThisKinematicVariables.F, rThisKinematicVariables.DN_DX);
 
     rThisKinematicVariables.detF = MathUtils<double>::Det(rThisKinematicVariables.F);
@@ -1360,7 +1348,7 @@ double ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateDerivativesOnRefer
     ) const
 {
     const GeometryType& r_geom = this->GetGeometry();
-    GeometryUtils::DirectJacobianOnInitialConfiguration(r_geom,r_geom.IntegrationPoints(ThisIntegrationMethod)[PointNumber], rJ0);
+    GeometryUtils::DirectJacobianOnInitialConfiguration(r_geom, rJ0, PointNumber, ThisIntegrationMethod);
     double detJ0;
     MathUtils<double>::InvertMatrix(rJ0, rInvJ0, detJ0);
     const Matrix& rDN_De = this->GetGeometry().ShapeFunctionsLocalGradients(ThisIntegrationMethod)[PointNumber];
@@ -1402,16 +1390,13 @@ array_1d<double, 3> ExplicitTotalLagrangianBbar<TDim, TNumNodes>::GetBodyForce(
     for (IndexType i = 0; i < 3; ++i)
         body_force[i] = 0.0;
 
-    const auto& r_properties = this->GetProperties();
-    double density = 0.0;
-    if (r_properties.Has( DENSITY ))
-        density = r_properties[DENSITY];
-
-    if (r_properties.Has( VOLUME_ACCELERATION ))
-        noalias(body_force) += density * r_properties[VOLUME_ACCELERATION];
-
     const auto& r_geometry = this->GetGeometry();
-    if( r_geometry[0].SolutionStepsDataHas(VOLUME_ACCELERATION) ) {
+    const auto& r_properties = this->GetProperties();
+    const double density = r_properties[DENSITY];
+
+    if (r_properties.Has( VOLUME_ACCELERATION )) {
+        noalias(body_force) += density * r_properties[VOLUME_ACCELERATION];
+    } else if( r_geometry[0].SolutionStepsDataHas(VOLUME_ACCELERATION) ) {
         Vector N;
         N = r_geometry.ShapeFunctionsValues(N, IntegrationPoints[PointNumber].Coordinates());
         for (IndexType i_node = 0; i_node < TNumNodes; ++i_node)
@@ -1484,48 +1469,12 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateLumpedMassVector(arr
 /***********************************************************************************/
 
 template< const SizeType TDim, const SizeType TNumNodes>
-void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateLumpedDampingVector(
-    array_1d<double, ElementSize>& rDampingVector,
-    const ProcessInfo& rCurrentProcessInfo
-    )
-{
-    KRATOS_TRY;
-
-    // Getting properties
-    const auto& r_prop = this->GetProperties();
-
-    // 1.-Get Damping Coeffitients (RAYLEIGH_ALPHA, RAYLEIGH_BETA)
-    const double alpha = StructuralMechanicsElementUtilities::GetRayleighAlpha(r_prop, rCurrentProcessInfo);
-
-    // Compose the Damping Matrix:
-    // Rayleigh Damping Matrix: alpha*M + beta*K
-
-    // 2.-Calculate mass matrix:
-    if (alpha > std::numeric_limits<double>::epsilon()) {
-        array_1d<double, ElementSize> mass_vector;
-        CalculateLumpedMassVector(mass_vector);
-        for (IndexType i = 0; i < ElementSize; ++i)
-            rDampingVector[i] = alpha * mass_vector[i];
-    } else {
-        for (IndexType i = 0; i < ElementSize; ++i)
-            rDampingVector[i] = 0.0;
-    }
-
-    // NOTE: No stiffness contribution on explicit computations
-
-    KRATOS_CATCH( "" )
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
-template< const SizeType TDim, const SizeType TNumNodes>
 void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::save( Serializer& rSerializer ) const
 {
     KRATOS_SERIALIZE_SAVE_BASE_CLASS( rSerializer, Element );
     int IntMethod = int(this->GetIntegrationMethod());
     rSerializer.save("IntegrationMethod",IntMethod);
-    rSerializer.save("mConstitutiveLawVector", mConstitutiveLawVector);
+    rSerializer.save("ConstitutiveLawVector", mConstitutiveLawVector);
 }
 
 /***********************************************************************************/
@@ -1538,7 +1487,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::load( Serializer& rSerializer
     int IntMethod;
     rSerializer.load("IntegrationMethod",IntMethod);
     mThisIntegrationMethod = IntegrationMethod(IntMethod);
-    rSerializer.load("mConstitutiveLawVector", mConstitutiveLawVector);
+    rSerializer.load("ConstitutiveLawVector", mConstitutiveLawVector);
 }
 
 /***********************************************************************************/

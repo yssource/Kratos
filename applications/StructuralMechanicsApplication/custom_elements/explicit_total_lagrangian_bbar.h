@@ -281,26 +281,6 @@ public:
         ) override;
 
     /**
-      * @brief This is called during the assembling process in order to calculate the elemental mass matrix
-      * @param rMassMatrix The elemental mass matrix
-      * @param rCurrentProcessInfo The current process info instance
-      */
-    void CalculateMassMatrix(
-        MatrixType& rMassMatrix,
-        ProcessInfo& rCurrentProcessInfo
-        ) override;
-
-    /**
-      * @brief This is called during the assembling process in order to calculate the elemental damping matrix
-      * @param rDampingMatrix The elemental damping matrix
-      * @param rCurrentProcessInfo The current process info instance
-      */
-    void CalculateDampingMatrix(
-        MatrixType& rDampingMatrix,
-        ProcessInfo& rCurrentProcessInfo
-        ) override;
-
-    /**
      * @brief Calculate a boolean Variable on the Element Constitutive Law
      * @param rVariable The variable we want to get
      * @param rOutput The values obtained int the integration points
@@ -646,9 +626,9 @@ protected:
         Vector  N;
         BoundedMatrix<double, StrainSize, TDim * TNumNodes>  B;
         array_1d<double, TDim * TNumNodes> Bh;
-        double  detF;
-        Matrix  F;
-        double  detJ0;
+        double  detF = 1.0;
+        Matrix  F = IdentityMatrix(TDim);
+        double  detJ0 = 1.0;
         BoundedMatrix<double, TDim, TDim> J0;
         BoundedMatrix<double, TDim, TDim> InvJ0;
         BoundedMatrix<double, TNumNodes, TDim>  DN_DX;
@@ -658,15 +638,6 @@ protected:
          */
         KinematicVariables()
         {
-            detF = 1.0;
-            detJ0 = 1.0;
-            N = ZeroVector(TNumNodes);
-            B = ZeroMatrix(StrainSize, TDim * TNumNodes);
-            Bh = ZeroVector(TDim * TNumNodes);
-            F = IdentityMatrix(TDim);
-            DN_DX = ZeroMatrix(TNumNodes, TDim);
-            J0 = ZeroMatrix(TDim, TDim);
-            InvJ0 = ZeroMatrix(TDim, TDim);
         }
     };
 
@@ -675,9 +646,11 @@ protected:
      */
     struct ConstitutiveVariables
     {
-        Vector StrainVector;
-        Vector StressVector;
-        Matrix D;
+        static constexpr std::size_t strain_size = TDim == 3 ? 6 : 3;
+
+        Vector StrainVector = ZeroVector(strain_size);
+        Vector StressVector = ZeroVector(strain_size);
+        Matrix D = ZeroMatrix(strain_size, strain_size);
 
         /**
          * @brief The default constructor
@@ -685,9 +658,6 @@ protected:
          */
         ConstitutiveVariables()
         {
-            StrainVector = ZeroVector(StrainSize);
-            StressVector = ZeroVector(StrainSize);
-            D = ZeroMatrix(StrainSize, StrainSize);
         }
     };
 
@@ -735,7 +705,8 @@ protected:
     void CalculateKinematicVariables(
         KinematicVariables& rThisKinematicVariables,
         const IndexType PointNumber,
-        const GeometryType::IntegrationMethod& rIntegrationMethod
+        const GeometryType::IntegrationMethod& rIntegrationMethod,
+        const Matrix& rNValues
         );
 
     /**
@@ -898,16 +869,6 @@ private:
     void CalculateLumpedMassVector(array_1d<double, ElementSize>& rMassVector) const;
 
     /**
-     * @brief This method computes directly the lumped mass matrix
-     * @param rMassMatrix The lumped mass matrix
-     * @param rCurrentProcessInfo The current process info instance
-     */
-    void CalculateLumpedDampingVector(
-        array_1d<double, ElementSize>& rDampingVector,
-        const ProcessInfo& rCurrentProcessInfo
-        );
-
-    /**
      * @brief This method gets a value directly in the CL
      * @details Avoids code repetition
      * @param rVariable The variable we want to get
@@ -942,13 +903,16 @@ private:
         const ProcessInfo& rCurrentProcessInfo
         )
     {
-        const GeometryType::IntegrationPointsArrayType& integration_points = GetGeometry().IntegrationPoints( this->GetIntegrationMethod() );
+        // Getting geometry
+        const GeometryType& r_geometry = this->GetGeometry();
+
+        const GeometryType::IntegrationPointsArrayType& integration_points = r_geometry.IntegrationPoints( this->GetIntegrationMethod() );
 
         KinematicVariables this_kinematic_variables = KinematicVariables();
         ConstitutiveVariables this_constitutive_variables = ConstitutiveVariables();
 
         // Create constitutive law parameters:
-        ConstitutiveLaw::Parameters Values(GetGeometry(),GetProperties(),rCurrentProcessInfo);
+        ConstitutiveLaw::Parameters Values(r_geometry,GetProperties(),rCurrentProcessInfo);
 
         // Set constitutive law flags:
         Flags& ConstitutiveLawOptions=Values.GetOptions();
@@ -958,9 +922,12 @@ private:
 
         Values.SetStrainVector(this_constitutive_variables.StrainVector);
 
+        // Shape functions
+        const Matrix& rNValues = r_geometry.ShapeFunctionsValues(this->GetIntegrationMethod());
+
         for (IndexType point_number = 0; point_number < integration_points.size(); ++point_number) {
             // Compute element kinematics B, F, DN_DX ...
-            this->CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod());
+            this->CalculateKinematicVariables(this_kinematic_variables, point_number, this->GetIntegrationMethod(), rNValues);
 
             // Compute material reponse
             this->SetConstitutiveVariables(this_kinematic_variables, this_constitutive_variables, Values, point_number, integration_points);

@@ -267,14 +267,14 @@ public:
         ProcessInfo& r_current_process_info = rModelPart.GetProcessInfo();
 
         const auto it_elem_begin = rModelPart.ElementsBegin();
-        #pragma omp parallel for
+        #pragma omp parallel for schedule(guided,512)
         for(int i=0; i<static_cast<int>(rModelPart.Elements().size()); ++i) {
             auto it_elem = it_elem_begin + i;
             it_elem->InitializeNonLinearIteration(r_current_process_info);
         }
 
         const auto it_cond_begin = rModelPart.ConditionsBegin();
-        #pragma omp parallel for
+        #pragma omp parallel for schedule(guided,512)
         for(int i=0; i<static_cast<int>(rModelPart.Conditions().size()); ++i) {
             auto it_elem = it_cond_begin + i;
             it_elem->InitializeNonLinearIteration(r_current_process_info);
@@ -325,7 +325,7 @@ public:
 
         /// Initialise the database of the nodes
         const array_1d<double, 3> zero_array = ZeroVector(3);
-        #pragma omp parallel for
+        #pragma omp parallel for schedule(guided,512)
         for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
             auto it_node = (it_begin_node + i);
             it_node->SetValue(NODAL_MASS, 0.0);
@@ -333,7 +333,7 @@ public:
         }
         const bool has_dof_for_rot_z = it_begin_node->HasDofFor(ROTATION_Z);
         if (has_dof_for_rot_z) {
-            #pragma omp parallel for
+            #pragma omp parallel for schedule(guided,512)
             for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
                 auto it_node = (it_begin_node + i);
                 it_node->SetValue(MIDDLE_ANGULAR_VELOCITY, zero_array);
@@ -341,7 +341,7 @@ public:
             }
         }
 
-        #pragma omp parallel for
+        #pragma omp parallel for schedule(guided,512)
         for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
             auto it_node = (it_begin_node + i);
 
@@ -416,14 +416,14 @@ public:
         const IndexType disppos = it_begin_node->GetDofPosition(DISPLACEMENT_X);
         const IndexType rotppos = has_dof_for_rot_z ? it_begin_node->GetDofPosition(ROTATION_X) : 0;
 
-        #pragma omp parallel for
+        #pragma omp parallel for schedule(guided,512)
         for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
             // Current step information "N+1" (before step update).
             this->UpdateTranslationalDegreesOfFreedom(it_begin_node + i, disppos, dim);
         } // for Node parallel
 
         if (has_dof_for_rot_z){
-            #pragma omp parallel for
+            #pragma omp parallel for schedule(guided,512)
             for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
                 this->UpdateRotationalDegreesOfFreedom(it_begin_node + i, rotppos, dim);
             } // for Node parallel
@@ -545,7 +545,7 @@ public:
         NodesArrayType& r_nodes = rModelPart.Nodes();
 
         // The fisrt node interator
-        auto it_begin_node = rModelPart.NodesBegin();
+        const auto it_begin_node = rModelPart.NodesBegin();
 
         // If we consider the rotation DoF
         const bool has_dof_for_rot_z = it_begin_node->HasDofFor(ROTATION_Z);
@@ -557,10 +557,10 @@ public:
         const IndexType disppos = it_begin_node->GetDofPosition(DISPLACEMENT_X);
         const IndexType rotppos = has_dof_for_rot_z ? it_begin_node->GetDofPosition(ROTATION_X) : 0;
 
-        #pragma omp parallel for firstprivate(it_begin_node)
+        #pragma omp parallel for schedule(guided,512)
         for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
             // Current step information "N+1" (before step update).
-            auto it_node = (it_begin_node + i);
+            auto it_node = it_begin_node + i;
 
             const double nodal_mass = it_node->GetValue(NODAL_MASS);
             const array_1d<double, 3>& r_current_residual = it_node->FastGetSolutionStepValue(FORCE_RESIDUAL);

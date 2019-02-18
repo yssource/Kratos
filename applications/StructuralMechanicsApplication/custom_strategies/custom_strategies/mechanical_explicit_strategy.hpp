@@ -240,7 +240,7 @@ public:
                 VariableUtils().SetNonHistoricalVariable(NODAL_INERTIA, zero_array, r_nodes);
                 VariableUtils().SetNonHistoricalVariable(NODAL_ROTATION_DAMPING, zero_array, r_nodes);
 
-                #pragma omp parallel for firstprivate(dummy_vector)
+                #pragma omp parallel for firstprivate(dummy_vector), schedule(guided,512)
                 for (int i = 0; i < static_cast<int>(r_elements.size()); ++i) {
                     // Getting nodal mass and inertia from element
                     // this function needs to be implemented in the respective
@@ -249,7 +249,7 @@ public:
                     it_elem->AddExplicitContribution(dummy_vector, RESIDUAL_VECTOR, NODAL_INERTIA, r_current_process_info);
                 }
             } else { // Only NODAL_MASS is needed
-                #pragma omp parallel for firstprivate(dummy_vector)
+                #pragma omp parallel for firstprivate(dummy_vector), schedule(guided,512)
                 for (int i = 0; i < static_cast<int>(r_elements.size()); ++i) {
                     // Getting nodal mass and inertia from element
                     // this function needs to be implemented in the respective
@@ -300,7 +300,7 @@ public:
                 VariableUtils().SetNonHistoricalVariable(NODAL_INERTIA, zero_array, r_nodes);
                 VariableUtils().SetNonHistoricalVariable(NODAL_ROTATION_DAMPING, zero_array, r_nodes);
 
-                #pragma omp parallel for firstprivate(dummy_vector)
+                #pragma omp parallel for firstprivate(dummy_vector), schedule(guided,512)
                 for (int i = 0; i < static_cast<int>(r_elements.size()); ++i) {
                     // Getting nodal mass and inertia from element
                     // this function needs to be implemented in the respective
@@ -309,7 +309,7 @@ public:
                     it_elem->AddExplicitContribution(dummy_vector, RESIDUAL_VECTOR, NODAL_INERTIA, r_current_process_info);
                 }
             } else { // Only NODAL_MASS and NODAL_DISPLACEMENT_DAMPING are needed
-                #pragma omp parallel for firstprivate(dummy_vector)
+                #pragma omp parallel for firstprivate(dummy_vector), schedule(guided,512)
                 for (int i = 0; i < static_cast<int>(r_elements.size()); ++i) {
                     // Getting nodal mass and inertia from element
                     // this function needs to be implemented in the respective
@@ -532,7 +532,7 @@ private:
 
         // Iterating nodes
         const auto it_node_begin = r_nodes.begin();
-        #pragma omp parallel for firstprivate(force_residual, moment_residual)
+        #pragma omp parallel for firstprivate(force_residual, moment_residual), schedule(guided,512)
         for(int i=0; i<static_cast<int>(r_nodes.size()); ++i) {
             auto it_node = it_node_begin + i;
 

@@ -47,33 +47,6 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::Initialize()
 {
     KRATOS_TRY
 
-    if( this->GetProperties().Has(INTEGRATION_ORDER) ) {
-        const SizeType integration_order = this->GetProperties()[INTEGRATION_ORDER];
-        switch ( integration_order )
-        {
-        case 1:
-            mThisIntegrationMethod = GeometryData::GI_GAUSS_1;
-            break;
-        case 2:
-            mThisIntegrationMethod = GeometryData::GI_GAUSS_2;
-            break;
-        case 3:
-            mThisIntegrationMethod = GeometryData::GI_GAUSS_3;
-            break;
-        case 4:
-            mThisIntegrationMethod = GeometryData::GI_GAUSS_4;
-            break;
-        case 5:
-            mThisIntegrationMethod = GeometryData::GI_GAUSS_5;
-            break;
-        default:
-            KRATOS_WARNING("ExplicitTotalLagrangianBbar") << "Integration order " << integration_order << " is not available, using default integration order for the geometry" << std::endl;
-            mThisIntegrationMethod = this->GetGeometry().GetDefaultIntegrationMethod();
-        }
-    } else {
-        mThisIntegrationMethod = this->GetGeometry().GetDefaultIntegrationMethod();
-    }
-
     const GeometryType::IntegrationPointsArrayType& integration_points = this->GetGeometry().IntegrationPoints(this->GetIntegrationMethod());
 
     //Constitutive Law initialisation
@@ -254,9 +227,6 @@ Element::Pointer ExplicitTotalLagrangianBbar<TDim, TNumNodes>::Clone (
     ExplicitTotalLagrangianBbar<TDim, TNumNodes>::Pointer p_new_elem = Kratos::make_shared<ExplicitTotalLagrangianBbar>(NewId, this->GetGeometry().Create(rThisNodes), this->pGetProperties());
     p_new_elem->SetData(this->GetData());
     p_new_elem->Set(Flags(*this));
-
-    // Currently selected integration methods
-    p_new_elem->SetIntegrationMethod(this->GetIntegrationMethod());
 
     // The vector containing the constitutive laws
     p_new_elem->SetConstitutiveLawVector(mConstitutiveLawVector);
@@ -1228,9 +1198,6 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateKinematicVariables(
     rThisKinematicVariables.detJ0 = this->CalculateDerivativesOnReferenceConfiguration(rThisKinematicVariables.J0, rThisKinematicVariables.InvJ0, rThisKinematicVariables.DN_DX, PointNumber, rIntegrationMethod);
     KRATOS_ERROR_IF(rThisKinematicVariables.detJ0 < 0.0) << "WARNING:: ELEMENT ID: " << this->Id() << " INVERTED. DETJ0: " << rThisKinematicVariables.detJ0 << std::endl;
 
-//     BoundedMatrix<double, TDim, TDim> J;
-//     GeometryUtils::DirectJacobianOnCurrentConfiguration(r_geometry, r_geometry.IntegrationPoints(rIntegrationMethod)[PointNumber], J);
-//     GeometryUtils::DeformationGradient(J, rThisKinematicVariables.InvJ0, rThisKinematicVariables.F);
     noalias(rThisKinematicVariables.F) = ZeroMatrix(TDim, TDim);
     for (IndexType i_node = 0; i_node < TNumNodes; ++i_node) {
         const array_1d<double, 3>& r_coordinates = r_geometry[i_node].Coordinates();
@@ -1240,6 +1207,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateKinematicVariables(
             }
         }
     }
+
     CalculateB(rThisKinematicVariables.B, rThisKinematicVariables.F, rThisKinematicVariables.DN_DX);
 
     rThisKinematicVariables.detF = MathUtils<double>::Det(rThisKinematicVariables.F);
@@ -1472,8 +1440,6 @@ template< const SizeType TDim, const SizeType TNumNodes>
 void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::save( Serializer& rSerializer ) const
 {
     KRATOS_SERIALIZE_SAVE_BASE_CLASS( rSerializer, Element );
-    int IntMethod = int(this->GetIntegrationMethod());
-    rSerializer.save("IntegrationMethod",IntMethod);
     rSerializer.save("ConstitutiveLawVector", mConstitutiveLawVector);
 }
 
@@ -1484,9 +1450,6 @@ template< const SizeType TDim, const SizeType TNumNodes>
 void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::load( Serializer& rSerializer )
 {
     KRATOS_SERIALIZE_LOAD_BASE_CLASS( rSerializer, Element );
-    int IntMethod;
-    rSerializer.load("IntegrationMethod",IntMethod);
-    mThisIntegrationMethod = IntegrationMethod(IntMethod);
     rSerializer.load("ConstitutiveLawVector", mConstitutiveLawVector);
 }
 

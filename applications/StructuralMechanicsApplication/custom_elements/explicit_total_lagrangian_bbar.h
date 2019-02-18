@@ -112,7 +112,6 @@ public:
     // Copy constructor
     ExplicitTotalLagrangianBbar(ExplicitTotalLagrangianBbar const& rOther)
         :BaseType(rOther)
-        ,mThisIntegrationMethod(rOther.mThisIntegrationMethod)
     {};
 
     // Destructor
@@ -206,7 +205,7 @@ public:
      */
     IntegrationMethod GetIntegrationMethod() const override
     {
-        return mThisIntegrationMethod;
+        return this->GetGeometry().GetDefaultIntegrationMethod();
     }
 
     /**
@@ -661,8 +660,6 @@ protected:
         }
     };
 
-    IntegrationMethod mThisIntegrationMethod; /// Currently selected integration methods
-
     std::vector<ConstitutiveLaw::Pointer> mConstitutiveLawVector; /// The vector containing the constitutive laws
 
     ///@}
@@ -672,15 +669,6 @@ protected:
     ///@}
     ///@name Protected Operations
     ///@{
-
-    /**
-     * @brief Sets the used integration method
-     * @param ThisIntegrationMethod Integration method used
-     */
-    void SetIntegrationMethod(const IntegrationMethod& ThisIntegrationMethod)
-    {
-         mThisIntegrationMethod = ThisIntegrationMethod;
-    }
 
     /**
      * @brief Sets the used constitutive laws

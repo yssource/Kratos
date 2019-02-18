@@ -78,7 +78,7 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::InitializeSolutionStep( Proce
     ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN, false);
     ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS, true);
     ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR, false);
-//
+
     Values.SetStrainVector(this_constitutive_variables.StrainVector);
     Values.SetStressVector(this_constitutive_variables.StressVector);
     Values.SetConstitutiveMatrix(this_constitutive_variables.D);
@@ -1225,36 +1225,54 @@ void ExplicitTotalLagrangianBbar<TDim, TNumNodes>::CalculateB(
 {
     KRATOS_TRY
     if (TDim == 2) {
+        const double F00 = rF(0, 0);
+        const double F10 = rF(1, 0);
+        const double F01 = rF(0, 1);
+        const double F11 = rF(1, 1);
         for (IndexType i = 0; i < TNumNodes; ++i) {
             const auto index = TDim * i;
-            rB(0, index + 0) = rF(0, 0) * rDN_DX(i, 0);
-            rB(0, index + 1) = rF(1, 0) * rDN_DX(i, 0);
-            rB(1, index + 0) = rF(0, 1) * rDN_DX(i, 1);
-            rB(1, index + 1) = rF(1, 1) * rDN_DX(i, 1);
-            rB(2, index + 0) = rF(0, 0) * rDN_DX(i, 1) + rF(0, 1) * rDN_DX(i, 0);
-            rB(2, index + 1) = rF(1, 0) * rDN_DX(i, 1) + rF(1, 1) * rDN_DX(i, 0);
+            const double rDN_DX0 = rDN_DX(i, 0);
+            const double rDN_DX1 = rDN_DX(i, 1);
+            rB(0, index + 0) = F00 * rDN_DX0;
+            rB(0, index + 1) = F10 * rDN_DX0;
+            rB(1, index + 0) = F01 * rDN_DX1;
+            rB(1, index + 1) = F11 * rDN_DX1;
+            rB(2, index + 0) = F00 * rDN_DX1 + F01 * rDN_DX0;
+            rB(2, index + 1) = F10 * rDN_DX1 + F11 * rDN_DX0;
         }
     } else {
+        const double F00 = rF(0, 0);
+        const double F10 = rF(1, 0);
+        const double F01 = rF(0, 1);
+        const double F11 = rF(1, 1);
+        const double F20 = rF(2, 0);
+        const double F21 = rF(2, 1);
+        const double F22 = rF(2, 2);
+        const double F02 = rF(0, 2);
+        const double F12 = rF(1, 2);
         for (IndexType i = 0; i < TNumNodes; ++i) {
             const IndexType index = TDim * i;
-            rB(0, index + 0) = rF(0, 0) * rDN_DX(i, 0);
-            rB(0, index + 1) = rF(1, 0) * rDN_DX(i, 0);
-            rB(0, index + 2) = rF(2, 0) * rDN_DX(i, 0);
-            rB(1, index + 0) = rF(0, 1) * rDN_DX(i, 1);
-            rB(1, index + 1) = rF(1, 1) * rDN_DX(i, 1);
-            rB(1, index + 2) = rF(2, 1) * rDN_DX(i, 1);
-            rB(2, index + 0) = rF(0, 2) * rDN_DX(i, 2);
-            rB(2, index + 1) = rF(1, 2) * rDN_DX(i, 2);
-            rB(2, index + 2) = rF(2, 2) * rDN_DX(i, 2);
-            rB(3, index + 0) = rF(0, 0) * rDN_DX(i, 1) + rF(0, 1) * rDN_DX(i, 0);
-            rB(3, index + 1) = rF(1, 0) * rDN_DX(i, 1) + rF(1, 1) * rDN_DX(i, 0);
-            rB(3, index + 2) = rF(2, 0) * rDN_DX(i, 1) + rF(2, 1) * rDN_DX(i, 0);
-            rB(4, index + 0) = rF(0, 1) * rDN_DX(i, 2) + rF(0, 2) * rDN_DX(i, 1);
-            rB(4, index + 1) = rF(1, 1) * rDN_DX(i, 2) + rF(1, 2) * rDN_DX(i, 1);
-            rB(4, index + 2) = rF(2, 1) * rDN_DX(i, 2) + rF(2, 2) * rDN_DX(i, 1);
-            rB(5, index + 0) = rF(0, 2) * rDN_DX(i, 0) + rF(0, 0) * rDN_DX(i, 2);
-            rB(5, index + 1) = rF(1, 2) * rDN_DX(i, 0) + rF(1, 0) * rDN_DX(i, 2);
-            rB(5, index + 2) = rF(2, 2) * rDN_DX(i, 0) + rF(2, 0) * rDN_DX(i, 2);
+            const double rDN_DX0 = rDN_DX(i, 0);
+            const double rDN_DX1 = rDN_DX(i, 1);
+            const double rDN_DX2 = rDN_DX(i, 2);
+            rB(0, index + 0) = F00 * rDN_DX0;
+            rB(0, index + 1) = F10 * rDN_DX0;
+            rB(0, index + 2) = F20 * rDN_DX0;
+            rB(1, index + 0) = F01 * rDN_DX1;
+            rB(1, index + 1) = F11 * rDN_DX1;
+            rB(1, index + 2) = F21 * rDN_DX1;
+            rB(2, index + 0) = F02 * rDN_DX2;
+            rB(2, index + 1) = F12 * rDN_DX2;
+            rB(2, index + 2) = F22 * rDN_DX2;
+            rB(3, index + 0) = F00 * rDN_DX1 + F01 * rDN_DX0;
+            rB(3, index + 1) = F10 * rDN_DX1 + F11 * rDN_DX0;
+            rB(3, index + 2) = F20 * rDN_DX1 + F21 * rDN_DX0;
+            rB(4, index + 0) = F01 * rDN_DX2 + F02 * rDN_DX1;
+            rB(4, index + 1) = F11 * rDN_DX2 + F12 * rDN_DX1;
+            rB(4, index + 2) = F21 * rDN_DX2 + F22 * rDN_DX1;
+            rB(5, index + 0) = F02 * rDN_DX0 + F00 * rDN_DX2;
+            rB(5, index + 1) = F12 * rDN_DX0 + F10 * rDN_DX2;
+            rB(5, index + 2) = F22 * rDN_DX0 + F20 * rDN_DX2;
         }
     }
 

@@ -32,12 +32,12 @@ public:
     mSingleIonCharge = 1.60e-19; // in Coulomb, Hard-coded but should go into node
     mDoubleIonCharge = 3.20e-19; // in Coulomb, Double charged ion
     mXenonMass = 2.18e-25; // in kg, Xenon is the most common gas used in plasma thrusters
-    mExternalElectricField[0]=0.0 ; // Global Electric Field, should be improved to compute complexe external fields
+    mExternalElectricField[0]=1000.0 ; // External Electric Field, should be improved to compute complexe external fields
     mExternalElectricField[1]=0.0 ; 
     mExternalElectricField[2]=0.0 ;
-    mExternalMagneticField[0]=0.0 ; // Global Magnetic Field
+    mExternalMagneticField[0]=0.0 ; // External Magnetic Field
     mExternalMagneticField[1]=0.0 ;
-    mExternalMagneticField[2]=0.0 ;
+    mExternalMagneticField[2]=100.0 ;
     }
 
     IonParticle( IndexType NewId, GeometryType::Pointer pGeometry ):SphericParticle(NewId, pGeometry)
@@ -45,32 +45,36 @@ public:
                         mSingleIonCharge = 1.60e-19;
                         mDoubleIonCharge = 3.20e-19;
                         mXenonMass = 2.18e-25;
-                        mExternalElectricField = ZeroVector(3);
-                        mExternalMagneticField = ZeroVector(3);                       
+                        mExternalElectricField[0]=1000.0 ;
+                        mExternalElectricField[1]=0.0 ;
+                        mExternalElectricField[2]=0.0 ;
+                        mExternalMagneticField[0]=0.0 ;
+                        mExternalMagneticField[1]=0.0 ;
+                        mExternalMagneticField[2]=100.0 ;                       
     }
     IonParticle( IndexType NewId, NodesArrayType const& ThisNodes):SphericParticle(NewId, ThisNodes)
     {
                         mSingleIonCharge = 1.60e-19;
                         mDoubleIonCharge = 3.20e-19;
                         mXenonMass = 2.18e-25;
-                        mExternalElectricField[0]=0.0 ;
+                        mExternalElectricField[0]=1000.0 ;
                         mExternalElectricField[1]=0.0 ;
                         mExternalElectricField[2]=0.0 ;
                         mExternalMagneticField[0]=0.0 ;
                         mExternalMagneticField[1]=0.0 ;
-                        mExternalMagneticField[2]=0.0 ;
+                        mExternalMagneticField[2]=100.0 ;
     }
     IonParticle( IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties ):SphericParticle(NewId, pGeometry, pProperties)
     {
                         mSingleIonCharge = 1.60e-19;
                         mDoubleIonCharge = 3.20e-19;
                         mXenonMass = 2.18e-25;
-                        mExternalElectricField[0]=0.0 ;
+                        mExternalElectricField[0]=1000.0 ;
                         mExternalElectricField[1]=0.0 ;
                         mExternalElectricField[2]=0.0 ;
                         mExternalMagneticField[0]=0.0 ;
                         mExternalMagneticField[1]=0.0 ;
-                        mExternalMagneticField[2]=0.0 ;
+                        mExternalMagneticField[2]=100.0 ;
     }
 
     Element::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const override

@@ -104,8 +104,9 @@ namespace Kratos {
 
     double DEM_electromagnetic::CalculateNormalForce(const double distance)
     {
-          const double F_elec = CalculateElectromagneticForce(distance);
-          return F_elec;
+          //const double F_elec = CalculateElectromagneticForce(distance);
+          return 0.0;
+          //return F_elec;
     }
 
     double DEM_electromagnetic::CalculateElectromagneticForce(const double distance)

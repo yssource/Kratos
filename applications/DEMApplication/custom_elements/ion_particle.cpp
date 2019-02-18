@@ -53,19 +53,21 @@ void IonParticle::ComputeAdditionalForces(array_1d<double, 3>& additionally_appl
 
 void IonParticle::CalculateCoulombForce(array_1d<double, 3>& Coulomb_force)
 {
-    double Density =  this->GetDensity();
-    Coulomb_force[0] =  Density * (mSingleIonCharge / mXenonMass) * mExternalElectricField[0];
-    Coulomb_force[1] =  Density * (mSingleIonCharge / mXenonMass) * mExternalElectricField[1];
-    Coulomb_force[2] =  Density * (mSingleIonCharge / mXenonMass) * mExternalElectricField[2];
+    //double Density =  this->GetDensity();
+    Coulomb_force[0] =  mSingleIonCharge * mExternalElectricField[0];
+    Coulomb_force[1] =  mSingleIonCharge * mExternalElectricField[1];
+    Coulomb_force[2] =  mSingleIonCharge * mExternalElectricField[2];
+    //KRATOS_INFO("DEM: DEM: Coulomb Force")<< Coulomb_force << std::endl;
 }
 
 
 void IonParticle::CalculateLaplaceForce(array_1d<double, 3>& Laplace_force)
 {
     array_1d<double, 3 >& VelocityPreviousStep = this->GetGeometry()[0].FastGetSolutionStepValue(VELOCITY);
-    double Density =  this->GetDensity();
+    //double Density =  this->GetDensity();
     DEM_SET_TO_CROSS_OF_FIRST_TWO_3(VelocityPreviousStep, mExternalMagneticField, Laplace_force)
-    Laplace_force *= Density * (mSingleIonCharge / mXenonMass);
+    Laplace_force *= mSingleIonCharge;
+    //KRATOS_INFO("DEM: DEM: Laplace Force")<< Laplace_force << std::endl;
     // Laplace_force[0] = coeff * (VelocityPreviousStep[1] * mExternalMagneticField[2] - VelocityPreviousStep[2] * mExternalMagneticField[1]);
     // Laplace_force[1] = coeff * (VelocityPreviousStep[2] * mExternalMagneticField[0] - VelocityPreviousStep[0] * mExternalMagneticField[2]);
     // Laplace_force[2] = coeff * (VelocityPreviousStep[0] * mExternalMagneticField[1] - VelocityPreviousStep[1] * mExternalMagneticField[0]);

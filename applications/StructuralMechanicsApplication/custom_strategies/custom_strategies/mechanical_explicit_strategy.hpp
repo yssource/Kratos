@@ -342,13 +342,13 @@ public:
         LocalSystemVectorType RHS_Contribution = LocalSystemVectorType(0);
         Element::EquationIdVectorType equation_id_vector_dummy; // Dummy
 
-        #pragma omp parallel for firstprivate(RHS_Contribution, equation_id_vector_dummy)
+        #pragma omp parallel for firstprivate(RHS_Contribution, equation_id_vector_dummy), schedule(guided,512)
         for (int i = 0; i < static_cast<int>(r_conditions.size()); ++i) {
             auto it_cond = r_conditions.begin() + i;
             pScheme->Condition_Calculate_RHS_Contribution((*it_cond.base()), RHS_Contribution, equation_id_vector_dummy, r_current_process_info);
         }
 
-        #pragma omp parallel for firstprivate(RHS_Contribution, equation_id_vector_dummy)
+        #pragma omp parallel for firstprivate(RHS_Contribution, equation_id_vector_dummy), schedule(guided,512)
         for (int i = 0; i < static_cast<int>(r_elements.size()); ++i) {
             auto it_elem = r_elements.begin() + i;
             pScheme->Calculate_RHS_Contribution((*it_elem.base()), RHS_Contribution, equation_id_vector_dummy, r_current_process_info);

@@ -313,10 +313,11 @@ public:
      * @param Tolerance The maximum tolerance considered
      */
     template<class TMatrix1, class TMatrix2>
-    static inline void CheckConditionNumber(
+    static inline bool CheckConditionNumber(
         const TMatrix1& rInputMatrix,
         TMatrix2& rInvertedMatrix,
-        const TDataType Tolerance = std::numeric_limits<double>::epsilon()
+        const TDataType Tolerance = std::numeric_limits<double>::epsilon(),
+        const bool ThrowError = true
         )
     {
         // We want at least 4 significant digits
@@ -330,9 +331,14 @@ public:
         const double cond_number = input_matrix_norm * inverted_matrix_norm ;
         // Finally check if the condition number is low enough
         if (cond_number > max_condition_number) {
-            KRATOS_WATCH(rInputMatrix);
-            KRATOS_ERROR << " Condition number of the matrix is too high!, cond_number = " << cond_number << " compared to the maximum condition number: " << max_condition_number << std::endl;
+            if (ThrowError) {
+                KRATOS_WATCH(rInputMatrix);
+                KRATOS_ERROR << " Condition number of the matrix is too high!, cond_number = " << cond_number << std::endl;
+            }
+            return false;
         }
+
+        return true;
     }
 
     /**

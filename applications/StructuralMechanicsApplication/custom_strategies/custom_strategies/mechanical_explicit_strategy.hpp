@@ -527,11 +527,16 @@ private:
         const bool has_dof_for_rot_z = (r_nodes.begin())->HasDofFor(ROTATION_Z);
 
         // Auxiliar values
+        const array_1d<double, 3> zero_array = ZeroVector(3);
         array_1d<double, 3> force_residual = ZeroVector(3);
         array_1d<double, 3> moment_residual = ZeroVector(3);
 
-        // Iterating nodes
+        // Getting
         const auto it_node_begin = r_nodes.begin();
+        const IndexType disppos = it_node_begin->GetDofPosition(DISPLACEMENT_X);
+        const IndexType rotppos = it_node_begin->GetDofPosition(ROTATION_X);
+
+        // Iterating nodes
         #pragma omp parallel for firstprivate(force_residual, moment_residual), schedule(guided,512)
         for(int i=0; i<static_cast<int>(r_nodes.size()); ++i) {
             auto it_node = it_node_begin + i;
@@ -539,30 +544,34 @@ private:
             noalias(force_residual) = it_node->FastGetSolutionStepValue(FORCE_RESIDUAL);
             if (has_dof_for_rot_z) {
                 noalias(moment_residual) = it_node->FastGetSolutionStepValue(MOMENT_RESIDUAL);
+            } else {
+                noalias(moment_residual) = zero_array;
             }
 
-            for (auto& r_dof : it_node->GetDofs()) {
-                if (r_dof.IsFixed()) {
-                    const auto& r_var = r_dof.GetVariable();
-                    if (r_var == DISPLACEMENT_X) {
-                        double& r_reaction = it_node->FastGetSolutionStepValue(REACTION_X);
-                        r_reaction = force_residual[0];
-                    } else if (r_var == DISPLACEMENT_Y) {
-                        double& r_reaction = it_node->FastGetSolutionStepValue(REACTION_Y);
-                        r_reaction = force_residual[1];
-                    } else if (r_var == DISPLACEMENT_Z) {
-                        double& r_reaction = it_node->FastGetSolutionStepValue(REACTION_Z);
-                        r_reaction = force_residual[2];
-                    } else if (r_var == ROTATION_X) {
-                        double& r_reaction = it_node->FastGetSolutionStepValue(REACTION_MOMENT_X);
-                        r_reaction = moment_residual[0];
-                    } else if (r_var == ROTATION_Y) {
-                        double& r_reaction = it_node->FastGetSolutionStepValue(REACTION_MOMENT_Y);
-                        r_reaction = moment_residual[1];
-                    } else if (r_var == ROTATION_Z) {
-                        double& r_reaction = it_node->FastGetSolutionStepValue(REACTION_MOMENT_Z);
-                        r_reaction = moment_residual[2];
-                    }
+            if (it_node->GetDof(DISPLACEMENT_X, disppos).IsFixed()) {
+                double& r_reaction = it_node->FastGetSolutionStepValue(REACTION_X);
+                r_reaction = force_residual[0];
+            }
+            if (it_node->GetDof(DISPLACEMENT_Y, disppos + 1).IsFixed()) {
+                double& r_reaction = it_node->FastGetSolutionStepValue(REACTION_Y);
+                r_reaction = force_residual[1];
+            }
+            if (it_node->GetDof(DISPLACEMENT_Z, disppos + 2).IsFixed()) {
+                double& r_reaction = it_node->FastGetSolutionStepValue(REACTION_Z);
+                r_reaction = force_residual[2];
+            }
+            if (has_dof_for_rot_z) {
+                if (it_node->GetDof(ROTATION_X, rotppos).IsFixed()) {
+                    double& r_reaction = it_node->FastGetSolutionStepValue(REACTION_MOMENT_X);
+                    r_reaction = moment_residual[0];
+                }
+                if (it_node->GetDof(ROTATION_Y, rotppos + 1).IsFixed()) {
+                    double& r_reaction = it_node->FastGetSolutionStepValue(REACTION_MOMENT_Y);
+                    r_reaction = moment_residual[1];
+                }
+                if (it_node->GetDof(ROTATION_Z, rotppos + 2).IsFixed()) {
+                    double& r_reaction = it_node->FastGetSolutionStepValue(REACTION_MOMENT_Z);
+                    r_reaction = moment_residual[2];
                 }
             }
         }

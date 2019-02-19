@@ -91,7 +91,7 @@ public:
     /// Destructor.
     ~TurbulenceEddyViscosityModelProcess() override
     {
-        delete mpDistanceCalculator;
+        // delete mpDistanceCalculator;
     }
 
     ///@}
@@ -146,7 +146,7 @@ protected:
     Parameters& mrParameters;
     typename TLinearSolver::Pointer mpLinearSolver;
 
-    ModelPart* mpTurbulenceModelPart;
+    bool mIsMeshMoving;
     ///@}
     ///@name Protected Operators
     ///@{
@@ -155,47 +155,35 @@ protected:
     ///@name Protected Operations
     ///@{
 
-    void InitializeTurbulenceModelPart()
+    virtual void AddSolutionStepVariables()
     {
-        KRATOS_TRY;
+        KRATOS_TRY
 
-        std::cout<<"Suneth InitializeTurbulenceModelPart 1\n";
+        mrModelPart.GetNodalSolutionStepVariablesList().push_back(DISTANCE);
+        mrModelPart.GetNodalSolutionStepVariablesList().push_back(FLAG_VARIABLE);
+        mrModelPart.GetNodalSolutionStepVariablesList().push_back(KINEMATIC_VISCOSITY);
+        mrModelPart.GetNodalSolutionStepVariablesList().push_back(TURBULENT_VISCOSITY);
 
-        KRATOS_INFO("TurbulenceModel")
-            << "Initializing turbulence model part\n";
-
-        KRATOS_ERROR_IF(mrModelPart.HasSubModelPart("TurbulenceModelPart")) << "TurbulenceEddyViscosityModelProcess: TurbulenceModelPart is already found."
-                                                                            << std::endl;
-        mrModelPart.CreateSubModelPart("TurbulenceModelPart");
-        mpTurbulenceModelPart =
-            &mrModelPart.GetSubModelPart("TurbulenceModelPart");
-
-        const Element* p_elem = this->GetReferenceElement();
-        const Condition* p_cond = this->GetReferenceCondition();
-
-        std::cout<<"Suneth InitializeTurbulenceModelPart 2\n";
-
-        this->GenerateModelPart(mrModelPart, *mpTurbulenceModelPart, *p_elem, *p_cond);
-
-        std::cout<<"Suneth InitializeTurbulenceModelPart 3\n";
+        KRATOS_INFO("TurbulenceModel")<<"Added eddy viscosity turbulence model solution step variables.\n";
 
         KRATOS_CATCH("");
     }
 
-    virtual const Element* GetReferenceElement() const
+    virtual void AddDofs()
     {
-        return NULL;
+        KRATOS_INFO("TurbulenceModel")<<"Added eddy viscosity turbulence model dofs.\n";
     }
-    virtual const Condition* GetReferenceCondition() const
+
+    virtual void InitializeTurbulenceModelPart()
     {
-        return NULL;
+        KRATOS_THROW_ERROR(std::runtime_error, "Calling base class InitializeTurbulenceModelPart.", "");
     }
 
     virtual void UpdateFluidViscosity()
     {
         KRATOS_TRY
 
-        NodesArrayType& nodes = mpTurbulenceModelPart->Nodes();
+        NodesArrayType& nodes = mrModelPart.Nodes();
 
 // Modifying viscosity of the nodes with the calculated turbulent viscosity
 #pragma omp parallel for
@@ -213,6 +201,17 @@ protected:
 
         KRATOS_CATCH("");
     }
+
+
+    virtual void InitializeConditionFlags(const Flags& rFlag)
+    {
+        KRATOS_THROW_ERROR(std::runtime_error, "Calling base class InitializeConditionFlags.", "");
+    }
+
+    void GenerateModelPart(ModelPart& rOriginModelPart,
+                           ModelPart& rDestinationModelPart,
+                           const Element& rReferenceElement,
+                           const Condition& rReferenceCondition);
 
     ///@}
     ///@name Protected  Access
@@ -238,8 +237,6 @@ private:
 
     VariationalDistanceCalculationProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>* mpDistanceCalculator;
 
-    bool mIsMeshMoving;
-
     ///@}
     ///@name Private Operators
     ///@{
@@ -247,11 +244,6 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
-
-    void GenerateModelPart(ModelPart& rOriginModelPart,
-                           ModelPart& rDestinationModelPart,
-                           const Element& rReferenceElement,
-                           const Condition& rReferenceCondition);
 
     void CalculateWallDistances();
 
@@ -262,7 +254,6 @@ private:
         for (std::size_t i = 0; i < rParameters.size(); ++i)
         {
             std::string model_part_name = rParameters.GetArrayItem(i).GetString();
-            KRATOS_WATCH(mrModelPart.GetSubModelPartNames());
             KRATOS_ERROR_IF(!mrModelPart.HasSubModelPart(model_part_name))
                 << "TurbulenceEddyViscosityModelProcess: Wall condition "
                 << model_part_name << " not found." << std::endl;

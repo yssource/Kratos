@@ -25,24 +25,7 @@ TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolv
 
     mrParameters.ValidateAndAssignDefaults(default_parameters);
 
-    int max_iterations = mrParameters["max_distance_calculation_iterations"].GetInt();
-
-    this->InitializeNodeFlags(mrParameters["inlet_conditions"], INLET);
-    this->InitializeNodeFlags(mrParameters["outlet_conditions"], OUTLET);
-    this->InitializeNodeFlags(mrParameters["wall_conditions"], STRUCTURE);
-
-    mpDistanceCalculator =
-        new VariationalDistanceCalculationProcess
-                <TDim, TSparseSpace, TDenseSpace, TLinearSolver>
-                (
-                    rModelPart, mpLinearSolver, max_iterations
-                );
-
     mIsMeshMoving = mrParameters["mesh_moving"].GetBool();
-
-    // Calculate the distances only once if the mesh is not moving
-    if (!mIsMeshMoving)
-        CalculateWallDistances();
 
     KRATOS_CATCH("");
 }
@@ -50,11 +33,25 @@ TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolv
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
 void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::ExecuteInitialize()
 {
-    std::cout<<"BaseInitialize 1\n";
     this->InitializeTurbulenceModelPart();
-    std::cout<<"BaseInitialize 2\n";
 
-    NodesArrayType& nodes = mpTurbulenceModelPart->Nodes();
+    this->InitializeNodeFlags(mrParameters["inlet_conditions"], INLET);
+    this->InitializeNodeFlags(mrParameters["outlet_conditions"], OUTLET);
+    this->InitializeNodeFlags(mrParameters["wall_conditions"], STRUCTURE);
+
+    this->InitializeConditionFlags(INLET);
+    this->InitializeConditionFlags(OUTLET);
+    this->InitializeConditionFlags(STRUCTURE);
+
+    mpDistanceCalculator =
+        new VariationalDistanceCalculationProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>(
+            mrModelPart, mpLinearSolver,
+            mrParameters["max_distance_calculation_iterations"].GetInt());
+
+    // Calculate the distances only once if the mesh is not moving
+    CalculateWallDistances();
+
+    NodesArrayType& nodes = mrModelPart.Nodes();
 
 #pragma omp parallel for
     for (int i = 0; i < static_cast<int>(nodes.size()); ++i)
@@ -63,8 +60,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
         const double kinematic_viscosity = it_node->FastGetSolutionStepValue(VISCOSITY);
         it_node->FastGetSolutionStepValue(KINEMATIC_VISCOSITY) = kinematic_viscosity;
     }
-
-    std::cout<<"BaseInitialize 3\n";
 }
 
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
@@ -82,7 +77,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
 void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::Execute()
 {
-
 }
 
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
@@ -109,7 +103,7 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 {
     KRATOS_TRY
 
-    KRATOS_INFO("TurbulenceModel")<<"Calculating wall distances"<<std::endl;
+    KRATOS_INFO("TurbulenceModel") << "Calculating wall distances..." << std::endl;
 
     // Fixing the wall boundaries for wall distance calculation
     NodesArrayType& nodes_array = this->mrModelPart.Nodes();
@@ -121,9 +115,13 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
         // KRATOS_INFO("TurbulenceModel")<<it_node->Id()<<", "<<it_node->Is(STRUCTURE) <<std::endl;
         if (it_node->Is(STRUCTURE))
             it_node->FastGetSolutionStepValue(DISTANCE) = 0.0;
+        else
+            it_node->FastGetSolutionStepValue(DISTANCE) = 1.0;
     }
 
     mpDistanceCalculator->Execute();
+
+    KRATOS_INFO("TurbulenceModel") << "Finished calculating wall distances." << std::endl;
 
     KRATOS_CATCH("");
 }
@@ -136,17 +134,13 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
     const Element& rReferenceElement,
     const Condition& rReferenceCondition)
 {
-    KRATOS_TRY
-
-    KRATOS_WATCH(rReferenceElement);
-    KRATOS_WATCH(rReferenceCondition);
-
-    std::cout<<"Suneth GenerateModelPart 1\n";
+    // KRATOS_TRY
 
     // Copy general ModelPart properites
-    rDestinationModelPart.GetNodalSolutionStepVariablesList() =
-        rOriginModelPart.GetNodalSolutionStepVariablesList();
-    rDestinationModelPart.SetBufferSize(rOriginModelPart.GetBufferSize());
+    // rDestinationModelPart.GetNodalSolutionStepVariablesList() =
+    //     rOriginModelPart.GetNodalSolutionStepVariablesList();
+
+    // rDestinationModelPart.SetBufferSize(rOriginModelPart.GetBufferSize());
     rDestinationModelPart.SetProcessInfo(rOriginModelPart.pGetProcessInfo());
     rDestinationModelPart.SetProperties(rOriginModelPart.pProperties());
 
@@ -160,6 +154,7 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
      * Only "general" information and node lists are passed, element and condition lists will be created later
      * using the new elements.
      */
+
     Communicator& rReferenceComm = rOriginModelPart.GetCommunicator();
     Communicator::Pointer pDestinationComm = rReferenceComm.Create();
     pDestinationComm->SetNumberOfColors(rReferenceComm.GetNumberOfColors());
@@ -174,8 +169,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
             rReferenceComm.pInterfaceMesh(i)->pNodes());
         pDestinationComm->pGhostMesh(i)->SetNodes(rReferenceComm.pGhostMesh(i)->pNodes());
     }
-
-    std::cout<<"Suneth GenerateModelPart 2\n";
 
     rDestinationModelPart.SetCommunicator(pDestinationComm);
 
@@ -204,8 +197,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
         rDestinationLocalElements.push_back(*iEl);
     }
 
-    std::cout<<"Suneth GenerateModelPart 3\n";
-
     // Reset condition container and create new conditions
     rDestinationModelPart.Conditions().clear();
     rDestinationModelPart.Conditions().reserve(rOriginModelPart.NumberOfConditions());
@@ -230,9 +221,10 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
         rDestinationLocalConditions.push_back(*iCo);
     }
 
-    std::cout<<"Suneth GenerateModelPart 4\n";
+    // for (auto cond: rDestinationModelPart.Conditions())
+    //     KRATOS_WATCH(cond);
 
-    KRATOS_CATCH("");
+    // KRATOS_CATCH("");
 }
 
 /* External functions *****************************************************/

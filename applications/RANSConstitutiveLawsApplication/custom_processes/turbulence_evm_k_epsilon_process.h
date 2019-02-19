@@ -224,8 +224,6 @@ public:
         BaseType::ExecuteInitialize();
 
         this->GenerateSolutionStrategies();
-
-        this->AssignBoundaryConditions();
     }
 
     /// this function will be executed at every time step BEFORE performing the solve phase
@@ -234,6 +232,8 @@ public:
         KRATOS_TRY
 
         BaseType::ExecuteInitializeSolutionStep();
+
+        this->AssignBoundaryConditions();
 
         KRATOS_CATCH("");
     }

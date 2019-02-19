@@ -558,8 +558,6 @@ private:
 
         this->UpdateTurbulentViscosity();
 
-        ProcessInfo& r_processinfo = this->mrModelPart.GetProcessInfo();
-
         mpKStrategy->Initialize();
         mpKStrategy->InitializeSolutionStep();
         mpKStrategy->Predict();

@@ -203,7 +203,8 @@ public:
             this->AddDofs();
         else if (process_step == 3)
         {
-            KRATOS_INFO("TurbulenceModel") << "Solving RANS equations...\n";
+            if (this->mEchoLevel > 0)
+                KRATOS_INFO("TurbulenceModel") << "Solving RANS equations...\n";
             this->SolveStep();
             this->UpdateFluidViscosity();
         }
@@ -506,6 +507,10 @@ private:
             this->mrParameters["model_properties"]["echo_level"].GetInt());
         mpEpsilonBuilderAndSolver->SetEchoLevel(
             this->mrParameters["model_properties"]["echo_level"].GetInt());
+        mpKStrategy->SetEchoLevel(
+            this->mrParameters["model_properties"]["echo_level"].GetInt());
+        mpEpsilonStrategy->SetEchoLevel(
+            this->mrParameters["model_properties"]["echo_level"].GetInt());
 
         KRATOS_CATCH("");
     }
@@ -542,7 +547,7 @@ private:
             {
                 array_1d<double, 3>& velocity = iNode->FastGetSolutionStepValue(VELOCITY);
                 const double velocity_mag = norm_2(velocity);
-                const double k = std::pow( velocity_mag / mixing_length, 2);
+                const double k = std::pow(velocity_mag / mixing_length, 2);
                 const double epsilon = C_mu * std::pow(k, 1.5) / mixing_length;
 
                 this->InitializeValues(*iNode, k, epsilon);
@@ -596,10 +601,12 @@ private:
                     (this->mrModelPart.NodesBegin() + i)->FastGetSolutionStepValue(TURBULENT_VISCOSITY);
             }
 
-            KRATOS_INFO("TurbulenceModel") << "Solving for K...\n";
+            if (this->mEchoLevel > 0)
+                KRATOS_INFO("TurbulenceModel") << "Solving for K...\n";
             mpKStrategy->SolveSolutionStep();
 
-            KRATOS_INFO("TurbulenceModel") << "Solving for Epsilon...\n";
+            if (this->mEchoLevel > 0)
+                KRATOS_INFO("TurbulenceModel") << "Solving for Epsilon...\n";
             mpEpsilonStrategy->SolveSolutionStep();
 
             this->UpdateTurbulentViscosity();

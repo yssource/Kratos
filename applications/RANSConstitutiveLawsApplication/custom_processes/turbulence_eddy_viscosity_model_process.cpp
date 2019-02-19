@@ -20,12 +20,14 @@ TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolv
         "wall_conditions"       : ["PLEASE_SPECIFY_WALL_CONDITIONS"],
         "max_distance_calculation_iterations" : 2,
         "mesh_moving"       : false,
+        "echo_level"        : 0,
         "model_properties"  : {}
     })");
 
     mrParameters.ValidateAndAssignDefaults(default_parameters);
 
     mIsMeshMoving = mrParameters["mesh_moving"].GetBool();
+    mEchoLevel = mrParameters["echo_level"].GetInt();
 
     KRATOS_CATCH("");
 }
@@ -103,7 +105,8 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 {
     KRATOS_TRY
 
-    KRATOS_INFO("TurbulenceModel") << "Calculating wall distances..." << std::endl;
+    if (mEchoLevel > 0)
+        KRATOS_INFO("TurbulenceModel") << "Calculating wall distances..." << std::endl;
 
     // Fixing the wall boundaries for wall distance calculation
     NodesArrayType& nodes_array = this->mrModelPart.Nodes();
@@ -121,7 +124,8 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 
     mpDistanceCalculator->Execute();
 
-    KRATOS_INFO("TurbulenceModel") << "Finished calculating wall distances." << std::endl;
+    if (mEchoLevel > 0)
+        KRATOS_INFO("TurbulenceModel") << "Finished calculating wall distances." << std::endl;
 
     KRATOS_CATCH("");
 }

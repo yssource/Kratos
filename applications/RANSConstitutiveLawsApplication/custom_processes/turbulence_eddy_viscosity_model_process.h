@@ -147,6 +147,8 @@ protected:
     typename TLinearSolver::Pointer mpLinearSolver;
 
     bool mIsMeshMoving;
+
+    unsigned int mEchoLevel;
     ///@}
     ///@name Protected Operators
     ///@{

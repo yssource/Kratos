@@ -2,22 +2,17 @@
 import KratosMultiphysics
 import KratosMultiphysics.StructuralMechanicsApplication as StructuralMechanicsApplication
 import run_cpp_unit_tests
+import KratosMultiphysics.kratos_utilities as kratos_utilities
 
 # Import Kratos "wrapper" for unittests
 import KratosMultiphysics.KratosUnittest as KratosUnittest
 
 import subprocess
 
-try:
-    import KratosMultiphysics.ExternalSolversApplication as ExternalSolversApplication
-    missing_external_dependencies = False
-    missing_application = ''
-except ImportError as e:
-    missing_external_dependencies = True
-    # extract name of the missing application from the error message
-    import re
-    missing_application = re.search(r'''.*'KratosMultiphysics\.(.*)'.*''',
-                                    '{0}'.format(e)).group(1)
+if kratos_utilities.IsApplicationAvailable("ExternalSolversApplication"):
+    has_external_solvers_application = True
+else:
+    has_external_solvers_application = False
 
 # Import the tests or test_classes to create the suits
 
@@ -159,7 +154,6 @@ from structural_mechanics_test_factory import ShellT3AndQ4NonLinearStaticStructH
 from structural_mechanics_test_factory import ShellT3AndQ4NonLinearDynamicStructOscillatingPlateTests as TShellT3AndQ4NonLinearDynamicStructOscillatingPlateTests
 from structural_mechanics_test_factory import ShellT3AndQ4NonLinearDynamicStructOscillatingPlateLumpedTests as TShellT3AndQ4NonLinearDynamicStructOscillatingPlateLumpedTests
 # CL tests
-from structural_mechanics_test_factory import IsotropicDamageSimoJuPSTest    as TIsotropicDamageSimoJuPSTest
 from structural_mechanics_test_factory import SimpleSmallDeformationPlasticityMCTest as TSimpleSmallDeformationPlasticityMCTest
 from structural_mechanics_test_factory import SimpleSmallDeformationPlasticityVMTest as TSimpleSmallDeformationPlasticityVMTest
 from structural_mechanics_test_factory import SimpleSmallDeformationPlasticityDPTest as TSimpleSmallDeformationPlasticityDPTest
@@ -173,7 +167,10 @@ from structural_mechanics_test_factory import SimpleJ2PlasticityTest as TSimpleJ
 from structural_mechanics_test_factory import TensileTestStructuralTest as TTensileTestStructuralTest
 # Rigid test
 from structural_mechanics_test_factory import RigidFaceTestWithImposeRigidMovementProcess as TRigidFaceTestWithImposeRigidMovementProcess
+from structural_mechanics_test_factory import RigidBlockTest as TRigidBlockTest
+from structural_mechanics_test_factory import RigidEliminationTest as TRigidEliminationTest
 from structural_mechanics_test_factory import RigidSphereFailing as TRigidSphereFailing
+from structural_mechanics_test_factory import RigidSphereFailingExplicit as TRigidSphereFailingExplicit
 
 ##### VALIDATION TESTS #####
 # SPRISM tests
@@ -181,6 +178,8 @@ from structural_mechanics_test_factory import SprismPanTests              as TSp
 # Pendulus Tests with Solid Elements
 from structural_mechanics_test_factory import PendulusTLTest              as TPendulusTLTest
 from structural_mechanics_test_factory import PendulusULTest              as TPendulusULTest
+# Rayleigh Tests with Solid Elements
+from structural_mechanics_test_factory import RayleighProcessTest         as TRayleighProcessTest
 # Pendulus Tests with Shell Elements
 from structural_mechanics_test_factory import ShellT3AndQ4NonLinearDynamicStructPendulusTests as TShellT3AndQ4NonLinearDynamicStructPendulusTests
 from structural_mechanics_test_factory import ShellT3AndQ4NonLinearDynamicStructPendulusLumpedTests as TShellT3AndQ4NonLinearDynamicStructPendulusLumpedTests
@@ -347,13 +346,16 @@ def AssembleTestSuites():
     # nightSuite.addTest(TShellT3AndQ4NonLinearDynamicStructOscillatingPlateTests('test_execution'))
     # nightSuite.addTest(TShellT3AndQ4NonLinearDynamicStructOscillatingPlateLumpedTests('test_execution'))
     # Constitutive Law tests
-    # nightSuite.addTest(TIsotropicDamageSimoJuPSTest('test_execution')) # FIXME: Needs get up to date
     nightSuite.addTest(TSmallDeformationPlasticityTest('test_execution'))
     nightSuite.addTest(TSimpleJ2PlasticityTest('test_execution'))
     nightSuite.addTest(TRigidFaceTestWithImposeRigidMovementProcess('test_execution'))
+    nightSuite.addTest(TRigidBlockTest('test_execution'))
+    nightSuite.addTest(TRigidEliminationTest('test_execution'))
     nightSuite.addTest(TRigidSphereFailing('test_execution'))
+    nightSuite.addTest(TRigidSphereFailingExplicit('test_execution'))
 
-    if (missing_external_dependencies == False):
+    if has_external_solvers_application:
+        import KratosMultiphysics.ExternalSolversApplication
         if (hasattr(KratosMultiphysics.ExternalSolversApplication, "FEASTSolver")):
             # Eigenvalues tests
             smallSuite.addTest(TEigenQ4Thick2x2PlateTests('test_execution'))
@@ -364,6 +366,8 @@ def AssembleTestSuites():
             nightSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([THarmonicAnalysisTestsWithHDF5]))
             # Element damping test
             nightSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TSpringDamperElementTests])) # TODO should be in smallSuite but is too slow
+            # Rayleigh process test
+            nightSuite.addTest(TRayleighProcessTest('test_execution'))
         else:
             print("FEASTSolver solver is not included in the compilation of the External Solvers Application")
 

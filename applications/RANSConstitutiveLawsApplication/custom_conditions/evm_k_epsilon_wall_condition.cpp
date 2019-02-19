@@ -227,6 +227,8 @@ void EvmKEpsilonWallCondition<TDim, TNumNodes>::CalculateLocalSystem(
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo)
 {
+    this->CalculateLeftHandSide(rLeftHandSideMatrix, rCurrentProcessInfo);
+    this->CalculateRightHandSide(rRightHandSideVector, rCurrentProcessInfo);
 }
 
 /**
@@ -238,6 +240,14 @@ void EvmKEpsilonWallCondition<TDim, TNumNodes>::CalculateLocalSystem(
 template<unsigned int TDim, unsigned int TNumNodes>
 void EvmKEpsilonWallCondition<TDim, TNumNodes>::CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
 {
+    KRATOS_TRY
+
+    if (rLeftHandSideMatrix.size1() != TLocalSize || rLeftHandSideMatrix.size2() != TLocalSize)
+        rLeftHandSideMatrix.resize(TLocalSize, TLocalSize, false);
+
+    rLeftHandSideMatrix.clear();
+
+    KRATOS_CATCH("");
 }
 
 /**
@@ -249,58 +259,59 @@ void EvmKEpsilonWallCondition<TDim, TNumNodes>::CalculateLeftHandSide(MatrixType
 template<unsigned int TDim, unsigned int TNumNodes>
 void EvmKEpsilonWallCondition<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
-    KRATOS_TRY
+    // KRATOS_TRY
 
-    if (rRightHandSideVector.size() != TLocalSize)
-        rRightHandSideVector.resize(TLocalSize, false);
+    // if (this->Is(STRUCTURE)){
+    //     if (rRightHandSideVector.size() != TLocalSize)
+    //         rRightHandSideVector.resize(TLocalSize, false);
 
-    rRightHandSideVector.clear();
+    //     rRightHandSideVector.clear();
 
-    if (this->GetValue(IS_STRUCTURE) != 0.0){
+    //     KRATOS_WATCH(this->Id());
 
-        const double C_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
-        const double epsilon_sigma = rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
+    //     const double C_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
+    //     const double epsilon_sigma = rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
 
-        const GeometryType& rGeom = this->GetGeometry();
-        const GeometryType::IntegrationPointsArrayType& IntegrationPoints = rGeom.IntegrationPoints(GeometryData::GI_GAUSS_2);
-        const unsigned int NumGauss = IntegrationPoints.size();
+    //     const GeometryType& rGeom = this->GetGeometry();
+    //     const GeometryType::IntegrationPointsArrayType& IntegrationPoints = rGeom.IntegrationPoints(GeometryData::GI_GAUSS_2);
+    //     const unsigned int NumGauss = IntegrationPoints.size();
 
-        MatrixType NContainer = rGeom.ShapeFunctionsValues(GeometryData::GI_GAUSS_2);
+    //     MatrixType NContainer = rGeom.ShapeFunctionsValues(GeometryData::GI_GAUSS_2);
 
-        array_1d<double,3> Normal;
-        this->CalculateNormal(Normal); //this already contains the area
-        double A = std::sqrt(Normal[0]*Normal[0]+Normal[1]*Normal[1]+Normal[2]*Normal[2]);
-        Normal /= A;
+    //     array_1d<double,3> Normal;
+    //     this->CalculateNormal(Normal); //this already contains the area
+    //     double A = std::sqrt(Normal[0]*Normal[0]+Normal[1]*Normal[1]+Normal[2]*Normal[2]);
+    //     Normal /= A;
 
-        // CAUTION: "Jacobian" is 2.0*A for triangles but 0.5*A for lines
-        double J = (TDim == 2) ? 0.5*A : 2.0*A;
+    //     // CAUTION: "Jacobian" is 2.0*A for triangles but 0.5*A for lines
+    //     double J = (TDim == 2) ? 0.5*A : 2.0*A;
 
-        for (unsigned int g = 0; g < NumGauss; g++)
-        {
-            Vector N = row(NContainer,g);
-            double Weight = J * IntegrationPoints[g].Weight();
+    //     for (unsigned int g = 0; g < NumGauss; g++)
+    //     {
+    //         Vector N = row(NContainer,g);
+    //         double Weight = J * IntegrationPoints[g].Weight();
 
-            double tke = 0.0;
-            double nu = 0.0;
-            for (unsigned int j = 0; j < TNumNodes; j++)
-            {
-                tke += N[j] * rGeom[j].FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
-                nu += N[j] * rGeom[j].FastGetSolutionStepValue(VISCOSITY);
-            }
+    //         double tke = 0.0;
+    //         double nu = 0.0;
+    //         for (unsigned int j = 0; j < TNumNodes; j++)
+    //         {
+    //             tke += N[j] * rGeom[j].FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
+    //             nu += N[j] * rGeom[j].FastGetSolutionStepValue(VISCOSITY);
+    //         }
 
-            const double utau = std::pow(C_mu, 0.25) * std::pow(tke, 0.5);
-            const double yplus = 11.06;
+    //         const double utau = std::pow(C_mu, 0.25) * std::pow(tke, 0.5);
+    //         const double yplus = 11.06;
 
-            const double value = std::pow(utau, 5.0) / (yplus * nu * epsilon_sigma);
+    //         const double value = std::pow(utau, 5.0) / (yplus * nu * epsilon_sigma);
 
-            for (unsigned int j = 0; j < TNumNodes; j++)
-            {
-                rRightHandSideVector[j * TBlockSize + 1] += Weight * N[j] * value;
-            }
-        }
-    }
+    //         for (unsigned int j = 0; j < TNumNodes; j++)
+    //         {
+    //             rRightHandSideVector[j * TBlockSize + 1] += Weight * N[j] * value;
+    //         }
+    //     }
+    // }
 
-    KRATOS_CATCH("");
+    // KRATOS_CATCH("");
 }
 
 /**
@@ -615,7 +626,10 @@ void EvmKEpsilonWallCondition<TDim, TNumNodes>::load(Serializer& rSerializer) {
 
 /// input stream function
 template<unsigned int TDim, unsigned int TNumNodes>
-inline std::istream & operator >> (std::istream& rIStream, EvmKEpsilonWallCondition<TDim, TNumNodes>& rThis);
+inline std::istream & operator >> (std::istream& rIStream, EvmKEpsilonWallCondition<TDim, TNumNodes>& rThis)
+{
+    return rIStream;
+}
 
 /// output stream function
 template<unsigned int TDim, unsigned int TNumNodes>

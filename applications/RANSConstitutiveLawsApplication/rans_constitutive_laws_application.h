@@ -19,7 +19,8 @@
 
 // Project includes
 #include "custom_conditions/evm_k_epsilon_wall_condition.h"
-#include "custom_elements/evm_k_epsilon_element.h"
+#include "custom_elements/evm_k_epsilon/evm_k_element.h"
+#include "custom_elements/evm_k_epsilon/evm_epsilon_element.h"
 #include "includes/kratos_application.h"
 
 namespace Kratos
@@ -165,8 +166,11 @@ private:
     ///@{
 
     /// k-epsilon turbulence model elements
-    const EvmKEpsilonElement<2, 3> mKEpsilon2D;
-    const EvmKEpsilonElement<3, 4> mKEpsilon3D;
+    const EvmKElement<2, 3> mRANSEVMK2D;
+    const EvmKElement<3, 4> mRANSEVMK3D;
+
+    const EvmEpsilonElement<2, 3> mRANSEVMEPSILON2D;
+    const EvmEpsilonElement<3, 4> mRANSEVMEPSILON3D;
 
     /// k-epsilon turbulence model conditions
     const EvmKEpsilonWallCondition<2, 2> mKEpsilonWallCondition2D;

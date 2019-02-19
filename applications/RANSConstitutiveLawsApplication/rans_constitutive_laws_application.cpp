@@ -28,8 +28,10 @@ namespace Kratos {
 
 KratosRANSConstitutiveLawsApplication::KratosRANSConstitutiveLawsApplication():
     KratosApplication("RANSConstitutiveLawsApplication"),
-    mKEpsilon2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
-    mKEpsilon3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
+    mRANSEVMK2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+    mRANSEVMK3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
+    mRANSEVMEPSILON2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+    mRANSEVMEPSILON3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
     mKEpsilonWallCondition2D(0, Element::GeometryType::Pointer( new Line2D2<Node<3> >( Element::GeometryType::PointsArrayType( 2 ) ) ) ),
     mKEpsilonWallCondition3D(0, Element::GeometryType::Pointer( new Triangle3D3<Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) )
     {}
@@ -44,6 +46,7 @@ void KratosRANSConstitutiveLawsApplication::Register()
     KRATOS_REGISTER_VARIABLE( TURBULENT_ENERGY_DISSIPATION_RATE )
     KRATOS_REGISTER_VARIABLE( TURBULENT_KINETIC_ENERGY_RATE )
     KRATOS_REGISTER_VARIABLE( TURBULENT_ENERGY_DISSIPATION_RATE_2 )
+    KRATOS_REGISTER_VARIABLE( RANS_MODELLING_PROCESS_STEP )
 
     // Turbulence model constants
     KRATOS_REGISTER_VARIABLE( WALL_SMOOTHNESS_BETA )
@@ -58,8 +61,10 @@ void KratosRANSConstitutiveLawsApplication::Register()
     KRATOS_REGISTER_VARIABLE( ELEMENT_DERIVATIVES_DOFS_EXTENSION )
 
     // Register Elements
-    KRATOS_REGISTER_ELEMENT("KEPSILON2D3N",mKEpsilon2D);
-    KRATOS_REGISTER_ELEMENT("KEPSILON3D4N",mKEpsilon3D);
+    KRATOS_REGISTER_ELEMENT("RANSEVMK2D3N",mRANSEVMK2D);
+    KRATOS_REGISTER_ELEMENT("RANSEVMK3D4N",mRANSEVMK3D);
+    KRATOS_REGISTER_ELEMENT("RANSEVMEPSILON2D3N",mRANSEVMEPSILON2D);
+    KRATOS_REGISTER_ELEMENT("RANSEVMEPSILON3D4N",mRANSEVMEPSILON3D);
 
     KRATOS_REGISTER_CONDITION("KEpsilonWallCondition2D2N", mKEpsilonWallCondition2D);
     KRATOS_REGISTER_CONDITION("KEpsilonWallCondition3D3N", mKEpsilonWallCondition2D);

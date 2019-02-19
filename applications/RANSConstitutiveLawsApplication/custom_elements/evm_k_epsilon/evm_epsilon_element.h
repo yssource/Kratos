@@ -25,6 +25,7 @@
 #include "custom_elements/element_derivatives_extension.h"
 #include "custom_elements/rans_constitutive_element.h"
 #include "rans_constitutive_laws_application_variables.h"
+#include "includes/cfd_variables.h"
 
 namespace Kratos
 {

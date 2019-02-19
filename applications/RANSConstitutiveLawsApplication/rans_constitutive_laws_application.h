@@ -18,7 +18,7 @@
 // External includes
 
 // Project includes
-#include "custom_conditions/evm_k_epsilon_wall_condition.h"
+#include "custom_conditions/evm_epsilon_wall_condition.h"
 #include "custom_elements/evm_k_epsilon/evm_k_element.h"
 #include "custom_elements/evm_k_epsilon/evm_epsilon_element.h"
 #include "includes/kratos_application.h"
@@ -173,8 +173,8 @@ private:
     const EvmEpsilonElement<3, 4> mRANSEVMEPSILON3D;
 
     /// k-epsilon turbulence model conditions
-    const EvmKEpsilonWallCondition<2, 2> mKEpsilonWallCondition2D;
-    const EvmKEpsilonWallCondition<3, 3> mKEpsilonWallCondition3D;
+    const EvmEpsilonWallCondition<2, 2> mEpsilonWallCondition2D;
+    const EvmEpsilonWallCondition<3, 3> mEpsilonWallCondition3D;
 
     ///@}
     ///@name Private Operators

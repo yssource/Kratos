@@ -32,8 +32,8 @@ KratosRANSConstitutiveLawsApplication::KratosRANSConstitutiveLawsApplication():
     mRANSEVMK3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
     mRANSEVMEPSILON2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mRANSEVMEPSILON3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
-    mKEpsilonWallCondition2D(0, Element::GeometryType::Pointer( new Line2D2<Node<3> >( Element::GeometryType::PointsArrayType( 2 ) ) ) ),
-    mKEpsilonWallCondition3D(0, Element::GeometryType::Pointer( new Triangle3D3<Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) )
+    mEpsilonWallCondition2D(0, Element::GeometryType::Pointer( new Line2D2<Node<3> >( Element::GeometryType::PointsArrayType( 2 ) ) ) ),
+    mEpsilonWallCondition3D(0, Element::GeometryType::Pointer( new Triangle3D3<Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) )
     {}
 
 void KratosRANSConstitutiveLawsApplication::Register()
@@ -66,7 +66,7 @@ void KratosRANSConstitutiveLawsApplication::Register()
     KRATOS_REGISTER_ELEMENT("RANSEVMEPSILON2D3N",mRANSEVMEPSILON2D);
     KRATOS_REGISTER_ELEMENT("RANSEVMEPSILON3D4N",mRANSEVMEPSILON3D);
 
-    KRATOS_REGISTER_CONDITION("KEpsilonWallCondition2D2N", mKEpsilonWallCondition2D);
-    KRATOS_REGISTER_CONDITION("KEpsilonWallCondition3D3N", mKEpsilonWallCondition2D);
+    KRATOS_REGISTER_CONDITION("EpsilonWallCondition2D", mEpsilonWallCondition2D);
+    KRATOS_REGISTER_CONDITION("EpsilonWallCondition3D", mEpsilonWallCondition2D);
 }
 }  // namespace Kratos.

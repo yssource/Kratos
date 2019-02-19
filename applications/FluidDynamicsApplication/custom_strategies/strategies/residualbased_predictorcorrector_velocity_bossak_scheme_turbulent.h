@@ -564,16 +564,14 @@ namespace Kratos {
                                                TSystemVectorType& Dx,
                                                TSystemVectorType& b) override
         {
-            KRATOS_TRY
 
-            if (mpTurbulenceModel != 0) // If not null
-                mpTurbulenceModel->Execute();
-
-            KRATOS_CATCH("")
         }
 
         void FinalizeNonLinIteration(ModelPart &rModelPart, TSystemMatrixType &A, TSystemVectorType &Dx, TSystemVectorType &b) override
         {
+
+            KRATOS_TRY
+
             ProcessInfo& CurrentProcessInfo = rModelPart.GetProcessInfo();
 
             //if orthogonal subscales are computed
@@ -630,6 +628,12 @@ namespace Kratos {
                     ind->FastGetSolutionStepValue(DIVPROJ) /= Area;
                 }
             }
+
+            if (mpTurbulenceModel != 0) // If not null
+                mpTurbulenceModel->Execute();
+
+            KRATOS_CATCH("")
+
         }
 
         void FinalizeSolutionStep(ModelPart &rModelPart, TSystemMatrixType &A, TSystemVectorType &Dx, TSystemVectorType &b) override

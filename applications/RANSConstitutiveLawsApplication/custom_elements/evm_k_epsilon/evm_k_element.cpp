@@ -575,7 +575,7 @@ void EvmKElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMa
                    rGeom[c].FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
             wall_distance +=
                 ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(DISTANCE);
-            nu += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(VISCOSITY);
+            nu += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
             velocity += ShapeFunctions(g, c) * r_velocity;
         }
 
@@ -589,16 +589,12 @@ void EvmKElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMa
         }
 
         const double f_mu = 1 - std::exp(-0.0115 * y_plus);
-
-        // calculating limited mixing length
-        double temp_tke = C_mu * f_mu * std::pow(tke, 1.5);
         const double limited_mixing_length =
-            (temp_tke < epsilon * mixing_length) ? temp_tke / epsilon : mixing_length;
-
+            std::min<double>(C_mu * std::pow(tke, 1.5) / epsilon, mixing_length);
         const double nu_min = nu * turbulent_viscosity_fraction;
         const double nu_t =
             std::max<double>(nu_min, limited_mixing_length * std::pow(tke, 0.5));
-        const double gamma = C_mu * f_mu * tke / nu_t;
+        const double gamma = C_mu * tke / (nu_t * f_mu);
 
         for (unsigned int a = 0; a < TNumNodes; a++)
         {

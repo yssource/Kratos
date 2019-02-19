@@ -626,9 +626,19 @@ private:
                 increase_norm += new_turbulent_viscosity[i] - old_turbulent_viscosity[i];
             }
 
-            is_converged =
-                (increase_norm < mTurbulentViscosityAbsoluteTolerance) ||
-                ((increase_norm / NumberOfNodes) < mTurbulentViscosityRelativeTolerance);
+            const double ratio = std::abs(increase_norm / NumberOfNodes);
+            increase_norm = std::abs(increase_norm);
+
+            if (this->mEchoLevel > 0)
+                std::cout << "CONVERGENCE CHECK: TURBULENT_VISCOSITY: ratio = " << std::scientific
+                          << ratio << "; exp.ratio = " << std::scientific
+                          << mTurbulentViscosityRelativeTolerance
+                          << ": abs = " << std::scientific << increase_norm
+                          << "; exp.abs = " << std::scientific
+                          << mTurbulentViscosityAbsoluteTolerance << std::endl;
+
+            is_converged = (increase_norm < mTurbulentViscosityAbsoluteTolerance) ||
+                           (ratio < mTurbulentViscosityRelativeTolerance);
 
             step++;
         }

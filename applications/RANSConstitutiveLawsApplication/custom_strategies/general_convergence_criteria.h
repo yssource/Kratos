@@ -69,8 +69,7 @@ public:
      * @param PrsRatioTolerance Relative tolerance for presssure error
      * @param PrsAbsTolerance Absolute tolerance for presssure error
      */
-    GeneralConvergenceCriteria(std::map<KeyType, TDataType>& rRatioTolerance,
-                               std::map<KeyType, TDataType>& rAbsTolerance)
+    GeneralConvergenceCriteria(double rRatioTolerance, double rAbsTolerance)
         : ConvergenceCriteria<TSparseSpace, TDenseSpace>(),
           mRatioTolerance(rRatioTolerance),
           mAbsTolerance(rAbsTolerance)
@@ -106,26 +105,19 @@ public:
             int NumDofs = rDofSet.size();
 
             // Initialize
-            std::map<KeyType, TDataType> solution_norm;
-            std::map<KeyType, TDataType> increase_norm;
-            std::map<KeyType, unsigned int> dof_num;
+            double solution_norm = 0.0;
+            double increase_norm = 0.0;
+            unsigned int dof_num = 0;
 
-            for (auto variable_data : mRatioTolerance)
-            {
-                solution_norm[variable_data.first] = 0.0;
-                dof_num[variable_data.first] = 0;
-            }
-
-            for (auto variable_data : mRatioTolerance)
-                increase_norm[variable_data.first] = 0.0;
+            std::string dof_name = rDofSet.begin()->GetVariable().Name();
 
             // Set a partition for OpenMP
             PartitionVector DofPartition;
             int NumThreads = OpenMPUtils::GetNumThreads();
             OpenMPUtils::DivideInPartitions(NumDofs, NumThreads, DofPartition);
 
-// Loop over Dofs
-#pragma omp parallel reduction(+:VelSolutionNorm,PrSolutionNorm,VelIncreaseNorm,PrIncreaseNorm,VelDofNum,PrDofNum)
+            // Loop over Dofs
+#pragma omp parallel reduction(+ : solution_norm, increase_norm, dof_num)
             {
                 int k = OpenMPUtils::ThisThread();
                 typename DofsArrayType::iterator DofBegin =
@@ -146,53 +138,32 @@ public:
                         DofValue = itDof->GetSolutionStepValue(0);
                         DofIncr = Dx[DofId];
 
-                        KeyType CurrVar = itDof->GetVariable().Key();
-
-                        solution_norm[CurrVar] += DofValue * DofValue;
-                        increase_norm[CurrVar] += DofIncr * DofIncr;
-                        dof_num[CurrVar] += 1;
+                        solution_norm += DofValue * DofValue;
+                        increase_norm += DofIncr * DofIncr;
+                        dof_num += 1;
                     }
                 }
             }
 
-            for (auto variable_data : mRatioTolerance)
-                if (solution_norm[variable_data.first] == 0.0)
-                    solution_norm[variable_data.first] = 1.0;
+            if (solution_norm == 0.0)
+                solution_norm = 1.0;
 
-            std::map<KeyType, TDataType> ratio;
-            std::map<KeyType, TDataType> ratio_abs;
-            for (auto variable_data : mRatioTolerance)
-            {
-                KeyType curr_var = variable_data.first;
-                ratio[curr_var] = increase_norm[curr_var] / solution_norm[curr_var];
-                ratio_abs[curr_var] = sqrt(increase_norm[curr_var]) /
-                                      static_cast<int>(dof_num[curr_var]);
-            }
+            const double ratio = increase_norm / solution_norm;
+            const double ratio_abs = sqrt(increase_norm) / static_cast<int>(dof_num);
 
             if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
             {
-                std::cout << "CONVERGENCE CHECK:" << std::endl;
-                for (auto variable_data : mRatioTolerance)
-                {
-                    KeyType cur_var = variable_data.first;
-                    std::cout << "   " << cur_var;
-                    std::cout << ": ratio = " << ratio[cur_var]
-                              << "; exp.ratio = " << mRatioTolerance[cur_var]
-                              << std::endl;
-                    std::cout << "   " << cur_var;
-                    std::cout << ": abs   = " << ratio_abs[cur_var]
-                              << ";   exp.abs = " << mAbsTolerance[cur_var]
-                              << std::endl;
-                }
+                std::cout << "CONVERGENCE CHECK: ";
+                std::cout << dof_name;
+                std::cout << ": ratio = " << std::scientific << ratio
+                          << "; exp.ratio = " << std::scientific << mRatioTolerance;
+                std::cout << ": abs = " << std::scientific << ratio_abs
+                          << "; exp.abs = " << std::scientific
+                          << mAbsTolerance << std::endl;
             }
 
-            for (auto variable_data : mAbsTolerance)
-            {
-                KeyType cur_var = variable_data.first;
-                if ((ratio[cur_var] > mRatioTolerance[cur_var]) &&
-                    (ratio_abs[cur_var] > mAbsTolerance[cur_var]))
-                    return false;
-            }
+            if ((std::abs(ratio) > mRatioTolerance) && (std::abs(ratio_abs) > mAbsTolerance))
+                return false;
 
             if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
             {
@@ -235,9 +206,9 @@ public:
     ///@} // Operations
 
 private:
-    std::map<KeyType, TDataType>& mRatioTolerance;
-    std::map<KeyType, TDataType>& mAbsTolerance;
-};
+    double mRatioTolerance;
+    double mAbsTolerance;
+}; // namespace Kratos
 
 ///@} // Kratos classes
 

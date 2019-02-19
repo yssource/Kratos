@@ -51,8 +51,8 @@ RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::RANSConstitutiveElement(In
  * Constructor using an array of nodes
  */
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
-RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::RANSConstitutiveElement(IndexType NewId,
-                                                                  const NodesArrayType& ThisNodes)
+RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::RANSConstitutiveElement(
+    IndexType NewId, const NodesArrayType& ThisNodes)
     : Element(NewId, ThisNodes)
 {
 }
@@ -61,8 +61,8 @@ RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::RANSConstitutiveElement(In
  * Constructor using Geometry
  */
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
-RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::RANSConstitutiveElement(IndexType NewId,
-                                                                  GeometryType::Pointer pGeometry)
+RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::RANSConstitutiveElement(
+    IndexType NewId, GeometryType::Pointer pGeometry)
     : Element(NewId, pGeometry)
 {
 }
@@ -160,8 +160,8 @@ Element::Pointer RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::Create(
  * @return a Pointer to the new element
  */
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
-Element::Pointer RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::Clone(IndexType NewId,
-                                                                 NodesArrayType const& ThisNodes) const
+Element::Pointer RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::Clone(
+    IndexType NewId, NodesArrayType const& ThisNodes) const
 {
     KRATOS_TRY
     return Kratos::make_shared<RANSConstitutiveElement>(
@@ -176,8 +176,8 @@ Element::Pointer RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::Clone(Ind
  * @param rCurrentProcessInfo: the current process info instance
  */
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
-void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::EquationIdVector(EquationIdVectorType& rResult,
-                                                                ProcessInfo& CurrentProcessInfo)
+void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::EquationIdVector(
+    EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo)
 {
     KRATOS_TRY;
     KRATOS_ERROR << "Attempting to call base RANSConstitutiveElement "
@@ -192,8 +192,8 @@ void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::EquationIdVector(Equa
  * @param rCurrentProcessInfo: the current process info instance
  */
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
-void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::GetDofList(DofsVectorType& rElementalDofList,
-                                                          ProcessInfo& CurrentProcessInfo)
+void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::GetDofList(
+    DofsVectorType& rElementalDofList, ProcessInfo& CurrentProcessInfo)
 {
     KRATOS_TRY;
     KRATOS_ERROR
@@ -222,7 +222,7 @@ void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateLocalSystem(
     MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
     // Resize and intialize output
-    if (rLeftHandSideMatrix.size1() != TLocalSize)
+    if (rLeftHandSideMatrix.size1() != TLocalSize || rLeftHandSideMatrix.size2() != TLocalSize)
         rLeftHandSideMatrix.resize(TLocalSize, TLocalSize, false);
 
     if (rRightHandSideVector.size() != TLocalSize)
@@ -239,11 +239,11 @@ void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateLocalSystem(
  * @param rCurrentProcessInfo: the current process info instance
  */
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
-void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix,
-                                                                     ProcessInfo& rCurrentProcessInfo)
+void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateLeftHandSide(
+    MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
 {
     // Resize and intialize output
-    if (rLeftHandSideMatrix.size1() != TLocalSize)
+    if (rLeftHandSideMatrix.size1() != TLocalSize || rLeftHandSideMatrix.size2() != TLocalSize)
         rLeftHandSideMatrix.resize(TLocalSize, TLocalSize, false);
 
     noalias(rLeftHandSideMatrix) = ZeroMatrix(TLocalSize, TLocalSize);
@@ -256,8 +256,8 @@ void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateLeftHandSide
  * @param rCurrentProcessInfo: the current process info instance
  */
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
-void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateRightHandSide(VectorType& rRightHandSideVector,
-                                                                      ProcessInfo& rCurrentProcessInfo)
+void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateRightHandSide(
+    VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
     if (rRightHandSideVector.size() != TLocalSize)
         rRightHandSideVector.resize(TLocalSize, false);
@@ -291,9 +291,9 @@ template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
 void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateFirstDerivativesContributions(
     MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
-    if (rLeftHandSideMatrix.size1() != 0)
+    if (rLeftHandSideMatrix.size1() != TLocalSize || rLeftHandSideMatrix.size2() != TLocalSize)
         rLeftHandSideMatrix.resize(TLocalSize, TLocalSize, false);
-    if (rRightHandSideVector.size() != 0)
+    if (rRightHandSideVector.size() != TLocalSize)
         rRightHandSideVector.resize(TLocalSize, false);
 }
 
@@ -307,7 +307,7 @@ template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
 void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateFirstDerivativesLHS(
     MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
 {
-    if (rLeftHandSideMatrix.size1() != 0)
+    if (rLeftHandSideMatrix.size1() != TLocalSize || rLeftHandSideMatrix.size2() != TLocalSize)
         rLeftHandSideMatrix.resize(TLocalSize, TLocalSize, false);
 }
 
@@ -321,7 +321,7 @@ template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
 void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateFirstDerivativesRHS(
     VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
-    if (rRightHandSideVector.size() != 0)
+    if (rRightHandSideVector.size() != TLocalSize)
         rRightHandSideVector.resize(TLocalSize, false);
 }
 
@@ -345,9 +345,9 @@ template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
 void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateSecondDerivativesContributions(
     MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
-    if (rLeftHandSideMatrix.size1() != 0)
+    if (rLeftHandSideMatrix.size1() != 0 || rLeftHandSideMatrix.size2() != TLocalSize)
         rLeftHandSideMatrix.resize(TLocalSize, TLocalSize, false);
-    if (rRightHandSideVector.size() != 0)
+    if (rRightHandSideVector.size() != TLocalSize)
         rRightHandSideVector.resize(TLocalSize, false);
 }
 
@@ -361,7 +361,7 @@ template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
 void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateSecondDerivativesLHS(
     MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
 {
-    if (rLeftHandSideMatrix.size1() != 0)
+    if (rLeftHandSideMatrix.size1() != TLocalSize || rLeftHandSideMatrix.size2() != TLocalSize)
         rLeftHandSideMatrix.resize(TLocalSize, TLocalSize, false);
 }
 
@@ -375,7 +375,7 @@ template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
 void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateSecondDerivativesRHS(
     VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
-    if (rRightHandSideVector.size() != 0)
+    if (rRightHandSideVector.size() != TLocalSize)
         rRightHandSideVector.resize(TLocalSize, false);
 }
 
@@ -386,10 +386,10 @@ void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateSecondDeriva
  * @param rCurrentProcessInfo: the current process info instance
  */
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
-void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateMassMatrix(MatrixType& rMassMatrix,
-                                                                   ProcessInfo& rCurrentProcessInfo)
+void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateMassMatrix(
+    MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo)
 {
-    if (rMassMatrix.size1() != 0)
+    if (rMassMatrix.size1() != TLocalSize || rMassMatrix.size2() != TLocalSize)
         rMassMatrix.resize(TLocalSize, TLocalSize, false);
 
     noalias(rMassMatrix) = ZeroMatrix(TLocalSize, TLocalSize);
@@ -402,10 +402,10 @@ void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateMassMatrix(M
  * @param rCurrentProcessInfo: the current process info instance
  */
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
-void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateDampingMatrix(MatrixType& rDampingMatrix,
-                                                                      ProcessInfo& rCurrentProcessInfo)
+void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateDampingMatrix(
+    MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo)
 {
-    if (rDampingMatrix.size1() != 0)
+    if (rDampingMatrix.size1() != TLocalSize || rDampingMatrix.size2() != TLocalSize)
         rDampingMatrix.resize(TLocalSize, TLocalSize, false);
 
     noalias(rDampingMatrix) = ZeroMatrix(TLocalSize, TLocalSize);
@@ -530,6 +530,47 @@ void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::PrintData(std::ostrea
 ///@name Protected Operations
 ///@{
 
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
+double RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateUTau(
+    const double velocity_magnitude,
+    const double wall_distance,
+    const double nu,
+    const double beta,
+    const double von_karman) const
+{
+    // auto log_law_wall_function = [velocity_magnitude, von_karman,
+    //                               wall_distance, nu, beta](double u_tau) {
+    //     return u_tau -
+    //            velocity_magnitude /
+    //                ((1.0 / von_karman) * std::log(u_tau * wall_distance / nu) + beta);
+    // };
+
+    // const double iterTol = 1e-5;
+    // const double maxIter = 10;
+    // u_tau = BrentIteration::FindRoot(log_law_wall_function, 1e-6,
+    //                                  10.0 * nu / wall_distance, iterTol, maxIter);
+
+    const unsigned int max_iterations = 10;
+    double u_tau = nu / wall_distance;
+    for (unsigned int i = 0; i < max_iterations; ++i)
+    {
+        u_tau = nu * std::exp(((velocity_magnitude / u_tau) - beta) * von_karman) / wall_distance;
+    }
+
+    return u_tau;
+}
+
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
+double RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateYPlus(
+    const double u_tau, const double velocity_magnitude, const double wall_distance, const double nu) const
+{
+    double y_plus = u_tau * wall_distance / nu;
+    if (y_plus < 11.06)
+        y_plus = velocity_magnitude / u_tau;
+
+    return y_plus;
+}
+
 ///@}
 ///@name Protected  Access
 ///@{
@@ -616,9 +657,9 @@ inline std::ostream& operator<<(std::ostream& rOStream,
 }
 // Class template instantiation
 
-template class RANSConstitutiveElement<2, 3, 2>;
-template class RANSConstitutiveElement<3, 4, 2>;
-template class RANSConstitutiveElement<2, 4, 2>;
-template class RANSConstitutiveElement<3, 8, 2>;
+template class RANSConstitutiveElement<2, 3, 1>;
+template class RANSConstitutiveElement<3, 4, 1>;
+template class RANSConstitutiveElement<2, 4, 1>;
+template class RANSConstitutiveElement<3, 8, 1>;
 
 } // namespace Kratos.

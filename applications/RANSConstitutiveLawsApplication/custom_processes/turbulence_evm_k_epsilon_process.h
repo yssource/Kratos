@@ -32,7 +32,7 @@
 #include "utilities/variable_utils.h"
 
 // Application includes
-#include "custom_conditions/evm_k_epsilon_wall_condition.h"
+#include "custom_conditions/evm_epsilon_wall_condition.h"
 #include "custom_elements/evm_k_epsilon/evm_epsilon_element.h"
 #include "custom_elements/evm_k_epsilon/evm_k_element.h"
 #include "custom_processes/turbulence_eddy_viscosity_model_process.h"
@@ -117,7 +117,8 @@ public:
                 "turbulent_viscosity_fraction": 0.05,
                 "free_stream_velocity"        : 1.0,
                 "free_stream_k"               : 1.0,
-                "free_stream_epsilon"         : 1.0
+                "free_stream_epsilon"         : 1.0,
+                "velocity_ratio_constant"     : 0.003
             }
         })");
 
@@ -151,6 +152,7 @@ public:
         mFreestreamVelocity = flow_parameters["free_stream_velocity"].GetDouble();
         mFreestreamK = flow_parameters["free_stream_k"].GetDouble();
         mFreestreamEpsilon = flow_parameters["free_stream_epsilon"].GetDouble();
+        mVelocityRatio = flow_parameters["velocity_ratio_constant"].GetDouble();
 
         KRATOS_ERROR_IF(
             this->mrModelPart.HasSubModelPart("TurbulenceModelPartRANSEVMK"))
@@ -291,12 +293,14 @@ protected:
             KratosComponents<Element>::Get("RANSEVMK" + element_postfix.str());
         const Element& epsilon_element =
             KratosComponents<Element>::Get("RANSEVMEPSILON" + element_postfix.str());
-        const Condition& cond =
+        const Condition& k_cond =
             KratosComponents<Condition>::Get("Condition" + condition_postfix.str());
+        const Condition& epsilon_cond = KratosComponents<Condition>::Get(
+            "EpsilonWallCondition" + condition_postfix.str());
 
-        this->GenerateModelPart(this->mrModelPart, *mpTurbulenceKModelPart, k_element, cond);
+        this->GenerateModelPart(this->mrModelPart, *mpTurbulenceKModelPart, k_element, k_cond);
         this->GenerateModelPart(this->mrModelPart, *mpTurbulenceEpsilonModelPart,
-                                epsilon_element, cond);
+                                epsilon_element, epsilon_cond);
 
         KRATOS_INFO("TurbulenceModel") << *mpTurbulenceKModelPart;
         KRATOS_INFO("TurbulenceModel") << *mpTurbulenceEpsilonModelPart;
@@ -368,6 +372,8 @@ private:
     double mFreestreamEpsilon;
 
     double mFreestreamVelocity;
+
+    double mVelocityRatio;
 
     int mMaximumCouplingIterations;
 
@@ -506,10 +512,10 @@ private:
 
     void AssignBoundaryConditions()
     {
-        // It is recommended to initialize with high values to facilitate convergence
-        const double InitialValueFactor = 10.;
-        const double InitialK = InitialValueFactor * mFreestreamK;
-        const double InitialEpsilon = InitialValueFactor * mFreestreamEpsilon;
+        const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
+
+        const double mixing_length = r_current_process_info[TURBULENT_MIXING_LENGTH];
+        const double C_mu = r_current_process_info[TURBULENCE_RANS_C_MU];
 
         // Set Boundary Conditions
         const int NumNodes = this->mrModelPart.NumberOfNodes();
@@ -524,12 +530,22 @@ private:
             }
             else if (iNode->Is(INLET))
             {
+                array_1d<double, 3>& velocity = iNode->FastGetSolutionStepValue(VELOCITY);
+                const double velocity_mag = norm_2(velocity);
+                const double k = velocity_mag * mVelocityRatio;
+                const double epsilon = C_mu * std::pow(k, 1.5) / mixing_length;
+
                 this->SetUpFreestreamNode(*iNode);
-                this->InitializeValues(*iNode, mFreestreamK, mFreestreamEpsilon);
+                this->InitializeValues(*iNode, k, epsilon);
             }
             else // internal node, set initial value
             {
-                this->InitializeValues(*iNode, InitialK, InitialEpsilon);
+                array_1d<double, 3>& velocity = iNode->FastGetSolutionStepValue(VELOCITY);
+                const double velocity_mag = norm_2(velocity);
+                const double k = std::pow( velocity_mag / mixing_length, 2);
+                const double epsilon = C_mu * std::pow(k, 1.5) / mixing_length;
+
+                this->InitializeValues(*iNode, k, epsilon);
             }
         }
     }
@@ -617,16 +633,29 @@ private:
     void UpdateTurbulentViscosity()
     {
         const int NumNodes = this->mrModelPart.NumberOfNodes();
-        const double c_mu = this->mrModelPart.GetProcessInfo()[TURBULENCE_RANS_C_MU];
+
+        const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
+
+        const double C_mu = r_current_process_info[TURBULENCE_RANS_C_MU];
+        const double mixing_length = r_current_process_info[TURBULENT_MIXING_LENGTH];
+        const double turbulent_viscosity_fraction =
+            r_current_process_info[TURBULENT_VISCOSITY_FRACTION];
 
 #pragma omp parallel for
         for (int i = 0; i < NumNodes; i++)
         {
             ModelPart::NodeIterator iNode = this->mrModelPart.NodesBegin() + i;
-            const double K = iNode->FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
+            const double k = iNode->FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
             const double epsilon =
                 iNode->FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
-            const double NuT = c_mu * std::pow(K, 2) / epsilon;
+
+            const double nu = iNode->FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
+            const double nu_min = nu * turbulent_viscosity_fraction;
+            const double limited_mixing_length =
+                std::min<double>(C_mu * std::pow(k, 1.5) / epsilon, mixing_length);
+
+            const double NuT =
+                std::max<double>(nu_min, limited_mixing_length * std::pow(k, 0.5));
             iNode->FastGetSolutionStepValue(TURBULENT_VISCOSITY) = NuT;
         }
     }

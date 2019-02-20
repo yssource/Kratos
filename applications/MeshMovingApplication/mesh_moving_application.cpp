@@ -28,7 +28,7 @@
 #include "geometries/triangle_3d_3.h"
 
 namespace Kratos {
-//
+// TODO clean up the registered elements, most of them are not needed!
 
 KratosMeshMovingApplication::KratosMeshMovingApplication()
     : KratosApplication("MeshMovingApplication"),

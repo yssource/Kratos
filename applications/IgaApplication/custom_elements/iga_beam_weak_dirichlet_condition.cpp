@@ -82,6 +82,7 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     using namespace BeamUtilities;
     using std::sqrt;
     using std::pow;
+    using std::atan;
 
     using Vector3d = BeamUtilities::Vector<3>;
     using Matrix3d = BeamUtilities::Matrix<3, 3>;
@@ -171,7 +172,7 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const auto phi = ComputeActValue(DISPLACEMENT_ROTATION, 0, shape_functions, GetGeometry());
     const auto phi_1 = ComputeActValue(DISPLACEMENT_ROTATION, 1, shape_functions, GetGeometry());
 
-    const auto x = ComputeActBaseVector(1, shape_functions, GetGeometry());
+    const auto x = ComputeActBaseVector(0, shape_functions, GetGeometry());
     const auto a1 = ComputeActBaseVector(1, shape_functions, GetGeometry());
     const auto a1_1 = ComputeActBaseVector(2, shape_functions, GetGeometry());
 
@@ -208,63 +209,74 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const auto c13 = a2_1.dot(a3);
 
 
-    const auto u_xyz = x - X;
-    const auto v_xyz = y - Y;
-    const auto w_xyz = z - Z;
+    const auto u_xyz = x - X;       
+    const auto delta_a = a1 - A1; 
 
     const auto A22 = A2.dot(A2);
-    const auto A22_length = sqrt(A22);
-    const auto N = A2 / A22_length;
-
     const auto A33 = A3.dot(A3);
-    const auto A33_length = sqrt(33);
-    const auto V = A3 / A33_length;
 
-    const auto a22 = a2.dot(a2);
-    const auto a22_length = sqrt(a22);
-    const auto n = a2 / a22_length;
+    const auto d_t = a1.dot(T);     // Anteil T in a1 Richtung
+    const auto d_n = a1.dot(A2);     // Anteil N in a1 Richtung
+    const auto d_v = a1.dot(A3);     // Anteil V in a1 Richtung
 
-    const auto a33 = a3.dot(a3);
-    const auto a33_length = sqrt(a33);
-    const auto v = a3 / a33_length;
-
-    const auto tmp_N = a1.dot(N);
-    const auto tmp_V = a1.dot(V);
-    const auto tmp_T = a1.dot(T);
-
-    //TODO:  Speicherformat anpassen!
-    // const auto alpha_2 = HyperJet::atan2(tmp_N, tmp_T);
-    // const auto alpha_3 = atan2(a1.dot(V), a1.dot(T));
-
-      // inner energy 
-    auto const penalty_x = GetValue(DISPLACEMENT_PENALTY_X);
-    auto const penalty_y = GetValue(DISPLACEMENT_PENALTY_Y);
-    auto const penalty_z = GetValue(DISPLACEMENT_PENALTY_Z);
-    auto const penalty_a2 = GetValue(DISPLACEMENT_PENALTY_ALPHA_2);
-    auto const penalty_a3 = GetValue(DISPLACEMENT_PENALTY_ALPHA_3);
-
-    const auto dP_x = 0.5 * ( u_xyz.dot(u_xyz)) * penalty_x ;
-    const auto dP_y = 0.5 * ( v_xyz.dot(v_xyz)) * penalty_y ;
-    const auto dP_z = 0.5 * ( w_xyz.dot(w_xyz)) * penalty_z ;
-
-    // const auto dP_alpha = 0.5 * (alpha_2.dot(alpha_2) * penalty_a2
-    //                            + alpha_3.dot(alpha_3) * penalty_a3); 
+    const auto alpha_12 = HyperJet::atan2(a2.dot(A3) , a2.dot(A2)); // Winkel zwischen a2 und A
+    const auto alpha_13 = HyperJet::atan2(a3.dot(A2) , a3.dot(A3)); // Winkel zwischen a2 und A
+    const auto alpha_2 = HyperJet::atan2(d_n , d_t);            // Winkel zwischen a1 und A1 um n
+    const auto alpha_3 = HyperJet::atan2(d_v , d_t);            // Winkel zwischen a1 und A1 um v
 
 
-    MapMatrix(rLeftHandSideMatrix) = dP_x.h() + dP_y.h() + dP_z.h() /*+ dP_alpha.h() */ ;
-    MapVector(rRightHandSideVector) = (dP_x.g() + dP_y.g() + dP_z.g()) /*+ dP_alpha.g() */;
+    // inner energy 
+    auto const condition_type = GetValue(DIRICHLET_CONDITION_TYPE);
+    auto const penalty_disp = GetValue(PENALTY_DISPLACEMENT);
+    auto const penalty_rot = GetValue(PENALTY_ROTATION);
+    auto const penalty_tors = GetValue(PENALTY_TORSION);
 
-        // const auto eps11 = Tm * (a11 - A11) / 2;
-    // const auto kap2  = Tm * (b2  - B2 );
-    // const auto kap3  = Tm * (b3  - B3 );
-    // const auto kap12 = Ts * (c12 - C12);
-    // const auto kap13 = Ts * (c13 - C13);
+ 
 
-    // const auto dP = 0.5 * (pow(eps11, 2) * ea +
-    //                        pow(kap2 , 2) * ei3 +
-    //                        pow(kap3 , 2) * ei2 +
-    //                        pow(kap12, 2) * gi1 * 0.5 +
-    //                        pow(kap13, 2) * gi1 * 0.5) * A * integration_weight;
+    // Potential Displacement
+    const auto dP_disp = 0.5 * ( u_xyz.dot(u_xyz)) * penalty_disp * integration_weight ;
+
+    // Potential Rotation
+      // By the Gradient 
+    const auto dP_delta = 0.5 * (delta_a.dot(delta_a) * penalty_rot) * integration_weight;
+      // By the Angle
+      // const auto dP_alpha_tors =  0.5 * (alpha_12 * alpha_13) * penalty_tors * integration_weight;
+    const auto dP_alpha_bend = 0.5 * (alpha_2 * alpha_2 + alpha_3 * alpha_3) * penalty_rot * integration_weight; 
+
+    // Potential Torsion
+    const auto dP_alpha_tors = 0.5 * (alpha_12 * alpha_12 + alpha_13 * alpha_13) * penalty_rot * integration_weight;
+
+
+    // Variation Hesse
+    if (condition_type == 1)        // Verschiebung 
+       MapMatrix(rLeftHandSideMatrix) =    dP_disp.h() ;
+    else if (condition_type == 2)    // Torsion
+       MapMatrix(rLeftHandSideMatrix) =    dP_alpha_tors.h() ;
+    else if (condition_type == 3)   // Biegung  Ableitung
+       MapMatrix(rLeftHandSideMatrix) =    dP_alpha_bend.h() ;
+    else if (condition_type == 4)   // Biegung Tangens
+       MapMatrix(rLeftHandSideMatrix) =    dP_delta.h() ;
+
+    else if(condition_type == 11)
+      MapVector(rRightHandSideVector) = ( dP_disp.h() + dP_alpha_tors.h() + dP_delta.h()) ;
+
+
+    // Variation Gradient
+    if (condition_type == 1)         // Verschiebung
+      MapVector(rRightHandSideVector) = -( dP_disp.g() ) ;
+    else if (condition_type == 2)   // Torsion
+      MapVector(rRightHandSideVector) = -( dP_alpha_tors.g()   );
+    else if (condition_type == 3)   // Biegung Tangens
+      MapVector(rRightHandSideVector) = -( dP_delta.g() );
+    else if (condition_type == 4)   // Biegung Ableitung
+      MapVector(rRightHandSideVector) = -( dP_alpha_bend.g()   );
+    
+    else if(condition_type == 11)
+      MapVector(rRightHandSideVector) = -( dP_disp.g() + dP_alpha_tors.g() + dP_delta.g()) ;
+
+
+
+   
 
     KRATOS_CATCH("")
 }

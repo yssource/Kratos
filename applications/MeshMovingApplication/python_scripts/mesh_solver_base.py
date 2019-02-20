@@ -102,10 +102,8 @@ class MeshSolverBase(PythonSolver):
 
         return new_time
 
-    # def Initialize(self):
-    #     self.get_mesh_motion_solving_strategy().Initialize()
-    #     #self.neighbour_search.Execute()
-    #     self.print_on_rank_zero("::[MeshSolverBase]:: Finished initialization.")
+    def Initialize(self):
+        self.print_on_rank_zero("::[MeshSolverBase]:: Finished initialization.")
 
     # def InitializeSolutionStep(self):
     #     self.get_mesh_motion_solving_strategy().InitializeSolutionStep()
@@ -152,7 +150,7 @@ class MeshSolverBase(PythonSolver):
             self._set_and_fill_buffer()
 
     def GetComputingModelPart(self):
-        return self.mesh_model_part.GetSubModelPart("mesh_motion_computing_model_part")
+        return self.mesh_model_part
 
     # #### Specific internal functions ####
 
@@ -168,10 +166,10 @@ class MeshSolverBase(PythonSolver):
 
     # #### Private functions ####
 
-    def _create_linear_solver(self):
-        import KratosMultiphysics.python_linear_solver_factory as linear_solver_factory
-        linear_solver = linear_solver_factory.ConstructSolver(self.settings["mesh_motion_linear_solver_settings"])
-        return linear_solver
+    # def _create_linear_solver(self):
+    #     import KratosMultiphysics.python_linear_solver_factory as linear_solver_factory
+    #     linear_solver = linear_solver_factory.ConstructSolver(self.settings["mesh_motion_linear_solver_settings"])
+    #     return linear_solver
 
     # def _create_mesh_motion_solving_strategy(self):
     #     """Create the mesh motion solving strategy.

@@ -26,7 +26,7 @@ class MeshSolverBase(PythonSolver):
 
         default_settings = KratosMultiphysics.Parameters("""
         {
-            "solver_type"           : "mesh_solver_structural_similarity",
+            "solver_type"           : "base_mesh_solver",
             "buffer_size"           : 1,
             "echo_level"            : 0,
             "domain_size"           : -1,
@@ -56,6 +56,8 @@ class MeshSolverBase(PythonSolver):
             "compute_reactions"         : false,
             "calculate_mesh_velocities" : true
         }""")
+
+        # TODO rename "mesh_motion_linear_solver_settings" to "linear_solver_settings" and add deprecation-warning
 
         self.settings.ValidateAndAssignDefaults(default_settings)
 

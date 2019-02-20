@@ -26,7 +26,7 @@ class AleFluidSolver(PythonSolver):
         solver_settings.ValidateAndAssignDefaults(default_settings)
 
         super(AleFluidSolver, self).__init__(model, solver_settings)
-        
+
         self.start_fluid_solution_time = self.settings["start_fluid_solution_time"].GetDouble()
 
         self.parallelism = parallelism
@@ -167,8 +167,6 @@ class AleFluidSolver(PythonSolver):
 
     def ImportModelPart(self):
         self.fluid_solver.ImportModelPart() # only ONE solver imports the ModelPart
-        #TODO set the to-skip-option
-        self.mesh_motion_solver.ImportModelPart()
 
     def PrepareModelPart(self):
         # Doing it ONLY for the fluid solver (since this contains filling the buffer)

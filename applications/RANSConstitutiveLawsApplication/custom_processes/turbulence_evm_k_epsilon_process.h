@@ -38,6 +38,7 @@
 #include "custom_processes/turbulence_eddy_viscosity_model_process.h"
 #include "rans_constitutive_laws_application_variables.h"
 #include "solving_strategies/strategies/residualbased_newton_raphson_strategy.h"
+#include "utilities/color_utilities.h"
 
 namespace Kratos
 {
@@ -641,6 +642,13 @@ private:
                            (ratio < mTurbulentViscosityRelativeTolerance);
 
             step++;
+        }
+
+        if (!is_converged)
+        {
+            std::cout << "|----------------------------------------------------|" << std::endl;
+            std::cout << "|    " << BOLDFONT(FRED("ATTENTION: Max coupling iterations exceeded")) << "     |" << std::endl;
+            std::cout << "|----------------------------------------------------|" << std::endl;
         }
 
         mpKStrategy->FinalizeSolutionStep();

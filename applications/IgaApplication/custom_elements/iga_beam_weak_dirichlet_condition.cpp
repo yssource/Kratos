@@ -209,42 +209,51 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const auto c13 = a2_1.dot(a3);
 
 
-    const auto u_xyz = x - X;       
+    const auto u_xyz = x - X;
+    // const auto v_xyz = y - Y;
+    // const auto w_xyz = z - Z;
     const auto delta_a = a1 - A1; 
 
-    const auto A22 = A2.dot(A2);
-    const auto A33 = A3.dot(A3);
+    // Normieren (wobei A2 / A3 eigentlich schon normiert sein sollten!)
+    // const auto A22 = A2.dot(A2);
+    // const auto A22_length = sqrt(A22);
+    // const auto N = A2 / A22_length;
+
+    // const auto A33 = A3.dot(A3);
+    // const auto A33_length = sqrt(A33);
+    // const auto V = A3 / A33_length;
 
     const auto d_t = a1.dot(T);     // Anteil T in a1 Richtung
     const auto d_n = a1.dot(A2);     // Anteil N in a1 Richtung
     const auto d_v = a1.dot(A3);     // Anteil V in a1 Richtung
 
-    const auto alpha_12 = HyperJet::atan2(a2.dot(A3) , a2.dot(A2)); // Winkel zwischen a2 und A
-    const auto alpha_13 = HyperJet::atan2(a3.dot(A2) , a3.dot(A3)); // Winkel zwischen a2 und A
-    const auto alpha_2 = HyperJet::atan2(d_n , d_t);            // Winkel zwischen a1 und A1 um n
-    const auto alpha_3 = HyperJet::atan2(d_v , d_t);            // Winkel zwischen a1 und A1 um v
+    const auto alpha_12 = HyperJet::atan2(a2.dot(A3) , a2.dot(A2));    // Winkel zwischen a2 und A
+    const auto alpha_13 = HyperJet::atan2(a3.dot(A2) , a3.dot(A3));    // Winkel zwischen a2 und A
+    const auto alpha_2  = HyperJet::atan2(d_n , d_t);                  // Winkel zwischen a1 und A1 um n
+    const auto alpha_3  = HyperJet::atan2(d_v , d_t);                  // Winkel zwischen a1 und A1 um v
 
 
     // inner energy 
     auto const condition_type = GetValue(DIRICHLET_CONDITION_TYPE);
-    auto const penalty_disp = GetValue(PENALTY_DISPLACEMENT);
-    auto const penalty_rot = GetValue(PENALTY_ROTATION);
-    auto const penalty_tors = GetValue(PENALTY_TORSION);
 
- 
+    auto const penalty_disp   = GetValue(PENALTY_DISPLACEMENT);
+    auto const penalty_rot    = GetValue(PENALTY_ROTATION);
+    auto const penalty_tors   = GetValue(PENALTY_TORSION);
+
 
     // Potential Displacement
     const auto dP_disp = 0.5 * ( u_xyz.dot(u_xyz)) * penalty_disp * integration_weight ;
 
     // Potential Rotation
       // By the Gradient 
-    const auto dP_delta = 0.5 * (delta_a.dot(delta_a) * penalty_rot) * integration_weight;
+    const auto dP_grad_bend = 0.5 * (delta_a.dot(delta_a) * penalty_rot) * integration_weight;
       // By the Angle
-      // const auto dP_alpha_tors =  0.5 * (alpha_12 * alpha_13) * penalty_tors * integration_weight;
     const auto dP_alpha_bend = 0.5 * (alpha_2 * alpha_2 + alpha_3 * alpha_3) * penalty_rot * integration_weight; 
 
     // Potential Torsion
-    const auto dP_alpha_tors = 0.5 * (alpha_12 * alpha_12 + alpha_13 * alpha_13) * penalty_rot * integration_weight;
+    const auto dP_alpha_tors = 0.5 * (alpha_12 * alpha_12 + alpha_13 * alpha_13) * penalty_tors * integration_weight;
+      // const auto dP_alpha_tors =  0.5 * (alpha_12 * alpha_13) * penalty_tors * integration_weight;
+
 
 
     // Variation Hesse
@@ -255,10 +264,10 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     else if (condition_type == 3)   // Biegung  Ableitung
        MapMatrix(rLeftHandSideMatrix) =    dP_alpha_bend.h() ;
     else if (condition_type == 4)   // Biegung Tangens
-       MapMatrix(rLeftHandSideMatrix) =    dP_delta.h() ;
+       MapMatrix(rLeftHandSideMatrix) =    dP_grad_bend.h() ;
 
     else if(condition_type == 11)
-      MapVector(rRightHandSideVector) = ( dP_disp.h() + dP_alpha_tors.h() + dP_delta.h()) ;
+      MapVector(rRightHandSideVector) = ( dP_disp.h() + dP_alpha_tors.h() + dP_alpha_bend.h()) ;
 
 
     // Variation Gradient
@@ -266,13 +275,14 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
       MapVector(rRightHandSideVector) = -( dP_disp.g() ) ;
     else if (condition_type == 2)   // Torsion
       MapVector(rRightHandSideVector) = -( dP_alpha_tors.g()   );
-    else if (condition_type == 3)   // Biegung Tangens
-      MapVector(rRightHandSideVector) = -( dP_delta.g() );
-    else if (condition_type == 4)   // Biegung Ableitung
+    else if (condition_type == 3)   // Biegung Ableitung
       MapVector(rRightHandSideVector) = -( dP_alpha_bend.g()   );
+    else if (condition_type == 4)   // Biegung Tangens
+      MapVector(rRightHandSideVector) = -( dP_grad_bend.g() );
+
     
     else if(condition_type == 11)
-      MapVector(rRightHandSideVector) = -( dP_disp.g() + dP_alpha_tors.g() + dP_delta.g()) ;
+      MapVector(rRightHandSideVector) = -( dP_disp.g() + dP_alpha_tors.g() + dP_alpha_bend.g()) ;
 
 
 

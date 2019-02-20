@@ -166,7 +166,9 @@ class AleFluidSolver(PythonSolver):
             KM.Logger.PrintInfo("::[AleFluidSolver]::", "Finished initialization")
 
     def ImportModelPart(self):
-        self.fluid_solver.ImportModelPart() # only ONE solver imports the ModelPart
+        # only ONE solver imports the ModelPart since nodes are shared
+        # done by fluid because the mesh might only be solved on a subdomain
+        self.fluid_solver.ImportModelPart()
 
     def PrepareModelPart(self):
         # Doing it ONLY for the fluid solver (since this contains filling the buffer)

@@ -24,7 +24,6 @@ class ChimeraWithVTKoutput(FluidChimeraAnalysis):
 
     def __init__(self,model,project_parameters):
         super(ChimeraWithVTKoutput,self).__init__(model,project_parameters)
-        
         #output_post  = project_parameters.Has("output_configuration")
 
     def Initialize(self):

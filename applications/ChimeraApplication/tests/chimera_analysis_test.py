@@ -72,7 +72,7 @@ class ChimeraAnalysisTest(UnitTest.TestCase):
     def testMultipleOverlappingPatch(self):
         self.check_tolerance = 1e-6
         # Set to true to get post-process files for the test
-        self.print_reference_values = True
+        self.print_reference_values = False
         self.reference_file = "reference_chimera_multiple_overlapping_patch_simple_test2"
         work_folder = "chimera_multiple_overlapping_patch"
         settings_file_name = "test_chimera_multiple_overlapping_simple_ProjectParameters.json"
@@ -104,7 +104,7 @@ class ChimeraAnalysisTest(UnitTest.TestCase):
                 ref_file.write("#ID, VELOCITY_X, VELOCITY_Y\n")
                 print("started to check results  3" )
                 for node in self.model["FluidModelPart"].Nodes:
-                    vel = node.GetSolutionStepValue(KratosMultiphysics.VELOCITY,0)
+                    vel = node.GetSolutionStepValue(km.VELOCITY,0)
                     ref_file.write("{0}, {1}, {2}\n".format(node.Id, vel[0], vel[1]))
         else:
             print("started to check results")
@@ -119,7 +119,7 @@ class ChimeraAnalysisTest(UnitTest.TestCase):
                     reference_vel_x = values[1]
                     reference_vel_y = values[2]
 
-                    velocity = node.GetSolutionStepValue(KratosMultiphysics.VELOCITY)
+                    velocity = node.GetSolutionStepValue(km.VELOCITY)
                     self.assertAlmostEqual(reference_vel_x, velocity[0], delta = self.check_tolerance)
                     self.assertAlmostEqual(reference_vel_y, velocity[1], delta = self.check_tolerance)
 

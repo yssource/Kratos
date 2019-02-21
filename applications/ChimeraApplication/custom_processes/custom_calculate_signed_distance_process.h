@@ -237,7 +237,6 @@ class CustomCalculateSignedDistanceProcess
 
 	void CalculateSignedDistance(ModelPart &toBackgroundModelPart, ModelPart &patchBoundaryModelPart)
 	{
-
 		if (TDim == 2)
 		{
 			// Implemented in the custom_processes
@@ -258,7 +257,6 @@ class CustomCalculateSignedDistanceProcess
 		std::size_t max_level = 100;
 		double max_distance = 200;
 		//CorrectSign(toBackgroundModelPart);
-
 		pDistanceCalculator->CalculateDistances(toBackgroundModelPart, DISTANCE, NODAL_AREA, max_level, max_distance);
 	}
 

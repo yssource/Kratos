@@ -16,8 +16,6 @@
 #if !defined(KRATOS_MODEL_PART_H_INCLUDED )
 #define  KRATOS_MODEL_PART_H_INCLUDED
 
-
-
 // System includes
 #include <string>
 #include <iostream>
@@ -123,7 +121,6 @@ public:
                 std::less<SetIdentityFunction<DofType>::result_type>,
                 std::equal_to<SetIdentityFunction<DofType>::result_type>,
                 DofType* > DofsArrayType;
-
 
     typedef Node < 3 > NodeType;
     typedef Properties PropertiesType;

@@ -33,27 +33,77 @@ void ComputeNodalGradientProcess<TDim, TVarType, THist>::Execute()
     
     // Set to zero
     ClearGradient();
-    
-    BoundedMatrix<double,TDim+1, TDim> DN_DX;
-    array_1d<double,TDim+1> N;
-    double Volume;
-    
-    #pragma omp parallel for private(DN_DX,  N,  Volume)
-    for(int i=0; i<static_cast<int>(mrModelPart.Elements().size()); ++i) {
-        auto it_elem = mrModelPart.ElementsBegin()+i;
-        Element::GeometryType& geom = it_elem->GetGeometry();
-        GeometryUtils::CalculateGeometryData(geom, DN_DX, N, Volume);
-        
-        array_1d<double, TDim+1> values;
-        for(std::size_t i=0; i<TDim+1; ++i)
-            values[i] = geom[i].FastGetSolutionStepValue(mrOriginVariable);
-        
-        const array_1d<double,TDim> grad = prod(trans(DN_DX), values);
-        
-        for(std::size_t i=0; i<TDim+1; ++i) {
-            for(std::size_t k=0; k<TDim; ++k) {
-                double& val = GetGradient(geom, i,k);
-                
+
+    // Auxiliar containers
+    Matrix DN_DX, J0;
+    Vector N;
+
+    // First element iterator
+    const auto it_element_begin = mrModelPart.ElementsBegin();
+
+    // Current domain size
+    const std::size_t dimension = mrModelPart.GetProcessInfo()[DOMAIN_SIZE];
+
+    // Iterate over the elements
+    #pragma omp parallel for firstprivate(DN_DX,  N, J0)
+    for(int i_elem=0; i_elem<static_cast<int>(mrModelPart.Elements().size()); ++i_elem) {
+        auto it_elem = it_element_begin + i_elem;
+        auto& r_geometry = it_elem->GetGeometry();
+
+        // Current geometry information
+        const std::size_t local_space_dimension = r_geometry.LocalSpaceDimension();
+        const std::size_t number_of_nodes = r_geometry.PointsNumber();
+
+        // Resize if needed
+        if (DN_DX.size1() != number_of_nodes || DN_DX.size2() != dimension)
+            DN_DX.resize(number_of_nodes, dimension);
+        if (N.size() != number_of_nodes)
+            N.resize(number_of_nodes);
+        if (J0.size1() != dimension || J0.size2() != local_space_dimension)
+            J0.resize(dimension, local_space_dimension);
+
+        // The integration points
+        const auto& r_integration_method = r_geometry.GetDefaultIntegrationMethod();
+        const auto& r_integration_points = r_geometry.IntegrationPoints(r_integration_method);
+        const std::size_t number_of_integration_points = r_integration_points.size();
+
+        Vector values(number_of_nodes);
+        if (mrOriginVariableDoubleList.size() > 0) {
+            for(std::size_t i_node=0; i_node<number_of_nodes; ++i_node)
+                values[i_node] = r_geometry[i_node].FastGetSolutionStepValue(*mrOriginVariableDoubleList[0]);
+        } else {
+            for(std::size_t i_node=0; i_node<number_of_nodes; ++i_node)
+                values[i_node] = r_geometry[i_node].FastGetSolutionStepValue(*mrOriginVariableComponentsList[0]);
+        }
+
+        // The containers of the shape functions and the local gradients
+        const Matrix& rNcontainer = r_geometry.ShapeFunctionsValues(r_integration_method);
+        const auto& rDN_DeContainer = r_geometry.ShapeFunctionsLocalGradients(r_integration_method);
+
+        for ( IndexType point_number = 0; point_number < number_of_integration_points; ++point_number ) {
+            // Getting the shape functions
+            noalias(N) = row(rNcontainer, point_number);
+
+            // Getting the jacobians and local gradients
+            GeometryUtils::JacobianOnInitialConfiguration(r_geometry, r_integration_points[point_number], J0);
+            double detJ0;
+            Matrix InvJ0;
+            MathUtils<double>::GeneralizedInvertMatrix(J0, InvJ0, detJ0);
+            const Matrix& rDN_De = rDN_DeContainer[point_number];
+            GeometryUtils::ShapeFunctionsGradients(rDN_De, InvJ0, DN_DX);
+
+            const Vector grad = prod(trans(DN_DX), values);
+            const double gauss_point_volume = r_integration_points[point_number].Weight() * detJ0;
+
+            for(std::size_t i_node=0; i_node<number_of_nodes; ++i_node) {
+                array_1d<double, 3>& r_gradient = GetGradient(r_geometry, i_node);
+                for(std::size_t k=0; k<dimension; ++k) {
+                    #pragma omp atomic
+                    r_gradient[k] += N[i_node] * gauss_point_volume*grad[k];
+                }
+
+                double& vol = r_geometry[i_node].GetValue(mrAreaVariable);
+
                 #pragma omp atomic
                 val += N[i]*Volume*grad[k];
             }

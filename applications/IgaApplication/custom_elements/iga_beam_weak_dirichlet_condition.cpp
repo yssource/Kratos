@@ -138,34 +138,34 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const double A = sqrt(A11);
 
     const Vector3d T = A1 / A;
-    const Vector3d T_1 = A1_1 / A - A1.dot(A1_1) * A1 / pow(A, 3);
+    // const Vector3d T_1 = A1_1 / A - A1.dot(A1_1) * A1 / pow(A, 3);
 
     const Matrix3d Rod = ComputeRod<double>(T, Phi);
-    const Matrix3d Rod_1 = ComputeRod_1<double>(T, T_1, Phi, Phi_1);
+    // const Matrix3d Rod_1 = ComputeRod_1<double>(T, T_1, Phi, Phi_1);
 
     const Matrix3d Lam = ComputeLam<double>(A01, T);
-    const Matrix3d Lam_1 = ComputeLam_1<double>(A01, A01_1, T, T_1);
+    // const Matrix3d Lam_1 = ComputeLam_1<double>(A01, A01_1, T, T_1);
 
     const Matrix3d Rod_Lam = Rod * Lam;
-    const Matrix3d Rod_1_Lam = Rod_1 * Lam;
-    const Matrix3d Rod_Lam_1 = Rod * Lam_1;
+    // const Matrix3d Rod_1_Lam = Rod_1 * Lam;
+    // const Matrix3d Rod_Lam_1 = Rod * Lam_1;
 
-    const auto Y = Rod_Lam * A02.transpose();
+    // const auto Y = Rod_Lam * A02.transpose();
     const Vector3d A2 = Rod_Lam * A02.transpose();
-    const Vector3d A2_1 = Rod_1_Lam * A02.transpose() + Rod_Lam_1 * A02.transpose();
+    // const Vector3d A2_1 = Rod_1_Lam * A02.transpose() + Rod_Lam_1 * A02.transpose();
 
-    const auto Z = Rod_Lam * A03.transpose();
+    // const auto Z = Rod_Lam * A03.transpose();
     const Vector3d A3 = Rod_Lam * A03.transpose();
-    const Vector3d A3_1 = Rod_1_Lam * A03.transpose() + Rod_Lam_1 * A03.transpose();
+    // const Vector3d A3_1 = Rod_1_Lam * A03.transpose() + Rod_Lam_1 * A03.transpose();
 
-    const double B2 = A2_1.dot(A1);
-    const double B3 = A3_1.dot(A1);
+    // const double B2 = A2_1.dot(A1);
+    // const double B3 = A3_1.dot(A1);
 
-    const double C12 = A3_1.dot(A2);
-    const double C13 = A2_1.dot(A3);
+    // const double C12 = A3_1.dot(A2);
+    // const double C13 = A2_1.dot(A3);
 
-    const double Tm = 1 / A11;
-    const double Ts = 1 / A;
+    // const double Tm = 1 / A11;
+    // const double Ts = 1 / A;
 
     // actual configuration
 
@@ -186,27 +186,27 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const auto rod_1 = ComputeRod_1<HyperDual>(t, t_1, phi, phi_1);
 
     const auto lam = ComputeLam<HyperDual>(T, t);
-    const auto lam_1 = ComputeLam_1<HyperDual>(T, T_1, t, t_1);
+    // const auto lam_1 = ComputeLam_1<HyperDual>(T, T_1, t, t_1);
 
     const auto rod_lam = rod * lam;
-    const auto rod_1_lam = rod_1 * lam;
-    const auto rod_lam_1 = rod * lam_1;
+    // const auto rod_1_lam = rod_1 * lam;
+    // const auto rod_lam_1 = rod * lam_1;
 
-    const auto xform = rod_1_lam * Rod_Lam + rod_lam_1 * Rod_Lam + rod_lam * Rod_1_Lam + rod_lam * Rod_Lam_1;
+    // const auto xform = rod_1_lam * Rod_Lam + rod_lam_1 * Rod_Lam + rod_lam * Rod_1_Lam + rod_lam * Rod_Lam_1;
 
-    const auto y = rod_lam * A2.transpose();
+    // const auto y = rod_lam * A2.transpose();
     const auto a2 = rod_lam * A2.transpose();
-    const auto a2_1 = xform * A02.transpose();
+    // const auto a2_1 = xform * A02.transpose();
 
-    const auto z = rod_lam * A3.transpose();
+    // const auto z = rod_lam * A3.transpose();
     const auto a3 = rod_lam * A3.transpose();
-    const auto a3_1 = xform * A03.transpose();
+    // const auto a3_1 = xform * A03.transpose();
 
-    const auto b2 = a2_1.dot(a1);
-    const auto b3 = a3_1.dot(a1);
+    // const auto b2 = a2_1.dot(a1);
+    // const auto b3 = a3_1.dot(a1);
 
-    const auto c12 = a3_1.dot(a2);
-    const auto c13 = a2_1.dot(a3);
+    // const auto c12 = a3_1.dot(a2);
+    // const auto c13 = a2_1.dot(a3);
 
 
     const auto u_xyz = x - X;
@@ -266,8 +266,15 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     else if (condition_type == 4)   // Biegung Tangens
        MapMatrix(rLeftHandSideMatrix) =    dP_grad_bend.h() ;
 
-    else if(condition_type == 11)
-      MapVector(rRightHandSideVector) = ( dP_disp.h() + dP_alpha_tors.h() + dP_alpha_bend.h()) ;
+
+    else if(condition_type == 12)   // Verschiebung + Torsion
+      MapMatrix(rLeftHandSideMatrix) = ( dP_disp.h() + dP_alpha_tors.h()) ;
+    else if(condition_type == 13)   // Verschiebung + Rotation
+      MapMatrix(rLeftHandSideMatrix) = ( dP_disp.h() + dP_alpha_bend.h()) ;
+    else if(condition_type == 23)   // Torsion + Rotation
+      MapMatrix(rLeftHandSideMatrix) = ( dP_alpha_tors.h() + dP_alpha_bend.h()) ;
+    else if(condition_type == 123)  // Verschiebung + Torsion +  Rotation
+      MapMatrix(rLeftHandSideMatrix) = ( dP_disp.h() + dP_alpha_tors.h() + dP_alpha_bend.h()) ;
 
 
     // Variation Gradient
@@ -281,7 +288,13 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
       MapVector(rRightHandSideVector) = -( dP_grad_bend.g() );
 
     
-    else if(condition_type == 11)
+    else if(condition_type == 12)   // Verschiebung + Torsion
+      MapVector(rRightHandSideVector) = -( dP_disp.g() + dP_alpha_tors.g()) ;
+    else if(condition_type == 13)   // Verschiebung + Rotation
+      MapVector(rRightHandSideVector) = -( dP_disp.g() + dP_alpha_bend.g()) ;
+    else if(condition_type == 23)   // Torsion + Rotation
+      MapVector(rRightHandSideVector) = -( dP_alpha_tors.g() + dP_alpha_bend.g()) ;
+    else if(condition_type == 123)  // Verschiebung + Torsion +  Rotation
       MapVector(rRightHandSideVector) = -( dP_disp.g() + dP_alpha_tors.g() + dP_alpha_bend.g()) ;
 
 

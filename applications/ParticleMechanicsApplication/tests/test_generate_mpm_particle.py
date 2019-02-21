@@ -51,12 +51,12 @@ class TestGenerateMPMParticle(KratosUnittest.TestCase):
 
         # Initialize solver
         if(dimension==2):
-            self.solver = KratosParticle.MPM2D(grid_model_part, initial_material_model_part, material_model_part, linear_solver, new_element, False, "static", False, False)
+            self.solver = KratosParticle.MPM2D(grid_model_part, initial_material_model_part, material_model_part, linear_solver, new_element, "static", 20, False, False, False, False)
         else:
-            self.solver = KratosParticle.MPM3D(grid_model_part, initial_material_model_part, material_model_part, linear_solver, new_element, False, "static", False, False)
+            self.solver = KratosParticle.MPM3D(grid_model_part, initial_material_model_part, material_model_part, linear_solver, new_element, "static", 20, False, False, False, False)
 
         # Check total number of element
-        particle_counter = len(material_model_part.Elements)
+        particle_counter = material_model_part.NumberOfElements()
         self.assertEqual(expected_num_particle,particle_counter)
 
     def _create_nodes(self, initial_mp, dimension, geometry_element):

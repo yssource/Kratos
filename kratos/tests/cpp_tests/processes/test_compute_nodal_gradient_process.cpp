@@ -441,28 +441,6 @@ namespace Kratos
             typedef ComputeNodalGradientProcess<ComputeNodalGradientProcessSettings::SaveAsHistoricalVariable> GradientType;
             GradientType process = GradientType(this_model_part, DISTANCE, DISTANCE_GRADIENT);
             process.Execute();
-
-//             // DEBUG
-//             GiDIODebugGradient(this_model_part);
-
-            const double tolerance = 1.0e-8;
-            KRATOS_CHECK_LESS_EQUAL(std::abs(p_node_1->FastGetSolutionStepValue(DISTANCE_GRADIENT_X)) - 1.0, tolerance);
-            KRATOS_CHECK_LESS_EQUAL(std::abs(p_node_2->FastGetSolutionStepValue(DISTANCE_GRADIENT_X)) - 1.0, tolerance);
-            KRATOS_CHECK_LESS_EQUAL(std::abs(p_node_3->FastGetSolutionStepValue(DISTANCE_GRADIENT_X)) - 1.0, tolerance);
-            KRATOS_CHECK_LESS_EQUAL(std::abs(p_node_5->FastGetSolutionStepValue(DISTANCE_GRADIENT_X)) - 1.0, tolerance);
-            KRATOS_CHECK_LESS_EQUAL(std::abs(p_node_9->FastGetSolutionStepValue(DISTANCE_GRADIENT_X)) - 1.0, tolerance);
-            KRATOS_CHECK_LESS_EQUAL(std::abs(p_node_10->FastGetSolutionStepValue(DISTANCE_GRADIENT_X)) - 1.0, tolerance);
-            KRATOS_CHECK_LESS_EQUAL(std::abs(p_node_11->FastGetSolutionStepValue(DISTANCE_GRADIENT_X)) - 1.0, tolerance);
-            KRATOS_CHECK_LESS_EQUAL(std::abs(p_node_12->FastGetSolutionStepValue(DISTANCE_GRADIENT_X)) - 1.0, tolerance);
-        }
-
-        /**
-        * Checks the correct work of the nodal gradient compute
-        * Test quadrilateral
-        */
-        KRATOS_TEST_CASE_IN_SUITE(NodalGradient4, KratosCoreFastSuite)
-        {
-            Model current_model;
             
 //             // DEBUG         
 //             GiDIODebugGradient(this_model_part);

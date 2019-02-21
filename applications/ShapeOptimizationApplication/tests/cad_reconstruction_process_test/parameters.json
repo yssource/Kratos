@@ -7,7 +7,16 @@
 },
 "conditions" :
 {
-    "apply_integral_method" : false,
+    "general" :
+    {
+        "apply_integral_method" : false,
+        "mapping_cad_fem"       :
+        {
+            "mapper_type"   : "nearest_element",
+            "search_radius" : 1.0,
+            "echo_level"    : 0
+        }
+    },
     "faces" :
     {
         "curvature" :

@@ -104,7 +104,6 @@ with suppress_stdout():
 
     # Mapping
     cad_model = an.Model()
-    cad_mapper = CADMapper(fe_model, cad_model, parameters)
     PerformMapping(cad_model, fe_model)
 
     # Actual test
@@ -120,12 +119,11 @@ with suppress_stdout():
     with open("parameters.json",'r') as parameter_file:
         parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
-    parameters["conditions"]["apply_integral_method"].SetBool(True)
+    parameters["conditions"]["general"]["apply_integral_method"].SetBool(True)
     parameters["output"]["results_directory"].SetString("Results_Test_3")
 
     # Mapping
     cad_model = an.Model()
-    cad_mapper = CADMapper(fe_model, cad_model, parameters)
     PerformMapping(cad_model, fe_model)
 
     # Actual test
@@ -221,8 +219,10 @@ relative_time_ratio = time_for_complete_test / time_for_first_test
 
 reference_ratio = 11.2
 
-if abs(relative_time_ratio - reference_ratio) / relative_time_ratio > 0.10:
+if (relative_time_ratio - reference_ratio) / relative_time_ratio > 0.10:
     raise RuntimeError("Test took unexpectedly long!")
+elif (relative_time_ratio - reference_ratio) / relative_time_ratio < -0.10:
+    raise RuntimeError("Test took unexpectedly short!")
 
 # =======================================================================================================
 # Delete result files

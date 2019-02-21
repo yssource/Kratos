@@ -19,7 +19,10 @@ parameters = KratosMultiphysics.Parameters("""
     },
     "conditions" :
     {
-        "apply_integral_method" : false,
+        "general" :
+        {
+            "apply_integral_method" : false
+        },
         "faces" :
         {
             "curvature" :

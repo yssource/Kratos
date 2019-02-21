@@ -32,13 +32,22 @@ class CADMapper:
         {
             "input" :
             {
-                "cad_filename"                  : "plate_fine_embedded.iga",
-                "fem_filename"                  : "plate.mdpa",
+                "cad_filename"                  : "name.iga",
+                "fem_filename"                  : "name.mdpa",
                 "fe_refinement_level"           : 0
             },
             "conditions" :
             {
-                "apply_integral_method" : false,
+                "general" :
+                {
+                    "apply_integral_method" : false,
+                    "mapping_cad_fem"       :
+                    {
+                        "mapper_type"   : "nearest_element",
+                        "search_radius" : -1.0,
+                        "echo_level"    : 0
+                    }
+                },
                 "faces" :
                 {
                     "curvature" :
@@ -503,7 +512,7 @@ class CADMapper:
 
         condition_factory = ConditionsFactory(self.fe_model_part, self.cad_model, self.parameters)
 
-        if self.parameters["conditions"]["apply_integral_method"].GetBool():
+        if self.parameters["conditions"]["general"]["apply_integral_method"].GetBool():
             condition_factory.CreateDistanceMinimizationWithIntegrationConditions(self.conditions)
         else:
             condition_factory.CreateDistanceMinimizationConditions(self.conditions)
@@ -711,12 +720,7 @@ class ConditionsFactory:
                 destination_mdpa.CreateNewNode(itr, x, y, z)
 
             # Map information from fem to integration points using element based mapper
-            mapper_parameters = KratosMultiphysics.Parameters("""{
-                "mapper_type" : "nearest_element",
-                "search_radius" : 1.0
-            }""")
-
-            mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, mapper_parameters )
+            mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, self.parameters["conditions"]["general"]["mapping_cad_fem"].Clone() )
             mapper.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
 
             # Create conditions
@@ -959,12 +963,7 @@ class ConditionsFactory:
                     destination_mdpa.CreateNewNode(itr, x, y, z)
 
                 # Map information from fem to integration points using element based mapper
-                mapper_parameters = KratosMultiphysics.Parameters("""{
-                    "mapper_type" : "nearest_element",
-                    "search_radius" : 1.0
-                }""")
-
-                mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, mapper_parameters )
+                mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, self.parameters["conditions"]["general"]["mapping_cad_fem"].Clone() )
                 if penalty_factor_position_enforcement > 0:
                     mapper.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
                 if penalty_factor_tangent_enforcement > 0:
@@ -1119,12 +1118,7 @@ class ConditionsFactory:
             destination_mdpa.CreateNewNode(itr+1, x, y, z)
 
         # Map information from fem to corner points using element based mapper
-        mapper_parameters = KratosMultiphysics.Parameters("""{
-            "mapper_type" : "nearest_element",
-            "search_radius" : 1.0
-        }""")
-
-        mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, mapper_parameters )
+        mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, self.parameters["conditions"]["general"]["mapping_cad_fem"].Clone() )
         mapper.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
         mapper.Map( KratosShape.NORMALIZED_SURFACE_NORMAL, KratosShape.NORMALIZED_SURFACE_NORMAL )
 

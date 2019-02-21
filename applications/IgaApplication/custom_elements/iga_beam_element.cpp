@@ -26,6 +26,7 @@
 #include "iga_application_variables.h"
 #include "custom_elements/base_discrete_element.h"
 #include "custom_utilities/iga_debug.h"
+
 // #include "YamlFile.h"
 
 
@@ -149,8 +150,6 @@ KRATOS_TRY;
     // LOG(rLeftHandSideMatrix);
     // LOG("rRightHandSideVector: ");
     // LOG(rRightHandSideVector);
-
-
 
 KRATOS_CATCH("");
 }
@@ -684,6 +683,68 @@ KRATOS_TRY;
 
 KRATOS_CATCH("");
 }
+
+
+//#################################################################################
+//#################################################################################
+//#
+//#                      +++ Compute initial Crosssection Rotation  +++
+//#
+//#################################################################################
+//#################################################################################
+//#
+/** Computes the base Vector
+     *
+     * @return
+          *
+     * @author L.Rauch (10/2018)
+     */
+//#--------------------------------------------------------------------------------
+void IgaBeamElement::ComputeInitialCrossRotation(Vector3& A1, Vector3& A2, Vector3& A3, double theta, double _dL)
+{
+    KRATOS_TRY;
+    // Get initial Inforamtaion
+    const double integration_weight = GetValue(INTEGRATION_WEIGHT);
+    const Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
+
+    // Norm A1
+    const double size_A1 = norm_2(A1);
+    A1 = A1 / size_A1; 
+
+    // // Compute derivative of theta  
+    // double theta_t = 0; 
+
+    // for (size_t i = 0; i < NumberOfNodes(); i++)
+    // {
+    //     theta_t += shape_derivatives_1[i] * theta * integration_weight * _dL;
+    // }
+
+    // // Compute theta at t 
+    // const double Thata_rot = theta_0 + theta_1
+
+    BoundedMatrix<double,3,3> matrix_rotation; 
+    Vector3 A2_tmp ;
+    A2_tmp.clear();
+    Vector3 A3_tmp ;
+    A3_tmp.clear();
+
+    double sin_theta = std::sin(theta);
+    double cos_theta = std::cos(theta);
+
+    matrix_rotation = IdentityMatrix(3) * cos_theta + CrossVectorIdentity(sin_theta * A1); 
+
+    A2_tmp = prod(matrix_rotation, A2);
+    A3_tmp = prod(matrix_rotation, A3);
+
+    A2 = A2_tmp;
+    A3 = A3_tmp;
+
+    // LOG("Rotation_Matrix " << matrix_rotation); 
+    // LOG("A2: " << A2);
+    // LOG("A3: " << A3);
+    KRATOS_CATCH("");
+}
+
 
 //#################################################################################
 //#################################################################################

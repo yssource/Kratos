@@ -469,7 +469,7 @@ void IgaBeamElement::ComputeShearForcesNonlinear(
         bool _prestress_bend1_auto,
         bool _prestress_bend2_auto ) ;
 
-
+void IgaBeamElement::ComputeInitialCrossRotation(Vector3& A1, Vector3& A2, Vector3& A3, double Theta, double dL) ;
     
 }; // class IgaBeamElement
 

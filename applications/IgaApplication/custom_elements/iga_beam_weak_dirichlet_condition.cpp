@@ -266,7 +266,6 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     else if (condition_type == 4)   // Biegung Tangens
        MapMatrix(rLeftHandSideMatrix) =    dP_grad_bend.h() ;
 
-
     else if(condition_type == 12)   // Verschiebung + Torsion
       MapMatrix(rLeftHandSideMatrix) = ( dP_disp.h() + dP_alpha_tors.h()) ;
     else if(condition_type == 13)   // Verschiebung + Rotation
@@ -286,7 +285,6 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
       MapVector(rRightHandSideVector) = -( dP_alpha_bend.g()   );
     else if (condition_type == 4)   // Biegung Tangens
       MapVector(rRightHandSideVector) = -( dP_grad_bend.g() );
-
     
     else if(condition_type == 12)   // Verschiebung + Torsion
       MapVector(rRightHandSideVector) = -( dP_disp.g() + dP_alpha_tors.g()) ;
@@ -296,10 +294,6 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
       MapVector(rRightHandSideVector) = -( dP_alpha_tors.g() + dP_alpha_bend.g()) ;
     else if(condition_type == 123)  // Verschiebung + Torsion +  Rotation
       MapVector(rRightHandSideVector) = -( dP_disp.g() + dP_alpha_tors.g() + dP_alpha_bend.g()) ;
-
-
-
-   
 
     KRATOS_CATCH("")
 }

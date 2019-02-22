@@ -29,7 +29,7 @@ class WorkFolderScope:
 # Class derived from the UnitTest (KratosMultiphysics.KratosUnittest) class
 class TwoFluidMassConservationTest(UnitTest.TestCase):
 
-    def __init__(self):
+    def setUp(self):
         self.waterLevel = 1.0
         self.work_folder = "TwoFluidMassConservationProcTest"
         self.check_tolerance = 1e-7

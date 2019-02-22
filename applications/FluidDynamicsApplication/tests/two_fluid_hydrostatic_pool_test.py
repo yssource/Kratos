@@ -29,7 +29,7 @@ class WorkFolderScope:
 # Class derived from the UnitTest (KratosMultiphysics.KratosUnittest) class
 class TwoFluidHydrostaticPoolTest(UnitTest.TestCase):
 
-    def __init__(self):
+    def setUp(self):
         self.waterLevel = 0.5
         self.work_folder = "TwoFluidStaticPoolTest"
         self.settings = "TwoFluidStaticPoolTest2D.json"

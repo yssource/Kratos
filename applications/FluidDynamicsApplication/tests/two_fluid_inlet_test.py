@@ -22,7 +22,7 @@ class WorkFolderScope:
 # Class derived from the UnitTest (KratosMultiphysics.KratosUnittest) class
 class TwoFluidInletTest(UnitTest.TestCase):
 
-    def __init__(self):
+    def setUp(self):
         self.waterLevel = 0.5
         self.work_folder = "TwoFluidInletTest"
         self.settings = "parameters_serial.json"

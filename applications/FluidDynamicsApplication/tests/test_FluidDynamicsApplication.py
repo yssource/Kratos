@@ -27,6 +27,9 @@ from adjoint_vms_element_2d import AdjointVMSElement2D
 from adjoint_vms_sensitivity_2d import AdjointVMSSensitivity2D
 from hdf5_io_test import HDF5IOTest
 from test_statistics_process import IntegrationPointStatisticsTest
+from two_fluid_hydrostatic_pool_test import TwoFluidHydrostaticPoolTest
+from two_fluid_inlet_test import TwoFluidInletTest
+from two_fluid_mass_conservation_test import TwoFluidMassConservationTest
 
 import run_cpp_unit_tests
 
@@ -99,6 +102,9 @@ def AssembleTestSuites():
     nightSuite.addTest(FluidAnalysisTest('testSteadyCavity'))
     nightSuite.addTest(FluidAnalysisTest('testSteadyCylinder'))
     nightSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([IntegrationPointStatisticsTest]))
+    nightSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TwoFluidHydrostaticPoolTest]))
+    nightSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TwoFluidInletTest]))
+    nightSuite.addTests(KratosUnittest.TestLoader().loadTestsFromTestCases([TwoFluidMassConservationTest]))
 
 
     # For very long tests that should not be in nighly and you can use to validate

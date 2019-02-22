@@ -72,6 +72,25 @@
     "alpha" : 0.0,
     "beta"  : 0.001
 },
+"refinement" :
+{
+    "a_priori" :
+    {
+        "apply_a_priori_refinement"         : false,
+        "max_levels_of_refinement"          : 3,
+        "min_knot_distance_at_max_gradient" : 15.0,
+        "exponent"                          : 2
+    },
+    "a_posteriori" :
+    {
+        "apply_a_posteriori_refinement" : false,
+        "max_levels_of_refinement"      : 4,
+        "mininimum_knot_distance"       : 15.0,
+        "fe_point_distance_tolerance"   : 0.1,
+        "disp_coupling_tolerance"       : 0.1,
+        "rot_coupling_tolerance"        : 1.0
+    }
+},
 "output":
 {
     "results_directory"           : "01_Results",

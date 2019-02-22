@@ -8,7 +8,7 @@ import ANurbs as an
 # Additional imports
 import time, os, csv, shutil, sys
 from contextlib import contextmanager
-from cad_reconstruction import CADMapper
+from cad_reconstruction_mapper import CADMapper
 import numpy as np
 
 # =======================================================================================================
@@ -24,12 +24,9 @@ def suppress_stdout():
         finally:
             sys.stdout = old_stdout
 
-def PerformMapping(cad_model, fe_model):
+def PerformMapping(cad_model, fe_model, parameters):
     cad_mapper = CADMapper(fe_model, cad_model, parameters)
-    cad_mapper.ReadModelData()
-    cad_mapper.Initialize()
-    cad_mapper.Map()
-    cad_mapper.Finalize()
+    cad_mapper.RunMappingProcess()
 
 def ExtractResults(cad_model):
     pole_coordinates = []
@@ -80,7 +77,7 @@ with suppress_stdout():
 
     # Mapping
     cad_model = an.Model()
-    PerformMapping(cad_model, fe_model)
+    PerformMapping(cad_model, fe_model, parameters)
 
     # Actual test
     pole_coordinates = ExtractResults(cad_model)
@@ -104,7 +101,7 @@ with suppress_stdout():
 
     # Mapping
     cad_model = an.Model()
-    PerformMapping(cad_model, fe_model)
+    PerformMapping(cad_model, fe_model, parameters)
 
     # Actual test
     pole_coordinates = ExtractResults(cad_model)
@@ -124,7 +121,7 @@ with suppress_stdout():
 
     # Mapping
     cad_model = an.Model()
-    PerformMapping(cad_model, fe_model)
+    PerformMapping(cad_model, fe_model, parameters)
 
     # Actual test
     pole_coordinates = ExtractResults(cad_model)
@@ -144,7 +141,7 @@ with suppress_stdout():
 
     # Mapping
     cad_model = an.Model()
-    PerformMapping(cad_model, fe_model)
+    PerformMapping(cad_model, fe_model, parameters)
 
     # Actual test
     pole_coordinates = ExtractResults(cad_model)
@@ -164,7 +161,7 @@ with suppress_stdout():
 
     # Mapping
     cad_model = an.Model()
-    PerformMapping(cad_model, fe_model)
+    PerformMapping(cad_model, fe_model, parameters)
 
     # Actual test
     pole_coordinates = ExtractResults(cad_model)
@@ -184,7 +181,7 @@ with suppress_stdout():
 
     # Mapping
     cad_model = an.Model()
-    PerformMapping(cad_model, fe_model)
+    PerformMapping(cad_model, fe_model, parameters)
 
     # Actual test
     pole_coordinates = ExtractResults(cad_model)
@@ -204,11 +201,53 @@ with suppress_stdout():
 
     # Mapping
     cad_model = an.Model()
-    PerformMapping(cad_model, fe_model)
+    PerformMapping(cad_model, fe_model, parameters)
 
     # Actual test
     pole_coordinates = ExtractResults(cad_model)
     TestResults(pole_coordinates, "07")
+
+# =======================================================================================================
+# Test 8: A prioi refinement
+# =======================================================================================================
+print("\n> Starting test 8...")
+with suppress_stdout():
+
+    with open("parameters.json",'r') as parameter_file:
+        parameters = KratosMultiphysics.Parameters(parameter_file.read())
+
+    parameters["refinement"]["a_priori"]["apply_a_priori_refinement"].SetBool(True)
+    parameters["output"]["results_directory"].SetString("Results_Test_8")
+
+    print(parameters["refinement"]["a_priori"]["apply_a_priori_refinement"].GetBool())
+
+    # Mapping
+    cad_model = an.Model()
+    PerformMapping(cad_model, fe_model, parameters)
+
+    # Actual test
+    pole_coordinates = ExtractResults(cad_model)
+    TestResults(pole_coordinates, "08")
+
+# =======================================================================================================
+# Test 9: A posteriori refinement
+# =======================================================================================================
+print("\n> Starting test 9...")
+with suppress_stdout():
+
+    with open("parameters.json",'r') as parameter_file:
+        parameters = KratosMultiphysics.Parameters(parameter_file.read())
+
+    parameters["refinement"]["a_posteriori"]["apply_a_posteriori_refinement"].SetBool(True)
+    parameters["output"]["results_directory"].SetString("Results_Test_9")
+
+    # Mapping
+    cad_model = an.Model()
+    PerformMapping(cad_model, fe_model, parameters)
+
+    # Actual test
+    pole_coordinates = ExtractResults(cad_model)
+    TestResults(pole_coordinates, "09")
 
 # =======================================================================================================
 # Test time
@@ -217,7 +256,7 @@ print("\n> Starting time...")
 time_for_complete_test = time.time() - start_time
 relative_time_ratio = time_for_complete_test / time_for_first_test
 
-reference_ratio = 11.2
+reference_ratio = 13.6
 
 if (relative_time_ratio - reference_ratio) / relative_time_ratio > 0.10:
     raise RuntimeError("Test took unexpectedly long!")
@@ -236,6 +275,8 @@ shutil.rmtree("Results_Test_4")
 shutil.rmtree("Results_Test_5")
 shutil.rmtree("Results_Test_6")
 shutil.rmtree("Results_Test_7")
+shutil.rmtree("Results_Test_8")
+shutil.rmtree("Results_Test_9")
 
 print("\n> Test Successfully finished in " + str(round(time_for_complete_test,2)) + " s!\n")
 # =======================================================================================================

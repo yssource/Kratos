@@ -43,6 +43,8 @@ class GiDOutputProcess(KM.Process):
             "gauss_point_results": [],
             "additional_list_files": []
         },
+        "CPT_post_process": false,
+        "int_data_post_process": false,
         "point_data_configuration": []
     }''')
 
@@ -129,6 +131,8 @@ class GiDOutputProcess(KM.Process):
     def ExecuteInitialize(self):
         result_file_configuration = self.param["result_file_configuration"]
         result_file_configuration.ValidateAndAssignDefaults(self.defaults["result_file_configuration"])
+
+#        print(str(result_file_configuration))
 
         # If either of these is True, we will have a volume output file
         self.body_output = result_file_configuration["body_output"].GetBool()
@@ -246,6 +250,10 @@ class GiDOutputProcess(KM.Process):
             return ( self.step_count >= self.next_output )
 
     def PrintOutput(self):
+
+        print("")
+        print("::[Gid_Output_Process]:: Start printing output files")
+
         if self.point_output_process is not None:
             self.point_output_process.ExecuteBeforeOutputStep()
 
@@ -289,6 +297,9 @@ class GiDOutputProcess(KM.Process):
 
         if self.point_output_process is not None:
             self.point_output_process.ExecuteAfterOutputStep()
+
+        print("::[Gid_Output_Process]:: End printing output files")
+
 
     def ExecuteFinalize(self):
         '''Finalize files and free resources.'''
@@ -367,6 +378,8 @@ class GiDOutputProcess(KM.Process):
             # This part of the input data is validated term by term
             cut_data.ValidateAndAssignDefaults(self.default_plane_output_data)
 
+#            print(str(cut_data))
+
             self.__define_output_plane(cut_data)
 
     def _InitializeListFiles(self,additional_frequencies):
@@ -394,12 +407,25 @@ class GiDOutputProcess(KM.Process):
             if f not in used_frequencies:
                 used_frequencies.append(f)
                 extra_frequencies.append(f)
+#MOD START
+        if self.post_mode == GiDPostMode.GiD_PostBinary:
+            ext = ".post.bin"
+        elif self.post_mode == GiDPostMode.GiD_PostAscii:
+            ext = ".post.res"
+        elif self.post_mode == GiDPostMode.GiD_PostAsciiZipped:
+            ext = ".post.res"  # ??? CHECK!
+        else:
+            return # No support for list_files in this format
+
+        pretty_label = "_{0}".format(0)
+#MOD END
 
         if self.body_io is not None:
             list_file = open(name_base+name_ext,"w")
 
             if self.multifile_flag == MultiFileFlag.MultipleFiles:
                 list_file.write("Multiple\n")
+                list_file.write("{0}{1}{2}\n".format(self.volume_file_name,pretty_label,ext)) #MOD
             elif self.multifile_flag == MultiFileFlag.SingleFile:
                 list_file.write("Single\n")
 
@@ -410,6 +436,7 @@ class GiDOutputProcess(KM.Process):
                     list_file_name = "{0}_list_{1}{2}".format(name_base,freq,name_ext)
                     list_file = open(list_file_name,"w")
                     list_file.write("Multiple\n")
+                    list_file.write("{0}{1}{2}\n".format(self.volume_file_name,pretty_label,ext)) #MOD
 
                     self.volume_list_files.append( [freq,list_file] )
 
@@ -421,6 +448,7 @@ class GiDOutputProcess(KM.Process):
 
             if self.multifile_flag == MultiFileFlag.MultipleFiles:
                 list_file.write("Multiple\n")
+                list_file.write("{0}{1}{2}\n".format(self.volume_file_name,pretty_label,ext)) #MOD
             elif self.multifile_flag == MultiFileFlag.SingleFile:
                 list_file.write("Single\n")
 
@@ -431,6 +459,7 @@ class GiDOutputProcess(KM.Process):
                     list_file_name = "{0}_list_{1}{2}".format(name_base,freq,name_ext)
                     list_file = open(list_file_name,"w")
                     list_file.write("Multiple\n")
+                    list_file.write("{0}{1}{2}\n".format(self.volume_file_name,pretty_label,ext)) #MOD
 
                     self.cut_list_files.append( [freq,list_file] )
 

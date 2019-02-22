@@ -15,7 +15,35 @@
 // Project includes
 #include "custom_python/add_custom_constitutive_laws_to_python.h"
 
-// Constitutive laws
+
+//hardening laws
+#include "custom_constitutive/custom_hardening_laws/cam_clay_hardening_law.hpp"
+#include "custom_constitutive/custom_hardening_laws/casm_hardening_law.hpp"
+#include "custom_constitutive/custom_hardening_laws/casm_cem_hardening_law.hpp"
+
+//yield criteria
+#include "custom_constitutive/custom_yield_criteria/cam_clay_yield_criterion.hpp"
+#include "custom_constitutive/custom_yield_criteria/casm_yield_criterion.hpp"
+#include "custom_constitutive/custom_yield_criteria/casm_cem_yield_criterion.hpp"
+#include "custom_constitutive/custom_yield_criteria/J2_yield_criterion.hpp"
+#include "custom_constitutive/custom_yield_criteria/tresca_yield_criterion.hpp"
+
+//flow rules
+#include "custom_constitutive/custom_flow_rules/non_associative_explicit_flow_rule.hpp"
+#include "custom_constitutive/custom_flow_rules/borja_cam_clay_explicit_plastic_flow_rule.hpp"
+#include "custom_constitutive/custom_flow_rules/borja_casm_explicit_plastic_flow_rule.hpp"
+#include "custom_constitutive/custom_flow_rules/borja_casm_cem_explicit_plastic_flow_rule.hpp"
+#include "custom_constitutive/custom_flow_rules/J2_explicit_plastic_flow_rule.hpp"
+#include "custom_constitutive/custom_flow_rules/tresca_explicit_plastic_flow_rule.hpp"
+
+
+
+
+//constitutive laws
+#include "custom_constitutive/borja_hencky_casm_3D_law.hpp"
+#include "custom_constitutive/borja_hencky_casm_axisym_2D_law.hpp"
+#include "custom_constitutive/borja_hencky_casm_cem_3D_law.hpp"
+#include "custom_constitutive/borja_hencky_casm_cem_axisym_2D_law.hpp"
 #include "custom_constitutive/borja_hencky_cam_clay_3D_law.hpp"
 #include "custom_constitutive/borja_hencky_cam_clay_axisym_2D_law.hpp"
 #include "custom_constitutive/borja_hencky_cam_clay_plane_strain_2D_law.hpp"
@@ -77,11 +105,52 @@ void  AddCustomConstitutiveLawsToPython(pybind11::module& m)
       .def(py::init<FlowRulePointer, YieldCriterionPointer, HardeningLawPointer>() )
       ;
 
-  py::class_<HenckyPlasticUPJ2Axisym2DLaw, typename HenckyPlasticUPJ2Axisym2DLaw::Pointer, ConstitutiveLaw >
-      (m, "HenckyPlasticUPJ2Axisym2DLaw")
-      .def(py::init<>() )
-      .def(py::init<FlowRulePointer, YieldCriterionPointer, HardeningLawPointer>() )
-      ;
+		class_<BorjaHenckyCasmCemPlastic3DLaw, bases< ConstitutiveLawBaseType >, boost::noncopyable >
+    ( "BorjaHenckyCasmCemPlastic3DLaw",
+      init<>() )
+      .def( init<FlowRulePointer, YieldCriterionPointer, HardeningLawPointer>() )
+    ;
+		class_<BorjaHenckyCasmCemPlasticAxisym2DLaw, bases< ConstitutiveLawBaseType >, boost::noncopyable >
+    ( "BorjaHenckyCasmCemPlasticAxisym2DLaw",
+      init<>() )
+      .def( init<FlowRulePointer, YieldCriterionPointer, HardeningLawPointer>() )
+    ;
+    class_<BorjaHenckyCasmPlastic3DLaw, bases< ConstitutiveLawBaseType >, boost::noncopyable >
+    ( "BorjaHenckyCasmPlastic3DLaw",
+      init<>() )
+      .def( init<FlowRulePointer, YieldCriterionPointer, HardeningLawPointer>() )
+    ;
+		class_<BorjaHenckyCasmPlasticAxisym2DLaw, bases< ConstitutiveLawBaseType >, boost::noncopyable >
+    ( "BorjaHenckyCasmPlasticAxisym2DLaw",
+      init<>() )
+      .def( init<FlowRulePointer, YieldCriterionPointer, HardeningLawPointer>() )
+    ;
+    class_<BorjaHenckyCamClayPlastic3DLaw, bases< ConstitutiveLawBaseType >, boost::noncopyable >
+    ( "BorjaHenckyCamClayPlastic3DLaw",
+      init<>() )
+      .def( init<FlowRulePointer, YieldCriterionPointer, HardeningLawPointer>() )
+    ;
+    class_<BorjaHenckyCamClayPlasticAxisym2DLaw, bases< ConstitutiveLawBaseType >, boost::noncopyable >
+    ( "BorjaHenckyCamClayPlasticAxisym2DLaw",
+      init<>() )
+      .def( init<FlowRulePointer, YieldCriterionPointer, HardeningLawPointer>() )
+    ;
+    class_<BorjaHenckyCamClayPlasticPlaneStrain2DLaw, bases< ConstitutiveLawBaseType >, boost::noncopyable >
+    ( "BorjaHenckyCamClayPlasticPlaneStrain2DLaw",
+      init<>() )
+      .def( init<FlowRulePointer, YieldCriterionPointer, HardeningLawPointer>() )
+    ;
+    class_<HenckyJ2PlasticPlaneStrain2DLaw, bases< ConstitutiveLawBaseType >, boost::noncopyable >
+    ( "HenckyJ2PlasticPlaneStrain2DLaw",
+      init<>() )
+      .def( init<FlowRulePointer, YieldCriterionPointer, HardeningLawPointer>() )
+    ;
+       
+    class_<HenckyJ2PlasticAxisym2DLaw, bases< ConstitutiveLawBaseType >, boost::noncopyable >
+    ( "HenckyJ2PlasticAxisym2DLaw",
+      init<>() )
+      .def( init<FlowRulePointer, YieldCriterionPointer, HardeningLawPointer>() )
+    ;
 
   py::class_<HenckyPlasticUPJ2PlaneStrain2DLaw, typename HenckyPlasticUPJ2PlaneStrain2DLaw::Pointer, ConstitutiveLaw >
       (m, "HenckyPlasticUPJ2PlaneStrain2DLaw")

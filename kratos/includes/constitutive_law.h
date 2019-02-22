@@ -1137,6 +1137,11 @@ public:
                       const GeometryType& rElementGeometry,
                       const ProcessInfo& rCurrentProcessInfo);
 
+    //need to be removed
+		virtual void SetPlasticVariables( const double& rInitialPreconPressure, const double& rInitialBonding); 
+		virtual const double GetBonding();
+    virtual const double GetPreconPressure();
+		virtual const double GetCriticalStateM();
 
 
     //*** OUTDATED METHODS: ***//

@@ -12,6 +12,101 @@
     "model_settings"           : {
         "model_name": "Main_Domain",
         "dimension"       : *GenData(DIMENSION,INT),
+	"time_step"       : *GenData(Time_Step),
+        "start_time"      : *GenData(Start_Time),
+        "end_time"        : *GenData(End_Time),
+        "echo_level"      : *GenData(Echo_Level),
+        "threads"         : *GenData(Number_of_threads,INT)
+    },
+    "solver_settings"          : {
+        "echo_level"                         : 0,
+        "buffer_size"                        : 2,
+*if(strcmp(GenData(Solver_Type),"DynamicSolver")==0)
+        "solution_type"                      : "Dynamic",
+*if(strcmp(GenData(Time_Integration_Method),"Explicit")==0)
+        "solver_type"                        : "solid_mechanics_explicit_dynamic_solver",
+        "time_integration_method"            : "Explicit",
+        "scheme_type"                        : "CentralDifferences",        
+*elseif(strcmp(GenData(Time_Integration_Method),"Implicit")==0)
+*if(strcmp(GenData(DOFS),"U-W")==0)
+        "solver_type"                        : "pfem_solid_mechanics_implicit_dynamic_solver",
+        "time_integration_method"            : "Implicit",
+        "scheme_type"                        : "Bossak",
+*elseif(strcmp(GenData(DOFS),"U-W-wP")==0)
+        "solver_type"                        : "pfem_solid_mechanics_implicit_dynamic_solver",
+        "time_integration_method"            : "Implicit",
+        "scheme_type"                        : "Bossak",
+*else
+        "solver_type"                        : "solid_mechanics_implicit_dynamic_solver",
+        "time_integration_method"            : "Implicit",
+        "scheme_type"                        : "Bossak",
+*endif
+*endif
+*else
+        "solver_type"                        : "pfem_solid_mechanics_static_solver",
+        "solution_type"                      : "Static",
+*if(strcmp(GenData(Solver_Type),"StaticSolver")==0)
+        "scheme_type"                        : "Non-Linear",
+*elseif(strcmp(GenData(Solver_Type),"QuasiStaticSolver")==0)
+        "scheme_type"                        : "Non-Linear",
+*endif
+*endif
+        "model_import_settings"              : {
+*if(strcmp(GenData(Load_Restart),"True")==0)
+            "input_type"       : "rest",
+            "input_filename"   : "*tcl(file tail [GiD_Info Project ModelName])",
+	    "input_file_label" : "*GenData(Load_Step)"
+*else
+            "input_type"       : "mdpa",
+            "input_filename"   : "*tcl(file tail [GiD_Info Project ModelName])",
+	    "input_file_label" : "0"
+*endif
+        },
+        "line_search"                        : *tcl(string tolower *GenData(LineSearch)),
+        "implex"                             : *tcl(string tolower *GenData(Implex)),
+        "compute_reactions"                  : *tcl(string tolower *GenData(Write_Reactions)),
+	"compute_contact_forces"             : *tcl(string tolower *GenData(Write_Contact_Forces)),
+        "convergence_criterion"              : "*GenData(Convergence_Criteria)",
+*if( strcmp(GenData(DOFS),"U-P")==0 || strcmp(GenData(DOFS),"U-wP")==0)
+        "stabilization_factor"               : *GenData(Stabilization_Factor),
+*endif
+        "dofs"                               : [
+*if(strcmp(GenData(DOFS),"ROTATIONS")==0)
+                                                "ROTATION",
+*endif
+*if(strcmp(GenData(DOFS),"U-P")==0)
+                                                "PRESSURE",
+*endif
+*if(strcmp(GenData(DOFS),"U-wP")==0 )
+                                                "WATER_PRESSURE",
+*endif
+*if( strcmp(GenData(DOFS),"U-J-wP")==0 )
+                                                "WATER_PRESSURE",
+						"JACOBIAN"
+*endif
+*if( strcmp(GenData(DOFS),"U-J")==0 )
+						"JACOBIAN"
+*endif
+*if(strcmp(GenData(DOFS),"U-W")==0)
+						"WATER_DISPLACEMENT"
+*endif
+*if(strcmp(GenData(DOFS),"U-W-wP")==0)
+						"WATER_DISPLACEMENT",
+                                                "WATER_PRESSURE"
+*endif
+					       ],
+        "reform_dofs_at_each_step"           : true,
+        "displacement_relative_tolerance"    : *GenData(Convergence_Tolerance),
+        "displacement_absolute_tolerance"    : *GenData(Absolute_Tolerance),
+        "residual_relative_tolerance"        : *GenData(Convergence_Tolerance),
+        "residual_absolute_tolerance"        : *GenData(Absolute_Tolerance),
+        "max_iteration"                      : *GenData(Max_Iter,INT),
+        "linear_solver_settings"             : {
+             "solver_type" : "*GenData(Linear_Solver)",
+             "tolerance"   : 1e-7,
+             "max_iteration" : *GenData(Linear_Solver_Max_Iteration,INT),
+             "scaling"     : false
+         },
 	"bodies_list":[
 *set cond group_DeformableBodies *groups
 *add cond group_RigidBodies *groups
@@ -224,7 +319,7 @@
         "process_name"    : "RemeshDomainsProcess",
         "Parameters"      : {
 	    "model_part_name"       : "Main_Domain",
-            "meshing_control_type"  : "step",
+            "meshing_control_type"  : "time",
             "meshing_frequency"     : 0.0,
             "meshing_before_output" : true,
 	    "meshing_domains" : [
@@ -267,44 +362,85 @@
 		"velocity": [0.0, 0.0, 0.0]
 	    },
 	    "refining_parameters":{
-		"critical_size": *cond(Critical_Mesh_Size),
-		"threshold_variable": "*cond(Dissipation_Variable)",
-		"reference_threshold" : *cond(Critical_Dissipation),
-		"error_variable": "*cond(Error_Variable)",
-		"reference_error" : *cond(Critical_Error),
-		"add_nodes": true,
-		"insert_nodes": false,
-		"remove_nodes": {
-			"apply_removal": false,
-			"on_distance": true,
-			"on_threshold": false,
-			"on_error": true
-		},
-		"remove_boundary": {
-			"apply_removal": true,
-			"on_distance": true,
-			"on_threshold": true,
-			"on_error": false
-		},
-		"refine_elements": {
-			"apply_refinement": true,
-			"on_distance": true,
-			"on_threshold": true,
-			"on_error": false
-		},
-		"refine_boundary": {
-			"apply_refinement": true,
-			"on_distance": true,
-			"on_threshold": true,
-			"on_error": false
-		},              
-		"refining_box":{
-			"refine_in_box_only": *tcl(string tolower *cond(Refine_on_box_only)),
-			"upper_point": [*tcl(JoinByComma *cond(Upper_Point_rbox))],
-			"lower_point": [*tcl(JoinByComma *cond(Lower_Point_rbox))],
-			"velocity": [*tcl(JoinByComma *cond(Velocity_rbox))]
-		}
-	    },            
+		    "critical_size": *cond(Critical_Mesh_Size),
+		    "threshold_variable": "*cond(Dissipation_Variable)",
+		    "reference_threshold" : *cond(Critical_Dissipation),
+		    "error_variable": "*cond(Error_Variable)",
+		    "reference_error" : *cond(Critical_Error),
+		    "add_nodes": true,
+		    "insert_nodes": false,
+		    "remove_nodes": {
+			    "apply_removal": true,
+			    "on_distance": true,
+			    "on_threshold": true,
+			    "on_error": true
+		    },
+		    "remove_boundary": {
+			    "apply_removal": true,
+			    "on_distance": true,
+			    "on_threshold": true,
+			    "on_error": true
+		    },
+		    "refine_elements": {
+			    "apply_refinement": true,
+			    "on_distance": true,
+			    "on_threshold": true,
+			    "on_error": false
+		    },
+		    "refine_boundary": {
+			    "apply_refinement": true,
+			    "on_distance": false,
+			    "on_threshold": true,
+			    "on_error": false
+		    },              
+		    "refining_box":{
+			    "refine_in_box_only": *tcl(string tolower *cond(Refine_on_box_only)),
+			    "upper_point": [*tcl(JoinByComma *cond(Upper_Point_rbox))],
+			    "lower_point": [*tcl(JoinByComma *cond(Lower_Point_rbox))],
+			    "velocity": [*tcl(JoinByComma *cond(Velocity_rbox))]
+		    },
+            "conditional_meshing":{
+                "conditional_meshing_nodes": [
+                    [0.017841, 0.031, 0.0, 0, -0.02, 0],
+                    [0.019, 0.0, 0.0, 0, 0, 0],
+                    [0.071, 0.0, 0.0, 0, 0, 0],
+                    [0.125, 0.0, 0.0, 0, 0, 0],
+                    [0.161, 0.0, 0.0, 0, 0, 0],
+                    [0.019, -0.1, 0.0, 0, 0, 0],
+                    [0.071, -0.1, 0.0, 0, 0, 0],
+                    [0.125, -0.1, 0.0, 0, 0, 0],
+                    [0.161, -0.1, 0.0, 0, 0, 0],
+                    [0.019, -0.2, 0.0, 0, 0, 0],
+                    [0.071, -0.2, 0.0, 0, 0, 0],
+                    [0.125, -0.2, 0.0, 0, 0, 0],
+                    [0.161, -0.2, 0.0, 0, 0, 0],
+                    [0.019, -0.3, 0.0, 0, 0, 0],
+                    [0.071, -0.3, 0.0, 0, 0, 0],
+                    [0.125, -0.3, 0.0, 0, 0, 0],
+                    [0.161, -0.3, 0.0, 0, 0, 0],
+                    [0.019, -0.4, 0.0, 0, 0, 0],
+                    [0.071, -0.4, 0.0, 0, 0, 0],
+                    [0.125, -0.4, 0.0, 0, 0, 0],
+                    [0.161, -0.4, 0.0, 0, 0, 0]
+                ],
+                "conditional_meshing_nodal_variables": [ "DISPLACEMENT", "WATER_PRESSURE", "JACOBIAN" ],
+                "conditional_meshing_gauss_variables": [ 
+                                        "CAUCHY_STRESS_TENSOR",
+                                        "GREEN_LAGRANGE_STRAIN_TENSOR",
+                                        "STRESS_INV_P",
+                                        "STRESS_INV_J2",
+                                        "STRESS_INV_THETA",
+                                        "INCR_SHEAR_PLASTIC",
+                                        "INCR_VOL_PLASTIC",
+                                        "PLASTIC_STRAIN",
+                                        "PRECONSOLIDATION",
+                                        "BONDING",
+                                        "VOLUMETRIC_PLASTIC",
+                                        "TOTAL_CAUCHY_STRESS",
+                                        "DARCY_FLOW",
+                                        "PERMEABILITY_TENSOR" ]
+            }
+        },            
 	    "elemental_variables_to_transfer":[ "CAUCHY_STRESS_VECTOR", "DEFORMATION_GRADIENT" ]
 *if( Counter == numberofdomains )
         }
@@ -692,7 +828,11 @@
              "constant_vertical_stress":    *GenData(SY),
              "constant_water_pressure":     *GenData(WP)
 *else 
-             "gravity_active":   true
+             "gravity_active":              true,
+             "top_surface_load_bool":       true,
+             "top_surface_load":            -130,
+             "top_water_pressure":          -100,
+             "top_ref_levelY":               0.0
 *endif
              }
          }
@@ -923,15 +1063,15 @@
             "plane_output"        : [],
 	    "nodal_results"       : [
 *if(strcmp(GenData(Solver_Type),"DynamicSolver")==0)
-                                      "VELOCITY",
+                  "VELOCITY",
 				      "ACCELERATION",
 *if(strcmp(GenData(DOFS),"U-W")==0)
-                                      "WATER_DISPLACEMENT",
-                                      "WATER_VELOCITY",
+                  "WATER_DISPLACEMENT",
+                  "WATER_VELOCITY",
 				      "WATER_ACCELERATION",
 *elseif(strcmp(GenData(DOFS),"U-W-wP")==0)
-                                      "WATER_DISPLACEMENT",
-                                      "WATER_VELOCITY",
+                  "WATER_DISPLACEMENT",
+                  "WATER_VELOCITY",
 				      "WATER_ACCELERATION",
 				      "WATER_PRESSURE",
 				      "WATER_PRESSURE_VELOCITY",
@@ -962,6 +1102,10 @@
 *if(strcmp(GenData(DOFS),"U-J-wP")==0)
 				      "WATER_PRESSURE",
 				      "JACOBIAN",
+*if(strcmp(GenData(Write_Contact_Forces),"True")==0)
+				      "EFFECTIVE_CONTACT_FORCE",
+				      "EFFECTIVE_CONTACT_STRESS",
+*endif
 *endif
 *if(strcmp(GenData(DOFS),"U-wP")==0)
 				      "WATER_PRESSURE",
@@ -976,25 +1120,24 @@
 *if(strcmp(GenData(Problem_Type),"mechanical")==0)
 				      "CAUCHY_STRESS_TENSOR",
 				      "GREEN_LAGRANGE_STRAIN_TENSOR",
+                  "INCR_SHEAR_PLASTIC",
+                  "INCR_VOL_PLASTIC",
+                  "PLASTIC_STRAIN",
+                  "PRECONSOLIDATION",
+                  "BONDING",
+                  "VOLUMETRIC_PLASTIC",
 *endif
 *if(strcmp(GenData(DOFS),"U-W")==0)
 				      "WATER_PRESSURE",
 *endif
-                                      "STRESS_INV_P",
-                                      "STRESS_INV_J2",
-                                      "STRESS_INV_THETA",
-                                      "PLASTIC_STRAIN",
-                                      "DELTA_PLASTIC_STRAIN",
-				      "PLASTIC_VOL_DEF",
-				      "NONLOCAL_PLASTIC_VOL_DEF",
-				      "PLASTIC_DEV_DEF",
-				      "NONLOCAL_PLASTIC_DEV_DEF",
-				      "PLASTIC_VOL_DEF_ABS",
-				      "NONLOCAL_PLASTIC_VOL_DEF_ABS",
-					"TOTAL_CAUCHY_STRESS",
-                                      "PS",
-                                      "PM",
-                                      "PT"
+*if(strcmp(GenData(DOFS),"U-J-wP")==0)
+                  "TOTAL_CAUCHY_STRESS",
+                  "DARCY_FLOW",
+                  "PERMEABILITY_TENSOR",
+*endif
+				      "STRESS_INV_P",
+                  "STRESS_INV_J2",
+                  "STRESS_INV_THETA"
 				    ],
 	    "additional_list_files": [
 *for(i=1;i<=GenData(List_Files,INT);i=i+1)
@@ -1006,6 +1149,8 @@
 *end
 	    			 ]
         },
+        "CPT_post_process": *tcl(string tolower *GenData(CPT_PostProcess)),
+        "int_data_post_process": false,
         "point_data_configuration"  : []
     }
 

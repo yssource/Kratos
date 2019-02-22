@@ -159,6 +159,11 @@ namespace Kratos
     //material
     KRATOS_REGISTER_VARIABLE( WATER_BULK_MODULUS )
     KRATOS_REGISTER_VARIABLE( PERMEABILITY )
+    KRATOS_REGISTER_VARIABLE( ANISOTROPIC_PERMEABILITY )
+    KRATOS_REGISTER_VARIABLE( VERTICAL_PERMEABILITY )
+    KRATOS_REGISTER_VARIABLE( HORIZONTAL_PERMEABILITY )
+    KRATOS_REGISTER_VARIABLE( PERMEABILITY_TENSOR )
+    KRATOS_REGISTER_VARIABLE( TRANSFORM_PERMEABILITY_TENSOR )
     KRATOS_REGISTER_VARIABLE( KOZENY_CARMAN )
     KRATOS_REGISTER_VARIABLE( INITIAL_POROSITY )
     KRATOS_REGISTER_VARIABLE( VOID_RATIO )
@@ -175,6 +180,8 @@ namespace Kratos
     KRATOS_REGISTER_VARIABLE( ELASTIC_LEFT_CAUCHY_GREEN_TENSOR )
     KRATOS_REGISTER_VARIABLE( ELASTIC_LEFT_CAUCHY_GREEN_VECTOR )
 
+    KRATOS_REGISTER_VARIABLE( INVERSE_DEFORMATION_GRADIENT )
+    KRATOS_REGISTER_VARIABLE( TOTAL_DEFORMATION_GRADIENT )
 
     //thermal
 
@@ -190,13 +197,17 @@ namespace Kratos
 
     // Material postprocess + invariants
     KRATOS_REGISTER_VARIABLE( PRECONSOLIDATION )
+    KRATOS_REGISTER_VARIABLE( BONDING )
     KRATOS_REGISTER_VARIABLE( STRESS_INV_P )
     KRATOS_REGISTER_VARIABLE( STRESS_INV_J2 )
     KRATOS_REGISTER_VARIABLE( STRESS_INV_THETA )
     KRATOS_REGISTER_VARIABLE( VOLUMETRIC_PLASTIC )
     KRATOS_REGISTER_VARIABLE( INCR_SHEAR_PLASTIC )
+    KRATOS_REGISTER_VARIABLE( INCR_VOL_PLASTIC )
+    KRATOS_REGISTER_VARIABLE( CRITICAL_STATE_M )
 
     KRATOS_REGISTER_VARIABLE( M_MODULUS )
+    KRATOS_REGISTER_VARIABLE( EXCESS_WATER_PRESSURE )
 
     //deprecated
     KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS( IMPOSED_DISPLACEMENT )
@@ -266,6 +277,10 @@ namespace Kratos
 
 
     //Register Constitutive Laws
+    Serializer::Register("BorjaHenckyCasmPlastic3DLaw", mBorjaHenckyCasmPlastic3DLaw);
+    Serializer::Register("BorjaHenckyCasmPlasticAxisym2DLaw", mBorjaHenckyCasmPlasticAxisym2DLaw);
+    Serializer::Register("BorjaHenckyCasmCemPlastic3DLaw", mBorjaHenckyCasmCemPlastic3DLaw);
+    Serializer::Register("BorjaHenckyCasmCemPlasticAxisym2DLaw", mBorjaHenckyCasmCemPlasticAxisym2DLaw);
     Serializer::Register("BorjaHenckyCamClayPlastic3DLaw", mBorjaHenckyCamClayPlastic3DLaw);
     Serializer::Register("BorjaHenckyCamClayPlasticAxisym2DLaw", mBorjaHenckyCamClayPlasticAxisym2DLaw);
     Serializer::Register("BorjaHenckyCamClayPlasticPlaneStrain2DLaw", mBorjaHenckyCamClayPlasticPlaneStrain2DLaw);
@@ -286,15 +301,20 @@ namespace Kratos
     Serializer::Register("TrescaExplicitFlowRule", mTrescaExplicitFlowRule);
     Serializer::Register("J2ExplicitFlowRule", mJ2ExplicitFlowRule);
     Serializer::Register("BorjaCamClayExplicitFlowRule", mBorjaCamClayExplicitFlowRule);
+    Serializer::Register("BorjaCasmExplicitFlowRule", mBorjaCasmExplicitFlowRule);
+    Serializer::Register("BorjaCasmCemExplicitFlowRule", mBorjaCasmCemExplicitFlowRule);
 
     //Register Yield Criterion
     Serializer::Register("J2YieldCriterion", mJ2YieldCriterion);
     Serializer::Register("NewTrescaYieldCriterion", mNewTrescaYieldCriterion);
     Serializer::Register("TrescaYieldCriterion", mTrescaYieldCriterion);
     Serializer::Register("CamClayYieldCriterion", mCamClayYieldCriterion);
+    Serializer::Register("CasmYieldCriterion", mCasmYieldCriterion);
+    Serializer::Register("CasmCemYieldCriterion", mCasmCemYieldCriterion);
 
     //Register Hardening Laws
     Serializer::Register("CamClayHardeningLaw", mCamClayHardeningLaw);
+    Serializer::Register("CasmCemHardeningLaw", mCasmCemHardeningLaw);
 
   }
 

@@ -119,6 +119,8 @@ namespace Kratos
          double mSurfaceLoad;
 
          double mWaterLoad;
+         
+         double mRefLevelY;
 
    }; //end class SetMechanicalInitialStateProcess
 

@@ -5,7 +5,7 @@ import KratosMultiphysics.ShapeOptimizationApplication as KratosShape
 # Additional imports
 import time
 import os
-from cad_reconstruction import CADMapper
+from cad_reconstruction_mapper import CADMapper
 import ANurbs as an
 
 # Parameters
@@ -86,7 +86,10 @@ parameters = KratosMultiphysics.Parameters("""
         },
         "a_priori" :
         {
-            "apply_a_priori_refinement" : false
+            "apply_a_priori_refinement"         : true,
+            "max_levels_of_refinement"          : 10,
+            "min_knot_distance_at_max_gradient" : 1.0,
+            "exponent"                          : 2
         }
     },
     "output":

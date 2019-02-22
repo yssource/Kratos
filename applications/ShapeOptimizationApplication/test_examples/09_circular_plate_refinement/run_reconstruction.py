@@ -13,7 +13,7 @@ parameters = KratosMultiphysics.Parameters("""
 {
     "input" :
     {
-        "cad_filename"                  : "plate_fine_rotated.iga",
+        "cad_filename"                  : "plate_coarse.iga",
         "fem_filename"                  : "plate_rotated.mdpa",
         "fe_refinement_level"           : 0
     },
@@ -21,7 +21,13 @@ parameters = KratosMultiphysics.Parameters("""
     {
         "general" :
         {
-            "apply_integral_method" : false
+            "apply_integral_method" : false,
+            "mapping_cad_fem"       :
+            {
+                "mapper_type"   : "nearest_element",
+                "search_radius" : 1.0,
+                "echo_level"    : 0
+            }
         },
         "faces" :
         {
@@ -33,8 +39,8 @@ parameters = KratosMultiphysics.Parameters("""
             "mechanical" :
             {
                 "apply_KL_shell"      : false,
-                "exclusive_face_list" : ["Rhino<9f4d24e9-d364-41c2-8a1b-a28ccee54f7b>.BrepFace<0>"],
-                "penalty_factor"      : 1e3
+                "exclusive_face_list" : [],
+                "penalty_factor"      : 1e1
             },
             "rigid" :
             {
@@ -56,7 +62,7 @@ parameters = KratosMultiphysics.Parameters("""
             "coupling" :
             {
                 "apply_coupling_conditions"            : true,
-                "penalty_factor_displacement_coupling" : 1e3,
+                "penalty_factor_displacement_coupling" : 1e4,
                 "penalty_factor_rotation_coupling"     : 1e3
             }
         }
@@ -71,12 +77,32 @@ parameters = KratosMultiphysics.Parameters("""
     "solution" :
     {
         "iterations"    : 1,
-        "test_solution" : true
+        "test_solution" : false
     },
     "regularization" :
     {
-        "alpha" : 0.1,
-        "beta"  : 0.001
+        "alpha"             : 0.1,
+        "beta"              : 0.001,
+        "include_all_poles" : false
+    },
+    "refinement" :
+    {
+        "a_posteriori" :
+        {
+            "apply_a_posteriori_refinement" : false,
+            "max_levels_of_refinement"      : 8,
+            "mininimum_knot_distance"       : 0.1,
+            "fe_point_distance_tolerance"   : 1.0,
+            "disp_coupling_tolerance"       : 0.005,
+            "rot_coupling_tolerance"        : 0.2
+        },
+        "a_priori" :
+        {
+            "apply_a_priori_refinement"         : true,
+            "max_levels_of_refinement"          : 10,
+            "min_knot_distance_at_max_gradient" : 5.0,
+            "exponent"                          : 2
+        }
     },
     "output":
     {
@@ -98,6 +124,9 @@ fe_model_part.ProcessInfo.SetValue(KratosMultiphysics.DOMAIN_SIZE, 3)
 fe_model_part.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE)
 fe_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)
 fe_model_part.AddNodalSolutionStepVariable(KratosShape.NORMALIZED_SURFACE_NORMAL)
+fe_model_part.AddNodalSolutionStepVariable(KratosShape.FITTING_ERROR)
+fe_model_part.AddNodalSolutionStepVariable(KratosShape.GRAD_SHAPE_CHANGE)
+fe_model_part.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE_ABSOLUTE)
 
 fem_input_filename = parameters["input"]["fem_filename"].GetString()
 model_part_io = KratosMultiphysics.ModelPartIO(fem_input_filename[:-5])

@@ -38,7 +38,7 @@ class TwoFluidMassConservationTest(UnitTest.TestCase):
         self.print_output = False
 
     # runs the two dimensinal test case
-    def runTwoFluidMassConservationTest2D(self):
+    def testTwoFluidMassConservation2D(self):
         with open("TwoFluidMassConservationProcTest/2Dtest.json",'r') as parameter_file:
             parameters = KratosMultiphysics.Parameters(parameter_file.read())
             model = KratosMultiphysics.Model()
@@ -93,7 +93,7 @@ class TwoFluidMassConservationTest(UnitTest.TestCase):
 
 
     # runs the three dimensional test case
-    def runTwoFluidMassConservationTest3D(self):
+    def testTwoFluidMassConservation3D(self):
         with open("TwoFluidMassConservationProcTest/3Dtest.json",'r') as parameter_file:
             parameters = KratosMultiphysics.Parameters(parameter_file.read())
             model = KratosMultiphysics.Model()
@@ -227,9 +227,10 @@ class FluidDynamicsAnalysisWithFlush3D(FluidDynamicsAnalysis):
 
 
 if __name__ == "__main__":
+    UnitTest.main()
 
-    test = TwoFluidMassConservationTest()
+    #test = TwoFluidMassConservationTest()
 
-    test.runTwoFluidMassConservationTest2D()
+    #test.runTwoFluidMassConservationTest2D()
 
-    test.runTwoFluidMassConservationTest3D()
+    #test.runTwoFluidMassConservationTest3D()

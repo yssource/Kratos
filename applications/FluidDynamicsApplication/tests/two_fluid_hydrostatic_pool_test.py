@@ -43,7 +43,7 @@ class TwoFluidHydrostaticPoolTest(UnitTest.TestCase):
         self.print_output = False
 
     # runs the two dimensinal test case
-    def runTwoFluidHydrostaticTest2D(self):
+    def testTwoFluidHydrostatic2D(self):
         with open("TwoFluidStaticPoolTest/TwoFluidStaticPoolTest2D.json",'r') as parameter_file:
             parameters = KratosMultiphysics.Parameters(parameter_file.read())
             model = KratosMultiphysics.Model()
@@ -107,7 +107,7 @@ class TwoFluidHydrostaticPoolTest(UnitTest.TestCase):
             kratos_utils.DeleteFileIfExisting('tests.post.lst')
 
     # runs the three dimensional test case
-    def runTwoFluidHydrostaticTest3D(self):
+    def testTwoFluidHydrostatic3D(self):
         with open("TwoFluidStaticPoolTest/TwoFluidStaticPoolTest3D.json",'r') as parameter_file:
             parameters = KratosMultiphysics.Parameters(parameter_file.read())
             model = KratosMultiphysics.Model()
@@ -281,7 +281,7 @@ class FluidDynamicsAnalysisWithFlush3D(FluidDynamicsAnalysis):
 
 
 if __name__ == "__main__":
-
-    test = TwoFluidHydrostaticPoolTest()
-    test.runTwoFluidHydrostaticTest2D()
-    test.runTwoFluidHydrostaticTest3D()
+    UnitTest.main()
+    #test = TwoFluidHydrostaticPoolTest()
+    #test.runTwoFluidHydrostaticTest2D()
+    #test.runTwoFluidHydrostaticTest3D()

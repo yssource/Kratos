@@ -36,7 +36,7 @@ class TwoFluidInletTest(UnitTest.TestCase):
         self.print_output = False
 
     # runs the three dimensional test case
-    def run_Serial_Inlet_Test(self):
+    def testSerialInlet(self):
         with open("TwoFluidInletTest/parameters_serial.json",'r') as parameter_file:
             parameters = KratosMultiphysics.Parameters(parameter_file.read())
             model = KratosMultiphysics.Model()
@@ -81,7 +81,7 @@ class TwoFluidInletTest(UnitTest.TestCase):
 
 
     # runs the three dimensional test case
-    def run_MPI_Inlet_Test(self):
+    def testMPIInlet(self):
         with open("TwoFluidInletTest/parameters_mpi.json",'r') as parameter_file:
             parameters = KratosMultiphysics.Parameters(parameter_file.read())
             model = KratosMultiphysics.Model()
@@ -214,9 +214,10 @@ class FluidDynamicsAnalysisWithFlush3D(FluidDynamicsAnalysis):
 
 
 if __name__ == "__main__":
+    UnitTest.main()
 
-    test = TwoFluidInletTest()
+    #test = TwoFluidInletTest()
 
-    test.run_Serial_Inlet_Test()
+    #test.run_Serial_Inlet_Test()
 
     # test.run_MPI_Inlet_Test()

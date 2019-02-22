@@ -421,72 +421,7 @@ namespace Kratos
    void NonLinearHenckyElasticPlastic3DLaw::SetValue(const Variable<Vector>& rThisVariable, const Vector& rValue, const ProcessInfo& rCurrentProcessInfo)
    {
 
-      if ( rThisVariable == ELASTIC_LEFT_CAUCHY_FROM_KIRCHHOFF_STRESS) {
-         // SETS THE VALUE OF THE ELASTIC LEFT CAUCHY GREEN FROM A KIRCHHOFF STRESS VECTOR
-
-         Matrix StressMat = ZeroMatrix(3,3);
-         for (int i = 0; i < 3; ++i)
-            StressMat(i,i) = rValue(i);
-
-         StressMat(0, 1) = rValue(3);
-         StressMat(1, 0) = rValue(3);
-         StressMat(2, 0) = rValue(4);
-         StressMat(0, 2) = rValue(4);
-         StressMat(1, 2) = rValue(5);  // VALE, està malament
-         StressMat(2, 1) = rValue(5);  // VALE, està malament
-
-         Vector EigenStress;
-         Matrix  EigenV;
-         SolidMechanicsMathUtilities<double>::EigenVectors( StressMat, EigenV, EigenStress);
-
-
-         Vector ElasticHenckyStrain(3);
-         Matrix InverseElastic(3,3);
-         double YoungModulus = mpYieldCriterion->GetHardeningLaw().GetProperties()[YOUNG_MODULUS];
-         double PoissonCoef  = mpYieldCriterion->GetHardeningLaw().GetProperties()[POISSON_RATIO];
-
-
-         for (unsigned int i = 0; i < 3; ++i) {
-            for (unsigned int j = 0; j < 3; ++j) {
-               if (i == j ) {
-                  InverseElastic(i,i) = 1.0/YoungModulus;
-               }
-               else {
-                  InverseElastic(i,j) = - PoissonCoef / YoungModulus;
-               }
-            }
-         }
-
-         ElasticHenckyStrain = prod( InverseElastic, EigenStress);
-
-
-         mElasticLeftCauchyGreen = ZeroMatrix(3,3);
-         for (unsigned int i = 0; i < 3; ++i) {
-            mElasticLeftCauchyGreen(i,i) = std::exp(2.0*ElasticHenckyStrain(i));
-         }
-
-         mElasticLeftCauchyGreen = prod( trans( EigenV), mElasticLeftCauchyGreen);
-         mElasticLeftCauchyGreen = prod( mElasticLeftCauchyGreen, (EigenV) );
-
-      }
-      else if ( rThisVariable == ELASTIC_LEFT_CAUCHY_GREEN_VECTOR)
-      {
-         Matrix ElasticMatrix = ZeroMatrix(3,3);
-         for (int i = 0; i < 3; i++)
-            ElasticMatrix(i,i) = rValue(i);
-         ElasticMatrix(0,1) = rValue(3);
-         ElasticMatrix(1,0) = rValue(3);
-         ElasticMatrix(0,2) = rValue(4);
-         ElasticMatrix(2,0) = rValue(4);
-         ElasticMatrix(2,1) = rValue(5);
-         ElasticMatrix(1,2) = rValue(5);
-
-         mElasticLeftCauchyGreen = ElasticMatrix;
-
-      }
-      else {
          HyperElasticPlastic3DLaw::SetValue( rThisVariable, rValue, rCurrentProcessInfo);
-      }
    }
 
    Matrix NonLinearHenckyElasticPlastic3DLaw::SetConstitutiveMatrixToAppropiateDimension(const Matrix& rElastoPlasticTangentMatrix)

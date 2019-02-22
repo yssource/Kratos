@@ -287,9 +287,7 @@ namespace Kratos
     Serializer::Register("HenckyJ2PlasticPlaneStrain2DLaw", mHenckyJ2PlasticPlaneStrain2DLaw);
     Serializer::Register("HenckyJ2PlasticAxisym2DLaw", mHenckyJ2PlasticAxisym2DLaw);
     Serializer::Register("HenckyTrescaPlasticAxisym2DLaw", mHenckyTrescaPlasticAxisym2DLaw);
-    Serializer::Register("NewHenckyTrescaPlasticAxisym2DLaw", mNewHenckyTrescaPlasticAxisym2DLaw);
     Serializer::Register("HenckyTrescaPlasticPlaneStrain2DLaw", mHenckyTrescaPlasticPlaneStrain2DLaw);
-    Serializer::Register("NewHenckyTrescaPlasticAxisym2DLaw", mNewHenckyTrescaPlasticAxisym2DLaw);
     Serializer::Register("HenckyTresca3DLaw", mHenckyTresca3DLaw);
 
     Serializer::Register("HenckyPlasticUPJ2Axisym2DLaw", mHenckyPlasticUPJ2Axisym2DLaw);

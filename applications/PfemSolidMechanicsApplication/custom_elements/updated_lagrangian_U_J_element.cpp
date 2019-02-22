@@ -477,13 +477,13 @@ namespace Kratos
             //call the constitutive law to update material variables
             if( rVariable == CAUCHY_STRESS_VECTOR){
                mConstitutiveLawVector[PointNumber]->CalculateMaterialResponseCauchy(Values);
-               
+
                std::cout<<"§§§§§§§§§§§§§§§§§§§§§3CAUCHY-RESPONSE CALLED!!!"<<std::endl;
                std::cout<<"§§§§§§§§§§§§§§§§§§§§§3CAUCHY-RESPONSE CALLED!!!"<<std::endl;}
-               
+
             else{
                mConstitutiveLawVector[PointNumber]->CalculateMaterialResponsePK2(Values);
-               
+
                std::cout<<"§§§§§§§§§§§§§§§§§§§§§§§§§PK2-RESPONSE CALLED!!!"<<std::endl;
                std::cout<<"§§§§§§§§§§§§§§§§§§§§§§§§§PK2-RESPONSE CALLED!!!"<<std::endl;}
 
@@ -508,7 +508,7 @@ namespace Kratos
          }
          double rInitialPorosity = 0;
          if( GetProperties().Has(INITIAL_POROSITY) ){
-			   rInitialPorosity = GetProperties()[INITIAL_POROSITY];
+            rInitialPorosity = GetProperties()[INITIAL_POROSITY];
          }
          // GEOMETRY PARAMETERS
          const unsigned int& integration_points_number = mConstitutiveLawVector.size();
@@ -540,10 +540,10 @@ namespace Kratos
 
             // compute permeability tensor at gauss point
             Matrix rPermeabilityTensor = ZeroMatrix(dimension, dimension);
-			   Matrix rF = Variables.F;
-				double rVolumeChange = MathUtils<double>::Det(rF);
+            Matrix rF = Variables.F;
+            double rVolumeChange = MathUtils<double>::Det(rF);
             WaterPressureUtilities aux;
-				aux.GetPermeabilityTensor( rProperties, rF, rPermeabilityTensor, rInitialPorosity, rVolumeChange);
+            aux.GetPermeabilityTensor( rProperties, rF, rPermeabilityTensor, rInitialPorosity, rVolumeChange);
 
             // BTerm
             GradP(dimension-1) -= 10.0 * WaterDensity;
@@ -660,57 +660,6 @@ namespace Kratos
          }
 
       }
-      else if ( rVariable == PERMEABILITY_TENSOR)
-      {
-			const unsigned int& dimension = GetGeometry().WorkingSpaceDimension();
-			PropertiesType rProperties = GetProperties();
-			double rInitialPorosity = rProperties.GetValue(INITIAL_POROSITY);
-
-         ElementVariables Variables;
-         this->InitializeElementVariables(Variables,rCurrentProcessInfo);
-
-         //reading integration points
-            for ( unsigned int PointNumber = 0; PointNumber < mConstitutiveLawVector.size(); PointNumber++ )
-            {
-               //compute element kinematics B, F, DN_DX ...
-                this->CalculateKinematics(Variables, PointNumber);
-
-               //build and save permeability tensor
-    			   Matrix rPermeabilityTensor = ZeroMatrix(dimension, dimension);
-			      Matrix rF = Variables.F;
-				   double rVolumeChange = MathUtils<double>::Det(rF);
-            	WaterPressureUtilities aux;
-				   aux.GetPermeabilityTensor( rProperties, rF, rPermeabilityTensor, rInitialPorosity, rVolumeChange);
-				   rOutput[PointNumber] = rPermeabilityTensor;
-            }
-      }
-		else if ( rVariable == TOTAL_DEFORMATION_GRADIENT)
-		{
-			const unsigned int& dimension = GetGeometry().WorkingSpaceDimension();
-
-			//create and initialize element variables
-			ElementVariables Variables;
-			this->InitializeElementVariables(Variables,rCurrentProcessInfo);
-            
-            //reading integration points
-			for ( unsigned int PointNumber = 0; PointNumber < mConstitutiveLawVector.size(); PointNumber++ )
-			{
-				//compute element kinematics B, F, DN_DX ...
-				this->CalculateKinematics(Variables,PointNumber);
-
-				//to take in account previous step writing
-				Matrix FT;
-				if( mFinalizedStep ){
-					this->GetHistoricalVariables(Variables,PointNumber);
-					FT = prod(Variables.F,Variables.F0);
-				}
-
-				if( rOutput[PointNumber].size2() != FT.size2() )
-				rOutput[PointNumber].resize( FT.size1(), FT.size2() , false );
-
-				rOutput[PointNumber] = FT;
-			}    
-		}
       else {
          LargeDisplacementElement::CalculateOnIntegrationPoints( rVariable, rOutput, rCurrentProcessInfo);
       }
@@ -1101,9 +1050,9 @@ namespace Kratos
 
       //Compute the deformation matrix B
       //this->CalculateDeformationMatrix(rVariables.B, rVariables.F, rVariables.DN_DX);
-    //Compute the deformation matrix B
-    const GeometryType& rGeometry = GetGeometry();
-    ElementUtilities::CalculateLinearDeformationMatrix(rVariables.B,rGeometry,rVariables.DN_DX);
+      //Compute the deformation matrix B
+      const GeometryType& rGeometry = GetGeometry();
+      ElementUtilities::CalculateLinearDeformationMatrix(rVariables.B,rGeometry,rVariables.DN_DX);
 
 
       KRATOS_CATCH( "" )
@@ -1275,7 +1224,7 @@ namespace Kratos
          for ( unsigned int j = 0; j < number_of_nodes; j++ )
          {
             if ( dimension == 2) {
-            consistent = 1.0/12.0;
+               consistent = 1.0/12.0;
             }
             else {
                consistent = 1.0/20.0;
@@ -1489,7 +1438,7 @@ namespace Kratos
 
       Vector KuJ(number_of_nodes*dimension);
       noalias( KuJ ) = prod( trans( rVariables.B), (ConstVector) );
-      
+
 
       Matrix SecondMatrix(dimension*number_of_nodes, number_of_nodes);
       noalias(  SecondMatrix ) = ZeroMatrix( dimension*number_of_nodes, number_of_nodes);
@@ -1507,9 +1456,9 @@ namespace Kratos
          for (unsigned int idim = 0; idim < dimension; idim++) {
             for (unsigned int j = 0; j < number_of_nodes; j++) {
                rLeftHandSideMatrix(i*(dimension+1) + idim, (dimension+1)*(j+1) -1 ) += SecondMatrix( i*(dimension) + idim, j);
-               }
             }
          }
+      }
 
 
 
@@ -1634,7 +1583,7 @@ namespace Kratos
          for ( unsigned int j = 0; j < number_of_nodes; j++ )
          {
             if ( dimension == 2) {
-            consistent = 1.0/12.0;
+               consistent = 1.0/12.0;
             }
             else {
                consistent = 1.0/20.0;
@@ -2014,7 +1963,7 @@ namespace Kratos
 
          //compute stresses and constitutive parameters
          mConstitutiveLawVector[PointNumber]->CalculateMaterialResponse(Values, Variables.StressMeasure);
-         
+
          //std::cout<<"§§§§§§§§§§§§§§§§§§§§§§§§§§§§Material-RESPONSE CALLED!!!"<<std::endl;
          //std::cout<<"§§§§§§§§§§§§§§§§§§§§§§§§§§§§Material-RESPONSE CALLED!!!"<<std::endl;
          //std::cout<<"§§§§§§§§§§§§§§§§§§§§§§§§§§§§Material-RESPONSE CALLED!!!"<<std::endl;

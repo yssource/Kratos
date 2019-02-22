@@ -276,22 +276,7 @@ Matrix& NonLinearHenckyElasticPlasticUP3DLaw::GetValue(const Variable<Matrix>& r
 void NonLinearHenckyElasticPlasticUP3DLaw::SetValue( const Variable<Vector>& rThisVariable, const Vector& rValue, const ProcessInfo& rCurrentProcessInfo)
 {
 
-   if ( rThisVariable == ELASTIC_LEFT_CAUCHY_FROM_KIRCHHOFF_STRESS)
-   {
-      Vector ThisVector = rValue;
-      double MeanStress = 0;
-      for (unsigned int i = 0; i < 3; i++)
-         MeanStress += ThisVector(i);
-      MeanStress /= 3.0;
-      for (unsigned int i = 0; i < 3; i++)
-         ThisVector(i) -= MeanStress;
-
-      NonLinearHenckyElasticPlastic3DLaw::SetValue( rThisVariable, ThisVector, rCurrentProcessInfo);
-
-   }
-   else {
       NonLinearHenckyElasticPlastic3DLaw::SetValue( rThisVariable, rValue, rCurrentProcessInfo);
-   }
 
 }
 

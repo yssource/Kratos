@@ -249,15 +249,6 @@ namespace Kratos
    {
       KRATOS_TRY
 
-      if ( rThisVariable == ELASTIC_LEFT_CAUCHY_FROM_KIRCHHOFF_STRESS)
-      {
-         mInitialStressState.resize(6);
-         noalias( mInitialStressState) = ZeroVector(6);
-         mInitialStressState = rValue;
-         mSetStressState = true;
-
-      }
-
       KRATOS_CATCH("")
    }
 

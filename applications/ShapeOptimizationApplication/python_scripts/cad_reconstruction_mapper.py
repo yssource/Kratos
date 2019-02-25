@@ -157,6 +157,7 @@ class CADMapper:
         self.assembler = Assembler(self.cad_model)
 
         self.conditions = {}
+        self.fe_point_parametric = None
         self.absolute_pole_displacement = None
 
     # --------------------------------------------------------------------------
@@ -173,6 +174,10 @@ class CADMapper:
             shutil.rmtree(output_dir)
 
         self.ReadModelData()
+
+        # Make sure the FE point parametrization is done on the initial mesh in case of any refinement
+        if apply_a_priori_refinement or apply_a_posteriori_refinement:
+            self.GetFEPointParametrization()
 
         if apply_a_priori_refinement:
             self.PerformAPrioriRefinement()
@@ -262,6 +267,10 @@ class CADMapper:
         print("> Finished reading of model data in" ,round( time.time()-start_time, 3 ), " s.")
 
     # --------------------------------------------------------------------------
+    def GetFEPointParametrization(self):
+        self.fe_point_parametric = self.condition_factory.GetFEPointParametrization()
+
+    # --------------------------------------------------------------------------
     def PerformAPrioriRefinement(self):
         print("\n> Initializing prior refinement...")
         start_time = time.time()
@@ -269,8 +278,6 @@ class CADMapper:
         max_iterations = self.parameters["refinement"]["a_priori"]["max_levels_of_refinement"].GetInt()
         min_knot_distance_at_max_gradient = self.parameters["refinement"]["a_priori"]["min_knot_distance_at_max_gradient"].GetDouble()
         exponent = self.parameters["refinement"]["a_priori"]["exponent"].GetInt()
-
-        fe_point_parametric = self.condition_factory.GetFEPointParametrization()
 
         # Compute gradient of displacment field if necessary
         for node in self.fe_model_part.Nodes:
@@ -280,7 +287,7 @@ class CADMapper:
         local_gradient = KratosMultiphysics.ComputeNodalGradientProcess3D(self.fe_model_part, KratosShape.SHAPE_CHANGE_ABSOLUTE, KratosShape.GRAD_SHAPE_CHANGE, KratosMultiphysics.NODAL_AREA)
         local_gradient.Execute()
 
-        l2_norms_grads = [np.array(entry["node"].GetSolutionStepValue(KratosShape.GRAD_SHAPE_CHANGE)) for entry in fe_point_parametric]
+        l2_norms_grads = [np.array(entry["node"].GetSolutionStepValue(KratosShape.GRAD_SHAPE_CHANGE)) for entry in self.fe_point_parametric]
         l2_norms_grads = [ la.norm(grad) for grad in l2_norms_grads]
         max_norm_grads = max(l2_norms_grads)
 
@@ -296,7 +303,7 @@ class CADMapper:
             exist_intervals_to_refine = False
 
             # First identify spots where distance to fe points exceeds limit
-            for entry in fe_point_parametric:
+            for entry in self.fe_point_parametric:
 
                 node = entry["node"]
 
@@ -434,8 +441,6 @@ class CADMapper:
         rot_coupling_tolerance = self.parameters["refinement"]["a_posteriori"]["rot_coupling_tolerance"].GetDouble() # in degree
         minimum_knot_distance = self.parameters["refinement"]["a_posteriori"]["mininimum_knot_distance"].GetDouble()
 
-        fe_point_parametric = self.condition_factory.GetFEPointParametrization()
-
         exist_intervals_to_refine = False
         is_fe_point_distance_satisfied = True
         is_disp_coupling_satisfied = True
@@ -446,7 +451,7 @@ class CADMapper:
         intervals_along_v_to_refine = {geometry.Key(): [] for geometry in self.cad_model.GetByType('SurfaceGeometry3D')}
 
         # First identify spots where distance to fe points exceeds limit
-        for entry in fe_point_parametric:
+        for entry in self.fe_point_parametric:
 
             node = entry["node"]
             shape_update = node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)

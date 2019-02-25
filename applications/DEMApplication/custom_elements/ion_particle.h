@@ -111,8 +111,8 @@ public:
 
     virtual void MemberDeclarationFirstStep(const ProcessInfo& r_process_info) override;
     
-    void CalculateCoulombForce(array_1d<double, 3>& Coulomb_force);
-    void CalculateLaplaceForce(array_1d<double, 3>& Laplace_force);
+    virtual void CalculateCoulombForce(array_1d<double, 3>& Coulomb_force);
+    virtual void CalculateLaplaceForce(array_1d<double, 3>& Laplace_force);
 
 
     double GetSingleIonCharge();

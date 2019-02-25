@@ -14,6 +14,7 @@ set(KRATOS_DEM_APPLICATION_CORE
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_strategies/strategies/explicit_solver_continuum.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/spheric_particle.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/ion_particle.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/electron_particle.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/nanoparticle.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/analytic_spheric_particle.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/spheric_continuum_particle.cpp

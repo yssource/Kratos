@@ -18,11 +18,10 @@
 // External includes
 
 // Project includes
-#include "custom_elements/element_derivatives_extension.h"
+#include "utilities/element_derivatives_extension.h"
 #include "includes/checks.h"
 #include "includes/define.h"
 #include "includes/kratos_parameters.h"
-#include "rans_constitutive_laws_application_variables.h"
 #include "solving_strategies/schemes/scheme.h"
 #include "utilities/variable_utils.h"
 
@@ -196,12 +195,16 @@ public:
                 r_second_derivatives, rModelPart.GetProcessInfo());
 
             Vector r_current_velocity;
-            it_element->GetValuesVector(r_current_velocity);
+            it_element->GetFirstDerivativesVector(r_current_velocity);
             Vector r_old_velocity;
-            it_element->GetValuesVector(r_old_velocity, 1);
+            it_element->GetFirstDerivativesVector(r_old_velocity, 1);
 
             for (unsigned int j = 0; j < r_second_derivatives.size(); ++j)
             {
+                // Skip the dof, if it is represented by shared null ptr
+                if (r_second_derivatives[j] == nullptr)
+                    continue;
+
                 double& current_value = r_second_derivatives[j]->GetSolutionStepValue();
                 const double old_value =
                     r_second_derivatives[j]->GetSolutionStepValue(1);
@@ -224,62 +227,51 @@ public:
                  TSystemVectorType& Dv,
                  TSystemVectorType& b) override
     {
-        // if (rModelPart.GetCommunicator().MyPID() == 0)
-        //     std::cout << "prediction" << std::endl;
+        auto& elements_array = rModelPart.Elements();
 
-        int NumThreads = OpenMPUtils::GetNumThreads();
-        OpenMPUtils::PartitionVector NodePartition;
-        OpenMPUtils::DivideInPartitions(rModelPart.Nodes().size(), NumThreads, NodePartition);
-
-#pragma omp parallel
+#pragma omp parallel for
+        for (int i = 0; i < static_cast<int>(elements_array.size()); ++i)
         {
-            // array_1d<double, 3 > DeltaDisp;
+            auto it_element = elements_array.begin() + i;
+            auto& element_derivatives_dofs_extension =
+                *it_element->GetValue(ELEMENT_DERIVATIVES_DOFS_EXTENSION);
 
-            int k = OpenMPUtils::ThisThread();
+            DofsVectorType r_first_derivatives;
+            element_derivatives_dofs_extension.GetFirstDerivativesDofList(
+                r_first_derivatives, rModelPart.GetProcessInfo());
+            
+            DofsVectorType r_second_derivatives;
+            element_derivatives_dofs_extension.GetSecondDerivativesDofList(
+                r_second_derivatives, rModelPart.GetProcessInfo());
+            
+            const std::size_t dof_size = r_first_derivatives.size();
 
-            ModelPart::NodeIterator NodesBegin =
-                rModelPart.NodesBegin() + NodePartition[k];
-            ModelPart::NodeIterator NodesEnd =
-                rModelPart.NodesBegin() + NodePartition[k + 1];
-
-            for (ModelPart::NodeIterator itNode = NodesBegin; itNode != NodesEnd; itNode++)
+            for (std::size_t i = 0; i < dof_size; ++i)
             {
-                array_1d<double, 3>& OldVelocity =
-                    (itNode)->FastGetSolutionStepValue(VELOCITY, 1);
-                double& OldPressure = (itNode)->FastGetSolutionStepValue(PRESSURE, 1);
+                double& r_current_velocity = r_first_derivatives[i]->GetSolutionStepValue();
+                const double r_old_velocity = r_first_derivatives[i]->GetSolutionStepValue(1);
 
-                // predicting velocity
-                // ATTENTION::: the prediction is performed only on free nodes
-                array_1d<double, 3>& CurrentVelocity =
-                    (itNode)->FastGetSolutionStepValue(VELOCITY);
-                double& CurrentPressure = (itNode)->FastGetSolutionStepValue(PRESSURE);
+                if (r_first_derivatives[i]->IsFree())
+                {
+#pragma omp atomic
+                    r_current_velocity = r_old_velocity;           
+                }
 
-                if ((itNode->pGetDof(VELOCITY_X))->IsFree())
-                    (CurrentVelocity[0]) = OldVelocity[0];
-                if (itNode->pGetDof(VELOCITY_Y)->IsFree())
-                    (CurrentVelocity[1]) = OldVelocity[1];
-                if (itNode->HasDofFor(VELOCITY_Z))
-                    if (itNode->pGetDof(VELOCITY_Z)->IsFree())
-                        (CurrentVelocity[2]) = OldVelocity[2];
+                if (mIsSteady)
+                    continue;
 
-                if (itNode->pGetDof(PRESSURE)->IsFree())
-                    CurrentPressure = OldPressure;
+                // Skip the dof, if it is represented by shared null ptr
+                if (r_second_derivatives[i] == nullptr)
+                    continue;
 
-                // updating time derivatives ::: please note that displacements and
-                // their time derivatives can not be consistently fixed separately
-                array_1d<double, 3> DeltaVel;
-                noalias(DeltaVel) = CurrentVelocity - OldVelocity;
-                array_1d<double, 3>& OldAcceleration =
-                    (itNode)->FastGetSolutionStepValue(ACCELERATION, 1);
-                array_1d<double, 3>& CurrentAcceleration =
-                    (itNode)->FastGetSolutionStepValue(ACCELERATION);
-
-                UpdateAcceleration(CurrentAcceleration, DeltaVel, OldAcceleration);
+                const double delta_velocity = r_current_velocity - r_old_velocity;
+                double& current_aceleration = r_second_derivatives[i]->GetSolutionStepValue();
+#pragma omp critical
+                current_aceleration =
+                    (r_current_velocity[j] - r_old_velocity[j]) * mBossak.C2 -
+                    mBossak.C3 * old_value;                
             }
         }
-
-        //              if (rModelPart.GetCommunicator().MyPID() == 0)
-        //                  std::cout << "end of prediction" << std::endl;
     }
 
     void CalculateSystemContributions(Element::Pointer pCurrentElement,
@@ -293,38 +285,17 @@ public:
         auto& r_current_element = *pCurrentElement;
         const auto k = OpenMPUtils::ThisThread();
 
-        r_current_element.GetValuesVector(mValuesVector[k]);
-        const auto local_size = mValuesVector[k].size();
+        r_current_element.InitializeNonLinearIteration(rCurrentProcessInfo);
 
-        if (rLHS_Contribution.size1() != local_size || rLHS_Contribution.size2() != local_size)
-            rLHS_Contribution.resize(local_size, local_size, false);
-
-        if (rRHS_Contribution.size() != local_size)
-            rRHS_Contribution.resize(local_size, false);
-
-        rLHS_Contribution.clear();
-        rRHS_Contribution.clear();
-
-        this->CheckAndResizeThreadStorage(local_size);
-
-        r_current_element.CalculateDampingMatrix(mDampingMatrix[k], rCurrentProcessInfo);
-        r_current_element.CalculateRightHandSide(mForceVector[k], rCurrentProcessInfo);
-
-        noalias(rLHS_Contribution) += mDampingMatrix[k];
-        noalias(rRHS_Contribution) += mForceVector[k];
+        r_current_element.CalculateLocalSystem(rLHS_Contribution, rRHS_Contribution,rCurrentProcessInfo);
+        r_current_element.CalculateLocalVelocityContribution(mDampingMatrix[k], rRHS_Contribution, rCurrentProcessInfo);
 
         if (!mIsSteady)
         {
             r_current_element.CalculateMassMatrix(mMassMatrix[k], rCurrentProcessInfo);
-            r_current_element.GetSecondDerivativesVector(
-                mSecondDerivativeValuesVector[k], 1);
-            r_current_element.GetSecondDerivativesVector(mAuxVector[k], 0);
-
-            mAuxVector[k] *= (1.0 - mBossak.Alpha);
-            noalias(mAuxVector[k]) += mBossak.Alpha * mSecondDerivativeValuesVector[k];
-
-            noalias(rLHS_Contribution) += mBossak.C0 * mMassMatrix[k];
-            noalias(rRHS_Contribution) -= prod(mMassMatrix[k], mAuxVector[k]);
+           
+            AddDynamicsToLHS(rLHS_Contribution, mDampingMatrix[k], mMassMatrix[k], rCurrentProcessInfo);
+            AddDynamicsToRHS(r_current_element, rRHS_Contribution, mDampingMatrix[k], mMassMatrix[k], rCurrentProcessInfo);
         }
 
         this->CalculateResidualLocalContributions(

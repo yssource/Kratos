@@ -74,6 +74,17 @@ public:
         })");
         Settings.ValidateAndAssignDefaults(default_parameters);
         mBossak.Alpha = Settings["alpha_bossak"].GetDouble();
+
+        mIsSteady = false;
+        if (Settings["scheme_type"].GetString() == "steady")
+            mIsSteady = true;
+
+        if (mIsSteady)
+            KRATOS_INFO("ResidualBasedBossakVelocityScheme")
+                << "Using steady bossak velocity scheme\n";
+        else
+            KRATOS_INFO("ResidualBasedBossakVelocityScheme")
+                << "Using transient bossak velocity scheme\n";
     }
 
     /// Destructor.
@@ -153,6 +164,8 @@ public:
         // residual of the physical problem.
         this->mpDofUpdater->UpdateDofs(rDofSet, rDx);
 
+        if (mIsSteady)
+            return;
         // update the second derivatives
         auto& elements_array = rModelPart.Elements();
 
@@ -179,9 +192,9 @@ public:
                     r_second_derivatives[j]->GetSolutionStepValue(1);
 
 #pragma omp critical
-                current_value = (r_current_velocity[j] - r_old_velocity[j]) * mBossak.C2 -
+                current_value =
+                    (r_current_velocity[j] - r_old_velocity[j]) * mBossak.C2 -
                     mBossak.C3 * old_value;
-
             }
         }
 
@@ -213,22 +226,25 @@ public:
 
         this->CheckAndResizeThreadStorage(local_size);
 
-        r_current_element.CalculateMassMatrix(mMassMatrix[k], rCurrentProcessInfo);
         r_current_element.CalculateDampingMatrix(mDampingMatrix[k], rCurrentProcessInfo);
         r_current_element.CalculateRightHandSide(mForceVector[k], rCurrentProcessInfo);
-        r_current_element.GetFirstDerivativesVector(mFirstDerivativeValuesVector[k], 1);
-        r_current_element.GetSecondDerivativesVector(mSecondDerivativeValuesVector[k], 1);
 
-        noalias(rLHS_Contribution) += mBossak.C0 * mMassMatrix[k];
         noalias(rLHS_Contribution) += mDampingMatrix[k];
-
         noalias(rRHS_Contribution) += mForceVector[k];
 
-        noalias(mAuxVector[k]) = prod(mMassMatrix[k], mSecondDerivativeValuesVector[k]);
-        noalias(rRHS_Contribution) += mBossak.C1 * mAuxVector[k];
+        if (!mIsSteady)
+        {
+            r_current_element.CalculateMassMatrix(mMassMatrix[k], rCurrentProcessInfo);
+            r_current_element.GetSecondDerivativesVector(
+                mSecondDerivativeValuesVector[k], 1);
+            r_current_element.GetSecondDerivativesVector(mAuxVector[k], 0);
 
-        noalias(mAuxVector[k]) = prod(mMassMatrix[k], mFirstDerivativeValuesVector[k]);
-        noalias(rRHS_Contribution) += mBossak.C0 * mAuxVector[k];
+            mAuxVector[k] *= (1.0 - mBossak.Alpha);
+            noalias(mAuxVector[k]) += mBossak.Alpha * mSecondDerivativeValuesVector[k];
+
+            noalias(rLHS_Contribution) += mBossak.C0 * mMassMatrix[k];
+            noalias(rRHS_Contribution) -= prod(mMassMatrix[k], mAuxVector[k]);
+        }
 
         this->CalculateResidualLocalContributions(
             r_current_element, rLHS_Contribution, rRHS_Contribution, rCurrentProcessInfo);
@@ -376,6 +392,8 @@ private:
     std::vector<LocalSystemMatrixType> mDampingMatrix;
     std::vector<LocalSystemVectorType> mForceVector;
     std::vector<LocalSystemVectorType> mAuxVector;
+
+    bool mIsSteady;
 
     ///@}
     ///@name Private Operators

@@ -24,14 +24,7 @@
 #include "includes/kratos_parameters.h"
 #include "utilities/divide_triangle_2d_3.h"
 #include "modified_shape_functions/triangle_2d_3_modified_shape_functions.h"
-
-#include <string>
-#include <iostream>
-#include <sstream>
-
-#include <boost/functional/hash.hpp> //TODO: remove this dependence when Kratos has en internal one
-#include <unordered_map> //TODO: remove this dependence when Kratos has en internal one
-#include <utility>
+#include "compressible_potential_flow_application_variables.h"
 
 namespace Kratos
 {
@@ -52,16 +45,6 @@ public:
     ///@name Life Cycle
     ///@{
 
-    /// Constructor for ComputeLiftLevelSetProcess Process
-//     ComputeLiftLevelSetProcess(ModelPart& rModelPart,
-//                      KratosParameters& parameters
-//                     ):
-//         Process(),
-//         mrModelPart(rModelPart),
-//         mrOptions(Flags()),
-//         mrParameters(parameters)
-//     {
-//     }
     /// Constructor for ComputeLiftLevelSetProcess Process
     ComputeLiftLevelSetProcess(ModelPart& rModelPart,
                 Vector& rResultForce                             

@@ -88,6 +88,10 @@ class LaplacianSolver(PythonSolver):
 
         # Kratos variables
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.DISTANCE)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.DISTANCE_GRADIENT)
+        self.main_model_part.AddNodalSolutionStepVariable(KCPFApp.LEVEL_SET_DISTANCE)
+        self.main_model_part.AddNodalSolutionStepVariable(KCPFApp.WAKE_DISTANCE)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.FLAG_VARIABLE)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)
 
     def AddDofs(self):

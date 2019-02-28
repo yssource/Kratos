@@ -275,7 +275,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                                                     "WriteConditionsFlag": "WriteConditions",
                                                     "MultiFileFlag": "SingleFile"
                                                 },
-                                                "nodal_results"       : ["DISTANCE","LEVEL_SET_DISTANCE","WAKE_DISTANCE","TEMPERATURE"],
+                                                "nodal_results"       : ["DISTANCE","LEVEL_SET_DISTANCE","WAKE_DISTANCE"],
                                                 "elemental_conditional_flags_results": ["MARKER","INTERFACE"]
                                             }
                                         }

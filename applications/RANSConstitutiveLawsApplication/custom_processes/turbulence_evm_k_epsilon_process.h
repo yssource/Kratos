@@ -499,9 +499,9 @@ protected:
         KRATOS_TRY
 
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(TURBULENT_KINETIC_ENERGY);
+        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(TURBULENT_KINETIC_ENERGY_RATE);
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(
             TURBULENT_ENERGY_DISSIPATION_RATE);
-        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(TURBULENT_KINETIC_ENERGY_RATE);
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(
             TURBULENT_ENERGY_DISSIPATION_RATE_2);
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(FRICTION_VELOCITY);
@@ -516,11 +516,6 @@ protected:
         VariableUtils().AddDof<Variable<double>>(TURBULENT_KINETIC_ENERGY, this->mrModelPart);
         VariableUtils().AddDof<Variable<double>>(
             TURBULENT_ENERGY_DISSIPATION_RATE, this->mrModelPart);
-        VariableUtils().AddDof<Variable<double>>(TURBULENT_KINETIC_ENERGY_RATE,
-                                                 this->mrModelPart);
-        VariableUtils().AddDof<Variable<double>>(
-            TURBULENT_ENERGY_DISSIPATION_RATE_2, this->mrModelPart);
-
         BaseType::AddDofs();
     }
     ///@}
@@ -959,12 +954,14 @@ private:
             if (this->mEchoLevel > 0)
                 KRATOS_INFO("TurbulenceModel") << "Solving for K...\n";
             mpKStrategy->SolveSolutionStep();
+            this->LowerBoundScalar(1e-15, TURBULENT_KINETIC_ENERGY);
 
             // this->CorrectTurbulentKineticEnergy();
 
             if (this->mEchoLevel > 0)
                 KRATOS_INFO("TurbulenceModel") << "Solving for Epsilon...\n";
             mpEpsilonStrategy->SolveSolutionStep();
+            this->LowerBoundScalar(1e-15, TURBULENT_ENERGY_DISSIPATION_RATE);
 
             this->UpdateTurbulentViscosity();
 
@@ -1064,6 +1061,19 @@ private:
                 C_mu, f_mu, tke, epsilon, mixing_length, nu_min);
 
             iNode->FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t;
+        }
+    }
+
+    void LowerBoundScalar(const double min_value, Variable<double>& rVariable)
+    {
+        const int number_of_nodes = this->mrModelPart.NumberOfNodes();
+
+#pragma omp parallel for
+        for (int i = 0; i < number_of_nodes; i++)
+        {
+            Node<3>& r_current_node = *(this->mrModelPart.NodesBegin() + i);
+            double& value = r_current_node.FastGetSolutionStepValue(rVariable);
+            value = std::max<double>(min_value, value);
         }
     }
 

@@ -151,15 +151,18 @@ public:
             const double ratio = increase_norm / solution_norm;
             const double ratio_abs = sqrt(increase_norm) / static_cast<int>(dof_num);
 
+            const ProcessInfo& r_current_process_info = rModelPart.GetProcessInfo();
+            const unsigned int iteration = r_current_process_info[NL_ITERATION_NUMBER];
+
             if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
             {
-                std::cout << "CONVERGENCE CHECK: ";
+                std::cout << "[" << iteration << "] CONVERGENCE CHECK: ";
                 std::cout << dof_name;
                 std::cout << ": ratio = " << std::scientific << ratio
                           << "; exp.ratio = " << std::scientific << mRatioTolerance;
                 std::cout << ": abs = " << std::scientific << ratio_abs
-                          << "; exp.abs = " << std::scientific
-                          << mAbsTolerance << std::endl;
+                          << "; exp.abs = " << std::scientific << mAbsTolerance
+                          << std::endl;
             }
 
             if ((std::abs(ratio) > mRatioTolerance) && (std::abs(ratio_abs) > mAbsTolerance))
@@ -167,7 +170,9 @@ public:
 
             if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
             {
-                std::cout << "*** CONVERGENCE IS ACHIEVED ***" << std::endl;
+                std::cout << "CONVERGENCE CHECK: ";
+                std::cout << dof_name;
+                std::cout << ": *** CONVERGENCE IS ACHIEVED ***" << std::endl;
             }
 
             return true;

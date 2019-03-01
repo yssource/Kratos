@@ -12,17 +12,13 @@
 
 // System includes
 
-
 // External includes
-
 
 // Include Base h
 #include "custom_conditions/evm_epsilon_wall_condition.h"
 
-
 namespace Kratos
 {
-
 ///@name Kratos Globals
 ///@{
 
@@ -45,7 +41,7 @@ namespace Kratos
 /**
  * Constructor.
  */
-template<unsigned int TDim, unsigned int TNumNodes>
+template <unsigned int TDim, unsigned int TNumNodes>
 EvmEpsilonWallCondition<TDim, TNumNodes>::EvmEpsilonWallCondition(IndexType NewId)
     : Condition(NewId)
 {
@@ -54,8 +50,9 @@ EvmEpsilonWallCondition<TDim, TNumNodes>::EvmEpsilonWallCondition(IndexType NewI
 /**
  * Constructor using an array of nodes
  */
-template<unsigned int TDim, unsigned int TNumNodes>
-EvmEpsilonWallCondition<TDim, TNumNodes>::EvmEpsilonWallCondition(IndexType NewId, const NodesArrayType& ThisNodes)
+template <unsigned int TDim, unsigned int TNumNodes>
+EvmEpsilonWallCondition<TDim, TNumNodes>::EvmEpsilonWallCondition(IndexType NewId,
+                                                                  const NodesArrayType& ThisNodes)
     : Condition(NewId, ThisNodes)
 {
 }
@@ -63,8 +60,9 @@ EvmEpsilonWallCondition<TDim, TNumNodes>::EvmEpsilonWallCondition(IndexType NewI
 /**
  * Constructor using Geometry
  */
-template<unsigned int TDim, unsigned int TNumNodes>
-EvmEpsilonWallCondition<TDim, TNumNodes>::EvmEpsilonWallCondition(IndexType NewId, GeometryType::Pointer pGeometry)
+template <unsigned int TDim, unsigned int TNumNodes>
+EvmEpsilonWallCondition<TDim, TNumNodes>::EvmEpsilonWallCondition(IndexType NewId,
+                                                                  GeometryType::Pointer pGeometry)
     : Condition(NewId, pGeometry)
 {
 }
@@ -72,8 +70,9 @@ EvmEpsilonWallCondition<TDim, TNumNodes>::EvmEpsilonWallCondition(IndexType NewI
 /**
  * Constructor using Properties
  */
-template<unsigned int TDim, unsigned int TNumNodes>
-EvmEpsilonWallCondition<TDim, TNumNodes>::EvmEpsilonWallCondition(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
+template <unsigned int TDim, unsigned int TNumNodes>
+EvmEpsilonWallCondition<TDim, TNumNodes>::EvmEpsilonWallCondition(
+    IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
     : Condition(NewId, pGeometry, pProperties)
 {
 }
@@ -81,7 +80,7 @@ EvmEpsilonWallCondition<TDim, TNumNodes>::EvmEpsilonWallCondition(IndexType NewI
 /**
  * Copy Constructor
  */
-template<unsigned int TDim, unsigned int TNumNodes>
+template <unsigned int TDim, unsigned int TNumNodes>
 EvmEpsilonWallCondition<TDim, TNumNodes>::EvmEpsilonWallCondition(EvmEpsilonWallCondition const& rOther)
     : Condition(rOther)
 {
@@ -90,19 +89,22 @@ EvmEpsilonWallCondition<TDim, TNumNodes>::EvmEpsilonWallCondition(EvmEpsilonWall
 /**
  * Destructor
  */
-template<unsigned int TDim, unsigned int TNumNodes>
-EvmEpsilonWallCondition<TDim, TNumNodes>::~EvmEpsilonWallCondition() { }
+template <unsigned int TDim, unsigned int TNumNodes>
+EvmEpsilonWallCondition<TDim, TNumNodes>::~EvmEpsilonWallCondition()
+{
+}
 
 ///@}
 ///@name Operators
 ///@{
 
 /// Assignment operator.
-template<unsigned int TDim, unsigned int TNumNodes>
-EvmEpsilonWallCondition<TDim, TNumNodes> & EvmEpsilonWallCondition<TDim, TNumNodes>::operator=(EvmEpsilonWallCondition<TDim, TNumNodes> const& rOther)
+template <unsigned int TDim, unsigned int TNumNodes>
+EvmEpsilonWallCondition<TDim, TNumNodes>& EvmEpsilonWallCondition<TDim, TNumNodes>::operator=(
+    EvmEpsilonWallCondition<TDim, TNumNodes> const& rOther)
 {
     BaseType::operator=(rOther);
-    Flags::operator =(rOther);
+    Flags::operator=(rOther);
     // mpProperties = rOther.mpProperties;
     return *this;
 }
@@ -123,15 +125,13 @@ EvmEpsilonWallCondition<TDim, TNumNodes> & EvmEpsilonWallCondition<TDim, TNumNod
  * @param pProperties: the properties assigned to the new condition
  * @return a Pointer to the new condition
  */
-template<unsigned int TDim, unsigned int TNumNodes>
+template <unsigned int TDim, unsigned int TNumNodes>
 Condition::Pointer EvmEpsilonWallCondition<TDim, TNumNodes>::Create(
-    IndexType NewId,
-    NodesArrayType const& ThisNodes,
-    PropertiesType::Pointer pProperties) const
+    IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const
 {
-
     KRATOS_TRY
-    return Kratos::make_shared<EvmEpsilonWallCondition>(NewId, GetGeometry().Create(ThisNodes), pProperties);
+    return Kratos::make_shared<EvmEpsilonWallCondition>(
+        NewId, GetGeometry().Create(ThisNodes), pProperties);
     KRATOS_CATCH("");
 }
 
@@ -142,13 +142,10 @@ Condition::Pointer EvmEpsilonWallCondition<TDim, TNumNodes>::Create(
  * @param pProperties: the properties assigned to the new condition
  * @return a Pointer to the new condition
  */
-template<unsigned int TDim, unsigned int TNumNodes>
+template <unsigned int TDim, unsigned int TNumNodes>
 Condition::Pointer EvmEpsilonWallCondition<TDim, TNumNodes>::Create(
-    IndexType NewId,
-    GeometryType::Pointer pGeom,
-    PropertiesType::Pointer pProperties) const
+    IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const
 {
-
     KRATOS_TRY
     return Kratos::make_shared<EvmEpsilonWallCondition>(NewId, pGeom, pProperties);
     KRATOS_CATCH("");
@@ -161,11 +158,13 @@ Condition::Pointer EvmEpsilonWallCondition<TDim, TNumNodes>::Create(
  * @param pProperties: the properties assigned to the new condition
  * @return a Pointer to the new condition
  */
-template<unsigned int TDim, unsigned int TNumNodes>
-Condition::Pointer EvmEpsilonWallCondition<TDim, TNumNodes>::Clone(IndexType NewId, NodesArrayType const& ThisNodes) const
+template <unsigned int TDim, unsigned int TNumNodes>
+Condition::Pointer EvmEpsilonWallCondition<TDim, TNumNodes>::Clone(IndexType NewId,
+                                                                   NodesArrayType const& ThisNodes) const
 {
     KRATOS_TRY
-    return Kratos::make_shared<EvmEpsilonWallCondition>(NewId, GetGeometry().Create(ThisNodes), pGetProperties());
+    return Kratos::make_shared<EvmEpsilonWallCondition>(
+        NewId, GetGeometry().Create(ThisNodes), pGetProperties());
     KRATOS_CATCH("");
 }
 
@@ -175,8 +174,9 @@ Condition::Pointer EvmEpsilonWallCondition<TDim, TNumNodes>::Clone(IndexType New
  * @param rResult: the condition equation ID vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-template<unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonWallCondition<TDim, TNumNodes>::EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmEpsilonWallCondition<TDim, TNumNodes>::EquationIdVector(EquationIdVectorType& rResult,
+                                                                ProcessInfo& CurrentProcessInfo)
 {
     if (rResult.size() != TLocalSize)
         rResult.resize(TLocalSize, false);
@@ -192,8 +192,9 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::EquationIdVector(EquationIdVector
  * @param ConditionDofList: the list of DOFs
  * @param rCurrentProcessInfo: the current process info instance
  */
-template<unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonWallCondition<TDim, TNumNodes>::GetDofList(DofsVectorType& rConditionDofList, ProcessInfo& CurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmEpsilonWallCondition<TDim, TNumNodes>::GetDofList(DofsVectorType& rConditionDofList,
+                                                          ProcessInfo& CurrentProcessInfo)
 {
     if (rConditionDofList.size() != TLocalSize)
         rConditionDofList.resize(TLocalSize);
@@ -206,9 +207,9 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::GetDofList(DofsVectorType& rCondi
 
 /**
  * CONDITIONS inherited from this class have to implement next
- * CalculateLocalSystem, CalculateLeftHandSide and CalculateRightHandSide methods
- * they can be managed internally with a private method to do the same calculations
- * only once: MANDATORY
+ * CalculateLocalSystem, CalculateLeftHandSide and CalculateRightHandSide
+ * methods they can be managed internally with a private method to do the same
+ * calculations only once: MANDATORY
  */
 
 /**
@@ -219,11 +220,9 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::GetDofList(DofsVectorType& rCondi
  * @param rRightHandSideVector: the condition right hand side
  * @param rCurrentProcessInfo: the current process info instance
  */
-template<unsigned int TDim, unsigned int TNumNodes>
+template <unsigned int TDim, unsigned int TNumNodes>
 void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateLocalSystem(
-    MatrixType& rLeftHandSideMatrix,
-    VectorType& rRightHandSideVector,
-    ProcessInfo& rCurrentProcessInfo)
+    MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
     this->CalculateLeftHandSide(rLeftHandSideMatrix, rCurrentProcessInfo);
     this->CalculateRightHandSide(rRightHandSideVector, rCurrentProcessInfo);
@@ -235,15 +234,24 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateLocalSystem(
  * @param rLeftHandSideMatrix: the condition left hand side matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-template<unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix,
+                                                                     ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY
 
-    if (rLeftHandSideMatrix.size1() != TLocalSize || rLeftHandSideMatrix.size2() != TLocalSize)
-        rLeftHandSideMatrix.resize(TLocalSize, TLocalSize, false);
+    if (this->Is(STRUCTURE))
+    {
+        if (rLeftHandSideMatrix.size1() != TLocalSize || rLeftHandSideMatrix.size2() != TLocalSize)
+            rLeftHandSideMatrix.resize(TLocalSize, TLocalSize, false);
 
-    rLeftHandSideMatrix.clear();
+        rLeftHandSideMatrix.clear();
+    }
+    else
+    {
+        if (rLeftHandSideMatrix.size1() != 0 || rLeftHandSideMatrix.size2() != 0)
+            rLeftHandSideMatrix.resize(0, 0, false);
+    }
 
     KRATOS_CATCH("");
 }
@@ -254,37 +262,42 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateLeftHandSide(MatrixType&
  * @param rRightHandSideVector: the condition right hand side vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-template<unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRightHandSideVector,
+                                                                      ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY
 
-    if (this->Is(STRUCTURE)){
+    if (this->Is(STRUCTURE))
+    {
         if (rRightHandSideVector.size() != TLocalSize)
             rRightHandSideVector.resize(TLocalSize, false);
 
         rRightHandSideVector.clear();
 
         const double C_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
-        const double epsilon_sigma = rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
+        const double epsilon_sigma =
+            rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
 
         const GeometryType& rGeom = this->GetGeometry();
-        const GeometryType::IntegrationPointsArrayType& IntegrationPoints = rGeom.IntegrationPoints(GeometryData::GI_GAUSS_2);
+        const GeometryType::IntegrationPointsArrayType& IntegrationPoints =
+            rGeom.IntegrationPoints(GeometryData::GI_GAUSS_2);
         const unsigned int NumGauss = IntegrationPoints.size();
 
         MatrixType NContainer = rGeom.ShapeFunctionsValues(GeometryData::GI_GAUSS_2);
 
-        array_1d<double,3> Normal;
-        this->CalculateNormal(Normal); //this already contains the area
-        double A = std::sqrt(Normal[0]*Normal[0]+Normal[1]*Normal[1]+Normal[2]*Normal[2]);
+        array_1d<double, 3> Normal;
+        this->CalculateNormal(Normal); // this already contains the area
+        double A = std::sqrt(Normal[0] * Normal[0] + Normal[1] * Normal[1] +
+                             Normal[2] * Normal[2]);
         Normal /= A;
 
         // CAUTION: "Jacobian" is 2.0*A for triangles but 0.5*A for lines
-        double J = (TDim == 2) ? 0.5*A : 2.0*A;
+        double J = (TDim == 2) ? 0.5 * A : 2.0 * A;
 
         for (unsigned int g = 0; g < NumGauss; g++)
         {
-            Vector N = row(NContainer,g);
+            Vector N = row(NContainer, g);
             double Weight = J * IntegrationPoints[g].Weight();
 
             double tke = 0.0;
@@ -306,6 +319,11 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateRightHandSide(VectorType
             }
         }
     }
+    else
+    {
+        if (rRightHandSideVector.size() != 0)
+            rRightHandSideVector.resize(0, false);
+    }
 
     KRATOS_CATCH("");
 }
@@ -317,11 +335,9 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateRightHandSide(VectorType
  * @param rRightHandSideVector: the condition right hand side
  * @param rCurrentProcessInfo: the current process info instance
  */
-template<unsigned int TDim, unsigned int TNumNodes>
+template <unsigned int TDim, unsigned int TNumNodes>
 void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateFirstDerivativesContributions(
-    MatrixType& rLeftHandSideMatrix,
-    VectorType& rRightHandSideVector,
-    ProcessInfo& rCurrentProcessInfo)
+    MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
     if (rLeftHandSideMatrix.size1() != 0)
         rLeftHandSideMatrix.resize(0, 0, false);
@@ -335,8 +351,9 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateFirstDerivativesContribu
  * @param rLeftHandSideMatrix: the condition left hand side matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-template<unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateFirstDerivativesLHS(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateFirstDerivativesLHS(
+    MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
 {
     if (rLeftHandSideMatrix.size1() != 0)
         rLeftHandSideMatrix.resize(0, 0, false);
@@ -348,11 +365,12 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateFirstDerivativesLHS(Matr
  * @param rRightHandSideVector: the condition right hand side vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-template<unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateFirstDerivativesRHS(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateFirstDerivativesRHS(
+    VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
     if (rRightHandSideVector.size() != 0)
-    rRightHandSideVector.resize(0, false);
+        rRightHandSideVector.resize(0, false);
 }
 
 /**
@@ -364,7 +382,6 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateFirstDerivativesRHS(Vect
  * CalculateSecondDerivativesLHS, CalculateSecondDerivativesRHS methods are : OPTIONAL
  */
 
-
 /**
  * this is called during the assembling process in order
  * to calculate the second derivative contributions for the LHS and RHS
@@ -372,11 +389,9 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateFirstDerivativesRHS(Vect
  * @param rRightHandSideVector: the condition right hand side
  * @param rCurrentProcessInfo: the current process info instance
  */
-template<unsigned int TDim, unsigned int TNumNodes>
+template <unsigned int TDim, unsigned int TNumNodes>
 void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateSecondDerivativesContributions(
-    MatrixType& rLeftHandSideMatrix,
-    VectorType& rRightHandSideVector,
-    ProcessInfo& rCurrentProcessInfo)
+    MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
     if (rLeftHandSideMatrix.size1() != 0)
         rLeftHandSideMatrix.resize(0, 0, false);
@@ -390,10 +405,9 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateSecondDerivativesContrib
  * @param rLeftHandSideMatrix: the condition left hand side matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-template<unsigned int TDim, unsigned int TNumNodes>
+template <unsigned int TDim, unsigned int TNumNodes>
 void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateSecondDerivativesLHS(
-    MatrixType& rLeftHandSideMatrix,
-    ProcessInfo& rCurrentProcessInfo)
+    MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
 {
     if (rLeftHandSideMatrix.size1() != 0)
         rLeftHandSideMatrix.resize(0, 0, false);
@@ -405,10 +419,9 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateSecondDerivativesLHS(
  * @param rRightHandSideVector: the condition right hand side vector
  * @param rCurrentProcessInfo: the current process info instance
  */
-template<unsigned int TDim, unsigned int TNumNodes>
+template <unsigned int TDim, unsigned int TNumNodes>
 void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateSecondDerivativesRHS(
-    VectorType& rRightHandSideVector,
-    ProcessInfo& rCurrentProcessInfo)
+    VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
     if (rRightHandSideVector.size() != 0)
         rRightHandSideVector.resize(0, false);
@@ -420,8 +433,9 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateSecondDerivativesRHS(
  * @param rMassMatrix: the condition mass matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-template<unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& rMassMatrix,
+                                                                   ProcessInfo& rCurrentProcessInfo)
 {
     if (rMassMatrix.size1() != 0)
         rMassMatrix.resize(0, 0, false);
@@ -433,31 +447,34 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& r
  * @param rDampingMatrix: the condition damping matrix
  * @param rCurrentProcessInfo: the current process info instance
  */
-template<unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmEpsilonWallCondition<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMatrix,
+                                                                      ProcessInfo& rCurrentProcessInfo)
 {
     if (rDampingMatrix.size1() != 0)
         rDampingMatrix.resize(0, 0, false);
 }
 
 /**
- * This method provides the place to perform checks on the completeness of the input
- * and the compatibility with the problem options as well as the contitutive laws selected
- * It is designed to be called only once (or anyway, not often) typically at the beginning
- * of the calculations, so to verify that nothing is missing from the input
- * or that no common error is found.
+ * This method provides the place to perform checks on the completeness of the
+ * input and the compatibility with the problem options as well as the
+ * contitutive laws selected It is designed to be called only once (or anyway,
+ * not often) typically at the beginning of the calculations, so to verify that
+ * nothing is missing from the input or that no common error is found.
  * @param rCurrentProcessInfo
  * this method is: MANDATORY
  */
-template<unsigned int TDim, unsigned int TNumNodes>
+template <unsigned int TDim, unsigned int TNumNodes>
 int EvmEpsilonWallCondition<TDim, TNumNodes>::Check(const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY
 
-    KRATOS_ERROR_IF(this->Id() < 1) <<"EvmEpsilonWallCondition found with Id 0 or negative" << std::endl;
+    KRATOS_ERROR_IF(this->Id() < 1)
+        << "EvmEpsilonWallCondition found with Id 0 or negative" << std::endl;
 
-    KRATOS_ERROR_IF(this->GetGeometry().Area() <= 0) << "On EvmEpsilonWallCondition -> "
-        << this->Id() <<  "; Area cannot be less than or equal to 0" << std::endl;
+    KRATOS_ERROR_IF(this->GetGeometry().Area() <= 0)
+        << "On EvmEpsilonWallCondition -> " << this->Id()
+        << "; Area cannot be less than or equal to 0" << std::endl;
 
     return 0;
 
@@ -468,11 +485,9 @@ int EvmEpsilonWallCondition<TDim, TNumNodes>::Check(const ProcessInfo& rCurrentP
 ///@name Access
 ///@{
 
-
 ///@}
 ///@name Inquiry
 ///@{
-
 
 ///@}
 ///@name Input and output
@@ -480,8 +495,9 @@ int EvmEpsilonWallCondition<TDim, TNumNodes>::Check(const ProcessInfo& rCurrentP
 
 /// Turn back information as a string.
 
-template<unsigned int TDim, unsigned int TNumNodes>
-std::string EvmEpsilonWallCondition<TDim, TNumNodes>::Info() const {
+template <unsigned int TDim, unsigned int TNumNodes>
+std::string EvmEpsilonWallCondition<TDim, TNumNodes>::Info() const
+{
     std::stringstream buffer;
     buffer << "EvmEpsilonWallCondition #" << Id();
     return buffer.str();
@@ -489,15 +505,17 @@ std::string EvmEpsilonWallCondition<TDim, TNumNodes>::Info() const {
 
 /// Print information about this object.
 
-template<unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonWallCondition<TDim, TNumNodes>::PrintInfo(std::ostream& rOStream) const {
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmEpsilonWallCondition<TDim, TNumNodes>::PrintInfo(std::ostream& rOStream) const
+{
     rOStream << "EvmEpsilonWallCondition #" << Id();
 }
 
 /// Print object's data.
 
-template<unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonWallCondition<TDim, TNumNodes>::PrintData(std::ostream& rOStream) const {
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmEpsilonWallCondition<TDim, TNumNodes>::PrintData(std::ostream& rOStream) const
+{
     pGetGeometry()->PrintData(rOStream);
 }
 
@@ -523,22 +541,21 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::PrintData(std::ostream& rOStream)
 ///@{
 
 template <>
-void EvmEpsilonWallCondition<2,2>::CalculateNormal(array_1d<double,3>& An)
+void EvmEpsilonWallCondition<2, 2>::CalculateNormal(array_1d<double, 3>& An)
 {
-    Geometry<Node<3> >& pGeometry = this->GetGeometry();
+    Geometry<Node<3>>& pGeometry = this->GetGeometry();
 
-    An[0] =   pGeometry[1].Y() - pGeometry[0].Y();
-    An[1] = - (pGeometry[1].X() - pGeometry[0].X());
-    An[2] =    0.00;
-
+    An[0] = pGeometry[1].Y() - pGeometry[0].Y();
+    An[1] = -(pGeometry[1].X() - pGeometry[0].X());
+    An[2] = 0.00;
 }
 
 template <>
-void EvmEpsilonWallCondition<3,3>::CalculateNormal(array_1d<double,3>& An )
+void EvmEpsilonWallCondition<3, 3>::CalculateNormal(array_1d<double, 3>& An)
 {
-    Geometry<Node<3> >& pGeometry = this->GetGeometry();
+    Geometry<Node<3>>& pGeometry = this->GetGeometry();
 
-    array_1d<double,3> v1,v2;
+    array_1d<double, 3> v1, v2;
     v1[0] = pGeometry[1].X() - pGeometry[0].X();
     v1[1] = pGeometry[1].Y() - pGeometry[0].Y();
     v1[2] = pGeometry[1].Z() - pGeometry[0].Z();
@@ -547,7 +564,7 @@ void EvmEpsilonWallCondition<3,3>::CalculateNormal(array_1d<double,3>& An )
     v2[1] = pGeometry[2].Y() - pGeometry[0].Y();
     v2[2] = pGeometry[2].Z() - pGeometry[0].Z();
 
-    MathUtils<double>::CrossProduct(An,v1,v2);
+    MathUtils<double>::CrossProduct(An, v1, v2);
     An *= 0.5;
 }
 
@@ -584,17 +601,19 @@ void EvmEpsilonWallCondition<3,3>::CalculateNormal(array_1d<double,3>& An )
 ///@name Serialization
 ///@{
 
-template<unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonWallCondition<TDim, TNumNodes>::save(Serializer& rSerializer) const {
-    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Condition );
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmEpsilonWallCondition<TDim, TNumNodes>::save(Serializer& rSerializer) const
+{
+    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Condition);
 
     // List
     // To be completed with the class member list
 }
 
-template<unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonWallCondition<TDim, TNumNodes>::load(Serializer& rSerializer) {
-    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Condition );
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmEpsilonWallCondition<TDim, TNumNodes>::load(Serializer& rSerializer)
+{
+    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Condition);
 
     // List
     // To be completed with the class member list
@@ -621,15 +640,18 @@ void EvmEpsilonWallCondition<TDim, TNumNodes>::load(Serializer& rSerializer) {
 ///@{
 
 /// input stream function
-template<unsigned int TDim, unsigned int TNumNodes>
-inline std::istream & operator >> (std::istream& rIStream, EvmEpsilonWallCondition<TDim, TNumNodes>& rThis)
+template <unsigned int TDim, unsigned int TNumNodes>
+inline std::istream& operator>>(std::istream& rIStream,
+                                EvmEpsilonWallCondition<TDim, TNumNodes>& rThis)
 {
     return rIStream;
 }
 
 /// output stream function
-template<unsigned int TDim, unsigned int TNumNodes>
-inline std::ostream & operator << (std::ostream& rOStream, const EvmEpsilonWallCondition<TDim, TNumNodes>& rThis) {
+template <unsigned int TDim, unsigned int TNumNodes>
+inline std::ostream& operator<<(std::ostream& rOStream,
+                                const EvmEpsilonWallCondition<TDim, TNumNodes>& rThis)
+{
     rThis.PrintInfo(rOStream);
     rOStream << " : " << std::endl;
     rThis.PrintData(rOStream);

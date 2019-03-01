@@ -128,24 +128,6 @@ class Algorithm(BaseAlgorithm):
     def GetFirstStepForFluidComputation(self):
         return 1;
 
-    def SaveInitialFluidFraction(self):
-
-        self.projection_module.ProjectFromParticles()
-
-        #TODO: can we use VariableUtils??
-        for node in self.fluid_solution.main_model_part.Nodes:
-            fluid_fraction = node.GetSolutionStepValue(FLUID_FRACTION)
-            node.SetSolutionStepValue(FLUID_FRACTION_OLD,fluid_fraction)
-
-        # interaction_start_time = self.pp.CFD_DEM["interaction_start_time"].GetDouble()
-        # if self.DEM_to_fluid_counter.Tick() and self.time >= interaction_start_time:
-        #     self.projection_module.ProjectFromParticles()
-        #     variable_utils = VariableUtils()
-        #     variable_utils.SaveScalarVar(FLUID_FRACTION, FLUID_FRACTION_OLD, self.fluid_solution.main_model_part.Nodes)
-
-    def SetCutsOutput(self):
-        pass
-
     def SetDragOutput(self):
         pass
 

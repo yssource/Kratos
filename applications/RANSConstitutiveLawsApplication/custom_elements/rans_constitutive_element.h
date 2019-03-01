@@ -413,6 +413,12 @@ protected:
                                           const Matrix& rShapeDerivatives,
                                           const int Step = 0) const;
 
+    void AddLumpedMassMatrix(MatrixType& rMassMatrix, const double Mass)
+    {
+        for (unsigned int iNode = 0; iNode < TLocalSize; ++iNode)
+            rMassMatrix(iNode, iNode) += Mass;
+    }
+
     ///@}
     ///@name Protected  Access
     ///@{

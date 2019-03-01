@@ -261,6 +261,14 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateLocalSystem(MatrixType& rLeftH
                                                               VectorType& rRightHandSideVector,
                                                               ProcessInfo& rCurrentProcessInfo)
 {
+    // Check sizes and initialize matrix
+    if (rLeftHandSideMatrix.size1() != TNumNodes)
+        rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
+
+    noalias(rLeftHandSideMatrix) = ZeroMatrix(TNumNodes, TNumNodes);
+
+    // Calculate RHS
+    this->CalculateRightHandSide(rRightHandSideVector, rCurrentProcessInfo);
 }
 
 /**
@@ -358,11 +366,11 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRig
         {
             double value = 0.0;
 
-            value += gauss_shape_functions[a] * tke_production;
+            // value += gauss_shape_functions[a] * tke_production;
 
-            // Add SUPG stabilization terms
-            value += velocity_convective_terms[a] * tau * tke_production;
-            value -= velocity_convective_terms[a] * supg_coeff1;
+            // // Add SUPG stabilization terms
+            // value += velocity_convective_terms[a] * tau * tke_production;
+            // value -= velocity_convective_terms[a] * supg_coeff1;
 
             rRightHandSideVector[a] += gauss_weights[g] * value;
         }
@@ -491,19 +499,10 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& rMassMa
     this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
     const unsigned int num_gauss_points = gauss_weights.size();
 
-    for (unsigned int a = 0; a < TNumNodes; a++)
+    for (unsigned int g = 0; g < num_gauss_points; g++)
     {
-        for (unsigned int b = 0; b < TNumNodes; b++)
-        {
-            for (unsigned int g = 0; g < num_gauss_points; g++)
-            {
-                const double value = gauss_weights[g] * shape_functions(g, a) *
-                                     shape_functions(g, b);
-
-                // Add contribution for k
-                rMassMatrix(a, b) += value;
-            }
-        }
+        const double mass = gauss_weights[g] / TNumNodes;
+        this->AddLumpedMassMatrix(rMassMatrix, mass);
     }
 
     // KRATOS_CATCH("");
@@ -589,16 +588,16 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
                 double value = 0.0;
 
                 // Add epsilon contribution
-                value += gauss_shape_functions[a] * velocity_divergence *
-                         gauss_shape_functions[b];
-                value += gauss_shape_functions[a] * convection_velocity[b];
+                // value += gauss_shape_functions[a] * velocity_divergence *
+                //          gauss_shape_functions[b];
+                // value += gauss_shape_functions[a] * convection_velocity[b];
                 value += coeff2 * dNa_dNb;
-                value += gauss_shape_functions[a] * coeff1 * gauss_shape_functions[b];
-                value += gauss_shape_functions[a] * coeff3 * gauss_shape_functions[b];
+                // value += gauss_shape_functions[a] * coeff1 * gauss_shape_functions[b];
+                // value += gauss_shape_functions[a] * coeff3 * gauss_shape_functions[b];
 
                 // Add SUPG stabilization terms
-                value += convection_velocity[a] * supg_coeff1 * gauss_shape_functions[b];
-                value += convection_velocity[a] * tau * convection_velocity[b];
+                // value += convection_velocity[a] * supg_coeff1 * gauss_shape_functions[b];
+                // value += convection_velocity[a] * tau * convection_velocity[b];
 
                 rDampingMatrix(a, b) += gauss_weights[g] * value;
             }
@@ -606,6 +605,21 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
     }
 
     KRATOS_CATCH("");
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmEpsilonElement<TDim, TNumNodes>::CalculateLocalVelocityContribution(
+    MatrixType& rDampingMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
+{
+    CalculateDampingMatrix(rDampingMatrix, rCurrentProcessInfo);
+
+    // Now calculate an additional contribution to the residual: r -= rDampingMatrix * (u,p)
+    VectorType U = ZeroVector(TNumNodes);
+    for (unsigned int iNode = 0; iNode < TNumNodes; ++iNode)
+        U[iNode] = this->GetGeometry()[iNode].FastGetSolutionStepValue(
+            TURBULENT_ENERGY_DISSIPATION_RATE);
+
+    noalias(rRightHandSideVector) -= prod(rDampingMatrix, U);
 }
 
 /**

@@ -19,8 +19,7 @@
 // External includes
 
 // Project includes
-#include "../custom_strategies/residual_based_bossak_velocity_scheme.h"
-#include "../rans_constitutive_laws_application_variables.h"
+#include "rans_constitutive_laws_application_variables.h"
 #include "includes/cfd_variables.h"
 #include "includes/define.h"
 #include "includes/model_part.h"

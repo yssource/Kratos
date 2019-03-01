@@ -24,7 +24,6 @@
 #include "spaces/ublas_space.h"
 
 // strategies
-#include "custom_strategies/residual_based_bossak_velocity_scheme.h"
 #include "solving_strategies/strategies/solving_strategy.h"
 
 // linear solvers
@@ -38,19 +37,12 @@ void AddCustomStrategiesToPython(pybind11::module& m)
 {
     namespace py = pybind11;
 
-    typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
-    typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
+    // typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
+    // typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
 
     // typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
     // typedef SolvingStrategy<SparseSpaceType, LocalSpaceType, LinearSolverType> BaseSolvingStrategyType;
-    typedef Scheme<SparseSpaceType, LocalSpaceType> BaseSchemeType;
-
-    //********************************************************************
-    //********************************************************************
-    typedef ResidualBasedBossakVelocityScheme<SparseSpaceType, LocalSpaceType> ResidualBasedBossakVelocityScheme;
-    py::class_<ResidualBasedBossakVelocityScheme, typename ResidualBasedBossakVelocityScheme::Pointer, BaseSchemeType>(
-        m, "ResidualBasedBossakVelocityScheme")
-        .def(py::init<Kratos::Parameters>());
+    // typedef Scheme<SparseSpaceType, LocalSpaceType> BaseSchemeType;
 }
 
 } // namespace Python.

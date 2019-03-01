@@ -332,6 +332,19 @@ public:
     void CalculateDampingMatrix(MatrixType& rDampingMatrix,
                                 ProcessInfo& rCurrentProcessInfo) override;
 
+    /// Computes the local contribution associated to 'new' velocity and pressure values
+    /**
+     * Provides local contributions to the system associated to the velocity and
+     * pressure terms (convection, diffusion, pressure gradient/velocity divergence
+     * and stabilization).
+     * @param rDampingMatrix Will be filled with the velocity-proportional "damping" matrix
+     * @param rRightHandSideVector the elemental right hand side vector
+     * @param rCurrentProcessInfo the current process info instance
+     */
+    void CalculateLocalVelocityContribution(MatrixType& rDampingMatrix,
+            VectorType& rRightHandSideVector,
+            ProcessInfo& rCurrentProcessInfo) override;
+
     /**
      * This method provides the place to perform checks on the completeness of the input
      * and the compatibility with the problem options as well as the contitutive laws selected

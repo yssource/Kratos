@@ -304,40 +304,38 @@ KRATOS_TRY;
     ket.clear();
 
     // Declarations
-    Vector3 R1;
-    Vector3 R2;
+    Vector3 A1;
+    Vector3 A1_1;
     double A;
     double B;
-    Vector3 r1;
-    Vector3 r2;
+    Vector3 a1;
+    Vector3 a1_1;
     double a;
     double b;
-    R1.clear();
-    R2.clear();
-    r1.clear();
-    r2.clear();
+    A1.clear();
+    A1_1.clear();
+    a1.clear();
+    a1_1.clear();
 
-   // Compute the Vectors R1 R2 and the length A and B in undeformed and deformed state
-    ComputeGeometryReference(R1, R2, A, B);
-    ComputeGeometryActual(r1, r2, a, b);
+    // Compute the Vectors A1 A1_1 and the length A and B in undeformed and deformed state
+    ComputeGeometryReference(A1, A1_1, A, B);
+    ComputeGeometryActual(a1, a1_1, a, b);
+    // LOG("old A1   " << A1);
+    // // Get Initial Base Vecotrs by the Model
+    // A1      = GetValue(BASE_A1);        //- checked
+    // LOG("new A1   " << A1);
+    // LOG("old A1_1 " << A1_1);
+    // A1_1    = GetValue(BASE_A1_1);      //- checked
+    // LOG("new A1_1 " << A1_1);
 
-
-    // LOG("R1 " << R1);
-    // LOG("R2 " << R2);
-    // LOG("A " << A);
-    // LOG("B " << B);
-    // LOG("r1 " << r1);
-    // LOG("r2 " << r2);
-    // LOG("a " << a);
-    // LOG("b " << b);
 
     // // Debug Check
-    // IgaDebug::CheckVector(expected_data, "R_1", R1);
-    // IgaDebug::CheckVector(expected_data, "R_2", R2);
+    // IgaDebug::CheckVector(expected_data, "A1", A1);
+    // IgaDebug::CheckVector(expected_data, "A1_1", A1_1);
     // IgaDebug::CheckDouble(expected_data, "A", A);
     // IgaDebug::CheckDouble(expected_data, "B", B);
-    // IgaDebug::CheckVector(expected_data, "r_1", r1);
-    // IgaDebug::CheckVector(expected_data, "r_2", r2);
+    // IgaDebug::CheckVector(expected_data, "r_1", a1);
+    // IgaDebug::CheckVector(expected_data, "r_2", a1_1);
     // IgaDebug::CheckDouble(expected_data, "a", a);
     // IgaDebug::CheckDouble(expected_data, "b", b);
 
@@ -357,46 +355,54 @@ KRATOS_TRY;
 
 
     // Further Declarations
-    double B_n;
-    double B_v;
+    double B_2;
+    double B_3;
     double C_12;
     double C_13;
-    double b_n;
-    double b_v;
+    double b_2;
+    double b_3;
     double c_12;
     double c_13;
 
-    Vector3 N;     // Principal Axis 1 of Cross Section in Undeformed Config.
-    Vector3 V;   // Prinzipal Axis 2 of Cross Section in Undeformed Config.
-    Vector3 n;   // Principal Axis 1 Of Cross Section in Deformed Config.
-    Vector3 v;  // Principal Axis 2 of Cross Section in Deformed Config.
-    Vector3 N0;    // Principal Axis 1 of Cross Section in Reference Config.
-    Vector3 V0;    // Principal Axis 2 of Cross Section in Reference Config.
+    Vector3 A2;     // Principal Axis 1 of Cross Section in Undeformed Config.
+    Vector3 A3;   // Prinzipal Axis 2 of Cross Section in Undeformed Config.
+    Vector3 a2;   // Principal Axis 1 Of Cross Section in Deformed Config.
+    Vector3 a3;  // Principal Axis 2 of Cross Section in Deformed Config.
+    Vector3 A02;    // Principal Axis 1 of Cross Section in Reference Config.
+    Vector3 A03;    // Principal Axis 2 of Cross Section in Reference Config.
 
-    ComputeCrossSectionGeometryReference(R1, R2, N, V, T0_vec, N0, V0, B_n, B_v, C_12, C_13, Phi, Phi_der);
-    // IgaDebug::CheckVector(expected_data, "N0_reference", N0);
-    // IgaDebug::CheckVector(expected_data, "V0_reference", V0);
-    // LOG("B_n " << B_n);
-    // LOG("B_v " << B_v);
+    ComputeCrossSectionGeometryReference(A1, A1_1, A2, A3, T0_vec, A02, A03, B_2, B_3, C_12, C_13, Phi, Phi_der);
+    // Get Initial Base Vecotrs by the Model
+    // LOG("old A2   " << A2);
+    // A2      = GetValue(BASE_A2);        // checked (wrong sign)
+    // LOG("new A2   " << A2);
+    // LOG("old A3   " << A3);
+    // A3      = GetValue(BASE_A3);        // checked (wrong sign)
+    // LOG("new A3   " << A3);
+
+    // IgaDebug::CheckVector(expected_data, "N0_reference", A02);
+    // IgaDebug::CheckVector(expected_data, "V0_reference", A03);
+    // LOG("B_2 " << B_2);
+    // LOG("B_3 " << B_3);
     // LOG("C_12 " << C_12);
     // LOG("C_13 " << C_13);
-    // LOG("R1_ " << R1);
+    // LOG("R1_ " << A1);
 
 
-    ComputeCrossSectionGeometryActual(R1, R2, r1, r2, N0, V0, n, v, b_n, b_v, c_12, c_13, Phi, Phi_der, phi, phi_der);
-    // IgaDebug::CheckDouble(expected_data, "b_n", b_n); // checked
-    // IgaDebug::CheckDouble(expected_data, "b_v", b_v); // checked
+    ComputeCrossSectionGeometryActual(A1, A1_1, a1, a1_1, A02, A03, a2, a3, b_2, b_3, c_12, c_13, Phi, Phi_der, phi, phi_der);
+    // IgaDebug::CheckDouble(expected_data, "b_2", b_2); // checked
+    // IgaDebug::CheckDouble(expected_data, "b_3", b_3); // checked
     // IgaDebug::CheckDouble(expected_data, "C_12", C_12); // Checked
     // IgaDebug::CheckDouble(expected_data, "c_12", c_12);
     // IgaDebug::CheckDouble(expected_data, "C_13", C_13);  // Checked
-    // LOG("b_n " << b_n);
-    // LOG("b_v " << b_v);
+    // LOG("b_2 " << b_2);
+    // LOG("b_3 " << b_3);
     // LOG("c_12 " << c_12);
     // LOG("c_13 " << c_13);
     // LOG("c_12 " << c_12);
     // LOG("c_12 " << c_12);
-    // LOG("r1_ " << r1);
-    // LOG("r2_ " << r2);
+    // LOG("r1_ " << a1);
+    // LOG("r2_ " << a1_1);
 
     _dL = A;
     double Apow2 = std::pow(A,2);
@@ -421,9 +427,9 @@ KRATOS_TRY;
     bool prestesss_tor_auto   = false;
 
     if (prestress_bend1_auto)
-        B_n = 0.00;
+        B_2 = 0.00;
     if (prestress_bend2_auto)
-        B_v = 0.00;
+        B_3 = 0.00;
     if (prestesss_tor_auto){
         C_12 = 0.00;
         C_13 = 0.00;
@@ -431,8 +437,8 @@ KRATOS_TRY;
 
      // Stresses
      double E11_m = 0.5 * (apow2 - Apow2);      // Green_Lagrange Formulation
-     double E11_cur_n = (b_n - B_n);
-     double E11_cur_v = (b_v - B_v);
+     double E11_cur_n = (b_2 - B_2);
+     double E11_cur_v = (b_3 - B_3);
      double E12       = (c_12 - C_12);
      double E13       = (c_13 - C_13);
 
@@ -446,8 +452,8 @@ KRATOS_TRY;
     // IgaDebug::CheckDouble(expected_data, "E12", E12);
 
      double S11_m = prestress * _area + E11_m * emod_A / Apow2;         // Normal Force
-     double S11_n = prestress_bend1 + E11_cur_n * emod_I_v / Apow2;     // Bending Moment n
-     double S11_v = prestress_bend2 + E11_cur_v * emod_I_n / Apow2;     // Bending Moment v
+     double S11_n = prestress_bend1 + E11_cur_n * emod_I_v / Apow2;     // Bending Moment a2
+     double S11_v = prestress_bend2 + E11_cur_v * emod_I_n / Apow2;     // Bending Moment a3
      double S12   = 0.5 * (- prestress_tor + E12 * gmod_It / A);        // 0.5 torsional Moment
      double S13   = 0.5 * (+ prestress_tor + E13 * gmod_It / A);        // 0.5 torsional Moment
     // LOG("S11_m " << S11_m);
@@ -459,14 +465,14 @@ KRATOS_TRY;
 
     // 1st Variation
     // Variation of the axial Strain
-    Vector eps_dof = ComputeEpsilonFirstDerivative(r1);
+    Vector eps_dof = ComputeEpsilonFirstDerivative(a1);
     eps_dof = eps_dof / Apow2;
     // LOG("eps_dof " << eps_dof);
 
 
     // 2nd Variation
     // Variation of axial Strain
-    Matrix eps_dof_2 = ComputeEpsilonSecondDerivative();        //    r1);      change 17.11
+    Matrix eps_dof_2 = ComputeEpsilonSecondDerivative();        //    a1);      change 17.11
     eps_dof_2 = eps_dof_2 / Apow2;
     // LOG("eps_dof_2 " << eps_dof_2);
 
@@ -485,7 +491,7 @@ KRATOS_TRY;
     Matrix torsion_dof_v_2;
 
 
-    ComputeDofNonlinear(curve_dof_n, curve_dof_v, torsion_dof_n, torsion_dof_v, curve_dof_n_2, curve_dof_v_2, torsion_dof_n_2, torsion_dof_v_2, R1, R2, r1, r2, N0, V0, Phi, Phi_der, phi, phi_der);
+    ComputeDofNonlinear(curve_dof_n, curve_dof_v, torsion_dof_n, torsion_dof_v, curve_dof_n_2, curve_dof_v_2, torsion_dof_n_2, torsion_dof_v_2, A1, A1_1, a1, a1_1, A02, A03, Phi, Phi_der, phi, phi_der);
     // IgaDebug::CheckVector(expected_data, "curv_dof_n", curve_dof_n);
     // IgaDebug::CheckVector(expected_data, "curv_dof_v", curve_dof_v);
     // IgaDebug::CheckVector(expected_data, "torsion_dof_n", torsion_dof_n);
@@ -595,7 +601,7 @@ KRATOS_TRY;
     // VectorType _curv_var_t;
     // VectorType _curv_var_n;
     // VectorType _curv_var_v;
-    // ComputeRotationalDof(_curv_var_t, _curv_var_n, _curv_var_v, R1, r1, N0, V0, N, V, n, v, Phi, phi );
+    // ComputeRotationalDof(_curv_var_t, _curv_var_n, _curv_var_v, A1, a1, A02, A03, A2, A3, a2, a3, Phi, phi );
 
     // IgaDebug::CheckVector(expected_data, "_curv_var_t", _curv_var_t);
     // IgaDebug::CheckVector(expected_data, "_curv_var_n", _curv_var_n);
@@ -1153,15 +1159,15 @@ KRATOS_CATCH("");
 void IgaBeamElement::ComputeCrossSectionGeometryReference(
     Vector3 _R1,
     Vector3 _R2,
-        Vector3& _n_act,
-        Vector3& _v_act,
-        Vector3 _T0,
-        Vector3& _N0,
-        Vector3& _V0,
-        double& _B_n,
-        double& _B_v,
-        double& _C_12,
-        double& _C_13,
+        Vector3& A2,
+        Vector3& A3,
+        Vector3 A01,
+        Vector3& A02,
+        Vector3& A03,
+        double& B_2,
+        double& B_3,
+        double& C_12,
+        double& C_13,
     double Phi,
     double Phi_der )
 {
@@ -1169,14 +1175,14 @@ KRATOS_TRY;
     // Import Debug data
     // auto expected_data = Parameters(GetValue(DEBUG_EXPECTED_DATA));
 
-    _T0 = GetValue(T0);
-    _N0 = GetValue(N0);
+    A01 = GetValue(T0);
+    A02 = GetValue(N0);
     // Normalize t0
-    double t0_L = norm_2(_T0);
-    _T0 = _T0/t0_L;
+    double t0_L = norm_2(A01);
+    A01 = A01/t0_L;
     // Normalize N0
-    double n0_L = norm_2(_N0);
-    _N0 = _N0/n0_L;
+    double n0_L = norm_2(A02);
+    A02 = A02/n0_L;
 
     double R1_dL = norm_2(_R1);
     BoundedVector<double,3> T_der1;
@@ -1190,12 +1196,12 @@ KRATOS_TRY;
     // Compute Matrix Lambda
     BoundedMatrix<double,3,3> matrix_lambda;
     matrix_lambda.clear();
-    ComputeLambda(_T0, T_vec, matrix_lambda);
+    ComputeLambda(A01, T_vec, matrix_lambda);
 
     // Compute Matrix Lambda first Derivative
     BoundedMatrix<double,3,3> matrix_lambda_der1;
     matrix_lambda_der1.clear();
-    ComputeLambdaDer(_T0, T0_der1, T_vec, T_der1, matrix_lambda_der1);
+    ComputeLambdaDer(A01, T0_der1, T_vec, T_der1, matrix_lambda_der1);
 
     // Compute Matrix rodriguez
     BoundedMatrix<double,3,3> matrix_rodriguez;
@@ -1207,18 +1213,18 @@ KRATOS_TRY;
     matrix_rodriguez_der1.clear();
     ComputeRodriguesDer(T_vec, T_der1, Phi, Phi_der, matrix_rodriguez_der1);
 
-    _n_act.clear();
+    A2.clear();
 
     // Unit T0 vector (normalisation if not already normalized)
-    _T0 = _T0 / norm_2(_T0);
+    A01 = A01 / norm_2(A01);
 
     // Projection in Perpendicular Area
-    _N0 = _N0 - inner_prod(_T0, _N0) * _T0;
-    _V0 = Cross(_T0, _N0);
+    A02 = A02 - inner_prod(A01, A02) * A01;
+    A03 = Cross(A01, A02);
 
     // Normalize the Vectors N and V
-    _N0 = _N0 / norm_2(_N0);
-    _V0 = _V0 / norm_2(_V0);
+    A02 = A02 / norm_2(A02);
+    A03 = A03 / norm_2(A03);
 
     BoundedVector<double,3> n_tmp;
     n_tmp.clear();
@@ -1226,18 +1232,18 @@ KRATOS_TRY;
     for (int i = 0; i < 3; i++){
         for (int j = 0; j < 3; j++){
 
-            n_tmp[i] += matrix_lambda(i,j) * _N0[j];
+            n_tmp[i] += matrix_lambda(i,j) * A02[j];
         }
     }
     for (int i = 0; i < 3; i++){
         for (int j = 0; j < 3; j++){
 
-            _n_act[i] += matrix_rodriguez(i,j) * n_tmp[j];
+            A2[i] += matrix_rodriguez(i,j) * n_tmp[j];
         }
     }
 
-    _n_act = _n_act / norm_2(_n_act);
-    _v_act = Cross(T_vec, _n_act);
+    A2 = A2 / norm_2(A2);
+    A3 = Cross(T_vec, A2);
 
     BoundedMatrix<double,3,3> matrix_axis1;
     matrix_axis1.clear();
@@ -1252,27 +1258,35 @@ KRATOS_TRY;
         }
     }
 
-    Vector3 A21;
-    Vector3 A31;
-    A21.clear();
-    A31.clear();
+    Vector3 A2_1;
+    Vector3 A3_1;
+    A2_1.clear();
+    A3_1.clear();
 
     for (int i = 0; i < 3; i++){
         for (int j = 0; j < 3; j++){
 
-            A21[i] += matrix_axis1(i,j) * _N0[j];
+            A2_1[i] += matrix_axis1(i,j) * A02[j];
         }
     }
+    // LOG("A2_1 - old " << A2_1);
+    // A2_1 = GetValue(BASE_A2_1);
+    // LOG("A2_1 - new " << A2_1);
+
     for (int i = 0; i < 3; i++){
         for (int j = 0; j < 3; j++){
 
-            A31[i] += matrix_axis1(i,j) * _V0[j];
+            A3_1[i] += matrix_axis1(i,j) * A03[j];
         }
     }
-    _B_n  = inner_prod(A21, _R1);
-    _B_v  = inner_prod(A31, _R1);
-    _C_12 = inner_prod(A31, _n_act);
-    _C_13 = inner_prod(A21, _v_act);
+    // LOG("A3_1 - old " << A3_1);
+    // A3_1 = GetValue(BASE_A3_1);
+    // LOG("A3_1 - new " << A3_1);
+
+    B_2  = inner_prod(A2_1, _R1);
+    B_3  = inner_prod(A3_1, _R1);
+    C_12 = inner_prod(A3_1, A2);
+    C_13 = inner_prod(A2_1, A3);
 
 KRATOS_CATCH("");
 }
@@ -1299,18 +1313,18 @@ KRATOS_CATCH("");
      */
 //#--------------------------------------------------------------------------------
 void IgaBeamElement::ComputeCrossSectionGeometryActual(
-    Vector3 _R1,
-    Vector3 _R2,
-    Vector3 _r1,
-    Vector3 _r2,
-    Vector3 _N0,
-    Vector3 _V0,
-        Vector3& _n_act,
-        Vector3& _v_act,
-        double& _b_n,
-        double& _b_v,
-        double& _c_12,
-        double& _c_13,
+    Vector3 A1,
+    Vector3 A1_1,
+    Vector3 a1,
+    Vector3 a1_1,
+    Vector3 A02,
+    Vector3 A03,
+        Vector3& a2,
+        Vector3& a3,
+        double& b_2,
+        double& b_3,
+        double& c_12,
+        double& c_13,
     double Phi,
     double Phi_der,
     double phi,
@@ -1325,8 +1339,8 @@ KRATOS_TRY;
     double t0_L = norm_2(T0_vec);
     T0_vec = T0_vec/t0_L;
 
-    double R1_dL = norm_2(_R1);
-    double r1_dL = norm_2(_r1);
+    double R1_dL = norm_2(A1);
+    double r1_dL = norm_2(a1);
 
     BoundedVector<double,3> T_der1;
     BoundedVector<double,3> t_der1;
@@ -1335,11 +1349,11 @@ KRATOS_TRY;
     t_der1.clear();
     T0_der1.clear();
 
-    BoundedVector<double,3> T_vec = _R1 / R1_dL;
-    BoundedVector<double,3> t_vec = _r1 / r1_dL;
+    BoundedVector<double,3> T_vec = A1 / R1_dL;
+    BoundedVector<double,3> t_vec = a1 / r1_dL;
 
-    T_der1 = _R2/R1_dL-inner_prod(_R1, _R2)/std::pow(r1_dL,3)*_R1;
-    t_der1 = _r2/r1_dL-inner_prod(_r1, _r2)/std::pow(r1_dL,3)*_r1;
+    T_der1 = A1_1/R1_dL-inner_prod(A1, A1_1)/std::pow(r1_dL,3)*A1;
+    t_der1 = a1_1/r1_dL-inner_prod(a1, a1_1)/std::pow(r1_dL,3)*a1;
 
     BoundedMatrix<double,3,3> matrix_LAMBDA;
     BoundedMatrix<double,3,3> matrix_lambda;
@@ -1453,23 +1467,23 @@ KRATOS_TRY;
     Vector3 a31;
     a21.clear();
     a31.clear();
-    _n_act.clear();
-    _v_act.clear();
+    a2.clear();
+    a3.clear();
 
     for (int i = 0; i < 3; i++){
         for (int j = 0; j < 3; j++){
 
-            a21[i] += matrix_summ_rod_lam_ROD_LAM(i,j) * _N0[j];
-            a31[i] += matrix_summ_rod_lam_ROD_LAM(i,j) * _V0[j];
-            _n_act[i] += matrix_rodriguez_lambda_RODRIGUEZ_LAMBDA(i,j) * _N0[j];
-            _v_act[i] += matrix_rodriguez_lambda_RODRIGUEZ_LAMBDA(i,j) * _V0[j];
+            a21[i] += matrix_summ_rod_lam_ROD_LAM(i,j) * A02[j];
+            a31[i] += matrix_summ_rod_lam_ROD_LAM(i,j) * A03[j];
+            a2[i] += matrix_rodriguez_lambda_RODRIGUEZ_LAMBDA(i,j) * A02[j];
+            a3[i] += matrix_rodriguez_lambda_RODRIGUEZ_LAMBDA(i,j) * A03[j];
         }
     }
 
-    _b_n = inner_prod(a21, _r1);        // _r1 zwar falsche werte aber richtiges Vorzeichen!
-    _b_v = inner_prod(a31, _r1);        //checked!
-    _c_12 = inner_prod(a31, _n_act);    //checked!
-    _c_13 = inner_prod(a21, _v_act);    //checked!
+    b_2 = inner_prod(a21, a1);        // a1 zwar falsche werte aber richtiges Vorzeichen!
+    b_3 = inner_prod(a31, a1);        //checked!
+    c_12 = inner_prod(a31, a2);    //checked!
+    c_13 = inner_prod(a21, a3);    //checked!
 
 KRATOS_CATCH("");
 }
@@ -3412,12 +3426,12 @@ KRATOS_TRY
     R2.clear();
     double A;
     double B;
-    double B_n;
-    double B_v;
+    double B_2;
+    double B_3;
     double C_12;
     double C_13;
     ComputeGeometryReference(R1, R2, R3, A, B);
-    ComputeCrossSectionGeometryReference(R1, R2, N, V, T0_vec, N0, V0, B_n, B_v, C_12, C_13, Phi, Phi_der_1);
+    ComputeCrossSectionGeometryReference(R1, R2, N, V, T0_vec, N0, V0, B_2, B_3, C_12, C_13, Phi, Phi_der_1);
 
     double Apow2     = std::pow(A,2);
 

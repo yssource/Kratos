@@ -386,16 +386,33 @@ protected:
                                        Matrix& rNContainer,
                                        ShapeFunctionDerivativesArrayType& rDN_DX) const;
 
-    double CalculateUTau(const double velocity_magnitude,
-                         const double wall_distance,
-                         const double nu,
-                         const double beta,
-                         const double von_karman) const;
+    double EvaluateInPoint(const Variable<double>& rVariable,
+                           const Vector& rShapeFunction,
+                           const int Step = 0) const;
 
-    double CalculateYPlus(const double u_tau,
-                          const double velocity_magnitude,
-                          const double wall_distance,
-                          const double nu) const;
+    array_1d<double, 3> EvaluateInPoint(const Variable<array_1d<double, 3>>& rVariable,
+                                        const Vector& rShapeFunction,
+                                        const int Step = 0) const;
+
+    void GetConvectionOperator(BoundedVector<double, TNumNodes>& rOutput,
+                               const array_1d<double, 3>& rVector,
+                               const Matrix& rShapeDerivatives) const;
+
+    double GetDivergenceOperator(const Variable<array_1d<double, 3>>& rVariable,
+                                 const Matrix& rShapeDerivatives,
+                                 const int Step = 0) const;
+
+    void CalculateGradientMatrix(BoundedMatrix<double, TDim, TDim>& rOutput,
+                                 const Variable<array_1d<double, 3>>& rVariable,
+                                 const Matrix& rShapeDerivatives,
+                                 const int Step = 0) const;
+
+    void CalculateSymmetricGradientMatrix(BoundedMatrix<double, TDim, TDim>& rOutput,
+                                          const Variable<array_1d<double, 3>>& rVariable,
+                                          const BoundedMatrix<double, TDim, TDim>& rGradientMatrix,
+                                          const Matrix& rShapeDerivatives,
+                                          const int Step = 0) const;
+
     ///@}
     ///@name Protected  Access
     ///@{

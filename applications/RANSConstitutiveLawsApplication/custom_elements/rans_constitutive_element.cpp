@@ -474,6 +474,106 @@ void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateGeometryData
         rGaussWeights[g] = DetJ[g] * IntegrationPoints[g].Weight();
 }
 
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
+double RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::EvaluateInPoint(
+    const Variable<double>& rVariable, const Vector& rShapeFunction, const int Step) const
+{
+    const GeometryType& r_geometry = this->GetGeometry();
+    double value = 0.0;
+    for (unsigned int c = 0; c < TNumNodes; c++)
+    {
+        value += rShapeFunction[c] * r_geometry[c].FastGetSolutionStepValue(rVariable, Step);
+    }
+
+    return value;
+}
+
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
+array_1d<double, 3> RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::EvaluateInPoint(
+    const Variable<array_1d<double, 3>>& rVariable, const Vector& rShapeFunction, const int Step) const
+{
+    const GeometryType& r_geometry = this->GetGeometry();
+    array_1d<double, 3> value = ZeroVector(3);
+    for (unsigned int c = 0; c < TNumNodes; c++)
+    {
+        value += rShapeFunction[c] * r_geometry[c].FastGetSolutionStepValue(rVariable, Step);
+    }
+
+    return value;
+}
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
+void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::GetConvectionOperator(
+    BoundedVector<double, TNumNodes>& rOutput,
+    const array_1d<double, 3>& rVector,
+    const Matrix& rShapeDerivatives) const
+{
+    rOutput.clear();
+    for (unsigned int i = 0; i < TNumNodes; ++i)
+        for (unsigned int j = 0; j < TDim; j++)
+        {
+            rOutput[i] += rVector[j] * rShapeDerivatives(i, j);
+        }
+}
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
+double RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::GetDivergenceOperator(
+    const Variable<array_1d<double, 3>>& rVariable, const Matrix& rShapeDerivatives, const int Step) const
+{
+    double value = 0.0;
+    const GeometryType& r_geometry = this->GetGeometry();
+
+    for (unsigned int i = 0; i < TNumNodes; ++i)
+    {
+        const array_1d<double, 3>& r_value =
+            r_geometry[i].FastGetSolutionStepValue(rVariable, Step);
+        for (unsigned int j = 0; j < TDim; ++j)
+        {
+            value += r_value[j] * rShapeDerivatives(i, j);
+        }
+    }
+
+    return value;
+}
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
+void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateGradientMatrix(
+    BoundedMatrix<double, TDim, TDim>& rOutput,
+    const Variable<array_1d<double, 3>>& rVariable,
+    const Matrix& rShapeDerivatives,
+    const int Step) const
+{
+    rOutput.clear();
+    const GeometryType& r_geometry = this->GetGeometry();
+
+    for (unsigned int a = 0; a < TNumNodes; ++a)
+    {
+        const array_1d<double, 3>& r_value =
+            r_geometry[a].FastGetSolutionStepValue(rVariable, Step);
+        for (unsigned int i = 0; i < TDim; ++i)
+        {
+            for (unsigned int j = 0; j < TDim; ++j)
+            {
+                rOutput(i, j) += rShapeDerivatives(a, j) * r_value[i];
+            }
+        }
+    }
+}
+
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
+void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateSymmetricGradientMatrix(
+    BoundedMatrix<double, TDim, TDim>& rOutput,
+    const Variable<array_1d<double, 3>>& rVariable,
+    const BoundedMatrix<double, TDim, TDim>& rGradientMatrix,
+    const Matrix& rShapeDerivatives,
+    const int Step) const
+{
+    const double variable_divergence =
+        this->GetDivergenceOperator(rVariable, rShapeDerivatives, Step);
+    identity_matrix<double> identity(TDim);
+
+    rOutput.clear();
+    noalias(rOutput) = rGradientMatrix + trans(rGradientMatrix) -
+                       (2.0 / 3.0) * variable_divergence * identity;
+}
+
 ///@}
 ///@name Access
 ///@{
@@ -530,46 +630,46 @@ void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::PrintData(std::ostrea
 ///@name Protected Operations
 ///@{
 
-template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
-double RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateUTau(
-    const double velocity_magnitude,
-    const double wall_distance,
-    const double nu,
-    const double beta,
-    const double von_karman) const
-{
-    // auto log_law_wall_function = [velocity_magnitude, von_karman,
-    //                               wall_distance, nu, beta](double u_tau) {
-    //     return u_tau -
-    //            velocity_magnitude /
-    //                ((1.0 / von_karman) * std::log(u_tau * wall_distance / nu) + beta);
-    // };
+// template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
+// double RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateUTau(
+//     const double velocity_magnitude,
+//     const double wall_distance,
+//     const double nu,
+//     const double beta,
+//     const double von_karman) const
+// {
+//     // auto log_law_wall_function = [velocity_magnitude, von_karman,
+//     //                               wall_distance, nu, beta](double u_tau) {
+//     //     return u_tau -
+//     //            velocity_magnitude /
+//     //                ((1.0 / von_karman) * std::log(u_tau * wall_distance / nu) + beta);
+//     // };
 
-    // const double iterTol = 1e-5;
-    // const double maxIter = 10;
-    // u_tau = BrentIteration::FindRoot(log_law_wall_function, 1e-6,
-    //                                  10.0 * nu / wall_distance, iterTol, maxIter);
+//     // const double iterTol = 1e-5;
+//     // const double maxIter = 10;
+//     // u_tau = BrentIteration::FindRoot(log_law_wall_function, 1e-6,
+//     //                                  10.0 * nu / wall_distance, iterTol, maxIter);
 
-    const unsigned int max_iterations = 10;
-    double u_tau = nu / wall_distance;
-    for (unsigned int i = 0; i < max_iterations; ++i)
-    {
-        u_tau = nu * std::exp(((velocity_magnitude / u_tau) - beta) * von_karman) / wall_distance;
-    }
+//     const unsigned int max_iterations = 10;
+//     double u_tau = nu / wall_distance;
+//     for (unsigned int i = 0; i < max_iterations; ++i)
+//     {
+//         u_tau = nu * std::exp(((velocity_magnitude / u_tau) - beta) * von_karman) / wall_distance;
+//     }
 
-    return u_tau;
-}
+//     return u_tau;
+// }
 
-template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
-double RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateYPlus(
-    const double u_tau, const double velocity_magnitude, const double wall_distance, const double nu) const
-{
-    double y_plus = u_tau * wall_distance / nu;
-    if (y_plus < 11.06)
-        y_plus = velocity_magnitude / u_tau;
+// template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
+// double RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateYPlus(
+//     const double u_tau, const double velocity_magnitude, const double wall_distance, const double nu) const
+// {
+//     double y_plus = u_tau * wall_distance / nu;
+//     if (y_plus < 11.06)
+//         y_plus = velocity_magnitude / u_tau;
 
-    return y_plus;
-}
+//     return y_plus;
+// }
 
 ///@}
 ///@name Protected  Access

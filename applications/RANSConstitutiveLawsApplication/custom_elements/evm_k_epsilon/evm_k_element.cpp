@@ -205,6 +205,12 @@ void EvmKElement<TDim, TNumNodes>::GetDofList(DofsVectorType& rElementalDofList,
 template <unsigned int TDim, unsigned int TNumNodes>
 void EvmKElement<TDim, TNumNodes>::GetValuesVector(VectorType& rValues, int Step)
 {
+    this->GetFirstDerivativesVector(rValues, Step);
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmKElement<TDim, TNumNodes>::GetFirstDerivativesVector(VectorType& rValues, int Step)
+{
     if (rValues.size() != TNumNodes)
         rValues.resize(TNumNodes, false);
 
@@ -214,6 +220,21 @@ void EvmKElement<TDim, TNumNodes>::GetValuesVector(VectorType& rValues, int Step
     {
         rValues[LocalIndex++] =
             rGeom[iNode].FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY, Step);
+    }
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmKElement<TDim, TNumNodes>::GetSecondDerivativesVector(VectorType& rValues, int Step)
+{
+    if (rValues.size() != TNumNodes)
+        rValues.resize(TNumNodes, false);
+
+    GeometryType& rGeom = this->GetGeometry();
+    IndexType LocalIndex = 0;
+    for (IndexType iNode = 0; iNode < TNumNodes; ++iNode)
+    {
+        rValues[LocalIndex++] =
+            rGeom[iNode].FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY_RATE, Step);
     }
 }
 
@@ -266,106 +287,70 @@ void EvmKElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRightHand
     BaseType::CalculateRightHandSide(rRightHandSideVector, rCurrentProcessInfo);
 
     // Get Shape function data
-    Vector GaussWeights;
-    Matrix ShapeFunctions;
-    ShapeFunctionDerivativesArrayType ShapeDerivatives;
-    this->CalculateGeometryData(GaussWeights, ShapeFunctions, ShapeDerivatives);
-    const unsigned int num_gauss_points = GaussWeights.size();
-
-    const GeometryType rGeom = this->GetGeometry();
-
-    const double beta = rCurrentProcessInfo[WALL_SMOOTHNESS_BETA];
-    const double von_karman = rCurrentProcessInfo[WALL_VON_KARMAN];
-    const double C_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
-    const double mixing_length = rCurrentProcessInfo[TURBULENT_MIXING_LENGTH];
-    const double turbulent_viscosity_fraction =
-        rCurrentProcessInfo[TURBULENT_VISCOSITY_FRACTION];
-
-    bool is_near_wall = false;
-    for (unsigned int i = 0; i < TNumNodes; ++i)
-    {
-        if (rGeom[i].Is(STRUCTURE))
-        {
-            is_near_wall = true;
-            break;
-        }
-    }
+    Vector gauss_weights;
+    Matrix shape_functions;
+    ShapeFunctionDerivativesArrayType shape_derivatives;
+    this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
+    const unsigned int num_gauss_points = gauss_weights.size();
 
     for (unsigned int g = 0; g < num_gauss_points; g++)
     {
-        const auto& r_shape_derivatives = ShapeDerivatives[g];
+        const Matrix& r_shape_derivatives = shape_derivatives[g];
+        const Vector& gauss_shape_functions = row(shape_functions, g);
 
-        double velocity_divergence = 0.0;
-        double epsilon = 0.0;
-        double tke = 0.0;
-        double wall_distance = 0.0;
-        double nu = 0.0;
-        array_1d<double, 3> velocity = ZeroVector(3);
-
-        for (unsigned int c = 0; c < TNumNodes; c++)
-        {
-            const array_1d<double, 3>& r_velocity =
-                rGeom[c].FastGetSolutionStepValue(VELOCITY);
-            for (unsigned int k = 0; k < TDim; k++)
-            {
-                velocity_divergence += r_shape_derivatives(c, k) * r_velocity[k];
-            }
-
-            epsilon += ShapeFunctions(g, c) *
-                       rGeom[c].FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
-            tke += ShapeFunctions(g, c) *
-                   rGeom[c].FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
-            wall_distance +=
-                ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(DISTANCE);
-            nu += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(VISCOSITY);
-            velocity += ShapeFunctions(g, c) * r_velocity;
-        }
-
-        double y_plus(300.0);
-        if (is_near_wall)
-        {
-            const double velocity_magnitude = norm_2(velocity);
-            const double u_tau = this->CalculateUTau(
-                velocity_magnitude, wall_distance, nu, beta, von_karman);
-
-            y_plus = this->CalculateYPlus(u_tau, velocity_magnitude, wall_distance, nu);
-        }
-
-        const double f_mu = 1 - std::exp(-0.0115 * y_plus);
-        // calculating limited mixing length
-        double temp_tke = C_mu * f_mu * std::pow(tke, 1.5);
-        const double limited_mixing_length =
-            (temp_tke < epsilon * mixing_length) ? temp_tke / epsilon : mixing_length;
-
-        const double nu_min = nu * turbulent_viscosity_fraction;
+        const double tke =
+            this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
+        const double tke_rate =
+            this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY_RATE, gauss_shape_functions);
         const double nu_t =
-            std::max<double>(nu_min, limited_mixing_length * std::pow(tke, 0.5));
+            this->EvaluateInPoint(TURBULENT_VISCOSITY, gauss_shape_functions);
 
         BoundedMatrix<double, TDim, TDim> velocity_gradient_matrix;
-        velocity_gradient_matrix.clear();
-        for (unsigned int c = 0; c < TNumNodes; c++)
+        this->CalculateGradientMatrix(velocity_gradient_matrix, VELOCITY, r_shape_derivatives);
+
+        BoundedMatrix<double, TDim, TDim> symmetric_gradient;
+        this->CalculateSymmetricGradientMatrix(
+            symmetric_gradient, VELOCITY, velocity_gradient_matrix, r_shape_derivatives);
+        symmetric_gradient *= nu_t;
+        identity_matrix<double> identity(TDim);
+        symmetric_gradient -= (2.0 / 3.0) * tke * identity;
+
+        const array_1d<double, 3> velocity =
+            this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
+        const double velocity_magnitude = norm_2(velocity);
+
+        BoundedVector<double, TNumNodes> velocity_convective_terms;
+        this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
+
+        double tke_production = 0.0;
+        for (unsigned int i = 0; i < TDim; ++i)
         {
-            const array_1d<double, 3>& r_velocity =
-                rGeom[c].FastGetSolutionStepValue(VELOCITY);
-            for (unsigned int i = 0; i < TDim; i++)
+            for (unsigned int j = 0; j < TDim; ++j)
             {
-                for (unsigned int j = 0; j < TDim; j++)
-                {
-                    velocity_gradient_matrix(i, j) +=
-                        r_shape_derivatives(c, j) * r_velocity[i];
-                }
+                tke_production +=
+                    symmetric_gradient(i, j) * velocity_gradient_matrix(i, j);
             }
         }
 
-        BoundedMatrix<double, TDim, TDim> temp;
-        noalias(temp) = velocity_gradient_matrix + trans(velocity_gradient_matrix);
-        const double P_k = 0.5 * nu_t * std::pow(norm_frobenius(temp), 2.0);
+        tke_production = std::max<double>(tke_production, 0.0);
 
-        for (unsigned int a = 0; a < TNumNodes; a++)
+        const double elem_size = this->GetGeometry().Length();
+        const double tau = EvmKepsilonModelUtilities::CalculateStabilizationTau(
+            velocity_magnitude, elem_size, tke);
+
+        const double supg_coeff1 = tau * tke_rate;
+
+        for (unsigned int a = 0; a < TNumNodes; ++a)
         {
-            const double value = GaussWeights[g] * ShapeFunctions(g, a) * P_k;
-            // Add k contribution
-            rRightHandSideVector[a] += value;
+            double value = 0.0;
+
+            value += gauss_shape_functions[a] * tke_production;
+
+            // Add supg stabilization terms
+            value += velocity_convective_terms[a] * tau * tke_production;
+            value -= velocity_convective_terms[a] * supg_coeff1;
+
+            rRightHandSideVector[a] += gauss_weights[g] * value;
         }
     }
 
@@ -486,11 +471,11 @@ void EvmKElement<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& rMassMatrix,
     BaseType::CalculateMassMatrix(rMassMatrix, rCurrentProcessInfo);
 
     // Get Shape function data
-    Vector GaussWeights;
-    Matrix ShapeFunctions;
-    ShapeFunctionDerivativesArrayType ShapeDerivatives;
-    this->CalculateGeometryData(GaussWeights, ShapeFunctions, ShapeDerivatives);
-    const unsigned int num_gauss_points = GaussWeights.size();
+    Vector gauss_weights;
+    Matrix shape_functions;
+    ShapeFunctionDerivativesArrayType shape_derivatives;
+    this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
+    const unsigned int num_gauss_points = gauss_weights.size();
 
     for (unsigned int a = 0; a < TNumNodes; a++)
     {
@@ -498,8 +483,8 @@ void EvmKElement<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& rMassMatrix,
         {
             for (unsigned int g = 0; g < num_gauss_points; g++)
             {
-                const double value =
-                    GaussWeights[g] * ShapeFunctions(g, a) * ShapeFunctions(g, b);
+                const double value = gauss_weights[g] * shape_functions(g, a) *
+                                     shape_functions(g, b);
 
                 // Add contribution for k
                 rMassMatrix(a, b) += value;
@@ -525,76 +510,61 @@ void EvmKElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMa
     BaseType::CalculateDampingMatrix(rDampingMatrix, rCurrentProcessInfo);
 
     // Get Shape function data
-    Vector GaussWeights;
-    Matrix ShapeFunctions;
-    ShapeFunctionDerivativesArrayType ShapeDerivatives;
-    this->CalculateGeometryData(GaussWeights, ShapeFunctions, ShapeDerivatives);
-    const unsigned int num_gauss_points = GaussWeights.size();
+    Vector gauss_weights;
+    Matrix shape_functions;
+    ShapeFunctionDerivativesArrayType shape_derivatives;
+    this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
+    const unsigned int num_gauss_points = gauss_weights.size();
 
-    const GeometryType rGeom = this->GetGeometry();
-
-    const double beta = rCurrentProcessInfo[WALL_SMOOTHNESS_BETA];
-    const double von_karman = rCurrentProcessInfo[WALL_VON_KARMAN];
-    const double C_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
     const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
-    const double mixing_length = rCurrentProcessInfo[TURBULENT_MIXING_LENGTH];
-    const double turbulent_viscosity_fraction =
-        rCurrentProcessInfo[TURBULENT_VISCOSITY_FRACTION];
-
-    bool is_near_wall = false;
-    for (unsigned int i = 0; i < TNumNodes; ++i)
-        if (rGeom[i].Is(STRUCTURE))
-        {
-            is_near_wall = true;
-            break;
-        }
+    const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
 
     for (unsigned int g = 0; g < num_gauss_points; g++)
     {
-        const auto& r_shape_derivatives = ShapeDerivatives[g];
+        const Matrix& r_shape_derivatives = shape_derivatives[g];
+        const Vector& gauss_shape_functions = row(shape_functions, g);
 
-        double velocity_divergence = 0.0;
-        double epsilon = 0.0;
-        double tke = 0.0;
-        double wall_distance = 0.0;
-        double nu = 0.0;
-        array_1d<double, 3> velocity = ZeroVector(3);
-
-        for (unsigned int c = 0; c < TNumNodes; c++)
-        {
-            const array_1d<double, 3>& r_velocity =
-                rGeom[c].FastGetSolutionStepValue(VELOCITY);
-            for (unsigned int k = 0; k < TDim; k++)
-            {
-                velocity_divergence += r_shape_derivatives(c, k) * r_velocity[k];
-            }
-
-            epsilon += ShapeFunctions(g, c) *
-                       rGeom[c].FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
-            tke += ShapeFunctions(g, c) *
-                   rGeom[c].FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
-            wall_distance +=
-                ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(DISTANCE);
-            nu += ShapeFunctions(g, c) * rGeom[c].FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
-            velocity += ShapeFunctions(g, c) * r_velocity;
-        }
-
-        double y_plus(300.0);
-        if (is_near_wall)
-        {
-            const double velocity_magnitude = norm_2(velocity);
-            const double u_tau = this->CalculateUTau(
-                velocity_magnitude, wall_distance, nu, beta, von_karman);
-            y_plus = this->CalculateYPlus(u_tau, velocity_magnitude, wall_distance, nu);
-        }
-
-        const double f_mu = 1 - std::exp(-0.0115 * y_plus);
-        const double limited_mixing_length =
-            std::min<double>(C_mu * std::pow(tke, 1.5) / epsilon, mixing_length);
-        const double nu_min = nu * turbulent_viscosity_fraction;
+        const double tke =
+            this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY, gauss_shape_functions, 1);
+        const double wall_distance = this->EvaluateInPoint(DISTANCE, gauss_shape_functions);
+        const double nu = this->EvaluateInPoint(KINEMATIC_VISCOSITY, gauss_shape_functions);
         const double nu_t =
-            std::max<double>(nu_min, limited_mixing_length * std::pow(tke, 0.5));
-        const double gamma = C_mu * tke / (nu_t * f_mu);
+            this->EvaluateInPoint(TURBULENT_VISCOSITY, gauss_shape_functions);
+        const array_1d<double, 3> velocity =
+            this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
+        const double u_tau = this->EvaluateInPoint(FRICTION_VELOCITY, gauss_shape_functions);
+
+        BoundedVector<double, TNumNodes> velocity_convective_terms;
+        this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
+
+        const double velocity_divergence =
+            this->GetDivergenceOperator(VELOCITY, r_shape_derivatives);
+
+        const double y_plus =
+            EvmKepsilonModelUtilities::CalculateYplus(u_tau, wall_distance, nu);
+        const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
+
+        const double coeff1 = 2 * nu / std::pow(wall_distance, 2);
+        const double coeff2 = nu + nu_t / tke_sigma;
+        const double gamma = std::max<double>(c_mu * f_mu * tke / nu_t, 0.0);
+
+        const double velocity_magnitude = norm_2(velocity);
+        const double elem_size = this->GetGeometry().Length();
+        const double tau = EvmKepsilonModelUtilities::CalculateStabilizationTau(
+            velocity_magnitude, elem_size, tke);
+        const double supg_coeff1 =
+            tau * (velocity_divergence + gamma + coeff1);
+
+        // KRATOS_WATCH(this->Id());
+        // KRATOS_WATCH(velocity_divergence);
+        // KRATOS_WATCH(coeff1);
+        // KRATOS_WATCH(coeff2);
+        // KRATOS_WATCH(gamma);
+        // KRATOS_WATCH(supg_coeff1);
+        // KRATOS_WATCH(tau);
+        // KRATOS_WATCH(elem_size);
+        // KRATOS_WATCH(tke);
+        // KRATOS_WATCH(nu_t);
 
         for (unsigned int a = 0; a < TNumNodes; a++)
         {
@@ -604,16 +574,21 @@ void EvmKElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMa
                 for (unsigned int i = 0; i < TDim; i++)
                     dNa_dNb += r_shape_derivatives(a, i) * r_shape_derivatives(b, i);
 
-                double value_k = 0.0;
-
-                value_k += velocity_divergence;
-                value_k += gamma;
-                value_k += 2.0 * nu / std::pow(wall_distance, 2.0);
-                value_k *= ShapeFunctions(g, a) * ShapeFunctions(g, b);
-                value_k += (nu_t / tke_sigma) * dNa_dNb;
-
+                double value = 0.0;
                 // Add k contribution
-                rDampingMatrix(a, b) += GaussWeights[g] * value_k;
+                value += gauss_shape_functions[a] * velocity_divergence *
+                         gauss_shape_functions[b];
+                value += gauss_shape_functions[a] * velocity_convective_terms[b];
+                value += gauss_shape_functions[a] * coeff1 * gauss_shape_functions[b];
+                value += dNa_dNb * coeff2;
+                value += gauss_shape_functions[a] * gamma * gauss_shape_functions[b];
+
+                // Adding SUPG stabilization terms
+                value += velocity_convective_terms[a] * supg_coeff1 *
+                         gauss_shape_functions[b];
+                value += velocity_convective_terms[a] * tau * velocity_convective_terms[b];
+
+                rDampingMatrix(a, b) += gauss_weights[g] * value;
             }
         }
     }

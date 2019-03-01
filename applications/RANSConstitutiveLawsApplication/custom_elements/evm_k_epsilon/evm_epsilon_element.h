@@ -22,10 +22,10 @@
 #include "includes/properties.h"
 #include "utilities/brent_iteration.h"
 
-#include "custom_elements/element_derivatives_extension.h"
 #include "custom_elements/rans_constitutive_element.h"
 #include "rans_constitutive_laws_application_variables.h"
 #include "includes/cfd_variables.h"
+#include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
 
 namespace Kratos
 {
@@ -101,33 +101,6 @@ public:
 
     static constexpr unsigned int TLocalSize = TNumNodes * TBlockSize;
 
-    class ThisExtensions : public ElementDerivativesExtension
-    {
-        Element* mpElement;
-
-    public:
-        explicit ThisExtensions(Element* pElement) : mpElement{pElement}
-        {
-        }
-
-        void GetSecondDerivativesDofList(DofsVectorType& rElementalDofList,
-                                         ProcessInfo& rCurrentProcessInfo) override
-        {
-            GeometryType& r_geometry = mpElement->GetGeometry();
-
-            if (rElementalDofList.size() != TLocalSize)
-                rElementalDofList.resize(TLocalSize);
-
-            unsigned int LocalIndex = 0;
-
-            for (unsigned int i = 0; i < TNumNodes; ++i)
-            {
-                rElementalDofList[LocalIndex++] =
-                    r_geometry[i].pGetDof(TURBULENT_ENERGY_DISSIPATION_RATE_2);
-            }
-        }
-    };
-
     ///@}
     ///@name Pointer Definitions
     /// Pointer definition of EvmEpsilonElement
@@ -179,12 +152,6 @@ public:
     ///@}
     ///@name Operations
     ///@{
-
-    void Initialize() override
-    {
-        this->SetValue(ELEMENT_DERIVATIVES_DOFS_EXTENSION,
-                       Kratos::make_shared<ThisExtensions>(this));
-    }
 
     /**
      * ELEMENTS inherited from this class have to implement next
@@ -239,6 +206,10 @@ public:
 
 
     void GetValuesVector(VectorType& rValues, int Step = 0) override;
+
+    void GetFirstDerivativesVector(VectorType& values, int Step = 0) override;
+
+    void GetSecondDerivativesVector(VectorType& values, int Step = 0) override;
 
     /**
      * ELEMENTS inherited from this class have to implement next

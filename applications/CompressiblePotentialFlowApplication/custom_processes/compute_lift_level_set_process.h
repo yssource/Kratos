@@ -85,7 +85,7 @@ public:
 
         for(auto it=mrModelPart.ElementsBegin(); it!=mrModelPart.ElementsEnd(); ++it)
         {
-            if (it->Is(BOUNDARY)){     
+            if (it->Is(BOUNDARY) && it -> Is(ACTIVE)){     
                 auto geom = it->GetGeometry();
                 const unsigned int NumNodes=geom.size();     
                 array_1d<double,3> elemental_distance;
@@ -136,7 +136,8 @@ public:
                 it->GetValueOnIntegrationPoints(PRESSURE,cp,mrModelPart.GetProcessInfo());
 
                 double cpressure=cp[0];
-                               
+                KRATOS_WATCH(it->Id())
+                KRATOS_WATCH(cpressure)        
                 Cl += cpressure*cut_unit_normal[0][1];
                 Cd += cpressure*cut_unit_normal[0][0];
                 Rz += cpressure*cut_unit_normal[0][2];

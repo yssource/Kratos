@@ -50,9 +50,57 @@ template <int Dim, int NumNodes>
 void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::CalculateLocalSystem(
     MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
-    //NOT EMBEDDED
-    BaseType::CalculateLocalSystem(rLeftHandSideMatrix, rRightHandSideVector, rCurrentProcessInfo);
+    const EmbeddedIncompressiblePotentialFlowElement& r_this = *this;
+    const int wake = r_this.GetValue(WAKE);
+    const int kutta = r_this.GetValue(KUTTA);
+
+
+    if (this->Is(BOUNDARY) && wake == 0 && kutta == 0)
+        CalculateEmbeddedLocalSystem(rLeftHandSideMatrix,rRightHandSideVector,rCurrentProcessInfo);
+    else
+        BaseType::CalculateLocalSystem(rLeftHandSideMatrix, rRightHandSideVector, rCurrentProcessInfo);
+    KRATOS_WATCH(this->Id())
+    KRATOS_WATCH(rLeftHandSideMatrix)
+    KRATOS_WATCH(rRightHandSideVector)
+
 }
+
+template <int Dim, int NumNodes>
+void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::CalculateEmbeddedLocalSystem(
+    MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
+{
+    ElementalData<NumNodes,Dim> data;
+    array_1d<double,NumNodes> elemental_distance;
+    for(unsigned int i_node = 0; i_node<NumNodes; i_node++)
+        elemental_distance[i_node] = this->GetGeometry()[i_node].GetSolutionStepValue(LEVEL_SET_DISTANCE);
+
+    BaseType::GetPotentialOnNormalElement(data.phis);
+
+    const Vector& r_elemental_distances=elemental_distance;
+    Triangle2D3ModifiedShapeFunctions triangle_shape_functions(this->pGetGeometry(), r_elemental_distances);
+    Matrix positive_side_sh_func;
+    ModifiedShapeFunctions::ShapeFunctionsGradientsType positive_side_sh_func_gradients;
+    Vector positive_side_weights;
+    triangle_shape_functions.ComputePositiveSideShapeFunctionsAndGradientsValues(
+        positive_side_sh_func,
+        positive_side_sh_func_gradients,
+        positive_side_weights,
+        GeometryData::GI_GAUSS_2);
+
+        for (unsigned int i_gauss=0;i_gauss<positive_side_sh_func_gradients.size();i_gauss++){
+            MatrixType aux_matrix;
+            bounded_matrix<double,NumNodes,Dim> DN_DX;
+            DN_DX=positive_side_sh_func_gradients(i_gauss);
+            
+            //reading properties and conditions
+            aux_matrix=prod(DN_DX,trans(DN_DX))*positive_side_weights(i_gauss);  // Bt D B
+
+            noalias(rLeftHandSideMatrix) += aux_matrix;                       
+        }
+     
+    noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
+}
+
 
 template <int Dim, int NumNodes>
 void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::CalculateRightHandSide(

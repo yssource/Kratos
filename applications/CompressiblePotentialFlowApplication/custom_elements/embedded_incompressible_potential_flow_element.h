@@ -22,6 +22,7 @@
 #include "includes/kratos_flags.h"
 #include "compressible_potential_flow_application_variables.h"
 #include "utilities/geometry_utilities.h"
+#include "modified_shape_functions/triangle_2d_3_modified_shape_functions.h"
 #include "utilities/enrichment_utilities.h"
 #include "incompressible_potential_flow_element.h"
 
@@ -262,7 +263,9 @@ private:
     ///@}
     ///@name Serialization
     ///@{
-
+    void CalculateEmbeddedLocalSystem(MatrixType& rLeftHandSideMatrix,
+                              VectorType& rRightHandSideVector,
+                              ProcessInfo& rCurrentProcessInfo);
     friend class Serializer;
 
     void save(Serializer& rSerializer) const override;

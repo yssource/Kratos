@@ -327,7 +327,7 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
                 #         max_node=node
         self.main_model_part.CreateSubModelPart('KuttaLS').AddNode(max_node,0)
         for node in self.main_model_part.GetSubModelPart('KuttaLS').Nodes:
-            node.Set(KratosMultiphysics.STRUCTURE,True)
+            node.SetValue(KratosMultiphysics.CompressiblePotentialFlowApplication.TRAILING_EDGE,True)
 ##################
         # max_node=self.main_model_part.GetNode(7069,0)
 ##################

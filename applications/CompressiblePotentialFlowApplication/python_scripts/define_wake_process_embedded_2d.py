@@ -1,5 +1,5 @@
 import KratosMultiphysics
-import KratosMultiphysics.CompressiblePotentialFlowApplication as CompressiblePotentialFlow
+import KratosMultiphysics.CompressiblePotentialFlowApplication as CPFApp
 import KratosMultiphysics.MeshingApplication as MeshingApplication
 
 import math
@@ -93,9 +93,9 @@ class DefineWakeProcess(KratosMultiphysics.Process):
             d=elem.GetValue(KratosMultiphysics.ELEMENTAL_DISTANCES)
             i=0            
             for node in elem.GetNodes():
-                node.SetSolutionStepValue(CompressiblePotentialFlow.WAKE_DISTANCE,d[i])
+                node.SetSolutionStepValue(CPFApp.WAKE_DISTANCE,d[i])
                 i += 1
-        # KratosMultiphysics.VariableUtils().CopyScalarVar(KratosMultiphysics.DISTANCE,CompressiblePotentialFlow.WAKE_DISTANCE, self.fluid_model_part.Nodes)
+        # KratosMultiphysics.VariableUtils().CopyScalarVar(KratosMultiphysics.DISTANCE,CPFApp.WAKE_DISTANCE, self.fluid_model_part.Nodes)
 
 
 
@@ -106,14 +106,12 @@ class DefineWakeProcess(KratosMultiphysics.Process):
         # This function marks the elements touching the trailing
         # edge and saves them in the trailing_edge_model_part for
         # further computations
-        if (elem.Is(KratosMultiphysics.ACTIVE)):
-            for elnode in elem.GetNodes():
-                if(elnode.Is(KratosMultiphysics.STRUCTURE)):
-                    elem.Set(KratosMultiphysics.STRUCTURE, True)
-                    elem.Set(KratosMultiphysics.MARKER,True)
-                    # elem.Set(KratosMultiphysics.BOUNDARY,False)
-                    self.trailing_edge_model_part.Elements.append(elem)
-                    break
+        for elnode in elem.GetNodes():
+            if(elnode.GetValue(CPFApp.TRAILING_EDGE)):
+                elem.SetValue(CPFApp.TRAILING_EDGE, True)
+                elem.SetValue(CPFApp.KUTTA, True)
+                self.trailing_edge_model_part.Elements.append(elem)
+                break
         
     def FindWake(self):
         print("Executing wake process")     
@@ -132,48 +130,6 @@ class DefineWakeProcess(KratosMultiphysics.Process):
             kutta_node=node
             print("Kutta Node Id:", node.Id)
 
-        # for elem in self.fluid_model_part.Elements:    
-        #     self.MarkTrailingEdgeElements(elem)     
-        #     distances=elem.GetValue(KratosMultiphysics.ELEMENTAL_DISTANCES)
-        #     npos = 0
-        #     nneg = 0
-        #     npos_ls = 0
-        #     nneg_ls = 0
-        #     for d in distances:
-        #         if(abs(d) < self.epsilon):
-        #             if d > 0.0:
-        #                 d = self.epsilon
-        #             else:
-        #                 d = -self.epsilon
-        #         if(d < 0):
-        #             nneg += 1
-        #         else:
-        #             npos += 1
-        #     for node in elem.GetNodes():
-        #         d=node.GetSolutionStepValue(CompressiblePotentialFlow.LEVEL_SET_DISTANCE)
-        #         if(d < 0):
-        #             nneg_ls += 1
-        #         else:
-        #             npos_ls += 1
-        #     if(nneg>0 and npos>0):
-        #         elem.Set(KratosMultiphysics.MARKER,True)
-        #         counter = 0
-        #         for elnode in elem.GetNodes():
-        #             elnode.SetSolutionStepValue(CompressiblePotentialFlow.WAKE_DISTANCE,0,distances[counter])
-        #             elnode.SetSolutionStepValue(KratosMultiphysics.TEMPERATURE,-1)
-        #             counter+=1
-        #         elem.SetValue(KratosMultiphysics.ELEMENTAL_DISTANCES,distances)
-        #     if(nneg>0 and npos>0) and (nneg_ls>0 and npos_ls>0):
-        #         elem.Set(KratosMultiphysics.ACTIVE,True)
-
-                # center_X=elem.GetGeometry().Center().X
-                # if center_X>max_X_center:
-                    # max_id=elem.Id
-                    # max_X_center=center_X
-                #only the max element of the trailing edge is considered part of the wake. 
-
-        #find element with the maximum X value
-
         xn = KratosMultiphysics.Vector(3)
         
         self.n = KratosMultiphysics.Vector(3)
@@ -186,7 +142,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
         y0 = kutta_node.Y
         for elem in self.fluid_model_part.Elements:
             self.MarkTrailingEdgeElements(elem)      
-            elem.Set(KratosMultiphysics.MARKER,False)                     
+            elem.SetValue(CPFApp.WAKE,False)                     
             #check in the potentially active portion
             potentially_active_portion = False
             for elnode in elem.GetNodes():
@@ -197,7 +153,7 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                 if(dx > 0): 
                     potentially_active_portion = True
                     break
-                if(elnode.Is(KratosMultiphysics.STRUCTURE)): ##all nodes that touch the kutta nodes are potentiallyactive
+                if(elnode.GetValue(CPFApp.TRAILING_EDGE)): ##all nodes that touch the kutta nodes are potentiallyactive
                     potentially_active_portion = True
                     break
                 
@@ -229,10 +185,10 @@ class DefineWakeProcess(KratosMultiphysics.Process):
                         npos += 1
                         
                 if(nneg>0 and npos>0):
-                    elem.Set(KratosMultiphysics.MARKER,True)
+                    elem.SetValue(CPFApp.WAKE,True)
                     counter = 0
                     for elnode in elem.GetNodes():
-                        elnode.SetSolutionStepValue(CompressiblePotentialFlow.WAKE_DISTANCE,0,distances[counter])
+                        elnode.SetSolutionStepValue(CPFApp.WAKE_DISTANCE,0,distances[counter])
                         counter+=1
                     elem.SetValue(KratosMultiphysics.ELEMENTAL_DISTANCES,distances)
 
@@ -240,11 +196,12 @@ class DefineWakeProcess(KratosMultiphysics.Process):
         for element in self.trailing_edge_model_part.Elements:
             # print(element.Id)
             element.Set(KratosMultiphysics.INTERFACE,True)
-            if (element.Is(KratosMultiphysics.MARKER)):
+                                 
+            if (element.GetValue(CPFApp.WAKE)):
                 center_X=element.GetGeometry().Center().X
                 nneg=0
                 for node in element.GetNodes():
-                    if node.GetSolutionStepValue(CompressiblePotentialFlow.WAKE_DISTANCE)<0:
+                    if node.GetSolutionStepValue(CPFApp.WAKE_DISTANCE)<0:
                         nneg += 1
                 if center_X>max_X_center and nneg==1:
                     max_id=element.Id
@@ -253,41 +210,21 @@ class DefineWakeProcess(KratosMultiphysics.Process):
         #only the max element of the trailing edge is considered part of the wake. 
         for element in self.trailing_edge_model_part.Elements:
             if not (element.Id==max_id):
-                element.Set(KratosMultiphysics.MARKER,False)
+                element.SetValue(CPFApp.WAKE,False)
                 nneg=0
                 for node in element.GetNodes():
-                    if node.GetSolutionStepValue(CompressiblePotentialFlow.WAKE_DISTANCE)<0:
+                    if node.GetSolutionStepValue(CPFApp.WAKE_DISTANCE)<0:
                         nneg += 1
                 if not nneg>0:
-                    element.Set(KratosMultiphysics.STRUCTURE,False)      
+                    element.SetValue(CPFApp.KUTTA,False)   
+            else:
+                element.Set(KratosMultiphysics.STRUCTURE,True)   
+                element.SetValue(CPFApp.KUTTA,False)   
+
 
                 
                 
-        from gid_output_process import GiDOutputProcess
-        gid_output = GiDOutputProcess(self.fluid_model_part,
-                                    "wake_preview",
-                                    KratosMultiphysics.Parameters("""
-                                        {
-                                            "result_file_configuration" : {
-                                                "gidpost_flags": {
-                                                    "GiDPostMode": "GiD_PostBinary",
-                                                    "WriteDeformedMeshFlag": "WriteUndeformed",
-                                                    "WriteConditionsFlag": "WriteConditions",
-                                                    "MultiFileFlag": "SingleFile"
-                                                },
-                                                "nodal_results"       : ["DISTANCE","LEVEL_SET_DISTANCE","WAKE_DISTANCE"],
-                                                "elemental_conditional_flags_results": ["MARKER","INTERFACE"]
-                                            }
-                                        }
-                                        """)
-                                    )
 
-        gid_output.ExecuteInitialize()
-        gid_output.ExecuteBeforeSolutionLoop()
-        gid_output.ExecuteInitializeSolutionStep()
-        gid_output.PrintOutput()
-        gid_output.ExecuteFinalizeSolutionStep()
-        gid_output.ExecuteFinalize()
                                                
     def ExecuteInitialize(self):
         self.Execute()

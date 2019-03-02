@@ -219,6 +219,7 @@ protected:
     ///@name Protected Operations
     ///@{
 
+    void GetPotentialOnNormalElement(array_1d<double, NumNodes>& phis) const;
     ///@}
     ///@name Protected  Access
     ///@{
@@ -292,7 +293,6 @@ private:
 
     void ComputeElementInternalEnergy();
 
-    void GetPotentialOnNormalElement(array_1d<double, NumNodes>& phis) const;
 
     void GetPotentialOnWakeElement(Vector& split_element_values,
                                    const array_1d<double, NumNodes>& distances) const;

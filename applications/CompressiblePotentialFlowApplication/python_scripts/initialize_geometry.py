@@ -96,7 +96,7 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
         print("Executing Initialize Geometry")
         self.InitializeSkinModelPart()
         self.CalculateDistance()
-        self.PerturbateDistanceNumericalGradient()
+        # self.PerturbateDistanceNumericalGradient()
 
         if (self.do_remeshing):
             if self.isosurface_flag:
@@ -109,13 +109,13 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
                 ini_time=time.time()
                 self.RefineMesh()
                 print("Elapsed time: ",time.time()-ini_time)
-                self.CalculateDistance()
-                self.MetricParameters["enforce_current"].SetBool(True)
-                self.MetricParameters["minimal_size"].SetDouble(1e-4)
-                print("Executing second refinement ")
-                ini_time=time.time()
-                self.RefineMesh()
-                print("Elapsed time: ",time.time()-ini_time)
+                # self.CalculateDistance()
+                # self.MetricParameters["enforce_current"].SetBool(True)
+                # self.MetricParameters["minimal_size"].SetDouble(1e-4)
+                # print("Executing second refinement ")
+                # ini_time=time.time()
+                # self.RefineMesh()
+                # print("Elapsed time: ",time.time()-ini_time)
                 self.CalculateDistance()
 
         self.ApplyFlags()
@@ -143,7 +143,7 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
             # for node in self.skin_model_part.Nodes:
             #     node.X=node.X+1e-5
             #     node.Y=node.Y+1e-5
-            RotateModelPart(self.origin,angle,self.skin_model_part)
+            # RotateModelPart(self.origin,angle,self.skin_model_part)
             # a=1
             # b=a/4
             # for node in self.main_model_part.Nodes:

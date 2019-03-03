@@ -136,8 +136,7 @@ public:
                 it->GetValueOnIntegrationPoints(PRESSURE,cp,mrModelPart.GetProcessInfo());
 
                 double cpressure=cp[0];
-                KRATOS_WATCH(it->Id())
-                KRATOS_WATCH(cpressure)        
+                
                 Cl += cpressure*cut_unit_normal[0][1];
                 Cd += cpressure*cut_unit_normal[0][0];
                 Rz += cpressure*cut_unit_normal[0][2];

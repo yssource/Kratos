@@ -59,9 +59,6 @@ void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::CalculateLocalSy
         CalculateEmbeddedLocalSystem(rLeftHandSideMatrix,rRightHandSideVector,rCurrentProcessInfo);
     else
         BaseType::CalculateLocalSystem(rLeftHandSideMatrix, rRightHandSideVector, rCurrentProcessInfo);
-    KRATOS_WATCH(this->Id())
-    KRATOS_WATCH(rLeftHandSideMatrix)
-    KRATOS_WATCH(rRightHandSideVector)
 
 }
 

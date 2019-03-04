@@ -19,12 +19,12 @@
 // External includes
 
 // Project includes
-#include "rans_constitutive_laws_application_variables.h"
 #include "includes/cfd_variables.h"
 #include "includes/define.h"
 #include "includes/model_part.h"
 #include "processes/process.h"
 #include "processes/variational_distance_calculation_process.h"
+#include "rans_constitutive_laws_application_variables.h"
 
 namespace Kratos
 {
@@ -165,19 +165,23 @@ protected:
         mrModelPart.GetNodalSolutionStepVariablesList().push_back(KINEMATIC_VISCOSITY);
         mrModelPart.GetNodalSolutionStepVariablesList().push_back(TURBULENT_VISCOSITY);
 
-        KRATOS_INFO("TurbulenceModel")<<"Added eddy viscosity turbulence model solution step variables.\n";
+        KRATOS_INFO("TurbulenceModel") << "Added eddy viscosity turbulence "
+                                          "model solution step variables.\n";
 
         KRATOS_CATCH("");
     }
 
     virtual void AddDofs()
     {
-        KRATOS_INFO("TurbulenceModel")<<"Added eddy viscosity turbulence model dofs.\n";
+        KRATOS_INFO("TurbulenceModel")
+            << "Added eddy viscosity turbulence model dofs.\n";
     }
 
     virtual void InitializeTurbulenceModelPart()
     {
-        KRATOS_THROW_ERROR(std::runtime_error, "Calling base class InitializeTurbulenceModelPart.", "");
+        KRATOS_THROW_ERROR(std::runtime_error,
+                           "Calling base class InitializeTurbulenceModelPart.",
+                           "");
     }
 
     virtual void UpdateFluidViscosity()
@@ -203,16 +207,63 @@ protected:
         KRATOS_CATCH("");
     }
 
-
     virtual void InitializeConditionFlags(const Flags& rFlag)
     {
-        KRATOS_THROW_ERROR(std::runtime_error, "Calling base class InitializeConditionFlags.", "");
+        KRATOS_THROW_ERROR(std::runtime_error,
+                           "Calling base class InitializeConditionFlags.", "");
     }
 
     void GenerateModelPart(ModelPart& rOriginModelPart,
                            ModelPart& rDestinationModelPart,
                            const Element& rReferenceElement,
                            const Condition& rReferenceCondition);
+
+    void CalculateYplus(unsigned int Step = 0)
+    {
+        int number_of_nodes = mrModelPart.NumberOfNodes();
+        const ProcessInfo& r_current_process_info = mrModelPart.GetProcessInfo();
+
+        const double von_karman = r_current_process_info[WALL_VON_KARMAN];
+        const double beta = r_current_process_info[WALL_SMOOTHNESS_BETA];
+
+#pragma omp parallel for
+        for (int i = 0; i < number_of_nodes; ++i)
+        {
+            Node<3>& r_node = *(mrModelPart.NodesBegin() + i);
+
+            const array_1d<double, 3>& r_velocity =
+                r_node.FastGetSolutionStepValue(VELOCITY, Step);
+            const double velocity_norm = norm_2(r_velocity);
+
+            const double nu = r_node.FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
+            const double wall_distance = r_node.FastGetSolutionStepValue(DISTANCE);
+
+            double& y_plus = r_node.FastGetSolutionStepValue(RANS_Y_PLUS);
+
+            // try linear law
+            y_plus = std::sqrt(velocity_norm * wall_distance / nu);
+
+            // If the linear low doesnt match within the range, try logrithmic law
+            if (y_plus > 11.06)
+            {
+                unsigned int max_u_tau_iterations = 10, i;
+                double u_tau = std::sqrt(velocity_norm * nu / wall_distance);
+                double prev_u_tau = 0.0;
+                for (i = 0; i < max_u_tau_iterations; ++i)
+                {
+                    prev_u_tau = u_tau;
+                    u_tau = velocity_norm /
+                            (std::log(u_tau * wall_distance / nu) / von_karman + beta);
+                }
+                const double delta_u_tau = std::abs(u_tau - prev_u_tau);
+                KRATOS_INFO_IF("TurbulenceEvmProcess", delta_u_tau > 1e-5) << "WARNING: Maximum number of iterations reached for y_plus calculation. error_u_tau = "
+                                                                           << std::scientific
+                                                                           << delta_u_tau
+                                                                           << ".\n";
+                y_plus = u_tau * wall_distance / nu;
+            }
+        }
+    }
 
     ///@}
     ///@name Protected  Access

@@ -31,10 +31,10 @@ double CalculateTurbulentViscosity(const double C_mu,
         << "TURBULENT_KINETIC_ENERGY < 0.0 [ " << std::scientific
         << turbulent_kinetic_energy << " < 0.0 ] in CalculateTurbulentViscosity\n";
 
-    KRATOS_DEBUG_ERROR_IF(turbulent_energy_dissipation_rate < 0.0)
-        << "TURBULENT_ENERGY_DISSIPATION_RATE < 0.0 [ " << std::scientific
-        << turbulent_energy_dissipation_rate
-        << " < 0.0 ] in CalculateTurbulentViscosity\n";
+    // KRATOS_DEBUG_ERROR_IF(turbulent_energy_dissipation_rate < 0.0)
+    //     << "TURBULENT_ENERGY_DISSIPATION_RATE < 0.0 [ " << std::scientific
+    //     << turbulent_energy_dissipation_rate
+    //     << " < 0.0 ] in CalculateTurbulentViscosity\n";
 
     const double limited_mixing_length = std::min<double>(
         C_mu * std::pow(turbulent_kinetic_energy, 1.5) / turbulent_energy_dissipation_rate,
@@ -62,9 +62,9 @@ double CalculateF2(const double turbulent_kinetic_energy,
         << "TURBULENT_KINETIC_ENERGY < 0.0 [ " << std::scientific
         << turbulent_kinetic_energy << " < 0.0 ] in CalculateF2\n";
 
-    KRATOS_DEBUG_ERROR_IF(turbulent_energy_dissipation_rate < 0.0)
-        << "TURBULENT_ENERGY_DISSIPATION_RATE < 0.0 [ " << std::scientific
-        << turbulent_energy_dissipation_rate << " < 0.0 ] in CalculateF2\n";
+    // KRATOS_DEBUG_ERROR_IF(turbulent_energy_dissipation_rate < 0.0)
+    //     << "TURBULENT_ENERGY_DISSIPATION_RATE < 0.0 [ " << std::scientific
+    //     << turbulent_energy_dissipation_rate << " < 0.0 ] in CalculateF2\n";
 
     KRATOS_DEBUG_ERROR_IF(kinematic_viscosity < 0.0)
         << "KINEMATIC_VISCOSITY < 0.0 [ " << std::scientific
@@ -145,11 +145,11 @@ double CalculateUTau(const double velocity_magnitude,
 
 double CalculateStabilizationTau(const double velocity_magnitude,
                                  const double length,
-                                 const double turbulent_kinetic_energy)
+                                 const double effective_kinematic_viscosity)
 {
     double alpha(1.0), Pe(0.0);
-    if (turbulent_kinetic_energy != 0.0)
-        Pe = std::max<double>(velocity_magnitude * length / (2.0 * turbulent_kinetic_energy), 0.0);
+    if (effective_kinematic_viscosity != 0.0)
+        Pe = std::max<double>(velocity_magnitude * length / (2.0 * effective_kinematic_viscosity), 0.0);
     if (Pe != 0.0)
         alpha = (std::exp(2.0 * Pe) + 1) / (std::exp(2.0 * Pe) - 1) - 1.0 / Pe;
 

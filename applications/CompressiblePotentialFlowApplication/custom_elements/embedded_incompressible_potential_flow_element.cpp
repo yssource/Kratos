@@ -66,6 +66,12 @@ template <int Dim, int NumNodes>
 void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::CalculateEmbeddedLocalSystem(
     MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
 {
+    if (rLeftHandSideMatrix.size1() != NumNodes || rLeftHandSideMatrix.size2() != NumNodes)
+        rLeftHandSideMatrix.resize(NumNodes, NumNodes, false);
+    if (rRightHandSideVector.size() != NumNodes)
+        rRightHandSideVector.resize(NumNodes, false);
+    rLeftHandSideMatrix.clear();
+
     ElementalData<NumNodes,Dim> data;
     array_1d<double,NumNodes> elemental_distance;
     for(unsigned int i_node = 0; i_node<NumNodes; i_node++)

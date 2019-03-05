@@ -154,19 +154,19 @@ public:
         KRATOS_CATCH("");
     }
 
-    // void FinalizeNonLinIteration(
-    //     ModelPart& rModelPart,
-    //     typename BaseType::SystemMatrixType& A,
-    //     typename BaseType::SystemVectorType& Dx,
-    //     typename BaseType::SystemVectorType& b
-    //     ) override
-    // {
-    //     KRATOS_TRY
+    void FinalizeNonLinIteration(
+        ModelPart& rModelPart,
+        typename BaseType::SystemMatrixType& A,
+        typename BaseType::SystemVectorType& Dx,
+        typename BaseType::SystemVectorType& b
+        ) override
+    {
+        KRATOS_TRY
 
-    //     LowerBound(rModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
+        LowerBound(rModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
 
-    //     KRATOS_CATCH("")
-    // }
+        KRATOS_CATCH("")
+    }
 
     ///@}
 };
@@ -192,7 +192,8 @@ class ResidualBasedBossakTurbulentEnergyDissipationRateScheme
         {
             rVector.resize(1);
             Node<3>& r_node = mpElement->GetGeometry()[NodeId];
-            rVector[0] = MakeIndirectScalar(r_node, TURBULENT_ENERGY_DISSIPATION_RATE, Step);
+            rVector[0] =
+                MakeIndirectScalar(r_node, TURBULENT_ENERGY_DISSIPATION_RATE, Step);
         }
 
         void GetSecondDerivativesVector(std::size_t NodeId,
@@ -202,7 +203,8 @@ class ResidualBasedBossakTurbulentEnergyDissipationRateScheme
         {
             rVector.resize(1);
             Node<3>& r_node = mpElement->GetGeometry()[NodeId];
-            rVector[0] = MakeIndirectScalar(r_node, TURBULENT_ENERGY_DISSIPATION_RATE_2, Step);
+            rVector[0] =
+                MakeIndirectScalar(r_node, TURBULENT_ENERGY_DISSIPATION_RATE_2, Step);
         }
 
         void GetFirstDerivativesDofsVector(std::size_t NodeId,
@@ -266,19 +268,19 @@ public:
         KRATOS_CATCH("");
     }
 
-    // void FinalizeNonLinIteration(
-    //     ModelPart& rModelPart,
-    //     typename BaseType::SystemMatrixType& A,
-    //     typename BaseType::SystemVectorType& Dx,
-    //     typename BaseType::SystemVectorType& b
-    //     ) override
-    // {
-    //     KRATOS_TRY
+    void FinalizeNonLinIteration(
+        ModelPart& rModelPart,
+        typename BaseType::SystemMatrixType& A,
+        typename BaseType::SystemVectorType& Dx,
+        typename BaseType::SystemVectorType& b
+        ) override
+    {
+        KRATOS_TRY
 
-    //     LowerBound(rModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
+        LowerBound(rModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
 
-    //     KRATOS_CATCH("")
-    // }
+        KRATOS_CATCH("")
+    }
 
     ///@}
 };
@@ -364,6 +366,12 @@ public:
         })");
 
         this->mrParameters["model_properties"].ValidateAndAssignDefaults(default_parameters);
+        this->mrParameters["model_properties"]["convergence_tolerances"].ValidateAndAssignDefaults(
+            default_parameters["convergence_tolerances"]);
+        this->mrParameters["model_properties"]["constants"].ValidateAndAssignDefaults(
+            default_parameters["constants"]);
+        this->mrParameters["model_properties"]["flow_parameters"].ValidateAndAssignDefaults(
+            default_parameters["flow_parameters"]);
 
         const Parameters& model_properties =
             this->mrParameters["model_properties"]["constants"];
@@ -448,12 +456,11 @@ public:
         else if (process_step == 3)
         {
             const double current_time = r_current_process_info[TIME];
-
             if (current_time < mRampUpTime)
                 return;
-            if (this->mEchoLevel > 0)
-                KRATOS_INFO("TurbulenceModel") << "Solving RANS equations...\n";
 
+            KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
+                << "Solving RANS equations...\n";
             this->SolveStep();
         }
         else
@@ -493,8 +500,6 @@ public:
             return;
 
         this->AssignBoundaryConditions();
-
-        this->CalculateYplus(r_current_process_info[RANS_VELOCITY_STEP]);
 
         // IsBoundaryConditionsAssigned = true;
 
@@ -780,11 +785,6 @@ private:
                 pEpsilonConvergenceCriteria, pEpsilonBuilderAndSolver, epsilon_max_iterations,
                 CalculateReactions, ReformDofSet, this->mIsMeshMoving));
 
-        // mpConvergenceCriteria = ConvergenceCriteriaPointerType(
-        //     new TurbulenceViscosityConvergenceCriteria<TSparseSpace, TDenseSpace>(
-        //         turbulent_viscosity_relative_tolerance, turbulent_viscosity_absolute_tolerance));
-        // mpConvergenceCriteria->Initialize(*mpTurbulenceModelPart);
-
         mpKBuilderAndSolver->SetEchoLevel(
             this->mrParameters["model_properties"]["echo_level"].GetInt());
         mpEpsilonBuilderAndSolver->SetEchoLevel(
@@ -805,36 +805,36 @@ private:
         const double C_mu = r_current_process_info[TURBULENCE_RANS_C_MU];
 
         // Set Boundary Conditions
-        const int NumNodes = this->mrModelPart.NumberOfNodes();
+        const int number_of_nodes = this->mrModelPart.NumberOfNodes();
 #pragma omp parallel for
-        for (int i = 0; i < NumNodes; i++)
+        for (int i = 0; i < number_of_nodes; i++)
         {
-            ModelPart::NodeIterator iNode = this->mrModelPart.NodesBegin() + i;
-            if (iNode->Is(STRUCTURE))
+            ModelPart::NodeIterator i_node = this->mrModelPart.NodesBegin() + i;
+            if (i_node->Is(STRUCTURE))
             {
-                this->SetUpWallNode(*iNode);
-                this->InitializeValues(*iNode, 0.0, 0.0);
+                this->SetUpWallNode(*i_node);
+                this->InitializeValues(*i_node, 0.0, 0.0);
             }
-            else if (iNode->Is(INLET))
+            else if (i_node->Is(INLET))
             {
                 array_1d<double, 3>& velocity =
-                    iNode->FastGetSolutionStepValue(VELOCITY, 0);
+                    i_node->FastGetSolutionStepValue(VELOCITY, 0);
                 const double velocity_mag = norm_2(velocity);
                 const double k = velocity_mag * mVelocityRatio;
                 const double epsilon = C_mu * std::pow(k, 1.5) / mixing_length;
 
-                this->SetUpFreestreamNode(*iNode);
-                this->InitializeValues(*iNode, k, epsilon);
+                this->SetUpFreestreamNode(*i_node);
+                this->InitializeValues(*i_node, k, epsilon);
             }
             else // internal node, set initial value
             {
                 array_1d<double, 3>& velocity =
-                    iNode->FastGetSolutionStepValue(VELOCITY, 0);
+                    i_node->FastGetSolutionStepValue(VELOCITY, 0);
                 const double velocity_mag = norm_2(velocity);
                 const double k = std::pow(velocity_mag / mixing_length, 2);
                 const double epsilon = C_mu * std::pow(k, 1.5) / mixing_length;
 
-                this->InitializeValues(*iNode, k, epsilon);
+                this->InitializeValues(*i_node, k, epsilon);
             }
         }
     }
@@ -857,273 +857,101 @@ private:
         rNode.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE) = Epsilon;
     }
 
-    void AssignFrictionVelocities()
-    {
-        //         const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
-
-        //         const double von_karman = r_current_process_info[WALL_VON_KARMAN];
-        //         const double beta = r_current_process_info[WALL_SMOOTHNESS_BETA];
-        //         const double c_mu = r_current_process_info[TURBULENCE_RANS_C_MU];
-
-        //         auto& nodes_array = this->mrModelPart.Nodes();
-        // #pragma omp parallel for
-        //         for (int i = 0; i < static_cast<int>(nodes_array.size()); ++i)
-        //         {
-        //             auto it_node = nodes_array.begin() + i;
-        //             it_node->FastGetSolutionStepValue(FRICTION_VELOCITY) = 0.0;
-        //         }
-
-        //         auto& element_array = this->mrModelPart.Elements();
-        //         // #pragma omp parallel for
-        //         for (int i = 0; i < static_cast<int>(element_array.size()); ++i)
-        //         {
-        //             auto it_element = element_array.begin() + i;
-        //             auto& r_geometry = it_element->GetGeometry();
-
-        //             int wall_points = 0;
-        //             int non_structure_index = 0;
-        //             for (long unsigned int i = 0; i < r_geometry.PointsNumber(); ++i)
-        //             {
-        //                 if (r_geometry[i].Is(STRUCTURE))
-        //                     wall_points++;
-        //                 else
-        //                     non_structure_index = static_cast<int>(i);
-        //             }
-
-        //             if (wall_points == TDim)
-        //             {
-        //                 double& friction_velocity =
-        //                     r_geometry[non_structure_index].FastGetSolutionStepValue(FRICTION_VELOCITY);
-        //                 // #pragma omp atomic
-        //                 friction_velocity = -1.0;
-        //                 // it_element->SetValue(STRUCTURE, true);
-        //             }
-        //         }
-
-        // #pragma omp parallel for
-        //         for (int i = 0; i < static_cast<int>(nodes_array.size()); ++i)
-        //         {
-        //             auto it_node = nodes_array.begin() + i;
-        //             double& u_tau = it_node->FastGetSolutionStepValue(FRICTION_VELOCITY);
-        //             if (!(it_node->Is(STRUCTURE)) && (u_tau == -1.0))
-        //             {
-        //                 const array_1d<double, 3> velocity =
-        //                     it_node->FastGetSolutionStepValue(VELOCITY);
-        //                 const double velocity_magnitude = norm_2(velocity);
-        //                 const double kinematic_viscosity =
-        //                     it_node->FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
-        //                 const double wall_distance = it_node->FastGetSolutionStepValue(DISTANCE);
-        //                 u_tau = EvmKepsilonModelUtilities::CalculateUTau(
-        //                     velocity_magnitude, wall_distance, kinematic_viscosity, beta, von_karman);
-        //             }
-        //             else if (!(it_node->Is(STRUCTURE)) && (u_tau == 0.0))
-        //             {
-        //                 const double tke =
-        //                     it_node->FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
-        //                 u_tau = std::pow(c_mu, 0.25) * std::sqrt(tke);
-        //             }
-        //         }
-    }
-
-    //     void AssignFrictionVelocities()
-    //     {
-    //         const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
-
-    //         const double von_karman = r_current_process_info[WALL_VON_KARMAN];
-    //         const double beta = r_current_process_info[WALL_SMOOTHNESS_BETA];
-
-    //         auto& nodes_array = this->mrModelPart.Nodes();
-    // #pragma omp parallel for
-    //         for (int i = 0; i < static_cast<int>(nodes_array.size()); ++i)
-    //         {
-    //             auto it_node = nodes_array.begin() + i;
-    //             it_node->FastGetSolutionStepValue(FRICTION_VELOCITY) = 0.0;
-    //         }
-
-    //         auto& element_array = this->mrModelPart.Elements();
-    //         // #pragma omp parallel for
-    //         for (int i = 0; i < static_cast<int>(element_array.size()); ++i)
-    //         {
-    //             auto it_element = element_array.begin() + i;
-    //             auto& r_geometry = it_element->GetGeometry();
-
-    //             int wall_points = 0;
-    //             int non_structure_index = 0;
-    //             for (long unsigned int i = 0; i < r_geometry.PointsNumber(); ++i)
-    //             {
-    //                 if (r_geometry[i].Is(STRUCTURE))
-    //                     wall_points++;
-    //                 else
-    //                     non_structure_index = static_cast<int>(i);
-    //             }
-
-    //             if (wall_points == TDim)
-    //             {
-    //                 double& friction_velocity =
-    //                     r_geometry[non_structure_index].FastGetSolutionStepValue(FRICTION_VELOCITY);
-    //                 // #pragma omp atomic
-    //                 friction_velocity = -1.0;
-    //                 // it_element->SetValue(STRUCTURE, true);
-    //             }
-    //         }
-
-    // // Calculate friction velocity for near wall nodes
-    // #pragma omp parallel for
-    //         for (int i = 0; i < static_cast<int>(nodes_array.size()); ++i)
-    //         {
-    //             auto it_node = nodes_array.begin() + i;
-    //             double& u_tau = it_node->FastGetSolutionStepValue(FRICTION_VELOCITY);
-    //             if (!(it_node->Is(STRUCTURE)) && (u_tau == -1.0))
-    //             {
-    //                 const array_1d<double, 3> velocity =
-    //                     it_node->FastGetSolutionStepValue(VELOCITY);
-    //                 const double velocity_magnitude = norm_2(velocity);
-    //                 const double kinematic_viscosity =
-    //                     it_node->FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
-    //                 const double wall_distance = it_node->FastGetSolutionStepValue(DISTANCE);
-    //                 u_tau = EvmKepsilonModelUtilities::CalculateUTau(
-    //                     velocity_magnitude, wall_distance, kinematic_viscosity, beta, von_karman);
-    //             }
-    //         }
-
-    //         // #pragma omp parallel for
-    //         bool filled_domain = true;
-    //         while (filled_domain)
-    //         {
-    //             filled_domain = false;
-    //             for (int i = 0; i < static_cast<int>(element_array.size()); ++i)
-    //             {
-    //                 auto it_element = element_array.begin() + i;
-    //                 auto& r_geometry = it_element->GetGeometry();
-
-    //                 double element_tau = -1.0;
-    //                 for (long unsigned int i = 0; i < r_geometry.PointsNumber(); ++i)
-    //                 {
-    //                     double u_tau = r_geometry[i].FastGetSolutionStepValue(FRICTION_VELOCITY);
-    //                     if (!(r_geometry[i].Is(STRUCTURE)) && (u_tau != 0.0))
-    //                     {
-    //                         element_tau = u_tau;
-    //                         break;
-    //                     }
-    //                 }
-
-    //                 if (element_tau != -1.0)
-    //                 {
-    //                     for (long unsigned int i = 0; i < r_geometry.PointsNumber(); ++i)
-    //                     {
-    //                         double& u_tau = r_geometry[i].FastGetSolutionStepValue(FRICTION_VELOCITY);
-    //                         if (!(r_geometry[i].Is(STRUCTURE)) && (u_tau == 0.0))
-    //                         {
-    //                             u_tau = element_tau;
-    //                             filled_domain = true;
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-
     void SolveStep()
     {
-        const int NumberOfNodes = this->mrModelPart.NumberOfNodes();
-
-        this->AssignFrictionVelocities();
+        const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
+        this->CalculateYplus(r_current_process_info[RANS_VELOCITY_STEP]);
 
         this->UpdateTurbulentViscosity();
 
-        // mpKStrategy->InitializeSolutionStep();
-        // mpKStrategy->Predict();
+        mpKStrategy->InitializeSolutionStep();
+        mpKStrategy->Predict();
 
-        // mpEpsilonStrategy->Initialize();
-        // mpEpsilonStrategy->InitializeSolutionStep();
-        // mpEpsilonStrategy->Predict();
+        mpEpsilonStrategy->InitializeSolutionStep();
+        mpEpsilonStrategy->Predict();
 
-        //         Vector old_turbulent_viscosity = ZeroVector(NumberOfNodes);
-        //         Vector new_turbulent_viscosity = ZeroVector(NumberOfNodes);
+        const int number_of_nodes = this->mrModelPart.NumberOfNodes();
+        Vector old_turbulent_viscosity = ZeroVector(number_of_nodes);
+        Vector new_turbulent_viscosity = ZeroVector(number_of_nodes);
 
-        //         bool is_converged = false;
-        //         int step = 0;
-        //         while (!is_converged && (step < mMaximumCouplingIterations))
-        //         {
-        // #pragma omp parallel for
-        //             for (int i = 0; i < NumberOfNodes; ++i)
-        //             {
-        //                 old_turbulent_viscosity[i] =
-        //                     (this->mrModelPart.NodesBegin() + i)->FastGetSolutionStepValue(TURBULENT_VISCOSITY);
-        //             }
+        bool is_converged = false;
+        int step = 0;
 
-        //             if (this->mEchoLevel > 0)
-        //                 KRATOS_INFO("TurbulenceModel") << "Solving for K...\n";
-        //             mpKStrategy->SolveSolutionStep();
+        while (!is_converged && (step < mMaximumCouplingIterations))
+        {
+#pragma omp parallel for
+            for (int i = 0; i < number_of_nodes; ++i)
+            {
+                old_turbulent_viscosity[i] =
+                    (this->mrModelPart.NodesBegin() + i)->FastGetSolutionStepValue(TURBULENT_VISCOSITY);
+            }
 
-        //             LowerBound(this->mrModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
+            KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
+                << "Solving for K...\n";
+            mpKStrategy->SolveSolutionStep();
 
-        //             if (this->mEchoLevel > 0)
-        //                 KRATOS_INFO("TurbulenceModel") << "Solving for Epsilon...\n";
-        //             mpEpsilonStrategy->SolveSolutionStep();
+            KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
+                << "Solving for Epsilon...\n";
+            mpEpsilonStrategy->SolveSolutionStep();
 
-        //             LowerBound(this->mrModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
+            this->UpdateTurbulentViscosity();
 
-        //             this->UpdateTurbulentViscosity();
+#pragma omp parallel for
+            for (int i = 0; i < number_of_nodes; ++i)
+            {
+                new_turbulent_viscosity[i] =
+                    (this->mrModelPart.NodesBegin() + i)->FastGetSolutionStepValue(TURBULENT_VISCOSITY);
+            }
 
-        // #pragma omp parallel for
-        //             for (int i = 0; i < NumberOfNodes; ++i)
-        //             {
-        //                 new_turbulent_viscosity[i] =
-        //                     (this->mrModelPart.NodesBegin() + i)->FastGetSolutionStepValue(TURBULENT_VISCOSITY);
-        //             }
+            double increase_norm(0.0);
 
-        //             double increase_norm(0.0);
+#pragma omp parallel for reduction(+ : increase_norm)
+            for (int i = 0; i < number_of_nodes; ++i)
+            {
+                increase_norm += new_turbulent_viscosity[i] - old_turbulent_viscosity[i];
+            }
 
-        // #pragma omp parallel for reduction(+ : increase_norm)
-        //             for (int i = 0; i < NumberOfNodes; ++i)
-        //             {
-        //                 increase_norm += new_turbulent_viscosity[i] - old_turbulent_viscosity[i];
-        //             }
+            const double ratio = std::abs(increase_norm / number_of_nodes);
+            increase_norm = std::abs(increase_norm);
 
-        //             const double ratio = std::abs(increase_norm /
-        //             NumberOfNodes); increase_norm = std::abs(increase_norm);
+            if (this->mEchoLevel > 0)
+                std::cout << "[" << step << "] CONVERGENCE CHECK: TURBULENT_VISCOSITY: ratio = "
+                          << std::scientific << ratio << "; exp.ratio = " << std::scientific
+                          << mTurbulentViscosityRelativeTolerance
+                          << ": abs = " << std::scientific << increase_norm
+                          << "; exp.abs = " << std::scientific
+                          << mTurbulentViscosityAbsoluteTolerance << std::endl;
 
-        //             if (this->mEchoLevel > 0)
-        //                 std::cout << "[" << step << "] CONVERGENCE CHECK: TURBULENT_VISCOSITY: ratio = "
-        //                           << std::scientific << ratio << "; exp.ratio = " << std::scientific
-        //                           << mTurbulentViscosityRelativeTolerance
-        //                           << ": abs = " << std::scientific << increase_norm
-        //                           << "; exp.abs = " << std::scientific
-        //                           << mTurbulentViscosityAbsoluteTolerance << std::endl;
+            is_converged = (increase_norm < mTurbulentViscosityAbsoluteTolerance) ||
+                           (ratio < mTurbulentViscosityRelativeTolerance);
 
-        //             is_converged = (increase_norm < mTurbulentViscosityAbsoluteTolerance) ||
-        //                            (ratio < mTurbulentViscosityRelativeTolerance);
+            if (this->mEchoLevel > 0 && is_converged)
+                std::cout << "[" << step << "] "
+                          << "CONVERGENCE CHECK: TURBULENT_VISCOSITY: "
+                             "*** CONVERGENCE IS ACHIEVED ***\n";
 
-        //             if (this->mEchoLevel > 0 && is_converged)
-        //                 std::cout << "[" << step << "] "
-        //                           << "CONVERGENCE CHECK: TURBULENT_VISCOSITY: "
-        //                              "*** CONVERGENCE IS ACHIEVED ***\n";
+            step++;
+        }
 
-        //             step++;
-        //         }
+        if (!is_converged)
+        {
+            std::cout
+                << "|----------------------------------------------------|"
+                << std::endl;
+            std::cout << "|    " << BOLDFONT(FRED("ATTENTION: Max coupling iterations exceeded"))
+                      << "     |" << std::endl;
+            std::cout
+                << "|----------------------------------------------------|"
+                << std::endl;
+        }
 
-        //         if (!is_converged)
-        //         {
-        //             std::cout
-        //                 << "|----------------------------------------------------|"
-        //                 << std::endl;
-        //             std::cout << "|    " << BOLDFONT(FRED("ATTENTION: Max coupling iterations exceeded"))
-        //                       << "     |" << std::endl;
-        //             std::cout
-        //                 << "|----------------------------------------------------|"
-        //                 << std::endl;
-        //         }
-
-        //         mpKStrategy->FinalizeSolutionStep();
-        //         mpEpsilonStrategy->FinalizeSolutionStep();
-
-        std::cout << "Suneth exit 1\n";
+        mpKStrategy->FinalizeSolutionStep();
+        mpEpsilonStrategy->FinalizeSolutionStep();
     }
 
     void UpdateTurbulentViscosity()
     {
-        const int NumNodes = this->mrModelPart.NumberOfNodes();
+        const int number_of_nodes = this->mrModelPart.NumberOfNodes();
 
         const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
 
@@ -1132,7 +960,7 @@ private:
         const double mixing_length = r_current_process_info[TURBULENT_MIXING_LENGTH];
 
 #pragma omp parallel for
-        for (int i = 0; i < NumNodes; i++)
+        for (int i = 0; i < number_of_nodes; i++)
         {
             ModelPart::NodeIterator iNode = this->mrModelPart.NodesBegin() + i;
             const double tke = iNode->FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);

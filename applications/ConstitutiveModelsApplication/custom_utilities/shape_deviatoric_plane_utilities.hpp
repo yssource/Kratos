@@ -56,7 +56,7 @@ namespace Kratos
                GetSmoothingConstants(A, B, rLodeAngle, Friction);
                rEffect = A + B*std::sin(3.0*rLodeAngle);
             }
-            rEffect /= ( sqrt(3)/6.0) * (3.0 - std::sin(Friction) );
+            rEffect /= ( sqrt(3.0)/6.0) * (3.0 - std::sin(Friction) );
             return rEffect;
 
             KRATOS_CATCH("")
@@ -81,7 +81,7 @@ namespace Kratos
                GetSmoothingConstants(A, B, rLodeAngle, Friction);
                rDerivative =  3.0*B*std::cos(3.0*rLodeAngle);
             }
-            rDerivative /= ( sqrt(3)/6.0) * (3.0 - std::sin(Friction) );
+            rDerivative /= ( sqrt(3.0)/6.0) * (3.0 - std::sin(Friction) );
             return rDerivative;
 
             KRATOS_CATCH("")
@@ -91,7 +91,7 @@ namespace Kratos
 
          static inline void GetSmoothingConstants(double& rA, double& rB, const double& rLodeAngle, const double & rFriction)
          {
-
+            KRATOS_TRY
 
             double SmoothingAngle = GetSmoothingLodeAngle();
 
@@ -104,13 +104,12 @@ namespace Kratos
 
             rB = -1.0 * ( Sign* std::sin(SmoothingAngle) + std::sin(rFriction)*std::cos(SmoothingAngle) / sqrt(3.0) ) / ( 3.0*std::cos(3.0*SmoothingAngle) );
 
-
-
+            KRATOS_CATCH("")
          }
 
          static inline double GetSmoothingLodeAngle()
          {
-            return 28.0*Globals::Pi/180.0;
+            return 25.0*Globals::Pi/180.0;
          }
 
 

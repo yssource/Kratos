@@ -133,10 +133,13 @@ namespace Kratos
       DeviatoricQ *= sqrt(3.0);
 
       double ThirdInvariantEffect = 1.0;
-      if ( rFriction > 0.0)
+      if ( rFriction > 0.0) 
          ThirdInvariantEffect = ShapeAtDeviatoricPlaneUtility::EvaluateEffectDueToThirdInvariant( ThirdInvariantEffect, LodeAngle, rFriction);
 
-      rYieldCondition  = pow( DeviatoricQ/rShearM, 2);
+
+         //std::cout << " LODE " << -LodeAngle*180.0/Globals::Pi << " rF " << rFriction << " Effect " << ThirdInvariantEffect << std::endl;
+
+      rYieldCondition  = pow( ThirdInvariantEffect * DeviatoricQ/rShearM, 2);
       rYieldCondition += (MeanStress * (MeanStress - PreconsolidationStress) );
 
 
@@ -185,9 +188,9 @@ namespace Kratos
          double Term = pow( sqrt(3.0)*J2/rShearM, 2) * ThirdInvariantEffect *2.0* DerivativeEffect;
 
          double C2 = - std::tan(3.0*LodeAngle) / J2 * Term;
-         double C3 = -sqrt(3.0) / 2.0/ pow(J2, 3) / std::cos(3.0*LodeAngle) * Term;
+         double C3 = - sqrt(3.0) / 2.0/ pow(J2, 3) / std::cos(3.0*LodeAngle) * Term;
 
-         noalias ( rDeltaStressYieldCondition) += C2*V2 + C3*V3;
+         rDeltaStressYieldCondition += C2*V2 + C3*V3;
 
       }
 

@@ -25,6 +25,7 @@
 #include "processes/process.h"
 #include "processes/variational_distance_calculation_process.h"
 #include "rans_constitutive_laws_application_variables.h"
+#include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
 
 namespace Kratos
 {
@@ -240,28 +241,8 @@ protected:
 
             double& y_plus = r_node.FastGetSolutionStepValue(RANS_Y_PLUS);
 
-            // try linear law
-            y_plus = std::sqrt(velocity_norm * wall_distance / nu);
-
-            // If the linear low doesnt match within the range, try logrithmic law
-            if (y_plus > 11.06)
-            {
-                unsigned int max_u_tau_iterations = 10, i;
-                double u_tau = std::sqrt(velocity_norm * nu / wall_distance);
-                double prev_u_tau = 0.0;
-                for (i = 0; i < max_u_tau_iterations; ++i)
-                {
-                    prev_u_tau = u_tau;
-                    u_tau = velocity_norm /
-                            (std::log(u_tau * wall_distance / nu) / von_karman + beta);
-                }
-                const double delta_u_tau = std::abs(u_tau - prev_u_tau);
-                KRATOS_INFO_IF("TurbulenceEvmProcess", delta_u_tau > 1e-5) << "WARNING: Maximum number of iterations reached for y_plus calculation. error_u_tau = "
-                                                                           << std::scientific
-                                                                           << delta_u_tau
-                                                                           << ".\n";
-                y_plus = u_tau * wall_distance / nu;
-            }
+            y_plus = EvmKepsilonModelUtilities::CalculateYplus(
+                velocity_norm, wall_distance, nu, von_karman, beta, 10);
         }
     }
 

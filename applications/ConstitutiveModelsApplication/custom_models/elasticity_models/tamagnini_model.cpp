@@ -109,7 +109,7 @@ namespace Kratos
 
       // 3.a Compute Deviatoric Part
       rStressMatrix.clear();
-      double Phi = 1;
+      double Phi = 1.0;
 
 
       if ( -VolumetricHencky > SwellingSlope) {
@@ -121,7 +121,7 @@ namespace Kratos
 
 
       // 3.b Compute Volumetric Part
-      double Theta = 1; 
+      double Theta = 1.0; 
       if ( -VolumetricHencky > SwellingSlope) {
          Theta = -rReferencePressure * exp( -VolumetricHencky / SwellingSlope - 1.0);
       }   else {
@@ -129,7 +129,7 @@ namespace Kratos
       }
 
 
-      double Pressure = ( 1 + rAlphaShear * pow(deviatoricNorm, 2) / SwellingSlope) * Theta;
+      double Pressure = ( 1.0 + rAlphaShear * pow(deviatoricNorm, 2) / SwellingSlope) * Theta;
 
       for (unsigned int i = 0; i< 3; i++)
          rStressMatrix(i,i) += Pressure;
@@ -187,19 +187,19 @@ namespace Kratos
 
       SeparateVolumetricAndDeviatoricPart( HenckyStrain, VolumetricHencky, DeviatoricHencky, deviatoricNorm);
 
-      double Phi = 1;
+      double Phi = 1.0;
       if ( -VolumetricHencky > SwellingSlope) {
          Phi = -SwellingSlope * rReferencePressure * exp( -VolumetricHencky / SwellingSlope - 1.0);
       }   else {
          Phi = -rReferencePressure * VolumetricHencky - rReferencePressure * pow( VolumetricHencky - SwellingSlope, 2) / 2.0 / SwellingSlope;
       }
-      double Theta = 1; 
+      double Theta = 1.0; 
       if ( -VolumetricHencky > SwellingSlope) {
          Theta = -rReferencePressure * exp( -VolumetricHencky / SwellingSlope - 1.0);
       }   else {
          Theta = -rReferencePressure * ( -VolumetricHencky / SwellingSlope);
       }
-      double K = 1; 
+      double K = 1.0; 
       if ( -VolumetricHencky > SwellingSlope) {
          K = rReferencePressure / SwellingSlope  * exp( -VolumetricHencky / SwellingSlope - 1.0);
       }   else {
@@ -207,7 +207,7 @@ namespace Kratos
       }
 
       // bulk modulus part
-      rConstitutiveMatrix = ( 1 + rAlphaShear / SwellingSlope * pow(deviatoricNorm,2.0) ) * K * IdentityCross;
+      rConstitutiveMatrix = ( 1.0 + rAlphaShear / SwellingSlope * pow(deviatoricNorm, 2) ) * K * IdentityCross;
 
       // Shear modulus part
       rConstitutiveMatrix += 2.0*(  ConstantShearModulus + rAlphaShear / SwellingSlope * Phi) *(FourthOrderIdentity - (1.0/3.0)*IdentityCross);

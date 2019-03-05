@@ -453,9 +453,9 @@ namespace Kratos
 
                double DevPlasticIncr = 0.0;
                for (unsigned int i = 0; i < 3; i++)
-                  DevPlasticIncr += pow( DeltaGamma * DeltaStressYieldCondition(i) - VolPlasticIncr/3.0, 2.0);
+                  DevPlasticIncr += pow( DeltaGamma * DeltaStressYieldCondition(i) - VolPlasticIncr/3.0, 2);
                for (unsigned int i = 3; i < 6; i++)
-                  DevPlasticIncr += 2.0 * pow( DeltaGamma *  DeltaStressYieldCondition(i) /2.0 , 2.0);
+                  DevPlasticIncr += 2.0 * pow( DeltaGamma *  DeltaStressYieldCondition(i) /2.0 , 2);
                DevPlasticIncr = sqrt(DevPlasticIncr);
                rPlasticDevDef += DevPlasticIncr;
 
@@ -557,9 +557,9 @@ namespace Kratos
 
                   double DevPlasticIncr = 0.0;
                   for (unsigned int i = 0; i < 3; i++)
-                     DevPlasticIncr += pow( DeltaGamma * DeltaStressYieldCondition(i) - VolPlasticIncr/3.0, 2.0);
+                     DevPlasticIncr += pow( DeltaGamma * DeltaStressYieldCondition(i) - VolPlasticIncr/3.0, 2);
                   for (unsigned int i = 3; i < 6; i++)
-                     DevPlasticIncr += 2.0 * pow( DeltaGamma *  DeltaStressYieldCondition(i) /2.0 , 2.0);
+                     DevPlasticIncr += 2.0 * pow( DeltaGamma *  DeltaStressYieldCondition(i) /2.0 , 2);
                   DevPlasticIncr = DeltaGamma/fabs(DeltaGamma) * sqrt(DevPlasticIncr);
                   rPlasticDevDef += DevPlasticIncr;
 

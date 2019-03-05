@@ -118,10 +118,10 @@ namespace Kratos
       // 3.a Compute Deviatoric Part
       rStressMatrix.clear();
       double ShearModulus = rAlphaShear * ReferencePressure * std::exp( -VolumetricHencky / rSwellingSlope );
-      rStressMatrix += DeviatoricHencky * 2 * ( ShearModulus  + rConstantShearModulus );
+      rStressMatrix += DeviatoricHencky * 2.0 * ( ShearModulus  + rConstantShearModulus );
 
       // 3.b Compute Volumetric Part
-      double pressure = -ReferencePressure * std::exp( -VolumetricHencky / rSwellingSlope ) * ( 1 + rAlphaShear * pow(deviatoricNorm, 2) / rSwellingSlope);
+      double pressure = -ReferencePressure * std::exp( -VolumetricHencky / rSwellingSlope ) * ( 1.0 + rAlphaShear * pow(deviatoricNorm, 2) / rSwellingSlope);
 
       for (unsigned int i = 0; i< 3; i++)
          rStressMatrix(i,i) += pressure;
@@ -177,7 +177,7 @@ namespace Kratos
 
 
       // bulk modulus part
-      double pressure = -ReferencePressure * std::exp( -VolumetricHencky / rSwellingSlope ) * ( 1 + rAlphaShear * pow(deviatoricNorm, 2) / rSwellingSlope);
+      double pressure = -ReferencePressure * std::exp( -VolumetricHencky / rSwellingSlope ) * ( 1.0 + rAlphaShear * pow(deviatoricNorm, 2) / rSwellingSlope);
       rConstitutiveMatrix = (-pressure/rSwellingSlope) * IdentityCross;
 
       // Shear modulus part

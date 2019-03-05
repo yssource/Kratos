@@ -138,8 +138,8 @@ namespace Kratos
          rYieldCondition =  J2 * ( ASmoothing +  BSmoothing * std::sin( 3.0* LodeAngle )  + CSmoothing * pow( std::sin( 3.0*LodeAngle), 2 )  );
       }
 
-      //rStateFunction = rStateFunction/YieldStress - 1.0;
-      rYieldCondition = rYieldCondition - 1.0*rYieldStress;
+      rYieldCondition = rYieldCondition - rYieldStress;
+      
       return rYieldCondition; 
 
       KRATOS_CATCH(" ")
@@ -198,7 +198,9 @@ namespace Kratos
 
 
       rDeltaStressYieldCondition = C2*V2 + C3*V3;
+
       return rDeltaStressYieldCondition;
+
       KRATOS_CATCH(" ")
     }
 
@@ -295,7 +297,8 @@ namespace Kratos
     {
        KRATOS_TRY
 
-       return 29.0*Globals::Pi/180.0;  
+       return 29.0*Globals::Pi/180.0; 
+
        KRATOS_CATCH("")
     }
     ///@}

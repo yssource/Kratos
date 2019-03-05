@@ -126,7 +126,7 @@ namespace Kratos
 
       // 3.a Compute Deviatoric Part
       rStressMatrix.clear();
-      rStressMatrix += DeviatoricHencky * 2 * ShearModulus;
+      rStressMatrix += DeviatoricHencky * 2.0 * ShearModulus;
 
       // 3.b Compute Volumetric Part
       double pressure = VolumetricHencky * BulkModulus;

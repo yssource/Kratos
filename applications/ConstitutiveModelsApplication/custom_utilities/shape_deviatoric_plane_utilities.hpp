@@ -25,7 +25,7 @@ namespace Kratos
 {
 
 
-   class ShapeAtDeviatoricPlaneMCCUtility
+   class ShapeAtDeviatoricPlaneUtility
    {
 
       public:
@@ -56,13 +56,37 @@ namespace Kratos
                GetSmoothingConstants(A, B, rLodeAngle, Friction);
                rEffect = A + B*std::sin(3.0*rLodeAngle);
             }
-            rEffect /= ( sqrt(3)/6) * (3.0 - std::sin(Friction) );
+            rEffect /= ( sqrt(3)/6.0) * (3.0 - std::sin(Friction) );
             return rEffect;
 
             KRATOS_CATCH("")
 
          }
 
+         static inline double & EvaluateEffectDerivative( double & rDerivative, const double & rLodeAngle, const double & rFriction)
+         {
+            KRATOS_TRY
+
+            rDerivative = 1.0;
+            if ( rFriction < 1e-6)
+               return rDerivative;
+
+            double Friction = rFriction * Globals::Pi / 180.0;
+            double LodeCut = GetSmoothingLodeAngle( );
+            if ( fabs( rLodeAngle) < LodeCut)
+            {
+               rDerivative = -std::sin( rLodeAngle) - 1.0/sqrt(3.0) * std::sin(Friction) * std::cos(rLodeAngle);
+            } else {
+               double A, B;
+               GetSmoothingConstants(A, B, rLodeAngle, Friction);
+               rDerivative =  3.0*B*std::cos(3.0*rLodeAngle);
+            }
+            rDerivative /= ( sqrt(3)/6.0) * (3.0 - std::sin(Friction) );
+            return rDerivative;
+
+            KRATOS_CATCH("")
+
+         }
       protected:
 
          static inline void GetSmoothingConstants(double& rA, double& rB, const double& rLodeAngle, const double & rFriction)
@@ -86,12 +110,12 @@ namespace Kratos
 
          static inline double GetSmoothingLodeAngle()
          {
-            return 27.0*Globals::Pi/180.0;
+            return 28.0*Globals::Pi/180.0;
          }
 
 
 
-   }; // end Class ShapeAtDeviatoricPlaneMCCUtility
+   }; // end Class ShapeAtDeviatoricPlaneUtility
 
 } // end namespace Kratos
 

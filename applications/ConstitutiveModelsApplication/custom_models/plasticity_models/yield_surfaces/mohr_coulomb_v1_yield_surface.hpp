@@ -17,7 +17,6 @@
 // Project includes
 #include "custom_models/plasticity_models/yield_surfaces/yield_surface.hpp"
 #include "custom_utilities/stress_invariants_utilities.hpp"
-#include "custom_utilities/shape_deviatoric_plane_mcc_utilities.hpp"
 
 namespace Kratos
 {

@@ -14,6 +14,7 @@
 #define KRATOS_EVM_K_EPSILON_UTILITIES_H_INCLUDED
 
 #include "includes/define.h"
+#include "input_output/logger.h"
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -37,6 +38,10 @@ namespace Kratos
 
 namespace EvmKepsilonModelUtilities
 {
+#define CheckIfVariableIsPositive(variable) \
+    KRATOS_DEBUG_ERROR_IF(variable < 0.0)   \
+        << #variable << " < 0.0 [ " << std::scientific << variable << " < 0.0 ]\n";
+
 double CalculateTurbulentViscosity(const double C_mu,
                                    const double f_mu,
                                    const double turbulent_kinetic_energy,
@@ -50,22 +55,17 @@ double CalculateF2(const double turbulent_kinetic_energy,
                    const double kinematic_viscosity,
                    const double turbulent_energy_dissipation_rate);
 
-double CalculateFrictionVelocity(const double kinematic_viscosity,
-                                 const double tangential_velocity_wall_gradient);
-
-double CalculateYplus(const double friction_velocity,
+double CalculateYplus(const double velocity_norm,
                       const double wall_distance,
-                      const double kinematic_viscosity);
-
-double CalculateUTau(const double velocity_magnitude,
-                     const double wall_distance,
-                     const double kinematic_viscosity,
-                     const double beta,
-                     const double von_karman);
+                      const double kinematic_viscosity,
+                      const double von_karman,
+                      const double beta,
+                      const unsigned int max_iterations);
 
 double CalculateStabilizationTau(const double velocity_magnitude,
                                  const double length,
-                                 const double turbulent_kinetic_energy);
+                                 const double turbulent_kinetic_energy,
+                                 const double delta_time);
 
 } // namespace EvmKepsilonModelUtilities
 

@@ -20,6 +20,7 @@ namespace Kratos
 
 namespace EvmKepsilonModelUtilities
 {
+
 double CalculateTurbulentViscosity(const double C_mu,
                                    const double f_mu,
                                    const double turbulent_kinetic_energy,
@@ -27,14 +28,8 @@ double CalculateTurbulentViscosity(const double C_mu,
                                    const double mixing_length,
                                    const double minimum_viscosity)
 {
-    KRATOS_DEBUG_ERROR_IF(turbulent_kinetic_energy < 0.0)
-        << "TURBULENT_KINETIC_ENERGY < 0.0 [ " << std::scientific
-        << turbulent_kinetic_energy << " < 0.0 ] in CalculateTurbulentViscosity\n";
-
-    // KRATOS_DEBUG_ERROR_IF(turbulent_energy_dissipation_rate < 0.0)
-    //     << "TURBULENT_ENERGY_DISSIPATION_RATE < 0.0 [ " << std::scientific
-    //     << turbulent_energy_dissipation_rate
-    //     << " < 0.0 ] in CalculateTurbulentViscosity\n";
+    CheckIfVariableIsPositive(turbulent_kinetic_energy);
+    CheckIfVariableIsPositive(turbulent_energy_dissipation_rate);
 
     const double limited_mixing_length = std::min<double>(
         C_mu * std::pow(turbulent_kinetic_energy, 1.5) / turbulent_energy_dissipation_rate,
@@ -48,9 +43,7 @@ double CalculateTurbulentViscosity(const double C_mu,
 
 double CalculateFmu(const double y_plus)
 {
-    KRATOS_DEBUG_ERROR_IF(y_plus < 0.0) << "Y_PLUS < 0.0 [ " << std::scientific
-                                        << y_plus << " < 0.0 ] in CalculateFmu\n";
-
+    CheckIfVariableIsPositive(y_plus);
     return 1.0 - std::exp(-0.0115 * y_plus);
 }
 
@@ -58,105 +51,67 @@ double CalculateF2(const double turbulent_kinetic_energy,
                    const double kinematic_viscosity,
                    const double turbulent_energy_dissipation_rate)
 {
-    KRATOS_DEBUG_ERROR_IF(turbulent_kinetic_energy < 0.0)
-        << "TURBULENT_KINETIC_ENERGY < 0.0 [ " << std::scientific
-        << turbulent_kinetic_energy << " < 0.0 ] in CalculateF2\n";
-
-    // KRATOS_DEBUG_ERROR_IF(turbulent_energy_dissipation_rate < 0.0)
-    //     << "TURBULENT_ENERGY_DISSIPATION_RATE < 0.0 [ " << std::scientific
-    //     << turbulent_energy_dissipation_rate << " < 0.0 ] in CalculateF2\n";
-
-    KRATOS_DEBUG_ERROR_IF(kinematic_viscosity < 0.0)
-        << "KINEMATIC_VISCOSITY < 0.0 [ " << std::scientific
-        << kinematic_viscosity << " < 0.0 ] in CalculateF2\n";
+    CheckIfVariableIsPositive(turbulent_kinetic_energy);
+    CheckIfVariableIsPositive(turbulent_energy_dissipation_rate);
+    CheckIfVariableIsPositive(kinematic_viscosity);
 
     return 1.0 - 0.22 * std::exp(-1.0 * std::pow(std::pow(turbulent_kinetic_energy, 2) /
                                                      (6 * kinematic_viscosity * turbulent_energy_dissipation_rate),
                                                  2));
 }
 
-double CalculateFrictionVelocity(const double kinematic_viscosity,
-                                 const double tangential_velocity_wall_gradient)
+double CalculateYplus(const double velocity_norm,
+                      const double wall_distance,
+                      const double kinematic_viscosity,
+                      const double von_karman,
+                      const double beta,
+                      const unsigned int max_iterations)
 {
-    KRATOS_DEBUG_ERROR_IF(kinematic_viscosity < 0.0)
-        << "KINEMATIC_VISCOSITY < 0.0 [ " << std::scientific
-        << kinematic_viscosity << " < 0.0 ] in CalculateFrictionVelocity\n";
+    CheckIfVariableIsPositive(velocity_norm);
+    CheckIfVariableIsPositive(wall_distance);
+    CheckIfVariableIsPositive(kinematic_viscosity);
+    CheckIfVariableIsPositive(von_karman);
+    CheckIfVariableIsPositive(beta);
 
-    KRATOS_DEBUG_ERROR_IF(tangential_velocity_wall_gradient < 0.0)
-        << "Tangential_wall_velocity_gradient < 0.0 [ " << std::scientific
-        << tangential_velocity_wall_gradient << " < 0.0 ] in CalculateFrictionVelocity\n";
+    // try linear law
+    double y_plus = std::sqrt(velocity_norm * wall_distance / kinematic_viscosity);
 
-    return std::sqrt(kinematic_viscosity * tangential_velocity_wall_gradient);
-}
-
-double CalculateYplus(const double friction_velocity, const double wall_distance, const double kinematic_viscosity)
-{
-    KRATOS_DEBUG_ERROR_IF(kinematic_viscosity < 0.0)
-        << "KINEMATIC_VISCOSITY < 0.0 [ " << std::scientific
-        << kinematic_viscosity << " < 0.0 ] in CalculateYplus\n";
-
-    KRATOS_DEBUG_ERROR_IF(friction_velocity < 0.0)
-        << "friction_velocity < 0.0 [ " << std::scientific << friction_velocity
-        << " < 0.0 ] in CalculateYplus\n";
-
-    KRATOS_DEBUG_ERROR_IF(wall_distance < 0.0)
-        << "wall_distance < 0.0 [ " << std::scientific << wall_distance
-        << " < 0.0 ] in CalculateYplus\n";
-
-    return friction_velocity * wall_distance / kinematic_viscosity;
-}
-
-double CalculateUTau(const double velocity_magnitude,
-                     const double wall_distance,
-                     const double kinematic_viscosity,
-                     const double beta,
-                     const double von_karman)
-{
-    KRATOS_DEBUG_ERROR_IF(kinematic_viscosity < 0.0)
-        << "KINEMATIC_VISCOSITY < 0.0 [ " << std::scientific
-        << kinematic_viscosity << " < 0.0 ] in CalculateUTau\n";
-
-    KRATOS_DEBUG_ERROR_IF(wall_distance < 0.0)
-        << "wall_distance < 0.0 [ " << std::scientific << wall_distance
-        << " < 0.0 ] in CalculateUTau\n";
-
-    KRATOS_DEBUG_ERROR_IF(velocity_magnitude < 0.0)
-        << "velocity_magnitude < 0.0 [ " << std::scientific
-        << velocity_magnitude << " < 0.0 ] in CalculateUTau\n";
-
-    const unsigned int max_iterations = 10;
-    double u_tau = kinematic_viscosity / wall_distance;
-    for (unsigned int i = 0; i < max_iterations; ++i)
+    // If the linear low doesnt match within the range, try logrithmic law
+    if (y_plus > 11.06)
     {
-        u_tau = kinematic_viscosity *
-                std::exp(((velocity_magnitude / u_tau) - beta) * von_karman) / wall_distance;
+        unsigned int i;
+        double u_tau = std::sqrt(velocity_norm * kinematic_viscosity / wall_distance);
+        double prev_u_tau = 0.0;
+        for (i = 0; i < max_iterations; ++i)
+        {
+            prev_u_tau = u_tau;
+            u_tau = velocity_norm /
+                    (std::log(u_tau * wall_distance / kinematic_viscosity) / von_karman + beta);
+        }
+        const double delta_u_tau = std::abs(u_tau - prev_u_tau);
+        KRATOS_INFO_IF("TurbulenceEvmProcess", delta_u_tau > 1e-5)
+            << "WARNING: Maximum number of iterations reached for y_plus "
+               "calculation. error_u_tau = "
+            << std::scientific << delta_u_tau << ".\n";
+        y_plus = u_tau * wall_distance / kinematic_viscosity;
     }
-
-    double y_plus = u_tau * wall_distance / kinematic_viscosity;
-
-    if (y_plus < 11.06)
-        u_tau = std::sqrt(velocity_magnitude * kinematic_viscosity / wall_distance);
-
-    KRATOS_ERROR_IF(u_tau < 0.0) << "Calculated u_tau < 0.0 [ "
-                                 << std::scientific << u_tau << " < 0.0 ]\n";
-
-    return u_tau;
+    return y_plus;
 }
 
 double CalculateStabilizationTau(const double velocity_magnitude,
                                  const double length,
-                                 const double effective_kinematic_viscosity)
+                                 const double effective_kinematic_viscosity,
+                                 const double delta_time)
 {
-    double alpha(1.0), Pe(0.0);
-    if (effective_kinematic_viscosity != 0.0)
-        Pe = std::max<double>(velocity_magnitude * length / (2.0 * effective_kinematic_viscosity), 0.0);
-    if (Pe != 0.0)
-        alpha = (std::exp(2.0 * Pe) + 1) / (std::exp(2.0 * Pe) - 1) - 1.0 / Pe;
+    const double Pe = 0.5 * velocity_magnitude * length / effective_kinematic_viscosity;
+    const double alpha = Pe * (std::exp(2.0 * Pe) + 1) / (std::exp(2.0 * Pe) - 1) - 1.0;
 
-    if (velocity_magnitude != 0.0)
-        return alpha * length / (2.0 * velocity_magnitude);
-    else
-        return 0.0;
+    const double stab_1 =
+        std::pow(velocity_magnitude, 2) / (effective_kinematic_viscosity * alpha);
+    const double stab_2 = effective_kinematic_viscosity / std::pow(length, 2);
+    const double stab_3 = 1.0 / delta_time;
+
+    return 1.0 / (stab_1 + stab_2 + stab_3);
 }
 
 } // namespace EvmKepsilonModelUtilities

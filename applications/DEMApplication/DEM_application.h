@@ -18,8 +18,6 @@
 #include "custom_elements/cylinder_continuum_particle.h"
 #include "custom_elements/spheric_particle.h"
 #include "custom_elements/spheric_continuum_particle.h"
-#include "custom_elements/ion_particle.h"
-#include "custom_elements/electron_particle.h"
 #include "custom_elements/nanoparticle.h"
 #include "custom_elements/analytic_spheric_particle.h"
 #include "custom_elements/ice_continuum_particle.h"
@@ -87,9 +85,7 @@ private:
 
     const CylinderParticle mCylinderParticle2D;
     const CylinderContinuumParticle mCylinderContinuumParticle2D;
-    const SphericParticle mSphericParticle3D;
-    const IonParticle mIonParticle3D;
-    const ElectronParticle mElectronParticle3D;    
+    const SphericParticle mSphericParticle3D; 
     const NanoParticle mNanoParticle3D;
     const AnalyticSphericParticle mAnalyticSphericParticle3D;
     const SphericContinuumParticle mSphericContinuumParticle3D;

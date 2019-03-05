@@ -302,6 +302,7 @@ void EvmKElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRightHand
     const unsigned int num_gauss_points = gauss_weights.size();
 
     const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
+    const double delta_time = rCurrentProcessInfo[DELTA_TIME];
 
     const int step = rCurrentProcessInfo[RANS_VELOCITY_STEP];
 
@@ -313,7 +314,7 @@ void EvmKElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRightHand
         const double tke =
             this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
         const double tke_rate = this->EvaluateInPoint(
-            TURBULENT_KINETIC_ENERGY_RATE, gauss_shape_functions, step);
+            TURBULENT_KINETIC_ENERGY_RATE, gauss_shape_functions);
         const double nu_t =
             this->EvaluateInPoint(TURBULENT_VISCOSITY, gauss_shape_functions);
         const double nu =
@@ -352,7 +353,7 @@ void EvmKElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRightHand
 
         const double elem_size = this->GetGeometry().Length();
         const double tau = EvmKepsilonModelUtilities::CalculateStabilizationTau(
-            velocity_magnitude, elem_size, effective_viscosity);
+            velocity_magnitude, elem_size, effective_viscosity, delta_time);
 
         const double supg_coeff1 = tau * tke_rate;
 
@@ -526,6 +527,7 @@ void EvmKElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMa
     const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
     const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
     const int step = rCurrentProcessInfo[RANS_VELOCITY_STEP];
+    const double delta_time = rCurrentProcessInfo[DELTA_TIME];
 
     for (unsigned int g = 0; g < num_gauss_points; g++)
     {
@@ -533,7 +535,7 @@ void EvmKElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMa
         const Vector& gauss_shape_functions = row(shape_functions, g);
 
         const double tke =
-            this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY, gauss_shape_functions, 1);
+            this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
         const double wall_distance = this->EvaluateInPoint(DISTANCE, gauss_shape_functions);
         const double nu = this->EvaluateInPoint(KINEMATIC_VISCOSITY, gauss_shape_functions);
         const double nu_t =
@@ -557,7 +559,7 @@ void EvmKElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMa
         const double velocity_magnitude = norm_2(velocity);
         const double elem_size = this->GetGeometry().Length();
         const double tau = EvmKepsilonModelUtilities::CalculateStabilizationTau(
-            velocity_magnitude, elem_size, effective_viscosity);
+            velocity_magnitude, elem_size, effective_viscosity, delta_time);
         const double supg_coeff1 = tau * (velocity_divergence + gamma + coeff1);
 
         for (unsigned int a = 0; a < TNumNodes; a++)

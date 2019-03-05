@@ -309,6 +309,7 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRig
     const double epsilon_sigma =
         rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
     const int step = rCurrentProcessInfo[RANS_VELOCITY_STEP];
+    const double delta_time = rCurrentProcessInfo[DELTA_TIME];
 
     for (unsigned int g = 0; g < num_gauss_points; g++)
     {
@@ -355,7 +356,7 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRig
 
         const double elem_size = this->GetGeometry().Length();
         const double tau = EvmKepsilonModelUtilities::CalculateStabilizationTau(
-            velocity_magnitude, elem_size, effective_viscosity);
+            velocity_magnitude, elem_size, effective_viscosity, delta_time);
 
         BoundedVector<double, TNumNodes> velocity_convective_terms;
         this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
@@ -536,6 +537,7 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
     const double c2 = rCurrentProcessInfo[TURBULENCE_RANS_C2];
     const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
     const int step = rCurrentProcessInfo[RANS_VELOCITY_STEP];
+    const double delta_time = rCurrentProcessInfo[DELTA_TIME];
 
     for (unsigned int g = 0; g < num_gauss_points; g++)
     {
@@ -572,7 +574,7 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
         const double velocity_magnitude = norm_2(velocity);
         const double elem_size = this->GetGeometry().Length();
         const double tau = EvmKepsilonModelUtilities::CalculateStabilizationTau(
-            velocity_magnitude, elem_size, effective_viscosity);
+            velocity_magnitude, elem_size, effective_viscosity, delta_time);
 
         const double supg_coeff1 = tau * (velocity_divergence + coeff1 + coeff3);
 

@@ -21,6 +21,7 @@ set( KRATOS_RANS_CONSTITUTIVE_LAWS_APPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_processes/turbulence_eddy_viscosity_model_process.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_strategies_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_processes_to_python.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/geometry_utilities.cpp
 )
 
 # define library Kratos which defines the basic python interface

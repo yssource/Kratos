@@ -41,9 +41,9 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
     this->InitializeNodeFlags(mrParameters["outlet_conditions"], OUTLET);
     this->InitializeNodeFlags(mrParameters["wall_conditions"], STRUCTURE);
 
-    this->InitializeConditionFlags(INLET);
-    this->InitializeConditionFlags(OUTLET);
-    this->InitializeConditionFlags(STRUCTURE);
+    NormalCalculationUtils::CalculateOnSimplex(mrModelPart, TDim);
+
+    this->InitializeConditions();
 
     mpDistanceCalculator =
         new VariationalDistanceCalculationProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>(

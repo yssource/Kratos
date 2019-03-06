@@ -462,8 +462,16 @@ void ShellThickElement3D4N::CalculateMassMatrix(MatrixType& rMassMatrix, Process
 
     ShellQ4_LocalCoordinateSystem referenceCoordinateSystem(
         mpCoordinateTransformation->CreateReferenceCoordinateSystem() );
-
-    BaseShellElement::TCalculateMassMatrix(rMassMatrix, rCurrentProcessInfo, referenceCoordinateSystem);
+    const bool compute_lumped_mass_matrix = StructuralMechanicsElementUtilities::ComputeLumpedMassMatrix(
+                GetProperties(), rCurrentProcessInfo);
+    if(compute_lumped_mass_matrix)
+    {
+        BaseShellElement::TCalculateMassMatrix(rMassMatrix, rCurrentProcessInfo, referenceCoordinateSystem);
+    }
+    else
+    {
+        BaseShellElement::TCalculateMassMatrixConsistent4N(rMassMatrix, rCurrentProcessInfo, referenceCoordinateSystem);
+    }
 
     // // lumped area
 

@@ -26,6 +26,7 @@
 #include "custom_utilities/shell_cross_section.hpp"
 #include "structural_mechanics_application_variables.h"
 #include "custom_utilities/structural_mechanics_element_utilities.h"
+#include "custom_utilities/shell_utilities.h"
 
 
 namespace Kratos
@@ -319,6 +320,9 @@ protected:
     * @param rOutput: the computed local axis
     * @param rpCoordinateTransformation: the coordinate-transformation to be used for computing the local axis
     */
+
+   // for mass matrix calculation of consisitent mass matrix of 3 node and
+   //lumped for both 3 and 4 node shell
     template <typename T>
     void TCalculateMassMatrix(
         MatrixType& rMassMatrix,
@@ -335,7 +339,6 @@ protected:
             av_mass_per_unit_area += mSections[i]->CalculateMassPerUnitArea(GetProperties());
         av_mass_per_unit_area /= double(num_gps);
 
-        const auto& r_prop = GetProperties();
         const GeometryType& r_geom = GetGeometry();
         const SizeType num_dofs = GetNumberOfDofs();
         SizeType number_of_nodes = r_geom.PointsNumber();
@@ -370,7 +373,7 @@ protected:
         }// lumped_mass_matrix
 
 
-        // consistent mass matrix
+        // consistent mass matrix for 3 node shell
         else {
 
             if (number_of_nodes == 3)  // triangular shell
@@ -411,71 +414,87 @@ protected:
                     av_mass_per_unit_area*rpCoordinateTransformation.Area() / 12.0;
             }  // triangular shell
 
-            else if (number_of_nodes == 4) // 4 node shell
-            {
-                // Get shape function values and setup jacobian
-                const Matrix & shapeFunctions = r_geom.ShapeFunctionsValues();
-                JacobianOperator jacOp;
-
-                // Get integration points
-                const GeometryType::IntegrationPointsArrayType& integration_points =
-                    GetGeometry().IntegrationPoints(mIntegrationMethod);
-
-                // Setup matrix of shape functions
-                Matrix N = Matrix(6, 6*number_of_nodes, 0.0);
-                // Other variables
-                double dA = 0.0;
-                double thickness = 0.0;
-                double drilling_factor = 1.0;    // sqrt of the actual factor applied,
-                                                // 1.0 is no reduction.
-
-                // Gauss loop
-                for (SizeType gauss_point = 0; gauss_point < num_gps; gauss_point++)
-                {
-                    // Calculate average mass per unit area and thickness at the
-                    // current GP
-                    av_mass_per_unit_area =
-                        mSections[gauss_point]->CalculateMassPerUnitArea(GetProperties());
-                    thickness = mSections[gauss_point]->GetThickness(GetProperties());
-
-                    // Calc jacobian and weighted dA at current GP
-                    jacOp.Calculate(rpCoordinateTransformation,
-                        r_geom.ShapeFunctionLocalGradient(gauss_point));
-                    dA = integration_points[gauss_point].Weight() *
-                        jacOp.Determinant();
-
-                    // Assemble shape function matrix over nodes
-                    for (SizeType node = 0; node < number_of_nodes; node++)
-                    {
-                        // translational entries - dofs 1, 2, 3
-                        for (SizeType dof = 0; dof < 3; dof++)
-                        {
-                            N(dof, 6 * node + dof) =
-                                shapeFunctions(gauss_point, node);
-                        }
-
-                        // rotational inertia entries - dofs 4, 5
-                        for (SizeType dof = 0; dof < 2; dof++)
-                        {
-                            N(dof + 3, 6 * node + dof + 3) =
-                                thickness / std::sqrt(12.0) *
-                                shapeFunctions(gauss_point, node);
-                        }
-
-                        // drilling rotational entry - artifical factor included
-                        N(5, 6 * node + 5) = thickness / std::sqrt(12.0) *
-                            shapeFunctions(gauss_point, node) /
-                            drilling_factor;
-                    }
-
-                    // Add contribution to total mass matrix
-                    rMassMatrix += prod(trans(N), N)*dA*av_mass_per_unit_area;
-                }// Gauss loop
-            } // 4 node shell
-
 
         }// consistent mass matrix
     } //TCalculateMassMatrix
+
+    //TCalculateMassMatrixConsistent4N is to calculate consistent mass matrix for 4
+    //node shell
+    template <typename T>
+    void TCalculateMassMatrixConsistent4N(
+        MatrixType& rMassMatrix,
+        const ProcessInfo& rCurrentProcessInfo,
+        const T& rpCoordinateTransformation)
+        {
+            const GeometryType& r_geom = GetGeometry();
+            const SizeType num_dofs = GetNumberOfDofs();
+            SizeType number_of_nodes = r_geom.PointsNumber();
+            const SizeType num_gps = GetNumberOfGPs();
+            SizeType mat_size = num_dofs;
+
+            // Clear matrix
+            if (rMassMatrix.size1() != mat_size || rMassMatrix.size2() != mat_size)
+                rMassMatrix.resize( mat_size, mat_size, false );
+            rMassMatrix = ZeroMatrix( mat_size, mat_size );
+            // Get shape function values and setup jacobian
+            const Matrix & shapeFunctions = r_geom.ShapeFunctionsValues();
+            ShellUtilities::JacobianOperator jacOp;
+
+            // Get integration points
+            const GeometryType::IntegrationPointsArrayType& integration_points =
+                GetGeometry().IntegrationPoints(mIntegrationMethod);
+
+            // Setup matrix of shape functions
+            Matrix N = Matrix(6, 6*number_of_nodes, 0.0);
+            // Other variables
+            double dA = 0.0;
+            double thickness = 0.0;
+            double drilling_factor = 1.0;    // sqrt of the actual factor applied,
+                                            // 1.0 is no reduction.
+
+            // Gauss loop
+            for (SizeType gauss_point = 0; gauss_point < num_gps; gauss_point++)
+            {
+                // Calculate average mass per unit area and thickness at the
+                // current GP
+                double av_mass_per_unit_area =
+                    mSections[gauss_point]->CalculateMassPerUnitArea(GetProperties());
+                thickness = mSections[gauss_point]->GetThickness(GetProperties());
+
+                // Calc jacobian and weighted dA at current GP
+                jacOp.Calculate(rpCoordinateTransformation,
+                    r_geom.ShapeFunctionLocalGradient(gauss_point));
+                dA = integration_points[gauss_point].Weight() *
+                    jacOp.Determinant();
+
+                // Assemble shape function matrix over nodes
+                for (SizeType node = 0; node < number_of_nodes; node++)
+                {
+                    // translational entries - dofs 1, 2, 3
+                    for (SizeType dof = 0; dof < 3; dof++)
+                    {
+                        N(dof, 6 * node + dof) =
+                            shapeFunctions(gauss_point, node);
+                    }
+
+                    // rotational inertia entries - dofs 4, 5
+                    for (SizeType dof = 0; dof < 2; dof++)
+                    {
+                        N(dof + 3, 6 * node + dof + 3) =
+                            thickness / std::sqrt(12.0) *
+                            shapeFunctions(gauss_point, node);
+                    }
+
+                    // drilling rotational entry - artifical factor included
+                    N(5, 6 * node + 5) = thickness / std::sqrt(12.0) *
+                        shapeFunctions(gauss_point, node) /
+                        drilling_factor;
+                }
+
+                // Add contribution to total mass matrix
+                rMassMatrix += prod(trans(N), N)*dA*av_mass_per_unit_area;
+            }// Gauss loop
+        } //TCalculateMassMatrixConsistent4N
 
         /**
     * computes the local axis of the element (for visualization)

@@ -22,6 +22,8 @@
 #include "includes/define.h"
 #include "includes/properties.h"
 #include "containers/array_1d.h"
+#include "utilities/math_utils.h"
+#include "custom_utilities/shellq4_local_coordinate_system.hpp"
 
 namespace Kratos
 {
@@ -81,6 +83,72 @@ double GetDensity(const Properties& rProps, const IndexType Index);
 double GetOrientationAngle(const Properties& rProps, const IndexType Index);
 
 double GetOffset(const Properties& rProps);
+
+/** \brief JacobianOperator
+     *
+     * This class is a utility to compute at a given integration point,
+     * the Jacobian, its inverse, its determinant
+     * and the derivatives of the shape functions in the local
+     * cartesian coordinate system.
+     */
+class JacobianOperator
+{
+public:
+
+    JacobianOperator()
+    : mJac(2, 2, 0.0)
+    , mInv(2, 2, 0.0)
+    , mXYDeriv(4, 2, 0.0)
+    , mDet(0.0)
+    {
+    }
+
+    void Calculate(const ShellQ4_LocalCoordinateSystem & CS, const Matrix & dN)
+    {
+    mJac(0, 0) = dN(0, 0) * CS.X1() + dN(1, 0) * CS.X2() + dN(2, 0) * CS.X3() + dN(3, 0) * CS.X4();
+    mJac(0, 1) = dN(0, 0) * CS.Y1() + dN(1, 0) * CS.Y2() + dN(2, 0) * CS.Y3() + dN(3, 0) * CS.Y4();
+    mJac(1, 0) = dN(0, 1) * CS.X1() + dN(1, 1) * CS.X2() + dN(2, 1) * CS.X3() + dN(3, 1) * CS.X4();
+    mJac(1, 1) = dN(0, 1) * CS.Y1() + dN(1, 1) * CS.Y2() + dN(2, 1) * CS.Y3() + dN(3, 1) * CS.Y4();
+
+    mDet = mJac(0, 0) * mJac(1, 1) - mJac(1, 0) * mJac(0, 1);
+    double mult = 1.0 / mDet;
+
+    mInv(0, 0) =   mJac(1, 1) * mult;
+    mInv(0, 1) = - mJac(0, 1) * mult;
+    mInv(1, 0) = - mJac(1, 0) * mult;
+    mInv(1, 1) =   mJac(0, 0) * mult;
+
+    noalias( mXYDeriv ) = prod( dN, trans( mInv ) );
+    }
+
+
+    inline const Matrix & Jacobian()const
+    {
+        return mJac;
+    }
+
+    inline const Matrix & Inverse()const
+    {
+        return mInv;
+    }
+
+    inline const Matrix & XYDerivatives()const
+    {
+        return mXYDeriv;
+    }
+
+    inline double Determinant()const
+    {
+        return mDet;
+    }
+
+private:
+
+    Matrix mJac;     /*!< Jacobian matrix */
+    Matrix mInv;     /*!< Inverse of the Jacobian matrix */
+    Matrix mXYDeriv; /*!< Shape function derivatives in cartesian coordinates */
+    double mDet;     /*!< Determinant of the Jacobian matrix */
+};
 
 }  // namespace Shell Utilities.
 

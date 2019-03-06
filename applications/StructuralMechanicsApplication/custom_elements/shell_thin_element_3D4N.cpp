@@ -209,9 +209,17 @@ void ShellThinElement3D4N::CalculateMassMatrix(MatrixType& rMassMatrix,
 
     // Compute the local coordinate system.
     ShellQ4_LocalCoordinateSystem referenceCoordinateSystem(
-        mpCoordinateTransformation->CreateReferenceCoordinateSystem());
-
-    BaseShellElement::TCalculateMassMatrix(rMassMatrix, rCurrentProcessInfo, referenceCoordinateSystem);
+        mpCoordinateTransformation->CreateReferenceCoordinateSystem() );
+    const bool compute_lumped_mass_matrix = StructuralMechanicsElementUtilities::ComputeLumpedMassMatrix(
+                GetProperties(), rCurrentProcessInfo);
+    if(compute_lumped_mass_matrix)
+    {
+        BaseShellElement::TCalculateMassMatrix(rMassMatrix, rCurrentProcessInfo, referenceCoordinateSystem);
+    }
+    else
+    {
+        BaseShellElement::TCalculateMassMatrixConsistent4N(rMassMatrix, rCurrentProcessInfo, referenceCoordinateSystem);
+    }
     // Average mass per unit area over the whole element
     // double av_mass_per_unit_area = 0.0;
 

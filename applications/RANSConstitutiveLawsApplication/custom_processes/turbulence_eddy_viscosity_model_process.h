@@ -302,7 +302,6 @@ protected:
                 double min_distance = 0.0;
                 for (unsigned int g = 0; g < num_gauss_points; g++)
                 {
-                    const Matrix& r_shape_derivatives = shape_derivatives[g];
                     const Vector& gauss_shape_functions = row(shape_functions, g);
 
                     double gp_x(0.0), gp_y(0.0), gp_z(0.0);

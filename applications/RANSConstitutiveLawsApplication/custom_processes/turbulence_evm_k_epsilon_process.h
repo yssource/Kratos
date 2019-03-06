@@ -38,6 +38,7 @@
 #include "custom_elements/evm_k_epsilon/evm_k_element.h"
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
 #include "custom_processes/turbulence_eddy_viscosity_model_process.h"
+#include "custom_utilities/geometry_utilities.h"
 #include "rans_constitutive_laws_application_variables.h"
 #include "solving_strategies/strategies/residualbased_newton_raphson_strategy.h"
 #include "utilities/color_utilities.h"
@@ -154,16 +155,14 @@ public:
         KRATOS_CATCH("");
     }
 
-    void FinalizeNonLinIteration(
-        ModelPart& rModelPart,
-        typename BaseType::SystemMatrixType& A,
-        typename BaseType::SystemVectorType& Dx,
-        typename BaseType::SystemVectorType& b
-        ) override
+    void FinalizeNonLinIteration(ModelPart& rModelPart,
+                                 typename BaseType::SystemMatrixType& A,
+                                 typename BaseType::SystemVectorType& Dx,
+                                 typename BaseType::SystemVectorType& b) override
     {
         KRATOS_TRY
 
-        LowerBound(rModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
+        // LowerBound(rModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
 
         KRATOS_CATCH("")
     }
@@ -268,16 +267,14 @@ public:
         KRATOS_CATCH("");
     }
 
-    void FinalizeNonLinIteration(
-        ModelPart& rModelPart,
-        typename BaseType::SystemMatrixType& A,
-        typename BaseType::SystemVectorType& Dx,
-        typename BaseType::SystemVectorType& b
-        ) override
+    void FinalizeNonLinIteration(ModelPart& rModelPart,
+                                 typename BaseType::SystemMatrixType& A,
+                                 typename BaseType::SystemVectorType& Dx,
+                                 typename BaseType::SystemVectorType& b) override
     {
         KRATOS_TRY
 
-        LowerBound(rModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
+        // LowerBound(rModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
 
         KRATOS_CATCH("")
     }
@@ -591,14 +588,24 @@ protected:
         // KRATOS_CATCH("");
     }
 
-    void InitializeConditionFlags(const Flags& rFlag) override
+    void InitializeConditions() override
     {
         KRATOS_TRY;
 
-        InitializeConditionFlagsForModelPart(mpTurbulenceKModelPart, rFlag);
-        InitializeConditionFlagsForModelPart(mpTurbulenceEpsilonModelPart, rFlag);
+        InitializeConditionsForModelPart(mpTurbulenceKModelPart);
+        InitializeConditionsForModelPart(mpTurbulenceEpsilonModelPart);
 
         KRATOS_CATCH("");
+    }
+
+    void InitializeConditionsForModelPart(ModelPart* pModelPart)
+    {
+        this->InitializeConditionFlagsForModelPart(pModelPart, INLET);
+        this->InitializeConditionFlagsForModelPart(pModelPart, OUTLET);
+        this->InitializeConditionFlagsForModelPart(pModelPart, STRUCTURE);
+
+        this->FindConditionsParentElements(pModelPart);
+        this->FindConditionGaussPointIndices(pModelPart);
     }
 
     void AddSolutionStepVariables() override
@@ -677,27 +684,6 @@ private:
     ///@}
     ///@name Private Operators
     ///@{
-
-    void InitializeConditionFlagsForModelPart(ModelPart* pModelPart, const Flags& rFlag)
-    {
-        KRATOS_TRY
-
-        auto& conditions_array = pModelPart->Conditions();
-
-        for (auto& it_cond : conditions_array)
-        {
-            bool is_flag_true = true;
-
-            auto& r_geometry = it_cond.GetGeometry();
-
-            for (auto& it_node : r_geometry.Points())
-                if (!(it_node.Is(rFlag)))
-                    is_flag_true = false;
-            it_cond.Set(rFlag, is_flag_true);
-        }
-
-        KRATOS_CATCH("");
-    }
 
     void GenerateSolutionStrategies()
     {
@@ -857,12 +843,93 @@ private:
         rNode.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE) = Epsilon;
     }
 
+    void UpdateBoundaryConditions()
+    {
+        const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
+        const double von_karman = r_current_process_info[WALL_VON_KARMAN];
+        const double beta = r_current_process_info[WALL_SMOOTHNESS_BETA];
+        const double c_mu = r_current_process_info[TURBULENCE_RANS_C_MU];
+
+        const int number_of_conditions = this->mrModelPart.NumberOfConditions();
+#pragma omp parallel for
+        for (int i_cond = 0; i_cond < number_of_conditions; ++i_cond)
+        {
+            Condition& r_condition = *(this->mrModelPart.ConditionsBegin() + i_cond);
+
+            // Skip the condition if it is not a wall
+            if (!r_condition.Is(STRUCTURE))
+                continue;
+
+            Geometry<Node<3>>& r_condition_geometry = r_condition.GetGeometry();
+            Element& r_element = *(r_condition.GetValue(PARENT_ELEMENT).lock());
+            Geometry<Node<3>>& r_element_geometry = r_element.GetGeometry();
+
+            Vector gauss_weights;
+            Matrix shape_functions;
+            Geometry<Node<3>>::ShapeFunctionsGradientsType shape_derivatives;
+            CalculateGeometryData(r_element_geometry, r_element.GetIntegrationMethod(),
+                                  gauss_weights, shape_functions, shape_derivatives);
+
+            const unsigned int number_of_element_nodes =
+                r_element_geometry.PointsNumber();
+            const unsigned int number_of_condition_nodes =
+                r_condition_geometry.PointsNumber();
+            const std::vector<int> condition_gauss_point_indices =
+                r_condition.GetValue(GAUSS_POINT_INDICES);
+
+            for (unsigned int i_node = 0; i_node < number_of_condition_nodes; i_node++)
+            {
+                Node<3>& r_condition_node = r_condition_geometry[i_node];
+
+                const int gauss_index = condition_gauss_point_indices[i_node];
+                const Vector& gauss_shape_functions = row(shape_functions, gauss_index);
+
+                double wall_distance(0.0), nu(0.0);
+                array_1d<double, 3> velocity = zero_vector(3);
+                array_1d<double, 3> normal = zero_vector(3);
+
+                for (unsigned int i_node_element = 0;
+                     i_node_element < number_of_element_nodes; i_node_element++)
+                {
+                    const Node<3>& r_element_node = r_element_geometry[i_node_element];
+
+                    wall_distance += shape_functions[i_node_element] *
+                                     r_element_node.FastGetSolutionStepValue(DISTANCE);
+                    velocity += shape_functions[i_node_element] *
+                                r_element_node.FastGetSolutionStepValue(VELOCITY);
+                    nu += shape_functions[i_node_element] *
+                          r_element_node.FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
+                    normal += shape_functions[i_node_element] *
+                              r_element_node.FastGetSolutionStepValue(NORMAL);
+                }
+                normal /= norm_2(normal);
+                const double tangential_velocity = std::sqrt(
+                    inner_prod(velocity, velocity) - inner_prod(velocity, normal));
+
+                // Applying boundary conditions
+                r_condition_node.SetLock();
+                double& y_plus = r_condition_node.FastGetSolutionStepValue(RANS_Y_PLUS);
+                double& tke = r_condition_node.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
+                double& epsilon = r_condition_node.FastGetSolutionStepValue(
+                    TURBULENT_ENERGY_DISSIPATION_RATE);
+
+                y_plus = EvmKepsilonModelUtilities::CalculateYplus(
+                    tangential_velocity, wall_distance, nu, von_karman, beta, 100);
+                const double u_tau = y_plus * nu / wall_distance;
+                tke = std::pow(u_tau, 2) / std::sqrt(c_mu);
+                epsilon = std::pow(u_tau, 4) / (von_karman * y_plus * nu);
+                r_condition_node.UnSetLock();
+            }
+        }
+    }
+
     void SolveStep()
     {
         const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
         this->CalculateYplus(r_current_process_info[RANS_VELOCITY_STEP]);
 
         this->UpdateTurbulentViscosity();
+        this->UpdateBoundaryConditions();
 
         mpKStrategy->InitializeSolutionStep();
         mpKStrategy->Predict();
@@ -957,22 +1024,20 @@ private:
 
         const double C_mu = r_current_process_info[TURBULENCE_RANS_C_MU];
         const double nu_fraction = r_current_process_info[TURBULENT_VISCOSITY_FRACTION];
-        const double mixing_length = r_current_process_info[TURBULENT_MIXING_LENGTH];
 
 #pragma omp parallel for
         for (int i = 0; i < number_of_nodes; i++)
         {
             ModelPart::NodeIterator iNode = this->mrModelPart.NodesBegin() + i;
-            const double tke = iNode->FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
+            const double tke =
+                iNode->FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY, 1);
             const double epsilon =
-                iNode->FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
+                iNode->FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE, 1);
             const double nu = iNode->FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
-            const double y_plus = iNode->FastGetSolutionStepValue(RANS_Y_PLUS);
-            const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
             const double nu_min = nu_fraction * nu;
 
             const double nu_t = EvmKepsilonModelUtilities::CalculateTurbulentViscosity(
-                C_mu, f_mu, tke, epsilon, mixing_length, nu_min);
+                C_mu, tke, epsilon, nu_min);
 
             iNode->FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t;
         }

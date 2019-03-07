@@ -27,6 +27,7 @@ set( KRATOS_STRUCTURAL_MECHANICS_APPLICATION_CORE
   ## RESPONSE UTILITIES
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_response_functions/response_utilities/adjoint_structural_response_function.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_response_functions/response_utilities/adjoint_local_stress_response_function.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_response_functions/response_utilities/adjoint_max_stress_response_function.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_response_functions/response_utilities/adjoint_nodal_displacement_response_function.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_response_functions/response_utilities/adjoint_linear_strain_energy_response_function.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_response_functions/response_utilities/stress_response_definitions.cpp
@@ -112,6 +113,7 @@ set( KRATOS_STRUCTURAL_MECHANICS_APPLICATION_CORE
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_response_functions/adjoint_elements/adjoint_finite_difference_cr_beam_element_3D2N.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_response_functions/adjoint_elements/adjoint_finite_difference_truss_element_3D2N.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_response_functions/adjoint_elements/adjoint_finite_difference_truss_element_linear_3D2N.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_response_functions/adjoint_elements/adjoint_finite_difference_small_displacement_element.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_response_functions/adjoint_elements/adjoint_solid_element.cpp
 
   # Solid elements

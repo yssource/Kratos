@@ -16,6 +16,7 @@
 
 // Include Base h
 #include "custom_elements/rans_constitutive_element.h"
+#include "custom_utilities/calculation_utilities.h"
 
 namespace Kratos
 {
@@ -447,31 +448,10 @@ template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
 void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateGeometryData(
     Vector& rGaussWeights, Matrix& rNContainer, ShapeFunctionDerivativesArrayType& rDN_DX) const
 {
-    const GeometryData::IntegrationMethod integration_method =
-        this->GetIntegrationMethod();
     const GeometryType& r_geometry = this->GetGeometry();
-    const unsigned int number_of_gauss_points =
-        r_geometry.IntegrationPointsNumber(integration_method);
 
-    Vector DetJ;
-    r_geometry.ShapeFunctionsIntegrationPointsGradients(rDN_DX, DetJ, integration_method);
-
-    if (rNContainer.size1() != number_of_gauss_points || rNContainer.size2() != TNumNodes)
-    {
-        rNContainer.resize(number_of_gauss_points, TNumNodes, false);
-    }
-    rNContainer = r_geometry.ShapeFunctionsValues(integration_method);
-
-    const GeometryType::IntegrationPointsArrayType& IntegrationPoints =
-        r_geometry.IntegrationPoints(integration_method);
-
-    if (rGaussWeights.size() != number_of_gauss_points)
-    {
-        rGaussWeights.resize(number_of_gauss_points, false);
-    }
-
-    for (unsigned int g = 0; g < number_of_gauss_points; g++)
-        rGaussWeights[g] = DetJ[g] * IntegrationPoints[g].Weight();
+    CalculationUtilities::CalculateGeometryData(
+        r_geometry, this->GetIntegrationMethod(), rGaussWeights, rNContainer, rDN_DX);
 }
 
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>

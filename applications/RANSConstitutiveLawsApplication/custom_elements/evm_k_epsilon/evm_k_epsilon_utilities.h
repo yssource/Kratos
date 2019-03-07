@@ -13,12 +13,13 @@
 #if !defined(KRATOS_EVM_K_EPSILON_UTILITIES_H_INCLUDED)
 #define KRATOS_EVM_K_EPSILON_UTILITIES_H_INCLUDED
 
+// System includes
+
+// Project includes
 #include "includes/define.h"
 #include "includes/ublas_interface.h"
 #include "input_output/logger.h"
-#include <cmath>
-#include <iostream>
-#include <limits>
+#include "custom_utilities/calculation_utilities.h"
 
 namespace Kratos
 {
@@ -39,9 +40,6 @@ namespace Kratos
 
 namespace EvmKepsilonModelUtilities
 {
-#define CheckIfVariableIsPositive(variable) \
-    KRATOS_DEBUG_ERROR_IF(variable < 0.0)   \
-        << #variable << " < 0.0 [ " << std::scientific << variable << " < 0.0 ]\n";
 
 double CalculateTurbulentViscosity(const double C_mu,
                                    const double turbulent_kinetic_energy,

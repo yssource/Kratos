@@ -1,5 +1,7 @@
-
 #include "evm_k_epsilon_utilities.h"
+#include <cmath>
+#include <iostream>
+#include <limits>
 
 namespace Kratos
 {
@@ -57,44 +59,6 @@ double CalculateF2(const double turbulent_kinetic_energy,
     return 1.0 - 0.22 * std::exp(-1.0 * std::pow(std::pow(turbulent_kinetic_energy, 2) /
                                                      (6 * kinematic_viscosity * turbulent_energy_dissipation_rate),
                                                  2));
-}
-
-double CalculateYplus(const double velocity_norm,
-                      const double wall_distance,
-                      const double kinematic_viscosity,
-                      const double von_karman,
-                      const double beta,
-                      const unsigned int max_iterations)
-{
-    CheckIfVariableIsPositive(velocity_norm);
-    CheckIfVariableIsPositive(wall_distance);
-    CheckIfVariableIsPositive(kinematic_viscosity);
-    CheckIfVariableIsPositive(von_karman);
-    CheckIfVariableIsPositive(beta);
-
-    // try linear law
-    double y_plus = std::sqrt(velocity_norm * wall_distance / kinematic_viscosity);
-
-    // If the linear low doesnt match within the range, try logrithmic law
-    if (y_plus > 11.06)
-    {
-        unsigned int i;
-        double u_tau = std::sqrt(velocity_norm * kinematic_viscosity / wall_distance);
-        double prev_u_tau = 0.0;
-        for (i = 0; i < max_iterations; ++i)
-        {
-            prev_u_tau = u_tau;
-            u_tau = velocity_norm /
-                    (std::log(u_tau * wall_distance / kinematic_viscosity) / von_karman + beta);
-        }
-        const double delta_u_tau = std::abs(u_tau - prev_u_tau);
-        KRATOS_INFO_IF("TurbulenceEvmProcess", delta_u_tau > 1e-5)
-            << "WARNING: Maximum number of iterations reached for y_plus "
-               "calculation. error_u_tau = "
-            << std::scientific << delta_u_tau << ".\n";
-        y_plus = u_tau * wall_distance / kinematic_viscosity;
-    }
-    return y_plus;
 }
 
 double CalculateStabilizationTau(const double velocity_magnitude,

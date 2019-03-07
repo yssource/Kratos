@@ -285,7 +285,7 @@ namespace Kratos {
             {
                 Element& r_element = *(rModelPart.ElementsBegin() + i);
                 r_element.SetValue(DERIVATIVES_EXTENSION,
-                                        Kratos::make_shared<ElementDerivativesExtension>(&r_element));
+                                        Kratos::make_unique<ElementDerivativesExtension>(&r_element));
             }
 
             KRATOS_CATCH("");
@@ -346,14 +346,14 @@ namespace Kratos {
                 for (ModelPart::NodeIterator itNode = NodesBegin; itNode != NodesEnd; itNode++) {
                     if (mMeshVelocity == 2)//Lagrangian
                     {
-                        if((itNode)->FastGetSolutionStepValue(IS_LAGRANGIAN_INLET) >= 1e-15)
+                        if((itNode)->FastGetSolutionStepValue(IS_LAGRANGIAN_INLET) < 1e-15)
                         {
-                            noalias(itNode->FastGetSolutionStepValue(MESH_VELOCITY)) = ZeroVector(3);
-                            noalias(itNode->FastGetSolutionStepValue(DISPLACEMENT)) = ZeroVector(3);
+                            noalias(itNode->FastGetSolutionStepValue(MESH_VELOCITY)) = itNode->FastGetSolutionStepValue(VELOCITY);
                         }
                         else
                         {
-                            noalias(itNode->FastGetSolutionStepValue(MESH_VELOCITY)) = itNode->FastGetSolutionStepValue(VELOCITY);
+                            noalias(itNode->FastGetSolutionStepValue(MESH_VELOCITY)) = ZeroVector(3);
+                            noalias(itNode->FastGetSolutionStepValue(DISPLACEMENT)) = ZeroVector(3);
                         }
 
                     }
@@ -492,16 +492,6 @@ namespace Kratos {
         //*************************************************************************************
         //*************************************************************************************
 
-        void InitializeSolutionStep(ModelPart& r_model_part,
-                                            TSystemMatrixType& A,
-                                            TSystemVectorType& Dx,
-                                            TSystemVectorType& b) override
-        {
-            BaseType::InitializeSolutionStep(r_model_part, A, Dx, b);
-        }
-        //*************************************************************************************
-        //*************************************************************************************
-
         void InitializeNonLinIteration(ModelPart& r_model_part,
                                                TSystemMatrixType& A,
                                                TSystemVectorType& Dx,
@@ -572,7 +562,7 @@ namespace Kratos {
                 }
             }
 
-            if (mpTurbulenceModel != 0) // If not null
+            if (mpTurbulenceModel) // If not null
                 mpTurbulenceModel->Execute();
 
             KRATOS_CATCH("")

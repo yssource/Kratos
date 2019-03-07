@@ -267,7 +267,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 {
     const int number_of_conditions = pModelPart->NumberOfConditions();
 
-#pragma omp parallel for
     for (int i_cond = 0; i_cond < number_of_conditions; ++i_cond)
     {
         Condition& r_condition = *(pModelPart->ConditionsBegin() + i_cond);

@@ -32,6 +32,8 @@ template <class TSparseSpace, class TDenseSpace>
 class ResidualBasedBossakTurbulentKineticEnergyScheme
     : public ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>
 {
+    typedef Node<3> NodeType;
+
     class ElementDerivativesExtension : public DerivativesExtension
     {
         Element* mpElement;
@@ -48,7 +50,7 @@ class ResidualBasedBossakTurbulentKineticEnergyScheme
                                        ProcessInfo& rCurrentProcessInfo) override
         {
             rVector.resize(1);
-            Node<3>& r_node = mpElement->GetGeometry()[NodeId];
+            NodeType& r_node = mpElement->GetGeometry()[NodeId];
             rVector[0] = MakeIndirectScalar(r_node, TURBULENT_KINETIC_ENERGY, Step);
         }
 
@@ -58,7 +60,7 @@ class ResidualBasedBossakTurbulentKineticEnergyScheme
                                         ProcessInfo& rCurrentProcessInfo) override
         {
             rVector.resize(1);
-            Node<3>& r_node = mpElement->GetGeometry()[NodeId];
+            NodeType& r_node = mpElement->GetGeometry()[NodeId];
             rVector[0] = MakeIndirectScalar(r_node, TURBULENT_KINETIC_ENERGY_RATE, Step);
         }
 
@@ -67,7 +69,7 @@ class ResidualBasedBossakTurbulentKineticEnergyScheme
                                            ProcessInfo& rCurrentProcessInfo) override
         {
             rVector.resize(1);
-            Node<3>& r_node = mpElement->GetGeometry()[NodeId];
+            NodeType& r_node = mpElement->GetGeometry()[NodeId];
             rVector[0] = r_node.pGetDof(TURBULENT_KINETIC_ENERGY);
         }
 
@@ -129,7 +131,7 @@ public:
     {
         KRATOS_TRY
 
-        // LowerBound(rModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
+        CalculationUtilities::LowerBound<NodeType>(rModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
 
         KRATOS_CATCH("")
     }

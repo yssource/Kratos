@@ -52,13 +52,6 @@ double CalculateF2(const double turbulent_kinetic_energy,
                    const double kinematic_viscosity,
                    const double turbulent_energy_dissipation_rate);
 
-double CalculateYplus(const double velocity_norm,
-                      const double wall_distance,
-                      const double kinematic_viscosity,
-                      const double von_karman,
-                      const double beta,
-                      const unsigned int max_iterations);
-
 double CalculateStabilizationTau(const double velocity_magnitude,
                                  const double length,
                                  const double effective_kinematic_viscosity,

@@ -10,8 +10,8 @@
 namespace Kratos
 {
 #define CheckIfVariableIsPositive(variable) \
-KRATOS_DEBUG_ERROR_IF(variable < 0.0)   \
-    << #variable << " < 0.0 [ " << std::scientific << variable << " < 0.0 ]\n";
+    KRATOS_DEBUG_ERROR_IF(variable < 0.0)   \
+        << #variable << " < 0.0 [ " << std::scientific << variable << " < 0.0 ]\n";
 
 namespace CalculationUtilities
 {
@@ -21,14 +21,27 @@ void CalculateGeometryData(const Geometry<Node<3>>& rGeometry,
                            Matrix& rNContainer,
                            Geometry<Node<3>>::ShapeFunctionsGradientsType& rDN_DX);
 
-void LowerBound(ModelPart& rModelPart, Variable<double>& rVariable, const double MinValue);
-
 double CalculateYplus(const double velocity_norm,
                       const double wall_distance,
                       const double kinematic_viscosity,
                       const double von_karman,
                       const double beta,
                       const unsigned int max_iterations);
+
+template <class NodeType>
+void LowerBound(ModelPart& rModelPart, Variable<double>& rVariable, const double MinValue);
+
+template <class GeometryType>
+double EvaluateInPoint(const GeometryType& rGeometry,
+                       const Variable<double>& rVariable,
+                       const Vector& rShapeFunction,
+                       const int Step = 0);
+
+template <class GeometryType>
+array_1d<double, 3> EvaluateInPoint(const GeometryType& rGeometry,
+                                    const Variable<array_1d<double, 3>>& rVariable,
+                                    const Vector& rShapeFunction,
+                                    const int Step = 0);
 
 } // namespace CalculationUtilities
 } // namespace Kratos

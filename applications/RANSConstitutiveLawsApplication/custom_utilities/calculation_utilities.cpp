@@ -37,6 +37,7 @@ void CalculateGeometryData(const Geometry<Node<3>>& rGeometry,
         rGaussWeights[g] = DetJ[g] * IntegrationPoints[g].Weight();
 }
 
+template <class NodeType>
 void LowerBound(ModelPart& rModelPart, Variable<double>& rVariable, const double MinValue)
 {
     const int number_of_nodes = rModelPart.NumberOfNodes();
@@ -44,7 +45,7 @@ void LowerBound(ModelPart& rModelPart, Variable<double>& rVariable, const double
 #pragma omp parallel for
     for (int i = 0; i < number_of_nodes; i++)
     {
-        Node<3>& r_current_node = *(rModelPart.NodesBegin() + i);
+        NodeType& r_current_node = *(rModelPart.NodesBegin() + i);
         double& value = r_current_node.FastGetSolutionStepValue(rVariable);
         value = std::max<double>(MinValue, value);
     }
@@ -63,29 +64,91 @@ double CalculateYplus(const double velocity_norm,
     CheckIfVariableIsPositive(von_karman);
     CheckIfVariableIsPositive(beta);
 
-    // try linear law
-    double y_plus = std::sqrt(velocity_norm * wall_distance / kinematic_viscosity);
+    // linear region
+    double utau = sqrt(velocity_norm * kinematic_viscosity / wall_distance);
+    double yplus = wall_distance * utau / kinematic_viscosity;
 
-    // If the linear low doesnt match within the range, try logrithmic law
-    if (y_plus > 11.06)
+    const double limit_yplus = 11.06;
+    const double inv_von_karman = 1.0 / von_karman;
+
+    // log region
+    if (yplus > limit_yplus)
     {
-        unsigned int i;
-        double u_tau = std::sqrt(velocity_norm * kinematic_viscosity / wall_distance);
-        double prev_u_tau = 0.0;
-        for (i = 0; i < max_iterations; ++i)
+        // wall_vel / utau = 1/kappa * log(yplus) + B
+        // this requires solving a nonlinear problem:
+        // f(utau) = utau*(1/kappa * log(y*utau/nu) + B) - wall_vel = 0
+        // note that f'(utau) = 1/kappa * log(y*utau/nu) + B + 1/kappa
+
+        unsigned int iter = 0;
+        double dx = 1e10;
+        const double tol = 1e-6;
+        double uplus = inv_von_karman * log(yplus) + beta;
+
+        while (iter < max_iterations && fabs(dx) > tol * utau)
         {
-            prev_u_tau = u_tau;
-            u_tau = velocity_norm /
-                    (std::log(u_tau * wall_distance / kinematic_viscosity) / von_karman + beta);
+            // Newton-Raphson iteration
+            double f = utau * uplus - velocity_norm;
+            double df = uplus + inv_von_karman;
+            dx = f / df;
+
+            // Update variables
+            utau -= dx;
+            yplus = wall_distance * utau / kinematic_viscosity;
+            uplus = inv_von_karman * log(yplus) + beta;
+            ++iter;
         }
-        const double delta_u_tau = std::abs(u_tau - prev_u_tau);
-        KRATOS_INFO_IF("TurbulenceEvmProcess", delta_u_tau > 1e-5)
-            << "WARNING: Maximum number of iterations reached for y_plus "
-               "calculation. error_u_tau = "
-            << std::scientific << delta_u_tau << ".\n";
-        y_plus = u_tau * wall_distance / kinematic_viscosity;
+
+        KRATOS_WARNING_IF("CalculateYplus", iter == max_iterations)
+            << "Wall (logarithmic region) Newton-Raphson did not converge. "
+               "residual > tolerance [ "
+            << std::scientific << dx << " > " << std::scientific << tol << " ]\n";
     }
-    return y_plus;
+
+    return yplus;
 }
+
+template <class GeometryType>
+double EvaluateInPoint(const GeometryType& rGeometry,
+                       const Variable<double>& rVariable,
+                       const Vector& rShapeFunction,
+                       const int Step)
+{
+    const unsigned int number_of_nodes = rGeometry.PointsNumber();
+    double value = 0.0;
+    for (unsigned int c = 0; c < number_of_nodes; c++)
+    {
+        value += rShapeFunction[c] * rGeometry[c].FastGetSolutionStepValue(rVariable, Step);
+    }
+
+    return value;
+}
+
+template <class GeometryType>
+array_1d<double, 3> EvaluateInPoint(const GeometryType& rGeometry,
+                                    const Variable<array_1d<double, 3>>& rVariable,
+                                    const Vector& rShapeFunction,
+                                    const int Step)
+{
+    const unsigned int number_of_nodes = rGeometry.PointsNumber();
+    array_1d<double, 3> value = ZeroVector(3);
+    for (unsigned int c = 0; c < number_of_nodes; c++)
+    {
+        value += rShapeFunction[c] * rGeometry[c].FastGetSolutionStepValue(rVariable, Step);
+    }
+
+    return value;
+}
+
+// template instantiations
+template double EvaluateInPoint<Geometry<Node<3>>>(const Geometry<Node<3>>&,
+                                                   const Variable<double>&,
+                                                   const Vector&,
+                                                   const int);
+
+template array_1d<double, 3> EvaluateInPoint<Geometry<Node<3>>>(
+    const Geometry<Node<3>>&, const Variable<array_1d<double, 3>>&, const Vector&, const int);
+
+template void LowerBound<Node<3>>(ModelPart&, Variable<double>&, const double);
+
 } // namespace CalculationUtilities
 } // namespace Kratos

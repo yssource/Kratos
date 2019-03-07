@@ -458,28 +458,16 @@ template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
 double RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::EvaluateInPoint(
     const Variable<double>& rVariable, const Vector& rShapeFunction, const int Step) const
 {
-    const GeometryType& r_geometry = this->GetGeometry();
-    double value = 0.0;
-    for (unsigned int c = 0; c < TNumNodes; c++)
-    {
-        value += rShapeFunction[c] * r_geometry[c].FastGetSolutionStepValue(rVariable, Step);
-    }
-
-    return value;
+    return CalculationUtilities::EvaluateInPoint<Geometry<Node<3>>>(
+        this->GetGeometry(), rVariable, rShapeFunction, Step);
 }
 
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
 array_1d<double, 3> RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::EvaluateInPoint(
     const Variable<array_1d<double, 3>>& rVariable, const Vector& rShapeFunction, const int Step) const
 {
-    const GeometryType& r_geometry = this->GetGeometry();
-    array_1d<double, 3> value = ZeroVector(3);
-    for (unsigned int c = 0; c < TNumNodes; c++)
-    {
-        value += rShapeFunction[c] * r_geometry[c].FastGetSolutionStepValue(rVariable, Step);
-    }
-
-    return value;
+    return CalculationUtilities::EvaluateInPoint<Geometry<Node<3>>>(
+        this->GetGeometry(), rVariable, rShapeFunction, Step);
 }
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
 void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::GetConvectionOperator(

@@ -36,6 +36,12 @@ ComputeLevelSetSolMetricProcess<TDim>::ComputeLevelSetSolMetricProcess(
             "boundary_layer_max_distance"      : 1.0,
             "interpolation"                    : "constant"
         },
+        "custom_settings":
+        {
+            "ratio"                     : 1.0,
+            "max_x"                     : 1.0,
+            "min_x"                     : 0.0
+        },
         "enforce_current"                      : true,
         "anisotropy_remeshing"                 : true,
         "anisotropy_parameters":
@@ -50,6 +56,9 @@ ComputeLevelSetSolMetricProcess<TDim>::ComputeLevelSetSolMetricProcess(
 
     mMinSize = ThisParameters["minimal_size"].GetDouble();
     mMaxSize = ThisParameters["maximal_size"].GetDouble();
+    mMaxX = ThisParameters["custom_settings"]["max_x"].GetDouble();
+    mMinX = ThisParameters["custom_settings"]["min_x"].GetDouble();
+    mCustomRatio = ThisParameters["custom_settings"]["ratio"].GetDouble();
     mSizeReferenceVariable = ThisParameters["sizing_parameters"]["reference_variable_name"].GetString();
     mSizeBoundLayer = ThisParameters["sizing_parameters"]["boundary_layer_max_distance"].GetDouble();
     mSizeInterpolation = ConvertInter(ThisParameters["sizing_parameters"]["interpolation"].GetString());
@@ -125,6 +134,7 @@ void ComputeLevelSetSolMetricProcess<TDim>::Execute()
         if (it_node->SolutionStepsDataHas(size_reference_var)) {
             const double size_reference = it_node->FastGetSolutionStepValue(size_reference_var);
             element_size = CalculateElementSize(size_reference, nodal_h);
+            ComputeElementSizeCorrection(element_size, it_node->X());
             if (((element_size > nodal_h) && (mEnforceCurrent)) || (std::abs(size_reference) > mSizeBoundLayer))
                 element_size = nodal_h;
         } else {
@@ -260,6 +270,26 @@ double ComputeLevelSetSolMetricProcess<TDim>::CalculateElementSize(
     
 
     return size;
+}
+
+
+template<SizeType TDim>
+void ComputeLevelSetSolMetricProcess<TDim>::ComputeElementSizeCorrection(
+    double ElementSize,
+    const double Xnode
+    )
+{   
+    double halfChord = std::abs(mMaxX-mMinX)/10;
+    double distToMax = std::abs(mMaxX-Xnode);
+    double distToMin = std::abs(Xnode-mMinX);
+    double minDist = std::min(distToMax,distToMin);
+    double ratio = 1.0;
+    if (minDist/halfChord<1.0){
+        ratio = mCustomRatio+(minDist/halfChord)*(1.0-mCustomRatio);
+        ratio = mCustomRatio;
+        // std::cout << ratio << std::endl;
+    }
+    ElementSize=ElementSize*ratio;   
 }
 /***********************************************************************************/
 /***********************************************************************************/

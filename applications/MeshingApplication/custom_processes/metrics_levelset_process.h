@@ -201,6 +201,9 @@ private:
     const Variable<array_1d<double,3>> mVariableGradient; /// The gradient variable
     std::string mRatioReferenceVariable = "DISTANCE";     /// Variable used to compute the anisotropic ratio
     std::string mSizeReferenceVariable = "DISTANCE";      /// Variable used to compute the element size
+    double mMinX;                                      /// The minimal size of the elements
+    double mMaxX;                                      /// The maximal size of the elements
+    double mCustomRatio;                                      /// The maximal size of the elements
     double mMinSize;                                      /// The minimal size of the elements
     double mMaxSize;                                      /// The maximal size of the elements
     bool mEnforceCurrent;                                 /// With this we choose if we inforce the current nodal size (NODAL_H)
@@ -265,6 +268,11 @@ private:
         const double Distance,
         const double NodalH
         );
+
+    void ComputeElementSizeCorrection(
+        double ElementSize,
+        const double Xnode
+    );
 
     ///@}
     ///@name Private  Access

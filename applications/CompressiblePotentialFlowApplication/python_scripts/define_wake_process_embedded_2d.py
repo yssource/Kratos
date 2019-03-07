@@ -1,231 +1,67 @@
 import KratosMultiphysics
 import KratosMultiphysics.CompressiblePotentialFlowApplication as CPFApp
 import KratosMultiphysics.MeshingApplication as MeshingApplication
-
+from KratosMultiphysics.CompressiblePotentialFlowApplication.define_wake_process_2d import DefineWakeProcess
 import math
 
 def Factory(settings, Model):
     if( not isinstance(settings,KratosMultiphysics.Parameters) ):
         raise Exception("expected input shall be a Parameters object, encapsulating a json string")
 
-    return DefineWakeProcess(Model, settings["Parameters"])
-def RotateModelPart(origin, angle, model_part):
-    ox,oy=origin        
-    for node in model_part.Nodes:
-        node.X = ox+math.cos(angle)*(node.X - ox)-math.sin(angle)*(node.Y - oy)
-        node.Y = oy+math.sin(angle)*(node.X - ox)+math.cos(angle)*(node.Y - oy)
+    return DefineWakeProcessEmbedded(Model, settings["Parameters"])
 
-class DefineWakeProcess(KratosMultiphysics.Process):
+class DefineWakeProcessEmbedded(DefineWakeProcess):
     def __init__(self, Model, settings ):
         KratosMultiphysics.Process.__init__(self)
-        print("Initialize Wake Process")
+
         default_settings = KratosMultiphysics.Parameters("""
             {
                 "mesh_id"                   : 0,
-                "model_part_name"           : "please specify the model part that contains the kutta nodes",
                 "fluid_part_name"           : "MainModelPart",
-                "upper_surface_model_part_name" : "Body2D_UpperSurface",
-                "lower_surface_model_part_name" : "Body2D_LowerSurface",
-                "direction"                 : [1.0,0.0,0.0],
-                "stl_filename"              : "please specify name of stl file",
-                "epsilon"    : 1e-9,
-                "geometry_parameter": 0.0
+                "wake_direction"                 : [1.0,0.0,0.0],
+                "epsilon"    : 1e-9
             }
             """)
 
-        settings.ValidateAndAssignDefaults(default_settings) 
-        self.geometry_parameter=settings["geometry_parameter"].GetDouble()
-        self.direction = KratosMultiphysics.Vector(3)
-        self.direction[0] = settings["direction"][0].GetDouble()
-        self.direction[1] = settings["direction"][1].GetDouble()
-        self.direction[2] = settings["direction"][2].GetDouble()
-        dnorm = math.sqrt(self.direction[0]**2 + self.direction[1]**2 + self.direction[2]**2)
-        self.direction[0] /= dnorm
-        self.direction[1] /= dnorm
-        self.direction[2] /= dnorm
-        
+        settings.ValidateAndAssignDefaults(default_settings)
+        # TODO Implement this process in C++ and make it open mp parallel to save time selecting the wake elements
+
+        self.wake_direction = settings["wake_direction"].GetVector()
+        if(self.wake_direction.Size() != 3):
+            raise Exception('The wake direction should be a vector with 3 components!')
+
+        dnorm = math.sqrt(
+            self.wake_direction[0]**2 + self.wake_direction[1]**2 + self.wake_direction[2]**2)
+        self.wake_direction[0] /= dnorm
+        self.wake_direction[1] /= dnorm
+        self.wake_direction[2] /= dnorm
+
+        self.wake_normal = KratosMultiphysics.Vector(3)
+        self.wake_normal[0] = -self.wake_direction[1]
+        self.wake_normal[1] = self.wake_direction[0]
+        self.wake_normal[2] = 0.0
+
         self.epsilon = settings["epsilon"].GetDouble()
-        
-        self.fluid_model_part = Model.GetModelPart(settings["fluid_part_name"].GetString()).GetRootModelPart()
-        for element in self.fluid_model_part.Elements:
-            element.Set(KratosMultiphysics.STRUCTURE,False)
-            element.Set(KratosMultiphysics.MARKER,False)
-        for node in self.fluid_model_part.Nodes:
-            node.Set(KratosMultiphysics.STRUCTURE,False)
-        self.model=Model
-        self.wake_model_part_name=settings["model_part_name"].GetString()
-        self.upper_surface_model_part_name=settings["upper_surface_model_part_name"].GetString()
-        self.lower_surface_model_part_name=settings["lower_surface_model_part_name"].GetString()
 
-        self.wake_line_model_part=Model.CreateModelPart("wake")
-        if (self.fluid_model_part.HasSubModelPart("trailing_edge_model_part")):
-            self.fluid_model_part.RemoveSubModelPart("trailing_edge_model_part")
-            self.trailing_edge_model_part = self.fluid_model_part.CreateSubModelPart("trailing_edge_model_part")
-        else:
-            self.trailing_edge_model_part = self.fluid_model_part.CreateSubModelPart("trailing_edge_model_part")
-        angle=math.radians(-self.geometry_parameter)
-        for node in self.wake_line_model_part.Nodes:
-            node.X = ox+math.cos(angle)*(node.X - ox)-math.sin(angle)*(node.Y - oy)
-            node.Y = oy+math.sin(angle)*(node.X - ox)+math.cos(angle)*(node.Y - oy)
-        
-        self.stl_filename = settings["stl_filename"].GetString()
+        self.fluid_model_part = Model[settings["fluid_part_name"].GetString()].GetRootModelPart()
+        self.trailing_edge_model_part = self.fluid_model_part.CreateSubModelPart(
+            "trailing_edge_model_part")
 
-    def Execute(self):
-        self.FindWake()
-
-    def DefineWakeFromLevelSet(self):
-        KratosMultiphysics.ModelPartIO("wake").ReadModelPart(self.wake_line_model_part)  
-        kutta_model_part_ls=self.fluid_model_part.GetSubModelPart('KuttaLS')
-        for node in kutta_model_part_ls.Nodes:
-            kutta_node=node 
-        # origin=[0.0,0.0] 
-        # angle=math.radians(-self.geometry_parameter) 
-        for node in self.wake_line_model_part.Nodes:
-            node.X=kutta_node.X-0.25+node.X+1e-4
-            node.Y=kutta_node.Y+node.Y+1e-4
-        # RotateModelPart(origin,angle,self.wake_line_model_part)
-
-        # for node in self.wake_line_model_part.Nodes:
-        #     print(node.X)
-        #     print(node.Y)
-        KratosMultiphysics.CalculateDiscontinuousDistanceToSkinProcess2D(self.fluid_model_part, self.wake_line_model_part).Execute()
-        for elem in self.fluid_model_part.Elements:
-            d=elem.GetValue(KratosMultiphysics.ELEMENTAL_DISTANCES)
-            i=0            
-            for node in elem.GetNodes():
-                node.SetSolutionStepValue(CPFApp.WAKE_DISTANCE,d[i])
-                i += 1
-        # KratosMultiphysics.VariableUtils().CopyScalarVar(KratosMultiphysics.DISTANCE,CPFApp.WAKE_DISTANCE, self.fluid_model_part.Nodes)
-
-
-
-        # self.kutta_model_part=self.model.CreateModelPart(self.wake_model_part_name)
-        # self.kutta_model_part.AddNode(kutta_node,0)
-    
-    def MarkTrailingEdgeElements(self, elem):
-        # This function marks the elements touching the trailing
-        # edge and saves them in the trailing_edge_model_part for
-        # further computations
-        for elnode in elem.GetNodes():
-            if(elnode.GetValue(CPFApp.TRAILING_EDGE)):
-                elem.SetValue(CPFApp.TRAILING_EDGE, True)
-                elem.SetValue(CPFApp.KUTTA, True)
-                self.trailing_edge_model_part.Elements.append(elem)
-                break
-        
-    def FindWake(self):
-        print("Executing wake process")     
-        
-        # self.DefineWakeFromLevelSet()
-        KratosMultiphysics.NormalCalculationUtils().CalculateOnSimplex(self.fluid_model_part,self.fluid_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE])
-
+    def ExecuteInitialize(self):
+        KratosMultiphysics.NormalCalculationUtils().CalculateOnSimplex(self.fluid_model_part,
+                                                        self.fluid_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE])
         # Neigbour search tool instance
         AvgElemNum = 10
         AvgNodeNum = 10
-        nodal_neighbour_search = KratosMultiphysics.FindNodalNeighboursProcess(self.fluid_model_part,AvgElemNum, AvgNodeNum)
+        nodal_neighbour_search = KratosMultiphysics.FindNodalNeighboursProcess(
+            self.fluid_model_part, AvgElemNum, AvgNodeNum)
         # Find neighbours
         nodal_neighbour_search.Execute()
-        kutta_model_part_ls=self.fluid_model_part.GetSubModelPart('KuttaLS')
-        for node in kutta_model_part_ls.Nodes:
-            kutta_node=node
-            print("Kutta Node Id:", node.Id)
-
-        xn = KratosMultiphysics.Vector(3)
-        
-        self.n = KratosMultiphysics.Vector(3)
-        self.n[0] = -self.direction[1]
-        self.n[1] = self.direction[0]
-        self.n[2] = 0.0
-        print("normal =",self.n)
-        
-        x0 = kutta_node.X
-        y0 = kutta_node.Y
-        for elem in self.fluid_model_part.Elements:
-            self.MarkTrailingEdgeElements(elem)      
-            elem.SetValue(CPFApp.WAKE,False)                     
-            #check in the potentially active portion
-            potentially_active_portion = False
-            for elnode in elem.GetNodes():
-                xn[0] = elnode.X - x0
-                xn[1] = elnode.Y - y0
-                xn[2] = 0.0
-                dx = xn[0]*self.direction[0] + xn[1]*self.direction[1]
-                if(dx > 0): 
-                    potentially_active_portion = True
-                    break
-                if(elnode.GetValue(CPFApp.TRAILING_EDGE)): ##all nodes that touch the kutta nodes are potentiallyactive
-                    potentially_active_portion = True
-                    break
-                
-                
-            if(potentially_active_portion):                   
-                distances = KratosMultiphysics.Vector(len(elem.GetNodes()))
-                
-                
-                counter = 0
-                for elnode in elem.GetNodes():
-                    xn[0] = elnode.X - x0
-                    xn[1] = elnode.Y - y0
-                    xn[2] = 0.0
-                    d =  xn[0]*self.n[0] + xn[1]*self.n[1]
-                    if(abs(d) < self.epsilon):
-                        if d >= 0.0:
-                            d = self.epsilon
-                        else:
-                            d = -self.epsilon
-                    distances[counter] = d
-                    counter += 1
-
-                npos = 0
-                nneg = 0
-                for d in distances:
-                    if(d < 0):
-                        nneg += 1
-                    else:
-                        npos += 1
-                        
-                if(nneg>0 and npos>0):
-                    elem.SetValue(CPFApp.WAKE,True)
-                    counter = 0
-                    for elnode in elem.GetNodes():
-                        elnode.SetSolutionStepValue(CPFApp.WAKE_DISTANCE,0,distances[counter])
-                        counter+=1
-                    elem.SetValue(KratosMultiphysics.ELEMENTAL_DISTANCES,distances)
-
-        max_X_center = -1e10    
-        for element in self.trailing_edge_model_part.Elements:
-            # print(element.Id)
-            element.Set(KratosMultiphysics.INTERFACE,True)
-                                 
-            if (element.GetValue(CPFApp.WAKE)):
-                center_X=element.GetGeometry().Center().X
-                nneg=0
-                for node in element.GetNodes():
-                    if node.GetSolutionStepValue(CPFApp.WAKE_DISTANCE)<0:
-                        nneg += 1
-                if center_X>max_X_center and nneg==1:
-                    max_id=element.Id
-                    max_X_center=center_X
-        # print(max_id)
-        #only the max element of the trailing edge is considered part of the wake. 
-        for element in self.trailing_edge_model_part.Elements:
-            if not (element.Id==max_id):
-                element.SetValue(CPFApp.WAKE,False)
-                nneg=0
-                for node in element.GetNodes():
-                    if node.GetSolutionStepValue(CPFApp.WAKE_DISTANCE)<0:
-                        nneg += 1
-                if not nneg>0:
-                    element.SetValue(CPFApp.KUTTA,False)   
-            else:
-                element.Set(KratosMultiphysics.STRUCTURE,True)   
-                element.SetValue(CPFApp.KUTTA,False)   
-
-
-                
-                
-
-                                               
-    def ExecuteInitialize(self):
-        self.Execute()
+        super(DefineWakeProcessEmbedded, self).ExecuteInitialize()
+    
+    def SaveTrailingEdgeNode(self):
+        # This function finds and saves the trailing edge for further computations
+        kutta_model_part=self.fluid_model_part.GetSubModelPart('KuttaLS')
+        for node in kutta_model_part.Nodes:
+            self.te = node
 

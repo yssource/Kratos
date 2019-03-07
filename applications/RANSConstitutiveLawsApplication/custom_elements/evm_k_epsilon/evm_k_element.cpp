@@ -543,7 +543,8 @@ void EvmKElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMa
         BoundedVector<double, TNumNodes> velocity_convective_terms;
         this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
 
-        const double nu = this->EvaluateInPoint(TURBULENT_VISCOSITY, gauss_shape_functions);
+        const double nu = this->EvaluateInPoint(KINEMATIC_VISCOSITY, gauss_shape_functions);
+
         const double effective_viscosity = nu + nu_t / tke_sigma;
 
         const double velocity_magnitude = norm_2(velocity);

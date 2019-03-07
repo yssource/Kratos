@@ -112,13 +112,17 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
                 print("Executing first refinement ")
                 import time
                 ini_time=time.time()
-                self.RefineMesh()
                 # initial_min=self.MetricParameters["minimal_size"].GetDouble()
-                # self.MetricParameters["minimal_size"].SetDouble(1e-3)
+                # initial_distance = self.MetricParameters["sizing_parameters"]["boundary_layer_max_distance"].GetDouble()
+                # self.MetricParameters["minimal_size"].SetDouble(5e-3)
+                # self.MetricParameters["sizing_parameters"]["boundary_layer_max_distance"].SetDouble(5.0)
+                self.RefineMesh()
                 print("Elapsed time: ",time.time()-ini_time)
                 self.CalculateDistance()
-                # self.MetricParameters["enforce_current"].SetBool(True)
+
+                # print("Executing second refinement ")
                 # self.MetricParameters["minimal_size"].SetDouble(initial_min)
+                # self.MetricParameters["sizing_parameters"]["boundary_layer_max_distance"].SetDouble(initial_distance)
                 # print("Executing second refinement ")
                 # ini_time=time.time()
                 # self.RefineMesh()
@@ -138,8 +142,8 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
             angle=math.radians(-self.geometry_parameter)
             self.origin=[0.25+self.initial_point[0],0+self.initial_point[1]] #to be defined from skin model part 
             for node in self.skin_model_part.Nodes:
-                node.X=self.initial_point[0]+2*node.X+1e-5
-                node.Y=2*node.Y+1e-5
+                node.X=self.initial_point[0]+2.5*node.X+1e-5
+                node.Y=self.initial_point[1]+2.5*node.Y+1e-5
             RotateModelPart(self.origin,angle,self.skin_model_part)
         elif self.skin_model_part_name=='circle':
             for node in self.skin_model_part.Nodes:
@@ -148,9 +152,9 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
         elif self.skin_model_part_name=='ellipse' or self.skin_model_part_name=='ellipse_fine':
             angle=math.radians(-self.geometry_parameter)   
             self.origin=[self.initial_point[0],self.initial_point[1]] #to be defined from skin model part  
-            # for node in self.skin_model_part.Nodes:
-            #     node.X=node.X+1e-5
-            #     node.Y=node.Y+1e-5
+            for node in self.skin_model_part.Nodes:
+                node.X=self.initial_point[0]+node.X+1e-5
+                node.Y=self.initial_point[1]+node.Y+1e-5
             RotateModelPart(self.origin,angle,self.skin_model_part)
             # a=1
             # b=a/4
@@ -310,6 +314,7 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
         n[0] = -direction[1]
         n[1] = direction[0]
         n[2] = 0.0
+        max_x_center = -1e10
         for elem in self.boundary_model_part.Elements:         
             distances = KratosMultiphysics.Vector(len(elem.GetNodes()))
             '''with positive epsilon'''
@@ -326,15 +331,22 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
                     npos += 1
                 elnode.SetValue(KratosMultiphysics.TEMPERATURE,d)
             if(nneg>0 and npos>0):
-                center_X=elem.GetGeometry().Center().X
+                center_X=elem.GetGeometry().Center().X                
                 if (center_X>self.origin[0]):
+                    elem.Set(KratosMultiphysics.THERMAL,True)
                     elem.Set(KratosMultiphysics.ACTIVE,False)
                     elem.Set(KratosMultiphysics.BOUNDARY,False)
-                    max_x_node=-1e10
-                    for elnode in elem.GetNodes():
-                        if elnode.X>max_x_node:
-                            max_node=elnode
-                            max_x_node=elnode.X
+                    if (center_X > max_x_center):
+                        max_x_center = center_X
+                        max_elem = elem
+
+        max_elem.Set(KratosMultiphysics.ACTIVE,False)
+        max_elem.Set(KratosMultiphysics.BOUNDARY,False)
+        max_x_node=-1e10
+        for elnode in max_elem.GetNodes():
+            if elnode.X>max_x_node:
+                max_node=elnode
+                max_x_node=elnode.X
 
         self.main_model_part.CreateSubModelPart('KuttaLS').AddNode(max_node,0)
         for node in self.main_model_part.GetSubModelPart('KuttaLS').Nodes:
@@ -352,6 +364,7 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
                                                     "WriteConditionsFlag": "WriteConditions",
                                                     "MultiFileFlag": "SingleFile"
                                                 },
+                                                "nodal_results" : ["LEVEL_SET_DISTANCE"],
                                                 "nodal_nonhistorical_results": ["METRIC_TENSOR_2D"]
 
                                             }

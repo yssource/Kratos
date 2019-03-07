@@ -114,19 +114,11 @@ void IgaBeamADElement::CalculateAll(
     // const double Phi = GetValue(PHI);
     // const double Phi_1 = GetValue(PHI_DER_1);
 
-    const Vector3d A01 = MapVector(GetValue(T0));
-    const Vector3d A01_1 = MapVector(GetValue(T0_DER));
-    const Vector3d A02 = MapVector(GetValue(N0));
+    // const Vector3d A01 = MapVector(GetValue(T0));
+    // const Vector3d A01_1 = MapVector(GetValue(T0_DER));
+    // const Vector3d A02 = MapVector(GetValue(N0));
 
-    const Vector3d A03 = A01.cross(A02);
-
-    // get initial configuration
-    // const Vector3d A1 =   MapVector(GetValue(BASE_A1));
-    // const Vector3d A2 =   MapVector(GetValue(BASE_A2));
-    // const Vector3d A3 =   MapVector(GetValue(BASE_A3));
-    // const Vector3d A1_1 = MapVector(GetValue(BASE_A1_1));
-    // const Vector3d A2_1 = MapVector(GetValue(BASE_A2_1));
-    // const Vector3d A3_1 = MapVector(GetValue(BASE_A3_1));
+    // const Vector3d A03 = A01.cross(A02);
 
     // material
 
@@ -139,7 +131,6 @@ void IgaBeamADElement::CalculateAll(
 
     // const Vector3d A1 = ComputeRefBaseVector(1, shape_functions, GetGeometry());
     // const Vector3d A1_1 = ComputeRefBaseVector(2, shape_functions, GetGeometry());
-
     const Vector3d A1   = MapVector(GetValue(BASE_A1));
     const Vector3d A1_1 = MapVector(GetValue(BASE_A1_1));
 
@@ -151,9 +142,8 @@ void IgaBeamADElement::CalculateAll(
 
     // const Matrix3d Rod = ComputeRod<double>(T, Phi);
     // const Matrix3d Rod_1 = ComputeRod_1<double>(T, T_1, Phi, Phi_1);
-
-    const Matrix3d Lam = ComputeLam<double>(A01, T);
-    const Matrix3d Lam_1 = ComputeLam_1<double>(A01, A01_1, T, T_1);
+    // const Matrix3d Lam = ComputeLam<double>(A01, T);
+    // const Matrix3d Lam_1 = ComputeLam_1<double>(A01, A01_1, T, T_1);
 
     // const Matrix3d Rod_Lam = Rod * Lam;
     // const Matrix3d Rod_1_Lam = Rod_1 * Lam;
@@ -161,13 +151,13 @@ void IgaBeamADElement::CalculateAll(
 
     // const Vector3d A2 = Rod_Lam * A02.transpose();
     // const Vector3d A2_1 = Rod_1_Lam * A02.transpose() + Rod_Lam_1 * A02.transpose();
-
     const Vector3d A2   = MapVector(GetValue(BASE_A2));
     const Vector3d A2_1 = MapVector(GetValue(BASE_A2_1));
 
     // const Vector3d A3 = Rod_Lam * A03.transpose();
     // const Vector3d A3_1 = Rod_1_Lam * A03.transpose() + Rod_Lam_1 * A03.transpose();
-
+    // const Vector3d A3   = T.cross(A2); 
+    // const Vector3d A3_1 = T.cross(A2_1) + T_1.cross(A2); 
     const Vector3d A3   = MapVector(GetValue(BASE_A3));
     const Vector3d A3_1 = MapVector(GetValue(BASE_A3_1));
 
@@ -208,11 +198,11 @@ void IgaBeamADElement::CalculateAll(
 
     const auto a2 = rod_lam * A2.transpose();
     // const auto a2_1 = xform * A02.transpose();
-    const auto a2_1 = rod_lam * A2_1.transpose() + rod_lam_1 * A02.transpose() ;
+    const auto a2_1 = rod_lam * A2_1.transpose() + rod_lam_1 * A2.transpose() ;
 
     const auto a3 = rod_lam * A3.transpose();
     // const auto a3_1 = xform * A03.transpose();
-    const auto a3_1 = rod_lam * A3_1.transpose() + rod_lam_1 * A03.transpose() ;
+    const auto a3_1 = rod_lam * A3_1.transpose() + rod_lam_1 * A3.transpose() ;
 
     const auto b2 = a2_1.dot(a1);
     const auto b3 = a3_1.dot(a1);

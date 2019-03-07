@@ -19,16 +19,15 @@
 #include <string>
 
 // Project includes
-#include "custom_strategies/general_convergence_criteria.h"
 #include "includes/cfd_variables.h"
 #include "includes/communicator.h"
 #include "includes/kratos_parameters.h"
 #include "includes/model_part.h"
 #include "processes/process.h"
 #include "solving_strategies/builder_and_solvers/residualbased_block_builder_and_solver.h"
-#include "solving_strategies/schemes/residual_based_bossak_velocity_scheme.h"
+#include "solving_strategies/strategies/residualbased_newton_raphson_strategy.h"
 #include "solving_strategies/strategies/solving_strategy.h"
-#include "utilities/brent_iteration.h"
+#include "utilities/color_utilities.h"
 #include "utilities/derivatives_extension.h"
 #include "utilities/variable_utils.h"
 
@@ -38,249 +37,16 @@
 #include "custom_elements/evm_k_epsilon/evm_k_element.h"
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
 #include "custom_processes/turbulence_eddy_viscosity_model_process.h"
-#include "custom_utilities/geometry_utilities.h"
+#include "custom_strategies/evm_k_epsilon/residual_based_bossak_turbulent_energy_dissipation_scheme.h"
+#include "custom_strategies/evm_k_epsilon/residual_based_bossak_turbulent_kinetic_energy_scheme.h"
+#include "custom_strategies/general_convergence_criteria.h"
+#include "custom_utilities/calculation_utilities.h"
 #include "rans_constitutive_laws_application_variables.h"
-#include "solving_strategies/strategies/residualbased_newton_raphson_strategy.h"
-#include "utilities/color_utilities.h"
 
 namespace Kratos
 {
 ///@name Kratos Classes
 ///@{
-
-void LowerBound(ModelPart& rModelPart, Variable<double>& rVariable, const double MinValue)
-{
-    const int number_of_nodes = rModelPart.NumberOfNodes();
-
-#pragma omp parallel for
-    for (int i = 0; i < number_of_nodes; i++)
-    {
-        Node<3>& r_current_node = *(rModelPart.NodesBegin() + i);
-        double& value = r_current_node.FastGetSolutionStepValue(rVariable);
-        value = std::max<double>(MinValue, value);
-    }
-}
-
-template <class TSparseSpace, class TDenseSpace>
-class ResidualBasedBossakTurbulentKineticEnergyScheme
-    : public ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>
-{
-    class ElementDerivativesExtension : public DerivativesExtension
-    {
-        Element* mpElement;
-
-    public:
-        explicit ElementDerivativesExtension(Element* pElement)
-            : mpElement(pElement)
-        {
-        }
-
-        void GetFirstDerivativesVector(std::size_t NodeId,
-                                       std::vector<IndirectScalar<double>>& rVector,
-                                       std::size_t Step,
-                                       ProcessInfo& rCurrentProcessInfo) override
-        {
-            rVector.resize(1);
-            Node<3>& r_node = mpElement->GetGeometry()[NodeId];
-            rVector[0] = MakeIndirectScalar(r_node, TURBULENT_KINETIC_ENERGY, Step);
-        }
-
-        void GetSecondDerivativesVector(std::size_t NodeId,
-                                        std::vector<IndirectScalar<double>>& rVector,
-                                        std::size_t Step,
-                                        ProcessInfo& rCurrentProcessInfo) override
-        {
-            rVector.resize(1);
-            Node<3>& r_node = mpElement->GetGeometry()[NodeId];
-            rVector[0] = MakeIndirectScalar(r_node, TURBULENT_KINETIC_ENERGY_RATE, Step);
-        }
-
-        void GetFirstDerivativesDofsVector(std::size_t NodeId,
-                                           std::vector<Dof<double>::Pointer>& rVector,
-                                           ProcessInfo& rCurrentProcessInfo) override
-        {
-            rVector.resize(1);
-            Node<3>& r_node = mpElement->GetGeometry()[NodeId];
-            rVector[0] = r_node.pGetDof(TURBULENT_KINETIC_ENERGY);
-        }
-
-        void GetFirstDerivativesVariables(std::vector<VariableData const*>& rVariables,
-                                          ProcessInfo& rCurrentProcessInfo) const override
-        {
-            rVariables.resize(1);
-            rVariables[0] = &TURBULENT_KINETIC_ENERGY;
-        }
-
-        void GetSecondDerivativesVariables(std::vector<VariableData const*>& rVariables,
-                                           ProcessInfo& rCurrentProcessInfo) const override
-        {
-            rVariables.resize(1);
-            rVariables[0] = &TURBULENT_KINETIC_ENERGY_RATE;
-        }
-    };
-
-public:
-    ///@name Type Definitions
-    ///@{
-
-    KRATOS_CLASS_POINTER_DEFINITION(ResidualBasedBossakTurbulentKineticEnergyScheme);
-
-    typedef ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace> BaseType;
-
-    /// Constructor.
-
-    ResidualBasedBossakTurbulentKineticEnergyScheme(const double AlphaBossak)
-        : ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(AlphaBossak, true, false)
-    {
-    }
-
-    void Initialize(ModelPart& rModelPart) override
-    {
-        KRATOS_TRY;
-
-        BaseType::Initialize(rModelPart);
-
-        const int number_of_elements = rModelPart.NumberOfElements();
-
-#pragma omp parallel for
-        for (int i = 0; i < number_of_elements; i++)
-        {
-            Element& r_element = *(rModelPart.ElementsBegin() + i);
-            r_element.SetValue(DERIVATIVES_EXTENSION,
-                               Kratos::make_shared<ElementDerivativesExtension>(&r_element));
-        }
-
-        KRATOS_INFO("KScheme") << "Initialized.\n";
-
-        KRATOS_CATCH("");
-    }
-
-    void FinalizeNonLinIteration(ModelPart& rModelPart,
-                                 typename BaseType::SystemMatrixType& A,
-                                 typename BaseType::SystemVectorType& Dx,
-                                 typename BaseType::SystemVectorType& b) override
-    {
-        KRATOS_TRY
-
-        // LowerBound(rModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
-
-        KRATOS_CATCH("")
-    }
-
-    ///@}
-};
-
-template <class TSparseSpace, class TDenseSpace>
-class ResidualBasedBossakTurbulentEnergyDissipationRateScheme
-    : public ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>
-{
-    class ElementDerivativesExtension : public DerivativesExtension
-    {
-        Element* mpElement;
-
-    public:
-        explicit ElementDerivativesExtension(Element* pElement)
-            : mpElement(pElement)
-        {
-        }
-
-        void GetFirstDerivativesVector(std::size_t NodeId,
-                                       std::vector<IndirectScalar<double>>& rVector,
-                                       std::size_t Step,
-                                       ProcessInfo& rCurrentProcessInfo) override
-        {
-            rVector.resize(1);
-            Node<3>& r_node = mpElement->GetGeometry()[NodeId];
-            rVector[0] =
-                MakeIndirectScalar(r_node, TURBULENT_ENERGY_DISSIPATION_RATE, Step);
-        }
-
-        void GetSecondDerivativesVector(std::size_t NodeId,
-                                        std::vector<IndirectScalar<double>>& rVector,
-                                        std::size_t Step,
-                                        ProcessInfo& rCurrentProcessInfo) override
-        {
-            rVector.resize(1);
-            Node<3>& r_node = mpElement->GetGeometry()[NodeId];
-            rVector[0] =
-                MakeIndirectScalar(r_node, TURBULENT_ENERGY_DISSIPATION_RATE_2, Step);
-        }
-
-        void GetFirstDerivativesDofsVector(std::size_t NodeId,
-                                           std::vector<Dof<double>::Pointer>& rVector,
-                                           ProcessInfo& rCurrentProcessInfo) override
-        {
-            rVector.resize(1);
-            Node<3>& r_node = mpElement->GetGeometry()[NodeId];
-            rVector[0] = r_node.pGetDof(TURBULENT_ENERGY_DISSIPATION_RATE);
-        }
-
-        void GetFirstDerivativesVariables(std::vector<VariableData const*>& rVariables,
-                                          ProcessInfo& rCurrentProcessInfo) const override
-        {
-            rVariables.resize(1);
-            rVariables[0] = &TURBULENT_ENERGY_DISSIPATION_RATE;
-        }
-
-        void GetSecondDerivativesVariables(std::vector<VariableData const*>& rVariables,
-                                           ProcessInfo& rCurrentProcessInfo) const override
-        {
-            rVariables.resize(1);
-            rVariables[0] = &TURBULENT_ENERGY_DISSIPATION_RATE_2;
-        }
-    };
-
-public:
-    ///@name Type Definitions
-    ///@{
-
-    KRATOS_CLASS_POINTER_DEFINITION(ResidualBasedBossakTurbulentEnergyDissipationRateScheme);
-
-    typedef ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace> BaseType;
-
-    /// Constructor.
-
-    ResidualBasedBossakTurbulentEnergyDissipationRateScheme(const double AlphaBossak)
-        : ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(AlphaBossak, true, false)
-    {
-    }
-
-    void Initialize(ModelPart& rModelPart) override
-    {
-        KRATOS_TRY;
-
-        BaseType::Initialize(rModelPart);
-
-        const int number_of_elements = rModelPart.NumberOfElements();
-
-#pragma omp parallel for
-        for (int i = 0; i < number_of_elements; i++)
-        {
-            Element& r_current_element = *(rModelPart.ElementsBegin() + i);
-            r_current_element.SetValue(
-                DERIVATIVES_EXTENSION,
-                Kratos::make_shared<ElementDerivativesExtension>(&r_current_element));
-        }
-
-        KRATOS_INFO("EpsilonScheme") << "Initialized.\n";
-
-        KRATOS_CATCH("");
-    }
-
-    void FinalizeNonLinIteration(ModelPart& rModelPart,
-                                 typename BaseType::SystemMatrixType& A,
-                                 typename BaseType::SystemVectorType& Dx,
-                                 typename BaseType::SystemVectorType& b) override
-    {
-        KRATOS_TRY
-
-        // LowerBound(rModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
-
-        KRATOS_CATCH("")
-    }
-
-    ///@}
-};
 
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
 class TurbulenceEvmKEpsilonProcess
@@ -592,20 +358,10 @@ protected:
     {
         KRATOS_TRY;
 
-        InitializeConditionsForModelPart(mpTurbulenceKModelPart);
-        InitializeConditionsForModelPart(mpTurbulenceEpsilonModelPart);
+        this->InitializeConditionsForModelPart(mpTurbulenceKModelPart);
+        this->InitializeConditionsForModelPart(mpTurbulenceEpsilonModelPart);
 
         KRATOS_CATCH("");
-    }
-
-    void InitializeConditionsForModelPart(ModelPart* pModelPart)
-    {
-        this->InitializeConditionFlagsForModelPart(pModelPart, INLET);
-        this->InitializeConditionFlagsForModelPart(pModelPart, OUTLET);
-        this->InitializeConditionFlagsForModelPart(pModelPart, STRUCTURE);
-
-        this->FindConditionsParentElements(pModelPart);
-        this->FindConditionGaussPointIndices(pModelPart);
     }
 
     void AddSolutionStepVariables() override
@@ -867,8 +623,9 @@ private:
             Vector gauss_weights;
             Matrix shape_functions;
             Geometry<Node<3>>::ShapeFunctionsGradientsType shape_derivatives;
-            CalculateGeometryData(r_element_geometry, r_element.GetIntegrationMethod(),
-                                  gauss_weights, shape_functions, shape_derivatives);
+            CalculationUtilities::CalculateGeometryData(
+                r_element_geometry, r_element.GetIntegrationMethod(),
+                gauss_weights, shape_functions, shape_derivatives);
 
             const unsigned int number_of_element_nodes =
                 r_element_geometry.PointsNumber();

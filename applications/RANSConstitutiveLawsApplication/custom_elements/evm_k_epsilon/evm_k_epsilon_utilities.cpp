@@ -74,6 +74,10 @@ double CalculateStabilizationTau(const double velocity_magnitude,
     const double stab_2 = effective_kinematic_viscosity / std::pow(length, 2);
     const double stab_3 = 1.0 / delta_time;
 
+    CheckIfVariableIsPositive(stab_1);
+    CheckIfVariableIsPositive(stab_2);
+    CheckIfVariableIsPositive(stab_3);
+
     return 1.0 / (stab_1 + stab_2 + stab_3);
 }
 
@@ -101,7 +105,7 @@ double CalculateSourceTerm(const BoundedMatrix<double, TDim, TDim>& rVelocityGra
     CheckIfVariableIsPositive(turbulent_kinetic_energy);
 
     const double velocity_divergence =
-        CalculationUtilities::CalculateTrace<TDim>(rVelocityGradient);
+        CalculationUtilities::CalculateMatrixTrace<TDim>(rVelocityGradient);
     identity_matrix<double> identity(TDim);
 
     BoundedMatrix<double, TDim, TDim> symmetric_velocity_gradient;

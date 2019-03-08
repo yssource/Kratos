@@ -331,11 +331,15 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRig
 
         BoundedMatrix<double, TDim, TDim> velocity_gradient_matrix;
         this->CalculateGradientMatrix(velocity_gradient_matrix, VELOCITY, r_shape_derivatives);
-        double production =
-            EvmKepsilonModelUtilities::CalculateSourceTerm<TDim>(velocity_gradient_matrix);
         const double tke =
             this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
-        production *= (c1 * tke);
+        double production = EvmKepsilonModelUtilities::CalculateSourceTerm<TDim>(
+            velocity_gradient_matrix, nu_t, tke);
+
+        const double epsilon_old = this->EvaluateInPoint(
+            TURBULENT_ENERGY_DISSIPATION_RATE, gauss_shape_functions, 1);
+        const double gamma = std::max<double>(epsilon_old / tke, 0.0);
+        production *= (c1 * gamma);
         production = std::max<double>(production, 0.0);
 
         for (unsigned int a = 0; a < TNumNodes; ++a)
@@ -501,10 +505,11 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& rMassMa
         this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
 
         // Add mass stabilization terms
-        for (unsigned int i = 0; i < TDim; ++i)
-        {
-            rMassMatrix(i, i) += tau * velocity_convective_terms[i] * mass;
-        }
+        for (unsigned int i = 0; i < TNumNodes; ++i)
+            for (unsigned int j = 0; j < TNumNodes; ++j)
+                rMassMatrix(i, j) += gauss_weights[g] * tau *
+                                     velocity_convective_terms[i] *
+                                     gauss_shape_functions[j];
     }
 
     KRATOS_CATCH("");
@@ -545,7 +550,7 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
             TURBULENT_ENERGY_DISSIPATION_RATE, gauss_shape_functions, 1);
         const double tke =
             this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
-        const double gamma = std::max<double>(c2 * epsilon_old / tke, 0.0);
+        const double gamma = std::max<double>(epsilon_old / tke, 0.0);
 
         const double nu_t =
             this->EvaluateInPoint(TURBULENT_VISCOSITY, gauss_shape_functions);
@@ -562,6 +567,26 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
         const double tau = EvmKepsilonModelUtilities::CalculateStabilizationTau(
             velocity_magnitude, elem_size, effective_viscosity, delta_time);
 
+        const double velocity_divergence =
+            this->GetDivergenceOperator(VELOCITY, r_shape_derivatives);
+        const double f2 = EvmKepsilonModelUtilities::CalculateF2(tke, nu, epsilon_old);
+        const double y_plus = this->EvaluateInPoint(RANS_Y_PLUS, gauss_shape_functions);
+        const double wall_distance = this->EvaluateInPoint(DISTANCE, gauss_shape_functions);
+
+        const double coeff1 =
+            velocity_divergence + c2 * f2 * gamma +
+            2.0 * nu * std::exp(-0.5 * y_plus) / std::pow(wall_distance, 2);
+
+        if (coeff1 > 1e+10)
+        {
+            KRATOS_WATCH(this->Id());
+            KRATOS_WATCH(velocity_divergence);
+            KRATOS_WATCH(y_plus);
+            KRATOS_WATCH(wall_distance);
+            KRATOS_WATCH(gamma);
+            KRATOS_WATCH(f2);
+        }
+
         for (unsigned int a = 0; a < TNumNodes; a++)
         {
             for (unsigned int b = 0; b < TNumNodes; b++)
@@ -573,12 +598,12 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
                 double value = 0.0;
 
                 value += gauss_shape_functions[a] * velocity_convective_terms[b];
-                value += gauss_shape_functions[a] * gamma * gauss_shape_functions[b];
+                value += gauss_shape_functions[a] * coeff1 * gauss_shape_functions[b];
                 value += effective_viscosity * dNa_dNb;
 
                 // Adding SUPG stabilization terms
                 value += tau * velocity_convective_terms[a] * velocity_convective_terms[b];
-                value += tau * velocity_convective_terms[a] * gamma *
+                value += tau * velocity_convective_terms[a] * coeff1 *
                          gauss_shape_functions[b];
 
                 rDampingMatrix(a, b) += gauss_weights[g] * value;

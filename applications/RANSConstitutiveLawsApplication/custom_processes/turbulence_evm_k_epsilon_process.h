@@ -687,7 +687,7 @@ private:
         this->CalculateYplus(r_current_process_info[RANS_VELOCITY_STEP]);
 
         this->UpdateTurbulentViscosity();
-        this->UpdateBoundaryConditions();
+        // this->UpdateBoundaryConditions();
 
         mpKStrategy->InitializeSolutionStep();
         mpKStrategy->Predict();
@@ -715,9 +715,15 @@ private:
                 << "Solving for K...\n";
             mpKStrategy->SolveSolutionStep();
 
+            CalculationUtilities::LowerBound<NodeType>(
+                this->mrModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
+
             KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
                 << "Solving for Epsilon...\n";
             mpEpsilonStrategy->SolveSolutionStep();
+
+            CalculationUtilities::LowerBound<NodeType>(
+                this->mrModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
 
             this->UpdateTurbulentViscosity();
 
@@ -791,11 +797,13 @@ private:
                 iNode->FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY, 1);
             const double epsilon =
                 iNode->FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE, 1);
+            const double y_plus = iNode->FastGetSolutionStepValue(RANS_Y_PLUS);
+            const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
             const double nu = iNode->FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
             const double nu_min = nu_fraction * nu;
 
             const double nu_t = EvmKepsilonModelUtilities::CalculateTurbulentViscosity(
-                C_mu, tke, epsilon, nu_min);
+                C_mu, tke, epsilon, nu_min, f_mu);
 
             iNode->FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t;
         }

@@ -38,7 +38,7 @@ namespace Kratos
 
          typedef unsigned int SizeType;
 
-         static inline double & EvaluateEffectDueToThirdInvariant( double & rEffect, const double & rLodeAngle, const double & rFriction)
+         static inline double& EvaluateEffectDueToThirdInvariant( double& rEffect, const double& rLodeAngle, const double& rFriction)
          {
             KRATOS_TRY
 
@@ -47,7 +47,7 @@ namespace Kratos
                return rEffect;
 
             double Friction = rFriction * Globals::Pi / 180.0;
-            double LodeCut = GetSmoothingLodeAngle( );
+            double LodeCut = GetSmoothingLodeAngle();
             if ( fabs( rLodeAngle) < LodeCut)
             {
                rEffect = std::cos( rLodeAngle) - 1.0/sqrt(3.0) * std::sin(Friction) * std::sin(rLodeAngle);
@@ -56,40 +56,39 @@ namespace Kratos
                GetSmoothingConstants(A, B, rLodeAngle, Friction);
                rEffect = A + B*std::sin(3.0*rLodeAngle);
             }
-            rEffect /= ( sqrt(3.0)/6.0) * (3.0 - std::sin(Friction) );
+            rEffect /= ( sqrt(3.0)/6) * (3.0 - std::sin(Friction) );
             return rEffect;
 
             KRATOS_CATCH("")
 
          }
 
-         static inline double & EvaluateEffectDerivative( double & rDerivative, const double & rLodeAngle, const double & rFriction)
+         static inline void CalculateKLodeCoefficients( double& rKLode, double& rKLodeDeriv, const double& rLodeAngle)
          {
             KRATOS_TRY
 
-            rDerivative = 1.0;
-            if ( rFriction < 1e-6)
-               return rDerivative;
-
-            double Friction = rFriction * Globals::Pi / 180.0;
-            double LodeCut = GetSmoothingLodeAngle( );
-            if ( fabs( rLodeAngle) < LodeCut)
-            {
-               rDerivative = -std::sin( rLodeAngle) - 1.0/sqrt(3.0) * std::sin(Friction) * std::cos(rLodeAngle);
-            } else {
-               double A, B;
-               GetSmoothingConstants(A, B, rLodeAngle, Friction);
-               rDerivative =  3.0*B*std::cos(3.0*rLodeAngle);
+            // calcualte K(Lode) and d_K/d_Lode
+            double LodeCut = GetSmoothingLodeAngle();
+            if ( fabs(rLodeAngle)  < LodeCut) {
+               rKLode = std::cos(rLodeAngle) - 1.0/std::sqrt(3.0) * std::sin(Friction) * std::sin(rLodeAngle); 
+               rKLodeDeriv = -std::sin(rLodeAngle) - 1.0/std::sqrt(3.0) * std::sin(Friction) * std::cos(rLodeAngle);
             }
-            rDerivative /= ( sqrt(3.0)/6.0) * (3.0 - std::sin(Friction) );
-            return rDerivative;
+            else {
+
+               double A, B;
+               GetSmoothingConstants(A, B, rLodeAngle);
+         
+               rKLode = A + B * std::sin(3.0*rLodeAngle);
+               rKLodeDeriv = 3.0 * B * std::cos(3.0*rLodeAngle);
+            }
 
             KRATOS_CATCH("")
 
          }
+
       protected:
 
-         static inline void GetSmoothingConstants(double& rA, double& rB, const double& rLodeAngle, const double & rFriction)
+         static inline void GetSmoothingConstants(double& rA, double& rB, const double& rLodeAngle, const double& rFriction)
          {
             KRATOS_TRY
 
@@ -104,7 +103,6 @@ namespace Kratos
 
             rB = -1.0 * ( Sign* std::sin(SmoothingAngle) + std::sin(rFriction)*std::cos(SmoothingAngle) / sqrt(3.0) ) / ( 3.0*std::cos(3.0*SmoothingAngle) );
 
-            KRATOS_CATCH("")
          }
 
          static inline double GetSmoothingLodeAngle()

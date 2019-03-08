@@ -21,7 +21,7 @@ class TestModifiedCamClayModel(KratosUnittest.TestCase):
 
 
 
-    def test_OedometricLoading(self):
+    def _test_OedometricLoading(self):
         import math
         import numpy as np
         
@@ -192,7 +192,7 @@ class TestModifiedCamClayModel(KratosUnittest.TestCase):
         isotropicLoadingStrain = self.F[1,1]
 
         # Second part
-        nLoadingSteps = 1000
+        nLoadingSteps = 5000
         FinalAxialDeformation = 0.35
 
 

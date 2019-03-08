@@ -71,6 +71,9 @@ void KratosConstitutiveModelsApplication::Register() {
    KRATOS_REGISTER_VARIABLE( CHIT )   
    KRATOS_REGISTER_VARIABLE( REFERENCE_PRESSURE )   
 
+   KRATOS_REGISTER_VARIABLE( SPACING_RATIO )
+   KRATOS_REGISTER_VARIABLE( SHAPE_PARAMETER )
+
    KRATOS_REGISTER_VARIABLE( PS )   
    KRATOS_REGISTER_VARIABLE( PT )   
    KRATOS_REGISTER_VARIABLE( PM )  
@@ -145,6 +148,8 @@ void KratosConstitutiveModelsApplication::Register() {
   Serializer::Register( "SimoJ2ThermoPlasticityModel", mSimoJ2ThermoPlasticityModel );
   Serializer::Register( "MohrCoulombV1Model", mMohrCoulombV1Model );
   Serializer::Register( "TrescaModel", mTrescaModel );
+  Serializer::Register( "CasmAssociatedSoilModel", mCasmAssociatedSoilModel );
+  Serializer::Register( "CasmMCCSoilModel", mCasmMCCSoilModel );
 
   //yield criteria
   Serializer::Register( "MisesHuberYieldSurface", mMisesHuberYieldSurface );

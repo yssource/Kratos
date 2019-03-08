@@ -412,6 +412,7 @@ namespace Kratos
 
             }
 
+
             //***************************************************************************************
             //***************************************************************************************
             // Correct Yield Surface Drift According to
@@ -526,6 +527,7 @@ namespace Kratos
                KRATOS_CATCH("")
             }
 
+
             //***************************************************************************************
             //***************************************************************************************
             // Compute Elasto Plastic Matrix
@@ -561,6 +563,7 @@ namespace Kratos
 
                KRATOS_CATCH("")
             }
+
 
             //***************************************************************************************
             //***************************************************************************************
@@ -930,7 +933,8 @@ namespace Kratos
             {
                KRATOS_TRY
 
-      MatrixType InverseMatrix; double detMatrix;
+               MatrixType InverseMatrix;
+               double detMatrix;
                InverseMatrix.clear();
                ConstitutiveModelUtilities::InvertMatrix3( rDeltaDeformationMatrix, InverseMatrix, detMatrix);
                rInitialLeftCauchyGreen = prod( InverseMatrix, rInitialLeftCauchyGreen);
@@ -1037,7 +1041,6 @@ namespace Kratos
             {
                KRATOS_TRY
 
-               // evaluate constitutive matrix and plastic flow
 
                const double & rPlasticMultiplierOld = mPreviousInternal.Variables[0];
                double & rPlasticMultiplier    = rVariables.Internal.Variables[0];

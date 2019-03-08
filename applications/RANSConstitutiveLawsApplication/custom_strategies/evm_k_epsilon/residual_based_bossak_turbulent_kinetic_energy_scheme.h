@@ -123,19 +123,6 @@ public:
 
         KRATOS_CATCH("");
     }
-
-    void FinalizeNonLinIteration(ModelPart& rModelPart,
-                                 typename BaseType::SystemMatrixType& A,
-                                 typename BaseType::SystemVectorType& Dx,
-                                 typename BaseType::SystemVectorType& b) override
-    {
-        KRATOS_TRY
-
-        CalculationUtilities::LowerBound<NodeType>(rModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
-
-        KRATOS_CATCH("")
-    }
-
     ///@}
 };
 

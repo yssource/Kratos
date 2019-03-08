@@ -32,7 +32,6 @@ template <class TSparseSpace, class TDenseSpace>
 class ResidualBasedBossakTurbulentEnergyDissipationRateScheme
     : public ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>
 {
-
     typedef Node<3> NodeType;
 
     class ElementDerivativesExtension : public DerivativesExtension
@@ -127,19 +126,6 @@ public:
 
         KRATOS_CATCH("");
     }
-
-    void FinalizeNonLinIteration(ModelPart& rModelPart,
-                                 typename BaseType::SystemMatrixType& A,
-                                 typename BaseType::SystemVectorType& Dx,
-                                 typename BaseType::SystemVectorType& b) override
-    {
-        KRATOS_TRY
-
-        CalculationUtilities::LowerBound<NodeType>(rModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
-
-        KRATOS_CATCH("")
-    }
-
     ///@}
 };
 

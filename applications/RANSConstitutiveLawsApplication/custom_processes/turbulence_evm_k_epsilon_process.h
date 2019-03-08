@@ -60,6 +60,11 @@ public:
     KRATOS_CLASS_POINTER_DEFINITION(TurbulenceEvmKEpsilonProcess);
 
     typedef TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver> BaseType;
+
+    typedef Node<3> NodeType;
+
+    typedef Geometry<NodeType> GeometryType;
+
     typedef SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver> StrategyType;
     typedef Scheme<TSparseSpace, TDenseSpace> SchemeType;
     typedef typename SchemeType::Pointer SchemePointerType;
@@ -581,19 +586,19 @@ private:
         }
     }
 
-    void SetUpWallNode(Node<3>& rNode)
+    void SetUpWallNode(NodeType& rNode)
     {
         rNode.Fix(TURBULENT_KINETIC_ENERGY);
         rNode.Fix(TURBULENT_ENERGY_DISSIPATION_RATE);
     }
 
-    void SetUpFreestreamNode(Node<3>& rNode)
+    void SetUpFreestreamNode(NodeType& rNode)
     {
         rNode.Fix(TURBULENT_KINETIC_ENERGY);
         rNode.Fix(TURBULENT_ENERGY_DISSIPATION_RATE);
     }
 
-    void InitializeValues(Node<3>& rNode, double K, double Epsilon)
+    void InitializeValues(NodeType& rNode, double K, double Epsilon)
     {
         rNode.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY) = K;
         rNode.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE) = Epsilon;
@@ -610,58 +615,54 @@ private:
 #pragma omp parallel for
         for (int i_cond = 0; i_cond < number_of_conditions; ++i_cond)
         {
-            Condition& r_condition = *(this->mrModelPart.ConditionsBegin() + i_cond);
+            Condition& r_condition =
+                *(this->mpTurbulenceKModelPart->ConditionsBegin() + i_cond);
 
             // Skip the condition if it is not a wall
             if (!r_condition.Is(STRUCTURE))
                 continue;
 
-            Geometry<Node<3>>& r_condition_geometry = r_condition.GetGeometry();
+            GeometryType& r_condition_geometry = r_condition.GetGeometry();
             Element& r_element = *(r_condition.GetValue(PARENT_ELEMENT).lock());
-            Geometry<Node<3>>& r_element_geometry = r_element.GetGeometry();
+            GeometryType& r_element_geometry = r_element.GetGeometry();
 
             Vector gauss_weights;
             Matrix shape_functions;
-            Geometry<Node<3>>::ShapeFunctionsGradientsType shape_derivatives;
+            GeometryType::ShapeFunctionsGradientsType shape_derivatives;
             CalculationUtilities::CalculateGeometryData(
                 r_element_geometry, r_element.GetIntegrationMethod(),
                 gauss_weights, shape_functions, shape_derivatives);
 
-            const unsigned int number_of_element_nodes =
-                r_element_geometry.PointsNumber();
             const unsigned int number_of_condition_nodes =
                 r_condition_geometry.PointsNumber();
             const std::vector<int> condition_gauss_point_indices =
                 r_condition.GetValue(GAUSS_POINT_INDICES);
 
+            // KRATOS_WATCH(condition_gauss_point_indices.size());
+
             for (unsigned int i_node = 0; i_node < number_of_condition_nodes; i_node++)
             {
-                Node<3>& r_condition_node = r_condition_geometry[i_node];
+                NodeType& r_condition_node = r_condition_geometry[i_node];
 
                 const int gauss_index = condition_gauss_point_indices[i_node];
                 const Vector& gauss_shape_functions = row(shape_functions, gauss_index);
 
-                double wall_distance(0.0), nu(0.0);
-                array_1d<double, 3> velocity = ZeroVector(3);
-                array_1d<double, 3> normal = ZeroVector(3);
+                const double wall_distance =
+                    CalculationUtilities::EvaluateInPoint<GeometryType>(
+                        r_element_geometry, DISTANCE, gauss_shape_functions);
+                const double nu = CalculationUtilities::EvaluateInPoint<GeometryType>(
+                    r_element_geometry, KINEMATIC_VISCOSITY, gauss_shape_functions);
+                const array_1d<double, 3> velocity =
+                    CalculationUtilities::EvaluateInPoint<GeometryType>(
+                        r_element_geometry, VELOCITY, gauss_shape_functions);
+                array_1d<double, 3> normal =
+                    CalculationUtilities::EvaluateInPoint<GeometryType>(
+                        r_element_geometry, NORMAL, gauss_shape_functions);
 
-                for (unsigned int i_node_element = 0;
-                     i_node_element < number_of_element_nodes; i_node_element++)
-                {
-                    const Node<3>& r_element_node = r_element_geometry[i_node_element];
-
-                    wall_distance += gauss_shape_functions[i_node_element] *
-                                     r_element_node.FastGetSolutionStepValue(DISTANCE);
-                    velocity += gauss_shape_functions[i_node_element] *
-                                r_element_node.FastGetSolutionStepValue(VELOCITY);
-                    nu += gauss_shape_functions[i_node_element] *
-                          r_element_node.FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
-                    normal += gauss_shape_functions[i_node_element] *
-                              r_element_node.FastGetSolutionStepValue(NORMAL);
-                }
                 normal /= norm_2(normal);
-                const double tangential_velocity = std::sqrt(
-                    inner_prod(velocity, velocity) - inner_prod(velocity, normal));
+                const double tangential_velocity =
+                    std::sqrt(inner_prod(velocity, velocity) -
+                              std::pow(inner_prod(velocity, normal), 2));
 
                 // Applying boundary conditions
                 r_condition_node.SetLock();
@@ -670,7 +671,7 @@ private:
                 double& epsilon = r_condition_node.FastGetSolutionStepValue(
                     TURBULENT_ENERGY_DISSIPATION_RATE);
 
-                y_plus = EvmKepsilonModelUtilities::CalculateYplus(
+                y_plus = CalculationUtilities::CalculateYplus(
                     tangential_velocity, wall_distance, nu, von_karman, beta, 100);
                 const double u_tau = y_plus * nu / wall_distance;
                 tke = std::pow(u_tau, 2) / std::sqrt(c_mu);

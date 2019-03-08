@@ -118,7 +118,6 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const Vector3d A01 = MapVector(GetValue(T0));
     const Vector3d A01_1 = MapVector(GetValue(T0_DER));
     const Vector3d A02 = MapVector(GetValue(N0));
-
     const Vector3d A03 = A01.cross(A02);
 
     // material

@@ -373,6 +373,7 @@ KRATOS_TRY;
 
     ComputeCrossSectionGeometryReference(A1, A1_1, A2, A3, T0_vec, A02, A03, B_2, B_3, C_12, C_13, Phi, Phi_der);
     // Get Initial Base Vecotrs by the Model
+    // LOG("old A1_1   " << A1_1);
     // LOG("old A2   " << A2);
     // A2      = GetValue(BASE_A2);        // checked (wrong sign)
     // LOG("new A2   " << A2);

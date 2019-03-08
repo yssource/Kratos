@@ -198,11 +198,11 @@ void IgaBeamADElement::CalculateAll(
 
     const auto a2 = rod_lam * A2.transpose();
     // const auto a2_1 = xform * A02.transpose();
-    const auto a2_1 = rod_lam * A2_1.transpose() + rod_lam_1 * A2.transpose() ;
+    const auto a2_1 = rod_lam * A2_1.transpose() + rod_lam_1 * A2.transpose() + rod_1_lam * A2.transpose() ;
 
     const auto a3 = rod_lam * A3.transpose();
     // const auto a3_1 = xform * A03.transpose();
-    const auto a3_1 = rod_lam * A3_1.transpose() + rod_lam_1 * A3.transpose() ;
+    const auto a3_1 = rod_lam * A3_1.transpose() + rod_lam_1 * A3.transpose() + rod_1_lam * A3.transpose();
 
     const auto b2 = a2_1.dot(a1);
     const auto b3 = a3_1.dot(a1);

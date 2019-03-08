@@ -44,7 +44,7 @@ double CalculateTurbulentViscosity(const double C_mu,
                                    const double turbulent_kinetic_energy,
                                    const double turbulent_energy_dissipation_rate,
                                    const double minimum_viscosity,
-                                   const double f_mu = 1.0);
+                                   const double f_mu);
 
 double CalculateFmu(const double y_plus);
 

@@ -176,15 +176,14 @@ namespace Kratos
       StressInvariantsUtilities::CalculateStressInvariants( rStressMatrix, MeanStress, J2, LodeAngle);
       StressInvariantsUtilities::CalculateDerivativeVectors( rStressMatrix, V1, V2, V3);
 
-      double ThirdInvariantEffect = 1.0;
+      double ThirdInvariantEffect(1), DerivativeEffect(0);
       if ( rFriction > 0.0)
-         ThirdInvariantEffect = ShapeAtDeviatoricPlaneUtility::EvaluateEffectDueToThirdInvariant( ThirdInvariantEffect, LodeAngle, rFriction);
+         ShapeAtDeviatoricPlaneUtility::CalculateKLodeCoefficients( ThirdInvariantEffect, DerivativeEffect, LodeAngle, rFriction);
 
       rDeltaStressYieldCondition  = ( 2.0*MeanStress - PreconsolidationStress) * V1 + 2.0 * 3.0 * pow( ThirdInvariantEffect / rShearM, 2) * J2 * V2;
 
       if ( rFriction > 0.0 && J2 > 1E-6) 
       {
-         double DerivativeEffect = ShapeAtDeviatoricPlaneUtility::EvaluateEffectDerivative( DerivativeEffect, LodeAngle, rFriction);
          double Term = pow( sqrt(3.0)*J2/rShearM, 2) * ThirdInvariantEffect *2.0* DerivativeEffect;
 
          double C2 = - std::tan(3.0*LodeAngle) / J2 * Term;

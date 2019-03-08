@@ -21,13 +21,13 @@ class TestModifiedCamClayModel(KratosUnittest.TestCase):
 
 
 
-    def _test_OedometricLoading(self):
+    def test_OedometricLoading(self):
         import math
         import numpy as np
         
-        NumberIncrements = 1000
+        NumberIncrements = 100
         IncrementalF = self._set_identity_matrix()
-        IncrementalF[1,1] = 0.9995
+        IncrementalF[1,1] = 0.99992
 
         self._create_material_model_and_law()
         for case in range(0, self.size_parametric_analysis):
@@ -44,14 +44,14 @@ class TestModifiedCamClayModel(KratosUnittest.TestCase):
             import matplotlib.pyplot as plt
             plt.show()
 
-    def _test_IsotropicLoading(self):
+    def test_IsotropicLoading(self):
         import math
         import numpy as np
         
-        NumberIncrements = 500
+        NumberIncrements = 100
         IncrementalF = self._set_identity_matrix()
         for i in range(0,3):
-            IncrementalF[i,i] = 0.9998 
+            IncrementalF[i,i] = 0.999955
 
         self._create_material_model_and_law()
         for case in range(0, self.size_parametric_analysis):
@@ -61,7 +61,14 @@ class TestModifiedCamClayModel(KratosUnittest.TestCase):
             self.parameters.SetMaterialProperties( self.properties )
     
             self._OpenOutputFile('isotropic.csv')
+            SaveVariable = self.initial_stress_state
+            for i in range(1,3):
+                self.initial_stress_state[i] = self.initial_stress_state[0]
+
             self._setInitialStressState()
+
+            self.initial_stress_state = SaveVariable
+
             self._compute_strain_driven_problem(IncrementalF, NumberIncrements)
 
         if ( self.plot):
@@ -192,7 +199,7 @@ class TestModifiedCamClayModel(KratosUnittest.TestCase):
         isotropicLoadingStrain = self.F[1,1]
 
         # Second part
-        nLoadingSteps = 4000
+        nLoadingSteps = 5000
         FinalAxialDeformation = 0.35
 
 

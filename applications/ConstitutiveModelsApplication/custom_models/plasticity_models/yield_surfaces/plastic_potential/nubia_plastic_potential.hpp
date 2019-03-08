@@ -7,8 +7,8 @@
 //
 //
 
-#if !defined(KRATOS_MODIFIED_CAM_CLAY_PLASTIC_POTENTIAL_H_INCLUDED )
-#define      KRATOS_MODIFIED_CAM_CLAY_PLASTIC_POTENTIAL_H_INCLUDED
+#if !defined(KRATOS_NUBIA_PLASTIC_POTENTIAL_H_INCLUDED )
+#define      KRATOS_NUBIA_PLASTIC_POTENTIAL_H_INCLUDED
 
 // System includes
 
@@ -17,7 +17,6 @@
 // Project includes
 #include "custom_models/plasticity_models/yield_surfaces/yield_surface.hpp"
 #include "custom_utilities/stress_invariants_utilities.hpp"
-#include "custom_utilities/shape_deviatoric_plane_utilities.hpp"
 
 namespace Kratos
 {
@@ -47,7 +46,7 @@ namespace Kratos
    /** Detail class definition.
     */
    template<class THardeningRule>
-      class ModifiedCamClayPlasticPotential : public YieldSurface<THardeningRule>
+      class NubiaPlasticPotential : public YieldSurface<THardeningRule>
    {
       public:
 
@@ -63,22 +62,22 @@ namespace Kratos
          typedef typename YieldSurface<THardeningRule>::Pointer        BaseTypePointer;
          typedef typename BaseType::PlasticDataType                    PlasticDataType;
 
-         /// Pointer definition of ModifiedCamClayPlasticPotential
-         KRATOS_CLASS_POINTER_DEFINITION( ModifiedCamClayPlasticPotential );
+         /// Pointer definition of NubiaPlasticPotential
+         KRATOS_CLASS_POINTER_DEFINITION( NubiaPlasticPotential );
 
          ///@}
          ///@name Life Cycle
          ///@{
 
          /// Default constructor.
-         ModifiedCamClayPlasticPotential() : BaseType() {}
+         NubiaPlasticPotential() : BaseType() {}
 
          /// Copy constructor.
-         ModifiedCamClayPlasticPotential(ModifiedCamClayPlasticPotential const& rOther) : BaseType(rOther) {}
+         NubiaPlasticPotential(NubiaPlasticPotential const& rOther) : BaseType(rOther) {}
 
 
          /// Assignment operator.
-         ModifiedCamClayPlasticPotential& operator=(ModifiedCamClayPlasticPotential const& rOther)
+         NubiaPlasticPotential& operator=(NubiaPlasticPotential const& rOther)
          {
             BaseType::operator=(rOther);
             return *this;
@@ -87,11 +86,11 @@ namespace Kratos
          /// Clone.
          BaseTypePointer Clone() const override
          {
-            return Kratos::make_shared<ModifiedCamClayPlasticPotential>(*this);
+            return Kratos::make_shared<NubiaPlasticPotential>(*this);
          }
 
          /// Destructor.
-         ~ModifiedCamClayPlasticPotential() override {}
+         ~NubiaPlasticPotential() override {}
 
 
          ///@}
@@ -116,10 +115,13 @@ namespace Kratos
 
             // Material Parameters
             const Properties& rProperties = rModelData.GetProperties();
-            const double& rShearM = rProperties[CRITICAL_STATE_LINE];
+            const double& rShearM   = rProperties[CRITICAL_STATE_LINE];
+            const double& rSpacingR = rProperties[SPACING_RATIO];
+            const double& rShapeN   = rProperties[SHAPE_PARAMETER];
+            const double & rSwellingSlope = rProperties[SWELLING_SLOPE];
+            const double & rOtherSlope    = rProperties[NORMAL_COMPRESSION_SLOPE];
 
-            // compute something with the hardening rule
-
+            //1- stress invariants and deviative vectors 
 
             double MeanStress, J2, LodeAngle;
 
@@ -128,12 +130,27 @@ namespace Kratos
             StressInvariantsUtilities::CalculateStressInvariants( rStressMatrix, MeanStress, J2, LodeAngle);
             StressInvariantsUtilities::CalculateDerivativeVectors( rStressMatrix, V1, V2);
 
-            double ThirdInvariantEffect = 1.0; // LMV: to be done
-            double PreconsolidationStress;
-            PreconsolidationStress = MeanStress + 3.0/MeanStress * pow( J2 / rShearM / ThirdInvariantEffect, 2.0);
+            // 2- Evaluate m of equation 2-12
+            double BigLambda = 1.0 - rSwellingSlope/rOtherSlope;
+            double m = pow( rShearM*(6.0-rShearM), rShapeN) - pow( 3.0*rShearM, rShapeN);
+            m /= BigLambda * (6.0 - rShearM) * pow( 3.0 * rShearM, rShapeN-1);
+            m *= 2.0/3.0;
+
+            double StressRatio = sqrt(3.0)*J2/(-MeanStress);
 
 
-            rDeltaStressYieldCondition  = ( 2.0*MeanStress - PreconsolidationStress) * V1 + 2.0 * 3.0 * pow( 1.0 / rShearM, 2) * J2 * V2;
+            double C1 = m * (m - 1.0) * rShapeN * pow( StressRatio/rShearM, rShapeN-1.0) * ( -1.0) * (-1.0) *  sqrt(3.0) * J2 / pow(MeanStress, 2) / rShearM;
+            C1 /= 1.0 + ( m-1.0) * pow( StressRatio / rShearM, rShapeN);
+
+            C1 += rShapeN * ( m - 1.0) / MeanStress;
+
+
+            double C2 = m * (m - 1.0) * rShapeN * pow( StressRatio/rShearM, rShapeN-1.0) * sqrt(3.0)/(-MeanStress) / rShearM;
+            C2 /= 1.0 + (m - 1.0) * pow( StressRatio/rShearM, rShapeN);
+
+            rDeltaStressYieldCondition = C1 * V1 + C2 * V2;
+
+            //std::cout << " P " << MeanStress << " J2 " << J2 << " stressRatio " << StressRatio << " m " << m << " C1 " << C1 << " C2 " << C2 << std::endl;
 
             return rDeltaStressYieldCondition;
 
@@ -160,20 +177,20 @@ namespace Kratos
          std::string Info() const override
          {
             std::stringstream buffer;
-            buffer << "ModifiedCamClayPlasticPotential" ;
+            buffer << "NubiaPlasticPotential" ;
             return buffer.str();
          }
 
          /// Print information about this object.
          void PrintInfo(std::ostream& rOStream) const override
          {
-            rOStream << "ModifiedCamClayPlasticPotential";
+            rOStream << "NubiaPlasticPotential";
          }
 
          /// Print object's data.
          void PrintData(std::ostream& rOStream) const override
          {
-            rOStream << "ModifiedCamClayPlasticPotential Data";
+            rOStream << "NubiaPlasticPotential Data";
          }
 
 
@@ -273,7 +290,7 @@ namespace Kratos
 
          ///@}
 
-   }; // Class ModifiedCamClayPlasticPotential
+   }; // Class NubiaPlasticPotential
 
    ///@}
 
@@ -292,4 +309,4 @@ namespace Kratos
 
 }  // namespace Kratos.
 
-#endif // KRATOS_MODIFIED_CAM_CLAY_PLASTIC_POTENTIAL_H_INCLUDED  defined
+#endif // KRATOS_NUBIA_PLASTIC_POTENTIAL_H_INCLUDED  defined

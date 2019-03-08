@@ -17,7 +17,7 @@
 // Project includes
 #include "custom_models/plasticity_models/yield_surfaces/non_associative_yield_surface.hpp"
 #include "custom_utilities/stress_invariants_utilities.hpp"
-#include "custom_utilities/shape_deviatoric_plane_mcc_utilities.hpp"
+#include "custom_utilities/shape_deviatoric_plane_utilities.hpp"
 
 // Variables
 // 0 Plastic Multiplier
@@ -131,7 +131,7 @@ namespace Kratos
 
       //get constants
       const double& rShearM   = rMaterialProperties[CRITICAL_STATE_LINE];
-      const double& rFriction = rMaterialProperties[FRICTION_ANGLE];
+      const double& rFriction = rMaterialProperties[INTERNAL_FRICTION_ANGLE];
       const double& rSpacingR = rMaterialProperties[SPACING_RATIO];
       const double& rShapeN   = rMaterialProperties[SHAPE_PARAMETER];
 
@@ -144,7 +144,7 @@ namespace Kratos
 
       //calcualte third invariant effect
       double ThirdInvEffect = 1.0;
-      ShapeAtDeviatoricPlaneMCCUtility::EvaluateEffectDueToThirdInvariant( ThirdInvEffect, LodeAngle, rFriction);
+      ShapeAtDeviatoricPlaneUtility::EvaluateEffectDueToThirdInvariant( ThirdInvEffect, LodeAngle, rFriction);
 
       //evaluate yield function
       rYieldCondition = std::pow(-std::sqrt(3.0)*J2/(rShearM/ThirdInvEffect*(MeanStress)), rShapeN );
@@ -168,7 +168,7 @@ namespace Kratos
 
       //get constants
       const double& rShearM   = rMaterialProperties[CRITICAL_STATE_LINE];
-      const double& rFriction = rMaterialProperties[FRICTION_ANGLE];
+      const double& rFriction = rMaterialProperties[INTERNAL_FRICTION_ANGLE];
       const double& rSpacingR = rMaterialProperties[SPACING_RATIO];
       const double& rShapeN   = rMaterialProperties[SHAPE_PARAMETER];
 
@@ -183,7 +183,7 @@ namespace Kratos
 
       //calculate third invariant effect on M
       double ThirdInvEffect = 1.0;
-      ShapeAtDeviatoricPlaneMCCUtility::EvaluateEffectDueToThirdInvariant( ThirdInvEffect, LodeAngle, rFriction);
+      ShapeAtDeviatoricPlaneUtility::EvaluateEffectDueToThirdInvariant( ThirdInvEffect, LodeAngle, rFriction);
 
       //evaluate yield surface derivative df/dp*dp/dsig + df/dJ2*dJ2/dsig
       rDeltaStressYieldCondition = ( 1.0/(MeanStress*std::log(rSpacingR)) + (rShapeN*std::pow(std::sqrt(3.0)*J2,rShapeN))/(std::pow(rShearM/ThirdInvEffect,rShapeN)*pow(-MeanStress,rShapeN+1.0)) )*V1;
@@ -194,7 +194,7 @@ namespace Kratos
       {
         double Friction = rFriction * Globals::Pi / 180.0;
         double KLode, KLodeDeriv, C2, C3;
-        ShapeAtDeviatoricPlaneMCCUtility::CalculateKLodeCoefficients( KLode, KLodeDeriv, LodeAngle);
+        ShapeAtDeviatoricPlaneUtility::CalculateKLodeCoefficients( KLode, KLodeDeriv, LodeAngle, rFriction);
 
         C2 = -std::tan(3.0*LodeAngle)*rShapeN*std::pow(6.0,rShapeN)*std::pow(J2,rShapeN-1)*std::pow(-MeanStress*rShearM*(3.0-std::sin(Friction)),-rShapeN);
         C2 *= std::pow(KLode,rShapeN-1) * KLodeDeriv;

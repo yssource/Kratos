@@ -42,31 +42,25 @@ namespace Kratos
          {
             KRATOS_TRY
 
-            rEffect = 1.0;
-            if ( rFriction < 1e-6)
-               return rEffect;
-
-            double Friction = rFriction * Globals::Pi / 180.0;
-            double LodeCut = GetSmoothingLodeAngle();
-            if ( fabs( rLodeAngle) < LodeCut)
-            {
-               rEffect = std::cos( rLodeAngle) - 1.0/sqrt(3.0) * std::sin(Friction) * std::sin(rLodeAngle);
-            } else {
-               double A, B;
-               GetSmoothingConstants(A, B, rLodeAngle, Friction);
-               rEffect = A + B*std::sin(3.0*rLodeAngle);
-            }
-            rEffect /= ( sqrt(3.0)/6) * (3.0 - std::sin(Friction) );
+            double Derivative = 0;
+            CalculateKLodeCoefficients( rEffect, Derivative, rLodeAngle, rFriction);
             return rEffect;
 
             KRATOS_CATCH("")
 
          }
 
-         static inline void CalculateKLodeCoefficients( double& rKLode, double& rKLodeDeriv, const double& rLodeAngle)
+         static inline void CalculateKLodeCoefficients( double& rKLode, double& rKLodeDeriv, const double& rLodeAngle, const double & rFriction)
          {
             KRATOS_TRY
 
+            if ( rFriction < 1e-6) {
+               rKLode = 1.0;
+               rKLodeDeriv = 0.0;
+               return;
+            }
+
+            double Friction = rFriction * Globals::Pi / 180.0;
             // calcualte K(Lode) and d_K/d_Lode
             double LodeCut = GetSmoothingLodeAngle();
             if ( fabs(rLodeAngle)  < LodeCut) {
@@ -76,11 +70,14 @@ namespace Kratos
             else {
 
                double A, B;
-               GetSmoothingConstants(A, B, rLodeAngle);
-         
+               GetSmoothingConstants(A, B, rLodeAngle, Friction);
+
                rKLode = A + B * std::sin(3.0*rLodeAngle);
                rKLodeDeriv = 3.0 * B * std::cos(3.0*rLodeAngle);
             }
+
+            rKLode /= ( sqrt(3.0)/6.0) * (3.0 - std::sin(Friction) );
+            rKLodeDeriv /= ( sqrt(3.0)/6.0) * (3.0 - std::sin(Friction) );
 
             KRATOS_CATCH("")
 
@@ -103,6 +100,7 @@ namespace Kratos
 
             rB = -1.0 * ( Sign* std::sin(SmoothingAngle) + std::sin(rFriction)*std::cos(SmoothingAngle) / sqrt(3.0) ) / ( 3.0*std::cos(3.0*SmoothingAngle) );
 
+            KRATOS_CATCH("")
          }
 
          static inline double GetSmoothingLodeAngle()

@@ -7,8 +7,8 @@
 //
 //
 
-#if !defined(KRATOS_CASM_MCC_SOIL_MODEL_H_INCLUDED )
-#define      KRATOS_CASM_MCC_SOIL_MODEL_H_INCLUDED
+#if !defined(KRATOS_CASM_NUBIA_SOIL_MODEL_H_INCLUDED )
+#define      KRATOS_CASM_NUBIA_SOIL_MODEL_H_INCLUDED
 
 // System includes
 
@@ -20,7 +20,7 @@
 #include "custom_models/plasticity_models/yield_surfaces/casm_yield_surface.hpp"
 #include "custom_models/elasticity_models/borja_model.hpp"
 
-#include "custom_models/plasticity_models/yield_surfaces/plastic_potential/modified_cam_clay_yield_surface.hpp"
+#include "custom_models/plasticity_models/yield_surfaces/plastic_potential/nubia_plastic_potential.hpp"
 
 namespace Kratos
 {
@@ -49,7 +49,7 @@ namespace Kratos
    /// Short class definition.
    /** Detail class definition.
     */
-   class KRATOS_API(CONSTITUTIVE_MODELS_APPLICATION) CasmMCCSoilModel : public CasmBaseSoilModel<BorjaModel, CasmYieldSurface<CasmHardeningRule> >
+   class KRATOS_API(CONSTITUTIVE_MODELS_APPLICATION) CasmNubiaSoilModel : public CasmBaseSoilModel<BorjaModel, CasmYieldSurface<CasmHardeningRule> >
    {
       public:
 
@@ -79,25 +79,25 @@ namespace Kratos
          typedef BaseType::InternalVariablesType     InternalVariablesType;
 
 
-         /// Pointer definition of CasmMCCSoilModel
-         KRATOS_CLASS_POINTER_DEFINITION( CasmMCCSoilModel );
+         /// Pointer definition of CasmNubiaSoilModel
+         KRATOS_CLASS_POINTER_DEFINITION( CasmNubiaSoilModel );
 
          ///@}
          ///@name Life Cycle
          ///@{
 
          /// Default constructor.
-         CasmMCCSoilModel() : BaseType() {
-            ModifiedCamClayPlasticPotential<CasmHardeningRule> Object;
+         CasmNubiaSoilModel() : BaseType() {
+            NubiaPlasticPotential<CasmHardeningRule> Object;
             YieldSurface<CasmHardeningRule>::Pointer pPlasticPotential = Object.Clone();
             mYieldSurface = CasmYieldSurface<CasmHardeningRule>( pPlasticPotential);
          }
 
          /// Copy constructor.
-         CasmMCCSoilModel(CasmMCCSoilModel const& rOther) : BaseType(rOther) {}
+         CasmNubiaSoilModel(CasmNubiaSoilModel const& rOther) : BaseType(rOther) {}
 
          /// Assignment operator.
-         CasmMCCSoilModel& operator=(CasmMCCSoilModel const& rOther)
+         CasmNubiaSoilModel& operator=(CasmNubiaSoilModel const& rOther)
          {
             BaseType::operator=(rOther);
             return *this;
@@ -106,11 +106,11 @@ namespace Kratos
          /// Clone.
          ConstitutiveModel::Pointer Clone() const override
          {
-            return Kratos::make_shared<CasmMCCSoilModel>(*this);
+            return Kratos::make_shared<CasmNubiaSoilModel>(*this);
          }
 
          /// Destructor.
-         ~CasmMCCSoilModel() override {}
+         ~CasmNubiaSoilModel() override {}
 
 
          ///@}
@@ -206,20 +206,20 @@ namespace Kratos
          std::string Info() const override
          {
             std::stringstream buffer;
-            buffer << "CasmMCCSoilModel" ;
+            buffer << "CasmNubiaSoilModel" ;
             return buffer.str();
          }
 
          /// Print information about this object.
          void PrintInfo(std::ostream& rOStream) const override
          {
-            rOStream << "CasmMCCSoilModel";
+            rOStream << "CasmNubiaSoilModel";
          }
 
          /// Print object's data.
          void PrintData(std::ostream& rOStream) const override
          {
-            rOStream << "CasmMCCSoilModel Data";
+            rOStream << "CasmNubiaSoilModel Data";
          }
 
 
@@ -319,7 +319,7 @@ namespace Kratos
 
          ///@}
 
-   }; // Class CasmMCCSoilModel
+   }; // Class CasmNubiaSoilModel
 
    ///@}
 
@@ -344,4 +344,4 @@ namespace Kratos
 
 }  // namespace Kratos.
 
-#endif // KRATOS_CASM_MCC_SOIL_MODEL_H_INCLUDED  defined
+#endif // KRATOS_CASM_NUBIA_SOIL_MODEL_H_INCLUDED  defined

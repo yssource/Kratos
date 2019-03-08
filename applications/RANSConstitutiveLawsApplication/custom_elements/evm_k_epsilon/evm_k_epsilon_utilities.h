@@ -16,10 +16,10 @@
 // System includes
 
 // Project includes
+#include "custom_utilities/calculation_utilities.h"
 #include "includes/define.h"
 #include "includes/ublas_interface.h"
 #include "input_output/logger.h"
-#include "custom_utilities/calculation_utilities.h"
 
 namespace Kratos
 {
@@ -40,11 +40,11 @@ namespace Kratos
 
 namespace EvmKepsilonModelUtilities
 {
-
 double CalculateTurbulentViscosity(const double C_mu,
                                    const double turbulent_kinetic_energy,
                                    const double turbulent_energy_dissipation_rate,
-                                   const double minimum_viscosity);
+                                   const double minimum_viscosity,
+                                   const double f_mu = 1.0);
 
 double CalculateFmu(const double y_plus);
 
@@ -59,6 +59,11 @@ double CalculateStabilizationTau(const double velocity_magnitude,
 
 template <unsigned int TDim>
 double CalculateSourceTerm(const BoundedMatrix<double, TDim, TDim>& rVelocityGradient);
+
+template <unsigned int TDim>
+double CalculateSourceTerm(const BoundedMatrix<double, TDim, TDim>& rVelocityGradient,
+                           const double turbulent_kinematic_viscosity,
+                           const double turbulent_kinetic_energy);
 
 } // namespace EvmKepsilonModelUtilities
 

@@ -139,16 +139,28 @@ array_1d<double, 3> EvaluateInPoint(const GeometryType& rGeometry,
     return value;
 }
 
+template <unsigned int TDim>
+double CalculateTrace(const BoundedMatrix<double, TDim, TDim>& rMatrix)
+{
+    double value = 0.0;
+    for (unsigned int i = 0; i < TDim; ++i)
+        value += rMatrix(i, i);
+
+    return value;
+}
+
 // template instantiations
 template double EvaluateInPoint<Geometry<Node<3>>>(const Geometry<Node<3>>&,
                                                    const Variable<double>&,
                                                    const Vector&,
                                                    const int);
-
 template array_1d<double, 3> EvaluateInPoint<Geometry<Node<3>>>(
     const Geometry<Node<3>>&, const Variable<array_1d<double, 3>>&, const Vector&, const int);
 
 template void LowerBound<Node<3>>(ModelPart&, Variable<double>&, const double);
+
+template double CalculateTrace<2>(const BoundedMatrix<double, 2, 2>&);
+template double CalculateTrace<3>(const BoundedMatrix<double, 3, 3>&);
 
 } // namespace CalculationUtilities
 } // namespace Kratos

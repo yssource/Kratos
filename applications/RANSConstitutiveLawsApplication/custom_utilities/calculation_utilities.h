@@ -44,7 +44,7 @@ array_1d<double, 3> EvaluateInPoint(const GeometryType& rGeometry,
                                     const int Step = 0);
 
 template <unsigned int TDim>
-double CalculateTrace(const BoundedMatrix<double, TDim, TDim> rMatrix);
+double CalculateMatrixTrace(const BoundedMatrix<double, TDim, TDim>& rMatrix);
 
 } // namespace CalculationUtilities
 } // namespace Kratos

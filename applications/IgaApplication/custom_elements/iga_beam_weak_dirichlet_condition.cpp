@@ -111,14 +111,14 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const double moment_of_inertia_x = properties[MOMENT_OF_INERTIA_T];
     const double moment_of_inertia_y = properties[MOMENT_OF_INERTIA_Y];
     const double moment_of_inertia_z = properties[MOMENT_OF_INERTIA_Z];
-    const double prestress = properties[PRESTRESS_CAUCHY];
-    const double Phi = GetValue(PHI);
-    const double Phi_1 = GetValue(PHI_DER_1);
+    // const double prestress = properties[PRESTRESS_CAUCHY];
+    // const double Phi = GetValue(PHI);
+    // const double Phi_1 = GetValue(PHI_DER_1);
 
-    const Vector3d A01 = MapVector(GetValue(T0));
-    const Vector3d A01_1 = MapVector(GetValue(T0_DER));
-    const Vector3d A02 = MapVector(GetValue(N0));
-    const Vector3d A03 = A01.cross(A02);
+    // const Vector3d A01 = MapVector(GetValue(T0));
+    // const Vector3d A01_1 = MapVector(GetValue(T0_DER));
+    // const Vector3d A02 = MapVector(GetValue(N0));
+    // const Vector3d A03 = A01.cross(A02);
 
     // material
 
@@ -130,8 +130,10 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     // reference configuration FIXME: move this section to Initialize()
 
     const auto X = ComputeRefBaseVector(0, shape_functions, GetGeometry());
-    const Vector3d A1 = ComputeRefBaseVector(1, shape_functions, GetGeometry());
-    const Vector3d A1_1 = ComputeRefBaseVector(2, shape_functions, GetGeometry());
+    // const Vector3d A1 = ComputeRefBaseVector(1, shape_functions, GetGeometry());
+    // const Vector3d A1_1 = ComputeRefBaseVector(2, shape_functions, GetGeometry());
+    const Vector3d A1   = MapVector(GetValue(BASE_A1));
+    // const Vector3d A1_1 = MapVector(GetValue(BASE_A1_1));
 
     const double A11 = A1.dot(A1);
     const double A = sqrt(A11);
@@ -139,23 +141,26 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const Vector3d T = A1 / A;
     // const Vector3d T_1 = A1_1 / A - A1.dot(A1_1) * A1 / pow(A, 3);
 
-    const Matrix3d Rod = ComputeRod<double>(T, Phi);
+    // const Matrix3d Rod = ComputeRod<double>(T, Phi);
     // const Matrix3d Rod_1 = ComputeRod_1<double>(T, T_1, Phi, Phi_1);
 
-    const Matrix3d Lam = ComputeLam<double>(A01, T);
+    // const Matrix3d Lam = ComputeLam<double>(A01, T);
     // const Matrix3d Lam_1 = ComputeLam_1<double>(A01, A01_1, T, T_1);
 
-    const Matrix3d Rod_Lam = Rod * Lam;
+    // const Matrix3d Rod_Lam = Rod * Lam;
     // const Matrix3d Rod_1_Lam = Rod_1 * Lam;
     // const Matrix3d Rod_Lam_1 = Rod * Lam_1;
 
     // const auto Y = Rod_Lam * A02.transpose();
-    const Vector3d A2 = Rod_Lam * A02.transpose();
+    // const Vector3d A2 = Rod_Lam * A02.transpose();
     // const Vector3d A2_1 = Rod_1_Lam * A02.transpose() + Rod_Lam_1 * A02.transpose();
+    const Vector3d A2   = MapVector(GetValue(BASE_A2));
 
     // const auto Z = Rod_Lam * A03.transpose();
-    const Vector3d A3 = Rod_Lam * A03.transpose();
+    // const Vector3d A3 = Rod_Lam * A03.transpose();
     // const Vector3d A3_1 = Rod_1_Lam * A03.transpose() + Rod_Lam_1 * A03.transpose();
+    const Vector3d A3   = MapVector(GetValue(BASE_A3));
+
 
     // const double B2 = A2_1.dot(A1);
     // const double B3 = A3_1.dot(A1);
@@ -233,7 +238,7 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
 
 
     // inner energy 
-    auto const condition_type = GetValue(DIRICHLET_CONDITION_TYPE);
+    // auto const condition_type = GetValue(DIRICHLET_CONDITION_TYPE);
 
     auto const penalty_disp   = GetValue(PENALTY_DISPLACEMENT);
     auto const penalty_rot    = GetValue(PENALTY_ROTATION);
@@ -254,6 +259,7 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
       // const auto dP_alpha_tors =  0.5 * (alpha_12 * alpha_13) * penalty_tors * integration_weight;
 
 
+    auto const condition_type = 123;
 
     // Variation Hesse
     if (condition_type == 1)        // Verschiebung 

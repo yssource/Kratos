@@ -236,7 +236,7 @@ public:
         }
 
         const double stop_build = OpenMPUtils::GetCurrentTime();
-        KRATOS_INFO_IF("MassAndStiffnessBuilderAndSolver", (this->GetEchoLevel() >= 1 && rModelPart.GetCommunicator().MyPID() == 0)) << "Build time: " << stop_build - start_build << std::endl;
+        KRATOS_INFO_IF("MassAndStiffnessBuilderAndSolver - Stiffness matrix", (this->GetEchoLevel() >= 1 && rModelPart.GetCommunicator().MyPID() == 0)) << "Build time: " << stop_build - start_build << std::endl;
 
         //for (int i = 0; i < A_size; i++)
         //    omp_destroy_lock(&lock_array[i]);
@@ -244,6 +244,7 @@ public:
 
         KRATOS_CATCH("")
     }
+
 
 
     /**
@@ -289,6 +290,7 @@ public:
             # pragma omp for  schedule(guided, 512) nowait
             for (int k = 0; k < nelements; k++)
             {
+                
                 ModelPart::ElementsContainerType::iterator it = el_begin + k;
 
                 //detect if the element is active or not. If the user did not make any choice the element
@@ -305,7 +307,7 @@ public:
                     it->EquationIdVector(EquationId, CurrentProcessInfo);
                     it->CalculateMassMatrix(LHS_Contribution,CurrentProcessInfo);
                     RHS_Contribution.resize(EquationId.size());
-
+                   
                     //assemble the elemental contribution
     #ifdef USE_LOCKS_IN_ASSEMBLY
                     BaseType::Assemble(A, b, LHS_Contribution, RHS_Contribution, EquationId, mlock_array);
@@ -353,7 +355,7 @@ public:
         }
 
         const double stop_build = OpenMPUtils::GetCurrentTime();
-        KRATOS_INFO_IF("MassAndStiffnessBuilderAndSolver", (this->GetEchoLevel() >= 1 && rModelPart.GetCommunicator().MyPID() == 0)) << "Build time: " << stop_build - start_build << std::endl;
+        KRATOS_INFO_IF("MassAndStiffnessBuilderAndSolver - Mass matrix", (this->GetEchoLevel() >= 1 && rModelPart.GetCommunicator().MyPID() == 0)) << "Build time: " << stop_build - start_build << std::endl;
 
         //for (int i = 0; i < A_size; i++)
         //    omp_destroy_lock(&lock_array[i]);
@@ -361,6 +363,127 @@ public:
 
         KRATOS_CATCH("")
     }
+
+    /*
+     * @brief Function to perform the build of the DampingMatrix. The vector could be sized as the total number
+     * of dofs or as the number of unrestrained ones
+     * @param pScheme The integration scheme considered
+     * @param rModelPart The model part of the problem to solve
+     * @param A The Damping matrix
+     */
+    void BuildDampingMatrix(
+        typename TSchemeType::Pointer pScheme,
+        ModelPart& rModelPart,
+        TSystemMatrixType& A,
+        TSystemVectorType& b)
+    {
+        //std::cout<<"Damping matrix called";
+        KRATOS_TRY
+
+        KRATOS_ERROR_IF(!pScheme) << "No scheme provided!" << std::endl;
+
+        // Getting the elements from the model
+        const int nelements = static_cast<int>(rModelPart.Elements().size());
+        //std::cout<<"Elements = "<<nelements<<std::endl;
+        // Getting the array of the conditions
+        const int nconditions = static_cast<int>(rModelPart.Conditions().size());
+
+        ProcessInfo& CurrentProcessInfo = rModelPart.GetProcessInfo();
+        ModelPart::ElementsContainerType::iterator el_begin = rModelPart.ElementsBegin();
+        ModelPart::ConditionsContainerType::iterator cond_begin = rModelPart.ConditionsBegin();
+
+        //contributions to the system
+        LocalSystemMatrixType LHS_Contribution = LocalSystemMatrixType(0, 0);
+        LocalSystemVectorType RHS_Contribution = LocalSystemVectorType(0);
+        //std::cout<<LHS_Contribution;
+
+        //vector containing the localization in the system of the different
+        //terms
+        Element::EquationIdVectorType EquationId;
+
+        // assemble all elements
+        double start_build = OpenMPUtils::GetCurrentTime();
+
+        #pragma omp parallel firstprivate(nelements,nconditions, LHS_Contribution, RHS_Contribution, EquationId )
+        {
+            
+            # pragma omp for  schedule(guided, 512) nowait
+            for (int k = 0; k < nelements; k++)
+            {
+                ModelPart::ElementsContainerType::iterator it = el_begin + k;
+                //detect if the element is active or not. If the user did not make any choice the element
+                //is active by default
+                bool element_is_active = true;
+                if ((it)->IsDefined(ACTIVE))
+                    element_is_active = (it)->Is(ACTIVE);
+
+                if (element_is_active)
+                {
+                    //calculate elemental contribution
+                    //pScheme->CalculateSystemContributions(*(it.base()), LHS_Contribution, RHS_Contribution, EquationId, CurrentProcessInfo);
+                    // Directly asking the element to give the stiffnessmatrix
+                    it->EquationIdVector(EquationId, CurrentProcessInfo);
+                    it->CalculateDampingMatrix(LHS_Contribution,CurrentProcessInfo);
+                    RHS_Contribution.resize(EquationId.size());
+                    
+
+                    //assemble the elemental contribution
+    #ifdef USE_LOCKS_IN_ASSEMBLY
+                    //BaseType::Assemble(A, b, LHS_Contribution, RHS_Contribution, EquationId, mlock_array);
+    #else
+                    BaseType::Assemble(A, b, LHS_Contribution, RHS_Contribution, EquationId);
+                    
+    #endif
+                    // clean local elemental memory
+                    pScheme->CleanMemory(*(it.base()));
+                }
+                    //std::cout<<"iteration finished"<<std::endl;
+            }
+
+
+            //#pragma omp parallel for firstprivate(nconditions, LHS_Contribution, RHS_Contribution, EquationId ) schedule(dynamic, 1024)
+            #pragma omp for  schedule(guided, 512)
+            for (int k = 0; k < nconditions; k++)
+            {
+                ModelPart::ConditionsContainerType::iterator it = cond_begin + k;
+
+                //detect if the element is active or not. If the user did not make any choice the element
+                //is active by default
+                bool condition_is_active = true;
+                if ((it)->IsDefined(ACTIVE))
+                    condition_is_active = (it)->Is(ACTIVE);
+
+                if (condition_is_active)
+                {
+                    //calculate elemental contribution
+                    //pScheme->Condition_CalculateSystemContributions(*(it.base()), LHS_Contribution, RHS_Contribution, EquationId, CurrentProcessInfo);
+                    it->EquationIdVector(EquationId, CurrentProcessInfo);
+                    it->CalculateDampingMatrix(LHS_Contribution,CurrentProcessInfo);
+                    RHS_Contribution.resize(EquationId.size());
+
+                    //assemble the elemental contribution
+    #ifdef USE_LOCKS_IN_ASSEMBLY
+                   // BaseType::Assemble(A, b, LHS_Contribution, RHS_Contribution, EquationId, mlock_array);
+    #else
+                    BaseType::Assemble(A, b, LHS_Contribution, RHS_Contribution, EquationId);
+    #endif
+
+                    // clean local elemental memory
+                    pScheme->CleanMemory(*(it.base()));
+                }
+            }
+        }
+
+        const double stop_build = OpenMPUtils::GetCurrentTime();
+        KRATOS_INFO_IF("MassAndStiffnessBuilderAndSolver - Damping matrix ", (this->GetEchoLevel() >= 1 && rModelPart.GetCommunicator().MyPID() == 0)) << "build time: " << stop_build - start_build << std::endl;
+
+        //for (int i = 0; i < A_size; i++)
+        //    omp_destroy_lock(&lock_array[i]);
+        KRATOS_INFO_IF("MassAndStiffnessBuilderAndSolver", (this->GetEchoLevel() > 2 && rModelPart.GetCommunicator().MyPID() == 0)) << "Finished parallel building" << std::endl;
+
+        KRATOS_CATCH("")
+    }
+
 
     /**
      * @brief Function to perform the build of the RHS (not the residual vector).
@@ -474,6 +597,84 @@ public:
         }
     }
 
+    /**
+     * @brief Applies the dirichlet conditions specifically for mass matrix to output. This operation may be very heavy or completely
+     * unexpensive depending on the implementation choosen and on how the System Matrix is built.
+     * @details the rows and colums for Dirichlet conditions are set to zero
+     * @param pScheme The integration scheme considered
+     * @param rModelPart The model part of the problem to solve
+     * @param A The Mass matrix
+     */
+    void ApplyDirichletConditionsForDampingMatrix(
+        typename TSchemeType::Pointer pScheme,
+        ModelPart& rModelPart,
+        TSystemMatrixType& A)
+    {
+        std::size_t system_size = A.size1();
+        std::vector<double> scaling_factors (system_size, 0.0f);
+
+        const int ndofs = static_cast<int>(BaseType::mDofSet.size());
+
+        //NOTE: dofs are assumed to be numbered consecutively in the BlockBuilderAndSolver
+        #pragma omp parallel for firstprivate(ndofs)
+        for(int k = 0; k<ndofs; k++)
+        {
+            typename DofsArrayType::iterator dof_iterator = BaseType::mDofSet.begin() + k;
+            if(dof_iterator->IsFixed())
+                scaling_factors[k] = 0.0f;
+            else
+                scaling_factors[k] = 1.0f;
+
+        }
+
+        double* Avalues = A.value_data().begin();
+        std::size_t* Arow_indices = A.index1_data().begin();
+        std::size_t* Acol_indices = A.index2_data().begin();
+
+        //detect if there is a line of all zeros and set the diagonal to a 1 if this happens
+        #pragma omp parallel for firstprivate(system_size)
+        for(int k = 0; k < static_cast<int>(system_size); ++k)
+        {
+            std::size_t col_begin = Arow_indices[k];
+            std::size_t col_end = Arow_indices[k+1];
+            bool empty = true;
+            for (std::size_t j = col_begin; j < col_end; ++j)
+            {
+                if(Avalues[j] != 0.0)
+                {
+                    empty = false;
+                    break;
+                }
+            }
+
+            if(empty == true)
+            {
+                A(k,k) = 0.0;
+            }
+        }
+
+        #pragma omp parallel for
+        for (int k = 0; k < static_cast<int>(system_size); ++k)
+        {
+            std::size_t col_begin = Arow_indices[k];
+            std::size_t col_end = Arow_indices[k+1];
+            double k_factor = scaling_factors[k];
+            if (k_factor == 0)
+            {
+                // zero out the whole row, except the diagonal
+                for (std::size_t j = col_begin; j < col_end; ++j)
+                    if (static_cast<int>(Acol_indices[j]) != k )
+                        Avalues[j] = 0.0;
+            }
+            else
+            {
+                // zero out the column which is associated with the zero'ed row
+                for (std::size_t j = col_begin; j < col_end; ++j)
+                    if(scaling_factors[ Acol_indices[j] ] == 0 )
+                        Avalues[j] = 0.0;
+            }
+        }
+    }
 
     ///@}
     ///@name Access

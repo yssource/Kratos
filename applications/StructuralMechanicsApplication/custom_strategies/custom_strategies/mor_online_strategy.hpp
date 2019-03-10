@@ -114,6 +114,7 @@ class MorOnlineStrategy
      * @param MoveMeshFlag The flag that allows to move the mesh
      */
     MorOnlineStrategy(
+        //std::cout<<"Constructor called"<<std::endl;
         ModelPart& rModelPart,
         typename TSchemeType::Pointer pScheme,
         typename TLinearSolver::Pointer pNewLinearSolver,
@@ -162,6 +163,7 @@ class MorOnlineStrategy
 
         mpA = TSparseSpace::CreateEmptyMatrixPointer(); //stiffness
         mpM = TSparseSpace::CreateEmptyMatrixPointer(); //mass
+        mpS = TSparseSpace::CreateEmptyMatrixPointer(); //Damping
         mpRHS = TSparseSpace::CreateEmptyVectorPointer();
 
         KRATOS_CATCH("");
@@ -371,6 +373,8 @@ class MorOnlineStrategy
             SparseSpaceType::Clear(mpA);
         if (mpM != nullptr)
             SparseSpaceType::Clear(mpM);
+        if (mpS != nullptr)
+            SparseSpaceType::Clear(mpS);
         if (mpRHS != nullptr)
             SparseSpaceType::Clear(mpRHS);
 
@@ -424,7 +428,9 @@ class MorOnlineStrategy
                 p_builder_and_solver->ResizeAndInitializeVectors(p_scheme, mpA, mpRHS, mpRHS,
                                                                  BaseType::GetModelPart());
                 p_builder_and_solver->ResizeAndInitializeVectors(p_scheme, mpM, mpRHS, mpRHS,
-                                                                 BaseType::GetModelPart());                                                                 
+                                                                 BaseType::GetModelPart()); 
+                p_builder_and_solver->ResizeAndInitializeVectors(p_scheme, mpS, mpRHS, mpRHS,
+                                                                 BaseType::GetModelPart());                                                                   
                 KRATOS_INFO_IF("System Matrix Resize Time", BaseType::GetEchoLevel() > 0 && rank == 0)
                     << system_matrix_resize_time.ElapsedSeconds() << std::endl;
             }
@@ -435,14 +441,17 @@ class MorOnlineStrategy
             TSystemMatrixType& rA  = *mpA;
             TSystemMatrixType& rM = *mpM;
             TSystemVectorType& rRHS  = *mpRHS;
+            TSystemMatrixType& rS  = *mpS;
 
             //initial operations ... things that are constant over the Solution Step
             p_builder_and_solver->InitializeSolutionStep(BaseType::GetModelPart(), rA, rRHS, rRHS);
             p_builder_and_solver->InitializeSolutionStep(BaseType::GetModelPart(), rM, rRHS, rRHS);
+            p_builder_and_solver->InitializeSolutionStep(BaseType::GetModelPart(), rS, rRHS, rRHS);
 
             //initial operations ... things that are constant over the Solution Step
             p_scheme->InitializeSolutionStep(BaseType::GetModelPart(), rA, rRHS, rRHS);
             p_scheme->InitializeSolutionStep(BaseType::GetModelPart(), rM, rRHS, rRHS);
+            p_scheme->InitializeSolutionStep(BaseType::GetModelPart(), rS, rRHS, rRHS);
 
             mSolutionStepIsInitialized = true;
         }
@@ -464,6 +473,7 @@ class MorOnlineStrategy
         TSystemMatrixType& rA  = *mpA;
         TSystemMatrixType& rM = *mpM;
         TSystemVectorType& rRHS  = *mpRHS;
+        TSystemMatrixType& rS  = *mpA;
 
         //Finalisation of the solution step,
         //operations to be done after achieving convergence, for example the
@@ -472,8 +482,10 @@ class MorOnlineStrategy
 
         p_scheme->FinalizeSolutionStep(BaseType::GetModelPart(), rA, rRHS, rRHS);
         p_scheme->FinalizeSolutionStep(BaseType::GetModelPart(), rM, rRHS, rRHS);
+        p_scheme->FinalizeSolutionStep(BaseType::GetModelPart(), rS, rRHS, rRHS);
         p_builder_and_solver->FinalizeSolutionStep(BaseType::GetModelPart(), rA, rRHS, rRHS);
         p_builder_and_solver->FinalizeSolutionStep(BaseType::GetModelPart(), rM, rRHS, rRHS);
+        p_builder_and_solver->FinalizeSolutionStep(BaseType::GetModelPart(), rS, rRHS, rRHS);
 
         //Cleaning memory after the solution
         p_scheme->Clean();
@@ -486,6 +498,7 @@ class MorOnlineStrategy
             SparseSpaceType::Clear(mpA);
             SparseSpaceType::Clear(mpRHS);
             SparseSpaceType::Clear(mpM);
+            SparseSpaceType::Clear(mpS);
 
             this->Clear();
         }
@@ -527,6 +540,7 @@ class MorOnlineStrategy
         TSystemMatrixType r_Ar = p_offline_strategy->GetAr();
         TSystemVectorType r_RHSr = p_offline_strategy->GetRHSr();
         TSystemMatrixType r_basis = p_offline_strategy->GetBasis();
+        TSystemMatrixType r_Sr = p_offline_strategy->GetSr();
 
         const unsigned int system_size = r_basis.size1();
         const unsigned int system_size_r = r_basis.size2();
@@ -540,7 +554,8 @@ class MorOnlineStrategy
         auto& r_kdyn = *kdyn;
         SparseSpaceType::Resize(r_kdyn, system_size_r, system_size_r);
 
-        r_kdyn = r_Ar - ( std::pow( excitation_frequency, 2.0 ) * r_Mr );
+        r_kdyn = r_Ar - ( std::pow( excitation_frequency, 2.0 ) * r_Mr );           // Without Damping
+       // r_kdyn = r_Ar - ( std::pow( excitation_frequency, 2.0 ) * r_Mr ) - r_Sr;    // With Damping
 
         GetBuilderAndSolver()->GetLinearSystemSolver()->Solve( r_kdyn, displacement_reduced, r_RHSr );
 
@@ -664,6 +679,7 @@ class MorOnlineStrategy
     TSystemVectorPointerType mpRHS; /// The RHS vector of the system of equations
     TSystemMatrixPointerType mpA; /// The Stiffness matrix of the system of equations
     TSystemMatrixPointerType mpM; /// The Mass matrix of the system of equations
+    TSystemMatrixPointerType mpS; /// The Damping matrix of the system of equations
     
     // reduced matrices
     // TSystemVectorPointerType mpRHSr; //reduced RHS
@@ -697,6 +713,7 @@ class MorOnlineStrategy
         TSystemMatrixType& rA  = *mpA;
         TSystemMatrixType& rM = *mpM;
         TSystemVectorType& rRHS  = *mpRHS;
+        TSystemMatrixType& rS  = *mpS;
 
         if (this->GetEchoLevel() == 2) //if it is needed to print the debug info
         {
@@ -706,6 +723,7 @@ class MorOnlineStrategy
         {
             KRATOS_INFO("LHS") << "SystemMatrix = " << rA << std::endl;
             KRATOS_INFO("Dx")  << "Mass Matrix = " << mpM << std::endl;
+            KRATOS_INFO("Sx") << "Damping Matrix = " << rS << std::endl;
             KRATOS_INFO("RHS") << "RHS  = " << rRHS << std::endl;
         }
         std::stringstream matrix_market_name;
@@ -714,7 +732,11 @@ class MorOnlineStrategy
 
         std::stringstream matrix_market_mass_name;
         matrix_market_mass_name << "M_" << BaseType::GetModelPart().GetProcessInfo()[TIME] << "_" << IterationNumber << ".mm";
-        TSparseSpace::WriteMatrixMarketMatrix((char *)(matrix_market_mass_name.str()).c_str(), rM, false);            
+        TSparseSpace::WriteMatrixMarketMatrix((char *)(matrix_market_mass_name.str()).c_str(), rM, false); 
+
+        std::stringstream matrix_market_damping_name;
+        matrix_market_name << "S_" << BaseType::GetModelPart().GetProcessInfo()[TIME] << "_" << IterationNumber << ".mm";
+        TSparseSpace::WriteMatrixMarketMatrix((char *)(matrix_market_damping_name.str()).c_str(), rS, false);           
 
         std::stringstream matrix_market_vectname;
         matrix_market_vectname << "RHS_" << BaseType::GetModelPart().GetProcessInfo()[TIME] << "_" << IterationNumber << ".mm.rhs";

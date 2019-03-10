@@ -152,6 +152,7 @@ class MorOfflineStrategy
         this->SetRebuildLevel(0);
 
         mpA = TSparseSpace::CreateEmptyMatrixPointer();
+        mpS = TSparseSpace::CreateEmptyMatrixPointer();
         mpM = TSparseSpace::CreateEmptyMatrixPointer();
         mpRHS = TSparseSpace::CreateEmptyVectorPointer();
 
@@ -160,6 +161,7 @@ class MorOfflineStrategy
         mpRHSr = TSparseSpace::CreateEmptyVectorPointer();
         // mpBasis = TDenseSpace::CreateEmptyMatrixPointer();
         mpBasis = TSparseSpace::CreateEmptyMatrixPointer();
+        mpSr = TSparseSpace::CreateEmptyMatrixPointer();
 
         mSamplingPoints = samplingPoints;
 
@@ -347,6 +349,8 @@ class MorOfflineStrategy
             SparseSpaceType::Clear(mpM);
         if (mpRHS != nullptr)
             SparseSpaceType::Clear(mpRHS);
+        if (mpS != nullptr)
+            SparseSpaceType::Clear(mpRHS);
 
         //setting to zero the internal flag to ensure that the dof sets are recalculated
         GetBuilderAndSolver()->SetDofSetIsInitializedFlag(false);
@@ -402,7 +406,10 @@ class MorOfflineStrategy
                 p_builder_and_solver->ResizeAndInitializeVectors(p_scheme, mpA, mpRHS, mpRHS,
                                                                  BaseType::GetModelPart());
                 p_builder_and_solver->ResizeAndInitializeVectors(p_scheme, mpM, mpRHS, mpRHS,
-                                                                 BaseType::GetModelPart());                                                                 
+                                                                 BaseType::GetModelPart()); 
+                p_builder_and_solver->ResizeAndInitializeVectors(p_scheme, mpS, mpRHS, mpRHS,
+                                                                 BaseType::GetModelPart()); 
+
                 KRATOS_INFO_IF("System Matrix Resize Time", BaseType::GetEchoLevel() > 0 && rank == 0)
                     << system_matrix_resize_time.ElapsedSeconds() << std::endl;
             }
@@ -446,6 +453,7 @@ class MorOfflineStrategy
         TSystemMatrixType& rA  = *mpA;
         TSystemMatrixType& rM = *mpM;
         TSystemVectorType& rRHS  = *mpRHS;
+        TSystemMatrixType& rS  = *mpS;
 
         //Finalisation of the solution step,
         //operations to be done after achieving convergence, for example the
@@ -456,6 +464,9 @@ class MorOfflineStrategy
         p_scheme->FinalizeSolutionStep(BaseType::GetModelPart(), rM, rRHS, rRHS);
         p_builder_and_solver->FinalizeSolutionStep(BaseType::GetModelPart(), rA, rRHS, rRHS);
         p_builder_and_solver->FinalizeSolutionStep(BaseType::GetModelPart(), rM, rRHS, rRHS);
+
+        p_scheme->FinalizeSolutionStep(BaseType::GetModelPart(), rS, rRHS, rRHS);
+        p_builder_and_solver->FinalizeSolutionStep(BaseType::GetModelPart(), rS, rRHS, rRHS);
 
         //Cleaning memory after the solution
         p_scheme->Clean();
@@ -468,6 +479,7 @@ class MorOfflineStrategy
             SparseSpaceType::Clear(mpA);
             SparseSpaceType::Clear(mpRHS);
             SparseSpaceType::Clear(mpM);
+            SparseSpaceType::Clear(mpS);
 
             this->Clear();
         }
@@ -481,11 +493,12 @@ class MorOfflineStrategy
     bool SolveSolutionStep() override
     {
         KRATOS_TRY;
-        std::cout << "hello! this is where the MOR magic happens." << std::endl;
+        std::cout << "hello! this is where the MOR magic happens" << std::endl;
         typename TSchemeType::Pointer p_scheme = GetScheme();
         typename TBuilderAndSolverType::Pointer p_builder_and_solver = GetBuilderAndSolver();
         TSystemMatrixType& rA  = *mpA;
         TSystemMatrixType& rM = *mpM;
+        TSystemMatrixType& rS  = *mpS;
         TSystemVectorType& rRHS  = *mpRHS;
         SparseSpaceType::Set(rRHS,0.0); //why??
 
@@ -495,6 +508,10 @@ class MorOfflineStrategy
         // KRATOS_WATCH(rRHS)
 
         TSystemVectorType tmp(rA.size1(), 0.0);
+        //std::cout<<"temp = "<<rA.size1()<<std::endl;
+
+        //TSystemVectorType tmp1(rS.size1(), 0.0);
+        //std::cout<<"temp1 = "<<rS.size1()<<std::endl;
 
         p_builder_and_solver->BuildStiffnessMatrix(p_scheme, BaseType::GetModelPart(), rA, tmp);
 
@@ -507,13 +524,23 @@ class MorOfflineStrategy
 
         p_builder_and_solver->BuildRHS(p_scheme, BaseType::GetModelPart(), rRHS);
 
+        p_builder_and_solver->BuildDampingMatrix(p_scheme, BaseType::GetModelPart(), rS, tmp);
+
+        p_builder_and_solver->ApplyDirichletConditionsForDampingMatrix(p_scheme, BaseType::GetModelPart(), rS);
+        
+        //std::cout<<"Damping matrix is "<<rS<<std::endl;
+        
+        //std::cout<<"\nDamping matrix"<<std::endl<<rS<<std::endl;
+        //std::cout<<"\nMass Matrix"<<std::endl<<rM<<std::endl;
+        //std::cout<<"\nStiffness matrix"<<std::endl<<rA<<std::endl;
+
         // EchoInfo(0);
         const unsigned int system_size = p_builder_and_solver->GetEquationSystemSize();
         //sampling points
         KRATOS_WATCH(mSamplingPoints)
         const std::size_t n_sampling_points = mSamplingPoints.size();
         const std::size_t reduced_system_size = 3 * n_sampling_points;
-
+        
         //initialize sb, As, AAs vectors
         auto s = SparseSpaceType::CreateEmptyVectorPointer();
         auto& rs = *s;
@@ -541,11 +568,15 @@ class MorOfflineStrategy
         // DenseSpaceType::Resize(r_basis, system_size, reduced_system_size);
 
         vector< double > aux;
+        vector <double > Q_vector;
+        
         for( size_t i = 0; i < n_sampling_points; ++i )
         {
             KRATOS_WATCH( mSamplingPoints(i) )
             // KRATOS_WATCH( std::pow( mSamplingPoints(i), 2.0) )
-            r_kdyn = rA - ( std::pow( mSamplingPoints(i), 2.0 ) * rM );
+            r_kdyn = rA - ( std::pow( mSamplingPoints(i), 2.0 ) * rM );    // Without Damping  
+            //r_kdyn = rA - ( std::pow( mSamplingPoints(i), 2.0 ) * rM )-rS;  With Damping
+            
             // KRATOS_WATCH(r_kdyn)
             // KRATOS_WATCH(rRHS)
             // std::cout << "rs vorher" << std::endl;
@@ -554,7 +585,7 @@ class MorOfflineStrategy
             p_builder_and_solver->GetLinearSystemSolver()->Solve( r_kdyn, rs, rRHS );
             // KRATOS_WATCH(rs)
             aux = prod( rM, rs );
-            // KRATOS_WATCH(aux)
+            //KRATOS_WATCH(aux)
             p_builder_and_solver->GetLinearSystemSolver()->Solve( r_kdyn, rAs, aux );
             aux = prod( rM, rAs );
             p_builder_and_solver->GetLinearSystemSolver()->Solve( r_kdyn, rAAs, aux );
@@ -583,29 +614,37 @@ class MorOfflineStrategy
         // SparseSpaceType::Resize(r_basis_r, system_size, 3*n_sampling_points);        
         auto& r_basis = *mpBasis;
         SparseSpaceType::Resize(r_basis, system_size, reduced_system_size);
+        
         for( size_t i = 0; i < system_size; ++i )
         {
             for( size_t j = 0; j < (3*n_sampling_points); ++j )
             {
                 r_basis(i,j) = mQR_decomposition.Q(i,j);
+                
             }
         }
+
+        std::cout<<Q_vector.size()<<std::endl;
         // auto r_basis_r = r_basis;
         auto& r_force_vector_reduced = *mpRHSr;
         // mpForceVectorReduced = ZeroMatrix( 3*n_sampling_points );
         r_force_vector_reduced = (prod( rRHS, r_basis ));
         auto& r_stiffness_matrix_reduced = *mpAr;
         auto& r_mass_matrix_reduced = *mpMr;
+        auto& r_damping_reduced = *mpSr;   // Reduced damping matrix
 
         // KRATOS_WATCH( prod( matrix<double>(prod(trans(r_basis_r),r_stiffness_matrix)), r_basis_r))
         r_stiffness_matrix_reduced = prod( matrix< double >( prod( trans( r_basis ),rA ) ), r_basis );
         r_mass_matrix_reduced = prod( matrix< double >( prod( trans( r_basis ),rM ) ), r_basis );
+
+        r_damping_reduced = prod( matrix< double >( prod( trans( r_basis ),rS ) ), r_basis );
         // KRATOS_WATCH(r_force_vector_reduced)
         // KRATOS_WATCH(r_stiffness_matrix_reduced)
         // KRATOS_WATCH(r_mass_matrix_reduced)
         // KRATOS_WATCH(r_basis)
         std::cout << "MOR offline solve finished" << std::endl;
-        return true;
+		//std::cout << "Compiled succesfully finally after long time"<<std::endl;
+		return true;
         KRATOS_CATCH("");
     }
 
@@ -660,6 +699,13 @@ class MorOfflineStrategy
         return mM;
     }
 
+    TSystemMatrixType &GetDampingMatrix()
+    {
+        TSystemMatrixType &mS = *mpS;
+
+        return mS;
+    }
+
     /**
      * @brief This method returns the RHS vector
      * @return The RHS vector
@@ -683,6 +729,13 @@ class MorOfflineStrategy
         TSystemMatrixType &mAr = *mpAr;
 
         return mAr;
+    };
+
+    TSystemMatrixType &GetSr()
+    {
+        TSystemMatrixType &mSr = *mpSr;
+
+        return mSr;
     };
 
     TSystemVectorType& GetRHSr()
@@ -754,6 +807,8 @@ class MorOfflineStrategy
     TSystemVectorPointerType mpRHS; /// The RHS vector of the system of equations
     TSystemMatrixPointerType mpA; /// The Stiffness matrix of the system of equations
     TSystemMatrixPointerType mpM; /// The Mass matrix of the system of equations
+    TSystemMatrixPointerType mpS; /// The Damping matrix of the system of equations
+
 
     // reduced matrices
     TSystemVectorPointerType mpRHSr; //reduced RHS
@@ -761,6 +816,7 @@ class MorOfflineStrategy
     TSystemMatrixPointerType mpMr;
     // TDenseMatrixPointerType mpBasis;
     TSystemMatrixPointerType mpBasis;
+    TSystemMatrixPointerType mpSr;
 
     vector< double > mSamplingPoints;
     QR<double, row_major> mQR_decomposition;
@@ -791,6 +847,7 @@ class MorOfflineStrategy
         TSystemMatrixType& rA  = *mpA;
         TSystemMatrixType& rM = *mpM;
         TSystemVectorType& rRHS  = *mpRHS;
+        TSystemMatrixType& rS  = *mpS;
 
         if (this->GetEchoLevel() == 2) //if it is needed to print the debug info
         {
@@ -800,6 +857,7 @@ class MorOfflineStrategy
         {
             KRATOS_INFO("LHS") << "SystemMatrix = " << rA << std::endl;
             KRATOS_INFO("Dx")  << "Mass Matrix = " << mpM << std::endl;
+            KRATOS_INFO("Sx")  << "Damping Matrix = " << mpS << std::endl;
             KRATOS_INFO("RHS") << "RHS  = " << rRHS << std::endl;
         }
         std::stringstream matrix_market_name;
@@ -808,7 +866,11 @@ class MorOfflineStrategy
 
         std::stringstream matrix_market_mass_name;
         matrix_market_mass_name << "M_" << BaseType::GetModelPart().GetProcessInfo()[TIME] << "_" << IterationNumber << ".mm";
-        TSparseSpace::WriteMatrixMarketMatrix((char *)(matrix_market_mass_name.str()).c_str(), rM, false);            
+        TSparseSpace::WriteMatrixMarketMatrix((char *)(matrix_market_mass_name.str()).c_str(), rM, false);   
+
+        std::stringstream matrix_market_damping_name;
+        matrix_market_name << "S_" << BaseType::GetModelPart().GetProcessInfo()[TIME] << "_" << IterationNumber << ".mm";
+        TSparseSpace::WriteMatrixMarketMatrix((char *)(matrix_market_damping_name.str()).c_str(), rS, false);        
 
         std::stringstream matrix_market_vectname;
         matrix_market_vectname << "RHS_" << BaseType::GetModelPart().GetProcessInfo()[TIME] << "_" << IterationNumber << ".mm.rhs";

@@ -160,6 +160,7 @@ public:
      */
     virtual double Solve()
     {
+        
         Initialize();
         InitializeSolutionStep();
         Predict();

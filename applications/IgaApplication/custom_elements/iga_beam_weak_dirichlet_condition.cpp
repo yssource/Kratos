@@ -128,7 +128,6 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const double ei3 = young_modulus * moment_of_inertia_z;
 
     // reference configuration FIXME: move this section to Initialize()
-
     const auto X = ComputeRefBaseVector(0, shape_functions, GetGeometry());
     // const Vector3d A1 = ComputeRefBaseVector(1, shape_functions, GetGeometry());
     // const Vector3d A1_1 = ComputeRefBaseVector(2, shape_functions, GetGeometry());
@@ -151,12 +150,10 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     // const Matrix3d Rod_1_Lam = Rod_1 * Lam;
     // const Matrix3d Rod_Lam_1 = Rod * Lam_1;
 
-    // const auto Y = Rod_Lam * A02.transpose();
     // const Vector3d A2 = Rod_Lam * A02.transpose();
     // const Vector3d A2_1 = Rod_1_Lam * A02.transpose() + Rod_Lam_1 * A02.transpose();
     const Vector3d A2   = MapVector(GetValue(BASE_A2));
 
-    // const auto Z = Rod_Lam * A03.transpose();
     // const Vector3d A3 = Rod_Lam * A03.transpose();
     // const Vector3d A3_1 = Rod_1_Lam * A03.transpose() + Rod_Lam_1 * A03.transpose();
     const Vector3d A3   = MapVector(GetValue(BASE_A3));
@@ -199,11 +196,11 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     // const auto xform = rod_1_lam * Rod_Lam + rod_lam_1 * Rod_Lam + rod_lam * Rod_1_Lam + rod_lam * Rod_Lam_1;
 
     // const auto y = rod_lam * A2.transpose();
-    const auto a2 = rod_lam * A2.transpose();
+    const Eigen::Matrix<class HyperJet::HyperJet<double>,1,3,1,1,3> a2 = rod_lam * A2.transpose();
     // const auto a2_1 = xform * A02.transpose();
 
     // const auto z = rod_lam * A3.transpose();
-    const auto a3 = rod_lam * A3.transpose();
+    const Eigen::Matrix<class HyperJet::HyperJet<double>,1,3,1,1,3> a3 = rod_lam * A3.transpose();
     // const auto a3_1 = xform * A03.transpose();
 
     // const auto b2 = a2_1.dot(a1);
@@ -211,12 +208,6 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
 
     // const auto c12 = a3_1.dot(a2);
     // const auto c13 = a2_1.dot(a3);
-
-
-    const auto u_xyz = x - X;
-    // const auto v_xyz = y - Y;
-    // const auto w_xyz = z - Z;
-    const auto delta_a = a1 - A1; 
 
     // Normieren (wobei A2 / A3 eigentlich schon normiert sein sollten!)
     // const auto A22 = A2.dot(A2);
@@ -227,6 +218,10 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     // const auto A33_length = sqrt(A33);
     // const auto V = A3 / A33_length;
 
+    const auto d_T = A1.dot(T);
+    const auto d_N = A1.dot(A2);
+    const auto d_V = A1.dot(A3);
+
     const auto d_t = a1.dot(T);     // Anteil T in a1 Richtung
     const auto d_n = a1.dot(A2);     // Anteil N in a1 Richtung
     const auto d_v = a1.dot(A3);     // Anteil V in a1 Richtung
@@ -236,17 +231,39 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const auto alpha_2  = HyperJet::atan2(d_n , d_t);                  // Winkel zwischen a1 und A1 um n
     const auto alpha_3  = HyperJet::atan2(d_v , d_t);                  // Winkel zwischen a1 und A1 um v
 
+    const auto u_xyz = x - X;
+    const auto delta_a = a1 - A1; 
 
     // inner energy 
     // auto const condition_type = GetValue(DIRICHLET_CONDITION_TYPE);
 
-    auto const penalty_disp   = GetValue(PENALTY_DISPLACEMENT);
+    auto const penalty_disp_u   = GetValue(PENALTY_DISPLACEMENT_X);
+    auto const penalty_disp_v   = GetValue(PENALTY_DISPLACEMENT_Y);
+    auto const penalty_disp_w   = GetValue(PENALTY_DISPLACEMENT_Z);
     auto const penalty_rot    = GetValue(PENALTY_ROTATION);
     auto const penalty_tors   = GetValue(PENALTY_TORSION);
 
 
+    // std::cout <<"a1 : " << typeid(a1).name() << std::endl;
+    // std::cout <<"A1 : " << typeid(A1).name() << std::endl;
+    // std::cout <<"a2 : " << typeid(a2).name() << std::endl;
+    // std::cout <<"A2 : " << typeid(A2).name() << std::endl;
+    // std::cout <<"a3 : " << typeid(a3).name() << std::endl;
+    // std::cout <<"A3 : " << typeid(A3).name() << std::endl;
+    const auto delta1 = d_t - d_T;
+    const auto delta2 = d_n - d_N;
+    const auto delta3 = d_v - d_V;
+
     // Potential Displacement
-    const auto dP_disp = 0.5 * ( u_xyz.dot(u_xyz)) * penalty_disp * integration_weight ;
+    // const auto dP_disp = 0.5 * ((delta1).dot(delta1) * pow(penalty_disp_u, 2) 
+    //                            +(delta2).dot(delta2) * pow(penalty_disp_v, 2)
+    //                            +(delta3).dot(delta3) * pow(penalty_disp_w, 2)) * integration_weight ;
+
+    const auto dP_disp_u = 0.5 * pow((x(0)-X(0)), 2) * penalty_disp_u * integration_weight;                               
+    const auto dP_disp_w = 0.5 * pow((x(1)-X(1)), 2) * penalty_disp_w * integration_weight;                               
+    const auto dP_disp_v = 0.5 * pow((x(2)-X(2)), 2) * penalty_disp_v * integration_weight;                               
+
+    // const auto dP_disp = 0.5 * ( u_xyz.dot(u_xyz)) * penalty_disp_u * integration_weight ;
 
     // Potential Rotation
       // By the Gradient 
@@ -263,7 +280,7 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
 
     // Variation Hesse
     if (condition_type == 1)        // Verschiebung 
-       MapMatrix(rLeftHandSideMatrix) =    dP_disp.h() ;
+       MapMatrix(rLeftHandSideMatrix) =    dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h();
     else if (condition_type == 2)    // Torsion
        MapMatrix(rLeftHandSideMatrix) =    dP_alpha_tors.h() ;
     else if (condition_type == 3)   // Biegung  Ableitung
@@ -272,18 +289,18 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
        MapMatrix(rLeftHandSideMatrix) =    dP_grad_bend.h() ;
 
     else if(condition_type == 12)   // Verschiebung + Torsion
-      MapMatrix(rLeftHandSideMatrix) = ( dP_disp.h() + dP_alpha_tors.h()) ;
+      MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h()+ dP_alpha_tors.h()) ;
     else if(condition_type == 13)   // Verschiebung + Rotation
-      MapMatrix(rLeftHandSideMatrix) = ( dP_disp.h() + dP_alpha_bend.h()) ;
+      MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h()+ dP_alpha_bend.h()) ;
     else if(condition_type == 23)   // Torsion + Rotation
       MapMatrix(rLeftHandSideMatrix) = ( dP_alpha_tors.h() + dP_alpha_bend.h()) ;
     else if(condition_type == 123)  // Verschiebung + Torsion +  Rotation
-      MapMatrix(rLeftHandSideMatrix) = ( dP_disp.h() + dP_alpha_tors.h() + dP_alpha_bend.h()) ;
+      MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h()+ dP_alpha_tors.h() + dP_grad_bend.h()) ;
 
 
     // Variation Gradient
     if (condition_type == 1)         // Verschiebung
-      MapVector(rRightHandSideVector) = -( dP_disp.g() ) ;
+      MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()) ;
     else if (condition_type == 2)   // Torsion
       MapVector(rRightHandSideVector) = -( dP_alpha_tors.g()   );
     else if (condition_type == 3)   // Biegung Ableitung
@@ -292,13 +309,13 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
       MapVector(rRightHandSideVector) = -( dP_grad_bend.g() );
     
     else if(condition_type == 12)   // Verschiebung + Torsion
-      MapVector(rRightHandSideVector) = -( dP_disp.g() + dP_alpha_tors.g()) ;
+      MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_tors.g()) ;
     else if(condition_type == 13)   // Verschiebung + Rotation
-      MapVector(rRightHandSideVector) = -( dP_disp.g() + dP_alpha_bend.g()) ;
+      MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_bend.g()) ;
     else if(condition_type == 23)   // Torsion + Rotation
       MapVector(rRightHandSideVector) = -( dP_alpha_tors.g() + dP_alpha_bend.g()) ;
     else if(condition_type == 123)  // Verschiebung + Torsion +  Rotation
-      MapVector(rRightHandSideVector) = -( dP_disp.g() + dP_alpha_tors.g() + dP_alpha_bend.g()) ;
+      MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_tors.g() + dP_grad_bend.g()) ;
 
     KRATOS_CATCH("")
 }

@@ -312,12 +312,13 @@ class ResidualBasedEliminationBuilderAndSolverWithConstraints
         const ProcessInfo& r_process_info = rModelPart.GetProcessInfo();
 
         // Computing constraints
-        const int n_constraints = static_cast<int>(rModelPart.MasterSlaveConstraints().size());
-        auto constraints_begin = rModelPart.MasterSlaveConstraintsBegin();
-        #pragma omp parallel for schedule(guided, 512) firstprivate(n_constraints, constraints_begin)
-        for (int k = 0; k < n_constraints; ++k) {
-            auto it = constraints_begin + k;
-            it->InitializeSolutionStep(r_process_info); // Here each constraint constructs and stores its T and C matrices. Also its equation slave_ids.
+        const int number_of_constraints = static_cast<int>(rModelPart.MasterSlaveConstraints().size());
+        const auto it_const_begin = rModelPart.MasterSlaveConstraintsBegin();
+
+        #pragma omp parallel for schedule(guided, 512)
+        for (int k = 0; k < number_of_constraints; ++k) {
+            auto it_const = it_const_begin + k;
+            it_const->InitializeSolutionStep(r_process_info); // Here each constraint constructs and stores its T and C matrices. Also its equation slave_ids.
         }
 
         KRATOS_CATCH("ResidualBasedEliminationBuilderAndSolverWithConstraints failed to initialize solution step.")
@@ -344,11 +345,12 @@ class ResidualBasedEliminationBuilderAndSolverWithConstraints
         const ProcessInfo& r_process_info = rModelPart.GetProcessInfo();
 
         // Computing constraints
-        const int n_constraints = static_cast<int>(rModelPart.MasterSlaveConstraints().size());
-        const auto constraints_begin = rModelPart.MasterSlaveConstraintsBegin();
-        #pragma omp parallel for schedule(guided, 512) firstprivate(n_constraints, constraints_begin)
-        for (int k = 0; k < n_constraints; ++k) {
-            auto it = constraints_begin + k;
+        const int number_of_constraints = static_cast<int>(rModelPart.MasterSlaveConstraints().size());
+        const auto it_const_begin = rModelPart.MasterSlaveConstraintsBegin();
+
+        #pragma omp parallel for schedule(guided, 512)
+        for (int k = 0; k < number_of_constraints; ++k) {
+            auto it = it_const_begin + k;
             it->FinalizeSolutionStep(r_process_info);
         }
         KRATOS_CATCH("ResidualBasedEliminationBuilderAndSolverWithConstraints failed to finalize solution step.")
@@ -1008,6 +1010,7 @@ protected:
 
         const int number_of_constraints = static_cast<int>(rModelPart.MasterSlaveConstraints().size());
         const auto it_const_begin = rModelPart.MasterSlaveConstraints().begin();
+
         // TODO: OMP
         for (int i_const = 0; i_const < number_of_constraints; ++i_const) {
             auto it_const = it_const_begin + i_const;
@@ -1540,13 +1543,14 @@ private:
         // Iterate over constraints
         const int number_of_constraints = static_cast<int>(rModelPart.MasterSlaveConstraints().size());
         const auto it_const_begin = rModelPart.MasterSlaveConstraints().begin();
+
         #pragma omp parallel firstprivate(slave_dof_list, master_dof_list)
         {
             // We cleate the temporal set and we reserve some space on them
             set_type dof_temp_fixed_master_set;
             dof_temp_fixed_master_set.reserve(2000);
 
-            #pragma omp for schedule(guided, 512) nowait
+            #pragma omp for schedule(guided, 512)
             for (int i_const = 0; i_const < number_of_constraints; ++i_const) {
                 auto it_const = it_const_begin + i_const;
 
@@ -1802,12 +1806,17 @@ private:
         // Vector containing the localization in the system of the different terms
         Element::EquationIdVectorType equation_id;
 
+        // Elements
+        const auto it_elem_begin = r_elements_array.begin();
+        const int nelements = static_cast<int>(r_elements_array.size());
+
+        // Conditions
+        const auto it_cond_begin = r_conditons_array.begin();
+        const int nconditions = static_cast<int>(r_conditons_array.size());
+
         // Assemble all elements and conditions
         #pragma omp parallel firstprivate( lhs_contribution, rhs_contribution, equation_id)
         {
-            // Elements
-            const auto it_elem_begin = r_elements_array.begin();
-            const int nelements = static_cast<int>(r_elements_array.size());
             #pragma omp for schedule(guided, 512) nowait
             for (int i = 0; i<nelements; ++i) {
                 auto it_elem = it_elem_begin + i;
@@ -1828,9 +1837,6 @@ private:
                 }
             }
 
-            // Conditions
-            const auto it_cond_begin = r_conditons_array.begin();
-            const int nconditions = static_cast<int>(r_conditons_array.size());
             #pragma omp  for schedule(guided, 512)
             for (int i = 0; i<nconditions; ++i) {
                 auto it_cond = it_cond_begin + i;
@@ -1881,12 +1887,17 @@ private:
         // Vector containing the localization in the system of the different terms
         Element::EquationIdVectorType equation_id;
 
+        // Elements
+        const auto it_elem_begin = r_elements_array.begin();
+        const int nelements = static_cast<int>(r_elements_array.size());
+
+        // Conditions>
+        const auto it_cond_begin = r_conditons_array.begin();
+        const int nconditions = static_cast<int>(r_conditons_array.size());
+
         // Assemble all elements and conditions
         #pragma omp parallel firstprivate( rhs_contribution, equation_id)
         {
-            // Elements
-            const auto it_elem_begin = r_elements_array.begin();
-            const int nelements = static_cast<int>(r_elements_array.size());
             #pragma omp for schedule(guided, 512) nowait
             for (int i = 0; i<nelements; ++i) {
                 auto it_elem = it_elem_begin + i;
@@ -1904,9 +1915,6 @@ private:
                 }
             }
 
-            // Conditions
-            const auto it_cond_begin = r_conditons_array.begin();
-            const int nconditions = static_cast<int>(r_conditons_array.size());
             #pragma omp  for schedule(guided, 512)
             for (int i = 0; i<nconditions; ++i) {
                 auto it_cond = it_cond_begin + i;

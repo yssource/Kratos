@@ -1144,8 +1144,8 @@ protected:
 
         // We do a backup of the matrix before apply the constraints
         if (mpOldAMatrix == NULL) { // If the pointer is not initialized initialize it to an empty matrix
-            TSystemMatrixPointerType pNewOldAMatrix = TSystemMatrixPointerType(new TSystemMatrixType(0, 0));
-            mpOldAMatrix.swap(pNewOldAMatrix);
+            TSystemMatrixPointerType p_new_old_matrix = TSystemMatrixPointerType(new TSystemMatrixType(0, 0));
+            mpOldAMatrix.swap(p_new_old_matrix);
         }
         (*mpOldAMatrix).swap(rA);
         // We resize of system of equations
@@ -1761,8 +1761,8 @@ private:
         }
 
         // Simply restore old LHS
-        (rA).swap(*mpOldAMatrix);
-        mpOldAMatrix = NULL;
+        rA.resize(0, 0, false);
+        rA.swap(*mpOldAMatrix);
 
         // Reconstruct the RHS
         TSystemVectorType rb_copy = rb;

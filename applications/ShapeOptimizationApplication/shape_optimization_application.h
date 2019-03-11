@@ -84,6 +84,7 @@ namespace Kratos
 
     // For mapping
     KRATOS_DEFINE_VARIABLE(int,MAPPING_ID);
+	KRATOS_DEFINE_3D_VARIABLE_WITH_COMPONENTS(TRACTION);
 
 	// For bead optimization
     KRATOS_DEFINE_VARIABLE(double,ALPHA);

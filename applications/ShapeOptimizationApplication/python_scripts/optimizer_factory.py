@@ -89,6 +89,7 @@ class VertexMorphingMethod:
         model_part.AddNodalSolutionStepVariable(MESH_CHANGE)
         model_part.AddNodalSolutionStepVariable(NORMAL)
         model_part.AddNodalSolutionStepVariable(NORMALIZED_SURFACE_NORMAL)
+        model_part.AddNodalSolutionStepVariable(TRACTION)
 
     # --------------------------------------------------------------------------
     def Optimize(self):

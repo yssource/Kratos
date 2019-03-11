@@ -28,7 +28,7 @@
 #include "geometries/tetrahedra_3d_10.h"
 #include "geometries/hexahedra_3d_8.h"
 #include "geometries/hexahedra_3d_20.h"
-#include "geometries/line_2d.h"
+#include "geometries/line_2d_2.h"
 #include "geometries/line_3d_2.h"
 #include "includes/variables.h"
 #include "includes/condition.h"
@@ -82,6 +82,7 @@ namespace Kratos
 
     // For Mapping
     KRATOS_CREATE_VARIABLE(int,MAPPING_ID);
+    KRATOS_CREATE_3D_VARIABLE_WITH_COMPONENTS(TRACTION);
 
     // For bead optimization
     KRATOS_CREATE_VARIABLE(double,ALPHA);
@@ -161,6 +162,7 @@ namespace Kratos
 
         // For mapping
         KRATOS_REGISTER_VARIABLE(MAPPING_ID);
+        KRATOS_REGISTER_3D_VARIABLE_WITH_COMPONENTS(TRACTION);
 
         // For bead optimization
         KRATOS_REGISTER_VARIABLE(ALPHA);

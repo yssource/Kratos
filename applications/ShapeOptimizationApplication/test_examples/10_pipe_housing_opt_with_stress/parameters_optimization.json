@@ -1,0 +1,112 @@
+{
+    "optimization_settings" : {
+        "model_settings" : {
+            "domain_size"           : 3,
+            "model_part_name"       : "CSM_domain",
+            "model_import_settings" : {
+                "input_type"     : "mdpa",
+                "input_filename" : "CSM_domain"
+            },
+            "design_surface_sub_model_part_name" : "Parts_structure",
+            "damping" : {
+                "apply_damping"      : true,
+                "max_neighbor_nodes" : 50000,
+                "damping_regions" : [{
+                        "sub_model_part_name"   : "DISPLACEMENT_left_face",
+                        "damp_X"                : true,
+                        "damp_Y"                : true,
+                        "damp_Z"                : true,
+                        "damping_function_type" : "cosine",
+                        "damping_radius"        : 0.06
+                    },
+                    {
+                        "sub_model_part_name"   : "damping_blocks",
+                        "damp_X"                : true,
+                        "damp_Y"                : true,
+                        "damp_Z"                : true,
+                        "damping_function_type" : "cosine",
+                        "damping_radius"        : 0.01
+                    }]
+            },
+            "mesh_motion" : {
+                "apply_mesh_solver" : false,
+                "solver_settings" : {
+                    "solver_type": "mesh_solver_structural_similarity",
+                    "model_part_name"    : "CSM_domain",
+                    "model_import_settings"              : {
+                        "input_type"     : "use_input_model_part"
+                    },
+                    "time_stepping" : {
+                        "time_step"       : 1.0
+                    },
+                    "domain_size"     : 3,
+                    "mesh_motion_linear_solver_settings"  : {
+                        "solver_type" : "EigenSolversApplication.pardiso_lu",
+                        "scaling"     : false,
+                        "verbosity"   : 0
+                    }
+                },
+                "boundary_conditions_process_list" : []
+            }
+        },
+        "objectives" : [{
+            "identifier" : "mean_stress_partition_1",
+            "type"       : "minimization",
+            "use_kratos" : false,
+            "kratos_response_settings":{
+                "response_type"        : "adjoint_max_stress",
+                "gradient_mode"        : "semi_analytic",
+                "step_size"            : 1.0e-8,
+                "critical_part_name"   : "stress_partition_1",
+                "stress_type"          : "VON_MISES_STRESS",
+                "stress_treatment"     : "mean",
+                "echo_level"           : 1,
+                "primal_settings"      : "parameters_analysis_partition_1.json",
+                "adjoint_settings"     : "auto",
+                "sensitivity_settings" : {
+                    "sensitivity_model_part_name"     : "Parts_structure",
+                    "nodal_sensitivity_variables"     : ["SHAPE"],
+                    "element_sensitivity_variables"   : [],
+                    "condition_sensitivity_variables" : [],
+                    "build_mode": "static"
+                }
+            },
+            "project_gradient_on_surface_normals" : false
+        }],
+        "constraints" : [],
+        "design_variables" : {
+            "type"                : "vertex_morphing",
+            "filter" : {
+                "filter_function_type"       : "linear",
+                "filter_radius"              : 0.03,
+                "max_nodes_in_filter_radius" : 50000,
+                "matrix_free_filtering"      : true
+            }
+        },
+        "optimization_algorithm" : {
+            "name"                    : "steepest_descent",
+            "max_iterations"          : 20,
+            "relative_tolerance"      : 1e-3,
+            "line_search" : {
+                "line_search_type"           : "manual_stepping",
+                "normalize_search_direction" : true,
+                "step_size"                  : 0.0025
+            }
+        },
+        "output" : {
+            "design_output_mode" : "WriteOptimizationModelPart",
+            "nodal_results"      : [ "NORMALIZED_SURFACE_NORMAL",
+                                     "TRACTION",
+                                     "DF1DX",
+                                     "DF1DX_MAPPED",
+                                     "CONTROL_POINT_UPDATE",
+                                     "CONTROL_POINT_CHANGE",
+                                     "SHAPE_UPDATE",
+                                     "SHAPE_CHANGE",
+                                     "MESH_CHANGE" ],
+            "output_format" : {
+                "name": "gid"
+            }
+        }
+    }
+}

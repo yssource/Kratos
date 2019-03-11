@@ -297,7 +297,6 @@ class AdjointResponseFunction(ResponseFunctionBase):
         self.adjoint_analysis.Initialize()
 
     def InitializeSolutionStep(self):
-
         # Run the primal analysis.
         # TODO if primal_analysis.status==solved: return
         Logger.PrintInfo("\n> Starting primal analysis for response:", self.identifier)
@@ -307,16 +306,6 @@ class AdjointResponseFunction(ResponseFunctionBase):
         self.primal_analysis.RunSolutionLoop()
         Logger.PrintInfo("> Time needed for solving the primal analysis = ",round(timer.time() - startTime,2),"s")
 
-        # TODO the response value calculation for stresses currently only works on the adjoint modelpart
-        # this needs to be improved, also the response value should be calculated on the PRIMAL modelpart!!
-        self.adjoint_analysis.time = self.adjoint_analysis._GetSolver().AdvanceInTime(self.adjoint_analysis.time)
-
-        # synchronize the modelparts
-        self._SynchronizeAdjointFromPrimal()
-
-        self.adjoint_analysis.InitializeSolutionStep()
-
-
     def CalculateValue(self):
         startTime = timer.time()
         value = self._GetResponseFunctionUtility().CalculateValue(self.primal_model_part)
@@ -324,18 +313,18 @@ class AdjointResponseFunction(ResponseFunctionBase):
 
         self.primal_model_part.ProcessInfo[StructuralMechanicsApplication.RESPONSE_VALUE] = value
 
-
     def CalculateGradient(self):
-        Logger.PrintInfo("\n> Starting adjoint analysis for response:", self.identifier)
+        # synchronize the modelparts
+        self._SynchronizeAdjointFromPrimal()
         startTime = timer.time()
-        self.adjoint_analysis._GetSolver().Predict()
-        self.adjoint_analysis._GetSolver().SolveSolutionStep()
+        Logger.PrintInfo("\n> Starting adjoint analysis for response:", self.identifier)
+        if not self.adjoint_analysis.time < self.adjoint_analysis.end_time:
+            self.adjoint_analysis.end_time += 1
+        self.adjoint_analysis.RunSolutionLoop()
         Logger.PrintInfo("> Time needed for solving the adjoint analysis = ",round(timer.time() - startTime,2),"s")
-
 
     def GetValue(self):
         return self.primal_model_part.ProcessInfo[StructuralMechanicsApplication.RESPONSE_VALUE]
-
 
     def GetShapeGradient(self):
         gradient = {}
@@ -343,20 +332,12 @@ class AdjointResponseFunction(ResponseFunctionBase):
             gradient[node.Id] = node.GetSolutionStepValue(KratosMultiphysics.SHAPE_SENSITIVITY)
         return gradient
 
-
-    def FinalizeSolutionStep(self):
-        self.adjoint_analysis.FinalizeSolutionStep()
-        self.adjoint_analysis.OutputSolutionStep()
-
-
     def Finalize(self):
         self.primal_analysis.Finalize()
         self.adjoint_analysis.Finalize()
 
-
     def _GetResponseFunctionUtility(self):
         return self.adjoint_analysis._GetSolver().response_function
-
 
     def _SynchronizeAdjointFromPrimal(self):
         Logger.PrintInfo("\n> Synchronize primal and adjoint modelpart for response:", self.identifier)
@@ -374,11 +355,10 @@ class AdjointResponseFunction(ResponseFunctionBase):
             adjoint_node.Z = primal_node.Z
 
         # Put primal solution on adjoint model - for "auto" setting, else it has to be done by the user e.g. using hdf5 process
-        if self.response_settings["adjoint_settings"].GetString() == "auto":
-            Logger.PrintInfo("> Transfer primal state to adjoint model part.")
-            variable_utils = KratosMultiphysics.VariableUtils()
-            for variable in self.primal_state_variables:
-                variable_utils.CopyModelPartNodalVar(variable, self.primal_model_part, self.adjoint_model_part, 0)
+        Logger.PrintInfo("> Transfer primal state to adjoint model part.")
+        variable_utils = KratosMultiphysics.VariableUtils()
+        for variable in self.primal_state_variables:
+            variable_utils.CopyModelPartNodalVar(variable, self.primal_model_part, self.adjoint_model_part, 0)
 
 
     def _GetAdjointParameters(self):
@@ -415,11 +395,16 @@ class AdjointResponseFunction(ResponseFunctionBase):
                 solver_settings.AddEmptyValue("move_mesh_flag")
             solver_settings["move_mesh_flag"].SetBool(False)
 
-            if not solver_settings.Has("scheme_settings"):
-                tmp = solver_settings.AddEmptyValue("scheme_settings")
-                if not tmp.Has("scheme_type"):
-                    tmp.AddEmptyValue("scheme_type")
-            solver_settings["scheme_settings"]["scheme_type"].SetString("adjoint_structural")
+            if solver_settings.Has("scheme_settings"):
+                depr_msg = '\nDEPRECATION-WARNING: "scheme_settings" is deprecated, please remove it from your json parameters.\n'
+                KratosMultiphysics.Logger.PrintWarning(__name__, depr_msg)
+                solver_settings.RemoveValue("scheme_settings")
+
+            if solver_settings["model_import_settings"]["input_type"].GetString() == "use_input_model_part":
+                solver_settings["model_import_settings"]["input_type"].SetString("mdpa")
+                solver_settings["model_import_settings"].AddEmptyValue("input_filename")
+                model_part_name = solver_settings["model_part_name"].GetString()
+                solver_settings["model_import_settings"]["input_filename"].SetString(model_part_name)
 
             # Dirichlet conditions: change variables
             for i in range(0,primal_parameters["processes"]["constraints_process_list"].size()):
@@ -431,9 +416,9 @@ class AdjointResponseFunction(ResponseFunctionBase):
 
             # Output process:
             # TODO how to add the output process? How find out about the variables?
-            if adjoint_parameters.Has("output_configuration"):
+            if adjoint_parameters.Has("output_processes"):
                 Logger.PrintInfo("> Output process is removed for adjoint analysis. To enable it define adjoint_parameters yourself.")
-                adjoint_parameters.RemoveValue("output_configuration")
+                adjoint_parameters.RemoveValue("output_processes")
 
             # sensitivity settings
             adjoint_parameters["solver_settings"].AddValue("sensitivity_settings", self.response_settings["sensitivity_settings"])

@@ -7,20 +7,29 @@
                 "input_type"     : "mdpa",
                 "input_filename" : "CSM_domain"
             },
-            "design_surface_sub_model_part_name" : "design_surface_wet_interface",
+            "design_surface_sub_model_part_name" : "Parts_structure",
             "damping" : {
-                "apply_damping" : false,
+                "apply_damping"      : true,
+                "max_neighbor_nodes" : 50000,
                 "damping_regions" : [{
-                        "sub_model_part_name"   : "support",
+                        "sub_model_part_name"   : "DISPLACEMENT_left_face",
                         "damp_X"                : true,
                         "damp_Y"                : true,
                         "damp_Z"                : true,
                         "damping_function_type" : "cosine",
-                        "damping_radius"        : 85.0
+                        "damping_radius"        : 0.06
+                    },
+                    {
+                        "sub_model_part_name"   : "damping_blocks",
+                        "damp_X"                : true,
+                        "damp_Y"                : true,
+                        "damp_Z"                : true,
+                        "damping_function_type" : "cosine",
+                        "damping_radius"        : 0.01
                     }]
             },
             "mesh_motion" : {
-                "apply_mesh_solver" : true,
+                "apply_mesh_solver" : false,
                 "solver_settings" : {
                     "solver_type": "mesh_solver_structural_similarity",
                     "model_part_name"    : "CSM_domain",
@@ -61,7 +70,8 @@
                     "condition_sensitivity_variables" : [],
                     "build_mode": "static"
                 }
-            }
+            },
+            "project_gradient_on_surface_normals" : false
         }],
         "constraints" : [],
         "design_variables" : {
@@ -86,6 +96,7 @@
         "output" : {
             "design_output_mode" : "WriteOptimizationModelPart",
             "nodal_results"      : [ "NORMALIZED_SURFACE_NORMAL",
+                                     "TRACTION",
                                      "DF1DX",
                                      "DF1DX_MAPPED",
                                      "CONTROL_POINT_UPDATE",

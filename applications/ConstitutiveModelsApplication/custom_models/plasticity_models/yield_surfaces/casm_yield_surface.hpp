@@ -173,7 +173,7 @@ namespace Kratos
       const double& rShapeN   = rMaterialProperties[SHAPE_PARAMETER];
 
       //get internal variables
-      const double& rP0   = rVariables.Internal.Variables[5];
+      //const double& rP0   = rVariables.Internal.Variables[5];
 
       //calculate stress invariants and derivatives
       double MeanStress, J2, LodeAngle;

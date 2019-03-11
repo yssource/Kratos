@@ -116,7 +116,7 @@ namespace Kratos
             // Material Parameters
             const Properties& rProperties = rModelData.GetProperties();
             const double& rShearM   = rProperties[CRITICAL_STATE_LINE];
-            const double& rSpacingR = rProperties[SPACING_RATIO];
+            //const double& rSpacingR = rProperties[SPACING_RATIO];
             const double& rShapeN   = rProperties[SHAPE_PARAMETER];
             const double & rSwellingSlope = rProperties[SWELLING_SLOPE];
             const double & rOtherSlope    = rProperties[NORMAL_COMPRESSION_SLOPE];

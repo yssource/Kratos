@@ -19,6 +19,7 @@
             "input_type"     : "mdpa",
             "input_filename" : "CSM_domain"
         },
+        "move_mesh_flag": false,
         "material_import_settings"           : {
             "materials_filename" : "parameters_material.json"
         },
@@ -76,7 +77,7 @@
                         "node_output"         : false,
                         "skin_output"         : false,
                         "plane_output"        : [],
-                        "nodal_results"       : ["DISPLACEMENT","REACTION","POINT_LOAD","MESH_CHANGE"],
+                        "nodal_results"       : ["DISPLACEMENT","REACTION","POINT_LOAD","TRACTION", "MESH_CHANGE"],
                         "gauss_point_results" : ["VON_MISES_STRESS"]
                     },
                     "point_data_configuration"  : []

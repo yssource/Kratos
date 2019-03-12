@@ -22,10 +22,10 @@
 #include "includes/properties.h"
 #include "utilities/brent_iteration.h"
 
-#include "custom_elements/rans_constitutive_element.h"
-#include "rans_constitutive_laws_application_variables.h"
-#include "includes/cfd_variables.h"
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
+#include "custom_elements/rans_constitutive_element.h"
+#include "includes/cfd_variables.h"
+#include "rans_constitutive_laws_application_variables.h"
 
 namespace Kratos
 {
@@ -129,8 +129,8 @@ public:
      * Constructor using Properties
      */
     EvmEpsilonElement(IndexType NewId,
-                       GeometryType::Pointer pGeometry,
-                       PropertiesType::Pointer pProperties);
+                      GeometryType::Pointer pGeometry,
+                      PropertiesType::Pointer pProperties);
 
     /**
      * Copy Constructor
@@ -203,7 +203,6 @@ public:
      * @param rCurrentProcessInfo: the current process info instance
      */
     void GetDofList(DofsVectorType& rElementalDofList, ProcessInfo& CurrentProcessInfo) override;
-
 
     void GetValuesVector(VectorType& rValues, int Step = 0) override;
 
@@ -342,8 +341,8 @@ public:
      * @param rCurrentProcessInfo the current process info instance
      */
     void CalculateLocalVelocityContribution(MatrixType& rDampingMatrix,
-            VectorType& rRightHandSideVector,
-            ProcessInfo& rCurrentProcessInfo) override;
+                                            VectorType& rRightHandSideVector,
+                                            ProcessInfo& rCurrentProcessInfo) override;
 
     /**
      * This method provides the place to perform checks on the completeness of the input
@@ -428,6 +427,13 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
+
+    double CalculateReactionTerm(const double kinematic_viscosity,
+                                 const double y_plus,
+                                 const double wall_distance,
+                                 const double f2,
+                                 const double c2,
+                                 const double gamma) const;
 
     ///@}
     ///@name Serialization

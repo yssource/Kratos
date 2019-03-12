@@ -339,8 +339,8 @@ public:
      * @param rCurrentProcessInfo the current process info instance
      */
     void CalculateLocalVelocityContribution(MatrixType& rDampingMatrix,
-            VectorType& rRightHandSideVector,
-            ProcessInfo& rCurrentProcessInfo) override;
+                                            VectorType& rRightHandSideVector,
+                                            ProcessInfo& rCurrentProcessInfo) override;
 
     /**
      * This method provides the place to perform checks on the completeness of the input
@@ -425,6 +425,10 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
+
+    double CalculateReactionTerm(const double kinematic_viscosity,
+                                 const double wall_distance,
+                                 const double gamma) const;
 
     ///@}
     ///@name Serialization

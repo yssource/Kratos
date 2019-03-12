@@ -6,7 +6,7 @@
 from __future__ import print_function, absolute_import, division
 
 # Import Kratos "wrapper" for unittests
-import KratosMultiphysics
+import KratosMultiphysics as km
 import KratosMultiphysics.KratosUnittest as KratosUnittest
 
 # ==============================================================================

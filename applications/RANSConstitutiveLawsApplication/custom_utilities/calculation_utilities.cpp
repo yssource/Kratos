@@ -38,17 +38,25 @@ void CalculateGeometryData(const Geometry<Node<3>>& rGeometry,
 }
 
 template <class NodeType>
-void LowerBound(ModelPart& rModelPart, Variable<double>& rVariable, const double MinValue)
+void LowerBound(ModelPart& rModelPart, const Variable<double>& rVariable, const double MinValue)
 {
     const int number_of_nodes = rModelPart.NumberOfNodes();
 
-#pragma omp parallel for
+    unsigned int count_of_nodes_negative = 0;
+
+#pragma omp parallel for reduction(+: count_of_nodes_negative)
     for (int i = 0; i < number_of_nodes; i++)
     {
         NodeType& r_current_node = *(rModelPart.NodesBegin() + i);
         double& value = r_current_node.FastGetSolutionStepValue(rVariable);
-        value = std::max<double>(MinValue, value);
+        if (value < MinValue)
+        {
+            value = MinValue;
+            count_of_nodes_negative++;
+        }
     }
+
+    KRATOS_WARNING_IF("LowerBound", count_of_nodes_negative > 0) << rVariable.Name() << " of " << count_of_nodes_negative << " nodes are less than " << std::scientific << MinValue << " out of total number of " << number_of_nodes <<" nodes in " << rModelPart.Name() << ".\n";
 }
 
 double CalculateYplus(const double velocity_norm,
@@ -104,6 +112,8 @@ double CalculateYplus(const double velocity_norm,
             << std::scientific << dx << " > " << std::scientific << tol << " ]\n";
     }
 
+    KRATOS_WARNING_IF("CalculateYplus", yplus < 0.0) << "Calculated y_plus < 0.0 [ " << std::scientific << yplus << " < 0.0 ]\n";
+
     return yplus;
 }
 
@@ -157,7 +167,7 @@ template double EvaluateInPoint<Geometry<Node<3>>>(const Geometry<Node<3>>&,
 template array_1d<double, 3> EvaluateInPoint<Geometry<Node<3>>>(
     const Geometry<Node<3>>&, const Variable<array_1d<double, 3>>&, const Vector&, const int);
 
-template void LowerBound<Node<3>>(ModelPart&, Variable<double>&, const double);
+template void LowerBound<Node<3>>(ModelPart&, const Variable<double>&, const double);
 
 template double CalculateMatrixTrace<2>(const BoundedMatrix<double, 2, 2>&);
 template double CalculateMatrixTrace<3>(const BoundedMatrix<double, 3, 3>&);

@@ -66,11 +66,23 @@ public:
     typedef Geometry<NodeType> GeometryType;
 
     typedef SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver> StrategyType;
+
     typedef Scheme<TSparseSpace, TDenseSpace> SchemeType;
+
     typedef typename SchemeType::Pointer SchemePointerType;
+
+    typedef typename SchemeType::DofsArrayType DofsArrayType;
+
+    typedef typename SchemeType::TSystemMatrixType SystemMatrixType;
+
+    typedef typename SchemeType::TSystemVectorType SystemVectorType;
+
     typedef BuilderAndSolver<TSparseSpace, TDenseSpace, TLinearSolver> BuilderAndSolverType;
+
     typedef typename BuilderAndSolverType::Pointer BuilderAndSolverPointerType;
+
     typedef ConvergenceCriteria<TSparseSpace, TDenseSpace> ConvergenceCriteriaType;
+
     typedef typename ConvergenceCriteriaType::Pointer ConvergenceCriteriaPointerType;
 
     ///@}
@@ -246,6 +258,18 @@ public:
     {
         BaseType::ExecuteInitialize();
 
+        const double nu_fraction =
+            this->mrModelPart.GetProcessInfo()[TURBULENT_VISCOSITY_FRACTION];
+        const int number_of_nodes = this->mrModelPart.NumberOfNodes();
+
+#pragma omp parallel for
+        for (int i = 0; i < number_of_nodes; ++i)
+        {
+            NodeType& r_node = *(this->mrModelPart.NodesBegin() + i);
+            const double nu = r_node.FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
+            r_node.FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu * nu_fraction;
+        }
+
         this->GenerateSolutionStrategies();
 
         mpKStrategy->Initialize();
@@ -380,6 +404,9 @@ protected:
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(
             TURBULENT_ENERGY_DISSIPATION_RATE_2);
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(RANS_Y_PLUS);
+        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(FRICTION_VELOCITY);
+        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(TANGENTIAL_VELOCITY);
+        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(NORMAL_VELOCITY);
 
         BaseType::AddSolutionStepVariables();
 
@@ -409,6 +436,10 @@ private:
     typename TLinearSolver::Pointer mpKLinearSolver;
 
     typename StrategyType::Pointer mpKStrategy;
+
+    SchemePointerType mpKScheme;
+
+    SchemePointerType mpEpsilonScheme;
 
     typename TLinearSolver::Pointer mpEpsilonLinearSolver;
 
@@ -490,7 +521,7 @@ private:
                 mpKLinearSolver));
         mpKBuilderAndSolver = pKBuilderAndSolver;
 
-        SchemePointerType pKScheme = SchemePointerType(
+        mpKScheme = SchemePointerType(
             new ResidualBasedBossakTurbulentKineticEnergyScheme<TSparseSpace, TDenseSpace>(
                 alpha_bossak));
 
@@ -503,7 +534,7 @@ private:
 
         mpKStrategy = typename StrategyType::Pointer(
             new ResidualBasedNewtonRaphsonStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(
-                *this->mpTurbulenceKModelPart, pKScheme, mpKLinearSolver,
+                *this->mpTurbulenceKModelPart, mpKScheme, mpKLinearSolver,
                 pKConvergenceCriteria, pKBuilderAndSolver, k_max_iterations,
                 CalculateReactions, ReformDofSet, this->mIsMeshMoving));
 
@@ -514,7 +545,7 @@ private:
 
         mpEpsilonBuilderAndSolver = pEpsilonBuilderAndSolver;
 
-        SchemePointerType pEpsilonScheme = SchemePointerType(
+        mpEpsilonScheme = SchemePointerType(
             new ResidualBasedBossakTurbulentEnergyDissipationRateScheme<TSparseSpace, TDenseSpace>(
                 alpha_bossak));
 
@@ -528,7 +559,7 @@ private:
         mpEpsilonStrategy = typename StrategyType::Pointer(
             new ResidualBasedNewtonRaphsonStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(
                 // new LineSearchStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(
-                *this->mpTurbulenceEpsilonModelPart, pEpsilonScheme, mpEpsilonLinearSolver,
+                *this->mpTurbulenceEpsilonModelPart, mpEpsilonScheme, mpEpsilonLinearSolver,
                 pEpsilonConvergenceCriteria, pEpsilonBuilderAndSolver, epsilon_max_iterations,
                 CalculateReactions, ReformDofSet, this->mIsMeshMoving));
 
@@ -667,13 +698,20 @@ private:
                 // Applying boundary conditions
                 r_condition_node.SetLock();
                 double& y_plus = r_condition_node.FastGetSolutionStepValue(RANS_Y_PLUS);
+                double& u_tangent =
+                    r_condition_node.FastGetSolutionStepValue(TANGENTIAL_VELOCITY);
+                double& u_normal =
+                    r_condition_node.FastGetSolutionStepValue(NORMAL_VELOCITY);
+                double& u_tau = r_condition_node.FastGetSolutionStepValue(FRICTION_VELOCITY);
                 double& tke = r_condition_node.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
                 double& epsilon = r_condition_node.FastGetSolutionStepValue(
                     TURBULENT_ENERGY_DISSIPATION_RATE);
 
                 y_plus = CalculationUtilities::CalculateYplus(
                     tangential_velocity, wall_distance, nu, von_karman, beta, 100);
-                const double u_tau = y_plus * nu / wall_distance;
+                u_tangent = tangential_velocity;
+                u_normal = inner_prod(velocity, normal);
+                u_tau = y_plus * nu / wall_distance;
                 tke = std::pow(u_tau, 2) / std::sqrt(c_mu);
                 epsilon = std::pow(u_tau, 4) / (von_karman * y_plus * nu);
                 r_condition_node.UnSetLock();
@@ -683,11 +721,9 @@ private:
 
     void SolveStep()
     {
-        const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
-        this->CalculateYplus(r_current_process_info[RANS_VELOCITY_STEP]);
-
+        this->CalculateYplus();
+        this->UpdateBoundaryConditions();
         this->UpdateTurbulentViscosity();
-        // this->UpdateBoundaryConditions();
 
         mpKStrategy->InitializeSolutionStep();
         mpKStrategy->Predict();
@@ -700,9 +736,13 @@ private:
         Vector new_turbulent_viscosity = ZeroVector(number_of_nodes);
 
         bool is_converged = false;
-        int step = 0;
+        int step = 1;
 
-        while (!is_converged && (step < mMaximumCouplingIterations))
+        DofsArrayType dummy_dofs;
+        SystemMatrixType dummy_matrix;
+        SystemVectorType dummy_vector;
+
+        while (!is_converged && (step <= mMaximumCouplingIterations))
         {
 #pragma omp parallel for
             for (int i = 0; i < number_of_nodes; ++i)
@@ -714,9 +754,10 @@ private:
             KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
                 << "Solving for K...\n";
             mpKStrategy->SolveSolutionStep();
-
             CalculationUtilities::LowerBound<NodeType>(
                 this->mrModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
+            mpKScheme->Update(this->mrModelPart, dummy_dofs, dummy_matrix,
+                              dummy_vector, dummy_vector);
 
             KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
                 << "Solving for Epsilon...\n";
@@ -724,6 +765,8 @@ private:
 
             CalculationUtilities::LowerBound<NodeType>(
                 this->mrModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
+            mpEpsilonScheme->Update(this->mrModelPart, dummy_dofs, dummy_matrix,
+                                    dummy_vector, dummy_vector);
 
             this->UpdateTurbulentViscosity();
 
@@ -780,8 +823,32 @@ private:
         mpEpsilonStrategy->FinalizeSolutionStep();
     }
 
+    double CalculateNodalTurbulentViscosity(const ModelPart::NodeIterator& iNode,
+                                            const double C_mu,
+                                            const double nu_fraction,
+                                            const unsigned int Step) const
+    {
+        const double tke = iNode->FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY, Step);
+        const double epsilon =
+            iNode->FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE, Step);
+        const double y_plus = iNode->FastGetSolutionStepValue(RANS_Y_PLUS);
+        const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
+        const double nu = iNode->FastGetSolutionStepValue(KINEMATIC_VISCOSITY, Step);
+        const double nu_min = nu_fraction * nu;
+        const double nu_max = nu / nu_fraction;
+
+        const double nu_t = EvmKepsilonModelUtilities::CalculateTurbulentViscosity(
+            C_mu, tke, epsilon, f_mu, nu_min, nu_max);
+
+        return nu_t;
+    }
+
     void UpdateTurbulentViscosity()
     {
+        DofsArrayType dummy_dofs;
+        SystemMatrixType dummy_matrix;
+        SystemVectorType dummy_vector;
+
         const int number_of_nodes = this->mrModelPart.NumberOfNodes();
 
         const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
@@ -793,18 +860,8 @@ private:
         for (int i = 0; i < number_of_nodes; i++)
         {
             ModelPart::NodeIterator iNode = this->mrModelPart.NodesBegin() + i;
-            const double tke =
-                iNode->FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY, 1);
-            const double epsilon =
-                iNode->FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE, 1);
-            const double y_plus = iNode->FastGetSolutionStepValue(RANS_Y_PLUS);
-            const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
-            const double nu = iNode->FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
-            const double nu_min = nu_fraction * nu;
-
-            const double nu_t = EvmKepsilonModelUtilities::CalculateTurbulentViscosity(
-                C_mu, tke, epsilon, nu_min, f_mu);
-
+            const double nu_t =
+                CalculateNodalTurbulentViscosity(iNode, C_mu, nu_fraction, 0);
             iNode->FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t;
         }
     }

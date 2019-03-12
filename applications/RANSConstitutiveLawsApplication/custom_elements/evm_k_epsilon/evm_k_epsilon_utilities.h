@@ -43,8 +43,9 @@ namespace EvmKepsilonModelUtilities
 double CalculateTurbulentViscosity(const double C_mu,
                                    const double turbulent_kinetic_energy,
                                    const double turbulent_energy_dissipation_rate,
+                                   const double f_mu,
                                    const double minimum_viscosity,
-                                   const double f_mu);
+                                   const double maximum_viscosity);
 
 double CalculateFmu(const double y_plus);
 
@@ -55,6 +56,7 @@ double CalculateF2(const double turbulent_kinetic_energy,
 double CalculateStabilizationTau(const double velocity_magnitude,
                                  const double length,
                                  const double effective_kinematic_viscosity,
+                                 const double reaction,
                                  const double delta_time);
 
 template <unsigned int TDim>
@@ -64,6 +66,11 @@ template <unsigned int TDim>
 double CalculateSourceTerm(const BoundedMatrix<double, TDim, TDim>& rVelocityGradient,
                            const double turbulent_kinematic_viscosity,
                            const double turbulent_kinetic_energy);
+
+double CalculateGamma(const double C_mu,
+                      const double f_mu,
+                      const double turbulent_kinetic_energy,
+                      const double turbulent_kinematic_viscosity);
 
 } // namespace EvmKepsilonModelUtilities
 

@@ -25,15 +25,19 @@ namespace EvmKepsilonModelUtilities
 double CalculateTurbulentViscosity(const double C_mu,
                                    const double turbulent_kinetic_energy,
                                    const double turbulent_energy_dissipation_rate,
+                                   const double f_mu,
                                    const double minimum_viscosity,
-                                   const double f_mu)
+                                   const double maximum_viscosity)
 {
     CheckIfVariableIsPositive(turbulent_kinetic_energy);
     CheckIfVariableIsPositive(turbulent_energy_dissipation_rate);
 
-    return std::max<double>(
-        minimum_viscosity, C_mu * f_mu * std::pow(turbulent_kinetic_energy, 2) /
-                               turbulent_energy_dissipation_rate);
+    const double nu_t = std::min<double>(
+        std::max<double>(minimum_viscosity, C_mu * f_mu * std::pow(turbulent_kinetic_energy, 2) /
+                                                turbulent_energy_dissipation_rate),
+        maximum_viscosity);
+
+    return nu_t;
 }
 
 double CalculateFmu(const double y_plus)
@@ -50,15 +54,22 @@ double CalculateF2(const double turbulent_kinetic_energy,
     CheckIfVariableIsPositive(turbulent_energy_dissipation_rate);
     CheckIfVariableIsPositive(kinematic_viscosity);
 
-    const double Re_t = std::pow(turbulent_kinetic_energy, 2) /
-                        (kinematic_viscosity * turbulent_energy_dissipation_rate);
+    if (turbulent_energy_dissipation_rate == 0.0)
+        return 1.0;
+    else
+    {
+        const double Re_t = std::pow(turbulent_kinetic_energy, 2) /
+                            (kinematic_viscosity * turbulent_energy_dissipation_rate);
+        const double f2 = 1.0 - 0.22 * std::exp(-1.0 * std::pow(Re_t / 6.0, 2));
 
-    return 1.0 - 0.22 * std::exp(-1.0 * std::pow(Re_t / 6.0, 2));
+        return f2;
+    }
 }
 
 double CalculateStabilizationTau(const double velocity_magnitude,
                                  const double length,
                                  const double effective_kinematic_viscosity,
+                                 const double reaction,
                                  const double delta_time)
 {
     CheckIfVariableIsPositive(velocity_magnitude);
@@ -66,17 +77,26 @@ double CalculateStabilizationTau(const double velocity_magnitude,
     CheckIfVariableIsPositive(effective_kinematic_viscosity);
     CheckIfVariableIsPositive(delta_time);
 
-    const double Pe = 0.5 * velocity_magnitude * length / effective_kinematic_viscosity;
-    const double alpha = Pe * (std::exp(2.0 * Pe) + 1) / (std::exp(2.0 * Pe) - 1) - 1.0;
+    PrintIfVariableIsNegative(velocity_magnitude);
+    PrintIfVariableIsNegative(length);
+    PrintIfVariableIsNegative(effective_kinematic_viscosity);
+    PrintIfVariableIsNegative(reaction);
+    PrintIfVariableIsNegative(delta_time);
 
-    const double stab_1 =
-        std::pow(velocity_magnitude, 2) / (effective_kinematic_viscosity * alpha);
-    const double stab_2 = effective_kinematic_viscosity / std::pow(length, 2);
-    const double stab_3 = 1.0 / delta_time;
+    // const double Pe = std::max<double>(
+    //     0.5 * velocity_magnitude * length / effective_kinematic_viscosity, 1e-15);
+    // const double alpha = std::max<double>(
+    //     std::min<double>((std::exp(2.0 * Pe) + 1) / (std::exp(2.0 * Pe) - 1) - 1.0 / Pe, 1.0),
+    //     0.0);
 
-    CheckIfVariableIsPositive(stab_1);
-    CheckIfVariableIsPositive(stab_2);
-    CheckIfVariableIsPositive(stab_3);
+    // const double stab_tau = alpha * length / (2 * velocity_magnitude);
+
+    // PrintIfVariableIsNegative(stab_tau);
+    // return stab_tau;
+
+    const double stab_1 = 4.0 * effective_kinematic_viscosity / std::pow(length, 2);
+    const double stab_2 = 2.0 * velocity_magnitude / length;
+    const double stab_3 = reaction;
 
     return 1.0 / (stab_1 + stab_2 + stab_3);
 }
@@ -123,6 +143,15 @@ double CalculateSourceTerm(const BoundedMatrix<double, TDim, TDim>& rVelocityGra
             source += reynolds_stress_tensor(i, j) * rVelocityGradient(i, j);
 
     return source;
+}
+
+double CalculateGamma(const double C_mu,
+                      const double f_mu,
+                      const double turbulent_kinetic_energy,
+                      const double turbulent_kinematic_viscosity)
+{
+    return std::max<double>(
+        0.0, C_mu * f_mu * turbulent_kinetic_energy / turbulent_kinematic_viscosity);
 }
 
 template double CalculateSourceTerm<2>(const BoundedMatrix<double, 2, 2>&);

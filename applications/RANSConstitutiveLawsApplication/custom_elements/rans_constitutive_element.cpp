@@ -502,7 +502,7 @@ double RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::GetDivergenceOperat
     return value;
 }
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
-void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateGradientMatrix(
+void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateGradient(
     BoundedMatrix<double, TDim, TDim>& rOutput,
     const Variable<array_1d<double, 3>>& rVariable,
     const Matrix& rShapeDerivatives,
@@ -522,6 +522,23 @@ void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateGradientMatr
                 rOutput(i, j) += rShapeDerivatives(a, j) * r_value[i];
             }
         }
+    }
+}
+
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
+void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateGradient(
+    array_1d<double, 3>& rOutput,
+    const Variable<double>& rVariable,
+    const Matrix& rShapeDerivatives,
+    const int Step) const
+{
+    rOutput.clear();
+    const GeometryType& r_geometry = this->GetGeometry();
+    for (unsigned int a = 0; a < TNumNodes; ++a)
+    {
+        const double value = r_geometry[a].FastGetSolutionStepValue(rVariable, Step);
+        for (unsigned int i = 0; i < TDim; ++i)
+            rOutput[i] += rShapeDerivatives(a, i) * value;
     }
 }
 

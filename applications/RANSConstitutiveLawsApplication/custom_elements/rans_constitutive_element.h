@@ -402,10 +402,15 @@ protected:
                                  const Matrix& rShapeDerivatives,
                                  const int Step = 0) const;
 
-    void CalculateGradientMatrix(BoundedMatrix<double, TDim, TDim>& rOutput,
-                                 const Variable<array_1d<double, 3>>& rVariable,
-                                 const Matrix& rShapeDerivatives,
-                                 const int Step = 0) const;
+    void CalculateGradient(BoundedMatrix<double, TDim, TDim>& rOutput,
+                           const Variable<array_1d<double, 3>>& rVariable,
+                           const Matrix& rShapeDerivatives,
+                           const int Step = 0) const;
+
+    void CalculateGradient(array_1d<double, 3>& rOutput,
+                           const Variable<double>& rVariable,
+                           const Matrix& rShapeDerivatives,
+                           const int Step = 0) const;
 
     void CalculateSymmetricGradientMatrix(BoundedMatrix<double, TDim, TDim>& rOutput,
                                           const Variable<array_1d<double, 3>>& rVariable,

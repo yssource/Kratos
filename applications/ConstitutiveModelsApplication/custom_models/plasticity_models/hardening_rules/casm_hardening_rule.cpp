@@ -107,37 +107,36 @@ namespace Kratos
   //************************************************************************************
   double& CasmHardeningRule::CalculateDeltaHardening(const PlasticDataType& rVariables, double& rDeltaHardening, const MatrixType & rPlasticPotentialDerivative)
   {
-    KRATOS_TRY
+     KRATOS_TRY
 
-      
-    const ModelDataType & rModelData = rVariables.GetModelData();
-    const Properties& rMaterialProperties = rModelData.GetProperties();
-    const MatrixType    & rStressMatrix = rModelData.GetStressMatrix();
+     const ModelDataType & rModelData = rVariables.GetModelData();
+     const Properties& rMaterialProperties = rModelData.GetProperties();
+     // const MatrixType    & rStressMatrix = rModelData.GetStressMatrix();
 
-      const double & rPreconsolidationStress = rVariables.Internal.Variables[5];
+     const double & rPreconsolidationStress = rVariables.Internal.Variables[5];
 
-      const double& rSpacingR = rMaterialProperties[SPACING_RATIO];
-      const double& rOtherSlope   = rMaterialProperties[NORMAL_COMPRESSION_SLOPE];
-      const double& rSwellingSlope   = rMaterialProperties[SWELLING_SLOPE];
-
-
-
-	Vector PreconDerivativeEpsVol = ZeroVector(6);
-	for (unsigned int i = 0; i<3; ++i)
-		PreconDerivativeEpsVol(i) = 1.0;
-	PreconDerivativeEpsVol *= -rPreconsolidationStress/(rOtherSlope - rSwellingSlope);
+     const double& rSpacingR = rMaterialProperties[SPACING_RATIO];
+     const double& rOtherSlope   = rMaterialProperties[NORMAL_COMPRESSION_SLOPE];
+     const double& rSwellingSlope   = rMaterialProperties[SWELLING_SLOPE];
 
 
 
-    rDeltaHardening = 1.0/( rPreconsolidationStress * std::log( rSpacingR));
-    Vector PlasticPot(6);
-    PlasticPot = ConstitutiveModelUtilities::StrainTensorToVector( rPlasticPotentialDerivative, PlasticPot);
-    rDeltaHardening *= MathUtils<double>::Dot( PreconDerivativeEpsVol, PlasticPot);
+     Vector PreconDerivativeEpsVol = ZeroVector(6);
+     for (unsigned int i = 0; i<3; ++i)
+        PreconDerivativeEpsVol(i) = 1.0;
+     PreconDerivativeEpsVol *= -rPreconsolidationStress/(rOtherSlope - rSwellingSlope);
 
-    
-    return rDeltaHardening;	
 
-    KRATOS_CATCH(" ")
+
+     rDeltaHardening = 1.0/( rPreconsolidationStress * std::log( rSpacingR));
+     Vector PlasticPot(6);
+     PlasticPot = ConstitutiveModelUtilities::StrainTensorToVector( rPlasticPotentialDerivative, PlasticPot);
+     rDeltaHardening *= MathUtils<double>::Dot( PreconDerivativeEpsVol, PlasticPot);
+
+
+     return rDeltaHardening;	
+
+     KRATOS_CATCH(" ")
   }
 
 

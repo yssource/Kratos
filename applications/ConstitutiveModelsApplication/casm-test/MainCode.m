@@ -9,21 +9,21 @@ global M;
 global ShapeN;
 global SpacingR;
 
-M = 1.0;
-ShapeN = 3;
-SpacingR = 4;
+M = 0.98;
+ShapeN = 10;
+SpacingR = 12;
 
-for i = 0:1000
-    ThisExists = MakeThisFile([num2str(i), 'drained_triaxial.csv']);
+ThisExists = true;
+for i = 0:100
+%     ThisExists = MakeThisFile([num2str(i), 'drained_triaxial.csv']);
 
     
     if (ThisExists == false )
         return
     end
      MakeThisFile([num2str(i),'undrained_triaxial.csv']);
-%     MakeThisFile([num2str(i),'undrained_triaxial.csv']);
-%     MakeThisFile([num2str(i),'oedometer.csv']);
-%     MakeThisFile([num2str(i),'isotropic.csv']);
+%      MakeThisFile([num2str(i),'oedometer.csv']);
+%      MakeThisFile([num2str(i),'isotropic.csv']);
 end
 % MakeThisFile('drained_triaxial.csv')
 % MakeThisFile('undrained_triaxial.csv')
@@ -61,8 +61,8 @@ pc = rawData(:,16);
 
 
 figure(1)
-PlotYieldSurface( ps(1),  'k');
-PlotYieldSurface( ps(end), 'g-.');
+PlotYieldSurface( ps(1),  'k-.');
+% PlotYieldSurface( ps(end), 'g-.');
 
 % Triaxial plane
 plot(p, J, 'linewidth', 1.5);
@@ -71,11 +71,13 @@ ylabel('q')
 axis equal
 
 figure(2)
-plot( eDev, J);
+plot( eDev-eDev(1), J);
 xlabel('eDev')
 ylabel('sDev')
 hold on
 
+yAxis = ylim();
+ylim([0, yAxis(2)]);
 
 figure(3)
 semilogx( p, -eVol);
@@ -101,7 +103,7 @@ qq = M*pp .* ( -log(pp/p0)/log(r)).^(1/n);
 plot(pp, qq, SPEC, 'linewidth', 1.0)
 hold on
 
-plot([0, 0.6*p0], M*[0, 0.6*p0], 'r-.')
+plot([0, 1.0*p0], M*[0, 1.0*p0], 'r-.')
 
 axis equal
 

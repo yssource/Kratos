@@ -7,8 +7,8 @@
 //
 //
 
-#if !defined(KRATOS_CASM_NUBIA_SOIL_MODEL_H_INCLUDED )
-#define      KRATOS_CASM_NUBIA_SOIL_MODEL_H_INCLUDED
+#if !defined(KRATOS_NONLOCAL_CASM_NUBIA_SOIL_MODEL_H_INCLUDED )
+#define      KRATOS_NONLOCAL_CASM_NUBIA_SOIL_MODEL_H_INCLUDED
 
 // System includes
 
@@ -49,7 +49,7 @@ namespace Kratos
    /// Short class definition.
    /** Detail class definition.
     */
-   class KRATOS_API(CONSTITUTIVE_MODELS_APPLICATION) CasmNubiaSoilModel : public CasmBaseSoilModel<BorjaModel, CasmYieldSurface<CasmHardeningRule> >
+   class KRATOS_API(CONSTITUTIVE_MODELS_APPLICATION) NonlocalCasmNubiaSoilModel : public CasmBaseSoilModel<BorjaModel, CasmYieldSurface<CasmHardeningRule> >
    {
       public:
 
@@ -79,25 +79,25 @@ namespace Kratos
          typedef BaseType::InternalVariablesType     InternalVariablesType;
 
 
-         /// Pointer definition of CasmNubiaSoilModel
-         KRATOS_CLASS_POINTER_DEFINITION( CasmNubiaSoilModel );
+         /// Pointer definition of NonlocalCasmNubiaSoilModel
+         KRATOS_CLASS_POINTER_DEFINITION( NonlocalCasmNubiaSoilModel );
 
          ///@}
          ///@name Life Cycle
          ///@{
 
          /// Default constructor.
-         CasmNubiaSoilModel() : BaseType() {
+         NonlocalCasmNubiaSoilModel() : BaseType() {
             NubiaPlasticPotential<CasmHardeningRule> Object;
             YieldSurface<CasmHardeningRule>::Pointer pPlasticPotential = Object.Clone();
             mYieldSurface = CasmYieldSurface<CasmHardeningRule>( pPlasticPotential);
          }
 
          /// Copy constructor.
-         CasmNubiaSoilModel(CasmNubiaSoilModel const& rOther) : BaseType(rOther) {}
+         NonlocalCasmNubiaSoilModel(NonlocalCasmNubiaSoilModel const& rOther) : BaseType(rOther) {}
 
          /// Assignment operator.
-         CasmNubiaSoilModel& operator=(CasmNubiaSoilModel const& rOther)
+         NonlocalCasmNubiaSoilModel& operator=(NonlocalCasmNubiaSoilModel const& rOther)
          {
             BaseType::operator=(rOther);
             return *this;
@@ -106,11 +106,11 @@ namespace Kratos
          /// Clone.
          ConstitutiveModel::Pointer Clone() const override
          {
-            return Kratos::make_shared<CasmNubiaSoilModel>(*this);
+            return Kratos::make_shared<NonlocalCasmNubiaSoilModel>(*this);
          }
 
          /// Destructor.
-         ~CasmNubiaSoilModel() override {}
+         ~NonlocalCasmNubiaSoilModel() override {}
 
 
          ///@}
@@ -166,10 +166,33 @@ namespace Kratos
             {
                rValue = this->mInternal.Variables[1];
             }
+            else if (rThisVariable==NONLOCAL_PLASTIC_VOL_DEF)
+            {
+               rValue = this->mInternal.Variables[8];
+            }
+            else if ( rThisVariable == NONLOCAL_PLASTIC_VOL_DEF_ABS) {
+               rValue = std::fabs( this->mInternal.Variables[8] );
+            }
             else {
                rValue = CasmBaseSoilModel::GetValue( rThisVariable, rValue);
             }
             return rValue;
+
+            KRATOS_CATCH("")
+         }
+
+         /**
+          * Set Values
+          */
+         void SetValue(const Variable<double>& rVariable,
+               const double& rValue,
+               const ProcessInfo& rCurrentProcessInfo) override 
+         {
+            KRATOS_TRY
+
+            if ( rVariable == NONLOCAL_PLASTIC_VOL_DEF) {
+               mInternal.Variables[8] = rValue;
+            }
 
             KRATOS_CATCH("")
          }
@@ -187,20 +210,20 @@ namespace Kratos
          std::string Info() const override
          {
             std::stringstream buffer;
-            buffer << "CasmNubiaSoilModel" ;
+            buffer << "NonlocalCasmNubiaSoilModel" ;
             return buffer.str();
          }
 
          /// Print information about this object.
          void PrintInfo(std::ostream& rOStream) const override
          {
-            rOStream << "CasmNubiaSoilModel";
+            rOStream << "NonlocalCasmNubiaSoilModel";
          }
 
          /// Print object's data.
          void PrintData(std::ostream& rOStream) const override
          {
-            rOStream << "CasmNubiaSoilModel Data";
+            rOStream << "NonlocalCasmNubiaSoilModel Data";
          }
 
 
@@ -342,7 +365,7 @@ namespace Kratos
 
          ///@}
 
-   }; // Class CasmNubiaSoilModel
+   }; // Class NonlocalCasmNubiaSoilModel
 
    ///@}
 
@@ -367,4 +390,4 @@ namespace Kratos
 
 }  // namespace Kratos.
 
-#endif // KRATOS_CASM_NUBIA_SOIL_MODEL_H_INCLUDED  defined
+#endif // KRATOS_NONLOCAL_CASM_NUBIA_SOIL_MODEL_H_INCLUDED  defined

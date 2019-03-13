@@ -8,15 +8,15 @@
                 "model_name" : "KratosMultiphysics.ConstitutiveModelsApplication.CasmNubiaSoilModel"
             },
             "variables": {
-                "KratosMultiphysics.NORMAL_COMPRESSION_SLOPE": 0.01,
-                "KratosMultiphysics.SWELLING_SLOPE": 0.002,
-                "KratosMultiphysics.INITIAL_SHEAR_MODULUS": 0.0,
+                "KratosMultiphysics.NORMAL_COMPRESSION_SLOPE": 0.0056,
+                "KratosMultiphysics.SWELLING_SLOPE": 0.001667,
+                "KratosMultiphysics.INITIAL_SHEAR_MODULUS": 10000.0,
                 "KratosMultiphysics.ALPHA_SHEAR": 0.0,
-                "KratosMultiphysics.CRITICAL_STATE_LINE": 0.90,
+                "KratosMultiphysics.CRITICAL_STATE_LINE": 0.98,
                 "KratosMultiphysics.PRE_CONSOLIDATION_STRESS": 70.0,
                 "KratosMultiphysics.OVER_CONSOLIDATION_RATIO": 1.0,
-                "KratosMultiphysics.ConstitutiveModelsApplication.SHAPE_PARAMETER": 4.0,
-                "KratosMultiphysics.ConstitutiveModelsApplication.SPACING_RATIO": 6.0,
+                "KratosMultiphysics.ConstitutiveModelsApplication.SHAPE_PARAMETER": 10.0,
+                "KratosMultiphysics.ConstitutiveModelsApplication.SPACING_RATIO": 12.0,
 		"KratosMultiphysics.INTERNAL_FRICTION_ANGLE": 0.0
             },
             "element_type": "Tetrahedra3D4",
@@ -26,7 +26,7 @@
                 "jacobian": 1.0
             },
             "echo_level" : 0,
-	    "parametric_analysis_variable": "INITIAL_SHEAR_MODULUS",
-	    "parametric_analysis_values": [  6000, 10000, 20000, 50000],
-	    "initial_stress_state": [-40.0, -40.0, -40.0]
+	    "parametric_analysis_variable": "SPACING_RATIO",
+	    "parametric_analysis_values": [1.5, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0 ],
+	    "initial_stress_state": [-56, -96, -56]
 }

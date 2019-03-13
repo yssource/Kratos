@@ -151,6 +151,7 @@ void KratosConstitutiveModelsApplication::Register() {
   Serializer::Register( "CasmAssociatedSoilModel", mCasmAssociatedSoilModel );
   Serializer::Register( "CasmMCCSoilModel", mCasmMCCSoilModel );
   Serializer::Register( "CasmNubiaSoilModel", mCasmNubiaSoilModel );
+  Serializer::Register( "NonlocalCasmNubiaSoilModel", mNonlocalCasmNubiaSoilModel );
 
   //yield criteria
   Serializer::Register( "MisesHuberYieldSurface", mMisesHuberYieldSurface );

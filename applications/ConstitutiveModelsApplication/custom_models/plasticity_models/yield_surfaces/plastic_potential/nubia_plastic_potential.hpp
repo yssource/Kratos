@@ -136,6 +136,10 @@ namespace Kratos
             m /= BigLambda * (6.0 - rShearM) * pow( 3.0 * rShearM, rShapeN-1);
             m *= 2.0/3.0;
 
+            if ( m <= 1.0) {
+               KRATOS_ERROR << " the given parameters are problematic with Nubia//Casm plastic flow " << std::endl;
+            }
+
             double StressRatio = sqrt(3.0)*J2/(-MeanStress);
 
 

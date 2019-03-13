@@ -73,6 +73,7 @@
 #include "custom_models/plasticity_models/casm_associated_soil_model.hpp"
 #include "custom_models/plasticity_models/casm_mcc_soil_model.hpp"
 #include "custom_models/plasticity_models/casm_nubia_soil_model.hpp"
+#include "custom_models/plasticity_models/nonlocal_casm_nubia_soil_model.hpp"
 
 
 namespace Kratos
@@ -315,6 +316,10 @@ void  AddCustomConstitutiveLawsToPython(pybind11::module& m)
       ;
   py::class_< CasmNubiaSoilModel, typename CasmNubiaSoilModel::Pointer, ConstitutiveModelBaseType >
       (m, "CasmNubiaSoilModel")
+      .def( py::init<>() )
+      ;
+  py::class_< NonlocalCasmNubiaSoilModel, typename NonlocalCasmNubiaSoilModel::Pointer, ConstitutiveModelBaseType >
+      (m, "NonlocalCasmNubiaSoilModel")
       .def( py::init<>() )
       ;
   py::class_< TrescaModel, typename TrescaModel::Pointer, ConstitutiveModelBaseType >

@@ -99,6 +99,7 @@
 #include "custom_models/plasticity_models/casm_associated_soil_model.hpp"
 #include "custom_models/plasticity_models/casm_mcc_soil_model.hpp"
 #include "custom_models/plasticity_models/casm_nubia_soil_model.hpp"
+#include "custom_models/plasticity_models/nonlocal_casm_nubia_soil_model.hpp"
 
 //yield criteria
 #include "custom_models/plasticity_models/yield_surfaces/mises_huber_thermal_yield_surface.hpp"
@@ -333,6 +334,7 @@ namespace Kratos {
     const CasmAssociatedSoilModel                  mCasmAssociatedSoilModel;
     const CasmMCCSoilModel                         mCasmMCCSoilModel;
     const CasmNubiaSoilModel                       mCasmNubiaSoilModel;
+    const NonlocalCasmNubiaSoilModel               mNonlocalCasmNubiaSoilModel;
 
     //yield criteria
     const MisesHuberYieldSurface<HardeningRule>         mMisesHuberYieldSurface;

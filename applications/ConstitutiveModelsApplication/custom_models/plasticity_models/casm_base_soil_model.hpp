@@ -32,9 +32,9 @@
 // 3 Abs Value Volumetric Plastic Strain
 // 4 B (bounding)
 // 5 pc preconsolidation
-// 6 pt 
-// 7 ps
 
+// 8 NonLocal Plastic Vol Def
+// 9 Constrained Modulus (not correct, to be corrected)
 
 namespace Kratos
 {
@@ -113,6 +113,7 @@ namespace Kratos
          CasmBaseSoilModel& operator=(CasmBaseSoilModel const& rOther)
          {
             DerivedType::operator=(rOther);
+            this->mInitialized = rOther.mInitialized;
             return *this;
          }
 
@@ -151,9 +152,19 @@ namespace Kratos
                const Properties & rMaterialProperties = rModelData.GetProperties();
 
 
+               for (unsigned int i = 0; i < 10; i++) {
+                  Variables.Internal.Variables[i] = 0;
+                  this->mInternal.Variables[i] = 0;
+                  this->mPreviousInternal.Variables[i] = 0;
+               }
+
                double & rPC = Variables.Internal.Variables[5];
 
                rPC = -rMaterialProperties[PRE_CONSOLIDATION_STRESS];
+
+               Variables.Internal.Variables[9] = rMaterialProperties[PRE_CONSOLIDATION_STRESS] / rMaterialProperties[OVER_CONSOLIDATION_RATIO];
+               Variables.Internal.Variables[9] /= rMaterialProperties[SWELLING_SLOPE];
+
 
                MatrixType Stress;
                this->UpdateInternalVariables(rValues, Variables, Stress);
@@ -184,6 +195,45 @@ namespace Kratos
          ///@name Access
          ///@{
 
+         virtual double &  GetValue( const Variable<double>& rThisVariable, double & rValue) override
+         {
+            KRATOS_TRY
+
+            if ( rThisVariable == M_MODULUS ) {
+               rValue = 1e10;
+               if ( mInitialized) {
+                  if ( this->mInternal.Variables[9] > 0.0) {
+                     rValue = this->mInternal.Variables[9];
+                  }
+               }
+            }
+            else if ( rThisVariable == YOUNG_MODULUS) {
+               rValue = 1e10;
+               if ( this->mInternal.Variables[9] > 0) {
+                  rValue = this->mInternal.Variables[9];
+               }
+            }
+            else if (rThisVariable==PLASTIC_STRAIN)
+            {
+               rValue = this->mInternal.Variables[0];
+            }
+            else if (rThisVariable==DELTA_PLASTIC_STRAIN)
+            {
+               rValue = this->mInternal.Variables[0]- this->mPreviousInternal.Variables[0];
+            }
+            else if (rThisVariable==PRE_CONSOLIDATION_STRESS)
+            {
+               rValue = this->mInternal.Variables[5];
+            }
+            else {
+               rValue = NonAssociativePlasticityModel<TElasticityModel, TYieldSurface>::GetValue( rThisVariable, rValue);
+            }
+
+            return rValue;
+            
+
+            KRATOS_CATCH("")
+         }
          /**
           * Has Values
           */   
@@ -290,6 +340,7 @@ namespace Kratos
                }
 
                rEPMatrix -= PlasticUpdateMatrix / ( H + denom);
+
 
                KRATOS_CATCH("")
             }
@@ -415,10 +466,28 @@ namespace Kratos
             {
                KRATOS_TRY
 
+               
+               if ( mInitialized ) {
+                  // temporal solution. Store the Constrianed modulus as variable 9 and compute it here
+                  const ModelDataType & rModelData = rVariables.GetModelData();
+                  const Properties & rMaterialProperties = rModelData.GetProperties();
+                  const double & rSwellingSlope = rMaterialProperties[SWELLING_SLOPE];
+                  const double & rAlpha         = rMaterialProperties[ALPHA_SHEAR];
+
+                  double MeanStress = 0;
+                  for (unsigned int i = 0; i < 3; i++)
+                     MeanStress += rValues.StressMatrix(i,i)/3.0;
+                  double K = (-MeanStress) / rSwellingSlope;
+                  double G = rMaterialProperties[INITIAL_SHEAR_MODULUS];
+                  G += rAlpha * (-MeanStress);
+                  rVariables.Internal.Variables[9] = K + 4.0/3.0 * G;
+               }
+
+
                this->mPreviousInternal.Variables[3] = this->mInternal.Variables[3];
                this->mInternal.Variables[3] = this->mInternal.Variables[3] + fabs( rVariables.Internal.Variables[1] - this->mInternal.Variables[1]);
-               for (unsigned int i = 0; i < 7; i++) {
-                     if ( i != 3) {
+               for (unsigned int i = 0; i < 10; i++) {
+                     if (  (i != 3) && (i != 8)  ) {
                      double & rCurrentPlasticVariable = rVariables.Internal.Variables[i]; 
                      double & rPreviousPlasticVariable    = this->mInternal.Variables[i];
 
@@ -565,11 +634,13 @@ namespace Kratos
          virtual void save(Serializer& rSerializer) const override
          {
             KRATOS_SERIALIZE_SAVE_BASE_CLASS( rSerializer, DerivedType )
+            rSerializer.save("Initialized", mInitialized);
          }
 
          virtual void load(Serializer& rSerializer) override
          {
             KRATOS_SERIALIZE_LOAD_BASE_CLASS( rSerializer, DerivedType )
+            rSerializer.load("Initialized", mInitialized);
          }
 
          ///@}

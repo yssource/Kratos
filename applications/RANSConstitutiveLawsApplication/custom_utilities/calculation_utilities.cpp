@@ -42,9 +42,9 @@ void LowerBound(ModelPart& rModelPart, const Variable<double>& rVariable, const 
 {
     const int number_of_nodes = rModelPart.NumberOfNodes();
 
-    unsigned int count_of_nodes_negative = 0;
+    unsigned int count_of_nodes = 0;
 
-#pragma omp parallel for reduction(+: count_of_nodes_negative)
+#pragma omp parallel for reduction(+ : count_of_nodes)
     for (int i = 0; i < number_of_nodes; i++)
     {
         NodeType& r_current_node = *(rModelPart.NodesBegin() + i);
@@ -52,11 +52,73 @@ void LowerBound(ModelPart& rModelPart, const Variable<double>& rVariable, const 
         if (value < MinValue)
         {
             value = MinValue;
-            count_of_nodes_negative++;
+            count_of_nodes++;
         }
     }
 
-    KRATOS_WARNING_IF("LowerBound", count_of_nodes_negative > 0) << rVariable.Name() << " of " << count_of_nodes_negative << " nodes are less than " << std::scientific << MinValue << " out of total number of " << number_of_nodes <<" nodes in " << rModelPart.Name() << ".\n";
+    KRATOS_WARNING_IF("LowerBound", count_of_nodes > 0)
+        << rVariable.Name() << " of " << count_of_nodes << " nodes are less than "
+        << std::scientific << MinValue << " out of total number of "
+        << number_of_nodes << " nodes in " << rModelPart.Name() << ".\n";
+}
+
+template <class NodeType>
+void ClipVariable(ModelPart& rModelPart,
+                  const Variable<double>& rVariable,
+                  const double MinValue,
+                  const double MaxValue)
+{
+    const int number_of_nodes = rModelPart.NumberOfNodes();
+
+    unsigned int count_of_nodes = 0;
+
+#pragma omp parallel for reduction(+ : count_of_nodes)
+    for (int i = 0; i < number_of_nodes; i++)
+    {
+        NodeType& r_current_node = *(rModelPart.NodesBegin() + i);
+        double& value = r_current_node.FastGetSolutionStepValue(rVariable);
+        if (value < MinValue)
+        {
+            value = MinValue;
+            count_of_nodes++;
+        }
+        else if (value > MaxValue)
+        {
+            value = MaxValue;
+            count_of_nodes++;
+        }
+    }
+
+    KRATOS_WARNING_IF("ClipVariable", count_of_nodes > 0)
+        << rVariable.Name() << " of " << count_of_nodes
+        << " nodes are not in the range of [ " << std::scientific << MinValue
+        << ", " << std::scientific << MaxValue << " ] out of total number of "
+        << number_of_nodes << " nodes in " << rModelPart.Name() << ".\n";
+}
+
+template <class NodeType>
+void UpperBound(ModelPart& rModelPart, const Variable<double>& rVariable, const double MaxValue)
+{
+    const int number_of_nodes = rModelPart.NumberOfNodes();
+
+    unsigned int count_of_nodes = 0;
+
+#pragma omp parallel for reduction(+ : count_of_nodes)
+    for (int i = 0; i < number_of_nodes; i++)
+    {
+        NodeType& r_current_node = *(rModelPart.NodesBegin() + i);
+        double& value = r_current_node.FastGetSolutionStepValue(rVariable);
+        if (value > MaxValue)
+        {
+            value = MaxValue;
+            count_of_nodes++;
+        }
+    }
+
+    KRATOS_WARNING_IF("UpperBound", count_of_nodes > 0)
+        << rVariable.Name() << " of " << count_of_nodes << " nodes are greater than "
+        << std::scientific << MaxValue << " out of total number of "
+        << number_of_nodes << " nodes in " << rModelPart.Name() << ".\n";
 }
 
 double CalculateYplus(const double velocity_norm,
@@ -66,11 +128,11 @@ double CalculateYplus(const double velocity_norm,
                       const double beta,
                       const unsigned int max_iterations)
 {
-    CheckIfVariableIsPositive(velocity_norm);
-    CheckIfVariableIsPositive(wall_distance);
-    CheckIfVariableIsPositive(kinematic_viscosity);
-    CheckIfVariableIsPositive(von_karman);
-    CheckIfVariableIsPositive(beta);
+    // CheckIfVariableIsPositive(velocity_norm);
+    // CheckIfVariableIsPositive(wall_distance);
+    // CheckIfVariableIsPositive(kinematic_viscosity);
+    // CheckIfVariableIsPositive(von_karman);
+    // CheckIfVariableIsPositive(beta);
 
     // linear region
     double utau = sqrt(velocity_norm * kinematic_viscosity / wall_distance);
@@ -112,7 +174,8 @@ double CalculateYplus(const double velocity_norm,
             << std::scientific << dx << " > " << std::scientific << tol << " ]\n";
     }
 
-    KRATOS_WARNING_IF("CalculateYplus", yplus < 0.0) << "Calculated y_plus < 0.0 [ " << std::scientific << yplus << " < 0.0 ]\n";
+    KRATOS_WARNING_IF("CalculateYplus", yplus < 0.0)
+        << "Calculated y_plus < 0.0 [ " << std::scientific << yplus << " < 0.0 ]\n";
 
     return yplus;
 }
@@ -168,6 +231,8 @@ template array_1d<double, 3> EvaluateInPoint<Geometry<Node<3>>>(
     const Geometry<Node<3>>&, const Variable<array_1d<double, 3>>&, const Vector&, const int);
 
 template void LowerBound<Node<3>>(ModelPart&, const Variable<double>&, const double);
+template void UpperBound<Node<3>>(ModelPart&, const Variable<double>&, const double);
+template void ClipVariable<Node<3>>(ModelPart&, const Variable<double>&, const double, const double);
 
 template double CalculateMatrixTrace<2>(const BoundedMatrix<double, 2, 2>&);
 template double CalculateMatrixTrace<3>(const BoundedMatrix<double, 3, 3>&);

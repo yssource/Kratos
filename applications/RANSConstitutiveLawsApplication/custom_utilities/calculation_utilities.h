@@ -13,9 +13,13 @@ namespace Kratos
     KRATOS_DEBUG_ERROR_IF(variable < 0.0)   \
         << #variable << " < 0.0 [ " << std::scientific << variable << " < 0.0 ]\n";
 
-#define PrintIfVariableIsNegative(variable) \
-    KRATOS_WARNING_IF("NegativeCheck", variable < 0.0)   \
+#define PrintIfVariableIsNegative(variable)            \
+    KRATOS_WARNING_IF("NegativeCheck", variable < 0.0) \
         << #variable << " < 0.0 [ " << std::scientific << variable << " < 0.0 ]\n";
+
+#define PrintIfVariableIsPositive(variable)            \
+    KRATOS_WARNING_IF("PositiveCheck", variable > 0.0) \
+        << #variable << " > 0.0 [ " << std::scientific << variable << " > 0.0 ]\n";
 
 namespace CalculationUtilities
 {
@@ -34,6 +38,15 @@ double CalculateYplus(const double velocity_norm,
 
 template <class NodeType>
 void LowerBound(ModelPart& rModelPart, const Variable<double>& rVariable, const double MinValue);
+
+template <class NodeType>
+void UpperBound(ModelPart& rModelPart, const Variable<double>& rVariable, const double MaxValue);
+
+template <class NodeType>
+void ClipVariable(ModelPart& rModelPart,
+                  const Variable<double>& rVariable,
+                  const double MinValue,
+                  const double MaxValue);
 
 template <class GeometryType>
 double EvaluateInPoint(const GeometryType& rGeometry,

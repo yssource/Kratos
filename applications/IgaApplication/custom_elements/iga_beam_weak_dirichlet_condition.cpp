@@ -218,6 +218,18 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     // const auto A33_length = sqrt(A33);
     // const auto V = A3 / A33_length;
 
+    // Vector3d c_X = (1.0, 0.0, 0.0);
+    // Vector3d c_Y = (0.0, 1.0, 0.0);
+    // Vector3d c_Z = (0.0, 0.0, 1.0); 
+
+    // const auto d_X = A1.dot(c_X);
+    // const auto d_Y = A1.dot(c_Y);
+    // const auto d_Z = A1.dot(c_Z);
+
+    // const auto d_x = a1.dot(c_X);
+    // const auto d_y = a1.dot(c_Y);
+    // const auto d_z = a1.dot(c_Z);
+
     const auto d_T = A1.dot(T);
     const auto d_N = A1.dot(A2);
     const auto d_V = A1.dot(A3);
@@ -260,8 +272,13 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     //                            +(delta3).dot(delta3) * pow(penalty_disp_w, 2)) * integration_weight ;
 
     const auto dP_disp_u = 0.5 * pow((x(0)-X(0)), 2) * penalty_disp_u * integration_weight;                               
-    const auto dP_disp_w = 0.5 * pow((x(1)-X(1)), 2) * penalty_disp_w * integration_weight;                               
-    const auto dP_disp_v = 0.5 * pow((x(2)-X(2)), 2) * penalty_disp_v * integration_weight;                               
+    const auto dP_disp_v = 0.5 * pow((x(1)-X(1)), 2) * penalty_disp_v * integration_weight;                               
+    const auto dP_disp_w = 0.5 * pow((x(2)-X(2)), 2) * penalty_disp_w * integration_weight;    
+
+    // const auto dP_disp_x = 0.5 * pow((d_x - d_X), 2) * penalty_disp_u * integration_weight;                               
+    // const auto dP_disp_y = 0.5 * pow((d_y - d_Y), 2) * penalty_disp_v * integration_weight;                               
+    // const auto dP_disp_z = 0.5 * pow((d_z - d_Z), 2) * penalty_disp_w * integration_weight;                               
+
 
     // const auto dP_disp = 0.5 * ( u_xyz.dot(u_xyz)) * penalty_disp_u * integration_weight ;
 
@@ -276,46 +293,46 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
       // const auto dP_alpha_tors =  0.5 * (alpha_12 * alpha_13) * penalty_tors * integration_weight;
 
 
-    auto const condition_type = 123;
+    // auto const condition_type = 123;
 
-    // Variation Hesse
-    if (condition_type == 1)        // Verschiebung 
-       MapMatrix(rLeftHandSideMatrix) =    dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h();
-    else if (condition_type == 2)    // Torsion
-       MapMatrix(rLeftHandSideMatrix) =    dP_alpha_tors.h() ;
-    else if (condition_type == 3)   // Biegung  Ableitung
-       MapMatrix(rLeftHandSideMatrix) =    dP_alpha_bend.h() ;
-    else if (condition_type == 4)   // Biegung Tangens
-       MapMatrix(rLeftHandSideMatrix) =    dP_grad_bend.h() ;
+    // // Variation Hesse
+    // if (condition_type == 1)        // Verschiebung 
+    //    MapMatrix(rLeftHandSideMatrix) =    dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h();
+    // else if (condition_type == 2)    // Torsion
+    //    MapMatrix(rLeftHandSideMatrix) =    dP_alpha_tors.h() ;
+    // else if (condition_type == 3)   // Biegung  Ableitung
+    //    MapMatrix(rLeftHandSideMatrix) =    dP_alpha_bend.h() ;
+    // else if (condition_type == 4)   // Biegung Tangens
+    //    MapMatrix(rLeftHandSideMatrix) =    dP_grad_bend.h() ;
 
-    else if(condition_type == 12)   // Verschiebung + Torsion
-      MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h()+ dP_alpha_tors.h()) ;
-    else if(condition_type == 13)   // Verschiebung + Rotation
-      MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h()+ dP_alpha_bend.h()) ;
-    else if(condition_type == 23)   // Torsion + Rotation
-      MapMatrix(rLeftHandSideMatrix) = ( dP_alpha_tors.h() + dP_alpha_bend.h()) ;
-    else if(condition_type == 123)  // Verschiebung + Torsion +  Rotation
-      MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h()+ dP_alpha_tors.h() + dP_grad_bend.h()) ;
+    // else if(condition_type == 12)   // Verschiebung + Torsion
+    //   MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h()+ dP_alpha_tors.h()) ;
+    // else if(condition_type == 13)   // Verschiebung + Rotation
+    //   MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h()+ dP_alpha_bend.h()) ;
+    // else if(condition_type == 23)   // Torsion + Rotation
+    //   MapMatrix(rLeftHandSideMatrix) = ( dP_alpha_tors.h() + dP_alpha_bend.h()) ;
+    // else if(condition_type == 123)  // Verschiebung + Torsion +  Rotation
+    MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h()+ dP_alpha_tors.h() + dP_grad_bend.h()) ;
 
 
-    // Variation Gradient
-    if (condition_type == 1)         // Verschiebung
-      MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()) ;
-    else if (condition_type == 2)   // Torsion
-      MapVector(rRightHandSideVector) = -( dP_alpha_tors.g()   );
-    else if (condition_type == 3)   // Biegung Ableitung
-      MapVector(rRightHandSideVector) = -( dP_alpha_bend.g()   );
-    else if (condition_type == 4)   // Biegung Tangens
-      MapVector(rRightHandSideVector) = -( dP_grad_bend.g() );
+    // // Variation Gradient
+    // if (condition_type == 1)         // Verschiebung
+    //   MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()) ;
+    // else if (condition_type == 2)   // Torsion
+    //   MapVector(rRightHandSideVector) = -( dP_alpha_tors.g()   );
+    // else if (condition_type == 3)   // Biegung Ableitung
+    //   MapVector(rRightHandSideVector) = -( dP_alpha_bend.g()   );
+    // else if (condition_type == 4)   // Biegung Tangens
+    //   MapVector(rRightHandSideVector) = -( dP_grad_bend.g() );
     
-    else if(condition_type == 12)   // Verschiebung + Torsion
-      MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_tors.g()) ;
-    else if(condition_type == 13)   // Verschiebung + Rotation
-      MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_bend.g()) ;
-    else if(condition_type == 23)   // Torsion + Rotation
-      MapVector(rRightHandSideVector) = -( dP_alpha_tors.g() + dP_alpha_bend.g()) ;
-    else if(condition_type == 123)  // Verschiebung + Torsion +  Rotation
-      MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_tors.g() + dP_grad_bend.g()) ;
+    // else if(condition_type == 12)   // Verschiebung + Torsion
+    //   MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_tors.g()) ;
+    // else if(condition_type == 13)   // Verschiebung + Rotation
+    //   MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_bend.g()) ;
+    // else if(condition_type == 23)   // Torsion + Rotation
+    //   MapVector(rRightHandSideVector) = -( dP_alpha_tors.g() + dP_alpha_bend.g()) ;
+    // else if(condition_type == 123)  // Verschiebung + Torsion +  Rotation
+    MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_tors.g() + dP_grad_bend.g()) ;
 
     KRATOS_CATCH("")
 }

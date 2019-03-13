@@ -401,6 +401,9 @@ namespace Kratos
       KRATOS_TRY
 
       const unsigned int& integration_points_number = mConstitutiveLawVector.size();
+      if ( rValues.size() != integration_points_number )
+         rValues.resize( integration_points_number );
+
       if (rVariable == DETERMINANT_F){
 
          if ( rValues.size() != integration_points_number )
@@ -661,11 +664,12 @@ namespace Kratos
    {
       KRATOS_TRY
 
-      if ( rVariable == DETERMINANT_F) {
-         const unsigned int& integration_points_number = mConstitutiveLawVector.size();
+      const unsigned int& integration_points_number = mConstitutiveLawVector.size();
 
-         if (rOutput.size() != integration_points_number)
-            rOutput.resize( integration_points_number) ;
+      if (rOutput.size() != integration_points_number)
+         rOutput.resize( integration_points_number) ;
+
+      if ( rVariable == DETERMINANT_F) {
 
          for ( unsigned int PointNumber = 0; PointNumber < integration_points_number; PointNumber++ )
          {
@@ -752,6 +756,10 @@ namespace Kratos
 
    void UpdatedLagrangianUJElement::GetValueOnIntegrationPoints( const Variable<Vector> & rVariable, std::vector<Vector>& rValues, const ProcessInfo& rCurrentProcessInfo)
    {
+      const unsigned int& integration_points_number = GetGeometry().IntegrationPointsNumber( mThisIntegrationMethod );
+
+      if ( rValues.size() != integration_points_number )
+         rValues.resize( integration_points_number );
 
       if ( rVariable == DARCY_FLOW)
       {

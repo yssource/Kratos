@@ -98,6 +98,16 @@ public:
 
     typedef ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace> BaseType;
 
+    typedef typename BaseType::SystemMatrixType SystemMatrixType;
+
+    typedef typename BaseType::SystemVectorType SystemVectorType;
+
+    typedef typename BaseType::LocalSystemMatrixType LocalSystemMatrixType;
+
+    typedef typename BaseType::LocalSystemVectorType LocalSystemVectorType;
+
+    typedef typename BaseType::DofsArrayType DofsArrayType;
+
     /// Constructor.
 
     ResidualBasedBossakTurbulentEnergyDissipationRateScheme(const double AlphaBossak)
@@ -126,6 +136,78 @@ public:
 
         KRATOS_CATCH("");
     }
+
+    void Update(ModelPart& rModelPart,
+                DofsArrayType& rDofSet,
+                SystemMatrixType& rA,
+                SystemVectorType& rDx,
+                SystemVectorType& rb) override
+    {
+        KRATOS_TRY;
+
+        // this->mpDofUpdater->UpdateDofs(rDofSet, rDx);
+
+        // CalculationUtilities::LowerBound<NodeType>(rModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
+
+        // this->UpdateTimeSchemeVariables(rModelPart);
+
+        BaseType::Update(rModelPart, rDofSet, rA, rDx, rb);
+
+        // Updating the auxiliary variables
+        const int number_of_nodes = rModelPart.NumberOfNodes();
+#pragma omp parallel for
+        for (int iNode = 0; iNode < number_of_nodes; ++iNode)
+        {
+            NodeType& r_node = *(rModelPart.NodesBegin() + iNode);
+            const double epsilon_dot_old = r_node.FastGetSolutionStepValue(
+                TURBULENT_ENERGY_DISSIPATION_RATE_2, 1);
+            const double epsilon_dot = r_node.FastGetSolutionStepValue(
+                TURBULENT_ENERGY_DISSIPATION_RATE_2, 0);
+
+            r_node.FastGetSolutionStepValue(RANS_AUXILIARY_VARIABLE_2) =
+                this->mAlphaBossak * epsilon_dot_old + (1.0 - this->mAlphaBossak) * epsilon_dot;
+        }
+
+        KRATOS_CATCH("");
+    }
+
+    // void CalculateSystemContributions(Element::Pointer pCurrentElement,
+    //                                   LocalSystemMatrixType& rLHS_Contribution,
+    //                                   LocalSystemVectorType& rRHS_Contribution,
+    //                                   Element::EquationIdVectorType& rEquationId,
+    //                                   ProcessInfo& rCurrentProcessInfo) override
+    // {
+    //     KRATOS_TRY;
+
+    //     const int k = OpenMPUtils::ThisThread();
+
+    //     (pCurrentElement)->InitializeNonLinearIteration(rCurrentProcessInfo);
+    //     std::cout<<"---- 1 ";
+    //     KRATOS_WATCH(rRHS_Contribution);
+    //     (pCurrentElement)->CalculateLocalSystem(rLHS_Contribution,
+    //     rRHS_Contribution, rCurrentProcessInfo); std::cout<<"---- 2 ";
+    //     KRATOS_WATCH(rRHS_Contribution);
+    //     (pCurrentElement)->CalculateLocalVelocityContribution(this->mDampingMatrix[k],
+    //     rRHS_Contribution, rCurrentProcessInfo); std::cout<<"---- 3 ";
+    //     KRATOS_WATCH(rRHS_Contribution);
+
+    //     if (this->mUpdateAcceleration)
+    //     {
+    //         (pCurrentElement)->CalculateMassMatrix(this->mMassMatrix[k], rCurrentProcessInfo);
+    //         this->AddDynamicsToRHS(pCurrentElement, rRHS_Contribution, this->mDampingMatrix[k],
+    //                          this->mMassMatrix[k], rCurrentProcessInfo);
+    //     }
+    //     std::cout<<"---- 4 ";
+    //     KRATOS_WATCH(rRHS_Contribution);
+    //     this->AddDynamicsToLHS(rLHS_Contribution, this->mDampingMatrix[k], this->mMassMatrix[k],
+    //                      rCurrentProcessInfo);
+    //     std::cout<<"---- 5 ";
+    //     KRATOS_WATCH(rRHS_Contribution);
+    //     (pCurrentElement)->EquationIdVector(rEquationId, rCurrentProcessInfo);
+
+    //     KRATOS_CATCH("");
+    // }
+
     ///@}
 };
 

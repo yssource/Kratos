@@ -96,6 +96,16 @@ public:
 
     typedef ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace> BaseType;
 
+    typedef typename BaseType::SystemMatrixType SystemMatrixType;
+
+    typedef typename BaseType::LocalSystemMatrixType LocalSystemMatrixType;
+
+    typedef typename BaseType::LocalSystemVectorType LocalSystemVectorType;
+
+    typedef typename BaseType::SystemVectorType SystemVectorType;
+
+    typedef typename BaseType::DofsArrayType DofsArrayType;
+
     /// Constructor.
 
     ResidualBasedBossakTurbulentKineticEnergyScheme(const double AlphaBossak)
@@ -123,6 +133,60 @@ public:
 
         KRATOS_CATCH("");
     }
+
+    void Update(ModelPart& rModelPart,
+                DofsArrayType& rDofSet,
+                SystemMatrixType& rA,
+                SystemVectorType& rDx,
+                SystemVectorType& rb) override
+    {
+        KRATOS_TRY;
+
+        // this->mpDofUpdater->UpdateDofs(rDofSet, rDx);
+
+        // CalculationUtilities::LowerBound<NodeType>(rModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
+
+        // this->UpdateTimeSchemeVariables(rModelPart);
+
+        BaseType::Update(rModelPart, rDofSet, rA, rDx, rb);
+
+        // Updating the auxiliary variables
+        const int number_of_nodes = rModelPart.NumberOfNodes();
+#pragma omp parallel for
+        for (int iNode = 0; iNode < number_of_nodes; ++iNode)
+        {
+            NodeType& r_node = *(rModelPart.NodesBegin() + iNode);
+            const double tke_dot_old =
+                r_node.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY_RATE, 1);
+            const double tke_dot =
+                r_node.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY_RATE, 0);
+
+            r_node.FastGetSolutionStepValue(RANS_AUXILIARY_VARIABLE_1) =
+                this->mAlphaBossak * tke_dot_old + (1.0 - this->mAlphaBossak) * tke_dot;
+        }
+
+        KRATOS_CATCH("");
+    }
+
+    // void CalculateSystemContributions(Element::Pointer pCurrentElement,
+    //                                   LocalSystemMatrixType& rLHS_Contribution,
+    //                                   LocalSystemVectorType& rRHS_Contribution,
+    //                                   Element::EquationIdVectorType& rEquationId,
+    //                                   ProcessInfo& rCurrentProcessInfo) override
+    // {
+    //     KRATOS_TRY;
+
+    //     BaseType::CalculateSystemContributions(pCurrentElement, rLHS_Contribution,
+    //                                            rRHS_Contribution, rEquationId,
+    //                                            rCurrentProcessInfo);
+
+    //     KRATOS_WATCH(pCurrentElement->Id());
+    //     KRATOS_WATCH(rLHS_Contribution);
+    //     KRATOS_WATCH(rRHS_Contribution);
+
+    //     KRATOS_CATCH("");
+    // }
+
     ///@}
 };
 

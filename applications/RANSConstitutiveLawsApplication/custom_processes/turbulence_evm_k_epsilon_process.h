@@ -131,6 +131,7 @@ public:
                 "c2"                      : 1.92,
                 "sigma_k"                 : 1.0,
                 "sigma_epsilon"           : 1.3,
+                "cross_wind_diffusion_c1" : 0.7,
                 "velocity_step"           : 1
             },
             "flow_parameters":
@@ -170,6 +171,8 @@ public:
             model_properties["sigma_k"].GetDouble();
         rModelPart.GetProcessInfo()[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA] =
             model_properties["sigma_epsilon"].GetDouble();
+        rModelPart.GetProcessInfo()[TURBULENCE_RANS_CROSS_WIND_DIFFUSION_C1] =
+            model_properties["cross_wind_diffusion_c1"].GetDouble();
         rModelPart.GetProcessInfo()[RANS_VELOCITY_STEP] =
             model_properties["velocity_step"].GetInt();
 
@@ -407,6 +410,8 @@ protected:
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(FRICTION_VELOCITY);
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(TANGENTIAL_VELOCITY);
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(NORMAL_VELOCITY);
+        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(RANS_AUXILIARY_VARIABLE_1);
+        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(RANS_AUXILIARY_VARIABLE_2);
 
         BaseType::AddSolutionStepVariables();
 
@@ -754,15 +759,14 @@ private:
             KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
                 << "Solving for K...\n";
             mpKStrategy->SolveSolutionStep();
-            CalculationUtilities::LowerBound<NodeType>(
-                this->mrModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
-            mpKScheme->Update(this->mrModelPart, dummy_dofs, dummy_matrix,
-                              dummy_vector, dummy_vector);
-
             KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
                 << "Solving for Epsilon...\n";
             mpEpsilonStrategy->SolveSolutionStep();
 
+            CalculationUtilities::LowerBound<NodeType>(
+                this->mrModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
+            mpKScheme->Update(this->mrModelPart, dummy_dofs, dummy_matrix,
+                              dummy_vector, dummy_vector);
             CalculationUtilities::LowerBound<NodeType>(
                 this->mrModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
             mpEpsilonScheme->Update(this->mrModelPart, dummy_dofs, dummy_matrix,

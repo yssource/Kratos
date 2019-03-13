@@ -246,7 +246,7 @@ END MATERIAL
 MATERIAL: CasmSoilPlasticity
 QUESTION: Type#CB#(CasmSoilPlasticity)
 VALUE: CasmSoilPlasticity
-QUESTION: CONSTITUTIVE_LAW_NAME#CB#(CasmNubiaSoilModel,CasmAssociatedSoilModel,CasmMCCSoilModel)
+QUESTION: CONSTITUTIVE_LAW_NAME#CB#(CasmNubiaSoilModel,CasmAssociatedSoilModel,CasmMCCSoilModel,NonlocalCasmNubiaSoilModel)
 VALUE: CasmNubiaSoilModel
 QUESTION: DIMENSION_OF_THE_PROBLEM#CB#(LargeStrainPlaneStrain2DLaw,LargeStrainAxisymmetric2DLaw,LargeStrain3DLaw)
 VALUE: PlaneStrainPlaneStrain2DLaw

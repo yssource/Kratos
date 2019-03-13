@@ -120,7 +120,7 @@ class ConePenetrationUtility(KratosMultiphysics.Process):
         figure_file.write(line_value)
         figure_file.close()
 
-        self.MakeTheOtherFile();
+        #self.MakeTheOtherFile();
 
     # make the other stupid file just to check everything is sort of correct
     def MakeTheOtherFile(self):

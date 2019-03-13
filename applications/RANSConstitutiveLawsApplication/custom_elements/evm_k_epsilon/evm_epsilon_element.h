@@ -435,6 +435,12 @@ private:
                                  const double c2,
                                  const double gamma) const;
 
+    double CalculateSourceTerm(const double turbulent_kinematic_viscosity,
+                               const double turbulent_kinetic_energy,
+                               const double c1,
+                               const double gamma,
+                               const Matrix& rShapeDerivatives) const;
+
     ///@}
     ///@name Serialization
     ///@{

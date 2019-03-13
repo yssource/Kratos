@@ -430,6 +430,10 @@ private:
                                  const double wall_distance,
                                  const double gamma) const;
 
+    double CalculateSourceTerm(const double turbulent_kinematic_viscosity,
+                               const double turbulent_kinetic_energy,
+                               const Matrix& rShapeDerivatives) const;
+
     ///@}
     ///@name Serialization
     ///@{

@@ -630,6 +630,9 @@ private:
                 this->InitializeValues(*i_node, k, epsilon);
             }
         }
+
+        // CalculationUtilities::LowerBound<NodeType>(this->mrModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
+        // CalculationUtilities::LowerBound<NodeType>(this->mrModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
     }
 
     void SetUpWallNode(NodeType& rNode)
@@ -782,16 +785,20 @@ private:
                     (this->mrModelPart.NodesBegin() + i)->FastGetSolutionStepValue(TURBULENT_VISCOSITY);
             }
 
-            double increase_norm(0.0);
+            double increase_norm(0.0), solution_norm(0.0);
 
-#pragma omp parallel for reduction(+ : increase_norm)
+#pragma omp parallel for reduction(+ : increase_norm, solution_norm)
             for (int i = 0; i < number_of_nodes; ++i)
             {
                 increase_norm += new_turbulent_viscosity[i] - old_turbulent_viscosity[i];
+                solution_norm += new_turbulent_viscosity[i];
             }
 
-            const double ratio = std::abs(increase_norm / number_of_nodes);
-            increase_norm = std::abs(increase_norm);
+            if (solution_norm == 0.0)
+                solution_norm = 1.0;
+
+            const double ratio = std::abs(increase_norm / solution_norm);
+            increase_norm = std::abs(increase_norm) / number_of_nodes;
 
             if (this->mEchoLevel > 0)
                 std::cout << "[" << step << "] CONVERGENCE CHECK: TURBULENT_VISCOSITY: ratio = "

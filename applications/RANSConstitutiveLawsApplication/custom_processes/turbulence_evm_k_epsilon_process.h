@@ -138,7 +138,8 @@ public:
             {
                 "ramp_up_time"                : 0.03,
                 "turbulent_mixing_length"     : 0.01,
-                "turbulent_viscosity_fraction": 0.05,
+                "turbulent_viscosity_min"     : 1e-6,
+                "turbulent_viscosity_max"     : 1e+2,
                 "free_stream_velocity"        : 1.0,
                 "free_stream_k"               : 1.0,
                 "free_stream_epsilon"         : 1.0,
@@ -180,8 +181,19 @@ public:
             this->mrParameters["model_properties"]["flow_parameters"];
         rModelPart.GetProcessInfo()[TURBULENT_MIXING_LENGTH] =
             flow_parameters["turbulent_mixing_length"].GetDouble();
-        rModelPart.GetProcessInfo()[TURBULENT_VISCOSITY_FRACTION] =
-            flow_parameters["turbulent_viscosity_fraction"].GetDouble();
+
+        const double nu_t_min = flow_parameters["turbulent_viscosity_min"].GetDouble();
+        const double nu_t_max = flow_parameters["turbulent_viscosity_max"].GetDouble();
+
+        KRATOS_ERROR_IF(nu_t_min >= nu_t_max)
+            << "Allowed bounds for turbulent viscosity is not valid. "
+               "turbulent_viscosity_min >= turbulent_viscosity_max [ "
+            << nu_t_min << " >= " << nu_t_max << " ]\n";
+
+        rModelPart.GetProcessInfo()[TURBULENT_VISCOSITY_MIN] =
+            flow_parameters["turbulent_viscosity_min"].GetDouble();
+        rModelPart.GetProcessInfo()[TURBULENT_VISCOSITY_MAX] =
+            flow_parameters["turbulent_viscosity_max"].GetDouble();
 
         mFreestreamVelocity = flow_parameters["free_stream_velocity"].GetDouble();
         mFreestreamK = flow_parameters["free_stream_k"].GetDouble();
@@ -261,16 +273,14 @@ public:
     {
         BaseType::ExecuteInitialize();
 
-        const double nu_fraction =
-            this->mrModelPart.GetProcessInfo()[TURBULENT_VISCOSITY_FRACTION];
+        const double nu_t_min = this->mrModelPart.GetProcessInfo()[TURBULENT_VISCOSITY_MIN];
         const int number_of_nodes = this->mrModelPart.NumberOfNodes();
 
 #pragma omp parallel for
         for (int i = 0; i < number_of_nodes; ++i)
         {
             NodeType& r_node = *(this->mrModelPart.NodesBegin() + i);
-            const double nu = r_node.FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
-            r_node.FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu * nu_fraction;
+            r_node.FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t_min;
         }
 
         this->GenerateSolutionStrategies();
@@ -763,15 +773,6 @@ private:
                 << "Solving for Epsilon...\n";
             mpEpsilonStrategy->SolveSolutionStep();
 
-            CalculationUtilities::LowerBound<NodeType>(
-                this->mrModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
-            mpKScheme->Update(this->mrModelPart, dummy_dofs, dummy_matrix,
-                              dummy_vector, dummy_vector);
-            CalculationUtilities::LowerBound<NodeType>(
-                this->mrModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
-            mpEpsilonScheme->Update(this->mrModelPart, dummy_dofs, dummy_matrix,
-                                    dummy_vector, dummy_vector);
-
             this->UpdateTurbulentViscosity();
 
 #pragma omp parallel for
@@ -829,7 +830,6 @@ private:
 
     double CalculateNodalTurbulentViscosity(const ModelPart::NodeIterator& iNode,
                                             const double C_mu,
-                                            const double nu_fraction,
                                             const unsigned int Step) const
     {
         const double tke = iNode->FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY, Step);
@@ -837,12 +837,9 @@ private:
             iNode->FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE, Step);
         const double y_plus = iNode->FastGetSolutionStepValue(RANS_Y_PLUS);
         const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
-        const double nu = iNode->FastGetSolutionStepValue(KINEMATIC_VISCOSITY, Step);
-        const double nu_min = nu_fraction * nu;
-        const double nu_max = nu / nu_fraction;
 
         const double nu_t = EvmKepsilonModelUtilities::CalculateTurbulentViscosity(
-            C_mu, tke, epsilon, f_mu, nu_min, nu_max);
+            C_mu, tke, epsilon, f_mu);
 
         return nu_t;
     }
@@ -858,16 +855,19 @@ private:
         const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
 
         const double C_mu = r_current_process_info[TURBULENCE_RANS_C_MU];
-        const double nu_fraction = r_current_process_info[TURBULENT_VISCOSITY_FRACTION];
+        const double nu_t_min = r_current_process_info[TURBULENT_VISCOSITY_MIN];
+        const double nu_t_max = r_current_process_info[TURBULENT_VISCOSITY_MAX];
 
 #pragma omp parallel for
         for (int i = 0; i < number_of_nodes; i++)
         {
             ModelPart::NodeIterator iNode = this->mrModelPart.NodesBegin() + i;
-            const double nu_t =
-                CalculateNodalTurbulentViscosity(iNode, C_mu, nu_fraction, 0);
+            const double nu_t = CalculateNodalTurbulentViscosity(iNode, C_mu, 0);
             iNode->FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t;
         }
+
+        CalculationUtilities::ClipVariable<NodeType>(
+            this->mrModelPart, TURBULENT_VISCOSITY, nu_t_min, nu_t_max);
     }
 
     ///@}

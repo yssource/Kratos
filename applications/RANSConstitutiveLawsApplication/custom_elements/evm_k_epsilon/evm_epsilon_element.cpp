@@ -621,7 +621,7 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
             for (unsigned int a = 0; a < TNumNodes; ++a)
             {
                 residual += velocity_convective_terms[a] * nodal_epsilon[a];
-                // residual += reaction * gauss_shape_functions[a] * nodal_epsilon[a];
+                residual += reaction * gauss_shape_functions[a] * nodal_epsilon[a];
             }
             residual -= source;
             residual = std::abs(residual);
@@ -629,36 +629,15 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
 
             const double u_parallel_mag =
                 std::abs(inner_prod(velocity, epsilon_gradient)) / epsilon_gradient_norm;
-            const double Pe = 0.5 * u_parallel_mag * elem_size / effective_viscosity;
-            const double alpha =
-                std::max<double>(0.0, cross_wind_diffusion_c1 - 1.0 / Pe);
+            const double tau = EvmKepsilonModelUtilities::CalculateStabilizationTau(
+                u_parallel_mag, elem_size, effective_viscosity, reaction, delta_time);
 
-            cross_wind_diffusion *= 0.5 * alpha * elem_size / velocity_magnitude_square;
-            // PrintIfVariableIsPositive(cross_wind_diffusion);
-            // PrintIfVariableIsNegative(cross_wind_diffusion);
+            cross_wind_diffusion *= (tau * elem_size / effective_viscosity);
         }
 
-
-        // // Node ids are checked
-        // switch (this->Id()-1)
-        // {
-        //     case 7772:
-        //     case 9574:
-        //     case 9575:
-        //     case 9595:
-        //     case 9636:
-        //     case 12938:
-        //     case 12939:
-        //         std::cout<<"------------ E ---------------\n";
-        //         KRATOS_WATCH(this->Id() - 1);
-        //         KRATOS_WATCH(tau);
-        //         KRATOS_WATCH(cross_wind_diffusion);
-        //         KRATOS_WATCH(velocity_magnitude_square);
-        //         KRATOS_WATCH(effective_viscosity);
-        //         break;
-        //     default:
-        //         break;
-        // }
+        // KRATOS_INFO_IF("Epsilon", reaction > 1e+5)
+        //     << this->Id() << ", R = " << reaction << ", Nu = " << effective_viscosity
+        //     << ", CD = " << cross_wind_diffusion << ", tau = " << tau << "\n";
 
         for (unsigned int a = 0; a < TNumNodes; a++)
         {
@@ -671,13 +650,13 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
                 double value = 0.0;
 
                 value += gauss_shape_functions[a] * velocity_convective_terms[b];
-                // value += gauss_shape_functions[a] * reaction * gauss_shape_functions[b];
+                value += gauss_shape_functions[a] * reaction * gauss_shape_functions[b];
                 value += effective_viscosity * dNa_dNb;
 
                 // Adding SUPG stabilization terms
                 value += tau * velocity_convective_terms[a] * velocity_convective_terms[b];
-                // value += tau * velocity_convective_terms[a] * reaction *
-                //          gauss_shape_functions[b];
+                value += tau * velocity_convective_terms[a] * reaction *
+                         gauss_shape_functions[b];
 
                 // Adding cross wind dissipation
                 value += cross_wind_diffusion * dNa_dNb * velocity_magnitude_square;

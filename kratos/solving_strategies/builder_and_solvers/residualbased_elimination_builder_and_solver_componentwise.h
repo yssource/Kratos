@@ -29,7 +29,6 @@
 #include "includes/define.h"
 #include "solving_strategies/builder_and_solvers/residualbased_elimination_builder_and_solver.h"
 
-
 namespace Kratos
 {
 
@@ -103,6 +102,7 @@ public:
 
 
     typedef BuilderAndSolver<TSparseSpace,TDenseSpace, TLinearSolver> BaseType;
+    typedef ResidualBasedEliminationBuilderAndSolver<TSparseSpace,TDenseSpace, TLinearSolver> ResidualBasedEliminationBuilderAndSolverType;
 
     typedef typename BaseType::TSchemeType TSchemeType;
 
@@ -128,16 +128,36 @@ public:
 
     typedef typename BaseType::ElementsContainerType ElementsContainerType;
 
-    /*@} */
-    /**@name Life Cycle
-    */
-    /*@{ */
+    ///@}
+    ///@name Life Cycle
+    ///@{
 
-    /** Constructor.
-    */
-    ResidualBasedEliminationBuilderAndSolverComponentwise(
+    /**
+     * @brief Default constructor. (with parameters)
+     */
+    explicit ResidualBasedEliminationBuilderAndSolverComponentwise(
+        typename TLinearSolver::Pointer pNewLinearSystemSolver,
+        Parameters ThisParameters
+        ) : ResidualBasedEliminationBuilderAndSolverType(pNewLinearSystemSolver)
+    {
+        // Validate default parameters
+        Parameters default_parameters = Parameters(R"(
+        {
+            "name"                     : "ResidualBasedEliminationBuilderAndSolverComponentwise",
+            "components_wise_variable" : "SCALAR_VARIABLE_OR_COMPONENT"
+        })" );
+
+        ThisParameters.ValidateAndAssignDefaults(default_parameters);
+
+        rVar = KratosComponents<TVariableType>::Get(ThisParameters["components_wise_variable"].GetString());
+    }
+
+    /**
+     * @brief Default constructor. Constructor.
+     */
+    explicit ResidualBasedEliminationBuilderAndSolverComponentwise(
         typename TLinearSolver::Pointer pNewLinearSystemSolver,TVariableType const& Var)
-        : ResidualBasedEliminationBuilderAndSolver< TSparseSpace,TDenseSpace,TLinearSolver >(pNewLinearSystemSolver)
+        : ResidualBasedEliminationBuilderAndSolverType(pNewLinearSystemSolver)
         , rVar(Var)
     {
 
@@ -235,7 +255,7 @@ public:
                     EquationId[i] = geom[i].GetDof(rVar,pos).EquationId();
 
                 //assemble the elemental contribution
-#ifdef _OPENMP
+#ifdef USE_LOCKS_IN_ASSEMBLY
                 this->Assemble(A,b,LHS_Contribution,RHS_Contribution,EquationId,lock_array);
 #else
                 this->Assemble(A,b,LHS_Contribution,RHS_Contribution,EquationId);
@@ -278,7 +298,7 @@ public:
                     EquationId[i] = geom[i].GetDof(rVar,pos).EquationId();
                 }
 
-#ifdef _OPENMP
+#ifdef USE_LOCKS_IN_ASSEMBLY
                 this->Assemble(A,b,LHS_Contribution,RHS_Contribution,EquationId,lock_array);
 #else
                 this->Assemble(A,b,LHS_Contribution,RHS_Contribution,EquationId);
@@ -540,7 +560,7 @@ protected:
         for(WeakPointerVector< Node<3> >::iterator in = mActiveNodes.begin();
                 in!=mActiveNodes.end(); in++)
         {
-            Node<3>::DofType& current_dof = in->GetDof(rVar,pos);
+            const Node<3>::DofType& current_dof = in->GetDof(rVar,pos);
             if( current_dof.IsFixed() == false)
             {
                 index_i = (current_dof).EquationId();
@@ -554,8 +574,7 @@ protected:
                 for( WeakPointerVector< Node<3> >::iterator i =	neighb_nodes.begin();
                         i != neighb_nodes.end(); i++)
                 {
-
-                    Node<3>::DofType& neighb_dof = i->GetDof(rVar,pos);
+                    const Node<3>::DofType& neighb_dof = i->GetDof(rVar,pos);
                     if(neighb_dof.IsFixed() == false )
                     {
                         int index_j = (neighb_dof).EquationId();
@@ -621,7 +640,7 @@ protected:
             for(WeakPointerVector< Node<3> >::iterator in = it_begin;
                     in!=it_end; in++)
             {
-                Node<3>::DofType& current_dof = in->GetDof(rVar,pos);
+                const Node<3>::DofType& current_dof = in->GetDof(rVar,pos);
                 if( current_dof.IsFixed() == false)
                 {
                     int index_i = (current_dof).EquationId();
@@ -636,7 +655,7 @@ protected:
                             i != neighb_nodes.end(); i++)
                     {
 
-                        Node<3>::DofType& neighb_dof = i->GetDof(rVar,pos);
+                        const Node<3>::DofType& neighb_dof = i->GetDof(rVar,pos);
                         if(neighb_dof.IsFixed() == false )
                         {
                             int index_j = (neighb_dof).EquationId();

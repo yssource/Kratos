@@ -30,7 +30,6 @@ class FluidDynamicsAnalysisWithVTK(FluidDynamicsAnalysis):
         self.VtkOut =kchim.VtkOutput(fluid,"nnn",self.project_parameters["output_configuration"])
         self.step = 0
 
-
     def OutputSolutionStep(self):
         super(FluidDynamicsAnalysisWithVTK,self).OutputSolutionStep()
         if(self.step%1==0):

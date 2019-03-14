@@ -22,7 +22,7 @@ class KratosIO(CoSimulationBaseIO):
         self.mapper_flags = {
             "add_values" : KratosMapping.Mapper.ADD_VALUES,
             "swap_sign" : KratosMapping.Mapper.SWAP_SIGN,
-            "conservative" : KratosMapping.Mapper.CONSERVATIVE
+            "conservative" : KratosMapping.Mapper.USE_TRANSPOSE
         }
 
         self.kratos_vars = {} # dict storing name-KratosVars,
@@ -222,7 +222,10 @@ class KratosIO(CoSimulationBaseIO):
                 "mapper_type" : ""
             }""")
             mapper_settings["mapper_type"].SetString(data_settings["io_settings"]["mapper_type"])
-            mapper = KratosMapping.MapperFactory.CreateMapper(client_mesh_from, client_mesh_to, mapper_settings)
+            if from_client.IsDistributed() or to_client.IsDistributed():
+                mapper = KratosMapping.MapperFactory.CreateMPIMapper(client_mesh_from, client_mesh_to, mapper_settings)
+            else:
+                mapper = KratosMapping.MapperFactory.CreateMapper(client_mesh_from, client_mesh_to, mapper_settings)
 
             self.mappers[geometry_name_from][geometry_name_to] = mapper
 

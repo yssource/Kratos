@@ -63,22 +63,23 @@ double CalculateStabilizationTau(const double velocity_magnitude,
     PrintIfVariableIsNegative(reaction);
     PrintIfVariableIsNegative(delta_time);
 
-    const double Pe = std::max<double>(
-        0.5 * velocity_magnitude * length / effective_kinematic_viscosity, 1e-15);
-    const double alpha = std::max<double>(
-        std::min<double>((std::exp(2.0 * Pe) + 1) / (std::exp(2.0 * Pe) - 1) - 1.0 / Pe, 1.0),
-        0.0);
+    // const double Pe = std::max<double>(
+    //     0.5 * velocity_magnitude * length / effective_kinematic_viscosity, 1e-15);
+    // const double alpha = std::max<double>(
+    //     std::min<double>((std::exp(2.0 * Pe) + 1) / (std::exp(2.0 * Pe) - 1) - 1.0 / Pe, 1.0),
+    //     0.0);
 
-    const double stab_tau = alpha * length / (2 * velocity_magnitude);
+    // PrintIfVariableIsNegative(stab_tau);
+    // return stab_tau;
 
-    PrintIfVariableIsNegative(stab_tau);
-    return stab_tau;
+    // const double stab_tau = alpha * length / (2 * velocity_magnitude);
 
-    // const double stab_1 = 4.0 * effective_kinematic_viscosity /
-    // std::pow(length, 2); const double stab_2 = 2.0 * velocity_magnitude /
-    // length; const double stab_3 = reaction;
+    const double stab_1 = 4.0 * effective_kinematic_viscosity / std::pow(length, 2);
+    const double stab_2 = 2.0 * velocity_magnitude / length;
+    const double stab_3 = reaction;
+    const double stab_4 = 1.0 / delta_time;
 
-    // return 1.0 / (stab_1 + stab_2 + stab_3);
+    return 1.0 / (stab_1 + stab_2 + stab_3 + stab_4);
 }
 
 template <unsigned int TDim>

@@ -173,24 +173,20 @@ namespace Kratos
          double& GetValue(const Variable<double>& rThisVariable, double& rValue) override
          {
 
+            KRATOS_TRY
+
             rValue=0;
 
-            if (rThisVariable==PLASTIC_STRAIN)
+            if (rThisVariable==PLASTIC_VOL_DEF)
             {
-               rValue = this->mInternal.Variables[0];
-            }
-            else if (rThisVariable==DELTA_PLASTIC_STRAIN)
-            {
-               rValue = this->mInternal.Variables[0]-mPreviousInternal.Variables[0];
-            }
-            else if (rThisVariable==PRE_CONSOLIDATION_STRESS)
-            {
-               rValue = this->mInternal.Variables[5];
+               rValue = this->mInternal.Variables[1];
             }
             else {
-               rValue = NonAssociativePlasticityModel::GetValue( rThisVariable, rValue);
+               rValue = CasmBaseSoilModel::GetValue( rThisVariable, rValue);
             }
             return rValue;
+
+            KRATOS_CATCH("")
          }
 
          ///@}

@@ -215,7 +215,7 @@ namespace Kratos
          ///@name Protected static Member Variables
          ///@{
 
-            // Calculate Stress and constitutive tensor
+           /* // Calculate Stress and constitutive tensor
             void CalculateStressAndConstitutiveTensors(ModelDataType& rValues, MatrixType& rStressMatrix, Matrix& rConstitutiveMatrix) override
             {
                KRATOS_TRY
@@ -256,7 +256,7 @@ namespace Kratos
 
 
                KRATOS_CATCH("")
-            }
+            }*/
 
          ///@}
          ///@name Protected member Variables

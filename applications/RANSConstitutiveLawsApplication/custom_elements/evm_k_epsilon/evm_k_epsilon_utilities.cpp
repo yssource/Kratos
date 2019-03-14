@@ -25,24 +25,13 @@ namespace EvmKepsilonModelUtilities
 double CalculateTurbulentViscosity(const double C_mu,
                                    const double turbulent_kinetic_energy,
                                    const double turbulent_energy_dissipation_rate,
-                                   const double f_mu,
-                                   const double minimum_viscosity,
-                                   const double maximum_viscosity)
+                                   const double f_mu)
 {
-    // CheckIfVariableIsPositive(turbulent_kinetic_energy);
-    // CheckIfVariableIsPositive(turbulent_energy_dissipation_rate);
-
-    const double nu_t = std::min<double>(
-        std::max<double>(minimum_viscosity, C_mu * f_mu * std::pow(turbulent_kinetic_energy, 2) /
-                                                turbulent_energy_dissipation_rate),
-        maximum_viscosity);
-
-    return nu_t;
+    return C_mu * f_mu * std::pow(turbulent_kinetic_energy, 2) / turbulent_energy_dissipation_rate;
 }
 
 double CalculateFmu(const double y_plus)
 {
-    // CheckIfVariableIsPositive(y_plus);
     return 1.0 - std::exp(-0.0115 * y_plus);
 }
 
@@ -50,10 +39,6 @@ double CalculateF2(const double turbulent_kinetic_energy,
                    const double kinematic_viscosity,
                    const double turbulent_energy_dissipation_rate)
 {
-    // CheckIfVariableIsPositive(turbulent_kinetic_energy);
-    // CheckIfVariableIsPositive(turbulent_energy_dissipation_rate);
-    // CheckIfVariableIsPositive(kinematic_viscosity);
-
     if (turbulent_energy_dissipation_rate == 0.0)
         return 1.0;
     else
@@ -72,11 +57,6 @@ double CalculateStabilizationTau(const double velocity_magnitude,
                                  const double reaction,
                                  const double delta_time)
 {
-    // CheckIfVariableIsPositive(velocity_magnitude);
-    // CheckIfVariableIsPositive(length);
-    // CheckIfVariableIsPositive(effective_kinematic_viscosity);
-    // CheckIfVariableIsPositive(delta_time);
-
     PrintIfVariableIsNegative(velocity_magnitude);
     PrintIfVariableIsNegative(length);
     PrintIfVariableIsNegative(effective_kinematic_viscosity);
@@ -94,9 +74,9 @@ double CalculateStabilizationTau(const double velocity_magnitude,
     PrintIfVariableIsNegative(stab_tau);
     return stab_tau;
 
-    // const double stab_1 = 4.0 * effective_kinematic_viscosity / std::pow(length, 2);
-    // const double stab_2 = 2.0 * velocity_magnitude / length;
-    // const double stab_3 = reaction;
+    // const double stab_1 = 4.0 * effective_kinematic_viscosity /
+    // std::pow(length, 2); const double stab_2 = 2.0 * velocity_magnitude /
+    // length; const double stab_3 = reaction;
 
     // return 1.0 / (stab_1 + stab_2 + stab_3);
 }

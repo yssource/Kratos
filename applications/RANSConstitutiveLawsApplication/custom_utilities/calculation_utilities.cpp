@@ -70,9 +70,10 @@ void ClipVariable(ModelPart& rModelPart,
 {
     const int number_of_nodes = rModelPart.NumberOfNodes();
 
-    unsigned int count_of_nodes = 0;
+    unsigned int count_of_nodes_negative = 0;
+    unsigned int count_of_nodes_positive = 0;
 
-#pragma omp parallel for reduction(+ : count_of_nodes)
+#pragma omp parallel for reduction(+ : count_of_nodes_negative, count_of_nodes_positive)
     for (int i = 0; i < number_of_nodes; i++)
     {
         NodeType& r_current_node = *(rModelPart.NodesBegin() + i);
@@ -80,20 +81,25 @@ void ClipVariable(ModelPart& rModelPart,
         if (value < MinValue)
         {
             value = MinValue;
-            count_of_nodes++;
+            count_of_nodes_negative++;
         }
         else if (value > MaxValue)
         {
             value = MaxValue;
-            count_of_nodes++;
+            count_of_nodes_positive++;
         }
     }
+
+    const unsigned int count_of_nodes = count_of_nodes_negative + count_of_nodes_positive;
 
     KRATOS_WARNING_IF("ClipVariable", count_of_nodes > 0)
         << rVariable.Name() << " of " << count_of_nodes
         << " nodes are not in the range of [ " << std::scientific << MinValue
         << ", " << std::scientific << MaxValue << " ] out of total number of "
-        << number_of_nodes << " nodes in " << rModelPart.Name() << ".\n";
+        << number_of_nodes << " nodes in " << rModelPart.Name() << " [ "
+        << count_of_nodes_negative << " nodes < " << std::scientific
+        << MinValue << "; " << count_of_nodes_positive << " nodes > "
+        << std::scientific << MaxValue << " ].\n";
 }
 
 template <class NodeType>

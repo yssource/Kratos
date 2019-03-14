@@ -634,9 +634,31 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
                 std::max<double>(0.0, cross_wind_diffusion_c1 - 1.0 / Pe);
 
             cross_wind_diffusion *= 0.5 * alpha * elem_size / velocity_magnitude_square;
-            PrintIfVariableIsPositive(cross_wind_diffusion);
-            PrintIfVariableIsNegative(cross_wind_diffusion);
+            // PrintIfVariableIsPositive(cross_wind_diffusion);
+            // PrintIfVariableIsNegative(cross_wind_diffusion);
         }
+
+
+        // // Node ids are checked
+        // switch (this->Id()-1)
+        // {
+        //     case 7772:
+        //     case 9574:
+        //     case 9575:
+        //     case 9595:
+        //     case 9636:
+        //     case 12938:
+        //     case 12939:
+        //         std::cout<<"------------ E ---------------\n";
+        //         KRATOS_WATCH(this->Id() - 1);
+        //         KRATOS_WATCH(tau);
+        //         KRATOS_WATCH(cross_wind_diffusion);
+        //         KRATOS_WATCH(velocity_magnitude_square);
+        //         KRATOS_WATCH(effective_viscosity);
+        //         break;
+        //     default:
+        //         break;
+        // }
 
         for (unsigned int a = 0; a < TNumNodes; a++)
         {

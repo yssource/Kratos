@@ -568,7 +568,7 @@ class MorOfflineStrategy
         // DenseSpaceType::Resize(r_basis, system_size, reduced_system_size);
 
         vector< double > aux;
-        vector <double > Q_vector;
+        //std::vector <double > Q_vector;
         
         for( size_t i = 0; i < n_sampling_points; ++i )
         {
@@ -623,8 +623,7 @@ class MorOfflineStrategy
                 
             }
         }
-
-        std::cout<<Q_vector.size()<<std::endl;
+    
         // auto r_basis_r = r_basis;
         auto& r_force_vector_reduced = *mpRHSr;
         // mpForceVectorReduced = ZeroMatrix( 3*n_sampling_points );
@@ -698,6 +697,7 @@ class MorOfflineStrategy
 
         return mM;
     }
+
 
     TSystemMatrixType &GetDampingMatrix()
     {

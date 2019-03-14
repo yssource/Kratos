@@ -68,7 +68,11 @@ class FluidChimeraAnalysis(FluidDynamicsAnalysis):
     '''
 
     def InitializeSolutionStep(self): 
+        import time
+        start = time.clock()
         self.ChimeraProcess.ExecuteInitializeSolutionStep()
+        end = time.clock()
+        print ("time taken for chimera is =  ", end - start)
         super(FluidChimeraAnalysis,self).InitializeSolutionStep()
 
     def FinalizeSolutionStep(self):

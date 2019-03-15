@@ -637,9 +637,6 @@ void EvmKElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMa
                 value -= cross_wind_diffusion * velocity_convective_terms[a] *
                          velocity_convective_terms[b];
 
-                // Adding isotropic diffusion for reaction term stabilization
-
-
                 rDampingMatrix(a, b) += gauss_weights[g] * value;
             }
         }

@@ -635,10 +635,6 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
             cross_wind_diffusion *= (tau * elem_size / effective_viscosity);
         }
 
-        // KRATOS_INFO_IF("Epsilon", reaction > 1e+5)
-        //     << this->Id() << ", R = " << reaction << ", Nu = " << effective_viscosity
-        //     << ", CD = " << cross_wind_diffusion << ", tau = " << tau << "\n";
-
         for (unsigned int a = 0; a < TNumNodes; a++)
         {
             for (unsigned int b = 0; b < TNumNodes; b++)

@@ -159,14 +159,16 @@ namespace Kratos
       const double & rConstantShearModulus = rProperties[INITIAL_SHEAR_MODULUS];
 
       // 1. Define some matrices
-      Matrix FourthOrderIdentity = ZeroMatrix(6,6);
+      Matrix FourthOrderIdentity(6,6);
+      noalias( FourthOrderIdentity ) = ZeroMatrix(6,6);
       for (unsigned int i = 0; i<3; ++i)
          FourthOrderIdentity(i,i) = 1.0;
 
       for (unsigned int i = 3; i<6; ++i)
          FourthOrderIdentity(i,i) = 0.50;
 
-      Matrix IdentityCross = ZeroMatrix(6,6);
+      Matrix IdentityCross(6,6);
+      noalias( IdentityCross )  = ZeroMatrix(6,6);
       for (unsigned int i = 0; i<3; ++i) {
          for (unsigned int j = 0; j<3; ++j) {
             IdentityCross(i,j) = 1.0;

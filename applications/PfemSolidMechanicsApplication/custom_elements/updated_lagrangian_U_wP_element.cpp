@@ -285,6 +285,20 @@ namespace Kratos
 
    }
 
+   // **************************************************************************
+   // **************************************************************************
+
+   UpdatedLagrangianUwPElement::SizeType UpdatedLagrangianUwPElement::GetDofsSize()
+   {
+      KRATOS_TRY
+
+      const SizeType dimension        = GetGeometry().WorkingSpaceDimension();
+      const SizeType number_of_nodes  = GetGeometry().PointsNumber();
+
+      return number_of_nodes * dimension + number_of_nodes; //usual size for U-P elements
+
+      KRATOS_CATCH( "" )
+   }
    //************************************************************************************
    //************************************************************************************
 

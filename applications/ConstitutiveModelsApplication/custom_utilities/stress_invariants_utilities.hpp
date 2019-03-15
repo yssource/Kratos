@@ -70,14 +70,16 @@ namespace Kratos
 
          static inline void CalculateStressInvariants( const MatrixType& rStressMatrix, double & rI1, double & rJ2, double & rLode)
          {
-            Vector StressVector = ZeroVector(6);
+            Vector StressVector(6);
+            noalias( StressVector )  = ZeroVector(6);
             ConstitutiveModelUtilities::StressTensorToVector( rStressMatrix, StressVector);
             CalculateStressInvariants( StressVector, rI1, rJ2, rLode);
          }
          static inline void CalculateStressInvariants( const Vector& rStress, double& I1, double& J2, double& Lode)
          {
             CalculateStressInvariants( rStress, I1, J2);
-            Matrix StressTensor  = MathUtils<double>::StressVectorToTensor( rStress);
+            Matrix StressTensor(3,3);
+            StressTensor = MathUtils<double>::StressVectorToTensor( rStress);
 
             for (unsigned int i = 0; i < 3; ++i)
                StressTensor(i,i) -= I1;

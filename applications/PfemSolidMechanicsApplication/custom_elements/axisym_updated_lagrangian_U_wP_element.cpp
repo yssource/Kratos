@@ -239,6 +239,20 @@ namespace Kratos
 
    }
 
+   // **************************************************************************
+   // **************************************************************************
+
+   AxisymUpdatedLagrangianUwPElement::SizeType AxisymUpdatedLagrangianUwPElement::GetDofsSize()
+   {
+      KRATOS_TRY
+
+      const SizeType dimension        = GetGeometry().WorkingSpaceDimension();
+      const SizeType number_of_nodes  = GetGeometry().PointsNumber();
+
+      return number_of_nodes * dimension + number_of_nodes; //usual size for U-P elements
+
+      KRATOS_CATCH( "" )
+   }
    //************************************************************************************
    //************************************************************************************
 
@@ -630,8 +644,9 @@ namespace Kratos
       double IntegrationWeight = rIntegrationWeight * 2.0 * 3.141592654 * rVariables.CurrentRadius / GetProperties()[THICKNESS];
 
       // Reshape the BaseClass LHS and Add the Hydro Part
-      AxisymWaterPressureUtilities WaterUtility; 
-      Matrix TotalF = prod ( rVariables.F, rVariables.F0);
+      AxisymWaterPressureUtilities WaterUtility;
+      Matrix TotalF( 3, 3);
+      noalias( TotalF ) = prod ( rVariables.F, rVariables.F0);
       int number_of_variables = dimension + 1; 
       Vector VolumeForce;
       VolumeForce= this->CalculateVolumeForce( VolumeForce, rVariables);

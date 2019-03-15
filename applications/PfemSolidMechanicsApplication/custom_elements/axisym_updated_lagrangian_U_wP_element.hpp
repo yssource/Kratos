@@ -197,6 +197,12 @@ protected:
     ///@name Protected Operators
     ///@{
 
+         /**
+          * Get element size from the dofs
+          */
+         virtual SizeType GetDofsSize() override;
+
+
     ///@}
     ///@name Protected Operations
     ///@{

@@ -372,14 +372,15 @@ namespace Kratos
       GetScalingConstant( ScalingConstant, rVariables.GetProperties() );
 
       //2. Gravity & Permeability
-      Vector b = ZeroVector(dimension);
+      Vector b(dimension);
+      noalias( b)  = ZeroVector(dimension);
       double WaterDensity = rVariables.GetProperties().GetValue(DENSITY_WATER);
       b(dimension-1) = -10.0*WaterDensity;
       Matrix K;
       double initial_porosity = rVariables.GetProperties().GetValue(INITIAL_POROSITY);
 
       double VolumeChange = this->CalculateVolumeChange(rGeometry, rVariables.GetShapeFunctions(), rVariables.GetDeformationGradient() );
-      GetPermeabilityTensor( rVariables.GetProperties(), rVariables.GetDeformationGradient(), K, initial_porosity,dimension,  VolumeChange);
+      GetPermeabilityTensor( rVariables.GetProperties(), rVariables.GetDeformationGradient(), K, initial_porosity, dimension,  VolumeChange);
 
 
       const MatrixType & rDN_DX = rVariables.GetShapeFunctionsDerivatives();
@@ -391,7 +392,8 @@ namespace Kratos
          }
       }
 
-      Vector DarcyFlow = prod( K, GradP-b);
+      Vector DarcyFlow(dimension);
+      noalias( DarcyFlow ) = prod( K, GradP-b);
 
       rLocalLHS.resize( number_of_nodes, number_of_nodes * dimension );
       noalias( rLocalLHS ) = ZeroMatrix( number_of_nodes, number_of_nodes * dimension);
@@ -1057,7 +1059,8 @@ namespace Kratos
       if (  rPermeabilityTensor.size1() != rDimension )
       {
          Matrix Aux = rPermeabilityTensor;
-         rPermeabilityTensor = ZeroMatrix( rDimension, rDimension);
+         rPermeabilityTensor.resize( rDimension, rDimension, false);
+         noalias( rPermeabilityTensor ) = ZeroMatrix( rDimension, rDimension);
          for (unsigned int i = 0; i < rDimension; i++) {
             for (unsigned int j = 0; j < rDimension; j++) {
                rPermeabilityTensor(i,j) = Aux(i,j);

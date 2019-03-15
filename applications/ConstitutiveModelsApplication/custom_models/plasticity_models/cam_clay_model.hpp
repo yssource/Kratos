@@ -181,6 +181,12 @@ namespace Kratos
             {
                rValue = this->mInternal.Variables[3];
             }
+            else if ( rThisVariable == M_MODULUS) {
+               rValue = 1e4;
+            }
+            else if ( rThisVariable == YOUNG_MODULUS) {
+               rValue = 1e4;
+            }
             else {
                rValue = NonAssociativePlasticityModel::GetValue( rThisVariable, rValue);
             }

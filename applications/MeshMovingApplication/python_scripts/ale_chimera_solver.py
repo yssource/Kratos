@@ -2,7 +2,6 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 
 # Importing the Kratos Library
 import KratosMultiphysics
-KratosMultiphysics.CheckRegisteredApplications("MeshMovingApplication")
 import KratosMultiphysics.MeshMovingApplication
 
 # Other imports
@@ -18,7 +17,6 @@ class ALEChimeraSolver(ALEFluidSolver):
         super(ALEChimeraSolver,self).__init__(model, solver_settings, parallelism)
 
     def _CreateFluidSolver(self, solver_settings, parallelism):
-        KratosMultiphysics.CheckRegisteredApplications("ChimeraApplication")
         import python_solvers_wrapper_fluid_chimera
         return python_solvers_wrapper_fluid_chimera.CreateSolverByParameters(
             self.model, solver_settings, parallelism)

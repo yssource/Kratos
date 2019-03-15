@@ -127,7 +127,6 @@ namespace Kratos
 
       if ( mpPlasticPotential) {
          rDeltaPlasticPotential = mpPlasticPotential->CalculateDeltaStressYieldCondition( rVariables, rDeltaPlasticPotential );
-         rDeltaPlasticPotential /= CalculateNorm( rDeltaPlasticPotential);
       }else {
          rDeltaPlasticPotential = this->CalculateDeltaStressYieldCondition( rVariables, rDeltaPlasticPotential );
       }
@@ -218,23 +217,6 @@ namespace Kratos
     ///@}
     ///@name Protected Operations
     ///@{
-
-    double CalculateNorm( const VectorType & rVector) 
-    {
-       KRATOS_TRY
-       
-       double value = 0;
-
-       for (unsigned int i = 0; i < 6; i++)
-       {
-          value += pow( rVector(i), 2); 
-       }
-
-       value = sqrt( value);
-       return value;
-
-       KRATOS_CATCH("")
-    }
 
     ///@}
     ///@name Protected  Access

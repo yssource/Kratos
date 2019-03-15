@@ -30,6 +30,8 @@ KratosIgaApplication::KratosIgaApplication()
         new Geometry<Node<3>>(Element::GeometryType::PointsArrayType(1))))    
     , mIgaBeamWeakDirichletCondition(0, Element::GeometryType::Pointer(
         new Geometry<Node<3>>(Element::GeometryType::PointsArrayType(1))))
+    , mIgaBeamADWeakCoupling(0, Element::GeometryType::Pointer(
+        new Geometry<Node<3>>(Element::GeometryType::PointsArrayType(1))))
     , mIgaShell3PElement(0, Element::GeometryType::Pointer(
         new Geometry<Node<3>>(Element::GeometryType::PointsArrayType(1))))
     , mIgaShell5PElement(0, Element::GeometryType::Pointer(
@@ -48,6 +50,7 @@ void KratosIgaApplication::Register() {
     KRATOS_REGISTER_ELEMENT("IgaBeamADElement", mIgaBeamADElement)
     KRATOS_REGISTER_ELEMENT("IgaBeamMomentCondition", mIgaBeamMomentCondition)
     KRATOS_REGISTER_ELEMENT("IgaBeamWeakDirichletCondition", mIgaBeamWeakDirichletCondition)
+    KRATOS_REGISTER_ELEMENT("IgaBeamADWeakCoupling", mIgaBeamADWeakCoupling)
     KRATOS_REGISTER_ELEMENT("IgaShell3PElement", mIgaShell3PElement)
     KRATOS_REGISTER_ELEMENT("IgaShell5PElement", mIgaShell5PElement)
     KRATOS_REGISTER_ELEMENT("ShellKLDiscreteElement", mShellKLDiscreteElement)

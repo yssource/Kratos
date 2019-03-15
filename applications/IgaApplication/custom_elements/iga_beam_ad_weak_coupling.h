@@ -9,8 +9,8 @@
 //                  Lukas Rauch
 */
 
-#if !defined(KRATOS_IGA_BEAM_MOMENT_CONDITION_H_INCLUDED)
-#define KRATOS_IGA_BEAM_MOMENT_CONDITION_H_INCLUDED
+#if !defined(KRATOS_IGA_BEAM_AD_WEAK_COUPLING_H_INCLUDED)
+#define KRATOS_IGA_BEAM_AD_WEAK_COUPLING_H_INCLUDED
 
 // System includes
 #include "includes/define.h"
@@ -27,15 +27,15 @@
 namespace Kratos
 {
 
-class IgaBeamMomentCondition
+class IgaBeamADWeakCoupling
     : public IgaBaseElement<4>
 {
 public:
-    KRATOS_CLASS_POINTER_DEFINITION( IgaBeamMomentCondition );
+    KRATOS_CLASS_POINTER_DEFINITION( IgaBeamADWeakCoupling );
 
     using IgaBaseElementType::IgaBaseElementType;
 
-    ~IgaBeamMomentCondition() override
+    ~IgaBeamADWeakCoupling() override
     {
     };
 
@@ -66,4 +66,4 @@ public:
 
 } // namespace Kratos
 
-#endif // !defined(KRATOS_IGA_BEAM_MOMENT_CONDITION_H_INCLUDED)
+#endif // !defined(KRATOS_IGA_BEAM_AD_WEAK_COUPLING_H_INCLUDED)

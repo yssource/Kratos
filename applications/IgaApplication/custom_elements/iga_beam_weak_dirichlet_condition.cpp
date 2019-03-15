@@ -91,7 +91,7 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
 
     // get integration weight
 
-    const double& integration_weight = GetValue(INTEGRATION_WEIGHT);
+    // const double& integration_weight = GetValue(INTEGRATION_WEIGHT);
 
     // get shape functions
 
@@ -103,14 +103,14 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
 
     // get properties
 
-    const auto& properties = GetProperties();
+    // const auto& properties = GetProperties();
 
-    const double young_modulus = properties[YOUNG_MODULUS];
-    const double shear_modulus = properties[SHEAR_MODULUS];
-    const double area = properties[CROSS_AREA];
-    const double moment_of_inertia_x = properties[MOMENT_OF_INERTIA_T];
-    const double moment_of_inertia_y = properties[MOMENT_OF_INERTIA_Y];
-    const double moment_of_inertia_z = properties[MOMENT_OF_INERTIA_Z];
+    // const double young_modulus = properties[YOUNG_MODULUS];
+    // const double shear_modulus = properties[SHEAR_MODULUS];
+    // const double area = properties[CROSS_AREA];
+    // const double moment_of_inertia_x = properties[MOMENT_OF_INERTIA_T];
+    // const double moment_of_inertia_y = properties[MOMENT_OF_INERTIA_Y];
+    // const double moment_of_inertia_z = properties[MOMENT_OF_INERTIA_Z];
     // const double prestress = properties[PRESTRESS_CAUCHY];
     // const double Phi = GetValue(PHI);
     // const double Phi_1 = GetValue(PHI_DER_1);
@@ -122,10 +122,10 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
 
     // material
 
-    const double ea  = young_modulus * area;
-    const double gi1 = shear_modulus * moment_of_inertia_x;
-    const double ei2 = young_modulus * moment_of_inertia_y;
-    const double ei3 = young_modulus * moment_of_inertia_z;
+    // const double ea  = young_modulus * area;
+    // const double gi1 = shear_modulus * moment_of_inertia_x;
+    // const double ei2 = young_modulus * moment_of_inertia_y;
+    // const double ei3 = young_modulus * moment_of_inertia_z;
 
     // reference configuration FIXME: move this section to Initialize()
     const auto X = ComputeRefBaseVector(0, shape_functions, GetGeometry());
@@ -269,28 +269,28 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     // Potential Displacement
     // const auto dP_disp = 0.5 * ((delta1).dot(delta1) * pow(penalty_disp_u, 2) 
     //                            +(delta2).dot(delta2) * pow(penalty_disp_v, 2)
-    //                            +(delta3).dot(delta3) * pow(penalty_disp_w, 2)) * integration_weight ;
+    //                            +(delta3).dot(delta3) * pow(penalty_disp_w, 2))  ;
 
-    const auto dP_disp_u = 0.5 * pow((x(0)-X(0)), 2) * penalty_disp_u * integration_weight;                               
-    const auto dP_disp_v = 0.5 * pow((x(1)-X(1)), 2) * penalty_disp_v * integration_weight;                               
-    const auto dP_disp_w = 0.5 * pow((x(2)-X(2)), 2) * penalty_disp_w * integration_weight;    
+    const auto dP_disp_u = 0.5 * pow((x(0)-X(0)), 2) * penalty_disp_u;                               
+    const auto dP_disp_v = 0.5 * pow((x(1)-X(1)), 2) * penalty_disp_v;                               
+    const auto dP_disp_w = 0.5 * pow((x(2)-X(2)), 2) * penalty_disp_w;    
 
-    // const auto dP_disp_x = 0.5 * pow((d_x - d_X), 2) * penalty_disp_u * integration_weight;                               
-    // const auto dP_disp_y = 0.5 * pow((d_y - d_Y), 2) * penalty_disp_v * integration_weight;                               
-    // const auto dP_disp_z = 0.5 * pow((d_z - d_Z), 2) * penalty_disp_w * integration_weight;                               
+    // const auto dP_disp_x = 0.5 * pow((d_x - d_X), 2) * penalty_disp_u;                               
+    // const auto dP_disp_y = 0.5 * pow((d_y - d_Y), 2) * penalty_disp_v;                               
+    // const auto dP_disp_z = 0.5 * pow((d_z - d_Z), 2) * penalty_disp_w;                               
 
 
-    // const auto dP_disp = 0.5 * ( u_xyz.dot(u_xyz)) * penalty_disp_u * integration_weight ;
+    // const auto dP_disp = 0.5 * ( u_xyz.dot(u_xyz)) * penalty_disp_u ;
 
     // Potential Rotation
       // By the Gradient 
-    const auto dP_grad_bend = 0.5 * (delta_a.dot(delta_a) * penalty_rot) * integration_weight;
+    const auto dP_grad_bend = 0.5 * (delta_a.dot(delta_a) * penalty_rot);
       // By the Angle
-    const auto dP_alpha_bend = 0.5 * (alpha_2 * alpha_2 + alpha_3 * alpha_3) * penalty_rot * integration_weight; 
+    const auto dP_alpha_bend = 0.5 * (alpha_2 * alpha_2 + alpha_3 * alpha_3) * penalty_rot; 
 
     // Potential Torsion
-    const auto dP_alpha_tors = 0.5 * (alpha_12 * alpha_12 + alpha_13 * alpha_13) * penalty_tors * integration_weight;
-      // const auto dP_alpha_tors =  0.5 * (alpha_12 * alpha_13) * penalty_tors * integration_weight;
+    const auto dP_alpha_tors = 0.5 * (alpha_12 * alpha_12 + alpha_13 * alpha_13) * penalty_tors;
+      // const auto dP_alpha_tors =  0.5 * (alpha_12 * alpha_13) * penalty_tors;
 
 
     // auto const condition_type = 123;

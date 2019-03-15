@@ -67,4 +67,4 @@ public:
 
 } // namespace Kratos
 
-#endif // !defined(KRATOS_IGA_BEAM_AD_ELEMENT_H_INCLUDED)
+#endif // !defined(KRATOS_IGA_BEAM_WEAK_DIRICHLET_CONDITION_H_INCLUDED)

@@ -563,8 +563,6 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
     const double c2 = rCurrentProcessInfo[TURBULENCE_RANS_C2];
     const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
     const double delta_time = rCurrentProcessInfo[DELTA_TIME];
-    const double cross_wind_diffusion_c1 =
-        rCurrentProcessInfo[TURBULENCE_RANS_CROSS_WIND_DIFFUSION_C1];
 
     for (unsigned int g = 0; g < num_gauss_points; g++)
     {

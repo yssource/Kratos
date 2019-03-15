@@ -130,9 +130,7 @@ public:
                 "c1"                      : 1.44,
                 "c2"                      : 1.92,
                 "sigma_k"                 : 1.0,
-                "sigma_epsilon"           : 1.3,
-                "cross_wind_diffusion_c1" : 0.7,
-                "velocity_step"           : 1
+                "sigma_epsilon"           : 1.3
             },
             "flow_parameters":
             {
@@ -172,10 +170,6 @@ public:
             model_properties["sigma_k"].GetDouble();
         rModelPart.GetProcessInfo()[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA] =
             model_properties["sigma_epsilon"].GetDouble();
-        rModelPart.GetProcessInfo()[TURBULENCE_RANS_CROSS_WIND_DIFFUSION_C1] =
-            model_properties["cross_wind_diffusion_c1"].GetDouble();
-        rModelPart.GetProcessInfo()[RANS_VELOCITY_STEP] =
-            model_properties["velocity_step"].GetInt();
 
         const Parameters& flow_parameters =
             this->mrParameters["model_properties"]["flow_parameters"];

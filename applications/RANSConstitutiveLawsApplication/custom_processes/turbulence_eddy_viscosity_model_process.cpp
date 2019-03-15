@@ -245,7 +245,7 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 #pragma omp parallel for
     for (int i = 0; i < number_of_nodes; ++i)
     {
-        Node<3>& r_node = *(mrModelPart.NodesBegin() + i);
+        NodeType& r_node = *(mrModelPart.NodesBegin() + i);
 
         const array_1d<double, 3>& r_velocity =
             r_node.FastGetSolutionStepValue(VELOCITY, Step);
@@ -267,16 +267,17 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 {
     const int number_of_conditions = pModelPart->NumberOfConditions();
 
+#pragma omp parallel for
     for (int i_cond = 0; i_cond < number_of_conditions; ++i_cond)
     {
         Condition& r_condition = *(pModelPart->ConditionsBegin() + i_cond);
-        Geometry<Node<3>>& r_condition_geometry = r_condition.GetGeometry();
+        const Geometry<NodeType>& r_condition_geometry = r_condition.GetGeometry();
         const Element& r_element = *(r_condition.GetValue(PARENT_ELEMENT).lock());
-        const Geometry<Node<3>>& r_element_geometry = r_element.GetGeometry();
+        const Geometry<NodeType>& r_element_geometry = r_element.GetGeometry();
 
         Vector gauss_weights;
         Matrix shape_functions;
-        Geometry<Node<3>>::ShapeFunctionsGradientsType shape_derivatives;
+        Geometry<NodeType>::ShapeFunctionsGradientsType shape_derivatives;
 
         CalculationUtilities::CalculateGeometryData(
             r_element_geometry, r_element.GetIntegrationMethod(), gauss_weights,
@@ -348,7 +349,7 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
     {
         Condition& r_condition = *(pModelPart->ConditionsBegin() + i_cond);
 
-        Geometry<Node<3>>& r_geometry = r_condition.GetGeometry();
+        Geometry<NodeType>& r_geometry = r_condition.GetGeometry();
         WeakPointerVector<Element> element_candidates;
 
         const IndexType number_of_nodes = r_geometry.PointsNumber();
@@ -370,7 +371,7 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
         std::vector<IndexType> element_node_ids;
         for (IndexType i_elem = 0; i_elem < element_candidates.size(); ++i_elem)
         {
-            Geometry<Node<3>>& r_element_geometry =
+            Geometry<NodeType>& r_element_geometry =
                 element_candidates[i_elem].GetGeometry();
             const IndexType number_of_element_nodes = r_element_geometry.PointsNumber();
             element_node_ids.resize(number_of_element_nodes);

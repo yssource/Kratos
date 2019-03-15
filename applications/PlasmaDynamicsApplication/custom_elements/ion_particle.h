@@ -11,7 +11,7 @@
 
 // Project includes
 #include "includes/define.h"
-#include "spheric_particle.h"
+#include "custom_elements/spheric_particle.h"
 
 
 namespace Kratos

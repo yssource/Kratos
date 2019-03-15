@@ -15,6 +15,7 @@
 // Project includes
 #include "includes/define.h"
 #include "includes/variables.h"
+#include "geometries/sphere_3d_1.h"
 
 #include "custom_constitutive/DEM_electromagnetic_CL.h"
 
@@ -27,8 +28,8 @@ namespace Kratos
 KratosPlasmaDynamicsApplication::KratosPlasmaDynamicsApplication()
     : KratosApplication("PlasmaDynamicsApplication"),
       mIonParticle3D(0, Element::GeometryType::Pointer(new Sphere3D1<Node<3> >(Element::GeometryType::PointsArrayType(1)))),
-      mElectronParticle3D(0, Element::GeometryType::Pointer(new Sphere3D1<Node<3> >(Element::GeometryType::PointsArrayType(1)))),      
-    {}
+      mElectronParticle3D(0, Element::GeometryType::Pointer(new Sphere3D1<Node<3> >(Element::GeometryType::PointsArrayType(1))))
+      {}
 
 void KratosPlasmaDynamicsApplication::Register()
 {
@@ -42,7 +43,7 @@ void KratosPlasmaDynamicsApplication::Register()
 
     // Register Constitutive Laws
     Serializer::Register("DEM_electromagnetic", DEM_electromagnetic());
-
+    KRATOS_INFO("") << " done." << std::endl;
 }
 
 }// namespace Kratos.

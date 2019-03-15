@@ -19,7 +19,7 @@
 #include "includes/define.h"
 #include "includes/kratos_application.h"
 #include "includes/variables.h"
-#include "fluid_transport_application_variables.h"
+
 
 namespace Kratos
 {

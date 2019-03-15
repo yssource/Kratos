@@ -7,7 +7,7 @@
 
 #include <string>
 #include <iostream>
-#include "DEM_discontinuum_constitutive_law.h"
+#include "custom_constitutive/DEM_discontinuum_constitutive_law.h"
 
 
 namespace Kratos {

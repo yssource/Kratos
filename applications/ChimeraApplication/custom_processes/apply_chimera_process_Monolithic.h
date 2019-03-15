@@ -262,18 +262,18 @@ class ApplyChimeraProcessMonolithic : public Process
 
 			// Initialise the boundary nodes dofs to 0 at ever time steps
 
-			p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(0) = 0.0;
-			p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(0) = 0.0;
-			p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(1) = 0.0;
-			p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(1) = 0.0;
+			p_boundary_node->FastGetSolutionStepValue(VELOCITY_X,0) = 0.0;
+			p_boundary_node->FastGetSolutionStepValue(VELOCITY_Y,0) = 0.0;
+			p_boundary_node->FastGetSolutionStepValue(VELOCITY_X,1) = 0.0;
+			p_boundary_node->FastGetSolutionStepValue(VELOCITY_Y,1) = 0.0;
 
 			if (TDim == 3)
 			{
-				p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0) = 0.0;
-				p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(1) = 0.0;
+				p_boundary_node->FastGetSolutionStepValue(VELOCITY_Z,0) = 0.0;
+				p_boundary_node->FastGetSolutionStepValue(VELOCITY_Z,1) = 0.0;
 			}
 
-			p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0) = 0.0;
+			p_boundary_node->FastGetSolutionStepValue(PRESSURE,0) = 0.0;
 
 			if (is_found == true)
 			{
@@ -282,8 +282,8 @@ class ApplyChimeraProcessMonolithic : public Process
 				for (std::size_t i = 0; i < geom.size(); i++)
 				{
 					//Interpolation of velocity
-					p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(0) += geom[i].GetDof(VELOCITY_X).GetSolutionStepValue(0) * N[i];
-					p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(0) += geom[i].GetDof(VELOCITY_Y).GetSolutionStepValue(0) * N[i];
+					p_boundary_node->FastGetSolutionStepValue(VELOCITY_X,0) += geom[i].FastGetSolutionStepValue(VELOCITY_X,0) * N[i];
+					p_boundary_node->FastGetSolutionStepValue(VELOCITY_Y,0) += geom[i].FastGetSolutionStepValue(VELOCITY_Y,0) * N[i];
 
 					//Define master slave relation for velocity
 					AddMasterSlaveRelationWithNodesAndVariableComponents(pMpc, geom[i], VELOCITY_X, *p_boundary_node, VELOCITY_X, N[i]);
@@ -291,26 +291,26 @@ class ApplyChimeraProcessMonolithic : public Process
 					if (TDim == 3)
 					{
 						//Interpolation of velocity
-						p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0) += geom[i].GetDof(VELOCITY_Z).GetSolutionStepValue(0) * N[i];
+						p_boundary_node->FastGetSolutionStepValue(VELOCITY_Z,0) += geom[i].FastGetSolutionStepValue(VELOCITY_Z,0) * N[i];
 						AddMasterSlaveRelationWithNodesAndVariableComponents(pMpc, geom[i], VELOCITY_Z, *p_boundary_node, VELOCITY_Z, N[i]);
 					}
 
 						//Interpolation of pressure
-						p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0) += geom[i].GetDof(PRESSURE).GetSolutionStepValue(0) * N[i];
+						p_boundary_node->FastGetSolutionStepValue(PRESSURE,0) += geom[i].FastGetSolutionStepValue(PRESSURE,0) * N[i];
 						//Defining master slave relation for pressure
 						AddMasterSlaveRelationWithNodesAndVariable(pMpc, geom[i], PRESSURE, *p_boundary_node, PRESSURE, N[i]);
 						counter++;
 				} // end of loop over host element nodes
 
 				// Setting the buffer 1 same buffer 0 
-				p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(0);
-				p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(0);
-				//p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_X).GetSolutionStepValue(0);
-				//p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_Y).GetSolutionStepValue(0);
+				p_boundary_node->FastGetSolutionStepValue(VELOCITY_X,1) = p_boundary_node->FastGetSolutionStepValue(VELOCITY_X,0);
+				p_boundary_node->FastGetSolutionStepValue(VELOCITY_Y,1) = p_boundary_node->FastGetSolutionStepValue(VELOCITY_Y,0);
+				//p_boundary_node->GetDof(VELOCITY_X).FastGetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_X).FastGetSolutionStepValue(0);
+				//p_boundary_node->GetDof(VELOCITY_Y).FastGetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_Y).FastGetSolutionStepValue(0);
 				if (TDim == 3)
-					p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(1) = p_boundary_node->GetDof(VELOCITY_Z).GetSolutionStepValue(0);
+					p_boundary_node->FastGetSolutionStepValue(VELOCITY_Z,1) = p_boundary_node->FastGetSolutionStepValue(VELOCITY_Z,0);
 
-				p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(1) = p_boundary_node->GetDof(PRESSURE).GetSolutionStepValue(0);
+				p_boundary_node->FastGetSolutionStepValue(PRESSURE,1) = p_boundary_node->FastGetSolutionStepValue(PRESSURE,0);
 				
 			}
 			p_boundary_node->Set(VISITED, true);
@@ -806,8 +806,8 @@ void ApplyConservativeCorrections(ModelPart &r_model_part, MpcDataPointerType pM
 void AddMasterSlaveRelationWithNodesAndVariableComponents(MpcDataPointerType pMpc, Node<3> &MasterNode, VariableComponentType &MasterVariable, Node<3> &SlaveNode, VariableComponentType &SlaveVariable, double weight, double constant = 0.0)
 {
 	SlaveNode.Set(SLAVE);
-	DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
-	DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
+	DofType &pointerSlaveDOF = *(SlaveNode.pGetDof(SlaveVariable));
+	DofType &pointerMasterDOF = *(MasterNode.pGetDof(MasterVariable));
 	AddMasterSlaveRelationWithDofs(pMpc, pointerSlaveDOF, pointerMasterDOF, weight, constant);
 }
 
@@ -816,8 +816,8 @@ void AddMasterSlaveRelationWithNodeIdsAndVariableComponents(MpcDataPointerType p
 	Node<3> &SlaveNode = mrMainModelPart.Nodes()[SlaveNodeId];
 	Node<3> &MasterNode = mrMainModelPart.Nodes()[MasterNodeId];
 	SlaveNode.Set(SLAVE);
-	DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
-	DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
+	DofType &pointerSlaveDOF = *(SlaveNode.pGetDof(SlaveVariable));
+	DofType &pointerMasterDOF = *(MasterNode.pGetDof(MasterVariable));
 	AddMasterSlaveRelationWithDofs(pMpc, pointerSlaveDOF, pointerMasterDOF, weight, constant);
 }
 
@@ -825,8 +825,8 @@ void AddMasterSlaveRelationWithNodeIdsAndVariableComponents(MpcDataPointerType p
 void AddMasterSlaveRelationWithNodesAndVariable(MpcDataPointerType pMpc, Node<3> &MasterNode, VariableType &MasterVariable, Node<3> &SlaveNode, VariableType &SlaveVariable, double weight, double constant = 0.0)
 {
 	SlaveNode.Set(SLAVE);
-	DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
-	DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
+	DofType &pointerSlaveDOF = *(SlaveNode.pGetDof(SlaveVariable));
+	DofType &pointerMasterDOF = *(MasterNode.pGetDof(MasterVariable));
 	AddMasterSlaveRelationWithDofs(pMpc, pointerSlaveDOF, pointerMasterDOF, weight, constant);
 }
 
@@ -835,8 +835,8 @@ void AddMasterSlaveRelationWithNodeIdsAndVariable(MpcDataPointerType pMpc, Index
 	Node<3> &SlaveNode = mrMainModelPart.Nodes()[SlaveNodeId];
 	Node<3> &MasterNode = mrMainModelPart.Nodes()[MasterNodeId];
 	SlaveNode.Set(SLAVE);
-	DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
-	DofType &pointerMasterDOF = MasterNode.GetDof(MasterVariable);
+	DofType &pointerSlaveDOF = *(SlaveNode.pGetDof(SlaveVariable));
+	DofType &pointerMasterDOF = *(MasterNode.pGetDof(MasterVariable));
 	AddMasterSlaveRelationWithDofs(pMpc, pointerSlaveDOF, pointerMasterDOF, weight, constant);
 }
 
@@ -848,7 +848,7 @@ void AddMasterSlaveRelationWithNodeIdsAndVariable(MpcDataPointerType pMpc, Index
     void RemoveMasterSlaveRelationWithNodesAndVariableComponents(MpcDataPointerType pMpc, Node<3> &SlaveNode, VariableComponentType &SlaveVariable)
     {
         SlaveNode.Set(SLAVE);
-        DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
+        DofType &pointerSlaveDOF = *(SlaveNode.pGetDof(SlaveVariable));
         RemoveMasterSlaveRelationWithDofs(pMpc,pointerSlaveDOF);
     }
 
@@ -856,7 +856,7 @@ void AddMasterSlaveRelationWithNodeIdsAndVariable(MpcDataPointerType pMpc, Index
     {
         Node<3> &SlaveNode = mrMainModelPart.Nodes()[SlaveNodeId];
         SlaveNode.Set(SLAVE, false);
-        DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
+        DofType &pointerSlaveDOF = *(SlaveNode.pGetDof(SlaveVariable));
         RemoveMasterSlaveRelationWithDofs(pMpc,pointerSlaveDOF);
     }
 
@@ -864,7 +864,7 @@ void AddMasterSlaveRelationWithNodeIdsAndVariable(MpcDataPointerType pMpc, Index
     void RemoveMasterSlaveRelationWithNodesAndVariable(MpcDataPointerType pMpc, Node<3> &SlaveNode, VariableType &SlaveVariable)
     {
         SlaveNode.Set(SLAVE);
-        DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
+        DofType &pointerSlaveDOF = *(SlaveNode.pGetDof(SlaveVariable));
         RemoveMasterSlaveRelationWithDofs(pMpc,pointerSlaveDOF);
     }
 
@@ -872,7 +872,7 @@ void AddMasterSlaveRelationWithNodeIdsAndVariable(MpcDataPointerType pMpc, Index
     {
         Node<3> &SlaveNode = mrMainModelPart.Nodes()[SlaveNodeId];
         SlaveNode.Set(SLAVE, false);
-        DofType &pointerSlaveDOF = SlaveNode.GetDof(SlaveVariable);
+        DofType &pointerSlaveDOF = *(SlaveNode.pGetDof(SlaveVariable));
         RemoveMasterSlaveRelationWithDofs(pMpc,pointerSlaveDOF);
     }
 

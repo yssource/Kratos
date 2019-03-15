@@ -284,11 +284,8 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                     // Modifying the local contributions for MPC
                     this->Element_ApplyMultipointConstraints(*(it.base()), LHS_Contribution, RHS_Contribution, EquationId, CurrentProcessInfo);
 //assemble the elemental contribution
-#ifdef USE_LOCKS_IN_ASSEMBLY
-                    this->Assemble(A, b, LHS_Contribution, RHS_Contribution, EquationId, BaseType::mlock_array);
-#else
                     this->Assemble(A, b, LHS_Contribution, RHS_Contribution, EquationId);
-#endif
+
                     // clean local elemental memory
                     pScheme->CleanMemory(*(it.base()));
                 }
@@ -316,11 +313,8 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
                     this->Condition_ApplyMultipointConstraints(*(it.base()), LHS_Contribution, RHS_Contribution, EquationId, CurrentProcessInfo);
 
 //assemble the elemental contribution
-#ifdef USE_LOCKS_IN_ASSEMBLY
-                    this->Assemble(A, b, LHS_Contribution, RHS_Contribution, EquationId, BaseType::mlock_array);
-#else
                     this->Assemble(A, b, LHS_Contribution, RHS_Contribution, EquationId);
-#endif
+
 
                     // clean local elemental memory
                         pScheme->CleanMemory(*(it.base()));
@@ -371,21 +365,13 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
 
         const std::size_t equation_size = BaseType::mDofSet.size();
 
-#ifdef USE_GOOGLE_HASH
-        std::vector<google::dense_hash_set<std::size_t>> indices(equation_size);
-        const std::size_t empty_key = 2 * equation_size + 10;
-#else
+        std::vector< LockObject > lock_array(equation_size);
+
         std::vector<std::unordered_set<std::size_t>> indices(equation_size);
-#endif
 
 #pragma omp parallel for firstprivate(equation_size)
-        for (int iii = 0; iii < static_cast<int>(equation_size); iii++)
-        {
-#ifdef USE_GOOGLE_HASH
-            indices[iii].set_empty_key(empty_key);
-#else
+        for (int iii = 0; iii < static_cast<int>(equation_size); iii++){
             indices[iii].reserve(40);
-#endif
         }
         Element::EquationIdVectorType ids(3, 0);
 
@@ -398,17 +384,11 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
             // Modifying the equation IDs of this element to suit MPCs
             this->Element_ModifyEquationIdsForMPC(*(i_element.base()), ids, CurrentProcessInfo);
 
-            for (std::size_t i = 0; i < ids.size(); i++)
-            {
-#ifdef _OPENMP
-                omp_set_lock(&(BaseType::mlock_array[ids[i]]));
-#endif
+            for (std::size_t i = 0; i < ids.size(); i++){
+                lock_array[ids[i]].SetLock();
                 auto &row_indices = indices[ids[i]];
                 row_indices.insert(ids.begin(), ids.end());
-
-#ifdef _OPENMP
-                omp_unset_lock(&(BaseType::mlock_array[ids[i]]));
-#endif
+                lock_array[ids[i]].UnSetLock();
             }
         }
 #pragma omp parallel for firstprivate(nconditions, ids)
@@ -419,18 +399,16 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
             // Modifying the equation IDs of this element to suit MPCs
             this->Condition_ModifyEquationIdsForMPC(*(i_condition.base()), ids, CurrentProcessInfo);
 
-            for (std::size_t i = 0; i < ids.size(); i++)
-            {
-#ifdef _OPENMP
-                omp_set_lock(&(BaseType::mlock_array[ids[i]]));
-#endif
+            for (std::size_t i = 0; i < ids.size(); i++){
+                lock_array[ids[i]].SetLock();
                 auto &row_indices = indices[ids[i]];
                 row_indices.insert(ids.begin(), ids.end());
-#ifdef _OPENMP
-                omp_unset_lock(&(BaseType::mlock_array[ids[i]]));
-#endif
+                lock_array[ids[i]].UnSetLock();
             }
         }
+         //destroy locks
+        lock_array = std::vector< LockObject >();
+
         //count the row sizes
         std::size_t nnz = 0;
         for (std::size_t i = 0; i < indices.size(); i++)
@@ -1244,5 +1222,4 @@ class ResidualBasedBlockBuilderAndSolverWithMpcChimera
     }
 };
 }
-
 #endif /* KRATOS_SOLVING_STRATEGIES_BUILDER_AND_SOLVERS_RESIDUALBASED_BLOCK_BUILDER_AND_SOLVER_WITH_MPC_H_ */

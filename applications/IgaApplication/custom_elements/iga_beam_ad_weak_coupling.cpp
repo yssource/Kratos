@@ -111,12 +111,12 @@ void IgaBeamADWeakCoupling::CalculateAll(
     const Vector3d A2   = MapVector(GetValue(BASE_A2));
     const Vector3d A3   = MapVector(GetValue(BASE_A3));
 
-    const auto phia = ComputeActValue(DISPLACEMENT_ROTATION, 0, shape_functions_a, GetGeometry(), false);
-    const auto phia_1 = ComputeActValue(DISPLACEMENT_ROTATION, 1, shape_functions_a, GetGeometry(), false);
+    const auto phia = ComputeActValue(DISPLACEMENT_ROTATION, 0, shape_functions_a, GetGeometry());
+    const auto phia_1 = ComputeActValue(DISPLACEMENT_ROTATION, 1, shape_functions_a, GetGeometry());    
 
-    const auto xa = ComputeActBaseVector(0, shape_functions_a, GetGeometry(), false);
-    const auto a1 = ComputeActBaseVector(1, shape_functions_a, GetGeometry(), false);
-    const auto a1_1 = ComputeActBaseVector(2, shape_functions_a, GetGeometry(), false);
+    const auto xa = ComputeActBaseVector(0, shape_functions_a, GetGeometry());
+    const auto a1 = ComputeActBaseVector(1, shape_functions_a, GetGeometry());
+    const auto a1_1 = ComputeActBaseVector(2, shape_functions_a, GetGeometry());
 
     const auto a11 = a1.dot(a1);
     const auto a = sqrt(a11);
@@ -153,10 +153,10 @@ void IgaBeamADWeakCoupling::CalculateAll(
     const Vector3d B2   = MapVector(GetValue(BASE_B2));
     const Vector3d B3   = MapVector(GetValue(BASE_B3));
 
-    const auto phib = ComputeActValue(DISPLACEMENT_ROTATION, 0, shape_functions_b, GetGeometry(), true);
-    const auto phib_1 = ComputeActValue(DISPLACEMENT_ROTATION, 1, shape_functions_b, GetGeometry(), true);
+    const auto phib   = ComputeActValue(DISPLACEMENT_ROTATION, 0, shape_functions_b, GetGeometry(), true);
+    const auto phib_1 = ComputeActValue(DISPLACEMENT_ROTATION, 1, shape_functions_b, GetGeometry(), true);    
 
-    const auto xb = ComputeActBaseVector(0, shape_functions_b, GetGeometry(), true);        //check!
+    const auto xb = ComputeActBaseVector(0, shape_functions_b, GetGeometry(), true);
     const auto b1 = ComputeActBaseVector(1, shape_functions_b, GetGeometry(), true);
     const auto b1_1 = ComputeActBaseVector(2, shape_functions_b, GetGeometry(), true);
 
@@ -216,15 +216,15 @@ void IgaBeamADWeakCoupling::CalculateAll(
 
     // const auto alpha_12 = HyperJet::atan2(a2.dot(A3) , a2.dot(A2));    // Winkel zwischen a2 und A
     // const auto alpha_13 = HyperJet::atan2(a3.dot(A2) , a3.dot(A3));    // Winkel zwischen a2 und A
-    const auto alpha_2  = HyperJet::atan2(d_n , d_t);                  // Winkel zwischen a1 und A1 um n
-    const auto alpha_3  = HyperJet::atan2(d_v , d_t);                  // Winkel zwischen a1 und A1 um v
+    // const auto alpha_2  = HyperJet::atan2(d_n , d_t);                  // Winkel zwischen a1 und A1 um n
+    // const auto alpha_3  = HyperJet::atan2(d_v , d_t);                  // Winkel zwischen a1 und A1 um v
 
 
-    const auto alpha_12 = HyperJet::atan2(b2.dot(a3) , b2.dot(a2));    
-    const auto alpha_13 = HyperJet::atan2(b3.dot(a2) , b3.dot(a3));    
+    // const auto alpha_12 = HyperJet::atan2(b2.dot(a3) , b2.dot(a2));    
+    // const auto alpha_13 = HyperJet::atan2(b3.dot(a2) , b3.dot(a3));    
 
-    // const auto alpha_2  = HyperJet::atan2(d_13 , d_11 );   
-    // const auto alpha_3  = HyperJet::atan2(d_12 , d_11 );   
+    const auto alpha_2  = 0.5 * (HyperJet::atan2(d_13, d_11) + HyperJet::atan2(d_31, d_22));   
+    const auto alpha_3  = 0.5 * (HyperJet::atan2(d_12, d_11) + HyperJet::atan2(d_21, d_22));   
 
     const auto dP_disp_u = 0.5 * pow(xb_1 - xa_1, 2) * penalty_disp_u;
     const auto dP_disp_v = 0.5 * pow(xb_2 - xa_2, 2) * penalty_disp_v;
@@ -243,7 +243,7 @@ void IgaBeamADWeakCoupling::CalculateAll(
     // By the Angle
     // const auto dP_alpha_bend = 0.5 * (pow(HyperJet::acos(tb.dot(ta)), 2)) * penalty_rot;
     // Potential Torsion
-    const auto dP_alpha_tors = 0.5 * (alpha_12 * alpha_12 + alpha_13 * alpha_13) * penalty_tors;
+    // const auto dP_alpha_tors = 0.5 * (alpha_12 * alpha_12 + alpha_13 * alpha_13) * penalty_tors;
 
     const auto f = 0.5 * u.dot(u) * 1e9;
 
@@ -253,8 +253,8 @@ void IgaBeamADWeakCoupling::CalculateAll(
 
     // MapMatrix(rLeftHandSideMatrix) = f.h(); //( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h()+ dP_alpha_tors.h() + dP_alpha_bend.h()) ;
     // MapVector(rRightHandSideVector) = -f.g();//-( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_tors.g() + dP_alpha_bend.g()) ;
-    MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h() + dP_alpha_bend_2.h() );
-    MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g() + dP_alpha_bend_2.g() ) ;
+    MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h() + dP_alpha_bend_2.h() + dP_alpha_bend_3.h());
+    MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g() + dP_alpha_bend_2.g() + dP_alpha_bend_3.g());
     // MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h()+ dP_alpha_tors.h() + dP_alpha_bend.h()) ;
     // MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_tors.g() + dP_alpha_bend.g()) ;
 

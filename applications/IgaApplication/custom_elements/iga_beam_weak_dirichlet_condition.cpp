@@ -312,7 +312,7 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     // else if(condition_type == 23)   // Torsion + Rotation
     //   MapMatrix(rLeftHandSideMatrix) = ( dP_alpha_tors.h() + dP_alpha_bend.h()) ;
     // else if(condition_type == 123)  // Verschiebung + Torsion +  Rotation
-    MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h()+ dP_alpha_tors.h() + dP_grad_bend.h()) ;
+    MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h()+ dP_alpha_tors.h() + dP_alpha_bend.h()) ;
 
 
     // // Variation Gradient
@@ -332,7 +332,7 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     // else if(condition_type == 23)   // Torsion + Rotation
     //   MapVector(rRightHandSideVector) = -( dP_alpha_tors.g() + dP_alpha_bend.g()) ;
     // else if(condition_type == 123)  // Verschiebung + Torsion +  Rotation
-    MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_tors.g() + dP_grad_bend.g()) ;
+    MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_tors.g() + dP_alpha_bend.g()) ;
 
     KRATOS_CATCH("")
 }

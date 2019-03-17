@@ -286,10 +286,10 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
       // By the Gradient 
     const auto dP_grad_bend = 0.5 * (delta_a.dot(delta_a) * penalty_rot);
       // By the Angle
-    const auto dP_alpha_bend = 0.5 * (alpha_2 * alpha_2 + alpha_3 * alpha_3) * penalty_rot; 
+    const auto dP_alpha_bend = 0.5 * 0.5 * (alpha_2 * alpha_2 + alpha_3 * alpha_3) * penalty_rot; 
 
     // Potential Torsion
-    const auto dP_alpha_tors = 0.5 * (alpha_12 * alpha_12 + alpha_13 * alpha_13) * penalty_tors;
+    const auto dP_alpha_tors = 0.5 * 0.5 * (alpha_12 * alpha_12 + alpha_13 * alpha_13) * penalty_tors;
       // const auto dP_alpha_tors =  0.5 * (alpha_12 * alpha_13) * penalty_tors;
 
 

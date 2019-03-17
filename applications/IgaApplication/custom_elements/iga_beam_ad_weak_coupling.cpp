@@ -197,12 +197,21 @@ void IgaBeamADWeakCoupling::CalculateAll(
     auto const penalty_rot    = 1e9; //GetValue(PENALTY_ROTATION);
     auto const penalty_tors   = 1e9; //GetValue(PENALTY_TORSION);
 
-    const auto dt_1 = ta.dot(a1);
-    const auto dt_2 = b2.dot(ta);
-    const auto dt_3 = b3.dot(ta);
+    // const auto dt_1 = ta.dot(a1);
+    // const auto dt_2 = b2.dot(ta);
+    // const auto dt_3 = b3.dot(ta);
 
 
-    const auto d_11 = tb.dot(ta);
+
+    const auto D_11 = Tb.dot(A1);
+    const auto D_12 = Tb.dot(A2);
+    const auto D_13 = Tb.dot(A3);
+    const auto D_21 = B2.dot(A1);
+    const auto D_22 = B2.dot(A2);
+    const auto D_31 = B3.dot(A1);
+
+
+    const auto d_11 = tb.dot(a1);
     const auto d_12 = tb.dot(a2);
     const auto d_13 = tb.dot(a3);
     const auto d_21 = b2.dot(a1);
@@ -212,38 +221,33 @@ void IgaBeamADWeakCoupling::CalculateAll(
     const auto d_32 = b3.dot(a2);
     const auto d_33 = b3.dot(a3);
 
-    const auto d_t = tb.dot(ta);     // Anteil T in a1 Richtung
-    const auto d_n = tb.dot(a2);     // Anteil N in a1 Richtung
-    const auto d_v = tb.dot(a3);     // Anteil V in a1 Richtung
+    // const auto d_t = tb.dot(ta);     // Anteil T in a1 Richtung
+    // const auto d_n = tb.dot(a2);     // Anteil N in a1 Richtung
+    // const auto d_v = tb.dot(a3);     // Anteil V in a1 Richtung
 
     // const auto alpha_12 = HyperJet::atan2(a2.dot(A3) , a2.dot(A2));    // Winkel zwischen a2 und A
     // const auto alpha_13 = HyperJet::atan2(a3.dot(A2) , a3.dot(A3));    // Winkel zwischen a2 und A
     // const auto alpha_2  = HyperJet::atan2(d_n , d_t);                  // Winkel zwischen a1 und A1 um n
     // const auto alpha_3  = HyperJet::atan2(d_v , d_t);                  // Winkel zwischen a1 und A1 um v
 
-
-
-
-    const auto alpha_2  = 0.5 * (HyperJet::atan2(d_13, d_11) + HyperJet::atan2(d_31, d_22));   
-    const auto alpha_3  = 0.5 * (HyperJet::atan2(d_12, d_11) + HyperJet::atan2(d_21, d_22));  
-
-    const auto alpha_1  = 0.5 * (HyperJet::atan2(d_23, d_22) + HyperJet::atan2(d_32, d_33)); 
-    const auto alpha_12 = HyperJet::atan2(b2.dot(a3) , b2.dot(a2));    // Winkel zwischen a2 und A
-    const auto alpha_13 = HyperJet::atan2(b3.dot(a2) , b3.dot(a3));    // Winkel zwischen a2 und A 
-
     const auto dP_disp_u = 0.5 * pow(xb_1 - xa_1, 2) * penalty_disp_u;
     const auto dP_disp_v = 0.5 * pow(xb_2 - xa_2, 2) * penalty_disp_v;
     const auto dP_disp_w = 0.5 * pow(xb_3 - xa_3, 2) * penalty_disp_w;
-  
-    // const auto dP_disp_u = 0.5 * pow(xb(0) - xa(0), 2) * penalty_disp_u;
-    // const auto dP_disp_v = 0.5 * pow(xb(1) - xa(1), 2) * penalty_disp_v;
-    // const auto dP_disp_w = 0.5 * pow(xb(2) - xa(2), 2) * penalty_disp_w;
+
+    const auto alpha_2  = 0.5 * (HyperJet::atan2(d_13, d_11) + HyperJet::atan2(d_31, d_22) 
+                                -HyperJet::atan2(D_13, D_11) - HyperJet::atan2(D_31, D_22));   
+    const auto alpha_3  = 0.5 * (HyperJet::atan2(d_12, d_11) + HyperJet::atan2(d_21, d_22)
+                                -HyperJet::atan2(D_12, D_11) - HyperJet::atan2(D_21, D_22));  
+
+    const auto alpha_12 = (HyperJet::atan2(b2.dot(a3) , b2.dot(a2))
+                        -  HyperJet::atan2(B2.dot(A3) , B2.dot(A2)));
+    const auto alpha_13 = (HyperJet::atan2(b3.dot(a2) , b3.dot(a3))
+                        -  HyperJet::atan2(B3.dot(A2) , B3.dot(A3))); 
 
     // // By the Angle
     const auto dP_alpha_bend_2 = 0.5 * (alpha_2 * alpha_2) * penalty_rot;
     const auto dP_alpha_bend_3 = 0.5 * (alpha_3 * alpha_3) * penalty_rot;
     // // Potential Torsion
-    // const auto dP_alpha_tors = 0.5 * (pow(alpha_12, 2)) * penalty_tors;
     const auto dP_alpha_tors = 0.5 * 0.5 * (alpha_12 * alpha_12 + alpha_13 * alpha_13) * penalty_tors;
 
 
@@ -262,8 +266,6 @@ void IgaBeamADWeakCoupling::CalculateAll(
     // MapVector(rRightHandSideVector) = -f.g();//-( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_tors.g() + dP_alpha_bend.g()) ;
     MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h() + dP_alpha_bend_2.h() + dP_alpha_bend_3.h() + dP_alpha_tors.h());
     MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g() + dP_alpha_bend_2.g() + dP_alpha_bend_3.g() + dP_alpha_tors.g());
-    // MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h()+ dP_alpha_tors.h() + dP_alpha_bend.h()) ;
-    // MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g()+ dP_alpha_tors.g() + dP_alpha_bend.g()) ;
 
     KRATOS_CATCH("")
 }

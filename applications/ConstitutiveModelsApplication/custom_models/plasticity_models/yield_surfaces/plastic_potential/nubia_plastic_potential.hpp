@@ -131,10 +131,17 @@ namespace Kratos
             StressInvariantsUtilities::CalculateDerivativeVectors( rStressMatrix, V1, V2);
 
             // 2- Evaluate m of equation 2-12
-            double BigLambda = 1.0 - rSwellingSlope/rOtherSlope;
-            double m = pow( rShearM*(6.0-rShearM), rShapeN) - pow( 3.0*rShearM, rShapeN);
-            m /= BigLambda * (6.0 - rShearM) * pow( 3.0 * rShearM, rShapeN-1);
-            m *= 2.0/3.0;
+            double m(0);
+            if ( rProperties.Has(CASM_M) ) {
+               m = rProperties[CASM_M];
+            } 
+            if ( m <= 1.0 ) {
+               double BigLambda = 1.0 - rSwellingSlope/rOtherSlope;
+
+               m = pow( rShearM*(6.0-rShearM), rShapeN) - pow( 3.0*rShearM, rShapeN);
+               m /= BigLambda * (6.0 - rShearM) * pow( 3.0 * rShearM, rShapeN-1);
+               m *= 2.0/3.0;
+            }
 
             if ( m <= 1.0) {
                KRATOS_ERROR << " the given parameters are problematic with Nubia//Casm plastic flow " << std::endl;

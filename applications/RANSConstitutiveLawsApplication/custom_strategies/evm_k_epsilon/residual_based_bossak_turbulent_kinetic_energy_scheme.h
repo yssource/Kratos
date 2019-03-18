@@ -142,12 +142,6 @@ public:
     {
         KRATOS_TRY;
 
-        // this->mpDofUpdater->UpdateDofs(rDofSet, rDx);
-
-        // CalculationUtilities::LowerBound<NodeType>(rModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
-
-        // this->UpdateTimeSchemeVariables(rModelPart);
-
         BaseType::Update(rModelPart, rDofSet, rA, rDx, rb);
 
         // Updating the auxiliary variables
@@ -167,25 +161,6 @@ public:
 
         KRATOS_CATCH("");
     }
-
-    // void CalculateSystemContributions(Element::Pointer pCurrentElement,
-    //                                   LocalSystemMatrixType& rLHS_Contribution,
-    //                                   LocalSystemVectorType& rRHS_Contribution,
-    //                                   Element::EquationIdVectorType& rEquationId,
-    //                                   ProcessInfo& rCurrentProcessInfo) override
-    // {
-    //     KRATOS_TRY;
-
-    //     BaseType::CalculateSystemContributions(pCurrentElement, rLHS_Contribution,
-    //                                            rRHS_Contribution, rEquationId,
-    //                                            rCurrentProcessInfo);
-
-    //     KRATOS_WATCH(pCurrentElement->Id());
-    //     KRATOS_WATCH(rLHS_Contribution);
-    //     KRATOS_WATCH(rRHS_Contribution);
-
-    //     KRATOS_CATCH("");
-    // }
 
     ///@}
 };

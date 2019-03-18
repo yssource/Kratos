@@ -145,12 +145,6 @@ public:
     {
         KRATOS_TRY;
 
-        // this->mpDofUpdater->UpdateDofs(rDofSet, rDx);
-
-        // CalculationUtilities::LowerBound<NodeType>(rModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
-
-        // this->UpdateTimeSchemeVariables(rModelPart);
-
         BaseType::Update(rModelPart, rDofSet, rA, rDx, rb);
 
         // Updating the auxiliary variables
@@ -170,43 +164,6 @@ public:
 
         KRATOS_CATCH("");
     }
-
-    // void CalculateSystemContributions(Element::Pointer pCurrentElement,
-    //                                   LocalSystemMatrixType& rLHS_Contribution,
-    //                                   LocalSystemVectorType& rRHS_Contribution,
-    //                                   Element::EquationIdVectorType& rEquationId,
-    //                                   ProcessInfo& rCurrentProcessInfo) override
-    // {
-    //     KRATOS_TRY;
-
-    //     const int k = OpenMPUtils::ThisThread();
-
-    //     (pCurrentElement)->InitializeNonLinearIteration(rCurrentProcessInfo);
-    //     std::cout<<"---- 1 ";
-    //     KRATOS_WATCH(rRHS_Contribution);
-    //     (pCurrentElement)->CalculateLocalSystem(rLHS_Contribution,
-    //     rRHS_Contribution, rCurrentProcessInfo); std::cout<<"---- 2 ";
-    //     KRATOS_WATCH(rRHS_Contribution);
-    //     (pCurrentElement)->CalculateLocalVelocityContribution(this->mDampingMatrix[k],
-    //     rRHS_Contribution, rCurrentProcessInfo); std::cout<<"---- 3 ";
-    //     KRATOS_WATCH(rRHS_Contribution);
-
-    //     if (this->mUpdateAcceleration)
-    //     {
-    //         (pCurrentElement)->CalculateMassMatrix(this->mMassMatrix[k], rCurrentProcessInfo);
-    //         this->AddDynamicsToRHS(pCurrentElement, rRHS_Contribution, this->mDampingMatrix[k],
-    //                          this->mMassMatrix[k], rCurrentProcessInfo);
-    //     }
-    //     std::cout<<"---- 4 ";
-    //     KRATOS_WATCH(rRHS_Contribution);
-    //     this->AddDynamicsToLHS(rLHS_Contribution, this->mDampingMatrix[k], this->mMassMatrix[k],
-    //                      rCurrentProcessInfo);
-    //     std::cout<<"---- 5 ";
-    //     KRATOS_WATCH(rRHS_Contribution);
-    //     (pCurrentElement)->EquationIdVector(rEquationId, rCurrentProcessInfo);
-
-    //     KRATOS_CATCH("");
-    // }
 
     ///@}
 };

@@ -272,8 +272,6 @@ Begin Properties *MatNum
 *format "%10.5e"
  INTERNAL_FRICTION_ANGLE *MatProp(INTERNAL_FRICTION_ANGLE,real)
 *format "%10.5e"
- NORMAL_COMPRESSION_SLOPE *MatProp(NORMAL_COMPRESSION_SLOPE,real)
-*format "%10.5e"
  SHAPE_PARAMETER *MatProp(SHAPE_PARAMETER,real)
 *format "%10.5e"
  SPACING_RATIO *MatProp(SPACING_RATIO,real)

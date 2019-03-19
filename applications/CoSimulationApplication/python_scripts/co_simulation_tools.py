@@ -17,8 +17,22 @@ class bcolors:
     BOLD      = '\033[1m'
     UNDERLINE = '\033[4m'
 
+## PrintInfo : Printing information with a label
+#
+#  @param label         The label for the print
+#  @param args          The arguments to be printed
+def PrintInfo(label, *args):
+    print(label, " ".join(map(str,args)))
 
-## ImportDataStructure : Imports the data structre which is specified in the parameters file
+## PrintInfo : Printing a warning with a label
+#
+#  @param label         The label for the print
+#  @param args          The arguments to be printed
+def PrintWarning(label, *args):
+    print(label, " ".join(map(str,args)))
+
+
+## ImportDataStructure : Imports the data structure which is specified in the parameters file
 #
 #  @param parameters_file_name   The JSON file name which contains the settings for the co-simulation
 def ImportDataStructure(parameters_file_name):

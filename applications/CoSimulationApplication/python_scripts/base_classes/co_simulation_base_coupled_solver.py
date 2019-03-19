@@ -1,8 +1,7 @@
 # co simulation imports
 import KratosMultiphysics.CoSimulationApplication.co_simulation_tools as cs_tools
-from KratosMultiphysics.CoSimulationApplication.base_co_simulation_classes.co_simulation_base_solver import CoSimulationBaseSolver
+from KratosMultiphysics.CoSimulationApplication.base_classes.co_simulation_base_solver import CoSimulationBaseSolver
 # Other imports
-import KratosMultiphysics.CoSimulationApplication.co_simulation_data_structure as data_str
 cs_data_structure = cs_tools.cs_data_structure
 import collections
 
@@ -29,11 +28,14 @@ class CoSimulationBaseCoupledSolver(CoSimulationBaseSolver):
             "echo_level" : 0,
             "start_coupling_time" : 0.0,
             "predictors":[],
-            "coupling_sequence" : []
+            "coupling_sequence" : [],
+            "convergence_accelerators":[],
+            "convergence_criteria":[],
+            "num_coupling_iterations":0
         }
         """)
         self.settings.ValidateAndAssignDefaults(default_setting)
-        self.number_of_participants = self.settings['participants'].size()
+        self.number_of_participants = self.settings['coupling_sequence'].size()
         self.echo_level = self.settings["echo_level"].GetInt()
 
         # Get the participating solvers a map with their names and objects
@@ -141,7 +143,7 @@ class CoSimulationBaseCoupledSolver(CoSimulationBaseSolver):
     def _SynchronizeInputData(self, solver_name):
         if self.coupling_started:
             solver = self.participating_solvers[solver_name]
-            input_data_list = self.solver_settings[solver_name]["input_data_list"]
+            input_data_list = self.coupling_sequence[solver_name]["input_data_list"]
             num_input_data = input_data_list.size()
 
             for i in range(num_input_data):
@@ -164,7 +166,7 @@ class CoSimulationBaseCoupledSolver(CoSimulationBaseSolver):
     def _SynchronizeOutputData(self, solver_name):
         if self.coupling_started:
             solver = self.participating_solvers[solver_name]
-            output_data_list = self.solver_settings[solver_name]["output_data_list"]
+            output_data_list = self.coupling_sequence[solver_name]["output_data_list"]
             num_output_data = output_data_list.size()
 
             for i in range(num_output_data):
@@ -185,7 +187,7 @@ class CoSimulationBaseCoupledSolver(CoSimulationBaseSolver):
     def _CreateSolvers(self, SolversDataMap):
         solvers_map = collections.OrderedDict()
         num_solvers = len(SolversDataMap.keys())
-        import KratosMultiphysics.CoSimulationApplication.custom_co_simulation_solver_interfaces.co_simulation_solver_factory as factory
+        import KratosMultiphysics.CoSimulationApplication.co_simulation_solver_interfaces.co_simulation_solver_factory as factory
 
         for solver_name, settings in SolversDataMap.items():
             solver = factory.CreateSolverInterface(solver_name,cs_data_structure.Parameters(settings))
@@ -215,7 +217,7 @@ class CoSimulationBaseCoupledSolver(CoSimulationBaseSolver):
     def _GetPredictors(self, list_predictor_settings):
         predictors_map = collections.OrderedDict()
         num_predictors = len(list_predictor_settings)
-        import KratosMultiphysics.CoSimulationApplication.custom_co_simulation_predictors.co_simulation_predictor_factory as factory
+        import KratosMultiphysics.CoSimulationApplication.co_simulation_predictors.co_simulation_predictor_factory as factory
 
         for predictor_settings in list_predictor_settings:
             predictor = factory.CreatePredictor(cs_data_structure.Parameters(predictor_settings))

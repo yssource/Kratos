@@ -141,7 +141,7 @@ public:
                 "free_stream_velocity"        : 1.0,
                 "free_stream_k"               : 1.0,
                 "free_stream_epsilon"         : 1.0,
-                "velocity_ratio_constant"     : 0.003
+                "turbulence_intensity"        : 0.003
             }
         })");
 
@@ -192,7 +192,7 @@ public:
         mFreestreamVelocity = flow_parameters["free_stream_velocity"].GetDouble();
         mFreestreamK = flow_parameters["free_stream_k"].GetDouble();
         mFreestreamEpsilon = flow_parameters["free_stream_epsilon"].GetDouble();
-        mVelocityRatio = flow_parameters["velocity_ratio_constant"].GetDouble();
+        mTurbulenceIntensity = flow_parameters["turbulence_intensity"].GetDouble();
         mRampUpTime = flow_parameters["ramp_up_time"].GetDouble();
 
         KRATOS_ERROR_IF(
@@ -281,6 +281,8 @@ public:
 
         mpKStrategy->Initialize();
         mpEpsilonStrategy->Initialize();
+
+        InitializeBoundaryNodes();
     }
 
     /// this function will be executed at every time step BEFORE performing the solve phase
@@ -290,17 +292,13 @@ public:
 
         BaseType::ExecuteInitializeSolutionStep();
 
-        // if (IsBoundaryConditionsAssigned)
-        // return;
-
         ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
         const double current_time = r_current_process_info[TIME];
         if (current_time < mRampUpTime)
             return;
 
-        this->AssignBoundaryConditions();
-
-        // IsBoundaryConditionsAssigned = true;
+        AssignInitialConditions();
+        this->UpdateBoundaryConditions();
 
         KRATOS_CATCH("");
     }
@@ -460,7 +458,7 @@ private:
 
     double mFreestreamVelocity;
 
-    double mVelocityRatio;
+    double mTurbulenceIntensity;
 
     int mMaximumCouplingIterations;
 
@@ -470,7 +468,7 @@ private:
 
     double mRampUpTime;
 
-    bool IsBoundaryConditionsAssigned = false;
+    bool mAssignedInitialConditions = false;
 
     ConvergenceCriteriaPointerType mpConvergenceCriteria;
 
@@ -584,7 +582,95 @@ private:
         KRATOS_CATCH("");
     }
 
-    void AssignBoundaryConditions()
+    void AssignInitialConditions()
+    {
+        if (mAssignedInitialConditions)
+            return;
+
+        this->UpdateInletNodes();
+        this->CalculateYplus();
+
+        const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
+        const double mixing_length = r_current_process_info[TURBULENT_MIXING_LENGTH];
+        const double C_mu = r_current_process_info[TURBULENCE_RANS_C_MU];
+        const double von_karman = r_current_process_info[WALL_VON_KARMAN];
+
+        unsigned int initialized_nodes_count{0};
+
+        const int number_of_nodes = this->mrModelPart.NumberOfNodes();
+#pragma omp parallel for reduction(+ : initialized_nodes_count)
+        for (int i = 0; i < number_of_nodes; i++)
+        {
+            ModelPart::NodeIterator i_node = this->mrModelPart.NodesBegin() + i;
+            if (!i_node->IsFixed(TURBULENT_KINETIC_ENERGY) &&
+                !i_node->IsFixed(TURBULENT_ENERGY_DISSIPATION_RATE))
+            {
+                array_1d<double, 3>& velocity =
+                    i_node->FastGetSolutionStepValue(VELOCITY, 0);
+                const double velocity_mag = norm_2(velocity);
+                const double y_plus = i_node->FastGetSolutionStepValue(RANS_Y_PLUS);
+                const double nu = i_node->FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
+                const double wall_distance = i_node->FastGetSolutionStepValue(DISTANCE);
+                const double u_tau = y_plus * nu / wall_distance;
+                const double k = std::pow(u_tau, 2) / std::sqrt(C_mu);
+                const double epsilon = std::pow(u_tau, 4) / (von_karman * nu * y_plus);
+                // const double k = 1.5 * std::pow(velocity_mag * mTurbulenceIntensity, 2);
+                // const double epsilon = C_mu * std::pow(k, 1.5) / mixing_length;
+                this->InitializeValues(*i_node, k, epsilon);
+                initialized_nodes_count++;
+            }
+        }
+
+        KRATOS_INFO("TurbulenceModel")
+            << initialized_nodes_count << " nodes were assigned initial values in "
+            << this->mrModelPart.Name() << " model part.\n";
+
+        mAssignedInitialConditions = true;
+    }
+
+    void InitializeBoundaryNodes()
+    {
+        const int number_of_nodes = this->mrModelPart.NumberOfNodes();
+
+        unsigned int nodes_count_fixed{0}, nodes_count_free{0};
+
+#pragma omp parallel for reduction(+ : nodes_count_fixed, nodes_count_free)
+        for (int i = 0; i < number_of_nodes; i++)
+        {
+            ModelPart::NodeIterator i_node = this->mrModelPart.NodesBegin() + i;
+            if (i_node->Is(STRUCTURE) || i_node->Is(INLET))
+            {
+                i_node->Fix(TURBULENT_KINETIC_ENERGY);
+                i_node->Fix(TURBULENT_ENERGY_DISSIPATION_RATE);
+                nodes_count_fixed++;
+            }
+            else
+            {
+                i_node->Free(TURBULENT_KINETIC_ENERGY);
+                i_node->Free(TURBULENT_ENERGY_DISSIPATION_RATE);
+                nodes_count_free++;
+            }
+        }
+
+        KRATOS_INFO("TurbulenceModel")
+            << nodes_count_fixed << "/" << nodes_count_free << " nodes were fixed/freed in "
+            << this->mrModelPart.Name() << " model part.\n";
+    }
+
+    void InitializeValues(NodeType& rNode, double K, double Epsilon)
+    {
+        rNode.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY) = K;
+        rNode.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE) = Epsilon;
+    }
+
+    void UpdateBoundaryConditions()
+    {
+        this->UpdateInletNodes();
+        this->CalculateYplus();
+        this->UpdateWallNodes();
+    }
+
+    void UpdateInletNodes()
     {
         const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
 
@@ -597,57 +683,20 @@ private:
         for (int i = 0; i < number_of_nodes; i++)
         {
             ModelPart::NodeIterator i_node = this->mrModelPart.NodesBegin() + i;
-            if (i_node->Is(STRUCTURE))
-            {
-                this->SetUpWallNode(*i_node);
-                this->InitializeValues(*i_node, 0.0, 0.0);
-            }
-            else if (i_node->Is(INLET))
+            if (i_node->Is(INLET))
             {
                 array_1d<double, 3>& velocity =
                     i_node->FastGetSolutionStepValue(VELOCITY, 0);
                 const double velocity_mag = norm_2(velocity);
-                const double k = velocity_mag * mVelocityRatio;
-                const double epsilon = C_mu * std::pow(k, 1.5) / mixing_length;
-
-                this->SetUpFreestreamNode(*i_node);
-                this->InitializeValues(*i_node, k, epsilon);
-            }
-            else // internal node, set initial value
-            {
-                array_1d<double, 3>& velocity =
-                    i_node->FastGetSolutionStepValue(VELOCITY, 0);
-                const double velocity_mag = norm_2(velocity);
-                const double k = std::pow(velocity_mag / mixing_length, 2);
+                const double k = 1.5 * std::pow(velocity_mag * mTurbulenceIntensity, 2);
                 const double epsilon = C_mu * std::pow(k, 1.5) / mixing_length;
 
                 this->InitializeValues(*i_node, k, epsilon);
             }
         }
-
-        // CalculationUtilities::LowerBound<NodeType>(this->mrModelPart, TURBULENT_KINETIC_ENERGY, 1e-15);
-        // CalculationUtilities::LowerBound<NodeType>(this->mrModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 1e-15);
     }
 
-    void SetUpWallNode(NodeType& rNode)
-    {
-        rNode.Fix(TURBULENT_KINETIC_ENERGY);
-        rNode.Fix(TURBULENT_ENERGY_DISSIPATION_RATE);
-    }
-
-    void SetUpFreestreamNode(NodeType& rNode)
-    {
-        rNode.Fix(TURBULENT_KINETIC_ENERGY);
-        rNode.Fix(TURBULENT_ENERGY_DISSIPATION_RATE);
-    }
-
-    void InitializeValues(NodeType& rNode, double K, double Epsilon)
-    {
-        rNode.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY) = K;
-        rNode.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE) = Epsilon;
-    }
-
-    void UpdateBoundaryConditions()
+    void UpdateWallNodes()
     {
         const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
         const double von_karman = r_current_process_info[WALL_VON_KARMAN];
@@ -680,8 +729,6 @@ private:
                 r_condition_geometry.PointsNumber();
             const std::vector<int> condition_gauss_point_indices =
                 r_condition.GetValue(GAUSS_POINT_INDICES);
-
-            // KRATOS_WATCH(condition_gauss_point_indices.size());
 
             for (unsigned int i_node = 0; i_node < number_of_condition_nodes; i_node++)
             {
@@ -733,8 +780,6 @@ private:
 
     void SolveStep()
     {
-        this->CalculateYplus();
-        this->UpdateBoundaryConditions();
         this->UpdateTurbulentViscosity();
 
         mpKStrategy->InitializeSolutionStep();

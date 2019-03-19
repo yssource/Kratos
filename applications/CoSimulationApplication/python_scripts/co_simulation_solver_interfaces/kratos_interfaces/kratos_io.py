@@ -5,7 +5,7 @@ try:
 except ModuleNotFoundError:
     raise ModuleNotFoundError(tools.bcolors.FAIL + 'KRATOS is not available! Please ensure that Kratos is available for usage!'+ tools.bcolors.ENDC)
 
-from KratosMultiphysics.CoSimulationApplication.base_co_simulation_classes.co_simulation_base_io import CoSimulationBaseIO
+from KratosMultiphysics.CoSimulationApplication.base_classes.co_simulation_base_io import CoSimulationBaseIO
 import KratosMultiphysics.CoSimulationApplication.co_simulation_tools as tools
 
 # Other imports
@@ -140,9 +140,11 @@ class KratosIo(CoSimulationBaseIO):
                     mapper_settings = KratosMultiphysics.Parameters("""{
                                                                         "mapper_type" : ""
                                                                     }""")
-                    mapper_settings["mapper_type"].SetString(data_object["mapper_settings"]["type"].GetString())
-                    origin_geo = from_solver.model[origin_geo_name]
-                    dest_geo = self.model[dest_geo_name]
+                    mapper_settings["mapper_type"].SetString(data_object.mapper_settings["type"].GetString())
+                    #origin_geo = to_solver.model[origin_geo_name]
+                    origin_geo = self.model[origin_geo_name]
+                    #dest_geo = self.model[dest_geo_name]
+                    dest_geo = to_solver.model[dest_geo_name]
                     mapper = self.SetupMapper(origin_geo, dest_geo, mapper_settings)
                     mapper.Map(origin_var, dest_var, set_flags)
             else:

@@ -3,8 +3,8 @@ from __future__ import print_function, absolute_import, division  # makes these 
 # Other imports
 import KratosMultiphysics.CoSimulationApplication.co_simulation_tools as cs_tools
 data_structure = cs_tools.cs_data_structure
-import math
 from decimal import Decimal
+import numpy as np
 
 def Create(settings, data_object):
     return CoSimulationConvergenceCriteria(settings, data_object)
@@ -85,8 +85,8 @@ class CoSimulationConvergenceCriteria(object):
     #                  To be called called when the convergence is to be enquired for this criteria
     #
     def IsConverged(self):
-        residual_list = self._CalculateResidual()
-        abs_residual_norm = cs_tools.CalculateNorm(residual_list)
+        residual = self._CalculateResidual()
+        abs_residual_norm = np.linalg.norm(residual)
         if(abs_residual_norm == 0):
             abs_residual_norm = 1.0
         if(self.iteration == 1):
@@ -114,7 +114,6 @@ class CoSimulationConvergenceCriteria(object):
     ## PrintInfo : PrintInfo function of the class.
     #                  Prints the information about the object
     #
-
     def PrintInfo(self):
         cs_tools.PrintInfo("Convergence criteria for data : ", self.data_name)
         cs_tools.PrintInfo("Absolute Tolerace  : ", self.abs_tolerance)

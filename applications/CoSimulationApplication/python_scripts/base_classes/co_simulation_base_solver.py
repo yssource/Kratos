@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import, division
 
 # Other imports
-import KratosMultiphysics.CoSimulationApplication.custom_co_simulation_solver_interfaces.co_simulation_io_factory as io_factory
+import KratosMultiphysics.CoSimulationApplication.co_simulation_solver_interfaces.co_simulation_io_factory as io_factory
 import KratosMultiphysics.CoSimulationApplication.co_simulation_tools as tools
 cs_data_structure = tools.cs_data_structure
 import collections
@@ -41,7 +41,7 @@ class CoSimulationBaseSolver(object):
 
 	## Initialize : Initialize function for the solver class. Necessary
 	#               initialization of the variables and objects to be done here.
-	 especially the geometries
+	# 				especially the geometries
 	def Initialize(self):
 		# Initialize IO
 		if(not self.io_is_initialized):

@@ -113,10 +113,6 @@ double CalculateSourceTerm(const BoundedMatrix<double, TDim, TDim>& rVelocityGra
     noalias(symmetric_velocity_gradient) = rVelocityGradient + trans(rVelocityGradient);
 
     BoundedMatrix<double, TDim, TDim> reynolds_stress_tensor;
-    // noalias(reynolds_stress_tensor) =
-    //     turbulent_kinematic_viscosity *
-    //         (symmetric_velocity_gradient - (2.0 / 3.0) * velocity_divergence * identity) -
-    //     (2.0 / 3.0) * turbulent_kinetic_energy * identity;
 
     noalias(reynolds_stress_tensor) =
         turbulent_kinematic_viscosity *

@@ -112,27 +112,25 @@ class ApplyChimeraProcessMonolithic : public Process
 
 		Parameters default_parameters(R"(
             {
-                "process_name":"chimera",
-                                "Chimera_levels" : [
-													[{
-														"model_part_name":"GENERIC_background",
-														"model_part_inside_boundary_name" :"GENERIC_domainboundary",
-                                						"overlap_distance":0.045
-		            					            }],
-				    								 [{
-														"model_part_name":"GENERIC_patch_1_1",
-														"model_part_inside_boundary_name":"GENERIC_structure_1_1",
-                                						"overlap_distance":0.045
-		            						     	}],
-				    								[{
-														"model_part_name":"GENERIC_patch_2_1",
-														"model_part_inside_boundary_name":"GENERIC_strcuture2_1",
-                                						"overlap_distance":0.045
-		            						    	}]
-													 ]
+                "chimera": [
+								[{
+									"model_part_name":"GENERIC_background",
+									"model_part_inside_boundary_name" :"GENERIC_domainboundary",
+									"overlap_distance":0.045
+								}],
+									[{
+									"model_part_name":"GENERIC_patch_1_1",
+									"model_part_inside_boundary_name":"GENERIC_structure_1_1",
+									"overlap_distance":0.045
+								}],
+								[{
+									"model_part_name":"GENERIC_patch_2_1",
+									"model_part_inside_boundary_name":"GENERIC_strcuture2_1",
+									"overlap_distance":0.045
+								}]
+							]
             })");
 
-		//m_overlap_distance = m_parameters["overlap_distance"].GetDouble();
 		NumberOfLevels = m_parameters.size();
 
 		for (int i =0; i<NumberOfLevels ;i++)
@@ -472,27 +470,6 @@ class ApplyChimeraProcessMonolithic : public Process
 
 	void FormulateChimera(int MainDomainOrNot)
 	{
-
-		//parameters for vtk output
-		Parameters parameters= Parameters(R"({
-						"result_file_configuration" : {
-							"gidpost_flags"       : {
-								"GiDPostMode"           : "GiD_PostAscii",
-								"WriteDeformedMeshFlag" : "WriteDeformed",
-								"WriteConditionsFlag"   : "WriteConditions",
-								"MultiFileFlag"         : "SingleFile"
-							},
-							"file_label"          : "time",
-							"output_control_type" : "time",
-							"output_frequency"    : 1.0,
-							"body_output"         : true,
-							"node_output"         : false,
-							"skin_output"         : false,
-							"plane_output"        : [],
-							"nodal_results"       : ["VELOCITY","PRESSURE","DISTANCE"],
-							"gauss_point_results" : []
-						},
-						"point_data_configuration"  : []})" );
 
 		ModelPart &rBackgroundModelPart = mrMainModelPart.GetSubModelPart(m_background_model_part_name);
 		ModelPart &rPatchModelPart = mrMainModelPart.GetSubModelPart(m_patch_model_part_name);

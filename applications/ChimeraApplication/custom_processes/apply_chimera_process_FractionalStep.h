@@ -131,8 +131,6 @@ class ApplyChimeraProcessFractionalStep : public Process
 		            								}]
 													]
             })");
-
-		//m_overlap_distance = m_parameters["overlap_distance"].GetDouble();
 		NumberOfLevels = m_parameters.size();
 
 		for (int i =0; i<NumberOfLevels ;i++)

@@ -13,16 +13,6 @@ class FluidChimeraAnalysis(FluidDynamicsAnalysis):
         # Deprecation warnings
         self.parameters = parameters
         solver_settings = parameters["solver_settings"]
-        if not solver_settings.Has("domain_size"):
-            Kratos.Logger.PrintInfo("FluidChimeraAnalysis", "Using the old way to pass the domain_size, this will be removed!")
-            solver_settings.AddEmptyValue("domain_size")
-            solver_settings["domain_size"].SetInt(parameters["problem_data"]["domain_size"].GetInt())
-
-        if not solver_settings.Has("model_part_name"):
-            Kratos.Logger.PrintInfo("FluidChimeraAnalysis", "Using the old way to pass the model_part_name, this will be removed!")
-            solver_settings.AddEmptyValue("model_part_name")
-            solver_settings["model_part_name"].SetString(parameters["problem_data"]["model_part_name"].GetString())
-
         # Import parallel modules if needed
         # has to be done before the base-class constuctor is called (in which the solver is constructed)
         if (parameters["problem_data"]["parallel_type"].GetString() == "MPI"):
@@ -36,13 +26,16 @@ class FluidChimeraAnalysis(FluidDynamicsAnalysis):
 
         if parameter_name == "processes":
             # Adding the Chimera Process to the list of processes
-            chimera_params = self.project_parameters["chimera"][0]
-            main_model_part = self.model[self.parameters["solver_settings"]["model_part_name"].GetString()]
+           
+            if self.parameters["solver_settings"].Has("fluid_solver_settings"):
+                self.parameters =  self.parameters["solver_settings"]["fluid_solver_settings"]
+            else:
+                self.parameters = self.parameters["solver_settings"]
+
+            chimera_params = self.project_parameters["chimera"]
+            main_model_part = self.model[self.parameters["model_part_name"].GetString()]
             domain_size = main_model_part.ProcessInfo[Kratos.DOMAIN_SIZE]
-
-            print("domain size is",domain_size)
-
-            solver_type = self.parameters["solver_settings"]["solver_type"].GetString()
+            solver_type = self.parameters["solver_type"].GetString()
 
             if domain_size == 2:
                 if(solver_type == "Monolithic" or solver_type == "monolithic"):

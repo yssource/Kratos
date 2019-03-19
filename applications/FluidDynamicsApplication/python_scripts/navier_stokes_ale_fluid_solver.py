@@ -11,7 +11,6 @@ import KratosMultiphysics.FluidDynamicsApplication.python_solvers_wrapper_fluid 
 def CreateSolver(model, solver_settings, parallelism):
     return NavierStokesAleFluidSolver(model, solver_settings, parallelism)
 
-
 class NavierStokesAleFluidSolver(AleFluidSolver):
     def _CreateFluidSolver(self, solver_settings, parallelism):
         return fluid_solvers_wrapper.CreateSolverByParameters(

@@ -26,7 +26,6 @@ if(${MPI_NEEDED} MATCHES ON )
 	set(KRATOS_CHIMERA_APPLICATION_EXTRA_LIBS ${KRATOS_CHIMERA_APPLICATION_EXTRA_LIBS} ${MPI_LIBRARIES})
 endif(${MPI_NEEDED} MATCHES ON )
 
-
 # define library Kratos which defines the basic python interface
 pybind11_add_module(KratosChimeraApplication MODULE THIN_LTO ${KRATOS_CHIMERA_APPLICATION_SOURCES})
 target_link_libraries(KratosChimeraApplication PRIVATE KratosCore ${KRATOS_CHIMERA_APPLICATION_EXTRA_LIBS})
@@ -50,4 +49,4 @@ if(${INSTALL_PYTHON_FILES} MATCHES ON)
 endif(${INSTALL_PYTHON_FILES} MATCHES ON)
 
 # Add to the KratosMultiphisics Python module
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/ChimeraApplication.py" DESTINATION KratosMultiphysics )
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/ChimeraApplication.py" DESTINATION "KratosMultiphysics/ChimeraApplication" RENAME "__init__.py")

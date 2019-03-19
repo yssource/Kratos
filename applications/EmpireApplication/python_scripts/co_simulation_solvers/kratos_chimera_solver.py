@@ -34,8 +34,8 @@ class ChimeraWithVTKoutput(FluidChimeraAnalysis):
         self.patch= main_model_part.GetSubModelPart("GENERIC_patch")
         #self.structure = main_model_part.GetSubModelPart("GENERIC_structure")
         
-        self.vtkOutput_background = kchim.VtkOutput(background,"nnn",self.parameters["output_configuration"])
-        self.vtkOutput_patch = kchim.VtkOutput(self.patch,"nnn",self.parameters["output_configuration"])
+        #self.vtkOutput_background = kchim.VtkOutput(background,"nnn",self.parameters["output_configuration"])
+        #self.vtkOutput_patch = kchim.VtkOutput(self.patch,"nnn",self.parameters["output_configuration"])
         #self.vtkOutput_structure = kchim.VtkOutput(self.structure,"nnn",self.parameters["output_configuration"])
         self.step=0
     def RunSolutionLoop(self):
@@ -56,10 +56,10 @@ class ChimeraWithVTKoutput(FluidChimeraAnalysis):
     def OutputSolutionStep(self):
         super(ChimeraWithVTKoutput,self).OutputSolutionStep()
         
-        if(self.step%1==0):
+        """ if(self.step%1==0):
             self.vtkOutput_background.PrintOutput()
             self.vtkOutput_patch.PrintOutput()
-        self.step+=1
+        self.step+=1 """
 
 
 class KratosChimeraSolver(KratosBaseFieldSolver):

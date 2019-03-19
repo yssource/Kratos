@@ -68,6 +68,7 @@
             "time_step"           : 0.0001
         }
     },
+    "processes" : {
     "initial_conditions_process_list"  : [{
         "python_module" : "assign_vector_variable_process",
         "kratos_module" : "KratosMultiphysics",
@@ -139,23 +140,21 @@
             "direction"       : [0.0,-1.0,0.0]
         }
     }],
-"chimera" :[{
-"Chimera_levels":[
+
+    "auxiliar_process_list"            : []
+        },
+        "chimera" :[
 			[{ "model_part_name" :"GENERIC_background",
-			"model_part_inside_boundary_name" :"GENERIC_domainboundary"
+			"model_part_inside_boundary_name" :"GENERIC_domainboundary",
+            "overlap_distance" :0.0002
 			}],
 			[{ "model_part_name" :"GENERIC_patch_1_1",
-			   "model_part_inside_boundary_name" :"NoSlip2D_structure_1_1"
+			   "model_part_inside_boundary_name" :"NoSlip2D_structure_1_1",
+               "overlap_distance" :0.0002
 			}] ,
 			[{ "model_part_name" :"GENERIC_patch_2_1",
-			   "model_part_inside_boundary_name" :"NoSlip2D_structure_2_1"
+			   "model_part_inside_boundary_name" :"NoSlip2D_structure_2_1",
+               "overlap_distance" :0.0002
 			}] 
-		 ],
-"type" :"nearest_element",
-"IsWeak" :true,
-"pressure_coupling" :"all" ,
-"pressure_coupling_node" :0.0,
-"overlap_distance" :0.0002
-}],
-    "auxiliar_process_list"            : []
+		 ]
 }

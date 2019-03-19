@@ -20,7 +20,6 @@ class AleFluidSolver(PythonSolver):
             "mesh_motion_solver_settings" : { },
             "mesh_velocity_calculation"   : { }
         }""")
-
         # cannot recursively validate because validation of fluid- and
         # mesh-motion-settings is done in corresponding solvers
         solver_settings.ValidateAndAssignDefaults(default_settings)

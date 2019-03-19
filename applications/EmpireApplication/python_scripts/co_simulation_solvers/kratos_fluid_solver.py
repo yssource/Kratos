@@ -27,14 +27,14 @@ class FluidDynamicsAnalysisWithVTK(FluidDynamicsAnalysis):
         main_model_part = self.model["FluidModelPart"]
 
         fluid = main_model_part.GetSubModelPart("Parts_Fluid")
-        self.VtkOut =kchim.VtkOutput(fluid,"nnn",self.project_parameters["output_configuration"])
+        #self.VtkOut =VtkOutput(fluid,"nnn",self.project_parameters["output_configuration"])
         self.step = 0
 
     def OutputSolutionStep(self):
         super(FluidDynamicsAnalysisWithVTK,self).OutputSolutionStep()
-        if(self.step%1==0):
-            self.VtkOut.PrintOutput()
-        self.step+=1
+        #if(self.step%1==0):
+            #self.VtkOut.PrintOutput()
+        #self.step+=1
 
 
 def CreateSolver(cosim_solver_settings, level):

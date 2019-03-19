@@ -68,6 +68,7 @@
             "time_step"           : 0.005
         }
     },
+    "processes" : {
     "initial_conditions_process_list"  : [],
     "boundary_conditions_process_list" : [{
         "python_module" : "apply_inlet_process",
@@ -115,20 +116,16 @@
             "direction"       : [0.0,-1.0,0.0]
         }
     }],
-"chimera" :[{
-"Chimera_levels":[
-			[{ "model_part_name" :"GENERIC_background",
-			"model_part_inside_boundary_name" :"GENERIC_domainboundary"
-			}],
-			[{ "model_part_name" :"GENERIC_patch",
-			   "model_part_inside_boundary_name" :"NoSlip2D_structure"
-			}] 
-		 ],
-"type" :"nearest_element",
-"IsWeak" :true,
-"pressure_coupling" :"all" ,
-"pressure_coupling_node" :0.0,
-"overlap_distance" :0.01
-}],
     "auxiliar_process_list"            : []
+    },
+"chimera" :[
+        [{ "model_part_name" :"GENERIC_background",
+        "model_part_inside_boundary_name" :"GENERIC_domainboundary",
+        "overlap_distance" :0.01
+        }],
+        [{ "model_part_name" :"GENERIC_patch",
+           "model_part_inside_boundary_name" :"NoSlip2D_structure",
+           "overlap_distance" :0.01
+        }] 
+     ]
 }

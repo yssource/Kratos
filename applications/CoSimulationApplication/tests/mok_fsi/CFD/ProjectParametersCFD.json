@@ -6,7 +6,7 @@
         "start_time"      : 0.0,
         "end_time"        : 1
     },
-    "_output_configuration"             : {
+    "output_configuration"             : {
         "result_file_configuration" : {
             "gidpost_flags"       : {
                 "GiDPostMode"           : "GiD_PostBinary",
@@ -38,9 +38,9 @@
             "model_part_name"              : "FluidModelPart",
             "model_import_settings"       : {
                 "input_type"     : "mdpa",
-                "input_filename" : "fsi_mok/Mok_CFD"
+                "input_filename" : "CFD/Mok_CFD"
             },
-            "echo_level"                  : 0,
+            "echo_level"                  : 1,
             "compute_reactions"           : true,
             "formulation": {
                 "element_type": "vms",

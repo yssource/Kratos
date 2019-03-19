@@ -12,7 +12,7 @@ class FluidChimeraAnalysis(FluidDynamicsAnalysis):
     def __init__(self,model,parameters):
         # Deprecation warnings
         self.parameters = parameters
-        solver_settings = parameters["solver_settings"]
+        
         # Import parallel modules if needed
         # has to be done before the base-class constuctor is called (in which the solver is constructed)
         if (parameters["problem_data"]["parallel_type"].GetString() == "MPI"):
@@ -25,17 +25,15 @@ class FluidChimeraAnalysis(FluidDynamicsAnalysis):
         list_of_processes = super(FluidChimeraAnalysis,self)._CreateProcesses(parameter_name, initialization_order)
 
         if parameter_name == "processes":
-            # Adding the Chimera Process to the list of processes
-           
             if self.parameters["solver_settings"].Has("fluid_solver_settings"):
-                self.parameters =  self.parameters["solver_settings"]["fluid_solver_settings"]
+                self.solver_settings =  self.parameters["solver_settings"]["fluid_solver_settings"]
             else:
-                self.parameters = self.parameters["solver_settings"]
+                self.solver_settings = self.parameters["solver_settings"]
 
             chimera_params = self.project_parameters["chimera"]
-            main_model_part = self.model[self.parameters["model_part_name"].GetString()]
+            main_model_part = self.model[self.solver_settings["model_part_name"].GetString()]
             domain_size = main_model_part.ProcessInfo[Kratos.DOMAIN_SIZE]
-            solver_type = self.parameters["solver_type"].GetString()
+            solver_type = self.solver_settings["solver_type"].GetString()
 
             if domain_size == 2:
                 if(solver_type == "Monolithic" or solver_type == "monolithic"):
@@ -48,9 +46,6 @@ class FluidChimeraAnalysis(FluidDynamicsAnalysis):
                 elif (solver_type == "fractional_step" or solver_type == "FractionalStep"):
                     self.ChimeraProcess = KratosChimera.ApplyChimeraProcessFractionalStep3d(main_model_part,chimera_params)
 
-            #list_of_processes.insert(0, ChimeraProcess)
-            #print(list_of_processes)
-            #err
         return list_of_processes
 
     ''' def Initialize(self):

@@ -20,23 +20,17 @@ from fluid_chimera_analysis import FluidChimeraAnalysis
 def CreateSolver(cosim_solver_settings, level):
     return KratosChimeraSolver(cosim_solver_settings, level)
 
-class ChimeraWithVTKoutput(FluidChimeraAnalysis):
-
+class ChimeraWithPatchMovement(FluidChimeraAnalysis):
+    "this class is used only when used defined movement of patch is required"
     def __init__(self,model,project_parameters):
-        super(ChimeraWithVTKoutput,self).__init__(model,project_parameters)
-        #output_post  = project_parameters.Has("output_configuration")
+        super(ChimeraWithPatchMovement,self).__init__(model,project_parameters)
 
     def Initialize(self):
-        super(ChimeraWithVTKoutput,self).Initialize()
+        super(ChimeraWithPatchMovement,self).Initialize()
         main_model_part = self.model["FluidModelPart"]
         self.main_model_part = main_model_part
         background = main_model_part.GetSubModelPart("GENERIC_background")
         self.patch= main_model_part.GetSubModelPart("GENERIC_patch")
-        #self.structure = main_model_part.GetSubModelPart("GENERIC_structure")
-        
-        #self.vtkOutput_background = kchim.VtkOutput(background,"nnn",self.parameters["output_configuration"])
-        #self.vtkOutput_patch = kchim.VtkOutput(self.patch,"nnn",self.parameters["output_configuration"])
-        #self.vtkOutput_structure = kchim.VtkOutput(self.structure,"nnn",self.parameters["output_configuration"])
         self.step=0
     def RunSolutionLoop(self):
         """
@@ -54,17 +48,12 @@ class ChimeraWithVTKoutput(FluidChimeraAnalysis):
             self.OutputSolutionStep()
             
     def OutputSolutionStep(self):
-        super(ChimeraWithVTKoutput,self).OutputSolutionStep()
+        super(ChimeraWithPatchMovement,self).OutputSolutionStep()
         
-        """ if(self.step%1==0):
-            self.vtkOutput_background.PrintOutput()
-            self.vtkOutput_patch.PrintOutput()
-        self.step+=1 """
-
 
 class KratosChimeraSolver(KratosBaseFieldSolver):
     def _CreateAnalysisStage(self):
-        return ChimeraWithVTKoutput(self.model, self.project_parameters)
+        return ChimeraWithPatchMovement(self.model, self.project_parameters)
 
     def _GetParallelType(self):
         return self.project_parameters["problem_data"]["parallel_type"].GetString()

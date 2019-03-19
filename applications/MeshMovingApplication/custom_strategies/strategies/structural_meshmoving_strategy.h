@@ -105,6 +105,7 @@ public:
         new ResidualBasedBlockBuilderAndSolver<TSparseSpace, TDenseSpace,
                                                TLinearSolver>(
             pNewLinearSolver));
+    mpbulider_and_solver->SetEchoLevel(mecho_level);
 
     mstrategy = typename BaseType::Pointer(
         new ResidualBasedLinearStrategy<TSparseSpace, TDenseSpace,
@@ -113,7 +114,7 @@ public:
             mcompute_reactions, mreform_dof_set_at_each_step,
             calculate_norm_dx_flag));
 
-    mstrategy->SetEchoLevel(mecho_level);
+    mstrategy->SetEchoLevel(1);
 
     KRATOS_CATCH("")
   }
@@ -125,7 +126,9 @@ public:
     owner_model.DeleteModelPart(name);
   }
 
-  void Initialize() override {}
+  void Initialize() override {
+      mstrategy->Initialize();
+  }
 
   double Solve() override {
     KRATOS_TRY;

@@ -54,9 +54,9 @@ import os
 import sys
 
 # Application dependent names and paths
+import KratosMultiphysics as KM
 from KratosCoSimulationApplication import *
 application = KratosCoSimulationApplication()
-#application = 'KratosCoSimulationApplication'
 application_name = 'KratosCoSimulationApplication'
 application_folder = 'CoSimulationApplication'
 

@@ -5,7 +5,7 @@
         "end_time"      : 15.0,
         "echo_level"    : 0
     },
-    "solver_settings" :
+    "coupled_solver_settings" :
     {
         "solver_type" : "gauss_seidel_strong_coupling",
         "echo_level" : 0,
@@ -70,7 +70,8 @@
                     }
                 ]
             }
-        ],
+        ]
+    },
         "solvers" :
         {
             "fluid":
@@ -117,9 +118,11 @@
                     {
                         "geometry_name"   : "GENERIC_FSI",
                         "name"            : "VELOCITY",
-                        "dimension"       : 3                    }
+                        "dimension"       : 3
+                    }
                 ]
             }
         }
     }
 }
+

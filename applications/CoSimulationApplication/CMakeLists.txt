@@ -45,6 +45,8 @@ elseif(NOT ${CO_SIMULATION_APPLICATION_PYTHON} MATCHES ON)
 
 endif(${CO_SIMULATION_APPLICATION} MATCHES ON)
 
+get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
+get_filename_component(KRATOS_DIR ${PARENT_DIR} DIRECTORY)
 
     ## Write CoSimulationApplication __init__.py
 file(WRITE ${CMAKE_CURRENT_SOURCE_DIR}/CoSimulationApplication.py "from __future__ import print_function, absolute_import, division
@@ -59,6 +61,10 @@ application_name = 'KratosCoSimulationApplication'
 application_folder = 'CoSimulationApplication'
 
 KM._ImportApplicationAsModule(application, application_name, application_folder, __path__)
+## adding pyKratos to path
+application_path = os.path.join(\"${KRATOS_DIR}/applications\", application_folder)
+python_path = os.path.join(application_path, 'custom_data_structure')
+sys.path.append(python_path)
 ")    
 
     # Add to the KratosMultiphisics Python module

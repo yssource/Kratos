@@ -3,12 +3,12 @@
     {
         "start_time"    : 0.0,
         "end_time"      : 15.0,
-        "echo_level"    : 0
+        "echo_level"    : 2
     },
     "coupled_solver_settings" :
     {
         "solver_type" : "gauss_seidel_strong_coupling",
-        "echo_level" : 0,
+        "echo_level" : 2,
         "num_coupling_iterations" : 12,
         "start_coupling_time" : 0.0,
         "predictors" :[
@@ -53,7 +53,8 @@
                         "mapper_settings"   : {
                             "type" : "nearest_neighbor",
                             "flags" : ["swap_sign"]
-                        }
+                        },
+                        "filters":[]
 
                     }
                 ],
@@ -65,63 +66,63 @@
                         "mapper_settings"   : {
                             "type" : "nearest_neighbor",
                             "flags":[]
-                        }
-
+                        },
+                        "filters":[]
                     }
                 ]
             }
         ]
     },
-        "solvers" :
+    "solvers" :
+    {
+        "fluid":
         {
-            "fluid":
-            {
-                "solver_type" : "kratos_fluid",
-                "settings":{
-                    "working_directory" : "fsi_mok/CFD",
-                    "input_file"  : "ProjectParametersCFD.json"
+            "solver_type" : "kratos_fluid",
+            "settings":{
+                "working_directory" : "CFD",
+                "input_file"  : "ProjectParametersCFD.json"
+            },
+            "data" : [
+                {
+                    "geometry_name"   : "FluidModelPart.NoSlip2D_FSI",
+                    "name"            : "MESH_DISPLACEMENT",
+                    "dimension"       : 3                    },
+                {
+                    "geometry_name"   : "FluidModelPart.NoSlip2D_FSI",
+                    "name"            : "REACTION",
+                    "dimension"       : 3
                 },
-                "data" : [
-                    {
-                        "geometry_name"   : "FluidModelPart.NoSlip2D_FSI",
-                        "name"            : "MESH_DISPLACEMENT",
-                        "dimension"       : 3                    },
-                    {
-                        "geometry_name"   : "FluidModelPart.NoSlip2D_FSI",
-                        "name"            : "REACTION",
-                        "dimension"       : 3
-                    },
-                    {
-                        "geometry_name"   : "FluidModelPart.NoSlip2D_FSI",
-                        "name"            : "VELOCITY",
-                        "dimension"       : 3
-                    }
-                ],
-            "structure" :
-            {
-                "solver_type" : "kratos_structural",
-                "settings":{
-                    "working_directory" : "fsi_mok/CSM",
-                    "input_file"  : "ProjectParametersCSM.json"
+                {
+                    "geometry_name"   : "FluidModelPart.NoSlip2D_FSI",
+                    "name"            : "VELOCITY",
+                    "dimension"       : 3
+                }
+            ]
+        },
+        "structure" :
+        {
+            "solver_type" : "kratos_structural",
+            "settings":{
+                "working_directory" : "CSM",
+                "input_file"  : "ProjectParametersCSM.json"
+            },
+            "data" : [
+                {
+                    "geometry_name"   : "Structure.GENERIC_FSI",
+                    "name"            : "DISPLACEMENT",
+                    "dimension"       : 3
                 },
-                "data" : [
-                    {
-                        "geometry_name"   : "GENERIC_FSI",
-                        "name"            : "DISPLACEMENT",
-                        "dimension"       : 3
-                    },
-                    {
-                        "geometry_name"   : "GENERIC_FSI",
-                        "name"            : "POINT_LOAD",
-                        "dimension"       : 3
-                    },
-                    {
-                        "geometry_name"   : "GENERIC_FSI",
-                        "name"            : "VELOCITY",
-                        "dimension"       : 3
-                    }
-                ]
-            }
+                {
+                    "geometry_name"   : "Structure.GENERIC_FSI",
+                    "name"            : "POINT_LOAD",
+                    "dimension"       : 3
+                },
+                {
+                    "geometry_name"   : "Structure.GENERIC_FSI",
+                    "name"            : "VELOCITY",
+                    "dimension"       : 3
+                }
+            ]
         }
     }
 }

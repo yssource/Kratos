@@ -2,6 +2,9 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 message("**** configuring KratosTopologyOptimizationApplication ****")
 
+################### PYBIND11
+include(pybind11Tools)
+
 include_directories( ${CMAKE_SOURCE_DIR}/kratos )
 include_directories( ${CMAKE_SOURCE_DIR}/applications/ )
 
@@ -21,8 +24,8 @@ set( KRATOS_TOPOLOGYOPTIMIZATION_APPLICATION_SOURCES
 
 ###############################################################
 ## define library Kratos which defines the basic python interface
-add_library(KratosTopologyOptimizationApplication SHARED ${KRATOS_TOPOLOGYOPTIMIZATION_APPLICATION_SOURCES})
-target_link_libraries(KratosTopologyOptimizationApplication KratosCore KratosSolidMechanicsApplication)
+pybind11_add_module(KratosTopologyOptimizationApplication MODULE THIN_LTO ${KRATOS_TOPOLOGYOPTIMIZATION_APPLICATION_SOURCES})
+target_link_libraries(KratosTopologyOptimizationApplication PRIVATE KratosCore)
 set_target_properties(KratosTopologyOptimizationApplication PROPERTIES PREFIX "")
 install(TARGETS KratosTopologyOptimizationApplication DESTINATION libs )
 

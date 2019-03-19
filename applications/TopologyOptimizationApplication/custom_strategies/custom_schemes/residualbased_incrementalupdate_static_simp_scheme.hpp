@@ -14,8 +14,8 @@
 #define  KRATOS_RESIDUAL_BASED_STATIC_SIMP_SCHEME
 
 
-// External includes
-#include "boost/smart_ptr.hpp"
+// System includes
+#include <pybind11/pybind11.h>
 
 // Project includes
 #include "includes/define.h"

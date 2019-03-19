@@ -18,6 +18,7 @@
 // System includes
 #include <string>
 #include <iostream>
+#include <pybind11/pybind11.h>
 
 // External includes
 

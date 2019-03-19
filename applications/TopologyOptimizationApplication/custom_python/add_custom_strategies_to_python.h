@@ -13,8 +13,8 @@
 #if !defined(KRATOS_STRATEGIES_PYTHON_H_INCLUDED )
 #define  KRATOS_STRATEGIES_PYTHON_H_INCLUDED
 
-// External includes 
-#include "boost/smart_ptr.hpp"
+// System includes
+#include <pybind11/pybind11.h>
 
 // Project includes
 #include "includes/define.h"
@@ -25,8 +25,8 @@ namespace Kratos
 
 namespace Python
 {
-
-void  AddCustomStrategiesToPython();
+    
+void  AddCustomStrategiesToPython(pybind11::module& m);
 /* { */
 /*   using namespace boost::python; */
 /* } */

@@ -11,11 +11,12 @@
 // ==============================================================================
 
 // External includes 
-#include <boost/python.hpp>
+
 
 // Project includes
 #include "includes/define.h"
 #include "processes/process.h"
+#include <pybind11/pybind11.h>
 
 // Application includes
 #include "custom_python/add_custom_utilities_to_python.h"
@@ -35,38 +36,44 @@ namespace Kratos
 namespace Python
 {
 
+namespace py = pybind11;  
 
-void AddCustomUtilitiesToPython()
+void  AddCustomUtilitiesToPython(pybind11::module& m)
 {
-	using namespace boost::python;
-
+    
 	// =============================================================================================================================================
 	// Utility Classes
 	// =============================================================================================================================================
 
-	class_<StructureResponseFunctionUtilities, bases<Process> >("StructureResponseFunctionUtilities", init<ModelPart&>())
+    py::class_<StructureResponseFunctionUtilities >(m, "StructureResponseFunctionUtilities")
+    .def(py::init<ModelPart&>())
     .def("ComputeStrainEnergy", &StructureResponseFunctionUtilities::ComputeStrainEnergy)
 	.def("ComputeVolumeFraction", &StructureResponseFunctionUtilities::ComputeVolumeFraction)
 	;
 
-	class_<TopologyFilteringUtilities, bases<Process> >("TopologyFilteringUtilities", init<ModelPart&, const double, const int>())
+    py::class_<TopologyFilteringUtilities >(m, "TopologyFilteringUtilities")
+    .def(py::init<ModelPart&, const double, const int>())
     .def("ApplyFilter", &TopologyFilteringUtilities::ApplyFilter)
 	;
 
-	class_<TopologyExtractorUtilities, bases<Process> >("TopologyExtractorUtilities", init<>())
+    py::class_<TopologyExtractorUtilities >(m, "TopologyExtractorUtilities")
+    .def(py::init<>())
     .def("ExtractVolumeMesh", &TopologyExtractorUtilities::ExtractVolumeMesh)
 	.def("ExtractSurfaceMesh", &TopologyExtractorUtilities::ExtractSurfaceMesh)
 	;
 
-	class_<TopologySmoothingUtilities, bases<Process> >("TopologySmoothingUtilities", init<>())
+	py::class_<TopologySmoothingUtilities>(m, "TopologySmoothingUtilities")
+    .def(py::init<>())
     .def("SmoothMesh", &TopologySmoothingUtilities::SmoothMesh)
 	;
 
-	class_<TopologyUpdatingUtilities, bases<Process> >("TopologyUpdatingUtilities", init<ModelPart&>())
+	py::class_<TopologyUpdatingUtilities >(m, "TopologyUpdatingUtilities")
+    .def(py::init<ModelPart&>())
     .def("UpdateDensitiesUsingOCMethod", &TopologyUpdatingUtilities::UpdateDensitiesUsingOCMethod)
 	;
 
-	class_<IOUtilities, bases<Process> >("IOUtilities", init<>())
+	py::class_<IOUtilities >(m, "IOUtilities")
+    .def(py::init<>())
     .def("SaveOptimizationResults", &IOUtilities::SaveOptimizationResults)
 	.def("WriteSurfaceAsSTLFile", &IOUtilities::WriteSurfaceAsSTLFile)
 	;

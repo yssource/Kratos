@@ -17,12 +17,9 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <pybind11/pybind11.h>
 
 // External includes
-#include <boost/python.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/io.hpp>
 
 #include "../custom_elements/small_displacement_simp_element.hpp"
 // Project includes
@@ -30,6 +27,7 @@
 #include "includes/element.h"
 #include "includes/model_part.h"
 #include "includes/process_info.h"
+#include "includes/key_hash.h"
 
 // Application includes
 #include "topology_optimization_application.h"
@@ -98,7 +96,7 @@ public:
 	{
 		std::size_t operator()(const vector<int>& k) const
 		{
-			return boost::hash_range(k.begin(), k.end());
+			return HashRange(k.begin(), k.end());
 		}
 	};
 
@@ -192,8 +190,8 @@ public:
 		std::cout<<"::[Surface Mesh Extraction]::"<<std::endl;
 
 		// Some type-definitions
-		typedef boost::unordered_map<vector<unsigned int>, unsigned int, KeyHasher, KeyComparor > hashmap;
-		typedef boost::unordered_map<vector<unsigned int>, vector<unsigned int>, KeyHasher, KeyComparor > hashmap_vec;
+		typedef std::unordered_map<vector<unsigned int>, unsigned int, KeyHasher, KeyComparor > hashmap;
+		typedef std::unordered_map<vector<unsigned int>, vector<unsigned int>, KeyHasher, KeyComparor > hashmap_vec;
 
 		// Some working variable
 		unsigned int domain_size = 3;

@@ -17,12 +17,9 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <pybind11/pybind11.h>
 
 // External includes
-#include <boost/python.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/io.hpp>
 
 // Project includes
 #include "includes/define.h"

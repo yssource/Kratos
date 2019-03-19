@@ -13,6 +13,8 @@
 #if !defined(KRATOS_SMALL_DISPLACEMENT_SIMP_ELEMENT_H_INCLUDED )
 #define  KRATOS_SMALL_DISPLACEMENT_SIMP_ELEMENT_H_INCLUDED
 
+#include <pybind11/pybind11.h>
+
 // Project includes
 #include "solid_mechanics_application.h"
 #include "custom_elements/solid_elements/small_displacement_element.hpp"

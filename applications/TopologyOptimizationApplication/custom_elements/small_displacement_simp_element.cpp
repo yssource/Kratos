@@ -11,6 +11,7 @@
 // ==============================================================================
 
 // Application includes
+#include <pybind11/pybind11.h>
 #include "small_displacement_simp_element.hpp"
 
 #include "topology_optimization_application.h"
@@ -240,9 +241,9 @@ void SmallDisplacementSIMPElement::CalculateOnIntegrationPoints(const Variable<d
 			//call the constitutive law to update material variables
 			mConstitutiveLawVector[PointNumber]->CalculateMaterialResponseCauchy(
 					Values);
-
-			ComparisonUtilities EquivalentStress;
-			rOutput[PointNumber] = EquivalentStress.CalculateVonMises(
+            
+            
+			rOutput[PointNumber] =  ElementUtilities::CalculateVonMises(
 					Variables.StressVector);
 		}
 	}

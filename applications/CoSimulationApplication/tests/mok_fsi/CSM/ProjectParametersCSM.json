@@ -8,7 +8,7 @@
     },
     "solver_settings"          : {
         "solver_type"                        : "dynamic",
-        "echo_level"                         : 0,
+        "echo_level"                         : 1,
         "analysis_type"                      : "non_linear",
         "time_integration_method"            : "implicit",
         "scheme_type"                        : "newmark",
@@ -16,10 +16,10 @@
         "domain_size"                        : 2,
         "model_import_settings"              : {
             "input_type"     : "mdpa",
-            "input_filename" : "fsi_mok/Mok_CSM"
+            "input_filename" : "CSM/Mok_CSM"
         },
         "material_import_settings"           : {
-            "materials_filename" : "fsi_mok/StructuralMaterials.json"
+            "materials_filename" : "CSM/StructuralMaterials.json"
         },
         "time_stepping"               : {
             "time_step"           : 0.1
@@ -54,7 +54,7 @@
         "loads_process_list"       : [],
         "list_other_processes"     : []
     },
-    "_output_configuration"     : {
+    "output_configuration"     : {
         "result_file_configuration" : {
             "gidpost_flags"       : {
                 "GiDPostMode"           : "GiD_PostBinary",

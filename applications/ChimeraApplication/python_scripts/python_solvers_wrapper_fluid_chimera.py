@@ -5,6 +5,9 @@ import KratosMultiphysics
 def CreateSolverByParameters(model, solver_settings,parallelism):
 
     solver_type = solver_settings["solver_type"].GetString()
+    if solver_type == "ale_chimera":
+        import navier_stokes_ale_chimera_solver
+        return navier_stokes_ale_chimera_solver.CreateSolver(model, solver_settings, parallelism)
 
     # Solvers for OpenMP parallelism
     if (parallelism == "OpenMP"):

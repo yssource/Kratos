@@ -32,6 +32,7 @@ class CoSimulationConvergenceCriteria(object):
     def _GetDefaultSettings(self):
         default_setting = data_structure.Parameters("""
             {
+                "solver"        : "",
                 "data_name"     : "",
                 "abs_tolerance" : 1e-5,
                 "rel_tolerance" : 1e-5,
@@ -65,18 +66,17 @@ class CoSimulationConvergenceCriteria(object):
     def FinalizeSolutionStep(self):
         pass
 
-    ## InitializeNonLinearIteration : InitializeNonLinearIteration function of the class.
+    ## InitializeCouplingIteration : InitializeCouplingIteration function of the class.
     #                           To be called once at the beginning of the non-linear coupling iteration.
     #
-    def InitializeNonLinearIteration(self):
+    def InitializeCouplingIteration(self):
         # storing the data for residual calculation
         self.data_prev_iter = self.data.GetNumpyArray()
 
-    ## FinalizeNonLinearIteration : FinalizeNonLinearIteration function of the class.
+    ## FinalizeCouplingIteration : FinalizeCouplingIteration function of the class.
     #                           To be called once at the end of the non-linear coupling iteration.
     #
-
-    def FinalizeNonLinearIteration(self):
+    def FinalizeCouplingIteration(self):
         self.data_current_iter = self.data.GetNumpyArray()
         self.iteration = self.iteration + 1
 

@@ -13,12 +13,12 @@ class EcaManufacturedSolution(ManufacturedSolution):
 
         default_settings = KratosMultiphysics.Parameters("""
             {
-                "U1"    : 1.0,
-                "L"     : 0.5,
-                "sigma" : 4.0,
-                "A"     : 15,
-                "B"     : 20,
-                'is_periodic' : false
+                "U1"          : 1.0,
+                "L"           : 0.5,
+                "sigma"       : 4.0,
+                "A"           : 15,
+                "B"           : 20,
+                "is_periodic" : false
             }
             """
             )

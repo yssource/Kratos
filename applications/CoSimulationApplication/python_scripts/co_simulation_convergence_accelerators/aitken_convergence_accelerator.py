@@ -11,7 +11,6 @@ from KratosMultiphysics.CoSimulationApplication.base_classes.co_simulation_base_
 import numpy as np
 from copy import deepcopy
 from collections import deque
-#from co_simulation_tools import red, classprint
 
 def Create(settings, data):
     return Aitken(settings, data)
@@ -59,11 +58,11 @@ class Aitken(CoSimulationBaseConvergenceAccelerator):
             if alpha > 2:
                 alpha = 2
                 if self.echo_level > 0:
-                    print(self._Name(), ": "+ red("WARNING: dynamic relaxation factor reaches upper bound: 20"))
+                    print(self._Name(), ": "+ "WARNING: dynamic relaxation factor reaches upper bound: 20")
             elif alpha < -2:
                 alpha = -2
                 if self.echo_level > 0:
-                    print(self._Name(), ": " + red("WARNING: dynamic relaxation factor reaches lower bound: -2"))
+                    print(self._Name(), ": " + "WARNING: dynamic relaxation factor reaches lower bound: -2")
             delta_x = alpha * self.R[0]
         self.alpha_old = alpha
 

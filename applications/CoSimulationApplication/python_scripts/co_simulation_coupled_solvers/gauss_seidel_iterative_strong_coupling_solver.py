@@ -21,8 +21,7 @@ class GaussSeidelIterativeStrongCouplingSolver(CoSimulationBaseCoupledSolver):
         ### Importing the Participant modules
         self.coupling_sequence_list = self.full_settings["coupled_solver_settings"]["coupling_sequence"]
 
-        #Comment how the settings are specified has to be consistent!
-        ### Making the convergence accelerator for this strategy
+        ### Making the filters
         self._CreateFilters(self.coupling_sequence_list)
 
         ### Creating the convergence criterion
@@ -36,15 +35,14 @@ class GaussSeidelIterativeStrongCouplingSolver(CoSimulationBaseCoupledSolver):
         for conv_criteria in self.convergence_criteria_list:
             conv_criteria.Initialize()
         for accelerator in self.convergence_accelerators_list:
-            accelerator.Initialize()               
-            
+            accelerator.Initialize()
 
     def Finalize(self):
         super(GaussSeidelIterativeStrongCouplingSolver, self).Finalize()
         for conv_criteria in self.convergence_criteria_list:
             conv_criteria.Finalize()
         for accelerator in self.convergence_accelerators_list:
-            accelerator.Finalize()               
+            accelerator.Finalize()
 
 
     def InitializeSolutionStep(self):
@@ -52,22 +50,22 @@ class GaussSeidelIterativeStrongCouplingSolver(CoSimulationBaseCoupledSolver):
         for conv_criteria in self.convergence_criteria_list:
             conv_criteria.InitializeSolutionStep()
         for accelerator in self.convergence_accelerators_list:
-            accelerator.InitializeSolutionStep()             
+            accelerator.InitializeSolutionStep()
 
     def FinalizeSolutionStep(self):
         super(GaussSeidelIterativeStrongCouplingSolver, self).FinalizeSolutionStep()
         for conv_criteria in self.convergence_criteria_list:
             conv_criteria.FinalizeSolutionStep()
         for accelerator in self.convergence_accelerators_list:
-            accelerator.FinalizeSolutionStep()            
+            accelerator.FinalizeSolutionStep()
 
     def SolveSolutionStep(self):
         if self.coupling_started:
-            for iteration in range(self.num_coupling_iterations):
-                #time.sleep(1)
+            for iteration in range(1, self.num_coupling_iterations+1):
+                #time.sleep(0.5)
                 if self.echo_level > 0:
                     cs_tools.PrintInfo("\t"+ cs_tools.bcolors.HEADER + str(self._Name()) ,
-                                        cs_tools.bcolors.MAGENTA + "Coupling iteration: ", cs_tools.bcolors.BOLD + str(iteration+1) +
+                                        cs_tools.bcolors.MAGENTA + "Coupling iteration: ", cs_tools.bcolors.BOLD + str(iteration) +
                                         " / " + cs_tools.bcolors.BLUE + str(self.num_coupling_iterations) + cs_tools.bcolors.ENDC)
 
                 for conv_criteria in self.convergence_criteria_list:
@@ -98,14 +96,15 @@ class GaussSeidelIterativeStrongCouplingSolver(CoSimulationBaseCoupledSolver):
                 if is_converged or iteration+1 >= self.num_coupling_iterations:
                     if self.echo_level > 0:
                         if is_converged:
-                            cs_tools.PrintInfo(cs_tools.bcolors.GREEN + "\t### CONVERGENCE WAS ACHIEVED IN CPUPLING ITERATIONS ###" + cs_tools.bcolors.ENDC )
+                            cs_tools.PrintInfo(cs_tools.bcolors.GREEN + "\t### CONVERGENCE WAS ACHIEVED ### " + "in : ", iteration," iterations !!" +cs_tools.bcolors.ENDC )
                         if iteration+1 >= self.num_coupling_iterations:
-                            cs_tools.PrintWarning("\t"+cs_tools.bcolors.FAIL + "### CONVERGENCE NOT ACHIEVED IN COUPLING ITERATIONS ###" + cs_tools.bcolors.ENDC)
+                            cs_tools.PrintWarning("\t"+cs_tools.bcolors.FAIL + "### CONVERGENCE NOT ACHIEVED IN STRONG COUPLING ITERATIONS ###" + cs_tools.bcolors.ENDC)
+                            for accelerator in self.convergence_accelerators_list:
+                                accelerator.ComputeUpdate()
                     break
                 else:
                     for accelerator in self.convergence_accelerators_list:
                         accelerator.ComputeUpdate()
-
         else:
             for solver_name, solver in self.participating_solvers.items():
                 cs_tools.PrintInfo("\t"+cs_tools.bcolors.GREEN + cs_tools.bcolors.BOLD + "SolveSolutionStep for Solver", solver_name + cs_tools.bcolors.ENDC)

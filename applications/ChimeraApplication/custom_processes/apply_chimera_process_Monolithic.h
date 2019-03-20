@@ -264,13 +264,13 @@ class ApplyChimeraProcessMonolithic : public Process
 
 			p_boundary_node->FastGetSolutionStepValue(VELOCITY_X,0) = 0.0;
 			p_boundary_node->FastGetSolutionStepValue(VELOCITY_Y,0) = 0.0;
-			p_boundary_node->FastGetSolutionStepValue(VELOCITY_X,1) = 0.0;
-			p_boundary_node->FastGetSolutionStepValue(VELOCITY_Y,1) = 0.0;
+			//p_boundary_node->FastGetSolutionStepValue(VELOCITY_X,1) = 0.0;
+			//p_boundary_node->FastGetSolutionStepValue(VELOCITY_Y,1) = 0.0;
 
 			if (TDim == 3)
 			{
 				p_boundary_node->FastGetSolutionStepValue(VELOCITY_Z,0) = 0.0;
-				p_boundary_node->FastGetSolutionStepValue(VELOCITY_Z,1) = 0.0;
+				//p_boundary_node->FastGetSolutionStepValue(VELOCITY_Z,1) = 0.0;
 			}
 
 			p_boundary_node->FastGetSolutionStepValue(PRESSURE,0) = 0.0;

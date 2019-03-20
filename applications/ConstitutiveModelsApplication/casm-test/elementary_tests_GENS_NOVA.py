@@ -82,7 +82,7 @@ class TestModifiedCamClayModel(KratosUnittest.TestCase):
         
         NumberIncrements = 2000
         IncrementalF = self._set_identity_matrix()
-        IncrementalF[0,1] = 0.0002
+        IncrementalF[0,1] = 0.0006
 
         self._create_material_model_and_law()
         for case in range(0, self.size_parametric_analysis):
@@ -92,7 +92,9 @@ class TestModifiedCamClayModel(KratosUnittest.TestCase):
             self._create_material_model_and_law()
             self._SetParametricAnalysisVariable(case)
             self.parameters.SetMaterialProperties( self.properties )
-    
+   
+            
+
             self._OpenOutputFile('undrained_triaxial.csv')
             self._setInitialStressState()
             self._compute_strain_driven_problem(IncrementalF, NumberIncrements)
@@ -200,8 +202,8 @@ class TestModifiedCamClayModel(KratosUnittest.TestCase):
         isotropicLoadingStrain = self.F[1,1]
 
         # Second part
-        nLoadingSteps = 6000
-        FinalAxialDeformation = 0.20
+        nLoadingSteps = 3000
+        FinalAxialDeformation = 0.40
 
         Penalty = 100.0;
         residual = 0.0*stress + stress;
@@ -799,6 +801,18 @@ class TestModifiedCamClayModel(KratosUnittest.TestCase):
         self.csv_path = os.path.join(problem_path, FileName)
 
         csv_file = open(self.csv_path, "w")
+
+
+        N = self.properties.GetValue( KratosMultiphysics.ConstitutiveModelsApplication.SHAPE_PARAMETER) 
+        R = self.properties.GetValue( KratosMultiphysics.ConstitutiveModelsApplication.SPACING_RATIO)
+
+        line = str(N) + ' , ' + str(R) + ' , ';
+
+        for i in range(0, 14):
+            line = line + ' 0 , '
+        line = line + " \n"
+
+        csv_file.write(line)
         csv_file.close()
 
     def _SetParametricAnalysisVariable(self, case):
@@ -806,6 +820,22 @@ class TestModifiedCamClayModel(KratosUnittest.TestCase):
         if ( self.InitialStateCase):
             for i in range(0, 3):
                 self.initial_stress_state[i] = self.parametric_analysis_values[case]
+        elif ( self.parametric_analysis_variable == KratosMultiphysics.KratosGlobals.GetVariable('SWELLING_SLOPE' ) ):
+            self.properties.SetValue( self.parametric_analysis_variable, self.parametric_analysis_values[case])
+            VarLambda = KratosMultiphysics.KratosGlobals.GetVariable('NORMAL_COMPRESSION_SLOPE')
+            ValueLambda = ( self.parametric_analysis_values[case] ) / 0.3
+            self.properties.SetValue( VarLambda, ValueLambda )
+        elif ( self.parametric_analysis_variable == KratosMultiphysics.KratosGlobals.GetVariable('MIU' ) ):
+            ValuesN = [10.0, 10.0, 10.0, 9.0, 8.0, 7.0, 6.0, 4.4]
+            ValuesR = [12.0, 10.0, 8.0, 6.0, 4.0, 3.0, 2.5, 2.0]
+            ValuesPC = [71.0, 71.0, 71.0, 72.0, 72.0, 72.0, 73.0, 75.0 ]
+            VariableN = KratosMultiphysics.KratosGlobals.GetVariable('SHAPE_PARAMETER')
+            VariableR = KratosMultiphysics.KratosGlobals.GetVariable('SPACING_RATIO')
+            VariablePC = KratosMultiphysics.KratosGlobals.GetVariable('PRE_CONSOLIDATION_STRESS')
+            self.properties.SetValue( VariableN, ValuesN[case] )
+            self.properties.SetValue( VariableR, ValuesR[case] )
+            self.properties.SetValue( VariablePC, ValuesPC[case] )
+
         else:
             self.properties.SetValue(self.parametric_analysis_variable,  self.parametric_analysis_values[case])
 

@@ -13,6 +13,8 @@ class EcaManufacturedSolution(ManufacturedSolution):
 
         default_settings = KratosMultiphysics.Parameters("""
             {
+                "viscosity"   : 1.846e-5,
+                "density"     : 1.225,
                 "U1"          : 1.0,
                 "L"           : 0.5,
                 "sigma"       : 4.0,
@@ -24,6 +26,9 @@ class EcaManufacturedSolution(ManufacturedSolution):
             )
 
         settings.ValidateAndAssignDefaults(default_settings)
+
+        self.rho = settings["density"].GetDouble()
+        self.nu = settings["viscosity"].GetDouble()
 
         self.U1 = settings["U1"].GetDouble()
         self.L = settings["L"].GetDouble()

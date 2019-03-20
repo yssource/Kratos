@@ -26,15 +26,15 @@ class MVQN(CoSimulationBaseConvergenceAccelerator):
     def __init__( self, settings, data ):
         super(MVQN, self).__init__(settings, data)
         if "horizon" in self.settings:
-            horizon = self.settings["horizon"]
+            self.horizon = self.settings["horizon"]
         else:
-            horizon = 15
+            self.horizon = 50
         if "alpha" in self.settings:
             self.alpha = self.settings["alpha"]
         else:
-            self.alpha = 0.125
-        self.R = deque( maxlen = horizon )
-        self.X = deque( maxlen = horizon )
+            self.alpha = 0.1
+        self.R = deque( maxlen = self.horizon )
+        self.X = deque( maxlen = self.horizon )
         self.J = [] # size will be determined when first time get the input vector
         self.J_hat = []
 

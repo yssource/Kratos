@@ -86,7 +86,7 @@ class CoSimulationConvergenceCriteria(object):
     #
     def IsConverged(self):
         residual = self._CalculateResidual()
-        abs_residual_norm = np.linalg.norm(residual)
+        abs_residual_norm = np.linalg.norm(residual) / np.sqrt(residual.size)
         if(abs_residual_norm == 0):
             abs_residual_norm = 1.0
         if(self.iteration == 1):

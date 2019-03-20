@@ -4,6 +4,7 @@ import KratosMultiphysics.CoSimulationApplication.co_simulation_tools as cs_tool
 
 # Other imports
 import os
+import time
 
 def Create(custom_settings):
     return GaussSeidelIterativeStrongCouplingSolver(custom_settings)
@@ -34,26 +35,36 @@ class GaussSeidelIterativeStrongCouplingSolver(CoSimulationBaseCoupledSolver):
         super(GaussSeidelIterativeStrongCouplingSolver, self).Initialize()
         for conv_criteria in self.convergence_criteria_list:
             conv_criteria.Initialize()
+        for accelerator in self.convergence_accelerators_list:
+            accelerator.Initialize()               
+            
 
     def Finalize(self):
         super(GaussSeidelIterativeStrongCouplingSolver, self).Finalize()
         for conv_criteria in self.convergence_criteria_list:
             conv_criteria.Finalize()
+        for accelerator in self.convergence_accelerators_list:
+            accelerator.Finalize()               
 
 
     def InitializeSolutionStep(self):
         super(GaussSeidelIterativeStrongCouplingSolver, self).InitializeSolutionStep()
         for conv_criteria in self.convergence_criteria_list:
             conv_criteria.InitializeSolutionStep()
+        for accelerator in self.convergence_accelerators_list:
+            accelerator.InitializeSolutionStep()             
 
     def FinalizeSolutionStep(self):
         super(GaussSeidelIterativeStrongCouplingSolver, self).FinalizeSolutionStep()
         for conv_criteria in self.convergence_criteria_list:
             conv_criteria.FinalizeSolutionStep()
+        for accelerator in self.convergence_accelerators_list:
+            accelerator.FinalizeSolutionStep()            
 
     def SolveSolutionStep(self):
         if self.coupling_started:
             for iteration in range(self.num_coupling_iterations):
+                #time.sleep(1)
                 if self.echo_level > 0:
                     cs_tools.PrintInfo("\t"+ cs_tools.bcolors.HEADER + str(self._Name()) ,
                                         cs_tools.bcolors.MAGENTA + "Coupling iteration: ", cs_tools.bcolors.BOLD + str(iteration+1) +
@@ -87,9 +98,9 @@ class GaussSeidelIterativeStrongCouplingSolver(CoSimulationBaseCoupledSolver):
                 if is_converged or iteration+1 >= self.num_coupling_iterations:
                     if self.echo_level > 0:
                         if is_converged:
-                            cs_tools.PrintInfo(cs_tools.bcolors.GREEN + "### CONVERGENCE WAS ACHIEVED ###" + cs_tools.bcolors.ENDC )
+                            cs_tools.PrintInfo(cs_tools.bcolors.GREEN + "\t### CONVERGENCE WAS ACHIEVED IN CPUPLING ITERATIONS ###" + cs_tools.bcolors.ENDC )
                         if iteration+1 >= self.num_coupling_iterations:
-                            cs_tools.PrintWarning("\t"+cs_tools.bcolors.FAIL + "### CONVERGENCE NOT ACHIEVED IN STRONG COUPLING ITERATIONS ###" + cs_tools.bcolors.ENDC)
+                            cs_tools.PrintWarning("\t"+cs_tools.bcolors.FAIL + "### CONVERGENCE NOT ACHIEVED IN COUPLING ITERATIONS ###" + cs_tools.bcolors.ENDC)
                     break
                 else:
                     for accelerator in self.convergence_accelerators_list:

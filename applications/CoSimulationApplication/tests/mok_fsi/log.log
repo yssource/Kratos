@@ -1,0 +1,3070 @@
+ |  /           |
+ ' /   __| _` | __|  _ \   __|
+ . \  |   (   | |   (   |\__ \
+_|\_\_|  \__,_|\__|\___/ ____/
+           Multi-Physics 7.0.0-fbf8a4449a
+Importing    KratosCoSimulationApplication 
+    KRATOS  / ___|___/ ___|(_)_ __ ___  _   _| | __ _| |_(_) ___  _ __
+           | |   / _ \___ \| | '_ ` _ \| | | | |/ _` | __| |/ _ \| '_ \
+           | |__| (_) |__) | | | | | | | |_| | | (_| | |_| | (_) | | | |
+            \____\___/____/|_|_| |_| |_|\__,_|_|\__,_|\__|_|\___/|_| |_|
+Initializing KratosCoSimulationApplication...
+Importing  KratosFluidDynamicsApplication 
+Initializing KratosFluidDynamicsApplication...
+Importing  KratosStructuralMechanicsApplication 
+    KRATOS   ___|  |                   |                   |
+           \___ \  __|  __| |   |  __| __| |   |  __| _` | |
+                 | |   |    |   | (    |   |   | |   (   | |
+           _____/ \__|_|   \__,_|\___|\__|\__,_|_|  \__,_|_| MECHANICS
+Initializing KratosStructuralMechanicsApplication...
+Importing    KratosMappingApplication 
+    KRATOS ______  ___                      _____
+           ___   |/  /_____ ___________________(_)_____________ _
+           __  /|_/ /_  __ `/__  __ \__  __ \_  /__  __ \_  __ `/
+           _  /  / / / /_/ /__  /_/ /_  /_/ /  / _  / / /  /_/ /
+           /_/  /_/  \__,_/ _  .___/_  .___//_/  /_/ /_/_\__, /
+                            /_/     /_/                 /____/
+Initializing KratosMappingApplication...
+Importing  KratosMeshMovingApplication 
+    KRATOS  __  __        _    __  __         _
+           |  \/  |___ __| |_ |  \/  |_____ _(_)_ _  __ _
+           | |\/| / -_|_-< ' \| |\/| / _ \ V / | ' \/ _` |
+           |_|  |_\___/__/_||_|_|  |_\___/\_/|_|_||_\__, |
+                                                    |___/
+Initializing KratosMeshMovingApplication...
+Linear-Solver-Factory: Constructing a regular (non-complex) linear-solver 
+NavierStokesSolverMonolithic: Construction of NavierStokesSolverMonolithic finished. 
+::[ALEFluidSolver]::: setting "time_scheme" of the mesh-solver for the
+calculation of the mesh-velocity to "bossak" to be consistent with the
+"time_scheme" of the fluid 
+::[ALEFluidSolver]::: setting "alpha_m" of the mesh-solver for the
+calculation of the mesh-velocity to "-0.3" to be consistent
+with "alpha" of the fluid 
+::[MeshSolverBase]:: Construction finished: 
+::[AleFluidSolver]::: Construction finished 
+::[MeshSolverBase]:: Variables ADDED.: 
+NavierStokesSolverMonolithic: Fluid solver variables added correctly. 
+::[AleFluidSolver]::: Variables Added 
+::[PythonSolver]:: Reading model part.: 
+::[PythonSolver]:: Reading model part from file: /media/aditya/750Disk/01_Software/01_Kratos/03_co_sim_new/Kratos/applications/CoSimulationApplication/tests/mok_fsi/CFD/Mok_CFD.mdpa: 
+ModelPartIO:   [Reading Nodes    : 298 nodes read]
+ModelPartIO:   [Reading Elements : 497 elements read] [Type: Element2D3N]
+ModelPartIO:   [Reading Conditions : 15 conditions read] [Type: WallCondition2D2N]
+ModelPartIO:   [Reading Conditions : 5 conditions read] [Type: WallCondition2D2N]
+ModelPartIO:   [Reading Conditions : 20 conditions read] [Type: WallCondition2D2N]
+ModelPartIO:   [Reading Conditions : 26 conditions read] [Type: WallCondition2D2N]
+ModelPartIO:   [Reading Conditions : 31 conditions read] [Type: WallCondition2D2N]
+ModelPartIO:   [Total Lines Read : 1970]
+::[PythonSolver]:: Finished reading model part from mdpa file.: 
+ModelPart -FluidModelPart- model part
+    Buffer Size : 1
+    Number of tables : 0
+    Number of sub model parts : 6
+    Current solution step index : 0
+    DOMAIN_SIZE : 2
+
+    Mesh 0 :
+        Number of Nodes       : 298
+        Number of Properties  : 2
+        Number of Elements    : 497
+        Number of Conditions  : 97
+        Number of Constraints : 0
+
+    -AutomaticInlet2D_Inlet- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 :
+            Number of Nodes       : 16
+            Number of Properties  : 0
+            Number of Elements    : 0
+            Number of Conditions  : 15
+            Number of Constraints : 0
+    -NoSlip2D_Bottom- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 :
+            Number of Nodes       : 28
+            Number of Properties  : 0
+            Number of Elements    : 0
+            Number of Conditions  : 26
+            Number of Constraints : 0
+    -NoSlip2D_FSI- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 :
+            Number of Nodes       : 32
+            Number of Properties  : 0
+            Number of Elements    : 0
+            Number of Conditions  : 31
+            Number of Constraints : 0
+    -Outlet2D_Outlet- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 :
+            Number of Nodes       : 6
+            Number of Properties  : 0
+            Number of Elements    : 0
+            Number of Conditions  : 5
+            Number of Constraints : 0
+    -Parts_Fluid- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 :
+            Number of Nodes       : 298
+            Number of Properties  : 0
+            Number of Elements    : 497
+            Number of Conditions  : 0
+            Number of Constraints : 0
+    -Slip2D_Top- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 :
+            Number of Nodes       : 21
+            Number of Properties  : 0
+            Number of Elements    : 0
+            Number of Conditions  : 20
+            Number of Constraints : 0
+: 
+::[PythonSolver]::  Finished reading model part.: 
+TetrahedralMeshOrientationCheck: No inverted elements found
+Mesh orientation check found 40 inverted conditions.
+FluidSolver: Model reading finished. 
+::[MeshSolverBase]:: DOFs ADDED.: 
+FluidSolver: Fluid solver DOFs added correctly. 
+::[AleFluidSolver]::: DOFs Added 
+FluidDynamicsAnalysis: Using the old way to create the gid-output, this will be removed!
+Refer to "https://github.com/KratosMultiphysics/Kratos/wiki/Common-Python-Interface-of-Applications-for-Users#analysisstage-usage" for a description of the new format 
+TimeBasedAsciiFileWriterUtility: File output buffer size set to 1 
+for TimeBasedAsciiFileWriterUtility output file fsi_mok/fsi_mok_cfd_results_disp.dat 
+TimeBasedAsciiFileWriterUtility: File output buffer size set to 1 
+for TimeBasedAsciiFileWriterUtility output file fsi_mok/fsi_mok_cfd_results_fluid.dat 
+Linear-Solver-Factory: Constructing a regular (non-complex) linear-solver 
+::[MeshSolverBase]:: Finished initialization.: 
+NavierStokesSolverMonolithic: Solver initialization finished. 
+::[AleFluidSolver]::: Finished initialization 
+Fluid Dynamics Analysis: Analysis -START-  
+::[MechanicalSolver]::  Construction finished: 
+::[ImplicitMechanicalSolver]::  Construction finished: 
+::[MechanicalSolver]::  Variables ADDED: 
+::[ImplicitMechanicalSolver]::  Variables ADDED: 
+::[PythonSolver]:: Reading model part.: 
+::[PythonSolver]:: Reading model part from file: /media/aditya/750Disk/01_Software/01_Kratos/03_co_sim_new/Kratos/applications/CoSimulationApplication/tests/mok_fsi/CSM/Mok_CSM.mdpa: 
+ModelPartIO:   [Reading Nodes    : 32 nodes read]
+ModelPartIO:   [Reading Elements : 15 elements read] [Type: TotalLagrangianElement2D4N]
+ModelPartIO:   [Reading Conditions : 32 conditions read] [Type: PointLoadCondition2D1N]
+ModelPartIO:   [Reading Conditions : 32 conditions read] [Type: PointCondition3D1N]
+ModelPartIO:   [Total Lines Read : 340]
+::[PythonSolver]:: Finished reading model part from mdpa file.: 
+ModelPart -Structure- model part
+    Buffer Size : 1
+    Number of tables : 0
+    Number of sub model parts : 4
+    Current solution step index : 0
+    DOMAIN_SIZE : 2
+    IS_RESTARTED : 0
+
+    Mesh 0 :
+        Number of Nodes       : 32
+        Number of Properties  : 1
+        Number of Elements    : 15
+        Number of Conditions  : 64
+        Number of Constraints : 0
+
+    -DISPLACEMENT_Dirichlet- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 :
+            Number of Nodes       : 2
+            Number of Properties  : 0
+   ::[MeshSolverStructuralSimilarity]:: Construction finished
+         Number of Elements    : 0
+            Number of Conditions  : 0
+            Number of Constraints : 0
+    -GENERIC_FSI- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 :
+            Number of Nodes       : 32
+            Number of Properties  : 0
+            Number of Elements    : 0
+            Number of Conditions  : 32
+            Number of Constraints : 0
+    -Parts_Structure- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 :
+            Number of Nodes       : 32
+            Number of Properties  : 0
+            Number of Elements    : 15
+            Number of Conditions  : 0
+            Number of Constraints : 0
+    -PointLoad2D_FSI- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 :
+            Number of Nodes       : 32
+            Number of Properties  : 0
+            Number of Elements    : 0
+            Number of Conditions  : 32
+            Number of Constraints : 0
+: 
+::[PythonSolver]::  Finished reading model part.: 
+Computing model part: -computing_domain- model part
+    Number of tables : 0
+    Number of sub model parts : 0
+
+    Mesh 0 :
+        Number of Nodes       : 32
+        Number of Properties  : 1
+        Number of Elements    : 15
+        Number of Conditions  : 64
+        Number of Constraints : 0
+
+ 
+Read materials: Started
+Model: DEPREATION_WARNING: The ModelPart "Parts_Structure"
+is retrieved from the Model by using the flat-map!
+Please prepend the Parent-ModelPart-Names like this:
+"Structure.Parts_Structure"
+Read materials: Finished
+::[MechanicalSolver]::  Constitutive law was successfully imported.: 
+::[MechanicalSolver]::: ModelPart prepared for Solver. 
+::[MechanicalSolver]::  DOF's ADDED: 
+::[ImplicitMechanicalSolver]::  DOF's ADDED: 
+StructuralMechanicsAnalysis: Using the old way to create the gid-output, this will be removed!
+Refer to "https://github.com/KratosMultiphysics/Kratos/wiki/Common-Python-Interface-of-Applications-for-Users#analysisstage-usage" for a description of the new format 
+::[MechanicalSolver]::  Initializing ...: 
+Linear-Solver-Factory: DEPRECATION-WARNING: 
+Using a deprecated "solver_type"!
+Replace "SuperLUSolver" with "super_lu" 
+Linear-Solver-Factory: DEPRECATION-WARNING:
+The linear-solver "super_lu" is defined in the "ExternalSolversApplication"
+Please specify the "solver_type" including the name of the application:
+"ExternalSolversApplication.super_lu"
+Please update your settings accordingly, the current settings are deprecated! 
+Importing    KratosExternalSolversApplication 
+Initializing KratosExternalSolversApplication...
+Linear-Solver-Factory: Constructing a regular (non-complex) linear-solver 
+::[Mechanical Solver]:: : CONVERGENCE CRITERION : residual_criterion 
+::[MechanicalSolver]::  Finished initialization.: 
+::[KSM Simulation]:: : Analysis -START-  
+Setup Dofs Time: 0.00119461
+Setup System Time: 9.101e-06
+System Matrix Resize Time: 0.000899333
+System Construction Time: 0.00212994
+Fluid Dynamics Analysis: STEP:  1 
+Fluid Dynamics Analysis: TIME:  0.1 
+Setup Dofs Time: 0.000379288
+Setup System Time: 5.356e-06
+System Matrix Resize Time: 8.2183e-05
+System Construction Time: 0.000488255
+::[KSM Simulation]:: : STEP:  1 
+::[KSM Simulation]:: : TIME:  0.1 
+SolvingStrategy:  MESH MOVED 
+ResidualBasedBlockBuilderAndSolver: ATTENTION! setting the RHS to zero!
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00200704
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00428917
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1; exp.ratio = 1e-06 abs = 5.45974e-07 exp.abs = 1e-08
+ PRESS.: ratio = 1; exp.ratio = 1e-06 abs = 0.0134705 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0031485
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00385264
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.01455e-05; exp.ratio = 1e-06 abs = 1.64589e-11 exp.abs = 1e-08
+ PRESS.: ratio = 7.34615e-06; exp.ratio = 1e-06 abs = 9.8957e-08 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00302902
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00359556
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.30382e-09; exp.ratio = 1e-06 abs = 7.11862e-16 exp.abs = 1e-08
+ PRESS.: ratio = 7.93673e-11; exp.ratio = 1e-06 abs = 1.06913e-12 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+ 
+ 
+[92m[1mCoSimulationAnalysis Time = 0.1000000000 | Step = 1[0m
+	[95m [96mCoupling iteration:  [1m1 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [92mACHIEVED[0m
+[95m	abs_norm = [1m7.010E-6 | abs_tol = [1m1e-05 || rel_norm = [1m1.000E+0 | rel_tol = [1m1e-05[0m 
+[92m### CONVERGENCE WAS ACHIEVED ###[0m 
+NR-Strategy: Convergence achieved after 3 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000268284
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000442802
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.04405e+08; Expected ratio = 1e-06; Absolute norm = 2.73264e-05; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000211535
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0001002
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 338.81; Expected ratio = 1e-06; Absolute norm = 4.52947e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+BuilderAndSolver: Clear Function called
+Setup Dofs Time: 0.000923721
+Setup System Time: 7.838e-06
+System Matrix Resize Time: 0.00068443
+System Construction Time: 0.00164062
+Fluid Dynamics Analysis: STEP:  2 
+Fluid Dynamics Analysis: TIME:  0.2 
+System Construction Time: 1.642e-06
+::[KSM Simulation]:: : STEP:  2 
+::[KSM Simulation]:: : TIME:  0.2 
+SolvingStrategy:  MESH MOVED 
+ResidualBasedBlockBuilderAndSolver: ATTENTION! setting the RHS to zero!
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00441946
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0421121
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.952495; exp.ratio = 1e-06 abs = 8.46094e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.787441; exp.ratio = 1e-06 abs = 0.0466396 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00324177
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00360533
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0636512; exp.ratio = 1e-06 abs = 5.70339e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.00791076; exp.ratio = 1e-06 abs = 0.000467531 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00172538
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0134326
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.14352e-05; exp.ratio = 1e-06 abs = 2.81672e-10 exp.abs = 1e-08
+ PRESS.: ratio = 4.65396e-06; exp.ratio = 1e-06 abs = 2.75053e-07 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00178213
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00429297
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.00654e-08; exp.ratio = 1e-06 abs = 2.69399e-13 exp.abs = 1e-08
+ PRESS.: ratio = 3.08056e-09; exp.ratio = 1e-06 abs = 1.82064e-10 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000252653
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000123501
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.39744e+08; Expected ratio = 1e-06; Absolute norm = 0.0153886; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000223626
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7011e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1241.49; Expected ratio = 1e-06; Absolute norm = 5.6233e-08; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0018768
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00368643
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.53623; exp.ratio = 1e-06 abs = 2.4965e-05 exp.abs = 1e-08
+ PRESS.: ratio = 1.96542; exp.ratio = 1e-06 abs = 0.0906244 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00326137
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00372965
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.117572; exp.ratio = 1e-06 abs = 1.95973e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.034528; exp.ratio = 1e-06 abs = 0.00159745 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00310986
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0037707
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000119862; exp.ratio = 1e-06 abs = 1.99785e-09 exp.abs = 1e-08
+ PRESS.: ratio = 5.47785e-05; exp.ratio = 1e-06 abs = 2.53425e-06 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00432683
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00473994
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.90865e-07; exp.ratio = 1e-06 abs = 3.18132e-12 exp.abs = 1e-08
+ PRESS.: ratio = 2.94827e-08; exp.ratio = 1e-06 abs = 1.36397e-09 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000236115
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000365083
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.45511e+09; Expected ratio = 1e-06; Absolute norm = 0.156498; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000205645
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8716e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 131168; Expected ratio = 1e-06; Absolute norm = 5.94119e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000241967
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9223e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.00778; Expected ratio = 1e-06; Absolute norm = 4.56471e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 3 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00177424
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00367931
+CONVERGENCE CHECK:
+ VELOC.: ratio = 6.23137; exp.ratio = 1e-06 abs = 1.60975e-05 exp.abs = 1e-08
+ PRESS.: ratio = 1.71194; exp.ratio = 1e-06 abs = 0.058612 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.001701
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0047623
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.687885; exp.ratio = 1e-06 abs = 1.26224e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.0307001; exp.ratio = 1e-06 abs = 0.00103808 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00308501
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00376201
+CONVERGENCE CHECK:
+ VELOC.: ratio = 4.73169e-05; exp.ratio = 1e-06 abs = 8.6825e-11 exp.abs = 1e-08
+ PRESS.: ratio = 2.22792e-06; exp.ratio = 1e-06 abs = 7.53342e-08 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00312265
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00356886
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.20803e-09; exp.ratio = 1e-06 abs = 5.88663e-15 exp.abs = 1e-08
+ PRESS.: ratio = 8.81654e-11; exp.ratio = 1e-06 abs = 2.98119e-12 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+ 
+[92m[1mCoSimulationAnalysis Time = 0.2000000000 | Step = 2[0m
+	[95m [96mCoupling iteration:  [1m1 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.955E-4 | abs_tol = [1m1e-05 || rel_norm = [1m1.000E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m2 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m3.487E-4 | abs_tol = [1m1e-05 || rel_norm = [1m1.783E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m3 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [92mACHIEVED[0m
+[95m	abs_norm = [1m2.587E-6 | abs_tol = [1m1e-05 || rel_norm = [1m1.323E-2 | rel_tol = [1m1e-05[0m 
+[92m### CONVERGENCE WAS ACHIEVED ###[0m 
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000980347
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000117874
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.4361e+09; Expected ratio = 1e-06; Absolute norm = 0.0650479; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000241091
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000103999
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 22716.7; Expected ratio = 1e-06; Absolute norm = 1.02895e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000213818
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9836e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.15876; Expected ratio = 1e-06; Absolute norm = 5.24856e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 3 / 20 iterations
+BuilderAndSolver: Clear Function called
+Setup Dofs Time: 0.001562
+Setup System Time: 8.697e-06
+System Matrix Resize Time: 0.000741638
+System Construction Time: 0.00233764
+Fluid Dynamics Analysis: STEP:  3 
+Fluid Dynamics Analysis: TIME:  0.30000000000000004 
+System Construction Time: 1.64e-06
+::[KSM Simulation]:: : STEP:  3 
+::[KSM Simulation]:: : TIME:  0.30000000000000004 
+SolvingStrategy:  MESH MOVED 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00170733
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00362952
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.990684; exp.ratio = 1e-06 abs = 1.55402e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.710678; exp.ratio = 1e-06 abs = 0.07025 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00302317
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00363358
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0631853; exp.ratio = 1e-06 abs = 9.98262e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.00817083; exp.ratio = 1e-06 abs = 0.000805467 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00293055
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00378811
+CONVERGENCE CHECK:
+ VELOC.: ratio = 6.47415e-05; exp.ratio = 1e-06 abs = 1.02283e-09 exp.abs = 1e-08
+ PRESS.: ratio = 1.11163e-05; exp.ratio = 1e-06 abs = 1.09582e-06 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00190078
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00557192
+CONVERGENCE CHECK:
+ VELOC.: ratio = 9.85944e-08; exp.ratio = 1e-06 abs = 1.55767e-12 exp.abs = 1e-08
+ PRESS.: ratio = 7.487e-09; exp.ratio = 1e-06 abs = 7.38049e-10 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000258798
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000452576
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.20671e+09; Expected ratio = 1e-06; Absolute norm = 0.0633347; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000217133
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00010199
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 19330; Expected ratio = 1e-06; Absolute norm = 1.01455e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000216486
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000102324
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.706965; Expected ratio = 1e-06; Absolute norm = 3.71055e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 3 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00175427
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00372271
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.73735; exp.ratio = 1e-06 abs = 1.26694e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.757287; exp.ratio = 1e-06 abs = 0.045704 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00185689
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00360965
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.215604; exp.ratio = 1e-06 abs = 1.00177e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.0135058; exp.ratio = 1e-06 abs = 0.00081918 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00302664
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00378029
+CONVERGENCE CHECK:
+ VELOC.: ratio = 4.0997e-05; exp.ratio = 1e-06 abs = 1.90488e-10 exp.abs = 1e-08
+ PRESS.: ratio = 2.88819e-06; exp.ratio = 1e-06 abs = 1.7518e-07 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00169168
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00433801
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.17534e-08; exp.ratio = 1e-06 abs = 5.46109e-14 exp.abs = 1e-08
+ PRESS.: ratio = 3.62617e-10; exp.ratio = 1e-06 abs = 2.19942e-11 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000227481
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000273683
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 7.64339e+08; Expected ratio = 1e-06; Absolute norm = 0.0401168; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000207774
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9987e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 7417.03; Expected ratio = 1e-06; Absolute norm = 3.89287e-07; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00169886
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0038375
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.890025; exp.ratio = 1e-06 abs = 3.64582e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.236939; exp.ratio = 1e-06 abs = 0.0124159 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0035899
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00383683
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0718028; exp.ratio = 1e-06 abs = 3.00835e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.00467108; exp.ratio = 1e-06 abs = 0.000245271 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00324545
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0090474
+CONVERGENCE CHECK:
+ VELOC.: ratio = 8.34822e-06; exp.ratio = 1e-06 abs = 3.49768e-11 exp.abs = 1e-08
+ PRESS.: ratio = 9.55067e-07; exp.ratio = 1e-06 abs = 5.0149e-08 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 3 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000223469
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000413112
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 6.15495e+07; Expected ratio = 1e-06; Absolute norm = 0.00323046; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000200852
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8701e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 47.416; Expected ratio = 1e-06; Absolute norm = 2.48866e-09; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00169351
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00363534
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.484001; exp.ratio = 1e-06 abs = 1.99364e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.12745; exp.ratio = 1e-06 abs = 0.0072847 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00312186
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00374703
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0384915; exp.ratio = 1e-06 abs = 1.56916e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.00225683; exp.ratio = 1e-06 abs = 0.000128885 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00304569
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00384403
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.53434e-06; exp.ratio = 1e-06 abs = 1.44082e-11 exp.abs = 1e-08
+ PRESS.: ratio = 2.36424e-07; exp.ratio = 1e-06 abs = 1.35018e-08 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+ 
+[92m[1mCoSimulationAnalysis Time = 0.3000000000 | Step = 3[0m
+	[95m [96mCoupling iteration:  [1m1 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m3.071E-4 | abs_tol = [1m1e-05 || rel_norm = [1m1.000E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m2 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m3.176E-5 | abs_tol = [1m1e-05 || rel_norm = [1m1.034E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m3 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m4.590E-5 | abs_tol = [1m1e-05 || rel_norm = [1m1.495E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m4 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [92mACHIEVED[0m
+[95m	abs_norm = [1m2.366E-6 | abs_tol = [1m1e-05 || rel_norm = [1m7.705E-3 | rel_tol = [1m1e-05[0m 
+[92m### CONVERGENCE WAS ACHIEVED ###[0m 
+NR-Strategy: Convergence achieved after 3 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000226438
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000216138
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.90529e+07; Expected ratio = 1e-06; Absolute norm = 0.001; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000218098
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.782e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 4.51086; Expected ratio = 1e-06; Absolute norm = 2.36755e-10; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+BuilderAndSolver: Clear Function called
+Setup Dofs Time: 0.000881686
+Setup System Time: 8.422e-06
+System Matrix Resize Time: 0.000710689
+System Construction Time: 0.00162503
+Fluid Dynamics Analysis: STEP:  4 
+Fluid Dynamics Analysis: TIME:  0.4 
+System Construction Time: 1.635e-06
+::[KSM Simulation]:: : STEP:  4 
+::[KSM Simulation]:: : TIME:  0.4 
+SolvingStrategy:  MESH MOVED 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00175388
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00365038
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.908619; exp.ratio = 1e-06 abs = 1.86548e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.599919; exp.ratio = 1e-06 abs = 0.0756941 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00293651
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00367854
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0527185; exp.ratio = 1e-06 abs = 1.08739e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.00699384; exp.ratio = 1e-06 abs = 0.000880667 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00297921
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00362323
+CONVERGENCE CHECK:
+ VELOC.: ratio = 5.74419e-05; exp.ratio = 1e-06 abs = 1.1848e-09 exp.abs = 1e-08
+ PRESS.: ratio = 8.81231e-06; exp.ratio = 1e-06 abs = 1.10964e-06 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00311851
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00360383
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.03514e-07; exp.ratio = 1e-06 abs = 2.1351e-12 exp.abs = 1e-08
+ PRESS.: ratio = 8.60186e-09; exp.ratio = 1e-06 abs = 1.08314e-09 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000225386
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000112994
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.16546e+08; Expected ratio = 1e-06; Absolute norm = 0.0749441; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000215612
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7981e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 5609.34; Expected ratio = 1e-06; Absolute norm = 1.32804e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000208802
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6019e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.0849541; Expected ratio = 1e-06; Absolute norm = 2.01133e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 3 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00180311
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0036346
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.25543; exp.ratio = 1e-06 abs = 1.67486e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.792152; exp.ratio = 1e-06 abs = 0.0606996 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00197504
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00363271
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.17281; exp.ratio = 1e-06 abs = 1.31399e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.0139641; exp.ratio = 1e-06 abs = 0.00107511 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0029881
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0037019
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.9318e-05; exp.ratio = 1e-06 abs = 1.46887e-10 exp.abs = 1e-08
+ PRESS.: ratio = 2.12281e-06; exp.ratio = 1e-06 abs = 1.63436e-07 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00165846
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00540232
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.59709e-09; exp.ratio = 1e-06 abs = 2.7351e-14 exp.abs = 1e-08
+ PRESS.: ratio = 1.33004e-10; exp.ratio = 1e-06 abs = 1.02401e-11 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000251773
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000112042
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 6.76989e+08; Expected ratio = 1e-06; Absolute norm = 0.160281; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000220597
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7794e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 26410.3; Expected ratio = 1e-06; Absolute norm = 6.25278e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000222945
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.5631e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.176302; Expected ratio = 1e-06; Absolute norm = 4.17404e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 3 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00177026
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0116289
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.244913; exp.ratio = 1e-06 abs = 2.10651e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.110116; exp.ratio = 1e-06 abs = 0.00915651 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0030004
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0161936
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0210479; exp.ratio = 1e-06 abs = 1.81094e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.00235982; exp.ratio = 1e-06 abs = 0.000196347 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00432054
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00368202
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.85763e-06; exp.ratio = 1e-06 abs = 1.59829e-11 exp.abs = 1e-08
+ PRESS.: ratio = 2.35622e-07; exp.ratio = 1e-06 abs = 1.96047e-08 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 3 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000247992
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000243613
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.41754e+08; Expected ratio = 1e-06; Absolute norm = 0.0335609; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000927267
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000110199
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1434.94; Expected ratio = 1e-06; Absolute norm = 3.3973e-07; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00187389
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00424454
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.577744; exp.ratio = 1e-06 abs = 8.71353e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.287992; exp.ratio = 1e-06 abs = 0.0312052 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00176025
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00444794
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0459568; exp.ratio = 1e-06 abs = 6.93488e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.00523788; exp.ratio = 1e-06 abs = 0.000566463 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00386191
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00703081
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.40459e-05; exp.ratio = 1e-06 abs = 5.13751e-10 exp.abs = 1e-08
+ PRESS.: ratio = 4.40466e-06; exp.ratio = 1e-06 abs = 4.76351e-07 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00316368
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0067374
+CONVERGENCE CHECK:
+ VELOC.: ratio = 4.03399e-08; exp.ratio = 1e-06 abs = 6.08726e-13 exp.abs = 1e-08
+ PRESS.: ratio = 2.80069e-09; exp.ratio = 1e-06 abs = 3.02886e-10 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000255638
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0001453
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 7.9853e+07; Expected ratio = 1e-06; Absolute norm = 0.0189056; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000214588
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000109231
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 364.138; Expected ratio = 1e-06; Absolute norm = 8.62116e-08; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00177143
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0126163
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.878716; exp.ratio = 1e-06 abs = 7.81084e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.364121; exp.ratio = 1e-06 abs = 0.0304685 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00191676
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00618094
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0668227; exp.ratio = 1e-06 abs = 5.95779e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.00601536; exp.ratio = 1e-06 abs = 0.000503938 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00336615
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00388241
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.37822e-05; exp.ratio = 1e-06 abs = 1.2288e-10 exp.abs = 1e-08
+ PRESS.: ratio = 1.18102e-06; exp.ratio = 1e-06 abs = 9.89398e-08 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00365146
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00381069
+CONVERGENCE CHECK:
+ VELOC.: ratio = 7.09428e-09; exp.ratio = 1e-06 abs = 6.32514e-14 exp.abs = 1e-08
+ PRESS.: ratio = 2.96816e-10; exp.ratio = 1e-06 abs = 2.48659e-11 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000706062
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000123167
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 6.69807e+07; Expected ratio = 1e-06; Absolute norm = 0.0158581; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000228216
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7249e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 266.903; Expected ratio = 1e-06; Absolute norm = 6.31908e-08; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00193655
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0057308
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.132717; exp.ratio = 1e-06 abs = 1.10198e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.0469536; exp.ratio = 1e-06 abs = 0.00380389 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00297122
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00378586
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0107578; exp.ratio = 1e-06 abs = 8.94789e-08 exp.abs = 1e-08
+ PRESS.: ratio = 0.000915972; exp.ratio = 1e-06 abs = 7.42383e-05 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00187238
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00721732
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.64618e-06; exp.ratio = 1e-06 abs = 2.20098e-11 exp.abs = 1e-08
+ PRESS.: ratio = 1.96726e-07; exp.ratio = 1e-06 abs = 1.59444e-08 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 3 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00023844
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000122673
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.2553e+06; Expected ratio = 1e-06; Absolute norm = 0.0002972; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000225076
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.911e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.138288; Expected ratio = 1e-06; Absolute norm = 3.27404e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00175483
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00429719
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.524744; exp.ratio = 1e-06 abs = 3.79422e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.169967; exp.ratio = 1e-06 abs = 0.0123665 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00389557
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00732874
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0438198; exp.ratio = 1e-06 abs = 3.20925e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.00376989; exp.ratio = 1e-06 abs = 0.000274849 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00215866
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00372822
+CONVERGENCE CHECK:
+ VELOC.: ratio = 4.59409e-06; exp.ratio = 1e-06 abs = 3.3646e-11 exp.abs = 1e-08
+ PRESS.: ratio = 2.78723e-07; exp.ratio = 1e-06 abs = 2.03207e-08 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+ 
+[92m[1mCoSimulationAnalysis Time = 0.4000000000 | Step = 4[0m
+	[95m [96mCoupling iteration:  [1m1 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m4.075E-4 | abs_tol = [1m1e-05 || rel_norm = [1m1.000E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m2 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m9.395E-5 | abs_tol = [1m1e-05 || rel_norm = [1m2.306E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m3 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m8.984E-5 | abs_tol = [1m1e-05 || rel_norm = [1m2.205E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m4 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m2.787E-4 | abs_tol = [1m1e-05 || rel_norm = [1m6.839E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m5 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.045E-4 | abs_tol = [1m1e-05 || rel_norm = [1m2.566E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m6 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m8.093E-5 | abs_tol = [1m1e-05 || rel_norm = [1m1.986E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m7 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [92mACHIEVED[0m
+[95m	abs_norm = [1m1.527E-6 | abs_tol = [1m1e-05 || rel_norm = [1m3.747E-3 | rel_tol = [1m1e-05[0m 
+[92m### CONVERGENCE WAS ACHIEVED ###[0m 
+NR-Strategy: Convergence achieved after 3 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000994733
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000134761
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.44392e+07; Expected ratio = 1e-06; Absolute norm = 0.00341856; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000215613
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000100313
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 11.5755; Expected ratio = 1e-06; Absolute norm = 2.74056e-09; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+BuilderAndSolver: Clear Function called
+Setup Dofs Time: 0.000920392
+Setup System Time: 8.009e-06
+System Matrix Resize Time: 0.000765574
+System Construction Time: 0.0017232
+Fluid Dynamics Analysis: STEP:  5 
+Fluid Dynamics Analysis: TIME:  0.5 
+System Construction Time: 1.707e-06
+::[KSM Simulation]:: : STEP:  5 
+::[KSM Simulation]:: : TIME:  0.5 
+SolvingStrategy:  MESH MOVED 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00230955
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00401547
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.938385; exp.ratio = 1e-06 abs = 3.2649e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.692015; exp.ratio = 1e-06 abs = 0.132206 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00294993
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00529872
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0555308; exp.ratio = 1e-06 abs = 1.94443e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.00825112; exp.ratio = 1e-06 abs = 0.00157363 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0030418
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0128218
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000100404; exp.ratio = 1e-06 abs = 3.51564e-09 exp.abs = 1e-08
+ PRESS.: ratio = 1.55412e-05; exp.ratio = 1e-06 abs = 2.96394e-06 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00215089
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00432593
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.97245e-07; exp.ratio = 1e-06 abs = 1.04081e-11 exp.abs = 1e-08
+ PRESS.: ratio = 3.49795e-08; exp.ratio = 1e-06 abs = 6.67111e-09 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000564038
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000129162
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 9.91472e+07; Expected ratio = 1e-06; Absolute norm = 0.271719; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000210922
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9841e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 6890.91; Expected ratio = 1e-06; Absolute norm = 1.8885e-05; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000208142
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000106568
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.149946; Expected ratio = 1e-06; Absolute norm = 4.10936e-10; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 3 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00197568
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00379872
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.861226; exp.ratio = 1e-06 abs = 1.69365e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.450754; exp.ratio = 1e-06 abs = 0.0611936 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00235113
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00492124
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0678983; exp.ratio = 1e-06 abs = 1.33061e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.00797208; exp.ratio = 1e-06 abs = 0.00108463 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00296602
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00594644
+CONVERGENCE CHECK:
+ VELOC.: ratio = 5.84746e-05; exp.ratio = 1e-06 abs = 1.14594e-09 exp.abs = 1e-08
+ PRESS.: ratio = 5.2607e-06; exp.ratio = 1e-06 abs = 7.15738e-07 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00167288
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00383648
+CONVERGENCE CHECK:
+ VELOC.: ratio = 9.52194e-08; exp.ratio = 1e-06 abs = 1.86603e-12 exp.abs = 1e-08
+ PRESS.: ratio = 7.81891e-09; exp.ratio = 1e-06 abs = 1.06379e-09 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000516093
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000121892
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.67831e+08; Expected ratio = 1e-06; Absolute norm = 0.45995; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000232063
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9195e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 18685.7; Expected ratio = 1e-06; Absolute norm = 5.12092e-05; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000206682
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.751e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.0365604; Expected ratio = 1e-06; Absolute norm = 1.00196e-10; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 3 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00175466
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00490211
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0181182; exp.ratio = 1e-06 abs = 3.52527e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.0027522; exp.ratio = 1e-06 abs = 0.000374339 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00165258
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0133903
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00271239; exp.ratio = 1e-06 abs = 5.28018e-08 exp.abs = 1e-08
+ PRESS.: ratio = 0.000419459; exp.ratio = 1e-06 abs = 5.70695e-05 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00297547
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00434614
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.72978e-06; exp.ratio = 1e-06 abs = 7.26072e-11 exp.abs = 1e-08
+ PRESS.: ratio = 3.25691e-07; exp.ratio = 1e-06 abs = 4.43119e-08 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 3 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000222506
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000122945
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 6.37909e+07; Expected ratio = 1e-06; Absolute norm = 0.174823; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000211268
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00122864
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2870.82; Expected ratio = 1e-06; Absolute norm = 7.86768e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000208669
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0001014
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.0124651; Expected ratio = 1e-06; Absolute norm = 3.41614e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 3 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00173547
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00625874
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.284516; exp.ratio = 1e-06 abs = 7.34507e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.167834; exp.ratio = 1e-06 abs = 0.0267805 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00304182
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00375787
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0223128; exp.ratio = 1e-06 abs = 5.76903e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.00294659; exp.ratio = 1e-06 abs = 0.000469804 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00178123
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00472509
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.81196e-05; exp.ratio = 1e-06 abs = 7.27037e-10 exp.abs = 1e-08
+ PRESS.: ratio = 3.46102e-06; exp.ratio = 1e-06 abs = 5.51823e-07 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00311156
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00376637
+CONVERGENCE CHECK:
+ VELOC.: ratio = 6.09988e-08; exp.ratio = 1e-06 abs = 1.57713e-12 exp.abs = 1e-08
+ PRESS.: ratio = 5.92878e-09; exp.ratio = 1e-06 abs = 9.45283e-10 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000234466
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00034364
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 4.95594e+06; Expected ratio = 1e-06; Absolute norm = 0.0135821; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000223894
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8583e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 16.3421; Expected ratio = 1e-06; Absolute norm = 4.47867e-08; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00188493
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00418623
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000176809; exp.ratio = 1e-06 abs = 4.57079e-09 exp.abs = 1e-08
+ PRESS.: ratio = 0.000118931; exp.ratio = 1e-06 abs = 1.89608e-05 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00174775
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00443944
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.29446e-05; exp.ratio = 1e-06 abs = 5.93154e-10 exp.abs = 1e-08
+ PRESS.: ratio = 5.38116e-06; exp.ratio = 1e-06 abs = 8.57905e-07 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00274505
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00629091
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.37963e-08; exp.ratio = 1e-06 abs = 6.15172e-13 exp.abs = 1e-08
+ PRESS.: ratio = 3.22097e-09; exp.ratio = 1e-06 abs = 5.13512e-10 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 3 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000231466
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000117879
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 5.83951e+07; Expected ratio = 1e-06; Absolute norm = 0.160035; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000207149
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000100242
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2774.97; Expected ratio = 1e-06; Absolute norm = 7.60499e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000218764
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7686e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.0209358; Expected ratio = 1e-06; Absolute norm = 5.73758e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 3 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0017485
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00373266
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.32698; exp.ratio = 1e-06 abs = 1.70116e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.573661; exp.ratio = 1e-06 abs = 0.0616935 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00168094
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00586644
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.102963; exp.ratio = 1e-06 abs = 1.33716e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.0101538; exp.ratio = 1e-06 abs = 0.00109603 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00332896
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00575203
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.22898e-05; exp.ratio = 1e-06 abs = 4.19338e-10 exp.abs = 1e-08
+ PRESS.: ratio = 5.87065e-06; exp.ratio = 1e-06 abs = 6.33692e-07 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00327043
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00379507
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.96281e-08; exp.ratio = 1e-06 abs = 2.54904e-13 exp.abs = 1e-08
+ PRESS.: ratio = 1.44754e-09; exp.ratio = 1e-06 abs = 1.56251e-10 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000256033
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000124832
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.30269e+07; Expected ratio = 1e-06; Absolute norm = 0.0357012; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000395307
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000355729
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 169.756; Expected ratio = 1e-06; Absolute norm = 4.65226e-07; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00359609
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00370725
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.81223; exp.ratio = 1e-06 abs = 3.3188e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.557086; exp.ratio = 1e-06 abs = 0.118056 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00304314
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00366845
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0642067; exp.ratio = 1e-06 abs = 2.64232e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.0101234; exp.ratio = 1e-06 abs = 0.00213877 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00311831
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00381124
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000155842; exp.ratio = 1e-06 abs = 6.41331e-09 exp.abs = 1e-08
+ PRESS.: ratio = 2.58802e-05; exp.ratio = 1e-06 abs = 5.46764e-06 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00174805
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00438302
+CONVERGENCE CHECK:
+ VELOC.: ratio = 5.63343e-07; exp.ratio = 1e-06 abs = 2.31831e-11 exp.abs = 1e-08
+ PRESS.: ratio = 6.60535e-08; exp.ratio = 1e-06 abs = 1.39549e-08 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000232103
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000120689
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 9.98157e+07; Expected ratio = 1e-06; Absolute norm = 0.273551; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000227114
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8332e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 6561.83; Expected ratio = 1e-06; Absolute norm = 1.79831e-05; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000212064
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6925e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.045949; Expected ratio = 1e-06; Absolute norm = 1.25926e-10; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 3 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00172869
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00512159
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.7682; exp.ratio = 1e-06 abs = 2.81806e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.822251; exp.ratio = 1e-06 abs = 0.0998891 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00239441
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00377387
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.140196; exp.ratio = 1e-06 abs = 2.23814e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.0150153; exp.ratio = 1e-06 abs = 0.00183524 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00255443
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00380078
+CONVERGENCE CHECK:
+ VELOC.: ratio = 9.04826e-05; exp.ratio = 1e-06 abs = 1.44451e-09 exp.abs = 1e-08
+ PRESS.: ratio = 8.64508e-06; exp.ratio = 1e-06 abs = 1.05664e-06 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00298374
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00485319
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.03897e-07; exp.ratio = 1e-06 abs = 1.65865e-12 exp.abs = 1e-08
+ PRESS.: ratio = 8.19746e-09; exp.ratio = 1e-06 abs = 1.00193e-09 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000218584
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000118996
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.53391e+08; Expected ratio = 1e-06; Absolute norm = 0.694433; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000291415
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9782e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 41838.3; Expected ratio = 1e-06; Absolute norm = 0.000114661; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000211064
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6487e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.601807; Expected ratio = 1e-06; Absolute norm = 1.64929e-09; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 3 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00329529
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00370805
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0806383; exp.ratio = 1e-06 abs = 1.22352e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.0327226; exp.ratio = 1e-06 abs = 0.00389556 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00322495
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00503294
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00700195; exp.ratio = 1e-06 abs = 1.0634e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.000737723; exp.ratio = 1e-06 abs = 8.78578e-05 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00297507
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00393023
+CONVERGENCE CHECK:
+ VELOC.: ratio = 4.54985e-06; exp.ratio = 1e-06 abs = 6.90992e-11 exp.abs = 1e-08
+ PRESS.: ratio = 3.20963e-07; exp.ratio = 1e-06 abs = 3.82245e-08 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 3 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000247909
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000121413
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 5.28239e+07; Expected ratio = 1e-06; Absolute norm = 0.144767; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000218607
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7067e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1913.73; Expected ratio = 1e-06; Absolute norm = 5.24469e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000215996
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6344e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.0135675; Expected ratio = 1e-06; Absolute norm = 3.71825e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 3 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00207655
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00409446
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.180121; exp.ratio = 1e-06 abs = 2.45639e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.0868293; exp.ratio = 1e-06 abs = 0.00968219 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00173254
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00550894
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0137144; exp.ratio = 1e-06 abs = 1.87243e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.00143975; exp.ratio = 1e-06 abs = 0.000160575 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00190749
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0059399
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.53245e-06; exp.ratio = 1e-06 abs = 4.82286e-11 exp.abs = 1e-08
+ PRESS.: ratio = 4.98675e-07; exp.ratio = 1e-06 abs = 5.56173e-08 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 3 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000687778
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000123621
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 575813; Expected ratio = 1e-06; Absolute norm = 0.00157805; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000216317
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7714e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.227553; Expected ratio = 1e-06; Absolute norm = 6.23622e-10; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00177391
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0038247
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.999115; exp.ratio = 1e-06 abs = 0.00764939 exp.abs = 1e-08
+ PRESS.: ratio = 0.99739; exp.ratio = 1e-06 abs = 33.6121 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0030632
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00376876
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.18465; exp.ratio = 1e-06 abs = 0.00147388 exp.abs = 1e-08
+ PRESS.: ratio = 0.145753; exp.ratio = 1e-06 abs = 5.17142 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00178875
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00437064
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0521866; exp.ratio = 1e-06 abs = 0.000416342 exp.abs = 1e-08
+ PRESS.: ratio = 0.0105162; exp.ratio = 1e-06 abs = 0.374646 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00232284
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.003812
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0137912; exp.ratio = 1e-06 abs = 0.000109913 exp.abs = 1e-08
+ PRESS.: ratio = 0.00266959; exp.ratio = 1e-06 abs = 0.0950112 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00167046
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0046335
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00249485; exp.ratio = 1e-06 abs = 1.98839e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000744472; exp.ratio = 1e-06 abs = 0.0264832 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00171117
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00450162
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000535204; exp.ratio = 1e-06 abs = 4.26556e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.000116371; exp.ratio = 1e-06 abs = 0.00413985 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00384271
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00375004
+CONVERGENCE CHECK:
+ VELOC.: ratio = 7.93447e-05; exp.ratio = 1e-06 abs = 6.32375e-07 exp.abs = 1e-08
+ PRESS.: ratio = 1.97988e-05; exp.ratio = 1e-06 abs = 0.000704342 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00447011
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00401343
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.08184e-05; exp.ratio = 1e-06 abs = 1.65922e-07 exp.abs = 1e-08
+ PRESS.: ratio = 4.00452e-06; exp.ratio = 1e-06 abs = 0.000142461 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00176717
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00457287
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.94091e-06; exp.ratio = 1e-06 abs = 2.34389e-08 exp.abs = 1e-08
+ PRESS.: ratio = 8.92491e-07; exp.ratio = 1e-06 abs = 3.17503e-05 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00166571
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00445664
+CONVERGENCE CHECK:
+ VELOC.: ratio = 7.77308e-07; exp.ratio = 1e-06 abs = 6.19512e-09 exp.abs = 1e-08
+ PRESS.: ratio = 1.81511e-07; exp.ratio = 1e-06 abs = 6.45722e-06 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: ATTENTION: max iterations ( 10 ) exceeded!
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000227855
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000258766
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.07418e+13; Expected ratio = 1e-06; Absolute norm = 29438.6; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000206926
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.3344e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.97778e+12; Expected ratio = 1e-06; Absolute norm = 8160.81; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000222493
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.2491e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 7.39657e+11; Expected ratio = 1e-06; Absolute norm = 2027.08; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000225928
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.5621e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.32365e+11; Expected ratio = 1e-06; Absolute norm = 362.753; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000205121
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6664e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 9.15658e+09; Expected ratio = 1e-06; Absolute norm = 25.0942; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000204188
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.856e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.17759e+09; Expected ratio = 1e-06; Absolute norm = 3.22727; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000198074
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8438e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.98532e+09; Expected ratio = 1e-06; Absolute norm = 10.922; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000200619
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8227e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 6.43201e+07; Expected ratio = 1e-06; Absolute norm = 0.176273; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00021272
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8575e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.10128e+08; Expected ratio = 1e-06; Absolute norm = 0.57587; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000207829
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7989e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 265772; Expected ratio = 1e-06; Absolute norm = 0.000728366; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000222318
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7132e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3758.15; Expected ratio = 1e-06; Absolute norm = 1.02994e-05; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000206459
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7685e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.00965578; Expected ratio = 1e-06; Absolute norm = 2.64623e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 12 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00186078
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00378969
+CONVERGENCE CHECK:
+ VELOC.: ratio = 30.8725; exp.ratio = 1e-06 abs = 0.00793547 exp.abs = 1e-08
+ PRESS.: ratio = 98.1544; exp.ratio = 1e-06 abs = 35.6575 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00322654
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00381486
+CONVERGENCE CHECK:
+ VELOC.: ratio = 7.11238; exp.ratio = 1e-06 abs = 0.000267317 exp.abs = 1e-08
+ PRESS.: ratio = 3.7201; exp.ratio = 1e-06 abs = 0.367866 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00196936
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00451393
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0109028; exp.ratio = 1e-06 abs = 4.08952e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.00753409; exp.ratio = 1e-06 abs = 0.000741633 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00316733
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00379186
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.78765e-05; exp.ratio = 1e-06 abs = 1.04561e-09 exp.abs = 1e-08
+ PRESS.: ratio = 5.92371e-06; exp.ratio = 1e-06 abs = 5.83114e-07 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00310084
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00389131
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.51276e-07; exp.ratio = 1e-06 abs = 5.67417e-12 exp.abs = 1e-08
+ PRESS.: ratio = 2.77983e-08; exp.ratio = 1e-06 abs = 2.73639e-09 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 5 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000219717
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00052195
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.8836e+11; Expected ratio = 1e-06; Absolute norm = 516.212; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000214571
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9227e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.59813e+10; Expected ratio = 1e-06; Absolute norm = 43.7979; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000208773
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8939e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.73972e+10; Expected ratio = 1e-06; Absolute norm = 47.6782; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0002166
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9902e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.23428e+10; Expected ratio = 1e-06; Absolute norm = 33.8263; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000204073
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8694e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.84076e+10; Expected ratio = 1e-06; Absolute norm = 50.4471; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000204312
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000100418
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.7016e+10; Expected ratio = 1e-06; Absolute norm = 46.6334; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000194402
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9683e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.85052e+10; Expected ratio = 1e-06; Absolute norm = 50.7146; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000210981
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.757e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 9.66427e+09; Expected ratio = 1e-06; Absolute norm = 26.4856; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00021172
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.762e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 4.7608e+09; Expected ratio = 1e-06; Absolute norm = 13.0473; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000204621
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7518e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 6.86426e+09; Expected ratio = 1e-06; Absolute norm = 18.8119; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00019727
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000104794
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 5.1269e+08; Expected ratio = 1e-06; Absolute norm = 1.40506; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000192909
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8213e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.13216e+09; Expected ratio = 1e-06; Absolute norm = 5.84333; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000192019
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7777e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.79558e+07; Expected ratio = 1e-06; Absolute norm = 0.0492091; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000196063
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6812e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 4.80319e+07; Expected ratio = 1e-06; Absolute norm = 0.131634; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000 
+[92m[1mCoSimulationAnalysis Time = 0.5000000000 | Step = 5[0m
+	[95m [96mCoupling iteration:  [1m1 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m6.813E-4 | abs_tol = [1m1e-05 || rel_norm = [1m1.000E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m2 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.609E-4 | abs_tol = [1m1e-05 || rel_norm = [1m2.362E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m3 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m3.093E-4 | abs_tol = [1m1e-05 || rel_norm = [1m4.540E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m4 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m4.697E-4 | abs_tol = [1m1e-05 || rel_norm = [1m6.894E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m5 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.210E-4 | abs_tol = [1m1e-05 || rel_norm = [1m1.776E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m6 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m9.920E-5 | abs_tol = [1m1e-05 || rel_norm = [1m1.456E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m7 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m8.169E-4 | abs_tol = [1m1e-05 || rel_norm = [1m1.199E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m8 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m2.536E-4 | abs_tol = [1m1e-05 || rel_norm = [1m3.723E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m9 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.840E-4 | abs_tol = [1m1e-05 || rel_norm = [1m2.701E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m10 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.290E-4 | abs_tol = [1m1e-05 || rel_norm = [1m1.894E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m11 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m3.562E-2 | abs_tol = [1m1e-05 || rel_norm = [1m5.229E+1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m12 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.134E-3 | abs_tol = [1m1e-05 || rel_norm = [1m1.664E+0 | rel_tol = [1m1e-05[0m 
+	[91m### CONVERGENCE NOT ACHIEVED IN STRONG COUPLING ITERATIONS ###[0m 
+202751
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000132005
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 14470.3; Expected ratio = 1e-06; Absolute norm = 3.96567e-05; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000500812
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000107927
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 38.6664; Expected ratio = 1e-06; Absolute norm = 1.05968e-07; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 16 / 20 iterations
+BuilderAndSolver: Clear Function called
+Setup Dofs Time: 0.00112181
+Setup System Time: 8.619e-06
+System Matrix Resize Time: 0.000774212
+System Construction Time: 0.00193144
+Fluid Dynamics Analysis: STEP:  6 
+Fluid Dynamics Analysis: TIME:  0.6 
+System Construction Time: 1.674e-06
+::[KSM Simulation]:: : STEP:  6 
+::[KSM Simulation]:: : TIME:  0.6 
+SolvingStrategy:  MESH MOVED 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00171698
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00383151
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.965538; exp.ratio = 1e-06 abs = 0.000994663 exp.abs = 1e-08
+ PRESS.: ratio = 0.980124; exp.ratio = 1e-06 abs = 3.34854 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00201908
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00364649
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.109975; exp.ratio = 1e-06 abs = 0.000119879 exp.abs = 1e-08
+ PRESS.: ratio = 0.049536; exp.ratio = 1e-06 abs = 0.176068 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00307328
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00366063
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00697229; exp.ratio = 1e-06 abs = 7.62616e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.00318762; exp.ratio = 1e-06 abs = 0.0113568 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00318851
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00366886
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000441456; exp.ratio = 1e-06 abs = 4.82783e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.000161752; exp.ratio = 1e-06 abs = 0.000576347 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00197372
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00502267
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.66201e-05; exp.ratio = 1e-06 abs = 4.00483e-08 exp.abs = 1e-08
+ PRESS.: ratio = 5.55982e-06; exp.ratio = 1e-06 abs = 1.98105e-05 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0017129
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00385386
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.02984e-06; exp.ratio = 1e-06 abs = 3.31347e-09 exp.abs = 1e-08
+ PRESS.: ratio = 3.25592e-07; exp.ratio = 1e-06 abs = 1.16013e-06 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 6 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000263409
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000121455
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 8.01029e+08; Expected ratio = 1e-06; Absolute norm = 84.8833; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00020892
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000100886
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.07962e+08; Expected ratio = 1e-06; Absolute norm = 11.4404; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000195474
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9454e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.10765e+08; Expected ratio = 1e-06; Absolute norm = 32.931; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000198254
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8509e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 8.3566e+07; Expected ratio = 1e-06; Absolute norm = 8.85529; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000222557
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9622e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 4.83079e+07; Expected ratio = 1e-06; Absolute norm = 5.11908; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000203895
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8208e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 5.15409e+07; Expected ratio = 1e-06; Absolute norm = 5.46167; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000221304
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000100916
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.96754e+06; Expected ratio = 1e-06; Absolute norm = 0.420431; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000196325
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7823e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.01718e+07; Expected ratio = 1e-06; Absolute norm = 1.07788; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000215956
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9412e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 86905.7; Expected ratio = 1e-06; Absolute norm = 0.0092092; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000201403
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00140541
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 17194.1; Expected ratio = 1e-06; Absolute norm = 0.00182202; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000198389
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8819e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.275338; Expected ratio = 1e-06; Absolute norm = 2.91769e-08; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 11 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00182512
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00368346
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0364479; exp.ratio = 1e-06 abs = 4.13571e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.0393516; exp.ratio = 1e-06 abs = 0.145956 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00192456
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00441676
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00351307; exp.ratio = 1e-06 abs = 3.99361e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.00194291; exp.ratio = 1e-06 abs = 0.00721701 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00192179
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00423
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000217698; exp.ratio = 1e-06 abs = 2.47497e-07 exp.abs = 1e-08
+ PRESS.: ratio = 9.48815e-05; exp.ratio = 1e-06 abs = 0.000352464 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00185236
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00450834
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.54444e-05; exp.ratio = 1e-06 abs = 1.75583e-08 exp.abs = 1e-08
+ PRESS.: ratio = 4.25897e-06; exp.ratio = 1e-06 abs = 1.58212e-05 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00311144
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00381507
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.25397e-06; exp.ratio = 1e-06 abs = 1.4256e-09 exp.abs = 1e-08
+ PRESS.: ratio = 2.74977e-07; exp.ratio = 1e-06 abs = 1.02148e-06 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 5 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000227396
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000121759
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.55053e+08; Expected ratio = 1e-06; Absolute norm = 16.4306; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000217562
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000106427
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 812658; Expected ratio = 1e-06; Absolute norm = 0.0861155; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000220464
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000103853
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 90311.2; Expected ratio = 1e-06; Absolute norm = 0.00957007; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000215206
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000102296
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 114.739; Expected ratio = 1e-06; Absolute norm = 1.21587e-05; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00022577
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000102233
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.00180079; Expected ratio = 1e-06; Absolute norm = 1.90825e-10; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 5 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0017904
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00366941
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.796619; exp.ratio = 1e-06 abs = 0.000505719 exp.abs = 1e-08
+ PRESS.: ratio = 0.958068; exp.ratio = 1e-06 abs = 1.81866 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00177139
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00377914
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0635557; exp.ratio = 1e-06 abs = 3.91419e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.0269024; exp.ratio = 1e-06 abs = 0.0501753 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00297089
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00365089
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00246697; exp.ratio = 1e-06 abs = 1.5175e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.0012527; exp.ratio = 1e-06 abs = 0.00233389 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00173639
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0042134
+CONVERGENCE CHECK:
+ VELOC.: ratio = 9.9609e-05; exp.ratio = 1e-06 abs = 6.12739e-08 exp.abs = 1e-08
+ PRESS.: ratio = 3.66448e-05; exp.ratio = 1e-06 abs = 6.82705e-05 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00300473
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00359198
+CONVERGENCE CHECK:
+ VELOC.: ratio = 4.93855e-06; exp.ratio = 1e-06 abs = 3.03792e-09 exp.abs = 1e-08
+ PRESS.: ratio = 8.83124e-07; exp.ratio = 1e-06 abs = 1.64529e-06 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 5 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000222558
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000113779
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.03483e+09; Expected ratio = 1e-06; Absolute norm = 109.658; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000219407
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8504e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.40515e+07; Expected ratio = 1e-06; Absolute norm = 2.54868; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000205084
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0001007
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 4.14124e+06; Expected ratio = 1e-06; Absolute norm = 0.438838; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00021186
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9987e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.10705e+06; Expected ratio = 1e-06; Absolute norm = 0.117312; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000205052
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8138e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 9898.83; Expected ratio = 1e-06; Absolute norm = 0.00104896; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00020596
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.89e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 23.7865; Expected ratio = 1e-06; Absolute norm = 2.5206e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000221625
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7531e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.000401632; Expected ratio = 1e-06; Absolute norm = 4.256e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 7 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00197166
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00369258
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.431648; exp.ratio = 1e-06 abs = 0.000465221 exp.abs = 1e-08
+ PRESS.: ratio = 0.473191; exp.ratio = 1e-06 abs = 1.67195 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0017885
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00442643
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0442692; exp.ratio = 1e-06 abs = 4.88767e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.0230337; exp.ratio = 1e-06 abs = 0.0828942 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00183629
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00443465
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00270235; exp.ratio = 1e-06 abs = 2.98729e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.00126844; exp.ratio = 1e-06 abs = 0.00456903 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00311709
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00897989
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000173121; exp.ratio = 1e-06 abs = 1.91363e-07 exp.abs = 1e-08
+ PRESS.: ratio = 5.98969e-05; exp.ratio = 1e-06 abs = 0.000215761 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00337316
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.003852
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.51494e-05; exp.ratio = 1e-06 abs = 1.67457e-08 exp.abs = 1e-08
+ PRESS.: ratio = 2.34494e-06; exp.ratio = 1e-06 abs = 8.44695e-06 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00335336
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00386569
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.39092e-06; exp.ratio = 1e-06 abs = 1.53748e-09 exp.abs = 1e-08
+ PRESS.: ratio = 1.87093e-07; exp.ratio = 1e-06 abs = 6.73947e-07 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 6 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0002335
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000143363
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.14095e+09; Expected ratio = 1e-06; Absolute norm = 120.904; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000224002
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0001058
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.91631e+07; Expected ratio = 1e-06; Absolute norm = 3.09035; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000211071
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00010356
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 940447; Expected ratio = 1e-06; Absolute norm = 0.099657; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000210424
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000105152
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 323842; Expected ratio = 1e-06; Absolute norm = 0.0343168; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00021981
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000118865
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 121.131; Expected ratio = 1e-06; Absolute norm = 1.2836e-05; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000212212
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000104569
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.0211361; Expected ratio = 1e-06; Absolute norm = 2.23974e-09; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 6 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00170937
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0037553
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0194736; exp.ratio = 1e-06 abs = 2.19501e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.0215619; exp.ratio = 1e-06 abs = 0.0793809 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00173311
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00418108
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00186085; exp.ratio = 1e-06 abs = 2.09954e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.00103546; exp.ratio = 1e-06 abs = 0.00381513 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00308644
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00369625
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000114062; exp.ratio = 1e-06 abs = 1.28699e-07 exp.abs = 1e-08
+ PRESS.: ratio = 4.95605e-05; exp.ratio = 1e-06 abs = 0.00018261 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00298548
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00837059
+CONVERGENCE CHECK:
+ VELOC.: ratio = 7.91985e-06; exp.ratio = 1e-06 abs = 8.93609e-09 exp.abs = 1e-08
+ PRESS.: ratio = 2.25241e-06; exp.ratio = 1e-06 abs = 8.29923e-06 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00293887
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00358896
+CONVERGENCE CHECK:
+ VELOC.: ratio = 6.63367e-07; exp.ratio = 1e-06 abs = 7.48488e-10 exp.abs = 1e-08
+ PRESS.: ratio = 1.33145e-07; exp.ratio = 1e-06 abs = 4.90584e-07 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 5 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00066168
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000128273
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 7.13845e+06; Expected ratio = 1e-06; Absolute norm = 0.756445; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000224106
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000100654
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2540.1; Expected ratio = 1e-06; Absolute norm = 0.000269169; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000204715
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9534e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 48.0831; Expected ratio = 1e-06; Absolute norm = 5.09526e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000205778
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8149e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.000269325; Expected ratio = 1e-06; Absolute norm = 2.85398e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 4 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00188661
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00365792
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000744277; exp.ratio = 1e-06 abs = 8.40402e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.000858862; exp.ratio = 1e-06 abs = 0.00316727 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00200891
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00449422
+CONVERGENCE CHECK:
+ VELOC.: ratio = 7.06288e-05; exp.ratio = 1e-06 abs = 7.97536e-08 exp.abs = 1e-08
+ PRESS.: ratio = 3.93942e-05; exp.ratio = 1e-06 abs = 0.000145281 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00180514
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00450648
+CONVERGENCE CHECK:
+ VELOC.: ratio = 4.53067e-06; exp.ratio = 1e-06 abs = 5.11601e-09 exp.abs = 1e-08
+ PRESS.: ratio = 1.81801e-06; exp.ratio = 1e-06 abs = 6.70458e-06 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00175541
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00420064
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.16496e-07; exp.ratio = 1e-06 abs = 3.57386e-10 exp.abs = 1e-08
+ PRESS.: ratio = 8.7882e-08; exp.ratio = 1e-06 abs = 3.24097e-07 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000421438
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000111877
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 576442; Expected ratio = 1e-06; Absolute norm = 0.0610842; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000209947
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8744e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 34.498; Expected ratio = 1e-06; Absolute norm = 3.65568e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000208785
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7595e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.0106571; Expected ratio = 1e-06; Absolute norm = 1.12931e-09; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 3 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00169149
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00366494
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000609554; exp.ratio = 1e-06 abs = 6.88701e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.000888857; exp.ratio = 1e-06 abs = 0.00328086 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0016515
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0161807
+CONVERGENCE CHECK:
+ VELOC.: ratio = 5.79592e-05; exp.ratio = 1e-06 abs = 6.54865e-08 exp.abs = 1e-08
+ PRESS.: ratio = 3.36386e-05; exp.ratio = 1e-06 abs = 0.000124167 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00291363
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00361321
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.6954e-06; exp.ratio = 1e-06 abs = 4.17535e-09 exp.abs = 1e-08
+ PRESS.: ratio = 1.13245e-06; exp.ratio = 1e-06 abs = 4.1801e-06 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00175723
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00418073
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.14194e-07; exp.ratio = 1e-06 abs = 2.42013e-10 exp.abs = 1e-08
+ PRESS.: ratio = 7.63064e-08; exp.ratio = 1e-06 abs = 2.81663e-07 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000207693
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000115147
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2992.84; Expected ratio = 1e-06; Absolute norm = 0.000317144; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000205887
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000100556
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.000458477; Expected ratio = 1e-06; Absolute norm = 4.85838e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00230718
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00364955
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000508103; exp.ratio = 1e-06 abs = 5.73838e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.000828448; exp.ratio = 1e-06 abs = 0.00305552 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00247696
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00438029
+CONVERGENCE CHECK:
+ VELOC.: ratio = 5.10573e-05; exp.ratio = 1e-06 abs = 5.76616e-08 exp.abs = 1e-08
+ PRESS.: ratio = 2.80236e-05; exp.ratio = 1e-06 abs = 0.000103355 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00248984
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00379134
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.33999e-06; exp.ratio = 1e-06 abs = 3.77202e-09 exp.abs = 1e-08
+ PRESS.: ratio = 7.66758e-07; exp.ratio = 1e-06 abs = 2.82792e-06 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 3 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000238068
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000255508
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2411.02; Expected ratio = 1e-06; Absolute norm = 0.000255491; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00021674
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000103067
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.000388406; Expected ratio = 1e-06; Absolute norm = 4.11585e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00167321
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00367788
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000105247; exp.ratio = 1e-06 abs = 1.18868e-07 exp.abs = 1e-08
+ PRESS.: ratio = 9.61879e-05; exp.ratio = 1e-06 abs = 0.000354738 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00172743
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00429901
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.52382e-05; exp.ratio = 1e-06 abs = 1.72104e-08 exp.abs = 1e-08
+ PRESS.: ratio = 5.60224e-06; exp.ratio = 1e-06 abs = 2.06609e-05 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00167913
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0123794
+CONVERGENCE CHECK:
+ VELOC.: ratio = 8.89938e-07; exp.ratio = 1e-06 abs = 1.00512e-09 exp.abs = 1e-08
+ PRESS.: ratio = 3.33649e-07; exp.ratio = 1e-06 abs = 1.23049e-06 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 3 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000618629
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00012008
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 6.62941; Expected ratio = 1e-06; Absolute norm = 7.02503e-07; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 1 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00174027
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00377343
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000579962; exp.ratio = 1e-06 abs = 6.54703e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.000291785; exp.ratio = 1e-06 abs = 0.00107595 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0028588
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00361024
+CONVERGENCE CHECK:
+ VELOC.: ratio = 6.92356e-05; exp.ratio = 1e-06 abs = 7.81559e-08 exp.abs = 1e-08
+ PRESS.: ratio = 2.8707e-05; exp.ratio = 1e-06 abs = 0.000105855 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00196637
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00383481
+CONVERGENCE CHECK:
+ VELOC.: ratio = 4.10094e-06; exp.ratio = 1e-06 abs = 4.6293e-09 exp.abs = 1e-08
+ PRESS.: ratio = 1.80712e-06; exp.ratio = 1e-06 abs = 6.6636e-06 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00178737
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00448628
+CONVERGENCE CHECK:
+ VELOC.: ratio = 3.24058e-07; exp.ratio = 1e-06 abs = 3.6581e-10 exp.abs = 1e-08
+ PRESS.: ratio = 6.62203e-08; exp.ratio = 1e-06 abs = 2.44182e-07 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000564088
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000117241
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 264.452; Expected ratio = 1e-06; Absolute norm = 2.80234e-05; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000219141
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000103379
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.000315339; Expected ratio = 1e-06; Absolute norm = 3.34157e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00181515
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00407903
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0019467; exp.ratio = 1e-06 abs = 2.19577e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.00766687; exp.ratio = 1e-06 abs = 0.0283599 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00375829
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00389849
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000343677; exp.ratio = 1e-06 abs = 3.87636e-07 exp.abs = 1e-08
+ PRESS.: ratio = 0.000169636; exp.ratio = 1e-06 abs = 0.000627437 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00336934
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00727978
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.18761e-05; exp.ratio = 1e-06 abs = 2.46744e-08 exp.abs = 1e-08
+ PRESS.: ratio = 4.60767e-06; exp.ratio = 1e-06 abs = 1.70424e-05 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00301614
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00374038
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.5011e-06; exp.ratio = 1e-06 abs = 2.82102e-09 exp.abs = 1e-08
+ PRESS.: ratio = 5.18151e-07; exp.ratio = 1e-06 abs = 1.91649e-06 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 4 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000216071
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000129025
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 49053.9; Expected ratio = 1e-06; Absolute norm = 0.00519813; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000212413
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000100709
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.109531; Expected ratio = 1e-06; Absolute norm = 1.16067e-08; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 2 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00208793
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00382103
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0199909; exp.ratio = 1e-06 abs = 2.27574e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.0616009; exp.ratio = 1e-06 abs = 0.223549 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00305615
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00371272
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00292248; exp.ratio = 1e-06 abs = 3.32766e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.00153178; exp.ratio = 1e-06 abs = 0.00556412 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00309919
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00380001
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000163883; exp.ratio = 1e-06 abs = 1.86601e-07 exp.abs = 1e-08
+ PRESS.: ratio = 3.81424e-05; exp.ratio = 1e-06 abs = 0.000138554 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0030219
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00369827
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.9922e-05; exp.ratio = 1e-06 abs = 2.26838e-08 exp.abs = 1e-08
+ PRESS.: ratio = 4.14226e-06; exp.ratio = 1e-06 abs = 1.50469e-05 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00169691
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00441723
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.90071e-06; exp.ratio = 1e-06 abs = 2.16421e-09 exp.abs = 1e-08
+ PRESS.: ratio = 5.60821e-07; exp.ratio = 1e-06 abs = 2.03721e-06 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+ 
+[92m[1mCoSimulationAnalysis Time = 0.6000000000 | Step = 6[0m
+	[95m [96mCoupling iteration:  [1m1 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m2.784E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.000E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m2 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m3.015E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.083E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m3 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.913E-2 | abs_tol = [1m1e-05 || rel_norm = [1m6.871E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m4 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m2.957E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.062E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m5 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m3.015E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.083E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m6 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m2.982E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.071E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m7 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m2.984E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.072E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m8 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m2.982E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.071E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m9 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m2.982E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.071E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m10 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m2.982E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.071E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m11 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m2.989E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.074E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m12 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m2.988E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.073E+0 | rel_tol = [1m1e-05[0m 
+	[91m### CONVERGENCE NOT ACHIEVED IN STRONG COUPLING ITERATIONS ###[0m 
+NR-Strategy: Convergence achieved after 5 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00022874
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000121021
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.34028e+06; Expected ratio = 1e-06; Absolute norm = 0.247994; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000228588
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000101346
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 268.087; Expected ratio = 1e-06; Absolute norm = 2.84085e-05; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000198138
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9127e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.543317; Expected ratio = 1e-06; Absolute norm = 5.7574e-08; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 3 / 20 iterations
+BuilderAndSolver: Clear Function called
+Setup Dofs Time: 0.000964754
+Setup System Time: 8.182e-06
+System Matrix Resize Time: 0.000772228
+System Construction Time: 0.00177423
+Fluid Dynamics Analysis: STEP:  7 
+Fluid Dynamics Analysis: TIME:  0.7 
+System Construction Time: 1.715e-06
+::[KSM Simulation]:: : STEP:  7 
+::[KSM Simulation]:: : TIME:  0.7 
+SolvingStrategy:  MESH MOVED 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00172532
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00376668
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.963018; exp.ratio = 1e-06 abs = 0.0295378 exp.abs = 1e-08
+ PRESS.: ratio = 0.967031; exp.ratio = 1e-06 abs = 105.463 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00348979
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0124261
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.330499; exp.ratio = 1e-06 abs = 0.0101259 exp.abs = 1e-08
+ PRESS.: ratio = 0.520357; exp.ratio = 1e-06 abs = 90.6478 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00186402
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0155747
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.151273; exp.ratio = 1e-06 abs = 0.0046683 exp.abs = 1e-08
+ PRESS.: ratio = 0.0695579; exp.ratio = 1e-06 abs = 12.2234 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00375717
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00372664
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0792082; exp.ratio = 1e-06 abs = 0.0024789 exp.abs = 1e-08
+ PRESS.: ratio = 0.0366526; exp.ratio = 1e-06 abs = 6.40109 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00192933
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00376283
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0380768; exp.ratio = 1e-06 abs = 0.00118883 exp.abs = 1e-08
+ PRESS.: ratio = 0.0185992; exp.ratio = 1e-06 abs = 3.25975 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00319853
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00381154
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0205402; exp.ratio = 1e-06 abs = 0.000639058 exp.abs = 1e-08
+ PRESS.: ratio = 0.00879207; exp.ratio = 1e-06 abs = 1.54402 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00407843
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00382488
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00966668; exp.ratio = 1e-06 abs = 0.000301016 exp.abs = 1e-08
+ PRESS.: ratio = 0.00473014; exp.ratio = 1e-06 abs = 0.83039 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00314247
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00375634
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00454166; exp.ratio = 1e-06 abs = 0.000141555 exp.abs = 1e-08
+ PRESS.: ratio = 0.00207712; exp.ratio = 1e-06 abs = 0.364586 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00323015
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00375277
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00216843; exp.ratio = 1e-06 abs = 6.75753e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.00105689; exp.ratio = 1e-06 abs = 0.185541 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00194882
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00452759
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00105633; exp.ratio = 1e-06 abs = 3.29124e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000476026; exp.ratio = 1e-06 abs = 0.0835738 exp.abs = 1e-08
+NR-Strategy: ATTENTION: max iterations ( 10 ) exceeded!
+FluidSolver: Fluid solver did not converge for step 7
+corresponding to time 0.7
+ 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000234729
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000488554
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.29526e+11; Expected ratio = 1e-06; Absolute norm = 7457.31; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000217429
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.4004e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.18162e+10; Expected ratio = 1e-06; Absolute norm = 1831.79; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000217107
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.0123e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 5.5783e+09; Expected ratio = 1e-06; Absolute norm = 321.165; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000216931
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8033e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 6.00549e+08; Expected ratio = 1e-06; Absolute norm = 34.576; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00100042
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000101314
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.70929e+08; Expected ratio = 1e-06; Absolute norm = 9.84107; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000208051
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7749e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.64052e+08; Expected ratio = 1e-06; Absolute norm = 9.44512; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000202094
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6198e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 5.51591e+06; Expected ratio = 1e-06; Absolute norm = 0.317573; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000195273
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7587e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.5734e+07; Expected ratio = 1e-06; Absolute norm = 1.48161; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000205004
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7074e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 110912; Expected ratio = 1e-06; Absolute norm = 0.00638565; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000208327
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.5489e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 14736.8; Expected ratio = 1e-06; Absolute norm = 0.000848457; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000196927
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.5943e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.0502597; Expected ratio = 1e-06; Absolute norm = 2.89365e-09; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 11 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00170619
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00377333
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00167758; exp.ratio = 1e-06 abs = 5.23331e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.00116921; exp.ratio = 1e-06 abs = 0.205504 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00233042
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00438647
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00162428; exp.ratio = 1e-06 abs = 5.06561e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000746138; exp.ratio = 1e-06 abs = 0.131224 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00345123
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00384621
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00077142; exp.ratio = 1e-06 abs = 2.40588e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000410854; exp.ratio = 1e-06 abs = 0.0722505 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00311521
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00386203
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000376715; exp.ratio = 1e-06 abs = 1.17496e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000189794; exp.ratio = 1e-06 abs = 0.0333746 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00316298
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00392508
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000176985; exp.ratio = 1e-06 abs = 5.52004e-06 exp.abs = 1e-08
+ PRESS.: ratio = 8.67882e-05; exp.ratio = 1e-06 abs = 0.0152615 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00311947
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00393992
+CONVERGENCE CHECK:
+ VELOC.: ratio = 8.66357e-05; exp.ratio = 1e-06 abs = 2.70206e-06 exp.abs = 1e-08
+ PRESS.: ratio = 3.66875e-05; exp.ratio = 1e-06 abs = 0.00645143 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00328086
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00384971
+CONVERGENCE CHECK:
+ VELOC.: ratio = 4.23083e-05; exp.ratio = 1e-06 abs = 1.31955e-06 exp.abs = 1e-08
+ PRESS.: ratio = 2.07293e-05; exp.ratio = 1e-06 abs = 0.0036452 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00174818
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00401911
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.90447e-05; exp.ratio = 1e-06 abs = 5.93986e-07 exp.abs = 1e-08
+ PRESS.: ratio = 8.90858e-06; exp.ratio = 1e-06 abs = 0.00156656 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00326249
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0039079
+CONVERGENCE CHECK:
+ VELOC.: ratio = 9.44711e-06; exp.ratio = 1e-06 abs = 2.94646e-07 exp.abs = 1e-08
+ PRESS.: ratio = 4.59349e-06; exp.ratio = 1e-06 abs = 0.000807756 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00305955
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00369634
+CONVERGENCE CHECK:
+ VELOC.: ratio = 4.4214e-06; exp.ratio = 1e-06 abs = 1.37899e-07 exp.abs = 1e-08
+ PRESS.: ratio = 2.00446e-06; exp.ratio = 1e-06 abs = 0.00035248 exp.abs = 1e-08
+NR-Strategy: ATTENTION: max iterations ( 10 ) exceeded!
+FluidSolver: Fluid solver did not converge for step 7
+corresponding to time 0.7
+ 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000536205
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000339281
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.53255e+11; Expected ratio = 1e-06; Absolute norm = 20338.3; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00021804
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.903e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 9.87167e+10; Expected ratio = 1e-06; Absolute norm = 5683.52; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000233147
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9852e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.51567e+10; Expected ratio = 1e-06; Absolute norm = 1448.37; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000219586
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.526e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 4.99822e+09; Expected ratio = 1e-06; Absolute norm = 287.768; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000213643
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7622e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.36672e+09; Expected ratio = 1e-06; Absolute norm = 78.6875; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000225548
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.736e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.41639e+09; Expected ratio = 1e-06; Absolute norm = 139.121; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000204475
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.5706e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 4.12903e+08; Expected ratio = 1e-06; Absolute norm = 23.7725; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000205291
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7312e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.98612e+09; Expected ratio = 1e-06; Absolute norm = 114.349; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000213805
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.5575e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.28873e+08; Expected ratio = 1e-06; Absolute norm = 7.41972; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00020238
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.5471e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.56144e+08; Expected ratio = 1e-06; Absolute norm = 20.5047; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000199579
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.5221e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.72364e+07; Expected ratio = 1e-06; Absolute norm = 0.99237; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000204238
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.4095e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.7721e+07; Expected ratio = 1e-06; Absolute norm = 1.02027; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000207239
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.4902e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 76997.5; Expected ratio = 1e-06; Absolute norm = 0.00443306; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00020347
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.4931e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 302.162; Expected ratio = 1e-06; Absolute norm = 1.73967e-05; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000205429
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000112481
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.000259883; Expected ratio = 1e-06; Absolute norm = 1.49625e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 15 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00179091
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00376121
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000788079; exp.ratio = 1e-06 abs = 2.45724e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000477085; exp.ratio = 1e-06 abs = 0.0838588 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00313798
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00377335
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000518487; exp.ratio = 1e-06 abs = 1.61653e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000205868; exp.ratio = 1e-06 abs = 0.0361828 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00268248
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00443136
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000251509; exp.ratio = 1e-06 abs = 7.84161e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.000129356; exp.ratio = 1e-06 abs = 0.022735 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00324296
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00388539
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000108371; exp.ratio = 1e-06 abs = 3.37889e-06 exp.abs = 1e-08
+ PRESS.: ratio = 5.77709e-05; exp.ratio = 1e-06 abs = 0.0101535 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00322035
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00385814
+CONVERGENCE CHECK:
+ VELOC.: ratio = 5.15986e-05; exp.ratio = 1e-06 abs = 1.60878e-06 exp.abs = 1e-08
+ PRESS.: ratio = 2.61824e-05; exp.ratio = 1e-06 abs = 0.00460166 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00313607
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00372647
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.33774e-05; exp.ratio = 1e-06 abs = 7.28873e-07 exp.abs = 1e-08
+ PRESS.: ratio = 9.86287e-06; exp.ratio = 1e-06 abs = 0.00173344 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00373197
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00390562
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.21226e-05; exp.ratio = 1e-06 abs = 3.77965e-07 exp.abs = 1e-08
+ PRESS.: ratio = 5.86857e-06; exp.ratio = 1e-06 abs = 0.00103142 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00179017
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00482472
+CONVERGENCE CHECK:
+ VELOC.: ratio = 5.13617e-06; exp.ratio = 1e-06 abs = 1.60139e-07 exp.abs = 1e-08
+ PRESS.: ratio = 2.46494e-06; exp.ratio = 1e-06 abs = 0.000433223 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00305469
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00380754
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.66575e-06; exp.ratio = 1e-06 abs = 8.31145e-08 exp.abs = 1e-08
+ PRESS.: ratio = 1.28981e-06; exp.ratio = 1e-06 abs = 0.00022669 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00303179
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00430811
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.19753e-06; exp.ratio = 1e-06 abs = 3.73375e-08 exp.abs = 1e-08
+ PRESS.: ratio = 5.40567e-07; exp.ratio = 1e-06 abs = 9.50068e-05 exp.abs = 1e-08
+NR-Strategy: ATTENTION: max iterations ( 10 ) exceeded!
+FluidSolver: Fluid solver did not converge for step 7
+corresponding to time 0.7
+ 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00045933
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000130999
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 4.43689e+07; Expected ratio = 1e-06; Absolute norm = 2.55449; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000234801
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.77e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 130848; Expected ratio = 1e-06; Absolute norm = 0.00753342; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000209028
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6573e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 28.2803; Expected ratio = 1e-06; Absolute norm = 1.62821e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000207876
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.767e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.0002574; Expected ratio = 1e-06; Absolute norm = 1.48195e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 4 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00172783
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00372634
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0659397; exp.ratio = 1e-06 abs = 0.00198112 exp.abs = 1e-08
+ PRESS.: ratio = 0.0569504; exp.ratio = 1e-06 abs = 9.48684 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0032883
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00413011
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0636995; exp.ratio = 1e-06 abs = 0.0019362 exp.abs = 1e-08
+ PRESS.: ratio = 0.0236522; exp.ratio = 1e-06 abs = 3.87142 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00175026
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00505946
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0271184; exp.ratio = 1e-06 abs = 0.000821718 exp.abs = 1e-08
+ PRESS.: ratio = 0.014981; exp.ratio = 1e-06 abs = 2.46642 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00341468
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00380313
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0169547; exp.ratio = 1e-06 abs = 0.000512531 exp.abs = 1e-08
+ PRESS.: ratio = 0.00681762; exp.ratio = 1e-06 abs = 1.12339 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00308461
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00366159
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00666354; exp.ratio = 1e-06 abs = 0.000201726 exp.abs = 1e-08
+ PRESS.: ratio = 0.00266522; exp.ratio = 1e-06 abs = 0.438821 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00304952
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00371442
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00450675; exp.ratio = 1e-06 abs = 0.000136483 exp.abs = 1e-08
+ PRESS.: ratio = 0.00168365; exp.ratio = 1e-06 abs = 0.277248 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00177122
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00449513
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00184713; exp.ratio = 1e-06 abs = 5.59121e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000724607; exp.ratio = 1e-06 abs = 0.119347 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00350874
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00381948
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00112899; exp.ratio = 1e-06 abs = 3.41734e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000461333; exp.ratio = 1e-06 abs = 0.075977 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00375495
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00381511
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000547786; exp.ratio = 1e-06 abs = 1.65829e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000197634; exp.ratio = 1e-06 abs = 0.0325467 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00327853
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00521698
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000276837; exp.ratio = 1e-06 abs = 8.38039e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.000115401; exp.ratio = 1e-06 abs = 0.0190049 exp.abs = 1e-08
+NR-Strategy: ATTENTION: max iterations ( 10 ) exceeded!
+FluidSolver: Fluid solver did not converge for step 7
+corresponding to time 0.7
+ 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000554966
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000130419
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 4.59961e+07; Expected ratio = 1e-06; Absolute norm = 2.64818; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000205405
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000101763
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 368524; Expected ratio = 1e-06; Absolute norm = 0.0212174; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000237991
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000100939
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 351.793; Expected ratio = 1e-06; Absolute norm = 2.02541e-05; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000202284
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000101614
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.000247912; Expected ratio = 1e-06; Absolute norm = 1.42733e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 4 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00173694
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00377639
+CONVERGENCE CHECK:
+ VELOC.: ratio = 2.88879; exp.ratio = 1e-06 abs = 0.026858 exp.abs = 1e-08
+ PRESS.: ratio = 1.0165; exp.ratio = 1e-06 abs = 97.2373 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00225157
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00379492
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.587262; exp.ratio = 1e-06 abs = 0.00416828 exp.abs = 1e-08
+ PRESS.: ratio = 0.0912319; exp.ratio = 1e-06 abs = 9.07188 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.001748
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00445893
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0325676; exp.ratio = 1e-06 abs = 0.00023079 exp.abs = 1e-08
+ PRESS.: ratio = 0.00741015; exp.ratio = 1e-06 abs = 0.734074 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00321044
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0086603
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00251797; exp.ratio = 1e-06 abs = 1.78447e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000436026; exp.ratio = 1e-06 abs = 0.0431887 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00299102
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00371206
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000209541; exp.ratio = 1e-06 abs = 1.48501e-06 exp.abs = 1e-08
+ PRESS.: ratio = 2.22085e-05; exp.ratio = 1e-06 abs = 0.00219978 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00172571
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00439005
+CONVERGENCE CHECK:
+ VELOC.: ratio = 1.19163e-05; exp.ratio = 1e-06 abs = 8.44504e-08 exp.abs = 1e-08
+ PRESS.: ratio = 2.12526e-06; exp.ratio = 1e-06 abs = 0.00021051 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00308902
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00374491
+CONVERGENCE CHECK:
+ VELOC.: ratio = 7.8877e-07; exp.ratio = 1e-06 abs = 5.58997e-09 exp.abs = 1e-08
+ PRESS.: ratio = 1.20981e-07; exp.ratio = 1e-06 abs = 1.19834e-05 exp.abs = 1e-08
+*** CONVERGENCE IS ACHIEVED ***
+NR-Strategy: Convergence achieved after 7 / 10 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000226552
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00012431
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 4.04134e+08; Expected ratio = 1e-06; Absolute norm = 23.2676; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00023413
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8796e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.55057e+07; Expected ratio = 1e-06; Absolute norm = 0.892728; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000205453
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9242e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 7.00416e+06; Expected ratio = 1e-06; Absolute norm = 0.403258; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00023847
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6952e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 8396.99; Expected ratio = 1e-06; Absolute norm = 0.000483449; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000216352
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7121e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 5.94868; Expected ratio = 1e-06; Absolute norm = 3.42489e-07; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 5 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00304909
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00393375
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.737378; exp.ratio = 1e-06 abs = 0.0158046 exp.abs = 1e-08
+ PRESS.: ratio = 0.380213; exp.ratio = 1e-06 abs = 41.262 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00199101
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00467111
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.210582; exp.ratio = 1e-06 abs = 0.00477223 exp.abs = 1e-08
+ PRESS.: ratio = 0.231319; exp.ratio = 1e-06 abs = 27.7188 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00196889
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00465096
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0846162; exp.ratio = 1e-06 abs = 0.00190554 exp.abs = 1e-08
+ PRESS.: ratio = 0.0259466; exp.ratio = 1e-06 abs = 3.14244 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00181547
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00432288
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0405734; exp.ratio = 1e-06 abs = 0.000902948 exp.abs = 1e-08
+ PRESS.: ratio = 0.0163239; exp.ratio = 1e-06 abs = 1.9682 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00328004
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00732049
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0130538; exp.ratio = 1e-06 abs = 0.000290335 exp.abs = 1e-08
+ PRESS.: ratio = 0.00590921; exp.ratio = 1e-06 abs = 0.711826 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00299769
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00364567
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00727804; exp.ratio = 1e-06 abs = 0.00016172 exp.abs = 1e-08
+ PRESS.: ratio = 0.00214914; exp.ratio = 1e-06 abs = 0.259115 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00312887
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00365873
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00360359; exp.ratio = 1e-06 abs = 8.00587e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.0012096; exp.ratio = 1e-06 abs = 0.145874 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00307708
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00566958
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00200245; exp.ratio = 1e-06 abs = 4.448e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000672604; exp.ratio = 1e-06 abs = 0.0811309 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00259414
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00365975
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00106488; exp.ratio = 1e-06 abs = 2.36542e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000352473; exp.ratio = 1e-06 abs = 0.0425207 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00325197
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00373714
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000566035; exp.ratio = 1e-06 abs = 1.25734e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000189747; exp.ratio = 1e-06 abs = 0.0228919 exp.abs = 1e-08
+NR-Strategy: ATTENTION: max iterations ( 10 ) exceeded!
+FluidSolver: Fluid solver did not converge for step 7
+corresponding to time 0.7
+ 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000524001
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.005571
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.74946e+08; Expected ratio = 1e-06; Absolute norm = 15.8297; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000217827
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9918e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.15881e+06; Expected ratio = 1e-06; Absolute norm = 0.181865; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000214915
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.768e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 494479; Expected ratio = 1e-06; Absolute norm = 0.0284692; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000201351
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6848e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 72.1105; Expected ratio = 1e-06; Absolute norm = 4.15169e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000198981
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.694e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.000361445; Expected ratio = 1e-06; Absolute norm = 2.08098e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 5 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0018041
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00433738
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.178278; exp.ratio = 1e-06 abs = 0.00380314 exp.abs = 1e-08
+ PRESS.: ratio = 0.0580986; exp.ratio = 1e-06 abs = 7.2062 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00293546
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0037008
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.100699; exp.ratio = 1e-06 abs = 0.00211643 exp.abs = 1e-08
+ PRESS.: ratio = 0.0278997; exp.ratio = 1e-06 abs = 3.43826 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00189777
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00555735
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0451755; exp.ratio = 1e-06 abs = 0.000957514 exp.abs = 1e-08
+ PRESS.: ratio = 0.00854383; exp.ratio = 1e-06 abs = 1.05159 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00342917
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00376759
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0168163; exp.ratio = 1e-06 abs = 0.000356836 exp.abs = 1e-08
+ PRESS.: ratio = 0.00522375; exp.ratio = 1e-06 abs = 0.643606 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00296026
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00374897
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00806808; exp.ratio = 1e-06 abs = 0.000171519 exp.abs = 1e-08
+ PRESS.: ratio = 0.00247075; exp.ratio = 1e-06 abs = 0.304387 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00304393
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00375746
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00353969; exp.ratio = 1e-06 abs = 7.52394e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.00113397; exp.ratio = 1e-06 abs = 0.139661 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00320157
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00439658
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00173647; exp.ratio = 1e-06 abs = 3.69137e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000510539; exp.ratio = 1e-06 abs = 0.0628596 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00173598
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00468129
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00084276; exp.ratio = 1e-06 abs = 1.7914e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000253059; exp.ratio = 1e-06 abs = 0.0311534 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00174972
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00426051
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000389296; exp.ratio = 1e-06 abs = 8.27479e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.000129956; exp.ratio = 1e-06 abs = 0.0159971 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0044991
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00868132
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000178942; exp.ratio = 1e-06 abs = 3.80346e-06 exp.abs = 1e-08
+ PRESS.: ratio = 5.97352e-05; exp.ratio = 1e-06 abs = 0.00735288 exp.abs = 1e-08
+NR-Strategy: ATTENTION: max iterations ( 10 ) exceeded!
+FluidSolver: Fluid solver did not converge for step 7
+corresponding to time 0.7
+ 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000564992
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000136097
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.95513e+08; Expected ratio = 1e-06; Absolute norm = 17.0139; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000208637
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.8705e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 5.41157e+06; Expected ratio = 1e-06; Absolute norm = 0.311566; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000220419
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.5413e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 217891; Expected ratio = 1e-06; Absolute norm = 0.0125449; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000206015
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6639e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 33.2702; Expected ratio = 1e-06; Absolute norm = 1.9155e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000208847
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6421e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.000244947; Expected ratio = 1e-06; Absolute norm = 1.41026e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 5 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00179393
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00372867
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.314842; exp.ratio = 1e-06 abs = 0.0081802 exp.abs = 1e-08
+ PRESS.: ratio = 0.408253; exp.ratio = 1e-06 abs = 79.9007 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00298685
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00372151
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.152049; exp.ratio = 1e-06 abs = 0.00421144 exp.abs = 1e-08
+ PRESS.: ratio = 0.0724689; exp.ratio = 1e-06 abs = 14.5199 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00290198
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00387521
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0601567; exp.ratio = 1e-06 abs = 0.00164998 exp.abs = 1e-08
+ PRESS.: ratio = 0.0211184; exp.ratio = 1e-06 abs = 4.27089 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00308463
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00384873
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0253063; exp.ratio = 1e-06 abs = 0.000692214 exp.abs = 1e-08
+ PRESS.: ratio = 0.0117313; exp.ratio = 1e-06 abs = 2.35963 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00322757
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00391839
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00902938; exp.ratio = 1e-06 abs = 0.000246466 exp.abs = 1e-08
+ PRESS.: ratio = 0.00309741; exp.ratio = 1e-06 abs = 0.622606 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00175029
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00433744
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00362163; exp.ratio = 1e-06 abs = 9.88131e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.00126392; exp.ratio = 1e-06 abs = 0.253966 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0030838
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00366919
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00119553; exp.ratio = 1e-06 abs = 3.26189e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000317379; exp.ratio = 1e-06 abs = 0.0637677 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00168644
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00424753
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000340868; exp.ratio = 1e-06 abs = 9.30057e-06 exp.abs = 1e-08
+ PRESS.: ratio = 0.000100365; exp.ratio = 1e-06 abs = 0.0201663 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00325352
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00366634
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000131516; exp.ratio = 1e-06 abs = 3.58859e-06 exp.abs = 1e-08
+ PRESS.: ratio = 6.05823e-05; exp.ratio = 1e-06 abs = 0.0121732 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00315753
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0119731
+CONVERGENCE CHECK:
+ VELOC.: ratio = 4.02275e-05; exp.ratio = 1e-06 abs = 1.09766e-06 exp.abs = 1e-08
+ PRESS.: ratio = 1.9474e-05; exp.ratio = 1e-06 abs = 0.00391307 exp.abs = 1e-08
+NR-Strategy: ATTENTION: max iterations ( 10 ) exceeded!
+FluidSolver: Fluid solver did not converge for step 7
+corresponding to time 0.7
+ 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000750218
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000134577
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.05129e+12; Expected ratio = 1e-06; Absolute norm = 60527.1; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000194069
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.3232e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.00749e+11; Expected ratio = 1e-06; Absolute norm = 17315.3; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00019678
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.1663e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 8.1713e+10; Expected ratio = 1e-06; Absolute norm = 4704.54; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000212123
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.108e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.95429e+10; Expected ratio = 1e-06; Absolute norm = 1125.16; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000194137
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.2459e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.68886e+09; Expected ratio = 1e-06; Absolute norm = 212.382; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000208428
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7966e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 5.72831e+08; Expected ratio = 1e-06; Absolute norm = 32.9802; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000200957
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7677e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 8.71784e+07; Expected ratio = 1e-06; Absolute norm = 5.01921; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000200107
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.5898e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.83525e+06; Expected ratio = 1e-06; Absolute norm = 0.105663; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000204442
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.5913e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1031.84; Expected ratio = 1e-06; Absolute norm = 5.9407e-05; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000196589
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6109e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.000578413; Expected ratio = 1e-06; Absolute norm = 3.33016e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 10 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00181267
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00419255
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.486683; exp.ratio = 1e-06 abs = 0.0150286 exp.abs = 1e-08
+ PRESS.: ratio = 0.376744; exp.ratio = 1e-06 abs = 64.8502 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00407461
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00389461
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.282689; exp.ratio = 1e-06 abs = 0.00900704 exp.abs = 1e-08
+ PRESS.: ratio = 0.120022; exp.ratio = 1e-06 abs = 21.8835 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00310641
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0038393
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0959321; exp.ratio = 1e-06 abs = 0.0031648 exp.abs = 1e-08
+ PRESS.: ratio = 0.0703421; exp.ratio = 1e-06 abs = 13.2313 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00312395
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00384937
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0270532; exp.ratio = 1e-06 abs = 0.000892556 exp.abs = 1e-08
+ PRESS.: ratio = 0.0264221; exp.ratio = 1e-06 abs = 5.04737 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00164263
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00447775
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.0143358; exp.ratio = 1e-06 abs = 0.00047243 exp.abs = 1e-08
+ PRESS.: ratio = 0.00561633; exp.ratio = 1e-06 abs = 1.07297 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00323513
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0038216
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00604451; exp.ratio = 1e-06 abs = 0.000199456 exp.abs = 1e-08
+ PRESS.: ratio = 0.00323562; exp.ratio = 1e-06 abs = 0.617382 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00300405
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00373707
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00408446; exp.ratio = 1e-06 abs = 0.000134831 exp.abs = 1e-08
+ PRESS.: ratio = 0.0019917; exp.ratio = 1e-06 abs = 0.380039 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00276573
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00372618
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00210238; exp.ratio = 1e-06 abs = 6.93917e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000970052; exp.ratio = 1e-06 abs = 0.185176 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00324708
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.00392912
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.00151577; exp.ratio = 1e-06 abs = 5.00268e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000774729; exp.ratio = 1e-06 abs = 0.147929 exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00315105
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0877365
+CONVERGENCE CHECK:
+ VELOC.: ratio = 0.000753426; exp.ratio = 1e-06 abs = 2.48672e-05 exp.abs = 1e-08
+ PRESS.: ratio = 0.000363828; exp.ratio = 1e-06 abs = 0.0694684 exp.abs = 1e-08
+NR-Strategy: ATTENTION: max iterations ( 10 ) exceeded!
+FluidSolver: Fluid solver did not converge for step 7
+corresponding to time 0.7
+ 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000229434
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000125637
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.70685e+10; Expected ratio = 1e-06; Absolute norm = 1558.44; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000214412
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.3855e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 4.83004e+09; Expected ratio = 1e-06; Absolute norm = 278.085; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000214309
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.3026e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.1317e+09; Expected ratio = 1e-06; Absolute norm = 180.305; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000208453
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.9525e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 2.40404e+09; Expected ratio = 1e-06; Absolute norm = 138.41; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000210746
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000103897
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.33347e+08; Expected ratio = 1e-06; Absolute norm = 19.1921; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000205877
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6549e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 3.90699e+08; Expected ratio = 1e-06; Absolute norm = 22.4941; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000214572
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.5865e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.86371e+07; Expected ratio = 1e-06; Absolute norm = 1.07301; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000206301
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.5711e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 1.32806e+07; Expected ratio = 1e-06; Absolute norm = 0.764618; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000194962
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6578e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 43120.1; Expected ratio = 1e-06; Absolute norm = 0.0024826; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000205605
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.5519e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 60.0886; Expected ratio = 1e-06; Absolute norm = 3.45954e-06; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000213263
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.6475e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = 0.000186152; Expected ratio = 1e-06; Absolute norm = 1.07175e-11; Expected norm =  1e-06]
+RESIDUAL CRITERION: Convergence is achieved
+NR-Strategy: Convergence achieved after 11 / 20 iterations
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00169142
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0668809
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = nan; exp.ratio = 1e-06 abs = nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00319368
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0649764
+CONVERGENCE CHECK:
+ VELOC.: ratio = nan; exp.ratio = 1e-06 abs = nan exp.abs = 1e-08
+ PRESS.: ratio = nan; exp.ratio = 1e-06 abs = nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00302992
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0755189
+CONVERGENCE CHECK:
+ VELOC.: ratio = nan; exp.ratio = 1e-06 abs = nan exp.abs = 1e-08
+ PRESS.: ratio = nan; exp.ratio = 1e-06 abs = nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00165418
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0654376
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00297895
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0635942
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00179801
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0683334
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00310155
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0732555
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00304926
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0594675
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00220989
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0607919
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00298677
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0603554
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+NR-Strategy: ATTENTION: max iterations ( 10 ) exceeded!
+FluidSolver: Fluid solver did not converge for step 7
+corresponding to time 0.7
+ 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000255615
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000128793
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000206625
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.6484e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000207959
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.2788e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000205154
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.0896e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000216908
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.3038e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000206877
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.239e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000198069
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.0371e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000195823
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.1095e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000204395
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.164e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000200615
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.221e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000197828
+ResidualBasedBlockBuilderAndSolver: System solve time: 9.7609e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00019796
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.1172e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000195304
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.0569e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000193173
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.0525e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000200261
+ResidualBasedBlockBuilderAndSolver: System solve time: 7.9845e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000206555
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000317168
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00038286
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.000301562
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000194329
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.2577e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000206136
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.1844e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+ResidualBasedBlockBuilderAndSolver: Build time: 0.000200984
+ResidualBasedBlockBuilderAndSolver: System solve time: 8.0648e-05
+SolvingStrategy:  MESH MOVED 
+RESIDUAL CRITERION:  :: [ Obtained ratio = nan; Expected ratio = 1e-06; Absolute norm = nan; Expected norm =  1e-06]
+NR-Strategy: ATTENTION: max iterations ( 20 ) exceeded!
+::[MechanicalSolver]::  Solver did not converge for step 7
+corresponding to time 0.7
+: 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00182419
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0622099
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00208319
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0593361
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00170523
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0777593
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = nan; exp.ratio = 1e-06 abs = nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00229968
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0604429
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00167604
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0589323
+CONVERGENCE CHECK:
+ VELOC.: ratio = nan; exp.ratio = 1e-06 abs = nan exp.abs = 1e-08
+ PRESS.: ratio = nan; exp.ratio = 1e-06 abs = nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0017315
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0660711
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00300191
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0675997
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00262185
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0585446
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00180018
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0965287
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ResidualBasedBlockBuilderAndSolver: Build time: 0.00338776
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.102464
+CONVERGENCE CHECK:
+ VELOC.: ratio = -nan; exp.ratio = 1e-06 abs = -nan exp.abs = 1e-08
+ PRESS.: ratio = nan; exp.ratio = 1e-06 abs = nan exp.abs = 1e-08
+ 
+[92m[1mCoSimulationAnalysis Time = 0.7000000000 | Step = 7[0m
+	[95m [96mCoupling iteration:  [1m1 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.628E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.000E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m2 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.043E-2 | abs_tol = [1m1e-05 || rel_norm = [1m6.406E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m3 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.504E-2 | abs_tol = [1m1e-05 || rel_norm = [1m9.237E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m4 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.022E-2 | abs_tol = [1m1e-05 || rel_norm = [1m6.276E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m5 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.993E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.224E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m6 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.076E-2 | abs_tol = [1m1e-05 || rel_norm = [1m6.609E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m7 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m8.063E-3 | abs_tol = [1m1e-05 || rel_norm = [1m4.953E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m8 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m2.723E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.673E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m9 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m1.388E-2 | abs_tol = [1m1e-05 || rel_norm = [1m8.526E-1 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m10 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+	[92m[1mSolveSolutionStep for Solver structure[0m
+[95m	Convergence for "[1mMESH_DISPLACEMENT" [91mNOT ACHIEVED[0m
+[95m	abs_norm = [1m2.998E-2 | abs_tol = [1m1e-05 || rel_norm = [1m1.842E+0 | rel_tol = [1m1e-05[0m 
+	[95m [96mCoupling iteration:  [1m11 / [94m12[0m
+	[92m[1mSolveSolutionStep for Solver fluid[0m
+NR-Strategy: ATTENTION: max iterations ( 10 ) exceeded!
+BuilderAndSolver: Clear Function called
+BuilderAndSolver: Clear Function called

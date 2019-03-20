@@ -1,5 +1,5 @@
 # co simulation imports
-from KratosMultiphysics.CoSimulationApplication.base_co_simulation_classes.co_simulation_base_coupled_solver import CoSimulationBaseCoupledSolver
+from KratosMultiphysics.CoSimulationApplication.base_classes.co_simulation_base_coupled_solver import CoSimulationBaseCoupledSolver
 import KratosMultiphysics.CoSimulationApplication.co_simulation_tools as cs_tools
 
 # Other imports
@@ -15,7 +15,7 @@ class GaussSeidelLooseCouplingSolver(CoSimulationBaseCoupledSolver):
             raise Exception(cs_tools.bcolors.FAIL + "Exactly two solvers have to be specified for the " + self.__class__.__name__ + "!")
 
         ### Importing the Participant modules
-        self.participants_setting_dict = self.full_settings["coupled_solver_settings"]["participants"]
+        self.participants_setting_dict = self.full_settings["coupled_solver_settings"]["coupling_sequence"]
         self.participating_solver_names = []
 
         #for p in range(0,self.number_of_participants) :

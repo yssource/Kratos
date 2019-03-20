@@ -5,7 +5,9 @@ def CreateConvergenceAccelerator(convergence_accelerator_settings, data):
     The convergence-accelerator-module has to be on the PYTHONPATH
     Naming-Convention: The module-file has to end with "_convergence_accelerator"
     """
+    folder_path = "KratosMultiphysics.CoSimulationApplication.co_simulation_convergence_accelerators."
     conv_acc_module_name = convergence_accelerator_settings["type"].GetString() + "_convergence_accelerator"
+    total_path = folder_path+conv_acc_module_name
+    accelerator_module = __import__(total_path,fromlist=[conv_acc_module_name])
 
-    accelerator_module = __import__(conv_acc_module_name)
     return accelerator_module.Create(convergence_accelerator_settings, data)

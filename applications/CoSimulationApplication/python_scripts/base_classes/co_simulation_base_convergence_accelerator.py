@@ -25,15 +25,15 @@ class CoSimulationBaseConvergenceAccelerator(object):
     def InitializeCouplingIteration(self):
         # Saving the previous data for the computation of the residual
         # and the computation of the solution update
-        self.prev_data = self.data.GetNumpyArray()
+        self.input_data = self.data.GetNumpyArray()
 
     def FinalizeCouplingIteration(self):
         pass
 
     def ComputeUpdate(self):
-        current_data = self.data.GetNumpyArray()
-        residual = current_data - self.prev_data
-        new_data = self.prev_data + self._ComputeUpdate(residual, self.prev_data)
+        output_data = self.data.GetNumpyArray()
+        residual = output_data - self.input_data
+        new_data = self.input_data + 0.01*self._ComputeUpdate(residual, self.input_data)
         self.data.ApplyUpdateToData(new_data)
 
     def PrintInfo(self):

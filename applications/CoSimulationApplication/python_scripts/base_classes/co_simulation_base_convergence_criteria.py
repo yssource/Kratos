@@ -62,7 +62,6 @@ class CoSimulationConvergenceCriteria(object):
     ## FinalizeSolutionStep : FinalizeSolutionStep function of the class.
     #                           To be called once at the end of the SolutionStep.
     #
-
     def FinalizeSolutionStep(self):
         pass
 
@@ -77,7 +76,7 @@ class CoSimulationConvergenceCriteria(object):
     #                           To be called once at the end of the non-linear coupling iteration.
     #
     def FinalizeCouplingIteration(self):
-        self.data_current_iter = self.data.GetNumpyArray()
+        #self.data_current_iter = self.data.GetNumpyArray()
         self.iteration = self.iteration + 1
 
 
@@ -85,16 +84,19 @@ class CoSimulationConvergenceCriteria(object):
     #                  To be called called when the convergence is to be enquired for this criteria
     #
     def IsConverged(self):
+        self.data_current_iter = self.data.GetNumpyArray()
+        norm_current_data = np.linalg.norm(self.data_current_iter)/np.sqrt(self.data_current_iter.size)
         residual = self._CalculateResidual()
-        abs_residual_norm = np.linalg.norm(residual)
+        abs_residual_norm = np.linalg.norm(residual) / np.sqrt(residual.size)
         if(abs_residual_norm == 0):
             abs_residual_norm = 1.0
         if(self.iteration == 1):
             self.initial_residual_norm = abs_residual_norm
 
         rel_residual_norm = abs_residual_norm / self.initial_residual_norm
+        #rel_residual_norm = abs_residual_norm / norm_current_data
 
-        is_converged = abs_residual_norm < self.abs_tolerance or rel_residual_norm < self.rel_tolerance
+        is_converged = abs_residual_norm < self.abs_tolerance*10 or rel_residual_norm < self.rel_tolerance*10
         if self.echo_level > 1:
             if is_converged:
                 info_msg = cs_tools.bcolors.GREEN+ "ACHIEVED"

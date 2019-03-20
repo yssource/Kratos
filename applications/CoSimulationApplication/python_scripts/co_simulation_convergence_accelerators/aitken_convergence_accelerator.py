@@ -5,16 +5,15 @@ from __future__ import print_function, absolute_import, division
 # Date: Feb. 20, 2017
 
 # Importing the base class
-from co_simulation_base_convergence_accelerator import CoSimulationBaseConvergenceAccelerator
+from KratosMultiphysics.CoSimulationApplication.base_classes.co_simulation_base_convergence_accelerator import CoSimulationBaseConvergenceAccelerator
 
 # Other imports
 import numpy as np
 from copy import deepcopy
 from collections import deque
-from co_simulation_tools import red, classprint
 
-def Create(settings, solvers, level):
-    return Aitken(settings, solvers, level)
+def Create(settings, data):
+    return Aitken(settings, data)
 
 ## Class Aitken.
 # This class contains the implementation of Aitken relaxation and helper functions.
@@ -23,8 +22,8 @@ class Aitken(CoSimulationBaseConvergenceAccelerator):
     ## The constructor.
     # @param init_alpha Initial relaxation factor in the first time step.
     # @param init_alpha_max Maximum relaxation factor for the first iteration in each time step
-    def __init__( self, settings, solvers, level ):
-        super(Aitken, self).__init__(settings, solvers, level)
+    def __init__( self, settings, data ):
+        super(Aitken, self).__init__(settings, data)
         self.R = deque( maxlen = 2 )
         if "init_alpha" in self.settings:
             self.alpha_old = self.settings["init_alpha"]
@@ -47,7 +46,7 @@ class Aitken(CoSimulationBaseConvergenceAccelerator):
         if k == 0:
             alpha = min( self.alpha_old, self.init_alpha_max )
             if self.echo_level > 3:
-                classprint(self.lvl, self._Name(), ": Doing relaxation in the first iteration with initial factor = " + "{0:.1g}".format(alpha))
+                print(self._Name(), ": Doing relaxation in the first iteration with initial factor = " + "{0:.1g}".format(alpha))
             return alpha * r
         else:
             r_diff = self.R[0] - self.R[1]
@@ -55,15 +54,15 @@ class Aitken(CoSimulationBaseConvergenceAccelerator):
             denominator = np.inner( r_diff, r_diff )
             alpha = -self.alpha_old * numerator/denominator
             if self.echo_level > 3:
-                classprint(self.lvl, self._Name(), ": Doing relaxation with factor = " + "{0:.1g}".format(alpha))
-            if alpha > 20:
-                alpha = 20
+                print(self._Name(), ": Doing relaxation with factor = " + "{0:.1g}".format(alpha))
+            if alpha > 2:
+                alpha = 2
                 if self.echo_level > 0:
-                    classprint(self.lvl, self._Name(), ": "+ red("WARNING: dynamic relaxation factor reaches upper bound: 20"))
+                    print(self._Name(), ": "+ "WARNING: dynamic relaxation factor reaches upper bound: 20")
             elif alpha < -2:
                 alpha = -2
                 if self.echo_level > 0:
-                    classprint(self.lvl, self._Name(), ": " + red("WARNING: dynamic relaxation factor reaches lower bound: -2"))
+                    print(self._Name(), ": " + "WARNING: dynamic relaxation factor reaches lower bound: -2")
             delta_x = alpha * self.R[0]
         self.alpha_old = alpha
 

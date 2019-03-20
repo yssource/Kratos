@@ -42,27 +42,41 @@ class EcaManufacturedSolution(ManufacturedSolution):
     def BodyForce(self, x1, x2, x3, t):
         x = x1 / self.L
         y = x2 / self.L
+        z = 0
         t = t / self.T
 
+        self.CheckIsInsideDomain(x, y)
+        self.InitializeAuxiliaryValues(x, y, t)
+
+        return super(EcaManufacturedSolution, self).BodyForce(x, y, z, t)
+
+    def Velocity(self, x1, x2, x3, t):
+        x = x1 / self.L
+        y = x2 / self.L
+        z = 0
+        t = t / self.T
+
+        self.CheckIsInsideDomain(x, y)
+        self.InitializeAuxiliaryValues(x, y, t)
+
+        return super(EcaManufacturedSolution, self).Velocity(x, y, z, t)
+
+    def CheckIsInsideDomain(self, x, y):
         if not (0.5 <= x and x <= 1 and 0 <= y and y <= 1):
             message = 'The coordinates must be (x, y) = (x1/L, x2/L) in [0.5, 1] X [0, 0.5]'
             message += 'The input was (x, y) = (' + str(x) + ', ' + str(y) + ')'
             message += 'with L = ' + str(self.L) + '.'
             raise ValueError(message)
 
-        self.eta = Eta(x, y)
-        pi = np.pi
+    def InitializeAuxiliaryValues(self, x, y, t):
+        self.eta = self.Eta(x, y)
         self.exp_minus_eta_2 = np.exp(- self.eta**2)
-        self.exp_minus_B_y = np.exp(- B*y)
+        self.exp_minus_B_y = np.exp(- self.B*y)
         self.exp_minus_2_dot_5_t = np.exp(- 2.5 * t)
-        self.sin_1_2x = np.sin((1 - 2*x) * pi)
-        self.cos_1_2x = np.cos((1 - 2*x) * pi)
-        self.cos_2pit = np.cos(2*pi * t)
-        self.sin_2pit = np.sin(2*pi * t)
-
-        return [self.body_force1(x, y, t),
-                self.body_force2(x, y, t),
-                self.body_force3(x, y, t)]
+        self.sin_1_2x = np.sin((1 - 2*x) * np.pi)
+        self.cos_1_2x = np.cos((1 - 2*x) * np.pi)
+        self.cos_2pit = np.cos(2*np.pi * t)
+        self.sin_2pit = np.sin(2*np.pi * t)
 
     def Eta(self, x, y):
         return self.sigma * y / x

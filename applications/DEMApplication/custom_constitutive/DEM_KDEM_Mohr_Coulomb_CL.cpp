@@ -65,15 +65,147 @@ namespace Kratos {
         return u1;
     }
 
+    void DEM_KDEM_Mohr_Coulomb::CalculateNormalForces(double LocalElasticContactForce[3],
+            const double kn_el,
+            double equiv_young,
+            double indentation,
+            double calculation_area,
+            double& acumulated_damage,
+            SphericContinuumParticle* element1,
+            SphericContinuumParticle* element2,
+            int i_neighbour_count,
+            int time_steps) {
+
+        KRATOS_TRY
+
+        if (indentation >= 0.0) { //COMPRESSION
+            LocalElasticContactForce[2] = kn_el * indentation;
+        }
+        else { //tension
+            int& failure_type = element1->mIniNeighbourFailureId[i_neighbour_count];
+            if (failure_type == 0) {
+                LocalElasticContactForce[2] = kn_el * indentation;
+            }
+            else {
+                LocalElasticContactForce[2] = 0.0;
+            }
+        }
+
+        KRATOS_CATCH("")
+    }
+
+    void DEM_KDEM_Mohr_Coulomb::CalculateTangentialForces(double OldLocalElasticContactForce[3],
+            double LocalElasticContactForce[3],
+            double LocalElasticExtraContactForce[3],
+            double LocalCoordSystem[3][3],
+            double LocalDeltDisp[3],
+            const double kt_el,
+            const double equiv_shear,
+            double& contact_sigma,
+            double& contact_tau,
+            double indentation,
+            double calculation_area,
+            double& failure_criterion_state,
+            SphericContinuumParticle* element1,
+            SphericContinuumParticle* element2,
+            int i_neighbour_count,
+            bool& sliding,
+            int search_control,
+            DenseVector<int>& search_control_vector,
+            const ProcessInfo& r_process_info) {
+
+        KRATOS_TRY
+
+        int& failure_type = element1->mIniNeighbourFailureId[i_neighbour_count];
+        LocalElasticContactForce[0] = OldLocalElasticContactForce[0] - kt_el * LocalDeltDisp[0]; // 0: first tangential
+        LocalElasticContactForce[1] = OldLocalElasticContactForce[1] - kt_el * LocalDeltDisp[1]; // 1: second tangential
+
+        double ShearForceNow = sqrt(LocalElasticContactForce[0] * LocalElasticContactForce[0]
+                                  + LocalElasticContactForce[1] * LocalElasticContactForce[1]);
+
+        if (failure_type == 0) { // This means it has not broken
+            if (r_process_info[SHEAR_STRAIN_PARALLEL_TO_BOND_OPTION]) { //TODO: use this only for intact bonds (not broken))
+                AddContributionOfShearStrainParallelToBond(OldLocalElasticContactForce, LocalElasticExtraContactForce, element1->mNeighbourElasticExtraContactForces[i_neighbour_count], LocalCoordSystem, kt_el, calculation_area,  element1, element2);
+            }
+            contact_tau = ShearForceNow / calculation_area;
+            contact_sigma = LocalElasticContactForce[2] / calculation_area;
+        }
+        else {
+            const double equiv_tg_of_fri_ang = 0.5 * (element1->GetTgOfFrictionAngle() + element2->GetTgOfFrictionAngle());
+            double Frictional_ShearForceMax = equiv_tg_of_fri_ang * LocalElasticContactForce[2];
+
+            if (Frictional_ShearForceMax < 0.0) {
+                Frictional_ShearForceMax = 0.0;
+            }
+
+            if ((ShearForceNow > Frictional_ShearForceMax) && (ShearForceNow != 0.0)) {
+                LocalElasticContactForce[0] = (Frictional_ShearForceMax / ShearForceNow) * LocalElasticContactForce[0];
+                LocalElasticContactForce[1] = (Frictional_ShearForceMax / ShearForceNow) * LocalElasticContactForce[1];
+                sliding = true;
+            }
+        }
+
+        KRATOS_CATCH("")
+    }
+
     void DEM_KDEM_Mohr_Coulomb::CheckFailure(const int i_neighbour_count, SphericContinuumParticle* element1, SphericContinuumParticle* element2){
 
         int& failure_type = element1->mIniNeighbourFailureId[i_neighbour_count];
 
         if (failure_type == 0) {
-            BoundedMatrix<double, 3, 3> average_stress_tensor = ZeroMatrix(3,3);
+            int use_element_tensor_1, use_element_tensor_2 = 0;
+
+            if(element1->IsSkin() && element2->IsSkin()) {
+                if (element1->IsNot(DEMFlags::COPIED_STRESS_TENSOR) &&  element1->IsNot(DEMFlags::COPIED_STRESS_TENSOR)) {
+                    if(element2->IsNot(DEMFlags::COPIED_STRESS_TENSOR) &&  element2->IsNot(DEMFlags::COPIED_STRESS_TENSOR)) {
+                        use_element_tensor_1 = 0;
+                        use_element_tensor_2 = 0;
+                    }
+                    else {
+                        use_element_tensor_1 = 0;
+                        use_element_tensor_2 = 1;
+                    }
+                }
+                else {
+                    if (element2->IsNot(DEMFlags::COPIED_STRESS_TENSOR) &&  element2->IsNot(DEMFlags::COPIED_STRESS_TENSOR)) {
+                        use_element_tensor_1 = 1;
+                        use_element_tensor_2 = 0;
+                    }
+                    else {
+                        use_element_tensor_1 = 1;
+                        use_element_tensor_2 = 1;
+                    }
+                }
+            }
+            else {
+                if (element1->IsSkin()) {
+                    use_element_tensor_1 = 0;
+                    use_element_tensor_2 = 1;
+                }
+                else {
+                    use_element_tensor_1 = 1;
+                    use_element_tensor_2 = 0;
+                }
+            }
+
+            CheckMohrCoulombFailure(i_neighbour_count, element1, element2, use_element_tensor_1, use_element_tensor_2);
+        }
+    }
+
+    void DEM_KDEM_Mohr_Coulomb::CheckMohrCoulombFailure(const int i_neighbour_count, SphericContinuumParticle* element1, SphericContinuumParticle* element2, int use_element_tensor_1, int use_element_tensor_2) {
+        Properties& element1_props = element1->GetProperties();
+        Properties& element2_props = element2->GetProperties();
+
+        if ( !use_element_tensor_1 && !use_element_tensor_2) {
+            const double mohr_coulomb_c = 1e6 * 0.5*(element1_props[INTERNAL_COHESION] + element2_props[INTERNAL_COHESION]);
+
+        }
+        else {
+            Matrix average_stress_tensor = ZeroMatrix(3,3);
+            double factor = 1.0 / (use_element_tensor_1 + use_element_tensor_2);
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 3; j++) {
-                    average_stress_tensor(i,j) = 0.5 * ((*(element1->mSymmStressTensor))(i,j) + (*(element2->mSymmStressTensor))(i,j));
+                    average_stress_tensor(i,j) = factor * (use_element_tensor_1 *(*(element1->mSymmStressTensor))(i,j) + use_element_tensor_2 *(*(element2->mSymmStressTensor))(i,j));
                 }
             }
 
@@ -94,11 +226,10 @@ namespace Kratos {
             const double function_value = (max_stress - min_stress) + (max_stress + min_stress) * sinphi - 2.0 * mohr_coulomb_c * cosphi;
 
             if(function_value > 0) {
+                int& failure_type = element1->mIniNeighbourFailureId[i_neighbour_count];
                 failure_type = 4;
             }
-
         }
-
     }
 
     bool DEM_KDEM_Mohr_Coulomb::CheckRequirementsOfStressTensor() {

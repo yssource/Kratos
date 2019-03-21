@@ -61,6 +61,17 @@ class EcaManufacturedSolution(ManufacturedSolution):
 
         return super(EcaManufacturedSolution, self).Velocity(x, y, z, t)
 
+    def Pressure(self, x1, x2, x3, t):
+        x = x1 / self.L
+        y = x2 / self.L
+        z = 0
+        t = t / self.T
+
+        self.CheckIsInsideDomain(x, y)
+        self.InitializePressureAuxiliaryValues(x, y, t)
+
+        return super(EcaManufacturedSolution, self).Pressure(x, y, z, t)
+
     def CheckIsInsideDomain(self, x, y):
         if not (0.5 <= x and x <= 1 and 0 <= y and y <= 1):
             message = 'The coordinates must be (x, y) = (x1/L, x2/L) in [0.5, 1] X [0, 0.5]'
@@ -92,7 +103,7 @@ class EcaManufacturedSolution(ManufacturedSolution):
 
     def dfp(self, t):
         pi = np.pi
-        return 2*pì * self.sin_2pit
+        return 2*pi * self.sin_2pit
 
     def f(self, t):
         if self.is_periodic:
@@ -194,3 +205,24 @@ class EcaManufacturedSolution(ManufacturedSolution):
         pi = np.pi
         eta = self.eta
         return 2/self.sqrt_pi * self.sigma*x2/x1**2 * self.exp_minus_eta_2 * (1 - eta**2) + 2*A*pi*self.exp_minus_B_y * self.cos_1_2x * (1 - x2 * B) * self.f(t)
+
+    # Pressure and derivatives
+
+    def p(self, x1, x2, t):
+        return 50 * np.log(self.pxa(x1)) * np.log(self.pya(x2)) - 0.05 * np.sin(pxb(x1) * np.pi / 2) * sin(pyb(x2) * np.pi / 2) * self.f(t)
+
+    @staticmethod
+    def pxa(x):
+        return x**3/3 - 3*x**2/4 + x/2 + 11/12
+
+    @staticmethod
+    def pya(y):
+        return y**2/2 + 7/8
+
+    @staticmethod
+    def pxb(x):
+        return (4*x - 3)**4 - 2*(4*x - 3)**2 + 1
+
+    @staticmethod
+    def pyb(y):
+        return 16*y**3 - 12*y**2 + 1

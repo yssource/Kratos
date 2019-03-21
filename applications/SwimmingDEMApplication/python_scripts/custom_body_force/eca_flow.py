@@ -96,7 +96,7 @@ class EcaManufacturedSolution(ManufacturedSolution):
         return 1. - self.exp_minus_2_dot_5_t
 
     def fp(self, t):
-        return 1 - self.self.cos_2pit
+        return 1 - self.cos_2pit
 
     def dfe(self, t):
         return 2.5 * self.exp_minus_2_dot_5_t

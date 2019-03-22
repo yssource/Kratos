@@ -6,7 +6,7 @@ Begin Properties 0
 End Properties
 
 Begin Properties 1
-    DENSITY 95.60
+    DENSITY 956.0
     DYNAMIC_VISCOSITY 0.145
 End Properties
 

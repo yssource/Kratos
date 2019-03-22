@@ -87,10 +87,14 @@
             "model_part_name" : "FluidModelPart.NoSlip2D_Bottom"
         }
     },{
-        "python_module" : "apply_noslip_process",
-        "kratos_module" : "KratosMultiphysics.FluidDynamicsApplication",
+        "python_module" : "fix_vector_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "help"          : "This process fixes the selected components of a given vector variable",
+        "process_name"  : "AssignVectorVariableProcess",
         "Parameters"    : {
-            "model_part_name" : "FluidModelPart.NoSlip2D_FSI"
+            "model_part_name" : "FluidModelPart.NoSlip2D_FSI",
+            "variable_name"   : "VELOCITY",
+            "constrained"      : [true, true, true]
         }
     },{
         "python_module" : "apply_slip_process",
@@ -122,7 +126,6 @@
                 "variable_name"   : "MESH_DISPLACEMENT",
                 "constrained"      : [true, true, true]
             }
-
         },{
             "python_module" : "fix_vector_variable_process",
             "kratos_module" : "KratosMultiphysics",
@@ -264,7 +267,7 @@
             "output_control_type"                : "step",
             "output_frequency"                   : 1,
             "folder_name"                        : "vtk_output",
-            "nodal_solution_step_data_variables" : ["VELOCITY","PRESSURE","MESH_DISPLACEMENT"]
+            "nodal_solution_step_data_variables" : ["VELOCITY","PRESSURE","MESH_DISPLACEMENT","MESH_VELOCITY","REACTION"]
             }
         }
         ]

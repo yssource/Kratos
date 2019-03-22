@@ -7,6 +7,24 @@ from custom_body_force.manufactured_solution import ManufacturedSolution
 def CreateManufacturedSolution(custom_settings):
     return EcaManufacturedSolution(custom_settings)
 
+def sin_1_2x(x):
+    return np.sin((1 - 2 * x) * np.pi)
+
+def cos_1_2x(x):
+    return np.cos((1 - 2 * x) * np.pi)
+
+def pxa(x):
+    return x**3/3 - 3*x**2/4 + x/2 + 11/12
+
+def pya(y):
+    return y**2/2 + 7/8
+
+def pxb(x):
+    return (4*x - 3)**4 - 2*(4*x - 3)**2 + 1
+
+def pyb(y):
+    return 16*y**3 - 12*y**2 + 1
+
 class EcaManufacturedSolution(ManufacturedSolution):
 
     def __init__(self, settings):
@@ -37,7 +55,6 @@ class EcaManufacturedSolution(ManufacturedSolution):
         self.B = settings["B"].GetDouble()
         self.is_periodic = settings["is_periodic"].GetBool()
         self.T = self.U1 / self.L
-        self.sqrt_pi = np.sqrt(np.pi)
 
     def BodyForce(self, x1, x2, x3, t):
         x = x1 / self.L
@@ -46,7 +63,6 @@ class EcaManufacturedSolution(ManufacturedSolution):
         t = t / self.T
 
         self.CheckIsInsideDomain(x, y)
-        self.InitializeAuxiliaryValues(x, y, t)
 
         return super(EcaManufacturedSolution, self).BodyForce(x, y, z, t)
 
@@ -57,7 +73,6 @@ class EcaManufacturedSolution(ManufacturedSolution):
         t = t / self.T
 
         self.CheckIsInsideDomain(x, y)
-        self.InitializeAuxiliaryValues(x, y, t)
 
         return super(EcaManufacturedSolution, self).Velocity(x, y, z, t)
 
@@ -68,7 +83,6 @@ class EcaManufacturedSolution(ManufacturedSolution):
         t = t / self.T
 
         self.CheckIsInsideDomain(x, y)
-        self.InitializePressureAuxiliaryValues(x, y, t)
 
         return super(EcaManufacturedSolution, self).Pressure(x, y, z, t)
 
@@ -79,31 +93,22 @@ class EcaManufacturedSolution(ManufacturedSolution):
             message += 'with L = ' + str(self.L) + '.'
             raise ValueError(message)
 
-    def InitializeAuxiliaryValues(self, x, y, t):
-        self.eta = self.Eta(x, y)
-        self.exp_minus_eta_2 = np.exp(- self.eta**2)
-        self.exp_minus_B_y = np.exp(- self.B*y)
-        self.exp_minus_2_dot_5_t = np.exp(- 2.5 * t)
-        self.sin_1_2x = np.sin((1 - 2*x) * np.pi)
-        self.cos_1_2x = np.cos((1 - 2*x) * np.pi)
-        self.cos_2pit = np.cos(2*np.pi * t)
-        self.sin_2pit = np.sin(2*np.pi * t)
-
     def Eta(self, x, y):
         return self.sigma * y / x
 
+    # Time dependant functions
+
     def fe(self, t):
-        return 1. - self.exp_minus_2_dot_5_t
+        return 1.0 - np.exp(-2.5 * t)
 
     def fp(self, t):
-        return 1 - self.cos_2pit
+        return 1.0 - np.cos(2 * np.pi * t)
 
     def dfe(self, t):
-        return 2.5 * self.exp_minus_2_dot_5_t
+        return 2.5 * np.exp(-2.5 * t)
 
     def dfp(self, t):
-        pi = np.pi
-        return 2*pi * self.sin_2pit
+        return 2 * np.pi * np.sin(2 * np.pi * t)
 
     def f(self, t):
         if self.is_periodic:
@@ -117,23 +122,27 @@ class EcaManufacturedSolution(ManufacturedSolution):
         else:
             return self.dfe(t)
 
+    # Velocity and derivatives
+
     def uxa(self, x1, x2, t):
-        return math.erf(self.eta)
+        eta = self.Eta(x1, x2)
+        return math.erf(eta)
 
     def uxb(self, x1, x2, t):
         A = self.A
         B = self.B
-        pi = np.pi
-        return A*x2 * self.exp_minus_B_y * self.sin_1_2x
+        return A * x2 * np.exp(-B * x2) * sin_1_2x(x1)
 
     def uya(self, x1, x2, t):
-        return 1.0 / (self.sigma * self.sqrt_pi) * (1.0 - self.exp_minus_eta_2)
+        eta = self.Eta(x1, x2)
+        sqrt_pi = np.sqrt(np.pi)
+        return 1.0 / (self.sigma * sqrt_pi) * (1.0 - np.exp(-eta**2))
 
     def uyb(self, x1, x2, t):
         A = self.A
         B = self.B
         pi = np.pi
-        return 2*A*pi / B**2 * self.cos_1_2x * (1 - self.exp_minus_B_y * (B*x2 + 1))
+        return 2 * A * pi / B**2 * cos_1_2x(x1) * (1 - np.exp(-B * x2) * (B * x2 + 1))
 
     def u1(self, x1, x2, t):
         return self.uxa(x1, x2, t) + self.uxb(x1, x2, t) * self.f(t)
@@ -149,80 +158,83 @@ class EcaManufacturedSolution(ManufacturedSolution):
 
     def du11(self, x1, x2, t):
         sigma = self.sigma
+        eta = self.Eta(x1, x2)
         A = self.A
         B = self.B
         pi = np.pi
-        return - 2/self.sqrt_pi * sigma*x2/x1**2 * self.exp_minus_eta_2 - 2*pi*A*x2 * self.exp_minus_B_y * self.cos_1_2x * self.f(t)
+        sqrt_pi = np.sqrt(np.pi)
+        return - 2/sqrt_pi * sigma*x2/x1**2 * np.exp(-eta**2) - 2*pi*A*x2 * np.exp(-B * x2) * cos_1_2x(x1) * self.f(t)
 
     def du12(self, x1, x2, t):
+        sigma = self.sigma
+        eta = self.Eta(x1, x2)
         A = self.A
         B = self.B
         pi = np.pi
-        return 2/self.sqrt_pi * self.sigma/x1 * self.exp_minus_eta_2 + A * self.exp_minus_B_y * self.sin_1_2x * (1 - B*x2) * self.f(t)
+        sqrt_pi = np.sqrt(np.pi)
+        return 2/sqrt_pi * sigma/x1 * np.exp(-eta**2) + A*np.exp(-B*x2) * sin_1_2x(x1) * (1 - B*x2) * self.f(t)
 
     def du21(self, x1, x2, t):
         sigma = self.sigma
+        eta = self.Eta(x1, x2)
         A = self.A
         B = self.B
         pi = np.pi
-        return - 2/self.sqrt_pi * sigma*x2**2/x1**3 * self.exp_minus_eta_2 + 4*A*pi**2/B**2 * self.sin_1_2x * (1 - self.exp_minus_B_y * (B*x2 + 1)) * self.f(t)
+        sqrt_pi = np.sqrt(np.pi)
+        return - 2/sqrt_pi * sigma*x2**2/x1**3 * np.exp(-eta**2) + 4*A*pi**2/B**2 * sin_1_2x(x1) * (1 - np.exp(-B*x2) * (B*x2 + 1)) * self.f(t)
 
     def du22(self, x1, x2, t):
         sigma = self.sigma
+        eta = self.Eta(x1, x2)
         A = self.A
         B = self.B
         pi = np.pi
-        return 2/self.sqrt_pi * self.sigma*x2/x1**2 * self.exp_minus_eta_2 + 2*pi*A*x2 * self.exp_minus_B_y * self.cos_1_2x * self.f(t)
+        sqrt_pi = np.sqrt(np.pi)
+        return 2/sqrt_pi * sigma*x2/x1**2 * np.exp(-eta**2) + 2*pi*A*x2 * np.exp(-B*x2) * cos_1_2x(x1) * self.f(t)
 
     def du111(self, x1, x2, t):
         sigma = self.sigma
+        eta = self.Eta(x1, x2)
         A = self.A
         B = self.B
         pi = np.pi
-        eta = self.eta
-        return 4/self.sqrt_pi * eta/x1**2 * self.exp_minus_eta_2 * (1 - eta**2) - 4*pi**2*A*x2 * self.exp_minus_B_y * self.sin_1_2x * self.f(t)
+        sqrt_pi = np.sqrt(np.pi)
+        return 4/sqrt_pi * eta/x1**2 * np.exp(-eta**2) * (1 - eta**2) - 4*pi**2*A*x2 * np.exp(-B*x2) * sin_1_2x(x1) * self.f(t)
 
     def du122(self, x1, x2, t):
         sigma = self.sigma
+        eta = self.Eta(x1, x2)
         A = self.A
         B = self.B
         pi = np.pi
-        eta = self.eta
-        return - 4/self.sqrt_pi * (sigma/x1)**2 * eta * self.exp_minus_eta_2 + A*B * self.exp_minus_B_y * self.sin_1_2x * (x2*B - 2) * self.f(t)
+        sqrt_pi = np.sqrt(np.pi)
+        return - 4/sqrt_pi * (sigma/x1)**2 * eta * np.exp(-eta**2) + A*B * np.exp(-B*x2) * sin_1_2x(x1) * (x2*B - 2) * self.f(t)
 
     def du211(self, x1, x2, t):
         sigma = self.sigma
+        eta = self.Eta(x1, x2)
         A = self.A
         B = self.B
         pi = np.pi
-        eta = self.eta
-        return 2/self.sqrt_pi * self.sigma*x2**2/x1**4 * self.exp_minus_eta_2 * (3 - 2*eta**2) + 8*A*pi**3/B**2 * self.cos_1_2x * (self.exp_minus_B_y * (B*x2 + 1) - 1) * self.f(t)
+        sqrt_pi = np.sqrt(np.pi)
+        return 2/sqrt_pi * sigma*x2**2/x1**4 * np.exp(-eta**2) * (3 - 2*eta**2) + 8*A*pi**3/B**2 * cos_1_2x(x1) * (np.exp(-B*x2) * (B*x2 + 1) - 1) * self.f(t)
 
     def du222(self, x1, x2, t):
         sigma = self.sigma
+        eta = self.Eta(x1, x2)
         A = self.A
         B = self.B
         pi = np.pi
-        eta = self.eta
-        return 2/self.sqrt_pi * self.sigma*x2/x1**2 * self.exp_minus_eta_2 * (1 - eta**2) + 2*A*pi*self.exp_minus_B_y * self.cos_1_2x * (1 - x2 * B) * self.f(t)
+        sqrt_pi = np.sqrt(np.pi)
+        return 2/sqrt_pi * sigma/x1**2 * np.exp(-eta**2) * (1 - eta**2) + 2*A*pi*np.exp(-B*x2) * cos_1_2x(x1) * (1 - B*x2) * self.f(t)
 
     # Pressure and derivatives
 
     def p(self, x1, x2, t):
-        return 50 * np.log(self.pxa(x1)) * np.log(self.pya(x2)) - 0.05 * np.sin(pxb(x1) * np.pi / 2) * sin(pyb(x2) * np.pi / 2) * self.f(t)
+        return self.Cpa(x1, x2) + self.Cpb(x1, x2) * self.f(t)
 
-    @staticmethod
-    def pxa(x):
-        return x**3/3 - 3*x**2/4 + x/2 + 11/12
+    def Cpa(self, x1, x2):
+        return 50 * np.log(pxa(x1)) * np.log(pya(x2)) 
 
-    @staticmethod
-    def pya(y):
-        return y**2/2 + 7/8
-
-    @staticmethod
-    def pxb(x):
-        return (4*x - 3)**4 - 2*(4*x - 3)**2 + 1
-
-    @staticmethod
-    def pyb(y):
-        return 16*y**3 - 12*y**2 + 1
+    def Cpb(self, x1, x2):
+        return - 0.05 * np.sin(pxb(x1) * np.pi / 2) * sin(pyb(x2) * np.pi / 2)

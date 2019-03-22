@@ -7,8 +7,8 @@
 //
 //
 
-#if !defined(KRATOS_CASM_MCC_SOIL_MODEL_H_INCLUDED )
-#define      KRATOS_CASM_MCC_SOIL_MODEL_H_INCLUDED
+#if !defined(KRATOS_NONLOCAL_CASM_MCC_SOIL_MODEL_H_INCLUDED )
+#define      KRATOS_NONLOCAL_CASM_MCC_SOIL_MODEL_H_INCLUDED
 
 // System includes
 
@@ -49,7 +49,7 @@ namespace Kratos
    /// Short class definition.
    /** Detail class definition.
     */
-   class KRATOS_API(CONSTITUTIVE_MODELS_APPLICATION) CasmMCCSoilModel : public CasmBaseSoilModel<BorjaModel, CasmYieldSurface<CasmHardeningRule> >
+   class KRATOS_API(CONSTITUTIVE_MODELS_APPLICATION) NonlocalCasmMCCSoilModel : public CasmBaseSoilModel<BorjaModel, CasmYieldSurface<CasmHardeningRule> >
    {
       public:
 
@@ -79,25 +79,25 @@ namespace Kratos
          typedef BaseType::InternalVariablesType     InternalVariablesType;
 
 
-         /// Pointer definition of CasmMCCSoilModel
-         KRATOS_CLASS_POINTER_DEFINITION( CasmMCCSoilModel );
+         /// Pointer definition of NonlocalCasmMCCSoilModel
+         KRATOS_CLASS_POINTER_DEFINITION( NonlocalCasmMCCSoilModel );
 
          ///@}
          ///@name Life Cycle
          ///@{
 
          /// Default constructor.
-         CasmMCCSoilModel() : BaseType() {
+         NonlocalCasmMCCSoilModel() : BaseType() {
             ModifiedCamClayPlasticPotential<CasmHardeningRule> Object;
             YieldSurface<CasmHardeningRule>::Pointer pPlasticPotential = Object.Clone();
             mYieldSurface = CasmYieldSurface<CasmHardeningRule>( pPlasticPotential);
          }
 
          /// Copy constructor.
-         CasmMCCSoilModel(CasmMCCSoilModel const& rOther) : BaseType(rOther) {}
+         NonlocalCasmMCCSoilModel(NonlocalCasmMCCSoilModel const& rOther) : BaseType(rOther) {}
 
          /// Assignment operator.
-         CasmMCCSoilModel& operator=(CasmMCCSoilModel const& rOther)
+         NonlocalCasmMCCSoilModel& operator=(NonlocalCasmMCCSoilModel const& rOther)
          {
             BaseType::operator=(rOther);
             return *this;
@@ -106,11 +106,11 @@ namespace Kratos
          /// Clone.
          ConstitutiveModel::Pointer Clone() const override
          {
-            return Kratos::make_shared<CasmMCCSoilModel>(*this);
+            return Kratos::make_shared<NonlocalCasmMCCSoilModel>(*this);
          }
 
          /// Destructor.
-         ~CasmMCCSoilModel() override {}
+         ~NonlocalCasmMCCSoilModel() override {}
 
 
          ///@}
@@ -151,21 +151,6 @@ namespace Kratos
             return false;
          }
 
-         /**
-          * Set Values
-          */
-         void SetValue(const Variable<double>& rVariable,
-               const double& rValue,
-               const ProcessInfo& rCurrentProcessInfo) override 
-         {
-            KRATOS_TRY
-
-            if ( rVariable == NONLOCAL_PLASTIC_VOL_DEF) {
-               mInternal.Variables[4] = rValue;
-            }
-
-            KRATOS_CATCH("")
-         }
 
          /**
           * Get Values
@@ -181,10 +166,33 @@ namespace Kratos
             {
                rValue = this->mInternal.Variables[1];
             }
+            else if (rThisVariable==NONLOCAL_PLASTIC_VOL_DEF)
+            {
+               rValue = this->mInternal.Variables[8];
+            }
+            else if ( rThisVariable == NONLOCAL_PLASTIC_VOL_DEF_ABS) {
+               rValue = std::fabs( this->mInternal.Variables[8] );
+            }
             else {
                rValue = CasmBaseSoilModel::GetValue( rThisVariable, rValue);
             }
             return rValue;
+
+            KRATOS_CATCH("")
+         }
+
+         /**
+          * Set Values
+          */
+         void SetValue(const Variable<double>& rVariable,
+               const double& rValue,
+               const ProcessInfo& rCurrentProcessInfo) override 
+         {
+            KRATOS_TRY
+
+            if ( rVariable == NONLOCAL_PLASTIC_VOL_DEF) {
+               mInternal.Variables[8] = rValue;
+            }
 
             KRATOS_CATCH("")
          }
@@ -202,20 +210,20 @@ namespace Kratos
          std::string Info() const override
          {
             std::stringstream buffer;
-            buffer << "CasmMCCSoilModel" ;
+            buffer << "NonlocalCasmMCCSoilModel" ;
             return buffer.str();
          }
 
          /// Print information about this object.
          void PrintInfo(std::ostream& rOStream) const override
          {
-            rOStream << "CasmMCCSoilModel";
+            rOStream << "NonlocalCasmMCCSoilModel";
          }
 
          /// Print object's data.
          void PrintData(std::ostream& rOStream) const override
          {
-            rOStream << "CasmMCCSoilModel Data";
+            rOStream << "NonlocalCasmMCCSoilModel Data";
          }
 
 
@@ -230,6 +238,48 @@ namespace Kratos
          ///@name Protected static Member Variables
          ///@{
 
+            // Calculate Stress and constitutive tensor
+            void CalculateStressAndConstitutiveTensors(ModelDataType& rValues, MatrixType& rStressMatrix, Matrix& rConstitutiveMatrix) override
+            {
+               KRATOS_TRY
+
+               { // modify the internal variables to make it nonlocal
+               }
+
+               double LocalPlasticVolStrain = mInternal.Variables[1];
+               double NonLocalPlasticVolStrain = mInternal.Variables[8];
+               mInternal.Variables[1] = mInternal.Variables[8];
+
+               // integrate "analytically" ps and pt from plastic variables. Then update the internal variables.
+
+               PlasticDataType Variables;
+               this->InitializeVariables( rValues, Variables);
+
+               const ModelDataType & rModelData = Variables.GetModelData();
+               const Properties & rMaterialProperties = rModelData.GetProperties();
+
+               const double & rInitialPrecon = rMaterialProperties[PRE_CONSOLIDATION_STRESS];
+               const double & rSwellingSlope = rMaterialProperties[SWELLING_SLOPE];
+               const double & rOtherSlope = rMaterialProperties[NORMAL_COMPRESSION_SLOPE];
+
+               const double & rPlasticVolDef = Variables.Internal.Variables[1]; 
+               double & rPreconsolidation = mInternal.Variables[5];
+
+               rPreconsolidation = -rInitialPrecon * std::exp( -rPlasticVolDef/ ( rOtherSlope-rSwellingSlope) );
+               CasmBaseSoilModel::CalculateStressAndConstitutiveTensors( rValues, rStressMatrix, rConstitutiveMatrix);
+
+               if ( rValues.State.Is(ConstitutiveModelData::UPDATE_INTERNAL_VARIABLES) ) {
+                  mPreviousInternal.Variables[8] = mInternal.Variables[8];
+                  mInternal.Variables[8] = mInternal.Variables[1];
+                  mInternal.Variables[1] = LocalPlasticVolStrain + ( mInternal.Variables[1] -  NonLocalPlasticVolStrain);
+               } else {
+                  mInternal.Variables[1] = LocalPlasticVolStrain;
+               }
+
+
+
+               KRATOS_CATCH("")
+            }
 
          ///@}
          ///@name Protected member Variables
@@ -315,7 +365,7 @@ namespace Kratos
 
          ///@}
 
-   }; // Class CasmMCCSoilModel
+   }; // Class NonlocalCasmMCCSoilModel
 
    ///@}
 
@@ -340,4 +390,4 @@ namespace Kratos
 
 }  // namespace Kratos.
 
-#endif // KRATOS_CASM_MCC_SOIL_MODEL_H_INCLUDED  defined
+#endif // KRATOS_NONLOCAL_CASM_MCC_SOIL_MODEL_H_INCLUDED  defined

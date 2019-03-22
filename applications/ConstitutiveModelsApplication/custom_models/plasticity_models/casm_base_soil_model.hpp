@@ -225,6 +225,12 @@ namespace Kratos
             {
                rValue = this->mInternal.Variables[5];
             }
+            else if ( rThisVariable==PLASTIC_DEV_DEF) {
+               rValue = this->mInternal.Variables[2];
+            }
+            else if ( rThisVariable==NONLOCAL_PLASTIC_VOL_DEF_ABS) {
+               rValue = std::abs(this->mInternal.Variables[1]);
+            }
             else {
                rValue = NonAssociativePlasticityModel<TElasticityModel, TYieldSurface>::GetValue( rThisVariable, rValue);
             }

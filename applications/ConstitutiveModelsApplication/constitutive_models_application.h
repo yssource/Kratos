@@ -99,6 +99,7 @@
 #include "custom_models/plasticity_models/casm_associated_soil_model.hpp"
 #include "custom_models/plasticity_models/casm_mcc_soil_model.hpp"
 #include "custom_models/plasticity_models/casm_nubia_soil_model.hpp"
+#include "custom_models/plasticity_models/nonlocal_casm_mcc_soil_model.hpp"
 #include "custom_models/plasticity_models/nonlocal_casm_nubia_soil_model.hpp"
 
 //yield criteria
@@ -334,6 +335,7 @@ namespace Kratos {
     const CasmAssociatedSoilModel                  mCasmAssociatedSoilModel;
     const CasmMCCSoilModel                         mCasmMCCSoilModel;
     const CasmNubiaSoilModel                       mCasmNubiaSoilModel;
+    const NonlocalCasmMCCSoilModel                 mNonlocalCasmMCCSoilModel;
     const NonlocalCasmNubiaSoilModel               mNonlocalCasmNubiaSoilModel;
 
     //yield criteria

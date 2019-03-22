@@ -77,7 +77,7 @@ class MVQN(CoSimulationBaseConvergenceAccelerator):
             ## Solve least norm problem
             rhs = V - np.dot(self.J, W)
             b = np.identity( row )
-            W_right_inverse = np.linalg.lstsq(W, b)[0]
+            W_right_inverse = np.linalg.lstsq(W, b, rcond=1E-5)[0]
             J_tilde = np.dot(rhs, W_right_inverse)
             self.J_hat = self.J + J_tilde
             delta_r = -self.R[0]

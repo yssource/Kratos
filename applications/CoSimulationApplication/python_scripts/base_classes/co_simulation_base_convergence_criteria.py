@@ -26,8 +26,8 @@ class CoSimulationConvergenceCriteria(object):
         self.iteration = 0
         self.initial_residual_norm = 0.0
 
-        self.data_prev_iter = []
-        self.data_current_iter = []
+        self.old_data = []
+        self.new_data = []
 
     def _GetDefaultSettings(self):
         default_setting = data_structure.Parameters("""
@@ -70,13 +70,13 @@ class CoSimulationConvergenceCriteria(object):
     #
     def InitializeCouplingIteration(self):
         # storing the data for residual calculation
-        self.data_prev_iter = self.data.GetNumpyArray()
+        self.old_data = self.data.GetNumpyArray()
 
     ## FinalizeCouplingIteration : FinalizeCouplingIteration function of the class.
     #                           To be called once at the end of the non-linear coupling iteration.
     #
     def FinalizeCouplingIteration(self):
-        #self.data_current_iter = self.data.GetNumpyArray()
+        #self.new_data = self.data.GetNumpyArray()
         self.iteration = self.iteration + 1
 
 
@@ -84,9 +84,9 @@ class CoSimulationConvergenceCriteria(object):
     #                  To be called called when the convergence is to be enquired for this criteria
     #
     def IsConverged(self):
-        self.data_current_iter = self.data.GetNumpyArray()
-        norm_current_data = np.linalg.norm(self.data_current_iter)/np.sqrt(self.data_current_iter.size)
-        residual = self._CalculateResidual()
+        self.new_data = self.data.GetNumpyArray()
+        norm_new_data = np.linalg.norm(self.new_data)/np.sqrt(self.new_data.size)
+        residual = self.new_data - self.old_data
         abs_residual_norm = np.linalg.norm(residual) / np.sqrt(residual.size)
         if(abs_residual_norm == 0):
             abs_residual_norm = 1.0
@@ -94,9 +94,9 @@ class CoSimulationConvergenceCriteria(object):
             self.initial_residual_norm = abs_residual_norm
 
         rel_residual_norm = abs_residual_norm / self.initial_residual_norm
-        #rel_residual_norm = abs_residual_norm / norm_current_data
+        #rel_residual_norm = abs_residual_norm / norm_new_data
 
-        is_converged = abs_residual_norm < self.abs_tolerance*10 or rel_residual_norm < self.rel_tolerance*10
+        is_converged = abs_residual_norm < self.abs_tolerance or rel_residual_norm < self.rel_tolerance
         if self.echo_level > 1:
             if is_converged:
                 info_msg = cs_tools.bcolors.GREEN+ "ACHIEVED"
@@ -139,11 +139,3 @@ class CoSimulationConvergenceCriteria(object):
     #
     def _Name(self):
         return self.__class__.__name__
-
-    ## _CalculateResidual : Calculates residual of the data specified in the settings
-    #                       Numpy can be used in the variants of this class.
-    #                       residual = data_in_current_iter - data_in_previous_iter
-    #
-    #  @param self            The object pointer
-    def _CalculateResidual(self):
-        return self.data_current_iter - self.data_prev_iter

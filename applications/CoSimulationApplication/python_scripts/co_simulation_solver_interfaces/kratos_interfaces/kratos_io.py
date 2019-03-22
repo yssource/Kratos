@@ -78,7 +78,7 @@ class KratosIo(CoSimulationBaseIO):
                     origin_geo = from_solver.model[origin_geo_name]
                     dest_geo = self.model[dest_geo_name]
                     mapper = self.SetupMapper(origin_geo, dest_geo, mapper_settings)
-
+                    self.mappers[(origin_geo_name,dest_geo_name)] = mapper
                     mapper.Map(origin_var, dest_var, set_flags)
             else:
                 pass ## We can copy one to one instead of mapping here.
@@ -146,7 +146,8 @@ class KratosIo(CoSimulationBaseIO):
                     #dest_geo = self.model[dest_geo_name]
                     dest_geo = to_solver.model[dest_geo_name]
                     mapper = self.SetupMapper(origin_geo, dest_geo, mapper_settings)
-                    mapper.Map(origin_var, dest_var, set_flags)
+                    self.mappers[(origin_geo_name,dest_geo_name)] = mapper
+                    mapper.Map(origin_var, dest_var, set_flags)                    
             else:
                 pass ## We can copy one to one instead of mapping here.
         else:
@@ -174,9 +175,8 @@ class KratosIo(CoSimulationBaseIO):
         return mapper_tuple in self.mappers.keys()
 
     def GetMapper(self, mapper_tuple):
-        return self.mappers[(mapper_tuple)]
+        return self.mappers[mapper_tuple]
 
     def SetupMapper(self, geo_origin, geo_destination, mapper_settings):
         mapper = MappingApp.MapperFactory.CreateMapper(geo_origin, geo_destination, mapper_settings)
-        self.mappers[(geo_origin.Name, geo_destination.Name)] = mapper
         return mapper

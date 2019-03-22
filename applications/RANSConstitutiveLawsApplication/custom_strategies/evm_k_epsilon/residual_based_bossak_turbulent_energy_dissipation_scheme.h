@@ -137,6 +137,39 @@ public:
         KRATOS_CATCH("");
     }
 
+    // void Predict(
+    //     ModelPart& rModelPart,
+    //     DofsArrayType& rDofSet,
+    //     SystemMatrixType& A,
+    //     SystemVectorType& Dx,
+    //     SystemVectorType& b
+    // ) override
+    // {
+    //     KRATOS_TRY
+
+    //     BaseType::Predict(rModelPart, rDofSet, A, Dx, b);
+
+    //     const int number_of_nodes = rModelPart.NumberOfNodes();
+
+    //     #pragma omp parallel for
+    //     for (int i = 0; i < number_of_nodes; ++i)
+    //     {
+    //         NodeType& r_node = *(rModelPart.NodesBegin() + i);
+
+    //         ResetVariableToPreviousTimeStep(r_node, TURBULENT_ENERGY_DISSIPATION_RATE);
+    //         ResetVariableToPreviousTimeStep(r_node, TURBULENT_ENERGY_DISSIPATION_RATE_2);
+    //         ResetVariableToPreviousTimeStep(r_node, RANS_AUXILIARY_VARIABLE_2);
+    //     }
+
+    //     KRATOS_CATCH("")
+    // }
+
+    // void ResetVariableToPreviousTimeStep(NodeType& rNode, Variable<double>& rVariable)
+    // {
+    //     if (!rNode.IsFixed(rVariable))
+    //         rNode.FastGetSolutionStepValue(rVariable) = rNode.FastGetSolutionStepValue(rVariable, 1);
+    // }
+
     void Update(ModelPart& rModelPart,
                 DofsArrayType& rDofSet,
                 SystemMatrixType& rA,
@@ -145,7 +178,12 @@ public:
     {
         KRATOS_TRY;
 
-        BaseType::Update(rModelPart, rDofSet, rA, rDx, rb);
+        this->mpDofUpdater->UpdateDofs(rDofSet, rDx);
+
+        // CalculationUtilities::LowerBound<NodeType>(rModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, std::numeric_limits<double>::epsilon());
+        this->UpdateTimeSchemeVariables(rModelPart);
+
+        // BaseType::Update(rModelPart, rDofSet, rA, rDx, rb);
 
         // Updating the auxiliary variables
         const int number_of_nodes = rModelPart.NumberOfNodes();

@@ -432,6 +432,20 @@ class NavierStokesSolverMonolithic(FluidSolver):
                 self.turbulence_process = KratosRANS.TurbulenceEvmKEpsilon3DProcess(self.main_model_part, self.turbulence_model_settings, self.linear_solver, self.linear_solver, self.linear_solver)
             else:
                 raise Exception("Unknown domain size: " + self.settings["domain_size"].GetInt())
+        elif self.settings["turbulence_model"].GetString() == "log_k_epsilon":
+            if self.settings["domain_size"].GetInt() == 2:
+                self.turbulence_process = KratosRANS.TurbulenceEvmLogKEpsilon2DProcess(self.main_model_part, self.turbulence_model_settings, self.linear_solver, self.linear_solver, self.linear_solver)
+            elif self.settings["domain_size"].GetInt() == 3:
+                self.turbulence_process = KratosRANS.TurbulenceEvmLogKEpsilon3DProcess(self.main_model_part, self.turbulence_model_settings, self.linear_solver, self.linear_solver, self.linear_solver)
+            else:
+                raise Exception("Unknown domain size: " + self.settings["domain_size"].GetInt())
+        elif self.settings["turbulence_model"].GetString() == "sqrt_k_epsilon":
+            if self.settings["domain_size"].GetInt() == 2:
+                self.turbulence_process = KratosRANS.TurbulenceEvmSqrtKEpsilon2DProcess(self.main_model_part, self.turbulence_model_settings, self.linear_solver, self.linear_solver, self.linear_solver)
+            elif self.settings["domain_size"].GetInt() == 3:
+                self.turbulence_process = KratosRANS.TurbulenceEvmSqrtKEpsilon3DProcess(self.main_model_part, self.turbulence_model_settings, self.linear_solver, self.linear_solver, self.linear_solver)
+            else:
+                raise Exception("Unknown domain size: " + self.settings["domain_size"].GetInt())
         else:
             raise Exception("Unknown turbulence model: " + self.settings["turbulence_model"].GetString())
 

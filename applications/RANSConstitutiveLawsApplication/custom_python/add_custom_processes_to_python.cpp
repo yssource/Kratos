@@ -15,6 +15,8 @@
 // Application includes
 #include "custom_processes/turbulence_eddy_viscosity_model_process.h"
 #include "custom_processes/turbulence_evm_k_epsilon_process.h"
+#include "custom_processes/turbulence_evm_log_k_epsilon_process.h"
+#include "custom_processes/turbulence_evm_sqrt_k_epsilon_process.h"
 
 namespace Kratos
 {
@@ -37,6 +39,30 @@ void AddCustomProcessesToPython(pybind11::module& m)
     typedef TurbulenceEvmKEpsilonProcess<3, SparseSpaceType, LocalSpaceType, LinearSolverType> TurbulenceEvmKEpsilon3DProcess;
     py::class_<TurbulenceEvmKEpsilon3DProcess, TurbulenceEvmKEpsilon3DProcess::Pointer, Process>(
         m, "TurbulenceEvmKEpsilon3DProcess")
+        .def(py::init<ModelPart&, Parameters&, LinearSolverType::Pointer,
+                      LinearSolverType::Pointer, LinearSolverType::Pointer>());
+
+    typedef TurbulenceEvmLogKEpsilonProcess<2, SparseSpaceType, LocalSpaceType, LinearSolverType> TurbulenceEvmLogKEpsilon2DProcess;
+    py::class_<TurbulenceEvmLogKEpsilon2DProcess, TurbulenceEvmLogKEpsilon2DProcess::Pointer, Process>(
+        m, "TurbulenceEvmLogKEpsilon2DProcess")
+        .def(py::init<ModelPart&, Parameters&, LinearSolverType::Pointer,
+                      LinearSolverType::Pointer, LinearSolverType::Pointer>());
+
+    typedef TurbulenceEvmLogKEpsilonProcess<3, SparseSpaceType, LocalSpaceType, LinearSolverType> TurbulenceEvmLogKEpsilon3DProcess;
+    py::class_<TurbulenceEvmLogKEpsilon3DProcess, TurbulenceEvmLogKEpsilon3DProcess::Pointer, Process>(
+        m, "TurbulenceEvmLogKEpsilon3DProcess")
+        .def(py::init<ModelPart&, Parameters&, LinearSolverType::Pointer,
+                      LinearSolverType::Pointer, LinearSolverType::Pointer>());
+
+    typedef TurbulenceEvmSqrtKEpsilonProcess<2, SparseSpaceType, LocalSpaceType, LinearSolverType> TurbulenceEvmSqrtKEpsilon2DProcess;
+    py::class_<TurbulenceEvmSqrtKEpsilon2DProcess, TurbulenceEvmSqrtKEpsilon2DProcess::Pointer, Process>(
+        m, "TurbulenceEvmSqrtKEpsilon2DProcess")
+        .def(py::init<ModelPart&, Parameters&, LinearSolverType::Pointer,
+                      LinearSolverType::Pointer, LinearSolverType::Pointer>());
+
+    typedef TurbulenceEvmSqrtKEpsilonProcess<3, SparseSpaceType, LocalSpaceType, LinearSolverType> TurbulenceEvmSqrtKEpsilon3DProcess;
+    py::class_<TurbulenceEvmSqrtKEpsilon3DProcess, TurbulenceEvmSqrtKEpsilon3DProcess::Pointer, Process>(
+        m, "TurbulenceEvmSqrtKEpsilon3DProcess")
         .def(py::init<ModelPart&, Parameters&, LinearSolverType::Pointer,
                       LinearSolverType::Pointer, LinearSolverType::Pointer>());
 }

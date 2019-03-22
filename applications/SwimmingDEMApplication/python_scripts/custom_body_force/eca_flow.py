@@ -1,6 +1,6 @@
 import KratosMultiphysics
 import numpy as np
-import math
+from scipy.special import erf
 ## Import base class file
 from custom_body_force.manufactured_solution import ManufacturedSolution
 
@@ -34,7 +34,7 @@ class EcaManufacturedSolution(ManufacturedSolution):
                 "viscosity"   : 1.846e-5,
                 "density"     : 1.225,
                 "U1"          : 1.0,
-                "L"           : 0.5,
+                "L"           : 1.0,
                 "sigma"       : 4.0,
                 "A"           : 15,
                 "B"           : 20,
@@ -96,7 +96,7 @@ class EcaManufacturedSolution(ManufacturedSolution):
     def Eta(self, x, y):
         return self.sigma * y / x
 
-    # Time dependant functions
+    # Time dependent functions
 
     def fe(self, t):
         return 1.0 - np.exp(-2.5 * t)
@@ -124,37 +124,37 @@ class EcaManufacturedSolution(ManufacturedSolution):
 
     # Velocity and derivatives
 
-    def uxa(self, x1, x2, t):
+    def uxa(self, x1, x2):
         eta = self.Eta(x1, x2)
-        return math.erf(eta)
+        return erf(eta)
 
-    def uxb(self, x1, x2, t):
+    def uxb(self, x1, x2):
         A = self.A
         B = self.B
         return A * x2 * np.exp(-B * x2) * sin_1_2x(x1)
 
-    def uya(self, x1, x2, t):
+    def uya(self, x1, x2):
         eta = self.Eta(x1, x2)
         sqrt_pi = np.sqrt(np.pi)
         return 1.0 / (self.sigma * sqrt_pi) * (1.0 - np.exp(-eta**2))
 
-    def uyb(self, x1, x2, t):
+    def uyb(self, x1, x2):
         A = self.A
         B = self.B
         pi = np.pi
         return 2 * A * pi / B**2 * cos_1_2x(x1) * (1 - np.exp(-B * x2) * (B * x2 + 1))
 
     def u1(self, x1, x2, t):
-        return self.uxa(x1, x2, t) + self.uxb(x1, x2, t) * self.f(t)
+        return self.uxa(x1, x2) + self.uxb(x1, x2) * self.f(t)
 
     def u2(self, x1, x2, t):
-        return self.uya(x1, x2, t) + self.uyb(x1, x2, t) * self.f(t)
+        return self.uya(x1, x2) + self.uyb(x1, x2) * self.f(t)
 
     def du1dt(self, x1, x2, t):
-        return self.uxb(x1, x2, t) * self.df(t)
+        return self.uxb(x1, x2) * self.df(t)
 
     def du2dt(self, x1, x2, t):
-        return self.uyb(x1, x2, t) * self.df(t)
+        return self.uyb(x1, x2) * self.df(t)
 
     def du11(self, x1, x2, t):
         sigma = self.sigma

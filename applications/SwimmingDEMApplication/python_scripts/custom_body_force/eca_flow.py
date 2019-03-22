@@ -38,7 +38,8 @@ class EcaManufacturedSolution(ManufacturedSolution):
                 "sigma"       : 4.0,
                 "A"           : 15,
                 "B"           : 20,
-                "is_periodic" : false
+                "is_periodic" : false,
+                "omega"       : 1.0
             }
             """
             )
@@ -54,6 +55,7 @@ class EcaManufacturedSolution(ManufacturedSolution):
         self.A = settings["A"].GetDouble()
         self.B = settings["B"].GetDouble()
         self.is_periodic = settings["is_periodic"].GetBool()
+        self.omega = settings["omega"].GetDouble()
         self.T = self.U1 / self.L
 
     def BodyForce(self, x1, x2, x3, t):
@@ -102,13 +104,13 @@ class EcaManufacturedSolution(ManufacturedSolution):
         return 1.0 - np.exp(-2.5 * t)
 
     def fp(self, t):
-        return 1.0 - np.cos(2 * np.pi * t)
+        return 1.0 - np.cos(2 * np.pi * self.omega * t)
 
     def dfe(self, t):
         return 2.5 * np.exp(-2.5 * t)
 
     def dfp(self, t):
-        return 2 * np.pi * np.sin(2 * np.pi * t)
+        return 2 * np.pi * self.omega * np.sin(2 * np.pi * self.omega * t)
 
     def f(self, t):
         if self.is_periodic:

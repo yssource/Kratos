@@ -386,6 +386,8 @@ protected:
                                        Matrix& rNContainer,
                                        ShapeFunctionDerivativesArrayType& rDN_DX) const;
 
+    ShapeFunctionDerivativesArrayType GetGeometryParameterDerivatives() const;
+
     double EvaluateInPoint(const Variable<double>& rVariable,
                            const Vector& rShapeFunction,
                            const int Step = 0) const;

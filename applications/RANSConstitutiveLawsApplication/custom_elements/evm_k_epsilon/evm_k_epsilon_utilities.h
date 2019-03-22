@@ -51,15 +51,6 @@ double CalculateF2(const double turbulent_kinetic_energy,
                    const double kinematic_viscosity,
                    const double turbulent_energy_dissipation_rate);
 
-double CalculateStabilizationTau(const double velocity_magnitude,
-                                 const double length,
-                                 const double effective_kinematic_viscosity,
-                                 const double reaction,
-                                 const double delta_time);
-
-template <unsigned int TDim>
-double CalculateSourceTerm(const BoundedMatrix<double, TDim, TDim>& rVelocityGradient);
-
 template <unsigned int TDim>
 double CalculateSourceTerm(const BoundedMatrix<double, TDim, TDim>& rVelocityGradient,
                            const double turbulent_kinematic_viscosity,
@@ -69,6 +60,31 @@ double CalculateGamma(const double C_mu,
                       const double f_mu,
                       const double turbulent_kinetic_energy,
                       const double turbulent_kinematic_viscosity);
+
+void CalculateStabilizationTau(double& tau,
+                               double& element_length,
+                               const array_1d<double, 3>& rVelocity,
+                               const Matrix& rContravariantMetricTensor,
+                               const double reaction,
+                               const double effective_kinematic_viscosity,
+                               const double delta_time);
+
+double CalculateStabilizationTau(const double velocity_magnitude,
+                                 const double length,
+                                 const double effective_kinematic_viscosity,
+                                 const double reaction,
+                                 const double delta_time);
+
+void CalculateCrossWindDiffusionParameters(double& chi,
+                                           double& k1,
+                                           double& k2,
+                                           const double velocity_magnitude,
+                                           const double tau,
+                                           const double effective_kinematic_viscosity,
+                                           const double reaction,
+                                           const double element_length);
+
+void CalculatePositiveValuesList(Vector& rOutput, const Vector& rInput);
 
 } // namespace EvmKepsilonModelUtilities
 

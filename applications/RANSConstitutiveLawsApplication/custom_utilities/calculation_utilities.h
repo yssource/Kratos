@@ -3,6 +3,7 @@
 #include "includes/define.h"
 #include "includes/model_part.h"
 #include "includes/node.h"
+#include "utilities/math_utils.h"
 
 #if !defined(KRATOS_RANS_APPLICATION_CALCULATION_UTILITIES_H_INCLUDED)
 #define KRATOS_RANS_APPLICATION_CALCULATION_UTILITIES_H_INCLUDED
@@ -23,11 +24,19 @@ namespace Kratos
 
 namespace CalculationUtilities
 {
+
+bool IsPositivityPreserving(const Matrix& rA);
+
+bool IsPositivityPreserving(const Vector& rb);
+
 void CalculateGeometryData(const Geometry<Node<3>>& rGeometry,
                            const GeometryData::IntegrationMethod& rIntegrationMethod,
                            Vector& rGaussWeights,
                            Matrix& rNContainer,
                            Geometry<Node<3>>::ShapeFunctionsGradientsType& rDN_DX);
+
+Geometry<Node<3>>::ShapeFunctionsGradientsType CalculateGeometryParameterDerivatives(
+    const Geometry<Node<3>>& rGeometry, const GeometryData::IntegrationMethod& rIntegrationMethod);
 
 double CalculateYplus(const double velocity_norm,
                       const double wall_distance,
@@ -62,6 +71,12 @@ array_1d<double, 3> EvaluateInPoint(const GeometryType& rGeometry,
 
 template <unsigned int TDim>
 double CalculateMatrixTrace(const BoundedMatrix<double, TDim, TDim>& rMatrix);
+
+template <class NodeType>
+void CheckBounds(ModelPart& rModelPart, const Variable<double>& rVariable, const std::string info = "");
+
+template <class NodeType>
+double WarnIfNegative(ModelPart& rModelPart, const Variable<double>& rVariable, const std::string info = "");
 
 } // namespace CalculationUtilities
 } // namespace Kratos

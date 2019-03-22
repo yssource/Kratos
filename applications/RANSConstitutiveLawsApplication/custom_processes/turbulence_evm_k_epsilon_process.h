@@ -121,6 +121,7 @@ public:
                 "echo_level": 2
             },
             "echo_level"     : 0,
+            "time_scheme"    : "steady",
             "scheme_settings": {},
             "constants":
             {
@@ -210,6 +211,24 @@ public:
             << std::endl;
         this->mrModelPart.CreateSubModelPart(
             "TurbulenceModelPartRANSEVMEpsilon");
+
+        if (this->mrParameters["model_properties"]["time_scheme"].GetString() ==
+            "steady")
+        {
+            rModelPart.GetProcessInfo()[RANS_TIME_STEP] = 1;
+        }
+        else if (this->mrParameters["model_properties"]["time_scheme"].GetString() ==
+                 "transient")
+        {
+            rModelPart.GetProcessInfo()[RANS_TIME_STEP] = 0;
+        }
+        else
+        {
+            KRATOS_ERROR
+                << "Undefined time_scheme in turbulence_model_settings. Only "
+                   "\"steady\" or \"transient\" is allowed in k_epsilon model "
+                   "time_scheme.";
+        }
 
         mpTurbulenceKModelPart =
             &(this->mrModelPart.GetSubModelPart("TurbulenceModelPartRANSEVMK"));
@@ -591,7 +610,7 @@ private:
         this->CalculateYplus();
 
         const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
-        const double mixing_length = r_current_process_info[TURBULENT_MIXING_LENGTH];
+        // const double mixing_length = r_current_process_info[TURBULENT_MIXING_LENGTH];
         const double C_mu = r_current_process_info[TURBULENCE_RANS_C_MU];
         const double von_karman = r_current_process_info[WALL_VON_KARMAN];
 
@@ -605,9 +624,9 @@ private:
             if (!i_node->IsFixed(TURBULENT_KINETIC_ENERGY) &&
                 !i_node->IsFixed(TURBULENT_ENERGY_DISSIPATION_RATE))
             {
-                array_1d<double, 3>& velocity =
-                    i_node->FastGetSolutionStepValue(VELOCITY, 0);
-                const double velocity_mag = norm_2(velocity);
+                // array_1d<double, 3>& velocity =
+                //     i_node->FastGetSolutionStepValue(VELOCITY, 0);
+                // const double velocity_mag = norm_2(velocity);
                 const double y_plus = i_node->FastGetSolutionStepValue(RANS_Y_PLUS);
                 const double nu = i_node->FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
                 const double wall_distance = i_node->FastGetSolutionStepValue(DISTANCE);
@@ -780,6 +799,11 @@ private:
 
     void SolveStep()
     {
+        CalculationUtilities::WarnIfNegative<NodeType>(
+            this->mrModelPart, TURBULENT_KINETIC_ENERGY, "SolveStep");
+        CalculationUtilities::WarnIfNegative<NodeType>(
+            this->mrModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, "SolveStep");
+
         this->UpdateTurbulentViscosity();
 
         mpKStrategy->InitializeSolutionStep();
@@ -808,12 +832,8 @@ private:
                     (this->mrModelPart.NodesBegin() + i)->FastGetSolutionStepValue(TURBULENT_VISCOSITY);
             }
 
-            KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
-                << "Solving for K...\n";
-            mpKStrategy->SolveSolutionStep();
-            KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
-                << "Solving for Epsilon...\n";
-            mpEpsilonStrategy->SolveSolutionStep();
+            ExecuteFluxCorrector(mpKStrategy, TURBULENT_KINETIC_ENERGY);
+            ExecuteFluxCorrector(mpEpsilonStrategy, TURBULENT_ENERGY_DISSIPATION_RATE);
 
             this->UpdateTurbulentViscosity();
 
@@ -874,6 +894,48 @@ private:
         mpEpsilonStrategy->FinalizeSolutionStep();
     }
 
+    void ExecuteFluxCorrector(typename StrategyType::Pointer pStrategy,
+                              const Variable<double>& rVariable)
+    {
+        ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
+
+        double& r_stabilization_multiplier =
+            r_current_process_info[RANS_STABILIZATION_MULTIPLIER];
+
+        r_stabilization_multiplier = 1.0;
+
+        KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
+            << "Solving for " << rVariable.Name()
+            << " with flux_corrector_multiplier = " << std::scientific
+            << r_stabilization_multiplier << "\n";
+        pStrategy->SolveSolutionStep();
+
+        // double prev_negative_aggregated_value, negative_aggregated_value;
+
+        // prev_negative_aggregated_value = CalculationUtilities::WarnIfNegative<NodeType>(
+        //     this->mrModelPart, rVariable, "Coupling");
+        // negative_aggregated_value = prev_negative_aggregated_value;
+        // r_stabilization_multiplier = 2.0;
+        // for (int i_flux_itr = 0; i_flux_itr < 10; i_flux_itr++)
+        // {
+        //     if (negative_aggregated_value == 0)
+        //         break;
+
+        //     KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
+        //         << "Solving for " << rVariable.Name()
+        //         << " with flux_corrector_multiplier = " << std::scientific
+        //         << r_stabilization_multiplier << "\n";
+        //     pStrategy->SolveSolutionStep();
+
+        //     negative_aggregated_value = CalculationUtilities::WarnIfNegative<NodeType>(
+        //         this->mrModelPart, rVariable, "Coupling");
+        //     double m = (negative_aggregated_value - prev_negative_aggregated_value);
+        //     double c = (negative_aggregated_value)-m * r_stabilization_multiplier;
+        //     prev_negative_aggregated_value = negative_aggregated_value;
+        //     r_stabilization_multiplier = -c / m;
+        // }
+    }
+
     double CalculateNodalTurbulentViscosity(const ModelPart::NodeIterator& iNode,
                                             const double C_mu,
                                             const unsigned int Step) const
@@ -912,6 +974,8 @@ private:
             iNode->FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t;
         }
 
+        CalculationUtilities::WarnIfNegative<NodeType>(
+            this->mrModelPart, TURBULENT_VISCOSITY, "NuT");
         CalculationUtilities::ClipVariable<NodeType>(
             this->mrModelPart, TURBULENT_VISCOSITY, nu_t_min, nu_t_max);
     }

@@ -267,6 +267,13 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 {
     const int number_of_conditions = pModelPart->NumberOfConditions();
 
+    for (int i_cond = 0; i_cond < number_of_conditions; ++i_cond)
+    {
+        Condition& r_condition = *(pModelPart->ConditionsBegin() + i_cond);
+        std::vector<int>& r_gauss_point_indices = r_condition.GetValue(GAUSS_POINT_INDICES);
+        r_gauss_point_indices.clear();
+    }
+
 #pragma omp parallel for
     for (int i_cond = 0; i_cond < number_of_conditions; ++i_cond)
     {

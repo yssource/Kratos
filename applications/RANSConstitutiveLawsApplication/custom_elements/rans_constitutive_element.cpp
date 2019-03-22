@@ -455,6 +455,14 @@ void RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::CalculateGeometryData
 }
 
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
+typename RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::ShapeFunctionDerivativesArrayType RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::GetGeometryParameterDerivatives() const
+{
+    const GeometryType& r_geometry = this->GetGeometry();
+    return CalculationUtilities::CalculateGeometryParameterDerivatives(
+        r_geometry, this->GetIntegrationMethod());
+}
+
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TBlockSize>
 double RANSConstitutiveElement<TDim, TNumNodes, TBlockSize>::EvaluateInPoint(
     const Variable<double>& rVariable, const Vector& rShapeFunction, const int Step) const
 {

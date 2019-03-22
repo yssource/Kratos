@@ -33,7 +33,7 @@ class CoSimulationBaseConvergenceAccelerator(object):
     def ComputeUpdate(self):
         output_data = self.data.GetNumpyArray()
         residual = output_data - self.input_data
-        new_data = self.input_data + 0.01*self._ComputeUpdate(residual, self.input_data)
+        new_data = self.input_data + self._ComputeUpdate(residual, self.input_data)
         self.data.ApplyUpdateToData(new_data)
 
     def PrintInfo(self):

@@ -657,9 +657,15 @@ private:
         for (int i = 0; i < number_of_nodes; i++)
         {
             ModelPart::NodeIterator i_node = this->mrModelPart.NodesBegin() + i;
-            if (i_node->Is(STRUCTURE) || i_node->Is(INLET))
+            if (i_node->Is(INLET))
             {
                 i_node->Fix(TURBULENT_KINETIC_ENERGY);
+                i_node->Free(TURBULENT_ENERGY_DISSIPATION_RATE);
+                nodes_count_fixed++;
+            }
+            else if (i_node->Is(STRUCTURE))
+            {
+                i_node->Free(TURBULENT_KINETIC_ENERGY);
                 i_node->Fix(TURBULENT_ENERGY_DISSIPATION_RATE);
                 nodes_count_fixed++;
             }

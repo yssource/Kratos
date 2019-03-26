@@ -49,15 +49,21 @@ class Algorithm(object):
         self.structural_solution._GetSolver().main_model_part.AddNodalSolutionStepVariable(Dem.SHEAR_STRESS)
         self.structural_solution._GetSolver().main_model_part.AddNodalSolutionStepVariable(Dem.NON_DIMENSIONAL_VOLUME_WEAR)
         self.structural_solution._GetSolver().main_model_part.AddNodalSolutionStepVariable(Dem.IMPACT_WEAR)
+        self.structural_solution._GetSolver().main_model_part.AddNodalSolutionStepVariable(Kratos.TOTAL_FORCES)
 
     def Run(self):
         self.Initialize()
         self.RunSolutionLoop()
         self.Finalize()
 
+    def PreliminaryComputations(self):
+        pass
+
     def Initialize(self):
         self.structural_solution.Initialize() # Reading mdpa
         self.dem_solution.Initialize() # Adding DEM variables and reading
+
+        self.PreliminaryComputations()
 
         self._DetectStructuresSkin()
         self._TransferStructuresSkinToDem()
@@ -76,19 +82,22 @@ class Algorithm(object):
                             self.dem_solution.spheres_model_part,
                             self.dem_solution.cluster_model_part,
                             self.dem_solution.rigid_face_model_part,
+                            self.dem_solution.contact_model_part,
                             mixed_mp
                             )
 
-        structures_nodal_results = ["VOLUME_ACCELERATION","DEM_SURFACE_LOAD"]
+        structures_nodal_results = ["VOLUME_ACCELERATION","DEM_SURFACE_LOAD","POSITIVE_FACE_PRESSURE","REACTION"]
         dem_nodal_results = ["IS_STICKY", "DEM_STRESS_TENSOR"]
         clusters_nodal_results = []
-        rigid_faces_nodal_results = ["DEM_NODAL_AREA"]
-        mixed_nodal_results = ["DISPLACEMENT", "VELOCITY"]
-        gauss_points_results = []
+        rigid_faces_nodal_results = ["DEM_NODAL_AREA","ELASTIC_FORCES"]
+        contact_model_part_results = ["CONTACT_FAILURE"]
+        mixed_nodal_results = ["DISPLACEMENT", "VELOCITY","ELASTIC_FORCES"]
+        gauss_points_results = ["CAUCHY_STRESS_TENSOR"]
         self.gid_output.initialize_dem_fem_results(structures_nodal_results,
                                                    dem_nodal_results,
                                                    clusters_nodal_results,
                                                    rigid_faces_nodal_results,
+                                                   contact_model_part_results,
                                                    mixed_nodal_results,
                                                    gauss_points_results)
 
@@ -116,22 +125,25 @@ class Algorithm(object):
     def _TransferStructuresSkinToDem(self):
         self.structural_mp = self.structural_solution._GetSolver().GetComputingModelPart()
         self.skin_mp = self.structural_mp.GetSubModelPart("DetectedByProcessSkinModelPart")
-        dem_walls_mp = self.dem_solution.rigid_face_model_part
+        self.dem_walls_mp = self.dem_solution.rigid_face_model_part
         max_prop_id = 0
-        for prop in dem_walls_mp.Properties:
+        for prop in self.dem_walls_mp.Properties:
             if prop.Id > max_prop_id:
                 max_prop_id = prop.Id
         props = Kratos.Properties(max_prop_id + 1)
-        props[Dem.FRICTION] = 0.5773502691896257
+        props[Dem.FRICTION] = -0.5773502691896257
         props[Dem.WALL_COHESION] = 0.0
         props[Dem.COMPUTE_WEAR] = False
         props[Dem.SEVERITY_OF_WEAR] = 0.001
         props[Dem.IMPACT_WEAR_SEVERITY] = 0.001
         props[Dem.BRINELL_HARDNESS] = 200.0
-        props[Kratos.YOUNG_MODULUS] = 1e20
-        props[Kratos.POISSON_RATIO] = 0.25
-        dem_walls_mp.AddProperties(props)
-        DemFem.DemStructuresCouplingUtilities().TransferStructuresSkinToDem(self.skin_mp, dem_walls_mp, props)
+        props[Kratos.YOUNG_MODULUS] = 7e9
+        props[Kratos.POISSON_RATIO] = 0.16
+        self.dem_walls_mp.AddProperties(props)
+        DemFem.DemStructuresCouplingUtilities().TransferStructuresSkinToDem(self.skin_mp, self.dem_walls_mp, props)
+
+    def PreviousCalculations(self):
+        pass
 
     def RunSolutionLoop(self):
 
@@ -148,6 +160,9 @@ class Algorithm(object):
 
             self.structural_solution.time = self.structural_solution._GetSolver().AdvanceInTime(self.structural_solution.time)
             self.structural_solution.InitializeSolutionStep()
+
+            self.PreviousCalculations()
+
             self.structural_solution._GetSolver().Predict()
             self.structural_solution._GetSolver().SolveSolutionStep()
             self.structural_solution.FinalizeSolutionStep()
@@ -160,7 +175,10 @@ class Algorithm(object):
 
             DemFem.ComputeDEMFaceLoadUtility().ClearDEMFaceLoads(self.skin_mp)
 
+            #DemFem.DemStructuresCouplingUtilities().ComputeSandProduction(self.dem_solution.spheres_model_part, self.skin_mp)
+
             for self.dem_solution.time_dem in self.yield_DEM_time(self.dem_solution.time, time_final_DEM_substepping, self.Dt_DEM):
+
                 self.dem_solution.InitializeTimeStep()
                 self.dem_solution.time = self.dem_solution.time + self.dem_solution.solver.dt
 
@@ -206,7 +224,7 @@ class Algorithm(object):
                 #### GiD IO ##########################################
                 if self.dem_solution.IsTimeToPrintPostProcess():
                     self.dem_solution.solver.PrepareElementsForPrinting()
-                    if self.dem_solution.DEM_parameters["ContactMeshOption"].GetBool():
+                    if False: #self.dem_solution.DEM_parameters["ContactMeshOption"].GetBool():
                         self.dem_solution.solver.PrepareContactElementsForPrinting()
                     self.dem_solution.PrintResultsForGid(self.dem_solution.time)
                     self.dem_solution.demio.PrintMultifileLists(self.dem_solution.time, self.dem_solution.post_path)
@@ -232,6 +250,10 @@ class Algorithm(object):
         self.dem_solution.Finalize()
         self.dem_solution.CleanUpOperations()
         self.structural_solution.Finalize()
+        self.ClosingOperations()
+
+    def ClosingOperations(self):
+        pass
 
     def yield_DEM_time(self, current_time, current_time_plus_increment, delta_time):
 

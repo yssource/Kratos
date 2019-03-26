@@ -241,7 +241,7 @@ namespace Kratos {
             }
 
             //if (r_process_info[BOUNDING_BOX_OPTION] == 1 && has_mpi) {  //This block rebuilds all the bonds between continuum particles
-            if (is_time_to_print_results && r_process_info[CONTACT_MESH_OPTION] == 1) {
+            if (true) {//is_time_to_print_results && r_process_info[CONTACT_MESH_OPTION] == 1) {
                 CreateContactElements();
                 BaseType::InitializeContactElements();
             }
@@ -715,6 +715,21 @@ namespace Kratos {
                 for (int i = 0; i < number_of_particles; i++) {
                     mListOfSphericContinuumParticles[i]->GetStressTensorFromNeighbourStep3();
                 }
+            }
+        }
+
+		// SAND PRODUCTION SIMULATIONS ONLY!!!!
+
+		const bool sand_prod_simulation = true;
+
+		if (!sand_prod_simulation) return;
+
+        const int number_of_particles = (int) mListOfSphericContinuumParticles.size();
+        #pragma omp parallel
+        {
+            #pragma omp for
+            for (int i = 0; i < number_of_particles; i++) {
+                mListOfSphericContinuumParticles[i]->RemoveSpheresInsideInnerHole();
             }
         }
     }

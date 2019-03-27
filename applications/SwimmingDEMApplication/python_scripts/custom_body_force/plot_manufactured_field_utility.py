@@ -6,10 +6,11 @@ class PlotManufacturedFieldUtility(object):
     def __init__(self, settings = KratosMultiphysics.Parameters("""{}""")):
 
         default_settings = KratosMultiphysics.Parameters("""{
-            "benchmark_name"  : "custom_body_force.polynomial_vortex",
-            "x_range"         : [0.0, 1.0],
-            "y_range"         : [0.0, 1.0],
-            "Parameters"      : {}
+            "benchmark_name"   : "custom_body_force.polynomial_vortex",
+            "x_range"          : [0.0, 1.0],
+            "y_range"          : [0.0, 1.0],
+            "number_of_points" : 20,
+            "Parameters"       : {}
         }""")
 
         settings.ValidateAndAssignDefaults(default_settings)
@@ -18,9 +19,9 @@ class PlotManufacturedFieldUtility(object):
         benchmark_module = __import__(settings["benchmark_name"].GetString(), fromlist=[None])
         self.benchmark = benchmark_module.CreateManufacturedSolution(settings["Parameters"])
 
-        L = 0.5
-        n_points = 30
-        step = L / n_points
+        L = settings["x_range"][1].GetDouble() - settings["x_range"][0].GetDouble()
+        n_points = settings["number_of_points"].GetInt()
+        step = L / (n_points - 1)
         x = np.arange(settings["x_range"][0].GetDouble(), settings["x_range"][1].GetDouble(), step)
         y = np.arange(settings["y_range"][0].GetDouble(), settings["y_range"][1].GetDouble(), step)
         self.X, self.Y = np.meshgrid(x, y)
@@ -35,10 +36,16 @@ class PlotManufacturedFieldUtility(object):
         self.plot_body_force(ax, time)
         plt.show()
 
-    def DynamicPlotVelocity(self, start = 0.0, stop = 5.0, step = 0.1, pause = 0.5):
+    def DynamicPlotVelocity(self, start = 0.0, stop = 1.0, step = 0.1, pause = 0.5):
         fig, ax = plt.subplots()
         for time in np.arange(start, stop, step):
             self.plot_velocity(ax, time)
+            plt.pause(pause)
+
+    def DynamicPlotBodyForce(self, start = 0.0, stop = 1.0, step = 0.1, pause = 0.5):
+        fig, ax = plt.subplots()
+        for time in np.arange(start, stop, step):
+            self.plot_body_force(ax, time)
             plt.pause(pause)
 
     def plot_velocity(self, ax, time):

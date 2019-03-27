@@ -25,6 +25,18 @@ def pxb(x):
 def pyb(y):
     return 16*y**3 - 12*y**2 + 1
 
+def dpxa(x):
+    return x**2 - 3*x/2 + 1/2
+
+def dpxb(x):
+    return 16*(4*x - 3)**3 - 16*(4*x - 3)
+
+def dpya(y):
+    return y
+
+def dpyb(y):
+    return 48*y**2 - 24*y
+
 class EcaManufacturedSolution(ManufacturedSolution):
 
     def __init__(self, settings):
@@ -228,7 +240,7 @@ class EcaManufacturedSolution(ManufacturedSolution):
         B = self.B
         pi = np.pi
         sqrt_pi = np.sqrt(np.pi)
-        return 2/sqrt_pi * sigma/x1**2 * np.exp(-eta**2) * (1 - eta**2) + 2*A*pi*np.exp(-B*x2) * cos_1_2x(x1) * (1 - B*x2) * self.f(t)
+        return 2/sqrt_pi * sigma/x1**2 * np.exp(-eta**2) * (1 - 2*eta**2) + 2*A*pi*np.exp(-B*x2) * cos_1_2x(x1) * (1 - B*x2) * self.f(t)
 
     # Pressure and derivatives
 
@@ -236,7 +248,13 @@ class EcaManufacturedSolution(ManufacturedSolution):
         return self.Cpa(x1, x2) + self.Cpb(x1, x2) * self.f(t)
 
     def Cpa(self, x1, x2):
-        return 50 * np.log(pxa(x1)) * np.log(pya(x2)) 
+        return 50 * np.log(pxa(x1)) * np.log(pya(x2))
 
     def Cpb(self, x1, x2):
         return - 0.05 * np.sin(pxb(x1) * np.pi / 2) * sin(pyb(x2) * np.pi / 2)
+
+    def dp1(self, x1, x2, t):
+        return 50 * dpxa(x1) * np.log(pya(x2)) / pxa(x1) - 0.05 * dpxb(x1)*np.pi/2 * np.cos(pxb(x1)*np.pi/2) * np.sin(pyb(x2)*np.pi/2) * self.f(t)
+
+    def dp2(self, x1, x2, t):
+        return 50 * dpya(x2) * np.log(pxa(x1)) / pya(x2) - 0.05 * dpyb(x2)*np.pi/2 * np.sin(pxb(x1)*np.pi/2) * np.cos(pyb(x2)*np.pi/2) * self.f(t)

@@ -130,7 +130,7 @@ public:
 
         BaseType::InitializeSolutionStep(rModelPart, rA, rDx, rb);
 
-        const auto& r_current_process_info = rModelPart.GetProcessInfo();
+        auto& r_current_process_info = rModelPart.GetProcessInfo();
 
         const double delta_time = r_current_process_info[DELTA_TIME];
 
@@ -143,6 +143,9 @@ public:
 
         ResidualBasedBossakVelocityScheme::CalculateBossakConstants(
             mBossak, mAlphaBossak, delta_time);
+
+        r_current_process_info[BOSSAK_ALPHA] = mBossak.Alpha;
+        r_current_process_info[NEWMARK_GAMMA] = mBossak.Gamma;
 
         this->CalculateNodeNeighbourCount(rModelPart);
 

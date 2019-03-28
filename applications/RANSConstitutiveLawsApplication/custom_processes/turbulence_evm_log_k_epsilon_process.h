@@ -32,7 +32,6 @@
 #include "utilities/variable_utils.h"
 
 // Application includes
-#include "custom_conditions/evm_epsilon_wall_condition.h"
 #include "custom_elements/evm_k_epsilon/evm_log_epsilon_element.h"
 #include "custom_elements/evm_k_epsilon/evm_log_k_element.h"
 #include "custom_elements/evm_k_epsilon/evm_log_k_epsilon_utilities.h"

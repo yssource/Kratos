@@ -219,7 +219,7 @@ private:
 
     void CalculateWallDistances();
 
-    void InitializeNodeFlags(const Parameters& rParameters, const Flags& rFlag);
+    void InitializeNodeFlags(const Parameters& rParameters, const Flags& rFlag, const bool FlagValue = true);
 
     // void AssignBoundaryConditions();
 

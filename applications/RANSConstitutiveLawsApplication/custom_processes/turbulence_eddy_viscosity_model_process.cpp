@@ -40,6 +40,8 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
     this->InitializeNodeFlags(mrParameters["inlet_conditions"], INLET);
     this->InitializeNodeFlags(mrParameters["outlet_conditions"], OUTLET);
     this->InitializeNodeFlags(mrParameters["wall_conditions"], STRUCTURE);
+    this->InitializeNodeFlags(mrParameters["wall_conditions"], INLET, false);
+    this->InitializeNodeFlags(mrParameters["wall_conditions"], OUTLET, false);
 
     NormalCalculationUtils normal_calculation_utility;
     normal_calculation_utility.CalculateOnSimplex(mrModelPart, TDim);
@@ -498,7 +500,7 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 /* Protected functions ****************************************************/
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
 void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::InitializeNodeFlags(
-    const Parameters& rParameters, const Flags& rFlag)
+    const Parameters& rParameters, const Flags& rFlag, const bool FlagValue)
 {
     KRATOS_TRY
 
@@ -516,7 +518,7 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
         for (int i = 0; i < static_cast<int>(nodes_array.size()); ++i)
         {
             auto it_node = nodes_array.begin() + i;
-            it_node->Set(rFlag, true);
+            it_node->Set(rFlag, FlagValue);
         }
     }
 

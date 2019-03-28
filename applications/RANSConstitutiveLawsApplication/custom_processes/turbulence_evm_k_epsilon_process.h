@@ -32,7 +32,6 @@
 #include "utilities/variable_utils.h"
 
 // Application includes
-#include "custom_conditions/evm_epsilon_wall_condition.h"
 #include "custom_elements/evm_k_epsilon/evm_epsilon_element.h"
 #include "custom_elements/evm_k_epsilon/evm_k_element.h"
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
@@ -118,6 +117,7 @@ public:
                 "k_max_iterations": 10,
                 "epsilon_max_iterations": 10,
                 "maximum_coupling_iterations": 10,
+                "maximum_stabilization_multiplier":1e+4,
                 "echo_level": 2
             },
             "echo_level"     : 0,
@@ -195,6 +195,11 @@ public:
         mFreestreamEpsilon = flow_parameters["free_stream_epsilon"].GetDouble();
         mTurbulenceIntensity = flow_parameters["turbulence_intensity"].GetDouble();
         mRampUpTime = flow_parameters["ramp_up_time"].GetDouble();
+
+        rModelPart.GetProcessInfo()[RANS_STABILIZATION_MULTIPLIER_MAX] =
+            this->mrParameters["model_properties"]["convergence_tolerances"]
+                              ["maximum_stabilization_multiplier"]
+                                  .GetInt();
 
         KRATOS_ERROR_IF(
             this->mrModelPart.HasSubModelPart("TurbulenceModelPartRANSEVMK"))
@@ -606,14 +611,10 @@ private:
         if (mAssignedInitialConditions)
             return;
 
-        this->UpdateInletNodes();
         this->CalculateYplus();
+        this->UpdateInletNodes();
 
         const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
-        // const double mixing_length = r_current_process_info[TURBULENT_MIXING_LENGTH];
-        const double C_mu = r_current_process_info[TURBULENCE_RANS_C_MU];
-        const double von_karman = r_current_process_info[WALL_VON_KARMAN];
-
         unsigned int initialized_nodes_count{0};
 
         const int number_of_nodes = this->mrModelPart.NumberOfNodes();
@@ -624,17 +625,8 @@ private:
             if (!i_node->IsFixed(TURBULENT_KINETIC_ENERGY) &&
                 !i_node->IsFixed(TURBULENT_ENERGY_DISSIPATION_RATE))
             {
-                // array_1d<double, 3>& velocity =
-                //     i_node->FastGetSolutionStepValue(VELOCITY, 0);
-                // const double velocity_mag = norm_2(velocity);
-                const double y_plus = i_node->FastGetSolutionStepValue(RANS_Y_PLUS);
-                const double nu = i_node->FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
-                const double wall_distance = i_node->FastGetSolutionStepValue(DISTANCE);
-                const double u_tau = y_plus * nu / wall_distance;
-                const double k = std::pow(u_tau, 2) / std::sqrt(C_mu);
-                const double epsilon = std::pow(u_tau, 4) / (von_karman * nu * y_plus);
-                // const double k = 1.5 * std::pow(velocity_mag * mTurbulenceIntensity, 2);
-                // const double epsilon = C_mu * std::pow(k, 1.5) / mixing_length;
+                double k{0.0}, epsilon{0.0};
+                this->CalculateTurbulentValues(k, epsilon, *i_node, r_current_process_info);
                 this->InitializeValues(*i_node, k, epsilon);
                 initialized_nodes_count++;
             }
@@ -660,12 +652,12 @@ private:
             if (i_node->Is(INLET))
             {
                 i_node->Fix(TURBULENT_KINETIC_ENERGY);
-                i_node->Free(TURBULENT_ENERGY_DISSIPATION_RATE);
+                i_node->Fix(TURBULENT_ENERGY_DISSIPATION_RATE);
                 nodes_count_fixed++;
             }
             else if (i_node->Is(STRUCTURE))
             {
-                i_node->Free(TURBULENT_KINETIC_ENERGY);
+                i_node->Fix(TURBULENT_KINETIC_ENERGY);
                 i_node->Fix(TURBULENT_ENERGY_DISSIPATION_RATE);
                 nodes_count_fixed++;
             }
@@ -690,17 +682,14 @@ private:
 
     void UpdateBoundaryConditions()
     {
-        this->UpdateInletNodes();
         this->CalculateYplus();
+        this->UpdateInletNodes();
         this->UpdateWallNodes();
     }
 
     void UpdateInletNodes()
     {
         const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
-
-        const double mixing_length = r_current_process_info[TURBULENT_MIXING_LENGTH];
-        const double C_mu = r_current_process_info[TURBULENCE_RANS_C_MU];
 
         // Set Boundary Conditions
         const int number_of_nodes = this->mrModelPart.NumberOfNodes();
@@ -710,12 +699,8 @@ private:
             ModelPart::NodeIterator i_node = this->mrModelPart.NodesBegin() + i;
             if (i_node->Is(INLET))
             {
-                array_1d<double, 3>& velocity =
-                    i_node->FastGetSolutionStepValue(VELOCITY, 0);
-                const double velocity_mag = norm_2(velocity);
-                const double k = 1.5 * std::pow(velocity_mag * mTurbulenceIntensity, 2);
-                const double epsilon = C_mu * std::pow(k, 1.5) / mixing_length;
-
+                double k{0.0}, epsilon{0.0};
+                this->CalculateTurbulentValues(k, epsilon, *i_node, r_current_process_info);
                 this->InitializeValues(*i_node, k, epsilon);
             }
         }
@@ -723,85 +708,100 @@ private:
 
     void UpdateWallNodes()
     {
-        const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
-        const double von_karman = r_current_process_info[WALL_VON_KARMAN];
-        const double beta = r_current_process_info[WALL_SMOOTHNESS_BETA];
-        const double c_mu = r_current_process_info[TURBULENCE_RANS_C_MU];
-
-        const int number_of_conditions = this->mrModelPart.NumberOfConditions();
+        // Set Boundary Conditions
+        const int number_of_nodes = this->mrModelPart.NumberOfNodes();
 #pragma omp parallel for
-        for (int i_cond = 0; i_cond < number_of_conditions; ++i_cond)
+        for (int i = 0; i < number_of_nodes; i++)
         {
-            Condition& r_condition =
-                *(this->mpTurbulenceKModelPart->ConditionsBegin() + i_cond);
-
-            // Skip the condition if it is not a wall
-            if (!r_condition.Is(STRUCTURE))
-                continue;
-
-            GeometryType& r_condition_geometry = r_condition.GetGeometry();
-            Element& r_element = *(r_condition.GetValue(PARENT_ELEMENT).lock());
-            GeometryType& r_element_geometry = r_element.GetGeometry();
-
-            Vector gauss_weights;
-            Matrix shape_functions;
-            GeometryType::ShapeFunctionsGradientsType shape_derivatives;
-            CalculationUtilities::CalculateGeometryData(
-                r_element_geometry, r_element.GetIntegrationMethod(),
-                gauss_weights, shape_functions, shape_derivatives);
-
-            const unsigned int number_of_condition_nodes =
-                r_condition_geometry.PointsNumber();
-            const std::vector<int> condition_gauss_point_indices =
-                r_condition.GetValue(GAUSS_POINT_INDICES);
-
-            for (unsigned int i_node = 0; i_node < number_of_condition_nodes; i_node++)
+            ModelPart::NodeIterator i_node = this->mrModelPart.NodesBegin() + i;
+            if (i_node->Is(STRUCTURE))
             {
-                NodeType& r_condition_node = r_condition_geometry[i_node];
-
-                const int gauss_index = condition_gauss_point_indices[i_node];
-                const Vector& gauss_shape_functions = row(shape_functions, gauss_index);
-
-                const double wall_distance =
-                    CalculationUtilities::EvaluateInPoint<GeometryType>(
-                        r_element_geometry, DISTANCE, gauss_shape_functions);
-                const double nu = CalculationUtilities::EvaluateInPoint<GeometryType>(
-                    r_element_geometry, KINEMATIC_VISCOSITY, gauss_shape_functions);
-                const array_1d<double, 3> velocity =
-                    CalculationUtilities::EvaluateInPoint<GeometryType>(
-                        r_element_geometry, VELOCITY, gauss_shape_functions);
-                array_1d<double, 3> normal =
-                    CalculationUtilities::EvaluateInPoint<GeometryType>(
-                        r_element_geometry, NORMAL, gauss_shape_functions);
-
-                normal /= norm_2(normal);
-                const double tangential_velocity =
-                    std::sqrt(inner_prod(velocity, velocity) -
-                              std::pow(inner_prod(velocity, normal), 2));
-
-                // Applying boundary conditions
-                r_condition_node.SetLock();
-                double& y_plus = r_condition_node.FastGetSolutionStepValue(RANS_Y_PLUS);
-                double& u_tangent =
-                    r_condition_node.FastGetSolutionStepValue(TANGENTIAL_VELOCITY);
-                double& u_normal =
-                    r_condition_node.FastGetSolutionStepValue(NORMAL_VELOCITY);
-                double& u_tau = r_condition_node.FastGetSolutionStepValue(FRICTION_VELOCITY);
-                double& tke = r_condition_node.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
-                double& epsilon = r_condition_node.FastGetSolutionStepValue(
-                    TURBULENT_ENERGY_DISSIPATION_RATE);
-
-                y_plus = CalculationUtilities::CalculateYplus(
-                    tangential_velocity, wall_distance, nu, von_karman, beta, 100);
-                u_tangent = tangential_velocity;
-                u_normal = inner_prod(velocity, normal);
-                u_tau = y_plus * nu / wall_distance;
-                tke = std::pow(u_tau, 2) / std::sqrt(c_mu);
-                epsilon = std::pow(u_tau, 4) / (von_karman * y_plus * nu);
-                r_condition_node.UnSetLock();
+                this->InitializeValues(*i_node, 1e-10, 1e-10);
             }
         }
     }
+
+    // void UpdateWallNodes()
+    // {
+    //         const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
+    //         const double von_karman = r_current_process_info[WALL_VON_KARMAN];
+    //         const double beta = r_current_process_info[WALL_SMOOTHNESS_BETA];
+    //         // const double c_mu = r_current_process_info[TURBULENCE_RANS_C_MU];
+
+    //         const int number_of_conditions = this->mrModelPart.NumberOfConditions();
+    // #pragma omp parallel for
+    //         for (int i_cond = 0; i_cond < number_of_conditions; ++i_cond)
+    //         {
+    //             Condition& r_condition =
+    //                 *(this->mpTurbulenceKModelPart->ConditionsBegin() + i_cond);
+
+    //             // Skip the condition if it is not a wall
+    //             if (!r_condition.Is(STRUCTURE))
+    //                 continue;
+
+    //             GeometryType& r_condition_geometry = r_condition.GetGeometry();
+    //             Element& r_element = *(r_condition.GetValue(PARENT_ELEMENT).lock());
+    //             GeometryType& r_element_geometry = r_element.GetGeometry();
+
+    //             Vector gauss_weights;
+    //             Matrix shape_functions;
+    //             GeometryType::ShapeFunctionsGradientsType shape_derivatives;
+    //             CalculationUtilities::CalculateGeometryData(
+    //                 r_element_geometry, r_element.GetIntegrationMethod(),
+    //                 gauss_weights, shape_functions, shape_derivatives);
+
+    //             const unsigned int number_of_condition_nodes =
+    //                 r_condition_geometry.PointsNumber();
+    //             const std::vector<int> condition_gauss_point_indices =
+    //                 r_condition.GetValue(GAUSS_POINT_INDICES);
+
+    //             for (unsigned int i_node = 0; i_node < number_of_condition_nodes; i_node++)
+    //             {
+    //                 NodeType& r_condition_node = r_condition_geometry[i_node];
+
+    //                 const int gauss_index = condition_gauss_point_indices[i_node];
+    //                 const Vector& gauss_shape_functions = row(shape_functions, gauss_index);
+
+    //                 const double wall_distance =
+    //                     CalculationUtilities::EvaluateInPoint<GeometryType>(
+    //                         r_element_geometry, DISTANCE, gauss_shape_functions);
+    //                 const double nu = CalculationUtilities::EvaluateInPoint<GeometryType>(
+    //                     r_element_geometry, KINEMATIC_VISCOSITY, gauss_shape_functions);
+    //                 const array_1d<double, 3> velocity =
+    //                     CalculationUtilities::EvaluateInPoint<GeometryType>(
+    //                         r_element_geometry, VELOCITY, gauss_shape_functions);
+    //                 array_1d<double, 3> normal =
+    //                     CalculationUtilities::EvaluateInPoint<GeometryType>(
+    //                         r_element_geometry, NORMAL, gauss_shape_functions);
+
+    //                 normal /= norm_2(normal);
+    //                 const double tangential_velocity =
+    //                     std::sqrt(inner_prod(velocity, velocity) -
+    //                               std::pow(inner_prod(velocity, normal), 2));
+
+    //                 // Applying boundary conditions
+    //                 r_condition_node.SetLock();
+    //                 double& y_plus = r_condition_node.FastGetSolutionStepValue(RANS_Y_PLUS);
+    //                 double& u_tangent =
+    //                     r_condition_node.FastGetSolutionStepValue(TANGENTIAL_VELOCITY);
+    //                 double& u_normal =
+    //                     r_condition_node.FastGetSolutionStepValue(NORMAL_VELOCITY);
+    //                 double& u_tau = r_condition_node.FastGetSolutionStepValue(FRICTION_VELOCITY);
+
+    //                 y_plus = CalculationUtilities::CalculateYplus(
+    //                     tangential_velocity, wall_distance, nu, von_karman, beta, 100);
+    //                 u_tangent = tangential_velocity;
+    //                 u_normal = inner_prod(velocity, normal);
+    //                 u_tau = y_plus * nu / wall_distance;
+
+    //                 // const double k = std::pow(u_tau, 2) / std::sqrt(c_mu);
+    //                 // const double epsilon = std::pow(u_tau, 4) / (von_karman * y_plus * nu);
+    //                 // this->InitializeValues(r_condition_node, k, epsilon);
+    //                 this->InitializeValues(r_condition_node, std::numeric_limits<double>::epsilon(), std::numeric_limits<double>::epsilon());
+    //                 r_condition_node.UnSetLock();
+    //             }
+    //         }
+    // }
 
     void SolveStep()
     {
@@ -916,30 +916,8 @@ private:
             << r_stabilization_multiplier << "\n";
         pStrategy->SolveSolutionStep();
 
-        // double prev_negative_aggregated_value, negative_aggregated_value;
-
-        // prev_negative_aggregated_value = CalculationUtilities::WarnIfNegative<NodeType>(
-        //     this->mrModelPart, rVariable, "Coupling");
-        // negative_aggregated_value = prev_negative_aggregated_value;
-        // r_stabilization_multiplier = 2.0;
-        // for (int i_flux_itr = 0; i_flux_itr < 10; i_flux_itr++)
-        // {
-        //     if (negative_aggregated_value == 0)
-        //         break;
-
-        //     KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
-        //         << "Solving for " << rVariable.Name()
-        //         << " with flux_corrector_multiplier = " << std::scientific
-        //         << r_stabilization_multiplier << "\n";
-        //     pStrategy->SolveSolutionStep();
-
-        //     negative_aggregated_value = CalculationUtilities::WarnIfNegative<NodeType>(
-        //         this->mrModelPart, rVariable, "Coupling");
-        //     double m = (negative_aggregated_value - prev_negative_aggregated_value);
-        //     double c = (negative_aggregated_value)-m * r_stabilization_multiplier;
-        //     prev_negative_aggregated_value = negative_aggregated_value;
-        //     r_stabilization_multiplier = -c / m;
-        // }
+        CalculationUtilities::WarnIfNegative<NodeType>(
+            this->mrModelPart, rVariable, "ExecuteFluxCorrector");
     }
 
     double CalculateNodalTurbulentViscosity(const ModelPart::NodeIterator& iNode,
@@ -984,6 +962,22 @@ private:
             this->mrModelPart, TURBULENT_VISCOSITY, "NuT");
         CalculationUtilities::ClipVariable<NodeType>(
             this->mrModelPart, TURBULENT_VISCOSITY, nu_t_min, nu_t_max);
+    }
+
+    void CalculateTurbulentValues(double& TurbulentKineticEnergy,
+                                  double& TurbulentEnergyDissipationRate,
+                                  const NodeType& rNode,
+                                  const ProcessInfo& rProcessInfo)
+    {
+        const double c_mu = rProcessInfo[TURBULENCE_RANS_C_MU];
+        const double von_karman = rProcessInfo[WALL_VON_KARMAN];
+        const double y_plus = rNode.FastGetSolutionStepValue(RANS_Y_PLUS, 0);
+        const double nu = rNode.FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
+        const double wall_distance = rNode.FastGetSolutionStepValue(DISTANCE);
+
+        EvmKepsilonModelUtilities::CalculateTurbulentValues(
+            TurbulentKineticEnergy, TurbulentEnergyDissipationRate, y_plus, nu,
+            wall_distance, c_mu, von_karman);
     }
 
     ///@}

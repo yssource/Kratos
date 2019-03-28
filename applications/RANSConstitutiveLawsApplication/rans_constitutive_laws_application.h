@@ -18,13 +18,10 @@
 // External includes
 
 // Project includes
-#include "custom_conditions/evm_epsilon_wall_condition.h"
 #include "custom_elements/evm_k_epsilon/evm_k_element.h"
 #include "custom_elements/evm_k_epsilon/evm_epsilon_element.h"
 #include "custom_elements/evm_k_epsilon/evm_log_k_element.h"
 #include "custom_elements/evm_k_epsilon/evm_log_epsilon_element.h"
-#include "custom_elements/evm_k_epsilon/evm_sqrt_k_element.h"
-#include "custom_elements/evm_k_epsilon/evm_sqrt_epsilon_element.h"
 #include "includes/kratos_application.h"
 
 namespace Kratos
@@ -181,16 +178,6 @@ private:
 
     const EvmLogEpsilonElement<2, 3> mRANSEVMLOGEPSILON2D;
     const EvmLogEpsilonElement<3, 4> mRANSEVMLOGEPSILON3D;
-
-    const EvmSqrtKElement<2, 3> mRANSEVMSQRTK2D;
-    const EvmSqrtKElement<3, 4> mRANSEVMSQRTK3D;
-
-    const EvmSqrtEpsilonElement<2, 3> mRANSEVMSQRTEPSILON2D;
-    const EvmSqrtEpsilonElement<3, 4> mRANSEVMSQRTEPSILON3D;
-
-    /// k-epsilon turbulence model conditions
-    const EvmEpsilonWallCondition<2, 2> mEpsilonWallCondition2D;
-    const EvmEpsilonWallCondition<3, 3> mEpsilonWallCondition3D;
 
     ///@}
     ///@name Private Operators

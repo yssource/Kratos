@@ -35,13 +35,7 @@ KratosRANSConstitutiveLawsApplication::KratosRANSConstitutiveLawsApplication():
     mRANSEVMLOGK2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mRANSEVMLOGK3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
     mRANSEVMLOGEPSILON2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
-    mRANSEVMLOGEPSILON3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
-    mRANSEVMSQRTK2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
-    mRANSEVMSQRTK3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
-    mRANSEVMSQRTEPSILON2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
-    mRANSEVMSQRTEPSILON3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
-    mEpsilonWallCondition2D(0, Element::GeometryType::Pointer( new Line2D2<Node<3> >( Element::GeometryType::PointsArrayType( 2 ) ) ) ),
-    mEpsilonWallCondition3D(0, Element::GeometryType::Pointer( new Triangle3D3<Node<3> >( Element::GeometryType::PointsArrayType( 3 ) ) ) )
+    mRANSEVMLOGEPSILON3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4))))
     {}
 
 void KratosRANSConstitutiveLawsApplication::Register()
@@ -64,6 +58,7 @@ void KratosRANSConstitutiveLawsApplication::Register()
     KRATOS_REGISTER_VARIABLE( TURBULENT_ENERGY_DISSIPATION_RATE_2 )
     KRATOS_REGISTER_VARIABLE( RANS_MODELLING_PROCESS_STEP )
     KRATOS_REGISTER_VARIABLE( RANS_TIME_STEP )
+    KRATOS_REGISTER_VARIABLE( RESIDUAL )
     KRATOS_REGISTER_VARIABLE( RANS_Y_PLUS )
     KRATOS_REGISTER_VARIABLE( FRICTION_VELOCITY )
     KRATOS_REGISTER_VARIABLE( TANGENTIAL_VELOCITY )
@@ -71,6 +66,7 @@ void KratosRANSConstitutiveLawsApplication::Register()
     KRATOS_REGISTER_VARIABLE( RANS_AUXILIARY_VARIABLE_1 )
     KRATOS_REGISTER_VARIABLE( RANS_AUXILIARY_VARIABLE_2 )
     KRATOS_REGISTER_VARIABLE( RANS_STABILIZATION_MULTIPLIER )
+    KRATOS_REGISTER_VARIABLE( RANS_STABILIZATION_MULTIPLIER_MAX )
 
     // Turbulence model constants
     KRATOS_REGISTER_VARIABLE( WALL_SMOOTHNESS_BETA )
@@ -96,13 +92,5 @@ void KratosRANSConstitutiveLawsApplication::Register()
     KRATOS_REGISTER_ELEMENT("RANSEVMLOGK3D4N",mRANSEVMLOGK3D);
     KRATOS_REGISTER_ELEMENT("RANSEVMLOGEPSILON2D3N",mRANSEVMLOGEPSILON2D);
     KRATOS_REGISTER_ELEMENT("RANSEVMLOGEPSILON3D4N",mRANSEVMLOGEPSILON3D);
-
-    KRATOS_REGISTER_ELEMENT("RANSEVMSQRTK2D3N",mRANSEVMSQRTK2D);
-    KRATOS_REGISTER_ELEMENT("RANSEVMSQRTK3D4N",mRANSEVMSQRTK3D);
-    KRATOS_REGISTER_ELEMENT("RANSEVMSQRTEPSILON2D3N",mRANSEVMSQRTEPSILON2D);
-    KRATOS_REGISTER_ELEMENT("RANSEVMSQRTEPSILON3D4N",mRANSEVMSQRTEPSILON3D);
-
-    KRATOS_REGISTER_CONDITION("EpsilonWallCondition2D", mEpsilonWallCondition2D);
-    KRATOS_REGISTER_CONDITION("EpsilonWallCondition3D", mEpsilonWallCondition2D);
 }
 }  // namespace Kratos.

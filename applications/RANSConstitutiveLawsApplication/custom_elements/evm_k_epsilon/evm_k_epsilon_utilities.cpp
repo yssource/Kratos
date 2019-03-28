@@ -57,6 +57,8 @@ void CalculateStabilizationTau(double& tau,
                                const Matrix& rContravariantMetricTensor,
                                const double reaction,
                                const double effective_kinematic_viscosity,
+                               const double alpha,
+                               const double gamma,
                                const double delta_time)
 {
     unsigned int dim = rContravariantMetricTensor.size2();
@@ -70,6 +72,7 @@ void CalculateStabilizationTau(double& tau,
                                   norm_frobenius(rContravariantMetricTensor);
     const double stab_dynamics = std::pow(2.0 / delta_time, 2);
     const double stab_reaction = std::pow(reaction, 2);
+
     PrintIfVariableIsNegative(stab_convection);
 
     const double velocity_norm = norm_2(rVelocity);
@@ -136,23 +139,31 @@ void CalculateCrossWindDiffusionParameters(double& chi,
                                            const double tau,
                                            const double effective_kinematic_viscosity,
                                            const double reaction,
+                                           const double alpha,
+                                           const double gamma,
+                                           const double delta_time,
                                            const double element_length)
 {
-    chi = 2.0 / (std::abs(reaction) * element_length + 2.0 * velocity_magnitude);
+    const double reaction_dynamics = reaction + (1 - alpha) / (gamma * delta_time);
+
+    chi = 2.0 / (std::abs(reaction_dynamics) * element_length + 2.0 * velocity_magnitude);
 
     double value = 0.0;
-    value = std::abs(0.5 * (velocity_magnitude - tau * velocity_magnitude * reaction +
-                            tau * velocity_magnitude * std::abs(reaction))) *
-                element_length -
-            (effective_kinematic_viscosity + tau * std::pow(velocity_magnitude, 2)) +
-            (reaction + tau * reaction * std::abs(reaction)) *
-                std::pow(element_length, 2) / 6.0;
+    value =
+        std::abs(0.5 * (velocity_magnitude - tau * velocity_magnitude * reaction_dynamics +
+                        tau * velocity_magnitude * std::abs(reaction_dynamics))) *
+            element_length -
+        (effective_kinematic_viscosity + tau * std::pow(velocity_magnitude, 2)) +
+        (reaction_dynamics + tau * reaction_dynamics * std::abs(reaction_dynamics)) *
+            std::pow(element_length, 2) / 6.0;
+
     k1 = std::max(value, 0.0);
 
-    value = std::abs(0.5 * (velocity_magnitude + tau * velocity_magnitude * std::abs(reaction))) *
+    value = std::abs(0.5 * (velocity_magnitude + tau * velocity_magnitude *
+                                                     std::abs(reaction_dynamics))) *
                 element_length -
             effective_kinematic_viscosity +
-            (reaction + tau * reaction * std::abs(reaction)) *
+            (reaction_dynamics + tau * reaction_dynamics * std::abs(reaction_dynamics)) *
                 std::pow(element_length, 2) / 6.0;
     k2 = std::max(value, 0.0);
 }
@@ -169,6 +180,31 @@ void CalculatePositiveValuesList(Vector& rOutput, const Vector& rInput)
         else
             rOutput[i] = 0.0;
     }
+}
+
+void CalculateTurbulentValues(double& turbulent_kinetic_energy,
+                              double& turbulent_energy_dissipation_rate,
+                              const double y_plus,
+                              const double kinematic_viscosity,
+                              const double wall_distance,
+                              const double c_mu,
+                              const double von_karman)
+{
+    const double u_tau = y_plus * kinematic_viscosity / wall_distance;
+    turbulent_kinetic_energy = std::pow(u_tau, 2) / std::sqrt(c_mu);
+    turbulent_energy_dissipation_rate =
+        std::pow(u_tau, 3) / (von_karman * wall_distance);
+}
+
+void CalculateTurbulentValues(double& turbulent_kinetic_energy,
+                              double& turbulent_energy_dissipation_rate,
+                              const double velocity_mag,
+                              const double turbulence_intensity,
+                              const double mixing_length,
+                              const double c_mu)
+{
+    turbulent_kinetic_energy = 1.5 * std::pow(velocity_mag * turbulence_intensity, 2);
+    turbulent_energy_dissipation_rate = c_mu * std::pow(turbulent_kinetic_energy, 1.5) / mixing_length;
 }
 
 template double CalculateSourceTerm<2>(const BoundedMatrix<double, 2, 2>&, const double, const double);

@@ -67,6 +67,8 @@ void CalculateStabilizationTau(double& tau,
                                const Matrix& rContravariantMetricTensor,
                                const double reaction,
                                const double effective_kinematic_viscosity,
+                               const double alpha,
+                               const double gamma,
                                const double delta_time);
 
 double CalculateStabilizationTau(const double velocity_magnitude,
@@ -82,7 +84,25 @@ void CalculateCrossWindDiffusionParameters(double& chi,
                                            const double tau,
                                            const double effective_kinematic_viscosity,
                                            const double reaction,
+                                           const double alpha,
+                                           const double gamma,
+                                           const double delta_time,
                                            const double element_length);
+
+void CalculateTurbulentValues(double& turbulent_kinetic_energy,
+                              double& turbulent_energy_dissipation_rate,
+                              const double y_plus,
+                              const double kinematic_viscosity,
+                              const double wall_distance,
+                              const double c_mu,
+                              const double von_karman);
+
+void CalculateTurbulentValues(double& turbulent_kinetic_energy,
+                              double& turbulent_energy_dissipation_rate,
+                              const double velocity_mag,
+                              const double turbulence_intensity,
+                              const double mixing_length,
+                              const double c_mu);
 
 void CalculatePositiveValuesList(Vector& rOutput, const Vector& rInput);
 

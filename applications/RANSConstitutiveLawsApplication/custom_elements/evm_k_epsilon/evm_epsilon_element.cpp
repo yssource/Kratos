@@ -313,6 +313,8 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRig
     const double delta_time = rCurrentProcessInfo[DELTA_TIME];
     const double c2 = rCurrentProcessInfo[TURBULENCE_RANS_C2];
     const int rans_time_step = rCurrentProcessInfo[RANS_TIME_STEP];
+    const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
+    const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
     for (unsigned int g = 0; g < num_gauss_points; g++)
     {
@@ -350,8 +352,8 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRig
 
         double tau, element_length;
         EvmKepsilonModelUtilities::CalculateStabilizationTau(
-            tau, element_length, velocity, contravariant_metric_tensor,
-            reaction, effective_kinematic_viscosity, delta_time);
+            tau, element_length, velocity, contravariant_metric_tensor, reaction,
+            effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
 
         const double production =
             this->CalculateSourceTerm(nu_t, tke, c1, gamma, r_shape_derivatives);
@@ -365,7 +367,8 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRig
             value += gauss_shape_functions[a] * production;
 
             // Add SUPG stabilization terms
-            value += (velocity_convective_terms[a] + s) * tau * production;
+            value += (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
+                     tau * production;
 
             rRightHandSideVector[a] += gauss_weights[g] * value;
         }
@@ -502,6 +505,8 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& rMassMa
     const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
     const double c2 = rCurrentProcessInfo[TURBULENCE_RANS_C2];
     const int rans_time_step = rCurrentProcessInfo[RANS_TIME_STEP];
+    const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
+    const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
     for (unsigned int g = 0; g < num_gauss_points; g++)
     {
@@ -538,8 +543,8 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& rMassMa
 
         double tau, element_length;
         EvmKepsilonModelUtilities::CalculateStabilizationTau(
-            tau, element_length, velocity, contravariant_metric_tensor,
-            reaction, effective_kinematic_viscosity, delta_time);
+            tau, element_length, velocity, contravariant_metric_tensor, reaction,
+            effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
 
         BoundedVector<double, TNumNodes> velocity_convective_terms;
         this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
@@ -549,9 +554,10 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& rMassMa
         // Add mass stabilization terms
         for (unsigned int i = 0; i < TNumNodes; ++i)
             for (unsigned int j = 0; j < TNumNodes; ++j)
-                rMassMatrix(i, j) += gauss_weights[g] * tau *
-                                     (velocity_convective_terms[i] + s) *
-                                     gauss_shape_functions[j];
+                rMassMatrix(i, j) +=
+                    gauss_weights[g] * tau *
+                    (velocity_convective_terms[i] + s * gauss_shape_functions[i]) *
+                    gauss_shape_functions[j];
     }
 
     KRATOS_CATCH("");
@@ -588,6 +594,8 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
     const double delta_time = rCurrentProcessInfo[DELTA_TIME];
     const double positivity_factor = rCurrentProcessInfo[RANS_STABILIZATION_MULTIPLIER];
     const int rans_time_step = rCurrentProcessInfo[RANS_TIME_STEP];
+    const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
+    const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
     for (unsigned int g = 0; g < num_gauss_points; g++)
     {
@@ -627,8 +635,8 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
 
         double tau, element_length;
         EvmKepsilonModelUtilities::CalculateStabilizationTau(
-            tau, element_length, velocity, contravariant_metric_tensor,
-            reaction, effective_kinematic_viscosity, delta_time);
+            tau, element_length, velocity, contravariant_metric_tensor, reaction,
+            effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
 
         // Calculate residual for cross wind dissipation coefficient
         array_1d<double, 3> epsilon_gradient;
@@ -659,8 +667,8 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
 
             double chi, k1, k2;
             EvmKepsilonModelUtilities::CalculateCrossWindDiffusionParameters(
-                chi, k1, k2, velocity_magnitude, tau,
-                effective_kinematic_viscosity, reaction, element_length);
+                chi, k1, k2, velocity_magnitude, tau, effective_kinematic_viscosity,
+                reaction, bossak_alpha, bossak_gamma, delta_time, element_length);
 
             stream_line_diffusion = residual * chi * k1 / velocity_magnitude_square;
             cross_wind_diffusion = residual * chi * k2 / velocity_magnitude_square;
@@ -687,10 +695,12 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
                 value += effective_kinematic_viscosity * dNa_dNb;
 
                 // Adding SUPG stabilization terms
-                value += tau * (velocity_convective_terms[a] + s) *
+                value += tau *
+                         (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
                          velocity_convective_terms[b];
-                value += tau * (velocity_convective_terms[a] + s) * reaction *
-                         gauss_shape_functions[b]; // * positive_values_list[b];
+                value +=
+                    tau * (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
+                    reaction * gauss_shape_functions[b]; // * positive_values_list[b];
 
                 // Adding cross wind dissipation
                 value += cross_wind_diffusion * dNa_dNb * velocity_magnitude_square;
@@ -722,6 +732,88 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateLocalVelocityContribution(
             TURBULENT_ENERGY_DISSIPATION_RATE);
 
     noalias(rRightHandSideVector) -= prod(rDampingMatrix, U);
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmEpsilonElement<TDim, TNumNodes>::Calculate(const Variable<double>& rVariable,
+                                                   double& Output,
+                                                   const ProcessInfo& rCurrentProcessInfo)
+{
+    if (rVariable == RESIDUAL)
+    {
+        // Get Shape function data
+        Vector gauss_weights;
+        Matrix shape_functions;
+        ShapeFunctionDerivativesArrayType shape_derivatives;
+        this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
+        const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
+            this->GetGeometryParameterDerivatives();
+        const unsigned int num_gauss_points = gauss_weights.size();
+
+        Output = 0.0;
+
+        // const double epsilon_sigma =
+        //     rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
+        const double c1 = rCurrentProcessInfo[TURBULENCE_RANS_C1];
+        const double c2 = rCurrentProcessInfo[TURBULENCE_RANS_C2];
+        const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
+        // const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+        // const double positivity_factor = rCurrentProcessInfo[RANS_STABILIZATION_MULTIPLIER];
+        const int rans_time_step = rCurrentProcessInfo[RANS_TIME_STEP];
+
+        Vector nodal_epsilon;
+        this->GetValuesVector(nodal_epsilon);
+
+        for (unsigned int g = 0; g < num_gauss_points; g++)
+        {
+            const Matrix& r_shape_derivatives = shape_derivatives[g];
+            const Vector& gauss_shape_functions = row(shape_functions, g);
+
+            const double epsilon = this->EvaluateInPoint(
+                TURBULENT_ENERGY_DISSIPATION_RATE, gauss_shape_functions);
+            const double tke =
+                this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
+            const double nu_t = this->EvaluateInPoint(
+                TURBULENT_VISCOSITY, gauss_shape_functions, rans_time_step);
+            const double nu =
+                this->EvaluateInPoint(KINEMATIC_VISCOSITY, gauss_shape_functions);
+            // const double effective_kinematic_viscosity = nu + nu_t / epsilon_sigma;
+
+            const double y_plus = this->EvaluateInPoint(RANS_Y_PLUS, gauss_shape_functions);
+            const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
+            const double gamma =
+                EvmKepsilonModelUtilities::CalculateGamma(c_mu, f_mu, tke, nu_t);
+
+            array_1d<double, 3> velocity =
+                this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
+            BoundedVector<double, TNumNodes> velocity_convective_terms;
+            this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
+
+            // const double velocity_magnitude = norm_2(velocity);
+            const double f2 = EvmKepsilonModelUtilities::CalculateF2(tke, nu, epsilon);
+            const double wall_distance =
+                this->EvaluateInPoint(DISTANCE, gauss_shape_functions);
+            const double reaction =
+                this->CalculateReactionTerm(nu, y_plus, wall_distance, f2, c2, gamma);
+
+            const double relaxed_epsilon_acceleration = this->EvaluateInPoint(
+                RANS_AUXILIARY_VARIABLE_2, gauss_shape_functions);
+            const double source =
+                this->CalculateSourceTerm(nu_t, tke, c1, gamma, r_shape_derivatives);
+
+            Output += relaxed_epsilon_acceleration;
+            Output += inner_prod(velocity_convective_terms, nodal_epsilon);
+            Output += reaction * inner_prod(gauss_shape_functions, nodal_epsilon);
+            Output -= source;
+            Output = std::abs(Output);
+        }
+    }
+    else
+    {
+        KRATOS_ERROR
+            << "Unsupported variable used in EvmKElement Calculate method"
+            << rVariable << "\n.";
+    }
 }
 
 /**

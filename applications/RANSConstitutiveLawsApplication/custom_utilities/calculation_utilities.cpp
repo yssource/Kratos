@@ -356,7 +356,7 @@ double WarnIfNegative(ModelPart& rModelPart, const Variable<double>& rVariable, 
     {
         NodeType& r_current_node = *(rModelPart.NodesBegin() + i);
         const double value = r_current_node.FastGetSolutionStepValue(rVariable);
-        if (value < std::numeric_limits<double>::epsilon())
+        if (value < 0.0)
         {
             count_of_nodes++;
             aggregated_negatives += value;
@@ -365,11 +365,61 @@ double WarnIfNegative(ModelPart& rModelPart, const Variable<double>& rVariable, 
 
     KRATOS_WARNING_IF("WarnIfNegative", count_of_nodes > 0)
         << rVariable.Name() << " of " << count_of_nodes << " nodes are less than "
-        << std::scientific << std::numeric_limits<double>::epsilon() << " out of total number of "
+        << std::scientific << 0.0 << " out of total number of "
         << number_of_nodes << " nodes in " << rModelPart.Name() << ".\n";
 
     return aggregated_negatives;
 }
+
+void CalculateRowSum(Vector& rRowSums, const Matrix& rMatrix)
+{
+    int rows = rMatrix.size1();
+    int cols = rMatrix.size2();
+
+    rRowSums.resize(rows);
+    rRowSums.clear();
+
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < cols; ++j)
+        {
+            rRowSums[i] += rMatrix(i, j);
+        }
+    }
+}
+
+void CalculateColumnSum(Vector& rColSums, const Matrix& rMatrix)
+{
+    int rows = rMatrix.size1();
+    int cols = rMatrix.size2();
+
+    rColSums.resize(rows);
+    rColSums.clear();
+
+    for (int i = 0; i < cols; i++)
+    {
+        for (int j = 0; j < rows; ++j)
+        {
+            rColSums[i] += rMatrix(j, i);
+        }
+    }
+}
+
+void GetDiagonalEntries(Vector& rDiags, const Matrix& rMatrix)
+{
+    int rows = rMatrix.size1();
+    int cols = rMatrix.size2();
+
+    int n = std::min(rows, cols);
+
+    rDiags.resize(n);
+
+    for (int i = 0; i < n; i++)
+    {
+        rDiags[i] = rMatrix(i, i);
+    }
+}
+
 
 // template instantiations
 template double EvaluateInPoint<Geometry<Node<3>>>(const Geometry<Node<3>>&,

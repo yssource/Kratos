@@ -78,6 +78,10 @@ void CheckBounds(ModelPart& rModelPart, const Variable<double>& rVariable, const
 template <class NodeType>
 double WarnIfNegative(ModelPart& rModelPart, const Variable<double>& rVariable, const std::string info = "");
 
+void CalculateRowSum(Vector& rRowSums, const Matrix& rMatrix);
+void CalculateColumnSum(Vector& rColSums, const Matrix& rMatrix);
+void GetDiagonalEntries(Vector& rDiags, const Matrix& rMatrix);
+
 } // namespace CalculationUtilities
 } // namespace Kratos
 

@@ -61,7 +61,7 @@ class EcaManufacturedSolution(ManufacturedSolution):
         self.rho = settings["density"].GetDouble()
         self.nu = settings["viscosity"].GetDouble()
 
-        self.U1 = settings["U1"].GetDouble()
+        self.U1 = settings["velocity"].GetDouble()
         self.L = settings["L"].GetDouble()
         self.sigma = settings["sigma"].GetDouble()
         self.A = settings["A"].GetDouble()

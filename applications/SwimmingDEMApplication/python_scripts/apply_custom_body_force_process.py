@@ -33,7 +33,7 @@ class ApplyCustomBodyForceProcess(KratosMultiphysics.Process):
         self.variable = KratosMultiphysics.KratosGlobals.GetVariable(self.settings["variable_name"].GetString())
 
         density = self.model_part.ElementsArray(0)[0].Properties[KratosMultiphysics.DENSITY]
-        viscosity = self.model_part.ElementsArray(0)[0].Properties[KratosMultiphysics.VISCOSITY]
+        viscosity = self.model_part.ElementsArray(0)[0].Properties[KratosMultiphysics.DYNAMIC_VISCOSITY]
         settings["benchmark_parameters"].AddEmptyValue("density").SetDouble(density)
         settings["benchmark_parameters"].AddEmptyValue("viscosity").SetDouble(viscosity)
 

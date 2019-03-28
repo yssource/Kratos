@@ -39,11 +39,17 @@ class Hdf5OutputTool:
             self.dataset_is_initialized = False
 
     def WriteBodyForceAttributes(self, body_force_settings):
-        for attr, value in body_force_settings.items():
+        for attr, param in body_force_settings.items():
+            if param.IsBool():
+                value = param.GetBool()
+            if param.IsInt():
+                value = param.GetInt()
+            if param.IsDouble():
+                value = param.GetDouble()
             if self.dataset_is_initialized:
-                if self.vortex_dset.attrs[attr] != value.GetDouble():
+                if self.vortex_dset.attrs[attr] != value:
                     self.vortex_dset.attrs["Warning"] = "There are several vortex definitions in this dataset"
-            self.vortex_dset.attrs[attr] = value.GetDouble()
+            self.vortex_dset.attrs[attr] = value
 
     def WriteAverageRelativeError(self, rel_err):
         case_data = (self.settings["framework"].GetString(),

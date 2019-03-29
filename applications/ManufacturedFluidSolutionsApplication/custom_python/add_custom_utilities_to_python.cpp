@@ -14,12 +14,10 @@
 // System includes
 
 // External includes
-#include <pybind11/pybind11.h>
-
 
 // Project includes
-#include "custom_python/add_custom_utilities_to_python.h"
-
+#include "add_custom_utilities_to_python.h"
+#include "custom_utilities/manufactured_solution_utility.h"
 
 
 namespace Kratos {
@@ -29,14 +27,16 @@ void AddCustomUtilitiesToPython(pybind11::module& m)
 {
     namespace py = pybind11;
 
-    //********************************************************************
-    //********************************************************************
-    //  py::class_< TestStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType>,
-    //  		TestStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType>::Pointer,
-    //          BaseSolvingStrategyType>(m, "TestStrategy")
-    //  	.def(py::init<ModelPart&, LinearSolverType::Pointer, int, int, bool >() )
-    //  	.def("MoveNodes",&TestStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType >::MoveNodes)
-    //  	;
+     py::class_< ManufacturedSolutionUtility, ManufacturedSolutionUtility::Pointer>(m, "ManufacturedSolutionUtility")
+     	.def(py::init<ModelPart&, ManufacturedSolution&>() )
+     	.def("SetBodyForce", &ManufacturedSolutionUtility::SetBodyForce)
+     	.def("SetVelocity", &ManufacturedSolutionUtility::SetVelocity)
+     	.def("SetPressure", &ManufacturedSolutionUtility::SetPressure)
+     	.def("ComputeExactVelocity", &ManufacturedSolutionUtility::ComputeExactVelocity)
+     	.def("ComputeExactPressure", &ManufacturedSolutionUtility::ComputeExactPressure)
+     	.def("ComputeVelocityRelativeError", &ManufacturedSolutionUtility::ComputeVelocityRelativeError)
+     	.def("ComputePressureRelativeError", &ManufacturedSolutionUtility::ComputePressureRelativeError)
+     	;
 
 }
 

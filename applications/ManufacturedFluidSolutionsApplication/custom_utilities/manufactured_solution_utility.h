@@ -73,7 +73,7 @@ public:
     ManufacturedSolutionUtility(ModelPart& rModelPart, ManufacturedSolution& rManufactured);
 
     /// Destructor.
-    ~ManufacturedSolutionUtility() = default;
+    virtual ~ManufacturedSolutionUtility() = default;
 
     ///@}
     ///@name Operators
@@ -113,13 +113,18 @@ public:
     ///@{
 
     /// Turn back information as a string.
-    virtual std::string Info() const;
+    virtual std::string Info() const
+    {
+        std::stringstream buffer;
+        buffer << "ManufacturedSolutionUtility";
+        return buffer.str();
+    }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const;
+    virtual void PrintInfo(std::ostream& rOStream) const {rOStream << "ManufacturedSolutionUtility";}
 
     /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const;
+    virtual void PrintData(std::ostream& rOStream) const {}
 
 
     ///@}

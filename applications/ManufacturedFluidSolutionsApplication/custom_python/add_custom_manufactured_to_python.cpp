@@ -13,15 +13,11 @@
 
 // System includes
 
-
 // External includes
-#include <pybind11/pybind11.h>
-
 
 // Project includes
-#include "custom_python/add_custom_manufactured_to_python.h"
-
-// Manufactured solutions
+#include "add_custom_manufactured_to_python.h"
+#include "custom_manufactured/manufactured_solution.h"
 
 
 namespace Kratos {
@@ -31,14 +27,18 @@ void  AddCustomManufacturedToPython(pybind11::module& m)
 {
     namespace py = pybind11;
 
-    //********************************************************************
-    //********************************************************************
-    //  py::class_< TestStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType>,
-    //  		TestStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType>::Pointer,
-    //          BaseSolvingStrategyType>(m, "TestStrategy")
-    //  	.def(py::init<ModelPart&, LinearSolverType::Pointer, int, int, bool >() )
-    //  	.def("MoveNodes",&TestStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType >::MoveNodes)
-    //  	;
+     py::class_< ManufacturedSolution, ManufacturedSolution::Pointer>(m, "ManufacturedSolution")
+     	.def(py::init<Properties::Pointer&, Parameters::Pointer&>() )
+     	.def("BodyForce", &ManufacturedSolution::BodyForce)
+     	.def("Velocity", &ManufacturedSolution::Velocity)
+     	.def("Pressure", &ManufacturedSolution::Pressure)
+     	.def("TimeDerivative", &ManufacturedSolution::TimeDerivative)
+     	.def("ConvectiveTerm", &ManufacturedSolution::ConvectiveTerm)
+     	.def("ViscousTerm", &ManufacturedSolution::ViscousTerm)
+     	.def("PressureGradient", &ManufacturedSolution::PressureGradient)
+     	.def("VelocityGradient", &ManufacturedSolution::VelocityGradient)
+     	.def("VelocityLaplacian", &ManufacturedSolution::VelocityLaplacian)
+     	;
 
 }
 

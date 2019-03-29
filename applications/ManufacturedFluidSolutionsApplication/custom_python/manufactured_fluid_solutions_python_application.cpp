@@ -7,8 +7,7 @@
 //  License:		 BSD License
 //					 Kratos default license: kratos/license.txt
 //
-//  Main authors:    Author1 Fullname
-//                   Author2 Fullname
+//  Main authors:    Miguel Maso Sotomayor
 //
 
 
@@ -40,7 +39,7 @@ PYBIND11_MODULE(KratosManufacturedFluidSolutionsApplication,m)
         .def(py::init<>())
         ;
 
-    AddCustomStrategiesToPython(m);
+    AddCustomManufacturedToPython(m);
     AddCustomUtilitiesToPython(m);
 
     //registering variables in python
@@ -48,7 +47,7 @@ PYBIND11_MODULE(KratosManufacturedFluidSolutionsApplication,m)
     KRATOS_REGISTER_IN_PYTHON_3D_VARIABLE_WITH_COMPONENTS(m, VELOCITY_RELATIVE_ERROR )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, EXACT_PRESSURE )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, PRESSURE_RELATIVE_ERROR )
-    KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, MANUFACTURED_PARAMETERS )
+    // KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, MANUFACTURED_PARAMETERS )
 
 }
 

@@ -7,7 +7,7 @@
 //  License:		 BSD License
 //					 Kratos default license: kratos/license.txt
 //
-//  Main authors:    @{KRATOS_APP_AUTHOR}
+//  Main authors:    Miguel Maso Sotomayor
 //
 
 #if !defined(KRATOS_MANUFACTURED_FLUID_SOLUTIONS_APPLICATION_VARIABLES_H_INCLUDED )

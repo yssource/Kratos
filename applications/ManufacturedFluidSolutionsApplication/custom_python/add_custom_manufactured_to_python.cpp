@@ -7,8 +7,7 @@
 //  License:		 BSD License
 //					 Kratos default license: kratos/license.txt
 //
-//  Main authors:    Author1 Fullname
-//                   Author2 Fullname
+//  Main authors:    Miguel Maso Sotomayor
 //
 
 
@@ -20,7 +19,6 @@
 
 
 // Project includes
-#include "includes/define_python.h"
 #include "custom_python/add_custom_manufactured_to_python.h"
 
 // Manufactured solutions
@@ -29,7 +27,7 @@
 namespace Kratos {
 namespace Python {
 
-void  AddCustomStrategiesToPython(pybind11::module& m)
+void  AddCustomManufacturedToPython(pybind11::module& m)
 {
     namespace py = pybind11;
 

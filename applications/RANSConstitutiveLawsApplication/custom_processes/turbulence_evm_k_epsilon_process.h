@@ -196,11 +196,6 @@ public:
         mTurbulenceIntensity = flow_parameters["turbulence_intensity"].GetDouble();
         mRampUpTime = flow_parameters["ramp_up_time"].GetDouble();
 
-        rModelPart.GetProcessInfo()[RANS_STABILIZATION_MULTIPLIER_MAX] =
-            this->mrParameters["model_properties"]["convergence_tolerances"]
-                              ["maximum_stabilization_multiplier"]
-                                  .GetInt();
-
         KRATOS_ERROR_IF(
             this->mrModelPart.HasSubModelPart("TurbulenceModelPartRANSEVMK"))
             << "TurbulenceEddyViscosityModelProcess: "
@@ -433,7 +428,6 @@ protected:
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(
             TURBULENT_ENERGY_DISSIPATION_RATE_2);
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(RANS_Y_PLUS);
-        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(FRICTION_VELOCITY);
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(TANGENTIAL_VELOCITY);
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(NORMAL_VELOCITY);
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(RANS_AUXILIARY_VARIABLE_1);
@@ -721,88 +715,6 @@ private:
         }
     }
 
-    // void UpdateWallNodes()
-    // {
-    //         const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
-    //         const double von_karman = r_current_process_info[WALL_VON_KARMAN];
-    //         const double beta = r_current_process_info[WALL_SMOOTHNESS_BETA];
-    //         // const double c_mu = r_current_process_info[TURBULENCE_RANS_C_MU];
-
-    //         const int number_of_conditions = this->mrModelPart.NumberOfConditions();
-    // #pragma omp parallel for
-    //         for (int i_cond = 0; i_cond < number_of_conditions; ++i_cond)
-    //         {
-    //             Condition& r_condition =
-    //                 *(this->mpTurbulenceKModelPart->ConditionsBegin() + i_cond);
-
-    //             // Skip the condition if it is not a wall
-    //             if (!r_condition.Is(STRUCTURE))
-    //                 continue;
-
-    //             GeometryType& r_condition_geometry = r_condition.GetGeometry();
-    //             Element& r_element = *(r_condition.GetValue(PARENT_ELEMENT).lock());
-    //             GeometryType& r_element_geometry = r_element.GetGeometry();
-
-    //             Vector gauss_weights;
-    //             Matrix shape_functions;
-    //             GeometryType::ShapeFunctionsGradientsType shape_derivatives;
-    //             CalculationUtilities::CalculateGeometryData(
-    //                 r_element_geometry, r_element.GetIntegrationMethod(),
-    //                 gauss_weights, shape_functions, shape_derivatives);
-
-    //             const unsigned int number_of_condition_nodes =
-    //                 r_condition_geometry.PointsNumber();
-    //             const std::vector<int> condition_gauss_point_indices =
-    //                 r_condition.GetValue(GAUSS_POINT_INDICES);
-
-    //             for (unsigned int i_node = 0; i_node < number_of_condition_nodes; i_node++)
-    //             {
-    //                 NodeType& r_condition_node = r_condition_geometry[i_node];
-
-    //                 const int gauss_index = condition_gauss_point_indices[i_node];
-    //                 const Vector& gauss_shape_functions = row(shape_functions, gauss_index);
-
-    //                 const double wall_distance =
-    //                     CalculationUtilities::EvaluateInPoint<GeometryType>(
-    //                         r_element_geometry, DISTANCE, gauss_shape_functions);
-    //                 const double nu = CalculationUtilities::EvaluateInPoint<GeometryType>(
-    //                     r_element_geometry, KINEMATIC_VISCOSITY, gauss_shape_functions);
-    //                 const array_1d<double, 3> velocity =
-    //                     CalculationUtilities::EvaluateInPoint<GeometryType>(
-    //                         r_element_geometry, VELOCITY, gauss_shape_functions);
-    //                 array_1d<double, 3> normal =
-    //                     CalculationUtilities::EvaluateInPoint<GeometryType>(
-    //                         r_element_geometry, NORMAL, gauss_shape_functions);
-
-    //                 normal /= norm_2(normal);
-    //                 const double tangential_velocity =
-    //                     std::sqrt(inner_prod(velocity, velocity) -
-    //                               std::pow(inner_prod(velocity, normal), 2));
-
-    //                 // Applying boundary conditions
-    //                 r_condition_node.SetLock();
-    //                 double& y_plus = r_condition_node.FastGetSolutionStepValue(RANS_Y_PLUS);
-    //                 double& u_tangent =
-    //                     r_condition_node.FastGetSolutionStepValue(TANGENTIAL_VELOCITY);
-    //                 double& u_normal =
-    //                     r_condition_node.FastGetSolutionStepValue(NORMAL_VELOCITY);
-    //                 double& u_tau = r_condition_node.FastGetSolutionStepValue(FRICTION_VELOCITY);
-
-    //                 y_plus = CalculationUtilities::CalculateYplus(
-    //                     tangential_velocity, wall_distance, nu, von_karman, beta, 100);
-    //                 u_tangent = tangential_velocity;
-    //                 u_normal = inner_prod(velocity, normal);
-    //                 u_tau = y_plus * nu / wall_distance;
-
-    //                 // const double k = std::pow(u_tau, 2) / std::sqrt(c_mu);
-    //                 // const double epsilon = std::pow(u_tau, 4) / (von_karman * y_plus * nu);
-    //                 // this->InitializeValues(r_condition_node, k, epsilon);
-    //                 this->InitializeValues(r_condition_node, std::numeric_limits<double>::epsilon(), std::numeric_limits<double>::epsilon());
-    //                 r_condition_node.UnSetLock();
-    //             }
-    //         }
-    // }
-
     void SolveStep()
     {
         CalculationUtilities::WarnIfNegative<NodeType>(
@@ -903,17 +815,8 @@ private:
     void ExecuteFluxCorrector(typename StrategyType::Pointer pStrategy,
                               const Variable<double>& rVariable)
     {
-        ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
-
-        double& r_stabilization_multiplier =
-            r_current_process_info[RANS_STABILIZATION_MULTIPLIER];
-
-        r_stabilization_multiplier = 1.0;
-
         KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
-            << "Solving for " << rVariable.Name()
-            << " with flux_corrector_multiplier = " << std::scientific
-            << r_stabilization_multiplier << "\n";
+            << "Solving for " << rVariable.Name() << "\n";
         pStrategy->SolveSolutionStep();
 
         CalculationUtilities::WarnIfNegative<NodeType>(

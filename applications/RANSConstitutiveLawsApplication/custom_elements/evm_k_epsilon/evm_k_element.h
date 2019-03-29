@@ -342,9 +342,6 @@ public:
                                             VectorType& rRightHandSideVector,
                                             ProcessInfo& rCurrentProcessInfo) override;
 
-    void Calculate(const Variable<double>& rVariable,
-                   double& Output,
-                   const ProcessInfo& rCurrentProcessInfo) override;
 
     /**
      * This method provides the place to perform checks on the completeness of the input

@@ -6,13 +6,13 @@ import KratosMultiphysics.ManufacturedFluidSolutionApplication as MS
 def Factory(settings, Model):
     if not isinstance(settings, KM.Parameters):
         raise Exception("expected input shall be a Parameters object, encapsulating a json string")
-    return ApplyCustomBodyForceProcess(Model, settings["Parameters"])
+    return ApplyCustomVelocityProcess(Model, settings["Parameters"])
 
 ## All the processes python should be derived from "Process"
-class ApplyCustomBodyForceProcess(KM.Process):
+class ApplyCustomVelocityProcess(KM.Process):
     '''
-    This process apply the custom body force to all the fluid domain
-    The body force is defined by the manufactured solution
+    This process apply the custom velocity to the conditions.
+    The velocity field is defined by the manufactured solution.
     TODO: use the parameters previously stored in the ProceesInfo
     '''
     def __init__(self, model, settings ):
@@ -24,8 +24,7 @@ class ApplyCustomBodyForceProcess(KM.Process):
                 "model_part_name"          : "model_part_name",
                 "manufactured_name"        : "manufactured_solution_name",
                 "manufactured_parameters"  : {},
-                "set_initial_values"       : True,
-                "compute_relative_error"   : True
+                "constrained"              : [true,true,true],
             }
             """
             )
@@ -41,29 +40,13 @@ class ApplyCustomBodyForceProcess(KM.Process):
         # We construct the process to apply the manufactured solution
         self.manufactured_process = MS.ManufacturedSolutionUtility(self.model_part, self.manufactured)
 
-        # Auxiliary variables
-        self.set_initial_values = settings["set_initial_values"].GetBool()
-        self.compute_error = settings["copmute_relative_error"].GetBool()
+        # Fixity process
+        #TODO: define the fixity process
 
 
     def ExecuteBeforeSolutionLoop(self):
-        if self.set_initial_values:
-            self.manufactured_process.SetVelocity()
-            self.manufactured_process.SetPressure()
-        if self.compute_error:
-            self.manufactured_process.ComputeExactVelocity()
-            self.manufactured_process.ComputeExactPressure()
-            self.manufactured_procees.ComputeVelocityRelativeError()
-            self.manufactured_process.ComputePressureRelativeError()
+        self.manufactured_process.SetVelocity()
 
 
     def ExecuteInitializeSolutionStep(self):
-        self.manufactured_process.SetBodyForce()
-
-
-    def ExecuteBeforeOutputStep(self):
-        if self.compute_error:
-            self.manufactured_process.ComputeExactVelocity()
-            self.manufactured_process.ComputeExactPressure()
-            self.manufactured_procees.ComputeVelocityRelativeError()
-            self.manufactured_process.ComputePressureRelativeError()
+        self.manufactured_process.SetVelocity()

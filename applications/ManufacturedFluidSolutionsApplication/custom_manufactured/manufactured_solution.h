@@ -260,10 +260,10 @@ private:
     ///@{
 
     /// Assignment operator.
-    ManufacturedSolution& operator=(ManufacturedSolution const& rOther){}
+    ManufacturedSolution& operator=(ManufacturedSolution const& rOther);
 
     /// Copy constructor.
-    ManufacturedSolution(ManufacturedSolution const& rOther){}
+    ManufacturedSolution(ManufacturedSolution const& rOther);
 
     ///@}
 
@@ -282,7 +282,7 @@ private:
 
 /// input stream function
 inline std::istream& operator >> (std::istream& rIStream,
-                ManufacturedSolution& rThis){}
+                ManufacturedSolution& rThis);
 
 /// output stream function
 inline std::ostream& operator << (std::ostream& rOStream,

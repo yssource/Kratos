@@ -47,7 +47,7 @@ cd ..
 
 #source scripts/wake_implementation15.sh
 #source scripts/wake_implementation16.sh
-source scripts/wake_implementation17.sh
+#source scripts/wake_implementation17.sh
 #source scripts/wake_implementation18.sh
 
 #TO BE RUN

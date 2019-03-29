@@ -67,6 +67,16 @@ array_1d<double, 3> ManufacturedSolution::ViscousTerm(array_1d<double, 3>& rCoor
 }
 
 
+array_1d<double, 3> ManufacturedSolution::TimeDerivative(array_1d<double, 3>& rCoords, double& rTime)
+{
+    array_1d<double, 3> time_der;
+    time_der[0] = DU1_DT(rCoords, rTime);
+    time_der[1] = DU2_DT(rCoords, rTime);
+    time_der[2] = DU3_DT(rCoords, rTime);
+    return time_der;
+}
+
+
 BoundedMatrix<double, 3, 3> ManufacturedSolution::VelocityGradient(array_1d<double, 3>& rCoords, double& rTime)
 {
     BoundedMatrix<double, 3, 3> grad;

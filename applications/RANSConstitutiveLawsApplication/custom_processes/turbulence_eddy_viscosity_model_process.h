@@ -176,8 +176,6 @@ protected:
 
     void FindConditionsParentElements(ModelPart* pModelPart);
 
-    void FindConditionGaussPointIndices(ModelPart* pModelPart);
-
     void GenerateModelPart(ModelPart& rOriginModelPart,
                            ModelPart& rDestinationModelPart,
                            const Element& rReferenceElement,

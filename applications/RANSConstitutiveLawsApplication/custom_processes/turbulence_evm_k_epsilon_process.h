@@ -428,8 +428,6 @@ protected:
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(
             TURBULENT_ENERGY_DISSIPATION_RATE_2);
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(RANS_Y_PLUS);
-        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(TANGENTIAL_VELOCITY);
-        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(NORMAL_VELOCITY);
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(RANS_AUXILIARY_VARIABLE_1);
         this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(RANS_AUXILIARY_VARIABLE_2);
 

@@ -264,87 +264,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 }
 
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
-void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::FindConditionGaussPointIndices(
-    ModelPart* pModelPart)
-{
-    const int number_of_conditions = pModelPart->NumberOfConditions();
-
-    for (int i_cond = 0; i_cond < number_of_conditions; ++i_cond)
-    {
-        Condition& r_condition = *(pModelPart->ConditionsBegin() + i_cond);
-        std::vector<int>& r_gauss_point_indices = r_condition.GetValue(GAUSS_POINT_INDICES);
-        r_gauss_point_indices.clear();
-    }
-
-#pragma omp parallel for
-    for (int i_cond = 0; i_cond < number_of_conditions; ++i_cond)
-    {
-        Condition& r_condition = *(pModelPart->ConditionsBegin() + i_cond);
-        const Geometry<NodeType>& r_condition_geometry = r_condition.GetGeometry();
-        const Element& r_element = *(r_condition.GetValue(PARENT_ELEMENT).lock());
-        const Geometry<NodeType>& r_element_geometry = r_element.GetGeometry();
-
-        Vector gauss_weights;
-        Matrix shape_functions;
-        Geometry<NodeType>::ShapeFunctionsGradientsType shape_derivatives;
-
-        CalculationUtilities::CalculateGeometryData(
-            r_element_geometry, r_element.GetIntegrationMethod(), gauss_weights,
-            shape_functions, shape_derivatives);
-
-        const unsigned int num_gauss_points = gauss_weights.size();
-        const unsigned int number_of_element_nodes = r_element_geometry.PointsNumber();
-        const unsigned int number_of_condition_nodes =
-            r_condition_geometry.PointsNumber();
-
-        std::vector<int>& r_gauss_point_indices = r_condition.GetValue(GAUSS_POINT_INDICES);
-        r_gauss_point_indices.clear();
-        r_gauss_point_indices.resize(number_of_condition_nodes);
-
-        for (unsigned int i_cond_node = 0; i_cond_node < number_of_condition_nodes; ++i_cond_node)
-        {
-            int g_index = -1;
-            double min_distance = 0.0;
-            for (unsigned int g = 0; g < num_gauss_points; g++)
-            {
-                const Vector& gauss_shape_functions = row(shape_functions, g);
-
-                double gp_x(0.0), gp_y(0.0), gp_z(0.0);
-
-                for (unsigned int i_node = 0; i_node < number_of_element_nodes; ++i_node)
-                {
-                    gp_x += gauss_shape_functions[i_node] *
-                            r_element_geometry[i_node].X();
-                    gp_y += gauss_shape_functions[i_node] *
-                            r_element_geometry[i_node].Y();
-                    gp_z += gauss_shape_functions[i_node] *
-                            r_element_geometry[i_node].Z();
-                }
-
-                double distance = 0.0;
-                distance += std::pow(gp_x - r_condition_geometry[i_cond_node].X(), 2);
-                distance += std::pow(gp_y - r_condition_geometry[i_cond_node].Y(), 2);
-                distance += std::pow(gp_z - r_condition_geometry[i_cond_node].Z(), 2);
-                distance = std::sqrt(distance);
-
-                if (g_index == -1)
-                {
-                    g_index = 0;
-                    min_distance = distance;
-                }
-
-                if (min_distance > distance)
-                {
-                    min_distance = distance;
-                    g_index = g;
-                }
-            }
-            r_gauss_point_indices[i_cond_node] = g_index;
-        }
-    }
-}
-
-template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
 void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::FindConditionsParentElements(
     ModelPart* pModelPart)
 {
@@ -433,7 +352,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
     this->InitializeConditionFlagsForModelPart(pModelPart, STRUCTURE);
 
     this->FindConditionsParentElements(pModelPart);
-    this->FindConditionGaussPointIndices(pModelPart);
 }
 
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>

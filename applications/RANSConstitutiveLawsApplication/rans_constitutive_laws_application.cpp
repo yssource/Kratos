@@ -31,11 +31,7 @@ KratosRANSConstitutiveLawsApplication::KratosRANSConstitutiveLawsApplication():
     mRANSEVMK2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mRANSEVMK3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
     mRANSEVMEPSILON2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
-    mRANSEVMEPSILON3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
-    mRANSEVMLOGK2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
-    mRANSEVMLOGK3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4)))),
-    mRANSEVMLOGEPSILON2D(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
-    mRANSEVMLOGEPSILON3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4))))
+    mRANSEVMEPSILON3D(0, Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3> >(Element::GeometryType::PointsArrayType(4))))
     {}
 
 void KratosRANSConstitutiveLawsApplication::Register()
@@ -44,14 +40,6 @@ void KratosRANSConstitutiveLawsApplication::Register()
      KratosApplication::Register();
      KRATOS_INFO("") << "Initializing KratosRANSConstitutiveLawsApplication..." << std::endl;
 
-    KRATOS_REGISTER_VARIABLE( TURBULENT_SQRT_KINETIC_ENERGY )
-    KRATOS_REGISTER_VARIABLE( TURBULENT_SQRT_ENERGY_DISSIPATION_RATE )
-    KRATOS_REGISTER_VARIABLE( TURBULENT_SQRT_KINETIC_ENERGY_RATE )
-    KRATOS_REGISTER_VARIABLE( TURBULENT_SQRT_ENERGY_DISSIPATION_RATE_2 )
-    KRATOS_REGISTER_VARIABLE( TURBULENT_LOG_KINETIC_ENERGY )
-    KRATOS_REGISTER_VARIABLE( TURBULENT_LOG_ENERGY_DISSIPATION_RATE )
-    KRATOS_REGISTER_VARIABLE( TURBULENT_LOG_KINETIC_ENERGY_RATE )
-    KRATOS_REGISTER_VARIABLE( TURBULENT_LOG_ENERGY_DISSIPATION_RATE_2 )
     KRATOS_REGISTER_VARIABLE( TURBULENT_KINETIC_ENERGY )
     KRATOS_REGISTER_VARIABLE( TURBULENT_ENERGY_DISSIPATION_RATE )
     KRATOS_REGISTER_VARIABLE( TURBULENT_KINETIC_ENERGY_RATE )
@@ -87,10 +75,5 @@ void KratosRANSConstitutiveLawsApplication::Register()
     KRATOS_REGISTER_ELEMENT("RANSEVMK3D4N",mRANSEVMK3D);
     KRATOS_REGISTER_ELEMENT("RANSEVMEPSILON2D3N",mRANSEVMEPSILON2D);
     KRATOS_REGISTER_ELEMENT("RANSEVMEPSILON3D4N",mRANSEVMEPSILON3D);
-
-    KRATOS_REGISTER_ELEMENT("RANSEVMLOGK2D3N",mRANSEVMLOGK2D);
-    KRATOS_REGISTER_ELEMENT("RANSEVMLOGK3D4N",mRANSEVMLOGK3D);
-    KRATOS_REGISTER_ELEMENT("RANSEVMLOGEPSILON2D3N",mRANSEVMLOGEPSILON2D);
-    KRATOS_REGISTER_ELEMENT("RANSEVMLOGEPSILON3D4N",mRANSEVMLOGEPSILON3D);
 }
 }  // namespace Kratos.

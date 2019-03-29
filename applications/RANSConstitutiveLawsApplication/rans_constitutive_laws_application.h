@@ -20,8 +20,6 @@
 // Project includes
 #include "custom_elements/evm_k_epsilon/evm_k_element.h"
 #include "custom_elements/evm_k_epsilon/evm_epsilon_element.h"
-#include "custom_elements/evm_k_epsilon/evm_log_k_element.h"
-#include "custom_elements/evm_k_epsilon/evm_log_epsilon_element.h"
 #include "includes/kratos_application.h"
 
 namespace Kratos
@@ -172,12 +170,6 @@ private:
 
     const EvmEpsilonElement<2, 3> mRANSEVMEPSILON2D;
     const EvmEpsilonElement<3, 4> mRANSEVMEPSILON3D;
-
-    const EvmLogKElement<2, 3> mRANSEVMLOGK2D;
-    const EvmLogKElement<3, 4> mRANSEVMLOGK3D;
-
-    const EvmLogEpsilonElement<2, 3> mRANSEVMLOGEPSILON2D;
-    const EvmLogEpsilonElement<3, 4> mRANSEVMLOGEPSILON3D;
 
     ///@}
     ///@name Private Operators

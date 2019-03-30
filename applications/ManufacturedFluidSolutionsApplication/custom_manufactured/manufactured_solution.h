@@ -152,6 +152,12 @@ protected:
     ///@name Protected member Variables
     ///@{
 
+    Properties::Pointer mpProperties;
+    Parameters::Pointer mpParameters;
+
+    double mDensity;
+    double mInvDensity;
+    double mDynamicViscosity;
 
     ///@}
     ///@name Protected Operators
@@ -189,12 +195,6 @@ private:
     ///@name Member Variables
     ///@{
 
-    Properties::Pointer mpProperties;
-    Parameters::Pointer mpParameters;
-
-    double mDensity;
-    double mInvDensity;
-    double mDynamicViscosity;
 
     ///@}
     ///@name Private Operators

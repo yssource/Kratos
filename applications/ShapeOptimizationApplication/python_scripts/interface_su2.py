@@ -18,7 +18,7 @@ import SU2
 from itertools import islice
 import shutil
 from contextlib import contextmanager
-import sys, os, csv
+import sys, os, csv, json, time
 
 # Functions
 @contextmanager
@@ -209,10 +209,6 @@ class InterfaceSU2():
 
     # --------------------------------------------------------------------------
     def __ReadSU2Mesh(self):
-
-        if self.interface_parameters["echo_level"].GetInt()>0:
-            print("\n> Start reading SU2 mesh file...")
-
         ''' imports mesh and builds python dictionary structure
             su2_mesh_data                               mesh data dictionary
             su2_mesh_data["NDIME"]                      number of dimensions
@@ -228,8 +224,21 @@ class InterfaceSU2():
             su2_mesh_data["MARKS"]["tag_name"]["POIN_IDS"]  stores su2_ids of points on marker
         '''
 
-        # initialize variables
-        self.su2_mesh_data["MARKS"]  = {}
+        start_time = time.time()
+
+        # Read su2 mesh data either from json backup file (fast access) or from original su2 mesh file (slow)
+        if os.path.isfile("su2_mesh_data.json"):
+            if self.interface_parameters["echo_level"].GetInt()>0:
+                print("\n> Start reading SU2 mesh file from json backup...")
+
+            with open("su2_mesh_data.json") as file_with_mesh_data:
+                self.su2_mesh_data = json.loads(file_with_mesh_data.read())
+        else:
+            if self.interface_parameters["echo_level"].GetInt()>0:
+                print("\n> Start reading SU2 mesh file from su2 mesh file...")
+
+            # initialize variables
+            self.su2_mesh_data["MARKS"]  = {}
 
         # open meshfile
         f_tb_read = open(self.interface_parameters["su2_related"]["mesh_file"].GetString(),'r')
@@ -369,11 +378,15 @@ class InterfaceSU2():
                 # add to marker list
                 self.su2_mesh_data["MARKS"][thistag] = thismark
 
-        # Close read file
-        f_tb_read.close()
+            # Close read file
+            f_tb_read.close()
+
+            # Dump file as json for fast access later
+            with open('su2_mesh_data.json', 'w') as fp:
+                json.dump(self.su2_mesh_data, fp)
 
         if self.interface_parameters["echo_level"].GetInt()>0:
-            print("> Finished reading SU2 mesh file!\n")
+            print("> Finished reading SU2 mesh file in" ,round( time.time()-start_time, 3 ), " s.")
 
     # --------------------------------------------------------------------------
     def __TranslateSU2IdsToKratosIds(self):

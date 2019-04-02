@@ -114,11 +114,13 @@ class LaplacianSolver(PythonSolver):
         self.incompressible_solution_stratety.Check()
 
     def ImportModelPart(self):
-
+        # if not self.model.HasModelPart("model"):
+# t        self._ImportModelPart(self.main_model_part,self.settings["model_import_settings"])
         if(self.settings["model_import_settings"]["input_type"].GetString() == "mdpa"):
             #here it would be the place to import restart data if required
             print(self.settings["model_import_settings"]["input_filename"].GetString())
-            KratosMultiphysics.ModelPartIO(self.settings["model_import_settings"]["input_filename"].GetString()).ReadModelPart(self.main_model_part)
+            if (self.main_model_part.NumberOfNodes()==0):
+                KratosMultiphysics.ModelPartIO(self.settings["model_import_settings"]["input_filename"].GetString()).ReadModelPart(self.main_model_part)
 
             throw_errors = False
             KratosMultiphysics.TetrahedralMeshOrientationCheck(self.main_model_part,throw_errors).Execute()

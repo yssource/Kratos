@@ -51,6 +51,8 @@ class DefineWakeProcess(KratosMultiphysics.Process):
         )]
 
         self.fluid_model_part = Model[settings["fluid_part_name"].GetString()].GetRootModelPart()
+        if self.fluid_model_part.HasSubModelPart("trailing_edge_model_part"):
+            self.fluid_model_part.RemoveSubModelPart("trailing_edge_model_part")
         self.trailing_edge_model_part = self.fluid_model_part.CreateSubModelPart(
             "trailing_edge_model_part")
 

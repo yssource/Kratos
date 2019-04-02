@@ -233,6 +233,7 @@ class InterfaceSU2():
 
             with open("su2_mesh_data.json") as file_with_mesh_data:
                 self.su2_mesh_data = json.loads(file_with_mesh_data.read())
+                self.su2_mesh_data["POIN"] = {int(key): value for key, value in self.su2_mesh_data["POIN"].items()}
         else:
             if self.interface_parameters["echo_level"].GetInt()>0:
                 print("\n> Start reading SU2 mesh file from su2 mesh file...")

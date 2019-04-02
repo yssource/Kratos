@@ -15,7 +15,9 @@ from __future__ import print_function, absolute_import, division
 # importing the Kratos Library
 from KratosMultiphysics import *
 from KratosMultiphysics.ShapeOptimizationApplication import *
+from KratosMultiphysics.CompressiblePotentialFlowApplication import *
 import structural_response_function_factory
+import KratosMultiphysics.CompressiblePotentialFlowApplication.potential_response as potential_response
 
 # ==============================================================================
 def CreateListOfResponseFunctions( optimization_settings, model ):
@@ -68,6 +70,8 @@ class ResponseFunctionCreator:
         response_type = response_settings["response_type"].GetString()
         if response_type in ["strain_energy", "mass", "eigenfrequency"]:
             self.list_of_response_functions[response_id] = structural_response_function_factory.CreateResponseFunction(response_id, response_settings, self.model)
+        elif response_type in ["adjoint_lift_jump_coordinates"]:
+            self.list_of_response_functions[response_id] = potential_response.AdjointResponseFunction(response_id, response_settings, self.model)
         else:
             raise NameError("The following response function is not available for optimization: " + response_id)
 

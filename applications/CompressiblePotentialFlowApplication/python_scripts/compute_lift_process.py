@@ -46,14 +46,14 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
          RX = rx/self.reference_area
          RY = ry/self.reference_area
 
-         Cl = RY
-         Cd = RX
+         self.Cl = RY
+         self.Cd = RX
 
-         print('Cl = ', Cl)
-         print('Cd = ', Cd)
+         print('Cl = ', self.Cl)
+         print('Cd = ', self.Cd)
          print('RZ = ', RZ)
          print('Mach = ', self.velocity_infinity[0]/340)
 
          if self.create_output_file:
              with open("cl.dat", 'w') as cl_file:
-                 cl_file.write('{0:15.12f}'.format(Cl))
+                 cl_file.write('{0:15.12f}'.format(self.Cl))

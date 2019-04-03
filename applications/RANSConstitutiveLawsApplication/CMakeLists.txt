@@ -13,7 +13,6 @@ set( KRATOS_RANS_CONSTITUTIVE_LAWS_APPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/rans_constitutive_laws_application_variables.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/rans_constitutive_laws_python_application.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_utilities_to_python.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/rans_constitutive_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/evm_k_epsilon/evm_k_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/evm_k_epsilon/evm_epsilon_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.cpp

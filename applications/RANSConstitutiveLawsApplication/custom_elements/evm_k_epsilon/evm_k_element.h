@@ -310,6 +310,13 @@ private:
 
     void CalculateConvectionDiffusionReactionData(EvmKElementData& rData,
                                                   double& rEffectiveKinematicViscosity,
+                                                  const Vector& rShapeFunctions,
+                                                  const Matrix& rShapeFunctionDerivatives,
+                                                  const ProcessInfo& rCurrentProcessInfo,
+                                                  const int Step = 0) const override;
+
+    void CalculateConvectionDiffusionReactionData(EvmKElementData& rData,
+                                                  double& rEffectiveKinematicViscosity,
                                                   double& rVariableGradientNorm,
                                                   double& rVariableRelaxedAcceleration,
                                                   const Vector& rShapeFunctions,

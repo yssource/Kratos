@@ -18,9 +18,9 @@
 // External includes
 
 // Project includes
-#include "includes/element.h"
-#include "includes/checks.h"
 #include "custom_utilities/calculation_utilities.h"
+#include "includes/checks.h"
+#include "includes/element.h"
 #include "rans_constitutive_laws_application_variables.h"
 
 namespace Kratos
@@ -338,9 +338,9 @@ public:
                 this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
 
             TConvectionDiffusionReactionData r_current_data;
-            double effective_kinematic_viscosity, dummy;
+            double effective_kinematic_viscosity;
             this->CalculateConvectionDiffusionReactionData(
-                r_current_data, effective_kinematic_viscosity, dummy, dummy,
+                r_current_data, effective_kinematic_viscosity,
                 gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
             const double reaction =
@@ -536,9 +536,9 @@ public:
             this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
 
             TConvectionDiffusionReactionData r_current_data;
-            double effective_kinematic_viscosity, dummy;
+            double effective_kinematic_viscosity;
             this->CalculateConvectionDiffusionReactionData(
-                r_current_data, effective_kinematic_viscosity, dummy, dummy,
+                r_current_data, effective_kinematic_viscosity,
                 gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
             const double reaction =
@@ -779,6 +779,23 @@ protected:
     ///@}
     ///@name Protected Operations
     ///@{
+
+    virtual void CalculateConvectionDiffusionReactionData(
+        TConvectionDiffusionReactionData& rData,
+        double& rEffectiveKinematicViscosity,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
+        const ProcessInfo& rCurrentProcessInfo,
+        const int Step = 0) const
+    {
+        KRATOS_TRY;
+        KRATOS_ERROR << "Attempting to call base "
+                        "StabilizedConvectionDiffusionReactionElement "
+                        "CalculateConvectionDiffusionReactionData method. "
+                        "Please implement it in the derrived class."
+                     << std::endl;
+        KRATOS_CATCH("");
+    }
 
     virtual void CalculateConvectionDiffusionReactionData(
         TConvectionDiffusionReactionData& rData,

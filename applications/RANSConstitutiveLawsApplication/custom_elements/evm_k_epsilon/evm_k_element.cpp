@@ -385,8 +385,6 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void EvmKElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionData(
     EvmKElementData& rData,
     double& rEffectiveKinematicViscosity,
-    double& rVariableGradientNorm,
-    double& rVariableRelaxedAcceleration,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
     const ProcessInfo& rCurrentProcessInfo,
@@ -394,9 +392,9 @@ void EvmKElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionData(
 {
     rData.ShapeFunctionDerivatives = rShapeFunctionDerivatives;
 
-    const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
-    const int rans_time_step = rCurrentProcessInfo[RANS_TIME_STEP];
-    const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
+    const double& c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
+    const int& rans_time_step = rCurrentProcessInfo[RANS_TIME_STEP];
+    const double& tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
 
     const double& nu_t =
         this->EvaluateInPoint(TURBULENT_VISCOSITY, rShapeFunctions, rans_time_step);
@@ -413,6 +411,22 @@ void EvmKElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionData(
     rData.WallDistance = wall_distance;
     rData.Gamma = gamma;
     rEffectiveKinematicViscosity = nu + nu_t / tke_sigma;
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmKElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionData(
+    EvmKElementData& rData,
+    double& rEffectiveKinematicViscosity,
+    double& rVariableGradientNorm,
+    double& rVariableRelaxedAcceleration,
+    const Vector& rShapeFunctions,
+    const Matrix& rShapeFunctionDerivatives,
+    const ProcessInfo& rCurrentProcessInfo,
+    const int Step) const
+{
+    this->CalculateConvectionDiffusionReactionData(
+        rData, rEffectiveKinematicViscosity, rShapeFunctions,
+        rShapeFunctionDerivatives, rCurrentProcessInfo, Step);
 
     array_1d<double, 3> tke_gradient;
     this->CalculateGradient(tke_gradient, TURBULENT_KINETIC_ENERGY, rShapeFunctionDerivatives);

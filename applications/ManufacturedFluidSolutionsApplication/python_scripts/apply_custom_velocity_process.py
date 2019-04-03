@@ -41,7 +41,12 @@ class ApplyCustomVelocityProcess(KM.Process):
         self.manufactured_process = MS.ManufacturedSolutionUtility(self.model_part, self.manufactured)
 
         # Fixity process
-        #TODO: define the fixity process
+        self.is_fixed = settings["constrained"].GetVector()
+        self.fix_variable = []
+        self.fix_variable[0] = KM.VELOCITY_X
+        self.fix_variable[1] = KM.VELOCITY_Y
+        self.fix_variable[2] = KM.VELOCITY_Z
+        self.variable_utils = KM.VariableUtils()
 
 
     def ExecuteBeforeSolutionLoop(self):
@@ -50,3 +55,5 @@ class ApplyCustomVelocityProcess(KM.Process):
 
     def ExecuteInitializeSolutionStep(self):
         self.manufactured_process.SetVelocity()
+        for i in range(3):
+            self.variable_utils.ApplyFixity(self.fix_variable[i], self.is_fixed[i], self.model_part.Nodes)

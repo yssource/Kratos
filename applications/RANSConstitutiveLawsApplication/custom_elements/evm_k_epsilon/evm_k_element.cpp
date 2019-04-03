@@ -261,12 +261,32 @@ int EvmKElement<TDim, TNumNodes>::Check(const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY
 
-    KRATOS_ERROR_IF(this->Id() < 1)
-        << "EvmKElement found with Id 0 or negative" << std::endl;
+    BaseType::Check(rCurrentProcessInfo);
 
-    KRATOS_ERROR_IF(this->Element::GetGeometry().Area() <= 0)
-        << "On EvmKElement -> " << this->Id()
-        << "; Area cannot be less than or equal to 0" << std::endl;
+    KRATOS_CHECK_VARIABLE_KEY(TURBULENCE_RANS_C_MU);
+    KRATOS_CHECK_VARIABLE_KEY(RANS_TIME_STEP);
+    KRATOS_CHECK_VARIABLE_KEY(TURBULENT_KINETIC_ENERGY_SIGMA);
+    KRATOS_CHECK_VARIABLE_KEY(TURBULENT_VISCOSITY);
+    KRATOS_CHECK_VARIABLE_KEY(KINEMATIC_VISCOSITY);
+    KRATOS_CHECK_VARIABLE_KEY(TURBULENT_KINETIC_ENERGY);
+    KRATOS_CHECK_VARIABLE_KEY(TURBULENT_KINETIC_ENERGY_RATE);
+    KRATOS_CHECK_VARIABLE_KEY(DISTANCE);
+    KRATOS_CHECK_VARIABLE_KEY(RANS_Y_PLUS);
+    KRATOS_CHECK_VARIABLE_KEY(RANS_AUXILIARY_VARIABLE_1);
+
+    for (IndexType iNode = 0; iNode < this->GetGeometry().size(); ++iNode)
+    {
+        NodeType& r_node = this->GetGeometry()[iNode];
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(TURBULENT_VISCOSITY, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(KINEMATIC_VISCOSITY, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(TURBULENT_KINETIC_ENERGY, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(TURBULENT_KINETIC_ENERGY_RATE, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(DISTANCE, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_Y_PLUS, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_AUXILIARY_VARIABLE_1, r_node);
+
+        KRATOS_CHECK_DOF_IN_NODE(TURBULENT_KINETIC_ENERGY, r_node);
+    }
 
     return 0;
 

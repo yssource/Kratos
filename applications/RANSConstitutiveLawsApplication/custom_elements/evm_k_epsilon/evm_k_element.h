@@ -19,6 +19,7 @@
 
 // Project includes
 #include "includes/element.h"
+#include "includes/checks.h"
 #include "includes/properties.h"
 #include "utilities/brent_iteration.h"
 

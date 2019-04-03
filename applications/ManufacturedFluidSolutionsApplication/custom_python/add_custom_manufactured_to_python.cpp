@@ -19,6 +19,7 @@
 #include "add_custom_manufactured_to_python.h"
 #include "custom_manufactured/manufactured_solution.h"
 #include "custom_manufactured/codina_vortex.h"
+#include "custom_manufactured/eca_flow.h"
 
 
 namespace Kratos {
@@ -42,6 +43,10 @@ void  AddCustomManufacturedToPython(pybind11::module& m)
         ;
 
     py::class_< CodinaVortex, CodinaVortex::Pointer, ManufacturedSolution>(m, "CodinaVortex")
+        .def(py::init<Properties::Pointer&, Parameters::Pointer&>() )
+        ;
+
+    py::class_< EcaFlow, EcaFlow::Pointer, ManufacturedSolution>(m, "EcaFlow")
         .def(py::init<Properties::Pointer&, Parameters::Pointer&>() )
         ;
 

@@ -43,7 +43,7 @@ namespace Kratos
  */
 template <unsigned int TDim, unsigned int TNumNodes>
 EvmEpsilonElement<TDim, TNumNodes>::EvmEpsilonElement(IndexType NewId)
-    : RANSConstitutiveElement<TDim, TNumNodes, 1>(NewId)
+    : StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmEpsilonElementData>(NewId)
 {
 }
 
@@ -53,7 +53,7 @@ EvmEpsilonElement<TDim, TNumNodes>::EvmEpsilonElement(IndexType NewId)
 template <unsigned int TDim, unsigned int TNumNodes>
 EvmEpsilonElement<TDim, TNumNodes>::EvmEpsilonElement(IndexType NewId,
                                                       const NodesArrayType& ThisNodes)
-    : RANSConstitutiveElement<TDim, TNumNodes, 1>(NewId, ThisNodes)
+    : StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmEpsilonElementData>(NewId, ThisNodes)
 {
 }
 
@@ -62,7 +62,7 @@ EvmEpsilonElement<TDim, TNumNodes>::EvmEpsilonElement(IndexType NewId,
  */
 template <unsigned int TDim, unsigned int TNumNodes>
 EvmEpsilonElement<TDim, TNumNodes>::EvmEpsilonElement(IndexType NewId, GeometryType::Pointer pGeometry)
-    : RANSConstitutiveElement<TDim, TNumNodes, 1>(NewId, pGeometry)
+    : StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmEpsilonElementData>(NewId, pGeometry)
 {
 }
 
@@ -73,7 +73,7 @@ template <unsigned int TDim, unsigned int TNumNodes>
 EvmEpsilonElement<TDim, TNumNodes>::EvmEpsilonElement(IndexType NewId,
                                                       GeometryType::Pointer pGeometry,
                                                       PropertiesType::Pointer pProperties)
-    : RANSConstitutiveElement<TDim, TNumNodes, 1>(NewId, pGeometry, pProperties)
+    : StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmEpsilonElementData>(NewId, pGeometry, pProperties)
 {
 }
 
@@ -82,7 +82,7 @@ EvmEpsilonElement<TDim, TNumNodes>::EvmEpsilonElement(IndexType NewId,
  */
 template <unsigned int TDim, unsigned int TNumNodes>
 EvmEpsilonElement<TDim, TNumNodes>::EvmEpsilonElement(EvmEpsilonElement<TDim, TNumNodes> const& rOther)
-    : RANSConstitutiveElement<TDim, TNumNodes, 1>(rOther)
+    : StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmEpsilonElementData>(rOther)
 {
 }
 
@@ -180,8 +180,8 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void EvmEpsilonElement<TDim, TNumNodes>::EquationIdVector(EquationIdVectorType& rResult,
                                                           ProcessInfo& CurrentProcessInfo)
 {
-    if (rResult.size() != TLocalSize)
-        rResult.resize(TLocalSize, false);
+    if (rResult.size() != TNumNodes)
+        rResult.resize(TNumNodes, false);
 
     for (unsigned int i = 0; i < TNumNodes; i++)
         rResult[i] =
@@ -197,8 +197,8 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void EvmEpsilonElement<TDim, TNumNodes>::GetDofList(DofsVectorType& rElementalDofList,
                                                     ProcessInfo& rCurrentProcessInfo)
 {
-    if (rElementalDofList.size() != TLocalSize)
-        rElementalDofList.resize(TLocalSize);
+    if (rElementalDofList.size() != TNumNodes)
+        rElementalDofList.resize(TNumNodes);
 
     for (unsigned int i = 0; i < TNumNodes; i++)
         rElementalDofList[i] =

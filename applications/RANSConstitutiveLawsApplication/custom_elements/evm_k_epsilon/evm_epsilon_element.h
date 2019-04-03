@@ -23,7 +23,7 @@
 #include "utilities/brent_iteration.h"
 
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
-#include "custom_elements/rans_constitutive_element.h"
+#include "custom_elements/stabilized_convection_diffusion_reaction_element.h"
 #include "includes/cfd_variables.h"
 #include "rans_constitutive_laws_application_variables.h"
 
@@ -48,14 +48,19 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
+struct EvmEpsilonElementData
+{
+    int i;
+};
+
 template <unsigned int TDim, unsigned int TNumNodes>
-class EvmEpsilonElement : public RANSConstitutiveElement<TDim, TNumNodes, 1>
+class EvmEpsilonElement : public StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmEpsilonElementData>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    typedef RANSConstitutiveElement<TDim, TNumNodes, 1> BaseType;
+    typedef StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmEpsilonElementData> BaseType;
 
     /// Node type (default is: Node<3>)
     typedef Node<3> NodeType;
@@ -96,10 +101,6 @@ public:
 
     /// Type for an array of shape function gradient matrices
     typedef GeometryType::ShapeFunctionsGradientsType ShapeFunctionDerivativesArrayType;
-
-    static constexpr unsigned int TBlockSize = 1;
-
-    static constexpr unsigned int TLocalSize = TNumNodes * TBlockSize;
 
     ///@}
     ///@name Pointer Definitions
@@ -343,6 +344,16 @@ public:
     void CalculateLocalVelocityContribution(MatrixType& rDampingMatrix,
                                             VectorType& rRightHandSideVector,
                                             ProcessInfo& rCurrentProcessInfo) override;
+
+
+    /**
+     * @brief GetIntegrationMethod Return the integration order to be used.
+     * @return Gauss Order
+     */
+    GeometryData::IntegrationMethod GetIntegrationMethod() const override
+    {
+        return GeometryData::GI_GAUSS_2;
+    }
 
     /**
      * This method provides the place to perform checks on the completeness of the input

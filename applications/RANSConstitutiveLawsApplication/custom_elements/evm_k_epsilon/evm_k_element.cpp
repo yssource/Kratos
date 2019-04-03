@@ -43,7 +43,7 @@ namespace Kratos
  */
 template <unsigned int TDim, unsigned int TNumNodes>
 EvmKElement<TDim, TNumNodes>::EvmKElement(IndexType NewId)
-    : RANSConstitutiveElement<TDim, TNumNodes, 1>(NewId)
+    : StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmKElementData>(NewId)
 {
 }
 
@@ -52,7 +52,7 @@ EvmKElement<TDim, TNumNodes>::EvmKElement(IndexType NewId)
  */
 template <unsigned int TDim, unsigned int TNumNodes>
 EvmKElement<TDim, TNumNodes>::EvmKElement(IndexType NewId, const NodesArrayType& ThisNodes)
-    : RANSConstitutiveElement<TDim, TNumNodes, 1>(NewId, ThisNodes)
+    : StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmKElementData>(NewId, ThisNodes)
 {
 }
 
@@ -61,7 +61,7 @@ EvmKElement<TDim, TNumNodes>::EvmKElement(IndexType NewId, const NodesArrayType&
  */
 template <unsigned int TDim, unsigned int TNumNodes>
 EvmKElement<TDim, TNumNodes>::EvmKElement(IndexType NewId, GeometryType::Pointer pGeometry)
-    : RANSConstitutiveElement<TDim, TNumNodes, 1>(NewId, pGeometry)
+    : StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmKElementData>(NewId, pGeometry)
 {
 }
 
@@ -72,7 +72,7 @@ template <unsigned int TDim, unsigned int TNumNodes>
 EvmKElement<TDim, TNumNodes>::EvmKElement(IndexType NewId,
                                           GeometryType::Pointer pGeometry,
                                           PropertiesType::Pointer pProperties)
-    : RANSConstitutiveElement<TDim, TNumNodes, 1>(NewId, pGeometry, pProperties)
+    : StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmKElementData>(NewId, pGeometry, pProperties)
 {
 }
 
@@ -81,7 +81,7 @@ EvmKElement<TDim, TNumNodes>::EvmKElement(IndexType NewId,
  */
 template <unsigned int TDim, unsigned int TNumNodes>
 EvmKElement<TDim, TNumNodes>::EvmKElement(EvmKElement<TDim, TNumNodes> const& rOther)
-    : RANSConstitutiveElement<TDim, TNumNodes, 1>(rOther)
+    : StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmKElementData>(rOther)
 {
 }
 
@@ -179,8 +179,8 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void EvmKElement<TDim, TNumNodes>::EquationIdVector(EquationIdVectorType& rResult,
                                                     ProcessInfo& CurrentProcessInfo)
 {
-    if (rResult.size() != TLocalSize)
-        rResult.resize(TLocalSize, false);
+    if (rResult.size() != TNumNodes)
+        rResult.resize(TNumNodes, false);
 
     for (unsigned int i = 0; i < TNumNodes; i++)
         rResult[i] = Element::GetGeometry()[i].GetDof(TURBULENT_KINETIC_ENERGY).EquationId();
@@ -195,8 +195,8 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void EvmKElement<TDim, TNumNodes>::GetDofList(DofsVectorType& rElementalDofList,
                                               ProcessInfo& rCurrentProcessInfo)
 {
-    if (rElementalDofList.size() != TLocalSize)
-        rElementalDofList.resize(TLocalSize);
+    if (rElementalDofList.size() != TNumNodes)
+        rElementalDofList.resize(TNumNodes);
 
     for (unsigned int i = 0; i < TNumNodes; i++)
         rElementalDofList[i] = Element::GetGeometry()[i].pGetDof(TURBULENT_KINETIC_ENERGY);

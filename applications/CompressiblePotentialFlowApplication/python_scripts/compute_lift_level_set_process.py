@@ -16,7 +16,7 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         default_parameters = KratosMultiphysics.Parameters("""
             {
                 
-                "fluid_part_name" : "please specify the main model part",
+                "model_part_name" : "please specify the main model part",
                 "mesh_id": 0,
                 "velocity_infinity": [1.0,0.0,0],
                 "reference_area": 1,
@@ -25,7 +25,7 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
 
         settings.ValidateAndAssignDefaults(default_parameters)
         self.problem_name=settings["problem_name"].GetString()
-        self.fluid_model_part=Model.GetModelPart(settings["fluid_part_name"].GetString()).GetRootModelPart() 
+        self.fluid_model_part=Model.GetModelPart(settings["model_part_name"].GetString()).GetRootModelPart() 
         self.result_force=KratosMultiphysics.Vector(3)  
         self.process=KratosMultiphysics.CompressiblePotentialFlowApplication.ComputeLiftLevelSetProcess(self.fluid_model_part,self.result_force)
 

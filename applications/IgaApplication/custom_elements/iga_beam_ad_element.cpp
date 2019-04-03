@@ -12,6 +12,7 @@
 // System includes
 #include "includes/define.h"
 #include "includes/variables.h"
+#include <chrono>
 // External includes
 
 // Project includes
@@ -88,6 +89,8 @@ void IgaBeamADElement::CalculateAll(
 
     KRATOS_TRY;
 
+
+
     // get integration weight
     
     const double& integration_weight = GetValue(INTEGRATION_WEIGHT);
@@ -99,6 +102,11 @@ void IgaBeamADElement::CalculateAll(
     shape_functions.row(1) = MapVector(GetValue(SHAPE_FUNCTION_LOCAL_DER_1));
     shape_functions.row(2) = MapVector(GetValue(SHAPE_FUNCTION_LOCAL_DER_2));
     // shape_functions.bottomRows<2>() = MapMatrix(GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES));
+
+
+    std::ofstream write;
+    write.open("OutputAD.txt", std::ofstream::app);
+    auto start = std::chrono::steady_clock::now();
 
     // get properties
 
@@ -217,6 +225,11 @@ void IgaBeamADElement::CalculateAll(
     const auto kap3  = Tm * (b3  - B3 );
     const auto kap12 = Ts * (c12 - C12);
     const auto kap13 = Ts * (c13 - C13);
+
+    auto end = std::chrono::steady_clock::now();
+    auto time = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+    write << time.count() <<  "\n";
+    write.close();
 
     const auto dP = 0.5 * (pow(eps11, 2) * ea +
                            pow(kap2 , 2) * ei3 +

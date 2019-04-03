@@ -13,10 +13,13 @@
 #include "includes/variables.h"
 #include "utilities/math_utils.h"
 #include <typeinfo>
+#include <iostream>
+#include <fstream>
+#include <chrono>
+// #include <unistd>
 
 // #include <math.h>
 // #include "Tools.h"
-#include <fstream>
 
 // External includes
 
@@ -117,10 +120,20 @@ KRATOS_TRY;
     _gfie.clear();
     double _dL;
 
+    std::ofstream write;
+    write.open("OutputStandard.txt", std::ofstream::app);
+    auto start = std::chrono::steady_clock::now();
+    
     ElementStiffnessMatrixNonlinear(_emod, _gmod, _area, _m_inert_y, _m_inert_z, _mt_inert, _gke, _gfie, _dL);
     // IgaDebug::CheckMatrix(expected_data, "stiffness", _gke);
     // IgaDebug::CheckVector(expected_data, "external_forces", _gfie);
     // LOG("GaussPonitStiffnessMatrixCheck! ");
+
+    auto end = std::chrono::steady_clock::now();
+    auto time = std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
+    write << time.count() <<  "\n";
+    write.close();
+    
 
     // transformation into Geometrical Space
     double integration_weight = GetValue(INTEGRATION_WEIGHT);
@@ -526,16 +539,12 @@ KRATOS_TRY;
             kem(r,s) = emod_A * eps_dof[r] * eps_dof[s] + eps_dof_2(r,s) * S11_m;
         }
     }
-    // LOG("kem " << kem);
-
     // Stiffness Matrix of the Bending Part
     for (size_t r = 0; r != NumberOfDofs(); r++){
         for (size_t s = 0; s != NumberOfDofs(); s++){
             keb_n(r,s) = emod_I_v * curve_dof_n[r] * curve_dof_n[s] + curve_dof_n_2(r,s) * S11_n;
         }
     }
-    // LOG("keb_n " << keb_n);
-
 
     // Stiffness Matrix of the Bending Part
     for (size_t r = 0; r != NumberOfDofs(); r++){
@@ -543,8 +552,6 @@ KRATOS_TRY;
             keb_v(r,s) = emod_I_n * curve_dof_v[r] * curve_dof_v[s] + curve_dof_v_2(r,s) * S11_v;
         }
     }
-    // LOG("keb_v " << keb_v);
-
 
     // Stiffness Matrix of the Torsion Part
     for (size_t r = 0; r != NumberOfDofs(); r++){
@@ -552,8 +559,6 @@ KRATOS_TRY;
             ket_n(r,s) = 0.50 * gmod_It * torsion_dof_n[r] * torsion_dof_n[s] + torsion_dof_n_2(r,s) * S12;
         }
     }
-    // LOG("ket_n " << ket_n);
-
 
     // Stiffness Matrix of the Torsion Part
     for (size_t r = 0; r != NumberOfDofs(); r++){
@@ -561,8 +566,6 @@ KRATOS_TRY;
             ket_v(r,s) = 0.50 * gmod_It * torsion_dof_v[r] * torsion_dof_v[s] + torsion_dof_v_2(r,s) * S13;
         }
     }
-    // LOG("ket_v "<< ket_v);
-
 
     // IgaDebug::CheckMatrix(expected_data, "kem", kem);
     // IgaDebug::CheckMatrix(expected_data, "keb_n", keb_n);
@@ -1564,22 +1567,18 @@ KRATOS_CATCH("");
      * @note   A.Bauer (03/2015)
      */
 //#--------------------------------------------------------------------------------
-Matrix IgaBeamElement::ComputeEpsilonSecondDerivative( )  // Vector3 _r1)     //change 17.11  r1 aus dem input nehmen
+Matrix IgaBeamElement::ComputeEpsilonSecondDerivative( )
 {
 KRATOS_TRY;
-
     Matrix epsilon_var_2;
     epsilon_var_2.resize(NumberOfDofs(), NumberOfDofs());
     epsilon_var_2.clear();
 
-    // get the degree of Freedom per Node
     std::vector<int> act_dofs;
     GetDofTypesPerNode(act_dofs);
     int number_dofs_per_node = act_dofs.size();
 
-    // Matrix shape_derivatives = GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES);
-    Vector& shape_derivatives_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
-
+    Vector& shape_der_1 = GetValue(SHAPE_FUNCTION_LOCAL_DER_1);
 
     for (int r = 0; r < NumberOfDofs(); r++){
 
@@ -1603,7 +1602,7 @@ KRATOS_TRY;
                 else
                 {
                     if (xyz_r == xyz_s)
-                        epsilon_var_2(r,s) = shape_derivatives_1[i] * shape_derivatives_1[j];
+                        epsilon_var_2(r,s) = shape_der_1[i] * shape_der_1[j];
                     else
                         epsilon_var_2(r,s) = 0.00;
                 }
@@ -1611,7 +1610,6 @@ KRATOS_TRY;
         }
     }
     return epsilon_var_2;
-
 KRATOS_CATCH("");
 }
 

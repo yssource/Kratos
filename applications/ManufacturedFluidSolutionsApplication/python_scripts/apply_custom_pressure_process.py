@@ -41,7 +41,8 @@ class ApplyCustomPressureProcess(KM.Process):
         self.manufactured_process = MS.ManufacturedSolutionUtility(self.model_part, self.manufactured)
 
         # Fixity process
-        #TODO: define the fixity process
+        self.is_fixed = settings["constrained"].GetBool()
+        self.variable_utils = KM.VariableUtils()
 
 
     def ExecuteBeforeSolutionLoop(self):
@@ -50,3 +51,4 @@ class ApplyCustomPressureProcess(KM.Process):
 
     def ExecuteInitializeSolutionStep(self):
         self.manufactured_process.SetPressure()
+        self.variable_utils.ApplyFixity(KM.PRESSURE, self.is_fixed, self.model_part.Nodes)

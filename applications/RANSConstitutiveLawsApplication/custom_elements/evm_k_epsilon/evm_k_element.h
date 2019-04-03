@@ -50,11 +50,14 @@ namespace Kratos
 
 struct EvmKElementData
 {
-    int i;
+    double KinematicViscosity;
+    double WallDistance;
+    double Gamma;
 };
 
 template <unsigned int TDim, unsigned int TNumNodes>
-class EvmKElement : public StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmKElementData>
+class EvmKElement
+    : public StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmKElementData>
 {
 public:
     ///@name Type Definitions
@@ -436,9 +439,9 @@ private:
     ///@name Private Operations
     ///@{
 
-    double CalculateReactionTerm(const double kinematic_viscosity,
-                                 const double wall_distance,
-                                 const double gamma) const;
+    double CalculateReactionTerm(const EvmKElementData& rData,
+                                 const ProcessInfo& rCurrentProcessInfo,
+                                 const int Step = 0) const override;
 
     double CalculateSourceTerm(const double turbulent_kinematic_viscosity,
                                const double turbulent_kinetic_energy,

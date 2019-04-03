@@ -532,6 +532,23 @@ protected:
     ///@name Protected Operations
     ///@{
 
+    virtual void CalculateConvectionDiffusionReactionData(
+        TConvectionDiffusionReactionData& rData,
+        double& rEffectiveKinematicViscosity,
+        const Vector& rShapeFunctions,
+        const Matrix& rShapeFunctionDerivatives,
+        const ProcessInfo& rCurrentProcessInfo,
+        const int Step = 0) const
+    {
+        KRATOS_TRY;
+        KRATOS_ERROR << "Attempting to call base "
+                        "StabilizedConvectionDiffusionReactionElement "
+                        "CalculateConvectionDiffusionReactionData method. "
+                        "Please implement it in the derrived class."
+                     << std::endl;
+        KRATOS_CATCH("");
+    }
+
     virtual double CalculateSourceTerm(const TConvectionDiffusionReactionData& rData,
                                        const ProcessInfo& rCurrentProcessInfo,
                                        const int Step = 0) const

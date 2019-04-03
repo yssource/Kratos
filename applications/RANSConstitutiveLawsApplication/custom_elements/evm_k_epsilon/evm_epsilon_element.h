@@ -50,11 +50,22 @@ namespace Kratos
 
 struct EvmEpsilonElementData
 {
-    int i;
+    double C1;
+    double C2;
+    double F2;
+    double Gamma;
+    double KinematicViscosity;
+    double YPlus;
+    double WallDistance;
+    double TurbulentKineticEnergy;
+    double TurbulentKinematicViscosity;
+
+    Matrix ShapeFunctionDerivatives;
 };
 
 template <unsigned int TDim, unsigned int TNumNodes>
-class EvmEpsilonElement : public StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmEpsilonElementData>
+class EvmEpsilonElement
+    : public StabilizedConvectionDiffusionReactionElement<TDim, TNumNodes, EvmEpsilonElementData>
 {
 public:
     ///@name Type Definitions
@@ -345,7 +356,6 @@ public:
                                             VectorType& rRightHandSideVector,
                                             ProcessInfo& rCurrentProcessInfo) override;
 
-
     /**
      * @brief GetIntegrationMethod Return the integration order to be used.
      * @return Gauss Order
@@ -439,18 +449,20 @@ private:
     ///@name Private Operations
     ///@{
 
-    double CalculateReactionTerm(const double kinematic_viscosity,
-                                 const double y_plus,
-                                 const double wall_distance,
-                                 const double f2,
-                                 const double c2,
-                                 const double gamma) const;
+    void CalculateConvectionDiffusionReactionData(EvmEpsilonElementData& rData,
+                                                  double& rEffectiveKinematicViscosity,
+                                                  const Vector& rShapeFunctions,
+                                                  const Matrix& rShapeFunctionDerivatives,
+                                                  const ProcessInfo& rCurrentProcessInfo,
+                                                  const int Step = 0) const override;
 
-    double CalculateSourceTerm(const double turbulent_kinematic_viscosity,
-                               const double turbulent_kinetic_energy,
-                               const double c1,
-                               const double gamma,
-                               const Matrix& rShapeDerivatives) const;
+    double CalculateReactionTerm(const EvmEpsilonElementData& rData,
+                                 const ProcessInfo& rCurrentProcessInfo,
+                                 const int Step = 0) const override;
+
+    double CalculateSourceTerm(const EvmEpsilonElementData& rData,
+                               const ProcessInfo& rCurrentProcessInfo,
+                               const int Step = 0) const override;
 
     ///@}
     ///@name Serialization

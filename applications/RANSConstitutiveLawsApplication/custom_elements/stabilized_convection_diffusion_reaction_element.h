@@ -272,15 +272,14 @@ public:
                               VectorType& rRightHandSideVector,
                               ProcessInfo& rCurrentProcessInfo) override
     {
-        // Resize and intialize output
+        // Check sizes and initialize matrix
         if (rLeftHandSideMatrix.size1() != TNumNodes || rLeftHandSideMatrix.size2() != TNumNodes)
             rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
 
-        if (rRightHandSideVector.size() != TNumNodes)
-            rRightHandSideVector.resize(TNumNodes, false);
-
         noalias(rLeftHandSideMatrix) = ZeroMatrix(TNumNodes, TNumNodes);
-        noalias(rRightHandSideVector) = ZeroVector(TNumNodes);
+
+        // Calculate RHS
+        this->CalculateRightHandSide(rRightHandSideVector, rCurrentProcessInfo);
     }
 
     /**
@@ -292,11 +291,6 @@ public:
     void CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix,
                                ProcessInfo& rCurrentProcessInfo) override
     {
-        // Resize and intialize output
-        if (rLeftHandSideMatrix.size1() != TNumNodes || rLeftHandSideMatrix.size2() != TNumNodes)
-            rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
-
-        noalias(rLeftHandSideMatrix) = ZeroMatrix(TNumNodes, TNumNodes);
     }
 
     /**
@@ -308,10 +302,76 @@ public:
     void CalculateRightHandSide(VectorType& rRightHandSideVector,
                                 ProcessInfo& rCurrentProcessInfo) override
     {
+        KRATOS_TRY
+
         if (rRightHandSideVector.size() != TNumNodes)
             rRightHandSideVector.resize(TNumNodes, false);
 
         noalias(rRightHandSideVector) = ZeroVector(TNumNodes);
+
+        // Get Shape function data
+        Vector gauss_weights;
+        Matrix shape_functions;
+        ShapeFunctionDerivativesArrayType shape_derivatives;
+        this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
+        const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
+            this->GetGeometryParameterDerivatives();
+        const unsigned int num_gauss_points = gauss_weights.size();
+
+        const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+        const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
+        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+
+        for (unsigned int g = 0; g < num_gauss_points; g++)
+        {
+            const Matrix& r_shape_derivatives = shape_derivatives[g];
+            const Vector& gauss_shape_functions = row(shape_functions, g);
+
+            const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
+            Matrix contravariant_metric_tensor(r_parameter_derivatives_g.size1(),
+                                               r_parameter_derivatives_g.size2());
+            noalias(contravariant_metric_tensor) =
+                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
+
+            const array_1d<double, 3> velocity =
+                this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
+
+            TConvectionDiffusionReactionData r_current_data;
+            double effective_kinematic_viscosity, dummy;
+            this->CalculateConvectionDiffusionReactionData(
+                r_current_data, effective_kinematic_viscosity, dummy, dummy,
+                gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+
+            const double reaction =
+                this->CalculateReactionTerm(r_current_data, rCurrentProcessInfo);
+            const double source =
+                this->CalculateSourceTerm(r_current_data, rCurrentProcessInfo);
+
+            double tau, element_length;
+            EvmKepsilonModelUtilities::CalculateStabilizationTau(
+                tau, element_length, velocity, contravariant_metric_tensor, reaction,
+                effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
+
+            BoundedVector<double, TNumNodes> velocity_convective_terms;
+            this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
+
+            const double s = std::abs(reaction);
+
+            for (unsigned int a = 0; a < TNumNodes; ++a)
+            {
+                double value = 0.0;
+
+                value += gauss_shape_functions[a] * source;
+
+                // Add supg stabilization terms
+                value += (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
+                         tau * source;
+
+                rRightHandSideVector[a] += gauss_weights[g] * value;
+            }
+        }
+
+        KRATOS_CATCH("");
     }
 
     /**
@@ -320,19 +380,16 @@ public:
      * @param rRightHandSideVector Local finite element residual vector (output)
      * @param rCurrentProcessInfo Current ProcessInfo values (input)
      */
-    void CalculateLocalVelocityContribution(MatrixType& rDampMatrix,
+    void CalculateLocalVelocityContribution(MatrixType& rDampingMatrix,
                                             VectorType& rRightHandSideVector,
                                             ProcessInfo& rCurrentProcessInfo) override
     {
-        // Resize and intialize output
-        if (rDampMatrix.size1() != TNumNodes)
-            rDampMatrix.resize(TNumNodes, TNumNodes, false);
+        CalculateDampingMatrix(rDampingMatrix, rCurrentProcessInfo);
 
-        if (rRightHandSideVector.size() != TNumNodes)
-            rRightHandSideVector.resize(TNumNodes, false);
-
-        noalias(rDampMatrix) = ZeroMatrix(TNumNodes, TNumNodes);
-        noalias(rRightHandSideVector) = ZeroVector(TNumNodes);
+        // Now calculate an additional contribution to the residual: r -= rDampingMatrix * (u,p)
+        VectorType U;
+        this->GetValuesVector(U);
+        noalias(rRightHandSideVector) -= prod(rDampingMatrix, U);
     }
 
     /**
@@ -346,10 +403,10 @@ public:
                                                 VectorType& rRightHandSideVector,
                                                 ProcessInfo& rCurrentProcessInfo) override
     {
-        if (rLeftHandSideMatrix.size1() != TNumNodes || rLeftHandSideMatrix.size2() != TNumNodes)
-            rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
-        if (rRightHandSideVector.size() != TNumNodes)
-            rRightHandSideVector.resize(TNumNodes, false);
+        if (rLeftHandSideMatrix.size1() != 0)
+            rLeftHandSideMatrix.resize(0, 0, false);
+        if (rRightHandSideVector.size() != 0)
+            rRightHandSideVector.resize(0, false);
     }
 
     /**
@@ -361,8 +418,8 @@ public:
     void CalculateFirstDerivativesLHS(MatrixType& rLeftHandSideMatrix,
                                       ProcessInfo& rCurrentProcessInfo) override
     {
-        if (rLeftHandSideMatrix.size1() != TNumNodes || rLeftHandSideMatrix.size2() != TNumNodes)
-            rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
+        if (rLeftHandSideMatrix.size1() != 0)
+            rLeftHandSideMatrix.resize(0, 0, false);
     }
 
     /**
@@ -374,8 +431,8 @@ public:
     void CalculateFirstDerivativesRHS(VectorType& rRightHandSideVector,
                                       ProcessInfo& rCurrentProcessInfo) override
     {
-        if (rRightHandSideVector.size() != TNumNodes)
-            rRightHandSideVector.resize(TNumNodes, false);
+        if (rRightHandSideVector.size() != 0)
+            rRightHandSideVector.resize(0, false);
     }
 
     /**
@@ -398,10 +455,10 @@ public:
                                                  VectorType& rRightHandSideVector,
                                                  ProcessInfo& rCurrentProcessInfo) override
     {
-        if (rLeftHandSideMatrix.size1() != 0 || rLeftHandSideMatrix.size2() != TNumNodes)
-            rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
-        if (rRightHandSideVector.size() != TNumNodes)
-            rRightHandSideVector.resize(TNumNodes, false);
+        if (rLeftHandSideMatrix.size1() != 0)
+            rLeftHandSideMatrix.resize(0, 0, false);
+        if (rRightHandSideVector.size() != 0)
+            rRightHandSideVector.resize(0, false);
     }
 
     /**
@@ -413,8 +470,8 @@ public:
     void CalculateSecondDerivativesLHS(MatrixType& rLeftHandSideMatrix,
                                        ProcessInfo& rCurrentProcessInfo) override
     {
-        if (rLeftHandSideMatrix.size1() != TNumNodes || rLeftHandSideMatrix.size2() != TNumNodes)
-            rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
+        if (rLeftHandSideMatrix.size1() != 0)
+            rLeftHandSideMatrix.resize(0, 0, false);
     }
 
     /**
@@ -426,8 +483,8 @@ public:
     void CalculateSecondDerivativesRHS(VectorType& rRightHandSideVector,
                                        ProcessInfo& rCurrentProcessInfo) override
     {
-        if (rRightHandSideVector.size() != TNumNodes)
-            rRightHandSideVector.resize(TNumNodes, false);
+        if (rRightHandSideVector.size() != 0)
+            rRightHandSideVector.resize(0, false);
     }
 
     /**
@@ -438,10 +495,71 @@ public:
      */
     void CalculateMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo) override
     {
+        KRATOS_TRY
+
         if (rMassMatrix.size1() != TNumNodes || rMassMatrix.size2() != TNumNodes)
             rMassMatrix.resize(TNumNodes, TNumNodes, false);
 
         noalias(rMassMatrix) = ZeroMatrix(TNumNodes, TNumNodes);
+
+        // Get Shape function data
+        Vector gauss_weights;
+        Matrix shape_functions;
+        ShapeFunctionDerivativesArrayType shape_derivatives;
+        this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
+        const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
+            this->GetGeometryParameterDerivatives();
+        const unsigned int num_gauss_points = gauss_weights.size();
+
+        const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+        const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
+        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+
+        for (unsigned int g = 0; g < num_gauss_points; g++)
+        {
+            const Matrix& r_shape_derivatives = shape_derivatives[g];
+            const Vector& gauss_shape_functions = row(shape_functions, g);
+
+            const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
+            Matrix contravariant_metric_tensor(r_parameter_derivatives_g.size1(),
+                                               r_parameter_derivatives_g.size2());
+            noalias(contravariant_metric_tensor) =
+                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
+
+            const double mass = gauss_weights[g] / TNumNodes;
+            this->AddLumpedMassMatrix(rMassMatrix, mass);
+
+            const array_1d<double, 3>& velocity =
+                this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
+            BoundedVector<double, TNumNodes> velocity_convective_terms;
+            this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
+
+            TConvectionDiffusionReactionData r_current_data;
+            double effective_kinematic_viscosity, dummy;
+            this->CalculateConvectionDiffusionReactionData(
+                r_current_data, effective_kinematic_viscosity, dummy, dummy,
+                gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+
+            const double reaction =
+                this->CalculateReactionTerm(r_current_data, rCurrentProcessInfo);
+
+            double tau, element_length;
+            EvmKepsilonModelUtilities::CalculateStabilizationTau(
+                tau, element_length, velocity, contravariant_metric_tensor, reaction,
+                effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
+
+            const double s = std::abs(reaction);
+
+            // Add mass stabilization terms
+            for (unsigned int i = 0; i < TNumNodes; ++i)
+                for (unsigned int j = 0; j < TNumNodes; ++j)
+                    rMassMatrix(i, j) +=
+                        gauss_weights[g] * tau *
+                        (velocity_convective_terms[i] + s * gauss_shape_functions[i]) *
+                        gauss_shape_functions[j];
+        }
+
+        KRATOS_CATCH("");
     }
 
     /**
@@ -452,10 +570,129 @@ public:
      */
     void CalculateDampingMatrix(MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo) override
     {
+        KRATOS_TRY
+
         if (rDampingMatrix.size1() != TNumNodes || rDampingMatrix.size2() != TNumNodes)
             rDampingMatrix.resize(TNumNodes, TNumNodes, false);
 
         noalias(rDampingMatrix) = ZeroMatrix(TNumNodes, TNumNodes);
+
+        // Get Shape function data
+        Vector gauss_weights;
+        Matrix shape_functions;
+        ShapeFunctionDerivativesArrayType shape_derivatives;
+        this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
+        const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
+            this->GetGeometryParameterDerivatives();
+        const unsigned int num_gauss_points = gauss_weights.size();
+
+        const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+        const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
+        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+
+        for (unsigned int g = 0; g < num_gauss_points; g++)
+        {
+            const Matrix& r_shape_derivatives = shape_derivatives[g];
+            const Vector& gauss_shape_functions = row(shape_functions, g);
+
+            const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
+            Matrix contravariant_metric_tensor(r_parameter_derivatives_g.size1(),
+                                               r_parameter_derivatives_g.size2());
+            noalias(contravariant_metric_tensor) =
+                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
+
+            const array_1d<double, 3> velocity =
+                this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
+            BoundedVector<double, TNumNodes> velocity_convective_terms;
+            this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
+            const double velocity_magnitude = norm_2(velocity);
+
+            TConvectionDiffusionReactionData r_current_data;
+            double effective_kinematic_viscosity, variable_gradient_norm,
+                relaxed_variable_acceleration;
+            this->CalculateConvectionDiffusionReactionData(
+                r_current_data, effective_kinematic_viscosity,
+                variable_gradient_norm, relaxed_variable_acceleration,
+                gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+
+            const double reaction =
+                this->CalculateReactionTerm(r_current_data, rCurrentProcessInfo);
+
+            double tau, element_length;
+            EvmKepsilonModelUtilities::CalculateStabilizationTau(
+                tau, element_length, velocity, contravariant_metric_tensor, reaction,
+                effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
+
+            // Calculate residual for cross wind dissipation coefficient
+            double cross_wind_diffusion{0.0}, stream_line_diffusion{0.0};
+            const double velocity_magnitude_square = std::pow(velocity_magnitude, 2);
+
+            Vector nodal_variable;
+            this->GetValuesVector(nodal_variable);
+
+            if (variable_gradient_norm > std::numeric_limits<double>::epsilon() &&
+                velocity_magnitude_square > std::numeric_limits<double>::epsilon())
+            {
+                const double source =
+                    this->CalculateSourceTerm(r_current_data, rCurrentProcessInfo);
+
+                double residual = relaxed_variable_acceleration;
+                residual += inner_prod(velocity_convective_terms, nodal_variable);
+                residual += reaction * inner_prod(gauss_shape_functions, nodal_variable);
+                residual -= source;
+                residual = std::abs(residual);
+                residual /= variable_gradient_norm;
+
+                double chi, k1, k2;
+                EvmKepsilonModelUtilities::CalculateCrossWindDiffusionParameters(
+                    chi, k1, k2, velocity_magnitude, tau, effective_kinematic_viscosity,
+                    reaction, bossak_alpha, bossak_gamma, delta_time, element_length);
+
+                stream_line_diffusion = residual * chi * k1 / velocity_magnitude_square;
+                cross_wind_diffusion = residual * chi * k2 / velocity_magnitude_square;
+            }
+
+            const double s = std::abs(reaction);
+
+            for (unsigned int a = 0; a < TNumNodes; a++)
+            {
+                for (unsigned int b = 0; b < TNumNodes; b++)
+                {
+                    double dNa_dNb = 0.0;
+                    for (unsigned int i = 0; i < TDim; i++)
+                        dNa_dNb += r_shape_derivatives(a, i) * r_shape_derivatives(b, i);
+
+                    double value = 0.0;
+
+                    value += gauss_shape_functions[a] * velocity_convective_terms[b];
+                    value += gauss_shape_functions[a] * reaction *
+                             gauss_shape_functions[b]; // * positive_values_list[b];
+                    value += effective_kinematic_viscosity * dNa_dNb;
+
+                    // Adding SUPG stabilization terms
+                    value += tau *
+                             (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
+                             velocity_convective_terms[b];
+                    value +=
+                        tau *
+                        (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
+                        reaction * gauss_shape_functions[b]; // * positive_values_list[b];
+
+                    // Adding cross wind dissipation
+                    value += cross_wind_diffusion * dNa_dNb * velocity_magnitude_square;
+                    value -= cross_wind_diffusion * velocity_convective_terms[a] *
+                             velocity_convective_terms[b];
+
+                    // Adding stream line dissipation
+                    value += stream_line_diffusion * velocity_convective_terms[a] *
+                             velocity_convective_terms[b];
+
+                    rDampingMatrix(a, b) += gauss_weights[g] * value;
+                }
+            }
+        }
+
+        KRATOS_CATCH("");
     }
 
     /**

@@ -348,7 +348,7 @@ public:
                 this->CalculateSourceTerm(r_current_data, rCurrentProcessInfo);
 
             double tau, element_length;
-            EvmKepsilonModelUtilities::CalculateStabilizationTau(
+            this->CalculateStabilizationTau(
                 tau, element_length, velocity, contravariant_metric_tensor, reaction,
                 effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
 
@@ -544,7 +544,7 @@ public:
                 this->CalculateReactionTerm(r_current_data, rCurrentProcessInfo);
 
             double tau, element_length;
-            EvmKepsilonModelUtilities::CalculateStabilizationTau(
+            this->CalculateStabilizationTau(
                 tau, element_length, velocity, contravariant_metric_tensor, reaction,
                 effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
 
@@ -619,7 +619,7 @@ public:
                 this->CalculateReactionTerm(r_current_data, rCurrentProcessInfo);
 
             double tau, element_length;
-            EvmKepsilonModelUtilities::CalculateStabilizationTau(
+            this->CalculateStabilizationTau(
                 tau, element_length, velocity, contravariant_metric_tensor, reaction,
                 effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
 
@@ -644,7 +644,7 @@ public:
                 residual /= variable_gradient_norm;
 
                 double chi, k1, k2;
-                EvmKepsilonModelUtilities::CalculateCrossWindDiffusionParameters(
+                this->CalculateCrossWindDiffusionParameters(
                     chi, k1, k2, velocity_magnitude, tau, effective_kinematic_viscosity,
                     reaction, bossak_alpha, bossak_gamma, delta_time, element_length);
 
@@ -967,6 +967,71 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
+
+    void CalculateStabilizationTau(double& tau,
+                                   double& element_length,
+                                   const array_1d<double, 3>& rVelocity,
+                                   const Matrix& rContravariantMetricTensor,
+                                   const double reaction,
+                                   const double effective_kinematic_viscosity,
+                                   const double alpha,
+                                   const double gamma,
+                                   const double delta_time)
+    {
+        unsigned int dim = rContravariantMetricTensor.size2();
+        Vector velocity(dim);
+        for (unsigned int d = 0; d < dim; ++d)
+            velocity[d] = rVelocity[d];
+        Vector temp(dim);
+        noalias(temp) = prod(rContravariantMetricTensor, velocity);
+        const double stab_convection = inner_prod(velocity, temp);
+        const double stab_diffusion = std::pow(3.0 * effective_kinematic_viscosity, 2) *
+                                      norm_frobenius(rContravariantMetricTensor);
+        const double stab_dynamics = std::pow(2.0 / delta_time, 2);
+        const double stab_reaction = std::pow(reaction, 2);
+
+        PrintIfVariableIsNegative(stab_convection);
+
+        const double velocity_norm = norm_2(rVelocity);
+        tau = 1.0 / std::sqrt(stab_dynamics + stab_convection + stab_diffusion + stab_reaction);
+        element_length = 2.0 * velocity_norm / std::sqrt(stab_convection);
+    }
+
+    void CalculateCrossWindDiffusionParameters(double& chi,
+                                               double& k1,
+                                               double& k2,
+                                               const double velocity_magnitude,
+                                               const double tau,
+                                               const double effective_kinematic_viscosity,
+                                               const double reaction,
+                                               const double alpha,
+                                               const double gamma,
+                                               const double delta_time,
+                                               const double element_length)
+    {
+        const double reaction_dynamics = reaction + (1 - alpha) / (gamma * delta_time);
+
+        chi = 2.0 / (std::abs(reaction_dynamics) * element_length + 2.0 * velocity_magnitude);
+
+        double value = 0.0;
+        value =
+            std::abs(0.5 * (velocity_magnitude - tau * velocity_magnitude * reaction_dynamics +
+                            tau * velocity_magnitude * std::abs(reaction_dynamics))) *
+                element_length -
+            (effective_kinematic_viscosity + tau * std::pow(velocity_magnitude, 2)) +
+            (reaction_dynamics + tau * reaction_dynamics * std::abs(reaction_dynamics)) *
+                std::pow(element_length, 2) / 6.0;
+
+        k1 = std::max(value, 0.0);
+
+        value = std::abs(0.5 * (velocity_magnitude + tau * velocity_magnitude *
+                                                         std::abs(reaction_dynamics))) *
+                    element_length -
+                effective_kinematic_viscosity +
+                (reaction_dynamics + tau * reaction_dynamics * std::abs(reaction_dynamics)) *
+                    std::pow(element_length, 2) / 6.0;
+        k2 = std::max(value, 0.0);
+    }
 
     ///@}
     ///@name Serialization

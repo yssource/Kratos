@@ -61,34 +61,6 @@ double CalculateGamma(const double C_mu,
                       const double turbulent_kinetic_energy,
                       const double turbulent_kinematic_viscosity);
 
-void CalculateStabilizationTau(double& tau,
-                               double& element_length,
-                               const array_1d<double, 3>& rVelocity,
-                               const Matrix& rContravariantMetricTensor,
-                               const double reaction,
-                               const double effective_kinematic_viscosity,
-                               const double alpha,
-                               const double gamma,
-                               const double delta_time);
-
-double CalculateStabilizationTau(const double velocity_magnitude,
-                                 const double length,
-                                 const double effective_kinematic_viscosity,
-                                 const double reaction,
-                                 const double delta_time);
-
-void CalculateCrossWindDiffusionParameters(double& chi,
-                                           double& k1,
-                                           double& k2,
-                                           const double velocity_magnitude,
-                                           const double tau,
-                                           const double effective_kinematic_viscosity,
-                                           const double reaction,
-                                           const double alpha,
-                                           const double gamma,
-                                           const double delta_time,
-                                           const double element_length);
-
 void CalculateTurbulentValues(double& turbulent_kinetic_energy,
                               double& turbulent_energy_dissipation_rate,
                               const double y_plus,

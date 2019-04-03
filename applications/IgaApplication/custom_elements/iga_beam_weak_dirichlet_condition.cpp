@@ -252,7 +252,8 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     auto const penalty_disp_u   = GetValue(PENALTY_DISPLACEMENT_X);
     auto const penalty_disp_v   = GetValue(PENALTY_DISPLACEMENT_Y);
     auto const penalty_disp_w   = GetValue(PENALTY_DISPLACEMENT_Z);
-    auto const penalty_rot    = GetValue(PENALTY_ROTATION);
+    auto const penalty_rot_2    = GetValue(PENALTY_ROTATION_2);
+    auto const penalty_rot_3    = GetValue(PENALTY_ROTATION_3);
     auto const penalty_tors   = GetValue(PENALTY_TORSION);
 
 
@@ -284,9 +285,9 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
 
     // Potential Rotation
       // By the Gradient 
-    const auto dP_grad_bend = 0.5 * (delta_a.dot(delta_a) * penalty_rot);
+    const auto dP_grad_bend = 0.5 * (delta_a.dot(delta_a) * penalty_rot_2);
       // By the Angle
-    const auto dP_alpha_bend = 0.5 * 0.5 * (alpha_2 * alpha_2 + alpha_3 * alpha_3) * penalty_rot; 
+    const auto dP_alpha_bend = 0.5 * 0.5 * (alpha_2 * alpha_2 + alpha_3 * alpha_3) * penalty_rot_2; 
 
     // Potential Torsion
     const auto dP_alpha_tors = 0.5 * 0.5 * (alpha_12 * alpha_12 + alpha_13 * alpha_13) * penalty_tors;

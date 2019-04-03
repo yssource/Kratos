@@ -444,6 +444,13 @@ private:
     ///@name Private Operations
     ///@{
 
+    void CalculateConvectionDiffusionReactionData(EvmKElementData& rData,
+                                                  double& rEffectiveKinematicViscosity,
+                                                  const Vector& rShapeFunctions,
+                                                  const Matrix& rShapeFunctionDerivatives,
+                                                  const ProcessInfo& rCurrentProcessInfo,
+                                                  const int Step = 0) const override;
+
     double CalculateReactionTerm(const EvmKElementData& rData,
                                  const ProcessInfo& rCurrentProcessInfo,
                                  const int Step = 0) const override;

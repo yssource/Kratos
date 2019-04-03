@@ -53,6 +53,11 @@ struct EvmKElementData
     double KinematicViscosity;
     double WallDistance;
     double Gamma;
+
+    double TurbulentKineticEnergy;
+    double TurbulentKinematicViscosity;
+
+    Matrix ShapeFunctionDerivatives;
 };
 
 template <unsigned int TDim, unsigned int TNumNodes>
@@ -443,9 +448,9 @@ private:
                                  const ProcessInfo& rCurrentProcessInfo,
                                  const int Step = 0) const override;
 
-    double CalculateSourceTerm(const double turbulent_kinematic_viscosity,
-                               const double turbulent_kinetic_energy,
-                               const Matrix& rShapeDerivatives) const;
+    double CalculateSourceTerm(const EvmKElementData& rData,
+                               const ProcessInfo& rCurrentProcessInfo,
+                               const int Step = 0) const override;
 
     ///@}
     ///@name Serialization

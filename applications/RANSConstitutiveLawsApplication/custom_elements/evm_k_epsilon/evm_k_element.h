@@ -446,6 +446,8 @@ private:
 
     void CalculateConvectionDiffusionReactionData(EvmKElementData& rData,
                                                   double& rEffectiveKinematicViscosity,
+                                                  double& rVariableGradientNorm,
+                                                  double& rVariableRelaxedAcceleration,
                                                   const Vector& rShapeFunctions,
                                                   const Matrix& rShapeFunctionDerivatives,
                                                   const ProcessInfo& rCurrentProcessInfo,

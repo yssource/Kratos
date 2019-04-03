@@ -535,6 +535,8 @@ protected:
     virtual void CalculateConvectionDiffusionReactionData(
         TConvectionDiffusionReactionData& rData,
         double& rEffectiveKinematicViscosity,
+        double& rVariableGradientNorm,
+        double& rVariableRelaxedAcceleration,
         const Vector& rShapeFunctions,
         const Matrix& rShapeFunctionDerivatives,
         const ProcessInfo& rCurrentProcessInfo,

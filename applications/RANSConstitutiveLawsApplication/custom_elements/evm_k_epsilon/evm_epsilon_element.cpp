@@ -309,13 +309,7 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRig
         this->GetGeometryParameterDerivatives();
     const unsigned int num_gauss_points = gauss_weights.size();
 
-    const double c1 = rCurrentProcessInfo[TURBULENCE_RANS_C1];
-    const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
-    const double epsilon_sigma =
-        rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
     const double delta_time = rCurrentProcessInfo[DELTA_TIME];
-    const double c2 = rCurrentProcessInfo[TURBULENCE_RANS_C2];
-    const int rans_time_step = rCurrentProcessInfo[RANS_TIME_STEP];
     const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
     const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
@@ -335,26 +329,10 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRig
         BoundedVector<double, TNumNodes> velocity_convective_terms;
         this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
 
-        const double nu = this->EvaluateInPoint(KINEMATIC_VISCOSITY, gauss_shape_functions);
-        const double nu_t = this->EvaluateInPoint(
-            TURBULENT_VISCOSITY, gauss_shape_functions, rans_time_step);
-        // const double effective_kinematic_viscosity = nu + nu_t / epsilon_sigma;
-
-        const double tke =
-            this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
-        const double epsilon = this->EvaluateInPoint(
-            TURBULENT_ENERGY_DISSIPATION_RATE, gauss_shape_functions);
-        const double y_plus = this->EvaluateInPoint(RANS_Y_PLUS, gauss_shape_functions);
-        const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
-        const double gamma =
-            EvmKepsilonModelUtilities::CalculateGamma(c_mu, f_mu, tke, nu_t);
-        const double f2 = EvmKepsilonModelUtilities::CalculateF2(tke, nu, epsilon);
-        const double wall_distance = this->EvaluateInPoint(DISTANCE, gauss_shape_functions);
-
         EvmEpsilonElementData current_data;
-        double effective_kinematic_viscosity;
+        double effective_kinematic_viscosity, dummy;
         this->CalculateConvectionDiffusionReactionData(
-            current_data, effective_kinematic_viscosity, gauss_shape_functions,
+            current_data, effective_kinematic_viscosity, dummy, dummy, gauss_shape_functions,
             r_shape_derivatives, rCurrentProcessInfo);
 
         const double reaction =
@@ -510,11 +488,6 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& rMassMa
     const unsigned int num_gauss_points = gauss_weights.size();
 
     const double delta_time = rCurrentProcessInfo[DELTA_TIME];
-    const double epsilon_sigma =
-        rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
-    const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
-    const double c2 = rCurrentProcessInfo[TURBULENCE_RANS_C2];
-    const int rans_time_step = rCurrentProcessInfo[RANS_TIME_STEP];
     const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
     const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
@@ -534,30 +507,15 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& rMassMa
 
         const array_1d<double, 3>& velocity =
             this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
-        const double nu = this->EvaluateInPoint(KINEMATIC_VISCOSITY, gauss_shape_functions);
-        const double nu_t = this->EvaluateInPoint(
-            TURBULENT_VISCOSITY, gauss_shape_functions, rans_time_step);
-        // const double effective_kinematic_viscosity = nu + nu_t / epsilon_sigma;
-        const double tke =
-            this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
-        const double epsilon = this->EvaluateInPoint(
-            TURBULENT_ENERGY_DISSIPATION_RATE, gauss_shape_functions);
-        const double f2 = EvmKepsilonModelUtilities::CalculateF2(tke, nu, epsilon);
-        const double wall_distance = this->EvaluateInPoint(DISTANCE, gauss_shape_functions);
-        const double y_plus = this->EvaluateInPoint(RANS_Y_PLUS, gauss_shape_functions);
-        const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
-        const double gamma =
-            EvmKepsilonModelUtilities::CalculateGamma(c_mu, f_mu, tke, nu_t);
 
         EvmEpsilonElementData current_data;
-        double effective_kinematic_viscosity;
+        double effective_kinematic_viscosity, dummy;
         this->CalculateConvectionDiffusionReactionData(
-            current_data, effective_kinematic_viscosity, gauss_shape_functions,
+            current_data, effective_kinematic_viscosity, dummy, dummy, gauss_shape_functions,
             r_shape_derivatives, rCurrentProcessInfo);
 
         const double reaction =
             this->CalculateReactionTerm(current_data, rCurrentProcessInfo);
-
 
         double tau, element_length;
         EvmKepsilonModelUtilities::CalculateStabilizationTau(
@@ -604,13 +562,7 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
         this->GetGeometryParameterDerivatives();
     const unsigned int num_gauss_points = gauss_weights.size();
 
-    const double epsilon_sigma =
-        rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
-    const double c1 = rCurrentProcessInfo[TURBULENCE_RANS_C1];
-    const double c2 = rCurrentProcessInfo[TURBULENCE_RANS_C2];
-    const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
     const double delta_time = rCurrentProcessInfo[DELTA_TIME];
-    const int rans_time_step = rCurrentProcessInfo[RANS_TIME_STEP];
     const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
     const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
@@ -625,33 +577,17 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
         noalias(contravariant_metric_tensor) =
             prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
 
-        const double epsilon = this->EvaluateInPoint(
-            TURBULENT_ENERGY_DISSIPATION_RATE, gauss_shape_functions);
-        const double tke =
-            this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
-        const double nu_t = this->EvaluateInPoint(
-            TURBULENT_VISCOSITY, gauss_shape_functions, rans_time_step);
-        const double nu = this->EvaluateInPoint(KINEMATIC_VISCOSITY, gauss_shape_functions);
-        // const double effective_kinematic_viscosity = nu + nu_t / epsilon_sigma;
-
-        const double y_plus = this->EvaluateInPoint(RANS_Y_PLUS, gauss_shape_functions);
-        const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
-        const double gamma =
-            EvmKepsilonModelUtilities::CalculateGamma(c_mu, f_mu, tke, nu_t);
-
         array_1d<double, 3> velocity =
             this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
         BoundedVector<double, TNumNodes> velocity_convective_terms;
         this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
-
         const double velocity_magnitude = norm_2(velocity);
-        const double f2 = EvmKepsilonModelUtilities::CalculateF2(tke, nu, epsilon);
-        const double wall_distance = this->EvaluateInPoint(DISTANCE, gauss_shape_functions);
 
         EvmEpsilonElementData current_data;
-        double effective_kinematic_viscosity;
+        double effective_kinematic_viscosity, relaxed_epsilon_acceleration, epsilon_gradient_norm;
         this->CalculateConvectionDiffusionReactionData(
-            current_data, effective_kinematic_viscosity, gauss_shape_functions,
+            current_data, effective_kinematic_viscosity, epsilon_gradient_norm,
+            relaxed_epsilon_acceleration, gauss_shape_functions,
             r_shape_derivatives, rCurrentProcessInfo);
 
         const double reaction =
@@ -663,11 +599,6 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
             effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
 
         // Calculate residual for cross wind dissipation coefficient
-        array_1d<double, 3> epsilon_gradient;
-        this->CalculateGradient(epsilon_gradient, TURBULENT_ENERGY_DISSIPATION_RATE,
-                                r_shape_derivatives);
-        const double epsilon_gradient_norm = norm_2(epsilon_gradient);
-
         double cross_wind_diffusion{0.0}, stream_line_diffusion{0.0};
         const double velocity_magnitude_square = std::pow(velocity_magnitude, 2);
 
@@ -677,8 +608,6 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDam
         if (epsilon_gradient_norm > std::numeric_limits<double>::epsilon() &&
             velocity_magnitude_square > std::numeric_limits<double>::epsilon())
         {
-            const double relaxed_epsilon_acceleration = this->EvaluateInPoint(
-                RANS_AUXILIARY_VARIABLE_2, gauss_shape_functions);
             const double source =
                 this->CalculateSourceTerm(current_data, rCurrentProcessInfo);
 
@@ -747,11 +676,8 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateLocalVelocityContribution(
     CalculateDampingMatrix(rDampingMatrix, rCurrentProcessInfo);
 
     // Now calculate an additional contribution to the residual: r -= rDampingMatrix * (u,p)
-    VectorType U = ZeroVector(TNumNodes);
-    for (unsigned int iNode = 0; iNode < TNumNodes; ++iNode)
-        U[iNode] = this->GetGeometry()[iNode].FastGetSolutionStepValue(
-            TURBULENT_ENERGY_DISSIPATION_RATE);
-
+    VectorType U;
+    this->GetValuesVector(U);
     noalias(rRightHandSideVector) -= prod(rDampingMatrix, U);
 }
 
@@ -873,6 +799,8 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void EvmEpsilonElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionData(
     EvmEpsilonElementData& rData,
     double& rEffectiveKinematicViscosity,
+    double& rVariableGradientNorm,
+    double& rVariableRelaxedAcceleration,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
     const ProcessInfo& rCurrentProcessInfo,
@@ -897,7 +825,6 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionDat
     const double f2 = EvmKepsilonModelUtilities::CalculateF2(tke, nu, epsilon);
     const double wall_distance = this->EvaluateInPoint(DISTANCE, rShapeFunctions);
 
-
     rData.C1 = c1;
     rData.C2 = c2;
     rData.F2 = f2;
@@ -910,6 +837,14 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionDat
     rData.YPlus = y_plus;
 
     rEffectiveKinematicViscosity = nu + nu_t / epsilon_sigma;
+
+    array_1d<double, 3> epsilon_gradient;
+    this->CalculateGradient(epsilon_gradient, TURBULENT_ENERGY_DISSIPATION_RATE,
+                            rShapeFunctionDerivatives);
+    rVariableGradientNorm = norm_2(epsilon_gradient);
+
+    rVariableRelaxedAcceleration =
+        this->EvaluateInPoint(RANS_AUXILIARY_VARIABLE_2, rShapeFunctions);
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
@@ -922,8 +857,9 @@ double EvmEpsilonElement<TDim, TNumNodes>::CalculateReactionTerm(
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-double EvmEpsilonElement<TDim, TNumNodes>::CalculateSourceTerm(
-    const EvmEpsilonElementData& rData, const ProcessInfo& rCurrentProcessInfo, const int Step) const
+double EvmEpsilonElement<TDim, TNumNodes>::CalculateSourceTerm(const EvmEpsilonElementData& rData,
+                                                               const ProcessInfo& rCurrentProcessInfo,
+                                                               const int Step) const
 {
     BoundedMatrix<double, TDim, TDim> velocity_gradient_matrix;
     this->CalculateGradient(velocity_gradient_matrix, VELOCITY, rData.ShapeFunctionDerivatives);

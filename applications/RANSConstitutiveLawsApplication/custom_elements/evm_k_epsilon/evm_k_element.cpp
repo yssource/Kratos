@@ -325,9 +325,9 @@ void EvmKElement<TDim, TNumNodes>::CalculateRightHandSide(VectorType& rRightHand
             this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
 
         EvmKElementData r_current_data;
-        double effective_kinematic_viscosity;
+        double effective_kinematic_viscosity, dummy;
         this->CalculateConvectionDiffusionReactionData(
-            r_current_data, effective_kinematic_viscosity,
+            r_current_data, effective_kinematic_viscosity, dummy, dummy,
             gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
         const double reaction =
@@ -508,9 +508,9 @@ void EvmKElement<TDim, TNumNodes>::CalculateMassMatrix(MatrixType& rMassMatrix,
         this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
 
         EvmKElementData r_current_data;
-        double effective_kinematic_viscosity;
+        double effective_kinematic_viscosity, dummy;
         this->CalculateConvectionDiffusionReactionData(
-            r_current_data, effective_kinematic_viscosity,
+            r_current_data, effective_kinematic_viscosity, dummy, dummy,
             gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
 
         const double reaction =
@@ -580,10 +580,11 @@ void EvmKElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMa
         const double velocity_magnitude = norm_2(velocity);
 
         EvmKElementData r_current_data;
-        double effective_kinematic_viscosity;
+        double effective_kinematic_viscosity, tke_gradient_norm, relaxed_tke_acceleration;
         this->CalculateConvectionDiffusionReactionData(
-            r_current_data, effective_kinematic_viscosity,
-            gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+            r_current_data, effective_kinematic_viscosity, tke_gradient_norm,
+            relaxed_tke_acceleration, gauss_shape_functions,
+            r_shape_derivatives, rCurrentProcessInfo);
 
         const double reaction =
             this->CalculateReactionTerm(r_current_data, rCurrentProcessInfo);
@@ -594,10 +595,6 @@ void EvmKElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMa
             effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
 
         // Calculate residual for cross wind dissipation coefficient
-        array_1d<double, 3> tke_gradient;
-        this->CalculateGradient(tke_gradient, TURBULENT_KINETIC_ENERGY, r_shape_derivatives);
-        const double tke_gradient_norm = norm_2(tke_gradient);
-
         double cross_wind_diffusion{0.0}, stream_line_diffusion{0.0};
         const double velocity_magnitude_square = std::pow(velocity_magnitude, 2);
 
@@ -607,8 +604,6 @@ void EvmKElement<TDim, TNumNodes>::CalculateDampingMatrix(MatrixType& rDampingMa
         if (tke_gradient_norm > std::numeric_limits<double>::epsilon() &&
             velocity_magnitude_square > std::numeric_limits<double>::epsilon())
         {
-            const double relaxed_tke_acceleration = this->EvaluateInPoint(
-                RANS_AUXILIARY_VARIABLE_1, gauss_shape_functions);
             const double source =
                 this->CalculateSourceTerm(r_current_data, rCurrentProcessInfo);
 
@@ -800,6 +795,8 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void EvmKElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionData(
     EvmKElementData& rData,
     double& rEffectiveKinematicViscosity,
+    double& rVariableGradientNorm,
+    double& rVariableRelaxedAcceleration,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
     const ProcessInfo& rCurrentProcessInfo,
@@ -826,6 +823,13 @@ void EvmKElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionData(
     rData.WallDistance = wall_distance;
     rData.Gamma = gamma;
     rEffectiveKinematicViscosity = nu + nu_t / tke_sigma;
+
+    array_1d<double, 3> tke_gradient;
+    this->CalculateGradient(tke_gradient, TURBULENT_KINETIC_ENERGY, rShapeFunctionDerivatives);
+    rVariableGradientNorm = norm_2(tke_gradient);
+
+    rVariableRelaxedAcceleration =
+        this->EvaluateInPoint(RANS_AUXILIARY_VARIABLE_1, rShapeFunctions);
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>

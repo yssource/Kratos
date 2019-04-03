@@ -1,7 +1,7 @@
 import KratosMultiphysics
 import KratosMultiphysics.CompressiblePotentialFlowApplication as CPFApp
 import KratosMultiphysics.MeshingApplication as MeshingApplication
-from KratosMultiphysics.CompressiblePotentialFlowApplication.define_wake_process_2d import DefineWakeProcess
+from KratosMultiphysics.CompressiblePotentialFlowApplication.define_wake_process_2d import DefineWakeProcess2D
 import math
 
 def Factory(settings, Model):
@@ -10,14 +10,14 @@ def Factory(settings, Model):
 
     return DefineWakeProcessEmbedded(Model, settings["Parameters"])
 
-class DefineWakeProcessEmbedded(DefineWakeProcess):
+class DefineWakeProcessEmbedded(DefineWakeProcess2D):
     def __init__(self, Model, settings ):
         KratosMultiphysics.Process.__init__(self)
 
         default_settings = KratosMultiphysics.Parameters("""
             {
                 "mesh_id"                   : 0,
-                "fluid_part_name"           : "MainModelPart",
+                "model_part_name"           : "MainModelPart",
                 "wake_direction"                 : [1.0,0.0,0.0],
                 "epsilon"    : 1e-9
             }
@@ -43,7 +43,7 @@ class DefineWakeProcessEmbedded(DefineWakeProcess):
 
         self.epsilon = settings["epsilon"].GetDouble()
 
-        self.fluid_model_part = Model[settings["fluid_part_name"].GetString()].GetRootModelPart()
+        self.fluid_model_part = Model[settings["model_part_name"].GetString()].GetRootModelPart()
         self.trailing_edge_model_part = self.fluid_model_part.CreateSubModelPart(
             "trailing_edge_model_part")
 

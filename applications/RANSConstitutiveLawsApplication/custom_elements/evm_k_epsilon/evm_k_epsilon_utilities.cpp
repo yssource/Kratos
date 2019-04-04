@@ -56,11 +56,8 @@ double CalculateSourceTerm(const BoundedMatrix<double, TDim, TDim>& rVelocityGra
                            const double turbulent_kinematic_viscosity,
                            const double turbulent_kinetic_energy)
 {
-    // CheckIfVariableIsPositive(turbulent_kinematic_viscosity);
-    // CheckIfVariableIsPositive(turbulent_kinetic_energy);
-
     const double velocity_divergence =
-        CalculationUtilities::CalculateMatrixTrace<TDim>(rVelocityGradient);
+        RansCalculationUtilities().CalculateMatrixTrace<TDim>(rVelocityGradient);
     identity_matrix<double> identity(TDim);
 
     BoundedMatrix<double, TDim, TDim> symmetric_velocity_gradient;

@@ -258,7 +258,7 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 
         double& y_plus = r_node.FastGetSolutionStepValue(RANS_Y_PLUS);
 
-        y_plus = CalculationUtilities::CalculateYplus(
+        y_plus = RansCalculationUtilities(this->mEchoLevel).CalculateYplus(
             velocity_norm, wall_distance, nu, von_karman, beta, 10);
     }
 }

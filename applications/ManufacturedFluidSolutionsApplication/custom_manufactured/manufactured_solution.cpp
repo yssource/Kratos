@@ -112,4 +112,16 @@ array_1d<double, 3> ManufacturedSolution::PressureGradient(array_1d<double, 3>& 
     return grad;
 }
 
+
+Parameters& ManufacturedSolution::GetParameters()
+{
+    return *mpParameters;
+}
+
+
+Properties& ManufacturedSolution::GetProperties()
+{
+    return *mpProperties;
+}
+
 }  // namespace Kratos.

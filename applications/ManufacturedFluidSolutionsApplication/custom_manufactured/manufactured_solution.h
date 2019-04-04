@@ -117,6 +117,9 @@ public:
     ///@name Inquiry
     ///@{
 
+    virtual Parameters& GetParameters();
+
+    virtual Properties& GetProperties();
 
     ///@}
     ///@name Input and output

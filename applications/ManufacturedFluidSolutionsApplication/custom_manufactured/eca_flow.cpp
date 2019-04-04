@@ -96,47 +96,51 @@ double EcaFlow::DU2_DT(array_1d<double, 3>& rCoords, double& rTime)
 double EcaFlow::DU1_DX1(array_1d<double, 3>& rCoords, double& rTime)
 {
     return -2 / std::sqrt(M_PI) * mSigma * rCoords[1] / std::pow(rCoords[0], 2) * ExpEta2(rCoords)
-        - 2 * M_PI * mA * rCoords[1] * ExpBX2(rCoords) * CosFunc(rCoords) * F(rTime);
+        - 2 * M_PI * mA * rCoords[1] * ExpBY(rCoords) * CosFunc(rCoords) * F(rTime);
 }
 
 double EcaFlow::DU1_DX2(array_1d<double, 3>& rCoords, double& rTime)
 {
     return 2 / std::sqrt(M_PI) * mSigma / rCoords[0] * ExpEta2(rCoords)
-        + mA * ExpBX2(rCoords) * SinFunc(rCoords) * (1.0 - mB * rCoords[1]) * F(rTime);
+        + mA * ExpBY(rCoords) * SinFunc(rCoords) * (1.0 - mB * rCoords[1]) * F(rTime);
 }
 
 double EcaFlow::DU2_DX1(array_1d<double, 3>& rCoords, double& rTime)
 {
     return -2 / std::sqrt(M_PI) * mSigma * std::pow(rCoords[1], 2) / std::pow(rCoords[0], 3) * ExpEta2(rCoords)
-        + 4 * mA * std::pow(M_PI, 2) / std::pow(mB, 2) * SinFunc(rCoords) * (1.0 - ExpBX2(rCoords) * (mB * rCoords[1] + 1)) * F(rTime);
+        + 4 * mA * std::pow(M_PI, 2) / std::pow(mB, 2) * SinFunc(rCoords) * (1.0 - ExpBY(rCoords) * (mB * rCoords[1] + 1)) * F(rTime);
 }
 
 double EcaFlow::DU2_DX2(array_1d<double, 3>& rCoords, double& rTime)
 {
     return 2 / std::sqrt(M_PI) * mSigma * rCoords[1] / std::pow(rCoords[0], 2) * ExpEta2(rCoords)
-        + 2 * mA * M_PI * rCoords[1] * ExpBX2(rCoords) * CosFunc(rCoords) * F(rTime);
+        + 2 * mA * M_PI * rCoords[1] * ExpBY(rCoords) * CosFunc(rCoords) * F(rTime);
 }
 
 
 // Velocity second derivatives definition
 double EcaFlow::DDU1_DX11(array_1d<double, 3>& rCoords, double& rTime)
 {
-    return 0.0;
+    return 4 / std::sqrt(M_PI) * Eta(rCoords) / std::pow(rCoords[0], 2) * ExpEta2(rCoords) * (1 - std::pow(Eta(rCoords), 2))
+        -4 * mA * std::pow(M_PI, 2) * rCoords[1] * ExpBY(rCoords) * SinFunc(rCoords) * F(rTime);
 }
 
 double EcaFlow::DDU1_DX22(array_1d<double, 3>& rCoords, double& rTime)
 {
-    return 0.0;
+    return -4 / std::sqrt(M_PI) * std::pow(mSigma / rCoords[0], 2) * Eta(rCoords) * ExpEta2(rCoords)
+        + mA * mB * ExpBY(rCoords) * SinFunc(rCoords) * (rCoords[1] * mB - 2) * F(rTime);
 }
 
 double EcaFlow::DDU2_DX11(array_1d<double, 3>& rCoords, double& rTime)
 {
-    return 0.0;
+    return 2 / std::sqrt(M_PI) * mSigma * std::pow(rCoords[1], 2) / std::pow(rCoords[0], 3) * ExpEta2(rCoords) * (3 - 2 * std::pow(Eta(rCoords), 2))
+        + 8 * mA * std::pow(M_PI, 3) / std::pow(mB, 2) * CosFunc(rCoords) * (ExpBY(rCoords) * (mB * rCoords[1] + 1) - 1) * F(rTime);
 }
 
 double EcaFlow::DDU2_DX22(array_1d<double, 3>& rCoords, double& rTime)
 {
-    return 0.0;
+    return 2 / std::sqrt(M_PI) * mSigma / std::pow(rCoords[0], 2) * ExpEta2(rCoords) * (1 - 2 * std::pow(Eta(rCoords), 2))
+        + 2 * mA * M_PI * ExpBY(rCoords) * CosFunc(rCoords) * (1 - mB * rCoords[1]) * F(rTime);
 }
 
 
@@ -192,7 +196,7 @@ double EcaFlow::CosFunc(array_1d<double, 3>& rCoords)
     return std::cos((1 - 2 * rCoords[0]) * M_PI);
 }
 
-double EcaFlow::ExpBX2(array_1d<double, 3>& rCoords)
+double EcaFlow::ExpBY(array_1d<double, 3>& rCoords)
 {
     return std::exp(-mB * rCoords[1]);
 }
@@ -216,14 +220,85 @@ double EcaFlow::UA2(array_1d<double, 3>& rCoords)
 
 double EcaFlow::UB1(array_1d<double, 3>& rCoords)
 {
-    return mA * rCoords[1] * ExpBX2(rCoords) * SinFunc(rCoords);
+    return mA * rCoords[1] * ExpBY(rCoords) * SinFunc(rCoords);
 }
 
 double EcaFlow::UB2(array_1d<double, 3>& rCoords)
 {
-    return 2 * mA * M_PI / std::pow(mB, 2) * CosFunc(rCoords) * (1.0 - ExpBX2(rCoords) * (mB * rCoords[1] + 1.0));
+    return 2 * mA * M_PI / std::pow(mB, 2) * CosFunc(rCoords) * (1.0 - ExpBY(rCoords) * (mB * rCoords[1] + 1.0));
 }
 
+
+// Pressure and derivatives definition
+double EcaFlow::P(array_1d<double, 3>& rCoords, double& rTime)
+{
+    return 50 * std::log(PA1(rCoords)) * std::log(PA2(rCoords)) 
+        -0.05 * std::sin(PB1(rCoords) * M_PI / 2) * std::sin(PB2(rCoords) * M_PI / 2) * F(rTime);
+}
+
+double EcaFlow::DP_DX1(array_1d<double, 3>& rCoords, double& rTime)
+{
+    return 50 * DPA1(rCoords) * std::log(PA2(rCoords)) / PA1(rCoords)
+        -0.05 * DPB1(rCoords) * M_PI / 2 * std::cos(PB1(rCoords) * M_PI / 2) * std::sin(PB2(rCoords) * M_PI / 2) * F(rTime);
+}
+
+double EcaFlow::DP_DX2(array_1d<double, 3>& rCoords, double& rTime)
+{
+    return 50 * DPA2(rCoords) * std::log(PA1(rCoords)) / PA2(rCoords)
+        -0.05 * DPB2(rCoords) * M_PI / 2 * std::sin(PB1(rCoords) * M_PI / 2) * std::cos(PB2(rCoords) * M_PI / 2) * F(rTime);
+}
+
+
+// Auxiliary functions for the pressure
+double EcaFlow::PA1(array_1d<double, 3>& rCoords)
+{
+    double x = rCoords[0];
+    return std::pow(x, 3) / 3 - 3 * std::pow(x, 2) / 4 + x / 2 + 11 / 12;
+}
+
+double EcaFlow::PA2(array_1d<double, 3>& rCoords)
+{
+    double y = rCoords[1];
+    return std::pow(y, 2) / 2 + 7 / 8;
+}
+
+double EcaFlow::PB1(array_1d<double, 3>& rCoords)
+{
+    double x = rCoords[0];
+    return std::pow(4 * x - 3, 4) - 2 * std::pow(4 * x - 3, 2) + 1;
+}
+
+double EcaFlow::PB2(array_1d<double, 3>& rCoords)
+{
+    double y = rCoords[1];
+    return 16 * std::pow(y, 3) - 12 * std::pow(y, 2) + 1;
+}
+
+
+// Derivatives of the auxiliary functions for the pressure
+double EcaFlow::DPA1(array_1d<double, 3>& rCoords)
+{
+    double x = rCoords[0];
+    return std::pow(x, 2) - 3 * x / 2 + 1 / 2;
+}
+
+double EcaFlow::DPA2(array_1d<double, 3>& rCoords)
+{
+    double y = rCoords[1];
+    return y;
+}
+
+double EcaFlow::DPB1(array_1d<double, 3>& rCoords)
+{
+    double x = rCoords[0];
+    return 16 * std::pow(4 * x - 3, 3) - 16 * std::pow(4 * x - 3, 2);
+}
+
+double EcaFlow::DPB2(array_1d<double, 3>& rCoords)
+{
+    double y = rCoords[1];
+    return 48 * std::pow(y, 2) - 24 * y;
+}
 
 }  // namespace Kratos.
 

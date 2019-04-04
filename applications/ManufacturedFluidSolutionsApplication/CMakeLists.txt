@@ -15,6 +15,8 @@ set( KRATOS_MANUFACTURED_FLUID_SOLUTIONS_APPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_utilities_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_manufactured_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_manufactured/manufactured_solution.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_manufactured/codina_vortex.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_manufactured/eca_flow.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/manufactured_solution_utility.cpp
 )
 

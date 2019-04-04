@@ -36,6 +36,16 @@ void AddCustomUtilitiesToPython(pybind11::module& m)
      	.def("ComputeExactPressure", &ManufacturedSolutionUtility::ComputeExactPressure)
      	.def("ComputeVelocityRelativeError", &ManufacturedSolutionUtility::ComputeVelocityRelativeError)
      	.def("ComputePressureRelativeError", &ManufacturedSolutionUtility::ComputePressureRelativeError)
+        .def("ComputeMean", &ManufacturedSolutionUtility::ComputeMean<Variable<double>>)
+        .def("ComputeMean", &ManufacturedSolutionUtility::ComputeMean<VariableComponent<VectorComponentAdaptor<array_1d<double, 3>>>>)
+        .def("ComputeMean", &ManufacturedSolutionUtility::ComputeMean<VariableComponent<VectorComponentAdaptor<array_1d<double, 4>>>>)
+        .def("ComputeMean", &ManufacturedSolutionUtility::ComputeMean<VariableComponent<VectorComponentAdaptor<array_1d<double, 6>>>>)
+        .def("ComputeMean", &ManufacturedSolutionUtility::ComputeMean<VariableComponent<VectorComponentAdaptor<array_1d<double, 9>>>>)
+        .def("ComputeRootMeanSquare", &ManufacturedSolutionUtility::ComputeRootMeanSquare<Variable<double>>)
+        .def("ComputeRootMeanSquare", &ManufacturedSolutionUtility::ComputeRootMeanSquare<VariableComponent<VectorComponentAdaptor<array_1d<double, 3>>>>)
+        .def("ComputeRootMeanSquare", &ManufacturedSolutionUtility::ComputeRootMeanSquare<VariableComponent<VectorComponentAdaptor<array_1d<double, 4>>>>)
+        .def("ComputeRootMeanSquare", &ManufacturedSolutionUtility::ComputeRootMeanSquare<VariableComponent<VectorComponentAdaptor<array_1d<double, 6>>>>)
+        .def("ComputeRootMeanSquare", &ManufacturedSolutionUtility::ComputeRootMeanSquare<VariableComponent<VectorComponentAdaptor<array_1d<double, 9>>>>)
      	;
 
 }

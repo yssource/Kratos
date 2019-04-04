@@ -98,6 +98,32 @@ public:
 
     void ComputePressureRelativeError();
 
+    template<class TVarType>
+    double ComputeMean(TVarType& rVariable)
+    {
+        double err = 0;
+        for (int i = 0; i < static_cast<int>(mrModelPart.Nodes().size()); i++)
+        {
+            auto it_node = mrModelPart.NodesBegin() + i;
+            err += it_node->GetValue(rVariable);
+        }
+        err /= mrModelPart.NumberOfNodes();
+        return err;
+    }
+
+    template<class TVarType>
+    double ComputeRootMeanSquare(TVarType& rVariable)
+    {
+        double err = 0;
+        for (int i = 0; i < static_cast<int>(mrModelPart.Nodes().size()); i++)
+        {
+            auto it_node = mrModelPart.NodesBegin() + i;
+            err += std::pow(it_node->GetValue(rVariable), 2);
+        }
+        err /= mrModelPart.NumberOfNodes();
+        return std::sqrt(err);
+    }
+
     ///@}
     ///@name Access
     ///@{

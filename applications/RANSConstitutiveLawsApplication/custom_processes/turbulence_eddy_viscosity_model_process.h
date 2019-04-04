@@ -7,7 +7,7 @@
 //  License:		 BSD License
 //					     Kratos default license: kratos/license.txt
 //
-//  Main author: Suneth Warnakulasuriya
+//  Main authors:    Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 
 #if !defined(KRATOS_TURBULENCE_EDDY_VISCOSITY_PROCESS_H_INCLUDED)
@@ -28,7 +28,7 @@
 #include "rans_constitutive_laws_application_variables.h"
 #include "utilities/normal_calculation_utils.h"
 
-#include "custom_utilities/calculation_utilities.h"
+#include "custom_utilities/rans_calculation_utilities.h"
 
 namespace Kratos
 {

@@ -8,7 +8,7 @@
 //                   Kratos default license: kratos/license.txt
 //
 //  Main authors:    Jordi Cotela
-//                   Suneth Warnakulasuriya
+//                   Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 
 #if !defined(KRATOS_RESIDUAL_BASED_BOSSAK_TURBULENT_KINETIC_ENERGY_SCHEME_H_INCLUDED)
@@ -23,7 +23,7 @@
 
 // Application includes
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
-#include "custom_utilities/calculation_utilities.h"
+#include "custom_utilities/rans_calculation_utilities.h"
 #include "rans_constitutive_laws_application_variables.h"
 
 namespace Kratos

@@ -7,7 +7,7 @@
 //  License:		 BSD License
 //					 Kratos default license: kratos/license.txt
 //
-//  Main authors:    , KratosAppGenerator
+//  Main authors:    Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 
 #if !defined(KRATOS_EVM_K_ELEMENT_H_INCLUDED)

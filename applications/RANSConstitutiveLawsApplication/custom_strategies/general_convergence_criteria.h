@@ -7,7 +7,7 @@
 //  License:		 BSD License
 //					 Kratos default license: kratos/license.txt
 //
-//  Main authors:    Suneth Warnakulasuriya
+//  Main authors:    Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 
 #ifndef KRATOS_GENERAL_CONVERGENCE_CRITERIA_H

@@ -7,7 +7,7 @@
 //  License:		 BSD License
 //					 Kratos default license: kratos/license.txt
 //
-//  Main authors:    , KratosAppGenerator
+//  Main authors:    Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 
 #if !defined(KRATOS_EVM_K_EPSILON_UTILITIES_H_INCLUDED)
@@ -16,7 +16,7 @@
 // System includes
 
 // Project includes
-#include "custom_utilities/calculation_utilities.h"
+#include "custom_utilities/rans_calculation_utilities.h"
 #include "includes/define.h"
 #include "includes/ublas_interface.h"
 #include "input_output/logger.h"

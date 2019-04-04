@@ -8,7 +8,7 @@
 //                   Kratos default license: kratos/license.txt
 //
 //  Main authors:    Jordi Cotela
-//                   Suneth Warnakulasuriya
+//                   Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 
 #if !defined(KRATOS_TURBULENCE_EVM_K_EPSILON_PROCESS_H_INCLUDED)
@@ -39,7 +39,7 @@
 #include "custom_strategies/evm_k_epsilon/residual_based_bossak_turbulent_energy_dissipation_scheme.h"
 #include "custom_strategies/evm_k_epsilon/residual_based_bossak_turbulent_kinetic_energy_scheme.h"
 #include "custom_strategies/general_convergence_criteria.h"
-#include "custom_utilities/calculation_utilities.h"
+#include "custom_utilities/rans_calculation_utilities.h"
 #include "rans_constitutive_laws_application_variables.h"
 
 namespace Kratos
@@ -715,11 +715,6 @@ private:
 
     void SolveStep()
     {
-        CalculationUtilities::WarnIfNegative<NodeType>(
-            this->mrModelPart, TURBULENT_KINETIC_ENERGY, "SolveStep");
-        CalculationUtilities::WarnIfNegative<NodeType>(
-            this->mrModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, "SolveStep");
-
         this->UpdateTurbulentViscosity();
 
         mpKStrategy->InitializeSolutionStep();
@@ -817,8 +812,9 @@ private:
             << "Solving for " << rVariable.Name() << "\n";
         pStrategy->SolveSolutionStep();
 
-        CalculationUtilities::WarnIfNegative<NodeType>(
-            this->mrModelPart, rVariable, "ExecuteFluxCorrector");
+        RansCalculationUtilities(this->mEchoLevel)
+            .WarnIfNegative(this->mrModelPart, rVariable,
+                            "ExecuteFluxCorrector");
     }
 
     double CalculateNodalTurbulentViscosity(const ModelPart::NodeIterator& iNode,
@@ -859,10 +855,10 @@ private:
             iNode->FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t;
         }
 
-        CalculationUtilities::WarnIfNegative<NodeType>(
-            this->mrModelPart, TURBULENT_VISCOSITY, "NuT");
-        CalculationUtilities::ClipVariable<NodeType>(
-            this->mrModelPart, TURBULENT_VISCOSITY, nu_t_min, nu_t_max);
+        RansCalculationUtilities(this->mEchoLevel)
+            .WarnIfNegative(this->mrModelPart, TURBULENT_VISCOSITY, "NuT");
+        RansCalculationUtilities(this->mEchoLevel)
+            .ClipVariable(this->mrModelPart, TURBULENT_VISCOSITY, nu_t_min, nu_t_max);
     }
 
     void CalculateTurbulentValues(double& TurbulentKineticEnergy,

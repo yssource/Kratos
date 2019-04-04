@@ -18,7 +18,7 @@
 // External includes
 
 // Project includes
-#include "custom_utilities/calculation_utilities.h"
+#include "custom_utilities/rans_calculation_utilities.h"
 #include "includes/checks.h"
 #include "includes/element.h"
 #include "rans_constitutive_laws_application_variables.h"
@@ -849,14 +849,14 @@ protected:
     {
         const GeometryType& r_geometry = this->GetGeometry();
 
-        CalculationUtilities::CalculateGeometryData(
+        RansCalculationUtilities().CalculateGeometryData(
             r_geometry, this->GetIntegrationMethod(), rGaussWeights, rNContainer, rDN_DX);
     }
 
     ShapeFunctionDerivativesArrayType GetGeometryParameterDerivatives() const
     {
         const GeometryType& r_geometry = this->GetGeometry();
-        return CalculationUtilities::CalculateGeometryParameterDerivatives(
+        return RansCalculationUtilities().CalculateGeometryParameterDerivatives(
             r_geometry, this->GetIntegrationMethod());
     }
 
@@ -864,7 +864,7 @@ protected:
                            const Vector& rShapeFunction,
                            const int Step = 0) const
     {
-        return CalculationUtilities::EvaluateInPoint<Geometry<Node<3>>>(
+        return RansCalculationUtilities().EvaluateInPoint(
             this->GetGeometry(), rVariable, rShapeFunction, Step);
     }
 
@@ -872,7 +872,7 @@ protected:
                                         const Vector& rShapeFunction,
                                         const int Step = 0) const
     {
-        return CalculationUtilities::EvaluateInPoint<Geometry<Node<3>>>(
+        return RansCalculationUtilities().EvaluateInPoint(
             this->GetGeometry(), rVariable, rShapeFunction, Step);
     }
 
@@ -1017,8 +1017,6 @@ private:
                                       norm_frobenius(rContravariantMetricTensor);
         const double stab_dynamics = std::pow(2.0 / delta_time, 2);
         const double stab_reaction = std::pow(reaction, 2);
-
-        PrintIfVariableIsNegative(stab_convection);
 
         const double velocity_norm = norm_2(rVelocity);
         tau = 1.0 / std::sqrt(stab_dynamics + stab_convection + stab_diffusion + stab_reaction);

@@ -210,9 +210,9 @@ void IgaBeamMomentCondition::CalculateAll(
     const auto c12 = a3_1.dot(a2);
     const auto c13 = a2_1.dot(a3);
     
-    const Vector3d _load_vec = MapVector(GetValue(LOAD_VECTOR_MOMENT));
+    const auto _load_vec = MapVector(GetValue(LOAD_VECTOR_MOMENT));
 
-    const auto fac_t = a1.dot(_load_vec);        //TODO check if right length
+    const auto fac_t = a1.dot(_load_vec); 
     const auto fac_n = a3.dot(_load_vec);
     const auto fac_v = a2.dot(_load_vec);
 
@@ -253,7 +253,7 @@ void IgaBeamMomentCondition::CalculateAll(
 
 
 
-    MapMatrix(rLeftHandSideMatrix) = dP.h() * 0;
+    MapMatrix(rLeftHandSideMatrix) = dP.h();
     MapVector(rRightHandSideVector) = -dP.g();
 
     KRATOS_CATCH("");

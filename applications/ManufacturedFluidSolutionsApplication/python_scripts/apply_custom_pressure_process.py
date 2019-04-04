@@ -2,6 +2,7 @@
 import KratosMultiphysics as KM
 import KratosMultiphysics.ManufacturedFluidSolutionApplication as MS
 
+from manufactured_solution_base_process import ManufacturedSolutionBaseProcess as ManufacturedProcess
 
 def Factory(settings, Model):
     if not isinstance(settings, KM.Parameters):
@@ -9,15 +10,13 @@ def Factory(settings, Model):
     return ApplyCustomPressureProcess(Model, settings["Parameters"])
 
 ## All the processes python should be derived from "Process"
-class ApplyCustomPressureProcess(KM.Process):
+class ApplyCustomPressureProcess(ManufacturedProcess):
     '''
     This process apply the custom velocity to the conditions.
     The velocity field is defined by the manufactured solution.
     TODO: use the parameters previously stored in the ProceesInfo
     '''
     def __init__(self, model, settings ):
-
-        KM.Process.__init__(self)
 
         default_settings = KM.Parameters("""
             {

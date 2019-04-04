@@ -18,8 +18,6 @@ class ApplyCustomBodyForceProcess(ManufacturedProcess):
     '''
     def __init__(self, model, settings ):
 
-        KM.Process.__init__(self)
-
         default_settings = KM.Parameters("""
             {
                 "model_part_name"          : "model_part_name",

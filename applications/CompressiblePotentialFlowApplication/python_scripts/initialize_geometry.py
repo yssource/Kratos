@@ -142,8 +142,8 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
             angle=math.radians(-self.geometry_parameter)
             self.origin=[0.25+self.initial_point[0],0+self.initial_point[1]] #to be defined from skin model part 
             for node in self.skin_model_part.Nodes:
-                node.X=self.initial_point[0]+2.5*node.X+1e-5
-                node.Y=self.initial_point[1]+2.5*node.Y+1e-5
+                node.X=self.initial_point[0]+node.X+1e-5
+                node.Y=self.initial_point[1]+node.Y+1e-5
             RotateModelPart(self.origin,angle,self.skin_model_part)
         elif self.skin_model_part_name=='circle':
             for node in self.skin_model_part.Nodes:

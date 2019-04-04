@@ -22,8 +22,6 @@ class ApplyCustomPressureProcess(KM.Process):
         default_settings = KM.Parameters("""
             {
                 "model_part_name"          : "model_part_name",
-                "manufactured_name"        : "manufactured_solution_name",
-                "manufactured_parameters"  : {},
                 "constrained"              : true,
             }
             """
@@ -31,14 +29,8 @@ class ApplyCustomPressureProcess(KM.Process):
 
         settings.ValidateAndAssignDefaults(default_settings)
 
-        # We construct the manufactured solution
+        # The model part manufactured solution applies to
         self.model_part = model[settings["model_part_name"].GetString()]
-        fluid_property = self.model_part.ElementsArray(0)[0].GetProperties()
-        manufactured_class = getattr(MS, settings["manufactured_name"].GetString())
-        self.manufactured = manufactured_class(fluid_properties, settings["manufactured_parameters"])
-
-        # We construct the process to apply the manufactured solution
-        self.manufactured_process = MS.ManufacturedSolutionUtility(self.model_part, self.manufactured)
 
         # Fixity process
         self.is_fixed = settings["constrained"].GetBool()

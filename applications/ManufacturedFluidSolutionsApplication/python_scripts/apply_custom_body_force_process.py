@@ -2,14 +2,15 @@
 import KratosMultiphysics as KM
 import KratosMultiphysics.ManufacturedFluidSolutionApplication as MS
 
+from manufactured_solution_base_process import ManufacturedSolutionBaseProcess as ManufacturedProcess
 
 def Factory(settings, Model):
     if not isinstance(settings, KM.Parameters):
         raise Exception("expected input shall be a Parameters object, encapsulating a json string")
     return ApplyCustomBodyForceProcess(Model, settings["Parameters"])
 
-## All the processes python should be derived from "Process"
-class ApplyCustomBodyForceProcess(KM.Process):
+## All the python manufactured processes should be derived from a base class, which is derived from "Process"
+class ApplyCustomBodyForceProcess(ManufacturedProcess):
     '''
     This process apply the custom body force to all the fluid domain
     The body force is defined by the manufactured solution
@@ -22,8 +23,6 @@ class ApplyCustomBodyForceProcess(KM.Process):
         default_settings = KM.Parameters("""
             {
                 "model_part_name"          : "model_part_name",
-                "manufactured_name"        : "manufactured_solution_name",
-                "manufactured_parameters"  : {},
                 "set_initial_values"       : True,
                 "compute_relative_error"   : True
             }
@@ -32,14 +31,8 @@ class ApplyCustomBodyForceProcess(KM.Process):
 
         settings.ValidateAndAssignDefaults(default_settings)
 
-        # We construct the manufactured solution
+        # The model part manufactured solution applies to
         self.model_part = model[settings["model_part_name"].GetString()]
-        fluid_property = self.model_part.ElementsArray(0)[0].GetProperties()
-        manufactured_class = getattr(MS, settings["manufactured_name"].GetString())
-        self.manufactured = manufactured_class(fluid_properties, settings["manufactured_parameters"])
-
-        # We construct the process to apply the manufactured solution
-        self.manufactured_process = MS.ManufacturedSolutionUtility(self.model_part, self.manufactured)
 
         # Auxiliary variables
         self.set_initial_values = settings["set_initial_values"].GetBool()

@@ -31,7 +31,7 @@ class PotentialFlowSolver(FluidSolver):
             },
             "maximum_iterations": 10,
             "echo_level": 0,
-            "relative_tolerance": 1e-9,
+            "relative_tolerance": 1e-5,
             "absolute_tolerance": 1e-9,
             "compute_reactions": false,
             "reform_dofs_at_each_step": false,

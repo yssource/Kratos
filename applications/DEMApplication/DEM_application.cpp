@@ -35,6 +35,8 @@
 #include "custom_constitutive/dem_d_linear_custom_constants_cl.h"
 #include "custom_constitutive/DEM_D_Conical_damage_CL.h"
 #include "custom_constitutive/DEM_KDEM_fabric_CL.h"
+#include "custom_constitutive/DEM_KDEM_Cable_CL.h"
+#include "custom_constitutive/DEM_KDEM_Beam_CL.h"
 #include "custom_constitutive/DEM_KDEM_Rankine_CL.h"
 #include "custom_constitutive/DEM_KDEM_CamClay_CL.h"
 #include "custom_constitutive/DEM_ExponentialHC_CL.h"
@@ -142,6 +144,9 @@ KRATOS_CREATE_VARIABLE(Vector, IF_BOUNDARY_FACE)
 KRATOS_CREATE_VARIABLE(DenseVector<int>, PARTICLE_CONTACT_FAILURE_ID)
 KRATOS_CREATE_VARIABLE(double, DEM_PRECONSOLIDATION_PRESSURE)
 KRATOS_CREATE_VARIABLE(double, DEM_M_CAMCLAY_SLOPE)
+KRATOS_CREATE_VARIABLE(double, BEAM_CROSS_SECTION)
+KRATOS_CREATE_VARIABLE(double, BEAM_PLANAR_MOMENT_OF_INERTIA_X)
+KRATOS_CREATE_VARIABLE(double, BEAM_PLANAR_MOMENT_OF_INERTIA_Y)
 
 // *************** Continuum only END ***************
 KRATOS_CREATE_VARIABLE(std::vector<Condition*>, WALL_POINT_CONDITION_POINTERS)
@@ -428,6 +433,7 @@ KratosDEMApplication::KratosDEMApplication() : KratosApplication("DEMApplication
       mAnalyticSphericParticle3D(0, Element::GeometryType::Pointer(new Sphere3D1<Node<3> >(Element::GeometryType::PointsArrayType(1)))),
       mSphericContinuumParticle3D(0, Element::GeometryType::Pointer(new Sphere3D1<Node<3> >(Element::GeometryType::PointsArrayType(1)))),
       mIceContinuumParticle3D(0, Element::GeometryType::Pointer(new Sphere3D1<Node<3> >(Element::GeometryType::PointsArrayType(1)))),
+      mBeamParticle3D(0, Element::GeometryType::Pointer(new Sphere3D1<Node<3> >(Element::GeometryType::PointsArrayType(1)))),
       mThermalSphericContinuumParticle3D(0, Element::GeometryType::Pointer(new Sphere3D1<Node<3> >(Element::GeometryType::PointsArrayType(1)))),
       mThermalSphericParticle3D(0, Element::GeometryType::Pointer(new Sphere3D1<Node<3> >(Element::GeometryType::PointsArrayType(1)))),
       mSinteringSphericContinuumParticle3D(0, Element::GeometryType::Pointer(new Sphere3D1<Node<3> >(Element::GeometryType::PointsArrayType(1)))),
@@ -559,6 +565,9 @@ void KratosDEMApplication::Register() {
     KRATOS_REGISTER_VARIABLE(EXPORT_PARTICLE_FAILURE_ID)
     KRATOS_REGISTER_VARIABLE(DEM_PRECONSOLIDATION_PRESSURE)
     KRATOS_REGISTER_VARIABLE(DEM_M_CAMCLAY_SLOPE)
+    KRATOS_REGISTER_VARIABLE(BEAM_CROSS_SECTION)
+    KRATOS_REGISTER_VARIABLE(BEAM_PLANAR_MOMENT_OF_INERTIA_X)
+    KRATOS_REGISTER_VARIABLE(BEAM_PLANAR_MOMENT_OF_INERTIA_Y)
     // *************** Continuum only END ***************
 
     // MATERIAL PARAMETERS
@@ -818,6 +827,7 @@ void KratosDEMApplication::Register() {
     KRATOS_REGISTER_ELEMENT("AnalyticSphericParticle3D", mAnalyticSphericParticle3D)
     KRATOS_REGISTER_ELEMENT("SphericContinuumParticle3D", mSphericContinuumParticle3D)
     KRATOS_REGISTER_ELEMENT("IceContinuumParticle3D", mIceContinuumParticle3D)
+    KRATOS_REGISTER_ELEMENT("BeamParticle3D", mBeamParticle3D)
     KRATOS_REGISTER_ELEMENT("ThermalSphericContinuumParticle3D", mThermalSphericContinuumParticle3D)
     KRATOS_REGISTER_ELEMENT("ThermalSphericParticle3D", mThermalSphericParticle3D)
     KRATOS_REGISTER_ELEMENT("SinteringSphericContinuumParticle3D", mSinteringSphericContinuumParticle3D)
@@ -868,6 +878,8 @@ void KratosDEMApplication::Register() {
     Serializer::Register("DEM_Dempack2D", DEM_Dempack2D());
     Serializer::Register("DEM_KDEM", DEM_KDEM());
     Serializer::Register("DEM_KDEMFabric", DEM_KDEMFabric());
+    Serializer::Register("DEM_KDEM_Cable", DEM_KDEM_Cable());
+    Serializer::Register("DEM_KDEM_Beam", DEM_KDEM_Beam());
     Serializer::Register("DEM_KDEM_Rankine", DEM_KDEM_Rankine());
     Serializer::Register("DEM_KDEM_CamClay", DEM_KDEM_CamClay());
     Serializer::Register("DEM_Dempack_torque", DEM_Dempack_torque());

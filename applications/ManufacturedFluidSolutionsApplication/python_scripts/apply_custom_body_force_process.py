@@ -1,8 +1,8 @@
 # Importing the Kratos Library
 import KratosMultiphysics as KM
-import KratosMultiphysics.ManufacturedFluidSolutionApplication as MS
+import KratosMultiphysics.ManufacturedFluidSolutionsApplication as MS
 
-from manufactured_solution_base_process import ManufacturedSolutionBaseProcess as ManufacturedProcess
+from KratosMultiphysics.ManufacturedFluidSolutionsApplication.manufactured_solution_base_process import ManufacturedSolutionBaseProcess as ManufacturedProcess
 
 def Factory(settings, Model):
     if not isinstance(settings, KM.Parameters):
@@ -21,8 +21,8 @@ class ApplyCustomBodyForceProcess(ManufacturedProcess):
         default_settings = KM.Parameters("""
             {
                 "model_part_name"          : "model_part_name",
-                "set_initial_values"       : True,
-                "compute_relative_error"   : True
+                "set_initial_values"       : true,
+                "compute_relative_error"   : true
             }
             """
             )
@@ -34,7 +34,7 @@ class ApplyCustomBodyForceProcess(ManufacturedProcess):
 
         # Auxiliary variables
         self.set_initial_values = settings["set_initial_values"].GetBool()
-        self.compute_error = settings["copmute_relative_error"].GetBool()
+        self.compute_error = settings["compute_relative_error"].GetBool()
 
 
     def ExecuteBeforeSolutionLoop(self):
@@ -44,7 +44,7 @@ class ApplyCustomBodyForceProcess(ManufacturedProcess):
         if self.compute_error:
             self.manufactured_process.ComputeExactVelocity()
             self.manufactured_process.ComputeExactPressure()
-            self.manufactured_procees.ComputeVelocityRelativeError()
+            self.manufactured_process.ComputeVelocityRelativeError()
             self.manufactured_process.ComputePressureRelativeError()
 
 
@@ -56,5 +56,5 @@ class ApplyCustomBodyForceProcess(ManufacturedProcess):
         if self.compute_error:
             self.manufactured_process.ComputeExactVelocity()
             self.manufactured_process.ComputeExactPressure()
-            self.manufactured_procees.ComputeVelocityRelativeError()
+            self.manufactured_process.ComputeVelocityRelativeError()
             self.manufactured_process.ComputePressureRelativeError()

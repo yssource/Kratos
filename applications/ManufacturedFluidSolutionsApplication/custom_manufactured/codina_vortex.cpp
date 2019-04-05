@@ -150,17 +150,17 @@ double CodinaVortex::F(double& rX)
 
 double CodinaVortex::DF(double& rX)
 {
-    return 2 * mA * rX * std::pow(mLength - rX, 2) - 2 * mA * std::pow(rX, 2) * (mLength - rX);
+    return 2.0 * mA * rX * std::pow(mLength - rX, 2) - 2.0 * mA * std::pow(rX, 2) * (mLength - rX);
 }
 
 double CodinaVortex::DDF(double& rX)
 {
-    return 2 * mA * (std::pow(mLength, 2) - 6 * mLength * rX + 6 * std::pow(rX, 2));
+    return 2.0 * mA * (std::pow(mLength, 2) - 6.0 * mLength * rX + 6 * std::pow(rX, 2));
 }
 
 double CodinaVortex::DDDF(double& rX)
 {
-    return 12 * mA * (2 * rX - mLength);
+    return 12.0 * mA * (2.0 * rX - mLength);
 }
 
 

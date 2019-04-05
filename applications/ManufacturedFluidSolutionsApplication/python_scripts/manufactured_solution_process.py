@@ -1,7 +1,6 @@
 # Importing the Kratos Library
 import KratosMultiphysics as KM
-import KratosMultiphysics.ManufacturedFluidSolutionApplication as MS
-
+import KratosMultiphysics.ManufacturedFluidSolutionsApplication as MS
 
 def Factory(settings, Model):
     if not isinstance(settings, KM.Parameters):
@@ -31,7 +30,7 @@ class ManufacturedSolutionProcess(KM.Process):
         settings.ValidateAndAssignDefaults(default_settings)
 
         # Build the manufactured solution
-        fluid_property = model[settings["model_part_name"].GetString()].ElementsArray()[0].Properties
+        fluid_properties = model[settings["model_part_name"].GetString()].ElementsArray(0)[0].Properties
         manufactured_class = getattr(MS, settings["manufactured_name"].GetString())
         self.manufactured = manufactured_class(fluid_properties, settings["manufactured_parameters"])
 
@@ -41,7 +40,7 @@ class ManufacturedSolutionProcess(KM.Process):
         self.processes = factory.ConstructListOfProcesses(settings["processes_list"])
 
         for process in self.processes:
-            process.SetManufacturedSolution(self.manufactured))
+            process.SetManufacturedSolution(self.manufactured)
 
     def Check(self):
         for process in self.processes:

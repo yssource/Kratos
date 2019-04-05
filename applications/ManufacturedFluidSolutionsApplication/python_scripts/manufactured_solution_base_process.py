@@ -1,7 +1,6 @@
 # Importing the Kratos Library
 import KratosMultiphysics as KM
-import KratosMultiphysics.ManufacturedFluidSolutionApplication as MS
-
+import KratosMultiphysics.ManufacturedFluidSolutionsApplication as MS
 
 def Factory(settings, Model):
     raise Exception("Trying the build the ManufacturedSolutionBaseProcess. Please, call the derived classes")
@@ -20,3 +19,30 @@ class ManufacturedSolutionBaseProcess(KM.Process):
             self.manufactured_process = MS.ManufacturedSolutionUtility(self.model_part, self.manufactured_solution)
         else:
             KM.Logger.PrintWarning("ManufacturedSolutionBaseProcess", "No model_part attribute found. The manufactured process is not constructed.")
+
+    def Check(self):
+        pass
+
+    def ExecuteInitialize(self):
+        pass
+
+    def ExecuteBeforeSolutionLoop(self):
+        pass
+
+    def ExecuteInitializeSolutionStep(self):
+        pass
+
+    def ExecuteFinalizeSolutionStep(self):
+        pass
+
+    def ExecuteBeforeOutputStep(self):
+        pass
+
+    def ExecuteAfterOutputStep(self):
+        pass
+
+    def ExecuteFinalize(self):
+        pass
+
+    def Clear(self):
+        pass

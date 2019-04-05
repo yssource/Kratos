@@ -1,6 +1,6 @@
 # Importing the Kratos Library
 import KratosMultiphysics as KM
-import KratosMultiphysics.ManufacturedFluidSolutionApplication as MS
+import KratosMultiphysics.ManufacturedFluidSolutionsApplication as MS
 
 from manufactured_solution_base_process import ManufacturedSolutionBaseProcess as ManufacturedProcess
 

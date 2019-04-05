@@ -1,8 +1,8 @@
 # Importing the Kratos Library
 import KratosMultiphysics as KM
-import KratosMultiphysics.ManufacturedFluidSolutionApplication as MS
+import KratosMultiphysics.ManufacturedFluidSolutionsApplication as MS
 
-from manufactured_solution_base_process import ManufacturedSolutionBaseProcess as ManufacturedProcess
+from KratosMultiphysics.ManufacturedFluidSolutionsApplication.manufactured_solution_base_process import ManufacturedSolutionBaseProcess as ManufacturedProcess
 
 def Factory(settings, Model):
     if not isinstance(settings, KM.Parameters):
@@ -21,7 +21,7 @@ class ApplyCustomVelocityProcess(ManufacturedProcess):
         default_settings = KM.Parameters("""
             {
                 "model_part_name"          : "model_part_name",
-                "constrained"              : [true,true,true]
+                "constrained"              : [true, true, true]
             }
             """
             )

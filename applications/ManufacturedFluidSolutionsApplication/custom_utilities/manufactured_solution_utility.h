@@ -208,6 +208,7 @@ private:
     ///@name Member Variables
     ///@{
 
+    const double mEpsilon = std::numeric_limits<double>::epsilon();
 
     ///@}
     ///@name Private Operators

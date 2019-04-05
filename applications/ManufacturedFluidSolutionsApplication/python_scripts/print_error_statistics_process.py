@@ -1,8 +1,12 @@
 # Importing the Kratos Library
 import KratosMultiphysics as KM
-import KratosMultiphysics.ManufacturedFluidSolutionApplication as MS
+import KratosMultiphysics.ManufacturedFluidSolutionsApplication as MS
 
-from manufactured_solution_base_process import ManufacturedSolutionBaseProcess as ManufacturedProcess
+# Other imports
+import h5py
+import numpy as np
+
+from KratosMultiphysics.ManufacturedFluidSolutionsApplication.manufactured_solution_base_process import ManufacturedSolutionBaseProcess as ManufacturedProcess
 
 def Factory(settings, Model):
     if not isinstance(settings, KM.Parameters):
@@ -49,9 +53,9 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
             self.dataset_is_initialized = False
 
 
-    def ExecuteFinalize():
-        WriteBodyForceAttributes()
-        WriteAverageRelativeError()
+    def ExecuteFinalize(self):
+        self._WriteBodyForceAttributes()
+        self._WriteAverageRelativeError()
 
 
     def _WriteBodyForceAttributes(self):
@@ -70,11 +74,11 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
 
 
     def _WriteAverageRelativeError(self):
-        rel_err = self.manufactured_process.ComputeMean(KM.VELOCITY_X)
+        rel_err = self.manufactured_process.ComputeMean(MS.VELOCITY_RELATIVE_ERROR)
         case_data = (self.settings["label"].GetString(),
                      self.model_part.NumberOfNodes(),
                      self.model_part.NumberOfElements(),
-                     self.model_part.ProcessInfo[KratosMultiphysics.DELTA_TIME],
+                     self.model_part.ProcessInfo[KM.DELTA_TIME],
                      rel_err)
 
         case_idx = self.dset.len()

@@ -105,7 +105,7 @@ void ManufacturedSolutionUtility::ComputeVelocityRelativeError()
         auto it_node = mrModelPart.NodesBegin() + i;
         auto exact = norm_2(it_node->GetValue(EXACT_VELOCITY));
         auto fem = norm_2(it_node->FastGetSolutionStepValue(VELOCITY));
-        it_node->SetValue(VELOCITY_RELATIVE_ERROR , std::abs(exact - fem) / exact);
+        it_node->SetValue(VELOCITY_RELATIVE_ERROR , std::abs(exact - fem) / (std::abs(exact) + mEpsilon));
     }
 }
 
@@ -118,7 +118,7 @@ void ManufacturedSolutionUtility::ComputePressureRelativeError()
         auto it_node = mrModelPart.NodesBegin() + i;
         auto exact = it_node->GetValue(EXACT_PRESSURE);
         auto fem = it_node->FastGetSolutionStepValue(PRESSURE);
-        it_node->SetValue(PRESSURE_RELATIVE_ERROR , std::abs(exact - fem) / exact);
+        it_node->SetValue(PRESSURE_RELATIVE_ERROR , std::abs(exact - fem) / (std::abs(exact) + mEpsilon));
     }
 }
 

@@ -12,6 +12,7 @@
 // System includes
 #include <iostream>
 #include "includes/define.h"
+
 #include "includes/variables.h"
 #include <chrono>
 // External includes
@@ -250,11 +251,7 @@ void IgaBeamADElement::CalculateAll(
     const double normal_force = eps11.f() * ea * A; 
     const double moment_kappa_2 = kap2.f() * ei3; 
     const double moment_kappa_3 = kap3.f() * ei2;
-    // std::cout << "normal force:   " << normal_force << std::endl;
-    // std::cout << "moment kappa 2: " << moment_kappa_2 << std::endl;
-    // std::cout << "moment kappa 3: " << moment_kappa_3 << std::endl;
-    // write_nf << Id() << " \t" << gauss_point[0] << " " << gauss_point[1] << " " << gauss_point[2] << " " << normal_force      <<  "\n";
-    // write_m2 << Id() << " " << gauss_point[0] << " " << gauss_point[1] << " " << gauss_point[2] << " " << moment_kappa_2    <<  "\n";
+
     write_f << Id() << " \t\t" << gauss_point[0] << " \t\t" << gauss_point[1] << " \t\t" << gauss_point[2] << " \t\t" << normal_force  << " \t\t" << moment_kappa_2 << " \t\t" << moment_kappa_3  <<  "\n";
     write_f.close();
 

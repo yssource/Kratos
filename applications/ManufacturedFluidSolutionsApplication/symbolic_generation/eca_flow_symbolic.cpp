@@ -32,38 +32,23 @@ EcaFlow::EcaFlow(
      : ManufacturedSolution(pProperties, pParameters)
 {
     // Getting the fluid properties
-    mDensity = (*mpProperties)[DENSITY];
-    mDynamicViscosity = (*mpProperties)[DYNAMIC_VISCOSITY];
-    mInvDensity = 1 / mDensity;
+    // Custom definition of the dynamics from the properties
 
     // Getting the manufactured settings
     Parameters default_parameters( R"(
     {
-        "velocity"    : 1.0,
-        "sigma"       : 4.0,
-        "a"           : 15,
-        "b"           : 20,
-        "is_periodic" : true,
-        "frequency"   : 1.0
     })");
 
     mpParameters->ValidateAndAssignDefaults(default_parameters);
 
-    mLength = 1.0;
-    mVelocity = (*mpParameters)["velocity"].GetDouble();
-    mSigma = (*mpParameters)["sigma"].GetDouble();
-    mA = (*mpParameters)["a"].GetDouble();
-    mB = (*mpParameters)["b"].GetDouble();
-    mIsPeriodic = (*mpParameters)["is_periodic"].GetBool();
-    mOmega = 2 * M_PI * (*mpParameters)["frequency"].GetDouble();
+    // custom definition of the kinematics from the parameters
 }
 
 
 bool EcaFlow::IsInsideDomain(array_1d<double, 3>& rCoords)
 {
-    bool is_inside = true;
-    if (rCoords[0] < 0.5 || rCoords[0] > mLength) {is_inside = false;}
-    if (rCoords[1] < 0.0 || rCoords[1] > 0.5 * mLength) {is_inside = false;}
+    bool is_inside = false;
+    // perform the check
     return is_inside;
 }
 

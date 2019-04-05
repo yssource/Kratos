@@ -201,43 +201,10 @@ private:
     virtual double DDU2_DX11(array_1d<double, 3>& rCoords, double& rTime) override;
     virtual double DDU2_DX22(array_1d<double, 3>& rCoords, double& rTime) override;
 
-    // Auxiliary time dependent functions
-    double F(double& rT);
-    double DF(double& rT);
-    double Fe(double& rT);
-    double DFe(double& rT);
-    double Fp(double& rT);
-    double DFp(double& rT);
-
-    // Auxiliary spatial dependent functions
-    double Eta(array_1d<double, 3>& rCoords);
-    double SinFunc(array_1d<double, 3>& rCoords);
-    double CosFunc(array_1d<double, 3>& rCoords);
-    double ExpBY(array_1d<double, 3>& rCoords);
-    double ExpEta2(array_1d<double, 3>& rCoords);
-
-    // Auxiliary functions for velocity
-    double UA1(array_1d<double, 3>& rCoords);
-    double UA2(array_1d<double, 3>& rCoords);
-    double UB1(array_1d<double, 3>& rCoords);
-    double UB2(array_1d<double, 3>& rCoords);
-
     // Pressure and derivatives
     virtual double P(array_1d<double, 3>& rCoords, double& rTime) override;
     virtual double DP_DX1(array_1d<double, 3>& rCoords, double& rTime) override;
     virtual double DP_DX2(array_1d<double, 3>& rCoords, double& rTime) override;
-
-    // Auxiliary functions for the pressure
-    double PA1(array_1d<double, 3>& rCoords);
-    double PA2(array_1d<double, 3>& rCoords);
-    double PB1(array_1d<double, 3>& rCoords);
-    double PB2(array_1d<double, 3>& rCoords);
-
-    // Derivatives of the auxiliary functions for pressure
-    double DPA1(array_1d<double, 3>& rCoords);
-    double DPA2(array_1d<double, 3>& rCoords);
-    double DPB1(array_1d<double, 3>& rCoords);
-    double DPB2(array_1d<double, 3>& rCoords);
 
     ///@}
     ///@name Private  Access

@@ -61,6 +61,8 @@ class PotentialFlowSolver(FluidSolver):
         self.condition_name = self.settings["element_replace_settings"]["condition_name"].GetString()
         self.min_buffer_size = 1
         self.move_mesh_flag = False
+        self.main_model_part.GetProperties()[1].SetValue(KCPFApp.ECHO_LEVEL, self.echo_level)
+
 
         # Construct the linear solvers
         import KratosMultiphysics.python_linear_solver_factory as linear_solver_factory

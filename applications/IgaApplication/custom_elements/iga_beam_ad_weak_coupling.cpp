@@ -262,9 +262,9 @@ void IgaBeamADWeakCoupling::CalculateAll(
     //                              delta_21 * delta_21 + delta_22 * delta_22 + delta_23 * delta_23 + 
     //                              delta_31 * delta_31 + delta_32 * delta_32 + delta_33 * delta_33) * penalty_rot;
     
-    const auto d1 = ta - e1;
-    const auto d2 = a2.transpose() - e2;
-    const auto d3 = a3.transpose() - e3;
+    // const auto d1 = ta - e1;
+    // const auto d2 = a2.transpose() - e2;
+    // const auto d3 = a3.transpose() - e3;
 
     const HyperDualVector<1> rotation = 0.5 * (d1 * d1.transpose() + d2 * d2.transpose() + d3 * d3.transpose()) * penalty_rot_2;
     // const auto rotation = 0.5 * (alpha_112 * alpha_112 + alpha_113 * alpha_113 + alpha_123 * alpha_123 + 
@@ -292,7 +292,7 @@ void IgaBeamADWeakCoupling::CalculateAll(
     const auto dP_alpha_tors = 0.5 * 0.5 * (alpha_12 * alpha_12 + alpha_13 * alpha_13) * penalty_tors;
     // const auto dP_alpha_tors = 0.5 * (alpha_12 * alpha_12 ) * penalty_tors;
 
-    const auto f = 0.5 * u.dot(u) * 1e9;
+    // // const auto f = 0.5 * u.dot(u) * 1e9;
 
     // MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h() + dP_alpha_bend_2.h() + dP_alpha_bend_3.h() + dP_alpha_tors.h());
     // MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g() + dP_alpha_bend_2.g() + dP_alpha_bend_3.g() + dP_alpha_tors.g());
@@ -300,6 +300,9 @@ void IgaBeamADWeakCoupling::CalculateAll(
     
     MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h() + rotation[0].h() );
     MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g() + rotation[0].g() );
+
+    // MapMatrix(rLeftHandSideMatrix) = ( f.h() + rotation[0].h() );
+    // MapVector(rRightHandSideVector) = -( f.g() + rotation[0].g() );
 
     // MapMatrix(rLeftHandSideMatrix) = ( f.h() + rotation[0].h() );
     // MapVector(rRightHandSideVector) = -( f.g() + rotation[0].g() );

@@ -245,14 +245,16 @@ void IgaBeamADElement::CalculateAll(
 
     // Postprozessing 
     const auto gauss_point = GetValue(GAUSS_POINT);
+    // const auto t = GetValue(POSITION_PARAMETER);
 
     std::ofstream write_f;
     write_f.open("cutting_force.txt", std::ofstream::app);
-    const double normal_force = eps11.f() * ea * A; 
     const double moment_kappa_2 = kap2.f() * ei3; 
     const double moment_kappa_3 = kap3.f() * ei2;
+    const double normal_force = eps11.f() * ea * A - moment_kappa_2 * kap2.f() - moment_kappa_3 * kap3.f(); 
+    // const double normal_force = eps11.f() * ea * A; 
 
-    write_f << Id() << " \t\t" << gauss_point[0] << " \t\t" << gauss_point[1] << " \t\t" << gauss_point[2] << " \t\t" << normal_force  << " \t\t" << moment_kappa_2 << " \t\t" << moment_kappa_3  <<  "\n";
+    write_f << Id() << "\t\t" << gauss_point[0] << " \t\t" << gauss_point[1] << " \t\t" << gauss_point[2] << " \t\t" << normal_force  << " \t\t" << moment_kappa_2 << " \t\t" << moment_kappa_3  <<  "\n";
     write_f.close();
 
     KRATOS_CATCH("")

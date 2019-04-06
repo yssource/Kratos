@@ -262,9 +262,9 @@ void IgaBeamADWeakCoupling::CalculateAll(
     //                              delta_21 * delta_21 + delta_22 * delta_22 + delta_23 * delta_23 + 
     //                              delta_31 * delta_31 + delta_32 * delta_32 + delta_33 * delta_33) * penalty_rot;
     
-    // const auto d1 = ta - e1;
-    // const auto d2 = a2.transpose() - e2;
-    // const auto d3 = a3.transpose() - e3;
+    const auto d1 = ta - e1;
+    const auto d2 = a2.transpose() - e2;
+    const auto d3 = a3.transpose() - e3;
 
     const HyperDualVector<1> rotation = 0.5 * (d1 * d1.transpose() + d2 * d2.transpose() + d3 * d3.transpose()) * penalty_rot_2;
     // const auto rotation = 0.5 * (alpha_112 * alpha_112 + alpha_113 * alpha_113 + alpha_123 * alpha_123 + 

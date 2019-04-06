@@ -11,8 +11,8 @@
 //
 
 
-#if !defined(KRATOS_MANUFACTURED_FLUID_SOLUTIONS_APPLICATION_H_INCLUDED )
-#define  KRATOS_MANUFACTURED_FLUID_SOLUTIONS_APPLICATION_H_INCLUDED
+#ifndef KRATOS_MANUFACTURED_FLUID_SOLUTIONS_APPLICATION_H_INCLUDED
+#define KRATOS_MANUFACTURED_FLUID_SOLUTIONS_APPLICATION_H_INCLUDED
 
 
 // System includes
@@ -108,8 +108,8 @@ public:
     ///// Print object's data.
     void PrintData(std::ostream& rOStream) const override
     {
-          KRATOS_WATCH("in my application");
-          KRATOS_WATCH(KratosComponents<VariableData>::GetComponents().size() );
+        KRATOS_WATCH("in my application");
+        KRATOS_WATCH(KratosComponents<VariableData>::GetComponents().size() );
 
         rOStream << "Variables:" << std::endl;
         KratosComponents<VariableData>().PrintData(rOStream);

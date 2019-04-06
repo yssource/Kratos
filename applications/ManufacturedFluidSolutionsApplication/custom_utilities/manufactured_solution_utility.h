@@ -56,7 +56,7 @@ namespace Kratos
 /// Short class definition.
 /** Detail class definition.
 */
-class KRATOS_API(MANUFACTURED_FLUID_SOLUTION_APPLICATION) ManufacturedSolutionUtility
+class KRATOS_API(MANUFACTURED_FLUID_SOLUTIONS_APPLICATION) ManufacturedSolutionUtility
 {
 public:
     ///@name Type Definitions
@@ -102,10 +102,11 @@ public:
     double ComputeMean(TVarType& rVariable)
     {
         double err = 0;
+        #pragma omp parallel for reduction(+:err)
         for (int i = 0; i < static_cast<int>(mrModelPart.Nodes().size()); i++)
         {
             auto it_node = mrModelPart.NodesBegin() + i;
-            err += it_node->GetValue(rVariable);
+            err += Norm(it_node->GetValue(rVariable));
         }
         err /= mrModelPart.NumberOfNodes();
         return err;
@@ -115,13 +116,31 @@ public:
     double ComputeRootMeanSquare(TVarType& rVariable)
     {
         double err = 0;
+        #pragma omp parallel for reduction(+:err)
         for (int i = 0; i < static_cast<int>(mrModelPart.Nodes().size()); i++)
         {
             auto it_node = mrModelPart.NodesBegin() + i;
-            err += std::pow(it_node->GetValue(rVariable), 2);
+            err += std::pow(Norm(it_node->GetValue(rVariable)), 2);
         }
         err /= mrModelPart.NumberOfNodes();
         return std::sqrt(err);
+    }
+
+    template<class TVarType>
+    void ComputeRelativeError(
+        TVarType& rExactVar,
+        TVarType& rComputationVar,
+        TVarType& rDestinationVar)
+    {
+        double mean = ComputeMean<TVarType>(rExactVar) + mEpsilon;
+        #pragma omp parallel for
+        for (int i = 0; i < static_cast<int>(mrModelPart.Nodes().size()); i++)
+        {
+            auto it_node = mrModelPart.NodesBegin() + i;
+            auto exact = it_node->GetValue(rExactVar);
+            auto fem = it_node->FastGetSolutionStepValue(rComputationVar);
+            it_node->SetValue(rDestinationVar , (exact - fem)/mean);
+        }
     }
 
     ///@}
@@ -201,13 +220,12 @@ private:
     ///@name Static Member Variables
     ///@{
 
-    ModelPart& mrModelPart;
-    ManufacturedSolution& mrManufactured;
-
     ///@}
     ///@name Member Variables
     ///@{
 
+    ModelPart& mrModelPart;
+    ManufacturedSolution& mrManufactured;
     const double mEpsilon = std::numeric_limits<double>::epsilon();
 
     ///@}
@@ -219,6 +237,10 @@ private:
     ///@name Private Operations
     ///@{
 
+    template<class TVectorType>
+    double Norm(TVectorType& rValue) {return norm_2(rValue);}
+
+    double Norm(double& rValue) {return std::abs(rValue);}
 
     ///@}
     ///@name Private  Access

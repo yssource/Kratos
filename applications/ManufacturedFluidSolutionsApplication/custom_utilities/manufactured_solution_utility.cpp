@@ -99,27 +99,13 @@ void ManufacturedSolutionUtility::ComputeExactPressure()
 
 void ManufacturedSolutionUtility::ComputeVelocityRelativeError()
 {
-    #pragma omp parallel for
-    for (int i = 0; i < static_cast<int>(mrModelPart.Nodes().size()); i++)
-    {
-        auto it_node = mrModelPart.NodesBegin() + i;
-        auto exact = norm_2(it_node->GetValue(EXACT_VELOCITY));
-        auto fem = norm_2(it_node->FastGetSolutionStepValue(VELOCITY));
-        it_node->SetValue(VELOCITY_RELATIVE_ERROR , std::abs(exact - fem) / (std::abs(exact) + mEpsilon));
-    }
+    ComputeRelativeError<Variable<array_1d<double, 3>>>(EXACT_VELOCITY, VELOCITY, VELOCITY_RELATIVE_ERROR);
 }
 
 
 void ManufacturedSolutionUtility::ComputePressureRelativeError()
 {
-    #pragma omp parallel for
-    for (int i = 0; i < static_cast<int>(mrModelPart.Nodes().size()); i++)
-    {
-        auto it_node = mrModelPart.NodesBegin() + i;
-        auto exact = it_node->GetValue(EXACT_PRESSURE);
-        auto fem = it_node->FastGetSolutionStepValue(PRESSURE);
-        it_node->SetValue(PRESSURE_RELATIVE_ERROR , std::abs(exact - fem) / (std::abs(exact) + mEpsilon));
-    }
+    ComputeRelativeError<Variable<double>>(EXACT_PRESSURE, PRESSURE, PRESSURE_RELATIVE_ERROR);
 }
 
 }  // namespace Kratos.

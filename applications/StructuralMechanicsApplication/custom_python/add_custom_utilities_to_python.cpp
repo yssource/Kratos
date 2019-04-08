@@ -21,6 +21,7 @@
 #include "custom_utilities/rayleigh_damping_coefficients_utilities.h"
 #include "custom_utilities/explicit_integration_utilities.h"
 #include "custom_utilities/rayleigh_damping_coefficients_utilities.h"
+#include "custom_utilities/rve_periodicity_utility.h"
 
 namespace Kratos {
 namespace Python {
@@ -35,14 +36,20 @@ void  AddCustomUtilitiesToPython(pybind11::module& m)
         .def("ReadPrestressData",&FormfindingIOUtility::ReadPrestressData )
         .def("PrintPrestressData",&FormfindingIOUtility::PrintPrestressData )
         ;
-    
+
     // RayleighDampingCoefficientsUtilities
     m.def("ComputeDampingCoefficients",&RayleighDampingCoefficientsUtilities::ComputeDampingCoefficients);
-  
+    m.def("ComputeDampingCoefficients",&RayleighDampingCoefficientsUtilities::ComputeDampingCoefficients);
+
     // ExplicitIntegrationUtilities
     m.def("CalculateDeltaTime",&ExplicitIntegrationUtilities::CalculateDeltaTime);
 
-    m.def("ComputeDampingCoefficients",&RayleighDampingCoefficientsUtilities::ComputeDampingCoefficients);
+    py::class_<RVEPeriodicityUtility>(m,"RVEPeriodicityUtility")
+        .def(py::init<ModelPart&>())
+        .def(py::init<ModelPart&, std::size_t>())
+        .def("AssignPeriodicity",&RVEPeriodicityUtility::AssignPeriodicity)
+        .def("Finalize",&RVEPeriodicityUtility::Finalize)
+        ;
 }
 
 }  // namespace Python.

@@ -18,13 +18,19 @@ except ImportError as e:
     missing_application = re.search(r'''.*'KratosMultiphysics\.(.*)'.*''',
                                     '{0}'.format(e)).group(1)
 
+import os
+import sys
+def GetFilePath(fileName):
+    return os.path.join(os.path.dirname(os.path.realpath(__file__)), fileName)
+sys.path.insert(0, GetFilePath('../../../kratos/tests/'))
+
 # Import the tests o test_classes to create the suits
 ## SMALL TESTS
 # Exact integration tests
 from test_process_factory import TestProcessFactory as TTestProcessFactory
 from test_double_curvature_integration import TestDoubleCurvatureIntegration as TTestDoubleCurvatureIntegration
 from test_dynamic_search import TestDynamicSearch as TTestDynamicSearch
-from test_mortar_mapper import TestMortarMapping as TTestMortarMapping
+from test_mortar_mapper import TestMortarMapperCore as TTestMortarMapperCore
 
 # Mesh tying tests
 from SmallTests import SimplePatchTestTwoDMeshTying            as TSimplePatchTestTwoDMeshTying
@@ -206,8 +212,8 @@ def AssembleTestSuites():
     nightSuite.addTest(TTestDoubleCurvatureIntegration('test_moving_mesh_integration_quad'))
 
     # Mortar mapping
-    nightSuite.addTest(TTestMortarMapping('test_less_basic_mortar_mapping_triangle'))
-    nightSuite.addTest(TTestMortarMapping('test_simple_curvature_mortar_mapping_triangle'))
+    nightSuite.addTest(TTestMortarMapperCore('test_less_basic_mortar_mapping_triangle'))
+    nightSuite.addTest(TTestMortarMapperCore('test_simple_curvature_mortar_mapping_triangle'))
 
     # ALM frictionless tests
     nightSuite.addTest(TALMTThreeDPatchMatchingTestContact('test_execution'))
@@ -238,10 +244,10 @@ def AssembleTestSuites():
     #nightSuite.addTest(TComponentsALMHertzSphereTestContact('test_execution'))
     validationSuite.addTest(TComponentsALMHertzSimpleTestContact('test_execution'))
     validationSuite.addTest(TComponentsALMHertzCompleteTestContact('test_execution'))
-    
+
     # Penalty frictionless tests
     validationSuite.addTest(TExplicitPenaltyThreeDSimplestPatchMatchingTestContact('test_execution'))
-    
+
     # Exact integration tests
     validationSuite.addTest(TTestDoubleCurvatureIntegration('test_double_curvature_integration_triangle'))
     validationSuite.addTest(TTestDoubleCurvatureIntegration('test_double_curvature_integration_quad'))
@@ -252,8 +258,8 @@ def AssembleTestSuites():
     validationSuite.addTest(TTestDynamicSearch('test_dynamic_search_quad'))
 
     # Mortar mapping
-    validationSuite.addTest(TTestMortarMapping('test_mortar_mapping_triangle'))
-    validationSuite.addTest(TTestMortarMapping('test_mortar_mapping_quad'))
+    validationSuite.addTest(TTestMortarMapperCore('test_mortar_mapping_triangle'))
+    validationSuite.addTest(TTestMortarMapperCore('test_mortar_mapping_quad'))
 
     validationSuite.addTest(TLargeDisplacementPatchTestHexa('test_execution'))
 
@@ -283,7 +289,7 @@ def AssembleTestSuites():
             TTestProcessFactory,
             TTestDoubleCurvatureIntegration,
             TTestDynamicSearch,
-            TTestMortarMapping,
+            TTestMortarMapperCore,
             ### SMALL
             TSimplePatchTestTwoDMeshTying,
             TSimpleSlopePatchTestTwoDMeshTying,

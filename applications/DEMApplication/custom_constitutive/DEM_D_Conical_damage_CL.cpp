@@ -393,13 +393,13 @@ namespace Kratos {
             }
         }
 
-        for (unsigned int i = 0; element1->mNeighbourElements.size(); i++) {
-            if (element1->mNeighbourElements[i]->Id() == element2->Id()) {
-                if (element1->mNeighbourTgOfFriAng[i] <= equiv_tg_of_fri_ang) equiv_tg_of_fri_ang = element1->mNeighbourTgOfFriAng[i];
-                else element1->mNeighbourTgOfFriAng[i] = equiv_tg_of_fri_ang;
-                break;
-            }
-        }
+        // for (unsigned int i = 0; element1->mNeighbourElements.size(); i++) {
+        //     if (element1->mNeighbourElements[i]->Id() == element2->Id()) {
+        //         if (element1->mNeighbourTgOfFriAng[i] <= equiv_tg_of_fri_ang) equiv_tg_of_fri_ang = element1->mNeighbourTgOfFriAng[i];
+        //         else element1->mNeighbourTgOfFriAng[i] = equiv_tg_of_fri_ang;
+        //         break;
+        //     }
+        // }
 
         MaximumAdmisibleShearForce = normal_contact_force * equiv_tg_of_fri_ang;
 
@@ -504,13 +504,13 @@ namespace Kratos {
             }
         }
 
-        for (unsigned int i = 0; element->mNeighbourRigidFaces.size(); i++) {
-            if (element->mNeighbourRigidFaces[i]->Id() == wall->Id()) {
-                if (element->mNeighbourRigidTgOfFriAng[i] <= equiv_tg_of_fri_ang) equiv_tg_of_fri_ang = element->mNeighbourRigidTgOfFriAng[i];
-                else element->mNeighbourRigidTgOfFriAng[i] = equiv_tg_of_fri_ang;
-                break;
-            }
-        }
+        // for (unsigned int i = 0; element->mNeighbourRigidFaces.size(); i++) {
+        //     if (element->mNeighbourRigidFaces[i]->Id() == wall->Id()) {
+        //         if (element->mNeighbourRigidTgOfFriAng[i] <= equiv_tg_of_fri_ang) equiv_tg_of_fri_ang = element->mNeighbourRigidTgOfFriAng[i];
+        //         else element->mNeighbourRigidTgOfFriAng[i] = equiv_tg_of_fri_ang;
+        //         break;
+        //     }
+        // }
 
         MaximumAdmisibleShearForce = normal_contact_force * equiv_tg_of_fri_ang;
 

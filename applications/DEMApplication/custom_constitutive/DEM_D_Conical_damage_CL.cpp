@@ -181,7 +181,7 @@ namespace Kratos {
             double MaximumAdmisibleShearForce;
 
             CalculateTangentialForce(normal_contact_force, OldLocalElasticContactForce, LocalElasticContactForce, ViscoDampingLocalContactForce, LocalDeltDisp,
-                                     sliding, p_element1, p_element2, original_equiv_radius, equiv_young, indentation, previous_indentation, AuxElasticShearForce, MaximumAdmisibleShearForce);
+                                     sliding, p_element1, p_element2, original_equiv_radius, equiv_young, elastic_indentation, previous_indentation, AuxElasticShearForce, MaximumAdmisibleShearForce);
 
             double& elastic_energy = p_element1->GetElasticEnergy();
             DEM_D_Hertz_viscous_Coulomb::CalculateElasticEnergyDEM(elastic_energy, elastic_indentation, LocalElasticContactForce);
@@ -318,7 +318,7 @@ namespace Kratos {
             double MaximumAdmisibleShearForce;
 
             CalculateTangentialForceWithFEM(normal_contact_force, OldLocalElasticContactForce, LocalElasticContactForce, ViscoDampingLocalContactForce, LocalDeltDisp,
-                                            sliding, p_element, wall, original_effective_radius, equiv_young, indentation, previous_indentation, AuxElasticShearForce, MaximumAdmisibleShearForce);
+                                            sliding, p_element, wall, original_effective_radius, equiv_young, elastic_indentation, previous_indentation, AuxElasticShearForce, MaximumAdmisibleShearForce);
 
             double& elastic_energy = p_element->GetElasticEnergy();
             DEM_D_Hertz_viscous_Coulomb::CalculateElasticEnergyFEM(elastic_energy, elastic_indentation, LocalElasticContactForce);
@@ -386,7 +386,7 @@ namespace Kratos {
         double equiv_tg_of_fri_ang                  = 0.5 * (my_tg_of_friction_angle + neighbour_tg_of_friction_angle);
 
         if (fabs(equiv_tg_of_fri_ang) > 1.0e-12) {
-            double critical_force = 0.6666666666666667 * Globals::Pi * original_equiv_radius * indentation * element1->GetParticleConicalDamageMaxStress();
+            double critical_force = 0.166666667 * pow(Globals::Pi * element1->GetParticleConicalDamageMaxStress, 3) * pow(original_equiv_radius / equiv_young, 2);
             if (normal_contact_force > critical_force) {
                 double critical_force_inv = 1.0  / critical_force;
                 equiv_tg_of_fri_ang *= pow((normal_contact_force * critical_force_inv), element1->GetParticleConicalDamageGamma());
@@ -497,7 +497,7 @@ namespace Kratos {
         double equiv_tg_of_fri_ang             = 0.5 * (my_tg_of_friction_angle + wall_tg_of_friction_angle);
 
         if (fabs(equiv_tg_of_fri_ang) > 1.0e-12) {
-            double critical_force = 0.6666666666666667 * Globals::Pi * original_effective_radius * indentation * element->GetParticleConicalDamageMaxStress();
+            double critical_force = 0.166666667 * pow(Globals::Pi * element->GetParticleConicalDamageMaxStress, 3) * pow(original_effective_radius / equiv_young, 2);
             if (normal_contact_force > critical_force) {
                 double critical_force_inv = 1.0  / critical_force;
                 equiv_tg_of_fri_ang *= pow((normal_contact_force * critical_force_inv), element->GetParticleConicalDamageGamma());

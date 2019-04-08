@@ -126,7 +126,8 @@ namespace Kratos {
         const double other_radius   = p_element2->GetParticleConicalDamageContactRadius();
         const double radius_sum     = my_radius + other_radius;
         const double radius_sum_inv = 1.0 / radius_sum;
-        double equiv_radius, original_equiv_radius = my_radius * other_radius * radius_sum_inv;
+        double equiv_radius = my_radius * other_radius * radius_sum_inv;
+        double original_equiv_radius = equiv_radius;
 
         double elastic_indentation = indentation;
 
@@ -262,7 +263,8 @@ namespace Kratos {
         ContactInfoSphericParticle* p_element = dynamic_cast<ContactInfoSphericParticle*>(element);
 
         //Get effective Radius
-        double effective_radius, original_effective_radius = p_element->GetParticleConicalDamageContactRadius();
+        double effective_radius = p_element->GetParticleConicalDamageContactRadius();
+        double original_effective_radius = effective_radius;
 
         double elastic_indentation = indentation;
 

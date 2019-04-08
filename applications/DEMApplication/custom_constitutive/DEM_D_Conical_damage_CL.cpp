@@ -386,7 +386,7 @@ namespace Kratos {
         double equiv_tg_of_fri_ang                  = 0.5 * (my_tg_of_friction_angle + neighbour_tg_of_friction_angle);
 
         if (fabs(equiv_tg_of_fri_ang) > 1.0e-12) {
-            double critical_force = 0.166666667 * pow(Globals::Pi * element1->GetParticleConicalDamageMaxStress, 3) * pow(original_equiv_radius / equiv_young, 2);
+            double critical_force = 0.166666667 * pow(Globals::Pi * element1->GetParticleConicalDamageMaxStress(), 3) * pow(original_equiv_radius / equiv_young, 2);
             if (normal_contact_force > critical_force) {
                 double critical_force_inv = 1.0  / critical_force;
                 equiv_tg_of_fri_ang *= pow((normal_contact_force * critical_force_inv), element1->GetParticleConicalDamageGamma());
@@ -497,7 +497,7 @@ namespace Kratos {
         double equiv_tg_of_fri_ang             = 0.5 * (my_tg_of_friction_angle + wall_tg_of_friction_angle);
 
         if (fabs(equiv_tg_of_fri_ang) > 1.0e-12) {
-            double critical_force = 0.166666667 * pow(Globals::Pi * element->GetParticleConicalDamageMaxStress, 3) * pow(original_effective_radius / equiv_young, 2);
+            double critical_force = 0.166666667 * pow(Globals::Pi * element->GetParticleConicalDamageMaxStress(), 3) * pow(original_effective_radius / equiv_young, 2);
             if (normal_contact_force > critical_force) {
                 double critical_force_inv = 1.0  / critical_force;
                 equiv_tg_of_fri_ang *= pow((normal_contact_force * critical_force_inv), element->GetParticleConicalDamageGamma());

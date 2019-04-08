@@ -387,7 +387,7 @@ namespace Kratos {
 
         if (fabs(equiv_tg_of_fri_ang) > 1.0e-12) {
             double critical_force = 0.6666666666666667 * Globals::Pi * original_equiv_radius * indentation * element1->GetParticleConicalDamageMaxStress();
-          if (normal_contact_force > critical_force) {
+            if (normal_contact_force > critical_force) {
                 double critical_force_inv = 1.0  / critical_force;
                 equiv_tg_of_fri_ang *= pow((normal_contact_force * critical_force_inv), element1->GetParticleConicalDamageGamma());
             }
@@ -498,7 +498,7 @@ namespace Kratos {
 
         if (fabs(equiv_tg_of_fri_ang) > 1.0e-12) {
             double critical_force = 0.6666666666666667 * Globals::Pi * original_effective_radius * indentation * element->GetParticleConicalDamageMaxStress();
-          if (normal_contact_force > critical_force) {
+            if (normal_contact_force > critical_force) {
                 double critical_force_inv = 1.0  / critical_force;
                 equiv_tg_of_fri_ang *= pow((normal_contact_force * critical_force_inv), element->GetParticleConicalDamageGamma());
             }

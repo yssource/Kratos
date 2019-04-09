@@ -308,10 +308,11 @@ for normalvar in range(2):
             outputstring = first_input.replace("// replace_lhs", lhs_string)
         else:
             input = open("penalty_frictional_mortar_contact_condition.cpp",'r').read()
+            outputstring = input.replace("// replace_lhs", lhs_string)
+
         if output_count < total_combs:
             lhs_string += "// replace_lhs"
             rhs_string += "// replace_rhs"
-            outputstring = input.replace("// replace_lhs", lhs_string)
 
         outputstring = outputstring.replace("// replace_rhs", rhs_string)
         output = open("penalty_frictional_mortar_contact_condition.cpp",'w')

@@ -496,11 +496,12 @@ void IncompressiblePotentialFlowElement<Dim, NumNodes>::ComputeLHSGaussPointCont
 
 template <int Dim, int NumNodes>
 void IncompressiblePotentialFlowElement<Dim, NumNodes>::NewtonRaphsonCompressibleNormalElement(
-    const double weight, Matrix& lhs, const ElementalData<NumNodes, Dim>& data) const
+    ProcessInfo& rCurrentProcessInfo, const double weight, Matrix& lhs, const ElementalData<NumNodes, Dim>& data) const
 {
     // WARNING! Pseudo Code!
-    int k=0
-    int max_iter = 10
+    int k=0;
+    int max_iter = 10;
+    double NR_epsilon = 10e-5;
     while (k<max_iter)
     {
         ComputeVelocityNormalElement(velocity); // check if needed. Step 1
@@ -514,7 +515,7 @@ void IncompressiblePotentialFlowElement<Dim, NumNodes>::NewtonRaphsonCompressibl
         noalias(lhs1) += density * weight * prod(data.DN_DX, trans(data.DN_DX)); // do we need noalias?
         noalias(lhs2) += 2 * drho_dvsquared * weight * prod(prod(trans(data.DN_DX)*velocity),prod(trans(velocity)*data.DN_DX)); // is it correct?
         noalias(lhs) = lhs1 + lhs2;
-        array_1d<double, NumNodes> residual = lhs1 - value; // find value from conditions / is it NumNodes?
+        array_1d<double, NumNodes> residual = lhs1 - value; // find/import value from conditions / is it NumNodes?
         if (k==0)
             const array_1d<double, NumNodes> residual1 = residual; // needs improvement
         else if ((residual/residual1)<NR_epsilon)

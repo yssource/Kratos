@@ -19,7 +19,6 @@
 // Project includes
 #include "includes/model_part.h"
 #include "solving_strategies/schemes/residual_based_bossak_velocity_scheme.h"
-#include "utilities/derivatives_extension.h"
 
 // Application includes
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
@@ -32,69 +31,13 @@ template <class TSparseSpace, class TDenseSpace>
 class ResidualBasedBossakTurbulentEnergyDissipationRateScheme
     : public ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>
 {
-    typedef Node<3> NodeType;
-
-    class ElementDerivativesExtension : public DerivativesExtension
-    {
-        Element* mpElement;
-
-    public:
-        explicit ElementDerivativesExtension(Element* pElement)
-            : mpElement(pElement)
-        {
-        }
-
-        void GetFirstDerivativesVector(std::size_t NodeId,
-                                       std::vector<IndirectScalar<double>>& rVector,
-                                       std::size_t Step,
-                                       ProcessInfo& rCurrentProcessInfo) override
-        {
-            rVector.resize(1);
-            NodeType& r_node = mpElement->GetGeometry()[NodeId];
-            rVector[0] =
-                MakeIndirectScalar(r_node, TURBULENT_ENERGY_DISSIPATION_RATE, Step);
-        }
-
-        void GetSecondDerivativesVector(std::size_t NodeId,
-                                        std::vector<IndirectScalar<double>>& rVector,
-                                        std::size_t Step,
-                                        ProcessInfo& rCurrentProcessInfo) override
-        {
-            rVector.resize(1);
-            NodeType& r_node = mpElement->GetGeometry()[NodeId];
-            rVector[0] =
-                MakeIndirectScalar(r_node, TURBULENT_ENERGY_DISSIPATION_RATE_2, Step);
-        }
-
-        void GetFirstDerivativesDofsVector(std::size_t NodeId,
-                                           std::vector<Dof<double>::Pointer>& rVector,
-                                           ProcessInfo& rCurrentProcessInfo) override
-        {
-            rVector.resize(1);
-            NodeType& r_node = mpElement->GetGeometry()[NodeId];
-            rVector[0] = r_node.pGetDof(TURBULENT_ENERGY_DISSIPATION_RATE);
-        }
-
-        void GetFirstDerivativesVariables(std::vector<VariableData const*>& rVariables,
-                                          ProcessInfo& rCurrentProcessInfo) const override
-        {
-            rVariables.resize(1);
-            rVariables[0] = &TURBULENT_ENERGY_DISSIPATION_RATE;
-        }
-
-        void GetSecondDerivativesVariables(std::vector<VariableData const*>& rVariables,
-                                           ProcessInfo& rCurrentProcessInfo) const override
-        {
-            rVariables.resize(1);
-            rVariables[0] = &TURBULENT_ENERGY_DISSIPATION_RATE_2;
-        }
-    };
-
 public:
     ///@name Type Definitions
     ///@{
 
     KRATOS_CLASS_POINTER_DEFINITION(ResidualBasedBossakTurbulentEnergyDissipationRateScheme);
+
+    typedef Node<3> NodeType;
 
     typedef ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace> BaseType;
 
@@ -111,30 +54,8 @@ public:
     /// Constructor.
 
     ResidualBasedBossakTurbulentEnergyDissipationRateScheme(const double AlphaBossak)
-        : ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(AlphaBossak, true, false)
+        : ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(AlphaBossak, {}, {&TURBULENT_ENERGY_DISSIPATION_RATE}, {&TURBULENT_ENERGY_DISSIPATION_RATE_2}, {}, {}, {})
     {
-    }
-
-    void Initialize(ModelPart& rModelPart) override
-    {
-        KRATOS_TRY;
-
-        BaseType::Initialize(rModelPart);
-
-        const int number_of_elements = rModelPart.NumberOfElements();
-
-#pragma omp parallel for
-        for (int i = 0; i < number_of_elements; i++)
-        {
-            Element& r_current_element = *(rModelPart.ElementsBegin() + i);
-            r_current_element.SetValue(
-                DERIVATIVES_EXTENSION,
-                Kratos::make_shared<ElementDerivativesExtension>(&r_current_element));
-        }
-
-        KRATOS_INFO("EpsilonScheme") << "Initialized.\n";
-
-        KRATOS_CATCH("");
     }
 
     void Update(ModelPart& rModelPart,

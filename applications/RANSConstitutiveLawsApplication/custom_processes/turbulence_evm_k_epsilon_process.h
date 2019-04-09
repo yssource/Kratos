@@ -28,7 +28,6 @@
 #include "solving_strategies/strategies/residualbased_newton_raphson_strategy.h"
 #include "solving_strategies/strategies/solving_strategy.h"
 #include "utilities/color_utilities.h"
-#include "utilities/derivatives_extension.h"
 #include "utilities/variable_utils.h"
 
 // Application includes

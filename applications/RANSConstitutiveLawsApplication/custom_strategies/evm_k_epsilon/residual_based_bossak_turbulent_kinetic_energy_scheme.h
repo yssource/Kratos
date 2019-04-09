@@ -19,7 +19,6 @@
 // Project includes
 #include "includes/model_part.h"
 #include "solving_strategies/schemes/residual_based_bossak_velocity_scheme.h"
-#include "utilities/derivatives_extension.h"
 
 // Application includes
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
@@ -32,67 +31,13 @@ template <class TSparseSpace, class TDenseSpace>
 class ResidualBasedBossakTurbulentKineticEnergyScheme
     : public ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>
 {
-    typedef Node<3> NodeType;
-
-    class ElementDerivativesExtension : public DerivativesExtension
-    {
-        Element* mpElement;
-
-    public:
-        explicit ElementDerivativesExtension(Element* pElement)
-            : mpElement(pElement)
-        {
-        }
-
-        void GetFirstDerivativesVector(std::size_t NodeId,
-                                       std::vector<IndirectScalar<double>>& rVector,
-                                       std::size_t Step,
-                                       ProcessInfo& rCurrentProcessInfo) override
-        {
-            rVector.resize(1);
-            NodeType& r_node = mpElement->GetGeometry()[NodeId];
-            rVector[0] = MakeIndirectScalar(r_node, TURBULENT_KINETIC_ENERGY, Step);
-        }
-
-        void GetSecondDerivativesVector(std::size_t NodeId,
-                                        std::vector<IndirectScalar<double>>& rVector,
-                                        std::size_t Step,
-                                        ProcessInfo& rCurrentProcessInfo) override
-        {
-            rVector.resize(1);
-            NodeType& r_node = mpElement->GetGeometry()[NodeId];
-            rVector[0] = MakeIndirectScalar(r_node, TURBULENT_KINETIC_ENERGY_RATE, Step);
-        }
-
-        void GetFirstDerivativesDofsVector(std::size_t NodeId,
-                                           std::vector<Dof<double>::Pointer>& rVector,
-                                           ProcessInfo& rCurrentProcessInfo) override
-        {
-            rVector.resize(1);
-            NodeType& r_node = mpElement->GetGeometry()[NodeId];
-            rVector[0] = r_node.pGetDof(TURBULENT_KINETIC_ENERGY);
-        }
-
-        void GetFirstDerivativesVariables(std::vector<VariableData const*>& rVariables,
-                                          ProcessInfo& rCurrentProcessInfo) const override
-        {
-            rVariables.resize(1);
-            rVariables[0] = &TURBULENT_KINETIC_ENERGY;
-        }
-
-        void GetSecondDerivativesVariables(std::vector<VariableData const*>& rVariables,
-                                           ProcessInfo& rCurrentProcessInfo) const override
-        {
-            rVariables.resize(1);
-            rVariables[0] = &TURBULENT_KINETIC_ENERGY_RATE;
-        }
-    };
-
 public:
     ///@name Type Definitions
     ///@{
 
     KRATOS_CLASS_POINTER_DEFINITION(ResidualBasedBossakTurbulentKineticEnergyScheme);
+
+    typedef Node<3> NodeType;
 
     typedef ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace> BaseType;
 
@@ -109,29 +54,8 @@ public:
     /// Constructor.
 
     ResidualBasedBossakTurbulentKineticEnergyScheme(const double AlphaBossak)
-        : ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(AlphaBossak, true, false)
+        : ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(AlphaBossak, {}, {&TURBULENT_KINETIC_ENERGY}, {&TURBULENT_KINETIC_ENERGY_RATE}, {}, {}, {})
     {
-    }
-
-    void Initialize(ModelPart& rModelPart) override
-    {
-        KRATOS_TRY;
-
-        BaseType::Initialize(rModelPart);
-
-        const int number_of_elements = rModelPart.NumberOfElements();
-
-#pragma omp parallel for
-        for (int i = 0; i < number_of_elements; i++)
-        {
-            Element& r_element = *(rModelPart.ElementsBegin() + i);
-            r_element.SetValue(DERIVATIVES_EXTENSION,
-                               Kratos::make_shared<ElementDerivativesExtension>(&r_element));
-        }
-
-        KRATOS_INFO("KScheme") << "Initialized.\n";
-
-        KRATOS_CATCH("");
     }
 
     void Update(ModelPart& rModelPart,

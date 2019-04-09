@@ -49,8 +49,8 @@
             "use_orthogonal_subscales" : false,
             "dynamic_tau"              : 1.0
         },
-        "turbulence_model": "k_epsilon",
-        "turbulence_model_settings": {
+        "turbulence_model": {
+            "model_type"            : "k_epsilon",
             "inlet_conditions"      : ["VelocityConstraints2D_inlet"],
             "outlet_conditions"     : [],
             "wall_conditions"       : ["VelocityConstraints2D_walls", "NoSlip2D_cylinder"],

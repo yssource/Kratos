@@ -22,6 +22,7 @@
 // Project includes
 #include "includes/cfd_variables.h"
 #include "includes/define.h"
+#include "node.h"
 #include "solving_strategies/schemes/scheme.h"
 #include "utilities/time_discretization.h"
 
@@ -48,6 +49,8 @@ public:
 
     typedef Scheme<TSparseSpace, TDenseSpace> BaseType;
 
+    typedef Node<3> NodeType;
+
     typedef typename BaseType::TSystemMatrixType SystemMatrixType;
 
     typedef typename BaseType::TSystemVectorType SystemVectorType;
@@ -57,6 +60,8 @@ public:
     typedef typename BaseType::LocalSystemMatrixType LocalSystemMatrixType;
 
     typedef typename BaseType::DofsArrayType DofsArrayType;
+
+    typedef std::size_t IndexType;
 
     ///@}
     ///@name Life Cycle

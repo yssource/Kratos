@@ -48,6 +48,7 @@ class ComputeMomentProcess(KratosMultiphysics.Process):
             lever = mid_point-self.reference_point
             m += crossProduct(lever, n*(-cp))
 
+        KratosMultiphysics.TOTAL_MOMENT = m
         Cm = m[2]/self.reference_area
 
         Logger.PrintInfo('moment', m[2])

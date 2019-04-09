@@ -38,6 +38,5 @@ class PotentialFlowFSIAnalysis(PotentialFlowAnalysis):
     def RunSolutionLoop(self):
         while self.KeepAdvancingSolutionLoop():
             super(PotentialFlowFSIAnalysis, self).RunSolutionLoop()
-            lift = KratosMultiphysics.TOTAL_LIFT
             self.prev_disp = self.disp
-            self.disp = self.StructuralModelResponse(lift)
+            self.disp = self.StructuralModelResponse(KratosMultiphysics.TOTAL_LIFT)

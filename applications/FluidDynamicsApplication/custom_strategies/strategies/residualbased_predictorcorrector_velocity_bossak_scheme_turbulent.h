@@ -34,7 +34,6 @@
 #include "utilities/coordinate_transformation_utilities.h"
 #include "processes/process.h"
 #include "solving_strategies/schemes/residual_based_bossak_velocity_scheme.h"
-#include "utilities/scheme_extension.h"
 
 namespace Kratos {
 
@@ -80,75 +79,6 @@ namespace Kratos {
     class TDenseSpace //= DenseSpace<double>
     >
     class ResidualBasedPredictorCorrectorVelocityBossakSchemeTurbulent : public ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace> {
-        class ElementDerivativesExtension : public SchemeExtension
-        {
-            Element* mpElement;
-        public:
-            explicit ElementDerivativesExtension(Element* pElement): mpElement(pElement)
-            {}
-
-            void GetZeroDerivativesVector(std::size_t NodeId,
-                                          std::vector<IndirectScalar<double>>& rVector,
-                                          std::size_t Step,
-                                          ProcessInfo& rCurrentProcessInfo) override
-            {
-                rVector.resize(3);
-                std::size_t index = 0;
-                Node<3>& r_node = mpElement->GetGeometry()[NodeId];
-                rVector[index++] = MakeIndirectScalar(r_node, DISPLACEMENT_X, Step);
-                rVector[index++] = MakeIndirectScalar(r_node, DISPLACEMENT_Y, Step);
-                rVector[index] = MakeIndirectScalar(r_node, DISPLACEMENT_Z, Step);
-            }
-
-            void GetFirstDerivativesVector(std::size_t NodeId,
-                                           std::vector<IndirectScalar<double>>& rVector,
-                                           std::size_t Step,
-                                           ProcessInfo& rCurrentProcessInfo) override
-            {
-                rVector.resize(4);
-                std::size_t index = 0;
-                Node<3>& r_node = mpElement->GetGeometry()[NodeId];
-                rVector[index++] = MakeIndirectScalar(r_node, VELOCITY_X, Step);
-                rVector[index++] = MakeIndirectScalar(r_node, VELOCITY_Y, Step);
-                rVector[index++] = MakeIndirectScalar(r_node, VELOCITY_Z, Step);
-                rVector[index] = MakeIndirectScalar(r_node, PRESSURE, Step);
-            }
-
-            void GetSecondDerivativesVector(std::size_t NodeId,
-                                            std::vector<IndirectScalar<double>>& rVector,
-                                            std::size_t Step,
-                                            ProcessInfo& rCurrentProcessInfo) override
-            {
-                rVector.resize(3);
-                std::size_t index = 0;
-                Node<3>& r_node = mpElement->GetGeometry()[NodeId];
-                rVector[index++] = MakeIndirectScalar(r_node, ACCELERATION_X, Step);
-                rVector[index++] = MakeIndirectScalar(r_node, ACCELERATION_Y, Step);
-                rVector[index] = MakeIndirectScalar(r_node, ACCELERATION_Z, Step);
-            }
-
-            void GetZeroDerivativesVariables(std::vector<VariableData const*>& rVariables,
-                                             ProcessInfo& rCurrentProcessInfo) const override
-            {
-                rVariables.resize(1);
-                rVariables[0] = &DISPLACEMENT;
-            }
-            void GetFirstDerivativesVariables(std::vector<VariableData const*>& rVariables,
-                                              ProcessInfo& rCurrentProcessInfo) const override
-            {
-                rVariables.resize(2);
-                rVariables[0] = &VELOCITY;
-                rVariables[1] = &PRESSURE;
-            }
-
-            void GetSecondDerivativesVariables(std::vector<VariableData const*>& rVariables,
-                                               ProcessInfo& rCurrentProcessInfo) const override
-            {
-                rVariables.resize(1);
-                rVariables[0] = &ACCELERATION;
-            }
-        };
-
     public:
         /**@name Type Definitions */
         /*@{ */
@@ -186,7 +116,7 @@ namespace Kratos {
             double MoveMeshStrategy,
             unsigned int DomainSize)
         :
-          ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(NewAlphaBossak),
+          ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(NewAlphaBossak, {}, {&PRESSURE}, {}, {&DISPLACEMENT_X, &DISPLACEMENT_Y, &DISPLACEMENT_Z}, {&VELOCITY_X, &VELOCITY_Y, &VELOCITY_Z}, {&ACCELERATION_X, &ACCELERATION_Y, &ACCELERATION_Z}),
           mRotationTool(DomainSize,DomainSize+1,IS_STRUCTURE,0.0), // Second argument is number of matrix rows per node: monolithic elements have velocity and pressure dofs.
           mrPeriodicIdVar(Kratos::Variable<int>::StaticObject())
           {
@@ -203,7 +133,7 @@ namespace Kratos {
             unsigned int DomainSize,
             const Variable<int>& rPeriodicIdVar)
         :
-          ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(NewAlphaBossak),
+          ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(NewAlphaBossak, {}, {&PRESSURE}, {}, {&DISPLACEMENT_X, &DISPLACEMENT_Y, &DISPLACEMENT_Z}, {&VELOCITY_X, &VELOCITY_Y, &VELOCITY_Z}, {&ACCELERATION_X, &ACCELERATION_Y, &ACCELERATION_Z}),
           mRotationTool(DomainSize,DomainSize+1,IS_STRUCTURE,0.0), // Second argument is number of matrix rows per node: monolithic elements have velocity and pressure dofs.
           mrPeriodicIdVar(rPeriodicIdVar)
           {
@@ -221,7 +151,7 @@ namespace Kratos {
             unsigned int DomainSize,
             Variable<double>& rSlipVar)
         :
-          ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(NewAlphaBossak),
+                    ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(NewAlphaBossak, {}, {&PRESSURE}, {}, {&DISPLACEMENT_X, &DISPLACEMENT_Y, &DISPLACEMENT_Z}, {&VELOCITY_X, &VELOCITY_Y, &VELOCITY_Z}, {&ACCELERATION_X, &ACCELERATION_Y, &ACCELERATION_Z}),
           mRotationTool(DomainSize,DomainSize+1,rSlipVar,0.0), // Second argument is number of matrix rows per node: monolithic elements have velocity and pressure dofs.
           mrPeriodicIdVar(Kratos::Variable<int>::StaticObject())
           {
@@ -238,7 +168,7 @@ namespace Kratos {
             unsigned int DomainSize,
             Process::Pointer pTurbulenceModel)
         :
-          ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(NewAlphaBossak),
+                    ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(NewAlphaBossak, {}, {&PRESSURE}, {}, {&DISPLACEMENT_X, &DISPLACEMENT_Y, &DISPLACEMENT_Z}, {&VELOCITY_X, &VELOCITY_Y, &VELOCITY_Z}, {&ACCELERATION_X, &ACCELERATION_Y, &ACCELERATION_Z}),
           mRotationTool(DomainSize,DomainSize+1,IS_STRUCTURE,0.0), // Second argument is number of matrix rows per node: monolithic elements have velocity and pressure dofs
           mrPeriodicIdVar(Kratos::Variable<int>::StaticObject()),
           mpTurbulenceModel(pTurbulenceModel)
@@ -697,11 +627,6 @@ namespace Kratos {
         /*@} */
         /**@name Protected Operators*/
         /*@{ */
-
-        SchemeExtension::Pointer GetSchemeExtension(Element& rElement) override
-        {
-            return Kratos::make_shared<ElementDerivativesExtension>(&rElement);
-        }        
 
         /** On periodic boundaries, the nodal area and the values to project need to take into account contributions from elements on
          * both sides of the boundary. This is done using the conditions and the non-historical nodal data containers as follows:\n

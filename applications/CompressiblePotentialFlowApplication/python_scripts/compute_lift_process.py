@@ -42,6 +42,8 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
             ry += n[1]*cp
             rz += n[2]*cp
 
+        KratosMultiphysics.TOTAL_LIFT = ry
+
         RZ = rz/self.reference_area
         RX = rx/self.reference_area
         RY = ry/self.reference_area

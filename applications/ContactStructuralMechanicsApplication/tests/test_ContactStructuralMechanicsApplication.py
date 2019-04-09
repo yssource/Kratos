@@ -85,6 +85,7 @@ from SmallTests import ComponentsALMThreeDPatchNotMatchingTestContact           
 from SmallTests import ALMHyperSimplePatchFrictionalTestContact                      as TALMHyperSimplePatchFrictionalTestContact
 
 # Penalty frictional tests
+from SmallTests import PenaltyNoFrictionHyperSimplePatchFrictionalTestContact        as TPenaltyNoFrictionHyperSimplePatchFrictionalTestContact
 from SmallTests import PenaltyHyperSimplePatchFrictionalTestContact                  as TPenaltyHyperSimplePatchFrictionalTestContact
 
 ## NIGTHLY TESTS
@@ -333,6 +334,7 @@ def AssembleTestSuites():
             TComponentsALMTThreeDPatchMatchingTestContact,
             TComponentsALMThreeDPatchNotMatchingTestContact,
             TALMHyperSimplePatchFrictionalTestContact,
+            #TPenaltyNoFrictionHyperSimplePatchFrictionalTestContact,
             #TPenaltyHyperSimplePatchFrictionalTestContact,
             #### NIGTHLY
             TALMTaylorPatchTestContact,

@@ -77,7 +77,7 @@ void KratosCompressiblePotentialFlowApplication::Register()
     //Register elements
     KRATOS_REGISTER_ELEMENT("IncompressiblePotentialFlowElement2D3N", mIncompressiblePotentialFlowElement2D3N);
     KRATOS_REGISTER_ELEMENT("AdjointIncompressiblePotentialFlowElement2D3N", mAdjointIncompressiblePotentialFlowElement2D3N);
-    KRATOS_REGISTER_ELEMENT("CompressiblePotentialFlowElement2D3N", mCompressiblePotentialFlowElement2D3N);
+    //KRATOS_REGISTER_ELEMENT("CompressiblePotentialFlowElement2D3N", mCompressiblePotentialFlowElement2D3N);
 
     //Register conditions
     KRATOS_REGISTER_CONDITION("PotentialWallCondition2D2N", mPotentialWallCondition2D2N);

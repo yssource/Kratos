@@ -491,9 +491,9 @@ template <int Dim, int NumNodes>
 void IncompressiblePotentialFlowElement<Dim, NumNodes>::ComputeLHSGaussPointContribution(
     const double weight, Matrix& lhs, const ElementalData<NumNodes, Dim>& data) const
 {
+    //const double density_infinity = rCurrentProcessInfo[DENSITY_INFINITY];
     noalias(lhs) += weight * prod(data.DN_DX, trans(data.DN_DX));
 }
-
 
 template <int Dim, int NumNodes>
 void IncompressiblePotentialFlowElement<Dim, NumNodes>::AssignLocalSystemSubdividedElement(

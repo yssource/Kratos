@@ -91,7 +91,7 @@ class PotentialFlowSolver(FluidSolver):
             time_scheme,
             self.linear_solver,
             conv_criteria,
-            max_iterations
+            max_iterations,
             self.settings["compute_reactions"].GetBool(),
             self.settings["reform_dofs_at_each_step"].GetBool(),
             self.settings["move_mesh_flag"].GetBool())

@@ -249,14 +249,16 @@ void IgaBeamADElement::CalculateAll(
 
     std::ofstream write_f;
     write_f.open("cutting_force.txt", std::ofstream::app);
-    const double moment_kappa_2 = kap2.f() * ei2/pow(A,2); 
-    const double moment_kappa_3 = kap3.f() * ei3/pow(A,2);
-    // const double normal_force = eps11.f() * ea * area - moment_kappa_2 * kap2.f() - moment_kappa_3 * kap3.f(); 
+    const double moment_kappa_2 = kap2.f() * ei3/pow(A,2); 
+    const double moment_kappa_3 = kap3.f() * ei2/pow(A,2);
+    const double normal_force = (eps11.f() * ea  + moment_kappa_2 * kap2.f() + moment_kappa_3 * kap3.f())/pow(A,2) ;
     // const double normal_force = eps11.f() * ea * area; 
-    const double normal_force = ((area + moment_of_inertia_y * pow(B2/pow(A,2),2)
-                                - moment_of_inertia_z * pow(B3/pow(A,2),2))  * eps11.f()
-                                + kap2.f() * moment_of_inertia_y * B2/pow(A,2) 
-                                - kap3.f() * moment_of_inertia_z * B3/pow(A,2)) * young_modulus/pow(A,2) * a.f()/A; 
+    // const double normal_force = ((area + moment_of_inertia_y * pow(B2/pow(A,2),2)
+    //                             - moment_of_inertia_z * pow(B3/pow(A,2),2))  * eps11.f()
+    //                             + kap2.f() * moment_of_inertia_y * B2/pow(A,2) 
+    //                             - kap3.f() * moment_of_inertia_z * B3/pow(A,2)) * young_modulus/pow(A,2) * a.f()/A; 
+
+    // std::cout << " m3 :: " << moment_kappa_3 << " kappa3  :: " << kap3.f() << " n :: " << eps11.f()*ea << " n - kappa*m :: " << eps11.f()*ea + moment_kappa_3 * kap3.f() << std::endl;
 
     // write_f << Id() << "\t\t" << gauss_point[0] << " \t\t" << gauss_point[1] << " \t\t" << gauss_point[2] << " \t\t" << normal_force  << " \t\t" << moment_kappa_2 << " \t\t" << moment_kappa_3  <<  "\n";
     write_f << std::setw(4)  << Id()

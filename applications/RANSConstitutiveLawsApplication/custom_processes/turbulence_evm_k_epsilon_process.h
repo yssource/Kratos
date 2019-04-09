@@ -35,8 +35,7 @@
 #include "custom_elements/evm_k_epsilon/evm_k_element.h"
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
 #include "custom_processes/turbulence_eddy_viscosity_model_process.h"
-#include "custom_strategies/evm_k_epsilon/residual_based_bossak_turbulent_energy_dissipation_scheme.h"
-#include "custom_strategies/evm_k_epsilon/residual_based_bossak_turbulent_kinetic_energy_scheme.h"
+#include "custom_strategies/general_residual_based_bossak_velocity_scalar_scheme.h"
 #include "custom_strategies/general_convergence_criteria.h"
 #include "custom_utilities/rans_calculation_utilities.h"
 #include "rans_constitutive_laws_application_variables.h"
@@ -544,8 +543,8 @@ private:
         mpKBuilderAndSolver = pKBuilderAndSolver;
 
         mpKScheme = SchemePointerType(
-            new ResidualBasedBossakTurbulentKineticEnergyScheme<TSparseSpace, TDenseSpace>(
-                alpha_bossak));
+            new ResidualBasedBossakVelocityScalarScheme<TSparseSpace, TDenseSpace>(
+                alpha_bossak, &TURBULENT_KINETIC_ENERGY, &TURBULENT_KINETIC_ENERGY_RATE, &RANS_AUXILIARY_VARIABLE_1));
 
         ConvergenceCriteriaPointerType pKConvergenceCriteria = ConvergenceCriteriaPointerType(
             new GeneralConvergenceCriteria<TSparseSpace, TDenseSpace>(
@@ -568,8 +567,8 @@ private:
         mpEpsilonBuilderAndSolver = pEpsilonBuilderAndSolver;
 
         mpEpsilonScheme = SchemePointerType(
-            new ResidualBasedBossakTurbulentEnergyDissipationRateScheme<TSparseSpace, TDenseSpace>(
-                alpha_bossak));
+            new ResidualBasedBossakVelocityScalarScheme<TSparseSpace, TDenseSpace>(
+                alpha_bossak, &TURBULENT_ENERGY_DISSIPATION_RATE, &TURBULENT_ENERGY_DISSIPATION_RATE_2, &RANS_AUXILIARY_VARIABLE_2));
 
         ConvergenceCriteriaPointerType pEpsilonConvergenceCriteria =
             ConvergenceCriteriaPointerType(new GeneralConvergenceCriteria<TSparseSpace, TDenseSpace>(

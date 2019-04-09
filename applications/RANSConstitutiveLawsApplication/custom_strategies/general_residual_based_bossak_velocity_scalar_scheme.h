@@ -11,8 +11,8 @@
 //                   Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 
-#if !defined(KRATOS_RESIDUAL_BASED_BOSSAK_TURBULENT_ENERGY_DISSIPATION_RATE_SCHEME_H_INCLUDED)
-#define KRATOS_RESIDUAL_BASED_BOSSAK_TURBULENT_ENERGY_DISSIPATION_RATE_SCHEME_H_INCLUDED
+#if !defined(KRATOS_RESIDUAL_BASED_BOSSAK_VELOCITY_SCALAR_SCHEME_H_INCLUDED)
+#define KRATOS_RESIDUAL_BASED_BOSSAK_VELOCITY_SCALAR_SCHEME_H_INCLUDED
 
 // System includes
 
@@ -28,14 +28,14 @@
 namespace Kratos
 {
 template <class TSparseSpace, class TDenseSpace>
-class ResidualBasedBossakTurbulentEnergyDissipationRateScheme
+class ResidualBasedBossakVelocityScalarScheme
     : public ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    KRATOS_CLASS_POINTER_DEFINITION(ResidualBasedBossakTurbulentEnergyDissipationRateScheme);
+    KRATOS_CLASS_POINTER_DEFINITION(ResidualBasedBossakVelocityScalarScheme);
 
     typedef Node<3> NodeType;
 
@@ -53,8 +53,13 @@ public:
 
     /// Constructor.
 
-    ResidualBasedBossakTurbulentEnergyDissipationRateScheme(const double AlphaBossak)
-        : ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(AlphaBossak, {}, {&TURBULENT_ENERGY_DISSIPATION_RATE}, {&TURBULENT_ENERGY_DISSIPATION_RATE_2}, {}, {}, {})
+    ResidualBasedBossakVelocityScalarScheme(const double AlphaBossak,
+                                            Variable<double> const * pScalarVariable,
+                                            Variable<double> const * pScalarRateVariable,
+                                            Variable<double> const * pRelaxedScalarRateVariable)
+        : ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(AlphaBossak, {}, {pScalarVariable}, {pScalarRateVariable}, {}, {}, {}),
+        mpScalarRateVariable(pScalarRateVariable),
+        mpRelaxedScalarRateVariable(pRelaxedScalarRateVariable)
     {
     }
 
@@ -74,24 +79,25 @@ public:
         for (int iNode = 0; iNode < number_of_nodes; ++iNode)
         {
             NodeType& r_node = *(rModelPart.NodesBegin() + iNode);
-            const double epsilon_dot_old = r_node.FastGetSolutionStepValue(
-                TURBULENT_ENERGY_DISSIPATION_RATE_2, 1);
-            const double epsilon_dot = r_node.FastGetSolutionStepValue(
-                TURBULENT_ENERGY_DISSIPATION_RATE_2, 0);
+            const double scalar_rate_dot_old = r_node.FastGetSolutionStepValue(
+                *mpScalarRateVariable, 1);
+            const double scalar_rate_dot = r_node.FastGetSolutionStepValue(
+                *mpScalarRateVariable, 0);
 
-            r_node.FastGetSolutionStepValue(RANS_AUXILIARY_VARIABLE_2) =
-                this->mAlphaBossak * epsilon_dot_old + (1.0 - this->mAlphaBossak) * epsilon_dot;
+            r_node.FastGetSolutionStepValue(*mpRelaxedScalarRateVariable) =
+                this->mAlphaBossak * scalar_rate_dot_old + (1.0 - this->mAlphaBossak) * scalar_rate_dot;
         }
 
         KRATOS_CATCH("");
     }
 
-    ///@}
 private:
-    double mPreviousStabilizationMultiplier = 0.0;
-    double mPreviousAggregatedError = 0.0;
+    Variable<double> const * mpScalarRateVariable;
+    Variable<double> const * mpRelaxedScalarRateVariable;
+
+    ///@}
 };
 
 } // namespace Kratos
 
-#endif // KRATOS_RESIDUAL_BASED_BOSSAK_TURBULENT_ENERGY_DISSIPATION_RATE_SCHEME_H_INCLUDED defined
+#endif // KRATOS_RESIDUAL_BASED_BOSSAK_VELOCITY_SCALAR_SCHEME_H_INCLUDED defined

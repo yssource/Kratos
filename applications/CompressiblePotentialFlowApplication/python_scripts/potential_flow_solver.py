@@ -79,14 +79,21 @@ class PotentialFlowSolver(FluidSolver):
 
     def Initialize(self):
         time_scheme = KratosMultiphysics.ResidualBasedIncrementalUpdateStaticScheme()
+
+        conv_criteria = KratosMultiphysics.ResidualCriteria(
+            self.settings["relative_tolerance"].GetDouble(),
+            self.settings["absolute_tolerance"].GetDouble())
+        max_iterations = self.settings["maximum_iterations"].GetInt()
+
         # TODO: Rename to self.strategy once we upgrade the base FluidDynamicsApplication solvers
-        self.solver = KratosMultiphysics.ResidualBasedLinearStrategy(
+        self.solver = KratosMultiphysics.ResidualBasedNewtonRaphsonStrategy(
             self.GetComputingModelPart(),
             time_scheme,
             self.linear_solver,
+            conv_criteria,
+            max_iterations,
             self.settings["compute_reactions"].GetBool(),
             self.settings["reform_dofs_at_each_step"].GetBool(),
-            self.settings["calculate_solution_norm"].GetBool(),
             self.settings["move_mesh_flag"].GetBool())
 
         (self.solver).SetEchoLevel(self.settings["echo_level"].GetInt())

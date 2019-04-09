@@ -34,7 +34,7 @@
 #include "utilities/coordinate_transformation_utilities.h"
 #include "processes/process.h"
 #include "solving_strategies/schemes/residual_based_bossak_velocity_scheme.h"
-#include "utilities/derivatives_extension.h"
+#include "utilities/scheme_extension.h"
 
 namespace Kratos {
 
@@ -80,7 +80,7 @@ namespace Kratos {
     class TDenseSpace //= DenseSpace<double>
     >
     class ResidualBasedPredictorCorrectorVelocityBossakSchemeTurbulent : public ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace> {
-        class ElementDerivativesExtension : public DerivativesExtension
+        class ElementDerivativesExtension : public SchemeExtension
         {
             Element* mpElement;
         public:
@@ -125,19 +125,6 @@ namespace Kratos {
                 rVector[index++] = MakeIndirectScalar(r_node, ACCELERATION_X, Step);
                 rVector[index++] = MakeIndirectScalar(r_node, ACCELERATION_Y, Step);
                 rVector[index] = MakeIndirectScalar(r_node, ACCELERATION_Z, Step);
-            }
-
-            void GetFirstDerivativesDofsVector(std::size_t NodeId,
-                                               std::vector<Dof<double>::Pointer>& rVector,
-                                               ProcessInfo& rCurrentProcessInfo) override
-            {
-                rVector.resize(4);
-                std::size_t index = 0;
-                Node<3>& r_node = mpElement->GetGeometry()[NodeId];
-                rVector[index++] = r_node.pGetDof(VELOCITY_X);
-                rVector[index++] = r_node.pGetDof(VELOCITY_Y);
-                rVector[index++] = r_node.pGetDof(VELOCITY_Z);
-                rVector[index] = r_node.pGetDof(PRESSURE);
             }
 
             void GetZeroDerivativesVariables(std::vector<VariableData const*>& rVariables,
@@ -272,25 +259,6 @@ namespace Kratos {
          */
         /*@{ */
 
-        void Initialize(ModelPart& rModelPart) override
-        {
-            KRATOS_TRY;
-
-            BaseType::Initialize(rModelPart);
-
-            const int number_of_elements = rModelPart.NumberOfElements();
-
-#pragma omp parallel for
-            for (int i = 0; i < number_of_elements; i++)
-            {
-                Element& r_element = *(rModelPart.ElementsBegin() + i);
-                r_element.SetValue(DERIVATIVES_EXTENSION,
-                                        Kratos::make_unique<ElementDerivativesExtension>(&r_element));
-            }
-
-            KRATOS_CATCH("");
-        }
-
         /**
                 Performing the update of the solution.
          */
@@ -306,7 +274,7 @@ namespace Kratos {
 
             mRotationTool.RotateVelocities(r_model_part);
 
-            this->mpDofUpdater->UpdateDofs(rDofSet,Dv);
+            mpDofUpdater->UpdateDofs(rDofSet,Dv);
 
             mRotationTool.RecoverVelocities(r_model_part);
 
@@ -374,30 +342,64 @@ namespace Kratos {
                      TSystemVectorType& Dv,
                      TSystemVectorType& b) override
         {
-            BaseType::mUpdateDisplacement = (mMeshVelocity == 2);
-
-            BaseType::Predict(rModelPart, rDofSet, A, Dv, b);
+            // if (rModelPart.GetCommunicator().MyPID() == 0)
+            //     std::cout << "prediction" << std::endl;
 
             int NumThreads = OpenMPUtils::GetNumThreads();
             OpenMPUtils::PartitionVector NodePartition;
             OpenMPUtils::DivideInPartitions(rModelPart.Nodes().size(), NumThreads, NodePartition);
+
 #pragma omp parallel
             {
+                //array_1d<double, 3 > DeltaDisp;
+
                 int k = OpenMPUtils::ThisThread();
 
-                ModelPart::NodeIterator NodesBegin =
-                    rModelPart.NodesBegin() + NodePartition[k];
-                ModelPart::NodeIterator NodesEnd =
-                    rModelPart.NodesBegin() + NodePartition[k + 1];
+                ModelPart::NodeIterator NodesBegin = rModelPart.NodesBegin() + NodePartition[k];
+                ModelPart::NodeIterator NodesEnd = rModelPart.NodesBegin() + NodePartition[k + 1];
 
-                for (ModelPart::NodeIterator itNode = NodesBegin; itNode != NodesEnd; itNode++)
-                {
-                    if (mMeshVelocity == 2) // Lagrangian
+                for (ModelPart::NodeIterator itNode = NodesBegin; itNode != NodesEnd; itNode++) {
+                    array_1d<double, 3 > & OldVelocity = (itNode)->FastGetSolutionStepValue(VELOCITY, 1);
+                    double& OldPressure = (itNode)->FastGetSolutionStepValue(PRESSURE, 1);
+
+                    //predicting velocity
+                    //ATTENTION::: the prediction is performed only on free nodes
+                    array_1d<double, 3 > & CurrentVelocity = (itNode)->FastGetSolutionStepValue(VELOCITY);
+                    double& CurrentPressure = (itNode)->FastGetSolutionStepValue(PRESSURE);
+
+                    if ((itNode->pGetDof(VELOCITY_X))->IsFree())
+                        (CurrentVelocity[0]) = OldVelocity[0];
+                    if (itNode->pGetDof(VELOCITY_Y)->IsFree())
+                        (CurrentVelocity[1]) = OldVelocity[1];
+                    if (itNode->HasDofFor(VELOCITY_Z))
+                        if (itNode->pGetDof(VELOCITY_Z)->IsFree())
+                            (CurrentVelocity[2]) = OldVelocity[2];
+
+                    if (itNode->pGetDof(PRESSURE)->IsFree())
+                        CurrentPressure = OldPressure;
+
+                    // updating time derivatives ::: please note that displacements and
+                    // their time derivatives can not be consistently fixed separately
+                    array_1d<double, 3 > & OldAcceleration = (itNode)->FastGetSolutionStepValue(ACCELERATION, 1);
+                    array_1d<double, 3 > & CurrentAcceleration = (itNode)->FastGetSolutionStepValue(ACCELERATION);
+
+                    for (unsigned int i_dim = 0; i_dim < 3; ++i_dim)
+                        this->UpdateAcceleration(
+                            CurrentAcceleration[i_dim], CurrentVelocity[i_dim],
+                            OldVelocity[i_dim], OldAcceleration[i_dim]);
+
+                    if (mMeshVelocity == 2) //Lagrangian
                     {
-                        if ((itNode)->FastGetSolutionStepValue(IS_LAGRANGIAN_INLET) < 1e-15)
+                        array_1d<double, 3 > & OldDisplacement = (itNode)->FastGetSolutionStepValue(DISPLACEMENT, 1);
+                        array_1d<double, 3 > & CurrentDisplacement = (itNode)->FastGetSolutionStepValue(DISPLACEMENT, 0);
+
+                        if((itNode)->FastGetSolutionStepValue(IS_LAGRANGIAN_INLET) < 1e-15)
                         {
-                            noalias(itNode->FastGetSolutionStepValue(MESH_VELOCITY)) =
-                                itNode->FastGetSolutionStepValue(VELOCITY);
+                            noalias(itNode->FastGetSolutionStepValue(MESH_VELOCITY)) = itNode->FastGetSolutionStepValue(VELOCITY);
+                            for (unsigned int i_dim; i_dim < 3; ++i_dim)
+                                this->UpdateDisplacement(CurrentDisplacement[i_dim], OldDisplacement[i_dim],
+                                               OldVelocity[i_dim], OldAcceleration[i_dim],
+                                               CurrentAcceleration[i_dim]);
                         }
                         else
                         {
@@ -409,6 +411,9 @@ namespace Kratos {
                     }
                 }
             }
+
+            //              if (rModelPart.GetCommunicator().MyPID() == 0)
+            //                  std::cout << "end of prediction" << std::endl;
 
         }
 
@@ -649,6 +654,12 @@ namespace Kratos {
         //************************************************************************************************
         //************************************************************************************************
 
+        /// Free memory allocated by this object.
+        void Clear() override
+        {
+            this->mpDofUpdater->Clear();
+        }
+
         /*@} */
         /**@name Operations */
         /*@{ */
@@ -686,6 +697,11 @@ namespace Kratos {
         /*@} */
         /**@name Protected Operators*/
         /*@{ */
+
+        SchemeExtension::Pointer GetSchemeExtension(Element& rElement) override
+        {
+            return Kratos::make_shared<ElementDerivativesExtension>(&rElement);
+        }        
 
         /** On periodic boundaries, the nodal area and the values to project need to take into account contributions from elements on
          * both sides of the boundary. This is done using the conditions and the non-historical nodal data containers as follows:\n
@@ -806,6 +822,8 @@ namespace Kratos {
         const Variable<int>& mrPeriodicIdVar;
 
         Process::Pointer mpTurbulenceModel;
+
+        typename TSparseSpace::DofUpdaterPointerType mpDofUpdater = TSparseSpace::CreateDofUpdater();
 
         /*@} */
         /**@name Private Operators*/

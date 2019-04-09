@@ -495,6 +495,39 @@ void IncompressiblePotentialFlowElement<Dim, NumNodes>::ComputeLHSGaussPointCont
 }
 
 template <int Dim, int NumNodes>
+void IncompressiblePotentialFlowElement<Dim, NumNodes>::NewtonRaphsonCompressibleNormalElement(
+    const double weight, Matrix& lhs, const ElementalData<NumNodes, Dim>& data) const
+{
+    // WARNING! Pseudo Code!
+    int k=0
+    int max_iter = 10
+    while (k<max_iter)
+    {
+        ComputeVelocityNormalElement(velocity); // check if needed. Step 1
+        double vsquared = inner_prod(velocity,velocity); // is it inner product or not?
+        const array_1d<double, 3> vinfinity = rCurrentProcessInfo[VELOCITY_INFINITY];
+        const double vinfinity_squared = inner_prod(vinfinity, vinfinity));
+        const double speed_of_sound_squared = speed_of_sound*speed_of_sound; // import speed of sound / add const double in front?
+        const double exponent = 1/(gamma-1); // import gamma / add const double in front?
+        double density = density_infinity*pow((1+0.5*(gamma-1)*vinfinity_squared*(1-vsquared/vinfinity_squared)/speed_of_sound_squared)),exponent); // import density infinity / add double in front?
+        double drho_dvsquared = pow(density,(2-gamma))/(2*speed_of_sound_squared); // import density infinity / add double in front?
+        noalias(lhs1) += density * weight * prod(data.DN_DX, trans(data.DN_DX)); // do we need noalias?
+        noalias(lhs2) += 2 * drho_dvsquared * weight * prod(prod(trans(data.DN_DX)*velocity),prod(trans(velocity)*data.DN_DX)); // is it correct?
+        noalias(lhs) = lhs1 + lhs2;
+        array_1d<double, NumNodes> residual = lhs1 - value; // find value from conditions / is it NumNodes?
+        if (k==0)
+            const array_1d<double, NumNodes> residual1 = residual; // needs improvement
+        else if ((residual/residual1)<NR_epsilon)
+            break
+        array_1d<double, NumNodes> deltaPhis = solver(lhs,-residual); // find proper solver / is it NumNodes?
+        data.phis += deltaPhis; // update phi
+        k+=1;
+    }
+
+
+}
+
+template <int Dim, int NumNodes>
 void IncompressiblePotentialFlowElement<Dim, NumNodes>::AssignLocalSystemSubdividedElement(
     MatrixType& rLeftHandSideMatrix,
     Matrix& lhs_positive,

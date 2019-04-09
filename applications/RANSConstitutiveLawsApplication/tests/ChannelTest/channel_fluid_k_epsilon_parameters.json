@@ -6,7 +6,7 @@
         "parallel_type"   : "OpenMP",
         "echo_level"      : 0,
         "start_time"      : 0.0,
-        "end_time"        : 0.2
+        "end_time"        : 5.0
     },
     "output_configuration"             : {
         "result_file_configuration" : {
@@ -85,6 +85,7 @@
                     "alpha_bossak": -0.3
                 },
                 "echo_level":0,
+                "show_warnings"     : false,
                 "convergence_tolerances":
                 {
                     "k_relative_tolerance": 1e-3,

@@ -119,6 +119,7 @@ public:
                 "echo_level": 2
             },
             "echo_level"     : 0,
+            "show_warnings"  : true,
             "time_scheme"    : "steady",
             "scheme_settings": {},
             "constants":
@@ -151,6 +152,8 @@ public:
             default_parameters["constants"]);
         this->mrParameters["model_properties"]["flow_parameters"].ValidateAndAssignDefaults(
             default_parameters["flow_parameters"]);
+
+        this->mShowWarnings = this->mrParameters["model_properties"]["show_warnings"].GetBool();
 
         const Parameters& model_properties =
             this->mrParameters["model_properties"]["constants"];
@@ -483,6 +486,8 @@ private:
     double mRampUpTime;
 
     bool mAssignedInitialConditions = false;
+
+    int mShowWarnings;
 
     ConvergenceCriteriaPointerType mpConvergenceCriteria;
 
@@ -853,9 +858,9 @@ private:
             iNode->FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t;
         }
 
-        RansCalculationUtilities(this->mEchoLevel)
+        RansCalculationUtilities(this->mShowWarnings)
             .WarnIfNegative(this->mrModelPart, TURBULENT_VISCOSITY, "NuT");
-        RansCalculationUtilities(this->mEchoLevel)
+        RansCalculationUtilities(this->mShowWarnings)
             .ClipVariable(this->mrModelPart, TURBULENT_VISCOSITY, nu_t_min, nu_t_max);
     }
 

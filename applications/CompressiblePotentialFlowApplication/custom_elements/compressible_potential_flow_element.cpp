@@ -510,7 +510,7 @@ void CompressiblePotentialFlowElement<Dim, NumNodes>::NewtonRaphsonCompressibleN
     noalias(lhs1) += density * weight * prod(data.DN_DX, trans(data.DN_DX));                                                                    // do we need noalias?
     noalias(lhs2) += 2 * drho_dvsquared * weight * prod(prod(trans(data.DN_DX) * velocity), prod(trans(velocity) * data.DN_DX));                // is it correct?
     noalias(lhs) = lhs1 + lhs2;
-    array_1d<double, NumNodes> residual = lhs1 - value; // find/import value from conditions / is it NumNodes?
+    // array_1d<double, NumNodes> residual = lhs1 - value; // find/import value from conditions / is it NumNodes?
 }
 
 template <int Dim, int NumNodes>

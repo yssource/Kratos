@@ -491,7 +491,25 @@ template <int Dim, int NumNodes>
 void IncompressiblePotentialFlowElement<Dim, NumNodes>::ComputeLHSGaussPointContribution(
     const double weight, Matrix& lhs, const ElementalData<NumNodes, Dim>& data) const
 {
+    array_1d<double, Dim> velocity;
+    Matrix lhs1;
+    Matrix lhs2;
     const double density_infinity = GetProperties().GetValue(DENSITY_INFINITY);
+    const double speed_of_sound = GetProperties().GetValue(SPEED_OF_SOUND);
+    const double gamma = GetProperties().GetValue(GAMMA);
+    ComputeVelocityNormalElement(velocity);           // check if needed. Step 1
+    double vsquared = inner_prod(velocity, velocity); // is it inner product or not?
+    //const array_1d<double, 3> vinfinity = rCurrentProcessInfo[VELOCITY_INFINITY];
+    //const double vinfinity_squared = inner_prod(vinfinity, vinfinity));
+    const double vinfinity_squared = 100.0;
+    const double speed_of_sound_squared = speed_of_sound * speed_of_sound;                                                                      // import speed of sound / add const double in front?
+    const double exponent = 1 / (gamma - 1);                                                                                                    // import gamma / add const double in front?
+    double density = density_infinity*pow((1+0.5*(gamma-1)*vinfinity_squared*(1-vsquared/vinfinity_squared)/speed_of_sound_squared),exponent); // import density infinity / add double in front?
+    double drho_dvsquared = pow(density, (2 - gamma)) / (2 * speed_of_sound_squared);                                                     // import density infinity / add double in front?
+    noalias(lhs1) += density * weight * prod(data.DN_DX, trans(data.DN_DX));// + 2 * drho_dvsquared * weight * prod(prod(trans(data.DN_DX) * velocity), prod(trans(velocity) * data.DN_DX)));                                                                    // do we need noalias?
+    noalias(lhs2) += 2.0 * drho_dvsquared * weight * prod(prod((data.DN_DX),velocity), prod(trans(velocity), data.DN_DX));                // doesnt work
+    //noalias(lhs) = lhs1 + lhs2;
+
     noalias(lhs) += density_infinity * weight * prod(data.DN_DX, trans(data.DN_DX));
 }
 

@@ -104,7 +104,9 @@ void PotentialWallCondition<TDim, TNumNodes>::CalculateLocalSystem(
 
     const PotentialWallCondition& r_this = *this;
     const array_1d<double, 3>& v = r_this.GetValue(VELOCITY_INFINITY);
-    const double value = inner_prod(v, An) / static_cast<double>(TNumNodes);
+    const double density_infinity = GetProperties().GetValue(DENSITY_INFINITY);
+    //const double density_infinity = r_this.GetValue(DENSITY_INFINITY); // other way
+    const double value = density_infinity * inner_prod(v, An) / static_cast<double>(TNumNodes);
 
     for (unsigned int i = 0; i < TNumNodes; ++i)
         rRightHandSideVector[i] = value;
@@ -176,6 +178,8 @@ void PotentialWallCondition<TDim, TNumNodes>::FinalizeSolutionStep(ProcessInfo& 
     ElementPointerType pElem = pGetElement();
     pElem->GetValueOnIntegrationPoints(PRESSURE, rValues, rCurrentProcessInfo);
     this->SetValue(PRESSURE, rValues[0]);
+    //pElem->GetValueOnIntegrationPoints(DENSITY, rValues, rCurrentProcessInfo);
+    //this->SetValue(DENSITY, rValues[0]);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -295,6 +295,8 @@ private:
 
     void ComputePotentialJump(ProcessInfo& rCurrentProcessInfo);
 
+    //void GetDens(ProcessInfo& rCurrentProcessInfo);
+
     void ComputeElementInternalEnergy();
 
     void GetPotentialOnNormalElement(array_1d<double, NumNodes>& phis) const;

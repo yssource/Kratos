@@ -146,7 +146,7 @@ for normalvar in range(normal_combs):
             for node in range(nnodes):
                 active = active_inactive[node]
                 if (active == 1):
-                    augmented_contact_pressure = (PenaltyParameter[node] * NormalGap[node])
+                    augmented_contact_pressure = PenaltyParameter[node] * NormalGap[node]
                     rv_galerkin += DynamicFactor[node] * (augmented_contact_pressure * NormalSlave.row(node)).dot(Dw1Mw2.row(node))
                 else:
                     rv_galerkin += 0

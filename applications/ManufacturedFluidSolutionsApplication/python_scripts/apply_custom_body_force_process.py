@@ -52,7 +52,7 @@ class ApplyCustomBodyForceProcess(ManufacturedProcess):
         self.manufactured_process.SetBodyForce()
 
 
-    def ExecuteBeforeOutputStep(self):
+    def ExecuteFinalizeSolutionStep(self):
         if self.compute_error:
             self.manufactured_process.ComputeExactVelocity()
             self.manufactured_process.ComputeExactPressure()

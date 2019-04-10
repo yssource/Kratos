@@ -165,11 +165,6 @@ class ALMContactProcess(search_base_process.SearchBaseProcess):
         # We call to the base process
         super(ALMContactProcess, self).ExecuteInitializeSolutionStep()
 
-        # Before computing we reset the flags of slip
-        if self._get_if_is_interval():
-            if self.is_frictional:
-                KM.VariableUtils().SetFlag(KM.SLIP, False, self._get_process_model_part().Nodes)
-
     def ExecuteFinalizeSolutionStep(self):
         """ This method is executed in order to finalize the current step
 

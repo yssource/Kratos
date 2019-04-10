@@ -15,6 +15,7 @@
 // Application includes
 #include "custom_processes/turbulence_eddy_viscosity_model_process.h"
 #include "custom_processes/turbulence_evm_k_epsilon_process.h"
+#include "custom_processes/y_plus_model_processes/rans_logarithmic_y_plus_model_process.h"
 
 namespace Kratos
 {
@@ -38,7 +39,11 @@ void AddCustomProcessesToPython(pybind11::module& m)
     py::class_<TurbulenceEvmKEpsilon3DProcess, TurbulenceEvmKEpsilon3DProcess::Pointer, Process>(
         m, "TurbulenceEvmKEpsilon3DProcess")
         .def(py::init<ModelPart&, Parameters&, LinearSolverType::Pointer,
-                      LinearSolverType::Pointer, LinearSolverType::Pointer>());
+                      LinearSolverType::Pointer, LinearSolverType::Pointer>());                      
+    
+    py::class_<RansLogarithmicYPlusModelProcess, RansLogarithmicYPlusModelProcess::Pointer, Process>(
+        m, "RansLogarithmicYPlusModelProcess")
+        .def(py::init<ModelPart&, Parameters&>());
 }
 
 } // namespace Python.

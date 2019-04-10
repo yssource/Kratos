@@ -21,13 +21,13 @@
 #include "C:\_Masterarbeit\bibliotheken\HyperJet\HyperJet.h"
 
 // Project includes
-#include "iga_base_element.h"
+#include "iga_base_condition.h"
 
 
 namespace Kratos
 {
  class IgaBeamLoadCondition
-  : public Condition
+  : public IgaBaseCondition<4>
     {
     public:
       ///@name Type Definitions
@@ -46,16 +46,17 @@ namespace Kratos
       
 
       Condition::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes,  PropertiesType::Pointer pProperties) const;
-
-      void CalculateLocalSystem(MatrixType& rLeftHandSideMatrix, VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo);
-      
-      void CalculateRightHandSide(VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo);
-
-      //virtual void CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo);
       
       void EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& rCurrentProcessInfo);
 
       void GetDofList(DofsVectorType& ConditionalDofList,ProcessInfo& CurrentProcessInfo);
+
+      void CalculateAll(
+          MatrixType& rLeftHandSideMatrix,
+          VectorType& rRightHandSideVector,
+          ProcessInfo& rCurrentProcessInfo,
+          const bool ComputeLeftHandSide,
+          const bool ComputeRightHandSide);
 
    protected:
  
@@ -65,7 +66,7 @@ namespace Kratos
 	friend class Serializer;
 
 	// A private default constructor necessary for serialization  
-	IgaBeamLoadCondition() : Condition()
+	IgaBeamLoadCondition() : IgaBaseCondition<4>()
        {
        }
         

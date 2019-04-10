@@ -24,6 +24,8 @@ set(KRATOS_IGA_APPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/iga_beam_load_condition.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/iga_shell_3P_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/iga_shell_5P_element.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/iga_beam_load_condition.cpp
+
     # utilities
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/iga_flags.cpp
     # elements

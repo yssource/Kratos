@@ -15,6 +15,7 @@
 
 // Project includes
 /* Mortar includes */
+#include "custom_utilities/mortar_explicit_contribution_utilities.h"
 #include "custom_conditions/penalty_frictional_mortar_contact_condition.h"
 
 namespace Kratos
@@ -123,7 +124,7 @@ void PenaltyMethodFrictionalMortarContactCondition<TDim,TNumNodes,TNormalVariati
     integration_utility.GetTotalArea(slave_geometry, conditions_points_slave, integration_area);
 
     const double geometry_area = slave_geometry.Area();
-    if (is_inside && ((integration_area/geometry_area) > 1.0e-3 * geometry_area)) {
+    if (is_inside && ((integration_area/geometry_area) > 1.0e-5)) {
         IntegrationMethod this_integration_method = this->GetIntegrationMethod();
 
         // Initialize general variables for the current master element
@@ -157,14 +158,15 @@ void PenaltyMethodFrictionalMortarContactCondition<TDim,TNumNodes,TNormalVariati
                 // Integrating the mortar operators
                 for ( IndexType point_number = 0; point_number < integration_points_slave.size(); ++point_number ) {
                     // We compute the local coordinates
-                    const PointType local_point_decomp = integration_points_slave[point_number].Coordinates();
+
+                    const PointType local_point_decomp = PointType(integration_points_slave[point_number].Coordinates());
                     PointType local_point_parent;
                     PointType gp_global;
                     decomp_geom.GlobalCoordinates(gp_global, local_point_decomp);
                     slave_geometry.PointLocalCoordinates(local_point_parent, gp_global);
 
                     // Calculate the kinematic variables
-                    this->CalculateKinematics( rVariables, rDerivativeData, normal_master, local_point_decomp, local_point_parent, decomp_geom, dual_LM);
+                    MortarExplicitContributionUtilities<TDim, TNumNodes, FrictionalCase::FRICTIONAL_PENALTY, TNormalVariation, TNumNodesMaster>::CalculateKinematics(this, rVariables, rDerivativeData, normal_master, local_point_decomp, local_point_parent, decomp_geom, dual_LM);
 
                     const double integration_weight = integration_points_slave[point_number].Weight() * this->GetAxisymmetricCoefficient(rVariables);
 
@@ -220,7 +222,7 @@ void PenaltyMethodFrictionalMortarContactCondition<TDim,TNumNodes,TNormalVariati
     integration_utility.GetTotalArea(slave_geometry, conditions_points_slave, integration_area);
 
     const double geometry_area = slave_geometry.Area();
-    if (is_inside && ((integration_area/geometry_area) > 1.0e-3 * geometry_area)) {
+    if (is_inside && ((integration_area/geometry_area) > 1.0e-5)) {
         IntegrationMethod this_integration_method = this->GetIntegrationMethod();
 
         // Initialize general variables for the current master element
@@ -254,14 +256,14 @@ void PenaltyMethodFrictionalMortarContactCondition<TDim,TNumNodes,TNormalVariati
                 // Integrating the mortar operators
                 for ( IndexType point_number = 0; point_number < integration_points_slave.size(); ++point_number ) {
                     // We compute the local coordinates
-                    const PointType local_point_decomp = integration_points_slave[point_number].Coordinates();
+                    const PointType local_point_decomp = PointType(integration_points_slave[point_number].Coordinates());
                     PointType local_point_parent;
                     PointType gp_global;
                     decomp_geom.GlobalCoordinates(gp_global, local_point_decomp);
                     slave_geometry.PointLocalCoordinates(local_point_parent, gp_global);
 
                     // Calculate the kinematic variables
-                    this->CalculateKinematics( rVariables, rDerivativeData, normal_master, local_point_decomp, local_point_parent, decomp_geom, dual_LM);
+                    MortarExplicitContributionUtilities<TDim, TNumNodes, FrictionalCase::FRICTIONAL_PENALTY, TNormalVariation, TNumNodesMaster>::CalculateKinematics(this, rVariables, rDerivativeData, normal_master, local_point_decomp, local_point_parent, decomp_geom, dual_LM);
 
                     const double integration_weight = integration_points_slave[point_number].Weight() * this->GetAxisymmetricCoefficient(rVariables);
 
@@ -373,7 +375,7 @@ void PenaltyMethodFrictionalMortarContactCondition<TDim,TNumNodes,TNormalVariati
         if (this->Is(ACTIVE)) {
             // Getting geometries
             GeometryType& r_slave_geometry = this->GetGeometry();
-            GeometryType& r_master_geometry = this->GetPairedGeometry();
+            GeometryType& r_master_geometry = this->GetGeometry();
 
             for ( IndexType i_master = 0; i_master < TNumNodesMaster; ++i_master ) {
                 NodeType& r_master_node = r_master_geometry[i_master];

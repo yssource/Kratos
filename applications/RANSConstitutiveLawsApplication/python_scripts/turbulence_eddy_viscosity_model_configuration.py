@@ -76,8 +76,6 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         self.GetTurbulenceModelProcess().ExecuteInitializeSolutionStep()
     
     def SolveSolutionStep(self):
-        self.UpdateFluidViscosity()
-
         for strategy in self.strategies_list:
             strategy.InitializeSolutionStep()
             strategy.Predict()
@@ -87,13 +85,19 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
 
         variable_utils = KM.VariableUtils()
 
-        old_turbulent_viscosity = variable_utils.SumHistoricalNodeScalarVariable(KM.TURBULENT_VISCOSITY, self.fluid_model_part)
         while (not is_converged and iteration <= self.settings["coupling_settings"]["max_iterations"].GetInt()):
+            variable_utils.CopyScalarVar(KM.OLD_TURBULENT_VISCOSITY, KM.TURBULENT_VISCOSITY, self.fluid_model_part.Nodes)                    
             for strategy in self.strategies_list:
                 strategy.SolveSolutionStep()
-        
+
+            self.UpdateTurbulentViscosity()
+
+            iteration += 1
+                    
         for strategy in self.strategies_list:
             strategy.FinalizeSolutionStep()
+        
+        self.UpdateFluidViscosity()
 
     def FinalizeSolutionStep(self):
         self.GetTurbulenceModelProcess().ExecuteFinalizeSolutionStep()
@@ -105,6 +109,7 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         self.fluid_model_part.AddNodalSolutionStepVariable(KM.FLAG_VARIABLE)
         self.fluid_model_part.AddNodalSolutionStepVariable(KM.KINEMATIC_VISCOSITY)
         self.fluid_model_part.AddNodalSolutionStepVariable(KM.TURBULENT_VISCOSITY)
+        self.fluid_model_part.AddNodalSolutionStepVariable(KM.OLD_TURBULENT_VISCOSITY)
 
     def AddDofs(self):
         raise Exception(
@@ -113,7 +118,7 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
 
     def GetTurbulenceModelProcess(self):
         raise Exception(
-            "Calling base class TurbulenceModelConfiguration::GetTurbulenceModelProcess"
+            "Calling base class TurbulenceEddyViscosityModelConfiguration::GetTurbulenceModelProcess"
         )
     
     def CalculateYPlus(self):
@@ -124,6 +129,11 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         
         self.y_plus_model_process.Execute()
         KM.Logger(self.__name__, "Calculated y plus using " + self.y_plus_model_process)
+
+    def UpdateTurbulentViscosity(self):
+        raise Exception(
+            "Calling base class TurbulenceEddyViscosityModelConfiguration::UpdateTurbulentViscosity"
+        )        
 
     def UpdateFluidViscosity(self):
         rans_variable_utils = KratosRANS.RansVariableUtils()

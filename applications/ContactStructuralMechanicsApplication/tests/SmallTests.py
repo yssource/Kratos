@@ -146,6 +146,9 @@ class ComponentsALMThreeDPatchNotMatchingTestContact(TestFactory):
 class ALMHyperSimplePatchFrictionalTestContact(TestFactory):
     file_name = "ALM_frictional_contact_test_2D/hyper_simple_patch_test"
 
+class PenaltyFrictionlessHyperSimplePatchFrictionalTestContact(TestFactory):
+    file_name = "penalty_frictionless_contact_test_2D/hyper_simple_patch_test"
+
 class PenaltyNoFrictionHyperSimplePatchFrictionalTestContact(TestFactory):
     file_name = "penalty_frictional_contact_test_2D/no_friction_hyper_simple_patch_test"
 

@@ -208,7 +208,7 @@ public:
                         }
 
                         // Check for the slip/stick state
-                        if (augmented_tangent_pressure < mu * augmented_normal_pressure) { // STICK CASE
+                        if (augmented_tangent_pressure < mu * std::abs(augmented_normal_pressure)) { // STICK CASE
 //                             KRATOS_WARNING_IF("PenaltyFrictionalMortarConvergenceCriteria", norm_2(r_gt) > Tolerance) << "In case of stick should be zero, if not this means that is not properly working. Node ID: " << it_node->Id() << std::endl;
 //                             noalias(it_node->FastGetSolutionStepValue(WEIGHTED_SLIP)) = zero_array; // NOTE: In case of stick should be zero, if not this means that is not properly working
                             if (it_node->Is(SLIP)) {
@@ -409,7 +409,7 @@ public:
                         }
 
                         // Check for the slip/stick state
-                        if (augmented_tangent_pressure <= - mu * augmented_normal_pressure) { // STICK CASE // FIXME: Check the sign
+                        if (augmented_tangent_pressure <= - mu * augmented_normal_pressure) { // STICK CASE // FIXME: Check the <=
 //                             KRATOS_WARNING_IF("PenaltyFrictionalMortarConvergenceCriteria", norm_2(r_gt) > Tolerance) << "In case of stick should be zero, if not this means that is not properly working. Node ID: " << it_node->Id() << std::endl;
 //                             noalias(it_node->FastGetSolutionStepValue(WEIGHTED_SLIP)) = zero_array; // NOTE: In case of stick should be zero, if not this means that is not properly working
                             if (it_node->Is(SLIP)) {

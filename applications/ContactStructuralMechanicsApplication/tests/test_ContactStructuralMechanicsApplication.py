@@ -9,12 +9,8 @@ import KratosMultiphysics.KratosUnittest as KratosUnittest
 
 # Import subprocess
 import subprocess
-import KratosMultiphysics.kratos_utilities as kratos_utilities
-if kratos_utilities.CheckIfApplicationsAvailable("ExternalSolversApplication"):
-    has_external_solvers_application = True
-else:
-    has_external_solvers_application = False
 
+# Using kratos_utilities
 import KratosMultiphysics.kratos_utilities as kratos_utilities
 if kratos_utilities.CheckIfApplicationsAvailable("ExternalSolversApplication"):
     has_external_solvers_application = True
@@ -348,9 +344,9 @@ def AssembleTestSuites():
             TComponentsALMThreeDPatchNotMatchingTestContact,
             TALMHyperSimplePatchFrictionalTestContact,
             TPenaltyNoFrictionHyperSimplePatchFrictionalTestContact,
-            #TPenaltyPerfectStickHyperSimplePatchFrictionalTestContact,
+            TPenaltyPerfectStickHyperSimplePatchFrictionalTestContact,
             TPenaltyHyperSimplePatchFrictionalSlipTestContact,
-            #TPenaltyHyperSimplePatchFrictionalStickTestContact,
+            ##TPenaltyHyperSimplePatchFrictionalStickTestContact,
             #### NIGTHLY
             TALMTaylorPatchTestContact,
             TALMHertzSimpleTestContact,

@@ -63,7 +63,6 @@
 
 #include "utilities/python_function_callback_utility.h"
 
-
 namespace Kratos
 {
 
@@ -109,11 +108,54 @@ void CalculateEmbeddedVariableFromSkinArray(
     rDistProcess.CalculateEmbeddedVariableFromSkin(rVariable, rEmbeddedVariable);
 }
 
+// Trampoline class for Process
+class PyProcess : public Process
+{
+public:
+    void Execute() override
+    {
+        PYBIND11_OVERLOAD(void, Process, Execute, );
+    }
+    void ExecuteInitialize() override
+    {
+        PYBIND11_OVERLOAD(void, Process, ExecuteInitialize, );
+    }
+    void ExecuteBeforeSolutionLoop() override
+    {
+        PYBIND11_OVERLOAD(void, Process, ExecuteBeforeSolutionLoop, );
+    }
+    void ExecuteInitializeSolutionStep() override
+    {
+        PYBIND11_OVERLOAD(void, Process, ExecuteInitializeSolutionStep, );
+    }
+    void ExecuteFinalizeSolutionStep() override
+    {
+        PYBIND11_OVERLOAD(void, Process, ExecuteFinalizeSolutionStep, );
+    }
+    void ExecuteBeforeOutputStep() override
+    {
+        PYBIND11_OVERLOAD(void, Process, ExecuteBeforeOutputStep, );
+    }
+    void ExecuteAfterOutputStep() override
+    {
+        PYBIND11_OVERLOAD(void, Process, ExecuteAfterOutputStep, );
+    }
+    void ExecuteFinalize() override
+    {
+        PYBIND11_OVERLOAD(void, Process, ExecuteFinalize, );
+    }
+
+    int Check() override
+    {
+        PYBIND11_OVERLOAD(int, Process, Check, );
+    }
+};
+
 void  AddProcessesToPython(pybind11::module& m)
 {
     namespace py = pybind11;
 
-    py::class_<Process, Process::Pointer>(m,"Process")
+    py::class_<Process, Process::Pointer, PyProcess>(m,"Process")
     .def(py::init<>())
     .def("Execute",&Process::Execute)
     .def("ExecuteInitialize",&Process::ExecuteInitialize)

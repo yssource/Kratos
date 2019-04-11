@@ -62,8 +62,8 @@ JInverse = simplify((J)**(-1))
 # Derivative of the shape functions w.r.t x and y
 DNDx = simplify(DNDe*JInverse)
 
-# Determinant of the jacobian (area of the triangle)
-det_J = simplify(J.det())
+# Determinant of the jacobian (half of the area of the triangle)
+det_J = simplify(0.5*J.det())
 
 # Local stiffness matrix (before integrating over the area)
 A = simplify(DNDx*DNDx.transpose())

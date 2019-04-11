@@ -177,7 +177,7 @@ for normalvar in range(2):
                 else:
                     augmented_normal_contact_pressure = PenaltyParameter[node] * NormalGap[node]
                     if slip == 1: # Slip
-                        augmented_tangent_contact_pressure = mu[node] * augmented_normal_contact_pressure * TangentSlave.row(node)
+                        augmented_tangent_contact_pressure = - mu[node] * augmented_normal_contact_pressure * TangentSlave.row(node)
                     else: # Stick
                         augmented_tangent_contact_pressure = TangentFactor * PenaltyParameter[node] * TangentSlip.row(node)
 

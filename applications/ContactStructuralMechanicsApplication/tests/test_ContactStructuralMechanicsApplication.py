@@ -89,6 +89,7 @@ from SmallTests import ALMHyperSimplePatchFrictionalTestContact                 
 # Penalty frictional tests
 from SmallTests import PenaltyNoFrictionHyperSimplePatchFrictionalTestContact        as TPenaltyNoFrictionHyperSimplePatchFrictionalTestContact
 from SmallTests import PenaltyPerfectStickHyperSimplePatchFrictionalTestContact      as TPenaltyPerfectStickHyperSimplePatchFrictionalTestContact
+from SmallTests import PenaltyThresholdSlipHyperSimplePatchFrictionalTestContact     as TPenaltyThresholdSlipHyperSimplePatchFrictionalTestContact
 from SmallTests import PenaltyHyperSimplePatchFrictionalSlipTestContact              as TPenaltyHyperSimplePatchFrictionalSlipTestContact
 from SmallTests import PenaltyHyperSimplePatchFrictionalStickTestContact             as TPenaltyHyperSimplePatchFrictionalStickTestContact
 
@@ -209,6 +210,7 @@ def AssembleTestSuites():
     # Penalty frictional tests
     smallSuite.addTest(TPenaltyNoFrictionHyperSimplePatchFrictionalTestContact('test_execution'))
     smallSuite.addTest(TPenaltyPerfectStickHyperSimplePatchFrictionalTestContact('test_execution'))
+    smallSuite.addTest(TPenaltyThresholdSlipHyperSimplePatchFrictionalTestContact('test_execution'))
     smallSuite.addTest(TPenaltyHyperSimplePatchFrictionalSlipTestContact('test_execution'))
     smallSuite.addTest(TPenaltyHyperSimplePatchFrictionalStickTestContact('test_execution'))
 
@@ -345,6 +347,7 @@ def AssembleTestSuites():
             TALMHyperSimplePatchFrictionalTestContact,
             TPenaltyNoFrictionHyperSimplePatchFrictionalTestContact,
             TPenaltyPerfectStickHyperSimplePatchFrictionalTestContact,
+            TPenaltyThresholdSlipHyperSimplePatchFrictionalTestContact,
             TPenaltyHyperSimplePatchFrictionalSlipTestContact,
             ##TPenaltyHyperSimplePatchFrictionalStickTestContact,
             #### NIGTHLY

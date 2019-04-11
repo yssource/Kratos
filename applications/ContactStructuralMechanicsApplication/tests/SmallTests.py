@@ -155,6 +155,9 @@ class PenaltyNoFrictionHyperSimplePatchFrictionalTestContact(TestFactory):
 class PenaltyPerfectStickHyperSimplePatchFrictionalTestContact(TestFactory):
     file_name = "penalty_frictional_contact_test_2D/perfect_stick_hyper_simple_patch_test"
 
+class PenaltyThresholdSlipHyperSimplePatchFrictionalTestContact(TestFactory):
+    file_name = "penalty_frictional_contact_test_2D/threshold_slip_hyper_simple_patch_test"
+
 class PenaltyHyperSimplePatchFrictionalSlipTestContact(TestFactory):
     file_name = "penalty_frictional_contact_test_2D/hyper_simple_slip_patch_test"
 

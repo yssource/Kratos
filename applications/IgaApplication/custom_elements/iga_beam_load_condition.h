@@ -47,7 +47,7 @@ namespace Kratos
 
       Condition::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes,  PropertiesType::Pointer pProperties) const;
       
-      void EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& rCurrentProcessInfo);
+	    void EquationIdVector(EquationIdVectorType& rResult,	ProcessInfo& rCurrentProcessInfo);
 
       void GetDofList(DofsVectorType& ConditionalDofList,ProcessInfo& CurrentProcessInfo);
 

@@ -50,17 +50,22 @@ namespace Kratos
 
 	//************************************************************************************
 	//************************************************************************************
-	void IgaBeamLoadCondition::EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo)
+	void IgaBeamLoadCondition::EquationIdVector(
+		EquationIdVectorType& rResult,
+		ProcessInfo& rCurrentProcessInfo)
 	{
-		int number_of_nodes = GetGeometry().PointsNumber();
-		unsigned int index;
-		unsigned int dim = 1;
-		rResult.resize(number_of_nodes*dim);
-		for (int i=0;i<number_of_nodes;i++)
-		{
-			index = i*dim;
-			rResult[index] = (GetGeometry()[i].GetDof(TEMPERATURE).EquationId());			
+		KRATOS_TRY;
+
+		rResult.resize(NumberOfDofs());
+
+		for (std::size_t i = 0; i < NumberOfNodes(); i++) {
+			SetElementEquationId(rResult, i, 0, DISPLACEMENT_X);
+			SetElementEquationId(rResult, i, 1, DISPLACEMENT_Y);
+			SetElementEquationId(rResult, i, 2, DISPLACEMENT_Z);
+			SetElementEquationId(rResult, i, 3, DISPLACEMENT_ROTATION);
 		}
+
+		KRATOS_CATCH("")
 	}
 
 	//************************************************************************************
@@ -89,55 +94,75 @@ namespace Kratos
 		const bool ComputeRightHandSide)
 	{
 		KRATOS_TRY
+		using namespace BeamUtilities;
+		using std::sqrt;
+		using std::pow;
 
-		// const unsigned int NumberOfNodes = GetGeometry().size();
-		// const unsigned int Dimension = GetGeometry().WorkingSpaceDimension();
+		using Vector3d = BeamUtilities::Vector<3>;
+		using Matrix3d = BeamUtilities::Matrix<3, 3>;
 
-		// // Resizing as needed the LHS
-		// const unsigned int MatSize = NumberOfNodes * Dimension;
+		// get integration weight
 
-		// if ( CalculateStiffnessMatrixFlag == true ) //calculation of the matrix is required
-		// {
-		// 	if ( rLeftHandSideMatrix.size1() != MatSize )
-		// 	{
-		// 		rLeftHandSideMatrix.resize( MatSize, MatSize, false );
-		// 	}
+		// const double& integration_weight = GetValue(INTEGRATION_WEIGHT);
 
-		// 	noalias( rLeftHandSideMatrix ) = ZeroMatrix( MatSize, MatSize ); //resetting LHS
-		// }
+		// get shape functions
 
-		// //resizing as needed the RHS
-		// if ( CalculateResidualVectorFlag == true ) //calculation of the matrix is required
-		// {
-		// 	if ( rRightHandSideVector.size( ) != MatSize )
-		// 	{
-		// 		rRightHandSideVector.resize( MatSize, false );
-		// 	}
+		BeamUtilities::Matrix<3, Dynamic> shape_functions(3, GetValue(SHAPE_FUNCTION_VALUES).size());
+		shape_functions.row(0) = MapVector(this->GetValue(SHAPE_FUNCTION_VALUES));
+		shape_functions.row(1) = MapVector(this->GetValue(SHAPE_FUNCTION_LOCAL_DER_1));
+		shape_functions.row(2) = MapVector(this->GetValue(SHAPE_FUNCTION_LOCAL_DER_2));
 
-		// 	noalias( rRightHandSideVector ) = ZeroVector( MatSize ); //resetting RHS
-		// }
+		const Vector3d A1   = MapVector(this->GetValue(BASE_A1));
+		const Vector3d A1_1 = MapVector(this->GetValue(BASE_A1_1));
 
-		// // Vector with a loading applied to the condition
-		// array_1d<double, 3 > PointLoad = ZeroVector(3);
-		// if( this->Has( POINT_LOAD ) )
-		// {
-		// 	noalias(PointLoad) = this->GetValue( POINT_LOAD );
-		// }
+		const double A11 = A1.dot(A1);
+		const double A = sqrt(A11);
 
-		// for (unsigned int ii = 0; ii < NumberOfNodes; ++ii)
-		// {
-		// 	const unsigned int base = ii*Dimension;
+		const Vector3d T = A1 / A;
+		const Vector3d T_1 = A1_1 / A - A1.dot(A1_1) * A1 / pow(A, 3);
 
-		// 	if( GetGeometry()[ii].SolutionStepsDataHas( POINT_LOAD ) )
-		// 	{
-		// 		noalias(PointLoad) += GetGeometry()[ii].FastGetSolutionStepValue( POINT_LOAD );
-		// 	}
+		const Vector3d A2   = MapVector(GetValue(BASE_A2));
+		const Vector3d A3   = MapVector(GetValue(BASE_A3));
 
-		// 	for(unsigned int k = 0; k < Dimension; ++k)
-		// 	{
-		// 		rRightHandSideVector[base + k] += GetPointLoadIntegrationWeight() * PointLoad[k];
-		// 	}
-		// }
+		const auto phi = ComputeActValue(DISPLACEMENT_ROTATION, 0, shape_functions, GetGeometry());
+		const auto phi_1 = ComputeActValue(DISPLACEMENT_ROTATION, 1, shape_functions, GetGeometry());    
+
+		const auto a1 = ComputeActBaseVector(1, shape_functions, GetGeometry());
+		const auto a1_1 = ComputeActBaseVector(2, shape_functions, GetGeometry());
+
+		const auto a11 = a1.dot(a1);
+		const auto a = sqrt(a11);
+
+		const auto t = a1 / a;
+		const auto t_1 = a1_1 / a - a1.dot(a1_1) * a1 / pow(a, 3);
+
+		const auto rod = ComputeRod<HyperDual>(t, phi);
+		const auto rod_1 = ComputeRod_1<HyperDual>(t, t_1, phi, phi_1);
+
+		const auto lam = ComputeLam<HyperDual>(T, t);
+		const auto lam_1 = ComputeLam_1<HyperDual>(T, T_1, t, t_1);
+
+		const auto rod_lam = rod * lam;
+
+		const auto a2 = rod_lam * A2.transpose();
+		const auto a3 = rod_lam * A3.transpose();
+
+		const auto d_T = A1.dot(T);
+
+		const auto d_t = a1.dot(T);     // Anteil T in a1 Richtung
+
+		const auto alpha_2  = HyperJet::atan2(d_n , d_t);                  // Winkel zwischen a1 und A1 um n
+		const auto alpha_3  = HyperJet::atan2(d_v , d_t);                  // Winkel zwischen a1 und A1 um v
+
+		array_1d<double, 3 > PointLoad = ZeroVector(3);
+
+		PointLoad = GetValue(LOAD_VECTOR_MOMENT); 
+
+		auto const dP_z = alpha_2 * PointLoad[2]; 
+		auto const dP_y = alpha_3 * PointLoad[1];
+		
+		MapMatrix(rLeftHandSideMatrix) =  dP_y.h() + dP_z.h() ;
+		MapVector(rRightHandSideVector) = -(dP_y.g() + dP_z.g());
 
 		KRATOS_CATCH( "" )
     }

@@ -249,6 +249,36 @@ namespace MortarUtilities
         }
 
         return tangent_matrix;
+
+    }
+    /**
+     * @brief It calculates the matrix containing the tangent vector of the slip (for frictional contact)
+     * @param rGeometry The geometry to calculate
+     * @return tangent_matrix The matrix containing the tangent vectors of the slip
+     */
+    template< SizeType TNumNodes, SizeType TDim>
+    BoundedMatrix<double, TNumNodes, TDim> ComputeTangentMatrixPenalty(const GeometryType& rGeometry) {
+        /* DEFINITIONS */
+        // Zero tolerance
+        const double zero_tolerance = std::numeric_limits<double>::epsilon();
+        // Tangent matrix
+        BoundedMatrix<double, TNumNodes, TDim> tangent_matrix;
+
+        const Variable<array_1d<double, 3>>& r_slip_variable = KratosComponents<Variable<array_1d<double, 3>>>::Get("WEIGHTED_SLIP");
+
+        for (IndexType i_node = 0; i_node < TNumNodes; ++i_node) {
+            const array_1d<double, 3>& r_gt = rGeometry[i_node].FastGetSolutionStepValue(r_slip_variable);
+            const double norm_gt = norm_2(r_gt);
+            if (norm_gt > zero_tolerance) { // Non zero slip
+                for (std::size_t i_dof = 0; i_dof < TDim; ++i_dof)
+                    tangent_matrix(i_node, i_dof) = r_gt[i_dof]/norm_gt;
+            } else { // In case of zero slip
+                for (std::size_t i_dof = 0; i_dof < TDim; ++i_dof)
+                    tangent_matrix(i_node, i_dof) = 0.0;
+            }
+        }
+
+        return tangent_matrix;
     }
 
     /**

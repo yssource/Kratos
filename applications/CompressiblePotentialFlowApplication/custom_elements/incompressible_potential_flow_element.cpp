@@ -402,11 +402,6 @@ void IncompressiblePotentialFlowElement<Dim, NumNodes>::CalculateLocalSystemNorm
 
     //GetPotentialOnNormalElement(data.phis);
     data.phis = PotentialFlow::GetPotentialOnNormalElement<2,3>(*this);
-    if(this->Id()==100)
-    {
-        KRATOS_WATCH(data.phis)
-        KRATOS_WATCH(density_infinity)
-    }
 
     noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
 }

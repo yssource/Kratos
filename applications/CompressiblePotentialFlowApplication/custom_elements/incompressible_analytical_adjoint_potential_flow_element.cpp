@@ -254,7 +254,6 @@ namespace Kratos
             }
         }
 
-
         KRATOS_CATCH("")
     }
 

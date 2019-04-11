@@ -507,7 +507,7 @@ void IncompressiblePotentialFlowElement<Dim, NumNodes>::ComputeLHSGaussPointCont
     const double exponent = 1 / (gamma - 1);
     double density = density_infinity*pow((1+0.5*(gamma-1)*vinfinity_squared*(1-vsquared/vinfinity_squared)/speed_of_sound_squared),exponent);
     int temp;
-    double drho_dvsquared = pow(density, (2 - gamma)) / (2 * speed_of_sound_squared);
+    double drho_dvsquared = -pow(density_infinity,gamma-1)*pow(density, (2 - gamma)) / (2 * speed_of_sound_squared);
     //std::cout  << "weight " << weight << std::endl;//", drho_dvsquared " << drho_dvsquared << std::endl;
     //std::cin >> temp;
     BoundedVector<double, NumNodes> DNV = prod(data.DN_DX, velocity);
@@ -526,14 +526,6 @@ void IncompressiblePotentialFlowElement<Dim, NumNodes>::ComputeLHSGaussPointCont
 
     //noalias(lhs) += density_infinity*weight * prod(data.DN_DX, trans(data.DN_DX)); // original line
 }
-
-// template <int Dim, int NumNodes>
-// void IncompressiblePotentialFlowElement<Dim, NumNodes>::GetDens(ProcessInfo& rCurrentProcessInfo)
-// {
-
-//     const double density_infinity = GetProperties().GetValue(DENSITY_INFINITY);
-//     std::cout  << "GET DENS!!! " << density_infinity << std::endl;
-// }
 
 template <int Dim, int NumNodes>
 void IncompressiblePotentialFlowElement<Dim, NumNodes>::AssignLocalSystemSubdividedElement(

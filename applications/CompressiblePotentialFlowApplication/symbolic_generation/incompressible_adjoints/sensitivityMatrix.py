@@ -65,7 +65,7 @@ DNDx = simplify(DNDe*JInverse)
 # Determinant of the jacobian (area of the triangle)
 det_J = simplify(J.det())
 
-# Local stiffness matrix
+# Local stiffness matrix (before integrating over the area)
 A = simplify(DNDx*DNDx.transpose())
 
 # Multiplying with the area:

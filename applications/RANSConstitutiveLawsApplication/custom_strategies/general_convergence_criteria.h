@@ -69,10 +69,10 @@ public:
      * @param PrsRatioTolerance Relative tolerance for presssure error
      * @param PrsAbsTolerance Absolute tolerance for presssure error
      */
-    GeneralConvergenceCriteria(double rRatioTolerance, double rAbsTolerance)
+    GeneralConvergenceCriteria(double RatioTolerance, double AbsTolerance)
         : ConvergenceCriteria<TSparseSpace, TDenseSpace>(),
-          mRatioTolerance(rRatioTolerance),
-          mAbsTolerance(rAbsTolerance)
+          mRatioTolerance(RatioTolerance),
+          mAbsTolerance(AbsTolerance)
     {
     }
 
@@ -154,7 +154,7 @@ public:
             const ProcessInfo& r_current_process_info = rModelPart.GetProcessInfo();
             const unsigned int iteration = r_current_process_info[NL_ITERATION_NUMBER];
 
-            if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
+            if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 1)
             {
                 std::cout << "[" << iteration << "] CONVERGENCE CHECK: ";
                 std::cout << dof_name;
@@ -168,7 +168,7 @@ public:
             if ((std::abs(ratio) > mRatioTolerance) && (std::abs(ratio_abs) > mAbsTolerance))
                 return false;
 
-            if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0)
+            if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 1)
             {
                 std::cout << "CONVERGENCE CHECK: ";
                 std::cout << dof_name;

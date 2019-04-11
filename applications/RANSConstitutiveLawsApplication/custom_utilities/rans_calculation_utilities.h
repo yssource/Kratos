@@ -124,13 +124,14 @@ public:
     template <unsigned int TDim>
     double CalculateMatrixTrace(const BoundedMatrix<double, TDim, TDim>& rMatrix);
 
-    void CheckBounds(ModelPart& rModelPart,
-                     const Variable<double>& rVariable,
-                     const std::string info = "");
+    void CheckBounds(double& rMinValue,
+                     double& rMaxValue,
+                     const ModelPart& rModelPart,
+                     const Variable<double>& rVariable);
 
-    double WarnIfNegative(ModelPart& rModelPart,
-                          const Variable<double>& rVariable,
-                          const std::string info = "");
+    void WarnIfNegative(unsigned int& rNumberOfNegativeNodes,
+                        const ModelPart& rModelPart,
+                        const Variable<double>& rVariable);
 
     ///@}
 

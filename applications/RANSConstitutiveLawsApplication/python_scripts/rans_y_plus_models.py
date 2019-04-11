@@ -1,3 +1,4 @@
+import KratosMultiphysics
 import KratosMultiphysics.RANSConstitutiveLawsApplication as KratosRANS
 
 

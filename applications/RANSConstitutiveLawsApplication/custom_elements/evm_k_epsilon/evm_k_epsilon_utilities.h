@@ -16,10 +16,9 @@
 // System includes
 
 // Project includes
-#include "custom_utilities/rans_calculation_utilities.h"
 #include "includes/define.h"
+#include "includes/model_part.h"
 #include "includes/ublas_interface.h"
-#include "input_output/logger.h"
 
 namespace Kratos
 {
@@ -38,47 +37,76 @@ namespace Kratos
 ///@name  Functions
 ///@{
 
-namespace EvmKepsilonModelUtilities
+///@}
+///@name Kratos Classes
+///@{
+
+/**
+ * @class VariableUtils
+ * @ingroup KratosCore
+ * @brief This class implements a set of auxiliar, already parallelized, methods to
+ * perform some common tasks related with the variable values and fixity.
+ * @details The methods are exported to python in order to add this improvements to the python interface
+ * @author Riccardo Rossi
+ * @author Ruben Zorrilla
+ * @author Vicente Mataix Ferrandiz
+ */
+
+class EvmKepsilonModelUtilities
 {
-double CalculateTurbulentViscosity(const double C_mu,
-                                   const double turbulent_kinetic_energy,
-                                   const double turbulent_energy_dissipation_rate,
-                                   const double f_mu);
+public:
+    ///@name Type Definitions
+    ///@{
 
-double CalculateFmu(const double y_plus);
+    /// We create the Pointer related to EvmKepsilonModelUtilities
+    KRATOS_CLASS_POINTER_DEFINITION(EvmKepsilonModelUtilities);
 
-double CalculateF2(const double turbulent_kinetic_energy,
-                   const double kinematic_viscosity,
-                   const double turbulent_energy_dissipation_rate);
+    template <unsigned int TDim>
+    double static CalculateSourceTerm(const BoundedMatrix<double, TDim, TDim>& rVelocityGradient,
+                                      const double turbulent_kinematic_viscosity,
+                                      const double turbulent_kinetic_energy);
 
-template <unsigned int TDim>
-double CalculateSourceTerm(const BoundedMatrix<double, TDim, TDim>& rVelocityGradient,
-                           const double turbulent_kinematic_viscosity,
-                           const double turbulent_kinetic_energy);
+    double static CalculateTurbulentViscosity(const double C_mu,
+                                              const double turbulent_kinetic_energy,
+                                              const double turbulent_energy_dissipation_rate,
+                                              const double f_mu);
 
-double CalculateGamma(const double C_mu,
-                      const double f_mu,
-                      const double turbulent_kinetic_energy,
-                      const double turbulent_kinematic_viscosity);
+    double static CalculateFmu(const double y_plus);
 
-void CalculateTurbulentValues(double& turbulent_kinetic_energy,
-                              double& turbulent_energy_dissipation_rate,
-                              const double y_plus,
+    double static CalculateF2(const double turbulent_kinetic_energy,
                               const double kinematic_viscosity,
-                              const double wall_distance,
-                              const double c_mu,
-                              const double von_karman);
+                              const double turbulent_energy_dissipation_rate);
 
-void CalculateTurbulentValues(double& turbulent_kinetic_energy,
-                              double& turbulent_energy_dissipation_rate,
-                              const double velocity_mag,
-                              const double turbulence_intensity,
-                              const double mixing_length,
-                              const double c_mu);
+    double static CalculateGamma(const double C_mu,
+                                 const double f_mu,
+                                 const double turbulent_kinetic_energy,
+                                 const double turbulent_kinematic_viscosity);
 
-void CalculatePositiveValuesList(Vector& rOutput, const Vector& rInput);
+    void static CalculateTurbulentValues(double& turbulent_kinetic_energy,
+                                         double& turbulent_energy_dissipation_rate,
+                                         const double y_plus,
+                                         const double kinematic_viscosity,
+                                         const double wall_distance,
+                                         const double c_mu,
+                                         const double von_karman);
 
-} // namespace EvmKepsilonModelUtilities
+    void static CalculateTurbulentValues(double& turbulent_kinetic_energy,
+                                         double& turbulent_energy_dissipation_rate,
+                                         const double velocity_mag,
+                                         const double turbulence_intensity,
+                                         const double mixing_length,
+                                         const double c_mu);
+
+    void static CalculatePositiveValuesList(Vector& rOutput, const Vector& rInput);
+
+    void CalculateTurbulentViscosityForModelPart(ModelPart& rModelPart,
+                                                 unsigned int Step = 0);
+
+    void UpdateBoundaryConditions(ModelPart& rModelPart);
+
+    void AssignInitialValues(ModelPart& rModelPart);
+
+}; // class EvmKepsilonModelUtilities
 
 ///@}
 

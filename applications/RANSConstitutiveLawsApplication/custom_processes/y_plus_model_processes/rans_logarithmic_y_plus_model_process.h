@@ -5,7 +5,7 @@
 //                   Multi-Physics
 //
 //  License:		 BSD License
-//					     Kratos default license: kratos/license.txt
+//					 Kratos default license: kratos/license.txt
 //
 //  Main authors:    Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
@@ -28,7 +28,7 @@
 #include "rans_constitutive_laws_application_variables.h"
 #include "utilities/normal_calculation_utils.h"
 
-#include "custom_utilities/rans_calculation_utilities.h"
+#include "custom_utilities/rans_variable_utils.h"
 
 namespace Kratos
 {
@@ -87,27 +87,30 @@ public:
     ///@{
 
     /// Constructor
-    RansLogarithmicYPlusModelProcess(ModelPart& rModelPart,
-                                     Parameters& rParameters): mrModelPart(rModelPart), mrParameters(rParameters)
+    RansLogarithmicYPlusModelProcess(ModelPart& rModelPart, Parameters& rParameters)
+        : mrModelPart(rModelPart), mrParameters(rParameters)
     {
         KRATOS_TRY
 
         Parameters default_parameters = Parameters(R"(
         {
             "echo_level"      : 0,
-            "max_iterations"  : 100,
             "step"            : 0,
+            "max_iterations"  : 100,
+            "tolerance"       : 1e-6,
             "constants": {
                 "von_karman"  : 0.41,
-                "beta"        : 5.2      
+                "beta"        : 5.2
             }
-        })");    
+        })");
 
         mrParameters.RecursivelyValidateAndAssignDefaults(default_parameters);
 
         mEchoLevel = mrParameters["echo_level"].GetInt();
-        mMaxIterations = mrParameters["max_iterations"].GetInt();
         mStep = mrParameters["step"].GetInt();
+
+        mMaxIterations = mrParameters["max_iterations"].GetInt();
+        mTolerance = mrParameters["tolerance"].GetDouble();
 
         mVonKarman = mrParameters["constants"]["von_karman"].GetDouble();
         mBeta = mrParameters["constants"]["beta"].GetDouble();
@@ -137,11 +140,13 @@ public:
         {
             NodeType& r_node = *(mrModelPart.NodesBegin() + i_node);
 
-            const array_1d<double, 3>& velocity = r_node.FastGetSolutionStepValue(VELOCITY, mStep);
+            const array_1d<double, 3>& velocity =
+                r_node.FastGetSolutionStepValue(VELOCITY, mStep);
             const double velocity_norm = norm_2(velocity);
 
             const double wall_distance = r_node.FastGetSolutionStepValue(DISTANCE, mStep);
-            const double kinematic_viscosity = r_node.FastGetSolutionStepValue(KINEMATIC_VISCOSITY, mStep);
+            const double kinematic_viscosity =
+                r_node.FastGetSolutionStepValue(KINEMATIC_VISCOSITY, mStep);
 
             const double von_karman = mVonKarman;
             const double beta = mBeta;
@@ -158,7 +163,7 @@ public:
             {
                 unsigned int iter = 0;
                 double dx = 1e10;
-                const double tol = 1e-6;
+                const double tol = mTolerance;
                 double uplus = inv_von_karman * log(yplus) + beta;
 
                 while (iter < mMaxIterations && fabs(dx) > tol * utau)
@@ -175,16 +180,39 @@ public:
                     ++iter;
                 }
 
-                KRATOS_WARNING_IF("RansLogarithmicYPlusModelProcess", iter == mMaxIterations && mEchoLevel > 0)
-                    << "Y plus calculation in Wall (logarithmic region) Newton-Raphson did not converge. "
-                    "residual > tolerance [ "
-                    << std::scientific << dx << " > " << std::scientific << tol << " ]\n";
+                KRATOS_WARNING_IF("RansLogarithmicYPlusModelProcess", iter == mMaxIterations && mEchoLevel > 2) << "Y plus calculation in Wall (logarithmic region) Newton-Raphson did not converge. "
+                                                                                                                   "residual > tolerance [ "
+                                                                                                                << std::scientific
+                                                                                                                << dx << " > "
+                                                                                                                << std::scientific
+                                                                                                                << tol << " ]\n";
             }
 
-            KRATOS_WARNING_IF("RansLogarithmicYPlusModelProcess", yplus < 0.0 && mEchoLevel > 0)
-                << "Calculated y_plus < 0.0 [ " << std::scientific << yplus << " < 0.0 ]\n";
-            
             r_node.FastGetSolutionStepValue(RANS_Y_PLUS) = yplus;
+        }
+
+        if (mEchoLevel > 0)
+        {
+            const unsigned int number_of_negative_y_plus_nodes =
+                RansVariableUtils().GetNumberOfNegativeScalarValueNodes(
+                    mrModelPart, RANS_Y_PLUS);
+            KRATOS_INFO("RansLogarithmicYPlusModelProcess")
+                << "RANS_Y_PLUS is negative in "
+                << number_of_negative_y_plus_nodes << " out of "
+                << number_of_nodes << " nodes in " << mrModelPart.Name() << ".";
+        }
+
+        if (mEchoLevel > 1)
+        {
+            const double min_value =
+                RansVariableUtils().GetMinimumScalarValue(mrModelPart, RANS_Y_PLUS);
+            const double max_value =
+                RansVariableUtils().GetMaximumScalarValue(mrModelPart, RANS_Y_PLUS);
+            KRATOS_INFO("RansLogarithmicYPlusModelProcess")
+                << "RANS_Y_PLUS calculated for " << number_of_nodes
+                << ". RANS_Y_PLUS is bounded between [ " << std::scientific
+                << min_value << ", " << std::scientific << max_value << " ] in "
+                << mrModelPart.Name() << ".";
         }
     }
 
@@ -265,8 +293,10 @@ private:
     Parameters& mrParameters;
 
     unsigned int mEchoLevel;
-    unsigned int mMaxIterations;
     unsigned int mStep;
+
+    unsigned int mMaxIterations;
+    double mTolerance;
 
     double mVonKarman;
     double mBeta;
@@ -292,12 +322,10 @@ private:
     ///@{
 
     /// Assignment operator.
-    RansLogarithmicYPlusModelProcess& operator=(
-        RansLogarithmicYPlusModelProcess const& rOther);
+    RansLogarithmicYPlusModelProcess& operator=(RansLogarithmicYPlusModelProcess const& rOther);
 
     /// Copy constructor.
-    RansLogarithmicYPlusModelProcess(
-        RansLogarithmicYPlusModelProcess const& rOther);
+    RansLogarithmicYPlusModelProcess(RansLogarithmicYPlusModelProcess const& rOther);
 
     ///@}
 
@@ -313,9 +341,8 @@ private:
 ///@{
 
 /// output stream function
-inline std::ostream& operator<<(
-    std::ostream& rOStream,
-    const RansLogarithmicYPlusModelProcess& rThis);
+inline std::ostream& operator<<(std::ostream& rOStream,
+                                const RansLogarithmicYPlusModelProcess& rThis);
 
 ///@}
 

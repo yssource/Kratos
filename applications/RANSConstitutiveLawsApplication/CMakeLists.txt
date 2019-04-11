@@ -12,13 +12,12 @@ set( KRATOS_RANS_CONSTITUTIVE_LAWS_APPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/rans_constitutive_laws_application.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/rans_constitutive_laws_application_variables.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/rans_constitutive_laws_python_application.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_utilities_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/evm_k_epsilon/evm_k_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/evm_k_epsilon/evm_epsilon_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/custom_processes/turbulence_eddy_viscosity_model_process.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_strategies_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_processes_to_python.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_utilities_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_utilities/rans_calculation_utilities.cpp
 )
 

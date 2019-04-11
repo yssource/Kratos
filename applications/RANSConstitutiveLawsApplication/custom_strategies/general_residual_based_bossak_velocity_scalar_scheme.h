@@ -54,12 +54,12 @@ public:
     /// Constructor.
 
     ResidualBasedBossakVelocityScalarScheme(const double AlphaBossak,
-                                            Variable<double> const * pScalarVariable,
-                                            Variable<double> const * pScalarRateVariable,
-                                            Variable<double> const * pRelaxedScalarRateVariable)
-        : ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(AlphaBossak, {}, {pScalarVariable}, {pScalarRateVariable}, {}, {}, {}),
-        mpScalarRateVariable(pScalarRateVariable),
-        mpRelaxedScalarRateVariable(pRelaxedScalarRateVariable)
+                                            const Variable<double>& rScalarVariable,
+                                            const Variable<double>& rScalarRateVariable,
+                                            const Variable<double>& rRelaxedScalarRateVariable)
+        : ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>(AlphaBossak, {}, {&rScalarVariable}, {&rScalarRateVariable}, {}, {}, {}),
+        mpScalarRateVariable(&rScalarRateVariable),
+        mpRelaxedScalarRateVariable(&rRelaxedScalarRateVariable)
     {
     }
 

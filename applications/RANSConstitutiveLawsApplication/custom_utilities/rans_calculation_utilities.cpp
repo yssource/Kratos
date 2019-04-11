@@ -269,13 +269,12 @@ RansCalculationUtilities::GeometryType::ShapeFunctionsGradientsType RansCalculat
     return de_dx;
 }
 
-void RansCalculationUtilities::CheckBounds(ModelPart& rModelPart,
-                                           const Variable<double>& rVariable,
-                                           const std::string info)
+void RansCalculationUtilities::CheckBounds(double& rMinValue,
+                                           double& rMaxValue,
+                                           const ModelPart& rModelPart,
+                                           const Variable<double>& rVariable)
 {
     const int number_of_nodes = rModelPart.NumberOfNodes();
-
-    double min{0.0}, max{0.0};
     bool initialized = false;
 
 #pragma omp parallel for
@@ -286,48 +285,33 @@ void RansCalculationUtilities::CheckBounds(ModelPart& rModelPart,
 
         if (!initialized)
         {
-            min = value;
-            max = value;
+            rMinValue = value;
+            rMaxValue = value;
             initialized = true;
         }
 
-        min = std::min(min, value);
-        max = std::max(max, value);
+        rMinValue = std::min(rMinValue, value);
+        rMaxValue = std::max(rMaxValue, value);
     }
-
-    KRATOS_INFO("CheckBounds")
-        << info << " - " << rVariable.Name() << " is bounded [ "
-        << std::scientific << min << ", " << std::scientific << max << " ].\n";
 }
 
-double RansCalculationUtilities::WarnIfNegative(ModelPart& rModelPart,
-                                                const Variable<double>& rVariable,
-                                                const std::string info)
+void RansCalculationUtilities::WarnIfNegative(unsigned int& rNumberOfNegativeNodes,
+                                              const ModelPart& rModelPart,
+                                              const Variable<double>& rVariable)
 {
     const int number_of_nodes = rModelPart.NumberOfNodes();
 
-    unsigned int count_of_nodes = 0;
-
-    double aggregated_negatives = 0.0;
-
-#pragma omp parallel for reduction(+ : count_of_nodes, aggregated_negatives)
+    rNumberOfNegativeNodes = 0;
+#pragma omp parallel for reduction(+ : rNumberOfNegativeNodes)
     for (int i = 0; i < number_of_nodes; i++)
     {
         NodeType& r_current_node = *(rModelPart.NodesBegin() + i);
         const double value = r_current_node.FastGetSolutionStepValue(rVariable);
         if (value < 0.0)
         {
-            count_of_nodes++;
-            aggregated_negatives += value;
+            rNumberOfNegativeNodes++;
         }
     }
-
-    KRATOS_WARNING_IF("WarnIfNegative", count_of_nodes > 0 && mEchoLevel > 0)
-        << rVariable.Name() << " of " << count_of_nodes << " nodes are less than "
-        << std::scientific << 0.0 << " out of total number of "
-        << number_of_nodes << " nodes in " << rModelPart.Name() << ".\n";
-
-    return aggregated_negatives;
 }
 
 // template instantiations

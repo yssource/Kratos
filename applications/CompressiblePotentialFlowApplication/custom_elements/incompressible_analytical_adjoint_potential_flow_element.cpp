@@ -13,6 +13,7 @@
 #include "compressible_potential_flow_application_variables.h"
 #include "incompressible_potential_flow_element.h"
 #include "incompressible_analytical_adjoint_potential_flow_element.h"
+#include "custom_elements/potential_flow_functions.h"
 
 namespace Kratos
 {
@@ -185,10 +186,89 @@ namespace Kratos
             }
         }
 
-        if(this->Id()==100)
+        //Added by inigo
+
+        const int wake = pGetPrimalElement()->GetValue(WAKE);
+
+        if (wake == 0) // Normal element (non-wake) - eventually an embedded
         {
+            BoundedMatrix<double, NumNodes, Dim> x;
+            for(unsigned int i_node = 0; i_node < NumNodes; i_node++){
+                    x( i_node , 0 ) = GetGeometry()[i_node].X();
+                    x( i_node , 1 ) = GetGeometry()[i_node].Y();
+            }
+            auto p = PotentialFlow::GetPotentialOnNormalElement<2,3>(*pGetPrimalElement());
+            BoundedMatrix<double, Dim*NumNodes, NumNodes> test = ZeroMatrix(Dim*NumNodes, NumNodes);
+
+            const double crOutput0 =             x(0,0) - x(1,0);
+            const double crOutput1 =             -x(2,1);
+            const double crOutput2 =             crOutput1 + x(0,1);
+            const double crOutput3 =             -x(2,0);
+            const double crOutput4 =             crOutput3 + x(0,0);
+            const double crOutput5 =             x(0,1) - x(1,1);
+            const double crOutput6 =             crOutput0*crOutput2 - crOutput4*crOutput5;
+            const double crOutput7 =             pow(crOutput6, -2);
+            const double crOutput8 =             crOutput3 + x(1,0);
+            const double crOutput9 =             -p[2];
+            const double crOutput10 =             crOutput6*(crOutput9 + p[1]);
+            const double crOutput11 =             crOutput1 + x(1,1);
+            const double crOutput12 =             crOutput0*crOutput8 + crOutput11*crOutput5;
+            const double crOutput13 =             crOutput11*crOutput2 + crOutput4*crOutput8;
+            const double crOutput14 =             crOutput12*p[2] - crOutput13*p[1] + p[0]*(pow(crOutput11, 2) + pow(crOutput8, 2));
+            const double crOutput15 =             crOutput8*p[0];
+            const double crOutput16 =             crOutput4*p[1];
+            const double crOutput17 =             2*crOutput16;
+            const double crOutput18 =             -2*x(0,0) + x(1,0) + x(2,0);
+            const double crOutput19 =             crOutput0*crOutput4 + crOutput2*crOutput5;
+            const double crOutput20 =             crOutput13*p[0] + crOutput19*p[2] - p[1]*(pow(crOutput2, 2) + pow(crOutput4, 2));
+            const double crOutput21 =             crOutput0*p[2];
+            const double crOutput22 =             2*crOutput21;
+            const double crOutput23 =             crOutput12*p[0] - crOutput19*p[1] + p[2]*(pow(crOutput0, 2) + pow(crOutput5, 2));
+            const double crOutput24 =             crOutput11*p[0];
+            const double crOutput25 =             crOutput2*p[1];
+            const double crOutput26 =             2*crOutput25;
+            const double crOutput27 =             -2*x(0,1) + x(1,1) + x(2,1);
+            const double crOutput28 =             crOutput5*p[2];
+            const double crOutput29 =             2*crOutput28;
+            const double crOutput30 =             2*crOutput15;
+            const double crOutput31 =             x(0,0) - 2*x(1,0) + x(2,0);
+            const double crOutput32 =             crOutput6*(crOutput9 + p[0]);
+            const double crOutput33 =             2*crOutput24;
+            const double crOutput34 =             x(0,1) - 2*x(1,1) + x(2,1);
+            const double crOutput35 =             x(0,0) + x(1,0) - 2*x(2,0);
+            const double crOutput36 =             crOutput6*(p[0] - p[1]);
+            const double crOutput37 =             x(0,1) + x(1,1) - 2*x(2,1);
+            test(0,0)=crOutput7*(crOutput10*crOutput8 + crOutput11*crOutput14);
+            test(0,1)=-crOutput7*(crOutput11*crOutput20 + crOutput6*(-crOutput15 + crOutput17 + crOutput18*p[2]));
+            test(0,2)=crOutput7*(crOutput11*crOutput23 - crOutput6*(crOutput15 + crOutput18*p[1] + crOutput22));
+            test(1,0)=crOutput7*(crOutput10*crOutput11 - crOutput14*crOutput8);
+            test(1,1)=crOutput7*(crOutput20*crOutput8 - crOutput6*(-crOutput24 + crOutput26 + crOutput27*p[2]));
+            test(1,2)=-crOutput7*(crOutput23*crOutput8 + crOutput6*(crOutput24 + crOutput27*p[1] + crOutput29));
+            test(2,0)=-crOutput7*(crOutput14*crOutput2 + crOutput6*(-crOutput16 + crOutput30 + crOutput31*p[2]));
+            test(2,1)=crOutput7*(crOutput2*crOutput20 + crOutput32*crOutput4);
+            test(2,2)=-crOutput7*(crOutput2*crOutput23 + crOutput6*(crOutput16 - crOutput22 + crOutput31*p[0]));
+            test(3,0)=crOutput7*(crOutput14*crOutput4 - crOutput6*(-crOutput25 + crOutput33 + crOutput34*p[2]));
+            test(3,1)=crOutput7*(crOutput2*crOutput32 - crOutput20*crOutput4);
+            test(3,2)=crOutput7*(crOutput23*crOutput4 - crOutput6*(crOutput25 - crOutput29 + crOutput34*p[0]));
+            test(4,0)=crOutput7*(crOutput14*crOutput5 + crOutput6*(crOutput21 + crOutput30 - crOutput35*p[1]));
+            test(4,1)=-crOutput7*(crOutput20*crOutput5 + crOutput6*(-crOutput17 + crOutput21 + crOutput35*p[0]));
+            test(4,2)=crOutput7*(crOutput0*crOutput36 + crOutput23*crOutput5);
+            test(5,0)=-crOutput7*(crOutput0*crOutput14 - crOutput6*(crOutput28 + crOutput33 - crOutput37*p[1]));
+            test(5,1)=crOutput7*(crOutput0*crOutput20 - crOutput6*(-crOutput26 + crOutput28 + crOutput37*p[0]));
+            test(5,2)=crOutput7*(-crOutput0*crOutput23 + crOutput36*crOutput5);
+
+            //array_1d<double, NumNodes> phis = pGetPrimalElement()->GetPotentialOnNormalElement(pGetPrimalElement());
+            
+
+            if(pGetPrimalElement()->Id()==100)
+            {
+            KRATOS_WATCH(rOutput(1,1))
+            KRATOS_WATCH(test(1,1))
+            KRATOS_WATCH(p)
             KRATOS_WATCH(delta)
+            }
         }
+
 
         KRATOS_CATCH("")
     }

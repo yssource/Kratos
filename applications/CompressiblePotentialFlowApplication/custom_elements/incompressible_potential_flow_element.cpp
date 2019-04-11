@@ -10,7 +10,7 @@
 //  Main authors:    Inigo Lopez and Riccardo Rossi
 //
 
-#include "incompressible_potential_flow_element.h"
+#include "custom_elements/potential_flow_functions.h"
 
 namespace Kratos
 {
@@ -400,7 +400,14 @@ void IncompressiblePotentialFlowElement<Dim, NumNodes>::CalculateLocalSystemNorm
 
     ComputeLHSGaussPointContribution(data.vol*density_infinity, rLeftHandSideMatrix, data);
 
-    GetPotentialOnNormalElement(data.phis);
+    //GetPotentialOnNormalElement(data.phis);
+    data.phis = PotentialFlow::GetPotentialOnNormalElement<2,3>(*this);
+    if(this->Id()==100)
+    {
+        KRATOS_WATCH(data.phis)
+        KRATOS_WATCH(density_infinity)
+    }
+
     noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
 }
 
@@ -616,23 +623,23 @@ void IncompressiblePotentialFlowElement<Dim, NumNodes>::ComputeElementInternalEn
     this->SetValue(INTERNAL_ENERGY, std::abs(internal_energy));
 }
 
-template <int Dim, int NumNodes>
-void IncompressiblePotentialFlowElement<Dim, NumNodes>::GetPotentialOnNormalElement(
-    array_1d<double, NumNodes>& phis) const
-{
-    const IncompressiblePotentialFlowElement& r_this = *this;
-    const int kutta = r_this.GetValue(KUTTA);
+// template <int Dim, int NumNodes>
+// void IncompressiblePotentialFlowElement<Dim, NumNodes>::GetPotentialOnNormalElement(
+//     array_1d<double, NumNodes>& phis) const
+// {
+//     const IncompressiblePotentialFlowElement& r_this = *this;
+//     const int kutta = r_this.GetValue(KUTTA);
 
-    if (kutta == 0)
-        for (unsigned int i = 0; i < NumNodes; i++)
-            phis[i] = GetGeometry()[i].FastGetSolutionStepValue(VELOCITY_POTENTIAL);
-    else
-        for (unsigned int i = 0; i < NumNodes; i++)
-            if (!GetGeometry()[i].GetValue(TRAILING_EDGE))
-                phis[i] = GetGeometry()[i].FastGetSolutionStepValue(VELOCITY_POTENTIAL);
-            else
-                phis[i] = GetGeometry()[i].FastGetSolutionStepValue(AUXILIARY_VELOCITY_POTENTIAL);
-}
+//     if (kutta == 0)
+//         for (unsigned int i = 0; i < NumNodes; i++)
+//             phis[i] = GetGeometry()[i].FastGetSolutionStepValue(VELOCITY_POTENTIAL);
+//     else
+//         for (unsigned int i = 0; i < NumNodes; i++)
+//             if (!GetGeometry()[i].GetValue(TRAILING_EDGE))
+//                 phis[i] = GetGeometry()[i].FastGetSolutionStepValue(VELOCITY_POTENTIAL);
+//             else
+//                 phis[i] = GetGeometry()[i].FastGetSolutionStepValue(AUXILIARY_VELOCITY_POTENTIAL);
+// }
 
 template <int Dim, int NumNodes>
 void IncompressiblePotentialFlowElement<Dim, NumNodes>::GetPotentialOnWakeElement(
@@ -710,7 +717,7 @@ void IncompressiblePotentialFlowElement<Dim, NumNodes>::ComputeVelocityNormalEle
     // Calculate shape functions
     GeometryUtils::CalculateGeometryData(GetGeometry(), data.DN_DX, data.N, data.vol);
 
-    GetPotentialOnNormalElement(data.phis);
+    data.phis = PotentialFlow::GetPotentialOnNormalElement<2,3>(*this);
 
     noalias(velocity) = prod(trans(data.DN_DX), data.phis);
 }

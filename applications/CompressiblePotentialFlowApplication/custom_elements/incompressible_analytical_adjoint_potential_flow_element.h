@@ -11,8 +11,8 @@
 //  Main authors:    Iñigo Lopez based on M. Nuñez, A. Geiser, M. Fusseder and R. Rossi work
 //
 
-#if !defined(KRATOS_INCOMPRESSIBLE_ADJOINT_POTENTIAL_FLOW_ELEMENT_H_INCLUDED )
-#define KRATOS_INCOMPRESSIBLE_ADJOINT_POTENTIAL_FLOW_ELEMENT_H_INCLUDED
+#if !defined(KRATOS_INCOMPRESSIBLE_ANALYTICAL_ADJOINT_POTENTIAL_FLOW_ELEMENT_H_INCLUDED )
+#define KRATOS_INCOMPRESSIBLE_ANALYTICAL_ADJOINT_POTENTIAL_FLOW_ELEMENT_H_INCLUDED
 
 
 // Project includes
@@ -22,7 +22,7 @@ namespace Kratos
 {
 
 template <class TPrimalElement>
-class AdjointIncompressiblePotentialFlowElement : public Element
+class AdjointAnalyticalIncompressiblePotentialFlowElement : public Element
 {
 public:
 
@@ -35,8 +35,8 @@ public:
 
     ///@}
     ///@name Pointer Definitions
-    /// Pointer definition of AdjointIncompressiblePotentialFlowElement
-    KRATOS_CLASS_POINTER_DEFINITION(AdjointIncompressiblePotentialFlowElement);
+    /// Pointer definition of AdjointAnalyticalIncompressiblePotentialFlowElement
+    KRATOS_CLASS_POINTER_DEFINITION(AdjointAnalyticalIncompressiblePotentialFlowElement);
 
     ///@}
     ///@name Life Cycle
@@ -45,19 +45,19 @@ public:
     /**
      * Constructor.
      */
-    AdjointIncompressiblePotentialFlowElement(IndexType NewId = 0) 
+    AdjointAnalyticalIncompressiblePotentialFlowElement(IndexType NewId = 0) 
      : Element(NewId),
      mpPrimalElement(std::make_shared<TPrimalElement>(NewId))
     {};
 
-    AdjointIncompressiblePotentialFlowElement(IndexType NewId,
+    AdjointAnalyticalIncompressiblePotentialFlowElement(IndexType NewId,
                         GeometryType::Pointer pGeometry)
      : Element(NewId, pGeometry),
       mpPrimalElement(std::make_shared<TPrimalElement>(NewId, pGeometry))
     {
     }
 
-    AdjointIncompressiblePotentialFlowElement(IndexType NewId,
+    AdjointAnalyticalIncompressiblePotentialFlowElement(IndexType NewId,
                         GeometryType::Pointer pGeometry,
                         PropertiesType::Pointer pProperties)
      : Element(NewId, pGeometry, pProperties),
@@ -67,19 +67,19 @@ public:
     /**
      * Copy Constructor
      */
-    AdjointIncompressiblePotentialFlowElement(AdjointIncompressiblePotentialFlowElement const& rOther) {};
+    AdjointAnalyticalIncompressiblePotentialFlowElement(AdjointAnalyticalIncompressiblePotentialFlowElement const& rOther) {};
 
     /**
      * Destructor
      */
-    ~AdjointIncompressiblePotentialFlowElement() override {};
+    ~AdjointAnalyticalIncompressiblePotentialFlowElement() override {};
 
     ///@}
     ///@name Operators
     ///@{
 
     /// Assignment operator.
-    AdjointIncompressiblePotentialFlowElement & operator=(AdjointIncompressiblePotentialFlowElement const& rOther)
+    AdjointAnalyticalIncompressiblePotentialFlowElement & operator=(AdjointAnalyticalIncompressiblePotentialFlowElement const& rOther)
     {
         BaseType::operator=(rOther);
         Flags::operator =(rOther);
@@ -163,7 +163,7 @@ private:
 
     void load(Serializer& rSerializer) override;
 
-}; // Class AdjointIncompressiblePotentialFlowElement
+}; // Class AdjointAnalyticalIncompressiblePotentialFlowElement
 
 
 } // namespace Kratos.

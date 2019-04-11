@@ -66,18 +66,32 @@ class PotentialFlowAdjointSolver(PotentialFlowSolver):
         super(PotentialFlowAdjointSolver, self).PrepareModelPart()
         # defines how the primal elements should be replaced with their adjoint counterparts
         if self.settings["formulation"]["element_type"].GetString()=="incompressible":
-            replacement_settings = KratosMultiphysics.Parameters("""
-            {
-                "element_name_table" :
+            if self.response_function_settings["gradient_mode"].GetString()=="semi_analytic":
+                replacement_settings = KratosMultiphysics.Parameters("""
                 {
-                    "IncompressiblePotentialFlowElement2D3N" : "AdjointIncompressiblePotentialFlowElement2D3N"
-                },
-                "condition_name_table" :
-                {
-                    "PotentialWallCondition2D2N"             : "AdjointIncompressiblePotentialWallCondition2D2N"
+                    "element_name_table" :
+                    {
+                        "IncompressiblePotentialFlowElement2D3N" : "AdjointIncompressiblePotentialFlowElement2D3N"
+                    },
+                    "condition_name_table" :
+                    {
+                        "PotentialWallCondition2D2N"             : "AdjointIncompressiblePotentialWallCondition2D2N"
+                    }
                 }
-            }
-            """)
+                """)
+            elif self.response_function_settings["gradient_mode"].GetString()=="analytic":
+                replacement_settings = KratosMultiphysics.Parameters("""
+                {
+                    "element_name_table" :
+                    {
+                        "IncompressiblePotentialFlowElement2D3N" : "AdjointAnalyticalIncompressiblePotentialFlowElement2D3N"
+                    },
+                    "condition_name_table" :
+                    {
+                        "PotentialWallCondition2D2N"             : "AdjointIncompressiblePotentialWallCondition2D2N"
+                    }
+                }
+                """)
         elif self.settings["formulation"]["element_type"].GetString()=="compressible":
             replacement_settings = KratosMultiphysics.Parameters("""
             {

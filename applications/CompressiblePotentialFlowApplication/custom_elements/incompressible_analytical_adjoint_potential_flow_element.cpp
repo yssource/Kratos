@@ -8,53 +8,52 @@
 //					 Kratos default license: kratos/license.txt
 //
 //
-//  Main authors:    Marc Nuñez, based on A. Geiser, M. Fusseder, I. Lopez and R. Rossi work
+//  Main authors:    Iñigo Lopez based on M. Nuñez, A. Geiser, M. Fusseder and R. Rossi work
 //
 #include "compressible_potential_flow_application_variables.h"
 #include "incompressible_potential_flow_element.h"
-#include "compressible_potential_flow_element.h"
-#include "incompressible_adjoint_potential_flow_element.h"
+#include "incompressible_analytical_adjoint_potential_flow_element.h"
 
 namespace Kratos
 {
     template <class TPrimalElement>
-    Element::Pointer AdjointIncompressiblePotentialFlowElement<TPrimalElement>::Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const 
+    Element::Pointer AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const 
     {
         KRATOS_TRY
-          return Kratos::make_shared<AdjointIncompressiblePotentialFlowElement<TPrimalElement>>(NewId, GetGeometry().Create(ThisNodes), pProperties);
+          return Kratos::make_shared<AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>>(NewId, GetGeometry().Create(ThisNodes), pProperties);
         KRATOS_CATCH("");
     }
 
     template <class TPrimalElement>
-    Element::Pointer AdjointIncompressiblePotentialFlowElement<TPrimalElement>::Create(IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const 
+    Element::Pointer AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::Create(IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const 
     {
         KRATOS_TRY
-            return Kratos::make_shared<AdjointIncompressiblePotentialFlowElement<TPrimalElement>>(NewId, pGeom, pProperties);
+            return Kratos::make_shared<AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>>(NewId, pGeom, pProperties);
         KRATOS_CATCH("");
     }
 
     template <class TPrimalElement>
-    Element::Pointer AdjointIncompressiblePotentialFlowElement<TPrimalElement>::Clone(IndexType NewId, NodesArrayType const& ThisNodes) const 
+    Element::Pointer AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::Clone(IndexType NewId, NodesArrayType const& ThisNodes) const 
     {
         KRATOS_TRY
-        return Element::Pointer(new AdjointIncompressiblePotentialFlowElement(NewId, GetGeometry().Create(ThisNodes), pGetProperties()));
+        return Element::Pointer(new AdjointAnalyticalIncompressiblePotentialFlowElement(NewId, GetGeometry().Create(ThisNodes), pGetProperties()));
         KRATOS_CATCH("");
     }
 
     template <class TPrimalElement>
-    Element::IntegrationMethod AdjointIncompressiblePotentialFlowElement<TPrimalElement>::GetIntegrationMethod() const 
+    Element::IntegrationMethod AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::GetIntegrationMethod() const 
     {
         return mpPrimalElement->GetIntegrationMethod();
     }
   
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::Initialize() 
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::Initialize() 
     {   
         mpPrimalElement->Initialize();
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::InitializeSolutionStep(ProcessInfo& rCurrentProcessInfo) 
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::InitializeSolutionStep(ProcessInfo& rCurrentProcessInfo) 
     {
         mpPrimalElement->Data() = this->Data();
         mpPrimalElement->Set(Flags(*this));
@@ -62,13 +61,13 @@ namespace Kratos
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) 
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) 
     {
 
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::CalculateLocalSystem(MatrixType& rLeftHandSideMatrix,
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::CalculateLocalSystem(MatrixType& rLeftHandSideMatrix,
                                       VectorType& rRightHandSideVector,
                                       ProcessInfo& rCurrentProcessInfo) 
     {
@@ -78,7 +77,7 @@ namespace Kratos
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix,
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix,
                                        ProcessInfo& rCurrentProcessInfo) 
     {
         MatrixType tmp;
@@ -87,7 +86,7 @@ namespace Kratos
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::CalculateRightHandSide(VectorType& rRightHandSideVector,
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::CalculateRightHandSide(VectorType& rRightHandSideVector,
                                         ProcessInfo& rCurrentProcessInfo) 
     {
         mpPrimalElement->CalculateRightHandSide(rRightHandSideVector,
@@ -95,7 +94,7 @@ namespace Kratos
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::GetValueOnIntegrationPoints(const Variable<double>& rVariable,
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::GetValueOnIntegrationPoints(const Variable<double>& rVariable,
             std::vector<double>& rValues,
             const ProcessInfo& rCurrentProcessInfo) 
     {
@@ -103,7 +102,7 @@ namespace Kratos
     }
     
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::GetValueOnIntegrationPoints(const Variable<array_1d<double,3> >& rVariable,
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::GetValueOnIntegrationPoints(const Variable<array_1d<double,3> >& rVariable,
             std::vector< array_1d<double,3> >& rValues,
             const ProcessInfo& rCurrentProcessInfo) 
     {
@@ -111,10 +110,10 @@ namespace Kratos
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::GetValuesVector(Vector& rValues, int Step) 
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::GetValuesVector(Vector& rValues, int Step) 
     {
         KRATOS_TRY
-        const AdjointIncompressiblePotentialFlowElement& r_this = *this;
+        const AdjointAnalyticalIncompressiblePotentialFlowElement& r_this = *this;
         const int wake = r_this.GetValue(WAKE);
         const int kutta = r_this.GetValue(KUTTA);
 
@@ -147,7 +146,7 @@ namespace Kratos
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::CalculateSensitivityMatrix(const Variable<array_1d<double,3> >& rDesignVariable,
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::CalculateSensitivityMatrix(const Variable<array_1d<double,3> >& rDesignVariable,
                                             Matrix& rOutput,
                                             const ProcessInfo& rCurrentProcessInfo) 
     {
@@ -186,13 +185,18 @@ namespace Kratos
             }
         }
 
+        if(this->Id()==100)
+        {
+            KRATOS_WATCH(delta)
+        }
+
         KRATOS_CATCH("")
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo) 
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo) 
     {
-        const AdjointIncompressiblePotentialFlowElement& r_this = *this;
+        const AdjointAnalyticalIncompressiblePotentialFlowElement& r_this = *this;
         const int wake = r_this.GetValue(WAKE);
         const int kutta = r_this.GetValue(KUTTA);
 
@@ -245,9 +249,9 @@ namespace Kratos
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::GetDofList(DofsVectorType& rElementalDofList, ProcessInfo& CurrentProcessInfo) 
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::GetDofList(DofsVectorType& rElementalDofList, ProcessInfo& CurrentProcessInfo) 
     {
-        const AdjointIncompressiblePotentialFlowElement& r_this = *this;
+        const AdjointAnalyticalIncompressiblePotentialFlowElement& r_this = *this;
         const int wake = r_this.GetValue(WAKE);
         const int kutta = r_this.GetValue(KUTTA);
 
@@ -298,7 +302,7 @@ namespace Kratos
     }
 
     template <class TPrimalElement>
-    int AdjointIncompressiblePotentialFlowElement<TPrimalElement>::Check(const ProcessInfo& rCurrentProcessInfo) 
+    int AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::Check(const ProcessInfo& rCurrentProcessInfo) 
     {
 
         KRATOS_TRY
@@ -330,27 +334,27 @@ namespace Kratos
 
     /// Turn back information as a string.
     template <class TPrimalElement>
-    std::string AdjointIncompressiblePotentialFlowElement<TPrimalElement>::Info() const 
+    std::string AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::Info() const 
     {
         std::stringstream buffer;
-        buffer << "AdjointIncompressiblePotentialFlowElement #" << Id();
+        buffer << "AdjointAnalyticalIncompressiblePotentialFlowElement #" << Id();
         return buffer.str();
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::PrintInfo(std::ostream& rOStream) const 
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::PrintInfo(std::ostream& rOStream) const 
     {
-        rOStream << "AdjointIncompressiblePotentialFlowElement #" << Id();
+        rOStream << "AdjointAnalyticalIncompressiblePotentialFlowElement #" << Id();
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::PrintData(std::ostream& rOStream) const 
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::PrintData(std::ostream& rOStream) const 
     {
         pGetGeometry()->PrintData(rOStream);
     }
 
     template <class TPrimalElement>
-    Element::Pointer AdjointIncompressiblePotentialFlowElement<TPrimalElement>::pGetPrimalElement()
+    Element::Pointer AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::pGetPrimalElement()
     {
         return mpPrimalElement;
     }
@@ -358,13 +362,13 @@ namespace Kratos
     /*PROTECTED*/
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::GetWakeDistances(array_1d<double,NumNodes>& distances)
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::GetWakeDistances(array_1d<double,NumNodes>& distances)
     {
         noalias(distances) = GetValue(ELEMENTAL_DISTANCES);
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::GetValuesOnSplitElement(Vector& split_element_values, const array_1d<double,NumNodes>& distances )
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::GetValuesOnSplitElement(Vector& split_element_values, const array_1d<double,NumNodes>& distances )
     {
 
         for (unsigned int i = 0; i < NumNodes; i++)
@@ -388,7 +392,7 @@ namespace Kratos
     /*PRIVATE*/
 
     template <class TPrimalElement>
-    double AdjointIncompressiblePotentialFlowElement<TPrimalElement>::GetPerturbationSize()
+    double AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::GetPerturbationSize()
     {
         const double delta = this->GetValue(SCALE_FACTOR);
         KRATOS_DEBUG_ERROR_IF_NOT(delta > 0) << "The perturbation size is not > 0!";
@@ -396,14 +400,14 @@ namespace Kratos
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::save(Serializer& rSerializer) const 
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::save(Serializer& rSerializer) const 
     {
         KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Element );
         rSerializer.save("mpPrimalElement", mpPrimalElement);
     }
 
     template <class TPrimalElement>
-    void AdjointIncompressiblePotentialFlowElement<TPrimalElement>::load(Serializer& rSerializer) 
+    void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::load(Serializer& rSerializer) 
     {
         KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Element );
         rSerializer.load("mpPrimalElement", mpPrimalElement);
@@ -411,7 +415,7 @@ namespace Kratos
     ///////////////////////////////////////////////////////////////////////////////////////////////////
     // Template class instantiation
 
-    template class AdjointIncompressiblePotentialFlowElement<IncompressiblePotentialFlowElement<2,3>>;
-    template class AdjointIncompressiblePotentialFlowElement<CompressiblePotentialFlowElement<2,3>>;
+    template class AdjointAnalyticalIncompressiblePotentialFlowElement<IncompressiblePotentialFlowElement<2,3>>;
+    //template class AdjointAnalyticalIncompressiblePotentialFlowElement<CompressiblePotentialFlowElement<2,3>>;
 } // namespace Kratos.
 

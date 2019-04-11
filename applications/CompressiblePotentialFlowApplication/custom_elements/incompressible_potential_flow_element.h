@@ -55,7 +55,6 @@ public:
         double vol;
 
         BoundedMatrix<double, TNumNodes, TDim> DN_DX;
-        BoundedMatrix<double, TNumNodes, TDim> mylhs;
         array_1d<double, TNumNodes> N;
     };
 

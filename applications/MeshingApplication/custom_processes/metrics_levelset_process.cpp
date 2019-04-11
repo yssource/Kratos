@@ -38,9 +38,10 @@ ComputeLevelSetSolMetricProcess<TDim>::ComputeLevelSetSolMetricProcess(
         },
         "custom_settings":
         {
-            "ratio"                     : 1.0,
-            "max_x"                     : 1.0,
-            "min_x"                     : 0.0
+            "ratio"                        : 1.0,
+            "chord_ratio"                  : 2.0,
+            "max_node"                     : [0.0,0.0,0.0],
+            "min_node"                     : [0.0,0.0,0.0]
         },
         "enforce_current"                      : true,
         "anisotropy_remeshing"                 : true,
@@ -56,9 +57,10 @@ ComputeLevelSetSolMetricProcess<TDim>::ComputeLevelSetSolMetricProcess(
 
     mMinSize = ThisParameters["minimal_size"].GetDouble();
     mMaxSize = ThisParameters["maximal_size"].GetDouble();
-    mMaxX = ThisParameters["custom_settings"]["max_x"].GetDouble();
-    mMinX = ThisParameters["custom_settings"]["min_x"].GetDouble();
+    mMaxNode = ThisParameters["custom_settings"]["max_node"].GetVector();
+    mMinNode = ThisParameters["custom_settings"]["min_node"].GetVector();
     mCustomRatio = ThisParameters["custom_settings"]["ratio"].GetDouble();
+    mCustomChordRatio = ThisParameters["custom_settings"]["chord_ratio"].GetDouble();
     mSizeReferenceVariable = ThisParameters["sizing_parameters"]["reference_variable_name"].GetString();
     mSizeBoundLayer = ThisParameters["sizing_parameters"]["boundary_layer_max_distance"].GetDouble();
     mSizeInterpolation = ConvertInter(ThisParameters["sizing_parameters"]["interpolation"].GetString());
@@ -134,7 +136,7 @@ void ComputeLevelSetSolMetricProcess<TDim>::Execute()
         if (it_node->SolutionStepsDataHas(size_reference_var)) {
             const double size_reference = it_node->FastGetSolutionStepValue(size_reference_var);
             element_size = CalculateElementSize(size_reference, nodal_h);
-            ComputeElementSizeCorrection(element_size, it_node->X());
+            element_size = ComputeElementSizeCorrection(element_size, it_node->X(), it_node->Y());
             if (((element_size > nodal_h) && (mEnforceCurrent)) || (std::abs(size_reference) > mSizeBoundLayer))
                 element_size = nodal_h;
         } else {
@@ -267,29 +269,35 @@ double ComputeLevelSetSolMetricProcess<TDim>::CalculateElementSize(
             if (size > mMaxSize) size = mMaxSize;
         }
     }
-    
+
 
     return size;
 }
 
 
 template<SizeType TDim>
-void ComputeLevelSetSolMetricProcess<TDim>::ComputeElementSizeCorrection(
+double ComputeLevelSetSolMetricProcess<TDim>::ComputeElementSizeCorrection(
     double ElementSize,
-    const double Xnode
+    const double Xnode,
+    const double Ynode
     )
-{   
-    double halfChord = std::abs(mMaxX-mMinX)/10;
-    double distToMax = std::abs(mMaxX-Xnode);
-    double distToMin = std::abs(Xnode-mMinX);
+{
+    double xMax = mMaxNode[0];
+    double yMax = mMaxNode[1];
+    double xMin = mMinNode[0];
+    double yMin = mMinNode[1];
+
+    double halfChord = std::abs(xMax-xMin)/mCustomChordRatio;
+    double distToMax = std::sqrt(std::pow(std::abs(xMax-Xnode),2.0)+std::pow(std::abs(yMax-Ynode),2.0));
+    double distToMin = std::sqrt(std::pow(std::abs(xMin-Xnode),2.0)+std::pow(std::abs(yMin-Ynode),2.0));
+
     double minDist = std::min(distToMax,distToMin);
     double ratio = 1.0;
     if (minDist/halfChord<1.0){
         ratio = mCustomRatio+(minDist/halfChord)*(1.0-mCustomRatio);
-        ratio = mCustomRatio;
-        // std::cout << ratio << std::endl;
     }
-    ElementSize=ElementSize*ratio;   
+    ElementSize=ElementSize*ratio;
+    return ElementSize;
 }
 /***********************************************************************************/
 /***********************************************************************************/

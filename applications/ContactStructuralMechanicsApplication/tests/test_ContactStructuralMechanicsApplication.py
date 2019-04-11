@@ -92,7 +92,7 @@ from SmallTests import ALMHyperSimplePatchFrictionalTestContact                 
 
 # Penalty frictional tests
 from SmallTests import PenaltyNoFrictionHyperSimplePatchFrictionalTestContact        as TPenaltyNoFrictionHyperSimplePatchFrictionalTestContact
-from SmallTests import PenaltyHyperSimplePatchFrictionalTestContact                  as TPenaltyHyperSimplePatchFrictionalTestContact
+from SmallTests import PenaltyHyperSimplePatchFrictionalSlipTestContact                  as TPenaltyHyperSimplePatchFrictionalSlipTestContact
 
 ## NIGTHLY TESTS
 # ALM frictionless tests
@@ -209,7 +209,7 @@ def AssembleTestSuites():
     smallSuite.addTest(TALMHyperSimplePatchFrictionalTestContact('test_execution'))
 
     # Penalty frictional tests
-    smallSuite.addTest(TPenaltyHyperSimplePatchFrictionalTestContact('test_execution'))
+    smallSuite.addTest(TPenaltyHyperSimplePatchFrictionalSlipTestContact('test_execution'))
 
     # Fill with all small tests
     nightSuite.addTests(smallSuite)
@@ -343,7 +343,7 @@ def AssembleTestSuites():
             TComponentsALMThreeDPatchNotMatchingTestContact,
             TALMHyperSimplePatchFrictionalTestContact,
             TPenaltyNoFrictionHyperSimplePatchFrictionalTestContact,
-            #TPenaltyHyperSimplePatchFrictionalTestContact,
+            TPenaltyHyperSimplePatchFrictionalSlipTestContact,
             #### NIGTHLY
             TALMTaylorPatchTestContact,
             TALMHertzSimpleTestContact,

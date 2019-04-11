@@ -55,5 +55,11 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         print('Mach = ', self.velocity_infinity[0]/340)
 
         if self.create_output_file:
+            with open('cp_distribution_naca0012.dat','w') as cp_file:
+                for cond in self.body_model_part.Conditions:
+                    x = cond.GetGeometry().Center().X
+                    cp = cond.GetValue(KratosMultiphysics.PRESSURE)
+                    cp_file.write('%f %f \n' % (x , cp))
+
             with open("cl.dat", 'w') as cl_file:
                 cl_file.write('{0:15.12f}'.format(Cl))

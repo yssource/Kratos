@@ -65,8 +65,20 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         # for node in self.fluid_model_part.GetSubModelPart("KuttaLS").Nodes:
         #     Cl_jump=node.GetValue(KratosMultiphysics.TEMPERATURE)
         # print("Cl_jump:",Cl_jump)
-        plt.plot(x_upper,cp_upper,'o',label='Upper surface')
-        plt.plot(x_lower,cp_lower,'ro',label='Lower surface')
+        with open('cp_distribution_naca0012.dat') as cp_ref:
+            lines=cp_ref.readlines()
+            x_ref=[]
+            cp_ref=[]
+            for line in lines:
+                x_ref.append(float(line.split(' ')[0]))
+                cp_ref.append(float(line.split(' ')[1]))
+        max_x=max(x_ref)
+        min_x=min(x_ref)
+        for i in range(0,len(x_ref)):
+            x_ref[i]=(x_ref[i]-min_x)/abs(max_x-min_x)
+        plt.plot(x_upper,cp_upper,'.',label='Upper surface')
+        plt.plot(x_lower,cp_lower,'r.',label='Lower surface')
+        plt.plot(x_ref, cp_ref ,'k.')
         title="Cl: %.5f, Cd: %.5f" % (self.result_force[1],self.result_force[0])
         plt.title(title)
         plt.legend()

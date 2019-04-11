@@ -83,7 +83,7 @@ for i_node in range(nnodes):
     for j_dim in range(dim):
         # Looping over columns (i.e. )
         for k_x in range(nnodes):
-            DB_Dx[ i_node + dim * j_dim , k_x ] = simplify(diff( B[k_x], x[i_node,j_dim]))
+            DB_Dx[ i_node * dim + j_dim , k_x ] = simplify(diff( B[k_x], x[i_node,j_dim]))
 
 dB_Dx_out = OutputMatrix_CollectingFactors(DB_Dx, "rOutput", mode)
 

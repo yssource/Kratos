@@ -152,41 +152,14 @@ namespace Kratos
                                             const ProcessInfo& rCurrentProcessInfo) 
     {
         KRATOS_TRY;
-        const double delta = this->GetPerturbationSize();
+
         ProcessInfo process_info = rCurrentProcessInfo;
-
         Vector RHS;
-        Vector RHS_perturbed;
-
         pGetPrimalElement()->CalculateRightHandSide(RHS, process_info);
 
         if (rOutput.size1() != NumNodes)
             rOutput.resize(Dim*NumNodes, RHS.size(), false);
-
-        for(unsigned int i_node = 0; i_node<NumNodes; i_node++){
-            for(unsigned int i_dim = 0; i_dim<Dim; i_dim++){
-                if ((GetGeometry()[i_node].Is(SOLID)) && (!GetGeometry()[i_node].GetValue(TRAILING_EDGE))){
-                    pGetPrimalElement()->GetGeometry()[i_node].GetInitialPosition()[i_dim] += delta;
-                    pGetPrimalElement()->GetGeometry()[i_node].Coordinates()[i_dim] += delta;
-
-                    // compute LHS after perturbation
-                    pGetPrimalElement()->CalculateRightHandSide(RHS_perturbed, process_info);
-
-                    //compute derivative of RHS w.r.t. design variable with finite differences
-                    for(unsigned int i = 0; i < RHS.size(); ++i)
-                        rOutput( (i_dim + i_node*Dim), i) = (RHS_perturbed[i] - RHS[i]) / delta;
-
-                    // unperturb the design variable
-                    pGetPrimalElement()->GetGeometry()[i_node].GetInitialPosition()[i_dim] -= delta;
-                    pGetPrimalElement()->GetGeometry()[i_node].Coordinates()[i_dim] -= delta;
-                }else{
-                    for(unsigned int i = 0; i < RHS.size(); ++i)
-                        rOutput( (i_dim + i_node*Dim), i) = 0.0;
-                }
-            }
-        }
-
-        //Added by inigo
+        rOutput.clear();
 
         const int wake = pGetPrimalElement()->GetValue(WAKE);
 
@@ -252,34 +225,32 @@ namespace Kratos
             const double crOutput49 =             0.5*crOutput34;
             const double crOutput50 =             x(0,1) + x(1,1) - 2*x(2,1);
             const double crOutput51 =             crOutput43 - 0.5*x(1,0);
-            test(0,0)=crOutput8*(crOutput11*crOutput9 + crOutput12*crOutput15);
-            test(0,1)=-crOutput7*(crOutput22*crOutput24 + crOutput6*(-crOutput17 + 1.0*crOutput18 + crOutput19*crOutput20));
-            test(0,2)=crOutput7*(crOutput22*crOutput27 - crOutput6*(crOutput17 + crOutput20*crOutput26 + 1.0*crOutput25));
-            test(1,0)=crOutput8*(crOutput11*crOutput12 - crOutput15*crOutput9);
-            test(1,1)=crOutput7*(crOutput24*crOutput33 - crOutput6*(crOutput19*crOutput31 - crOutput29 + 1.0*crOutput30));
-            test(1,2)=-crOutput7*(crOutput27*crOutput33 + crOutput6*(crOutput26*crOutput31 + crOutput29 + 1.0*crOutput34));
-            test(2,0)=-crOutput7*(crOutput15*crOutput38 + crOutput6*(1.0*crOutput16 + crOutput19*crOutput36 - crOutput35));
-            test(2,1)=crOutput8*(crOutput2*crOutput24 + crOutput39*crOutput4);
-            test(2,2)=-crOutput7*(crOutput27*crOutput38 + crOutput6*(-crOutput25 + crOutput35 + crOutput36*crOutput40));
-            test(3,0)=crOutput7*(crOutput15*crOutput44 - crOutput6*(crOutput19*crOutput42 + 1.0*crOutput28 - crOutput41));
-            test(3,1)=crOutput8*(crOutput2*crOutput39 - crOutput24*crOutput4);
-            test(3,2)=crOutput7*(crOutput27*crOutput44 - crOutput6*(-crOutput34 + crOutput40*crOutput42 + crOutput41));
-            test(4,0)=crOutput7*(crOutput15*crOutput47 + crOutput6*(crOutput16 - crOutput26*crOutput46 + crOutput45));
-            test(4,1)=-crOutput7*(crOutput24*crOutput47 + crOutput6*(-crOutput18 + crOutput40*crOutput46 + crOutput45));
-            test(4,2)=crOutput8*(crOutput0*crOutput48 + crOutput27*crOutput5);
-            test(5,0)=-crOutput7*(crOutput15*crOutput51 - crOutput6*(-crOutput26*crOutput50 + crOutput28 + crOutput49));
-            test(5,1)=crOutput7*(crOutput24*crOutput51 - crOutput6*(-crOutput30 + crOutput40*crOutput50 + crOutput49));
-            test(5,2)=crOutput8*(-crOutput0*crOutput27 + crOutput48*crOutput5);
+            rOutput(0,0)=crOutput8*(crOutput11*crOutput9 + crOutput12*crOutput15);
+            rOutput(0,1)=-crOutput7*(crOutput22*crOutput24 + crOutput6*(-crOutput17 + 1.0*crOutput18 + crOutput19*crOutput20));
+            rOutput(0,2)=crOutput7*(crOutput22*crOutput27 - crOutput6*(crOutput17 + crOutput20*crOutput26 + 1.0*crOutput25));
+            rOutput(1,0)=crOutput8*(crOutput11*crOutput12 - crOutput15*crOutput9);
+            rOutput(1,1)=crOutput7*(crOutput24*crOutput33 - crOutput6*(crOutput19*crOutput31 - crOutput29 + 1.0*crOutput30));
+            rOutput(1,2)=-crOutput7*(crOutput27*crOutput33 + crOutput6*(crOutput26*crOutput31 + crOutput29 + 1.0*crOutput34));
+            rOutput(2,0)=-crOutput7*(crOutput15*crOutput38 + crOutput6*(1.0*crOutput16 + crOutput19*crOutput36 - crOutput35));
+            rOutput(2,1)=crOutput8*(crOutput2*crOutput24 + crOutput39*crOutput4);
+            rOutput(2,2)=-crOutput7*(crOutput27*crOutput38 + crOutput6*(-crOutput25 + crOutput35 + crOutput36*crOutput40));
+            rOutput(3,0)=crOutput7*(crOutput15*crOutput44 - crOutput6*(crOutput19*crOutput42 + 1.0*crOutput28 - crOutput41));
+            rOutput(3,1)=crOutput8*(crOutput2*crOutput39 - crOutput24*crOutput4);
+            rOutput(3,2)=crOutput7*(crOutput27*crOutput44 - crOutput6*(-crOutput34 + crOutput40*crOutput42 + crOutput41));
+            rOutput(4,0)=crOutput7*(crOutput15*crOutput47 + crOutput6*(crOutput16 - crOutput26*crOutput46 + crOutput45));
+            rOutput(4,1)=-crOutput7*(crOutput24*crOutput47 + crOutput6*(-crOutput18 + crOutput40*crOutput46 + crOutput45));
+            rOutput(4,2)=crOutput8*(crOutput0*crOutput48 + crOutput27*crOutput5);
+            rOutput(5,0)=-crOutput7*(crOutput15*crOutput51 - crOutput6*(-crOutput26*crOutput50 + crOutput28 + crOutput49));
+            rOutput(5,1)=crOutput7*(crOutput24*crOutput51 - crOutput6*(-crOutput30 + crOutput40*crOutput50 + crOutput49));
+            rOutput(5,2)=crOutput8*(-crOutput0*crOutput27 + crOutput48*crOutput5);
 
-            //array_1d<double, NumNodes> phis = pGetPrimalElement()->GetPotentialOnNormalElement(pGetPrimalElement());
-            
-
-            if(pGetPrimalElement()->Id()==100)
-            {
-            KRATOS_WATCH(rOutput(1,1))
-            KRATOS_WATCH(test(1,1))
-            KRATOS_WATCH(p)
-            KRATOS_WATCH(delta)
+            for(unsigned int i_node = 0; i_node<NumNodes; i_node++){
+                for(unsigned int i_dim = 0; i_dim<Dim; i_dim++){
+                    if ((!GetGeometry()[i_node].Is(SOLID)) || (GetGeometry()[i_node].GetValue(TRAILING_EDGE))){
+                        for(unsigned int i = 0; i < RHS.size(); ++i)
+                            rOutput( (i_dim + i_node*Dim), i) = 0.0;
+                    }
+                }
             }
         }
 

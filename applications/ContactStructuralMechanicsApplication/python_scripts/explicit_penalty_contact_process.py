@@ -52,7 +52,7 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
             "interval"                    : [0.0,"End"],
             "normal_variation"            : "no_derivatives_computation",
             "frictional_law"              : "Coulomb",
-            "tangent_factor"              : 5.0e-3,
+            "tangent_factor"              : 1.0e-4,
             "integration_order"           : 2,
             "clear_inactive_for_post"     : true,
             "search_parameters" : {

@@ -176,6 +176,10 @@ public:
 
                     const double augmented_normal_pressure = epsilon * it_node->FastGetSolutionStepValue(WEIGHTED_GAP);
 
+//                     // BEGIN Adding debugging value of NORMAL_GAP
+//                     it_node->SetValue(NORMAL_GAP, it_node->FastGetSolutionStepValue(WEIGHTED_GAP) * it_node->GetValue(NODAL_AREA));
+//                     // END Adding debugging value of NORMAL_GAP
+
                     it_node->SetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE, augmented_normal_pressure);
 
                     if (augmented_normal_pressure < 0.0) { // NOTE: This could be conflictive (< or <=)
@@ -184,6 +188,10 @@ public:
 
                         // The weighted slip
                         const array_1d<double, 3>& r_gt = it_node->FastGetSolutionStepValue(WEIGHTED_SLIP);
+
+//                         // BEGIN Adding debugging value of TANGENT_SLIP
+//                         it_node->SetValue(TANGENT_SLIP, r_gt * it_node->GetValue(NODAL_AREA));
+//                         // END Adding debugging value of TANGENT_SLIP
 
                         // Computing the augmented tangent pressure
                         const array_1d<double,3> augmented_tangent_pressure_components = tangent_factor * epsilon * r_gt;

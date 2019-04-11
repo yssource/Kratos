@@ -152,5 +152,11 @@ class PenaltyFrictionlessHyperSimplePatchFrictionalTestContact(TestFactory):
 class PenaltyNoFrictionHyperSimplePatchFrictionalTestContact(TestFactory):
     file_name = "penalty_frictional_contact_test_2D/no_friction_hyper_simple_patch_test"
 
+class PenaltyPerfectStickHyperSimplePatchFrictionalTestContact(TestFactory):
+    file_name = "penalty_frictional_contact_test_2D/perfect_stick_hyper_simple_patch_test"
+
 class PenaltyHyperSimplePatchFrictionalSlipTestContact(TestFactory):
     file_name = "penalty_frictional_contact_test_2D/hyper_simple_slip_patch_test"
+
+class PenaltyHyperSimplePatchFrictionalStickTestContact(TestFactory):
+    file_name = "penalty_frictional_contact_test_2D/hyper_simple_stick_patch_test"

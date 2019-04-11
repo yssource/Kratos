@@ -92,7 +92,9 @@ from SmallTests import ALMHyperSimplePatchFrictionalTestContact                 
 
 # Penalty frictional tests
 from SmallTests import PenaltyNoFrictionHyperSimplePatchFrictionalTestContact        as TPenaltyNoFrictionHyperSimplePatchFrictionalTestContact
-from SmallTests import PenaltyHyperSimplePatchFrictionalSlipTestContact                  as TPenaltyHyperSimplePatchFrictionalSlipTestContact
+from SmallTests import PenaltyPerfectStickHyperSimplePatchFrictionalTestContact      as TPenaltyPerfectStickHyperSimplePatchFrictionalTestContact
+from SmallTests import PenaltyHyperSimplePatchFrictionalSlipTestContact              as TPenaltyHyperSimplePatchFrictionalSlipTestContact
+from SmallTests import PenaltyHyperSimplePatchFrictionalStickTestContact             as TPenaltyHyperSimplePatchFrictionalStickTestContact
 
 ## NIGTHLY TESTS
 # ALM frictionless tests
@@ -209,7 +211,10 @@ def AssembleTestSuites():
     smallSuite.addTest(TALMHyperSimplePatchFrictionalTestContact('test_execution'))
 
     # Penalty frictional tests
+    smallSuite.addTest(TPenaltyNoFrictionHyperSimplePatchFrictionalTestContact('test_execution'))
+    smallSuite.addTest(TPenaltyPerfectStickHyperSimplePatchFrictionalTestContact('test_execution'))
     smallSuite.addTest(TPenaltyHyperSimplePatchFrictionalSlipTestContact('test_execution'))
+    smallSuite.addTest(TPenaltyHyperSimplePatchFrictionalStickTestContact('test_execution'))
 
     # Fill with all small tests
     nightSuite.addTests(smallSuite)
@@ -343,7 +348,9 @@ def AssembleTestSuites():
             TComponentsALMThreeDPatchNotMatchingTestContact,
             TALMHyperSimplePatchFrictionalTestContact,
             TPenaltyNoFrictionHyperSimplePatchFrictionalTestContact,
+            #TPenaltyPerfectStickHyperSimplePatchFrictionalTestContact,
             TPenaltyHyperSimplePatchFrictionalSlipTestContact,
+            #TPenaltyHyperSimplePatchFrictionalStickTestContact,
             #### NIGTHLY
             TALMTaylorPatchTestContact,
             TALMHertzSimpleTestContact,

@@ -456,14 +456,6 @@ namespace Kratos
     /*PRIVATE*/
 
     template <class TPrimalElement>
-    double AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::GetPerturbationSize()
-    {
-        const double delta = this->GetValue(SCALE_FACTOR);
-        KRATOS_DEBUG_ERROR_IF_NOT(delta > 0) << "The perturbation size is not > 0!";
-        return delta;
-    }
-
-    template <class TPrimalElement>
     void AdjointAnalyticalIncompressiblePotentialFlowElement<TPrimalElement>::save(Serializer& rSerializer) const 
     {
         KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Element );

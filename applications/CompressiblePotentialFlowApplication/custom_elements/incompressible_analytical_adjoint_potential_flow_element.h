@@ -155,8 +155,6 @@ protected:
 
 private:
 
-    double GetPerturbationSize();
-
     friend class Serializer;
 
     void save(Serializer& rSerializer) const override;

@@ -855,6 +855,8 @@ void SphericParticle::ComputeBallToBallContactForce(SphericParticle::ParticleDat
                 ComputeMoments(LocalContactForce[2], GlobalContactForce, RollingResistance, data_buffer.mLocalCoordSystem[2], data_buffer.mpOtherParticle, data_buffer.mIndentation);
             }
 
+            CheckBreakageCriterion(LocalContactForce);
+
             if (this->Is(DEMFlags::HAS_STRESS_TENSOR)) {
                 AddNeighbourContributionToStressTensor(GlobalElasticContactForce, data_buffer.mLocalCoordSystem[2], data_buffer.mDistance, data_buffer.mRadiusSum, this);
             }
@@ -1977,47 +1979,66 @@ void SphericParticle::AdditionalCalculate(const Variable<double>& rVariable, dou
 
 void SphericParticle::ApplyGlobalDampingToContactForcesAndMoments(array_1d<double,3>& total_forces, array_1d<double,3>& total_moment) {
 
-        KRATOS_TRY
+    KRATOS_TRY
 
-        const array_1d<double, 3> velocity =         this->GetGeometry()[0].FastGetSolutionStepValue(VELOCITY);
-        const array_1d<double, 3> angular_velocity = this->GetGeometry()[0].FastGetSolutionStepValue(ANGULAR_VELOCITY);
+    const array_1d<double, 3> velocity =         this->GetGeometry()[0].FastGetSolutionStepValue(VELOCITY);
+    const array_1d<double, 3> angular_velocity = this->GetGeometry()[0].FastGetSolutionStepValue(ANGULAR_VELOCITY);
 
-        if (this->GetGeometry()[0].IsNot(DEMFlags::FIXED_VEL_X)) {
-            total_forces[0] *= (1.0 - mGlobalDamping * GeometryFunctions::sign(total_forces[0] * velocity[0]));
-        }
-        if (this->GetGeometry()[0].IsNot(DEMFlags::FIXED_VEL_Y)) {
-            total_forces[1] *= (1.0 - mGlobalDamping * GeometryFunctions::sign(total_forces[1] * velocity[1]));
-        }
-        if (this->GetGeometry()[0].IsNot(DEMFlags::FIXED_VEL_Z)) {
-            total_forces[2] *= (1.0 - mGlobalDamping * GeometryFunctions::sign(total_forces[2] * velocity[2]));
-        }
-
-        if (this->GetGeometry()[0].IsNot(DEMFlags::FIXED_ANG_VEL_X)) {
-            total_moment[0] *= (1.0 - mGlobalDamping * GeometryFunctions::sign(total_moment[0] * angular_velocity[0]));
-        }
-        if (this->GetGeometry()[0].IsNot(DEMFlags::FIXED_ANG_VEL_Y)) {
-            total_moment[1] *= (1.0 - mGlobalDamping * GeometryFunctions::sign(total_moment[1] * angular_velocity[1]));
-        }
-        if (this->GetGeometry()[0].IsNot(DEMFlags::FIXED_ANG_VEL_Z)) {
-            total_moment[2] *= (1.0 - mGlobalDamping * GeometryFunctions::sign(total_moment[2] * angular_velocity[2]));
-        }
-
-        KRATOS_CATCH("")
+    if (this->GetGeometry()[0].IsNot(DEMFlags::FIXED_VEL_X)) {
+        total_forces[0] *= (1.0 - mGlobalDamping * GeometryFunctions::sign(total_forces[0] * velocity[0]));
+    }
+    if (this->GetGeometry()[0].IsNot(DEMFlags::FIXED_VEL_Y)) {
+        total_forces[1] *= (1.0 - mGlobalDamping * GeometryFunctions::sign(total_forces[1] * velocity[1]));
+    }
+    if (this->GetGeometry()[0].IsNot(DEMFlags::FIXED_VEL_Z)) {
+        total_forces[2] *= (1.0 - mGlobalDamping * GeometryFunctions::sign(total_forces[2] * velocity[2]));
     }
 
-    void SphericParticle::CalculateOnContactElements(size_t i, double LocalContactForce[3]) {
-
-        KRATOS_TRY
-
-        if (!mBondElements.size()) return; // we skip this function if the vector of bonds hasn't been filled yet.
-        ParticleContactElement* bond = mBondElements[i];
-        if (bond == NULL) return; //This bond was never created (happens in some MPI cases, see CreateContactElements() in explicit_solve_continumm.h)
-
-        bond->mLocalContactForce[0] = LocalContactForce[0];
-        bond->mLocalContactForce[1] = LocalContactForce[1];
-        bond->mLocalContactForce[2] = LocalContactForce[2];
-        KRATOS_CATCH("")
+    if (this->GetGeometry()[0].IsNot(DEMFlags::FIXED_ANG_VEL_X)) {
+        total_moment[0] *= (1.0 - mGlobalDamping * GeometryFunctions::sign(total_moment[0] * angular_velocity[0]));
     }
+    if (this->GetGeometry()[0].IsNot(DEMFlags::FIXED_ANG_VEL_Y)) {
+        total_moment[1] *= (1.0 - mGlobalDamping * GeometryFunctions::sign(total_moment[1] * angular_velocity[1]));
+    }
+    if (this->GetGeometry()[0].IsNot(DEMFlags::FIXED_ANG_VEL_Z)) {
+        total_moment[2] *= (1.0 - mGlobalDamping * GeometryFunctions::sign(total_moment[2] * angular_velocity[2]));
+    }
+
+    KRATOS_CATCH("")
+}
+
+void SphericParticle::CalculateOnContactElements(size_t i, double LocalContactForce[3]) {
+
+    KRATOS_TRY
+
+    if (!mBondElements.size()) return; // we skip this function if the vector of bonds hasn't been filled yet.
+    ParticleContactElement* bond = mBondElements[i];
+    if (bond == NULL) return; //This bond was never created (happens in some MPI cases, see CreateContactElements() in explicit_solve_continumm.h)
+
+    bond->mLocalContactForce[0] = LocalContactForce[0];
+    bond->mLocalContactForce[1] = LocalContactForce[1];
+    bond->mLocalContactForce[2] = LocalContactForce[2];
+    KRATOS_CATCH("")
+}
+
+void SphericParticle::CheckBreakageCriterion(double LocalContactForce[3]) {
+    if(this->Is(TO_REFINE)) return; //if it's marked as broken, we don't look again!
+
+    bool this_particle_has_to_break = false;
+
+    //IMPLEMENT HERE THE CRITERION
+    //Normal force of the neighbour is LocalContactForce[2]. Tangential forces are LocalContactForce[0] and LocalContactForce[1].
+    //Look this file for other places where the radius is called, or the mass, etc.
+
+
+
+    //befor this spot the variable this_particle_has_to_break must be 'true' if you want the particle to break.
+    /////////
+
+    if(this_particle_has_to_break) {
+        this->Set(TO_REFINE, true);
+    }
+}
 
 int    SphericParticle::GetClusterId()                                                           { return mClusterId;      }
 void   SphericParticle::SetClusterId(int givenId)                                                { mClusterId = givenId;   }

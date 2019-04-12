@@ -470,6 +470,9 @@ namespace Kratos {
         BoundingBoxUtility(is_time_to_mark_and_remove);
 
         if (is_time_to_search_neighbours) {
+
+            SplitBrokenParticles(r_model_part);
+
             if (!is_time_to_mark_and_remove) { //Just in case that some entities were marked as TO_ERASE without a bounding box (manual removal)
                 mpParticleCreatorDestructor->DestroyParticles(*mpCluster_model_part);
                 mpParticleCreatorDestructor->DestroyParticles(r_model_part);
@@ -504,6 +507,51 @@ namespace Kratos {
         //RebuildPropertiesProxyPointers(mListOfGhostSphericParticles);
         KRATOS_CATCH("")
     }//SearchDEMOperations;
+
+    void ExplicitSolverStrategy::SplitBrokenParticles(ModelPart& r_model_part) {
+        const int number_of_particles = (int) mListOfSphericParticles.size();
+        PointerVector<Element> elements_to_be_added_later;
+
+        for (int i = 0; i < number_of_particles; i++) {
+            if ( mListOfSphericParticles[i]->IsNot(TO_REFINE) ) {
+                continue;
+            }
+            mListOfSphericParticles[i]->Set(TO_ERASE, true);
+            array_1d<double, 3>& coordinates_of_old_particle = mListOfSphericParticles[i]->GetGeometry()[0].Coordinates();
+            Properties::Pointer material_properties_of_old_particle = mListOfSphericParticles[i]->pGetProperties();
+
+            array_1d<double, 3> coordinates_of_new_particle;
+            double radius_of_new_particle = 0.0;
+            Element::Pointer p_new_particle;
+
+            //HERE ADDING THE FIRST PARTICLE:
+            coordinates_of_new_particle[0] = coordinates_of_old_particle[0] + 0.0;
+            coordinates_of_new_particle[1] = coordinates_of_old_particle[1] + 1.0;
+            coordinates_of_new_particle[2] = coordinates_of_old_particle[2] + 0.0;
+            radius_of_new_particle = 1.0;
+            p_new_particle = mpParticleCreatorDestructor->CreateSphericParticle(r_model_part, coordinates_of_new_particle, material_properties_of_old_particle, radius_of_new_particle, "SphericParticle3D");
+            elements_to_be_added_later.push_back(p_new_particle);
+
+            //HERE ADDING THE SECOND PARTICLE:
+            coordinates_of_new_particle[0] = coordinates_of_old_particle[0] + 1.0;
+            coordinates_of_new_particle[1] = coordinates_of_old_particle[1] + 0.0;
+            coordinates_of_new_particle[2] = coordinates_of_old_particle[2] + 0.0;
+            radius_of_new_particle = 2.0;
+            p_new_particle = mpParticleCreatorDestructor->CreateSphericParticle(r_model_part, coordinates_of_new_particle, material_properties_of_old_particle, radius_of_new_particle, "SphericParticle3D");
+            elements_to_be_added_later.push_back(p_new_particle);
+
+            //HERE ADDING THE THIRD PARTICLE:
+            coordinates_of_new_particle[0] = coordinates_of_old_particle[0] + 0.0;
+            coordinates_of_new_particle[1] = coordinates_of_old_particle[1] + 0.0;
+            coordinates_of_new_particle[2] = coordinates_of_old_particle[2] + 1.0;
+            radius_of_new_particle = 3.0;
+            p_new_particle = mpParticleCreatorDestructor->CreateSphericParticle(r_model_part, coordinates_of_new_particle, material_properties_of_old_particle, radius_of_new_particle, "SphericParticle3D");
+            elements_to_be_added_later.push_back(p_new_particle);
+        }
+
+        r_model_part.AddElements(elements_to_be_added_later.begin(), elements_to_be_added_later.end());
+
+    }
 
     void ExplicitSolverStrategy::SearchFEMOperations(ModelPart& r_model_part, bool has_mpi) {
         KRATOS_TRY

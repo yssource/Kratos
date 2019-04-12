@@ -36,7 +36,7 @@ namespace Kratos {
 /// Short class definition.
 /** Detail class definition.
 */
-class KratosCompressiblePotentialFlowApplication : public KratosApplication {
+class KRATOS_API(COMPRESSIBLE_POTENTIAL_FLOW_APPLICATION) KratosCompressiblePotentialFlowApplication : public KratosApplication {
 public:
 	///@name Type Definitions
 	///@{

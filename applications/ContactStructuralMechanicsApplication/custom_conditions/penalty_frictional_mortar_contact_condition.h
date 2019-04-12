@@ -17,6 +17,7 @@
 // External includes
 
 // Project includes
+#include "utilities/math_utils.h"
 #include "custom_conditions/mortar_contact_condition.h"
 
 namespace Kratos
@@ -507,9 +508,21 @@ private:
                 for (std::size_t i_dof = 0; i_dof < TDim; ++i_dof)
                     tangent_matrix(i_node, i_dof) = tangent_slip[i_dof];
             } else { // We consider the tangent direction as auxiliar
-                const array_1d<double, 3>& r_tangent_xi = rGeometry[i_node].GetValue(TANGENT_XI);
-                for (std::size_t i_dof = 0; i_dof < TDim; ++i_dof)
-                    tangent_matrix(i_node, i_dof) = r_tangent_xi[i_dof];
+                const array_1d<double, 3>& r_normal = rGeometry[i_node].FastGetSolutionStepValue(NORMAL);
+                array_1d<double, 3> tangent_xi, tangent_eta;
+                MathUtils<double>::OrthonormalBasis(r_normal, tangent_xi, tangent_eta);
+                if (TDim == 3) {
+                    for (std::size_t i_dof = 0; i_dof < 3; ++i_dof)
+                        tangent_matrix(i_node, i_dof) = tangent_xi[i_dof];
+                } else  {
+                    if (std::abs(tangent_xi[2]) > std::numeric_limits<double>::epsilon()) {
+                        for (std::size_t i_dof = 0; i_dof < 2; ++i_dof)
+                            tangent_matrix(i_node, i_dof) = tangent_eta[i_dof];
+                    } else {
+                        for (std::size_t i_dof = 0; i_dof < 2; ++i_dof)
+                            tangent_matrix(i_node, i_dof) = tangent_xi[i_dof];
+                    }
+                }
             }
         }
 

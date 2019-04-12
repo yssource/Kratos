@@ -19,16 +19,12 @@
 // External includes
 
 // Project includes
+#include "custom_utilities/rans_variable_utils.h"
 #include "includes/cfd_variables.h"
 #include "includes/define.h"
 #include "includes/model_part.h"
-#include "processes/find_nodal_neighbours_process.h"
 #include "processes/process.h"
-#include "processes/variational_distance_calculation_process.h"
 #include "rans_constitutive_laws_application_variables.h"
-#include "utilities/normal_calculation_utils.h"
-
-#include "custom_utilities/rans_variable_utils.h"
 
 namespace Kratos
 {
@@ -133,12 +129,15 @@ public:
 
     void Execute() override
     {
-        const int number_of_nodes = mrModelPart.NumberOfNodes();
+        ModelPart::NodesContainerType& r_nodes =
+            mrModelPart.GetCommunicator().LocalMesh().Nodes();
+
+        const int number_of_nodes = r_nodes.size();
 
 #pragma omp parallel for
         for (int i_node = 0; i_node < number_of_nodes; ++i_node)
         {
-            NodeType& r_node = *(mrModelPart.NodesBegin() + i_node);
+            NodeType& r_node = *(r_nodes.begin() + i_node);
 
             const array_1d<double, 3>& velocity =
                 r_node.FastGetSolutionStepValue(VELOCITY, mStep);
@@ -191,11 +190,12 @@ public:
             r_node.FastGetSolutionStepValue(RANS_Y_PLUS) = yplus;
         }
 
+        RansVariableUtils rans_variable_utils;
+
         if (mEchoLevel > 0)
         {
             const unsigned int number_of_negative_y_plus_nodes =
-                RansVariableUtils().GetNumberOfNegativeScalarValueNodes(
-                    mrModelPart, RANS_Y_PLUS);
+                rans_variable_utils.GetNumberOfNegativeScalarValueNodes(r_nodes, RANS_Y_PLUS);
             KRATOS_INFO("RansLogarithmicYPlusModelProcess")
                 << "RANS_Y_PLUS is negative in "
                 << number_of_negative_y_plus_nodes << " out of "
@@ -205,9 +205,9 @@ public:
         if (mEchoLevel > 1)
         {
             const double min_value =
-                RansVariableUtils().GetMinimumScalarValue(mrModelPart, RANS_Y_PLUS);
+                rans_variable_utils.GetMinimumScalarValue(r_nodes, RANS_Y_PLUS);
             const double max_value =
-                RansVariableUtils().GetMaximumScalarValue(mrModelPart, RANS_Y_PLUS);
+                rans_variable_utils.GetMaximumScalarValue(r_nodes, RANS_Y_PLUS);
             KRATOS_INFO("RansLogarithmicYPlusModelProcess")
                 << "RANS_Y_PLUS calculated for " << number_of_nodes
                 << ". RANS_Y_PLUS is bounded between [ " << std::scientific

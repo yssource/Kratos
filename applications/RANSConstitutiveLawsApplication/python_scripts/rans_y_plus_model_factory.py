@@ -1,8 +1,15 @@
 import KratosMultiphysics
 import KratosMultiphysics.RANSConstitutiveLawsApplication as KratosRANS
 
-
 def Factory(model_part, settings):
+    default_settings = KratosMultiphysics.Parameters(r'''
+    {
+        "model_type"     : "logarithmic",
+        "model_settings" : {}
+    }''')
+
+    settings.ValidateAndAssignDefaults(default_settings)
+
     if settings["model_type"].GetString() == "logarithmic":
         return KratosRANS.RansLogarithmicYPlusModelProcess(model_part, settings["model_settings"])
     else:

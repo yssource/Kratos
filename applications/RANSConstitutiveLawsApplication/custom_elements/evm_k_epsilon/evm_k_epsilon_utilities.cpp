@@ -127,32 +127,31 @@ void EvmKepsilonModelUtilities::CalculateTurbulentValues(double& turbulent_kinet
         c_mu * std::pow(turbulent_kinetic_energy, 1.5) / mixing_length;
 }
 
-void EvmKepsilonModelUtilities::CalculateTurbulentViscosityForModelPart(ModelPart& rModelPart,
-                                                                        unsigned int Step)
-{
-    KRATOS_TRY
+// void EvmKepsilonModelUtilities::CalculateTurbulentViscosityForModelPart(ModelPart& rModelPart)
+// {
+//     KRATOS_TRY
 
-    int number_of_nodes = rModelPart.GetCommunicator().LocalMesh().NumberOfNodes();
-    const double c_mu = rModelPart.GetProcessInfo()[TURBULENCE_RANS_C_MU];
+//     int number_of_nodes = rModelPart.GetCommunicator().LocalMesh().NumberOfNodes();
+//     const double c_mu = rModelPart.GetProcessInfo()[TURBULENCE_RANS_C_MU];
 
-#pragma omp parallel for
-    for (int i = 0; i < number_of_nodes; ++i)
-    {
-        auto& r_node = *(rModelPart.GetCommunicator().LocalMesh().NodesBegin() + i);
+// #pragma omp parallel for
+//     for (int i = 0; i < number_of_nodes; ++i)
+//     {
+//         auto& r_node = *(rModelPart.GetCommunicator().LocalMesh().NodesBegin() + i);
 
-        const double tke = r_node.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY, Step);
-        const double epsilon =
-            r_node.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE, Step);
-        const double y_plus = r_node.FastGetSolutionStepValue(RANS_Y_PLUS, Step);
+//         const double tke = r_node.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
+//         const double epsilon =
+//             r_node.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
+//         const double y_plus = r_node.FastGetSolutionStepValue(RANS_Y_PLUS);
 
-        const double f_mu = CalculateFmu(y_plus);
+//         const double f_mu = CalculateFmu(y_plus);
 
-        const double nu_t = CalculateTurbulentViscosity(c_mu, tke, epsilon, f_mu);
-        r_node.FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t;
-    }
+//         const double nu_t = CalculateTurbulentViscosity(c_mu, tke, epsilon,
+//         f_mu); r_node.FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t;
+//     }
 
-    KRATOS_CATCH("");
-}
+//     KRATOS_CATCH("");
+// }
 
 void EvmKepsilonModelUtilities::UpdateBoundaryConditions(ModelPart& rModelPart)
 {
@@ -223,6 +222,32 @@ void EvmKepsilonModelUtilities::AssignInitialValues(ModelPart& rModelPart)
 
             CalculateTurbulentValues(tke, epsilon, y_plus, nu, wall_distance, c_mu, von_karman);
         }
+    }
+
+    KRATOS_CATCH("");
+}
+
+void EvmKepsilonModelUtilities::CalculateTurbulentViscosityForModelPart(ModelPart& rModelPart)
+{
+    KRATOS_TRY
+
+    int number_of_nodes = rModelPart.GetCommunicator().LocalMesh().NumberOfNodes();
+    const double c_mu = rModelPart.GetProcessInfo()[TURBULENCE_RANS_C_MU];
+
+#pragma omp parallel for
+    for (int i = 0; i < number_of_nodes; ++i)
+    {
+        auto& r_node = *(rModelPart.GetCommunicator().LocalMesh().NodesBegin() + i);
+
+        const double tke = r_node.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
+        const double epsilon =
+            r_node.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
+        const double y_plus = r_node.FastGetSolutionStepValue(RANS_Y_PLUS);
+
+        const double f_mu = CalculateFmu(y_plus);
+
+        const double nu_t = CalculateTurbulentViscosity(c_mu, tke, epsilon, f_mu);
+        r_node.FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t;
     }
 
     KRATOS_CATCH("");

@@ -21,6 +21,7 @@
 /* Project includes */
 #include "includes/define.h"
 #include "includes/model_part.h"
+#include "utilities/variable_utils.h"
 
 namespace Kratos
 {
@@ -53,7 +54,7 @@ namespace Kratos
  * @author Ruben Zorrilla
  * @author Vicente Mataix Ferrandiz
  */
-class RansVariableUtils
+class RansVariableUtils : public VariableUtils
 {
 public:
     ///@name Type Definitions
@@ -62,45 +63,20 @@ public:
     /// We create the Pointer related to RansVariableUtils
     KRATOS_CLASS_POINTER_DEFINITION(RansVariableUtils);
 
-    template <class TVarType>
-    void AddToHistoricalNodeScalarVariable(const TVarType& rDestinationVar,
-                                           const TVarType& rVarA,
-                                           const TVarType& rVarB,
-                                           ModelPart& rModelPart,
-                                           const unsigned int rBuffStep = 0) const
-    {
-        KRATOS_TRY
-
-        const int number_of_nodes =
-            rModelPart.GetCommunicator().LocalMesh().NumberOfNodes();
-
-#pragma omp parallel for
-        for (int i = 0; i < number_of_nodes; i++)
-        {
-            auto it_node = rModelPart.GetCommunicator().LocalMesh().NodesBegin() + i;
-            const double val_a = it_node->GetSolutionStepValue(rVarA, rBuffStep);
-            const double val_b = it_node->GetSolutionStepValue(rVarB, rBuffStep);
-            double& val_destination =
-                it_node->GetSolutionStepValue(rDestinationVar, rBuffStep);
-            val_destination = val_a + val_b;
-        }
-
-        KRATOS_CATCH("")
-    }
-
     void FixScalarVariableDofs(const Flags& rFlag,
                                const Variable<double>& rVariable,
-                               ModelPart& rModelPart) const
+                               ModelPart::NodesContainerType& rNodes)
     {
         KRATOS_TRY
 
-        const int number_of_nodes =
-            rModelPart.GetCommunicator().LocalMesh().NumberOfNodes();
+        CheckVariableExists(rVariable, rNodes);
+
+        const int number_of_nodes = rNodes.size();
 
 #pragma omp parallel for
         for (int i = 0; i < number_of_nodes; i++)
         {
-            auto& r_node = *(rModelPart.GetCommunicator().LocalMesh().NodesBegin() + i);
+            ModelPart::NodeType& r_node = *(rNodes.begin() + i);
             if (r_node.Is(rFlag))
                 r_node.Fix(rVariable);
         }
@@ -108,105 +84,174 @@ public:
         KRATOS_CATCH("")
     }
 
-    unsigned int GetNumberOfNegativeScalarValueNodes(const ModelPart& rModelPart,
-                                                     const Variable<double>& rVariable) const
+    void ClipScalarVariable(unsigned int& rNumberOfNodesBelowMinimum,
+                            unsigned int& rNumberOfNodesAboveMaximum,
+                            const double MinimumValue,
+                            const double MaximumValue,
+                            const Variable<double>& rVariable,
+                            ModelPart::NodesContainerType& rNodes)
     {
-        const int number_of_nodes = rModelPart.NumberOfNodes();
+        KRATOS_TRY
 
+        CheckVariableExists(rVariable, rNodes);
+
+        const int number_of_nodes = rNodes.size();
+
+        rNumberOfNodesBelowMinimum = 0;
+        rNumberOfNodesAboveMaximum = 0;
+
+#pragma omp parallel for reduction( +: rNumberOfNodesBelowMinimum, rNumberOfNodesAboveMaximum)
+        for (int i = 0; i < number_of_nodes; i++)
+        {
+            ModelPart::NodeType& r_node = *(rNodes.begin() + i);
+            double& r_value = r_node.FastGetSolutionStepValue(rVariable);
+
+            if (r_value < MinimumValue)
+            {
+                rNumberOfNodesBelowMinimum++;
+                r_value = MinimumValue;
+            }
+            else if (r_value > MaximumValue)
+            {
+                rNumberOfNodesAboveMaximum++;
+                r_value = MaximumValue;
+            }
+        }
+
+        KRATOS_CATCH("")
+    }
+
+    unsigned int GetNumberOfNegativeScalarValueNodes(const ModelPart::NodesContainerType& rNodes,
+                                                     const Variable<double>& rVariable)
+    {
+        KRATOS_TRY
+
+        CheckVariableExists(rVariable, rNodes);
+
+        const int number_of_nodes = rNodes.size();
         unsigned int number_of_negative_nodes = 0;
 
 #pragma omp parallel for reduction(+ : number_of_negative_nodes)
         for (int i = 0; i < number_of_nodes; i++)
         {
-            const double value =
-                (rModelPart.NodesBegin() + i)->FastGetSolutionStepValue(rVariable);
-            if (value < 0.0)
-            {
-                number_of_negative_nodes++;
-            }
+            const double value = (rNodes.begin() + i)->FastGetSolutionStepValue(rVariable);
+            number_of_negative_nodes += (value < 0.0);
         }
 
         return number_of_negative_nodes;
+
+        KRATOS_CATCH("");
     }
 
-    double GetMinimumScalarValue(const ModelPart& rModelPart,
-                                 const Variable<double>& rVariable) const
+    double GetMinimumScalarValue(const ModelPart::NodesContainerType& rNodes,
+                                 const Variable<double>& rVariable)
     {
-        const int number_of_nodes = rModelPart.NumberOfNodes();
+        KRATOS_TRY
+
+        CheckVariableExists(rVariable, rNodes);
+
+        const int number_of_nodes = rNodes.size();
 
         if (number_of_nodes == 0)
             return 0.0;
 
-        double min_value = rModelPart.NodesBegin()->FastGetSolutionStepValue(rVariable);
+        double min_value = rNodes.begin()->FastGetSolutionStepValue(rVariable);
 
 #pragma omp parallel for reduction(min : min_value)
         for (int i = 0; i < number_of_nodes; i++)
         {
-            const double value =
-                (rModelPart.NodesBegin() + i)->FastGetSolutionStepValue(rVariable);
+            const double value = (rNodes.begin() + i)->FastGetSolutionStepValue(rVariable);
             min_value = std::min(min_value, value);
         }
 
         return min_value;
+
+        KRATOS_CATCH("");
     }
 
-    double GetMaximumScalarValue(const ModelPart& rModelPart,
-                                 const Variable<double>& rVariable) const
+    double GetMaximumScalarValue(const ModelPart::NodesContainerType& rNodes,
+                                 const Variable<double>& rVariable)
     {
-        const int number_of_nodes = rModelPart.NumberOfNodes();
+        KRATOS_TRY
+
+        CheckVariableExists(rVariable, rNodes);
+
+        const int number_of_nodes = rNodes.size();
 
         if (number_of_nodes == 0)
             return 0.0;
 
-        double max_value = rModelPart.NodesBegin()->FastGetSolutionStepValue(rVariable);
+        double max_value = rNodes.begin()->FastGetSolutionStepValue(rVariable);
 
 #pragma omp parallel for reduction(max : max_value)
         for (int i = 0; i < number_of_nodes; i++)
         {
-            const double value =
-                (rModelPart.NodesBegin() + i)->FastGetSolutionStepValue(rVariable);
+            const double value = (rNodes.begin() + i)->FastGetSolutionStepValue(rVariable);
             max_value = std::max(max_value, value);
         }
 
         return max_value;
+
+        KRATOS_CATCH("");
     }
 
-    double GetScalarVariableIncreaseNormSquare(const ModelPart& rModelPart,
-                                               const Variable<double>& rOldVariable,
-                                               const Variable<double>& rNewVariable) const
+    double GetScalarVariableDifferenceNormSquare(const ModelPart::NodesContainerType& rNodes,
+                                                 const Variable<double>& rVariableA,
+                                                 const Variable<double>& rVariableB)
     {
-        const int number_of_nodes = rModelPart.NumberOfNodes();
+        KRATOS_TRY
 
+        CheckVariableExists(rVariableA, rNodes);
+        CheckVariableExists(rVariableB, rNodes);
+
+        const int number_of_nodes = rNodes.size();
         double increase_norm_square = 0.0;
 
 #pragma omp parallel for reduction(+ : increase_norm_square)
         for (int i = 0; i < number_of_nodes; i++)
         {
-            const auto& r_node = *(rModelPart.NodesBegin() + i);
-            const double old_value = r_node.FastGetSolutionStepValue(rOldVariable);
-            const double new_value = r_node.FastGetSolutionStepValue(rNewVariable);
-            increase_norm_square += std::pow(old_value - new_value, 2);
+            const ModelPart::NodeType& r_node = *(rNodes.begin() + i);
+            const double value_a = r_node.FastGetSolutionStepValue(rVariableA);
+            const double value_b = r_node.FastGetSolutionStepValue(rVariableB);
+            increase_norm_square += std::pow(value_a - value_b, 2);
         }
 
         return increase_norm_square;
+
+        KRATOS_CATCH("");
     }
 
-    double GetScalarVariableSolutionNormSquare(const ModelPart& rModelPart,
-                                               const Variable<double>& rVariable) const
+    double GetScalarVariableSolutionNormSquare(const ModelPart::NodesContainerType& rNodes,
+                                               const Variable<double>& rVariable)
     {
-        const int number_of_nodes = rModelPart.NumberOfNodes();
+        KRATOS_TRY
 
+        CheckVariableExists(rVariable, rNodes);
+
+        const int number_of_nodes = rNodes.size();
         double solution_norm_square = 0.0;
 
 #pragma omp parallel for reduction(+ : solution_norm_square)
         for (int i = 0; i < number_of_nodes; i++)
         {
             const double solution_value =
-                (rModelPart.NodesBegin() + i)->FastGetSolutionStepValue(rVariable);
+                (rNodes.begin() + i)->FastGetSolutionStepValue(rVariable);
             solution_norm_square += std::pow(solution_value, 2);
         }
 
         return solution_norm_square;
+
+        KRATOS_CATCH("");
+    }
+
+    void CopyNodalSolutionStepVariablesList(ModelPart& rOriginModelPart, ModelPart& rDestinationModelPart)
+    {
+        KRATOS_TRY
+
+        rDestinationModelPart.GetNodalSolutionStepVariablesList() =
+            rOriginModelPart.GetNodalSolutionStepVariablesList();
+
+        KRATOS_CATCH("");
     }
 }; /* Class RansVariableUtils */
 

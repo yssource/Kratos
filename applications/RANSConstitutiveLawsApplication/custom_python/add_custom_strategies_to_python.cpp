@@ -23,8 +23,8 @@
 #include "spaces/ublas_space.h"
 
 // strategies
-#include "custom_strategies/general_residual_based_bossak_velocity_scalar_scheme.h"
 #include "solving_strategies/strategies/solving_strategy.h"
+#include "custom_strategies/general_residual_based_bossak_velocity_scalar_scheme.h"
 
 // convergence criterians
 #include "custom_strategies/general_convergence_criteria.h"

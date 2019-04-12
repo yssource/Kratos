@@ -22,6 +22,7 @@
 
 // rans modelling includes
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
+#include "custom_utilities/rans_calculation_utilities.h"
 #include "custom_utilities/rans_variable_utils.h"
 
 namespace Kratos
@@ -32,25 +33,28 @@ void AddCustomUtilitiesToPython(pybind11::module& m)
 {
     namespace py = pybind11;
 
-    py::class_<RansVariableUtils>(m, "RansVariableUtils")
+    py::class_<RansVariableUtils, VariableUtils>(m, "RansVariableUtils")
         .def(py::init<>())
-        .def("AddToHistoricalNodeScalarVariable",
-             &RansVariableUtils::AddToHistoricalNodeScalarVariable<Variable<double>>)
+        .def("FixScalarVariableDofs", &RansVariableUtils::FixScalarVariableDofs)
+        .def("ClipScalarVariable", &RansVariableUtils::ClipScalarVariable)
         .def("GetNumberOfNegativeScalarValueNodes", &RansVariableUtils::GetNumberOfNegativeScalarValueNodes)
         .def("GetMinimumScalarValue", &RansVariableUtils::GetMinimumScalarValue)
         .def("GetMaximumScalarValue", &RansVariableUtils::GetMaximumScalarValue)
-        .def("GetScalarVariableIncreaseNormSquare", &RansVariableUtils::GetScalarVariableIncreaseNormSquare)
-        .def("GetScalarVariableSolutionNormSquare",
-             &RansVariableUtils::GetScalarVariableSolutionNormSquare)
-        .def("FixScalarVariableDofs", &RansVariableUtils::FixScalarVariableDofs)
-        ;
+        .def("GetScalarVariableDifferenceNormSquare",
+             &RansVariableUtils::GetScalarVariableDifferenceNormSquare)
+        .def("GetScalarVariableSolutionNormSquare", &RansVariableUtils::GetScalarVariableSolutionNormSquare)
+        .def("CopyNodalSolutionStepVariablesList",
+             &RansVariableUtils::CopyNodalSolutionStepVariablesList);
 
     py::class_<EvmKepsilonModelUtilities>(m, "EvmKepsilonModelUtilities")
         .def(py::init<>())
-        .def("CalculateTurbulentViscosity", &EvmKepsilonModelUtilities::CalculateTurbulentViscosityForModelPart)
         .def("UpdateBoundaryConditions", &EvmKepsilonModelUtilities::UpdateBoundaryConditions)
-        .def("AssignInitialValues", &EvmKepsilonModelUtilities::AssignInitialValues)
-        ;
+        .def("AssignInitialValues", &EvmKepsilonModelUtilities::AssignInitialValues);
+
+//     py::class_<RansCalculationUtilities>(m, "RansCalculationUtilities")
+//         .def(py::init<>())
+//         .def("UpdateEffectiveViscosityForModelPart",
+//              &RansCalculationUtilities::UpdateEffectiveViscosityForModelPart);
 }
 
 } // namespace Python.

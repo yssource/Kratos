@@ -13,6 +13,8 @@
 #if !defined(KRATOS_RANS_APPLICATION_CALCULATION_UTILITIES_H_INCLUDED)
 #define KRATOS_RANS_APPLICATION_CALCULATION_UTILITIES_H_INCLUDED
 
+#include <functional>
+
 #include "geometries/geometry.h"
 #include "geometries/geometry_data.h"
 #include "includes/define.h"
@@ -132,6 +134,8 @@ public:
     void WarnIfNegative(unsigned int& rNumberOfNegativeNodes,
                         const ModelPart& rModelPart,
                         const Variable<double>& rVariable);
+
+    void UpdateEffectiveViscosityForModelPart(ModelPart& rModelPart);
 
     ///@}
 

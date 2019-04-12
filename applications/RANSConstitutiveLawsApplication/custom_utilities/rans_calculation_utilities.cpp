@@ -1,4 +1,5 @@
 #include "rans_calculation_utilities.h"
+#include "includes/cfd_variables.h"
 #include <cmath>
 
 namespace Kratos
@@ -312,6 +313,25 @@ void RansCalculationUtilities::WarnIfNegative(unsigned int& rNumberOfNegativeNod
             rNumberOfNegativeNodes++;
         }
     }
+}
+
+void RansCalculationUtilities::UpdateEffectiveViscosityForModelPart(ModelPart& rModelPart)
+{
+    KRATOS_TRY
+
+    int number_of_nodes = rModelPart.GetCommunicator().LocalMesh().NumberOfNodes();
+
+#pragma omp parallel for
+    for (int i = 0; i < number_of_nodes; ++i)
+    {
+        auto& r_node = *(rModelPart.GetCommunicator().LocalMesh().NodesBegin() + i);
+        const double nu_k = r_node.FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
+        const double nu_t = r_node.FastGetSolutionStepValue(TURBULENT_VISCOSITY);
+        double& nu = r_node.FastGetSolutionStepValue(VISCOSITY);
+
+        nu = nu_k + nu_t;
+    }
+    KRATOS_CATCH("");
 }
 
 // template instantiations

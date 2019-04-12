@@ -8,14 +8,15 @@ if CheckIfApplicationsAvailable("FluidDynamicsApplication"):
     import KratosMultiphysics.FluidDynamicsApplication as KratosCFD
     from turbulence_model_configuration import TurbulenceModelConfiguration
 else:
-    raise Exception(
-        "RANSConstitutiveLawsApplication requires FluidDynamicsApplication which is not found. Please install/compile it and try again."
-    )
+    msg = "RANSConstitutiveLawsApplication requires FluidDynamicsApplication which is not found."
+    msg += " Please install/compile it and try again."
+    raise Exception(msg)
 
 class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
     def __init__(self, model, settings):
         default_settings = Kratos.Parameters(r'''{
             "model_type"            : "",
+            "model_settings"        : {},
             "fluid_model_part"      : "PLEASE_SPECIFY_FLUID_MODEL_PART",
             "inlet_conditions"      : ["PLEASE_SPECIFY_INLET_CONDITIONS"],
             "outlet_conditions"     : ["PLEASE_SPECIFY_OUTLET_CONDITIONS"],
@@ -24,179 +25,105 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
                 "max_iterations"         : 5,
                 "linear_solver_settings" : {}
             },
-            "y_plus_calculation"    : {
-                "model_type"        : "",
-                "model_settings"    : {}
+            "y_plus_calculation"      : {
+                "model_type"     : "",
+                "model_settings" : {}
             },
-            "mesh_moving"       : false,
-            "echo_level"        : 0,
-            "model_settings"    : {},
-            "coupling_settings" : {
-                "relative_tolerance"    : 1e-3,
-                "absolute_tolerance"    : 1e-5,
-                "max_iterations"        : 200,
-                "echo_level"            : 0
-            }
+            "mesh_moving"             : false,
+            "echo_level"              : 0,
+            "coupling_settings"       : {},
+            "turbulent_viscosity_min" : 1e-6,
+            "turbulent_viscosity_max" : 1e+2
         }''')
 
         self.settings = settings.ValidateAndAssignDefaults(default_settings)
 
-        super(TurbulenceEddyViscosityModelConfiguration, self).__init__(
-            model, settings)
+        super(TurbulenceEddyViscosityModelConfiguration, self).__init__(model, settings)
 
-        self.fluid_model_part = self.model.GetModelPart(
-            self.settings["fluid_model_part"].GetString())
+        self.fluid_model_part = self.model.GetModelPart(self.settings["fluid_model_part"].GetString())
 
         self.mesh_moving = self.settings["mesh_moving"].GetBool()
         self.distance_calculation_process = None
         self.y_plus_model_process = None
+        self.turbulence_model_process = None
         self.strategies_list = []
 
-        self.relative_tolerance = self.settings["coupling_settings"][
-            "relative_tolerance"].GetDouble()
-        self.absolute_tolerance = self.settings["coupling_settings"][
-            "absolute_tolerance"].GetDouble()
+        self.nu_t_min = self.settings["turbulent_viscosity_min"].GetDouble()
+        self.nu_t_max = self.settings["turbulent_viscosity_max"].GetDouble()
 
         self.is_computing_solution = False
 
     def Initialize(self):
-        for model_part in self.turbulence_model_parts_list:
-            self.AddDofs(model_part)
+        super(TurbulenceEddyViscosityModelConfiguration, self).Initialize()
 
+        self.__InitializeModelPart()
         self.PrepareSolvingStrategy()
 
         for strategy in self.strategies_list:
             strategy.Initialize()
 
-        self.__InitializeModelPart()
+        rans_variable_utils = KratosRANS.RansVariableUtils()
+        rans_variable_utils.CopyScalarVar(Kratos.VISCOSITY, Kratos.KINEMATIC_VISCOSITY,  self.fluid_model_part.Nodes)
+        rans_variable_utils.SetScalarVar(Kratos.TURBULENT_VISCOSITY, self.nu_t_min, self.fluid_model_part.Nodes)
 
-        variable_utils = Kratos.VariableUtils()
-        variable_utils.CopyScalarVar(Kratos.VISCOSITY, Kratos.KINEMATIC_VISCOSITY,  self.fluid_model_part.Nodes)
+        Kratos.Logger.PrintInfo(self.__class__.__name__, "Initialization successfull.")
 
     def InitializeSolutionStep(self):
+        super(TurbulenceEddyViscosityModelConfiguration, self).InitializeSolutionStep()
+
         if self.mesh_moving:
             self.__InitializeModelPart()
 
-    def Execute(self):
-        print("help trampoline")
-        if not self.is_computing_solution:
-            return
+    def AddVariables(self):
+        # adding variables required by rans eddy viscosity models
+        self.fluid_model_part.AddNodalSolutionStepVariable(Kratos.DISTANCE)
+        self.fluid_model_part.AddNodalSolutionStepVariable(Kratos.FLAG_VARIABLE)
+        self.fluid_model_part.AddNodalSolutionStepVariable(Kratos.VISCOSITY)
+        self.fluid_model_part.AddNodalSolutionStepVariable(Kratos.KINEMATIC_VISCOSITY)
+        self.fluid_model_part.AddNodalSolutionStepVariable(Kratos.TURBULENT_VISCOSITY)
+        self.fluid_model_part.AddNodalSolutionStepVariable(KratosRANS.RANS_Y_PLUS)
+        self.fluid_model_part.AddNodalSolutionStepVariable(KratosRANS.OLD_CONVERGENCE_VARIABLE)
 
-        self.UpdateBoundaryConditions()
-
-        for strategy in self.strategies_list:
-            strategy.InitializeSolutionStep()
-            strategy.Predict()
-
-        is_converged = False
-        iteration = 1
-
-        variable_utils = Kratos.VariableUtils()
-        while (not is_converged and iteration <=
-               self.settings["coupling_settings"]["max_iterations"].GetInt()):
-            variable_utils.CopyScalarVar(KratosRANS.OLD_TURBULENT_VISCOSITY,
-                                         KratosCFD.TURBULENT_VISCOSITY,
-                                         self.fluid_model_part.Nodes)
-
-            # solve for turbulent scalar variables
-            for strategy in self.strategies_list:
-                strategy.SolveSolutionStep()
-
-            # calculating the new turbulent viscosity
-            self.UpdateTurbulentViscosity()
-
-            # checking for convergence of turbulent viscosity
-            increase_norm = KratosRANS.RansVariableUtils(
-            ).GetScalarVariableIncreaseNormSquare(
-                self.fluid_model_part.Nodes,
-                KratosRANS.OLD_TURBULENT_VISCOSITY, Kratos.TURBULENT_VISCOSITY)
-
-            solution_norm = KratosRANS.RansVariableUtils(
-            ).GetScalarVariableSolutionNormSquare(self.fluid_model_part.Nodes,
-                                                  Kratos.TURBULENT_VISCOSITY)
-            if (solution_norm == 0.0):
-                solution_norm = 1.0
-
-            relative_tolerance = increase_norm / solution_norm
-            absolute_tolerance = math.sqrt(
-                increase_norm) / self.fluid_model_part.NumberOfNodes()
-
-            is_converged = (relative_tolerance < self.relative_tolerance
-                            or absolute_tolerance < self.absolute_tolerance)
-            iteration += 1
-
-        for strategy in self.strategies_list:
-            strategy.FinalizeSolutionStep()
-
-        self.UpdateFluidViscosity()
-
-    def AddVariables(self, model_part):
-        # adding variables from navier_stokes_vms_monolithic_solver
-        model_part.AddNodalSolutionStepVariable(Kratos.VELOCITY)
-        model_part.AddNodalSolutionStepVariable(Kratos.ACCELERATION)
-        model_part.AddNodalSolutionStepVariable(Kratos.MESH_VELOCITY)
-        model_part.AddNodalSolutionStepVariable(Kratos.PRESSURE)
-        model_part.AddNodalSolutionStepVariable(Kratos.IS_STRUCTURE)
-        model_part.AddNodalSolutionStepVariable(Kratos.DISPLACEMENT)
-        model_part.AddNodalSolutionStepVariable(Kratos.VISCOSITY)
-        model_part.AddNodalSolutionStepVariable(Kratos.DENSITY)
-        model_part.AddNodalSolutionStepVariable(Kratos.BODY_FORCE)
-        model_part.AddNodalSolutionStepVariable(Kratos.NODAL_AREA)
-        model_part.AddNodalSolutionStepVariable(Kratos.NODAL_H)
-        model_part.AddNodalSolutionStepVariable(Kratos.ADVPROJ)
-        model_part.AddNodalSolutionStepVariable(Kratos.DIVPROJ)
-        model_part.AddNodalSolutionStepVariable(Kratos.REACTION)
-        model_part.AddNodalSolutionStepVariable(Kratos.REACTION_WATER_PRESSURE)
-        model_part.AddNodalSolutionStepVariable(Kratos.EXTERNAL_PRESSURE)
-        model_part.AddNodalSolutionStepVariable(Kratos.NORMAL)
-        model_part.AddNodalSolutionStepVariable(Kratos.Y_WALL)
-        model_part.AddNodalSolutionStepVariable(KratosCFD.Q_VALUE)
-
-        # adding variables required by rans
-        model_part.AddNodalSolutionStepVariable(Kratos.DISTANCE)
-        model_part.AddNodalSolutionStepVariable(Kratos.FLAG_VARIABLE)
-        model_part.AddNodalSolutionStepVariable(Kratos.KINEMATIC_VISCOSITY)
-        model_part.AddNodalSolutionStepVariable(Kratos.TURBULENT_VISCOSITY)
-        model_part.AddNodalSolutionStepVariable(KratosRANS.RANS_Y_PLUS)
-        model_part.AddNodalSolutionStepVariable(KratosRANS.OLD_TURBULENT_VISCOSITY)
-
-    def AddDofs(self, model_part):
-        raise Exception(
-            "Calling base class TurbulenceEddyViscosityModelConfiguration::AddDofs"
-        )
-
-    def UpdateTurbulentViscosity(self):
-        raise Exception(
-            "Calling base class TurbulenceEddyViscosityModelConfiguration::UpdateTurbulentViscosity"
-        )
-
-    def UpdateBoundaryConditions(self):
-        raise Exception(
-            "Calling base class TurbulenceEddyViscosityModelConfiguration::UpdateBoundaryConditions"
-        )
+        Kratos.Logger.PrintInfo(self.__class__.__name__, "Successfully added solution step variables.")
 
     def InitializeBoundaryNodes(self):
         raise Exception(
             "Calling base class TurbulenceEddyViscosityModelConfiguration::InitializeBoundaryNodes"
         )
 
-    def CalculateYPlus(self):
+    def GetUpdateConvergenceVariableMethod(self):
+        raise Exception(
+            "Calling base class TurbulenceEddyViscosityModelConfiguration::GetUpdateConvergenceVariableMethod"
+        )
+
+    def GetUpdateBeforeSolveSolutionStepMethod(self):
+        raise Exception(
+            "Calling base class TurbulenceEddyViscosityModelConfiguration::GetUpdateBeforeSolveSolutionStepMethod"
+        )
+
+    def PrepareSolvingStrategy(self):
+        raise Exception(
+            "Calling base class TurbulenceEddyViscosityModelConfiguration::PrepareSolvingStrategy"
+        )
+
+    def GetUpdateAfterSolveSolutionStepMethod(self):
+        rans_calculation_utils = KratosRANS.RansCalculationUtilities()
+        return rans_calculation_utils.UpdateEffectiveViscosityForModelPart()
+
+    def GetYPlusModel(self):
         if self.y_plus_model_process is None:
-            import rans_y_plus_models
-            self.y_plus_model_process = rans_y_plus_models.Factory(
+            import rans_y_plus_model_factory
+            self.y_plus_model_process = rans_y_plus_model_factory.Factory(
                 self.fluid_model_part, self.settings["y_plus_calculation"])
-            Kratos.Logger(self.__name__,
-                      "Initialized " + self.y_plus_model_process)
+            Kratos.Logger.PrintInfo(self.__class__.__name__,
+                      "Initialized " + self.y_plus_model_process.__str__())
 
-        self.y_plus_model_process.Execute()
-        Kratos.Logger(self.__name__,
-                  "Calculated y plus using " + self.y_plus_model_process)
+        return self.y_plus_model_process
 
-    def UpdateFluidViscosity(self):
-        rans_variable_utils = KratosRANS.RansVariableUtils()
-        rans_variable_utils.AddToHistoricalNodeScalarVariable(
-            Kratos.VISCOSITY, Kratos.KINEMATIC_VISCOSITY, Kratos.TURBULENT_VISCOSITY,
-            self.fluid_model_part)
+    def CalculateYPlus(self):
+        self.GetYPlusModel().Execute()
+        Kratos.Logger.PrintInfo(self.__class__.__name__,
+                  "Calculated y plus using " + self.y_plus_model_process.__str__())
 
     def CreateStrategy(self, solver_settings, scheme_settings, model_part,
                        scalar_variable, scalar_variable_rate,
@@ -218,6 +145,8 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
             builder_and_solver, solver_settings["max_iterations"].GetInt(),
             False, False, False)
 
+        Kratos.Logger.PrintInfo(self.__class__.__name__, "Successfully created solving strategy.")
+
         return strategy, linear_solver, convergence_criteria, builder_and_solver, time_scheme
 
     def __InitializeModelPart(self):
@@ -230,14 +159,16 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
 
         self.__CalculateWallDistances()
 
+        Kratos.Logger.PrintInfo(self.__class__.__name__, "Model part initialized.")
+
     def __InitializeNodeFlags(self):
-        self.__InitializeNodeFlagsForConditions(
-            self.settings["inlet_conditions"].GetStringArray(), Kratos.INLET, True)
+        self.__InitializeNodeFlagsForConditions(self.settings["inlet_conditions"].GetStringArray(), Kratos.INLET, True)
         self.__InitializeNodeFlagsForConditions(self.settings["outlet_conditions"].GetStringArray(), Kratos.OUTLET, True)
         self.__InitializeNodeFlagsForConditions(self.settings["wall_conditions"].GetStringArray(), Kratos.STRUCTURE, True)
         self.__InitializeNodeFlagsForConditions(self.settings["wall_conditions"].GetStringArray(), Kratos.INLET, False)
-        self.__InitializeNodeFlagsForConditions(self.settings["wall_conditions"].GetStringArray(), Kratos.INLET, False)
+        self.__InitializeNodeFlagsForConditions(self.settings["wall_conditions"].GetStringArray(), Kratos.OUTLET, False)
 
+        Kratos.Logger.PrintInfo(self.__class__.__name__, "Node flags initialized.")
 
     def __InitializeNodeFlagsForConditions(self, conditions_list, flag, value):
         variable_utils = Kratos.VariableUtils()

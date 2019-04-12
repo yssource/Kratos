@@ -14,6 +14,7 @@
 #define KRATOS_EVM_K_EPSILON_UTILITIES_H_INCLUDED
 
 // System includes
+#include <functional>
 
 // Project includes
 #include "includes/define.h"
@@ -99,12 +100,11 @@ public:
 
     void static CalculatePositiveValuesList(Vector& rOutput, const Vector& rInput);
 
-    void CalculateTurbulentViscosityForModelPart(ModelPart& rModelPart,
-                                                 unsigned int Step = 0);
-
     void UpdateBoundaryConditions(ModelPart& rModelPart);
 
     void AssignInitialValues(ModelPart& rModelPart);
+
+    void CalculateTurbulentViscosityForModelPart(ModelPart& rModelPart);
 
 }; // class EvmKepsilonModelUtilities
 

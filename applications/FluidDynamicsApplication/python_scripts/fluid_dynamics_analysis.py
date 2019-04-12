@@ -38,12 +38,6 @@ class FluidDynamicsAnalysis(AnalysisStage):
         import python_solvers_wrapper_fluid
         return python_solvers_wrapper_fluid.CreateSolver(self.model, self.project_parameters)
 
-    def ModifyAfterSolverInitialize(self):
-        if ("turbulence_process" in dir(self._GetSolver())):
-            if self._GetSolver().turbulence_process is not None:
-                self._list_of_processes.append(self._GetSolver().turbulence_process)
-                self._GetSolver().turbulence_process.ExecuteInitialize()
-
     def _CreateProcesses(self, parameter_name, initialization_order):
         """Create a list of Processes
         This method is TEMPORARY to not break existing code

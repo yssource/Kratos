@@ -21,7 +21,7 @@
                 "response_type"     : "adjoint_lift_jump_coordinates",
                 "use_kratos"        : true,
                 "gradient_mode"     : "semi_analytic",
-                "step_size"         : 1e-6
+                "step_size"         : 1e-8
             },
         "sensitivity_settings" : {
                 "sensitivity_model_part_name" : "Parts_Parts_Auto1",
@@ -88,10 +88,10 @@
             "process_name"    : "CompareTwoFilesCheckProcess",
             "Parameters" :{
                 "output_file_name"    : "naca0012_test_shape_sensitivity_probe1.dat",
-                "reference_file_name" : "naca0012_test_shape_sensitivity_probe1_ref.dat",
+                "reference_file_name" : "naca0012_test_shape_sensitivity_analytical_probe1_ref.dat",
                 "comparison_type"     : "dat_file",
                 "remove_output_file"    : true,
-                "tolerance"             : 1e-9,
+                "tolerance"             : 1e-6,
                 "relative_tolerance"    : 1e-12
             }
         },{

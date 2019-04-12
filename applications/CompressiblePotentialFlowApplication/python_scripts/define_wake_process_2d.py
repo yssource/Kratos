@@ -147,6 +147,8 @@ class DefineWakeProcess2D(KratosMultiphysics.Process):
     def ComputeDistancesToWake(self, elem):
         # This function computes the distance of the element nodes
         # to the wake
+        myobject = CPFApp.DefineWake2DProcess(self.fluid_model_part)
+        myobject.Execute()
         nodal_distances_to_wake = KratosMultiphysics.Vector(3)
         counter = 0
         for elnode in elem.GetNodes():

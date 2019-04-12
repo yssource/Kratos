@@ -19,6 +19,7 @@
 #include "includes/define.h"
 #include "custom_python/add_custom_processes_to_python.h"
 #include "custom_processes/kutta_condition_process.h"
+#include "custom_processes/define_wake_2d_process.h"
 
 namespace Kratos {
 namespace Python {
@@ -29,6 +30,11 @@ void  AddCustomProcessesToPython(pybind11::module& m)
 
     py::class_<KuttaConditionProcess, KuttaConditionProcess::Pointer, Process >
         (m, "KuttaConditionProcess")
+        .def(py::init<ModelPart&>())
+        ;
+
+    py::class_<DefineWake2DProcess, DefineWake2DProcess::Pointer, Process >
+        (m, "DefineWake2DProcess")
         .def(py::init<ModelPart&>())
         ;
 }

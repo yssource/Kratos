@@ -2,8 +2,6 @@ import KratosMultiphysics
 import KratosMultiphysics.CompressiblePotentialFlowApplication as CompressiblePotentialFlow
 import KratosMultiphysics.MeshingApplication as MeshingApplication
 import math
-import sys
-import pprint
 import time
 
 
@@ -20,7 +18,7 @@ def RotateModelPart(origin, angle, model_part):
 class InitializeGeometryProcess(KratosMultiphysics.Process):
     def __init__(self, Model, settings ):
         KratosMultiphysics.Process.__init__(self)
-        print("Initialize Geometry process")
+        KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','Initialize Geometry process')
         default_parameters = KratosMultiphysics.Parameters( """
             {
                 "model_part_name": "insert_model_part",
@@ -93,23 +91,23 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
         self.linear_solver = python_linear_solver_factory.ConstructSolver(linear_solver_settings)
 
     def Execute(self):
-        print("Executing Initialize Geometry")
+        KratosMultiphysics.Logger.PrintInfo('Executing Initialize Geometry')
         self.InitializeSkinModelPart()
         self.CalculateDistance()
 
         if (self.do_remeshing):
-            print("Executing first refinement ")
+            KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','Executing first refinement ')
             import time
             ini_time=time.time()
             self.ExtendDistance()
             self.RefineMesh()
-            print("Elapsed time: ",time.time()-ini_time)
+            KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','Elapsed time: ',time.time()-ini_time)
             self.CalculateDistance()
 
         KratosMultiphysics.VariableUtils().CopyScalarVar(KratosMultiphysics.DISTANCE,CompressiblePotentialFlow.LEVEL_SET_DISTANCE, self.main_model_part.Nodes)
         self.ApplyFlags()
         self.ComputeKuttaNodeAndElement()
-        print("Level Set geometry initialized")
+        KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','Level Set geometry initialized')
 
 
     def ExecuteInitialize(self):
@@ -136,7 +134,7 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
                 node.Y=self.initial_point[1]+node.Y+1e-5
             RotateModelPart(self.origin,angle,self.skin_model_part)
         self.FindXMaxAndMinSkin()
-        KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','CalculateDistance Time: ',time.time()-ini_time)
+        KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','InitializeSkin Time: ',time.time()-ini_time)
 
     def CalculateDistance(self):
         ini_time=time.time()
@@ -405,7 +403,7 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
         max_node_vec[2]=max_node.Z
         self.MetricParameters["custom_settings"]["max_node"].SetVector(max_node_vec)
         self.MetricParameters["custom_settings"]["min_node"].SetVector(min_node_vec)
-        print("MIN SKIN NODE", min_node.X, min_node.Y)
-        print("MAX SKIN NODE", max_node.X, max_node.Y)
+        KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','MIN SKIN NODE', min_node.X, min_node.Y)
+        KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','MAX SKIN NODE', max_node.X, max_node.Y)
 
 

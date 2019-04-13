@@ -411,6 +411,11 @@ void EvmKElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionData(
     rData.WallDistance = wall_distance;
     rData.Gamma = gamma;
     rEffectiveKinematicViscosity = nu + nu_t / tke_sigma;
+
+    // KRATOS_WATCH(nu);
+    // KRATOS_WATCH(nu_t);
+    // KRATOS_WATCH(tke_sigma);
+    // std::exit(-1);
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>

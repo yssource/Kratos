@@ -51,10 +51,10 @@ void AddCustomUtilitiesToPython(pybind11::module& m)
         .def("UpdateBoundaryConditions", &EvmKepsilonModelUtilities::UpdateBoundaryConditions)
         .def("AssignInitialValues", &EvmKepsilonModelUtilities::AssignInitialValues);
 
-//     py::class_<RansCalculationUtilities>(m, "RansCalculationUtilities")
-//         .def(py::init<>())
-//         .def("UpdateEffectiveViscosityForModelPart",
-//              &RansCalculationUtilities::UpdateEffectiveViscosityForModelPart);
+    py::class_<RansCalculationUtilities>(m, "RansCalculationUtilities")
+        .def(py::init<>())
+        .def("CreateConnectivityPreservingModelPart",
+             &RansCalculationUtilities::CreateConnectivityPreservingModelPart);
 }
 
 } // namespace Python.

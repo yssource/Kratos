@@ -145,6 +145,8 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
             builder_and_solver, solver_settings["max_iterations"].GetInt(),
             False, False, False)
 
+        strategy.SetEchoLevel(solver_settings["echo_level"].GetInt())
+
         Kratos.Logger.PrintInfo(self.__class__.__name__, "Successfully created solving strategy.")
 
         return strategy, linear_solver, convergence_criteria, builder_and_solver, time_scheme

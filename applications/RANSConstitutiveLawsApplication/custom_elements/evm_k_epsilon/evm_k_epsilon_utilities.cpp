@@ -157,7 +157,7 @@ void EvmKepsilonModelUtilities::UpdateBoundaryConditions(ModelPart& rModelPart)
 {
     KRATOS_TRY
 
-    int number_of_nodes = rModelPart.GetCommunicator().LocalMesh().NumberOfNodes();
+    int number_of_nodes = rModelPart.NumberOfNodes();
 
     const ProcessInfo& r_process_info = rModelPart.GetProcessInfo();
 
@@ -167,7 +167,7 @@ void EvmKepsilonModelUtilities::UpdateBoundaryConditions(ModelPart& rModelPart)
 #pragma omp parallel for
     for (int i = 0; i < number_of_nodes; ++i)
     {
-        auto& r_node = *(rModelPart.GetCommunicator().LocalMesh().NodesBegin() + i);
+        auto& r_node = *(rModelPart.NodesBegin() + i);
 
         if (r_node.Is(INLET))
         {
@@ -198,7 +198,7 @@ void EvmKepsilonModelUtilities::AssignInitialValues(ModelPart& rModelPart)
 {
     KRATOS_TRY
 
-    int number_of_nodes = rModelPart.GetCommunicator().LocalMesh().NumberOfNodes();
+    int number_of_nodes = rModelPart.NumberOfNodes();
 
     const ProcessInfo& r_process_info = rModelPart.GetProcessInfo();
 
@@ -208,7 +208,8 @@ void EvmKepsilonModelUtilities::AssignInitialValues(ModelPart& rModelPart)
 #pragma omp parallel for
     for (int i = 0; i < number_of_nodes; ++i)
     {
-        auto& r_node = *(rModelPart.GetCommunicator().LocalMesh().NodesBegin() + i);
+        auto& r_node = *(rModelPart.NodesBegin() + i);
+
 
         if (!r_node.IsFixed(TURBULENT_KINETIC_ENERGY) &&
             !r_node.IsFixed(TURBULENT_ENERGY_DISSIPATION_RATE))
@@ -220,7 +221,14 @@ void EvmKepsilonModelUtilities::AssignInitialValues(ModelPart& rModelPart)
             double& epsilon =
                 r_node.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
 
-            CalculateTurbulentValues(tke, epsilon, y_plus, nu, wall_distance, c_mu, von_karman);
+            double v1, v2;
+            CalculateTurbulentValues(v1, v2, y_plus, nu, wall_distance, c_mu, von_karman);
+
+            if (!r_node.IsFixed(TURBULENT_KINETIC_ENERGY))
+                tke = v1;
+
+            if (!r_node.IsFixed(TURBULENT_ENERGY_DISSIPATION_RATE))
+                epsilon = v2;
         }
     }
 
@@ -231,13 +239,13 @@ void EvmKepsilonModelUtilities::CalculateTurbulentViscosityForModelPart(ModelPar
 {
     KRATOS_TRY
 
-    int number_of_nodes = rModelPart.GetCommunicator().LocalMesh().NumberOfNodes();
+    int number_of_nodes = rModelPart.NumberOfNodes();
     const double c_mu = rModelPart.GetProcessInfo()[TURBULENCE_RANS_C_MU];
 
 #pragma omp parallel for
     for (int i = 0; i < number_of_nodes; ++i)
     {
-        auto& r_node = *(rModelPart.GetCommunicator().LocalMesh().NodesBegin() + i);
+        auto& r_node = *(rModelPart.NodesBegin() + i);
 
         const double tke = r_node.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
         const double epsilon =
@@ -245,6 +253,11 @@ void EvmKepsilonModelUtilities::CalculateTurbulentViscosityForModelPart(ModelPar
         const double y_plus = r_node.FastGetSolutionStepValue(RANS_Y_PLUS);
 
         const double f_mu = CalculateFmu(y_plus);
+
+        // KRATOS_WATCH(c_mu);
+        // KRATOS_WATCH(tke);
+        // KRATOS_WATCH(epsilon);
+        // KRATOS_WATCH(f_mu);
 
         const double nu_t = CalculateTurbulentViscosity(c_mu, tke, epsilon, f_mu);
         r_node.FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t;

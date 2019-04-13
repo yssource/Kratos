@@ -137,6 +137,11 @@ public:
 
     void UpdateEffectiveViscosityForModelPart(ModelPart& rModelPart);
 
+    void CreateConnectivityPreservingModelPart(ModelPart& rOrigin,
+                                               const std::string& rDestinationModelPartName,
+                                               const std::string& rElementName,
+                                               const std::string& rConditionName);
+
     ///@}
 
 private:

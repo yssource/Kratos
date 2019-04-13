@@ -29,9 +29,10 @@
 #include "processes/process.h"
 
 // Application includes
-#include "custom_processes/scalar_co_solving_process.h"
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
+#include "custom_processes/scalar_co_solving_process.h"
 #include "custom_utilities/rans_calculation_utilities.h"
+#include "rans_constitutive_laws_application_variables.h"
 
 namespace Kratos
 {
@@ -68,7 +69,8 @@ public:
 
     /// Constructor.
     KEpsilonCoSolvingProcess(ModelPart& rModelPart, Parameters& rParameters, Process& rYPlusModelProcess)
-        : BaseType(rModelPart, rParameters, TURBULENT_VISCOSITY), mrYPlusModelProcess(rYPlusModelProcess)
+        : BaseType(rModelPart, rParameters, TURBULENT_VISCOSITY),
+          mrYPlusModelProcess(rYPlusModelProcess)
     {
     }
 
@@ -84,6 +86,12 @@ public:
     ///@}
     ///@name Operations
     ///@{
+
+    void ExecuteFinalizeSolutionStep() override
+    {
+        if (this->mIsCoSolvingProcessActive)
+            EvmKepsilonModelUtilities().CalculateTurbulentViscosityForModelPart(this->mrModelPart);
+    }
 
     ///@}
     ///@name Access
@@ -141,7 +149,7 @@ private:
 
     void UpdateAfterSolveSolutionStep() override
     {
-        EvmKepsilonModelUtilities().CalculateTurbulentViscosityForModelPart(this->mrModelPart);
+
     }
 
     void UpdateConvergenceVariable() override

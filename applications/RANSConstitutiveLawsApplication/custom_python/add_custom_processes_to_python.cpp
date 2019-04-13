@@ -41,7 +41,8 @@ void AddCustomProcessesToPython(pybind11::module& m)
         m, "ScalarCoSolvingProcess")
         .def(py::init<ModelPart&, Parameters&, Variable<double>&>())
         .def("AddStrategy", &ScalarCoSolvingProcessType::AddStrategy)
-        .def("SetIsCoSolvingProcessActive", &ScalarCoSolvingProcessType::SetIsCoSolvingProcessActive);
+        .def("SetIsCoSolvingProcessActive", &ScalarCoSolvingProcessType::SetIsCoSolvingProcessActive)
+        .def("CreateModelPart", &ScalarCoSolvingProcessType::CreateModelPart);
 
     typedef KEpsilonCoSolvingProcess<SparseSpaceType, LocalSpaceType, LinearSolverType> KEpsilonCoSolvingProcessType;
     py::class_<KEpsilonCoSolvingProcessType, KEpsilonCoSolvingProcessType::Pointer, ScalarCoSolvingProcessType, Process>(

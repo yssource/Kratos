@@ -22,10 +22,11 @@
 // External includes
 
 // Project includes
+#include "containers/model.h"
 #include "includes/checks.h"
 #include "includes/define.h"
 #include "includes/kratos_parameters.h"
-#include "includes/model_part.h"
+#include "modeler/connectivity_preserve_modeler.h"
 #include "processes/process.h"
 #include "solving_strategies/strategies/solving_strategy.h"
 
@@ -111,6 +112,32 @@ public:
         mIsCoSolvingProcessActive = IsActive;
     }
 
+    ModelPart& CreateModelPart(ModelPart& rOrigin,
+                               const std::string& rDestinationModelPartName,
+                               const std::string& rElementName,
+                               const std::string& rConditionName)
+    {
+        Model& r_model = rOrigin.GetModel();
+        if (!r_model.HasModelPart(rDestinationModelPartName))
+        {
+            const Element& r_element = KratosComponents<Element>::Get(rElementName);
+            const Condition& r_condition = KratosComponents<Condition>::Get(rConditionName);
+            r_model.CreateModelPart(rDestinationModelPartName);
+            ModelPart& r_destination_model_part =
+                r_model.GetModelPart(rDestinationModelPartName);
+            r_destination_model_part.GetNodalSolutionStepVariablesList() =
+                rOrigin.GetNodalSolutionStepVariablesList();
+
+            ConnectivityPreserveModeler().GenerateModelPart(
+                rOrigin, r_destination_model_part, r_element, r_condition);
+
+            KRATOS_INFO_IF(this->Info(), mEchoLevel > 0)
+                << rDestinationModelPartName << " created.";
+        }
+
+        return r_model.GetModelPart(rDestinationModelPartName);
+    }
+
     /// Execute method is used to execute the ScalarCoSolvingProcess algorithms.
     void Execute() override
     {
@@ -118,7 +145,7 @@ public:
             SolveSolutionStep();
     }
 
-    int Check() override
+    virtual int Check() override
     {
         KRATOS_CHECK_VARIABLE_KEY(OLD_CONVERGENCE_VARIABLE);
         KRATOS_CHECK_VARIABLE_KEY(this->mrConvergenceVariable);
@@ -177,7 +204,7 @@ protected:
 
     ModelPart& mrModelPart;
     int mEchoLevel;
-
+    bool mIsCoSolvingProcessActive;
     ///@}
     ///@name Operations
     ///@{
@@ -216,7 +243,6 @@ private:
     std::vector<SolvingStrategyType*> mrSolvingStrategiesList;
     Variable<double>& mrConvergenceVariable;
 
-    bool mIsCoSolvingProcessActive;
     int mMaxIterations;
     double mConvergenceAbsoluteTolerance;
     double mConvergenceRelativeTolerance;
@@ -269,7 +295,7 @@ private:
             is_converged = (convergence_relative < this->mConvergenceRelativeTolerance ||
                             convergence_absolute < this->mConvergenceAbsoluteTolerance);
 
-            KRATOS_INFO_IF(this->Info(), this->mEchoLevel > 1)
+            KRATOS_INFO_IF(this->Info(), this->mEchoLevel > 0)
                 << "[ " << iteration
                 << " ] CONVERGENCE CHECK: " << mrConvergenceVariable.Name()
                 << " ratio = " << std::scientific << convergence_relative
@@ -278,7 +304,7 @@ private:
                 << convergence_absolute << "; exp.abs = " << std::scientific
                 << this->mConvergenceAbsoluteTolerance;
 
-            KRATOS_INFO_IF(this->Info(), this->mEchoLevel > 1 && is_converged)
+            KRATOS_INFO_IF(this->Info(), this->mEchoLevel > 0 && is_converged)
                 << "[ " << iteration
                 << " ] CONVERGENCE CHECK: " << mrConvergenceVariable.Name()
                 << " *** CONVERGENCE IS ACHIEVED ***";
@@ -288,7 +314,7 @@ private:
 
         this->UpdateAfterSolveSolutionStep();
 
-        KRATOS_INFO_IF(this->Info(), this->mEchoLevel > 0 && !is_converged)
+        KRATOS_WARNING_IF(this->Info(), !is_converged)
             << "\n-------------------------------------------------------"
             << "\n    WARNING: Max coupling iterations reached.          "
             << "\n             Please increase coupling max_iterations   "

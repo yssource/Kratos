@@ -30,27 +30,20 @@ class TurbulenceModelConfiguration(PythonSolver):
         self.domain_size = self.fluid_model_part.ProcessInfo[Kratos.
                                                              DOMAIN_SIZE]
 
-        connectivity_preserve_modeler = Kratos.ConnectivityPreserveModeler()
-        rans_utils = KratosRANS.RansVariableUtils()
-
-        for elem, cond in zip(self.model_elements, self.model_conditions):
-            model_part_name = "TurbulenceModelPart_" + elem
+        for element, condition in zip(self.model_elements,
+                                      self.model_conditions):
+            model_part_name = "TurbulenceModelPart_" + element
             if not self.model.HasModelPart(model_part_name):
-                model_part = self.model.CreateModelPart(model_part_name)
-                rans_utils.CopyNodalSolutionStepVariablesList(
-                    self.fluid_model_part, model_part)
 
-                element_name = "{0}{1}D{2}N".format(elem, self.domain_size,
+                element_name = "{0}{1}D{2}N".format(element, self.domain_size,
                                                     self.domain_size + 1)
-                condition_name = "{0}{1}D{2}N".format(cond, self.domain_size,
-                                                      self.domain_size)
-                connectivity_preserve_modeler.GenerateModelPart(
-                    self.fluid_model_part, model_part, element_name,
-                    condition_name)
+                condition_name = "{0}{1}D{2}N".format(
+                    condition, self.domain_size, self.domain_size)
 
-                Kratos.Logger.PrintInfo(
-                    self.__class__.__name__,
-                    model_part_name + " created successfully.")
+                KratosRANS.RansCalculationUtilities(
+                ).CreateConnectivityPreservingModelPart(
+                    self.fluid_model_part, model_part_name, element_name,
+                    condition_name)
             else:
                 Kratos.Logger.PrintInfo(
                     self.__class__.__name__, model_part_name +

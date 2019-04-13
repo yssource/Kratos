@@ -1,5 +1,7 @@
 #include "rans_calculation_utilities.h"
+#include "containers/model.h"
 #include "includes/cfd_variables.h"
+#include "modeler/connectivity_preserve_modeler.h"
 #include <cmath>
 
 namespace Kratos
@@ -332,6 +334,28 @@ void RansCalculationUtilities::UpdateEffectiveViscosityForModelPart(ModelPart& r
         nu = nu_k + nu_t;
     }
     KRATOS_CATCH("");
+}
+
+void RansCalculationUtilities::CreateConnectivityPreservingModelPart(
+    ModelPart& rOrigin,
+    const std::string& rDestinationModelPartName,
+    const std::string& rElementName,
+    const std::string& rConditionName)
+{
+    Model& r_model = rOrigin.GetModel();
+    if (!r_model.HasModelPart(rDestinationModelPartName))
+    {
+        const Element& r_element = KratosComponents<Element>::Get(rElementName);
+        const Condition& r_condition = KratosComponents<Condition>::Get(rConditionName);
+        r_model.CreateModelPart(rDestinationModelPartName);
+        ModelPart& r_destination_model_part =
+            r_model.GetModelPart(rDestinationModelPartName);
+        r_destination_model_part.GetNodalSolutionStepVariablesList() =
+            rOrigin.GetNodalSolutionStepVariablesList();
+
+        ConnectivityPreserveModeler().GenerateModelPart(
+            rOrigin, r_destination_model_part, r_element, r_condition);
+    }
 }
 
 // template instantiations

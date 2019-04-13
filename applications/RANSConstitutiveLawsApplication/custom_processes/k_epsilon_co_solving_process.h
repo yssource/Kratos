@@ -32,6 +32,7 @@
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
 #include "custom_processes/scalar_co_solving_process.h"
 #include "custom_utilities/rans_calculation_utilities.h"
+#include "custom_utilities/rans_variable_utils.h"
 #include "rans_constitutive_laws_application_variables.h"
 
 namespace Kratos
@@ -90,7 +91,7 @@ public:
     void ExecuteFinalizeSolutionStep() override
     {
         if (this->mIsCoSolvingProcessActive)
-            EvmKepsilonModelUtilities().CalculateTurbulentViscosityForModelPart(this->mrModelPart);
+            UpdateTurbulentViscosity();
     }
 
     ///@}
@@ -149,12 +150,31 @@ private:
 
     void UpdateAfterSolveSolutionStep() override
     {
-
     }
 
     void UpdateConvergenceVariable() override
     {
         RansCalculationUtilities().UpdateEffectiveViscosityForModelPart(this->mrModelPart);
+    }
+
+    void UpdateTurbulentViscosity()
+    {
+        EvmKepsilonModelUtilities().CalculateTurbulentViscosityForModelPart(this->mrModelPart);
+
+        const ProcessInfo& r_process_info = this->mrModelPart.GetProcessInfo();
+        const double nu_t_min = r_process_info[TURBULENT_VISCOSITY_MIN];
+        const double nu_t_max = r_process_info[TURBULENT_VISCOSITY_MAX];
+
+        unsigned int lower_number_of_nodes, higher_number_of_nodes;
+        RansVariableUtils().ClipScalarVariable(
+            lower_number_of_nodes, higher_number_of_nodes, nu_t_min, nu_t_max,
+            TURBULENT_VISCOSITY, this->mrModelPart.Nodes());
+
+        KRATOS_WARNING_IF(this->Info(), lower_number_of_nodes > 0 || higher_number_of_nodes > 0)
+            << "TURBULENT_VISCOSITY out of bounds. [ " << lower_number_of_nodes
+            << " nodes < " << std::scientific << nu_t_min << ", " << higher_number_of_nodes
+            << " nodes > " << std::scientific << nu_t_max << "  out of total number of "
+            << this->mrModelPart.NumberOfNodes() << " nodes. ]";
     }
 
     ///@}

@@ -77,13 +77,19 @@ class DefineWakeProcess2D(KratosMultiphysics.Process):
 
     def SaveTrailingEdgeNode(self):
         # This function finds and saves the trailing edge for further computations
+        myobject = CPFApp.DefineWake2DProcess(self.body_model_part)
+        myobject.Execute()
         max_x_coordinate = -1e30
         for node in self.body_model_part.Nodes:
             if(node.X > max_x_coordinate):
                 max_x_coordinate = node.X
                 self.te = node
-
+        print(' max_x_coordinate', max_x_coordinate)
+        print(' self.te', self.te.Id)
+        input()
         self.te.SetValue(CPFApp.TRAILING_EDGE, True)
+        #print(' CPFApp.TRAILING_EDGE', CPFApp.TRAILING_EDGE.X)
+        #input()
 
     def MarkWakeElements(self):
         # This function checks which elements are cut by the wake
@@ -147,8 +153,7 @@ class DefineWakeProcess2D(KratosMultiphysics.Process):
     def ComputeDistancesToWake(self, elem):
         # This function computes the distance of the element nodes
         # to the wake
-        myobject = CPFApp.DefineWake2DProcess(self.fluid_model_part)
-        myobject.Execute()
+
         nodal_distances_to_wake = KratosMultiphysics.Vector(3)
         counter = 0
         for elnode in elem.GetNodes():

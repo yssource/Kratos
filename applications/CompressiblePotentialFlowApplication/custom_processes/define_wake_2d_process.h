@@ -8,6 +8,7 @@
 #include "processes/process.h"
 #include "geometries/geometry.h"
 #include "utilities/geometry_utilities.h"
+#include "compressible_potential_flow_application_variables.h"
 #include "utilities/math_utils.h"
 #include "includes/kratos_parameters.h"
 
@@ -52,7 +53,7 @@ public:
     ///@}
     ///@name Operators
     ///@{
-
+    void PrintMyInfo2();
     /// This operator is provided to call the process as a function and simply calls the Execute method.
     void operator()()
     {
@@ -60,16 +61,41 @@ public:
     }
 
 
+
+    // void PrintMyInfo2()
+    // {
+    //     KRATOS_TRY
+    //     std::cout<< "Print My Info !!!!!!!!" << std::endl;
+    //     KRATOS_CATCH("");
+    // }
+
     ///@}
     ///@name Operations
     ///@{
 
-
+    //void SaveTrailingEdgeNodecpp();
     /// Check elements to make sure that their jacobian is positive and conditions to ensure that their face normals point outwards
     void Execute() override
     {
         KRATOS_TRY;
-        std::cout<< "MY NEW PROCESS !!!!!!!!" << std::endl;
+        //SaveTrailingEdgeNodecpp();
+        PrintMyInfo2();
+        double max_x_coordinate = -1e30;
+        auto trailing_edge_node = mrModelPart.NodesBegin();
+        for(auto it=mrModelPart.NodesBegin(); it!=mrModelPart.NodesEnd(); ++it)
+        //for(auto it_elem = mrModelPart.ElementsBegin(); it_elem!=mrModelPart.ElementsEnd(); ++it_elem) // Loop the elements
+        {
+            if (it->X()>max_x_coordinate)
+            {
+                max_x_coordinate = it->X();
+                trailing_edge_node = it;
+            }
+        }
+        std::cout<< "max_x_coordinate cpp" <<  max_x_coordinate << std::endl;
+        std::cout<< "trailing_edge_node" <<  trailing_edge_node->Id() << std::endl;
+        int temp;
+        std::cin>>temp;
+        //it->Set(TRAILING_EDGE, max_x_coordinate); // how to save it?
 
         KRATOS_CATCH("");
     }
@@ -96,6 +122,7 @@ public:
         return "DefineWake2DProcess";
     }
 
+
     /// Print information about this object.
     void PrintInfo(std::ostream& rOStream) const override
     {
@@ -120,7 +147,7 @@ private:
 
     /// Copy constructor.
     DefineWake2DProcess(DefineWake2DProcess const& rOther);
-
+    //void PrintMyInfo2();
 
 }; // Class Process
 

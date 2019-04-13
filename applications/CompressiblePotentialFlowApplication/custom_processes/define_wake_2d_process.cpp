@@ -1,10 +1,11 @@
-#include "define_wake_2d_process.h"
-#include <iostream>
+#include "custom_processes/define_wake_2d_process.h"
 
 namespace Kratos
 {
-    void DefineWake2DProcess::PrintMyInfo()
+    void DefineWake2DProcess::PrintMyInfo2()
     {
-        std::cout<< "MY NEW PROCESS !!!!!!!!" << std::endl;
+        KRATOS_TRY
+        std::cout<< "Print My Info2 !!!!!!!!" << std::endl;
+        KRATOS_CATCH("");
     }
 }

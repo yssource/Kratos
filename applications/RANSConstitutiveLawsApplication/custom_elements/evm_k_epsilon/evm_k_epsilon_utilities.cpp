@@ -254,11 +254,6 @@ void EvmKepsilonModelUtilities::CalculateTurbulentViscosityForModelPart(ModelPar
 
         const double f_mu = CalculateFmu(y_plus);
 
-        // KRATOS_WATCH(c_mu);
-        // KRATOS_WATCH(tke);
-        // KRATOS_WATCH(epsilon);
-        // KRATOS_WATCH(f_mu);
-
         const double nu_t = CalculateTurbulentViscosity(c_mu, tke, epsilon, f_mu);
         r_node.FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t;
     }

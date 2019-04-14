@@ -105,8 +105,6 @@ public:
     ///@name Operations
     ///@{
 
-    void ExecuteInitialize() override;
-
     void Execute() override;
 
     ///@}
@@ -157,14 +155,7 @@ protected:
     ///@name Protected Operations
     ///@{
 
-    virtual void InitializeTurbulenceModelPart();
-
     virtual void UpdateFluidViscosity();
-
-    void GenerateModelPart(ModelPart& rOriginModelPart,
-                           ModelPart& rDestinationModelPart,
-                           const Element& rReferenceElement,
-                           const Condition& rReferenceCondition);
 
     void CalculateYplus(unsigned int Step = 0);
 

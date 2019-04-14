@@ -62,8 +62,8 @@ class TurbulenceKEpsilonConfiguration(
 
         parameters["model_properties"].ValidateAndAssignDefaults(default_settings)
 
-        # self.model_elements = ["RANSEVMK", "RANSEVMEPSILON"]
-        # self.model_conditions = ["Condition", "Condition"]
+        self.model_elements_list = ["RANSEVMK", "RANSEVMEPSILON"]
+        self.model_conditions_list = ["Condition", "Condition"]
         self.rans_solver_configurations = []
         self.is_initial_values_assigned = False
 
@@ -86,13 +86,8 @@ class TurbulenceKEpsilonConfiguration(
     def PrepareSolvingStrategy(self):
         scheme_settings = self.settings["model_properties"]["scheme_settings"]
 
-        # TODO: Remove this after porting model part creation to python
-        self.turbulence_model_parts_list = []
-        self.turbulence_model_parts_list.append(self.fluid_model_part.GetSubModelPart("TurbulenceModelPartRANSEVMK"))
-        self.turbulence_model_parts_list.append(self.fluid_model_part.GetSubModelPart("TurbulenceModelPartRANSEVMEpsilon"))
-
         # create turbulent kinetic energy strategy
-        model_part = self.turbulence_model_parts_list[0]
+        model_part = self.model_parts_list[0]
         solver_settings = self.settings["model_properties"]["turbulent_kinetic_energy_settings"]
         scalar_variable = KratosRANS.TURBULENT_KINETIC_ENERGY
         scalar_variable_rate = KratosRANS.TURBULENT_KINETIC_ENERGY_RATE
@@ -107,7 +102,7 @@ class TurbulenceKEpsilonConfiguration(
         self.GetTurbulenceSolvingProcess().AddStrategy(current_strategy)
 
         # create turbulent energy dissipation rate strategy
-        model_part = self.turbulence_model_parts_list[1]
+        model_part = self.model_parts_list[1]
         solver_settings = self.settings["model_properties"]["turbulent_energy_dissipation_rate_settings"]
         scalar_variable = KratosRANS.TURBULENT_ENERGY_DISSIPATION_RATE
         scalar_variable_rate = KratosRANS.TURBULENT_ENERGY_DISSIPATION_RATE_2

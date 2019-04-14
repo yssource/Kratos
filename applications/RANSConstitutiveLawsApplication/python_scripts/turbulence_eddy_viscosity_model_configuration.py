@@ -52,11 +52,14 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         # TODO: Remove manual settings after porting
         self.nu_t_min = 1e-12
         self.nu_t_max = 1e+2
-        self.domain_size = 2
 
         # TODO: Implement stuff for mesh_moving
 
         self.is_computing_solution = False
+
+        self.model_elements_list = []
+        self.model_conditions_list = []
+        self.model_parts_list = []
 
     def Initialize(self):
         self.__InitializeModelPart()
@@ -85,6 +88,19 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         # self.fluid_model_part.AddNodalSolutionStepVariable(KratosRANS.OLD_CONVERGENCE_VARIABLE)
 
         Kratos.Logger.PrintInfo(self.__class__.__name__, "Successfully added solution step variables.")
+
+    def PrepareModelPart(self):
+        self.domain_size = self.fluid_model_part.ProcessInfo[Kratos.DOMAIN_SIZE]
+
+        from model_part_factory import CreateDuplicateModelPart
+        for element, condition in zip(self.model_elements_list, self.model_conditions_list):
+            element_name = "{0}{1}D{2}N".format(element, self.domain_size,
+                                                self.domain_size + 1)
+            condition_name = "{0}{1}D{2}N".format(
+                condition, self.domain_size, self.domain_size)
+            model_part = CreateDuplicateModelPart(self.fluid_model_part, "TurbulenceModelPart_" + element_name, element_name, condition_name)
+            self.model_parts_list.append(model_part)
+
 
     # def InitializeBoundaryNodes(self):
     #     raise Exception(

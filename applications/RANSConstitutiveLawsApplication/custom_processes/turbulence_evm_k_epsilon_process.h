@@ -168,22 +168,6 @@ public:
             r_convergence_parameters["maximum_coupling_iterations"].GetInt();
 
 
-        KRATOS_ERROR_IF(
-            this->mrModelPart.HasSubModelPart("TurbulenceModelPartRANSEVMK"))
-            << "TurbulenceEddyViscosityModelProcess: "
-               "TurbulenceModelPartRANSEVMK is "
-               "already found."
-            << std::endl;
-        this->mrModelPart.CreateSubModelPart("TurbulenceModelPartRANSEVMK");
-        KRATOS_ERROR_IF(this->mrModelPart.HasSubModelPart(
-            "TurbulenceModelPartRANSEVMEpsilon"))
-            << "TurbulenceEddyViscosityModelProcess: "
-               "TurbulenceModelPartRANSEVMEpsilon is "
-               "already found."
-            << std::endl;
-        this->mrModelPart.CreateSubModelPart(
-            "TurbulenceModelPartRANSEVMEpsilon");
-
         if (this->mrParameters["model_properties"]["time_scheme"].GetString() ==
             "steady")
         {
@@ -201,11 +185,6 @@ public:
                    "\"steady\" or \"transient\" is allowed in k_epsilon model "
                    "time_scheme.";
         }
-
-        mpTurbulenceKModelPart =
-            &(this->mrModelPart.GetSubModelPart("TurbulenceModelPartRANSEVMK"));
-        mpTurbulenceEpsilonModelPart = &(this->mrModelPart.GetSubModelPart(
-            "TurbulenceModelPartRANSEVMEpsilon"));
 
         KRATOS_CATCH("");
     }
@@ -309,40 +288,6 @@ public:
 protected:
     ///@name Protected Operations
     ///@{
-
-    void InitializeTurbulenceModelPart() override
-    {
-        // KRATOS_TRY;
-
-        KRATOS_INFO("TurbulenceModel")
-            << "Initializing turbulence model part\n";
-
-        std::stringstream element_postfix;
-        element_postfix << TDim << "D" << TDim + 1 << "N";
-
-        std::stringstream condition_postfix;
-        condition_postfix << TDim << "D";
-
-        const Element& k_element =
-            KratosComponents<Element>::Get("RANSEVMK" + element_postfix.str());
-        const Element& epsilon_element =
-            KratosComponents<Element>::Get("RANSEVMEPSILON" + element_postfix.str());
-        const Condition& k_cond =
-            KratosComponents<Condition>::Get("Condition" + condition_postfix.str());
-        // const Condition& epsilon_cond = KratosComponents<Condition>::Get(
-        //     "EpsilonWallCondition" + condition_postfix.str());
-        const Condition& epsilon_cond =
-            KratosComponents<Condition>::Get("Condition" + condition_postfix.str());
-
-        this->GenerateModelPart(this->mrModelPart, *mpTurbulenceKModelPart, k_element, k_cond);
-        this->GenerateModelPart(this->mrModelPart, *mpTurbulenceEpsilonModelPart,
-                                epsilon_element, epsilon_cond);
-
-        KRATOS_INFO("TurbulenceModel") << *mpTurbulenceKModelPart;
-        KRATOS_INFO("TurbulenceModel") << *mpTurbulenceEpsilonModelPart;
-
-        // KRATOS_CATCH("");
-    }
 
     ///@}
 

@@ -36,12 +36,6 @@ TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolv
 }
 
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
-void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::ExecuteInitialize()
-{
-    this->InitializeTurbulenceModelPart();
-}
-
-template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
 void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::Execute()
 {
 }
@@ -66,106 +60,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 }
 
 /* Protected functions ****************************************************/
-template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
-void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::GenerateModelPart(
-    ModelPart& rOriginModelPart,
-    ModelPart& rDestinationModelPart,
-    const Element& rReferenceElement,
-    const Condition& rReferenceCondition)
-{
-    // KRATOS_TRY
-
-    // Copy general ModelPart properites
-    // rDestinationModelPart.GetNodalSolutionStepVariablesList() =
-    //     rOriginModelPart.GetNodalSolutionStepVariablesList();
-
-    // rDestinationModelPart.SetBufferSize(rOriginModelPart.GetBufferSize());
-    rDestinationModelPart.SetProcessInfo(rOriginModelPart.pGetProcessInfo());
-    rDestinationModelPart.SetProperties(rOriginModelPart.pProperties());
-
-    // Copy tables
-    rDestinationModelPart.Tables() = rOriginModelPart.Tables();
-
-    // Copy the node list so that both model parts share the same nodes
-    rDestinationModelPart.SetNodes(rOriginModelPart.pNodes());
-
-    /* Create a new communicator for rDestinationModelPart and fill it with the information of the original one
-     * Only "general" information and node lists are passed, element and condition lists will be created later
-     * using the new elements.
-     */
-
-    Communicator& rReferenceComm = rOriginModelPart.GetCommunicator();
-    Communicator::Pointer pDestinationComm = rReferenceComm.Create();
-    pDestinationComm->SetNumberOfColors(rReferenceComm.GetNumberOfColors());
-    pDestinationComm->NeighbourIndices() = rReferenceComm.NeighbourIndices();
-    pDestinationComm->LocalMesh().SetNodes(rReferenceComm.LocalMesh().pNodes());
-    pDestinationComm->InterfaceMesh().SetNodes(rReferenceComm.InterfaceMesh().pNodes());
-    pDestinationComm->GhostMesh().SetNodes(rReferenceComm.GhostMesh().pNodes());
-    for (unsigned int i = 0; i < rReferenceComm.GetNumberOfColors(); i++)
-    {
-        pDestinationComm->pLocalMesh(i)->SetNodes(rReferenceComm.pLocalMesh(i)->pNodes());
-        pDestinationComm->pInterfaceMesh(i)->SetNodes(
-            rReferenceComm.pInterfaceMesh(i)->pNodes());
-        pDestinationComm->pGhostMesh(i)->SetNodes(rReferenceComm.pGhostMesh(i)->pNodes());
-    }
-
-    rDestinationModelPart.SetCommunicator(pDestinationComm);
-
-    // Reset element container and create new elements
-    rDestinationModelPart.Elements().clear();
-    rDestinationModelPart.Elements().reserve(rOriginModelPart.NumberOfElements());
-
-    for (ModelPart::ElementsContainerType::iterator iEl = rOriginModelPart.ElementsBegin();
-         iEl != rOriginModelPart.ElementsEnd(); iEl++)
-    {
-        Properties::Pointer pProp = iEl->pGetProperties();
-        Element::Pointer pElem =
-            rReferenceElement.Create(iEl->Id(), iEl->GetGeometry(), pProp);
-        rDestinationModelPart.Elements().push_back(pElem);
-    }
-
-    // All elements are passed as local elements to the new communicator
-    ModelPart::ElementsContainerType& rDestinationLocalElements =
-        pDestinationComm->LocalMesh().Elements();
-    rDestinationLocalElements.clear();
-    rDestinationLocalElements.reserve(rDestinationModelPart.NumberOfElements());
-    for (ModelPart::ElementsContainerType::ptr_iterator iEl =
-             rDestinationModelPart.Elements().ptr_begin();
-         iEl != rDestinationModelPart.Elements().ptr_end(); iEl++)
-    {
-        rDestinationLocalElements.push_back(*iEl);
-    }
-
-    // Reset condition container and create new conditions
-    rDestinationModelPart.Conditions().clear();
-    rDestinationModelPart.Conditions().reserve(rOriginModelPart.NumberOfConditions());
-    for (ModelPart::ConditionsContainerType::iterator iCo = rOriginModelPart.ConditionsBegin();
-         iCo != rOriginModelPart.ConditionsEnd(); iCo++)
-    {
-        Properties::Pointer pProp = iCo->pGetProperties();
-        Condition::Pointer pCond =
-            rReferenceCondition.Create(iCo->Id(), iCo->GetGeometry(), pProp);
-        rDestinationModelPart.Conditions().push_back(pCond);
-    }
-
-    // Create new communicator local condition list
-    ModelPart::ConditionsContainerType& rDestinationLocalConditions =
-        pDestinationComm->LocalMesh().Conditions();
-    rDestinationLocalConditions.clear();
-    rDestinationLocalConditions.reserve(rDestinationModelPart.NumberOfConditions());
-    for (ModelPart::ConditionsContainerType::ptr_iterator iCo =
-             rDestinationModelPart.Conditions().ptr_begin();
-         iCo != rDestinationModelPart.Conditions().ptr_end(); iCo++)
-    {
-        rDestinationLocalConditions.push_back(*iCo);
-    }
-
-    // for (auto cond: rDestinationModelPart.Conditions())
-    //     KRATOS_WATCH(cond);
-
-    // KRATOS_CATCH("");
-}
-
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
 void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::CalculateYplus(unsigned int Step)
 {
@@ -192,13 +86,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
         y_plus = RansCalculationUtilities(this->mEchoLevel).CalculateYplus(
             velocity_norm, wall_distance, nu, von_karman, beta, 10);
     }
-}
-
-template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
-void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::InitializeTurbulenceModelPart()
-{
-    KRATOS_THROW_ERROR(std::runtime_error,
-                       "Calling base class InitializeTurbulenceModelPart.", "");
 }
 
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>

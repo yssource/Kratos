@@ -22,36 +22,6 @@ class TurbulenceModelConfiguration(PythonSolver):
     def __init__(self, model, settings):
         super(TurbulenceModelConfiguration, self).__init__(model, settings)
 
-        self.model_elements = []
-        self.model_conditions = []
-        self.turbulence_model_parts_list = []
-
-    def CreateTurbulenceModelParts(self):
-        self.domain_size = self.fluid_model_part.ProcessInfo[Kratos.
-                                                             DOMAIN_SIZE]
-
-        for element, condition in zip(self.model_elements,
-                                      self.model_conditions):
-            model_part_name = "TurbulenceModelPart_" + element
-            if not self.model.HasModelPart(model_part_name):
-
-                element_name = "{0}{1}D{2}N".format(element, self.domain_size,
-                                                    self.domain_size + 1)
-                condition_name = "{0}{1}D{2}N".format(
-                    condition, self.domain_size, self.domain_size)
-
-                KratosRANS.RansCalculationUtilities(
-                ).CreateConnectivityPreservingModelPart(
-                    self.fluid_model_part, model_part_name, element_name,
-                    condition_name)
-            else:
-                Kratos.Logger.PrintInfo(
-                    self.__class__.__name__, model_part_name +
-                    " already exists. Using the existing model part.")
-
-            self.turbulence_model_parts_list.append(
-                self.model.GetModelPart(model_part_name))
-
     def AddVariables(self):
         msg = "Calling the base TurbulenceModelConfiguration class AddVariables method."
         msg += " Please override it in the derrived class."
@@ -65,6 +35,11 @@ class TurbulenceModelConfiguration(PythonSolver):
     def GetTurbulenceSolvingProcess(self):
         msg = "Calling the base TurbulenceModelConfiguration class GetTurbulenceSolvingProcess method."
         msg += " Please override it in the derrived class to return a KratosMultiphysics.Process."
+        raise Exception(msg)
+
+    def PrepareModelPart(self):
+        msg = "Calling the base TurbulenceModelConfiguration class PrepareModelPart method."
+        msg += " Please override it in the derrived class."
         raise Exception(msg)
 
     def Initialize(self):

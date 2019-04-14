@@ -54,6 +54,8 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         self.nu_t_max = 1e+2
         self.domain_size = 2
 
+        # TODO: Implement stuff for mesh_moving
+
         # self.is_computing_solution = False
 
     def Initialize(self):
@@ -71,12 +73,6 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         #     strategy.Initialize()
 
         Kratos.Logger.PrintInfo(self.__class__.__name__, "Initialization successfull.")
-
-    # def InitializeSolutionStep(self):
-    #     super(TurbulenceEddyViscosityModelConfiguration, self).InitializeSolutionStep()
-
-    #     if self.mesh_moving:
-    #         self.__InitializeModelPart()
 
     def AddVariables(self):
         # adding variables required by rans eddy viscosity models

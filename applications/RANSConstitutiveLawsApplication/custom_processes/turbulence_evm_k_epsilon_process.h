@@ -192,7 +192,6 @@ public:
         mFreestreamK = flow_parameters["free_stream_k"].GetDouble();
         mFreestreamEpsilon = flow_parameters["free_stream_epsilon"].GetDouble();
         mTurbulenceIntensity = flow_parameters["turbulence_intensity"].GetDouble();
-        mRampUpTime = flow_parameters["ramp_up_time"].GetDouble();
 
         KRATOS_ERROR_IF(
             this->mrModelPart.HasSubModelPart("TurbulenceModelPartRANSEVMK"))
@@ -284,9 +283,7 @@ public:
 
         BaseType::ExecuteInitializeSolutionStep();
 
-        ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
-        const double current_time = r_current_process_info[TIME];
-        if (current_time < mRampUpTime)
+        if (!this->IsSolvingProcessActive)
             return;
 
         AssignInitialConditions();
@@ -418,8 +415,6 @@ private:
     double mTurbulentViscosityRelativeTolerance;
 
     double mTurbulentViscosityAbsoluteTolerance;
-
-    double mRampUpTime;
 
     bool mAssignedInitialConditions = false;
 

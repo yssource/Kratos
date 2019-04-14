@@ -22,6 +22,7 @@
 // Project includes
 #include "includes/cfd_variables.h"
 #include "includes/define.h"
+#include "includes/model_part.h"
 #include "solving_strategies/schemes/scheme.h"
 #include "utilities/time_discretization.h"
 
@@ -57,6 +58,10 @@ public:
     typedef typename BaseType::LocalSystemMatrixType LocalSystemMatrixType;
 
     typedef typename BaseType::DofsArrayType DofsArrayType;
+
+    typedef ModelPart::NodeType NodeType;
+
+    typedef std::size_t IndexType;
 
     ///@}
     ///@name Life Cycle

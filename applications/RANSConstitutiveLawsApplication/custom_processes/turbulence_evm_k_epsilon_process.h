@@ -63,6 +63,8 @@ public:
 
     typedef Geometry<NodeType> GeometryType;
 
+    typedef SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver> SolvingStrategyType;
+
     typedef SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver> StrategyType;
 
     typedef Scheme<TSparseSpace, TDenseSpace> SchemeType;
@@ -155,41 +157,15 @@ public:
         this->mrParameters["model_properties"]["flow_parameters"].ValidateAndAssignDefaults(
             default_parameters["flow_parameters"]);
 
-        const Parameters& model_properties =
-            this->mrParameters["model_properties"]["constants"];
+        const Parameters& r_convergence_parameters =
+            this->mrParameters["model_properties"]["convergence_tolerances"];
 
-        rModelPart.GetProcessInfo()[WALL_SMOOTHNESS_BETA] =
-            model_properties["wall_smoothness_beta"].GetDouble();
-        rModelPart.GetProcessInfo()[WALL_VON_KARMAN] =
-            model_properties["von_karman"].GetDouble();
-        rModelPart.GetProcessInfo()[TURBULENCE_RANS_C_MU] =
-            model_properties["c_mu"].GetDouble();
-        rModelPart.GetProcessInfo()[TURBULENCE_RANS_C1] =
-            model_properties["c1"].GetDouble();
-        rModelPart.GetProcessInfo()[TURBULENCE_RANS_C2] =
-            model_properties["c2"].GetDouble();
-        rModelPart.GetProcessInfo()[TURBULENT_KINETIC_ENERGY_SIGMA] =
-            model_properties["sigma_k"].GetDouble();
-        rModelPart.GetProcessInfo()[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA] =
-            model_properties["sigma_epsilon"].GetDouble();
-
-        const Parameters& flow_parameters =
-            this->mrParameters["model_properties"]["flow_parameters"];
-        // rModelPart.GetProcessInfo()[TURBULENT_MIXING_LENGTH] =
-        //     flow_parameters["turbulent_mixing_length"].GetDouble();
-
-        const double nu_t_min = flow_parameters["turbulent_viscosity_min"].GetDouble();
-        const double nu_t_max = flow_parameters["turbulent_viscosity_max"].GetDouble();
-
-        KRATOS_ERROR_IF(nu_t_min >= nu_t_max)
-            << "Allowed bounds for turbulent viscosity is not valid. "
-               "turbulent_viscosity_min >= turbulent_viscosity_max [ "
-            << nu_t_min << " >= " << nu_t_max << " ]\n";
-
-        rModelPart.GetProcessInfo()[TURBULENT_VISCOSITY_MIN] =
-            flow_parameters["turbulent_viscosity_min"].GetDouble();
-        rModelPart.GetProcessInfo()[TURBULENT_VISCOSITY_MAX] =
-            flow_parameters["turbulent_viscosity_max"].GetDouble();
+        this->mTurbulentViscosityRelativeTolerance =
+            r_convergence_parameters["turbulent_viscosity_relative_tolerance"].GetDouble();
+        this->mTurbulentViscosityAbsoluteTolerance =
+            r_convergence_parameters["turbulent_viscosity_absolute_tolerance"].GetDouble();
+        this->mMaximumCouplingIterations =
+            r_convergence_parameters["maximum_coupling_iterations"].GetInt();
 
 
         KRATOS_ERROR_IF(
@@ -252,6 +228,11 @@ public:
         this->IsSolvingProcessActive = rIsSolvingProcessActive;
     }
 
+    void AddStrategy(SolvingStrategyType* pStrategy)
+    {
+        mrSolvingStrategiesList.push_back(pStrategy);
+    }
+
     virtual void Execute() override
     {
         if (!this->IsSolvingProcessActive)
@@ -260,19 +241,6 @@ public:
         KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
             << "Solving RANS equations...\n";
         this->SolveStep();
-    }
-
-    /// this function is designed for being called at the beginning of the
-    /// computations right after reading the model and the groups
-    virtual void ExecuteInitialize() override
-    {
-        BaseType::ExecuteInitialize();
-
-        this->GenerateSolutionStrategies();
-
-        mpKStrategy->Initialize();
-        mpEpsilonStrategy->Initialize();
-
     }
 
     /// this function will be executed at every time step BEFORE performing the solve phase
@@ -423,113 +391,11 @@ private:
 
     bool IsSolvingProcessActive = false;
 
+    std::vector<SolvingStrategyType*> mrSolvingStrategiesList;
+
     ///@}
     ///@name Private Operators
     ///@{
-
-    void GenerateSolutionStrategies()
-    {
-        KRATOS_TRY
-
-        KRATOS_INFO("TurbulenceModel")
-            << "Generating turbulence modelling strategies.\n";
-
-        const Parameters& r_k_parameters =
-            this->mrParameters["model_properties"]["turbulent_kinetic_energy_settings"];
-
-        double k_relative_tolerance =
-            r_k_parameters["relative_tolerance"].GetDouble();
-        double k_absolute_tolerance =
-            r_k_parameters["absolute_tolerance"].GetDouble();
-        int k_max_iterations = r_k_parameters["max_iterations"].GetInt();
-
-        const Parameters& r_epsilon_parameters =
-            this->mrParameters["model_properties"]["turbulent_energy_dissipation_rate_settings"];
-
-        double epsilon_relative_tolerance =
-            r_epsilon_parameters["relative_tolerance"].GetDouble();
-        double epsilon_absolute_tolerance =
-            r_epsilon_parameters["absolute_tolerance"].GetDouble();
-        int epsilon_max_iterations =
-            r_epsilon_parameters["max_iterations"].GetInt();
-
-        const Parameters& r_convergence_parameters =
-            this->mrParameters["model_properties"]["convergence_tolerances"];
-
-        this->mTurbulentViscosityRelativeTolerance =
-            r_convergence_parameters["turbulent_viscosity_relative_tolerance"].GetDouble();
-        this->mTurbulentViscosityAbsoluteTolerance =
-            r_convergence_parameters["turbulent_viscosity_absolute_tolerance"].GetDouble();
-        this->mMaximumCouplingIterations =
-            r_convergence_parameters["maximum_coupling_iterations"].GetInt();
-
-        bool CalculateReactions = false;
-        bool ReformDofSet = false;
-
-        const double alpha_bossak =
-            this->mrParameters["model_properties"]["scheme_settings"]
-                              ["alpha_bossak"]
-                                  .GetDouble();
-
-        // K solution strategy
-        BuilderAndSolverPointerType pKBuilderAndSolver = BuilderAndSolverPointerType(
-            new ResidualBasedBlockBuilderAndSolver<TSparseSpace, TDenseSpace, TLinearSolver>(
-                mpKLinearSolver));
-        mpKBuilderAndSolver = pKBuilderAndSolver;
-
-        mpKScheme = SchemePointerType(
-            new ResidualBasedBossakTurbulentKineticEnergyScheme<TSparseSpace, TDenseSpace>(
-                alpha_bossak));
-
-        ConvergenceCriteriaPointerType pKConvergenceCriteria = ConvergenceCriteriaPointerType(
-            new GeneralConvergenceCriteria<TSparseSpace, TDenseSpace>(
-                k_relative_tolerance, k_absolute_tolerance));
-
-        pKConvergenceCriteria->SetEchoLevel(
-            r_convergence_parameters["echo_level"].GetInt());
-
-        mpKStrategy = typename StrategyType::Pointer(
-            new ResidualBasedNewtonRaphsonStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(
-                *this->mpTurbulenceKModelPart, mpKScheme, mpKLinearSolver,
-                pKConvergenceCriteria, pKBuilderAndSolver, k_max_iterations,
-                CalculateReactions, ReformDofSet, this->mIsMeshMoving));
-
-        // Epsilon solution strategy
-        BuilderAndSolverPointerType pEpsilonBuilderAndSolver = BuilderAndSolverPointerType(
-            new ResidualBasedBlockBuilderAndSolver<TSparseSpace, TDenseSpace, TLinearSolver>(
-                mpEpsilonLinearSolver));
-
-        mpEpsilonBuilderAndSolver = pEpsilonBuilderAndSolver;
-
-        mpEpsilonScheme = SchemePointerType(
-            new ResidualBasedBossakTurbulentEnergyDissipationRateScheme<TSparseSpace, TDenseSpace>(
-                alpha_bossak));
-
-        ConvergenceCriteriaPointerType pEpsilonConvergenceCriteria =
-            ConvergenceCriteriaPointerType(new GeneralConvergenceCriteria<TSparseSpace, TDenseSpace>(
-                epsilon_relative_tolerance, epsilon_absolute_tolerance));
-
-        pEpsilonConvergenceCriteria->SetEchoLevel(
-            r_convergence_parameters["echo_level"].GetInt());
-
-        mpEpsilonStrategy = typename StrategyType::Pointer(
-            new ResidualBasedNewtonRaphsonStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(
-                // new LineSearchStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(
-                *this->mpTurbulenceEpsilonModelPart, mpEpsilonScheme, mpEpsilonLinearSolver,
-                pEpsilonConvergenceCriteria, pEpsilonBuilderAndSolver, epsilon_max_iterations,
-                CalculateReactions, ReformDofSet, this->mIsMeshMoving));
-
-        mpKBuilderAndSolver->SetEchoLevel(
-            this->mrParameters["model_properties"]["echo_level"].GetInt());
-        mpEpsilonBuilderAndSolver->SetEchoLevel(
-            this->mrParameters["model_properties"]["echo_level"].GetInt());
-        mpKStrategy->SetEchoLevel(
-            this->mrParameters["model_properties"]["echo_level"].GetInt());
-        mpEpsilonStrategy->SetEchoLevel(
-            this->mrParameters["model_properties"]["echo_level"].GetInt());
-
-        KRATOS_CATCH("");
-    }
 
     void AssignInitialConditions()
     {
@@ -615,11 +481,11 @@ private:
     {
         this->UpdateTurbulentViscosity();
 
-        mpKStrategy->InitializeSolutionStep();
-        mpKStrategy->Predict();
-
-        mpEpsilonStrategy->InitializeSolutionStep();
-        mpEpsilonStrategy->Predict();
+        for (auto strategy: mrSolvingStrategiesList)
+        {
+            strategy->InitializeSolutionStep();
+            strategy->Predict();
+        }
 
         const int number_of_nodes = this->mrModelPart.NumberOfNodes();
         Vector old_turbulent_viscosity = ZeroVector(number_of_nodes);
@@ -641,8 +507,8 @@ private:
                     (this->mrModelPart.NodesBegin() + i)->FastGetSolutionStepValue(TURBULENT_VISCOSITY);
             }
 
-            ExecuteFluxCorrector(mpKStrategy, TURBULENT_KINETIC_ENERGY);
-            ExecuteFluxCorrector(mpEpsilonStrategy, TURBULENT_ENERGY_DISSIPATION_RATE);
+            for (auto strategy: mrSolvingStrategiesList)
+                strategy->SolveSolutionStep();
 
             this->UpdateTurbulentViscosity();
 
@@ -699,20 +565,9 @@ private:
                 << std::endl;
         }
 
-        mpKStrategy->FinalizeSolutionStep();
-        mpEpsilonStrategy->FinalizeSolutionStep();
-    }
+            for (auto strategy: mrSolvingStrategiesList)
+                strategy->FinalizeSolutionStep();
 
-    void ExecuteFluxCorrector(typename StrategyType::Pointer pStrategy,
-                              const Variable<double>& rVariable)
-    {
-        KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
-            << "Solving for " << rVariable.Name() << "\n";
-        pStrategy->SolveSolutionStep();
-
-        RansCalculationUtilities(this->mEchoLevel)
-            .WarnIfNegative(this->mrModelPart, rVariable,
-                            "ExecuteFluxCorrector");
     }
 
     double CalculateNodalTurbulentViscosity(const ModelPart::NodeIterator& iNode,

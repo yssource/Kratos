@@ -249,10 +249,13 @@ void IgaBeamADElement::CalculateAll(
 
     std::ofstream write_f;
     write_f.open("cutting_force.txt", std::ofstream::app);
-    const double moment_kappa_2 = kap2.f() * ei3/pow(A,2); 
-    const double moment_kappa_3 = kap3.f() * ei2/pow(A,2);
-    const double normal_force = (eps11.f() * ea  + moment_kappa_2 * kap2.f() + moment_kappa_3 * kap3.f())/pow(A,2) ;
-    // const double normal_force = eps11.f() * ea * area; 
+    const double moment_kappa_2 = kap2.f() * ei3; 
+    const double moment_kappa_3 = kap3.f() * ei2;
+    const double normal_force   = (eps11.f() * ea  + moment_kappa_2 * kap2.f() + moment_kappa_3 * kap3.f());
+    const double moment_torsion = 0.5 * (kap12.f() - kap13.f()) * gi1; 
+
+    // std::cout << "moment_torsion :: " << moment_torsion << std::endl;
+
     // const double normal_force = ((area + moment_of_inertia_y * pow(B2/pow(A,2),2)
     //                             - moment_of_inertia_z * pow(B3/pow(A,2),2))  * eps11.f()
     //                             + kap2.f() * moment_of_inertia_y * B2/pow(A,2) 
@@ -266,11 +269,12 @@ void IgaBeamADElement::CalculateAll(
             << std::setw(20) << gauss_point[1] 
             << std::setw(20) << gauss_point[2] 
             << std::setw(30) << normal_force 
-            << std::setw(30) << moment_kappa_2 
-            << std::setw(30) << moment_kappa_3  
-            << std::setw(30) << T  
-            << std::setw(30) << A2  
-            << std::setw(30) << A3  
+            << std::setw(30) << moment_kappa_3 
+            << std::setw(30) << moment_kappa_2  
+            << std::setw(30) << moment_torsion  
+            << std::setw(20) << T  
+            << std::setw(20) << A2  
+            << std::setw(20) << A3  
             <<  "\n";
     write_f.close();
 

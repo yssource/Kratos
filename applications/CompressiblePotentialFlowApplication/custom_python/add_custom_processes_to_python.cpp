@@ -13,6 +13,7 @@
 // System includes
 
 // External includes
+#include <pybind11/stl.h>
 
 
 // Project includes
@@ -35,8 +36,11 @@ void  AddCustomProcessesToPython(pybind11::module& m)
 
     py::class_<DefineWake2DProcess, DefineWake2DProcess::Pointer, Process >
         (m, "DefineWake2DProcess")
-        .def(py::init<ModelPart&>())
-        ;
+        .def(py::init<ModelPart&>());
+
+    // py::class_<DefineWake2DProcess, DefineWake2DProcess::Pointer , Process>
+    //     (m, "DefineWake2DProcess")
+    //     .def(py::init<ModelPart&, Parameters>());
 }
 
 }  // namespace Python.

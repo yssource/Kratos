@@ -68,8 +68,10 @@ class DefineWakeProcess2D(KratosMultiphysics.Process):
     def ExecuteInitialize(self):
         # Save the trailing edge for further computations
         self.SaveTrailingEdgeNode()
+        CPFApp.DefineWake2DProcess(self.body_model_part).Execute()
         # Check which elements are cut and mark them as wake
         self.MarkWakeElements()
+        CPFApp.DefineWake2DProcess(self.fluid_model_part).MarkWakeElementscpp();
         # Mark the elements touching the trailing edge from below as kutta
         self.MarkKuttaElements()
         # Mark the trailing edge element that is further downstream as wake
@@ -77,8 +79,6 @@ class DefineWakeProcess2D(KratosMultiphysics.Process):
 
     def SaveTrailingEdgeNode(self):
         # This function finds and saves the trailing edge for further computations
-        myobject = CPFApp.DefineWake2DProcess(self.body_model_part)
-        myobject.Execute()
         max_x_coordinate = -1e30
         for node in self.body_model_part.Nodes:
             if(node.X > max_x_coordinate):
@@ -86,10 +86,10 @@ class DefineWakeProcess2D(KratosMultiphysics.Process):
                 self.te = node
         print(' max_x_coordinate', max_x_coordinate)
         print(' self.te', self.te.Id)
+
+        self.te.SetValue(CPFApp.TRAILING_EDGE, True) #replaced in Cpp
+        #print(' TRAILING_EDGE python', CPFApp.TRAILING_EDGE)
         input()
-        self.te.SetValue(CPFApp.TRAILING_EDGE, True)
-        #print(' CPFApp.TRAILING_EDGE', CPFApp.TRAILING_EDGE.X)
-        #input()
 
     def MarkWakeElements(self):
         # This function checks which elements are cut by the wake
@@ -128,6 +128,7 @@ class DefineWakeProcess2D(KratosMultiphysics.Process):
         for elnode in elem.GetNodes():
             if(elnode.GetValue(CPFApp.TRAILING_EDGE)):
                 elem.SetValue(CPFApp.TRAILING_EDGE, True)
+                print('te elements: ',elem.Id)
                 self.trailing_edge_model_part.Elements.append(elem)
                 break
 

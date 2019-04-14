@@ -104,16 +104,24 @@ public:
 
         Parameters default_parameters = Parameters(R"(
         {
+            "turbulent_kinetic_energy_settings": {
+                "relative_tolerance": 1e-3,
+                "absolute_tolerance": 1e-5,
+                "max_iterations": 10,
+                "echo_level": 0,
+                "linear_solver_settings": {}
+            },
+            "turbulent_energy_dissipation_rate_settings": {
+                "relative_tolerance": 1e-3,
+                "absolute_tolerance": 1e-5,
+                "max_iterations": 10,
+                "echo_level": 0,
+                "linear_solver_settings": {}
+            },
             "convergence_tolerances":
             {
-                "k_relative_tolerance": 1e-3,
-                "k_absolute_tolerance": 1e-5,
-                "epsilon_relative_tolerance": 1e-3,
-                "epsilon_absolute_tolerance": 1e-5,
                 "turbulent_viscosity_relative_tolerance": 1e-3,
                 "turbulent_viscosity_absolute_tolerance": 1e-5,
-                "k_max_iterations": 10,
-                "epsilon_max_iterations": 10,
                 "maximum_coupling_iterations": 10,
                 "maximum_stabilization_multiplier":1e+4,
                 "echo_level": 2
@@ -134,13 +142,8 @@ public:
             "flow_parameters":
             {
                 "ramp_up_time"                : 0.03,
-                "turbulent_mixing_length"     : 0.01,
                 "turbulent_viscosity_min"     : 1e-6,
-                "turbulent_viscosity_max"     : 1e+2,
-                "free_stream_velocity"        : 1.0,
-                "free_stream_k"               : 1.0,
-                "free_stream_epsilon"         : 1.0,
-                "turbulence_intensity"        : 0.003
+                "turbulent_viscosity_max"     : 1e+2
             }
         })");
 
@@ -172,8 +175,8 @@ public:
 
         const Parameters& flow_parameters =
             this->mrParameters["model_properties"]["flow_parameters"];
-        rModelPart.GetProcessInfo()[TURBULENT_MIXING_LENGTH] =
-            flow_parameters["turbulent_mixing_length"].GetDouble();
+        // rModelPart.GetProcessInfo()[TURBULENT_MIXING_LENGTH] =
+        //     flow_parameters["turbulent_mixing_length"].GetDouble();
 
         const double nu_t_min = flow_parameters["turbulent_viscosity_min"].GetDouble();
         const double nu_t_max = flow_parameters["turbulent_viscosity_max"].GetDouble();
@@ -188,10 +191,6 @@ public:
         rModelPart.GetProcessInfo()[TURBULENT_VISCOSITY_MAX] =
             flow_parameters["turbulent_viscosity_max"].GetDouble();
 
-        mFreestreamVelocity = flow_parameters["free_stream_velocity"].GetDouble();
-        mFreestreamK = flow_parameters["free_stream_k"].GetDouble();
-        mFreestreamEpsilon = flow_parameters["free_stream_epsilon"].GetDouble();
-        mTurbulenceIntensity = flow_parameters["turbulence_intensity"].GetDouble();
 
         KRATOS_ERROR_IF(
             this->mrModelPart.HasSubModelPart("TurbulenceModelPartRANSEVMK"))
@@ -404,12 +403,6 @@ private:
 
     double mFreestreamK;
 
-    double mFreestreamEpsilon;
-
-    double mFreestreamVelocity;
-
-    double mTurbulenceIntensity;
-
     int mMaximumCouplingIterations;
 
     double mTurbulentViscosityRelativeTolerance;
@@ -441,21 +434,27 @@ private:
         KRATOS_INFO("TurbulenceModel")
             << "Generating turbulence modelling strategies.\n";
 
-        const Parameters& r_convergence_parameters =
-            this->mrParameters["model_properties"]["convergence_tolerances"];
+        const Parameters& r_k_parameters =
+            this->mrParameters["model_properties"]["turbulent_kinetic_energy_settings"];
 
         double k_relative_tolerance =
-            r_convergence_parameters["k_relative_tolerance"].GetDouble();
+            r_k_parameters["relative_tolerance"].GetDouble();
         double k_absolute_tolerance =
-            r_convergence_parameters["k_absolute_tolerance"].GetDouble();
-        int k_max_iterations = r_convergence_parameters["k_max_iterations"].GetInt();
+            r_k_parameters["absolute_tolerance"].GetDouble();
+        int k_max_iterations = r_k_parameters["max_iterations"].GetInt();
+
+        const Parameters& r_epsilon_parameters =
+            this->mrParameters["model_properties"]["turbulent_energy_dissipation_rate_settings"];
 
         double epsilon_relative_tolerance =
-            r_convergence_parameters["epsilon_relative_tolerance"].GetDouble();
+            r_epsilon_parameters["relative_tolerance"].GetDouble();
         double epsilon_absolute_tolerance =
-            r_convergence_parameters["epsilon_absolute_tolerance"].GetDouble();
+            r_epsilon_parameters["absolute_tolerance"].GetDouble();
         int epsilon_max_iterations =
-            r_convergence_parameters["epsilon_max_iterations"].GetInt();
+            r_epsilon_parameters["max_iterations"].GetInt();
+
+        const Parameters& r_convergence_parameters =
+            this->mrParameters["model_properties"]["convergence_tolerances"];
 
         this->mTurbulentViscosityRelativeTolerance =
             r_convergence_parameters["turbulent_viscosity_relative_tolerance"].GetDouble();

@@ -8,8 +8,8 @@ namespace Kratos
 /* Public functions *******************************************************/
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
 TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::TurbulenceEddyViscosityModelProcess(
-    ModelPart& rModelPart, Parameters& rParameters, typename TLinearSolver::Pointer pLinearSolver)
-    : mrModelPart(rModelPart), mrParameters(rParameters), mpLinearSolver(pLinearSolver)
+    ModelPart& rModelPart, Parameters& rParameters)
+    : mrModelPart(rModelPart), mrParameters(rParameters)
 {
     KRATOS_TRY
 
@@ -18,7 +18,6 @@ TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolv
         "inlet_conditions"      : ["PLEASE_SPECIFY_INLET_CONDITIONS"],
         "outlet_conditions"     : ["PLEASE_SPECIFY_OUTLET_CONDITIONS"],
         "wall_conditions"       : ["PLEASE_SPECIFY_WALL_CONDITIONS"],
-        "max_distance_calculation_iterations" : 2,
         "mesh_moving"       : false,
         "echo_level"        : 0,
         "model_properties"  : {},

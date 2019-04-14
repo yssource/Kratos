@@ -89,8 +89,7 @@ public:
 
     /// Constructor
     TurbulenceEddyViscosityModelProcess(ModelPart& rModelPart,
-                                        Parameters& rParameters,
-                                        typename TLinearSolver::Pointer pLinearSolver);
+                                        Parameters& rParameters);
 
     /// Destructor.
     ~TurbulenceEddyViscosityModelProcess() override
@@ -146,7 +145,6 @@ protected:
     ///@{
     ModelPart& mrModelPart;
     Parameters& mrParameters;
-    typename TLinearSolver::Pointer mpLinearSolver;
 
     bool mIsMeshMoving;
 

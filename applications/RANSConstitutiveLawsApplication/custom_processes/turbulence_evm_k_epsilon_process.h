@@ -90,11 +90,10 @@ public:
     /// Constructor.
     TurbulenceEvmKEpsilonProcess(ModelPart& rModelPart,
                                  Parameters& rParameters,
-                                 typename TLinearSolver::Pointer pDistanceLinearSolver,
                                  typename TLinearSolver::Pointer pKLinearSolver,
                                  typename TLinearSolver::Pointer pEpsilonLinearSolver)
         : TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>(
-              rModelPart, rParameters, pDistanceLinearSolver),
+              rModelPart, rParameters),
           mpKLinearSolver(pKLinearSolver),
           mpEpsilonLinearSolver(pEpsilonLinearSolver)
     {

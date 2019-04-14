@@ -31,15 +31,13 @@ void AddCustomProcessesToPython(pybind11::module& m)
     typedef TurbulenceEvmKEpsilonProcess<2, SparseSpaceType, LocalSpaceType, LinearSolverType> TurbulenceEvmKEpsilon2DProcess;
     py::class_<TurbulenceEvmKEpsilon2DProcess, TurbulenceEvmKEpsilon2DProcess::Pointer, Process>(
         m, "TurbulenceEvmKEpsilon2DProcess")
-        .def(py::init<ModelPart&, Parameters&, LinearSolverType::Pointer,
-                      LinearSolverType::Pointer, LinearSolverType::Pointer>())
+        .def(py::init<ModelPart&, Parameters&, LinearSolverType::Pointer, LinearSolverType::Pointer>())
         .def("SetIsCoSolvingProcessActive", &TurbulenceEvmKEpsilon2DProcess::SetIsCoSolvingProcessActive);
 
     typedef TurbulenceEvmKEpsilonProcess<3, SparseSpaceType, LocalSpaceType, LinearSolverType> TurbulenceEvmKEpsilon3DProcess;
     py::class_<TurbulenceEvmKEpsilon3DProcess, TurbulenceEvmKEpsilon3DProcess::Pointer, Process>(
         m, "TurbulenceEvmKEpsilon3DProcess")
-        .def(py::init<ModelPart&, Parameters&, LinearSolverType::Pointer,
-                      LinearSolverType::Pointer, LinearSolverType::Pointer>());
+        .def(py::init<ModelPart&, Parameters&, LinearSolverType::Pointer, LinearSolverType::Pointer>());
 }
 
 } // namespace Python.

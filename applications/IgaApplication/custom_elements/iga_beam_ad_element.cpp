@@ -104,8 +104,6 @@ void IgaBeamADElement::CalculateAll(
     shape_functions.row(0) = MapVector(GetValue(SHAPE_FUNCTION_VALUES));
     shape_functions.row(1) = MapVector(GetValue(SHAPE_FUNCTION_LOCAL_DER_1));
     shape_functions.row(2) = MapVector(GetValue(SHAPE_FUNCTION_LOCAL_DER_2));
-    // shape_functions.bottomRows<2>() = MapMatrix(GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES));
-
 
     std::ofstream write;
     write.open("OutputAD.txt", std::ofstream::app);
@@ -122,14 +120,6 @@ void IgaBeamADElement::CalculateAll(
     const double moment_of_inertia_y = properties[MOMENT_OF_INERTIA_Y];
     const double moment_of_inertia_z = properties[MOMENT_OF_INERTIA_Z];
     const double prestress = properties[PRESTRESS_CAUCHY];
-    // const double Phi = GetValue(PHI);
-    // const double Phi_1 = GetValue(PHI_DER_1);
-
-    // const Vector3d A01 = MapVector(GetValue(T0));
-    // const Vector3d A01_1 = MapVector(GetValue(T0_DER));
-    // const Vector3d A02 = MapVector(GetValue(N0));
-
-    // const Vector3d A03 = A01.cross(A02);
 
     // material
 
@@ -138,10 +128,6 @@ void IgaBeamADElement::CalculateAll(
     const double ei2 = young_modulus * moment_of_inertia_y;
     const double ei3 = young_modulus * moment_of_inertia_z;
 
-    // reference configuration FIXME: move this section to Initialize()
-
-    // const Vector3d A1 = ComputeRefBaseVector(1, shape_functions, GetGeometry());
-    // const Vector3d A1_1 = ComputeRefBaseVector(2, shape_functions, GetGeometry());
     const Vector3d A1   = MapVector(GetValue(BASE_A1));
     const Vector3d A1_1 = MapVector(GetValue(BASE_A1_1));
 
@@ -151,24 +137,9 @@ void IgaBeamADElement::CalculateAll(
     const Vector3d T = A1 / A;
     const Vector3d T_1 = A1_1 / A - A1.dot(A1_1) * A1 / pow(A, 3);
 
-    // const Matrix3d Rod = ComputeRod<double>(T, Phi);
-    // const Matrix3d Rod_1 = ComputeRod_1<double>(T, T_1, Phi, Phi_1);
-    // const Matrix3d Lam = ComputeLam<double>(A01, T);
-    // const Matrix3d Lam_1 = ComputeLam_1<double>(A01, A01_1, T, T_1);
-
-    // const Matrix3d Rod_Lam = Rod * Lam;
-    // const Matrix3d Rod_1_Lam = Rod_1 * Lam;
-    // const Matrix3d Rod_Lam_1 = Rod * Lam_1;
-
-    // const Vector3d A2 = Rod_Lam * A02.transpose();
-    // const Vector3d A2_1 = Rod_1_Lam * A02.transpose() + Rod_Lam_1 * A02.transpose();
     const Vector3d A2   = MapVector(GetValue(BASE_A2));
     const Vector3d A2_1 = MapVector(GetValue(BASE_A2_1));
 
-    // const Vector3d A3 = Rod_Lam * A03.transpose();
-    // const Vector3d A3_1 = Rod_1_Lam * A03.transpose() + Rod_Lam_1 * A03.transpose();
-    // const Vector3d A3   = T.cross(A2); 
-    // const Vector3d A3_1 = T.cross(A2_1) + T_1.cross(A2); 
     const Vector3d A3   = MapVector(GetValue(BASE_A3));
     const Vector3d A3_1 = MapVector(GetValue(BASE_A3_1));
 
@@ -205,14 +176,10 @@ void IgaBeamADElement::CalculateAll(
     const auto rod_1_lam = rod_1 * lam;
     const auto rod_lam_1 = rod * lam_1;
 
-    // const auto xform = rod_1_lam * Rod_Lam + rod_lam_1 * Rod_Lam + rod_lam * Rod_1_Lam + rod_lam * Rod_Lam_1;
-
     const auto a2 = rod_lam * A2.transpose();
-    // const auto a2_1 = xform * A02.transpose();
     const auto a2_1 = rod_lam * A2_1.transpose() + rod_lam_1 * A2.transpose() + rod_1_lam * A2.transpose() ;
 
     const auto a3 = rod_lam * A3.transpose();
-    // const auto a3_1 = xform * A03.transpose();
     const auto a3_1 = rod_lam * A3_1.transpose() + rod_lam_1 * A3.transpose() + rod_1_lam * A3.transpose();
 
     const auto b2 = a2_1.dot(a1);
@@ -248,22 +215,14 @@ void IgaBeamADElement::CalculateAll(
     const auto gauss_point = GetValue(GAUSS_POINT);
 
     std::ofstream write_f;
-    write_f.open("cutting_force.txt", std::ofstream::app);
+    write_f.open("kratos_data.txt", std::ofstream::app);
     const double moment_kappa_2 = kap2.f() * ei3; 
     const double moment_kappa_3 = kap3.f() * ei2;
     const double normal_force   = (eps11.f() * ea  + moment_kappa_2 * kap2.f() + moment_kappa_3 * kap3.f());
     const double moment_torsion = 0.5 * (kap12.f() - kap13.f()) * gi1; 
 
-    // std::cout << "moment_torsion :: " << moment_torsion << std::endl;
 
-    // const double normal_force = ((area + moment_of_inertia_y * pow(B2/pow(A,2),2)
-    //                             - moment_of_inertia_z * pow(B3/pow(A,2),2))  * eps11.f()
-    //                             + kap2.f() * moment_of_inertia_y * B2/pow(A,2) 
-    //                             - kap3.f() * moment_of_inertia_z * B3/pow(A,2)) * young_modulus/pow(A,2) * a.f()/A; 
-
-    // std::cout << " m3 :: " << moment_kappa_3 << " kappa3  :: " << kap3.f() << " n :: " << eps11.f()*ea << " n - kappa*m :: " << eps11.f()*ea + moment_kappa_3 * kap3.f() << std::endl;
-
-    // write_f << Id() << "\t\t" << gauss_point[0] << " \t\t" << gauss_point[1] << " \t\t" << gauss_point[2] << " \t\t" << normal_force  << " \t\t" << moment_kappa_2 << " \t\t" << moment_kappa_3  <<  "\n";
+    // write output 
     write_f << std::setw(4)  << Id()
             << std::setw(20) << gauss_point[0] 
             << std::setw(20) << gauss_point[1] 

@@ -99,74 +99,19 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     shape_functions.row(0) = MapVector(GetValue(SHAPE_FUNCTION_VALUES));
     shape_functions.row(1) = MapVector(GetValue(SHAPE_FUNCTION_LOCAL_DER_1));
     shape_functions.row(2) = MapVector(GetValue(SHAPE_FUNCTION_LOCAL_DER_2));
-    // shape_functions.bottomRows<2>() = MapMatrix(GetValue(SHAPE_FUNCTION_LOCAL_DERIVATIVES));
 
-    // get properties
-
-    // const auto& properties = GetProperties();
-
-    // const double young_modulus = properties[YOUNG_MODULUS];
-    // const double shear_modulus = properties[SHEAR_MODULUS];
-    // const double area = properties[CROSS_AREA];
-    // const double moment_of_inertia_x = properties[MOMENT_OF_INERTIA_T];
-    // const double moment_of_inertia_y = properties[MOMENT_OF_INERTIA_Y];
-    // const double moment_of_inertia_z = properties[MOMENT_OF_INERTIA_Z];
-    // const double prestress = properties[PRESTRESS_CAUCHY];
-    // const double Phi = GetValue(PHI);
-    // const double Phi_1 = GetValue(PHI_DER_1);
-
-    // const Vector3d A01 = MapVector(GetValue(T0));
-    // const Vector3d A01_1 = MapVector(GetValue(T0_DER));
-    // const Vector3d A02 = MapVector(GetValue(N0));
-    // const Vector3d A03 = A01.cross(A02);
-
-    // material
-
-    // const double ea  = young_modulus * area;
-    // const double gi1 = shear_modulus * moment_of_inertia_x;
-    // const double ei2 = young_modulus * moment_of_inertia_y;
-    // const double ei3 = young_modulus * moment_of_inertia_z;
-
-    // reference configuration FIXME: move this section to Initialize()
+    // reference configuration 
     const auto X = ComputeRefBaseVector(0, shape_functions, GetGeometry());
-    // const Vector3d A1 = ComputeRefBaseVector(1, shape_functions, GetGeometry());
-    // const Vector3d A1_1 = ComputeRefBaseVector(2, shape_functions, GetGeometry());
     const Vector3d A1   = MapVector(GetValue(BASE_A1));
-    // const Vector3d A1_1 = MapVector(GetValue(BASE_A1_1));
 
     const double A11 = A1.dot(A1);
     const double A = sqrt(A11);
 
     const Vector3d T = A1 / A;
-    // const Vector3d T_1 = A1_1 / A - A1.dot(A1_1) * A1 / pow(A, 3);
 
-    // const Matrix3d Rod = ComputeRod<double>(T, Phi);
-    // const Matrix3d Rod_1 = ComputeRod_1<double>(T, T_1, Phi, Phi_1);
-
-    // const Matrix3d Lam = ComputeLam<double>(A01, T);
-    // const Matrix3d Lam_1 = ComputeLam_1<double>(A01, A01_1, T, T_1);
-
-    // const Matrix3d Rod_Lam = Rod * Lam;
-    // const Matrix3d Rod_1_Lam = Rod_1 * Lam;
-    // const Matrix3d Rod_Lam_1 = Rod * Lam_1;
-
-    // const Vector3d A2 = Rod_Lam * A02.transpose();
-    // const Vector3d A2_1 = Rod_1_Lam * A02.transpose() + Rod_Lam_1 * A02.transpose();
     const Vector3d A2   = MapVector(GetValue(BASE_A2));
 
-    // const Vector3d A3 = Rod_Lam * A03.transpose();
-    // const Vector3d A3_1 = Rod_1_Lam * A03.transpose() + Rod_Lam_1 * A03.transpose();
     const Vector3d A3   = MapVector(GetValue(BASE_A3));
-
-
-    // const double B2 = A2_1.dot(A1);
-    // const double B3 = A3_1.dot(A1);
-
-    // const double C12 = A3_1.dot(A2);
-    // const double C13 = A2_1.dot(A3);
-
-    // const double Tm = 1 / A11;
-    // const double Ts = 1 / A;
 
     // actual configuration
 
@@ -187,48 +132,12 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const auto rod_1 = ComputeRod_1<HyperDual>(t, t_1, phi, phi_1);
 
     const auto lam = ComputeLam<HyperDual>(T, t);
-    // const auto lam_1 = ComputeLam_1<HyperDual>(T, T_1, t, t_1);
 
     const auto rod_lam = rod * lam;
-    // const auto rod_1_lam = rod_1 * lam;
-    // const auto rod_lam_1 = rod * lam_1;
 
-    // const auto xform = rod_1_lam * Rod_Lam + rod_lam_1 * Rod_Lam + rod_lam * Rod_1_Lam + rod_lam * Rod_Lam_1;
-
-    // const auto y = rod_lam * A2.transpose();
     const Eigen::Matrix<class HyperJet::HyperJet<double>,1,3,1,1,3> a2 = rod_lam * A2.transpose();
-    // const auto a2_1 = xform * A02.transpose();
 
-    // const auto z = rod_lam * A3.transpose();
     const Eigen::Matrix<class HyperJet::HyperJet<double>,1,3,1,1,3> a3 = rod_lam * A3.transpose();
-    // const auto a3_1 = xform * A03.transpose();
-
-    // const auto b2 = a2_1.dot(a1);
-    // const auto b3 = a3_1.dot(a1);
-
-    // const auto c12 = a3_1.dot(a2);
-    // const auto c13 = a2_1.dot(a3);
-
-    // Normieren (wobei A2 / A3 eigentlich schon normiert sein sollten!)
-    // const auto A22 = A2.dot(A2);
-    // const auto A22_length = sqrt(A22);
-    // const auto N = A2 / A22_length;
-
-    // const auto A33 = A3.dot(A3);
-    // const auto A33_length = sqrt(A33);
-    // const auto V = A3 / A33_length;
-
-    // Vector3d c_X = (1.0, 0.0, 0.0);
-    // Vector3d c_Y = (0.0, 1.0, 0.0);
-    // Vector3d c_Z = (0.0, 0.0, 1.0); 
-
-    // const auto d_X = A1.dot(c_X);
-    // const auto d_Y = A1.dot(c_Y);
-    // const auto d_Z = A1.dot(c_Z);
-
-    // const auto d_x = a1.dot(c_X);
-    // const auto d_y = a1.dot(c_Y);
-    // const auto d_z = a1.dot(c_Z);
 
     const auto d_T = A1.dot(T);
     const auto d_N = A1.dot(A2);

@@ -122,6 +122,8 @@ public:
 
     static constexpr IndexType MatrixSize = TDim * (TNumNodes + TNumNodesMaster);
 
+    static constexpr IndexType StepSlip = TNormalVariation ? 0 : 1;
+
     ///@}
     ///@name Life Cycle
     ///@{
@@ -501,7 +503,7 @@ private:
         BoundedMatrix<double, TNumNodes, TDim> tangent_matrix;
 
         for (IndexType i_node = 0; i_node < TNumNodes; ++i_node) {
-            const array_1d<double, 3>& r_gt = rGeometry[i_node].FastGetSolutionStepValue(WEIGHTED_SLIP);
+            const array_1d<double, 3>& r_gt = rGeometry[i_node].FastGetSolutionStepValue(WEIGHTED_SLIP, StepSlip);
             const double norm_slip = norm_2(r_gt);
             if (norm_slip > zero_tolerance) { // Non zero r_gt
                 const array_1d<double, 3> tangent_slip = r_gt/norm_slip;

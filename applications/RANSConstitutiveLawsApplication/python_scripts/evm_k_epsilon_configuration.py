@@ -14,10 +14,9 @@ else:
 
 class TurbulenceKEpsilonConfiguration(
         TurbulenceEddyViscosityModelConfiguration):
-    def __init__(self, model, parameters, linear_solver):
+    def __init__(self, model, parameters):
         super(TurbulenceKEpsilonConfiguration, self).__init__(model, parameters)
 
-        self.linear_solver = linear_solver
         default_settings = Kratos.Parameters(r'''{
                 "scheme_settings": {
                     "scheme_type": "bossak",

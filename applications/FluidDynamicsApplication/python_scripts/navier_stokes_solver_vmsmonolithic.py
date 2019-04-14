@@ -247,7 +247,7 @@ class NavierStokesSolverMonolithic(FluidSolver):
         if not self.settings["turbulence_model"].IsEquivalentTo(KratosMultiphysics.Parameters("{}")):
             # if not empty
             from turbulence_model_configuration import CreateTurbulenceModel
-            self.turbulence_model_configuration = CreateTurbulenceModel(model, self.settings["turbulence_model"], self.linear_solver)
+            self.turbulence_model_configuration = CreateTurbulenceModel(model, self.settings["turbulence_model"])
         else:
             self.turbulence_model_configuration = None
 

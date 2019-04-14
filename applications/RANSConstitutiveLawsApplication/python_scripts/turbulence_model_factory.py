@@ -1,7 +1,7 @@
 import KratosMultiphysics
 import KratosMultiphysics.RANSConstitutiveLawsApplication
 
-def Factory(model, settings, linear_solver):
+def Factory(model, settings):
     turbulence_models_list = ["k_epsilon"]
 
     model_type = settings["model_type"].GetString()
@@ -16,4 +16,4 @@ def Factory(model, settings, linear_solver):
         # TODO: Remove this after full porting
         settings.RemoveValue("model_type")
 
-        return TurbulenceKEpsilonConfiguration(model, settings, linear_solver)
+        return TurbulenceKEpsilonConfiguration(model, settings)

@@ -45,7 +45,7 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
 
         # self.mesh_moving = self.settings["mesh_moving"].GetBool()
         self.distance_calculation_process = None
-        # self.y_plus_model_process = None
+        self.y_plus_model_process = None
         self.turbulence_model_process = None
         self.strategies_list = []
 
@@ -126,15 +126,15 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
     #     rans_calculation_utils = KratosRANS.RansCalculationUtilities()
     #     return rans_calculation_utils.UpdateEffectiveViscosityForModelPart()
 
-    # def GetYPlusModel(self):
-    #     if self.y_plus_model_process is None:
-    #         import rans_y_plus_model_factory
-    #         self.y_plus_model_process = rans_y_plus_model_factory.Factory(
-    #             self.fluid_model_part, self.settings["y_plus_calculation"])
-    #         Kratos.Logger.PrintInfo(self.__class__.__name__,
-    #                   "Initialized " + self.y_plus_model_process.__str__())
+    def GetYPlusModel(self):
+        if self.y_plus_model_process is None:
+            import rans_y_plus_model_factory
+            self.y_plus_model_process = rans_y_plus_model_factory.Factory(
+                self.fluid_model_part, self.settings["y_plus_calculation"])
+            Kratos.Logger.PrintInfo(self.__class__.__name__,
+                      "Initialized " + self.y_plus_model_process.__str__())
 
-    #     return self.y_plus_model_process
+        return self.y_plus_model_process
 
     # def CalculateYPlus(self):
     #     self.GetYPlusModel().Execute()

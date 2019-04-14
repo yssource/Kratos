@@ -69,6 +69,10 @@
             },
             "mesh_moving"       : false,
             "echo_level"        : 0,
+            "y_plus_calculation"      : {
+                "model_type"     : "logarithmic",
+                "model_settings" : {}
+            },
             "model_properties"  : {
                 "time_scheme"    : "transient",
                 "scheme_settings": {

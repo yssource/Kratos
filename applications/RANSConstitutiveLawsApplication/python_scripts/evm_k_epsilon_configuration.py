@@ -169,7 +169,7 @@ class TurbulenceKEpsilonConfiguration(
     def GetTurbulenceSolvingProcess(self):
         if self.turbulence_model_process is None:
             self.turbulence_model_process = KratosRANS.TurbulenceEvmKEpsilon2DProcess(
-                                                self.fluid_model_part, self.settings)
+                                                self.fluid_model_part, self.settings, self.GetYPlusModel())
             Kratos.Logger.PrintInfo(self.__class__.__name__, "Created turbulence solving process.")
 
         return self.turbulence_model_process

@@ -8,8 +8,8 @@ namespace Kratos
 /* Public functions *******************************************************/
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
 TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::TurbulenceEddyViscosityModelProcess(
-    ModelPart& rModelPart, Parameters& rParameters)
-    : mrModelPart(rModelPart), mrParameters(rParameters)
+    ModelPart& rModelPart, Parameters& rParameters, Process& rRansYPlusProcess)
+    : mrModelPart(rModelPart), mrParameters(rParameters), mrRansYPlusProcess(rRansYPlusProcess)
 {
     KRATOS_TRY
 
@@ -24,7 +24,11 @@ TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolv
         "distance_calculation"  : {
                 "max_iterations"         : 5,
                 "linear_solver_settings" : {}
-        }
+        },
+            "y_plus_calculation"      : {
+                "model_type"     : "",
+                "model_settings" : {}
+            }
     })");
 
     mrParameters.ValidateAndAssignDefaults(default_parameters);
@@ -63,29 +67,7 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
 void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::CalculateYplus(unsigned int Step)
 {
-    int number_of_nodes = mrModelPart.NumberOfNodes();
-    const ProcessInfo& r_current_process_info = mrModelPart.GetProcessInfo();
-
-    const double von_karman = r_current_process_info[WALL_VON_KARMAN];
-    const double beta = r_current_process_info[WALL_SMOOTHNESS_BETA];
-
-#pragma omp parallel for
-    for (int i = 0; i < number_of_nodes; ++i)
-    {
-        NodeType& r_node = *(mrModelPart.NodesBegin() + i);
-
-        const array_1d<double, 3>& r_velocity =
-            r_node.FastGetSolutionStepValue(VELOCITY, Step);
-        const double velocity_norm = norm_2(r_velocity);
-
-        const double nu = r_node.FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
-        const double wall_distance = r_node.FastGetSolutionStepValue(DISTANCE);
-
-        double& y_plus = r_node.FastGetSolutionStepValue(RANS_Y_PLUS);
-
-        y_plus = RansCalculationUtilities(this->mEchoLevel).CalculateYplus(
-            velocity_norm, wall_distance, nu, von_karman, beta, 10);
-    }
+    mrRansYPlusProcess.Execute();
 }
 
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
@@ -112,9 +94,7 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
     KRATOS_CATCH("");
 }
 
-
 /* Protected functions ****************************************************/
-
 
 /* External functions *****************************************************/
 

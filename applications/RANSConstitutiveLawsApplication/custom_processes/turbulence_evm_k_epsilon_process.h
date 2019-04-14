@@ -91,9 +91,9 @@ public:
 
     /// Constructor.
     TurbulenceEvmKEpsilonProcess(ModelPart& rModelPart,
-                                 Parameters& rParameters)
+                                 Parameters& rParameters, Process& rRansYPlusProcess)
         : TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>(
-              rModelPart, rParameters)
+              rModelPart, rParameters, rRansYPlusProcess)
     {
         KRATOS_TRY
 

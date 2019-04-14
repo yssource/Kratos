@@ -4,8 +4,8 @@ import KratosMultiphysics as Kratos
 import KratosMultiphysics.RANSConstitutiveLawsApplication as KratosRANS
 from turbulence_eddy_viscosity_model_configuration import TurbulenceEddyViscosityModelConfiguration
 
-from KratosMultiphysics.kratos_utilities import IsApplicationAvailable
-if IsApplicationAvailable("FluidDynamicsApplication"):
+from KratosMultiphysics.kratos_utilities import CheckIfApplicationsAvailable
+if CheckIfApplicationsAvailable("FluidDynamicsApplication"):
     import KratosMultiphysics.FluidDynamicsApplication
 else:
     msg = "k-epsilon turbulence model depends on the FluidDynamicsApplication which is not found."

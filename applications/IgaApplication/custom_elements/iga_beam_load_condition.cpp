@@ -112,6 +112,7 @@ namespace Kratos
 		shape_functions.row(1) = MapVector(this->GetValue(SHAPE_FUNCTION_LOCAL_DER_1));
 		shape_functions.row(2) = MapVector(this->GetValue(SHAPE_FUNCTION_LOCAL_DER_2));
 
+	    const auto X = ComputeRefBaseVector(0, shape_functions, GetGeometry());
 		const Vector3d A1   = MapVector(this->GetValue(BASE_A1));
 		const Vector3d A1_1 = MapVector(this->GetValue(BASE_A1_1));
 
@@ -127,7 +128,7 @@ namespace Kratos
 		const auto phi = ComputeActValue(DISPLACEMENT_ROTATION, 0, shape_functions, GetGeometry());
 		const auto phi_1 = ComputeActValue(DISPLACEMENT_ROTATION, 1, shape_functions, GetGeometry());    
 
-		const auto x = ComputeActBaseVector(0, shape_functions, GetGeometry());
+	    const auto x = ComputeActBaseVector(0, shape_functions, GetGeometry());
 		const auto a1 = ComputeActBaseVector(1, shape_functions, GetGeometry());
 		const auto a1_1 = ComputeActBaseVector(2, shape_functions, GetGeometry());
 
@@ -148,30 +149,74 @@ namespace Kratos
 		const auto a2 = rod_lam * A2.transpose();
 		const auto a3 = rod_lam * A3.transpose();
 
+		const auto delta_x = x - X; 
 
-		const auto d_T = A1.dot(T);
-		const auto d_N = A1.dot(A2);
-		const auto d_V = A1.dot(A3);
+		// std::cout << "delta_x " << sqrt(delta_x.dot(delta_x)).f() << std::endl;
+
+		// const auto d_T = A1.dot(T);
+		// const auto d_N = A1.dot(A2);
+		// const auto d_V = A1.dot(A3);
+
+		// const auto X_T = X.dot(T); 
+		// const auto X_N = X.dot(A2); 
+		// const auto X_V = X.dot(A3); 
+
+		const auto d_xt = t.dot(delta_x);
+		const auto d_xn = a2.dot(delta_x);
+		const auto d_xv = a3.dot(delta_x);
+
+		// std::cout << "T   " << T << std::endl;
+
+		// std::cout << "d_xt " << d_xt.f() << std::endl;
+		// std::cout << "d_xn " << d_xn. << std::endl;
+		// std::cout << "d_xv " << d_xv << std::endl;
+
+		std::cout << "square :" << sqrt(d_xt*d_xt + d_xn*d_xn + d_xv*d_xv).f() << std::endl; 
+
 
 		const auto d_t = a1.dot(T);     // Anteil T in a1 Richtung
 		const auto d_n = a1.dot(A2);     // Anteil N in a1 Richtung
 		const auto d_v = a1.dot(A3);     // Anteil V in a1 Richtung
+
+		const auto x_t = x.dot(t); 
+		const auto x_v = x.dot(a2); 
+		const auto x_n = x.dot(a3); 
+
+		// const auto delta_u = x_t - X_T;
+		// const auto delta_v = x_v - X_V;
+		// const auto delta_w = x_n - X_N;
 
 		const auto alpha_12 = HyperJet::atan2(a2.dot(A3) , a2.dot(A2));    // Winkel zwischen a2 und A
 		const auto alpha_13 = HyperJet::atan2(a3.dot(A2) , a3.dot(A3));    // Winkel zwischen a2 und A
 		const auto alpha_2  = HyperJet::atan2(d_n , d_t);                  // Winkel zwischen a1 und A1 um n
 		const auto alpha_3  = HyperJet::atan2(d_v , d_t);                  // Winkel zwischen a1 und A1 um v
 
-		array_1d<double, 3 > PointLoad = ZeroVector(3);
+		array_1d<double, 3 > PointLoadForce = ZeroVector(3);
+		array_1d<double, 3 > PointLoadMoment = ZeroVector(3);
 
-		PointLoad = GetValue(LOAD_VECTOR_MOMENT); 
+		PointLoadForce = GetValue(LOAD_VECTOR_FORCE); 
+		PointLoadMoment = GetValue(LOAD_VECTOR_MOMENT); 
 
-		auto const dP_x = 0.5 * (alpha_12 + alpha_13) * PointLoad[0];
-		auto const dP_z = alpha_2 * PointLoad[2]; 
-		auto const dP_y = alpha_3 * PointLoad[1];
+		std::cout << "PointLoadForce: " << PointLoadForce << std::endl;
+		std::cout << "PointLoadMoment: " << PointLoadMoment << std::endl;
+
+		// auto const dP_u = - d_xt * PointLoadForce[0];
+		// auto const dP_v = - d_xn * PointLoadForce[1];
+		// auto const dP_w = - d_xv * PointLoadForce[2]; 
+
+		const auto dP_disp = x - X - T * PointLoadForce[0] - A2 * PointLoadForce[1] - A3 * PointLoadForce[2]; 
+		const auto dP_u = 0.5 * dP_disp.dot(dP_disp);
+
+		auto const dP_x = - alpha_12 * PointLoadMoment[0];
+		auto const dP_y =   alpha_3  * PointLoadMoment[1];
+		auto const dP_z = - alpha_2  * PointLoadMoment[2]; 
 		
-		MapMatrix(rLeftHandSideMatrix) =  dP_y.h() + dP_z.h() ;
-		MapVector(rRightHandSideVector) = -(dP_y.g() + dP_z.g());
+		// MapMatrix(rLeftHandSideMatrix) =  dP_u.h() + dP_v.h() + dP_w.h() + dP_x.h() + dP_y.h() + dP_z.h() ;
+		// MapVector(rRightHandSideVector) = -(dP_u.g() + dP_v.g() + dP_w.g() + dP_x.g() + dP_y.g() + dP_z.g());
+		MapMatrix(rLeftHandSideMatrix) =  dP_u.h() + dP_x.h() + dP_y.h() + dP_z.h() ;
+		MapVector(rRightHandSideVector) = -(dP_u.g() + dP_x.g() + dP_y.g() + dP_z.g());
+
+		// std::cout << "MapVector(rRightHandSideVector)  "  << MapVector(rRightHandSideVector) << std::endl;
 
 		KRATOS_CATCH( "" )
     }

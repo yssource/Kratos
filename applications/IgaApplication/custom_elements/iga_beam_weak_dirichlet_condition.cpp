@@ -254,7 +254,7 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     auto const penalty_disp_w   = GetValue(PENALTY_DISPLACEMENT_Z);
     auto const penalty_rot_2    = GetValue(PENALTY_ROTATION_2);
     auto const penalty_rot_3    = GetValue(PENALTY_ROTATION_3);
-    auto const penalty_tors   = GetValue(PENALTY_TORSION);
+    auto const penalty_tors     = GetValue(PENALTY_TORSION);
 
 
     // std::cout <<"a1 : " << typeid(a1).name() << std::endl;

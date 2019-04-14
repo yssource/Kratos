@@ -254,29 +254,13 @@ public:
     {
         ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
 
-        const int process_step = r_current_process_info[RANS_MODELLING_PROCESS_STEP];
+        const double current_time = r_current_process_info[TIME];
+        if (current_time < mRampUpTime)
+            return;
 
-        if (process_step == 1)
-            this->AddSolutionStepVariables();
-        else if (process_step == 2)
-            this->AddDofs();
-        else if (process_step == 3)
-        {
-            const double current_time = r_current_process_info[TIME];
-            if (current_time < mRampUpTime)
-                return;
-
-            KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
-                << "Solving RANS equations...\n";
-            this->SolveStep();
-        }
-        else
-        {
-            KRATOS_THROW_ERROR(std::runtime_error,
-                               "Provided step in RANS_MODELLING_PROCESS_STEP "
-                               "is not supported.",
-                               "");
-        }
+        KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
+            << "Solving RANS equations...\n";
+        this->SolveStep();
     }
 
     /// this function is designed for being called at the beginning of the

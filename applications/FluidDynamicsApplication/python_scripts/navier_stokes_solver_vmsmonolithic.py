@@ -169,8 +169,7 @@ class NavierStokesSolverMonolithic(FluidSolver):
             "move_mesh_strategy": 0,
             "periodic": "periodic",
             "move_mesh_flag": false,
-            "turbulence_model": "None",
-            "turbulence_model_settings": {}
+            "turbulence_model": {}
         }""")
 
         settings = self._BackwardsCompatibilityHelper(settings)
@@ -208,6 +207,13 @@ class NavierStokesSolverMonolithic(FluidSolver):
             settings["formulation"].AddEmptyValue("dynamic_tau")
             settings["formulation"]["dynamic_tau"].SetDouble(settings["dynamic_tau"].GetDouble())
             settings.RemoveValue("dynamic_tau")
+
+        if settings.Has("turbulence_model") and settings["turbulence_model"].IsString():
+            if settings["turbulence_model"].GetString().lower()!="none":
+                msg = "Ignoring deprecated \"turbulence_model\" (string) setting."
+                KratosMultiphysics.Logger.PrintWarning("NavierStokesVMSMonolithicSolver",msg)
+            settings.RemoveValue("turbulence_model")
+
         return settings
 
 
@@ -240,10 +246,12 @@ class NavierStokesSolverMonolithic(FluidSolver):
         import KratosMultiphysics.python_linear_solver_factory as linear_solver_factory
         self.linear_solver = linear_solver_factory.ConstructSolver(self.settings["linear_solver_settings"])
 
-        if self.settings["turbulence_model"].GetString().lower()!="none":
-            self._CreateRANSModel()
+        if not self.settings["turbulence_model"].IsEquivalentTo(KratosMultiphysics.Parameters("{}")):
+            # if not empty
+            from turbulence_model_configuration import CreateTurbulenceModel
+            self.turbulence_model_configuration = CreateTurbulenceModel(model, self.settings["turbulence_model"], self.linear_solver)
         else:
-            self.turbulence_process = None
+            self.turbulence_model_configuration = None
 
         KratosMultiphysics.Logger.PrintInfo("NavierStokesSolverMonolithic", "Construction of NavierStokesSolverMonolithic finished.")
 
@@ -271,9 +279,8 @@ class NavierStokesSolverMonolithic(FluidSolver):
         self.main_model_part.AddNodalSolutionStepVariable(KratosCFD.Q_VALUE)
 
         # Adding variables required for the turbulence modelling
-        if self.turbulence_process is not None:
-            self.main_model_part.ProcessInfo[KratosRANS.RANS_MODELLING_PROCESS_STEP] = 1
-            self.turbulence_process.Execute()
+        if self.turbulence_model_configuration is not None:
+            self.turbulence_model_configuration.AddVariables()
 
         if self.settings["consider_periodic_conditions"].GetBool() == True:
             self.main_model_part.AddNodalSolutionStepVariable(KratosCFD.PATCH_INDEX)
@@ -281,16 +288,16 @@ class NavierStokesSolverMonolithic(FluidSolver):
         if self._IsPrintingRank():
             KratosMultiphysics.Logger.PrintInfo("NavierStokesSolverMonolithic", "Fluid solver variables added correctly.")
 
+    def AddDofs(self):
+        super(NavierStokesSolverMonolithic, self).AddDofs()
+
+        if self.turbulence_model_configuration is not None:
+            self.turbulence_model_configuration.AddDofs()
 
     def PrepareModelPart(self):
         if not self.main_model_part.ProcessInfo[KratosMultiphysics.IS_RESTARTED]:
             self._set_physical_properties()
         super(NavierStokesSolverMonolithic, self).PrepareModelPart()
-
-        if self.turbulence_process is not None:
-            self.main_model_part.ProcessInfo[KratosRANS.RANS_MODELLING_PROCESS_STEP] = 2
-            self.turbulence_process.Execute()
-            self.main_model_part.ProcessInfo[KratosRANS.RANS_MODELLING_PROCESS_STEP] = 3
 
     def Initialize(self):
 
@@ -324,7 +331,7 @@ class NavierStokesSolverMonolithic(FluidSolver):
                 err_msg += "Available options are: \"bdf2\""
                 raise Exception(err_msg)
         else:
-            if (self.settings["turbulence_model"].GetString() == "None"):
+            if (self.turbulence_model_configuration is None):
                 # Bossak time integration scheme
                 if self.settings["time_scheme"].GetString() == "bossak":
                     if self.settings["consider_periodic_conditions"].GetBool() == True:
@@ -351,11 +358,12 @@ class NavierStokesSolverMonolithic(FluidSolver):
                     err_msg += "Available options are: \"bossak\", \"bdf2\" and \"steady\""
                     raise Exception(err_msg)
             else:
+                self.turbulence_model_configuration.Initialize()
                 self.time_scheme = KratosCFD.ResidualBasedPredictorCorrectorVelocityBossakSchemeTurbulent(
                             self.settings["alpha"].GetDouble(),
                             self.settings["move_mesh_strategy"].GetInt(),
                             self.computing_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE],
-                            self.turbulence_process)
+                            self.turbulence_model_configuration.GetTurbulenceSolvingProcess())
 
         if self.settings["consider_periodic_conditions"].GetBool() == True:
             builder_and_solver = KratosCFD.ResidualBasedBlockBuilderAndSolverPeriodic(self.linear_solver,
@@ -390,6 +398,21 @@ class NavierStokesSolverMonolithic(FluidSolver):
             # Perform the solver InitializeSolutionStep
             (self.solver).InitializeSolutionStep()
 
+            if (self.turbulence_model_configuration is not None):
+                self.turbulence_model_configuration.InitializeSolutionStep()
+
+    def FinalizeSolutionStep(self):
+        super(NavierStokesSolverMonolithic, self).FinalizeSolutionStep()
+
+        if (self.turbulence_model_configuration is not None):
+            self.turbulence_model_configuration.FinalizeSolutionStep()
+
+    def Check(self):
+        super(NavierStokesSolverMonolithic, self).Check()
+
+        if (self.turbulence_model_configuration is not None):
+            self.turbulence_model_configuration.Check()
+
     def _set_physical_properties(self):
         # Check if fluid properties are provided using a .json file
         materials_filename = self.settings["material_import_settings"]["materials_filename"].GetString()
@@ -420,38 +443,4 @@ class NavierStokesSolverMonolithic(FluidSolver):
         self.settings["time_stepping"]["automatic_time_step"].SetBool(False)
         if self.settings["formulation"].Has("dynamic_tau"):
             self.settings["formulation"]["dynamic_tau"].SetDouble(0.0)
-
-    def _CreateRANSModel(self):
-        if not has_rans_application:
-            raise Exception("RANSConstitutiveLawsApplication is not compiled. Please compile it to use turbulence models.")
-
-        self.turbulence_model_settings = self.settings["turbulence_model_settings"]
-
-        if self.settings["turbulence_model"].GetString() == "k_epsilon":
-            if self.settings["domain_size"].GetInt() == 2:
-                self.turbulence_process = KratosRANS.TurbulenceEvmKEpsilon2DProcess(self.main_model_part, self.turbulence_model_settings, self.linear_solver, self.linear_solver, self.linear_solver)
-            elif self.settings["domain_size"].GetInt() == 3:
-                self.turbulence_process = KratosRANS.TurbulenceEvmKEpsilon3DProcess(self.main_model_part, self.turbulence_model_settings, self.linear_solver, self.linear_solver, self.linear_solver)
-            else:
-                raise Exception("Unknown domain size: " + self.settings["domain_size"].GetInt())
-        elif self.settings["turbulence_model"].GetString() == "log_k_epsilon":
-            if self.settings["domain_size"].GetInt() == 2:
-                self.turbulence_process = KratosRANS.TurbulenceEvmLogKEpsilon2DProcess(self.main_model_part, self.turbulence_model_settings, self.linear_solver, self.linear_solver, self.linear_solver)
-            elif self.settings["domain_size"].GetInt() == 3:
-                self.turbulence_process = KratosRANS.TurbulenceEvmLogKEpsilon3DProcess(self.main_model_part, self.turbulence_model_settings, self.linear_solver, self.linear_solver, self.linear_solver)
-            else:
-                raise Exception("Unknown domain size: " + self.settings["domain_size"].GetInt())
-        elif self.settings["turbulence_model"].GetString() == "sqrt_k_epsilon":
-            if self.settings["domain_size"].GetInt() == 2:
-                self.turbulence_process = KratosRANS.TurbulenceEvmSqrtKEpsilon2DProcess(self.main_model_part, self.turbulence_model_settings, self.linear_solver, self.linear_solver, self.linear_solver)
-            elif self.settings["domain_size"].GetInt() == 3:
-                self.turbulence_process = KratosRANS.TurbulenceEvmSqrtKEpsilon3DProcess(self.main_model_part, self.turbulence_model_settings, self.linear_solver, self.linear_solver, self.linear_solver)
-            else:
-                raise Exception("Unknown domain size: " + self.settings["domain_size"].GetInt())
-        else:
-            raise Exception("Unknown turbulence model: " + self.settings["turbulence_model"].GetString())
-
-
-
-
 

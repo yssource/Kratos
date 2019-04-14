@@ -28,7 +28,7 @@ Condition::Pointer AdjointIncompressiblePotentialWallCondition<TPrimalCondition>
 
 template <class TPrimalCondition>
 Condition::Pointer AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::Create(
-    IndexType NewId, Condition::GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const 
+    IndexType NewId, Condition::GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const
 {
     return Kratos::make_shared<AdjointIncompressiblePotentialWallCondition<TPrimalCondition>>(
             NewId, pGeom, pProperties);
@@ -36,7 +36,7 @@ Condition::Pointer AdjointIncompressiblePotentialWallCondition<TPrimalCondition>
 
 template <class TPrimalCondition>
 
-Condition::Pointer AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::Clone(IndexType NewId, NodesArrayType const& rThisNodes) const 
+Condition::Pointer AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::Clone(IndexType NewId, NodesArrayType const& rThisNodes) const
 {
     Condition::Pointer pNewCondition = Create(NewId, GetGeometry().Create( rThisNodes ), pGetProperties() );
 
@@ -47,20 +47,20 @@ Condition::Pointer AdjointIncompressiblePotentialWallCondition<TPrimalCondition>
 }
 
 template <class TPrimalCondition>
-void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::Initialize() 
-{   
+void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::Initialize()
+{
     mpPrimalCondition->Initialize();
 }
 
 template <class TPrimalCondition>
-void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::InitializeSolutionStep(ProcessInfo& rCurrentProcessInfo) 
+void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::InitializeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 {
     mpPrimalCondition->Data() = this->Data();
     mpPrimalCondition->Set(Flags(*this));
     mpPrimalCondition->InitializeSolutionStep(rCurrentProcessInfo);
 }
 template <class TPrimalCondition>
-void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::GetValuesVector(Vector& rValues, int Step) 
+void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::GetValuesVector(Vector& rValues, int Step)
 {
 
     KRATOS_TRY
@@ -92,7 +92,7 @@ void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::GetValuesVec
 
 template <class TPrimalCondition>
 void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::CalculateLeftHandSide(MatrixType &rLeftHandSideMatrix,
-                            ProcessInfo &rCurrentProcessInfo) 
+                            ProcessInfo &rCurrentProcessInfo)
 {
     VectorType RHS;
     this->CalculateLocalSystem(rLeftHandSideMatrix, RHS, rCurrentProcessInfo);
@@ -100,9 +100,19 @@ void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::CalculateLef
 }
 
 template <class TPrimalCondition>
+void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::CalculateSensitivityMatrix(const Variable<double>& rDesignVariable,
+                                        Matrix& rOutput,
+                                        const ProcessInfo& rCurrentProcessInfo)
+{
+    if (rOutput.size1() != TNumNodes)
+        rOutput.resize(TNumNodes, TNumNodes, false);
+    rOutput.clear();
+}
+
+template <class TPrimalCondition>
 void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::CalculateSensitivityMatrix(const Variable<array_1d<double,3> >& rDesignVariable,
                                         Matrix& rOutput,
-                                        const ProcessInfo& rCurrentProcessInfo) 
+                                        const ProcessInfo& rCurrentProcessInfo)
 {
     if (rOutput.size1() != TNumNodes)
         rOutput.resize(TDim*TNumNodes, TNumNodes, false);
@@ -112,8 +122,8 @@ void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::CalculateSen
 template <class TPrimalCondition>
 void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::CalculateLocalSystem(MatrixType &rLeftHandSideMatrix,
                             VectorType &rRightHandSideVector,
-                            ProcessInfo &rCurrentProcessInfo) 
-{               
+                            ProcessInfo &rCurrentProcessInfo)
+{
     if (rLeftHandSideMatrix.size1() != TNumNodes)
         rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
     if (rRightHandSideVector.size() != TNumNodes)
@@ -123,7 +133,7 @@ void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::CalculateLoc
 
 /// Check that all data required by this condition is available and reasonable
 template <class TPrimalCondition>
-int AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::Check(const ProcessInfo& rCurrentProcessInfo) 
+int AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::Check(const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY;
 
@@ -153,8 +163,8 @@ int AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::Check(const P
 
 template <class TPrimalCondition>
 void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::EquationIdVector(EquationIdVectorType& rResult,
-                                ProcessInfo& rCurrentProcessInfo) 
-{   
+                                ProcessInfo& rCurrentProcessInfo)
+{
     if (rResult.size() != TNumNodes)
         rResult.resize(TNumNodes, false);
 
@@ -179,7 +189,7 @@ void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::EquationIdVe
 
 template <class TPrimalCondition>
 void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::GetDofList(DofsVectorType& ConditionDofList,
-                        ProcessInfo& CurrentProcessInfo) 
+                        ProcessInfo& CurrentProcessInfo)
 {
     if (ConditionDofList.size() != TNumNodes)
     ConditionDofList.resize(TNumNodes);
@@ -204,14 +214,14 @@ void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::GetDofList(D
 }
 
 template <class TPrimalCondition>
-void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) 
+void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo)
 {
     mpPrimalCondition -> FinalizeSolutionStep(rCurrentProcessInfo);
 }
 
 /// Turn back information as a string.
 template <class TPrimalCondition>
-std::string AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::Info() const 
+std::string AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::Info() const
 {
     std::stringstream buffer;
     this->PrintInfo(buffer);
@@ -220,28 +230,28 @@ std::string AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::Info(
 
 /// Print information about this object.
 template <class TPrimalCondition>
-void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::PrintInfo(std::ostream& rOStream) const 
+void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::PrintInfo(std::ostream& rOStream) const
 {
     rOStream << "AdjointIncompressiblePotentialWallCondition" << TDim << "D #" << this->Id();
 }
 
 /// Print object's data.
 template <class TPrimalCondition>
-void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::PrintData(std::ostream& rOStream) const 
+void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::PrintData(std::ostream& rOStream) const
 {
     this->pGetGeometry()->PrintData(rOStream);
 }
 
 
 template <class TPrimalCondition>
-void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::save(Serializer& rSerializer) const 
+void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::save(Serializer& rSerializer) const
 {
     KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Condition );
     rSerializer.save("mpPrimalCondition", mpPrimalCondition);
 }
 
 template <class TPrimalCondition>
-void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::load(Serializer& rSerializer) 
+void AdjointIncompressiblePotentialWallCondition<TPrimalCondition>::load(Serializer& rSerializer)
 {
     KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Condition );
     rSerializer.load("mpPrimalCondition", mpPrimalCondition);

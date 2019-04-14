@@ -32,7 +32,7 @@ public:
     KRATOS_CLASS_POINTER_DEFINITION(AdjointIncompressiblePotentialWallCondition);
 
     typedef Element::WeakPointer ElementWeakPointerType;
-    
+
     typedef Element::Pointer ElementPointerType;
 
     AdjointIncompressiblePotentialWallCondition(IndexType NewId = 0)
@@ -96,6 +96,10 @@ public:
     void FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) override;
 
     void GetValuesVector(Vector& rValues, int Step=0)  override;
+
+    void CalculateSensitivityMatrix(const Variable<double>& rDesignVariable,
+                                        Matrix& rOutput,
+                                        const ProcessInfo& rCurrentProcessInfo) override;
 
     void CalculateSensitivityMatrix(const Variable<array_1d<double,3> >& rDesignVariable,
                                         Matrix& rOutput,

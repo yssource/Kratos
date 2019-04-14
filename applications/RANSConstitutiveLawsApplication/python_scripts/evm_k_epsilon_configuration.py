@@ -58,6 +58,9 @@ class TurbulenceKEpsilonConfiguration(
                 }
         }''')
 
+        # TODO: Remove manual settings after porting
+        self.ramp_up_time = 0.5
+
     #     parameters["model_settings"].ValidateAndAssignDefaults(default_settings)
 
     #     self.model_elements = ["RANSEVMK", "RANSEVMEPSILON"]
@@ -131,16 +134,16 @@ class TurbulenceKEpsilonConfiguration(
 
         Kratos.Logger.PrintInfo(self.__class__.__name__, "DOFs added successfully.")
 
-    # def InitializeSolutionStep(self):
-    #     time = self.fluid_model_part.ProcessInfo[Kratos.TIME]
-    #     if (time >= self.ramp_up_time):
-    #         self.is_computing_solution = True
-    #         self.GetTurbulenceSolvingProcess().SetIsCoSolvingProcessActive(self.is_computing_solution)
-    #     else:
-    #         return
+    def InitializeSolutionStep(self):
+        time = self.fluid_model_part.ProcessInfo[Kratos.TIME]
+        if (time >= self.ramp_up_time):
+            self.is_computing_solution = True
+            self.GetTurbulenceSolvingProcess().SetIsCoSolvingProcessActive(self.is_computing_solution)
+        else:
+            return
 
-    #     super(TurbulenceKEpsilonConfiguration, self).InitializeSolutionStep()
-    #     self.UpdateBoundaryConditions()
+        super(TurbulenceKEpsilonConfiguration, self).InitializeSolutionStep()
+        # self.UpdateBoundaryConditions()
 
     # def UpdateBoundaryConditions(self):
     #     evm_k_epsilon_utilities = KratosRANS.EvmKepsilonModelUtilities()
@@ -154,14 +157,14 @@ class TurbulenceKEpsilonConfiguration(
 
     #     evm_k_epsilon_utilities.UpdateBoundaryConditions(self.fluid_model_part)
 
-    # def InitializeBoundaryNodes(self):
-    #     rans_variable_utils = KratosRANS.RansVariableUtils()
+    def InitializeBoundaryNodes(self):
+        rans_variable_utils = KratosRANS.RansVariableUtils()
 
-    #     rans_variable_utils.FixScalarVariableDofs(Kratos.INLET, KratosRANS.TURBULENT_KINETIC_ENERGY, self.fluid_model_part.Nodes)
-    #     rans_variable_utils.FixScalarVariableDofs(Kratos.STRUCTURE, KratosRANS.TURBULENT_KINETIC_ENERGY, self.fluid_model_part.Nodes)
+        rans_variable_utils.FixScalarVariableDofs(Kratos.INLET, KratosRANS.TURBULENT_KINETIC_ENERGY, self.fluid_model_part.Nodes)
+        rans_variable_utils.FixScalarVariableDofs(Kratos.STRUCTURE, KratosRANS.TURBULENT_KINETIC_ENERGY, self.fluid_model_part.Nodes)
 
-    #     rans_variable_utils.FixScalarVariableDofs(Kratos.INLET, KratosRANS.TURBULENT_ENERGY_DISSIPATION_RATE, self.fluid_model_part.Nodes)
-    #     rans_variable_utils.FixScalarVariableDofs(Kratos.STRUCTURE, KratosRANS.TURBULENT_ENERGY_DISSIPATION_RATE, self.fluid_model_part.Nodes)
+        rans_variable_utils.FixScalarVariableDofs(Kratos.INLET, KratosRANS.TURBULENT_ENERGY_DISSIPATION_RATE, self.fluid_model_part.Nodes)
+        rans_variable_utils.FixScalarVariableDofs(Kratos.STRUCTURE, KratosRANS.TURBULENT_ENERGY_DISSIPATION_RATE, self.fluid_model_part.Nodes)
 
     def GetTurbulenceSolvingProcess(self):
         if self.turbulence_model_process is None:

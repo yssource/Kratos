@@ -160,17 +160,9 @@ protected:
     ///@name Protected Operations
     ///@{
 
-    virtual void AddSolutionStepVariables();
-
-    virtual void AddDofs();
-
     virtual void InitializeTurbulenceModelPart();
 
     virtual void UpdateFluidViscosity();
-
-    virtual void InitializeConditions();
-
-    void InitializeConditionsForModelPart(ModelPart* pModelPart);
 
     void InitializeConditionFlagsForModelPart(ModelPart* pModelPart, const Flags& rFlag);
 

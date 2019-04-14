@@ -49,25 +49,26 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         self.turbulence_model_process = None
         # self.strategies_list = []
 
-        # self.nu_t_min = self.settings["turbulent_viscosity_min"].GetDouble()
-        # self.nu_t_max = self.settings["turbulent_viscosity_max"].GetDouble()
+        # TODO: Remove manual settings after porting
+        self.nu_t_min = 1e-12
+        self.nu_t_max = 1e+2
 
         # self.is_computing_solution = False
 
-    # def Initialize(self):
-    #     super(TurbulenceEddyViscosityModelConfiguration, self).Initialize()
+    def Initialize(self):
+        super(TurbulenceEddyViscosityModelConfiguration, self).Initialize()
 
-    #     self.__InitializeModelPart()
-    #     self.PrepareSolvingStrategy()
+        rans_variable_utils = KratosRANS.RansVariableUtils()
+        rans_variable_utils.CopyScalarVar(Kratos.VISCOSITY, Kratos.KINEMATIC_VISCOSITY,  self.fluid_model_part.Nodes)
+        rans_variable_utils.SetScalarVar(Kratos.TURBULENT_VISCOSITY, self.nu_t_min, self.fluid_model_part.Nodes)
 
-    #     for strategy in self.strategies_list:
-    #         strategy.Initialize()
+        # self.__InitializeModelPart()
+        # self.PrepareSolvingStrategy()
 
-    #     rans_variable_utils = KratosRANS.RansVariableUtils()
-    #     rans_variable_utils.CopyScalarVar(Kratos.VISCOSITY, Kratos.KINEMATIC_VISCOSITY,  self.fluid_model_part.Nodes)
-    #     rans_variable_utils.SetScalarVar(Kratos.TURBULENT_VISCOSITY, self.nu_t_min, self.fluid_model_part.Nodes)
+        # for strategy in self.strategies_list:
+        #     strategy.Initialize()
 
-    #     Kratos.Logger.PrintInfo(self.__class__.__name__, "Initialization successfull.")
+        Kratos.Logger.PrintInfo(self.__class__.__name__, "Initialization successfull.")
 
     # def InitializeSolutionStep(self):
     #     super(TurbulenceEddyViscosityModelConfiguration, self).InitializeSolutionStep()
@@ -152,35 +153,35 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
 
     #     return strategy, linear_solver, convergence_criteria, builder_and_solver, time_scheme
 
-    # def __InitializeModelPart(self):
-    #     self.__InitializeNodeFlags()
-    #     self.InitializeBoundaryNodes()
+    def __InitializeModelPart(self):
+        self.__InitializeNodeFlags()
+        self.InitializeBoundaryNodes()
 
-    #     variable_utils = Kratos.VariableUtils()
-    #     variable_utils.SetScalarVar(Kratos.DISTANCE, 1.0, self.fluid_model_part.Nodes)
-    #     variable_utils.SetScalarVar(Kratos.DISTANCE, 0.0, self.fluid_model_part.Nodes, Kratos.STRUCTURE, True)
+        # variable_utils = Kratos.VariableUtils()
+        # variable_utils.SetScalarVar(Kratos.DISTANCE, 1.0, self.fluid_model_part.Nodes)
+        # variable_utils.SetScalarVar(Kratos.DISTANCE, 0.0, self.fluid_model_part.Nodes, Kratos.STRUCTURE, True)
 
-    #     self.__CalculateWallDistances()
+        # self.__CalculateWallDistances()
 
-    #     Kratos.Logger.PrintInfo(self.__class__.__name__, "Model part initialized.")
+        Kratos.Logger.PrintInfo(self.__class__.__name__, "Model part initialized.")
 
-    # def __InitializeNodeFlags(self):
-    #     self.__InitializeNodeFlagsForConditions(self.settings["inlet_conditions"].GetStringArray(), Kratos.INLET, True)
-    #     self.__InitializeNodeFlagsForConditions(self.settings["outlet_conditions"].GetStringArray(), Kratos.OUTLET, True)
-    #     self.__InitializeNodeFlagsForConditions(self.settings["wall_conditions"].GetStringArray(), Kratos.STRUCTURE, True)
-    #     self.__InitializeNodeFlagsForConditions(self.settings["wall_conditions"].GetStringArray(), Kratos.INLET, False)
-    #     self.__InitializeNodeFlagsForConditions(self.settings["wall_conditions"].GetStringArray(), Kratos.OUTLET, False)
+    def __InitializeNodeFlags(self):
+        self.__InitializeNodeFlagsForConditions(self.settings["inlet_conditions"].GetStringArray(), Kratos.INLET, True)
+        self.__InitializeNodeFlagsForConditions(self.settings["outlet_conditions"].GetStringArray(), Kratos.OUTLET, True)
+        self.__InitializeNodeFlagsForConditions(self.settings["wall_conditions"].GetStringArray(), Kratos.STRUCTURE, True)
+        self.__InitializeNodeFlagsForConditions(self.settings["wall_conditions"].GetStringArray(), Kratos.INLET, False)
+        self.__InitializeNodeFlagsForConditions(self.settings["wall_conditions"].GetStringArray(), Kratos.OUTLET, False)
 
-    #     Kratos.Logger.PrintInfo(self.__class__.__name__, "Node flags initialized.")
+        Kratos.Logger.PrintInfo(self.__class__.__name__, "Node flags initialized.")
 
-    # def __InitializeNodeFlagsForConditions(self, conditions_list, flag, value):
-    #     variable_utils = Kratos.VariableUtils()
-    #     for condition_name in conditions_list:
-    #         if not self.fluid_model_part.HasSubModelPart(condition_name):
-    #             raise Exception(condition_name + " not found in " +
-    #                             self.fluid_model_part.Name)
-    #         variable_utils.SetFlag(flag, value,
-    #                                self.fluid_model_part.GetSubModelPart(condition_name).Nodes)
+    def __InitializeNodeFlagsForConditions(self, conditions_list, flag, value):
+        variable_utils = Kratos.VariableUtils()
+        for condition_name in conditions_list:
+            if not self.fluid_model_part.HasSubModelPart(condition_name):
+                raise Exception(condition_name + " not found in " +
+                                self.fluid_model_part.Name)
+            variable_utils.SetFlag(flag, value,
+                                   self.fluid_model_part.GetSubModelPart(condition_name).Nodes)
 
     # def __CalculateWallDistances(self):
     #     if (self.distance_calculation_process is None):

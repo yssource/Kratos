@@ -250,12 +250,14 @@ public:
     ///@name Operations
     ///@{
 
+    void SetIsCoSolvingProcessActive(bool rIsSolvingProcessActive)
+    {
+        this->IsSolvingProcessActive = rIsSolvingProcessActive;
+    }
+
     virtual void Execute() override
     {
-        ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
-
-        const double current_time = r_current_process_info[TIME];
-        if (current_time < mRampUpTime)
+        if (!this->IsSolvingProcessActive)
             return;
 
         KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
@@ -268,16 +270,6 @@ public:
     virtual void ExecuteInitialize() override
     {
         BaseType::ExecuteInitialize();
-
-        const double nu_t_min = this->mrModelPart.GetProcessInfo()[TURBULENT_VISCOSITY_MIN];
-        const int number_of_nodes = this->mrModelPart.NumberOfNodes();
-
-#pragma omp parallel for
-        for (int i = 0; i < number_of_nodes; ++i)
-        {
-            NodeType& r_node = *(this->mrModelPart.NodesBegin() + i);
-            r_node.FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t_min;
-        }
 
         this->GenerateSolutionStrategies();
 
@@ -390,42 +382,6 @@ protected:
         // KRATOS_CATCH("");
     }
 
-    void InitializeConditions() override
-    {
-        KRATOS_TRY;
-
-        this->InitializeConditionsForModelPart(mpTurbulenceKModelPart);
-        this->InitializeConditionsForModelPart(mpTurbulenceEpsilonModelPart);
-
-        KRATOS_CATCH("");
-    }
-
-    void AddSolutionStepVariables() override
-    {
-        KRATOS_TRY
-
-        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(TURBULENT_KINETIC_ENERGY);
-        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(TURBULENT_KINETIC_ENERGY_RATE);
-        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(
-            TURBULENT_ENERGY_DISSIPATION_RATE);
-        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(
-            TURBULENT_ENERGY_DISSIPATION_RATE_2);
-        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(RANS_Y_PLUS);
-        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(RANS_AUXILIARY_VARIABLE_1);
-        this->mrModelPart.GetNodalSolutionStepVariablesList().push_back(RANS_AUXILIARY_VARIABLE_2);
-
-        BaseType::AddSolutionStepVariables();
-
-        KRATOS_CATCH("");
-    }
-
-    void AddDofs() override
-    {
-        VariableUtils().AddDof<Variable<double>>(TURBULENT_KINETIC_ENERGY, this->mrModelPart);
-        VariableUtils().AddDof<Variable<double>>(
-            TURBULENT_ENERGY_DISSIPATION_RATE, this->mrModelPart);
-        BaseType::AddDofs();
-    }
     ///@}
 
 private:
@@ -478,6 +434,8 @@ private:
     ModelPart* mpTurbulenceKModelPart;
 
     ModelPart* mpTurbulenceEpsilonModelPart;
+
+    bool IsSolvingProcessActive = false;
 
     ///@}
     ///@name Private Operators

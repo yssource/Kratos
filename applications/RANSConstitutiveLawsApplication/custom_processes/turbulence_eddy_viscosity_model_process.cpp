@@ -43,11 +43,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
     this->InitializeNodeFlags(mrParameters["wall_conditions"], INLET, false);
     this->InitializeNodeFlags(mrParameters["wall_conditions"], OUTLET, false);
 
-    NormalCalculationUtils normal_calculation_utility;
-    normal_calculation_utility.CalculateOnSimplex(mrModelPart, TDim);
-
-    this->InitializeConditions();
-
     mpDistanceCalculator =
         new VariationalDistanceCalculationProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>(
             mrModelPart, mpLinearSolver,
@@ -56,15 +51,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
     // Calculate the distances only once if the mesh is not moving
     CalculateWallDistances();
 
-    NodesArrayType& nodes = mrModelPart.Nodes();
-
-#pragma omp parallel for
-    for (int i = 0; i < static_cast<int>(nodes.size()); ++i)
-    {
-        auto it_node = nodes.begin() + i;
-        const double kinematic_viscosity = it_node->FastGetSolutionStepValue(VISCOSITY);
-        it_node->FastGetSolutionStepValue(KINEMATIC_VISCOSITY) = kinematic_viscosity;
-    }
 }
 
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
@@ -344,40 +330,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 }
 
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
-void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::InitializeConditionsForModelPart(
-    ModelPart* pModelPart)
-{
-    this->InitializeConditionFlagsForModelPart(pModelPart, INLET);
-    this->InitializeConditionFlagsForModelPart(pModelPart, OUTLET);
-    this->InitializeConditionFlagsForModelPart(pModelPart, STRUCTURE);
-
-    this->FindConditionsParentElements(pModelPart);
-}
-
-template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
-void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::AddSolutionStepVariables()
-{
-    KRATOS_TRY
-
-    mrModelPart.GetNodalSolutionStepVariablesList().push_back(DISTANCE);
-    mrModelPart.GetNodalSolutionStepVariablesList().push_back(FLAG_VARIABLE);
-    mrModelPart.GetNodalSolutionStepVariablesList().push_back(KINEMATIC_VISCOSITY);
-    mrModelPart.GetNodalSolutionStepVariablesList().push_back(TURBULENT_VISCOSITY);
-
-    KRATOS_INFO("TurbulenceModel") << "Added eddy viscosity turbulence "
-                                      "model solution step variables.\n";
-
-    KRATOS_CATCH("");
-}
-
-template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
-void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::AddDofs()
-{
-    KRATOS_INFO("TurbulenceModel")
-        << "Added eddy viscosity turbulence model dofs.\n";
-}
-
-template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
 void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::InitializeTurbulenceModelPart()
 {
     KRATOS_THROW_ERROR(std::runtime_error,
@@ -408,12 +360,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
     KRATOS_CATCH("");
 }
 
-template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
-void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::InitializeConditions()
-{
-    KRATOS_THROW_ERROR(std::runtime_error,
-                       "Calling base class InitializeConditions.", "");
-}
 
 /* Protected functions ****************************************************/
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>

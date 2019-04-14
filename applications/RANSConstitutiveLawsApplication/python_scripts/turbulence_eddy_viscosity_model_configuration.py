@@ -56,13 +56,14 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         # self.is_computing_solution = False
 
     def Initialize(self):
+        self.__InitializeModelPart()
+
         super(TurbulenceEddyViscosityModelConfiguration, self).Initialize()
 
         rans_variable_utils = KratosRANS.RansVariableUtils()
         rans_variable_utils.CopyScalarVar(Kratos.VISCOSITY, Kratos.KINEMATIC_VISCOSITY,  self.fluid_model_part.Nodes)
         rans_variable_utils.SetScalarVar(Kratos.TURBULENT_VISCOSITY, self.nu_t_min, self.fluid_model_part.Nodes)
 
-        # self.__InitializeModelPart()
         # self.PrepareSolvingStrategy()
 
         # for strategy in self.strategies_list:

@@ -37,12 +37,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 {
     this->InitializeTurbulenceModelPart();
 
-    this->InitializeNodeFlags(mrParameters["inlet_conditions"], INLET);
-    this->InitializeNodeFlags(mrParameters["outlet_conditions"], OUTLET);
-    this->InitializeNodeFlags(mrParameters["wall_conditions"], STRUCTURE);
-    this->InitializeNodeFlags(mrParameters["wall_conditions"], INLET, false);
-    this->InitializeNodeFlags(mrParameters["wall_conditions"], OUTLET, false);
-
     mpDistanceCalculator =
         new VariationalDistanceCalculationProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>(
             mrModelPart, mpLinearSolver,
@@ -250,86 +244,6 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 }
 
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
-void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::FindConditionsParentElements(
-    ModelPart* pModelPart)
-{
-    FindNodalNeighboursProcess find_nodal_neighbours_process(*pModelPart);
-    find_nodal_neighbours_process.Execute();
-
-    const int number_of_conditions = pModelPart->NumberOfConditions();
-
-#pragma omp parallel for
-    for (int i_cond = 0; i_cond < number_of_conditions; ++i_cond)
-    {
-        Condition& r_condition = *(pModelPart->ConditionsBegin() + i_cond);
-
-        Geometry<NodeType>& r_geometry = r_condition.GetGeometry();
-        WeakPointerVector<Element> element_candidates;
-
-        const IndexType number_of_nodes = r_geometry.PointsNumber();
-
-        for (IndexType i_node = 0; i_node < number_of_nodes; ++i_node)
-        {
-            WeakPointerVector<Element>& r_node_element_candidates =
-                r_geometry[i_node].GetValue(NEIGHBOUR_ELEMENTS);
-            for (IndexType i_elem = 0; i_elem < r_node_element_candidates.size(); ++i_elem)
-                element_candidates.push_back(r_node_element_candidates(i_elem));
-        }
-
-        std::vector<IndexType> node_ids(number_of_nodes);
-        for (IndexType i_node = 0; i_node < number_of_nodes; ++i_node)
-            node_ids[i_node] = r_geometry[i_node].Id();
-
-        std::sort(node_ids.begin(), node_ids.end());
-
-        std::vector<IndexType> element_node_ids;
-        for (IndexType i_elem = 0; i_elem < element_candidates.size(); ++i_elem)
-        {
-            Geometry<NodeType>& r_element_geometry =
-                element_candidates[i_elem].GetGeometry();
-            const IndexType number_of_element_nodes = r_element_geometry.PointsNumber();
-            element_node_ids.resize(number_of_element_nodes);
-
-            for (IndexType i_node = 0; i_node < number_of_element_nodes; ++i_node)
-                element_node_ids[i_node] = r_element_geometry[i_node].Id();
-
-            std::sort(element_node_ids.begin(), element_node_ids.end());
-
-            // If all the node in the condition is included in the element, then it is the parent element for that condition
-            if (std::includes(element_node_ids.begin(), element_node_ids.end(),
-                              node_ids.begin(), node_ids.end()))
-            {
-                r_condition.SetValue(PARENT_ELEMENT, element_candidates(i_elem));
-                break;
-            }
-        }
-    }
-}
-
-template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
-void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::InitializeConditionFlagsForModelPart(
-    ModelPart* pModelPart, const Flags& rFlag)
-{
-    KRATOS_TRY
-
-    auto& conditions_array = pModelPart->Conditions();
-
-    for (auto& it_cond : conditions_array)
-    {
-        bool is_flag_true = true;
-
-        auto& r_geometry = it_cond.GetGeometry();
-
-        for (auto& it_node : r_geometry.Points())
-            if (!(it_node.Is(rFlag)))
-                is_flag_true = false;
-        it_cond.Set(rFlag, is_flag_true);
-    }
-
-    KRATOS_CATCH("");
-}
-
-template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
 void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::InitializeTurbulenceModelPart()
 {
     KRATOS_THROW_ERROR(std::runtime_error,
@@ -362,32 +276,7 @@ void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinea
 
 
 /* Protected functions ****************************************************/
-template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
-void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::InitializeNodeFlags(
-    const Parameters& rParameters, const Flags& rFlag, const bool FlagValue)
-{
-    KRATOS_TRY
 
-    for (std::size_t i = 0; i < rParameters.size(); ++i)
-    {
-        std::string model_part_name = rParameters.GetArrayItem(i).GetString();
-        KRATOS_ERROR_IF(!mrModelPart.HasSubModelPart(model_part_name))
-            << "TurbulenceEddyViscosityModelProcess: Wall condition "
-            << model_part_name << " not found." << std::endl;
-        ModelPart& current_model_part = mrModelPart.GetSubModelPart(model_part_name);
-
-        NodesArrayType& nodes_array = current_model_part.Nodes();
-
-#pragma omp parallel for
-        for (int i = 0; i < static_cast<int>(nodes_array.size()); ++i)
-        {
-            auto it_node = nodes_array.begin() + i;
-            it_node->Set(rFlag, FlagValue);
-        }
-    }
-
-    KRATOS_CATCH("");
-}
 
 /* External functions *****************************************************/
 

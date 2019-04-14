@@ -164,10 +164,6 @@ protected:
 
     virtual void UpdateFluidViscosity();
 
-    void InitializeConditionFlagsForModelPart(ModelPart* pModelPart, const Flags& rFlag);
-
-    void FindConditionsParentElements(ModelPart* pModelPart);
-
     void GenerateModelPart(ModelPart& rOriginModelPart,
                            ModelPart& rDestinationModelPart,
                            const Element& rReferenceElement,
@@ -208,8 +204,6 @@ private:
     ///@{
 
     void CalculateWallDistances();
-
-    void InitializeNodeFlags(const Parameters& rParameters, const Flags& rFlag, const bool FlagValue = true);
 
     // void AssignBoundaryConditions();
 

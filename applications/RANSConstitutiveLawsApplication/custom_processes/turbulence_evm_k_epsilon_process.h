@@ -276,7 +276,6 @@ public:
         mpKStrategy->Initialize();
         mpEpsilonStrategy->Initialize();
 
-        InitializeBoundaryNodes();
     }
 
     /// this function will be executed at every time step BEFORE performing the solve phase
@@ -570,41 +569,6 @@ private:
             << this->mrModelPart.Name() << " model part.\n";
 
         mAssignedInitialConditions = true;
-    }
-
-    void InitializeBoundaryNodes()
-    {
-        const int number_of_nodes = this->mrModelPart.NumberOfNodes();
-
-        unsigned int nodes_count_fixed{0}, nodes_count_free{0};
-
-#pragma omp parallel for reduction(+ : nodes_count_fixed, nodes_count_free)
-        for (int i = 0; i < number_of_nodes; i++)
-        {
-            ModelPart::NodeIterator i_node = this->mrModelPart.NodesBegin() + i;
-            if (i_node->Is(INLET))
-            {
-                i_node->Fix(TURBULENT_KINETIC_ENERGY);
-                i_node->Fix(TURBULENT_ENERGY_DISSIPATION_RATE);
-                nodes_count_fixed++;
-            }
-            else if (i_node->Is(STRUCTURE))
-            {
-                i_node->Fix(TURBULENT_KINETIC_ENERGY);
-                i_node->Fix(TURBULENT_ENERGY_DISSIPATION_RATE);
-                nodes_count_fixed++;
-            }
-            else
-            {
-                i_node->Free(TURBULENT_KINETIC_ENERGY);
-                i_node->Free(TURBULENT_ENERGY_DISSIPATION_RATE);
-                nodes_count_free++;
-            }
-        }
-
-        KRATOS_INFO("TurbulenceModel")
-            << nodes_count_fixed << "/" << nodes_count_free << " nodes were fixed/freed in "
-            << this->mrModelPart.Name() << " model part.\n";
     }
 
     void InitializeValues(NodeType& rNode, double K, double Epsilon)

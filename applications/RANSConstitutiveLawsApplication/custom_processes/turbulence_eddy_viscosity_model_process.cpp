@@ -21,7 +21,11 @@ TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolv
         "max_distance_calculation_iterations" : 2,
         "mesh_moving"       : false,
         "echo_level"        : 0,
-        "model_properties"  : {}
+        "model_properties"  : {},
+        "distance_calculation"  : {
+                "max_iterations"         : 5,
+                "linear_solver_settings" : {}
+        }
     })");
 
     mrParameters.ValidateAndAssignDefaults(default_parameters);
@@ -36,27 +40,6 @@ template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinea
 void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::ExecuteInitialize()
 {
     this->InitializeTurbulenceModelPart();
-
-    mpDistanceCalculator =
-        new VariationalDistanceCalculationProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>(
-            mrModelPart, mpLinearSolver,
-            mrParameters["max_distance_calculation_iterations"].GetInt());
-
-    // Calculate the distances only once if the mesh is not moving
-    CalculateWallDistances();
-
-}
-
-template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
-void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::ExecuteInitializeSolutionStep()
-{
-    KRATOS_TRY
-
-    // Calculate the wall distances if the mesh has moved
-    if (mIsMeshMoving)
-        CalculateWallDistances();
-
-    KRATOS_CATCH("");
 }
 
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
@@ -81,37 +64,6 @@ template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinea
 void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::PrintData(
     std::ostream& rOStream) const
 {
-}
-
-template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
-void TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::CalculateWallDistances()
-{
-    KRATOS_TRY
-
-    if (mEchoLevel > 0)
-        KRATOS_INFO("TurbulenceModel") << "Calculating wall distances..." << std::endl;
-
-    // Fixing the wall boundaries for wall distance calculation
-    NodesArrayType& nodes_array = this->mrModelPart.Nodes();
-
-#pragma omp parallel for
-    for (int i = 0; i < static_cast<int>(nodes_array.size()); ++i)
-    {
-        auto it_node = nodes_array.begin() + i;
-        // KRATOS_INFO("TurbulenceModel")<<it_node->Id()<<", "<<it_node->Is(STRUCTURE) <<std::endl;
-        if (it_node->Is(STRUCTURE))
-            it_node->FastGetSolutionStepValue(DISTANCE) = 0.0;
-        else
-            it_node->FastGetSolutionStepValue(DISTANCE) = 1.0;
-    }
-
-    mpDistanceCalculator->Execute();
-
-    if (mEchoLevel > 0)
-        KRATOS_INFO("TurbulenceModel")
-            << "Finished calculating wall distances." << std::endl;
-
-    KRATOS_CATCH("");
 }
 
 /* Protected functions ****************************************************/

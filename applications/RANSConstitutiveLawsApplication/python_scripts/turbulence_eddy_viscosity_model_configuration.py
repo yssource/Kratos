@@ -44,7 +44,7 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         self.fluid_model_part = self.model.GetModelPart("MainModelPart")
 
         # self.mesh_moving = self.settings["mesh_moving"].GetBool()
-        # self.distance_calculation_process = None
+        self.distance_calculation_process = None
         # self.y_plus_model_process = None
         self.turbulence_model_process = None
         # self.strategies_list = []
@@ -52,6 +52,7 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         # TODO: Remove manual settings after porting
         self.nu_t_min = 1e-12
         self.nu_t_max = 1e+2
+        self.domain_size = 2
 
         # self.is_computing_solution = False
 
@@ -158,11 +159,11 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         self.__InitializeNodeFlags()
         self.InitializeBoundaryNodes()
 
-        # variable_utils = Kratos.VariableUtils()
-        # variable_utils.SetScalarVar(Kratos.DISTANCE, 1.0, self.fluid_model_part.Nodes)
-        # variable_utils.SetScalarVar(Kratos.DISTANCE, 0.0, self.fluid_model_part.Nodes, Kratos.STRUCTURE, True)
+        variable_utils = Kratos.VariableUtils()
+        variable_utils.SetScalarVar(Kratos.DISTANCE, 1.0, self.fluid_model_part.Nodes)
+        variable_utils.SetScalarVar(Kratos.DISTANCE, 0.0, self.fluid_model_part.Nodes, Kratos.STRUCTURE, True)
 
-        # self.__CalculateWallDistances()
+        self.__CalculateWallDistances()
 
         Kratos.Logger.PrintInfo(self.__class__.__name__, "Model part initialized.")
 
@@ -184,28 +185,28 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
             variable_utils.SetFlag(flag, value,
                                    self.fluid_model_part.GetSubModelPart(condition_name).Nodes)
 
-    # def __CalculateWallDistances(self):
-    #     if (self.distance_calculation_process is None):
-    #         import python_linear_solver_factory as linear_solver_factory
-    #         self.distance_calculation_linear_solver = linear_solver_factory.ConstructSolver(
-    #             self.settings["distance_calculation"]
-    #             ["linear_solver_settings"])
-    #         max_iterations = self.settings["distance_calculation"][
-    #             "max_iterations"].GetInt()
-    #         if (self.domain_size == 2):
-    #             self.distance_calculation_process = Kratos.VariationalDistanceCalculationProcess2D(
-    #                 self.fluid_model_part,
-    #                 self.distance_calculation_linear_solver, max_iterations)
-    #         elif (self.domain_size == 3):
-    #             self.distance_calculation_process = Kratos.VariationalDistanceCalculationProcess3D(
-    #                 self.fluid_model_part,
-    #                 self.distance_calculation_linear_solver, max_iterations)
-    #         else:
-    #             raise Exception("Unsupported domain size")
+    def __CalculateWallDistances(self):
+        if (self.distance_calculation_process is None):
+            import python_linear_solver_factory as linear_solver_factory
+            self.distance_calculation_linear_solver = linear_solver_factory.ConstructSolver(
+                self.settings["distance_calculation"]
+                ["linear_solver_settings"])
+            max_iterations = self.settings["distance_calculation"][
+                "max_iterations"].GetInt()
+            if (self.domain_size == 2):
+                self.distance_calculation_process = Kratos.VariationalDistanceCalculationProcess2D(
+                    self.fluid_model_part,
+                    self.distance_calculation_linear_solver, max_iterations)
+            elif (self.domain_size == 3):
+                self.distance_calculation_process = Kratos.VariationalDistanceCalculationProcess3D(
+                    self.fluid_model_part,
+                    self.distance_calculation_linear_solver, max_iterations)
+            else:
+                raise Exception("Unsupported domain size")
 
-    #         Kratos.Logger.PrintInfo(
-    #             self.__class__.__name__,
-    #             "Variational distance calculation process initialized.")
+            Kratos.Logger.PrintInfo(
+                self.__class__.__name__,
+                "Variational distance calculation process initialized.")
 
-    #     self.distance_calculation_process.Execute()
-    #     Kratos.Logger.PrintInfo(self.__class__.__name__, "Wall distances calculated.")
+        self.distance_calculation_process.Execute()
+        Kratos.Logger.PrintInfo(self.__class__.__name__, "Wall distances calculated.")

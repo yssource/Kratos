@@ -54,7 +54,19 @@
             "inlet_conditions"      : ["VelocityConstraints2D_inlet"],
             "outlet_conditions"     : [],
             "wall_conditions"       : ["VelocityConstraints2D_walls", "NoSlip2D_cylinder"],
-            "max_distance_calculation_iterations" : 10,
+            "distance_calculation"  : {
+                "max_iterations"         : 10,
+                "linear_solver_settings" : {
+                    "solver_type"         : "amgcl",
+                    "max_iteration"       : 200,
+                    "tolerance"           : 1e-7,
+                    "provide_coordinates" : false,
+                    "smoother_type"       : "ilu0",
+                    "krylov_type"         : "gmres",
+                    "coarsening_type"     : "aggregation",
+                    "scaling"             : false
+                }
+            },
             "mesh_moving"       : false,
             "echo_level"        : 0,
             "model_properties"  : {

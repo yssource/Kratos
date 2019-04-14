@@ -24,7 +24,6 @@
 #include "includes/model_part.h"
 #include "processes/find_nodal_neighbours_process.h"
 #include "processes/process.h"
-#include "processes/variational_distance_calculation_process.h"
 #include "rans_constitutive_laws_application_variables.h"
 #include "utilities/normal_calculation_utils.h"
 
@@ -77,6 +76,8 @@ public:
     ///@name Type Definitions
     ///@{
 
+    typedef ModelPart::NodeType NodeType;
+
     typedef ModelPart::NodesContainerType NodesArrayType;
 
     /// Pointer definition of TurbulenceEddyViscosityModelProcess
@@ -106,8 +107,6 @@ public:
     ///@{
 
     void ExecuteInitialize() override;
-
-    void ExecuteInitializeSolutionStep() override;
 
     void Execute() override;
 
@@ -193,8 +192,6 @@ private:
     ///@name Member Variables
     ///@{
 
-    VariationalDistanceCalculationProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>* mpDistanceCalculator;
-
     ///@}
     ///@name Private Operators
     ///@{
@@ -202,8 +199,6 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
-
-    void CalculateWallDistances();
 
     // void AssignBoundaryConditions();
 

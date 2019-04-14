@@ -91,13 +91,9 @@ public:
 
     /// Constructor.
     TurbulenceEvmKEpsilonProcess(ModelPart& rModelPart,
-                                 Parameters& rParameters,
-                                 typename TLinearSolver::Pointer pKLinearSolver,
-                                 typename TLinearSolver::Pointer pEpsilonLinearSolver)
+                                 Parameters& rParameters)
         : TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>(
-              rModelPart, rParameters),
-          mpKLinearSolver(pKLinearSolver),
-          mpEpsilonLinearSolver(pEpsilonLinearSolver)
+              rModelPart, rParameters)
     {
         KRATOS_TRY
 
@@ -302,19 +298,6 @@ private:
     std::map<std::size_t, double> mRatioTolerance;
     std::map<std::size_t, double> mAbsTolerance;
 
-    typename TLinearSolver::Pointer mpKLinearSolver;
-
-    typename StrategyType::Pointer mpKStrategy;
-
-    SchemePointerType mpKScheme;
-
-    SchemePointerType mpEpsilonScheme;
-
-    typename TLinearSolver::Pointer mpEpsilonLinearSolver;
-
-    typename StrategyType::Pointer mpEpsilonStrategy;
-
-    double mFreestreamK;
 
     int mMaximumCouplingIterations;
 
@@ -324,15 +307,6 @@ private:
 
     bool mAssignedInitialConditions = false;
 
-    ConvergenceCriteriaPointerType mpConvergenceCriteria;
-
-    BuilderAndSolverPointerType mpKBuilderAndSolver;
-
-    BuilderAndSolverPointerType mpEpsilonBuilderAndSolver;
-
-    ModelPart* mpTurbulenceKModelPart;
-
-    ModelPart* mpTurbulenceEpsilonModelPart;
 
     bool IsSolvingProcessActive = false;
 

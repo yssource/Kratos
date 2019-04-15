@@ -138,27 +138,14 @@ private:
     //Parameters mSettings;   /// The settings of the problem (names of the conditions and elements)
     Flags mrOptions;
 
-    void SaveTrailingEdgeNodecpp();
+    //void SaveTrailingEdgeNodecpp();
+    template <typename TE> void SaveTrailingEdgeNodecpp(TE &trailing_edge_node);
+    template <typename TE> void MarkWakeElementscpp(TE trailing_edge);
     template <typename GE, typename IT> void MarkTrailingEdgeElementscpp(ModelPart& trailing_edge_model_part, GE geom, IT it_elem);
-    template <typename GE, typename IT> void SelectPotentiallyWakeElementscpp(GE geom, IT it_elem);
+    template <typename GE, typename IT, typename TE> void SelectPotentiallyWakeElementscpp(GE geom, IT it_elem, TE trailing_edge);
     //void MarkTrailingEdgeElementscpp(ModelPart& trailing_edge_model_part, int i);
     //void SelectPotentiallyWakeElementscpp(int i);
-    void MarkWakeElementscpp()
-    {
-        //ModelPart* ptrailing_edge_model_part = &mrModelPart.CreateSubModelPart("fluid_model_part");
-        //trailing_edge_model_part->CreateSubModelPart("trailing_edge_model_part");
-        ModelPart& trailing_edge_model_part = mrFluidModelPart.CreateSubModelPart("trailing_edge_model_part2");
-        KRATOS_WATCH(mrFluidModelPart)
-
-        for(int i = 0; i< static_cast<int>(mrFluidModelPart.Elements().size()); ++i) // Loop the elements
-        {
-            auto it_elem = mrFluidModelPart.ElementsBegin() + i;
-            auto geom = it_elem->GetGeometry();
-            MarkTrailingEdgeElementscpp(trailing_edge_model_part, geom, it_elem);
-            SelectPotentiallyWakeElementscpp(geom, it_elem);
-        }
-
-    }
+    //void MarkWakeElementscpp();
 }; // Class Process
 
 

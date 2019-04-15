@@ -5,17 +5,19 @@ namespace Kratos
     void DefineWake2DProcess::Execute()
     {
         KRATOS_TRY;
-        SaveTrailingEdgeNodecpp();
-        MarkWakeElementscpp();
+        auto trailing_edge = mrBodyModelPart.NodesBegin();
+        SaveTrailingEdgeNodecpp(trailing_edge);
+        MarkWakeElementscpp(trailing_edge);
 
 
         KRATOS_CATCH("");
     }
 
-    void DefineWake2DProcess::SaveTrailingEdgeNodecpp()
+    //void DefineWake2DProcess::SaveTrailingEdgeNodecpp()
+    template <typename TE> void DefineWake2DProcess::SaveTrailingEdgeNodecpp(TE &trailing_edge_node)
     {
         double max_x_coordinate = -1e30;
-        auto trailing_edge_node = mrBodyModelPart.NodesBegin();
+        //auto trailing_edge_node = mrBodyModelPart.NodesBegin();
         for(auto it=mrBodyModelPart.NodesBegin(); it!=mrBodyModelPart.NodesEnd(); ++it)
         {
             if (it->X()>max_x_coordinate)
@@ -46,8 +48,24 @@ namespace Kratos
         }
     }
 
-    template <typename GE, typename IT> void DefineWake2DProcess::SelectPotentiallyWakeElementscpp(GE geom, IT it_elem)
+    template <typename GE, typename IT, typename TE> void DefineWake2DProcess::SelectPotentiallyWakeElementscpp(GE geom, IT it_elem, TE trailing_edge)
     {
-        std::cout << "Hi" << std::endl;
+        double x_distance_to_te = it_elem->GetGeometry().Center().X() - trailing_edge->X();
+        double y_distance_to_te = it_elem->GetGeometry().Center().Y() - trailing_edge->Y();
+    }
+
+    template <typename TE> void DefineWake2DProcess::MarkWakeElementscpp(TE trailing_edge)
+    {
+        //ModelPart* ptrailing_edge_model_part = &mrModelPart.CreateSubModelPart("fluid_model_part");
+        //trailing_edge_model_part->CreateSubModelPart("trailing_edge_model_part");
+        ModelPart& trailing_edge_model_part = mrFluidModelPart.CreateSubModelPart("trailing_edge_model_part2");
+
+        for(int i = 0; i< static_cast<int>(mrFluidModelPart.Elements().size()); ++i) // Loop the elements
+        {
+            auto it_elem = mrFluidModelPart.ElementsBegin() + i;
+            auto geom = it_elem->GetGeometry();
+            MarkTrailingEdgeElementscpp(trailing_edge_model_part, geom, it_elem);
+            SelectPotentiallyWakeElementscpp(geom, it_elem, trailing_edge);
+        }
     }
 }

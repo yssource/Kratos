@@ -87,7 +87,6 @@ class DefineWakeProcess2D(KratosMultiphysics.Process):
                 self.te = node
 
         #self.te.SetValue(CPFApp.TRAILING_EDGE, True) #replaced in Cpp
-        #print(' TRAILING_EDGE python', CPFApp.TRAILING_EDGE)
         #input()
 
     def MarkWakeElements(self):

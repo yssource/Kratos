@@ -31,27 +31,20 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
             },
             "mesh_moving"             : false,
             "echo_level"              : 0,
-            "coupling_settings"       : {},
-            "turbulent_viscosity_min" : 1e-6,
+            "turbulent_viscosity_min" : 1e-12,
             "turbulent_viscosity_max" : 1e+2
         }''')
-
-        # self.settings = settings.ValidateAndAssignDefaults(default_settings)
-        self.settings = settings
+        self.settings = settings.ValidateAndAssignDefaults(default_settings)
 
         super(TurbulenceEddyViscosityModelConfiguration, self).__init__(model, settings)
-
-        self.fluid_model_part = self.model.GetModelPart("MainModelPart")
 
         # self.mesh_moving = self.settings["mesh_moving"].GetBool()
         self.distance_calculation_process = None
         self.y_plus_model_process = None
         self.turbulence_model_process = None
         self.strategies_list = []
-
-        # TODO: Remove manual settings after porting
-        self.nu_t_min = 1e-12
-        self.nu_t_max = 1e+2
+        self.nu_t_min = self.settings["turbulent_viscosity_min"].GetDouble()
+        self.nu_t_max = self.settings["turbulent_viscosity_max"].GetDouble()
 
         # TODO: Implement stuff for mesh_moving
 
@@ -102,30 +95,6 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
             self.model_parts_list.append(model_part)
 
 
-    # def InitializeBoundaryNodes(self):
-    #     raise Exception(
-    #         "Calling base class TurbulenceEddyViscosityModelConfiguration::InitializeBoundaryNodes"
-    #     )
-
-    # def GetUpdateConvergenceVariableMethod(self):
-    #     raise Exception(
-    #         "Calling base class TurbulenceEddyViscosityModelConfiguration::GetUpdateConvergenceVariableMethod"
-    #     )
-
-    # def GetUpdateBeforeSolveSolutionStepMethod(self):
-    #     raise Exception(
-    #         "Calling base class TurbulenceEddyViscosityModelConfiguration::GetUpdateBeforeSolveSolutionStepMethod"
-    #     )
-
-    # def PrepareSolvingStrategy(self):
-    #     raise Exception(
-    #         "Calling base class TurbulenceEddyViscosityModelConfiguration::PrepareSolvingStrategy"
-    #     )
-
-    # def GetUpdateAfterSolveSolutionStepMethod(self):
-    #     rans_calculation_utils = KratosRANS.RansCalculationUtilities()
-    #     return rans_calculation_utils.UpdateEffectiveViscosityForModelPart()
-
     def GetYPlusModel(self):
         if self.y_plus_model_process is None:
             import rans_y_plus_model_factory
@@ -135,11 +104,6 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
                       "Initialized " + self.y_plus_model_process.__str__())
 
         return self.y_plus_model_process
-
-    # def CalculateYPlus(self):
-    #     self.GetYPlusModel().Execute()
-    #     Kratos.Logger.PrintInfo(self.__class__.__name__,
-    #               "Calculated y plus using " + self.y_plus_model_process.__str__())
 
     def CreateStrategy(self, solver_settings, scheme_settings, model_part,
                        scalar_variable, scalar_variable_rate,

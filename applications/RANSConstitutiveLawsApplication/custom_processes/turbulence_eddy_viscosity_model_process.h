@@ -88,8 +88,7 @@ public:
     ///@{
 
     /// Constructor
-    TurbulenceEddyViscosityModelProcess(ModelPart& rModelPart,
-                                        Parameters& rParameters, Process& rRansYPlusProcess);
+    TurbulenceEddyViscosityModelProcess(ModelPart& rModelPart, Process& rRansYPlusProcess);
 
     /// Destructor.
     ~TurbulenceEddyViscosityModelProcess() override
@@ -142,12 +141,6 @@ protected:
     ///@name Protected member Variables
     ///@{
     ModelPart& mrModelPart;
-    Parameters& mrParameters;
-
-    bool mIsMeshMoving;
-
-    unsigned int mEchoLevel;
-
     Process& mrRansYPlusProcess;
     ///@}
     ///@name Protected Operators

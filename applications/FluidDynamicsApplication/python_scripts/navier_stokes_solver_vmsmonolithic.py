@@ -278,6 +278,7 @@ class NavierStokesSolverMonolithic(FluidSolver):
 
         # Adding variables required for the turbulence modelling
         if self.turbulence_model_configuration is not None:
+            self.turbulence_model_configuration.fluid_model_part = self.main_model_part
             self.turbulence_model_configuration.AddVariables()
 
         if self.settings["consider_periodic_conditions"].GetBool() == True:

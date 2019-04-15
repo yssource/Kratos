@@ -73,8 +73,9 @@
                 "model_type"     : "logarithmic",
                 "model_settings" : {}
             },
-            "model_properties"  : {
-                "time_scheme"    : "transient",
+            "turbulent_viscosity_min"     : 1e-12,
+            "turbulent_viscosity_max"     : 1e+2,
+            "model_settings"  : {
                 "scheme_settings": {
                     "scheme_type": "bossak",
                     "alpha_bossak": -0.3
@@ -112,21 +113,19 @@
                         "scaling"             : false
                     }
                 },
-                "convergence_tolerances":
-                {
-                    "turbulent_viscosity_relative_tolerance": 1e-3,
-                    "turbulent_viscosity_absolute_tolerance": 1e-5,
-                    "maximum_coupling_iterations": 100,
-		            "maximum_stabilization_multiplier": 1e+15,
-                    "echo_level": 0
-                },
                 "flow_parameters":
                 {
-                    "ramp_up_time"                : 0.4,
-                    "turbulent_viscosity_min"     : 1e-12,
-                    "turbulent_viscosity_max"     : 1e+2
+                    "ramp_up_time"                : 0.4
+                },
+                "coupling_settings":
+                {
+                    "relative_tolerance": 1e-3,
+                    "absolute_tolerance": 1e-5,
+                    "max_iterations": 100,
+                    "echo_level": 0
                 }
             }
+
         }
     },
     "processes": {

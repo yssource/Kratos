@@ -8,33 +8,10 @@ namespace Kratos
 /* Public functions *******************************************************/
 template <unsigned int TDim, class TSparseSpace, class TDenseSpace, class TLinearSolver>
 TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>::TurbulenceEddyViscosityModelProcess(
-    ModelPart& rModelPart, Parameters& rParameters, Process& rRansYPlusProcess)
-    : mrModelPart(rModelPart), mrParameters(rParameters), mrRansYPlusProcess(rRansYPlusProcess)
+    ModelPart& rModelPart, Process& rRansYPlusProcess)
+    : mrModelPart(rModelPart), mrRansYPlusProcess(rRansYPlusProcess)
 {
     KRATOS_TRY
-
-    Parameters default_parameters = Parameters(R"(
-    {
-        "inlet_conditions"      : ["PLEASE_SPECIFY_INLET_CONDITIONS"],
-        "outlet_conditions"     : ["PLEASE_SPECIFY_OUTLET_CONDITIONS"],
-        "wall_conditions"       : ["PLEASE_SPECIFY_WALL_CONDITIONS"],
-        "mesh_moving"       : false,
-        "echo_level"        : 0,
-        "model_properties"  : {},
-        "distance_calculation"  : {
-                "max_iterations"         : 5,
-                "linear_solver_settings" : {}
-        },
-            "y_plus_calculation"      : {
-                "model_type"     : "",
-                "model_settings" : {}
-            }
-    })");
-
-    mrParameters.ValidateAndAssignDefaults(default_parameters);
-
-    mIsMeshMoving = mrParameters["mesh_moving"].GetBool();
-    mEchoLevel = mrParameters["echo_level"].GetInt();
 
     KRATOS_CATCH("");
 }

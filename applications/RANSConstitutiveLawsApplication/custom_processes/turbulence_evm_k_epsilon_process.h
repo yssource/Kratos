@@ -90,10 +90,9 @@ public:
     ///@{
 
     /// Constructor.
-    TurbulenceEvmKEpsilonProcess(ModelPart& rModelPart,
-                                 Parameters& rParameters, Process& rRansYPlusProcess)
+    TurbulenceEvmKEpsilonProcess(ModelPart& rModelPart, Parameters& rParameters, Process& rRansYPlusProcess)
         : TurbulenceEddyViscosityModelProcess<TDim, TSparseSpace, TDenseSpace, TLinearSolver>(
-              rModelPart, rParameters, rRansYPlusProcess)
+              rModelPart, rRansYPlusProcess)
     {
         KRATOS_TRY
 
@@ -102,85 +101,19 @@ public:
 
         Parameters default_parameters = Parameters(R"(
         {
-            "turbulent_kinetic_energy_settings": {
-                "relative_tolerance": 1e-3,
-                "absolute_tolerance": 1e-5,
-                "max_iterations": 10,
-                "echo_level": 0,
-                "linear_solver_settings": {}
-            },
-            "turbulent_energy_dissipation_rate_settings": {
-                "relative_tolerance": 1e-3,
-                "absolute_tolerance": 1e-5,
-                "max_iterations": 10,
-                "echo_level": 0,
-                "linear_solver_settings": {}
-            },
-            "convergence_tolerances":
-            {
-                "turbulent_viscosity_relative_tolerance": 1e-3,
-                "turbulent_viscosity_absolute_tolerance": 1e-5,
-                "maximum_coupling_iterations": 10,
-                "maximum_stabilization_multiplier":1e+4,
-                "echo_level": 2
-            },
-            "echo_level"     : 0,
-            "time_scheme"    : "steady",
-            "scheme_settings": {},
-            "constants":
-            {
-                "wall_smoothness_beta"    : 5.2,
-                "von_karman"              : 0.41,
-                "c_mu"                    : 0.09,
-                "c1"                      : 1.44,
-                "c2"                      : 1.92,
-                "sigma_k"                 : 1.0,
-                "sigma_epsilon"           : 1.3
-            },
-            "flow_parameters":
-            {
-                "ramp_up_time"                : 0.03,
-                "turbulent_viscosity_min"     : 1e-6,
-                "turbulent_viscosity_max"     : 1e+2
-            }
+            "relative_tolerance": 1e-3,
+            "absolute_tolerance": 1e-5,
+            "max_iterations": 10,
+            "echo_level": 2
         })");
 
-        this->mrParameters["model_properties"].ValidateAndAssignDefaults(default_parameters);
-        this->mrParameters["model_properties"]["convergence_tolerances"].ValidateAndAssignDefaults(
-            default_parameters["convergence_tolerances"]);
-        this->mrParameters["model_properties"]["constants"].ValidateAndAssignDefaults(
-            default_parameters["constants"]);
-        this->mrParameters["model_properties"]["flow_parameters"].ValidateAndAssignDefaults(
-            default_parameters["flow_parameters"]);
-
-        const Parameters& r_convergence_parameters =
-            this->mrParameters["model_properties"]["convergence_tolerances"];
+        rParameters.ValidateAndAssignDefaults(default_parameters);
 
         this->mTurbulentViscosityRelativeTolerance =
-            r_convergence_parameters["turbulent_viscosity_relative_tolerance"].GetDouble();
+            rParameters["relative_tolerance"].GetDouble();
         this->mTurbulentViscosityAbsoluteTolerance =
-            r_convergence_parameters["turbulent_viscosity_absolute_tolerance"].GetDouble();
-        this->mMaximumCouplingIterations =
-            r_convergence_parameters["maximum_coupling_iterations"].GetInt();
-
-
-        if (this->mrParameters["model_properties"]["time_scheme"].GetString() ==
-            "steady")
-        {
-            rModelPart.GetProcessInfo()[RANS_TIME_STEP] = 1;
-        }
-        else if (this->mrParameters["model_properties"]["time_scheme"].GetString() ==
-                 "transient")
-        {
-            rModelPart.GetProcessInfo()[RANS_TIME_STEP] = 0;
-        }
-        else
-        {
-            KRATOS_ERROR
-                << "Undefined time_scheme in turbulence_model_settings. Only "
-                   "\"steady\" or \"transient\" is allowed in k_epsilon model "
-                   "time_scheme.";
-        }
+            rParameters["absolute_tolerance"].GetDouble();
+        this->mMaximumCouplingIterations = rParameters["max_iterations"].GetInt();
 
         KRATOS_CATCH("");
     }
@@ -274,11 +207,9 @@ private:
     ///@name Member Variables
     ///@{
 
-    std::map<std::size_t, double> mRatioTolerance;
-    std::map<std::size_t, double> mAbsTolerance;
-
-
     int mMaximumCouplingIterations;
+
+    int mEchoLevel;
 
     double mTurbulentViscosityRelativeTolerance;
 
@@ -290,12 +221,11 @@ private:
     ///@name Private Operators
     ///@{
 
-
     void SolveStep()
     {
         this->UpdateTurbulentViscosity();
 
-        for (auto strategy: mrSolvingStrategiesList)
+        for (auto strategy : mrSolvingStrategiesList)
         {
             strategy->InitializeSolutionStep();
             strategy->Predict();
@@ -321,7 +251,7 @@ private:
                     (this->mrModelPart.NodesBegin() + i)->FastGetSolutionStepValue(TURBULENT_VISCOSITY);
             }
 
-            for (auto strategy: mrSolvingStrategiesList)
+            for (auto strategy : mrSolvingStrategiesList)
                 strategy->SolveSolutionStep();
 
             this->UpdateTurbulentViscosity();
@@ -379,9 +309,8 @@ private:
                 << std::endl;
         }
 
-            for (auto strategy: mrSolvingStrategiesList)
-                strategy->FinalizeSolutionStep();
-
+        for (auto strategy : mrSolvingStrategiesList)
+            strategy->FinalizeSolutionStep();
     }
 
     double CalculateNodalTurbulentViscosity(const ModelPart::NodeIterator& iNode,

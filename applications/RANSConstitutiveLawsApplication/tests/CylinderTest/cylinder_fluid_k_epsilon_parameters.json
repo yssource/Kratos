@@ -51,9 +51,6 @@
         },
         "turbulence_model": {
             "model_type": "k_epsilon",
-            "inlet_conditions"      : ["VelocityConstraints2D_inlet"],
-            "outlet_conditions"     : [],
-            "wall_conditions"       : ["VelocityConstraints2D_walls", "NoSlip2D_cylinder"],
             "distance_calculation"  : {
                 "max_iterations"         : 10,
                 "linear_solver_settings" : {

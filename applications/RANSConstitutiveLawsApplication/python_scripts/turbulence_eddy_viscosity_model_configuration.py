@@ -17,10 +17,6 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         default_settings = Kratos.Parameters(r'''{
             "model_type"            : "",
             "model_settings"        : {},
-            "fluid_model_part"      : "PLEASE_SPECIFY_FLUID_MODEL_PART",
-            "inlet_conditions"      : ["PLEASE_SPECIFY_INLET_CONDITIONS"],
-            "outlet_conditions"     : ["PLEASE_SPECIFY_OUTLET_CONDITIONS"],
-            "wall_conditions"       : ["PLEASE_SPECIFY_WALL_CONDITIONS"],
             "distance_calculation"  : {
                 "max_iterations"         : 5,
                 "linear_solver_settings" : {}

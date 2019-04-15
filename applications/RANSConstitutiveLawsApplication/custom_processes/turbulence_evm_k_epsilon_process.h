@@ -346,23 +346,6 @@ private:
     void UpdateBoundaryConditions()
     {
         this->CalculateYplus();
-        this->UpdateWallNodes();
-    }
-
-    void UpdateWallNodes()
-    {
-        // Set Boundary Conditions
-        const int number_of_nodes = this->mrModelPart.NumberOfNodes();
-#pragma omp parallel for
-        for (int i = 0; i < number_of_nodes; i++)
-        {
-            ModelPart::NodeIterator i_node = this->mrModelPart.NodesBegin() + i;
-            if (i_node->Is(STRUCTURE))
-            {
-                this->InitializeValues(*i_node, 1e-10, 1e-10);
-                // std::cout<<" STRUCTURE " <<i_node->Id() << "\n";
-            }
-        }
     }
 
     void SolveStep()

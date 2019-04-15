@@ -40,7 +40,6 @@ void AddCustomUtilitiesToPython(pybind11::module& m)
 
     py::class_<RansVariableUtils, VariableUtils>(m, "RansVariableUtils")
         .def(py::init<>())
-        .def("FixScalarVariableDofs", &RansVariableUtils::FixScalarVariableDofs)
         .def("ClipScalarVariable", &RansVariableUtils::ClipScalarVariable)
         .def("GetNumberOfNegativeScalarValueNodes", &RansVariableUtils::GetNumberOfNegativeScalarValueNodes)
         .def("GetMinimumScalarValue", &RansVariableUtils::GetMinimumScalarValue)

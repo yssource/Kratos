@@ -63,27 +63,6 @@ public:
     /// We create the Pointer related to RansVariableUtils
     KRATOS_CLASS_POINTER_DEFINITION(RansVariableUtils);
 
-    void FixScalarVariableDofs(const Flags& rFlag,
-                               const Variable<double>& rVariable,
-                               ModelPart::NodesContainerType& rNodes)
-    {
-        KRATOS_TRY
-
-        CheckVariableExists(rVariable, rNodes);
-
-        const int number_of_nodes = rNodes.size();
-
-#pragma omp parallel for
-        for (int i = 0; i < number_of_nodes; i++)
-        {
-            ModelPart::NodeType& r_node = *(rNodes.begin() + i);
-            if (r_node.Is(rFlag))
-                r_node.Fix(rVariable);
-        }
-
-        KRATOS_CATCH("")
-    }
-
     void ClipScalarVariable(unsigned int& rNumberOfNodesBelowMinimum,
                             unsigned int& rNumberOfNodesAboveMaximum,
                             const double MinimumValue,

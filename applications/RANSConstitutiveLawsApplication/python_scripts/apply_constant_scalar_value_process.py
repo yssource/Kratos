@@ -17,13 +17,18 @@ class ApplyConstantScalarValueProcess(KratosMultiphysics.Process):
                 "mesh_id": 0,
                 "variable_name": "PLEASE_PRESCRIBE_VARIABLE_NAME",
                 "is_fixed": false,
-                "value" : 1.0
+                "value" : 1.0,
+                "boundary_condition_type" : "structure"
             }  """ )
 
         settings.ValidateAndAssignDefaults(default_parameters)
         self.settings = settings
 
         self.model_part = Model[settings["model_part_name"].GetString()]
+
+        from model_part_factory import ApplyFlagsToModelPart
+        ApplyFlagsToModelPart(self.model_part, self.settings["boundary_condition_type"].GetString(), True)
+        self.settings.RemoveValue("boundary_condition_type")
 
         self.scalar_value_process = KratosMultiphysics.ApplyConstantScalarValueProcess(self.model_part, self.settings)
         self.is_constant_scalars_applied = False

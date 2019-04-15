@@ -303,6 +303,8 @@ private:
         {
             NodeType& r_node = *(rNodes.begin() + i_node);
             CalculateTurbulentValues(r_node);
+            r_node.Fix(TURBULENT_KINETIC_ENERGY);
+            r_node.Fix(TURBULENT_ENERGY_DISSIPATION_RATE);
         }
     }
 

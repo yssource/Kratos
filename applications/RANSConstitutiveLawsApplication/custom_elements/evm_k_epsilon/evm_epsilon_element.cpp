@@ -268,7 +268,6 @@ int EvmEpsilonElement<TDim, TNumNodes>::Check(const ProcessInfo& rCurrentProcess
     KRATOS_CHECK_VARIABLE_KEY(TURBULENCE_RANS_C1);
     KRATOS_CHECK_VARIABLE_KEY(TURBULENCE_RANS_C2);
     KRATOS_CHECK_VARIABLE_KEY(TURBULENCE_RANS_C_MU);
-    KRATOS_CHECK_VARIABLE_KEY(RANS_TIME_STEP);
     KRATOS_CHECK_VARIABLE_KEY(TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA);
     KRATOS_CHECK_VARIABLE_KEY(KINEMATIC_VISCOSITY);
     KRATOS_CHECK_VARIABLE_KEY(TURBULENT_VISCOSITY);
@@ -400,13 +399,12 @@ void EvmEpsilonElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionDat
     const double& c1 = rCurrentProcessInfo[TURBULENCE_RANS_C1];
     const double& c2 = rCurrentProcessInfo[TURBULENCE_RANS_C2];
     const double& c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
-    const int& rans_time_step = rCurrentProcessInfo[RANS_TIME_STEP];
     const double& epsilon_sigma =
         rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
 
     const double& nu = this->EvaluateInPoint(KINEMATIC_VISCOSITY, rShapeFunctions);
     const double& nu_t =
-        this->EvaluateInPoint(TURBULENT_VISCOSITY, rShapeFunctions, rans_time_step);
+        this->EvaluateInPoint(TURBULENT_VISCOSITY, rShapeFunctions);
     const double& tke = this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY, rShapeFunctions);
     const double& epsilon =
         this->EvaluateInPoint(TURBULENT_ENERGY_DISSIPATION_RATE, rShapeFunctions);

@@ -149,15 +149,6 @@ class TurbulenceKEpsilonConfiguration(
         if (time >= self.ramp_up_time):
             self.fluid_model_part.ProcessInfo[KratosRANS.IS_CO_SOLVING_PROCESS_ACTIVE] = True
 
-    def InitializeBoundaryNodes(self):
-        rans_variable_utils = KratosRANS.RansVariableUtils()
-
-        rans_variable_utils.FixScalarVariableDofs(Kratos.INLET, KratosRANS.TURBULENT_KINETIC_ENERGY, self.fluid_model_part.Nodes)
-        rans_variable_utils.FixScalarVariableDofs(Kratos.STRUCTURE, KratosRANS.TURBULENT_KINETIC_ENERGY, self.fluid_model_part.Nodes)
-
-        rans_variable_utils.FixScalarVariableDofs(Kratos.INLET, KratosRANS.TURBULENT_ENERGY_DISSIPATION_RATE, self.fluid_model_part.Nodes)
-        rans_variable_utils.FixScalarVariableDofs(Kratos.STRUCTURE, KratosRANS.TURBULENT_ENERGY_DISSIPATION_RATE, self.fluid_model_part.Nodes)
-
     def GetTurbulenceSolvingProcess(self):
         if self.turbulence_model_process is None:
             self.turbulence_model_process = KratosRANS.KEpsilonCoSolvingProcess(

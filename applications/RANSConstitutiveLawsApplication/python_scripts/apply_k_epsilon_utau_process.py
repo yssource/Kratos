@@ -18,7 +18,8 @@ class ApplyKEpsilonUtauProcess(KratosMultiphysics.Process):
                     "model_type"     : "logarithmic"
                 },
                 "constants"            : {},
-                "is_initialization_process" : false
+                "is_initialization_process" : false,
+                "boundary_condition_type"   : "inlet"
             }  """ )
 
         settings.ValidateAndAssignDefaults(default_parameters)
@@ -30,6 +31,10 @@ class ApplyKEpsilonUtauProcess(KratosMultiphysics.Process):
         self.y_plus_model = Factory(self.model_part, self.settings["y_plus_calculation"])
         self.settings.RemoveValue("y_plus_calculation")
 
+        if (not self.settings["is_initialization_process"].GetBool()):
+            from model_part_factory import ApplyFlagsToModelPart
+            ApplyFlagsToModelPart(self.model_part, self.settings["boundary_condition_type"].GetString(), True)
+        self.settings.RemoveValue("boundary_condition_type")
 
         self.k_epsilon_utau_process = KratosRANS.RansKEpsilonEvaluationUtauProcess(Model, self.settings, self.y_plus_model)
 

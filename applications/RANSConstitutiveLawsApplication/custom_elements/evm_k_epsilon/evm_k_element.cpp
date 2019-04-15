@@ -264,7 +264,6 @@ int EvmKElement<TDim, TNumNodes>::Check(const ProcessInfo& rCurrentProcessInfo)
     BaseType::Check(rCurrentProcessInfo);
 
     KRATOS_CHECK_VARIABLE_KEY(TURBULENCE_RANS_C_MU);
-    KRATOS_CHECK_VARIABLE_KEY(RANS_TIME_STEP);
     KRATOS_CHECK_VARIABLE_KEY(TURBULENT_KINETIC_ENERGY_SIGMA);
     KRATOS_CHECK_VARIABLE_KEY(TURBULENT_VISCOSITY);
     KRATOS_CHECK_VARIABLE_KEY(KINEMATIC_VISCOSITY);
@@ -393,11 +392,10 @@ void EvmKElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionData(
     rData.ShapeFunctionDerivatives = rShapeFunctionDerivatives;
 
     const double& c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
-    const int& rans_time_step = rCurrentProcessInfo[RANS_TIME_STEP];
     const double& tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
 
     const double& nu_t =
-        this->EvaluateInPoint(TURBULENT_VISCOSITY, rShapeFunctions, rans_time_step);
+        this->EvaluateInPoint(TURBULENT_VISCOSITY, rShapeFunctions);
     const double& tke = this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY, rShapeFunctions);
     const double& nu = this->EvaluateInPoint(KINEMATIC_VISCOSITY, rShapeFunctions);
     const double& wall_distance = this->EvaluateInPoint(DISTANCE, rShapeFunctions);

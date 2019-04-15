@@ -15,10 +15,7 @@
 
 #include "geometries/geometry.h"
 #include "geometries/geometry_data.h"
-#include "includes/define.h"
 #include "includes/model_part.h"
-#include "includes/node.h"
-#include "utilities/math_utils.h"
 
 namespace Kratos
 {
@@ -50,8 +47,8 @@ public:
     /// We create the Pointer related to VariableUtils
     KRATOS_CLASS_POINTER_DEFINITION(RansCalculationUtilities);
 
-    /// Node type (default is: Node<3>)
-    typedef Node<3> NodeType;
+    /// Node type
+    typedef ModelPart::NodeType NodeType;
 
     /// Geometry type (using with given NodeType)
     typedef Geometry<NodeType> GeometryType;
@@ -63,14 +60,7 @@ public:
     /**
      * Constructor.
      */
-    RansCalculationUtilities() : mEchoLevel(0)
-    {
-    }
-
-    /**
-     * Constructor using echo level
-     */
-    RansCalculationUtilities(unsigned int EchoLevel) : mEchoLevel(EchoLevel)
+    RansCalculationUtilities()
     {
     }
 
@@ -95,22 +85,6 @@ public:
     GeometryType::ShapeFunctionsGradientsType CalculateGeometryParameterDerivatives(
         const GeometryType& rGeometry, const GeometryData::IntegrationMethod& rIntegrationMethod);
 
-    double CalculateYplus(const double velocity_norm,
-                          const double wall_distance,
-                          const double kinematic_viscosity,
-                          const double von_karman,
-                          const double beta,
-                          const unsigned int max_iterations);
-
-    void LowerBound(ModelPart& rModelPart, const Variable<double>& rVariable, const double MinValue);
-
-    void UpperBound(ModelPart& rModelPart, const Variable<double>& rVariable, const double MaxValue);
-
-    void ClipVariable(ModelPart& rModelPart,
-                      const Variable<double>& rVariable,
-                      const double MinValue,
-                      const double MaxValue);
-
     double EvaluateInPoint(const GeometryType& rGeometry,
                            const Variable<double>& rVariable,
                            const Vector& rShapeFunction,
@@ -124,14 +98,6 @@ public:
     template <unsigned int TDim>
     double CalculateMatrixTrace(const BoundedMatrix<double, TDim, TDim>& rMatrix);
 
-    void CheckBounds(ModelPart& rModelPart,
-                     const Variable<double>& rVariable,
-                     const std::string info = "");
-
-    double WarnIfNegative(ModelPart& rModelPart,
-                          const Variable<double>& rVariable,
-                          const std::string info = "");
-
     ///@}
 
 private:
@@ -141,8 +107,6 @@ private:
     ///@}
     ///@name Member Variables
     ///@{
-
-    unsigned int mEchoLevel;
 
     ///@}
 

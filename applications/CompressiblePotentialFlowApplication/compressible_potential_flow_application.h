@@ -101,6 +101,7 @@ private:
 
     const IncompressiblePotentialFlowElement<2,3> mIncompressiblePotentialFlowElement2D3N;
     const AdjointIncompressiblePotentialFlowElement<IncompressiblePotentialFlowElement<2,3>> mAdjointIncompressiblePotentialFlowElement2D3N;
+    const AdjointIncompressiblePotentialFlowElement<EmbeddedIncompressiblePotentialFlowElement<2,3>> mAdjointEmbeddedIncompressiblePotentialFlowElement2D3N;
     const EmbeddedIncompressiblePotentialFlowElement<2,3> mEmbeddedIncompressiblePotentialFlowElement2D3N;
 
     const PotentialWallCondition<2,2> mPotentialWallCondition2D2N;

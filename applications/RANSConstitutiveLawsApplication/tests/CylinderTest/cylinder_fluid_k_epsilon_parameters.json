@@ -171,14 +171,6 @@
             "help"          : [],
             "process_name"  : "ApplyKEpsilonUtauProcess",
             "Parameters"    : {
-                "model_part_name" : "MainModelPart.VelocityConstraints2D_inlet"
-            }
-        },{
-            "python_module" : "apply_k_epsilon_utau_process",
-            "kratos_module" : "KratosMultiphysics.RANSConstitutiveLawsApplication",
-            "help"          : [],
-            "process_name"  : "ApplyKEpsilonUtauProcess",
-            "Parameters"    : {
                 "model_part_name"           : "MainModelPart",
                 "is_initialization_process" : true
             }

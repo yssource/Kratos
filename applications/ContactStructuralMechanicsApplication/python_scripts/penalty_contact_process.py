@@ -51,7 +51,7 @@ class PenaltyContactProcess(alm_contact_process.ALMContactProcess):
             "interval"                    : [0.0,"End"],
             "normal_variation"            : "no_derivatives_computation",
             "frictional_law"              : "Coulomb",
-            "tangent_factor"              : 1.0e-4,
+            "tangent_factor"              : 1.0e-3,
             "integration_order"           : 2,
             "clear_inactive_for_post"     : true,
             "search_parameters" : {
@@ -85,7 +85,7 @@ class PenaltyContactProcess(alm_contact_process.ALMContactProcess):
                 "penalty"                     : 1.0e16,
                 "scale_factor"                : 1.0e0,
                 "adapt_penalty"               : false,
-                "max_gap_factor"              : 1.0e-3
+                "max_gap_factor"              : 5.0e-4
             },
             "alternative_formulations" : {
                 "axisymmetric"                : false

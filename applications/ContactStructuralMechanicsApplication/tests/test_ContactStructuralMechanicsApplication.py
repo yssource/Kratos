@@ -349,7 +349,7 @@ def AssembleTestSuites():
             TPenaltyPerfectStickHyperSimplePatchFrictionalTestContact,
             TPenaltyThresholdSlipHyperSimplePatchFrictionalTestContact,
             TPenaltyHyperSimplePatchFrictionalSlipTestContact,
-            ##TPenaltyHyperSimplePatchFrictionalStickTestContact,
+            TPenaltyHyperSimplePatchFrictionalStickTestContact,
             #### NIGTHLY
             TALMTaylorPatchTestContact,
             TALMHertzSimpleTestContact,

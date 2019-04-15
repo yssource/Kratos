@@ -223,6 +223,7 @@ private:
 
     void SolveStep()
     {
+        this->CalculateYplus();
         this->UpdateTurbulentViscosity();
 
         for (auto strategy : mrSolvingStrategiesList)

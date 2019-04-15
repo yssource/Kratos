@@ -21,10 +21,10 @@
 #include "spaces/ublas_space.h"
 
 // strategies
-#include "custom_strategies/general_residual_based_bossak_velocity_scalar_scheme.h"
+#include "custom_strategies/generic_residual_based_bossak_velocity_scalar_scheme.h"
 
 // convergence criterians
-#include "custom_strategies/general_convergence_criteria.h"
+#include "custom_strategies/generic_convergence_criteria.h"
 
 namespace Kratos
 {
@@ -39,15 +39,15 @@ void AddCustomStrategiesToPython(pybind11::module& m)
     typedef Scheme<SparseSpaceType, LocalSpaceType> BaseSchemeType;
 
     // Convergence criteria
-    py::class_<GeneralConvergenceCriteria<SparseSpaceType, LocalSpaceType>,
-               typename GeneralConvergenceCriteria<SparseSpaceType, LocalSpaceType>::Pointer,
+    py::class_<GenericConvergenceCriteria<SparseSpaceType, LocalSpaceType>,
+               typename GenericConvergenceCriteria<SparseSpaceType, LocalSpaceType>::Pointer,
                ConvergenceCriteria<SparseSpaceType, LocalSpaceType>>(
         m, "GenericScalarConvergenceCriteria")
         .def(py::init<double, double>())
         ;
 
-    py::class_<ResidualBasedBossakVelocityScalarScheme<SparseSpaceType, LocalSpaceType>,
-               typename ResidualBasedBossakVelocityScalarScheme<SparseSpaceType, LocalSpaceType>::Pointer, BaseSchemeType>(
+    py::class_<GenericResidualBasedBossakVelocityScalarScheme<SparseSpaceType, LocalSpaceType>,
+               typename GenericResidualBasedBossakVelocityScalarScheme<SparseSpaceType, LocalSpaceType>::Pointer, BaseSchemeType>(
         m, "GenericResidualBasedBossakVelocityDynamicScalarScheme")
         .def(py::init<const double, const Variable<double>&, const Variable<double>&,
                       const Variable<double>&>())

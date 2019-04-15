@@ -21,7 +21,6 @@
 #include "includes/element.h"
 #include "includes/checks.h"
 #include "includes/properties.h"
-#include "utilities/brent_iteration.h"
 
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
 #include "custom_elements/stabilized_convection_diffusion_reaction_element.h"

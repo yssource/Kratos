@@ -19,7 +19,6 @@
 #include "custom_utilities/rans_calculation_utilities.h"
 #include "includes/define.h"
 #include "includes/ublas_interface.h"
-#include "input_output/logger.h"
 
 namespace Kratos
 {
@@ -75,8 +74,6 @@ void CalculateTurbulentValues(double& turbulent_kinetic_energy,
                               const double turbulence_intensity,
                               const double mixing_length,
                               const double c_mu);
-
-void CalculatePositiveValuesList(Vector& rOutput, const Vector& rInput);
 
 } // namespace EvmKepsilonModelUtilities
 

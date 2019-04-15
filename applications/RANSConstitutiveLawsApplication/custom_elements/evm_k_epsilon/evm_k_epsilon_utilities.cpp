@@ -86,20 +86,6 @@ double CalculateGamma(const double C_mu,
         0.0, C_mu * f_mu * turbulent_kinetic_energy / turbulent_kinematic_viscosity);
 }
 
-void CalculatePositiveValuesList(Vector& rOutput, const Vector& rInput)
-{
-    const int n = rInput.size();
-    rOutput.resize(n);
-
-    for (int i = 0; i < n; ++i)
-    {
-        if (rInput[i] >= std::numeric_limits<double>::epsilon())
-            rOutput[i] = 1.0;
-        else
-            rOutput[i] = 0.0;
-    }
-}
-
 void CalculateTurbulentValues(double& turbulent_kinetic_energy,
                               double& turbulent_energy_dissipation_rate,
                               const double y_plus,

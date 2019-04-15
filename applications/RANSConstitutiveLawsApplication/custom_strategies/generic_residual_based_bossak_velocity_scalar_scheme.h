@@ -11,8 +11,8 @@
 //                   Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 
-#if !defined(KRATOS_RESIDUAL_BASED_BOSSAK_VELOCITY_SCALAR_SCHEME_H_INCLUDED)
-#define KRATOS_RESIDUAL_BASED_BOSSAK_VELOCITY_SCALAR_SCHEME_H_INCLUDED
+#if !defined(KRATOS_GENERIC_RESIDUAL_BASED_BOSSAK_VELOCITY_SCALAR_SCHEME_H_INCLUDED)
+#define KRATOS_GENERIC_RESIDUAL_BASED_BOSSAK_VELOCITY_SCALAR_SCHEME_H_INCLUDED
 
 // System includes
 
@@ -27,14 +27,14 @@
 namespace Kratos
 {
 template <class TSparseSpace, class TDenseSpace>
-class ResidualBasedBossakVelocityScalarScheme
+class GenericResidualBasedBossakVelocityScalarScheme
     : public ResidualBasedBossakVelocityScheme<TSparseSpace, TDenseSpace>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    KRATOS_CLASS_POINTER_DEFINITION(ResidualBasedBossakVelocityScalarScheme);
+    KRATOS_CLASS_POINTER_DEFINITION(GenericResidualBasedBossakVelocityScalarScheme);
 
     typedef Node<3> NodeType;
 
@@ -52,7 +52,7 @@ public:
 
     /// Constructor.
 
-    ResidualBasedBossakVelocityScalarScheme(const double AlphaBossak,
+    GenericResidualBasedBossakVelocityScalarScheme(const double AlphaBossak,
                                             const Variable<double>& rScalarVariable,
                                             const Variable<double>& rScalarRateVariable,
                                             const Variable<double>& rRelaxedScalarRateVariable)
@@ -122,4 +122,4 @@ private:
 
 } // namespace Kratos
 
-#endif // KRATOS_RESIDUAL_BASED_BOSSAK_VELOCITY_SCALAR_SCHEME_H_INCLUDED defined
+#endif // KRATOS_GENERIC_RESIDUAL_BASED_BOSSAK_VELOCITY_SCALAR_SCHEME_H_INCLUDED defined

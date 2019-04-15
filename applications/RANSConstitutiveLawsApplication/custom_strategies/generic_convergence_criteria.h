@@ -10,8 +10,8 @@
 //  Main authors:    Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 
-#ifndef KRATOS_GENERAL_CONVERGENCE_CRITERIA_H
-#define KRATOS_GENERAL_CONVERGENCE_CRITERIA_H
+#ifndef KRATOS_GENERIC_CONVERGENCE_CRITERIA_H
+#define KRATOS_GENERIC_CONVERGENCE_CRITERIA_H
 
 /* Project includes */
 #include "includes/define.h"
@@ -34,13 +34,13 @@ namespace Kratos
  relative and absolute tolerances for both must be specified.
  */
 template <class TSparseSpace, class TDenseSpace>
-class GeneralConvergenceCriteria : public ConvergenceCriteria<TSparseSpace, TDenseSpace>
+class GenericConvergenceCriteria : public ConvergenceCriteria<TSparseSpace, TDenseSpace>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    KRATOS_CLASS_POINTER_DEFINITION(GeneralConvergenceCriteria);
+    KRATOS_CLASS_POINTER_DEFINITION(GenericConvergenceCriteria);
 
     typedef ConvergenceCriteria<TSparseSpace, TDenseSpace> BaseType;
 
@@ -69,7 +69,7 @@ public:
      * @param PrsRatioTolerance Relative tolerance for presssure error
      * @param PrsAbsTolerance Absolute tolerance for presssure error
      */
-    GeneralConvergenceCriteria(double rRatioTolerance, double rAbsTolerance)
+    GenericConvergenceCriteria(double rRatioTolerance, double rAbsTolerance)
         : ConvergenceCriteria<TSparseSpace, TDenseSpace>(),
           mRatioTolerance(rRatioTolerance),
           mAbsTolerance(rAbsTolerance)
@@ -77,7 +77,7 @@ public:
     }
 
     /// Destructor.
-    ~GeneralConvergenceCriteria() override
+    ~GenericConvergenceCriteria() override
     {
     }
 

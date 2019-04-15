@@ -57,11 +57,39 @@ class DefineWakeProcessEmbedded(DefineWakeProcess2D):
             self.fluid_model_part, AvgElemNum, AvgNodeNum)
         # Find neighbours
         nodal_neighbour_search.Execute()
-        super(DefineWakeProcessEmbedded, self).ExecuteInitialize()
-    
+        print(self.fluid_model_part.GetSubModelPart('KuttaLS').NumberOfNodes())
+        if self.fluid_model_part.GetSubModelPart('KuttaLS').NumberOfNodes() == 1:
+            super(DefineWakeProcessEmbedded, self).ExecuteInitialize()
+        elif self.fluid_model_part.GetSubModelPart('KuttaLS').NumberOfNodes() == 2:
+            self.ExecuteEmbeddedWakeProcess()
+        else:
+            raise Exception("Too many trailing edge nodes defined! Maximum allowed are 2")
+
+
     def SaveTrailingEdgeNode(self):
         # This function finds and saves the trailing edge for further computations
         kutta_model_part=self.fluid_model_part.GetSubModelPart('KuttaLS')
         for node in kutta_model_part.Nodes:
             self.te = node
+    def ExecuteEmbeddedWakeProcess(self):
+        self.te=KratosMultiphysics.Node(1,0.0,0.0,0.0)
+        kutta_model_part=self.fluid_model_part.GetSubModelPart('KuttaLS')
+        for node in kutta_model_part.Nodes:
+            self.te.X += node.X*0.5
+            self.te.Y += node.Y*0.5
+        self.MarkWakeElements()
+        self.MarkWakeTEElementEmbedded()
 
+    def MarkWakeTEElementEmbedded(self):
+        # This function finds the trailing edge element that is further downstream
+        # and marks it as wake trailing edge element. The rest of trailing edge elements are
+        # unassigned from the wake.
+
+        for elem in self.trailing_edge_model_part.Elements:
+            if (elem.GetValue(CPFApp.WAKE)):
+                numberTEnodes = 0
+                for node in elem.GetNodes():
+                    if node.GetValue(CPFApp.TRAILING_EDGE):
+                        numberTEnodes += 1
+                if numberTEnodes == 2:
+                    elem.Set(KratosMultiphysics.STRUCTURE)

@@ -106,7 +106,7 @@ void RansCalculationUtilities::ClipVariable(ModelPart& rModelPart,
 
     const unsigned int count_of_nodes = count_of_nodes_negative + count_of_nodes_positive;
 
-    KRATOS_WARNING_IF("ClipVariable", count_of_nodes > 0 && mEchoLevel > 0)
+    KRATOS_WARNING_IF("ClipVariable", count_of_nodes > 0)
         << rVariable.Name() << " of " << count_of_nodes << " nodes are not in the range of [ "
         << std::scientific << MinValue << ", " << std::scientific << MaxValue
         << " ] out of total number of " << number_of_nodes << " nodes in "
@@ -322,7 +322,7 @@ double RansCalculationUtilities::WarnIfNegative(ModelPart& rModelPart,
         }
     }
 
-    KRATOS_WARNING_IF("WarnIfNegative", count_of_nodes > 0 && mEchoLevel > 0)
+    KRATOS_WARNING_IF("WarnIfNegative", count_of_nodes > 0)
         << rVariable.Name() << " of " << count_of_nodes << " nodes are less than "
         << std::scientific << 0.0 << " out of total number of "
         << number_of_nodes << " nodes in " << rModelPart.Name() << ".\n";

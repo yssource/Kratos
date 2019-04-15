@@ -13,8 +13,8 @@
 #include "spaces/ublas_space.h"
 
 // Application includes
-#include "custom_processes/turbulence_eddy_viscosity_model_process.h"
-#include "custom_processes/turbulence_evm_k_epsilon_process.h"
+#include "custom_processes/scalar_co_solving_process.h"
+#include "custom_processes/k_epsilon_co_solving_process.h"
 
 // RANS Y Plus models
 #include "custom_processes/y_plus_model_processes/rans_logarithmic_y_plus_model_process.h"
@@ -34,17 +34,16 @@ void AddCustomProcessesToPython(pybind11::module& m)
     typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
     typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
 
-    typedef TurbulenceEvmKEpsilonProcess<2, SparseSpaceType, LocalSpaceType, LinearSolverType> TurbulenceEvmKEpsilon2DProcess;
-    py::class_<TurbulenceEvmKEpsilon2DProcess, TurbulenceEvmKEpsilon2DProcess::Pointer, Process>(
-        m, "TurbulenceEvmKEpsilon2DProcess")
-        .def(py::init<ModelPart&, Parameters&, Process&>())
-        .def("AddStrategy", &TurbulenceEvmKEpsilon2DProcess::AddStrategy);
+    typedef ScalarCoSolvingProcess<SparseSpaceType, LocalSpaceType, LinearSolverType> ScalarCoSolvingProcessType;
+    py::class_<ScalarCoSolvingProcessType, ScalarCoSolvingProcessType::Pointer, Process>(
+        m, "ScalarCoSolvingProcess")
+        .def(py::init<ModelPart&, Parameters&, Variable<double>&>())
+        .def("AddStrategy", &ScalarCoSolvingProcessType::AddStrategy);
 
-    typedef TurbulenceEvmKEpsilonProcess<3, SparseSpaceType, LocalSpaceType, LinearSolverType> TurbulenceEvmKEpsilon3DProcess;
-    py::class_<TurbulenceEvmKEpsilon3DProcess, TurbulenceEvmKEpsilon3DProcess::Pointer, Process>(
-        m, "TurbulenceEvmKEpsilon3DProcess")
+    typedef KEpsilonCoSolvingProcess<SparseSpaceType, LocalSpaceType, LinearSolverType> KEpsilonCoSolvingProcessType;
+    py::class_<KEpsilonCoSolvingProcessType, KEpsilonCoSolvingProcessType::Pointer, ScalarCoSolvingProcessType, Process>(
+        m, "KEpsilonCoSolvingProcess")
         .def(py::init<ModelPart&, Parameters&, Process&>());
-
 
     py::class_<RansLogarithmicYPlusModelProcess, RansLogarithmicYPlusModelProcess::Pointer, Process>(
         m, "RansLogarithmicYPlusModelProcess")

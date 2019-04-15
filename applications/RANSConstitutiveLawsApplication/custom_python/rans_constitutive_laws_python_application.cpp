@@ -7,8 +7,7 @@
 //  License:		 BSD License
 //					 Kratos default license: kratos/license.txt
 //
-//  Main authors:    Author1 Fullname
-//                   Author2 Fullname
+//  Main authors:    Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 
 
@@ -61,7 +60,6 @@ PYBIND11_MODULE(KratosRANSConstitutiveLawsApplication,m)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( m, TURBULENCE_RANS_C_MU )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( m, TURBULENCE_RANS_C1 )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( m, TURBULENCE_RANS_C2 )
-    // KRATOS_REGISTER_IN_PYTHON_VARIABLE( m, OLD_CONVERGENCE_VARIABLE )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( m, TURBULENT_VISCOSITY_MIN )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( m, TURBULENT_VISCOSITY_MAX )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE( m, TURBULENT_KINETIC_ENERGY_SIGMA )

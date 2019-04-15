@@ -7,7 +7,7 @@
 //  License:		 BSD License
 //					 Kratos default license: kratos/license.txt
 //
-//  Main authors:    Suneth Warnakulasuriya
+//  Main authors:    Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 //
 
@@ -45,14 +45,13 @@ namespace Kratos
 ///@{
 
 /**
- * @class VariableUtils
- * @ingroup KratosCore
- * @brief This class implements a set of auxiliar, already parallelized, methods to
- * perform some common tasks related with the variable values and fixity.
+ * @class RansVariableUtils
+ * @ingroup KratosRANSConstitutiveLawsApplication
+ * @brief This class extends @KratosCore VariableUtils class to perform some RANS unique
+ * tasks related with the variable values.
  * @details The methods are exported to python in order to add this improvements to the python interface
- * @author Riccardo Rossi
- * @author Ruben Zorrilla
- * @author Vicente Mataix Ferrandiz
+ * @author Suneth Warnakulasuriya
+ * @see VariableUtils
  */
 class RansVariableUtils : public VariableUtils
 {

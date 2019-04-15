@@ -141,8 +141,6 @@ class TurbulenceKEpsilonConfiguration(
         if (self.fluid_model_part.ProcessInfo[KratosRANS.IS_CO_SOLVING_PROCESS_ACTIVE]):
             super(TurbulenceKEpsilonConfiguration, self).InitializeSolutionStep()
 
-        # self.UpdateBoundaryConditions()
-
     def FinalizeSolutionStep(self):
         super(TurbulenceKEpsilonConfiguration, self).FinalizeSolutionStep()
         time = self.fluid_model_part.ProcessInfo[Kratos.TIME]

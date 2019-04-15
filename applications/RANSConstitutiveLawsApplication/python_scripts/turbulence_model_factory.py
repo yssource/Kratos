@@ -12,8 +12,4 @@ def Factory(model, settings):
 
     if model_type == "k_epsilon":
         from evm_k_epsilon_configuration import TurbulenceKEpsilonConfiguration
-
-        # TODO: Remove this after full porting
-        settings.RemoveValue("model_type")
-
         return TurbulenceKEpsilonConfiguration(model, settings)

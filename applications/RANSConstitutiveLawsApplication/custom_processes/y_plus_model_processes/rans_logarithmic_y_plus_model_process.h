@@ -22,6 +22,7 @@
 #include "custom_utilities/rans_variable_utils.h"
 #include "includes/cfd_variables.h"
 #include "includes/define.h"
+#include "includes/checks.h"
 #include "includes/model_part.h"
 #include "processes/process.h"
 #include "rans_constitutive_laws_application_variables.h"
@@ -126,6 +127,29 @@ public:
     ///@}
     ///@name Operations
     ///@{
+
+    int Check() override
+    {
+        KRATOS_CHECK_VARIABLE_KEY(VELOCITY);
+        KRATOS_CHECK_VARIABLE_KEY(DISTANCE);
+        KRATOS_CHECK_VARIABLE_KEY(KINEMATIC_VISCOSITY);
+        KRATOS_CHECK_VARIABLE_KEY(RANS_Y_PLUS);
+
+        ModelPart::NodesContainerType& r_nodes = mrModelPart.Nodes();
+        int number_of_nodes = r_nodes.size();
+
+        #pragma omp parallel for
+        for (int i_node = 0; i_node < number_of_nodes; ++i_node)
+        {
+            NodeType& r_node = *(r_nodes.begin() + i_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(VELOCITY, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(DISTANCE, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(KINEMATIC_VISCOSITY, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_Y_PLUS, r_node);
+        }
+
+        return 0;
+    }
 
     void Execute() override
     {

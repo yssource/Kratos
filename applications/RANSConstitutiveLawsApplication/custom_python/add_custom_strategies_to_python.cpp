@@ -7,8 +7,7 @@
 //  License:		 BSD License
 //					 Kratos default license: kratos/license.txt
 //
-//  Main authors:    Author1 Fullname
-//                   Author2 Fullname
+//  Main authors:    Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 
 // System includes
@@ -19,16 +18,13 @@
 // Project includes
 #include "custom_python/add_custom_strategies_to_python.h"
 #include "includes/define_python.h"
-#include "includes/kratos_parameters.h"
 #include "spaces/ublas_space.h"
 
 // strategies
-#include "solving_strategies/strategies/solving_strategy.h"
 #include "custom_strategies/general_residual_based_bossak_velocity_scalar_scheme.h"
 
 // convergence criterians
 #include "custom_strategies/general_convergence_criteria.h"
-#include "solving_strategies/convergencecriterias/convergence_criteria.h"
 
 namespace Kratos
 {
@@ -40,9 +36,6 @@ void AddCustomStrategiesToPython(pybind11::module& m)
 
     typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
     typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
-
-    // typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
-    // typedef SolvingStrategy<SparseSpaceType, LocalSpaceType, LinearSolverType> BaseSolvingStrategyType;
     typedef Scheme<SparseSpaceType, LocalSpaceType> BaseSchemeType;
 
     // Convergence criteria
@@ -50,13 +43,14 @@ void AddCustomStrategiesToPython(pybind11::module& m)
                typename GeneralConvergenceCriteria<SparseSpaceType, LocalSpaceType>::Pointer,
                ConvergenceCriteria<SparseSpaceType, LocalSpaceType>>(
         m, "GenericScalarConvergenceCriteria")
-        .def(py::init<double, double>());
+        .def(py::init<double, double>())
+        ;
 
     py::class_<ResidualBasedBossakVelocityScalarScheme<SparseSpaceType, LocalSpaceType>,
                typename ResidualBasedBossakVelocityScalarScheme<SparseSpaceType, LocalSpaceType>::Pointer, BaseSchemeType>(
         m, "GenericResidualBasedBossakVelocityDynamicScalarScheme")
         .def(py::init<const double, const Variable<double>&, const Variable<double>&,
-                      const Variable<double>&>()) // constructor passing a turbulence model
+                      const Variable<double>&>())
         ;
 }
 

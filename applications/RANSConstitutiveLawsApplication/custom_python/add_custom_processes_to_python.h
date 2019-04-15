@@ -7,7 +7,7 @@
 //  License:		 BSD License
 //					 license: HDF5Application/license.txt
 //
-//  Main authors:
+//  Main authors:    Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 //
 

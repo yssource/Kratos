@@ -82,6 +82,10 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
 
         Kratos.Logger.PrintInfo(self.__class__.__name__, "Successfully added solution step variables.")
 
+    def Check(self):
+        self.GetYPlusModel().Check()
+        self.GetTurbulenceSolvingProcess().Check()
+
     def PrepareModelPart(self):
         self.domain_size = self.fluid_model_part.ProcessInfo[Kratos.DOMAIN_SIZE]
 

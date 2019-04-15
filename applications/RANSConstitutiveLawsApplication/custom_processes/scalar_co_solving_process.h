@@ -7,7 +7,7 @@
 //  License:		 BSD License
 //					 Kratos default license: kratos/license.txt
 //
-//  Main authors:    Suneth Warnakulasuriya
+//  Main authors:    Suneth Warnakulasuriya (https://github.com/sunethwarna)
 //
 
 #if !defined(SCALAR_CO_SOLVING_PROCESS_H_INCLUDED)
@@ -22,11 +22,9 @@
 // External includes
 
 // Project includes
-#include "containers/model.h"
 #include "includes/checks.h"
 #include "includes/define.h"
 #include "includes/kratos_parameters.h"
-#include "modeler/connectivity_preserve_modeler.h"
 #include "processes/process.h"
 #include "solving_strategies/strategies/solving_strategy.h"
 
@@ -124,6 +122,9 @@ public:
             KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(OLD_CONVERGENCE_VARIABLE, r_node);
             KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(this->mrConvergenceVariable, r_node);
         }
+
+        for (SolvingStrategyType* strategy : mrSolvingStrategiesList)
+            strategy->Check();
 
         KRATOS_ERROR_IF(mrSolvingStrategiesList.size() == 0)
             << "No strategies are found for ScalarCoSolvingProcess.";

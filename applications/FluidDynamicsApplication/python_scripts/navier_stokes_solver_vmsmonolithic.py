@@ -6,8 +6,8 @@ import KratosMultiphysics
 # Import applications
 import KratosMultiphysics.FluidDynamicsApplication as KratosCFD
 from kratos_utilities import CheckIfApplicationsAvailable
-if CheckIfApplicationsAvailable("RANSConstitutiveLawsApplication"):
-    import KratosMultiphysics.RANSConstitutiveLawsApplication as KratosRANS
+if CheckIfApplicationsAvailable("RANSModellingApplication"):
+    import KratosMultiphysics.RANSModellingApplication as KratosRANS
 
 # Import base class file
 from fluid_solver import FluidSolver

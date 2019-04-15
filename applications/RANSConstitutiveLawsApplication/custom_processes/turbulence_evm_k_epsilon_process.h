@@ -268,15 +268,17 @@ private:
 #pragma omp parallel for reduction(+ : increase_norm, solution_norm)
             for (int i = 0; i < number_of_nodes; ++i)
             {
-                increase_norm += new_turbulent_viscosity[i] - old_turbulent_viscosity[i];
-                solution_norm += new_turbulent_viscosity[i];
+                increase_norm += (new_turbulent_viscosity[i] - old_turbulent_viscosity[i])*(new_turbulent_viscosity[i] - old_turbulent_viscosity[i]);
+                solution_norm += new_turbulent_viscosity[i]*new_turbulent_viscosity[i];
+                // increase_norm += (new_turbulent_viscosity[i] - old_turbulent_viscosity[i]);
+                // solution_norm += new_turbulent_viscosity[i];
             }
 
             if (solution_norm == 0.0)
                 solution_norm = 1.0;
 
             const double ratio = std::abs(increase_norm / solution_norm);
-            increase_norm = std::abs(increase_norm) / number_of_nodes;
+            increase_norm = std::sqrt(increase_norm) / number_of_nodes;
 
             if (this->mEchoLevel > 0)
                 std::cout << "[" << step << "] CONVERGENCE CHECK: TURBULENT_VISCOSITY: ratio = "

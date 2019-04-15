@@ -216,18 +216,6 @@ public:
     }
 
     /// this function will be executed at every time step BEFORE performing the solve phase
-    virtual void ExecuteInitializeSolutionStep() override
-    {
-        KRATOS_TRY
-
-        this->UpdateBoundaryConditions();
-        AssignInitialConditions();
-
-
-        KRATOS_CATCH("");
-    }
-
-    /// this function will be executed at every time step BEFORE performing the solve phase
     virtual void ExecuteFinalizeSolutionStep() override
     {
         KRATOS_TRY
@@ -296,57 +284,12 @@ private:
 
     double mTurbulentViscosityAbsoluteTolerance;
 
-    bool mAssignedInitialConditions = false;
-
-
     std::vector<SolvingStrategyType*> mrSolvingStrategiesList;
 
     ///@}
     ///@name Private Operators
     ///@{
 
-    void AssignInitialConditions()
-    {
-        if (mAssignedInitialConditions)
-            return;
-
-        this->CalculateYplus();
-
-        const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
-        unsigned int initialized_nodes_count{0};
-
-        const int number_of_nodes = this->mrModelPart.NumberOfNodes();
-#pragma omp parallel for reduction(+ : initialized_nodes_count)
-        for (int i = 0; i < number_of_nodes; i++)
-        {
-            ModelPart::NodeIterator i_node = this->mrModelPart.NodesBegin() + i;
-            if (!i_node->IsFixed(TURBULENT_KINETIC_ENERGY) &&
-                !i_node->IsFixed(TURBULENT_ENERGY_DISSIPATION_RATE))
-            {
-                double k{0.0}, epsilon{0.0};
-                this->CalculateTurbulentValues(k, epsilon, *i_node, r_current_process_info);
-                this->InitializeValues(*i_node, k, epsilon);
-                initialized_nodes_count++;
-            }
-        }
-
-        KRATOS_INFO("TurbulenceModel")
-            << initialized_nodes_count << " nodes were assigned initial values in "
-            << this->mrModelPart.Name() << " model part.\n";
-
-        mAssignedInitialConditions = true;
-    }
-
-    void InitializeValues(NodeType& rNode, double K, double Epsilon)
-    {
-        rNode.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY) = K;
-        rNode.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE) = Epsilon;
-    }
-
-    void UpdateBoundaryConditions()
-    {
-        this->CalculateYplus();
-    }
 
     void SolveStep()
     {

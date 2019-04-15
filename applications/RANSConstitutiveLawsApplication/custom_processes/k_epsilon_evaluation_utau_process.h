@@ -77,6 +77,8 @@ public:
 
     typedef ModelPart::NodeType NodeType;
 
+    typedef ModelPart::NodesContainerType NodesContainerType;
+
     /// Pointer definition of RansKEpsilonEvaluationUtauProcess
     KRATOS_CLASS_POINTER_DEFINITION(RansKEpsilonEvaluationUtauProcess);
 
@@ -100,7 +102,8 @@ public:
             "variable_minimums": {
                 "turbulent_kinetic_energy"          : 1e-10,
                 "turbulent_energy_dissipation_rate" : 1e-10
-            }
+            },
+            "is_initialization_process": false
         })");
 
         mrParameters.RecursivelyValidateAndAssignDefaults(default_parameters);
@@ -115,6 +118,9 @@ public:
                             .GetDouble();
 
         mModelPartName = mrParameters["model_part_name"].GetString();
+
+        mIsInitializationProcess = mrParameters["is_initialization_process"].GetBool();
+        mIsValuesAssigned = false;
 
         KRATOS_CATCH("");
     }
@@ -140,28 +146,15 @@ public:
         mrRansYPlusModel.Execute();
 
         ModelPart& r_modelpart = mrModel.GetModelPart(mModelPartName);
-        ModelPart::NodesContainerType& r_nodes = r_modelpart.Nodes();
-        int number_of_nodes = r_nodes.size();
+        NodesContainerType& r_nodes = r_modelpart.Nodes();
 
-#pragma omp parallel for
-        for (int i_node = 0; i_node < number_of_nodes; ++i_node)
+        if (mIsInitializationProcess && !mIsValuesAssigned)
         {
-            NodeType& r_node = *(r_nodes.begin() + i_node);
-
-            const double y_plus = r_node.FastGetSolutionStepValue(RANS_Y_PLUS);
-            const double nu = r_node.FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
-            const double wall_distance = r_node.FastGetSolutionStepValue(DISTANCE);
-
-            double& tke = r_node.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
-            double& epsilon =
-                r_node.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
-
-            const double u_tau = y_plus * nu / wall_distance;
-            tke = std::max(mTurbulentKineticEnergyMin,
-                           std::pow(u_tau, 2) / std::sqrt(mCmu));
-            epsilon = std::max(mTurbulentEnergyDissipationMin,
-                               std::pow(u_tau, 3) / (mVonKarman * wall_distance));
+            ApplyValuesForFreeNodes(r_nodes);
+            mIsValuesAssigned = true;
         }
+        else if (!mIsInitializationProcess)
+            ApplyValuesForAllNodes(r_nodes);
 
         KRATOS_CATCH("");
     }
@@ -290,6 +283,9 @@ private:
     double mTurbulentEnergyDissipationMin;
     std::string mModelPartName;
 
+    bool mIsInitializationProcess;
+    bool mIsValuesAssigned;
+
     ///@}
     ///@name Private Operators
     ///@{
@@ -297,6 +293,47 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
+
+    void ApplyValuesForAllNodes(NodesContainerType& rNodes)
+    {
+        int number_of_nodes = rNodes.size();
+
+#pragma omp parallel for
+        for (int i_node = 0; i_node < number_of_nodes; ++i_node)
+        {
+            NodeType& r_node = *(rNodes.begin() + i_node);
+            CalculateTurbulentValues(r_node);
+        }
+    }
+
+    void ApplyValuesForFreeNodes(NodesContainerType& rNodes)
+    {
+        int number_of_nodes = rNodes.size();
+
+#pragma omp parallel for
+        for (int i_node = 0; i_node < number_of_nodes; ++i_node)
+        {
+            NodeType& r_node = *(rNodes.begin() + i_node);
+
+            if (!r_node.IsFixed(TURBULENT_KINETIC_ENERGY) && !r_node.IsFixed(TURBULENT_ENERGY_DISSIPATION_RATE))
+                CalculateTurbulentValues(r_node);
+        }
+    }
+
+    void CalculateTurbulentValues(NodeType& rNode)
+    {
+        const double y_plus = rNode.FastGetSolutionStepValue(RANS_Y_PLUS);
+        const double nu = rNode.FastGetSolutionStepValue(KINEMATIC_VISCOSITY);
+        const double wall_distance = rNode.FastGetSolutionStepValue(DISTANCE);
+
+        double& tke = rNode.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
+        double& epsilon = rNode.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
+
+        const double u_tau = y_plus * nu / wall_distance;
+        tke = std::max(mTurbulentKineticEnergyMin, std::pow(u_tau, 2) / std::sqrt(mCmu));
+        epsilon = std::max(mTurbulentEnergyDissipationMin,
+                           std::pow(u_tau, 3) / (mVonKarman * wall_distance));
+    }
 
     ///@}
     ///@name Private  Access

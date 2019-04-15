@@ -15,7 +15,7 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         KratosMultiphysics.Process.__init__(self)
         default_parameters = KratosMultiphysics.Parameters("""
             {
-                
+
                 "model_part_name" : "please specify the main model part",
                 "mesh_id": 0,
                 "velocity_infinity": [1.0,0.0,0],
@@ -25,8 +25,8 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
 
         settings.ValidateAndAssignDefaults(default_parameters)
         self.problem_name=settings["problem_name"].GetString()
-        self.fluid_model_part=Model.GetModelPart(settings["model_part_name"].GetString()).GetRootModelPart() 
-        self.result_force=KratosMultiphysics.Vector(3)  
+        self.fluid_model_part=Model.GetModelPart(settings["model_part_name"].GetString()).GetRootModelPart()
+        self.result_force=KratosMultiphysics.Vector(3)
         self.process=KratosMultiphysics.CompressiblePotentialFlowApplication.ComputeLiftLevelSetProcess(self.fluid_model_part,self.result_force)
 
 
@@ -59,8 +59,8 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         # for i in range(len(x_upper)):
             # if x_upper[i]>0.4 and x_upper[i]<0.6:
                 # print(x_upper[i],cp_upper[i])
-        print("Cl:",self.result_force[1]) 
-        print("Cd:",self.result_force[0])   
+        print("Cl:",self.result_force[1])
+        print("Cd:",self.result_force[0])
         # self.fluid_model_part.SetValue(KratosMultiphysics.FRICTION_COEFFICIENT,self.result_force[1])
         # for node in self.fluid_model_part.GetSubModelPart("KuttaLS").Nodes:
         #     Cl_jump=node.GetValue(KratosMultiphysics.TEMPERATURE)
@@ -78,7 +78,6 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
             x_ref[i]=(x_ref[i]-min_x)/abs(max_x-min_x)
         plt.plot(x_upper,cp_upper,'.',label='Upper surface')
         plt.plot(x_lower,cp_lower,'r.',label='Lower surface')
-        plt.plot(x_ref, cp_ref ,'k.')
         title="Cl: %.5f, Cd: %.5f" % (self.result_force[1],self.result_force[0])
         plt.title(title)
         plt.legend()
@@ -88,4 +87,16 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         # plt.show()
         plt.savefig(self.problem_name+'.png', bbox_inches='tight')
         plt.close('all')
-    
+
+        plt.plot(x_upper,cp_upper,'.',label='Upper surface')
+        plt.plot(x_lower,cp_lower,'r.',label='Lower surface')
+        plt.plot(x_ref, cp_ref ,'k.')
+        title="Cl: %.5f, Cd: %.5f" % (self.result_force[1],self.result_force[0])
+        plt.title(title)
+        plt.legend()
+        # plt.ylim(-1.8, 1.2)
+        # plt.xlim(-0.2, 1.2)
+        plt.gca().invert_yaxis()
+        # plt.show()
+        plt.savefig(self.problem_name+'_COMPARISON.png', bbox_inches='tight')
+        plt.close('all')

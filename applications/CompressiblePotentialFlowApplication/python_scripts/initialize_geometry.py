@@ -102,20 +102,19 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
 
         ini_time=time.time()
         while self.step < self.max_iter and self.do_remeshing:
+
             self.step += 1
-                        # previous_min_size=MetricParameters["minimal_size"].GetDouble()
-            # MetricParameters["minimal_size"].SetDouble(previous_min_size*0.5)
             previous_ratio=self.MetricParameters["custom_settings"]["ratio"].GetDouble()
             self.MetricParameters["custom_settings"]["ratio"].SetDouble(previous_ratio*0.5)
+
             KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','##### Executing refinement #', self.step, ' #####')
-
-
             self.ExtendDistance()
             self.RefineMesh()
             self.CalculateDistance()
         KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','Elapsed time: ',time.time()-ini_time)
 
         KratosMultiphysics.VariableUtils().CopyScalarVar(KratosMultiphysics.DISTANCE,CompressiblePotentialFlow.LEVEL_SET_DISTANCE, self.main_model_part.Nodes)
+        KratosMultiphysics.VariableUtils().SetScalarVar(KratosMultiphysics.DISTANCE, 0.0, self.main_model_part.Nodes)
         self.ApplyFlags()
         self.ComputeKuttaNodeAndElement()
         KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','Level Set geometry initialized')
@@ -130,8 +129,8 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
             angle=math.radians(-self.geometry_parameter)
             self.origin=[0.25+self.initial_point[0],0+self.initial_point[1]] #to be defined from skin model part
             for node in self.skin_model_part.Nodes:
-                node.X=self.initial_point[0]+node.X+1e-5
-                node.Y=self.initial_point[1]+node.Y+1e-5
+                node.X=self.initial_point[0]+node.X
+                node.Y=self.initial_point[1]+node.Y
             RotateModelPart(self.origin,angle,self.skin_model_part)
         elif self.skin_model_part_name=='circle':
             for node in self.skin_model_part.Nodes:
@@ -141,8 +140,8 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
             angle=math.radians(-self.geometry_parameter)
             self.origin=[self.initial_point[0],self.initial_point[1]] #to be defined from skin model part
             for node in self.skin_model_part.Nodes:
-                node.X=self.initial_point[0]+node.X+1e-5
-                node.Y=self.initial_point[1]+node.Y+1e-5
+                node.X=self.initial_point[0]+node.X
+                node.Y=self.initial_point[1]+node.Y
             RotateModelPart(self.origin,angle,self.skin_model_part)
         self.FindXMaxAndMinSkin()
         KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','InitializeSkin Time: ',time.time()-ini_time)
@@ -286,42 +285,6 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
 
 
 
-
-        # max_x_node=-1e10
-        # deactivated_model_part=self.main_model_part.CreateSubModelPart('deactivated')
-        # for element in self.boundary_model_part.Elements:
-        #     for elnode in element.GetNodes():
-        #         if elnode.Id == self.max_node.Id:
-        #             self.DeactivateActive(element)
-        #             deactivated_model_part.Elements.append(element)
-        # max_x_center=-1e10
-        # for element in deactivated_model_part.Elements:
-        #     n_center = 0
-        #     center_X=element.GetGeometry().Center().X
-        #     if center_X>max_x_center:
-        #         max_x_center=center_X
-        #         max_elem=element
-
-        # for elnode in max_elem.GetNodes():
-        #     if elnode.X>center_X:
-        #         n_center+=1
-        # for elnode in max_elem.GetNodes():
-        #     if elnode.X>max_x_node:
-        #         max_x_node=elnode.X
-        #         max_node=elnode
-        #         # max_elem=element
-        #         max_n_center=n_center
-
-        # # if max_n_center==2:
-        # #     min_y=1e10
-        # #     for node in max_elem.GetNodes():
-        # #         if node.X>max_x_center and node.Y<min_y:
-        # #             min_y=node.Y
-        # #             max_node=node
-        # # max_node = self.main_model_part.GetNode(11380,0)
-
-
-
         max_x_node=-1e10
         deactivated_model_part=self.main_model_part.CreateSubModelPart('deactivated')
         for element in self.boundary_model_part.Elements:
@@ -337,30 +300,23 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
                 max_x_center=center_X
                 max_elem=element
 
+        kutta_model_part=self.main_model_part.CreateSubModelPart('KuttaLS')
         for elnode in max_elem.GetNodes():
-            if elnode.X>center_X:
+            if elnode.X>max_elem.GetGeometry().Center().X:
                 n_center+=1
+                kutta_model_part.AddNode(elnode,0)
         for elnode in max_elem.GetNodes():
             if elnode.X>max_x_node:
                 max_x_node=elnode.X
                 max_node=elnode
                 # max_elem=element
-                max_n_center=n_center
+                # max_n_center=n_center
 
-        # if max_n_center==2:
-        #     min_y=1e10
-        #     for node in max_elem.GetNodes():
-        #         if node.X>max_x_center and node.Y<min_y:
-        #             min_y=node.Y
-        #             max_node=node
-        # max_node = self.main_model_part.GetNode(11380,0)
-
-
-        self.main_model_part.CreateSubModelPart('KuttaLS').AddNode(max_node,0)
+        kutta_model_part.AddNode(max_node,0)
 
         for element in self.boundary_model_part.Elements:
             center_X=element.GetGeometry().Center().X
-            if center_X>max_node.X:
+            if center_X>self.max_node.X:
                 self.DeactivateBoundary(element)
 
         for node in self.main_model_part.GetSubModelPart('KuttaLS').Nodes:

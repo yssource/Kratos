@@ -218,10 +218,9 @@ private:
         for (int i_node = 0; i_node < number_of_nodes; ++i_node)
         {
             NodeType& r_node = *(r_nodes.begin() + i_node);
-            const double tke =
-                r_node.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
-            const double epsilon = r_node.FastGetSolutionStepValue(
-                TURBULENT_ENERGY_DISSIPATION_RATE);
+            const double tke = r_node.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
+            const double epsilon =
+                r_node.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
             const double y_plus = r_node.FastGetSolutionStepValue(RANS_Y_PLUS);
             const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
             const double nu_t = EvmKepsilonModelUtilities::CalculateTurbulentViscosity(
@@ -235,7 +234,9 @@ private:
             lower_number_of_nodes, higher_number_of_nodes, nu_t_min, nu_t_max,
             TURBULENT_VISCOSITY, this->mrModelPart.Nodes());
 
-        KRATOS_WARNING_IF(this->Info(), lower_number_of_nodes > 0 || higher_number_of_nodes > 0)
+        KRATOS_WARNING_IF(this->Info(),
+                          (lower_number_of_nodes > 0 || higher_number_of_nodes > 0) &&
+                              this->mEchoLevel > 0)
             << "TURBULENT_VISCOSITY out of bounds. [ " << lower_number_of_nodes
             << " nodes < " << std::scientific << nu_t_min << ", "
             << higher_number_of_nodes << " nodes > " << std::scientific << nu_t_max

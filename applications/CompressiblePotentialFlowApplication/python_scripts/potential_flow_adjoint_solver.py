@@ -71,7 +71,7 @@ class PotentialFlowAdjointSolver(PotentialFlowSolver):
                 "element_name_table" :
                 {
                     "IncompressiblePotentialFlowElement2D3N" : "AdjointIncompressiblePotentialFlowElement2D3N",
-                    "EmbeddedIncompressiblePotentialFlowElement2D3N" : "AdjointIncompressiblePotentialFlowElement2D3N"
+                    "EmbeddedIncompressiblePotentialFlowElement2D3N" : "AdjointEmbeddedIncompressiblePotentialFlowElement2D3N"
 
                 },
                 "condition_name_table" :
@@ -91,6 +91,7 @@ class PotentialFlowAdjointSolver(PotentialFlowSolver):
 
     def FinalizeSolutionStep(self):
         super(PotentialFlowAdjointSolver, self).FinalizeSolutionStep()
+        print(self.response_function.CalculateValue(self.main_model_part))
         self.response_function.FinalizeSolutionStep()
         self.sensitivity_builder.UpdateSensitivities()
 

@@ -21,7 +21,7 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
                 "max_iterations"         : 5,
                 "linear_solver_settings" : {}
             },
-            "y_plus_calculation"      : {
+            "y_plus_model"      : {
                 "model_type"     : "",
                 "model_settings" : {}
             },
@@ -99,7 +99,7 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         if self.y_plus_model_process is None:
             import rans_y_plus_model_factory
             self.y_plus_model_process = rans_y_plus_model_factory.Factory(
-                self.fluid_model_part, self.settings["y_plus_calculation"])
+                self.fluid_model_part, self.settings["y_plus_model"])
             Kratos.Logger.PrintInfo(self.__class__.__name__,
                       "Initialized " + self.y_plus_model_process.__str__())
 

@@ -93,7 +93,7 @@
                     "scaling"             : false
                 }
             },
-            "y_plus_calculation"      : {
+            "y_plus_model"      : {
                 "model_type"     : "logarithmic"
             },
             "mesh_moving": false,

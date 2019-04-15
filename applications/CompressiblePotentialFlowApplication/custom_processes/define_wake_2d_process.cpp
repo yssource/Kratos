@@ -27,11 +27,11 @@ namespace Kratos
         trailing_edge_node->SetValue(TRAILING_EDGE,true);
     }
 
-    void DefineWake2DProcess::MarkTrailingEdgeElementscpp(ModelPart& trailing_edge_model_part, int j)
+    //void DefineWake2DProcess::MarkTrailingEdgeElementscpp(ModelPart& trailing_edge_model_part, int j)
+    template <typename GE, typename IT> void DefineWake2DProcess::MarkTrailingEdgeElementscpp(ModelPart& trailing_edge_model_part, GE geom, IT it_elem)
     {
-        auto it_elem = mrFluidModelPart.ElementsBegin() + j;
-        auto geom = it_elem->GetGeometry();
-
+        // auto it_elem = mrFluidModelPart.ElementsBegin() + j;
+        // auto geom = it_elem->GetGeometry();
         for (unsigned int k = 0; k < geom.size(); ++k)
         {
             if (geom[k].GetValue(TRAILING_EDGE))
@@ -44,5 +44,10 @@ namespace Kratos
                 break;
             }
         }
+    }
+
+    template <typename GE, typename IT> void DefineWake2DProcess::SelectPotentiallyWakeElementscpp(GE geom, IT it_elem)
+    {
+        std::cout << "Hi" << std::endl;
     }
 }

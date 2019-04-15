@@ -139,7 +139,10 @@ private:
     Flags mrOptions;
 
     void SaveTrailingEdgeNodecpp();
-    void MarkTrailingEdgeElementscpp(ModelPart& trailing_edge_model_part, int i);
+    template <typename GE, typename IT> void MarkTrailingEdgeElementscpp(ModelPart& trailing_edge_model_part, GE geom, IT it_elem);
+    template <typename GE, typename IT> void SelectPotentiallyWakeElementscpp(GE geom, IT it_elem);
+    //void MarkTrailingEdgeElementscpp(ModelPart& trailing_edge_model_part, int i);
+    //void SelectPotentiallyWakeElementscpp(int i);
     void MarkWakeElementscpp()
     {
         //ModelPart* ptrailing_edge_model_part = &mrModelPart.CreateSubModelPart("fluid_model_part");
@@ -149,7 +152,10 @@ private:
 
         for(int i = 0; i< static_cast<int>(mrFluidModelPart.Elements().size()); ++i) // Loop the elements
         {
-            MarkTrailingEdgeElementscpp(trailing_edge_model_part, i);
+            auto it_elem = mrFluidModelPart.ElementsBegin() + i;
+            auto geom = it_elem->GetGeometry();
+            MarkTrailingEdgeElementscpp(trailing_edge_model_part, geom, it_elem);
+            SelectPotentiallyWakeElementscpp(geom, it_elem);
         }
 
     }

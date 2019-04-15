@@ -24,6 +24,7 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
                 "model_part_name": "insert_model_part",
                 "skin_model_part_name": "insert_skin_model_part",
                 "geometry_parameter": 0.0,
+                "maximum_iterations": 3,
                 "remeshing_flag": false,
                 "initial_point": [0,0],
                 "metric_parameters":  {
@@ -64,6 +65,10 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
         self.boundary_model_part = self.main_model_part.CreateSubModelPart("boundary_model_part")
         KratosMultiphysics.ModelPartIO(self.skin_model_part_name).ReadModelPart(self.skin_model_part)
 
+        '''Loop parameters'''
+        self.step = 0
+        self.max_iter = settings["maximum_iterations"].GetInt()
+
         self.MetricParameters = settings["metric_parameters"]
         # We set to zero the metric
         ZeroVector = KratosMultiphysics.Vector(3)
@@ -95,14 +100,20 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
         self.InitializeSkinModelPart()
         self.CalculateDistance()
 
-        if (self.do_remeshing):
-            KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','Executing first refinement ')
-            import time
-            ini_time=time.time()
+        ini_time=time.time()
+        while self.step < self.max_iter and self.do_remeshing:
+            self.step += 1
+                        # previous_min_size=MetricParameters["minimal_size"].GetDouble()
+            # MetricParameters["minimal_size"].SetDouble(previous_min_size*0.5)
+            previous_ratio=self.MetricParameters["custom_settings"]["ratio"].GetDouble()
+            self.MetricParameters["custom_settings"]["ratio"].SetDouble(previous_ratio*0.5)
+            KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','##### Executing refinement #', self.step, ' #####')
+
+
             self.ExtendDistance()
             self.RefineMesh()
-            KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','Elapsed time: ',time.time()-ini_time)
             self.CalculateDistance()
+        KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','Elapsed time: ',time.time()-ini_time)
 
         KratosMultiphysics.VariableUtils().CopyScalarVar(KratosMultiphysics.DISTANCE,CompressiblePotentialFlow.LEVEL_SET_DISTANCE, self.main_model_part.Nodes)
         self.ApplyFlags()
@@ -142,6 +153,7 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
         KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','CalculateDistance Time: ',time.time()-ini_time)
 
     def ExtendDistance(self):
+        ini_time=time.time()
         # Construct the variational distance calculation process
         maximum_iterations = 2 #TODO: Make this user-definable
         if self.main_model_part.ProcessInfo[KratosMultiphysics.DOMAIN_SIZE] == 2:
@@ -155,9 +167,11 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
                 self.linear_solver,
                 maximum_iterations)
         variational_distance_process.Execute()
+        KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','Variational distance process Time: ',time.time()-ini_time)
 
 
     def RefineMesh(self):
+        ini_time=time.time()
         local_gradient = KratosMultiphysics.ComputeNodalGradientProcess2D(self.main_model_part, KratosMultiphysics.DISTANCE, KratosMultiphysics.DISTANCE_GRADIENT, KratosMultiphysics.NODAL_AREA)
         local_gradient.Execute()
 
@@ -168,7 +182,7 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
         metric_process = MeshingApplication.ComputeLevelSetSolMetricProcess2D(self.main_model_part,  KratosMultiphysics.DISTANCE_GRADIENT, self.MetricParameters)
         metric_process.Execute()
 
-        self.PrintOutput('metric_output')
+        self.PrintOutput('metric_output'+str(self.step))
 
         mmg_parameters = KratosMultiphysics.Parameters("""
         {
@@ -189,7 +203,9 @@ class InitializeGeometryProcess(KratosMultiphysics.Process):
         # We remesh
         mmg_process.Execute()
 
-        self.PrintOutput('remeshed_output')
+        KratosMultiphysics.Logger.PrintInfo('InitializeGeometry','Remesh Time: ',time.time()-ini_time)
+
+        self.PrintOutput('remeshed_output'+str(self.step))
 
     def ApplyFlags(self):
         max_x=-1e10

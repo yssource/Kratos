@@ -12,6 +12,7 @@
 //
 #include "compressible_potential_flow_application_variables.h"
 #include "incompressible_potential_flow_element.h"
+#include "embedded_incompressible_potential_flow_element.h"
 #include "incompressible_adjoint_potential_flow_element.h"
 
 namespace Kratos
@@ -442,5 +443,6 @@ namespace Kratos
     // Template class instantiation
 
     template class AdjointIncompressiblePotentialFlowElement<IncompressiblePotentialFlowElement<2,3>>;
+    template class AdjointIncompressiblePotentialFlowElement<EmbeddedIncompressiblePotentialFlowElement<2,3>>;
 } // namespace Kratos.
 

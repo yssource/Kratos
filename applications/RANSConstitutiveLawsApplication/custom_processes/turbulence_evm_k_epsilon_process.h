@@ -198,11 +198,6 @@ public:
     ///@name Operations
     ///@{
 
-    void SetIsCoSolvingProcessActive(bool rIsSolvingProcessActive)
-    {
-        this->IsSolvingProcessActive = rIsSolvingProcessActive;
-    }
-
     void AddStrategy(SolvingStrategyType* pStrategy)
     {
         mrSolvingStrategiesList.push_back(pStrategy);
@@ -210,7 +205,9 @@ public:
 
     virtual void Execute() override
     {
-        if (!this->IsSolvingProcessActive)
+        const ProcessInfo& r_process_info = this->mrModelPart.GetProcessInfo();
+
+        if (!r_process_info[IS_CO_SOLVING_PROCESS_ACTIVE])
             return;
 
         KRATOS_INFO_IF("TurbulenceModel", this->mEchoLevel > 0)
@@ -223,13 +220,9 @@ public:
     {
         KRATOS_TRY
 
-        BaseType::ExecuteInitializeSolutionStep();
-
-        if (!this->IsSolvingProcessActive)
-            return;
-
-        AssignInitialConditions();
         this->UpdateBoundaryConditions();
+        AssignInitialConditions();
+
 
         KRATOS_CATCH("");
     }
@@ -238,8 +231,6 @@ public:
     virtual void ExecuteFinalizeSolutionStep() override
     {
         KRATOS_TRY
-
-        BaseType::ExecuteFinalizeSolutionStep();
 
         this->UpdateFluidViscosity();
 
@@ -308,8 +299,6 @@ private:
     bool mAssignedInitialConditions = false;
 
 
-    bool IsSolvingProcessActive = false;
-
     std::vector<SolvingStrategyType*> mrSolvingStrategiesList;
 
     ///@}
@@ -322,7 +311,6 @@ private:
             return;
 
         this->CalculateYplus();
-        this->UpdateInletNodes();
 
         const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
         unsigned int initialized_nodes_count{0};
@@ -358,27 +346,7 @@ private:
     void UpdateBoundaryConditions()
     {
         this->CalculateYplus();
-        this->UpdateInletNodes();
         this->UpdateWallNodes();
-    }
-
-    void UpdateInletNodes()
-    {
-        const ProcessInfo& r_current_process_info = this->mrModelPart.GetProcessInfo();
-
-        // Set Boundary Conditions
-        const int number_of_nodes = this->mrModelPart.NumberOfNodes();
-#pragma omp parallel for
-        for (int i = 0; i < number_of_nodes; i++)
-        {
-            ModelPart::NodeIterator i_node = this->mrModelPart.NodesBegin() + i;
-            if (i_node->Is(INLET))
-            {
-                double k{0.0}, epsilon{0.0};
-                this->CalculateTurbulentValues(k, epsilon, *i_node, r_current_process_info);
-                this->InitializeValues(*i_node, k, epsilon);
-            }
-        }
     }
 
     void UpdateWallNodes()
@@ -392,6 +360,7 @@ private:
             if (i_node->Is(STRUCTURE))
             {
                 this->InitializeValues(*i_node, 1e-10, 1e-10);
+                // std::cout<<" STRUCTURE " <<i_node->Id() << "\n";
             }
         }
     }

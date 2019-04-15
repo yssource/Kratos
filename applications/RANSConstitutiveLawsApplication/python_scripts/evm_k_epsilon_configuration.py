@@ -135,15 +135,16 @@ class TurbulenceKEpsilonConfiguration(
         Kratos.Logger.PrintInfo(self.__class__.__name__, "DOFs added successfully.")
 
     def InitializeSolutionStep(self):
+        if (self.fluid_model_part.ProcessInfo[KratosRANS.IS_CO_SOLVING_PROCESS_ACTIVE]):
+            super(TurbulenceKEpsilonConfiguration, self).InitializeSolutionStep()
+
+        # self.UpdateBoundaryConditions()
+
+    def FinalizeSolutionStep(self):
+        super(TurbulenceKEpsilonConfiguration, self).FinalizeSolutionStep()
         time = self.fluid_model_part.ProcessInfo[Kratos.TIME]
         if (time >= self.ramp_up_time):
-            self.is_computing_solution = True
-            self.GetTurbulenceSolvingProcess().SetIsCoSolvingProcessActive(self.is_computing_solution)
-        else:
-            return
-
-        super(TurbulenceKEpsilonConfiguration, self).InitializeSolutionStep()
-        # self.UpdateBoundaryConditions()
+            self.fluid_model_part.ProcessInfo[KratosRANS.IS_CO_SOLVING_PROCESS_ACTIVE] = True
 
     # def UpdateBoundaryConditions(self):
     #     evm_k_epsilon_utilities = KratosRANS.EvmKepsilonModelUtilities()

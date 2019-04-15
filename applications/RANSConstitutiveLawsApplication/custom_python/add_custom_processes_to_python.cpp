@@ -19,6 +19,9 @@
 // RANS Y Plus models
 #include "custom_processes/y_plus_model_processes/rans_logarithmic_y_plus_model_process.h"
 
+// RANS initialization processes
+#include "custom_processes/k_epsilon_evaluation_utau_process.h"
+
 namespace Kratos
 {
 namespace Python
@@ -35,7 +38,6 @@ void AddCustomProcessesToPython(pybind11::module& m)
     py::class_<TurbulenceEvmKEpsilon2DProcess, TurbulenceEvmKEpsilon2DProcess::Pointer, Process>(
         m, "TurbulenceEvmKEpsilon2DProcess")
         .def(py::init<ModelPart&, Parameters&, Process&>())
-        .def("SetIsCoSolvingProcessActive", &TurbulenceEvmKEpsilon2DProcess::SetIsCoSolvingProcessActive)
         .def("AddStrategy", &TurbulenceEvmKEpsilon2DProcess::AddStrategy);
 
     typedef TurbulenceEvmKEpsilonProcess<3, SparseSpaceType, LocalSpaceType, LinearSolverType> TurbulenceEvmKEpsilon3DProcess;
@@ -47,6 +49,10 @@ void AddCustomProcessesToPython(pybind11::module& m)
     py::class_<RansLogarithmicYPlusModelProcess, RansLogarithmicYPlusModelProcess::Pointer, Process>(
         m, "RansLogarithmicYPlusModelProcess")
         .def(py::init<ModelPart&, Parameters&>());
+
+    py::class_<RansKEpsilonEvaluationUtauProcess, RansKEpsilonEvaluationUtauProcess::Pointer, Process>(
+        m, "RansKEpsilonEvaluationUtauProcess")
+        .def(py::init<Model&, Parameters&, Process&>());
 }
 
 } // namespace Python.

@@ -98,7 +98,7 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
                                                 self.domain_size + 1)
             condition_name = "{0}{1}D{2}N".format(
                 condition, self.domain_size, self.domain_size)
-            model_part = CreateDuplicateModelPart(self.fluid_model_part, "TurbulenceModelPart_" + element_name, element_name, condition_name)
+            model_part = CreateDuplicateModelPart(self.fluid_model_part, "TurbulenceModelPart_" + element, element_name, condition_name)
             self.model_parts_list.append(model_part)
 
 

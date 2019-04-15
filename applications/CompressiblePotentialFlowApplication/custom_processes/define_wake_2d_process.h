@@ -1,15 +1,15 @@
 #ifndef KRATOS_DEFINE_WAKE_2D_PROCESS_H
 #define KRATOS_DEFINE_WAKE_2D_PROCESS_H
 
-// #include "includes/define.h"
-// #include "includes/model_part.h"
-// #include "includes/kratos_flags.h"
-// #include "processes/process.h"
-// #include "geometries/geometry.h"
-// #include "utilities/geometry_utilities.h"
+#include "includes/define.h"
+#include "includes/model_part.h"
+#include "includes/kratos_flags.h"
+#include "processes/process.h"
+#include "geometries/geometry.h"
+#include "utilities/geometry_utilities.h"
 #include "compressible_potential_flow_application_variables.h"
-// #include "utilities/math_utils.h"
-// #include "includes/kratos_parameters.h"
+#include "utilities/math_utils.h"
+#include "includes/kratos_parameters.h"
 
 // #include <boost/functional/hash.hpp> //TODO: remove this dependence when Kratos has en internal one
 // #include <unordered_map> //TODO: remove this dependence when Kratos has en internal one
@@ -62,26 +62,26 @@ public:
     // }
 
     DefineWake2DProcess(
-        ModelPart& rModelPart
-        ) : Process(Flags()) ,
-            mrModelPart(rModelPart)
+        ModelPart& rBodyModelPart,
+        ModelPart& rFluidModelPart
+        ) : Process() ,
+            mrBodyModelPart(rBodyModelPart),
+            mrFluidModelPart(rFluidModelPart)
     {
     }
 
     /// Assignment operator.
-    DefineWake2DProcess& operator=(DefineWake2DProcess const& rOther);
+    DefineWake2DProcess& operator=(DefineWake2DProcess const& rOther) = delete;
+
     /// Destructor.
     ~DefineWake2DProcess() override = default;
+
     /// Copy constructor.
-    DefineWake2DProcess(DefineWake2DProcess const& rOther);
-
-
-
+    DefineWake2DProcess(DefineWake2DProcess const& rOther) = delete;
 
     ///@}
     ///@name Operators
     ///@{
-    //void PrintMyInfo2();
     /// This operator is provided to call the process as a function and simply calls the Execute method.
     void operator()()
     {
@@ -95,17 +95,7 @@ public:
     //void SaveTrailingEdgeNodecpp();
     //void MarkWakeElementscpp();
     /// Check elements to make sure that their jacobian is positive and conditions to ensure that their face normals point outwards
-    void Execute() override
-    {
-        KRATOS_TRY;
-        SaveTrailingEdgeNodecpp();
-        //MarkWakeElementscpp();
-
-
-        KRATOS_CATCH("");
-    }
-
-
+    void Execute() override;
 
     ///@}
     ///@name Access
@@ -143,64 +133,26 @@ public:
 
 private:
 
-    ModelPart& mrModelPart;
+    ModelPart& mrBodyModelPart;
+    ModelPart& mrFluidModelPart;
     //Parameters mSettings;   /// The settings of the problem (names of the conditions and elements)
     Flags mrOptions;
 
+    void SaveTrailingEdgeNodecpp();
+    void MarkTrailingEdgeElementscpp(ModelPart& trailing_edge_model_part, int i);
     void MarkWakeElementscpp()
     {
         //ModelPart* ptrailing_edge_model_part = &mrModelPart.CreateSubModelPart("fluid_model_part");
         //trailing_edge_model_part->CreateSubModelPart("trailing_edge_model_part");
-        //ModelPart trailing_edge_model_part = mrModelPart.CreateSubModelPart("trailing_edge_model_part");
-        for(auto it_elem = mrModelPart.ElementsBegin(); it_elem!=mrModelPart.ElementsEnd(); ++it_elem) // Loop the elements
+        ModelPart& trailing_edge_model_part = mrFluidModelPart.CreateSubModelPart("trailing_edge_model_part2");
+        KRATOS_WATCH(mrFluidModelPart)
+
+        for(int i = 0; i< static_cast<int>(mrFluidModelPart.Elements().size()); ++i) // Loop the elements
         {
-            auto geom = it_elem->GetGeometry();
-
-            for(unsigned int i=0; i<geom.size(); ++i)
-            {
-                 if (geom[i].GetValue(TRAILING_EDGE))
-                 {
-                     it_elem->SetValue(TRAILING_EDGE,true);
-                     std::cout<<"it_elem->"<<it_elem->Id()<<std::endl;
-                     break;
-                 }
-            }
-            //trailing_edge_model_part.Elements()(it_elem);// how to add the elements to the model part
-
-            //MarkTrailingEdgeElementscpp(it_elem);
+            MarkTrailingEdgeElementscpp(trailing_edge_model_part, i);
         }
+
     }
-
-    void SaveTrailingEdgeNodecpp()
-    {
-        double max_x_coordinate = -1e30;
-        auto trailing_edge_node = mrModelPart.NodesBegin();
-        //trailing_edge_node->Set(TRAILING_EDGE,1500); // how to save it?
-        for(auto it=mrModelPart.NodesBegin(); it!=mrModelPart.NodesEnd(); ++it)
-        {
-            if (it->X()>max_x_coordinate)
-            {
-                max_x_coordinate = it->X();
-                trailing_edge_node = it;
-                //it->Set(TRAILING_EDGE,true)
-            }
-        }
-        trailing_edge_node->SetValue(TRAILING_EDGE,true);
-        std::cout<< "max_x_coordinate cpp: " <<  max_x_coordinate << std::endl;
-        std::cout<< "trailing_edge_node cpp: " <<  trailing_edge_node->Id() << std::endl;
-        //std::cout<< "TRAILING_EDGE cpp: " <<  TRAILING_EDGE << std::endl;
-    }
-
-    // void MarkTrailingEdgeElementscpp(auto it_elem)
-    // {
-    //     std::cout<< "elem nodes " <<it_elem.node<<std::endl;
-    // }
-
-
-
-
-    //void PrintMyInfo2();
-
 }; // Class Process
 
 

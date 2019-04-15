@@ -773,7 +773,7 @@ protected:
 
 	  rModelPart.AddElement(pElement);
 	  pElement->Set(ACTIVE,false);
-	  pComputingModelPart->AddElement(pElement);
+	  pComputingModelPart(pElement);
 
 	  local_counter = 1;
 	}

@@ -1,15 +1,26 @@
-#ifndef KRATOS_DEFINE_WAKE_2D_PROCESS_H
-#define KRATOS_DEFINE_WAKE_2D_PROCESS_H
+//    |  /           |
+//    ' /   __| _` | __|  _ \   __|
+//    . \  |   (   | |   (   |\__ `
+//   _|\_\_|  \__,_|\__|\___/ ____/
+//                   Multi-Physics
+//
+//  License:		 BSD License
+//					 Kratos default license: kratos/license.txt
+//
+//  Main authors:    Aggelos Eznepidis
+//
 
-#include "includes/define.h"
-#include "includes/model_part.h"
+// #ifndef KRATOS_DEFINE_WAKE_2D_PROCESS_H
+// #define KRATOS_DEFINE_WAKE_2D_PROCESS_H
+
+#if !defined(KRATOS_DEFINE_WAKE_2D_PROCESS_H_INCLUDED )
+#define KRATOS_DEFINE_WAKE_2D_PROCESS_H_INCLUDED
+
 #include "includes/kratos_flags.h"
-#include "processes/process.h"
-#include "geometries/geometry.h"
-#include "utilities/geometry_utilities.h"
+// #include "geometries/geometry.h"
+// #include "utilities/geometry_utilities.h"
 #include "compressible_potential_flow_application_variables.h"
-#include "utilities/math_utils.h"
-#include "includes/kratos_parameters.h"
+// #include "utilities/math_utils.h"
 
 // #include <boost/functional/hash.hpp> //TODO: remove this dependence when Kratos has en internal one
 // #include <unordered_map> //TODO: remove this dependence when Kratos has en internal one
@@ -26,8 +37,8 @@
 namespace Kratos
 {
 
-//class KRATOS_API(COMPRESSIBLE_POTENTIAL_FLOW_APPLICATION) DefineWake2DProcess: public Process
-class DefineWake2DProcess: public Process
+class KRATOS_API(COMPRESSIBLE_POTENTIAL_FLOW_APPLICATION) DefineWake2DProcess: public Process
+//class DefineWake2DProcess: public Process
 {
 public:
     ///@name Type Definitions
@@ -64,7 +75,7 @@ public:
     DefineWake2DProcess(
         ModelPart& rBodyModelPart,
         ModelPart& rFluidModelPart
-        ) : Process() ,
+        ) : Process(Flags()) ,
             mrBodyModelPart(rBodyModelPart),
             mrFluidModelPart(rFluidModelPart)
     {
@@ -96,6 +107,16 @@ public:
     //void MarkWakeElementscpp();
     /// Check elements to make sure that their jacobian is positive and conditions to ensure that their face normals point outwards
     void Execute() override;
+    // {
+    //     KRATOS_TRY;
+    //     std::cout << "Hi"<< std::endl;
+    //     //auto trailing_edge = mrBodyModelPart.NodesBegin();
+    //     //SaveTrailingEdgeNodecpp(trailing_edge);
+    //     //MarkWakeElementscpp(trailing_edge);
+
+
+    //     KRATOS_CATCH("");
+    // }
 
     ///@}
     ///@name Access
@@ -136,7 +157,7 @@ private:
     ModelPart& mrBodyModelPart;
     ModelPart& mrFluidModelPart;
     //Parameters mSettings;   /// The settings of the problem (names of the conditions and elements)
-    Flags mrOptions;
+    //Flags mrOptions;
 
     //void SaveTrailingEdgeNodecpp();
     template <typename TE> void SaveTrailingEdgeNodecpp(TE &trailing_edge_node);

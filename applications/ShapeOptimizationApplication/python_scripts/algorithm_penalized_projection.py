@@ -154,14 +154,16 @@ class AlgorithmPenalizedProjection(OptimizationAlgorithm):
         if self.constraints[0]["project_gradient_on_surface_normals"].GetBool():
             self.model_part_controller.ProjectNodalVariableOnUnitSurfaceNormals(DC1DX)
 
-        self.model_part_controller.DampNodalVariableIfSpecified(DF1DX)
-        self.model_part_controller.DampNodalVariableIfSpecified(DC1DX)
+        print("WARNING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!: Damping of DF1DX and DC1DX is deactivated and supposed to be covered in analyzer")
+        # self.model_part_controller.DampNodalVariableIfSpecified(DF1DX)
+        # self.model_part_controller.DampNodalVariableIfSpecified(DC1DX)
 
     # --------------------------------------------------------------------------
     def __computeShapeUpdate(self):
         self.mapper.Update()
-        self.mapper.InverseMap(DF1DX, DF1DX_MAPPED)
-        self.mapper.InverseMap(DC1DX, DC1DX_MAPPED)
+        print("WARNING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!: Mapping of DF1DX and DC1DX is manually switched off in penalized projection algorithm")
+        #self.mapper.InverseMap(DF1DX, DF1DX_MAPPED)
+        # self.mapper.InverseMap(DC1DX, DC1DX_MAPPED)
 
         constraint_value = self.communicator.getStandardizedValue(self.constraints[0]["identifier"].GetString())
         if self.__isConstraintActive(constraint_value):

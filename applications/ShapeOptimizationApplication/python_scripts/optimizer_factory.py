@@ -91,6 +91,11 @@ class VertexMorphingMethod:
         model_part.AddNodalSolutionStepVariable(NORMALIZED_SURFACE_NORMAL)
         model_part.AddNodalSolutionStepVariable(TRACTION)
 
+        model_part.AddNodalSolutionStepVariable(CSM_GRADIENT)
+        model_part.AddNodalSolutionStepVariable(CSM_GRADIENT_MAPPED)
+        model_part.AddNodalSolutionStepVariable(CFD_GRADIENT)
+        model_part.AddNodalSolutionStepVariable(CFD_GRADIENT_MAPPED)
+
     # --------------------------------------------------------------------------
     def Optimize(self):
         algorithm_name = self.optimization_settings["optimization_algorithm"]["name"].GetString()

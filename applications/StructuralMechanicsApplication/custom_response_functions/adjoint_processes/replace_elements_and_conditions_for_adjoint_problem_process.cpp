@@ -243,6 +243,8 @@ namespace Kratos
             rName = "AdjointSemiAnalyticPointLoadCondition";
         else if(name_current_condition == "PointLoadCondition3D1N")
             rName = "AdjointSemiAnalyticPointLoadCondition";
+        else if(name_current_condition == "ShapeOptimizationCondition2D2N")
+            replacement_necessary = false;
         else if(name_current_condition == "ShapeOptimizationCondition3D3N")
             replacement_necessary = false;
         else if(name_current_condition == "ShapeOptimizationCondition3D4N")

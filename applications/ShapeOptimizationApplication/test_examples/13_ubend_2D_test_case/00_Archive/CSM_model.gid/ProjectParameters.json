@@ -1,0 +1,88 @@
+{
+    "problem_data"             : {
+        "problem_name"    : "CSM_model",
+        "model_part_name" : "Structure",
+        "domain_size"     : 3,
+        "parallel_type"   : "OpenMP",
+        "time_step"       : 1.1,
+        "start_time"      : 0.0,
+        "end_time"        : 1.0,
+        "echo_level"      : 1
+    },
+    "solver_settings"          : {
+        "solver_type"                        : "Static",
+        "echo_level"                         : 1,
+        "analysis_type"                      : "non_linear",
+        "model_import_settings"              : {
+            "input_type"     : "mdpa",
+            "input_filename" : "CSM_model"
+        },
+        "material_import_settings"           : {
+            "materials_filename" : "StructuralMaterials.json"
+        },
+        "line_search"                        : false,
+        "convergence_criterion"              : "residual_criterion",
+        "displacement_relative_tolerance"    : 0.0001,
+        "displacement_absolute_tolerance"    : 1e-9,
+        "residual_relative_tolerance"        : 0.0001,
+        "residual_absolute_tolerance"        : 1e-9,
+        "max_iteration"                      : 10,
+        "problem_domain_sub_model_part_list" : ["Parts_structure","Parts_wet_interface"],
+        "processes_sub_model_part_list"      : ["DISPLACEMENT_support","DISPLACEMENT_all_nodes","PointLoad3D_wet_interface"],
+        "rotation_dofs"                      : false
+    },
+    "constraints_process_list" : [{
+        "python_module" : "assign_vector_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "Parameters"    : {
+            "model_part_name" : "DISPLACEMENT_support",
+            "variable_name"   : "DISPLACEMENT",
+            "constrained"     : [true,true,true],
+            "value"           : [0.0,0.0,0.0],
+            "interval"        : [0.0,"End"]
+        }
+    },{
+        "python_module" : "assign_vector_variable_process",
+        "kratos_module" : "KratosMultiphysics",
+        "Parameters"    : {
+            "model_part_name" : "DISPLACEMENT_all_nodes",
+            "variable_name"   : "DISPLACEMENT",
+            "constrained"     : [false,false,true],
+            "value"           : [0.0,0.0,0.0],
+            "interval"        : [0.0,"End"]
+        }
+    }],
+    "loads_process_list"       : [{
+        "python_module" : "assign_vector_by_direction_to_condition_process",
+        "kratos_module" : "KratosMultiphysics",
+        "check"         : "DirectorVectorNonZero direction",
+        "Parameters"    : {
+            "model_part_name" : "PointLoad3D_wet_interface",
+            "variable_name"   : "POINT_LOAD",
+            "modulus"         : 1.0,
+            "direction"       : [0.0,0.0,0.0],
+            "interval"        : [0.0,"End"]
+        }
+    }],
+    "list_other_processes"     : [],
+    "output_configuration"     : {
+        "result_file_configuration" : {
+            "gidpost_flags"       : {
+                "GiDPostMode"           : "GiD_PostBinary",
+                "WriteDeformedMeshFlag" : "WriteDeformed",
+                "WriteConditionsFlag"   : "WriteConditions",
+                "MultiFileFlag"         : "SingleFile"
+            },
+            "file_label"          : "step",
+            "output_control_type" : "step",
+            "output_frequency"    : 1,
+            "body_output"         : true,
+            "node_output"         : false,
+            "skin_output"         : false,
+            "plane_output"        : [],
+            "nodal_results"       : ["DISPLACEMENT","REACTION"],
+            "gauss_point_results" : ["VON_MISES_STRESS"]
+        },
+        "point_data_configuration"  : []
+    }
+}

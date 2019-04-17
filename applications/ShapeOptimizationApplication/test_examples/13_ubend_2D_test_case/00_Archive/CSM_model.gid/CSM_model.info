@@ -1,0 +1,123 @@
+ |  /           |             
+ ' /   __| _` | __|  _ \   __|
+ . \  |   (   | |   (   |\__ \ 
+_|\_\_|  \__,_|\__|\___/ ____/
+           Multi-Physics 6.0.0-d386b0f
+Importing    KratosStructuralMechanicsApplication 
+     KRATOS   ___|  |                   |                   |                     
+            \___ \  __|  __| |   |  __| __| |   |  __| _` | |                   
+                  | |   |    |   | (    |   |   | |   (   | |                     
+            _____/ \__|_|   \__,_|\___|\__|\__,_|_|  \__,_|_| MECHANICS     
+Importing    KratosExternalSolversApplication 
+Initializing KratosExternalSolversApplication... 
+ExternalSolversApplication: succesfully imported 
+Importing    KratosEigenSolversApplication 
+Initializing KratosEigenSolversApplication... 
+EigenSolversApplication: succesfully imported 
+::[MechanicalSolver]::  Construction finished: 
+::[StaticMechanicalSolver]::  Construction finished: 
+::[MechanicalSolver]::  Variables ADDED: 
+::[MechanicalSolver]::: Reading model part. 
+::[MechanicalSolver]::: Reading model part from file: /home/daniel/software/kratos/applications/ShapeOptimizationApplication/test_examples/08_2D_ubend_optimization/00_Archive/CSM_model.gid/CSM_model.mdpa 
+ModelPartIO:   [Reading Nodes    : 10552 nodes read]
+ModelPartIO:   [Reading Elements : 18796 elements read] [Type: SmallDisplacementElement2D3N]
+ModelPartIO:   [Reading Conditions : 1130 conditions read] [Type: PointLoadCondition2D1N]
+ModelPartIO:   [Reading Conditions : 2256 conditions read] [Type: LineCondition3D2N]
+ModelPartIO:   [Reading Conditions : 1128 conditions read] [Type: LineCondition3D2N]
+ModelPartIO:   [Total Lines Read : 72347]
+::[MechanicalSolver]::: Finished reading model part from mdpa file. 
+ModelPart: -Structure- model part
+    Buffer Size : 1
+    Number of tables : 0
+    Number of sub model parts : 5
+    Current solution step index : 0
+    DOMAIN_SIZE : 2
+    IS_RESTARTED : 0
+
+    Mesh 0 : 
+        Number of Nodes      : 10552
+        Number of Properties : 1
+        Number of Elements   : 18796
+        Number of Conditions : 4514
+
+    -GENERIC_wet_surface- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 : 
+            Number of Nodes      : 1130
+            Number of Properties : 0
+            Number of Elements   : 0
+            Number of Conditions : 1128
+    -GENERIC_complete_surface- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 : 
+            Number of Nodes      : 2260
+            Number of Properties : 0
+            Number of Elements   : 0
+            Number of Conditions : 2256
+    -PointLoad2D_wet_surface- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 : 
+            Number of Nodes      : 1130
+            Number of Properties : 0
+            Number of Elements   : 0
+            Number of Conditions : 1130
+    -DISPLACEMENT_support- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 : 
+            Number of Nodes      : 44
+            Number of Properties : 0
+            Number of Elements   : 0
+            Number of Conditions : 0
+    -Parts_solid_part- model part
+        Number of tables : 0
+        Number of sub model parts : 0
+
+        Mesh 0 : 
+            Number of Nodes      : 10548
+            Number of Properties : 0
+            Number of Elements   : 18796
+            Number of Conditions : 0
+ 
+::[MechanicalSolver]:: : Finished reading model part. 
+Computing model part:: -computing_domain- model part
+    Number of tables : 0
+    Number of sub model parts : 0
+
+    Mesh 0 : 
+        Number of Nodes      : 10548
+        Number of Properties : 1
+        Number of Elements   : 18796
+        Number of Conditions : 1130
+
+ 
+::[Reading materials process]:: : Started 
+Warning in reading materials: Ignoring "KratosMultiphysics.StructuralMechanicsApplication" for Constitutive Law "LinearElasticPlaneStrain2DLaw" 
+::[Reading materials process]:: : Finished 
+::[MechanicalSolver]::  Constitutive law was successfully imported.: 
+::[MechanicalSolver]::: ModelPart prepared for Solver. 
+::[MechanicalSolver]::  DOF's ADDED: 
+::[StaticMechanicalSolver]::  Initializing ...: 
+::[MechanicalSolver]::  Initializing ...: 
+::[MechanicalSolver]::  Finished initialization.: 
+::[StaticMechanicalSolver]::  Finished initialization.: 
+::[KSM Simulation]:: : Analysis -START-  
+Setup Dofs Time: 0.0173372
+Setup System Time: 7.3609e-05
+System Matrix Resize Time: 0.0476237
+System Construction Time: 0.0650867
+::[KSM Simulation]:: : STEP:  1 
+::[KSM Simulation]:: : TIME:  1.1 
+ResidualBasedBlockBuilderAndSolver: Build time: 0.0423574
+ResidualBasedBlockBuilderAndSolver: System solve time: 0.0608236
+ MESH MOVED 
+::[KSM Simulation]:: : Analysis -END-  
+BuilderAndSolver: Clear Function called
+KRATOS TERMINATED CORRECTLY

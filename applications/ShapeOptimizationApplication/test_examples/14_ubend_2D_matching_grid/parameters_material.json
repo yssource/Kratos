@@ -1,0 +1,17 @@
+{
+    "properties" : [{
+        "model_part_name" : "CSM_model.Parts_structure",
+        "properties_id"   : 0,
+        "Material"        : {
+            "constitutive_law" : {
+                "name" : "LinearElastic3DLaw"
+            },
+            "Variables"        : {
+                "DENSITY"       : 4.447592067988668,
+                "YOUNG_MODULUS" : 1340999.3797877869,
+                "POISSON_RATIO" : 0.29
+            },
+            "Tables"           : {}
+        }
+    }]
+}

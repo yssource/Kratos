@@ -1,0 +1,33 @@
+{
+    "properties" : [{
+        "model_part_name" : "Parts_structure",
+        "properties_id"   : 1,
+        "Material"        : {
+            "constitutive_law" : {
+                "name" : "KratosMultiphysics.StructuralMechanicsApplication.LinearElastic3DLaw"
+            },
+            "Variables"        : {
+                "DENSITY"       : 7850.0,
+                "YOUNG_MODULUS" : 206900000000.0,
+                "POISSON_RATIO" : 0.29
+            },
+            "Tables"           : {}
+        }
+    },{
+        "model_part_name" : "Parts_wet_interface",
+        "properties_id"   : 2,
+        "Material"        : {
+            "constitutive_law" : {
+                "name" : "KratosMultiphysics.StructuralMechanicsApplication.TrussConstitutiveLaw"
+            },
+            "Variables"        : {
+                "DENSITY"             : 7850.0,
+                "YOUNG_MODULUS"       : 206900000000.0,
+                "POISSON_RATIO"       : 0.29,
+                "CROSS_AREA"          : 1.0,
+                "TRUSS_PRESTRESS_PK2" : 0.0
+            },
+            "Tables"           : {}
+        }
+    }]
+}

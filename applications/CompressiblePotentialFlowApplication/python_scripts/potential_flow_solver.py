@@ -72,6 +72,7 @@ class PotentialFlowSolver(FluidSolver):
         # Kratos variables
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.DISTANCE)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.REACTION)
 
     def AddDofs(self):
         KratosMultiphysics.VariableUtils().AddDof(KCPFApp.VELOCITY_POTENTIAL, self.main_model_part)
@@ -93,4 +94,7 @@ class PotentialFlowSolver(FluidSolver):
         (self.solver).Initialize()
 
     def AdvanceInTime(self, current_time):
-        raise Exception("AdvanceInTime is not implemented. Potential Flow simulations are steady state.")
+        self.delta_t = 0.05
+        self.time = current_time + self.delta_t
+        #TODO: alternative for "virtual timestepping" in steady problem
+        return self.time

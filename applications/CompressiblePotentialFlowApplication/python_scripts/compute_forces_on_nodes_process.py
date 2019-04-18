@@ -9,24 +9,22 @@ def Factory(settings, Model):
 # all the processes python processes should be derived from "python_process"
 
 class ComputeForcesOnNodesProcess(KratosMultiphysics.Process):
-    def __init__(self, Model, settings):
+    def __init__(self, Model, settings=None):
         KratosMultiphysics.Process.__init__(self)
 
-        default_parameters = KratosMultiphysics.Parameters(r'''{
-            "model_part_name": "please specify the model part that contains the surface nodes",
-            "create_output_file": false
-        }''')
+        if settings:
+            default_parameters = KratosMultiphysics.Parameters(r'''{
+                "model_part_name": "please specify the model part that contains the surface nodes",
+                "create_output_file": false
+            }''')
+            settings.ValidateAndAssignDefaults(default_parameters)
 
-        settings.ValidateAndAssignDefaults(default_parameters)
+            self.body_model_part = Model[settings["model_part_name"].GetString()]
+            self.create_output_file = settings["create_output_file"].GetBool()
 
-        self.body_model_part = Model[settings["model_part_name"].GetString()]
-        self.create_output_file = settings["create_output_file"].GetBool()
-
-    def __init__(self, body_model_part):
-        KratosMultiphysics.Process.__init__(self)
-
-        self.body_model_part = body_model_part
-        self.create_output_file = False
+        else:
+            self.body_model_part = Model
+            self.create_output_file = False
 
     def ExecuteFinalizeSolutionStep(self):
         self.Execute()

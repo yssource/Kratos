@@ -20,7 +20,7 @@
             "solver_type": "mesh_solver_structural_similarity"
         },
         "fluid_solver_settings": {
-            "solver_type": "kratos_potential_flow",
+            "solver_type": "potential_flow",
             "domain_size": 2,
             "model_part_name": "MainModelPart",
             "model_import_settings": {
@@ -78,7 +78,8 @@
                         "node_output"         : false,
                         "skin_output"         : false,
                         "plane_output"        : [],
-                        "nodal_results": ["PRESSURE", "MESH_DISPLACEMENT"],
+                        "nodal_results": ["VELOCITY_POTENTIAL"],
+                        "nodal_nonhistorical_results": ["PRESSURE", "MESH_DISPLACEMENT"],
                         "gauss_point_results" : []
                     },
                     "point_data_configuration"  : []

@@ -9,6 +9,9 @@ class CoSimulationSteadyAnalysis(CoSimulationAnalysis):
 
     def RunSolutionLoop(self):
         print("")
+        self.time = 1.0
+        self.time = self._GetSolver().AdvanceInTime(self.time)
+        #TODO: alternative for "virtual timestepping" in steady problem
         self.InitializeSolutionStep()
         self._GetSolver().Predict()
         self._GetSolver().SolveSolutionStep()

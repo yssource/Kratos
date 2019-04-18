@@ -12,5 +12,15 @@ def CreateSolver(model, solver_settings, parallelism):
 
 
 class AlePotentialFlowSolver(AleFluidSolver):
+    def __init__(self, model, solver_settings, parallelism):
+        super(AlePotentialFlowSolver, self).__init__(model, solver_settings, parallelism)
+        self.fluid_solver.min_buffer_size = 1
+
     def _CreateFluidSolver(self, solver_settings, parallelism):
         return potential_flow_solver.CreateSolver(self.model, solver_settings)
+
+    def SolveSolutionStep(self):
+        for mesh_solver in self.mesh_motion_solvers:
+            mesh_solver.SolveSolutionStep()
+        print(self.fluid_solver)
+        self.fluid_solver.SolveSolutionStep()

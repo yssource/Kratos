@@ -30,12 +30,8 @@
             "echo_level": 0,
             "compute_reactions": true,
             "maximum_iterations": 10,
-            "linear_solver_settings": {
-                "solver_type": "bicgstab",
-                "max_iteration": 200,
-                "tolerance": 1e-7,
-                "preconditioner_type": "ilu0",
-                "scaling": false
+            "linear_solver_settings"  : {
+                "solver_type"             : "ExternalSolversApplication.super_lu"
             },
             "volume_model_part_name": "Parts_Parts_Auto1",
             "skin_parts"             : ["PotentialWallCondition2D_Far_field_Auto1","Body2D_BodySurface"],

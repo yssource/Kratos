@@ -6,29 +6,7 @@
         "start_time": 0.0,
         "end_time": 1.0
     },
-    "output_configuration": {
-        "result_file_configuration": {
-            "gidpost_flags": {
-                "GiDPostMode": "GiD_PostBinary",
-                "WriteDeformedMeshFlag": "WriteDeformed",
-                "WriteConditionsFlag": "WriteConditions",
-                "MultiFileFlag": "SingleFile"
-            },
-            "file_label": "step",
-            "output_control_type": "step",
-            "output_frequency": 1,
-            "body_output": true,
-            "node_output": false,
-            "skin_output": false,
-            "plane_output": [],
-            "nodal_results": [
-                "PRESSURE",
-                "MESH_DISPLACEMENT"
-            ],
-            "gauss_point_results": []
-        },
-        "point_data_configuration": []
-    },
+
     "restart_options": {
         "SaveRestart": "False",
         "RestartFrequency": 0,
@@ -64,58 +42,78 @@
             "no_skin_parts": []
         }
     },
-    "initial_conditions_process_list"   : [],
-    "boundary_conditions_process_list"  : [
-        {
-            "python_module" : "apply_far_field_process",
-            "kratos_module" : "KratosMultiphysics.CompressiblePotentialFlowApplication",
-            "process_name"  : "FarFieldProcess",
-            "Parameters"    : {
-                "model_part_name"   : "MainModelPart.PotentialWallCondition2D_Far_field_Auto1",
-                "inlet_phi"         : 1.0,
-                "velocity_infinity" : [10.0,0.0,0.0]
+    "processes":{
+        "initial_conditions_process_list"   : [],
+        "boundary_conditions_process_list"  : [
+            {
+                "python_module" : "apply_far_field_process",
+                "kratos_module" : "KratosMultiphysics.CompressiblePotentialFlowApplication",
+                "process_name"  : "FarFieldProcess",
+                "Parameters"    : {
+                    "model_part_name"   : "MainModelPart.PotentialWallCondition2D_Far_field_Auto1",
+                    "inlet_phi"         : 1.0,
+                    "velocity_infinity" : [10.0,0.0,0.0]
+                }
+            },
+            {
+                "python_module" : "assign_vector_variable_process",
+                "kratos_module" : "KratosMultiphysics",
+                "help"          : "This process fixes the selected components of a given vector variable",
+                "process_name"  : "AssignVectorVariableProcess",
+                "Parameters"    : {
+                    "mesh_id": 0,
+                    "model_part_name"   : "MainModelPart.PotentialWallCondition2D_Far_field_Auto1",
+                    "variable_name"     : "MESH_DISPLACEMENT",
+                    "constrained"       : [true, true, true],
+                    "value"             : [0.0, 0.0, 0.0]
+                }
+            },
+            {
+                "python_module" : "assign_vector_variable_process",
+                "kratos_module" : "KratosMultiphysics",
+                "help"          : "This process fixes the selected components of a given vector variable",
+                "process_name"  : "AssignVectorVariableProcess",
+                "Parameters"    : {
+                    "mesh_id": 0,
+                    "model_part_name"   : "MainModelPart.Body2D_BodySurface",
+                    "variable_name"     : "MESH_DISPLACEMENT",
+                    "constrained"       : [true, true, true],
+                    "value"             : [0.0, 0.0, 0.0]
+                }
             }
-        },
-        {
-            "python_module" : "assign_vector_variable_process",
+        ],
+        "auxiliar_process_list": []
+    },
+    "output_processes" : {
+        "gid_output" : [{
+            "python_module" : "gid_output_process",
             "kratos_module" : "KratosMultiphysics",
-            "help"          : "This process fixes the selected components of a given vector variable",
-            "process_name"  : "AssignVectorVariableProcess",
+            "process_name"  : "GiDOutputProcess",
+            "help"          : "This process writes postprocessing files for GiD",
             "Parameters"    : {
-                "mesh_id": 0,
-                "model_part_name"   : "MainModelPart.PotentialWallCondition2D_Far_field_Auto1",
-                "variable_name"     : "MESH_DISPLACEMENT",
-                "constrained"       : [true, true, true],
-                "value"             : [0.0, 0.0, 0.0]
+                "model_part_name"        : "MainModelPart",
+                "output_name"            : "potential_flow_around_rigid_wing_fsi",
+                "postprocess_parameters" : {
+                    "result_file_configuration" : {
+                        "gidpost_flags"       : {
+                            "GiDPostMode"           : "GiD_PostBinary",
+                            "WriteDeformedMeshFlag" : "WriteDeformed",
+                            "WriteConditionsFlag"   : "WriteConditions",
+                            "MultiFileFlag"         : "SingleFile"
+                        },
+                        "file_label"          : "step",
+                        "output_control_type" : "step",
+                        "output_frequency"    : 4,
+                        "body_output"         : true,
+                        "node_output"         : false,
+                        "skin_output"         : false,
+                        "plane_output"        : [],
+                        "nodal_results": ["PRESSURE", "MESH_DISPLACEMENT"],
+                        "gauss_point_results" : []
+                    },
+                    "point_data_configuration"  : []
+                }
             }
-        },
-        {
-            "python_module" : "assign_vector_variable_process",
-            "kratos_module" : "KratosMultiphysics",
-            "help"          : "This process fixes the selected components of a given vector variable",
-            "process_name"  : "AssignVectorVariableProcess",
-            "Parameters"    : {
-                "mesh_id": 0,
-                "model_part_name"   : "MainModelPart.Body2D_BodySurface",
-                "variable_name"     : "MESH_DISPLACEMENT",
-                "constrained"       : [true, true, true],
-                "value"             : [0.0, 0.0, 0.0]
-            }
-        }
-    ],
-    "gravity": [
-        {
-            "python_module" : "assign_vector_by_direction_process",
-            "kratos_module" : "KratosMultiphysics",
-            "process_name"  : "AssignVectorByDirectionProcess",
-            "Parameters"    : {
-                "model_part_name"   : "FluidModelPart.Parts_Fluid",
-                "variable_name"     : "BODY_FORCE",
-                "modulus"           : 0.0,
-                "constrained"       : false,
-                "direction"         : [0.0, -1.0, 0.0]
-            }
-        }
-    ],
-    "auxiliar_process_list": []
+        }]
+    }
 }

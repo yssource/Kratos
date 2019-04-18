@@ -23,8 +23,6 @@ def CreateSolver(cosim_solver_settings, level):
 
 class KratosPotentialFlowSolver(KratosBaseFieldSolver):
     def _CreateAnalysisStage(self):
-        #print('debug: project_param. from KratosPotentialFlowSolver:\n',  self.project_parameters)
-
         return PotentialFlowAnalysis(self.model, self.project_parameters)
 
     def InitializeSolutionStep(self):

@@ -15,8 +15,6 @@ class DefineWakeProcess2D(KratosMultiphysics.Process):
         # Call the base Kratos process constructor
         KratosMultiphysics.Process.__init__(self)
 
-        print("debug - model as seen from define wake process 2d:\n", Model)
-
         # Check default settings
         default_settings = KratosMultiphysics.Parameters(r'''{
             "model_part_name": "",

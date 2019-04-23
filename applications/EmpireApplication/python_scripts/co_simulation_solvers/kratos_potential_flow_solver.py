@@ -37,7 +37,7 @@ class KratosPotentialFlowSolver(KratosBaseFieldSolver):
         if not hasattr(self, "wake_process"):
             raise Exception("potential flow requires specification of a process for the wake (currently specifically using 'define_wake_process_2d')")
 
-        self.conversion_process = ComputeForcesOnNodesProcess(self.model[self.project_parameters["solver_settings"]["ale_boundary_parts"][0]])
+        self.conversion_process = ComputeForcesOnNodesProcess(self.model[self.project_parameters["solver_settings"]["ale_boundary_parts"][0].GetString()])
 
 
 

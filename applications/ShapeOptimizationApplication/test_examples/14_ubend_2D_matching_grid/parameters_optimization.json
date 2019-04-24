@@ -5,7 +5,7 @@
             "number_of_cores"             : 12,
             "gradient_method"             : "DISCRETE_ADJOINT",
             "write_frequency_adjoint_run" : 500,
-            "residual_min_adjoint_run"    : -7,
+            "residual_min_adjoint_run"    : -10,
             "mesh_file"                   : "ubend_2d.su2",
             "mesh_motion_file"            : "mesh_motion.dat",
             "use_restart_in_adjoint_run"  : "YES",

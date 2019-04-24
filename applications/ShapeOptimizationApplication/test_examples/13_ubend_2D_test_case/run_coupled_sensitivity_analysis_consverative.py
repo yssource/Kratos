@@ -17,7 +17,6 @@ from KratosMultiphysics.ShapeOptimizationApplication import custom_variable_util
 # =================================================================================================================================================================
 # Preprocessing
 # =================================================================================================================================================================
-list_of_move_nodes = [1,6,7,65,73,173,183,248,299,316,373,377,435,453,503,538,570,598,687,771,804,832,921,1834,1890,1944,2010,3079,3455,3704,3936,4176,4544,9480]
 
 # Read parameters
 with open("parameters_optimization.json",'r') as parameter_file:
@@ -51,7 +50,7 @@ class CustomAnalyzer(AnalyzerBaseClass):
         self.csm_interface_part_name = "wet_interface"
 
         self.results_folder = "Optimization_Results"
-        self.reference_pressure = 1 #74571.25
+        self.reference_pressure = 1#74571.25
 
         self.cfd_interface_gid_output = None
         self.cfd_interface_output_parameters = km.Parameters("""
@@ -96,12 +95,12 @@ class CustomAnalyzer(AnalyzerBaseClass):
         }""")
         self.traction_mapper_settings = km.Parameters("""
         {
-            "mapper_type" : "nearest_neighbor",
+            "mapper_type" : "nearest_element",
             "echo_level"  : 0
         }""")
         self.adjoint_displacement_mapper_settings = km.Parameters("""
         {
-            "mapper_type" : "nearest_neighbor",
+            "mapper_type" : "nearest_element",
             "echo_level"  : 0
         }""")
         self.stress_response_settings = km.Parameters("""
@@ -158,49 +157,21 @@ class CustomAnalyzer(AnalyzerBaseClass):
         self.cfd_interface_part = self.cfd_part.GetSubModelPart(self.cfd_interface_part_name)
         self.cfd_wall_part = self.cfd_part.GetSubModelPart(self.cfd_wall_part_name)
 
-        # for cond in self.cfd_wall_part.Conditions:
-        #     all_nodes_beyond_limit = True
-        #     for node in cond.GetNodes():
-        #         if node.X < 0.16:
-        #             all_nodes_beyond_limit = False
-
-        #     if all_nodes_beyond_limit:
-        #         print(cond.Id)
-
-        # for node in self.cfd_wall_part.Nodes:
-        #     if node.X > 0.1599999:
-        #         print(node.Id)
-
-        # err
-
     # -------------------------------------------------------------------------------------------------------------------------------------------------------------
     def AnalyzeDesignAndReportToCommunicator(self, current_design, optimization_iteration, communicator):
         # obtain new csm mesh
         new_csm_mesh = {node.Id: [node.X, node.Y, node.Z] for node in current_design.Nodes}
 
-        # Update fluid mesh (structure is controlled by the optimization algorithm) - Note that the mapper should be based on the previos design to match the forward map in the structure
-        for node in current_design.Nodes:
-            shape_update = node.GetSolutionStepValue(kso.SHAPE_UPDATE)
-            node.X -= shape_update[0]
-            node.Y -= shape_update[1]
-            node.Z -= shape_update[2]
-            node.X0 -= shape_update[0]
-            node.Y0 -= shape_update[1]
-            node.Z0 -= shape_update[2]
+        # Update fluid mesh (structure is controlled by the optimization algorithm)
+        # Note that the mapper should be based on the previos design to match the forward map in the structure
+        # Afterwards it hwas to be updated to current design to correctly map gradients of THIS optimization iteration
+        self.__RemoveVariableFromCoordinates(kso.SHAPE_UPDATE, current_design)
 
         vm_csm2cfd_mapper = kso.MapperVertexMorphingMatrixFree(current_design, self.cfd_interface_part, parameters["optimization_settings"]["design_variables"]["filter"].Clone())
         vm_csm2cfd_mapper.Map(kso.CONTROL_POINT_UPDATE, km.MESH_DISPLACEMENT)
 
-        for node in current_design.Nodes:
-            shape_update = node.GetSolutionStepValue(kso.SHAPE_UPDATE)
-            node.X += shape_update[0]
-            node.Y += shape_update[1]
-            node.Z += shape_update[2]
-            node.X0 += shape_update[0]
-            node.Y0 += shape_update[1]
-            node.Z0 += shape_update[2]
+        self.__AddVariableToCoordinates(kso.SHAPE_UPDATE, current_design)
 
-        # Update mapper to current design to correctly map gradients of THIS optimization iteration
         vm_csm2cfd_mapper.Update()
 
         kso.MeshControllerUtilities(self.cfd_interface_part).UpdateMeshAccordingInputVariable(km.MESH_DISPLACEMENT)
@@ -214,7 +185,7 @@ class CustomAnalyzer(AnalyzerBaseClass):
             previos_iteration = int(optimization_iteration-1)
             self.interface_su2.WriteNodesAsSU2MeshMotionFile(self.cfd_wall_part.GetNodes(),"DESIGNS/DSN_"+str(previos_iteration).zfill(3))
 
-        # Run fluid
+        # Evaluate fluid
         if communicator.isRequestingValueOf("pressure_loss"):
             update_mesh = True
             [value] = self.interface_su2.ComputeValues(["SURFACE_TOTAL_PRESSURE"], update_mesh, optimization_iteration)
@@ -223,16 +194,79 @@ class CustomAnalyzer(AnalyzerBaseClass):
         if communicator.isRequestingGradientOf("pressure_loss"):
             update_mesh = False
             [gradient] = self.interface_su2.ComputeGradient(["SURFACE_TOTAL_PRESSURE"], update_mesh, optimization_iteration)
-
-            # Map and filter gradient at the same time --> this requires to switch off filtering in algorithm
             cvu.WriteDictionaryDataOnNodalVariable(gradient, self.cfd_part, kso.DF1DX)
+
             vm_csm2cfd_mapper.InverseMap(kso.DF1DX,kso.DF1DX_MAPPED)
 
             dummy_gradient = {node.Id: [0,0,0] for node in current_design.Nodes}
             communicator.reportGradient("pressure_loss", dummy_gradient)
 
-        # Read and dimensionalize fluid results
-        file_with_pressures = "DESIGNS/DSN_"+str(optimization_iteration).zfill(3)+"/DIRECT/"+self.SURFACE_FLOW_FILENAME+".csv"
+        # Evaluate structure
+        if communicator.isRequestingValueOf("mean_stress") or communicator.isRequestingGradientOf("mean_stress"):
+            # Process fluid results
+            self.__ReadAndDimensionalizeFluidResults(opt_itr=optimization_iteration)
+
+            # Run CSM
+            displacements, adjoint_displacements, value, csm_gradients = self.__RunCSM(opt_itr=optimization_iteration, new_mesh=new_csm_mesh, displacements={})
+            communicator.reportValue("mean_stress", value)
+
+            if communicator.isRequestingGradientOf("mean_stress"):
+                # Map csm gradients
+                cvu.WriteDictionaryDataOnNodalVariable(csm_gradients, current_design, kso.CSM_GRADIENT)
+                vm_csm2csm_mapper = kso.MapperVertexMorphingMatrixFree(current_design, current_design, parameters["optimization_settings"]["design_variables"]["filter"].Clone())
+                vm_csm2csm_mapper.InverseMap(kso.CSM_GRADIENT,kso.CSM_GRADIENT_MAPPED)
+
+                # Run another adjoint fluid force analysis using the adjoint displacement as input
+                update_mesh = False
+                self.__ReplaceAdjointDisplacementInSU2RestartFile(adjoint_displacements, optimization_iteration)
+                [drag_gradients] = self.interface_su2.ComputeGradient(["DRAG"], update_mesh, optimization_iteration)
+
+                # Also dimensionalize cfd gradient as CFD is non-dimensional)
+                drag_gradients = {key: [self.reference_pressure*value[0],self.reference_pressure*value[1],self.reference_pressure*value[2]] for key, value in drag_gradients.items()}
+                cvu.WriteDictionaryDataOnNodalVariable(drag_gradients, self.cfd_part, kso.CFD_GRADIENT)
+
+                vm_csm2cfd_mapper.InverseMap(kso.CFD_GRADIENT,kso.CFD_GRADIENT_MAPPED)
+
+                self.__OutputCFDInterface(optimization_iteration)
+
+                # Combine stress sensitivity parts
+                for node in current_design.Nodes:
+                    cfd_sens = node.GetSolutionStepValue(kso.CFD_GRADIENT_MAPPED)
+                    csm_sens = node.GetSolutionStepValue(kso.CSM_GRADIENT_MAPPED)
+                    combined = [cfd_sens[0]+csm_sens[0], cfd_sens[1]+csm_sens[1], cfd_sens[2]+csm_sens[2]]
+                    node.SetSolutionStepValue(kso.DC1DX_MAPPED, combined)
+
+                # Report dummy value (actual gradient is computed in analyzer here)
+                dummy_gradient = {node.Id: [0,0,0] for node in current_design.Nodes}
+                communicator.reportGradient("mean_stress", dummy_gradient)
+
+    # -------------------------------------------------------------------------------------------------------------------------------------------------------------
+    @staticmethod
+    def __RemoveVariableFromCoordinates(variable, model_part):
+        for node in model_part.Nodes:
+            shape_update = node.GetSolutionStepValue(variable)
+            node.X -= shape_update[0]
+            node.Y -= shape_update[1]
+            node.Z -= shape_update[2]
+            node.X0 -= shape_update[0]
+            node.Y0 -= shape_update[1]
+            node.Z0 -= shape_update[2]
+
+    # -------------------------------------------------------------------------------------------------------------------------------------------------------------
+    @staticmethod
+    def __AddVariableToCoordinates(variable, model_part):
+        for node in model_part.Nodes:
+            shape_update = node.GetSolutionStepValue(variable)
+            node.X += shape_update[0]
+            node.Y += shape_update[1]
+            node.Z += shape_update[2]
+            node.X0 += shape_update[0]
+            node.Y0 += shape_update[1]
+            node.Z0 += shape_update[2]
+
+    # -------------------------------------------------------------------------------------------------------------------------------------------------------------
+    def __ReadAndDimensionalizeFluidResults(self, opt_itr):
+        file_with_pressures = "DESIGNS/DSN_"+str(opt_itr).zfill(3)+"/DIRECT/"+self.SURFACE_FLOW_FILENAME+".csv"
         if self.interface_su2.su2_mesh_data["NDIME"] == 2:
             nodal_forces = self.interface_su2.ReadNodalValuesFromCSVFile(file_with_pressures,0,[5,6],1)
             nodal_forces = {key: [value[0],value[1],0.0] for key, value in nodal_forces.items()}
@@ -250,44 +284,6 @@ class CustomAnalyzer(AnalyzerBaseClass):
             traction = nodal_force_densities[node.Id]
             dimensional_traction = [value*self.reference_pressure for value in traction]
             node.SetSolutionStepValue(kso.TRACTION, dimensional_traction)
-
-        # Run CSM
-        displacements, adjoint_displacements, value, csm_gradients = self.__RunCSM(opt_itr=optimization_iteration, new_mesh=new_csm_mesh, displacements={})
-
-        # Map csm gradients
-        cvu.WriteDictionaryDataOnNodalVariable(csm_gradients, current_design, kso.CSM_GRADIENT)
-        vm_csm2csm_mapper = kso.MapperVertexMorphingMatrixFree(current_design, current_design, parameters["optimization_settings"]["design_variables"]["filter"].Clone())
-        vm_csm2csm_mapper.InverseMap(kso.CSM_GRADIENT,kso.CSM_GRADIENT_MAPPED)
-
-        # Run another adjoint fluid force analysis using the adjoint displacement as input
-        update_mesh = False
-        self.__ReplaceAdjointDisplacementInSU2RestartFile(adjoint_displacements, optimization_iteration)
-        [drag_gradients] = self.interface_su2.ComputeGradient(["DRAG"], update_mesh, optimization_iteration)
-
-        # dimensionalize gradient again
-        drag_gradients = {key: [self.reference_pressure*value[0],self.reference_pressure*value[1],self.reference_pressure*value[2]] for key, value in drag_gradients.items()}
-
-        # map cfd gradients to csm
-        cvu.WriteDictionaryDataOnNodalVariable(drag_gradients, self.cfd_part, kso.CFD_GRADIENT)
-        vm_csm2cfd_mapper.InverseMap(kso.CFD_GRADIENT,kso.CFD_GRADIENT_MAPPED)
-
-        # Combine stress sensitivity parts
-        for node in current_design.Nodes:
-            cfd_sens = node.GetSolutionStepValue(kso.CFD_GRADIENT_MAPPED)
-            csm_sens = node.GetSolutionStepValue(kso.CSM_GRADIENT_MAPPED)
-            combined = [cfd_sens[0]+csm_sens[0], cfd_sens[1]+csm_sens[1], cfd_sens[2]+csm_sens[2]]
-            node.SetSolutionStepValue(kso.DC1DX_MAPPED, combined)
-
-        # Some postprocessing
-        self.__PrintGradientOFSpecifiedNodes(current_design)
-        self.__OutputCFDInterface(optimization_iteration)
-
-        if communicator.isRequestingValueOf("mean_stress"):
-            communicator.reportValue("mean_stress", value)
-
-        if communicator.isRequestingGradientOf("mean_stress"):
-            dummy_gradient = {node.Id: [0,0,0] for node in current_design.Nodes}
-            communicator.reportGradient("mean_stress", dummy_gradient)
 
     # -------------------------------------------------------------------------------------------------------------------------------------------------------------
     def __RunCSM(self, opt_itr, new_mesh, displacements):
@@ -335,16 +331,14 @@ class CustomAnalyzer(AnalyzerBaseClass):
 
             # Map forces
             csm_interface_part = csm_primal_part.GetSubModelPart(self.csm_interface_part_name)
+            csm_interface_part.ProcessInfo.SetValue(km.DOMAIN_SIZE,2)
             kso.GeometryUtilities(csm_interface_part).ComputeUnitSurfaceNormals()
+            csm_interface_part.ProcessInfo.SetValue(km.DOMAIN_SIZE,3)
 
-            cfd_to_csm_mapper = kma.MapperFactory.CreateMapper(self.cfd_interface_part, csm_interface_part, self.traction_mapper_settings.Clone())
-            cfd_to_csm_mapper.Map(kcsm.POINT_LOAD, kcsm.POINT_LOAD)
+            cfd_to_csm_mapper = kma.MapperFactory.CreateMapper(csm_interface_part, self.cfd_interface_part, self.traction_mapper_settings.Clone())
+            cfd_to_csm_mapper.InverseMap(kcsm.POINT_LOAD, kcsm.POINT_LOAD, kma.Mapper.USE_TRANSPOSE)
 
-            for node in csm_interface_part.Nodes:
-                if node.Z > 0:
-                    node.SetSolutionStepValue(kcsm.POINT_LOAD, [0,0,0])
-
-            # # Apply forces
+            # Apply forces
             # for node_i in csm_interface_part.Nodes:
             #     normal = node_i.GetSolutionStepValue(km.NORMAL)
             #     area = math.sqrt( normal[0]**2+normal[1]**2+normal[2]**2 )
@@ -376,9 +370,9 @@ class CustomAnalyzer(AnalyzerBaseClass):
 
         # Map adjoint displacements to cfd side
         csm_adjoint_interface_part = csm_adjoint_part.GetSubModelPart(self.csm_interface_part_name)
-        cfd_to_csm_mapper = kma.MapperFactory.CreateMapper(self.cfd_interface_part, csm_adjoint_interface_part, self.adjoint_displacement_mapper_settings.Clone())
-        cfd_to_csm_mapper.InverseMap(kcsm.ADJOINT_DISPLACEMENT, kcsm.ADJOINT_DISPLACEMENT)
-
+        cfd_to_csm_mapper = kma.MapperFactory.CreateMapper(csm_adjoint_interface_part, self.cfd_interface_part, self.adjoint_displacement_mapper_settings.Clone())
+        # cfd_to_csm_mapper.InverseMap(kcsm.ADJOINT_DISPLACEMENT, kcsm.ADJOINT_DISPLACEMENT, kma.Mapper.USE_TRANSPOSE) #Actually this is correct, but it leads to unexpected osciallations on CFD side --> approximation: mapping using consistent mapping matrix
+        cfd_to_csm_mapper.Map(kcsm.ADJOINT_DISPLACEMENT, kcsm.ADJOINT_DISPLACEMENT)
         adjoint_displacements = {node.Id: node.GetSolutionStepValue(kcsm.ADJOINT_DISPLACEMENT) for node in self.cfd_interface_part.Nodes}
 
         # Some postprocessing
@@ -458,14 +452,10 @@ class CustomAnalyzer(AnalyzerBaseClass):
         os.rename(old_name,new_name)
         shutil.move(new_name, self.results_folder)
 
-    def __PrintGradientOFSpecifiedNodes(self, mdpa_with_gradient_data):
-        print("> Gradients for specified nodes: [Node Id, DC1DX_MAPPED, CFD_GRADIENT_MAPPED, CSM_GRADIENT_MAPPED]")
-        for node in mdpa_with_gradient_data.Nodes:
-            if node.Id in list_of_move_nodes:
-                grad = node.GetSolutionStepValue(kso.DC1DX_MAPPED)
-                cfd_part = node.GetSolutionStepValue(kso.CFD_GRADIENT_MAPPED)
-                csm_part = node.GetSolutionStepValue(kso.CSM_GRADIENT_MAPPED)
-                print(str(node.Id)+","+str(grad[0])+","+str(grad[1])+","+str(grad[2])+","+str(cfd_part[0])+","+str(cfd_part[1])+","+str(cfd_part[2])+","+str(csm_part[0])+","+str(csm_part[1])+","+str(csm_part[2])+",")
+    # -------------------------------------------------------------------------------------------------------------------------------------------------------------
+    def __CopyFileUnderNewNameToResultsFolder(self, filename, new_name):
+        os.rename(filename,new_name)
+        shutil.move(new_name, self.results_folder)
 
     # -------------------------------------------------------------------------------------------------------------------------------------------------------------
     @staticmethod

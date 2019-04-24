@@ -16,9 +16,9 @@ from KratosMultiphysics.ShapeOptimizationApplication import custom_variable_util
 # Parameters
 # =================================================================================================================================================================
 # verification parameters
-fd_start_level = 0
-fd_end_level = 10
-list_of_move_nodes = [2114]
+fd_start_level = 1
+fd_end_level = 8
+list_of_move_nodes = [1,6,7,65,73,173,183,248,299,316,373,377,435,453,503,538,570,598,687,771,804,832,921,1834,1890,1944,2010,3079,3455,3704,3936,4176,4544,9480]
 
 # analysis parameter
 cfd_part_name = "ubend_2d"
@@ -296,9 +296,13 @@ class CustomAnalyzer(AnalyzerBaseClass):
 # =================================================================================================================================================================
 # Perform verification
 # =================================================================================================================================================================
-# =================================================================================================================================================================
-# Perform verification
-# =================================================================================================================================================================
+print("\n> Delete old results? Press enter if yes. Cancel if no.")
+input()
+
+filename = "fd_results.txt"
+file_to_write = open(filename,"w")
+file_to_write.close()
+
 for move_node_id in list_of_move_nodes:
     # Compute reference
     print("\n\n##########################################################################")
@@ -322,7 +326,6 @@ for move_node_id in list_of_move_nodes:
     shutil.copy("restart_flow.dat", case_dir+"/")
     shutil.copy("ubend_coarse.cfg", case_dir+"/")
     shutil.copy("ubend_2d.su2", case_dir+"/")
-    shutil.copy("su2_mesh_data.json", case_dir+"/")
 
     # Change to case directory
     top_dir = os.getcwd()
@@ -354,7 +357,9 @@ for move_node_id in list_of_move_nodes:
     # Change back to top dir and save results
     os.chdir(top_dir)
 
-    with open("fd_results_move_node_"+str(move_node_id)+".txt",'w') as results_file:
+    with open(filename,'a') as results_file:
+        results_file.write("##############################################\n")
+        results_file.write("move_node_id = "+str(move_node_id)+"\n")
         results_file.write("cfd_reference_value = "+str(cfd_response_value_reference)+"\n")
         results_file.write("csm_reference_value = "+str(csm_response_value_reference)+"\n")
         results_file.write("---\n")
@@ -393,7 +398,7 @@ for move_node_id in list_of_move_nodes:
             shutil.copy("restart_flow.dat", case_dir+"/")
             shutil.copy("ubend_coarse.cfg", case_dir+"/")
             shutil.copy("ubend_2d.su2", case_dir+"/")
-            shutil.copy("su2_mesh_data.json", case_dir+"/")
+            shutil.copy("tmp_calculation_reference/su2_mesh_data.json", case_dir+"/")
 
             # Change to case directory
             top_dir = os.getcwd()
@@ -448,7 +453,7 @@ for move_node_id in list_of_move_nodes:
             os.chdir(top_dir)
 
         # Write results
-        with open("fd_results_move_node_"+str(move_node_id)+".txt",'a') as results_file:
+        with open(filename,'a') as results_file:
             results_file.write(str(current_delta)+","+str(cfd_grad_x)+","+str(cfd_grad_y)+","+str(csm_grad_x)+","+str(csm_grad_y)+","+str(time.ctime())+"\n")
 
     print("\n\n##########################################################################")

@@ -18,7 +18,7 @@ from KratosMultiphysics.ShapeOptimizationApplication import custom_variable_util
 # verification parameters
 fd_start_level = 4
 fd_end_level = 15
-list_of_test_nodes = [3679]
+list_of_test_nodes = [3679, 6050, 7882, 9148]
 
 csm_point_load_filename = "csm_point_load_baseline_non_dimensional.txt"
 
@@ -164,11 +164,20 @@ class CustomAnalyzer(AnalyzerBaseClass):
 # =================================================================================================================================================================
 # Perform verification
 # =================================================================================================================================================================
+print("\n> Delete old results? Press enter if yes. Cancel if no.")
+input()
+
+filename = "fd_semianalytic_csm_gradient_test.txt"
+file_to_write = open(filename,"w")
+file_to_write.close()
+
 start_time = time.time()
 
 for test_node_id in list_of_test_nodes:
-    with open("fd_semianalytic_csm_gradient_test_node_"+str(test_node_id)+".txt",'w') as results_file:
-        results_file.write("step_size,csm_gradient_x,csm_gradient_y,time\n")
+    with open(filename,'a') as results_file:
+        results_file.write("##############################################\n")
+        results_file.write("test_node_id = "+str(test_node_id)+"\n")
+        results_file.write("step_size,csm_gradient_x,csm_gradient_y,csm_gradient_z,time\n")
 
     # Compute pertubation
     for itr in range(fd_start_level,fd_end_level+1):
@@ -239,8 +248,8 @@ for test_node_id in list_of_test_nodes:
         os.chdir(top_dir)
 
         # Write results
-        with open("fd_semianalytic_csm_gradient_test_node_"+str(test_node_id)+".txt",'a') as results_file:
-            results_file.write(str(current_delta)+","+str(csm_grad_of_test_node[0])+","+str(csm_grad_of_test_node[1])+","+str(time.ctime())+"\n")
+        with open(filename,'a') as results_file:
+            results_file.write(str(current_delta)+","+str(csm_grad_of_test_node[0])+","+str(csm_grad_of_test_node[1])+","+str(csm_grad_of_test_node[2])+","+str(time.ctime())+"\n")
 
 print("\n\n##########################################################################")
 print("> Finished verifiation process in" ,round( time.time()-start_time, 3 ), " s.")

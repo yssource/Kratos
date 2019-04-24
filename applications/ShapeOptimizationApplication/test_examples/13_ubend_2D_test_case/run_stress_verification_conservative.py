@@ -269,17 +269,17 @@ class CustomAnalyzer(AnalyzerBaseClass):
         kso.GeometryUtilities(csm_interface_part).ComputeUnitSurfaceNormals()
         csm_interface_part.ProcessInfo.SetValue(km.DOMAIN_SIZE,3)
 
-        cfd_to_csm_mapper = kma.MapperFactory.CreateMapper(self.cfd_interface_part, csm_interface_part, traction_mapper_settings.Clone())
-        cfd_to_csm_mapper.Map(kso.TRACTION, kso.TRACTION)
+        cfd_to_csm_mapper = kma.MapperFactory.CreateMapper(csm_interface_part, self.cfd_interface_part, traction_mapper_settings.Clone())
+        cfd_to_csm_mapper.InverseMap(kcsm.POINT_LOAD, kcsm.POINT_LOAD, kma.Mapper.USE_TRANSPOSE)
 
         # Apply forces
-        for node_i in csm_interface_part.Nodes:
-            normal = node_i.GetSolutionStepValue(km.NORMAL)
-            area = math.sqrt( normal[0]**2+normal[1]**2+normal[2]**2 )
-            traction = node_i.GetSolutionStepValue(kso.TRACTION)
-            force = [value*area for value in traction]
-            node_i.SetSolutionStepValue(kso.TRACTION, traction)
-            node_i.SetSolutionStepValue(kcsm.POINT_LOAD, force)
+        # for node_i in csm_interface_part.Nodes:
+        #     normal = node_i.GetSolutionStepValue(km.NORMAL)
+        #     area = math.sqrt( normal[0]**2+normal[1]**2+normal[2]**2 )
+        #     traction = node_i.GetSolutionStepValue(kso.TRACTION)
+        #     force = [value*area for value in traction]
+        #     node_i.SetSolutionStepValue(kso.TRACTION, traction)
+        #     node_i.SetSolutionStepValue(kcsm.POINT_LOAD, force)
 
         # Compute primals
         csm.InitializeSolutionStep()

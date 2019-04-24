@@ -26,10 +26,22 @@ def CreateMapper(origin_model_part, destination_model_part, mapper_settings):
         "consistent_mapping"         : false,
         "improved_integration"       : false,
         "integration_method"         : "gauss_integration",
-        "number_of_gauss_points"     : 5
+        "number_of_gauss_points"     : 5,
+        "use_empire"                 : false,
+        "empire_settings"            : {}
     }""")
 
-    mapper_settings.RecursivelyValidateAndAssignDefaults(default_settings)
+    mapper_settings.ValidateAndAssignDefaults(default_settings)
+
+    if mapper_settings["use_empire"].GetBool():
+        import empire_mapper
+        mapper_type = mapper_settings["empire_settings"]["mapper_type"].GetString()
+        if mapper_type == "VertexMorphing":
+            return empire_mapper.EmpireVertexMorphingMapper(origin_model_part, destination_model_part, mapper_settings)
+        elif mapper_type == "FEMortar":
+            return empire_mapper.EmpireFEMortarMapper(origin_model_part, destination_model_part, mapper_settings)
+        else:
+            raise RuntimeError("Unknown empire mapper type:", mapper_type)
 
     if mapper_settings["matrix_free_filtering"].GetBool():
         if mapper_settings["consistent_mapping"].GetBool():

@@ -134,28 +134,9 @@ namespace Kratos {
 	    /**
 	     * Checks the body fitted drag computation utility.
 	     */
-	    KRATOS_TEST_CASE_IN_SUITE(RANSAdjointTest1, StabilizedAdjointUtilsTestSuite)
+	    KRATOS_TEST_CASE_IN_SUITE(RANSTurbulentKinematicViscosityDerivatives, StabilizedAdjointUtilsTestSuite)
 		{
             // // Create a test element inside a modelpart
-            // Model model;
-            // ModelPart& model_part = model.CreateModelPart("Main", 3);
-            // GenerateTestModelPart(model_part);
-            // Element::Pointer p_element = model_part.pGetElement(1);
-
-            // // Initialize the fluid element
-            // p_element->Initialize();
-
-            // // Set the reaction values manually. Note that the body fitted drag utilities assume
-            // // that the REACTION has been already computed. Since this is assumed to be done by
-            // // the builder and solver, which is out of the scope of this test, we do it manually.
-            // model_part.GetNode(1).FastGetSolutionStepValue(REACTION_X) = 5.0;
-            // model_part.GetNode(1).FastGetSolutionStepValue(REACTION_Y) = 10.0;
-            // model_part.GetNode(2).FastGetSolutionStepValue(REACTION_X) = -20.0;
-            // model_part.GetNode(2).FastGetSolutionStepValue(REACTION_Y) = -40.0;
-
-            // // Call the body fitted drag utility
-            // DragUtilities drag_utilities;
-            // array_1d<double, 3> drag_force = drag_utilities.CalculateBodyFittedDrag(model_part.GetSubModelPart("DragModelPart"));
 
             // // Check computed values
             // KRATOS_CHECK_NEAR(drag_force[0], 15.0, 1e-6);

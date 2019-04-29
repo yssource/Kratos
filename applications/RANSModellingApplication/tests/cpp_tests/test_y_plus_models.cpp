@@ -12,147 +12,141 @@
 //
 
 // System includes
-#include <set>
 
 // External includes
 
 // Project includes
-#include "testing/testing.h"
 #include "containers/model.h"
-#include "includes/model_part.h"
-#include "rans_modelling_application_variables.h"
-#include "custom_utilities/rans_calculation_utilities.h"
 #include "custom_processes/y_plus_model_processes/rans_logarithmic_y_plus_model_process.h"
 #include "custom_processes/y_plus_model_processes/rans_logarithmic_y_plus_model_sensitivities_process.h"
-
+#include "includes/model_part.h"
+#include "rans_modelling_application_variables.h"
+#include "testing/testing.h"
 
 // Application includes
 
+namespace Kratos
+{
+namespace Testing
+{
+typedef ModelPart::NodeType NodeType;
 
-namespace Kratos {
-	namespace Testing {
+typedef ModelPart::ElementType ElementType;
 
-        typedef ModelPart::NodeType                       NodeType;
+typedef Geometry<NodeType> GeometryType;
 
-        typedef ModelPart::ElementType                    ElementType;
+typedef GeometryType::ShapeFunctionsGradientsType ShapeFunctionDerivativesArrayType;
 
-        typedef Geometry<NodeType>                        GeometryType;
+/**
+ * Auxiliar function to generate a triangular element to be tested.
+ */
+void GenerateTestModelPart(ModelPart& rModelPart)
+{
+    // Set buffer size
+    rModelPart.SetBufferSize(2);
 
-        typedef GeometryType::ShapeFunctionsGradientsType ShapeFunctionDerivativesArrayType;
+    // Variables addition
+    rModelPart.AddNodalSolutionStepVariable(DISTANCE);
+    rModelPart.AddNodalSolutionStepVariable(VELOCITY);
+    rModelPart.AddNodalSolutionStepVariable(KINEMATIC_VISCOSITY);
+    rModelPart.AddNodalSolutionStepVariable(RANS_Y_PLUS);
 
-        /**
-	     * Auxiliar function to generate a triangular element to be tested.
-	     */
-        void GenerateTestModelPart(
-            ModelPart& rModelPart) {
+    // Process info creation
+    rModelPart.GetProcessInfo().SetValue(DOMAIN_SIZE, 2);
 
-            // Set buffer size
-            rModelPart.SetBufferSize(2);
+    // Set the element properties
+    Properties::Pointer p_elem_prop = rModelPart.CreateNewProperties(0);
+    p_elem_prop->SetValue(KINEMATIC_VISCOSITY, 3.0e-02);
 
-            // Variables addition
-            rModelPart.AddNodalSolutionStepVariable(DISTANCE);
-            rModelPart.AddNodalSolutionStepVariable(VELOCITY);
-            rModelPart.AddNodalSolutionStepVariable(KINEMATIC_VISCOSITY);
-            rModelPart.AddNodalSolutionStepVariable(RANS_Y_PLUS);
+    // Element creation
+    rModelPart.CreateNewNode(1, 0.0, 0.0, 0.0);
+    rModelPart.CreateNewNode(2, 1.0, 0.0, 0.0);
+    rModelPart.CreateNewNode(3, 0.0, 1.0, 0.0);
+    std::vector<ModelPart::IndexType> elem_nodes{1, 2, 3};
+    rModelPart.CreateNewElement("RANSEVMK2D3N", 1, elem_nodes, p_elem_prop);
 
-            // Process info creation
-            rModelPart.GetProcessInfo().SetValue(DOMAIN_SIZE, 2);
+    // Set the VELOCITY and PRESSURE nodal values
+    array_1d<double, 3> v_1 = ZeroVector(3);
+    array_1d<double, 3> v_2 = ZeroVector(3);
+    array_1d<double, 3> v_3 = ZeroVector(3);
+    v_1[0] = 10.0;
+    v_1[1] = 20.0;
+    v_2[0] = 1000.0;
+    v_2[1] = 500.0;
+    v_3[0] = 30.0;
+    v_3[1] = 20.0;
+    (rModelPart.GetNode(1)).GetSolutionStepValue(VELOCITY) = v_1;
+    (rModelPart.GetNode(2)).GetSolutionStepValue(VELOCITY) = v_2;
+    (rModelPart.GetNode(3)).GetSolutionStepValue(VELOCITY) = v_3;
 
-            // Set the element properties
-            Properties::Pointer p_elem_prop = rModelPart.CreateNewProperties(0);
-            p_elem_prop->SetValue(KINEMATIC_VISCOSITY, 3.0e-02);
+    (rModelPart.GetNode(1)).GetSolutionStepValue(DISTANCE) = 0.01;
+    (rModelPart.GetNode(2)).GetSolutionStepValue(DISTANCE) = 0.02;
+    (rModelPart.GetNode(3)).GetSolutionStepValue(DISTANCE) = 0.05;
 
-            // Element creation
-            rModelPart.CreateNewNode(1, 0.0, 0.0, 0.0);
-            rModelPart.CreateNewNode(2, 1.0, 0.0, 0.0);
-            rModelPart.CreateNewNode(3, 0.0, 1.0, 0.0);
-            std::vector<ModelPart::IndexType> elem_nodes {1, 2, 3};
-            rModelPart.CreateNewElement("RANSEVMK2D3N", 1, elem_nodes, p_elem_prop);
+    // Set the DENSITY and DYNAMIC_VISCOSITY nodal values
+    for (ModelPart::NodeIterator it_node = rModelPart.NodesBegin();
+         it_node < rModelPart.NodesEnd(); ++it_node)
+    {
+        it_node->FastGetSolutionStepValue(KINEMATIC_VISCOSITY) =
+            p_elem_prop->GetValue(KINEMATIC_VISCOSITY);
+    }
+}
 
-            // Set the VELOCITY and PRESSURE nodal values
-            array_1d<double, 3> v_1 = ZeroVector(3);
-            array_1d<double, 3> v_2 = ZeroVector(3);
-            array_1d<double, 3> v_3 = ZeroVector(3);
-            v_1[0] = 10.0;
-            v_2[0] = 1000.0;
-            v_3[0] = 30.0;
-            v_3[1] = 20.0;
-            (rModelPart.GetNode(1)).GetSolutionStepValue(VELOCITY) = v_1;
-            (rModelPart.GetNode(2)).GetSolutionStepValue(VELOCITY) = v_2;
-            (rModelPart.GetNode(3)).GetSolutionStepValue(VELOCITY) = v_3;
+/**
+ * Checks the RANSYPlusModelLogarithmic process.
+ */
+KRATOS_TEST_CASE_IN_SUITE(RansLogarithmicYPlusModelProcess, RANSYPlusModels)
+{
+    Model model;
+    ModelPart& r_model_part =
+        model.CreateModelPart("RANSYPlusModelLogarithmic");
+    GenerateTestModelPart(r_model_part);
 
-            (rModelPart.GetNode(1)).GetSolutionStepValue(DISTANCE) = 0.01;
-            (rModelPart.GetNode(2)).GetSolutionStepValue(DISTANCE) = 0.02;
-            (rModelPart.GetNode(3)).GetSolutionStepValue(DISTANCE) = 0.05;
+    Parameters empty_parameters = Parameters(R"({})");
 
-            // Set the DENSITY and DYNAMIC_VISCOSITY nodal values
-            for (ModelPart::NodeIterator it_node = rModelPart.NodesBegin(); it_node < rModelPart.NodesEnd(); ++it_node){
-                it_node->FastGetSolutionStepValue(KINEMATIC_VISCOSITY) = p_elem_prop->GetValue(KINEMATIC_VISCOSITY);
-            }
-        }
+    RansLogarithmicYPlusModelSensitivitiesProcess adjoint_process(r_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess primal_process(r_model_part, empty_parameters);
 
-	    /**
-	     * Checks the RANSYPlusModelLogarithmic process.
-	     */
-	    KRATOS_TEST_CASE_IN_SUITE(RansLogarithmicYPlusModelProcess, RANSYPlusModels)
-		{
-            Model model;
-            ModelPart& r_model_part = model.CreateModelPart("RANSYPlusModelLogarithmic");
-            GenerateTestModelPart(r_model_part);
+    auto& r_element = *r_model_part.ElementsBegin();
+    auto& r_geometry = r_element.GetGeometry();
 
-            Parameters empty_parameters = Parameters(R"({})");
+    // Calculate finite difference values
 
-            RansLogarithmicYPlusModelSensitivitiesProcess adjoint_process(r_model_part, empty_parameters);
-            RansLogarithmicYPlusModelProcess primal_process(r_model_part, empty_parameters);
+    // Calculate initial y_plus values
+    primal_process.Check();
+    primal_process.Execute();
 
-            auto& r_element = *r_model_part.ElementsBegin();
-            auto& r_geometry = r_element.GetGeometry();
+    // Calculate adjoint values
+    adjoint_process.Check();
+    adjoint_process.Execute();
+    Matrix& r_adjoint_values = r_element.GetValue(RANS_Y_PLUS_SENSITIVITIES);
 
-            // Calculate finite difference values
+    const int domain_size = r_model_part.GetProcessInfo()[DOMAIN_SIZE];
+    const int number_of_nodes = r_model_part.NumberOfNodes();
 
-            // Calculate initial y_plus values
-            RansCalculationUtilities rans_calculation_utilities;
-            primal_process.Check();
+    const double epsilon = 1e-8;
+    primal_process.Execute();
+    std::vector<double> y_plus_0(number_of_nodes);
+
+    for (int i_node = 0; i_node < number_of_nodes; ++i_node)
+        y_plus_0[i_node] = r_geometry[i_node].FastGetSolutionStepValue(RANS_Y_PLUS);
+
+    for (int i_node = 0; i_node < number_of_nodes; ++i_node)
+    {
+        for (int i_dim = 0; i_dim < domain_size; ++i_dim)
+        {
+            array_1d<double, 3>& r_velocity =
+                r_geometry[i_node].FastGetSolutionStepValue(VELOCITY);
+            r_velocity[i_dim] += epsilon;
             primal_process.Execute();
+            const double y_plus = r_geometry[i_node].FastGetSolutionStepValue(RANS_Y_PLUS);
+            const double y_plus_sensitivity = (y_plus - y_plus_0[i_node]) / epsilon;
+            r_velocity[i_dim] -= epsilon;
 
-
-            // Calculate adjoint values
-            adjoint_process.Check();
-            adjoint_process.Execute();
-            const std::vector<Matrix>& r_adjoint_values = r_element.GetValue(RANS_Y_PLUS_SENSITIVITIES);
-
-
-            const int domain_size = r_model_part.GetProcessInfo()[DOMAIN_SIZE];
-            const int number_of_nodes = r_model_part.NumberOfNodes();
-
-            Vector gauss_weights;
-            Matrix shape_functions;
-            ShapeFunctionDerivativesArrayType shape_derivatives;
-            rans_calculation_utilities.CalculateGeometryData(r_geometry, r_element.GetIntegrationMethod(), gauss_weights, shape_functions, shape_derivatives);
-            const int num_gauss_points = gauss_weights.size();
-
-            const double epsilon = 1e-8;
-            for (int g = 0; g < num_gauss_points; ++g)
-            {
-                const Vector& gauss_shape_functions = row(shape_functions, g);
-                primal_process.Execute();
-                const double y_plus_0 = rans_calculation_utilities.EvaluateInPoint(r_geometry, RANS_Y_PLUS, gauss_shape_functions);
-
-                for (int i_node = 0; i_node < number_of_nodes; ++i_node)
-                {
-                    for (int i_dim = 0; i_dim < domain_size; ++i_dim)
-                    {
-                        array_1d<double, 3>& r_velocity = r_geometry[i_node].FastGetSolutionStepValue(VELOCITY);
-                        r_velocity[i_dim] += epsilon;
-                        primal_process.Execute();
-                        const double y_plus = rans_calculation_utilities.EvaluateInPoint(r_geometry, RANS_Y_PLUS, gauss_shape_functions);
-                        const double y_plus_sensitivity = (y_plus - y_plus_0) / epsilon;
-                        r_velocity[i_dim] -= epsilon;
-
-                        KRATOS_CHECK_NEAR(r_adjoint_values[g](i_node, i_dim), y_plus_sensitivity, 1e-6);
-                    }
-                }
-            }
-	    }
-    } // namespace Testing
-}  // namespace Kratos.
+            KRATOS_CHECK_NEAR(r_adjoint_values(i_node, i_dim), y_plus_sensitivity, 1e-6);
+            KRATOS_CHECK_NOT_EQUAL(y_plus_sensitivity, 0.0);
+        }
+    }
+}
+} // namespace Testing
+} // namespace Kratos.

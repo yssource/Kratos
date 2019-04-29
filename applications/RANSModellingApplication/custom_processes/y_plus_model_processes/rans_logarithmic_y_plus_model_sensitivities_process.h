@@ -19,8 +19,6 @@
 // External includes
 
 // Project includes
-#include "custom_utilities/rans_calculation_utilities.h"
-#include "custom_utilities/rans_variable_utils.h"
 #include "includes/cfd_variables.h"
 #include "includes/checks.h"
 #include "includes/define.h"
@@ -164,8 +162,6 @@ public:
 
         const double inv_kappa = 1.0 / mVonKarman;
 
-        RansCalculationUtilities rans_calculation_utilities;
-
 #pragma omp parallel for
         for (int i_element = 0; i_element < number_of_elements; ++i_element)
         {
@@ -173,18 +169,7 @@ public:
             GeometryType& r_geometry = r_element.GetGeometry();
             const int number_of_nodes = r_geometry.PointsNumber();
 
-            // Get Shape function data
-            Vector gauss_weights;
-            Matrix shape_functions;
-            ShapeFunctionDerivativesArrayType shape_derivatives;
-            rans_calculation_utilities.CalculateGeometryData(
-                r_geometry, r_element.GetIntegrationMethod(), gauss_weights,
-                shape_functions, shape_derivatives);
-            const int num_gauss_points = gauss_weights.size();
-
-            std::vector<Matrix> r_adjoint_y_plus_matrix(num_gauss_points);
-            for (int g = 0; g < num_gauss_points; ++g)
-                r_adjoint_y_plus_matrix[g].resize(number_of_nodes, domain_size);
+            Matrix r_adjoint_y_plus_matrix(number_of_nodes, domain_size);
 
             for (int i_node = 0; i_node < number_of_nodes; ++i_node)
             {
@@ -208,19 +193,10 @@ public:
                 {
                     value = 1.0 / (2.0 * y_plus);
                 }
-
-                for (int g = 0; g < num_gauss_points; ++g)
+                for (int i_dim = 0; i_dim < domain_size; ++i_dim)
                 {
-                    const Vector& gauss_shape_functions = row(shape_functions, g);
-
-                    Matrix& r_matrix = r_adjoint_y_plus_matrix[g];
-
-                    for (int i_dim = 0; i_dim < domain_size; ++i_dim)
-                    {
-                        r_matrix(i_node, i_dim) =
-                            gauss_shape_functions[i_node] * (wall_distance / nu) *
-                            value * velocity[i_dim] / velocity_magnitude;
-                    }
+                    r_adjoint_y_plus_matrix(i_node, i_dim) =
+                        (wall_distance / nu) * value * velocity[i_dim] / velocity_magnitude;
                 }
             }
             r_element.SetValue(RANS_Y_PLUS_SENSITIVITIES, r_adjoint_y_plus_matrix);

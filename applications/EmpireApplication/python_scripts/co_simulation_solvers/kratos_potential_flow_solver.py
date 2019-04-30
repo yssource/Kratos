@@ -21,6 +21,7 @@ from KratosMultiphysics.CompressiblePotentialFlowApplication.define_wake_process
 def CreateSolver(cosim_solver_settings, level):
     return KratosPotentialFlowSolver(cosim_solver_settings, level)
 
+
 class KratosPotentialFlowSolver(KratosBaseFieldSolver):
     def _CreateAnalysisStage(self):
         return PotentialFlowAnalysis(self.model, self.project_parameters)
@@ -28,17 +29,17 @@ class KratosPotentialFlowSolver(KratosBaseFieldSolver):
     def InitializeSolutionStep(self):
         super(KratosPotentialFlowSolver, self).InitializeSolutionStep()
 
-        default_settings = KratosMultiphysics.Parameters(r'''{
-            "model_part_name": "MainModelPart.Body2D_BodySurface"
-        }''')
+        wake_proc_settings = KratosMultiphysics.Parameters(('{'
+                                        '"model_part_name": "'
+                                        + self.project_parameters["solver_settings"]["ale_boundary_parts"][0].GetString()
+                                        + '"}'))
+        self.wake_process = DefineWakeProcess2D(self.model, wake_proc_settings)
 
-        self.wake_process = DefineWakeProcess2D(self.model, default_settings)
-
-        if not hasattr(self, "wake_process"):
-            raise Exception("potential flow requires specification of a process for the wake (currently specifically using 'define_wake_process_2d')")
-
-        self.conversion_process = ComputeForcesOnNodesProcess(self.model[self.project_parameters["solver_settings"]["ale_boundary_parts"][0].GetString()])
-
+        conversion_proc_settings = KratosMultiphysics.Parameters(('{'
+                                        '"model_part_name": "'
+                                        + self.project_parameters["solver_settings"]["ale_boundary_parts"][0].GetString()
+                                        + '"}'))
+        self.conversion_process = ComputeForcesOnNodesProcess(self.model, conversion_proc_settings)
 
 
     def SolveSolutionStep(self):

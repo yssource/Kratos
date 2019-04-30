@@ -37,7 +37,8 @@ namespace Kratos
 		ModelPart& rSkinPart,
 		Variable<double>& rDistanceVariable
 		)
-		: CalculateDiscontinuousDistanceToSkinProcess<TDim>(rVolumePart, rSkinPart)
+		: CalculateDiscontinuousDistanceToSkinProcess<TDim>(rVolumePart, rSkinPart),
+		mDistanceVariable(rDistanceVariable)
 	{
 	}
 

@@ -72,6 +72,21 @@ public:
 
     /**
      * @brief Construct a new Calculate Distance To Skin Process object
+     * Constructor without user defined extra rays epsilon, used to 
+     * generate the extra rays when voting is required for coloring
+     * @param rVolumePart model part containing the volume elements
+     * @param rSkinPart model part containing the skin to compute 
+     * the distance to as conditions
+     * @param rDistanceVariable user-defined variable to store the
+     * distances values
+     */
+    CalculateDistanceToSkinProcess(
+        ModelPart& rVolumePart,
+        ModelPart& rSkinPart,
+        Variable<double>& rDistanceVariable);
+    
+    /**
+     * @brief Construct a new Calculate Distance To Skin Process object
      * Constructor with user defined extra rays epsilon, used to 
      * generate the extra rays when voting is required for coloring
      * @param rVolumePart model part containing the volume elements
@@ -243,6 +258,7 @@ private:
     ///@{
 
     const double mExtraRaysEpsilon = 1.0e-8;
+    Variable <double> mDistanceVariable = KratosComponents<Variable<double>>::Get("DISTANCE");
 
     ///@}
     ///@name Private Operators

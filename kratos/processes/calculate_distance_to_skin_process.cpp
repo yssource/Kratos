@@ -35,6 +35,16 @@ namespace Kratos
 	CalculateDistanceToSkinProcess<TDim>::CalculateDistanceToSkinProcess(
 		ModelPart& rVolumePart, 
 		ModelPart& rSkinPart,
+		Variable<double>& rDistanceVariable
+		)
+		: CalculateDiscontinuousDistanceToSkinProcess<TDim>(rVolumePart, rSkinPart)
+	{
+	}
+
+	template<std::size_t TDim>
+	CalculateDistanceToSkinProcess<TDim>::CalculateDistanceToSkinProcess(
+		ModelPart& rVolumePart, 
+		ModelPart& rSkinPart,
 		const double ExtraRaysEpsilon)
 		: CalculateDiscontinuousDistanceToSkinProcess<TDim>(rVolumePart, rSkinPart),
 		mExtraRaysEpsilon(ExtraRaysEpsilon)
@@ -61,7 +71,7 @@ namespace Kratos
 
 		// Initialize the nodal distance values to a maximum positive value
 		for (auto& node : ModelPart1.Nodes()){
-			node.GetSolutionStepValue(DISTANCE) = std::numeric_limits<double>::max();
+			node.GetSolutionStepValue(mDistanceVariable) = std::numeric_limits<double>::max();
 		}
 	}
 
@@ -176,7 +186,7 @@ namespace Kratos
 				const auto& r_elemental_distances = element.GetValue(ELEMENTAL_DISTANCES);
 				for (int i = 0; i < number_of_tetrahedra_points; i++) {
 					Node<3>& r_node = element.GetGeometry()[i];
-					double& r_distance = r_node.GetSolutionStepValue(DISTANCE);
+					double& r_distance = r_node.GetSolutionStepValue(mDistanceVariable);
 					if (std::abs(r_distance) > std::abs(r_elemental_distances[i])){
 						r_distance = r_elemental_distances[i];
 					}
@@ -193,7 +203,7 @@ namespace Kratos
 		#pragma omp parallel for
 		for(int k = 0 ; k < static_cast<int>(ModelPart1.NumberOfNodes()); ++k) {
 			auto it_node = ModelPart1.NodesBegin() + k;
-			double &node_distance = it_node->GetSolutionStepValue(DISTANCE);
+			double &node_distance = it_node->GetSolutionStepValue(mDistanceVariable);
 			const double ray_distance = this->DistancePositionInSpace(*it_node);
 			if (ray_distance * node_distance < 0.0) {
 				node_distance = -node_distance;

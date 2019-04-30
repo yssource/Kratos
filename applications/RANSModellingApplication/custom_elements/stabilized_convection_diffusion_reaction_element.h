@@ -674,10 +674,9 @@ public:
                     value += tau *
                              (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
                              velocity_convective_terms[b];
-                    value +=
-                        tau *
-                        (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
-                        reaction * gauss_shape_functions[b]; // * positive_values_list[b];
+                    value += tau *
+                             (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
+                             reaction * gauss_shape_functions[b]; // * positive_values_list[b];
 
                     // Adding cross wind dissipation
                     value += cross_wind_diffusion * dNa_dNb * velocity_magnitude_square;
@@ -913,21 +912,10 @@ protected:
                            const Matrix& rShapeDerivatives,
                            const int Step = 0) const
     {
-        rOutput.clear();
         const GeometryType& r_geometry = this->GetGeometry();
 
-        for (unsigned int a = 0; a < TNumNodes; ++a)
-        {
-            const array_1d<double, 3>& r_value =
-                r_geometry[a].FastGetSolutionStepValue(rVariable, Step);
-            for (unsigned int i = 0; i < TDim; ++i)
-            {
-                for (unsigned int j = 0; j < TDim; ++j)
-                {
-                    rOutput(i, j) += rShapeDerivatives(a, j) * r_value[i];
-                }
-            }
-        }
+        RansCalculationUtilities().CalculateGradient<TDim>(
+            rOutput, r_geometry, rVariable, rShapeDerivatives, Step);
     }
 
     void CalculateGradient(array_1d<double, 3>& rOutput,
@@ -935,14 +923,9 @@ protected:
                            const Matrix& rShapeDerivatives,
                            const int Step = 0) const
     {
-        rOutput.clear();
         const GeometryType& r_geometry = this->GetGeometry();
-        for (unsigned int a = 0; a < TNumNodes; ++a)
-        {
-            const double value = r_geometry[a].FastGetSolutionStepValue(rVariable, Step);
-            for (unsigned int i = 0; i < TDim; ++i)
-                rOutput[i] += rShapeDerivatives(a, i) * value;
-        }
+        RansCalculationUtilities().CalculateGradient(
+            rOutput, r_geometry, rVariable, rShapeDerivatives, Step);
     }
 
     void CalculateSymmetricGradientMatrix(BoundedMatrix<double, TDim, TDim>& rOutput,

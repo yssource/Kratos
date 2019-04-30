@@ -130,12 +130,89 @@ RansCalculationUtilities::GeometryType::ShapeFunctionsGradientsType RansCalculat
     return de_dx;
 }
 
+template <unsigned int TDim>
+void RansCalculationUtilities::CalculateGradient(BoundedMatrix<double, TDim, TDim>& rOutput,
+                                                 const Geometry<ModelPart::NodeType>& rGeometry,
+                                                 const Variable<array_1d<double, 3>>& rVariable,
+                                                 const Matrix& rShapeDerivatives,
+                                                 const int Step) const
+{
+    rOutput.clear();
+    std::size_t number_of_nodes = rGeometry.PointsNumber();
+
+    for (unsigned int a = 0; a < number_of_nodes; ++a)
+    {
+        const array_1d<double, 3>& r_value =
+            rGeometry[a].FastGetSolutionStepValue(rVariable, Step);
+        for (unsigned int i = 0; i < TDim; ++i)
+        {
+            for (unsigned int j = 0; j < TDim; ++j)
+            {
+                rOutput(i, j) += rShapeDerivatives(a, j) * r_value[i];
+            }
+        }
+    }
+}
+
+void RansCalculationUtilities::CalculateGradient(array_1d<double, 3>& rOutput,
+                                                 const Geometry<ModelPart::NodeType>& rGeometry,
+                                                 const Variable<double>& rVariable,
+                                                 const Matrix& rShapeDerivatives,
+                                                 const int Step) const
+{
+    rOutput.clear();
+    std::size_t number_of_nodes = rGeometry.PointsNumber();
+    unsigned int domain_size = rShapeDerivatives.size2();
+
+    for (std::size_t a = 0; a < number_of_nodes; ++a)
+    {
+        const double value = rGeometry[a].FastGetSolutionStepValue(rVariable, Step);
+        for (unsigned int i = 0; i < domain_size; ++i)
+            rOutput[i] += rShapeDerivatives(a, i) * value;
+    }
+}
+
+template <unsigned int TDim>
+void RansCalculationUtilities::CalculateVelocityGradientSensitivities(
+    BoundedMatrix<double, TDim, TDim>& rOutput,
+    const int VelocityDerivNodeIndex,
+    const int VelocityDerivDirection,
+    const Matrix& rShapeDerivatives) const
+{
+    rOutput.clear();
+    for (unsigned int j = 0; j < TDim; ++j)
+    {
+        rOutput(VelocityDerivDirection, j) =
+            rShapeDerivatives(VelocityDerivNodeIndex, j);
+    }
+}
+
 // template instantiations
 
 template double RansCalculationUtilities::CalculateMatrixTrace<2>(
     const BoundedMatrix<double, 2, 2>&);
 template double RansCalculationUtilities::CalculateMatrixTrace<3>(
     const BoundedMatrix<double, 3, 3>&);
+
+template void RansCalculationUtilities::CalculateGradient<2>(
+    BoundedMatrix<double, 2, 2>&,
+    const Geometry<ModelPart::NodeType>&,
+    const Variable<array_1d<double, 3>>&,
+    const Matrix&,
+    const int) const;
+
+template void RansCalculationUtilities::CalculateGradient<3>(
+    BoundedMatrix<double, 3, 3>&,
+    const Geometry<ModelPart::NodeType>&,
+    const Variable<array_1d<double, 3>>&,
+    const Matrix&,
+    const int) const;
+
+template void RansCalculationUtilities::CalculateVelocityGradientSensitivities<2>(
+    BoundedMatrix<double, 2, 2>&, const int, const int, const Matrix&) const;
+
+template void RansCalculationUtilities::CalculateVelocityGradientSensitivities<3>(
+    BoundedMatrix<double, 3, 3>&, const int, const int, const Matrix&) const;
 
 ///@}
 

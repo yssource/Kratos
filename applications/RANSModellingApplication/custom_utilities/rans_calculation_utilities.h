@@ -98,6 +98,25 @@ public:
     template <unsigned int TDim>
     double CalculateMatrixTrace(const BoundedMatrix<double, TDim, TDim>& rMatrix);
 
+    template <unsigned int TDim>
+    void CalculateGradient(BoundedMatrix<double, TDim, TDim>& rOutput,
+                           const Geometry<ModelPart::NodeType>& rGeometry,
+                           const Variable<array_1d<double, 3>>& rVariable,
+                           const Matrix& rShapeDerivatives,
+                           const int Step = 0) const;
+
+    void CalculateGradient(array_1d<double, 3>& rOutput,
+                           const Geometry<ModelPart::NodeType>& rGeometry,
+                           const Variable<double>& rVariable,
+                           const Matrix& rShapeDerivatives,
+                           const int Step = 0) const;
+
+    template <unsigned int TDim>
+    void CalculateVelocityGradientSensitivities(
+        BoundedMatrix<double, TDim, TDim>& rOutput,
+        const int VelocityDerivNodeIndex,
+        const int VelocityDerivDirection,
+        const Matrix& rShapeDerivatives) const;
     ///@}
 
 private:

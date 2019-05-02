@@ -37,15 +37,18 @@ class ComputeForcesOnNodesProcess(KratosMultiphysics.Process):
         free_stream_velocity_norm = free_stream_velocity.norm_2()
         dynamic_pressure = 0.5*free_stream_density*free_stream_velocity_norm**2
 
+        largest_force = 0.0 # comparison value to give warning in the end if no reaction force was computed
         for cond in self.body_model_part.Conditions:
             condition_normal = cond.GetValue(KratosMultiphysics.NORMAL)
             pressure_coefficient = cond.GetValue(KratosMultiphysics.PRESSURE)
-
             for node in cond.GetNodes():
                 added_force = condition_normal*(pressure_coefficient/2.0)*dynamic_pressure
                 nodal_force = node.GetValue(KratosMultiphysics.REACTION) + added_force
+                largest_force = max(largest_force, nodal_force.norm_2())
                 node.SetValue(KratosMultiphysics.REACTION, nodal_force)
 
+        if largest_force<1e-300:
+            KratosMultiphysics.Logger.PrintWarning('Warning','all reaction forces are zero')
         total_force = KratosMultiphysics.VariableUtils().SumNonHistoricalNodeVectorVariable(KratosMultiphysics.REACTION, self.body_model_part)
 
         KratosMultiphysics.Logger.PrintInfo('ComputeForcesOnNodesProcess','Lift Force = ', total_force[1])

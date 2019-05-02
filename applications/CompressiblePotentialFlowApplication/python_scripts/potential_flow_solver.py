@@ -98,3 +98,8 @@ class PotentialFlowSolver(FluidSolver):
         self.time = current_time + self.delta_t
         #TODO: alternative for "virtual timestepping" in steady problem
         return self.time
+
+    def _TimeBufferIsInitialized(self):
+        # since potential flow is steady state, time buffering is not required and this simply passes on
+        print('debug time buffer check is actually called in potflow')
+        return True

@@ -38,7 +38,7 @@ def go_tracing():
     r = tracer.results()
     r.write_results(show_missing=True, coverdir="/home/mlukash/software/Kratos/applications/EmpireApplication/test_examples/CoSim_DevExamples/potential_flow_rigid_2D_wing_fsi/tracing")
 
-if __name__ == '__main__'and True:
+if __name__ == '__main__'and False:
     go_tracing()
 else:
     main()

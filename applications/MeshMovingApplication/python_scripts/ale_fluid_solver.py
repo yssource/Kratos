@@ -39,16 +39,17 @@ class AleFluidSolver(PythonSolver):
             model.CreateModelPart(fluid_model_part_name)
 
         ## Checking if reactions are being computed in the fluid
-        if fluid_solver_settings.Has("compute_reactions"):
-            if fluid_solver_settings["compute_reactions"].GetBool() == False:
-                fluid_solver_settings["compute_reactions"].SetBool(True)
-                warn_msg  = '"compute_reactions" is switched off for the fluid-solver, '
-                warn_msg += 'switching it on!'
-                KM.Logger.PrintWarning("::[AleFluidSolver]::", warn_msg)
-        else:
-            fluid_solver_settings.AddEmptyValue("compute_reactions").SetBool(True)
-            info_msg = 'Setting "compute_reactions" to true for the fluid-solver'
-            KM.Logger.PrintInfo("::[AleFluidSolver]::", info_msg)
+        if fluid_solver_settings["solver_type"].GetString() != "potential_flow":
+            if fluid_solver_settings.Has("compute_reactions"):
+                if fluid_solver_settings["compute_reactions"].GetBool() == False:
+                    fluid_solver_settings["compute_reactions"].SetBool(True)
+                    warn_msg  = '"compute_reactions" is switched off for the fluid-solver, '
+                    warn_msg += 'switching it on!'
+                    KM.Logger.PrintWarning("::[AleFluidSolver]::", warn_msg)
+            else:
+                fluid_solver_settings.AddEmptyValue("compute_reactions").SetBool(True)
+                info_msg = 'Setting "compute_reactions" to true for the fluid-solver'
+                KM.Logger.PrintInfo("::[AleFluidSolver]::", info_msg)
 
         ## Creating the fluid solver
         self.fluid_solver = self._CreateFluidSolver(fluid_solver_settings, parallelism)

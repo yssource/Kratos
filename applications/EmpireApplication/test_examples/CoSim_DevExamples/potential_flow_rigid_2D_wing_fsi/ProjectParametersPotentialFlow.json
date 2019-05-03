@@ -28,7 +28,7 @@
                 "input_filename" : "naca0012_Case_0_DS_100_AOA_5.0_Far_Field_Mesh_Size_2_Airfoil_Mesh_Size_0.001"
             },
             "echo_level": 0,
-            "compute_reactions": true,
+            "compute_reactions": false,
             "maximum_iterations": 10,
             "linear_solver_settings"  : {
                 "solver_type"             : "ExternalSolversApplication.super_lu"
@@ -88,8 +88,8 @@
                         "node_output"         : false,
                         "skin_output"         : false,
                         "plane_output"        : [],
-                        "nodal_results": ["VELOCITY_POTENTIAL"],
-                        "nodal_nonhistorical_results": ["PRESSURE", "MESH_DISPLACEMENT"],
+                        "nodal_results": ["VELOCITY_POTENTIAL", "MESH_DISPLACEMENT"],
+                        "nodal_nonhistorical_results": ["PRESSURE"],
                         "gauss_point_results" : []
                     },
                     "point_data_configuration"  : []

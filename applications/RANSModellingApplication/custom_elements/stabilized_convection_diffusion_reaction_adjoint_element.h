@@ -388,7 +388,8 @@ public:
             rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
 
         rLeftHandSideMatrix.clear();
-        CalculatePrimalDampingMatrixScalarDerivatives(rLeftHandSideMatrix, rCurrentProcessInfo);
+        AddPrimalSteadyTermScalarDerivatives(rLeftHandSideMatrix, rCurrentProcessInfo);
+        AddMassTermScalarDerivatives(rLeftHandSideMatrix, rCurrentProcessInfo);
     }
 
     /**
@@ -1085,8 +1086,8 @@ private:
         return result;
     }
 
-    void CalculatePrimalDampingMatrixScalarDerivatives(MatrixType& rLeftHandSideMatrix,
-                                                       ProcessInfo& rCurrentProcessInfo)
+    void AddPrimalSteadyTermScalarDerivatives(MatrixType& rLeftHandSideMatrix,
+                                              ProcessInfo& rCurrentProcessInfo)
     {
         // Get Shape function data
         Vector gauss_weights;
@@ -1101,6 +1102,8 @@ private:
         const double delta_time = rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+
+        const Variable<double>& primal_variable = this->GetPrimalVariable();
 
         for (unsigned int g = 0; g < num_gauss_points; g++)
         {
@@ -1121,8 +1124,6 @@ private:
             TConvectionDiffusionReactionAdjointData current_data;
             this->CalculateConvectionDiffusionReactionAdjointData(
                 current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
-
-            const Variable<double>& primal_variable = this->GetPrimalVariable();
 
             const double scalar_value =
                 this->EvaluateInPoint(primal_variable, gauss_shape_functions);
@@ -1156,7 +1157,6 @@ private:
             this->CalculateStabilizationTau(
                 tau, element_length, velocity, contravariant_metric_tensor,
                 reaction, effective_kinematic_viscosity, delta_time);
-
             Vector tau_derivatives;
             this->CalculateStabilizationTauScalarDerivatives(
                 tau_derivatives, tau, effective_kinematic_viscosity, reaction,
@@ -1249,6 +1249,7 @@ private:
                 crosswind_diffusion_coeff_derivatives, psi_one, element_length, psi_one_derivatives,
                 psi_two_derivatives, effective_kinematic_viscosity_derivatives);
 
+            // calculating primal damping matrix scalar derivatives
             for (unsigned int a = 0; a < TNumNodes; ++a)
             {
                 for (unsigned int c = 0; c < TNumNodes; ++c)
@@ -1321,7 +1322,113 @@ private:
                              streamline_diffusion_coeff_derivatives[c] *
                              velocity_convective_terms[a] * velocity_dot_scalar_gradient;
 
-                    rLeftHandSideMatrix(a, c) += gauss_weights[g] * value;
+                    // putting it in the transposed matrix
+                    rLeftHandSideMatrix(c, a) += -1.0 * gauss_weights[g] * value;
+                }
+            }
+
+            // calculating right hand side scalar derivatives
+            for (unsigned int a = 0; a < TNumNodes; ++a)
+            {
+                for (unsigned int c = 0; c < TNumNodes; ++c)
+                {
+                    double value = 0.0;
+
+                    value += gauss_shape_functions[a] * source_derivatives[c];
+                    value += tau_derivatives[c] *
+                             (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
+                             source;
+                    value += tau * (s_derivatives[c] * gauss_shape_functions[a]) * source;
+                    value += tau *
+                             (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
+                             source_derivatives[c];
+
+                    // putting it in the transposed matrix
+                    rLeftHandSideMatrix(c, a) += gauss_weights[g] * value;
+                }
+            }
+        }
+    }
+
+    void AddMassTermScalarDerivatives(MatrixType& rLeftHandSideMatrix, ProcessInfo& rCurrentProcessInfo)
+    {
+        // Get Shape function data
+        Vector gauss_weights;
+        Matrix shape_functions;
+        ShapeFunctionDerivativesArrayType shape_derivatives;
+        this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
+        const unsigned int num_gauss_points = gauss_weights.size();
+
+        const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
+            this->GetGeometryParameterDerivatives();
+
+        const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+
+        const Variable<double>& primal_variable = this->GetPrimalVariable();
+
+        for (unsigned int g = 0; g < num_gauss_points; g++)
+        {
+            const Matrix& r_shape_derivatives = shape_derivatives[g];
+            const Vector& gauss_shape_functions = row(shape_functions, g);
+
+            const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
+            Matrix contravariant_metric_tensor(r_parameter_derivatives_g.size1(),
+                                               r_parameter_derivatives_g.size2());
+            noalias(contravariant_metric_tensor) =
+                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
+
+            TConvectionDiffusionReactionAdjointData current_data;
+            this->CalculateConvectionDiffusionReactionAdjointData(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+
+            const array_1d<double, 3> velocity =
+                this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
+            BoundedVector<double, TNumNodes> velocity_convective_terms;
+            this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
+
+            const double effective_kinematic_viscosity =
+                this->CalculateEffectiveKinematicViscosity(current_data, rCurrentProcessInfo);
+            Vector effective_kinematic_viscosity_derivatives;
+            this->CalculateEffectiveKinematicViscosityDerivatives(
+                effective_kinematic_viscosity_derivatives, primal_variable,
+                current_data, rCurrentProcessInfo);
+
+            const double reaction =
+                this->CalculateReactionTerm(current_data, rCurrentProcessInfo);
+            Vector reaction_derivatives;
+            this->CalculateReactionTermDerivatives(
+                reaction_derivatives, primal_variable, current_data, rCurrentProcessInfo);
+
+            const double relaxed_scalar_rate =
+                this->CalculateRelaxedScalarRate(current_data, rCurrentProcessInfo);
+
+            double tau, element_length;
+            this->CalculateStabilizationTau(
+                tau, element_length, velocity, contravariant_metric_tensor,
+                reaction, effective_kinematic_viscosity, delta_time);
+            Vector tau_derivatives;
+            this->CalculateStabilizationTauScalarDerivatives(
+                tau_derivatives, tau, effective_kinematic_viscosity, reaction,
+                contravariant_metric_tensor,
+                effective_kinematic_viscosity_derivatives, reaction_derivatives);
+
+            const double s = std::abs(reaction);
+            Vector s_derivatives;
+            this->CalculateAbsoluteScalarValueScalarDerivatives(
+                s_derivatives, reaction, reaction_derivatives);
+
+            for (unsigned int a = 0; a < TNumNodes; ++a)
+            {
+                for (unsigned int c = 0; c < TNumNodes; ++c)
+                {
+                    double value = 0.0;
+
+                    value += tau_derivatives[c] *
+                             (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
+                             relaxed_scalar_rate;
+                    value += tau * (s_derivatives[c] * gauss_shape_functions[a]) * relaxed_scalar_rate;
+
+                    rLeftHandSideMatrix(c, a) += -1.0 * gauss_weights[g] * value;
                 }
             }
         }

@@ -231,3 +231,5 @@ class DefineWakeProcess2D(KratosMultiphysics.Process):
         for node in self.body_model_part.Nodes:
             node.SetValue(CPFApp.TRAILING_EDGE, False)
             node.SetSolutionStepValue(KratosMultiphysics.DISTANCE, 0.0)
+
+        KratosMultiphysics.Logger.PrintInfo('...Cleaned Marking of wake elements...')

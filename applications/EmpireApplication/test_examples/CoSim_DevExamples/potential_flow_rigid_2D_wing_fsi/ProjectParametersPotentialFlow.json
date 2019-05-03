@@ -50,6 +50,16 @@
                     "inlet_phi"         : 1.0,
                     "velocity_infinity" : [10.0,0.0,0.0]
                 }
+            },{
+                "python_module" : "compute_moment_process",
+                "kratos_module" : "KratosMultiphysics.CompressiblePotentialFlowApplication",
+                "process_name"  : "ComputeMomentProcess3D",
+                "Parameters"    : {
+                    "reference_point" : [-0.25,0.0,0.0],
+                    "model_part_name" : "MainModelPart.Body2D_BodySurface",
+                    "velocity_infinity" : [10.0,0.0,0.0],
+                    "create_output_file": true
+                }
             }
         ],
         "auxiliar_process_list": []
@@ -73,7 +83,7 @@
                         },
                         "file_label"          : "step",
                         "output_control_type" : "step",
-                        "output_frequency"    : 4,
+                        "output_frequency"    : 1,
                         "body_output"         : true,
                         "node_output"         : false,
                         "skin_output"         : false,

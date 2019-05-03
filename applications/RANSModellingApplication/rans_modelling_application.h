@@ -23,8 +23,13 @@
 
 // Project includes
 #include "includes/kratos_application.h"
+
+// Primal elements
 #include "custom_elements/evm_k_epsilon/evm_k_element.h"
 #include "custom_elements/evm_k_epsilon/evm_epsilon_element.h"
+
+// Adjoint elements
+#include "custom_elements/evm_k_epsilon/evm_k_adjoint_element.h"
 
 namespace Kratos {
 
@@ -182,6 +187,10 @@ private:
 
     const EvmEpsilonElement<2, 3> mRANSEVMEPSILON2D;
     const EvmEpsilonElement<3, 4> mRANSEVMEPSILON3D;
+
+    /// k-epsilon turbulence model adjoint elements
+    const EvmKAdjointElement<2, 3> mRANSEVMKAdjoint2D;
+    const EvmKAdjointElement<3, 4> mRANSEVMKAdjoint3D;
 
     ///@}
     ///@name Private Operators

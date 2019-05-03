@@ -333,7 +333,7 @@ private:
     double CalculateSourceTerm(const EvmKAdjointElementData& rCurrentData,
                                const ProcessInfo& rCurrentProcessInfo) const override;
 
-    void CalculateEffectiveKinematicViscosityDerivatives(
+    void CalculateEffectiveKinematicViscosityScalarDerivatives(
         Vector& rOutput,
         const Variable<double>& rDerivativeVariable,
         const EvmKAdjointElementData& rCurrentData,

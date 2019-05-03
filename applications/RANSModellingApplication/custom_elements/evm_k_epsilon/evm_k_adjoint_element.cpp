@@ -434,7 +434,7 @@ double EvmKAdjointElement<TDim, TNumNodes>::CalculateSourceTerm(
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-void EvmKAdjointElement<TDim, TNumNodes>::CalculateEffectiveKinematicViscosityDerivatives(
+void EvmKAdjointElement<TDim, TNumNodes>::CalculateEffectiveKinematicViscosityScalarDerivatives(
     Vector& rOutput,
     const Variable<double>& rDerivativeVariable,
     const EvmKAdjointElementData& rCurrentData,

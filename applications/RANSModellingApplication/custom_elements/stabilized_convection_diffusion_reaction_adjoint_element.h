@@ -639,7 +639,7 @@ protected:
         KRATOS_CATCH("");
     }
 
-    virtual void CalculateEffectiveKinematicViscosityDerivatives(
+    virtual void CalculateEffectiveKinematicViscosityScalarDerivatives(
         Vector& rOutput,
         const Variable<double>& rDerivativeVariable,
         const TConvectionDiffusionReactionAdjointData& rCurrentData,
@@ -648,7 +648,7 @@ protected:
         KRATOS_TRY
 
         KRATOS_ERROR
-            << "Calling base CalculateEffectiveKinematicViscosityDerivatives "
+            << "Calling base CalculateEffectiveKinematicViscosityScalarDerivatives "
                "method in "
                "StabilizedConvectionDiffusionReactionAdjointElement "
                "class. Please implement it in the derrived class.";
@@ -948,7 +948,7 @@ private:
         }
     }
 
-    void CalculatePositivityPreservationCoefficientDerivatives(
+    void CalculatePositivityPreservationCoefficientScalarDerivatives(
         Vector& rOutput,
         const double chi,
         const double residual,
@@ -1137,7 +1137,7 @@ private:
             const double effective_kinematic_viscosity =
                 this->CalculateEffectiveKinematicViscosity(current_data, rCurrentProcessInfo);
             Vector effective_kinematic_viscosity_derivatives;
-            this->CalculateEffectiveKinematicViscosityDerivatives(
+            this->CalculateEffectiveKinematicViscosityScalarDerivatives(
                 effective_kinematic_viscosity_derivatives, primal_variable,
                 current_data, rCurrentProcessInfo);
 
@@ -1212,7 +1212,7 @@ private:
                 absolute_residual_derivatives, residual, residual_derivatives);
 
             Vector positivity_preserving_coeff_derivatives;
-            this->CalculatePositivityPreservationCoefficientDerivatives(
+            this->CalculatePositivityPreservationCoefficientScalarDerivatives(
                 positivity_preserving_coeff_derivatives, chi, residual,
                 scalar_gradient_norm, velocity_magnitude_square, chi_derivatives,
                 absolute_residual_derivatives, scalar_gradient_norm_derivative);
@@ -1389,7 +1389,7 @@ private:
             const double effective_kinematic_viscosity =
                 this->CalculateEffectiveKinematicViscosity(current_data, rCurrentProcessInfo);
             Vector effective_kinematic_viscosity_derivatives;
-            this->CalculateEffectiveKinematicViscosityDerivatives(
+            this->CalculateEffectiveKinematicViscosityScalarDerivatives(
                 effective_kinematic_viscosity_derivatives, primal_variable,
                 current_data, rCurrentProcessInfo);
 

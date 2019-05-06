@@ -15,8 +15,8 @@ import json
 
 def main():
     #parameter_file_name = "project_parameters_cosim_pure_SDoF.json"
-    #parameter_file_name = "project_parameters_cosim_pure_fluid.json"
-    parameter_file_name = "project_parameters_cosim_potential_flow_wing_fsi.json"
+    parameter_file_name = "project_parameters_cosim_pure_alePotFlow.json"
+    #parameter_file_name = "project_parameters_cosim_potential_flow_wing_fsi.json"
 
     with open(parameter_file_name, 'r') as parameter_file:
         cosim_parameters = json.load(parameter_file)

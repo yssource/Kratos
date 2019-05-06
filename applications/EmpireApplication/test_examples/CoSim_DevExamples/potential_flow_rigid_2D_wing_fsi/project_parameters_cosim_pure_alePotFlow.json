@@ -8,6 +8,6 @@
     "solver_settings" :
     {
         "solver_type" : "kratos_potential_flow",
-        "input_file"  : "ProjectParametersPotentialFlow"
+        "input_file"  : "ProjectParametersAlePotentialFlow"
     }
 }

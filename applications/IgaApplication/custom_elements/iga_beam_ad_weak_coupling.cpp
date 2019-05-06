@@ -236,50 +236,92 @@ void IgaBeamADWeakCoupling::CalculateAll(
     // const auto alpha_3  = 0.5 * (HyperJet::atan2(d_12, d_11) + HyperJet::atan2(d_21, d_22)  // );
     //                             -HyperJet::atan2(D_12, D_11) - HyperJet::atan2(D_21, D_22));  
                                 
-    // const auto alpha_112 = HyperJet::atan2(d_11, d_12) - HyperJet::atan2(D_11, D_12); 
-    // const auto alpha_113 = HyperJet::atan2(d_11, d_13) - HyperJet::atan2(D_11, D_13); 
-    // const auto alpha_123 = HyperJet::atan2(d_12, d_13) - HyperJet::atan2(D_12, D_13); 
+    const auto alpha_112 = HyperJet::atan2(d_11, d_12) - HyperJet::atan2(D_11, D_12); 
+    const auto alpha_113 = HyperJet::atan2(d_11, d_13) - HyperJet::atan2(D_11, D_13); 
+    const auto alpha_123 = HyperJet::atan2(d_12, d_13) - HyperJet::atan2(D_12, D_13); 
                               
-    // const auto alpha_212 = HyperJet::atan2(d_21, d_22) - HyperJet::atan2(D_21, D_22); 
-    // const auto alpha_213 = HyperJet::atan2(d_21, d_23) - HyperJet::atan2(D_21, D_23); 
-    // const auto alpha_223 = HyperJet::atan2(d_22, d_23) - HyperJet::atan2(D_22, D_23); 
+    const auto alpha_212 = HyperJet::atan2(d_21, d_22) - HyperJet::atan2(D_21, D_22); 
+    const auto alpha_213 = HyperJet::atan2(d_21, d_23) - HyperJet::atan2(D_21, D_23); 
+    const auto alpha_223 = HyperJet::atan2(d_22, d_23) - HyperJet::atan2(D_22, D_23); 
                               
-    // const auto alpha_312 = HyperJet::atan2(d_31, d_32) - HyperJet::atan2(D_31, D_32); 
-    // const auto alpha_313 = HyperJet::atan2(d_31, d_33) - HyperJet::atan2(D_31, D_33); 
-    // const auto alpha_323 = HyperJet::atan2(d_32, d_33) - HyperJet::atan2(D_32, D_33);
+    const auto alpha_312 = HyperJet::atan2(d_31, d_32) - HyperJet::atan2(D_31, D_32); 
+    const auto alpha_313 = HyperJet::atan2(d_31, d_33) - HyperJet::atan2(D_31, D_33); 
+    const auto alpha_323 = HyperJet::atan2(d_32, d_33) - HyperJet::atan2(D_32, D_33);
 
-    // const auto delta_11 = D_11 - d_11;
-    // const auto delta_12 = D_12 - d_12;
-    // const auto delta_13 = D_13 - d_13;
-    // const auto delta_21 = D_21 - d_21;
-    // const auto delta_22 = D_22 - d_22;
-    // const auto delta_23 = D_23 - d_23;
-    // const auto delta_31 = D_31 - d_31;
-    // const auto delta_32 = D_32 - d_32;
-    // const auto delta_33 = D_33 - d_33;
+    const auto delta_11 = D_11 - d_11;
+    const auto delta_12 = D_12 - d_12;
+    const auto delta_13 = D_13 - d_13;
+    const auto delta_21 = D_21 - d_21;
+    const auto delta_22 = D_22 - d_22;
+    const auto delta_23 = D_23 - d_23;
+    const auto delta_31 = D_31 - d_31;
+    const auto delta_32 = D_32 - d_32;
+    const auto delta_33 = D_33 - d_33;
 
     // const auto rotation = 0.5 * (delta_11 * delta_11 + delta_12 * delta_12 + delta_13 * delta_13 + 
     //                              delta_21 * delta_21 + delta_22 * delta_22 + delta_23 * delta_23 + 
-    //                              delta_31 * delta_31 + delta_32 * delta_32 + delta_33 * delta_33) * penalty_rot;
+    //                              delta_31 * delta_31 + delta_32 * delta_32 + delta_33 * delta_33) * penalty_rot_2;
     
     const auto d1 = ta - e1;
     const auto d2 = a2.transpose() - e2;
     const auto d3 = a3.transpose() - e3;
 
+    const auto disp1 = tb - ta - Tb + Ta;
+    const auto disp2 = b2.transpose() - a2.transpose() - B2 + A2;
+    const auto disp3 = b3.transpose() - a3.transpose() - B3 + A3;
+
     const HyperDualVector<1> rotation = 0.5 * (d1 * d1.transpose() + d2 * d2.transpose() + d3 * d3.transpose()) * penalty_rot_2;
+    // const HyperDualVector<1> rotation = 0.5 * (disp1 * disp1.transpose() + disp2 * disp2.transpose() + disp3 * disp3.transpose()) * penalty_rot_2;
     // const auto rotation = 0.5 * (alpha_112 * alpha_112 + alpha_113 * alpha_113 + alpha_123 * alpha_123 + 
-    //                              alpha_212 * alpha_212 + alpha_213 * alpha_213 + alpha_223 * alpha_223) * penalty_rot;
-    const auto alpha_2  = 0.5 * (HyperJet::atan2(tb.dot(a3), tb.dot(a1)) + HyperJet::atan2(b3.dot(ta), b3.dot(a3)) // );
-                                -HyperJet::atan2(Tb.dot(A3), Tb.dot(A1)) - HyperJet::atan2(B3.dot(Ta), B3.dot(A3)) );   
-    const auto alpha_3  = 0.5 * (HyperJet::atan2(tb.dot(a2), tb.dot(a1)) + HyperJet::atan2(b2.dot(ta), b2.dot(a2)) // );
-                                -HyperJet::atan2(Tb.dot(A2), Tb.dot(A1)) - HyperJet::atan2(B2.dot(Ta), B2.dot(A2)));  
+    //                              alpha_212 * alpha_212 + alpha_213 * alpha_213 + alpha_223 * alpha_223) * penalty_rot_2;    // Verursacht decomposition error
+    
+    // const auto alpha_2  = (HyperJet::atan2(tb.dot(a3), tb.dot(a1)) // + HyperJet::atan2(b3.dot(ta), b3.dot(a3)) // );
+    //                         -HyperJet::atan2(Tb.dot(A3), Tb.dot(A1)) );//- HyperJet::atan2(B3.dot(Ta), B3.dot(A3)) );   
+    // const auto alpha_3  = (HyperJet::atan2(tb.dot(a2), tb.dot(a1)) // + HyperJet::atan2(b2.dot(ta), b2.dot(a2)) // );
+    //                         -HyperJet::atan2(Tb.dot(A2), Tb.dot(A1)) );//- HyperJet::atan2(B2.dot(Ta), B2.dot(A2)));  
 
-    const auto alpha_12 = (HyperJet::atan2(b2.dot(a3) , b2.dot(a2))  // );
-                        -  HyperJet::atan2(B2.dot(A3) , B2.dot(A2)));
-    const auto alpha_13 = (HyperJet::atan2(b3.dot(a2) , b3.dot(a3))  // );
-                        -  HyperJet::atan2(B3.dot(A2) , B3.dot(A3))); 
+    const auto alpha_2 = HyperJet::atan2(tb.dot(A3) , tb.dot(Ta)) - HyperJet::atan2(ta.dot(A3), ta.dot(Ta)) ;
+                    //    - HyperJet::atan2(Tb.dot(A3) , Tb.dot(Ta)) + HyperJet::atan2(Ta.dot(A3), Ta.dot(Ta)) ;
+                    //    - HyperJet::atan2(Tb.dot(A3) , Tb.dot(Ta))  ;
+    // std::cout << "alpha a2 " << - HyperJet::atan2(ta.dot(A3), ta.dot(Ta)).f() << std::endl; 
+    // std::cout << "alpha b2 " << HyperJet::atan2(tb.dot(A3) , tb.dot(Ta)).f() << std::endl; 
+    // std::cout << "Alpha 2 " << HyperJet::atan2(Tb.dot(A3) , Tb.dot(Ta)) << std::endl; 
+    // std::cout << "Alpha 2 summ " <<  HyperJet::atan2(tb.dot(A3) , tb.dot(Ta)).f() - HyperJet::atan2(ta.dot(A3), ta.dot(Ta)).f() -HyperJet::atan2(Tb.dot(A3) , Tb.dot(Ta)) << std::endl; 
+
+    const auto alpha_3 = HyperJet::atan2(tb.dot(A2) , tb.dot(Ta)) - HyperJet::atan2(ta.dot(A2), ta.dot(Ta)) ;
+                    //    - HyperJet::atan2(Tb.dot(A2) , Tb.dot(Ta)) + HyperJet::atan2(Ta.dot(A2), Ta.dot(Ta)) ;
+                    //    - HyperJet::atan2(Tb.dot(A2) , Tb.dot(Ta)) ;
+    // std::cout << "alpha a3 " << - HyperJet::atan2(ta.dot(A2), ta.dot(Ta)).f() << std::endl; 
+    // std::cout << "alpha b3 " << HyperJet::atan2(tb.dot(A2) , tb.dot(Ta)).f() << std::endl; 
+    // std::cout << "Alpha 3 " << HyperJet::atan2(Tb.dot(A2) , Tb.dot(Ta)) << std::endl; 
+    // std::cout << "Alpha 3 summ " <<HyperJet::atan2(tb.dot(A2) , tb.dot(Ta)).f() - HyperJet::atan2(ta.dot(A2), ta.dot(Ta)).f() -  HyperJet::atan2(Tb.dot(A2) , Tb.dot(Ta)) << std::endl; 
 
 
+
+    const auto alpha_23 = 0.5 *  pow((sqrt(pow(HyperJet::atan2(tb.dot(a2), tb.dot(ta)),2) + 
+                                 pow(HyperJet::atan2(tb.dot(a3), tb.dot(ta)),2))) , 2) * penalty_rot_2;
+                        //   sqrt(pow(HyperJet::atan2(Tb.dot(A2), Tb.dot(Ta)),2) + 
+                        //        pow(HyperJet::atan2(Tb.dot(A3), Tb.dot(Ta)),2))  )* penalty_rot_2;
+
+
+    // const auto alpha_12 = (HyperJet::atan2(b2.dot(a3) , b2.dot(a2))  // );
+    //                     -  HyperJet::atan2(B2.dot(A3) , B2.dot(A2)));
+    // const auto alpha_13 = (HyperJet::atan2(b3.dot(a2) , b3.dot(a3))  // );
+    //                     -  HyperJet::atan2(B3.dot(A2) , B3.dot(A3))); 
+
+    const auto alpha_12 = HyperJet::atan2(b2.dot(A3) , b2.dot(A2)) - HyperJet::atan2(a2.dot(A3), a2.dot(A2)) ; 
+                        // - HyperJet::atan2(B2.dot(A3) , B2.dot(A2)) + HyperJet::atan2(A2.dot(A3), A2.dot(A2)) ;
+                        // - HyperJet::atan2(B2.dot(A3) , B2.dot(A2))  ;
+
+
+    // std::cout << "alpha ta3 " << - HyperJet::atan2(a2.dot(A3), a2.dot(A2)).f() << std::endl; 
+    // std::cout << "alpha tb3 " << HyperJet::atan2(b2.dot(A3) , b2.dot(A2)).f() << std::endl; 
+    // std::cout << "Alpha t3 " << HyperJet::atan2(Tb.dot(A2) , Tb.dot(Ta)) << std::endl; 
+    // std::cout << "Alpha t3 summ" <<HyperJet::atan2(b2.dot(A3) , b2.dot(A2)).f()- HyperJet::atan2(a2.dot(A3), a2.dot(A2)).f() -HyperJet::atan2(Tb.dot(A2) , Tb.dot(Ta)) << std::endl; 
+
+    const auto alpha_13 = HyperJet::atan2(b3.dot(A2) , b3.dot(A3)) - HyperJet::atan2(a3.dot(A2), a3.dot(A3)) 
+                        // - HyperJet::atan2(B3.dot(A2) , B3.dot(A3)) + HyperJet::atan2(A3.dot(A2), A3.dot(A3)) ;
+                        - HyperJet::atan2(B3.dot(A2) , B3.dot(A3))   ;
 
     const auto dP_disp_u = 0.5 * pow(xb_1 - xa_1, 2) * penalty_disp_u;
     const auto dP_disp_v = 0.5 * pow(xb_2 - xa_2, 2) * penalty_disp_v;
@@ -289,17 +331,39 @@ void IgaBeamADWeakCoupling::CalculateAll(
     const auto dP_alpha_bend_2 = 0.5 * (alpha_2 * alpha_2) * penalty_rot_2;
     const auto dP_alpha_bend_3 = 0.5 * (alpha_3 * alpha_3) * penalty_rot_3;
     // // Potential Torsion
-    const auto dP_alpha_tors = 0.5 * 0.5 * (alpha_12 * alpha_12 + alpha_13 * alpha_13) * penalty_tors;
-    // const auto dP_alpha_tors = 0.5 * (alpha_12 * alpha_12 ) * penalty_tors;
+    const auto dP_alpha_tors_12 = 0.5 * (alpha_12 * alpha_12) * penalty_tors;
+    const auto dP_alpha_tors_13 = 0.5 * (alpha_13 * alpha_13) * penalty_tors;
+    // const auto dP_alpha_tors = 0.5 * (alpha_12 * alpha_12) * penalty_tors;
 
-    // // const auto f = 0.5 * u.dot(u) * 1e9;
+    // const auto f = 0.5 * u.dot(u) * 1e9;
 
-    // MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h() + dP_alpha_bend_2.h() + dP_alpha_bend_3.h() + dP_alpha_tors.h());
-    // MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g() + dP_alpha_bend_2.g() + dP_alpha_bend_3.g() + dP_alpha_tors.g());
+    MapMatrix(rLeftHandSideMatrix) = ( 
+          dP_disp_u.h() 
+        + dP_disp_v.h() 
+        + dP_disp_w.h() 
+        + dP_alpha_bend_2.h() 
+        + dP_alpha_bend_3.h() 
+        + dP_alpha_tors_12.h()
+        + dP_alpha_tors_13.h()
+        );
+    MapVector(rRightHandSideVector) = -( 
+          dP_disp_u.g() 
+        + dP_disp_v.g() 
+        + dP_disp_w.g() 
+        + dP_alpha_bend_2.g() 
+        + dP_alpha_bend_3.g() 
+        + dP_alpha_tors_12.g()
+        + dP_alpha_tors_13.g()
+        );
 
-    
-    MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h() + rotation[0].h() );
-    MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g() + rotation[0].g() );
+    // MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h() + rotation[0].h() );
+    // MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g() + rotation[0].g() );
+
+    // MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h() + rotation.h() );
+    // MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g() + rotation.g() );
+
+    // MapMatrix(rLeftHandSideMatrix) = ( dP_disp_u.h() + dP_disp_v.h() + dP_disp_w.h() + alpha_23.h()  );
+    // MapVector(rRightHandSideVector) = -( dP_disp_u.g() + dP_disp_v.g() + dP_disp_w.g() + alpha_23.g()  );
 
     // MapMatrix(rLeftHandSideMatrix) = ( f.h() + rotation[0].h() );
     // MapVector(rRightHandSideVector) = -( f.g() + rotation[0].g() );

@@ -39,7 +39,7 @@ class ComputeForcesOnNodesProcess(KratosMultiphysics.Process):
 
         largest_force = 0.0 # comparison value to give warning in the end if no reaction force was computed
         for cond in self.body_model_part.Conditions:
-            condition_normal = cond.GetValue(KratosMultiphysics.NORMAL)
+            condition_normal = cond.GetGeometry().Normal()
             pressure_coefficient = cond.GetValue(KratosMultiphysics.PRESSURE)
             for node in cond.GetNodes():
                 added_force = condition_normal*(pressure_coefficient/2.0)*dynamic_pressure

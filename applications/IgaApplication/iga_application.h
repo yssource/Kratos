@@ -25,9 +25,10 @@
 #include "custom_elements/iga_truss_element.h"
 #include "custom_elements/iga_beam_element.h"
 #include "custom_elements/iga_beam_ad_element.h"
-#include "custom_elements/iga_beam_weak_dirichlet_condition.h"
+#include "custom_elements/iga_beam_weak_bedding_condition.h"
 #include "custom_elements/iga_beam_load_condition.h"
 #include "custom_elements/iga_beam_ad_weak_coupling.h"
+#include "custom_elements/iga_beam_ad_postprocess.h"
 #include "custom_elements/iga_shell_3P_element.h"
 #include "custom_elements/iga_shell_5P_element.h"
 #include "custom_elements/shell_kl_discrete_element.h"
@@ -170,8 +171,9 @@ private:
     const IgaTrussElement mIgaTrussElement;
     const IgaBeamElement mIgaBeamElement;
     const IgaBeamADElement mIgaBeamADElement;
-    const IgaBeamWeakDirichletCondition mIgaBeamWeakDirichletCondition;
+    const IgaBeamWeakBeddingCondition mIgaBeamWeakBeddingCondition;
     const IgaBeamADWeakCoupling mIgaBeamADWeakCoupling;
+    const IgaBeamADPostprocess mIgaBeamADPostprocess;
     const IgaShell3PElement mIgaShell3PElement;
     const IgaShell5PElement mIgaShell5PElement;
     const ShellKLDiscreteElement mShellKLDiscreteElement;

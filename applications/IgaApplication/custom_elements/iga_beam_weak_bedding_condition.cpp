@@ -15,23 +15,23 @@
 // External includes
 
 // Project includes
-#include "iga_beam_weak_dirichlet_condition.h"
+#include "iga_beam_weak_bedding_condition.h"
 #include "iga_application_variables.h"
 
 namespace Kratos {
 
-Element::Pointer IgaBeamWeakDirichletCondition::Create(
+Element::Pointer IgaBeamWeakBeddingCondition::Create(
     IndexType NewId,
     NodesArrayType const& ThisNodes,
     PropertiesType::Pointer pProperties) const
 {
     auto geometry = GetGeometry().Create(ThisNodes);
 
-    return Kratos::make_shared<IgaBeamWeakDirichletCondition>(NewId, geometry,
+    return Kratos::make_shared<IgaBeamWeakBeddingCondition>(NewId, geometry,
         pProperties);
 }
 
-void IgaBeamWeakDirichletCondition::GetDofList(
+void IgaBeamWeakBeddingCondition::GetDofList(
     DofsVectorType& rElementalDofList,
     ProcessInfo& rCurrentProcessInfo)
 {
@@ -49,7 +49,7 @@ void IgaBeamWeakDirichletCondition::GetDofList(
     KRATOS_CATCH("")
 }
 
-void IgaBeamWeakDirichletCondition::EquationIdVector(
+void IgaBeamWeakBeddingCondition::EquationIdVector(
     EquationIdVectorType& rResult,
     ProcessInfo& rCurrentProcessInfo)
 {
@@ -67,12 +67,12 @@ void IgaBeamWeakDirichletCondition::EquationIdVector(
     KRATOS_CATCH("")
 }
 
-void IgaBeamWeakDirichletCondition::Initialize()
+void IgaBeamWeakBeddingCondition::Initialize()
 {
 
 }
 
-void IgaBeamWeakDirichletCondition::CalculateAll(
+void IgaBeamWeakBeddingCondition::CalculateAll(
     MatrixType& rLeftHandSideMatrix,
     VectorType& rRightHandSideVector,
     ProcessInfo& rCurrentProcessInfo,
@@ -147,8 +147,10 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     const auto d_n = a1.dot(A2);     // Anteil N in a1 Richtung
     const auto d_v = a1.dot(A3);     // Anteil V in a1 Richtung
 
-    const auto alpha_12 = HyperJet::atan2(a2.dot(A3) , a2.dot(A2));    // Winkel zwischen a2 und A
-    const auto alpha_13 = HyperJet::atan2(a3.dot(A2) , a3.dot(A3));    // Winkel zwischen a2 und A
+    const auto alpha_pre = GetValue(ALPHA_LOAD);
+
+    const auto alpha_12 = HyperJet::atan2(a2.dot(A3) , a2.dot(A2)) ;    // Winkel zwischen a2 und A
+    const auto alpha_13 = HyperJet::atan2(a3.dot(A3), a3.dot(A2)) ;    // Winkel zwischen a2 und A
     const auto alpha_2  = HyperJet::atan2(d_n , d_t);                  // Winkel zwischen a1 und A1 um n
     const auto alpha_3  = HyperJet::atan2(d_v , d_t);                  // Winkel zwischen a1 und A1 um v
 
@@ -196,12 +198,11 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
       // By the Gradient 
     const auto dP_grad_bend = 0.5 * (delta_a.dot(delta_a) * penalty_rot_2);
       // By the Angle
-    const auto dP_alpha_bend = 0.5 * 0.5 * (alpha_2 * alpha_2 + alpha_3 * alpha_3) * penalty_rot_2; 
+    const auto dP_alpha_bend = 0.5 *(alpha_2 * alpha_2 + alpha_3 * alpha_3) * penalty_rot_2; 
 
     // Potential Torsion
-    const auto dP_alpha_tors = 0.5 * 0.5 * (alpha_12 * alpha_12 + alpha_13 * alpha_13) * penalty_tors;
+    const auto dP_alpha_tors = 0.5 * (alpha_12 * alpha_12) * penalty_tors;
       // const auto dP_alpha_tors =  0.5 * (alpha_12 * alpha_13) * penalty_tors;
-
 
     // auto const condition_type = 123;
 
@@ -247,9 +248,9 @@ void IgaBeamWeakDirichletCondition::CalculateAll(
     KRATOS_CATCH("")
 }
 
-void IgaBeamWeakDirichletCondition::PrintInfo(std::ostream& rOStream) const
+void IgaBeamWeakBeddingCondition::PrintInfo(std::ostream& rOStream) const
 {
-    rOStream << "\"IgaBeamWeakDirichletCondition\" #" << Id();
+    rOStream << "\"IgaBeamWeakBeddingCondition\" #" << Id();
 }
 
 } // namespace Kratos

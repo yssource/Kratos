@@ -109,9 +109,7 @@ class FluidSolver(PythonSolver):
             return True
 
     def FinalizeSolutionStep(self):
-        print('debug1 finsolste in fluid solver')
         if self._TimeBufferIsInitialized():
-            print('even inside if debug2')
             (self.solver).FinalizeSolutionStep()
 
     def Check(self):

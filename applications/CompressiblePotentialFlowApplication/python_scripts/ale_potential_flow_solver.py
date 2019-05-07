@@ -19,6 +19,9 @@ class AlePotentialFlowSolver(AleFluidSolver):
     def _CreateFluidSolver(self, solver_settings, parallelism):
         return potential_flow_solver.CreateSolver(self.model, solver_settings)
 
+    def AdvanceInTime(self, current_time):
+        return 0.0 # potential flow is steady state
+
     def SolveSolutionStep(self):
         for mesh_solver in self.mesh_motion_solvers:
             mesh_solver.SolveSolutionStep()

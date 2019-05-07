@@ -2,7 +2,7 @@
     "problem_data": {
         "problem_name": "PotentialFlow_Airfoil",
         "parallel_type": "OpenMP",
-        "echo_level": 0,
+        "echo_level": 3,
         "start_time": 0.0,
         "end_time": 1.0
     },
@@ -27,7 +27,7 @@
                 "input_type": "mdpa",
                 "input_filename" : "naca0012_Case_0_DS_100_AOA_5.0_Far_Field_Mesh_Size_2_Airfoil_Mesh_Size_0.001"
             },
-            "echo_level": 0,
+            "echo_level": 3,
             "compute_reactions": false,
             "maximum_iterations": 10,
             "linear_solver_settings"  : {

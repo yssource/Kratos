@@ -94,10 +94,7 @@ class PotentialFlowSolver(FluidSolver):
         (self.solver).Initialize()
 
     def AdvanceInTime(self, current_time):
-        self.delta_t = 0.05
-        self.time = current_time + self.delta_t
-        #TODO: alternative for "virtual timestepping" in steady problem
-        return self.time
+        raise Exception("AdvanceInTime is not implemented. Potential Flow simulations are steady state.")
 
     def _TimeBufferIsInitialized(self):
         # since potential flow is steady state, time buffering is not required and this simply passes on

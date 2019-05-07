@@ -20,9 +20,12 @@ def CreateSolverByParameters(model, solver_settings, parallelism):
         elif (solver_type == "structural_similarity"):
             solver_module_name = "mesh_solver_structural_similarity"
 
+        elif (solver_type == "steady_structural_similarity"):
+            solver_module_name = "steady_mesh_solver_structural_similarity"
+
         else:
             err_msg =  'The requested solver type "' + solver_type + '" is not in the python solvers wrapper\n'
-            err_msg += 'Available options are: "laplacian", "structural_similarity"'
+            err_msg += 'Available options are: "laplacian", "structural_similarity" and "steady_mesh_solver_structural_similarity"(OMP only)'
             raise Exception(err_msg)
 
     # Solvers for MPI parallelism

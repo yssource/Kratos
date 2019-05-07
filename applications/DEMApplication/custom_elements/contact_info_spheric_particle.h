@@ -85,6 +85,8 @@ std::vector<double> mNeighbourTgOfFriAng;
 std::vector<double> mNeighbourRigidTgOfFriAng;
 std::vector<double> mNeighbourContactStress;
 std::vector<double> mNeighbourRigidContactStress;
+std::vector<double> mNeighbourCohesion;
+std::vector<double> mNeighbourRigidCohesion;
 
 protected:
 

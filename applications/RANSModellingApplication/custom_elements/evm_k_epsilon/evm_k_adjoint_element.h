@@ -51,6 +51,7 @@ struct EvmKAdjointElementData
     double WallDistance;
     double Gamma;
     double Fmu;
+    double y_plus;
 
     double TurbulentKineticEnergy;
     double TurbulentKinematicViscosity;
@@ -348,6 +349,19 @@ private:
                                         const Variable<double>& rDerivativeVariable,
                                         const EvmKAdjointElementData& rCurrentData,
                                         const ProcessInfo& rCurrentProcessInfo) const override;
+
+    void CalculateEffectiveKinematicViscosityVelocityDerivatives(
+        Matrix& rOutput,
+        const EvmKAdjointElementData& rCurrentData,
+        const ProcessInfo& rCurrentProcessInfo) const override;
+
+    void CalculateReactionTermVelocityDerivatives(Matrix& rOutput,
+                                                  const EvmKAdjointElementData& rCurrentData,
+                                                  const ProcessInfo& rCurrentProcessInfo) const override;
+
+    void CalculateSourceTermVelocityDerivatives(Matrix& rOutput,
+                                                const EvmKAdjointElementData& rCurrentData,
+                                                const ProcessInfo& rCurrentProcessInfo) const override;
 
     ///@}
     ///@name Serialization

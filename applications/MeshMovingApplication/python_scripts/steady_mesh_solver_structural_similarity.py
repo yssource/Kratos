@@ -21,7 +21,7 @@ class MeshSolverStructuralSimilarity(SteadyMeshSolverBase):
 
     def _create_mesh_motion_solving_strategy(self):
         linear_solver = self.get_linear_solver()
-        time_order = self.settings["time_order"].GetInt()
+        time_order = 1
         reform_dofs_each_step = self.settings["reform_dofs_each_step"].GetBool()
         compute_reactions = self.settings["compute_reactions"].GetBool()
         calculate_mesh_velocities = False

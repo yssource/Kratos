@@ -98,5 +98,4 @@ class PotentialFlowSolver(FluidSolver):
 
     def _TimeBufferIsInitialized(self):
         # since potential flow is steady state, time buffering is not required and this simply passes on
-        print('debug time buffer check is actually called in potflow')
         return True

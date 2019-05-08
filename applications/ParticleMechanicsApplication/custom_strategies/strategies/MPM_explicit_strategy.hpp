@@ -484,33 +484,18 @@ protected:
 
                 Vector dummy_vector;
                 // If we consider the rotation DoF
-                const bool has_dof_for_rot_z = r_model_part.Nodes().begin()->HasDofFor(ROTATION_Z);
-                if (has_dof_for_rot_z) {
-                    const array_1d<double, 3> zero_array = ZeroVector(3);
-                    VariableUtils().SetNonHistoricalVariable(NODAL_INERTIA, zero_array, r_nodes);
-                    VariableUtils().SetNonHistoricalVariable(NODAL_ROTATION_DAMPING, zero_array, r_nodes);
+                #pragma omp parallel for firstprivate(dummy_vector), schedule(guided,512)
+                for (int i = 0; i < static_cast<int>(r_elements.size()); ++i) {
+                    // Getting nodal mass and inertia from element
+                    // this function needs to be implemented in the respective
+                    // element to provide nodal masses
+                    auto it_elem = it_elem_begin + i;
+                    it_elem->AddExplicitContribution(dummy_vector, RESIDUAL_VECTOR, NODAL_MASS, r_current_process_info);
+                }
+            }
+            }
 
-                    #pragma omp parallel for firstprivate(dummy_vector), schedule(guided,512)
-                    for (int i = 0; i < static_cast<int>(r_elements.size()); ++i) {
-                        // Getting nodal mass and inertia from element
-                        // this function needs to be implemented in the respective
-                        // element to provide inertias and nodal masses
-                        auto it_elem = it_elem_begin + i;
-                        it_elem->AddExplicitContribution(dummy_vector, RESIDUAL_VECTOR, NODAL_INERTIA, r_current_process_info);
-                    }
-                } else { // Only NODAL_MASS and NODAL_DISPLACEMENT_DAMPING are needed
-                    #pragma omp parallel for firstprivate(dummy_vector), schedule(guided,512)
-                    for (int i = 0; i < static_cast<int>(r_elements.size()); ++i) {
-                        // Getting nodal mass and inertia from element
-                        // this function needs to be implemented in the respective
-                        // element to provide nodal masses
-                        auto it_elem = it_elem_begin + i;
-                        it_elem->AddExplicitContribution(dummy_vector, RESIDUAL_VECTOR, NODAL_MASS, r_current_process_info);
-                    }
-            }
-            }
-            mSolutionStepIsInitialized = true;
-        }
+        mSolutionStepIsInitialized = true;
 
         KRATOS_INFO_IF("MPM_Strategy", this->GetEchoLevel() >= 3) << "Initialize Solution Step in strategy finished" <<std::endl;
 

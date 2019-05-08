@@ -209,6 +209,7 @@ class ParticleMPMSolver(PythonSolver):
                             self.linear_solver, self.new_element, self.solver_type, self.max_iteration, self.compute_reactions,
                             self.block_builder, self.pressure_dofs, self.move_mesh_flag)
 
+        self.solver.Initialize()
         # Set echo level
         self._set_echo_level()
 
@@ -233,7 +234,6 @@ class ParticleMPMSolver(PythonSolver):
 
     def InitializeSolutionStep(self):
         self.SearchElement()
-        self.solver.Initialize()
         self.solver.InitializeSolutionStep()
 
     def Predict(self):

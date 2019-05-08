@@ -794,12 +794,31 @@ class ConditionFactory:
 
                 projection.Compute(point=node_coords_i)
                 projected_point_uv = np.array([projection.ParameterU(), projection.ParameterV()])
+                projected_point = surface.PointAt(*projected_point_uv)
 
                 is_inside, is_on_boundary = self.Contains(projected_point_uv, boundary_polygons[face_i.Key()], self.boundary_tessellation_tolerance*1.1)
-                if is_inside:
+
+                distance_vector = projected_point - np.array(node_coords_i)
+                distance_square = np.dot(distance_vector, distance_vector)
+                is_really_near_surface = distance_square < (self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()*10)**2
+
+                if is_inside and is_really_near_surface:
                     fe_point_parametrization[node_itr]["faces"].append(face_i)
                     fe_point_parametrization[node_itr]["parameters"].append(projected_point_uv)
                     fe_point_parametrization[node_itr]["is_on_boundary"] = is_on_boundary
+
+                    # point_ptr = self.cad_model.Add(an.Point3D(location=node_coords_i))
+                    # point_ptr.Attributes().SetLayer('FEPoints')
+
+                    # point_ptr = self.cad_model.Add(an.Point3D(location=surface.PointAt(*projected_point_uv)))
+                    # point_ptr.Attributes().SetLayer('FEPoints_projected_face_'+str(face_i.Key()))
+
+                    # line_ptr =  self.cad_model.Add(an.Line3D(a=np.array(node_coords_i), b=(np.array(node_coords_i) + np.array(node_i.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)))))
+                    # line_ptr.Attributes().SetLayer('disp')
+
+                # if is_on_boundary:
+                #     point_ptr = self.cad_model.Add(an.Point3D(location=node_coords_i))
+                #     point_ptr.Attributes().SetLayer('FE_nodes_on_boundary')
 
         # Check results
         for entry in fe_point_parametrization:

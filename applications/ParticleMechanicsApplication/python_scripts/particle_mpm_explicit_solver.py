@@ -108,11 +108,8 @@ class ParticleMPMSolver(PythonSolver):
         # Construct the linear solvers
         ## todo: delete this
         import KratosMultiphysics.python_linear_solver_factory as linear_solver_factory
-        linear_solver_type = self.settings["linear_solver_settings"]["solver_type"].GetString()
-        if(linear_solver_type == "amgcl" or linear_solver_type == "AMGCL"):
-            self.block_builder = True
-        else:
-            self.block_builder = False
+        linear_solver_type = self.settings["linear_solver_settings"]["solver_type"].GetString() # dummy
+        self.block_builder = True # dummy
         self.linear_solver = linear_solver_factory.ConstructSolver(self.settings["linear_solver_settings"])
 
         KratosMultiphysics.Logger.PrintInfo("::[ParticleMPMSolver]:: ", "Solver is constructed correctly.")
@@ -159,19 +156,9 @@ class ParticleMPMSolver(PythonSolver):
         KratosMultiphysics.Logger.PrintInfo("::[ParticleMPMSolver]:: ","DOFs are added.")
 
     def Initialize(self):
-        #TODO: implement solver_settings and change the input of the constructor in MPM_strategy.h
-
-        #todo: delete
-        self.convergence_criterion_type = self.settings["convergence_criterion"].GetString()
-        self.rel_disp_tol               = self.settings["displacement_relative_tolerance"].GetDouble()
-        self.abs_disp_tol               = self.settings["displacement_absolute_tolerance"].GetDouble()
-        self.rel_res_tol                = self.settings["residual_relative_tolerance"].GetDouble()
-        self.abs_res_tol                = self.settings["residual_absolute_tolerance"].GetDouble()
-        self.max_iteration              = self.settings["max_iteration"].GetInt()
-
-
         # Set definition of the global solver type
         self.solver_type                    =   "explicit"
+        self.max_iteration                  =     1   # dummy
 
         # Set definition of the solver parameters
         self.compute_reactions      = self.settings["compute_reactions"].GetBool()
@@ -258,7 +245,6 @@ class ParticleMPMSolver(PythonSolver):
 
     def FinalizeSolutionStep(self):
         self.solver.FinalizeSolutionStep()
-
         self.solver.Clear()
 
     ### Solver private functions

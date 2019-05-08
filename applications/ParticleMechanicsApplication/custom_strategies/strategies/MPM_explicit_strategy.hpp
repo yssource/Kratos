@@ -128,7 +128,6 @@ public:
     MPMExplicitStrategy(
         ModelPart& model_part,
         typename TSchemeType::Pointer pScheme,
-        typename TLinearSolver::Pointer pNewLinearSolver,
         typename TConvergenceCriteriaType::Pointer pNewConvergenceCriteria,
         int MaxIterations = 30,
         bool CalculateReactions = false,
@@ -153,27 +152,12 @@ public:
         // Saving the scheme
         mpScheme = pScheme;
 
-        // Saving the linear solver
-        mpLinearSolver = pNewLinearSolver;
-
-        // Setting up the default builder and solver
-        mpBuilderAndSolver = typename TBuilderAndSolverType::Pointer
-                             (
-                                new ResidualBasedEliminationBuilderAndSolver<TSparseSpace, TDenseSpace, TLinearSolver > (mpLinearSolver)
-                             );
-
         // Set flags to start correcty the calculations
         mSolutionStepIsInitialized = false;
 
         mInitializeWasPerformed = false;
 
         mFinalizeSolutionStep = true;
-
-        // Tells to the Builder And Solver if the reactions have to be Calculated or not
-        GetBuilderAndSolver()->SetCalculateReactionsFlag(mCalculateReactionsFlag);
-
-        // Tells to the Builder And Solver if the system matrix and vectors need to be reshaped at each step or not
-        GetBuilderAndSolver()->SetReshapeMatrixFlag(mReformDofSetAtEachStep);
 
         // Set EchoLevel to the default value (only time is displayed)
         SetEchoLevel(1);
@@ -187,7 +171,6 @@ public:
     MPMExplicitStrategy(
         ModelPart& model_part,
         typename TSchemeType::Pointer pScheme,
-        typename TLinearSolver::Pointer pNewLinearSolver,
         typename TConvergenceCriteriaType::Pointer pNewConvergenceCriteria,
         typename TBuilderAndSolverType::Pointer pNewBuilderAndSolver,
         int MaxIterations = 30,
@@ -213,24 +196,12 @@ public:
         // Saving the scheme
         mpScheme = pScheme;
 
-        // Saving the linear solver
-        mpLinearSolver = pNewLinearSolver;
-
-        // Setting up the default builder and solver
-        mpBuilderAndSolver = pNewBuilderAndSolver;
-
         // Set flags to start correcty the calculations
         mSolutionStepIsInitialized = false;
 
         mInitializeWasPerformed = false;
 
         mFinalizeSolutionStep = true;
-
-        // Tells to the Builder And Solver if the reactions have to be Calculated or not
-        GetBuilderAndSolver()->SetCalculateReactionsFlag(mCalculateReactionsFlag);
-
-        // Tells to the Builder And Solver if the system matrix and vectors need to be reshaped at each step or not
-        GetBuilderAndSolver()->SetReshapeMatrixFlag(mReformDofSetAtEachStep);
 
         // Set EchoLevel to the default value (only time is displayed)
         SetEchoLevel(1);
@@ -262,17 +233,6 @@ public:
         return mpScheme;
     };
 
-    //Set and Get the BuilderAndSolver
-
-    void SetBuilderAndSolver(typename TBuilderAndSolverType::Pointer pNewBuilderAndSolver)
-    {
-        mpBuilderAndSolver = pNewBuilderAndSolver;
-    };
-
-    typename TBuilderAndSolverType::Pointer GetBuilderAndSolver()
-    {
-        return mpBuilderAndSolver;
-    };
 
     void SetInitializePerformedFlag(bool InitializePerformedFlag = true)
     {
@@ -292,12 +252,6 @@ public:
     bool GetCalculateReactionsFlag()
     {
         return mCalculateReactionsFlag;
-    }
-
-    void SetReformDofSetAtEachStepFlag(bool flag)
-    {
-        mReformDofSetAtEachStep = flag;
-        GetBuilderAndSolver()->SetReshapeMatrixFlag(mReformDofSetAtEachStep);
     }
 
     bool GetReformDofSetAtEachStepFlag()
@@ -335,8 +289,6 @@ public:
     void SetEchoLevel(int Level) override
     {
         BaseType::mEchoLevel = Level;
-        /* GetBuilderAndSolver()->SetEchoLevel(Level);
-        mpConvergenceCriteria->SetEchoLevel(Level); */
     }
 
     //*********************************************************************************
@@ -353,7 +305,6 @@ public:
         KRATOS_TRY
 
         typename TSchemeType::Pointer pScheme = GetScheme();
-        typename TBuilderAndSolverType::Pointer pBuilderAndSolver = GetBuilderAndSolver();
 
         // OPERATIONS THAT SHOULD BE DONE ONCE - internal check to avoid repetitions
         // if the operations needed were already performed this does nothing
@@ -388,18 +339,6 @@ public:
             mInitializeWasPerformed = true;
         }
 
-        /* // Set up the system, operation performed just once unless it is required to reform the dof set at each iteration
-        if (pBuilderAndSolver->GetDofSetIsInitializedFlag() == false ||
-                mReformDofSetAtEachStep == true)
-        {
-            // Setting up the list of the DOFs to be solved
-            pBuilderAndSolver->SetUpDofSet(pScheme, BaseType::GetModelPart());
-
-            // Shaping correctly the system
-            pBuilderAndSolver->SetUpSystem(BaseType::GetModelPart());
-
-        } */
-
         // Prints informations about the current time
         if (this->GetEchoLevel() == 2 && BaseType::GetModelPart().GetCommunicator().MyPID() == 0 )
         {
@@ -418,7 +357,6 @@ public:
     bool SolveSolutionStep() override
     {
         typename TSchemeType::Pointer pScheme = GetScheme();
-        typename TBuilderAndSolverType::Pointer pBuilderAndSolver = GetBuilderAndSolver();
         DofsArrayType dof_set_dummy;
         TSystemMatrixType mA = TSystemMatrixType();
         TSystemVectorType mDx = TSystemVectorType();
@@ -454,10 +392,6 @@ public:
     void Clear() override
     {
         KRATOS_TRY
-        /* // Setting to zero the internal flag to ensure that the dof sets are recalculated
-        GetBuilderAndSolver()->SetDofSetIsInitializedFlag(false);
-        GetBuilderAndSolver()->Clear(); */
-
         GetScheme()->Clear();
 
         KRATOS_CATCH( "" )
@@ -558,10 +492,6 @@ protected:
 
     typename TSchemeType::Pointer mpScheme;
 
-    typename TLinearSolver::Pointer mpLinearSolver;
-
-    typename TBuilderAndSolverType::Pointer mpBuilderAndSolver;
-
     typename TConvergenceCriteriaType::Pointer mpConvergenceCriteria;
 
     /*		TSystemVectorType mDx;
@@ -614,7 +544,6 @@ protected:
         // Initialize solution step
         if (mSolutionStepIsInitialized == false)
         {
-            typename TBuilderAndSolverType::Pointer pBuilderAndSolver = GetBuilderAndSolver();
             typename TSchemeType::Pointer pScheme = GetScheme();
 
             ModelPart& r_model_part = BaseType::GetModelPart();
@@ -623,15 +552,10 @@ protected:
             TSystemVectorType rDx = TSystemVectorType();
             TSystemVectorType rb = TSystemVectorType();
 
-            // Setting up the Vectors involved to the correct size
-            pBuilderAndSolver->ResizeAndInitializeVectors(pScheme, mpA, mpDx, mpb, BaseType::GetModelPart());
 
             TSystemMatrixType mA = TSystemMatrixType();
             TSystemVectorType mDx = TSystemVectorType();
             TSystemVectorType mb = TSystemVectorType();
-
-            // Initial operations ... things that are constant over the Solution Step
-            pBuilderAndSolver->InitializeSolutionStep(BaseType::GetModelPart(), mA, mDx, mb);
 
             // Initial operations ... things that are constant over the Solution Step
             pScheme->InitializeSolutionStep(BaseType::GetModelPart(), mA, mDx, mb);
@@ -689,18 +613,11 @@ protected:
     void FinalizeSolutionStep() override
     {
         KRATOS_TRY
-        typename TBuilderAndSolverType::Pointer pBuilderAndSolver = GetBuilderAndSolver();
         typename TSchemeType::Pointer pScheme = GetScheme();
         TSystemMatrixType mA = TSystemMatrixType();
         TSystemVectorType mDx = TSystemVectorType();
         TSystemVectorType mb = TSystemVectorType();
-        /* if (mCalculateReactionsFlag == true)
-        {
-            pBuilderAndSolver->CalculateReactions(pScheme, BaseType::GetModelPart(), mA, mDx, mb);
-        } */
 
-        // Calling rDofSet
-        //DofsArrayType& rDofSet = pBuilderAndSolver->GetDofSet();
 
         /*Finalization of the solution step,
         operations to be done after achieving convergence, for example the
@@ -711,8 +628,6 @@ protected:
             KRATOS_INFO_IF("MPM_Strategy", this->GetEchoLevel() >= 3) << "Calling FinalizeSolutionStep" <<std::endl;
 
             pScheme->FinalizeSolutionStep(BaseType::GetModelPart(), mA, mDx, mb);
-            //pBuilderAndSolver->FinalizeSolutionStep(BaseType::GetModelPart(), mA, mDx, mb);
-            //mpConvergenceCriteria->FinalizeSolutionStep(BaseType::GetModelPart(), rDofSet, mA, mDx, mb);
             if (BaseType::MoveMeshFlag()) BaseType::MoveMesh();
         }
 

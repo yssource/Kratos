@@ -1044,8 +1044,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementVelocityFirstDerivativeLHSMatrix, RANSE
     noalias(mass_tke_0) = prod(mass_0, tke_rate_0);
 
     Vector residual_0(rhs_0.size());
-    // noalias(residual_0) = rhs_0 - damp_tke_0 - mass_tke_0;
-    noalias(residual_0) = damp_tke_0 * -1.0;
+    noalias(residual_0) = rhs_0 - damp_tke_0 - mass_tke_0;
 
     const double delta = 1e-7;
     for (std::size_t i_node = 0; i_node < number_of_nodes; ++i_node)
@@ -1079,8 +1078,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementVelocityFirstDerivativeLHSMatrix, RANSE
             noalias(mass_tke) = prod(mass, tke_rate);
 
             Vector residual(rhs.size());
-            // noalias(residual) = rhs - damp_tke - mass_tke;
-            noalias(residual) = damp_tke * -1.0;
+            noalias(residual) = rhs - damp_tke - mass_tke;
 
             Vector delta_residual(residual.size());
             noalias(delta_residual) = residual - residual_0;

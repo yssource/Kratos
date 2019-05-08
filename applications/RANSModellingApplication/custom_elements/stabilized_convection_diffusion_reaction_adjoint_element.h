@@ -612,8 +612,10 @@ public:
 
             double chi, k1, k2;
 
-            double residual =
+            const double primal_variable_relaxed_rate =
                 this->CalculateRelaxedScalarRate(current_data, rCurrentProcessInfo);
+
+            double residual = primal_variable_relaxed_rate;
             residual += velocity_dot_primal_variable_gradient;
             residual += reaction * primal_variable_value;
             residual -= source;
@@ -694,6 +696,7 @@ public:
                     unsigned int block_size = c * TDim;
                     for (unsigned int k = 0; k < TDim; ++k)
                     {
+                        // adding damping matrix derivatives
                         double value = 0.0;
 
                         // convection term derivatives
@@ -776,8 +779,44 @@ public:
                                  gauss_shape_functions[c] * primal_variable_gradient[k];
 
                         // putting transposed values
+                        rResidualDerivatives(block_size + k, a) -=
+                            value * gauss_weights[g];
+
+                        // adding source term derivatives
+                        value = 0.0;
+
+                        value += gauss_shape_functions[a] * source_derivatives(c, k);
+                        value += tau_derivatives(c, k) *
+                                 (velocity_convective_terms[a] +
+                                  s * gauss_shape_functions[a]) *
+                                 source;
+                        value += tau *
+                                 (gauss_shape_functions[c] * r_shape_derivatives(a, k) +
+                                  s_derivatives(c, k) * gauss_shape_functions[a]) *
+                                 source;
+                        value += tau *
+                                 (velocity_convective_terms[a] +
+                                  s * gauss_shape_functions[a]) *
+                                 source_derivatives(c, k);
+
+                        // putting transposed values
                         rResidualDerivatives(block_size + k, a) +=
-                            -1.0 * value * gauss_weights[g];
+                            value * gauss_weights[g];
+
+                        // adding mass term derivatives
+                        value = 0.0;
+
+                        value += tau_derivatives(c, k) *
+                                 (velocity_convective_terms[a] +
+                                  s * gauss_shape_functions[a]) *
+                                 primal_variable_relaxed_rate;
+                        value += tau *
+                                 (gauss_shape_functions[c] * r_shape_derivatives(a, k) +
+                                  s_derivatives(c, k) * gauss_shape_functions[a]) *
+                                 primal_variable_relaxed_rate;
+
+                        rResidualDerivatives(block_size + k, a) -=
+                            value * gauss_weights[g];
                     }
                 }
             }

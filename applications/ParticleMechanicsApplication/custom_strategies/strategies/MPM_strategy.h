@@ -260,44 +260,18 @@ public:
         }
         else if(SolutionType == "explicit" || SolutionType == "Explicit")
         {
-            double alpha_M;
-            double dynamic;
             typename TSchemeType::Pointer pscheme = typename TSchemeType::Pointer(
                  new MPMExplicitCentralDifferencesScheme< TSparseSpace,TDenseSpace >(
-                     mr_grid_model_part,
-                     TDim,
-                     TBlock,
-                     alpha_M = 0.0,
-                     dynamic=1) );
-
-            const double ratio_tolerance = 0.00005;
-            const double always_converged_norm = 1e-09;
+                     mr_grid_model_part) );
 
 
-            //todo:: delete this
-            typename TBuilderAndSolverType::Pointer pBuilderAndSolver;
-            if(BlockBuilder == true){
-                KRATOS_INFO("MPM_Strategy") << "Block Builder is used" << std::endl;
-                pBuilderAndSolver = typename TBuilderAndSolverType::Pointer(new ResidualBasedBlockBuilderAndSolver<TSparseSpace,TDenseSpace,TLinearSolver>(plinear_solver) );
-            }
-            else{
-                KRATOS_INFO("MPM_Strategy") << "Block Builder is not used" << std::endl;
-                pBuilderAndSolver = typename TBuilderAndSolverType::Pointer(new ResidualBasedEliminationBuilderAndSolver<TSparseSpace,TDenseSpace,TLinearSolver>(plinear_solver) );
-            }
-
-            //todo:: delete this
-            typename TConvergenceCriteriaType::Pointer pConvergenceCriteria = typename TConvergenceCriteriaType::Pointer(new ResidualCriteria< TSparseSpace, TDenseSpace >(ratio_tolerance,always_converged_norm));
             bool reform_DOF_at_each_iteration = false;
-
-
             //todo:: delete bs, linear solver, cc, maxIter
             mp_solving_strategy =
              typename SolvingStrategyType::Pointer(
                  new MPMExplicitStrategy<TSparseSpace,TDenseSpace,TLinearSolver >(
                  mr_mpm_model_part,
                  pscheme,
-                 pBuilderAndSolver,
-                 MaxIteration,
                  ComputeReaction,
                  reform_DOF_at_each_iteration,
                  MoveMeshFlag) );

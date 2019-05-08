@@ -26,8 +26,6 @@
 #include "includes/kratos_flags.h"
 
 #include "solving_strategies/strategies/solving_strategy.h"
-#include "solving_strategies/builder_and_solvers/residualbased_block_builder_and_solver.h"
-#include "solving_strategies/builder_and_solvers/residualbased_elimination_builder_and_solver.h"
 
 namespace Kratos
 {
@@ -78,7 +76,6 @@ public:
     KRATOS_CLASS_POINTER_DEFINITION(MPMExplicitStrategy);
 
     typedef SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver> BaseType;
-    typedef typename BaseType::TBuilderAndSolverType TBuilderAndSolverType;
 
     typedef typename BaseType::TDataType TDataType;
 
@@ -125,7 +122,6 @@ public:
     MPMExplicitStrategy(
         ModelPart& model_part,
         typename TSchemeType::Pointer pScheme,
-        int MaxIterations = 30,
         bool CalculateReactions = false,
         bool ReformDofSetAtEachStep = false,
         bool MoveMeshFlag = false
@@ -137,47 +133,6 @@ public:
         mKeepSystemConstantDuringIterations = false;
 
         // Set flags to default values
-        SetMaxIterationNumber(MaxIterations);
-        mCalculateReactionsFlag = CalculateReactions;
-
-        mReformDofSetAtEachStep = ReformDofSetAtEachStep;
-
-        // Saving the scheme
-        mpScheme = pScheme;
-
-        // Set flags to start correcty the calculations
-        mSolutionStepIsInitialized = false;
-
-        mInitializeWasPerformed = false;
-
-        mFinalizeSolutionStep = true;
-
-        // Set EchoLevel to the default value (only time is displayed)
-        SetEchoLevel(1);
-
-        // By default the matrices are rebuilt at each iteration
-        this->SetRebuildLevel(2);
-
-        KRATOS_CATCH( "" )
-    }
-
-    MPMExplicitStrategy(
-        ModelPart& model_part,
-        typename TSchemeType::Pointer pScheme,
-        typename TBuilderAndSolverType::Pointer pNewBuilderAndSolver,
-        int MaxIterations = 30,
-        bool CalculateReactions = false,
-        bool ReformDofSetAtEachStep = false,
-        bool MoveMeshFlag = false
-    )
-        : SolvingStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(model_part, MoveMeshFlag)
-    {
-        KRATOS_TRY
-
-        mKeepSystemConstantDuringIterations = false;
-
-        // Set flags to default values
-        SetMaxIterationNumber(MaxIterations);
         mCalculateReactionsFlag = CalculateReactions;
 
         mReformDofSetAtEachStep = ReformDofSetAtEachStep;
@@ -246,16 +201,6 @@ public:
     bool GetReformDofSetAtEachStepFlag()
     {
         return mReformDofSetAtEachStep;
-    }
-
-    void SetMaxIterationNumber(unsigned int MaxIterationNumber)
-    {
-        mMaxIterationNumber = MaxIterationNumber;
-    }
-
-    unsigned int GetMaxIterationNumber()
-    {
-        return mMaxIterationNumber;
     }
 
     void SetFinalizeSolutionStepFlag(bool FinalizeSolutionStepFlag = true)
@@ -394,13 +339,6 @@ public:
 
     /*@{ */
 
-    TSystemMatrixType& GetSystemMatrix()
-    {
-        TSystemMatrixType& mA = *mpA;
-
-        return mA;
-    }
-
     void SetKeepSystemConstantDuringIterations(bool value)
     {
         mKeepSystemConstantDuringIterations = value;
@@ -475,12 +413,6 @@ protected:
     typename TSchemeType::Pointer mpScheme;
 
 
-    /*		TSystemVectorType mDx;
-                    TSystemVectorType mb;
-                    TSystemMatrixType mA;*/
-    TSystemVectorPointerType mpDx;
-    TSystemVectorPointerType mpb;
-    TSystemMatrixPointerType mpA;
 
     /**
     Flag telling if it is needed to reform the DofSet at each
@@ -500,9 +432,6 @@ protected:
     bool mCalculateReactionsFlag;
 
     bool mSolutionStepIsInitialized;
-
-    ///default = 30
-    unsigned int mMaxIterationNumber;
 
     bool mInitializeWasPerformed;
 

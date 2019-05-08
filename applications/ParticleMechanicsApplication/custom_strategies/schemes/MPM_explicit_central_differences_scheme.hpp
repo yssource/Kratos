@@ -50,24 +50,6 @@ template<class TSparseSpace,  class TDenseSpace >
 class MPMExplicitCentralDifferencesScheme: public Scheme<TSparseSpace,TDenseSpace>
 {
 protected:
-
-    struct  GeneralMatrices
-    {
-
-        std::vector< Matrix > M;     //first derivative matrix  (usually mass matrix)
-        std::vector< Matrix > D;     //second derivative matrix (usually damping matrix)
-
-    };
-
-    struct GeneralVectors
-    {
-
-        std::vector< Vector > v;    //velocity
-        std::vector< Vector > a;    //acceleration
-        std::vector< Vector > ap;   //previous acceleration
-
-    };
-
 public:
 
     /**@name Type Definitions */
@@ -118,15 +100,12 @@ public:
      * Constructor.
      * The bossak method
      */
-    MPMExplicitCentralDifferencesScheme(ModelPart& grid_model_part,
-     unsigned int DomainSize,
-     unsigned int BlockSize,
-     double rAlpham=0,double rDynamic=1)
-        :Scheme<TSparseSpace,TDenseSpace>(), mr_grid_model_part(grid_model_part), mRotationTool(DomainSize,BlockSize,IS_STRUCTURE)
+    MPMExplicitCentralDifferencesScheme(ModelPart& grid_model_part)
+        :Scheme<TSparseSpace,TDenseSpace>(), mr_grid_model_part(grid_model_part)
     {
         // For pure Newmark Scheme
         ProcessInfo& r_current_process_info = grid_model_part.GetProcessInfo();
-
+        //hard coded so far
         mDeltaTime.PredictionLevel = 0;
         mDeltaTime.Maximum = 1.0;
         mDeltaTime.Fraction = 1.0;
@@ -137,13 +116,7 @@ public:
      */
      MPMExplicitCentralDifferencesScheme(MPMExplicitCentralDifferencesScheme& rOther)
         :BaseType(rOther)
-        ,mAlpha(rOther.mAlpha)
-        ,mNewmark(rOther.mNewmark)
-        ,mMatrix(rOther.mMatrix)
-        ,mVector(rOther.mVector)
         ,mr_grid_model_part(rOther.mr_grid_model_part)
-        ,mDomainSize(rOther.mDomainSize)
-        ,mRotationTool(rOther.mDomainSize,rOther.mBlockSize,IS_STRUCTURE)
     {
     }
 
@@ -701,9 +674,6 @@ public:
             KRATOS_ERROR_IF(it->HasDofFor(DISPLACEMENT_Z) == false) <<"Missing DISPLACEMENT_Z dof on node "<<it->Id() <<std::endl;
         }
 
-        //check for admissible value of the AlphaBossak
-        KRATOS_ERROR_IF(mAlpha.m > 0.0 || mAlpha.m < -0.3) << "Value not admissible for AlphaBossak. Admissible values should be between 0.0 and -0.3. Current value is "<< mAlpha.m << std::endl;
-
         //check for minimum value of the buffer index
         KRATOS_ERROR_IF(r_model_part.GetBufferSize() < 2) << "Insufficient buffer size. Buffer size should be greater than 2. Current size is" << r_model_part.GetBufferSize() <<std::endl;
 
@@ -847,35 +817,6 @@ protected:
     /**@name Member Variables */
     /*@{ */
 
-    struct GeneralAlphaMethod
-    {
-
-        double f;  //alpha Hilbert
-        double m;  //alpha Bosssak
-
-    };
-
-    struct NewmarkMethod
-    {
-
-        double beta;
-        double gamma;
-
-        // System constants
-        double c0;
-        double c1;
-        double c2;
-        double c3;
-        double c4;
-        double c5;
-        double c6;
-
-        // Static-dynamic parameter
-        double static_dynamic;
-
-    };
-
-
     struct DeltaTimeParameters {
         double PredictionLevel; // 0, 1, 2 // NOTE: Should be a integer?
         double Maximum;         // Maximum delta time
@@ -900,19 +841,7 @@ protected:
     TimeVariables mTime;            /// This struct contains the details of the time variables
     DeltaTimeParameters mDeltaTime; /// This struct contains the information related with the increment od time step
 
-    GeneralAlphaMethod  mAlpha;
-    NewmarkMethod       mNewmark;
-
-    GeneralMatrices     mMatrix;
-    GeneralVectors      mVector;
-
     ModelPart& mr_grid_model_part;
-
-    unsigned int    mDomainSize;
-    unsigned int    mBlockSize;
-
-    MPMBoundaryRotationUtility<LocalSystemMatrixType,LocalSystemVectorType> mRotationTool;
-
     /*@} */
     /**@name Protected Operators*/
     /*@{ */

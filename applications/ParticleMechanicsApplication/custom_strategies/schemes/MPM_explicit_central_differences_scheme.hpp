@@ -200,7 +200,7 @@ public:
         #pragma omp parallel for schedule(guided,512)
         for (int i = 0; i < static_cast<int>(r_nodes.size()); ++i) {
             auto it_node = (it_node_begin + i);
-            it_node->SetValue(NODAL_MASS, 0.0);
+            //it_node->SetValue(NODAL_MASS, 0.0);
             array_1d<double, 3>& r_middle_velocity = it_node->FastGetSolutionStepValue(MIDDLE_VELOCITY);
             r_middle_velocity  = ZeroVector(3);
         }
@@ -289,7 +289,9 @@ public:
             )
         {
 
-            const double nodal_mass = itCurrentNode->GetValue(NODAL_MASS);
+            //const double nodal_mass = itCurrentNode->GetValue(NODAL_MASS);
+            const double nodal_mass = itCurrentNode->FastGetSolutionStepValue(NODAL_MASS);
+
             const double nodal_displacement_damping = itCurrentNode->GetValue(NODAL_DISPLACEMENT_DAMPING);
             const array_1d<double, 3>& r_current_residual = itCurrentNode->FastGetSolutionStepValue(FORCE_RESIDUAL);
 

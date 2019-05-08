@@ -479,19 +479,19 @@ protected:
 
                 // Set Nodal Mass and Damping to zero
                 NodesArrayType& r_nodes = r_model_part.Nodes();
-                VariableUtils().SetNonHistoricalVariable(NODAL_MASS, 0.0, r_nodes);
+                //VariableUtils().SetNonHistoricalVariable(NODAL_MASS, 0.0, r_nodes);
                 VariableUtils().SetNonHistoricalVariable(NODAL_DISPLACEMENT_DAMPING, 0.0, r_nodes);
 
                 Vector dummy_vector;
                 // If we consider the rotation DoF
-                #pragma omp parallel for firstprivate(dummy_vector), schedule(guided,512)
+                /* #pragma omp parallel for firstprivate(dummy_vector), schedule(guided,512)
                 for (int i = 0; i < static_cast<int>(r_elements.size()); ++i) {
                     // Getting nodal mass and inertia from element
                     // this function needs to be implemented in the respective
                     // element to provide nodal masses
                     auto it_elem = it_elem_begin + i;
                     it_elem->AddExplicitContribution(dummy_vector, RESIDUAL_VECTOR, NODAL_MASS, r_current_process_info);
-                }
+                } */
             }
             }
 

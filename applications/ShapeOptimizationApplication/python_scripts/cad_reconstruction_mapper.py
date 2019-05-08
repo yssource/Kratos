@@ -372,7 +372,7 @@ class CADMapper:
                 total_num_conditions = sum( [len(list_of_values) for list_of_values in self.conditions.values()] )
                 print("\n> Number of conditions =",total_num_conditions)
                 print("> Number of equations =", lhs.shape[0])
-                print("> Number of relevant control points =", lhs.shape[1])
+                print("> Number of relevant unknowns =", lhs.shape[1])
 
             print("\n> ----------------------------------------------------")
             print("> Starting solution iteration", solution_itr,"...")

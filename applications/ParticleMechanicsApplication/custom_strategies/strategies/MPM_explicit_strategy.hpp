@@ -26,7 +26,6 @@
 #include "includes/kratos_flags.h"
 
 #include "solving_strategies/strategies/solving_strategy.h"
-#include "solving_strategies/convergencecriterias/convergence_criteria.h"
 #include "solving_strategies/builder_and_solvers/residualbased_block_builder_and_solver.h"
 #include "solving_strategies/builder_and_solvers/residualbased_elimination_builder_and_solver.h"
 
@@ -75,8 +74,6 @@ class MPMExplicitStrategy
 public:
     /**@name Type Definitions */
     /*@{ */
-    typedef ConvergenceCriteria<TSparseSpace, TDenseSpace> TConvergenceCriteriaType;
-
     /** Counted pointer of ClassName */
     KRATOS_CLASS_POINTER_DEFINITION(MPMExplicitStrategy);
 
@@ -128,7 +125,6 @@ public:
     MPMExplicitStrategy(
         ModelPart& model_part,
         typename TSchemeType::Pointer pScheme,
-        typename TConvergenceCriteriaType::Pointer pNewConvergenceCriteria,
         int MaxIterations = 30,
         bool CalculateReactions = false,
         bool ReformDofSetAtEachStep = false,
@@ -145,9 +141,6 @@ public:
         mCalculateReactionsFlag = CalculateReactions;
 
         mReformDofSetAtEachStep = ReformDofSetAtEachStep;
-
-        // Saving the convergence criteria to be used
-        mpConvergenceCriteria = pNewConvergenceCriteria;
 
         // Saving the scheme
         mpScheme = pScheme;
@@ -171,7 +164,6 @@ public:
     MPMExplicitStrategy(
         ModelPart& model_part,
         typename TSchemeType::Pointer pScheme,
-        typename TConvergenceCriteriaType::Pointer pNewConvergenceCriteria,
         typename TBuilderAndSolverType::Pointer pNewBuilderAndSolver,
         int MaxIterations = 30,
         bool CalculateReactions = false,
@@ -189,9 +181,6 @@ public:
         mCalculateReactionsFlag = CalculateReactions;
 
         mReformDofSetAtEachStep = ReformDofSetAtEachStep;
-
-        // Saving the convergence criteria to be used
-        mpConvergenceCriteria = pNewConvergenceCriteria;
 
         // Saving the scheme
         mpScheme = pScheme;
@@ -328,13 +317,6 @@ public:
             if (pScheme->ConditionsAreInitialized() == false)
                 pScheme->InitializeConditions(BaseType::GetModelPart());
 
-
-            /* //todo: delete this
-            // Initialisation of the convergence criteria
-            typename TConvergenceCriteriaType::Pointer pConvergenceCriteria = mpConvergenceCriteria;
-            KRATOS_INFO_IF("MPM_Strategy",this->GetEchoLevel() >1) << "Initializing convergence criteria"<<std::endl;
-            if (mpConvergenceCriteria->IsInitialized() == false)
-                mpConvergenceCriteria->Initialize(BaseType::GetModelPart()); */
 
             mInitializeWasPerformed = true;
         }
@@ -492,7 +474,6 @@ protected:
 
     typename TSchemeType::Pointer mpScheme;
 
-    typename TConvergenceCriteriaType::Pointer mpConvergenceCriteria;
 
     /*		TSystemVectorType mDx;
                     TSystemVectorType mb;

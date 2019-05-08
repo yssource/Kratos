@@ -296,7 +296,6 @@ public:
                  new MPMExplicitStrategy<TSparseSpace,TDenseSpace,TLinearSolver >(
                  mr_mpm_model_part,
                  pscheme,
-                 pConvergenceCriteria,
                  pBuilderAndSolver,
                  MaxIteration,
                  ComputeReaction,

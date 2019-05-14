@@ -31,7 +31,7 @@ class ComputeForcesOnNodesProcess(KratosMultiphysics.Process):
 
         KratosMultiphysics.VariableUtils().SetNonHistoricalVariableToZero(KratosMultiphysics.REACTION, self.body_model_part.Nodes)
 
-        free_stream_velocity = self.body_model_part.ProcessInfo.GetValue(CPFApp.VELOCITY_INFINITY)
+        free_stream_velocity = self.body_model_part.ProcessInfo.GetValue(CPFApp.FREE_STREAM_VELOCITY)
         #TODO: Read density from ProcessInfo once available
         free_stream_density = 1.225
         free_stream_velocity_norm = free_stream_velocity.norm_2()
@@ -39,7 +39,7 @@ class ComputeForcesOnNodesProcess(KratosMultiphysics.Process):
 
         largest_force = 0.0 # comparison value to give warning in the end if no reaction force was computed
         for cond in self.body_model_part.Conditions:
-            condition_normal = cond.GetValue(KratosMultiphysics.NORMAL)
+            condition_normal = cond.GetGeometry().Normal()
             pressure_coefficient = cond.GetValue(KratosMultiphysics.PRESSURE)
             for node in cond.GetNodes():
                 added_force = condition_normal*(pressure_coefficient/2.0)*dynamic_pressure

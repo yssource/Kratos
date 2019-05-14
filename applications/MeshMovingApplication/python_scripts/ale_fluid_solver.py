@@ -10,21 +10,8 @@ import KratosMultiphysics.MeshMovingApplication.python_solvers_wrapper_mesh_moti
 
 class AleFluidSolver(PythonSolver):
     def __init__(self, model, solver_settings, parallelism):
-        default_settings = KM.Parameters("""{
-            "solver_type"                 : "ale_fluid",
-            "echo_level"                  : 0,
-            "start_fluid_solution_time"   : 0.0,
-            "ale_boundary_parts"          : [ ],
-            "mesh_motion_parts"           : [ ],
-            "fluid_solver_settings"       : { },
-            "mesh_motion_solver_settings" : { },
-            "mesh_velocity_calculation"   : { }
-        }""")
 
-        # cannot recursively validate because validation of fluid- and
-        # mesh-motion-settings is done in corresponding solvers
-        solver_settings.ValidateAndAssignDefaults(default_settings)
-
+        self._validate_settings_in_baseclass=True # To be removed eventually
         super(AleFluidSolver, self).__init__(model, solver_settings)
 
         self.start_fluid_solution_time = self.settings["start_fluid_solution_time"].GetDouble()
@@ -87,24 +74,19 @@ class AleFluidSolver(PythonSolver):
 
         KM.Logger.PrintInfo("::[AleFluidSolver]::", "Construction finished")
 
-    def _CheckSettingsConsistency(self, fluid_solver_settings, mesh_motion_solver_settings):
-        # Making sure the settings are consistent btw fluid and mesh-motion
-        if mesh_motion_solver_settings.Has("model_part_name"):
-            if not fluid_solver_settings["model_part_name"].GetString() == mesh_motion_solver_settings["model_part_name"].GetString():
-                err_msg =  'Fluid- and Mesh-Solver have to use the same MainModelPart ("model_part_name")!\n'
-                err_msg += 'Use "mesh_motion_parts" for specifying mesh-motion on sub-model-parts'
-                raise Exception(err_msg)
-        else:
-            mesh_motion_solver_settings.AddValue("model_part_name", fluid_solver_settings["model_part_name"])
-
-        domain_size = fluid_solver_settings["domain_size"].GetInt()
-        if mesh_motion_solver_settings.Has("domain_size"):
-            mesh_motion_domain_size = mesh_motion_solver_settings["domain_size"].GetInt()
-            if not domain_size == mesh_motion_domain_size:
-                raise Exception('Fluid- and Mesh-Solver have to use the same "domain_size"!')
-        else:
-            mesh_motion_solver_settings.AddValue("domain_size", fluid_solver_settings["domain_size"])
-        return [fluid_solver_settings, mesh_motion_solver_settings]
+    @classmethod
+    def GetDefaultSettings(cls):
+        this_defaults = KM.Parameters("""{
+            "solver_type"                 : "ale_fluid",
+            "start_fluid_solution_time"   : 0.0,
+            "ale_boundary_parts"          : [ ],
+            "mesh_motion_parts"           : [ ],
+            "fluid_solver_settings"       : { },
+            "mesh_motion_solver_settings" : { },
+            "mesh_velocity_calculation"   : { }
+        }""")
+        this_defaults.AddMissingParameters(super(AleFluidSolver, cls).GetDefaultSettings())
+        return this_defaults
 
     def AddVariables(self):
         self.mesh_motion_solver_full_mesh.AddVariables()

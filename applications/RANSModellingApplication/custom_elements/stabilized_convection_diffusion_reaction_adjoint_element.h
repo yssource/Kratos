@@ -22,7 +22,9 @@
 
 // Application includes
 #include "custom_utilities/rans_calculation_utilities.h"
+#include "custom_utilities/rans_variable_utils.h"
 #include "rans_modelling_application_variables.h"
+#include "utilities/geometrical_sensitivity_utility.h"
 
 namespace Kratos
 {
@@ -495,6 +497,40 @@ public:
         }
     }
 
+    /**
+     * @brief Calculates the sensitivity matrix.
+     *
+     * \f[
+     *    \partial_{\mathbf{s}}\mathbf{f}(\mathbf{w}^n)^T
+     *  - \partial_{\mathbf{s}}(\mathbf{M}^n \dot{\mathbf{w}}^{n-\alpha})^T
+     * \f]
+     */
+    void CalculateSensitivityMatrix(const Variable<array_1d<double, 3>>& rSensitivityVariable,
+                                    Matrix& rOutput,
+                                    const ProcessInfo& rCurrentProcessInfo) override
+    {
+        KRATOS_TRY
+
+        constexpr unsigned int TLocalSize = TNumNodes * TDim;
+        if (rOutput.size1() != TLocalSize || rOutput.size2() != TNumNodes)
+            rOutput.resize(TLocalSize, TNumNodes, false);
+
+        rOutput.clear();
+
+        if (rSensitivityVariable == SHAPE_SENSITIVITY)
+        {
+            this->AddShapeGradientSteadyTerm(rOutput, rCurrentProcessInfo);
+            // this->AddShapeGradientMassTerm(rOutput, ACCELERATION, -1.0, rCurrentProcessInfo);
+        }
+        else
+        {
+            KRATOS_ERROR << "Sensitivity variable " << rSensitivityVariable
+                         << " not supported." << std::endl;
+        }
+
+        KRATOS_CATCH("")
+    }
+
     void CalculateElementTotalResidualScalarDerivatives(Matrix& rResidualDerivatives,
                                                         const Variable<double>& rDerivativeVariable,
                                                         ProcessInfo& rCurrentProcessInfo)
@@ -584,19 +620,20 @@ public:
 
             double tau, element_length;
             this->CalculateStabilizationTau(
-                tau, element_length, velocity, contravariant_metric_tensor,
-                reaction, effective_kinematic_viscosity, delta_time);
-            Matrix tau_derivatives;
-            this->CalculateStabilizationTauVelocityDerivatives(
-                tau_derivatives, tau, effective_kinematic_viscosity, reaction,
-                velocity, contravariant_metric_tensor, effective_kinematic_derivatives,
-                reaction_derivatives, gauss_shape_functions);
+                tau, element_length, velocity, contravariant_metric_tensor, reaction,
+                effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
 
             Matrix element_length_derivatives;
             this->CalculateElementLengthH2VelocityDerivative(
                 element_length_derivatives, velocity_magnitude, velocity,
                 velocity_magnitude_derivatives, contravariant_metric_tensor,
                 gauss_shape_functions);
+
+            Matrix tau_derivatives;
+            this->CalculateStabilizationTauVelocityDerivatives(
+                tau_derivatives, tau, effective_kinematic_viscosity, reaction, element_length,
+                velocity, contravariant_metric_tensor, effective_kinematic_derivatives,
+                reaction_derivatives, element_length_derivatives, gauss_shape_functions);
 
             const double source =
                 this->CalculateSourceTerm(current_data, rCurrentProcessInfo);
@@ -907,6 +944,19 @@ protected:
         KRATOS_CATCH("");
     }
 
+    virtual const Variable<double>& GetPrimalVariableRelaxedRate() const
+    {
+        KRATOS_TRY
+
+        KRATOS_ERROR << "Calling base GetPrimalVariableRelaxedRate method in "
+                        "StabilizedConvectionDiffusionReactionAdjointElement "
+                        "class. Please implement it in the derrived class.";
+
+        return RANS_ADJOINT_SCALAR_1;
+
+        KRATOS_CATCH("");
+    }
+
     virtual double CalculateRelaxedScalarRate(const TConvectionDiffusionReactionAdjointData& rCurrentData,
                                               const ProcessInfo& rCurrentProcessInfo) const
     {
@@ -1069,6 +1119,58 @@ protected:
         KRATOS_CATCH("");
     }
 
+    virtual double CalculateEffectiveKinematicViscosityShapeSensitivity(
+        const TConvectionDiffusionReactionAdjointData& rCurrentData,
+        const ShapeParameter& rShapeDerivative,
+        const double detJ_deriv,
+        const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
+        const ProcessInfo& rCurrentProcessInfo) const
+    {
+        KRATOS_TRY
+
+        KRATOS_ERROR << "Calling base "
+                        "CalculateEffectiveKinematicViscosityShapeSensitivity "
+                        "method in "
+                        "StabilizedConvectionDiffusionReactionAdjointElement "
+                        "class. Please implement it in the derrived class.";
+
+        KRATOS_CATCH("");
+    }
+
+    virtual double CalculateReactionTermShapeSensitivity(
+        const TConvectionDiffusionReactionAdjointData& rCurrentData,
+        const ShapeParameter& rShapeDerivative,
+        const double detJ_deriv,
+        const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
+        const ProcessInfo& rCurrentProcessInfo) const
+    {
+        KRATOS_TRY
+
+        KRATOS_ERROR << "Calling base CalculateReactionTermShapeSensitivity "
+                        "method in "
+                        "StabilizedConvectionDiffusionReactionAdjointElement "
+                        "class. Please implement it in the derrived class.";
+
+        KRATOS_CATCH("");
+    }
+
+    virtual double CalculateSourceTermShapeSensitivity(
+        const TConvectionDiffusionReactionAdjointData& rCurrentData,
+        const ShapeParameter& rShapeDerivative,
+        const double detJ_deriv,
+        const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
+        const ProcessInfo& rCurrentProcessInfo) const
+    {
+        KRATOS_TRY
+
+        KRATOS_ERROR << "Calling base CalculateSourceTermShapeSensitivity "
+                        "method in "
+                        "StabilizedConvectionDiffusionReactionAdjointElement "
+                        "class. Please implement it in the derrived class.";
+
+        KRATOS_CATCH("");
+    }
+
     /// Determine integration point weights and shape funcition derivatives from the element's geometry.
     virtual void CalculateGeometryData(Vector& rGaussWeights,
                                        Matrix& rNContainer,
@@ -1197,6 +1299,8 @@ private:
                                    const Matrix& rContravariantMetricTensor,
                                    const double reaction,
                                    const double effective_kinematic_viscosity,
+                                   const double alpha,
+                                   const double gamma,
                                    const double delta_time)
     {
         unsigned int dim = rContravariantMetricTensor.size2();
@@ -1205,21 +1309,24 @@ private:
             velocity[d] = rVelocity[d];
         Vector temp(dim);
         noalias(temp) = prod(rContravariantMetricTensor, velocity);
-        const double stab_convection = inner_prod(velocity, temp);
-        const double stab_diffusion = std::pow(3.0 * effective_kinematic_viscosity, 2) *
-                                      norm_frobenius(rContravariantMetricTensor);
-        const double stab_dynamics = std::pow(2.0 / delta_time, 2);
+        const double velocity_norm = norm_2(rVelocity);
+        element_length = 2.0 * velocity_norm / std::sqrt(inner_prod(velocity, temp));
+
+        const double stab_convection =
+            std::pow(2.0 * norm_2(rVelocity) / element_length, 2);
+        const double stab_diffusion = std::pow(
+            12.0 * effective_kinematic_viscosity / (element_length * element_length), 2);
+        const double stab_dynamics = std::pow((1 - alpha) / (gamma * delta_time), 2);
         const double stab_reaction = std::pow(reaction, 2);
 
-        const double velocity_norm = norm_2(rVelocity);
         tau = 1.0 / std::sqrt(stab_dynamics + stab_convection + stab_diffusion + stab_reaction);
-        element_length = 2.0 * velocity_norm / std::sqrt(stab_convection);
     }
 
     void CalculateStabilizationTauScalarDerivatives(Vector& rOutput,
                                                     const double tau,
                                                     const double effective_kinematic_viscosity,
                                                     const double reaction,
+                                                    const double element_length,
                                                     const Matrix& rContravariantMetricTensor,
                                                     const Vector& rEffectiveKinematicViscosityScalarDerivatives,
                                                     const Vector& rReactionScalarDerivatives)
@@ -1228,10 +1335,9 @@ private:
             rOutput.resize(rReactionScalarDerivatives.size());
 
         noalias(rOutput) = (rEffectiveKinematicViscosityScalarDerivatives *
-                                (18 * effective_kinematic_viscosity *
-                                 norm_frobenius(rContravariantMetricTensor)) +
-                            rReactionScalarDerivatives * (2.0 * reaction)) *
-                           (-1.0 * std::pow(tau, 3) / 2.0);
+                                (144 * effective_kinematic_viscosity / std::pow(element_length, 4)) +
+                            rReactionScalarDerivatives * (reaction)) *
+                           (-1.0 * std::pow(tau, 3));
     }
 
     void CalculateStabilizationTauVelocityDerivatives(
@@ -1239,10 +1345,12 @@ private:
         const double tau,
         const double effective_kinematic_viscosity,
         const double reaction,
+        const double element_length,
         const array_1d<double, 3>& rVelocity,
         const Matrix& rContravariantMetricTensor,
         const Matrix& rEffectiveKinematicViscosityVelocityDerivatives,
         const Matrix& rReactionVelocityDerivatives,
+        const Matrix& rElementLengthDerivatives,
         const Vector& rGaussShapeFunctions)
     {
         const std::size_t number_of_nodes = rReactionVelocityDerivatives.size1();
@@ -1262,14 +1370,39 @@ private:
 
         for (std::size_t i_node = 0; i_node < number_of_nodes; ++i_node)
             for (std::size_t i_dim = 0; i_dim < domain_size; ++i_dim)
-                rOutput(i_node, i_dim) = rGaussShapeFunctions[i_node] *
+                rOutput(i_node, i_dim) = 0.5 * rGaussShapeFunctions[i_node] *
                                          contravariant_metric_velocity[i_dim];
 
         noalias(rOutput) += rEffectiveKinematicViscosityVelocityDerivatives *
-                            (18.0 * norm_frobenius(rContravariantMetricTensor) *
-                             effective_kinematic_viscosity);
-        noalias(rOutput) += rReactionVelocityDerivatives * (2.0 * reaction);
-        noalias(rOutput) = rOutput * (-1.0 * std::pow(tau, 3) / 2.0);
+                            (144.0 *  effective_kinematic_viscosity / std::pow(element_length, 4));
+        noalias(rOutput) -= rElementLengthDerivatives * (288.0 * std::pow(effective_kinematic_viscosity, 2) / std::pow(element_length, 5));
+        noalias(rOutput) += rReactionVelocityDerivatives * (reaction);
+        noalias(rOutput) = rOutput * (-1.0 * std::pow(tau, 3));
+    }
+
+    double CalculateStabilizationTauShapeSensitivity(const double tau,
+                                                     const double velocity_magnitude,
+                                                     const double element_length,
+                                                     const double element_length_deriv,
+                                                     const double effective_kinematic_viscosity,
+                                                     const double effective_kinematic_viscosity_deriv,
+                                                     const double reaction,
+                                                     const double reaction_deriv)
+    {
+        double shape_sensitivity = 0.0;
+
+        shape_sensitivity += 4.0 * std::pow(velocity_magnitude, 2) *
+                             element_length_deriv / std::pow(element_length, 3);
+        shape_sensitivity -= 144.0 * effective_kinematic_viscosity *
+                             effective_kinematic_viscosity_deriv /
+                             std ::pow(element_length, 4);
+        shape_sensitivity += 288.0 * std::pow(effective_kinematic_viscosity, 2) *
+                             element_length_deriv / std::pow(element_length, 5);
+        shape_sensitivity -= reaction * reaction_deriv;
+
+        shape_sensitivity *= std::pow(tau, 3);
+
+        return shape_sensitivity;
     }
 
     void CalculateCrossWindDiffusionParameters(double& chi,
@@ -1353,6 +1486,23 @@ private:
         noalias(rOutput) += (rVelocityMagnitudeVelocityDerivatives) * (2.0 / sqrt_u_e_u);
     }
 
+    double CalculateElementLengthH2ShapeSensitivity(const double velocity_magnitude,
+                                                    const array_1d<double, 3>& rVelocity,
+                                                    const Matrix& rContravariantMetricTensor,
+                                                    const Matrix& rContravariantMetricTensorShapeSensitivity)
+    {
+        Vector velocity(TDim);
+        for (std::size_t i_dim = 0; i_dim < TDim; ++i_dim)
+            velocity[i_dim] = rVelocity[i_dim];
+
+        const double u_e_u = std::pow(
+            inner_prod(velocity, prod(rContravariantMetricTensor, velocity)), 1.5);
+
+        return -velocity_magnitude *
+               (inner_prod(velocity, prod(rContravariantMetricTensorShapeSensitivity, velocity))) /
+               u_e_u;
+    }
+
     void CalculateChiScalarDerivatives(Vector& rOutput,
                                        const double chi,
                                        const double element_length,
@@ -1393,6 +1543,24 @@ private:
                            (-0.5 * std::pow(chi, 2));
     }
 
+    double CalculateChiShapeSensitivity(const double chi,
+                                        const double reaction,
+                                        const double reaction_deriv,
+                                        const double element_length,
+                                        const double element_length_deriv,
+                                        const double bossak_alpha,
+                                        const double bossak_gamma,
+                                        const double delta_time)
+    {
+        const double reaction_tilde =
+            reaction + (1 - bossak_alpha) / (bossak_gamma * delta_time);
+        const double abs_reaction_tilde = std::abs(reaction_tilde);
+
+        return -0.5 * std::pow(chi, 2) *
+               (abs_reaction_tilde * element_length_deriv +
+                reaction_tilde * element_length * reaction_deriv / abs_reaction_tilde);
+    }
+
     void CalculateAbsoluteScalarGradientScalarDerivative(Vector& rOutput,
                                                          const array_1d<double, 3> rScalarGradient,
                                                          const Matrix& rShapeFunctionDerivatives)
@@ -1409,6 +1577,25 @@ private:
             rOutput[i_node] =
                 CalculateScalarProduct(shape_function_gradient, rScalarGradient) / scalar_gradient_norm;
         }
+    }
+
+    double CalculateAbsoluteScalarGradientShapeSensitivity(const array_1d<double, 3>& rScalarGradient,
+                                                           const Matrix& rShapeFunctionDerivShapeSensitivity,
+                                                           const Vector& rNodalScalarValues)
+    {
+        const double scalar_gradient_norm = norm_2(rScalarGradient);
+
+        Vector scalar_gradient_shape_sensitivity(TDim);
+        noalias(scalar_gradient_shape_sensitivity) =
+            prod(trans(rShapeFunctionDerivShapeSensitivity), rNodalScalarValues);
+
+        Vector scalar_gradient(TDim);
+        for (unsigned int i_dim = 0; i_dim < TDim; ++i_dim)
+        {
+            scalar_gradient[i_dim] = rScalarGradient[i_dim];
+        }
+
+        return inner_prod(scalar_gradient_shape_sensitivity, scalar_gradient) / scalar_gradient_norm;
     }
 
     void CalculateResidualScalarDerivative(Vector& rOutput,
@@ -1454,6 +1641,27 @@ private:
                     rGaussShapeFunctions[i_node] * rPrimalVariableGradient[i_dim];
 
         noalias(rOutput) = rOutput + rReactionDerivatives * primal_variable_value - rSourceDerivatives;
+    }
+
+    double CalculateResidualShapeSensitivity(const double residual,
+                                             const array_1d<double, 3>& rVelocity,
+                                             const Matrix& rShapeFunctionDerivShapeSensitivity,
+                                             const double scalar_value,
+                                             const Vector& rNodalScalarValues,
+                                             const double reaction_deriv,
+                                             const double source_deriv)
+    {
+        const double abs_residual = std::abs(residual);
+
+        const Vector& r_velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
+        Vector primal_variable_gradient_shape_sensitivity(TDim);
+        noalias(primal_variable_gradient_shape_sensitivity) =
+            prod(trans(rShapeFunctionDerivShapeSensitivity), rNodalScalarValues);
+
+        return residual *
+               (inner_prod(r_velocity, primal_variable_gradient_shape_sensitivity) +
+                reaction_deriv * scalar_value - source_deriv) /
+               abs_residual;
     }
 
     void CalculatePositivityPreservationCoefficientScalarDerivatives(
@@ -1503,6 +1711,21 @@ private:
                 (chi / (primal_variable_gradient_norm * velocity_magnitude_square));
     }
 
+    double CalculatePositivityPreservationCoefficientShapeSensitivity(
+        const double chi,
+        const double chi_deriv,
+        const double abs_residual,
+        const double abs_residual_deriv,
+        const double velocity_magnitude_square,
+        const double scalar_gradient_norm,
+        const double scalar_gradient_norm_deriv)
+    {
+        return chi_deriv * abs_residual / (scalar_gradient_norm * velocity_magnitude_square) +
+               chi * abs_residual_deriv / (scalar_gradient_norm * velocity_magnitude_square) -
+               chi * abs_residual * scalar_gradient_norm_deriv /
+                   (std::pow(scalar_gradient_norm, 2) * velocity_magnitude_square);
+    }
+
     double CalculatePsiOne(const double velocity_norm, const double tau, const double reaction_tilde)
     {
         return velocity_norm + tau * velocity_norm * reaction_tilde;
@@ -1545,6 +1768,23 @@ private:
                            rTauDerivatives * (velocity_norm * reaction_tilde) +
                            rVelocityMagnitudeDerivatives * (tau * reaction_tilde) +
                            rAbsoluteReactionTildeDerivatives * (tau * velocity_norm);
+    }
+
+    double CalculatePsiOneShapeSensitivity(const double tau,
+                                           const double tau_deriv,
+                                           const double velocity_magnitude,
+                                           const double reaction,
+                                           const double reaction_deriv,
+                                           const double bossak_alpha,
+                                           const double bossak_gamma,
+                                           const double delta_time)
+    {
+        const double reaction_dynamics =
+            reaction + (1 - bossak_alpha) / (bossak_gamma * delta_time);
+        const double abs_reaction_dynamics = std::abs(reaction_dynamics);
+
+        return tau_deriv * velocity_magnitude * abs_reaction_dynamics +
+               tau * velocity_magnitude * reaction_dynamics * reaction_deriv / abs_reaction_dynamics;
     }
 
     void CalculatePsiTwoScalarDerivatives(Vector& rOutput,
@@ -1590,6 +1830,36 @@ private:
             rElementLengthDerivatives *
                 (element_length *
                  (reaction_tilde + tau * reaction_tilde * abs_reaction_tilde) / 3.0);
+    }
+
+    double CalculatePsiTwoShapeSensitivity(const double psi_two,
+                                           const double element_length,
+                                           const double element_length_deriv,
+                                           const double reaction,
+                                           const double reaction_deriv,
+                                           const double tau,
+                                           const double tau_deriv,
+                                           const double bossak_alpha,
+                                           const double bossak_gamma,
+                                           const double delta_time)
+    {
+        double shape_sensitivity = 0.0;
+
+        const double reaction_dynamics =
+            reaction + (1 - bossak_alpha) / (bossak_gamma * delta_time);
+        const double abs_reaction_dynamics = std::abs(reaction_dynamics);
+
+        shape_sensitivity += reaction_deriv;
+        shape_sensitivity += tau_deriv * reaction_dynamics * abs_reaction_dynamics;
+        shape_sensitivity += tau * reaction_deriv * abs_reaction_dynamics;
+        shape_sensitivity += tau * reaction_dynamics * reaction_dynamics *
+                             reaction_deriv / abs_reaction_dynamics;
+
+        shape_sensitivity *= std::pow(element_length, 2) / 6.0;
+
+        shape_sensitivity += 2.0 * psi_two * element_length_deriv / element_length;
+
+        return shape_sensitivity;
     }
 
     void CalculateStreamLineDiffusionCoeffScalarDerivatives(
@@ -1656,6 +1926,39 @@ private:
         noalias(rOutput) -= rVelocityMagnitudeDerivatives * (2.0 * tau * velocity_norm);
     }
 
+    double CalculateStreamLineDiffusionCoeffShapeSensitivity(
+        const double psi_one,
+        const double psi_one_deriv,
+        const double tau,
+        const double tau_deriv,
+        const double velocity_magnitude,
+        const double reaction,
+        const double reaction_deriv,
+        const double element_length,
+        const double element_length_deriv,
+        const double effective_kinematic_viscosity_deriv,
+        const double psi_two_deriv,
+        const double bossak_alpha,
+        const double bossak_gamma,
+        const double delta_time)
+    {
+        const double reaction_dynamics =
+            reaction + (1 - bossak_alpha) / (bossak_gamma * delta_time);
+        const double coeff = psi_one - tau * velocity_magnitude * reaction_dynamics;
+        const double abs_coeff = std::abs(coeff);
+        double shape_sensitivity = 0.0;
+
+        shape_sensitivity += psi_one_deriv - tau_deriv * velocity_magnitude * reaction_dynamics -
+                             tau * velocity_magnitude * reaction_deriv;
+        shape_sensitivity *= 0.5 * coeff * element_length / abs_coeff;
+        shape_sensitivity += 0.5 * abs_coeff * element_length_deriv;
+        shape_sensitivity -= effective_kinematic_viscosity_deriv +
+                             tau_deriv * std::pow(velocity_magnitude, 2);
+        shape_sensitivity += psi_two_deriv;
+
+        return shape_sensitivity;
+    }
+
     void CalculateCrossWindDiffusionCoeffScalarDerivatives(
         Vector& rOutput,
         const double psi_one,
@@ -1692,6 +1995,20 @@ private:
             rElementLengthDerivatives * (0.5 * abs_psi_one) -
             rEffectiveKinematicViscosityDerivatives + rPsiTwoDerivatives;
     }
+
+    double CalculateCrossWindDiffusionCoeffShapeSensitivity(const double psi_one,
+                                                            const double psi_one_deriv,
+                                                            const double element_length,
+                                                            const double element_length_deriv,
+                                                            const double effective_kinematic_viscosity_deriv,
+                                                            const double psi_two_deriv)
+    {
+        const double abs_psi_one = std::abs(psi_one);
+        return 0.5 * psi_one * element_length * psi_one_deriv / abs_psi_one +
+               0.5 * abs_psi_one * element_length_deriv -
+               effective_kinematic_viscosity_deriv + psi_two_deriv;
+    }
+
     void CalculateAbsoluteScalarValueScalarDerivatives(Vector& rOutput,
                                                        const double scalar_value,
                                                        const Vector& rScalarValueDerivatives)
@@ -1794,11 +2111,11 @@ private:
 
             double tau, element_length;
             this->CalculateStabilizationTau(
-                tau, element_length, velocity, contravariant_metric_tensor,
-                reaction, effective_kinematic_viscosity, delta_time);
+                tau, element_length, velocity, contravariant_metric_tensor, reaction,
+                effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
             Vector tau_derivatives;
             this->CalculateStabilizationTauScalarDerivatives(
-                tau_derivatives, tau, effective_kinematic_viscosity, reaction,
+                tau_derivatives, tau, effective_kinematic_viscosity, reaction, element_length,
                 contravariant_metric_tensor,
                 effective_kinematic_viscosity_derivatives, reaction_derivatives);
 
@@ -2023,8 +2340,8 @@ private:
 
             double tau, element_length;
             this->CalculateStabilizationTau(
-                tau, element_length, velocity, contravariant_metric_tensor,
-                reaction, effective_kinematic_viscosity, delta_time);
+                tau, element_length, velocity, contravariant_metric_tensor, reaction,
+                effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
 
             // Calculate residual for cross wind dissipation coefficient
             double cross_wind_diffusion{0.0}, stream_line_diffusion{0.0};
@@ -2112,6 +2429,8 @@ private:
             this->GetGeometryParameterDerivatives();
 
         const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+        const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
+        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
         const Variable<double>& primal_variable = this->GetPrimalVariable();
 
@@ -2153,11 +2472,11 @@ private:
 
             double tau, element_length;
             this->CalculateStabilizationTau(
-                tau, element_length, velocity, contravariant_metric_tensor,
-                reaction, effective_kinematic_viscosity, delta_time);
+                tau, element_length, velocity, contravariant_metric_tensor, reaction,
+                effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
             Vector tau_derivatives;
             this->CalculateStabilizationTauScalarDerivatives(
-                tau_derivatives, tau, effective_kinematic_viscosity, reaction,
+                tau_derivatives, tau, effective_kinematic_viscosity, reaction, element_length,
                 contravariant_metric_tensor,
                 effective_kinematic_viscosity_derivatives, reaction_derivatives);
 
@@ -2178,6 +2497,384 @@ private:
                     value += tau * (s_derivatives[c] * gauss_shape_functions[a]) * relaxed_scalar_rate;
 
                     rLeftHandSideMatrix(c, a) += -1.0 * gauss_weights[g] * value;
+                }
+            }
+        }
+    }
+
+    void AddShapeGradientSteadyTerm(Matrix& rOutput, const ProcessInfo& rCurrentProcessInfo)
+    {
+        // Get Shape function data
+        Vector gauss_weights;
+        Matrix shape_functions;
+        ShapeFunctionDerivativesArrayType shape_derivatives;
+        this->CalculateGeometryData(gauss_weights, shape_functions, shape_derivatives);
+        const unsigned int num_gauss_points = gauss_weights.size();
+
+        const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
+            this->GetGeometryParameterDerivatives();
+
+        // const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+
+        const Variable<double>& primal_variable = this->GetPrimalVariable();
+
+        Geometry<NodeType>& r_geometry = this->GetGeometry();
+
+        ShapeParameter deriv;
+
+        Geometry<Point>::JacobiansType J;
+        r_geometry.Jacobian(J, this->GetIntegrationMethod());
+
+        Geometry<Point>::ShapeFunctionsGradientsType DN_De;
+        DN_De = r_geometry.ShapeFunctionsLocalGradients(this->GetIntegrationMethod());
+
+        RansCalculationUtilities rans_calculation_utilities;
+        RansVariableUtils rans_variable_utils;
+
+        const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+        const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
+        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+
+        const GeometryType::ShapeFunctionsGradientsType& r_dn_de =
+            this->GetGeometry().ShapeFunctionsLocalGradients(this->GetIntegrationMethod());
+
+        for (unsigned int g = 0; g < num_gauss_points; g++)
+        {
+            const Matrix& gauss_r_dn_de = r_dn_de[g];
+            const Matrix& r_shape_derivatives = shape_derivatives[g];
+            const Vector& gauss_shape_functions = row(shape_functions, g);
+            const double gauss_weight = gauss_weights[g];
+
+            const Matrix& rJ = J[g];
+            const Matrix& rDN_De = DN_De[g];
+            const double inv_detJ = 1.0 / MathUtils<double>::DetMat(rJ);
+            GeometricalSensitivityUtility geom_sensitivity(rJ, rDN_De);
+
+            const Matrix& r_parameter_derivatives_g = r_parameter_derivatives[g];
+            Matrix contravariant_metric_tensor(r_parameter_derivatives_g.size1(),
+                                               r_parameter_derivatives_g.size2());
+            noalias(contravariant_metric_tensor) =
+                prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
+
+            TConvectionDiffusionReactionAdjointData current_data;
+            this->CalculateConvectionDiffusionReactionAdjointData(
+                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+
+            const array_1d<double, 3>& velocity =
+                this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
+            const double velocity_magnitude = norm_2(velocity);
+            const double velocity_magnitude_square = std::pow(velocity_magnitude, 2);
+            BoundedVector<double, TNumNodes> velocity_convective_terms;
+            this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
+
+            const double primal_variable_value =
+                this->EvaluateInPoint(primal_variable, gauss_shape_functions);
+            array_1d<double, 3> primal_variable_gradient;
+            this->CalculateGradient(primal_variable_gradient, primal_variable,
+                                    r_shape_derivatives);
+            const double primal_variable_gradient_norm = norm_2(primal_variable_gradient);
+            const double velocity_dot_primal_variable_gradient =
+                inner_prod(velocity, primal_variable_gradient);
+            BoundedVector<double, TNumNodes> primal_variable_gradient_convective_terms;
+            this->GetConvectionOperator(primal_variable_gradient_convective_terms,
+                                        primal_variable_gradient, r_shape_derivatives);
+
+            BoundedVector<double, TNumNodes> convective_primal_variable_gradient_terms;
+            this->GetConvectionOperator(convective_primal_variable_gradient_terms,
+                                        primal_variable_gradient, r_shape_derivatives);
+            const double primal_variable_relaxed_rate =
+                this->CalculateRelaxedScalarRate(current_data, rCurrentProcessInfo);
+            Vector primal_variable_relaxed_rate_nodal_values(TNumNodes);
+            rans_variable_utils.GetNodalArray(
+                primal_variable_relaxed_rate_nodal_values, *this,
+                this->GetPrimalVariableRelaxedRate());
+
+            const double effective_kinematic_viscosity =
+                this->CalculateEffectiveKinematicViscosity(current_data, rCurrentProcessInfo);
+            const double reaction =
+                this->CalculateReactionTerm(current_data, rCurrentProcessInfo);
+            const double source =
+                this->CalculateSourceTerm(current_data, rCurrentProcessInfo);
+
+            double tau, element_length;
+            this->CalculateStabilizationTau(
+                tau, element_length, velocity, contravariant_metric_tensor, reaction,
+                effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
+
+            double chi{0.0}, stream_line_diffusion_coeff{0.0},
+                cross_wind_diffusion_coeff{0.0}, residual{0.0};
+
+            if (primal_variable_gradient_norm > std::numeric_limits<double>::epsilon() &&
+                velocity_magnitude_square > std::numeric_limits<double>::epsilon())
+            {
+                residual = primal_variable_relaxed_rate;
+                residual += velocity_dot_primal_variable_gradient;
+                residual += reaction * primal_variable_value;
+                residual -= source;
+                residual = std::abs(residual);
+
+                this->CalculateCrossWindDiffusionParameters(
+                    chi, stream_line_diffusion_coeff, cross_wind_diffusion_coeff,
+                    velocity_magnitude, tau, effective_kinematic_viscosity, reaction,
+                    bossak_alpha, bossak_gamma, delta_time, element_length);
+            }
+
+            Vector primal_variable_nodal_values(TNumNodes);
+            rans_variable_utils.GetNodalArray(primal_variable_nodal_values,
+                                              *this, primal_variable);
+
+            const double positivity_preserving_coeff =
+                chi * residual / (primal_variable_gradient_norm * velocity_magnitude_square);
+
+            const double psi_one = this->CalculatePsiOne(
+                velocity_magnitude, tau,
+                reaction + (1 - bossak_alpha) / (bossak_gamma * delta_time));
+
+            const double psi_two = this->CalculatePsiTwo(
+                reaction + (1 - bossak_alpha) / (bossak_gamma * delta_time), tau, element_length);
+
+            const double s = std::abs(reaction);
+
+            for (unsigned int c = 0; c < TNumNodes; ++c)
+            {
+                const unsigned int block_size = c * TDim;
+                for (unsigned int k = 0; k < TDim; ++k)
+                {
+                    deriv.NodeIndex = c;
+                    deriv.Direction = k;
+
+                    double detJ_deriv;
+                    GeometricalSensitivityUtility::ShapeFunctionsGradientType DN_DX_deriv;
+                    geom_sensitivity.CalculateSensitivity(deriv, detJ_deriv, DN_DX_deriv);
+                    const double gauss_weight_deriv =
+                        detJ_deriv * inv_detJ * gauss_weights[g];
+
+                    Matrix parameter_derivatives_shape_derivs;
+                    rans_calculation_utilities.CalculateGeometryParameterDerivativesShapeSensitivity(
+                        parameter_derivatives_shape_derivs, deriv,
+                        gauss_r_dn_de, r_parameter_derivatives_g);
+
+                    Matrix contravariant_metric_tensor_deriv(
+                        contravariant_metric_tensor.size1(),
+                        contravariant_metric_tensor.size2());
+                    noalias(contravariant_metric_tensor_deriv) =
+                        prod(trans(parameter_derivatives_shape_derivs), r_parameter_derivatives_g) +
+                        prod(trans(r_parameter_derivatives_g), parameter_derivatives_shape_derivs);
+
+                    array_1d<double, 3> primal_variable_gradient_deriv;
+                    this->CalculateGradient(primal_variable_gradient_deriv,
+                                            primal_variable, DN_DX_deriv);
+                    const double velocity_dot_primal_variable_gradient_deriv =
+                        inner_prod(velocity, primal_variable_gradient_deriv);
+
+                    const double reaction_deriv = this->CalculateReactionTermShapeSensitivity(
+                        current_data, deriv, detJ_deriv, DN_DX_deriv, rCurrentProcessInfo);
+                    const double effective_kinematic_viscosity_deriv =
+                        this->CalculateEffectiveKinematicViscosityShapeSensitivity(
+                            current_data, deriv, detJ_deriv, DN_DX_deriv, rCurrentProcessInfo);
+
+                    BoundedVector<double, TNumNodes> convective_primal_variable_gradient_terms_deriv;
+                    this->GetConvectionOperator(
+                        convective_primal_variable_gradient_terms_deriv,
+                        primal_variable_gradient_deriv, r_shape_derivatives);
+                    BoundedVector<double, TNumNodes> convective_deriv_primal_variable_gradient_terms;
+                    this->GetConvectionOperator(convective_deriv_primal_variable_gradient_terms,
+                                                primal_variable_gradient, DN_DX_deriv);
+
+                    const double element_length_deriv =
+                        this->CalculateElementLengthH2ShapeSensitivity(
+                            velocity_magnitude, velocity, contravariant_metric_tensor,
+                            contravariant_metric_tensor_deriv);
+
+                    const double tau_deriv = this->CalculateStabilizationTauShapeSensitivity(
+                        tau, velocity_magnitude, element_length,
+                        element_length_deriv, effective_kinematic_viscosity,
+                        effective_kinematic_viscosity_deriv, reaction, reaction_deriv);
+
+                    const double chi_deriv = this->CalculateChiShapeSensitivity(
+                        chi, reaction, reaction_deriv, element_length,
+                        element_length_deriv, bossak_alpha, bossak_gamma, delta_time);
+
+                    const double primal_variable_gradient_norm_deriv =
+                        this->CalculateAbsoluteScalarGradientShapeSensitivity(
+                            primal_variable_gradient, DN_DX_deriv, primal_variable_nodal_values);
+
+                    const double source_deriv = this->CalculateSourceTermShapeSensitivity(
+                        current_data, deriv, detJ_deriv, DN_DX_deriv, rCurrentProcessInfo);
+
+                    const double residual_deriv = this->CalculateResidualShapeSensitivity(
+                        residual, velocity, DN_DX_deriv, primal_variable_value,
+                        primal_variable_nodal_values, reaction_deriv, source_deriv);
+
+                    const double positivity_preserving_coeff_deriv =
+                        CalculatePositivityPreservationCoefficientShapeSensitivity(
+                            chi, chi_deriv, residual, residual_deriv,
+                            velocity_magnitude_square, primal_variable_gradient_norm,
+                            primal_variable_gradient_norm_deriv);
+
+                    const double psi_one_deriv = CalculatePsiOneShapeSensitivity(
+                        tau, tau_deriv, velocity_magnitude, reaction,
+                        reaction_deriv, bossak_alpha, bossak_gamma, delta_time);
+
+                    const double psi_two_deriv = CalculatePsiTwoShapeSensitivity(
+                        psi_two, element_length, element_length_deriv, reaction, reaction_deriv,
+                        tau, tau_deriv, bossak_alpha, bossak_gamma, delta_time);
+
+                    const double stream_line_diffusion_coeff_deriv =
+                        CalculateStreamLineDiffusionCoeffShapeSensitivity(
+                            psi_one, psi_one_deriv, tau, tau_deriv, velocity_magnitude,
+                            reaction, reaction_deriv, element_length,
+                            element_length_deriv, effective_kinematic_viscosity_deriv,
+                            psi_two_deriv, bossak_alpha, bossak_gamma, delta_time);
+
+                    const double cross_wind_diffusion_coeff_deriv =
+                        CalculateCrossWindDiffusionCoeffShapeSensitivity(
+                            psi_one, psi_one_deriv, element_length, element_length_deriv,
+                            effective_kinematic_viscosity_deriv, psi_two_deriv);
+
+                    const double s_deriv = reaction * reaction_deriv / s;
+
+                    BoundedVector<double, TNumNodes> velocity_convective_terms_deriv;
+                    this->GetConvectionOperator(velocity_convective_terms_deriv,
+                                                velocity, DN_DX_deriv);
+
+                    BoundedVector<double, TNumNodes> primal_variable_gradient_convective_terms_deriv;
+                    this->GetConvectionOperator(primal_variable_gradient_convective_terms_deriv,
+                                                primal_variable_gradient, DN_DX_deriv);
+
+                    BoundedVector<double, TNumNodes> primal_variable_gradient_deriv_convective_terms;
+                    this->GetConvectionOperator(
+                        primal_variable_gradient_deriv_convective_terms,
+                        primal_variable_gradient_deriv, r_shape_derivatives);
+
+                    for (unsigned int a = 0; a < TNumNodes; ++a)
+                    {
+                        const double tau_operator = velocity_convective_terms[a] +
+                                                    s * gauss_shape_functions[a];
+                        const double tau_operator_deriv =
+                            velocity_convective_terms_deriv[a] +
+                            s_deriv * gauss_shape_functions[a];
+
+                        double value = 0.0;
+
+                        // adding convective term shape sensitivity
+                        value += gauss_shape_functions[a] *
+                                 velocity_dot_primal_variable_gradient_deriv * gauss_weight;
+                        value += gauss_shape_functions[a] *
+                                 velocity_dot_primal_variable_gradient * gauss_weight_deriv;
+
+                        // adding reaction term shape sensitivity
+                        value += gauss_shape_functions[a] * primal_variable_value *
+                                 reaction_deriv * gauss_weight;
+                        value += gauss_shape_functions[a] * primal_variable_value *
+                                 reaction * gauss_weight_deriv;
+
+                        // adding diffusion term shape sensitivity
+                        value += effective_kinematic_viscosity_deriv *
+                                 convective_primal_variable_gradient_terms[a] * gauss_weight;
+                        value += effective_kinematic_viscosity *
+                                 convective_deriv_primal_variable_gradient_terms[a] *
+                                 gauss_weight;
+                        value += effective_kinematic_viscosity *
+                                 convective_primal_variable_gradient_terms_deriv[a] *
+                                 gauss_weight;
+                        value += effective_kinematic_viscosity *
+                                 convective_primal_variable_gradient_terms[a] *
+                                 gauss_weight_deriv;
+
+                        // adding SUPG term derivatives
+                        value += tau_deriv * tau_operator *
+                                 velocity_dot_primal_variable_gradient * gauss_weight;
+                        value += tau * tau_operator_deriv *
+                                 velocity_dot_primal_variable_gradient * gauss_weight;
+                        value += tau * tau_operator *
+                                 velocity_dot_primal_variable_gradient_deriv * gauss_weight;
+                        value += tau * tau_operator *
+                                 velocity_dot_primal_variable_gradient * gauss_weight_deriv;
+
+                        value += tau_deriv * tau_operator * reaction *
+                                 primal_variable_value * gauss_weight;
+                        value += tau * tau_operator_deriv * reaction *
+                                 primal_variable_value * gauss_weight;
+                        value += tau * tau_operator * reaction_deriv *
+                                 primal_variable_value * gauss_weight;
+                        value += tau * tau_operator * reaction *
+                                 primal_variable_value * gauss_weight_deriv;
+
+                        // adding cross wind dissipation term derivatives
+                        value += velocity_magnitude_square * positivity_preserving_coeff_deriv *
+                                 cross_wind_diffusion_coeff *
+                                 primal_variable_gradient_convective_terms[a] * gauss_weight;
+                        value += velocity_magnitude_square * positivity_preserving_coeff *
+                                 cross_wind_diffusion_coeff_deriv *
+                                 primal_variable_gradient_convective_terms[a] * gauss_weight;
+                        value += velocity_magnitude_square * positivity_preserving_coeff *
+                                 cross_wind_diffusion_coeff *
+                                 primal_variable_gradient_convective_terms_deriv[a] *
+                                 gauss_weight;
+                        value += velocity_magnitude_square * positivity_preserving_coeff *
+                                 cross_wind_diffusion_coeff *
+                                 primal_variable_gradient_deriv_convective_terms[a] *
+                                 gauss_weight;
+                        value += velocity_magnitude_square * positivity_preserving_coeff *
+                                 cross_wind_diffusion_coeff *
+                                 primal_variable_gradient_convective_terms[a] *
+                                 gauss_weight_deriv;
+
+                        value -= positivity_preserving_coeff_deriv * cross_wind_diffusion_coeff *
+                                 velocity_convective_terms[a] *
+                                 velocity_dot_primal_variable_gradient * gauss_weight;
+                        value -= positivity_preserving_coeff * cross_wind_diffusion_coeff_deriv *
+                                 velocity_convective_terms[a] *
+                                 velocity_dot_primal_variable_gradient * gauss_weight;
+                        value -= positivity_preserving_coeff * cross_wind_diffusion_coeff *
+                                 velocity_convective_terms_deriv[a] *
+                                 velocity_dot_primal_variable_gradient * gauss_weight;
+                        value -= positivity_preserving_coeff * cross_wind_diffusion_coeff *
+                                 velocity_convective_terms[a] *
+                                 velocity_dot_primal_variable_gradient_deriv * gauss_weight;
+                        value -= positivity_preserving_coeff * cross_wind_diffusion_coeff *
+                                 velocity_convective_terms[a] *
+                                 velocity_dot_primal_variable_gradient * gauss_weight_deriv;
+
+                        // adding stream line diffusion term derivatives
+                        value += positivity_preserving_coeff_deriv * stream_line_diffusion_coeff *
+                                 velocity_convective_terms[a] *
+                                 velocity_dot_primal_variable_gradient * gauss_weight;
+                        value += positivity_preserving_coeff * stream_line_diffusion_coeff_deriv *
+                                 velocity_convective_terms[a] *
+                                 velocity_dot_primal_variable_gradient * gauss_weight;
+                        value += positivity_preserving_coeff * stream_line_diffusion_coeff *
+                                 velocity_convective_terms_deriv[a] *
+                                 velocity_dot_primal_variable_gradient * gauss_weight;
+                        value += positivity_preserving_coeff * stream_line_diffusion_coeff *
+                                 velocity_convective_terms[a] *
+                                 velocity_dot_primal_variable_gradient_deriv * gauss_weight;
+                        value += positivity_preserving_coeff * stream_line_diffusion_coeff *
+                                 velocity_convective_terms[a] *
+                                 velocity_dot_primal_variable_gradient * gauss_weight_deriv;
+
+                        // adding right hand side terms shape gradient terms
+
+                        value -= gauss_shape_functions[a] * source_deriv * gauss_weight;
+                        value -= gauss_shape_functions[a] * source * gauss_weight_deriv;
+
+                        value -= tau_deriv * tau_operator * source * gauss_weight;
+                        value -= tau * tau_operator_deriv * source * gauss_weight;
+                        value -= tau * tau_operator * source_deriv * gauss_weight;
+                        value -= tau * tau_operator * source * gauss_weight_deriv;
+
+                        // adding mass shape gradient terms
+                        value += gauss_weight_deriv *
+                                 primal_variable_relaxed_rate_nodal_values[a] / TNumNodes;
+                        value += tau_deriv * tau_operator *
+                                 primal_variable_relaxed_rate * gauss_weight;
+                        value += tau * tau_operator_deriv *
+                                 primal_variable_relaxed_rate * gauss_weight;
+                        value += tau * tau_operator * primal_variable_relaxed_rate * gauss_weight_deriv;
+
+                        rOutput(block_size + k, a) -= value;
+                    }
                 }
             }
         }

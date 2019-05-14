@@ -72,9 +72,9 @@ void CalculateGaussSensitivities(Vector& rGaussSensitivities,
     }
 }
 
-void CalculateNodalFmuVelocitySensitivities(Matrix& rFmuNodalSensitivities,
-                                            const Vector& nodal_y_plus,
-                                            const Matrix& rYPlusNodalSensitivities)
+void CalculateNodalFmuVectorSensitivities(Matrix& rFmuNodalSensitivities,
+                                          const Vector& nodal_y_plus,
+                                          const Matrix& rYPlusNodalSensitivities)
 {
     const std::size_t number_of_nodes = rYPlusNodalSensitivities.size1();
     const std::size_t domain_size = rYPlusNodalSensitivities.size2();
@@ -94,10 +94,10 @@ void CalculateNodalFmuVelocitySensitivities(Matrix& rFmuNodalSensitivities,
     }
 }
 
-void CalculateGaussFmuVelocitySensitivities(Matrix& rFmuGaussSensitivities,
-                                            const double y_plus,
-                                            const Matrix& rYPlusNodalSensitivities,
-                                            const Vector& rGaussShapeFunctions)
+void CalculateGaussFmuVectorSensitivities(Matrix& rFmuGaussSensitivities,
+                                          const double y_plus,
+                                          const Matrix& rYPlusNodalSensitivities,
+                                          const Vector& rGaussShapeFunctions)
 {
     CalculateGaussSensitivities(rFmuGaussSensitivities,
                                 rYPlusNodalSensitivities, rGaussShapeFunctions);
@@ -106,7 +106,7 @@ void CalculateGaussFmuVelocitySensitivities(Matrix& rFmuGaussSensitivities,
     noalias(rFmuGaussSensitivities) = rFmuGaussSensitivities * coeff;
 }
 
-void CalculateNodalTurbulentViscosityVelocitySensitivities(
+void CalculateNodalTurbulentViscosityVectorSensitivities(
     Matrix& rTurbulentViscosityNodalSensitivities,
     const double c_mu,
     const Vector& nodal_turbulent_kinetic_energy,
@@ -218,6 +218,66 @@ void CalculateProductionVelocitySensitivities(Matrix& rOutput,
             rOutput(c, k) += NuT * value;
         }
     }
+}
+
+template <unsigned int TDim>
+void CalculateProductionShapeSensitivities(
+    double& rOutput,
+    const double turbulent_kinematic_viscosity,
+    const double turbulent_kinematic_viscosity_derivative,
+    const Matrix& rNodalVelocity,
+    const BoundedMatrix<double, TDim, TDim>& rVelocityGradient,
+    const Matrix& rShapeDerivatives,
+    const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_DxDerivatives)
+{
+    const std::size_t number_of_nodes = rShapeDerivatives.size1();
+
+    rOutput = 0.0;
+
+    double velocity_divergence = 0.0;
+    velocity_divergence =
+        RansCalculationUtilities().CalculateMatrixTrace<TDim>(rVelocityGradient);
+    identity_matrix<double> identity(TDim);
+
+    BoundedMatrix<double, TDim, TDim> reynolds_stress_tensor;
+    noalias(reynolds_stress_tensor) = rVelocityGradient + trans(rVelocityGradient) -
+                                      (2.0 / 3.0) * velocity_divergence * identity;
+
+    double value = 0.0;
+    for (unsigned int i = 0; i < TDim; ++i)
+        for (unsigned int j = 0; j < TDim; ++j)
+            value += reynolds_stress_tensor(i, j) * rVelocityGradient(i, j);
+
+    const double negative_two_thirds = -2.0 / 3.0;
+
+    for (std::size_t a = 0; a < number_of_nodes; ++a)
+    {
+        const Vector& r_dna_dx_derivative = row(rDN_DxDerivatives, a);
+        const Vector& r_velocity_a = row(rNodalVelocity, a);
+        const Vector& r_dna_dx = row(rShapeDerivatives, a);
+        for (std::size_t b = 0; b < number_of_nodes; ++b)
+        {
+            const Vector& r_dnb_dx_derivative = row(rDN_DxDerivatives, b);
+            const Vector& r_dnb_dx = row(rShapeDerivatives, b);
+            const Vector& r_velocity_b = row(rNodalVelocity, b);
+
+            const double uai_ubi = inner_prod(r_velocity_a, r_velocity_b);
+
+            rOutput += inner_prod(r_dna_dx_derivative, r_dnb_dx) * uai_ubi;
+            rOutput += inner_prod(r_dna_dx, r_dnb_dx_derivative) * uai_ubi;
+            rOutput += inner_prod(r_velocity_a, r_dnb_dx_derivative) *
+                       inner_prod(r_velocity_b, r_dna_dx);
+            rOutput += inner_prod(r_velocity_a, r_dnb_dx) *
+                       inner_prod(r_velocity_b, r_dna_dx_derivative);
+            rOutput += negative_two_thirds * inner_prod(r_velocity_a, r_dna_dx_derivative) *
+                       inner_prod(r_velocity_b, r_dnb_dx);
+            rOutput += negative_two_thirds * inner_prod(r_velocity_a, r_dna_dx) *
+                       inner_prod(r_velocity_b, r_dnb_dx_derivative);
+        }
+    }
+
+    rOutput *= turbulent_kinematic_viscosity;
+    rOutput += turbulent_kinematic_viscosity_derivative * value;
 }
 
 template <unsigned int TDim>
@@ -418,7 +478,22 @@ template void CalculateProductionVelocitySensitivities<2>(
     Matrix&, const double, const Matrix&, const BoundedMatrix<double, 2, 2>&, const Matrix&);
 template void CalculateProductionVelocitySensitivities<3>(
     Matrix&, const double, const Matrix&, const BoundedMatrix<double, 3, 3>&, const Matrix&);
-
+template void CalculateProductionShapeSensitivities<2>(
+    double&,
+    const double,
+    const double,
+    const Matrix&,
+    const BoundedMatrix<double, 2, 2>&,
+    const Matrix&,
+    const GeometricalSensitivityUtility::ShapeFunctionsGradientType&);
+template void CalculateProductionShapeSensitivities<3>(
+    double&,
+    const double,
+    const double,
+    const Matrix&,
+    const BoundedMatrix<double, 3, 3>&,
+    const Matrix&,
+    const GeometricalSensitivityUtility::ShapeFunctionsGradientType&);
 template void CalculateProductionScalarSensitivities<2>(
     Vector&, const Vector&, const BoundedMatrix<double, 2, 2>&);
 

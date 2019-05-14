@@ -17,6 +17,7 @@
 
 // Project includes
 #include "includes/ublas_interface.h"
+#include "utilities/geometrical_sensitivity_utility.h"
 
 namespace Kratos
 {
@@ -45,16 +46,16 @@ void CalculateGaussSensitivities(Vector& rGaussSensitivities,
                                  const Vector& rNodalSensitivities,
                                  const Vector& rGaussShapeFunctions);
 
-void CalculateNodalFmuVelocitySensitivities(Matrix& rFmuNodalSensitivities,
-                                            const Vector& nodal_y_plus,
-                                            const Matrix& rYPlusNodalSensitivities);
+void CalculateNodalFmuVectorSensitivities(Matrix& rFmuNodalSensitivities,
+                                          const Vector& nodal_y_plus,
+                                          const Matrix& rYPlusNodalSensitivities);
 
-void CalculateGaussFmuVelocitySensitivities(Matrix& rFmuGaussSensitivities,
-                                            const double y_plus,
-                                            const Matrix& rYPlusNodalSensitivities,
-                                            const Vector& rGaussShapeFunctions);
+void CalculateGaussFmuVectorSensitivities(Matrix& rFmuGaussSensitivities,
+                                          const double y_plus,
+                                          const Matrix& rYPlusNodalSensitivities,
+                                          const Vector& rGaussShapeFunctions);
 
-void CalculateNodalTurbulentViscosityVelocitySensitivities(
+void CalculateNodalTurbulentViscosityVectorSensitivities(
     Matrix& rTurbulentViscosityNodalSensitivities,
     const double c_mu,
     const Vector& nodal_turbulent_kinetic_energy,
@@ -80,6 +81,16 @@ void CalculateProductionVelocitySensitivities(Matrix& rOutput,
                                               const Matrix& rNuTVelocityDerivatives,
                                               const BoundedMatrix<double, TDim, TDim>& rVelocityGradient,
                                               const Matrix& rShapeDerivatives);
+
+template <unsigned int TDim>
+void CalculateProductionShapeSensitivities(
+    double& rOutput,
+    const double turbulent_kinematic_viscosity,
+    const double turbulent_kinematic_viscosity_derivative,
+    const Matrix& rNodalVelocity,
+    const BoundedMatrix<double, TDim, TDim>& rVelocityGradient,
+    const Matrix& rShapeDerivatives,
+    const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_DxDerivatives);
 
 template <unsigned int TDim>
 void CalculateProductionScalarSensitivities(Vector& rOutput,

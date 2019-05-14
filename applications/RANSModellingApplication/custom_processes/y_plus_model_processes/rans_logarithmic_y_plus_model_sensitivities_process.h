@@ -134,7 +134,7 @@ public:
         KRATOS_CHECK_VARIABLE_KEY(DISTANCE);
         KRATOS_CHECK_VARIABLE_KEY(KINEMATIC_VISCOSITY);
         KRATOS_CHECK_VARIABLE_KEY(RANS_Y_PLUS);
-        KRATOS_CHECK_VARIABLE_KEY(RANS_Y_PLUS_SENSITIVITIES);
+        KRATOS_CHECK_VARIABLE_KEY(RANS_Y_PLUS_VELOCITY_DERIVATIVES);
 
         ModelPart::NodesContainerType& r_nodes = mrModelPart.Nodes();
         int number_of_nodes = r_nodes.size();
@@ -199,7 +199,7 @@ public:
                         (wall_distance / nu) * value * velocity[i_dim] / velocity_magnitude;
                 }
             }
-            r_element.SetValue(RANS_Y_PLUS_SENSITIVITIES, r_adjoint_y_plus_matrix);
+            r_element.SetValue(RANS_Y_PLUS_VELOCITY_DERIVATIVES, r_adjoint_y_plus_matrix);
         }
     }
 

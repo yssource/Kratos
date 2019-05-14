@@ -119,7 +119,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansLogarithmicYPlusModelProcess, RANSYPlusModels)
     // Calculate adjoint values
     adjoint_process.Check();
     adjoint_process.Execute();
-    Matrix& r_adjoint_values = r_element.GetValue(RANS_Y_PLUS_SENSITIVITIES);
+    Matrix& r_adjoint_values = r_element.GetValue(RANS_Y_PLUS_VELOCITY_DERIVATIVES);
 
     const int domain_size = r_model_part.GetProcessInfo()[DOMAIN_SIZE];
     const int number_of_nodes = r_model_part.NumberOfNodes();

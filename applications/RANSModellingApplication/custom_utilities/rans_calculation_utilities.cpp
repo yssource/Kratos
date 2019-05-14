@@ -126,8 +126,27 @@ RansCalculationUtilities::GeometryType::ShapeFunctionsGradientsType RansCalculat
 
         de_dx[g] = inv_current_dx_de;
     }
-
     return de_dx;
+}
+
+void RansCalculationUtilities::CalculateGeometryParameterDerivativesShapeSensitivity(
+    Matrix& rOutput, const ShapeParameter& rShapeDerivative, const Matrix& rDnDe, const Matrix& rDeDx)
+{
+    std::size_t domain_size = rDeDx.size1();
+    if (rOutput.size1() != domain_size || rOutput.size2() != domain_size)
+        rOutput.resize(domain_size, domain_size);
+
+    const Vector& r_dnc_de = row(rDnDe, rShapeDerivative.NodeIndex);
+
+    for (std::size_t j = 0; j < domain_size; ++j)
+    {
+        const Vector& r_de_dxj = column(rDeDx, j);
+        for (std::size_t i = 0; i < domain_size; ++i)
+        {
+            rOutput(i, j) = -1.0 * rDeDx(i, rShapeDerivative.Direction) *
+                            inner_prod(r_dnc_de, r_de_dxj);
+        }
+    }
 }
 
 template <unsigned int TDim>
@@ -187,6 +206,17 @@ void RansCalculationUtilities::CalculateVelocityGradientSensitivities(
     }
 }
 
+template <unsigned int TDim>
+Vector RansCalculationUtilities::GetVector(const array_1d<double, 3>& rVector) const
+{
+    Vector result(TDim);
+
+    for (unsigned int i_dim; i_dim < TDim; ++i_dim)
+        result[i_dim] = rVector[i_dim];
+
+    return result;
+}
+
 // template instantiations
 
 template double RansCalculationUtilities::CalculateMatrixTrace<2>(
@@ -213,6 +243,9 @@ template void RansCalculationUtilities::CalculateVelocityGradientSensitivities<2
 
 template void RansCalculationUtilities::CalculateVelocityGradientSensitivities<3>(
     BoundedMatrix<double, 3, 3>&, const int, const int, const Matrix&) const;
+
+template Vector RansCalculationUtilities::GetVector<2>(const array_1d<double, 3>&) const;
+template Vector RansCalculationUtilities::GetVector<3>(const array_1d<double, 3>&) const;
 
 ///@}
 

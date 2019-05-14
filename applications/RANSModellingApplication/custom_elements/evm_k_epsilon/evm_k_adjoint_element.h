@@ -63,6 +63,7 @@ struct EvmKAdjointElementData
     Vector NodalTurbulentEnergyDissipationRate;
     Vector NodalFmu;
     Vector NodalYPlus;
+    Matrix NodalVelocity;
 };
 
 template <unsigned int TDim, unsigned int TNumNodes>
@@ -316,6 +317,8 @@ private:
 
     const Variable<double>& GetPrimalVariable() const override;
 
+    const Variable<double>& GetPrimalVariableRelaxedRate() const override;
+
     void CalculateConvectionDiffusionReactionAdjointData(
         EvmKAdjointElementData& rData,
         const Vector& rShapeFunctions,
@@ -362,6 +365,27 @@ private:
     void CalculateSourceTermVelocityDerivatives(Matrix& rOutput,
                                                 const EvmKAdjointElementData& rCurrentData,
                                                 const ProcessInfo& rCurrentProcessInfo) const override;
+
+    double CalculateEffectiveKinematicViscosityShapeSensitivity(
+        const EvmKAdjointElementData& rCurrentData,
+        const ShapeParameter& rShapeDerivative,
+        const double detJ_deriv,
+        const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
+        const ProcessInfo& rCurrentProcessInfo) const override;
+
+    double CalculateReactionTermShapeSensitivity(
+        const EvmKAdjointElementData& rCurrentData,
+        const ShapeParameter& rShapeDerivative,
+        const double detJ_deriv,
+        const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
+        const ProcessInfo& rCurrentProcessInfo) const override;
+
+    double CalculateSourceTermShapeSensitivity(
+        const EvmKAdjointElementData& rCurrentData,
+        const ShapeParameter& rShapeDerivative,
+        const double detJ_deriv,
+        const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
+        const ProcessInfo& rCurrentProcessInfo) const override;
 
     ///@}
     ///@name Serialization

@@ -16,6 +16,7 @@
 #include "geometries/geometry.h"
 #include "geometries/geometry_data.h"
 #include "includes/model_part.h"
+#include "utilities/geometrical_sensitivity_utility.h"
 
 namespace Kratos
 {
@@ -85,6 +86,11 @@ public:
     GeometryType::ShapeFunctionsGradientsType CalculateGeometryParameterDerivatives(
         const GeometryType& rGeometry, const GeometryData::IntegrationMethod& rIntegrationMethod);
 
+    void CalculateGeometryParameterDerivativesShapeSensitivity(Matrix& rOutput,
+                                                               const ShapeParameter& rShapeDerivative,
+                                                               const Matrix& rDnDe,
+                                                               const Matrix& rDeDx);
+
     double EvaluateInPoint(const GeometryType& rGeometry,
                            const Variable<double>& rVariable,
                            const Vector& rShapeFunction,
@@ -112,11 +118,13 @@ public:
                            const int Step = 0) const;
 
     template <unsigned int TDim>
-    void CalculateVelocityGradientSensitivities(
-        BoundedMatrix<double, TDim, TDim>& rOutput,
-        const int VelocityDerivNodeIndex,
-        const int VelocityDerivDirection,
-        const Matrix& rShapeDerivatives) const;
+    void CalculateVelocityGradientSensitivities(BoundedMatrix<double, TDim, TDim>& rOutput,
+                                                const int VelocityDerivNodeIndex,
+                                                const int VelocityDerivDirection,
+                                                const Matrix& rShapeDerivatives) const;
+
+    template <unsigned int TDim>
+    Vector GetVector(const array_1d<double, 3>& rVector) const;
     ///@}
 
 private:

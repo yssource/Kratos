@@ -37,3 +37,6 @@ class SimpleSteadyCouplingSolver(CoSimulationBaseCouplingSolver):
                 self._SynchronizeInputData(solver, solver_name)
                 solver.SolveSolutionStep()
                 self._SynchronizeOutputData(solver, solver_name)
+
+        if k+1 >= self.num_coupling_iterations:
+                couplingsolverprint(self.lvl, self._Name(), red("XXX CONVERGENCE WAS NOT ACHIEVED AT COUPLING SOLVER XXX"))

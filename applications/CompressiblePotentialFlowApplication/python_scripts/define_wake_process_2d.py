@@ -49,7 +49,9 @@ class DefineWakeProcess2D(KratosMultiphysics.Process):
         self.wake_normal[2] = 0.0
 
         self.fluid_model_part = self.body_model_part.GetRootModelPart()
-        self.trailing_edge_model_part = self.fluid_model_part.CreateSubModelPart("trailing_edge_model_part")
+        if not self.fluid_model_part.HasSubModelPart("trailing_edge_model_part"):
+            self.trailing_edge_model_part = self.fluid_model_part.CreateSubModelPart("trailing_edge_model_part")
+        else: self.trailing_edge_model_part = self.fluid_model_part.GetSubModelPart("trailing_edge_model_part")
 
         # Find nodal neigbours util call
         avg_elem_num = 10

@@ -338,7 +338,8 @@ class CADMapper:
 
         nodal_variables = ["SHAPE_CHANGE", "GRAD_SHAPE_CHANGE", "NORMAL", "NORMALIZED_SURFACE_NORMAL"]
         filename = self.parameters["output"]["filename_fem_for_reconstruction"].GetString()
-        self.__OutputFEData(self.fe_model_part, filename, nodal_variables)
+        output_dir = self.parameters["output"]["results_directory"].GetString()
+        self.__OutputFEData(self.fe_model_part, filename, output_dir, nodal_variables)
 
         print("\n> Starting creation of conditions...")
         start_time = time.time()
@@ -471,7 +472,8 @@ class CADMapper:
         # Output fitting error
         nodal_variables = ["SHAPE_CHANGE", "FITTING_ERROR"]
         filename = self.parameters["output"]["filename_fem_for_quality_evaluation"].GetString()
-        self.__OutputFEData(self.fe_model_part, filename, nodal_variables)
+        output_dir = self.parameters["output"]["results_directory"].GetString()
+        self.__OutputFEData(self.fe_model_part, filename, output_dir, nodal_variables)
 
         # Then identify spots where coupling or enforcement conditions are not met
         for conditions_face_i in self.conditions.values():
@@ -601,8 +603,8 @@ class CADMapper:
         self.cad_model.Save(output_filename_with_path)
 
     # --------------------------------------------------------------------------
-    def __OutputFEData(self, model_part, fem_output_filename, nodal_variables):
-        output_dir = self.parameters["output"]["results_directory"].GetString()
+    @staticmethod
+    def __OutputFEData(model_part, fem_output_filename, output_dir, nodal_variables):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
@@ -617,10 +619,10 @@ class CADMapper:
         GiDWriteConditionsFlag = True
         GiDMultiFileFlag = "Single"
 
-        gig_io = GiDOutput(fem_output_filename_with_path, VolumeOutput, GiDPostMode, GiDMultiFileFlag, GiDWriteMeshFlag, GiDWriteConditionsFlag)
-        gig_io.initialize_results(model_part)
-        gig_io.write_results(1, model_part, nodal_results, gauss_points_results)
-        gig_io.finalize_results()
+        gid_io = GiDOutput(fem_output_filename_with_path, VolumeOutput, GiDPostMode, GiDMultiFileFlag, GiDWriteMeshFlag, GiDWriteConditionsFlag)
+        gid_io.initialize_results(model_part)
+        gid_io.write_results(1, model_part, nodal_results, gauss_points_results)
+        gid_io.finalize_results()
 
     # --------------------------------------------------------------------------
     @staticmethod

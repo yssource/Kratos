@@ -1331,9 +1331,6 @@ private:
                                                     const Vector& rEffectiveKinematicViscosityScalarDerivatives,
                                                     const Vector& rReactionScalarDerivatives)
     {
-        if (rOutput.size() != rReactionScalarDerivatives.size())
-            rOutput.resize(rReactionScalarDerivatives.size());
-
         noalias(rOutput) =
             (rEffectiveKinematicViscosityScalarDerivatives *
                  (144 * effective_kinematic_viscosity / std::pow(element_length, 4)) +
@@ -1354,13 +1351,8 @@ private:
         const Matrix& rElementLengthDerivatives,
         const Vector& rGaussShapeFunctions)
     {
-        if (rOutput.size1() != TNumNodes || rOutput.size2() != TDim)
-            rOutput.resize(TNumNodes, TDim);
-
         Vector contravariant_metric_velocity(TDim);
-        Vector velocity(TDim);
-        for (std::size_t i_dim = 0; i_dim < TDim; ++i_dim)
-            velocity[i_dim] = rVelocity[i_dim];
+        const Vector& velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
 
         noalias(contravariant_metric_velocity) =
             prod(rContravariantMetricTensor, velocity) +
@@ -1411,9 +1403,6 @@ private:
                                                       const array_1d<double, 3>& rVelocity,
                                                       const Vector& rGaussShapeFunctions)
     {
-        if (rOutput.size1() != TNumNodes || rOutput.size2() != TDim)
-            rOutput.resize(TNumNodes, TDim);
-
         for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node)
             for (unsigned int i_dim = 0; i_dim < TDim; ++i_dim)
                 rOutput(i_node, i_dim) =
@@ -1427,12 +1416,7 @@ private:
                                                     const Matrix& rContravariantMetricTensor,
                                                     const Vector& rGaussShapeFunctions)
     {
-        if (rOutput.size1() != TNumNodes || rOutput.size2() != TDim)
-            rOutput.resize(TNumNodes, TDim);
-
-        Vector velocity(TDim);
-        for (std::size_t i_dim = 0; i_dim < TDim; ++i_dim)
-            velocity[i_dim] = rVelocity[i_dim];
+        const Vector& velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
 
         const double sqrt_u_e_u =
             std::sqrt(inner_prod(velocity, prod(rContravariantMetricTensor, velocity)));
@@ -1457,9 +1441,7 @@ private:
                                                     const Matrix& rContravariantMetricTensor,
                                                     const Matrix& rContravariantMetricTensorShapeSensitivity)
     {
-        Vector velocity(TDim);
-        for (std::size_t i_dim = 0; i_dim < TDim; ++i_dim)
-            velocity[i_dim] = rVelocity[i_dim];
+        const Vector& velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
 
         const double u_e_u = std::pow(
             inner_prod(velocity, prod(rContravariantMetricTensor, velocity)), 1.5);
@@ -1533,9 +1515,6 @@ private:
     {
         const double scalar_gradient_norm = norm_2(rScalarGradient);
 
-        if (rOutput.size() != TNumNodes)
-            rOutput.resize(TNumNodes);
-
         for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
         {
             const Vector& shape_function_gradient = row(rShapeFunctionDerivatives, i_node);
@@ -1554,12 +1533,7 @@ private:
         noalias(scalar_gradient_shape_sensitivity) =
             prod(trans(rShapeFunctionDerivShapeSensitivity), rNodalScalarValues);
 
-        Vector scalar_gradient(TDim);
-        for (unsigned int i_dim = 0; i_dim < TDim; ++i_dim)
-        {
-            scalar_gradient[i_dim] = rScalarGradient[i_dim];
-        }
-
+        const Vector& scalar_gradient = RansCalculationUtilities().GetVector<TDim>(rScalarGradient);
         return inner_prod(scalar_gradient_shape_sensitivity, scalar_gradient) / scalar_gradient_norm;
     }
 
@@ -1572,9 +1546,6 @@ private:
                                            const Vector& rShapeFunctions,
                                            const Matrix& rShapeFunctionDerivatives)
     {
-        if (rOutput.size() != TNumNodes)
-            rOutput.resize(TNumNodes);
-
         for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
         {
             const Vector& shape_function_gradient = row(rShapeFunctionDerivatives, i_node);
@@ -1596,8 +1567,6 @@ private:
                                              const Matrix& rSourceDerivatives,
                                              const Vector& rGaussShapeFunctions)
     {
-        if (rOutput.size1() != TNumNodes || rOutput.size2() != TDim)
-            rOutput.resize(TNumNodes, TDim);
 
         for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node)
             for (unsigned int i_dim = 0; i_dim < TDim; ++i_dim)
@@ -1640,9 +1609,6 @@ private:
     {
         const double abs_residual = std::abs(residual);
 
-        if (rOutput.size() != rChiScalarDerivatives.size())
-            rOutput.resize(rChiScalarDerivatives.size());
-
         noalias(rOutput) = rAbsoluteResidualScalarDerivatives *
                            (chi / (velocity_norm_square * scalar_gradient_norm));
         noalias(rOutput) +=
@@ -1663,9 +1629,6 @@ private:
         const Matrix& rAbsoluteResidualDerivatives,
         const Matrix& rVelocityMagnitudeDerivatives)
     {
-        if (rOutput.size1() != TNumNodes || rOutput.size2() != TDim)
-            rOutput.resize(TNumNodes, TDim);
-
         const double velocity_magnitude_square = std::pow(velocity_magnitude, 2);
 
         noalias(rOutput) =
@@ -1697,9 +1660,6 @@ private:
                                           const Vector& rTauScalarDerivatives,
                                           const Vector& rAbsoluteReactionTildeScalarDerivatives)
     {
-        if (rOutput.size() != rTauScalarDerivatives.size())
-            rOutput.resize(rTauScalarDerivatives.size());
-
         const double absolute_reaction_tilde = std::abs(reaction_tilde);
 
         noalias(rOutput) = rTauScalarDerivatives * (velocity_norm * absolute_reaction_tilde);
@@ -1714,9 +1674,6 @@ private:
                                             const Matrix& rAbsoluteReactionTildeDerivatives,
                                             const Matrix& rVelocityMagnitudeDerivatives)
     {
-        if (rOutput.size1() != TNumNodes || rOutput.size2() != TDim)
-            rOutput.resize(TNumNodes, TDim);
-
         noalias(rOutput) = rVelocityMagnitudeDerivatives +
                            rTauDerivatives * (velocity_norm * reaction_tilde) +
                            rVelocityMagnitudeDerivatives * (tau * reaction_tilde) +
@@ -1750,9 +1707,6 @@ private:
     {
         const double absolute_reaction_tilde = std::abs(reaction_tilde);
 
-        if (rOutput.size() != rTauScalarDerivatives.size())
-            rOutput.resize(rTauScalarDerivatives.size());
-
         noalias(rOutput) = rReactionTildeDerivatives;
         noalias(rOutput) +=
             rTauScalarDerivatives * (reaction_tilde * absolute_reaction_tilde);
@@ -1770,9 +1724,6 @@ private:
                                             const Matrix& rAbsoluteReactionTildeDerivatives,
                                             const Matrix& rElementLengthDerivatives)
     {
-        if (rOutput.size1() != TNumNodes || rOutput.size2() != TDim)
-            rOutput.resize(TNumNodes, TDim);
-
         const double abs_reaction_tilde = std::abs(reaction_tilde);
 
         noalias(rOutput) =
@@ -1829,9 +1780,6 @@ private:
         const Vector& rReactionTildeScalarDerivatives,
         const Vector& rEffectiveViscosityScalarDerivatives)
     {
-        if (rOutput.size() != rPsiOneScalarDerivatives.size())
-            rOutput.resize(rPsiOneScalarDerivatives.size());
-
         noalias(rOutput) = rPsiOneScalarDerivatives;
         noalias(rOutput) -= rTauScalarDerivatives * (velocity_norm * reaction_tilde);
         noalias(rOutput) -= rReactionTildeScalarDerivatives * (tau * velocity_norm);
@@ -1860,9 +1808,6 @@ private:
         const Matrix& rEffectiveViscosityDerivatives,
         const Matrix& rElementLengthDerivatives)
     {
-        if (rOutput.size1() != TNumNodes || rOutput.size2() != TDim)
-            rOutput.resize(TNumNodes, TDim);
-
         noalias(rOutput) =
             (rPsiOneDerivatives - rTauDerivatives * (velocity_norm * reaction_tilde) -
              rVelocityMagnitudeDerivatives * (tau * reaction_tilde) -
@@ -1920,9 +1865,6 @@ private:
         const Vector& rPsiTwoScalarDerivatives,
         const Vector& rEffectiveKinematicViscosityScalarDerivatives)
     {
-        if (rOutput.size() != rPsiOneScalarDerivatives.size())
-            rOutput.resize(rPsiOneScalarDerivatives.size());
-
         noalias(rOutput) = rPsiOneScalarDerivatives *
                            (0.5 * psi_one * element_length / std::abs(psi_one));
         noalias(rOutput) -= rEffectiveKinematicViscosityScalarDerivatives;
@@ -1938,9 +1880,6 @@ private:
         const Matrix& rEffectiveKinematicViscosityDerivatives,
         const Matrix& rElementLengthDerivatives)
     {
-        if (rOutput.size1() != TNumNodes || rOutput.size2() != TDim)
-            rOutput.resize(TNumNodes, TDim);
-
         const double abs_psi_one = std::abs(psi_one);
 
         noalias(rOutput) =
@@ -1966,9 +1905,6 @@ private:
                                                        const double scalar_value,
                                                        const Vector& rScalarValueDerivatives)
     {
-        if (rOutput.size() != rScalarValueDerivatives.size())
-            rOutput.resize(rScalarValueDerivatives.size());
-
         noalias(rOutput) =
             rScalarValueDerivatives * (scalar_value / std::abs(scalar_value));
     }
@@ -1977,11 +1913,6 @@ private:
                                                        const double scalar_value,
                                                        const Matrix& rScalarValueDerivatives)
     {
-        if (rOutput.size1() != rScalarValueDerivatives.size1() ||
-            rOutput.size2() != rScalarValueDerivatives.size2())
-            rOutput.resize(rScalarValueDerivatives.size1(),
-                           rScalarValueDerivatives.size2());
-
         noalias(rOutput) =
             rScalarValueDerivatives * (scalar_value / std::abs(scalar_value));
     }

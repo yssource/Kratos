@@ -3,16 +3,26 @@
     {
         "start_time" : 0.0,
         "end_time" : 1.0,
-        "echo_level" : 3,
-        "print_colors" : true,
-        "parallel_type" : "OpenMP"
+        "echo_level" : 2,
+        "print_colors" : true
     },
     "solver_settings" :
     {
         "solver_type" : "simple_steady_coupling",
-        "echo_level" : 3,
-        "num_coupling_iterations" : 2,
+        "echo_level" : 1,
+        "num_coupling_iterations" : 10,
         "start_coupling_time" : 0.0,
+        "convergence_accelerator_settings" :
+        {
+            "type"          : "aitken",
+            "data_list" :
+            [
+                {
+                    "solver"   : "fluid",
+                    "data_name"     : "disp_y"
+                }
+            ]
+        },
         "convergence_criteria_settings" :
         {
             "data_list" :
@@ -20,8 +30,8 @@
                 {
                     "solver"   : "fluid",
                     "data_name"     : "disp_y",
-                    "abs_tolerance" : 1e-5,
-                    "rel_tolerance" : 1e-5
+                    "abs_tolerance" : 1e-9,
+                    "rel_tolerance" : 1e-2
                 }
             ]
         },
@@ -58,16 +68,21 @@
             "fluid":
             {
                 "solver_type" : "kratos_potential_flow",
-                "input_file"  : "ProjectParametersPotentialFlow",
+                "input_file"  : "naca0012_small_parameters_coupling",
                 "data" : {
                     "disp_y" : {
-                        "geometry_name" : "MainModelPart.Body2D_BodySurface",
+                        "geometry_name" : "FluidModelPart.Body2D_Body",
                         "data_identifier" : "MESH_DISPLACEMENT_Y",
                         "data_format"     : "kratos_modelpart"
                     },
                         "force_y" : {
-                        "geometry_name" : "MainModelPart.Body2D_BodySurface",
+                        "geometry_name" : "FluidModelPart.Body2D_Body",
                         "data_identifier" : "REACTION_Y",
+                        "data_format"     : "kratos_modelpart"
+                    },
+                    "vel_y" : {
+                        "geometry_name"   : "FluidModelPart.Body2D_Body",
+                        "data_identifier" : "VELOCITY_Y",
                         "data_format"     : "kratos_modelpart"
                     }
                 }

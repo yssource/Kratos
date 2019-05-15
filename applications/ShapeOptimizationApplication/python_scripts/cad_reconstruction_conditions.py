@@ -14,48 +14,45 @@ import numpy as np
 # For automatic differentiation
 from HyperJet import HyperJet, Jet
 from numpy.testing import assert_array_almost_equal
+import EQlib as eq
 
 # ==============================================================================
-class ReconstructionCondition:
+class ReconstructionCondition(eq.Element):
+    def __init__(self):
+        eq.Element.__init__(self)
+
+    # --------------------------------------------------------------------------
+    def dofs(self):
+        dof_list = []
+        for node in self.pole_nodes:
+            dof_list += [node.x.dof, node.y.dof, node.z.dof]
+        return dof_list
+
     # --------------------------------------------------------------------------
     @staticmethod
-    def ComputeActual(geometry_data, nonzero_pole_ids, shape):
+    def ComputeActual(pole_nodes, shape):
         value = np.zeros(3)
-
-        for i, (r,s) in enumerate(nonzero_pole_ids):
-            value += shape[i]*geometry_data.Pole(r,s)
+        for i, pole in enumerate(pole_nodes):
+            value += shape[i]*pole.act_location
 
         return value
-
-    # --------------------------------------------------------------------------
-    @staticmethod
-    def GenerateDofList(surface_geometry_key, nonzero_pole_ids):
-        dof_list = []
-        for (r,s) in nonzero_pole_ids:
-            dof_list.append( (surface_geometry_key,r,s,"x") )
-        for (r,s) in nonzero_pole_ids:
-            dof_list.append( (surface_geometry_key,r,s,"y") )
-        for (r,s) in nonzero_pole_ids:
-            dof_list.append( (surface_geometry_key,r,s,"z") )
-        return dof_list
 
 # ==============================================================================
 class ReconstructionConditionWithAD(ReconstructionCondition):
     # --------------------------------------------------------------------------
     @staticmethod
-    def ComputeActualJet(geometry_data, nonzero_pole_ids, shape):
+    def ComputeActualJet(pole_nodes, shape):
         value = np.zeros(3)
+        for i, pole in enumerate(pole_nodes):
+            value += shape[i]*pole.act_location
 
-        for i, (r,s) in enumerate(nonzero_pole_ids):
-            value += shape[i]*geometry_data.Pole(r,s)
+        dx = np.zeros(len(shape) * 3)
+        dy = np.zeros(len(shape) * 3)
+        dz = np.zeros(len(shape) * 3)
 
-        dx = np.zeros(shape.size * 3)
-        dy = np.zeros(shape.size * 3)
-        dz = np.zeros(shape.size * 3)
-
-        dx[:shape.size] = shape
-        dy[shape.size:2*shape.size] = shape
-        dz[2*shape.size:] = shape
+        dx[0::3] = shape # [N0 0  0  N1 0  0  N2 0  ...]
+        dy[1::3] = shape # [0  N0 0  0  N1 0  0  N2 ...]
+        dz[2::3] = shape # [0  0  N0 0  0  N1 0  0  ...]
 
         return np.array([Jet(value[0], dx),
                          Jet(value[1], dy),
@@ -63,19 +60,18 @@ class ReconstructionConditionWithAD(ReconstructionCondition):
 
     # --------------------------------------------------------------------------
     @staticmethod
-    def ComputeActualHyperJet(geometry_data, nonzero_pole_ids, shape):
+    def ComputeActualHyperJet(pole_nodes, shape):
         value = np.zeros(3)
+        for i, pole in enumerate(pole_nodes):
+            value += shape[i]*pole.act_location
 
-        for i, (r,s) in enumerate(nonzero_pole_ids):
-            value += shape[i]*geometry_data.Pole(r,s)
+        dx = np.zeros(len(shape) * 3)
+        dy = np.zeros(len(shape) * 3)
+        dz = np.zeros(len(shape) * 3)
 
-        dx = np.zeros(shape.size * 3)
-        dy = np.zeros(shape.size * 3)
-        dz = np.zeros(shape.size * 3)
-
-        dx[:shape.size] = shape
-        dy[shape.size:2*shape.size] = shape
-        dz[2*shape.size:] = shape
+        dx[0::3] = shape # [N0 0  0  N1 0  0  N2 0  ...]
+        dy[1::3] = shape # [0  N0 0  0  N1 0  0  N2 ...]
+        dz[2::3] = shape # [0  0  N0 0  0  N1 0  0  ...]
 
         return np.array([HyperJet(value[0], dx),
                          HyperJet(value[1], dy),
@@ -84,338 +80,352 @@ class ReconstructionConditionWithAD(ReconstructionCondition):
 # ==============================================================================
 class DistanceMinimizationCondition(ReconstructionCondition):
     # --------------------------------------------------------------------------
-    def __init__(self, fe_node, surface_geometry, nonzero_pole_ids, shape_functions, variabl_to_map, weight):
+    def __init__(self, fe_node, pole_nodes, shape_functions, variable_to_map, weight):
+        super().__init__()
+
         self.fe_node = fe_node
-        self.geometry_data = surface_geometry.Data()
-        self.nonzero_pole_ids = nonzero_pole_ids
-        self.shape_functions = shape_functions
-        self.variabl_to_map = variabl_to_map
+        self.pole_nodes = pole_nodes
+        self.shape_function_values = np.asarray(shape_functions[0], float)
+        self.variable_to_map = variable_to_map
         self.weight = weight
 
         node_initial_coords = np.array([self.fe_node.X, self.fe_node.Y, self.fe_node.Z])
-        nodal_update = np.array(self.fe_node.GetSolutionStepValue(self.variabl_to_map))
+        nodal_update = np.array(self.fe_node.GetSolutionStepValue(self.variable_to_map))
         self.fe_node_coords = node_initial_coords + nodal_update
 
-        self.dof_list = super().GenerateDofList(surface_geometry.Key(), nonzero_pole_ids)
-        self.num_local_dofs = len(self.dof_list)
-        self.block_size = len(nonzero_pole_ids)
+    # --------------------------------------------------------------------------
+    def CalculateRHS(self, rhs):
+        cad_location = super().ComputeActual(self.pole_nodes, self.shape_function_values)
+        distance_vec =  cad_location - self.fe_node_coords
+        value = 0.5*self.weight*distance_vec.dot(distance_vec)
+
+        local_rhs = - self.weight * np.outer(self.shape_function_values, distance_vec)
+
+        rhs[0::3] = local_rhs[:,0]
+        rhs[1::3] = local_rhs[:,1]
+        rhs[2::3] = local_rhs[:,2]
+
+        return value
 
     # --------------------------------------------------------------------------
-    def CalculateRHS(self):
-        pole_coords = np.zeros((self.block_size, 3))
-        for i, (r,s) in enumerate(self.nonzero_pole_ids):
-            pole_coords[i,:] = self.geometry_data.Pole(r,s)
+    def CalculateLocalSystem(self, rhs, lhs):
+        num_dofs = len(self.shape_function_values)*3
 
-        local_rhs = -self.weight * np.outer(self.shape_functions, (self.shape_functions @ pole_coords - self.fe_node_coords))
-        local_rhs = local_rhs.T.flatten()
-
-        return local_rhs, self.dof_list
-
-    # --------------------------------------------------------------------------
-    def CalculateLocalSystem(self):
         # LHS
-        local_lhs = np.zeros([self.num_local_dofs,self.num_local_dofs])
+        local_lhs_block = self.weight * np.outer(self.shape_function_values, self.shape_function_values)
 
-        local_lhs_block = self.weight * np.outer(self.shape_functions, self.shape_functions)
-        local_lhs[0*self.block_size:1*self.block_size,0*self.block_size:1*self.block_size] = local_lhs_block
-        local_lhs[1*self.block_size:2*self.block_size,1*self.block_size:2*self.block_size] = local_lhs_block
-        local_lhs[2*self.block_size:3*self.block_size,2*self.block_size:3*self.block_size] = local_lhs_block
+        lhs[:] = np.zeros([num_dofs,num_dofs])
+        lhs[0::3,0::3] = local_lhs_block
+        lhs[1::3,1::3] = local_lhs_block
+        lhs[2::3,2::3] = local_lhs_block
 
         # RHS
-        local_rhs, _ = self.CalculateRHS()
+        value = self.CalculateRHS(rhs)
 
-        return local_lhs, local_rhs, self.dof_list
+        return value
+
+    # --------------------------------------------------------------------------
+    def compute(self, rhs, lhs):
+        if len(lhs) == 0:
+            return self.CalculateRHS(rhs)
+        return self.CalculateLocalSystem(rhs, lhs)
+
+# ==============================================================================
+class DistanceMinimizationConditionWithAD(ReconstructionConditionWithAD):
+    # --------------------------------------------------------------------------
+    def __init__(self, fe_node, pole_nodes, shape_functions, variable_to_map, weight):
+        super().__init__()
+
+        self.fe_node = fe_node
+        self.pole_nodes = pole_nodes
+        self.shape_function_values = np.asarray(shape_functions[0], float)
+        self.variable_to_map = variable_to_map
+        self.weight = weight
+
+        node_initial_coords = np.array([self.fe_node.X, self.fe_node.Y, self.fe_node.Z])
+        nodal_update = np.array(self.fe_node.GetSolutionStepValue(self.variable_to_map))
+        self.fe_node_coords = node_initial_coords + nodal_update
+
+    # --------------------------------------------------------------------------
+    def CalculateRHS(self, rhs):
+        cad_location = self.ComputeActualJet(self.pole_nodes, self.shape_function_values)
+
+        v = cad_location - self.fe_node_coords
+
+        f = 0.5 * self.weight * v.dot(v)
+
+        rhs[:] = -f.g
+        return f.f
+
+    # --------------------------------------------------------------------------
+    def CalculateLocalSystem(self, rhs, lhs):
+        cad_location = self.ComputeActualHyperJet(self.pole_nodes, self.shape_function_values)
+
+        v = cad_location - self.fe_node_coords
+
+        f = 0.5 * self.weight * v.dot(v)
+
+        rhs[:] = -f.g
+        lhs[:] = f.h
+        return f.f
+
+    # --------------------------------------------------------------------------
+    def compute(self, rhs, lhs):
+        if len(lhs) == 0:
+            return self.CalculateRHS(rhs)
+        return self.CalculateLocalSystem(rhs, lhs)
 
 # ==============================================================================
 class PositionEnforcementCondition(ReconstructionCondition):
     # --------------------------------------------------------------------------
-    def __init__(self, target_position, surface_geometry, nonzero_pole_ids, shape_functions, penalty_factor):
+    def __init__(self, target_position, pole_nodes, shape_functions, penalty):
+        super().__init__()
+
         self.target_position = target_position
-        self.geometry_data = surface_geometry.Data()
-        self.nonzero_pole_ids = nonzero_pole_ids
-        self.shape_functions = shape_functions
-        self.penalty_fac = penalty_factor
-
-        self.dof_list = super().GenerateDofList(surface_geometry.Key(), nonzero_pole_ids)
-        self.num_local_dofs = len(self.dof_list)
-        self.block_size = len(nonzero_pole_ids)
+        self.pole_nodes = pole_nodes
+        self.shape_function_values = np.asarray(shape_functions[0], float)
+        self.penalty = penalty
 
     # --------------------------------------------------------------------------
-    def CalculateRHS(self):
-        pole_coords = np.zeros((self.block_size, 3))
-        for i, (r,s) in enumerate(self.nonzero_pole_ids):
-            pole_coords[i,:] = self.geometry_data.Pole(r,s)
+    def CalculateRHS(self, rhs):
+        cad_location = super().ComputeActual(self.pole_nodes, self.shape_function_values)
+        distance_vec =  cad_location - self.target_position
+        value = 0.5 * self.penalty * distance_vec.dot(distance_vec)
 
-        local_rhs = -self.penalty_fac * np.outer(self.shape_functions, (self.shape_functions @ pole_coords - self.target_position))
-        local_rhs = local_rhs.T.flatten()
+        local_rhs = - self.penalty * np.outer(self.shape_function_values, distance_vec)
 
-        return local_rhs, self.dof_list
+        rhs[0::3] = local_rhs[:,0]
+        rhs[1::3] = local_rhs[:,1]
+        rhs[2::3] = local_rhs[:,2]
+
+        return value
 
     # --------------------------------------------------------------------------
-    def CalculateLocalSystem(self):
+    def CalculateLocalSystem(self, rhs, lhs):
+        num_dofs = len(self.shape_function_values)*3
+
         # LHS
-        local_lhs = np.zeros([self.num_local_dofs,self.num_local_dofs])
+        local_lhs_block = self.penalty * np.outer(self.shape_function_values, self.shape_function_values)
 
-        local_lhs_block = self.penalty_fac * np.outer(self.shape_functions, self.shape_functions)
-        local_lhs[0*self.block_size:1*self.block_size,0*self.block_size:1*self.block_size] = local_lhs_block
-        local_lhs[1*self.block_size:2*self.block_size,1*self.block_size:2*self.block_size] = local_lhs_block
-        local_lhs[2*self.block_size:3*self.block_size,2*self.block_size:3*self.block_size] = local_lhs_block
+        lhs[:] = np.zeros([num_dofs,num_dofs])
+        lhs[0::3,0::3] = local_lhs_block
+        lhs[1::3,1::3] = local_lhs_block
+        lhs[2::3,2::3] = local_lhs_block
 
         # RHS
-        local_rhs, _ = self.CalculateRHS()
+        value = self.CalculateRHS(rhs)
 
-        return local_lhs, local_rhs, self.dof_list
-
-# ==============================================================================
-class TangentEnforcementCondition(ReconstructionCondition):
-    # --------------------------------------------------------------------------
-    def __init__(self, target_normal, surface_geometry, nonzero_pole_ids, shape_function_derivatives_u, shape_function_derivatives_v, penalty_factor):
-        self.target_normal = target_normal
-        self.geometry_data = surface_geometry.Data()
-        self.nonzero_pole_ids = nonzero_pole_ids
-        self.shape_function_derivatives_u = shape_function_derivatives_u
-        self.shape_function_derivatives_v = shape_function_derivatives_v
-        self.penalty_factor = penalty_factor
-
-        self.dof_list = super().GenerateDofList(surface_geometry.Key(), nonzero_pole_ids)
-        self.block_size = len(nonzero_pole_ids)
+        return value
 
     # --------------------------------------------------------------------------
-    def CalculateRHS(self):
-        pole_coords = np.zeros((self.block_size, 3))
-        for i, (r,s) in enumerate(self.nonzero_pole_ids):
-            pole_coords[i,:] = self.geometry_data.Pole(r,s)
-
-        a1 = self.shape_function_derivatives_u @ pole_coords
-        a2 = self.shape_function_derivatives_v @ pole_coords
-
-        local_rhs_1 = - self.penalty_factor * np.outer(self.shape_function_derivatives_u,self.target_normal) * (a1 @ self.target_normal)
-        local_rhs_2 = - self.penalty_factor * np.outer(self.shape_function_derivatives_v,self.target_normal) * (a2 @ self.target_normal)
-
-        local_rhs = local_rhs_1.T.flatten() + local_rhs_2.T.flatten()
-
-        return local_rhs, self.dof_list
-
-    # --------------------------------------------------------------------------
-    def CalculateLocalSystem(self):
-        # LHS
-        term1 = np.outer(self.shape_function_derivatives_u,self.target_normal)
-        term1 = term1.T.flatten()
-
-        term2 = np.outer(self.shape_function_derivatives_v,self.target_normal)
-        term2 = term2.T.flatten()
-
-        local_lhs = self.penalty_factor * np.outer(term1,term1) + self.penalty_factor * np.outer(term2,term2)
-
-        # RHS
-        local_rhs, _ = self.CalculateRHS()
-
-        return local_lhs, local_rhs, self.dof_list
+    def compute(self, rhs, lhs):
+        if len(lhs) == 0:
+            return self.CalculateRHS(rhs)
+        return self.CalculateLocalSystem(rhs, lhs)
 
 # ==============================================================================
 class TangentEnforcementConditionWithAD( ReconstructionConditionWithAD ):
     # --------------------------------------------------------------------------
-    def __init__(self, target_normal, surface_geometry, nonzero_pole_ids, shape_function_derivatives_u, shape_function_derivatives_v, penalty_factor):
+    def __init__(self, target_normal, pole_nodes, shape_functions, penalty):
+        super().__init__()
+
         self.target_normal = target_normal
-        self.geometry_data = surface_geometry.Data()
-        self.nonzero_pole_ids = nonzero_pole_ids
-        self.shape_function_derivatives_u = shape_function_derivatives_u
-        self.shape_function_derivatives_v = shape_function_derivatives_v
-        self.penalty_factor = penalty_factor
-
-        self.dof_list = super().GenerateDofList(surface_geometry.Key(), nonzero_pole_ids)
-        self.block_size = len(nonzero_pole_ids)
+        self.pole_nodes = pole_nodes
+        self.shape_function_derivatives_u = np.asarray(shape_functions[1], float)
+        self.shape_function_derivatives_v = np.asarray(shape_functions[2], float)
+        self.penalty = penalty
 
     # --------------------------------------------------------------------------
-    def CalculateRHS(self):
-        a1 = super().ComputeActualJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_u)
-        a2 = super().ComputeActualJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_v)
+    def CalculateRHS(self, rhs):
+        a1 = super().ComputeActualJet(self.pole_nodes, self.shape_function_derivatives_u)
+        a2 = super().ComputeActualJet(self.pole_nodes, self.shape_function_derivatives_v)
 
-        f_1 = self.penalty_factor * np.dot(a1,self.target_normal)**2 * 0.5
-        f_2 = self.penalty_factor * np.dot(a2,self.target_normal)**2 * 0.5
+        f_1 = self.penalty * np.dot(a1,self.target_normal)**2 * 0.5
+        f_2 = self.penalty * np.dot(a2,self.target_normal)**2 * 0.5
+        value = f_1.f + f_2.f
 
-        local_rhs_1 = - f_1.g
-        local_rhs_2 = - f_2.g
+        rhs[:]  = - f_1.g
+        rhs[:] -=   f_2.g
 
-        rhs_new = local_rhs_1 + local_rhs_2
-
-        # # Compare against old way of computing it
-        # pole_coords = np.zeros((self.block_size, 3))
-        # for i, (r,s) in enumerate(self.nonzero_pole_ids):
-        #     pole_coords[i,:] = self.surface_geometry.Pole(r,s)
-
-        # a1 = self.shape_function_derivatives_u @ pole_coords
-        # a2 = self.shape_function_derivatives_v @ pole_coords
-
-        # local_rhs_1 = - self.penalty_factor * np.outer(self.shape_function_derivatives_u,self.target_normal) * (a1 @ self.target_normal)
-        # local_rhs_2 = - self.penalty_factor * np.outer(self.shape_function_derivatives_v,self.target_normal) * (a2 @ self.target_normal)
-
-        # rhs_old = local_rhs_1.T.flatten() + local_rhs_2.T.flatten()
-
-        # assert_array_almost_equal(rhs_new,rhs_old,10)
-
-
-        # # Compare against old way of computing it
-        # term1 = np.outer(self.shape_function_derivatives_u,self.target_normal)
-        # term1 = term1.T.flatten()
-
-        # term2 = np.outer(self.shape_function_derivatives_v,self.target_normal)
-        # term2 = term2.T.flatten()
-
-        # lhs_old = self.penalty_factor * np.outer(term1,term1) + self.penalty_factor * np.outer(term2,term2)
-
-        # assert_array_almost_equal(lhs_new,lhs_old,10)
-
-        return rhs_new, self.dof_list
+        return value
 
     # --------------------------------------------------------------------------
-    def CalculateLocalSystem(self):
-        a1 = super().ComputeActualHyperJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_u)
-        a2 = super().ComputeActualHyperJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_v)
+    def CalculateLocalSystem(self, rhs, lhs):
+        a1 = super().ComputeActualHyperJet(self.pole_nodes, self.shape_function_derivatives_u)
+        a2 = super().ComputeActualHyperJet(self.pole_nodes, self.shape_function_derivatives_v)
 
-        f_1 = self.penalty_factor * np.dot(a1,self.target_normal)**2 * 0.5
-        f_2 = self.penalty_factor * np.dot(a2,self.target_normal)**2 * 0.5
+        f_1 = self.penalty * np.dot(a1,self.target_normal)**2 * 0.5
+        f_2 = self.penalty * np.dot(a2,self.target_normal)**2 * 0.5
+        value = f_1.f + f_2.f
 
         # LHS
-        local_lhs_1 = f_1.h
-        local_lhs_2 = f_2.h
-
-        lhs_new = local_lhs_1 + local_lhs_2
+        lhs[:]  = f_1.h
+        lhs[:] += f_2.h
 
         # RHS
-        local_rhs_1 = - f_1.g
-        local_rhs_2 = - f_2.g
+        rhs[:]  = - f_1.g
+        rhs[:] -=   f_2.g
 
-        rhs_new = local_rhs_1 + local_rhs_2
+        return value
 
-        return lhs_new, rhs_new, self.dof_list
+    # --------------------------------------------------------------------------
+    def compute(self, rhs, lhs):
+        if len(lhs) == 0:
+            return self.CalculateRHS(rhs)
+        return self.CalculateLocalSystem(rhs, lhs)
 
 # ==============================================================================
 class DisplacementCouplingCondition(ReconstructionCondition):
     # --------------------------------------------------------------------------
-    def __init__(self, geometry_a, geometry_b, parameters_a, parameters_b, nonzero_pole_ids_a, nonzero_pole_ids_b, shape_functions_a, shape_functions_b, penalty_factor):
-        self.geometry_a = geometry_a
-        self.geometry_b = geometry_b
-        self.parameters_a = parameters_a
-        self.parameters_b = parameters_b
-        self.nonzero_pole_ids_a = nonzero_pole_ids_a
-        self.nonzero_pole_ids_b = nonzero_pole_ids_b
-        self.shape_functions_a = shape_functions_a
-        self.shape_functions_b = shape_functions_b
-        self.penalty_fac = penalty_factor
+    def __init__(self, pole_nodes_a, pole_nodes_b, shape_functions_a, shape_functions_b, geometry_a, geometry_b, parameters_a, parameters_b,  penalty):
+        super().__init__()
 
-        dof_list_a = super().GenerateDofList(geometry_a.Key(), nonzero_pole_ids_a)
-        dof_list_b = super().GenerateDofList(geometry_b.Key(), nonzero_pole_ids_b)
+        self.pole_nodes_a = pole_nodes_a
+        self.pole_nodes_b = pole_nodes_b
+        self.shape_function_values_a = np.asarray(shape_functions_a[0], float)
+        self.shape_function_values_b = np.asarray(shape_functions_b[0], float)
+        self.geometry_a = geometry_a # only strored for aposteriori refinement
+        self.geometry_b = geometry_b # only strored for aposteriori refinement
+        self.parameters_a = parameters_a # only strored for aposteriori refinement
+        self.parameters_b = parameters_b # only strored for aposteriori refinement
+        self.penalty = penalty
 
-        self.dof_list = dof_list_a + dof_list_b
+        self.pos_0_a = super().ComputeActual(pole_nodes_a, self.shape_function_values_a)
+        self.pos_0_b = super().ComputeActual(pole_nodes_b, self.shape_function_values_b)
 
-        self.num_local_dofs = len(self.dof_list)
-        self.block_size_a = len(nonzero_pole_ids_a)
-        self.block_size_b = len(nonzero_pole_ids_b)
-
-        self.pos_0_a = super().ComputeActual(self.geometry_a.Data(), nonzero_pole_ids_a, shape_functions_a)
-        self.pos_0_b = super().ComputeActual(self.geometry_b.Data(), nonzero_pole_ids_b, shape_functions_b)
+    # --------------------------------------------------------------------------
+    def dofs(self):
+        dof_list = []
+        for node in self.pole_nodes_a:
+            dof_list += [node.x.dof, node.y.dof, node.z.dof]
+        for node in self.pole_nodes_b:
+            dof_list += [node.x.dof, node.y.dof, node.z.dof]
+        return dof_list
 
     # --------------------------------------------------------------------------
     def CalculateQualityIndicator(self):
-        disp_a = super().ComputeActual(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_functions_a) - self.pos_0_a
-        disp_b = super().ComputeActual(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_functions_b) - self.pos_0_b
+        disp_a = super().ComputeActual(self.pole_nodes_a, self.shape_function_values_a) - self.pos_0_a
+        disp_b = super().ComputeActual(self.pole_nodes_b, self.shape_function_values_b) - self.pos_0_b
         return disp_a - disp_b
 
     # --------------------------------------------------------------------------
-    def CalculateRHS(self):
-        N_ab = np.zeros(self.num_local_dofs)
+    def CalculateRHS(self, rhs):
+        num_dofs = len(self.dofs())
+        num_pole_nodes_a = len(self.pole_nodes_a)
 
-        N_ab[0*self.block_size_a:1*self.block_size_a] = self.shape_functions_a
-        N_ab[1*self.block_size_a:2*self.block_size_a] = self.shape_functions_a
-        N_ab[2*self.block_size_a:3*self.block_size_a] = self.shape_functions_a
+        N_ab = np.zeros(num_dofs)
 
-        N_ab[3*self.block_size_a+0*self.block_size_b:3*self.block_size_a+1*self.block_size_b] -= self.shape_functions_b
-        N_ab[3*self.block_size_a+1*self.block_size_b:3*self.block_size_a+2*self.block_size_b] -= self.shape_functions_b
-        N_ab[3*self.block_size_a+2*self.block_size_b:3*self.block_size_a+3*self.block_size_b] -= self.shape_functions_b
+        N_ab[0:num_pole_nodes_a*3:3] = self.shape_function_values_a
+        N_ab[1:num_pole_nodes_a*3:3] = self.shape_function_values_a
+        N_ab[2:num_pole_nodes_a*3:3] = self.shape_function_values_a
+
+        N_ab[3*num_pole_nodes_a+0::3] -= self.shape_function_values_b
+        N_ab[3*num_pole_nodes_a+1::3] -= self.shape_function_values_b
+        N_ab[3*num_pole_nodes_a+2::3] -= self.shape_function_values_b
 
         # RHS
-        disp_a = super().ComputeActual(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_functions_a) - self.pos_0_a
-        disp_b = super().ComputeActual(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_functions_b) - self.pos_0_b
+        disp_a = super().ComputeActual(self.pole_nodes_a, self.shape_function_values_a) - self.pos_0_a
+        disp_b = super().ComputeActual(self.pole_nodes_b, self.shape_function_values_b) - self.pos_0_b
         delta = disp_a - disp_b
 
+        value = 0.5  * self.penalty * delta.dot(delta)
+
         # a
-        delta_ab = np.zeros(self.num_local_dofs)
-        delta_ab[0*self.block_size_a:1*self.block_size_a] = delta[0]
-        delta_ab[1*self.block_size_a:2*self.block_size_a] = delta[1]
-        delta_ab[2*self.block_size_a:3*self.block_size_a] = delta[2]
+        delta_ab = np.zeros(num_dofs)
+        delta_ab[0:num_pole_nodes_a*3:3] = delta[0]
+        delta_ab[1:num_pole_nodes_a*3:3] = delta[1]
+        delta_ab[2:num_pole_nodes_a*3:3] = delta[2]
 
         # b
-        delta_ab[3*self.block_size_a+0*self.block_size_b:3*self.block_size_a+1*self.block_size_b] = delta[0]
-        delta_ab[3*self.block_size_a+1*self.block_size_b:3*self.block_size_a+2*self.block_size_b] = delta[1]
-        delta_ab[3*self.block_size_a+2*self.block_size_b:3*self.block_size_a+3*self.block_size_b] = delta[2]
+        delta_ab[3*num_pole_nodes_a+0::3] = delta[0]
+        delta_ab[3*num_pole_nodes_a+1::3] = delta[1]
+        delta_ab[3*num_pole_nodes_a+2::3] = delta[2]
 
-        local_rhs = - self.penalty_fac * np.multiply(N_ab, delta_ab)
+        rhs[:] = - self.penalty * np.multiply(N_ab, delta_ab)
 
-        return local_rhs, self.dof_list
+        return value
 
     # --------------------------------------------------------------------------
-    def CalculateLocalSystem(self):
+    def CalculateLocalSystem(self, rhs, lhs):
+        num_dofs = len(self.dofs())
+        num_pole_nodes_a = len(self.pole_nodes_a)
+
         # LHS
-        local_lhs = np.zeros([self.num_local_dofs,self.num_local_dofs])
+        lhs[:] = np.zeros([num_dofs,num_dofs])
 
         # aa
-        local_lhs_aa = self.penalty_fac * np.outer(self.shape_functions_a, self.shape_functions_a)
-        local_lhs[0*self.block_size_a:1*self.block_size_a , 0*self.block_size_a:1*self.block_size_a] = local_lhs_aa
-        local_lhs[1*self.block_size_a:2*self.block_size_a , 1*self.block_size_a:2*self.block_size_a] = local_lhs_aa
-        local_lhs[2*self.block_size_a:3*self.block_size_a , 2*self.block_size_a:3*self.block_size_a] = local_lhs_aa
+        local_lhs_aa = self.penalty * np.outer(self.shape_function_values_a, self.shape_function_values_a)
+        lhs[0:num_pole_nodes_a*3:3 , 0:num_pole_nodes_a*3:3] = local_lhs_aa
+        lhs[1:num_pole_nodes_a*3:3 , 1:num_pole_nodes_a*3:3] = local_lhs_aa
+        lhs[2:num_pole_nodes_a*3:3 , 2:num_pole_nodes_a*3:3] = local_lhs_aa
 
         # ab
-        local_lhs_ab = - self.penalty_fac * np.outer(self.shape_functions_a, self.shape_functions_b)
-        local_lhs[0*self.block_size_a:1*self.block_size_a , 3*self.block_size_a+0*self.block_size_b:3*self.block_size_a+1*self.block_size_b] = local_lhs_ab
-        local_lhs[1*self.block_size_a:2*self.block_size_a , 3*self.block_size_a+1*self.block_size_b:3*self.block_size_a+2*self.block_size_b] = local_lhs_ab
-        local_lhs[2*self.block_size_a:3*self.block_size_a , 3*self.block_size_a+2*self.block_size_b:3*self.block_size_a+3*self.block_size_b] = local_lhs_ab
+        local_lhs_ab = - self.penalty * np.outer(self.shape_function_values_a, self.shape_function_values_b)
+        lhs[0:num_pole_nodes_a*3:3 , 3*num_pole_nodes_a+0::3] = local_lhs_ab
+        lhs[1:num_pole_nodes_a*3:3 , 3*num_pole_nodes_a+1::3] = local_lhs_ab
+        lhs[2:num_pole_nodes_a*3:3 , 3*num_pole_nodes_a+2::3] = local_lhs_ab
 
         # ba
-        local_lsh_ba = - self.penalty_fac * np.outer(self.shape_functions_b, self.shape_functions_a)
-        local_lhs[3*self.block_size_a+0*self.block_size_b:3*self.block_size_a+1*self.block_size_b , 0*self.block_size_a:1*self.block_size_a] = local_lsh_ba
-        local_lhs[3*self.block_size_a+1*self.block_size_b:3*self.block_size_a+2*self.block_size_b , 1*self.block_size_a:2*self.block_size_a] = local_lsh_ba
-        local_lhs[3*self.block_size_a+2*self.block_size_b:3*self.block_size_a+3*self.block_size_b , 2*self.block_size_a:3*self.block_size_a] = local_lsh_ba
+        local_lsh_ba = - self.penalty * np.outer(self.shape_function_values_b, self.shape_function_values_a)
+        lhs[3*num_pole_nodes_a+0::3 , 0:num_pole_nodes_a*3:3] = local_lsh_ba
+        lhs[3*num_pole_nodes_a+1::3 , 1:num_pole_nodes_a*3:3] = local_lsh_ba
+        lhs[3*num_pole_nodes_a+2::3 , 2:num_pole_nodes_a*3:3] = local_lsh_ba
 
         # bb
-        local_lhs_bb = self.penalty_fac * np.outer(self.shape_functions_b, self.shape_functions_b)
-        local_lhs[3*self.block_size_a+0*self.block_size_b:3*self.block_size_a+1*self.block_size_b , 3*self.block_size_a+0*self.block_size_b:3*self.block_size_a+1*self.block_size_b] = local_lhs_bb
-        local_lhs[3*self.block_size_a+1*self.block_size_b:3*self.block_size_a+2*self.block_size_b , 3*self.block_size_a+1*self.block_size_b:3*self.block_size_a+2*self.block_size_b] = local_lhs_bb
-        local_lhs[3*self.block_size_a+2*self.block_size_b:3*self.block_size_a+3*self.block_size_b , 3*self.block_size_a+2*self.block_size_b:3*self.block_size_a+3*self.block_size_b] = local_lhs_bb
+        local_lhs_bb = self.penalty * np.outer(self.shape_function_values_b, self.shape_function_values_b)
+        lhs[3*num_pole_nodes_a+0::3 , 3*num_pole_nodes_a+0::3] = local_lhs_bb
+        lhs[3*num_pole_nodes_a+1::3 , 3*num_pole_nodes_a+1::3] = local_lhs_bb
+        lhs[3*num_pole_nodes_a+2::3 , 3*num_pole_nodes_a+2::3] = local_lhs_bb
 
         # RHS
-        local_rhs, _ = self.CalculateRHS()
+        value = self.CalculateRHS(rhs)
 
-        return local_lhs, local_rhs, self.dof_list
+        return value
+
+    # --------------------------------------------------------------------------
+    def compute(self, rhs, lhs):
+        if len(lhs) == 0:
+            return self.CalculateRHS(rhs)
+        return self.CalculateLocalSystem(rhs, lhs)
 
 # ==============================================================================
 class DisplacementCouplingConditionWithAD(ReconstructionConditionWithAD):
     # --------------------------------------------------------------------------
-    def __init__(self, geometry_a, geometry_b, nonzero_pole_ids_a, nonzero_pole_ids_b, shape_functions_a, shape_functions_b, penalty_factor):
-        self.geometry_a = geometry_a
-        self.geometry_b = geometry_b
-        self.nonzero_pole_ids_a = nonzero_pole_ids_a
-        self.nonzero_pole_ids_b = nonzero_pole_ids_b
-        self.shape_functions_a = shape_functions_a
-        self.shape_functions_b = shape_functions_b
-        self.penalty_fac = penalty_factor
+    def __init__(self, pole_nodes_a, pole_nodes_b, shape_functions_a, shape_functions_b, geometry_a, geometry_b, parameters_a, parameters_b,  penalty):
+        super().__init__()
 
-        dof_list_a = super().GenerateDofList(geometry_a.Key(), nonzero_pole_ids_a)
-        dof_list_b = super().GenerateDofList(geometry_b.Key(), nonzero_pole_ids_b)
+        self.pole_nodes_a = pole_nodes_a
+        self.pole_nodes_b = pole_nodes_b
+        self.shape_function_values_a = np.asarray(shape_functions_a[0], float)
+        self.shape_function_values_b = np.asarray(shape_functions_b[0], float)
+        self.geometry_a = geometry_a # only strored for aposteriori refinement
+        self.geometry_b = geometry_b # only strored for aposteriori refinement
+        self.parameters_a = parameters_a # only strored for aposteriori refinement
+        self.parameters_b = parameters_b # only strored for aposteriori refinement
+        self.penalty = penalty
 
-        self.dof_list = dof_list_a + dof_list_b
-
-        self.num_local_dofs = len(self.dof_list)
-        self.block_size_a = len(nonzero_pole_ids_a)
-        self.block_size_b = len(nonzero_pole_ids_b)
-
-        self.pos_0_a = super().ComputeActual(self.geometry_a.Data(), nonzero_pole_ids_a, shape_functions_a)
-        self.pos_0_b = super().ComputeActual(self.geometry_b.Data(), nonzero_pole_ids_b, shape_functions_b)
+        self.pos_0_a = super().ComputeActual(pole_nodes_a, self.shape_function_values_a)
+        self.pos_0_b = super().ComputeActual(pole_nodes_b, self.shape_function_values_b)
 
     # --------------------------------------------------------------------------
-    def CalculateRHS(self):
-        pos_a = super().ComputeActualJet(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_functions_a)
-        pos_b = super().ComputeActualJet(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_functions_b)
+    def dofs(self):
+        dof_list = []
+        for node in self.pole_nodes_a:
+            dof_list += [node.x.dof, node.y.dof, node.z.dof]
+        for node in self.pole_nodes_b:
+            dof_list += [node.x.dof, node.y.dof, node.z.dof]
+        return dof_list
+
+    # --------------------------------------------------------------------------
+    def CalculateQualityIndicator(self):
+        disp_a = super().ComputeActual(self.pole_nodes_a, self.shape_function_values_a) - self.pos_0_a
+        disp_b = super().ComputeActual(self.pole_nodes_b, self.shape_function_values_b) - self.pos_0_b
+        return disp_a - disp_b
+
+    # --------------------------------------------------------------------------
+    def CalculateRHS(self, rhs):
+        pos_a = super().ComputeActualJet(self.pole_nodes_a, self.shape_function_values_a)
+        pos_b = super().ComputeActualJet(self.pole_nodes_b, self.shape_function_values_b)
 
         len_a = len(pos_a[0])
         len_b = len(pos_b[0])
@@ -425,16 +435,15 @@ class DisplacementCouplingConditionWithAD(ReconstructionConditionWithAD):
 
         position_difference = pos_a - pos_b
 
-        function = 0.5  * self.penalty_fac * np.dot(position_difference,position_difference)
+        f = 0.5  * self.penalty * position_difference.dot(position_difference)
 
-        local_rhs = -function.g
-
-        return local_rhs, self.dof_list
+        rhs[:] = -f.g
+        return f.f
 
     # --------------------------------------------------------------------------
-    def CalculateLocalSystem(self):
-        pos_a = super().ComputeActualHyperJet(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_functions_a)
-        pos_b = super().ComputeActualHyperJet(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_functions_b)
+    def CalculateLocalSystem(self, rhs, lhs):
+        pos_a = super().ComputeActualHyperJet(self.pole_nodes_a, self.shape_function_values_a)
+        pos_b = super().ComputeActualHyperJet(self.pole_nodes_b, self.shape_function_values_b)
 
         len_a = len(pos_a[0])
         len_b = len(pos_b[0])
@@ -444,60 +453,65 @@ class DisplacementCouplingConditionWithAD(ReconstructionConditionWithAD):
 
         position_difference = pos_a - pos_b
 
-        function = 0.5 * self.penalty_fac * np.dot(position_difference,position_difference)
+        f = 0.5 * self.penalty * position_difference.dot(position_difference)
 
-        local_rhs = -function.g
-        local_lhs = function.h
+        rhs[:] = -f.g
+        lhs[:] = f.h
+        return f.f
 
-        return local_lhs, local_rhs, self.dof_list
+    # --------------------------------------------------------------------------
+    def compute(self, rhs, lhs):
+        if len(lhs) == 0:
+            return self.CalculateRHS(rhs)
+        return self.CalculateLocalSystem(rhs, lhs)
 
 # ==============================================================================
 class RotationCouplingConditionWithAD(ReconstructionConditionWithAD):
     # --------------------------------------------------------------------------
-    def __init__(self, geometry_a, geometry_b, parameters_a, parameters_b, T2_edge, nonzero_pole_ids_a, nonzero_pole_ids_b, shape_functions_a, shape_functions_b, shape_function_derivatives_u_a, shape_function_derivatives_u_b, shape_function_derivatives_v_a, shape_function_derivatives_v_b, penalty_factor):
-        self.geometry_a = geometry_a
-        self.geometry_b = geometry_b
-        self.parameters_a = parameters_a
-        self.parameters_b = parameters_b
+    def __init__(self, pole_nodes_a, pole_nodes_b, T2_edge, shape_functions_a, shape_functions_b, geometry_a, geometry_b, parameters_a, parameters_b, penalty):
+        super().__init__()
+
+        self.pole_nodes_a = pole_nodes_a
+        self.pole_nodes_b = pole_nodes_b
         self.T2_edge = T2_edge
-        self.nonzero_pole_ids_a = nonzero_pole_ids_a
-        self.nonzero_pole_ids_b = nonzero_pole_ids_b
-        self.shape_functions_a = shape_functions_a
-        self.shape_functions_b = shape_functions_b
-        self.shape_function_derivatives_u_a = shape_function_derivatives_u_a
-        self.shape_function_derivatives_v_a = shape_function_derivatives_v_a
-        self.shape_function_derivatives_u_b = shape_function_derivatives_u_b
-        self.shape_function_derivatives_v_b = shape_function_derivatives_v_b
-        self.penalty_fac = penalty_factor
+        self.shape_function_derivatives_u_a = np.asarray(shape_functions_a[1], float)
+        self.shape_function_derivatives_v_a = np.asarray(shape_functions_a[2], float)
+        self.shape_function_derivatives_u_b = np.asarray(shape_functions_b[1], float)
+        self.shape_function_derivatives_v_b = np.asarray(shape_functions_b[2], float)
+        self.geometry_a = geometry_a # only strored for aposteriori refinement
+        self.geometry_b = geometry_b # only strored for aposteriori refinement
+        self.parameters_a = parameters_a # only strored for aposteriori refinement
+        self.parameters_b = parameters_b # only strored for aposteriori refinement
+        self.penalty = penalty
 
-        dof_list_a = super().GenerateDofList(geometry_a.Key(), nonzero_pole_ids_a)
-        dof_list_b = super().GenerateDofList(geometry_b.Key(), nonzero_pole_ids_b)
-
-        self.dof_list = dof_list_a + dof_list_b
-
-        self.num_local_dofs = len(self.dof_list)
-        self.block_size_a = len(nonzero_pole_ids_a)
-        self.block_size_b = len(nonzero_pole_ids_b)
-
-        A1_a = super().ComputeActual(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_u_a)
-        A2_a = super().ComputeActual(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_v_a)
+        A1_a = super().ComputeActual(self.pole_nodes_a, self.shape_function_derivatives_u_a)
+        A2_a = super().ComputeActual(self.pole_nodes_a, self.shape_function_derivatives_v_a)
         A3_a = np.cross(A1_a, A2_a)
         self.A3_a = A3_a / np.linalg.norm(A3_a)
 
-        A1_b = super().ComputeActual(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_u_b)
-        A2_b = super().ComputeActual(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_v_b)
+        A1_b = super().ComputeActual(self.pole_nodes_b, self.shape_function_derivatives_u_b)
+        A2_b = super().ComputeActual(self.pole_nodes_b, self.shape_function_derivatives_v_b)
         A3_b = np.cross(A1_b, A2_b)
         self.A3_b = A3_b / np.linalg.norm(A3_b)
 
     # --------------------------------------------------------------------------
+    def dofs(self):
+        dof_list = []
+        for node in self.pole_nodes_a:
+            dof_list += [node.x.dof, node.y.dof, node.z.dof]
+        for node in self.pole_nodes_b:
+            dof_list += [node.x.dof, node.y.dof, node.z.dof]
+        return dof_list
+
+    # --------------------------------------------------------------------------
     def CalculateQualityIndicator(self):
-        a1_a = super().ComputeActual(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_u_a)
-        a2_a = super().ComputeActual(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_v_a)
+        a1_a = super().ComputeActual(self.pole_nodes_a, self.shape_function_derivatives_u_a)
+        a2_a = super().ComputeActual(self.pole_nodes_a, self.shape_function_derivatives_v_a)
         a3_a = np.cross(a1_a, a2_a)
         a3_a = a3_a / np.linalg.norm(a3_a)
 
-        a1_b = super().ComputeActual(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_u_b)
-        a2_b = super().ComputeActual(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_v_b)
+        a1_b = super().ComputeActual(self.pole_nodes_b, self.shape_function_derivatives_u_b)
+        a2_b = super().ComputeActual(self.pole_nodes_b, self.shape_function_derivatives_v_b)
         a3_b = np.cross(a1_b, a2_b)
         a3_b = a3_b / np.linalg.norm(a3_b)
 
@@ -513,14 +527,14 @@ class RotationCouplingConditionWithAD(ReconstructionConditionWithAD):
         return angle_a - angle_b
 
     # --------------------------------------------------------------------------
-    def CalculateRHS(self):
-        a1_a = super().ComputeActualJet(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_u_a)
-        a2_a = super().ComputeActualJet(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_v_a)
+    def CalculateRHS(self, rhs):
+        a1_a = super().ComputeActualJet(self.pole_nodes_a, self.shape_function_derivatives_u_a)
+        a2_a = super().ComputeActualJet(self.pole_nodes_a, self.shape_function_derivatives_v_a)
         a3_a = np.cross(a1_a, a2_a)
         a3_a = a3_a / np.linalg.norm(a3_a)
 
-        a1_b = super().ComputeActualJet(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_u_b)
-        a2_b = super().ComputeActualJet(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_v_b)
+        a1_b = super().ComputeActualJet(self.pole_nodes_b, self.shape_function_derivatives_u_b)
+        a2_b = super().ComputeActualJet(self.pole_nodes_b, self.shape_function_derivatives_v_b)
         a3_b = np.cross(a1_b, a2_b)
         a3_b = a3_b / np.linalg.norm(a3_b)
 
@@ -533,26 +547,28 @@ class RotationCouplingConditionWithAD(ReconstructionConditionWithAD):
         angle_a = np.arcsin(np.dot(omega_a, self.T2_edge))
         angle_b = np.arcsin(np.dot(omega_b, self.T2_edge))
 
-        angle_a = angle_a.enlarge(len(angle_a), False)
-        angle_b = angle_b.enlarge(len(angle_b), True)
+        len_a = len(angle_a)
+        len_b = len(angle_b)
+
+        angle_a = angle_a.enlarge(len_b, False)
+        angle_b = angle_b.enlarge(len_a, True)
 
         angular_difference = angle_a - angle_b
 
-        angle = 0.5 * self.penalty_fac * angular_difference**2
+        f = 0.5 * self.penalty * angular_difference**2
 
-        local_rhs = -angle.g
-
-        return local_rhs, self.dof_list
+        rhs[:] = -f.g
+        return f.f
 
     # --------------------------------------------------------------------------
-    def CalculateLocalSystem(self):
-        a1_a = super().ComputeActualHyperJet(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_u_a)
-        a2_a = super().ComputeActualHyperJet(self.geometry_a.Data(), self.nonzero_pole_ids_a, self.shape_function_derivatives_v_a)
+    def CalculateLocalSystem(self, rhs, lhs):
+        a1_a = super().ComputeActualHyperJet(self.pole_nodes_a, self.shape_function_derivatives_u_a)
+        a2_a = super().ComputeActualHyperJet(self.pole_nodes_a, self.shape_function_derivatives_v_a)
         a3_a = np.cross(a1_a, a2_a)
         a3_a = a3_a / np.linalg.norm(a3_a)
 
-        a1_b = super().ComputeActualHyperJet(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_u_b)
-        a2_b = super().ComputeActualHyperJet(self.geometry_b.Data(), self.nonzero_pole_ids_b, self.shape_function_derivatives_v_b)
+        a1_b = super().ComputeActualHyperJet(self.pole_nodes_b, self.shape_function_derivatives_u_b)
+        a2_b = super().ComputeActualHyperJet(self.pole_nodes_b, self.shape_function_derivatives_v_b)
         a3_b = np.cross(a1_b, a2_b)
         a3_b = a3_b / np.linalg.norm(a3_b)
 
@@ -565,42 +581,46 @@ class RotationCouplingConditionWithAD(ReconstructionConditionWithAD):
         angle_a = np.arcsin(np.dot(omega_a, self.T2_edge))
         angle_b = np.arcsin(np.dot(omega_b, self.T2_edge))
 
-        angle_a = angle_a.enlarge(len(angle_a), False)
-        angle_b = angle_b.enlarge(len(angle_b), True)
+        len_a = len(angle_a)
+        len_b = len(angle_b)
+
+        angle_a = angle_a.enlarge(len_b, False)
+        angle_b = angle_b.enlarge(len_a, True)
 
         angular_difference = angle_a - angle_b
 
-        angle = 0.5 * self.penalty_fac * angular_difference**2
+        f = 0.5 * self.penalty * angular_difference**2
 
-        local_rhs = -angle.g
-        local_lhs = angle.h
+        rhs[:] = -f.g
+        lhs[:] = f.h
+        return f.f
 
-        return local_lhs, local_rhs, self.dof_list
-
+    # --------------------------------------------------------------------------
+    def compute(self, rhs, lhs):
+        if len(lhs) == 0:
+            return self.CalculateRHS(rhs)
+        return self.CalculateLocalSystem(rhs, lhs)
 
 # ==============================================================================
 class KLShellConditionWithAD( ReconstructionConditionWithAD ):
     # --------------------------------------------------------------------------
-    def __init__(self, surface_geometry, nonzero_pole_ids, shape_function_derivatives_u, shape_function_derivatives_v, shape_function_derivatives_uu, shape_function_derivatives_uv, shape_function_derivatives_vv, penalty_factor):
-        self.geometry_data = surface_geometry.Data()
-        self.nonzero_pole_ids = nonzero_pole_ids
-        self.shape_function_derivatives_u = shape_function_derivatives_u
-        self.shape_function_derivatives_v = shape_function_derivatives_v
-        self.shape_function_derivatives_uu = shape_function_derivatives_uu
-        self.shape_function_derivatives_uv = shape_function_derivatives_uv
-        self.shape_function_derivatives_vv = shape_function_derivatives_vv
-        self.penalty_factor = penalty_factor
+    def __init__(self, pole_nodes, shape_function_values_and_dervatives, penalty):
+        super().__init__()
 
-        self.dof_list = super().GenerateDofList(surface_geometry.Key(), nonzero_pole_ids)
-        self.num_local_dofs = len(self.dof_list)
-        self.block_size = len(nonzero_pole_ids)
+        self.pole_nodes = pole_nodes
+        self.shape_function_derivatives_u = np.asarray(shape_function_values_and_dervatives[1], float)
+        self.shape_function_derivatives_v = np.asarray(shape_function_values_and_dervatives[2], float)
+        self.shape_function_derivatives_uu = np.asarray(shape_function_values_and_dervatives[3], float)
+        self.shape_function_derivatives_uv = np.asarray(shape_function_values_and_dervatives[4], float)
+        self.shape_function_derivatives_vv = np.asarray(shape_function_values_and_dervatives[5], float)
+        self.penalty = penalty
 
         # Reference configuration
-        A1 = super().ComputeActual(self.geometry_data, nonzero_pole_ids, shape_function_derivatives_u)
-        A2 = super().ComputeActual(self.geometry_data, nonzero_pole_ids, shape_function_derivatives_v)
-        A1_1 = super().ComputeActual(self.geometry_data, nonzero_pole_ids, shape_function_derivatives_uu)
-        A1_2 = super().ComputeActual(self.geometry_data, nonzero_pole_ids, shape_function_derivatives_uv)
-        A2_2 = super().ComputeActual(self.geometry_data, nonzero_pole_ids, shape_function_derivatives_vv)
+        A1 = super().ComputeActual(pole_nodes, self.shape_function_derivatives_u)
+        A2 = super().ComputeActual(pole_nodes, self.shape_function_derivatives_v)
+        A1_1 = super().ComputeActual(pole_nodes, self.shape_function_derivatives_uu)
+        A1_2 = super().ComputeActual(pole_nodes, self.shape_function_derivatives_uv)
+        A2_2 = super().ComputeActual(pole_nodes, self.shape_function_derivatives_vv)
 
         A11, A22, A12 = np.dot(A1, A1), np.dot(A2, A2), np.dot(A1, A2)
         self.A11, self.A22, self.A12 = A11, A22, A12
@@ -653,15 +673,15 @@ class KLShellConditionWithAD( ReconstructionConditionWithAD ):
         ])
 
     # --------------------------------------------------------------------------
-    def CalculateRHS(self):
+    def CalculateRHS(self, rhs):
         B11, B12, B22 = self.B11, self.B12, self.B22
         A11, A22, A12 = self.A11, self.A22, self.A12
 
-        a1 =super().ComputeActualHyperJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_u)
-        a2 =super().ComputeActualHyperJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_v)
-        a1_1 =super().ComputeActualHyperJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_uu)
-        a1_2 =super().ComputeActualHyperJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_uv)
-        a2_2 =super().ComputeActualHyperJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_vv)
+        a1 =super().ComputeActualJet(self.pole_nodes, self.shape_function_derivatives_u)
+        a2 =super().ComputeActualJet(self.pole_nodes, self.shape_function_derivatives_v)
+        a1_1 =super().ComputeActualJet(self.pole_nodes, self.shape_function_derivatives_uu)
+        a1_2 =super().ComputeActualJet(self.pole_nodes, self.shape_function_derivatives_uv)
+        a2_2 =super().ComputeActualJet(self.pole_nodes, self.shape_function_derivatives_vv)
 
         a3 = np.cross(a1,a2)
         a3 /= np.linalg.norm(a3)
@@ -672,27 +692,24 @@ class KLShellConditionWithAD( ReconstructionConditionWithAD ):
         eps = np.dot(self.Tm, [a11 - A11, a22 - A22, a12 - A12]) * 0.5
         kap = np.dot(self.Tm, [B11 - b11, B12 - b12, B22 - b22])
 
-        n = np.dot(self.Dm, [j.f for j in eps])
-        m = np.dot(self.Db, [j.f for j in kap])
+        n = np.dot(eps, self.Dm)
+        m = np.dot(kap, self.Db)
 
-        f_act = np.zeros(self.num_local_dofs)
-        for k in range(3):
-            f_act -= n[k] * eps[k].g + m[k] * kap[k].g
+        f = 0.5 * self.penalty * (np.dot(eps, n) + np.dot(kap, m))
 
-        local_rhs = self.penalty_factor * self.dA * f_act
-
-        return local_rhs, self.dof_list
+        rhs[:] = -f.g
+        return f.f
 
     # --------------------------------------------------------------------------
-    def CalculateLocalSystem(self):
+    def CalculateLocalSystem(self, rhs, lhs):
         B11, B12, B22 = self.B11, self.B12, self.B22
         A11, A22, A12 = self.A11, self.A22, self.A12
 
-        a1 =super().ComputeActualHyperJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_u)
-        a2 =super().ComputeActualHyperJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_v)
-        a1_1 =super().ComputeActualHyperJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_uu)
-        a1_2 =super().ComputeActualHyperJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_uv)
-        a2_2 =super().ComputeActualHyperJet(self.geometry_data, self.nonzero_pole_ids, self.shape_function_derivatives_vv)
+        a1 =super().ComputeActualHyperJet(self.pole_nodes, self.shape_function_derivatives_u)
+        a2 =super().ComputeActualHyperJet(self.pole_nodes, self.shape_function_derivatives_v)
+        a1_1 =super().ComputeActualHyperJet(self.pole_nodes, self.shape_function_derivatives_uu)
+        a1_2 =super().ComputeActualHyperJet(self.pole_nodes, self.shape_function_derivatives_uv)
+        a2_2 =super().ComputeActualHyperJet(self.pole_nodes, self.shape_function_derivatives_vv)
 
         a3 = np.cross(a1,a2)
         a3 /= np.linalg.norm(a3)
@@ -703,71 +720,81 @@ class KLShellConditionWithAD( ReconstructionConditionWithAD ):
         eps = np.dot(self.Tm, [a11 - A11, a22 - A22, a12 - A12]) * 0.5
         kap = np.dot(self.Tm, [B11 - b11, B12 - b12, B22 - b22])
 
-        n = np.dot(self.Dm, [j.f for j in eps])
-        m = np.dot(self.Db, [j.f for j in kap])
+        n = np.dot(eps, self.Dm)
+        m = np.dot(kap, self.Db)
 
-        f_act = np.zeros(self.num_local_dofs)
-        k_act = np.zeros((self.num_local_dofs, self.num_local_dofs))
-        for k in range(3):
-            f_act -= n[k] * eps[k].g + m[k] * kap[k].g
-            for l in range(3):
-                k_act += np.outer(eps[k].g, eps[l].g) * self.Dm[k, l]
-                k_act += np.outer(kap[k].g, kap[l].g) * self.Db[k, l]
+        f = 0.5 * self.penalty * (np.dot(eps, n) + np.dot(kap, m))
 
-            k_act += n[k] * eps[k].h + m[k] * kap[k].h
+        rhs[:] = -f.g
+        lhs[:] = f.h
+        return f.f
 
-        local_lhs = self.penalty_factor * self.dA * k_act
-        local_rhs = self.penalty_factor * self.dA * f_act
-
-        return local_lhs, local_rhs, self.dof_list
+    # --------------------------------------------------------------------------
+    def compute(self, rhs, lhs):
+        if len(lhs) == 0:
+            return self.CalculateRHS(rhs)
+        return self.CalculateLocalSystem(rhs, lhs)
 
 # ==============================================================================
 class AlphaRegularizationCondition(ReconstructionCondition):
     # --------------------------------------------------------------------------
-    def __init__(self, target_pole_indices, greville_params, surface_geometry, nonzero_pole_ids_of_greville_point, shape_functions, alpha):
-        self.target_pole_indices = target_pole_indices
-        self.greville_params = greville_params
+    def __init__(self, target_pole_rs, greville_parameters, surface_geometry, pole_nodes, pole_ids, shape_functions, alpha):
+        super().__init__()
+
+        self.target_pole_rs = target_pole_rs
+        self.greville_parameters = greville_parameters
         self.geometry_data = surface_geometry.Data()
-        self.nonzero_pole_ids = nonzero_pole_ids_of_greville_point
+        self.pole_nodes = pole_nodes
+        self.shape_function_values = np.asarray(shape_functions[0], float)
         self.alpha = alpha
 
-        self.dof_list = super().GenerateDofList(surface_geometry.Key(), nonzero_pole_ids_of_greville_point)
-        self.num_local_dofs = len(self.dof_list)
-        self.block_size = len(self.nonzero_pole_ids)
+        r = target_pole_rs[0]
+        s = target_pole_rs[1]
+        id_of_pole_associated_to_grevile_point = pole_ids.index(r*self.geometry_data.NbPolesV() + s)
 
-        I = np.zeros(self.block_size)
-        tpole_local_system_id = nonzero_pole_ids_of_greville_point.index(target_pole_indices)
-        I[tpole_local_system_id] = 1
+        I = np.zeros(len(self.shape_function_values))
+        I[id_of_pole_associated_to_grevile_point] = 1
+
         self.IminN =  (I - shape_functions)
 
     # --------------------------------------------------------------------------
-    def CalculateRHS(self):
-        pole_coords = self.geometry_data.Pole(self.target_pole_indices[0],self.target_pole_indices[1])
-        greville_point_coords = self.geometry_data.PointAt(self.greville_params[0], self.greville_params[1])
+    def CalculateRHS(self, rhs):
+        pole_coords = self.geometry_data.Pole(self.target_pole_rs[0],self.target_pole_rs[1])
+        greville_point_coords = self.geometry_data.PointAt(self.greville_parameters[0], self.greville_parameters[1])
 
-        distance_vector = pole_coords-greville_point_coords
-        distance_vector = np.array(distance_vector)
+        distance_vec = pole_coords-greville_point_coords
+        distance_vec = np.array(distance_vec)
+
+        value = 0.5 * self.alpha * distance_vec.dot(distance_vec)
 
         # RHS
-        local_rhs = np.zeros(self.num_local_dofs)
-        local_rhs[0*self.block_size:1*self.block_size] = -self.alpha * self.IminN * distance_vector[0]
-        local_rhs[1*self.block_size:2*self.block_size] = -self.alpha * self.IminN * distance_vector[1]
-        local_rhs[2*self.block_size:3*self.block_size] = -self.alpha * self.IminN * distance_vector[2]
+        rhs[0::3] = -self.alpha * self.IminN * distance_vec[0]
+        rhs[1::3] = -self.alpha * self.IminN * distance_vec[1]
+        rhs[2::3] = -self.alpha * self.IminN * distance_vec[2]
 
-        return local_rhs, self.dof_list
+        return value
 
     # --------------------------------------------------------------------------
-    def CalculateLocalSystem(self):
+    def CalculateLocalSystem(self, rhs, lhs):
+        num_dofs = len(self.shape_function_values)*3
+
         # LHS
-        local_lhs = np.zeros([self.num_local_dofs,self.num_local_dofs])
         local_lhs_block = self.alpha * np.outer(self.IminN, self.IminN)
-        local_lhs[0*self.block_size:1*self.block_size,0*self.block_size:1*self.block_size] = local_lhs_block
-        local_lhs[1*self.block_size:2*self.block_size,1*self.block_size:2*self.block_size] = local_lhs_block
-        local_lhs[2*self.block_size:3*self.block_size,2*self.block_size:3*self.block_size] = local_lhs_block
+
+        lhs[:] = np.zeros([num_dofs,num_dofs])
+        lhs[0::3,0::3] = local_lhs_block
+        lhs[1::3,1::3] = local_lhs_block
+        lhs[2::3,2::3] = local_lhs_block
 
         # RHS
-        local_rhs, _ = self.CalculateRHS()
+        value = self.CalculateRHS(rhs)
 
-        return local_lhs, local_rhs, self.dof_list
+        return value
+
+    # --------------------------------------------------------------------------
+    def compute(self, rhs, lhs):
+        if len(lhs) == 0:
+            return self.CalculateRHS(rhs)
+        return self.CalculateLocalSystem(rhs, lhs)
 
 # ==============================================================================

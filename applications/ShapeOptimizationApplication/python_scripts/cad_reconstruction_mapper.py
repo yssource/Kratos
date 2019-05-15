@@ -25,6 +25,7 @@ import ANurbs as an
 import numpy as np
 import numpy.linalg as la
 import time, os, shutil
+import EQlib as eq
 
 # ==============================================================================
 class CADMapper:
@@ -92,14 +93,14 @@ class CADMapper:
             },
             "solution" :
             {
-                "iterations"    : 1,
-                "test_solution" : true
+                "iterations"        : 1,
+                "test_solution"     : true,
+                "parallel_assembly" : false
             },
             "regularization" :
             {
                 "alpha"             : 0.1,
-                "beta"              : 0.001,
-                "include_all_poles" : false
+                "beta"              : 0.001
             },
             "refinement" :
             {
@@ -125,7 +126,8 @@ class CADMapper:
                 "results_directory"                   : "01_Results",
                 "resulting_geometry_filename"         : "reconstructed_geometry.iga",
                 "filename_fem_for_reconstruction"     : "fe_model_used_for_reconstruction",
-                "filename_fem_for_quality_evaluation" : "fe_model_with_reconstruction_quality"
+                "filename_fem_for_quality_evaluation" : "fe_model_with_reconstruction_quality",
+                "echo_level"                          : 0
             }
         }""")
         parameters.RecursivelyValidateAndAssignDefaults(default_parameters)
@@ -149,9 +151,11 @@ class CADMapper:
 
         self.condition_factory = ConditionFactory(self.fe_model_part, self.cad_model, self.parameters)
 
-        self.conditions = {}
+        eq.Log.info_level = parameters["output"]["echo_level"].GetInt()
+
+        self.conditions = []
         self.fe_point_parametric = None
-        self.absolute_pole_displacement = None
+        self.pole_nodes = {}
 
     # --------------------------------------------------------------------------
     def RunMappingProcess(self):
@@ -332,19 +336,17 @@ class CADMapper:
 
     # --------------------------------------------------------------------------
     def Initialize(self):
-        # Initialize (reset) class attributes
-        self.conditions = {}
-        self.absolute_pole_displacement = None
-
         nodal_variables = ["SHAPE_CHANGE", "GRAD_SHAPE_CHANGE", "NORMAL", "NORMALIZED_SURFACE_NORMAL"]
         filename = self.parameters["output"]["filename_fem_for_reconstruction"].GetString()
         output_dir = self.parameters["output"]["results_directory"].GetString()
         self.__OutputFEData(self.fe_model_part, filename, output_dir, nodal_variables)
 
+        self.pole_nodes = self.__CreateNodesFromPolesForSolution(self.cad_model)
+
         print("\n> Starting creation of conditions...")
         start_time = time.time()
 
-        self.conditions = self.condition_factory.CreateConditions()
+        self.conditions = self.condition_factory.CreateConditions(self.pole_nodes)
 
         print("> Finished creation of conditions in" ,round( time.time()-start_time, 3 ), " s.")
         print("\n> Initializing assembly...")
@@ -359,43 +361,53 @@ class CADMapper:
         # Nonlinear solution iterations
         for solution_itr in range(1,self.parameters["solution"]["iterations"].GetInt()+1):
 
+            print("\n> -----------------------------------------------------------------")
+            print("> Starting solution iteration", solution_itr,"...")
+            start_time_iteration = time.time()
+
             # Assemble
             print("\n> Starting to compute RHS and LHS ....")
 
-            if solution_itr == 1:
-                total_num_conditions = sum( [len(list_of_values) for list_of_values in self.conditions.values()] )
-                print("\n> Number of conditions =",total_num_conditions)
-                print("> Number of equations =", lhs.shape[0])
-                print("> Number of relevant unknowns =", lhs.shape[1])
+            self.system.compute(parallel=self.parameters["solution"]["parallel_assembly"].GetBool())
 
-            print("\n> ----------------------------------------------------")
-            print("> Starting solution iteration", solution_itr,"...")
-            start_time_iteration = time.time()
+            print("> Finished computing RHs and LHS in" ,round( time.time()-start_time_iteration, 3 ), " s.")
+
+            rhs = self.system.g
+            # lhs = self.system.h
+            # lhs = self.system.h.todense()
+            # lhs += np.triu(lhs, k=1).T
+
+            if solution_itr == 1:
+                total_num_conditions = len(self.conditions)
+                print("\n> Number of conditions =",total_num_conditions)
+                print("> Number of unkowns =", self.system.nb_dofs)
 
             print("\n> Starting system solution ....")
             start_time_solution = time.time()
 
             # Beta regularization
             beta = self.parameters["regularization"]["beta"].GetDouble()
-            lhs_diag = np.diag(lhs)
-            for i in range(lhs_diag.shape[0]):
-                entry = lhs[i,i]
-                # if abs(entry) < 1e-12:
-                #     print("WARNING!!!!Zero on main diagonal found at position",i,". Make sure to include beta regularization.")
-                lhs[i,i] += beta
+            self.system.add_diagonal(beta)
 
-            solution = la.solve(lhs,rhs)
+            # Solve system and add delta to eqlib solution vector
+            solution = self.system.h_inv_v(rhs)
+            self.system.x += solution
+
+            # Store system data if specified
+            if self.parameters["output"]["echo_level"].GetInt() > 1:
+                from scipy import io as scipyio
+                np.savetxt("rhs.txt",rhs)
+                np.savetxt("lhs.txt",self.system.h.todense())
+                np.savetxt("solution.txt",solution)
 
             print("> Finished system solution in" ,round( time.time()-start_time_solution, 3 ), " s.")
 
-            self.__UpdateCADModel(solution)
-            self.__ComputeAbsolutePoleDisplacements(solution)
+            self.__UpdateCADModel()
 
             if self.parameters["solution"]["test_solution"].GetBool():
 
                 # Test solution quality
-                test_rhs = np.zeros(rhs.shape)
-                test_rhs[:] = lhs.dot(solution)
+                test_rhs = self.system.h_v(solution)
 
                 delta = rhs-test_rhs
                 error_norm = la.norm(delta)
@@ -406,7 +418,8 @@ class CADMapper:
                 print("> RHS before current solution iteration = ",error_norm)
 
                 # Test rhs after update
-                rhs = self.assembler.AssembleRHS()
+                self.system.compute(order=1)
+                rhs = self.system.g
 
                 error_norm = la.norm(rhs)
                 print("\n> RHS after current solution iteration = ",error_norm)
@@ -415,7 +428,7 @@ class CADMapper:
                 # in terms of minimization of the control point displacement
 
             print("\n> Finished solution iteration in" ,round( time.time()-start_time_iteration, 3 ), " s.")
-            print("> ----------------------------------------------------")
+            print("> -----------------------------------------------------------------")
 
     # --------------------------------------------------------------------------
     def Finalize(self):
@@ -556,42 +569,23 @@ class CADMapper:
                         surface_geometry.SetPole(r,s,new_pole_coords)
 
     # --------------------------------------------------------------------------
-    def __UpdateCADModel(self, solution):
-        print("\n> Updating cad database....")
-        start_time = time.time()
-
-        dof_ids = self.assembler.GetDofIds()
-        dofs = self.assembler.GetDofs()
-
-        for surface_i in self.cad_model.GetByType('SurfaceGeometry3D'):
-            surface_geometry = surface_i.Data()
-            surface_geometry_key = surface_i.Key()
-
-            for r in range(surface_geometry.NbPolesU()):
-                for s in range(surface_geometry.NbPolesV()):
-                    dof_i_x = (surface_geometry_key,r,s,"x")
-                    dof_i_y = (surface_geometry_key,r,s,"y")
-                    dof_i_z = (surface_geometry_key,r,s,"z")
-
-                    if dof_i_x in dofs:
-                        dof_id_x = dof_ids[dof_i_x]
-                        dof_id_y = dof_ids[dof_i_y]
-                        dof_id_z = dof_ids[dof_i_z]
-
-                        pole_coords = surface_geometry.Pole(r,s)
-                        pole_update = np.array([solution[dof_id_x], solution[dof_id_y], solution[dof_id_z]])
-
-                        new_pole_coords = pole_coords + pole_update
-                        surface_geometry.SetPole(r,s,new_pole_coords)
-
-        print("> Finished updating cad database in" ,round( time.time()-start_time, 3 ), " s.")
+    @staticmethod
+    def __CreateNodesFromPolesForSolution(cad_model):
+        pole_nodes = {}
+        for surface_geometry in cad_model.GetByType('SurfaceGeometry3D'):
+            surface = surface_geometry.Data()
+            surface_dofs = [eq.Node(x, y, z) for x, y, z in surface.Poles()]
+            pole_nodes[surface_geometry.Key()] = surface_dofs
+        return pole_nodes
 
     # --------------------------------------------------------------------------
-    def __ComputeAbsolutePoleDisplacements(self, delta):
-        if self.absolute_pole_displacement is None:
-            self.absolute_pole_displacement = delta
-        else:
-            self.absolute_pole_displacement += delta
+    def __UpdateCADModel(self):
+        for surface_key, pole_nodes in self.pole_nodes.items():
+            surface_geometry = self.cad_model.Get(surface_key)
+            surface_geometry_data = surface_geometry.Data()
+            for i, pole_node in enumerate(pole_nodes):
+                # print('displacement =', pole_node.act_location - pole_node.ref_location)
+                surface_geometry_data.SetPole(i, pole_node.act_location) # act_location considers the solution stored on self.system.x
 
     # --------------------------------------------------------------------------
     def __OutputCadModel(self, filename):

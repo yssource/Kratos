@@ -217,6 +217,16 @@ Vector RansCalculationUtilities::GetVector(const array_1d<double, 3>& rVector) c
     return result;
 }
 
+Vector RansCalculationUtilities::GetVector(const array_1d<double, 3>& rVector, const unsigned int Dim) const
+{
+    Vector result(Dim);
+
+    for (unsigned int i_dim; i_dim < Dim; ++i_dim)
+        result[i_dim] = rVector[i_dim];
+
+    return result;
+}
+
 // template instantiations
 
 template double RansCalculationUtilities::CalculateMatrixTrace<2>(

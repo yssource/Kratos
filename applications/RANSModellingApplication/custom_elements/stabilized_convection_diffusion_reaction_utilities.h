@@ -21,6 +21,7 @@
 // Project includes
 #include "containers/array_1d.h"
 #include "includes/ublas_interface.h"
+#include "custom_utilities/rans_calculation_utilities.h"
 
 namespace Kratos
 {
@@ -63,13 +64,23 @@ inline void CalculateStabilizationTau(double& rTau,
                                       const double DeltaTime)
 {
     unsigned int dim = rContravariantMetricTensor.size2();
-    Vector velocity(dim);
-    for (unsigned int d = 0; d < dim; ++d)
-        velocity[d] = rVelocity[d];
+    const Vector& velocity = RansCalculationUtilities().GetVector(rVelocity, dim);
     Vector temp(dim);
     noalias(temp) = prod(rContravariantMetricTensor, velocity);
     const double velocity_norm = norm_2(rVelocity);
-    rElementLength = 2.0 * velocity_norm / std::sqrt(inner_prod(velocity, temp));
+
+    if (velocity_norm <= std::numeric_limits<double>::epsilon())
+    {
+        rElementLength = 0.0;
+        for (unsigned int i = 0; i < dim; ++i)
+            for (unsigned int j = 0; j < dim; ++j)
+                rElementLength += rContravariantMetricTensor(i, j);
+        rElementLength = std::sqrt(1.0 / rElementLength) * 2.0;
+    }
+    else
+    {
+        rElementLength = 2.0 * velocity_norm / std::sqrt(inner_prod(velocity, temp));
+    }
 
     const double stab_convection = std::pow(2.0 * norm_2(rVelocity) / rElementLength, 2);
     const double stab_diffusion = std::pow(

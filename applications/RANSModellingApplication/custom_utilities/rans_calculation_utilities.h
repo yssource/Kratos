@@ -125,6 +125,8 @@ public:
 
     template <unsigned int TDim>
     Vector GetVector(const array_1d<double, 3>& rVector) const;
+
+    Vector GetVector(const array_1d<double, 3>& rVector, const unsigned int Dim) const;
     ///@}
 
 private:

@@ -18,7 +18,6 @@ import KratosMultiphysics.MappingApplication as KratosMapping
 
 # Import helper classes
 import cad_reconstruction_conditions as clib
-from cad_reconstruction_assembler import Assembler
 from cad_reconstruction_condition_factory import ConditionFactory
 
 # Additional imports
@@ -154,7 +153,6 @@ class CADMapper:
             self.fe_model_part.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE_ABSOLUTE)
 
         self.condition_factory = ConditionFactory(self.fe_model_part, self.cad_model, self.parameters)
-        self.assembler = Assembler(self.cad_model)
 
         self.conditions = {}
         self.fe_point_parametric = None
@@ -356,7 +354,7 @@ class CADMapper:
         print("\n> Initializing assembly...")
         start_time = time.time()
 
-        self.assembler.Initialize(self.conditions)
+        self.system = eq.SymmetricSystem(elements=self.conditions, linear_solver={'type': 'pardiso_ldlt'})
 
         print("> Initialization of assembly finished in" ,round( time.time()-start_time, 3 ), " s.")
 
@@ -366,7 +364,7 @@ class CADMapper:
         for solution_itr in range(1,self.parameters["solution"]["iterations"].GetInt()+1):
 
             # Assemble
-            lhs, rhs = self.assembler.AssembleSystem()
+            print("\n> Starting to compute RHS and LHS ....")
 
             if solution_itr == 1:
                 total_num_conditions = sum( [len(list_of_values) for list_of_values in self.conditions.values()] )

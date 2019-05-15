@@ -211,7 +211,7 @@ Vector RansCalculationUtilities::GetVector(const array_1d<double, 3>& rVector) c
 {
     Vector result(TDim);
 
-    for (unsigned int i_dim; i_dim < TDim; ++i_dim)
+    for (unsigned int i_dim = 0; i_dim < TDim; ++i_dim)
         result[i_dim] = rVector[i_dim];
 
     return result;
@@ -221,7 +221,7 @@ Vector RansCalculationUtilities::GetVector(const array_1d<double, 3>& rVector, c
 {
     Vector result(Dim);
 
-    for (unsigned int i_dim; i_dim < Dim; ++i_dim)
+    for (unsigned int i_dim = 0; i_dim < Dim; ++i_dim)
         result[i_dim] = rVector[i_dim];
 
     return result;

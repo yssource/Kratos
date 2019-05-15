@@ -47,8 +47,7 @@ class ConditionFactory:
             self.AddDistanceMinimizationWithIntegrationConditions(conditions)
         else:
             self.AddDistanceMinimizationConditions(conditions)
-        if self.parameters["conditions"]["faces"]["curvature"]["apply_curvature_minimization"].GetBool() or \
-           self.parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].GetBool():
+        if self.parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].GetBool():
             self.AddFaceConditions(conditions)
         if self.parameters["conditions"]["faces"]["rigid"]["apply_rigid_conditions"].GetBool():
             self.AddRigidConditions(conditions)
@@ -155,8 +154,6 @@ class ConditionFactory:
     # --------------------------------------------------------------------------
     def AddFaceConditions(self, conditions):
         drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
-        apply_curvature_min = self.parameters["conditions"]["faces"]["curvature"]["apply_curvature_minimization"].GetBool()
-        curvature_penalty_fac = self.parameters["conditions"]["faces"]["curvature"]["penalty_factor"].GetDouble()
         apply_kl_shell = self.parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].GetBool()
         shell_penalty_fac = self.parameters["conditions"]["faces"]["mechanical"]["penalty_factor"].GetDouble()
 
@@ -201,11 +198,6 @@ class ConditionFactory:
                     shape_function_derivatives_uu[i] = shape_function(3,i)
                     shape_function_derivatives_uv[i] = shape_function(4,i)
                     shape_function_derivatives_vv[i] = shape_function(5,i)
-
-                if apply_curvature_min:
-                    weight = curvature_penalty_fac * weight
-                    new_condition = clib.CurvatureMinimizationConditionWithAD(surface_geometry, nonzero_pole_indices, shape_function_derivatives_u, shape_function_derivatives_v, shape_function_derivatives_uu, shape_function_derivatives_uv, shape_function_derivatives_vv, weight)
-                    conditions[face_i.Key()].append(new_condition)
 
                 if apply_kl_shell:
                     weight = shell_penalty_fac * weight

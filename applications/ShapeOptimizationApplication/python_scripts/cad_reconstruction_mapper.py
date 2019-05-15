@@ -52,11 +52,6 @@ class CADMapper:
                 },
                 "faces" :
                 {
-                    "curvature" :
-                    {
-                        "apply_curvature_minimization" : false,
-                        "penalty_factor"               : 1e-1
-                    },
                     "mechanical" :
                     {
                         "apply_KL_shell"      : false,

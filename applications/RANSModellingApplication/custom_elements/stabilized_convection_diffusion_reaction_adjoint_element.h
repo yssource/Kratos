@@ -882,7 +882,7 @@ protected:
 
     void CalculateElementTotalResidualScalarDerivatives(Matrix& rResidualDerivatives,
                                                         const Variable<double>& rDerivativeVariable,
-                                                        ProcessInfo& rCurrentProcessInfo)
+                                                        const ProcessInfo& rCurrentProcessInfo)
     {
         if (rResidualDerivatives.size1() != TNumNodes || rResidualDerivatives.size2() != TNumNodes)
             rResidualDerivatives.resize(TNumNodes, TNumNodes, false);
@@ -1230,17 +1230,22 @@ private:
                                            const Vector& rReactionScalarDerivatives,
                                            const Vector& rSourceScalarDerivatives,
                                            const Vector& rShapeFunctions,
-                                           const Matrix& rShapeFunctionDerivatives)
+                                           const Matrix& rShapeFunctionDerivatives,
+                                           const Variable<double>& rDerivativeVariable)
     {
         for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
         {
             const Vector& shape_function_gradient = row(rShapeFunctionDerivatives, i_node);
             double value = 0.0;
 
-            value += CalculateScalarProduct(shape_function_gradient, rVelocity);
             value += scalar_value * rReactionScalarDerivatives[i_node];
-            value += reaction * rShapeFunctions[i_node];
             value -= rSourceScalarDerivatives[i_node];
+
+            if (this->GetPrimalVariable() == rDerivativeVariable)
+            {
+                value += reaction * rShapeFunctions[i_node];
+                value += CalculateScalarProduct(shape_function_gradient, rVelocity);
+            }
 
             rOutput[i_node] = value;
         }
@@ -1290,7 +1295,8 @@ private:
         const double velocity_norm_square,
         const Vector& rChiScalarDerivatives,
         const Vector& rAbsoluteResidualScalarDerivatives,
-        const Vector& rAbsoluteScalarGradientScalarDerivative)
+        const Vector& rAbsoluteScalarGradientScalarDerivative,
+        const Variable<double>& rDerivativeVariable)
     {
         const double abs_residual = std::abs(residual);
 
@@ -1299,9 +1305,11 @@ private:
         noalias(rOutput) +=
             rChiScalarDerivatives *
             (abs_residual / (velocity_norm_square * scalar_gradient_norm));
-        noalias(rOutput) -=
-            rAbsoluteScalarGradientScalarDerivative *
-            (chi * abs_residual / (std::pow(scalar_gradient_norm, 2) * velocity_norm_square));
+
+        if (this->GetPrimalVariable() == rDerivativeVariable)
+            noalias(rOutput) -=
+                rAbsoluteScalarGradientScalarDerivative *
+                (chi * abs_residual / (std::pow(scalar_gradient_norm, 2) * velocity_norm_square));
     }
 
     void CalculatePositivityPreservationCoefficientVelocityDerivatives(
@@ -1612,7 +1620,7 @@ private:
 
     void AddPrimalSteadyTermScalarDerivatives(MatrixType& rLeftHandSideMatrix,
                                               const Variable<double>& rDerivativeVariable,
-                                              ProcessInfo& rCurrentProcessInfo)
+                                              const ProcessInfo& rCurrentProcessInfo)
     {
         // Get Shape function data
         Vector gauss_weights;
@@ -1735,7 +1743,7 @@ private:
 
             this->CalculateResidualScalarDerivative(
                 residual_derivatives, scalar_value, reaction, velocity, reaction_derivatives,
-                source_derivatives, gauss_shape_functions, r_shape_derivatives);
+                source_derivatives, gauss_shape_functions, r_shape_derivatives, rDerivativeVariable);
 
             this->CalculateAbsoluteScalarValueScalarDerivatives(
                 absolute_residual_derivatives, residual, residual_derivatives);
@@ -1743,7 +1751,7 @@ private:
             this->CalculatePositivityPreservationCoefficientScalarDerivatives(
                 positivity_preserving_coeff_derivatives, chi, residual,
                 scalar_gradient_norm, velocity_magnitude_square, chi_derivatives,
-                absolute_residual_derivatives, scalar_gradient_norm_derivative);
+                absolute_residual_derivatives, scalar_gradient_norm_derivative, rDerivativeVariable);
 
             const double reaction_tilde =
                 reaction + (1 - bossak_alpha) / (bossak_gamma * delta_time);
@@ -2177,7 +2185,7 @@ private:
 
     void AddMassTermScalarDerivatives(MatrixType& rLeftHandSideMatrix,
                                       const Variable<double>& rDerivativeVariable,
-                                      ProcessInfo& rCurrentProcessInfo)
+                                      const ProcessInfo& rCurrentProcessInfo)
     {
         // Get Shape function data
         Vector gauss_weights;
@@ -2192,8 +2200,6 @@ private:
         const double delta_time = rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
-
-        const Variable<double>& primal_variable = this->GetPrimalVariable();
 
         Matrix contravariant_metric_tensor(TDim, TDim);
 
@@ -2225,13 +2231,13 @@ private:
             const double effective_kinematic_viscosity =
                 this->CalculateEffectiveKinematicViscosity(current_data, rCurrentProcessInfo);
             this->CalculateEffectiveKinematicViscosityScalarDerivatives(
-                effective_kinematic_viscosity_derivatives, primal_variable,
+                effective_kinematic_viscosity_derivatives, rDerivativeVariable,
                 current_data, rCurrentProcessInfo);
 
             const double reaction =
                 this->CalculateReactionTerm(current_data, rCurrentProcessInfo);
             this->CalculateReactionTermDerivatives(
-                reaction_derivatives, primal_variable, current_data, rCurrentProcessInfo);
+                reaction_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
 
             const double relaxed_scalar_rate =
                 this->CalculateRelaxedScalarRate(current_data, rCurrentProcessInfo);

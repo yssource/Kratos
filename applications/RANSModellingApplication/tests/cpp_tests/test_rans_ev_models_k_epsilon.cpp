@@ -1158,6 +1158,47 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementTKEFirstDerivativeLHSMatrix, RANSEvMode
         calculate_sensitivity_matrix, perturb_variable, 1e-6, 1e-5);
 }
 
+KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementEpsilonFirstDerivativeLHSMatrix, RANSEvModels)
+{
+    Model primal_model;
+    ModelPart& r_primal_model_part =
+        primal_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_primal_model_part, "RANSEVMK2D3N");
+
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMKAdjoint2D3N");
+
+    Parameters empty_parameters = Parameters(R"({})");
+
+    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_sensitivities_process(
+        r_adjoint_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess adjoint_y_plus_process(
+        r_adjoint_model_part, empty_parameters);
+
+    RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
+
+    auto perturb_variable = [](NodeType& rNode, const double Epsilon) {
+        double& value = rNode.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
+        value += Epsilon;
+    };
+
+    auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
+                                           ProcessInfo& rProcessInfo) {
+        rElement.Calculate(RANS_TURBULENT_ENERGY_DISSIPATION_RATE_PARTIAL_DERIVATIVE,
+                           rOutput, rProcessInfo);
+    };
+
+    RansModellingApplicationTestUtilities::RunResidualScalarSensitivityTest(
+        TURBULENT_KINETIC_ENERGY, RANS_AUXILIARY_VARIABLE_1, r_primal_model_part,
+        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
+        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        calculate_sensitivity_matrix, perturb_variable, 1e-6, 1e-5);
+}
+
 KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementTKESecondDerivativeLHSMatrix, RANSEvModels)
 {
     Model primal_model;

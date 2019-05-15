@@ -475,6 +475,19 @@ void EvmKAdjointElement<TDim, TNumNodes>::CalculateEffectiveKinematicViscositySc
 
         noalias(rOutput) = rOutput / tke_sigma;
     }
+    else if (rDerivativeVariable == TURBULENT_ENERGY_DISSIPATION_RATE)
+    {
+        const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
+        const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
+
+        EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityEpsilonSensitivities(
+            rOutput, c_mu, rCurrentData.NodalTurbulentKineticEnergy,
+            rCurrentData.NodalTurbulentEnergyDissipationRate, rCurrentData.NodalFmu);
+        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+            rOutput, rOutput, rCurrentData.ShapeFunctions);
+
+        noalias(rOutput) = rOutput / tke_sigma;
+    }
     else
     {
         KRATOS_ERROR << "Unsupported partial derivative variable "
@@ -505,6 +518,23 @@ void EvmKAdjointElement<TDim, TNumNodes>::CalculateReactionTermDerivatives(
         EvmKepsilonModelAdjointUtilities::CalculateThetaTKESensitivity(
             theta_sensitivities, c_mu, rCurrentData.Fmu, rCurrentData.TurbulentKineticEnergy,
             rCurrentData.TurbulentKinematicViscosity, rOutput, rCurrentData.ShapeFunctions);
+
+        noalias(rOutput) = theta_sensitivities;
+    }
+    else if (rDerivativeVariable == TURBULENT_ENERGY_DISSIPATION_RATE)
+    {
+        const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
+
+        EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityEpsilonSensitivities(
+            rOutput, c_mu, rCurrentData.NodalTurbulentKineticEnergy,
+            rCurrentData.NodalTurbulentEnergyDissipationRate, rCurrentData.NodalFmu);
+        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+            rOutput, rOutput, rCurrentData.ShapeFunctions);
+
+        Vector theta_sensitivities(rOutput.size());
+        EvmKepsilonModelAdjointUtilities::CalculateThetaEpsilonSensitivity(
+            theta_sensitivities, c_mu, rCurrentData.Fmu, rCurrentData.TurbulentKineticEnergy,
+            rCurrentData.TurbulentKinematicViscosity, rOutput);
 
         noalias(rOutput) = theta_sensitivities;
     }
@@ -539,11 +569,48 @@ void EvmKAdjointElement<TDim, TNumNodes>::CalculateSourceTermDerivatives(
         EvmKepsilonModelAdjointUtilities::CalculateProductionScalarSensitivities<TDim>(
             rOutput, rOutput, velocity_gradient);
     }
+    else if (rDerivativeVariable == TURBULENT_ENERGY_DISSIPATION_RATE)
+    {
+        const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
+
+        EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityEpsilonSensitivities(
+            rOutput, c_mu, rCurrentData.NodalTurbulentKineticEnergy,
+            rCurrentData.NodalTurbulentEnergyDissipationRate, rCurrentData.NodalFmu);
+        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+            rOutput, rOutput, rCurrentData.ShapeFunctions);
+
+        BoundedMatrix<double, TDim, TDim> velocity_gradient;
+        this->CalculateGradient(velocity_gradient, VELOCITY,
+                                rCurrentData.ShapeFunctionDerivatives);
+
+        EvmKepsilonModelAdjointUtilities::CalculateProductionScalarSensitivities<TDim>(
+            rOutput, rOutput, velocity_gradient);
+    }
     else
     {
         KRATOS_ERROR << "Unsupported partial derivative variable "
                      << rDerivativeVariable.Name() << " used in EvmKAdjointElement::CalculateSourceTermDerivatives method.";
     }
+}
+
+template <unsigned int TDim, unsigned int TNumNodes>
+void EvmKAdjointElement<TDim, TNumNodes>::Calculate(const Variable<Matrix>& rVariable,
+                                                    Matrix& Output,
+                                                    const ProcessInfo& rCurrentProcessInfo)
+{
+    KRATOS_TRY
+
+    if (rVariable == RANS_TURBULENT_ENERGY_DISSIPATION_RATE_PARTIAL_DERIVATIVE)
+    {
+        this->CalculateElementTotalResidualScalarDerivatives(
+            Output, TURBULENT_ENERGY_DISSIPATION_RATE, rCurrentProcessInfo);
+    }
+    else
+    {
+        BaseType::Calculate(rVariable, Output, rCurrentProcessInfo);
+    }
+
+    KRATOS_CATCH("");
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>

@@ -225,6 +225,10 @@ public:
 
     void GetSecondDerivativesVector(VectorType& values, int Step = 0) override;
 
+    void Calculate(const Variable<Matrix>& rVariable,
+                   Matrix& Output,
+                   const ProcessInfo& rCurrentProcessInfo) override;
+
     /**
      * @brief GetIntegrationMethod Return the integration order to be used.
      * @return Gauss Order

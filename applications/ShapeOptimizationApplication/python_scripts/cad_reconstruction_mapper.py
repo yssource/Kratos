@@ -489,40 +489,39 @@ class CADMapper:
         self.__OutputFEData(self.fe_model_part, filename, output_dir, nodal_variables)
 
         # Then identify spots where coupling or enforcement conditions are not met
-        for conditions_face_i in self.conditions.values():
-            for condition in conditions_face_i:
-                if isinstance(condition, clib.DisplacementCouplingCondition) or isinstance(condition, clib.RotationCouplingConditionWithAD):
-                    geometry_a = condition.geometry_a
-                    geometry_b = condition.geometry_b
-                    (u_a,v_a) = condition.parameters_a
-                    (u_b,v_b) = condition.parameters_b
+        for condition in self.conditions:
+            if isinstance(condition, clib.DisplacementCouplingCondition) or isinstance(condition, clib.DisplacementCouplingConditionWithAD) or isinstance(condition, clib.RotationCouplingConditionWithAD):
+                geometry_a = condition.geometry_a
+                geometry_b = condition.geometry_b
+                (u_a,v_a) = condition.parameters_a
+                (u_b,v_b) = condition.parameters_b
 
-                    is_spot_to_be_refined = False
+                is_spot_to_be_refined = False
 
-                    if isinstance(condition, clib.DisplacementCouplingCondition):
-                        delta_disp = la.norm(condition.CalculateQualityIndicator())
-                        if delta_disp > disp_coupling_tolerance:
-                            is_disp_coupling_satisfied = False
-                            is_spot_to_be_refined = True
-                            print("delta_disp =", delta_disp)
+                if isinstance(condition, clib.DisplacementCouplingCondition) or isinstance(condition, clib.DisplacementCouplingConditionWithAD):
+                    delta_disp = la.norm(condition.CalculateQualityIndicator())
+                    if delta_disp > disp_coupling_tolerance:
+                        is_disp_coupling_satisfied = False
+                        is_spot_to_be_refined = True
+                        print("delta_disp =", delta_disp)
 
-                    if isinstance(condition, clib.RotationCouplingConditionWithAD):
-                        delta_rot = condition.CalculateQualityIndicator() * 180 / np.pi
-                        if delta_rot > rot_coupling_tolerance:
-                            is_rot_coupling_satisfied = False
-                            is_spot_to_be_refined = True
-                            print("delta_rot =", delta_rot)
+                if isinstance(condition, clib.RotationCouplingConditionWithAD):
+                    delta_rot = condition.CalculateQualityIndicator() * 180 / np.pi
+                    if delta_rot > rot_coupling_tolerance:
+                        is_rot_coupling_satisfied = False
+                        is_spot_to_be_refined = True
+                        print("delta_rot =", delta_rot)
 
-                    if is_spot_to_be_refined:
-                        # Geometry a
-                        u_a_added = self.__AddUIntervalToList(geometry_a, u_a, v_a, intervals_along_u_to_refine, minimum_knot_distance)
-                        v_a_added = self.__AddVIntervalToList(geometry_a, u_a, v_a, intervals_along_v_to_refine, minimum_knot_distance)
+                if is_spot_to_be_refined:
+                    # Geometry a
+                    u_a_added = self.__AddUIntervalToList(geometry_a, u_a, v_a, intervals_along_u_to_refine, minimum_knot_distance)
+                    v_a_added = self.__AddVIntervalToList(geometry_a, u_a, v_a, intervals_along_v_to_refine, minimum_knot_distance)
 
-                        # Geometry b
-                        u_b_added = self.__AddUIntervalToList(geometry_b, u_b, v_b, intervals_along_u_to_refine, minimum_knot_distance)
-                        v_b_added = self.__AddVIntervalToList(geometry_b, u_b, v_b, intervals_along_v_to_refine, minimum_knot_distance)
+                    # Geometry b
+                    u_b_added = self.__AddUIntervalToList(geometry_b, u_b, v_b, intervals_along_u_to_refine, minimum_knot_distance)
+                    v_b_added = self.__AddVIntervalToList(geometry_b, u_b, v_b, intervals_along_v_to_refine, minimum_knot_distance)
 
-                        exist_intervals_to_refine = exist_intervals_to_refine or u_a_added or v_a_added or u_b_added or v_b_added
+                    exist_intervals_to_refine = exist_intervals_to_refine or u_a_added or v_a_added or u_b_added or v_b_added
 
         self.ResetPoleDisplacements()
 
@@ -544,29 +543,11 @@ class CADMapper:
 
     # --------------------------------------------------------------------------
     def ResetPoleDisplacements(self):
-        dof_ids = self.assembler.GetDofIds()
-        dofs = self.assembler.GetDofs()
-
-        for surface_i in self.cad_model.GetByType('SurfaceGeometry3D'):
-            surface_geometry = surface_i.Data()
-            surface_geometry_key = surface_i.Key()
-
-            for r in range(surface_geometry.NbPolesU()):
-                for s in range(surface_geometry.NbPolesV()):
-                    dof_i_x = (surface_geometry_key,r,s,"x")
-                    dof_i_y = (surface_geometry_key,r,s,"y")
-                    dof_i_z = (surface_geometry_key,r,s,"z")
-
-                    if dof_i_x in dofs:
-                        dof_id_x = dof_ids[dof_i_x]
-                        dof_id_y = dof_ids[dof_i_y]
-                        dof_id_z = dof_ids[dof_i_z]
-
-                        pole_coords = surface_geometry.Pole(r,s)
-                        pole_update = np.array([self.absolute_pole_displacement[dof_id_x], self.absolute_pole_displacement[dof_id_y], self.absolute_pole_displacement[dof_id_z]])
-
-                        new_pole_coords = pole_coords - pole_update
-                        surface_geometry.SetPole(r,s,new_pole_coords)
+        for surface_key, pole_nodes in self.pole_nodes.items():
+            surface_geometry = self.cad_model.Get(surface_key)
+            surface_geometry_data = surface_geometry.Data()
+            for i, pole_node in enumerate(pole_nodes):
+                surface_geometry_data.SetPole(i, pole_node.ref_location)
 
     # --------------------------------------------------------------------------
     @staticmethod

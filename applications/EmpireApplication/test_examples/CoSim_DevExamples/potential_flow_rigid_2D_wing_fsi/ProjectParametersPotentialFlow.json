@@ -47,18 +47,8 @@
                 "process_name"  : "FarFieldProcess",
                 "Parameters"    : {
                     "model_part_name"   : "MainModelPart.PotentialWallCondition2D_Far_field_Auto1",
-                    "inlet_phi"         : 1.0,
-                    "velocity_infinity" : [10.0,0.0,0.0]
-                }
-            },{
-                "python_module" : "compute_moment_process",
-                "kratos_module" : "KratosMultiphysics.CompressiblePotentialFlowApplication",
-                "process_name"  : "ComputeMomentProcess3D",
-                "Parameters"    : {
-                    "reference_point" : [-0.25,0.0,0.0],
-                    "model_part_name" : "MainModelPart.Body2D_BodySurface",
-                    "velocity_infinity" : [10.0,0.0,0.0],
-                    "create_output_file": true
+                    "inlet_potential"         : 1.0,
+                    "free_stream_velocity" : [10.0,0.0,0.0]
                 }
             }
         ],

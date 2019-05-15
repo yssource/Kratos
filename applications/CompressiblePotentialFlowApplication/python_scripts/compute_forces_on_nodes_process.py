@@ -48,7 +48,7 @@ class ComputeForcesOnNodesProcess(KratosMultiphysics.Process):
 
         if largest_force<1e-300:
             KratosMultiphysics.Logger.PrintWarning('Warning','all reaction forces are zero')
-        total_force = KratosMultiphysics.VariableUtils().SumHistoricalNodeVectorVariable(KratosMultiphysics.REACTION, self.body_model_part)
+        total_force = KratosMultiphysics.VariableUtils().SumHistoricalNodeVectorVariable(KratosMultiphysics.REACTION, self.body_model_part, 0)
 
         KratosMultiphysics.Logger.PrintInfo('ComputeForcesOnNodesProcess','Lift Force = ', total_force[1])
         KratosMultiphysics.Logger.PrintInfo('ComputeForcesOnNodesProcess','Drag Force = ', total_force[0])

@@ -1,12 +1,12 @@
 {
     "system_parameters":{
-        "stiffness" : 3947841.760435743
+        "stiffness" : 230.0
     },
     "initial_values":{
         "displacement": 0.0
      },
      "boundary_conditions":{
-        "external_load": 10000.0
+        "external_load": 0.0
      },
      "output_parameters":{
         "file_name": "results_sdof.dat"

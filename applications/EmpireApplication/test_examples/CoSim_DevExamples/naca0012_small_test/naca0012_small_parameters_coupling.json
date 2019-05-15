@@ -146,19 +146,6 @@
                 "output_variables" : [
                     "MESH_DISPLACEMENT_Y"]
                 }
-            },{
-                "python_module"   : "compare_two_files_check_process",
-                "kratos_module"   : "KratosMultiphysics",
-                "help"            : "",
-                "process_name"    : "CompareTwoFilesCheckProcess",
-                "Parameters" :{
-                    "output_file_name"    : "naca0012_mesh_movement_Y.dat",
-                    "reference_file_name" : "naca0012_mesh_movement_Y_ref.dat",
-                    "comparison_type"     : "dat_file",
-                    "remove_output_file"    : true,
-                    "tolerance"             : 1e-12,
-                    "relative_tolerance"    : 1e-12
-                }
             }]
     },
     "output_configuration"             : {
@@ -176,9 +163,9 @@
             "node_output"         : true,
             "skin_output"         : false,
             "plane_output"        : [],
-            "nodal_results"       : ["MESH_DISPLACEMENT","REACTION","VELOCITY","PRESSURE"],
+            "nodal_results"       : ["MESH_DISPLACEMENT","VELOCITY_POTENTIAL"],
             "nodal_nonhistorical_results": [],
-            "gauss_point_results" : ["PRESSURE","VELOCITY"]
+            "gauss_point_results" : ["PRESSURE"]
         },
         "point_data_configuration"  : []
     }

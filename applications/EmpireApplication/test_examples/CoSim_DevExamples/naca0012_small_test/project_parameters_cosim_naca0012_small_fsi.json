@@ -10,7 +10,7 @@
     {
         "solver_type" : "simple_steady_coupling",
         "echo_level" : 1,
-        "num_coupling_iterations" : 10,
+        "num_coupling_iterations" : 13,
         "start_coupling_time" : 0.0,
         "convergence_accelerator_settings" :
         {
@@ -49,7 +49,7 @@
                         "from_solver" : "fluid",
                         "data_name"   : "force_y",
                         "io_settings"   : {
-                            "io_options" : ["swap_sign"]
+                            "io_options" : []
                         }
 
                     }

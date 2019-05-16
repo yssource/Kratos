@@ -24,6 +24,8 @@
 #include "custom_utilities/rans_variable_utils.h"
 #include "includes/checks.h"
 
+#include "custom_utilities/rans_calculation_utilities.h"
+
 namespace Kratos
 {
 namespace RansModellingApplicationTestUtilities
@@ -31,21 +33,26 @@ namespace RansModellingApplicationTestUtilities
 typedef ModelPart::NodeType NodeType;
 typedef ModelPart::ElementType ElementType;
 typedef Geometry<NodeType> GeometryType;
-
-void IsValidValue(const double Value, const double Tolerance)
-{
-    KRATOS_CHECK_IS_FALSE(!std::isfinite(Value));
-    KRATOS_CHECK_IS_FALSE(std::abs(Value) < Tolerance);
-}
+typedef GeometryType::ShapeFunctionsGradientsType ShapeFunctionDerivativesArrayType;
 
 void IsValuesRelativelyNear(const double ValueA, const double ValueB, const double Tolerance)
 {
-    IsValidValue(ValueA, Tolerance);
-    IsValidValue(ValueB, Tolerance);
+    KRATOS_CHECK_IS_FALSE(!std::isfinite(ValueA));
+    KRATOS_CHECK_IS_FALSE(!std::isfinite(ValueB));
 
-    const double relative_value = (1 - ValueB / ValueA);
-
-    KRATOS_CHECK_NEAR(relative_value, 0.0, Tolerance);
+    if (abs(ValueA) < std::numeric_limits<double>::epsilon())
+    {
+        KRATOS_CHECK_NEAR(ValueB, 0.0, std::numeric_limits<double>::epsilon());
+        KRATOS_WARNING("IsValuesRelativelyNear")
+            << "Comparing values closer to zero. ValueA/ValueB < Tolerance [ "
+            << ValueA << " / " << ValueB << " < "
+            << std::numeric_limits<double>::epsilon() << " ]\n";
+    }
+    else
+    {
+        const double relative_value = (1 - ValueB / ValueA);
+        KRATOS_CHECK_NEAR(relative_value, 0.0, Tolerance);
+    }
 }
 
 void CalculateResidual(Vector& residual,
@@ -72,96 +79,194 @@ void CalculateResidual(Vector& residual,
     noalias(residual) -= prod(mass_matrix, nodal_scalar_relaxed_rate_values);
 }
 
-void RunResidualVectorSensitivityTest(
-    const Variable<double>& rPrimalVariable,
-    const Variable<double>& rPrimalRelaxedRateVariable,
-    ModelPart& rPrimalModelPart,
-    ModelPart& rAdjointModelPart,
-    Process& rPrimalYPlusProcess,
-    Process& rAdjointYPlusProcess,
-    Process& rYPlusSensitivitiesProcess,
+void GetElementData(Vector& rGaussWeights,
+                    Matrix& rShapeFunctions,
+                    ShapeFunctionDerivativesArrayType& rShapeFunctionDerivatives,
+                    const ElementType& rElement)
+{
+    RansCalculationUtilities().CalculateGeometryData(
+        rElement.GetGeometry(), rElement.GetIntegrationMethod(), rGaussWeights,
+        rShapeFunctions, rShapeFunctionDerivatives);
+}
+
+void InitializeVariableWithValues(ModelPart& rModelPart,
+                                  const Variable<double>& rVariable,
+                                  const double Value,
+                                  const std::size_t TimeStep = 0)
+{
+    const int number_of_nodes = rModelPart.NumberOfNodes();
+
+    for (int i_node = 0; i_node < number_of_nodes; ++i_node)
+    {
+        NodeType& r_node = *(rModelPart.NodesBegin() + i_node);
+        r_node.FastGetSolutionStepValue(rVariable, TimeStep) = Value;
+    }
+}
+
+void InitializeVariableWithRandomValues(ModelPart& rModelPart,
+                                        const Variable<double>& rVariable,
+                                        const double MinValue,
+                                        const double MaxValue,
+                                        const std::size_t TimeSteps)
+{
+    std::string seed_str = "KratosRANSModellingTestSeed_" + rVariable.Name();
+    std::seed_seq seed(seed_str.begin(), seed_str.end());
+    std::default_random_engine generator(seed);
+    std::uniform_real_distribution<double> distribution(MinValue, MaxValue);
+
+    for (std::size_t i = 0; i < rModelPart.NumberOfNodes(); ++i)
+    {
+        NodeType& r_node = *(rModelPart.NodesBegin() + i);
+        for (std::size_t i_step = 0; i_step < TimeSteps; ++i_step)
+            r_node.FastGetSolutionStepValue(rVariable, i_step) = distribution(generator);
+    }
+}
+
+void InitializeVariableWithRandomValues(ModelPart& rModelPart,
+                                        const Variable<array_1d<double, 3>>& rVariable,
+                                        const double MinValue,
+                                        const double MaxValue,
+                                        const std::size_t TimeSteps)
+{
+    std::string seed_str = "KratosRANSModellingTestSeed_" + rVariable.Name();
+    std::seed_seq seed(seed_str.begin(), seed_str.end());
+    std::default_random_engine generator(seed);
+    std::uniform_real_distribution<double> distribution(MinValue, MaxValue);
+
+    for (std::size_t i = 0; i < rModelPart.NumberOfNodes(); ++i)
+    {
+        NodeType& r_node = *(rModelPart.NodesBegin() + i);
+        for (std::size_t i_step = 0; i_step < TimeSteps; ++i_step)
+        {
+            array_1d<double, 3>& r_vector =
+                r_node.FastGetSolutionStepValue(rVariable, i_step);
+            r_vector[0] = distribution(generator);
+            r_vector[1] = distribution(generator);
+            r_vector[2] = distribution(generator);
+        }
+    }
+}
+
+void RunGaussPointScalarSensitivityTest(
+    ModelPart& rModelPart,
+    Process& rYPlusProcess,
+    std::function<void(std::vector<double>&, const ElementType&, const Vector&, const Matrix&, const ProcessInfo&)> CalculatePrimalQuantities,
+    std::function<void(std::vector<Vector>&, const ElementType&, const Vector&, const Matrix&, const ProcessInfo&)> CalculateSensitivities,
     std::function<void(ModelPart&)> UpdateVariablesInModelPart,
-    std::function<void(Matrix&, Element&, const ProcessInfo&)> CalculateSensitivityMatrix,
-    std::function<void(NodeType&, const int, const double)> PerturbVariable,
+    std::function<double&(NodeType&)> PerturbVariable,
     const double Delta,
     const double Tolerance)
 {
-    std::size_t number_of_elements = rPrimalModelPart.NumberOfElements();
+    const int number_of_elements = rModelPart.NumberOfElements();
 
-    KRATOS_ERROR_IF(number_of_elements != rAdjointModelPart.NumberOfElements())
-        << "Number of elements mismatch.";
+    const ProcessInfo& r_process_info = rModelPart.GetProcessInfo();
 
-    // Calculate initial y_plus values
-    rPrimalYPlusProcess.Check();
-    rPrimalYPlusProcess.Execute();
-    UpdateVariablesInModelPart(rPrimalModelPart);
+    rYPlusProcess.Check();
 
-    rAdjointYPlusProcess.Check();
-    rAdjointYPlusProcess.Execute();
-    UpdateVariablesInModelPart(rAdjointModelPart);
+    RansCalculationUtilities rans_calculation_utilities;
 
-    // Calculate adjoint values
-    rYPlusSensitivitiesProcess.Check();
-    rYPlusSensitivitiesProcess.Execute();
-
-    ProcessInfo& r_primal_process_info = rPrimalModelPart.GetProcessInfo();
-    ProcessInfo& r_adjoint_process_info = rAdjointModelPart.GetProcessInfo();
-
-    const int domain_size = r_primal_process_info[DOMAIN_SIZE];
-    KRATOS_ERROR_IF(domain_size != r_adjoint_process_info[DOMAIN_SIZE])
-        << "Domain size mismatch.";
-
-    Matrix adjoint_total_element_residual_sensitivity, damping_matrix, mass_matrix;
-
-    for (std::size_t i_element = 0; i_element < number_of_elements; ++i_element)
+    for (int i = 0; i < number_of_elements; ++i)
     {
-        ElementType& r_adjoint_element = *(rAdjointModelPart.ElementsBegin() + i_element);
-        CalculateSensitivityMatrix(adjoint_total_element_residual_sensitivity,
-                                   r_adjoint_element, r_adjoint_process_info);
+        ElementType& r_element = *(rModelPart.ElementsBegin() + i);
+        GeometryType& r_geometry = r_element.GetGeometry();
+        r_element.Check(r_process_info);
 
-        ElementType& r_primal_element = *(rPrimalModelPart.ElementsBegin() + i_element);
-        GeometryType& r_primal_geometry = r_primal_element.GetGeometry();
+        Vector gauss_weights;
+        Matrix shape_functions;
+        ShapeFunctionDerivativesArrayType shape_function_derivatives;
+        GetElementData(gauss_weights, shape_functions, shape_function_derivatives, r_element);
 
-        const std::size_t number_of_nodes = r_primal_geometry.PointsNumber();
+        const int number_of_gauss_points = gauss_weights.size();
+        const int number_of_nodes = r_geometry.PointsNumber();
 
-        Vector residual(number_of_nodes), residual_0(number_of_nodes),
-            residual_sensitivity(number_of_nodes);
-
-        CalculateResidual(residual_0, r_primal_element, r_primal_process_info,
-                          rPrimalVariable, rPrimalRelaxedRateVariable);
-
-        for (std::size_t i_node = 0; i_node < number_of_nodes; ++i_node)
+        for (int g = 0; g < number_of_gauss_points; ++g)
         {
-            NodeType& r_node = r_primal_geometry[i_node];
-            for (int i_dim = 0; i_dim < domain_size; ++i_dim)
+            rYPlusProcess.Execute();
+            UpdateVariablesInModelPart(rModelPart);
+
+            const Vector& gauss_shape_functions = row(shape_functions, g);
+            const Matrix& r_shape_function_derivatives = shape_function_derivatives[g];
+
+            std::vector<Vector> analytical_sensitivities;
+            CalculateSensitivities(analytical_sensitivities, r_element, gauss_shape_functions,
+                                   r_shape_function_derivatives, r_process_info);
+
+            std::vector<double> values_0;
+            CalculatePrimalQuantities(values_0, r_element, gauss_shape_functions,
+                                      r_shape_function_derivatives, r_process_info);
+
+            // calculating finite difference sensitivities
+            for (int i = 0; i < number_of_nodes; ++i)
             {
-                PerturbVariable(r_node, i_dim, Delta);
+                NodeType& r_node = r_geometry[i];
+                PerturbVariable(r_node) += Delta;
 
-                rPrimalYPlusProcess.Execute();
-                UpdateVariablesInModelPart(rPrimalModelPart);
+                rYPlusProcess.Execute();
+                UpdateVariablesInModelPart(rModelPart);
 
-                CalculateResidual(residual, r_primal_element, r_primal_process_info,
-                                  rPrimalVariable, rPrimalRelaxedRateVariable);
+                Vector current_gauss_weights;
+                Matrix current_shape_functions;
+                ShapeFunctionDerivativesArrayType current_shape_function_derivatives;
+                GetElementData(current_gauss_weights, current_shape_functions,
+                               current_shape_function_derivatives, r_element);
 
-                noalias(residual_sensitivity) = (residual - residual_0) / Delta;
+                std::vector<double> values;
+                CalculatePrimalQuantities(
+                    values, r_element, row(current_shape_functions, g),
+                    current_shape_function_derivatives[g], r_process_info);
 
-                for (std::size_t i_check_node = 0; i_check_node < number_of_nodes; ++i_check_node)
+                for (int j = 0; j < static_cast<int>(analytical_sensitivities.size()); ++j)
                 {
-                    const double current_adjoint_shape_sensitivity =
-                        adjoint_total_element_residual_sensitivity(
-                            i_node * 2 + i_dim, i_check_node);
-
-                    IsValuesRelativelyNear(residual_sensitivity[i_check_node],
-                                           current_adjoint_shape_sensitivity, Tolerance);
+                    const double fd_sensitivity = ((values[j] - values_0[j]) / Delta);
+                    IsValuesRelativelyNear(
+                        fd_sensitivity, analytical_sensitivities[j][i], Tolerance);
                 }
 
-                PerturbVariable(r_node, i_dim, -Delta);
+                PerturbVariable(r_node) -= Delta;
             }
         }
     }
 }
 
-void RunResidualScalarSensitivityTest(
+void RunGaussPointVectorSensitivityTest(
+    ModelPart& rModelPart,
+    Process& rYPlusProcess,
+    std::function<void(std::vector<double>&, const ElementType&, const Vector&, const Matrix&, const ProcessInfo&)> CalculatePrimalQuantities,
+    std::function<void(std::vector<Matrix>&, const ElementType&, const Vector&, const Matrix&, const ProcessInfo&)> CalculateSensitivities,
+    std::function<void(ModelPart&)> UpdateVariablesInModelPart,
+    std::function<double&(NodeType&, const int Dim)> PerturbVariable,
+    const double Delta,
+    const double Tolerance)
+{
+    const ProcessInfo& r_process_info = rModelPart.GetProcessInfo();
+    const int domain_size = r_process_info[DOMAIN_SIZE];
+
+    for (int i_dim = 0; i_dim < domain_size; ++i_dim)
+    {
+        auto calculate_sensitivities = [CalculateSensitivities, i_dim](
+                                           std::vector<Vector>& riDimSensitivities,
+                                           const ElementType& rElement,
+                                           const Vector& rGaussShapeFunctions,
+                                           const Matrix& rGaussShapeFunctionDerivatives,
+                                           const ProcessInfo& rCurrentProcessInfo) {
+            std::vector<Matrix> analytical_sensitivities;
+            CalculateSensitivities(analytical_sensitivities, rElement, rGaussShapeFunctions,
+                                   rGaussShapeFunctionDerivatives, rCurrentProcessInfo);
+            for (std::size_t i_var = 0; i_var < analytical_sensitivities.size(); ++i_var)
+                riDimSensitivities.push_back(column(analytical_sensitivities[i_var], i_dim));
+        };
+
+        auto perturb_variable = [PerturbVariable, i_dim](NodeType& rNode) -> double& {
+            return PerturbVariable(rNode, i_dim);
+        };
+
+        RunGaussPointScalarSensitivityTest(
+            rModelPart, rYPlusProcess, CalculatePrimalQuantities, calculate_sensitivities,
+            UpdateVariablesInModelPart, perturb_variable, Delta, Tolerance);
+    }
+}
+
+void RunElementResidualScalarSensitivityTest(
     const Variable<double>& rPrimalVariable,
     const Variable<double>& rPrimalRelaxedRateVariable,
     ModelPart& rPrimalModelPart,
@@ -170,8 +275,8 @@ void RunResidualScalarSensitivityTest(
     Process& rAdjointYPlusProcess,
     Process& rYPlusSensitivitiesProcess,
     std::function<void(ModelPart&)> UpdateVariablesInModelPart,
-    std::function<void(Matrix&, Element&, ProcessInfo&)> CalculateSensitivityMatrix,
-    std::function<void(NodeType&, const double)> PerturbVariable,
+    std::function<void(Matrix&, ElementType&, ProcessInfo&)> CalculateElementResidualScalarSensitivity,
+    std::function<double&(NodeType&)> PerturbVariable,
     const double Delta,
     const double Tolerance)
 {
@@ -205,11 +310,14 @@ void RunResidualScalarSensitivityTest(
     for (std::size_t i_element = 0; i_element < number_of_elements; ++i_element)
     {
         ElementType& r_adjoint_element = *(rAdjointModelPart.ElementsBegin() + i_element);
-        CalculateSensitivityMatrix(adjoint_total_element_residual_sensitivity,
-                                   r_adjoint_element, r_adjoint_process_info);
+        r_adjoint_element.Check(r_adjoint_process_info);
+
+        CalculateElementResidualScalarSensitivity(
+            adjoint_total_element_residual_sensitivity, r_adjoint_element, r_adjoint_process_info);
 
         ElementType& r_primal_element = *(rPrimalModelPart.ElementsBegin() + i_element);
         GeometryType& r_primal_geometry = r_primal_element.GetGeometry();
+        r_primal_element.Check(r_primal_process_info);
 
         const std::size_t number_of_nodes = r_primal_geometry.PointsNumber();
 
@@ -222,7 +330,7 @@ void RunResidualScalarSensitivityTest(
         for (std::size_t i_node = 0; i_node < number_of_nodes; ++i_node)
         {
             NodeType& r_node = r_primal_geometry[i_node];
-            PerturbVariable(r_node, Delta);
+            PerturbVariable(r_node) += Delta;
 
             rPrimalYPlusProcess.Execute();
             UpdateVariablesInModelPart(rPrimalModelPart);
@@ -241,8 +349,56 @@ void RunResidualScalarSensitivityTest(
                                        current_adjoint_shape_sensitivity, Tolerance);
             }
 
-            PerturbVariable(r_node, -Delta);
+            PerturbVariable(r_node) -= Delta;
         }
+    }
+}
+
+void RunElementResidualVectorSensitivityTest(
+    const Variable<double>& rPrimalVariable,
+    const Variable<double>& rPrimalRelaxedRateVariable,
+    ModelPart& rPrimalModelPart,
+    ModelPart& rAdjointModelPart,
+    Process& rPrimalYPlusProcess,
+    Process& rAdjointYPlusProcess,
+    Process& rYPlusSensitivitiesProcess,
+    std::function<void(ModelPart&)> UpdateVariablesInModelPart,
+    std::function<void(Matrix&, ElementType&, ProcessInfo&)> CalculateElementResidualScalarSensitivity,
+    std::function<double&(NodeType&, const int)> PerturbVariable,
+    const double Delta,
+    const double Tolerance)
+{
+    ProcessInfo& r_primal_process_info = rPrimalModelPart.GetProcessInfo();
+
+    const int domain_size = r_primal_process_info[DOMAIN_SIZE];
+
+    for (int i_dim = 0; i_dim < domain_size; ++i_dim)
+    {
+        auto calculate_sensitivities = [CalculateElementResidualScalarSensitivity, i_dim,
+                                        domain_size](Matrix& rDimSensitivities,
+                                                     ElementType& rElement,
+                                                     ProcessInfo& rCurrentProcessInfo) {
+            Matrix sensitivities;
+            CalculateElementResidualScalarSensitivity(sensitivities, rElement,
+                                                      rCurrentProcessInfo);
+
+            const int number_of_equations = sensitivities.size2();
+            rDimSensitivities.resize(number_of_equations, number_of_equations);
+
+            for (int i = 0; i < number_of_equations; ++i)
+                for (int j = 0; j < number_of_equations; ++j)
+                    rDimSensitivities(i, j) = sensitivities(i * domain_size + i_dim, j);
+        };
+
+        auto perturb_variable = [PerturbVariable, i_dim](NodeType& rNode) -> double& {
+            return PerturbVariable(rNode, i_dim);
+        };
+
+        RunElementResidualScalarSensitivityTest(
+            rPrimalVariable, rPrimalRelaxedRateVariable, rPrimalModelPart,
+            rAdjointModelPart, rPrimalYPlusProcess, rAdjointYPlusProcess,
+            rYPlusSensitivitiesProcess, UpdateVariablesInModelPart,
+            calculate_sensitivities, perturb_variable, Delta, Tolerance);
     }
 }
 } // namespace RansModellingApplicationTestUtilities

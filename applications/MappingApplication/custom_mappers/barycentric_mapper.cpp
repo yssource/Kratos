@@ -23,15 +23,18 @@
 #include "geometries/line_2d_2.h"
 #include "geometries/triangle_3d_3.h"
 #include "geometries/tetrahedra_3d_4.h"
-#include "utilities/geometrical_projection_utilities.h"
 
 namespace Kratos
 {
 
+typedef Node<3> NodeType;
+typedef Geometry<NodeType> GeometryType;
+
 namespace { // internal functions only used in this cpp
 
 array_1d<double, 3> CreateArrayFromVector(const std::vector<double>& rVector,
-                                          const std::size_t StartPosition) {
+                                          const std::size_t StartPosition)
+{
     array_1d<double,3> the_array;
     the_array[0] = rVector[StartPosition];
     the_array[1] = rVector[StartPosition+1];
@@ -41,7 +44,8 @@ array_1d<double, 3> CreateArrayFromVector(const std::vector<double>& rVector,
 
 void ComputeNeighborDistances(const array_1d<double,3>& rCoords,
                               const std::vector<double>& rNeighborCoords,
-                              std::vector<double>& rDistances) {
+                              std::vector<double>& rDistances)
+{
     for (std::size_t i=0; i<rDistances.size(); ++i) {
         const auto neighbor_coords = CreateArrayFromVector(rNeighborCoords, i*3);
         rDistances[i] = MapperUtilities::ComputeDistance(rCoords, neighbor_coords);
@@ -52,10 +56,17 @@ void InsertIfCloser(const array_1d<double,3>& rRefCoords,
                     const int CandidateEquationId,
                     const array_1d<double,3>& rCandidateCoords,
                     std::vector<int>& rNeighborIds,
-                    std::vector<double>& rNeighborCoods) {
+                    std::vector<double>& rNeighborCoods)
+{
     const std::size_t num_interpolation_nodes = rNeighborIds.size();
 
     std::vector<double> neighbor_distances(num_interpolation_nodes, std::numeric_limits<double>::max());
+
+    // compute the distances to the currently closest nodes to the candidate to check for coinciding nodes
+    ComputeNeighborDistances(rCandidateCoords, rNeighborCoods, neighbor_distances);
+    for (const double dist : neighbor_distances) {
+        if (dist < 1e-12) return; // the candidate is coinciding with an already used point, hence we don't use it
+    }
 
     // compute the distances to the currently closest nodes based on the coordinates
     ComputeNeighborDistances(rRefCoords, rNeighborCoods, neighbor_distances);
@@ -63,8 +74,7 @@ void InsertIfCloser(const array_1d<double,3>& rRefCoords,
     // compute distance to candidate
     const double candidate_distance = MapperUtilities::ComputeDistance(rRefCoords, rCandidateCoords);
 
-    // check if the candidate is closer than the previously found nodes
-    // save it if it is closer
+    // check if the candidate is closer than the previously found nodes and save it if it is closer
     for (std::size_t i=0; i<num_interpolation_nodes; ++i) {
         if (candidate_distance < neighbor_distances[i]) {
             rNeighborIds.insert(rNeighborIds.begin()+i, CandidateEquationId);
@@ -83,71 +93,33 @@ void InsertIfCloser(const array_1d<double,3>& rRefCoords,
 
 bool BarycentricInterpolateInEntity(const array_1d<double,3>& rRefCoords,
                                     const std::vector<double>& rCoordinates,
-                                    Vector& rShapeFunctionValues) {
+                                    Vector& rShapeFunctionValues,
+                                    std::vector<int>& rEquationIds,
+                                    ProjectionUtilities::PairingIndex& rPairingIndex)
+{
+    // Check how many "proper" results were found
+    const std::size_t num_interpolation_nodes = rEquationIds.size() - std::count(rEquationIds.begin(), rEquationIds.end(), -1);
 
-    bool is_inside;
-    const std::size_t num_interpolation_nodes = rCoordinates.size()/3;
+    const bool is_full_projection = num_interpolation_nodes == rEquationIds.size();
 
-    array_1d<double, 3> local_coords;
+    KRATOS_DEBUG_ERROR_IF(num_interpolation_nodes < 2 || num_interpolation_nodes > 4) << "Wrong number of interpolation nodes" << std::endl;
+    KRATOS_DEBUG_ERROR_IF(rCoordinates.size() < num_interpolation_nodes*3) << "Not enough coords" << std::endl;
+    KRATOS_DEBUG_ERROR_IF(rCoordinates.size()%3 != 0) << "Coords have wrong size" << std::endl;
 
-    // TODO return false if points are coinciding and issue a warning, this should not happen!
-
-    if (num_interpolation_nodes == 2) {
-        Point::Pointer p_1(Kratos::make_shared<Point>(CreateArrayFromVector(rCoordinates, 0)));
-        Point::Pointer p_2(Kratos::make_shared<Point>(CreateArrayFromVector(rCoordinates, 3)));
-        Line2D2<Point> line(p_1, p_2);
-
-        // const Point point_to_proj(rRefCoords);
-        // double dummy = 0.0;
-
-        // is_inside = GeometricalProjectionUtilities::ProjectOnGeometry(line, point_to_proj, local_coords, dummy);
-        // if (is_inside) {
-        //     line.ShapeFunctionsValues(rShapeFunctionValues, local_coords);
-        // }
-
-    } else if (num_interpolation_nodes == 3) {
-        Point::Pointer p_1(Kratos::make_shared<Point>(CreateArrayFromVector(rCoordinates, 0)));
-        Point::Pointer p_2(Kratos::make_shared<Point>(CreateArrayFromVector(rCoordinates, 3)));
-        Point::Pointer p_3(Kratos::make_shared<Point>(CreateArrayFromVector(rCoordinates, 6)));
-        Triangle3D3<Point> triangle(p_1, p_2, p_3);
-
-        const Point point_to_proj(rRefCoords);
-        double dummy = 0.0;
-
-        // KRATOS_WATCH(rCoordinates)
-        // KRATOS_WATCH(*p_1)
-        // KRATOS_WATCH(*p_2)
-        // KRATOS_WATCH(*p_3)
-
-        // KRATOS_WATCH(triangle)
-
-        // is_inside = GeometricalProjectionUtilities::ProjectOnGeometry(triangle, point_to_proj, local_coords, dummy);
-        // if (is_inside) {
-        //     triangle.ShapeFunctionsValues(rShapeFunctionValues, local_coords);
-        // }
-
-    } else if (num_interpolation_nodes == 4) {
-        Point::Pointer p_1(Kratos::make_shared<Point>(CreateArrayFromVector(rCoordinates, 0)));
-        Point::Pointer p_2(Kratos::make_shared<Point>(CreateArrayFromVector(rCoordinates, 3)));
-        Point::Pointer p_3(Kratos::make_shared<Point>(CreateArrayFromVector(rCoordinates, 6)));
-        Point::Pointer p_4(Kratos::make_shared<Point>(CreateArrayFromVector(rCoordinates, 9)));
-        Tetrahedra3D4<Point> tetra(p_1, p_2, p_3, p_4);
-
-        const Point point_to_proj(rRefCoords);
-        double dummy = 0.0;
-
-        // is_inside = MapperUtilities::ProjectIntoVolume(tetra, point_to_proj, local_coords, dummy);
-        // if (is_inside) {
-        //     tetra.ShapeFunctionsValues(rShapeFunctionValues, local_coords);
-        // }
-
-    } else {
-        KRATOS_ERROR << "Wrong number of interpolation nodes, this should not happen!" << std::endl;
+    GeometryType::PointsArrayType geom_points;
+    for (std::size_t i=0; i<num_interpolation_nodes; ++i) {
+        geom_points.push_back(Kratos::make_intrusive<NodeType>(0, rCoordinates[i*3], rCoordinates[i*3+1], rCoordinates[i*3+2]));
+        geom_points[i].SetValue(INTERFACE_EQUATION_ID, rEquationIds[i]);
     }
 
-    // KRATOS_WATCH(is_inside)
+    Kratos::unique_ptr<GeometryType> p_geom;
+    if      (num_interpolation_nodes == 2) p_geom = Kratos::make_unique<Line2D2<NodeType>>(geom_points);
+    else if (num_interpolation_nodes == 3) p_geom = Kratos::make_unique<Triangle3D3<NodeType>>(geom_points);
+    else if (num_interpolation_nodes == 4) p_geom = Kratos::make_unique<Tetrahedra3D4<NodeType>>(geom_points);
 
-    return is_inside;
+    double dummy_dist;
+
+    return is_full_projection && ProjectionUtilities::ComputeProjection(*p_geom, Point(rRefCoords), 0.25, rShapeFunctionValues, rEquationIds, dummy_dist, rPairingIndex, true);
 }
 
 }
@@ -164,12 +136,6 @@ void BarycentricInterfaceInfo::ProcessSearchResult(const InterfaceObject& rInter
         p_node->Coordinates(),
         mNodeIds,
         mNeighborCoordinates);
-
-
-    // KRATOS_WATCH(Coordinates())
-    // KRATOS_WATCH(mNodeIds);
-    // KRATOS_WATCH(mNeighborCoordinates);
-    // std::cout << std::endl << std::endl;
 }
 
 void BarycentricLocalSystem::CalculateAll(MatrixType& rLocalMappingMatrix,
@@ -216,125 +182,36 @@ void BarycentricLocalSystem::CalculateAll(MatrixType& rLocalMappingMatrix,
     if (rDestinationIds.size() != 1) rDestinationIds.resize(1);
     rDestinationIds[0] = mpNode->GetValue(INTERFACE_EQUATION_ID);
 
-    if (std::find(final_node_ids.begin(), final_node_ids.end(), -1) == final_node_ids.end()) { // enough nodes found, trying to project/interpolate
-        Vector shape_function_values;
-        const bool is_inside = BarycentricInterpolateInEntity(Coordinates(), final_neighbor_coords, shape_function_values);
-        if (is_inside) {
-            rPairingStatus = MapperLocalSystem::PairingStatus::InterfaceInfoFound;
-            if (rLocalMappingMatrix.size1() != 1 || rLocalMappingMatrix.size2() != shape_function_values.size()) {
-                rLocalMappingMatrix.resize(1, shape_function_values.size(), false);
-            }
-            for (std::size_t i=0; i<shape_function_values.size(); ++i) {
-                rLocalMappingMatrix(0,i) = shape_function_values[i];
-            }
+    const std::size_t num_interpolation_nodes = final_node_ids.size();
 
-            if (rOriginIds.size() != final_node_ids.size()) rOriginIds.resize(final_node_ids.size());
-            for (std::size_t i=0; i<final_node_ids.size(); ++i) {
-                rOriginIds[i] = final_node_ids[i];
-            }
-
-            return;
-        }
-    }
-
-    // using the nearest neighbor as approximation
-    rPairingStatus = MapperLocalSystem::PairingStatus::Approximation;
-    if (rLocalMappingMatrix.size1() != 1 || rLocalMappingMatrix.size2() != 1) {
-        rLocalMappingMatrix.resize(1, 1, false);
-    }
-    rLocalMappingMatrix(0,0) = 1.0;
-    if (rOriginIds.size() != 1) rOriginIds.resize(1);
-    rOriginIds[0] = final_node_ids[0];
-
+    KRATOS_DEBUG_ERROR_IF(num_interpolation_nodes < 2 || num_interpolation_nodes > 4) << "Wrong number of interpolation nodes" << std::endl;
 
     KRATOS_ERROR_IF(final_node_ids[0] == -1) << "Not even an approximation is found, this should not happen!" << std::endl; // TODO should this be an error?
 
+    if (final_node_ids[1] == -1) { // only one node was found => using nearest-neighbor
+        rPairingStatus = MapperLocalSystem::PairingStatus::Approximation;
+        mPairingIndex = ProjectionUtilities::PairingIndex::Closest_Point;
+        if (rLocalMappingMatrix.size1() != 1 || rLocalMappingMatrix.size2() != 1) rLocalMappingMatrix.resize(1, 1, false);
+        rLocalMappingMatrix(0,0) = 1.0;
+        if (rOriginIds.size() != 1) rOriginIds.resize(1);
+        rOriginIds[0] = final_node_ids[0];
+    } else {
+        Vector shape_function_values;
+        const bool is_full_projection = BarycentricInterpolateInEntity(Coordinates(), final_neighbor_coords, shape_function_values, final_node_ids, mPairingIndex);
+        rPairingStatus = is_full_projection ? MapperLocalSystem::PairingStatus::InterfaceInfoFound : MapperLocalSystem::PairingStatus::Approximation;
 
+        if (rLocalMappingMatrix.size1() != 1 || rLocalMappingMatrix.size2() != shape_function_values.size()) {
+            rLocalMappingMatrix.resize(1, shape_function_values.size(), false);
+        }
+        for (std::size_t i=0; i<shape_function_values.size(); ++i) {
+            rLocalMappingMatrix(0,i) = shape_function_values[i];
+        }
 
-
-
-    // KRATOS_WATCH(final_node_ids)
-    // KRATOS_WATCH(final_neighbor_coords)
-
-
-        // if enough_nodes_found:
-        //     rPairingStatus = MapperLocalSystem::PairingStatus::InterfaceInfoFound;
-        //     trying to project
-        //     if this fails then also use nearest node
-        // else:
-        //     rPairingStatus = MapperLocalSystem::PairingStatus::Approximation;
-        //     using nearest node
-        //     if (rLocalMappingMatrix.size1() != 1 || rLocalMappingMatrix.size2() != 1) {
-        //         rLocalMappingMatrix.resize(1, 1, false);
-        //     }
-        //     if (rOriginIds.size()      != 1) rOriginIds.resize(1);
-
-        //     rLocalMappingMatrix(0,0) = 1.0;
-        //     rOriginIds[0] = nearest_neighbor_id;
-
-        // KRATOS_ERROR_IF(found_idx == -1) << "Not even an approximation is found, this should not happen!"
-        //     << std::endl; // TODO should thi sbe an error?
-
-
-
-
-
-
-        // //     // the approximations will be processed in the next step if necessary
-        // //     if (!mInterfaceInfos[i]->GetIsApproximation()) {
-        // //         mInterfaceInfos[i]->GetValue(distance, MapperInterfaceInfo::InfoType::Dummy);
-        // //         if (distance < min_distance) {
-        // //             min_distance = distance;
-        // //             found_idx = static_cast<int>(i); // TODO explicit conversion needed?
-        // //             rPairingStatus = MapperLocalSystem::PairingStatus::InterfaceInfoFound;
-        // //         }
-        // //     }
-        // // }
-
-        // // mInterfaceInfos[found_idx]->GetValue(sf_values, MapperInterfaceInfo::InfoType::Dummy);
-        // // reconstruct n closest nodes and create a geometry out of it
-        // // then see if it is inside/outside
-
-
-        // // rPairingStatus = MapperLocalSystem::PairingStatus::InterfaceInfoFound;
-
-        // // if (rLocalMappingMatrix.size1() != 1 || rLocalMappingMatrix.size2() != 1) {
-        // //     rLocalMappingMatrix.resize(1, 1, false);
-        // // }
-        // // if (rOriginIds.size()      != 1) rOriginIds.resize(1);
-        // // if (rDestinationIds.size() != 1) rDestinationIds.resize(1);
-
-        // // int nearest_neighbor_id;
-        // // double nearest_neighbor_distance;
-        // // mInterfaceInfos[0]->GetValue(nearest_neighbor_id, MapperInterfaceInfo::InfoType::Dummy);
-        // // mInterfaceInfos[0]->GetValue(nearest_neighbor_distance, MapperInterfaceInfo::InfoType::Dummy);
-
-        // // for (std::size_t i=1; i<mInterfaceInfos.size(); ++i) {
-        // //     // no check if this InterfaceInfo is an approximation is necessary
-        // //     // bcs this does not exist for NearestNeighbor
-        // //     double distance;
-        // //     mInterfaceInfos[i]->GetValue(distance, MapperInterfaceInfo::InfoType::Dummy);
-
-        // //     if (distance < nearest_neighbor_distance) {
-        // //         nearest_neighbor_distance = distance;
-        // //         mInterfaceInfos[i]->GetValue(nearest_neighbor_id, MapperInterfaceInfo::InfoType::Dummy);
-        // //     }
-        // // }
-
-        // // rLocalMappingMatrix(0,0) = 1.0;
-        // // rOriginIds[0] = nearest_neighbor_id;
-        // // KRATOS_DEBUG_ERROR_IF_NOT(mpNode) << "Members are not intitialized!" << std::endl;
-        // // rDestinationIds[0] = mpNode->GetValue(INTERFACE_EQUATION_ID);
-
-        // if (rLocalMappingMatrix.size1() != 1 || rLocalMappingMatrix.size2() != sf_values.size()) {
-        //     rLocalMappingMatrix.resize(1, sf_values.size(), false);
-        // }
-        // for (IndexType i=0; i<sf_values.size(); ++i) {
-        //     rLocalMappingMatrix(0,i) = sf_values[i];
-        // }
-
-        // mInterfaceInfos[found_idx]->GetValue(rOriginIds, MapperInterfaceInfo::InfoType::Dummy);
-
+        if (rOriginIds.size() != final_node_ids.size()) rOriginIds.resize(final_node_ids.size());
+        for (std::size_t i=0; i<final_node_ids.size(); ++i) {
+            rOriginIds[i] = final_node_ids[i];
+        }
+    }
 }
 
 std::string BarycentricLocalSystem::PairingInfo(const int EchoLevel) const
@@ -342,13 +219,11 @@ std::string BarycentricLocalSystem::PairingInfo(const int EchoLevel) const
     KRATOS_DEBUG_ERROR_IF_NOT(mpNode) << "Members are not intitialized!" << std::endl;
 
     std::stringstream buffer;
-    buffer << "BarycentricLocalSystem based on " << mpNode->Info();
+    buffer << "NearestElementLocalSystem based on " << mpNode->Info();
     if (EchoLevel > 1) {// TODO leave here?
         buffer << " at Coodinates " << Coordinates()[0] << " | " << Coordinates()[1] << " | " << Coordinates()[2];
         if (mPairingStatus == MapperLocalSystem::PairingStatus::Approximation) {
-            mpNode->SetValue(PAIRING_STATUS, 0);
-        } else {
-            mpNode->SetValue(PAIRING_STATUS, -1);
+            mpNode->SetValue(PAIRING_STATUS, (int)mPairingIndex);
         }
     }
     return buffer.str();

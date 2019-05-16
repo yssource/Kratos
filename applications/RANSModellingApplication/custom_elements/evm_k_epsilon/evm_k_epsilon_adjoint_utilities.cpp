@@ -363,7 +363,7 @@ void CalculateThetaEpsilonSensitivity(Vector& rOutput,
 void CalculateTurbulentReynoldsNumberVelocitySensitivity(Matrix& rOutput,
                                                          const double tke,
                                                          const double epsilon,
-                                                         const double nu_t,
+                                                         const double nu,
                                                          const Matrix& rNuTSensitivities)
 {
     std::size_t number_of_nodes = rNuTSensitivities.size1();
@@ -372,60 +372,47 @@ void CalculateTurbulentReynoldsNumberVelocitySensitivity(Matrix& rOutput,
     if (rOutput.size1() != number_of_nodes || rOutput.size2() != domain_size)
         rOutput.resize(number_of_nodes, domain_size);
 
-    noalias(rOutput) = rNuTSensitivities * (-1.0 * std::pow(tke / nu_t, 2) / epsilon);
+    rOutput.clear();
 }
 
 void CalculateTurbulentReynoldsNumberTKESensitivity(Vector& rOutput,
                                                     const double tke,
                                                     const double epsilon,
-                                                    const double nu_t,
-                                                    const Vector& rNuTSensitivities,
+                                                    const double nu,
                                                     const Vector& rGaussShapeFunctions)
 {
-    std::size_t number_of_nodes = rNuTSensitivities.size();
+    std::size_t number_of_nodes = rGaussShapeFunctions.size();
 
     if (rOutput.size() != number_of_nodes)
         rOutput.resize(number_of_nodes);
 
-    noalias(rOutput) = rGaussShapeFunctions * (2.0 * tke / (epsilon * nu_t));
-    noalias(rOutput) -= rNuTSensitivities * (std::pow(tke / nu_t, 2) / epsilon);
+    noalias(rOutput) = rGaussShapeFunctions * (2.0 * tke / (epsilon * nu));
 }
 
 void CalculateTurbulentReynoldsNumberEpsilonSensitivity(Vector& rOutput,
                                                         const double tke,
                                                         const double epsilon,
-                                                        const double nu_t,
-                                                        const Vector& rNuTSensitivities,
+                                                        const double nu,
                                                         const Vector& rGaussShapeFunctions)
 {
-    std::size_t number_of_nodes = rNuTSensitivities.size();
+    std::size_t number_of_nodes = rGaussShapeFunctions.size();
 
     if (rOutput.size() != number_of_nodes)
         rOutput.resize(number_of_nodes);
 
-    noalias(rOutput) = rGaussShapeFunctions * (-1.0 * std::pow(tke / epsilon, 2) / nu_t);
-    noalias(rOutput) -= rNuTSensitivities * (std::pow(tke / nu_t, 2) / epsilon);
+    noalias(rOutput) = rGaussShapeFunctions * (-1.0 * std::pow(tke / epsilon, 2) / nu);
 }
 
 void CalculateF2VelocitySensitivity(Matrix& rOutput,
                                     const double tke,
                                     const double epsilon,
-                                    const double nu_t,
+                                    const double nu,
                                     const Matrix& rNuTSensitivities)
 {
     CalculateTurbulentReynoldsNumberVelocitySensitivity(
-        rOutput, tke, epsilon, nu_t, rNuTSensitivities);
+        rOutput, tke, epsilon, nu, rNuTSensitivities);
 
-    if (std::abs(epsilon) <= std::numeric_limits<double>::epsilon())
-    {
-        rOutput.clear();
-        return;
-    }
-
-    const double Re_t = std::pow(tke, 2) / (nu_t * epsilon * 6.0);
-    const double coeff = 0.44 * Re_t * std::exp(-std::pow(Re_t, 2));
-
-    noalias(rOutput) = rOutput * coeff;
+    rOutput.clear();
 }
 
 void CalculateF2ScalarSensitivity(Vector& rOutput,
@@ -438,40 +425,13 @@ void CalculateF2ScalarSensitivity(Vector& rOutput,
     if (rOutput.size() != number_of_nodes)
         rOutput.resize(number_of_nodes);
 
-    if (std::abs(epsilon) <= std::numeric_limits<double>::epsilon())
-    {
-        rOutput.clear();
-        return;
-    }
+    // if (std::abs(epsilon) <= std::numeric_limits<double>::epsilon())
+    // {
+    //     rOutput.clear();
+    //     return;
+    // }
     noalias(rOutput) = rReTSensitivities *
-                       (0.44 * Re_t / 6.0 * std::exp(-std::pow(Re_t / 6.0, 2)));
-}
-
-void CalculateReactionVelocitySensitivities(Matrix& rOutput,
-                                            const double wall_distance,
-                                            const Matrix& rNuTSensitivities,
-                                            const Matrix& rThetaSensitivities)
-{
-    std::size_t number_of_nodes = rNuTSensitivities.size1();
-    std::size_t domain_size = rNuTSensitivities.size2();
-
-    if (rOutput.size1() != number_of_nodes || rOutput.size2() != domain_size)
-        rOutput.resize(number_of_nodes, domain_size);
-
-    noalias(rOutput) = rNuTSensitivities * (2.0 / std::pow(wall_distance, 2)) + rThetaSensitivities;
-}
-
-void CalculateReactionScalarSensitivities(Vector& rOutput,
-                                          const double wall_distance,
-                                          const Vector& rNuTSensitivities,
-                                          const Vector& rThetaSensitivities)
-{
-    std::size_t number_of_nodes = rNuTSensitivities.size();
-
-    if (rOutput.size() != number_of_nodes)
-        rOutput.resize(number_of_nodes);
-
-    noalias(rOutput) = rNuTSensitivities * (2.0 / std::pow(wall_distance, 2)) + rThetaSensitivities;
+                       (0.44 * Re_t / 36.0 * std::exp(-std::pow(Re_t / 6.0, 2)));
 }
 
 template void CalculateProductionVelocitySensitivities<2>(

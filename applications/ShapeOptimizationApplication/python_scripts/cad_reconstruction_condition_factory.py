@@ -552,15 +552,15 @@ class ConditionFactory:
                     if penalty_factor_displacement > 0:
                         weight = penalty_factor_displacement * integration_weight
 
-                        new_condition = clib.DisplacementCouplingConditionWithAD( nonzero_pole_nodes_a,
-                                                                                  nonzero_pole_nodes_b,
-                                                                                  shape_functions_a,
-                                                                                  shape_functions_b,
-                                                                                  surface_geometry_a,
-                                                                                  surface_geometry_b,
-                                                                                  (u_a, v_a),
-                                                                                  (u_b, v_b),
-                                                                                  weight )
+                        new_condition = clib.DisplacementCouplingCondition( nonzero_pole_nodes_a,
+                                                                            nonzero_pole_nodes_b,
+                                                                            shape_functions_a,
+                                                                            shape_functions_b,
+                                                                            surface_geometry_a,
+                                                                            surface_geometry_b,
+                                                                            (u_a, v_a),
+                                                                            (u_b, v_b),
+                                                                            weight )
                         conditions.append(new_condition)
 
                     # rotation coupling condition

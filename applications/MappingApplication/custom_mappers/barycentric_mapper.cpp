@@ -97,13 +97,13 @@ bool BarycentricInterpolateInEntity(const array_1d<double,3>& rRefCoords,
         Point::Pointer p_2(Kratos::make_shared<Point>(CreateArrayFromVector(rCoordinates, 3)));
         Line2D2<Point> line(p_1, p_2);
 
-        const Point point_to_proj(rRefCoords);
-        double dummy = 0.0;
+        // const Point point_to_proj(rRefCoords);
+        // double dummy = 0.0;
 
-        is_inside = GeometricalProjectionUtilities::ProjectOnGeometry(line, point_to_proj, local_coords, dummy);
-        if (is_inside) {
-            line.ShapeFunctionsValues(rShapeFunctionValues, local_coords);
-        }
+        // is_inside = GeometricalProjectionUtilities::ProjectOnGeometry(line, point_to_proj, local_coords, dummy);
+        // if (is_inside) {
+        //     line.ShapeFunctionsValues(rShapeFunctionValues, local_coords);
+        // }
 
     } else if (num_interpolation_nodes == 3) {
         Point::Pointer p_1(Kratos::make_shared<Point>(CreateArrayFromVector(rCoordinates, 0)));
@@ -121,10 +121,10 @@ bool BarycentricInterpolateInEntity(const array_1d<double,3>& rRefCoords,
 
         // KRATOS_WATCH(triangle)
 
-        is_inside = GeometricalProjectionUtilities::ProjectOnGeometry(triangle, point_to_proj, local_coords, dummy);
-        if (is_inside) {
-            triangle.ShapeFunctionsValues(rShapeFunctionValues, local_coords);
-        }
+        // is_inside = GeometricalProjectionUtilities::ProjectOnGeometry(triangle, point_to_proj, local_coords, dummy);
+        // if (is_inside) {
+        //     triangle.ShapeFunctionsValues(rShapeFunctionValues, local_coords);
+        // }
 
     } else if (num_interpolation_nodes == 4) {
         Point::Pointer p_1(Kratos::make_shared<Point>(CreateArrayFromVector(rCoordinates, 0)));
@@ -136,10 +136,10 @@ bool BarycentricInterpolateInEntity(const array_1d<double,3>& rRefCoords,
         const Point point_to_proj(rRefCoords);
         double dummy = 0.0;
 
-        is_inside = MapperUtilities::ProjectIntoVolume(tetra, point_to_proj, local_coords, dummy);
-        if (is_inside) {
-            tetra.ShapeFunctionsValues(rShapeFunctionValues, local_coords);
-        }
+        // is_inside = MapperUtilities::ProjectIntoVolume(tetra, point_to_proj, local_coords, dummy);
+        // if (is_inside) {
+        //     tetra.ShapeFunctionsValues(rShapeFunctionValues, local_coords);
+        // }
 
     } else {
         KRATOS_ERROR << "Wrong number of interpolation nodes, this should not happen!" << std::endl;
@@ -337,7 +337,7 @@ void BarycentricLocalSystem::CalculateAll(MatrixType& rLocalMappingMatrix,
 
 }
 
-std::string BarycentricLocalSystem::PairingInfo(const int EchoLevel, const int CommRank) const
+std::string BarycentricLocalSystem::PairingInfo(const int EchoLevel) const
 {
     KRATOS_DEBUG_ERROR_IF_NOT(mpNode) << "Members are not intitialized!" << std::endl;
 

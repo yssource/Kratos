@@ -30,6 +30,7 @@
 
 // Adjoint elements
 #include "custom_elements/evm_k_epsilon/evm_k_adjoint_element.h"
+#include "custom_elements/evm_k_epsilon/evm_epsilon_adjoint_element.h"
 
 namespace Kratos {
 
@@ -191,6 +192,9 @@ private:
     /// k-epsilon turbulence model adjoint elements
     const EvmKAdjointElement<2, 3> mRANSEVMKAdjoint2D;
     const EvmKAdjointElement<3, 4> mRANSEVMKAdjoint3D;
+
+    const EvmEpsilonAdjointElement<2, 3> mRANSEVMEpsilonAdjoint2D;
+    const EvmEpsilonAdjointElement<3, 4> mRANSEVMEpsilonAdjoint3D;
 
     ///@}
     ///@name Private Operators

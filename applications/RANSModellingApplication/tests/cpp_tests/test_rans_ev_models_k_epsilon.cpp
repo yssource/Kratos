@@ -12,6 +12,7 @@
 //
 
 // System includes
+#include <random>
 
 // External includes
 
@@ -27,6 +28,7 @@
 #include "rans_modelling_application_variables.h"
 #include "test_utilities.h"
 #include "testing/testing.h"
+#include "utilities/variable_utils.h"
 
 // Application includes
 
@@ -64,6 +66,8 @@ void AddVariablesToModelPart(ModelPart& rModelPart)
     rModelPart.AddNodalSolutionStepVariable(RANS_AUXILIARY_VARIABLE_2);
     rModelPart.AddNodalSolutionStepVariable(TURBULENT_KINETIC_ENERGY_RATE);
     rModelPart.AddNodalSolutionStepVariable(TURBULENT_ENERGY_DISSIPATION_RATE_2);
+    rModelPart.AddNodalSolutionStepVariable(RANS_ADJOINT_SCALAR_1);
+    rModelPart.AddNodalSolutionStepVariable(RANS_ADJOINT_SCALAR_2);
 }
 
 void InitializeProcessInfo(ModelPart& rModelPart)
@@ -72,9 +76,14 @@ void InitializeProcessInfo(ModelPart& rModelPart)
     rModelPart.GetProcessInfo().SetValue(DOMAIN_SIZE, 2);
     rModelPart.GetProcessInfo().SetValue(DELTA_TIME, 0.01);
     rModelPart.GetProcessInfo().SetValue(TURBULENCE_RANS_C_MU, 0.09);
+    rModelPart.GetProcessInfo().SetValue(TURBULENCE_RANS_C1, 1.44);
+    rModelPart.GetProcessInfo().SetValue(TURBULENCE_RANS_C2, 1.92);
     rModelPart.GetProcessInfo().SetValue(TURBULENT_KINETIC_ENERGY_SIGMA, 1.03);
+    rModelPart.GetProcessInfo().SetValue(TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA, 1.3);
     rModelPart.GetProcessInfo().SetValue(BOSSAK_ALPHA, -0.03);
     rModelPart.GetProcessInfo().SetValue(NEWMARK_GAMMA, 1.25);
+    rModelPart.GetProcessInfo().SetValue(WALL_SMOOTHNESS_BETA, 5.2);
+    rModelPart.GetProcessInfo().SetValue(WALL_VON_KARMAN, 0.41);
 
     // Set the element properties
     Properties::Pointer p_elem_prop = rModelPart.CreateNewProperties(0);
@@ -87,6 +96,11 @@ void CreateModelPartNodes(ModelPart& rModelPart)
     rModelPart.CreateNewNode(1, 0.0, 0.0, 0.0);
     rModelPart.CreateNewNode(2, 1.0, 0.0, 0.0);
     rModelPart.CreateNewNode(3, 0.0, 1.0, 0.0);
+
+    VariableUtils().AddDof<Variable<double>>(TURBULENT_KINETIC_ENERGY, rModelPart);
+    VariableUtils().AddDof<Variable<double>>(TURBULENT_ENERGY_DISSIPATION_RATE, rModelPart);
+    VariableUtils().AddDof<Variable<double>>(RANS_ADJOINT_SCALAR_1, rModelPart);
+    VariableUtils().AddDof<Variable<double>>(RANS_ADJOINT_SCALAR_2, rModelPart);
 }
 
 void CreateModelPartElements(ModelPart& rModelPart, std::string ElementName)
@@ -101,50 +115,19 @@ void CreateModelPartElements(ModelPart& rModelPart, std::string ElementName)
 
 void InitializeNodalVariables(ModelPart& rModelPart)
 {
-    // Set the VELOCITY and PRESSURE nodal values
-    array_1d<double, 3> v_1 = ZeroVector(3);
-    array_1d<double, 3> v_2 = ZeroVector(3);
-    array_1d<double, 3> v_3 = ZeroVector(3);
-    v_1[0] = 10.0;
-    v_1[1] = 20.0;
-    v_2[0] = 15.0;
-    v_2[1] = 18.0;
-    v_3[0] = 12.0;
-    v_3[1] = 11.0;
-    (rModelPart.GetNode(1)).GetSolutionStepValue(VELOCITY) = v_1;
-    (rModelPart.GetNode(2)).GetSolutionStepValue(VELOCITY) = v_2;
-    (rModelPart.GetNode(3)).GetSolutionStepValue(VELOCITY) = v_3;
+    using namespace RansModellingApplicationTestUtilities;
 
-    (rModelPart.GetNode(1)).GetSolutionStepValue(DISTANCE) = 0.01;
-    (rModelPart.GetNode(2)).GetSolutionStepValue(DISTANCE) = 0.02;
-    (rModelPart.GetNode(3)).GetSolutionStepValue(DISTANCE) = 0.05;
+    InitializeVariableWithRandomValues(rModelPart, DISTANCE, 1e-2, 1.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, TURBULENT_KINETIC_ENERGY, 0.1, 1.0, 2);
+    InitializeVariableWithRandomValues(
+        rModelPart, TURBULENT_KINETIC_ENERGY_RATE, 5.0, 10.0, 2);
+    InitializeVariableWithRandomValues(
+        rModelPart, TURBULENT_ENERGY_DISSIPATION_RATE, 10, 20.0, 2);
+    InitializeVariableWithRandomValues(
+        rModelPart, TURBULENT_ENERGY_DISSIPATION_RATE_2, 5, 10.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, VELOCITY, 5, 10.0, 2);
 
-    (rModelPart.GetNode(1)).GetSolutionStepValue(TURBULENT_KINETIC_ENERGY) = 10.145;
-    (rModelPart.GetNode(2)).GetSolutionStepValue(TURBULENT_KINETIC_ENERGY) = 12.154;
-    (rModelPart.GetNode(3)).GetSolutionStepValue(TURBULENT_KINETIC_ENERGY) = 18.326;
-
-    (rModelPart.GetNode(1)).GetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE) = 5.12;
-    (rModelPart.GetNode(2)).GetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE) = 1.26;
-    (rModelPart.GetNode(3)).GetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE) = 6.23;
-
-    (rModelPart.GetNode(1)).GetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE, 1) = 4.52;
-    (rModelPart.GetNode(2)).GetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE, 1) = 8.36;
-    (rModelPart.GetNode(3)).GetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE, 1) = 2.13;
-
-    (rModelPart.GetNode(1)).GetSolutionStepValue(TURBULENT_KINETIC_ENERGY_RATE) = 9.02;
-    (rModelPart.GetNode(2)).GetSolutionStepValue(TURBULENT_KINETIC_ENERGY_RATE) = 6.16;
-    (rModelPart.GetNode(3)).GetSolutionStepValue(TURBULENT_KINETIC_ENERGY_RATE) = 4.53;
-
-    (rModelPart.GetNode(1)).GetSolutionStepValue(TURBULENT_KINETIC_ENERGY_RATE) = 6.42;
-    (rModelPart.GetNode(2)).GetSolutionStepValue(TURBULENT_KINETIC_ENERGY_RATE) = 3.36;
-    (rModelPart.GetNode(3)).GetSolutionStepValue(TURBULENT_KINETIC_ENERGY_RATE) = 4.23;
-
-    // Set the DENSITY and DYNAMIC_VISCOSITY nodal values
-    for (ModelPart::NodeIterator it_node = rModelPart.NodesBegin();
-         it_node < rModelPart.NodesEnd(); ++it_node)
-    {
-        it_node->FastGetSolutionStepValue(KINEMATIC_VISCOSITY) = 3e-2;
-    }
+    InitializeVariableWithValues(rModelPart, KINEMATIC_VISCOSITY, 3e-2);
 }
 
 void GenerateRansEvmKEpsilonTestModelPart(ModelPart& rModelPart, std::string ElementName)
@@ -191,10 +174,51 @@ void UpdateVariablesInModelPart(ModelPart& rModelPart)
     }
 }
 
-void CalculateRansYPlusAndUpdateVariables(Process& rProcess, ModelPart& rModelPart)
+void CalculatePrimalQuantities(std::vector<double>& rValues,
+                               const ElementType& rElement,
+                               const Vector& rGaussShapeFunctions,
+                               const Matrix& rGaussShapeFunctionDerivatives,
+                               const ProcessInfo& rCurrentProcessInfo)
 {
-    rProcess.Execute();
-    UpdateVariablesInModelPart(rModelPart);
+    RansCalculationUtilities rans_calculation_utilities;
+
+    const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
+
+    const GeometryType& r_geometry = rElement.GetGeometry();
+
+    const double y_plus = rans_calculation_utilities.EvaluateInPoint(
+        r_geometry, RANS_Y_PLUS, rGaussShapeFunctions);
+    const double tke = rans_calculation_utilities.EvaluateInPoint(
+        r_geometry, TURBULENT_KINETIC_ENERGY, rGaussShapeFunctions);
+    const double epsilon = rans_calculation_utilities.EvaluateInPoint(
+        r_geometry, TURBULENT_ENERGY_DISSIPATION_RATE, rGaussShapeFunctions);
+    const double nu_t = rans_calculation_utilities.EvaluateInPoint(
+        r_geometry, TURBULENT_VISCOSITY, rGaussShapeFunctions);
+    const double nu = rans_calculation_utilities.EvaluateInPoint(
+        r_geometry, KINEMATIC_VISCOSITY, rGaussShapeFunctions);
+
+    const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
+    const double Re_t = std::pow(tke, 2) / (nu * epsilon);
+    const double theta = EvmKepsilonModelUtilities::CalculateGamma(c_mu, f_mu, tke, nu_t);
+    const double f2 = EvmKepsilonModelUtilities::CalculateF2(tke, nu, epsilon);
+
+    BoundedMatrix<double, 2, 2> velocity_gradient_matrix;
+    rans_calculation_utilities.CalculateGradient<2>(
+        velocity_gradient_matrix, r_geometry, VELOCITY, rGaussShapeFunctionDerivatives);
+    const double P_k = EvmKepsilonModelUtilities::CalculateSourceTerm<2>(
+        velocity_gradient_matrix, nu_t, tke);
+
+    rValues.clear();
+    rValues.push_back(nu_t);
+    rValues.push_back(P_k);
+    rValues.push_back(theta);
+    rValues.push_back(Re_t);
+    rValues.push_back(f2);
+    rValues.push_back(f_mu);
+    rValues.push_back(nu);
+    rValues.push_back(epsilon);
+    rValues.push_back(tke);
+    rValues.push_back(y_plus);
 }
 
 void ReadNodalDataFromElement(Vector& rYPlus,
@@ -217,828 +241,292 @@ void ReadNodalDataFromElement(Vector& rYPlus,
     for (std::size_t i_node = 0; i_node < number_of_nodes; ++i_node)
         rFmu[i_node] = EvmKepsilonModelUtilities::CalculateFmu(rYPlus[i_node]);
 }
+} // namespace RansEvmKEpsilonModel
 
-void CheckGaussScalarSensitivities(Process& rPrimalProcess,
-                                   ModelPart& rModelPart,
-                                   Element& rElement,
-                                   const Variable<double>& rVariable,
-                                   const Vector& rGaussShapeFunctions,
-                                   const Matrix& rGaussShapeDerivatives,
-                                   const Vector& nu_t_sensitivities,
-                                   const Vector& p_k_sensitivities,
-                                   const Vector& theta_sensitivities,
-                                   const Vector& Re_t_sensitivities,
-                                   const Vector& f2_sensitivities)
+KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonGaussTKESensitivities, RANSEvModelsKEpsilonGaussMatrices)
 {
-    auto& r_geometry = rElement.GetGeometry();
-    int number_of_nodes = static_cast<int>(r_geometry.PointsNumber());
+    Model model;
+    ModelPart& r_model_part = model.CreateModelPart("RansSensitivities");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(r_model_part,
+                                                               "RANSEVMK2D3N");
 
-    RansCalculationUtilities rans_calculation_utilities;
+    Parameters empty_parameters = Parameters(R"({})");
+    RansLogarithmicYPlusModelProcess y_plus_model_process(r_model_part, empty_parameters);
 
-    const double c_mu = rModelPart.GetProcessInfo()[TURBULENCE_RANS_C_MU];
+    auto perturb_variable = [](NodeType& rNode) -> double& {
+        return rNode.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
+    };
 
-    const double nu_t_0 = rans_calculation_utilities.EvaluateInPoint(
-        r_geometry, TURBULENT_VISCOSITY, rGaussShapeFunctions);
-    const double tke_0 = rans_calculation_utilities.EvaluateInPoint(
-        r_geometry, TURBULENT_KINETIC_ENERGY, rGaussShapeFunctions);
-    const double y_plus_0 = rans_calculation_utilities.EvaluateInPoint(
-        r_geometry, RANS_Y_PLUS, rGaussShapeFunctions);
-    const double epsilon_0 = rans_calculation_utilities.EvaluateInPoint(
-        r_geometry, TURBULENT_ENERGY_DISSIPATION_RATE, rGaussShapeFunctions);
-    const double f_mu_0 = EvmKepsilonModelUtilities::CalculateFmu(y_plus_0);
+    auto calculate_sensitivities = [](std::vector<Vector>& rValues,
+                                      const ElementType& rElement,
+                                      const Vector& rGaussShapeFunctions,
+                                      const Matrix& rGaussShapeFunctionDerivatives,
+                                      const ProcessInfo& rCurrentProcessInfo) {
+        RansCalculationUtilities rans_calculation_utilities;
 
-    BoundedMatrix<double, 2, 2> velocity_gradient_matrix_0;
-    rans_calculation_utilities.CalculateGradient<2>(
-        velocity_gradient_matrix_0, r_geometry, VELOCITY, rGaussShapeDerivatives);
-    const double P_k_0 = EvmKepsilonModelUtilities::CalculateSourceTerm<2>(
-        velocity_gradient_matrix_0, nu_t_0, tke_0);
-    const double theta_0 =
-        EvmKepsilonModelUtilities::CalculateGamma(c_mu, f_mu_0, tke_0, nu_t_0);
-    const double Re_t_0 = std::pow(tke_0, 2) / (epsilon_0 * nu_t_0);
-    const double f2_0 = EvmKepsilonModelUtilities::CalculateF2(tke_0, nu_t_0, epsilon_0);
+        const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
 
-    const double delta = 1e-8;
-    for (int i_node = 0; i_node < number_of_nodes; ++i_node)
-    {
-        double& nodal_value = r_geometry[i_node].FastGetSolutionStepValue(rVariable);
-        nodal_value += delta;
-        CalculateRansYPlusAndUpdateVariables(rPrimalProcess, rModelPart);
+        const GeometryType& r_geometry = rElement.GetGeometry();
+        const int number_of_nodes = r_geometry.PointsNumber();
 
-        const double y_plus = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, RANS_Y_PLUS, rGaussShapeFunctions);
-        const double nu_t = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, TURBULENT_VISCOSITY, rGaussShapeFunctions);
-        const double tke = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, TURBULENT_KINETIC_ENERGY, rGaussShapeFunctions);
-        const double epsilon = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, TURBULENT_ENERGY_DISSIPATION_RATE, rGaussShapeFunctions);
-        const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
+        Vector nodal_y_plus(number_of_nodes);
+        Vector nodal_tke(number_of_nodes);
+        Vector nodal_epsilon(number_of_nodes);
+        Vector nodal_nu_t(number_of_nodes);
+        Vector nodal_f_mu(number_of_nodes);
+
+        RansEvmKEpsilonModel::ReadNodalDataFromElement(
+            nodal_y_plus, nodal_tke, nodal_epsilon, nodal_nu_t, nodal_f_mu, rElement);
+
+        std::vector<double> primal_quantities;
+        RansEvmKEpsilonModel::CalculatePrimalQuantities(
+            primal_quantities, rElement, rGaussShapeFunctions,
+            rGaussShapeFunctionDerivatives, rCurrentProcessInfo);
+
+        const double nu_t = primal_quantities[0];
+        const double Re_t = primal_quantities[3];
+        const double f_mu = primal_quantities[5];
+        const double nu = primal_quantities[6];
+        const double epsilon = primal_quantities[7];
+        const double tke = primal_quantities[8];
+
+        Vector nodal_nu_t_sensitivities(number_of_nodes);
+        EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityTKESensitivities(
+            nodal_nu_t_sensitivities, c_mu, nodal_tke, nodal_epsilon, nodal_f_mu);
+
+        Vector gauss_nu_t_sensitivities(number_of_nodes);
+        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+            gauss_nu_t_sensitivities, nodal_nu_t_sensitivities, rGaussShapeFunctions);
 
         BoundedMatrix<double, 2, 2> velocity_gradient_matrix;
         rans_calculation_utilities.CalculateGradient<2>(
-            velocity_gradient_matrix, r_geometry, VELOCITY, rGaussShapeDerivatives);
-        const double P_k = EvmKepsilonModelUtilities::CalculateSourceTerm<2>(
-            velocity_gradient_matrix, nu_t, tke);
-
-        const double theta =
-            EvmKepsilonModelUtilities::CalculateGamma(c_mu, f_mu, tke, nu_t);
-        const double Re_t = std::pow(tke, 2) / (nu_t * epsilon);
-        const double f2 = EvmKepsilonModelUtilities::CalculateF2(tke, nu_t, epsilon);
-
-        const double nu_t_sensitivity = (nu_t - nu_t_0) / delta;
-        const double P_k_sensitivity = (P_k - P_k_0) / delta;
-        const double theta_sensitivity = (theta - theta_0) / delta;
-        const double Re_t_sensitivity = (Re_t - Re_t_0) / delta;
-        const double f2_sensitivity = (f2 - f2_0) / delta;
-
-        KRATOS_CHECK_NEAR(nu_t_sensitivities[i_node], nu_t_sensitivity, 1e-6);
-        KRATOS_CHECK_NEAR(p_k_sensitivities[i_node], P_k_sensitivity, 1e-5);
-        KRATOS_CHECK_NEAR(theta_sensitivities[i_node], theta_sensitivity, 1e-6);
-        KRATOS_CHECK_NEAR(Re_t_sensitivities[i_node], Re_t_sensitivity, 1e-5);
-        KRATOS_CHECK_NEAR(f2_sensitivities[i_node], f2_sensitivity, 1e-5);
-
-        KRATOS_CHECK_NOT_EQUAL(nu_t_sensitivity, 0.0);
-        KRATOS_CHECK_NOT_EQUAL(P_k_sensitivity, 0.0);
-        KRATOS_CHECK_NOT_EQUAL(theta_sensitivity, 0.0);
-        KRATOS_CHECK_NOT_EQUAL(Re_t_sensitivity, 0.0);
-
-        nodal_value -= delta;
-    }
-}
-
-} // namespace RansEvmKEpsilonModel
-
-KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonNodalVelocitySensitivities, RANSEvModels)
-{
-    Model model;
-    ModelPart& r_model_part =
-        model.CreateModelPart("RansEvmKEpsilonVelocitySensitivitiesNodal");
-    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(r_model_part,
-                                                               "RANSEVMK2D3N");
-
-    const double c_mu = r_model_part.GetProcessInfo()[TURBULENCE_RANS_C_MU];
-
-    Parameters empty_parameters = Parameters(R"({})");
-
-    RansLogarithmicYPlusModelSensitivitiesProcess adjoint_process(r_model_part, empty_parameters);
-    RansLogarithmicYPlusModelProcess primal_process(r_model_part, empty_parameters);
-
-    auto& r_element = *r_model_part.ElementsBegin();
-    auto& r_geometry = r_element.GetGeometry();
-
-    // Calculate initial y_plus values
-    primal_process.Check();
-    RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(primal_process, r_model_part);
-
-    // Calculate adjoint values
-    adjoint_process.Check();
-    adjoint_process.Execute();
-    Matrix& r_adjoint_values = r_element.GetValue(RANS_Y_PLUS_VELOCITY_DERIVATIVES);
-
-    const int domain_size = r_model_part.GetProcessInfo()[DOMAIN_SIZE];
-    const int number_of_nodes = r_model_part.NumberOfNodes();
-
-    Matrix f_mu_velocity_sensitivities;
-    Matrix nu_t_velocity_sensitivities;
-
-    Vector y_plus_0(number_of_nodes);
-    Vector tke_0(number_of_nodes);
-    Vector epsilon_0(number_of_nodes);
-    Vector nu_t_0(number_of_nodes);
-    Vector f_mu_0(number_of_nodes);
-
-    RansEvmKEpsilonModel::ReadNodalDataFromElement(y_plus_0, tke_0, epsilon_0,
-                                                   nu_t_0, f_mu_0, r_element);
-
-    EvmKepsilonModelAdjointUtilities::CalculateNodalFmuVectorSensitivities(
-        f_mu_velocity_sensitivities, y_plus_0, r_adjoint_values);
-
-    EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityVectorSensitivities(
-        nu_t_velocity_sensitivities, c_mu, tke_0, epsilon_0, f_mu_velocity_sensitivities);
-
-    // Calculate finite difference values
-    const double delta = 1e-8;
-    for (int i_node = 0; i_node < number_of_nodes; ++i_node)
-    {
-        array_1d<double, 3>& r_velocity =
-            r_geometry[i_node].FastGetSolutionStepValue(VELOCITY);
-        for (int i_dim = 0; i_dim < domain_size; ++i_dim)
-        {
-            r_velocity[i_dim] += delta;
-            RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(
-                primal_process, r_model_part);
-
-            const double nu_t =
-                r_geometry[i_node].FastGetSolutionStepValue(TURBULENT_VISCOSITY);
-
-            const double nu_t_sensitivity = (nu_t - nu_t_0[i_node]) / delta;
-            KRATOS_CHECK_NEAR(nu_t_velocity_sensitivities(i_node, i_dim),
-                              nu_t_sensitivity, 1e-6);
-            KRATOS_CHECK_NOT_EQUAL(nu_t_sensitivity, 0.0);
-
-            r_velocity[i_dim] -= delta;
-        }
-    }
-}
-
-KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonNodalTKESensitivities, RANSEvModels)
-{
-    Model model;
-    ModelPart& r_model_part =
-        model.CreateModelPart("RansEvmKEpsilonTKESensitivitiesNodal");
-    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(r_model_part,
-                                                               "RANSEVMK2D3N");
-
-    const double c_mu = r_model_part.GetProcessInfo()[TURBULENCE_RANS_C_MU];
-
-    Parameters empty_parameters = Parameters(R"({})");
-
-    RansLogarithmicYPlusModelSensitivitiesProcess adjoint_process(r_model_part, empty_parameters);
-    RansLogarithmicYPlusModelProcess primal_process(r_model_part, empty_parameters);
-
-    auto& r_element = *r_model_part.ElementsBegin();
-    auto& r_geometry = r_element.GetGeometry();
-
-    // Calculate initial y_plus values
-    primal_process.Check();
-    RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(primal_process, r_model_part);
-
-    // Calculate adjoint values
-    adjoint_process.Check();
-    adjoint_process.Execute();
-
-    const int number_of_nodes = r_model_part.NumberOfNodes();
-
-    Vector f_mu_0(number_of_nodes);
-    Vector y_plus_0(number_of_nodes);
-    Vector tke_0(number_of_nodes);
-    Vector epsilon_0(number_of_nodes);
-    Vector nu_t_0(number_of_nodes);
-
-    RansEvmKEpsilonModel::ReadNodalDataFromElement(y_plus_0, tke_0, epsilon_0,
-                                                   nu_t_0, f_mu_0, r_element);
-
-    Vector nu_t_velocity_sensitivities;
-    EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityTKESensitivities(
-        nu_t_velocity_sensitivities, c_mu, tke_0, epsilon_0, f_mu_0);
-
-    // Calculate finite difference values
-    const double delta = 1e-8;
-    for (int i_node = 0; i_node < number_of_nodes; ++i_node)
-    {
-        double& tke_nodal =
-            r_geometry[i_node].FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
-        tke_nodal += delta;
-        RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(primal_process, r_model_part);
-
-        const double nu_t = r_geometry[i_node].FastGetSolutionStepValue(TURBULENT_VISCOSITY);
-        const double nu_t_sensitivity = (nu_t - nu_t_0[i_node]) / delta;
-
-        KRATOS_CHECK_NEAR(nu_t_velocity_sensitivities[i_node], nu_t_sensitivity, 1e-6);
-        KRATOS_CHECK_NOT_EQUAL(nu_t_sensitivity, 0.0);
-
-        tke_nodal -= delta;
-    }
-}
-
-KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonNodalEpsilonSensitivities, RANSEvModels)
-{
-    Model model;
-    ModelPart& r_model_part =
-        model.CreateModelPart("RansEvmKEpsilonEpsilonSensitivitiesNodal");
-    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(r_model_part,
-                                                               "RANSEVMK2D3N");
-
-    const double c_mu = r_model_part.GetProcessInfo()[TURBULENCE_RANS_C_MU];
-
-    Parameters empty_parameters = Parameters(R"({})");
-
-    RansLogarithmicYPlusModelSensitivitiesProcess adjoint_process(r_model_part, empty_parameters);
-    RansLogarithmicYPlusModelProcess primal_process(r_model_part, empty_parameters);
-
-    auto& r_element = *r_model_part.ElementsBegin();
-    auto& r_geometry = r_element.GetGeometry();
-
-    // Calculate initial y_plus values
-    primal_process.Check();
-    RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(primal_process, r_model_part);
-
-    // Calculate adjoint values
-    adjoint_process.Check();
-    adjoint_process.Execute();
-
-    const int number_of_nodes = r_model_part.NumberOfNodes();
-
-    Vector f_mu_0(number_of_nodes);
-    Vector y_plus_0(number_of_nodes);
-    Vector tke_0(number_of_nodes);
-    Vector epsilon_0(number_of_nodes);
-    Vector nu_t_0(number_of_nodes);
-
-    RansEvmKEpsilonModel::ReadNodalDataFromElement(y_plus_0, tke_0, epsilon_0,
-                                                   nu_t_0, f_mu_0, r_element);
-
-    Vector nu_t_velocity_sensitivities;
-    EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityEpsilonSensitivities(
-        nu_t_velocity_sensitivities, c_mu, tke_0, epsilon_0, f_mu_0);
-
-    // Calculate finite difference values
-    const double delta = 1e-8;
-    for (int i_node = 0; i_node < number_of_nodes; ++i_node)
-    {
-        double& epsilon_nodal =
-            r_geometry[i_node].FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
-        epsilon_nodal += delta;
-        RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(primal_process, r_model_part);
-
-        const double nu_t = r_geometry[i_node].FastGetSolutionStepValue(TURBULENT_VISCOSITY);
-        const double nu_t_sensitivity = (nu_t - nu_t_0[i_node]) / delta;
-
-        KRATOS_CHECK_NEAR(nu_t_velocity_sensitivities[i_node], nu_t_sensitivity, 1e-6);
-        KRATOS_CHECK_NOT_EQUAL(nu_t_sensitivity, 0.0);
-
-        epsilon_nodal -= delta;
-    }
-}
-
-KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonGaussVelocitySensitivities, RANSEvModels)
-{
-    Model model;
-    ModelPart& r_model_part =
-        model.CreateModelPart("RansEvmKEpsilonVelocitySensitivitiesGauss");
-    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(r_model_part,
-                                                               "RANSEVMK2D3N");
-
-    const double c_mu = r_model_part.GetProcessInfo()[TURBULENCE_RANS_C_MU];
-
-    Parameters empty_parameters = Parameters(R"({})");
-
-    RansLogarithmicYPlusModelSensitivitiesProcess adjoint_process(r_model_part, empty_parameters);
-    RansLogarithmicYPlusModelProcess primal_process(r_model_part, empty_parameters);
-
-    auto& r_element = *r_model_part.ElementsBegin();
-    auto& r_geometry = r_element.GetGeometry();
-
-    // Calculate initial y_plus values
-    RansCalculationUtilities rans_calculation_utilities;
-    primal_process.Check();
-    RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(primal_process, r_model_part);
-
-    // Calculate adjoint values
-    adjoint_process.Check();
-    adjoint_process.Execute();
-    Matrix& r_adjoint_values = r_element.GetValue(RANS_Y_PLUS_VELOCITY_DERIVATIVES);
-
-    const int domain_size = r_model_part.GetProcessInfo()[DOMAIN_SIZE];
-    const int number_of_nodes = r_model_part.NumberOfNodes();
-
-    Vector gauss_weights;
-    Matrix shape_functions;
-    ShapeFunctionDerivativesArrayType shape_derivatives;
-    rans_calculation_utilities.CalculateGeometryData(
-        r_geometry, r_element.GetIntegrationMethod(), gauss_weights,
-        shape_functions, shape_derivatives);
-
-    const int num_gauss_points = gauss_weights.size();
-
-    Vector nodal_y_plus_0(number_of_nodes);
-    Vector nodal_tke_0(number_of_nodes);
-    Vector nodal_epsilon_0(number_of_nodes);
-    Vector nodal_nu_t_0(number_of_nodes);
-    Vector nodal_f_mu_0(number_of_nodes);
-
-    RansEvmKEpsilonModel::ReadNodalDataFromElement(
-        nodal_y_plus_0, nodal_tke_0, nodal_epsilon_0, nodal_nu_t_0, nodal_f_mu_0, r_element);
-
-    Matrix nodal_f_mu_sensitivities(number_of_nodes, domain_size);
-    EvmKepsilonModelAdjointUtilities::CalculateNodalFmuVectorSensitivities(
-        nodal_f_mu_sensitivities, nodal_y_plus_0, r_adjoint_values);
-
-    Matrix nodal_nu_t_sensitivities(number_of_nodes, domain_size);
-    EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityVectorSensitivities(
-        nodal_nu_t_sensitivities, c_mu, nodal_tke_0, nodal_epsilon_0, nodal_f_mu_sensitivities);
-
-    // Calculate finite difference values
-    const double delta = 1e-8;
-    for (int g = 1; g < num_gauss_points; ++g)
-    {
-        RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(primal_process, r_model_part);
-        const Vector& gauss_shape_functions = row(shape_functions, g);
-        const Matrix& r_shape_derivatives = shape_derivatives[g];
-
-        const double y_plus_0 = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, RANS_Y_PLUS, gauss_shape_functions);
-        const double tke_0 = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
-        const double epsilon_0 = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, TURBULENT_ENERGY_DISSIPATION_RATE, gauss_shape_functions);
-        const double nu_t_0 = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, TURBULENT_VISCOSITY, gauss_shape_functions);
-
-        BoundedMatrix<double, 2, 2> velocity_gradient_matrix_0;
-        rans_calculation_utilities.CalculateGradient<2>(
-            velocity_gradient_matrix_0, r_geometry, VELOCITY, r_shape_derivatives);
-
-        const double f_mu_0 = EvmKepsilonModelUtilities::CalculateFmu(y_plus_0);
-        const double P_k_0 = EvmKepsilonModelUtilities::CalculateSourceTerm<2>(
-            velocity_gradient_matrix_0, nu_t_0, tke_0);
-        const double theta_0 =
-            EvmKepsilonModelUtilities::CalculateGamma(c_mu, f_mu_0, tke_0, nu_t_0);
-
-        const double Re_t_0 = std::pow(tke_0, 2) / (nu_t_0 * epsilon_0);
-        const double f2_0 = EvmKepsilonModelUtilities::CalculateF2(tke_0, nu_t_0, epsilon_0);
-
-        Matrix gauss_f_mu_velocity_sensitivities(number_of_nodes, domain_size);
-        EvmKepsilonModelAdjointUtilities::CalculateGaussFmuVectorSensitivities(
-            gauss_f_mu_velocity_sensitivities, y_plus_0, r_adjoint_values, gauss_shape_functions);
-
-        Matrix gauss_nu_t_velocity_sensitivities(number_of_nodes, domain_size);
-        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
-            gauss_nu_t_velocity_sensitivities, nodal_nu_t_sensitivities, gauss_shape_functions);
-
-        Matrix gauss_y_plus_velocity_sensitivities(number_of_nodes, domain_size);
-        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
-            gauss_y_plus_velocity_sensitivities, r_adjoint_values, gauss_shape_functions);
-
-        Matrix gauss_production_velocity_sensitivities(number_of_nodes, domain_size);
-        EvmKepsilonModelAdjointUtilities::CalculateProductionVelocitySensitivities<2>(
-            gauss_production_velocity_sensitivities, nu_t_0, gauss_nu_t_velocity_sensitivities,
-            velocity_gradient_matrix_0, r_shape_derivatives);
-
-        Matrix gauss_theta_sensitivities(number_of_nodes, domain_size);
-        EvmKepsilonModelAdjointUtilities::CalculateThetaVelocitySensitivity(
-            gauss_theta_sensitivities, c_mu, f_mu_0, tke_0, nu_t_0,
-            gauss_f_mu_velocity_sensitivities, gauss_nu_t_velocity_sensitivities);
-
-        Matrix gauss_turbulent_reynolds_sensitivities(number_of_nodes, domain_size);
-        EvmKepsilonModelAdjointUtilities::CalculateTurbulentReynoldsNumberVelocitySensitivity(
-            gauss_turbulent_reynolds_sensitivities, tke_0, epsilon_0, nu_t_0,
-            gauss_nu_t_velocity_sensitivities);
-
-        Matrix gauss_f2_sensitivities(number_of_nodes, domain_size);
-        EvmKepsilonModelAdjointUtilities::CalculateF2VelocitySensitivity(
-            gauss_f2_sensitivities, tke_0, epsilon_0, nu_t_0, gauss_nu_t_velocity_sensitivities);
-
-        for (int i_node = 0; i_node < number_of_nodes; ++i_node)
-        {
-            array_1d<double, 3>& r_velocity =
-                r_geometry[i_node].FastGetSolutionStepValue(VELOCITY);
-            for (int i_dim = 0; i_dim < domain_size; ++i_dim)
-            {
-                r_velocity[i_dim] += delta;
-                RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(
-                    primal_process, r_model_part);
-
-                const double y_plus = rans_calculation_utilities.EvaluateInPoint(
-                    r_geometry, RANS_Y_PLUS, gauss_shape_functions);
-                const double nu_t = rans_calculation_utilities.EvaluateInPoint(
-                    r_geometry, TURBULENT_VISCOSITY, gauss_shape_functions);
-                const double tke = rans_calculation_utilities.EvaluateInPoint(
-                    r_geometry, TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
-                const double epsilon = rans_calculation_utilities.EvaluateInPoint(
-                    r_geometry, TURBULENT_ENERGY_DISSIPATION_RATE, gauss_shape_functions);
-
-                const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
-
-                BoundedMatrix<double, 2, 2> velocity_gradient_matrix;
-                rans_calculation_utilities.CalculateGradient<2>(
-                    velocity_gradient_matrix, r_geometry, VELOCITY, r_shape_derivatives);
-
-                const double P_k = EvmKepsilonModelUtilities::CalculateSourceTerm<2>(
-                    velocity_gradient_matrix, nu_t, tke);
-
-                const double theta =
-                    EvmKepsilonModelUtilities::CalculateGamma(c_mu, f_mu, tke, nu_t);
-                const double Re_t = std::pow(tke, 2) / (nu_t * epsilon);
-                const double f2 =
-                    EvmKepsilonModelUtilities::CalculateF2(tke, nu_t, epsilon);
-
-                const double f_mu_sensitivity = (f_mu - f_mu_0) / delta;
-                const double nu_t_sensitivity = (nu_t - nu_t_0) / delta;
-                const double y_plus_sensitivity = (y_plus - y_plus_0) / delta;
-                const double P_k_sensitivity = (P_k - P_k_0) / delta;
-                const double theta_sensitivity = (theta - theta_0) / delta;
-                const double Re_t_sensitivity = (Re_t - Re_t_0) / delta;
-                const double f2_sensitivity = (f2 - f2_0) / delta;
-
-                KRATOS_CHECK_NEAR(gauss_f_mu_velocity_sensitivities(i_node, i_dim),
-                                  f_mu_sensitivity, 1e-6);
-                KRATOS_CHECK_NEAR(gauss_y_plus_velocity_sensitivities(i_node, i_dim),
-                                  y_plus_sensitivity, 1e-6);
-                KRATOS_CHECK_NEAR(gauss_nu_t_velocity_sensitivities(i_node, i_dim),
-                                  nu_t_sensitivity, 1e-6);
-                KRATOS_CHECK_NEAR(gauss_production_velocity_sensitivities(i_node, i_dim),
-                                  P_k_sensitivity, 1e-5);
-                KRATOS_CHECK_NEAR(gauss_theta_sensitivities(i_node, i_dim),
-                                  theta_sensitivity, 1e-6);
-                KRATOS_CHECK_NEAR(gauss_turbulent_reynolds_sensitivities(i_node, i_dim),
-                                  Re_t_sensitivity, 1e-5);
-                KRATOS_CHECK_NEAR(gauss_f2_sensitivities(i_node, i_dim),
-                                  f2_sensitivity, 1e-6);
-
-                KRATOS_CHECK_NOT_EQUAL(f_mu_sensitivity, 0.0);
-                KRATOS_CHECK_NOT_EQUAL(y_plus_sensitivity, 0.0);
-                KRATOS_CHECK_NOT_EQUAL(nu_t_sensitivity, 0.0);
-                KRATOS_CHECK_NOT_EQUAL(P_k_sensitivity, 0.0);
-                KRATOS_CHECK_NOT_EQUAL(theta_sensitivity, 0.0);
-                KRATOS_CHECK_NOT_EQUAL(Re_t_sensitivity, 0.0);
-
-                r_velocity[i_dim] -= delta;
-            }
-        }
-    }
-}
-
-KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonGaussTKESensitivities, RANSEvModels)
-{
-    Model model;
-    ModelPart& r_model_part =
-        model.CreateModelPart("RansEvmKEpsilonTKESensitivitiesGauss");
-    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(r_model_part,
-                                                               "RANSEVMK2D3N");
-
-    const double c_mu = r_model_part.GetProcessInfo()[TURBULENCE_RANS_C_MU];
-
-    Parameters empty_parameters = Parameters(R"({})");
-    RansLogarithmicYPlusModelProcess primal_process(r_model_part, empty_parameters);
-
-    auto& r_element = *r_model_part.ElementsBegin();
-    auto& r_geometry = r_element.GetGeometry();
-
-    // Calculate initial y_plus values
-    RansCalculationUtilities rans_calculation_utilities;
-    primal_process.Check();
-    RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(primal_process, r_model_part);
-
-    const int domain_size = r_model_part.GetProcessInfo()[DOMAIN_SIZE];
-    const int number_of_nodes = r_model_part.NumberOfNodes();
-
-    Vector gauss_weights;
-    Matrix shape_functions;
-    ShapeFunctionDerivativesArrayType shape_derivatives;
-    rans_calculation_utilities.CalculateGeometryData(
-        r_geometry, r_element.GetIntegrationMethod(), gauss_weights,
-        shape_functions, shape_derivatives);
-
-    const int num_gauss_points = gauss_weights.size();
-
-    Vector nodal_y_plus_0(number_of_nodes);
-    Vector nodal_tke_0(number_of_nodes);
-    Vector nodal_epsilon_0(number_of_nodes);
-    Vector nodal_nu_t_0(number_of_nodes);
-    Vector nodal_f_mu_0(number_of_nodes);
-
-    RansEvmKEpsilonModel::ReadNodalDataFromElement(
-        nodal_y_plus_0, nodal_tke_0, nodal_epsilon_0, nodal_nu_t_0, nodal_f_mu_0, r_element);
-
-    Vector nodal_nu_t_sensitivities(number_of_nodes, domain_size);
-    EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityTKESensitivities(
-        nodal_nu_t_sensitivities, c_mu, nodal_tke_0, nodal_epsilon_0, nodal_f_mu_0);
-
-    // Calculate finite difference values
-    for (int g = 0; g < num_gauss_points; ++g)
-    {
-        RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(primal_process, r_model_part);
-        const Vector& gauss_shape_functions = row(shape_functions, g);
-        const Matrix& r_shape_derivatives = shape_derivatives[g];
-
-        const double y_plus_0 = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, RANS_Y_PLUS, gauss_shape_functions);
-        const double tke_0 = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
-        const double epsilon_0 = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, TURBULENT_ENERGY_DISSIPATION_RATE, gauss_shape_functions);
-        const double nu_t_0 = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, TURBULENT_VISCOSITY, gauss_shape_functions);
-
-        BoundedMatrix<double, 2, 2> velocity_gradient_matrix_0;
-        rans_calculation_utilities.CalculateGradient<2>(
-            velocity_gradient_matrix_0, r_geometry, VELOCITY, r_shape_derivatives);
-
-        const double f_mu_0 = EvmKepsilonModelUtilities::CalculateFmu(y_plus_0);
-        const double Re_t_0 = std::pow(tke_0, 2) / (nu_t_0 * epsilon_0);
-
-        Vector gauss_nu_t_sensitivities(number_of_nodes);
-        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
-            gauss_nu_t_sensitivities, nodal_nu_t_sensitivities, gauss_shape_functions);
+            velocity_gradient_matrix, r_geometry, VELOCITY, rGaussShapeFunctionDerivatives);
 
         Vector gauss_production_sensitivities(number_of_nodes);
         EvmKepsilonModelAdjointUtilities::CalculateProductionScalarSensitivities<2>(
-            gauss_production_sensitivities, gauss_nu_t_sensitivities, velocity_gradient_matrix_0);
-
-        Vector gauss_theta_sensitivities(number_of_nodes);
-        EvmKepsilonModelAdjointUtilities::CalculateThetaTKESensitivity(
-            gauss_theta_sensitivities, c_mu, f_mu_0, tke_0, nu_t_0,
-            gauss_nu_t_sensitivities, gauss_shape_functions);
+            gauss_production_sensitivities, gauss_nu_t_sensitivities, velocity_gradient_matrix);
 
         Vector gauss_re_t_sensitivities(number_of_nodes);
         EvmKepsilonModelAdjointUtilities::CalculateTurbulentReynoldsNumberTKESensitivity(
-            gauss_re_t_sensitivities, tke_0, epsilon_0, nu_t_0,
-            gauss_nu_t_sensitivities, gauss_shape_functions);
+            gauss_re_t_sensitivities, tke, epsilon, nu, rGaussShapeFunctions);
+
+        Vector gauss_theta_sensitivities(number_of_nodes);
+        EvmKepsilonModelAdjointUtilities::CalculateThetaTKESensitivity(
+            gauss_theta_sensitivities, c_mu, f_mu, tke, nu_t,
+            gauss_nu_t_sensitivities, rGaussShapeFunctions);
 
         Vector gauss_f2_sensitivities(number_of_nodes);
         EvmKepsilonModelAdjointUtilities::CalculateF2ScalarSensitivity(
-            gauss_f2_sensitivities, epsilon_0, Re_t_0, gauss_re_t_sensitivities);
+            gauss_f2_sensitivities, epsilon, Re_t, gauss_re_t_sensitivities);
 
-        RansEvmKEpsilonModel::CheckGaussScalarSensitivities(
-            primal_process, r_model_part, r_element, TURBULENT_KINETIC_ENERGY,
-            gauss_shape_functions, r_shape_derivatives, gauss_nu_t_sensitivities,
-            gauss_production_sensitivities, gauss_theta_sensitivities,
-            gauss_re_t_sensitivities, gauss_f2_sensitivities);
-    }
+        rValues.clear();
+        rValues.push_back(gauss_nu_t_sensitivities);
+        rValues.push_back(gauss_production_sensitivities);
+        rValues.push_back(gauss_theta_sensitivities);
+        rValues.push_back(gauss_re_t_sensitivities);
+        rValues.push_back(gauss_f2_sensitivities);
+    };
+
+    RansModellingApplicationTestUtilities::RunGaussPointScalarSensitivityTest(
+        r_model_part, y_plus_model_process,
+        RansEvmKEpsilonModel::CalculatePrimalQuantities, calculate_sensitivities,
+        RansEvmKEpsilonModel::UpdateVariablesInModelPart, perturb_variable, 1e-7, 1e-6);
 }
 
-KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonGaussEpsilonSensitivities, RANSEvModels)
+KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonGaussEpsilonSensitivities, RANSEvModelsKEpsilonGaussMatrices)
 {
     Model model;
-    ModelPart& r_model_part =
-        model.CreateModelPart("RansEvmKEpsilonEpsilonSensitivitiesGauss");
+    ModelPart& r_model_part = model.CreateModelPart("RansSensitivities");
     RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(r_model_part,
                                                                "RANSEVMK2D3N");
 
-    const double c_mu = r_model_part.GetProcessInfo()[TURBULENCE_RANS_C_MU];
-
     Parameters empty_parameters = Parameters(R"({})");
-    RansLogarithmicYPlusModelProcess primal_process(r_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess y_plus_model_process(r_model_part, empty_parameters);
 
-    auto& r_element = *r_model_part.ElementsBegin();
-    auto& r_geometry = r_element.GetGeometry();
+    auto perturb_variable = [](NodeType& rNode) -> double& {
+        return rNode.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
+    };
 
-    // Calculate initial y_plus values
-    RansCalculationUtilities rans_calculation_utilities;
-    primal_process.Check();
-    RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(primal_process, r_model_part);
+    auto calculate_sensitivities = [](std::vector<Vector>& rValues,
+                                      const ElementType& rElement,
+                                      const Vector& rGaussShapeFunctions,
+                                      const Matrix& rGaussShapeFunctionDerivatives,
+                                      const ProcessInfo& rCurrentProcessInfo) {
+        RansCalculationUtilities rans_calculation_utilities;
 
-    const int domain_size = r_model_part.GetProcessInfo()[DOMAIN_SIZE];
-    const int number_of_nodes = r_model_part.NumberOfNodes();
+        const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
 
-    Vector gauss_weights;
-    Matrix shape_functions;
-    ShapeFunctionDerivativesArrayType shape_derivatives;
-    rans_calculation_utilities.CalculateGeometryData(
-        r_geometry, r_element.GetIntegrationMethod(), gauss_weights,
-        shape_functions, shape_derivatives);
+        const GeometryType& r_geometry = rElement.GetGeometry();
+        const int number_of_nodes = r_geometry.PointsNumber();
 
-    const int num_gauss_points = gauss_weights.size();
+        Vector nodal_y_plus(number_of_nodes);
+        Vector nodal_tke(number_of_nodes);
+        Vector nodal_epsilon(number_of_nodes);
+        Vector nodal_nu_t(number_of_nodes);
+        Vector nodal_f_mu(number_of_nodes);
 
-    Vector nodal_y_plus_0(number_of_nodes);
-    Vector nodal_tke_0(number_of_nodes);
-    Vector nodal_epsilon_0(number_of_nodes);
-    Vector nodal_nu_t_0(number_of_nodes);
-    Vector nodal_f_mu_0(number_of_nodes);
+        RansEvmKEpsilonModel::ReadNodalDataFromElement(
+            nodal_y_plus, nodal_tke, nodal_epsilon, nodal_nu_t, nodal_f_mu, rElement);
 
-    RansEvmKEpsilonModel::ReadNodalDataFromElement(
-        nodal_y_plus_0, nodal_tke_0, nodal_epsilon_0, nodal_nu_t_0, nodal_f_mu_0, r_element);
+        std::vector<double> primal_quantities;
+        RansEvmKEpsilonModel::CalculatePrimalQuantities(
+            primal_quantities, rElement, rGaussShapeFunctions,
+            rGaussShapeFunctionDerivatives, rCurrentProcessInfo);
 
-    Vector nodal_nu_t_sensitivities(number_of_nodes, domain_size);
-    EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityEpsilonSensitivities(
-        nodal_nu_t_sensitivities, c_mu, nodal_tke_0, nodal_epsilon_0, nodal_f_mu_0);
+        const double nu_t = primal_quantities[0];
+        const double Re_t = primal_quantities[3];
+        const double f_mu = primal_quantities[5];
+        const double nu = primal_quantities[6];
+        const double epsilon = primal_quantities[7];
+        const double tke = primal_quantities[8];
 
-    // Calculate finite difference values
-    for (int g = 0; g < num_gauss_points; ++g)
-    {
-        RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(primal_process, r_model_part);
-        const Vector& gauss_shape_functions = row(shape_functions, g);
-        const Matrix& r_shape_derivatives = shape_derivatives[g];
-
-        const double y_plus_0 = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, RANS_Y_PLUS, gauss_shape_functions);
-        const double tke_0 = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
-        const double epsilon_0 = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, TURBULENT_ENERGY_DISSIPATION_RATE, gauss_shape_functions);
-        const double nu_t_0 = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, TURBULENT_VISCOSITY, gauss_shape_functions);
-        const double f_mu_0 = EvmKepsilonModelUtilities::CalculateFmu(y_plus_0);
-        const double Re_t_0 = std::pow(tke_0, 2) / (nu_t_0 * epsilon_0);
+        Vector nodal_nu_t_sensitivities(number_of_nodes);
+        EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityEpsilonSensitivities(
+            nodal_nu_t_sensitivities, c_mu, nodal_tke, nodal_epsilon, nodal_f_mu);
 
         Vector gauss_nu_t_sensitivities(number_of_nodes);
         EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
-            gauss_nu_t_sensitivities, nodal_nu_t_sensitivities, gauss_shape_functions);
+            gauss_nu_t_sensitivities, nodal_nu_t_sensitivities, rGaussShapeFunctions);
 
-        BoundedMatrix<double, 2, 2> velocity_gradient_matrix_0;
+        BoundedMatrix<double, 2, 2> velocity_gradient_matrix;
         rans_calculation_utilities.CalculateGradient<2>(
-            velocity_gradient_matrix_0, r_geometry, VELOCITY, r_shape_derivatives);
+            velocity_gradient_matrix, r_geometry, VELOCITY, rGaussShapeFunctionDerivatives);
 
         Vector gauss_production_sensitivities(number_of_nodes);
         EvmKepsilonModelAdjointUtilities::CalculateProductionScalarSensitivities<2>(
-            gauss_production_sensitivities, gauss_nu_t_sensitivities, velocity_gradient_matrix_0);
+            gauss_production_sensitivities, gauss_nu_t_sensitivities, velocity_gradient_matrix);
 
         Vector gauss_theta_sensitivities(number_of_nodes);
         EvmKepsilonModelAdjointUtilities::CalculateThetaEpsilonSensitivity(
-            gauss_theta_sensitivities, c_mu, f_mu_0, tke_0, nu_t_0, gauss_nu_t_sensitivities);
+            gauss_theta_sensitivities, c_mu, f_mu, tke, nu_t, gauss_nu_t_sensitivities);
 
         Vector gauss_re_t_sensitivities(number_of_nodes);
         EvmKepsilonModelAdjointUtilities::CalculateTurbulentReynoldsNumberEpsilonSensitivity(
-            gauss_re_t_sensitivities, tke_0, epsilon_0, nu_t_0,
-            gauss_nu_t_sensitivities, gauss_shape_functions);
+            gauss_re_t_sensitivities, tke, epsilon, nu, rGaussShapeFunctions);
 
         Vector gauss_f2_sensitivities(number_of_nodes);
         EvmKepsilonModelAdjointUtilities::CalculateF2ScalarSensitivity(
-            gauss_f2_sensitivities, epsilon_0, Re_t_0, gauss_re_t_sensitivities);
+            gauss_f2_sensitivities, epsilon, Re_t, gauss_re_t_sensitivities);
 
-        RansEvmKEpsilonModel::CheckGaussScalarSensitivities(
-            primal_process, r_model_part, r_element, TURBULENT_ENERGY_DISSIPATION_RATE,
-            gauss_shape_functions, r_shape_derivatives, gauss_nu_t_sensitivities,
-            gauss_production_sensitivities, gauss_theta_sensitivities,
-            gauss_re_t_sensitivities, gauss_f2_sensitivities);
+        rValues.clear();
+        rValues.push_back(gauss_nu_t_sensitivities);
+        rValues.push_back(gauss_production_sensitivities);
+        rValues.push_back(gauss_theta_sensitivities);
+        rValues.push_back(gauss_re_t_sensitivities);
+        rValues.push_back(gauss_f2_sensitivities);
+    };
 
-        // checking pde terms
-    }
+    RansModellingApplicationTestUtilities::RunGaussPointScalarSensitivityTest(
+        r_model_part, y_plus_model_process,
+        RansEvmKEpsilonModel::CalculatePrimalQuantities, calculate_sensitivities,
+        RansEvmKEpsilonModel::UpdateVariablesInModelPart, perturb_variable, 1e-7, 3e-5);
 }
 
-KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonGaussShapeSensitivities, RANSEvModels)
+KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonGaussVelocitySensitivities, RANSEvModelsKEpsilonGaussMatrices)
 {
     Model model;
-    ModelPart& r_model_part =
-        model.CreateModelPart("RansEvmKEpsilonShapeSensitivitiesGauss");
+    ModelPart& r_model_part = model.CreateModelPart("RansSensitivities");
     RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(r_model_part,
                                                                "RANSEVMK2D3N");
 
     Parameters empty_parameters = Parameters(R"({})");
+    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_model_sensitivities_process(
+        r_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess y_plus_model_process(r_model_part, empty_parameters);
 
-    RansLogarithmicYPlusModelSensitivitiesProcess adjoint_process(r_model_part, empty_parameters);
-    RansLogarithmicYPlusModelProcess primal_process(r_model_part, empty_parameters);
+    y_plus_model_process.Check();
+    y_plus_model_process.Execute();
 
-    auto& r_element = *r_model_part.ElementsBegin();
-    auto& r_geometry = r_element.GetGeometry();
+    y_plus_model_sensitivities_process.Check();
+    y_plus_model_sensitivities_process.Execute();
 
-    // Calculate initial y_plus values
-    RansCalculationUtilities rans_calculation_utilities;
-    primal_process.Check();
-    RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(primal_process, r_model_part);
+    auto perturb_variable = [](NodeType& rNode, const int Dim) -> double& {
+        array_1d<double, 3>& r_vector = rNode.FastGetSolutionStepValue(VELOCITY);
+        return r_vector[Dim];
+    };
 
-    // Calculate adjoint values
-    adjoint_process.Check();
-    adjoint_process.Execute();
+    auto calculate_sensitivities = [](std::vector<Matrix>& rValues,
+                                      const ElementType& rElement,
+                                      const Vector& rGaussShapeFunctions,
+                                      const Matrix& rGaussShapeFunctionDerivatives,
+                                      const ProcessInfo& rCurrentProcessInfo) {
+        RansCalculationUtilities rans_calculation_utilities;
 
-    const int domain_size = r_model_part.GetProcessInfo()[DOMAIN_SIZE];
-    const int number_of_nodes = r_model_part.NumberOfNodes();
+        const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
+        const int domain_size = rCurrentProcessInfo[DOMAIN_SIZE];
 
-    Vector gauss_weights_0;
-    Matrix shape_functions_0;
-    ShapeFunctionDerivativesArrayType shape_derivatives_0;
-    rans_calculation_utilities.CalculateGeometryData(
-        r_geometry, r_element.GetIntegrationMethod(), gauss_weights_0,
-        shape_functions_0, shape_derivatives_0);
+        const GeometryType& r_geometry = rElement.GetGeometry();
+        const int number_of_nodes = r_geometry.PointsNumber();
 
-    const int num_gauss_points = gauss_weights_0.size();
+        Vector nodal_y_plus(number_of_nodes);
+        Vector nodal_tke(number_of_nodes);
+        Vector nodal_epsilon(number_of_nodes);
+        Vector nodal_nu_t(number_of_nodes);
+        Vector nodal_f_mu(number_of_nodes);
 
-    Vector nodal_y_plus_0(number_of_nodes);
-    Vector nodal_tke_0(number_of_nodes);
-    Vector nodal_epsilon_0(number_of_nodes);
-    Vector nodal_nu_t_0(number_of_nodes);
-    Vector nodal_f_mu_0(number_of_nodes);
-    Matrix nodal_velocity(number_of_nodes, domain_size);
+        RansEvmKEpsilonModel::ReadNodalDataFromElement(
+            nodal_y_plus, nodal_tke, nodal_epsilon, nodal_nu_t, nodal_f_mu, rElement);
 
-    RansEvmKEpsilonModel::ReadNodalDataFromElement(
-        nodal_y_plus_0, nodal_tke_0, nodal_epsilon_0, nodal_nu_t_0, nodal_f_mu_0, r_element);
+        std::vector<double> primal_quantities;
+        RansEvmKEpsilonModel::CalculatePrimalQuantities(
+            primal_quantities, rElement, rGaussShapeFunctions,
+            rGaussShapeFunctionDerivatives, rCurrentProcessInfo);
 
-    for (int i_node = 0; i_node < number_of_nodes; ++i_node)
-    {
-        for (int i_dim = 0; i_dim < domain_size; ++i_dim)
-        {
-            nodal_velocity(i_node, i_dim) =
-                r_geometry[i_node].FastGetSolutionStepValue(VELOCITY)[i_dim];
-        }
-    }
+        const double nu_t = primal_quantities[0];
+        const double f_mu = primal_quantities[5];
+        const double tke = primal_quantities[8];
+        const double y_plus = primal_quantities[9];
 
-    Geometry<Point>::JacobiansType J;
-    r_geometry.Jacobian(J, r_element.GetIntegrationMethod());
-
-    Geometry<Point>::ShapeFunctionsGradientsType DN_De;
-    DN_De = r_geometry.ShapeFunctionsLocalGradients(r_element.GetIntegrationMethod());
-
-    // Calculate finite difference values
-    const double delta = 1e-8;
-    for (int g = 1; g < num_gauss_points; ++g)
-    {
-        RansEvmKEpsilonModel::CalculateRansYPlusAndUpdateVariables(primal_process, r_model_part);
-        const Vector& gauss_shape_functions_0 = row(shape_functions_0, g);
-        const Matrix& r_shape_derivatives_0 = shape_derivatives_0[g];
-
-        const Matrix& rJ = J[g];
-        const Matrix& rDN_De = DN_De[g];
-        GeometricalSensitivityUtility geom_sensitivity(rJ, rDN_De);
-
-        ShapeParameter deriv;
-
-        const double nu_t_0 = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, TURBULENT_VISCOSITY, gauss_shape_functions_0);
-        const double tke_0 = rans_calculation_utilities.EvaluateInPoint(
-            r_geometry, TURBULENT_KINETIC_ENERGY, gauss_shape_functions_0);
-
-        BoundedMatrix<double, 2, 2> velocity_gradient_0;
+        BoundedMatrix<double, 2, 2> velocity_gradient_matrix;
         rans_calculation_utilities.CalculateGradient<2>(
-            velocity_gradient_0, r_geometry, VELOCITY, r_shape_derivatives_0);
+            velocity_gradient_matrix, r_geometry, VELOCITY, rGaussShapeFunctionDerivatives);
 
-        // calculating initial fd values
-        const double production_0 = EvmKepsilonModelUtilities::CalculateSourceTerm<2>(
-            velocity_gradient_0, nu_t_0, tke_0);
+        const Matrix& y_plus_sensitivities =
+            rElement.GetValue(RANS_Y_PLUS_VELOCITY_DERIVATIVES);
 
-        for (int i_node = 0; i_node < number_of_nodes; ++i_node)
-        {
-            for (int i_dim = 0; i_dim < domain_size; ++i_dim)
-            {
-                deriv.NodeIndex = i_node;
-                deriv.Direction = i_dim;
+        Matrix nodal_f_mu_sensitivities(number_of_nodes, domain_size);
+        EvmKepsilonModelAdjointUtilities::CalculateNodalFmuVectorSensitivities(
+            nodal_f_mu_sensitivities, nodal_y_plus, y_plus_sensitivities);
 
-                double detJ_deriv;
-                GeometricalSensitivityUtility::ShapeFunctionsGradientType DN_DX_deriv;
-                geom_sensitivity.CalculateSensitivity(deriv, detJ_deriv, DN_DX_deriv);
+        Matrix nodal_nu_t_sensitivities(number_of_nodes, domain_size);
+        EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityVectorSensitivities(
+            nodal_nu_t_sensitivities, c_mu, nodal_tke, nodal_epsilon, nodal_f_mu_sensitivities);
 
-                double nu_t_deriv = 0.0;
+        Matrix gauss_f_mu_velocity_sensitivities(number_of_nodes, domain_size);
+        EvmKepsilonModelAdjointUtilities::CalculateGaussFmuVectorSensitivities(
+            gauss_f_mu_velocity_sensitivities, y_plus, y_plus_sensitivities, rGaussShapeFunctions);
 
-                double production_adjoint_derivative;
-                EvmKepsilonModelAdjointUtilities::CalculateProductionShapeSensitivities<2>(
-                    production_adjoint_derivative, nu_t_0, nu_t_deriv, nodal_velocity,
-                    velocity_gradient_0, r_shape_derivatives_0, DN_DX_deriv);
+        Matrix gauss_nu_t_sensitivities(number_of_nodes, domain_size);
+        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+            gauss_nu_t_sensitivities, nodal_nu_t_sensitivities, rGaussShapeFunctions);
 
-                // doing fd sensitivities
-                if (i_dim == 0)
-                    r_geometry[i_node].X() += delta;
-                else if (i_dim == 1)
-                    r_geometry[i_node].Y() += delta;
+        Matrix gauss_y_plus_velocity_sensitivities(number_of_nodes, domain_size);
+        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+            gauss_y_plus_velocity_sensitivities, y_plus_sensitivities, rGaussShapeFunctions);
 
-                Vector gauss_weights;
-                Matrix shape_functions;
-                ShapeFunctionDerivativesArrayType shape_derivatives;
-                rans_calculation_utilities.CalculateGeometryData(
-                    r_geometry, r_element.GetIntegrationMethod(), gauss_weights,
-                    shape_functions, shape_derivatives);
+        Matrix gauss_production_sensitivities(number_of_nodes, domain_size);
+        EvmKepsilonModelAdjointUtilities::CalculateProductionVelocitySensitivities<2>(
+            gauss_production_sensitivities, nu_t, gauss_nu_t_sensitivities,
+            velocity_gradient_matrix, rGaussShapeFunctionDerivatives);
 
-                const Vector& gauss_shape_functions = row(shape_functions, g);
-                const Matrix& r_shape_derivatives = shape_derivatives[g];
+        Matrix gauss_theta_sensitivities(number_of_nodes, domain_size);
+        EvmKepsilonModelAdjointUtilities::CalculateThetaVelocitySensitivity(
+            gauss_theta_sensitivities, c_mu, f_mu, tke, nu_t,
+            gauss_f_mu_velocity_sensitivities, gauss_nu_t_sensitivities);
 
-                BoundedMatrix<double, 2, 2> velocity_gradient;
-                rans_calculation_utilities.CalculateGradient<2>(
-                    velocity_gradient, r_geometry, VELOCITY, r_shape_derivatives);
+        rValues.clear();
+        rValues.push_back(gauss_nu_t_sensitivities);
+        rValues.push_back(gauss_production_sensitivities);
+        rValues.push_back(gauss_theta_sensitivities);
+    };
 
-                const double nu_t = rans_calculation_utilities.EvaluateInPoint(
-                    r_geometry, TURBULENT_VISCOSITY, gauss_shape_functions);
-                const double tke = rans_calculation_utilities.EvaluateInPoint(
-                    r_geometry, TURBULENT_KINETIC_ENERGY, gauss_shape_functions);
-
-                const double production =
-                    EvmKepsilonModelUtilities::CalculateSourceTerm<2>(
-                        velocity_gradient, nu_t, tke);
-
-                const double production_sensitivity = (production - production_0) / delta;
-
-                KRATOS_CHECK_NEAR(production_sensitivity,
-                                  production_adjoint_derivative, 1e-5);
-                KRATOS_CHECK_NOT_EQUAL(production_sensitivity, 0.0);
-
-                if (i_dim == 0)
-                    r_geometry[i_node].X() -= delta;
-                else if (i_dim == 1)
-                    r_geometry[i_node].Y() -= delta;
-            }
-        }
-    }
+    RansModellingApplicationTestUtilities::RunGaussPointVectorSensitivityTest(
+        r_model_part, y_plus_model_process,
+        RansEvmKEpsilonModel::CalculatePrimalQuantities, calculate_sensitivities,
+        RansEvmKEpsilonModel::UpdateVariablesInModelPart, perturb_variable, 1e-7, 3e-6);
 }
 
-KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementSensitivityMatrix, RANSEvModels)
+KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementTKEFirstDerivativeLHSMatrix, RANSEvModelsKEpsilonElementResidualMatrices)
 {
     Model primal_model;
     ModelPart& r_primal_model_part =
@@ -1061,89 +549,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementSensitivityMatrix, RANSEvModels)
 
     RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
 
-    auto perturb_variable = [](NodeType& rNode, const int iDim, const double Epsilon) {
-        array_1d<double, 3>& r_coordinates = rNode.Coordinates();
-        r_coordinates[iDim] += Epsilon;
-    };
-
-    auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
-                                           const ProcessInfo& rProcessInfo) {
-        rElement.CalculateSensitivityMatrix(SHAPE_SENSITIVITY, rOutput, rProcessInfo);
-    };
-
-    RansModellingApplicationTestUtilities::RunResidualVectorSensitivityTest(
-        TURBULENT_KINETIC_ENERGY, RANS_AUXILIARY_VARIABLE_1, r_primal_model_part,
-        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
-        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
-        calculate_sensitivity_matrix, perturb_variable, 1e-7, 1e-6);
-}
-
-KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementVelocityFirstDerivativeLHSMatrix, RANSEvModels)
-{
-    Model primal_model;
-    ModelPart& r_primal_model_part =
-        primal_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
-    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
-        r_primal_model_part, "RANSEVMK2D3N");
-
-    Model adjoint_model;
-    ModelPart& r_adjoint_model_part =
-        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
-    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
-        r_adjoint_model_part, "RANSEVMKAdjoint2D3N");
-
-    Parameters empty_parameters = Parameters(R"({})");
-
-    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_sensitivities_process(
-        r_adjoint_model_part, empty_parameters);
-    RansLogarithmicYPlusModelProcess adjoint_y_plus_process(
-        r_adjoint_model_part, empty_parameters);
-
-    RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
-
-    auto perturb_variable = [](NodeType& rNode, const int iDim, const double Epsilon) {
-        array_1d<double, 3>& nodal_value = rNode.FastGetSolutionStepValue(VELOCITY);
-        nodal_value[iDim] += Epsilon;
-    };
-
-    auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
-                                           const ProcessInfo& rProcessInfo) {
-        rElement.Calculate(RANS_VELOCITY_PARTIAL_DERIVATIVE, rOutput, rProcessInfo);
-    };
-
-    RansModellingApplicationTestUtilities::RunResidualVectorSensitivityTest(
-        TURBULENT_KINETIC_ENERGY, RANS_AUXILIARY_VARIABLE_1, r_primal_model_part,
-        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
-        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
-        calculate_sensitivity_matrix, perturb_variable, 1e-7, 1e-5);
-}
-
-KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementTKEFirstDerivativeLHSMatrix, RANSEvModels)
-{
-    Model primal_model;
-    ModelPart& r_primal_model_part =
-        primal_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
-    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
-        r_primal_model_part, "RANSEVMK2D3N");
-
-    Model adjoint_model;
-    ModelPart& r_adjoint_model_part =
-        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
-    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
-        r_adjoint_model_part, "RANSEVMKAdjoint2D3N");
-
-    Parameters empty_parameters = Parameters(R"({})");
-
-    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_sensitivities_process(
-        r_adjoint_model_part, empty_parameters);
-    RansLogarithmicYPlusModelProcess adjoint_y_plus_process(
-        r_adjoint_model_part, empty_parameters);
-
-    RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
-
-    auto perturb_variable = [](NodeType& rNode, const double Epsilon) {
-        double& value = rNode.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
-        value += Epsilon;
+    auto perturb_variable = [](NodeType& rNode) -> double&{
+        return rNode.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
     };
 
     auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
@@ -1151,14 +558,14 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementTKEFirstDerivativeLHSMatrix, RANSEvMode
         rElement.CalculateFirstDerivativesLHS(rOutput, rProcessInfo);
     };
 
-    RansModellingApplicationTestUtilities::RunResidualScalarSensitivityTest(
+    RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(
         TURBULENT_KINETIC_ENERGY, RANS_AUXILIARY_VARIABLE_1, r_primal_model_part,
         r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
         y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
-        calculate_sensitivity_matrix, perturb_variable, 1e-6, 1e-5);
+        calculate_sensitivity_matrix, perturb_variable, 1e-8, 1e-5);
 }
 
-KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementEpsilonFirstDerivativeLHSMatrix, RANSEvModels)
+KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementEpsilonFirstDerivativeLHSMatrix, RANSEvModelsKEpsilonElementResidualMatrices)
 {
     Model primal_model;
     ModelPart& r_primal_model_part =
@@ -1181,25 +588,23 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementEpsilonFirstDerivativeLHSMatrix, RANSEv
 
     RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
 
-    auto perturb_variable = [](NodeType& rNode, const double Epsilon) {
-        double& value = rNode.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
-        value += Epsilon;
+    auto perturb_variable = [](NodeType& rNode) -> double&{
+        return rNode.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
     };
 
     auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
                                            ProcessInfo& rProcessInfo) {
-        rElement.Calculate(RANS_TURBULENT_ENERGY_DISSIPATION_RATE_PARTIAL_DERIVATIVE,
-                           rOutput, rProcessInfo);
+        rElement.Calculate(RANS_TURBULENT_ENERGY_DISSIPATION_RATE_PARTIAL_DERIVATIVE, rOutput, rProcessInfo);
     };
 
-    RansModellingApplicationTestUtilities::RunResidualScalarSensitivityTest(
+    RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(
         TURBULENT_KINETIC_ENERGY, RANS_AUXILIARY_VARIABLE_1, r_primal_model_part,
         r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
         y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
-        calculate_sensitivity_matrix, perturb_variable, 1e-6, 1e-5);
+        calculate_sensitivity_matrix, perturb_variable, 1e-8, 1e-5);
 }
 
-KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementTKESecondDerivativeLHSMatrix, RANSEvModels)
+KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementTKESecondDerivativeLHSMatrix, RANSEvModelsKEpsilonElementResidualMatrices)
 {
     Model primal_model;
     ModelPart& r_primal_model_part =
@@ -1222,9 +627,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementTKESecondDerivativeLHSMatrix, RANSEvMod
 
     RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
 
-    auto perturb_variable = [](NodeType& rNode, const double Epsilon) {
-        double& value = rNode.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY_RATE);
-        value += Epsilon;
+    auto perturb_variable = [](NodeType& rNode) -> double&{
+        return rNode.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY_RATE);
     };
 
     auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
@@ -1232,12 +636,289 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementTKESecondDerivativeLHSMatrix, RANSEvMod
         rElement.CalculateSecondDerivativesLHS(rOutput, rProcessInfo);
     };
 
-    RansModellingApplicationTestUtilities::RunResidualScalarSensitivityTest(
+    RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(
         TURBULENT_KINETIC_ENERGY, RANS_AUXILIARY_VARIABLE_1, r_primal_model_part,
+        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
+        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        calculate_sensitivity_matrix, perturb_variable, 1e-8, 1e-5);
+}
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementVelocityDerivativeLHSMatrix, RANSEvModelsKEpsilonElementResidualMatrices)
+{
+    Model primal_model;
+    ModelPart& r_primal_model_part =
+        primal_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_primal_model_part, "RANSEVMK2D3N");
+
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMKAdjoint2D3N");
+
+    Parameters empty_parameters = Parameters(R"({})");
+
+    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_sensitivities_process(
+        r_adjoint_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess adjoint_y_plus_process(
+        r_adjoint_model_part, empty_parameters);
+
+    RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
+
+    auto perturb_variable = [](NodeType& rNode, const int Dim) -> double&{
+        array_1d<double, 3>& r_velocity = rNode.FastGetSolutionStepValue(VELOCITY);
+        return r_velocity[Dim];
+    };
+
+    auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
+                                           ProcessInfo& rProcessInfo) {
+        rElement.Calculate(RANS_VELOCITY_PARTIAL_DERIVATIVE, rOutput, rProcessInfo);
+    };
+
+    RansModellingApplicationTestUtilities::RunElementResidualVectorSensitivityTest(
+        TURBULENT_KINETIC_ENERGY, RANS_AUXILIARY_VARIABLE_1, r_primal_model_part,
+        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
+        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        calculate_sensitivity_matrix, perturb_variable, 1e-7, 1e-5);
+}
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementShapeSensitivity, RANSEvModelsKEpsilonElementResidualMatrices)
+{
+    Model primal_model;
+    ModelPart& r_primal_model_part =
+        primal_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_primal_model_part, "RANSEVMK2D3N");
+
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMKAdjoint2D3N");
+
+    Parameters empty_parameters = Parameters(R"({})");
+
+    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_sensitivities_process(
+        r_adjoint_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess adjoint_y_plus_process(
+        r_adjoint_model_part, empty_parameters);
+
+    RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
+
+    auto perturb_variable = [](NodeType& rNode, const int Dim) -> double&{
+        array_1d<double, 3>& r_coordinates = rNode.Coordinates();
+        return r_coordinates[Dim];
+    };
+
+    auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
+                                           ProcessInfo& rProcessInfo) {
+        rElement.CalculateSensitivityMatrix(SHAPE_SENSITIVITY, rOutput, rProcessInfo);
+    };
+
+    RansModellingApplicationTestUtilities::RunElementResidualVectorSensitivityTest(
+        TURBULENT_KINETIC_ENERGY, RANS_AUXILIARY_VARIABLE_1, r_primal_model_part,
+        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
+        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        calculate_sensitivity_matrix, perturb_variable, 1e-7, 1e-5);
+}
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonElementEpsilonFirstDerivativeLHSMatrix, RANSEvModelsKEpsilonElementResidualMatrices)
+{
+    Model primal_model;
+    ModelPart& r_primal_model_part =
+        primal_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_primal_model_part, "RANSEVMEPSILON2D3N");
+
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMEpsilonAdjoint2D3N");
+
+    Parameters empty_parameters = Parameters(R"({})");
+
+    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_sensitivities_process(
+        r_adjoint_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess adjoint_y_plus_process(
+        r_adjoint_model_part, empty_parameters);
+
+    RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
+
+    auto perturb_variable = [](NodeType& rNode) -> double&{
+        return rNode.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE);
+    };
+
+    auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
+                                           ProcessInfo& rProcessInfo) {
+        rElement.CalculateFirstDerivativesLHS(rOutput, rProcessInfo);
+    };
+
+    RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(
+        TURBULENT_ENERGY_DISSIPATION_RATE, RANS_AUXILIARY_VARIABLE_2, r_primal_model_part,
+        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
+        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        calculate_sensitivity_matrix, perturb_variable, 1e-8, 1e-5);
+}
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonElementTKEFirstDerivativeLHSMatrix, RANSEvModelsKEpsilonElementResidualMatrices)
+{
+    Model primal_model;
+    ModelPart& r_primal_model_part =
+        primal_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_primal_model_part, "RANSEVMEPSILON2D3N");
+
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMEpsilonAdjoint2D3N");
+
+    Parameters empty_parameters = Parameters(R"({})");
+
+    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_sensitivities_process(
+        r_adjoint_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess adjoint_y_plus_process(
+        r_adjoint_model_part, empty_parameters);
+
+    RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
+
+    auto perturb_variable = [](NodeType& rNode) -> double&{
+        return rNode.FastGetSolutionStepValue(TURBULENT_KINETIC_ENERGY);
+    };
+
+    auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
+                                           ProcessInfo& rProcessInfo) {
+        rElement.Calculate(RANS_TURBULENT_KINETIC_ENERGY_PARTIAL_DERIVATIVE, rOutput, rProcessInfo);
+    };
+
+    RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(
+        TURBULENT_ENERGY_DISSIPATION_RATE, RANS_AUXILIARY_VARIABLE_2, r_primal_model_part,
+        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
+        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        calculate_sensitivity_matrix, perturb_variable, 1e-8, 1e-5);
+}
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonElementEpsilonSecondDerivativeLHSMatrix, RANSEvModelsKEpsilonElementResidualMatrices)
+{
+    Model primal_model;
+    ModelPart& r_primal_model_part =
+        primal_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_primal_model_part, "RANSEVMEPSILON2D3N");
+
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMEpsilonAdjoint2D3N");
+
+    Parameters empty_parameters = Parameters(R"({})");
+
+    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_sensitivities_process(
+        r_adjoint_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess adjoint_y_plus_process(
+        r_adjoint_model_part, empty_parameters);
+
+    RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
+
+    auto perturb_variable = [](NodeType& rNode) -> double&{
+        return rNode.FastGetSolutionStepValue(TURBULENT_ENERGY_DISSIPATION_RATE_2);
+    };
+
+    auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
+                                           ProcessInfo& rProcessInfo) {
+        rElement.CalculateSecondDerivativesLHS(rOutput, rProcessInfo);
+    };
+
+    RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(
+        TURBULENT_ENERGY_DISSIPATION_RATE, RANS_AUXILIARY_VARIABLE_2, r_primal_model_part,
         r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
         y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
         calculate_sensitivity_matrix, perturb_variable, 1e-6, 1e-5);
 }
 
+KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonElementShapeSensitivity, RANSEvModelsKEpsilonElementResidualMatrices)
+{
+    Model primal_model;
+    ModelPart& r_primal_model_part =
+        primal_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_primal_model_part, "RANSEVMEPSILON2D3N");
+
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMEpsilonAdjoint2D3N");
+
+    Parameters empty_parameters = Parameters(R"({})");
+
+    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_sensitivities_process(
+        r_adjoint_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess adjoint_y_plus_process(
+        r_adjoint_model_part, empty_parameters);
+
+    RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
+
+    auto perturb_variable = [](NodeType& rNode, const int Dim) -> double&{
+        array_1d<double, 3>& r_coordinates = rNode.Coordinates();
+        return r_coordinates[Dim];
+    };
+
+    auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
+                                           ProcessInfo& rProcessInfo) {
+        rElement.CalculateSensitivityMatrix(SHAPE_SENSITIVITY, rOutput, rProcessInfo);
+    };
+
+    RansModellingApplicationTestUtilities::RunElementResidualVectorSensitivityTest(
+        TURBULENT_ENERGY_DISSIPATION_RATE, RANS_AUXILIARY_VARIABLE_2, r_primal_model_part,
+        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
+        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        calculate_sensitivity_matrix, perturb_variable, 1e-7, 1e-5);
+}
+
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonElementVelocityDerivativeLHSMatrix, RANSEvModelsKEpsilonElementResidualMatrices)
+{
+    Model primal_model;
+    ModelPart& r_primal_model_part =
+        primal_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_primal_model_part, "RANSEVMEPSILON2D3N");
+
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMEpsilonAdjoint2D3N");
+
+    Parameters empty_parameters = Parameters(R"({})");
+
+    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_sensitivities_process(
+        r_adjoint_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess adjoint_y_plus_process(
+        r_adjoint_model_part, empty_parameters);
+
+    RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
+
+    auto perturb_variable = [](NodeType& rNode, const int Dim) -> double&{
+        array_1d<double, 3>& r_velocity = rNode.FastGetSolutionStepValue(VELOCITY);
+        return r_velocity[Dim];
+    };
+
+    auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
+                                           ProcessInfo& rProcessInfo) {
+        rElement.Calculate(RANS_VELOCITY_PARTIAL_DERIVATIVE, rOutput, rProcessInfo);
+    };
+
+    RansModellingApplicationTestUtilities::RunElementResidualVectorSensitivityTest(
+        TURBULENT_ENERGY_DISSIPATION_RATE, RANS_AUXILIARY_VARIABLE_2, r_primal_model_part,
+        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
+        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        calculate_sensitivity_matrix, perturb_variable, 1e-6, 1e-5);
+}
 } // namespace Testing
 } // namespace Kratos.

@@ -39,7 +39,7 @@ double CalculateF2(const double turbulent_kinetic_energy,
                    const double kinematic_viscosity,
                    const double turbulent_energy_dissipation_rate)
 {
-    if (turbulent_energy_dissipation_rate == 0.0)
+    if (turbulent_energy_dissipation_rate <= std::numeric_limits<double>::epsilon())
         return 1.0;
     else
     {

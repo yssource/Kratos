@@ -121,21 +121,19 @@ void CalculateThetaEpsilonSensitivity(Vector& rOutput,
 void CalculateTurbulentReynoldsNumberVelocitySensitivity(Matrix& rOutput,
                                                          const double tke,
                                                          const double epsilon,
-                                                         const double nu_t,
+                                                         const double nu,
                                                          const Matrix& rNuTSensitivities);
 
 void CalculateTurbulentReynoldsNumberTKESensitivity(Vector& rOutput,
                                                     const double tke,
                                                     const double epsilon,
-                                                    const double nu_t,
-                                                    const Vector& rNuTSensitivities,
+                                                    const double nu,
                                                     const Vector& rGaussShapeFunctions);
 
 void CalculateTurbulentReynoldsNumberEpsilonSensitivity(Vector& rOutput,
                                                         const double tke,
                                                         const double epsilon,
-                                                        const double nu_t,
-                                                        const Vector& rNuTSensitivities,
+                                                        const double nu,
                                                         const Vector& rGaussShapeFunctions);
 
 void CalculateF2VelocitySensitivity(Matrix& rOutput,
@@ -148,16 +146,6 @@ void CalculateF2ScalarSensitivity(Vector& rOutput,
                                   const double epsilon,
                                   const double Re_t,
                                   const Vector& rReTSensitivities);
-
-void CalculateReactionVelocitySensitivities(Matrix& rOutput,
-                                            const double wall_distance,
-                                            const Matrix& rNuTSensitivities,
-                                            const Matrix& rThetaSensitivities);
-
-void CalculateReactionScalarSensitivities(Vector& rOutput,
-                                          const double wall_distance,
-                                          const Vector& rNuTSensitivities,
-                                          const Vector& rThetaSensitivities);
 
 } // namespace EvmKepsilonModelAdjointUtilities
 

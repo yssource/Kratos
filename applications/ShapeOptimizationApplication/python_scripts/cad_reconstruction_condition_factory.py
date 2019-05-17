@@ -117,15 +117,15 @@ class ConditionFactory:
             for itr, [x,y,z] in enumerate(list_of_points):
                 destination_mdpa.CreateNewNode(itr, x, y, z)
 
+                # point_ptr = self.cad_model.Add(an.Point3D(location=[x, y, z]))
+                # point_ptr.Attributes().SetLayer('IntegrationPoints_'+str(face_i.Key()))
+
             # Map information from fem to integration points using element based mapper
             mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, self.parameters["conditions"]["general"]["mapping_cad_fem"].Clone() )
             mapper.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
 
             # Create conditions
-            for itr, fe_node in enumerate(destination_mdpa.Nodes):
-
-                [u,v] = list_of_parameters[itr]
-                weight = list_of_integration_weights[itr]
+            for fe_node, (u,v), weight in zip(destination_mdpa.Nodes, list_of_parameters, list_of_integration_weights):
 
                 total_area += weight
 
@@ -164,13 +164,13 @@ class ConditionFactory:
             list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i, drawing_tolerance)
 
             # Create conditions
-            for itr in range(len(list_of_points)):
-
-                [u,v] = list_of_parameters[itr]
-                weight = list_of_integration_weights[itr]
+            for (x,y,z), (u,v), weight in zip(list_of_points, list_of_parameters, list_of_integration_weights):
 
                 nonzero_indices, shape_functions = surface_geometry_data.ShapeFunctionsAt(u, v, order=2)
                 nonzero_pole_nodes = [pole_nodes[i] for i in nonzero_indices]
+
+                # point_ptr = self.cad_model.Add(an.Point3D(location=[x, y, z]))
+                # point_ptr.Attributes().SetLayer('IntegrationPoints_'+str(face_i.Key()))
 
                 if apply_kl_shell:
                     weight = shell_penalty_fac * weight
@@ -332,19 +332,11 @@ class ConditionFactory:
                     mapper.Map( KratosShape.NORMALIZED_SURFACE_NORMAL, KratosShape.NORMALIZED_SURFACE_NORMAL )
 
                 # Create conditions
-                for itr, fe_node in enumerate(destination_mdpa.Nodes):
-
-                    integration_weight = list_of_integration_weights[itr]
+                for fe_node, integration_weight, (u_a,v_a), (u_b,v_b) in zip(destination_mdpa.Nodes, list_of_integration_weights, list_of_parameters_a, list_of_parameters_b):
 
                     # Create conditions to enforce t1 and t2 on both face a and face b
-                    u_a = list_of_parameters_a[itr][0]
-                    v_a = list_of_parameters_a[itr][1]
-
                     nonzero_indices_a, shape_functions_a = surface_geometry_data_a.ShapeFunctionsAt(u_a, v_a, order=1)
                     nonzero_pole_nodes_a = [poles_nodes_a[i] for i in nonzero_indices_a]
-
-                    u_b = list_of_parameters_b[itr][0]
-                    v_b = list_of_parameters_b[itr][1]
 
                     nonzero_indices_b, shape_functions_b = surface_geometry_data_b.ShapeFunctionsAt(u_b, v_b, order=1)
                     nonzero_pole_nodes_b = [poles_nodes_b[i] for i in nonzero_indices_b]
@@ -466,10 +458,8 @@ class ConditionFactory:
         mapper.Map( KratosShape.NORMALIZED_SURFACE_NORMAL, KratosShape.NORMALIZED_SURFACE_NORMAL )
 
         # Create conditions for each corner point
-        for itr, fe_node in enumerate(destination_mdpa.Nodes):
+        for fe_node, face, (u,v) in zip(destination_mdpa.Nodes, corner_point_faces, corner_point_parameters):
             integration_weight = 1
-
-            face = corner_point_faces[itr]
 
             surface_geometry = face.Data().Geometry()
             surface_geometry_data = face.Data().Geometry().Data()
@@ -477,9 +467,6 @@ class ConditionFactory:
             pole_nodes = self.pole_nodes[surface_geometry.Key()]
 
             # Create conditions to enforce t1 and t2 on both face a and face b
-            u = corner_point_parameters[itr][0]
-            v = corner_point_parameters[itr][1]
-
             nonzero_indices, shape_functions = surface_geometry_data.ShapeFunctionsAt(u, v, order=1)
             nonzero_pole_nodes = [pole_nodes[i] for i in nonzero_indices]
 

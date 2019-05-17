@@ -560,6 +560,9 @@ class ConditionFactory:
 
                     # rotation coupling condition
                     if penalty_factor_rotation > 0:
+                        _, T2_edge = edge_curve_a.DerivativesAt(t_a, order=1)
+                        T2_edge /=   np.linalg.norm(T2_edge)
+
                         weight = penalty_factor_rotation * integration_weight
 
                         new_condition = clib.RotationCouplingConditionWithAD( nonzero_pole_nodes_a,

@@ -23,6 +23,7 @@ import numpy as np
 import numpy.linalg as la
 import time, shutil
 import EQlib as eq
+# import IGAlib as iga
 
 # ==============================================================================
 class ConditionFactory:
@@ -89,6 +90,12 @@ class ConditionFactory:
                 nonzero_pole_nodes = [pole_nodes[i] for i in nonzero_indices]
 
                 new_condition = clib.DistanceMinimizationCondition(fe_node, nonzero_pole_nodes, shape_functions, KratosShape.SHAPE_CHANGE, weight=1)
+
+                # Variant with C++ element of EQlib
+                # node_initial_coords = np.array([fe_node.X, fe_node.Y, fe_node.Z])
+                # nodal_update = np.array(fe_node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE))
+                # fe_node_coords = node_initial_coords + nodal_update
+                # new_condition = iga.LocationConstraint(nonzero_pole_nodes, shape_functions, fe_node_coords, 1)
 
                 conditions.append(new_condition)
 

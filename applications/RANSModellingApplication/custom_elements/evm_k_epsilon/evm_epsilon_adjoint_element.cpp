@@ -140,7 +140,7 @@ Element::Pointer EvmEpsilonAdjointElement<TDim, TNumNodes>::Create(
     IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const
 {
     KRATOS_TRY
-    return Kratos::make_shared<EvmEpsilonAdjointElement>(
+    return Kratos::make_intrusive<EvmEpsilonAdjointElement>(
         NewId, Element::GetGeometry().Create(ThisNodes), pProperties);
     KRATOS_CATCH("");
 }
@@ -157,7 +157,7 @@ Element::Pointer EvmEpsilonAdjointElement<TDim, TNumNodes>::Create(
     IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const
 {
     KRATOS_TRY
-    return Kratos::make_shared<EvmEpsilonAdjointElement>(NewId, pGeom, pProperties);
+    return Kratos::make_intrusive<EvmEpsilonAdjointElement>(NewId, pGeom, pProperties);
     KRATOS_CATCH("");
 }
 
@@ -173,7 +173,7 @@ Element::Pointer EvmEpsilonAdjointElement<TDim, TNumNodes>::Clone(IndexType NewI
                                                                   NodesArrayType const& ThisNodes) const
 {
     KRATOS_TRY
-    return Kratos::make_shared<EvmEpsilonAdjointElement>(
+    return Kratos::make_intrusive<EvmEpsilonAdjointElement>(
         NewId, Element::GetGeometry().Create(ThisNodes), Element::pGetProperties());
     KRATOS_CATCH("");
 }

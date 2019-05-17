@@ -277,6 +277,7 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
 # =======================================================================================================
 os.remove("cad_reconstruction_process_test.post.lst")
 os.remove("plate.time")
+os.remove("fe_parametrization_backup.json")
 
 if delete_result_folders:
     for number in range(test_number+1):

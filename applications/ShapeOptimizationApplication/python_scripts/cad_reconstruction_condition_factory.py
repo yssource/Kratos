@@ -24,6 +24,7 @@ import numpy.linalg as la
 import time, shutil
 import EQlib as eq
 # import IGAlib as iga
+import os, json
 
 # ==============================================================================
 class ConditionFactory:
@@ -640,7 +641,19 @@ class ConditionFactory:
         if self.fe_point_parametrization is not None:
             return self.fe_point_parametrization
         else:
-            self.fe_point_parametrization = self.__CreateFEPointParametrization()
+            parametrization_filename = self.parameters["input"]["fe_parametrization_filename"].GetString()
+            parametrization_backup_filename = "fe_parametrization_backup.json"
+
+            if parametrization_filename != "":
+                print("> Using FE point parametrization from input file...")
+                self.fe_point_parametrization = self.__ReadFEPointParametrizationFromJson(parametrization_filename)
+            elif os.path.exists(parametrization_backup_filename):
+                print("> Using FE point parametrization from backup file...")
+                self.fe_point_parametrization = self.__ReadFEPointParametrizationFromJson(parametrization_backup_filename)
+            else:
+                self.fe_point_parametrization = self.__CreateFEPointParametrization()
+                self.__StoreFePointParametrizationAsJson(parametrization_backup_filename)
+
             return self.fe_point_parametrization
 
     # --------------------------------------------------------------------------
@@ -733,6 +746,52 @@ class ConditionFactory:
         print("> Finished parametrization of fe points in" ,round( time.time()-start_time, 3 ), " s.")
 
         return fe_point_parametrization
+
+    # --------------------------------------------------------------------------
+    def __ReadFEPointParametrizationFromJson(self, filename):
+        with open(filename) as json_file:
+            data = json.load(json_file)
+
+        fe_point_parametrization = []
+        for node_i in self.fe_model_part.Nodes:
+            fe_point_parametrization.append({"node": node_i , "faces": [], "parameters": [], "is_on_boundary": False})
+
+        node_id_to_itr = {}
+        for itr, node in enumerate(self.fe_model_part.Nodes):
+            node_id_to_itr[node.Id] = itr
+
+        for face_key, local_fe_parametric in data.items():
+
+            face_i = self.cad_model.Get(face_key)
+            surface = an.Surface3D(face_i.Data().Geometry())
+
+            for (fe_node_id, u, v) in local_fe_parametric:
+                node_itr = node_id_to_itr[fe_node_id]
+                fe_point_parametrization[node_itr]["faces"].append(face_i)
+                fe_point_parametrization[node_itr]["parameters"].append((u,v))
+
+                # point_ptr = self.cad_model.Add(an.Point3D(location=surface.PointAt(*(u,v))))
+                # point_ptr.Attributes().SetLayer('FEPoints_projected_face_'+str(face_i.Key()))
+
+        return fe_point_parametrization
+
+    # --------------------------------------------------------------------------
+    def __StoreFePointParametrizationAsJson(self, filename):
+        out_dict = {}
+        for entry in self.fe_point_parametrization:
+            node = entry["node"]
+            faces = entry["faces"]
+            parameters = entry["parameters"]
+
+            for face in faces:
+                if face.Key() not in out_dict.keys():
+                    out_dict[face.Key()] = []
+
+            for face, (u,v) in zip(faces, parameters):
+                out_dict[face.Key()].append([node.Id, u, v])
+
+        with open(filename, 'w') as fp:
+            json.dump(out_dict, fp)
 
     # --------------------------------------------------------------------------
     @staticmethod

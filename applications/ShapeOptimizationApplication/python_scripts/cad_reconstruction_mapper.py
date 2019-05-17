@@ -37,7 +37,8 @@ class CADMapper:
             {
                 "cad_filename"                  : "name.iga",
                 "fem_filename"                  : "name.mdpa",
-                "fe_refinement_level"           : 0
+                "fe_refinement_level"           : 0,
+                "fe_parametrization_filename"   : ""
             },
             "conditions" :
             {

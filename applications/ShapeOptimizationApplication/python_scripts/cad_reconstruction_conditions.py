@@ -467,6 +467,8 @@ class DisplacementCouplingConditionWithAD(ReconstructionConditionWithAD):
 
 # ==============================================================================
 class RotationCouplingConditionWithAD(ReconstructionConditionWithAD):
+    # Note that this condition considers the rotation around a common tangent vector from one of the two coupled faces (T2_edge)
+    # This is different to the classical IGA coupling where the rotation is calculated on the individual tangents (which requires a direction/sign check)
     # --------------------------------------------------------------------------
     def __init__(self, pole_nodes_a, pole_nodes_b, T2_edge, shape_functions_a, shape_functions_b, geometry_a, geometry_b, parameters_a, parameters_b, penalty):
         super().__init__()

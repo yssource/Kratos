@@ -1,0 +1,850 @@
+//  KratosFluidDynamicsApplication
+//
+//  License:		 BSD License
+//					 license: FluidDynamicsApplication/license.txt
+//
+//  Main authors:
+//
+
+#if !defined(KRATOS_RANS_EVM_VMS_ADJOINT_ELEMENT_H_INCLUDED)
+#define KRATOS_RANS_EVM_VMS_ADJOINT_ELEMENT_H_INCLUDED
+
+// System includes
+#include <cmath>
+#include <iostream>
+#include <string>
+
+// Project includes
+#include "geometries/tetrahedra_3d_4.h"
+#include "geometries/triangle_2d_3.h"
+#include "includes/cfd_variables.h"
+#include "includes/define.h"
+#include "includes/element.h"
+#include "includes/kratos_flags.h"
+#include "includes/serializer.h"
+#include "includes/ublas_interface.h"
+#include "utilities/adjoint_extensions.h"
+#include "utilities/geometry_utilities.h"
+#include "utilities/indirect_scalar.h"
+
+// Application includes
+#include "FluidDynamicsApplication/custom_elements/vms_adjoint_element.h"
+#include "fluid_dynamics_application_variables.h"
+
+namespace Kratos
+{
+///@addtogroup FluidDynamicsApplication
+///@{
+
+///@name Kratos Classes
+///@{
+
+/**
+ * @brief An adjoint element for discrete shape sensitivity of VMS fluid element.
+ *
+ * @see VMS monolithic fluid element
+ */
+template <unsigned int TDim, class TRANSEvmVMSAdjointData>
+class RANSEvmVMSAdjointElement : public VMSAdjointElement<TDim>
+{
+public:
+    ///@name Type Definitions
+    ///@{
+
+    /// Pointer definition
+    KRATOS_CLASS_POINTER_DEFINITION(RANSEvmVMSAdjointElement);
+
+    constexpr static unsigned int TNumNodes = TDim + 1;
+
+    constexpr static unsigned int TBlockSize = TDim + 1;
+
+    constexpr static unsigned int TFluidLocalSize = TBlockSize * TNumNodes;
+
+    constexpr static unsigned int TCoordLocalSize = TDim * TNumNodes;
+
+    typedef Element::IndexType IndexType;
+
+    typedef Element::SizeType SizeType;
+
+    typedef Element::GeometryType GeometryType;
+
+    typedef Element::PropertiesType PropertiesType;
+
+    typedef Element::NodesArrayType NodesArrayType;
+
+    typedef Element::VectorType VectorType;
+
+    typedef Element::MatrixType MatrixType;
+
+    typedef Element::DofsVectorType DofsVectorType;
+
+    typedef Element::EquationIdVectorType EquationIdVectorType;
+
+    typedef BoundedMatrix<double, TNumNodes, TDim> ShapeFunctionDerivativesType;
+
+    typedef VMSAdjointElement<TDim> BaseType;
+
+    ///@}
+    ///@name Life Cycle
+    ///@{
+
+    RANSEvmVMSAdjointElement(IndexType NewId = 0)
+        : VMSAdjointElement<TDim>(NewId)
+    {
+    }
+
+    RANSEvmVMSAdjointElement(IndexType NewId, GeometryType::Pointer pGeometry)
+        : VMSAdjointElement<TDim>(NewId, pGeometry)
+    {
+    }
+
+    RANSEvmVMSAdjointElement(IndexType NewId,
+                             GeometryType::Pointer pGeometry,
+                             PropertiesType::Pointer pProperties)
+        : VMSAdjointElement<TDim>(NewId, pGeometry, pProperties)
+    {
+    }
+
+    ~RANSEvmVMSAdjointElement() override
+    {
+    }
+
+    ///@}
+    ///@name Operations
+    ///@{
+
+    /**
+     * @brief Creates a new element of this type.
+     *
+     * @return pointer to the newly created element
+     */
+    Element::Pointer Create(IndexType NewId,
+                            NodesArrayType const& ThisNodes,
+                            PropertiesType::Pointer pProperties) const override
+    {
+        KRATOS_TRY
+
+        return Element::Pointer(new RANSEvmVMSAdjointElement<TDim, TRANSEvmVMSAdjointElementData>(
+            NewId, this->GetGeometry().Create(ThisNodes), pProperties));
+
+        KRATOS_CATCH("")
+    }
+
+    Element::Pointer Create(IndexType NewId,
+                            GeometryType::Pointer pGeom,
+                            PropertiesType::Pointer pProperties) const override
+    {
+        KRATOS_TRY
+
+        return Element::Pointer(new RANSEvmVMSAdjointElement<TDim, TRANSEvmVMSAdjointElementData>(
+            NewId, pGeom, pProperties));
+
+        KRATOS_CATCH("")
+    }
+
+    /**
+     * @brief Checks for proper element geometry, nodal variables and dofs.
+     *
+     * @return 0 after successful completion.
+     */
+    int Check(const ProcessInfo& rCurrentProcessInfo) override
+    {
+        KRATOS_TRY
+
+        BaseType::Check(rCurrentProcessInfo);
+
+        // TODO:
+
+        return 0;
+
+        KRATOS_CATCH("")
+    }
+
+    /**
+     * @brief Calculates the adjoint matrix for velocity and pressure.
+     *
+     * This function returns the gradient of the elemental residual w.r.t.
+     * velocity and pressure transposed:
+     *
+     * \f[
+     *    \partial_{\mathbf{w}^n}\mathbf{f}(\mathbf{w}^n)^T
+     *  - \partial_{\mathbf{w}^n}(\mathbf{M}^n \dot{\mathbf{w}}^n)^T
+     * \f]
+     *
+     * where \f$\mathbf{w}^n\f$ is the vector of nodal velocities and pressures
+     * stored at the current step. For steady problems, the ACCELERATION
+     * (\f$\dot{\mathbf{w}}^n\f$) must be set to zero on the nodes. For
+     * the Bossak method, \f$\dot{\mathbf{w}}^{n-\alpha}\f$ must be stored in
+     * ACCELERATION.
+     */
+    void CalculateFirstDerivativesLHS(MatrixType& rLeftHandSideMatrix,
+                                      ProcessInfo& rCurrentProcessInfo) override
+    {
+        BaseType::CalculateFirstDerivativesLHS(rLeftHandSideMatrix, rCurrentProcessInfo);
+
+        // Adding additional terms coming from the eddy viscosity hypothesis
+        AddTurbulentViscosityPartialDerivativePrimalGradientOfVMSSteadyTerm(
+            rLeftHandSideMatrix, rCurrentProcessInfo);
+        AddTurbulentViscosityPartialDerivativePrimalGradientOfVMSMassTerm(
+            rLeftHandSideMatrix, ACCELERATION, -1.0, rCurrentProcessInfo);
+    }
+
+    ///@}
+    ///@name Input and output
+    ///@{
+
+    std::string Info() const override
+    {
+        std::stringstream buffer;
+        buffer << "RANSEvmVMSAdjointElement"
+               << this->GetGeometry().WorkingSpaceDimension() << "D #" << this->Id();
+        return buffer.str();
+    }
+
+    void PrintInfo(std::ostream& rOStream) const override
+    {
+        rOStream << "RANSEvmVMSAdjointElement"
+                 << this->GetGeometry().WorkingSpaceDimension() << "D #"
+                 << this->Id() << std::endl;
+        rOStream << "Number of Nodes: " << this->GetGeometry().PointsNumber() << std::endl;
+    }
+
+    void PrintData(std::ostream& rOStream) const override
+    {
+        this->PrintInfo(rOStream);
+        rOStream << "Geometry Data: " << std::endl;
+        this->GetGeometry().PrintData(rOStream);
+    }
+
+    ///@}
+
+protected:
+    ///@name Protected Operations
+    ///@{
+
+    virtual void CalculateRansEvmVMSAdjointData(TRansEvmVMSAdjointData& rData,
+                                                const Vector& rShapeFunctions,
+                                                const Matrix& rShapeFunctionDerivatives,
+                                                const ProcessInfo& rCurrentProcessInfo) const
+    {
+        KRATOS_TRY;
+        KRATOS_ERROR << "Attempting to call base "
+                        "RANSEvmVMSAdjointElement "
+                        "CalculateRansEvmVMSAdjointData method. "
+                        "Please implement it in the derrived class."
+                     << std::endl;
+        KRATOS_CATCH("");
+    }
+
+    virtual void CalculateTurbulentKinematicViscosityVelocityDerivatives(
+        Matrix& rOutput,
+        const TConvectionDiffusionReactionAdjointData& rCurrentData,
+        const ProcessInfo& rCurrentProcessInfo) const
+    {
+        KRATOS_TRY
+
+        KRATOS_ERROR
+            << "Calling base "
+               "CalculateTurbulentKinematicViscosityVelocityDerivatives "
+               "method in "
+               "RANSEvmVMSAdjointElement "
+               "class. Please implement it in the derrived class.";
+
+        KRATOS_CATCH("");
+    }
+
+    virtual void CalculateTurbulentKinematicViscosityScalarDerivatives(
+        Vector& rOutput,
+        const Variable<double>& rDerivativeVariable,
+        const TConvectionDiffusionReactionAdjointData& rCurrentData,
+        const ProcessInfo& rCurrentProcessInfo) const
+    {
+        KRATOS_TRY
+
+        KRATOS_ERROR << "Calling base "
+                        "CalculateTurbulentKinematicViscosityScalarDerivatives "
+                        "method in "
+                        "RANSEvmVMSAdjointElement "
+                        "class. Please implement it in the derrived class.";
+
+        KRATOS_CATCH("");
+    }
+
+    void CalculateElementTotalResidualScalarDerivatives(Matrix& rOutput,
+                                                        const Variable<double>& rDerivativeVariable,
+                                                        const ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY
+
+        // Get shape functions, shape function gradients and element volume (area in
+        // 2D). Only one integration point is used so the volume is its weight.
+        ShapeFunctionDerivativesType DN_DX;
+        array_1d<double, TNumNodes> N;
+        double Volume;
+
+        GeometryUtils::CalculateGeometryData(this->GetGeometry(), DN_DX, N, Volume);
+
+        TRANSEvmVMSAdjointData current_data;
+        this->CalculateRansEvmVMSAdjointData(current_data, N, DN_DX, rCurrentProcessInfo);
+
+        // Density
+        double Density;
+        this->EvaluateInPoint(Density, DENSITY, N);
+
+        // Dynamic viscosity
+        double Viscosity;
+        this->EvaluateInPoint(Viscosity, VISCOSITY, N);
+        Viscosity *= Density;
+
+        // u
+        array_1d<double, TDim> Velocity;
+        this->EvaluateInPoint(Velocity, VELOCITY, N);
+
+        // u * Grad(N)
+        array_1d<double, TNumNodes> DensityVelGradN;
+        noalias(DensityVelGradN) = Density * prod(DN_DX, Velocity);
+
+        // Grad(u)
+        BoundedMatrix<double, TDim, TDim> DensityGradVel;
+        this->CalculateVelocityGradient(DensityGradVel, DN_DX);
+
+        // Div(u)
+        double DivVel = 0.0;
+        for (IndexType d = 0; d < TDim; ++d)
+            DivVel += DensityGradVel(d, d);
+
+        DensityGradVel *= Density;
+
+        // Grad(p)
+        array_1d<double, TDim> GradP;
+        this->CalculatePressureGradient(GradP, DN_DX);
+
+        // ( Grad(u) * Grad(N) )^T
+        BoundedMatrix<double, TNumNodes, TDim> DN_DX_DensityGradVel;
+        noalias(DN_DX_DensityGradVel) = prod(DN_DX, DensityGradVel);
+
+        // ( u * Grad(u) * Grad(N) )^T
+        array_1d<double, TNumNodes> DN_DX_DensityGradVel_Vel;
+        noalias(DN_DX_DensityGradVel_Vel) = prod(DN_DX_DensityGradVel, Velocity);
+
+        // u * Grad(u)
+        array_1d<double, TDim> DensityGradVel_Vel;
+        noalias(DensityGradVel_Vel) = prod(DensityGradVel, Velocity);
+
+        // Grad(N)^T * Grad(p)
+        array_1d<double, TNumNodes> DN_DX_GradP;
+        noalias(DN_DX_GradP) = prod(DN_DX, GradP);
+
+        // Grad(N)^T * BodyForce
+        array_1d<double, TDim> BodyForce;
+        array_1d<double, TNumNodes> DN_DX_BodyForce;
+        this->EvaluateInPoint(BodyForce, BODY_FORCE, N);
+        BodyForce *= Density;
+        noalias(DN_DX_BodyForce) = prod(DN_DX, BodyForce);
+
+        // Stabilization parameters TauOne, TauTwo
+        double VelNorm = norm_2(Velocity);
+        double ElemSize = this->CalculateElementSize(Volume);
+        double TauOne, TauTwo;
+        this->CalculateStabilizationParameters(TauOne, TauTwo, VelNorm, ElemSize, Density,
+                                               Viscosity, rCurrentProcessInfo);
+
+        // Derivatives of TauOne, TauTwo w.r.t velocity. These definitions
+        // depend on the definitions of TauOne and TauTwo and should be
+        // consistent with the fluid element used to solve for VELOCITY and
+        // PRESSURE.
+        BoundedVector<double, TNumNodes> TauOneDeriv;
+        BoundedVector<double, TNumNodes> TauTwoDeriv;
+
+        Vector NuTDerivative(TNumNodes);
+        this->CalculateTurbulentKinematicViscosityScalarDerivatives(
+            NuTDerivative, current_data, rCurrentProcessInfo);
+
+        if (VelNorm > 0.0)
+        {
+            const double CoefOne = -4.0 * Density * TauOne * TauOne / (ElemSize * ElemSize);
+
+            for (IndexType i = 0; i < TNumNodes; ++i)
+            {
+                    TauOneDeriv[i] = CoefOne * NuTDerivative[i];
+                    TauTwoDeriv[i] = Density * NuTDerivative[i];
+            }
+        }
+
+        // Here, -(\partial R / \partial W) is calculated. This is the discrete
+        // derivative of the fluid residual w.r.t the fluid variables and therefore
+        // includes many of the terms defined in the fluid element. Neglecting the
+        // transient terms of the fluid element, this matrix is identical to the
+        // Jacobian of the fluid residual used for Newton-Raphson iterations. The
+        // matrix is transposed at the end to get the adjoint system matrix.
+
+        const double coeff = DivVel * Density * 2.0 / 3.0;
+
+        IndexType FirstRow(0), FirstCol(0);
+        // Loop over nodes
+        for (IndexType i = 0; i < TNumNodes; ++i)
+        {
+            for (IndexType j = 0; j < TNumNodes; ++j)
+            {
+                for (IndexType m = 0; m < TDim; ++m)
+                {
+                    const double dNi_dUm =
+                        inner_prod(row(DN_DX, i), row(DensityGradVel, m));
+
+                    double valm = 0.0;
+
+                    // Stabilization, lsq convection
+                    // (u * Grad(v)) * TauOne * (u * Grad(u))
+                    valm += DensityVelGradN[i] * TauOneDeriv[j] * DensityGradVel_Vel[m];
+                    // Stabilization, lsq divergence
+                    // Div(v) * TauTwo * Div(u)
+                    valm += DN_DX(i, m) * TauTwoDeriv[j] * DivVel;
+
+                    // Stabilization, convection-pressure
+                    // (u * Grad(v)) * TauOne * Grad(p)
+                    valm += TauOneDeriv[j] * DensityVelGradN[i] * GradP[m];
+
+                    // Stabilization, convection-BodyForce
+                    // (u * Grad(v)) * TauOne * f
+                    valm -= DensityVelGradN[i] * TauOneDeriv[j] * BodyForce[m];
+
+                    valm += NuTDerivative[j] * DN_DX_DensityGradVel(i, m);
+                    valm += NuTDerivative[j] * dNi_dUm;
+                    valm -= NuTDerivative[j] * DN_DX(i, m) * coeff;
+
+                    rAdjointMatrix(FirstCol, FirstRow + m) -= Volume * valm;
+
+                    double valpn = 0.0;
+
+                    // Stabilization, lsq pressure
+                    // TauOne * Grad(q) * Grad(p)
+                    valpn += DN_DX_GradP[i] * TauOneDeriv(j, m);
+
+                    // Stabilization, pressure-convection
+                    // Grad(q) * TauOne * (u * Grad(u))
+                    valpn += DN_DX_DensityGradVel_Vel[i] * TauOneDeriv(j, m);
+
+                    // Stabilization, pressure-BodyForce
+                    // Grad(q) * TauOne * f
+                    valpn -= DN_DX_BodyForce[i] * TauOneDeriv(j, m);
+
+                    rAdjointMatrix(FirstCol + m, FirstRow + TDim) -= Volume * valpn;
+                }
+
+                FirstCol += TBlockSize;
+            } // Node block columns
+
+            FirstRow += TBlockSize;
+            FirstCol = 0;
+        } // Node block rows
+
+        KRATOS_CATCH("")
+    }
+
+    /**
+     * @brief Adds primal gradient of the VMS mass matrix multiplied by a vector.
+     *
+     * Calculates \f$ \partial_{\mathbf{w}^n} (\mathbf{M}^n\mathbf{x}) \f$.
+     * \f$\mathbf{w}^n\f$ is the vector of primal variables at the current
+     * adjoint step. \f$\mathbf{M}^n\f$ is the VMS mass matrix. \f$\mathbf{x}\f$
+     * is a constant vector with zeros for pressure dofs. The variable
+     * determines the values for velocity dofs.
+     */
+
+    void AddTurbulentViscosityPartialDerivativePrimalGradientOfVMSMassTerm(
+        MatrixType& rOutputMatrix,
+        const Variable<array_1d<double, 3>>& rVariable,
+        double alpha,
+        const ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY
+
+        if (rOutputMatrix.size1() != TFluidLocalSize)
+        {
+            KRATOS_THROW_ERROR(
+                std::runtime_error,
+                "invalid matrix size detected. rOutputMatrix.size1() = ",
+                rOutputMatrix.size1());
+        }
+
+        if (rOutputMatrix.size2() != TFluidLocalSize)
+        {
+            KRATOS_THROW_ERROR(
+                std::runtime_error,
+                "invalid matrix size detected. rOutputMatrix.size2() = ",
+                rOutputMatrix.size2());
+        }
+
+        // Get shape functions, shape function gradients and element volume (area in
+        // 2D). Only one integration point is used so the volume is its weight.
+        ShapeFunctionDerivativesType DN_DX;
+        array_1d<double, TNumNodes> N;
+        double Volume;
+        GeometryUtils::CalculateGeometryData(this->GetGeometry(), DN_DX, N, Volume);
+
+        TRANSEvmVMSAdjointData current_data;
+        this->CalculateRansEvmVMSAdjointData(current_data, N, DN_DX, rCurrentProcessInfo);
+
+        // Density
+        double Density;
+        this->EvaluateInPoint(Density, DENSITY, N);
+
+        // Dynamic viscosity
+        double Viscosity;
+        this->EvaluateInPoint(Viscosity, VISCOSITY, N);
+        Viscosity *= Density;
+
+        // u
+        array_1d<double, TDim> Velocity;
+        this->EvaluateInPoint(Velocity, VELOCITY, N);
+
+        // u * Grad(N)
+        array_1d<double, TNumNodes> DensityVelGradN;
+        for (IndexType i = 0; i < TNumNodes; i++)
+        {
+            DensityVelGradN[i] = 0.0;
+            for (IndexType d = 0; d < TDim; d++)
+                DensityVelGradN[i] += Density * DN_DX(i, d) * Velocity[d];
+        }
+
+        // Stabilization parameters
+        double VelNorm = 0.0;
+        for (IndexType d = 0; d < TDim; d++)
+            VelNorm += Velocity[d] * Velocity[d];
+        VelNorm = std::sqrt(VelNorm);
+        const double ElemSize = this->CalculateElementSize(Volume);
+        double TauOne, TauTwo;
+        this->CalculateStabilizationParameters(TauOne, TauTwo, VelNorm, ElemSize, Density,
+                                               Viscosity, rCurrentProcessInfo);
+
+        // Derivatives of TauOne, TauTwo w.r.t velocity. These definitions
+        // depend on the definitions of TauOne and TauTwo and should be consistent
+        // with the fluid element used to solve for VELOCITY and PRESSURE.
+        BoundedMatrix<double, TNumNodes, TDim> TauOneDeriv;
+        BoundedMatrix<double, TNumNodes, TDim> TauTwoDeriv;
+
+        if (VelNorm > 0.0)
+        {
+            Matrix NuTDerivative(TNumNodes, TDim);
+            this->CalculateTurbulentKinematicViscosityVelocityDerivatives(
+                NuTDerivative, current_data, rCurrentProcessInfo);
+
+            const double CoefOne = -4.0 * Density * TauOne * TauOne / (ElemSize * ElemSize);
+
+            for (IndexType i = 0; i < TNumNodes; ++i)
+            {
+                for (IndexType d = 0; d < TDim; ++d)
+                {
+                    TauOneDeriv(i, d) = CoefOne * NuTDerivative(i, d);
+                }
+            }
+        }
+
+        // rVariable (x)
+        array_1d<double, TDim> X;
+        this->EvaluateInPoint(X, rVariable, N);
+
+        // x * Grad(N)
+        array_1d<double, TNumNodes> DensityXGradN;
+        for (IndexType i = 0; i < TNumNodes; i++)
+        {
+            DensityXGradN[i] = 0.0;
+            for (IndexType d = 0; d < TDim; d++)
+                DensityXGradN[i] += Density * DN_DX(i, d) * X[d];
+        }
+
+        // Primal gradient of (lumped) VMS mass matrix multiplied with vector
+        IndexType FirstRow(0), FirstCol(0);
+        // Loop over nodes
+        for (IndexType i = 0; i < TNumNodes; ++i)
+        {
+            for (IndexType j = 0; j < TNumNodes; ++j)
+            {
+                for (IndexType m = 0; m < TDim; ++m)
+                {
+                    for (IndexType n = 0; n < TDim; ++n)
+                    {
+                        double valmn = 0.0;
+
+                        valmn += DensityVelGradN[i] * TauOneDeriv(j, n) * Density * X[m];
+
+                        // Adding it in a transposed manner
+                        rOutputMatrix(FirstCol + n, FirstRow + m) += alpha * Volume * valmn;
+                    }
+
+                    rOutputMatrix(FirstCol + m, FirstRow + TDim) +=
+                        alpha * Volume * DensityXGradN[i] * TauOneDeriv(j, m);
+                }
+
+                FirstCol += TBlockSize;
+            } // Node block columns
+
+            FirstRow += TBlockSize;
+            FirstCol = 0;
+        } // Node block rows
+
+        KRATOS_CATCH("")
+    }
+
+    /**
+     * @brief Calculates the elemental contribution to the steady adjoint system matrix.
+     *
+     * This function returns elemental contributions for:
+     *
+     * \f[
+     * \partial_{\mathbf{w}^n}\mathbf{f}(\mathbf{w}^n)
+     * \f]
+     *
+     * where the current adjoint step is the \f$n^{th}\f$ time step.
+     */
+    void AddTurbulentViscosityPartialDerivativePrimalGradientOfVMSSteadyTerm(
+        MatrixType& rAdjointMatrix, const ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY
+
+        // Get shape functions, shape function gradients and element volume (area in
+        // 2D). Only one integration point is used so the volume is its weight.
+        ShapeFunctionDerivativesType DN_DX;
+        array_1d<double, TNumNodes> N;
+        double Volume;
+
+        GeometryUtils::CalculateGeometryData(this->GetGeometry(), DN_DX, N, Volume);
+
+        TRANSEvmVMSAdjointData current_data;
+        this->CalculateRansEvmVMSAdjointData(current_data, N, DN_DX, rCurrentProcessInfo);
+
+        // Density
+        double Density;
+        this->EvaluateInPoint(Density, DENSITY, N);
+
+        // Dynamic viscosity
+        double Viscosity;
+        this->EvaluateInPoint(Viscosity, VISCOSITY, N);
+        Viscosity *= Density;
+
+        // u
+        array_1d<double, TDim> Velocity;
+        this->EvaluateInPoint(Velocity, VELOCITY, N);
+
+        // u * Grad(N)
+        array_1d<double, TNumNodes> DensityVelGradN;
+        noalias(DensityVelGradN) = Density * prod(DN_DX, Velocity);
+
+        // Grad(u)
+        BoundedMatrix<double, TDim, TDim> DensityGradVel;
+        this->CalculateVelocityGradient(DensityGradVel, DN_DX);
+
+        // Div(u)
+        double DivVel = 0.0;
+        for (IndexType d = 0; d < TDim; ++d)
+            DivVel += DensityGradVel(d, d);
+
+        DensityGradVel *= Density;
+
+        // Grad(p)
+        array_1d<double, TDim> GradP;
+        this->CalculatePressureGradient(GradP, DN_DX);
+
+        // ( Grad(u) * Grad(N) )^T
+        BoundedMatrix<double, TNumNodes, TDim> DN_DX_DensityGradVel;
+        noalias(DN_DX_DensityGradVel) = prod(DN_DX, DensityGradVel);
+
+        // ( u * Grad(u) * Grad(N) )^T
+        array_1d<double, TNumNodes> DN_DX_DensityGradVel_Vel;
+        noalias(DN_DX_DensityGradVel_Vel) = prod(DN_DX_DensityGradVel, Velocity);
+
+        // u * Grad(u)
+        array_1d<double, TDim> DensityGradVel_Vel;
+        noalias(DensityGradVel_Vel) = prod(DensityGradVel, Velocity);
+
+        // Grad(N)^T * Grad(p)
+        array_1d<double, TNumNodes> DN_DX_GradP;
+        noalias(DN_DX_GradP) = prod(DN_DX, GradP);
+
+        // Grad(N)^T * BodyForce
+        array_1d<double, TDim> BodyForce;
+        array_1d<double, TNumNodes> DN_DX_BodyForce;
+        this->EvaluateInPoint(BodyForce, BODY_FORCE, N);
+        BodyForce *= Density;
+        noalias(DN_DX_BodyForce) = prod(DN_DX, BodyForce);
+
+        // Stabilization parameters TauOne, TauTwo
+        double VelNorm = norm_2(Velocity);
+        double ElemSize = this->CalculateElementSize(Volume);
+        double TauOne, TauTwo;
+        this->CalculateStabilizationParameters(TauOne, TauTwo, VelNorm, ElemSize, Density,
+                                               Viscosity, rCurrentProcessInfo);
+
+        // Derivatives of TauOne, TauTwo w.r.t velocity. These definitions
+        // depend on the definitions of TauOne and TauTwo and should be
+        // consistent with the fluid element used to solve for VELOCITY and
+        // PRESSURE.
+        BoundedMatrix<double, TNumNodes, TDim> TauOneDeriv;
+        BoundedMatrix<double, TNumNodes, TDim> TauTwoDeriv;
+
+        Matrix NuTDerivative(TNumNodes, TDim);
+        this->CalculateTurbulentKinematicViscosityVelocityDerivatives(
+            NuTDerivative, current_data, rCurrentProcessInfo);
+
+        if (VelNorm > 0.0)
+        {
+            const double CoefOne = -4.0 * Density * TauOne * TauOne / (ElemSize * ElemSize);
+
+            for (IndexType i = 0; i < TNumNodes; ++i)
+            {
+                for (IndexType d = 0; d < TDim; ++d)
+                {
+                    TauOneDeriv(i, d) = CoefOne * NuTDerivative(i, d);
+                    TauTwoDeriv(i, d) = Density * NuTDerivative(i, d);
+                }
+            }
+        }
+
+        // Here, -(\partial R / \partial W) is calculated. This is the discrete
+        // derivative of the fluid residual w.r.t the fluid variables and therefore
+        // includes many of the terms defined in the fluid element. Neglecting the
+        // transient terms of the fluid element, this matrix is identical to the
+        // Jacobian of the fluid residual used for Newton-Raphson iterations. The
+        // matrix is transposed at the end to get the adjoint system matrix.
+
+        const double coeff = DivVel * Density * 2.0 / 3.0;
+
+        IndexType FirstRow(0), FirstCol(0);
+        // Loop over nodes
+        for (IndexType i = 0; i < TNumNodes; ++i)
+        {
+            for (IndexType j = 0; j < TNumNodes; ++j)
+            {
+                for (IndexType m = 0; m < TDim; ++m)
+                {
+                    const double dNi_dUm =
+                        inner_prod(row(DN_DX, i), row(DensityGradVel, m));
+
+                    for (IndexType n = 0; n < TDim; ++n)
+                    {
+                        double valmn = 0.0;
+
+                        // Stabilization, lsq convection
+                        // (u * Grad(v)) * TauOne * (u * Grad(u))
+                        valmn += DensityVelGradN[i] * TauOneDeriv(j, n) *
+                                 DensityGradVel_Vel[m];
+                        // Stabilization, lsq divergence
+                        // Div(v) * TauTwo * Div(u)
+                        valmn += DN_DX(i, m) * TauTwoDeriv(j, n) * DivVel;
+
+                        // Stabilization, convection-pressure
+                        // (u * Grad(v)) * TauOne * Grad(p)
+                        valmn += TauOneDeriv(j, n) * DensityVelGradN[i] * GradP[m];
+
+                        // Stabilization, convection-BodyForce
+                        // (u * Grad(v)) * TauOne * f
+                        valmn -= DensityVelGradN[i] * TauOneDeriv(j, n) * BodyForce[m];
+
+                        valmn += NuTDerivative(j, n) * DN_DX_DensityGradVel(i, m);
+                        valmn += NuTDerivative(j, n) * dNi_dUm;
+                        valmn -= NuTDerivative(j, n) * DN_DX(i, m) * coeff;
+
+                        rAdjointMatrix(FirstCol + n, FirstRow + m) -= Volume * valmn;
+                    }
+
+                    rAdjointMatrix(FirstCol + m, FirstRow + m) -= Volume * diag;
+
+                    double valpn = 0.0;
+
+                    // Stabilization, lsq pressure
+                    // TauOne * Grad(q) * Grad(p)
+                    valpn += DN_DX_GradP[i] * TauOneDeriv(j, m);
+
+                    // Stabilization, pressure-convection
+                    // Grad(q) * TauOne * (u * Grad(u))
+                    valpn += DN_DX_DensityGradVel_Vel[i] * TauOneDeriv(j, m);
+
+                    // Stabilization, pressure-BodyForce
+                    // Grad(q) * TauOne * f
+                    valpn -= DN_DX_BodyForce[i] * TauOneDeriv(j, m);
+
+                    rAdjointMatrix(FirstCol + m, FirstRow + TDim) -= Volume * valpn;
+                }
+
+                FirstCol += TBlockSize;
+            } // Node block columns
+
+            FirstRow += TBlockSize;
+            FirstCol = 0;
+        } // Node block rows
+
+        KRATOS_CATCH("")
+    }
+
+    ///@}
+
+private:
+    ///@name Member Variables
+    ///@{
+
+    ///@}
+    ///@name Serialization
+    ///@{
+
+    friend class Serializer;
+
+    void save(Serializer& rSerializer) const override
+    {
+        KRATOS_TRY;
+
+        KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Element);
+
+        KRATOS_CATCH("");
+    }
+
+    void load(Serializer& rSerializer) override
+    {
+        KRATOS_TRY;
+
+        KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Element);
+
+        KRATOS_CATCH("");
+    }
+
+    ///@}
+    ///@name Unaccessible methods
+    ///@{
+
+    RANSEvmVMSAdjointElement& operator=(RANSEvmVMSAdjointElement const& rOther);
+
+    RANSEvmVMSAdjointElement(RANSEvmVMSAdjointElement const& rOther);
+
+    ///@}
+
+}; // class RANSEvmVMSAdjointElement
+
+///@} // Kratos classes
+
+///@name Input and output
+///@{
+
+/// Defines an input stream operator that does nothing.
+template <unsigned int TDim>
+inline std::istream& operator>>(std::istream& rIStream, RANSEvmVMSAdjointElement<TDim>& rThis)
+{
+    return rIStream;
+}
+
+/// Defines an output stream operator that prints element info.
+template <unsigned int TDim>
+inline std::ostream& operator<<(std::ostream& rOStream,
+                                const RANSEvmVMSAdjointElement<TDim>& rThis)
+{
+    rThis.PrintInfo(rOStream);
+    rOStream << std::endl;
+    rThis.PrintData(rOStream);
+
+    return rOStream;
+}
+///@}
+
+///@} // FluidDynamicsApplication group
+
+} // namespace Kratos
+
+#endif // KRATOS_RANS_EVM_VMS_ADJOINT_ELEMENT_H_INCLUDED defined

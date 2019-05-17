@@ -401,5 +401,100 @@ void RunElementResidualVectorSensitivityTest(
             calculate_sensitivities, perturb_variable, Delta, Tolerance);
     }
 }
+
+void RunNodalScalarSensitivityTest(
+    ModelPart& rModelPart,
+    Process& rYPlusProcess,
+    std::function<void(std::vector<double>&, const NodeType&, const ProcessInfo&)> CalculatePrimalQuantities,
+    std::function<void(std::vector<Vector>&, const ElementType&, const ProcessInfo&)> CalculateSensitivities,
+    std::function<void(ModelPart&)> UpdateVariablesInModelPart,
+    std::function<double&(NodeType&)> PerturbVariable,
+    const double Delta,
+    const double Tolerance)
+{
+    const int number_of_elements = rModelPart.NumberOfElements();
+
+    const ProcessInfo& r_process_info = rModelPart.GetProcessInfo();
+
+    rYPlusProcess.Check();
+
+    RansCalculationUtilities rans_calculation_utilities;
+
+    for (int i = 0; i < number_of_elements; ++i)
+    {
+        ElementType& r_element = *(rModelPart.ElementsBegin() + i);
+        GeometryType& r_geometry = r_element.GetGeometry();
+        r_element.Check(r_process_info);
+
+        const int number_of_nodes = r_geometry.PointsNumber();
+
+        rYPlusProcess.Execute();
+        UpdateVariablesInModelPart(rModelPart);
+
+        std::vector<Vector> analytical_sensitivities;
+        CalculateSensitivities(analytical_sensitivities, r_element, r_process_info);
+
+        // calculating finite difference sensitivities
+        for (int i = 0; i < number_of_nodes; ++i)
+        {
+            NodeType& r_node = r_geometry[i];
+
+            std::vector<double> values_0;
+            CalculatePrimalQuantities(values_0, r_node, r_process_info);
+
+            PerturbVariable(r_node) += Delta;
+
+            rYPlusProcess.Execute();
+            UpdateVariablesInModelPart(rModelPart);
+
+            std::vector<double> values;
+            CalculatePrimalQuantities(values, r_node, r_process_info);
+
+            for (int j = 0; j < static_cast<int>(analytical_sensitivities.size()); ++j)
+            {
+                const double fd_sensitivity = ((values[j] - values_0[j]) / Delta);
+                IsValuesRelativelyNear(
+                    fd_sensitivity, analytical_sensitivities[j][i], Tolerance);
+            }
+
+            PerturbVariable(r_node) -= Delta;
+        }
+    }
+}
+
+void RunNodalVectorSensitivityTest(
+    ModelPart& rModelPart,
+    Process& rYPlusProcess,
+    std::function<void(std::vector<double>&, const NodeType&, const ProcessInfo&)> CalculatePrimalQuantities,
+    std::function<void(std::vector<Matrix>&, const ElementType&, const ProcessInfo&)> CalculateSensitivities,
+    std::function<void(ModelPart&)> UpdateVariablesInModelPart,
+    std::function<double&(NodeType&, const int Dim)> PerturbVariable,
+    const double Delta,
+    const double Tolerance)
+{
+    const ProcessInfo& r_process_info = rModelPart.GetProcessInfo();
+    const int domain_size = r_process_info[DOMAIN_SIZE];
+
+    for (int i_dim = 0; i_dim < domain_size; ++i_dim)
+    {
+        auto calculate_sensitivities = [CalculateSensitivities, i_dim](
+                                           std::vector<Vector>& riDimSensitivities,
+                                           const ElementType& rElement,
+                                           const ProcessInfo& rCurrentProcessInfo) {
+            std::vector<Matrix> analytical_sensitivities;
+            CalculateSensitivities(analytical_sensitivities, rElement, rCurrentProcessInfo);
+            for (std::size_t i_var = 0; i_var < analytical_sensitivities.size(); ++i_var)
+                riDimSensitivities.push_back(column(analytical_sensitivities[i_var], i_dim));
+        };
+
+        auto perturb_variable = [PerturbVariable, i_dim](NodeType& rNode) -> double& {
+            return PerturbVariable(rNode, i_dim);
+        };
+
+        RunNodalScalarSensitivityTest(
+            rModelPart, rYPlusProcess, CalculatePrimalQuantities, calculate_sensitivities,
+            UpdateVariablesInModelPart, perturb_variable, Delta, Tolerance);
+    }
+}
 } // namespace RansModellingApplicationTestUtilities
 } // namespace Kratos

@@ -124,7 +124,7 @@ class CADMapper:
             "output":
             {
                 "results_directory"                   : "01_Results",
-                "resulting_geometry_filename"         : "reconstructed_geometry.iga",
+                "resulting_geometry_filename"         : "reconstructed_geometry",
                 "filename_fem_for_reconstruction"     : "fe_model_used_for_reconstruction",
                 "filename_fem_for_quality_evaluation" : "fe_model_with_reconstruction_quality",
                 "echo_level"                          : 0
@@ -192,7 +192,6 @@ class CADMapper:
 
                 self.Initialize()
                 self.Map()
-                self.Finalize()
 
                 nothing_to_refine = self.ResetDisplacementsAndRefineCadModel()
 
@@ -203,7 +202,6 @@ class CADMapper:
         else:
             self.Initialize()
             self.Map()
-            self.Finalize()
 
     # --------------------------------------------------------------------------
     def ReadModelData(self):
@@ -394,15 +392,23 @@ class CADMapper:
             self.system.x += solution
 
             # Store system data if specified
-            if self.parameters["output"]["echo_level"].GetInt() > 1:
-                from scipy import io as scipyio
-                np.savetxt("rhs.txt",rhs)
-                np.savetxt("lhs.txt",self.system.h.todense())
-                np.savetxt("solution.txt",solution)
+            if self.parameters["output"]["echo_level"].GetInt() > 5:
+                from scipy.io import mmwrite
+                mmwrite("rhs.mtx",[rhs])
+                mmwrite("lhs.mtx",self.system.h)
+                mmwrite("solution.mtx",[solution])
 
             print("> Finished system solution in" ,round( time.time()-start_time_solution, 3 ), " s.")
 
+            print("\n> Finalizing solution step....")
+            start_time = time.time()
+
             self.__UpdateCADModel()
+
+            filename = self.parameters["output"]["resulting_geometry_filename"].GetString() + "_itr_"+str(solution_itr)+".iga"
+            self.__OutputCadModel(filename)
+
+            print("> Finished finalization of solution step in" ,round( time.time()-start_time, 3 ), " s.")
 
             if self.parameters["solution"]["test_solution"].GetBool():
 
@@ -429,17 +435,6 @@ class CADMapper:
 
             print("\n> Finished solution iteration in" ,round( time.time()-start_time_iteration, 3 ), " s.")
             print("> -----------------------------------------------------------------")
-
-    # --------------------------------------------------------------------------
-    def Finalize(self):
-        print("\n> Finalizing mapping....")
-        start_time = time.time()
-
-        # Output cad model
-        output_filename = self.parameters["output"]["resulting_geometry_filename"].GetString()
-        self.__OutputCadModel(output_filename)
-
-        print("> Finished finalization of mapping in" ,round( time.time()-start_time, 3 ), " s.")
 
     # --------------------------------------------------------------------------
     def ResetDisplacementsAndRefineCadModel(self):

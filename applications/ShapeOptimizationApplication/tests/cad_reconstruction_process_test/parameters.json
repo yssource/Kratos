@@ -89,6 +89,6 @@
 "output":
 {
     "results_directory"           : "01_Results",
-    "resulting_geometry_filename" : "reconstructed_geometry.iga"
+    "resulting_geometry_filename" : "reconstructed_geometry"
 }
 }

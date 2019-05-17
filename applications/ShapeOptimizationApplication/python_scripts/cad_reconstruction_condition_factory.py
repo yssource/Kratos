@@ -540,9 +540,6 @@ class ConditionFactory:
                     nonzero_indices_b, shape_functions_b = surface_geometry_data_b.ShapeFunctionsAt(u_b, v_b, order=1)
                     nonzero_pole_nodes_b = [poles_nodes_b[i] for i in nonzero_indices_b]
 
-                    _, T2_edge = edge_curve_a.DerivativesAt(t_a, order=1)
-                    T2_edge /= np.linalg.norm(T2_edge)
-
                     # displacement coupling condition
                     if penalty_factor_displacement > 0:
                         weight = penalty_factor_displacement * integration_weight

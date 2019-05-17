@@ -17,6 +17,18 @@ namespace Kratos {
     void DEM_KDEM_Beam::SetConstitutiveLawInProperties(Properties::Pointer pProp, bool verbose) const {
         KRATOS_INFO("DEM") << "Assigning DEM_KDEM_Beam to Properties " << pProp->Id() << std::endl;
         pProp->SetValue(DEM_CONTINUUM_CONSTITUTIVE_LAW_POINTER, this->Clone());
+        this->Check(pProp);
+    }
+
+    void DEM_KDEM_Beam::Check(Properties::Pointer pProp) const {
+        DEMContinuumConstitutiveLaw::Check(pProp);
+
+        if(!pProp->Has(ROTATIONAL_MOMENT_COEFFICIENT)) {
+            KRATOS_WARNING("DEM")<<std::endl;
+            KRATOS_WARNING("DEM")<<"WARNING: Variable ROTATIONAL_MOMENT_COEFFICIENT should be present in the properties when using DEM_KDEM. 1.0 value assigned by default."<<std::endl;
+            KRATOS_WARNING("DEM")<<std::endl;
+            pProp->GetValue(ROTATIONAL_MOMENT_COEFFICIENT) = 1.0;
+        }
     }
 
     void DEM_KDEM_Beam::ComputeParticleRotationalMoments(SphericContinuumParticle* element,

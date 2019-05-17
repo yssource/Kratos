@@ -20,6 +20,7 @@ namespace Kratos {
         DEMContinuumConstitutiveLaw::Pointer Clone() const override;
 
         void SetConstitutiveLawInProperties(Properties::Pointer pProp, bool verbose = true) const override;
+        void Check(Properties::Pointer pProp) const override;
 
         virtual void ComputeParticleRotationalMoments(SphericContinuumParticle* element,
                                                       SphericContinuumParticle* neighbor,

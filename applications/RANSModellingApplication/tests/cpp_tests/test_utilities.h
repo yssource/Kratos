@@ -363,7 +363,7 @@ void RunElementResidualVectorSensitivityTest(
     Process& rAdjointYPlusProcess,
     Process& rYPlusSensitivitiesProcess,
     std::function<void(ModelPart&)> UpdateVariablesInModelPart,
-    std::function<void(Matrix&, ElementType&, ProcessInfo&)> CalculateElementResidualScalarSensitivity,
+    std::function<void(Matrix&, ElementType&, ProcessInfo&)> CalculateElementResidualVectorSensitivity,
     std::function<double&(NodeType&, const int)> PerturbVariable,
     const double Delta,
     const double Tolerance)
@@ -374,12 +374,12 @@ void RunElementResidualVectorSensitivityTest(
 
     for (int i_dim = 0; i_dim < domain_size; ++i_dim)
     {
-        auto calculate_sensitivities = [CalculateElementResidualScalarSensitivity, i_dim,
+        auto calculate_sensitivities = [CalculateElementResidualVectorSensitivity, i_dim,
                                         domain_size](Matrix& rDimSensitivities,
                                                      ElementType& rElement,
                                                      ProcessInfo& rCurrentProcessInfo) {
             Matrix sensitivities;
-            CalculateElementResidualScalarSensitivity(sensitivities, rElement,
+            CalculateElementResidualVectorSensitivity(sensitivities, rElement,
                                                       rCurrentProcessInfo);
 
             const int number_of_equations = sensitivities.size2();

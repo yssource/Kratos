@@ -172,8 +172,11 @@ std::string VtkOutput::GetOutputFileName(const ModelPart& rModelPart, const bool
 
     // Putting everything together
     const std::string& r_folder_name = mOutputSettings["folder_name"].GetString();
-    KRATOS_WARNING_IF("VtkOutput", !OSUtilities::IsDirExist(r_folder_name)) << "Folder: " << r_folder_name << " does not exist. We will try to create it" << std::endl;
-    OSUtilities::CreateDir(r_folder_name);
+    const bool directory_exists = OSUtilities::IsDirExist(r_folder_name);
+    if (!directory_exists) {
+        KRATOS_WARNING("VtkOutput") << "Folder: " << r_folder_name << " does not exist. We will try to create it" << std::endl;
+        OSUtilities::CreateDir(r_folder_name);
+    }
     std::string output_file_name;
     if (mOutputSettings["save_output_files_in_folder"].GetBool()) {
         output_file_name += r_folder_name + "/";

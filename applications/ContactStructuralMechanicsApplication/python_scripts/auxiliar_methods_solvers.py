@@ -27,7 +27,7 @@ def AuxiliarContactSettings():
             "ensure_contact"                                    : false,
             "frictional_decomposed"                             : true,
             "compute_dynamic_factor"                            : false,
-            "gidio_debug"                                       : false,
+            "io_debug"                                          : false,
             "adaptative_strategy"                               : false,
             "split_factor"                                      : 10.0,
             "max_number_splits"                                 : 3,
@@ -170,7 +170,7 @@ def AuxiliarCreateConvergenceParameters(main_model_part, settings, contact_setti
         conv_params.AddValue("ensure_contact", contact_settings["ensure_contact"])
         conv_params.AddValue("frictional_decomposed", contact_settings["frictional_decomposed"])
         conv_params.AddValue("compute_dynamic_factor", contact_settings["compute_dynamic_factor"])
-        conv_params.AddValue("gidio_debug", contact_settings["gidio_debug"])
+        conv_params.AddValue("io_debug", contact_settings["io_debug"])
 
         return conv_params
 

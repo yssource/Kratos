@@ -200,6 +200,11 @@ public:
         // Compute the contribution
         ContactUtilities::ComputeExplicitContributionConditions(rModelPart.GetSubModelPart("ComputingContact"));
 
+        // IO for debugging
+        if (mOptions.Is(BaseMortarConvergenceCriteria::IO_DEBUG)) {
+            mpIO->PrintOutput();
+        }
+
         return true;
     }
 
@@ -233,7 +238,7 @@ public:
 
         // IO for debugging
         if (mOptions.Is(BaseMortarConvergenceCriteria::IO_DEBUG)) {
-            const auto& r_nodes_array = rModelPart.Nodes();
+            const auto it_node_begin = rModelPart.Nodes().begin();
             const bool frictional_problem = rModelPart.IsDefined(SLIP) ? rModelPart.Is(SLIP) : false;
 
             Parameters debug_io_parameters = Parameters(R"(
@@ -258,43 +263,29 @@ public:
 
             debug_io_parameters["model_part_name"].SetString(rModelPart.Name());
             debug_io_parameters["folder_name"].SetString("VTK_Output/STEP_" + std::to_string(rModelPart.GetProcessInfo()[STEP]));
-            if (rModelPart.Nodes().begin()->SolutionStepsDataHas(VELOCITY_X)) {
-                debug_io_parameters["nodal_solution_step_data_variables"].Append("VELOCITY");
-                debug_io_parameters["nodal_solution_step_data_variables"].Append("ACCELERATION");
+            if (it_node_begin->SolutionStepsDataHas(VELOCITY_X)) {
+                const std::string vel_variable = "VELOCITY";
+                debug_io_parameters["nodal_solution_step_data_variables"].Append(vel_variable);
+                const std::string accel_variable = "ACCELERATION";
+                debug_io_parameters["nodal_solution_step_data_variables"].Append(accel_variable);
             }
-            if (r_nodes_array.begin()->SolutionStepsDataHas(LAGRANGE_MULTIPLIER_CONTACT_PRESSURE))
-                debug_io_parameters["nodal_solution_step_data_variables"].Append("LAGRANGE_MULTIPLIER_CONTACT_PRESSURE");
-            else if (r_nodes_array.begin()->SolutionStepsDataHas(VECTOR_LAGRANGE_MULTIPLIER_X))
-                debug_io_parameters["nodal_solution_step_data_variables"].Append("VECTOR_LAGRANGE_MULTIPLIER");
+            if (it_node_begin->SolutionStepsDataHas(LAGRANGE_MULTIPLIER_CONTACT_PRESSURE)) {
+                const std::string lm_variable = "LAGRANGE_MULTIPLIER_CONTACT_PRESSURE";
+                debug_io_parameters["nodal_solution_step_data_variables"].Append(lm_variable);
+            } else if (it_node_begin->SolutionStepsDataHas(VECTOR_LAGRANGE_MULTIPLIER_X)) {
+                const std::string lm_variable = "VECTOR_LAGRANGE_MULTIPLIER";
+                debug_io_parameters["nodal_solution_step_data_variables"].Append(lm_variable);
+            }
             if (frictional_problem) {
-                debug_io_parameters["nodal_flags"].Append("SLIP");
-                debug_io_parameters["nodal_solution_step_data_variables"].Append("WEIGHTED_SLIP");
-                debug_io_parameters["nodal_data_value_variables"].Append("AUGMENTED_TANGENT_CONTACT_PRESSURE");
+                const std::string slip_variable = "SLIP";
+                debug_io_parameters["nodal_flags"].Append(slip_variable);
+                const std::string weighted_slip_variable = "WEIGHTED_SLIP";
+                debug_io_parameters["nodal_solution_step_data_variables"].Append(weighted_slip_variable);
+                const std::string augmented_tangent_lm_variable = "AUGMENTED_TANGENT_CONTACT_PRESSURE";
+                debug_io_parameters["nodal_data_value_variables"].Append(augmented_tangent_lm_variable);
             }
 
             mpIO = Kratos::make_shared<VtkOutput>(rModelPart, debug_io_parameters);
-        }
-    }
-
-    /**
-     * @brief This function finalizes the non-linear iteration
-     * @param rModelPart Reference to the ModelPart containing the contact problem.
-     * @param rDofSet Reference to the container of the problem's degrees of freedom (stored by the BuilderAndSolver)
-     * @param rA System matrix (unused)
-     * @param rDx Vector of results (variations on nodal variables)
-     * @param rb RHS vector (residual)
-     */
-    void FinalizeNonLinearIteration(
-        ModelPart& rModelPart,
-        DofsArrayType& rDofSet,
-        const TSystemMatrixType& rA,
-        const TSystemVectorType& rDx,
-        const TSystemVectorType& rb
-        ) override
-    {
-        // IO for debugging
-        if (mOptions.Is(BaseMortarConvergenceCriteria::IO_DEBUG)) {
-            mpIO->PrintOutput();
         }
     }
 

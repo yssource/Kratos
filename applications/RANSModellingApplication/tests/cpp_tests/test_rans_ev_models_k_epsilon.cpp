@@ -560,9 +560,9 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementTKEFirstDerivativeLHSMatrix,
     };
 
     RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(
-        TURBULENT_KINETIC_ENERGY, RANS_AUXILIARY_VARIABLE_1, r_primal_model_part,
-        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
-        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        r_primal_model_part, r_adjoint_model_part, primal_y_plus_process,
+        adjoint_y_plus_process, y_plus_sensitivities_process,
+        RansEvmKEpsilonModel::UpdateVariablesInModelPart,
         calculate_sensitivity_matrix, perturb_variable, 1e-8, 1e-5);
 }
 
@@ -601,9 +601,9 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementEpsilonFirstDerivativeLHSMatrix,
     };
 
     RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(
-        TURBULENT_KINETIC_ENERGY, RANS_AUXILIARY_VARIABLE_1, r_primal_model_part,
-        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
-        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        r_primal_model_part, r_adjoint_model_part, primal_y_plus_process,
+        adjoint_y_plus_process, y_plus_sensitivities_process,
+        RansEvmKEpsilonModel::UpdateVariablesInModelPart,
         calculate_sensitivity_matrix, perturb_variable, 1e-8, 1e-5);
 }
 
@@ -641,9 +641,9 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementTKESecondDerivativeLHSMatrix,
     };
 
     RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(
-        TURBULENT_KINETIC_ENERGY, RANS_AUXILIARY_VARIABLE_1, r_primal_model_part,
-        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
-        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        r_primal_model_part, r_adjoint_model_part, primal_y_plus_process,
+        adjoint_y_plus_process, y_plus_sensitivities_process,
+        RansEvmKEpsilonModel::UpdateVariablesInModelPart,
         calculate_sensitivity_matrix, perturb_variable, 1e-8, 1e-5);
 }
 
@@ -762,9 +762,9 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonElementEpsilonFirstDerivativeLHSMatrix,
     };
 
     RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(
-        TURBULENT_ENERGY_DISSIPATION_RATE, RANS_AUXILIARY_VARIABLE_2, r_primal_model_part,
-        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
-        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        r_primal_model_part, r_adjoint_model_part, primal_y_plus_process,
+        adjoint_y_plus_process, y_plus_sensitivities_process,
+        RansEvmKEpsilonModel::UpdateVariablesInModelPart,
         calculate_sensitivity_matrix, perturb_variable, 1e-8, 1e-5);
 }
 
@@ -803,9 +803,9 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonElementTKEFirstDerivativeLHSMatrix,
     };
 
     RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(
-        TURBULENT_ENERGY_DISSIPATION_RATE, RANS_AUXILIARY_VARIABLE_2, r_primal_model_part,
-        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
-        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        r_primal_model_part, r_adjoint_model_part, primal_y_plus_process,
+        adjoint_y_plus_process, y_plus_sensitivities_process,
+        RansEvmKEpsilonModel::UpdateVariablesInModelPart,
         calculate_sensitivity_matrix, perturb_variable, 1e-8, 1e-5);
 }
 
@@ -843,9 +843,9 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonElementEpsilonSecondDerivativeLHSMatrix,
     };
 
     RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(
-        TURBULENT_ENERGY_DISSIPATION_RATE, RANS_AUXILIARY_VARIABLE_2, r_primal_model_part,
-        r_adjoint_model_part, primal_y_plus_process, adjoint_y_plus_process,
-        y_plus_sensitivities_process, RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        r_primal_model_part, r_adjoint_model_part, primal_y_plus_process,
+        adjoint_y_plus_process, y_plus_sensitivities_process,
+        RansEvmKEpsilonModel::UpdateVariablesInModelPart,
         calculate_sensitivity_matrix, perturb_variable, 1e-6, 1e-5);
 }
 

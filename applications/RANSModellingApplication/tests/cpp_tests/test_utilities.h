@@ -55,28 +55,29 @@ void IsValuesRelativelyNear(const double ValueA, const double ValueB, const doub
     }
 }
 
-void CalculateResidual(Vector& residual,
-                       Element& rElement,
-                       ProcessInfo& rProcessInfo,
-                       const Variable<double>& rScalarVariable,
-                       const Variable<double>& rRelaxedScalarRateVariable)
+void CalculateResidual(Vector& residual, Element& rElement, ProcessInfo& rProcessInfo)
 {
-    RansVariableUtils rans_variable_utils;
+    const double bossak_alpha = rProcessInfo[BOSSAK_ALPHA];
 
-    Vector rhs, nodal_scalar_values, nodal_scalar_relaxed_rate_values;
+    Vector rhs, nodal_scalar_values, current_nodal_scalar_rate_values,
+        old_nodal_scalar_rate_values;
     Matrix damping_matrix, mass_matrix;
 
     rElement.CalculateRightHandSide(rhs, rProcessInfo);
     rElement.CalculateDampingMatrix(damping_matrix, rProcessInfo);
     rElement.CalculateMassMatrix(mass_matrix, rProcessInfo);
 
-    rans_variable_utils.GetNodalArray(nodal_scalar_values, rElement, rScalarVariable);
-    rans_variable_utils.GetNodalArray(nodal_scalar_relaxed_rate_values,
-                                      rElement, rRelaxedScalarRateVariable);
+    rElement.GetFirstDerivativesVector(nodal_scalar_values);
+    rElement.GetSecondDerivativesVector(current_nodal_scalar_rate_values);
+    rElement.GetSecondDerivativesVector(old_nodal_scalar_rate_values, 1);
+
+    noalias(current_nodal_scalar_rate_values) =
+        current_nodal_scalar_rate_values * (1 - bossak_alpha) +
+        old_nodal_scalar_rate_values * bossak_alpha;
 
     noalias(residual) = rhs;
     noalias(residual) -= prod(damping_matrix, nodal_scalar_values);
-    noalias(residual) -= prod(mass_matrix, nodal_scalar_relaxed_rate_values);
+    noalias(residual) -= prod(mass_matrix, current_nodal_scalar_rate_values);
 }
 
 void GetElementData(Vector& rGaussWeights,
@@ -267,8 +268,6 @@ void RunGaussPointVectorSensitivityTest(
 }
 
 void RunElementResidualScalarSensitivityTest(
-    const Variable<double>& rPrimalVariable,
-    const Variable<double>& rPrimalRelaxedRateVariable,
     ModelPart& rPrimalModelPart,
     ModelPart& rAdjointModelPart,
     Process& rPrimalYPlusProcess,
@@ -324,8 +323,7 @@ void RunElementResidualScalarSensitivityTest(
         Vector residual(number_of_nodes), residual_0(number_of_nodes),
             residual_sensitivity(number_of_nodes);
 
-        CalculateResidual(residual_0, r_primal_element, r_primal_process_info,
-                          rPrimalVariable, rPrimalRelaxedRateVariable);
+        CalculateResidual(residual_0, r_primal_element, r_primal_process_info);
 
         for (std::size_t i_node = 0; i_node < number_of_nodes; ++i_node)
         {
@@ -335,8 +333,7 @@ void RunElementResidualScalarSensitivityTest(
             rPrimalYPlusProcess.Execute();
             UpdateVariablesInModelPart(rPrimalModelPart);
 
-            CalculateResidual(residual, r_primal_element, r_primal_process_info,
-                              rPrimalVariable, rPrimalRelaxedRateVariable);
+            CalculateResidual(residual, r_primal_element, r_primal_process_info);
 
             noalias(residual_sensitivity) = (residual - residual_0) / Delta;
 
@@ -395,9 +392,8 @@ void RunElementResidualVectorSensitivityTest(
         };
 
         RunElementResidualScalarSensitivityTest(
-            rPrimalVariable, rPrimalRelaxedRateVariable, rPrimalModelPart,
-            rAdjointModelPart, rPrimalYPlusProcess, rAdjointYPlusProcess,
-            rYPlusSensitivitiesProcess, UpdateVariablesInModelPart,
+            rPrimalModelPart, rAdjointModelPart, rPrimalYPlusProcess,
+            rAdjointYPlusProcess, rYPlusSensitivitiesProcess, UpdateVariablesInModelPart,
             calculate_sensitivities, perturb_variable, Delta, Tolerance);
     }
 }

@@ -158,11 +158,11 @@ class ConditionFactory:
 
         for face_i in self.cad_model.GetByType('BrepFace'):
 
-            print("> Processing face ",face_i.Key())
-
             # Skip faces if exclusive face list is specified (if list is empty, use all faces)
             if len(list_of_exclusive_faces) > 0 and face_i.Key() not in list_of_exclusive_faces:
                 continue
+
+            print("> Processing face ",face_i.Key())
 
             surface_geometry = face_i.Data().Geometry()
             surface_geometry_data = face_i.Data().Geometry().Data()
@@ -195,17 +195,16 @@ class ConditionFactory:
 
         boundary_polygons = self.GetBoundaryPolygons()
 
-        relevant_fe_points = []
-        relevant_fe_points_displaced = []
-        relevant_cad_uvs = []
-
         for face_i in self.cad_model.GetByType('BrepFace'):
-
-            print("> Processing face ",face_i.Key())
 
             # Skip faces if exclusive face list is specified (if list is empty, use all faces)
             if face_i.Key() not in list_of_exclusive_faces:
                 continue
+
+            print("> Processing face ",face_i.Key())
+            relevant_fe_points = []
+            relevant_fe_points_displaced = []
+            relevant_cad_uvs = []
 
             surface_geometry = face_i.Data().Geometry()
             surface_geometry_data = face_i.Data().Geometry().Data()

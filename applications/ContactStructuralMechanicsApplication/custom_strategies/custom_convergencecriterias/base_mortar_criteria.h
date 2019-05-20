@@ -26,7 +26,7 @@
 #include "solving_strategies/convergencecriterias/convergence_criteria.h"
 
 // DEBUG
-#include "includes/gid_io.h"
+#include "input_output/vtk_output.h"
 
 namespace Kratos
 {
@@ -80,15 +80,6 @@ public:
     typedef typename BaseType::TSystemMatrixType    TSystemMatrixType;
     typedef typename BaseType::TSystemVectorType    TSystemVectorType;
 
-    /// The sparse space used
-    typedef TSparseSpace                              SparseSpaceType;
-
-    /// The components containers
-    typedef ModelPart::ConditionsContainerType    ConditionsArrayType;
-    typedef ModelPart::NodesContainerType              NodesArrayType;
-
-    typedef GidIO<> GidIOBaseType;
-
     ///@}
     ///@name Life Cycle
     ///@{
@@ -104,10 +95,6 @@ public:
         // Set local flags
         mOptions.Set(BaseMortarConvergenceCriteria::COMPUTE_DYNAMIC_FACTOR, ComputeDynamicFactor);
         mOptions.Set(BaseMortarConvergenceCriteria::IO_DEBUG, IODebug);
-
-        if (mOptions.Is(BaseMortarConvergenceCriteria::IO_DEBUG)) {
-            mpIO = Kratos::make_shared<GidIOBaseType>("POST_LINEAR_ITER", GiD_PostBinary, SingleFile, WriteUndeformed,  WriteElementsOnly);
-        }
     }
 
     ///Copy constructor
@@ -143,17 +130,17 @@ public:
         ) override
     {
         // The current process info
-        ProcessInfo& process_info = rModelPart.GetProcessInfo();
+        ProcessInfo& r_process_info = rModelPart.GetProcessInfo();
 
         // The contact model part
         ModelPart& r_contact_model_part = rModelPart.GetSubModelPart("Contact");
 
         // We update the normals if necessary
-        const auto normal_variation = process_info.Has(CONSIDER_NORMAL_VARIATION) ? static_cast<NormalDerivativesComputation>(process_info.GetValue(CONSIDER_NORMAL_VARIATION)) : NO_DERIVATIVES_COMPUTATION;
+        const auto normal_variation = r_process_info.Has(CONSIDER_NORMAL_VARIATION) ? static_cast<NormalDerivativesComputation>(r_process_info.GetValue(CONSIDER_NORMAL_VARIATION)) : NO_DERIVATIVES_COMPUTATION;
         if (normal_variation != NO_DERIVATIVES_COMPUTATION)
             ComputeNodesMeanNormalModelPartWithPairedNormal(rModelPart); // Update normal of the conditions
 
-        const bool adapt_penalty = process_info.Has(ADAPT_PENALTY) ? process_info.GetValue(ADAPT_PENALTY) : false;
+        const bool adapt_penalty = r_process_info.Has(ADAPT_PENALTY) ? r_process_info.GetValue(ADAPT_PENALTY) : false;
         const bool dynamic_case = rModelPart.HasNodalSolutionStepVariable(VELOCITY);
 
         /* Compute weighthed gap */
@@ -198,7 +185,7 @@ public:
         ) override
     {
         // We save the current WEIGHTED_GAP in the buffer
-        NodesArrayType& r_nodes_array = rModelPart.GetSubModelPart("Contact").Nodes();
+        auto& r_nodes_array = rModelPart.GetSubModelPart("Contact").Nodes();
         const auto it_node_begin = r_nodes_array.begin();
 
         #pragma omp parallel for
@@ -212,43 +199,6 @@ public:
 
         // Compute the contribution
         ContactUtilities::ComputeExplicitContributionConditions(rModelPart.GetSubModelPart("ComputingContact"));
-
-        // GiD IO for debugging
-        if (mOptions.Is(BaseMortarConvergenceCriteria::IO_DEBUG)) {
-            const bool frictional_problem = rModelPart.IsDefined(SLIP) ? rModelPart.Is(SLIP) : false;
-            const int nl_iter = rModelPart.GetProcessInfo()[NL_ITERATION_NUMBER];
-            const double label = static_cast<double>(nl_iter);
-
-            if (nl_iter == 1) {
-                mpIO->InitializeMesh(label);
-                mpIO->WriteMesh(rModelPart.GetMesh());
-                mpIO->FinalizeMesh();
-                mpIO->InitializeResults(label, rModelPart.GetMesh());
-            }
-
-            mpIO->WriteNodalFlags(INTERFACE, "INTERFACE", rModelPart.Nodes(), label);
-            mpIO->WriteNodalFlags(ACTIVE, "ACTIVE", rModelPart.Nodes(), label);
-            mpIO->WriteNodalFlags(SLAVE, "SLAVE", rModelPart.Nodes(), label);
-            mpIO->WriteNodalFlags(ISOLATED, "ISOLATED", rModelPart.Nodes(), label);
-            mpIO->WriteNodalResults(NORMAL, rModelPart.Nodes(), label, 0);
-            mpIO->WriteNodalResultsNonHistorical(DYNAMIC_FACTOR, rModelPart.Nodes(), label);
-            mpIO->WriteNodalResultsNonHistorical(AUGMENTED_NORMAL_CONTACT_PRESSURE, rModelPart.Nodes(), label);
-            mpIO->WriteNodalResults(DISPLACEMENT, rModelPart.Nodes(), label, 0);
-            if (rModelPart.Nodes().begin()->SolutionStepsDataHas(VELOCITY_X)) {
-                mpIO->WriteNodalResults(VELOCITY, rModelPart.Nodes(), label, 0);
-                mpIO->WriteNodalResults(ACCELERATION, rModelPart.Nodes(), label, 0);
-            }
-            if (r_nodes_array.begin()->SolutionStepsDataHas(LAGRANGE_MULTIPLIER_CONTACT_PRESSURE))
-                mpIO->WriteNodalResults(LAGRANGE_MULTIPLIER_CONTACT_PRESSURE, rModelPart.Nodes(), label, 0);
-            else if (r_nodes_array.begin()->SolutionStepsDataHas(VECTOR_LAGRANGE_MULTIPLIER_X))
-                mpIO->WriteNodalResults(VECTOR_LAGRANGE_MULTIPLIER, rModelPart.Nodes(), label, 0);
-            mpIO->WriteNodalResults(WEIGHTED_GAP, rModelPart.Nodes(), label, 0);
-            if (frictional_problem) {
-                mpIO->WriteNodalFlags(SLIP, "SLIP", rModelPart.Nodes(), label);
-                mpIO->WriteNodalResults(WEIGHTED_SLIP, rModelPart.Nodes(), label, 0);
-                mpIO->WriteNodalResultsNonHistorical(AUGMENTED_TANGENT_CONTACT_PRESSURE, rModelPart.Nodes(), label);
-            }
-        }
 
         return true;
     }
@@ -283,22 +233,58 @@ public:
 
         // IO for debugging
         if (mOptions.Is(BaseMortarConvergenceCriteria::IO_DEBUG)) {
-            mpIO->CloseResultFile();
-            std::ostringstream new_name ;
-            new_name << "POST_LINEAR_ITER_STEP=""POST_LINEAR_ITER_STEP=" << rModelPart.GetProcessInfo()[STEP];
-            mpIO->ChangeOutputName(new_name.str());
+            const auto& r_nodes_array = rModelPart.Nodes();
+            const bool frictional_problem = rModelPart.IsDefined(SLIP) ? rModelPart.Is(SLIP) : false;
+
+            Parameters debug_io_parameters = Parameters(R"(
+            {
+                "model_part_name"                    : "PLEASE_SPECIFY_MODEL_PART_NAME",
+                "file_format"                        : "binary",
+                "output_precision"                   : 7,
+                "output_control_type"                : "nl_iteration_number",
+                "output_sub_model_parts"             : false,
+                "folder_name"                        : "VTK_Output",
+                "custom_name_prefix"                 : "",
+                "save_output_files_in_folder"        : true,
+                "nodal_solution_step_data_variables" : ["DISPLACEMENT","NORMAL","WEIGHTED_GAP"],
+                "nodal_data_value_variables"         : ["DYNAMIC_FACTOR","AUGMENTED_NORMAL_CONTACT_PRESSURE"],
+                "nodal_flags"                        : ["INTERFACE", "ACTIVE", "SLAVE", "ISOLATED"],
+                "element_data_value_variables"       : [],
+                "element_flags"                      : [],
+                "condition_data_value_variables"     : [],
+                "condition_flags"                    : [],
+                "gauss_point_variables"              : []
+            })" );
+
+            debug_io_parameters["model_part_name"].SetString(rModelPart.Name());
+            debug_io_parameters["folder_name"].SetString("VTK_Output/STEP_" + std::to_string(rModelPart.GetProcessInfo()[STEP]));
+            if (rModelPart.Nodes().begin()->SolutionStepsDataHas(VELOCITY_X)) {
+                debug_io_parameters["nodal_solution_step_data_variables"].Append("VELOCITY");
+                debug_io_parameters["nodal_solution_step_data_variables"].Append("ACCELERATION");
+            }
+            if (r_nodes_array.begin()->SolutionStepsDataHas(LAGRANGE_MULTIPLIER_CONTACT_PRESSURE))
+                debug_io_parameters["nodal_solution_step_data_variables"].Append("LAGRANGE_MULTIPLIER_CONTACT_PRESSURE");
+            else if (r_nodes_array.begin()->SolutionStepsDataHas(VECTOR_LAGRANGE_MULTIPLIER_X))
+                debug_io_parameters["nodal_solution_step_data_variables"].Append("VECTOR_LAGRANGE_MULTIPLIER");
+            if (frictional_problem) {
+                debug_io_parameters["nodal_flags"].Append("SLIP");
+                debug_io_parameters["nodal_solution_step_data_variables"].Append("WEIGHTED_SLIP");
+                debug_io_parameters["nodal_data_value_variables"].Append("AUGMENTED_TANGENT_CONTACT_PRESSURE");
+            }
+
+            mpIO = Kratos::make_shared<VtkOutput>(rModelPart, debug_io_parameters);
         }
     }
 
     /**
-     * @brief This function finalizes the solution step
+     * @brief This function finalizes the non-linear iteration
      * @param rModelPart Reference to the ModelPart containing the contact problem.
      * @param rDofSet Reference to the container of the problem's degrees of freedom (stored by the BuilderAndSolver)
      * @param rA System matrix (unused)
      * @param rDx Vector of results (variations on nodal variables)
      * @param rb RHS vector (residual)
      */
-    void FinalizeSolutionStep(
+    void FinalizeNonLinearIteration(
         ModelPart& rModelPart,
         DofsArrayType& rDofSet,
         const TSystemMatrixType& rA,
@@ -308,7 +294,7 @@ public:
     {
         // IO for debugging
         if (mOptions.Is(BaseMortarConvergenceCriteria::IO_DEBUG)) {
-            mpIO->FinalizeResults();
+            mpIO->PrintOutput();
         }
     }
 
@@ -353,7 +339,7 @@ protected:
      */
     virtual void ResetWeightedGap(ModelPart& rModelPart)
     {
-        NodesArrayType& r_nodes_array = rModelPart.GetSubModelPart("Contact").Nodes();
+        auto& r_nodes_array = rModelPart.GetSubModelPart("Contact").Nodes();
         VariableUtils().SetScalarVar<Variable<double>>(WEIGHTED_GAP, 0.0, r_nodes_array);
     }
 
@@ -378,7 +364,7 @@ private:
     ///@name Member Variables
     ///@{
 
-    GidIOBaseType::Pointer mpIO; /// The pointer to the debugging IO
+    VtkOutput::Pointer mpIO; /// The pointer to the debugging IO
 
     ///@}
     ///@name Private Operators
@@ -396,7 +382,7 @@ private:
         MortarUtilities::ComputeNodesMeanNormalModelPart(rModelPart.GetSubModelPart("Contact"));
 
         // Iterate over the computing conditions
-        ConditionsArrayType& r_conditions_array = rModelPart.GetSubModelPart("ComputingContact").Conditions();
+        auto& r_conditions_array = rModelPart.GetSubModelPart("ComputingContact").Conditions();
         const auto it_cond_begin = r_conditions_array.begin();
 
         #pragma omp parallel for

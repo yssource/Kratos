@@ -101,13 +101,19 @@ public:
         KRATOS_TRY;
 
         const unsigned int domain_size = mrModelPart.GetProcessInfo().GetValue(DOMAIN_SIZE);
-        KRATOS_ERROR_IF(mrModelPart.NumberOfConditions() == 0) <<
-            "> Normal calculation requires surface or line conditions to be defined!" << std::endl;
-        KRATOS_ERROR_IF((domain_size == 3 && mrModelPart.ConditionsBegin()->GetGeometry().size() == 2)) <<
+
+        if(use_elements)
+        {
+            KRATOS_ERROR_IF((domain_size == 3 && mrModelPart.ElementsBegin()->GetGeometry().size() == 2)) <<
+            "> Normal calculation of 2-noded elements in 3D domains is not possible!" << std::endl;
+            CalculateAreaNormals<Element>(mrModelPart.ElementsArray(),domain_size);
+        }
+        else
+        {
+            KRATOS_ERROR_IF((domain_size == 3 && mrModelPart.ConditionsBegin()->GetGeometry().size() == 2)) <<
             "> Normal calculation of 2-noded conditions in 3D domains is not possible!" << std::endl;
             CalculateAreaNormals<Condition>(mrModelPart.ConditionsArray(),domain_size);
         }
-
 
         CalculateUnitNormals();
 

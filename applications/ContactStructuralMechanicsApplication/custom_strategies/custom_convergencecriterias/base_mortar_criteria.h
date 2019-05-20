@@ -21,6 +21,7 @@
 #include "custom_utilities/contact_utilities.h"
 #include "utilities/mortar_utilities.h"
 #include "utilities/variable_utils.h"
+#include "utilities/os_utilities.h"
 #include "custom_processes/aalm_adapt_penalty_value_process.h"
 #include "custom_processes/compute_dynamic_factor_process.h"
 #include "solving_strategies/convergencecriterias/convergence_criteria.h"
@@ -261,6 +262,7 @@ public:
                 "gauss_point_variables"              : []
             })" );
 
+            OSUtilities::CreateDir("VTK_Output");
             debug_io_parameters["model_part_name"].SetString(rModelPart.Name());
             debug_io_parameters["folder_name"].SetString("VTK_Output/STEP_" + std::to_string(rModelPart.GetProcessInfo()[STEP]));
             if (it_node_begin->SolutionStepsDataHas(VELOCITY_X)) {

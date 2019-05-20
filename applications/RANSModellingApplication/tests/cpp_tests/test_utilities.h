@@ -134,6 +134,8 @@ void InitializeVariableWithRandomValues(ModelPart& rModelPart,
     std::default_random_engine generator(seed);
     std::uniform_real_distribution<double> distribution(MinValue, MaxValue);
 
+    const int domain_size = rModelPart.GetProcessInfo()[DOMAIN_SIZE];
+
     for (std::size_t i = 0; i < rModelPart.NumberOfNodes(); ++i)
     {
         NodeType& r_node = *(rModelPart.NodesBegin() + i);
@@ -143,7 +145,8 @@ void InitializeVariableWithRandomValues(ModelPart& rModelPart,
                 r_node.FastGetSolutionStepValue(rVariable, i_step);
             r_vector[0] = distribution(generator);
             r_vector[1] = distribution(generator);
-            r_vector[2] = distribution(generator);
+            if (domain_size > 2)
+                r_vector[2] = distribution(generator);
         }
     }
 }
@@ -309,19 +312,20 @@ void RunElementResidualScalarSensitivityTest(
     for (std::size_t i_element = 0; i_element < number_of_elements; ++i_element)
     {
         ElementType& r_adjoint_element = *(rAdjointModelPart.ElementsBegin() + i_element);
-        r_adjoint_element.Check(r_adjoint_process_info);
+        // r_adjoint_element.Check(r_adjoint_process_info);
 
         CalculateElementResidualScalarSensitivity(
             adjoint_total_element_residual_sensitivity, r_adjoint_element, r_adjoint_process_info);
 
         ElementType& r_primal_element = *(rPrimalModelPart.ElementsBegin() + i_element);
         GeometryType& r_primal_geometry = r_primal_element.GetGeometry();
-        r_primal_element.Check(r_primal_process_info);
+        // r_primal_element.Check(r_primal_process_info);
 
         const std::size_t number_of_nodes = r_primal_geometry.PointsNumber();
+        const std::size_t number_of_equations = adjoint_total_element_residual_sensitivity.size2();
 
-        Vector residual(number_of_nodes), residual_0(number_of_nodes),
-            residual_sensitivity(number_of_nodes);
+        Vector residual(number_of_equations), residual_0(number_of_equations),
+            residual_sensitivity(number_of_equations);
 
         CalculateResidual(residual_0, r_primal_element, r_primal_process_info);
 
@@ -337,12 +341,12 @@ void RunElementResidualScalarSensitivityTest(
 
             noalias(residual_sensitivity) = (residual - residual_0) / Delta;
 
-            for (std::size_t i_check_node = 0; i_check_node < number_of_nodes; ++i_check_node)
+            for (std::size_t i_check_equation = 0; i_check_equation < number_of_equations; ++i_check_equation)
             {
                 const double current_adjoint_shape_sensitivity =
-                    adjoint_total_element_residual_sensitivity(i_node, i_check_node);
+                    adjoint_total_element_residual_sensitivity(i_node, i_check_equation);
 
-                IsValuesRelativelyNear(residual_sensitivity[i_check_node],
+                IsValuesRelativelyNear(residual_sensitivity[i_check_equation],
                                        current_adjoint_shape_sensitivity, Tolerance);
             }
 
@@ -352,8 +356,6 @@ void RunElementResidualScalarSensitivityTest(
 }
 
 void RunElementResidualVectorSensitivityTest(
-    const Variable<double>& rPrimalVariable,
-    const Variable<double>& rPrimalRelaxedRateVariable,
     ModelPart& rPrimalModelPart,
     ModelPart& rAdjointModelPart,
     Process& rPrimalYPlusProcess,
@@ -380,11 +382,13 @@ void RunElementResidualVectorSensitivityTest(
                                                       rCurrentProcessInfo);
 
             const int number_of_equations = sensitivities.size2();
-            rDimSensitivities.resize(number_of_equations, number_of_equations);
+            const int number_of_nodes = rElement.GetGeometry().PointsNumber();
+            const int local_size = sensitivities.size1() / number_of_nodes;
+            rDimSensitivities.resize(number_of_nodes, number_of_equations);
 
-            for (int i = 0; i < number_of_equations; ++i)
+            for (int i = 0; i < number_of_nodes; ++i)
                 for (int j = 0; j < number_of_equations; ++j)
-                    rDimSensitivities(i, j) = sensitivities(i * domain_size + i_dim, j);
+                    rDimSensitivities(i, j) = sensitivities(i * local_size + i_dim, j);
         };
 
         auto perturb_variable = [PerturbVariable, i_dim](NodeType& rNode) -> double& {

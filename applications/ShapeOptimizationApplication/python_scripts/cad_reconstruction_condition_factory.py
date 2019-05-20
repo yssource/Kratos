@@ -586,7 +586,7 @@ class ConditionFactory:
 
             # Skipp embedded faces to not have two identical contributions from the same unknowns (embedded faces share the unkonws of a given geometry)
             if face_i.Attributes().HasTag('Embedded'):
-                print(f'Skip {face_i.Key()}')
+                print(f'Skipping embedded_face: {face_i.Key()}')
                 continue
 
             surface_geometry = face_i.Data().Geometry()
@@ -679,7 +679,7 @@ class ConditionFactory:
 
             # Skipp embedded faces to not have two identical contributions from the same unknowns (embedded faces share the unkonws of a given geometry)
             if face_i.Attributes().HasTag('Embedded'):
-                print(f'Skip {face_i.Key()}')
+                print(f'Skipping embedded_face: {face_i.Key()}')
                 continue
 
             surface = an.Surface3D(face_i.Data().Geometry())

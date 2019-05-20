@@ -18,7 +18,8 @@
 // External includes
 
 // Project includes
-#include "vtk_output.h"
+#include "input_output/vtk_output.h"
+#include "utilities/os_utilities.h"
 #include "containers/model.h"
 #include "processes/fast_transfer_between_model_parts_process.h"
 
@@ -170,9 +171,12 @@ std::string VtkOutput::GetOutputFileName(const ModelPart& rModelPart, const bool
     }
 
     // Putting everything together
+    const std::string& r_folder_name = mOutputSettings["folder_name"].GetString();
+    KRATOS_WARNING_IF("VtkOutput", !OSUtilities::IsDirExist(r_folder_name)) << "Folder: " << r_folder_name << " does not exist. We will try to create it" << std::endl;
+    OSUtilities::CreateDir(r_folder_name);
     std::string output_file_name;
     if (mOutputSettings["save_output_files_in_folder"].GetBool()) {
-        output_file_name += mOutputSettings["folder_name"].GetString() + "/";
+        output_file_name += r_folder_name + "/";
     }
     const std::string& custom_name_prefix = mOutputSettings["custom_name_prefix"].GetString();
     output_file_name += custom_name_prefix + model_part_name + "_" + std::to_string(rank) + "_" + label + ".vtk";

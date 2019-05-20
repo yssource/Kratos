@@ -159,6 +159,10 @@ std::string VtkOutput::GetOutputFileName(const ModelPart& rModelPart, const bool
         ss << std::setprecision(mDefaultPrecision) << std::setfill('0')
            << rModelPart.GetProcessInfo()[TIME];
         label = ss.str();
+    } else if(output_control == "nl_iteration_number") {
+        ss << std::setprecision(mDefaultPrecision) << std::setfill('0')
+           << rModelPart.GetProcessInfo()[NL_ITERATION_NUMBER];
+        label = ss.str();
     } else {
         KRATOS_ERROR << "Option for \"output_control_type\": " << output_control
             <<" not recognised!\nPossible output_control_type options "

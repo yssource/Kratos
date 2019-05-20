@@ -58,7 +58,7 @@ public:
     ///@{
 
     // Counted pointer of SurfaceLoadCondition3D
-    KRATOS_CLASS_POINTER_DEFINITION( SurfaceLoadCondition3D );
+    KRATOS_CLASS_INTRUSIVE_POINTER_DEFINITION( SurfaceLoadCondition3D );
 
     ///@}
     ///@name Life Cycle
@@ -219,16 +219,6 @@ protected:
         const Vector& rN,
         const double Pressure,
         const double Weight
-        ) const;
-
-    /**
-     * @brief This method computes the cross product matrix
-     * @param rM The matrix to be build
-     * @param rU The vector that defines the
-     */
-    void MakeCrossMatrix(
-        BoundedMatrix<double, 3, 3>& rM,
-        const array_1d<double, 3>& rU
         ) const;
 
     /**

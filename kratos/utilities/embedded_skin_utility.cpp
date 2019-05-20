@@ -82,9 +82,9 @@ namespace Kratos
         VariableUtils().SetFlag<ModelPart::ConditionsContainerType>(TO_ERASE, true, mrSkinModelPart.Conditions());
 
         // Remove all the skin model part geometrical entities
-        mrSkinModelPart.RemoveNodes(TO_ERASE);
-        mrSkinModelPart.RemoveElements(TO_ERASE);
-        mrSkinModelPart.RemoveConditions(TO_ERASE);
+        mrSkinModelPart.RemoveNodesFromAllLevels(TO_ERASE);
+        mrSkinModelPart.RemoveElementsFromAllLevels(TO_ERASE);
+        mrSkinModelPart.RemoveConditionsFromAllLevels(TO_ERASE);
     }
 
     template<std::size_t TDim>
@@ -135,7 +135,7 @@ namespace Kratos
                 sub_int_geom_nodes_array);
 
             // Create the new condition
-            Condition::Pointer p_new_cond = Kratos::make_shared<Condition>(rTempCondId, p_new_geom, pCondProp);
+            Condition::Pointer p_new_cond = Kratos::make_intrusive<Condition>(rTempCondId, p_new_geom, pCondProp);
             rNewCondsVect.push_back(p_new_cond);
 
             // Update the new elements id. counter

@@ -16,8 +16,8 @@
 #include <direct.h>
 #define GetCurrentDir _getcwd
 #else
-#include <unistd.h>
-#define GetCurrentDir getcwd
+// #include <unistd.h>
+// #define GetCurrentDir getcwd
 #endif
 
 // External includes
@@ -33,10 +33,10 @@ std::string GetCurrentWorkingDir()
 {
     KRATOS_TRY
 
-    char buff[FILENAME_MAX];
-    GetCurrentDir( buff, FILENAME_MAX );
-    std::string current_working_dir(buff);
-    return current_working_dir;
+    // char buff[FILENAME_MAX];
+    // GetCurrentDir( buff, FILENAME_MAX );
+    // std::string current_working_dir(buff);
+    return "Nothing";
 
     KRATOS_CATCH("")
 }

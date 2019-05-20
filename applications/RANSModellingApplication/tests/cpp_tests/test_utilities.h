@@ -134,8 +134,6 @@ void InitializeVariableWithRandomValues(ModelPart& rModelPart,
     std::default_random_engine generator(seed);
     std::uniform_real_distribution<double> distribution(MinValue, MaxValue);
 
-    const int domain_size = rModelPart.GetProcessInfo()[DOMAIN_SIZE];
-
     for (std::size_t i = 0; i < rModelPart.NumberOfNodes(); ++i)
     {
         NodeType& r_node = *(rModelPart.NodesBegin() + i);
@@ -145,8 +143,7 @@ void InitializeVariableWithRandomValues(ModelPart& rModelPart,
                 r_node.FastGetSolutionStepValue(rVariable, i_step);
             r_vector[0] = distribution(generator);
             r_vector[1] = distribution(generator);
-            if (domain_size > 2)
-                r_vector[2] = distribution(generator);
+            r_vector[2] = distribution(generator);
         }
     }
 }
@@ -286,6 +283,8 @@ void RunElementResidualScalarSensitivityTest(
 
     KRATOS_ERROR_IF(number_of_elements != rAdjointModelPart.NumberOfElements())
         << "Number of elements mismatch.";
+
+    rAdjointModelPart.GetProcessInfo()[DELTA_TIME] = -1.0 * rPrimalModelPart.GetProcessInfo()[DELTA_TIME];
 
     // Calculate initial y_plus values
     rPrimalYPlusProcess.Check();

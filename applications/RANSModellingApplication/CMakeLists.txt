@@ -2,10 +2,15 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 message("**** configuring KratosRANSModellingApplication ****")
 
+if(${FLUID_DYNAMICS_APPLICATION} MATCHES OFF )
+	message( SEND_ERROR "Please compile with -DFLUID_DYNAMICS_APPLICATION=ON, KratosRANSModellingApplication depends on KratosFluidDynamicsApplication." )
+endif(${FLUID_DYNAMICS_APPLICATION} MATCHES OFF )
+
 ################### PYBIND11
 include(pybind11Tools)
 
 include_directories( ${CMAKE_SOURCE_DIR}/kratos )
+include_directories( ${CMAKE_SOURCE_DIR}/applications/FluidDynamicsApplication )
 
 # generate variables with the sources
 set( KRATOS_RANS_MODELLING_APPLICATION_SOURCES
@@ -23,6 +28,7 @@ set( KRATOS_RANS_MODELLING_APPLICATION_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/evm_k_epsilon/evm_k_adjoint_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/evm_k_epsilon/evm_epsilon_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/evm_k_epsilon/evm_epsilon_adjoint_element.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/evm_k_epsilon/evm_k_epsilon_vms_adjoint_element.cpp
 )
 
 ## define test sources
@@ -32,7 +38,7 @@ endif(${KRATOS_BUILD_TESTING} MATCHES ON)
 
 # define library Kratos which defines the basic python interface
 pybind11_add_module(KratosRANSModellingApplication MODULE THIN_LTO ${KRATOS_RANS_MODELLING_APPLICATION_SOURCES} ${KRATOS_RANS_MODELLING_TESTING_SOURCES})
-target_link_libraries(KratosRANSModellingApplication PRIVATE KratosCore )
+target_link_libraries(KratosRANSModellingApplication PRIVATE KratosCore KratosFluidDynamicsCore )
 set_target_properties(KratosRANSModellingApplication PROPERTIES PREFIX "")
 
 if(USE_COTIRE MATCHES ON)

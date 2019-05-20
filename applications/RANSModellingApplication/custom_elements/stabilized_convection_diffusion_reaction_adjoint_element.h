@@ -1632,7 +1632,7 @@ private:
         const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
             this->GetGeometryParameterDerivatives();
 
-        const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+        const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
@@ -1877,7 +1877,7 @@ private:
         const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
             this->GetGeometryParameterDerivatives();
 
-        const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+        const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
@@ -1992,7 +1992,7 @@ private:
             this->GetGeometryParameterDerivatives();
         const unsigned int num_gauss_points = gauss_weights.size();
 
-        const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+        const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
@@ -2130,7 +2130,7 @@ private:
             this->GetGeometryParameterDerivatives();
         const unsigned int num_gauss_points = gauss_weights.size();
 
-        const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+        const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
@@ -2197,7 +2197,7 @@ private:
         const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
             this->GetGeometryParameterDerivatives();
 
-        const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+        const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
@@ -2290,7 +2290,7 @@ private:
         const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
             this->GetGeometryParameterDerivatives();
 
-        // const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+        // const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
 
         const Variable<double>& primal_variable = this->GetPrimalVariable();
 
@@ -2307,7 +2307,7 @@ private:
         RansCalculationUtilities rans_calculation_utilities;
         RansVariableUtils rans_variable_utils;
 
-        const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+        const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
@@ -2674,7 +2674,7 @@ private:
         const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
             this->GetGeometryParameterDerivatives();
 
-        const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+        const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 

@@ -63,6 +63,7 @@ void AddVariablesToModelPart(ModelPart& rModelPart)
     rModelPart.AddNodalSolutionStepVariable(DENSITY);
     rModelPart.AddNodalSolutionStepVariable(VISCOSITY);
     rModelPart.AddNodalSolutionStepVariable(ACCELERATION);
+    rModelPart.AddNodalSolutionStepVariable(RELAXED_ACCELERATION);
     rModelPart.AddNodalSolutionStepVariable(BODY_FORCE);
     rModelPart.AddNodalSolutionStepVariable(KINEMATIC_VISCOSITY);
     rModelPart.AddNodalSolutionStepVariable(TURBULENT_VISCOSITY);
@@ -85,7 +86,7 @@ void InitializeProcessInfo(ModelPart& rModelPart)
 {
     // Process info creation
     rModelPart.GetProcessInfo().SetValue(DOMAIN_SIZE, 2);
-    // rModelPart.GetProcessInfo().SetValue(DYNAMIC_TAU, 0.01);
+    rModelPart.GetProcessInfo().SetValue(DYNAMIC_TAU, 0.1);
     rModelPart.GetProcessInfo().SetValue(DELTA_TIME, 0.01);
     rModelPart.GetProcessInfo().SetValue(TURBULENCE_RANS_C_MU, 0.09);
     rModelPart.GetProcessInfo().SetValue(TURBULENCE_RANS_C1, 1.44);
@@ -146,7 +147,7 @@ void InitializeNodalVariables(ModelPart& rModelPart)
     InitializeVariableWithRandomValues(rModelPart, VELOCITY, 5, 10.0, 2);
 
     InitializeVariableWithRandomValues(rModelPart, PRESSURE, 5, 10.0, 2);
-    InitializeVariableWithRandomValues(rModelPart, ACCELERATION, 1e-2, 1e-1, 2);
+    InitializeVariableWithRandomValues(rModelPart, ACCELERATION, 5.0, 10.0, 2);
 
     InitializeVariableWithValues(rModelPart, KINEMATIC_VISCOSITY, 3e-2);
     InitializeVariableWithValues(rModelPart, VISCOSITY, 3e-2);
@@ -196,7 +197,15 @@ void UpdateVariablesInModelPart(ModelPart& rModelPart)
         r_node.FastGetSolutionStepValue(RANS_AUXILIARY_VARIABLE_2) =
             (1 - bossak_alpha) * epsilon_rate + bossak_alpha * old_epsilon_rate;
 
-        // r_node.FastGetSolutionStepValue(VISCOSITY) = nu + nu_t;
+        const array_1d<double, 3>& acceleration =
+            r_node.FastGetSolutionStepValue(ACCELERATION);
+        const array_1d<double, 3>& old_acceleration =
+            r_node.FastGetSolutionStepValue(ACCELERATION, 1);
+
+        r_node.FastGetSolutionStepValue(RELAXED_ACCELERATION) =
+            acceleration * (1 - bossak_alpha) + bossak_alpha * old_acceleration;
+
+        r_node.FastGetSolutionStepValue(VISCOSITY) = nu + nu_t;
     }
 }
 
@@ -1133,7 +1142,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonNodalVelocitySensitivities, RANSEvModel
 }
 
 KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonVMSAdjointElementVelocityDerivativeLHSMatrix,
-                          RANSEvModelsKEpsilonElementResidualMatricesT1)
+                          RANSEvModelsKEpsilonElementResidualMatrices)
 {
     Model primal_model;
     ModelPart& r_primal_model_part =
@@ -1163,31 +1172,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonVMSAdjointElementVelocityDerivativeLHSM
 
     auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
                                            ProcessInfo& rProcessInfo) {
-        const double bossak_alpha = rProcessInfo[BOSSAK_ALPHA];
-        GeometryType& r_geometry = rElement.GetGeometry();
-        const int number_of_nodes = r_geometry.PointsNumber();
-
-        // calculating the relaxed acceleration and puting it on ACCELERATION
-        Matrix temp(number_of_nodes, 3);
-        for (int i = 0; i < number_of_nodes; ++i)
-        {
-            array_1d<double, 3>& current_acceleration = r_geometry[i].FastGetSolutionStepValue(ACCELERATION);
-            const array_1d<double, 3>& old_acceleration = r_geometry[i].FastGetSolutionStepValue(ACCELERATION, 1);
-
-            temp(i, 0) = current_acceleration[0];
-            temp(i, 1) = current_acceleration[1];
-            temp(i, 2) = current_acceleration[2];
-            noalias(current_acceleration) = current_acceleration * (1 - bossak_alpha) + bossak_alpha * old_acceleration;
-        }
         rElement.CalculateFirstDerivativesLHS(rOutput, rProcessInfo);
-        for (int i = 0; i < number_of_nodes; ++i)
-        {
-            array_1d<double, 3>& current_acceleration = r_geometry[i].FastGetSolutionStepValue(ACCELERATION);
-            current_acceleration[0] = temp(i, 0);
-            current_acceleration[1] = temp(i, 1);
-            current_acceleration[2] = temp(i, 2);
-        }
-
     };
 
     RansModellingApplicationTestUtilities::RunElementResidualVectorSensitivityTest(

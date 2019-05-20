@@ -62,10 +62,10 @@ bool IsDirExist(const std::string& rFolderName)
 /***********************************************************************************/
 /***********************************************************************************/
 
-bool CreateDir(const std::string& rFolderName)
+int CreateDir(const std::string& rFolderName)
 {
     const int status = mkdir(rFolderName.c_str(),0777);
-    return status == 0 ? false : true;
+    return status;
 }
 
 } // namespace OSUtilities

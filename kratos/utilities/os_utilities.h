@@ -71,9 +71,9 @@ namespace OSUtilities
     /**
      * @brief This method creates a new directory
      * @param rFolderName The name of the directory to be created
-     * @return True if success, false otherwise
+     * @return The status
      */
-    bool KRATOS_API(KRATOS_CORE) CreateDir(const std::string& rFolderName);
+    int KRATOS_API(KRATOS_CORE) CreateDir(const std::string& rFolderName);
 
 }; // namespace OSUtilities
 }  // namespace Kratos

@@ -47,6 +47,12 @@ KratosRANSModellingApplication::KratosRANSModellingApplication()
                                    Element::GeometryType::PointsArrayType(3)))),
       mRANSEVMEpsilonAdjoint3D(0,
                                Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(
+                                   Element::GeometryType::PointsArrayType(4)))),
+      mRANSEVMKEpsilonVMSAdjoint2D(0,
+                               Element::GeometryType::Pointer(new Triangle2D3<Node<3>>(
+                                   Element::GeometryType::PointsArrayType(3)))),
+      mRANSEVMKEpsilonVMSAdjoint3D(0,
+                               Element::GeometryType::Pointer(new Tetrahedra3D4<Node<3>>(
                                    Element::GeometryType::PointsArrayType(4))))
 {
 }
@@ -100,5 +106,8 @@ void KratosRANSModellingApplication::Register()
 
     KRATOS_REGISTER_ELEMENT("RANSEVMEpsilonAdjoint2D3N", mRANSEVMEpsilonAdjoint2D);
     KRATOS_REGISTER_ELEMENT("RANSEVMEpsilonAdjoint3D4N", mRANSEVMEpsilonAdjoint3D);
+
+    KRATOS_REGISTER_ELEMENT("RANSEVMKEpsilonVMSAdjoint2D3N", mRANSEVMKEpsilonVMSAdjoint2D);
+    KRATOS_REGISTER_ELEMENT("RANSEVMKEpsilonVMSAdjoint3D4N", mRANSEVMKEpsilonVMSAdjoint3D);
 }
 } // namespace Kratos.

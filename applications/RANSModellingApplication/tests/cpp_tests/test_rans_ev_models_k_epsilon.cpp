@@ -1310,5 +1310,51 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonVMSAdjointElementEpsilonFirstDerivative
         RansEvmKEpsilonModel::UpdateVariablesInModelPart,
         calculate_sensitivity_matrix, perturb_variable, 1e-5, 1e-5);
 }
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonVMSAdjointElementPressureFirstDerivativeLHSMatrix,
+                          RANSEvModelsKEpsilonElementResidualMatrices)
+{
+    Model primal_model;
+    ModelPart& r_primal_model_part =
+        primal_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_primal_model_part, "VMS2D3N");
+
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMKEpsilonVMSAdjoint2D3N");
+
+
+    r_primal_model_part.GetProcessInfo().SetValue(TURBULENCE_RANS_C_MU, 102.3);
+    r_adjoint_model_part.GetProcessInfo().SetValue(TURBULENCE_RANS_C_MU, 102.3);
+
+    const int domain_size = r_primal_model_part.GetProcessInfo()[DOMAIN_SIZE];
+
+    Parameters empty_parameters = Parameters(R"({})");
+
+    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_sensitivities_process(
+        r_adjoint_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess adjoint_y_plus_process(
+        r_adjoint_model_part, empty_parameters);
+
+    RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
+
+    auto perturb_variable = [](NodeType& rNode) -> double& {
+        return rNode.FastGetSolutionStepValue(PRESSURE);
+    };
+
+    auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
+                                           ProcessInfo& rProcessInfo) {
+        rElement.CalculateFirstDerivativesLHS(rOutput, rProcessInfo);
+    };
+
+    RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(
+        r_primal_model_part, r_adjoint_model_part, primal_y_plus_process,
+        adjoint_y_plus_process, y_plus_sensitivities_process,
+        RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        calculate_sensitivity_matrix, perturb_variable, 1e-6, 1e-5, domain_size);
+}
 } // namespace Testing
 } // namespace Kratos.

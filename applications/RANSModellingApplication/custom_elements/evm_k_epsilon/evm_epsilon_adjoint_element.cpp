@@ -477,8 +477,8 @@ void EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateEffectiveKinematicVisco
 
     if (rDerivativeVariable == TURBULENT_KINETIC_ENERGY)
     {
-        const double epsilon_sigma =
-            rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
+        const double tke_sigma =
+            rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
         const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
 
         EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityTKESensitivities(
@@ -487,7 +487,7 @@ void EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateEffectiveKinematicVisco
         EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
             rOutput, rOutput, rCurrentData.ShapeFunctions);
 
-        noalias(rOutput) = rOutput / epsilon_sigma;
+        noalias(rOutput) = rOutput / tke_sigma;
     }
     else if (rDerivativeVariable == TURBULENT_ENERGY_DISSIPATION_RATE)
     {

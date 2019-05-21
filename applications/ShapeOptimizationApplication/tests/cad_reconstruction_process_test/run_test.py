@@ -273,6 +273,28 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
         TestResults(pole_coordinates, str(test_number))
 
 # =======================================================================================================
+# Test: Direct edge enforcement
+# =======================================================================================================
+test_number = 10
+if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
+    print("\n> Starting test "+str(test_number)+"...")
+
+    with suppress_stdout():
+            with open("parameters.json",'r') as parameter_file:
+                parameters = KratosMultiphysics.Parameters(parameter_file.read())
+
+            parameters["conditions"]["edges"]["direct"]["apply_enforcement_conditions"].SetBool(True)
+            parameters["output"]["results_directory"].SetString("Results_Test_"+str(test_number))
+
+            # Mapping
+            cad_model = an.Model()
+            PerformMapping(cad_model, fe_model, parameters)
+
+            # Actual test
+            pole_coordinates = ExtractResults(cad_model)
+            TestResults(pole_coordinates, str(test_number))
+
+# =======================================================================================================
 # Delete result files
 # =======================================================================================================
 os.remove("cad_reconstruction_process_test.post.lst")

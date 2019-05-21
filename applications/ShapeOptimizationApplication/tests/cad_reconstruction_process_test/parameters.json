@@ -34,6 +34,17 @@
     },
     "edges" :
     {
+        "direct" :
+        {
+            "apply_enforcement_conditions" : false,
+            "exclusive_edge_list": [
+                ["Rhino<dba9a5ba-6b33-4a1b-b46e-3916bd68d053>.BrepEdge<16>", [0,0,25]],
+                ["Rhino<dba9a5ba-6b33-4a1b-b46e-3916bd68d053>.BrepEdge<19>" , [0,0,25]],
+                ["Rhino<dba9a5ba-6b33-4a1b-b46e-3916bd68d053>.BrepEdge<21>" , [0,0,25]],
+                ["Rhino<dba9a5ba-6b33-4a1b-b46e-3916bd68d053>.BrepEdge<24>" , [0,0,25]]
+            ],
+            "penalty_factor_position_enforcement" : 1e3
+        },
         "fe_based" :
         {
             "apply_enforcement_conditions"        : false,

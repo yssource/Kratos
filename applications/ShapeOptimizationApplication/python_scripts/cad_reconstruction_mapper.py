@@ -69,6 +69,12 @@ class CADMapper:
                 },
                 "edges" :
                 {
+                    "direct" :
+                    {
+                        "apply_enforcement_conditions" : false,
+                        "exclusive_edge_list": [],
+                        "penalty_factor_position_enforcement" : 1e3
+                    },
                     "fe_based" :
                     {
                         "apply_enforcement_conditions"        : false,

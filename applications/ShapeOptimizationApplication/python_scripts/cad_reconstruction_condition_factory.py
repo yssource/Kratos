@@ -55,6 +55,8 @@ class ConditionFactory:
             self.AddFaceConditions(conditions)
         if self.parameters["conditions"]["faces"]["rigid"]["apply_rigid_conditions"].GetBool():
             self.AddRigidConditions(conditions)
+        if self.parameters["conditions"]["edges"]["direct"]["apply_enforcement_conditions"].GetBool():
+            self.AddDirectEdgeConditions(conditions)
         if self.parameters["conditions"]["edges"]["fe_based"]["apply_enforcement_conditions"].GetBool():
             self.AddEnforcementConditions(conditions)
         if self.parameters["conditions"]["edges"]["fe_based"]["apply_corner_enforcement_conditions"].GetBool():
@@ -311,6 +313,55 @@ class ConditionFactory:
                 conditions.append(new_condition)
 
     # --------------------------------------------------------------------------
+    def AddDirectEdgeConditions(self, conditions):
+        drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
+        min_span_length = self.parameters["drawing_parameters"]["min_span_length"].GetDouble()
+        penalty_factor_position_enforcement = self.parameters["conditions"]["edges"]["direct"]["penalty_factor_position_enforcement"].GetDouble()
+
+        # Collect list of exclusive edges
+        list_of_exclusive_edges = []
+        for itr in range(self.parameters["conditions"]["edges"]["direct"]["exclusive_edge_list"].size()):
+            edge_key = self.parameters["conditions"]["edges"]["direct"]["exclusive_edge_list"][itr][0].GetString()
+            edge = self.cad_model.Get(edge_key)
+            target_displacement = self.parameters["conditions"]["edges"]["direct"]["exclusive_edge_list"][itr][1].GetVector()
+            list_of_exclusive_edges.append([edge, target_displacement])
+
+        # Introduce constraints for each specified edge
+        for [edge_i, target_displacement] in list_of_exclusive_edges:
+            adjacent_faces = edge_i.Data().Faces()
+            num_adjacent_faces = len(adjacent_faces)
+
+            if num_adjacent_faces == 1:
+                print("> Processing edge ", edge_i.Key(),"; disp =",target_displacement)
+                face = adjacent_faces[0]
+                surface_geometry = face.Data().Geometry()
+                surface_geometry_data = face.Data().Geometry().Data()
+
+                poles_nodes = self.pole_nodes[surface_geometry.Key()]
+                list_of_points, list_of_parameters, _, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i, drawing_tolerance, min_span_length)
+
+                for integration_point, integration_weight, (u,v) in zip(list_of_points, list_of_integration_weights, list_of_parameters):
+
+                    point_ptr = self.cad_model.Add(an.Point3D(location=integration_point))
+                    point_ptr.Attributes().SetLayer('EnforcementPoints')
+
+                    nonzero_indices, shape_functions = surface_geometry_data.ShapeFunctionsAt(u, v, order=1)
+                    nonzero_pole_nodes = [poles_nodes[i] for i in nonzero_indices]
+
+                    # Positions enforcement
+                    if penalty_factor_position_enforcement > 0:
+                        target_position = integration_point + np.array(target_displacement)
+                        weight = penalty_factor_position_enforcement * integration_weight
+
+                        new_condition = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes, shape_functions, weight)
+                        conditions.append(new_condition)
+
+            elif num_adjacent_faces == 2:
+                raise RuntimeError("Specific edge enforcement not implemented for edge with more than 1 adjacent faces!!")
+            else:
+                raise RuntimeError("Max number of adjacent has to be 2!!")
+
+    # --------------------------------------------------------------------------
     def AddEnforcementConditions(self, conditions):
         drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
         min_span_length = self.parameters["drawing_parameters"]["min_span_length"].GetDouble()
@@ -319,9 +370,6 @@ class ConditionFactory:
 
         # Create corresponding points
         for edge_itr, edge_i in enumerate(self.cad_model.GetByType('BrepEdge')):
-
-            print("> Processing edge ",edge_itr)
-
             adjacent_faces = edge_i.Data().Faces()
             num_adjacent_faces = len(adjacent_faces)
 
@@ -329,6 +377,7 @@ class ConditionFactory:
                 # Skip non coupling-edges
                 pass
             elif num_adjacent_faces == 2:
+                print("> Processing edge ",edge_i.Key())
 
                 face_a = adjacent_faces[0]
                 face_b = adjacent_faces[1]
@@ -341,7 +390,7 @@ class ConditionFactory:
                 poles_nodes_a = self.pole_nodes[surface_geometry_a.Key()]
                 poles_nodes_b = self.pole_nodes[surface_geometry_b.Key()]
 
-                list_of_points, list_of_parameters_a, list_of_parameters_b, _, _, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i, drawing_tolerance, min_span_length)
+                list_of_points, list_of_parameters_a, list_of_parameters_b, _, _, list_of_integration_weights = self.__CreateIntegrationPointsForCouplingEdge(edge_i, drawing_tolerance, min_span_length)
 
                 # Collect integration points in model part
                 temp_model = KratosMultiphysics.Model()
@@ -547,7 +596,7 @@ class ConditionFactory:
                 poles_nodes_a = self.pole_nodes[surface_geometry_a.Key()]
                 poles_nodes_b = self.pole_nodes[surface_geometry_b.Key()]
 
-                list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_curve_parameters_a, _, list_of_integration_weights = self.__CreateIntegrationPointsForEdge(edge_i, drawing_tolerance, min_span_length)
+                list_of_points, list_of_parameters_a, list_of_parameters_b, list_of_curve_parameters_a, _, list_of_integration_weights = self.__CreateIntegrationPointsForCouplingEdge(edge_i, drawing_tolerance, min_span_length)
 
                 # for point in list_of_points:
                 #     point_ptr = self.cad_model.Add(an.Point3D(location=point))
@@ -837,6 +886,42 @@ class ConditionFactory:
     # --------------------------------------------------------------------------
     @staticmethod
     def __CreateIntegrationPointsForEdge(edge, drawing_tolerance, min_span_length):
+        projection_tolerance = drawing_tolerance * 10
+
+        [trim] = edge.Data().Trims()
+        curve_3d = an.CurveOnSurface3D(trim.Data().Geometry().Data(), trim.Data().Face().Data().Geometry().Data(), trim.Data().Geometry().Data().Domain())
+        spans_on_curve = [span.T0() for span in curve_3d.Spans()]
+        spans_on_curve.append(curve_3d.Domain().T1())
+
+        [face] = edge.Data().Faces()
+        surface_3d = face.Data().Geometry().Data()
+        degree = max(surface_3d.DegreeU(), surface_3d.DegreeV()) + 1
+
+        list_of_points = []
+        list_of_parameters = []
+        list_of_curve_parameters = []
+        list_of_weights = []
+
+        for t0, t1 in zip(spans_on_curve, spans_on_curve[1:]):
+            span = an.Interval(t0, t1)
+
+            if span.Length() < min_span_length:
+                continue
+
+            for t, weight in an.IntegrationPoints.Points1D(degree, span):
+                point, a1 = curve_3d.DerivativesAt(t, 1)
+                u, v = trim.Data().Geometry().Data().PointAt(t)
+
+                list_of_points.append(point)
+                list_of_parameters.append((u, v))
+                list_of_curve_parameters.append(t)
+                list_of_weights.append(weight * la.norm(a1))
+
+        return list_of_points, list_of_parameters, list_of_curve_parameters, list_of_weights
+
+    # --------------------------------------------------------------------------
+    @staticmethod
+    def __CreateIntegrationPointsForCouplingEdge(edge, drawing_tolerance, min_span_length):
         projection_tolerance = drawing_tolerance * 10
 
         trim_a, trim_b = edge.Data().Trims()

@@ -277,7 +277,8 @@ void RunElementResidualScalarSensitivityTest(
     std::function<void(Matrix&, ElementType&, ProcessInfo&)> CalculateElementResidualScalarSensitivity,
     std::function<double&(NodeType&)> PerturbVariable,
     const double Delta,
-    const double Tolerance)
+    const double Tolerance,
+    const int DerivativesOffset = 0)
 {
     std::size_t number_of_elements = rPrimalModelPart.NumberOfElements();
 
@@ -322,6 +323,7 @@ void RunElementResidualScalarSensitivityTest(
 
         const std::size_t number_of_nodes = r_primal_geometry.PointsNumber();
         const std::size_t number_of_equations = adjoint_total_element_residual_sensitivity.size2();
+        const int local_size = adjoint_total_element_residual_sensitivity.size1() / number_of_nodes;
 
         Vector residual(number_of_equations), residual_0(number_of_equations),
             residual_sensitivity(number_of_equations);
@@ -343,7 +345,7 @@ void RunElementResidualScalarSensitivityTest(
             for (std::size_t i_check_equation = 0; i_check_equation < number_of_equations; ++i_check_equation)
             {
                 const double current_adjoint_shape_sensitivity =
-                    adjoint_total_element_residual_sensitivity(i_node, i_check_equation);
+                    adjoint_total_element_residual_sensitivity(i_node * local_size + DerivativesOffset , i_check_equation);
 
                 IsValuesRelativelyNear(residual_sensitivity[i_check_equation],
                                        current_adjoint_shape_sensitivity, Tolerance);
@@ -364,7 +366,8 @@ void RunElementResidualVectorSensitivityTest(
     std::function<void(Matrix&, ElementType&, ProcessInfo&)> CalculateElementResidualVectorSensitivity,
     std::function<double&(NodeType&, const int)> PerturbVariable,
     const double Delta,
-    const double Tolerance)
+    const double Tolerance,
+    const int DerivativesOffset = 0)
 {
     ProcessInfo& r_primal_process_info = rPrimalModelPart.GetProcessInfo();
 
@@ -373,7 +376,7 @@ void RunElementResidualVectorSensitivityTest(
     for (int i_dim = 0; i_dim < domain_size; ++i_dim)
     {
         auto calculate_sensitivities = [CalculateElementResidualVectorSensitivity, i_dim,
-                                        domain_size](Matrix& rDimSensitivities,
+                                        domain_size, DerivativesOffset](Matrix& rDimSensitivities,
                                                      ElementType& rElement,
                                                      ProcessInfo& rCurrentProcessInfo) {
             Matrix sensitivities;
@@ -387,7 +390,7 @@ void RunElementResidualVectorSensitivityTest(
 
             for (int i = 0; i < number_of_nodes; ++i)
                 for (int j = 0; j < number_of_equations; ++j)
-                    rDimSensitivities(i, j) = sensitivities(i * local_size + i_dim, j);
+                    rDimSensitivities(i, j) = sensitivities(i * local_size + i_dim + DerivativesOffset, j);
         };
 
         auto perturb_variable = [PerturbVariable, i_dim](NodeType& rNode) -> double& {

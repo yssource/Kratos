@@ -342,8 +342,8 @@ class ConditionFactory:
 
                 for integration_point, integration_weight, (u,v) in zip(list_of_points, list_of_integration_weights, list_of_parameters):
 
-                    point_ptr = self.cad_model.Add(an.Point3D(location=integration_point))
-                    point_ptr.Attributes().SetLayer('EnforcementPoints')
+                    # point_ptr = self.cad_model.Add(an.Point3D(location=integration_point))
+                    # point_ptr.Attributes().SetLayer('EnforcementPoints')
 
                     nonzero_indices, shape_functions = surface_geometry_data.ShapeFunctionsAt(u, v, order=1)
                     nonzero_pole_nodes = [poles_nodes[i] for i in nonzero_indices]

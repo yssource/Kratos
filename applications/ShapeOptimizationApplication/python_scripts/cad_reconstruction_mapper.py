@@ -194,6 +194,8 @@ class CADMapper:
                 self.Initialize()
                 self.Map()
 
+                self.__OutputCadModel("reconstructed_geometry_refinement_level"+ iteration_tag +".iga")
+
                 nothing_to_refine = self.ResetDisplacementsAndRefineCadModel()
 
                 if nothing_to_refine:

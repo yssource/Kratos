@@ -105,40 +105,63 @@ class ConditionFactory:
         drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
         total_area = 0
 
+        # Create integration points and assign fe data
+        temp_model = KratosMultiphysics.Model()
+        destination_mdpa = temp_model.CreateModelPart("temp_model_part")
+        destination_mdpa.AddNodalSolutionStepVariable(KratosShape.NORMALIZED_SURFACE_NORMAL)
+        destination_mdpa.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE)
+        integration_point_counter = 0
+        integration_point_data = {}
         for face_i in self.cad_model.GetByType('BrepFace'):
+
+            # Skipp embedded faces to not have two identical contributions from the same unknowns (embedded faces share the unkonws of a given geometry)
+            if face_i.Attributes().HasTag('Embedded'):
+                print(f'Skipping embedded_face: {face_i.Key()}')
+                continue
 
             print("> Processing face ",face_i.Key())
 
-            surface_geometry = face_i.Data().Geometry()
-            surface_geometry_data = face_i.Data().Geometry().Data()
+            list_of_integration_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i, drawing_tolerance)
+
+            # Collect integration points in model part
+            list_of_fe_points = []
+            for [x,y,z] in list_of_integration_points:
+                integration_point_counter = integration_point_counter+1
+                destination_mdpa.CreateNewNode(integration_point_counter, x, y, z)
+                list_of_fe_points.append(destination_mdpa.Nodes[integration_point_counter])
+
+            integration_point_data[face_i] = [list_of_fe_points, list_of_parameters, list_of_integration_weights]
+
+        # Map information from fem to integration points using element based mapper
+        print("> Perform mapping... ",face_i.Key())
+        mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, self.parameters["conditions"]["general"]["mapping_cad_fem"].Clone() )
+        mapper.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
+
+        # Create conditions
+        for face, [list_of_fe_points, list_of_parameters, list_of_integration_weights] in integration_point_data.items():
+            surface_geometry = face.Data().Geometry()
+            surface_geometry_data = face.Data().Geometry().Data()
 
             pole_nodes = self.pole_nodes[surface_geometry.Key()]
 
-            list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i, drawing_tolerance)
-
-            # Collect integration points in model part
-            temp_model = KratosMultiphysics.Model()
-            destination_mdpa = temp_model.CreateModelPart("temp_model_part")
-            destination_mdpa.AddNodalSolutionStepVariable(KratosShape.NORMALIZED_SURFACE_NORMAL)
-            destination_mdpa.AddNodalSolutionStepVariable(KratosShape.SHAPE_CHANGE)
-
-            for itr, [x,y,z] in enumerate(list_of_points):
-                destination_mdpa.CreateNewNode(itr, x, y, z)
-
-                # point_ptr = self.cad_model.Add(an.Point3D(location=[x, y, z]))
-                # point_ptr.Attributes().SetLayer('IntegrationPoints_'+str(face_i.Key()))
-
-            # Map information from fem to integration points using element based mapper
-            mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, self.parameters["conditions"]["general"]["mapping_cad_fem"].Clone() )
-            mapper.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
-
-            # Create conditions
-            for fe_node, (u,v), weight in zip(destination_mdpa.Nodes, list_of_parameters, list_of_integration_weights):
+            for fe_node, (u,v), weight in zip(list_of_fe_points, list_of_parameters, list_of_integration_weights):
 
                 total_area += weight
 
                 nonzero_indices, shape_functions = surface_geometry_data.ShapeFunctionsAt(u, v, order=0)
                 nonzero_pole_nodes = [pole_nodes[i] for i in nonzero_indices]
+
+                # node_coords_i = np.array([fe_node.X, fe_node.Y, fe_node.Z])
+                # node_coords_i_updated = node_coords_i + np.array(fe_node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE))
+
+                # line_ptr =  self.cad_model.Add(an.Line3D(a=node_coords_i, b=node_coords_i_updated))
+                # line_ptr.Attributes().SetLayer('disp')
+
+                # point_ptr = self.cad_model.Add(an.Point3D(location=node_coords_i))
+                # point_ptr.Attributes().SetLayer('IntegrationPoints_'+str(face_i.Key()))
+
+                # point_ptr = self.cad_model.Add(an.Point3D(location=node_coords_i_updated))
+                # point_ptr.Attributes().SetLayer('MappedIntPointsUpdated'+str(face_i.Key()))
 
                 new_condition = clib.DistanceMinimizationCondition(fe_node, nonzero_pole_nodes, shape_functions, KratosShape.SHAPE_CHANGE, weight=weight)
 

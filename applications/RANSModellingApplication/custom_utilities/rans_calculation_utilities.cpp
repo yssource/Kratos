@@ -217,7 +217,8 @@ Vector RansCalculationUtilities::GetVector(const array_1d<double, 3>& rVector) c
     return result;
 }
 
-Vector RansCalculationUtilities::GetVector(const array_1d<double, 3>& rVector, const unsigned int Dim) const
+Vector RansCalculationUtilities::GetVector(const array_1d<double, 3>& rVector,
+                                           const unsigned int Dim) const
 {
     Vector result(Dim);
 
@@ -225,6 +226,18 @@ Vector RansCalculationUtilities::GetVector(const array_1d<double, 3>& rVector, c
         result[i_dim] = rVector[i_dim];
 
     return result;
+}
+
+void RansCalculationUtilities::PlaceInGlobalMatrix(Matrix& rGlobalMatrix,
+                                                   const Matrix& rSubMatrix,
+                                                   const std::size_t RowOffset,
+                                                   const std::size_t ColumnOffset)
+{
+    for (std::size_t i = 0; i < rSubMatrix.size1(); ++i)
+    {
+        for (std::size_t j = 0; j < rSubMatrix.size2(); ++j)
+            rGlobalMatrix(RowOffset + i, ColumnOffset + j) = rSubMatrix(i, j);
+    }
 }
 
 // template instantiations

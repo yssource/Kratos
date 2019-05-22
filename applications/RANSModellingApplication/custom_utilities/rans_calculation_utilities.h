@@ -127,6 +127,12 @@ public:
     Vector GetVector(const array_1d<double, 3>& rVector) const;
 
     Vector GetVector(const array_1d<double, 3>& rVector, const unsigned int Dim) const;
+
+    void PlaceInGlobalMatrix(Matrix& rGlobalMatrix,
+                             const Matrix& rSubMatrix,
+                             const std::size_t RowOffset,
+                             const std::size_t ColumnOffset);
+
     ///@}
 
 private:

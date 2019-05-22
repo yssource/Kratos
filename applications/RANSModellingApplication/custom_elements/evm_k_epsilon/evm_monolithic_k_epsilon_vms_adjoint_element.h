@@ -385,6 +385,8 @@ public:
     void CalculateFirstDerivativesLHS(MatrixType& rLeftHandSideMatrix,
                                       ProcessInfo& rCurrentProcessInfo) override
     {
+        KRATOS_TRY
+
         AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
         AdjointKElement k_element(this->Id(), this->pGetGeometry());
         AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
@@ -422,7 +424,8 @@ public:
         i_offset = 0;
         j_offset += local_matrix.size2();
 
-        k_element.Calculate(RANS_VELOCITY_PRESSURE_PARTIAL_DERIVATIVE, local_matrix, rCurrentProcessInfo);
+        k_element.Calculate(RANS_VELOCITY_PRESSURE_PARTIAL_DERIVATIVE,
+                            local_matrix, rCurrentProcessInfo);
         rans_calculation_utilities.PlaceInGlobalMatrix(
             rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
         i_offset += local_matrix.size1();
@@ -455,6 +458,54 @@ public:
         epsilon_element.CalculateFirstDerivativesLHS(local_matrix, rCurrentProcessInfo);
         rans_calculation_utilities.PlaceInGlobalMatrix(
             rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
+
+        KRATOS_CATCH("");
+    }
+
+    void CalculateSecondDerivativesLHS(MatrixType& rLeftHandSideMatrix,
+                                       ProcessInfo& rCurrentProcessInfo) override
+    {
+        KRATOS_TRY
+
+        const double inv_one_minus_bossak_alpha = 1.0 / (1.0 - rCurrentProcessInfo[BOSSAK_ALPHA]);
+
+        AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
+        AdjointKElement k_element(this->Id(), this->pGetGeometry());
+        AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
+
+        fluid_element.SetData(this->Data());
+        k_element.SetData(this->Data());
+        epsilon_element.SetData(this->Data());
+
+        if (rLeftHandSideMatrix.size1() != TElementLocalSize ||
+            rLeftHandSideMatrix.size2() != TElementLocalSize)
+            rLeftHandSideMatrix.resize(TElementLocalSize, TElementLocalSize, false);
+
+        rLeftHandSideMatrix.clear();
+
+        IndexType i_offset{0}, j_offset{0};
+        Matrix local_matrix;
+        RansCalculationUtilities rans_calculation_utilities;
+
+        fluid_element.CalculateSecondDerivativesLHS(local_matrix, rCurrentProcessInfo);
+        rans_calculation_utilities.PlaceInGlobalMatrix(
+            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
+        i_offset += local_matrix.size1();
+        j_offset += local_matrix.size2();
+
+        k_element.CalculateSecondDerivativesLHS(local_matrix, rCurrentProcessInfo);
+        noalias(local_matrix) = local_matrix * inv_one_minus_bossak_alpha;
+        rans_calculation_utilities.PlaceInGlobalMatrix(
+            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
+        i_offset += local_matrix.size1();
+        j_offset += local_matrix.size2();
+
+        epsilon_element.CalculateSecondDerivativesLHS(local_matrix, rCurrentProcessInfo);
+        noalias(local_matrix) = local_matrix * inv_one_minus_bossak_alpha;
+        rans_calculation_utilities.PlaceInGlobalMatrix(
+            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
+
+        KRATOS_CATCH("");
     }
 
     ///@}

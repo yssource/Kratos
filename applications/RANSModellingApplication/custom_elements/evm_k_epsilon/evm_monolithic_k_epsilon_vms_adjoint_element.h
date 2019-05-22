@@ -389,15 +389,72 @@ public:
         AdjointKElement k_element(this->Id(), this->pGetGeometry());
         AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
 
+        fluid_element.SetData(this->Data());
+        k_element.SetData(this->Data());
+        epsilon_element.SetData(this->Data());
+
         if (rLeftHandSideMatrix.size1() != TElementLocalSize ||
             rLeftHandSideMatrix.size2() != TElementLocalSize)
             rLeftHandSideMatrix.resize(TElementLocalSize, TElementLocalSize, false);
 
         rLeftHandSideMatrix.clear();
 
-        // fluid_element.CalculateFirstDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        // rans_calculation_utilities.PlaceInGlobalMatrix(rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
-        // i_offset += local_matrix.size1();
+        IndexType i_offset{0}, j_offset{0};
+        Matrix local_matrix;
+        RansCalculationUtilities rans_calculation_utilities;
+
+        fluid_element.CalculateFirstDerivativesLHS(local_matrix, rCurrentProcessInfo);
+        rans_calculation_utilities.PlaceInGlobalMatrix(
+            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
+        i_offset += local_matrix.size1();
+
+        fluid_element.Calculate(RANS_TURBULENT_KINETIC_ENERGY_PARTIAL_DERIVATIVE,
+                                local_matrix, rCurrentProcessInfo);
+        rans_calculation_utilities.PlaceInGlobalMatrix(
+            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
+        i_offset += local_matrix.size1();
+
+        fluid_element.Calculate(RANS_TURBULENT_ENERGY_DISSIPATION_RATE_PARTIAL_DERIVATIVE,
+                                local_matrix, rCurrentProcessInfo);
+        rans_calculation_utilities.PlaceInGlobalMatrix(
+            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
+
+        i_offset = 0;
+        j_offset += local_matrix.size2();
+
+        k_element.Calculate(RANS_VELOCITY_PARTIAL_DERIVATIVE, local_matrix, rCurrentProcessInfo);
+        rans_calculation_utilities.PlaceInGlobalMatrix(
+            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
+        i_offset += local_matrix.size1();
+
+        k_element.CalculateFirstDerivativesLHS(local_matrix, rCurrentProcessInfo);
+        rans_calculation_utilities.PlaceInGlobalMatrix(
+            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
+        i_offset += local_matrix.size1();
+
+        k_element.Calculate(RANS_TURBULENT_ENERGY_DISSIPATION_RATE_PARTIAL_DERIVATIVE,
+                            local_matrix, rCurrentProcessInfo);
+        rans_calculation_utilities.PlaceInGlobalMatrix(
+            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
+
+        i_offset = 0;
+        j_offset += local_matrix.size2();
+
+        epsilon_element.Calculate(RANS_VELOCITY_PARTIAL_DERIVATIVE,
+                                  local_matrix, rCurrentProcessInfo);
+        rans_calculation_utilities.PlaceInGlobalMatrix(
+            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
+        i_offset += local_matrix.size1();
+
+        epsilon_element.Calculate(RANS_TURBULENT_KINETIC_ENERGY_PARTIAL_DERIVATIVE,
+                                  local_matrix, rCurrentProcessInfo);
+        rans_calculation_utilities.PlaceInGlobalMatrix(
+            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
+        i_offset += local_matrix.size1();
+
+        epsilon_element.CalculateFirstDerivativesLHS(local_matrix, rCurrentProcessInfo);
+        rans_calculation_utilities.PlaceInGlobalMatrix(
+            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
     }
 
     ///@}

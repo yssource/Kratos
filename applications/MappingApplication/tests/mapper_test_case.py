@@ -145,15 +145,19 @@ def CheckHistoricalNonUniformValues(model_part, variable, file_name, output_refe
         full_model_part_name = GetFullModelPartName(model_part)
 
         check_parameters = KM.Parameters("""{
-            "check_variables"           : [\"""" + variable.Name() + """\"],
-            "input_file_name"           : \"""" + file_name + ".json" + """\",
-            "model_part_name"           : \"""" + full_model_part_name + """\",
+            "check_variables"           : [],
+            "input_file_name"           : "",
+            "model_part_name"           : "",
             "tolerance"                 : 1e-6,
             "relative_tolerance"        : 1e-9,
             "time_frequency"            : 0.00,
             "use_node_coordinates"      : true,
             "check_only_local_entities" : true
         }""")
+
+        check_parameters["check_variables"].Append(variable.Name())
+        check_parameters["input_file_name"].SetString(file_name + ".json")
+        check_parameters["model_part_name"].SetString(full_model_part_name)
         # TODO check all entities, requires some syncronization though!
         check_proc = from_json_check_result_process.FromJsonCheckResultProcess(model_part.GetModel(), check_parameters)
         check_proc.ExecuteInitialize()

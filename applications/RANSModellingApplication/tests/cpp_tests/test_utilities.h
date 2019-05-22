@@ -44,9 +44,17 @@ void IsValuesRelativelyNear(const double ValueA, const double ValueB, const doub
     {
         KRATOS_CHECK_NEAR(ValueB, 0.0, std::numeric_limits<double>::epsilon());
         KRATOS_WARNING("IsValuesRelativelyNear")
-            << "Comparing values closer to zero. ValueA/ValueB < Tolerance [ "
+            << "Comparing values closer to zero. ValueA / ValueB < Tolerance [ "
             << ValueA << " / " << ValueB << " < "
             << std::numeric_limits<double>::epsilon() << " ]\n";
+    }
+    else if (abs(ValueA) < Tolerance && abs(ValueB) < Tolerance)
+    {
+        KRATOS_WARNING("IsValuesRelativelyNear")
+            << "Comparing values smaller than Tolerance. ValueA / ValueB < Tolerance [ "
+            << ValueA << " / " << ValueB << " < "
+            << Tolerance << " ]\n";
+        KRATOS_CHECK_NEAR(ValueA, ValueB, Tolerance);
     }
     else
     {
@@ -77,6 +85,7 @@ void CalculateResidual(Vector& residual, Element& rElement, ProcessInfo& rProces
 
     noalias(residual) = rhs;
     noalias(residual) -= prod(damping_matrix, nodal_scalar_values);
+    // noalias(residual) = prod(damping_matrix, nodal_scalar_values) * -1.0;
     noalias(residual) -= prod(mass_matrix, current_nodal_scalar_rate_values);
 }
 
@@ -218,9 +227,12 @@ void RunGaussPointScalarSensitivityTest(
 
                 for (int j = 0; j < static_cast<int>(analytical_sensitivities.size()); ++j)
                 {
-                    const double fd_sensitivity = ((values[j] - values_0[j]) / Delta);
-                    IsValuesRelativelyNear(
-                        fd_sensitivity, analytical_sensitivities[j][i], Tolerance);
+                    if (analytical_sensitivities[j].size() > 0)
+                    {
+                        const double fd_sensitivity = ((values[j] - values_0[j]) / Delta);
+                        IsValuesRelativelyNear(
+                            fd_sensitivity, analytical_sensitivities[j][i], Tolerance);
+                    }
                 }
 
                 PerturbVariable(r_node) -= Delta;
@@ -285,7 +297,8 @@ void RunElementResidualScalarSensitivityTest(
     KRATOS_ERROR_IF(number_of_elements != rAdjointModelPart.NumberOfElements())
         << "Number of elements mismatch.";
 
-    rAdjointModelPart.GetProcessInfo()[DELTA_TIME] = -1.0 * rPrimalModelPart.GetProcessInfo()[DELTA_TIME];
+    rAdjointModelPart.GetProcessInfo()[DELTA_TIME] =
+        -1.0 * rPrimalModelPart.GetProcessInfo()[DELTA_TIME];
 
     // Calculate initial y_plus values
     rPrimalYPlusProcess.Check();
@@ -322,8 +335,10 @@ void RunElementResidualScalarSensitivityTest(
         // r_primal_element.Check(r_primal_process_info);
 
         const std::size_t number_of_nodes = r_primal_geometry.PointsNumber();
-        const std::size_t number_of_equations = adjoint_total_element_residual_sensitivity.size2();
-        const int local_size = adjoint_total_element_residual_sensitivity.size1() / number_of_nodes;
+        const std::size_t number_of_equations =
+            adjoint_total_element_residual_sensitivity.size2();
+        const int local_size =
+            adjoint_total_element_residual_sensitivity.size1() / number_of_nodes;
 
         Vector residual(number_of_equations), residual_0(number_of_equations),
             residual_sensitivity(number_of_equations);
@@ -342,10 +357,12 @@ void RunElementResidualScalarSensitivityTest(
 
             noalias(residual_sensitivity) = (residual - residual_0) / Delta;
 
-            for (std::size_t i_check_equation = 0; i_check_equation < number_of_equations; ++i_check_equation)
+            for (std::size_t i_check_equation = 0;
+                 i_check_equation < number_of_equations; ++i_check_equation)
             {
                 const double current_adjoint_shape_sensitivity =
-                    adjoint_total_element_residual_sensitivity(i_node * local_size + DerivativesOffset , i_check_equation);
+                    adjoint_total_element_residual_sensitivity(
+                        i_node * local_size + DerivativesOffset, i_check_equation);
 
                 IsValuesRelativelyNear(residual_sensitivity[i_check_equation],
                                        current_adjoint_shape_sensitivity, Tolerance);
@@ -375,23 +392,24 @@ void RunElementResidualVectorSensitivityTest(
 
     for (int i_dim = 0; i_dim < domain_size; ++i_dim)
     {
-        auto calculate_sensitivities = [CalculateElementResidualVectorSensitivity, i_dim,
-                                        domain_size, DerivativesOffset](Matrix& rDimSensitivities,
-                                                     ElementType& rElement,
-                                                     ProcessInfo& rCurrentProcessInfo) {
-            Matrix sensitivities;
-            CalculateElementResidualVectorSensitivity(sensitivities, rElement,
-                                                      rCurrentProcessInfo);
+        auto calculate_sensitivities =
+            [CalculateElementResidualVectorSensitivity, i_dim, domain_size,
+             DerivativesOffset](Matrix& rDimSensitivities, ElementType& rElement,
+                                ProcessInfo& rCurrentProcessInfo) {
+                Matrix sensitivities;
+                CalculateElementResidualVectorSensitivity(
+                    sensitivities, rElement, rCurrentProcessInfo);
 
-            const int number_of_equations = sensitivities.size2();
-            const int number_of_nodes = rElement.GetGeometry().PointsNumber();
-            const int local_size = sensitivities.size1() / number_of_nodes;
-            rDimSensitivities.resize(number_of_nodes, number_of_equations);
+                const int number_of_equations = sensitivities.size2();
+                const int number_of_nodes = rElement.GetGeometry().PointsNumber();
+                const int local_size = sensitivities.size1() / number_of_nodes;
+                rDimSensitivities.resize(number_of_nodes, number_of_equations);
 
-            for (int i = 0; i < number_of_nodes; ++i)
-                for (int j = 0; j < number_of_equations; ++j)
-                    rDimSensitivities(i, j) = sensitivities(i * local_size + i_dim + DerivativesOffset, j);
-        };
+                for (int i = 0; i < number_of_nodes; ++i)
+                    for (int j = 0; j < number_of_equations; ++j)
+                        rDimSensitivities(i, j) = sensitivities(
+                            i * local_size + i_dim + DerivativesOffset, j);
+            };
 
         auto perturb_variable = [PerturbVariable, i_dim](NodeType& rNode) -> double& {
             return PerturbVariable(rNode, i_dim);

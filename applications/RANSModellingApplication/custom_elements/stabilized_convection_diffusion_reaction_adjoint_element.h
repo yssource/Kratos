@@ -513,7 +513,7 @@ public:
     {
         KRATOS_TRY
 
-        if (rVariable == RANS_VELOCITY_PARTIAL_DERIVATIVE)
+        if (rVariable == RANS_VELOCITY_PRESSURE_PARTIAL_DERIVATIVE)
         {
             CalculateElementTotalResidualVelocityDerivatives(Output, rCurrentProcessInfo);
         }

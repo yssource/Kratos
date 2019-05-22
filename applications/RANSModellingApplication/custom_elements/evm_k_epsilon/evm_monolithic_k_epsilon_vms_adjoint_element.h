@@ -422,7 +422,7 @@ public:
         i_offset = 0;
         j_offset += local_matrix.size2();
 
-        k_element.Calculate(RANS_VELOCITY_PARTIAL_DERIVATIVE, local_matrix, rCurrentProcessInfo);
+        k_element.Calculate(RANS_VELOCITY_PRESSURE_PARTIAL_DERIVATIVE, local_matrix, rCurrentProcessInfo);
         rans_calculation_utilities.PlaceInGlobalMatrix(
             rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
         i_offset += local_matrix.size1();
@@ -440,7 +440,7 @@ public:
         i_offset = 0;
         j_offset += local_matrix.size2();
 
-        epsilon_element.Calculate(RANS_VELOCITY_PARTIAL_DERIVATIVE,
+        epsilon_element.Calculate(RANS_VELOCITY_PRESSURE_PARTIAL_DERIVATIVE,
                                   local_matrix, rCurrentProcessInfo);
         rans_calculation_utilities.PlaceInGlobalMatrix(
             rLeftHandSideMatrix, local_matrix, i_offset, j_offset);

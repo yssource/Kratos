@@ -729,7 +729,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementVelocityDerivativeLHSMatrix,
 
     auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
                                            ProcessInfo& rProcessInfo) {
-        rElement.Calculate(RANS_VELOCITY_PARTIAL_DERIVATIVE, rOutput, rProcessInfo);
+        rElement.Calculate(RANS_VELOCITY_PRESSURE_PARTIAL_DERIVATIVE, rOutput, rProcessInfo);
     };
 
     RansModellingApplicationTestUtilities::RunElementResidualVectorSensitivityTest(
@@ -972,7 +972,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonElementVelocityDerivativeLHSMatrix,
 
     auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
                                            ProcessInfo& rProcessInfo) {
-        rElement.Calculate(RANS_VELOCITY_PARTIAL_DERIVATIVE, rOutput, rProcessInfo);
+        rElement.Calculate(RANS_VELOCITY_PRESSURE_PARTIAL_DERIVATIVE, rOutput, rProcessInfo);
     };
 
     RansModellingApplicationTestUtilities::RunElementResidualVectorSensitivityTest(

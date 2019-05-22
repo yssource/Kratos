@@ -1330,9 +1330,6 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKEpsilonVMSAdjointElementPressureFirstDerivativ
     RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
         r_adjoint_model_part, "RANSEVMKEpsilonVMSAdjoint2D3N");
 
-    r_primal_model_part.GetProcessInfo().SetValue(TURBULENCE_RANS_C_MU, 102.3);
-    r_adjoint_model_part.GetProcessInfo().SetValue(TURBULENCE_RANS_C_MU, 102.3);
-
     const int domain_size = r_primal_model_part.GetProcessInfo()[DOMAIN_SIZE];
 
     Parameters empty_parameters = Parameters(R"({})");

@@ -254,6 +254,7 @@ int EvmKAdjointElement<TDim, TNumNodes>::Check(const ProcessInfo& rCurrentProces
     BaseType::Check(rCurrentProcessInfo);
 
     KRATOS_CHECK_VARIABLE_KEY(TURBULENCE_RANS_C_MU);
+    KRATOS_CHECK_VARIABLE_KEY(TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA);
     KRATOS_CHECK_VARIABLE_KEY(TURBULENT_KINETIC_ENERGY_SIGMA);
     KRATOS_CHECK_VARIABLE_KEY(TURBULENT_VISCOSITY);
     KRATOS_CHECK_VARIABLE_KEY(TURBULENT_KINETIC_ENERGY);
@@ -514,7 +515,7 @@ void EvmKAdjointElement<TDim, TNumNodes>::CalculateEffectiveKinematicViscositySc
     }
     else if (rDerivativeVariable == TURBULENT_ENERGY_DISSIPATION_RATE)
     {
-        const double epsilon_sigma = rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
+        const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
         const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
 
         EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityEpsilonSensitivities(
@@ -523,7 +524,7 @@ void EvmKAdjointElement<TDim, TNumNodes>::CalculateEffectiveKinematicViscositySc
         EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
             rOutput, rOutput, rCurrentData.ShapeFunctions);
 
-        noalias(rOutput) = rOutput / epsilon_sigma;
+        noalias(rOutput) = rOutput / tke_sigma;
     }
     else
     {

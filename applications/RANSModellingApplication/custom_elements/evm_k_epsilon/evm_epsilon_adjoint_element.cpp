@@ -16,11 +16,11 @@
 
 // Include Base h
 #include "evm_epsilon_adjoint_element.h"
-
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_adjoint_utilities.h"
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
 #include "custom_utilities/rans_variable_utils.h"
 #include "includes/cfd_variables.h"
+#include "includes/checks.h"
 #include "rans_modelling_application_variables.h"
 
 namespace Kratos
@@ -253,8 +253,37 @@ int EvmEpsilonAdjointElement<TDim, TNumNodes>::Check(const ProcessInfo& rCurrent
 
     BaseType::Check(rCurrentProcessInfo);
 
-    // TODO:
+    KRATOS_CHECK_VARIABLE_KEY(TURBULENCE_RANS_C_MU);
+    KRATOS_CHECK_VARIABLE_KEY(TURBULENCE_RANS_C1);
+    KRATOS_CHECK_VARIABLE_KEY(TURBULENCE_RANS_C2);
+    KRATOS_CHECK_VARIABLE_KEY(TURBULENT_KINETIC_ENERGY_SIGMA);
+    KRATOS_CHECK_VARIABLE_KEY(TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA);
+    KRATOS_CHECK_VARIABLE_KEY(TURBULENT_VISCOSITY);
+    KRATOS_CHECK_VARIABLE_KEY(TURBULENT_KINETIC_ENERGY);
+    KRATOS_CHECK_VARIABLE_KEY(TURBULENT_ENERGY_DISSIPATION_RATE);
+    KRATOS_CHECK_VARIABLE_KEY(KINEMATIC_VISCOSITY);
+    KRATOS_CHECK_VARIABLE_KEY(DISTANCE);
+    KRATOS_CHECK_VARIABLE_KEY(RANS_Y_PLUS);
+    KRATOS_CHECK_VARIABLE_KEY(RANS_AUXILIARY_VARIABLE_2);
+    KRATOS_CHECK_VARIABLE_KEY(RANS_TURBULENT_KINETIC_ENERGY_PARTIAL_DERIVATIVE);
+    KRATOS_CHECK_VARIABLE_KEY(RANS_Y_PLUS_VELOCITY_DERIVATIVES);
+    KRATOS_CHECK_VARIABLE_KEY(VELOCITY);
 
+    for (IndexType iNode = 0; iNode < this->GetGeometry().size(); ++iNode)
+    {
+        NodeType& r_node = this->GetGeometry()[iNode];
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(TURBULENT_VISCOSITY, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(TURBULENT_KINETIC_ENERGY, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(TURBULENT_ENERGY_DISSIPATION_RATE, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(KINEMATIC_VISCOSITY, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(DISTANCE, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_Y_PLUS, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(VELOCITY, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_AUXILIARY_VARIABLE_2, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_ADJOINT_SCALAR_2, r_node);
+
+        KRATOS_CHECK_DOF_IN_NODE(RANS_ADJOINT_SCALAR_2, r_node);
+    }
     return 0;
 
     KRATOS_CATCH("");
@@ -477,8 +506,8 @@ void EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateEffectiveKinematicVisco
 
     if (rDerivativeVariable == TURBULENT_KINETIC_ENERGY)
     {
-        const double tke_sigma =
-            rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
+        const double epsilon_sigma =
+            rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
         const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
 
         EvmKepsilonModelAdjointUtilities::CalculateNodalTurbulentViscosityTKESensitivities(
@@ -487,7 +516,7 @@ void EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateEffectiveKinematicVisco
         EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
             rOutput, rOutput, rCurrentData.ShapeFunctions);
 
-        noalias(rOutput) = rOutput / tke_sigma;
+        noalias(rOutput) = rOutput / epsilon_sigma;
     }
     else if (rDerivativeVariable == TURBULENT_ENERGY_DISSIPATION_RATE)
     {

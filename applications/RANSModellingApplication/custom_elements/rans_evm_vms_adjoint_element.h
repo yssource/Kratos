@@ -66,6 +66,8 @@ public:
 
     typedef Element::SizeType SizeType;
 
+    typedef Element::NodeType NodeType;
+
     typedef Element::GeometryType GeometryType;
 
     typedef Element::PropertiesType PropertiesType;
@@ -150,10 +152,21 @@ public:
     {
         KRATOS_TRY
 
-        // BaseType::Check(rCurrentProcessInfo);
+        BaseType::Check(rCurrentProcessInfo);
 
-        // TODO:
+        KRATOS_CHECK_VARIABLE_KEY(RELAXED_ACCELERATION);
+        KRATOS_CHECK_VARIABLE_KEY(DENSITY);
+        KRATOS_CHECK_VARIABLE_KEY(VISCOSITY);
+        KRATOS_CHECK_VARIABLE_KEY(VELOCITY);
 
+        for (IndexType iNode = 0; iNode < this->GetGeometry().size(); ++iNode)
+        {
+            NodeType& r_node = this->GetGeometry()[iNode];
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RELAXED_ACCELERATION, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(DENSITY, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(VISCOSITY, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(VELOCITY, r_node);
+        }
         return 0;
 
         KRATOS_CATCH("")

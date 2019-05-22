@@ -19,7 +19,6 @@
 
 // Project includes
 #include "custom_elements/stabilized_convection_diffusion_reaction_adjoint_element.h"
-#include "includes/checks.h"
 #include "includes/element.h"
 #include "includes/properties.h"
 

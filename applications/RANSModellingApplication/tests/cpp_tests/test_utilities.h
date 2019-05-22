@@ -325,14 +325,14 @@ void RunElementResidualScalarSensitivityTest(
     for (std::size_t i_element = 0; i_element < number_of_elements; ++i_element)
     {
         ElementType& r_adjoint_element = *(rAdjointModelPart.ElementsBegin() + i_element);
-        // r_adjoint_element.Check(r_adjoint_process_info);
+        r_adjoint_element.Check(r_adjoint_process_info);
 
         CalculateElementResidualScalarSensitivity(
             adjoint_total_element_residual_sensitivity, r_adjoint_element, r_adjoint_process_info);
 
         ElementType& r_primal_element = *(rPrimalModelPart.ElementsBegin() + i_element);
         GeometryType& r_primal_geometry = r_primal_element.GetGeometry();
-        // r_primal_element.Check(r_primal_process_info);
+        r_primal_element.Check(r_primal_process_info);
 
         const std::size_t number_of_nodes = r_primal_geometry.PointsNumber();
         const std::size_t number_of_equations =

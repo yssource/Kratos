@@ -771,6 +771,22 @@ protected:
     {
         KRATOS_TRY
 
+        if (rAdjointMatrix.size1() != TFluidLocalSize)
+        {
+            KRATOS_THROW_ERROR(
+                std::runtime_error,
+                "invalid matrix size detected. rAdjointMatrix.size1() = ",
+                rAdjointMatrix.size1());
+        }
+
+        if (rAdjointMatrix.size2() != TFluidLocalSize)
+        {
+            KRATOS_THROW_ERROR(
+                std::runtime_error,
+                "invalid matrix size detected. rAdjointMatrix.size2() = ",
+                rAdjointMatrix.size2());
+        }
+
         // Get shape functions, shape function gradients and element volume (area in
         // 2D). Only one integration point is used so the volume is its weight.
         ShapeFunctionDerivativesType DN_DX;

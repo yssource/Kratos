@@ -240,6 +240,21 @@ void RansCalculationUtilities::PlaceInGlobalMatrix(Matrix& rGlobalMatrix,
     }
 }
 
+void RansCalculationUtilities::GetSubMatrix(Matrix& rSubMatrix,
+                                            const Matrix& rGlobalMatrix,
+                                            const std::size_t RowOffset,
+                                            const std::size_t ColumnOffset,
+                                            const std::size_t NumberOfRows,
+                                            const std::size_t NumberOfColumns)
+{
+    if (rSubMatrix.size1() != NumberOfRows || rSubMatrix.size2() != NumberOfColumns)
+        rSubMatrix.resize(NumberOfRows, NumberOfColumns, false);
+
+    for (std::size_t i = 0; i < NumberOfRows; ++i)
+        for (std::size_t j = 0; j < NumberOfColumns; ++j)
+            rSubMatrix(i, j) = rGlobalMatrix(i + RowOffset, j + ColumnOffset);
+}
+
 // template instantiations
 
 template double RansCalculationUtilities::CalculateMatrixTrace<2>(

@@ -133,6 +133,13 @@ public:
                              const std::size_t RowOffset,
                              const std::size_t ColumnOffset);
 
+    void GetSubMatrix(Matrix& rSubMatrix,
+                      const Matrix& rGlobalMatrix,
+                      const std::size_t RowOffset,
+                      const std::size_t ColumnOffset,
+                      const std::size_t NumberOfRows,
+                      const std::size_t NumberOfColumns);
+
     ///@}
 
 private:

@@ -51,9 +51,9 @@ void IsValuesRelativelyNear(const double ValueA, const double ValueB, const doub
     else if (abs(ValueA) < Tolerance && abs(ValueB) < Tolerance)
     {
         KRATOS_WARNING("IsValuesRelativelyNear")
-            << "Comparing values smaller than Tolerance. ValueA / ValueB < Tolerance [ "
-            << ValueA << " / " << ValueB << " < "
-            << Tolerance << " ]\n";
+            << "Comparing values smaller than Tolerance. ValueA / ValueB < "
+               "Tolerance [ "
+            << ValueA << " / " << ValueB << " < " << Tolerance << " ]\n";
         KRATOS_CHECK_NEAR(ValueA, ValueB, Tolerance);
     }
     else
@@ -82,6 +82,9 @@ void CalculateResidual(Vector& residual, Element& rElement, ProcessInfo& rProces
     noalias(current_nodal_scalar_rate_values) =
         current_nodal_scalar_rate_values * (1 - bossak_alpha) +
         old_nodal_scalar_rate_values * bossak_alpha;
+
+    if (residual.size() != rhs.size())
+        residual.resize(rhs.size());
 
     noalias(residual) = rhs;
     noalias(residual) -= prod(damping_matrix, nodal_scalar_values);
@@ -290,7 +293,8 @@ void RunElementResidualScalarSensitivityTest(
     std::function<double&(NodeType&)> PerturbVariable,
     const double Delta,
     const double Tolerance,
-    const int DerivativesOffset = 0)
+    const int DerivativesOffset = 0,
+    const int EquationOffset = 0)
 {
     std::size_t number_of_elements = rPrimalModelPart.NumberOfElements();
 
@@ -334,16 +338,16 @@ void RunElementResidualScalarSensitivityTest(
         GeometryType& r_primal_geometry = r_primal_element.GetGeometry();
         r_primal_element.Check(r_primal_process_info);
 
+        Vector residual, residual_0, residual_sensitivity;
+        CalculateResidual(residual_0, r_primal_element, r_primal_process_info);
+
         const std::size_t number_of_nodes = r_primal_geometry.PointsNumber();
-        const std::size_t number_of_equations =
-            adjoint_total_element_residual_sensitivity.size2();
+        const std::size_t number_of_equations = residual_0.size();
         const int local_size =
             adjoint_total_element_residual_sensitivity.size1() / number_of_nodes;
 
-        Vector residual(number_of_equations), residual_0(number_of_equations),
-            residual_sensitivity(number_of_equations);
-
-        CalculateResidual(residual_0, r_primal_element, r_primal_process_info);
+        residual.resize(number_of_equations);
+        residual_sensitivity.resize(number_of_equations);
 
         for (std::size_t i_node = 0; i_node < number_of_nodes; ++i_node)
         {
@@ -362,7 +366,8 @@ void RunElementResidualScalarSensitivityTest(
             {
                 const double current_adjoint_shape_sensitivity =
                     adjoint_total_element_residual_sensitivity(
-                        i_node * local_size + DerivativesOffset, i_check_equation);
+                        i_node * local_size + DerivativesOffset,
+                        i_check_equation + EquationOffset);
 
                 IsValuesRelativelyNear(residual_sensitivity[i_check_equation],
                                        current_adjoint_shape_sensitivity, Tolerance);
@@ -384,7 +389,8 @@ void RunElementResidualVectorSensitivityTest(
     std::function<double&(NodeType&, const int)> PerturbVariable,
     const double Delta,
     const double Tolerance,
-    const int DerivativesOffset = 0)
+    const int DerivativesOffset = 0,
+    const int EquationOffset = 0)
 {
     ProcessInfo& r_primal_process_info = rPrimalModelPart.GetProcessInfo();
 
@@ -417,8 +423,9 @@ void RunElementResidualVectorSensitivityTest(
 
         RunElementResidualScalarSensitivityTest(
             rPrimalModelPart, rAdjointModelPart, rPrimalYPlusProcess,
-            rAdjointYPlusProcess, rYPlusSensitivitiesProcess, UpdateVariablesInModelPart,
-            calculate_sensitivities, perturb_variable, Delta, Tolerance);
+            rAdjointYPlusProcess, rYPlusSensitivitiesProcess,
+            UpdateVariablesInModelPart, calculate_sensitivities, perturb_variable,
+            Delta, Tolerance, DerivativesOffset, EquationOffset);
     }
 }
 

@@ -116,10 +116,15 @@ void CreateModelPartNodes(ModelPart& rModelPart)
     VariableUtils().AddDof<Variable<double>>(RANS_ADJOINT_SCALAR_1, rModelPart);
     VariableUtils().AddDof<Variable<double>>(RANS_ADJOINT_SCALAR_2, rModelPart);
 
-    // VariableUtils().AddDof<Variable<array_1d<double, 3>>>(ADJOINT_FLUID_VECTOR_1, rModelPart);
-    // VariableUtils().AddDof<Variable<array_1d<double, 3>>>(ADJOINT_FLUID_VECTOR_2, rModelPart);
-    // VariableUtils().AddDof<Variable<array_1d<double, 3>>>(ADJOINT_FLUID_VECTOR_3, rModelPart);
-    // VariableUtils().AddDof<Variable<double>>(ADJOINT_FLUID_SCALAR_1, rModelPart);
+    VariableUtils().AddDof<Variable<double>>(PRESSURE, rModelPart);
+    VariableUtils().AddDof<VariableComponent<VectorComponentAdaptor<array_1d<double, 3>>>>(VELOCITY_X, rModelPart);
+    VariableUtils().AddDof<VariableComponent<VectorComponentAdaptor<array_1d<double, 3>>>>(VELOCITY_Y, rModelPart);
+    VariableUtils().AddDof<VariableComponent<VectorComponentAdaptor<array_1d<double, 3>>>>(VELOCITY_Z, rModelPart);
+
+    VariableUtils().AddDof<Variable<double>>(ADJOINT_FLUID_SCALAR_1, rModelPart);
+    VariableUtils().AddDof<VariableComponent<VectorComponentAdaptor<array_1d<double, 3>>>>(ADJOINT_FLUID_VECTOR_1_X, rModelPart);
+    VariableUtils().AddDof<VariableComponent<VectorComponentAdaptor<array_1d<double, 3>>>>(ADJOINT_FLUID_VECTOR_1_Y, rModelPart);
+    VariableUtils().AddDof<VariableComponent<VectorComponentAdaptor<array_1d<double, 3>>>>(ADJOINT_FLUID_VECTOR_1_Z, rModelPart);
 }
 
 void CreateModelPartElements(ModelPart& rModelPart, std::string ElementName)

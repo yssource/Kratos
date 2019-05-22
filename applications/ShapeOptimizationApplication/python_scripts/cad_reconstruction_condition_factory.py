@@ -301,7 +301,9 @@ class ConditionFactory:
             rigididly_displaced_points = A @ np.transpose(R) + np.matlib.repmat(t, num_nodes, 1)
 
             for node_coords_disp, rigididly_displaced_point_coords, projected_point_uv in zip(relevant_fe_points_displaced, rigididly_displaced_points,relevant_cad_uvs):
-                # self.cad_model.Add(an.Point3D(location=node_coords_disp))
+
+                # point_ptr = self.cad_model.Add(an.Point3D(location=rigididly_displaced_point_coords))
+                # point_ptr.Attributes().SetLayer('Rigid_points'+str(face_i.Key()))
 
                 u = projected_point_uv[0]
                 v = projected_point_uv[1]

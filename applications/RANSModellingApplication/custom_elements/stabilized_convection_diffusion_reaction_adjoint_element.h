@@ -65,6 +65,11 @@ public:
     ///@name Type Definitions
     ///@{
     /// Pointer definition of Element
+
+    constexpr static unsigned int TVelPrBlockSize = TDim + 1;
+
+    constexpr static unsigned int TVelPrLocalSize = TNumNodes * TVelPrBlockSize;
+
     KRATOS_CLASS_POINTER_DEFINITION(StabilizedConvectionDiffusionReactionAdjointElement);
 
     /// base type: an GeometricalObject that automatically has a unique number
@@ -2657,10 +2662,9 @@ private:
     void CalculateElementTotalResidualVelocityDerivatives(Matrix& rResidualDerivatives,
                                                           const ProcessInfo& rCurrentProcessInfo)
     {
-        constexpr unsigned int TLocalSize = TNumNodes * TDim;
-        if (rResidualDerivatives.size1() != TLocalSize ||
+        if (rResidualDerivatives.size1() != TVelPrLocalSize ||
             rResidualDerivatives.size2() != TNumNodes)
-            rResidualDerivatives.resize(TLocalSize, TNumNodes, false);
+            rResidualDerivatives.resize(TVelPrLocalSize, TNumNodes, false);
 
         rResidualDerivatives.clear();
 
@@ -2840,7 +2844,7 @@ private:
             {
                 for (unsigned int c = 0; c < TNumNodes; ++c)
                 {
-                    unsigned int block_size = c * TDim;
+                    unsigned int block_size = c * TVelPrBlockSize;
                     for (unsigned int k = 0; k < TDim; ++k)
                     {
                         // adding damping matrix derivatives

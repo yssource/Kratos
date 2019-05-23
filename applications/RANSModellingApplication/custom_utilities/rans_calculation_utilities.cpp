@@ -228,6 +228,16 @@ Vector RansCalculationUtilities::GetVector(const array_1d<double, 3>& rVector,
     return result;
 }
 
+void RansCalculationUtilities::PlaceInGlobalVector(Vector& rGlobalVector,
+                                                   const Vector& rSubVector,
+                                                   const std::size_t RowOffset)
+{
+    for (std::size_t i = 0; i < rSubVector.size(); ++i)
+    {
+        rGlobalVector[RowOffset + i] = rSubVector[i];
+    }
+}
+
 void RansCalculationUtilities::PlaceInGlobalMatrix(Matrix& rGlobalMatrix,
                                                    const Matrix& rSubMatrix,
                                                    const std::size_t RowOffset,

@@ -128,6 +128,10 @@ public:
 
     Vector GetVector(const array_1d<double, 3>& rVector, const unsigned int Dim) const;
 
+    void PlaceInGlobalVector(Vector& rGlobalVector,
+                             const Vector& rSubVector,
+                             const std::size_t RowOffset);
+
     void PlaceInGlobalMatrix(Matrix& rGlobalMatrix,
                              const Matrix& rSubMatrix,
                              const std::size_t RowOffset,

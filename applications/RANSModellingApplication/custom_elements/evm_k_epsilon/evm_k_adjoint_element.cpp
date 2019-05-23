@@ -409,19 +409,19 @@ void EvmKAdjointElement<TDim, TNumNodes>::PrintData(std::ostream& rOStream) cons
 ///@name Private Operations
 ///@{
 template <unsigned int TDim, unsigned int TNumNodes>
-const Variable<double>& EvmKAdjointElement<TDim, TNumNodes>::GetPrimalVariable() const
+const Variable<double>& EvmKAdjointElement<TDim, TNumNodes>::GetScalarVariable() const
 {
     return TURBULENT_KINETIC_ENERGY;
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-const Variable<double>& EvmKAdjointElement<TDim, TNumNodes>::GetPrimalVariableRelaxedRate() const
+const Variable<double>& EvmKAdjointElement<TDim, TNumNodes>::GetScalarVariableRelaxedRate() const
 {
     return RANS_AUXILIARY_VARIABLE_1;
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-void EvmKAdjointElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionAdjointData(
+void EvmKAdjointElement<TDim, TNumNodes>::CalculateElementData(
     EvmKAdjointElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
@@ -477,13 +477,6 @@ void EvmKAdjointElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionAd
             rData.NodalVelocity(i_node, i_dim) = rVelocity[i_dim];
         }
     }
-}
-
-template <unsigned int TDim, unsigned int TNumNodes>
-double EvmKAdjointElement<TDim, TNumNodes>::CalculateRelaxedScalarRate(
-    const EvmKAdjointElementData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
-{
-    return this->EvaluateInPoint(RANS_AUXILIARY_VARIABLE_1, rCurrentData.ShapeFunctions);
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
@@ -559,7 +552,7 @@ void EvmKAdjointElement<TDim, TNumNodes>::CalculateEffectiveKinematicViscositySc
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-void EvmKAdjointElement<TDim, TNumNodes>::CalculateReactionTermDerivatives(
+void EvmKAdjointElement<TDim, TNumNodes>::CalculateReactionTermScalarDerivatives(
     Vector& rOutput,
     const Variable<double>& rDerivativeVariable,
     const EvmKAdjointElementData& rCurrentData,
@@ -602,12 +595,12 @@ void EvmKAdjointElement<TDim, TNumNodes>::CalculateReactionTermDerivatives(
     else
     {
         KRATOS_ERROR << "Unsupported partial derivative variable "
-                     << rDerivativeVariable.Name() << " used in EvmKAdjointElement::CalculateReactionTermDerivatives method.";
+                     << rDerivativeVariable.Name() << " used in EvmKAdjointElement::CalculateReactionTermScalarDerivatives method.";
     }
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-void EvmKAdjointElement<TDim, TNumNodes>::CalculateSourceTermDerivatives(
+void EvmKAdjointElement<TDim, TNumNodes>::CalculateSourceTermScalarDerivatives(
     Vector& rOutput,
     const Variable<double>& rDerivativeVariable,
     const EvmKAdjointElementData& rCurrentData,
@@ -650,7 +643,7 @@ void EvmKAdjointElement<TDim, TNumNodes>::CalculateSourceTermDerivatives(
     else
     {
         KRATOS_ERROR << "Unsupported partial derivative variable "
-                     << rDerivativeVariable.Name() << " used in EvmKAdjointElement::CalculateSourceTermDerivatives method.";
+                     << rDerivativeVariable.Name() << " used in EvmKAdjointElement::CalculateSourceTermScalarDerivatives method.";
     }
 }
 

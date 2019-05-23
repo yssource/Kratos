@@ -401,19 +401,19 @@ void EvmEpsilonAdjointElement<TDim, TNumNodes>::PrintData(std::ostream& rOStream
 ///@name Private Operations
 ///@{
 template <unsigned int TDim, unsigned int TNumNodes>
-const Variable<double>& EvmEpsilonAdjointElement<TDim, TNumNodes>::GetPrimalVariable() const
+const Variable<double>& EvmEpsilonAdjointElement<TDim, TNumNodes>::GetScalarVariable() const
 {
     return TURBULENT_ENERGY_DISSIPATION_RATE;
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-const Variable<double>& EvmEpsilonAdjointElement<TDim, TNumNodes>::GetPrimalVariableRelaxedRate() const
+const Variable<double>& EvmEpsilonAdjointElement<TDim, TNumNodes>::GetScalarVariableRelaxedRate() const
 {
     return RANS_AUXILIARY_VARIABLE_2;
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionAdjointData(
+void EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateElementData(
     EvmEpsilonAdjointElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
@@ -477,13 +477,6 @@ void EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateConvectionDiffusionReac
             rData.NodalVelocity(i_node, i_dim) = rVelocity[i_dim];
         }
     }
-}
-
-template <unsigned int TDim, unsigned int TNumNodes>
-double EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateRelaxedScalarRate(
-    const EvmEpsilonAdjointElementData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
-{
-    return this->EvaluateInPoint(RANS_AUXILIARY_VARIABLE_2, rCurrentData.ShapeFunctions);
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
@@ -566,7 +559,7 @@ void EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateEffectiveKinematicVisco
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateReactionTermDerivatives(
+void EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateReactionTermScalarDerivatives(
     Vector& rOutput,
     const Variable<double>& rDerivativeVariable,
     const EvmEpsilonAdjointElementData& rCurrentData,
@@ -636,12 +629,12 @@ void EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateReactionTermDerivatives
     else
     {
         KRATOS_ERROR << "Unsupported partial derivative variable "
-                     << rDerivativeVariable.Name() << " used in EvmEpsilonAdjointElement::CalculateReactionTermDerivatives method.";
+                     << rDerivativeVariable.Name() << " used in EvmEpsilonAdjointElement::CalculateReactionTermScalarDerivatives method.";
     }
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-void EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateSourceTermDerivatives(
+void EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateSourceTermScalarDerivatives(
     Vector& rOutput,
     const Variable<double>& rDerivativeVariable,
     const EvmEpsilonAdjointElementData& rCurrentData,
@@ -712,7 +705,7 @@ void EvmEpsilonAdjointElement<TDim, TNumNodes>::CalculateSourceTermDerivatives(
     else
     {
         KRATOS_ERROR << "Unsupported partial derivative variable "
-                     << rDerivativeVariable.Name() << " used in EvmEpsilonAdjointElement::CalculateSourceTermDerivatives method.";
+                     << rDerivativeVariable.Name() << " used in EvmEpsilonAdjointElement::CalculateSourceTermScalarDerivatives method.";
     }
 }
 

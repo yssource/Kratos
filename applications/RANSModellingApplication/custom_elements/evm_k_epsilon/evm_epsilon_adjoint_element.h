@@ -322,18 +322,15 @@ private:
     ///@name Private Operations
     ///@{
 
-    const Variable<double>& GetPrimalVariable() const override;
+    const Variable<double>& GetScalarVariable() const override;
 
-    const Variable<double>& GetPrimalVariableRelaxedRate() const override;
+    const Variable<double>& GetScalarVariableRelaxedRate() const override;
 
-    void CalculateConvectionDiffusionReactionAdjointData(
+    void CalculateElementData(
         EvmEpsilonAdjointElementData& rData,
         const Vector& rShapeFunctions,
         const Matrix& rShapeFunctionDerivatives,
         const ProcessInfo& rCurrentProcessInfo) const override;
-
-    double CalculateRelaxedScalarRate(const EvmEpsilonAdjointElementData& rCurrentData,
-                                      const ProcessInfo& rCurrentProcessInfo) const override;
 
     double CalculateEffectiveKinematicViscosity(const EvmEpsilonAdjointElementData& rCurrentData,
                                                 const ProcessInfo& rCurrentProcessInfo) const override;
@@ -350,12 +347,12 @@ private:
         const EvmEpsilonAdjointElementData& rCurrentData,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
-    void CalculateReactionTermDerivatives(Vector& rOutput,
+    void CalculateReactionTermScalarDerivatives(Vector& rOutput,
                                           const Variable<double>& rDerivativeVariable,
                                           const EvmEpsilonAdjointElementData& rCurrentData,
                                           const ProcessInfo& rCurrentProcessInfo) const override;
 
-    void CalculateSourceTermDerivatives(Vector& rOutput,
+    void CalculateSourceTermScalarDerivatives(Vector& rOutput,
                                         const Variable<double>& rDerivativeVariable,
                                         const EvmEpsilonAdjointElementData& rCurrentData,
                                         const ProcessInfo& rCurrentProcessInfo) const override;

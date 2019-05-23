@@ -48,17 +48,29 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-/// Base class for all Elements.
-
 /**
- * This is the base class for all elements used in KRATOS
- * Elements inherited from this class have to reimplement
- * all public functions that are needed to perform their designated
- * tasks. Due to a dummy implementation of every function though,
- * not all of them have to be implemented if they are not needed for
- * the actual problem
+ * @brief Discrete stabilized Convection-Diffusion-Reaction adjoint element
+ *
+ * This class provides derivatives with respect to velocity, pressure,
+ * local coordinates and the scalar variable which is being used in the
+ * element as the transport variable
+ *
+ * The sensitivities are calculated on the discrete version of the stabilized
+ * equation given below
+ *
+ * \[
+ *	\frac{\partial\phi}{\partial t} + \underline{u} \cdot \frac{\partial \phi}{\partial\underline{x}} - \nu_\phi \frac{\partial^2\phi}{\partial\underline{x}^2} + s_\phi \phi = f_\phi
+ * \]
+ *
+ * Where, $\phi$ is the scalar variable, and $\underline{u}$, $\nu_\phi$,
+ * $s_\phi$, $f_\phi$ are velocity, effective kinematic viscosity,
+ * reaction coefficient, source term respectively.
+ *
+ * @tparam TDim          Dimensionality of the element
+ * @tparam TNumNodes     Number of nodes in the element
+ * @tparam TElementData  Data container used to calculate derivatives
  */
-template <unsigned int TDim, unsigned int TNumNodes, class TConvectionDiffusionReactionAdjointData>
+template <unsigned int TDim, unsigned int TNumNodes, class TElementData>
 class StabilizedConvectionDiffusionReactionAdjointElement : public Element
 {
 public:
@@ -122,11 +134,6 @@ public:
     ///@{
 
     /**
-     * ELEMENTS inherited from this class have to implement next
-     * contructors, copy constructors and destructor: MANDATORY
-     */
-
-    /**
      * Constructor.
      */
     StabilizedConvectionDiffusionReactionAdjointElement(IndexType NewId = 0)
@@ -179,11 +186,6 @@ public:
     ///@name Operators
     ///@{
 
-    /**
-     * ELEMENTS inherited from this class have to implement next
-     * assignment operator: MANDATORY
-     */
-
     /// Assignment operator.
 
     StabilizedConvectionDiffusionReactionAdjointElement& operator=(
@@ -199,19 +201,9 @@ public:
     ///@name Informations
     ///@{
 
-    /** Dimensional space of the element geometry
-    @return SizeType, working space dimension of this geometry.
-    */
-
     ///@}
     ///@name Operations
     ///@{
-
-    /**
-     * ELEMENTS inherited from this class have to implement next
-     * Create and Clone methods: MANDATORY
-     */
-
     /**
      * @brief It creates a new element pointer
      * @param NewId the ID of the new element
@@ -266,11 +258,6 @@ public:
     }
 
     /**
-     * ELEMENTS inherited from this class have to implement next
-     * EquationIdVector and GetDofList methods: MANDATORY
-     */
-
-    /**
      * this determines the elemental equation ID vector for all elemental
      * DOFs
      * @param rResult the elemental equation ID vector
@@ -304,13 +291,6 @@ public:
     }
 
     /**
-     * ELEMENTS inherited from this class have to implement next
-     * CalculateLocalSystem, CalculateLeftHandSide and CalculateRightHandSide
-     * methods they can be managed internally with a private method to do the
-     * same calculations only once: MANDATORY
-     */
-
-    /**
      * this is called during the assembling process in order
      * to calculate all elemental contributions to the global system
      * matrix and the right hand side
@@ -322,12 +302,12 @@ public:
                               VectorType& rRightHandSideVector,
                               ProcessInfo& rCurrentProcessInfo) override
     {
-        // KRATOS_TRY
+        KRATOS_TRY
 
-        // KRATOS_THROW_ERROR(std::runtime_error,
-        //                    "this function is not implemented.", "")
+        KRATOS_ERROR << "StabilizeConvectionDiffusionReactionAdjointElement::"
+                        "CalculateLocalSystem method not implemented.";
 
-        // KRATOS_CATCH("")
+        KRATOS_CATCH("");
     }
 
     /**
@@ -354,100 +334,56 @@ public:
     void CalculateRightHandSide(VectorType& rRightHandSideVector,
                                 ProcessInfo& rCurrentProcessInfo) override
     {
-        // KRATOS_TRY
+        KRATOS_TRY
 
-        // KRATOS_THROW_ERROR(std::runtime_error,
-        //                    "this function is not implemented.", "")
+        KRATOS_ERROR << "StabilizeConvectionDiffusionReactionAdjointElement::"
+                        "CalculateRightHandSide method not implemented.";
 
-        // KRATOS_CATCH("")
+        KRATOS_CATCH("");
     }
 
     /**
-     * ELEMENTS inherited from this class must implement this methods
-     * if they need to add dynamic element contributions
-     * note: first derivatives means the velocities if the displacements are the dof of the analysis
-     * note: time integration parameters must be set in the rCurrentProcessInfo before calling these methods
-     * CalculateFirstDerivativesContributions,
-     * CalculateFirstDerivativesLHS, CalculateFirstDerivativesRHS methods are : OPTIONAL
-     */
-
-    /**
-     * this is called during the assembling process in order
-     * to calculate the first derivatives contributions for the LHS and RHS
-     * @param rLeftHandSideMatrix the elemental left hand side matrix
-     * @param rRightHandSideVector the elemental right hand side
-     * @param rCurrentProcessInfo the current process info instance
-     */
-    void CalculateFirstDerivativesContributions(MatrixType& rLeftHandSideMatrix,
-                                                VectorType& rRightHandSideVector,
-                                                ProcessInfo& rCurrentProcessInfo) override
-    {
-        if (rLeftHandSideMatrix.size1() != TNumNodes || rLeftHandSideMatrix.size2())
-            rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
-
-        if (rRightHandSideVector.size() != TNumNodes)
-            rRightHandSideVector.resize(TNumNodes, false);
-    }
-
-    /**
-     * this is called during the assembling process in order
-     * to calculate the elemental left hand side matrix for the first derivatives constributions
-     * @param rLeftHandSideMatrix the elemental left hand side matrix
-     * @param rCurrentProcessInfo the current process info instance
+     * @brief Calculates the adjoint matrix for scalar variable
+     *
+     * This function returns the gradient of the elemental residual w.r.t.
+     * scalar variable transposed:
+     *
+     * \f[
+     *    \partial_{\mathbf{w}^n}\mathbf{f}(\mathbf{w}^n)^T
+     *  - \partial_{\mathbf{w}^n}(\mathbf{M}^n \dot{\mathbf{w}}^n)^T
+     * \f]
+     *
+     * where \f$\mathbf{w}^n\f$ is the vector of nodal scalar
+     * stored at the current step. For steady problems, the scalar rate variable
+     * (\f$\dot{\mathbf{w}}^n\f$) must be set to zero on the nodes. For
+     * the Bossak method, \f$\dot{\mathbf{w}}^{n-\alpha}\f$ must be stored in
+     * the variable given by @GetScalarVariableRelaxedRate().
+     *
+     * @param rLeftHandSideMatrix
+     * @param rCurrentProcessInfo
      */
     void CalculateFirstDerivativesLHS(MatrixType& rLeftHandSideMatrix,
                                       ProcessInfo& rCurrentProcessInfo) override
     {
-        const Variable<double>& r_derivative_variable = this->GetPrimalVariable();
+        const Variable<double>& r_derivative_variable = this->GetScalarVariable();
         CalculateElementTotalResidualScalarDerivatives(
             rLeftHandSideMatrix, r_derivative_variable, rCurrentProcessInfo);
         AddPrimalDampingMatrix(rLeftHandSideMatrix, rCurrentProcessInfo);
     }
 
     /**
-     * this is called during the assembling process in order
-     * to calculate the elemental right hand side vector for the first derivatives constributions
-     * @param rRightHandSideVector the elemental right hand side vector
-     * @param rCurrentProcessInfo the current process info instance
-     */
-    void CalculateFirstDerivativesRHS(VectorType& rRightHandSideVector,
-                                      ProcessInfo& rCurrentProcessInfo) override
-    {
-        if (rRightHandSideVector.size() != 0)
-            rRightHandSideVector.resize(0, false);
-    }
-
-    /**
-     * ELEMENTS inherited from this class must implement this methods
-     * if they need to add dynamic element contributions
-     * note: second derivatives means the accelerations if the displacements are the dof of the analysis
-     * note: time integration parameters must be set in the rCurrentProcessInfo before calling these methods
-     * CalculateSecondDerivativesContributions,
-     * CalculateSecondDerivativesLHS, CalculateSecondDerivativesRHS methods are : OPTIONAL
-     */
-
-    /**
-     * this is called during the assembling process in order
-     * to calculate the second derivative contributions for the LHS and RHS
-     * @param rLeftHandSideMatrix the elemental left hand side matrix
-     * @param rRightHandSideVector the elemental right hand side
-     * @param rCurrentProcessInfo the current process info instance
-     */
-    void CalculateSecondDerivativesContributions(MatrixType& rLeftHandSideMatrix,
-                                                 VectorType& rRightHandSideVector,
-                                                 ProcessInfo& rCurrentProcessInfo) override
-    {
-        if (rLeftHandSideMatrix.size1() != 0)
-            rLeftHandSideMatrix.resize(0, 0, false);
-        if (rRightHandSideVector.size() != 0)
-            rRightHandSideVector.resize(0, false);
-    }
-
-    /**
-     * this is called during the assembling process in order
-     * to calculate the elemental left hand side matrix for the second derivatives constributions
-     * @param rLeftHandSideMatrix the elemental left hand side matrix
-     * @param rCurrentProcessInfo the current process info instance
+     * @brief Calculate the adjoint matrix for scalar rate
+     *
+     * This function returns the gradient of the elemental residual w.r.t.
+     * scalar rate variable:
+     *
+     * \f[
+     *    \partial_{\dot{\mathbf{w}}^n}\mathbf{f}(\mathbf{w}^n)^T
+     *  - \partial_{\dot{\mathbf{w}}^n}(\mathbf{M}^n \dot{\mathbf{w}}^n)^T
+     * \f]
+     *
+     * @param rLeftHandSideMatrix
+     * @param rCurrentProcessInfo
      */
     void CalculateSecondDerivativesLHS(MatrixType& rLeftHandSideMatrix,
                                        ProcessInfo& rCurrentProcessInfo) override
@@ -464,33 +400,18 @@ public:
 
     /**
      * this is called during the assembling process in order
-     * to calculate the elemental right hand side vector for the second derivatives constributions
-     * @param rRightHandSideVector the elemental right hand side vector
-     * @param rCurrentProcessInfo the current process info instance
-     */
-    void CalculateSecondDerivativesRHS(VectorType& rRightHandSideVector,
-                                       ProcessInfo& rCurrentProcessInfo) override
-    {
-        if (rRightHandSideVector.size() != 0)
-            rRightHandSideVector.resize(0, false);
-    }
-
-    /**
-     * ELEMENTS inherited from this class must implement this methods
-     * if they need to add dynamic element contributions
-     * CalculateMassMatrix and CalculateDampingMatrix methods are: OPTIONAL
-     */
-
-    /**
-     * this is called during the assembling process in order
      * to calculate the elemental mass matrix
      * @param rMassMatrix the elemental mass matrix
      * @param rCurrentProcessInfo the current process info instance
      */
     void CalculateMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo) override
     {
-        if (rMassMatrix.size1() != 0)
-            rMassMatrix.resize(0, 0, false);
+        KRATOS_TRY
+
+        KRATOS_ERROR << "StabilizeConvectionDiffusionReactionAdjointElement::"
+                        "CalculateMassMatrix method not implemented.";
+
+        KRATOS_CATCH("");
     }
 
     /**
@@ -501,9 +422,32 @@ public:
      */
     void CalculateDampingMatrix(MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo) override
     {
-        if (rDampingMatrix.size1() != 0)
-            rDampingMatrix.resize(0, 0, false);
+        KRATOS_TRY
+
+        KRATOS_ERROR << "StabilizeConvectionDiffusionReactionAdjointElement::"
+                        "CalculateDampingMatrix method not implemented.";
+
+        KRATOS_CATCH("");
     }
+
+    /**
+     * @brief Calculates the adjoint matrix for scalar variable
+     *
+     * This function returns the gradient of the elemental residual w.r.t.
+     * velocity and pressure transposed:
+     *
+     * \f[
+     *    \partial_{\mathbf{w}^n}\mathbf{f}(\mathbf{w}^n)^T
+     *  - \partial_{\mathbf{w}^n}(\mathbf{M}^n \dot{\mathbf{w}}^n)^T
+     * \f]
+     *
+     * where \f$\mathbf{w}^n\f$ is the vector of nodal velocity and pressure
+     * stored at the current step.
+     *
+     * @param rVariable
+     * @param Output
+     * @param rCurrentProcessInfo
+     */
 
     void Calculate(const Variable<Matrix>& rVariable,
                    Matrix& Output,
@@ -558,7 +502,6 @@ public:
      * of the calculations, so to verify that nothing is missing from the input
      * or that no common error is found.
      * @param rCurrentProcessInfo
-     * this method is: MANDATORY
      */
 
     int Check(const ProcessInfo& rCurrentProcessInfo) override
@@ -574,9 +517,9 @@ public:
             << "On StabilizedConvectionDiffusionReactionAdjointElement -> "
             << this->Id() << "; Area cannot be less than or equal to 0" << std::endl;
 
-        const Variable<double>& r_primal_variable = this->GetPrimalVariable();
+        const Variable<double>& r_primal_variable = this->GetScalarVariable();
         const Variable<double>& r_primal_relaxed_rate_variable =
-            this->GetPrimalVariableRelaxedRate();
+            this->GetScalarVariableRelaxedRate();
 
         KRATOS_CHECK_VARIABLE_KEY(r_primal_variable);
         KRATOS_CHECK_VARIABLE_KEY(r_primal_relaxed_rate_variable);
@@ -643,11 +586,21 @@ protected:
     ///@name Protected Operations
     ///@{
 
-    virtual const Variable<double>& GetPrimalVariable() const
+    /**
+     * @brief Get the Scalar Variable object
+     *
+     * This returns the scalar variable ($\phi$) used in stabilized
+     * convection-diffusion-reaction transport equation.
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @return const Variable<double>&
+     */
+    virtual const Variable<double>& GetScalarVariable() const
     {
         KRATOS_TRY
 
-        KRATOS_ERROR << "Calling base GetPrimalVariable method in "
+        KRATOS_ERROR << "Calling base GetScalarVariable method in "
                         "StabilizedConvectionDiffusionReactionAdjointElement "
                         "class. Please implement it in the derrived class.";
 
@@ -656,11 +609,25 @@ protected:
         KRATOS_CATCH("");
     }
 
-    virtual const Variable<double>& GetPrimalVariableRelaxedRate() const
+    /**
+     * @brief Get the Scalar Variable Relaxed Rate object
+     *
+     * This method returns the relaxed scalar rate variable ($\dot{\phi}_r$) calculated according
+     * to following equation, where $n$ is the time step:
+     *
+     * \[
+     *      \dot{\phi}_r = \left(1-\alpha_{bossak}\right)\dot{\phi}^{n} + \alpha_{bossak}\dot{\phi}^{n-1}
+     * \]
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @return const Variable<double>&
+     */
+    virtual const Variable<double>& GetScalarVariableRelaxedRate() const
     {
         KRATOS_TRY
 
-        KRATOS_ERROR << "Calling base GetPrimalVariableRelaxedRate method in "
+        KRATOS_ERROR << "Calling base GetScalarVariableRelaxedRate method in "
                         "StabilizedConvectionDiffusionReactionAdjointElement "
                         "class. Please implement it in the derrived class.";
 
@@ -669,37 +636,47 @@ protected:
         KRATOS_CATCH("");
     }
 
-    virtual double CalculateRelaxedScalarRate(const TConvectionDiffusionReactionAdjointData& rCurrentData,
-                                              const ProcessInfo& rCurrentProcessInfo) const
+    /**
+     * @brief Calculates all the data required by the element.
+     *
+     * This method is used to calculate and store all the required
+     * quantities under each gauss point. This method is called
+     * for each gauss point, before calculating the derivatives
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @param rData                      Element data container
+     * @param rShapeFunctions            Gauss point shape functions
+     * @param rShapeFunctionDerivatives  Gauss point shape function derivatives
+     * @param rCurrentProcessInfo        Current process info
+     */
+    virtual void CalculateElementData(TElementData& rData,
+                                      const Vector& rShapeFunctions,
+                                      const Matrix& rShapeFunctionDerivatives,
+                                      const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY;
         KRATOS_ERROR << "Attempting to call base "
                         "StabilizedConvectionDiffusionReactionAdjointElement "
-                        "CalculateRelaxedScalarRate method. "
+                        "CalculateElementData method. "
                         "Please implement it in the derrived class."
                      << std::endl;
         KRATOS_CATCH("");
     }
 
-    virtual void CalculateConvectionDiffusionReactionAdjointData(
-        TConvectionDiffusionReactionAdjointData& rData,
-        const Vector& rShapeFunctions,
-        const Matrix& rShapeFunctionDerivatives,
-        const ProcessInfo& rCurrentProcessInfo) const
-    {
-        KRATOS_TRY;
-        KRATOS_ERROR
-            << "Attempting to call base "
-               "StabilizedConvectionDiffusionReactionAdjointElement "
-               "CalculateConvectionDiffusionReactionAdjointData method. "
-               "Please implement it in the derrived class."
-            << std::endl;
-        KRATOS_CATCH("");
-    }
-
-    virtual double CalculateEffectiveKinematicViscosity(
-        const TConvectionDiffusionReactionAdjointData& rCurrentData,
-        const ProcessInfo& rCurrentProcessInfo) const
+    /**
+     * @brief Calculate effective kinematic viscosity
+     *
+     * Calculate effective kinematic viscosity (i.e. $\nu_\phi$)
+     * This method is called for each gauss point.
+     * This method should be implemented by the derrived class.
+     *
+     * @param rCurrentData
+     * @param rCurrentProcessInfo
+     * @return double
+     */
+    virtual double CalculateEffectiveKinematicViscosity(const TElementData& rCurrentData,
+                                                        const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
 
@@ -711,7 +688,18 @@ protected:
         KRATOS_CATCH("");
     }
 
-    virtual double CalculateReactionTerm(const TConvectionDiffusionReactionAdjointData& rCurrentData,
+    /**
+     * @brief Calculates reaction coefficient
+     *
+     * This method calculates reaction coefficient (i.e. $s_\phi$).
+     * This method is called for each gauss point.
+     * This method should be implemented by the derrived class.
+     *
+     * @param rCurrentData
+     * @param rCurrentProcessInfo
+     * @return double
+     */
+    virtual double CalculateReactionTerm(const TElementData& rCurrentData,
                                          const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
@@ -724,7 +712,18 @@ protected:
         KRATOS_CATCH("");
     }
 
-    virtual double CalculateSourceTerm(const TConvectionDiffusionReactionAdjointData& rCurrentData,
+    /**
+     * @brief Calculates source term
+     *
+     * This method calculates source term (i.e. $f_\phi$).
+     * This method is called for each gauss point.
+     * This method should be implemented by the derrived class.
+     *
+     * @param rCurrentData
+     * @param rCurrentProcessInfo
+     * @return double
+     */
+    virtual double CalculateSourceTerm(const TElementData& rCurrentData,
                                        const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
@@ -737,10 +736,30 @@ protected:
         KRATOS_CATCH("");
     }
 
+    /**
+     * @brief Calculates scalar partial derivatives of effective kinematic viscosity
+     *
+     * This method calculates partial derivative of the effective kinematic viscosity
+     * for a given scalar variable. This method is called for each gauss point.
+     *
+     * \[
+     *   \frac{\partial\nu_\phi}{\partial w}
+     * \]
+     *
+     * Where $\nu_\phi$ is the effective kinematic viscosity, and $w$ is the derivative
+     * variable
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @param rOutput              Output vector containing partial derivatives for each node
+     * @param rDerivativeVariable  Derivative variable (i.e. $w$)
+     * @param rCurrentData         Data required to calculate partial derivatives
+     * @param rCurrentProcessInfo  Current process info
+     */
     virtual void CalculateEffectiveKinematicViscosityScalarDerivatives(
         Vector& rOutput,
         const Variable<double>& rDerivativeVariable,
-        const TConvectionDiffusionReactionAdjointData& rCurrentData,
+        const TElementData& rCurrentData,
         const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
@@ -754,14 +773,34 @@ protected:
         KRATOS_CATCH("");
     }
 
-    virtual void CalculateReactionTermDerivatives(Vector& rOutput,
-                                                  const Variable<double>& rDerivativeVariable,
-                                                  const TConvectionDiffusionReactionAdjointData& rCurrentData,
-                                                  const ProcessInfo& rCurrentProcessInfo) const
+    /**
+     * @brief Calculates scalar partial derivatives of reaction coefficient
+     *
+     * This method calculates partial derivative of the reaction coefficient
+     * for a given scalar variable. This method is called for each gauss point.
+     *
+     * \[
+     *   \frac{\partial s_\phi}{\partial w}
+     * \]
+     *
+     * Where $s_\phi$ is the reaction coefficient, and $w$ is the derivative
+     * variable
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @param rOutput              Output vector containing partial derivatives for each node
+     * @param rDerivativeVariable  Derivative variable (i.e. $w$)
+     * @param rCurrentData         Data required to calculate partial derivatives
+     * @param rCurrentProcessInfo  Current process info
+     */
+    virtual void CalculateReactionTermScalarDerivatives(Vector& rOutput,
+                                                        const Variable<double>& rDerivativeVariable,
+                                                        const TElementData& rCurrentData,
+                                                        const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
 
-        KRATOS_ERROR << "Calling base CalculateReactionTermDerivatives "
+        KRATOS_ERROR << "Calling base CalculateReactionTermScalarDerivatives "
                         "method in "
                         "StabilizedConvectionDiffusionReactionAdjointElement "
                         "class. Please implement it in the derrived class.";
@@ -769,14 +808,34 @@ protected:
         KRATOS_CATCH("");
     }
 
-    virtual void CalculateSourceTermDerivatives(Vector& rOutput,
-                                                const Variable<double>& rDerivativeVariable,
-                                                const TConvectionDiffusionReactionAdjointData& rCurrentData,
-                                                const ProcessInfo& rCurrentProcessInfo) const
+    /**
+     * @brief Calculates scalar partial derivatives of source term
+     *
+     * This method calculates partial derivative of the source term
+     * for a given scalar variable. This method is called for each gauss point.
+     *
+     * \[
+     *   \frac{\partial f_\phi}{\partial w}
+     * \]
+     *
+     * Where $s_\phi$ is the source term, and $w$ is the derivative
+     * variable
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @param rOutput              Output vector containing partial derivatives for each node
+     * @param rDerivativeVariable  Derivative variable (i.e. $w$)
+     * @param rCurrentData         Data required to calculate partial derivatives
+     * @param rCurrentProcessInfo  Current process info
+     */
+    virtual void CalculateSourceTermScalarDerivatives(Vector& rOutput,
+                                                      const Variable<double>& rDerivativeVariable,
+                                                      const TElementData& rCurrentData,
+                                                      const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
 
-        KRATOS_ERROR << "Calling base CalculateSourceTermDerivatives "
+        KRATOS_ERROR << "Calling base CalculateSourceTermScalarDerivatives "
                         "method in "
                         "StabilizedConvectionDiffusionReactionAdjointElement "
                         "class. Please implement it in the derrived class.";
@@ -784,10 +843,24 @@ protected:
         KRATOS_CATCH("");
     }
 
+    /**
+     * @brief Calculate velocity derivatives of effective kinematic viscosity
+     *
+     * This method calculates partial velocity derivatives of effective kinematic viscosity
+     * This method is called for each gauss point.
+     *
+     * \[
+     *   \frac{\partial \nu_\phi}{\partial \underline{u}}
+     * \]
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @param rOutput             Output vector containing partial derivatives for each node in rows, and each dimension in columns
+     * @param rCurrentData        Data required to calculate partial derivatives
+     * @param rCurrentProcessInfo Current process info
+     */
     virtual void CalculateEffectiveKinematicViscosityVelocityDerivatives(
-        Matrix& rOutput,
-        const TConvectionDiffusionReactionAdjointData& rCurrentData,
-        const ProcessInfo& rCurrentProcessInfo) const
+        Matrix& rOutput, const TElementData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
 
@@ -801,10 +874,25 @@ protected:
         KRATOS_CATCH("");
     }
 
-    virtual void CalculateReactionTermVelocityDerivatives(
-        Matrix& rOutput,
-        const TConvectionDiffusionReactionAdjointData& rCurrentData,
-        const ProcessInfo& rCurrentProcessInfo) const
+    /**
+     * @brief Calculate velocity derivatives of reaction coefficient
+     *
+     * This method calculates partial velocity derivatives of reaction coefficient
+     * This method is called for each gauss point.
+     *
+     * \[
+     *   \frac{\partial s_\phi}{\partial \underline{u}}
+     * \]
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @param rOutput             Output vector containing partial derivatives for each node in rows, and each dimension in columns
+     * @param rCurrentData        Data required to calculate partial derivatives
+     * @param rCurrentProcessInfo Current process info
+     */
+    virtual void CalculateReactionTermVelocityDerivatives(Matrix& rOutput,
+                                                          const TElementData& rCurrentData,
+                                                          const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
 
@@ -816,10 +904,25 @@ protected:
         KRATOS_CATCH("");
     }
 
-    virtual void CalculateSourceTermVelocityDerivatives(
-        Matrix& rOutput,
-        const TConvectionDiffusionReactionAdjointData& rCurrentData,
-        const ProcessInfo& rCurrentProcessInfo) const
+    /**
+     * @brief Calculate velocity derivatives of source term
+     *
+     * This method calculates partial velocity derivatives of source term
+     * This method is called for each gauss point.
+     *
+     * \[
+     *   \frac{\partial f_\phi}{\partial \underline{u}}
+     * \]
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @param rOutput             Output vector containing partial derivatives for each node in rows, and each dimension in columns
+     * @param rCurrentData        Data required to calculate partial derivatives
+     * @param rCurrentProcessInfo Current process info
+     */
+    virtual void CalculateSourceTermVelocityDerivatives(Matrix& rOutput,
+                                                        const TElementData& rCurrentData,
+                                                        const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
 
@@ -831,8 +934,24 @@ protected:
         KRATOS_CATCH("");
     }
 
+    /**
+     * @brief Calculates shape sensitivity of effective kinematic viscosity
+     *
+     * Calculates shape derivative of effective kinematic viscosity
+     * w.r.t. nodal coordinates. This method is called for each nodal coordinate,
+     * its different dimensions and for each gauss point as well.
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @param rCurrentData         Data required to calculate partial derivatives
+     * @param rShapeDerivative     Current derivative (i.e. $x^c_k$, where $c$ is the node, $k$ is the dimension)
+     * @param detJ_deriv           Derivative of determinant of jacobian (i.e. $|J|$) w.r.t. $x^c_k$
+     * @param rDN_Dx_deriv         Derivative of shape function gradients w.r.t. $x^c_k$
+     * @param rCurrentProcessInfo  Current process info
+     * @return double              Effective kinematic viscosity shape derivative w.r.t. $x^c_k$
+     */
     virtual double CalculateEffectiveKinematicViscosityShapeSensitivity(
-        const TConvectionDiffusionReactionAdjointData& rCurrentData,
+        const TElementData& rCurrentData,
         const ShapeParameter& rShapeDerivative,
         const double detJ_deriv,
         const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
@@ -849,8 +968,24 @@ protected:
         KRATOS_CATCH("");
     }
 
+    /**
+     * @brief Calculates shape sensitivity of reaction coefficient
+     *
+     * Calculates shape derivative of reaction coefficient
+     * w.r.t. nodal coordinates. This method is called for each nodal coordinate,
+     * its different dimensions and for each gauss point as well.
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @param rCurrentData         Data required to calculate partial derivatives
+     * @param rShapeDerivative     Current derivative (i.e. $x^c_k$, where $c$ is the node, $k$ is the dimension)
+     * @param detJ_deriv           Derivative of determinant of jacobian (i.e. $|J|$) w.r.t. $x^c_k$
+     * @param rDN_Dx_deriv         Derivative of shape function gradients w.r.t. $x^c_k$
+     * @param rCurrentProcessInfo  Current process info
+     * @return double              Reaction coefficient shape derivative w.r.t. $x^c_k$
+     */
     virtual double CalculateReactionTermShapeSensitivity(
-        const TConvectionDiffusionReactionAdjointData& rCurrentData,
+        const TElementData& rCurrentData,
         const ShapeParameter& rShapeDerivative,
         const double detJ_deriv,
         const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
@@ -866,8 +1001,24 @@ protected:
         KRATOS_CATCH("");
     }
 
+    /**
+     * @brief Calculates shape sensitivity of source term
+     *
+     * Calculates shape derivative of source term
+     * w.r.t. nodal coordinates. This method is called for each nodal coordinate,
+     * its different dimensions and for each gauss point as well.
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @param rCurrentData         Data required to calculate partial derivatives
+     * @param rShapeDerivative     Current derivative (i.e. $x^c_k$, where $c$ is the node, $k$ is the dimension)
+     * @param detJ_deriv           Derivative of determinant of jacobian (i.e. $|J|$) w.r.t. $x^c_k$
+     * @param rDN_Dx_deriv         Derivative of shape function gradients w.r.t. $x^c_k$
+     * @param rCurrentProcessInfo  Current process info
+     * @return double              Source term shape derivative w.r.t. $x^c_k$
+     */
     virtual double CalculateSourceTermShapeSensitivity(
-        const TConvectionDiffusionReactionAdjointData& rCurrentData,
+        const TElementData& rCurrentData,
         const ShapeParameter& rShapeDerivative,
         const double detJ_deriv,
         const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
@@ -883,6 +1034,20 @@ protected:
         KRATOS_CATCH("");
     }
 
+    /**
+     * @brief Calculate element residual scalar derivatives
+     *
+     * This method calculates transposed element residuals scalar partial derivatives.
+     * In the steady regime, the the variable given by
+     * @GetScalarVariableRelaxedRate() should have zero values.
+     * This method is called for each gauss point.
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @param rResidualDerivatives Residual derivatives, rows contains derivative variables, columns contains residual equations.
+     * @param rDerivativeVariable  Scalar derivative variables
+     * @param rCurrentProcessInfo  Current process info
+     */
     void CalculateElementTotalResidualScalarDerivatives(Matrix& rResidualDerivatives,
                                                         const Variable<double>& rDerivativeVariable,
                                                         const ProcessInfo& rCurrentProcessInfo)
@@ -898,7 +1063,13 @@ protected:
                                      rCurrentProcessInfo);
     }
 
-    /// Determine integration point weights and shape funcition derivatives from the element's geometry.
+    /**
+     * @brief Calculates shape function data for this element
+     *
+     * @param rGaussWeights Gauss point weights list
+     * @param rNContainer   Shape function values. Each row contains shape functions for respective gauss point
+     * @param rDN_DX        List of matrices containing shape function derivatives for each gauss point
+     */
     virtual void CalculateGeometryData(Vector& rGaussWeights,
                                        Matrix& rNContainer,
                                        ShapeFunctionDerivativesArrayType& rDN_DX) const
@@ -909,6 +1080,18 @@ protected:
             r_geometry, this->GetIntegrationMethod(), rGaussWeights, rNContainer, rDN_DX);
     }
 
+    /**
+     * @brief Get the Geometry Parameter Derivatives object
+     *
+     * This method calculates partial derivatives of parametric coordinates(i.e. $\underline{\xi}$) of element
+     * w.r.t. physical coordinates (i.e. $\underline{x}$)
+     *
+     * \[
+     *      \frac{\partial \underline{\xi}}{\partial \underline{x}}
+     * \]
+     *
+     * @return ShapeFunctionDerivativesArrayType
+     */
     ShapeFunctionDerivativesArrayType GetGeometryParameterDerivatives() const
     {
         const GeometryType& r_geometry = this->GetGeometry();
@@ -916,6 +1099,14 @@ protected:
             r_geometry, this->GetIntegrationMethod());
     }
 
+    /**
+     * @brief Calculates scalar value for given gauss point
+     *
+     * @param rVariable      Scalar variable
+     * @param rShapeFunction Gauss point shape functions
+     * @param Step           Step
+     * @return double        Gauss point scalar value
+     */
     double EvaluateInPoint(const Variable<double>& rVariable,
                            const Vector& rShapeFunction,
                            const int Step = 0) const
@@ -924,6 +1115,14 @@ protected:
             this->GetGeometry(), rVariable, rShapeFunction, Step);
     }
 
+    /**
+     * @brief Calculates vector value for given gauss point
+     *
+     * @param rVariable            Vector variable
+     * @param rShapeFunction       Gauss point shape functions
+     * @param Step                 Step
+     * @return array_1d<double, 3> Gauss point vector value
+     */
     array_1d<double, 3> EvaluateInPoint(const Variable<array_1d<double, 3>>& rVariable,
                                         const Vector& rShapeFunction,
                                         const int Step = 0) const
@@ -932,6 +1131,23 @@ protected:
             this->GetGeometry(), rVariable, rShapeFunction, Step);
     }
 
+    /**
+     * @brief Get the Convection Operator object
+     *
+     * Calculates convection operator given by following equation
+     *
+     * \[
+     *  w_i\frac{\partial N^a}{\partial x_i}
+     * \]
+     *
+     * $w_i$ being the $i^{th}$ dimension of $\underline{w}$ vector, $N^a$ being the
+     * shape function of $a^{th}$ node, $x_i$ being the $i^{th}$ dimension
+     * of local coordinates
+     *
+     * @param rOutput           Vector of results
+     * @param rVector           Input vector (i.e. $\underline{w}$)
+     * @param rShapeDerivatives Shape function derivatives w.r.t. physical coordinates
+     */
     void GetConvectionOperator(BoundedVector<double, TNumNodes>& rOutput,
                                const array_1d<double, 3>& rVector,
                                const Matrix& rShapeDerivatives) const
@@ -944,6 +1160,16 @@ protected:
             }
     }
 
+    /**
+     * @brief Get the Divergence Operator object
+     *
+     * Calculates divergence of a vector at a gauss point
+     *
+     * @param rVariable          Vector variable
+     * @param rShapeDerivatives  Shape derivatives at gauss point
+     * @param Step               time step
+     * @return double            Divergence of the variable
+     */
     double GetDivergenceOperator(const Variable<array_1d<double, 3>>& rVariable,
                                  const Matrix& rShapeDerivatives,
                                  const int Step = 0) const
@@ -964,6 +1190,16 @@ protected:
         return value;
     }
 
+    /**
+     * @brief Calculate gradient matrix for a vector
+     *
+     * Calculates the gradient matrix for a given vector variable.
+     *
+     * @param rOutput            Output matrix, rows contain the given vector indices, columns containt physical coordinate dimensions
+     * @param rVariable          Vector variable
+     * @param rShapeDerivatives  Shape function derivatives at the gauss point
+     * @param Step               Time step
+     */
     void CalculateGradient(BoundedMatrix<double, TDim, TDim>& rOutput,
                            const Variable<array_1d<double, 3>>& rVariable,
                            const Matrix& rShapeDerivatives,
@@ -975,6 +1211,16 @@ protected:
             rOutput, r_geometry, rVariable, rShapeDerivatives, Step);
     }
 
+    /**
+     * @brief Calculate gradient vector for a scalar
+     *
+     * Calculates the gradient vector for a given scalar variable.
+     *
+     * @param rOutput            Output vector
+     * @param rVariable          Scalar variable
+     * @param rShapeDerivatives  Shape function derivatives at the gauss point
+     * @param Step               Time step
+     */
     void CalculateGradient(array_1d<double, 3>& rOutput,
                            const Variable<double>& rVariable,
                            const Matrix& rShapeDerivatives,
@@ -1010,34 +1256,50 @@ private:
     ///@name Private Operations
     ///@{
 
+    /**
+     * @brief Calculates stabilization tau scalar derivatives
+     *
+     * \[
+     *  -\tau_\phi^3\left[144\frac{\nu_\phi}{h^4_2}\left(\nu_{\phi,w}\right)^c + s_\phi\left(s_{\phi,w}\right)^c\right]
+     * \]
+     *
+     * Where $w$ is the derivative variable
+     *
+     * @param rOutput                                        Scalar derivatives for each node w.r.t. $w$
+     * @param Tau                                            Stabilization tau
+     * @param EffectiveKinematicViscosity                    Effective kinematic viscosity $\nu_\phi$
+     * @param Reaction                                       Reaction coefficient $s_\phi$
+     * @param ElementLength                                  Element length $h_2$
+     * @param rEffectiveKinematicViscosityScalarDerivatives  Scalar derivatives of effective kinematic viscosity $\left(\nu_{\phi,w}\right)$
+     * @param rReactionScalarDerivatives                     Reaction scalar derivatives $\left(s_{\phi,w}\right)$
+     */
     void CalculateStabilizationTauScalarDerivatives(Vector& rOutput,
-                                                    const double tau,
-                                                    const double effective_kinematic_viscosity,
-                                                    const double reaction,
-                                                    const double element_length,
-                                                    const Matrix& rContravariantMetricTensor,
+                                                    const double Tau,
+                                                    const double EffectiveKinematicViscosity,
+                                                    const double Reaction,
+                                                    const double ElementLength,
                                                     const Vector& rEffectiveKinematicViscosityScalarDerivatives,
-                                                    const Vector& rReactionScalarDerivatives)
+                                                    const Vector& rReactionScalarDerivatives) const
     {
         noalias(rOutput) =
             (rEffectiveKinematicViscosityScalarDerivatives *
-                 (144 * effective_kinematic_viscosity / std::pow(element_length, 4)) +
-             rReactionScalarDerivatives * (reaction)) *
-            (-1.0 * std::pow(tau, 3));
+                 (144 * EffectiveKinematicViscosity / std::pow(ElementLength, 4)) +
+             rReactionScalarDerivatives * (Reaction)) *
+            (-1.0 * std::pow(Tau, 3));
     }
 
     void CalculateStabilizationTauVelocityDerivatives(
         Matrix& rOutput,
-        const double tau,
-        const double effective_kinematic_viscosity,
-        const double reaction,
-        const double element_length,
+        const double Tau,
+        const double EffectiveKinematicViscosity,
+        const double Reaction,
+        const double ElementLength,
         const array_1d<double, 3>& rVelocity,
         const Matrix& rContravariantMetricTensor,
         const Matrix& rEffectiveKinematicViscosityVelocityDerivatives,
         const Matrix& rReactionVelocityDerivatives,
         const Matrix& rElementLengthDerivatives,
-        const Vector& rGaussShapeFunctions)
+        const Vector& rGaussShapeFunctions) const
     {
         Vector contravariant_metric_velocity(TDim);
         const Vector& velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
@@ -1053,130 +1315,162 @@ private:
 
         noalias(rOutput) +=
             rEffectiveKinematicViscosityVelocityDerivatives *
-            (144.0 * effective_kinematic_viscosity / std::pow(element_length, 4));
+            (144.0 * EffectiveKinematicViscosity / std::pow(ElementLength, 4));
         noalias(rOutput) -= rElementLengthDerivatives *
-                            (288.0 * std::pow(effective_kinematic_viscosity, 2) /
-                             std::pow(element_length, 5));
-        noalias(rOutput) += rReactionVelocityDerivatives * (reaction);
-        noalias(rOutput) = rOutput * (-1.0 * std::pow(tau, 3));
+                            (288.0 * std::pow(EffectiveKinematicViscosity, 2) /
+                             std::pow(ElementLength, 5));
+        noalias(rOutput) += rReactionVelocityDerivatives * (Reaction);
+        noalias(rOutput) = rOutput * (-1.0 * std::pow(Tau, 3));
     }
 
-    double CalculateStabilizationTauShapeSensitivity(const double tau,
-                                                     const double velocity_magnitude,
-                                                     const double element_length,
-                                                     const double element_length_deriv,
-                                                     const double effective_kinematic_viscosity,
-                                                     const double effective_kinematic_viscosity_deriv,
-                                                     const double reaction,
-                                                     const double reaction_deriv)
+    double CalculateStabilizationTauShapeSensitivity(const double Tau,
+                                                     const double VelocityMagnitude,
+                                                     const double ElementLength,
+                                                     const double ElementLengthDeriv,
+                                                     const double EffectiveKinematicViscosity,
+                                                     const double EffectiveKinematicViscosityDeriv,
+                                                     const double Reaction,
+                                                     const double ReactionDeriv) const
     {
         double shape_sensitivity = 0.0;
 
-        shape_sensitivity += 4.0 * std::pow(velocity_magnitude, 2) *
-                             element_length_deriv / std::pow(element_length, 3);
-        shape_sensitivity -= 144.0 * effective_kinematic_viscosity *
-                             effective_kinematic_viscosity_deriv /
-                             std ::pow(element_length, 4);
-        shape_sensitivity += 288.0 * std::pow(effective_kinematic_viscosity, 2) *
-                             element_length_deriv / std::pow(element_length, 5);
-        shape_sensitivity -= reaction * reaction_deriv;
+        shape_sensitivity += 4.0 * std::pow(VelocityMagnitude, 2) *
+                             ElementLengthDeriv / std::pow(ElementLength, 3);
+        shape_sensitivity -= 144.0 * EffectiveKinematicViscosity *
+                             EffectiveKinematicViscosityDeriv /
+                             std ::pow(ElementLength, 4);
+        shape_sensitivity += 288.0 * std::pow(EffectiveKinematicViscosity, 2) *
+                             ElementLengthDeriv / std::pow(ElementLength, 5);
+        shape_sensitivity -= Reaction * ReactionDeriv;
 
-        shape_sensitivity *= std::pow(tau, 3);
+        shape_sensitivity *= std::pow(Tau, 3);
 
         return shape_sensitivity;
     }
 
     void CalculateVelocityMagnitudeVelocityDerivative(Matrix& rOutput,
-                                                      const double velocity_magnitude,
+                                                      const double VelocityMagnitude,
                                                       const array_1d<double, 3>& rVelocity,
-                                                      const Vector& rGaussShapeFunctions)
+                                                      const Vector& rGaussShapeFunctions) const
     {
-        for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node)
-            for (unsigned int i_dim = 0; i_dim < TDim; ++i_dim)
-                rOutput(i_node, i_dim) =
-                    rVelocity[i_dim] * rGaussShapeFunctions[i_node] / velocity_magnitude;
+        if (VelocityMagnitude <= std::numeric_limits<double>::epsilon())
+        {
+            rOutput.clear();
+        }
+        else
+        {
+            for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node)
+                for (unsigned int i_dim = 0; i_dim < TDim; ++i_dim)
+                    rOutput(i_node, i_dim) =
+                        rVelocity[i_dim] * rGaussShapeFunctions[i_node] / VelocityMagnitude;
+        }
     }
 
     void CalculateElementLengthH2VelocityDerivative(Matrix& rOutput,
-                                                    const double velocity_magnitude,
+                                                    const double VelocityMagnitude,
                                                     const array_1d<double, 3>& rVelocity,
                                                     const Matrix& rVelocityMagnitudeVelocityDerivatives,
                                                     const Matrix& rContravariantMetricTensor,
-                                                    const Vector& rGaussShapeFunctions)
+                                                    const Vector& rGaussShapeFunctions) const
     {
-        const Vector& velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
+        if (VelocityMagnitude <= std::numeric_limits<double>::epsilon())
+        {
+            rOutput.clear();
+        }
+        else
+        {
+            const Vector& velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
 
-        const double sqrt_u_e_u =
-            std::sqrt(inner_prod(velocity, prod(rContravariantMetricTensor, velocity)));
+            const double sqrt_u_e_u = std::sqrt(inner_prod(
+                velocity, prod(rContravariantMetricTensor, velocity)));
 
-        Vector contravariant_metric_velocity(TDim);
-        noalias(contravariant_metric_velocity) =
-            prod(rContravariantMetricTensor, velocity) +
-            prod(trans(rContravariantMetricTensor), velocity);
+            Vector contravariant_metric_velocity(TDim);
+            noalias(contravariant_metric_velocity) =
+                prod(rContravariantMetricTensor, velocity) +
+                prod(trans(rContravariantMetricTensor), velocity);
 
-        for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
-            for (std::size_t i_dim = 0; i_dim < TDim; ++i_dim)
-                rOutput(i_node, i_dim) = rGaussShapeFunctions[i_node] *
-                                         contravariant_metric_velocity[i_dim];
+            for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
+                for (std::size_t i_dim = 0; i_dim < TDim; ++i_dim)
+                    rOutput(i_node, i_dim) = rGaussShapeFunctions[i_node] *
+                                             contravariant_metric_velocity[i_dim];
 
-        noalias(rOutput) =
-            rOutput * (-1.0 * velocity_magnitude / std::pow(sqrt_u_e_u, 3));
-        noalias(rOutput) += (rVelocityMagnitudeVelocityDerivatives) * (2.0 / sqrt_u_e_u);
+            noalias(rOutput) =
+                rOutput * (-1.0 * VelocityMagnitude / std::pow(sqrt_u_e_u, 3));
+            noalias(rOutput) += (rVelocityMagnitudeVelocityDerivatives) * (2.0 / sqrt_u_e_u);
+        }
     }
 
-    double CalculateElementLengthH2ShapeSensitivity(const double velocity_magnitude,
+    double CalculateElementLengthH2ShapeSensitivity(const double VelocityMagnitude,
                                                     const array_1d<double, 3>& rVelocity,
                                                     const Matrix& rContravariantMetricTensor,
                                                     const Matrix& rContravariantMetricTensorShapeSensitivity)
     {
-        const Vector& velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
+        if (VelocityMagnitude <= std::numeric_limits<double>::epsilon())
+        {
+            double sensitivity = 0.0;
+            double element_length = 0.0;
+            for (unsigned int i = 0; i < TDim; ++i)
+                for (unsigned int j = 0; j < TDim; ++j)
+                {
+                    sensitivity += rContravariantMetricTensorShapeSensitivity(i, j);
+                    element_length += rContravariantMetricTensor(i, j);
+                }
+            element_length = std::sqrt(1.0 / element_length) * 2.0;
 
-        const double u_e_u = std::pow(
-            inner_prod(velocity, prod(rContravariantMetricTensor, velocity)), 1.5);
+            return sensitivity * std::pow(element_length, 3) * (-1.0 / 8.0);
+        }
+        else
+        {
+            const Vector& velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
 
-        return -velocity_magnitude *
-               (inner_prod(velocity, prod(rContravariantMetricTensorShapeSensitivity, velocity))) /
-               u_e_u;
+            const double u_e_u = std::pow(
+                inner_prod(velocity, prod(rContravariantMetricTensor, velocity)), 1.5);
+
+            return -VelocityMagnitude *
+                   (inner_prod(velocity, prod(rContravariantMetricTensorShapeSensitivity,
+                                              velocity))) /
+                   u_e_u;
+        }
     }
 
     void CalculateChiScalarDerivatives(Vector& rOutput,
-                                       const double chi,
-                                       const double element_length,
-                                       const double bossak_alpha,
-                                       const double bossak_gamma,
-                                       const double delta_time,
-                                       const double reaction,
+                                       const double Chi,
+                                       const double ElementLength,
+                                       const double BossakAlpha,
+                                       const double BossakGamma,
+                                       const double DeltaTime,
+                                       const double Reaction,
                                        const Vector& rReactionScalarDerivatives)
     {
         const double reaction_tilde =
-            reaction + (1 - bossak_alpha) / (bossak_gamma * delta_time);
+            Reaction + (1 - BossakAlpha) / (BossakGamma * DeltaTime);
 
         CalculateAbsoluteScalarValueScalarDerivatives(
             rOutput, reaction_tilde, rReactionScalarDerivatives);
-        noalias(rOutput) = rOutput * (-0.5 * std::pow(chi, 2) * element_length);
+        noalias(rOutput) = rOutput * (-0.5 * std::pow(Chi, 2) * ElementLength);
     }
 
     void CalculateChiVelocityDerivatives(Matrix& rOutput,
-                                         const double chi,
-                                         const double element_length,
-                                         const double bossak_alpha,
-                                         const double bossak_gamma,
-                                         const double delta_time,
-                                         const double reaction,
+                                         const double Chi,
+                                         const double ElementLength,
+                                         const double BossakAlpha,
+                                         const double BossakGamma,
+                                         const double DeltaTime,
+                                         const double Reaction,
                                          const Matrix& rReactionDerivatives,
                                          const Matrix& rVelocityMagnitudeDerivatives,
                                          const Matrix& rElementLengthDerivatives)
     {
         const double reaction_tilde =
-            reaction + (1 - bossak_alpha) / (bossak_gamma * delta_time);
+            Reaction + (1 - BossakAlpha) / (BossakGamma * DeltaTime);
         const double abs_reaction_tilde = std::abs(reaction_tilde);
 
         CalculateAbsoluteScalarValueVectorDerivatives(rOutput, reaction_tilde,
                                                       rReactionDerivatives);
 
-        noalias(rOutput) = (rOutput * element_length + rElementLengthDerivatives * abs_reaction_tilde +
+        noalias(rOutput) = (rOutput * ElementLength + rElementLengthDerivatives * abs_reaction_tilde +
                             rVelocityMagnitudeDerivatives * 2.0) *
-                           (-0.5 * std::pow(chi, 2));
+                           (-0.5 * std::pow(Chi, 2));
     }
 
     double CalculateChiShapeSensitivity(const double chi,
@@ -1194,7 +1488,8 @@ private:
 
         return -0.5 * std::pow(chi, 2) *
                (abs_reaction_tilde * element_length_deriv +
-                reaction_tilde * element_length * reaction_deriv / abs_reaction_tilde);
+                reaction_tilde * element_length * reaction_deriv /
+                    (abs_reaction_tilde + std::numeric_limits<double>::epsilon()));
     }
 
     void CalculateAbsoluteScalarGradientScalarDerivative(Vector& rOutput,
@@ -1203,11 +1498,20 @@ private:
     {
         const double scalar_gradient_norm = norm_2(rScalarGradient);
 
-        for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
+        if (scalar_gradient_norm <= std::numeric_limits<double>::epsilon())
         {
-            const Vector& shape_function_gradient = row(rShapeFunctionDerivatives, i_node);
-            rOutput[i_node] =
-                CalculateScalarProduct(shape_function_gradient, rScalarGradient) / scalar_gradient_norm;
+            rOutput.clear();
+        }
+        else
+        {
+            for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
+            {
+                const Vector& shape_function_gradient =
+                    row(rShapeFunctionDerivatives, i_node);
+                rOutput[i_node] =
+                    CalculateScalarProduct(shape_function_gradient, rScalarGradient) /
+                    scalar_gradient_norm;
+            }
         }
     }
 
@@ -1217,13 +1521,20 @@ private:
     {
         const double scalar_gradient_norm = norm_2(rScalarGradient);
 
-        Vector scalar_gradient_shape_sensitivity(TDim);
-        noalias(scalar_gradient_shape_sensitivity) =
-            prod(trans(rShapeFunctionDerivShapeSensitivity), rNodalScalarValues);
+        if (scalar_gradient_norm <= std::numeric_limits<double>::epsilon())
+        {
+            return 0.0;
+        }
+        else
+        {
+            Vector scalar_gradient_shape_sensitivity(TDim);
+            noalias(scalar_gradient_shape_sensitivity) =
+                prod(trans(rShapeFunctionDerivShapeSensitivity), rNodalScalarValues);
 
-        const Vector& scalar_gradient =
-            RansCalculationUtilities().GetVector<TDim>(rScalarGradient);
-        return inner_prod(scalar_gradient_shape_sensitivity, scalar_gradient) / scalar_gradient_norm;
+            const Vector& scalar_gradient =
+                RansCalculationUtilities().GetVector<TDim>(rScalarGradient);
+            return inner_prod(scalar_gradient_shape_sensitivity, scalar_gradient) / scalar_gradient_norm;
+        }
     }
 
     void CalculateResidualScalarDerivative(Vector& rOutput,
@@ -1244,7 +1555,7 @@ private:
             value += scalar_value * rReactionScalarDerivatives[i_node];
             value -= rSourceScalarDerivatives[i_node];
 
-            if (this->GetPrimalVariable() == rDerivativeVariable)
+            if (this->GetScalarVariable() == rDerivativeVariable)
             {
                 value += reaction * rShapeFunctions[i_node];
                 value += CalculateScalarProduct(shape_function_gradient, rVelocity);
@@ -1279,15 +1590,23 @@ private:
     {
         const double abs_residual = std::abs(residual);
 
-        const Vector& r_velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
-        Vector primal_variable_gradient_shape_sensitivity(TDim);
-        noalias(primal_variable_gradient_shape_sensitivity) =
-            prod(trans(rShapeFunctionDerivShapeSensitivity), rNodalScalarValues);
+        if (abs_residual <= std::numeric_limits<double>::epsilon())
+        {
+            return 0.0;
+        }
+        else
+        {
+            const Vector& r_velocity =
+                RansCalculationUtilities().GetVector<TDim>(rVelocity);
+            Vector primal_variable_gradient_shape_sensitivity(TDim);
+            noalias(primal_variable_gradient_shape_sensitivity) =
+                prod(trans(rShapeFunctionDerivShapeSensitivity), rNodalScalarValues);
 
-        return residual *
-               (inner_prod(r_velocity, primal_variable_gradient_shape_sensitivity) +
-                reaction_deriv * scalar_value - source_deriv) /
-               abs_residual;
+            return residual *
+                   (inner_prod(r_velocity, primal_variable_gradient_shape_sensitivity) +
+                    reaction_deriv * scalar_value - source_deriv) /
+                   abs_residual;
+        }
     }
 
     void CalculatePositivityPreservationCoefficientScalarDerivatives(
@@ -1303,16 +1622,25 @@ private:
     {
         const double abs_residual = std::abs(residual);
 
-        noalias(rOutput) = rAbsoluteResidualScalarDerivatives *
-                           (chi / (velocity_norm_square * scalar_gradient_norm));
-        noalias(rOutput) +=
-            rChiScalarDerivatives *
-            (abs_residual / (velocity_norm_square * scalar_gradient_norm));
+        if (scalar_gradient_norm <= std::numeric_limits<double>::epsilon() ||
+            velocity_norm_square <= std::numeric_limits<double>::epsilon())
+        {
+            rOutput.clear();
+        }
+        else
+        {
+            noalias(rOutput) = rAbsoluteResidualScalarDerivatives *
+                               (chi / (velocity_norm_square * scalar_gradient_norm));
+            noalias(rOutput) +=
+                rChiScalarDerivatives *
+                (abs_residual / (velocity_norm_square * scalar_gradient_norm));
 
-        if (this->GetPrimalVariable() == rDerivativeVariable)
-            noalias(rOutput) -=
-                rAbsoluteScalarGradientScalarDerivative *
-                (chi * abs_residual / (std::pow(scalar_gradient_norm, 2) * velocity_norm_square));
+            if (this->GetScalarVariable() == rDerivativeVariable)
+                noalias(rOutput) -=
+                    rAbsoluteScalarGradientScalarDerivative *
+                    (chi * abs_residual /
+                     (std::pow(scalar_gradient_norm, 2) * velocity_norm_square));
+        }
     }
 
     void CalculatePositivityPreservationCoefficientVelocityDerivatives(
@@ -1327,11 +1655,21 @@ private:
     {
         const double velocity_magnitude_square = std::pow(velocity_magnitude, 2);
 
-        noalias(rOutput) =
-            (rVelocityMagnitudeDerivatives * (-2.0 * chi / velocity_magnitude) + rChiDerivatives) *
-                (absolute_residual / (velocity_magnitude_square * primal_variable_gradient_norm)) +
-            rAbsoluteResidualDerivatives *
-                (chi / (primal_variable_gradient_norm * velocity_magnitude_square));
+        if (primal_variable_gradient_norm <= std::numeric_limits<double>::epsilon() ||
+            velocity_magnitude_square <= std::numeric_limits<double>::epsilon())
+        {
+            rOutput.clear();
+        }
+
+        else
+        {
+            noalias(rOutput) =
+                (rVelocityMagnitudeDerivatives * (-2.0 * chi / velocity_magnitude) + rChiDerivatives) *
+                    (absolute_residual /
+                     (velocity_magnitude_square * primal_variable_gradient_norm)) +
+                rAbsoluteResidualDerivatives *
+                    (chi / (primal_variable_gradient_norm * velocity_magnitude_square));
+        }
     }
 
     double CalculatePositivityPreservationCoefficientShapeSensitivity(
@@ -1343,10 +1681,18 @@ private:
         const double scalar_gradient_norm,
         const double scalar_gradient_norm_deriv)
     {
-        return chi_deriv * abs_residual / (scalar_gradient_norm * velocity_magnitude_square) +
-               chi * abs_residual_deriv / (scalar_gradient_norm * velocity_magnitude_square) -
-               chi * abs_residual * scalar_gradient_norm_deriv /
-                   (std::pow(scalar_gradient_norm, 2) * velocity_magnitude_square);
+        if (scalar_gradient_norm <= std::numeric_limits<double>::epsilon() ||
+            velocity_magnitude_square <= std::numeric_limits<double>::epsilon())
+        {
+            return 0.0;
+        }
+        else
+        {
+            return chi_deriv * abs_residual / (scalar_gradient_norm * velocity_magnitude_square) +
+                   chi * abs_residual_deriv / (scalar_gradient_norm * velocity_magnitude_square) -
+                   chi * abs_residual * scalar_gradient_norm_deriv /
+                       (std::pow(scalar_gradient_norm, 2) * velocity_magnitude_square);
+        }
     }
 
     void CalculatePsiOneScalarDerivatives(Vector& rOutput,
@@ -1390,7 +1736,8 @@ private:
         const double abs_reaction_dynamics = std::abs(reaction_dynamics);
 
         return tau_deriv * velocity_magnitude * abs_reaction_dynamics +
-               tau * velocity_magnitude * reaction_dynamics * reaction_deriv / abs_reaction_dynamics;
+               tau * velocity_magnitude * reaction_dynamics * reaction_deriv /
+                   (abs_reaction_dynamics + std::numeric_limits<double>::epsilon());
     }
 
     void CalculatePsiTwoScalarDerivatives(Vector& rOutput,
@@ -1452,8 +1799,9 @@ private:
         shape_sensitivity += reaction_deriv;
         shape_sensitivity += tau_deriv * reaction_dynamics * abs_reaction_dynamics;
         shape_sensitivity += tau * reaction_deriv * abs_reaction_dynamics;
-        shape_sensitivity += tau * reaction_dynamics * reaction_dynamics *
-                             reaction_deriv / abs_reaction_dynamics;
+        shape_sensitivity +=
+            tau * reaction_dynamics * reaction_dynamics * reaction_deriv /
+            (abs_reaction_dynamics + std::numeric_limits<double>::epsilon());
 
         shape_sensitivity *= std::pow(element_length, 2) / 6.0;
 
@@ -1481,7 +1829,8 @@ private:
         noalias(rOutput) -= rReactionTildeScalarDerivatives * (tau * velocity_norm);
 
         const double coeff = psi_one - tau * velocity_norm * reaction_tilde;
-        noalias(rOutput) = rOutput * (0.5 * element_length * (coeff) / std::abs(coeff));
+        noalias(rOutput) = rOutput * (0.5 * element_length * (coeff) / (std::abs(coeff)) +
+                                      std::numeric_limits<double>::epsilon());
 
         noalias(rOutput) += rPsiTwoScalarDerivatives;
         noalias(rOutput) -= rEffectiveViscosityScalarDerivatives;
@@ -1510,7 +1859,8 @@ private:
              rReactionTildeDerivatives * (tau * velocity_norm));
 
         const double coeff = psi_one - tau * velocity_norm * reaction_tilde;
-        noalias(rOutput) = rOutput * (0.5 * element_length * (coeff) / std::abs(coeff));
+        noalias(rOutput) = rOutput * (0.5 * element_length * (coeff) / (std::abs(coeff)) +
+                                      std::numeric_limits<double>::epsilon());
 
         noalias(rOutput) += rElementLengthDerivatives * (0.5 * std::abs(coeff));
 
@@ -1544,7 +1894,8 @@ private:
 
         shape_sensitivity += psi_one_deriv - tau_deriv * velocity_magnitude * reaction_dynamics -
                              tau * velocity_magnitude * reaction_deriv;
-        shape_sensitivity *= 0.5 * coeff * element_length / abs_coeff;
+        shape_sensitivity *= 0.5 * coeff * element_length /
+                             (abs_coeff + std::numeric_limits<double>::epsilon());
         shape_sensitivity += 0.5 * abs_coeff * element_length_deriv;
         shape_sensitivity -= effective_kinematic_viscosity_deriv +
                              tau_deriv * std::pow(velocity_magnitude, 2);
@@ -1562,7 +1913,8 @@ private:
         const Vector& rEffectiveKinematicViscosityScalarDerivatives)
     {
         noalias(rOutput) = rPsiOneScalarDerivatives *
-                           (0.5 * psi_one * element_length / std::abs(psi_one));
+                           (0.5 * psi_one * element_length / (std::abs(psi_one)) +
+                            std::numeric_limits<double>::epsilon());
         noalias(rOutput) -= rEffectiveKinematicViscosityScalarDerivatives;
         noalias(rOutput) += rPsiTwoScalarDerivatives;
     }
@@ -1579,7 +1931,8 @@ private:
         const double abs_psi_one = std::abs(psi_one);
 
         noalias(rOutput) =
-            rPsiOneDerivatives * (0.5 * psi_one * element_length / abs_psi_one) +
+            rPsiOneDerivatives * (0.5 * psi_one * element_length /
+                                  (abs_psi_one + std::numeric_limits<double>::epsilon())) +
             rElementLengthDerivatives * (0.5 * abs_psi_one) -
             rEffectiveKinematicViscosityDerivatives + rPsiTwoDerivatives;
     }
@@ -1592,7 +1945,8 @@ private:
                                                             const double psi_two_deriv)
     {
         const double abs_psi_one = std::abs(psi_one);
-        return 0.5 * psi_one * element_length * psi_one_deriv / abs_psi_one +
+        return 0.5 * psi_one * element_length * psi_one_deriv /
+                   (abs_psi_one + std::numeric_limits<double>::epsilon()) +
                0.5 * abs_psi_one * element_length_deriv -
                effective_kinematic_viscosity_deriv + psi_two_deriv;
     }
@@ -1601,16 +1955,18 @@ private:
                                                        const double scalar_value,
                                                        const Vector& rScalarValueDerivatives)
     {
-        noalias(rOutput) =
-            rScalarValueDerivatives * (scalar_value / std::abs(scalar_value));
+        noalias(rOutput) = rScalarValueDerivatives *
+                           (scalar_value / (std::abs(scalar_value) +
+                                            std::numeric_limits<double>::epsilon()));
     }
 
     void CalculateAbsoluteScalarValueVectorDerivatives(Matrix& rOutput,
                                                        const double scalar_value,
                                                        const Matrix& rScalarValueDerivatives)
     {
-        noalias(rOutput) =
-            rScalarValueDerivatives * (scalar_value / std::abs(scalar_value));
+        noalias(rOutput) = rScalarValueDerivatives *
+                           (scalar_value / (std::abs(scalar_value) +
+                                            std::numeric_limits<double>::epsilon()));
     }
 
     double CalculateScalarProduct(const Vector& rVector1, const array_1d<double, 3>& rVector2)
@@ -1639,7 +1995,7 @@ private:
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
-        const Variable<double>& primal_variable = this->GetPrimalVariable();
+        const Variable<double>& primal_variable = this->GetScalarVariable();
 
         BoundedVector<double, TNumNodes> velocity_convective_terms, scalar_convective_terms;
 
@@ -1658,7 +2014,7 @@ private:
 
         array_1d<double, 3> scalar_gradient;
 
-        TConvectionDiffusionReactionAdjointData current_data;
+        TElementData current_data;
 
         for (unsigned int g = 0; g < num_gauss_points; g++)
         {
@@ -1673,8 +2029,8 @@ private:
                 this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
             this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
 
-            this->CalculateConvectionDiffusionReactionAdjointData(
-                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+            this->CalculateElementData(current_data, gauss_shape_functions,
+                                       r_shape_derivatives, rCurrentProcessInfo);
 
             const double scalar_value =
                 this->EvaluateInPoint(primal_variable, gauss_shape_functions);
@@ -1691,21 +2047,20 @@ private:
 
             const double reaction =
                 this->CalculateReactionTerm(current_data, rCurrentProcessInfo);
-            this->CalculateReactionTermDerivatives(
+            this->CalculateReactionTermScalarDerivatives(
                 reaction_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
 
             const double source =
                 this->CalculateSourceTerm(current_data, rCurrentProcessInfo);
-            this->CalculateSourceTermDerivatives(source_derivatives, rDerivativeVariable,
-                                                 current_data, rCurrentProcessInfo);
+            this->CalculateSourceTermScalarDerivatives(
+                source_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
 
             double tau, element_length;
             StabilizedConvectionDiffusionReactionUtilities::CalculateStabilizationTau(
                 tau, element_length, velocity, contravariant_metric_tensor, reaction,
                 effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
             this->CalculateStabilizationTauScalarDerivatives(
-                tau_derivatives, tau, effective_kinematic_viscosity, reaction,
-                element_length, contravariant_metric_tensor,
+                tau_derivatives, tau, effective_kinematic_viscosity, reaction, element_length,
                 effective_kinematic_viscosity_derivatives, reaction_derivatives);
 
             const double s = std::abs(reaction);
@@ -1719,11 +2074,14 @@ private:
             const double velocity_magnitude_square = std::pow(velocity_magnitude, 2);
             const double scalar_gradient_norm = norm_2(scalar_gradient);
 
+            const double relaxed_scalar_rate = this->EvaluateInPoint(
+                this->GetScalarVariableRelaxedRate(), gauss_shape_functions);
+
             double chi, k1, k2, residual, positivity_preserving_coeff;
             if (scalar_gradient_norm > std::numeric_limits<double>::epsilon() &&
                 velocity_magnitude_square > std::numeric_limits<double>::epsilon())
             {
-                residual = this->CalculateRelaxedScalarRate(current_data, rCurrentProcessInfo);
+                residual = relaxed_scalar_rate;
                 residual += velocity_dot_scalar_gradient;
                 residual += reaction * scalar_value;
                 residual -= source;
@@ -1886,7 +2244,7 @@ private:
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
-        const Variable<double>& primal_variable = this->GetPrimalVariable();
+        const Variable<double>& primal_variable = this->GetScalarVariable();
 
         BoundedVector<double, TNumNodes> velocity_convective_terms, scalar_convective_terms;
 
@@ -1896,7 +2254,7 @@ private:
 
         array_1d<double, 3> scalar_gradient;
 
-        TConvectionDiffusionReactionAdjointData current_data;
+        TElementData current_data;
 
         for (unsigned int g = 0; g < num_gauss_points; g++)
         {
@@ -1911,8 +2269,8 @@ private:
                 this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
             this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
 
-            this->CalculateConvectionDiffusionReactionAdjointData(
-                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+            this->CalculateElementData(current_data, gauss_shape_functions,
+                                       r_shape_derivatives, rCurrentProcessInfo);
 
             const double scalar_value =
                 this->EvaluateInPoint(primal_variable, gauss_shape_functions);
@@ -1942,11 +2300,14 @@ private:
             const double velocity_magnitude_square = std::pow(velocity_magnitude, 2);
             const double scalar_gradient_norm = norm_2(scalar_gradient);
 
+            const double relaxed_scalar_rate = this->EvaluateInPoint(
+                this->GetScalarVariableRelaxedRate(), gauss_shape_functions);
+
             double chi, k1, k2, residual;
             if (scalar_gradient_norm > std::numeric_limits<double>::epsilon() &&
                 velocity_magnitude_square > std::numeric_limits<double>::epsilon())
             {
-                residual = this->CalculateRelaxedScalarRate(current_data, rCurrentProcessInfo);
+                residual = relaxed_scalar_rate;
                 residual += velocity_dot_scalar_gradient;
                 residual += reaction * scalar_value;
                 residual -= source;
@@ -2000,7 +2361,7 @@ private:
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
-        const Variable<double>& primal_variable = this->GetPrimalVariable();
+        const Variable<double>& primal_variable = this->GetScalarVariable();
 
         BoundedVector<double, TNumNodes> velocity_convective_terms;
 
@@ -2008,7 +2369,7 @@ private:
 
         array_1d<double, 3> variable_gradient;
 
-        TConvectionDiffusionReactionAdjointData r_current_data;
+        TElementData r_current_data;
 
         for (unsigned int g = 0; g < num_gauss_points; g++)
         {
@@ -2025,16 +2386,17 @@ private:
             this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
             const double velocity_magnitude = norm_2(velocity);
 
-            this->CalculateConvectionDiffusionReactionAdjointData(
-                r_current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+            this->CalculateElementData(r_current_data, gauss_shape_functions,
+                                       r_shape_derivatives, rCurrentProcessInfo);
 
             this->CalculateGradient(variable_gradient, primal_variable, r_shape_derivatives);
             const double variable_gradient_norm = norm_2(variable_gradient);
 
             const double effective_kinematic_viscosity =
                 this->CalculateEffectiveKinematicViscosity(r_current_data, rCurrentProcessInfo);
-            const double relaxed_variable_acceleration =
-                this->CalculateRelaxedScalarRate(r_current_data, rCurrentProcessInfo);
+
+            const double relaxed_variable_acceleration = this->EvaluateInPoint(
+                this->GetScalarVariableRelaxedRate(), gauss_shape_functions);
 
             const double reaction =
                 this->CalculateReactionTerm(r_current_data, rCurrentProcessInfo);
@@ -2138,7 +2500,7 @@ private:
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
-        TConvectionDiffusionReactionAdjointData current_data;
+        TElementData current_data;
 
         for (unsigned int g = 0; g < num_gauss_points; g++)
         {
@@ -2159,8 +2521,8 @@ private:
             BoundedVector<double, TNumNodes> velocity_convective_terms;
             this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
 
-            this->CalculateConvectionDiffusionReactionAdjointData(
-                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+            this->CalculateElementData(current_data, gauss_shape_functions,
+                                       r_shape_derivatives, rCurrentProcessInfo);
 
             const double effective_kinematic_viscosity =
                 this->CalculateEffectiveKinematicViscosity(current_data, rCurrentProcessInfo);
@@ -2209,7 +2571,7 @@ private:
 
         BoundedVector<double, TNumNodes> velocity_convective_terms;
 
-        TConvectionDiffusionReactionAdjointData current_data;
+        TElementData current_data;
 
         Vector effective_kinematic_viscosity_derivatives(TNumNodes),
             reaction_derivatives(TNumNodes), tau_derivatives(TNumNodes),
@@ -2225,8 +2587,8 @@ private:
             noalias(contravariant_metric_tensor) =
                 prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
 
-            this->CalculateConvectionDiffusionReactionAdjointData(
-                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+            this->CalculateElementData(current_data, gauss_shape_functions,
+                                       r_shape_derivatives, rCurrentProcessInfo);
 
             const array_1d<double, 3>& velocity =
                 this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
@@ -2240,19 +2602,18 @@ private:
 
             const double reaction =
                 this->CalculateReactionTerm(current_data, rCurrentProcessInfo);
-            this->CalculateReactionTermDerivatives(
+            this->CalculateReactionTermScalarDerivatives(
                 reaction_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
 
-            const double relaxed_scalar_rate =
-                this->CalculateRelaxedScalarRate(current_data, rCurrentProcessInfo);
+            const double relaxed_scalar_rate = this->EvaluateInPoint(
+                this->GetScalarVariableRelaxedRate(), gauss_shape_functions);
 
             double tau, element_length;
             StabilizedConvectionDiffusionReactionUtilities::CalculateStabilizationTau(
                 tau, element_length, velocity, contravariant_metric_tensor, reaction,
                 effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
             this->CalculateStabilizationTauScalarDerivatives(
-                tau_derivatives, tau, effective_kinematic_viscosity, reaction,
-                element_length, contravariant_metric_tensor,
+                tau_derivatives, tau, effective_kinematic_viscosity, reaction, element_length,
                 effective_kinematic_viscosity_derivatives, reaction_derivatives);
 
             const double s = std::abs(reaction);
@@ -2296,7 +2657,7 @@ private:
 
         // const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
 
-        const Variable<double>& primal_variable = this->GetPrimalVariable();
+        const Variable<double>& primal_variable = this->GetScalarVariable();
 
         Geometry<NodeType>& r_geometry = this->GetGeometry();
 
@@ -2322,7 +2683,7 @@ private:
             parameter_derivatives_shape_derivs(TDim, TDim),
             contravariant_metric_tensor_deriv(TDim, TDim);
 
-        TConvectionDiffusionReactionAdjointData current_data;
+        TElementData current_data;
 
         BoundedVector<double, TNumNodes> velocity_convective_terms,
             primal_variable_gradient_convective_terms,
@@ -2356,8 +2717,8 @@ private:
             noalias(contravariant_metric_tensor) =
                 prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
 
-            this->CalculateConvectionDiffusionReactionAdjointData(
-                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+            this->CalculateElementData(current_data, gauss_shape_functions,
+                                       r_shape_derivatives, rCurrentProcessInfo);
 
             const array_1d<double, 3>& velocity =
                 this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
@@ -2374,11 +2735,13 @@ private:
                 inner_prod(velocity, primal_variable_gradient);
             this->GetConvectionOperator(primal_variable_gradient_convective_terms,
                                         primal_variable_gradient, r_shape_derivatives);
-            const double primal_variable_relaxed_rate =
-                this->CalculateRelaxedScalarRate(current_data, rCurrentProcessInfo);
+
+            const double primal_variable_relaxed_rate = this->EvaluateInPoint(
+                this->GetScalarVariableRelaxedRate(), gauss_shape_functions);
+
             rans_variable_utils.GetNodalArray(
                 primal_variable_relaxed_rate_nodal_values, *this,
-                this->GetPrimalVariableRelaxedRate());
+                this->GetScalarVariableRelaxedRate());
 
             const double effective_kinematic_viscosity =
                 this->CalculateEffectiveKinematicViscosity(current_data, rCurrentProcessInfo);
@@ -2681,7 +3044,7 @@ private:
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
 
-        const Variable<double>& primal_variable = this->GetPrimalVariable();
+        const Variable<double>& primal_variable = this->GetScalarVariable();
 
         BoundedVector<double, TNumNodes> primal_variable_gradient_convective_terms,
             velocity_convective_terms;
@@ -2702,7 +3065,7 @@ private:
 
         array_1d<double, 3> primal_variable_gradient;
 
-        TConvectionDiffusionReactionAdjointData current_data;
+        TElementData current_data;
 
         for (unsigned int g = 0; g < num_gauss_points; g++)
         {
@@ -2713,8 +3076,8 @@ private:
             noalias(contravariant_metric_tensor) =
                 prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
 
-            this->CalculateConvectionDiffusionReactionAdjointData(
-                current_data, gauss_shape_functions, r_shape_derivatives, rCurrentProcessInfo);
+            this->CalculateElementData(current_data, gauss_shape_functions,
+                                       r_shape_derivatives, rCurrentProcessInfo);
 
             const double primal_variable_value =
                 this->EvaluateInPoint(primal_variable, gauss_shape_functions);
@@ -2770,8 +3133,8 @@ private:
 
             double chi, k1, k2;
 
-            const double primal_variable_relaxed_rate =
-                this->CalculateRelaxedScalarRate(current_data, rCurrentProcessInfo);
+            const double primal_variable_relaxed_rate = this->EvaluateInPoint(
+                this->GetScalarVariableRelaxedRate(), gauss_shape_functions);
 
             double residual = primal_variable_relaxed_rate;
             residual += velocity_dot_primal_variable_gradient;
@@ -3017,16 +3380,16 @@ private:
 ///@{
 
 /// input stream function
-template <unsigned int TDim, unsigned int TNumNodes, class TConvectionDiffusionReactionAdjointData>
+template <unsigned int TDim, unsigned int TNumNodes, class TElementData>
 inline std::istream& operator>>(
     std::istream& rIStream,
-    StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, TConvectionDiffusionReactionAdjointData>& rThis);
+    StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, TElementData>& rThis);
 
 /// output stream function
-template <unsigned int TDim, unsigned int TNumNodes, class TConvectionDiffusionReactionAdjointData>
+template <unsigned int TDim, unsigned int TNumNodes, class TElementData>
 inline std::ostream& operator<<(
     std::ostream& rOStream,
-    const StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, TConvectionDiffusionReactionAdjointData>& rThis)
+    const StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, TElementData>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << " : " << std::endl;

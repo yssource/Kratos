@@ -689,6 +689,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKElementTKESecondDerivativeLHSMatrix,
     auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
                                            ProcessInfo& rProcessInfo) {
         rElement.CalculateSecondDerivativesLHS(rOutput, rProcessInfo);
+        const double bossak_alpha = rProcessInfo[BOSSAK_ALPHA];
+        noalias(rOutput) = rOutput * (1.0 - bossak_alpha);
     };
 
     RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(
@@ -891,6 +893,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonElementEpsilonSecondDerivativeLHSMatrix,
     auto calculate_sensitivity_matrix = [](Matrix& rOutput, Element& rElement,
                                            ProcessInfo& rProcessInfo) {
         rElement.CalculateSecondDerivativesLHS(rOutput, rProcessInfo);
+        const double bossak_alpha = rProcessInfo[BOSSAK_ALPHA];
+        noalias(rOutput) = rOutput * (1.0 - bossak_alpha);
     };
 
     RansModellingApplicationTestUtilities::RunElementResidualScalarSensitivityTest(

@@ -467,8 +467,6 @@ public:
     {
         KRATOS_TRY
 
-        const double inv_one_minus_bossak_alpha = 1.0 / (1.0 - rCurrentProcessInfo[BOSSAK_ALPHA]);
-
         AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
         AdjointKElement k_element(this->Id(), this->pGetGeometry());
         AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
@@ -494,14 +492,12 @@ public:
         j_offset += local_matrix.size2();
 
         k_element.CalculateSecondDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        noalias(local_matrix) = local_matrix * inv_one_minus_bossak_alpha;
         rans_calculation_utilities.PlaceInGlobalMatrix(
             rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
         i_offset += local_matrix.size1();
         j_offset += local_matrix.size2();
 
         epsilon_element.CalculateSecondDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        noalias(local_matrix) = local_matrix * inv_one_minus_bossak_alpha;
         rans_calculation_utilities.PlaceInGlobalMatrix(
             rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
 

@@ -457,10 +457,8 @@ public:
 
         rLeftHandSideMatrix.clear();
 
-        const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
-
         AddPrimalMassMatrix(rLeftHandSideMatrix, rCurrentProcessInfo);
-        noalias(rLeftHandSideMatrix) = rLeftHandSideMatrix * ((bossak_alpha - 1.0));
+        noalias(rLeftHandSideMatrix) = rLeftHandSideMatrix * (-1.0);
         AddPrimalSteadyTermScalarRateDerivatives(rLeftHandSideMatrix, rCurrentProcessInfo);
     }
 
@@ -1747,16 +1745,18 @@ private:
                 scalar_gradient_norm_derivative, scalar_gradient, r_shape_derivatives);
 
             this->CalculateResidualScalarDerivative(
-                residual_derivatives, scalar_value, reaction, velocity, reaction_derivatives,
-                source_derivatives, gauss_shape_functions, r_shape_derivatives, rDerivativeVariable);
+                residual_derivatives, scalar_value, reaction, velocity,
+                reaction_derivatives, source_derivatives, gauss_shape_functions,
+                r_shape_derivatives, rDerivativeVariable);
 
             this->CalculateAbsoluteScalarValueScalarDerivatives(
                 absolute_residual_derivatives, residual, residual_derivatives);
 
             this->CalculatePositivityPreservationCoefficientScalarDerivatives(
                 positivity_preserving_coeff_derivatives, chi, residual,
-                scalar_gradient_norm, velocity_magnitude_square, chi_derivatives,
-                absolute_residual_derivatives, scalar_gradient_norm_derivative, rDerivativeVariable);
+                scalar_gradient_norm, velocity_magnitude_square,
+                chi_derivatives, absolute_residual_derivatives,
+                scalar_gradient_norm_derivative, rDerivativeVariable);
 
             const double reaction_tilde =
                 reaction + (1 - bossak_alpha) / (bossak_gamma * delta_time);
@@ -1957,9 +1957,8 @@ private:
             }
 
             noalias(positivity_preserving_coeff_derivatives) =
-                gauss_shape_functions *
-                ((1 - bossak_alpha) * (residual / std::abs(residual)) * chi /
-                 (scalar_gradient_norm * velocity_magnitude_square));
+                gauss_shape_functions * ((residual / std::abs(residual)) * chi /
+                                         (scalar_gradient_norm * velocity_magnitude_square));
 
             // calculating primal damping matrix scalar derivatives
             for (unsigned int a = 0; a < TNumNodes; ++a)

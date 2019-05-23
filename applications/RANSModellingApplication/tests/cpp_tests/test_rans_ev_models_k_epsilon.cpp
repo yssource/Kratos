@@ -1929,5 +1929,146 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementSecondDeriva
         RansEvmKEpsilonModel::UpdateVariablesInModelPart,
         calculate_sensitivity_matrix_epsilon, perturb_variable_epsilon, delta, tolerance);
 }
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementShapeSensitivityVMS,
+                          RANSEvModelsKEpsilonElementResidualMatrices)
+{
+    Model primal_model;
+    ModelPart& r_primal_model_part =
+        primal_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_primal_model_part, "VMS2D3N");
+
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMMonolithicKEpsilonVMSAdjoint2D3N");
+
+    Parameters empty_parameters = Parameters(R"({})");
+
+    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_sensitivities_process(
+        r_adjoint_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess adjoint_y_plus_process(
+        r_adjoint_model_part, empty_parameters);
+
+    RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
+
+    auto perturb_variable = [](NodeType& rNode, const int Dim) -> double& {
+        array_1d<double, 3>& r_coordinates = rNode.Coordinates();
+        return r_coordinates[Dim];
+    };
+
+    auto calculate_sensitivity_matrix_velocity_pressure =
+        [](Matrix& rOutput, Element& rElement, ProcessInfo& rProcessInfo) {
+            Matrix global_output;
+            rElement.CalculateSensitivityMatrix(SHAPE_SENSITIVITY, global_output, rProcessInfo);
+            RansCalculationUtilities rans_calculation_utilities;
+            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 0, 0, 6, 9);
+        };
+
+    const double delta = 1e-5;
+    const double tolerance = 1e-3;
+
+    RansModellingApplicationTestUtilities::RunElementResidualVectorSensitivityTest(
+        r_primal_model_part, r_adjoint_model_part, primal_y_plus_process,
+        adjoint_y_plus_process, y_plus_sensitivities_process,
+        RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        calculate_sensitivity_matrix_velocity_pressure, perturb_variable, delta, tolerance);
+}
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementShapeSensitiviyK,
+                          RANSEvModelsKEpsilonElementResidualMatrices)
+{
+    Model primal_model;
+    ModelPart& r_primal_model_part =
+        primal_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_primal_model_part, "RANSEVMK2D3N");
+
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMMonolithicKEpsilonVMSAdjoint2D3N");
+
+    Parameters empty_parameters = Parameters(R"({})");
+
+    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_sensitivities_process(
+        r_adjoint_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess adjoint_y_plus_process(
+        r_adjoint_model_part, empty_parameters);
+
+    RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
+
+    auto perturb_variable = [](NodeType& rNode, const int Dim) -> double& {
+        array_1d<double, 3>& r_coordinates = rNode.Coordinates();
+        return r_coordinates[Dim];
+    };
+
+    auto calculate_sensitivity_matrix_tke = [](Matrix& rOutput, Element& rElement,
+                                               ProcessInfo& rProcessInfo) {
+        Matrix global_output;
+        rElement.CalculateSensitivityMatrix(SHAPE_SENSITIVITY, global_output, rProcessInfo);
+        RansCalculationUtilities rans_calculation_utilities;
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 0, 9, 6, 3);
+    };
+
+    const double delta = 1e-5;
+    const double tolerance = 1e-3;
+
+    RansModellingApplicationTestUtilities::RunElementResidualVectorSensitivityTest(
+        r_primal_model_part, r_adjoint_model_part, primal_y_plus_process,
+        adjoint_y_plus_process, y_plus_sensitivities_process,
+        RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        calculate_sensitivity_matrix_tke, perturb_variable, delta, tolerance);
+}
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementShapeSensitivityEpsilon,
+                          RANSEvModelsKEpsilonElementResidualMatrices)
+{
+    Model primal_model;
+    ModelPart& r_primal_model_part =
+        primal_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_primal_model_part, "RANSEVMEPSILON2D3N");
+
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMMonolithicKEpsilonVMSAdjoint2D3N");
+
+    Parameters empty_parameters = Parameters(R"({})");
+
+    RansLogarithmicYPlusModelSensitivitiesProcess y_plus_sensitivities_process(
+        r_adjoint_model_part, empty_parameters);
+    RansLogarithmicYPlusModelProcess adjoint_y_plus_process(
+        r_adjoint_model_part, empty_parameters);
+
+    RansLogarithmicYPlusModelProcess primal_y_plus_process(r_primal_model_part, empty_parameters);
+
+    auto perturb_variable = [](NodeType& rNode, const int Dim) -> double& {
+        array_1d<double, 3>& r_coordinates = rNode.Coordinates();
+        return r_coordinates[Dim];
+    };
+
+    auto calculate_sensitivity_matrix_epsilon = [](Matrix& rOutput, Element& rElement,
+                                                   ProcessInfo& rProcessInfo) {
+        Matrix global_output;
+        rElement.CalculateSensitivityMatrix(SHAPE_SENSITIVITY, global_output, rProcessInfo);
+        RansCalculationUtilities rans_calculation_utilities;
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 0, 12, 6, 3);
+    };
+
+    const double delta = 1e-5;
+    const double tolerance = 1e-3;
+
+    RansModellingApplicationTestUtilities::RunElementResidualVectorSensitivityTest(
+        r_primal_model_part, r_adjoint_model_part, primal_y_plus_process,
+        adjoint_y_plus_process, y_plus_sensitivities_process,
+        RansEvmKEpsilonModel::UpdateVariablesInModelPart,
+        calculate_sensitivity_matrix_epsilon, perturb_variable, delta, tolerance);
+}
 } // namespace Testing
 } // namespace Kratos.

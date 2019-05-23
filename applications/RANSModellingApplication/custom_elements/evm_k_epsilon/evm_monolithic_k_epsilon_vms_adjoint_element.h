@@ -352,8 +352,8 @@ public:
     {
         KRATOS_TRY
 
-        KRATOS_THROW_ERROR(std::runtime_error,
-                           "this function is not implemented.", "")
+        KRATOS_ERROR << "EvmMonolithicKEpsilonVMSAdjointElement::"
+                        "CalculateLocalSystem method is not implemented.";
 
         KRATOS_CATCH("");
     }
@@ -373,8 +373,8 @@ public:
     {
         KRATOS_TRY
 
-        KRATOS_THROW_ERROR(std::runtime_error,
-                           "this function is not implemented.", "")
+        KRATOS_ERROR << "EvmMonolithicKEpsilonVMSAdjointElement::"
+                        "CalculateRightHandSide method is not implemented.";
 
         KRATOS_CATCH("");
     }
@@ -499,6 +499,75 @@ public:
             rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
 
         KRATOS_CATCH("");
+    }
+
+    void CalculateMassMatrix(MatrixType& rMassMatrix, ProcessInfo& /*rCurrentProcessInfo*/) override
+    {
+        KRATOS_TRY
+
+        KRATOS_ERROR << "EvmMonolithicKEpsilonVMSAdjointElement::"
+                        "CalculateMassMatrix method is not implemented.";
+
+        KRATOS_CATCH("")
+    }
+
+    void CalculateDampingMatrix(MatrixType& rDampingMatrix,
+                                ProcessInfo& /*rCurrentProcessInfo*/) override
+    {
+        KRATOS_TRY
+
+        KRATOS_ERROR << "EvmMonolithicKEpsilonVMSAdjointElement::"
+                        "CalculateDampingMatrix method is not implemented.";
+
+        KRATOS_CATCH("")
+    }
+
+    void CalculateSensitivityMatrix(const Variable<array_1d<double, 3>>& rSensitivityVariable,
+                                    Matrix& rOutput,
+                                    const ProcessInfo& rCurrentProcessInfo) override
+    {
+        KRATOS_TRY
+
+        if (rSensitivityVariable == SHAPE_SENSITIVITY)
+        {
+            if (rOutput.size1() != TElementLocalSize || rOutput.size2() != TElementLocalSize)
+                rOutput.resize(TCoordLocalSize, TElementLocalSize, false);
+
+            rOutput.clear();
+
+            AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
+            AdjointKElement k_element(this->Id(), this->pGetGeometry());
+            AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
+
+            fluid_element.SetData(this->Data());
+            k_element.SetData(this->Data());
+            epsilon_element.SetData(this->Data());
+
+            IndexType j_offset{0};
+            Matrix local_matrix;
+            RansCalculationUtilities rans_calculation_utilities;
+
+            fluid_element.CalculateSensitivityMatrix(
+                rSensitivityVariable, local_matrix, rCurrentProcessInfo);
+            rans_calculation_utilities.PlaceInGlobalMatrix(rOutput, local_matrix, 0, j_offset);
+            j_offset += local_matrix.size2();
+
+            k_element.CalculateSensitivityMatrix(
+                rSensitivityVariable, local_matrix, rCurrentProcessInfo);
+            rans_calculation_utilities.PlaceInGlobalMatrix(rOutput, local_matrix, 0, j_offset);
+            j_offset += local_matrix.size2();
+
+            epsilon_element.CalculateSensitivityMatrix(
+                rSensitivityVariable, local_matrix, rCurrentProcessInfo);
+            rans_calculation_utilities.PlaceInGlobalMatrix(rOutput, local_matrix, 0, j_offset);
+        }
+        else
+        {
+            KRATOS_ERROR << "Sensitivity variable " << rSensitivityVariable
+                         << " not supported." << std::endl;
+        }
+
+        KRATOS_CATCH("")
     }
 
     ///@}

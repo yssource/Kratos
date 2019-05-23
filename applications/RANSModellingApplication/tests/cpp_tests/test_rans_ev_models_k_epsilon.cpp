@@ -76,6 +76,8 @@ void AddVariablesToModelPart(ModelPart& rModelPart)
     rModelPart.AddNodalSolutionStepVariable(TURBULENT_ENERGY_DISSIPATION_RATE_2);
     rModelPart.AddNodalSolutionStepVariable(RANS_ADJOINT_SCALAR_1);
     rModelPart.AddNodalSolutionStepVariable(RANS_ADJOINT_SCALAR_2);
+    rModelPart.AddNodalSolutionStepVariable(RANS_ADJOINT_SCALAR_RATE_1);
+    rModelPart.AddNodalSolutionStepVariable(RANS_ADJOINT_SCALAR_RATE_2);
     rModelPart.AddNodalSolutionStepVariable(ADJOINT_FLUID_VECTOR_1);
     rModelPart.AddNodalSolutionStepVariable(ADJOINT_FLUID_VECTOR_2);
     rModelPart.AddNodalSolutionStepVariable(ADJOINT_FLUID_VECTOR_3);

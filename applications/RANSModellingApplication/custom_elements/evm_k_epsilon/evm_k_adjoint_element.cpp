@@ -216,19 +216,40 @@ void EvmKAdjointElement<TDim, TNumNodes>::GetDofList(DofsVectorType& rElementalD
 template <unsigned int TDim, unsigned int TNumNodes>
 void EvmKAdjointElement<TDim, TNumNodes>::GetValuesVector(VectorType& rValues, int Step)
 {
-    // TODO:
+    if (rValues.size() != TNumNodes)
+        rValues.resize(TNumNodes, false);
+
+    const GeometryType& r_geometry = this->GetGeometry();
+    for (unsigned int i = 0; i < TNumNodes; i++)
+    {
+        const double r_value =
+            r_geometry[i].FastGetSolutionStepValue(RANS_ADJOINT_SCALAR_1, Step);
+        rValues[i] = r_value;
+    }
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void EvmKAdjointElement<TDim, TNumNodes>::GetFirstDerivativesVector(VectorType& rValues, int Step)
 {
-    // TODO:
+    if (rValues.size() != TNumNodes)
+        rValues.resize(TNumNodes, false);
+
+    rValues.clear();
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void EvmKAdjointElement<TDim, TNumNodes>::GetSecondDerivativesVector(VectorType& rValues, int Step)
 {
-    // TODO:
+    if (rValues.size() != TNumNodes)
+        rValues.resize(TNumNodes, false);
+
+    const GeometryType& r_geometry = this->GetGeometry();
+    for (unsigned int i = 0; i < TNumNodes; i++)
+    {
+        const double r_value =
+            r_geometry[i].FastGetSolutionStepValue(RANS_ADJOINT_SCALAR_RATE_1, Step);
+        rValues[i] = r_value;
+    }
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
@@ -267,6 +288,7 @@ int EvmKAdjointElement<TDim, TNumNodes>::Check(const ProcessInfo& rCurrentProces
     KRATOS_CHECK_VARIABLE_KEY(RANS_TURBULENT_ENERGY_DISSIPATION_RATE_PARTIAL_DERIVATIVE);
     KRATOS_CHECK_VARIABLE_KEY(RANS_Y_PLUS_VELOCITY_DERIVATIVES);
     KRATOS_CHECK_VARIABLE_KEY(RANS_ADJOINT_SCALAR_1);
+    KRATOS_CHECK_VARIABLE_KEY(RANS_ADJOINT_SCALAR_RATE_1);
 
     KRATOS_ERROR_IF(this->Id() < 1) << "EvmKAdjointElement"
                                        "found with Id 0 "
@@ -289,6 +311,7 @@ int EvmKAdjointElement<TDim, TNumNodes>::Check(const ProcessInfo& rCurrentProces
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(VELOCITY, r_node);
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_AUXILIARY_VARIABLE_1, r_node);
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_ADJOINT_SCALAR_1, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_ADJOINT_SCALAR_RATE_1, r_node);
 
         KRATOS_CHECK_DOF_IN_NODE(RANS_ADJOINT_SCALAR_1, r_node);
     }

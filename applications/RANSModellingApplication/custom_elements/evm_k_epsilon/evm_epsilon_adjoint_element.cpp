@@ -214,21 +214,42 @@ void EvmEpsilonAdjointElement<TDim, TNumNodes>::GetDofList(DofsVectorType& rElem
 template <unsigned int TDim, unsigned int TNumNodes>
 void EvmEpsilonAdjointElement<TDim, TNumNodes>::GetValuesVector(VectorType& rValues, int Step)
 {
-    // TODO:
+    if (rValues.size() != TNumNodes)
+        rValues.resize(TNumNodes, false);
+
+    const GeometryType& r_geometry = this->GetGeometry();
+    for (unsigned int i = 0; i < TNumNodes; i++)
+    {
+        const double r_value =
+            r_geometry[i].FastGetSolutionStepValue(RANS_ADJOINT_SCALAR_2, Step);
+        rValues[i] = r_value;
+    }
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void EvmEpsilonAdjointElement<TDim, TNumNodes>::GetFirstDerivativesVector(VectorType& rValues,
                                                                           int Step)
 {
-    // TODO:
+    if (rValues.size() != TNumNodes)
+        rValues.resize(TNumNodes, false);
+
+    rValues.clear();
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void EvmEpsilonAdjointElement<TDim, TNumNodes>::GetSecondDerivativesVector(VectorType& rValues,
                                                                            int Step)
 {
-    // TODO:
+    if (rValues.size() != TNumNodes)
+        rValues.resize(TNumNodes, false);
+
+    const GeometryType& r_geometry = this->GetGeometry();
+    for (unsigned int i = 0; i < TNumNodes; i++)
+    {
+        const double r_value =
+            r_geometry[i].FastGetSolutionStepValue(RANS_ADJOINT_SCALAR_RATE_2, Step);
+        rValues[i] = r_value;
+    }
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
@@ -268,6 +289,8 @@ int EvmEpsilonAdjointElement<TDim, TNumNodes>::Check(const ProcessInfo& rCurrent
     KRATOS_CHECK_VARIABLE_KEY(RANS_TURBULENT_KINETIC_ENERGY_PARTIAL_DERIVATIVE);
     KRATOS_CHECK_VARIABLE_KEY(RANS_Y_PLUS_VELOCITY_DERIVATIVES);
     KRATOS_CHECK_VARIABLE_KEY(VELOCITY);
+    KRATOS_CHECK_VARIABLE_KEY(RANS_ADJOINT_SCALAR_2);
+    KRATOS_CHECK_VARIABLE_KEY(RANS_ADJOINT_SCALAR_RATE_2);
 
     for (IndexType iNode = 0; iNode < this->GetGeometry().size(); ++iNode)
     {
@@ -281,6 +304,7 @@ int EvmEpsilonAdjointElement<TDim, TNumNodes>::Check(const ProcessInfo& rCurrent
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(VELOCITY, r_node);
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_AUXILIARY_VARIABLE_2, r_node);
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_ADJOINT_SCALAR_2, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_ADJOINT_SCALAR_RATE_2, r_node);
 
         KRATOS_CHECK_DOF_IN_NODE(RANS_ADJOINT_SCALAR_2, r_node);
     }

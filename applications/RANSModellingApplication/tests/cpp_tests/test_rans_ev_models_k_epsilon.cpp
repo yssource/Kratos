@@ -1977,7 +1977,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementShapeSensiti
         calculate_sensitivity_matrix_velocity_pressure, perturb_variable, delta, tolerance);
 }
 
-KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementShapeSensitiviyK,
+KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementShapeSensitivityK,
                           RANSEvModelsKEpsilonElementResidualMatrices)
 {
     Model primal_model;

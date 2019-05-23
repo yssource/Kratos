@@ -260,93 +260,90 @@ public:
     /// Returns the adjoint values stored in this element's nodes.
     void GetValuesVector(VectorType& rValues, int Step = 0) override
     {
-        // AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
-        // AdjointKElement k_element(this->Id(), this->pGetGeometry());
-        // AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
+        if (rValues.size() != TElementLocalSize)
+            rValues.resize(TElementLocalSize, false);
 
-        // VectorType fluid_values;
-        // fluid_element.GetValuesVector(fluid_values, Step);
+        AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
+        AdjointKElement k_element(this->Id(), this->pGetGeometry());
+        AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
 
-        // VectorType k_values;
-        // k_element.GetValuesVector(k_values, Step);
+        fluid_element.SetData(this->Data());
+        k_element.SetData(this->Data());
+        epsilon_element.SetData(this->Data());
 
-        // VectorType epsilon_values;
-        // epsilon_element.GetValuesVector(epsilon_values, Step);
+        IndexType i_offset{0};
+        RansCalculationUtilities rans_calculation_utilities;
+        Vector local_vector;
 
-        // const int total_values_size =
-        //     fluid_element.size() + k_element.size() + epsilon_element.size();
+        fluid_element.GetValuesVector(local_vector, Step);
+        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
+        i_offset += local_vector.size();
 
-        // if (rValues.size() != total_values_size)
-        //     rValue.resize(total_values_size, false);
+        k_element.GetValuesVector(local_vector, Step);
+        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
+        i_offset += local_vector.size();
 
-        // IndexType current_index{0};
-        // for (IndexType i = 0; i < fluid_element.size(); ++i)
-        //     rValue[current_index++] = fluid_element[i];
-        // for (IndexType i = 0; i < k_element.size(); ++i)
-        //     rValue[current_index++] = k_element[i];
-        // for (IndexType i = 0; i < epsilon_element.size(); ++i)
-        //     rValue[current_index++] = epsilon_element[i];
+        epsilon_element.GetValuesVector(local_vector, Step);
+        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
     }
 
     /// Returns the adjoint velocity values stored in this element's nodes.
     void GetFirstDerivativesVector(VectorType& rValues, int Step = 0) override
     {
-        // AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
-        // AdjointKElement k_element(this->Id(), this->pGetGeometry());
-        // AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
+        if (rValues.size() != TElementLocalSize)
+            rValues.resize(TElementLocalSize, false);
 
-        // VectorType fluid_values;
-        // fluid_element.GetFirstDerivativesVector(fluid_values, Step);
+        AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
+        AdjointKElement k_element(this->Id(), this->pGetGeometry());
+        AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
 
-        // VectorType k_values;
-        // k_element.GetFirstDerivativesVector(k_values, Step);
+        fluid_element.SetData(this->Data());
+        k_element.SetData(this->Data());
+        epsilon_element.SetData(this->Data());
 
-        // VectorType epsilon_values;
-        // epsilon_element.GetFirstDerivativesVector(epsilon_values, Step);
+        IndexType i_offset{0};
+        RansCalculationUtilities rans_calculation_utilities;
+        Vector local_vector;
 
-        // const int total_values_size =
-        //     fluid_element.size() + k_element.size() + epsilon_element.size();
+        fluid_element.GetFirstDerivativesVector(local_vector, Step);
+        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
+        i_offset += local_vector.size();
 
-        // if (rValues.size() != total_values_size)
-        //     rValue.resize(total_values_size, false);
+        k_element.GetFirstDerivativesVector(local_vector, Step);
+        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
+        i_offset += local_vector.size();
 
-        // IndexType current_index{0};
-        // for (IndexType i = 0; i < fluid_element.size(); ++i)
-        //     rValue[current_index++] = fluid_element[i];
-        // for (IndexType i = 0; i < k_element.size(); ++i)
-        //     rValue[current_index++] = k_element[i];
-        // for (IndexType i = 0; i < epsilon_element.size(); ++i)
-        //     rValue[current_index++] = epsilon_element[i];
+        epsilon_element.GetFirstDerivativesVector(local_vector, Step);
+        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
     }
 
     void GetSecondDerivativesVector(VectorType& rValues, int Step) override
     {
-        // AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
-        // AdjointKElement k_element(this->Id(), this->pGetGeometry());
-        // AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
+        if (rValues.size() != TElementLocalSize)
+            rValues.resize(TElementLocalSize, false);
 
-        // VectorType fluid_values;
-        // fluid_element.GetSecondDerivativesVector(fluid_values, Step);
+        AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
+        AdjointKElement k_element(this->Id(), this->pGetGeometry());
+        AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
 
-        // VectorType k_values;
-        // k_element.GetSecondDerivativesVector(k_values, Step);
+        fluid_element.SetData(this->Data());
+        k_element.SetData(this->Data());
+        epsilon_element.SetData(this->Data());
 
-        // VectorType epsilon_values;
-        // epsilon_element.GetSecondDerivativesVector(epsilon_values, Step);
+        IndexType i_offset{0};
+        RansCalculationUtilities rans_calculation_utilities;
+        Vector local_vector;
 
-        // const int total_values_size =
-        //     fluid_element.size() + k_element.size() + epsilon_element.size();
+        fluid_element.GetSecondDerivativesVector(local_vector, Step);
+        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
+        i_offset += local_vector.size();
 
-        // if (rValues.size() != total_values_size)
-        //     rValue.resize(total_values_size, false);
+        k_element.GetSecondDerivativesVector(local_vector, Step);
+        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
+        i_offset += local_vector.size();
 
-        // IndexType current_index{0};
-        // for (IndexType i = 0; i < fluid_element.size(); ++i)
-        //     rValue[current_index++] = fluid_element[i];
-        // for (IndexType i = 0; i < k_element.size(); ++i)
-        //     rValue[current_index++] = k_element[i];
-        // for (IndexType i = 0; i < epsilon_element.size(); ++i)
-        //     rValue[current_index++] = epsilon_element[i];
+        epsilon_element.GetSecondDerivativesVector(local_vector, Step);
+        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
     }
 
     void CalculateLocalSystem(MatrixType& rLeftHandSideMatrix,

@@ -4,11 +4,11 @@
 
 /* Project includes */
 #include "DEM_continuum_constitutive_law.h"
-#include "DEM_KDEM_CL.h"
+#include "DEM_KDEM_Cable_CL.h"
 
 namespace Kratos {
 
-    class KRATOS_API(DEM_APPLICATION) DEM_KDEM_Beam : public DEM_KDEM {
+    class KRATOS_API(DEM_APPLICATION) DEM_KDEM_Beam : public DEM_KDEM_Cable {
     public:
 
         KRATOS_CLASS_POINTER_DEFINITION(DEM_KDEM_Beam);

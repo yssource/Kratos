@@ -26,6 +26,24 @@ namespace Kratos {
 
         void GetContactArea(const double radius, const double other_radius, const Vector& vector_of_initial_areas, const int neighbour_position, double& calculation_area) override;
 
+        void CalculateViscoDampingCoeff(double &equiv_visco_damp_coeff_normal,
+                                        double &equiv_visco_damp_coeff_tangential,
+                                        SphericContinuumParticle* element1,
+                                        SphericContinuumParticle* element2,
+                                        const double kn_el,
+                                        const double kt_el) override;
+
+        virtual void ComputeParticleRotationalMoments(SphericContinuumParticle* element,
+                                                      SphericContinuumParticle* neighbor,
+                                                      double equiv_young,
+                                                      double distance,
+                                                      double calculation_area,
+                                                      double LocalCoordSystem[3][3],
+                                                      double ElasticLocalRotationalMoment[3],
+                                                      double ViscoLocalRotationalMoment[3],
+                                                      double equiv_poisson,
+                                                      double indentation) override;
+
     private:
 
         friend class Serializer;

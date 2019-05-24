@@ -69,15 +69,15 @@ struct EvmEpsilonAdjointElementData
     Matrix NodalVelocity;
 };
 
-template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyElementBlockSize = 1>
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize = 1>
 class EvmEpsilonAdjointElement
-    : public StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmEpsilonAdjointElementData, TMonolithicAssemblyElementBlockSize>
+    : public StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmEpsilonAdjointElementData, TMonolithicAssemblyNodalDofSize>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    typedef StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmEpsilonAdjointElementData, TMonolithicAssemblyElementBlockSize> BaseType;
+    typedef StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmEpsilonAdjointElementData, TMonolithicAssemblyNodalDofSize> BaseType;
 
     /// Node type (default is: Node<3>)
     typedef Node<3> NodeType;

@@ -263,28 +263,28 @@ public:
         if (rValues.size() != TElementLocalSize)
             rValues.resize(TElementLocalSize, false);
 
-        AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
-        AdjointKElement k_element(this->Id(), this->pGetGeometry());
-        AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
+        // AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
+        // AdjointKElement k_element(this->Id(), this->pGetGeometry());
+        // AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
 
-        fluid_element.SetData(this->Data());
-        k_element.SetData(this->Data());
-        epsilon_element.SetData(this->Data());
+        // fluid_element.SetData(this->Data());
+        // k_element.SetData(this->Data());
+        // epsilon_element.SetData(this->Data());
 
-        IndexType i_offset{0};
-        RansCalculationUtilities rans_calculation_utilities;
-        Vector local_vector;
+        // IndexType i_offset{0};
+        // RansCalculationUtilities rans_calculation_utilities;
+        // Vector local_vector;
 
-        fluid_element.GetValuesVector(local_vector, Step);
-        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
-        i_offset += local_vector.size();
+        // fluid_element.GetValuesVector(local_vector, Step);
+        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector,
+        // i_offset); i_offset += local_vector.size();
 
-        k_element.GetValuesVector(local_vector, Step);
-        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
-        i_offset += local_vector.size();
+        // k_element.GetValuesVector(local_vector, Step);
+        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector,
+        // i_offset); i_offset += local_vector.size();
 
-        epsilon_element.GetValuesVector(local_vector, Step);
-        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
+        // epsilon_element.GetValuesVector(local_vector, Step);
+        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
     }
 
     /// Returns the adjoint velocity values stored in this element's nodes.
@@ -293,28 +293,28 @@ public:
         if (rValues.size() != TElementLocalSize)
             rValues.resize(TElementLocalSize, false);
 
-        AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
-        AdjointKElement k_element(this->Id(), this->pGetGeometry());
-        AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
+        // AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
+        // AdjointKElement k_element(this->Id(), this->pGetGeometry());
+        // AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
 
-        fluid_element.SetData(this->Data());
-        k_element.SetData(this->Data());
-        epsilon_element.SetData(this->Data());
+        // fluid_element.SetData(this->Data());
+        // k_element.SetData(this->Data());
+        // epsilon_element.SetData(this->Data());
 
-        IndexType i_offset{0};
-        RansCalculationUtilities rans_calculation_utilities;
-        Vector local_vector;
+        // IndexType i_offset{0};
+        // RansCalculationUtilities rans_calculation_utilities;
+        // Vector local_vector;
 
-        fluid_element.GetFirstDerivativesVector(local_vector, Step);
-        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
-        i_offset += local_vector.size();
+        // fluid_element.GetFirstDerivativesVector(local_vector, Step);
+        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector,
+        // i_offset); i_offset += local_vector.size();
 
-        k_element.GetFirstDerivativesVector(local_vector, Step);
-        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
-        i_offset += local_vector.size();
+        // k_element.GetFirstDerivativesVector(local_vector, Step);
+        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector,
+        // i_offset); i_offset += local_vector.size();
 
-        epsilon_element.GetFirstDerivativesVector(local_vector, Step);
-        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
+        // epsilon_element.GetFirstDerivativesVector(local_vector, Step);
+        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
     }
 
     void GetSecondDerivativesVector(VectorType& rValues, int Step) override
@@ -322,28 +322,28 @@ public:
         if (rValues.size() != TElementLocalSize)
             rValues.resize(TElementLocalSize, false);
 
-        AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
-        AdjointKElement k_element(this->Id(), this->pGetGeometry());
-        AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
+        // AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
+        // AdjointKElement k_element(this->Id(), this->pGetGeometry());
+        // AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
 
-        fluid_element.SetData(this->Data());
-        k_element.SetData(this->Data());
-        epsilon_element.SetData(this->Data());
+        // fluid_element.SetData(this->Data());
+        // k_element.SetData(this->Data());
+        // epsilon_element.SetData(this->Data());
 
-        IndexType i_offset{0};
-        RansCalculationUtilities rans_calculation_utilities;
-        Vector local_vector;
+        // IndexType i_offset{0};
+        // RansCalculationUtilities rans_calculation_utilities;
+        // Vector local_vector;
 
-        fluid_element.GetSecondDerivativesVector(local_vector, Step);
-        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
-        i_offset += local_vector.size();
+        // fluid_element.GetSecondDerivativesVector(local_vector, Step);
+        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector,
+        // i_offset); i_offset += local_vector.size();
 
-        k_element.GetSecondDerivativesVector(local_vector, Step);
-        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
-        i_offset += local_vector.size();
+        // k_element.GetSecondDerivativesVector(local_vector, Step);
+        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector,
+        // i_offset); i_offset += local_vector.size();
 
-        epsilon_element.GetSecondDerivativesVector(local_vector, Step);
-        rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
+        // epsilon_element.GetSecondDerivativesVector(local_vector, Step);
+        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
     }
 
     void CalculateLocalSystem(MatrixType& rLeftHandSideMatrix,
@@ -398,63 +398,50 @@ public:
 
         rLeftHandSideMatrix.clear();
 
-        IndexType i_offset{0}, j_offset{0};
         Matrix local_matrix;
         RansCalculationUtilities rans_calculation_utilities;
 
         fluid_element.CalculateFirstDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.PlaceInGlobalMatrix(
-            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
-        i_offset += local_matrix.size1();
+        rans_calculation_utilities.AssembleElementMatrix(
+            rLeftHandSideMatrix, local_matrix, TNumNodes, 0, 0);
 
         fluid_element.Calculate(RANS_TURBULENT_KINETIC_ENERGY_PARTIAL_DERIVATIVE,
                                 local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.PlaceInGlobalMatrix(
-            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
-        i_offset += local_matrix.size1();
+        rans_calculation_utilities.AssembleElementMatrix(
+            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 1, 0);
 
         fluid_element.Calculate(RANS_TURBULENT_ENERGY_DISSIPATION_RATE_PARTIAL_DERIVATIVE,
                                 local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.PlaceInGlobalMatrix(
-            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
-
-        i_offset = 0;
-        j_offset += local_matrix.size2();
+        rans_calculation_utilities.AssembleElementMatrix(
+            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 2, 0);
 
         k_element.Calculate(RANS_VELOCITY_PRESSURE_PARTIAL_DERIVATIVE,
                             local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.PlaceInGlobalMatrix(
-            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
-        i_offset += local_matrix.size1();
+        rans_calculation_utilities.AssembleElementMatrix(
+            rLeftHandSideMatrix, local_matrix, TNumNodes, 0, TDim + 1);
 
         k_element.CalculateFirstDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.PlaceInGlobalMatrix(
-            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
-        i_offset += local_matrix.size1();
+        rans_calculation_utilities.AssembleElementMatrix(
+            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 1, TDim + 1);
 
         k_element.Calculate(RANS_TURBULENT_ENERGY_DISSIPATION_RATE_PARTIAL_DERIVATIVE,
                             local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.PlaceInGlobalMatrix(
-            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
-
-        i_offset = 0;
-        j_offset += local_matrix.size2();
+        rans_calculation_utilities.AssembleElementMatrix(
+            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 2, TDim + 1);
 
         epsilon_element.Calculate(RANS_VELOCITY_PRESSURE_PARTIAL_DERIVATIVE,
                                   local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.PlaceInGlobalMatrix(
-            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
-        i_offset += local_matrix.size1();
+        rans_calculation_utilities.AssembleElementMatrix(
+            rLeftHandSideMatrix, local_matrix, TNumNodes, 0, TDim + 2);
 
         epsilon_element.Calculate(RANS_TURBULENT_KINETIC_ENERGY_PARTIAL_DERIVATIVE,
                                   local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.PlaceInGlobalMatrix(
-            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
-        i_offset += local_matrix.size1();
+        rans_calculation_utilities.AssembleElementMatrix(
+            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 1, TDim + 2);
 
         epsilon_element.CalculateFirstDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.PlaceInGlobalMatrix(
-            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
+        rans_calculation_utilities.AssembleElementMatrix(
+            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 2, TDim + 2);
 
         KRATOS_CATCH("");
     }
@@ -478,25 +465,20 @@ public:
 
         rLeftHandSideMatrix.clear();
 
-        IndexType i_offset{0}, j_offset{0};
         Matrix local_matrix;
         RansCalculationUtilities rans_calculation_utilities;
 
         fluid_element.CalculateSecondDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.PlaceInGlobalMatrix(
-            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
-        i_offset += local_matrix.size1();
-        j_offset += local_matrix.size2();
+        rans_calculation_utilities.AssembleElementMatrix(
+            rLeftHandSideMatrix, local_matrix, TNumNodes, 0, 0);
 
         k_element.CalculateSecondDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.PlaceInGlobalMatrix(
-            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
-        i_offset += local_matrix.size1();
-        j_offset += local_matrix.size2();
+        rans_calculation_utilities.AssembleElementMatrix(
+            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 1, TDim + 1);
 
         epsilon_element.CalculateSecondDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.PlaceInGlobalMatrix(
-            rLeftHandSideMatrix, local_matrix, i_offset, j_offset);
+        rans_calculation_utilities.AssembleElementMatrix(
+            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 2, TDim + 2);
 
         KRATOS_CATCH("");
     }
@@ -543,23 +525,23 @@ public:
             k_element.SetData(this->Data());
             epsilon_element.SetData(this->Data());
 
-            IndexType j_offset{0};
             Matrix local_matrix;
             RansCalculationUtilities rans_calculation_utilities;
 
             fluid_element.CalculateSensitivityMatrix(
                 rSensitivityVariable, local_matrix, rCurrentProcessInfo);
-            rans_calculation_utilities.PlaceInGlobalMatrix(rOutput, local_matrix, 0, j_offset);
-            j_offset += local_matrix.size2();
+            rans_calculation_utilities.AssembleElementMatrix(
+                rOutput, local_matrix, TNumNodes, 0, 0);
 
             k_element.CalculateSensitivityMatrix(
                 rSensitivityVariable, local_matrix, rCurrentProcessInfo);
-            rans_calculation_utilities.PlaceInGlobalMatrix(rOutput, local_matrix, 0, j_offset);
-            j_offset += local_matrix.size2();
+            rans_calculation_utilities.AssembleElementMatrix(
+                rOutput, local_matrix, TNumNodes, 0, TDim + 1);
 
             epsilon_element.CalculateSensitivityMatrix(
                 rSensitivityVariable, local_matrix, rCurrentProcessInfo);
-            rans_calculation_utilities.PlaceInGlobalMatrix(rOutput, local_matrix, 0, j_offset);
+            rans_calculation_utilities.AssembleElementMatrix(
+                rOutput, local_matrix, TNumNodes, 0, TDim + 2);
         }
         else
         {

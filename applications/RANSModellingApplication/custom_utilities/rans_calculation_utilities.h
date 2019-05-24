@@ -128,21 +128,24 @@ public:
 
     Vector GetVector(const array_1d<double, 3>& rVector, const unsigned int Dim) const;
 
-    void PlaceInGlobalVector(Vector& rGlobalVector,
-                             const Vector& rSubVector,
-                             const std::size_t RowOffset);
+    void AssembleElementVector(Vector& rElementVector,
+                               const Vector& rSubVector,
+                               const std::size_t NumberOfNodes,
+                               const std::size_t Offset);
 
-    void PlaceInGlobalMatrix(Matrix& rGlobalMatrix,
-                             const Matrix& rSubMatrix,
-                             const std::size_t RowOffset,
-                             const std::size_t ColumnOffset);
+    void AssembleElementMatrix(Matrix& rElementMatrix,
+                               const Matrix& rSubMatrix,
+                               const std::size_t NumberOfNodes,
+                               const std::size_t DerivativeOffset,
+                               const std::size_t EquationOffset);
 
     void GetSubMatrix(Matrix& rSubMatrix,
-                      const Matrix& rGlobalMatrix,
-                      const std::size_t RowOffset,
-                      const std::size_t ColumnOffset,
-                      const std::size_t NumberOfRows,
-                      const std::size_t NumberOfColumns);
+                      const Matrix& rElementMatrix,
+                      const std::size_t NumberOfNodes,
+                      const std::size_t NodeDerivativeOffset,
+                      const std::size_t NodeEquationOffset,
+                      const std::size_t NumberOfNodalDerivatives,
+                      const std::size_t NumberOfNodalEquations);
 
     ///@}
 

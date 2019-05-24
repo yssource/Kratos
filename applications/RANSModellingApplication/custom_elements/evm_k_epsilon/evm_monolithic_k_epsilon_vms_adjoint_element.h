@@ -88,11 +88,11 @@ public:
     // defining the base type
     typedef Element BaseType;
     // defining the base adjoint base fluid element type
-    typedef EvmKEpsilonVMSAdjointElement<TDim> AdjointFluidElement;
+    typedef EvmKEpsilonVMSAdjointElement<TDim, TDim + 1, TDim + 3> AdjointFluidElement;
     // defining the k element type
-    typedef EvmKAdjointElement<TDim, TNumNodes> AdjointKElement;
+    typedef EvmKAdjointElement<TDim, TNumNodes, TDim + 3> AdjointKElement;
     // defining the epsilon element type
-    typedef EvmEpsilonAdjointElement<TDim, TNumNodes> AdjointEpsilonElement;
+    typedef EvmEpsilonAdjointElement<TDim, TNumNodes, TDim + 3> AdjointEpsilonElement;
 
     constexpr static unsigned int TFluidBlockSize = (TDim + 1);
 
@@ -398,50 +398,23 @@ public:
 
         rLeftHandSideMatrix.clear();
 
-        Matrix local_matrix;
-        RansCalculationUtilities rans_calculation_utilities;
-
-        fluid_element.CalculateFirstDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.AssembleElementMatrix(
-            rLeftHandSideMatrix, local_matrix, TNumNodes, 0, 0);
-
+        fluid_element.CalculateFirstDerivativesLHS(rLeftHandSideMatrix, rCurrentProcessInfo);
         fluid_element.Calculate(RANS_TURBULENT_KINETIC_ENERGY_PARTIAL_DERIVATIVE,
-                                local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.AssembleElementMatrix(
-            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 1, 0);
-
+                                rLeftHandSideMatrix, rCurrentProcessInfo);
         fluid_element.Calculate(RANS_TURBULENT_ENERGY_DISSIPATION_RATE_PARTIAL_DERIVATIVE,
-                                local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.AssembleElementMatrix(
-            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 2, 0);
+                                rLeftHandSideMatrix, rCurrentProcessInfo);
 
         k_element.Calculate(RANS_VELOCITY_PRESSURE_PARTIAL_DERIVATIVE,
-                            local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.AssembleElementMatrix(
-            rLeftHandSideMatrix, local_matrix, TNumNodes, 0, TDim + 1);
-
-        k_element.CalculateFirstDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.AssembleElementMatrix(
-            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 1, TDim + 1);
-
+                            rLeftHandSideMatrix, rCurrentProcessInfo);
+        k_element.CalculateFirstDerivativesLHS(rLeftHandSideMatrix, rCurrentProcessInfo);
         k_element.Calculate(RANS_TURBULENT_ENERGY_DISSIPATION_RATE_PARTIAL_DERIVATIVE,
-                            local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.AssembleElementMatrix(
-            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 2, TDim + 1);
+                            rLeftHandSideMatrix, rCurrentProcessInfo);
 
         epsilon_element.Calculate(RANS_VELOCITY_PRESSURE_PARTIAL_DERIVATIVE,
-                                  local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.AssembleElementMatrix(
-            rLeftHandSideMatrix, local_matrix, TNumNodes, 0, TDim + 2);
-
+                                  rLeftHandSideMatrix, rCurrentProcessInfo);
         epsilon_element.Calculate(RANS_TURBULENT_KINETIC_ENERGY_PARTIAL_DERIVATIVE,
-                                  local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.AssembleElementMatrix(
-            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 1, TDim + 2);
-
-        epsilon_element.CalculateFirstDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.AssembleElementMatrix(
-            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 2, TDim + 2);
+                                  rLeftHandSideMatrix, rCurrentProcessInfo);
+        epsilon_element.CalculateFirstDerivativesLHS(rLeftHandSideMatrix, rCurrentProcessInfo);
 
         KRATOS_CATCH("");
     }
@@ -465,20 +438,9 @@ public:
 
         rLeftHandSideMatrix.clear();
 
-        Matrix local_matrix;
-        RansCalculationUtilities rans_calculation_utilities;
-
-        fluid_element.CalculateSecondDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.AssembleElementMatrix(
-            rLeftHandSideMatrix, local_matrix, TNumNodes, 0, 0);
-
-        k_element.CalculateSecondDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.AssembleElementMatrix(
-            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 1, TDim + 1);
-
-        epsilon_element.CalculateSecondDerivativesLHS(local_matrix, rCurrentProcessInfo);
-        rans_calculation_utilities.AssembleElementMatrix(
-            rLeftHandSideMatrix, local_matrix, TNumNodes, TDim + 2, TDim + 2);
+        fluid_element.CalculateSecondDerivativesLHS(rLeftHandSideMatrix, rCurrentProcessInfo);
+        k_element.CalculateSecondDerivativesLHS(rLeftHandSideMatrix, rCurrentProcessInfo);
+        epsilon_element.CalculateSecondDerivativesLHS(rLeftHandSideMatrix, rCurrentProcessInfo);
 
         KRATOS_CATCH("");
     }
@@ -512,7 +474,7 @@ public:
 
         if (rSensitivityVariable == SHAPE_SENSITIVITY)
         {
-            if (rOutput.size1() != TElementLocalSize || rOutput.size2() != TElementLocalSize)
+            if (rOutput.size1() != TCoordLocalSize || rOutput.size2() != TElementLocalSize)
                 rOutput.resize(TCoordLocalSize, TElementLocalSize, false);
 
             rOutput.clear();
@@ -525,23 +487,12 @@ public:
             k_element.SetData(this->Data());
             epsilon_element.SetData(this->Data());
 
-            Matrix local_matrix;
-            RansCalculationUtilities rans_calculation_utilities;
-
             fluid_element.CalculateSensitivityMatrix(
-                rSensitivityVariable, local_matrix, rCurrentProcessInfo);
-            rans_calculation_utilities.AssembleElementMatrix(
-                rOutput, local_matrix, TNumNodes, 0, 0);
-
+                rSensitivityVariable, rOutput, rCurrentProcessInfo);
             k_element.CalculateSensitivityMatrix(
-                rSensitivityVariable, local_matrix, rCurrentProcessInfo);
-            rans_calculation_utilities.AssembleElementMatrix(
-                rOutput, local_matrix, TNumNodes, 0, TDim + 1);
-
+                rSensitivityVariable, rOutput, rCurrentProcessInfo);
             epsilon_element.CalculateSensitivityMatrix(
-                rSensitivityVariable, local_matrix, rCurrentProcessInfo);
-            rans_calculation_utilities.AssembleElementMatrix(
-                rOutput, local_matrix, TNumNodes, 0, TDim + 2);
+                rSensitivityVariable, rOutput, rCurrentProcessInfo);
         }
         else
         {

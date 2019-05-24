@@ -44,8 +44,9 @@ namespace Kratos
  *
  * @see VMS monolithic fluid element
  */
-template <unsigned int TDim, class TRANSEvmVMSAdjointElementData>
-class RANSEvmVMSAdjointElement : public VMSAdjointElement<TDim>
+template <unsigned int TDim, class TRANSEvmVMSAdjointElementData, unsigned int TNumNodes = TDim + 1, unsigned int TMonolithicAssemblyNodalDofSize = TDim + 1>
+class RANSEvmVMSAdjointElement
+    : public VMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>
 {
 public:
     ///@name Type Definitions
@@ -54,13 +55,17 @@ public:
     /// Pointer definition
     KRATOS_CLASS_POINTER_DEFINITION(RANSEvmVMSAdjointElement);
 
-    constexpr static unsigned int TNumNodes = TDim + 1;
-
-    constexpr static unsigned int TBlockSize = TDim + 1;
+    constexpr static unsigned int TBlockSize = TMonolithicAssemblyNodalDofSize;
 
     constexpr static unsigned int TFluidLocalSize = TBlockSize * TNumNodes;
 
     constexpr static unsigned int TCoordLocalSize = TDim * TNumNodes;
+
+    constexpr static unsigned int TMonolithicAssemblyLocalSize =
+        TNumNodes * TMonolithicAssemblyNodalDofSize;
+
+    constexpr static bool TMonolithicMatrixConstruction =
+        (TMonolithicAssemblyNodalDofSize != (TDim + 1));
 
     typedef Element::IndexType IndexType;
 
@@ -84,7 +89,7 @@ public:
 
     typedef BoundedMatrix<double, TNumNodes, TDim> ShapeFunctionDerivativesType;
 
-    typedef VMSAdjointElement<TDim> BaseType;
+    typedef VMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize> BaseType;
 
     ///@}
     ///@name Life Cycle
@@ -195,7 +200,6 @@ public:
         this->CalculatePrimalGradientOfVMSSteadyTerm(rLeftHandSideMatrix, rCurrentProcessInfo);
         this->AddPrimalGradientOfVMSMassTerm(
             rLeftHandSideMatrix, RELAXED_ACCELERATION, -1.0, rCurrentProcessInfo);
-        rLeftHandSideMatrix = trans(rLeftHandSideMatrix); // transpose
 
         // Adding additional terms coming from the eddy viscosity hypothesis
         AddTurbulentViscosityPartialDerivativePrimalGradientOfVMSSteadyTerm(
@@ -314,21 +318,27 @@ protected:
     {
         KRATOS_TRY
 
-        if (rOutputMatrix.size1() != TNumNodes)
+        if (!TMonolithicMatrixConstruction)
         {
-            KRATOS_THROW_ERROR(
-                std::runtime_error,
-                "invalid matrix size detected. rOutputMatrix.size1() = ",
-                rOutputMatrix.size1());
+            if (rOutputMatrix.size1() != TNumNodes)
+            {
+                KRATOS_THROW_ERROR(
+                    std::runtime_error,
+                    "invalid matrix size detected. rOutputMatrix.size1() = ",
+                    rOutputMatrix.size1());
+            }
+
+            if (rOutputMatrix.size2() != TFluidLocalSize)
+            {
+                KRATOS_THROW_ERROR(
+                    std::runtime_error,
+                    "invalid matrix size detected. rOutputMatrix.size2() = ",
+                    rOutputMatrix.size2());
+            }
         }
 
-        if (rOutputMatrix.size2() != TFluidLocalSize)
-        {
-            KRATOS_THROW_ERROR(
-                std::runtime_error,
-                "invalid matrix size detected. rOutputMatrix.size2() = ",
-                rOutputMatrix.size2());
-        }
+        const unsigned int derivative_dof_index =
+            static_cast<unsigned int>(rCurrentProcessInfo[rDerivativeVariable]);
 
         // Get shape functions, shape function gradients and element volume (area in
         // 2D). Only one integration point is used so the volume is its weight.
@@ -406,7 +416,7 @@ protected:
         }
 
         // Primal gradient of (lumped) VMS mass matrix multiplied with vector
-        IndexType FirstRow(0), FirstCol(0);
+        IndexType FirstRow(0), FirstCol(derivative_dof_index);
         // Loop over nodes
         for (IndexType i = 0; i < TNumNodes; ++i)
         {
@@ -424,11 +434,11 @@ protected:
 
                 rOutputMatrix(FirstCol, FirstRow + TDim) +=
                     alpha * Volume * DensityXGradN[i] * TauOneDeriv[j];
-                FirstCol += 1;
+                FirstCol += TBlockSize;
             } // Node block columns
 
             FirstRow += TBlockSize;
-            FirstCol = 0;
+            FirstCol = derivative_dof_index;
         } // Node block rows
 
         KRATOS_CATCH("")
@@ -440,10 +450,15 @@ protected:
     {
         KRATOS_TRY
 
-        if (rAdjointMatrix.size1() != TNumNodes || rAdjointMatrix.size2() != TFluidLocalSize)
-            rAdjointMatrix.resize(TNumNodes, TFluidLocalSize, false);
+        if (!TMonolithicMatrixConstruction)
+        {
+            if (rAdjointMatrix.size1() != TFluidLocalSize || rAdjointMatrix.size2() != TFluidLocalSize)
+                rAdjointMatrix.resize(TFluidLocalSize, TFluidLocalSize, false);
 
-        rAdjointMatrix.clear();
+            rAdjointMatrix.clear();
+        }
+
+        const unsigned int derivative_dof_index = static_cast<unsigned int>(rCurrentProcessInfo[rDerivativeVariable]);
 
         // Get shape functions, shape function gradients and element volume (area in
         // 2D). Only one integration point is used so the volume is its weight.
@@ -549,7 +564,7 @@ protected:
 
         const double coeff = DivVel * Density * 2.0 / 3.0;
 
-        IndexType FirstRow(0), FirstCol(0);
+        IndexType FirstRow(0), FirstCol(derivative_dof_index);
         // Loop over nodes
         for (IndexType i = 0; i < TNumNodes; ++i)
         {
@@ -600,11 +615,11 @@ protected:
 
                 rAdjointMatrix(FirstCol, FirstRow + TDim) -= Volume * valpn;
 
-                FirstCol += 1;
+                FirstCol += TBlockSize;
             } // Node block columns
 
             FirstRow += TBlockSize;
-            FirstCol = 0;
+            FirstCol = derivative_dof_index;
         } // Node block rows
 
         KRATOS_CATCH("")

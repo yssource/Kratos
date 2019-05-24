@@ -47,8 +47,8 @@ namespace Kratos
 /**
  * Constructor.
  */
-template <unsigned int TDim>
-EvmKEpsilonVMSAdjointElement<TDim>::EvmKEpsilonVMSAdjointElement(IndexType NewId)
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::EvmKEpsilonVMSAdjointElement(IndexType NewId)
     : BaseType(NewId)
 {
 }
@@ -56,9 +56,9 @@ EvmKEpsilonVMSAdjointElement<TDim>::EvmKEpsilonVMSAdjointElement(IndexType NewId
 /**
  * Constructor using Geometry
  */
-template <unsigned int TDim>
-EvmKEpsilonVMSAdjointElement<TDim>::EvmKEpsilonVMSAdjointElement(IndexType NewId,
-                                                                 GeometryType::Pointer pGeometry)
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::EvmKEpsilonVMSAdjointElement(
+    IndexType NewId, GeometryType::Pointer pGeometry)
     : BaseType(NewId, pGeometry)
 {
 }
@@ -66,8 +66,8 @@ EvmKEpsilonVMSAdjointElement<TDim>::EvmKEpsilonVMSAdjointElement(IndexType NewId
 /**
  * Constructor using Properties
  */
-template <unsigned int TDim>
-EvmKEpsilonVMSAdjointElement<TDim>::EvmKEpsilonVMSAdjointElement(
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::EvmKEpsilonVMSAdjointElement(
     IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties)
     : BaseType(NewId, pGeometry, pProperties)
 {
@@ -76,8 +76,8 @@ EvmKEpsilonVMSAdjointElement<TDim>::EvmKEpsilonVMSAdjointElement(
 /**
  * Destructor
  */
-template <unsigned int TDim>
-EvmKEpsilonVMSAdjointElement<TDim>::~EvmKEpsilonVMSAdjointElement()
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::~EvmKEpsilonVMSAdjointElement()
 {
 }
 
@@ -101,10 +101,9 @@ EvmKEpsilonVMSAdjointElement<TDim>::~EvmKEpsilonVMSAdjointElement()
  * @param pProperties: the properties assigned to the new element
  * @return a Pointer to the new element
  */
-template <unsigned int TDim>
-Element::Pointer EvmKEpsilonVMSAdjointElement<TDim>::Create(IndexType NewId,
-                                                            NodesArrayType const& ThisNodes,
-                                                            PropertiesType::Pointer pProperties) const
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+Element::Pointer EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::Create(
+    IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const
 {
     KRATOS_TRY
     return Kratos::make_intrusive<EvmKEpsilonVMSAdjointElement>(
@@ -119,10 +118,9 @@ Element::Pointer EvmKEpsilonVMSAdjointElement<TDim>::Create(IndexType NewId,
  * @param pProperties: the properties assigned to the new element
  * @return a Pointer to the new element
  */
-template <unsigned int TDim>
-Element::Pointer EvmKEpsilonVMSAdjointElement<TDim>::Create(IndexType NewId,
-                                                            GeometryType::Pointer pGeom,
-                                                            PropertiesType::Pointer pProperties) const
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+Element::Pointer EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::Create(
+    IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const
 {
     KRATOS_TRY
     return Kratos::make_intrusive<EvmKEpsilonVMSAdjointElement>(NewId, pGeom, pProperties);
@@ -136,9 +134,9 @@ Element::Pointer EvmKEpsilonVMSAdjointElement<TDim>::Create(IndexType NewId,
  * @param pProperties: the properties assigned to the new element
  * @return a Pointer to the new element
  */
-template <unsigned int TDim>
-Element::Pointer EvmKEpsilonVMSAdjointElement<TDim>::Clone(IndexType NewId,
-                                                           NodesArrayType const& ThisNodes) const
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+Element::Pointer EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::Clone(
+    IndexType NewId, NodesArrayType const& ThisNodes) const
 {
     KRATOS_TRY
     return Kratos::make_intrusive<EvmKEpsilonVMSAdjointElement>(
@@ -155,8 +153,9 @@ Element::Pointer EvmKEpsilonVMSAdjointElement<TDim>::Clone(IndexType NewId,
  * @param rCurrentProcessInfo
  * this method is: MANDATORY
  */
-template <unsigned int TDim>
-int EvmKEpsilonVMSAdjointElement<TDim>::Check(const ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+int EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::Check(
+    const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY
 
@@ -170,7 +169,6 @@ int EvmKEpsilonVMSAdjointElement<TDim>::Check(const ProcessInfo& rCurrentProcess
     KRATOS_CHECK_VARIABLE_KEY(RANS_TURBULENT_KINETIC_ENERGY_PARTIAL_DERIVATIVE);
     KRATOS_CHECK_VARIABLE_KEY(RELAXED_ACCELERATION);
     KRATOS_CHECK_VARIABLE_KEY(RANS_Y_PLUS_VELOCITY_DERIVATIVES);
-
 
     for (IndexType iNode = 0; iNode < this->GetGeometry().size(); ++iNode)
     {
@@ -200,8 +198,8 @@ int EvmKEpsilonVMSAdjointElement<TDim>::Check(const ProcessInfo& rCurrentProcess
 
 /// Turn back information as a string.
 
-template <unsigned int TDim>
-std::string EvmKEpsilonVMSAdjointElement<TDim>::Info() const
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+std::string EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::Info() const
 {
     std::stringstream buffer;
     buffer << "EvmKEpsilonVMSAdjointElement #" << Element::Id();
@@ -210,16 +208,18 @@ std::string EvmKEpsilonVMSAdjointElement<TDim>::Info() const
 
 /// Print information about this object.
 
-template <unsigned int TDim>
-void EvmKEpsilonVMSAdjointElement<TDim>::PrintInfo(std::ostream& rOStream) const
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+void EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::PrintInfo(
+    std::ostream& rOStream) const
 {
     rOStream << "EvmKEpsilonVMSAdjointElement #" << Element::Id();
 }
 
 /// Print object's data.
 
-template <unsigned int TDim>
-void EvmKEpsilonVMSAdjointElement<TDim>::PrintData(std::ostream& rOStream) const
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+void EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::PrintData(
+    std::ostream& rOStream) const
 {
     Element::pGetGeometry()->PrintData(rOStream);
 }
@@ -274,8 +274,8 @@ void EvmKEpsilonVMSAdjointElement<TDim>::PrintData(std::ostream& rOStream) const
 ///@name Private Operations
 ///@{
 
-template <unsigned int TDim>
-void EvmKEpsilonVMSAdjointElement<TDim>::CalculateElementData(
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+void EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::CalculateElementData(
     RANSEvmVMSAdjointElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
@@ -304,8 +304,8 @@ void EvmKEpsilonVMSAdjointElement<TDim>::CalculateElementData(
     }
 }
 
-template <unsigned int TDim>
-void EvmKEpsilonVMSAdjointElement<TDim>::CalculateTurbulentKinematicViscosityScalarDerivatives(
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+void EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::CalculateTurbulentKinematicViscosityScalarDerivatives(
     Vector& rOutput,
     const Variable<double>& rDerivativeVariable,
     const RANSEvmVMSAdjointElementData& rCurrentData,
@@ -342,10 +342,9 @@ void EvmKEpsilonVMSAdjointElement<TDim>::CalculateTurbulentKinematicViscositySca
     KRATOS_CATCH("");
 }
 
-template <unsigned int TDim>
-void EvmKEpsilonVMSAdjointElement<TDim>::Calculate(const Variable<Matrix>& rVariable,
-                                                   Matrix& Output,
-                                                   const ProcessInfo& rCurrentProcessInfo)
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+void EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::Calculate(
+    const Variable<Matrix>& rVariable, Matrix& Output, const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY
 
@@ -373,8 +372,8 @@ void EvmKEpsilonVMSAdjointElement<TDim>::Calculate(const Variable<Matrix>& rVari
     KRATOS_CATCH("");
 }
 
-template <unsigned int TDim>
-void EvmKEpsilonVMSAdjointElement<TDim>::CalculateTurbulentKinematicViscosityVelocityDerivatives(
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+void EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::CalculateTurbulentKinematicViscosityVelocityDerivatives(
     Matrix& rOutput,
     const RANSEvmVMSAdjointElementData& rCurrentData,
     const ProcessInfo& rCurrentProcessInfo) const
@@ -398,8 +397,8 @@ void EvmKEpsilonVMSAdjointElement<TDim>::CalculateTurbulentKinematicViscosityVel
 ///@name Serialization
 ///@{
 
-template <unsigned int TDim>
-void EvmKEpsilonVMSAdjointElement<TDim>::save(Serializer& rSerializer) const
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+void EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::save(Serializer& rSerializer) const
 {
     KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, Element);
 
@@ -407,8 +406,8 @@ void EvmKEpsilonVMSAdjointElement<TDim>::save(Serializer& rSerializer) const
     // To be completed with the class member list
 }
 
-template <unsigned int TDim>
-void EvmKEpsilonVMSAdjointElement<TDim>::load(Serializer& rSerializer)
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+void EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::load(Serializer& rSerializer)
 {
     KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, Element);
 
@@ -438,15 +437,16 @@ void EvmKEpsilonVMSAdjointElement<TDim>::load(Serializer& rSerializer)
 
 /// input stream function
 
-template <unsigned int TDim>
-inline std::istream& operator>>(std::istream& rIStream,
-                                EvmKEpsilonVMSAdjointElement<TDim>& rThis);
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+inline std::istream& operator>>(
+    std::istream& rIStream,
+    EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>& rThis);
 
 /// output stream function
 
-template <unsigned int TDim>
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
 inline std::ostream& operator<<(std::ostream& rOStream,
-                                const EvmKEpsilonVMSAdjointElement<TDim>& rThis)
+                                const EvmKEpsilonVMSAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << " : " << std::endl;
@@ -458,5 +458,8 @@ inline std::ostream& operator<<(std::ostream& rOStream,
 
 template class EvmKEpsilonVMSAdjointElement<2>;
 template class EvmKEpsilonVMSAdjointElement<3>;
+
+template class EvmKEpsilonVMSAdjointElement<2, 3, 5>;
+template class EvmKEpsilonVMSAdjointElement<3, 4, 6>;
 
 } // namespace Kratos.

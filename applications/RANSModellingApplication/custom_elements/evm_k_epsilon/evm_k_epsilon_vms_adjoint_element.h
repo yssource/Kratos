@@ -55,15 +55,15 @@ struct RANSEvmVMSAdjointElementData
     Vector NodalFmu;
 };
 
-template <unsigned int TDim>
+template <unsigned int TDim, unsigned int TNumNodes = TDim + 1, unsigned int TMonolithicAssemblyNodalDofSize = TDim + 1>
 class EvmKEpsilonVMSAdjointElement
-    : public RANSEvmVMSAdjointElement<TDim, RANSEvmVMSAdjointElementData>
+    : public RANSEvmVMSAdjointElement<TDim, RANSEvmVMSAdjointElementData, TNumNodes, TMonolithicAssemblyNodalDofSize>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    typedef RANSEvmVMSAdjointElement<TDim, RANSEvmVMSAdjointElementData> BaseType;
+    typedef RANSEvmVMSAdjointElement<TDim, RANSEvmVMSAdjointElementData, TNumNodes, TMonolithicAssemblyNodalDofSize> BaseType;
 
     /// Node type (default is: Node<3>)
     typedef Node<3> NodeType;
@@ -115,8 +115,8 @@ public:
      * Constructor using Properties
      */
     EvmKEpsilonVMSAdjointElement(IndexType NewId,
-                       GeometryType::Pointer pGeometry,
-                       PropertiesType::Pointer pProperties);
+                                 GeometryType::Pointer pGeometry,
+                                 PropertiesType::Pointer pProperties);
 
     /**
      * Destructor
@@ -260,12 +260,10 @@ private:
     ///@name Private Operations
     ///@{
 
-    void CalculateElementData(
-        RANSEvmVMSAdjointElementData& rData,
-        const Vector& rShapeFunctions,
-        const Matrix& rShapeFunctionDerivatives,
-        const ProcessInfo& rCurrentProcessInfo) const override;
-
+    void CalculateElementData(RANSEvmVMSAdjointElementData& rData,
+                              const Vector& rShapeFunctions,
+                              const Matrix& rShapeFunctionDerivatives,
+                              const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateTurbulentKinematicViscosityScalarDerivatives(
         Vector& rOutput,

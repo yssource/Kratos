@@ -320,7 +320,7 @@ protected:
 
         if (!TMonolithicMatrixConstruction)
         {
-            if (rOutputMatrix.size1() != TNumNodes)
+            if (rOutputMatrix.size1() != TFluidLocalSize)
             {
                 KRATOS_THROW_ERROR(
                     std::runtime_error,
@@ -458,7 +458,8 @@ protected:
             rAdjointMatrix.clear();
         }
 
-        const unsigned int derivative_dof_index = static_cast<unsigned int>(rCurrentProcessInfo[rDerivativeVariable]);
+        const unsigned int derivative_dof_index =
+            static_cast<unsigned int>(rCurrentProcessInfo[rDerivativeVariable]);
 
         // Get shape functions, shape function gradients and element volume (area in
         // 2D). Only one integration point is used so the volume is its weight.

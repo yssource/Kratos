@@ -69,15 +69,15 @@ struct EvmEpsilonAdjointElementData
     Matrix NodalVelocity;
 };
 
-template <unsigned int TDim, unsigned int TNumNodes>
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyElementBlockSize = 1>
 class EvmEpsilonAdjointElement
-    : public StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmEpsilonAdjointElementData>
+    : public StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmEpsilonAdjointElementData, TMonolithicAssemblyElementBlockSize>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    typedef StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmEpsilonAdjointElementData> BaseType;
+    typedef StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmEpsilonAdjointElementData, TMonolithicAssemblyElementBlockSize> BaseType;
 
     /// Node type (default is: Node<3>)
     typedef Node<3> NodeType;
@@ -147,8 +147,8 @@ public:
      * Constructor using Properties
      */
     EvmEpsilonAdjointElement(IndexType NewId,
-                       GeometryType::Pointer pGeometry,
-                       PropertiesType::Pointer pProperties);
+                             GeometryType::Pointer pGeometry,
+                             PropertiesType::Pointer pProperties);
 
     /**
      * Copy Constructor
@@ -322,15 +322,14 @@ private:
     ///@name Private Operations
     ///@{
 
-    const Variable<double>& GetScalarVariable() const override;
+    const Variable<double>& GetPrimalVariable() const override;
 
-    const Variable<double>& GetScalarVariableRelaxedRate() const override;
+    const Variable<double>& GetPrimalRelaxedRateVariable() const override;
 
-    void CalculateElementData(
-        EvmEpsilonAdjointElementData& rData,
-        const Vector& rShapeFunctions,
-        const Matrix& rShapeFunctionDerivatives,
-        const ProcessInfo& rCurrentProcessInfo) const override;
+    void CalculateElementData(EvmEpsilonAdjointElementData& rData,
+                              const Vector& rShapeFunctions,
+                              const Matrix& rShapeFunctionDerivatives,
+                              const ProcessInfo& rCurrentProcessInfo) const override;
 
     double CalculateEffectiveKinematicViscosity(const EvmEpsilonAdjointElementData& rCurrentData,
                                                 const ProcessInfo& rCurrentProcessInfo) const override;
@@ -348,14 +347,14 @@ private:
         const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateReactionTermScalarDerivatives(Vector& rOutput,
-                                          const Variable<double>& rDerivativeVariable,
-                                          const EvmEpsilonAdjointElementData& rCurrentData,
-                                          const ProcessInfo& rCurrentProcessInfo) const override;
+                                                const Variable<double>& rDerivativeVariable,
+                                                const EvmEpsilonAdjointElementData& rCurrentData,
+                                                const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateSourceTermScalarDerivatives(Vector& rOutput,
-                                        const Variable<double>& rDerivativeVariable,
-                                        const EvmEpsilonAdjointElementData& rCurrentData,
-                                        const ProcessInfo& rCurrentProcessInfo) const override;
+                                              const Variable<double>& rDerivativeVariable,
+                                              const EvmEpsilonAdjointElementData& rCurrentData,
+                                              const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateEffectiveKinematicViscosityVelocityDerivatives(
         Matrix& rOutput,

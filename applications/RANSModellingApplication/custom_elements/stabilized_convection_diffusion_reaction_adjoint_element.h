@@ -66,23 +66,27 @@ namespace Kratos
  * $s_\phi$, $f_\phi$ are velocity, effective kinematic viscosity,
  * reaction coefficient, source term respectively.
  *
- * @tparam TDim          Dimensionality of the element
- * @tparam TNumNodes     Number of nodes in the element
- * @tparam TElementData  Data container used to calculate derivatives
+ * @tparam TDim                                Dimensionality of the element
+ * @tparam TNumNodes                           Number of nodes in the element
+ * @tparam TElementData                        Data container used to calculate derivatives
+ * @tparam TMonolithicAssemblyElementBlockSize Block size of the parent monolithic element
  */
-template <unsigned int TDim, unsigned int TNumNodes, class TElementData>
+template <unsigned int TDim, unsigned int TNumNodes, class TElementData, unsigned int TMonolithicAssemblyElementBlockSize = 1>
 class StabilizedConvectionDiffusionReactionAdjointElement : public Element
 {
 public:
     ///@name Type Definitions
     ///@{
+
     /// Pointer definition of Element
+    KRATOS_CLASS_POINTER_DEFINITION(StabilizedConvectionDiffusionReactionAdjointElement);
+
+    constexpr static unsigned int TMonolithicAssemblyLocalSize =
+        TNumNodes * TMonolithicAssemblyElementBlockSize;
 
     constexpr static unsigned int TVelPrBlockSize = TDim + 1;
 
     constexpr static unsigned int TVelPrLocalSize = TNumNodes * TVelPrBlockSize;
-
-    KRATOS_CLASS_POINTER_DEFINITION(StabilizedConvectionDiffusionReactionAdjointElement);
 
     /// base type: an GeometricalObject that automatically has a unique number
     typedef Element BaseType;
@@ -357,7 +361,7 @@ public:
      * stored at the current step. For steady problems, the scalar rate variable
      * (\f$\dot{\mathbf{w}}^n\f$) must be set to zero on the nodes. For
      * the Bossak method, \f$\dot{\mathbf{w}}^{n-\alpha}\f$ must be stored in
-     * the variable given by @GetScalarVariableRelaxedRate().
+     * the variable given by @GetPrimalRelaxedRateVariable().
      *
      * @param rLeftHandSideMatrix
      * @param rCurrentProcessInfo
@@ -365,7 +369,7 @@ public:
     void CalculateFirstDerivativesLHS(MatrixType& rLeftHandSideMatrix,
                                       ProcessInfo& rCurrentProcessInfo) override
     {
-        const Variable<double>& r_derivative_variable = this->GetScalarVariable();
+        const Variable<double>& r_derivative_variable = this->GetPrimalVariable();
         CalculateElementTotalResidualScalarDerivatives(
             rLeftHandSideMatrix, r_derivative_variable, rCurrentProcessInfo);
         AddPrimalDampingMatrix(rLeftHandSideMatrix, rCurrentProcessInfo);
@@ -517,9 +521,9 @@ public:
             << "On StabilizedConvectionDiffusionReactionAdjointElement -> "
             << this->Id() << "; Area cannot be less than or equal to 0" << std::endl;
 
-        const Variable<double>& r_primal_variable = this->GetScalarVariable();
+        const Variable<double>& r_primal_variable = this->GetPrimalVariable();
         const Variable<double>& r_primal_relaxed_rate_variable =
-            this->GetScalarVariableRelaxedRate();
+            this->GetPrimalRelaxedRateVariable();
 
         KRATOS_CHECK_VARIABLE_KEY(r_primal_variable);
         KRATOS_CHECK_VARIABLE_KEY(r_primal_relaxed_rate_variable);
@@ -587,7 +591,7 @@ protected:
     ///@{
 
     /**
-     * @brief Get the Scalar Variable object
+     * @brief Get the primal scalar variable
      *
      * This returns the scalar variable ($\phi$) used in stabilized
      * convection-diffusion-reaction transport equation.
@@ -596,11 +600,11 @@ protected:
      *
      * @return const Variable<double>&
      */
-    virtual const Variable<double>& GetScalarVariable() const
+    virtual const Variable<double>& GetPrimalVariable() const
     {
         KRATOS_TRY
 
-        KRATOS_ERROR << "Calling base GetScalarVariable method in "
+        KRATOS_ERROR << "Calling base GetPrimalVariable method in "
                         "StabilizedConvectionDiffusionReactionAdjointElement "
                         "class. Please implement it in the derrived class.";
 
@@ -610,7 +614,7 @@ protected:
     }
 
     /**
-     * @brief Get the Scalar Variable Relaxed Rate object
+     * @brief Get the primal relaxed rate variable
      *
      * This method returns the relaxed scalar rate variable ($\dot{\phi}_r$) calculated according
      * to following equation, where $n$ is the time step:
@@ -623,11 +627,11 @@ protected:
      *
      * @return const Variable<double>&
      */
-    virtual const Variable<double>& GetScalarVariableRelaxedRate() const
+    virtual const Variable<double>& GetPrimalRelaxedRateVariable() const
     {
         KRATOS_TRY
 
-        KRATOS_ERROR << "Calling base GetScalarVariableRelaxedRate method in "
+        KRATOS_ERROR << "Calling base GetPrimalRelaxedRateVariable method in "
                         "StabilizedConvectionDiffusionReactionAdjointElement "
                         "class. Please implement it in the derrived class.";
 
@@ -1039,7 +1043,7 @@ protected:
      *
      * This method calculates transposed element residuals scalar partial derivatives.
      * In the steady regime, the the variable given by
-     * @GetScalarVariableRelaxedRate() should have zero values.
+     * @GetPrimalRelaxedRateVariable() should have zero values.
      * This method is called for each gauss point.
      *
      * This method should be implemented by the derrived class.
@@ -1555,7 +1559,7 @@ private:
             value += scalar_value * rReactionScalarDerivatives[i_node];
             value -= rSourceScalarDerivatives[i_node];
 
-            if (this->GetScalarVariable() == rDerivativeVariable)
+            if (this->GetPrimalVariable() == rDerivativeVariable)
             {
                 value += reaction * rShapeFunctions[i_node];
                 value += CalculateScalarProduct(shape_function_gradient, rVelocity);
@@ -1635,7 +1639,7 @@ private:
                 rChiScalarDerivatives *
                 (abs_residual / (velocity_norm_square * scalar_gradient_norm));
 
-            if (this->GetScalarVariable() == rDerivativeVariable)
+            if (this->GetPrimalVariable() == rDerivativeVariable)
                 noalias(rOutput) -=
                     rAbsoluteScalarGradientScalarDerivative *
                     (chi * abs_residual /
@@ -1981,6 +1985,16 @@ private:
                                               const Variable<double>& rDerivativeVariable,
                                               const ProcessInfo& rCurrentProcessInfo)
     {
+        KRATOS_TRY
+
+        // if (rLeftHandSideMatrix.size1() != TMonolithicAssemblyLocalSize)
+        // {
+        //     KRATOS_ERROR << "rLeftHandSideMatrix size mismatch. "
+        //                     "rLeftHandSideMatrix.size1() != Expected size [ "
+        //                  << rLeftHandSideMatrix.size1()
+        //                  << " != " << TMonolithicAssemblyLocalSize << " ]";
+        // }
+
         // Get Shape function data
         Vector gauss_weights;
         Matrix shape_functions;
@@ -1991,11 +2005,15 @@ private:
         const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
             this->GetGeometryParameterDerivatives();
 
+        const Variable<double>& primal_variable = this->GetPrimalVariable();
+
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
-
-        const Variable<double>& primal_variable = this->GetScalarVariable();
+        const unsigned int equation_dof_index =
+            static_cast<unsigned int>(rCurrentProcessInfo[primal_variable]);
+        const unsigned int derivative_dof_index =
+            static_cast<unsigned int>(rCurrentProcessInfo[rDerivativeVariable]);
 
         BoundedVector<double, TNumNodes> velocity_convective_terms, scalar_convective_terms;
 
@@ -2075,7 +2093,7 @@ private:
             const double scalar_gradient_norm = norm_2(scalar_gradient);
 
             const double relaxed_scalar_rate = this->EvaluateInPoint(
-                this->GetScalarVariableRelaxedRate(), gauss_shape_functions);
+                this->GetPrimalRelaxedRateVariable(), gauss_shape_functions);
 
             double chi, k1, k2, residual, positivity_preserving_coeff;
             if (scalar_gradient_norm > std::numeric_limits<double>::epsilon() &&
@@ -2200,7 +2218,10 @@ private:
                              velocity_convective_terms[a] * velocity_dot_scalar_gradient;
 
                     // putting it in the transposed matrix
-                    rLeftHandSideMatrix(c, a) += -1.0 * gauss_weights[g] * value;
+                    rLeftHandSideMatrix(
+                        c * TMonolithicAssemblyElementBlockSize + derivative_dof_index,
+                        a * TMonolithicAssemblyElementBlockSize + equation_dof_index) +=
+                        -1.0 * gauss_weights[g] * value;
                 }
             }
 
@@ -2221,10 +2242,15 @@ private:
                              source_derivatives[c];
 
                     // putting it in the transposed matrix
-                    rLeftHandSideMatrix(c, a) += gauss_weights[g] * value;
+                    rLeftHandSideMatrix(
+                        c * TMonolithicAssemblyElementBlockSize + derivative_dof_index,
+                        a * TMonolithicAssemblyElementBlockSize + equation_dof_index) +=
+                        gauss_weights[g] * value;
                 }
             }
         }
+
+        KRATOS_CATCH("");
     }
 
     void AddPrimalSteadyTermScalarRateDerivatives(MatrixType& rLeftHandSideMatrix,
@@ -2240,11 +2266,13 @@ private:
         const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
             this->GetGeometryParameterDerivatives();
 
+        const Variable<double>& primal_variable = this->GetPrimalVariable();
+
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
-
-        const Variable<double>& primal_variable = this->GetScalarVariable();
+        const unsigned int dof_index =
+            static_cast<unsigned int>(rCurrentProcessInfo[primal_variable]);
 
         BoundedVector<double, TNumNodes> velocity_convective_terms, scalar_convective_terms;
 
@@ -2301,7 +2329,7 @@ private:
             const double scalar_gradient_norm = norm_2(scalar_gradient);
 
             const double relaxed_scalar_rate = this->EvaluateInPoint(
-                this->GetScalarVariableRelaxedRate(), gauss_shape_functions);
+                this->GetPrimalRelaxedRateVariable(), gauss_shape_functions);
 
             double chi, k1, k2, residual;
             if (scalar_gradient_norm > std::numeric_limits<double>::epsilon() &&
@@ -2340,7 +2368,10 @@ private:
                              velocity_convective_terms[a] * velocity_dot_scalar_gradient;
 
                     // putting it in the transposed matrix
-                    rLeftHandSideMatrix(c, a) += -1.0 * gauss_weights[g] * value;
+                    rLeftHandSideMatrix(
+                        c * TMonolithicAssemblyElementBlockSize + dof_index,
+                        a * TMonolithicAssemblyElementBlockSize + dof_index) +=
+                        -1.0 * gauss_weights[g] * value;
                 }
             }
         }
@@ -2357,11 +2388,13 @@ private:
             this->GetGeometryParameterDerivatives();
         const unsigned int num_gauss_points = gauss_weights.size();
 
+        const Variable<double>& primal_variable = this->GetPrimalVariable();
+
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
-
-        const Variable<double>& primal_variable = this->GetScalarVariable();
+        const unsigned int dof_index =
+            static_cast<unsigned int>(rCurrentProcessInfo[primal_variable]);
 
         BoundedVector<double, TNumNodes> velocity_convective_terms;
 
@@ -2396,7 +2429,7 @@ private:
                 this->CalculateEffectiveKinematicViscosity(r_current_data, rCurrentProcessInfo);
 
             const double relaxed_variable_acceleration = this->EvaluateInPoint(
-                this->GetScalarVariableRelaxedRate(), gauss_shape_functions);
+                this->GetPrimalRelaxedRateVariable(), gauss_shape_functions);
 
             const double reaction =
                 this->CalculateReactionTerm(r_current_data, rCurrentProcessInfo);
@@ -2471,7 +2504,10 @@ private:
                     value += stream_line_diffusion * velocity_convective_terms[a] *
                              velocity_convective_terms[c];
 
-                    rPrimalDampingMatrix(c, a) += -1.0 * gauss_weights[g] * value;
+                    rPrimalDampingMatrix(
+                        c * TMonolithicAssemblyElementBlockSize + dof_index,
+                        a * TMonolithicAssemblyElementBlockSize + dof_index) +=
+                        -1.0 * gauss_weights[g] * value;
                 }
             }
         }
@@ -2499,6 +2535,8 @@ private:
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+        const unsigned int dof_index =
+            static_cast<unsigned int>(rCurrentProcessInfo[this->GetPrimalVariable()]);
 
         TElementData current_data;
 
@@ -2540,7 +2578,8 @@ private:
             // Add mass stabilization terms
             for (unsigned int i = 0; i < TNumNodes; ++i)
                 for (unsigned int j = 0; j < TNumNodes; ++j)
-                    rMassMatrix(j, i) +=
+                    rMassMatrix(j * TMonolithicAssemblyElementBlockSize + dof_index,
+                                i * TMonolithicAssemblyElementBlockSize + dof_index) +=
                         gauss_weights[g] * tau *
                         (velocity_convective_terms[i] + s * gauss_shape_functions[i]) *
                         gauss_shape_functions[j];
@@ -2566,6 +2605,10 @@ private:
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+        const unsigned int equation_dof_index =
+            static_cast<unsigned int>(rCurrentProcessInfo[this->GetPrimalVariable()]);
+        const unsigned int derivative_dof_index =
+            static_cast<unsigned int>(rCurrentProcessInfo[rDerivativeVariable]);
 
         Matrix contravariant_metric_tensor(TDim, TDim);
 
@@ -2606,7 +2649,7 @@ private:
                 reaction_derivatives, rDerivativeVariable, current_data, rCurrentProcessInfo);
 
             const double relaxed_scalar_rate = this->EvaluateInPoint(
-                this->GetScalarVariableRelaxedRate(), gauss_shape_functions);
+                this->GetPrimalRelaxedRateVariable(), gauss_shape_functions);
 
             double tau, element_length;
             StabilizedConvectionDiffusionReactionUtilities::CalculateStabilizationTau(
@@ -2631,7 +2674,10 @@ private:
                              relaxed_scalar_rate;
                     value += tau * (s_derivatives[c] * gauss_shape_functions[a]) * relaxed_scalar_rate;
 
-                    rLeftHandSideMatrix(c, a) += -1.0 * gauss_weights[g] * value;
+                    rLeftHandSideMatrix(
+                        c * TMonolithicAssemblyElementBlockSize + derivative_dof_index,
+                        a * TMonolithicAssemblyElementBlockSize + equation_dof_index) +=
+                        -1.0 * gauss_weights[g] * value;
                 }
             }
         }
@@ -2655,9 +2701,7 @@ private:
         const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
             this->GetGeometryParameterDerivatives();
 
-        // const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
-
-        const Variable<double>& primal_variable = this->GetScalarVariable();
+        const Variable<double>& primal_variable = this->GetPrimalVariable();
 
         Geometry<NodeType>& r_geometry = this->GetGeometry();
 
@@ -2675,6 +2719,8 @@ private:
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+        const unsigned int dof_index =
+            static_cast<unsigned int>(rCurrentProcessInfo[primal_variable]);
 
         const GeometryType::ShapeFunctionsGradientsType& r_dn_de =
             this->GetGeometry().ShapeFunctionsLocalGradients(this->GetIntegrationMethod());
@@ -2737,11 +2783,11 @@ private:
                                         primal_variable_gradient, r_shape_derivatives);
 
             const double primal_variable_relaxed_rate = this->EvaluateInPoint(
-                this->GetScalarVariableRelaxedRate(), gauss_shape_functions);
+                this->GetPrimalRelaxedRateVariable(), gauss_shape_functions);
 
             rans_variable_utils.GetNodalArray(
                 primal_variable_relaxed_rate_nodal_values, *this,
-                this->GetScalarVariableRelaxedRate());
+                this->GetPrimalRelaxedRateVariable());
 
             const double effective_kinematic_viscosity =
                 this->CalculateEffectiveKinematicViscosity(current_data, rCurrentProcessInfo);
@@ -3014,7 +3060,8 @@ private:
                                  primal_variable_relaxed_rate * gauss_weight;
                         value += tau * tau_operator * primal_variable_relaxed_rate * gauss_weight_deriv;
 
-                        rOutput(block_size + k, a) -= value;
+                        rOutput(block_size + k, a * TMonolithicAssemblyElementBlockSize +
+                                                    dof_index) -= value;
                     }
                 }
             }
@@ -3040,11 +3087,13 @@ private:
         const ShapeFunctionDerivativesArrayType& r_parameter_derivatives =
             this->GetGeometryParameterDerivatives();
 
+        const Variable<double>& primal_variable = this->GetPrimalVariable();
+
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
-
-        const Variable<double>& primal_variable = this->GetScalarVariable();
+        // const unsigned int dof_index =
+        //     static_cast<unsigned int>(rCurrentProcessInfo[primal_variable]);
 
         BoundedVector<double, TNumNodes> primal_variable_gradient_convective_terms,
             velocity_convective_terms;
@@ -3134,7 +3183,7 @@ private:
             double chi, k1, k2;
 
             const double primal_variable_relaxed_rate = this->EvaluateInPoint(
-                this->GetScalarVariableRelaxedRate(), gauss_shape_functions);
+                this->GetPrimalRelaxedRateVariable(), gauss_shape_functions);
 
             double residual = primal_variable_relaxed_rate;
             residual += velocity_dot_primal_variable_gradient;
@@ -3380,16 +3429,16 @@ private:
 ///@{
 
 /// input stream function
-template <unsigned int TDim, unsigned int TNumNodes, class TElementData>
+template <unsigned int TDim, unsigned int TNumNodes, class TElementData, unsigned int TMonolithicAssemblyElementBlockSize = 1>
 inline std::istream& operator>>(
     std::istream& rIStream,
-    StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, TElementData>& rThis);
+    StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, TElementData, TMonolithicAssemblyElementBlockSize>& rThis);
 
 /// output stream function
-template <unsigned int TDim, unsigned int TNumNodes, class TElementData>
+template <unsigned int TDim, unsigned int TNumNodes, class TElementData, unsigned int TMonolithicAssemblyElementBlockSize = 1>
 inline std::ostream& operator<<(
     std::ostream& rOStream,
-    const StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, TElementData>& rThis)
+    const StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, TElementData, TMonolithicAssemblyElementBlockSize>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << " : " << std::endl;

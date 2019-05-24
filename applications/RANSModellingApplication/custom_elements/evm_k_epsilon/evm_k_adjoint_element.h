@@ -66,15 +66,15 @@ struct EvmKAdjointElementData
     Matrix NodalVelocity;
 };
 
-template <unsigned int TDim, unsigned int TNumNodes>
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyElementBlockSize = 1>
 class EvmKAdjointElement
-    : public StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmKAdjointElementData>
+    : public StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmKAdjointElementData, TMonolithicAssemblyElementBlockSize>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    typedef StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmKAdjointElementData> BaseType;
+    typedef StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmKAdjointElementData, TMonolithicAssemblyElementBlockSize> BaseType;
 
     /// Node type (default is: Node<3>)
     typedef Node<3> NodeType;
@@ -319,9 +319,9 @@ private:
     ///@name Private Operations
     ///@{
 
-    const Variable<double>& GetScalarVariable() const override;
+    const Variable<double>& GetPrimalVariable() const override;
 
-    const Variable<double>& GetScalarVariableRelaxedRate() const override;
+    const Variable<double>& GetPrimalRelaxedRateVariable() const override;
 
     void CalculateElementData(
         EvmKAdjointElementData& rData,

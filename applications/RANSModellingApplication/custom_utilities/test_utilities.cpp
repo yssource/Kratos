@@ -116,7 +116,7 @@ void GetElementData(Vector& rGaussWeights,
 void InitializeVariableWithValues(ModelPart& rModelPart,
                                   const Variable<double>& rVariable,
                                   const double Value,
-                                  const std::size_t TimeStep )
+                                  const std::size_t TimeStep)
 {
     const int number_of_nodes = rModelPart.NumberOfNodes();
 
@@ -344,6 +344,7 @@ void RunElementResidualScalarSensitivityTest(
 
         CalculateElementResidualScalarSensitivity(
             adjoint_total_element_residual_sensitivity, r_adjoint_element, r_adjoint_process_info);
+        KRATOS_WATCH(adjoint_total_element_residual_sensitivity);
 
         ElementType& r_primal_element = *(rPrimalModelPart.ElementsBegin() + i_element);
         GeometryType& r_primal_geometry = r_primal_element.GetGeometry();
@@ -354,8 +355,11 @@ void RunElementResidualScalarSensitivityTest(
 
         const std::size_t number_of_nodes = r_primal_geometry.PointsNumber();
         const std::size_t number_of_equations = residual_0.size();
-        const int local_size =
+        const int local_derivative_size =
             adjoint_total_element_residual_sensitivity.size1() / number_of_nodes;
+
+        const int local_equation_size =
+                adjoint_total_element_residual_sensitivity.size2() / number_of_nodes;
 
         residual.resize(number_of_equations);
         residual_sensitivity.resize(number_of_equations);
@@ -371,15 +375,21 @@ void RunElementResidualScalarSensitivityTest(
             CalculateResidual(residual, r_primal_element, r_primal_process_info);
 
             noalias(residual_sensitivity) = (residual - residual_0) / Delta;
+            KRATOS_WATCH(residual_sensitivity);
 
             for (std::size_t i_check_equation = 0;
                  i_check_equation < number_of_equations; ++i_check_equation)
             {
+                const std::size_t i_check_eq_node = i_check_equation / number_of_nodes;
+                const std::size_t i_check_eq_dim = i_check_equation % number_of_nodes;
+
                 const double current_adjoint_shape_sensitivity =
                     adjoint_total_element_residual_sensitivity(
-                        i_node * local_size + DerivativesOffset,
-                        i_check_equation + EquationOffset);
+                        i_node * local_derivative_size + DerivativesOffset,
+                        i_check_eq_node * local_equation_size + EquationOffset + i_check_eq_dim);
 
+                KRATOS_WATCH(residual_sensitivity[i_check_equation]);
+                KRATOS_WATCH(current_adjoint_shape_sensitivity);
                 IsValuesRelativelyNear(residual_sensitivity[i_check_equation],
                                        current_adjoint_shape_sensitivity, Tolerance);
             }

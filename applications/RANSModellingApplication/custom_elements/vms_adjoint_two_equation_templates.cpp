@@ -1,4 +1,4 @@
-#include "vms_adjoint_element.h"
+#include "custom_elements/vms_adjoint_element.h"
 
 namespace Kratos {
 
@@ -6,10 +6,10 @@ namespace Kratos {
 ///@{
 
 template<>
-void VMSAdjointElement<2>::GetDofList(DofsVectorType& rElementalDofList,
+void VMSAdjointElement<2,3,5>::GetDofList(DofsVectorType& rElementalDofList,
                                       ProcessInfo& /*rCurrentProcessInfo*/)
 {
-  const unsigned int NumNodes(3), LocalSize(9);
+  const unsigned int NumNodes(3), LocalSize(15);
 
   if (rElementalDofList.size() != LocalSize)
     rElementalDofList.resize(LocalSize);
@@ -24,14 +24,15 @@ void VMSAdjointElement<2>::GetDofList(DofsVectorType& rElementalDofList,
         ADJOINT_FLUID_VECTOR_1_Y);
     rElementalDofList[LocalIndex++] = this->GetGeometry()[iNode].pGetDof(
         ADJOINT_FLUID_SCALAR_1);
+    LocalIndex += 2;
   }
 }
 
 template<>
-void VMSAdjointElement<3>::GetDofList(DofsVectorType& rElementalDofList,
+void VMSAdjointElement<3,4,6>::GetDofList(DofsVectorType& rElementalDofList,
                                       ProcessInfo& /*rCurrentProcessInfo*/)
 {
-  const SizeType NumNodes(4), LocalSize(16);
+  const SizeType NumNodes(4), LocalSize(24);
 
   if (rElementalDofList.size() != LocalSize)
     rElementalDofList.resize(LocalSize);
@@ -48,15 +49,16 @@ void VMSAdjointElement<3>::GetDofList(DofsVectorType& rElementalDofList,
         ADJOINT_FLUID_VECTOR_1_Z);
     rElementalDofList[LocalIndex++] = this->GetGeometry()[iNode].pGetDof(
         ADJOINT_FLUID_SCALAR_1);
+    LocalIndex += 2;
   }
 }
 
 template<>
-void VMSAdjointElement<2>::EquationIdVector(
+void VMSAdjointElement<2,3,5>::EquationIdVector(
     EquationIdVectorType& rResult,
     ProcessInfo& /*rCurrentProcessInfo*/)
 {
-  const SizeType NumNodes(3), LocalSize(9);
+  const SizeType NumNodes(3), LocalSize(15);
 
   if (rResult.size() != LocalSize)
     rResult.resize(LocalSize, false);
@@ -71,15 +73,16 @@ void VMSAdjointElement<2>::EquationIdVector(
         .EquationId();
     rResult[LocalIndex++] = this->GetGeometry()[iNode].GetDof(ADJOINT_FLUID_SCALAR_1)
         .EquationId();
+    LocalIndex += 2;
   }
 }
 
 template<>
-void VMSAdjointElement<3>::EquationIdVector(
+void VMSAdjointElement<3,4,6>::EquationIdVector(
     EquationIdVectorType& rResult,
     ProcessInfo& /*rCurrentProcessInfo*/)
 {
-  const SizeType NumNodes(4), LocalSize(16);
+  const SizeType NumNodes(4), LocalSize(24);
 
   if (rResult.size() != LocalSize)
     rResult.resize(LocalSize, false);
@@ -96,18 +99,19 @@ void VMSAdjointElement<3>::EquationIdVector(
         .EquationId();
     rResult[LocalIndex++] = this->GetGeometry()[iNode].GetDof(ADJOINT_FLUID_SCALAR_1)
         .EquationId();
+    LocalIndex += 2;
   }
 }
 
 template<>
-double VMSAdjointElement<2>::CalculateElementSize(const double Area)
+double VMSAdjointElement<2,3,5>::CalculateElementSize(const double Area)
 {
   // Diameter of a circle of given Area.
   return 1.128379167 * std::sqrt(Area);
 }
 
 template<>
-double VMSAdjointElement<3>::CalculateElementSize(const double Volume)
+double VMSAdjointElement<3,4,6>::CalculateElementSize(const double Volume)
 {
   // Diameter of the sphere circumscribed to a regular tetrahedron
   // with the same volume.
@@ -115,7 +119,7 @@ double VMSAdjointElement<3>::CalculateElementSize(const double Volume)
 }
 
 template<>
-void VMSAdjointElement<2>::CalculateDeterminantOfJacobianDerivatives(
+void VMSAdjointElement<2,3,5>::CalculateDeterminantOfJacobianDerivatives(
     array_1d< double, 6 >& rDetJDerivatives)
 {
   const SizeType LocalSize(6);
@@ -132,7 +136,7 @@ void VMSAdjointElement<2>::CalculateDeterminantOfJacobianDerivatives(
 }
 
 template<>
-void VMSAdjointElement<3>::CalculateDeterminantOfJacobianDerivatives(
+void VMSAdjointElement<3,4,6>::CalculateDeterminantOfJacobianDerivatives(
     array_1d< double, 12 >& rDetJDerivatives)
 {
   const SizeType LocalSize(12);
@@ -170,7 +174,7 @@ void VMSAdjointElement<3>::CalculateDeterminantOfJacobianDerivatives(
 }
 
 template<>
-void VMSAdjointElement<2>::CalculateStabilizationParametersDerivative(
+void VMSAdjointElement<2,3,5>::CalculateStabilizationParametersDerivative(
     double& rTauOneDeriv,
     double& rTauTwoDeriv,
     const double TauOne,
@@ -190,7 +194,7 @@ void VMSAdjointElement<2>::CalculateStabilizationParametersDerivative(
 }
 
 template<>
-void VMSAdjointElement<3>::CalculateStabilizationParametersDerivative(
+void VMSAdjointElement<3,4,6>::CalculateStabilizationParametersDerivative(
     double& rTauOneDeriv,
     double& rTauTwoDeriv,
     const double TauOne,
@@ -211,9 +215,9 @@ void VMSAdjointElement<3>::CalculateStabilizationParametersDerivative(
 }
 
 template<>
-void VMSAdjointElement<2>::AddViscousTerm(
+void VMSAdjointElement<2,3,5>::AddViscousTerm(
     MatrixType& rResult,
-    const VMSAdjointElement<2>::ShapeFunctionDerivativesType& rDN_DX,
+    const VMSAdjointElement<2,3,5>::ShapeFunctionDerivativesType& rDN_DX,
     const double Weight)
 {
   const SizeType NumNodes = 3;
@@ -248,9 +252,9 @@ void VMSAdjointElement<2>::AddViscousTerm(
 }
 
 template<>
-void VMSAdjointElement<3>::AddViscousTerm(
+void VMSAdjointElement<3,4,6>::AddViscousTerm(
     MatrixType& rResult,
-    const VMSAdjointElement<3>::ShapeFunctionDerivativesType& rDN_DX,
+    const VMSAdjointElement<3,4,6>::ShapeFunctionDerivativesType& rDN_DX,
     const double Weight)
 {
   const unsigned int NumNodes = 4;
@@ -301,10 +305,10 @@ void VMSAdjointElement<3>::AddViscousTerm(
 }
 
 template<>
-void VMSAdjointElement<2>::AddViscousTermDerivative(
-    BoundedMatrix< double, 9, 9 >& rResult,
-    const VMSAdjointElement<2>::ShapeFunctionDerivativesType& rDN_DX,
-    const VMSAdjointElement<2>::ShapeFunctionDerivativesType& rDN_DX_Deriv,
+void VMSAdjointElement<2,3,5>::AddViscousTermDerivative(
+    BoundedMatrix< double, 15, 15 >& rResult,
+    const VMSAdjointElement<2,3,5>::ShapeFunctionDerivativesType& rDN_DX,
+    const VMSAdjointElement<2,3,5>::ShapeFunctionDerivativesType& rDN_DX_Deriv,
     const double Weight,
     const double WeightDeriv)
 {
@@ -360,10 +364,10 @@ void VMSAdjointElement<2>::AddViscousTermDerivative(
 }
 
 template<>
-void VMSAdjointElement<3>::AddViscousTermDerivative(
-    BoundedMatrix< double, 16, 16 >& rResult,
-    const VMSAdjointElement<3>::ShapeFunctionDerivativesType& rDN_DX,
-    const VMSAdjointElement<3>::ShapeFunctionDerivativesType& rDN_DX_Deriv,
+void VMSAdjointElement<3,4,6>::AddViscousTermDerivative(
+    BoundedMatrix< double, 24, 24 >& rResult,
+    const VMSAdjointElement<3,4,6>::ShapeFunctionDerivativesType& rDN_DX,
+    const VMSAdjointElement<3,4,6>::ShapeFunctionDerivativesType& rDN_DX_Deriv,
     const double Weight,
     const double WeightDeriv)
 {
@@ -456,7 +460,7 @@ void VMSAdjointElement<3>::AddViscousTermDerivative(
 
 ///@} // Specialized implementations
 
-template class VMSAdjointElement<2> ;
-template class VMSAdjointElement<3> ;
+template class VMSAdjointElement<2,3,5> ;
+template class VMSAdjointElement<3,4,6> ;
 
 }  // namespace Kratos

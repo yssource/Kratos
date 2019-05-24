@@ -26,7 +26,7 @@
 #include "custom_utilities/rans_variable_utils.h"
 #include "includes/model_part.h"
 #include "rans_modelling_application_variables.h"
-#include "test_utilities.h"
+#include "custom_utilities/test_utilities.h"
 #include "testing/testing.h"
 #include "utilities/variable_utils.h"
 
@@ -1415,7 +1415,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementFirstDerivat
             Matrix global_output;
             rElement.CalculateFirstDerivativesLHS(global_output, rProcessInfo);
             RansCalculationUtilities rans_calculation_utilities;
-            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 0, 0, 9, 9);
+            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 0, 0, 3, 3);
         };
 
     auto calculate_sensitivity_matrix_tke = [](Matrix& rOutput, Element& rElement,
@@ -1423,7 +1423,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementFirstDerivat
         Matrix global_output;
         rElement.CalculateFirstDerivativesLHS(global_output, rProcessInfo);
         RansCalculationUtilities rans_calculation_utilities;
-        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 9, 0, 3, 9);
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 3, 0, 1, 3);
     };
 
     auto calculate_sensitivity_matrix_epsilon = [](Matrix& rOutput, Element& rElement,
@@ -1431,7 +1431,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementFirstDerivat
         Matrix global_output;
         rElement.CalculateFirstDerivativesLHS(global_output, rProcessInfo);
         RansCalculationUtilities rans_calculation_utilities;
-        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 12, 0, 3, 9);
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 4, 0, 1, 3);
     };
 
     const double delta = 1e-5;
@@ -1510,7 +1510,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementFirstDerivat
             Matrix global_output;
             rElement.CalculateFirstDerivativesLHS(global_output, rProcessInfo);
             RansCalculationUtilities rans_calculation_utilities;
-            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 0, 9, 9, 3);
+            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 0, 3, 3, 1);
         };
 
     auto calculate_sensitivity_matrix_tke = [](Matrix& rOutput, Element& rElement,
@@ -1518,7 +1518,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementFirstDerivat
         Matrix global_output;
         rElement.CalculateFirstDerivativesLHS(global_output, rProcessInfo);
         RansCalculationUtilities rans_calculation_utilities;
-        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 9, 9, 3, 3);
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 3, 3, 1, 1);
     };
 
     auto calculate_sensitivity_matrix_epsilon = [](Matrix& rOutput, Element& rElement,
@@ -1526,7 +1526,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementFirstDerivat
         Matrix global_output;
         rElement.CalculateFirstDerivativesLHS(global_output, rProcessInfo);
         RansCalculationUtilities rans_calculation_utilities;
-        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 12, 9, 3, 3);
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 4, 3, 1, 1);
     };
 
     const double delta = 1e-5;
@@ -1605,7 +1605,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementFirstDerivat
             Matrix global_output;
             rElement.CalculateFirstDerivativesLHS(global_output, rProcessInfo);
             RansCalculationUtilities rans_calculation_utilities;
-            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 0, 12, 9, 3);
+            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 0, 4, 3, 1);
         };
 
     auto calculate_sensitivity_matrix_tke = [](Matrix& rOutput, Element& rElement,
@@ -1613,7 +1613,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementFirstDerivat
         Matrix global_output;
         rElement.CalculateFirstDerivativesLHS(global_output, rProcessInfo);
         RansCalculationUtilities rans_calculation_utilities;
-        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 9, 12, 3, 3);
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 3, 4, 1, 1);
     };
 
     auto calculate_sensitivity_matrix_epsilon = [](Matrix& rOutput, Element& rElement,
@@ -1621,7 +1621,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementFirstDerivat
         Matrix global_output;
         rElement.CalculateFirstDerivativesLHS(global_output, rProcessInfo);
         RansCalculationUtilities rans_calculation_utilities;
-        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 12, 12, 3, 3);
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 4, 4, 1, 1);
     };
 
     const double delta = 1e-5;
@@ -1700,7 +1700,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementSecondDeriva
             rElement.CalculateSecondDerivativesLHS(global_output, rProcessInfo);
             noalias(global_output) = global_output * one_minus_bossak_alpha;
             RansCalculationUtilities rans_calculation_utilities;
-            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 0, 0, 9, 9);
+            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 0, 0, 3, 3);
         };
 
     auto calculate_sensitivity_matrix_tke = [one_minus_bossak_alpha](
@@ -1710,7 +1710,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementSecondDeriva
         rElement.CalculateSecondDerivativesLHS(global_output, rProcessInfo);
         noalias(global_output) = global_output * one_minus_bossak_alpha;
         RansCalculationUtilities rans_calculation_utilities;
-        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 9, 0, 3, 9);
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 3, 0, 1, 3);
     };
 
     auto calculate_sensitivity_matrix_epsilon = [one_minus_bossak_alpha](
@@ -1720,7 +1720,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementSecondDeriva
         rElement.CalculateSecondDerivativesLHS(global_output, rProcessInfo);
         noalias(global_output) = global_output * one_minus_bossak_alpha;
         RansCalculationUtilities rans_calculation_utilities;
-        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 12, 0, 3, 9);
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 4, 0, 1, 3);
     };
 
     const double delta = 1e-5;
@@ -1792,7 +1792,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementSecondDeriva
             rElement.CalculateSecondDerivativesLHS(global_output, rProcessInfo);
             noalias(global_output) = global_output * one_minus_bossak_alpha;
             RansCalculationUtilities rans_calculation_utilities;
-            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 0, 9, 9, 3);
+            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 0, 3, 3, 1);
         };
 
     auto calculate_sensitivity_matrix_tke = [one_minus_bossak_alpha](
@@ -1802,7 +1802,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementSecondDeriva
         rElement.CalculateSecondDerivativesLHS(global_output, rProcessInfo);
         noalias(global_output) = global_output * one_minus_bossak_alpha;
         RansCalculationUtilities rans_calculation_utilities;
-        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 9, 9, 3, 3);
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 3, 3, 1, 1);
     };
 
     auto calculate_sensitivity_matrix_epsilon = [one_minus_bossak_alpha](
@@ -1812,7 +1812,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementSecondDeriva
         rElement.CalculateSecondDerivativesLHS(global_output, rProcessInfo);
         noalias(global_output) = global_output * one_minus_bossak_alpha;
         RansCalculationUtilities rans_calculation_utilities;
-        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 12, 9, 3, 3);
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 4, 3, 1, 1);
     };
 
     const double delta = 1e-5;
@@ -1884,7 +1884,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementSecondDeriva
             rElement.CalculateSecondDerivativesLHS(global_output, rProcessInfo);
             noalias(global_output) = global_output * one_minus_bossak_alpha;
             RansCalculationUtilities rans_calculation_utilities;
-            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 0, 12, 9, 3);
+            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 0, 4, 3, 1);
         };
 
     auto calculate_sensitivity_matrix_tke = [one_minus_bossak_alpha](
@@ -1894,7 +1894,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementSecondDeriva
         rElement.CalculateSecondDerivativesLHS(global_output, rProcessInfo);
         noalias(global_output) = global_output * one_minus_bossak_alpha;
         RansCalculationUtilities rans_calculation_utilities;
-        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 9, 12, 3, 3);
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 3, 4, 1, 1);
     };
 
     auto calculate_sensitivity_matrix_epsilon = [one_minus_bossak_alpha](
@@ -1904,7 +1904,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementSecondDeriva
         rElement.CalculateSecondDerivativesLHS(global_output, rProcessInfo);
         noalias(global_output) = global_output * one_minus_bossak_alpha;
         RansCalculationUtilities rans_calculation_utilities;
-        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 12, 12, 3, 3);
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 4, 4, 1, 1);
     };
 
     const double delta = 1e-5;
@@ -1964,7 +1964,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementShapeSensiti
             Matrix global_output;
             rElement.CalculateSensitivityMatrix(SHAPE_SENSITIVITY, global_output, rProcessInfo);
             RansCalculationUtilities rans_calculation_utilities;
-            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 0, 0, 6, 9);
+            rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 0, 0, 2, 3);
         };
 
     const double delta = 1e-5;
@@ -2011,7 +2011,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementShapeSensiti
         Matrix global_output;
         rElement.CalculateSensitivityMatrix(SHAPE_SENSITIVITY, global_output, rProcessInfo);
         RansCalculationUtilities rans_calculation_utilities;
-        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 0, 9, 6, 3);
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 0, 3, 2, 1);
     };
 
     const double delta = 1e-5;
@@ -2058,7 +2058,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementShapeSensiti
         Matrix global_output;
         rElement.CalculateSensitivityMatrix(SHAPE_SENSITIVITY, global_output, rProcessInfo);
         RansCalculationUtilities rans_calculation_utilities;
-        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 0, 12, 6, 3);
+        rans_calculation_utilities.GetSubMatrix(rOutput, global_output, 3, 0, 4, 2, 1);
     };
 
     const double delta = 1e-5;

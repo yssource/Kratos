@@ -66,12 +66,12 @@ namespace Kratos
  * $s_\phi$, $f_\phi$ are velocity, effective kinematic viscosity,
  * reaction coefficient, source term respectively.
  *
- * @tparam TDim                                Dimensionality of the element
- * @tparam TNumNodes                           Number of nodes in the element
- * @tparam TElementData                        Data container used to calculate derivatives
- * @tparam TMonolithicAssemblyElementBlockSize Block size of the parent monolithic element
+ * @tparam TDim                            Dimensionality of the element
+ * @tparam TNumNodes                       Number of nodes in the element
+ * @tparam TElementData                    Data container used to calculate derivatives
+ * @tparam TMonolithicAssemblyNodalDofSize Block size of the parent monolithic element
  */
-template <unsigned int TDim, unsigned int TNumNodes, class TElementData, unsigned int TMonolithicAssemblyElementBlockSize = 1>
+template <unsigned int TDim, unsigned int TNumNodes, class TElementData, unsigned int TMonolithicAssemblyNodalDofSize = 1>
 class StabilizedConvectionDiffusionReactionAdjointElement : public Element
 {
 public:
@@ -82,11 +82,13 @@ public:
     KRATOS_CLASS_POINTER_DEFINITION(StabilizedConvectionDiffusionReactionAdjointElement);
 
     constexpr static unsigned int TMonolithicAssemblyLocalSize =
-        TNumNodes * TMonolithicAssemblyElementBlockSize;
+        TNumNodes * TMonolithicAssemblyNodalDofSize;
 
     constexpr static unsigned int TVelPrBlockSize = TDim + 1;
 
     constexpr static unsigned int TVelPrLocalSize = TNumNodes * TVelPrBlockSize;
+
+    constexpr static bool TMonolithicMatrixConstruction = (TMonolithicAssemblyLocalSize!=TNumNodes);
 
     /// base type: an GeometricalObject that automatically has a unique number
     typedef Element BaseType;
@@ -392,13 +394,16 @@ public:
     void CalculateSecondDerivativesLHS(MatrixType& rLeftHandSideMatrix,
                                        ProcessInfo& rCurrentProcessInfo) override
     {
-        if (rLeftHandSideMatrix.size1() != TNumNodes || rLeftHandSideMatrix.size2() != TNumNodes)
-            rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
+        if (!TMonolithicMatrixConstruction)
+        {
+            if (rLeftHandSideMatrix.size1() != TMonolithicAssemblyLocalSize ||
+                rLeftHandSideMatrix.size2() != TMonolithicAssemblyLocalSize)
+                rLeftHandSideMatrix.resize(TMonolithicAssemblyLocalSize,
+                                           TMonolithicAssemblyLocalSize, false);
+            rLeftHandSideMatrix.clear();
+        }
 
-        rLeftHandSideMatrix.clear();
-
-        AddPrimalMassMatrix(rLeftHandSideMatrix, rCurrentProcessInfo);
-        noalias(rLeftHandSideMatrix) = rLeftHandSideMatrix * (-1.0);
+        AddPrimalMassMatrix(rLeftHandSideMatrix, -1.0, rCurrentProcessInfo);
         AddPrimalSteadyTermScalarRateDerivatives(rLeftHandSideMatrix, rCurrentProcessInfo);
     }
 
@@ -1056,10 +1061,14 @@ protected:
                                                         const Variable<double>& rDerivativeVariable,
                                                         const ProcessInfo& rCurrentProcessInfo)
     {
-        if (rResidualDerivatives.size1() != TNumNodes || rResidualDerivatives.size2() != TNumNodes)
-            rResidualDerivatives.resize(TNumNodes, TNumNodes, false);
-
-        rResidualDerivatives.clear();
+        if (!TMonolithicMatrixConstruction)
+        {
+            if (rResidualDerivatives.size1() != TMonolithicAssemblyLocalSize ||
+                rResidualDerivatives.size2() != TMonolithicAssemblyLocalSize)
+                rResidualDerivatives.resize(TMonolithicAssemblyLocalSize,
+                                            TMonolithicAssemblyLocalSize, false);
+            rResidualDerivatives.clear();
+        }
 
         AddPrimalSteadyTermScalarDerivatives(
             rResidualDerivatives, rDerivativeVariable, rCurrentProcessInfo);
@@ -1987,13 +1996,23 @@ private:
     {
         KRATOS_TRY
 
-        // if (rLeftHandSideMatrix.size1() != TMonolithicAssemblyLocalSize)
-        // {
-        //     KRATOS_ERROR << "rLeftHandSideMatrix size mismatch. "
-        //                     "rLeftHandSideMatrix.size1() != Expected size [ "
-        //                  << rLeftHandSideMatrix.size1()
-        //                  << " != " << TMonolithicAssemblyLocalSize << " ]";
-        // }
+        constexpr unsigned int TLocalMatrixSize = TMonolithicAssemblyLocalSize;
+
+        if (rLeftHandSideMatrix.size1() != TLocalMatrixSize)
+        {
+            KRATOS_ERROR << "rLeftHandSideMatrix size mismatch. "
+                            "rLeftHandSideMatrix.size1() != Expected size [ "
+                         << rLeftHandSideMatrix.size1()
+                         << " != " << TLocalMatrixSize << " ]";
+        }
+
+        if (rLeftHandSideMatrix.size2() != TLocalMatrixSize)
+        {
+            KRATOS_ERROR << "rLeftHandSideMatrix size mismatch. "
+                            "rLeftHandSideMatrix.size2() != Expected size [ "
+                         << rLeftHandSideMatrix.size2()
+                         << " != " << TLocalMatrixSize << " ]";
+        }
 
         // Get Shape function data
         Vector gauss_weights;
@@ -2219,8 +2238,8 @@ private:
 
                     // putting it in the transposed matrix
                     rLeftHandSideMatrix(
-                        c * TMonolithicAssemblyElementBlockSize + derivative_dof_index,
-                        a * TMonolithicAssemblyElementBlockSize + equation_dof_index) +=
+                        c * TMonolithicAssemblyNodalDofSize + derivative_dof_index,
+                        a * TMonolithicAssemblyNodalDofSize + equation_dof_index) +=
                         -1.0 * gauss_weights[g] * value;
                 }
             }
@@ -2243,8 +2262,8 @@ private:
 
                     // putting it in the transposed matrix
                     rLeftHandSideMatrix(
-                        c * TMonolithicAssemblyElementBlockSize + derivative_dof_index,
-                        a * TMonolithicAssemblyElementBlockSize + equation_dof_index) +=
+                        c * TMonolithicAssemblyNodalDofSize + derivative_dof_index,
+                        a * TMonolithicAssemblyNodalDofSize + equation_dof_index) +=
                         gauss_weights[g] * value;
                 }
             }
@@ -2254,8 +2273,28 @@ private:
     }
 
     void AddPrimalSteadyTermScalarRateDerivatives(MatrixType& rLeftHandSideMatrix,
-                                                  ProcessInfo& rCurrentProcessInfo)
+                                                  const ProcessInfo& rCurrentProcessInfo)
     {
+        KRATOS_TRY
+
+        constexpr unsigned int TLocalMatrixSize = TMonolithicAssemblyLocalSize;
+
+        if (rLeftHandSideMatrix.size1() != TLocalMatrixSize)
+        {
+            KRATOS_ERROR << "rLeftHandSideMatrix size mismatch. "
+                            "rLeftHandSideMatrix.size1() != Expected size [ "
+                         << rLeftHandSideMatrix.size1()
+                         << " != " << TLocalMatrixSize << " ]";
+        }
+
+        if (rLeftHandSideMatrix.size2() != TLocalMatrixSize)
+        {
+            KRATOS_ERROR << "rLeftHandSideMatrix size mismatch. "
+                            "rLeftHandSideMatrix.size2() != Expected size [ "
+                         << rLeftHandSideMatrix.size2()
+                         << " != " << TLocalMatrixSize << " ]";
+        }
+
         // Get Shape function data
         Vector gauss_weights;
         Matrix shape_functions;
@@ -2368,17 +2407,38 @@ private:
                              velocity_convective_terms[a] * velocity_dot_scalar_gradient;
 
                     // putting it in the transposed matrix
-                    rLeftHandSideMatrix(
-                        c * TMonolithicAssemblyElementBlockSize + dof_index,
-                        a * TMonolithicAssemblyElementBlockSize + dof_index) +=
+                    rLeftHandSideMatrix(c * TMonolithicAssemblyNodalDofSize + dof_index,
+                                        a * TMonolithicAssemblyNodalDofSize + dof_index) +=
                         -1.0 * gauss_weights[g] * value;
                 }
             }
         }
+
+        KRATOS_CATCH("");
     }
 
     void AddPrimalDampingMatrix(MatrixType& rPrimalDampingMatrix, ProcessInfo& rCurrentProcessInfo)
     {
+        KRATOS_TRY
+
+        constexpr unsigned int TLocalMatrixSize = TMonolithicAssemblyLocalSize;
+
+        if (rPrimalDampingMatrix.size1() != TLocalMatrixSize)
+        {
+            KRATOS_ERROR << "rPrimalDampingMatrix size mismatch. "
+                            "rPrimalDampingMatrix.size1() != Expected size [ "
+                         << rPrimalDampingMatrix.size1()
+                         << " != " << TLocalMatrixSize << " ]";
+        }
+
+        if (rPrimalDampingMatrix.size2() != TLocalMatrixSize)
+        {
+            KRATOS_ERROR << "rPrimalDampingMatrix size mismatch. "
+                            "rPrimalDampingMatrix.size2() != Expected size [ "
+                         << rPrimalDampingMatrix.size2()
+                         << " != " << TLocalMatrixSize << " ]";
+        }
+
         // Get Shape function data
         Vector gauss_weights;
         Matrix shape_functions;
@@ -2504,24 +2564,67 @@ private:
                     value += stream_line_diffusion * velocity_convective_terms[a] *
                              velocity_convective_terms[c];
 
-                    rPrimalDampingMatrix(
-                        c * TMonolithicAssemblyElementBlockSize + dof_index,
-                        a * TMonolithicAssemblyElementBlockSize + dof_index) +=
+                    rPrimalDampingMatrix(c * TMonolithicAssemblyNodalDofSize + dof_index,
+                                         a * TMonolithicAssemblyNodalDofSize + dof_index) +=
                         -1.0 * gauss_weights[g] * value;
                 }
             }
         }
+
+        KRATOS_CATCH("");
     }
 
-    void AddLumpedMassMatrix(MatrixType& rMassMatrix, const double Mass)
-    {
-        for (unsigned int iNode = 0; iNode < TNumNodes; ++iNode)
-            rMassMatrix(iNode, iNode) += Mass;
-    }
-
-    void AddPrimalMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo)
+    void AddLumpedMassMatrix(MatrixType& rMassMatrix, const double Mass, const ProcessInfo& rCurrentProcessInfo)
     {
         KRATOS_TRY
+
+        constexpr unsigned int TLocalMatrixSize = TMonolithicAssemblyLocalSize;
+
+        if (rMassMatrix.size1() != TLocalMatrixSize)
+        {
+            KRATOS_ERROR << "rMassMatrix size mismatch. "
+                            "rMassMatrix.size1() != Expected size [ "
+                         << rMassMatrix.size1() << " != " << TLocalMatrixSize << " ]";
+        }
+
+        if (rMassMatrix.size2() != TLocalMatrixSize)
+        {
+            KRATOS_ERROR << "rMassMatrix size mismatch. "
+                            "rMassMatrix.size2() != Expected size [ "
+                         << rMassMatrix.size2() << " != " << TLocalMatrixSize << " ]";
+        }
+
+        const unsigned int dof_index =
+            static_cast<unsigned int>(rCurrentProcessInfo[this->GetPrimalVariable()]);
+
+        for (unsigned int iNode = 0; iNode < TNumNodes; ++iNode)
+            rMassMatrix(iNode * TMonolithicAssemblyNodalDofSize + dof_index,
+                        iNode * TMonolithicAssemblyNodalDofSize + dof_index) += Mass;
+
+        KRATOS_CATCH("");
+    }
+
+    void AddPrimalMassMatrix(MatrixType& rMassMatrix,
+                             const double ScalingFactor,
+                             const ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY
+
+        constexpr unsigned int TLocalMatrixSize = TMonolithicAssemblyLocalSize;
+
+        if (rMassMatrix.size1() != TLocalMatrixSize)
+        {
+            KRATOS_ERROR << "rMassMatrix size mismatch. "
+                            "rMassMatrix.size1() != Expected size [ "
+                         << rMassMatrix.size1() << " != " << TLocalMatrixSize << " ]";
+        }
+
+        if (rMassMatrix.size2() != TLocalMatrixSize)
+        {
+            KRATOS_ERROR << "rMassMatrix size mismatch. "
+                            "rMassMatrix.size2() != Expected size [ "
+                         << rMassMatrix.size2() << " != " << TLocalMatrixSize << " ]";
+        }
 
         // Get Shape function data
         Vector gauss_weights;
@@ -2552,7 +2655,7 @@ private:
                 prod(trans(r_parameter_derivatives_g), r_parameter_derivatives_g);
 
             const double mass = gauss_weights[g] / TNumNodes;
-            this->AddLumpedMassMatrix(rMassMatrix, mass);
+            this->AddLumpedMassMatrix(rMassMatrix, mass * ScalingFactor, rCurrentProcessInfo);
 
             const array_1d<double, 3>& velocity =
                 this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
@@ -2578,9 +2681,9 @@ private:
             // Add mass stabilization terms
             for (unsigned int i = 0; i < TNumNodes; ++i)
                 for (unsigned int j = 0; j < TNumNodes; ++j)
-                    rMassMatrix(j * TMonolithicAssemblyElementBlockSize + dof_index,
-                                i * TMonolithicAssemblyElementBlockSize + dof_index) +=
-                        gauss_weights[g] * tau *
+                    rMassMatrix(j * TMonolithicAssemblyNodalDofSize + dof_index,
+                                i * TMonolithicAssemblyNodalDofSize + dof_index) +=
+                        ScalingFactor * gauss_weights[g] * tau *
                         (velocity_convective_terms[i] + s * gauss_shape_functions[i]) *
                         gauss_shape_functions[j];
         }
@@ -2592,6 +2695,26 @@ private:
                                       const Variable<double>& rDerivativeVariable,
                                       const ProcessInfo& rCurrentProcessInfo)
     {
+        KRATOS_TRY
+
+        constexpr unsigned int TLocalMatrixSize = TMonolithicAssemblyLocalSize;
+
+        if (rLeftHandSideMatrix.size1() != TLocalMatrixSize)
+        {
+            KRATOS_ERROR << "rLeftHandSideMatrix size mismatch. "
+                            "rLeftHandSideMatrix.size1() != Expected size [ "
+                         << rLeftHandSideMatrix.size1()
+                         << " != " << TLocalMatrixSize << " ]";
+        }
+
+        if (rLeftHandSideMatrix.size2() != TLocalMatrixSize)
+        {
+            KRATOS_ERROR << "rLeftHandSideMatrix size mismatch. "
+                            "rLeftHandSideMatrix.size2() != Expected size [ "
+                         << rLeftHandSideMatrix.size2()
+                         << " != " << TLocalMatrixSize << " ]";
+        }
+
         // Get Shape function data
         Vector gauss_weights;
         Matrix shape_functions;
@@ -2675,21 +2798,29 @@ private:
                     value += tau * (s_derivatives[c] * gauss_shape_functions[a]) * relaxed_scalar_rate;
 
                     rLeftHandSideMatrix(
-                        c * TMonolithicAssemblyElementBlockSize + derivative_dof_index,
-                        a * TMonolithicAssemblyElementBlockSize + equation_dof_index) +=
+                        c * TMonolithicAssemblyNodalDofSize + derivative_dof_index,
+                        a * TMonolithicAssemblyNodalDofSize + equation_dof_index) +=
                         -1.0 * gauss_weights[g] * value;
                 }
             }
         }
+
+        KRATOS_CATCH("");
     }
 
     void CalculateElementTotalResidualShapeSensitivity(Matrix& rOutput, const ProcessInfo& rCurrentProcessInfo)
     {
-        constexpr unsigned int TLocalSize = TNumNodes * TDim;
-        if (rOutput.size1() != TLocalSize || rOutput.size2() != TNumNodes)
-            rOutput.resize(TLocalSize, TNumNodes, false);
+        KRATOS_TRY
 
-        rOutput.clear();
+        constexpr unsigned int TLocalCoordsSize = TNumNodes * TDim;
+        constexpr unsigned int TLocalMatrixSize = TMonolithicAssemblyLocalSize;
+
+        if (!TMonolithicMatrixConstruction)
+        {
+            if (rOutput.size1() != TLocalCoordsSize || rOutput.size2() != TLocalMatrixSize)
+                rOutput.resize(TLocalCoordsSize, TLocalMatrixSize, false);
+            rOutput.clear();
+        }
 
         // Get Shape function data
         Vector gauss_weights;
@@ -3060,22 +3191,31 @@ private:
                                  primal_variable_relaxed_rate * gauss_weight;
                         value += tau * tau_operator * primal_variable_relaxed_rate * gauss_weight_deriv;
 
-                        rOutput(block_size + k, a * TMonolithicAssemblyElementBlockSize +
+                        rOutput(block_size + k, a * TMonolithicAssemblyNodalDofSize +
                                                     dof_index) -= value;
                     }
                 }
             }
         }
+
+        KRATOS_CATCH("");
     }
 
     void CalculateElementTotalResidualVelocityDerivatives(Matrix& rResidualDerivatives,
                                                           const ProcessInfo& rCurrentProcessInfo)
     {
-        if (rResidualDerivatives.size1() != TVelPrLocalSize ||
-            rResidualDerivatives.size2() != TNumNodes)
-            rResidualDerivatives.resize(TVelPrLocalSize, TNumNodes, false);
+        KRATOS_TRY
 
-        rResidualDerivatives.clear();
+        constexpr unsigned int TLocalMatrixSize = TMonolithicAssemblyLocalSize;
+        const unsigned int local_vel_pr_size = std::max(TVelPrLocalSize, TLocalMatrixSize);
+
+        if (!TMonolithicMatrixConstruction)
+        {
+            if (rResidualDerivatives.size1() != local_vel_pr_size ||
+                rResidualDerivatives.size2() != TLocalMatrixSize)
+                rResidualDerivatives.resize(local_vel_pr_size, TLocalMatrixSize, false);
+            rResidualDerivatives.clear();
+        }
 
         // Get Shape function data
         Vector gauss_weights;
@@ -3092,8 +3232,10 @@ private:
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
         const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
-        // const unsigned int dof_index =
-        //     static_cast<unsigned int>(rCurrentProcessInfo[primal_variable]);
+        const unsigned int equation_dof_index =
+            static_cast<unsigned int>(rCurrentProcessInfo[primal_variable]);
+        const unsigned int nodal_vel_pr_derivative_dof_size =
+            std::max(TMonolithicAssemblyNodalDofSize, TVelPrBlockSize);
 
         BoundedVector<double, TNumNodes> primal_variable_gradient_convective_terms,
             velocity_convective_terms;
@@ -3255,7 +3397,7 @@ private:
             {
                 for (unsigned int c = 0; c < TNumNodes; ++c)
                 {
-                    unsigned int block_size = c * TVelPrBlockSize;
+                    unsigned int block_size = c * nodal_vel_pr_derivative_dof_size;
                     for (unsigned int k = 0; k < TDim; ++k)
                     {
                         // adding damping matrix derivatives
@@ -3341,7 +3483,8 @@ private:
                                  gauss_shape_functions[c] * primal_variable_gradient[k];
 
                         // putting transposed values
-                        rResidualDerivatives(block_size + k, a) -=
+                        rResidualDerivatives(block_size + k, a * TMonolithicAssemblyNodalDofSize +
+                                                                 equation_dof_index) -=
                             value * gauss_weights[g];
 
                         // adding source term derivatives
@@ -3362,7 +3505,8 @@ private:
                                  source_derivatives(c, k);
 
                         // putting transposed values
-                        rResidualDerivatives(block_size + k, a) +=
+                        rResidualDerivatives(block_size + k, a * TMonolithicAssemblyNodalDofSize +
+                                                                 equation_dof_index) +=
                             value * gauss_weights[g];
 
                         // adding mass term derivatives
@@ -3377,12 +3521,15 @@ private:
                                   s_derivatives(c, k) * gauss_shape_functions[a]) *
                                  primal_variable_relaxed_rate;
 
-                        rResidualDerivatives(block_size + k, a) -=
+                        rResidualDerivatives(block_size + k, a * TMonolithicAssemblyNodalDofSize +
+                                                                 equation_dof_index) -=
                             value * gauss_weights[g];
                     }
                 }
             }
         }
+
+        KRATOS_CATCH("");
     }
 
     ///@}
@@ -3429,16 +3576,16 @@ private:
 ///@{
 
 /// input stream function
-template <unsigned int TDim, unsigned int TNumNodes, class TElementData, unsigned int TMonolithicAssemblyElementBlockSize = 1>
+template <unsigned int TDim, unsigned int TNumNodes, class TElementData, unsigned int TMonolithicAssemblyNodalDofSize = 1>
 inline std::istream& operator>>(
     std::istream& rIStream,
-    StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, TElementData, TMonolithicAssemblyElementBlockSize>& rThis);
+    StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, TElementData, TMonolithicAssemblyNodalDofSize>& rThis);
 
 /// output stream function
-template <unsigned int TDim, unsigned int TNumNodes, class TElementData, unsigned int TMonolithicAssemblyElementBlockSize = 1>
+template <unsigned int TDim, unsigned int TNumNodes, class TElementData, unsigned int TMonolithicAssemblyNodalDofSize = 1>
 inline std::ostream& operator<<(
     std::ostream& rOStream,
-    const StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, TElementData, TMonolithicAssemblyElementBlockSize>& rThis)
+    const StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, TElementData, TMonolithicAssemblyNodalDofSize>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << " : " << std::endl;

@@ -88,7 +88,8 @@ public:
 
     constexpr static unsigned int TVelPrLocalSize = TNumNodes * TVelPrBlockSize;
 
-    constexpr static bool TMonolithicMatrixConstruction = (TMonolithicAssemblyLocalSize!=TNumNodes);
+    constexpr static bool TMonolithicMatrixConstruction =
+        (TMonolithicAssemblyLocalSize != TNumNodes);
 
     /// base type: an GeometricalObject that automatically has a unique number
     typedef Element BaseType;
@@ -271,13 +272,18 @@ public:
      */
     void EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& rCurrentProcessInfo) override
     {
-        KRATOS_TRY;
-        KRATOS_ERROR << "Attempting to call base "
-                        "StabilizedConvectionDiffusionReactionAdjointElement "
-                        "EquationIdVector method. Please implement it in the "
-                        "derrived class."
-                     << std::endl;
-        KRATOS_CATCH("");
+        if (rResult.size() != TMonolithicAssemblyLocalSize)
+            rResult.resize(TMonolithicAssemblyLocalSize, false);
+
+        const Variable<double>& r_adjoint_Variable = this->GetAdjointVariable();
+        const IndexType dof_index =
+            static_cast<IndexType>(rCurrentProcessInfo[this->GetPrimalVariable()]);
+
+        for (IndexType i_node = 0; i_node < TNumNodes; ++i_node)
+        {
+            rResult[i_node * TMonolithicAssemblyNodalDofSize + dof_index] =
+                this->GetGeometry()[i_node].GetDof(r_adjoint_Variable).EquationId();
+        }
     }
 
     /**
@@ -287,13 +293,18 @@ public:
      */
     void GetDofList(DofsVectorType& rElementalDofList, ProcessInfo& rCurrentProcessInfo) override
     {
-        KRATOS_TRY;
-        KRATOS_ERROR
-            << "Attempting to call base "
-               "StabilizedConvectionDiffusionReactionAdjointElement GetDofList "
-               "method. Please implement it in the derrived class."
-            << std::endl;
-        KRATOS_CATCH("");
+        if (rElementalDofList.size() != TMonolithicAssemblyLocalSize)
+            rElementalDofList.resize(TMonolithicAssemblyLocalSize);
+
+        const Variable<double>& r_adjoint_Variable = this->GetAdjointVariable();
+        const IndexType dof_index =
+            static_cast<IndexType>(rCurrentProcessInfo[this->GetPrimalVariable()]);
+
+        for (IndexType i_node = 0; i_node < TNumNodes; ++i_node)
+        {
+            rElementalDofList[i_node * TMonolithicAssemblyNodalDofSize + dof_index] =
+                this->GetGeometry()[i_node].pGetDof(r_adjoint_Variable);
+        }
     }
 
     /**
@@ -325,10 +336,14 @@ public:
     void CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix,
                                ProcessInfo& rCurrentProcessInfo) override
     {
-        if (rLeftHandSideMatrix.size1() != TNumNodes || rLeftHandSideMatrix.size2() != TNumNodes)
-            rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
+        if (!TMonolithicMatrixConstruction)
+        {
+            if (rLeftHandSideMatrix.size1() != TNumNodes ||
+                rLeftHandSideMatrix.size2() != TNumNodes)
+                rLeftHandSideMatrix.resize(TNumNodes, TNumNodes, false);
 
-        rLeftHandSideMatrix.clear();
+            rLeftHandSideMatrix.clear();
+        }
     }
 
     /**
@@ -529,6 +544,7 @@ public:
         const Variable<double>& r_primal_variable = this->GetPrimalVariable();
         const Variable<double>& r_primal_relaxed_rate_variable =
             this->GetPrimalRelaxedRateVariable();
+        const Variable<double>& r_adjoint_variable = this->GetAdjointVariable();
 
         KRATOS_CHECK_VARIABLE_KEY(r_primal_variable);
         KRATOS_CHECK_VARIABLE_KEY(r_primal_relaxed_rate_variable);
@@ -536,6 +552,7 @@ public:
         KRATOS_CHECK_VARIABLE_KEY(BOSSAK_ALPHA);
         KRATOS_CHECK_VARIABLE_KEY(NEWMARK_GAMMA);
         KRATOS_CHECK_VARIABLE_KEY(DELTA_TIME);
+        KRATOS_CHECK_VARIABLE_KEY(r_adjoint_variable);
 
         for (IndexType iNode = 0; iNode < this->GetGeometry().size(); ++iNode)
         {
@@ -543,6 +560,9 @@ public:
             KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(r_primal_variable, r_node);
             KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(r_primal_relaxed_rate_variable, r_node);
             KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(VELOCITY, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(r_adjoint_variable, r_node);
+
+            KRATOS_CHECK_DOF_IN_NODE(r_adjoint_variable, r_node);
         }
 
         return 0;
@@ -613,7 +633,7 @@ protected:
                         "StabilizedConvectionDiffusionReactionAdjointElement "
                         "class. Please implement it in the derrived class.";
 
-        return RANS_ADJOINT_SCALAR_1;
+        return RANS_SCALAR_1_ADJOINT_1;
 
         KRATOS_CATCH("");
     }
@@ -640,7 +660,29 @@ protected:
                         "StabilizedConvectionDiffusionReactionAdjointElement "
                         "class. Please implement it in the derrived class.";
 
-        return RANS_ADJOINT_SCALAR_1;
+        return RANS_SCALAR_1_ADJOINT_1;
+
+        KRATOS_CATCH("");
+    }
+
+    /**
+     * @brief Get the adjoint variable
+     *
+     * This method returns the adjoint variable.
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @return const Variable<double>&
+     */
+    virtual const Variable<double>& GetAdjointVariable() const
+    {
+        KRATOS_TRY
+
+        KRATOS_ERROR << "Calling base GetAdjointVariable method in "
+                        "StabilizedConvectionDiffusionReactionAdjointElement "
+                        "class. Please implement it in the derrived class.";
+
+        return RANS_SCALAR_1_ADJOINT_1;
 
         KRATOS_CATCH("");
     }

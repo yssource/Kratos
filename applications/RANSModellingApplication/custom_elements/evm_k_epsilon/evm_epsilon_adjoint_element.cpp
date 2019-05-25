@@ -175,52 +175,19 @@ Element::Pointer EvmEpsilonAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNo
     KRATOS_CATCH("");
 }
 
-/**
- * this determines the elemental equation ID vector for all elemental
- * DOFs
- * @param rResult: the elemental equation ID vector
- * @param rCurrentProcessInfo: the current process info instance
- */
-template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
-void EvmEpsilonAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::EquationIdVector(
-    EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo)
-{
-    if (rResult.size() != TNumNodes)
-        rResult.resize(TNumNodes, false);
-
-    for (unsigned int i = 0; i < TNumNodes; i++)
-        rResult[i] = Element::GetGeometry()[i].GetDof(RANS_ADJOINT_SCALAR_2).EquationId();
-}
-
-/**
- * determines the elemental list of DOFs
- * @param ElementalDofList: the list of DOFs
- * @param rCurrentProcessInfo: the current process info instance
- */
-template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
-void EvmEpsilonAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::GetDofList(
-    DofsVectorType& rElementalDofList, ProcessInfo& rCurrentProcessInfo)
-{
-    if (rElementalDofList.size() != TNumNodes)
-        rElementalDofList.resize(TNumNodes);
-
-    for (unsigned int i = 0; i < TNumNodes; i++)
-        rElementalDofList[i] = Element::GetGeometry()[i].pGetDof(RANS_ADJOINT_SCALAR_2);
-}
-
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
 void EvmEpsilonAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::GetValuesVector(
     VectorType& rValues, int Step)
 {
-    if (rValues.size() != TNumNodes)
-        rValues.resize(TNumNodes, false);
+    if (rValues.size() != BaseType::TMonolithicAssemblyLocalSize)
+        rValues.resize(BaseType::TMonolithicAssemblyLocalSize, false);
 
     const GeometryType& r_geometry = this->GetGeometry();
     for (unsigned int i = 0; i < TNumNodes; i++)
     {
         const double r_value =
-            r_geometry[i].FastGetSolutionStepValue(RANS_ADJOINT_SCALAR_2, Step);
-        rValues[i] = r_value;
+            r_geometry[i].FastGetSolutionStepValue(RANS_SCALAR_2_ADJOINT_1, Step);
+        rValues[i * TMonolithicAssemblyNodalDofSize + TDim + 2] = r_value;
     }
 }
 
@@ -228,25 +195,28 @@ template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAss
 void EvmEpsilonAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::GetFirstDerivativesVector(
     VectorType& rValues, int Step)
 {
-    if (rValues.size() != TNumNodes)
-        rValues.resize(TNumNodes, false);
+    if (rValues.size() != BaseType::TMonolithicAssemblyLocalSize)
+        rValues.resize(BaseType::TMonolithicAssemblyLocalSize, false);
 
-    rValues.clear();
+    for (unsigned int i = 0; i < TNumNodes; i++)
+    {
+        rValues[i * TMonolithicAssemblyNodalDofSize + TDim + 2] = 0.0;
+    }
 }
 
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
 void EvmEpsilonAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::GetSecondDerivativesVector(
     VectorType& rValues, int Step)
 {
-    if (rValues.size() != TNumNodes)
-        rValues.resize(TNumNodes, false);
+    if (rValues.size() != BaseType::TMonolithicAssemblyLocalSize)
+        rValues.resize(BaseType::TMonolithicAssemblyLocalSize, false);
 
     const GeometryType& r_geometry = this->GetGeometry();
     for (unsigned int i = 0; i < TNumNodes; i++)
     {
         const double r_value =
-            r_geometry[i].FastGetSolutionStepValue(RANS_ADJOINT_SCALAR_RATE_2, Step);
-        rValues[i] = r_value;
+            r_geometry[i].FastGetSolutionStepValue(RANS_SCALAR_2_ADJOINT_3, Step);
+        rValues[i * TMonolithicAssemblyNodalDofSize + TDim + 2] = r_value;
     }
 }
 
@@ -266,8 +236,7 @@ GeometryData::IntegrationMethod EvmEpsilonAdjointElement<TDim, TNumNodes, TMonol
  * this method is: MANDATORY
  */
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
-int EvmEpsilonAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::Check(
-    const ProcessInfo& rCurrentProcessInfo)
+int EvmEpsilonAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::Check(const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY
 
@@ -288,8 +257,8 @@ int EvmEpsilonAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::
     KRATOS_CHECK_VARIABLE_KEY(RANS_TURBULENT_KINETIC_ENERGY_PARTIAL_DERIVATIVE);
     KRATOS_CHECK_VARIABLE_KEY(RANS_Y_PLUS_VELOCITY_DERIVATIVES);
     KRATOS_CHECK_VARIABLE_KEY(VELOCITY);
-    KRATOS_CHECK_VARIABLE_KEY(RANS_ADJOINT_SCALAR_2);
-    KRATOS_CHECK_VARIABLE_KEY(RANS_ADJOINT_SCALAR_RATE_2);
+    KRATOS_CHECK_VARIABLE_KEY(RANS_SCALAR_2_ADJOINT_1);
+    KRATOS_CHECK_VARIABLE_KEY(RANS_SCALAR_2_ADJOINT_3);
 
     for (IndexType iNode = 0; iNode < this->GetGeometry().size(); ++iNode)
     {
@@ -302,10 +271,10 @@ int EvmEpsilonAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_Y_PLUS, r_node);
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(VELOCITY, r_node);
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_AUXILIARY_VARIABLE_2, r_node);
-        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_ADJOINT_SCALAR_2, r_node);
-        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_ADJOINT_SCALAR_RATE_2, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_SCALAR_2_ADJOINT_1, r_node);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_SCALAR_2_ADJOINT_3, r_node);
 
-        KRATOS_CHECK_DOF_IN_NODE(RANS_ADJOINT_SCALAR_2, r_node);
+        KRATOS_CHECK_DOF_IN_NODE(RANS_SCALAR_2_ADJOINT_1, r_node);
     }
     return 0;
 
@@ -411,6 +380,12 @@ template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAss
 const Variable<double>& EvmEpsilonAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::GetPrimalRelaxedRateVariable() const
 {
     return RANS_AUXILIARY_VARIABLE_2;
+}
+
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>
+const Variable<double>& EvmEpsilonAdjointElement<TDim, TNumNodes, TMonolithicAssemblyNodalDofSize>::GetAdjointVariable() const
+{
+    return RANS_SCALAR_2_ADJOINT_1;
 }
 
 template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize>

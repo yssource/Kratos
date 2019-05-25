@@ -204,21 +204,6 @@ public:
      */
     Element::Pointer Clone(IndexType NewId, NodesArrayType const& ThisNodes) const override;
 
-    /**
-     * this determines the elemental equation ID vector for all elemental
-     * DOFs
-     * @param rResult: the elemental equation ID vector
-     * @param rCurrentProcessInfo: the current process info instance
-     */
-    void EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo) override;
-
-    /**
-     * determines the elemental list of DOFs
-     * @param ElementalDofList: the list of DOFs
-     * @param rCurrentProcessInfo: the current process info instance
-     */
-    void GetDofList(DofsVectorType& rElementalDofList, ProcessInfo& CurrentProcessInfo) override;
-
     void GetValuesVector(VectorType& rValues, int Step = 0) override;
 
     void GetFirstDerivativesVector(VectorType& values, int Step = 0) override;
@@ -322,6 +307,8 @@ private:
     const Variable<double>& GetPrimalVariable() const override;
 
     const Variable<double>& GetPrimalRelaxedRateVariable() const override;
+
+    const Variable<double>& GetAdjointVariable() const override;
 
     void CalculateElementData(
         EvmKAdjointElementData& rData,

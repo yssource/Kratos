@@ -26,6 +26,7 @@
 // Application includes
 #include "custom_utilities/rans_calculation_utilities.h"
 #include "rans_modelling_application_variables.h"
+#include "utilities/adjoint_extensions.h"
 
 #include "custom_elements/evm_k_epsilon/evm_epsilon_adjoint_element.h"
 #include "custom_elements/evm_k_epsilon/evm_k_adjoint_element.h"
@@ -55,31 +56,98 @@ namespace Kratos
 template <unsigned int TDim, unsigned int TNumNodes = TDim + 1>
 class EvmMonolithicKEpsilonVMSAdjointElement : public Element
 {
-    // class ThisExtensions : public AdjointExtensions
-    // {
-    //     Element* mpElement;
+    class ThisExtensions : public AdjointExtensions
+    {
+        Element* mpElement;
 
-    // public:
-    //     explicit ThisExtensions(Element* pElement);
+    public:
+        explicit ThisExtensions(Element* pElement) : mpElement{pElement}
+        {
+        }
 
-    //     void GetFirstDerivativesVector(std::size_t NodeId,
-    //                                    std::vector<IndirectScalar<double>>&
-    //                                    rVector, std::size_t Step) override;
+        void GetFirstDerivativesVector(std::size_t NodeId,
+                                       std::vector<IndirectScalar<double>>& rVector,
+                                       std::size_t Step) override
+        {
+            auto& r_node = mpElement->GetGeometry()[NodeId];
+            rVector.resize(TDim + 3);
+            std::size_t index = 0;
+            rVector[index++] = MakeIndirectScalar(r_node, ADJOINT_FLUID_VECTOR_2_X, Step);
+            rVector[index++] = MakeIndirectScalar(r_node, ADJOINT_FLUID_VECTOR_2_Y, Step);
+            if (TDim == 3)
+            {
+                rVector[index++] =
+                    MakeIndirectScalar(r_node, ADJOINT_FLUID_VECTOR_2_Z, Step);
+            }
+            rVector[index++] = IndirectScalar<double>{}; // pressure
+            rVector[index++] = MakeIndirectScalar(r_node, RANS_SCALAR_1_ADJOINT_2, Step);
+            rVector[index] = MakeIndirectScalar(r_node, RANS_SCALAR_2_ADJOINT_2, Step);
+        }
 
-    //     void GetSecondDerivativesVector(std::size_t NodeId,
-    //                                     std::vector<IndirectScalar<double>>&
-    //                                     rVector, std::size_t Step) override;
+        void GetSecondDerivativesVector(std::size_t NodeId,
+                                        std::vector<IndirectScalar<double>>& rVector,
+                                        std::size_t Step) override
+        {
+            auto& r_node = mpElement->GetGeometry()[NodeId];
+            rVector.resize(TDim + 3);
+            std::size_t index = 0;
+            rVector[index++] = MakeIndirectScalar(r_node, ADJOINT_FLUID_VECTOR_3_X, Step);
+            rVector[index++] = MakeIndirectScalar(r_node, ADJOINT_FLUID_VECTOR_3_Y, Step);
+            if (TDim == 3)
+            {
+                rVector[index++] =
+                    MakeIndirectScalar(r_node, ADJOINT_FLUID_VECTOR_3_Z, Step);
+            }
+            rVector[index++] = IndirectScalar<double>{}; // pressure
+            rVector[index++] = MakeIndirectScalar(r_node, RANS_SCALAR_1_ADJOINT_3, Step);
+            rVector[index] = MakeIndirectScalar(r_node, RANS_SCALAR_2_ADJOINT_3, Step);
+        }
 
-    //     void GetAuxiliaryVector(std::size_t NodeId,
-    //                             std::vector<IndirectScalar<double>>& rVector,
-    //                             std::size_t Step) override;
+        void GetAuxiliaryVector(std::size_t NodeId,
+                                std::vector<IndirectScalar<double>>& rVector,
+                                std::size_t Step) override
+        {
+            auto& r_node = mpElement->GetGeometry()[NodeId];
+            rVector.resize(TDim + 3);
+            std::size_t index = 0;
+            rVector[index++] =
+                MakeIndirectScalar(r_node, AUX_ADJOINT_FLUID_VECTOR_1_X, Step);
+            rVector[index++] =
+                MakeIndirectScalar(r_node, AUX_ADJOINT_FLUID_VECTOR_1_Y, Step);
+            if (TDim == 3)
+            {
+                rVector[index++] =
+                    MakeIndirectScalar(r_node, AUX_ADJOINT_FLUID_VECTOR_1_Z, Step);
+            }
+            rVector[index++] = IndirectScalar<double>{}; // pressure
+            rVector[index++] = MakeIndirectScalar(r_node, RANS_AUX_ADJOINT_SCALAR_1, Step);
+            rVector[index] = MakeIndirectScalar(r_node, RANS_AUX_ADJOINT_SCALAR_2, Step);
+        }
 
-    //     void GetFirstDerivativesVariables(std::vector<VariableData const*>& rVariables) const override;
+        void GetFirstDerivativesVariables(std::vector<VariableData const*>& rVariables) const override
+        {
+            rVariables.resize(3);
+            rVariables[0] = &ADJOINT_FLUID_VECTOR_2;
+            rVariables[1] = &RANS_SCALAR_1_ADJOINT_2;
+            rVariables[2] = &RANS_SCALAR_2_ADJOINT_2;
+        }
 
-    //     void GetSecondDerivativesVariables(std::vector<VariableData const*>& rVariables) const override;
+        void GetSecondDerivativesVariables(std::vector<VariableData const*>& rVariables) const override
+        {
+            rVariables.resize(3);
+            rVariables[0] = &ADJOINT_FLUID_VECTOR_3;
+            rVariables[1] = &RANS_SCALAR_1_ADJOINT_3;
+            rVariables[2] = &RANS_SCALAR_2_ADJOINT_3;
+        }
 
-    //     void GetAuxiliaryVariables(std::vector<VariableData const*>& rVariables) const override;
-    // };
+        void GetAuxiliaryVariables(std::vector<VariableData const*>& rVariables) const override
+        {
+            rVariables.resize(3);
+            rVariables[0] = &AUX_ADJOINT_FLUID_VECTOR_1;
+            rVariables[1] = &RANS_AUX_ADJOINT_SCALAR_1;
+            rVariables[2] = &RANS_AUX_ADJOINT_SCALAR_2;
+        }
+    };
 
 public:
     ///@name Type Definitions
@@ -181,7 +249,7 @@ public:
 
     void Initialize() override
     {
-        // TODO: Implement adjoint extensions
+        this->SetValue(ADJOINT_EXTENSIONS, Kratos::make_shared<ThisExtensions>(this));
     }
 
     /**
@@ -252,9 +320,88 @@ public:
         adjoint_k_element.Check(rCurrentProcessInfo);
         adjoint_epsilon_element.Check(rCurrentProcessInfo);
 
+        KRATOS_CHECK_VARIABLE_KEY(ADJOINT_FLUID_VECTOR_1);
+        KRATOS_CHECK_VARIABLE_KEY(ADJOINT_FLUID_VECTOR_2);
+        KRATOS_CHECK_VARIABLE_KEY(ADJOINT_FLUID_VECTOR_3);
+        KRATOS_CHECK_VARIABLE_KEY(ADJOINT_FLUID_SCALAR_1);
+        KRATOS_CHECK_VARIABLE_KEY(AUX_ADJOINT_FLUID_VECTOR_1);
+        KRATOS_CHECK_VARIABLE_KEY(RANS_SCALAR_1_ADJOINT_1);
+        KRATOS_CHECK_VARIABLE_KEY(RANS_SCALAR_1_ADJOINT_2);
+        KRATOS_CHECK_VARIABLE_KEY(RANS_SCALAR_1_ADJOINT_3);
+        KRATOS_CHECK_VARIABLE_KEY(RANS_AUX_ADJOINT_SCALAR_1);
+        KRATOS_CHECK_VARIABLE_KEY(RANS_SCALAR_2_ADJOINT_1);
+        KRATOS_CHECK_VARIABLE_KEY(RANS_SCALAR_2_ADJOINT_2);
+        KRATOS_CHECK_VARIABLE_KEY(RANS_SCALAR_2_ADJOINT_3);
+        KRATOS_CHECK_VARIABLE_KEY(RANS_AUX_ADJOINT_SCALAR_2);
+
+        for (IndexType i_node = 0; i_node < TNumNodes; ++i_node)
+        {
+            NodeType& r_node = this->GetGeometry()[i_node];
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(ADJOINT_FLUID_VECTOR_1, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(ADJOINT_FLUID_VECTOR_2, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(ADJOINT_FLUID_VECTOR_3, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(ADJOINT_FLUID_SCALAR_1, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(AUX_ADJOINT_FLUID_VECTOR_1, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_SCALAR_1_ADJOINT_1, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_SCALAR_1_ADJOINT_2, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_SCALAR_1_ADJOINT_3, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_AUX_ADJOINT_SCALAR_1, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_SCALAR_2_ADJOINT_1, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_SCALAR_2_ADJOINT_2, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_SCALAR_2_ADJOINT_3, r_node);
+            KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(RANS_AUX_ADJOINT_SCALAR_2, r_node);
+        }
+
         return 0;
 
         KRATOS_CATCH("");
+    }
+
+    /**
+     * this determines the elemental equation ID vector for all elemental
+     * DOFs
+     * @param rResult the elemental equation ID vector
+     * @param rCurrentProcessInfo the current process info instance
+     */
+    void EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& rCurrentProcessInfo) override
+    {
+        if (rResult.size() != TElementLocalSize)
+            rResult.resize(TElementLocalSize);
+
+        AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
+        AdjointKElement k_element(this->Id(), this->pGetGeometry());
+        AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
+
+        fluid_element.SetData(this->Data());
+        k_element.SetData(this->Data());
+        epsilon_element.SetData(this->Data());
+
+        fluid_element.EquationIdVector(rResult, rCurrentProcessInfo);
+        k_element.EquationIdVector(rResult, rCurrentProcessInfo);
+        epsilon_element.EquationIdVector(rResult, rCurrentProcessInfo);
+    }
+
+    /**
+     * determines the elemental list of DOFs
+     * @param ElementalDofList the list of DOFs
+     * @param rCurrentProcessInfo the current process info instance
+     */
+    void GetDofList(DofsVectorType& rElementalDofList, ProcessInfo& rCurrentProcessInfo) override
+    {
+        if (rElementalDofList.size() != TElementLocalSize)
+            rElementalDofList.resize(TElementLocalSize);
+
+        AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
+        AdjointKElement k_element(this->Id(), this->pGetGeometry());
+        AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
+
+        fluid_element.SetData(this->Data());
+        k_element.SetData(this->Data());
+        epsilon_element.SetData(this->Data());
+
+        fluid_element.GetDofList(rElementalDofList, rCurrentProcessInfo);
+        k_element.GetDofList(rElementalDofList, rCurrentProcessInfo);
+        epsilon_element.GetDofList(rElementalDofList, rCurrentProcessInfo);
     }
 
     /// Returns the adjoint values stored in this element's nodes.
@@ -263,28 +410,17 @@ public:
         if (rValues.size() != TElementLocalSize)
             rValues.resize(TElementLocalSize, false);
 
-        // AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
-        // AdjointKElement k_element(this->Id(), this->pGetGeometry());
-        // AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
+        AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
+        AdjointKElement k_element(this->Id(), this->pGetGeometry());
+        AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
 
-        // fluid_element.SetData(this->Data());
-        // k_element.SetData(this->Data());
-        // epsilon_element.SetData(this->Data());
+        fluid_element.SetData(this->Data());
+        k_element.SetData(this->Data());
+        epsilon_element.SetData(this->Data());
 
-        // IndexType i_offset{0};
-        // RansCalculationUtilities rans_calculation_utilities;
-        // Vector local_vector;
-
-        // fluid_element.GetValuesVector(local_vector, Step);
-        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector,
-        // i_offset); i_offset += local_vector.size();
-
-        // k_element.GetValuesVector(local_vector, Step);
-        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector,
-        // i_offset); i_offset += local_vector.size();
-
-        // epsilon_element.GetValuesVector(local_vector, Step);
-        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
+        fluid_element.GetValuesVector(rValues, Step);
+        k_element.GetValuesVector(rValues, Step);
+        epsilon_element.GetValuesVector(rValues, Step);
     }
 
     /// Returns the adjoint velocity values stored in this element's nodes.
@@ -293,28 +429,17 @@ public:
         if (rValues.size() != TElementLocalSize)
             rValues.resize(TElementLocalSize, false);
 
-        // AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
-        // AdjointKElement k_element(this->Id(), this->pGetGeometry());
-        // AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
+        AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
+        AdjointKElement k_element(this->Id(), this->pGetGeometry());
+        AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
 
-        // fluid_element.SetData(this->Data());
-        // k_element.SetData(this->Data());
-        // epsilon_element.SetData(this->Data());
+        fluid_element.SetData(this->Data());
+        k_element.SetData(this->Data());
+        epsilon_element.SetData(this->Data());
 
-        // IndexType i_offset{0};
-        // RansCalculationUtilities rans_calculation_utilities;
-        // Vector local_vector;
-
-        // fluid_element.GetFirstDerivativesVector(local_vector, Step);
-        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector,
-        // i_offset); i_offset += local_vector.size();
-
-        // k_element.GetFirstDerivativesVector(local_vector, Step);
-        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector,
-        // i_offset); i_offset += local_vector.size();
-
-        // epsilon_element.GetFirstDerivativesVector(local_vector, Step);
-        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
+        fluid_element.GetFirstDerivativesVector(rValues, Step);
+        k_element.GetFirstDerivativesVector(rValues, Step);
+        epsilon_element.GetFirstDerivativesVector(rValues, Step);
     }
 
     void GetSecondDerivativesVector(VectorType& rValues, int Step) override
@@ -322,28 +447,17 @@ public:
         if (rValues.size() != TElementLocalSize)
             rValues.resize(TElementLocalSize, false);
 
-        // AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
-        // AdjointKElement k_element(this->Id(), this->pGetGeometry());
-        // AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
+        AdjointFluidElement fluid_element(this->Id(), this->pGetGeometry());
+        AdjointKElement k_element(this->Id(), this->pGetGeometry());
+        AdjointEpsilonElement epsilon_element(this->Id(), this->pGetGeometry());
 
-        // fluid_element.SetData(this->Data());
-        // k_element.SetData(this->Data());
-        // epsilon_element.SetData(this->Data());
+        fluid_element.SetData(this->Data());
+        k_element.SetData(this->Data());
+        epsilon_element.SetData(this->Data());
 
-        // IndexType i_offset{0};
-        // RansCalculationUtilities rans_calculation_utilities;
-        // Vector local_vector;
-
-        // fluid_element.GetSecondDerivativesVector(local_vector, Step);
-        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector,
-        // i_offset); i_offset += local_vector.size();
-
-        // k_element.GetSecondDerivativesVector(local_vector, Step);
-        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector,
-        // i_offset); i_offset += local_vector.size();
-
-        // epsilon_element.GetSecondDerivativesVector(local_vector, Step);
-        // rans_calculation_utilities.PlaceInGlobalVector(rValues, local_vector, i_offset);
+        fluid_element.GetSecondDerivativesVector(rValues, Step);
+        k_element.GetSecondDerivativesVector(rValues, Step);
+        epsilon_element.GetSecondDerivativesVector(rValues, Step);
     }
 
     void CalculateLocalSystem(MatrixType& rLeftHandSideMatrix,
@@ -489,8 +603,8 @@ public:
 
             fluid_element.CalculateSensitivityMatrix(
                 rSensitivityVariable, rOutput, rCurrentProcessInfo);
-            k_element.CalculateSensitivityMatrix(
-                rSensitivityVariable, rOutput, rCurrentProcessInfo);
+            k_element.CalculateSensitivityMatrix(rSensitivityVariable, rOutput,
+                                                 rCurrentProcessInfo);
             epsilon_element.CalculateSensitivityMatrix(
                 rSensitivityVariable, rOutput, rCurrentProcessInfo);
         }

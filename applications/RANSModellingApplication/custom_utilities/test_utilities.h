@@ -36,6 +36,8 @@ void IsValuesRelativelyNear(const double ValueA, const double ValueB, const doub
 
 void IsMatricesSame(const Matrix& rA, const Matrix& rB, const double Tolerance);
 
+void IsVectorsSame(const Vector& rA, const Vector& rB, const double Tolerance);
+
 void CalculateResidual(Vector& residual, Element& rElement, ProcessInfo& rProcessInfo);
 
 void GetElementData(Vector& rGaussWeights,

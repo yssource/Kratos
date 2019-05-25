@@ -71,6 +71,14 @@ void IsMatricesSame(const Matrix& rA, const Matrix& rB, const double Tolerance)
             IsValuesRelativelyNear(rA(i, j), rB(i, j), Tolerance);
 }
 
+void IsVectorsSame(const Vector& rA, const Vector& rB, const double Tolerance)
+{
+    KRATOS_CHECK_IS_FALSE(rA.size() != rB.size());
+
+    for (std::size_t i = 0; i < rA.size(); ++i)
+        IsValuesRelativelyNear(rA[i], rB[i], Tolerance);
+}
+
 void CalculateResidual(Vector& residual, Element& rElement, ProcessInfo& rProcessInfo)
 {
     const double bossak_alpha = rProcessInfo[BOSSAK_ALPHA];

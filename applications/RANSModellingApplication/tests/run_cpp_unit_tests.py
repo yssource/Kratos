@@ -7,6 +7,7 @@ def run():
     Tester.RunTestSuite("RANSEvModelsKEpsilonNodalMatrices")
     Tester.RunTestSuite("RANSEvModelsKEpsilonGaussMatrices")
     Tester.RunTestSuite("RANSEvModelsKEpsilonElementResidualMatrices")
+    Tester.RunTestSuite("RANSEvModelsKEpsilonElementMethods")
 
 if __name__ == '__main__':
     run()

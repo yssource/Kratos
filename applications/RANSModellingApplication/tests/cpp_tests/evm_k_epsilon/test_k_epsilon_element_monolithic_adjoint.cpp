@@ -26,8 +26,9 @@
 #include "custom_processes/y_plus_model_processes/rans_logarithmic_y_plus_model_process.h"
 #include "custom_processes/y_plus_model_processes/rans_logarithmic_y_plus_model_sensitivities_process.h"
 #include "custom_utilities/rans_calculation_utilities.h"
-#include "test_k_epsilon_utilities.h"
 #include "custom_utilities/test_utilities.h"
+#include "fluid_dynamics_application_variables.h"
+#include "test_k_epsilon_utilities.h"
 
 namespace Kratos
 {
@@ -631,6 +632,199 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementShapeSensiti
         adjoint_y_plus_process, y_plus_sensitivities_process,
         RansEvmKEpsilonModel::UpdateVariablesInModelPart,
         calculate_sensitivity_matrix_epsilon, perturb_variable, delta, tolerance, 0, 4);
+}
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementGetValues,
+                          RANSEvModelsKEpsilonElementMethods)
+{
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMMonolithicKEpsilonVMSAdjoint2D3N");
+
+    for (IndexType i_element = 0;
+         i_element < r_adjoint_model_part.NumberOfElements(); ++i_element)
+    {
+        Element& r_element = *(r_adjoint_model_part.ElementsBegin() + i_element);
+        GeometryType& r_geometry = r_element.GetGeometry();
+        const IndexType number_of_nodes = r_geometry.PointsNumber();
+
+        Vector element_values;
+        r_element.GetValuesVector(element_values);
+
+        Vector values(15);
+        IndexType local_index = 0;
+        for (IndexType i_node = 0; i_node < number_of_nodes; ++i_node)
+        {
+            const NodeType& r_node = r_geometry[i_node];
+            const array_1d<double, 3>& r_vector =
+                r_node.FastGetSolutionStepValue(ADJOINT_FLUID_VECTOR_1);
+            values[local_index++] = r_vector[0];
+            values[local_index++] = r_vector[1];
+            values[local_index++] = r_node.FastGetSolutionStepValue(ADJOINT_FLUID_SCALAR_1);
+            values[local_index++] = r_node.FastGetSolutionStepValue(RANS_SCALAR_1_ADJOINT_1);
+            values[local_index++] = r_node.FastGetSolutionStepValue(RANS_SCALAR_2_ADJOINT_1);
+        }
+
+        RansModellingApplicationTestUtilities::IsVectorsSame(
+            element_values, values, std::numeric_limits<double>::epsilon());
+    }
+}
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementGetFirstDerivatives,
+                          RANSEvModelsKEpsilonElementMethods)
+{
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMMonolithicKEpsilonVMSAdjoint2D3N");
+
+    for (IndexType i_element = 0;
+         i_element < r_adjoint_model_part.NumberOfElements(); ++i_element)
+    {
+        Element& r_element = *(r_adjoint_model_part.ElementsBegin() + i_element);
+
+        Vector element_values;
+        r_element.GetFirstDerivativesVector(element_values);
+
+        Vector values = ZeroVector(15);
+
+        RansModellingApplicationTestUtilities::IsVectorsSame(
+            element_values, values, std::numeric_limits<double>::epsilon());
+    }
+}
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementGetSecondDerivatives,
+                          RANSEvModelsKEpsilonElementMethods)
+{
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMMonolithicKEpsilonVMSAdjoint2D3N");
+
+    for (IndexType i_element = 0;
+         i_element < r_adjoint_model_part.NumberOfElements(); ++i_element)
+    {
+        Element& r_element = *(r_adjoint_model_part.ElementsBegin() + i_element);
+        GeometryType& r_geometry = r_element.GetGeometry();
+        const IndexType number_of_nodes = r_geometry.PointsNumber();
+
+        Vector element_values;
+        r_element.GetSecondDerivativesVector(element_values);
+
+        Vector values(15);
+        IndexType local_index = 0;
+        for (IndexType i_node = 0; i_node < number_of_nodes; ++i_node)
+        {
+            const NodeType& r_node = r_geometry[i_node];
+            const array_1d<double, 3>& r_vector =
+                r_node.FastGetSolutionStepValue(ADJOINT_FLUID_VECTOR_3);
+            values[local_index++] = r_vector[0];
+            values[local_index++] = r_vector[1];
+            values[local_index++] = 0.0;
+            values[local_index++] =
+                r_node.FastGetSolutionStepValue(RANS_SCALAR_1_ADJOINT_3);
+            values[local_index++] =
+                r_node.FastGetSolutionStepValue(RANS_SCALAR_2_ADJOINT_3);
+        }
+
+        RansModellingApplicationTestUtilities::IsVectorsSame(
+            element_values, values, std::numeric_limits<double>::epsilon());
+    }
+}
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementGetDofs,
+                          RANSEvModelsKEpsilonElementMethods)
+{
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMMonolithicKEpsilonVMSAdjoint2D3N");
+
+    ProcessInfo& r_process_info = r_adjoint_model_part.GetProcessInfo();
+
+    // adding monolithic formulation parameters : equation indices
+    r_process_info[TURBULENT_KINETIC_ENERGY] = 3;
+    r_process_info[TURBULENT_ENERGY_DISSIPATION_RATE] = 4;
+
+    for (IndexType i_element = 0;
+         i_element < r_adjoint_model_part.NumberOfElements(); ++i_element)
+    {
+        Element& r_element = *(r_adjoint_model_part.ElementsBegin() + i_element);
+        GeometryType& r_geometry = r_element.GetGeometry();
+        const IndexType number_of_nodes = r_geometry.PointsNumber();
+
+        Element::DofsVectorType element_dofs;
+        r_element.GetDofList(element_dofs, r_process_info);
+
+        IndexType local_index = 0;
+        for (IndexType i_node = 0; i_node < number_of_nodes; ++i_node)
+        {
+            NodeType& r_node = r_geometry[i_node];
+            KRATOS_ERROR_IF(element_dofs[local_index++] != r_node.pGetDof(ADJOINT_FLUID_VECTOR_1_X))
+                << "Dofs mismatch";
+            KRATOS_ERROR_IF(element_dofs[local_index++] != r_node.pGetDof(ADJOINT_FLUID_VECTOR_1_Y))
+                << "Dofs mismatch";
+            KRATOS_ERROR_IF(element_dofs[local_index++] != r_node.pGetDof(ADJOINT_FLUID_SCALAR_1))
+                << "Dofs mismatch";
+            KRATOS_ERROR_IF(element_dofs[local_index++] != r_node.pGetDof(RANS_SCALAR_1_ADJOINT_1))
+                << "Dofs mismatch";
+            KRATOS_ERROR_IF(element_dofs[local_index++] != r_node.pGetDof(RANS_SCALAR_2_ADJOINT_1))
+                << "Dofs mismatch";
+        }
+    }
+}
+
+KRATOS_TEST_CASE_IN_SUITE(RansEvmMonolithicKEpsilonVMSAdjointElementEquationId,
+                          RANSEvModelsKEpsilonElementMethods)
+{
+    Model adjoint_model;
+    ModelPart& r_adjoint_model_part =
+        adjoint_model.CreateModelPart("RansEvmKElementSensitivityMatrix");
+    RansEvmKEpsilonModel::GenerateRansEvmKEpsilonTestModelPart(
+        r_adjoint_model_part, "RANSEVMMonolithicKEpsilonVMSAdjoint2D3N");
+
+    ProcessInfo& r_process_info = r_adjoint_model_part.GetProcessInfo();
+
+    // adding monolithic formulation parameters : equation indices
+    r_process_info[TURBULENT_KINETIC_ENERGY] = 3;
+    r_process_info[TURBULENT_ENERGY_DISSIPATION_RATE] = 4;
+
+    for (IndexType i_element = 0;
+         i_element < r_adjoint_model_part.NumberOfElements(); ++i_element)
+    {
+        Element& r_element = *(r_adjoint_model_part.ElementsBegin() + i_element);
+        GeometryType& r_geometry = r_element.GetGeometry();
+        const IndexType number_of_nodes = r_geometry.PointsNumber();
+
+        Element::EquationIdVectorType element_eq_ids;
+        r_element.EquationIdVector(element_eq_ids, r_process_info);
+
+        IndexType local_index = 0;
+        for (IndexType i_node = 0; i_node < number_of_nodes; ++i_node)
+        {
+            NodeType& r_node = r_geometry[i_node];
+            KRATOS_ERROR_IF(element_eq_ids[local_index++] !=
+                            r_node.GetDof(ADJOINT_FLUID_VECTOR_1_X).EquationId())
+                << "Equation id mismatch";
+            KRATOS_ERROR_IF(element_eq_ids[local_index++] !=
+                            r_node.GetDof(ADJOINT_FLUID_VECTOR_1_Y).EquationId())
+                << "Equation id mismatch";
+            KRATOS_ERROR_IF(element_eq_ids[local_index++] !=
+                            r_node.GetDof(ADJOINT_FLUID_SCALAR_1).EquationId())
+                << "Equation id mismatch";
+            KRATOS_ERROR_IF(element_eq_ids[local_index++] !=
+                            r_node.GetDof(RANS_SCALAR_1_ADJOINT_1).EquationId())
+                << "Equation id mismatch";
+            KRATOS_ERROR_IF(element_eq_ids[local_index++] !=
+                            r_node.GetDof(RANS_SCALAR_2_ADJOINT_1).EquationId())
+                << "Equation id mismatch";
+        }
+    }
 }
 
 } // namespace Testing

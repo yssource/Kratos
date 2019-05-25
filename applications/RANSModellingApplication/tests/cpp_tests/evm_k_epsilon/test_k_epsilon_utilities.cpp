@@ -72,14 +72,19 @@ void AddVariablesToModelPart(ModelPart& rModelPart)
     rModelPart.AddNodalSolutionStepVariable(RANS_AUXILIARY_VARIABLE_2);
     rModelPart.AddNodalSolutionStepVariable(TURBULENT_KINETIC_ENERGY_RATE);
     rModelPart.AddNodalSolutionStepVariable(TURBULENT_ENERGY_DISSIPATION_RATE_2);
-    rModelPart.AddNodalSolutionStepVariable(RANS_ADJOINT_SCALAR_1);
-    rModelPart.AddNodalSolutionStepVariable(RANS_ADJOINT_SCALAR_2);
-    rModelPart.AddNodalSolutionStepVariable(RANS_ADJOINT_SCALAR_RATE_1);
-    rModelPart.AddNodalSolutionStepVariable(RANS_ADJOINT_SCALAR_RATE_2);
+    rModelPart.AddNodalSolutionStepVariable(RANS_SCALAR_1_ADJOINT_1);
+    rModelPart.AddNodalSolutionStepVariable(RANS_SCALAR_2_ADJOINT_1);
+    rModelPart.AddNodalSolutionStepVariable(RANS_SCALAR_1_ADJOINT_2);
+    rModelPart.AddNodalSolutionStepVariable(RANS_SCALAR_2_ADJOINT_2);
+    rModelPart.AddNodalSolutionStepVariable(RANS_SCALAR_1_ADJOINT_3);
+    rModelPart.AddNodalSolutionStepVariable(RANS_SCALAR_2_ADJOINT_3);
     rModelPart.AddNodalSolutionStepVariable(ADJOINT_FLUID_VECTOR_1);
     rModelPart.AddNodalSolutionStepVariable(ADJOINT_FLUID_VECTOR_2);
     rModelPart.AddNodalSolutionStepVariable(ADJOINT_FLUID_VECTOR_3);
     rModelPart.AddNodalSolutionStepVariable(ADJOINT_FLUID_SCALAR_1);
+    rModelPart.AddNodalSolutionStepVariable(AUX_ADJOINT_FLUID_VECTOR_1);
+    rModelPart.AddNodalSolutionStepVariable(RANS_AUX_ADJOINT_SCALAR_1);
+    rModelPart.AddNodalSolutionStepVariable(RANS_AUX_ADJOINT_SCALAR_2);
 }
 
 void InitializeProcessInfo(ModelPart& rModelPart)
@@ -113,8 +118,8 @@ void CreateModelPartNodes(ModelPart& rModelPart)
 
     VariableUtils().AddDof<Variable<double>>(TURBULENT_KINETIC_ENERGY, rModelPart);
     VariableUtils().AddDof<Variable<double>>(TURBULENT_ENERGY_DISSIPATION_RATE, rModelPart);
-    VariableUtils().AddDof<Variable<double>>(RANS_ADJOINT_SCALAR_1, rModelPart);
-    VariableUtils().AddDof<Variable<double>>(RANS_ADJOINT_SCALAR_2, rModelPart);
+    VariableUtils().AddDof<Variable<double>>(RANS_SCALAR_1_ADJOINT_1, rModelPart);
+    VariableUtils().AddDof<Variable<double>>(RANS_SCALAR_2_ADJOINT_1, rModelPart);
 
     VariableUtils().AddDof<Variable<double>>(PRESSURE, rModelPart);
     VariableUtils().AddDof<VariableComponent<VectorComponentAdaptor<array_1d<double, 3>>>>(
@@ -162,6 +167,20 @@ void InitializeNodalVariables(ModelPart& rModelPart)
 
     InitializeVariableWithValues(rModelPart, KINEMATIC_VISCOSITY, 3e-2);
     InitializeVariableWithValues(rModelPart, DENSITY, 200.0);
+
+    InitializeVariableWithRandomValues(rModelPart, ADJOINT_FLUID_VECTOR_1, 55.0, 120.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, ADJOINT_FLUID_VECTOR_3, 35.0, 150.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, ADJOINT_FLUID_SCALAR_1, 45.0, 100.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, AUX_ADJOINT_FLUID_VECTOR_1, 45.0, 100.0, 2);
+
+    InitializeVariableWithRandomValues(rModelPart, RANS_SCALAR_1_ADJOINT_1, 15.0, 20.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, RANS_SCALAR_2_ADJOINT_1, 15.0, 20.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, RANS_SCALAR_1_ADJOINT_2, 25.0, 30.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, RANS_SCALAR_2_ADJOINT_2, 25.0, 30.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, RANS_SCALAR_1_ADJOINT_3, 25.0, 30.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, RANS_SCALAR_2_ADJOINT_3, 25.0, 30.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, RANS_AUX_ADJOINT_SCALAR_1, 25.0, 30.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, RANS_AUX_ADJOINT_SCALAR_2, 25.0, 30.0, 2);
 }
 
 void GenerateRansEvmKEpsilonTestModelPart(ModelPart& rModelPart, std::string ElementName)

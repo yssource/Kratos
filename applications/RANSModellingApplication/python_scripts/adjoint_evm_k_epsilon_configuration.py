@@ -55,8 +55,8 @@ class AdjointTurbulenceKEpsilonConfiguration(
 
     def PrepareSolvingStrategy(self):
         domain_size = self.fluid_model_part.ProcessInfo[Kratos.DOMAIN_SIZE]
-        self.fluid_model_part.ProcessInfo[TURBULENT_KINETIC_ENERGY] = domain_size+1
-        self.fluid_model_part.ProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE] = domain_size+2
+        self.fluid_model_part.ProcessInfo[KratosRANS.TURBULENT_KINETIC_ENERGY] = domain_size+1
+        self.fluid_model_part.ProcessInfo[KratosRANS.TURBULENT_ENERGY_DISSIPATION_RATE] = domain_size+2
 
         Kratos.Logger.PrintInfo(self.__class__.__name__, "All adjoint turbulence solution strategies are created.")
 
@@ -78,7 +78,7 @@ class AdjointTurbulenceKEpsilonConfiguration(
         self.fluid_model_part.AddNodalSolutionStepVariable(KratosRANS.RANS_AUX_ADJOINT_SCALAR_2)
 
 
-        super(TurbulenceKEpsilonConfiguration, self).AddVariables()
+        super(AdjointTurbulenceKEpsilonConfiguration, self).AddVariables()
 
     def AddDofs(self):
         Kratos.VariableUtils().AddDof(KratosRANS.RANS_SCALAR_1_ADJOINT_1, self.fluid_model_part)
@@ -99,3 +99,6 @@ class AdjointTurbulenceKEpsilonConfiguration(
         time = self.fluid_model_part.ProcessInfo[Kratos.TIME]
         if (time >= self.ramp_up_time):
             self.fluid_model_part.ProcessInfo[KratosRANS.IS_CO_SOLVING_PROCESS_ACTIVE] = True
+
+    def GetAdjointElementName(self):
+        return self.element_name

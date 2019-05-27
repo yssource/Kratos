@@ -127,9 +127,9 @@ void KratosRANSModellingApplication::Register()
     KRATOS_REGISTER_ELEMENT("RANSEVMKEpsilonVMSAdjoint2D3N", mRANSEVMKEpsilonVMSAdjoint2D);
     KRATOS_REGISTER_ELEMENT("RANSEVMKEpsilonVMSAdjoint3D4N", mRANSEVMKEpsilonVMSAdjoint3D);
 
-    KRATOS_REGISTER_ELEMENT("RANSEVMMonolithicKEpsilonVMSAdjoint2D3N",
+    KRATOS_REGISTER_ELEMENT("RANSEVMMonolithicKEpsilonVMSAdjoint2D",
                             mRANSEVMMonolithicKEpsilonVMSAdjoint2D);
-    KRATOS_REGISTER_ELEMENT("RANSEVMMonolithicKEpsilonVMSAdjoint3D4N",
+    KRATOS_REGISTER_ELEMENT("RANSEVMMonolithicKEpsilonVMSAdjoint3D",
                             mRANSEVMMonolithicKEpsilonVMSAdjoint3D);
 }
 } // namespace Kratos.

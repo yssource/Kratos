@@ -207,6 +207,9 @@ public:
             }
             r_element.SetValue(RANS_Y_PLUS_VELOCITY_DERIVATIVES, r_adjoint_y_plus_matrix);
         }
+
+        if (mEchoLevel > 0)
+            KRATOS_INFO(this->Info()) << "RANS_Y_PLUS_VELOCITY_DERIVATIVES calculated.\n";
     }
 
     ///@}

@@ -158,9 +158,9 @@ public:
     // defining the base adjoint base fluid element type
     typedef EvmKEpsilonVMSAdjointElement<TDim, TDim + 1, TDim + 3> AdjointFluidElement;
     // defining the k element type
-    typedef EvmKAdjointElement<TDim, TNumNodes, TDim + 3> AdjointKElement;
+    typedef EvmKAdjointElement<TDim, TNumNodes, TDim + 3, TDim + 1> AdjointKElement;
     // defining the epsilon element type
-    typedef EvmEpsilonAdjointElement<TDim, TNumNodes, TDim + 3> AdjointEpsilonElement;
+    typedef EvmEpsilonAdjointElement<TDim, TNumNodes, TDim + 3, TDim + 2> AdjointEpsilonElement;
 
     constexpr static unsigned int TFluidBlockSize = (TDim + 1);
 

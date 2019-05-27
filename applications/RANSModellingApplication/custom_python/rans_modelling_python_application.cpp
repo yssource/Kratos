@@ -21,6 +21,7 @@
 #include "custom_python/add_custom_processes_to_python.h"
 #include "custom_python/add_custom_strategies_to_python.h"
 #include "custom_python/add_custom_utilities_to_python.h"
+#include "custom_python/add_custom_response_functions_to_python.h"
 #include "includes/define.h"
 #include "rans_modelling_application.h"
 #include "rans_modelling_application_variables.h"
@@ -40,6 +41,7 @@ PYBIND11_MODULE(KratosRANSModellingApplication, m)
     AddCustomStrategiesToPython(m);
     AddCustomUtilitiesToPython(m);
     AddCustomProcessesToPython(m);
+    AddCustomResponseFunctionsToPython(m);
 
     // registering variables in python
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, TURBULENT_KINETIC_ENERGY)

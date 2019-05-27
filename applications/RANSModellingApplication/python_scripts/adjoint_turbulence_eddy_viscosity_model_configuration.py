@@ -61,12 +61,6 @@ class AdjointTurbulenceEddyViscosityModelConfiguration(
         Kratos.Logger.PrintInfo(self.__class__.__name__,
                                 "Successfully added solution step variables.")
 
-    def Check(self):
-        self.GetAdjointYPlusModel().Check()
-
-    def PrepareModelPart(self):
-        pass
-
     def GetAdjointYPlusModel(self):
         if self.adjoint_y_plus_model_process is None:
             y_plus_model_settings = self.settings["adjoint_y_plus_model"]

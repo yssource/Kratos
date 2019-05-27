@@ -155,7 +155,7 @@ public:
     /// this function will be executed at every time step BEFORE performing the solve phase
     void ExecuteInitializeSolutionStep() override
     {
-        Execute();
+        this->Execute();
     }
 
     void Execute() override
@@ -206,6 +206,7 @@ public:
                 }
             }
             r_element.SetValue(RANS_Y_PLUS_VELOCITY_DERIVATIVES, r_adjoint_y_plus_matrix);
+            KRATOS_WATCH(r_adjoint_y_plus_matrix);
         }
 
         if (mEchoLevel > 0)

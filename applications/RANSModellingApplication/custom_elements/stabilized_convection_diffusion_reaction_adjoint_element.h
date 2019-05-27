@@ -70,8 +70,9 @@ namespace Kratos
  * @tparam TNumNodes                       Number of nodes in the element
  * @tparam TElementData                    Data container used to calculate derivatives
  * @tparam TMonolithicAssemblyNodalDofSize Block size of the parent monolithic element
+ * @tparam TMonolithicNodalEquationIndex   Equation index in the monolithic element
  */
-template <unsigned int TDim, unsigned int TNumNodes, class TElementData, unsigned int TMonolithicAssemblyNodalDofSize = 1>
+template <unsigned int TDim, unsigned int TNumNodes, class TElementData, unsigned int TMonolithicAssemblyNodalDofSize = 1, unsigned int TMonolithicNodalEquationIndex = 0>
 class StabilizedConvectionDiffusionReactionAdjointElement : public Element
 {
 public:
@@ -304,6 +305,50 @@ public:
         {
             rElementalDofList[i_node * TMonolithicAssemblyNodalDofSize + dof_index] =
                 this->GetGeometry()[i_node].pGetDof(r_adjoint_Variable);
+        }
+    }
+
+    void GetValuesVector(VectorType& rValues, int Step = 0) override
+    {
+        if (rValues.size() != TMonolithicAssemblyLocalSize)
+            rValues.resize(TMonolithicAssemblyLocalSize, false);
+
+        const Variable<double>& r_adjoint_variable = this->GetAdjointVariable();
+
+        const GeometryType& r_geometry = this->GetGeometry();
+        for (unsigned int i = 0; i < TNumNodes; i++)
+        {
+            const double r_value =
+                r_geometry[i].FastGetSolutionStepValue(r_adjoint_variable, Step);
+            rValues[i * TMonolithicAssemblyNodalDofSize + TMonolithicNodalEquationIndex] = r_value;
+        }
+    }
+
+    void GetFirstDerivativesVector(VectorType& rValues, int Step = 0) override
+    {
+        if (rValues.size() != TMonolithicAssemblyLocalSize)
+            rValues.resize(TMonolithicAssemblyLocalSize, false);
+
+        for (unsigned int i = 0; i < TNumNodes; i++)
+        {
+            rValues[i * TMonolithicAssemblyNodalDofSize + TMonolithicNodalEquationIndex] = 0.0;
+        }
+    }
+
+    void GetSecondDerivativesVector(VectorType& rValues, int Step = 0) override
+    {
+        if (rValues.size() != TMonolithicAssemblyLocalSize)
+            rValues.resize(TMonolithicAssemblyLocalSize, false);
+
+        const Variable<double>& r_adjoint_second_variable =
+            this->GetAdjointSecondVariable();
+
+        const GeometryType& r_geometry = this->GetGeometry();
+        for (unsigned int i = 0; i < TNumNodes; i++)
+        {
+            const double r_value = r_geometry[i].FastGetSolutionStepValue(
+                r_adjoint_second_variable, Step);
+            rValues[i * TMonolithicAssemblyNodalDofSize + TMonolithicNodalEquationIndex] = r_value;
         }
     }
 
@@ -546,6 +591,15 @@ public:
             this->GetPrimalRelaxedRateVariable();
         const Variable<double>& r_adjoint_variable = this->GetAdjointVariable();
 
+        const unsigned int primal_dof_index =
+            static_cast<unsigned int>(rCurrentProcessInfo[r_primal_variable]);
+        if (TMonolithicNodalEquationIndex != primal_dof_index)
+        {
+            KRATOS_ERROR << this->Info() << "'s equation index and Processinfo equation index mismatch. Processinfo.EquationIndex != Element.EquationIndex [ "
+                         << primal_dof_index
+                         << " != " << TMonolithicNodalEquationIndex << " ]";
+        }
+
         KRATOS_CHECK_VARIABLE_KEY(r_primal_variable);
         KRATOS_CHECK_VARIABLE_KEY(r_primal_relaxed_rate_variable);
         KRATOS_CHECK_VARIABLE_KEY(VELOCITY);
@@ -679,6 +733,28 @@ protected:
         KRATOS_TRY
 
         KRATOS_ERROR << "Calling base GetAdjointVariable method in "
+                        "StabilizedConvectionDiffusionReactionAdjointElement "
+                        "class. Please implement it in the derrived class.";
+
+        return RANS_SCALAR_1_ADJOINT_1;
+
+        KRATOS_CATCH("");
+    }
+
+    /**
+     * @brief Get the second adjoint variable
+     *
+     * This method returns the second adjoint variable.
+     *
+     * This method should be implemented by the derrived class.
+     *
+     * @return const Variable<double>&
+     */
+    virtual const Variable<double>& GetAdjointSecondVariable() const
+    {
+        KRATOS_TRY
+
+        KRATOS_ERROR << "Calling base GetAdjointSecondVariable method in "
                         "StabilizedConvectionDiffusionReactionAdjointElement "
                         "class. Please implement it in the derrived class.";
 

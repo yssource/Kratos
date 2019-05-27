@@ -69,15 +69,15 @@ struct EvmEpsilonAdjointElementData
     Matrix NodalVelocity;
 };
 
-template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize = 1>
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize = 1, unsigned int TMonolithicNodalEquationIndex = 0>
 class EvmEpsilonAdjointElement
-    : public StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmEpsilonAdjointElementData, TMonolithicAssemblyNodalDofSize>
+    : public StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmEpsilonAdjointElementData, TMonolithicAssemblyNodalDofSize, TMonolithicNodalEquationIndex>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    typedef StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmEpsilonAdjointElementData, TMonolithicAssemblyNodalDofSize> BaseType;
+    typedef StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmEpsilonAdjointElementData, TMonolithicAssemblyNodalDofSize, TMonolithicNodalEquationIndex> BaseType;
 
     /// Node type (default is: Node<3>)
     typedef Node<3> NodeType;
@@ -207,12 +207,6 @@ public:
      */
     Element::Pointer Clone(IndexType NewId, NodesArrayType const& ThisNodes) const override;
 
-    void GetValuesVector(VectorType& rValues, int Step = 0) override;
-
-    void GetFirstDerivativesVector(VectorType& values, int Step = 0) override;
-
-    void GetSecondDerivativesVector(VectorType& values, int Step = 0) override;
-
     void Calculate(const Variable<Matrix>& rVariable,
                    Matrix& Output,
                    const ProcessInfo& rCurrentProcessInfo) override;
@@ -312,6 +306,8 @@ private:
     const Variable<double>& GetPrimalRelaxedRateVariable() const override;
 
     const Variable<double>& GetAdjointVariable() const override;
+
+    const Variable<double>& GetAdjointSecondVariable() const override;
 
     void CalculateElementData(EvmEpsilonAdjointElementData& rData,
                               const Vector& rShapeFunctions,

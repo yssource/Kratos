@@ -66,15 +66,15 @@ struct EvmKAdjointElementData
     Matrix NodalVelocity;
 };
 
-template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize = 1>
+template <unsigned int TDim, unsigned int TNumNodes, unsigned int TMonolithicAssemblyNodalDofSize = 1, unsigned int TMonolithicNodalEquationIndex = 0>
 class EvmKAdjointElement
-    : public StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmKAdjointElementData, TMonolithicAssemblyNodalDofSize>
+    : public StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmKAdjointElementData, TMonolithicAssemblyNodalDofSize, TMonolithicNodalEquationIndex>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    typedef StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmKAdjointElementData, TMonolithicAssemblyNodalDofSize> BaseType;
+    typedef StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, EvmKAdjointElementData, TMonolithicAssemblyNodalDofSize, TMonolithicNodalEquationIndex> BaseType;
 
     /// Node type (default is: Node<3>)
     typedef Node<3> NodeType;
@@ -204,12 +204,6 @@ public:
      */
     Element::Pointer Clone(IndexType NewId, NodesArrayType const& ThisNodes) const override;
 
-    void GetValuesVector(VectorType& rValues, int Step = 0) override;
-
-    void GetFirstDerivativesVector(VectorType& values, int Step = 0) override;
-
-    void GetSecondDerivativesVector(VectorType& values, int Step = 0) override;
-
     void Calculate(const Variable<Matrix>& rVariable,
                    Matrix& Output,
                    const ProcessInfo& rCurrentProcessInfo) override;
@@ -310,11 +304,12 @@ private:
 
     const Variable<double>& GetAdjointVariable() const override;
 
-    void CalculateElementData(
-        EvmKAdjointElementData& rData,
-        const Vector& rShapeFunctions,
-        const Matrix& rShapeFunctionDerivatives,
-        const ProcessInfo& rCurrentProcessInfo) const override;
+    const Variable<double>& GetAdjointSecondVariable() const override;
+
+    void CalculateElementData(EvmKAdjointElementData& rData,
+                              const Vector& rShapeFunctions,
+                              const Matrix& rShapeFunctionDerivatives,
+                              const ProcessInfo& rCurrentProcessInfo) const override;
 
     double CalculateEffectiveKinematicViscosity(const EvmKAdjointElementData& rCurrentData,
                                                 const ProcessInfo& rCurrentProcessInfo) const override;
@@ -332,14 +327,14 @@ private:
         const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateReactionTermScalarDerivatives(Vector& rOutput,
-                                          const Variable<double>& rDerivativeVariable,
-                                          const EvmKAdjointElementData& rCurrentData,
-                                          const ProcessInfo& rCurrentProcessInfo) const override;
+                                                const Variable<double>& rDerivativeVariable,
+                                                const EvmKAdjointElementData& rCurrentData,
+                                                const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateSourceTermScalarDerivatives(Vector& rOutput,
-                                        const Variable<double>& rDerivativeVariable,
-                                        const EvmKAdjointElementData& rCurrentData,
-                                        const ProcessInfo& rCurrentProcessInfo) const override;
+                                              const Variable<double>& rDerivativeVariable,
+                                              const EvmKAdjointElementData& rCurrentData,
+                                              const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateEffectiveKinematicViscosityVelocityDerivatives(
         Matrix& rOutput,

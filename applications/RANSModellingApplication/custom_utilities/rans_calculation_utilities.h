@@ -118,34 +118,9 @@ public:
                            const int Step = 0) const;
 
     template <unsigned int TDim>
-    void CalculateVelocityGradientSensitivities(BoundedMatrix<double, TDim, TDim>& rOutput,
-                                                const int VelocityDerivNodeIndex,
-                                                const int VelocityDerivDirection,
-                                                const Matrix& rShapeDerivatives) const;
-
-    template <unsigned int TDim>
     Vector GetVector(const array_1d<double, 3>& rVector) const;
 
     Vector GetVector(const array_1d<double, 3>& rVector, const unsigned int Dim) const;
-
-    void AssembleElementVector(Vector& rElementVector,
-                               const Vector& rSubVector,
-                               const std::size_t NumberOfNodes,
-                               const std::size_t Offset);
-
-    void AssembleElementMatrix(Matrix& rElementMatrix,
-                               const Matrix& rSubMatrix,
-                               const std::size_t NumberOfNodes,
-                               const std::size_t DerivativeOffset,
-                               const std::size_t EquationOffset);
-
-    void GetSubMatrix(Matrix& rSubMatrix,
-                      const Matrix& rElementMatrix,
-                      const std::size_t NumberOfNodes,
-                      const std::size_t NodeDerivativeOffset,
-                      const std::size_t NodeEquationOffset,
-                      const std::size_t NumberOfNodalDerivatives,
-                      const std::size_t NumberOfNodalEquations);
 
     ///@}
 

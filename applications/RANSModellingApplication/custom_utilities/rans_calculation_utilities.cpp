@@ -192,21 +192,6 @@ void RansCalculationUtilities::CalculateGradient(array_1d<double, 3>& rOutput,
 }
 
 template <unsigned int TDim>
-void RansCalculationUtilities::CalculateVelocityGradientSensitivities(
-    BoundedMatrix<double, TDim, TDim>& rOutput,
-    const int VelocityDerivNodeIndex,
-    const int VelocityDerivDirection,
-    const Matrix& rShapeDerivatives) const
-{
-    rOutput.clear();
-    for (unsigned int j = 0; j < TDim; ++j)
-    {
-        rOutput(VelocityDerivDirection, j) =
-            rShapeDerivatives(VelocityDerivNodeIndex, j);
-    }
-}
-
-template <unsigned int TDim>
 Vector RansCalculationUtilities::GetVector(const array_1d<double, 3>& rVector) const
 {
     Vector result(TDim);
@@ -226,95 +211,6 @@ Vector RansCalculationUtilities::GetVector(const array_1d<double, 3>& rVector,
         result[i_dim] = rVector[i_dim];
 
     return result;
-}
-
-void RansCalculationUtilities::AssembleElementVector(Vector& rElementVector,
-                                                     const Vector& rSubVector,
-                                                     const std::size_t NumberOfNodes,
-                                                     const std::size_t Offset)
-{
-    const std::size_t element_local_size = rElementVector.size() / NumberOfNodes;
-    const std::size_t sub_vector_local_size = rSubVector.size() / NumberOfNodes;
-
-    for (std::size_t i = 0; i < rSubVector.size(); ++i)
-    {
-        const std::size_t i_node = i / sub_vector_local_size;
-        const std::size_t i_dim = i % sub_vector_local_size;
-        rElementVector[i_node * element_local_size + Offset + i_dim] = rSubVector[i];
-    }
-}
-
-void RansCalculationUtilities::AssembleElementMatrix(Matrix& rElementMatrix,
-                                                     const Matrix& rSubMatrix,
-                                                     const std::size_t NumberOfNodes,
-                                                     const std::size_t DerivativeOffset,
-                                                     const std::size_t EquationOffset)
-{
-    const std::size_t element_matrix_eq_local_size = rElementMatrix.size2() / NumberOfNodes;
-    const std::size_t element_matrix_deriv_local_size = rElementMatrix.size1() / NumberOfNodes;
-
-    const std::size_t sub_matrix_derivatives_size = rSubMatrix.size1();
-    const std::size_t sub_matrix_equations_size = rSubMatrix.size2();
-    const std::size_t sub_matrix_equation_local_size = sub_matrix_equations_size / NumberOfNodes;
-    const std::size_t sub_matrix_derivatives_local_size =
-        sub_matrix_derivatives_size / NumberOfNodes;
-
-    for (std::size_t i_deriv = 0; i_deriv < sub_matrix_derivatives_size; ++i_deriv)
-    {
-        const std::size_t node_deriv = i_deriv / sub_matrix_derivatives_local_size;
-        const std::size_t node_deriv_dim = i_deriv % sub_matrix_derivatives_local_size;
-
-        for (std::size_t i_eq = 0; i_eq < sub_matrix_equations_size; ++i_eq)
-        {
-            const std::size_t node_eq = i_eq / sub_matrix_equation_local_size;
-            const std::size_t node_eq_dim = i_eq % sub_matrix_equation_local_size;
-
-            const std::size_t element_eq =
-                node_eq * element_matrix_eq_local_size + EquationOffset + node_eq_dim;
-            const std::size_t element_deriv = node_deriv * element_matrix_deriv_local_size +
-                                              DerivativeOffset + node_deriv_dim;
-
-            rElementMatrix(element_deriv, element_eq) = rSubMatrix(i_deriv, i_eq);
-        }
-    }
-}
-
-void RansCalculationUtilities::GetSubMatrix(Matrix& rSubMatrix,
-                                            const Matrix& rElementMatrix,
-                                            const std::size_t NumberOfNodes,
-                                            const std::size_t NodeDerivativeOffset,
-                                            const std::size_t NodeEquationOffset,
-                                            const std::size_t NumberOfNodalDerivatives,
-                                            const std::size_t NumberOfNodalEquations)
-{
-    const std::size_t sub_matrix_equations = NumberOfNodes * NumberOfNodalEquations;
-    const std::size_t sub_matrix_derivatives = NumberOfNodes * NumberOfNodalDerivatives;
-    const std::size_t element_matrix_deriv_local_size = rElementMatrix.size1() / NumberOfNodes;
-    const std::size_t element_matrix_eq_local_size = rElementMatrix.size2() / NumberOfNodes;
-
-    if (rSubMatrix.size1() != sub_matrix_derivatives || rSubMatrix.size2() != sub_matrix_equations)
-        rSubMatrix.resize(sub_matrix_derivatives, sub_matrix_equations, false);
-
-    for (std::size_t i_deriv_node = 0; i_deriv_node < NumberOfNodes; ++i_deriv_node)
-    {
-        for (std::size_t i_deriv_dim = 0; i_deriv_dim < NumberOfNodalDerivatives; ++i_deriv_dim)
-        {
-            for (std::size_t i_eq_node = 0; i_eq_node < NumberOfNodes; ++i_eq_node)
-            {
-                for (std::size_t i_eq_dim = 0; i_eq_dim < NumberOfNodalEquations; ++i_eq_dim)
-                {
-                    const std::size_t s_i =
-                        i_deriv_node * NumberOfNodalDerivatives + i_deriv_dim;
-                    const std::size_t s_j = i_eq_node * NumberOfNodalEquations + i_eq_dim;
-                    const std::size_t g_i = i_deriv_node * element_matrix_deriv_local_size +
-                                            NodeDerivativeOffset + i_deriv_dim;
-                    const std::size_t g_j = i_eq_node * element_matrix_eq_local_size +
-                                            NodeEquationOffset + i_eq_dim;
-                    rSubMatrix(s_i, s_j) = rElementMatrix(g_i, g_j);
-                }
-            }
-        }
-    }
 }
 
 // template instantiations
@@ -337,12 +233,6 @@ template void RansCalculationUtilities::CalculateGradient<3>(
     const Variable<array_1d<double, 3>>&,
     const Matrix&,
     const int) const;
-
-template void RansCalculationUtilities::CalculateVelocityGradientSensitivities<2>(
-    BoundedMatrix<double, 2, 2>&, const int, const int, const Matrix&) const;
-
-template void RansCalculationUtilities::CalculateVelocityGradientSensitivities<3>(
-    BoundedMatrix<double, 3, 3>&, const int, const int, const Matrix&) const;
 
 template Vector RansCalculationUtilities::GetVector<2>(const array_1d<double, 3>&) const;
 template Vector RansCalculationUtilities::GetVector<3>(const array_1d<double, 3>&) const;

@@ -65,15 +65,12 @@ public:
         Parameters default_settings(R"(
         {
             "structure_model_part_name": "PLEASE_SPECIFY_STRUCTURE_MODEL_PART",
-            "drag_direction": [1.0, 0.0, 0.0],
-            "number_of_additional_nodal_equations" : 2
+            "drag_direction": [1.0, 0.0, 0.0]
         })");
 
         Settings.ValidateAndAssignDefaults(default_settings);
 
         mStructureModelPartName = Settings["structure_model_part_name"].GetString();
-        mNumberOfAdditionalNodalEquations =
-            Settings["number_of_additional_nodal_equations"].GetInt();
 
         if (Settings["drag_direction"].IsArray() == false ||
             Settings["drag_direction"].size() != 3)
@@ -169,20 +166,6 @@ public:
         KRATOS_CATCH("");
     }
 
-    void CalculatePartialSensitivity(Condition& rAdjointCondition,
-                                     const Variable<array_1d<double, 3>>& rVariable,
-                                     const Matrix& rSensitivityMatrix,
-                                     Vector& rSensitivityGradient,
-                                     const ProcessInfo& rProcessInfo) override
-    {
-        KRATOS_TRY;
-
-        rSensitivityGradient.resize(rSensitivityMatrix.size1(), false);
-        rSensitivityGradient.clear();
-
-        KRATOS_CATCH("");
-    }
-
     double CalculateValue(ModelPart& rModelPart) override
     {
         KRATOS_TRY;
@@ -214,7 +197,6 @@ private:
     ModelPart& mrModelPart;
     std::string mStructureModelPartName;
     array_1d<double, TDim> mDragDirection;
-    int mNumberOfAdditionalNodalEquations;
 
     ///@}
     ///@name Private Operators
@@ -241,25 +223,18 @@ private:
     {
         constexpr std::size_t max_size = 50;
         BoundedVector<double, max_size> drag_flag_vector(rDerivativesOfResidual.size2());
+        drag_flag_vector.clear();
 
         const unsigned num_nodes = rNodes.size();
-        unsigned local_index = 0;
+        const unsigned local_size = rDerivativesOfResidual.size2() / num_nodes;
+
         for (unsigned i_node = 0; i_node < num_nodes; ++i_node)
         {
             if (rNodes[i_node].Is(STRUCTURE))
             {
                 for (unsigned d = 0; d < TDim; ++d)
-                    drag_flag_vector[local_index++] = mDragDirection[d];
+                    drag_flag_vector[i_node * local_size + d] = mDragDirection[d];
             }
-            else
-            {
-                for (unsigned int d = 0; d < TDim; ++d)
-                    drag_flag_vector[local_index++] = 0.0;
-            }
-
-            drag_flag_vector[local_index++] = 0.0; // pressure dof
-            for (int i_eq = 0; i_eq < mNumberOfAdditionalNodalEquations; ++i_eq)
-                drag_flag_vector[local_index++] = 0.0;
         }
 
         if (rDerivativesOfDrag.size() != rDerivativesOfResidual.size1())

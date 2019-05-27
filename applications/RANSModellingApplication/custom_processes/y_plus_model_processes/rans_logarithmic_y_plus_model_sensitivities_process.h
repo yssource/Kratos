@@ -176,6 +176,7 @@ public:
             const int number_of_nodes = r_geometry.PointsNumber();
 
             Matrix r_adjoint_y_plus_matrix(number_of_nodes, domain_size);
+            r_adjoint_y_plus_matrix.clear();
 
             for (int i_node = 0; i_node < number_of_nodes; ++i_node)
             {
@@ -199,18 +200,22 @@ public:
                 {
                     value = 1.0 / (2.0 * y_plus);
                 }
-                for (int i_dim = 0; i_dim < domain_size; ++i_dim)
+                if (velocity_magnitude > std::numeric_limits<double>::epsilon() &&
+                    y_plus > std::numeric_limits<double>::epsilon())
                 {
-                    r_adjoint_y_plus_matrix(i_node, i_dim) =
-                        (wall_distance / nu) * value * velocity[i_dim] / velocity_magnitude;
+                    for (int i_dim = 0; i_dim < domain_size; ++i_dim)
+                    {
+                        r_adjoint_y_plus_matrix(i_node, i_dim) =
+                            (wall_distance / nu) * value * velocity[i_dim] / velocity_magnitude;
+                    }
                 }
             }
             r_element.SetValue(RANS_Y_PLUS_VELOCITY_DERIVATIVES, r_adjoint_y_plus_matrix);
-            KRATOS_WATCH(r_adjoint_y_plus_matrix);
         }
 
         if (mEchoLevel > 0)
-            KRATOS_INFO(this->Info()) << "RANS_Y_PLUS_VELOCITY_DERIVATIVES calculated.\n";
+            KRATOS_INFO(this->Info())
+                << "RANS_Y_PLUS_VELOCITY_DERIVATIVES calculated.\n";
     }
 
     ///@}

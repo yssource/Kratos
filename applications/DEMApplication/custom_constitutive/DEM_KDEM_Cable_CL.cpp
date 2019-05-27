@@ -81,8 +81,6 @@ namespace Kratos {
                                                     double equiv_poisson,
                                                     double indentation) {
 
-        double rotational_moment_coeff = element->GetProperties()[ROTATIONAL_MOMENT_COEFFICIENT];
-        //double LocalRotationalMoment[3]     = {0.0};
         double LocalDeltaRotatedAngle[3]    = {0.0};
         double LocalDeltaAngularVelocity[3] = {0.0};
 
@@ -133,9 +131,6 @@ namespace Kratos {
         ViscoLocalRotationalMoment[0] = -visc_param_rot * LocalDeltaAngularVelocity[0] * norm_distance;
         ViscoLocalRotationalMoment[1] = -visc_param_rot * LocalDeltaAngularVelocity[1] * norm_distance;
         ViscoLocalRotationalMoment[2] = -visc_param_tor * LocalDeltaAngularVelocity[2] * norm_distance;
-
-        DEM_MULTIPLY_BY_SCALAR_3(ElasticLocalRotationalMoment, rotational_moment_coeff);
-        DEM_MULTIPLY_BY_SCALAR_3(ViscoLocalRotationalMoment, rotational_moment_coeff);
 
         // TODO: Judge if the rotation spring is broken or not
         /*

@@ -35,12 +35,12 @@ class AdjointTurbulenceModelConfiguration(PythonSolver):
 
     def GetAdjointResponseFunction(self, settings):
         msg = "Calling the base AdjointTurbulenceModelConfiguration class GetAdjointElementName method."
-        msg += " Please override it in the derrived class to return an element name."
+        msg += " Please override it in the derrived class to return a response function."
         raise Exception(msg)
 
     def GetAdjointYPlusModel(self):
         msg = "Calling the base AdjointTurbulenceModelConfiguration class GetAdjointYPlusModel method."
-        msg += " Please override it in the derrived class to return an element name."
+        msg += " Please override it in the derrived class to return a process."
         raise Exception(msg)
 
     def Initialize(self):

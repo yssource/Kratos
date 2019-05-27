@@ -38,7 +38,8 @@ class AdjointTurbulenceKEpsilonConfiguration(
         parameters["model_settings"].ValidateAndAssignDefaults(default_settings)
         self.model_settings = parameters["model_settings"]
 
-        self.element_name = "RANSEVMMonolithicKEpsilonVMSAdjoint"
+        # self.element_name = "RANSEVMMonolithicKEpsilonVMSAdjoint"
+        self.element_name = "VMSAdjointElement"
 
         self.ramp_up_time = self.model_settings["flow_parameters"]["ramp_up_time"].GetDouble()
 
@@ -89,16 +90,6 @@ class AdjointTurbulenceKEpsilonConfiguration(
     def Initialize(self):
         super(AdjointTurbulenceKEpsilonConfiguration, self).Initialize()
         self.InitializeModelConstants()
-
-    def InitializeSolutionStep(self):
-        if (self.fluid_model_part.ProcessInfo[KratosRANS.IS_CO_SOLVING_PROCESS_ACTIVE]):
-            super(AdjointTurbulenceKEpsilonConfiguration, self).InitializeSolutionStep()
-
-    def FinalizeSolutionStep(self):
-        super(AdjointTurbulenceKEpsilonConfiguration, self).FinalizeSolutionStep()
-        time = self.fluid_model_part.ProcessInfo[Kratos.TIME]
-        if (time >= self.ramp_up_time):
-            self.fluid_model_part.ProcessInfo[KratosRANS.IS_CO_SOLVING_PROCESS_ACTIVE] = True
 
     def GetAdjointElementName(self):
         return self.element_name

@@ -80,3 +80,16 @@ class AdjointTurbulenceEddyViscosityModelConfiguration(
                 "Initialized " + self.adjoint_y_plus_model_process.__str__())
 
         return self.adjoint_y_plus_model_process
+
+    def GetAdjointResponseFunction(self, settings):
+        domain_size = self.fluid_model_part.ProcessInfo[Kratos.DOMAIN_SIZE]
+
+        if (settings["response_type"].GetString() == "drag"):
+            if (domain_size == 2):
+                return KratosRANS.RansDragResponseFunction2D(settings["custom_settings"], self.fluid_model_part)
+            elif (domain_size == 3):
+                return KratosRANS.RansDragResponseFunction3D(settings["custom_settings"], self.fluid_model_part)
+            else:
+                raise Exception("Invalid DOMAIN_SIZE: " + str(domain_size))
+        else:
+            raise Exception("Unknown RANS response_type \"" + settings["response_type"].GetString() + "\"")

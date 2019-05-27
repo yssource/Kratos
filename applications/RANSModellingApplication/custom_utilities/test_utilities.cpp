@@ -297,6 +297,27 @@ void RunGaussPointVectorSensitivityTest(
     }
 }
 
+/**
+ * @brief Calculate adjoint and finite difference sensitivities of the element residual
+ *
+ * This method calculates element residuals sensitivity w.r.t. scalar variable, and it is
+ * compared against adjoint sensitivities of the same. Due to high computational cost,
+ * the DISTANCE parameter is not updated after each perturbation, since calculating derivatives
+ * w.r.t. shape parameters for DISTANCE values comes with higher computational cost.
+ *
+ * @param rPrimalModelPart
+ * @param rAdjointModelPart
+ * @param rPrimalYPlusProcess
+ * @param rAdjointYPlusProcess
+ * @param rYPlusSensitivitiesProcess
+ * @param UpdateVariablesInModelPart
+ * @param CalculateElementResidualScalarSensitivity
+ * @param PerturbVariable
+ * @param Delta
+ * @param Tolerance
+ * @param DerivativesOffset
+ * @param EquationOffset
+ */
 void RunElementResidualScalarSensitivityTest(
     ModelPart& rPrimalModelPart,
     ModelPart& rAdjointModelPart,

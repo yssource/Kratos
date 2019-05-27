@@ -2232,7 +2232,8 @@ private:
             const double relaxed_scalar_rate = this->EvaluateInPoint(
                 this->GetPrimalRelaxedRateVariable(), gauss_shape_functions);
 
-            double chi, k1, k2, residual, positivity_preserving_coeff;
+            double chi{0.0}, k1{0.0}, k2{0.0}, residual{0.0},
+                positivity_preserving_coeff{0.0};
             if (scalar_gradient_norm > std::numeric_limits<double>::epsilon() &&
                 velocity_magnitude_square > std::numeric_limits<double>::epsilon())
             {
@@ -2488,7 +2489,7 @@ private:
             const double relaxed_scalar_rate = this->EvaluateInPoint(
                 this->GetPrimalRelaxedRateVariable(), gauss_shape_functions);
 
-            double chi, k1, k2, residual;
+            double chi{0.0}, k1{0.0}, k2{0.0}, residual{0.0};
             if (scalar_gradient_norm > std::numeric_limits<double>::epsilon() &&
                 velocity_magnitude_square > std::numeric_limits<double>::epsilon())
             {
@@ -2503,8 +2504,9 @@ private:
             }
 
             noalias(positivity_preserving_coeff_derivatives) =
-                gauss_shape_functions * ((residual / std::abs(residual)) * chi /
-                                         (scalar_gradient_norm * velocity_magnitude_square));
+                gauss_shape_functions *
+                ((residual / (std::abs(residual) + std::numeric_limits<double>::epsilon())) *
+                 chi / (scalar_gradient_norm * velocity_magnitude_square));
 
             // calculating primal damping matrix scalar derivatives
             for (unsigned int a = 0; a < TNumNodes; ++a)
@@ -3051,7 +3053,8 @@ private:
                 effective_kinematic_viscosity, bossak_alpha, bossak_gamma, delta_time);
 
             double chi{0.0}, stream_line_diffusion_coeff{0.0},
-                cross_wind_diffusion_coeff{0.0}, residual{0.0};
+                cross_wind_diffusion_coeff{0.0}, residual{0.0},
+                positivity_preserving_coeff{0.0};
 
             if (primal_variable_gradient_norm > std::numeric_limits<double>::epsilon() &&
                 velocity_magnitude_square > std::numeric_limits<double>::epsilon())
@@ -3066,14 +3069,13 @@ private:
                     chi, stream_line_diffusion_coeff, cross_wind_diffusion_coeff,
                     velocity_magnitude, tau, effective_kinematic_viscosity, reaction,
                     bossak_alpha, bossak_gamma, delta_time, element_length);
+
+                positivity_preserving_coeff =
+                    chi * residual / (primal_variable_gradient_norm * velocity_magnitude_square);
             }
 
             rans_variable_utils.GetNodalArray(primal_variable_nodal_values,
                                               *this, primal_variable);
-
-            const double positivity_preserving_coeff =
-                chi * residual / (primal_variable_gradient_norm * velocity_magnitude_square);
-
             const double psi_one =
                 StabilizedConvectionDiffusionReactionUtilities::CalculatePsiOne(
                     velocity_magnitude, tau,
@@ -3440,23 +3442,28 @@ private:
             const double velocity_magnitude_square = std::pow(velocity_magnitude, 2);
             const double primal_variable_gradient_norm = norm_2(primal_variable_gradient);
 
-            double chi, k1, k2;
+            double chi{0.0}, k1{0.0}, k2{0.0}, residual{0.0},
+                positivity_preservation_coeff{0.0};
 
             const double primal_variable_relaxed_rate = this->EvaluateInPoint(
                 this->GetPrimalRelaxedRateVariable(), gauss_shape_functions);
 
-            double residual = primal_variable_relaxed_rate;
-            residual += velocity_dot_primal_variable_gradient;
-            residual += reaction * primal_variable_value;
-            residual -= source;
+            if (velocity_magnitude_square > std::numeric_limits<double>::epsilon() &&
+                primal_variable_gradient_norm > std::numeric_limits<double>::epsilon())
+            {
+                residual = primal_variable_relaxed_rate;
+                residual += velocity_dot_primal_variable_gradient;
+                residual += reaction * primal_variable_value;
+                residual -= source;
 
-            StabilizedConvectionDiffusionReactionUtilities::CalculateCrossWindDiffusionParameters(
-                chi, k1, k2, velocity_magnitude, tau, effective_kinematic_viscosity,
-                reaction, bossak_alpha, bossak_gamma, delta_time, element_length);
+                StabilizedConvectionDiffusionReactionUtilities::CalculateCrossWindDiffusionParameters(
+                    chi, k1, k2, velocity_magnitude, tau, effective_kinematic_viscosity,
+                    reaction, bossak_alpha, bossak_gamma, delta_time, element_length);
 
-            const double positivity_preservation_coeff =
-                std::abs(residual) * chi /
-                (velocity_magnitude_square * primal_variable_gradient_norm);
+                positivity_preservation_coeff =
+                    std::abs(residual) * chi /
+                    (velocity_magnitude_square * primal_variable_gradient_norm);
+            }
 
             this->CalculateChiVelocityDerivatives(
                 chi_derivatives, chi, element_length, bossak_alpha,

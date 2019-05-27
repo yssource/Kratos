@@ -43,7 +43,8 @@ class AdjointVMSMonolithicSolver(AdjointFluidSolver):
             "time_stepping"               : {
                 "automatic_time_step" : false,
                 "time_step"           : -0.1
-        }
+            },
+            "turbulence_model": {}
         }""")
 
         settings.ValidateAndAssignDefaults(default_settings)
@@ -52,7 +53,6 @@ class AdjointVMSMonolithicSolver(AdjointFluidSolver):
     def __init__(self, model, custom_settings):
         super(AdjointVMSMonolithicSolver,self).__init__(model,custom_settings)
 
-        self.element_name = "VMSAdjointElement"
         if self.settings["domain_size"].GetInt() == 2:
             self.condition_name = "LineCondition"
         elif self.settings["domain_size"].GetInt() == 3:
@@ -61,6 +61,15 @@ class AdjointVMSMonolithicSolver(AdjointFluidSolver):
         # construct the linear solver
         import KratosMultiphysics.python_linear_solver_factory as linear_solver_factory
         self.linear_solver = linear_solver_factory.ConstructSolver(self.settings["linear_solver_settings"])
+
+        if not self.settings["turbulence_model"].IsEquivalentTo(KratosMultiphysics.Parameters("{}")):
+            # if not empty
+            from adjoint_turbulence_model_configuration import CreateTurbulenceModel
+            self.turbulence_model_configuration = CreateTurbulenceModel(model, self.settings["turbulence_model"])
+            self.element_name = self.turbulence_model_configuration.GetAdjointElementName()
+        else:
+            self.turbulence_model_configuration = None
+            self.element_name = "VMSAdjointElement"
 
         KratosMultiphysics.Logger.PrintInfo(self.__class__.__name__, "Construction of AdjointVMSMonolithicSolver finished.")
 
@@ -80,7 +89,18 @@ class AdjointVMSMonolithicSolver(AdjointFluidSolver):
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.SHAPE_SENSITIVITY)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL_SENSITIVITY)
 
+        # Adding variables required for the turbulence modelling
+        if self.turbulence_model_configuration is not None:
+            self.turbulence_model_configuration.fluid_model_part = self.main_model_part
+            self.turbulence_model_configuration.AddVariables()
+
         KratosMultiphysics.Logger.PrintInfo(self.__class__.__name__, "Adjoint fluid solver variables added correctly.")
+
+    def AddDofs(self):
+        super(AdjointVMSMonolithicSolver, self).AddDofs()
+
+        if self.turbulence_model_configuration is not None:
+            self.turbulence_model_configuration.AddDofs()
 
     def PrepareModelPart(self):
         self._set_physical_properties()
@@ -100,7 +120,10 @@ class AdjointVMSMonolithicSolver(AdjointFluidSolver):
             else:
                 raise Exception("Invalid DOMAIN_SIZE: " + str(domain_size))
         else:
-            raise Exception("invalid response_type: " + self.settings["response_function_settings"]["response_type"].GetString())
+            if (self.turbulence_model_configuration is not None):
+                self.response_function = self.turbulence_model_configuration.GetAdjointResponseFunction(self.settings["response_function_settings"])
+            else:
+                raise Exception("invalid response_type: " + self.settings["response_function_settings"]["response_type"].GetString())
 
         self.sensitivity_builder = KratosMultiphysics.SensitivityBuilder(self.settings["sensitivity_settings"], self.main_model_part, self.response_function)
 
@@ -128,6 +151,9 @@ class AdjointVMSMonolithicSolver(AdjointFluidSolver):
         self.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.DYNAMIC_TAU, self.settings["dynamic_tau"].GetDouble())
         self.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.OSS_SWITCH, self.settings["oss_switch"].GetInt())
 
+        if (self.turbulence_model_configuration is not None):
+            self.turbulence_model_configuration.Initialize()
+
         (self.solver).Initialize()
         (self.response_function).Initialize()
         (self.sensitivity_builder).Initialize()
@@ -147,3 +173,18 @@ class AdjointVMSMonolithicSolver(AdjointFluidSolver):
 
         KratosMultiphysics.VariableUtils().SetScalarVar(KratosMultiphysics.DENSITY, rho, self.main_model_part.Nodes)
         KratosMultiphysics.VariableUtils().SetScalarVar(KratosMultiphysics.VISCOSITY, kin_viscosity, self.main_model_part.Nodes)
+
+    def InitializeSolutionStep(self):
+        super(AdjointVMSMonolithicSolver, self).InitializeSolutionStep()
+        if (self.turbulence_model_configuration is not None):
+            self.turbulence_model_configuration.InitializeSolutionStep()
+
+    def FinalizeSolutionStep(self):
+        super(AdjointVMSMonolithicSolver, self).FinalizeSolutionStep()
+        if (self.turbulence_model_configuration is not None):
+            self.turbulence_model_configuration.FinalizeSolutionStep()
+
+    def Check(self):
+        super(AdjointVMSMonolithicSolver, self).Check()
+        if (self.turbulence_model_configuration is not None):
+            self.turbulence_model_configuration.Check()

@@ -152,6 +152,12 @@ public:
         return 0;
     }
 
+    /// this function will be executed at every time step BEFORE performing the solve phase
+    void ExecuteInitializeSolutionStep() override
+    {
+        Execute();
+    }
+
     void Execute() override
     {
         ModelPart::ElementsContainerType& r_elements = mrModelPart.Elements();

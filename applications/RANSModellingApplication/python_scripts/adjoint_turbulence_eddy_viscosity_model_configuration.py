@@ -1,0 +1,81 @@
+import KratosMultiphysics as Kratos
+import KratosMultiphysics.RANSModellingApplication as KratosRANS
+import math
+
+from KratosMultiphysics.kratos_utilities import CheckIfApplicationsAvailable
+
+if CheckIfApplicationsAvailable("FluidDynamicsApplication"):
+    import KratosMultiphysics.FluidDynamicsApplication as KratosCFD
+    from adjoint_turbulence_model_configuration import AdjointTurbulenceModelConfiguration
+else:
+    msg = "RANSModellingApplication requires FluidDynamicsApplication which is not found."
+    msg += " Please install/compile it and try again."
+    raise Exception(msg)
+
+
+class AdjointTurbulenceEddyViscosityModelConfiguration(
+        AdjointTurbulenceModelConfiguration):
+    def __init__(self, model, settings):
+        self._validate_settings_in_baseclass = True  # To be removed eventually
+
+        super(AdjointTurbulenceEddyViscosityModelConfiguration, self).__init__(
+            model, settings)
+
+        # self.mesh_moving = self.settings["mesh_moving"].GetBool()
+        self.adjoint_y_plus_model_process = None
+        self.element_name = None
+
+    def GetDefaultSettings(self):
+        return Kratos.Parameters(r'''{
+            "model_type"            : "",
+            "model_settings"        : {},
+            "adjoint_y_plus_model"  : {
+                "model_type"     : "",
+                "model_settings" : {}
+            },
+            "echo_level"              : 0
+        }''')
+
+    def Initialize(self):
+        self.__InitializeModelPart()
+
+        super(AdjointTurbulenceEddyViscosityModelConfiguration,
+              self).Initialize()
+
+        self.PrepareSolvingStrategy()
+
+        Kratos.Logger.PrintInfo(self.__class__.__name__,
+                                "Initialization successfull.")
+
+    def AddVariables(self):
+        # adding variables required by rans eddy viscosity models
+        self.fluid_model_part.AddNodalSolutionStepVariable(Kratos.VISCOSITY)
+        self.fluid_model_part.AddNodalSolutionStepVariable(
+            Kratos.KINEMATIC_VISCOSITY)
+        self.fluid_model_part.AddNodalSolutionStepVariable(
+            Kratos.TURBULENT_VISCOSITY)
+        self.fluid_model_part.AddNodalSolutionStepVariable(
+            KratosRANS.RANS_Y_PLUS)
+
+        Kratos.Logger.PrintInfo(self.__class__.__name__,
+                                "Successfully added solution step variables.")
+
+    def Check(self):
+        self.GetAdjointYPlusModel().Check()
+
+    def PrepareModelPart(self):
+        pass
+
+    def GetAdjointYPlusModel(self):
+        if self.adjoint_y_plus_model_process is None:
+            y_plus_model_settings = self.settings["adjoint_y_plus_model"]
+            import adjoint_rans_y_plus_model_factory
+            adjoint_rans_y_plus_model_factory.InitializeModelPartName(
+                y_plus_model_settings, self.model, self.fluid_model_part)
+            self.adjoint_y_plus_model_process = adjoint_rans_y_plus_model_factory.Factory(
+                y_plus_model_settings, self.model)
+            Kratos.Logger.PrintInfo(
+                self.__class__.__name__,
+                "Initialized " + self.adjoint_y_plus_model_process.__str__())
+
+        return self.adjoint_y_plus_model_process

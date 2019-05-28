@@ -53,6 +53,9 @@ void AssembleNodalSolutionStepValues(const Variable<double>& rVariable,
                                      Geometry<Node<3>>& rGeom)
 {
     KRATOS_TRY;
+    if (rValues.size() == 0)
+        return;
+
     KRATOS_ERROR_IF(rGeom.size() != rValues.size())
         << "Geometry size: " << rGeom.size()
         << " is incompatible with vector size: " << rValues.size() << std::endl;
@@ -76,6 +79,10 @@ void AssembleNodalSolutionStepValues(const Variable<array_1d<double, 3>>& rVaria
                                      Geometry<Node<3>>& rGeom)
 {
     KRATOS_TRY;
+
+    if (rValues.size() == 0)
+        return;
+
     if (rGeom.size() * rGeom.WorkingSpaceDimension() != rValues.size())
     {
         KRATOS_ERROR << "Geometry size: " << rGeom.size()

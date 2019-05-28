@@ -90,7 +90,7 @@ public:
                                    Vector& rResponseGradient,
                                    const ProcessInfo& rProcessInfo)
     {
-        KRATOS_ERROR << "Calling base class response function method.\n";
+        // KRATOS_ERROR << "Calling base class response function method.\n";
     }
 
     /// Calculate the local gradient w.r.t. primal solution.
@@ -106,7 +106,7 @@ public:
                                    Vector& rResponseGradient,
                                    const ProcessInfo& rProcessInfo)
     {
-        KRATOS_ERROR << "Calling base class response function method.\n";
+        // KRATOS_ERROR << "Calling base class response function method.\n";
     }
 
     /// Calculate the local gradient w.r.t. first derivatives of primal solution.
@@ -122,7 +122,7 @@ public:
                                                    Vector& rResponseGradient,
                                                    const ProcessInfo& rProcessInfo)
     {
-        KRATOS_ERROR << "Calling base class response function method.\n";
+        // KRATOS_ERROR << "Calling base class response function method.\n";
     }
 
     /// Calculate the local gradient w.r.t. first derivatives of primal solution.
@@ -138,7 +138,7 @@ public:
                                                    Vector& rResponseGradient,
                                                    const ProcessInfo& rProcessInfo)
     {
-        KRATOS_ERROR << "Calling base class response function method.\n";
+        // KRATOS_ERROR << "Calling base class response function method.\n";
     }
 
     /// Calculate the local gradient w.r.t. second derivatives of primal solution.
@@ -154,7 +154,7 @@ public:
                                                     Vector& rResponseGradient,
                                                     const ProcessInfo& rProcessInfo)
     {
-        KRATOS_ERROR << "Calling base class response function method.\n";
+        // KRATOS_ERROR << "Calling base class response function method.\n";
     }
 
     /// Calculate the local gradient w.r.t. second derivatives of primal solution.
@@ -170,7 +170,7 @@ public:
                                                     Vector& rResponseGradient,
                                                     const ProcessInfo& rProcessInfo)
     {
-        KRATOS_ERROR << "Calling base class response function method.\n";
+        // KRATOS_ERROR << "Calling base class response function method.\n";
     }
 
     /// Calculate the partial sensitivity w.r.t. design variable.
@@ -188,7 +188,7 @@ public:
                                              Vector& rSensitivityGradient,
                                              const ProcessInfo& rProcessInfo)
     {
-        KRATOS_ERROR << "Calling base class response function method.\n";
+        // KRATOS_ERROR << "Calling base class response function method.\n";
     }
 
     /// Calculate the partial sensitivity w.r.t. design variable.
@@ -206,7 +206,7 @@ public:
                                              Vector& rSensitivityGradient,
                                              const ProcessInfo& rProcessInfo)
     {
-        KRATOS_ERROR << "Calling base class response function method.\n";
+        // KRATOS_ERROR << "Calling base class response function method.\n";
     }
 
     /// Calculate the partial sensitivity w.r.t. design variable.
@@ -224,7 +224,7 @@ public:
                                              Vector& rSensitivityGradient,
                                              const ProcessInfo& rProcessInfo)
     {
-        KRATOS_ERROR << "Calling base class response function method.\n";
+        // KRATOS_ERROR << "Calling base class response function method.\n";
     }
 
     /// Calculate the partial sensitivity w.r.t. design variable.
@@ -242,7 +242,7 @@ public:
                                              Vector& rSensitivityGradient,
                                              const ProcessInfo& rProcessInfo)
     {
-        KRATOS_ERROR << "Calling base class response function method.\n";
+        // KRATOS_ERROR << "Calling base class response function method.\n";
     }
 
     /// Calculate the scalar valued response function.

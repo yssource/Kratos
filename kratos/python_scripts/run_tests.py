@@ -1,16 +1,15 @@
 from __future__ import print_function, absolute_import, division
 
-import imp
 import os
 import re
-import getopt
 import sys
-import subprocess
+import getopt
 import threading
+import subprocess
 
-from KratosMultiphysics import Tester
-from KratosMultiphysics import KratosLoader
-from KratosMultiphysics.KratosUnittest import SupressConsoleOutput, SupressConsoleError, SupressAllConsole
+import KratosMultiphysics as KtsMp
+import KratosMultiphysics.KratosUnittest as KtsUt
+import KratosMultiphysics.kratos_utilities as KtsUtls
 
 
 def Usage():
@@ -22,48 +21,13 @@ def Usage():
         'Options',
         '\t -h, --help: Shows this command',
         '\t -l, --level: Minimum level of detail of the tests: \'all\'(Default) \'(nightly)\' \'(small)\'',  # noqa
-        '\t              For MPI tests, use the equivalent distributed test suites: \'(mpi_all)\', \'(mpi_nightly)\' \'(mpi_small)\'',
         '\t -a, --applications: List of applications to run separated by \':\'. All compiled applications will be run by default',  # noqa
         '\t -v, --verbose: Verbosity level: 0, 1 (Default), 2',
-        '\t -c, --command: Use the provided command to launch test cases. If not provided, the default \'runkratos\' executable is used'
+        '\t -c, --command: Use the provided command to launch test cases. If not provided, the default \'runkratos\' executable is used',
+        '\t --using-mpi: If running in MPI and executing the MPI-tests'
     ]
-
     for l in lines:
-        print(l)
-
-
-def GetModulePath(module):
-    ''' Returns the location of a module using its absolute path
-
-    Return
-    ------
-    string
-        The absolute path of the module
-
-    '''
-
-    return imp.find_module(module)[1]
-
-
-def GetAvailableApplication():
-    ''' Return the list of applications available in KratosMultiphysics
-
-    Return a list of compiled applications available in the KratosMultiphysics
-    module.
-
-    Return
-    ------
-    list of string
-        List of the names of the applications
-
-    '''
-    kratosPath = GetModulePath('KratosMultiphysics')
-
-    apps = [
-        f.split('.')[0] for f in os.listdir(kratosPath) if re.match(r'.*Application*', f)
-    ]
-
-    return apps
+        KtsMp.Logger.PrintInfo(l) # using the logger to only print once in MPI
 
 
 def handler(signum, frame):
@@ -76,23 +40,18 @@ class Commander(object):
         self.exitCode = 0
 
     def RunTestSuitInTime(self, application, applicationPath, path, level, verbose, command, timeout):
-        if(timeout > -1):
-            t = threading.Thread(
-                target=self.RunTestSuit,
-                args=(application, applicationPath, path, level, verbose, command)
-            )
+        t = threading.Thread(
+            target=self.RunTestSuit,
+            args=(application, applicationPath, path, level, verbose, command)
+        )
 
-            t.start()
-            t.join(timeout)
+        t.start()
+        t.join(timeout)
 
-            if t.isAlive():
-                self.process.terminate()
-                t.join()
-                print('\nABORT: Tests for {} took to long. Process Killed.'.format(application), file=sys.stderr)
-            else:
-                print('\nTests for {} finished in time ({}s).'.format(application, timeout))
-        else:
-            self.RunTestSuit(application, applicationPath, path, level, verbose, command)
+        if t.isAlive():
+            self.process.terminate()
+            t.join()
+            print('\n[Error]: Tests for {} took to long. Process Killed.'.format(application), file=sys.stderr)
 
     def RunTestSuit(self, application, applicationPath, path, level, verbose, command):
         ''' Calls the script that will run the tests.
@@ -153,24 +112,33 @@ class Commander(object):
                     file=sys.stderr)
 
             if os.path.isfile(script):
-                self.process = subprocess.Popen([
-                    command,
-                    script,
-                    '-l'+level,
-                    '-v'+str(verbose)
-                ], stdout=subprocess.PIPE)
+                try:
+                    self.process = subprocess.Popen([
+                        command,
+                        script,
+                        '-l'+level,
+                        '-v'+str(verbose)
+                    ], stdout=subprocess.PIPE)
+                except OSError:
+                    # Command does not exist
+                    print('[Error]: Unable to execute {}'.format(command), file=sys.stderr)
+                    self.exitCode = 1
+                except ValueError:
+                    # Command does exist, but the arguments are invalid (It sohuld never enter here. Just to be safe)
+                    print('[Error]: Invalid arguments when calling {} {} {} {}'.format(command, script, '-l'+level, '-v'+str(verbose)), file=sys.stderr)
+                    self.exitCode = 1
+                else:
+                    # Used instead of wait to "soft-block" the process and prevent deadlocks
+                    # and capture the first exit code different from OK
+                    process_stdout, process_stderr = self.process.communicate()
+                    if process_stdout:
+                        print(process_stdout.decode('ascii'), file=sys.stdout)
+                    if process_stderr:
+                        print(process_stderr.decode('ascii'), file=sys.stderr)
 
-                # Used instead of wait to "soft-block" the process and prevent deadlocks
-                # and capture the first exit code different from OK
-                process_stdout, process_stderr = self.process.communicate()
-                if process_stdout:
-                    print(process_stdout.decode('ascii'), file=sys.stdout)
-                if process_stderr:
-                    print(process_stderr.decode('ascii'), file=sys.stderr)
-
-                # Running out of time in the tests will send the error code -15. We may want to skip
-                # that one in a future. Right now will throw everything different from 0.
-                self.exitCode = int(self.process.returncode != 0)
+                    # Running out of time in the tests will send the error code -15. We may want to skip
+                    # that one in a future. Right now will throw everything different from 0.
+                    self.exitCode = int(self.process.returncode != 0)
             else:
                 if verbose > 0:
                     print(
@@ -196,8 +164,8 @@ class Commander(object):
             __import__("KratosMultiphysics." + application)
 
         try:
-            Tester.SetVerbosity(Tester.Verbosity.PROGRESS)
-            self.exitCode = Tester.RunAllTestCases()
+            KtsMp.Tester.SetVerbosity(KtsMp.Tester.Verbosity.PROGRESS)
+            self.exitCode = KtsMp.Tester.RunAllTestCases()
         except Exception as e:
             print('[Warning]:', e, file=sys.stderr)
             self.exitCode = 1
@@ -206,15 +174,16 @@ class Commander(object):
 def main():
 
     # Define the command
-    cmd = os.path.dirname(GetModulePath('KratosMultiphysics'))+'/'+'runkratos'
+    cmd = os.path.join(os.path.dirname(KtsUtls.GetKratosMultiphysicsPath()), 'runkratos')
 
     verbose_values = [0, 1, 2]
-    level_values = ['all', 'nightly', 'small', 'validation', 'mpi_all', 'mpi_small', 'mpi_nightly', 'mpi_validation']
+    level_values = ['all', 'nightly', 'small', 'validation']
 
     # Set default values
-    applications = GetAvailableApplication()
+    applications = KtsUtls.GetListOfAvailableApplications()
     verbosity = 1
     level = 'all'
+    is_mpi = False
 
     # Keep the worst exit code
     exit_code = 0
@@ -228,7 +197,8 @@ def main():
                 'applications=',
                 'verbose=',
                 'level=',
-                'command='
+                'command=',
+                'using-mpi'
             ])
     except getopt.GetoptError as err:
         print(str(err))
@@ -279,11 +249,17 @@ def main():
                 Usage()
                 sys.exit()
 
+        elif o in ('--using-mpi'):
+            is_mpi = True
+
         else:
             assert False, 'unhandled option'
 
+    if is_mpi:
+        level = "mpi_" + level
+
     # Set timeout of the different levels
-    signalTime = int(-1)
+    signalTime = None
     if level == 'small':
         signalTime = int(60)
     elif level == 'nightly':
@@ -295,11 +271,11 @@ def main():
     # KratosCore must always be runned
     print('Running tests for KratosCore', file=sys.stderr)
 
-    with SupressConsoleOutput():
+    with KtsUt.SupressConsoleOutput():
         commander.RunTestSuitInTime(
             'KratosCore',
             'kratos',
-            os.path.dirname(GetModulePath('KratosMultiphysics')),
+            os.path.dirname(KtsUtls.GetKratosMultiphysicsPath()),
             level,
             verbosity,
             cmd,
@@ -313,11 +289,11 @@ def main():
         print('Running tests for {}'.format(application), file=sys.stderr)
         sys.stderr.flush()
 
-        with SupressConsoleOutput():
+        with KtsUt.SupressConsoleOutput():
             commander.RunTestSuitInTime(
                 application,
                 application,
-                KratosLoader.kratos_applications+'/',
+                KtsMp.KratosPaths.kratos_applications+'/',
                 level,
                 verbosity,
                 cmd,
@@ -328,7 +304,7 @@ def main():
 
     # Run the cpp tests (does the same as run_cpp_tests.py)
     print('Running cpp tests', file=sys.stderr)
-    with SupressConsoleOutput():
+    with KtsUt.SupressConsoleOutput():
         commander.RunCppTests(applications)
 
     exit_code = max(exit_code, commander.exitCode)

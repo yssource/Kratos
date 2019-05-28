@@ -57,7 +57,7 @@ namespace Kratos
         PropertiesType::Pointer pProperties
         ) const
     {
-        return Kratos::make_shared<SurfaceLoadFromDEMCondition3D>(NewId, pGeom, pProperties);
+        return Kratos::make_intrusive<SurfaceLoadFromDEMCondition3D>(NewId, pGeom, pProperties);
     }
 
     //***********************************************************************************
@@ -69,7 +69,7 @@ namespace Kratos
         PropertiesType::Pointer pProperties
         ) const
     {
-        return Kratos::make_shared<SurfaceLoadFromDEMCondition3D>(NewId, GetGeometry().Create(ThisNodes), pProperties);
+        return Kratos::make_intrusive<SurfaceLoadFromDEMCondition3D>(NewId, GetGeometry().Create(ThisNodes), pProperties);
     }
 
     //******************************* DESTRUCTOR *****************************************
@@ -94,7 +94,7 @@ namespace Kratos
     void SurfaceLoadFromDEMCondition3D::CalculateAll(
         MatrixType& rLeftHandSideMatrix,
         VectorType& rRightHandSideVector,
-        ProcessInfo& rCurrentProcessInfo,
+        const ProcessInfo& rCurrentProcessInfo,
         const bool CalculateStiffnessMatrixFlag,
         const bool CalculateResidualVectorFlag
         )
@@ -175,9 +175,9 @@ namespace Kratos
         noalias(r_surface_load) = ZeroVector(3);
 
         for (unsigned int i = 0; i < number_of_nodes; ++i) {
-            
+
             if (Geometry[i].SolutionStepsDataHas(DEM_SURFACE_LOAD)) {
-                
+
                 noalias(r_surface_load) += n_container(g_point,i) * Geometry[i].FastGetSolutionStepValue(DEM_SURFACE_LOAD);
             }
         }

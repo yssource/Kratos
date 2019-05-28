@@ -27,10 +27,10 @@ namespace Kratos {
 	KRATOS_TEST_CASE_IN_SUITE(DistanceProcessQuadrilateral2D, KratosCoreFastSuite)
 	{
 		// Generate a volume mesh (done with the StructuredMeshGeneratorProcess)
-		Node<3>::Pointer p_point_1 = Kratos::make_shared<Node<3>>(1, 0.00, 0.00, 0.00);
-		Node<3>::Pointer p_point_2 = Kratos::make_shared<Node<3>>(2, 0.00, 10.00, 0.00);
-		Node<3>::Pointer p_point_3 = Kratos::make_shared<Node<3>>(3, 10.00, 10.00, 0.00);
-		Node<3>::Pointer p_point_4 = Kratos::make_shared<Node<3>>(4, 10.00, 0.00, 0.00);
+		Node<3>::Pointer p_point_1 = Kratos::make_intrusive<Node<3>>(1, 0.00, 0.00, 0.00);
+		Node<3>::Pointer p_point_2 = Kratos::make_intrusive<Node<3>>(2, 0.00, 10.00, 0.00);
+		Node<3>::Pointer p_point_3 = Kratos::make_intrusive<Node<3>>(3, 10.00, 10.00, 0.00);
+		Node<3>::Pointer p_point_4 = Kratos::make_intrusive<Node<3>>(4, 10.00, 0.00, 0.00);
 
 		Quadrilateral2D4<Node<3>> geometry(p_point_1, p_point_2, p_point_3, p_point_4);
 
@@ -87,10 +87,10 @@ namespace Kratos {
 	{
 
 		// Generate a volume mesh (done with the StructuredMeshGeneratorProcess)
-		Node<3>::Pointer p_point_1 = Kratos::make_shared<Node<3>>(1, 0.00, 0.00, 0.00);
-		Node<3>::Pointer p_point_2 = Kratos::make_shared<Node<3>>(2, 0.00, 10.00, 0.00);
-		Node<3>::Pointer p_point_3 = Kratos::make_shared<Node<3>>(3, 10.00, 10.00, 0.00);
-		Node<3>::Pointer p_point_4 = Kratos::make_shared<Node<3>>(4, 10.00, 0.00, 0.00);
+		Node<3>::Pointer p_point_1 = Kratos::make_intrusive<Node<3>>(1, 0.00, 0.00, 0.00);
+		Node<3>::Pointer p_point_2 = Kratos::make_intrusive<Node<3>>(2, 0.00, 10.00, 0.00);
+		Node<3>::Pointer p_point_3 = Kratos::make_intrusive<Node<3>>(3, 10.00, 10.00, 0.00);
+		Node<3>::Pointer p_point_4 = Kratos::make_intrusive<Node<3>>(4, 10.00, 0.00, 0.00);
 
 		Quadrilateral2D4<Node<3>> geometry(p_point_1, p_point_2, p_point_3, p_point_4);
 
@@ -141,14 +141,14 @@ namespace Kratos {
 	{
 
 		// Generate a volume mesh (done with the StructuredMeshGeneratorProcess)
-		Node<3>::Pointer p_point1 = Kratos::make_shared<Node<3>>(1, 0.00, 0.00, 0.00);
-		Node<3>::Pointer p_point2 = Kratos::make_shared<Node<3>>(2, 10.00, 0.00, 0.00);
-		Node<3>::Pointer p_point3 = Kratos::make_shared<Node<3>>(3, 10.00, 10.00, 0.00);
-		Node<3>::Pointer p_point4 = Kratos::make_shared<Node<3>>(4, 0.00, 10.00, 0.00);
-		Node<3>::Pointer p_point5 = Kratos::make_shared<Node<3>>(5, 0.00, 0.00, 10.00);
-		Node<3>::Pointer p_point6 = Kratos::make_shared<Node<3>>(6, 10.00, 0.00, 10.00);
-		Node<3>::Pointer p_point7 = Kratos::make_shared<Node<3>>(7, 10.00, 10.00, 10.00);
-		Node<3>::Pointer p_point8 = Kratos::make_shared<Node<3>>(8, 0.00, 10.00, 10.00);
+		Node<3>::Pointer p_point1 = Kratos::make_intrusive<Node<3>>(1, 0.00, 0.00, 0.00);
+		Node<3>::Pointer p_point2 = Kratos::make_intrusive<Node<3>>(2, 10.00, 0.00, 0.00);
+		Node<3>::Pointer p_point3 = Kratos::make_intrusive<Node<3>>(3, 10.00, 10.00, 0.00);
+		Node<3>::Pointer p_point4 = Kratos::make_intrusive<Node<3>>(4, 0.00, 10.00, 0.00);
+		Node<3>::Pointer p_point5 = Kratos::make_intrusive<Node<3>>(5, 0.00, 0.00, 10.00);
+		Node<3>::Pointer p_point6 = Kratos::make_intrusive<Node<3>>(6, 10.00, 0.00, 10.00);
+		Node<3>::Pointer p_point7 = Kratos::make_intrusive<Node<3>>(7, 10.00, 10.00, 10.00);
+		Node<3>::Pointer p_point8 = Kratos::make_intrusive<Node<3>>(8, 0.00, 10.00, 10.00);
 
 		Hexahedra3D8<Node<3> > geometry(p_point1, p_point2, p_point3, p_point4, p_point5, p_point6, p_point7, p_point8);
 
@@ -158,7 +158,7 @@ namespace Kratos {
 			"element_name":     "Element3D4N"
 		})");
 
-    Model current_model;
+                Model current_model;
 		ModelPart &volume_part = current_model.CreateModelPart("Volume");
 		volume_part.AddNodalSolutionStepVariable(VELOCITY);
 		volume_part.AddNodalSolutionStepVariable(DISTANCE);
@@ -172,7 +172,7 @@ namespace Kratos {
 		skin_part.CreateNewNode(902, 10.0, 0.0, 2.0);
 		skin_part.CreateNewNode(903, 10.0, 10.0, 2.0);
 		skin_part.CreateNewNode(904, 0.0, 10.0, 2.0);
-		Properties::Pointer p_properties(new Properties(0));
+		Properties::Pointer p_properties = skin_part.CreateNewProperties(0);
 		skin_part.CreateNewElement("Element3D3N", 901, { 901,902,903 }, p_properties);
 		skin_part.CreateNewElement("Element3D3N", 902, { 901,903,904 }, p_properties);
 
@@ -180,8 +180,8 @@ namespace Kratos {
 		CalculateDistanceToSkinProcess<3>(volume_part, skin_part).Execute();
 
 		for (auto& node : volume_part.Nodes())
-			if (fabs(node.GetSolutionStepValue(DISTANCE)) < 1.00e16) { // There are no propagation in this version so I avoid numeric_limit::max() one
-				auto distance = fabs(node.Z() - 2.00);
+			if (std::abs(node.GetSolutionStepValue(DISTANCE)) < 1.00e16) { // There are no propagation in this version so I avoid numeric_limit::max() one
+				auto distance = std::abs(node.Z() - 2.00);
 				KRATOS_CHECK_NEAR(node.GetSolutionStepValue(DISTANCE), distance, 1e-6);
 			}
 	}
@@ -190,14 +190,14 @@ namespace Kratos {
 	{
 
 		// Generate a volume mesh (done with the StructuredMeshGeneratorProcess)
-		Node<3>::Pointer p_point1 = Kratos::make_shared<Node<3>>(1, 0.00, 0.00, 0.00);
-		Node<3>::Pointer p_point2 = Kratos::make_shared<Node<3>>(2, 10.00, 0.00, 0.00);
-		Node<3>::Pointer p_point3 = Kratos::make_shared<Node<3>>(3, 10.00, 10.00, 0.00);
-		Node<3>::Pointer p_point4 = Kratos::make_shared<Node<3>>(4, 0.00, 10.00, 0.00);
-		Node<3>::Pointer p_point5 = Kratos::make_shared<Node<3>>(5, 0.00, 0.00, 10.00);
-		Node<3>::Pointer p_point6 = Kratos::make_shared<Node<3>>(6, 10.00, 0.00, 10.00);
-		Node<3>::Pointer p_point7 = Kratos::make_shared<Node<3>>(7, 10.00, 10.00, 10.00);
-		Node<3>::Pointer p_point8 = Kratos::make_shared<Node<3>>(8, 0.00, 10.00, 10.00);
+		Node<3>::Pointer p_point1 = Kratos::make_intrusive<Node<3>>(1, 0.00, 0.00, 0.00);
+		Node<3>::Pointer p_point2 = Kratos::make_intrusive<Node<3>>(2, 10.00, 0.00, 0.00);
+		Node<3>::Pointer p_point3 = Kratos::make_intrusive<Node<3>>(3, 10.00, 10.00, 0.00);
+		Node<3>::Pointer p_point4 = Kratos::make_intrusive<Node<3>>(4, 0.00, 10.00, 0.00);
+		Node<3>::Pointer p_point5 = Kratos::make_intrusive<Node<3>>(5, 0.00, 0.00, 10.00);
+		Node<3>::Pointer p_point6 = Kratos::make_intrusive<Node<3>>(6, 10.00, 0.00, 10.00);
+		Node<3>::Pointer p_point7 = Kratos::make_intrusive<Node<3>>(7, 10.00, 10.00, 10.00);
+		Node<3>::Pointer p_point8 = Kratos::make_intrusive<Node<3>>(8, 0.00, 10.00, 10.00);
 
 		Hexahedra3D8<Node<3> > geometry(p_point1, p_point2, p_point3, p_point4, p_point5, p_point6, p_point7, p_point8);
 
@@ -221,7 +221,7 @@ namespace Kratos {
 		skin_part.CreateNewNode(902, 10.0, 0.0, 5.0);
 		skin_part.CreateNewNode(903, 10.0, 10.0, 5.0);
 		skin_part.CreateNewNode(904, 0.0, 10.0, 5.0);
-		Properties::Pointer p_properties(new Properties(0));
+		Properties::Pointer p_properties = skin_part.CreateNewProperties(0);
 		skin_part.CreateNewElement("Element3D3N", 901, { 901,902,903 }, p_properties);
 		skin_part.CreateNewElement("Element3D3N", 902, { 901,903,904 }, p_properties);
 
@@ -229,8 +229,8 @@ namespace Kratos {
 		CalculateDistanceToSkinProcess<3>(volume_part, skin_part).Execute();
 
 		for (auto& node : volume_part.Nodes())
-			if (fabs(node.GetSolutionStepValue(DISTANCE)) < 1.00e16) { // There are no propagation in this version so I avoid numeric_limit::max() one
-				auto distance = fabs(node.Z() - 5.00);
+			if (std::abs(node.GetSolutionStepValue(DISTANCE)) < 1.00e16) { // There are no propagation in this version so I avoid numeric_limit::max() one
+				auto distance = std::abs(node.Z() - 5.00);
 				KRATOS_CHECK_NEAR(node.GetSolutionStepValue(DISTANCE), distance, 1e-6);
 			}
 
@@ -240,14 +240,14 @@ namespace Kratos {
 	{
 
 		// Generate a volume mesh (done with the StructuredMeshGeneratorProcess)
-		Node<3>::Pointer p_point1 = Kratos::make_shared<Node<3>>(1, 0.00, 0.00, 0.00);
-		Node<3>::Pointer p_point2 = Kratos::make_shared<Node<3>>(2, 10.00, 0.00, 0.00);
-		Node<3>::Pointer p_point3 = Kratos::make_shared<Node<3>>(3, 10.00, 10.00, 0.00);
-		Node<3>::Pointer p_point4 = Kratos::make_shared<Node<3>>(4, 0.00, 10.00, 0.00);
-		Node<3>::Pointer p_point5 = Kratos::make_shared<Node<3>>(5, 0.00, 0.00, 10.00);
-		Node<3>::Pointer p_point6 = Kratos::make_shared<Node<3>>(6, 10.00, 0.00, 10.00);
-		Node<3>::Pointer p_point7 = Kratos::make_shared<Node<3>>(7, 10.00, 10.00, 10.00);
-		Node<3>::Pointer p_point8 = Kratos::make_shared<Node<3>>(8, 0.00, 10.00, 10.00);
+		Node<3>::Pointer p_point1 = Kratos::make_intrusive<Node<3>>(1, 0.00, 0.00, 0.00);
+		Node<3>::Pointer p_point2 = Kratos::make_intrusive<Node<3>>(2, 10.00, 0.00, 0.00);
+		Node<3>::Pointer p_point3 = Kratos::make_intrusive<Node<3>>(3, 10.00, 10.00, 0.00);
+		Node<3>::Pointer p_point4 = Kratos::make_intrusive<Node<3>>(4, 0.00, 10.00, 0.00);
+		Node<3>::Pointer p_point5 = Kratos::make_intrusive<Node<3>>(5, 0.00, 0.00, 10.00);
+		Node<3>::Pointer p_point6 = Kratos::make_intrusive<Node<3>>(6, 10.00, 0.00, 10.00);
+		Node<3>::Pointer p_point7 = Kratos::make_intrusive<Node<3>>(7, 10.00, 10.00, 10.00);
+		Node<3>::Pointer p_point8 = Kratos::make_intrusive<Node<3>>(8, 0.00, 10.00, 10.00);
 
 		Hexahedra3D8<Node<3> > geometry(p_point1, p_point2, p_point3, p_point4, p_point5, p_point6, p_point7, p_point8);
 
@@ -369,10 +369,10 @@ namespace Kratos {
         Model current_model;
 
         // Generate a volume mesh (done with the StructuredMeshGeneratorProcess)
-        Node<3>::Pointer p_point_1 = Kratos::make_shared<Node<3>>(1, -0.5, -0.5, 0.0);
-        Node<3>::Pointer p_point_2 = Kratos::make_shared<Node<3>>(2, -0.5,  0.5, 0.0);
-        Node<3>::Pointer p_point_3 = Kratos::make_shared<Node<3>>(3,  0.5,  0.5, 0.0);
-        Node<3>::Pointer p_point_4 = Kratos::make_shared<Node<3>>(4,  0.5, -0.5, 0.0);
+        Node<3>::Pointer p_point_1 = Kratos::make_intrusive<Node<3>>(1, -0.5, -0.5, 0.0);
+        Node<3>::Pointer p_point_2 = Kratos::make_intrusive<Node<3>>(2, -0.5,  0.5, 0.0);
+        Node<3>::Pointer p_point_3 = Kratos::make_intrusive<Node<3>>(3,  0.5,  0.5, 0.0);
+        Node<3>::Pointer p_point_4 = Kratos::make_intrusive<Node<3>>(4,  0.5, -0.5, 0.0);
 
         Quadrilateral2D4<Node<3>> geometry(p_point_1, p_point_2, p_point_3, p_point_4);
 
@@ -423,10 +423,10 @@ namespace Kratos {
         Model current_model;
 
         // Generate a volume mesh (done with the StructuredMeshGeneratorProcess)
-        Node<3>::Pointer p_point_1 = Kratos::make_shared<Node<3>>(1, -0.5, -0.5, 0.0);
-        Node<3>::Pointer p_point_2 = Kratos::make_shared<Node<3>>(2, -0.5,  0.5, 0.0);
-        Node<3>::Pointer p_point_3 = Kratos::make_shared<Node<3>>(3,  0.5,  0.5, 0.0);
-        Node<3>::Pointer p_point_4 = Kratos::make_shared<Node<3>>(4,  0.5, -0.5, 0.0);
+        Node<3>::Pointer p_point_1 = Kratos::make_intrusive<Node<3>>(1, -0.5, -0.5, 0.0);
+        Node<3>::Pointer p_point_2 = Kratos::make_intrusive<Node<3>>(2, -0.5,  0.5, 0.0);
+        Node<3>::Pointer p_point_3 = Kratos::make_intrusive<Node<3>>(3,  0.5,  0.5, 0.0);
+        Node<3>::Pointer p_point_4 = Kratos::make_intrusive<Node<3>>(4,  0.5, -0.5, 0.0);
 
         Quadrilateral2D4<Node<3>> geometry(p_point_1, p_point_2, p_point_3, p_point_4);
 

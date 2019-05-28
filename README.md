@@ -6,7 +6,7 @@ _KRATOS Multiphysics_ ("Kratos") is a framework for building parallel, multi-dis
 
 **Kratos** is **free** under BSD-4 [license](https://github.com/KratosMultiphysics/Kratos/wiki/Licence) and can be used even in comercial softwares as it is. Many of its main applications are also free and BSD-4 licensed but each derived application can have its own propietary license.
 
-[release-image]: https://img.shields.io/badge/release-6.0-green.svg?style=flat
+[release-image]: https://img.shields.io/badge/release-7.0-green.svg?style=flat
 [releases]: https://github.com/KratosMultiphysics/Kratos/releases
 
 [license-image]: https://img.shields.io/badge/license-BSD-green.svg?style=flat
@@ -35,8 +35,8 @@ Its main applications are:
 
 Some main modules are:
 - [External Solvers](applications/ExternalSolversApplication/README.md)
-- [Trilinos](applications/trilinos_application/README.md)
-- [Metis](applications/metis_application/README.md)
+- [Trilinos](applications/TrilinosApplication/README.md)
+- [Metis](applications/MetisApplication/README.md)
 - [Meshing](applications/MeshingApplication/README.md)
 
 # Examples of use
@@ -88,6 +88,7 @@ In Kratos Core:
 - [pybind11](https://github.com/pybind/pybind11) for exposing C++ to python
 - [GidPost](https://www.gidhome.com/gid-plus/tools/476/gidpost/) providing output to [GiD](https://www.gidhome.com/)
 - [AMGCL](https://github.com/ddemidov/amgcl) for its highly scalable multigrid solver
+- [JSON](https://github.com/nlohmann/json) JSON for Modern C++
 - [ZLib](https://zlib.net/) The compression library
 
 In applications

@@ -52,7 +52,7 @@ Condition::Pointer AxisymLineLoadCondition2D::Create(
     PropertiesType::Pointer pProperties
     ) const
 {
-    return Kratos::make_shared<AxisymLineLoadCondition2D>(NewId, pGeom, pProperties);
+    return Kratos::make_intrusive<AxisymLineLoadCondition2D>(NewId, pGeom, pProperties);
 }
 
 /***********************************************************************************/
@@ -64,7 +64,25 @@ Condition::Pointer AxisymLineLoadCondition2D::Create(
     PropertiesType::Pointer pProperties
     ) const
 {
-    return Kratos::make_shared<AxisymLineLoadCondition2D>( NewId, GetGeometry().Create( ThisNodes ), pProperties );
+    return Kratos::make_intrusive<AxisymLineLoadCondition2D>( NewId, GetGeometry().Create( ThisNodes ), pProperties );
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+Condition::Pointer AxisymLineLoadCondition2D::Clone (
+    IndexType NewId,
+    NodesArrayType const& ThisNodes
+    ) const
+{
+    KRATOS_TRY
+
+    Condition::Pointer p_new_cond = Kratos::make_intrusive<AxisymLineLoadCondition2D>(NewId, GetGeometry().Create(ThisNodes), pGetProperties());
+    p_new_cond->SetData(this->GetData());
+    p_new_cond->Set(Flags(*this));
+    return p_new_cond;
+
+    KRATOS_CATCH("");
 }
 
 /******************************* DESTRUCTOR ****************************************/

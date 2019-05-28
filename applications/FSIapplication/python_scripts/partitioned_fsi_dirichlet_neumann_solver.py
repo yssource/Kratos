@@ -1,22 +1,13 @@
 from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 
-# Import utilities
-import NonConformant_OneSideMap                # Import non-conformant mapper
-import python_solvers_wrapper_fluid            # Import the fluid Python solvers wrapper
-import python_solvers_wrapper_structural       # Import the structure Python solvers wrapper
-import convergence_accelerator_factory         # Import the FSI convergence accelerator factory
-
 # Importing the Kratos Library
 import KratosMultiphysics
 
 # Import applications
-import KratosMultiphysics.FSIApplication as KratosFSI
-import KratosMultiphysics.MeshMovingApplication as KratosMeshMoving
-import KratosMultiphysics.FluidDynamicsApplication as KratosFluid
 import KratosMultiphysics.StructuralMechanicsApplication as KratosStructural
 
 # Import base class file
-import partitioned_fsi_base_solver
+from KratosMultiphysics.FSIApplication import partitioned_fsi_base_solver
 
 def CreateSolver(model, project_parameters):
     return PartitionedFSIDirichletNeumannSolver(model, project_parameters)
@@ -121,10 +112,7 @@ class PartitionedFSIDirichletNeumannSolver(partitioned_fsi_base_solver.Partition
 
         # Solve the mesh problem (or moves the interface nodes)
         if self.solve_mesh_at_each_iteration:
-            self.mesh_solver.InitializeSolutionStep()
-            self.mesh_solver.Predict()
             self.mesh_solver.SolveSolutionStep()
-            self.mesh_solver.FinalizeSolutionStep()
         else:
             self.mesh_solver.MoveMesh()
 

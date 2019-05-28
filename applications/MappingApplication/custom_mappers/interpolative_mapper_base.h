@@ -81,9 +81,6 @@ public:
     {
         mpInterfaceVectorContainerOrigin = Kratos::make_unique<InterfaceVectorContainerType>(rModelPartOrigin);
         mpInterfaceVectorContainerDestination = Kratos::make_unique<InterfaceVectorContainerType>(rModelPartDestination);
-
-        ValidateInput(mMapperSettings);
-        InitializeInterfaceCommunicator();
     }
 
     /// Destructor.
@@ -117,7 +114,12 @@ public:
         Kratos::Flags MappingOptions) override
     {
         if (MappingOptions.Is(MapperFlags::USE_TRANSPOSE)) {
-            GetInverseMapper()->Map(rOriginVariable, rDestinationVariable, MappingOptions);
+            MappingOptions.Reset(MapperFlags::USE_TRANSPOSE);
+            MappingOptions.Set(MapperFlags::INTERNAL_USE_TRANSPOSE, true);
+            GetInverseMapper()->Map(rDestinationVariable, rOriginVariable, MappingOptions);
+        }
+        else if (MappingOptions.Is(MapperFlags::INTERNAL_USE_TRANSPOSE)) {
+            MapInternalTranspose(rOriginVariable, rDestinationVariable, MappingOptions);
         }
         else {
             MapInternal(rOriginVariable, rDestinationVariable, MappingOptions);
@@ -130,7 +132,12 @@ public:
         Kratos::Flags MappingOptions) override
     {
         if (MappingOptions.Is(MapperFlags::USE_TRANSPOSE)) {
-            GetInverseMapper()->Map(rOriginVariable, rDestinationVariable, MappingOptions);
+            MappingOptions.Reset(MapperFlags::USE_TRANSPOSE);
+            MappingOptions.Set(MapperFlags::INTERNAL_USE_TRANSPOSE, true);
+            GetInverseMapper()->Map(rDestinationVariable, rOriginVariable, MappingOptions);
+        }
+        else if (MappingOptions.Is(MapperFlags::INTERNAL_USE_TRANSPOSE)) {
+            MapInternalTranspose(rOriginVariable, rDestinationVariable, MappingOptions);
         }
         else {
             MapInternal(rOriginVariable, rDestinationVariable, MappingOptions);
@@ -195,7 +202,9 @@ public:
     /// Print object's data.
     void PrintData(std::ostream& rOStream) const override
     {
+        BaseType::PrintData(rOStream);
     }
+
 protected:
 
    /**
@@ -206,8 +215,11 @@ protected:
     */
     void Initialize()
     {
+        InitializeInterfaceCommunicator();
         InitializeInterface();
     }
+
+    void ValidateInput();
 
 private:
     ///@name Member Variables
@@ -232,18 +244,7 @@ private:
     ///@name Private Operations
     ///@{
 
-    void ValidateInput(Parameters AllMapperSettings);
 
-    void ValidateParameters(Parameters AllMapperSettings)
-    {
-        Parameters default_settings = Parameters( R"({
-            "search_radius"            : -1.0,
-            "search_iterations"        : 3,
-            "echo_level"               : 0
-        })");
-
-        AllMapperSettings.ValidateAndAssignDefaults(default_settings);
-    }
 
     void InitializeInterfaceCommunicator();
 
@@ -281,6 +282,8 @@ private:
         std::vector<Kratos::unique_ptr<MapperLocalSystem>>& rLocalSystems) = 0;
 
     virtual MapperInterfaceInfoUniquePointerType GetMapperInterfaceInfo() const = 0;
+
+    virtual Parameters GetMapperDefaultSettings() const = 0;
 
     ///@}
     ///@name Private  Access

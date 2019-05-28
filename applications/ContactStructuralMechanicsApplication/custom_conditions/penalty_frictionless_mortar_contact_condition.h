@@ -66,11 +66,29 @@ public:
     ///@{
 
     /// Counted pointer of PenaltyMethodFrictionlessMortarContactCondition
-    KRATOS_CLASS_POINTER_DEFINITION( PenaltyMethodFrictionlessMortarContactCondition );
+    KRATOS_CLASS_INTRUSIVE_POINTER_DEFINITION( PenaltyMethodFrictionlessMortarContactCondition );
 
     typedef MortarContactCondition<TDim, TNumNodes, FrictionalCase::FRICTIONLESS_PENALTY, TNormalVariation, TNumNodesMaster> BaseType;
 
     typedef typename BaseType::MortarConditionMatrices                    MortarConditionMatrices;
+
+    typedef typename BaseType::GeneralVariables                                  GeneralVariables;
+
+    typedef typename BaseType::AeData                                                      AeData;
+
+    typedef typename BaseType::IntegrationUtility                              IntegrationUtility;
+
+    typedef typename BaseType::DerivativesUtilitiesType                  DerivativesUtilitiesType;
+
+    typedef typename BaseType::BelongType                                              BelongType;
+
+    typedef typename BaseType::ConditionArrayType                              ConditionArrayType;
+
+    typedef typename BaseType::ConditionArrayListType                      ConditionArrayListType;
+
+    typedef typename BaseType::DecompositionType                                DecompositionType;
+
+    typedef typename BaseType::DerivativeDataType                              DerivativeDataType;
 
     typedef Condition                                                           ConditionBaseType;
 
@@ -105,16 +123,6 @@ public:
 
     // Type definition for integration methods
     typedef GeometryType::IntegrationPointsArrayType                        IntegrationPointsType;
-
-    typedef typename std::vector<array_1d<PointType,TDim>>                 ConditionArrayListType;
-
-    typedef Line2D2<Point>                                                               LineType;
-
-    typedef Triangle3D3<Point>                                                       TriangleType;
-
-    typedef typename std::conditional<TDim == 2, LineType, TriangleType >::type DecompositionType;
-
-    typedef DerivativeData<TDim, TNumNodes, TNormalVariation, TNumNodesMaster> DerivativeDataType;
 
     static constexpr IndexType MatrixSize = TDim * (TNumNodes + TNumNodesMaster);
 
@@ -212,6 +220,18 @@ public:
         PropertiesPointerType pProperties,
         GeometryPointerType pMasterGeom
         ) const override;
+
+    /**
+     * @brief This is called during the assembling process in order
+     * to calculate the condition contribution in explicit calculation.
+     * NodalData is modified Inside the function, so the
+     * The "AddEXplicit" FUNCTIONS THE ONLY FUNCTIONS IN WHICH A CONDITION
+     * IS ALLOWED TO WRITE ON ITS NODES.
+     * the caller is expected to ensure thread safety hence
+     * SET/UNSETLOCK MUST BE PERFORMED IN THE STRATEGY BEFORE CALLING THIS FUNCTION
+     * @param rCurrentProcessInfo the current process info instance
+     */
+    void AddExplicitContribution(ProcessInfo& rCurrentProcessInfo) override;
 
     /**
      * @brief This function is designed to make the element to assemble an rRHS vector identified by a variable rRHSVariable by assembling it to the nodes on the variable rDestinationVariable (double version)
@@ -338,13 +358,12 @@ protected:
     /********************************************************************************/
 
     /**
-     * Calculates the local contibution of the LHS
+     * @brief Calculates the local contibution of the LHS
      * @param rLocalLHS The local LHS to compute
      * @param rMortarConditionMatrices The mortar operators to be considered
      * @param rDerivativeData The class containing all the derivatives uses to compute the jacobian
      * @param rActiveInactive The integer that is used to identify which case is the currectly computed
      */
-
     void CalculateLocalLHS(
         Matrix& rLocalLHS,
         const MortarConditionMatrices& rMortarConditionMatrices,
@@ -354,13 +373,12 @@ protected:
         ) override;
 
     /**
-     * Calculates the local contibution of the RHS
+     * @brief Calculates the local contibution of the RHS
      * @param rLocalRHS The local RHS to compute
      * @param rMortarConditionMatrices The mortar operators to be considered
      * @param rDerivativeData The class containing all the derivatives uses to compute the jacobian
      * @param rActiveInactive The integer that is used to identify which case is the currectly computed
      */
-
     void CalculateLocalRHS(
         Vector& rLocalRHS,
         const MortarConditionMatrices& rMortarConditionMatrices,
@@ -374,12 +392,11 @@ protected:
     /******************************************************************/
 
     /**
-     * Returns a value depending of the active/inactive set
+     * @brief Returns a value depending of the active/inactive set
      * @param rCurrentGeometry The geometry containing the nodes that are needed to be checked as active or inactive
      * @return The integer that can be used to identify the case to compute
      */
-
-    IndexType GetActiveInactiveValue(GeometryType& rCurrentGeometry) const override
+    IndexType GetActiveInactiveValue(const GeometryType& rCurrentGeometry) const override
     {
         IndexType value = 0;
         for (IndexType i_node = 0; i_node < TNumNodes; ++i_node)

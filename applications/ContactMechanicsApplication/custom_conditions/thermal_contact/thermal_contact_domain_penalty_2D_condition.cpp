@@ -66,7 +66,7 @@ ThermalContactDomainPenalty2DCondition&  ThermalContactDomainPenalty2DCondition:
 
 Condition::Pointer ThermalContactDomainPenalty2DCondition::Create( IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties ) const
 {
-  return Kratos::make_shared<ThermalContactDomainPenalty2DCondition>( NewId, GetGeometry().Create( ThisNodes ), pProperties );
+  return Kratos::make_intrusive<ThermalContactDomainPenalty2DCondition>( NewId, GetGeometry().Create( ThisNodes ), pProperties );
 }
 
 
@@ -90,10 +90,10 @@ void ThermalContactDomainPenalty2DCondition::SetMasterGeometry()
 {
     KRATOS_TRY
     // std::cout<<" MASTER_ELEMENTS "<<GetValue(MASTER_ELEMENTS).size()<<" MASTER_NODES "<<GetValue(MASTER_NODES).size()<<std::endl;
-    Element::ElementType& MasterElement = *GetValue(MASTER_ELEMENTS).back();
+    Element::ElementType& MasterElement = GetValue(MASTER_ELEMENTS).back();
     mContactVariables.SetMasterElement(MasterElement);
 
-    Element::NodeType&    MasterNode   = *GetValue(MASTER_NODES).back();
+    Element::NodeType&    MasterNode   = GetValue(MASTER_NODES).back();
     mContactVariables.SetMasterNode(MasterNode);
 
     int  slave=-1;

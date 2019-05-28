@@ -19,9 +19,6 @@ libs/*
 runkratos
 script.py
 
-# Version
-kratos/includes/kratos_version.h
-
 # Times files
 *.time
 
@@ -56,15 +53,18 @@ kratos/includes/kratos_version.h
 *.post.bin
 *.post.lst
 
+# VTK post files
+*.vtk
+*.vtu
+
 # Output of tests of meshing application (MMG)
 *.sol
 *.mesh
 *.o.sol
 *.o.mesh
 
+# Backup files
 *.bak
 
-*.h~
-*.cpp~
-
+# Auxiliar file (deprecated?)
 applications/python_scripts/beam_profiles\.csv

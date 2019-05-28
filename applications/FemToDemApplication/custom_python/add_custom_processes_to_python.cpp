@@ -1,8 +1,14 @@
+//    |  /           |
+//    ' /   __| _` | __|  _ \   __|
+//    . \  |   (   | |   (   |\__ \.
+//   _|\_\_|  \__,_|\__|\___/ ____/
+//                   Multi-Physics FemDem Application
 //
-//   Project Name:
-//   Last modified by:    $Author:  $
-//   Date:                $Date:  $
-//   Revision:            $Revision: $
+//  License:		 BSD License
+//					 Kratos default license: kratos/license.txt
+//
+//  Main authors:    Alejandro Cornejo Velazquez
+//
 
 // External includes
 
@@ -12,11 +18,19 @@
 #include "fem_to_dem_application_variables.h"
 #include "custom_python/add_custom_processes_to_python.h"
 #include "custom_processes/stress_to_nodes_process.hpp"
+#include "custom_processes/compute_normalized_free_energy_on_nodes_process.hpp"
 #include "custom_processes/damage_to_nodes_process.hpp"
 #include "custom_processes/dem_after_remesh_identificator_process.hpp"
 #include "custom_processes/initial_dem_skin_process.hpp"
 #include "custom_processes/extend_pressure_condition_process.h"
 #include "custom_processes/assign_pressure_id_process.h"
+#include "custom_processes/expand_wet_nodes_process.h"
+#include "custom_processes/apply_component_table_process.hpp"
+#include "custom_processes/apply_double_table_process.hpp"
+#include "custom_processes/generate_dem_process.h"
+#include "custom_processes/update_dem_kinematics_process.h"
+#include "custom_processes/transfer_nodal_forces_to_fem.h"
+
 
 namespace Kratos
 {
@@ -58,6 +72,32 @@ void AddCustomProcessesToPython(pybind11::module &m)
 		.def(init<ModelPart &>())
 		.def("Execute", &AssignPressureIdProcess::Execute);
 
+	class_<ExpandWetNodesProcess, ExpandWetNodesProcess::Pointer, Process>(m, "ExpandWetNodesProcess")
+		.def(init<ModelPart &>())
+		.def("Execute", &ExpandWetNodesProcess::Execute);
+
+	// Normalized Free Energy extrapolation to Nodes
+	class_<ComputeNormalizedFreeEnergyOnNodesProcess, ComputeNormalizedFreeEnergyOnNodesProcess::Pointer, Process>(m, "ComputeNormalizedFreeEnergyOnNodesProcess")
+		.def(init<ModelPart &, unsigned int>())
+		.def("Execute", &ComputeNormalizedFreeEnergyOnNodesProcess::Execute);
+
+	class_<ApplyComponentTableProcess, ApplyComponentTableProcess::Pointer, Process> (m, "ApplyComponentTableProcess")
+		.def(init< ModelPart&, Parameters>());
+
+	class_<ApplyDoubleTableProcess, ApplyDoubleTableProcess::Pointer, Process> (m, "ApplyDoubleTableProcess")
+		.def(init< ModelPart&, Parameters>());
+
+	class_<GenerateDemProcess, GenerateDemProcess::Pointer, Process>(m, "GenerateDemProcess")
+		.def(init<ModelPart &, ModelPart &>())
+		.def("Execute", &GenerateDemProcess::Execute);
+
+	class_<UpdateDemKinematicsProcess, UpdateDemKinematicsProcess::Pointer, Process>(m, "UpdateDemKinematicsProcess")
+		.def(init<ModelPart &, ModelPart &>())
+		.def("Execute", &UpdateDemKinematicsProcess::Execute);
+
+	class_<TransferNodalForcesToFem, TransferNodalForcesToFem::Pointer, Process>(m, "TransferNodalForcesToFem")
+		.def(init<ModelPart &, ModelPart &>())
+		.def("Execute", &TransferNodalForcesToFem::Execute);
 }
 } // namespace Python.
 } // Namespace Kratos

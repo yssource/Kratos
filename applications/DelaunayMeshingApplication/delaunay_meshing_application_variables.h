@@ -32,6 +32,7 @@
 #include "includes/element.h"
 #include "includes/condition.h"
 #include "utilities/indexed_object.h"
+#include "includes/global_pointer_variables.h"
 
 namespace Kratos
 {
@@ -39,13 +40,13 @@ namespace Kratos
   ///@{
   typedef PointerVectorSet<Condition, IndexedObject> ConditionContainerType;
 
-  typedef Node<3>* NodePointerType;
-  typedef Element* ElementPointerType;
-  typedef Condition* ConditionPointerType;
+  typedef Node<3>::WeakPointer NodeWeakPtrType;
+  typedef Element::WeakPointer ElementWeakPtrType;
+  typedef Condition::WeakPointer ConditionWeakPtrType;
 
-  typedef std::vector<NodePointerType > NodePointerVectorType;
-  typedef std::vector<ElementPointerType > ElementPointerVectorType;
-  typedef std::vector<ConditionPointerType > ConditionPointerVectorType;
+  typedef GlobalPointersVector<Node<3> > NodeWeakPtrVectorType;
+  typedef GlobalPointersVector<Element> ElementWeakPtrVectorType;
+  typedef GlobalPointersVector<Condition> ConditionWeakPtrVectorType;
   ///@}
 
   ///@name Kratos Globals
@@ -67,17 +68,13 @@ namespace Kratos
   KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, int,                                 RIGID_WALL )
 
   //custom neighbor and masters
-  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, NodePointerType,                    MASTER_NODE )
-  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, ElementPointerType,              MASTER_ELEMENT )
-  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, ConditionPointerType,          MASTER_CONDITION )
+  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, NodeWeakPtrType,                    MASTER_NODE )
+  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, ElementWeakPtrType,              MASTER_ELEMENT )
+  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, ConditionWeakPtrType,          MASTER_CONDITION )
 
-  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, NodePointerVectorType,             MASTER_NODES )
-  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, ElementPointerVectorType,       MASTER_ELEMENTS )
-  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, ConditionPointerVectorType,   MASTER_CONDITIONS )
-
-  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, NodePointerVectorType,           NEIGHBOR_NODES )
-  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, ElementPointerVectorType,     NEIGHBOR_ELEMENTS )
-  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, ConditionPointerVectorType, NEIGHBOR_CONDITIONS )
+  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, NodeWeakPtrVectorType,             MASTER_NODES )
+  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, ElementWeakPtrVectorType,       MASTER_ELEMENTS )
+  KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, ConditionWeakPtrVectorType,   MASTER_CONDITIONS )
 
   //condition variables
   KRATOS_DEFINE_APPLICATION_VARIABLE( DELAUNAY_MESHING_APPLICATION, ConditionContainerType,      CHILDREN_CONDITIONS)

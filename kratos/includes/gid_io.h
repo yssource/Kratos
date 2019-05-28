@@ -196,6 +196,9 @@ public:
                                           GeometryData::Kratos_Line3D3,
                                           GiD_Linear, "Kratos_Line3D3_Mesh" ) );
         mGidMeshContainers.push_back( TMeshContainer(
+                                          GeometryData::Kratos_Point2D,
+                                          GiD_Point, "Kratos_Point2D_Mesh" ) );
+        mGidMeshContainers.push_back( TMeshContainer(
                                           GeometryData::Kratos_Point3D,
                                           GiD_Point, "Kratos_Point3D_Mesh" ) );
 
@@ -591,7 +594,7 @@ public:
     /**
      * Turn back information as a string.
      */
-    virtual std::string Info() const
+    std::string Info() const override
     {
         return "gid io";
     }
@@ -599,7 +602,7 @@ public:
     /**
      * Print information about this object.
      */
-    virtual void PrintInfo(std::ostream& rOStream) const
+    void PrintInfo(std::ostream& rOStream) const override
     {
         rOStream << Info();
     }
@@ -607,7 +610,7 @@ public:
     /**
      * Print object's data.
      */
-    virtual void PrintData(std::ostream& rOStream) const
+    void PrintData(std::ostream& rOStream) const override
     {
     }
 
@@ -952,6 +955,25 @@ public:
                          GiD_OnNodes, NULL, NULL, 0, NULL );
         for ( NodesContainerType::iterator it_node = rNodes.begin();
                 it_node != rNodes.end() ; ++it_node)
+            GiD_fWriteScalar( mResultFile, it_node->Id(), it_node->GetValue(rVariable) );
+        GiD_fEndResult(mResultFile);
+
+        Timer::Stop("Writing Results");
+
+    }
+
+    /**
+     * writes nodal results for variables of type int
+     */
+    void WriteNodalResultsNonHistorical( Variable<int> const& rVariable, NodesContainerType& rNodes, double SolutionTag)
+    {
+
+        Timer::Start("Writing Results");
+        GiD_fBeginResult( mResultFile, (char*)(rVariable.Name().c_str()), "Kratos",
+                          SolutionTag, GiD_Scalar,
+                          GiD_OnNodes, NULL, NULL, 0, NULL );
+        for ( NodesContainerType::iterator it_node = rNodes.begin();
+              it_node != rNodes.end() ; ++it_node)
             GiD_fWriteScalar( mResultFile, it_node->Id(), it_node->GetValue(rVariable) );
         GiD_fEndResult(mResultFile);
 
@@ -1339,7 +1361,7 @@ public:
      * @param deformed_flag states whether the mesh should be written in deformed configuration
      * @param conditions_flag states whether conditions should also be written
      */
-    void WriteMesh( MeshType& rThisMesh )
+    void WriteMesh( MeshType& rThisMesh ) override
     {
         KRATOS_TRY
 

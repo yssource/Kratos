@@ -66,7 +66,7 @@ namespace Kratos
 
   Condition::Pointer ContactDomainPenalty2DCondition::Create( IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties ) const
   {
-    return Kratos::make_shared<ContactDomainPenalty2DCondition>(NewId, GetGeometry().Create( ThisNodes ), pProperties);
+    return Kratos::make_intrusive<ContactDomainPenalty2DCondition>(NewId, GetGeometry().Create( ThisNodes ), pProperties);
   }
 
   //************************************CLONE*******************************************
@@ -107,7 +107,7 @@ namespace Kratos
     //Contact face segment node1-node2
     unsigned int slave = mContactVariables.slaves.back();
 
-    const Properties& SlaveProperties  = GetGeometry()[slave].GetValue(NEIGHBOR_ELEMENTS).front()->GetProperties();
+    const Properties& SlaveProperties  = GetGeometry()[slave].GetValue(NEIGHBOUR_ELEMENTS).front().GetProperties();
     const Properties& MasterProperties = rMasterElement.GetProperties();
     double Eslave  = 1e9;
     if( SlaveProperties.Has(YOUNG_MODULUS) ){

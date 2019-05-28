@@ -56,11 +56,11 @@ class KRATOS_API(CONTACT_MECHANICS_APPLICATION) RigidBodyPointLinkCondition
   typedef Node<3>::DofsContainerType     DofsContainerType;
   typedef GeometryData::SizeType                  SizeType;
   typedef BeamMathUtils<double>          BeamMathUtilsType;
-  typedef std::vector<Element*>   ElementPointerVectorType;
 
+  typedef GlobalPointersVector<Element> ElementWeakPtrVectorType;
   ///@{
   // Counted pointer of RigidBodyPointLinkCondition
-  KRATOS_CLASS_POINTER_DEFINITION( RigidBodyPointLinkCondition );
+  KRATOS_CLASS_INTRUSIVE_POINTER_DEFINITION( RigidBodyPointLinkCondition );
   ///@}
 
  protected:

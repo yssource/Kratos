@@ -18,11 +18,10 @@
 
 // Project includes
 #include "includes/define_python.h"
-#include "includes/model_part.h"
 #include "includes/mesh.h"
-#include "includes/properties.h"
 #include "includes/element.h"
 #include "includes/condition.h"
+#include "includes/properties.h"
 #include "python/add_mesh_to_python.h"
 #include "python/containers_interface.h"
 
@@ -449,11 +448,11 @@ void  AddMeshToPython(pybind11::module& m)
     //.def(self_ns::str(self))
     //      ;
 
-    py::class_<GeometricalObject, GeometricalObject::Pointer, GeometricalObject::BaseType/*, Flags*/  >(m,"GeometricalObject")
+    py::class_<GeometricalObject, GeometricalObject::Pointer, IndexedObject, Flags>(m,"GeometricalObject")
     .def(py::init<Kratos::GeometricalObject::IndexType>())
     ;
 
-    py::class_<Element, Element::Pointer, Element::BaseType, Flags  >(m,"Element")
+    py::class_<Element, Element::Pointer, Element::BaseType>(m,"Element")
     .def(py::init<Kratos::Element::IndexType>())
     .def_property("Properties", GetPropertiesFromElement, SetPropertiesFromElement)
     .def("GetGeometry", GetGeometryFromObject<Element>, py::return_value_policy::reference_internal)
@@ -583,7 +582,7 @@ void  AddMeshToPython(pybind11::module& m)
     PointerVectorSetPythonInterface<MeshType::ElementsContainerType>().CreateInterface(m,"ElementsArray")
     ;
 
-    py::class_<Condition, Condition::Pointer, Condition::BaseType, Flags  >(m,"Condition")
+    py::class_<Condition, Condition::Pointer, Condition::BaseType>(m,"Condition")
     .def(py::init<Kratos::Condition::IndexType>())
     .def_property("Properties", GetPropertiesFromCondition, SetPropertiesFromCondition)
     .def("GetGeometry", GetGeometryFromObject<Condition>, py::return_value_policy::reference_internal)
@@ -695,12 +694,20 @@ void  AddMeshToPython(pybind11::module& m)
     py::class_<MeshType, MeshType::Pointer, DataValueContainer, Flags >(m,"Mesh")
     .def_property("Nodes", &MeshType::pNodes,&MeshType::SetNodes)
     .def("NodesArray", &MeshType::NodesArray, py::return_value_policy::reference_internal)
+    .def("NumberOfNodes", &MeshType::NumberOfNodes)
+
     .def_property("Elements", &MeshType::pElements,&MeshType::SetElements)
     .def("ElementsArray", &MeshType::ElementsArray, py::return_value_policy::reference_internal)
+    .def("NumberOfElements", &MeshType::NumberOfElements)
+
     .def_property("Conditions", &MeshType::pConditions,&MeshType::SetConditions)
     .def("ConditionsArray", &MeshType::ConditionsArray, py::return_value_policy::reference_internal)
+    .def("NumberOfConditions", &MeshType::NumberOfConditions)
+
     .def_property("Properties", &MeshType::pProperties,&MeshType::SetProperties)
     .def("PropertiesArray", &MeshType::PropertiesArray, py::return_value_policy::reference_internal)
+    .def("NumberOfProperties", &MeshType::NumberOfProperties)
+
     .def("HasNode", &MeshType::HasNode)
     .def("HasProperties", &MeshType::HasProperties)
     .def("HasElement", &MeshType::HasElement)

@@ -21,7 +21,7 @@
 #include "geometries/tetrahedra_3d_4.h"
 #include "geometries/tetrahedra_3d_10.h"
 
-#include "geometries/line_2d.h"
+#include "geometries/line_2d_2.h"
 
 #include "geometries/point_2d.h"
 #include "geometries/point_3d.h"
@@ -102,10 +102,6 @@ namespace Kratos
     KRATOS_REGISTER_VARIABLE( MASTER_NODES )
     KRATOS_REGISTER_VARIABLE( MASTER_ELEMENTS )
     KRATOS_REGISTER_VARIABLE( MASTER_CONDITIONS )
-
-    KRATOS_REGISTER_VARIABLE( NEIGHBOR_NODES )
-    KRATOS_REGISTER_VARIABLE( NEIGHBOR_ELEMENTS )
-    KRATOS_REGISTER_VARIABLE( NEIGHBOR_CONDITIONS )
 
     //condition variables
     KRATOS_REGISTER_VARIABLE( CHILDREN_CONDITIONS )

@@ -2,20 +2,18 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 from math import sqrt   # Import the square root from python library
 
 # Import utilities
-import NonConformant_OneSideMap                # Import non-conformant mapper
-import python_solvers_wrapper_fluid            # Import the fluid Python solvers wrapper
-import python_solvers_wrapper_structural       # Import the structure Python solvers wrapper
-import python_solvers_wrapper_mesh_motion      # Import the mesh motion Python solvers wrapper
-import convergence_accelerator_factory         # Import the FSI convergence accelerator factory
+from KratosMultiphysics.FSIApplication import NonConformant_OneSideMap                # Import non-conformant mapper
+from KratosMultiphysics.FluidDynamicsApplication import python_solvers_wrapper_fluid            # Import the fluid Python solvers wrapper
+from KratosMultiphysics.StructuralMechanicsApplication import python_solvers_wrapper_structural       # Import the structure Python solvers wrapper
+from KratosMultiphysics.MeshMovingApplication import python_solvers_wrapper_mesh_motion      # Import the mesh motion Python solvers wrapper
+from KratosMultiphysics.FSIApplication import convergence_accelerator_factory         # Import the FSI convergence accelerator factory
 
 # Importing the Kratos Library
 import KratosMultiphysics
-from python_solver import PythonSolver
+from KratosMultiphysics.python_solver import PythonSolver
 
 # Import applications
 import KratosMultiphysics.FSIApplication as KratosFSI
-import KratosMultiphysics.MeshMovingApplication as KratosMeshMoving
-import KratosMultiphysics.FluidDynamicsApplication as KratosFluid
 import KratosMultiphysics.StructuralMechanicsApplication as KratosStructural
 
 def CreateSolver(model, project_parameters):
@@ -117,8 +115,9 @@ class PartitionedFSIBaseSolver(PythonSolver):
         # Get the minimum buffer size between the mesh, fluid and structure solvers
         self._GetAndSetMinimumBufferSize()
         # Fluid and structure solvers PrepareModelPart() call
-        self.fluid_solver.PrepareModelPart()
         self.structure_solver.PrepareModelPart()
+        self.fluid_solver.PrepareModelPart()
+        self.mesh_solver.PrepareModelPart()
 
     def AddDofs(self):
         # Add DOFs structure
@@ -147,14 +146,16 @@ class PartitionedFSIBaseSolver(PythonSolver):
 
     def InitializeSolutionStep(self):
         # Initialize solution step of fluid, structure and coupling solvers
-        self.fluid_solver.InitializeSolutionStep()
         self.structure_solver.InitializeSolutionStep()
+        self.fluid_solver.InitializeSolutionStep()
+        self.mesh_solver.InitializeSolutionStep()
         self._GetConvergenceAccelerator().InitializeSolutionStep()
 
     def Predict(self):
         # Perform fluid and structure solvers predictions
-        self.fluid_solver.Predict()
         self.structure_solver.Predict()
+        self.fluid_solver.Predict()
+        self.mesh_solver.Predict()
 
     def GetComputingModelPart(self):
         err_msg =  'Calling GetComputingModelPart() method in a partitioned solver.\n'
@@ -189,8 +190,10 @@ class PartitionedFSIBaseSolver(PythonSolver):
             self._ComputeMeshPredictionSingleFaced()
 
         ## Non-Linear interface coupling iteration ##
-        for nl_it in range(1,self.max_nl_it+1):
-
+        nl_it = 0
+        is_converged = False
+        while not is_converged:
+            nl_it += 1
             self._PrintInfoOnRankZero("","\tFSI non-linear iteration = ", nl_it)
 
             self.fluid_solver.main_model_part.ProcessInfo[KratosMultiphysics.CONVERGENCE_ACCELERATOR_ITERATION] = nl_it
@@ -215,6 +218,7 @@ class PartitionedFSIBaseSolver(PythonSolver):
 
             # Check convergence
             if nl_res_norm/sqrt(interface_dofs) < self.nl_tol:
+                is_converged = True
                 self._GetConvergenceAccelerator().FinalizeNonLinearIteration()
                 self._PrintInfoOnRankZero("","\tNon-linear iteration convergence achieved")
                 self._PrintInfoOnRankZero("","\tTotal non-linear iterations: ", nl_it, " |res|/sqrt(nDOFS) = ", nl_res_norm/sqrt(interface_dofs))
@@ -227,6 +231,7 @@ class PartitionedFSIBaseSolver(PythonSolver):
 
                 if (nl_it == self.max_nl_it):
                     self._PrintWarningOnRankZero("","\tFSI NON-LINEAR ITERATION CONVERGENCE NOT ACHIEVED")
+                    break
 
         ## Compute the mesh residual as final testing (it is expected to be 0)
         mesh_res_norm = self.partitioned_fsi_utilities.ComputeInterfaceResidualNorm(
@@ -238,9 +243,12 @@ class PartitionedFSIBaseSolver(PythonSolver):
         self._PrintInfoOnRankZero("","\tNL residual norm: ", nl_res_norm)
         self._PrintInfoOnRankZero("","\tMesh residual norm: ", mesh_res_norm)
 
-        ## Finalize solution step
-        self.fluid_solver.FinalizeSolutionStep()
+        return is_converged
+
+    def FinalizeSolutionStep(self):
         self.structure_solver.FinalizeSolutionStep()
+        self.fluid_solver.FinalizeSolutionStep()
+        self.mesh_solver.FinalizeSolutionStep()
         self._GetConvergenceAccelerator().FinalizeSolutionStep()
 
     def SetEchoLevel(self, structure_echo_level, fluid_echo_level):
@@ -435,7 +443,7 @@ class PartitionedFSIBaseSolver(PythonSolver):
         for condition in self.structure_solver.main_model_part.Conditions:
             max_cond_id = max(max_cond_id, condition.Id)
 
-        max_cond_id = self.structure_solver.main_model_part.GetCommunicator().MaxAll(max_cond_id)
+        max_cond_id = self.structure_solver.main_model_part.GetCommunicator().GetDataCommunicator().MaxAll(max_cond_id)
 
         # Set up the point load condition in the structure interface
         structure_interfaces_list = self.settings["coupling_settings"]["structure_interfaces_list"]

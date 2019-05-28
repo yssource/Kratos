@@ -55,7 +55,7 @@ void DerivativeRecovery<TDim>::CalculateVectorMaterialDerivative(ModelPart& r_mo
                                                                  Variable<array_1d<double, 3> >& vector_rate_container,
                                                                  Variable<array_1d<double, 3> >& material_derivative_container)
 {
-    KRATOS_INFO("DEM-FLUID") << "Constructing the material derivative by derivating nodal averages..." << std::endl;
+    KRATOS_INFO("SwimmingDEM") << "Constructing the material derivative by derivating nodal averages..." << std::endl;
     std::map <std::size_t, unsigned int> id_to_position;
     unsigned int entry = 0;
 
@@ -143,7 +143,7 @@ void DerivativeRecovery<TDim>::CalculateVectorMaterialDerivative(ModelPart& r_mo
 
     AddTimeDerivative(r_model_part, material_derivative_container);
 
-    KRATOS_INFO("DEM-FLUID") << "Finished constructing the material derivative by derivating nodal averages..." << std::endl;
+    KRATOS_INFO("SwimmingDEM") << "Finished constructing the material derivative by derivating nodal averages..." << std::endl;
 }
 //***************************************************************************************************************
 //***************************************************************************************************************
@@ -209,10 +209,10 @@ void DerivativeRecovery<TDim>::RecoverSuperconvergentMatDeriv(ModelPart& r_model
     mCalculatingTheGradient = true;
 
     if (mFirstGradientRecovery){
-        KRATOS_INFO("DEM-FLUID") << "Constructing first-step neighbour clouds for material derivative..." << std::endl;
+        KRATOS_INFO("SwimmingDEM") << "Constructing first-step neighbour clouds for material derivative..." << std::endl;
         SetNeighboursAndWeights(r_model_part);
         mFirstGradientRecovery = false;
-        KRATOS_INFO("DEM-FLUID") << "Finished constructing neighbour clouds for material derivative." << std::endl;
+        KRATOS_INFO("SwimmingDEM") << "Finished constructing neighbour clouds for material derivative." << std::endl;
     }
 
     if (mSomeCloudsDontWork){ // a default value is necessary in the cases where recovery is not possible
@@ -226,7 +226,7 @@ void DerivativeRecovery<TDim>::RecoverSuperconvergentMatDeriv(ModelPart& r_model
     polynomial_coefficients.resize(n_relevant_terms);
 
     for (NodeIteratorType inode = r_model_part.NodesBegin(); inode != r_model_part.NodesEnd(); ++inode){
-        WeakPointerVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
+        GlobalPointersVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
         unsigned int n_neigh = neigh_nodes.size();
 
         if (!n_neigh){ // then we keep the defualt value
@@ -407,10 +407,10 @@ void DerivativeRecovery<TDim>::RecoverSuperconvergentGradient(ModelPart& r_model
     mCalculatingTheGradient = true;
 
     if (mFirstGradientRecovery){
-        KRATOS_INFO("DEM-FLUID") << "Constructing first-step neighbour clouds for gradient recovery..." << std::endl;
+        KRATOS_INFO("SwimmingDEM") << "Constructing first-step neighbour clouds for gradient recovery..." << std::endl;
         SetNeighboursAndWeights(r_model_part);
         mFirstGradientRecovery = false;
-        KRATOS_INFO("DEM-FLUID") << "Finished constructing neighbour clouds for gradient recovery." << std::endl;
+        KRATOS_INFO("SwimmingDEM") << "Finished constructing neighbour clouds for gradient recovery." << std::endl;
     }
 
     if (mSomeCloudsDontWork){ // a default value is necessary in the cases where recovery is not possible
@@ -420,7 +420,7 @@ void DerivativeRecovery<TDim>::RecoverSuperconvergentGradient(ModelPart& r_model
     // Solving least squares problem (Zhang, 2006)
 
     for (NodeIteratorType inode = r_model_part.NodesBegin(); inode != r_model_part.NodesEnd(); ++inode){
-        WeakPointerVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
+        GlobalPointersVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
         unsigned int n_neigh = neigh_nodes.size();
 
         if (!n_neigh){ // we keep the defualt value
@@ -463,7 +463,7 @@ void DerivativeRecovery<TDim>::RecoverSuperconvergentGradient(ModelPart& r_model
 //    // Solving least squares problem (Zhang, 2006)
 
 //    for (NodeIteratorType inode = r_model_part.NodesBegin(); inode != r_model_part.NodesEnd(); ++inode){
-//        WeakPointerVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
+//        GlobalPointersVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
 //        unsigned int n_neigh = neigh_nodes.size();
 
 //        if (!n_neigh){ // we keep the defualt value
@@ -493,10 +493,10 @@ void DerivativeRecovery<TDim>::RecoverSuperconvergentLaplacian(ModelPart& r_mode
     mCalculatingTheLaplacian = true;
 
     if (mFirstLaplacianRecovery){
-        KRATOS_INFO("DEM-FLUID") << "Constructing first-step neighbour clouds for laplacian recovery..." << std::endl;
+        KRATOS_INFO("SwimmingDEM") << "Constructing first-step neighbour clouds for laplacian recovery..." << std::endl;
         SetNeighboursAndWeights(r_model_part);
         mFirstLaplacianRecovery = false;
-        KRATOS_INFO("DEM-FLUID") << "Finished constructing neighbour clouds for laplacian recovery." << std::endl;
+        KRATOS_INFO("SwimmingDEM") << "Finished constructing neighbour clouds for laplacian recovery." << std::endl;
     }
 
     if (mSomeCloudsDontWork){ // a default value is necessary in the cases where recovery is not possible
@@ -510,7 +510,7 @@ void DerivativeRecovery<TDim>::RecoverSuperconvergentLaplacian(ModelPart& r_mode
     polynomial_coefficients.resize(n_relevant_terms);
 
     for (NodeIteratorType inode = r_model_part.NodesBegin(); inode != r_model_part.NodesEnd(); ++inode){
-        WeakPointerVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
+        GlobalPointersVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
         unsigned int n_neigh = neigh_nodes.size();
 
         if (!n_neigh){ // then we keep the defualt value
@@ -552,10 +552,10 @@ void DerivativeRecovery<TDim>::RecoverSuperconvergentVelocityLaplacianFromGradie
     mCalculatingTheGradient = true;
 
     if (mFirstLaplacianRecovery){
-        KRATOS_INFO("DEM-FLUID") << "Finished constructing neighbour clouds for laplacian recovery." << std::endl;
+        KRATOS_INFO("SwimmingDEM") << "Finished constructing neighbour clouds for laplacian recovery." << std::endl;
         SetNeighboursAndWeights(r_model_part);
         mFirstLaplacianRecovery = false;
-        KRATOS_INFO("DEM-FLUID") << "Finished constructing neighbour clouds for laplacian recovery." << std::endl;
+        KRATOS_INFO("SwimmingDEM") << "Finished constructing neighbour clouds for laplacian recovery." << std::endl;
     }
 
     if (mSomeCloudsDontWork){ // a default value is necessary in the cases where recovery is not possible
@@ -570,7 +570,7 @@ void DerivativeRecovery<TDim>::RecoverSuperconvergentVelocityLaplacianFromGradie
     array_1d< array_1d<double, 3>, 3> gradient;
 
     for (NodeIteratorType inode = r_model_part.NodesBegin(); inode != r_model_part.NodesEnd(); ++inode){
-        WeakPointerVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
+        GlobalPointersVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
         unsigned int n_neigh = neigh_nodes.size();
 
         if (!n_neigh){ // then we keep the defualt value
@@ -612,10 +612,10 @@ void DerivativeRecovery<TDim>::RecoverSuperconvergentMatDerivAndLaplacian(ModelP
     mCalculatingGradientAndLaplacian = true;
 
     if (mFirstLaplacianRecovery){
-        KRATOS_INFO("DEM-FLUID") << "Constructing first-step neighbour clouds for material derivative and laplacian recovery..." << std::endl;
+        KRATOS_INFO("SwimmingDEM") << "Constructing first-step neighbour clouds for material derivative and laplacian recovery..." << std::endl;
         SetNeighboursAndWeights(r_model_part);
         mFirstLaplacianRecovery = false;
-        KRATOS_INFO("DEM-FLUID") << "Finished constructing neighbour clouds for material derivative and laplacian recovery." << std::endl;
+        KRATOS_INFO("SwimmingDEM") << "Finished constructing neighbour clouds for material derivative and laplacian recovery." << std::endl;
     }
 
     if (mSomeCloudsDontWork){ // a default value is necessary in the cases where recovery is not possible
@@ -631,7 +631,7 @@ void DerivativeRecovery<TDim>::RecoverSuperconvergentMatDerivAndLaplacian(ModelP
     polynomial_coefficients.resize(n_relevant_terms);
 
     for (NodeIteratorType inode = r_model_part.NodesBegin(); inode != r_model_part.NodesEnd(); ++inode){
-        WeakPointerVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
+        GlobalPointersVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
         unsigned int n_neigh = neigh_nodes.size();
 
         if (!n_neigh){ // then we keep the defualt value
@@ -674,7 +674,7 @@ void DerivativeRecovery<TDim>::RecoverSuperconvergentMatDerivAndLaplacian(ModelP
 template <std::size_t TDim>
 void DerivativeRecovery<TDim>::CalculateVectorLaplacian(ModelPart& r_model_part, Variable<array_1d<double, 3> >& vector_container, Variable<array_1d<double, 3> >& laplacian_container)
 {
-    KRATOS_INFO("DEM-FLUID") << "Constructing the Laplacian by derivating nodal averages..." << std::endl;
+    KRATOS_INFO("SwimmingDEM") << "Constructing the Laplacian by derivating nodal averages..." << std::endl;
     std::map <std::size_t, unsigned int> id_to_position;
     unsigned int entry = 0;
 
@@ -774,7 +774,7 @@ void DerivativeRecovery<TDim>::CalculateVectorLaplacian(ModelPart& r_model_part,
         noalias(laplacian) = stored_laplacian / inode->FastGetSolutionStepValue(NODAL_AREA);
     }
 
-    KRATOS_INFO("DEM-FLUID") << "Finished constructing the Laplacian by derivating nodal averages..." << std::endl;
+    KRATOS_INFO("SwimmingDEM") << "Finished constructing the Laplacian by derivating nodal averages..." << std::endl;
 }
 //**************************************************************************************************************************************************
 //**************************************************************************************************************************************************
@@ -817,7 +817,7 @@ void DerivativeRecovery<TDim>::SetNeighboursAndWeights(ModelPart& r_model_part)
     unsigned int i = 0;
     for (NodeIteratorType inode = r_model_part.NodesBegin(); inode != r_model_part.NodesEnd(); ++inode){
         bool the_cloud_of_neighbours_is_successful = SetInitialNeighboursAndWeights(r_model_part, *(inode.base()));
-        WeakPointerVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
+        GlobalPointersVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
 
         unsigned int iteration = 0;
         while (!the_cloud_of_neighbours_is_successful && iteration < n_max_iterations){
@@ -829,8 +829,8 @@ void DerivativeRecovery<TDim>::SetNeighboursAndWeights(ModelPart& r_model_part)
             mSomeCloudsDontWork = true;
             neigh_nodes.clear();
             inode->FastGetSolutionStepValue(NODAL_WEIGHTS).clear();
-            KRATOS_WARNING("DEM-FLUID") << "Warning!, for the node with id " << inode->Id() << " it has not been possible to form an adequate cloud of neighbours" << std::endl;
-            KRATOS_WARNING("DEM-FLUID") << "for the gradient recovery. A lower accuracy method has been employed for this node." << std::endl;
+            KRATOS_WARNING("SwimmingDEM") << "Warning!, for the node with id " << inode->Id() << " it has not been possible to form an adequate cloud of neighbours" << std::endl;
+            KRATOS_WARNING("SwimmingDEM") << "for the gradient recovery. A lower accuracy method has been employed for this node." << std::endl;
         }
 
         ++i;
@@ -849,7 +849,7 @@ void DerivativeRecovery<TDim>::SetNeighboursAndWeightsForTheLaplacian(ModelPart&
     unsigned int i = 0;
     for (NodeIteratorType inode = r_model_part.NodesBegin(); inode != r_model_part.NodesEnd(); ++inode){
         bool the_cloud_of_neighbours_is_successful = SetInitialNeighboursAndWeights(r_model_part, *(inode.base()));
-        WeakPointerVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
+        GlobalPointersVector<Node<3> >& neigh_nodes = inode->GetValue(NEIGHBOUR_NODES);
 
         unsigned int iteration = 0;
         while (!the_cloud_of_neighbours_is_successful && iteration < n_max_iterations){
@@ -861,8 +861,8 @@ void DerivativeRecovery<TDim>::SetNeighboursAndWeightsForTheLaplacian(ModelPart&
             mSomeCloudsDontWork = true;
             neigh_nodes.clear();
             inode->FastGetSolutionStepValue(NODAL_WEIGHTS).clear();
-            KRATOS_WARNING("DEM-FLUID") << "Warning!, for the node with id " << inode->Id() << " it has not been possible to form an adequate cloud of neighbours" << std::endl;
-            KRATOS_WARNING("DEM-FLUID") << "for the gradient recovery. A lower accuracy method has been employed for this node." << std::endl;
+            KRATOS_WARNING("SwimmingDEM") << "Warning!, for the node with id " << inode->Id() << " it has not been possible to form an adequate cloud of neighbours" << std::endl;
+            KRATOS_WARNING("SwimmingDEM") << "for the gradient recovery. A lower accuracy method has been employed for this node." << std::endl;
         }
 
         ++i;
@@ -871,7 +871,7 @@ void DerivativeRecovery<TDim>::SetNeighboursAndWeightsForTheLaplacian(ModelPart&
 //**************************************************************************************************************************************************
 //**************************************************************************************************************************************************
 template <std::size_t TDim>
-void DerivativeRecovery<TDim>::OrderByDistance(Node<3>::Pointer &p_node, WeakPointerVector<Node<3> >& neigh_nodes)
+void DerivativeRecovery<TDim>::OrderByDistance(Node<3>::Pointer &p_node, GlobalPointersVector<Node<3> >& neigh_nodes)
 {
     const unsigned int n_nodes = neigh_nodes.size();
     std::vector<double> distances_squared;
@@ -889,7 +889,7 @@ void DerivativeRecovery<TDim>::OrderByDistance(Node<3>::Pointer &p_node, WeakPoi
         ordering[i] = std::make_pair(i, distances_squared[i]);
     }
     std::sort(ordering.begin(), ordering.end(), IsCloser());
-    WeakPointerVector<Node<3> > ordered_neighbours;
+    GlobalPointersVector<Node<3> > ordered_neighbours;
 
     for (unsigned int i = 0; i < n_nodes; ++i){
         Node<3>::WeakPointer& p_neigh = neigh_nodes(ordering[i].first);
@@ -903,8 +903,8 @@ void DerivativeRecovery<TDim>::OrderByDistance(Node<3>::Pointer &p_node, WeakPoi
 template <std::size_t TDim>
 bool DerivativeRecovery<TDim>::SetInitialNeighboursAndWeights(ModelPart& r_model_part, Node<3>::Pointer &p_node)
 {
-    WeakPointerVector<Element>& neigh_elems = p_node->GetValue(NEIGHBOUR_ELEMENTS);
-    WeakPointerVector<Node<3> >& neigh_nodes = p_node->GetValue(NEIGHBOUR_NODES);
+    GlobalPointersVector<Element>& neigh_elems = p_node->GetValue(NEIGHBOUR_ELEMENTS);
+    GlobalPointersVector<Node<3> >& neigh_nodes = p_node->GetValue(NEIGHBOUR_NODES);
     std::map<std::size_t, std::size_t> ids; // map to keep track of all different ids corresponding to already added neighbours to avoid repetition
     ids[p_node->Id()] = p_node->Id();
 
@@ -945,25 +945,25 @@ bool DerivativeRecovery<TDim>::SetInitialNeighboursAndWeights(ModelPart& r_model
 template <std::size_t TDim>
 bool DerivativeRecovery<TDim>::SetNeighboursAndWeights(ModelPart& r_model_part, Node<3>::Pointer& p_node)
 {
-    WeakPointerVector<Node<3> >& neigh_nodes = p_node->GetValue(NEIGHBOUR_NODES);
+    GlobalPointersVector<Node<3> >& neigh_nodes = p_node->GetValue(NEIGHBOUR_NODES);
     const unsigned int node_increase_per_neighbour = 1;
     const unsigned int node_increase_overall = 1;
     std::map<std::size_t, std::size_t> ids;
     ids[p_node->Id()] = p_node->Id();
 
     for (unsigned int i = 0; i < (unsigned int)neigh_nodes.size(); ++i){
-        Node<3>::Pointer p_neigh = neigh_nodes(i).lock();
+        auto p_neigh = neigh_nodes(i);
         ids[p_neigh->Id()] = p_neigh->Id();
     }
 
     const unsigned int n_neigh = neigh_nodes.size();
 
     for (unsigned int i = 0; i < n_neigh; ++i){
-        Node<3>::Pointer p_neigh = neigh_nodes(i).lock();
-        WeakPointerVector<Node<3> >& neigh_neigh_nodes = p_neigh->GetValue(NEIGHBOUR_NODES);
+        auto p_neigh = neigh_nodes(i);
+        GlobalPointersVector<Node<3> >& neigh_neigh_nodes = p_neigh->GetValue(NEIGHBOUR_NODES);
         unsigned int n_new_nodes = 0;
         for (unsigned int j = 0; j < (unsigned int)neigh_neigh_nodes.size(); ++j){
-            Node<3>::Pointer p_neigh_neigh = neigh_neigh_nodes(j).lock();
+            auto p_neigh_neigh = neigh_neigh_nodes(j);
             if (ids.find(p_neigh_neigh->Id()) == ids.end()){
                 neigh_nodes.push_back(p_neigh_neigh);
                 ids[p_neigh_neigh->Id()] = p_neigh_neigh->Id();
@@ -1036,7 +1036,7 @@ bool DerivativeRecovery<TDim>::SetWeightsAndRunLeastSquaresTest(ModelPart& r_mod
         KRATOS_THROW_ERROR(std::runtime_error, "Gradient recovery not implemented yet in 2D!)","");
     }
 
-    WeakPointerVector<Node<3> >& neigh_nodes = p_node->GetValue(NEIGHBOUR_NODES);
+    GlobalPointersVector<Node<3> >& neigh_nodes = p_node->GetValue(NEIGHBOUR_NODES);
     unsigned int n_nodal_neighs = (unsigned int)neigh_nodes.size();
     const double h_inv = 1.0 / CalculateTheMaximumDistanceToNeighbours(p_node); // we use it as a scaling parameter to improve stability
     const array_1d <double, 3> origin = p_node->Coordinates();
@@ -1169,7 +1169,7 @@ bool DerivativeRecovery<TDim>::SetWeightsAndRunLeastSquaresTest(ModelPart& r_mod
 //**************************************************************************************************************************************************
 //**************************************************************************************************************************************************
 template <std::size_t TDim>
-unsigned int DerivativeRecovery<TDim>::GetNumberOfUniqueNeighbours(const int my_id, const WeakPointerVector<Element>& my_neighbour_elements)
+unsigned int DerivativeRecovery<TDim>::GetNumberOfUniqueNeighbours(const int my_id, const GlobalPointersVector<Element>& my_neighbour_elements)
 {
     std::vector<int> ids;
     ids.push_back(my_id);
@@ -1196,7 +1196,7 @@ double DerivativeRecovery<TDim>::CalculateTheMaximumDistanceToNeighbours(Node<3>
 {
     double max_distance_yet = 0.0;
     const array_1d <double, 3>& coors = p_node->Coordinates();
-    WeakPointerVector<Node<3> >& neigh_nodes = p_node->GetValue(NEIGHBOUR_NODES);
+    GlobalPointersVector<Node<3> >& neigh_nodes = p_node->GetValue(NEIGHBOUR_NODES);
 
     for (unsigned int i = 0; i < (unsigned int)neigh_nodes.size(); ++i){
         array_1d <double, 3> delta = neigh_nodes[i].Coordinates() - coors;

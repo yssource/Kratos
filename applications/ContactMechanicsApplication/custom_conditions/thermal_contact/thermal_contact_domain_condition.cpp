@@ -72,7 +72,7 @@ ThermalContactDomainCondition&  ThermalContactDomainCondition::operator=(Thermal
 
 Condition::Pointer ThermalContactDomainCondition::Create( IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties ) const
 {
-  return Kratos::make_shared<ThermalContactDomainCondition>(NewId, GetGeometry().Create( ThisNodes ), pProperties);
+  return Kratos::make_intrusive<ThermalContactDomainCondition>(NewId, GetGeometry().Create( ThisNodes ), pProperties);
 }
 
 //************************************CLONE*******************************************
@@ -314,7 +314,7 @@ void ThermalContactDomainCondition::CalculateHeatConductivity()
 
   // unsigned int vsize=GetValue(MASTER_ELEMENTS).size();
   // Element::ElementType& MasterElement = *GetValue(MASTER_ELEMENTS)[vsize-1];
-  Element::ElementType& rMasterElement = *GetValue(MASTER_ELEMENTS).back();
+  Element::ElementType& rMasterElement = GetValue(MASTER_ELEMENTS).back();
 
   //Look at the nodes, get the slave and get the Emin
 
@@ -323,8 +323,8 @@ void ThermalContactDomainCondition::CalculateHeatConductivity()
 
 
   double Kslave = 0;
-  if( GetGeometry()[slave].GetValue(NEIGHBOR_ELEMENTS).front()->GetProperties().Has(HEAT_CONDUCTIVITY) )
-    Kslave = GetGeometry()[slave].GetValue(NEIGHBOR_ELEMENTS).front()->GetProperties()[HEAT_CONDUCTIVITY];
+  if( GetGeometry()[slave].GetValue(NEIGHBOUR_ELEMENTS).front().GetProperties().Has(HEAT_CONDUCTIVITY) )
+    Kslave = GetGeometry()[slave].GetValue(NEIGHBOUR_ELEMENTS).front().GetProperties()[HEAT_CONDUCTIVITY];
 
   double Kmin = 0;
   if( rMasterElement.GetProperties().Has(HEAT_CONDUCTIVITY) )

@@ -95,6 +95,7 @@ class FemDem2DElement : public SmallDisplacementElement // Derived Element from 
 	void DruckerPragerCriterion(double& rThreshold, double &rDamage, const Vector &StressVector, const int cont, const double L_char, bool& rIsDamaging);
 	void SimoJuCriterion(double& rThreshold, double &rDamage, const Vector &StrainVector, const Vector &StressVector, const int cont, const double L_char, bool& rIsDamaging);
 	void RankineFragileLaw(double& rThreshold, double &rDamage, const Vector &StressVector, const int cont, const double L_char, bool& rIsDamaging);
+	void ElasticLaw(double& rThreshold,double &rDamage, const Vector &rStressVector, const int Edge, const double Length, bool& rIsDamaging);
 
 	void CalculateExponentialDamage(
 		double& rDamage,
@@ -152,7 +153,6 @@ class FemDem2DElement : public SmallDisplacementElement // Derived Element from 
 	double GetMaxAbsValue(const Vector& rValues);
 	double GetMinAbsValue(const Vector& rValues);
 
-
 	void CalculateDeformationMatrix(Matrix &rB, const Matrix &rDN_DX);
 
 	void SetValueOnIntegrationPoints(
@@ -164,6 +164,16 @@ class FemDem2DElement : public SmallDisplacementElement // Derived Element from 
 		const ProcessInfo &rCurrentProcessInfo) override;
 
 	void CalculateTangentTensor(
+		Matrix& TangentTensor,
+		const Vector& rStrainVectorGP,
+		const Vector& rStressVectorGP,
+		const Matrix& rElasticMatrix);
+	void CalculateSecondOrderTangentTensor(
+		Matrix& TangentTensor,
+		const Vector& rStrainVectorGP,
+		const Vector& rStressVectorGP,
+		const Matrix& rElasticMatrix);
+	void CalculateSecondOrderCentralDifferencesTangentTensor(
 		Matrix& TangentTensor,
 		const Vector& rStrainVectorGP,
 		const Vector& rStressVectorGP,
@@ -186,8 +196,30 @@ class FemDem2DElement : public SmallDisplacementElement // Derived Element from 
 		const Vector& rDeltaStress,
 		const double Perturbation,
 		const int Component);
+	void AssignComponentsToSecondOrderTangentTensor(
+		Matrix& rTangentTensor,
+		const Vector& rGaussPointStress,
+		const Vector& rPerturbedStress,
+		const Vector& rTwicePerturbedStress,
+		const double Perturbation,
+		const int Component);
+	void AssignComponentsToSecondOrderCentralDifferencesTangentTensor(
+		Matrix& rTangentTensor,
+		const Vector& rGaussPointStress,
+		const Vector& rPerturbedStress,
+		const Vector& rTwicePerturbedStress,
+		const double Perturbation,
+		const int Component);
 
-       private:
+	void CalculateTangentTensorUPerturbed(
+		Matrix& rTangentTensor,
+		const Vector& rStrainVectorGP,
+		const Vector& rStressVectorGP,
+		const Vector& rInternalForcesVectorGP,
+		const Matrix& rElasticMatrix);
+
+
+	private:
 	int mNumberOfEdges;
 	// Each component == Each edge
 	Vector mThresholds; // Stress mThreshold on edge

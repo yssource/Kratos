@@ -77,7 +77,7 @@ UpdatedLagrangianSegregatedFluidElement&  UpdatedLagrangianSegregatedFluidElemen
 
 Element::Pointer UpdatedLagrangianSegregatedFluidElement::Create( IndexType NewId, NodesArrayType const& rThisNodes, PropertiesType::Pointer pProperties ) const
 {
-  return Kratos::make_shared< UpdatedLagrangianSegregatedFluidElement >(NewId, GetGeometry().Create(rThisNodes), pProperties);
+  return Kratos::make_intrusive< UpdatedLagrangianSegregatedFluidElement >(NewId, GetGeometry().Create(rThisNodes), pProperties);
 }
 
 
@@ -105,13 +105,13 @@ Element::Pointer UpdatedLagrangianSegregatedFluidElement::Clone( IndexType NewId
     NewElement.mConstitutiveLawVector[i] = mConstitutiveLawVector[i]->Clone();
   }
 
-  //commented: it raises a segmentation fault in make_shared bad alloc
+  //commented: it raises a segmentation fault in make_intrusive bad alloc
   NewElement.mStepVariable = mStepVariable;
 
   NewElement.SetData(this->GetData());
   NewElement.SetFlags(this->GetFlags());
 
-  return Kratos::make_shared< UpdatedLagrangianSegregatedFluidElement >(NewElement);
+  return Kratos::make_intrusive< UpdatedLagrangianSegregatedFluidElement >(NewElement);
 }
 
 
@@ -1477,11 +1477,11 @@ void UpdatedLagrangianSegregatedFluidElement::GetFreeSurfaceFaces(std::vector<st
   // }
 
   //based in existance of neighbour elements (proper detection for triangles and tetrahedra)
-  ElementPointerVectorType& neighb_elems = this->GetValue(NEIGHBOR_ELEMENTS);
+  ElementWeakPtrVectorType& nElements = this->GetValue(NEIGHBOUR_ELEMENTS);
   unsigned int face=0;
-  for(ElementPointerVectorType::iterator ne = neighb_elems.begin(); ne!=neighb_elems.end(); ++ne)
+  for(auto& i_nelem : nElements)
   {
-    if ((*ne)->Id() == this->Id())  // If there is no shared element in face nf (the Id coincides)
+    if(i_nelem.Id() == this->Id())  // If there is no shared element in face nf (the Id coincides)
     {
       std::vector<SizeType> Nodes;
       unsigned int WallNodes  = 0;

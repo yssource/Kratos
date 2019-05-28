@@ -97,7 +97,7 @@ template< class TBinderType, typename TContainerType, typename TVariableType > v
         binder.def("Has", [](const TContainerType& container, const TVariableType& rV){return container.Has(rV);} );
         binder.def("SetValue",  [](TContainerType& container, const TVariableType& rV, const typename TVariableType::Type rValue){container.SetValue(rV, rValue);} );
         binder.def("GetValue", [](TContainerType& container, const TVariableType& rV){return container.GetValue(rV);} );
-
+        binder.def("Clear", [](TContainerType& container){container.Clear();} );
     }
 
 //     template< typename TVariableType > void RegisterInPythonVariables(pybind11::module& m)
@@ -362,6 +362,10 @@ void  AddContainersToPython(pybind11::module& m)
     KRATOS_REGISTER_IN_PYTHON_FLAG(m,MARKER);
     KRATOS_REGISTER_IN_PYTHON_FLAG(m,PERIODIC);
 
+    // Note: using internal macro for these two because they do not have a NOT_ version
+    KRATOS_REGISTER_IN_PYTHON_FLAG_IMPLEMENTATION(m,ALL_DEFINED);
+    KRATOS_REGISTER_IN_PYTHON_FLAG_IMPLEMENTATION(m,ALL_TRUE);
+
 
 //     AddDeprecatedVariablesToPython();
 //     AddC2CVariablesToPython();
@@ -589,6 +593,7 @@ void  AddContainersToPython(pybind11::module& m)
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, STRAIN )
 
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, NODAL_MASS )
+    KRATOS_REGISTER_IN_PYTHON_SYMMETRIC_3D_TENSOR_VARIABLE_WITH_COMPONENTS(m, NODAL_INERTIA_TENSOR )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, AUX_INDEX )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, EXTERNAL_PRESSURE )
     KRATOS_REGISTER_IN_PYTHON_VARIABLE(m, BDF_COEFFICIENTS )

@@ -17,6 +17,7 @@
 #include "includes/define.h"
 #include "includes/checks.h"
 #include "custom_elements/nodal_concentrated_element.hpp"
+#include "custom_utilities/structural_mechanics_element_utilities.h"
 
 #include "structural_mechanics_application_variables.h"
 
@@ -83,7 +84,7 @@ Element::Pointer NodalConcentratedElement::Create(
     ) const
 {
     //NEEDED TO CREATE AN ELEMENT
-    return Kratos::make_shared<NodalConcentratedElement>( NewId, GetGeometry().Create( rThisNodes ), pProperties, mUseRayleighDamping );
+    return Kratos::make_intrusive<NodalConcentratedElement>( NewId, GetGeometry().Create( rThisNodes ), pProperties, mUseRayleighDamping );
 }
 
 //************************************************************************************
@@ -96,7 +97,7 @@ Element::Pointer NodalConcentratedElement::Create(
     ) const
 {
     //NEEDED TO CREATE AN ELEMENT
-    return Kratos::make_shared<NodalConcentratedElement>( NewId, pGeom, pProperties, mUseRayleighDamping );
+    return Kratos::make_intrusive<NodalConcentratedElement>( NewId, pGeom, pProperties, mUseRayleighDamping );
 }
 
 //************************************CLONE*******************************************
@@ -112,7 +113,7 @@ Element::Pointer NodalConcentratedElement::Clone(
 
     NodalConcentratedElement new_element(NewId, GetGeometry().Create( rThisNodes ), pGetProperties(), mUseRayleighDamping );
 
-    return Kratos::make_shared<NodalConcentratedElement>(new_element);
+    return Kratos::make_intrusive<NodalConcentratedElement>(new_element);
 }
 
 
@@ -314,7 +315,7 @@ void NodalConcentratedElement::CalculateRightHandSide(VectorType& rRightHandSide
         rRightHandSideVector[j]  += volume_acceleration[j] * nodal_mass;
 
     // Compute and add internal forces
-    const array_1d<double, 3 >& nodal_stiffness = rconst_this.GetValue(NODAL_STIFFNESS);
+    const array_1d<double, 3 >& nodal_stiffness = rconst_this.GetValue(NODAL_DISPLACEMENT_STIFFNESS);
     for ( unsigned int j = 0; j < dimension; ++j )
         rRightHandSideVector[j]  -= nodal_stiffness[j] * current_displacement[j];
 }
@@ -338,7 +339,7 @@ void NodalConcentratedElement::CalculateLeftHandSide( MatrixType& rLeftHandSideM
     const auto& rconst_this = *this;
 
     // We add the nodal stiffness
-    const array_1d<double, 3 >& nodal_stiffness = rconst_this.GetValue(NODAL_STIFFNESS);
+    const array_1d<double, 3 >& nodal_stiffness = rconst_this.GetValue(NODAL_DISPLACEMENT_STIFFNESS);
     for ( unsigned int j = 0; j < dimension; ++j )
         rLeftHandSideMatrix(j, j) += nodal_stiffness[j];
 }
@@ -415,40 +416,11 @@ void NodalConcentratedElement::CalculateDampingMatrix(
 
     //Check, if Rayleigh damping is available; use nodal damping, if not
     if( mUseRayleighDamping ) {
-        //1.-Calculate StiffnessMatrix:
-
-        MatrixType stiffness_matrix     = ZeroMatrix( system_size, system_size );
-        VectorType right_hand_side_vector = ZeroVector( system_size );
-
-        this->CalculateLocalSystem( stiffness_matrix, right_hand_side_vector, rCurrentProcessInfo );
-
-        //2.-Calculate MassMatrix:
-
-        MatrixType mass_matrix  = ZeroMatrix( system_size, system_size );
-
-        this->CalculateMassMatrix ( mass_matrix, rCurrentProcessInfo );
-
-        //3.-Get Damping Coeffitients (RAYLEIGH_ALPHA, RAYLEIGH_BETA)
-        double alpha = 0.0;
-        if( GetProperties().Has(RAYLEIGH_ALPHA) )
-            alpha = GetProperties()[RAYLEIGH_ALPHA];
-        else if( rCurrentProcessInfo.Has(RAYLEIGH_ALPHA) )
-            alpha = rCurrentProcessInfo[RAYLEIGH_ALPHA];
-
-        double beta  = 0.0;
-        if( GetProperties().Has(RAYLEIGH_BETA) )
-            beta = GetProperties()[RAYLEIGH_BETA];
-        else if( rCurrentProcessInfo.Has(RAYLEIGH_BETA) )
-            beta = rCurrentProcessInfo[RAYLEIGH_BETA];
-
-        //4.-Compose the Damping Matrix:
-
-        //Rayleigh Damping Matrix: alpha*M + beta*K
-        mass_matrix      *= alpha;
-        stiffness_matrix *= beta;
-
-        rDampingMatrix  = mass_matrix;
-        rDampingMatrix += stiffness_matrix;
+        StructuralMechanicsElementUtilities::CalculateRayleighDampingMatrix(
+            *this,
+            rDampingMatrix,
+            rCurrentProcessInfo,
+            system_size);
     } else {
         const array_1d<double, 3 >& nodal_damping_ratio = this->GetValue(NODAL_DAMPING_RATIO);
         for ( unsigned int j = 0; j < dimension; ++j )
@@ -470,7 +442,7 @@ int NodalConcentratedElement::Check( const ProcessInfo& rCurrentProcessInfo )
     KRATOS_CHECK_VARIABLE_KEY(VELOCITY)
     KRATOS_CHECK_VARIABLE_KEY(ACCELERATION)
     KRATOS_CHECK_VARIABLE_KEY(NODAL_MASS)
-    KRATOS_CHECK_VARIABLE_KEY(NODAL_STIFFNESS)
+    KRATOS_CHECK_VARIABLE_KEY(NODAL_DISPLACEMENT_STIFFNESS)
     KRATOS_CHECK_VARIABLE_KEY(NODAL_DAMPING_RATIO)
     KRATOS_CHECK_VARIABLE_KEY(VOLUME_ACCELERATION)
 

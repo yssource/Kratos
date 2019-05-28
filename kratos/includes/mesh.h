@@ -99,7 +99,13 @@ public:
     typedef Mesh<TNodeType, TPropertiesType, TElementType, TConditionType> MeshType;
 
     /// Nodes container. Which is a vector set of nodes with their Id's as key.
-    typedef PointerVectorSet<NodeType, IndexedObject> NodesContainerType;
+    typedef PointerVectorSet<NodeType, 
+                            IndexedObject,
+                            std::less<typename IndexedObject::result_type>,
+                            std::equal_to<typename IndexedObject::result_type>,
+                            typename NodeType::Pointer,
+                            std::vector< typename NodeType::Pointer >                         
+                            > NodesContainerType;
 
     /** Iterator over the nodes. This iterator is an indirect
     iterator over Node::Pointer which turn back a reference to
@@ -132,7 +138,13 @@ public:
     /*       typedef PointerVectorMap<GeometryType> GeometriesContainerType; */
 
     /// Element container. A vector set of Elements with their Id's as key.
-    typedef PointerVectorSet<ElementType, IndexedObject> ElementsContainerType;
+    typedef PointerVectorSet<ElementType, 
+                            IndexedObject,
+                            std::less<typename IndexedObject::result_type>,
+                            std::equal_to<typename IndexedObject::result_type>,
+                            typename ElementType::Pointer,
+                            std::vector< typename ElementType::Pointer >                         
+                            > ElementsContainerType;
 
     /** Iterator over the Elements. This iterator is an indirect
     iterator over Elements::Pointer which turn back a reference to
@@ -147,7 +159,13 @@ public:
     typedef typename ElementsContainerType::const_iterator ElementConstantIterator;
 
     /// Conditions container. A vector set of Conditions with their Id's as key.
-    typedef PointerVectorSet<ConditionType, IndexedObject> ConditionsContainerType;
+    typedef PointerVectorSet<ConditionType, 
+                            IndexedObject,
+                            std::less<typename IndexedObject::result_type>,
+                            std::equal_to<typename IndexedObject::result_type>,
+                            typename ConditionType::Pointer,
+                            std::vector< typename ConditionType::Pointer >                         
+                            > ConditionsContainerType;
 
     /** Iterator over the Conditions. This iterator is an indirect
     iterator over Conditions::Pointer which turn back a reference to
@@ -241,6 +259,7 @@ public:
         mpProperties->clear();
         mpElements->clear();
         mpConditions->clear();
+        mpMasterSlaveConstraints->clear();
     }
 
     ///@}
@@ -276,7 +295,6 @@ public:
     {
         return mpNodes->size();
     }
-
 
     /** Inserts a node in the mesh.
     */
@@ -387,7 +405,6 @@ public:
     {
         return mpProperties->size();
     }
-
 
     /** Inserts a properties in the mesh.
     */
@@ -705,8 +722,6 @@ public:
     ///@name MasterSlaveConstraints
     ///@{
 
-
-
     SizeType NumberOfMasterSlaveConstraints() const
     {
         return mpMasterSlaveConstraints->size();
@@ -803,10 +818,9 @@ public:
         return mpMasterSlaveConstraints->GetContainer();
     }
 
-
     bool HasMasterSlaveConstraint(IndexType MasterSlaveConstraintId) const
     {
-            return (mpMasterSlaveConstraints->find(MasterSlaveConstraintId) != mpMasterSlaveConstraints->end());
+        return (mpMasterSlaveConstraints->find(MasterSlaveConstraintId) != mpMasterSlaveConstraints->end());
     }
 
 
@@ -952,7 +966,7 @@ private:
         rSerializer.save("Properties",mpProperties);
         rSerializer.save("Elements",mpElements);
         rSerializer.save("Conditions",mpConditions);
-        rSerializer.save("Conditions",mpMasterSlaveConstraints);
+        rSerializer.save("Constraints",mpMasterSlaveConstraints);
     }
 
     void load(Serializer& rSerializer) override
@@ -963,7 +977,7 @@ private:
         rSerializer.load("Properties",mpProperties);
         rSerializer.load("Elements",mpElements);
         rSerializer.load("Conditions",mpConditions);
-        rSerializer.load("Conditions",mpMasterSlaveConstraints);
+        rSerializer.load("Constraints",mpMasterSlaveConstraints);
     }
 
 
@@ -989,6 +1003,7 @@ private:
         mpProperties = rOther.mpProperties;
         mpElements = rOther.mpElements;
         mpConditions = rOther.mpConditions;
+        mpMasterSlaveConstraints = rOther.mpMasterSlaveConstraints;
     }
 
 

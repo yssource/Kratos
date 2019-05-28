@@ -21,7 +21,10 @@
 #include "interpolative_mapper_base.h"
 #include "custom_utilities/mapper_typedefs.h"
 #include "custom_utilities/mapping_matrix_utilities.h"
+#include "mapping_application_variables.h"
 #include "custom_utilities/mapper_utilities.h"
+#include "input_output/vtk_output.h"
+#include "utilities/variable_utils.h"
 #ifdef KRATOS_USING_MPI // mpi-parallel compilation
 #include "custom_searching/interface_communicator_mpi.h"
 #endif
@@ -131,43 +134,21 @@ void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::MapInternal(
     const Variable<array_1d<double, 3>>& rDestinationVariable,
     Kratos::Flags MappingOptions)
 {
-    const auto& var_x_origin = KratosComponents<ComponentVariableType>::Get(rOriginVariable.Name() + "_X");
-    const auto& var_y_origin = KratosComponents<ComponentVariableType>::Get(rOriginVariable.Name() + "_Y");
-    const auto& var_z_origin = KratosComponents<ComponentVariableType>::Get(rOriginVariable.Name() + "_Z");
+    const std::vector<std::string> var_comps{"_X", "_Y", "_Z"};
 
-    const auto& var_x_destination = KratosComponents<ComponentVariableType>::Get(rDestinationVariable.Name() + "_X");
-    const auto& var_y_destination = KratosComponents<ComponentVariableType>::Get(rDestinationVariable.Name() + "_Y");
-    const auto& var_z_destination = KratosComponents<ComponentVariableType>::Get(rDestinationVariable.Name() + "_Z");
+    for (const auto& var_ext : var_comps) {
+        const auto& var_origin = KratosComponents<ComponentVariableType>::Get(rOriginVariable.Name() + var_ext);
+        const auto& var_destination = KratosComponents<ComponentVariableType>::Get(rDestinationVariable.Name() + var_ext);
 
-    // X-Component
-    mpInterfaceVectorContainerOrigin->UpdateSystemVectorFromModelPart(var_x_origin, MappingOptions);
+        mpInterfaceVectorContainerOrigin->UpdateSystemVectorFromModelPart(var_origin, MappingOptions);
 
-    TSparseSpace::Mult(
-        *mpMappingMatrix,
-        mpInterfaceVectorContainerOrigin->GetVector(),
-        mpInterfaceVectorContainerDestination->GetVector()); // rQd = rMdo * rQo
+        TSparseSpace::Mult(
+            *mpMappingMatrix,
+            mpInterfaceVectorContainerOrigin->GetVector(),
+            mpInterfaceVectorContainerDestination->GetVector()); // rQd = rMdo * rQo
 
-    mpInterfaceVectorContainerDestination->UpdateModelPartFromSystemVector(var_x_destination, MappingOptions);
-
-    // Y-Component
-    mpInterfaceVectorContainerOrigin->UpdateSystemVectorFromModelPart(var_y_origin, MappingOptions);
-
-    TSparseSpace::Mult(
-        *mpMappingMatrix,
-        mpInterfaceVectorContainerOrigin->GetVector(),
-        mpInterfaceVectorContainerDestination->GetVector()); // rQd = rMdo * rQo
-
-    mpInterfaceVectorContainerDestination->UpdateModelPartFromSystemVector(var_y_destination, MappingOptions);
-
-    // Z-Component
-    mpInterfaceVectorContainerOrigin->UpdateSystemVectorFromModelPart(var_z_origin, MappingOptions);
-
-    TSparseSpace::Mult(
-        *mpMappingMatrix,
-        mpInterfaceVectorContainerOrigin->GetVector(),
-        mpInterfaceVectorContainerDestination->GetVector()); // rQd = rMdo * rQo
-
-    mpInterfaceVectorContainerDestination->UpdateModelPartFromSystemVector(var_z_destination, MappingOptions);
+        mpInterfaceVectorContainerDestination->UpdateModelPartFromSystemVector(var_destination, MappingOptions);
+    }
 }
 
 template<class TSparseSpace, class TDenseSpace>
@@ -176,56 +157,36 @@ void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::MapInternalTranspose(
     const Variable<array_1d<double, 3>>& rDestinationVariable,
     Kratos::Flags MappingOptions)
 {
-    const auto& var_x_origin = KratosComponents<ComponentVariableType>::Get(rOriginVariable.Name() + "_X");
-    const auto& var_y_origin = KratosComponents<ComponentVariableType>::Get(rOriginVariable.Name() + "_Y");
-    const auto& var_z_origin = KratosComponents<ComponentVariableType>::Get(rOriginVariable.Name() + "_Z");
+    const std::vector<std::string> var_comps{"_X", "_Y", "_Z"};
 
-    const auto& var_x_destination = KratosComponents<ComponentVariableType>::Get(rDestinationVariable.Name() + "_X");
-    const auto& var_y_destination = KratosComponents<ComponentVariableType>::Get(rDestinationVariable.Name() + "_Y");
-    const auto& var_z_destination = KratosComponents<ComponentVariableType>::Get(rDestinationVariable.Name() + "_Z");
+    for (const auto& var_ext : var_comps) {
+        const auto& var_origin = KratosComponents<ComponentVariableType>::Get(rOriginVariable.Name() + var_ext);
+        const auto& var_destination = KratosComponents<ComponentVariableType>::Get(rDestinationVariable.Name() + var_ext);
 
-    // X-Component
-    mpInterfaceVectorContainerDestination->UpdateSystemVectorFromModelPart(var_x_destination, MappingOptions);
+        mpInterfaceVectorContainerDestination->UpdateSystemVectorFromModelPart(var_destination, MappingOptions);
 
-    TSparseSpace::TransposeMult(
-        *mpMappingMatrix,
-        mpInterfaceVectorContainerOrigin->GetVector(),
-        mpInterfaceVectorContainerDestination->GetVector()); // rQo = rMdo^T * rQd
+        TSparseSpace::TransposeMult(
+            *mpMappingMatrix,
+            mpInterfaceVectorContainerDestination->GetVector(),
+            mpInterfaceVectorContainerOrigin->GetVector()); // rQo = rMdo^T * rQd
 
-    mpInterfaceVectorContainerOrigin->UpdateModelPartFromSystemVector(var_x_origin, MappingOptions);
-
-    // Y-Component
-    mpInterfaceVectorContainerDestination->UpdateSystemVectorFromModelPart(var_y_destination, MappingOptions);
-
-    TSparseSpace::TransposeMult(
-        *mpMappingMatrix,
-        mpInterfaceVectorContainerOrigin->GetVector(),
-        mpInterfaceVectorContainerDestination->GetVector()); // rQo = rMdo^T * rQd
-
-    mpInterfaceVectorContainerOrigin->UpdateModelPartFromSystemVector(var_y_origin, MappingOptions);
-
-    // Z-Component
-    mpInterfaceVectorContainerDestination->UpdateSystemVectorFromModelPart(var_z_destination, MappingOptions);
-
-    TSparseSpace::TransposeMult(
-        *mpMappingMatrix,
-        mpInterfaceVectorContainerOrigin->GetVector(),
-        mpInterfaceVectorContainerDestination->GetVector()); // rQo = rMdo^T * rQd
-
-    mpInterfaceVectorContainerOrigin->UpdateModelPartFromSystemVector(var_z_origin, MappingOptions);
+        mpInterfaceVectorContainerOrigin->UpdateModelPartFromSystemVector(var_origin, MappingOptions);
+    }
 }
 
 template<class TSparseSpace, class TDenseSpace>
-void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::ValidateInput(Parameters MapperSettings)
+void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::ValidateInput()
 {
     MapperUtilities::CheckInterfaceModelParts(0);
-    ValidateParameters(MapperSettings);
+
+    Parameters mapper_default_settings(GetMapperDefaultSettings());
+    mMapperSettings.ValidateAndAssignDefaults(mapper_default_settings);
 
     if (mMapperSettings["search_radius"].GetDouble() < 0.0) {
         const double search_radius = MapperUtilities::ComputeSearchRadius(
                                         mrModelPartOrigin,
                                         mrModelPartDestination,
-                                        MapperSettings["echo_level"].GetInt());
+                                        mMapperSettings["echo_level"].GetInt());
         mMapperSettings["search_radius"].SetDouble(search_radius);
     }
 }
@@ -233,28 +194,52 @@ void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::ValidateInput(Parameter
 template<class TSparseSpace, class TDenseSpace>
 void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::PrintPairingInfo(const int EchoLevel)
 {
-    const int comm_rank = mrModelPartDestination.GetCommunicator().MyPID();
     std::stringstream warning_msg;
 
-    for (const auto& rp_local_sys : mMapperLocalSystems)
-    {
+    if (EchoLevel > 1) {
+        // Initialize the values for printing later
+        VariableUtils().SetNonHistoricalVariable(PAIRING_STATUS, 1, mrModelPartDestination.Nodes());
+    }
+
+    for (const auto& rp_local_sys : mMapperLocalSystems) {
         const auto pairing_status = rp_local_sys->GetPairingStatus();
 
-        if (pairing_status != MapperLocalSystem::PairingStatus::InterfaceInfoFound)
-        {
-            warning_msg << rp_local_sys->PairingInfo(EchoLevel, comm_rank);
+        if (pairing_status != MapperLocalSystem::PairingStatus::InterfaceInfoFound) {
+            warning_msg << rp_local_sys->PairingInfo(EchoLevel);
 
             if (pairing_status == MapperLocalSystem::PairingStatus::Approximation)
                 warning_msg << " is using an approximation";
             else if (pairing_status == MapperLocalSystem::PairingStatus::NoInterfaceInfo)
                 warning_msg << " has not found a neighbor";
 
-            KRATOS_WARNING("Mapper") << warning_msg.str() << std::endl;
+            KRATOS_WARNING_ALL_RANKS("Mapper") << warning_msg.str() << std::endl; // TODO use data-comm of the destination-MP
 
             // reset the stringstream
             warning_msg.str( std::string() );
             warning_msg.clear();
         }
+    }
+
+    if (EchoLevel > 1) {
+        // print a debug ModelPart to check the pairing
+
+        std::string prefix = Info() + "_PairingStatus_";
+
+        Parameters vtk_params( R"({
+            "file_format"                        : "binary",
+            "output_precision"                   : 7,
+            "output_control_type"                : "step",
+            "custom_name_prefix"                 : "",
+            "save_output_files_in_folder"        : false,
+            "nodal_solution_step_data_variables" : [],
+            "nodal_data_value_variables"         : ["PAIRING_STATUS"],
+            "element_data_value_variables"       : [],
+            "condition_data_value_variables"     : [],
+            "gauss_point_variables"              : []
+        })");
+
+        vtk_params["custom_name_prefix"].SetString(prefix);
+        VtkOutput(mrModelPartDestination, vtk_params).PrintOutput();
     }
 }
 

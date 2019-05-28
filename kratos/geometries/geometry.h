@@ -14,6 +14,7 @@
 //  contributors:    Hoang Giang Bui
 //                   Josep Maria Carbonell
 //                   Carlos Roig
+//                   Vicente Mataix Ferrandiz
 //
 
 #if !defined(KRATOS_GEOMETRY_H_INCLUDED )
@@ -91,7 +92,23 @@ public:
       VOLUME_TO_SURFACE_AREA,
       VOLUME_TO_EDGE_LENGTH,
       VOLUME_TO_AVERAGE_EDGE_LENGTH,
-      VOLUME_TO_RMS_EDGE_LENGTH
+      VOLUME_TO_RMS_EDGE_LENGTH,
+      MIN_DIHEDRAL_ANGLE,
+      MAX_DIHEDRAL_ANGLE,
+      MIN_SOLID_ANGLE
+    };
+
+    /**
+     * @brief This defines the different methods to compute the lumping methods
+     * @details The three methods available are:
+     *      - The row sum method
+     *      - Diagonal scaling
+     *      - Evaluation of M using a quadrature involving only the nodal points and thus automatically yielding a diagonal matrix for standard element shape function
+     */
+    enum class LumpingMethods {
+        ROW_SUM,
+        DIAGONAL_SCALING,
+        QUADRATURE_ON_NODES
     };
 
 
@@ -410,10 +427,105 @@ public:
     //     return p_clone;
     // }
 
-    //lumping factors for the calculation of the lumped mass matrix
-    virtual Vector& LumpingFactors( Vector& rResult )  const
+    /**
+     * @brief Lumping factors for the calculation of the lumped mass matrix
+     * @param rResult Vector containing the lumping factors
+     * @param LumpingMethod The lumping method considered. The three methods available are:
+     *      - The row sum method
+     *      - Diagonal scaling
+     *      - Evaluation of M using a quadrature involving only the nodal points and thus automatically yielding a diagonal matrix for standard element shape function
+     */
+    virtual Vector& LumpingFactors(
+        Vector& rResult,
+        const LumpingMethods LumpingMethod = LumpingMethods::ROW_SUM
+        )  const
     {
-        KRATOS_ERROR << "Called the virtual function for LumpingFactors " << *this << std::endl;
+        const SizeType number_of_nodes = this->size();
+        const SizeType local_space_dimension = this->LocalSpaceDimension();
+
+        // Clear lumping factors
+        if (rResult.size() != number_of_nodes)
+            rResult.resize(number_of_nodes, false);
+        noalias(rResult) = ZeroVector(number_of_nodes);
+
+        if (LumpingMethod == LumpingMethods::ROW_SUM) {
+            const IntegrationMethod integration_method = GetDefaultIntegrationMethod();
+            const GeometryType::IntegrationPointsArrayType& r_integrations_points = this->IntegrationPoints( integration_method );
+            const Matrix& r_Ncontainer = this->ShapeFunctionsValues(integration_method);
+
+            // Vector fo jacobians
+            Vector detJ_vector(r_integrations_points.size());
+            DeterminantOfJacobian(detJ_vector, integration_method);
+
+            // Iterate over the integration points
+            double domain_size = 0.0;
+            for ( IndexType point_number = 0; point_number < r_integrations_points.size(); ++point_number ) {
+                const double integration_weight = r_integrations_points[point_number].Weight() * detJ_vector[point_number];
+                const Vector& rN = row(r_Ncontainer,point_number);
+
+                // Computing domain size
+                domain_size += integration_weight;
+
+                for ( IndexType i = 0; i < number_of_nodes; ++i ) {
+                    rResult[i] += rN[i] * integration_weight;
+                }
+            }
+
+            // Divide by the domain size
+            for ( IndexType i = 0; i < number_of_nodes; ++i ) {
+                rResult[i] /= domain_size;
+            }
+        } else if (LumpingMethod == LumpingMethods::DIAGONAL_SCALING) {
+            IntegrationMethod integration_method = GetDefaultIntegrationMethod();
+            integration_method = static_cast<IntegrationMethod>(static_cast<int>(integration_method) + 1);
+            const GeometryType::IntegrationPointsArrayType& r_integrations_points = this->IntegrationPoints( integration_method );
+            const Matrix& r_Ncontainer = this->ShapeFunctionsValues(integration_method);
+
+            // Vector fo jacobians
+            Vector detJ_vector(r_integrations_points.size());
+            DeterminantOfJacobian(detJ_vector, integration_method);
+
+            // Iterate over the integration points
+            for ( IndexType point_number = 0; point_number < r_integrations_points.size(); ++point_number ) {
+                const double detJ = detJ_vector[point_number];
+                const double integration_weight = r_integrations_points[point_number].Weight() * detJ;
+                const Vector& rN = row(r_Ncontainer,point_number);
+
+                for ( IndexType i = 0; i < number_of_nodes; ++i ) {
+                    rResult[i] += std::pow(rN[i], 2) * integration_weight;
+                }
+            }
+
+            // Computing diagonal scaling coefficient
+            double total_value = 0.0;
+            for ( IndexType i = 0; i < number_of_nodes; ++i ) {
+                total_value += rResult[i];
+            }
+            for ( IndexType i = 0; i < number_of_nodes; ++i ) {
+                rResult[i] /= total_value;
+            }
+        } else if (LumpingMethod == LumpingMethods::QUADRATURE_ON_NODES) {
+            // Divide by the domain size
+            const double domain_size = DomainSize();
+
+            // Getting local coordinates
+            Matrix local_coordinates(number_of_nodes, local_space_dimension);
+            PointsLocalCoordinates(local_coordinates);
+            Point local_point(ZeroVector(3));
+            array_1d<double, 3>& r_local_coordinates = local_point.Coordinates();
+
+            // Iterate over integration points
+            const GeometryType::IntegrationPointsArrayType& r_integrations_points = this->IntegrationPoints( GeometryData::GI_GAUSS_1 ); // First order
+            const double weight = r_integrations_points[0].Weight()/static_cast<double>(number_of_nodes);
+            for ( IndexType point_number = 0; point_number < number_of_nodes; ++point_number ) {
+                for ( IndexType dim = 0; dim < local_space_dimension; ++dim ) {
+                    r_local_coordinates[dim] = local_coordinates(point_number, dim);
+                }
+                const double detJ = DeterminantOfJacobian(local_point);
+                rResult[point_number] = weight * detJ/domain_size;
+            }
+        }
+
         return rResult;
     }
 
@@ -627,24 +739,26 @@ public:
     //   Bounding_Box(rResult.LowPoint(), rResult.HighPoint());
     // }
 
-    /** Calculates the boundingbox of the geometry.
-     * Calculates the boundingbox of the geometry.
-     *
+    /**
+     * @brief Calculates the boundingbox of the geometry.
+     * @details Corresponds with the highest and lowest point in space
      * @param rLowPoint  Lower point of the boundingbox.
      * @param rHighPoint Higher point of the boundingbox.
      */
-    virtual void BoundingBox( TPointType& rLowPoint, TPointType& rHighPoint ) const
+    virtual void BoundingBox(
+        TPointType& rLowPoint,
+        TPointType& rHighPoint
+        ) const
     {
-        rHighPoint         = this->GetPoint( 0 );
-        rLowPoint          = this->GetPoint( 0 );
+        rHighPoint = this->GetPoint( 0 );
+        rLowPoint  = this->GetPoint( 0 );
         const SizeType dim = WorkingSpaceDimension();
 
-        for ( unsigned int point = 0; point < PointsNumber(); point++ )
-        {
-            for ( unsigned int i = 0; i < dim; i++ )
-            {
-                rHighPoint[i] = ( rHighPoint[i] < this->GetPoint( point )[i] ) ? this->GetPoint( point )[i] : rHighPoint[i];
-                rLowPoint[i]  = ( rLowPoint[i]  > this->GetPoint( point )[i] ) ? this->GetPoint( point )[i] : rLowPoint[i];
+        for ( IndexType point = 1; point < PointsNumber(); ++point ) { //The first node is already assigned, so we can start from 1
+            const auto& r_point = this->GetPoint( point );
+            for ( IndexType i = 0; i < dim; ++i ) {
+                rHighPoint[i] = ( rHighPoint[i] < r_point[i] ) ? r_point[i] : rHighPoint[i];
+                rLowPoint[i]  = ( rLowPoint[i]  > r_point[i] ) ? r_point[i] : rLowPoint[i];
             }
         }
     }
@@ -773,10 +887,36 @@ public:
          quality = VolumeToAverageEdgeLength();
        } else if(qualityCriteria == QualityCriteria::VOLUME_TO_RMS_EDGE_LENGTH) {
          quality = VolumeToRMSEdgeLength();
+       } else if(qualityCriteria == QualityCriteria::MIN_DIHEDRAL_ANGLE) {
+         quality = MinDihedralAngle();
+       } else if (qualityCriteria == QualityCriteria::MAX_DIHEDRAL_ANGLE) {
+         quality = MaxDihedralAngle();
+       } else if(qualityCriteria == QualityCriteria::MIN_SOLID_ANGLE) {
+         quality = MinSolidAngle();
        }
 
        return quality;
      }
+
+    /** Calculates the dihedral angles of the geometry.
+     * Calculates the dihedral angles of the geometry.
+     *
+     * @return a vector of dihedral angles of the geometry..
+     */
+    virtual inline void ComputeDihedralAngles(Vector& rDihedralAngles )  const
+    {
+        KRATOS_ERROR << "Called the virtual function for ComputeDihedralAngles " << *this << std::endl;
+    }
+
+    /** Calculates the solid angles of the geometry.
+     * Calculates the solid angles of the geometry.
+     *
+     * @return a vector of dihedral angles of the geometry..
+     */
+    virtual inline void ComputeSolidAngles(Vector& rSolidAngles )  const
+    {
+        KRATOS_ERROR << "Called the virtual function for ComputeDihedralAngles " << *this << std::endl;
+    }
 
     ///@}
     ///@name Access
@@ -935,7 +1075,7 @@ public:
         const CoordinatesArrayType& rPoint,
         CoordinatesArrayType& rResult,
         const double Tolerance = std::numeric_limits<double>::epsilon()
-        )
+        ) const
     {
         KRATOS_ERROR << "Calling base class IsInside method instead of derived class one. Please check the definition of derived class. " << *this << std::endl;
         return false;
@@ -983,44 +1123,99 @@ public:
     }
 
     ///@}
+    ///@name Boundaries
+    ///@{
+
+    /**
+     * @brief This method gives you all boundaries entities of this geometry.
+     * @details This method will gives you all the boundaries entities
+     * @return GeometriesArrayType containes this geometry boundaries entities.
+     * @see GeneratePoints()
+     * @see GenerateEdges()
+     * @see GenerateFaces()
+     */
+    virtual GeometriesArrayType GenerateBoundariesEntities() const
+    {
+        const SizeType dimension = this->LocalSpaceDimension();
+        if (dimension == 3) {
+            return this->GenerateFaces();
+        } else if (dimension == 2) {
+            return this->GenerateEdges();
+        } else { // Let's assume is one
+            return this->GeneratePoints();
+        }
+    }
+
+    ///@}
+    ///@name Points
+    ///@{
+
+    /**
+     * @brief This method gives you all points of this geometry.
+     * @details This method will gives you all the points
+     * @return GeometriesArrayType containes this geometry points.
+     * @see Points()
+     */
+    virtual GeometriesArrayType GeneratePoints() const
+    {
+        GeometriesArrayType points;
+
+        const auto& p_points = this->Points();
+        for (IndexType i_point = 0; i_point < p_points.size(); ++i_point) {
+            PointsArrayType point_array;
+            point_array.push_back(p_points(i_point));
+            auto p_point_geometry = Kratos::make_shared<Geometry<TPointType>>(point_array);
+            points.push_back(p_point_geometry);
+        }
+
+        return points;
+    }
+
+    ///@}
     ///@name Edge
     ///@{
 
-    /** This method gives you number of all edges of this
-     * geometry. For example, for a hexahedron, this would be
-     * 12
-     *
+    /**
+     * @brief This method gives you number of all edges of this geometry.
+     * @details For example, for a hexahedron, this would be 12
      * @return SizeType containes number of this geometry edges.
      * @see EdgesNumber()
      * @see Edges()
+     * @see GenerateEdges()
      * @see FacesNumber()
      * @see Faces()
+     * @see GenerateFaces()
      */
-    // will be used by refinement algorithm, thus uncommented. janosch.
     virtual SizeType EdgesNumber() const
     {
         KRATOS_ERROR << "Calling base class EdgesNumber method instead of derived class one. Please check the definition of derived class. " << *this << std::endl;
-
-        return SizeType();
     }
 
-    /** This method gives you all edges of this geometry. This
-    method will gives you all the edges with one dimension less
-    than this geometry. for example a triangle would return
-    three lines as its edges or a tetrahedral would return four
-    triangle as its edges but won't return its six edge
-    lines by this method.
+    /**
+     * @brief This method gives you all edges of this geometry.
+     * @details This method will gives you all the edges with one dimension less than this geometry.
+     * For example a triangle would return three lines as its edges or a tetrahedral would return four triangle as its edges but won't return its six edge lines by this method.
+     * @return GeometriesArrayType containes this geometry edges.
+     * @deprecated This is legacy version, move to GenerateFaces
+     * @see EdgesNumber()
+     * @see Edge()
+     */
+    KRATOS_DEPRECATED_MESSAGE("This is legacy version (use GenerateEdgesInstead)") virtual GeometriesArrayType Edges( void )
+    {
+        return this->GenerateEdges();
+    }
 
-    @return GeometriesArrayType containes this geometry edges.
-    @see EdgesNumber()
-    @see Edge()
-    */
-    // will be used by refinement algorithm, thus uncommented. janosch.
-    virtual GeometriesArrayType Edges( void )
+    /**
+     * @brief This method gives you all edges of this geometry.
+     * @details This method will gives you all the edges with one dimension less than this geometry.
+     * For example a triangle would return three lines as its edges or a tetrahedral would return four triangle as its edges but won't return its six edge lines by this method.
+     * @return GeometriesArrayType containes this geometry edges.
+     * @see EdgesNumber()
+     * @see Edge()
+     */
+    virtual GeometriesArrayType GenerateEdges() const
     {
         KRATOS_ERROR << "Calling base class Edges method instead of derived class one. Please check the definition of derived class. " << *this << std::endl;
-
-        return GeometriesArrayType();
     }
 
     /** This method gives you an edge of this geometry which holds
@@ -1033,17 +1228,20 @@ public:
     @see EdgesNumber()
     @see Edges()
     */
-    // Commented for possible change in Edge interface of geometry. Pooyan.
+    // Commented for possible change in Edge interface of geometry. Pooyan. // NOTE: We should rethink this because is aligned with the current PR
 //       virtual Pointer Edge(const PointsArrayType& EdgePoints)
 //  {
 //    KRATOS_ERROR << "Calling base class Edge method instead of derived class one. Please check the definition of derived class." << *this << std::endl;
 //
 //  }
 
+    ///@}
+    ///@name Face
+    ///@{
+
     /**
-     * Returns the number of faces of the current geometry.
-     * This is only implemented for 3D geometries, since 2D geometries
-     * only have edges but no faces
+     * @brief Returns the number of faces of the current geometry.
+     * @details This is only implemented for 3D geometries, since 2D geometries only have edges but no faces
      * @see EdgesNumber
      * @see Edges
      * @see Faces
@@ -1051,23 +1249,38 @@ public:
     virtual SizeType FacesNumber() const
     {
         KRATOS_ERROR << "Calling base class FacesNumber method instead of derived class one. Please check the definition of derived class. " << *this << std::endl;
-
-        return SizeType();
     }
 
     /**
-     * Returns all faces of the current geometry.
-     * This is only implemented for 3D geometries, since 2D geometries
-     * only have edges but no faces
+     * @brief Returns all faces of the current geometry.
+     * @details This is only implemented for 3D geometries, since 2D geometries only have edges but no faces
+     * @return GeometriesArrayType containes this geometry faces.
+     * @deprecated This is legacy version, move to GenerateFaces
      * @see EdgesNumber
      * @see Edges
      * @see FacesNumber
      */
-    virtual GeometriesArrayType Faces( void )
+    KRATOS_DEPRECATED_MESSAGE("This is legacy version (use GenerateEdgesInstead)") virtual GeometriesArrayType Faces( void )
     {
-        KRATOS_ERROR << "Calling base class Faces method instead of derived class one. Please check the definition of derived class. " << *this << std::endl;
+        const SizeType dimension = this->LocalSpaceDimension();
+        if (dimension == 3) {
+            return this->GenerateFaces();
+        } else {
+            return this->GenerateEdges();
+        }
+    }
 
-        return GeometriesArrayType();
+    /**
+     * @brief Returns all faces of the current geometry.
+     * @details This is only implemented for 3D geometries, since 2D geometries only have edges but no faces
+     * @return GeometriesArrayType containes this geometry faces.
+     * @see EdgesNumber
+     * @see GenerateEdges
+     * @see FacesNumber
+     */
+    virtual GeometriesArrayType GenerateFaces() const
+    {
+        KRATOS_ERROR << "Calling base class GenerateFaces method instead of derived class one. Please check the definition of derived class. " << *this << std::endl;
     }
 
     //Connectivities of faces required
@@ -1090,7 +1303,7 @@ public:
     @see EdgesNumber()
     @see Edges()
     */
-    // Commented for possible change in Edge interface of geometry. Pooyan.
+    // Commented for possible change in Edge interface of geometry. Pooyan. // NOTE: We should rethink this because is aligned with the current PR
 //       virtual Pointer Edge(IndexType EdgeIndex)
 //  {
 //    KRATOS_ERROR << "Calling base class Edge method instead of derived class one. Please check the definition of derived class." << *this << std::endl;
@@ -1103,7 +1316,7 @@ public:
     @return NormalType which is normal to this geometry specific edge.
     @see Edge()
     */
-    // Commented for possible change in Edge interface of geometry. Pooyan.
+    // Commented for possible change in Edge interface of geometry. Pooyan. // NOTE: We should rethink this because is aligned with the current PR
 //       virtual NormalType NormalEdge(const PointsArrayType& EdgePoints)
 //  {
 //    KRATOS_ERROR << "Calling base class NormalEdge method instead of derived class one. Please check the definition of derived class." << *this << std::endl
@@ -1118,7 +1331,7 @@ public:
     @return NormalType which is normal to this geometry specific edge.
     @see Edge()
     */
-    // Commented for possible change in Edge interface of geometry. Pooyan.
+    // Commented for possible change in Edge interface of geometry. Pooyan. // NOTE: We should rethink this because is aligned with the current PR
 //       virtual NormalType NormalEdge(IndexType EdgeIndex)
 //  {
 //    KRATOS_ERROR << "Calling base class NormalEdge method instead of derived class one. Please check the definition of derived class." << *this << std::endl;
@@ -2395,6 +2608,39 @@ protected:
      */
     virtual double VolumeToRMSEdgeLength() const {
       KRATOS_ERROR << "Calling base class 'VolumeToRMSEdgeLength' method instead of derived class one. Please check the definition of derived class. " << *this << std::endl;
+      return 0.0;
+    }
+
+    /** Calculates the min dihedral angle quality metric.
+     * Calculates the min dihedral angle quality metric.
+     * The min dihedral angle is min angle between two faces of the element
+     * In radians
+     * @return [description]
+     */
+    virtual double MinDihedralAngle() const {
+      KRATOS_ERROR << "Calling base class 'MinDihedralAngle' method instead of derived class one. Please check the definition of derived class. " << *this << std::endl;
+      return 0.0;
+    }
+
+    /** Calculates the max dihedral angle quality metric.
+     * Calculates the max dihedral angle quality metric.
+     * The max dihedral angle is max angle between two faces of the element
+     * In radians
+     * @return [description]
+     */
+    virtual double MaxDihedralAngle() const {
+        KRATOS_ERROR << "Calling base class 'MaxDihedralAngle' method instead of derived class one. Please check the definition of derived class. " << *this << std::endl;
+        return 0.0;
+    }
+
+    /** Calculates the min solid angle quality metric.
+     * Calculates the min solid angle quality metric.
+     * The min solid angle  [stereoradians] is the lowest solid angle "seen" from any of the 4 nodes of the geometry. Valid only for 3d elems!
+     * In stereo radians
+     * @return [description]
+     */
+    virtual double MinSolidAngle() const {
+      KRATOS_ERROR << "Calling base class 'MinSolidAngle' method instead of derived class one. Please check the definition of derived class. " << *this << std::endl;
       return 0.0;
     }
 

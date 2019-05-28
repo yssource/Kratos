@@ -231,7 +231,7 @@ public:
 
       if( pCondition->GetValue(MASTER_ELEMENTS).size() > 0 ){
 
-	Element::ElementType& MasterElement = *pCondition->GetValue(MASTER_ELEMENTS).back();
+	Element::ElementType& MasterElement = pCondition->GetValue(MASTER_ELEMENTS).back();
 
 	std::vector<double> Value;
 
@@ -801,7 +801,7 @@ public:
 	      this->SetNodalPosition(*(i_cond.base()), rCurrentProcessInfo, xc, yc, zc);
 
 	      //create a new node
-	      pNode = Kratos::make_shared< NodeType >( id, xc, yc, zc );
+	      pNode = Kratos::make_intrusive<Node<3>>( id, xc, yc, zc );
 
 	      //giving model part variables list to the node
 	      pNode->SetSolutionStepVariablesList(&VariablesList);

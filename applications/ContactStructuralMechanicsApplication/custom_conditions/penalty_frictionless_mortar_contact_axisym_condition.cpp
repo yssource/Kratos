@@ -31,7 +31,7 @@ Condition::Pointer PenaltyMethodFrictionlessMortarContactAxisymCondition<TNumNod
     NodesArrayType const& rThisNodes,
     PropertiesPointerType pProperties ) const
 {
-    return Kratos::make_shared< PenaltyMethodFrictionlessMortarContactAxisymCondition<TNumNodes, TNormalVariation> >( NewId, this->GetGeometry().Create( rThisNodes ), pProperties );
+    return Kratos::make_intrusive< PenaltyMethodFrictionlessMortarContactAxisymCondition<TNumNodes, TNormalVariation> >( NewId, this->GetGeometry().Create( rThisNodes ), pProperties );
 }
 
 /***********************************************************************************/
@@ -43,7 +43,7 @@ Condition::Pointer PenaltyMethodFrictionlessMortarContactAxisymCondition<TNumNod
     GeometryPointerType pGeom,
     PropertiesPointerType pProperties) const
 {
-    return Kratos::make_shared< PenaltyMethodFrictionlessMortarContactAxisymCondition<TNumNodes, TNormalVariation> >( NewId, pGeom, pProperties );
+    return Kratos::make_intrusive< PenaltyMethodFrictionlessMortarContactAxisymCondition<TNumNodes, TNormalVariation> >( NewId, pGeom, pProperties );
 }
 
 /************************************* DESTRUCTOR **********************************/
@@ -52,6 +52,15 @@ Condition::Pointer PenaltyMethodFrictionlessMortarContactAxisymCondition<TNumNod
 template< std::size_t TNumNodes, bool TNormalVariation >
 PenaltyMethodFrictionlessMortarContactAxisymCondition<TNumNodes, TNormalVariation>::~PenaltyMethodFrictionlessMortarContactAxisymCondition( )
 = default;
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template< std::size_t TNumNodes, bool TNormalVariation >
+bool PenaltyMethodFrictionlessMortarContactAxisymCondition<TNumNodes,TNormalVariation>::IsAxisymmetric() const
+{
+    return true;
+}
 
 /***********************************************************************************/
 /***********************************************************************************/

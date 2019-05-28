@@ -73,9 +73,9 @@ public:
     typedef MesherUtilities::MeshingParameters   MeshingParametersType;
     typedef MesherUtilities::RefiningParameters   RefineParametersType;
 
-    typedef std::vector<Node<3>*>             NodePointerVectorType;
-    typedef std::vector<Element*>          ElementPointerVectorType;
-    typedef std::vector<Condition*>      ConditionPointerVectorType;
+    typedef GlobalPointersVector<Node<3> >          NodeWeakPtrVectorType;
+    typedef GlobalPointersVector<Element>        ElementWeakPtrVectorType;
+    typedef GlobalPointersVector<Condition>    ConditionWeakPtrVectorType;
     ///@}
     ///@name Life Cycle
     ///@{

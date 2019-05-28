@@ -38,8 +38,8 @@ class AdjointTurbulenceKEpsilonConfiguration(
         parameters["model_settings"].ValidateAndAssignDefaults(default_settings)
         self.model_settings = parameters["model_settings"]
 
-        # self.element_name = "RANSEVMMonolithicKEpsilonVMSAdjoint"
-        self.element_name = "VMSAdjointElement"
+        self.element_name = "RANSEVMMonolithicKEpsilonVMSAdjoint"
+        # self.element_name = "VMSAdjointElement"
 
         self.ramp_up_time = self.model_settings["flow_parameters"]["ramp_up_time"].GetDouble()
 

@@ -23,6 +23,7 @@
 #include "includes/element.h"
 #include "rans_modelling_application_variables.h"
 #include "stabilized_convection_diffusion_reaction_utilities.h"
+#include "utilities/time_discretization.h"
 
 namespace Kratos
 {
@@ -322,7 +323,8 @@ public:
 
         const double delta_time = rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
-        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+        const double bossak_gamma =
+            TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
 
         for (unsigned int g = 0; g < num_gauss_points; g++)
         {
@@ -515,7 +517,8 @@ public:
 
         const double delta_time = rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
-        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+        const double bossak_gamma =
+            TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
 
         for (unsigned int g = 0; g < num_gauss_points; g++)
         {
@@ -590,7 +593,8 @@ public:
 
         const double delta_time = rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
-        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+        const double bossak_gamma =
+            TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
 
         for (unsigned int g = 0; g < num_gauss_points; g++)
         {
@@ -720,7 +724,6 @@ public:
 
         KRATOS_CHECK_VARIABLE_KEY(DELTA_TIME);
         KRATOS_CHECK_VARIABLE_KEY(BOSSAK_ALPHA);
-        KRATOS_CHECK_VARIABLE_KEY(NEWMARK_GAMMA);
         KRATOS_CHECK_VARIABLE_KEY(VELOCITY);
 
         for (IndexType iNode = 0; iNode < this->GetGeometry().size(); ++iNode)

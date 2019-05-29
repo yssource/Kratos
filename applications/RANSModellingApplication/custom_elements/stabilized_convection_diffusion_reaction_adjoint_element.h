@@ -26,6 +26,7 @@
 #include "rans_modelling_application_variables.h"
 #include "stabilized_convection_diffusion_reaction_utilities.h"
 #include "utilities/geometrical_sensitivity_utility.h"
+#include "utilities/time_discretization.h"
 
 namespace Kratos
 {
@@ -2146,7 +2147,8 @@ private:
 
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
-        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+        const double bossak_gamma =
+            TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
         const unsigned int equation_dof_index =
             static_cast<unsigned int>(rCurrentProcessInfo[primal_variable]);
         const unsigned int derivative_dof_index =
@@ -2428,7 +2430,8 @@ private:
 
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
-        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+        const double bossak_gamma =
+            TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
         const unsigned int dof_index =
             static_cast<unsigned int>(rCurrentProcessInfo[primal_variable]);
 
@@ -2501,12 +2504,16 @@ private:
                 StabilizedConvectionDiffusionReactionUtilities::CalculateCrossWindDiffusionParameters(
                     chi, k1, k2, velocity_magnitude, tau, effective_kinematic_viscosity,
                     reaction, bossak_alpha, bossak_gamma, delta_time, element_length);
-            }
 
-            noalias(positivity_preserving_coeff_derivatives) =
-                gauss_shape_functions *
-                ((residual / (std::abs(residual) + std::numeric_limits<double>::epsilon())) *
-                 chi / (scalar_gradient_norm * velocity_magnitude_square));
+                noalias(positivity_preserving_coeff_derivatives) =
+                    gauss_shape_functions *
+                    ((residual / (std::abs(residual) + std::numeric_limits<double>::epsilon())) *
+                     chi / (scalar_gradient_norm * velocity_magnitude_square));
+            }
+            else
+            {
+                positivity_preserving_coeff_derivatives.clear();
+            }
 
             // calculating primal damping matrix scalar derivatives
             for (unsigned int a = 0; a < TNumNodes; ++a)
@@ -2572,7 +2579,8 @@ private:
 
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
-        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+        const double bossak_gamma =
+            TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
         const unsigned int dof_index =
             static_cast<unsigned int>(rCurrentProcessInfo[primal_variable]);
 
@@ -2757,7 +2765,8 @@ private:
 
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
-        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+        const double bossak_gamma =
+            TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
         const unsigned int dof_index =
             static_cast<unsigned int>(rCurrentProcessInfo[this->GetPrimalVariable()]);
 
@@ -2847,7 +2856,8 @@ private:
 
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
-        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+        const double bossak_gamma =
+            TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
         const unsigned int equation_dof_index =
             static_cast<unsigned int>(rCurrentProcessInfo[this->GetPrimalVariable()]);
         const unsigned int derivative_dof_index =
@@ -2969,7 +2979,8 @@ private:
 
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
-        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+        const double bossak_gamma =
+            TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
         const unsigned int dof_index =
             static_cast<unsigned int>(rCurrentProcessInfo[primal_variable]);
 
@@ -3351,7 +3362,8 @@ private:
 
         const double delta_time = -1.0 * rCurrentProcessInfo[DELTA_TIME];
         const double bossak_alpha = rCurrentProcessInfo[BOSSAK_ALPHA];
-        const double bossak_gamma = rCurrentProcessInfo[NEWMARK_GAMMA];
+        const double bossak_gamma =
+            TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
         const unsigned int equation_dof_index =
             static_cast<unsigned int>(rCurrentProcessInfo[primal_variable]);
         const unsigned int nodal_vel_pr_derivative_dof_size =

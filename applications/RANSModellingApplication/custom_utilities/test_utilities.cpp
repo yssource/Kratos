@@ -56,8 +56,15 @@ void IsValuesRelativelyNear(const double ValueA, const double ValueB, const doub
     }
     else
     {
-        const double relative_value = (1 - ValueB / ValueA);
-        KRATOS_CHECK_NEAR(relative_value, 0.0, Tolerance);
+        if (std::abs(ValueA - ValueB) > Tolerance)
+        {
+            const double relative_value = (1 - ValueB / ValueA);
+            KRATOS_ERROR_IF(std::abs(relative_value) > Tolerance)
+                << "Check failed because ValueA = " << ValueA
+                << " is not relatively near to ValueB = " << ValueB << " within the tolerance "
+                << Tolerance << ". [ RelativeValue = " << relative_value
+                << " > " << Tolerance << " ]\n";
+        }
     }
 }
 

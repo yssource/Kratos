@@ -99,7 +99,6 @@ void InitializeProcessInfo(ModelPart& rModelPart)
     rModelPart.GetProcessInfo().SetValue(TURBULENT_KINETIC_ENERGY_SIGMA, 1.03);
     rModelPart.GetProcessInfo().SetValue(TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA, 1.3);
     rModelPart.GetProcessInfo().SetValue(BOSSAK_ALPHA, -0.03);
-    rModelPart.GetProcessInfo().SetValue(NEWMARK_GAMMA, 1.25);
     rModelPart.GetProcessInfo().SetValue(WALL_SMOOTHNESS_BETA, 5.2);
     rModelPart.GetProcessInfo().SetValue(WALL_VON_KARMAN, 0.41);
     rModelPart.GetProcessInfo().SetValue(OSS_SWITCH, 0);
@@ -171,7 +170,8 @@ void InitializeNodalVariables(ModelPart& rModelPart)
     InitializeVariableWithRandomValues(rModelPart, ADJOINT_FLUID_VECTOR_1, 55.0, 120.0, 2);
     InitializeVariableWithRandomValues(rModelPart, ADJOINT_FLUID_VECTOR_3, 35.0, 150.0, 2);
     InitializeVariableWithRandomValues(rModelPart, ADJOINT_FLUID_SCALAR_1, 45.0, 100.0, 2);
-    InitializeVariableWithRandomValues(rModelPart, AUX_ADJOINT_FLUID_VECTOR_1, 45.0, 100.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, AUX_ADJOINT_FLUID_VECTOR_1,
+                                       45.0, 100.0, 2);
 
     InitializeVariableWithRandomValues(rModelPart, RANS_SCALAR_1_ADJOINT_1, 15.0, 20.0, 2);
     InitializeVariableWithRandomValues(rModelPart, RANS_SCALAR_2_ADJOINT_1, 15.0, 20.0, 2);
@@ -179,8 +179,10 @@ void InitializeNodalVariables(ModelPart& rModelPart)
     InitializeVariableWithRandomValues(rModelPart, RANS_SCALAR_2_ADJOINT_2, 25.0, 30.0, 2);
     InitializeVariableWithRandomValues(rModelPart, RANS_SCALAR_1_ADJOINT_3, 25.0, 30.0, 2);
     InitializeVariableWithRandomValues(rModelPart, RANS_SCALAR_2_ADJOINT_3, 25.0, 30.0, 2);
-    InitializeVariableWithRandomValues(rModelPart, RANS_AUX_ADJOINT_SCALAR_1, 25.0, 30.0, 2);
-    InitializeVariableWithRandomValues(rModelPart, RANS_AUX_ADJOINT_SCALAR_2, 25.0, 30.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, RANS_AUX_ADJOINT_SCALAR_1,
+                                       25.0, 30.0, 2);
+    InitializeVariableWithRandomValues(rModelPart, RANS_AUX_ADJOINT_SCALAR_2,
+                                       25.0, 30.0, 2);
 }
 
 void GenerateRansEvmKEpsilonTestModelPart(ModelPart& rModelPart, std::string ElementName)

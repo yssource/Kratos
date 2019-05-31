@@ -94,9 +94,13 @@ public:
 
     void ComputeExactPressure();
 
+    void ComputeExactMaterialAcceleration();
+
     void ComputeVelocityRelativeError();
 
     void ComputePressureRelativeError();
+
+    void ComputeMaterialAccelerationError();
 
     template<class TVarType>
     double ComputeMean(TVarType& rVariable)
@@ -124,6 +128,21 @@ public:
         }
         err /= mrModelPart.NumberOfNodes();
         return std::sqrt(err);
+    }
+
+    template<class TVarType>
+    void ComputeError(
+        TVarType& rExactVar,
+        TVarType& rComputationVar,
+        TVarType& rDestinationVar)
+    {
+        #pragma omp parallel for
+        for (int i = 0; i < static_cast<int>(mrModelPart.Nodes().size()); i++)
+        {
+            auto it_node = mrModelPart.NodesBegin() + i;
+            auto exact = it_node->GetValue(rExactVar);
+            auto fem = it_node->FastGetSolutionStepValue(rComputationVar);
+            it_node->SetValue(rDestinationVar , exact - fem);
     }
 
     template<class TVarType>

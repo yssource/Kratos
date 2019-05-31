@@ -97,6 +97,20 @@ void ManufacturedSolutionUtility::ComputeExactPressure()
 }
 
 
+void ManufacturedSolutionUtility::ComputeExactMaterialAcceleration()
+{
+    double time = mrModelPart.GetProcessInfo().GetValue(TIME);
+    #pragma omp parallel for
+    for (int i = 0; i < static_cast<int>(mrModelPart.Nodes().size()); i++)
+    {
+        auto it_node = mrModelPart.NodesBegin() + i;
+        array_1d<double, 3>& coords = it_node->Coordinates();
+        array_1d<double, 3> mat_acc = mrManufactured.TimeDerivative(coords, time) + mrManufactured.ConvectiveTerm(coords, time);
+        it_node->SetValue(EXACT_MATERIAL_ACCELERATION, mat_acc);
+    }
+}
+
+
 void ManufacturedSolutionUtility::ComputeVelocityRelativeError()
 {
     ComputeRelativeError<Variable<array_1d<double, 3>>>(EXACT_VELOCITY, VELOCITY, VELOCITY_RELATIVE_ERROR);
@@ -106,6 +120,15 @@ void ManufacturedSolutionUtility::ComputeVelocityRelativeError()
 void ManufacturedSolutionUtility::ComputePressureRelativeError()
 {
     ComputeRelativeError<Variable<double>>(EXACT_PRESSURE, PRESSURE, PRESSURE_RELATIVE_ERROR);
+}
+
+
+void ManufacturedSolutionUtility::ComputeMaterialAccelerationError()
+{
+    ComputeRelativeError<Variable<array_1d<double, 3>>>(
+        EXACT_MATERIAL_ACCELERATION,
+        MATERIAL_ACCELERATION,
+        MATERIAL_ACCELERATION_ERROR)
 }
 
 }  // namespace Kratos.

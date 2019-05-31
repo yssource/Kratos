@@ -5,6 +5,8 @@ import sys
 from KratosMultiphysics import *
 from KratosMultiphysics.DEMApplication import *
 sys.path.insert(0, '')
+Logger.PrintInfo("DEM", "WARNING: main_script.py is is deprecated since 20/03/2019")
+Logger.PrintInfo("DEM", "WARNING: Please use DEM_analysis_stage.py")
 
 # Import MPI modules if needed. This way to do this is only valid when using OpenMPI. For other implementations of MPI it will not work.
 if "OMPI_COMM_WORLD_SIZE" in os.environ or "I_MPI_INFO_NUMA_NODE_NUM" in os.environ:
@@ -71,7 +73,7 @@ class Solution(object):
 
 
         # Set the print function TO_DO: do this better...
-        self.KRATOSprint = self.procedures.KRATOSprint
+        self.KratosPrintInfo = self.procedures.KratosPrintInfo
 
         # Creating necessary directories:
         self.problem_name = self.GetProblemTypeFilename()
@@ -284,7 +286,8 @@ class Solution(object):
         # Setting up the buffer size
         self.procedures.SetUpBufferSizeInAllModelParts(self.spheres_model_part, 1, self.cluster_model_part, 1, self.dem_inlet_model_part, 1, self.rigid_face_model_part, 1)
         # Adding dofs
-        self.AddAllDofs()
+        # self.AddAllDofs() # Calls to this method are deprecated.
+        self.AddDofs()
 
         #-----------os.chdir(self.main_path)
         self.KratosPrintInfo("Initializing Problem...")
@@ -338,10 +341,13 @@ class Solution(object):
         self.KratosPrintInfo(self.report.BeginReport(timer))
         #-----os.chdir(self.main_path)
 
-    def AddAllDofs(self):
+    def AddAllDofs(self):  # Deprecated method.
         self.solver.AddDofs(self.spheres_model_part)
         self.solver.AddDofs(self.cluster_model_part)
         self.solver.AddDofs(self.dem_inlet_model_part)
+
+    def AddDofs(self):
+        self.solver.AddDofs()
 
     def SetSearchStrategy(self):
         self.solver.search_strategy = self.parallelutils.GetSearchStrategy(self.solver, self.spheres_model_part)
@@ -379,7 +385,7 @@ class Solution(object):
         else:
             self.parallelutils.PerformInitialPartition(model_part_io_spheres)
 
-        [model_part_io_spheres, self.spheres_model_part, MPICommSetup] = self.parallelutils.SetCommunicator(self.spheres_model_part, model_part_io_spheres, spheres_mp_filename)
+        [model_part_io_spheres, self.spheres_model_part] = self.parallelutils.SetCommunicator(self.spheres_model_part, model_part_io_spheres, spheres_mp_filename)
         model_part_io_spheres.ReadModelPart(self.spheres_model_part)
 
         max_node_Id = max(max_node_Id, self.creator_destructor.FindMaxNodeIdInModelPart(self.spheres_model_part))
@@ -564,7 +570,7 @@ class Solution(object):
         if self.post_normal_impact_velocity_option:
             del self.analytic_model_part
 
-        del self.KRATOSprint
+        del self.KratosPrintInfo
         del self.all_model_parts
         del self.demio
         del self.procedures

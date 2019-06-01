@@ -97,11 +97,12 @@ class VariablesManager:
         if parameters["material_acceleration_calculation_type"].GetInt() == 5 or parameters["material_acceleration_calculation_type"].GetInt() == 6:
             fluid_model_part.ProcessInfo.SetValue(Kratos.CURRENT_COMPONENT, 0)
 
-        if parameters["non_newtonian_fluid"]["non_newtonian_option"].GetBool():
-            fluid_model_part.ProcessInfo.SetValue(Kratos.YIELD_STRESS, parameters["non_newtonian_fluid"]["yield_stress"].GetDouble())
-            fluid_model_part.ProcessInfo.SetValue(Kratos.REGULARIZATION_COEFFICIENT, parameters["non_newtonian_fluid"]["regularization_coefficient"].GetDouble())
-            fluid_model_part.ProcessInfo.SetValue(Kratos.POWER_LAW_K, parameters["non_newtonian_fluid"]["power_law_k"].GetDouble())
-            fluid_model_part.ProcessInfo.SetValue(Kratos.POWER_LAW_N, parameters["non_newtonian_fluid"]["power_law_n"].GetDouble())
+        #TODO: review this lines
+        # if parameters["non_newtonian_fluid"]["non_newtonian_option"].GetBool():
+        #     fluid_model_part.ProcessInfo.SetValue(Kratos.YIELD_STRESS, parameters["non_newtonian_fluid"]["yield_stress"].GetDouble())
+        #     fluid_model_part.ProcessInfo.SetValue(Kratos.REGULARIZATION_COEFFICIENT, parameters["non_newtonian_fluid"]["regularization_coefficient"].GetDouble())
+        #     fluid_model_part.ProcessInfo.SetValue(Kratos.POWER_LAW_K, parameters["non_newtonian_fluid"]["power_law_k"].GetDouble())
+        #     fluid_model_part.ProcessInfo.SetValue(Kratos.POWER_LAW_N, parameters["non_newtonian_fluid"]["power_law_n"].GetDouble())
 
     def AddExtraProcessInfoVariablesToDispersePhaseModelPart(self, parameters, dem_model_part):
 
@@ -350,7 +351,7 @@ class VariablesManager:
         if parameters["coupling"]["coupling_level_type"].GetInt() >= 1:
             self.coupling_fluid_vars += [Kratos.HYDRODYNAMIC_REACTION]
 
-        if parameters["coupling"]["coupling_level_type"].GetInt() >= 1 and parameters["coupling"]["time_averaging_type"].GetInt() > 0:
+        if parameters["coupling"]["coupling_level_type"].GetInt() >= 1 and parameters["coupling"]["forward_coupling"]["time_averaging_type"].GetInt() > 0:
             self.coupling_fluid_vars += [Kratos.MEAN_HYDRODYNAMIC_REACTION]
 
         if parameters["non_newtonian_fluid"]["non_newtonian_option"].GetBool():
@@ -418,6 +419,8 @@ class VariablesManager:
 
 
     def ChangeListOfFluidNodalResultsToPrint(self, parameters):
+        fluid_list = self.project_parameters["fluid_nodal_results"]
+        self.nodal_results.extend(key for key in fluid_list.keys() if fluid_list[key].GetBool())
 
         if parameters["store_full_gradient_option"].GetBool() and 'VELOCITY_GRADIENT' in self.nodal_results:
             self.nodal_results += ["VELOCITY_X_GRADIENT"]

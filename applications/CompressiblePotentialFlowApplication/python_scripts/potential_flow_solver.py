@@ -92,9 +92,9 @@ class PotentialFlowSolver(FluidSolver):
         self._is_printing_rank = True
 
         # Set the element and condition names for the replace settings
-        self.embedded_formulation = PotentialFlowFormulation(self.settings["formulation"])
-        self.element_name = self.embedded_formulation.element_name
-        self.condition_name = self.embedded_formulation.condition_name
+        self.formulation = PotentialFlowFormulation(self.settings["formulation"])
+        self.element_name = self.formulation.element_name
+        self.condition_name = self.formulation.condition_name
         self.min_buffer_size = 1
 
         # Construct the linear solvers
@@ -105,14 +105,15 @@ class PotentialFlowSolver(FluidSolver):
         # Degrees of freedom
         self.main_model_part.AddNodalSolutionStepVariable(KCPFApp.VELOCITY_POTENTIAL)
         self.main_model_part.AddNodalSolutionStepVariable(KCPFApp.AUXILIARY_VELOCITY_POTENTIAL)
-
+        # Embedded variables
+        self.main_model_part.AddNodalSolutionStepVariable(KCPFApp.GEOMETRY_DISTANCE)
         # Kratos variables
-        self.main_model_part.AddNodalSolutionStepVariable(KCPFApp.LEVEL_SET_DISTANCE)
-        self.main_model_part.AddNodalSolutionStepVariable(KCPFApp.WAKE_DISTANCE)
-        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.FLAG_VARIABLE)
-        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.FLAG_VARIABLE) # Required for variational_distance_process
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.DISTANCE)
         self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.DISTANCE_GRADIENT)
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NODAL_H) # Required for modify_distance_process
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.VELOCITY) # Required for modify_distance_process
+        self.main_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.PRESSURE) # Required for modify_distance_process
 
     def AddDofs(self):
         KratosMultiphysics.VariableUtils().AddDof(KCPFApp.VELOCITY_POTENTIAL, self.main_model_part)

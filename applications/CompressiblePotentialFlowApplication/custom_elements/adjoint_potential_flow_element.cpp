@@ -19,7 +19,10 @@ namespace Kratos
 {
     template <class TPrimalElement>
     Element::Pointer AdjointPotentialFlowElement<TPrimalElement>::Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const
+    {
+        KRATOS_TRY
           return Kratos::make_intrusive<AdjointPotentialFlowElement<TPrimalElement>>(NewId, GetGeometry().Create(ThisNodes), pProperties);
+        KRATOS_CATCH("");
     }
 
     template <class TPrimalElement>
@@ -440,5 +443,6 @@ namespace Kratos
     // Template class instantiation
 
     template class AdjointPotentialFlowElement<IncompressiblePotentialFlowElement<2,3>>;
+    template class AdjointPotentialFlowElement<EmbeddedIncompressiblePotentialFlowElement<2,3>>;
 } // namespace Kratos.
 

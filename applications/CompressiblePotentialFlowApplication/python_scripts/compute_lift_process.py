@@ -102,19 +102,7 @@ class ComputeLiftProcess(KratosMultiphysics.Process):
         dnorm = self.wake_direction.norm_2()
         self.wake_direction /= dnorm
 
-<<<<<<< HEAD
-        if self.create_output_file:
-            with open('cp_distribution_naca0012.dat','w') as cp_file:
-                for cond in self.body_model_part.Conditions:
-                    x = cond.GetGeometry().Center().X
-                    cp = cond.GetValue(KratosMultiphysics.PRESSURE)
-                    cp_file.write('%f %f \n' % (x , cp))
-
-            with open("cl.dat", 'w') as cl_file:
-                cl_file.write('{0:15.12f}'.format(Cl))
-=======
         self.wake_normal = KratosMultiphysics.Vector(3)
         self.wake_normal[0] = -self.wake_direction[1]
         self.wake_normal[1] = self.wake_direction[0]
         self.wake_normal[2] = 0.0
->>>>>>> cps/embedded-pr-3of4

@@ -231,10 +231,6 @@ private:
 
     void ComputeElementInternalEnergy();
 
-<<<<<<< HEAD
-
-=======
->>>>>>> cps/embedded-pr-3of4
     void GetPotentialOnWakeElement(Vector& split_element_values,
                                    const array_1d<double, NumNodes>& distances) const;
 

@@ -222,7 +222,10 @@ void AdjointPotentialWallCondition<TPrimalCondition>::FinalizeSolutionStep(Proce
 /// Turn back information as a string.
 template <class TPrimalCondition>
 std::string AdjointPotentialWallCondition<TPrimalCondition>::Info() const
+{
+    std::stringstream buffer;
     this->PrintInfo(buffer);
+    return buffer.str();
 }
 
 /// Print information about this object.
@@ -235,7 +238,10 @@ void AdjointPotentialWallCondition<TPrimalCondition>::PrintInfo(std::ostream& rO
 /// Print object's data.
 template <class TPrimalCondition>
 void AdjointPotentialWallCondition<TPrimalCondition>::PrintData(std::ostream& rOStream) const
+{
+    this->pGetGeometry()->PrintData(rOStream);
 }
+
 
 template <class TPrimalCondition>
 void AdjointPotentialWallCondition<TPrimalCondition>::save(Serializer& rSerializer) const

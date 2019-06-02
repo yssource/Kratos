@@ -32,16 +32,16 @@ public:
 
     typedef IncompressiblePotentialFlowElement<Dim,NumNodes> BaseType;
 
-    typedef Node<3> NodeType;
+    typedef typename BaseType::IndexType IndexType;
+    typedef typename BaseType::GeometryType GeometryType;
+    typedef typename BaseType::PropertiesType PropertiesType;
+    typedef typename BaseType::NodesArrayType NodesArrayType;
+    typedef typename BaseType::VectorType VectorType;
+    typedef typename BaseType::MatrixType MatrixType;
 
-    typedef Properties PropertiesType;
-
-    typedef Geometry<NodeType> GeometryType;
-
-    typedef Geometry<NodeType>::PointsArrayType NodesArrayType;
-
-    typedef Vector VectorType;
-
+    ///@name Pointer Definitions
+    /// Pointer definition of EmbeddedIncompressiblePotentialFlowElement
+    KRATOS_CLASS_POINTER_DEFINITION(EmbeddedIncompressiblePotentialFlowElement);
 
     ///@}
     ///@name Life Cycle
@@ -50,6 +50,7 @@ public:
     // Constructors.
 
     /// Default constuctor.
+    /**
      * @param NewId Index number of the new element (optional)
      */
     explicit EmbeddedIncompressiblePotentialFlowElement(IndexType NewId = 0){}
@@ -72,7 +73,6 @@ public:
     EmbeddedIncompressiblePotentialFlowElement(IndexType NewId,
                                        typename GeometryType::Pointer pGeometry,
                                        typename PropertiesType::Pointer pProperties)
->>>>>>> cps/embedded-pr-3of4
         : IncompressiblePotentialFlowElement<Dim,NumNodes>(NewId, pGeometry, pProperties){}
 
     /**

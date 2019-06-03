@@ -104,18 +104,17 @@ namespace Kratos {
     }
 
     void DEM_D_Conical_damage::CalculateForces(const ProcessInfo& r_process_info,
-                                                         const double OldLocalElasticContactForce[3],
-                                                         double LocalElasticContactForce[3],
-                                                         double LocalDeltDisp[3],
-                                                         double LocalRelVel[3],
-                                                         double indentation,
-                                                         double previous_indentation,
-                                                         double ViscoDampingLocalContactForce[3],
-                                                         double& cohesive_force,
-                                                         SphericParticle* element1,
-                                                         SphericParticle* element2,
-                                                         bool& sliding,
-                                                         double LocalCoordSystem[3][3]) {
+                                               const double OldLocalElasticContactForce[3],
+                                               double LocalElasticContactForce[3],
+                                               double LocalDeltDisp[3],
+                                               double LocalRelVel[3],
+                                               double indentation,
+                                               double previous_indentation,
+                                               double ViscoDampingLocalContactForce[3],
+                                               SphericParticle* element1,
+                                               SphericParticle* element2,
+                                               bool& sliding,
+                                               double LocalCoordSystem[3][3]) {
 
         ContactInfoSphericParticle* p_element1 = dynamic_cast<ContactInfoSphericParticle*>(element1);
         ContactInfoSphericParticle* p_element2 = dynamic_cast<ContactInfoSphericParticle*>(element2);
@@ -159,14 +158,12 @@ namespace Kratos {
             InitializeDependentContact(equiv_radius, equiv_level_of_fouling, equiv_young, equiv_shear, elastic_indentation);
 
             LocalElasticContactForce[2] = CalculateNormalForce(elastic_indentation);
-            cohesive_force              = CalculateCohesiveNormalForce(element1, element2, elastic_indentation);
 
             double contact_stress = (3 * LocalElasticContactForce[2]) / (2 * Globals::Pi * equiv_level_of_fouling * equiv_radius * elastic_indentation);
 
             if (contact_stress > p_element1->GetParticleConicalDamageMaxStress()) {
                 DamageContact(p_element1, p_element2, equiv_radius, equiv_level_of_fouling, equiv_young, equiv_shear, elastic_indentation, LocalElasticContactForce[2]);
                 LocalElasticContactForce[2] = CalculateNormalForce(elastic_indentation);
-                cohesive_force              = CalculateCohesiveNormalForce(p_element1, p_element2, elastic_indentation);
             }
 
             CalculateViscoDampingForce(LocalRelVel, ViscoDampingLocalContactForce, p_element1, p_element2);
@@ -235,13 +232,13 @@ namespace Kratos {
     }
 
     void DEM_D_Conical_damage::DamageContactWithFEM(ContactInfoSphericParticle* const element,
-                                                                 Condition* const wall,
-                                                                 double& effective_radius,
-                                                                 const double equiv_level_of_fouling,
-                                                                 const double equiv_young,
-                                                                 const double equiv_shear,
-                                                                 double& indentation,
-                                                                 const double normal_contact_force) {
+                                                    Condition* const wall,
+                                                    double& effective_radius,
+                                                    const double equiv_level_of_fouling,
+                                                    const double equiv_young,
+                                                    const double equiv_shear,
+                                                    double& indentation,
+                                                    const double normal_contact_force) {
         //Get new Equivalent Radius
         double effective_radius_new = (equiv_young * sqrt(6 * normal_contact_force)) / (pow(Globals::Pi * element->GetParticleConicalDamageMaxStress(),1.5));
 
@@ -258,7 +255,7 @@ namespace Kratos {
                 element->mNeighbourRigidContactRadius[i] = effective_radius;
                 if (indentation > offset) element->mNeighbourRigidIndentation[i] = indentation - offset;
                 else element->mNeighbourRigidIndentation[i] = 0.0;
-                element->mNeighbourRigidIndentation[i] = indentation;
+                indentation = element->mNeighbourRigidIndentation[i];
                 break;
             }
         }
@@ -277,7 +274,6 @@ namespace Kratos {
                                                       double indentation,
                                                       double previous_indentation,
                                                       double ViscoDampingLocalContactForce[3],
-                                                      double& cohesive_force,
                                                       SphericParticle* const element,
                                                       Condition* const wall,
                                                       bool& sliding) {
@@ -545,15 +541,6 @@ namespace Kratos {
         return 0.666666666666666666667 * mKn * indentation;
     }
 
-    double DEM_D_Conical_damage::CalculateCohesiveNormalForce(SphericParticle* const element1, SphericParticle* const element2, const double indentation){
-        return 0.0;
-    }
-
-    double DEM_D_Conical_damage::CalculateCohesiveNormalForceWithFEM(SphericParticle* const element, Condition* const wall, const double indentation){
-        return 0.0;
-    }
-
-    //MSIMSI
     void DEM_D_Conical_damage::CalculateElasticEnergyDEM(double& elastic_energy, double indentation, double LocalElasticContactForce[3])
     {
         double normal_elastic         = 0.20*LocalElasticContactForce[2]*indentation; //each ball in a contact with another ball receives half the contact energy

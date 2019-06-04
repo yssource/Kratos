@@ -737,7 +737,9 @@ void SphericParticle::ComputeMoments(double NormalLocalContactForce,
         if (!wall) {
             const double my_rolling_friction_coeff    = GetRollingFriction() * GetRadius();
             const double other_rolling_friction_coeff = p_neighbour->GetRollingFriction() * p_neighbour->GetRadius();
-            equiv_rolling_friction_coeff = std::min(my_rolling_friction_coeff, other_rolling_friction_coeff);
+            const double rolling_friction_coeff_sum     = my_rolling_friction_coeff + other_rolling_friction_coeff;
+            const double rolling_friction_coeff_sum_inv = 1.0 / rolling_friction_coeff_sum;
+            equiv_rolling_friction_coeff          = my_rolling_friction_coeff * other_rolling_friction_coeff * rolling_friction_coeff_sum_inv;
         }
 
         else if (wall) {

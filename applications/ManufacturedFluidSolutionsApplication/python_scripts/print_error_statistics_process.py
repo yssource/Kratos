@@ -26,7 +26,6 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
             {
                 "model_part_name"  : "model_part",
                 "file_name"        : "output_file",
-                "manufactured_id"  : 0,
                 "label"            : "description",
                 "variables_list"   : []
             }
@@ -42,32 +41,17 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
 
         self.variables = [KM.KratosGlobals.GetVariable(v) for v in self.settings["variables_list"].GetStringArray()]
 
-        dset_name = "manufactured_{:03d}".format(self.settings["manufactured_id"].GetInt())
-        if dset_name in self.f:
-            self.dset = self.f[dset_name]
-            self.dataset_was_initialized = True
-        else:
-            header = [("label", h5py.special_dtype(vlen=str)),
-                      ("num_nodes", np.uint32),
-                      ("num_elems", np.uint32),
-                      ("time_step", np.float),
-                      ("computational_time", np.float)]
-            
-            for variable in self.variables:
-                header.append((variable.Name(), np.float))
 
-            self.dset = self.f.create_dataset(dset_name, (0,), maxshape=(None,), chunks=True, dtype=np.dtype(header))
-            self.dataset_was_initialized = False
-
+    def ExecuteBeforeSolutionLoop(self):
+        self.dset = self._GetManufacturedDataset()
         self.start_time = time.time()
 
 
     def ExecuteFinalize(self):
-        self._WriteBodyForceAttributes()
-        self._WriteAverageRelativeError()
+        self._WriteAverageError()
 
 
-    def _WriteBodyForceAttributes(self):
+    def _WriteBodyForceAttributes(self, dset):
         manufactured_parameters = self.manufactured_solution.GetParameters()
         for attr, param in manufactured_parameters.items():
             if param.IsBool():
@@ -76,13 +60,57 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
                 value = param.GetInt()
             if param.IsDouble():
                 value = param.GetDouble()
-            if self.dataset_was_initialized:
-                if self.dset.attrs[attr] != value:
-                    self.dset.attrs["Warning"] = "There are several manufactured solutions defined on this dataset"
-            self.dset.attrs[attr] = value
+            dset.attrs[attr] = value
 
 
-    def _WriteAverageRelativeError(self):
+    def _CheckAttributes(self, attributes):
+        match = None
+
+        manufactured_parameters = self.manufactured_solution.GetParameters()
+        for key, param in manufactured_parameters.items():
+            match = False
+            if param.IsBool():
+                value = param.GetBool()
+            if param.IsInt():
+                value = param.GetInt()
+            if param.IsDouble():
+                value = param.GetDouble()
+
+            if attributes.get(key) is not None:
+                if attributes[key] == value:
+                    match = True
+            if not match:
+                break
+
+        return match
+
+
+    def _GetManufacturedDataset(self):
+        for name in self.f:
+            data = self.f[name]
+            if self._CheckAttributes(data.attrs):
+                return data
+
+        dset_name = "manufactured_{:03d}".format(self.f.items().__len__())
+        header = self._GetHeaderDtype()
+        dset = self.f.create_dataset(dset_name, (0,), maxshape=(None,), chunks=True, dtype=header)
+        self._WriteBodyForceAttributes(dset)
+        return dset
+
+
+    def _GetHeaderDtype(self):
+        header = [("label", h5py.special_dtype(vlen=str)),
+                    ("num_nodes", np.uint32),
+                    ("num_elems", np.uint32),
+                    ("time_step", np.float),
+                    ("computational_time", np.float)]
+        
+        for variable in self.variables:
+            header.append((variable.Name(), np.float))
+        return np.dtype(header)
+
+
+    def _WriteAverageError(self):
         elapsed_time = time.time() - self.start_time
         case_data = [self.settings["label"].GetString(),
                      self.model_part.NumberOfNodes(),

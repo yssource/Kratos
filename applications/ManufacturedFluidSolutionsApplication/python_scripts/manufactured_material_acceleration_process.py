@@ -45,4 +45,4 @@ class ManufacturedMaterialAccelerationProcess(ManufacturedBaseProcess):
             self.derivative_recoverer.Recover()
         if self.framework == "lagrangian":
             KM.VariableUtils().CopyVectorVar(self.velocity_variable, self.acceleration_variable, self.model_part.Nodes)
-        self.manufactured_process.CopmuteMaterialAccelerationError
+        self.manufactured_process.ComputeMaterialAccelerationError()

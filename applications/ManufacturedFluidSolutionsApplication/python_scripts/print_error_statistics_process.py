@@ -27,7 +27,8 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
                 "model_part_name"  : "model_part",
                 "file_name"        : "output_file",
                 "manufactured_id"  : 0,
-                "label"            : "description"    
+                "label"            : "description",
+                "variables_list"   : []
             }
             """
             )
@@ -39,19 +40,24 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
 
         self.f = h5py.File(self.settings["file_name"].GetString() + ".hdf5", 'a') # 'a' means append mode
 
+        self.variables = [KM.KratosGlobals.GetVariable(v) for v in self.settings["variables_list"]]
+
         dset_name = "manufactured_{:03d}".format(self.settings["manufactured_id"].GetInt())
         if dset_name in self.f:
             self.dset = self.f[dset_name]
-            self.dataset_is_initialized = True
+            self.dataset_was_initialized = True
         else:
-            case_dtype = np.dtype([("label", h5py.special_dtype(vlen=str)),
-                                ("num_nodes", np.uint32),
-                                ("num_elems", np.uint32),
-                                ("time_step", np.float),
-                                ("computational_time", np.float),
-                                ("rel_error", np.float)])
-            self.dset = self.f.create_dataset(dset_name, (0,), maxshape=(None,), chunks=True, dtype=case_dtype)
-            self.dataset_is_initialized = False
+            header = [("label", h5py.special_dtype(vlen=str)),
+                      ("num_nodes", np.uint32),
+                      ("num_elems", np.uint32),
+                      ("time_step", np.float),
+                      ("computational_time", np.float)]
+            
+            for variable in self.variables:
+                header.append((variable.Name(), np.float))
+
+            self.dset = self.f.create_dataset(dset_name, (0,), maxshape=(None,), chunks=True, dtype=np.dtype(header))
+            self.dataset_was_initialized = False
 
         self.start_time = time.time()
 
@@ -70,22 +76,24 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
                 value = param.GetInt()
             if param.IsDouble():
                 value = param.GetDouble()
-            if self.dataset_is_initialized:
+            if self.dataset_was_initialized:
                 if self.dset.attrs[attr] != value:
-                    self.dset.attrs["Warning"] = "There are several vortex definitions in this dataset"
+                    self.dset.attrs["Warning"] = "There are several manufactured solutions defined on this dataset"
             self.dset.attrs[attr] = value
 
 
     def _WriteAverageRelativeError(self):
         elapsed_time = time.time() - self.start_time
-        rel_err = self.manufactured_process.ComputeMean(MS.VELOCITY_RELATIVE_ERROR)
-        case_data = (self.settings["label"].GetString(),
+        case_data = [self.settings["label"].GetString(),
                      self.model_part.NumberOfNodes(),
                      self.model_part.NumberOfElements(),
                      self.model_part.ProcessInfo[KM.DELTA_TIME],
-                     elapsed_time,
-                     rel_err)
+                     elapsed_time]
+
+        for variable in self.variables:
+            value = self.manufactured_process.ComputeMean(variable)
+            case_data.append(value)
 
         case_idx = self.dset.len()
         self.dset.resize((case_idx+1,))
-        self.dset[case_idx] = case_data
+        self.dset[case_idx] = tuple(case_data)

@@ -133,7 +133,8 @@ namespace Kratos {
             if (p_element1->mNeighbourElements[i]->Id() == p_element2->Id()) {
                 if (p_element1->mNeighbourContactRadius[i] > equiv_radius) {
                     equiv_radius = p_element1->mNeighbourContactRadius[i];
-                    elastic_indentation = p_element1->mNeighbourIndentation[i] + (indentation - previous_indentation);
+                    p_element1->mNeighbourIndentation[i] += (indentation - previous_indentation);
+                    elastic_indentation = p_element1->mNeighbourIndentation[i];
                     if (elastic_indentation < 0.0) p_element1->mNeighbourIndentation[i] = elastic_indentation = 0.0;
                 }
                 break;
@@ -291,7 +292,8 @@ namespace Kratos {
             if (p_element->mNeighbourRigidFaces[i]->Id() == wall->Id()) {
                 if (p_element->mNeighbourRigidContactRadius[i] > effective_radius) {
                     effective_radius = p_element->mNeighbourRigidContactRadius[i];
-                    elastic_indentation = p_element->mNeighbourRigidIndentation[i] + (indentation - previous_indentation);
+                    p_element->mNeighbourRigidIndentation[i] += (indentation - previous_indentation);
+                    elastic_indentation = p_element->mNeighbourRigidIndentation[i];
                     if (elastic_indentation < 0.0) p_element->mNeighbourRigidIndentation[i] = elastic_indentation = 0.0;
                 }
                 break;
@@ -384,15 +386,15 @@ namespace Kratos {
         const double neighbour_tg_of_friction_angle = element2->GetTgOfFrictionAngle();
         double equiv_tg_of_fri_ang                  = 0.5 * (my_tg_of_friction_angle + neighbour_tg_of_friction_angle);
 
-        // if (fabs(equiv_tg_of_fri_ang) > 1.0e-12) {
+        if (fabs(equiv_tg_of_fri_ang) > 1.0e-12) {
 
-        //   double critical_force = 0.6666666666666667 * Globals::Pi * equiv_radius * indentation * element1->GetParticleConicalDamageMaxStress();
+          double critical_force = 0.6666666666666667 * Globals::Pi * equiv_radius * indentation * element1->GetParticleConicalDamageMaxStress();
 
-        //   if (normal_contact_force > critical_force) {
-        //         double critical_force_inv = 1.0  / critical_force;
-        //         equiv_tg_of_fri_ang *= pow((normal_contact_force * critical_force_inv), element1->GetParticleConicalDamageGamma());
-        //     }
-        // }
+          if (normal_contact_force > critical_force) {
+                double critical_force_inv = 1.0  / critical_force;
+                equiv_tg_of_fri_ang *= pow((normal_contact_force * critical_force_inv), element1->GetParticleConicalDamageGamma());
+            }
+        }
 
         MaximumAdmisibleShearForce = normal_contact_force * equiv_tg_of_fri_ang;
 

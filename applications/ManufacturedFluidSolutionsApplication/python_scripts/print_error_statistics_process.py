@@ -40,7 +40,7 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
 
         self.f = h5py.File(self.settings["file_name"].GetString() + ".hdf5", 'a') # 'a' means append mode
 
-        self.variables = [KM.KratosGlobals.GetVariable(v) for v in self.settings["variables_list"]]
+        self.variables = [KM.KratosGlobals.GetVariable(v) for v in self.settings["variables_list"].GetStringArray()]
 
         dset_name = "manufactured_{:03d}".format(self.settings["manufactured_id"].GetInt())
         if dset_name in self.f:

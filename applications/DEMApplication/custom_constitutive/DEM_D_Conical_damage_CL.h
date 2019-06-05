@@ -6,7 +6,9 @@
 
 #include <string>
 #include <iostream>
-#include "DEM_discontinuum_constitutive_law.h"
+
+// Project includes
+#include "DEM_D_Hertz_viscous_Coulomb_CL.h"
 #include "custom_elements/spheric_particle.h"
 #include "custom_elements/contact_info_spheric_particle.h"
 
@@ -14,10 +16,9 @@ namespace Kratos {
 
     class SphericParticle;
 
-    class KRATOS_API(DEM_APPLICATION) DEM_D_Conical_damage : public DEMDiscontinuumConstitutiveLaw {
+    class KRATOS_API(DEM_APPLICATION) DEM_D_Conical_damage : public DEM_D_Hertz_viscous_Coulomb {
 
     public:
-        using DEMDiscontinuumConstitutiveLaw::CalculateNormalForce;
 
         KRATOS_CLASS_POINTER_DEFINITION(DEM_D_Conical_damage);
 
@@ -25,7 +26,6 @@ namespace Kratos {
 
         ~DEM_D_Conical_damage() {}
 
-        void Initialize(const ProcessInfo& r_process_info) override;
 
         void SetConstitutiveLawInProperties(Properties::Pointer pProp, bool verbose = true) const override;
 
@@ -92,8 +92,6 @@ namespace Kratos {
                                     Condition* const wall,
                                     bool& sliding) override;
 
-        double CalculateNormalForce(const double indentation) override;
-
         void CalculateTangentialForce(const double normal_contact_force,
                                       const double OldLocalElasticContactForce[3],
                                       double LocalElasticContactForce[3],
@@ -102,7 +100,7 @@ namespace Kratos {
                                       bool& sliding,
                                       ContactInfoSphericParticle* const element1,
                                       ContactInfoSphericParticle* const element2,
-                                      const double equiv_radius,
+                                      const double original_equiv_radius,
                                       const double equiv_young,
                                       double indentation,
                                       double previous_indentation,
@@ -117,8 +115,8 @@ namespace Kratos {
                                              bool& sliding,
                                              ContactInfoSphericParticle* const element,
                                              Condition* const wall,
-                                             const double equiv_radius,
-                                             const double equiv_young,
+                                             const double effective_radius,
+                                             const double original_effective_young,
                                              double indentation,
                                              double previous_indentation,
                                              double& AuxElasticShearForce,
@@ -134,29 +132,14 @@ namespace Kratos {
                                                ContactInfoSphericParticle* const element,
                                                Condition* const wall);
 
-        void CalculateElasticEnergyDEM(double& elastic_energy,
-                                       double indentation,
-                                       double LocalElasticContactForce[3]);
+        using DEM_D_Hertz_viscous_Coulomb::CalculateNormalForce;
 
-        void CalculateInelasticFrictionalEnergyDEM(double& inelastic_frictional_energy,
-                                                   double& AuxElasticShearForce,
-                                                   double LocalElasticContactForce[3]);
-
-        void CalculateInelasticViscodampingEnergyDEM(double& inelastic_viscodamping_energy,
-                                                     double ViscoDampingLocalContactForce[3],
-                                                     double LocalDeltDisp[3]);
-
-        void CalculateElasticEnergyFEM(double& elastic_energy,
-                                       double indentation,
-                                       double LocalElasticContactForce[3]);
-
-        void CalculateInelasticFrictionalEnergyFEM(double& inelastic_frictional_energy,
-                                                   double& AuxElasticShearForce,
-                                                   double LocalElasticContactForce[3]);
-
-        void CalculateInelasticViscodampingEnergyFEM(double& inelastic_viscodamping_energy,
-                                                     double ViscoDampingLocalContactForce[3],
-                                                     double LocalDeltDisp[3]);
+        using DEM_D_Hertz_viscous_Coulomb::CalculateElasticEnergyDEM;
+        using DEM_D_Hertz_viscous_Coulomb::CalculateInelasticFrictionalEnergyDEM;
+        using DEM_D_Hertz_viscous_Coulomb::CalculateInelasticViscodampingEnergyDEM;
+        using DEM_D_Hertz_viscous_Coulomb::CalculateElasticEnergyFEM;
+        using DEM_D_Hertz_viscous_Coulomb::CalculateInelasticFrictionalEnergyFEM;
+        using DEM_D_Hertz_viscous_Coulomb::CalculateInelasticViscodampingEnergyFEM;
 
     private:
 
@@ -164,12 +147,10 @@ namespace Kratos {
 
         virtual void save(Serializer& rSerializer) const override {
             KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, DEMDiscontinuumConstitutiveLaw)
-                    //rSerializer.save("MyMemberName",myMember);
         }
 
         virtual void load(Serializer& rSerializer)  override {
             KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, DEMDiscontinuumConstitutiveLaw)
-                    //rSerializer.load("MyMemberName",myMember);
         }
 
     }; //class DEM_D_Conical_damage

@@ -54,9 +54,12 @@ set( KRATOS_STRUCTURAL_MECHANICS_APPLICATION_CORE
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/beam_constitutive_law.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/linear_plane_stress.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/linear_plane_strain.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/linear_plane_stress_optimization.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/linear_plane_strain_optimization.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/elastic_isotropic_plane_stress_uncoupled_shear.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/elastic_isotropic_3d.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/axisym_elastic_isotropic.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/elastic_isotropic_3d_optimization.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/hyper_elastic_isotropic_kirchhoff_3d.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/hyper_elastic_isotropic_kirchhoff_plane_stress_2d.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_constitutive/hyper_elastic_isotropic_kirchhoff_plane_strain_2d.cpp

@@ -103,6 +103,11 @@
 #include "custom_constitutive/plane_stress_d_plus_d_minus_damage_masonry_2d.h"
 #include "custom_constitutive/d_plus_d_minus_damage_masonry_3d.h"
 
+#include "custom_constitutive/elastic_isotropic_3d_optimization.h"
+#include "custom_constitutive/linear_plane_stress_optimization.h"
+#include "custom_constitutive/linear_plane_strain_optimization.h"
+
+
 // Advanced Constitutive laws
 #include "custom_constitutive/small_strain_isotropic_plasticity_factory.h"
 #include "custom_constitutive/generic_small_strain_isotropic_plasticity.h"
@@ -464,6 +469,12 @@ private:
     const HyperElasticIsotropicNeoHookean3D  mHyperElasticIsotropicNeoHookean3D;
     const HyperElasticIsotropicNeoHookeanPlaneStrain2D  mHyperElasticIsotropicNeoHookeanPlaneStrain2D;
     const LinearElasticOrthotropic2DLaw mLinearElasticOrthotropic2DLaw;
+
+    const ElasticIsotropicOptimization3D mElasticIsotropicOptimization3D; 
+    const LinearPlaneStrainOptimization mLinearPlaneStrainOptimization; 
+    const LinearPlaneStressOptimization mLinearPlaneStressOptimization; 
+    
+
 
     const SmallStrainJ2Plasticity3D mSmallStrainJ2Plasticity3D;
     const SmallStrainJ2PlasticityPlaneStrain2D mSmallStrainJ2PlasticityPlaneStrain2D;

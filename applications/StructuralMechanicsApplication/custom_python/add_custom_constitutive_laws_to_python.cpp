@@ -26,6 +26,9 @@
 #include "custom_constitutive/axisym_elastic_isotropic.h"
 #include "custom_constitutive/linear_plane_stress.h"
 #include "custom_constitutive/linear_plane_strain.h"
+#include "custom_constitutive/elastic_isotropic_3d_optimization.h"
+#include "custom_constitutive/linear_plane_stress_optimization.h"
+#include "custom_constitutive/linear_plane_strain_optimization.h"
 #include "custom_constitutive/elastic_isotropic_plane_stress_uncoupled_shear.h"
 #include "custom_constitutive/hyper_elastic_isotropic_kirchhoff_3d.h"
 #include "custom_constitutive/hyper_elastic_isotropic_kirchhoff_plane_stress_2d.h"
@@ -113,6 +116,18 @@ void  AddCustomConstitutiveLawsToPython(pybind11::module& m)
     (m, "LinearElastic3DLaw").def(py::init<>() )
     ;
 
+    py::class_< LinearPlaneStressOptimization, typename LinearPlaneStressOptimization::Pointer, ConstitutiveLaw >
+    (m, "LinearElasticPlaneStressOptimization2DLaw").def(py::init<>() )
+    ;
+
+    py::class_< LinearPlaneStrainOptimization, typename LinearPlaneStrainOptimization::Pointer, ConstitutiveLaw >
+    (m, "LinearElasticPlaneStrainOptimization2DLaw").def(py::init<>() )
+    ;
+
+    py::class_< ElasticIsotropicOptimization3D, typename ElasticIsotropicOptimization3D::Pointer, ConstitutiveLaw >
+    (m, "LinearElasticOptimization3DLaw").def(py::init<>() )
+    ;
+    
     py::class_< AxisymElasticIsotropic, typename AxisymElasticIsotropic::Pointer, ConstitutiveLaw >
     (m, "LinearElasticAxisym2DLaw").def(py::init<>() )
     ;

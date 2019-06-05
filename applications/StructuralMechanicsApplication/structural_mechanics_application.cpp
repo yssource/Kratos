@@ -601,6 +601,11 @@ void KratosStructuralMechanicsApplication::Register() {
     KRATOS_REGISTER_CONSTITUTIVE_LAW("LinearElastic3DLaw", mElasticIsotropic3D);
     KRATOS_REGISTER_CONSTITUTIVE_LAW("LinearElasticPlaneStrain2DLaw", mLinearPlaneStrain);
     KRATOS_REGISTER_CONSTITUTIVE_LAW("LinearElasticPlaneStress2DLaw", mLinearPlaneStress);
+
+    KRATOS_REGISTER_CONSTITUTIVE_LAW("LinearElasticOptimization3DLaw", mElasticIsotropicOptimization3D);
+    KRATOS_REGISTER_CONSTITUTIVE_LAW("LinearElasticPlaneStrainOptimization2DLaw", mLinearPlaneStrainOptimization);
+    KRATOS_REGISTER_CONSTITUTIVE_LAW("LinearElasticPlaneStressOptimization2DLaw", mLinearPlaneStressOptimization);
+
     KRATOS_REGISTER_CONSTITUTIVE_LAW("ElasticPlaneStressUncoupledShear2DLaw", mElasticIsotropicPlaneStressUncoupledShear);
     KRATOS_REGISTER_CONSTITUTIVE_LAW("LinearElasticAxisym2DLaw", mAxisymElasticIsotropic);
     KRATOS_REGISTER_CONSTITUTIVE_LAW("LinearElasticOrthotropic2DLaw", mLinearElasticOrthotropic2DLaw);

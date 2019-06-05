@@ -51,7 +51,7 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
         self._WriteAverageError()
 
 
-    def _WriteBodyForceAttributes(self, dset):
+    def _WriteAttributes(self, dset):
         manufactured_parameters = self.manufactured_solution.GetParameters()
         for attr, param in manufactured_parameters.items():
             if param.IsBool():
@@ -86,15 +86,14 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
 
 
     def _GetManufacturedDataset(self):
-        for name in self.f:
-            data = self.f[name]
+        for name, data in self.f.items():
             if self._CheckAttributes(data.attrs):
                 return data
 
         dset_name = "manufactured_{:03d}".format(self.f.items().__len__())
         header = self._GetHeaderDtype()
         dset = self.f.create_dataset(dset_name, (0,), maxshape=(None,), chunks=True, dtype=header)
-        self._WriteBodyForceAttributes(dset)
+        self._WriteAttributes(dset)
         return dset
 
 

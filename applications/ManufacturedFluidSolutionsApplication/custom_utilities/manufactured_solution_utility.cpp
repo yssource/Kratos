@@ -18,7 +18,9 @@
 
 
 // Project includes
+#include "includes/cfd_variables.h"
 #include "manufactured_solution_utility.h"
+#include "manufactured_fluid_solutions_application_variables.h"
 
 
 namespace Kratos
@@ -128,7 +130,16 @@ void ManufacturedSolutionUtility::ComputeMaterialAccelerationError()
     ComputeRelativeError<Variable<array_1d<double, 3>>>(
         EXACT_MATERIAL_ACCELERATION,
         MATERIAL_ACCELERATION,
-        MATERIAL_ACCELERATION_ERROR)
+        MATERIAL_ACCELERATION_ERROR);
+}
+
+
+inline std::ostream& operator << (std::ostream& rOStream, const ManufacturedSolutionUtility& rThis)
+{
+    rThis.PrintInfo(rOStream);
+    rOStream << std::endl;
+    rThis.PrintData(rOStream);
+    return rOStream;
 }
 
 }  // namespace Kratos.

@@ -26,7 +26,6 @@
 #include "includes/define.h"
 #include "includes/model_part.h"
 #include "custom_manufactured/manufactured_solution.h"
-#include "manufactured_fluid_solutions_application_variables.h"
 
 
 namespace Kratos
@@ -143,6 +142,7 @@ public:
             auto exact = it_node->GetValue(rExactVar);
             auto fem = it_node->FastGetSolutionStepValue(rComputationVar);
             it_node->SetValue(rDestinationVar , exact - fem);
+        }
     }
 
     template<class TVarType>
@@ -296,21 +296,8 @@ private:
 ///@name Input and output
 ///@{
 
+inline std::ostream& operator << (std::ostream& rOStream, const ManufacturedSolutionUtility& rThis);
 
-/// input stream function
-inline std::istream& operator >> (std::istream& rIStream,
-                ManufacturedSolutionUtility& rThis);
-
-/// output stream function
-inline std::ostream& operator << (std::ostream& rOStream,
-                const ManufacturedSolutionUtility& rThis)
-{
-    rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
-    rThis.PrintData(rOStream);
-
-    return rOStream;
-}
 ///@}
 
 ///@} addtogroup block

@@ -25,19 +25,19 @@ class ManufacturedMaterialAccelerationProcess(ManufacturedBaseProcess):
 
         settings.ValidateAndAssignDefaults(default_settings)
 
-        # The model part manufactured solution applies to
         self.model_part = model[settings["model_part_name"].GetString()]
 
         self.framework = settings["framework"].GetString()
-    
+
         if self.framework == "eulerian":
             # recovery_parameters = KM.Parameters()
             # sub_param = recovery_parameters.AddEmptyValue("variables_for_recovery")
             # sub_param = sub_param.AddEmptyValue("material_derivative")
             # sub_param = sub_param.AddEmptyValue("VELOCITY").SetString("MATERIAL_ACCELERATION")
             # self.derivative_recoverer = SD.StandardRecoveryUtility(self.model_part, recovery_parameters)
+            # KM.CalculateNodalAreaProcess(self.model_part)
             pass
-        if self.framework == "lagrangian":
+        elif self.framework == "lagrangian":
             pass
         else:
             msg = "Requested framework type: " + self.framework
@@ -51,6 +51,6 @@ class ManufacturedMaterialAccelerationProcess(ManufacturedBaseProcess):
             # self.derivative_recoverer.Recover()
             self.manufactured_process.RecoverMaterialAcceleration()            
         if self.framework == "lagrangian":
-            KM.VariableUtils().CopyVectorVar(self.velocity_variable, self.acceleration_variable, self.model_part.Nodes)
+            KM.VariableUtils().CopyVectorVar(KM.ACCELERATION, KM.MATERIAL_ACCELERATION, self.model_part.Nodes)
         self.manufactured_process.ComputeExactMaterialAcceleration()
         self.manufactured_process.ComputeMaterialAccelerationError()

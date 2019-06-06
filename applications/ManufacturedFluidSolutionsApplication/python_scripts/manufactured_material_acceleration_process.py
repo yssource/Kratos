@@ -1,8 +1,8 @@
 # Importing the Kratos Library
 import KratosMultiphysics as KM
 import KratosMultiphysics.ManufacturedFluidSolutionsApplication as MS
-import KratosMultiphysics.DEMApplication as DEM
-import KratosMultiphysics.SwimmingDEMApplication as SD
+# import KratosMultiphysics.DEMApplication as DEM
+# import KratosMultiphysics.SwimmingDEMApplication as SD
 
 from KratosMultiphysics.ManufacturedFluidSolutionsApplication.manufactured_solution_base_process import ManufacturedSolutionBaseProcess as ManufacturedBaseProcess
 
@@ -31,18 +31,26 @@ class ManufacturedMaterialAccelerationProcess(ManufacturedBaseProcess):
         self.framework = settings["framework"].GetString()
     
         if self.framework == "eulerian":
-            recovery_parameters = KM.Parameters()
-            sub_param = recovery_parameters.AddEmptyValue("variables_for_recovery")
-            sub_param = sub_param.AddEmptyValue("material_derivative")
-            sub_param = sub_param.AddEmptyValue("VELOCITY").SetString("MATERIAL_ACCELERATION")
-            self.derivative_recoverer = SD.StandardRecoveryUtility(self.model_part, recovery_parameters)
+            # recovery_parameters = KM.Parameters()
+            # sub_param = recovery_parameters.AddEmptyValue("variables_for_recovery")
+            # sub_param = sub_param.AddEmptyValue("material_derivative")
+            # sub_param = sub_param.AddEmptyValue("VELOCITY").SetString("MATERIAL_ACCELERATION")
+            # self.derivative_recoverer = SD.StandardRecoveryUtility(self.model_part, recovery_parameters)
+            pass
         if self.framework == "lagrangian":
-            self.velocity_variable = KM.KratosGlobals.GetVariable("VELOCITY")
-            self.acceleration_variable = KM.KratosGlobals.GetVariable("MATERIAL_ACCELERATION")
+            pass
+        else:
+            msg = "Requested framework type: " + self.framework
+            msg += "\nAvailable options are:\n"
+            msg += "\t\"eulerian\"\n"
+            msg += "\t\"lagrangian\"\n"
+            raise Exception(msg)
 
     def ExecuteFinalizeSolutionStep(self):
         if self.framework == "eulerian":
-            self.derivative_recoverer.Recover()
+            # self.derivative_recoverer.Recover()
+            self.manufactured_process.RecoverMaterialAcceleration()            
         if self.framework == "lagrangian":
             KM.VariableUtils().CopyVectorVar(self.velocity_variable, self.acceleration_variable, self.model_part.Nodes)
+        self.manufactured_process.ComputeExactMaterialAcceleration()
         self.manufactured_process.ComputeMaterialAccelerationError()

@@ -61,6 +61,7 @@ void AddCustomUtilitiesToPython(pybind11::module& m)
         .def("ComputeRootMeanSquare", &ManufacturedSolutionUtility::ComputeRootMeanSquare<VariableComponent<VectorComponentAdaptor<array_1d<double, 4>>>>)
         .def("ComputeRootMeanSquare", &ManufacturedSolutionUtility::ComputeRootMeanSquare<VariableComponent<VectorComponentAdaptor<array_1d<double, 6>>>>)
         .def("ComputeRootMeanSquare", &ManufacturedSolutionUtility::ComputeRootMeanSquare<VariableComponent<VectorComponentAdaptor<array_1d<double, 9>>>>)
+        .def("RecoverMaterialAcceleration", &ManufacturedSolutionUtility::RecoverMaterialAcceleration)
      	;
 
 }

@@ -162,6 +162,8 @@ public:
         }
     }
 
+    void RecoverMaterialAcceleration();
+
     ///@}
     ///@name Access
     ///@{

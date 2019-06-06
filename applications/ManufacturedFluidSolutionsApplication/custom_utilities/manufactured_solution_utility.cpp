@@ -21,6 +21,8 @@
 #include "includes/cfd_variables.h"
 #include "manufactured_solution_utility.h"
 #include "manufactured_fluid_solutions_application_variables.h"
+#include "processes/compute_nodal_gradient_process.h"
+#include "utilities/variable_utils.h"
 
 
 namespace Kratos
@@ -131,6 +133,29 @@ void ManufacturedSolutionUtility::ComputeMaterialAccelerationError()
         EXACT_MATERIAL_ACCELERATION,
         MATERIAL_ACCELERATION,
         MATERIAL_ACCELERATION_ERROR);
+}
+
+
+void ManufacturedSolutionUtility::RecoverMaterialAcceleration()
+{
+    VariableUtils().CopyVectorVar(ACCELERATION, MATERIAL_ACCELERATION, mrModelPart.Nodes());
+    constexpr bool save_as_historical_variable = true;
+    ComputeNodalGradientProcess<save_as_historical_variable>(mrModelPart, VELOCITY_X, VELOCITY_X_GRADIENT)();
+    ComputeNodalGradientProcess<save_as_historical_variable>(mrModelPart, VELOCITY_Y, VELOCITY_Y_GRADIENT)();
+    ComputeNodalGradientProcess<save_as_historical_variable>(mrModelPart, VELOCITY_Z, VELOCITY_Z_GRADIENT)();
+    #pragma omp parallel for
+    for (int i = 0; i < static_cast<int>(mrModelPart.Nodes().size()); ++i)
+    {
+        auto it_node = mrModelPart.NodesBegin() + i;
+        auto vel = it_node->FastGetSolutionStepValue(VELOCITY);
+        auto acc = it_node->FastGetSolutionStepValue(ACCELERATION);
+        auto grad_x = it_node->FastGetSolutionStepValue(VELOCITY_X_GRADIENT);
+        auto grad_y = it_node->FastGetSolutionStepValue(VELOCITY_Y_GRADIENT);
+        auto grad_z = it_node->FastGetSolutionStepValue(VELOCITY_Z_GRADIENT);
+        it_node->FastGetSolutionStepValue(MATERIAL_ACCELERATION_X) += inner_prod(vel, grad_x);
+        it_node->FastGetSolutionStepValue(MATERIAL_ACCELERATION_Y) += inner_prod(vel, grad_y);
+        it_node->FastGetSolutionStepValue(MATERIAL_ACCELERATION_Z) += inner_prod(vel, grad_z);
+    }
 }
 
 

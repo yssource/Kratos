@@ -173,6 +173,18 @@ namespace Kratos
 
 		// std::cout << "square :" << sqrt(d_xt*d_xt + d_xn*d_xn + d_xv*d_xv).f() << std::endl;
 
+		// globale Lastdefinition
+
+		// const auto alpha_2g =  HyperJet::atan2(a3[0], a3[2]); 
+		// const auto alpha_3g =  HyperJet::atan2(a2[0], a2[1]); 
+
+		const auto alpha_1g=  HyperJet::atan(t[0]); 
+		const auto alpha_2g =  HyperJet::atan(t[1]); 
+		const auto alpha_3g =  HyperJet::atan(t[2]); 
+
+		// const auto alpha_1g =  HyperJet::atan2(t[2], t[1]) - HyperJet::atan2(a2[2], a2[1]) + HyperJet::atan2(a3[2], a3[1]); 
+		// const auto alpha_2g =  HyperJet::atan2(t[2], t[0]) - HyperJet::atan2(a2[2], a2[0]) + HyperJet::atan2(a3[2], a3[0]); 
+		// const auto alpha_3g =  HyperJet::atan2(t[0], t[1]) - HyperJet::atan2(a2[0], a2[1]) + HyperJet::atan2(a3[0], a3[1]); 
 
 		const auto d_t = a1.dot(T);     // Anteil T in a1 Richtung
 		const auto d_n = a1.dot(A2);     // Anteil N in a1 Richtung
@@ -188,8 +200,34 @@ namespace Kratos
 
 		const auto alpha_12 = HyperJet::atan2(a2.dot(A3) , a2.dot(A2));    // Winkel zwischen a2 und A
 		const auto alpha_13 = HyperJet::atan2(a3.dot(A2) , a3.dot(A3));    // Winkel zwischen a2 und A
-		const auto alpha_2  = HyperJet::atan2(d_n , d_t);                  // Winkel zwischen a1 und A1 um n
-		const auto alpha_3  = HyperJet::atan2(d_v , d_t);                  // Winkel zwischen a1 und A1 um v
+		// const auto alpha_2  = HyperJet::atan2(d_n , d_t);                  // Winkel zwischen a1 und A1 um n
+		// const auto alpha_3  = HyperJet::atan2(d_v , d_t);                  // Winkel zwischen a1 und A1 um v		
+
+		Vector3d f_t; 
+		f_t[0] = t[0].f();
+		f_t[1] = t[1].f();
+		f_t[2] = t[2].f();
+
+		Vector3d a2_f; 
+		a2_f[0] = a2[0].f();
+		a2_f[1] = a2[1].f();
+		a2_f[2] = a2[2].f();
+
+		Vector3d a3_f;
+		a3_f[0] = a3[0].f();
+		a3_f[1] = a3[1].f();
+		a3_f[2] = a3[2].f();
+
+		// const auto alpha_2  = HyperJet::atan2(t.dot(a3_f) , t.dot(f_t)); 
+		// const auto alpha_3  = HyperJet::atan2(t.dot(f_t) ,t.dot(a2_f));
+
+
+		const auto alpha_2  = HyperJet::atan2(a3.dot(a3_f) , a3.dot(f_t));
+		const auto alpha_3  = HyperJet::atan2(a2.dot(f_t) , a2.dot(a2_f)); 
+
+
+		// const auto alpha_2  = HyperJet::atan2(a3.dot(T) , a3.dot(A3)); 
+		// const auto alpha_3  = HyperJet::atan2(a2.dot(T) , a2.dot(A2));     
 
 		array_1d<double, 3 > PointLoadForce = ZeroVector(3);
 		array_1d<double, 3 > PointLoadMoment = ZeroVector(3);
@@ -207,9 +245,17 @@ namespace Kratos
 		const auto dP_disp = x - X - T * PointLoadForce[0] - A2 * PointLoadForce[1] - A3 * PointLoadForce[2];
 		const auto dP_u = 0.5 * dP_disp.dot(dP_disp);
 
-		auto const dP_x = - alpha_12 * PointLoadMoment[0];
-		auto const dP_y =   alpha_3  * PointLoadMoment[1];
-		auto const dP_z = - alpha_2  * PointLoadMoment[2];
+		auto const dP_x = - alpha_12  * PointLoadMoment[0];
+		auto const dP_y =  alpha_2  * PointLoadMoment[1];
+		auto const dP_z =  alpha_3  * PointLoadMoment[2];
+
+		// // std::cout " dP_x.h " << MapVectordP_x.h() << sdt::endl;
+		// std::cout " dP_x.g " << MapVector(dP_x.g()) << sdt::endl;
+		// // std::cout " dP_y.h " << MapVectordP_x.h() << sdt::endl;
+		// std::cout " dP_y.g " << MapVector(dP_x.g()) << sdt::endl;
+		// // std::cout " dP_z.h " << MapVectordP_x.h() << sdt::endl;
+		// std::cout " dP_z.g " << MapVector(dP_x.g()) << sdt::endl;
+
 
 		// MapMatrix(rLeftHandSideMatrix) =  dP_u.h() + dP_v.h() + dP_w.h() + dP_x.h() + dP_y.h() + dP_z.h() ;
 		// MapVector(rRightHandSideVector) = -(dP_u.g() + dP_v.g() + dP_w.g() + dP_x.g() + dP_y.g() + dP_z.g());

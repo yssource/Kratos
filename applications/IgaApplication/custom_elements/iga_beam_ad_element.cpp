@@ -120,6 +120,7 @@ void IgaBeamADElement::CalculateAll(
     const double moment_of_inertia_y = properties[MOMENT_OF_INERTIA_Y];
     const double moment_of_inertia_z = properties[MOMENT_OF_INERTIA_Z];
     const double prestress = properties[PRESTRESS_CAUCHY];
+    const double possion = properties[PRESTRESS_CAUCHY];
 
     // material
 
@@ -210,17 +211,23 @@ void IgaBeamADElement::CalculateAll(
     MapMatrix(rLeftHandSideMatrix) = dP.h();
     MapVector(rRightHandSideVector) = -dP.g();
 
+    // 
 
-    // Postprozessing 
+
+    // Postprocessing 
     const auto gauss_point = GetValue(GAUSS_POINT);
 
     std::ofstream write_f;
+    write_f.precision(13);
     write_f.open("kratos_data.txt", std::ofstream::app);
     const double moment_kappa_2 = kap2.f() * ei3; 
     const double moment_kappa_3 = kap3.f() * ei2;
     const double normal_force   = (eps11.f() * ea  + moment_kappa_2 * kap2.f() + moment_kappa_3 * kap3.f());
+    // const double normal_force   = (eps11.f() * ea );
     const double moment_torsion = 0.5 * (kap12.f() - kap13.f()) * gi1; 
 
+    // std::cout << Id() << std::endl;
+    // std::cout << omp_get_num_threads() << std::endl;
 
     // write output 
     write_f << std::setw(4)  << Id()
@@ -242,7 +249,7 @@ void IgaBeamADElement::CalculateAll(
 
 void IgaBeamADElement::PrintInfo(std::ostream& rOStream) const
 {
-    rOStream << "\"IgaBeamADElement\" #" << Id();
+    rOStream << "\"IgaBeamADElement #" << Id();
 }
 
 } // namespace Kratos

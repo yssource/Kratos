@@ -133,7 +133,6 @@ namespace Kratos {
                     equiv_radius = p_element1->mNeighbourContactRadius[i];
                     p_element1->mNeighbourIndentation[i] += (indentation - previous_indentation);
                     elastic_indentation = p_element1->mNeighbourIndentation[i];
-                    if (elastic_indentation < 0.0) p_element1->mNeighbourIndentation[i] = elastic_indentation = 0.0;
                 }
                 break;
             }
@@ -269,7 +268,6 @@ namespace Kratos {
                     effective_radius = p_element->mNeighbourRigidContactRadius[i];
                     p_element->mNeighbourRigidIndentation[i] += (indentation - previous_indentation);
                     elastic_indentation = p_element->mNeighbourRigidIndentation[i];
-                    if (elastic_indentation < 0.0) p_element->mNeighbourRigidIndentation[i] = elastic_indentation = 0.0;
                 }
                 break;
             }

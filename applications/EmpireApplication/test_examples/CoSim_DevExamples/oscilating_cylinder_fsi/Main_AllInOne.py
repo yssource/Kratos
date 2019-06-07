@@ -83,7 +83,7 @@ while time < end_time:
     if flush_stdout:
         sys.stdout.flush()
 
-    solver.Finalize()
+solver.Finalize()
 
 
 

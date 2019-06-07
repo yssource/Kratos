@@ -78,21 +78,19 @@ namespace Kratos {
         //Get new Equivalent Radius
         double equiv_radius_new = (equiv_young * sqrt(6 * normal_contact_force)) / (pow(Globals::Pi * element1->GetParticleConicalDamageMaxStress(),1.5));
 
-        double offset = 0.0;
         if (equiv_radius_new > equiv_level_of_fouling * equiv_radius) {
             const double AlphaFunction = element1->GetProperties()[CONICAL_DAMAGE_ALPHA_FUNCTION];
-            offset = (equiv_radius_new - equiv_radius) * AlphaFunction;
-
+            double offset = (equiv_radius_new - equiv_radius) * AlphaFunction;
             equiv_radius = equiv_radius_new;
-        }
 
-        for (unsigned int i = 0; element1->mNeighbourElements.size(); i++) {
-            if (element1->mNeighbourElements[i]->Id() == element2->Id()) {
-                element1->mNeighbourContactRadius[i] = equiv_radius;
-                if (indentation > offset) element1->mNeighbourIndentation[i] = indentation - offset;
-                else element1->mNeighbourIndentation[i] = 0.0;
-                indentation = element1->mNeighbourIndentation[i];
-                break;
+            for (unsigned int i = 0; element1->mNeighbourElements.size(); i++) {
+                if (element1->mNeighbourElements[i]->Id() == element2->Id()) {
+                    element1->mNeighbourContactRadius[i] = equiv_radius;
+                    if (indentation > offset) element1->mNeighbourIndentation[i] = indentation - offset;
+                    else element1->mNeighbourIndentation[i] = 0.0;
+                    indentation = element1->mNeighbourIndentation[i];
+                    break;
+                }
             }
         }
 
@@ -222,21 +220,19 @@ namespace Kratos {
         //Get new Equivalent Radius
         double effective_radius_new = (equiv_young * sqrt(6 * normal_contact_force)) / (pow(Globals::Pi * element->GetParticleConicalDamageMaxStress(),1.5));
 
-        double offset = 0.0;
         if (effective_radius_new > equiv_level_of_fouling * effective_radius) {
             const double AlphaFunction = element->GetProperties()[CONICAL_DAMAGE_ALPHA_FUNCTION];
-            offset = (effective_radius_new - effective_radius) * AlphaFunction;
-
+            double offset = (effective_radius_new - effective_radius) * AlphaFunction;
             effective_radius = effective_radius_new;
-        }
 
-        for (unsigned int i = 0; element->mNeighbourRigidFaces.size(); i++) {
-            if (element->mNeighbourRigidFaces[i]->Id() == wall->Id()) {
-                element->mNeighbourRigidContactRadius[i] = effective_radius;
-                if (indentation > offset) element->mNeighbourRigidIndentation[i] = indentation - offset;
-                else element->mNeighbourRigidIndentation[i] = 0.0;
-                indentation = element->mNeighbourRigidIndentation[i];
-                break;
+            for (unsigned int i = 0; element->mNeighbourRigidFaces.size(); i++) {
+                if (element->mNeighbourRigidFaces[i]->Id() == wall->Id()) {
+                    element->mNeighbourRigidContactRadius[i] = effective_radius;
+                    if (indentation > offset) element->mNeighbourRigidIndentation[i] = indentation - offset;
+                    else element->mNeighbourRigidIndentation[i] = 0.0;
+                    indentation = element->mNeighbourRigidIndentation[i];
+                    break;
+                }
             }
         }
 

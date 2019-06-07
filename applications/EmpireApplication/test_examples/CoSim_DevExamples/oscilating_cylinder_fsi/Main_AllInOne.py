@@ -3,9 +3,16 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 import KratosMultiphysics
 import KratosMultiphysics.EmpireApplication
 
-# imports in CoSimulationAnalysis
+# imports Kratos tools
 import co_simulation_tools as cs_tools
 from co_simulation_tools import csprint, bold, CheckCoSimulationSettingsAndAssignDefaults
+
+# import Kratos components
+from co_simulation_predictors.co_simulation_predictor_factory import CreatePredictor
+from co_simulation_convergence_accelerators.co_simulation_convergence_accelerator_factory import CreateConvergenceAccelerator
+from co_simulation_convergence_criteria.co_simulation_convergence_criteria_factory import CreateConvergenceCriteria
+
+### WORK HERE: imports to be resolved
 import co_simulation_solvers.python_solvers_wrapper_co_simulation as solvers_wrapper
 
 # imports from basic Python
@@ -45,12 +52,102 @@ echo_level = problem_data["echo_level"]
 
 
 ### Initialize ###################################
-solver = solvers_wrapper.CreateSolver(cosim_settings["solver_settings"], level=0)
-solver.Initialize()
-solver.Check()
+cosim_solver_settings = cosim_settings["solver_settings"]
+
+## CoSimulationBaseSolver __init__() ###################################
+echo_level = 0
+solver_level = 0
+if "echo_level" in cosim_solver_settings:
+    echo_level = cosim_solver_settings["echo_level"]
+io_is_initialized = False
+
+## CoSimulationBaseCouplingSolver __init__() ###################################
+solver_names = []
+solvers = {}
+
+for solver_settings in cosim_solver_settings["coupling_loop"]:
+    solver_name = solver_settings["name"]
+    if solver_name in solver_names:
+        raise NameError('Solver name "' + solver_name + '" defined twice!')
+    solver_names.append(solver_name)
+    cosim_solver_settings["solvers"][solver_name]["name"] = solver_name # adding the name such that the solver can identify itself
+    solvers[solver_name] = solvers_wrapper.CreateSolver(
+        cosim_solver_settings["solvers"][solver_name], solver_level-1) # -1 to have solver prints on same lvl
+
+cosim_solver_details = cs_tools.GetSolverCoSimulationDetails(
+    cosim_solver_settings["coupling_loop"])
+
+predictor = None
+if "predictor_settings" in cosim_solver_settings:
+    predictor = CreatePredictor(cosim_solver_settings["predictor_settings"], solvers, solver_level)
+    predictor.SetEchoLevel(echo_level)
+
+# With this setting the coupling can start later
+start_coupling_time = 0.0
+if "start_coupling_time" in cosim_solver_settings:
+    start_coupling_time = cosim_solver_settings["start_coupling_time"]
+if start_coupling_time > 0.0:
+    coupling_started = False
+else:
+    coupling_started = True
+
+## GaussSeidelStrongCouplingSolver __init__() ###################################
+if not len(cosim_solver_settings["solvers"]) == 2:
+    raise Exception("Exactly two solvers have to be specified for the GaussSeidelStrongCouplingSolver!")
+
+convergence_accelerator = CreateConvergenceAccelerator(
+    cosim_solver_settings["convergence_accelerator_settings"],
+    solvers, solver_level)
+convergence_accelerator.SetEchoLevel(echo_level)
+
+convergence_criteria = CreateConvergenceCriteria(
+    cosim_solver_settings["convergence_criteria_settings"],
+    solvers, solver_level)
+convergence_criteria.SetEchoLevel(echo_level)
+
+num_coupling_iterations = cosim_solver_settings["num_coupling_iterations"]
+
+## GaussSeidelStrongCouplingSolver Initialize() ###################################
+# from super -------------------
+for solver_name in solver_names:
+    solvers[solver_name].Initialize()
+for solver_name in solver_names:
+    solvers[solver_name].InitializeIO(solvers, echo_level)
+
+if predictor is not None:
+    predictor.Initialize()
+# from sub -------------------
+convergence_accelerator.Initialize()
+convergence_criteria.Initialize()
+
+## GaussSeidelStrongCouplingSolver Check() ###################################
+# from super -------------------
+for solver_name in solver_names:
+    solvers[solver_name].Check()
+
+if predictor is not None:
+    predictor.Check()
+
+# from sub -------------------
+convergence_accelerator.Check()
+convergence_criteria.Check()
+
 
 if echo_level > 0:
-    solver.PrintInfo()
+    ## GaussSeidelStrongCouplingSolver PrintInfo() ###################################
+    # from super -------------------
+    cs_tools.couplingsolverprint("GaussSeidelStrongCouplingSolver", "Has the following participants:")
+    for solver_name in solver_names:
+        solvers[solver_name].PrintInfo()
+
+    if predictor is not None:
+        cs_tools.couplingsolverprint("GaussSeidelStrongCouplingSolver", "Uses a Predictor:")
+        predictor.PrintInfo()
+
+    # from sub -------------------
+    cs_tools.couplingsolverprint("GaussSeidelStrongCouplingSolver", "Uses the following objects:")
+    convergence_accelerator.PrintInfo()
+    convergence_criteria.PrintInfo()
 
 # Stepping and time settings
 end_time = cosim_settings["problem_data"]["end_time"]
@@ -65,6 +162,17 @@ print("")
 while time < end_time:
     print("")
     step += 1
+
+
+
+
+
+
+
+
+    ################################### BAUSTELLE ###################################TODO
+    ### !!! solver is a GaussSeidelStrongCouplingSolver with self.lvl = solver_level
+
     time = solver.AdvanceInTime(time)
 
     ## InitializeSolutionStep ###################################
@@ -87,4 +195,4 @@ solver.Finalize()
 
 
 
-################################### BAUSTELLE ###################################
+

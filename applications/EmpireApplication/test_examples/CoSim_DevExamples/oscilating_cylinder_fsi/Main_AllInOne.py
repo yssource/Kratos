@@ -5,12 +5,15 @@ import KratosMultiphysics.EmpireApplication
 
 # imports Kratos tools
 import co_simulation_tools as cs_tools
-from co_simulation_tools import csprint, bold, CheckCoSimulationSettingsAndAssignDefaults
 
 # import Kratos components
 from co_simulation_predictors.co_simulation_predictor_factory import CreatePredictor
 from co_simulation_convergence_accelerators.co_simulation_convergence_accelerator_factory import CreateConvergenceAccelerator
 from co_simulation_convergence_criteria.co_simulation_convergence_criteria_factory import CreateConvergenceCriteria
+
+# import Kratos solvers
+from co_simulation_solvers.sdof_solver import SDoFSolver
+from co_simulation_solvers.kratos_fluid_solver import KratosFluidSolver
 
 ### WORK HERE: imports to be resolved
 import co_simulation_solvers.python_solvers_wrapper_co_simulation as solvers_wrapper
@@ -19,8 +22,11 @@ import co_simulation_solvers.python_solvers_wrapper_co_simulation as solvers_wra
 import json
 import sys
 
+
+
+
 # read parameter file(s)
-parameter_file_name = "project_parameters_cosim_oscilating_cylinder_fsi.json"
+parameter_file_name = "parameters_FSI_AllInOne.json"
 with open(parameter_file_name, 'r') as parameter_file:
     cosim_settings = json.load(parameter_file)
 
@@ -29,7 +35,8 @@ with open(parameter_file_name, 'r') as parameter_file:
 if type(cosim_settings) != dict:
     raise Exception("Input is expected to be provided as a python dictionary")
 
-CheckCoSimulationSettingsAndAssignDefaults(cosim_settings)
+# commented out to enable changes in the settings structure without changing cs_tools
+# cs_tools.CheckCoSimulationSettingsAndAssignDefaults(cosim_settings)
 
 problem_data = cosim_settings["problem_data"]
 
@@ -62,25 +69,17 @@ if "echo_level" in cosim_solver_settings:
 io_is_initialized = False
 
 ## CoSimulationBaseCouplingSolver __init__() ###################################
-solver_names = []
+solver_names = ["fluid", "structure"]
 solvers = {}
 
-for solver_settings in cosim_solver_settings["coupling_loop"]:
-    solver_name = solver_settings["name"]
-    if solver_name in solver_names:
-        raise NameError('Solver name "' + solver_name + '" defined twice!')
-    solver_names.append(solver_name)
-    cosim_solver_settings["solvers"][solver_name]["name"] = solver_name # adding the name such that the solver can identify itself
-    solvers[solver_name] = solvers_wrapper.CreateSolver(
-        cosim_solver_settings["solvers"][solver_name], solver_level-1) # -1 to have solver prints on same lvl
+solvers["fluid"] = KratosFluidSolver(cosim_solver_settings["solvers"]["fluid"], solver_level-1)
+solvers["structure"] = SDoFSolver(cosim_solver_settings["solvers"]["structure"], solver_level-1)
 
-cosim_solver_details = cs_tools.GetSolverCoSimulationDetails(
-    cosim_solver_settings["coupling_loop"])
-
-predictor = None
 if "predictor_settings" in cosim_solver_settings:
     predictor = CreatePredictor(cosim_solver_settings["predictor_settings"], solvers, solver_level)
     predictor.SetEchoLevel(echo_level)
+else:
+    predictor = None
 
 # With this setting the coupling can start later
 start_coupling_time = 0.0
@@ -92,17 +91,12 @@ else:
     coupling_started = True
 
 ## GaussSeidelStrongCouplingSolver __init__() ###################################
-if not len(cosim_solver_settings["solvers"]) == 2:
-    raise Exception("Exactly two solvers have to be specified for the GaussSeidelStrongCouplingSolver!")
-
 convergence_accelerator = CreateConvergenceAccelerator(
-    cosim_solver_settings["convergence_accelerator_settings"],
-    solvers, solver_level)
+    cosim_solver_settings["convergence_accelerator_settings"], solvers, solver_level)
 convergence_accelerator.SetEchoLevel(echo_level)
 
 convergence_criteria = CreateConvergenceCriteria(
-    cosim_solver_settings["convergence_criteria_settings"],
-    solvers, solver_level)
+    cosim_solver_settings["convergence_criteria_settings"], solvers, solver_level)
 convergence_criteria.SetEchoLevel(echo_level)
 
 num_coupling_iterations = cosim_solver_settings["num_coupling_iterations"]
@@ -175,7 +169,7 @@ while time < end_time:
     if not coupling_started and time > start_coupling_time:
         coupling_started = True
         if echo_level > 0:
-            cs_tools.couplingsolverprint(solver_level, "GaussSeidelStrongCouplingSolver", bold("Starting Coupling"))
+            cs_tools.couplingsolverprint(solver_level, "GaussSeidelStrongCouplingSolver", cs_tools.bold("Starting Coupling"))
 
     # if a predictor is used then the delta_time is set
     # this is needed by some predictors
@@ -183,7 +177,7 @@ while time < end_time:
         delta_time = time - old_time
         predictor.SetDeltaTime(delta_time)
 
-    csprint(0, bold("time={0:.12g}".format(time) + " | step=" + str(step)))
+    cs_tools.csprint(0, cs_tools.bold("time={0:.12g}".format(time) + " | step=" + str(step)))
     ## GaussSeidelStrongCouplingSolver InitializeSolutionStep() ###################################
     # from super -------------------
     for solver_name in solver_names:
@@ -209,9 +203,9 @@ while time < end_time:
 
             ## GaussSeidelStrongCouplingSolver _SynchronizeInputData() ###################################
             if coupling_started:
-                input_data_list = cosim_solver_details[solver_name]["input_data_list"]
+                input_data_list = cosim_solver_settings["coupling_loop"][solver_name]["input_data_list"]
 
-                if time >= cosim_solver_details[solver_name]["input_coupling_start_time"]:
+                if time >= cosim_solver_settings["coupling_loop"][solver_name]["input_coupling_start_time"]:
                     for input_data in input_data_list:
                         from_solver = solvers[input_data["from_solver"]]
                         data_name = input_data["data_name"]
@@ -225,9 +219,9 @@ while time < end_time:
 
             ## GaussSeidelStrongCouplingSolver _SynchronizeOutputData() ###################################
             if coupling_started:
-                output_data_list = cosim_solver_details[solver_name]["output_data_list"]
+                output_data_list = cosim_solver_settings["coupling_loop"][solver_name]["output_data_list"]
 
-                if time >= cosim_solver_details[solver_name]["output_coupling_start_time"]:
+                if time >= cosim_solver_settings["coupling_loop"][solver_name]["output_coupling_start_time"]:
                     for output_data in output_data_list:
                         to_solver = solvers[output_data["to_solver"]]
                         data_name = output_data["data_name"]

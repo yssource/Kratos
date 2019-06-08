@@ -136,16 +136,16 @@ convergence_criteria.Check()
 if echo_level > 0:
     ## GaussSeidelStrongCouplingSolver PrintInfo() ###################################
     # from super -------------------
-    cs_tools.couplingsolverprint("GaussSeidelStrongCouplingSolver", "Has the following participants:")
+    cs_tools.cs_tools.couplingsolverprint("GaussSeidelStrongCouplingSolver", "Has the following participants:")
     for solver_name in solver_names:
         solvers[solver_name].PrintInfo()
 
     if predictor is not None:
-        cs_tools.couplingsolverprint("GaussSeidelStrongCouplingSolver", "Uses a Predictor:")
+        cs_tools.cs_tools.couplingsolverprint("GaussSeidelStrongCouplingSolver", "Uses a Predictor:")
         predictor.PrintInfo()
 
     # from sub -------------------
-    cs_tools.couplingsolverprint("GaussSeidelStrongCouplingSolver", "Uses the following objects:")
+    cs_tools.cs_tools.couplingsolverprint("GaussSeidelStrongCouplingSolver", "Uses the following objects:")
     convergence_accelerator.PrintInfo()
     convergence_criteria.PrintInfo()
 
@@ -163,36 +163,118 @@ while time < end_time:
     print("")
     step += 1
 
+    ## GaussSeidelStrongCouplingSolver AdvanceInTime() ###################################
+    # from super -------------------
+    old_time = time
+    time = solvers[solver_names[0]].AdvanceInTime(old_time)
+    for solver_name in solver_names[1:]:
+        time_other_solver = solvers[solver_name].AdvanceInTime(old_time)
+        if abs(time - time_other_solver) > 1e-12:
+            raise Exception("Solver time mismatch")
 
+    if not coupling_started and time > start_coupling_time:
+        coupling_started = True
+        if echo_level > 0:
+            cs_tools.couplingsolverprint(solver_level, "GaussSeidelStrongCouplingSolver", bold("Starting Coupling"))
 
+    # if a predictor is used then the delta_time is set
+    # this is needed by some predictors
+    if predictor is not None:
+        delta_time = time - old_time
+        predictor.SetDeltaTime(delta_time)
 
-
-
-
-
-    ################################### BAUSTELLE ###################################TODO
-    ### !!! solver is a GaussSeidelStrongCouplingSolver with self.lvl = solver_level
-
-    time = solver.AdvanceInTime(time)
-
-    ## InitializeSolutionStep ###################################
     csprint(0, bold("time={0:.12g}".format(time) + " | step=" + str(step)))
-    solver.InitializeSolutionStep()
+    ## GaussSeidelStrongCouplingSolver InitializeSolutionStep() ###################################
+    # from super -------------------
+    for solver_name in solver_names:
+        solvers[solver_name].InitializeSolutionStep()
 
-    solver.Predict()
-    solver.SolveSolutionStep()
+    if predictor is not None:
+        predictor.InitializeSolutionStep()
+    convergence_accelerator.InitializeSolutionStep()
+    convergence_criteria.InitializeSolutionStep()
 
-    ## FinalizeSolutionStep ###################################
-    solver.FinalizeSolutionStep()
+    ## GaussSeidelStrongCouplingSolver SolveSolutionStep() ###################################
+    for k in range(num_coupling_iterations):
+        if echo_level > 0:
+            cs_tools.couplingsolverprint(solver_level, "GaussSeidelStrongCouplingSolver",
+                                cs_tools.cyan("Coupling iteration:"),
+                                cs_tools.bold(str(k + 1) + " / " + str(num_coupling_iterations)))
 
-    ## OutputSolutionStep ###################################
-    solver.OutputSolutionStep()
+        convergence_accelerator.InitializeNonLinearIteration()
+        convergence_criteria.InitializeNonLinearIteration()
 
+        for solver_name in solver_names:
+            solver = solvers[solver_name]
+
+            ## GaussSeidelStrongCouplingSolver _SynchronizeInputData() ###################################
+            if coupling_started:
+                input_data_list = cosim_solver_details[solver_name]["input_data_list"]
+
+                if time >= cosim_solver_details[solver_name]["input_coupling_start_time"]:
+                    for input_data in input_data_list:
+                        from_solver = solvers[input_data["from_solver"]]
+                        data_name = input_data["data_name"]
+                        data_definition = from_solver.GetDataDefinition(data_name)
+                        data_settings = {"data_format": data_definition["data_format"],
+                                         "data_name": data_name,
+                                         "io_settings": input_data["io_settings"]}
+                        solver.ImportData(data_settings, from_solver)
+
+            solver.SolveSolutionStep()
+
+            ## GaussSeidelStrongCouplingSolver _SynchronizeOutputData() ###################################
+            if coupling_started:
+                output_data_list = cosim_solver_details[solver_name]["output_data_list"]
+
+                if time >= cosim_solver_details[solver_name]["output_coupling_start_time"]:
+                    for output_data in output_data_list:
+                        to_solver = solvers[output_data["to_solver"]]
+                        data_name = output_data["data_name"]
+                        data_definition = to_solver.GetDataDefinition(data_name)
+                        data_settings = {"data_format": data_definition["data_format"],
+                                         "data_name": data_name,
+                                         "io_settings": output_data["io_settings"]}
+                        solver.ExportData(data_settings, to_solver)
+
+        convergence_accelerator.FinalizeNonLinearIteration()
+        convergence_criteria.FinalizeNonLinearIteration()
+
+        if convergence_criteria.IsConverged():
+            if echo_level > 0:
+                cs_tools.couplingsolverprint(solver_level, "GaussSeidelStrongCouplingSolver", cs_tools.green("### CONVERGENCE WAS ACHIEVED ###"))
+            break
+        else:
+            convergence_accelerator.ComputeUpdate()
+
+        if k + 1 >= num_coupling_iterations and echo_level > 0:
+            cs_tools.couplingsolverprint(solver_level, "GaussSeidelStrongCouplingSolver", cs_tools.red("XXX CONVERGENCE WAS NOT ACHIEVED XXX"))
+
+    ## GaussSeidelStrongCouplingSolver FinalizeSolutionStep() ###################################
+    # from super -------------------
+    for solver_name in solver_names:
+        solvers[solver_name].FinalizeSolutionStep()
+        if predictor is not None:
+            predictor.FinalizeSolutionStep()
+
+    # from sub -------------------
+    convergence_accelerator.FinalizeSolutionStep()
+    convergence_criteria.FinalizeSolutionStep()
+
+
+    ## GaussSeidelStrongCouplingSolver OutputSolutionStep() ###################################
+    for solver_name in solver_names:
+        solvers[solver_name].OutputSolutionStep()
+    
     if flush_stdout:
         sys.stdout.flush()
 
-solver.Finalize()
+## GaussSeidelStrongCouplingSolver Finalize() ###################################
+for solver_name in solver_names:
+    solvers[solver_name].Finalize()
 
+if predictor is not None:
+    predictor.Finalize()
 
 
 

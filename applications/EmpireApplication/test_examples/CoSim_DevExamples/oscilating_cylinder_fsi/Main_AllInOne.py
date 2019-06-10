@@ -5,6 +5,7 @@ import KratosMultiphysics.EmpireApplication
 
 # imports Kratos tools
 import co_simulation_tools as cs_tools
+import co_simulation_ios.co_simulation_io_factory
 
 # import Kratos components
 from co_simulation_predictors.co_simulation_predictor_factory import CreatePredictor
@@ -13,10 +14,10 @@ from co_simulation_convergence_criteria.co_simulation_convergence_criteria_facto
 
 # import Kratos solvers
 from co_simulation_solvers.sdof_solver import SDoFSolver
-from co_simulation_solvers.kratos_fluid_solver_allinone import KratosFluidSolver
 
 ### WORK HERE: imports to be resolved
-import co_simulation_solvers.python_solvers_wrapper_co_simulation as solvers_wrapper
+from co_simulation_solvers.kratos_fluid_solver_allinone import KratosFluidSolver
+from KratosMultiphysics.FluidDynamicsApplication import python_solvers_wrapper_fluid
 
 # imports from basic Python
 import json

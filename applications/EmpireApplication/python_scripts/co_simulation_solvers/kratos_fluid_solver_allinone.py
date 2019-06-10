@@ -2,29 +2,19 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 
 # Importing the Kratos Library
 import KratosMultiphysics
-import KratosMultiphysics.FluidDynamicsApplication
-import python_solvers_wrapper_fluid
-try:
-    import KratosMultiphysics.MeshMovingApplication
-    KratosMultiphysics.Logger.PrintInfo("MeshMovingApplication", "succesfully imported")
-except ImportError:
-    KratosMultiphysics.Logger.PrintInfo("MeshMovingApplication", "not imported")
+from KratosMultiphysics.FluidDynamicsApplication import python_solvers_wrapper_fluid
 
-# Importing the base class
-from kratos_base_field_solver import KratosBaseFieldSolver
 
 # Other imports
-from fluid_dynamics_analysis import FluidDynamicsAnalysis
-import co_simulation_tools
-from co_simulation_tools import solverprint, bold, red
-import co_simulation_ios.co_simulation_io_factory as io_factory
+import co_simulation_tools as cs_tools
+import co_simulation_ios.co_simulation_io_factory
 
 
 
 def CreateSolver(cosim_solver_settings, level):
     return KratosFluidSolver(cosim_solver_settings, level)
 
-class KratosFluidSolver(KratosBaseFieldSolver):
+class KratosFluidSolver(object):
 
     def __init__(self, cosim_solver_settings, level):
         self.cosim_solver_settings = cosim_solver_settings
@@ -100,7 +90,7 @@ class KratosFluidSolver(KratosBaseFieldSolver):
         if self.io_is_initialized:
             raise Exception('IO for "' + solver_name + '" is already initialized!')
 
-        self.io = io_factory.CreateIO(self._GetIOName(),
+        self.io = co_simulation_ios.co_simulation_io_factory.CreateIO(self._GetIOName(),
                                       solvers,
                                       solver_name,
                                       self.lvl)
@@ -210,20 +200,20 @@ class KratosFluidSolver(KratosBaseFieldSolver):
         return self.cosim_solver_settings["data"][data_name]
 
     def PrintInfo(self):
-        solverprint(self.lvl, "KratosSolver", bold(self._Name()))
+        cs_tools.solverprint(self.lvl, "KratosSolver", cs_tools.bold(self._Name()))
 
     ################################### BAUSTELLE ###################################(from analysis_stage)
     ################################### BAUSTELLE ###################################
     def Check(self):
-        is_distributed = co_simulation_tools.COSIM_SPACE.IsDistributed()
+        is_distributed = cs_tools.COSIM_SPACE.IsDistributed()
         if is_distributed and not self.parallel_type == "MPI":
             warning_msg  = 'WARNING: Global "parallel_type" (MPI) is different '
             warning_msg += 'from local one (' + self.parallel_type + ')!'
-            solverprint(self.lvl, self._Name(), ": " + red(warning_msg))
+            cs_tools.solverprint(self.lvl, self._Name(), ": " + cs_tools.red(warning_msg))
         elif not is_distributed and not self.parallel_type == "OpenMP":
             warning_msg  = 'WARNING: Global "parallel_type" (OpenMP) is different '
             warning_msg += 'from local one (' + self.parallel_type + ')!'
-            solverprint(self.lvl, self._Name(), ": " + red(warning_msg))
+            cs_tools.solverprint(self.lvl, self._Name(), ": " + cs_tools.red(warning_msg))
 
     def _GetIOName(self):
         return "kratos"

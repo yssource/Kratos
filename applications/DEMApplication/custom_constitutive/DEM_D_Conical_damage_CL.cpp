@@ -47,7 +47,7 @@ namespace Kratos {
     }
 
     std::string DEM_D_Conical_damage::GetTypeOfLaw() {
-        std::string type_of_law = "Conical_damge";
+        std::string type_of_law = "Conical_damage";
         return type_of_law;
     }
 

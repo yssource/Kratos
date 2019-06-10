@@ -13,7 +13,7 @@ from co_simulation_convergence_criteria.co_simulation_convergence_criteria_facto
 
 # import Kratos solvers
 from co_simulation_solvers.sdof_solver import SDoFSolver
-from co_simulation_solvers.kratos_fluid_solver import KratosFluidSolver
+from co_simulation_solvers.kratos_fluid_solver_allinone import KratosFluidSolver
 
 ### WORK HERE: imports to be resolved
 import co_simulation_solvers.python_solvers_wrapper_co_simulation as solvers_wrapper
@@ -73,6 +73,8 @@ solver_names = ["fluid", "structure"]
 solvers = {}
 
 solvers["fluid"] = KratosFluidSolver(cosim_solver_settings["solvers"]["fluid"], solver_level-1)
+
+
 solvers["structure"] = SDoFSolver(cosim_solver_settings["solvers"]["structure"], solver_level-1)
 
 if "predictor_settings" in cosim_solver_settings:

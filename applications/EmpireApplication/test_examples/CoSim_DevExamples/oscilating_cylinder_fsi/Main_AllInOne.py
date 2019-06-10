@@ -73,7 +73,7 @@ io_is_initialized = False
 solver_names = ["fluid", "structure"]
 solvers = {}
 
-solvers["fluid"] = KratosFluidSolver(cosim_solver_settings["solvers"]["fluid"], solver_level-1)
+solvers["fluid"] = KratosFluidSolver(cosim_solver_settings)
 
 
 solvers["structure"] = SDoFSolver(cosim_solver_settings["solvers"]["structure"], solver_level-1)

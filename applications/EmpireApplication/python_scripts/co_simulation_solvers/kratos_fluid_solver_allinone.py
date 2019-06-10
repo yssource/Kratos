@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 
 # Importing the Kratos Library
 import KratosMultiphysics
-from KratosMultiphysics.FluidDynamicsApplication import python_solvers_wrapper_fluid
+from KratosMultiphysics.FluidDynamicsApplication import navier_stokes_ale_fluid_solver
 
 
 # Other imports
@@ -16,27 +16,25 @@ def CreateSolver(cosim_solver_settings, level):
 
 class KratosFluidSolver(object):
 
-    def __init__(self, cosim_solver_settings, level):
-        self.cosim_solver_settings = cosim_solver_settings
-        self.lvl = level
-        self.echo_level = 0
-        if "echo_level" in self.cosim_solver_settings:
-            self.echo_level = self.cosim_solver_settings["echo_level"]
-        self.io_is_initialized = False
+    def __init__(self, cosim_solver_settings):
+        self.cosim_solver_settings = cosim_solver_settings  # kill
+        self.echo_level = 0  # kill
+
+        if "echo_level" in self.cosim_solver_settings["solvers"]["fluid"]:
+            self.echo_level = self.cosim_solver_settings["solvers"]["fluid"]["echo_level"]
 
         self.model = KratosMultiphysics.Model()
 
-        input_file_name = self.cosim_solver_settings["input_file"]
+        input_file_name = self.cosim_solver_settings["solvers"]["fluid"]["input_file"]
         if not input_file_name.endswith(".json"):
             input_file_name += ".json"
 
         with open(input_file_name,'r') as parameter_file:
             parameters = KratosMultiphysics.Parameters(parameter_file.read())
-
-        self.project_parameters = KratosMultiphysics.Parameters(parameters)
+        self.fluid_parameters = KratosMultiphysics.Parameters(parameters)
 
     def Initialize(self):
-        self.parallel_type = self.project_parameters["problem_data"]["parallel_type"].GetString()
+        self.parallel_type = self.fluid_parameters["problem_data"]["parallel_type"].GetString()
 
         if (self.parallel_type == "MPI"):
             import KratosMultiphysics.mpi as KratosMPI
@@ -44,7 +42,12 @@ class KratosFluidSolver(object):
         else:
             self.is_printing_rank = True
 
-        self.solver = python_solvers_wrapper_fluid.CreateSolver(self.model, self.project_parameters)
+        ################################### BAUSTELLE ###############################(navier_stokes_ale_fluid_solver)
+        ################################### BAUSTELLE ###################################
+
+        self.solver = navier_stokes_ale_fluid_solver.CreateSolver(self.model,
+                                                                  self.fluid_parameters["solver_settings"],
+                                                                  self.parallel_type)
         self.solver.AddVariables()
 
         self.solver.ImportModelPart()
@@ -70,32 +73,28 @@ class KratosFluidSolver(object):
             process.ExecuteBeforeSolutionLoop()
 
         ## Stepping and time settings
-        self.end_time = self.project_parameters["problem_data"]["end_time"].GetDouble()
+        self.end_time = self.fluid_parameters["problem_data"]["end_time"].GetDouble()
 
         if self.solver.GetComputingModelPart().ProcessInfo[KratosMultiphysics.IS_RESTARTED]:
             self.time = self.solver.GetComputingModelPart().ProcessInfo[KratosMultiphysics.TIME]
         else:
-            self.time = self.project_parameters["problem_data"]["start_time"].GetDouble()
+            self.time = self.fluid_parameters["problem_data"]["start_time"].GetDouble()
 
         ## If the echo level is high enough, print the complete list of settings used to run the simualtion
         if self.is_printing_rank and self.echo_level > 1:
             with open("ProjectParametersOutput.json", 'w') as parameter_output_file:
-                parameter_output_file.write(self.project_parameters.PrettyPrintJsonString())
+                parameter_output_file.write(self.fluid_parameters.PrettyPrintJsonString())
 
         if self.is_printing_rank:
             KratosMultiphysics.Logger.PrintInfo("Fluid Dynamics Analysis", "Analysis -START- ")
 
     def InitializeIO(self, solvers, io_echo_level):
-        solver_name = self.cosim_solver_settings["name"]
-        if self.io_is_initialized:
-            raise Exception('IO for "' + solver_name + '" is already initialized!')
-
+        solver_name = self.cosim_solver_settings["solvers"]["fluid"]["name"]
         self.io = co_simulation_ios.co_simulation_io_factory.CreateIO(self._GetIOName(),
                                       solvers,
                                       solver_name,
-                                      self.lvl)
+                                      -1)
         self.io.SetEchoLevel(io_echo_level)
-        self.io_is_initialized = True
 
     def Finalize(self):
         for process in self._list_of_processes:
@@ -165,7 +164,7 @@ class KratosFluidSolver(object):
         self.solver.SolveSolutionStep()
 
     def GetBufferSize(self):
-        model_part_name = self.project_parameters["solver_settings"]["model_part_name"].GetString()
+        model_part_name = self.fluid_parameters["solver_settings"]["model_part_name"].GetString()
         return self.model[model_part_name].GetBufferSize()
 
     def GetDeltaTime(self):
@@ -177,49 +176,39 @@ class KratosFluidSolver(object):
         self.echo_level = level
 
     def ImportData(self, data_name, from_client):
-        if not self.io_is_initialized:
-            raise Exception('IO for "' + solver_name + '" is not initialized!')
         self.io.ImportData(data_name, from_client)
 
     def ImportMesh(self, mesh_name, from_client):
-        if not self.io_is_initialized:
-            raise Exception('IO for "' + solver_name + '" is not initialized!')
         self.io.ImportMesh(mesh_name, from_client)
 
     def ExportData(self, data_name, to_client):
-        if not self.io_is_initialized:
-            raise Exception('IO for "' + solver_name + '" is not initialized!')
         self.io.ExportData(data_name, to_client)
 
     def ExportMesh(self, mesh_name, to_client):
-        if not self.io_is_initialized:
-            raise Exception('IO for "' + solver_name + '" is not initialized!')
         self.io.ExportMesh(mesh_name, to_client)
 
     def GetDataDefinition(self, data_name):
-        return self.cosim_solver_settings["data"][data_name]
+        return self.cosim_solver_settings["solvers"]["fluid"]["data"][data_name]
 
     def PrintInfo(self):
-        cs_tools.solverprint(self.lvl, "KratosSolver", cs_tools.bold(self._Name()))
+        cs_tools.solverprint(-1, "KratosSolver", cs_tools.bold(self._Name()))
 
-    ################################### BAUSTELLE ###################################(from analysis_stage)
-    ################################### BAUSTELLE ###################################
     def Check(self):
         is_distributed = cs_tools.COSIM_SPACE.IsDistributed()
         if is_distributed and not self.parallel_type == "MPI":
             warning_msg  = 'WARNING: Global "parallel_type" (MPI) is different '
             warning_msg += 'from local one (' + self.parallel_type + ')!'
-            cs_tools.solverprint(self.lvl, self._Name(), ": " + cs_tools.red(warning_msg))
+            cs_tools.solverprint(-1, self._Name(), ": " + cs_tools.red(warning_msg))
         elif not is_distributed and not self.parallel_type == "OpenMP":
             warning_msg  = 'WARNING: Global "parallel_type" (OpenMP) is different '
             warning_msg += 'from local one (' + self.parallel_type + ')!'
-            cs_tools.solverprint(self.lvl, self._Name(), ": " + cs_tools.red(warning_msg))
+            cs_tools.solverprint(-1, self._Name(), ": " + cs_tools.red(warning_msg))
 
     def _GetIOName(self):
         return "kratos"
 
     def _GetParallelType(self):
-        return self.project_parameters["problem_data"]["parallel_type"].GetString()
+        return self.fluid_parameters["problem_data"]["parallel_type"].GetString()
 
     def _Name(self):
         return self.__class__.__name__
@@ -244,14 +233,14 @@ class KratosFluidSolver(object):
                 from process_factory import KratosProcessFactory
                 factory = KratosProcessFactory(self.model)
                 for process_name in processes_block_names:
-                    if (self.project_parameters.Has(process_name) is True):
-                        list_of_processes += factory.ConstructListOfProcesses(self.project_parameters[process_name])
+                    if (self.fluid_parameters.Has(process_name) is True):
+                        list_of_processes += factory.ConstructListOfProcesses(self.fluid_parameters[process_name])
             else: # Processes are given in the new format
                 for process_name in processes_block_names:
-                    if (self.project_parameters.Has(process_name) is True):
+                    if (self.fluid_parameters.Has(process_name) is True):
                         raise Exception("Mixing of process initialization is not alowed!")
         elif parameter_name == "output_processes":
-            if self.project_parameters.Has("output_configuration"):
+            if self.fluid_parameters.Has("output_configuration"):
                 info_msg  = "Using the old way to create the gid-output, this will be removed!\n"
                 info_msg += "Refer to \"https://github.com/KratosMultiphysics/Kratos/wiki/Common-"
                 info_msg += "Python-Interface-of-Applications-for-Users#analysisstage-usage\" "
@@ -264,8 +253,8 @@ class KratosFluidSolver(object):
                     from gid_output_process_mpi import GiDOutputProcessMPI as OutputProcess
 
                 gid_output = OutputProcess(self.solver.GetComputingModelPart(),
-                                       self.project_parameters["problem_data"]["problem_name"].GetString(),
-                                       self.project_parameters["output_configuration"])
+                                       self.fluid_parameters["problem_data"]["problem_name"].GetString(),
+                                       self.fluid_parameters["output_configuration"])
 
                 list_of_processes += [gid_output,]
         else:

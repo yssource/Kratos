@@ -162,34 +162,37 @@ namespace Kratos {
 
             if (contact_stress > p_element1->GetParticleConicalDamageMaxStress()) {
                 DamageContact(p_element1, p_element2, equiv_radius, equiv_level_of_fouling, equiv_young, equiv_shear, elastic_indentation, LocalElasticContactForce[2]);
-                LocalElasticContactForce[2] = DEM_D_Hertz_viscous_Coulomb::CalculateNormalForce(elastic_indentation);
+                if (elastic_indentation > 0.0) LocalElasticContactForce[2] = DEM_D_Hertz_viscous_Coulomb::CalculateNormalForce(elastic_indentation);
+                else LocalElasticContactForce[2] = 0.0;
             }
 
-            CalculateViscoDampingForce(LocalRelVel, ViscoDampingLocalContactForce, p_element1, p_element2);
+            if (elastic_indentation > 0.0) {
+                CalculateViscoDampingForce(LocalRelVel, ViscoDampingLocalContactForce, p_element1, p_element2);
 
-            double normal_contact_force = LocalElasticContactForce[2] + ViscoDampingLocalContactForce[2];
+                double normal_contact_force = LocalElasticContactForce[2] + ViscoDampingLocalContactForce[2];
 
-            if (normal_contact_force < 0.0) {
-                normal_contact_force = 0.0;
-                ViscoDampingLocalContactForce[2] = -1.0 * LocalElasticContactForce[2];
+                if (normal_contact_force < 0.0) {
+                    normal_contact_force = 0.0;
+                    ViscoDampingLocalContactForce[2] = -1.0 * LocalElasticContactForce[2];
+                }
+
+                double AuxElasticShearForce;
+                double MaximumAdmisibleShearForce;
+
+                CalculateTangentialForce(normal_contact_force, OldLocalElasticContactForce, LocalElasticContactForce, ViscoDampingLocalContactForce, LocalDeltDisp,
+                                         sliding, p_element1, p_element2, original_equiv_radius, equiv_young, elastic_indentation, previous_indentation, AuxElasticShearForce, MaximumAdmisibleShearForce);
+
+                double& elastic_energy = p_element1->GetElasticEnergy();
+                DEM_D_Hertz_viscous_Coulomb::CalculateElasticEnergyDEM(elastic_energy, elastic_indentation, LocalElasticContactForce);
+
+                if(sliding && MaximumAdmisibleShearForce != 0.0){
+                    double& inelastic_frictional_energy = p_element1->GetInelasticFrictionalEnergy();
+                    DEM_D_Hertz_viscous_Coulomb::CalculateInelasticFrictionalEnergyDEM(inelastic_frictional_energy, AuxElasticShearForce, LocalElasticContactForce);
+                }
+
+                double& inelastic_viscodamping_energy = p_element1->GetInelasticViscodampingEnergy();
+                DEM_D_Hertz_viscous_Coulomb::CalculateInelasticViscodampingEnergyDEM(inelastic_viscodamping_energy, ViscoDampingLocalContactForce, LocalDeltDisp);
             }
-
-            double AuxElasticShearForce;
-            double MaximumAdmisibleShearForce;
-
-            CalculateTangentialForce(normal_contact_force, OldLocalElasticContactForce, LocalElasticContactForce, ViscoDampingLocalContactForce, LocalDeltDisp,
-                                     sliding, p_element1, p_element2, original_equiv_radius, equiv_young, elastic_indentation, previous_indentation, AuxElasticShearForce, MaximumAdmisibleShearForce);
-
-            double& elastic_energy = p_element1->GetElasticEnergy();
-            DEM_D_Hertz_viscous_Coulomb::CalculateElasticEnergyDEM(elastic_energy, elastic_indentation, LocalElasticContactForce);
-
-            if(sliding && MaximumAdmisibleShearForce != 0.0){
-                double& inelastic_frictional_energy = p_element1->GetInelasticFrictionalEnergy();
-                DEM_D_Hertz_viscous_Coulomb::CalculateInelasticFrictionalEnergyDEM(inelastic_frictional_energy, AuxElasticShearForce, LocalElasticContactForce);
-            }
-
-            double& inelastic_viscodamping_energy = p_element1->GetInelasticViscodampingEnergy();
-            DEM_D_Hertz_viscous_Coulomb::CalculateInelasticViscodampingEnergyDEM(inelastic_viscodamping_energy, ViscoDampingLocalContactForce, LocalDeltDisp);
         }
     }
 
@@ -227,8 +230,7 @@ namespace Kratos {
             for (unsigned int i = 0; element->mNeighbourRigidFaces.size(); i++) {
                 if (element->mNeighbourRigidFaces[i]->Id() == wall->Id()) {
                     element->mNeighbourRigidContactRadius[i] = effective_radius;
-                    if (indentation > offset) element->mNeighbourRigidIndentation[i] = indentation - offset;
-                    else element->mNeighbourRigidIndentation[i] = 0.0;
+                    element->mNeighbourRigidIndentation[i] = indentation - offset;
                     indentation = element->mNeighbourRigidIndentation[i];
                     break;
                 }
@@ -298,34 +300,37 @@ namespace Kratos {
 
             if (contact_stress > p_element->GetParticleConicalDamageMaxStress()) {
                 DamageContactWithFEM(p_element, wall, effective_radius, equiv_level_of_fouling, equiv_young, equiv_shear, elastic_indentation, LocalElasticContactForce[2]);
-                LocalElasticContactForce[2] = DEM_D_Hertz_viscous_Coulomb::CalculateNormalForce(elastic_indentation);
+                if (elastic_indentation > 0.0) LocalElasticContactForce[2] = DEM_D_Hertz_viscous_Coulomb::CalculateNormalForce(elastic_indentation);
+                else LocalElasticContactForce[2] = 0.0;
             }
 
-            CalculateViscoDampingForceWithFEM(LocalRelVel, ViscoDampingLocalContactForce, p_element, wall);
+            if (elastic_indentation > 0.0) {
+                CalculateViscoDampingForceWithFEM(LocalRelVel, ViscoDampingLocalContactForce, p_element, wall);
 
-            double normal_contact_force = LocalElasticContactForce[2] + ViscoDampingLocalContactForce[2];
+                double normal_contact_force = LocalElasticContactForce[2] + ViscoDampingLocalContactForce[2];
 
-            if (normal_contact_force < 0.0) {
-                normal_contact_force = 0.0;
-                ViscoDampingLocalContactForce[2] = -1.0 * LocalElasticContactForce[2];
+                if (normal_contact_force < 0.0) {
+                    normal_contact_force = 0.0;
+                    ViscoDampingLocalContactForce[2] = -1.0 * LocalElasticContactForce[2];
+                }
+
+                double AuxElasticShearForce;
+                double MaximumAdmisibleShearForce;
+
+                CalculateTangentialForceWithFEM(normal_contact_force, OldLocalElasticContactForce, LocalElasticContactForce, ViscoDampingLocalContactForce, LocalDeltDisp,
+                                                sliding, p_element, wall, original_effective_radius, equiv_young, elastic_indentation, previous_indentation, AuxElasticShearForce, MaximumAdmisibleShearForce);
+
+                double& elastic_energy = p_element->GetElasticEnergy();
+                DEM_D_Hertz_viscous_Coulomb::CalculateElasticEnergyFEM(elastic_energy, elastic_indentation, LocalElasticContactForce);
+
+                if(sliding && MaximumAdmisibleShearForce != 0.0){
+                    double& inelastic_frictional_energy = p_element->GetInelasticFrictionalEnergy();
+                    DEM_D_Hertz_viscous_Coulomb::CalculateInelasticFrictionalEnergyFEM(inelastic_frictional_energy, AuxElasticShearForce, LocalElasticContactForce);
+                }
+
+                double& inelastic_viscodamping_energy = p_element->GetInelasticViscodampingEnergy();
+                DEM_D_Hertz_viscous_Coulomb::CalculateInelasticViscodampingEnergyFEM(inelastic_viscodamping_energy, ViscoDampingLocalContactForce, LocalDeltDisp);
             }
-
-            double AuxElasticShearForce;
-            double MaximumAdmisibleShearForce;
-
-            CalculateTangentialForceWithFEM(normal_contact_force, OldLocalElasticContactForce, LocalElasticContactForce, ViscoDampingLocalContactForce, LocalDeltDisp,
-                                            sliding, p_element, wall, original_effective_radius, equiv_young, elastic_indentation, previous_indentation, AuxElasticShearForce, MaximumAdmisibleShearForce);
-
-            double& elastic_energy = p_element->GetElasticEnergy();
-            DEM_D_Hertz_viscous_Coulomb::CalculateElasticEnergyFEM(elastic_energy, elastic_indentation, LocalElasticContactForce);
-
-            if(sliding && MaximumAdmisibleShearForce != 0.0){
-                double& inelastic_frictional_energy = p_element->GetInelasticFrictionalEnergy();
-                DEM_D_Hertz_viscous_Coulomb::CalculateInelasticFrictionalEnergyFEM(inelastic_frictional_energy, AuxElasticShearForce, LocalElasticContactForce);
-            }
-
-            double& inelastic_viscodamping_energy = p_element->GetInelasticViscodampingEnergy();
-            DEM_D_Hertz_viscous_Coulomb::CalculateInelasticViscodampingEnergyFEM(inelastic_viscodamping_energy, ViscoDampingLocalContactForce, LocalDeltDisp);
         }
     }
 

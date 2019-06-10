@@ -18,7 +18,8 @@
 // External includes
 
 // Project includes
-#include "includes/constitutive_law.h"
+//#include "includes/constitutive_law.h"
+#include "custom_constitutive/elastic_isotropic_3d.h"
 
 namespace Kratos
 {
@@ -49,7 +50,7 @@ namespace Kratos
  * 
  */
 class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) ElasticIsotropicOptimization3D
-    : public ConstitutiveLaw
+    : public ElasticIsotropic3D
 {
 public:
 
@@ -60,7 +61,10 @@ public:
     typedef ProcessInfo      ProcessInfoType;
     
     /// The base class ConstitutiveLaw type definition
-    typedef ConstitutiveLaw         BaseType;
+   // typedef ConstitutiveLaw         BaseType;
+    
+    /// The base class ElasticIsotropic3D type definition
+    typedef ElasticIsotropic3D      BaseType;
     
     /// The size type definition
     typedef std::size_t             SizeType;
@@ -344,7 +348,7 @@ protected:
     virtual void CalculateElasticMatrix(
         Matrix& rConstitutiveMatrix,
         ConstitutiveLaw::Parameters& rValues
-        );
+        ) override;
 
     /**
      * @brief It calculates the stress vector
@@ -356,7 +360,7 @@ protected:
         const Vector& rStrainVector,
         Vector& rStressVector,
         ConstitutiveLaw::Parameters& rValues
-        );
+        ) override;
 
     /**
      * @brief It calculates the strain vector
@@ -366,7 +370,7 @@ protected:
     virtual void CalculateCauchyGreenStrain(
         ConstitutiveLaw::Parameters& rValues,
         Vector& rStrainVector
-        );
+        ) override;
 
     ///@}
 

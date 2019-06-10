@@ -18,7 +18,7 @@
 // External includes
 
 // Project includes
-#include "custom_constitutive/elastic_isotropic_3d.h"
+#include "custom_constitutive/linear_plane_stress.h"
 
 namespace Kratos
 {
@@ -48,7 +48,7 @@ namespace Kratos
  * @author Riccardo Rossi
  */
 class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) LinearPlaneStressOptimization 
-    : public ElasticIsotropic3D
+    : public LinearPlaneStress
 {
 public:
     ///@name Type Definitions
@@ -61,7 +61,7 @@ public:
     typedef ConstitutiveLaw       CLBaseType;
     
     /// The base class ElasticIsotropic3D type definition
-    typedef ElasticIsotropic3D      BaseType;
+    typedef LinearPlaneStress      BaseType;
 
     // Adding the respective using to avoid overload conflicts
     //using BaseType::Has;
@@ -169,7 +169,7 @@ public:
      * @param rValue a reference to the returned value
      * @param rValue output: the value of the specified variable
      */
-    bool& GetValue(const Variable<bool>& rThisVariable, bool& rValue) override;
+    //bool& GetValue(const Variable<bool>& rThisVariable, bool& rValue) override;
     double& GetValue(const Variable<double>& rThisVariable, double& rValue) override;
 
 
@@ -198,7 +198,10 @@ protected:
     * @param C: The constitutive matrix
     * @param rValues Parameters of the constitutive law
     */
-    void CalculateElasticMatrix(Matrix& C, ConstitutiveLaw::Parameters& rValues) override;
+    virtual void CalculateElasticMatrix(
+        Matrix& C, 
+        ConstitutiveLaw::Parameters& rValues
+        ) override;
 
     /**
     * It calculates the stress vector
@@ -206,7 +209,7 @@ protected:
     * @param rStressVector The stress vector in Voigt notation
     * @param rValues Parameters of the constitutive law
     */
-    void CalculatePK2Stress(
+    virtual void CalculatePK2Stress(
         const Vector& rStrainVector,
         Vector& rStressVector,
         ConstitutiveLaw::Parameters& rValues
@@ -217,11 +220,11 @@ protected:
     * @param rValues The internal values of the law
     * @param rStrainVector The strain vector in Voigt notation
     */
-    void CalculateCauchyGreenStrain(
+    virtual void CalculateCauchyGreenStrain(
         ConstitutiveLaw::Parameters& rValues,
         Vector& rStrainVector
         ) override;
-
+    
     ///@}
 
 private:

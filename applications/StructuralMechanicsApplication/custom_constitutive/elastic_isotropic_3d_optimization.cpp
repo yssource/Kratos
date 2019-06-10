@@ -26,7 +26,7 @@ namespace Kratos
 /***********************************************************************************/
 
 ElasticIsotropicOptimization3D::ElasticIsotropicOptimization3D()
-    : ConstitutiveLaw()
+    : ElasticIsotropic3D()
 {
 }
 
@@ -34,7 +34,7 @@ ElasticIsotropicOptimization3D::ElasticIsotropicOptimization3D()
 /***********************************************************************************/
 
 ElasticIsotropicOptimization3D::ElasticIsotropicOptimization3D(const ElasticIsotropicOptimization3D& rOther)
-    : ConstitutiveLaw(rOther)
+    : ElasticIsotropic3D(rOther)
 {
 }
 
@@ -316,7 +316,7 @@ void ElasticIsotropicOptimization3D::CalculateElasticMatrix(
     ConstitutiveLaw::Parameters& rValues
     )
 {
-    //ElasticIsotropic3D::CalculateElasticMatrix(rConstitutiveMatrix, rValues);
+    BaseType::CalculateElasticMatrix(rConstitutiveMatrix, rValues);
     KRATOS_WATCH(__LINE__)
     KRATOS_WATCH(mopt_coeff)
     rConstitutiveMatrix *= mopt_coeff;

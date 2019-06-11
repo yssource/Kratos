@@ -19,6 +19,7 @@
 // Project includes
 #include "custom_utilities/contact_utilities.h"
 #include "custom_conditions/mortar_contact_condition.h"
+#include "custom_frictional_laws/frictional_law_with_derivative.h"
 
 namespace Kratos
 {
@@ -119,6 +120,8 @@ public:
     typedef typename std::conditional<TDim == 2, LineType, TriangleType >::type                                   DecompositionType;
 
     typedef DerivativeDataFrictional<TDim, TNumNodes, TNormalVariation, TNumNodesMaster>                         DerivativeDataType;
+
+    typedef FrictionalLawWithDerivative<TDim,TNumNodes,TNormalVariation, TNumNodesMaster>           FrictionalLawWithDerivativeType;
 
     static constexpr IndexType MatrixSize = TDim * (TNumNodes + TNumNodesMaster);
 
@@ -451,6 +454,57 @@ protected:
         // TODO: Define the "CL" or friction law to compute this
 
         return friction_coeffient_vector;
+    }
+
+    /**
+     * @brief This method returns a vector containing the threshold values
+     * @param rCurrentProcessInfo The current instance of the process info
+     * @return Threshold values
+     */
+    array_1d<double, TNumNodes> GetThresholdValue(const ProcessInfo& rCurrentProcessInfo)
+    {
+        // The friction coefficient
+        array_1d<double, TNumNodes> threshold_values;
+        auto& r_geometry = this->GetGeometry();
+
+        for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node) {
+            const auto& r_node = r_geometry[i_node];
+            KRATOS_DEBUG_ERROR_IF_NOT(r_node.Has(FRICTIONAL_LAW)) << "FRICTIONAL_LAW not defined on node: " << r_node.Id() << std::endl;
+            FrictionalLaw::Pointer p_law = r_node.GetValue(FRICTIONAL_LAW);
+            threshold_values[i_node] = p_law->GetThresholdValue(r_geometry[i_node], *this, rCurrentProcessInfo);
+        }
+
+        return threshold_values;
+    }
+
+    /**
+     * @brief This method returns a vector containing the derivatives of the threshold values
+     * @param rCurrentProcessInfo The current instance of the process info
+     * @param rDerivativeData The reference to the derivative database
+     * @param rMortarConditionMatrices The container of the mortar operators
+     * @return The derivatives of the threshold values
+     */
+    array_1d<array_1d<double, TNumNodes>, TDim * (TNumNodes + TNumNodesMaster)> GetDerivativeThresholdValue(
+        const ProcessInfo& rCurrentProcessInfo,
+        const DerivativeDataType& rDerivativeData,
+        const MortarConditionMatrices& rMortarConditionMatrices
+        )
+    {
+        // The friction coefficient
+        array_1d<array_1d<double, TNumNodes>, TDim * (TNumNodes + TNumNodesMaster)> derivatives_threshold_values;
+        auto& r_geometry = this->GetGeometry();
+
+        for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node) {
+            const auto& r_node = r_geometry[i_node];
+            KRATOS_DEBUG_ERROR_IF_NOT(r_node.Has(FRICTIONAL_LAW)) << "FRICTIONAL_LAW not defined on node: " << r_node.Id() << std::endl;
+            FrictionalLaw::Pointer p_law = r_node.GetValue(FRICTIONAL_LAW);
+            auto& r_law = dynamic_cast<FrictionalLawWithDerivativeType&>(*p_law);
+            for (std::size_t i_der = 0; i_der < TDim * (TNumNodes + TNumNodesMaster); ++i_der) {
+                derivatives_threshold_values[i_der][i_node] = r_law.GetDerivativeThresholdValue(r_node, *this, rCurrentProcessInfo, rDerivativeData, rMortarConditionMatrices, i_der, i_node);
+            }
+        }
+
+        return derivatives_threshold_values;
     }
 
     ///@}

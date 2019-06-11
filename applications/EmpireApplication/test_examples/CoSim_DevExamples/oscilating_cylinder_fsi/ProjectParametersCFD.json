@@ -12,7 +12,8 @@
       "NoSlip2D_Interface"
     ],
     "mesh_motion_solver_settings": {
-      "solver_type": "structural_similarity"
+      "solver_type": "structural_similarity",
+      "calculate_mesh_velocities": false
     },
     "fluid_solver_settings": {
       "solver_type": "Monolithic",

@@ -3,7 +3,8 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 # Importing the Kratos Library
 import KratosMultiphysics
 from KratosMultiphysics.FluidDynamicsApplication import navier_stokes_ale_fluid_solver
-
+import KratosMultiphysics.MeshMovingApplication.python_solvers_wrapper_mesh_motion as mesh_mothion_solvers_wrapper
+import KratosMultiphysics.FluidDynamicsApplication.python_solvers_wrapper_fluid as fluid_solvers_wrapper
 
 # Other imports
 import co_simulation_tools as cs_tools
@@ -41,6 +42,8 @@ class KratosFluidSolver(object):
             self.is_printing_rank = (KratosMPI.mpi.rank == 0)
         else:
             self.is_printing_rank = True
+
+
 
         ################################### BAUSTELLE ###############################(navier_stokes_ale_fluid_solver)
         ################################### BAUSTELLE ###################################
@@ -261,3 +264,4 @@ class KratosFluidSolver(object):
             raise NameError("wrong parameter name")
 
         return list_of_processes
+

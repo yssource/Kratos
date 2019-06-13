@@ -7,7 +7,7 @@
 //                   license: structural_mechanics_application/license.txt
 //
 //  Main authors:    Sergio Jimenez/Alejandro Cornejo/Lucia Barbu
-//  Collaborator:    
+//  Collaborator:
 //
 
 // System includes
@@ -90,14 +90,18 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
         double previous_max_stress = this->GetPreviousMaxStress();
         double previous_min_stress = this->GetPreviousMinStress();
         double wohler_stress = this->GetWohlerStress();
+        double reversion_factor_relative_error = mReversionFactorRelativeError;
+        double max_stress_relative_error = mMaxStressRelativeError;
+        double CyclesToFailure = mCyclesToFailure;
+        unsigned int new_cycle = 0;
 
 
         if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
 
             HighCycleFatigueLawIntegrator<6>::CalculateMaximumAndMinimumStresses(
-                uniaxial_stress, 
-                max_stress, 
-                min_stress, 
+                uniaxial_stress,
+                max_stress,
+                min_stress,
                 this->GetPreviousStresses(),
                 max_indicator,
                 min_indicator);
@@ -107,7 +111,7 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
             if (max_indicator && min_indicator) {
                 double previous_reversion_factor = HighCycleFatigueLawIntegrator<6>::CalculateReversionFactor(previous_max_stress, previous_min_stress);
                 double reversion_factor = HighCycleFatigueLawIntegrator<6>::CalculateReversionFactor(max_stress, min_stress);
-                
+
                 double s_th, alphat;
                 HighCycleFatigueLawIntegrator<6>::CalculateFatigueParameters(
                     max_stress,
@@ -115,22 +119,26 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
                     rValues.GetMaterialProperties(),
                     B0,
                     s_th,
-                    alphat);
-                
+                    alphat,
+                    CyclesToFailure);
+
                 double betaf = rValues.GetMaterialProperties()[HIGH_CYCLE_FATIGUE_COEFFICIENTS][4];
-                double reversion_factor_relative_error = std::abs((previous_reversion_factor - reversion_factor) / previous_reversion_factor);
-                double max_stress_relative_error = std::abs((previous_reversion_factor - reversion_factor) / previous_reversion_factor);
+                reversion_factor_relative_error = std::abs((reversion_factor - previous_reversion_factor) / reversion_factor);
+                max_stress_relative_error = std::abs((max_stress - previous_max_stress) / max_stress);
+                KRATOS_WATCH(reversion_factor_relative_error);
+                KRATOS_WATCH(max_stress_relative_error);
 
                 if (global_number_of_cycles > 2 && (reversion_factor_relative_error > 0.001 || max_stress_relative_error > 0.001)) {
                     local_number_of_cycles = std::trunc(std::pow(10, std::pow(-(std::log(fatigue_reduction_factor) / B0), 1.0 / (betaf * betaf)))) + 1;
                 }
                 global_number_of_cycles++;
                 local_number_of_cycles++;
+                new_cycle = 1;
                 max_indicator = false;
                 min_indicator = false;
                 previous_max_stress = max_stress;
                 previous_min_stress = min_stress;
-                                
+
                 HighCycleFatigueLawIntegrator<6>::CalculateFatigueReductionFactorAndWohlerStress(rValues.GetMaterialProperties(),
                                                                                                 max_stress,
                                                                                                 local_number_of_cycles,
@@ -150,13 +158,18 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
             this->SetPreviousMaxStress(previous_max_stress);
             this->SetPreviousMinStress(previous_min_stress);
             this->SetWohlerStress(wohler_stress);
+            mReversionFactorRelativeError = reversion_factor_relative_error;
+            mMaxStressRelativeError = max_stress_relative_error;
+            mNewCycleIndicator = new_cycle;
+            mCyclesToFailure = CyclesToFailure;
+
         }
 
         uniaxial_stress *= sign_factor;
         if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
             this->SetValue(UNIAXIAL_STRESS, uniaxial_stress, rValues.GetProcessInfo());
         }
-        
+
         uniaxial_stress /= fatigue_reduction_factor;  // Fatigue contribution
         const double F = uniaxial_stress - threshold;
 
@@ -171,16 +184,16 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
             const double characteristic_length = ConstitutiveLawUtilities<VoigtSize>::CalculateCharacteristicLength(rValues.GetElementGeometry());
             // This routine updates the PredictiveStress to verify the yield surf
             TConstLawIntegratorType::IntegrateStressVector(
-                predictive_stress_vector, 
-                uniaxial_stress, 
-                damage, 
-                threshold, 
-                rValues, 
+                predictive_stress_vector,
+                uniaxial_stress,
+                damage,
+                threshold,
+                rValues,
                 characteristic_length);
 
             // Updated Values
             noalias(r_integrated_stress_vector) = predictive_stress_vector;
-            
+
             if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
                 TConstLawIntegratorType::YieldSurfaceType::CalculateEquivalentStress(predictive_stress_vector, r_strain_vector,uniaxial_stress, rValues);
                 this->SetStressVector(r_integrated_stress_vector);
@@ -230,21 +243,21 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::FinalizeMat
         double uniaxial_stress;
         TConstLawIntegratorType::YieldSurfaceType::CalculateEquivalentStress(predictive_stress_vector, r_strain_vector, uniaxial_stress, rValues);
         this->SetValue(UNIAXIAL_STRESS, uniaxial_stress, rValues.GetProcessInfo());
-        
+
         double fatigue_reduction_factor = this->GetFatigueReductionFactor();
 
         uniaxial_stress /= fatigue_reduction_factor;  // Fatigue contribution
         const double F = uniaxial_stress - threshold;
 
-        if (F > tolerance) { 
+        if (F > tolerance) {
             const double characteristic_length = ConstitutiveLawUtilities<VoigtSize>::CalculateCharacteristicLength(rValues.GetElementGeometry());
             // This routine updates the PredictiveStress to verify the yield surf
             TConstLawIntegratorType::IntegrateStressVector(
-                predictive_stress_vector, 
-                uniaxial_stress, 
-                damage, 
-                threshold, 
-                rValues, 
+                predictive_stress_vector,
+                uniaxial_stress,
+                damage,
+                threshold,
+                rValues,
                 characteristic_length);
             this->SetDamage(damage);
             this->SetThreshold(uniaxial_stress);
@@ -270,6 +283,12 @@ bool GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::Has(const V
         return true;
     } else if (rThisVariable == WOHLER_STRESS) {
         return true;
+    } else if (rThisVariable == CYCLES_TO_FAILURE) {
+        return true;
+    } else if (rThisVariable == REVERSION_FACTOR_RELATIVE_ERROR) {
+        return true;
+    } else if (rThisVariable == MAX_STRESS_RELATIVE_ERROR) {
+        return true;
     } else {
         return GenericSmallStrainIsotropicDamage<TConstLawIntegratorType>::Has(rThisVariable);
     }
@@ -283,6 +302,8 @@ template <class TConstLawIntegratorType>
 bool GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::Has(const Variable<int>& rThisVariable)
 {
     if (rThisVariable == NUMBER_OF_CYCLES) {
+        return true;
+    } else if (rThisVariable == CYCLE_INDICATOR) {
         return true;
     }
     return false;
@@ -304,6 +325,12 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::SetValue(
         mFatigueReductionFactor = rValue;
     } else if (rThisVariable == WOHLER_STRESS) {
         mWohlerStress = rValue;
+    } else if (rThisVariable == CYCLES_TO_FAILURE) {
+        mCyclesToFailure = rValue;
+    } else if (rThisVariable == REVERSION_FACTOR_RELATIVE_ERROR) {
+        mReversionFactorRelativeError = rValue;
+    } else if (rThisVariable == MAX_STRESS_RELATIVE_ERROR) {
+        mMaxStressRelativeError = rValue;
     } else {
         return GenericSmallStrainIsotropicDamage<TConstLawIntegratorType>::SetValue(rThisVariable, rValue, rCurrentProcessInfo);
     }
@@ -319,7 +346,9 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::SetValue(
     )
 {
     if (rThisVariable == NUMBER_OF_CYCLES) {
-        mNumberOfCyclesGlobal = rValue; 
+        mNumberOfCyclesGlobal = rValue;
+    } else if (rThisVariable == CYCLE_INDICATOR) {
+        mNewCycleIndicator = rValue;
     }
 }
 
@@ -338,6 +367,12 @@ double& GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::GetValue
         rValue = mFatigueReductionFactor;
     } else if (rThisVariable == WOHLER_STRESS) {
         rValue = mWohlerStress;
+    } else if (rThisVariable == CYCLES_TO_FAILURE) {
+        rValue = mCyclesToFailure;
+    } else if (rThisVariable == REVERSION_FACTOR_RELATIVE_ERROR) {
+        rValue = mReversionFactorRelativeError;
+    } else if (rThisVariable == MAX_STRESS_RELATIVE_ERROR) {
+        rValue = mMaxStressRelativeError;
     } else {
         return GenericSmallStrainIsotropicDamage<TConstLawIntegratorType>::GetValue(rThisVariable, rValue);
     }
@@ -355,7 +390,9 @@ int& GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::GetValue(
 {
     if (rThisVariable == NUMBER_OF_CYCLES) {
         rValue = mNumberOfCyclesGlobal;
-    } 
+    } else if (rThisVariable == CYCLE_INDICATOR) {
+        rValue = mNewCycleIndicator;
+    }
     return rValue;
 }
 

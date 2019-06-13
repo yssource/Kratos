@@ -356,6 +356,10 @@ private:
     bool mMaxDetected = false; // Maximum's indicator in the current cycle
     bool mMinDetected = false; // Minimum's indicator in the current cycle
     double mWohlerStress = 1.0; // Normalised Wohler stress required for building the life prediction curves (SN curves)
+    double mReversionFactorRelativeError = 0.0; 
+    double mMaxStressRelativeError = 0.0; 
+    unsigned int mNewCycleIndicator = 0; 
+    double mCyclesToFailure = 0.0;
 
     ///@}
     ///@name Private Operators

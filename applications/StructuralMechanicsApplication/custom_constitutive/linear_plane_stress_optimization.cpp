@@ -16,30 +16,29 @@
 
 // Project includes
 #include "custom_constitutive/linear_plane_stress_optimization.h"
-
 #include "structural_mechanics_application_variables.h"
 
 namespace Kratos
 {
 
-//******************************CONSTRUCTOR*******************************************
-//************************************************************************************
+/******************************CONSTRUCTOR******************************************/
+/***********************************************************************************/
 
 LinearPlaneStressOptimization::LinearPlaneStressOptimization()
     :LinearPlaneStress()
 {
 }
 
-//******************************COPY CONSTRUCTOR**************************************
-//************************************************************************************
+/******************************COPY CONSTRUCTOR*************************************/
+/***********************************************************************************/
 
 LinearPlaneStressOptimization::LinearPlaneStressOptimization(const LinearPlaneStressOptimization& rOther)
     :LinearPlaneStress(rOther)
 {
 }
 
-//********************************CLONE***********************************************
-//************************************************************************************
+/********************************CLONE**********************************************/
+/***********************************************************************************/
 
 ConstitutiveLaw::Pointer LinearPlaneStressOptimization::Clone() const
 {
@@ -47,32 +46,52 @@ ConstitutiveLaw::Pointer LinearPlaneStressOptimization::Clone() const
     return p_clone;
 }
 
-//*******************************DESTRUCTOR*******************************************
-//************************************************************************************
+/*******************************DESTRUCTOR******************************************/
+/***********************************************************************************/
 
 LinearPlaneStressOptimization::~LinearPlaneStressOptimization()
 {
 }
 
-
 /***********************************************************************************/
 /***********************************************************************************/
 
-double& LinearPlaneStressOptimization::GetValue(const Variable<double>& rThisVariable, double& rValue)
+bool LinearPlaneStressOptimization::Has(const Variable<double>& rThisVariable)
 {
-    if(rThisVariable == SCALE_FACTOR)
-        return mopt_coeff;
-            
+    if (rThisVariable == SCALE_FACTOR) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-void LinearPlaneStressOptimization::SetValue(const Variable<double>& rVariable, const double& rValue, const ProcessInfo& rCurrentProcessInfo)
+double& LinearPlaneStressOptimization::GetValue(
+    const Variable<double>& rThisVariable,
+    double& rValue
+    )
 {
-    if(rVariable == SCALE_FACTOR)
-        mopt_coeff = rValue;
+    if(rThisVariable == SCALE_FACTOR) {
+        rValue = mOptimizationCoefficient;
+    }
 
+    return rValue;
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+void LinearPlaneStressOptimization::SetValue(
+    const Variable<double>& rVariable,
+    const double& rValue,
+    const ProcessInfo& rCurrentProcessInfo
+    )
+{
+    if(rVariable == SCALE_FACTOR) {
+        mOptimizationCoefficient = rValue;
+    }
 }
 
 //*************************CONSTITUTIVE LAW GENERAL FEATURES *************************
@@ -95,41 +114,32 @@ void LinearPlaneStressOptimization::GetLawFeatures(Features& rFeatures)
     rFeatures.mSpaceDimension = 2;
 }
 
-
-
-//************************************************************************************
-
+/***********************************************************************************/
+/***********************************************************************************/
 
 void LinearPlaneStressOptimization::CalculateElasticMatrix(Matrix& C, ConstitutiveLaw::Parameters& rValues)
 {
     BaseType::CalculateElasticMatrix(C, rValues);
-   // KRATOS_WATCH(__LINE__)
-    //KRATOS_WATCH(mopt_coeff)
-   // KRATOS_WATCH(C)
-    C *= mopt_coeff;
 
+    C *= mOptimizationCoefficient;
 }
 
-//************************************************************************************
-//************************************************************************************
+/***********************************************************************************/
+/***********************************************************************************/
 
 void LinearPlaneStressOptimization::CalculatePK2Stress(
     const Vector& rStrainVector,
     Vector& rStressVector,
     ConstitutiveLaw::Parameters& rValues
-)
+    )
 {
     LinearPlaneStress::CalculatePK2Stress(rStrainVector, rStressVector,rValues);
-        KRATOS_WATCH(__LINE__)
 
-//KRATOS_WATCH(rStressVector)
-    rStressVector *= mopt_coeff;
-       // KRATOS_WATCH(rStressVector)
-
+    rStressVector *= mOptimizationCoefficient;
 }
 
-//************************************************************************************
-//************************************************************************************
+/***********************************************************************************/
+/***********************************************************************************/
 
 void LinearPlaneStressOptimization::CalculateCauchyGreenStrain(Parameters& rValues, Vector& rStrainVector)
 {
@@ -151,6 +161,5 @@ void LinearPlaneStressOptimization::CalculateCauchyGreenStrain(Parameters& rValu
 
     noalias(rStrainVector) = MathUtils<double>::StrainTensorToVector(E_tensor);
 }
-
 
 } // Namespace Kratos

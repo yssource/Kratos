@@ -107,14 +107,6 @@ public:
     ///@}
     ///@name Operations
     ///@{
-    bool Has(const Variable<double>& rThisVariable) override
-    {
-        if (rThisVariable == SCALE_FACTOR)
-            return true;
-        else
-            return false;
-    }
-
 
     /**
      * This function is designed to be called once to check compatibility with element
@@ -138,21 +130,13 @@ public:
         return VoigtSize;
     }
 
-    ///@}
-    ///@name Access
-    ///@{
+    /**
+     * @brief Returns whether this constitutive Law has specified variable (double)
+     * @param rThisVariable the variable to be checked for
+     * @return true if the variable is defined in the constitutive law
+     */
+    bool Has(const Variable<double>& rThisVariable) override;
 
-    ///@}
-    ///@name Inquiry
-    ///@{
-
-    ///@}
-    ///@name Input and output
-    ///@{
-
-    ///@}
-    ///@name Friends
-    ///@{
     /**
      * @brief Sets the value of a specified variable (double)
      * @param rVariable the variable to be returned
@@ -172,7 +156,21 @@ public:
     //bool& GetValue(const Variable<bool>& rThisVariable, bool& rValue) override;
     double& GetValue(const Variable<double>& rThisVariable, double& rValue) override;
 
+    ///@}
+    ///@name Access
+    ///@{
 
+    ///@}
+    ///@name Inquiry
+    ///@{
+
+    ///@}
+    ///@name Input and output
+    ///@{
+
+    ///@}
+    ///@name Friends
+    ///@{
 
     ///@}
 
@@ -235,7 +233,9 @@ private:
     ///@}
     ///@name Member Variables
     ///@{
-    double mopt_coeff = 1.0;
+
+    double mOptimizationCoefficient = 1.0; /// The optimization coefficient
+
     ///@}
     ///@name Private Operators
     ///@{

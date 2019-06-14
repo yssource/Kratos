@@ -139,27 +139,25 @@ function evaluating the QoI and the cost of the simulation, computing the mesh o
 refining recursively from the coarsest mesh
 input:
         current_MLMC_level:                current Multilevel Monte Carlo level we are solving
-        pickled_coarse_model:              pickled model
-        pickled_coarse_project_parameters: pickled parameters
+        serialized_coarse_model:              pickled model
+        serialized_coarse_project_parameters: pickled parameters
         mesh_sizes:                        mesh sizes for all levels
 output:
         mlmc_results: QoI:                list of QoI for all levels computed in the current simulation
                       finer_level:        finest level
                       time_ML:            list of MLMC time for all levels computed in the current simulation
-        pickled_finer_model:              pickled finer model
-        pickled_finer_project_parameters: pickled finer parameters
+        serialized_finer_model:              pickled finer model
+        serialized_finer_project_parameters: pickled finer parameters
 """
 @constraint(ComputingUnits="${computing_units_mc_execute}")
 @ExaquteTask(returns=3)
-def ExecuteInstanceConcurrentAdaptiveRefinementAux_Task(current_MLMC_level,pickled_coarse_model,pickled_coarse_project_parameters,pickled_custom_metric_refinement_parameters,pickled_custom_remesh_refinement_parameters,mesh_sizes,recursive_maximal_size,sample,current_level,current_analysis_stage,mlmc_results):
+def ExecuteInstanceConcurrentAdaptiveRefinementAux_Task(current_MLMC_level,serialized_model,serialized_project_parameters,serialized_custom_metric_refinement_parameters,serialized_custom_remesh_refinement_parameters,mesh_sizes,recursive_maximal_size,sample,current_level,current_analysis_stage,mlmc_results):
     time_0 = time.time()
-    # unpickle model and build Kratos Model object
-    serialized_model = pickle.loads(pickled_coarse_model)
+    # unserialize model and build Kratos Model object
     current_model = KratosMultiphysics.Model()
     serialized_model.Load("ModelSerialization",current_model)
     del(serialized_model)
-    # unpickle parameters and build Kratos Parameters object
-    serialized_project_parameters = pickle.loads(pickled_coarse_project_parameters)
+    # unserialize parameters and build Kratos Parameters object
     current_project_parameters = KratosMultiphysics.Parameters()
     serialized_project_parameters.Load("ParametersSerialization",current_project_parameters)
     del(serialized_project_parameters)
@@ -170,8 +168,6 @@ def ExecuteInstanceConcurrentAdaptiveRefinementAux_Task(current_MLMC_level,pickl
     if (current_level > 0):
         time_2 = time.time()
         # unpickle metric and remesh refinement parameters and build Kratos Parameters objects
-        serialized_custom_metric_refinement_parameters = pickle.loads(pickled_custom_metric_refinement_parameters)
-        serialized_custom_remesh_refinement_parameters = pickle.loads(pickled_custom_remesh_refinement_parameters)
         current_custom_metric_refinement_parameters = KratosMultiphysics.Parameters()
         current_custom_remesh_refinement_parameters = KratosMultiphysics.Parameters()
         serialized_custom_metric_refinement_parameters.Load("MetricRefinementParametersSerialization",current_custom_metric_refinement_parameters)
@@ -214,9 +210,6 @@ def ExecuteInstanceConcurrentAdaptiveRefinementAux_Task(current_MLMC_level,pickl
     serialized_finer_model.Save("ModelSerialization",simulation.model)
     serialized_finer_project_parameters = KratosMultiphysics.StreamSerializer()
     serialized_finer_project_parameters.Save("ParametersSerialization",simulation.project_parameters)
-    # pickle model and parameters
-    pickled_finer_model = pickle.dumps(serialized_finer_model, 2) # second argument is the protocol and is NECESSARY (according to pybind11 docs)
-    pickled_finer_project_parameters = pickle.dumps(serialized_finer_project_parameters, 2) # second argument is the protocol and is NECESSARY (according to pybind11 docs)
     del(simulation)
     time_8 = time.time()
     end_MLMC_time = time.time()
@@ -250,60 +243,24 @@ def ExecuteInstanceConcurrentAdaptiveRefinementAux_Task(current_MLMC_level,pickl
         print("[RATIO] Relative ONLY mmg refinement time:",mmg_refinement_time/total_task_time)
     print("\n","#"*50," END TIMES EXECUTE TASK ","#"*50,"\n")
 
-    return mlmc_results,pickled_finer_model,pickled_finer_project_parameters
+    return mlmc_results,serialized_finer_model,serialized_finer_project_parameters
 
 
 @constraint(ComputingUnits="${computing_units_mc_execute}")
 @ExaquteTask(returns=1)
-def ExecuteInstanceSingleRefinementAux_Task(current_MLMC_level,pickled_coarse_model,pickled_coarse_project_parameters,sample,current_level,current_analysis_stage,mlmc_results):
+def ExecuteInstanceSingleRefinementAux_Task(current_MLMC_level,serialized_model,serialized_project_parameters,sample,current_level,current_analysis_stage,mlmc_results):
     time_0 = time.time()
-    # unpickle model and build Kratos Model object
-    serialized_model = pickle.loads(pickled_coarse_model)
+    # unserialize model and build Kratos Model object
     current_model = KratosMultiphysics.Model()
     serialized_model.Load("ModelSerialization",current_model)
     del(serialized_model)
-    # unpickle parameters and build Kratos Parameters object
-    serialized_project_parameters = pickle.loads(pickled_coarse_project_parameters)
+    # unserialize parameters and build Kratos Parameters object
     current_project_parameters = KratosMultiphysics.Parameters()
     serialized_project_parameters.Load("ParametersSerialization",current_project_parameters)
     del(serialized_project_parameters)
     time_1 = time.time()
     # start time
     start_MLMC_time = time.time()
-    # # refine if current current_level > 0, adaptive refinement based on the solution of previous level
-    # if (current_level > 0):
-    #     time_2 = time.time()
-    #     # unpickle metric and remesh refinement parameters and build Kratos Parameters objects
-    #     serialized_custom_metric_refinement_parameters = pickle.loads(pickled_custom_metric_refinement_parameters)
-    #     serialized_custom_remesh_refinement_parameters = pickle.loads(pickled_custom_remesh_refinement_parameters)
-    #     current_custom_metric_refinement_parameters = KratosMultiphysics.Parameters()
-    #     current_custom_remesh_refinement_parameters = KratosMultiphysics.Parameters()
-    #     serialized_custom_metric_refinement_parameters.Load("MetricRefinementParametersSerialization",current_custom_metric_refinement_parameters)
-    #     serialized_custom_remesh_refinement_parameters.Load("RemeshRefinementParametersSerialization",current_custom_remesh_refinement_parameters)
-    #     del(serialized_custom_metric_refinement_parameters,serialized_custom_remesh_refinement_parameters)
-    #     # set minimal and maximal mesh sizes
-    #     minimal_mesh_size_level = mesh_sizes[current_level]
-    #     if (recursive_maximal_size == "True"):
-    #         maximal_mesh_size_level = mesh_sizes[current_level-1]
-    #     else:
-    #         maximal_mesh_size_level = 10.0
-    #     time_3 = time.time()
-    #     # refine the model Kratos object
-    #     adaptive_refinement_manager = AdaptiveRefinement(current_model,current_project_parameters,current_custom_metric_refinement_parameters,current_custom_remesh_refinement_parameters,minimal_mesh_size_level,maximal_mesh_size_level)
-    #     refined_model,refined_project_parameters = adaptive_refinement_manager.ComputeAdaptiveRefinement()
-
-    #     # refined_model,refined_project_parameters = \
-    #     #     hessian_metric_refinement.ComputeRefinementHessianMetric(current_model,current_project_parameters,minimal_mesh_size_level,maximal_mesh_size_level,current_custom_metric_refinement_parameters,current_custom_remesh_refinement_parameters)
-
-    #     time_4 = time.time()
-    #     # initialize the model Kratos object
-    #     simulation = current_analysis_stage(refined_model,refined_project_parameters,sample)
-    #     simulation.Initialize()
-    #     # update model Kratos object
-    #     current_model = simulation.model
-    #     current_project_parameters = simulation.project_parameters
-    #     del(simulation)
-    #     time_5 = time.time()
     time_6 = time.time()
     simulation = current_analysis_stage(current_model,current_project_parameters,sample)
     print("[CHECK OUTPUT]: sample value:", str(sample))
@@ -313,14 +270,6 @@ def ExecuteInstanceSingleRefinementAux_Task(current_MLMC_level,pickled_coarse_mo
     print("[CHECK OUTPUT]: simulation qoi:", str(QoI))
     sys.stdout.flush()
     time_7 = time.time()
-    # # save model and parameters as StreamSerializer Kratos objects
-    # serialized_finer_model = KratosMultiphysics.StreamSerializer()
-    # serialized_finer_model.Save("ModelSerialization",simulation.model)
-    # serialized_finer_project_parameters = KratosMultiphysics.StreamSerializer()
-    # serialized_finer_project_parameters.Save("ParametersSerialization",simulation.project_parameters)
-    # # pickle model and parameters
-    # pickled_finer_model = pickle.dumps(serialized_finer_model, 2) # second argument is the protocol and is NECESSARY (according to pybind11 docs)
-    # pickled_finer_project_parameters = pickle.dumps(serialized_finer_project_parameters, 2) # second argument is the protocol and is NECESSARY (according to pybind11 docs)
     del(simulation)
     time_8 = time.time()
     end_MLMC_time = time.time()
@@ -365,9 +314,9 @@ class MultilevelMonteCarlo(object):
             raise Exception ("Please provide a Kratos specific application analysis stage for the current problem")
         # project_parameters_path: path to the project parameters json file
         if (project_parameters_path is "auxiliary_project_parameters_path"): # needed in FinalizePhaseAux_Task to build an auxiliary MultilevelMonteCarlo class
-            self.to_pickle_model_parameters = False
+            self.to_serialize_model_parameters = False
         elif(project_parameters_path is not None): # standard constructor
-            self.to_pickle_model_parameters = True
+            self.to_serialize_model_parameters = True
             self.project_parameters_path = project_parameters_path
         else:
             raise Exception ("Please provide the path of the project parameters json file")
@@ -529,26 +478,24 @@ class MultilevelMonteCarlo(object):
         #      self.current_level = len(self.difference_QoI.values) - 1        #
         ########################################################################
 
-        # pickled_model: serialization of model Kratos object of the problem
+        # pickled/serialized_model: serialization of model Kratos object of the problem
         self.pickled_model = None
         self.serialized_model = None
-        # pickled_project_parameters: serialization of project parameters Kratos object of the problem
+        # pickled/serialized_project_parameters: serialization of project parameters Kratos object of the problem
         self.pickled_project_parameters = None
         self.serialized_project_parameters = None
-        # pickled_custom_settings_metric_refinement: serialization of the metric refinement custom settings
+        # pickled/serialized_custom_settings_metric_refinement: serialization of the metric refinement custom settings
         self.pickled_custom_metric_refinement_parameters = None
         self.serialized_custom_metric_refinement_parameters = None
-        # pickled_custom_settings_remesh_refinement: serialization of the remesh custom settings
+        # pickled/serialized_custom_settings_remesh_refinement: serialization of the remesh custom settings
         self.pickled_custom_remesh_refinement_parameters = None
         self.serialized_custom_remesh_refinement_parameters = None
         # construct the pickled model and pickled project parameters of the problem
-        self.is_project_parameters_pickled = False
-        self.is_model_pickled = False
-        # self.SerializeModelParameters()
+        self.is_project_parameters_serialized = False
+        self.is_model_serialized = False
         # construct the pickled custom settings metric refinement and the picled custom settings remesh of the problem
-        self.is_custom_settings_metric_refinement_pickled = False
-        self.is_custom_settings_remesh_refinement_pickled = False
-        # self.SerializeRefinementParameters()
+        self.is_custom_settings_metric_refinement_serialized = False
+        self.is_custom_settings_remesh_refinement_serialized = False
 
     """
     function executing the CMLMC algorithm
@@ -556,6 +503,7 @@ class MultilevelMonteCarlo(object):
     """
     def Run(self):
         if (self.settings["run_multilevel_monte_carlo"].GetString() == "True"):
+            start_time = time.time()
             self.SerializeRefinementParameters()
             self.SerializeModelParameters()
             self.InitializeScreeningPhase()
@@ -563,18 +511,17 @@ class MultilevelMonteCarlo(object):
             self.FinalizeScreeningPhase()
             self.ScreeningInfoScreeningPhase()
             self.ComputeMeanMLMCQoI()
+            end_time_screening = time.time()
+            print("[TIMER] screening phase MLMC:",end_time_screening-start_time)
             # start MLMC phase
-            self.convergence=True
             while self.convergence is not True:
                 self.InitializeMLMCPhase()
                 self.ScreeningInfoInitializeMLMCPhase()
                 self.LaunchEpoch()
                 self.FinalizeMLMCPhase()
                 self.ScreeningInfoFinalizeMLMCPhase()
-#                if self.iteration_counter <= 2:
-#                    self.convergence = False
-#                else:
-#                    self.convergence = True
+            end_time_mlmc = time.time()
+            print("[TIMER] mlmc phase MLMC (no screening phase):", end_time_mlmc-end_time_screening)
         else:
             print("\n","#"*50,"Not running Multilevel Monte Carlo algorithm","#"*50)
             pass
@@ -610,12 +557,12 @@ class MultilevelMonteCarlo(object):
     """
     def ExecuteInstanceConcurrentAdaptiveRefinement(self,current_MLMC_level):
         # local variables
-        pickled_coarse_model = self.pickled_model[0] # first component is relative to original model part
-        pickled_coarse_project_parameters = self.pickled_project_parameters[0] # first component is relative to original project parameters
+        serialized_coarse_model = self.serialized_model[0] # first component is relative to original model part
+        serialized_coarse_project_parameters = self.serialized_project_parameters[0] # first component is relative to original project parameters
         mesh_sizes = self.mesh_sizes
         recursive_maximal_size = self.settings["recursive_maximal_size"].GetString() # check if setting or not maximal mesh size
-        pickled_custom_metric_refinement_parameters = self.pickled_custom_metric_refinement_parameters
-        pickled_custom_remesh_refinement_parameters = self.pickled_custom_remesh_refinement_parameters
+        serialized_custom_metric_refinement_parameters = self.serialized_custom_metric_refinement_parameters
+        serialized_custom_remesh_refinement_parameters = self.serialized_custom_remesh_refinement_parameters
         current_analysis = self.analysis
         # generate the sample
         sample = generator.GenerateSample()
@@ -623,16 +570,16 @@ class MultilevelMonteCarlo(object):
         mlmc_results = MultilevelMonteCarloResults(current_MLMC_level)
         if (current_MLMC_level == 0):
             current_level = 0
-            mlmc_results,pickled_current_model,pickled_current_project_parameters = \
-                ExecuteInstanceConcurrentAdaptiveRefinementAux_Task(current_MLMC_level,pickled_coarse_model,pickled_coarse_project_parameters,pickled_custom_metric_refinement_parameters,pickled_custom_remesh_refinement_parameters,mesh_sizes,recursive_maximal_size,sample,current_level,current_analysis,mlmc_results)
+            mlmc_results,serialized_current_model,serialized_current_project_parameters = \
+                ExecuteInstanceConcurrentAdaptiveRefinementAux_Task(current_MLMC_level,serialized_coarse_model,serialized_coarse_project_parameters,serialized_custom_metric_refinement_parameters,serialized_custom_remesh_refinement_parameters,mesh_sizes,recursive_maximal_size,sample,current_level,current_analysis,mlmc_results)
         else:
             for current_level in range(current_MLMC_level+1):
-                mlmc_results,pickled_current_model,pickled_current_project_parameters = \
-                    ExecuteInstanceConcurrentAdaptiveRefinementAux_Task(current_MLMC_level,pickled_coarse_model,pickled_coarse_project_parameters,pickled_custom_metric_refinement_parameters,pickled_custom_remesh_refinement_parameters,mesh_sizes,recursive_maximal_size,sample,current_level,current_analysis,mlmc_results)
-                del(pickled_coarse_model,pickled_coarse_project_parameters)
-                pickled_coarse_model = pickled_current_model
-                pickled_coarse_project_parameters = pickled_current_project_parameters
-                del(pickled_current_model,pickled_current_project_parameters)
+                mlmc_results,serialized_current_model,serialized_current_project_parameters = \
+                    ExecuteInstanceConcurrentAdaptiveRefinementAux_Task(current_MLMC_level,serialized_coarse_model,serialized_coarse_project_parameters,serialized_custom_metric_refinement_parameters,serialized_custom_remesh_refinement_parameters,mesh_sizes,recursive_maximal_size,sample,current_level,current_analysis,mlmc_results)
+                del(serialized_coarse_model,serialized_coarse_project_parameters)
+                serialized_coarse_model = serialized_current_model
+                serialized_coarse_project_parameters = serialized_current_project_parameters
+                del(serialized_current_model,serialized_current_project_parameters)
         return mlmc_results,current_MLMC_level
 
     def ExecuteInstanceSingleRefinement(self,current_MLMC_level):
@@ -644,11 +591,11 @@ class MultilevelMonteCarlo(object):
         if (current_MLMC_level == 0):
             current_level = 0
             mlmc_results = \
-                ExecuteInstanceSingleRefinementAux_Task(current_MLMC_level,self.pickled_model[current_level],self.pickled_project_parameters[current_level],sample,current_level,current_analysis,mlmc_results)
+                ExecuteInstanceSingleRefinementAux_Task(current_MLMC_level,self.serialized_model[current_level],self.serialized_project_parameters[current_level],sample,current_level,current_analysis,mlmc_results)
         else:
             for current_level in range(current_MLMC_level-1,current_MLMC_level+1):
                 mlmc_results = \
-                    ExecuteInstanceSingleRefinementAux_Task(current_MLMC_level,self.pickled_model[current_level],self.pickled_project_parameters[current_level],sample,current_level,current_analysis,mlmc_results)
+                    ExecuteInstanceSingleRefinementAux_Task(current_MLMC_level,self.serialized_model[current_level],self.serialized_project_parameters[current_level],sample,current_level,current_analysis,mlmc_results)
         return mlmc_results,current_MLMC_level
 
     def InitializeScreeningPhase(self):
@@ -672,12 +619,12 @@ class MultilevelMonteCarlo(object):
     iii) from pickle string to StreamSerializer Kratos object
     iv)  from StreamSerializer Kratos object to Model/Parameters Kratos object
     requires: self.project_parameters_path: path of the Project Parameters file
-    builds: self.pickled_model:              pickled model
-            self.pickled_project_parameters: pickled project parameters
+    builds: self.serialized_model:              pickled model
+            self.serialized_project_parameters: pickled project parameters
     input:  self: an instance of the class
     """
     def SerializeModelParameters(self):
-        if (self.to_pickle_model_parameters):
+        if (self.to_serialize_model_parameters):
             self.serialized_model = []
             self.serialized_project_parameters = []
             self.pickled_model = []
@@ -689,8 +636,8 @@ class MultilevelMonteCarlo(object):
                 self.SerializeModelParametersSingleRefinement()
             else:
                 raise Exception ("Specify refinement_strategy: concurrent_adaptive_refinement or single_refinement")
-            self.is_project_parameters_pickled = True
-            self.is_model_pickled = True
+            self.is_project_parameters_serialized = True
+            self.is_model_serialized = True
             print("\n","#"*50," SERIALIZATION MODEL AND PROJECT PARAMETERS COMPLETED ","#"*50,"\n")
 
     def SerializeModelParametersConcurrentAdaptiveRefinement(self):
@@ -716,28 +663,26 @@ class MultilevelMonteCarlo(object):
         self.SerializeModelParametersConcurrentAdaptiveRefinement() # to prepare parameters and model part of coarsest level
         number_levels_to_serialize = self.settings["maximum_number_levels"].GetInt()
         # same routine of ExecuteInstanceConcurrentAdaptiveRefinemnt() to build models and parameters, but here we save models and parameters
-        pickled_coarse_model = self.pickled_model[0]
-        pickled_coarse_project_parameters = self.pickled_project_parameters[0]
+        serialized_coarse_model = self.serialized_model[0]
+        serialized_coarse_project_parameters = self.serialized_project_parameters[0]
         mesh_sizes = self.mesh_sizes
         recursive_maximal_size = self.settings["recursive_maximal_size"].GetString() # check if setting or not maximal mesh size
-        pickled_custom_metric_refinement_parameters = self.pickled_custom_metric_refinement_parameters
-        pickled_custom_remesh_refinement_parameters = self.pickled_custom_remesh_refinement_parameters
+        serialized_custom_metric_refinement_parameters = self.serialized_custom_metric_refinement_parameters
+        serialized_custom_remesh_refinement_parameters = self.serialized_custom_remesh_refinement_parameters
         current_analysis = self.analysis
         # generate the sample and prepare mlmc result class
         fake_sample = generator.GenerateSample()
         fake_mlmc_results = MultilevelMonteCarloResults(number_levels_to_serialize)
         for current_level in range(number_levels_to_serialize+1):
-            fake_mlmc_results,pickled_current_model,pickled_current_project_parameters = \
-                ExecuteInstanceConcurrentAdaptiveRefinementAux_Task(number_levels_to_serialize,pickled_coarse_model,pickled_coarse_project_parameters,pickled_custom_metric_refinement_parameters,pickled_custom_remesh_refinement_parameters,mesh_sizes,recursive_maximal_size,fake_sample,current_level,current_analysis,fake_mlmc_results)
-            del(pickled_coarse_model,pickled_coarse_project_parameters)
-            pickled_coarse_model = pickled_current_model
-            pickled_coarse_project_parameters = pickled_current_project_parameters
+            fake_mlmc_results,serialized_current_model,serialized_current_project_parameters = \
+                ExecuteInstanceConcurrentAdaptiveRefinementAux_Task(number_levels_to_serialize,serialized_coarse_model,serialized_coarse_project_parameters,serialized_custom_metric_refinement_parameters,serialized_custom_remesh_refinement_parameters,mesh_sizes,recursive_maximal_size,fake_sample,current_level,current_analysis,fake_mlmc_results)
+            del(serialized_coarse_model,serialized_coarse_project_parameters)
+            serialized_coarse_model = serialized_current_model
+            serialized_coarse_project_parameters = serialized_current_project_parameters
             # save pickled and serialized model and parameters
-            self.pickled_model.append(pickled_current_model)
-            self.pickled_project_parameters.append(pickled_current_project_parameters)
-            self.serialized_model.append(pickle.loads(pickled_current_model))
-            self.serialized_project_parameters.append(pickle.loads(pickled_current_project_parameters))
-            del(pickled_current_model,pickled_current_project_parameters)
+            self.serialized_model.append(serialized_current_model)
+            self.serialized_project_parameters.append(serialized_current_project_parameters)
+            del(serialized_current_model,serialized_current_project_parameters)
 
     """
     function reading the XMC parameters passed from json file
@@ -762,8 +707,8 @@ class MultilevelMonteCarlo(object):
     function serializing and pickling the custom setting metric and remeshing for the refinement
     requires: self.custom_metric_refinement_parameters
               self.custom_remesh_refinement_parameters
-    builds: self.pickled_custom_metric_refinement_parameters
-            self.pickled_custom_remesh_refinement_parameters
+    builds: self.serialized_custom_metric_refinement_parameters
+            self.serialized_custom_remesh_refinement_parameters
     input:  self: an instance of the class
     """
     def SerializeRefinementParameters(self):
@@ -775,11 +720,15 @@ class MultilevelMonteCarlo(object):
             serialized_metric_refinement_parameters.Save("MetricRefinementParametersSerialization",metric_refinement_parameters)
             serialized_remesh_refinement_parameters = KratosMultiphysics.StreamSerializer()
             serialized_remesh_refinement_parameters.Save("RemeshRefinementParametersSerialization",remeshing_refinement_parameters)
+            self.serialized_custom_metric_refinement_parameters = serialized_metric_refinement_parameters
+            self.serialized_custom_remesh_refinement_parameters = serialized_remesh_refinement_parameters
             # pickle parameters
             pickled_metric_refinement_parameters = pickle.dumps(serialized_metric_refinement_parameters, 2) # second argument is the protocol and is NECESSARY (according to pybind11 docs)
             pickled_remesh_refinement_parameters = pickle.dumps(serialized_remesh_refinement_parameters, 2) # second argument is the protocol and is NECESSARY (according to pybind11 docs)
             self.pickled_custom_metric_refinement_parameters = pickled_metric_refinement_parameters
             self.pickled_custom_remesh_refinement_parameters = pickled_remesh_refinement_parameters
+            self.is_custom_settings_metric_refinement_serialized = True
+            self.is_custom_settings_remesh_refinement_serialized = True
             print("\n","#"*50," SERIALIZATION REFINEMENT PARAMETERS COMPLETED ","#"*50,"\n")
 
     """

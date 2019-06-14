@@ -629,7 +629,6 @@ class MultilevelMonteCarlo(object):
             self.serialized_project_parameters = []
             self.pickled_model = []
             self.pickled_project_parameters = []
-
             if (self.settings["refinement_strategy"].GetString() == "concurrent_adaptive_refinement"):
                 self.SerializeModelParametersConcurrentAdaptiveRefinement()
             elif (self.settings["refinement_strategy"].GetString() == "single_refinement"):
@@ -679,9 +678,10 @@ class MultilevelMonteCarlo(object):
             del(serialized_coarse_model,serialized_coarse_project_parameters)
             serialized_coarse_model = serialized_current_model
             serialized_coarse_project_parameters = serialized_current_project_parameters
-            # save pickled and serialized model and parameters
-            self.serialized_model.append(serialized_current_model)
-            self.serialized_project_parameters.append(serialized_current_project_parameters)
+            if (current_level>0):
+                # save pickled and serialized model and parameters
+                self.serialized_model.append(serialized_current_model)
+                self.serialized_project_parameters.append(serialized_current_project_parameters)
             del(serialized_current_model,serialized_current_project_parameters)
 
     """

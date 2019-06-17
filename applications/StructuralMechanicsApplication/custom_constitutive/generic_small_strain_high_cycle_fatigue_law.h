@@ -187,10 +187,12 @@ public:
      * @brief Sets the value of a specified variable (integer)
      * @param rVariable the variable to be returned
      * @param rValue new value of the specified variable
+     * @param rCurrentProcessInfo the process info
      */
     void SetValue(
         const Variable<int>& rThisVariable, 
-        const int& rValue);
+        const int& rValue,
+        const ProcessInfo& rCurrentProcessInfo) override;
 
     /**
      * @brief Returns the value of a specified variable (double)
@@ -360,6 +362,8 @@ private:
     double mMaxStressRelativeError = 0.0; 
     unsigned int mNewCycleIndicator = 0; 
     double mCyclesToFailure = 0.0;
+    double mPreviousCycleTime = 0.0;
+    double mPeriod = 0.0;
 
     ///@}
     ///@name Private Operators

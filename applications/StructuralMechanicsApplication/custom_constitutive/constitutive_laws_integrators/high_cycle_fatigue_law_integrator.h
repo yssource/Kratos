@@ -193,7 +193,7 @@ public:
 
         const double square_betaf = std::pow(BETAF, 2.0);
         if (MaxStress > rSth && MaxStress <= yield_stress) {
-            const double rN_f = std::pow(10.0,std::pow(-std::log((MaxStress - rSth) / (yield_stress - rSth))/rAlphat,(1.0/BETAF)));
+            rN_f = std::pow(10.0,std::pow(-std::log((MaxStress - rSth) / (yield_stress - rSth))/rAlphat,(1.0/BETAF)));
             rB0 = -(std::log(MaxStress / yield_stress) / std::pow((std::log10(rN_f)), square_betaf));
         }
     }

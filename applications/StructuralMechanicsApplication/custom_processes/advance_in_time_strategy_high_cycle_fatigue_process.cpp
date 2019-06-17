@@ -11,6 +11,7 @@
 //
 
 #include "custom_processes/advance_in_time_strategy_high_cycle_fatigue_process.h"
+#include "structural_mechanics_application_variables.h"
 
 namespace Kratos
 {
@@ -19,10 +20,15 @@ namespace Kratos
 /***********************************************************************************/
 
 // Constructor
-AdvanceInTimeStrategyHighCycleFatigueProcess::AdvanceInTimeStrategyHighCycleFatigueProcess(
-    ModelPart &rModelPart, 
-    Parameters ThisParameters) : mrModelPart(rModelPart)
+	AdvanceInTimeStrategyHighCycleFatigueProcess::AdvanceInTimeStrategyHighCycleFatigueProcess(
+		ModelPart &rModelPart,
+		Parameters ThisParameters) : mrModelPart(rModelPart), mThisParameters(ThisParameters)
 {
+    KRATOS_WATCH(mThisParameters["constraints_process_list"].size())
+    KRATOS_WATCH(mThisParameters["constraints_process_list"][4]["Parameters"]["interval"][1].GetDouble())
+    double time = mrModelPart.GetProcessInfo()[TIME];
+    KRATOS_WATCH(time)
+
     // mNNodes = mrModelPart.NumberOfNodes();
     // Parameters default_parameters = Parameters(R"(
     // {
@@ -44,70 +50,61 @@ void AdvanceInTimeStrategyHighCycleFatigueProcess::Execute()
 {
     // auto& r_mat_properties = mrModelPart.Elements().GetProperties();
     auto& process_info = mrModelPart.GetProcessInfo();
+    bool cycle_found = false;
     std::vector<int> cycle_identificator;
 
-    mrModelPart.GetElement(1).GetValueOnIntegrationPoints(CYCLE_INDICATOR, cycle_identificator, process_info);
-    KRATOS_WATCH(cycle_identificator);
+    this->CyclePeriodPerIntegrationPoint(cycle_found);
     
-    if (cycle_identificator[1] == 1) {
+    if (cycle_found) {
         bool advancing_strategy = false;
         this->StableConditionForAdvancingStrategy(advancing_strategy);
+        KRATOS_WATCH(advancing_strategy);
 
+        double increment = 0.0;
         if (advancing_strategy) {
+			this->TimeIncrement(increment);
+			KRATOS_WATCH(increment);
+            this->TimeAndCyclesUpdate(increment);
         }
     }
-    // NodeNormalizedFreeEnergy *NodeNormalizedFreeEnergyVector = new NodeNormalizedFreeEnergy[max_id];
-    // this->NormalizedFreeEnergyExtrapolation(NodeNormalizedFreeEnergyVector);
-    // delete[] NodeNormalizedFreeEnergyVector;
 }
 
 /***********************************************************************************/
 /***********************************************************************************/
 
-// void AdvanceInTimeStrategyHighCycleFatigueProcess::NormalizedFreeEnergyExtrapolation(
-//     NodeNormalizedFreeEnergy* pNodeNormalizedFreeEnergyVector
-//     )
-// {
-//     // Vector gauss_point_stress;
-//     // double gauss_point_damage;
-//     // // Loop over elements to extrapolate the stress to the nodes
-    // // for (auto& r_elem : mrModelPart.Elements()) {
-//     //     auto& r_geometry = r_elem.GetGeometry();
-//     //     auto& r_mat_properties = r_elem.GetProperties();
+void AdvanceInTimeStrategyHighCycleFatigueProcess::CyclePeriodPerIntegrationPoint(bool& rCycleFound) 
+{
+    auto& process_info = mrModelPart.GetProcessInfo();
+    std::vector<int> cycle_identificator;
+    std::vector<double> previous_cycle_time;
+    std::vector<double> period;
+    double time = mrModelPart.GetProcessInfo()[TIME];
+    
+    for (auto& r_elem : mrModelPart.Elements()) {
+        r_elem.GetValueOnIntegrationPoints(CYCLE_INDICATOR, cycle_identificator, process_info);
+        r_elem.GetValueOnIntegrationPoints(PREVIOUS_CYCLE, previous_cycle_time, process_info);
+        r_elem.GetValueOnIntegrationPoints(CYCLE_PERIOD, period, process_info);
+        KRATOS_WATCH(previous_cycle_time)
+        KRATOS_WATCH(period)
 
-//     //     const Vector& r_strain_vector = r_elem.GetValue(STRAIN_VECTOR);
-//     //     const Vector& r_stress_vector = r_elem.GetValue(STRESS_VECTOR);
-//     //     const double damage = r_elem.GetValue(DAMAGE_ELEMENT);
 
-//     //     // Compute Normalized Free Energy on that element
-        // // const double normalized_free_energy = this->StableConditionForAdvancingStrategy(r_strain_vector, r_stress_vector, damage, r_mat_properties, r_geometry);
+		const int number_of_ip = r_elem.GetGeometry().IntegrationPoints(r_elem.GetIntegrationMethod()).size();
+        for (unsigned int i = 0; i < number_of_ip; i++){
+                if (cycle_identificator[i] == 1){
+                    period[i] = time - previous_cycle_time[i];
+                    previous_cycle_time[i] = time;
+                    rCycleFound = true;
+                }
+        }
 
-//     //     for (unsigned int i = 0; i < r_geometry.PointsNumber(); i++) {
-//     //         const std::size_t node_id = r_geometry.GetPoint(i).Id();
-//     //         pNodeNormalizedFreeEnergyVector[node_id - 1].NormalizedFreeEnergy += normalized_free_energy;
-//     //         pNodeNormalizedFreeEnergyVector[node_id - 1].NElems += 1;
-//     //     }
-//     // }
+        r_elem.SetValueOnIntegrationPoints(PREVIOUS_CYCLE, previous_cycle_time, process_info);
+        r_elem.SetValueOnIntegrationPoints(CYCLE_PERIOD, period, process_info);
+        KRATOS_WATCH(previous_cycle_time)
+        KRATOS_WATCH(period)
 
-//     // // Ponderate over the elements coincident on that node
-//     // for (unsigned int i = 0; i < mNNodes; i++) {
-//     //     pNodeNormalizedFreeEnergyVector[i].NormalizedFreeEnergy /= pNodeNormalizedFreeEnergyVector[i].NElems;
-//     // }
+    }
 
-//     // // Loop over nodes to assign the variable
-//     // for (auto& r_node : mrModelPart.Nodes()) {
-//     //     const std::size_t Id = r_node.Id();
-//     //     const double nodal_free_energy = pNodeNormalizedFreeEnergyVector[Id - 1].NormalizedFreeEnergy;
-//     //     double& r_norm = r_node.FastGetSolutionStepValue(EQUIVALENT_NODAL_STRESS);
-//     //     r_norm = nodal_free_energy;
-
-//     //     if (mCorrectWithDisplacements) {
-//     //         const double displ = norm_2(r_node.FastGetSolutionStepValue(DISPLACEMENT));
-//     //         r_norm *= displ;
-//     //     }
-//     //     r_norm *= mCorrectionFactor;
-//     // }
-// }
+}
 
 /***********************************************************************************/
 /***********************************************************************************/
@@ -121,13 +118,15 @@ void AdvanceInTimeStrategyHighCycleFatigueProcess::StableConditionForAdvancingSt
     double acumulated_max_stress_rel_error;
     double acumulated_rev_factor_rel_error;
     for (auto& r_elem : mrModelPart.Elements()) {
+        r_elem.Id();
         acumulated_max_stress_rel_error = 0.0;
         acumulated_rev_factor_rel_error = 0.0;
         r_elem.GetValueOnIntegrationPoints(MAX_STRESS_RELATIVE_ERROR, max_stress_rel_error, process_info);
         r_elem.GetValueOnIntegrationPoints(REVERSION_FACTOR_RELATIVE_ERROR, rev_factor_rel_error, process_info);
 
-        KRATOS_WATCH(max_stress_rel_error);
-        KRATOS_WATCH(rev_factor_rel_error);
+        // double elemento = r_elem;
+        // KRATOS_WATCH(r_elem);
+        // KRATOS_WATCH(elemento);
         for (unsigned int i=0; i < max_stress_rel_error.size(); i++) {
             acumulated_max_stress_rel_error += max_stress_rel_error[i];
             acumulated_rev_factor_rel_error += rev_factor_rel_error[i];
@@ -141,10 +140,55 @@ void AdvanceInTimeStrategyHighCycleFatigueProcess::StableConditionForAdvancingSt
 /***********************************************************************************/
 /***********************************************************************************/
 
-// void AdvanceInTimeStrategyHighCycleFatigueProcess::AdvancingStrategyStep(double& rTimeStep) 
-// {
+void AdvanceInTimeStrategyHighCycleFatigueProcess::TimeIncrement(double& rIncrement) 
+{
+    auto& process_info = mrModelPart.GetProcessInfo();
+    std::vector<double>  cycles_to_failure_element;
+    std::vector<int>  local_number_of_cycles;
+    std::vector<double> period;
+    double min_time_to_failure = 0.0;
 
-// }
+    for (auto& r_elem : mrModelPart.Elements()) {
+        r_elem.GetValueOnIntegrationPoints(CYCLES_TO_FAILURE, cycles_to_failure_element, process_info); 
+        r_elem.GetValueOnIntegrationPoints(LOCAL_NUMBER_OF_CYCLES, local_number_of_cycles, process_info); 
+        r_elem.GetValueOnIntegrationPoints(CYCLE_PERIOD, period, process_info);
+
+		const int number_of_ip = r_elem.GetGeometry().IntegrationPoints(r_elem.GetIntegrationMethod()).size();
+        for (unsigned int i = 0; i < number_of_ip; i++){
+            double time_to_failure = (cycles_to_failure_element[i] - local_number_of_cycles[i]) * period[i];
+            if (period[i] > 0 || min_time_to_failure == 0.0 || time_to_failure < min_time_to_failure){
+                min_time_to_failure = time_to_failure;
+                KRATOS_WATCH(min_time_to_failure)
+            }
+        }
+    }
+	rIncrement = min_time_to_failure;
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+void AdvanceInTimeStrategyHighCycleFatigueProcess::TimeAndCyclesUpdate(double Increment) 
+{
+    auto& r_process_info = mrModelPart.GetProcessInfo();
+    std::vector<int>  local_number_of_cycles;
+    std::vector<double> period;
+
+    for (auto& r_elem : mrModelPart.Elements()) {
+        r_elem.GetValueOnIntegrationPoints(LOCAL_NUMBER_OF_CYCLES, local_number_of_cycles, r_process_info); 
+        r_elem.GetValueOnIntegrationPoints(CYCLE_PERIOD, period, r_process_info);
+
+		const int number_of_ip = r_elem.GetGeometry().IntegrationPoints(r_elem.GetIntegrationMethod()).size();
+        for (unsigned int i = 0; i < number_of_ip; i++){
+            unsigned int local_cycles_increment = std::trunc(Increment / period[i]) + 1;
+            local_number_of_cycles[i] += local_cycles_increment;
+        }
+        r_elem.SetValueOnIntegrationPoints(LOCAL_NUMBER_OF_CYCLES, local_number_of_cycles, r_process_info);
+    }
+    // double time = r_process_info[TIME];
+    // time += Increment;
+    // r_process_info[TIME] = time;
+}
 
 
 /***********************************************************************************/

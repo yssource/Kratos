@@ -90,7 +90,37 @@ public:
      * @param rMatProps The material properties
      * @param rGeometry The geometry of the element
      */
+    void CyclePeriodPerIntegrationPoint(bool& rCycleFound);
+
+    /**
+     * @brief This method computes the free energy 
+     * @param rStrainVector The strain vector
+     * @param rStressVector The stress vector
+     * @param Damage The damage variable
+     * @param rMatProps The material properties
+     * @param rGeometry The geometry of the element
+     */
     void StableConditionForAdvancingStrategy(bool& rAdvancingStrategy);
+
+    /**
+     * @brief This method computes the free energy 
+     * @param rStrainVector The strain vector
+     * @param rStressVector The stress vector
+     * @param Damage The damage variable
+     * @param rMatProps The material properties
+     * @param rGeometry The geometry of the element
+     */
+    void TimeIncrement(double& rIncrement);
+
+    /**
+     * @brief This method computes the free energy 
+     * @param rStrainVector The strain vector
+     * @param rStressVector The stress vector
+     * @param Damage The damage variable
+     * @param rMatProps The material properties
+     * @param rGeometry The geometry of the element
+     */
+    void TimeAndCyclesUpdate(double Increment);
 
     /**
      * @brief This method computes characteristic 
@@ -165,6 +195,7 @@ public:
 protected:
     // Member Variables
     ModelPart& mrModelPart;                     // The model part to compute
+    Parameters mThisParameters;
     unsigned int mNNodes;                       // The number of nodes
     bool mComputeNormalizedFreeEnergy = false;  // Bool discerning the computation of the normalized free energy o full free energy
     bool mCorrectWithDisplacements = false;     // Bool discerning wether or not to multiply the nodel free energy with the displacement field

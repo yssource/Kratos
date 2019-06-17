@@ -132,7 +132,39 @@
                 "output_variables" : [
                     "MESH_DISPLACEMENT_Y"]
                 }
-            }]
+            }],
+        "list_other_processes" :[{
+            "kratos_module" : "KratosMultiphysics.HDF5Application",
+            "python_module" : "single_mesh_primal_output_process",
+            "help"          : "",
+            "process_name"  : "",
+            "Parameters" : {
+                "model_part_name" : "FluidModelPart",
+                "file_settings" : {
+                    "file_access_mode" : "truncate"
+                },
+
+                "nodal_solution_step_data_settings" : {
+                    "list_of_variables": ["VELOCITY_POTENTIAL", "AUXILIARY_VELOCITY_POTENTIAL"]
+                },
+                "output_time_settings" :{
+                    "step_frequency": 1
+                }
+            }
+        },{
+            "python_module"   : "from_json_check_result_process",
+            "kratos_module" : "KratosMultiphysics",
+            "help"                  : "",
+            "process_name"          : "FromJsonCheckResultProcess",
+            "Parameters"            : {
+                "check_variables"  : ["VELOCITY_POTENTIAL"],
+                "input_file_name"  : "fsi_coupler_test_results.json",
+                "model_part_name"  : "FluidModelPart.Parts_Parts_Auto1",
+                "tolerance"            : 1e-9,
+                "relative_tolerance"   : 1e-12,
+                "time_frequency"   : -2
+            }
+        }]
     },
     "output_processes"             : {
         "gid_output" : [{
@@ -158,7 +190,7 @@
                         "node_output"         : true,
                         "skin_output"         : false,
                         "plane_output"        : [],
-                        "nodal_results"       : ["MESH_DISPLACEMENT","REACTION","VELOCITY","PRESSURE"],
+                        "nodal_results"       : ["MESH_DISPLACEMENT","REACTION","VELOCITY","PRESSURE", "VELOCITY_POTENTIAL"],
                         "nodal_nonhistorical_results": [],
                         "gauss_point_results" : ["PRESSURE","VELOCITY"]
                     },
@@ -167,4 +199,4 @@
             }
         }]
     }
-} 
+}

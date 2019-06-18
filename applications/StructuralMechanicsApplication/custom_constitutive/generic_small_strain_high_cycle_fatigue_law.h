@@ -159,6 +159,13 @@ public:
     void CalculateMaterialResponseCauchy(ConstitutiveLaw::Parameters& rValues) override;
 
     /**
+     * returns whether this constitutive Law has specified variable
+     * @param rThisVariable the variable to be checked for
+     * @return true if the variable is defined in the constitutive law
+     */
+    bool Has(const Variable<bool>& rThisVariable) override;
+
+    /**
      * @brief Returns whether this constitutive Law has specified variable (double)
      * @param rThisVariable the variable to be checked for
      * @return true if the variable is defined in the constitutive law
@@ -173,14 +180,14 @@ public:
     bool Has(const Variable<int>& rThisVariable) override;
 
     /**
-     * @brief Sets the value of a specified variable (double)
-     * @param rVariable the variable to be returned
-     * @param rValue new value of the specified variable
+     * @brief Sets the value of a specified variable (bool)
+     * @param rThisVariable the variable to be returned
+     * @param Value new value of the specified variable
      * @param rCurrentProcessInfo the process info
      */
     void SetValue(
-        const Variable<double>& rThisVariable, 
-        const double& rValue,
+        const Variable<bool>& rThisVariable, 
+        const bool& Value, 
         const ProcessInfo& rCurrentProcessInfo) override;
 
     /**
@@ -195,14 +202,25 @@ public:
         const ProcessInfo& rCurrentProcessInfo) override;
 
     /**
-     * @brief Returns the value of a specified variable (double)
+     * @brief Sets the value of a specified variable (double)
+     * @param rVariable the variable to be returned
+     * @param rValue new value of the specified variable
+     * @param rCurrentProcessInfo the process info
+     */
+    void SetValue(
+        const Variable<double>& rThisVariable, 
+        const double& rValue,
+        const ProcessInfo& rCurrentProcessInfo) override;
+
+    /**
+     * returns the value of a specified variable
      * @param rThisVariable the variable to be returned
      * @param rValue a reference to the returned value
-     * @return rValue output: the value of the specified variable
+     * @param rValue output: the value of the specified variable
      */
-    double& GetValue(
-        const Variable<double>& rThisVariable, 
-        double& rValue) override;
+    bool& GetValue(
+        const Variable<bool>& rThisVariable, 
+        bool& rValue) override;
 
     /**
      * @brief Returns the value of a specified variable (integer)
@@ -213,6 +231,16 @@ public:
     int& GetValue(
         const Variable<int>& rThisVariable, 
         int& rValue) override;
+
+    /**
+     * @brief Returns the value of a specified variable (double)
+     * @param rThisVariable the variable to be returned
+     * @param rValue a reference to the returned value
+     * @return rValue output: the value of the specified variable
+     */
+    double& GetValue(
+        const Variable<double>& rThisVariable, 
+        double& rValue) override;
 
     /**
      * @brief Returns the value of a specified variable (matrix)
@@ -360,7 +388,7 @@ private:
     double mWohlerStress = 1.0; // Normalised Wohler stress required for building the life prediction curves (SN curves)
     double mReversionFactorRelativeError = 0.0; 
     double mMaxStressRelativeError = 0.0; 
-    unsigned int mNewCycleIndicator = 0; 
+    bool mNewCycleIndicator = 0; 
     double mCyclesToFailure = 0.0;
     double mPreviousCycleTime = 0.0;
     double mPeriod = 0.0;

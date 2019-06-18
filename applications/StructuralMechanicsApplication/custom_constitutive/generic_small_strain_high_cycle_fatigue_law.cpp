@@ -93,7 +93,8 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
         double reversion_factor_relative_error = mReversionFactorRelativeError;
         double max_stress_relative_error = mMaxStressRelativeError;
         double CyclesToFailure = mCyclesToFailure;
-        unsigned int new_cycle = 0;
+        bool new_cycle = false;
+        bool adnvance_strategy_applied = rValues.GetProcessInfo()[ADVANCE_STRATEGY_APPLIED];
 
 
         if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
@@ -131,7 +132,7 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
                 }
                 global_number_of_cycles++;
                 local_number_of_cycles++;
-                new_cycle = 1;
+                new_cycle = true;
                 max_indicator = false;
                 min_indicator = false;
                 previous_max_stress = max_stress;
@@ -149,6 +150,29 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
                                                                                                 fatigue_reduction_factor,
                                                                                                 wohler_stress);
             }
+
+            if (adnvance_strategy_applied) {
+                double reversion_factor = HighCycleFatigueLawIntegrator<6>::CalculateReversionFactor(max_stress, min_stress);
+                double s_th, alphat;
+                HighCycleFatigueLawIntegrator<6>::CalculateFatigueParameters(
+                    max_stress,
+                    reversion_factor,
+                    rValues.GetMaterialProperties(),
+                    B0,
+                    s_th,
+                    alphat,
+                    CyclesToFailure);
+                HighCycleFatigueLawIntegrator<6>::CalculateFatigueReductionFactorAndWohlerStress(rValues.GetMaterialProperties(),
+                                                                                                max_stress,
+                                                                                                local_number_of_cycles,
+                                                                                                global_number_of_cycles,
+                                                                                                B0,
+                                                                                                s_th,
+                                                                                                alphat,
+                                                                                                fatigue_reduction_factor,
+                                                                                                wohler_stress);
+            }
+
             this->SetNumberOfCyclesGlobal(global_number_of_cycles);
             this->SetNumberOfCyclesLocal(local_number_of_cycles);
             this->SetMaxDetected(max_indicator);
@@ -269,6 +293,31 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::FinalizeMat
     previous_stresses[0] = r_aux_stresses[1];
     this->SetPreviousStresses(previous_stresses);
 }
+/***********************************************************************************/
+/***********************************************************************************/
+
+template <class TConstLawIntegratorType>
+bool GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::Has(const Variable<bool>& rThisVariable)
+{
+    if (rThisVariable == CYCLE_INDICATOR) {
+        return true;
+    }
+    return false;
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template <class TConstLawIntegratorType>
+bool GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::Has(const Variable<int>& rThisVariable)
+{
+    if (rThisVariable == NUMBER_OF_CYCLES) {
+        return true;
+    } else if (rThisVariable == LOCAL_NUMBER_OF_CYCLES) {
+        return true;
+    }
+    return false;
+}
 
 /***********************************************************************************/
 /***********************************************************************************/
@@ -302,16 +351,31 @@ bool GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::Has(const V
 /***********************************************************************************/
 
 template <class TConstLawIntegratorType>
-bool GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::Has(const Variable<int>& rThisVariable)
+void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::SetValue(
+    const Variable<bool>& rThisVariable, 
+    const bool& rValue, 
+    const ProcessInfo& rCurrentProcessInfo
+    )
+{
+    if (rThisVariable == CYCLE_INDICATOR) {
+        mNewCycleIndicator = rValue;
+    }
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+template <class TConstLawIntegratorType>
+void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::SetValue(
+    const Variable<int>& rThisVariable,
+    const int& rValue,
+    const ProcessInfo& rCurrentProcessInfo
+    )
 {
     if (rThisVariable == NUMBER_OF_CYCLES) {
-        return true;
+        mNumberOfCyclesGlobal = rValue;
     } else if (rThisVariable == LOCAL_NUMBER_OF_CYCLES) {
-        return true;
-    } else if (rThisVariable == CYCLE_INDICATOR) {
-        return true;
+        mNumberOfCyclesLocal = rValue;
     }
-    return false;
 }
 
 /***********************************************************************************/
@@ -349,19 +413,32 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::SetValue(
 /***********************************************************************************/
 
 template <class TConstLawIntegratorType>
-void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::SetValue(
+bool& GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::GetValue(
+    const Variable<bool>& rThisVariable, 
+    bool& rValue
+    )
+{
+    if (rThisVariable == CYCLE_INDICATOR) {
+        rValue = mNewCycleIndicator;
+    }
+    return rValue;
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template <class TConstLawIntegratorType>
+int& GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::GetValue(
     const Variable<int>& rThisVariable,
-    const int& rValue,
-    const ProcessInfo& rCurrentProcessInfo
+    int& rValue
     )
 {
     if (rThisVariable == NUMBER_OF_CYCLES) {
-        mNumberOfCyclesGlobal = rValue;
+        rValue = mNumberOfCyclesGlobal;
     } else if (rThisVariable == LOCAL_NUMBER_OF_CYCLES) {
-        mNumberOfCyclesLocal = rValue;
-    } else if (rThisVariable == CYCLE_INDICATOR) {
-        mNewCycleIndicator = rValue;
+        rValue = mNumberOfCyclesLocal;
     }
+    return rValue;
 }
 
 /***********************************************************************************/
@@ -391,25 +468,6 @@ double& GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::GetValue
         rValue = mPeriod;
     } else {
         return GenericSmallStrainIsotropicDamage<TConstLawIntegratorType>::GetValue(rThisVariable, rValue);
-    }
-    return rValue;
-}
-
-/***********************************************************************************/
-/***********************************************************************************/
-
-template <class TConstLawIntegratorType>
-int& GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::GetValue(
-    const Variable<int>& rThisVariable,
-    int& rValue
-    )
-{
-    if (rThisVariable == NUMBER_OF_CYCLES) {
-        rValue = mNumberOfCyclesGlobal;
-    } else if (rThisVariable == LOCAL_NUMBER_OF_CYCLES) {
-        rValue = mNumberOfCyclesLocal;
-    } else if (rThisVariable == CYCLE_INDICATOR) {
-        rValue = mNewCycleIndicator;
     }
     return rValue;
 }

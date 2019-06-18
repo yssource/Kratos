@@ -39,7 +39,7 @@ double CalculateF2(const double turbulent_kinetic_energy,
                    const double kinematic_viscosity,
                    const double turbulent_energy_dissipation_rate)
 {
-    if (turbulent_energy_dissipation_rate <= std::numeric_limits<double>::epsilon())
+    if (turbulent_energy_dissipation_rate == 0.0)
         return 1.0;
     else
     {
@@ -96,7 +96,8 @@ void CalculateTurbulentValues(double& turbulent_kinetic_energy,
 {
     const double u_tau = y_plus * kinematic_viscosity / wall_distance;
     turbulent_kinetic_energy = std::pow(u_tau, 2) / std::sqrt(c_mu);
-    turbulent_energy_dissipation_rate = std::pow(u_tau, 3) / (von_karman * wall_distance);
+    turbulent_energy_dissipation_rate =
+        std::pow(u_tau, 3) / (von_karman * wall_distance);
 }
 
 void CalculateTurbulentValues(double& turbulent_kinetic_energy,
@@ -107,25 +108,7 @@ void CalculateTurbulentValues(double& turbulent_kinetic_energy,
                               const double c_mu)
 {
     turbulent_kinetic_energy = 1.5 * std::pow(velocity_mag * turbulence_intensity, 2);
-    turbulent_energy_dissipation_rate =
-        c_mu * std::pow(turbulent_kinetic_energy, 1.5) / mixing_length;
-}
-double CalculateReactionTurbulentKineticEnergy(const double kinematic_viscosity,
-                                               const double wall_distance,
-                                               const double gamma)
-{
-    return 2.0 * kinematic_viscosity / std::pow(wall_distance, 2) + gamma;
-}
-
-double CalculateReactionTurbulentEnergyDissipationRate(const double c2,
-                                                       const double f2,
-                                                       const double gamma,
-                                                       const double kinematic_viscosity,
-                                                       const double y_plus,
-                                                       const double wall_distance)
-{
-    return c2 * f2 * gamma + 2.0 * kinematic_viscosity * std::exp(-0.5 * y_plus) /
-                                 std::pow(wall_distance, 2);
+    turbulent_energy_dissipation_rate = c_mu * std::pow(turbulent_kinetic_energy, 1.5) / mixing_length;
 }
 
 template double CalculateSourceTerm<2>(const BoundedMatrix<double, 2, 2>&, const double, const double);

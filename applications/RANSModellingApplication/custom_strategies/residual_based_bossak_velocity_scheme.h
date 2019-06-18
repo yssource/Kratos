@@ -138,6 +138,7 @@ public:
 #pragma omp critical
         {
             rModelPart.GetProcessInfo()[BOSSAK_ALPHA] = mBossak.Alpha;
+            rModelPart.GetProcessInfo()[NEWMARK_GAMMA] = mBossak.Gamma;
         }
 
         KRATOS_CATCH("");

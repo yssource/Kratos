@@ -394,7 +394,8 @@ void EvmKElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionData(
     const double& c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
     const double& tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
 
-    const double& nu_t = this->EvaluateInPoint(TURBULENT_VISCOSITY, rShapeFunctions);
+    const double& nu_t =
+        this->EvaluateInPoint(TURBULENT_VISCOSITY, rShapeFunctions);
     const double& tke = this->EvaluateInPoint(TURBULENT_KINETIC_ENERGY, rShapeFunctions);
     const double& nu = this->EvaluateInPoint(KINEMATIC_VISCOSITY, rShapeFunctions);
     const double& wall_distance = this->EvaluateInPoint(DISTANCE, rShapeFunctions);
@@ -438,8 +439,8 @@ double EvmKElement<TDim, TNumNodes>::CalculateReactionTerm(const EvmKElementData
                                                            const ProcessInfo& rCurrentProcessInfo,
                                                            const int Step) const
 {
-    return EvmKepsilonModelUtilities::CalculateReactionTurbulentKineticEnergy(
-        rData.KinematicViscosity, rData.WallDistance, rData.Gamma);
+    return 2.0 * rData.KinematicViscosity / std::pow(rData.WallDistance, 2) +
+           rData.Gamma;
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>

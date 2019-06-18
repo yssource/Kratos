@@ -1,4 +1,5 @@
 import KratosMultiphysics as Kratos
+import KratosMultiphysics.FluidDynamicsApplication as KratosCFD
 import KratosMultiphysics.RANSModellingApplication as KratosRANS
 import math
 
@@ -31,6 +32,7 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         # TODO: Implement stuff for mesh_moving
 
         self.is_computing_solution = False
+        self.is_periodic = self.settings["is_periodic"].GetBool()
 
         self.model_elements_list = []
         self.model_conditions_list = []
@@ -40,6 +42,7 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         return Kratos.Parameters(r'''{
             "model_type"            : "",
             "model_settings"        : {},
+            "is_periodic"           : false,
             "distance_calculation"  : {
                 "max_iterations"         : 5,
                 "linear_solver_settings" : {}
@@ -136,8 +139,12 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         convergence_criteria = KratosRANS.GenericScalarConvergenceCriteria(
             solver_settings["relative_tolerance"].GetDouble(),
             solver_settings["absolute_tolerance"].GetDouble())
-        builder_and_solver = Kratos.ResidualBasedBlockBuilderAndSolver(
-            linear_solver)
+        if self.is_periodic:
+            builder_and_solver = KratosCFD.ResidualBasedBlockBuilderAndSolverPeriodic(
+                linear_solver, KratosCFD.PATCH_INDEX)
+        else:
+            builder_and_solver = Kratos.ResidualBasedBlockBuilderAndSolver(
+                linear_solver)
         time_scheme = KratosRANS.GenericResidualBasedBossakVelocityDynamicScalarScheme(
             scheme_settings["alpha_bossak"].GetDouble(), scalar_variable,
             scalar_variable_rate, relaxed_scalar_variable_rate)

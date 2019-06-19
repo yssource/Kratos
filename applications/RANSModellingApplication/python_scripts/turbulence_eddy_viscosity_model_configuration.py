@@ -16,7 +16,7 @@ else:
 
 class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
     def __init__(self, model, settings):
-        self._validate_settings_in_baseclass=True # To be removed eventually
+        self._validate_settings_in_baseclass = True  # To be removed eventually
 
         super(TurbulenceEddyViscosityModelConfiguration, self).__init__(
             model, settings)
@@ -32,7 +32,6 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         # TODO: Implement stuff for mesh_moving
 
         self.is_computing_solution = False
-        self.is_periodic = self.settings["is_periodic"].GetBool()
 
         self.model_elements_list = []
         self.model_conditions_list = []
@@ -67,7 +66,7 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
                                           Kratos.KINEMATIC_VISCOSITY,
                                           self.fluid_model_part.Nodes)
         rans_variable_utils.SetScalarVar(Kratos.TURBULENT_VISCOSITY,
-                                         self.nu_t_min,
+                                         self.nu_t_max,
                                          self.fluid_model_part.Nodes)
 
         self.PrepareSolvingStrategy()
@@ -139,7 +138,9 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         convergence_criteria = KratosRANS.GenericScalarConvergenceCriteria(
             solver_settings["relative_tolerance"].GetDouble(),
             solver_settings["absolute_tolerance"].GetDouble())
-        if self.is_periodic:
+        is_periodic = solver_settings["is_periodic"].GetBool()
+        if is_periodic:
+            self.__InitializePeriodicConditions(model_part, scalar_variable)
             builder_and_solver = KratosCFD.ResidualBasedBlockBuilderAndSolverPeriodic(
                 linear_solver, KratosCFD.PATCH_INDEX)
         else:
@@ -159,8 +160,16 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         convergence_criteria.SetEchoLevel(
             solver_settings["echo_level"].GetInt())
 
-        Kratos.Logger.PrintInfo(self.__class__.__name__,
-                                "Successfully created solving strategy.")
+        if (is_periodic):
+            Kratos.Logger.PrintInfo(
+                self.__class__.__name__,
+                "Successfully created periodic solving strategy for " +
+                scalar_variable.Name() + ".")
+        else:
+            Kratos.Logger.PrintInfo(
+                self.__class__.__name__,
+                "Successfully created solving strategy for " + scalar_variable.Name()
+                + ".")
 
         return strategy, linear_solver, convergence_criteria, builder_and_solver, time_scheme
 
@@ -203,3 +212,18 @@ class TurbulenceEddyViscosityModelConfiguration(TurbulenceModelConfiguration):
         self.distance_calculation_process.Execute()
         Kratos.Logger.PrintInfo(self.__class__.__name__,
                                 "Wall distances calculated.")
+
+    def __InitializePeriodicConditions(self, model_part, scalar_variable):
+        properties = model_part.CreateNewProperties(model_part.NumberOfProperties() + 1)
+        pcu = KratosCFD.PeriodicConditionUtilities(
+            model_part, model_part.ProcessInfo[Kratos.DOMAIN_SIZE])
+        pcu.AddPeriodicVariable(properties, scalar_variable)
+
+        index = model_part.NumberOfConditions()
+        for condition in self.fluid_model_part.Conditions:
+            if condition.Is(Kratos.PERIODIC):
+                index += 1
+                node_id_list = [node.Id for node in condition.GetNodes()]
+                periodic_condition = model_part.CreateNewCondition(
+                    "PeriodicCondition", index, node_id_list, properties)
+                periodic_condition.Set(Kratos.PERIODIC)

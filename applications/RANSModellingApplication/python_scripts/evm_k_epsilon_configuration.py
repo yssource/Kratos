@@ -24,6 +24,7 @@ class TurbulenceKEpsilonConfiguration(
             },
             "echo_level"        :0,
             "turbulent_kinetic_energy_settings":{
+                "is_periodic"           : false,
                 "relative_tolerance"    : 1e-3,
                 "absolute_tolerance"    : 1e-5,
                 "max_iterations"        : 200,
@@ -33,6 +34,7 @@ class TurbulenceKEpsilonConfiguration(
                 }
             },
             "turbulent_energy_dissipation_rate_settings":{
+                "is_periodic"           : false,
                 "relative_tolerance"    : 1e-3,
                 "absolute_tolerance"    : 1e-5,
                 "max_iterations"        : 200,

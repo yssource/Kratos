@@ -21,6 +21,7 @@
 
 // RANS initialization processes
 #include "custom_processes/k_epsilon_evaluation_utau_process.h"
+#include "custom_processes/k_epsilon_evaluation_intensity_process.h"
 
 namespace Kratos
 {
@@ -52,6 +53,10 @@ void AddCustomProcessesToPython(pybind11::module& m)
     py::class_<RansKEpsilonEvaluationUtauProcess, RansKEpsilonEvaluationUtauProcess::Pointer, Process>(
         m, "RansKEpsilonEvaluationUtauProcess")
         .def(py::init<Model&, Parameters&, Process&>());
+
+    py::class_<RansKEpsilonEvaluationIntensityProcess, RansKEpsilonEvaluationIntensityProcess::Pointer, Process>(
+        m, "RansKEpsilonEvaluationIntensityProcess")
+        .def(py::init<Model&, Parameters&>());
 }
 
 } // namespace Python.

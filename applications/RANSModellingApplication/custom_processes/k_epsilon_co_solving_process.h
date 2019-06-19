@@ -220,7 +220,7 @@ private:
             const double y_plus = r_node.FastGetSolutionStepValue(RANS_Y_PLUS);
             const double f_mu = EvmKepsilonModelUtilities::CalculateFmu(y_plus);
             const double nu_t = EvmKepsilonModelUtilities::CalculateTurbulentViscosity(
-                c_mu, tke, epsilon, f_mu);
+                c_mu, tke, epsilon, f_mu <= std::numeric_limits<double>::epsilon() ? 1.0 : f_mu);
 
             r_node.FastGetSolutionStepValue(TURBULENT_VISCOSITY) = nu_t;
         }

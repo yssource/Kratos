@@ -21,6 +21,8 @@
 #include "custom_processes/kutta_condition_process.h"
 #include "custom_processes/move_model_part_process.h"
 #include "custom_processes/compute_embedded_lift_process.h"
+#include "custom_processes/project_sensitivity_to_skin_process.cpp"
+
 
 namespace Kratos {
 namespace Python {
@@ -43,6 +45,12 @@ void  AddCustomProcessesToPython(pybind11::module& m)
         (m, "ComputeEmbeddedLiftProcess")
         .def(py::init<ModelPart&, Vector&>())
         ;
+
+    py::class_<ProjectSensitivityToSkinProcess, ProjectSensitivityToSkinProcess::Pointer, Process >
+        (m, "ProjectSensitivityToSkinProcess")
+        .def(py::init<ModelPart&, ModelPart&>())
+        ;
+
 }
 
 }

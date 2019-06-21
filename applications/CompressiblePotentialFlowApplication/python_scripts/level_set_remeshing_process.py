@@ -95,6 +95,7 @@ class LevelSetRemeshingProcess(KratosMultiphysics.Process):
             It also rotates the skin model part around the origin point according to the rotation_angle'''
         self.skin_model_part=self.model.CreateModelPart("skin")
         self.skin_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.NORMAL) # Required for variational_distance_process
+        self.skin_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.SHAPE_SENSITIVITY) # Required for variational_distance_process
 
         ini_time=time.time()
         # Reading skin model part

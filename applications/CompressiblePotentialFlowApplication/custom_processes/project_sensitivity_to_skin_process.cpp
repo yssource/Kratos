@@ -45,26 +45,25 @@ void ProjectSensitivityToSkinProcess::Execute()
         Element::Pointer pElement;
         bool is_found = locator.FindPointOnMesh(it_skin_node->Coordinates(), NShapeFunc, pElement, result_begin, max_results);
 
-        if (is_found && pElement->Is(ACTIVE)){
-            KRATOS_WATCH(NShapeFunc)
-            KRATOS_WATCH(pElement->Id())
-            KRATOS_WATCH(it_skin_node->Id())
-
-            KRATOS_WATCH(it_skin_node->Coordinates())
+        array_1d<double,3> normal = it_skin_node -> FastGetSolutionStepValue(NORMAL);
+        double normal_norm = norm_2(normal);
+        if (normal_norm < 1e-6){
+            normal_norm = 1e-6;
         }
-        // it_skin_node -> GetValue(SHAPE_SENSITIVITY) = it_skin_node->X();
-    }
+        array_1d<double,3> unit_normal = normal/normal_norm;
 
-    for(std::size_t i = 0; i < mrSkinModelPart.Conditions().size(); ++i) {
-        auto it_cond=mrSkinModelPart.ConditionsBegin()+i;
-        auto r_geometry = it_cond -> GetGeometry();
-        array_1d<double,3> aux_coords;
-        // r_geometry.PrintInfo(std::cout);
+        if (is_found && pElement->Is(ACTIVE)){
+            auto &r_geometry = pElement->GetGeometry();
+            auto &r_sensitivity_vector = it_skin_node->FastGetSolutionStepValue(SHAPE_SENSITIVITY);
+            r_sensitivity_vector.clear();
 
-        r_geometry.PointLocalCoordinates(aux_coords, r_geometry.Center());
-        it_cond->SetValue(NORMAL, r_geometry.UnitNormal(aux_coords));
-        // it_cond->SetValue(NORMAL, r_geometry.Normal());
-
+            for(std::size_t i_node = 0; i_node < 3; ++i_node) {
+                double normal_sensitivity = r_geometry[i_node].FastGetSolutionStepValue(NORMAL_SENSITIVITY);
+                for(std::size_t i_dim = 0; i_dim < 3; ++i_dim) {
+                    r_sensitivity_vector[i_dim] += NShapeFunc[i_node]*normal_sensitivity*unit_normal[i_dim];
+                }
+            }
+        }
     }
 
 

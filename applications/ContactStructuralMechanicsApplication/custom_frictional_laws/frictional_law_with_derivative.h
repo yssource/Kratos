@@ -79,6 +79,9 @@ public:
     /// The definition of the mortar operators
     typedef MortarOperatorWithDerivatives<TDim, TNumNodes, true, TNormalVariation, TNumNodesMaster> MortarConditionMatrices;
 
+    /// Definition of the derivatives array
+    typedef array_1d<array_1d<double, TNumNodes>, TDim * (2 * TNumNodes + TNumNodesMaster)> DerivativesArray;
+
     /// Zero tolerance
     static constexpr double ZeroTolerance = std::numeric_limits<double>::epsilon();
 
@@ -116,22 +119,17 @@ public:
 
     /**
      * @brief This method computes the threshold derivative value considered for computing friction
-     * @param rNode The node where the threshold derivative value is obtained
      * @param rCondition The condition where the friction is computed
      * @param rCurrentProcessInfo The current instance of the process info
      * @param rDerivativeData The reference to the derivative database
      * @param rMortarConditionMatrices The container of the mortar operators
-     * @param IndexDerivative The derivative index
-     * @param IndexNode The corresponding node index on the condition geometry
+     * @return The threshold derivative array considered for computing friction
      */
-    virtual double GetDerivativeThresholdValue(
-        const NodeType& rNode,
+    virtual DerivativesArray GetDerivativesThresholdArray(
         const PairedCondition& rCondition,
         const ProcessInfo& rCurrentProcessInfo,
         const DerivativeDataType& rDerivativeData,
-        const MortarConditionMatrices& rMortarConditionMatrices,
-        const IndexType IndexDerivative,
-        const IndexType IndexNode
+        const MortarConditionMatrices& rMortarConditionMatrices
         );
 
     ///@}

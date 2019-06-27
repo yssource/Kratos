@@ -123,6 +123,8 @@ public:
 
     typedef FrictionalLawWithDerivative<TDim,TNumNodes,TNormalVariation, TNumNodesMaster>           FrictionalLawWithDerivativeType;
 
+    typedef array_1d<array_1d<double, TNumNodes>, TDim * (2 * TNumNodes + TNumNodesMaster)>                        DerivativesArray;
+
     static constexpr IndexType MatrixSize = TDim * (TNumNodes + TNumNodesMaster);
 
     static constexpr IndexType StepSlip = TNormalVariation ? 0 : 1;
@@ -363,9 +365,11 @@ protected:
     ///@name Protected member Variables
     ///@{
 
-    bool mPreviousMortarOperatorsInitialized = false;     /// In order to know iw we need to initialize the previous operators
+    bool mPreviousMortarOperatorsInitialized = false;        /// In order to know iw we need to initialize the previous operators
 
-    MortarBaseConditionMatrices mPreviousMortarOperators; /// These are the mortar operators from the previous converged step, necessary for a consistent definition of the r_gt
+    MortarBaseConditionMatrices mPreviousMortarOperators;    /// These are the mortar operators from the previous converged step, necessary for a consistent definition of the r_gt
+
+    FrictionalLawWithDerivativeType* mpFrictionalLaw = NULL; /// The frictional law considered
 
     // TODO: Define the "CL" or friction law to compute this. Or do it nodally
 
@@ -484,27 +488,26 @@ protected:
      * @param rMortarConditionMatrices The container of the mortar operators
      * @return The derivatives of the threshold values
      */
-    array_1d<array_1d<double, TNumNodes>, TDim * (TNumNodes + TNumNodesMaster)> GetDerivativeThresholdValue(
+    DerivativesArray GetDerivativeThresholdValue(
         const ProcessInfo& rCurrentProcessInfo,
         const DerivativeDataType& rDerivativeData,
         const MortarConditionMatrices& rMortarConditionMatrices
         )
     {
-        // The friction coefficient
-        array_1d<array_1d<double, TNumNodes>, TDim * (TNumNodes + TNumNodesMaster)> derivatives_threshold_values;
-        auto& r_geometry = this->GetGeometry();
+        if (mpFrictionalLaw != NULL) {
+            return mpFrictionalLaw->GetDerivativesThresholdArray(*this, rCurrentProcessInfo, rDerivativeData, rMortarConditionMatrices);
+        } else {
+            // The friction coefficient
+            DerivativesArray derivatives_threshold_values;
 
-        for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node) {
-            const auto& r_node = r_geometry[i_node];
-            KRATOS_DEBUG_ERROR_IF_NOT(r_node.Has(FRICTIONAL_LAW)) << "FRICTIONAL_LAW not defined on node: " << r_node.Id() << std::endl;
-            FrictionalLaw::Pointer p_law = r_node.GetValue(FRICTIONAL_LAW);
-            auto& r_law = dynamic_cast<FrictionalLawWithDerivativeType&>(*p_law);
-            for (std::size_t i_der = 0; i_der < TDim * (TNumNodes + TNumNodesMaster); ++i_der) {
-                derivatives_threshold_values[i_der][i_node] = r_law.GetDerivativeThresholdValue(r_node, *this, rCurrentProcessInfo, rDerivativeData, rMortarConditionMatrices, i_der, i_node);
+            for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node) {
+                for (std::size_t i_der = 0; i_der < TDim * (2 * TNumNodes + TNumNodesMaster); ++i_der) {
+                    derivatives_threshold_values[i_der][i_node] = 0.0;
+                }
             }
-        }
 
-        return derivatives_threshold_values;
+            return derivatives_threshold_values;
+        }
     }
 
     ///@}
@@ -574,6 +577,7 @@ private:
         KRATOS_SERIALIZE_SAVE_BASE_CLASS( rSerializer, BaseType );
         rSerializer.save("PreviousMortarOperators", mPreviousMortarOperators);
         rSerializer.save("PreviousMortarOperatorsInitialized", mPreviousMortarOperatorsInitialized);
+        rSerializer.save("FrictionalLaw", mpFrictionalLaw); // TODO: Check this
     }
 
     void load(Serializer& rSerializer) override
@@ -581,6 +585,7 @@ private:
         KRATOS_SERIALIZE_LOAD_BASE_CLASS( rSerializer, BaseType );
         rSerializer.load("PreviousMortarOperators", mPreviousMortarOperators);
         rSerializer.load("PreviousMortarOperatorsInitialized", mPreviousMortarOperatorsInitialized);
+        rSerializer.load("FrictionalLaw", mpFrictionalLaw); // TODO: Check this
     }
 
     ///@}

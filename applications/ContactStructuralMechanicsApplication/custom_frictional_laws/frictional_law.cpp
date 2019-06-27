@@ -51,5 +51,17 @@ double FrictionalLaw::GetThresholdValue(
     return 0.0;
 }
 
+/***********************************************************************************/
+/***********************************************************************************/
+
+int FrictionalLaw::Check(
+    const NodeType& rNode,
+    const PairedCondition& rCondition,
+    const ProcessInfo& rCurrentProcessInfo
+    )
+{
+    return 0;
+}
+
 }  // namespace Kratos.
 

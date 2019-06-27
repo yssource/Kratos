@@ -125,6 +125,18 @@ public:
         const ProcessInfo& rCurrentProcessInfo
         );
 
+    /**
+     * @brief This function is designed to be called once to perform all the checks needed on the input provided. Checks can be "expensive" as the function is designed to catch user's errors.
+     * @param rNode The node where the threshold value is obtained
+     * @param rCondition The condition where the friction is computed
+     * @param rCurrentProcessInfo The current instance of the process info
+     */
+    virtual int Check(
+        const NodeType& rNode,
+        const PairedCondition& rCondition,
+        const ProcessInfo& rCurrentProcessInfo
+        );
+
     ///@}
     ///@name Access
     ///@{

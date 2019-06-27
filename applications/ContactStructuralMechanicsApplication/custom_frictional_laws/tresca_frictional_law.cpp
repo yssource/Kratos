@@ -42,18 +42,23 @@ double TrescaFrictionalLaw<TDim,TNumNodes,TNormalVariation, TNumNodesMaster>::Ge
 /***********************************************************************************/
 
 template< std::size_t TDim, std::size_t TNumNodes, bool TNormalVariation, std::size_t TNumNodesMaster>
-double TrescaFrictionalLaw<TDim,TNumNodes,TNormalVariation, TNumNodesMaster>::GetDerivativeThresholdValue(
-    const NodeType& rNode,
+typename TrescaFrictionalLaw<TDim,TNumNodes,TNormalVariation, TNumNodesMaster>::DerivativesArray TrescaFrictionalLaw<TDim,TNumNodes,TNormalVariation, TNumNodesMaster>::GetDerivativesThresholdArray(
     const PairedCondition& rCondition,
     const ProcessInfo& rCurrentProcessInfo,
     const DerivativeDataType& rDerivativeData,
-    const MortarConditionMatrices& rMortarConditionMatrices,
-    const IndexType IndexDerivative,
-    const IndexType IndexNode
+    const MortarConditionMatrices& rMortarConditionMatrices
     )
 {
+    DerivativesArray derivatives_threshold_values;
+
     // Threshold is constant, derivative is always zero
-    return 0.0;
+    for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node) {
+        for (std::size_t i_der = 0; i_der < TDim * (2 * TNumNodes + TNumNodesMaster); ++i_der) {
+            derivatives_threshold_values[i_der][i_node] = 0.0;
+        }
+    }
+
+    return derivatives_threshold_values;
 }
 
 /***********************************************************************************/

@@ -70,6 +70,9 @@ public:
     /// The definition of the mortar operators
     typedef typename BaseType::MortarConditionMatrices MortarConditionMatrices;
 
+    /// Definition of the derivatives array
+    typedef typename BaseType::DerivativesArray DerivativesArray;
+
     /// Node definition
     typedef Node<3> NodeType;
 
@@ -126,23 +129,18 @@ public:
         ) override;
 
     /**
-     * @brief This method computes the threshold derivative value considered for computing friction
-     * @param rNode The node where the threshold derivative value is obtained
+     * @brief This method computes the threshold derivative array considered for computing friction
      * @param rCondition The condition where the friction is computed
      * @param rCurrentProcessInfo The current instance of the process info
      * @param rDerivativeData The reference to the derivative database
      * @param rMortarConditionMatrices The container of the mortar operators
-     * @param IndexDerivative The derivative index
-     * @param IndexNode The corresponding node index on the condition geometry
+     * @return The threshold derivative array considered for computing friction
      */
-    double GetDerivativeThresholdValue(
-        const NodeType& rNode,
+    DerivativesArray GetDerivativesThresholdArray(
         const PairedCondition& rCondition,
         const ProcessInfo& rCurrentProcessInfo,
         const DerivativeDataType& rDerivativeData,
-        const MortarConditionMatrices& rMortarConditionMatrices,
-        const IndexType IndexDerivative,
-        const IndexType IndexNode
+        const MortarConditionMatrices& rMortarConditionMatrices
         ) override;
 
     ///@}

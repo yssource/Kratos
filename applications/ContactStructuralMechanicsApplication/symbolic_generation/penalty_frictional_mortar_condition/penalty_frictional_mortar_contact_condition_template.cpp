@@ -320,6 +320,11 @@ int PenaltyMethodFrictionalMortarContactCondition<TDim,TNumNodes,TNormalVariatio
         KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(NORMAL, r_node)
     }
 
+    // Checking frictional law
+    if (mpFrictionalLaw != NULL) {
+        ierr = mpFrictionalLaw->Check(*this, rCurrentProcessInfo);
+    }
+
     return ierr;
 
     KRATOS_CATCH("")

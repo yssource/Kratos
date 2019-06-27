@@ -253,7 +253,109 @@ private:
 ///@name Input and output
 ///@{
 
+/// input stream function
+template< std::size_t TDim, std::size_t TNumNodes, bool TNormalVariation, std::size_t TNumNodesMaster>
+inline std::istream & operator >>(std::istream& rIStream,
+                                  FrictionalLawWithDerivative<TDim, TNumNodes, TNormalVariation, TNumNodesMaster>& rThis);
+
+/// output stream function
+template< std::size_t TDim, std::size_t TNumNodes, bool TNormalVariation, std::size_t TNumNodesMaster>
+inline std::ostream & operator <<(std::ostream& rOStream,
+                                  const FrictionalLawWithDerivative<TDim, TNumNodes, TNormalVariation, TNumNodesMaster>& rThis)
+{
+    rThis.PrintInfo(rOStream);
+    rOStream << " : " << std::endl;
+    rThis.PrintData(rOStream);
+
+    return rOStream;
+}
+
 ///@}
+///@} addtogroup block
+
+KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) FrictionalLawWithDerivative<2, 2, false, 2>;
+KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) FrictionalLawWithDerivative<3, 3, false, 3>;
+KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) FrictionalLawWithDerivative<3, 4, false, 4>;
+KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) FrictionalLawWithDerivative<3, 3, false, 4>;
+KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) FrictionalLawWithDerivative<3, 4, false, 3>;
+KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) FrictionalLawWithDerivative<2, 2, true,  2>;
+KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) FrictionalLawWithDerivative<3, 3, true,  3>;
+KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) FrictionalLawWithDerivative<3, 4, true,  4>;
+KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) FrictionalLawWithDerivative<3, 3, true,  4>;
+KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) FrictionalLawWithDerivative<3, 4, true,  3>;
+
+template< std::size_t TDim, std::size_t TNumNodes, bool TNormalVariation, std::size_t TNumNodesMaster>
+void KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) AddKratosComponent(std::string const& Name, FrictionalLawWithDerivative<TDim, TNumNodes, TNormalVariation, TNumNodesMaster> const& ThisComponent);
+
+#ifdef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_2D2N
+#undef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_2D2N
+#endif
+#define KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_2D2N(name, reference) \
+    KratosComponents<FrictionalLawWithDerivative<2, 2, false, 2> >::Add(name, reference); \
+    Serializer::Register(name, reference);
+
+#ifdef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D3N
+#undef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D3N
+#endif
+#define KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D3N(name, reference) \
+    KratosComponents<FrictionalLawWithDerivative<3, 3, false, 3> >::Add(name, reference); \
+    Serializer::Register(name, reference);
+
+#ifdef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D4N
+#undef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D4N
+#endif
+#define KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D4N(name, reference) \
+    KratosComponents<FrictionalLawWithDerivative<3, 4, false, 4> >::Add(name, reference); \
+    Serializer::Register(name, reference);
+
+#ifdef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D3N4N
+#undef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D3N4N
+#endif
+#define KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D3N4N(name, reference) \
+    KratosComponents<FrictionalLawWithDerivative<3, 3, false, 4> >::Add(name, reference); \
+    Serializer::Register(name, reference);
+
+#ifdef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D4N3N
+#undef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D4N3N
+#endif
+#define KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D4N3N(name, reference) \
+    KratosComponents<FrictionalLawWithDerivative<3, 4, false, 3> >::Add(name, reference); \
+    Serializer::Register(name, reference);
+
+#ifdef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_2D2NNV
+#undef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_2D2NNV
+#endif
+#define KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_2D2NNV(name, reference) \
+    KratosComponents<FrictionalLawWithDerivative<2, 2, true, 2> >::Add(name, reference); \
+    Serializer::Register(name, reference);
+
+#ifdef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D3NNV
+#undef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D3NNV
+#endif
+#define KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D3NNV(name, reference) \
+    KratosComponents<FrictionalLawWithDerivative<3, 3, true, 3> >::Add(name, reference); \
+    Serializer::Register(name, reference);
+
+#ifdef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D4NNV
+#undef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D4NNV
+#endif
+#define KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D4NNV(name, reference) \
+    KratosComponents<FrictionalLawWithDerivative<3, 4, true, 4> >::Add(name, reference); \
+    Serializer::Register(name, reference);
+
+#ifdef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D3N4NNV
+#undef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D3N4NNV
+#endif
+#define KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D3N4NNV(name, reference) \
+    KratosComponents<FrictionalLawWithDerivative<3, 3, true, 4> >::Add(name, reference); \
+    Serializer::Register(name, reference);
+
+#ifdef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D4N3NNV
+#undef KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D4N3NNV
+#endif
+#define KRATOS_REGISTER_FRICTIONAL_LAW_WITH_DERIVATIVES_3D4N3NNV(name, reference) \
+    KratosComponents<FrictionalLawWithDerivative<3, 4, true, 3> >::Add(name, reference); \
+    Serializer::Register(name, reference);
 
 }  // namespace Kratos.
 

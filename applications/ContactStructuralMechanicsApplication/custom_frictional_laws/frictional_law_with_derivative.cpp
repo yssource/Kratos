@@ -43,6 +43,29 @@ typename FrictionalLawWithDerivative<TDim,TNumNodes,TNormalVariation, TNumNodesM
 /***********************************************************************************/
 /***********************************************************************************/
 
+template< std::size_t TDim, std::size_t TNumNodes, bool TNormalVariation, std::size_t TNumNodesMaster>
+void AddKratosComponent(std::string const& Name, FrictionalLawWithDerivative<TDim, TNumNodes, TNormalVariation, TNumNodesMaster> const& ThisComponent)
+{
+    KratosComponents<FrictionalLawWithDerivative<TDim, TNumNodes, TNormalVariation, TNumNodesMaster>>::Add(Name, ThisComponent);
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template class KratosComponents<FrictionalLawWithDerivative<2, 2, false, 2>>;
+template class KratosComponents<FrictionalLawWithDerivative<3, 3, false, 3>>;
+template class KratosComponents<FrictionalLawWithDerivative<3, 4, false, 4>>;
+template class KratosComponents<FrictionalLawWithDerivative<3, 3, false, 4>>;
+template class KratosComponents<FrictionalLawWithDerivative<3, 4, false, 3>>;
+template class KratosComponents<FrictionalLawWithDerivative<2, 2, true,  2>>;
+template class KratosComponents<FrictionalLawWithDerivative<3, 3, true,  3>>;
+template class KratosComponents<FrictionalLawWithDerivative<3, 4, true,  4>>;
+template class KratosComponents<FrictionalLawWithDerivative<3, 3, true,  4>>;
+template class KratosComponents<FrictionalLawWithDerivative<3, 4, true,  3>>;
+
+/***********************************************************************************/
+/***********************************************************************************/
+
 template class FrictionalLawWithDerivative<2, 2, false, 2>;
 template class FrictionalLawWithDerivative<3, 3, false, 3>;
 template class FrictionalLawWithDerivative<3, 4, false, 4>;

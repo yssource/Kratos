@@ -211,14 +211,8 @@ for normalvar in range(normal_combs):
                         normal_augmented_contact_pressure = augmented_normal_contact_pressure * NormalSlave.row(node)
                         rv_galerkin += DynamicFactor[node] * augmented_normal_contact_pressure * NormalwGap[node]
 
-                    if slip == 1: # Slip
-                        augmented_tangent_contact_pressure = ThresholdValue[node] * TangentSlave.row(node)
-                        rv_galerkin -= DynamicFactor[node] * augmented_tangent_contact_pressure.dot(TangentwSlipObjective.row(node))
-                    else: # Stick
-                        augmented_tangent_contact_pressure = TangentFactor * PenaltyParameter[node] * TangentSlipObjective.row(node)
-                        rv_galerkin -= DynamicFactor[node] * augmented_tangent_contact_pressure.dot(TangentwSlipObjective.row(node))
                         if slip == 1: # Slip
-                            augmented_tangent_contact_pressure = - mu[node] * augmented_normal_contact_pressure * TangentSlave.row(node)
+                            augmented_tangent_contact_pressure = ThresholdValue[node] * TangentSlave.row(node)
                             rv_galerkin += DynamicFactor[node] * augmented_tangent_contact_pressure.dot(TangentwSlipObjective.row(node))
                         else: # Stick
                             augmented_tangent_contact_pressure = TangentFactor * PenaltyParameter[node] * TangentSlipObjective.row(node)

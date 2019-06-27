@@ -488,7 +488,7 @@ protected:
      * @param rMortarConditionMatrices The container of the mortar operators
      * @return The derivatives of the threshold values
      */
-    DerivativesArray GetDerivativeThresholdValue(
+    DerivativesArray GetDerivativesThresholdArray(
         const ProcessInfo& rCurrentProcessInfo,
         const DerivativeDataType& rDerivativeData,
         const MortarConditionMatrices& rMortarConditionMatrices

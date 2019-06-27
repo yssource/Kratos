@@ -118,7 +118,18 @@ public:
     ///@{
 
     /**
-     * @brief This method computes the threshold derivative value considered for computing friction
+     * @brief This method computes the threshold array considered for computing friction
+     * @param rCondition The condition where the friction is computed
+     * @param rCurrentProcessInfo The current instance of the process info
+     * @return The threshold derivative array considered for computing friction
+     */
+    virtual array_1d<double, TNumNodes> GetThresholdArray(
+        const PairedCondition& rCondition,
+        const ProcessInfo& rCurrentProcessInfo
+        );
+
+    /**
+     * @brief This method computes the threshold derivative array considered for computing friction
      * @param rCondition The condition where the friction is computed
      * @param rCurrentProcessInfo The current instance of the process info
      * @param rDerivativeData The reference to the derivative database

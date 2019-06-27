@@ -468,17 +468,17 @@ protected:
     array_1d<double, TNumNodes> GetThresholdValue(const ProcessInfo& rCurrentProcessInfo)
     {
         // The friction coefficient
-        array_1d<double, TNumNodes> threshold_values;
-        auto& r_geometry = this->GetGeometry();
+        if (mpFrictionalLaw != NULL) {
+            return mpFrictionalLaw->GetThresholdArray(*this, rCurrentProcessInfo);
+        } else {
+            array_1d<double, TNumNodes> threshold_values;
 
-        for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node) {
-            const auto& r_node = r_geometry[i_node];
-            KRATOS_DEBUG_ERROR_IF_NOT(r_node.Has(FRICTIONAL_LAW)) << "FRICTIONAL_LAW not defined on node: " << r_node.Id() << std::endl;
-            FrictionalLaw::Pointer p_law = r_node.GetValue(FRICTIONAL_LAW);
-            threshold_values[i_node] = p_law->GetThresholdValue(r_geometry[i_node], *this, rCurrentProcessInfo);
+            for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node) {
+                threshold_values[i_node] = 0.0;
+            }
+
+            return threshold_values;
         }
-
-        return threshold_values;
     }
 
     /**

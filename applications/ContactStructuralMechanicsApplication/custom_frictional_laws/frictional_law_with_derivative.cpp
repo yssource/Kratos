@@ -19,6 +19,26 @@
 namespace Kratos
 {
 template< std::size_t TDim, std::size_t TNumNodes, bool TNormalVariation, std::size_t TNumNodesMaster>
+array_1d<double, TNumNodes> FrictionalLawWithDerivative<TDim,TNumNodes,TNormalVariation, TNumNodesMaster>::GetThresholdArray(
+    const PairedCondition& rCondition,
+    const ProcessInfo& rCurrentProcessInfo
+    )
+{
+    array_1d<double, TNumNodes> threshold_values;
+
+    const auto& r_geometry = rCondition.GetGeometry();
+    for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node) {
+        const auto& r_node = r_geometry[i_node];
+        threshold_values[i_node] = this->GetThresholdValue(r_node, rCondition, rCurrentProcessInfo);
+    }
+
+    return threshold_values;
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template< std::size_t TDim, std::size_t TNumNodes, bool TNormalVariation, std::size_t TNumNodesMaster>
 typename FrictionalLawWithDerivative<TDim,TNumNodes,TNormalVariation, TNumNodesMaster>::DerivativesArray FrictionalLawWithDerivative<TDim,TNumNodes,TNormalVariation, TNumNodesMaster>::GetDerivativesThresholdArray(
     const PairedCondition& rCondition,
     const ProcessInfo& rCurrentProcessInfo,

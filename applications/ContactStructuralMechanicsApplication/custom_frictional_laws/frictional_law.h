@@ -127,12 +127,10 @@ public:
 
     /**
      * @brief This function is designed to be called once to perform all the checks needed on the input provided. Checks can be "expensive" as the function is designed to catch user's errors.
-     * @param rNode The node where the threshold value is obtained
      * @param rCondition The condition where the friction is computed
      * @param rCurrentProcessInfo The current instance of the process info
      */
     virtual int Check(
-        const NodeType& rNode,
         const PairedCondition& rCondition,
         const ProcessInfo& rCurrentProcessInfo
         );
@@ -247,16 +245,36 @@ private:
 }; // Class FrictionalLaw
 
 ///@}
-
 ///@name Type Definitions
 ///@{
-
-
 ///@}
 ///@name Input and output
 ///@{
 
+/// input stream function
+inline std::istream & operator >>(std::istream& rIStream,
+                                  FrictionalLaw& rThis);
+
+/// output stream function
+
+inline std::ostream & operator <<(std::ostream& rOStream,
+                                  const FrictionalLaw& rThis)
+{
+    rThis.PrintInfo(rOStream);
+    rOStream << " : " << std::endl;
+    rThis.PrintData(rOStream);
+
+    return rOStream;
+}
+
 ///@}
+///@} addtogroup block
+
+// KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) KratosComponents<FrictionalLaw >;
+// KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) KratosComponents< Variable<FrictionalLaw::Pointer> >;
+//
+// void KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) AddKratosComponent(std::string const& Name, FrictionalLaw const& ThisComponent);
+// void KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) AddKratosComponent(std::string const& Name, Variable<FrictionalLaw::Pointer> const& ThisComponent);
 
 }  // namespace Kratos.
 

@@ -55,7 +55,6 @@ double FrictionalLaw::GetThresholdValue(
 /***********************************************************************************/
 
 int FrictionalLaw::Check(
-    const NodeType& rNode,
     const PairedCondition& rCondition,
     const ProcessInfo& rCurrentProcessInfo
     )

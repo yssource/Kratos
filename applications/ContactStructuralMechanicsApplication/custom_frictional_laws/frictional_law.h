@@ -270,11 +270,18 @@ inline std::ostream & operator <<(std::ostream& rOStream,
 ///@}
 ///@} addtogroup block
 
-// KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) KratosComponents<FrictionalLaw >;
-// KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) KratosComponents< Variable<FrictionalLaw::Pointer> >;
-//
-// void KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) AddKratosComponent(std::string const& Name, FrictionalLaw const& ThisComponent);
-// void KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) AddKratosComponent(std::string const& Name, Variable<FrictionalLaw::Pointer> const& ThisComponent);
+KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) KratosComponents<FrictionalLaw >;
+KRATOS_API_EXTERN template class KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) KratosComponents< Variable<FrictionalLaw::Pointer> >;
+
+void KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) AddKratosComponent(std::string const& Name, FrictionalLaw const& ThisComponent);
+void KRATOS_API(CONTACT_STRUCTURAL_MECHANICS_APPLICATION) AddKratosComponent(std::string const& Name, Variable<FrictionalLaw::Pointer> const& ThisComponent);
+
+#ifdef KRATOS_REGISTER_FRICTIONAL_LAW
+#undef KRATOS_REGISTER_FRICTIONAL_LAW
+#endif
+#define KRATOS_REGISTER_FRICTIONAL_LAW(name, reference) \
+    KratosComponents<FrictionalLaw >::Add(name, reference); \
+    Serializer::Register(name, reference);
 
 }  // namespace Kratos.
 

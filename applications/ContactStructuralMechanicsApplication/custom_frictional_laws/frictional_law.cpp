@@ -62,5 +62,27 @@ int FrictionalLaw::Check(
     return 0;
 }
 
+/***********************************************************************************/
+/***********************************************************************************/
+
+void AddKratosComponent(std::string const& Name, FrictionalLaw const& ThisComponent)
+{
+    KratosComponents<FrictionalLaw>::Add(Name, ThisComponent);
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+void AddKratosComponent(std::string const& Name, Variable<FrictionalLaw::Pointer> const& ThisComponent)
+{
+    KratosComponents<Variable<FrictionalLaw::Pointer> >::Add(Name, ThisComponent);
+}
+
+/***********************************************************************************/
+/***********************************************************************************/
+
+template class KratosComponents<FrictionalLaw>;
+template class KratosComponents<Variable<FrictionalLaw::Pointer>>;
+
 }  // namespace Kratos.
 

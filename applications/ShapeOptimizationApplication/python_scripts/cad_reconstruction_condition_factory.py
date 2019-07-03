@@ -691,15 +691,12 @@ class ConditionFactory:
                         v_value += knot_vec_v[s+q_index]
                     v_value /= deg_v
 
-                    is_inside, is_on_boundary = self.Contains((u_value,v_value), boundary_polygons[face_i.Key()], self.boundary_tessellation_tolerance*1.1)
+                    pole_indices.append((r,s))
+                    greville_abscissa_parameters.append((u_value,v_value))
+                    greville_points.append(surface_geometry_data.PointAt(u_value, v_value))
 
-                    # Only control points within the visible surface shall be considered
-                    if is_inside:
-                        pole_indices.append((r,s))
-                        greville_abscissa_parameters.append((u_value,v_value))
-                        greville_points.append(surface_geometry_data.PointAt(u_value, v_value))
-                        # point_ptr = self.cad_model.Add(an.Point3D(location=grevile_point))
-                        # point_ptr.Attributes().SetLayer('GrevillePoints')
+                    # point_ptr = self.cad_model.Add(an.Point3D(location=grevile_point))
+                    # point_ptr.Attributes().SetLayer('GrevillePoints')
 
             # Create condition for each of the relevant control points
             for (r,s), (u,v) in zip(pole_indices, greville_abscissa_parameters):

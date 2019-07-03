@@ -135,9 +135,10 @@ class ConditionFactory:
             integration_point_data[face_i] = [list_of_fe_points, list_of_parameters, list_of_integration_weights]
 
         # Map information from fem to integration points using element based mapper
-        print("> Perform mapping... ",face_i.Key())
+        print("> Starting to map from FEM to integration points... ")
         mapper = KratosMapping.MapperFactory.CreateMapper( self.fe_model_part, destination_mdpa, self.parameters["conditions"]["general"]["mapping_cad_fem"].Clone() )
         mapper.Map( KratosShape.SHAPE_CHANGE, KratosShape.SHAPE_CHANGE )
+        print("> Finished mapping from FEM to integration points. ")
 
         # Create conditions
         for face, [list_of_fe_points, list_of_parameters, list_of_integration_weights] in integration_point_data.items():
@@ -992,18 +993,18 @@ class ConditionFactory:
         surface_geometry = face.Data().Geometry().Data()
 
         clipper = an.TrimmedSurfaceClipping(tolerance=drawing_tolerance*10, scale=drawing_tolerance/10.0)
-        integration_points = an.PolygonIntegrationPoints()
-
         clipper.Clear()
 
         for loop in face.Data().Loops():
             clipper.BeginLoop()
 
             for trim in loop.Data().Trims():
+                # Polygonalizes given trimming curve
                 clipper.AddCurve(an.Curve2D(trim.Data().Geometry()))
 
             clipper.EndLoop()
 
+        # Performs actual clipping
         clipper.Compute(surface_geometry.SpansU(), surface_geometry.SpansV())
 
         degree_u = surface_geometry.DegreeU()
@@ -1014,6 +1015,8 @@ class ConditionFactory:
         list_of_points = []
         list_of_parameters = []
         list_of_weights = []
+
+        integration_points = an.PolygonIntegrationPoints()
 
         for i in range(clipper.NbSpansU()):
             for j in range(clipper.NbSpansV()):
@@ -1029,6 +1032,7 @@ class ConditionFactory:
                         list_of_weights.append(weight * la.norm(np.cross(a1,a2)))
                 else:
                     for polygon_i, polygon in enumerate(clipper.SpanPolygons(i, j)):
+                        # Here integration points are introduced based on an internal triangularization of given polygon
                         integration_points.Compute(degree, polygon)
 
                         for k in range(integration_points.NbIntegrationPoints()):

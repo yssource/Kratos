@@ -131,17 +131,41 @@ public:
 
         double abs_component = 0.0, average_component = 0.0, sum_abs = 0.0, sum_average = 0.0;
         for (unsigned int i = 0; i < principal_stresses.size(); ++i) {
+            KRATOS_WATCH(principal_stresses[i])
             abs_component = std::abs(principal_stresses[i]);
             average_component = 0.5 * (principal_stresses[i] + abs_component);
             sum_average += average_component;
             sum_abs += abs_component;
         }
         const double pre_indicator = sum_average / sum_abs;
+        KRATOS_WATCH(pre_indicator)
         if (pre_indicator < 0.5) {
             return -1.0;
         } else {
             return 1.0;
         }
+
+        // double suma = 0.0, sumb = 0.0;
+        // double aux_sa;
+        // double rTensileIndicatorFactor;
+
+        // for (IndexType i = 0; i < 3; ++i) {
+        //     aux_sa = std::abs(principal_stresses[i]);
+        //     suma += aux_sa;
+        //     sumb += 0.5 * (principal_stresses[i] + aux_sa);
+        // }
+
+        // if (std::abs(suma) > 1e-3) {
+        //     rTensileIndicatorFactor = sumb / suma;
+        // } else {
+        //     rTensileIndicatorFactor = sumb;
+        // }
+        // KRATOS_WATCH(rTensileIndicatorFactor)
+        // if (rTensileIndicatorFactor < 0.5) {
+        //     return -1.0;
+        // } else {
+        //     return 1.0;
+        // }
     }
 
     /**

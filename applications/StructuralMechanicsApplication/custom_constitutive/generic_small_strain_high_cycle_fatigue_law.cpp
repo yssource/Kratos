@@ -79,8 +79,8 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
 
         double max_stress = this->GetMaxStress();
         double min_stress = this->GetMinStress();
-        double sign_factor = HighCycleFatigueLawIntegrator<6>::CalculateTensionCompressionFactor(predictive_stress_vector);
-        uniaxial_stress *= sign_factor;
+        // double sign_factor = HighCycleFatigueLawIntegrator<6>::CalculateTensionCompressionFactor(predictive_stress_vector);
+        // uniaxial_stress *= sign_factor;
         unsigned int global_number_of_cycles = this->GetNumberOfCyclesGlobal();
         unsigned int local_number_of_cycles = this->GetNumberOfCyclesLocal();
         bool max_indicator = this->GetMaxDetected();
@@ -99,19 +99,25 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
 
         if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
 
-            HighCycleFatigueLawIntegrator<6>::CalculateMaximumAndMinimumStresses(
-                uniaxial_stress,
-                max_stress,
-                min_stress,
-                this->GetPreviousStresses(),
-                max_indicator,
-                min_indicator);
-            this->SetMaxStress(max_stress);
-            this->SetMinStress(min_stress);
+            // HighCycleFatigueLawIntegrator<6>::CalculateMaximumAndMinimumStresses(
+            //     uniaxial_stress,
+            //     max_stress,
+            //     min_stress,
+            //     this->GetPreviousStresses(),
+            //     max_indicator,
+            //     min_indicator);
+            // this->SetMaxStress(max_stress);
+            // this->SetMinStress(min_stress);
+
+            // KRATOS_WATCH(max_indicator)
+            KRATOS_WATCH(max_stress)
+            // KRATOS_WATCH(min_indicator)
+            KRATOS_WATCH(min_stress)
 
             if (max_indicator && min_indicator) {
                 double previous_reversion_factor = HighCycleFatigueLawIntegrator<6>::CalculateReversionFactor(previous_max_stress, previous_min_stress);
                 double reversion_factor = HighCycleFatigueLawIntegrator<6>::CalculateReversionFactor(max_stress, min_stress);
+                KRATOS_WATCH(reversion_factor)
 
                 double s_th, alphat;
                 HighCycleFatigueLawIntegrator<6>::CalculateFatigueParameters(
@@ -185,10 +191,12 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
             mReversionFactorRelativeError = reversion_factor_relative_error;
             mMaxStressRelativeError = max_stress_relative_error;
             mNewCycleIndicator = new_cycle;
+            // KRATOS_WATCH(global_number_of_cycles)
+            // KRATOS_WATCH(uniaxial_stress)
 
         }
 
-        uniaxial_stress *= sign_factor;
+        // uniaxial_stress *= sign_factor;
         if (r_constitutive_law_options.Is(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR)) {
             this->SetValue(UNIAXIAL_STRESS, uniaxial_stress, rValues.GetProcessInfo());
         }
@@ -267,13 +275,38 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::FinalizeMat
         TConstLawIntegratorType::YieldSurfaceType::CalculateEquivalentStress(predictive_stress_vector, r_strain_vector, uniaxial_stress, rValues);
         this->SetValue(UNIAXIAL_STRESS, uniaxial_stress, rValues.GetProcessInfo());
 
+        double sign_factor = HighCycleFatigueLawIntegrator<6>::CalculateTensionCompressionFactor(predictive_stress_vector);
+        uniaxial_stress *= sign_factor;
+
+        double max_stress = this->GetMaxStress();
+        double min_stress = this->GetMinStress();
+        bool max_indicator = this->GetMaxDetected();
+        bool min_indicator = this->GetMinDetected();
         double fatigue_reduction_factor = this->GetFatigueReductionFactor();
 
+        HighCycleFatigueLawIntegrator<6>::CalculateMaximumAndMinimumStresses(
+            uniaxial_stress,
+            max_stress,
+            min_stress,
+            this->GetPreviousStresses(),
+            max_indicator,
+            min_indicator);
+        this->SetMaxStress(max_stress);
+        this->SetMinStress(min_stress);
+        this->SetMaxDetected(max_indicator);
+        this->SetMinDetected(min_indicator);
+
+
+        KRATOS_WATCH("finalize")
+        KRATOS_WATCH(uniaxial_stress)
+        uniaxial_stress *= sign_factor;
         uniaxial_stress /= fatigue_reduction_factor;  // Fatigue contribution
+        KRATOS_WATCH(uniaxial_stress)
         const double F = uniaxial_stress - threshold;
 
         if (F > tolerance) {
-            const double characteristic_length = ConstitutiveLawUtilities<VoigtSize>::CalculateCharacteristicLength(rValues.GetElementGeometry());
+            // const double characteristic_length = ConstitutiveLawUtilities<VoigtSize>::CalculateCharacteristicLength(rValues.GetElementGeometry());
+            const double characteristic_length = 0.01;
             // This routine updates the PredictiveStress to verify the yield surf
             TConstLawIntegratorType::IntegrateStressVector(
                 predictive_stress_vector,
@@ -285,13 +318,14 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::FinalizeMat
             this->SetDamage(damage);
             this->SetThreshold(uniaxial_stress);
         }
+        Vector previous_stresses = ZeroVector(2);
+        const Vector& r_aux_stresses = this->GetPreviousStresses();
+        previous_stresses[1] = this->GetValue(UNIAXIAL_STRESS, previous_stresses[1])*sign_factor;
+        previous_stresses[0] = r_aux_stresses[1];
+        // KRATOS_WATCH(previous_stresses[1])
+        // KRATOS_WATCH(previous_stresses[0])
+        this->SetPreviousStresses(previous_stresses);
     }
-    double sign_factor = HighCycleFatigueLawIntegrator<6>::CalculateTensionCompressionFactor(predictive_stress_vector);
-    Vector previous_stresses = ZeroVector(2);
-    const Vector& r_aux_stresses = this->GetPreviousStresses();
-    previous_stresses[1] = this->GetValue(UNIAXIAL_STRESS, previous_stresses[1])*sign_factor;
-    previous_stresses[0] = r_aux_stresses[1];
-    this->SetPreviousStresses(previous_stresses);
 }
 /***********************************************************************************/
 /***********************************************************************************/
@@ -392,8 +426,10 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::SetValue(
         GenericSmallStrainIsotropicDamage<TConstLawIntegratorType>::SetValue(rThisVariable, rValue, rCurrentProcessInfo);
     } else if (rThisVariable == FATIGUE_REDUCTION_FACTOR) {
         mFatigueReductionFactor = rValue;
+        // mMaxStress = rValue;
     } else if (rThisVariable == WOHLER_STRESS) {
         mWohlerStress = rValue;
+        // mMinStress = rValue;
     } else if (rThisVariable == CYCLES_TO_FAILURE) {
         mCyclesToFailure = rValue;
     } else if (rThisVariable == REVERSION_FACTOR_RELATIVE_ERROR) {
@@ -454,8 +490,10 @@ double& GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::GetValue
         GenericSmallStrainIsotropicDamage<TConstLawIntegratorType>::GetValue(rThisVariable, rValue);
     } else if (rThisVariable == FATIGUE_REDUCTION_FACTOR) {
         rValue = mFatigueReductionFactor;
+        // rValue = mMaxStress;
     } else if (rThisVariable == WOHLER_STRESS) {
         rValue = mWohlerStress;
+        // rValue = mMinStress;
     } else if (rThisVariable == CYCLES_TO_FAILURE) {
         rValue = mCyclesToFailure;
     } else if (rThisVariable == REVERSION_FACTOR_RELATIVE_ERROR) {

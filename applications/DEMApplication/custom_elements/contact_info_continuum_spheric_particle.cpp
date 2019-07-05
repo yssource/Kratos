@@ -29,11 +29,11 @@ ContactInfoContinuumSphericParticle::ContactInfoContinuumSphericParticle(IndexTy
 ContactInfoContinuumSphericParticle::ContactInfoContinuumSphericParticle(IndexType NewId, NodesArrayType const& ThisNodes)
     : SphericContinuumParticle(NewId, ThisNodes) {}
 
-ContactInfoContinuumSphericParticle::ContactInfoContinuumSphericParticle(Element::Pointer p_spheric_particle)
+ContactInfoContinuumSphericParticle::ContactInfoContinuumSphericParticle(Element::Pointer p_continuum_spheric_particle)
 {
-    GeometryType::Pointer p_geom = p_spheric_particle->pGetGeometry();
-    PropertiesType::Pointer pProperties = p_spheric_particle->pGetProperties();
-    ContactInfoContinuumSphericParticle(p_spheric_particle->Id(), p_geom, pProperties);
+    GeometryType::Pointer p_geom = p_continuum_spheric_particle->pGetGeometry();
+    PropertiesType::Pointer pProperties = p_continuum_spheric_particle->pGetProperties();
+    ContactInfoContinuumSphericParticle(p_continuum_spheric_particle->Id(), p_geom, pProperties);
 }
 
 ContactInfoContinuumSphericParticle& ContactInfoContinuumSphericParticle::operator=(const ContactInfoContinuumSphericParticle& rOther) {

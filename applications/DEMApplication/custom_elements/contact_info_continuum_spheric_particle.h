@@ -28,16 +28,16 @@ KRATOS_CLASS_INTRUSIVE_POINTER_DEFINITION(ContactInfoContinuumSphericParticle);
 // typedef GlobalPointersVector<Element> ParticleWeakVectorType;
 // typedef ParticleWeakVectorType::ptr_iterator ParticleWeakIteratorType_ptr;
 // typedef GlobalPointersVector<Element >::iterator ParticleWeakIteratorType;
-// typedef SphericParticle BaseType;
-// typedef BaseType::ParticleDataBuffer BaseBufferType;
-// typedef std::unique_ptr<BaseType::ParticleDataBuffer> BaseBufferPointerType;
+typedef SphericContinuumParticle BaseType;
+typedef BaseType::ParticleDataBuffer BaseBufferType;
+typedef std::unique_ptr<BaseType::ParticleDataBuffer> BaseBufferPointerType;
 
 /// Default constructor.
 ContactInfoContinuumSphericParticle();
 ContactInfoContinuumSphericParticle( IndexType NewId, GeometryType::Pointer pGeometry);
 ContactInfoContinuumSphericParticle( IndexType NewId, NodesArrayType const& ThisNodes);
 ContactInfoContinuumSphericParticle( IndexType NewId, GeometryType::Pointer pGeometry,  PropertiesType::Pointer pProperties);
-ContactInfoContinuumSphericParticle(Element::Pointer p_spheric_particle);
+ContactInfoContinuumSphericParticle(Element::Pointer p_continuum_spheric_particle);
 
 Element::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const override;
 

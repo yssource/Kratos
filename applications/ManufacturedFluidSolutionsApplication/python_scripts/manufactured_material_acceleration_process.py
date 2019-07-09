@@ -1,8 +1,6 @@
 # Importing the Kratos Library
 import KratosMultiphysics as KM
 import KratosMultiphysics.ManufacturedFluidSolutionsApplication as MS
-# import KratosMultiphysics.DEMApplication as DEM
-# import KratosMultiphysics.SwimmingDEMApplication as SD
 
 from KratosMultiphysics.ManufacturedFluidSolutionsApplication.manufactured_solution_base_process import ManufacturedSolutionBaseProcess as ManufacturedBaseProcess
 
@@ -30,23 +28,14 @@ class ManufacturedMaterialAccelerationProcess(ManufacturedBaseProcess):
         self.framework = settings["framework"].GetString()
         self.time_scheme = settings["time_scheme"].GetString()
 
-        if self.time_scheme and self.time_scheme is not "bdf1":
+        if (self.time_scheme) and (self.time_scheme != "bdf1"):
             msg = "Requested time scheme: " + self.time_scheme
             msg += "\nAvailable options are:\n"
             msg += "\tNone\n"
             msg += "\t\"bdf1\"\n"
+            raise Exception(msg)
 
-        if self.framework == "eulerian":
-            # recovery_parameters = KM.Parameters()
-            # sub_param = recovery_parameters.AddEmptyValue("variables_for_recovery")
-            # sub_param = sub_param.AddEmptyValue("material_derivative")
-            # sub_param = sub_param.AddEmptyValue("VELOCITY").SetString("MATERIAL_ACCELERATION")
-            # self.derivative_recoverer = SD.StandardRecoveryUtility(self.model_part, recovery_parameters)
-            # KM.CalculateNodalAreaProcess(self.model_part)
-            pass
-        elif self.framework == "lagrangian":
-            pass
-        else:
+        if (self.framework != "eulerian") and (self.framework != "lagrangian"):
             msg = "Requested framework type: " + self.framework
             msg += "\nAvailable options are:\n"
             msg += "\t\"eulerian\"\n"
@@ -58,7 +47,6 @@ class ManufacturedMaterialAccelerationProcess(ManufacturedBaseProcess):
             if self.time_scheme == "bdf1":
                 self.manufactured_process.BDF1(KM.VELOCITY, KM.ACCELERATION)
         if self.framework == "eulerian":
-            # self.derivative_recoverer.Recover()
             self.manufactured_process.RecoverMaterialAcceleration()            
         if self.framework == "lagrangian":
             KM.VariableUtils().CopyVectorVar(KM.ACCELERATION, KM.MATERIAL_ACCELERATION, self.model_part.Nodes)

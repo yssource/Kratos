@@ -32,7 +32,7 @@ varying_parameters["steps_per_average_step"] = 1
 varying_parameters["rotated_stationary_flow_option"] = False
 varying_parameters["averaging_has_already_been_done"] = False
 varying_parameters["do_write_results_to_hdf5"] = False
-varying_parameters["stationarity"]["time_steps_per_analytic_processing_step"] = 1000
+varying_parameters["time_steps_per_analytic_processing_step"] = 1000
 
 parameters = Parameters(json.dumps(varying_parameters))
 

@@ -132,7 +132,7 @@ public:
     QSVMS(IndexType NewId, GeometryType::Pointer pGeometry, Properties::Pointer pProperties);
 
     /// Destructor.
-    ~QSVMS() override;
+    virtual ~QSVMS() override;
 
     ///@}
     ///@name Operators
@@ -297,7 +297,7 @@ protected:
         TElementData& rData,
         MatrixType& rMassMatrix);
 
-    void AddViscousTerm(
+    virtual void AddViscousTerm(
         const TElementData& rData,
         BoundedMatrix<double,LocalSize,LocalSize>& rLHS,
         VectorType& rRHS);

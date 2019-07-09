@@ -81,6 +81,7 @@ set( KRATOS_SWIMMING_DEM_APPLICATION_CORE_SOURCES
     ## Elements
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/monolithic_dem_coupled.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/monolithic_dem_coupled_weak.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/qsvms_dem_coupled.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/calculate_laplacian_simplex_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/calculate_mat_deriv_simplex_element.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_elements/calculate_component_gradient_simplex_element.cpp
@@ -137,8 +138,8 @@ target_link_libraries(KratosSwimmingDEMApplication PUBLIC KratosSwimmingDEMCore)
 set_target_properties(KratosSwimmingDEMApplication PROPERTIES PREFIX "")
 
 if(USE_COTIRE MATCHES ON)
-  cotire(KratosSwimmingDEMCore)
-  cotire(KratosSwimmingDEMApplication)
+    cotire(KratosSwimmingDEMCore)
+    cotire(KratosSwimmingDEMApplication)
 endif(USE_COTIRE MATCHES ON)
 
 ## installing the resulting libraries

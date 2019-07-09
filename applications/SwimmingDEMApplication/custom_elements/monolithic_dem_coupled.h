@@ -2244,7 +2244,7 @@ protected:
            for (unsigned int iNode = 0; iNode < TNumNodes; ++iNode){
               double rate = delta_time_inv * (this->GetGeometry()[iNode].FastGetSolutionStepValue(FLUID_FRACTION) - this->GetGeometry()[iNode].FastGetSolutionStepValue(FLUID_FRACTION_OLD));
                 this->GetGeometry()[iNode].SetLock();
-              this->GetGeometry()[iNode].FastGetSolutionStepValue(FLUID_FRACTION_RATE) = rate;
+                this->GetGeometry()[iNode].FastGetSolutionStepValue(FLUID_FRACTION_RATE) = rate;
                 this->GetGeometry()[iNode].UnSetLock();
               rResult += rShapeFunc[iNode] * rate;
              }

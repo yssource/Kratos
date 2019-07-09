@@ -182,7 +182,7 @@ class TestAnalytics(KratosUnittest.TestCase):
 
 
     @classmethod
-    @KratosUnittest.expectedFailure
+    #@KratosUnittest.expectedFailure
     def test_Analytics_2(self):
         path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "analytics_tests_files")
         parameters_file_name = os.path.join(path, "ProjectParametersDEM_single_layer_ghost.json")
@@ -191,7 +191,7 @@ class TestAnalytics(KratosUnittest.TestCase):
 
 
     @classmethod
-    @KratosUnittest.expectedFailure
+    #@KratosUnittest.expectedFailure
     def test_Analytics_3(self):
         path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "analytics_tests_files")
         parameters_file_name = os.path.join(path, "ProjectParametersDEM_multi_layer_ghost.json")

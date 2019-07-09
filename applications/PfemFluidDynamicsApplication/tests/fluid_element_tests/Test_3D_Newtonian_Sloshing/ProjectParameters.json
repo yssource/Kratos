@@ -147,7 +147,7 @@
                     "mesh_smoothing"                : false,
                     "variables_smoothing"           : false,
                     "elemental_variables_to_smooth" : ["DETERMINANT_F"],
-                    "reference_element_type"        : "TwoStepUpdatedLagrangianVPFluidElement3D",
+                    "reference_element_type"        : "TwoStepUpdatedLagrangianVPFluidDEMcouplingElement3D",
                     "reference_condition_type"      : "CompositeCondition3D3N"
                 },
                 "spatial_bounding_box"            : {

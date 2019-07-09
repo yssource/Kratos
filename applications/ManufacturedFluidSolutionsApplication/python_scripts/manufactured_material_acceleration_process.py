@@ -29,14 +29,14 @@ class ManufacturedMaterialAccelerationProcess(ManufacturedBaseProcess):
         self.time_scheme = settings["time_scheme"].GetString()
 
         if (self.time_scheme) and (self.time_scheme != "bdf1"):
-            msg = "Requested time scheme: " + self.time_scheme
+            msg = "Requested time scheme: \"" + self.time_scheme + "\""
             msg += "\nAvailable options are:\n"
             msg += "\tNone\n"
             msg += "\t\"bdf1\"\n"
             raise Exception(msg)
 
         if (self.framework != "eulerian") and (self.framework != "lagrangian"):
-            msg = "Requested framework type: " + self.framework
+            msg = "Requested framework type: \"" + self.framework + "\""
             msg += "\nAvailable options are:\n"
             msg += "\t\"eulerian\"\n"
             msg += "\t\"lagrangian\"\n"

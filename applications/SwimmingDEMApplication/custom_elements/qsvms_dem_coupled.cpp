@@ -15,7 +15,7 @@
 #include "includes/cfd_variables.h"
 #include "includes/checks.h"
 
-#include "custom_utilities/qsvmsdemcoupled_data.h"
+#include "custom_utilities/qsvms_data.h"
 //#include "../FluidDynamicsApplication/custom_utilities/fluid_element_data.h"
 //#include "../FluidDynamicsApplication/custom_utilities/qsvms_data.h"
 //#include "../FluidDynamicsApplication/custom_elements/qs_vms.h"
@@ -1981,8 +1981,8 @@ void QSVMSDEMCoupled<TElementData>::load(Serializer& rSerializer)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Class template instantiation
 
-template class QSVMSDEMCoupled<QSVMSDEMCoupledData< 2, 3 >>;
-template class QSVMSDEMCoupled<QSVMSDEMCoupledData< 3, 4 >>;
+template class QSVMSDEMCoupled<QSVMSData< 2, 3 >>;
+template class QSVMSDEMCoupled<QSVMSData< 3, 4 >>;
 
 }
 

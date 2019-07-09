@@ -46,8 +46,8 @@
 //#include "../FluidDynamicsApplication/custom_elements/fluid_element.h"
 #include "../FluidDynamicsApplication/custom_elements/qs_vms.h"
 //#include "../FluidDynamicsApplication/custom_utilities/fluid_element_data.h"
-//#include "../FluidDynamicsApplication/custom_utilities/qsvms_data.h"
-#include "custom_utilities/qsvmsdemcoupled_data.h"
+#include "../FluidDynamicsApplication/custom_utilities/qsvms_data.h"
+//#include "custom_utilities/qsvmsdemcoupled_data.h"
 
 namespace Kratos
 {
@@ -125,9 +125,9 @@ private:
     const MonolithicDEMCoupledWeak<3> mMonolithicDEMCoupledWeak3D;
 
     /// 2D instance of the QSVMSDEMCoupled element
-    const QSVMSDEMCoupled< QSVMSDEMCoupledData < 2, 3 > > mQSVMSDEMCoupled2D;
+    const QSVMSDEMCoupled< QSVMSData < 2, 3 > > mQSVMSDEMCoupled2D;
     /// 3D instance of the QSVMSDEMCoupled element
-    const QSVMSDEMCoupled< QSVMSDEMCoupledData < 3, 4 > > mQSVMSDEMCoupled3D;
+    const QSVMSDEMCoupled< QSVMSData < 3, 4 > > mQSVMSDEMCoupled3D;
 
     const ComputeLaplacianSimplex<2> mComputeLaplacianSimplex2D;
     const ComputeLaplacianSimplex<3> mComputeLaplacianSimplex3D;

@@ -25,6 +25,7 @@
 // Project includes
 #include "includes/define.h"
 #include "includes/model_part.h"
+#include "includes/variables.h"
 #include "custom_manufactured/manufactured_solution.h"
 
 
@@ -163,6 +164,23 @@ public:
     }
 
     void RecoverMaterialAcceleration();
+
+    template<class TVarType>
+    void BDF1(
+        TVarType& rPrimaryVariable,
+        TVarType& rDerivativeVariable)
+    {
+        double dt_inv = 1 / mrModelPart.GetProcessInfo().GetValue(DELTA_TIME);
+        #pragma omp parallel for
+        for (int i = 0; i < static_cast<int>(mrModelPart.Nodes().size()); i++)
+        {
+            auto it_node = mrModelPart.NodesBegin() + i;
+            auto value_n = it_node->FastGetSolutionStepValue(rPrimaryVariable);
+            auto value_nn = it_node->FastGetSolutionStepValue(rPrimaryVariable, 1);
+            auto derivative = dt_inv * (value_n - value_nn);
+            it_node->FastGetSolutionStepValue(rDerivativeVariable) = derivative;
+        }
+    }
 
     ///@}
     ///@name Access

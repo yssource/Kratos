@@ -18,7 +18,8 @@ class ManufacturedMaterialAccelerationProcess(ManufacturedBaseProcess):
         default_settings = KM.Parameters("""
             {
                 "model_part_name"  : "model_part_name",
-                "framework"        : "eulerian"
+                "framework"        : "eulerian",
+                "time_scheme"      : ""
             }
             """
             )
@@ -26,8 +27,14 @@ class ManufacturedMaterialAccelerationProcess(ManufacturedBaseProcess):
         settings.ValidateAndAssignDefaults(default_settings)
 
         self.model_part = model[settings["model_part_name"].GetString()]
-
         self.framework = settings["framework"].GetString()
+        self.time_scheme = settings["time_scheme"].GetString()
+
+        if self.time_scheme and self.time_scheme is not "bdf1":
+            msg = "Requested time scheme: " + self.time_scheme
+            msg += "\nAvailable options are:\n"
+            msg += "\tNone\n"
+            msg += "\t\"bdf1\"\n"
 
         if self.framework == "eulerian":
             # recovery_parameters = KM.Parameters()
@@ -47,6 +54,9 @@ class ManufacturedMaterialAccelerationProcess(ManufacturedBaseProcess):
             raise Exception(msg)
 
     def ExecuteFinalizeSolutionStep(self):
+        if self.time_scheme:
+            if self.time_scheme == "bdf1":
+                self.manufactured_process.BDF1(KM.VELOCITY, KM.ACCELERATION)
         if self.framework == "eulerian":
             # self.derivative_recoverer.Recover()
             self.manufactured_process.RecoverMaterialAcceleration()            

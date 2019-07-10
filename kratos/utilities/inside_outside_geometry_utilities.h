@@ -40,7 +40,7 @@ namespace Kratos
 ///@}
 ///@name Kratos Classes
 ///@{
-namespace GeometryUtilities
+namespace InsideOutsideGeometryUtilities
 {
     /**
      * @brief This method computes the local coordinates of  node inside a triangle (2D)
@@ -107,7 +107,7 @@ namespace GeometryUtilities
         const std::vector<std::vector<double>>& rInnerLoops
         );
 
-}; // namespace GeometryUtilities
+}; // namespace InsideOutsideGeometryUtilities
 }  // namespace Kratos
 
 #endif // INSIDE_OUTSIDE_GEOMETRY_UTILITIES_H_INCLUDED

@@ -41,7 +41,7 @@ namespace Kratos
 ///@}
 ///@name Kratos Classes
 ///@{
-namespace GeometryUtilities
+namespace InsideOutsideGeometryUtilities
 {
 void GetLocalCoordinatesTriangle2D(
     const double LocationX,
@@ -150,5 +150,5 @@ bool IsInside2D(
     return false;
 }
 
-} // namespace GeometryUtilities
+} // namespace InsideOutsideGeometryUtilities
 }  // namespace Kratos

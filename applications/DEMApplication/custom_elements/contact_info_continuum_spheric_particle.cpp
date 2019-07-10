@@ -38,7 +38,7 @@ ContactInfoContinuumSphericParticle::ContactInfoContinuumSphericParticle(Element
 
 ContactInfoContinuumSphericParticle& ContactInfoContinuumSphericParticle::operator=(const ContactInfoContinuumSphericParticle& rOther) {
 
-    SphericContinuumParticle::operator=(rOther);
+    SphericParticle::operator=(rOther);
 
     mNeighbourContactRadius = rOther.mNeighbourContactRadius;
     mNeighbourIndentation = rOther.mNeighbourIndentation;

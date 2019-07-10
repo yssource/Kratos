@@ -111,36 +111,38 @@ bool IsInside2D(
     )
 {
     for (std::size_t i = 0; i < rInnerLoops.size(); ++i) {
-        delaunator::Delaunator delaunators(rInnerLoops[i]);
+        delaunator::Delaunator delaunator(rInnerLoops[i]);
+        const auto& r_triangles = delaunator.triangles;
 
-        for (std::size_t i = 0; i < delaunators.triangles.size(); i += 3) {
+        for (std::size_t i = 0; i < r_triangles.size(); i += 3) {
             const bool check_is_inside = IsInsideTriangle2D(
                 LocationX,
                 LocationY,
-                rInnerLoops[i][2 * delaunators.triangles[i]],
-                rInnerLoops[i][2 * delaunators.triangles[i] + 1],
-                rInnerLoops[i][2 * delaunators.triangles[i + 1]],
-                rInnerLoops[i][2 * delaunators.triangles[i + 1] + 1],
-                rInnerLoops[i][2 * delaunators.triangles[i + 2]],
-                rInnerLoops[i][2 * delaunators.triangles[i + 2] + 1]
+                rInnerLoops[i][2 * r_triangles[i]],
+                rInnerLoops[i][2 * r_triangles[i] + 1],
+                rInnerLoops[i][2 * r_triangles[i + 1]],
+                rInnerLoops[i][2 * r_triangles[i + 1] + 1],
+                rInnerLoops[i][2 * r_triangles[i + 2]],
+                rInnerLoops[i][2 * r_triangles[i + 2] + 1]
             );
             if (check_is_inside)
                 return false;
         }
     }
     for (std::size_t i = 0; i < rOuterLoops.size(); ++i) {
-        delaunator::Delaunator delaunators(rOuterLoops[i]);
+        delaunator::Delaunator delaunator(rOuterLoops[i]);
+        const auto& r_triangles = delaunator.triangles;
 
-        for (std::size_t i = 0; i < delaunators.triangles.size(); i += 3) {
+        for (std::size_t i = 0; i < r_triangles.size(); i += 3) {
             const bool check_is_inside = IsInsideTriangle2D(
                 LocationX,
                 LocationY,
-                rOuterLoops[i][2 * delaunators.triangles[i]],
-                rOuterLoops[i][2 * delaunators.triangles[i] + 1],
-                rOuterLoops[i][2 * delaunators.triangles[i + 1]],
-                rOuterLoops[i][2 * delaunators.triangles[i + 1] + 1],
-                rOuterLoops[i][2 * delaunators.triangles[i + 2]],
-                rOuterLoops[i][2 * delaunators.triangles[i + 2] + 1]
+                rOuterLoops[i][2 * r_triangles[i]],
+                rOuterLoops[i][2 * r_triangles[i] + 1],
+                rOuterLoops[i][2 * r_triangles[i + 1]],
+                rOuterLoops[i][2 * r_triangles[i + 1] + 1],
+                rOuterLoops[i][2 * r_triangles[i + 2]],
+                rOuterLoops[i][2 * r_triangles[i + 2] + 1]
             );
             if (check_is_inside)
                 return true;

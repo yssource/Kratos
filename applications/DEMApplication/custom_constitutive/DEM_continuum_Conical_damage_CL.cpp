@@ -66,8 +66,8 @@ namespace Kratos {
         mKt = 4.0 * equiv_shear * mKn / equiv_young;
     }
 
-    void DEM_continuum_Conical_damage::DamageContact(ContactInfoContinuumSphericParticle* const element1,
-                                             ContactInfoContinuumSphericParticle* const element2,
+    void DEM_continuum_Conical_damage::DamageContact(BeamParticle* const element1,
+                                             BeamParticle* const element2,
                                              double& equiv_radius,
                                              const double equiv_level_of_fouling,
                                              const double equiv_young,
@@ -114,8 +114,8 @@ namespace Kratos {
                                                bool& sliding,
                                                double LocalCoordSystem[3][3]) {
 
-        ContactInfoContinuumSphericParticle* p_element1 = dynamic_cast<ContactInfoContinuumSphericParticle*>(element1);
-        ContactInfoContinuumSphericParticle* p_element2 = dynamic_cast<ContactInfoContinuumSphericParticle*>(element2);
+        BeamParticle* p_element1 = dynamic_cast<BeamParticle*>(element1);
+        BeamParticle* p_element2 = dynamic_cast<BeamParticle*>(element2);
 
         //Get equivalent Radius
         const double my_radius      = p_element1->GetParticleConicalDamageContactRadius();
@@ -211,7 +211,7 @@ namespace Kratos {
         mKt = 4.0 * equiv_shear * mKn / equiv_young;
     }
 
-    void DEM_continuum_Conical_damage::DamageContactWithFEM(ContactInfoContinuumSphericParticle* const element,
+    void DEM_continuum_Conical_damage::DamageContactWithFEM(BeamParticle* const element,
                                                     Condition* const wall,
                                                     double& effective_radius,
                                                     const double equiv_level_of_fouling,
@@ -256,7 +256,7 @@ namespace Kratos {
                                                       Condition* const wall,
                                                       bool& sliding) {
 
-        ContactInfoContinuumSphericParticle* p_element = dynamic_cast<ContactInfoContinuumSphericParticle*>(element);
+        BeamParticle* p_element = dynamic_cast<BeamParticle*>(element);
 
         //Get effective Radius
         double effective_radius = p_element->GetParticleConicalDamageContactRadius();
@@ -336,8 +336,8 @@ namespace Kratos {
 
     void DEM_continuum_Conical_damage::CalculateViscoDampingForce(double LocalRelVel[3],
                                                           double ViscoDampingLocalContactForce[3],
-                                                          ContactInfoContinuumSphericParticle* const element1,
-                                                          ContactInfoContinuumSphericParticle* const element2) {
+                                                          BeamParticle* const element1,
+                                                          BeamParticle* const element2) {
 
         const double my_mass    = element1->GetMass();
         const double other_mass = element2->GetMass();
@@ -362,8 +362,8 @@ namespace Kratos {
                                                         double ViscoDampingLocalContactForce[3],
                                                         const double LocalDeltDisp[3],
                                                         bool& sliding,
-                                                        ContactInfoContinuumSphericParticle* const element1,
-                                                        ContactInfoContinuumSphericParticle* const element2,
+                                                        BeamParticle* const element1,
+                                                        BeamParticle* const element2,
                                                         const double original_equiv_radius,
                                                         const double equiv_young,
                                                         double indentation,
@@ -453,7 +453,7 @@ namespace Kratos {
 
     void DEM_continuum_Conical_damage::CalculateViscoDampingForceWithFEM(double LocalRelVel[3],
                                                                  double ViscoDampingLocalContactForce[3],
-                                                                 ContactInfoContinuumSphericParticle* const element,
+                                                                 BeamParticle* const element,
                                                                  Condition* const wall) {
 
         const double my_mass    = element->GetMass();
@@ -473,7 +473,7 @@ namespace Kratos {
                                                                double ViscoDampingLocalContactForce[3],
                                                                const double LocalDeltDisp[3],
                                                                bool& sliding,
-                                                               ContactInfoContinuumSphericParticle* const element,
+                                                               BeamParticle* const element,
                                                                Condition* const wall,
                                                                const double original_effective_radius,
                                                                const double equiv_young,

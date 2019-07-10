@@ -35,6 +35,8 @@ namespace Kratos {
         /// Destructor
         virtual ~BeamParticle() {};
 
+        BeamParticle& operator=(const BeamParticle& rOther);
+
         /// Turn back information as a string
         virtual std::string Info() const override
         {
@@ -42,7 +44,6 @@ namespace Kratos {
             buffer << "BeamParticle" ;
             return buffer.str();
         }
-
 
         /// Print information about this object
         virtual void PrintInfo(std::ostream& rOStream) const override {rOStream << "BeamParticle";}
@@ -55,6 +56,59 @@ namespace Kratos {
                                                    array_1d<double, 3>& rElasticForce,
                                                    array_1d<double, 3>& rContactForce,
                                                    double& RollingResistance) override;
+
+        virtual double GetParticleInitialCohesion();
+        void   SetParticleInitialCohesionFromProperties(double* particle_initial_cohesion);
+        virtual double GetAmountOfCohesionFromStress();
+        void   SetAmountOfCohesionFromStressFromProperties(double* amount_of_cohesion_from_stress);
+        virtual double GetParticleConicalDamageContactRadius();
+        void   SetParticleConicalDamageContactRadiusFromProperties(double* particle_contact_radius);
+        virtual double GetParticleConicalDamageMaxStress();
+        void   SetParticleConicalDamageMaxStressFromProperties(double* particle_max_stress);
+        virtual double GetParticleConicalDamageGamma();
+        void   SetParticleConicalDamageGammaFromProperties(double* particle_gamma);
+        virtual double GetLevelOfFouling();
+        void   SetLevelOfFoulingFromProperties(double* level_of_fouling);
+
+        double SlowGetParticleInitialCohesion();
+        double SlowGetAmountOfCohesionFromStress();
+        double SlowGetParticleConicalDamageContactRadius();
+        double SlowGetParticleConicalDamageMaxStress();
+        double SlowGetParticleConicalDamageGamma();
+        double SlowGetLevelOfFouling();
+
+        std::vector<double> mNeighbourContactRadius;
+        std::vector<double> mNeighbourRigidContactRadius;
+        std::vector<double> mNeighbourIndentation;
+        std::vector<double> mNeighbourRigidIndentation;
+        std::vector<double> mNeighbourTgOfFriAng;
+        std::vector<double> mNeighbourRigidTgOfFriAng;
+        std::vector<double> mNeighbourContactStress;
+        std::vector<double> mNeighbourRigidContactStress;
+        std::vector<double> mNeighbourCohesion;
+        std::vector<double> mNeighbourRigidCohesion;
+
+        protected:
+
+        class ParticleDataBuffer: public SphericParticle::ParticleDataBuffer
+        {
+            public:
+
+            ParticleDataBuffer(SphericParticle* p_this_particle): SphericParticle::ParticleDataBuffer(p_this_particle){}
+
+            virtual ~ParticleDataBuffer(){}
+
+        };
+
+        std::unique_ptr<SphericParticle::ParticleDataBuffer> CreateParticleDataBuffer(SphericParticle* p_this_particle) override
+        {
+            return std::unique_ptr<SphericParticle::ParticleDataBuffer>(new ParticleDataBuffer(p_this_particle));
+        }
+
+        void ComputeNewNeighboursHistoricalData(DenseVector<int>& temp_neighbours_ids,
+                                                std::vector<array_1d<double, 3> >& temp_neighbour_elastic_contact_forces) override;
+
+        void ComputeNewRigidFaceNeighboursHistoricalData() override;
 
         private:
 
@@ -70,23 +124,7 @@ namespace Kratos {
             KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, SphericContinuumParticle);
         }
 
-        /*
-        /// Assignment operator
-        BeamParticle& operator=(BeamParticle const& rOther)
-        {
-        return *this;
-        }
-
-        /// Copy constructor
-        BeamParticle(BeamParticle const& rOther)
-        {
-        *this = rOther;
-        }
-        */
-
-        ///@}
-
-    }; // Class BeamParticle
+}; // Class BeamParticle
 
     /// input stream function
     inline std::istream& operator >> (std::istream& rIStream, BeamParticle& rThis) {return rIStream;}

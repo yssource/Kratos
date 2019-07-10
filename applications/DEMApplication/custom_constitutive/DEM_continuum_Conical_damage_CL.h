@@ -10,7 +10,7 @@
 // Project includes
 #include "DEM_D_Hertz_viscous_Coulomb_CL.h"
 #include "custom_elements/spheric_continuum_particle.h"
-#include "custom_elements/contact_info_continuum_spheric_particle.h"
+#include "custom_elements/beam_particle.h"
 
 namespace Kratos {
 
@@ -41,8 +41,8 @@ namespace Kratos {
                                         const double equiv_shear,
                                         const double indentation);
 
-        void DamageContact(ContactInfoContinuumSphericParticle* const element1,
-                           ContactInfoContinuumSphericParticle* const element2,
+        void DamageContact(BeamParticle* const element1,
+                           BeamParticle* const element2,
                            double& equiv_radius,
                            const double equiv_level_of_fouling,
                            const double equiv_young,
@@ -56,7 +56,7 @@ namespace Kratos {
                                                const double equiv_shear,
                                                const double indentation);
 
-        void DamageContactWithFEM(ContactInfoContinuumSphericParticle* const element,
+        void DamageContactWithFEM(BeamParticle* const element,
                                   Condition* const wall,
                                   double& effective_radius,
                                   const double equiv_level_of_fouling,
@@ -98,8 +98,8 @@ namespace Kratos {
                                       double ViscoDampingLocalContactForce[3],
                                       const double LocalDeltDisp[3],
                                       bool& sliding,
-                                      ContactInfoContinuumSphericParticle* const element1,
-                                      ContactInfoContinuumSphericParticle* const element2,
+                                      BeamParticle* const element1,
+                                      BeamParticle* const element2,
                                       const double original_equiv_radius,
                                       const double equiv_young,
                                       double indentation,
@@ -113,7 +113,7 @@ namespace Kratos {
                                              double ViscoDampingLocalContactForce[3],
                                              const double LocalDeltDisp[3],
                                              bool& sliding,
-                                             ContactInfoContinuumSphericParticle* const element,
+                                             BeamParticle* const element,
                                              Condition* const wall,
                                              const double effective_radius,
                                              const double original_effective_young,
@@ -124,12 +124,12 @@ namespace Kratos {
 
         void CalculateViscoDampingForce(double LocalRelVel[3],
                                         double ViscoDampingLocalContactForce[3],
-                                        ContactInfoContinuumSphericParticle* const element1,
-                                        ContactInfoContinuumSphericParticle* const element2);
+                                        BeamParticle* const element1,
+                                        BeamParticle* const element2);
 
         void CalculateViscoDampingForceWithFEM(double LocalRelVel[3],
                                                double ViscoDampingLocalContactForce[3],
-                                               ContactInfoContinuumSphericParticle* const element,
+                                               BeamParticle* const element,
                                                Condition* const wall);
 
         using DEM_D_Hertz_viscous_Coulomb::CalculateNormalForce;

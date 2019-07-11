@@ -1,5 +1,5 @@
 //
-// Author: Joaquín Irazábal, jirazabal@cimne.upc.edu
+// Author: Joaquín Irazábal jirazabal@cimne.upc.edu
 //
 
 #if !defined(KRATOS_BEAM_PARTICLE_H_INCLUDED)
@@ -8,10 +8,8 @@
 // System includes
 #include <string>
 #include <iostream>
-
-// Project includes
-#include "includes/define.h"
 #include "spheric_continuum_particle.h"
+
 
 namespace Kratos {
 
@@ -22,23 +20,32 @@ namespace Kratos {
         /// Pointer definition of BeamParticle
         KRATOS_CLASS_POINTER_DEFINITION(BeamParticle);
 
-        BeamParticle() : SphericContinuumParticle() {}
-        BeamParticle(IndexType NewId, GeometryType::Pointer pGeometry) : SphericContinuumParticle(NewId, pGeometry) {}
-        BeamParticle(IndexType NewId, NodesArrayType const& ThisNodes) : SphericContinuumParticle(NewId, ThisNodes) {}
-        BeamParticle(IndexType NewId, GeometryType::Pointer pGeometry, PropertiesType::Pointer pProperties) : SphericContinuumParticle(NewId, pGeometry, pProperties) {}
+        // typedef GlobalPointersVector<Condition> ConditionWeakVectorType;
+        // typedef GlobalPointersVector<Condition >::iterator ConditionWeakIteratorType;
 
-        Element::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const override
-        {
-            return SphericContinuumParticle::Pointer(new BeamParticle(NewId, GetGeometry().Create(ThisNodes), pProperties));
-        }
+        // typedef GlobalPointersVector<Element> ParticleWeakVectorType;
+        // typedef ParticleWeakVectorType::ptr_iterator ParticleWeakIteratorType_ptr;
+        // typedef GlobalPointersVector<Element >::iterator ParticleWeakIteratorType;
+        typedef SphericContinuumParticle BaseType;
+        typedef BaseType::ParticleDataBuffer BaseBufferType;
+        typedef std::unique_ptr<BaseType::ParticleDataBuffer> BaseBufferPointerType;
+
+        /// Default constructor.
+        BeamParticle();
+        BeamParticle( IndexType NewId, GeometryType::Pointer pGeometry);
+        BeamParticle( IndexType NewId, NodesArrayType const& ThisNodes);
+        BeamParticle( IndexType NewId, GeometryType::Pointer pGeometry,  PropertiesType::Pointer pProperties);
+        BeamParticle(Element::Pointer p_continuum_spheric_particle);
+
+        Element::Pointer Create(IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const override;
 
         /// Destructor
-        virtual ~BeamParticle() {};
+        virtual ~BeamParticle(){}
 
         BeamParticle& operator=(const BeamParticle& rOther);
 
         /// Turn back information as a string
-        virtual std::string Info() const override
+        std::string Info() const override
         {
             std::stringstream buffer;
             buffer << "BeamParticle" ;
@@ -46,10 +53,10 @@ namespace Kratos {
         }
 
         /// Print information about this object
-        virtual void PrintInfo(std::ostream& rOStream) const override {rOStream << "BeamParticle";}
+        void PrintInfo(std::ostream& rOStream) const override {rOStream << "BeamParticle";}
 
         /// Print object's data
-        virtual void PrintData(std::ostream& rOStream) const override {}
+        void PrintData(std::ostream& rOStream) const override {}
 
         virtual void ComputeBallToBallContactForce(SphericParticle::ParticleDataBuffer &,
                                                    ProcessInfo& r_process_info,
@@ -98,6 +105,24 @@ namespace Kratos {
 
             virtual ~ParticleDataBuffer(){}
 
+            bool SetNextNeighbourOrExit(int& i) override
+            {
+                while (i < int(mpThisParticle->mNeighbourElements.size()) && (mpThisParticle->mNeighbourElements[i]==NULL)){
+                    i++;
+                }
+
+                if (i < int(mpThisParticle->mNeighbourElements.size())) {
+                    SetCurrentNeighbour(mpThisParticle->mNeighbourElements[i]);
+                    mpOtherParticleNode = &(mpOtherParticle->GetGeometry()[0]);
+                    return true;
+                }
+
+                else { // other_neighbour is nullified upon exiting loop
+                    mpOtherParticle = NULL;
+                    mpOtherParticleNode = NULL;
+                    return false;
+                }
+            }
         };
 
         std::unique_ptr<SphericParticle::ParticleDataBuffer> CreateParticleDataBuffer(SphericParticle* p_this_particle) override
@@ -112,14 +137,12 @@ namespace Kratos {
 
         private:
 
-        friend class Serializer;
-
-        virtual void save(Serializer& rSerializer) const override
+        void save(Serializer& rSerializer) const override
         {
             KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, SphericContinuumParticle);
         }
 
-        virtual void load(Serializer& rSerializer) override
+        void load(Serializer& rSerializer) override
         {
             KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, SphericContinuumParticle);
         }
@@ -134,9 +157,10 @@ namespace Kratos {
         rThis.PrintInfo(rOStream);
         rOStream << std::endl;
         rThis.PrintData(rOStream);
+
         return rOStream;
     }
 
-} // namespace Kratos
+}  // namespace Kratos
 
 #endif // KRATOS_BEAM_PARTICLE_H_INCLUDED defined

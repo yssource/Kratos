@@ -62,7 +62,7 @@ Element::Pointer ContactInfoContinuumSphericParticle::Create(IndexType NewId, No
 }
 
 void ContactInfoContinuumSphericParticle::ComputeNewNeighboursHistoricalData(DenseVector<int>& temp_neighbours_ids,
-                                                         std::vector<array_1d<double, 3> >& temp_neighbour_elastic_contact_forces)
+                                                                             std::vector<array_1d<double, 3> >& temp_neighbour_elastic_contact_forces)
 {
     std::vector<array_1d<double, 3> > temp_neighbour_elastic_extra_contact_forces;
     std::vector<double> temp_neighbour_contact_radius;

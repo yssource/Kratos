@@ -67,6 +67,7 @@ void AddCustomUtilitiesToPython(pybind11::module& m)
         .def("BDF1", &ManufacturedSolutionUtility::BDF1<Variable<array_1d<double,4>>>)
         .def("BDF1", &ManufacturedSolutionUtility::BDF1<Variable<array_1d<double,6>>>)
         .def("BDF1", &ManufacturedSolutionUtility::BDF1<Variable<array_1d<double,9>>>)
+        .def("ComputeNodalCFL", &ManufacturedSolutionUtility::ComputeNodalCFL)
      	;
 
 }

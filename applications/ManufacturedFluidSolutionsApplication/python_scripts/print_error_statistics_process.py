@@ -99,11 +99,11 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
 
     def _GetHeaderDtype(self):
         header = [("label", h5py.special_dtype(vlen=str)),
-                    ("num_nodes", np.uint32),
-                    ("num_elems", np.uint32),
-                    ("time_step", np.float),
-                    ("computational_time", np.float)]
-        
+                  ("num_nodes", np.uint32),
+                  ("num_elems", np.uint32),
+                  ("time_step", np.float),
+                  ("computational_time", np.float)]
+
         for variable in self.variables:
             header.append((variable.Name(), np.float))
         return np.dtype(header)

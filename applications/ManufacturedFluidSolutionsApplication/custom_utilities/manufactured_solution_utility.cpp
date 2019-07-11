@@ -22,6 +22,7 @@
 #include "manufactured_solution_utility.h"
 #include "manufactured_fluid_solutions_application_variables.h"
 #include "processes/compute_nodal_gradient_process.h"
+#include "processes/find_nodal_h_process.h"
 #include "utilities/variable_utils.h"
 
 
@@ -155,6 +156,21 @@ void ManufacturedSolutionUtility::RecoverMaterialAcceleration()
         it_node->FastGetSolutionStepValue(MATERIAL_ACCELERATION_X) += inner_prod(vel, grad_x);
         it_node->FastGetSolutionStepValue(MATERIAL_ACCELERATION_Y) += inner_prod(vel, grad_y);
         it_node->FastGetSolutionStepValue(MATERIAL_ACCELERATION_Z) += inner_prod(vel, grad_z);
+    }
+}
+
+
+void ManufacturedSolutionUtility::ComputeNodalCFL()
+{
+    FindNodalHProcess<FindNodalHSettings::SaveAsNonHistoricalVariable>(mrModelPart).Execute();
+    double time_step = mrModelPart.GetProcessInfo()[DELTA_TIME];
+    #pragma omp parallel for
+    for (int i = 0; i < static_cast<int>(mrModelPart.NumberOfNodes()); ++i)
+    {
+        auto it_node = mrModelPart.NodesBegin() + i;
+        double h = it_node->GetValue(NODAL_H);
+        double velocity = norm_2(it_node->FastGetSolutionStepValue(VELOCITY));
+        it_node->SetValue(CFL_NUMBER, velocity * time_step / h);
     }
 }
 

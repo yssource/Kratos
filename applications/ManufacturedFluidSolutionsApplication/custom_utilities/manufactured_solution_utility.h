@@ -182,6 +182,8 @@ public:
         }
     }
 
+    void ComputeNodalCFL();
+
     ///@}
     ///@name Access
     ///@{

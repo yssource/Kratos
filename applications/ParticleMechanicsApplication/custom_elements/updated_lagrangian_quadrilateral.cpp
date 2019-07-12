@@ -831,6 +831,9 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     In the InitializeSolutionStep of each time step the nodal initial conditions are evaluated.
     This function is called by the base scheme class.*/
 
+	// PJW: for explicit time integration we need to compute the nodal internal force term somewhere here:
+	// f_int_nodal += N(x_particle) * spatialGradient(x_particle) * stress_particle * volume_particle
+
     GeometryType& rGeom = GetGeometry();
     const unsigned int dimension = rGeom.WorkingSpaceDimension();
     const unsigned int number_of_nodes = rGeom.PointsNumber();

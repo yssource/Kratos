@@ -240,8 +240,10 @@ class ParticleMPMSolver(PythonSolver):
         self.solver.SearchElement(self.max_number_of_search_results, self.searching_tolerance)
 
     def InitializeSolutionStep(self):
-        self.SearchElement()
+        self.SearchElement() # PJW: doesn't seem to be important? not sure what it is...
         self.solver.Initialize()
+
+
         self.solver.InitializeSolutionStep()
 
     def Predict(self):

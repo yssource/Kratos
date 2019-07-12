@@ -71,10 +71,24 @@ class ParticleMechanicsAnalysis(AnalysisStage):
             start_solve_time = time.time()
 
             self.time = self._GetSolver().AdvanceInTime(self.time)
+
+            # MAP PARTICLE QUANTITIES TO GRID, VIA ELEMENT VIA SCHEME - STAYS THE SAME!
             self.InitializeSolutionStep()
+
+
+            # DETERMINE PREDICTOR QUANTITIES, VIA SCHEME - NOT NEEDED FOR EXPLICIT SINCE THERE IS NO ITERATION!
+            # we just use the base class virtual void with  nothing and it is fine.
             self._GetSolver().Predict()
+
+            # DETERMINE CONVERGED QUANTITIES, VIA SOLVER
+            # FOR EXPLICIT THIS SHOULD OCCUR DIRECTLY WITHOUT ITERATION, in explicit strategy
             self._GetSolver().SolveSolutionStep()
+
+            # MAP GRID BACK TO PARTICLES, VIA ELEMENT VIA SCHEME
+            # A DIFFERENCE HERE IS THAT FOR EXPLICIT WE NEED TO DETEMINE THE STRESSES FROM THE GRADIENT VELOCITY, INSTEAD OF THE DISPS
             self.FinalizeSolutionStep()
+
+
             self.OutputSolutionStep()
 
             ## Stop solution loop timer

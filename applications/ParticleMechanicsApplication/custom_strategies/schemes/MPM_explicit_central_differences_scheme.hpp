@@ -110,6 +110,8 @@ public:
         mDeltaTime.Maximum = 1.0;
         mDeltaTime.Fraction = 1.0;
 
+
+		std::cout << "\n\n\n\n =========================== USING EXPLICIT CENTRAL DIFF ========================== \n\n\n\n" << std::endl;
     }
 
     /** Copy Constructor.
@@ -304,6 +306,7 @@ public:
             const array_1d<double, 3>& r_previous_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT, 1);
             const array_1d<double, 3>& r_previous_middle_velocity = itCurrentNode->FastGetSolutionStepValue(MIDDLE_VELOCITY, 1);
             // Solution of the explicit equation:
+			// PJW: THIS IS WHERE WE ACTUALLY HIT, IT SEEMS TO WORK CORRECTLY. (JUST CHECKED FOR GRAVITY LOAD)
             if (nodal_mass > numerical_limit)
                 // I do this on element lvl
                 //noalias(r_current_acceleration) = (r_current_residual - nodal_displacement_damping * r_current_velocity) / nodal_mass;

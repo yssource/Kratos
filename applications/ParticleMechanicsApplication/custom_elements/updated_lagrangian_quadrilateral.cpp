@@ -655,7 +655,7 @@ Vector& UpdatedLagrangianQuadrilateral::CalculateVolumeForce( Vector& rVolumeFor
     rVolumeForce = ZeroVector(dimension);
     rVolumeForce = this->GetValue(MP_VOLUME_ACCELERATION)* this->GetValue(MP_MASS);
 
-    KRATOS_WATCH(rVolumeForce);
+    //KRATOS_WATCH(rVolumeForce);
 
     return rVolumeForce;
 
@@ -925,8 +925,20 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
     // Set general variables to constitutivelaw parameters
     this->SetGeneralVariables(Variables,Values);
 
-    // Call the constitutive law to update material variables
-    mConstitutiveLawVector->FinalizeMaterialResponse(Values, Variables.StressMeasure);
+	// TODO: add some test to see what time integration we have
+	bool isImplicit = true;
+
+	if (isImplicit)
+	{
+		// Call the constitutive law to update material variables
+		mConstitutiveLawVector->FinalizeMaterialResponse(Values, Variables.StressMeasure);
+	}
+	else // explicit time integration
+	{
+		// Calculate strains and stress state from velocity gradient and timestep
+		// TODO: add options for USL and MUSL
+		double test = 1;
+	}
 
     // Call the element internal variables update
     this->FinalizeStepVariables(Variables, rCurrentProcessInfo);

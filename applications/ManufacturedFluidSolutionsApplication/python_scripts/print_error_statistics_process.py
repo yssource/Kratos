@@ -43,8 +43,13 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
 
 
     def ExecuteBeforeSolutionLoop(self):
+        KM.FindNodalHNonHistoricalProcess(self.model_part).Execute()
         self.dset = self._GetManufacturedDataset()
         self.start_time = time.time()
+
+
+    def ExecuteFinalizeSolutionStep(self):
+        self.manufactured_process.ComputeNodalCFL()
 
 
     def ExecuteFinalize(self):

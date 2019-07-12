@@ -162,7 +162,6 @@ void ManufacturedSolutionUtility::RecoverMaterialAcceleration()
 
 void ManufacturedSolutionUtility::ComputeNodalCFL()
 {
-    FindNodalHProcess<FindNodalHSettings::SaveAsNonHistoricalVariable>(mrModelPart).Execute();
     double time_step = mrModelPart.GetProcessInfo()[DELTA_TIME];
     #pragma omp parallel for
     for (int i = 0; i < static_cast<int>(mrModelPart.NumberOfNodes()); ++i)

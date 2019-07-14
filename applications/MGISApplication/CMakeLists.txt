@@ -37,8 +37,17 @@ set( KRATOS_MGIS_APPLICATION_PYTHON_INTERFACE_SOURCES
 
 ###############################################################################
 ## MGISApplication core library (C++ parts)
+
+# If build mode is not defined, assume Release
+if(NOT MGIS_INCLUDE_DIR)
+  message(FATAL_ERROR "Undefined MGIS_INCLUDE_DIR")
+endif(NOT MGIS_INCLUDE_DIR)
+if(NOT MGIS_LIBRARY)
+  message(FATAL_ERROR "Undefined MGIS_LIBRARY")
+endif(NOT MGIS_LIBRARY)
 add_library(KratosMGISCore SHARED ${KRATOS_MGIS_APPLICATION_CORE_SOURCES} ${KRATOS_MGIS_APPLICATION_TESTING_SOURCES})
-target_link_libraries(KratosMGISCore PUBLIC KratosCore KratosStructuralMechanicsCore)
+INCLUDE_DIRECTORIES(${MGIS_INCLUDE_DIR})
+target_link_libraries(KratosMGISCore PUBLIC KratosCore KratosStructuralMechanicsCore ${MGIS_LIBRARY})
 set_target_properties(KratosMGISCore PROPERTIES COMPILE_DEFINITIONS "MGIS_APPLICATION=EXPORT,API")
 
 ## MGISApplication python module

@@ -212,6 +212,9 @@ class CADMapper:
             self.Initialize()
             self.Map()
 
+        if self.parameters["output"]["echo_level"].GetInt() > 0:
+            self.__StoreCaseFilesInResults()
+
     # --------------------------------------------------------------------------
     def ReadModelData(self):
         print("\n> Starting to read model data...")
@@ -580,6 +583,17 @@ class CADMapper:
 
         output_filename_with_path = os.path.join(output_dir,filename)
         self.cad_model.Save(output_filename_with_path)
+
+    # --------------------------------------------------------------------------
+    def __StoreCaseFilesInResults(self):
+        output_dir = self.parameters["output"]["results_directory"].GetString()
+        input_cad_filename = self.parameters["input"]["cad_filename"].GetString()
+        input_fem_filename = self.parameters["input"]["fem_filename"].GetString()
+
+        import shutil, __main__
+        shutil.copy(input_cad_filename, output_dir)
+        shutil.copy(input_fem_filename, output_dir)
+        shutil.copy(os.path.basename(__main__.__file__), output_dir)
 
     # --------------------------------------------------------------------------
     @staticmethod

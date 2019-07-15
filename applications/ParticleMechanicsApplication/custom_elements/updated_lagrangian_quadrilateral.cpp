@@ -843,16 +843,40 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     // Calculating shape function
     Variables.N = this->MPMShapeFunctionPointValues(Variables.N, xg);
 
+	//PJW Calculate shape function gradients
+	Matrix Jacobian;
+	Jacobian = this->MPMJacobian(Jacobian, xg);
+	Matrix InvJ;
+	double detJ;
+	MathUtils<double>::InvertMatrix(Jacobian, InvJ, detJ);
+	Variables.DN_De = this->MPMShapeFunctionsLocalGradients(Variables.DN_De, xg); // local gradients
+	Variables.DN_DX = prod(Variables.DN_De, InvJ); // cartesian gradients
+	
+	std::cout << "\n\n" << std::endl;
+	for (size_t i = 0; i < Variables.DN_DX.size1(); i++)
+	{
+		std::cout << "\n" << std::endl;
+		for (size_t j = 0; j < Variables.DN_DX.size2(); j++)
+		{
+			std::cout << Variables.DN_DX(i,j) << "\t\t" << std::endl;
+		}
+		
+	}
+
     mFinalizedStep = false;
 
     const array_1d<double,3>& MP_Velocity = this->GetValue(MP_VELOCITY);
     const array_1d<double,3>& MP_Acceleration = this->GetValue(MP_ACCELERATION);
+	const Vector& MP_Stress = this->GetValue(MP_CAUCHY_STRESS_VECTOR); //PJW, retrieve stress vector, explicit only
     const double& MP_Mass = this->GetValue(MP_MASS);
+	const double& MP_Volume = this->GetValue(MP_VOLUME); //PJW, needed for explicit force calculation
 
     array_1d<double,3> AUX_MP_Velocity = ZeroVector(3);
     array_1d<double,3> AUX_MP_Acceleration = ZeroVector(3);
     array_1d<double,3> nodal_momentum = ZeroVector(3);
     array_1d<double,3> nodal_inertia  = ZeroVector(3);
+
+	array_1d<double, 3> nodal_force_internal_normal = ZeroVector(3); //PJW, needed for explicit force
 
     for (unsigned int j=0; j<number_of_nodes; j++)
     {
@@ -874,11 +898,14 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
         {
             nodal_momentum[j] = Variables.N[i] * (MP_Velocity[j] - AUX_MP_Velocity[j]) * MP_Mass;
             nodal_inertia[j]  = Variables.N[i] * (MP_Acceleration[j] - AUX_MP_Acceleration[j]) * MP_Mass;
+
+			nodal_force_internal_normal[j] = MP_Volume * MP_Stress[j] * Variables.DN_DX(i, j); //PJW, nodal internal forces
         }
 
         rGeom[i].SetLock();
         rGeom[i].FastGetSolutionStepValue(NODAL_MOMENTUM, 0) += nodal_momentum;
         rGeom[i].FastGetSolutionStepValue(NODAL_INERTIA, 0)  += nodal_inertia;
+		rGeom[i].FastGetSolutionStepValue(FORCE_RESIDUAL, 0) -= nodal_force_internal_normal; //PJW, minus sign, internal forces
 
         rGeom[i].FastGetSolutionStepValue(NODAL_MASS, 0) += Variables.N[i] * MP_Mass;
         rGeom[i].UnSetLock();
@@ -936,11 +963,80 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
 		// Call the constitutive law to update material variables
 		mConstitutiveLawVector->FinalizeMaterialResponse(Values, Variables.StressMeasure);
 	}
-	else // explicit time integration
+	else // explicit time integration - just temporarily here for testing!
 	{
+
 		// Calculate strains and stress state from velocity gradient and timestep
 		// TODO: add options for USL and MUSL
 		double test = 1;
+
+		GeometryType& rGeom = GetGeometry();
+		const unsigned int dimension = rGeom.WorkingSpaceDimension();
+		const unsigned int number_of_nodes = rGeom.PointsNumber();
+		const array_1d<double, 3>& xg = this->GetValue(MP_COORD);
+		GeneralVariables Variables;
+
+		//PJW Calculate shape function gradients
+		Matrix Jacobian;
+		Jacobian = this->MPMJacobian(Jacobian, xg);
+		Matrix InvJ;
+		double detJ;
+		MathUtils<double>::InvertMatrix(Jacobian, InvJ, detJ);
+		Variables.DN_De = this->MPMShapeFunctionsLocalGradients(Variables.DN_De, xg); // local gradients
+		Variables.DN_DX = prod(Variables.DN_De, InvJ); // cartesian gradients
+
+		//PJW calculate velocity gradients
+		Matrix velocityGradient = Matrix(dimension, dimension,0.0);
+		for (unsigned int nodeIndex = 0; nodeIndex < number_of_nodes; nodeIndex++)
+		{
+			const array_1d<double, 3 > & nodal_velocity = rGeom[nodeIndex].FastGetSolutionStepValue(VELOCITY, 0);
+
+			for (unsigned int i = 0; i < dimension; i++)
+			{
+				for (unsigned int j = 0; j < dimension; j++)
+				{
+					velocityGradient(i,j) += nodal_velocity[i] * Variables.DN_DX(nodeIndex, j);
+				}
+			}
+		}
+
+		//PJW calculate rate of deformation and spin tensors
+		Matrix rateOfDeformation = 0.5*(velocityGradient + trans(velocityGradient));
+		Matrix spinTensor = velocityGradient - rateOfDeformation;
+
+		//PJW calculate objective jaumann strain rate - check this
+		const double delta_time = rCurrentProcessInfo[DELTA_TIME];
+		Matrix jaumannRate = rateOfDeformation -
+			(prod(spinTensor, rateOfDeformation))*delta_time +
+			prod((rateOfDeformation*delta_time), spinTensor);
+
+		//PJW calculate and store objective strain increments
+		Vector& MP_Strain = this->GetValue(MP_ALMANSI_STRAIN_VECTOR); //PJW, retrieve stress vector, explicit only
+		MP_Strain(0) += jaumannRate(1, 1)*delta_time; //e_xx
+		MP_Strain(1) += jaumannRate(2, 2)*delta_time; //e_yy
+		MP_Strain(2) += 2.0*jaumannRate(1, 2)*delta_time; //e_xy
+
+		//PJW  - How should I interface the strains with the constitutive law part to get back stresses?
+
+		//PJW calculate compressiblity related phenomena
+		bool isCompressible = false; //add some test to see if we are considering compressibility or not
+		if (isCompressible)
+		{
+			Matrix currentDeformationGradient = IdentityMatrix(dimension); //PJW, placeholder - not sure how to retrieve current deformation grad mat
+			
+			Matrix updatedDeformationGradient = prod(
+				(IdentityMatrix(dimension) + delta_time * velocityGradient), 
+				currentDeformationGradient);
+			const double detF = MathUtils<double>::DetMat(updatedDeformationGradient);
+
+			double& MP_Volume = this->GetValue(MP_VOLUME); //PJW, needed for explicit force calculation
+			MP_Volume *= detF;
+			this->SetValue(MP_VOLUME, MP_Volume);
+
+			double& MP_Density = this->GetValue(MP_DENSITY); //PJW, needed for explicit force calculation
+			MP_Density /= detF;
+			this->SetValue(MP_DENSITY, MP_Density);
+		}
 	}
 
     // Call the element internal variables update

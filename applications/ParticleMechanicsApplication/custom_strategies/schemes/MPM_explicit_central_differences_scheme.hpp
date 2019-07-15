@@ -494,10 +494,10 @@ public:
         // The array of nodes
         NodesArrayType& r_nodes = r_model_part.Nodes();
 
-        // Auxiliar values
+        // Auxiliary values
         const array_1d<double, 3> zero_array = ZeroVector(3);
         // Initializing the variables
-        VariableUtils().SetVectorVar(FORCE_RESIDUAL, zero_array,r_nodes);
+        VariableUtils().SetVectorVar(FORCE_RESIDUAL, zero_array,r_nodes); //PJW, setting nodal forces to zero
 
         KRATOS_CATCH( "" )
     }
@@ -516,6 +516,8 @@ public:
         TSystemVectorType& b) override
     {
         KRATOS_TRY
+
+		//PJW: finalize solution step
 
         ElementsArrayType& rElements = rModelPart.Elements();
         ProcessInfo& CurrentProcessInfo = rModelPart.GetProcessInfo();
@@ -797,6 +799,7 @@ public:
         //Matrix dummy_lhs;
         //(pCurrentEntity)->CalculateLocalSystem(dummy_lhs, RHS_Contribution, rCurrentProcessInfo);
 
+		//PJW
         pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, FORCE_RESIDUAL, rCurrentProcessInfo);
         pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, MOMENT_RESIDUAL, rCurrentProcessInfo);
     }

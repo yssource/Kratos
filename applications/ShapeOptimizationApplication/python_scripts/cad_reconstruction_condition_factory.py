@@ -94,11 +94,26 @@ class ConditionFactory:
 
                 new_condition = clib.DistanceMinimizationCondition(fe_node, nonzero_pole_nodes, shape_functions, KratosShape.SHAPE_CHANGE, weight=1)
 
-                # Variant with C++ element of EQlib
+                ## Variant with C++ element of EQlib
                 # node_initial_coords = np.array([fe_node.X, fe_node.Y, fe_node.Z])
                 # nodal_update = np.array(fe_node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE))
                 # fe_node_coords = node_initial_coords + nodal_update
                 # new_condition = iga.LocationConstraint(nonzero_pole_nodes, shape_functions, fe_node_coords, 1)
+
+                ## Output of parametrization data
+                # surface = an.Surface3D(surface_geometry)
+
+                # node_coords_i = [fe_node.X0, fe_node.Y0, fe_node.Z0]
+                # projected_point_uv = (u,v)
+
+                # point_ptr = self.cad_model.Add(an.Point3D(location=node_coords_i))
+                # point_ptr.Attributes().SetLayer('FEPoints')
+
+                # point_ptr = self.cad_model.Add(an.Point3D(location=surface.PointAt(*projected_point_uv)))
+                # point_ptr.Attributes().SetLayer('FEPoints_projected_face_'+str(face.Key()))
+
+                # line_ptr =  self.cad_model.Add(an.Line3D(a=np.array(node_coords_i), b=(np.array(node_coords_i) + np.array(fe_node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)))))
+                # line_ptr.Attributes().SetLayer('disp')
 
                 conditions.append(new_condition)
 
@@ -165,6 +180,9 @@ class ConditionFactory:
 
                 # point_ptr = self.cad_model.Add(an.Point3D(location=node_coords_i_updated))
                 # point_ptr.Attributes().SetLayer('MappedIntPointsUpdated'+str(face_i.Key()))
+
+                # point_ptr = self.cad_model.Add(an.Point3D(location=[fe_node.X, fe_node.Y, fe_node.Z]))
+                # point_ptr.Attributes().SetLayer('IntegationProjectionPoints')
 
                 new_condition = clib.DistanceMinimizationCondition(fe_node, nonzero_pole_nodes, shape_functions, KratosShape.SHAPE_CHANGE, weight=weight)
 
@@ -791,15 +809,6 @@ class ConditionFactory:
                     fe_point_parametrization[node_itr]["faces"].append(face_i)
                     fe_point_parametrization[node_itr]["parameters"].append(projected_point_uv)
                     fe_point_parametrization[node_itr]["is_on_boundary"] = is_on_boundary
-
-                    # point_ptr = self.cad_model.Add(an.Point3D(location=node_coords_i))
-                    # point_ptr.Attributes().SetLayer('FEPoints')
-
-                    # point_ptr = self.cad_model.Add(an.Point3D(location=surface.PointAt(*projected_point_uv)))
-                    # point_ptr.Attributes().SetLayer('FEPoints_projected_face_'+str(face_i.Key()))
-
-                    # line_ptr =  self.cad_model.Add(an.Line3D(a=np.array(node_coords_i), b=(np.array(node_coords_i) + np.array(node_i.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)))))
-                    # line_ptr.Attributes().SetLayer('disp')
 
                 # if is_on_boundary:
                 #     point_ptr = self.cad_model.Add(an.Point3D(location=node_coords_i))

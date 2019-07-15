@@ -424,6 +424,9 @@ class CADMapper:
 
             if self.parameters["solution"]["test_solution"].GetBool():
 
+                # Check fitting system
+                print("\n> Max absolute control point displacement = ",la.norm(solution, np.inf))
+
                 # Test solution quality
                 test_rhs = self.system.h_v(solution)
 
@@ -568,6 +571,19 @@ class CADMapper:
 
     # --------------------------------------------------------------------------
     def __UpdateCADModel(self):
+        # Add control point displacement as field
+        for face_i in self.cad_model.GetByType('BrepFace'):
+            surface_key = face_i.Data().Geometry().Key()
+
+            field = an.BrepFaceField(3)
+            field.SetFace(face_i)
+            for i, pole_node in enumerate(self.pole_nodes[surface_key]):
+                displacement = pole_node.act_location - pole_node.ref_location
+                field.SetValue(i, displacement)
+
+            self.cad_model.Add(field)
+
+        # Update control point position
         for surface_key, pole_nodes in self.pole_nodes.items():
             surface_geometry = self.cad_model.Get(surface_key)
             surface_geometry_data = surface_geometry.Data()

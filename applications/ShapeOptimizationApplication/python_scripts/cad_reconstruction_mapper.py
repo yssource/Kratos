@@ -161,6 +161,8 @@ class CADMapper:
         eq.Log.info_level = parameters["output"]["echo_level"].GetInt()
 
         self.conditions = []
+        self.conditions_scaling_factors = []
+        self.beta_scaling_factor = None
         self.fe_point_parametric = None
         self.pole_nodes = {}
 
@@ -362,7 +364,7 @@ class CADMapper:
         print("\n> Initializing assembly...")
         start_time = time.time()
 
-        self.system = eq.SymmetricSystem(elements=self.conditions, linear_solver={'type': 'pardiso_ldlt'})
+        self.system = eq.DSymmetricSystem(element_lists=self.conditions, linear_solver={'type': 'pardiso_ldlt'})
 
         print("> Initialization of assembly finished in" ,round( time.time()-start_time, 3 ), " s.")
 
@@ -375,31 +377,23 @@ class CADMapper:
             print("> Starting solution iteration", solution_itr,"...")
             start_time_iteration = time.time()
 
-            # Assemble
+            # Assemble considering scaling of constraints
             print("\n> Starting to compute RHS and LHS ....")
-
-            self.system.compute(parallel=self.parameters["solution"]["parallel_assembly"].GetBool())
-
+            self.__AssembleSystem()
             print("> Finished computing RHs and LHS in" ,round( time.time()-start_time_iteration, 3 ), " s.")
 
-            rhs = self.system.g
-            # lhs = self.system.h
-            # lhs = self.system.h.todense()
-            # lhs += np.triu(lhs, k=1).T
-
             if solution_itr == 1:
-                total_num_conditions = len(self.conditions)
+                total_num_conditions = 0
+                for condition_list in self.conditions:
+                    total_num_conditions += len(condition_list)
                 print("\n> Number of conditions =",total_num_conditions)
                 print("> Number of unkowns =", self.system.nb_dofs)
 
             print("\n> Starting system solution ....")
             start_time_solution = time.time()
 
-            # Beta regularization
-            beta = self.parameters["regularization"]["beta"].GetDouble()
-            self.system.add_diagonal(beta)
-
             # Solve system and add delta to eqlib solution vector
+            rhs = self.system.g
             solution = self.system.h_inv_v(rhs)
             self.system.x += solution
 
@@ -426,6 +420,9 @@ class CADMapper:
 
                 # Check fitting system
                 print("\n> Max absolute control point displacement = ",la.norm(solution, np.inf))
+                # print("> Computing condition number of LHS...")
+                # print("> Condition number LHS = ", la.cond(self.system.h.todense()))
+                # print("\n> Max absolute value in LHS = ", abs(self.system.h).max())
 
                 # Test solution quality
                 test_rhs = self.system.h_v(solution)
@@ -439,7 +436,7 @@ class CADMapper:
                 print("> RHS before current solution iteration = ",error_norm)
 
                 # Test rhs after update
-                self.system.compute(order=1)
+                self.__AssembleSystemRHS()
                 rhs = self.system.g
 
                 error_norm = la.norm(rhs)
@@ -569,6 +566,69 @@ class CADMapper:
             surface_dofs = [eq.Node(x, y, z) for x, y, z in surface.Poles()]
             pole_nodes[surface_geometry.Key()] = surface_dofs
         return pole_nodes
+
+    # --------------------------------------------------------------------------
+    def __AssembleSystem(self, only_rhs=False):
+        is_initial_assembly = (len(self.conditions_scaling_factors) == 0)
+
+        # Initialize
+        self.system.set_zero()
+
+        # Assemble reference system
+        self.system.compute(index=0, parallel=self.parameters["solution"]["parallel_assembly"].GetBool())
+        self.system.add_working_system(factor=1)
+        self.conditions_scaling_factors.append(1)
+
+        if is_initial_assembly:
+            system_trace = self.system.working_trace()
+            print("> Max absolute system LHS = " + str(abs(self.system.working_h).max()))
+            print("> trace_0 = "+str(system_trace))
+
+        # Beta regularization
+        beta = self.parameters["regularization"]["beta"].GetDouble()
+
+        if is_initial_assembly:
+            trace_beta = self.system.nb_dofs
+            self.beta_scaling_factor = system_trace/trace_beta
+            print("> beta_scaling_factor = "+str(self.beta_scaling_factor)+"\n")
+
+        self.system.add_diagonal(self.beta_scaling_factor*beta)
+
+        # Assembly constraints considering scaling
+        for itr in range(1,len(self.conditions)):
+            self.system.compute(index=itr, parallel=self.parameters["solution"]["parallel_assembly"].GetBool())
+
+            if is_initial_assembly:
+                weight_of_element_type = self.conditions[itr][0].GetWeight()
+                constraint_trace = self.system.working_trace() / weight_of_element_type
+                scaling_factor = system_trace/constraint_trace
+
+                self.conditions_scaling_factors.append(scaling_factor)
+
+                print("> trace_"+str(itr)+" = "+str(constraint_trace))
+                print("> scaling_factor_"+str(itr)+" = "+str(scaling_factor))
+
+                max_value_constraint = abs(self.system.working_h).max() / weight_of_element_type
+                print("> Max absolute value constraint LHS_"+str(itr)+"= " + str(max_value_constraint)+"\n")
+
+            self.system.add_working_system(factor=self.conditions_scaling_factors[itr])
+
+ # --------------------------------------------------------------------------
+    def __AssembleSystemRHS(self):
+        if len(self.conditions_scaling_factors) == 0:
+            raise RuntimeError("__AssembleSystemRHS: No scaling factors computed yet!")
+
+        # Initialize
+        self.system.set_zero()
+
+        # Assemble reference system
+        self.system.compute(index=0, order=1, parallel=self.parameters["solution"]["parallel_assembly"].GetBool())
+        self.system.add_working_system(factor=1)
+
+        # Assembly constraints considering scaling
+        for itr in range(1,len(self.conditions)):
+            self.system.compute(index=itr, order=1, parallel=self.parameters["solution"]["parallel_assembly"].GetBool())
+            self.system.add_working_system(factor=self.conditions_scaling_factors[itr])
 
     # --------------------------------------------------------------------------
     def __UpdateCADModel(self):

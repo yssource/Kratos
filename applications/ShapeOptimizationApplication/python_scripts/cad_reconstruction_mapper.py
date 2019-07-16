@@ -573,6 +573,7 @@ class CADMapper:
 
         # Initialize
         self.system.set_zero()
+        self.system.set_working_zero()
 
         # Assemble reference system
         self.system.compute(index=0, parallel=self.parameters["solution"]["parallel_assembly"].GetBool())
@@ -595,6 +596,7 @@ class CADMapper:
 
         # Assembly constraints considering scaling
         for itr in range(1,len(self.conditions)):
+            self.system.set_working_zero()
             self.system.compute(index=itr, parallel=self.parameters["solution"]["parallel_assembly"].GetBool())
 
             if is_initial_assembly:

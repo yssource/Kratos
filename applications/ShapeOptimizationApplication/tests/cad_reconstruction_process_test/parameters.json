@@ -51,7 +51,7 @@
             "penalty_factor_position_enforcement" : 1e3,
             "penalty_factor_tangent_enforcement"  : 1e3,
             "apply_corner_enforcement_conditions" : false,
-            "penalty_factor_corner_enforcement"   : 1e4
+            "penalty_factor_corner_enforcement"   : 1e6
         },
         "coupling" :
         {

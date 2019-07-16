@@ -84,6 +84,11 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
             parameters["solution"]["test_solution"].SetBool(True)
             parameters["output"]["results_directory"].SetString("Results_Test_"+str(test_number))
 
+            # Scale values
+            beta = parameters["regularization"]["beta"].GetDouble()
+            scaled_beta = beta*(1/0.33464798003773155)
+            parameters["regularization"]["beta"].SetDouble(scaled_beta)
+
             # Mapping
             cad_model = an.Model()
             PerformMapping(cad_model, fe_model, parameters)
@@ -103,10 +108,23 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
         with open("parameters.json",'r') as parameter_file:
             parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
-        parameters["regularization"]["alpha"].SetDouble(0.1)
+        parameters["regularization"]["alpha"].SetDouble(0.1*(1/0.7944248463107507))
         parameters["conditions"]["edges"]["fe_based"]["apply_enforcement_conditions"].SetBool(True)
         parameters["conditions"]["edges"]["fe_based"]["apply_corner_enforcement_conditions"].SetBool(True)
         parameters["output"]["results_directory"].SetString("Results_Test_"+str(test_number))
+
+        # Scale values
+        beta = parameters["regularization"]["beta"].GetDouble()
+        scaled_beta = beta*(1/0.2835212053097448)
+        parameters["regularization"]["beta"].SetDouble(scaled_beta)
+
+        penalty = parameters["conditions"]["edges"]["fe_based"]["penalty_factor_position_enforcement"].GetDouble()
+        scaled_penalty = penalty*(1/1.486290220186227)
+        parameters["conditions"]["edges"]["fe_based"]["penalty_factor_position_enforcement"].SetDouble(scaled_penalty)
+
+        penalty = parameters["conditions"]["edges"]["fe_based"]["penalty_factor_tangent_enforcement"].GetDouble()
+        scaled_penalty = penalty*(1/222.0707277703195)
+        parameters["conditions"]["edges"]["fe_based"]["penalty_factor_tangent_enforcement"].SetDouble(scaled_penalty)
 
         # Mapping
         cad_model = an.Model()
@@ -130,6 +148,11 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
         parameters["conditions"]["general"]["apply_integral_method"].SetBool(True)
         parameters["output"]["results_directory"].SetString("Results_Test_"+str(test_number))
 
+        # Scale values
+        beta = parameters["regularization"]["beta"].GetDouble()
+        scaled_beta = beta*(1/21.140382843640175)
+        parameters["regularization"]["beta"].SetDouble(scaled_beta)
+
         # Mapping
         cad_model = an.Model()
         PerformMapping(cad_model, fe_model, parameters)
@@ -151,6 +174,15 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
 
         parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].SetBool(True)
         parameters["output"]["results_directory"].SetString("Results_Test_"+str(test_number))
+
+        # Scale values
+        beta = parameters["regularization"]["beta"].GetDouble()
+        scaled_beta = beta*(1/0.33464798003773155)
+        parameters["regularization"]["beta"].SetDouble(scaled_beta)
+
+        penalty = parameters["conditions"]["faces"]["mechanical"]["penalty_factor"].GetDouble()
+        scaled_penalty = penalty*(1/17.59939555766338)
+        parameters["conditions"]["faces"]["mechanical"]["penalty_factor"].SetDouble(scaled_penalty)
 
         # Mapping
         cad_model = an.Model()
@@ -176,6 +208,15 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
             parameters["conditions"]["faces"]["mechanical"]["exclusive_face_list"][0].SetString("Rhino<dba9a5ba-6b33-4a1b-b46e-3916bd68d053>.BrepFace<1>.Hole")
             parameters["output"]["results_directory"].SetString("Results_Test_"+str(test_number))
 
+            # Scale values
+            beta = parameters["regularization"]["beta"].GetDouble()
+            scaled_beta = beta*(1/0.33464798003773155)
+            parameters["regularization"]["beta"].SetDouble(scaled_beta)
+
+            penalty = parameters["conditions"]["faces"]["mechanical"]["penalty_factor"].GetDouble()
+            scaled_penalty = penalty*(1/5.3423455463836325)
+            parameters["conditions"]["faces"]["mechanical"]["penalty_factor"].SetDouble(scaled_penalty)
+
             # Mapping
             cad_model = an.Model()
             PerformMapping(cad_model, fe_model, parameters)
@@ -197,6 +238,15 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
 
         parameters["conditions"]["faces"]["rigid"]["apply_rigid_conditions"].SetBool(True)
         parameters["output"]["results_directory"].SetString("Results_Test_"+str(test_number))
+
+        # Scale values
+        beta = parameters["regularization"]["beta"].GetDouble()
+        scaled_beta = beta*(1/0.33464798003773155)
+        parameters["regularization"]["beta"].SetDouble(scaled_beta)
+
+        penalty = parameters["conditions"]["faces"]["rigid"]["penalty_factor"].GetDouble()
+        scaled_penalty = penalty*(1/111.70169712521464)
+        parameters["conditions"]["faces"]["rigid"]["penalty_factor"].SetDouble(scaled_penalty)
 
         # Mapping
         cad_model = an.Model()
@@ -220,6 +270,19 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
         parameters["conditions"]["edges"]["coupling"]["apply_coupling_conditions"].SetBool(True)
         parameters["output"]["results_directory"].SetString("Results_Test_"+str(test_number))
 
+        # Scale values
+        beta = parameters["regularization"]["beta"].GetDouble()
+        scaled_beta = beta*(1/0.33464798003773155)
+        parameters["regularization"]["beta"].SetDouble(scaled_beta)
+
+        penalty = parameters["conditions"]["edges"]["coupling"]["penalty_factor_displacement_coupling"].GetDouble()
+        scaled_penalty = penalty*(1/1.4862902201862294)
+        parameters["conditions"]["edges"]["coupling"]["penalty_factor_displacement_coupling"].SetDouble(scaled_penalty)
+
+        penalty = parameters["conditions"]["edges"]["coupling"]["penalty_factor_rotation_coupling"].GetDouble()
+        scaled_penalty = penalty*(1/295.0810052293132)
+        parameters["conditions"]["edges"]["coupling"]["penalty_factor_rotation_coupling"].SetDouble(scaled_penalty)
+
         # Mapping
         cad_model = an.Model()
         PerformMapping(cad_model, fe_model, parameters)
@@ -241,6 +304,11 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
 
         parameters["refinement"]["a_priori"]["apply_a_priori_refinement"].SetBool(True)
         parameters["output"]["results_directory"].SetString("Results_Test_"+str(test_number))
+
+        # Scale values
+        beta = parameters["regularization"]["beta"].GetDouble()
+        scaled_beta = beta*(1/0.2700871625002464)
+        parameters["regularization"]["beta"].SetDouble(scaled_beta)
 
         # Mapping
         cad_model = an.Model()
@@ -264,6 +332,11 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
         parameters["refinement"]["a_posteriori"]["apply_a_posteriori_refinement"].SetBool(True)
         parameters["output"]["results_directory"].SetString("Results_Test_"+str(test_number))
 
+        # Scale values
+        beta = parameters["regularization"]["beta"].GetDouble()
+        scaled_beta = beta*(1/0.33464798003773155)
+        parameters["regularization"]["beta"].SetDouble(scaled_beta)
+
         # Mapping
         cad_model = an.Model()
         PerformMapping(cad_model, fe_model, parameters)
@@ -280,30 +353,41 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
     print("\n> Starting test "+str(test_number)+"...")
 
     with suppress_stdout():
-            with open("parameters.json",'r') as parameter_file:
-                parameters = KratosMultiphysics.Parameters(parameter_file.read())
+        with open("parameters.json",'r') as parameter_file:
+            parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
-            parameters["conditions"]["edges"]["direct"]["apply_enforcement_conditions"].SetBool(True)
-            parameters["output"]["results_directory"].SetString("Results_Test_"+str(test_number))
+        parameters["conditions"]["edges"]["direct"]["apply_enforcement_conditions"].SetBool(True)
+        parameters["output"]["results_directory"].SetString("Results_Test_"+str(test_number))
 
-            # Mapping
-            cad_model = an.Model()
-            PerformMapping(cad_model, fe_model, parameters)
+        # Scale values
+        beta = parameters["regularization"]["beta"].GetDouble()
+        scaled_beta = beta*(1/0.33464798003773155)
+        parameters["regularization"]["beta"].SetDouble(scaled_beta)
 
-            # Actual test
-            pole_coordinates = ExtractResults(cad_model)
-            TestResults(pole_coordinates, str(test_number))
+        penalty = parameters["conditions"]["edges"]["direct"]["penalty_factor_position_enforcement"].GetDouble()
+        scaled_penalty = penalty*(1/9.153070314393736)
+        parameters["conditions"]["edges"]["direct"]["penalty_factor_position_enforcement"].SetDouble(scaled_penalty)
+
+        # Mapping
+        cad_model = an.Model()
+        PerformMapping(cad_model, fe_model, parameters)
+
+        # Actual test
+        pole_coordinates = ExtractResults(cad_model)
+        TestResults(pole_coordinates, str(test_number))
 
 # =======================================================================================================
 # Delete result files
 # =======================================================================================================
 os.remove("cad_reconstruction_process_test.post.lst")
-os.remove("fe_parametrization_backup.json")
 
 if delete_result_folders:
     for number in range(test_number+1):
         if os.path.exists("Results_Test_"+str(number)):
             shutil.rmtree("Results_Test_"+str(number))
+
+if os.path.exists("fe_parametrization_backup.json"):
+    os.remove("fe_parametrization_backup.json")
 
 time_for_complete_test = time.time() - start_time
 print("\n> Test Successfully finished in " + str(round(time_for_complete_test,2)) + " s!\n")

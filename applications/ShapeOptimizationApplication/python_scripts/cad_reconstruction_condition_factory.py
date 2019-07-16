@@ -48,23 +48,39 @@ class ConditionFactory:
         conditions = []
 
         if self.parameters["conditions"]["general"]["apply_integral_method"].GetBool():
-            self.AddDistanceMinimizationWithIntegrationConditions(conditions)
+            conditions.append([])
+            self.AddDistanceMinimizationWithIntegrationConditions(conditions[-1])
         else:
-            self.AddDistanceMinimizationConditions(conditions)
+            conditions.append([])
+            self.AddDistanceMinimizationConditions(conditions[-1])
+
         if self.parameters["conditions"]["faces"]["mechanical"]["apply_KL_shell"].GetBool():
-            self.AddFaceConditions(conditions)
+            conditions.append([])
+            self.AddFaceConditions(conditions[-1])
+
         if self.parameters["conditions"]["faces"]["rigid"]["apply_rigid_conditions"].GetBool():
-            self.AddRigidConditions(conditions)
+            conditions.append([])
+            self.AddRigidConditions(conditions[-1])
+
         if self.parameters["conditions"]["edges"]["direct"]["apply_enforcement_conditions"].GetBool():
-            self.AddDirectEdgeConditions(conditions)
+            conditions.append([])
+            self.AddDirectEdgeConditions(conditions[-1])
+
         if self.parameters["conditions"]["edges"]["fe_based"]["apply_enforcement_conditions"].GetBool():
-            self.AddEnforcementConditions(conditions)
+            conditions.append([])
+            self.AddEnforcementConditions(conditions[-1])
+
         if self.parameters["conditions"]["edges"]["fe_based"]["apply_corner_enforcement_conditions"].GetBool():
-            self.AddCornerEnforcementConditions(conditions)
+            conditions.append([])
+            self.AddCornerEnforcementConditions(conditions[-1])
+
         if self.parameters["conditions"]["edges"]["coupling"]["apply_coupling_conditions"].GetBool():
-            self.AddCouplingConditions(conditions)
+            conditions.append([])
+            self.AddCouplingConditions(conditions[-1])
+
         if self.parameters["regularization"]["alpha"].GetDouble() != 0:
-            self.AddAlphaRegularizationConditions(conditions)
+            conditions.append([])
+            self.AddAlphaRegularizationConditions(conditions[-1])
 
         return conditions
 

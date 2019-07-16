@@ -84,7 +84,9 @@ double& LinearElastic3DLaw::GetValue( const Variable<double>& rThisVariable, dou
 
 void  LinearElastic3DLaw::CalculateMaterialResponsePK2 (Parameters& rValues)
 {
+	//std::cout << 'pjw2' << std::endl;
 
+	int i = 1;
     //-----------------------------//
 
     // a.-Check if the constitutive parameters are passed correctly to the law calculation
@@ -99,13 +101,15 @@ void  LinearElastic3DLaw::CalculateMaterialResponsePK2 (Parameters& rValues)
     Vector& StrainVector                  = rValues.GetStrainVector();
     Vector& StressVector                  = rValues.GetStressVector();
 
+	bool elestrain = Options.IsNot(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN);
+
     //-----------------------------//
 
     // 0.- Lame constants
     const double& YoungModulus       = MaterialProperties[YOUNG_MODULUS];
     const double& PoissonCoefficient = MaterialProperties[POISSON_RATIO];
 
-    if(Options.Is( ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN )) //large strains
+    if(Options.IsNot( ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN )) //large strains, refer https://github.com/KratosMultiphysics/Kratos/wiki/How-to-use-the-Constitutive-Law-class and structural mechanics elastic_isotropic_3d.h
     {
         // 1.-Compute total deformation gradient
         const Matrix& DeformationGradientF = rValues.GetDeformationGradientF();
@@ -116,7 +120,6 @@ void  LinearElastic3DLaw::CalculateMaterialResponsePK2 (Parameters& rValues)
         // 3.-Green-Lagrange Strain:
         // E= 0.5*(FT*F-1)
         this->CalculateGreenLagrangeStrain(RightCauchyGreen,StrainVector);
-
     }
 
     //4.-Calculate Total PK2 stress
@@ -142,6 +145,7 @@ void  LinearElastic3DLaw::CalculateMaterialResponsePK2 (Parameters& rValues)
         Matrix& ConstitutiveMatrix = rValues.GetConstitutiveMatrix();
         this->CalculateLinearElasticMatrix( ConstitutiveMatrix, YoungModulus, PoissonCoefficient );
     }
+
 
     if( Options.Is( ConstitutiveLaw::COMPUTE_STRAIN_ENERGY ) )
     {
@@ -174,7 +178,9 @@ void  LinearElastic3DLaw::CalculateMaterialResponsePK2 (Parameters& rValues)
 
 void LinearElastic3DLaw::CalculateMaterialResponseKirchhoff (Parameters& rValues)
 {
+	//std::cout << 'pjw3' << std::endl;
 
+	int i = 9;
     //-----------------------------//
 
     // a.-Check if the constitutive parameters are passed correctly to the law calculation
@@ -194,7 +200,7 @@ void LinearElastic3DLaw::CalculateMaterialResponseKirchhoff (Parameters& rValues
     const double& YoungModulus          = MaterialProperties[YOUNG_MODULUS];
     const double& PoissonCoefficient    = MaterialProperties[POISSON_RATIO];
 
-    if(Options.Is( ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN )) //large strains
+    if(Options.IsNot( ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN )) //large strains
     {
 	    // 1.-Compute total deformation gradient
         const Matrix& DeformationGradientF  = rValues.GetDeformationGradientF();

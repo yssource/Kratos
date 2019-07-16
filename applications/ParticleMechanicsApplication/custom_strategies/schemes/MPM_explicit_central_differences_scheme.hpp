@@ -306,13 +306,19 @@ public:
             const array_1d<double, 3>& r_previous_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT, 1);
             const array_1d<double, 3>& r_previous_middle_velocity = itCurrentNode->FastGetSolutionStepValue(MIDDLE_VELOCITY, 1);
             // Solution of the explicit equation:
-			// PJW: THIS IS WHERE WE ACTUALLY HIT, IT SEEMS TO WORK CORRECTLY. (JUST CHECKED FOR GRAVITY LOAD)
+			//PJW: THIS IS WHERE WE ACTUALLY HIT, IT SEEMS TO WORK CORRECTLY. (JUST CHECKED FOR GRAVITY LOAD)
             if (nodal_mass > numerical_limit)
                 // I do this on element lvl
                 //noalias(r_current_acceleration) = (r_current_residual - nodal_displacement_damping * r_current_velocity) / nodal_mass;
                 noalias(r_current_acceleration) = (r_current_residual) / nodal_mass;
             else
                 noalias(r_current_acceleration) = ZeroVector(3);
+
+
+			if (norm_2(r_current_residual) > 0.0)
+			{
+				std::cout << "r_current_residual norm = " << norm_2(r_current_residual) << std::endl;
+			}
 
             std::array<bool, 3> fix_displacements = {false, false, false};
 
@@ -795,13 +801,24 @@ public:
         ProcessInfo& rCurrentProcessInfo
         )
     {
-        (pCurrentEntity)->CalculateRightHandSide(RHS_Contribution, rCurrentProcessInfo);
+		KRATOS_TRY
+
+		std::cout << "RHS_Contribution before = " << RHS_Contribution << std::endl;
+
+        pCurrentEntity->CalculateRightHandSide(RHS_Contribution, rCurrentProcessInfo); //PJW- here is the problem
+
+		std::cout << "RHS_Contribution after = " << RHS_Contribution << std::endl;
         //Matrix dummy_lhs;
         //(pCurrentEntity)->CalculateLocalSystem(dummy_lhs, RHS_Contribution, rCurrentProcessInfo);
 
 		//PJW
         pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, FORCE_RESIDUAL, rCurrentProcessInfo);
+
+		std::cout << "pos6" << RHS_Contribution << std::endl;
         pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, MOMENT_RESIDUAL, rCurrentProcessInfo);
+
+		std::cout << "pos7" << RHS_Contribution << std::endl;
+		KRATOS_CATCH("")
     }
 
 

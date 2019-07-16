@@ -74,13 +74,13 @@ class ParticleMechanicsAnalysis(AnalysisStage):
 
             # MAP PARTICLE QUANTITIES TO GRID, VIA ELEMENT VIA SCHEME
             # we need to convert particle stresses to nodal forces here
-            input('before InitializeSolutionStep')
+            #input('before InitializeSolutionStep')
             self.InitializeSolutionStep()
 
 
             # DETERMINE PREDICTOR QUANTITIES, VIA SCHEME - NOT NEEDED FOR EXPLICIT SINCE THERE IS NO ITERATION!
             # we just use the base class virtual void with  nothing and it is fine.
-            input('before Predict')
+            #input('before Predict')
             self._GetSolver().Predict()
 
             # DETERMINE CONVERGED QUANTITIES, VIA SOLVER
@@ -92,6 +92,7 @@ class ParticleMechanicsAnalysis(AnalysisStage):
             # A DIFFERENCE HERE IS THAT FOR EXPLICIT WE NEED TO DETEMINE THE STRESSES FROM THE GRADIENT VELOCITY, INSTEAD OF THE DISPS
             input('before FinalizeSolutionStep')
             self.FinalizeSolutionStep()
+            input('after FinalizeSolutionStep')
 
 
             self.OutputSolutionStep()

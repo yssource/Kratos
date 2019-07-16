@@ -629,6 +629,12 @@ protected:
     virtual void CalculateKinematics(GeneralVariables& rVariables, ProcessInfo& rCurrentProcessInfo);
 
 
+	/**
+	 * Calculate Element Kinematics for explicit time integration
+	 */
+	void CalculateExplicitKinematics(GeneralVariables& rVariables, ProcessInfo& rCurrentProcessInfo);
+
+
 
     /**
      * Calculation of the Current Displacement

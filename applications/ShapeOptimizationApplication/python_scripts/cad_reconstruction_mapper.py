@@ -499,39 +499,40 @@ class CADMapper:
         self.__OutputFEData(self.fe_model_part, filename, output_dir, nodal_variables)
 
         # Then identify spots where coupling or enforcement conditions are not met
-        for condition in self.conditions:
-            if isinstance(condition, clib.DisplacementCouplingCondition) or isinstance(condition, clib.DisplacementCouplingConditionWithAD) or isinstance(condition, clib.RotationCouplingConditionWithAD):
-                geometry_a = condition.geometry_a
-                geometry_b = condition.geometry_b
-                (u_a,v_a) = condition.parameters_a
-                (u_b,v_b) = condition.parameters_b
+        for condition_list in self.conditions:
+            for condition in condition_list:
+                if isinstance(condition, clib.DisplacementCouplingCondition) or isinstance(condition, clib.DisplacementCouplingConditionWithAD) or isinstance(condition, clib.RotationCouplingConditionWithAD):
+                    geometry_a = condition.geometry_a
+                    geometry_b = condition.geometry_b
+                    (u_a,v_a) = condition.parameters_a
+                    (u_b,v_b) = condition.parameters_b
 
-                is_spot_to_be_refined = False
+                    is_spot_to_be_refined = False
 
-                if isinstance(condition, clib.DisplacementCouplingCondition) or isinstance(condition, clib.DisplacementCouplingConditionWithAD):
-                    delta_disp = la.norm(condition.CalculateQualityIndicator())
-                    if delta_disp > disp_coupling_tolerance:
-                        is_disp_coupling_satisfied = False
-                        is_spot_to_be_refined = True
-                        print("delta_disp =", delta_disp)
+                    if isinstance(condition, clib.DisplacementCouplingCondition) or isinstance(condition, clib.DisplacementCouplingConditionWithAD):
+                        delta_disp = la.norm(condition.CalculateQualityIndicator())
+                        if delta_disp > disp_coupling_tolerance:
+                            is_disp_coupling_satisfied = False
+                            is_spot_to_be_refined = True
+                            print("delta_disp =", delta_disp)
 
-                if isinstance(condition, clib.RotationCouplingConditionWithAD):
-                    delta_rot = condition.CalculateQualityIndicator() * 180 / np.pi
-                    if delta_rot > rot_coupling_tolerance:
-                        is_rot_coupling_satisfied = False
-                        is_spot_to_be_refined = True
-                        print("delta_rot =", delta_rot)
+                    if isinstance(condition, clib.RotationCouplingConditionWithAD):
+                        delta_rot = condition.CalculateQualityIndicator() * 180 / np.pi
+                        if delta_rot > rot_coupling_tolerance:
+                            is_rot_coupling_satisfied = False
+                            is_spot_to_be_refined = True
+                            print("delta_rot =", delta_rot)
 
-                if is_spot_to_be_refined:
-                    # Geometry a
-                    u_a_added = self.__AddUIntervalToList(geometry_a, u_a, v_a, intervals_along_u_to_refine, minimum_knot_distance)
-                    v_a_added = self.__AddVIntervalToList(geometry_a, u_a, v_a, intervals_along_v_to_refine, minimum_knot_distance)
+                    if is_spot_to_be_refined:
+                        # Geometry a
+                        u_a_added = self.__AddUIntervalToList(geometry_a, u_a, v_a, intervals_along_u_to_refine, minimum_knot_distance)
+                        v_a_added = self.__AddVIntervalToList(geometry_a, u_a, v_a, intervals_along_v_to_refine, minimum_knot_distance)
 
-                    # Geometry b
-                    u_b_added = self.__AddUIntervalToList(geometry_b, u_b, v_b, intervals_along_u_to_refine, minimum_knot_distance)
-                    v_b_added = self.__AddVIntervalToList(geometry_b, u_b, v_b, intervals_along_v_to_refine, minimum_knot_distance)
+                        # Geometry b
+                        u_b_added = self.__AddUIntervalToList(geometry_b, u_b, v_b, intervals_along_u_to_refine, minimum_knot_distance)
+                        v_b_added = self.__AddVIntervalToList(geometry_b, u_b, v_b, intervals_along_v_to_refine, minimum_knot_distance)
 
-                    exist_intervals_to_refine = exist_intervals_to_refine or u_a_added or v_a_added or u_b_added or v_b_added
+                        exist_intervals_to_refine = exist_intervals_to_refine or u_a_added or v_a_added or u_b_added or v_b_added
 
         self.ResetPoleDisplacements()
 

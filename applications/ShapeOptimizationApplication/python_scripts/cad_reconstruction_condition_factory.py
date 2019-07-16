@@ -67,16 +67,31 @@ class ConditionFactory:
             self.AddDirectEdgeConditions(conditions[-1])
 
         if self.parameters["conditions"]["edges"]["fe_based"]["apply_enforcement_conditions"].GetBool():
-            conditions.append([])
-            self.AddEnforcementConditions(conditions[-1])
+            position_conditions = []
+            tangent_conditions = []
+            self.AddEnforcementConditions(position_conditions, tangent_conditions)
+            if len(position_conditions)>0:
+                conditions.append(position_conditions)
+            if len(tangent_conditions)>0:
+                conditions.append(tangent_conditions)
 
         if self.parameters["conditions"]["edges"]["fe_based"]["apply_corner_enforcement_conditions"].GetBool():
-            conditions.append([])
-            self.AddCornerEnforcementConditions(conditions[-1])
+            position_conditions = []
+            tangent_conditions = []
+            self.AddCornerEnforcementConditions(position_conditions, tangent_conditions)
+            if len(position_conditions)>0:
+                conditions.append(position_conditions)
+            if len(tangent_conditions)>0:
+                conditions.append(tangent_conditions)
 
         if self.parameters["conditions"]["edges"]["coupling"]["apply_coupling_conditions"].GetBool():
-            conditions.append([])
-            self.AddCouplingConditions(conditions[-1])
+            displacement_conditions = []
+            rotation_conditions = []
+            self.AddCouplingConditions(displacement_conditions, rotation_conditions)
+            if len(displacement_conditions)>0:
+                conditions.append(displacement_conditions)
+            if len(rotation_conditions)>0:
+                conditions.append(rotation_conditions)
 
         if self.parameters["regularization"]["alpha"].GetDouble() != 0:
             conditions.append([])
@@ -399,7 +414,7 @@ class ConditionFactory:
                 raise RuntimeError("Max number of adjacent has to be 2!!")
 
     # --------------------------------------------------------------------------
-    def AddEnforcementConditions(self, conditions):
+    def AddEnforcementConditions(self, position_conditions, tangent_conditions):
         drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
         min_span_length = self.parameters["drawing_parameters"]["min_span_length"].GetDouble()
         penalty_factor_tangent_enforcement = self.parameters["conditions"]["edges"]["fe_based"]["penalty_factor_tangent_enforcement"].GetDouble()
@@ -464,10 +479,10 @@ class ConditionFactory:
                         weight = penalty_factor_position_enforcement * integration_weight
 
                         new_condition_a = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes_a, shape_functions_a, weight)
-                        conditions.append(new_condition_a)
+                        position_conditions.append(new_condition_a)
 
                         new_condition_b = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes_b, shape_functions_b, weight)
-                        conditions.append(new_condition_b)
+                        position_conditions.append(new_condition_b)
 
                     # Tangents enforcement
                     if penalty_factor_tangent_enforcement > 0:
@@ -475,15 +490,15 @@ class ConditionFactory:
                         weight = penalty_factor_tangent_enforcement * integration_weight
 
                         new_condition_a = clib.TangentEnforcementConditionWithAD(target_normal, nonzero_pole_nodes_a, shape_functions_a, weight)
-                        conditions.append(new_condition_a)
+                        tangent_conditions.append(new_condition_a)
 
                         new_condition_b = clib.TangentEnforcementConditionWithAD(target_normal, nonzero_pole_nodes_b, shape_functions_b, weight)
-                        conditions.append(new_condition_b)
+                        tangent_conditions.append(new_condition_b)
             else:
                 raise RuntimeError("Max number of adjacent has to be 2!!")
 
     # --------------------------------------------------------------------------
-    def AddCornerEnforcementConditions(self, conditions):
+    def AddCornerEnforcementConditions(self, position_conditions, tangent_conditions):
         # This conditions assumes an integration weight of 1 and other than that uses the penalty factors from the tangent and position enforcement
         penalty_factor = self.parameters["conditions"]["edges"]["fe_based"]["penalty_factor_corner_enforcement"].GetDouble()
 
@@ -591,7 +606,7 @@ class ConditionFactory:
             weight = penalty_factor * integration_weight
 
             new_condition = clib.TangentEnforcementConditionWithAD(target_normal, nonzero_pole_nodes, shape_functions, weight)
-            conditions.append(new_condition)
+            tangent_conditions.append(new_condition)
 
             # Positions enforcement
             target_displacement = fe_node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)
@@ -599,10 +614,10 @@ class ConditionFactory:
             weight = penalty_factor * integration_weight
 
             new_condition = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes, shape_functions, weight)
-            conditions.append(new_condition)
+            position_conditions.append(new_condition)
 
     # --------------------------------------------------------------------------
-    def AddCouplingConditions(self, conditions):
+    def AddCouplingConditions(self, displacement_conditions, rotation_conditions):
         drawing_tolerance = self.parameters["drawing_parameters"]["cad_drawing_tolerance"].GetDouble()
         min_span_length = self.parameters["drawing_parameters"]["min_span_length"].GetDouble()
         penalty_factor_displacement = self.parameters["conditions"]["edges"]["coupling"]["penalty_factor_displacement_coupling"].GetDouble()
@@ -661,7 +676,7 @@ class ConditionFactory:
                                                                             (u_a, v_a),
                                                                             (u_b, v_b),
                                                                             weight )
-                        conditions.append(new_condition)
+                        displacement_conditions.append(new_condition)
 
                     # rotation coupling condition
                     if penalty_factor_rotation > 0:
@@ -680,7 +695,7 @@ class ConditionFactory:
                                                                               (u_a, v_a),
                                                                               (u_b, v_b),
                                                                               weight )
-                        conditions.append(new_condition)
+                        rotation_conditions.append(new_condition)
             else:
                 raise RuntimeError("Max number of adjacent has to be 2!!")
 

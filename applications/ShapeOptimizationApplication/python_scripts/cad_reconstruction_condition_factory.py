@@ -752,9 +752,6 @@ class ConditionFactory:
             if parametrization_filename != "":
                 print("> Using FE point parametrization from input file...")
                 self.fe_point_parametrization = self.__ReadFEPointParametrizationFromJson(parametrization_filename)
-            elif os.path.exists(parametrization_backup_filename):
-                print("> Using FE point parametrization from backup file...")
-                self.fe_point_parametrization = self.__ReadFEPointParametrizationFromJson(parametrization_backup_filename)
             else:
                 self.fe_point_parametrization = self.__CreateFEPointParametrization()
                 self.__StoreFePointParametrizationAsJson(parametrization_backup_filename)

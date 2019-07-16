@@ -29,6 +29,10 @@ class ReconstructionCondition(eq.Element):
         return dof_list
 
     # --------------------------------------------------------------------------
+    def GetWeight(self):
+        return self.weight
+
+    # --------------------------------------------------------------------------
     @staticmethod
     def ComputeActual(pole_nodes, shape):
         value = np.zeros(3)
@@ -178,21 +182,21 @@ class DistanceMinimizationConditionWithAD(ReconstructionConditionWithAD):
 # ==============================================================================
 class PositionEnforcementCondition(ReconstructionCondition):
     # --------------------------------------------------------------------------
-    def __init__(self, target_position, pole_nodes, shape_functions, penalty):
+    def __init__(self, target_position, pole_nodes, shape_functions, weight):
         super().__init__()
 
         self.target_position = target_position
         self.pole_nodes = pole_nodes
         self.shape_function_values = np.asarray(shape_functions[0], float)
-        self.penalty = penalty
+        self.weight = weight
 
     # --------------------------------------------------------------------------
     def CalculateRHS(self, rhs):
         cad_location = super().ComputeActual(self.pole_nodes, self.shape_function_values)
         distance_vec =  cad_location - self.target_position
-        value = 0.5 * self.penalty * distance_vec.dot(distance_vec)
+        value = 0.5 * self.weight * distance_vec.dot(distance_vec)
 
-        local_rhs = - self.penalty * np.outer(self.shape_function_values, distance_vec)
+        local_rhs = - self.weight * np.outer(self.shape_function_values, distance_vec)
 
         rhs[0::3] = local_rhs[:,0]
         rhs[1::3] = local_rhs[:,1]
@@ -205,7 +209,7 @@ class PositionEnforcementCondition(ReconstructionCondition):
         num_dofs = len(self.shape_function_values)*3
 
         # LHS
-        local_lhs_block = self.penalty * np.outer(self.shape_function_values, self.shape_function_values)
+        local_lhs_block = self.weight * np.outer(self.shape_function_values, self.shape_function_values)
 
         lhs[:] = np.zeros([num_dofs,num_dofs])
         lhs[0::3,0::3] = local_lhs_block
@@ -226,22 +230,22 @@ class PositionEnforcementCondition(ReconstructionCondition):
 # ==============================================================================
 class TangentEnforcementConditionWithAD( ReconstructionConditionWithAD ):
     # --------------------------------------------------------------------------
-    def __init__(self, target_normal, pole_nodes, shape_functions, penalty):
+    def __init__(self, target_normal, pole_nodes, shape_functions, weight):
         super().__init__()
 
         self.target_normal = target_normal
         self.pole_nodes = pole_nodes
         self.shape_function_derivatives_u = np.asarray(shape_functions[1], float)
         self.shape_function_derivatives_v = np.asarray(shape_functions[2], float)
-        self.penalty = penalty
+        self.weight = weight
 
     # --------------------------------------------------------------------------
     def CalculateRHS(self, rhs):
         a1 = super().ComputeActualJet(self.pole_nodes, self.shape_function_derivatives_u)
         a2 = super().ComputeActualJet(self.pole_nodes, self.shape_function_derivatives_v)
 
-        f_1 = self.penalty * np.dot(a1,self.target_normal)**2 * 0.5
-        f_2 = self.penalty * np.dot(a2,self.target_normal)**2 * 0.5
+        f_1 = self.weight * np.dot(a1,self.target_normal)**2 * 0.5
+        f_2 = self.weight * np.dot(a2,self.target_normal)**2 * 0.5
         value = f_1.f + f_2.f
 
         rhs[:]  = - f_1.g
@@ -254,8 +258,8 @@ class TangentEnforcementConditionWithAD( ReconstructionConditionWithAD ):
         a1 = super().ComputeActualHyperJet(self.pole_nodes, self.shape_function_derivatives_u)
         a2 = super().ComputeActualHyperJet(self.pole_nodes, self.shape_function_derivatives_v)
 
-        f_1 = self.penalty * np.dot(a1,self.target_normal)**2 * 0.5
-        f_2 = self.penalty * np.dot(a2,self.target_normal)**2 * 0.5
+        f_1 = self.weight * np.dot(a1,self.target_normal)**2 * 0.5
+        f_2 = self.weight * np.dot(a2,self.target_normal)**2 * 0.5
         value = f_1.f + f_2.f
 
         # LHS
@@ -277,7 +281,7 @@ class TangentEnforcementConditionWithAD( ReconstructionConditionWithAD ):
 # ==============================================================================
 class DisplacementCouplingCondition(ReconstructionCondition):
     # --------------------------------------------------------------------------
-    def __init__(self, pole_nodes_a, pole_nodes_b, shape_functions_a, shape_functions_b, geometry_a, geometry_b, parameters_a, parameters_b,  penalty):
+    def __init__(self, pole_nodes_a, pole_nodes_b, shape_functions_a, shape_functions_b, geometry_a, geometry_b, parameters_a, parameters_b,  weight):
         super().__init__()
 
         self.pole_nodes_a = pole_nodes_a
@@ -288,7 +292,7 @@ class DisplacementCouplingCondition(ReconstructionCondition):
         self.geometry_b = geometry_b # only strored for aposteriori refinement
         self.parameters_a = parameters_a # only strored for aposteriori refinement
         self.parameters_b = parameters_b # only strored for aposteriori refinement
-        self.penalty = penalty
+        self.weight = weight
 
         self.pos_0_a = super().ComputeActual(pole_nodes_a, self.shape_function_values_a)
         self.pos_0_b = super().ComputeActual(pole_nodes_b, self.shape_function_values_b)
@@ -328,7 +332,7 @@ class DisplacementCouplingCondition(ReconstructionCondition):
         disp_b = super().ComputeActual(self.pole_nodes_b, self.shape_function_values_b) - self.pos_0_b
         delta = disp_a - disp_b
 
-        value = 0.5  * self.penalty * delta.dot(delta)
+        value = 0.5  * self.weight * delta.dot(delta)
 
         # a
         delta_ab = np.zeros(num_dofs)
@@ -341,7 +345,7 @@ class DisplacementCouplingCondition(ReconstructionCondition):
         delta_ab[3*num_pole_nodes_a+1::3] = delta[1]
         delta_ab[3*num_pole_nodes_a+2::3] = delta[2]
 
-        rhs[:] = - self.penalty * np.multiply(N_ab, delta_ab)
+        rhs[:] = - self.weight * np.multiply(N_ab, delta_ab)
 
         return value
 
@@ -354,25 +358,25 @@ class DisplacementCouplingCondition(ReconstructionCondition):
         lhs[:] = np.zeros([num_dofs,num_dofs])
 
         # aa
-        local_lhs_aa = self.penalty * np.outer(self.shape_function_values_a, self.shape_function_values_a)
+        local_lhs_aa = self.weight * np.outer(self.shape_function_values_a, self.shape_function_values_a)
         lhs[0:num_pole_nodes_a*3:3 , 0:num_pole_nodes_a*3:3] = local_lhs_aa
         lhs[1:num_pole_nodes_a*3:3 , 1:num_pole_nodes_a*3:3] = local_lhs_aa
         lhs[2:num_pole_nodes_a*3:3 , 2:num_pole_nodes_a*3:3] = local_lhs_aa
 
         # ab
-        local_lhs_ab = - self.penalty * np.outer(self.shape_function_values_a, self.shape_function_values_b)
+        local_lhs_ab = - self.weight * np.outer(self.shape_function_values_a, self.shape_function_values_b)
         lhs[0:num_pole_nodes_a*3:3 , 3*num_pole_nodes_a+0::3] = local_lhs_ab
         lhs[1:num_pole_nodes_a*3:3 , 3*num_pole_nodes_a+1::3] = local_lhs_ab
         lhs[2:num_pole_nodes_a*3:3 , 3*num_pole_nodes_a+2::3] = local_lhs_ab
 
         # ba
-        local_lsh_ba = - self.penalty * np.outer(self.shape_function_values_b, self.shape_function_values_a)
+        local_lsh_ba = - self.weight * np.outer(self.shape_function_values_b, self.shape_function_values_a)
         lhs[3*num_pole_nodes_a+0::3 , 0:num_pole_nodes_a*3:3] = local_lsh_ba
         lhs[3*num_pole_nodes_a+1::3 , 1:num_pole_nodes_a*3:3] = local_lsh_ba
         lhs[3*num_pole_nodes_a+2::3 , 2:num_pole_nodes_a*3:3] = local_lsh_ba
 
         # bb
-        local_lhs_bb = self.penalty * np.outer(self.shape_function_values_b, self.shape_function_values_b)
+        local_lhs_bb = self.weight * np.outer(self.shape_function_values_b, self.shape_function_values_b)
         lhs[3*num_pole_nodes_a+0::3 , 3*num_pole_nodes_a+0::3] = local_lhs_bb
         lhs[3*num_pole_nodes_a+1::3 , 3*num_pole_nodes_a+1::3] = local_lhs_bb
         lhs[3*num_pole_nodes_a+2::3 , 3*num_pole_nodes_a+2::3] = local_lhs_bb
@@ -391,7 +395,7 @@ class DisplacementCouplingCondition(ReconstructionCondition):
 # ==============================================================================
 class DisplacementCouplingConditionWithAD(ReconstructionConditionWithAD):
     # --------------------------------------------------------------------------
-    def __init__(self, pole_nodes_a, pole_nodes_b, shape_functions_a, shape_functions_b, geometry_a, geometry_b, parameters_a, parameters_b,  penalty):
+    def __init__(self, pole_nodes_a, pole_nodes_b, shape_functions_a, shape_functions_b, geometry_a, geometry_b, parameters_a, parameters_b,  weight):
         super().__init__()
 
         self.pole_nodes_a = pole_nodes_a
@@ -402,7 +406,7 @@ class DisplacementCouplingConditionWithAD(ReconstructionConditionWithAD):
         self.geometry_b = geometry_b # only strored for aposteriori refinement
         self.parameters_a = parameters_a # only strored for aposteriori refinement
         self.parameters_b = parameters_b # only strored for aposteriori refinement
-        self.penalty = penalty
+        self.weight = weight
 
         self.pos_0_a = super().ComputeActual(pole_nodes_a, self.shape_function_values_a)
         self.pos_0_b = super().ComputeActual(pole_nodes_b, self.shape_function_values_b)
@@ -435,7 +439,7 @@ class DisplacementCouplingConditionWithAD(ReconstructionConditionWithAD):
 
         position_difference = pos_a - pos_b
 
-        f = 0.5  * self.penalty * position_difference.dot(position_difference)
+        f = 0.5  * self.weight * position_difference.dot(position_difference)
 
         rhs[:] = -f.g
         return f.f
@@ -453,7 +457,7 @@ class DisplacementCouplingConditionWithAD(ReconstructionConditionWithAD):
 
         position_difference = pos_a - pos_b
 
-        f = 0.5 * self.penalty * position_difference.dot(position_difference)
+        f = 0.5 * self.weight * position_difference.dot(position_difference)
 
         rhs[:] = -f.g
         lhs[:] = f.h
@@ -470,7 +474,7 @@ class RotationCouplingConditionWithAD(ReconstructionConditionWithAD):
     # Note that this condition considers the rotation around a common tangent vector from one of the two coupled faces (T2_edge)
     # This is different to the classical IGA coupling where the rotation is calculated on the individual tangents (which requires a direction/sign check)
     # --------------------------------------------------------------------------
-    def __init__(self, pole_nodes_a, pole_nodes_b, T2_edge, shape_functions_a, shape_functions_b, geometry_a, geometry_b, parameters_a, parameters_b, penalty):
+    def __init__(self, pole_nodes_a, pole_nodes_b, T2_edge, shape_functions_a, shape_functions_b, geometry_a, geometry_b, parameters_a, parameters_b, weight):
         super().__init__()
 
         self.pole_nodes_a = pole_nodes_a
@@ -484,7 +488,7 @@ class RotationCouplingConditionWithAD(ReconstructionConditionWithAD):
         self.geometry_b = geometry_b # only strored for aposteriori refinement
         self.parameters_a = parameters_a # only strored for aposteriori refinement
         self.parameters_b = parameters_b # only strored for aposteriori refinement
-        self.penalty = penalty
+        self.weight = weight
 
         A1_a = super().ComputeActual(self.pole_nodes_a, self.shape_function_derivatives_u_a)
         A2_a = super().ComputeActual(self.pole_nodes_a, self.shape_function_derivatives_v_a)
@@ -557,7 +561,7 @@ class RotationCouplingConditionWithAD(ReconstructionConditionWithAD):
 
         angular_difference = angle_a - angle_b
 
-        f = 0.5 * self.penalty * angular_difference**2
+        f = 0.5 * self.weight * angular_difference**2
 
         rhs[:] = -f.g
         return f.f
@@ -591,7 +595,7 @@ class RotationCouplingConditionWithAD(ReconstructionConditionWithAD):
 
         angular_difference = angle_a - angle_b
 
-        f = 0.5 * self.penalty * angular_difference**2
+        f = 0.5 * self.weight * angular_difference**2
 
         rhs[:] = -f.g
         lhs[:] = f.h
@@ -606,7 +610,7 @@ class RotationCouplingConditionWithAD(ReconstructionConditionWithAD):
 # ==============================================================================
 class KLShellConditionWithAD( ReconstructionConditionWithAD ):
     # --------------------------------------------------------------------------
-    def __init__(self, pole_nodes, shape_function_values_and_dervatives, penalty):
+    def __init__(self, pole_nodes, shape_function_values_and_dervatives, weight):
         super().__init__()
 
         self.pole_nodes = pole_nodes
@@ -615,7 +619,7 @@ class KLShellConditionWithAD( ReconstructionConditionWithAD ):
         self.shape_function_derivatives_uu = np.asarray(shape_function_values_and_dervatives[3], float)
         self.shape_function_derivatives_uv = np.asarray(shape_function_values_and_dervatives[4], float)
         self.shape_function_derivatives_vv = np.asarray(shape_function_values_and_dervatives[5], float)
-        self.penalty = penalty
+        self.weight = weight
 
         # Reference configuration
         A1 = super().ComputeActual(pole_nodes, self.shape_function_derivatives_u)
@@ -697,7 +701,7 @@ class KLShellConditionWithAD( ReconstructionConditionWithAD ):
         n = np.dot(eps, self.Dm)
         m = np.dot(kap, self.Db)
 
-        f = 0.5 * self.penalty * (np.dot(eps, n) + np.dot(kap, m))
+        f = 0.5 * self.weight * (np.dot(eps, n) + np.dot(kap, m))
 
         rhs[:] = -f.g
         return f.f
@@ -725,7 +729,7 @@ class KLShellConditionWithAD( ReconstructionConditionWithAD ):
         n = np.dot(eps, self.Dm)
         m = np.dot(kap, self.Db)
 
-        f = 0.5 * self.penalty * (np.dot(eps, n) + np.dot(kap, m))
+        f = 0.5 * self.weight * (np.dot(eps, n) + np.dot(kap, m))
 
         rhs[:] = -f.g
         lhs[:] = f.h
@@ -748,7 +752,7 @@ class AlphaRegularizationCondition(ReconstructionCondition):
         self.geometry_data = surface_geometry.Data()
         self.pole_nodes = pole_nodes
         self.shape_function_values = np.asarray(shape_functions[0], float)
-        self.alpha = alpha
+        self.weight = alpha
 
         r = target_pole_rs[0]
         s = target_pole_rs[1]
@@ -767,12 +771,12 @@ class AlphaRegularizationCondition(ReconstructionCondition):
         distance_vec = pole_coords-greville_point_coords
         distance_vec = np.array(distance_vec)
 
-        value = 0.5 * self.alpha * distance_vec.dot(distance_vec)
+        value = 0.5 * self.weight * distance_vec.dot(distance_vec)
 
         # RHS
-        rhs[0::3] = -self.alpha * self.IminN * distance_vec[0]
-        rhs[1::3] = -self.alpha * self.IminN * distance_vec[1]
-        rhs[2::3] = -self.alpha * self.IminN * distance_vec[2]
+        rhs[0::3] = -self.weight * self.IminN * distance_vec[0]
+        rhs[1::3] = -self.weight * self.IminN * distance_vec[1]
+        rhs[2::3] = -self.weight * self.IminN * distance_vec[2]
 
         return value
 
@@ -781,7 +785,7 @@ class AlphaRegularizationCondition(ReconstructionCondition):
         num_dofs = len(self.shape_function_values)*3
 
         # LHS
-        local_lhs_block = self.alpha * np.outer(self.IminN, self.IminN)
+        local_lhs_block = self.weight * np.outer(self.IminN, self.IminN)
 
         lhs[:] = np.zeros([num_dofs,num_dofs])
         lhs[0::3,0::3] = local_lhs_block

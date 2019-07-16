@@ -86,7 +86,7 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
 
             # Scale values
             beta = parameters["regularization"]["beta"].GetDouble()
-            scaled_beta = beta*(1/0.33464798003773155)
+            scaled_beta = beta*(1/1.8810841992574518)
             parameters["regularization"]["beta"].SetDouble(scaled_beta)
 
             # Mapping
@@ -108,22 +108,22 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
         with open("parameters.json",'r') as parameter_file:
             parameters = KratosMultiphysics.Parameters(parameter_file.read())
 
-        parameters["regularization"]["alpha"].SetDouble(0.1*(1/0.7944248463107507))
+        parameters["regularization"]["alpha"].SetDouble(0.1*(1/3.706403799982184))
         parameters["conditions"]["edges"]["fe_based"]["apply_enforcement_conditions"].SetBool(True)
         parameters["conditions"]["edges"]["fe_based"]["apply_corner_enforcement_conditions"].SetBool(True)
         parameters["output"]["results_directory"].SetString("Results_Test_"+str(test_number))
 
         # Scale values
         beta = parameters["regularization"]["beta"].GetDouble()
-        scaled_beta = beta*(1/0.2835212053097448)
+        scaled_beta = beta*(1/1.8810841992574518)
         parameters["regularization"]["beta"].SetDouble(scaled_beta)
 
         penalty = parameters["conditions"]["edges"]["fe_based"]["penalty_factor_position_enforcement"].GetDouble()
-        scaled_penalty = penalty*(1/1.486290220186227)
+        scaled_penalty = penalty*(1/1.1620842950984942)
         parameters["conditions"]["edges"]["fe_based"]["penalty_factor_position_enforcement"].SetDouble(scaled_penalty)
 
         penalty = parameters["conditions"]["edges"]["fe_based"]["penalty_factor_tangent_enforcement"].GetDouble()
-        scaled_penalty = penalty*(1/222.0707277703195)
+        scaled_penalty = penalty*(1/98.59917550430211)
         parameters["conditions"]["edges"]["fe_based"]["penalty_factor_tangent_enforcement"].SetDouble(scaled_penalty)
 
         # Mapping
@@ -150,7 +150,7 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
 
         # Scale values
         beta = parameters["regularization"]["beta"].GetDouble()
-        scaled_beta = beta*(1/21.140382843640175)
+        scaled_beta = beta*(1/103.06009139761014)
         parameters["regularization"]["beta"].SetDouble(scaled_beta)
 
         # Mapping
@@ -177,11 +177,11 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
 
         # Scale values
         beta = parameters["regularization"]["beta"].GetDouble()
-        scaled_beta = beta*(1/0.33464798003773155)
+        scaled_beta = beta*(1/1.8810841992574518)
         parameters["regularization"]["beta"].SetDouble(scaled_beta)
 
         penalty = parameters["conditions"]["faces"]["mechanical"]["penalty_factor"].GetDouble()
-        scaled_penalty = penalty*(1/17.59939555766338)
+        scaled_penalty = penalty*(1/1.333729466916638)
         parameters["conditions"]["faces"]["mechanical"]["penalty_factor"].SetDouble(scaled_penalty)
 
         # Mapping
@@ -210,11 +210,11 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
 
             # Scale values
             beta = parameters["regularization"]["beta"].GetDouble()
-            scaled_beta = beta*(1/0.33464798003773155)
+            scaled_beta = beta*(1/1.8810841992574518)
             parameters["regularization"]["beta"].SetDouble(scaled_beta)
 
             penalty = parameters["conditions"]["faces"]["mechanical"]["penalty_factor"].GetDouble()
-            scaled_penalty = penalty*(1/5.3423455463836325)
+            scaled_penalty = penalty*(1/0.24046582823887183)
             parameters["conditions"]["faces"]["mechanical"]["penalty_factor"].SetDouble(scaled_penalty)
 
             # Mapping
@@ -241,11 +241,11 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
 
         # Scale values
         beta = parameters["regularization"]["beta"].GetDouble()
-        scaled_beta = beta*(1/0.33464798003773155)
+        scaled_beta = beta*(1/1.8810841992574518)
         parameters["regularization"]["beta"].SetDouble(scaled_beta)
 
         penalty = parameters["conditions"]["faces"]["rigid"]["penalty_factor"].GetDouble()
-        scaled_penalty = penalty*(1/111.70169712521464)
+        scaled_penalty = penalty*(1/8.411602013389427)
         parameters["conditions"]["faces"]["rigid"]["penalty_factor"].SetDouble(scaled_penalty)
 
         # Mapping
@@ -272,15 +272,15 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
 
         # Scale values
         beta = parameters["regularization"]["beta"].GetDouble()
-        scaled_beta = beta*(1/0.33464798003773155)
+        scaled_beta = beta*(1/1.8810841992574518)
         parameters["regularization"]["beta"].SetDouble(scaled_beta)
 
         penalty = parameters["conditions"]["edges"]["coupling"]["penalty_factor_displacement_coupling"].GetDouble()
-        scaled_penalty = penalty*(1/1.4862902201862294)
+        scaled_penalty = penalty*(1/1.162084295098494)
         parameters["conditions"]["edges"]["coupling"]["penalty_factor_displacement_coupling"].SetDouble(scaled_penalty)
 
         penalty = parameters["conditions"]["edges"]["coupling"]["penalty_factor_rotation_coupling"].GetDouble()
-        scaled_penalty = penalty*(1/295.0810052293132)
+        scaled_penalty = penalty*(1/118.74880123227429)
         parameters["conditions"]["edges"]["coupling"]["penalty_factor_rotation_coupling"].SetDouble(scaled_penalty)
 
         # Mapping
@@ -307,7 +307,7 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
 
         # Scale values
         beta = parameters["regularization"]["beta"].GetDouble()
-        scaled_beta = beta*(1/0.2700871625002464)
+        scaled_beta = beta*(1/2.4630547562956804)
         parameters["regularization"]["beta"].SetDouble(scaled_beta)
 
         # Mapping
@@ -334,7 +334,7 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
 
         # Scale values
         beta = parameters["regularization"]["beta"].GetDouble()
-        scaled_beta = beta*(1/0.33464798003773155)
+        scaled_beta = beta*(1/1.8810841992574518)
         parameters["regularization"]["beta"].SetDouble(scaled_beta)
 
         # Mapping
@@ -361,11 +361,11 @@ if test_number in specific_tests_to_run or len(specific_tests_to_run) == 0 :
 
         # Scale values
         beta = parameters["regularization"]["beta"].GetDouble()
-        scaled_beta = beta*(1/0.33464798003773155)
+        scaled_beta = beta*(1/1.8810841992574518)
         parameters["regularization"]["beta"].SetDouble(scaled_beta)
 
         penalty = parameters["conditions"]["edges"]["direct"]["penalty_factor_position_enforcement"].GetDouble()
-        scaled_penalty = penalty*(1/9.153070314393736)
+        scaled_penalty = penalty*(1/1.90300895288533)
         parameters["conditions"]["edges"]["direct"]["penalty_factor_position_enforcement"].SetDouble(scaled_penalty)
 
         # Mapping

@@ -580,16 +580,15 @@ class CADMapper:
         self.conditions_scaling_factors.append(1)
 
         if is_initial_assembly:
-            system_trace = self.system.working_trace()
-            print("> Max absolute system LHS = " + str(abs(self.system.working_h).max()))
-            print("> trace_0 = "+str(system_trace))
+            system_max = abs(self.system.working_h).max()
+            print("> Max absolute system LHS = " + str(system_max))
 
         # Beta regularization
         beta = self.parameters["regularization"]["beta"].GetDouble()
 
         if is_initial_assembly:
-            trace_beta = self.system.nb_dofs
-            self.beta_scaling_factor = system_trace/trace_beta
+            max_beta = 1
+            self.beta_scaling_factor = system_max/max_beta
             print("> beta_scaling_factor = "+str(self.beta_scaling_factor)+"\n")
 
         self.system.add_diagonal(self.beta_scaling_factor*beta)
@@ -600,16 +599,13 @@ class CADMapper:
 
             if is_initial_assembly:
                 weight_of_element_type = self.conditions[itr][0].GetWeight()
-                constraint_trace = self.system.working_trace() / weight_of_element_type
-                scaling_factor = system_trace/constraint_trace
+                constraint_max = abs(self.system.working_h).max() / weight_of_element_type
+                scaling_factor = system_max/constraint_max
 
                 self.conditions_scaling_factors.append(scaling_factor)
 
-                print("> trace_"+str(itr)+" = "+str(constraint_trace))
                 print("> scaling_factor_"+str(itr)+" = "+str(scaling_factor))
-
-                max_value_constraint = abs(self.system.working_h).max() / weight_of_element_type
-                print("> Max absolute value constraint LHS_"+str(itr)+"= " + str(max_value_constraint)+"\n")
+                print("> Max absolute value constraint LHS_"+str(itr)+"= " + str(constraint_max)+"\n")
 
             self.system.add_working_system(factor=self.conditions_scaling_factors[itr])
 

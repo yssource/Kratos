@@ -137,6 +137,18 @@ namespace Kratos
     }
 
     template <class TPrimalElement>
+    void AdjointBasePotentialFlowElement<TPrimalElement>::CalculateSensitivityMatrix(const Variable<double>& rDesignVariable,
+                                            Matrix& rOutput,
+                                            const ProcessInfo& rCurrentProcessInfo)
+    {
+        KRATOS_TRY;
+
+        KRATOS_ERROR << "Calling CalculateSensitivityMatrix from adjoint potential flow base element." << std::endl;
+
+        KRATOS_CATCH("")
+    }
+
+    template <class TPrimalElement>
     void AdjointBasePotentialFlowElement<TPrimalElement>::EquationIdVector(EquationIdVectorType& rResult, ProcessInfo& CurrentProcessInfo)
     {
         const AdjointBasePotentialFlowElement& r_this = *this;

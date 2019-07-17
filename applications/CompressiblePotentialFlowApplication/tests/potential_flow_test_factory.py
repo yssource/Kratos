@@ -32,7 +32,7 @@ class PotentialFlowTests(UnitTest.TestCase):
 
     def setUp(self):
         # Set to true to get post-process files for the test
-        self.print_output = True
+        self.print_output = False
 
     def test_Naca0012SmallAdjoint(self):
         if not hdf5_is_available:
@@ -40,6 +40,7 @@ class PotentialFlowTests(UnitTest.TestCase):
         file_name = "naca0012_small_sensitivities"
         settings_file_name_primal = file_name + "_primal_parameters.json"
         settings_file_name_adjoint = file_name + "_adjoint_parameters.json"
+        settings_file_name_adjoint_analytical = file_name + "_adjoint_analytical_parameters.json"
         work_folder = "naca0012_small_adjoint_test"
 
         with WorkFolderScope(work_folder):
@@ -47,7 +48,10 @@ class PotentialFlowTests(UnitTest.TestCase):
             self._check_results(self.main_model_part.ProcessInfo[CPFApp.LIFT_COEFFICIENT], 0.327805503865, 0.0, 1e-9)
             self._check_results(self.main_model_part.ProcessInfo[CPFApp.MOMENT_COEFFICIENT], -0.105810071870, 0.0, 1e-9)
             self._check_results(self.main_model_part.ProcessInfo[CPFApp.LIFT_COEFFICIENT_JUMP], 0.3230253050805644, 0.0, 1e-9)
+            self._check_results(self.main_model_part.ProcessInfo[CPFApp.LIFT_COEFFICIENT_FAR_FIELD], 0.32651526722535246, 0.0, 1e-9)
+            self._check_results(self.main_model_part.ProcessInfo[CPFApp.DRAG_COEFFICIENT_FAR_FIELD], 0.0036897206842046205, 0.0, 1e-9)
             self._runTest(settings_file_name_adjoint)
+            self._runTest(settings_file_name_adjoint_analytical)
 
             for file_name in os.listdir(os.getcwd()):
                 if file_name.endswith(".h5"):
@@ -63,6 +67,7 @@ class PotentialFlowTests(UnitTest.TestCase):
             self._check_results(self.main_model_part.ProcessInfo[CPFApp.LIFT_COEFFICIENT], 0.4968313580730855, 0.0, 1e-9)
             self._check_results(self.main_model_part.ProcessInfo[CPFApp.MOMENT_COEFFICIENT], -0.1631792300021498, 0.0, 1e-9)
             self._check_results(self.main_model_part.ProcessInfo[CPFApp.LIFT_COEFFICIENT_JUMP], 0.4876931961465126, 0.0, 1e-9)
+            self._check_results(self.main_model_part.ProcessInfo[CPFApp.LIFT_COEFFICIENT_FAR_FIELD], 0.4953997676243705, 0.0, 1e-9)
 
             for file_name in os.listdir():
                 if file_name.endswith(".time"):
@@ -80,7 +85,7 @@ class PotentialFlowTests(UnitTest.TestCase):
 
         with WorkFolderScope(work_folder):
             self._runTest(settings_file_name)
-            self._check_results(self.main_model_part.ProcessInfo[CPFApp.LIFT_COEFFICIENT], 7.035245462470813, 0.0, 1e-9)
+            self._check_results(self.main_model_part.ProcessInfo[CPFApp.LIFT_COEFFICIENT], -0.08769331821378197, 0.0, 1e-9)
 
     def _runTest(self,settings_file_name):
         model = KratosMultiphysics.Model()
@@ -148,10 +153,10 @@ class PotentialFlowTests(UnitTest.TestCase):
                                     "node_output"         : false,
                                     "skin_output"         : false,
                                     "plane_output"        : [],
-                                    "nodal_results"       : ["VELOCITY_POTENTIAL","AUXILIARY_VELOCITY_POTENTIAL","DISTANCE"],
-                                    "nodal_nonhistorical_results": ["TRAILING_EDGE"],
-                                    "elemental_conditional_flags_results": ["STRUCTURE"],
-                                    "gauss_point_results" : ["PRESSURE_COEFFICIENT","VELOCITY","VELOCITY_LOWER","PRESSURE_LOWER","WAKE","ELEMENTAL_DISTANCES","KUTTA"]
+                                    "nodal_results"       : ["VELOCITY_POTENTIAL","AUXILIARY_VELOCITY_POTENTIAL"],
+                                    "nodal_nonhistorical_results": ["TRAILING_EDGE","WAKE_DISTANCE"],
+                                    "elemental_conditional_flags_results": ["STRUCTURE","TO_SPLIT"],
+                                    "gauss_point_results" : ["PRESSURE_COEFFICIENT","VELOCITY","VELOCITY_LOWER","PRESSURE_LOWER","WAKE","WAKE_ELEMENTAL_DISTANCES","KUTTA"]
                                 },
                                 "point_data_configuration"  : []
                             }

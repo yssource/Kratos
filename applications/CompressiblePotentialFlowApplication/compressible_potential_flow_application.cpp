@@ -4,11 +4,11 @@
 //   _|\_\_|  \__,_|\__|\___/ ____/
 //                   Multi-Physics
 //
-//  License:	    	 BSD License
-//    					     Kratos default license: kratos/license.txt
+//  License:        BSD License
+//                  Kratos default license: kratos/license.txt
 //
-//  Main authors:    Inigo Lopez
-//                   Riccardo Rossi
+//
+//  Main authors:    Riccardo Rossi, Inigo Lopez and Marc Nunez
 //
 
 // System includes
@@ -28,6 +28,7 @@ namespace Kratos {
 KratosCompressiblePotentialFlowApplication::KratosCompressiblePotentialFlowApplication():
     KratosApplication("CompressiblePotentialFlowApplication"),
     mIncompressiblePotentialFlowElement2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
+    mAdjointAnalyticalIncompressiblePotentialFlowElement2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mCompressiblePotentialFlowElement2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mAdjointIncompressiblePotentialFlowElement2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
     mAdjointEmbeddedIncompressiblePotentialFlowElement2D3N(0, Element::GeometryType::Pointer(new Triangle2D3<Node<3> >(Element::GeometryType::PointsArrayType(3)))),
@@ -51,6 +52,12 @@ void KratosCompressiblePotentialFlowApplication::Register()
 
   //Embedded variables
   KRATOS_REGISTER_VARIABLE(GEOMETRY_DISTANCE);
+  KRATOS_REGISTER_VARIABLE(ROTATION_ANGLE);
+
+  // Wake variables
+  KRATOS_REGISTER_VARIABLE(WAKE_DISTANCE);
+  KRATOS_REGISTER_VARIABLE(WAKE_ELEMENTAL_DISTANCES);
+  KRATOS_REGISTER_VARIABLE(WAKE_ORIGIN);
 
   // Adjoint variables
   KRATOS_REGISTER_VARIABLE(ADJOINT_VELOCITY_POTENTIAL);
@@ -74,6 +81,11 @@ void KratosCompressiblePotentialFlowApplication::Register()
   KRATOS_REGISTER_VARIABLE(DRAG_COEFFICIENT);
   KRATOS_REGISTER_VARIABLE(MOMENT_COEFFICIENT);
   KRATOS_REGISTER_VARIABLE(LIFT_COEFFICIENT_JUMP);
+  KRATOS_REGISTER_VARIABLE(LIFT_COEFFICIENT_FAR_FIELD);
+  KRATOS_REGISTER_VARIABLE(DRAG_COEFFICIENT_FAR_FIELD);
+
+  // Geometrical variables
+  KRATOS_REGISTER_VARIABLE(REFERENCE_CHORD)
 
   // Markers
   KRATOS_REGISTER_VARIABLE(WAKE);
@@ -97,6 +109,7 @@ void KratosCompressiblePotentialFlowApplication::Register()
   KRATOS_REGISTER_ELEMENT("CompressiblePotentialFlowElement2D3N", mCompressiblePotentialFlowElement2D3N);
   KRATOS_REGISTER_ELEMENT("AdjointIncompressiblePotentialFlowElement2D3N", mAdjointIncompressiblePotentialFlowElement2D3N);
   KRATOS_REGISTER_ELEMENT("AdjointEmbeddedIncompressiblePotentialFlowElement2D3N", mAdjointEmbeddedIncompressiblePotentialFlowElement2D3N);
+  KRATOS_REGISTER_ELEMENT("AdjointAnalyticalIncompressiblePotentialFlowElement2D3N", mAdjointAnalyticalIncompressiblePotentialFlowElement2D3N);
   KRATOS_REGISTER_ELEMENT("AdjointCompressiblePotentialFlowElement2D3N", mAdjointCompressiblePotentialFlowElement2D3N);
   KRATOS_REGISTER_ELEMENT("EmbeddedIncompressiblePotentialFlowElement2D3N", mEmbeddedIncompressiblePotentialFlowElement2D3N);
 

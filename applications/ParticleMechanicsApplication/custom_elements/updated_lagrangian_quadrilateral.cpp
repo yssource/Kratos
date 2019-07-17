@@ -319,7 +319,7 @@ void UpdatedLagrangianQuadrilateral::CalculateElementalSystem( LocalSystemCompon
 	Variables.StressMeasure = ConstitutiveLaw::StressMeasure_Cauchy;
 
 
-	bool isImplicit = false; //PJW add element system
+	bool isImplicit = false; //PJW CalculateElementalSystem
 	if (isImplicit)
 	{
 		ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS, true);
@@ -385,7 +385,7 @@ void UpdatedLagrangianQuadrilateral::CalculateElementalSystem( LocalSystemCompon
     {
         // Contribution to forces (in residual term) are calculated
         volume_force  = this->CalculateVolumeForce( volume_force, Variables );
-		std::cout << "Vol force = " << volume_force << std::endl;
+		//std::cout << "Vol force = " << volume_force << std::endl;
         this->CalculateAndAddRHS ( rLocalSystem, Variables, volume_force, MP_Volume );
     }
 
@@ -470,7 +470,6 @@ void UpdatedLagrangianQuadrilateral::CalculateExplicitKinematics(GeneralVariable
 	const array_1d<double, 3>& xg = this->GetValue(MP_COORD);
 
 	//PJW Calculate shape function gradients
-
 	Matrix Jacobian;
 	Jacobian = this->MPMJacobian(Jacobian, xg);
 	Matrix InvJ;
@@ -506,15 +505,17 @@ void UpdatedLagrangianQuadrilateral::CalculateExplicitKinematics(GeneralVariable
 
 	//PJW calculate and store objective strain increments
 	Vector& MP_Strain = this->GetValue(MP_ALMANSI_STRAIN_VECTOR); //PJW, retrieve stress vector, explicit only
-	MP_Strain(0) += jaumannRate(1, 1)*delta_time; //e_xx
-	MP_Strain(1) += jaumannRate(2, 2)*delta_time; //e_yy
-	MP_Strain(2) += 2.0*jaumannRate(1, 2)*delta_time; //e_xy
+	MP_Strain(0) += jaumannRate(0, 0)*delta_time; //e_xx
+	MP_Strain(1) += jaumannRate(1, 1)*delta_time; //e_yy
+	MP_Strain(2) += 2.0*jaumannRate(0, 1)*delta_time; //e_xy
 	rVariables.StrainVector = MP_Strain;
 
 
 	// Set dummy parameters
 	rVariables.F = mDeformationGradientF0;
 	rVariables.detF = mDeterminantF0;
+	rVariables.detF0 = mDeterminantF0;
+	rVariables.F0 = mDeformationGradientF0;
 	
 
 	bool isCompressible = false; //add some test to see if we are considering compressibility or not
@@ -627,13 +628,10 @@ void UpdatedLagrangianQuadrilateral::CalculateAndAddRHS(LocalSystemComponents& r
     {
         VectorType& rRightHandSideVector = rLocalSystem.GetRightHandSideVector();
 
-		std::cout << "pos3" << rRightHandSideVector << std::endl;
         // Operation performed: rRightHandSideVector += ExtForce*IntToReferenceWeight
         this->CalculateAndAddExternalForces( rRightHandSideVector, rVariables, rVolumeForce, rIntegrationWeight );
-		std::cout << "pos4" << rRightHandSideVector << std::endl;
         // Operation performed: rRightHandSideVector -= IntForce*IntToReferenceWeight
         this->CalculateAndAddInternalForces( rRightHandSideVector, rVariables, rIntegrationWeight );
-		std::cout << "pos5" << rRightHandSideVector << std::endl;
     }
 
 }
@@ -706,8 +704,9 @@ void UpdatedLagrangianQuadrilateral::CalculateAndAddInternalForces(VectorType& r
 				internal_forces[index] += MP_Volume * MP_Stress[j] * Variables.DN_DX(i, j); //PJW-nodal internal forces
 			}
 		}
-
 	}
+
+	
 
 
 	//PJW - add internal forces here!
@@ -841,8 +840,6 @@ void UpdatedLagrangianQuadrilateral::CalculateRightHandSide( VectorType& rRightH
     // Set Variables to Local system components
     LocalSystem.SetLeftHandSideMatrix(LeftHandSideMatrix);
     LocalSystem.SetRightHandSideVector(rRightHandSideVector);
-
-	std::cout << "RHS before calculateElementalSystem = " << rRightHandSideVector << std::endl;
 
     // Calculate elemental system
     CalculateElementalSystem( LocalSystem, rCurrentProcessInfo ); //PJW - this is the problem
@@ -1086,7 +1083,7 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
     KRATOS_TRY
 
 	// TODO: add some test to see what time integration we have
-	bool isImplicit = false;
+	bool isImplicit = false; // finalize solution step
 
     // Create and initialize element variables:
     GeneralVariables Variables;
@@ -1115,7 +1112,7 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
 	}
 	else
 	{
-		ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR);
+		ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR, true);
 
 		// use element provided strain incremented from velocity gradient
 		ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN, true);
@@ -1124,6 +1121,8 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
 
 		// Compute explicit element kinematics
 		this->CalculateExplicitKinematics(Variables, rCurrentProcessInfo);
+
+		
 
 		// Set general variables to constitutivelaw parameters
 		this->SetGeneralVariables(Variables, Values);
@@ -1999,8 +1998,6 @@ void UpdatedLagrangianQuadrilateral::AddExplicitContribution(
         CalculateDampingMatrix(damping_matrix, temp_process_information);
         // current residual contribution due to damping
         noalias(damping_residual_contribution) = prod(damping_matrix, current_nodal_velocities);
-		
-		std::cout << "rRHSVector = " << rRHSVector << std::endl;
 
         for (size_t i = 0; i < number_of_nodes; ++i) {
             size_t index = dimension * i;

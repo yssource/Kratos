@@ -315,10 +315,7 @@ public:
                 noalias(r_current_acceleration) = ZeroVector(3);
 
 
-			if (norm_2(r_current_residual) > 0.0)
-			{
-				std::cout << "r_current_residual norm = " << norm_2(r_current_residual) << std::endl;
-			}
+
 
             std::array<bool, 3> fix_displacements = {false, false, false};
 
@@ -803,21 +800,10 @@ public:
     {
 		KRATOS_TRY
 
-		std::cout << "RHS_Contribution before = " << RHS_Contribution << std::endl;
-
-        pCurrentEntity->CalculateRightHandSide(RHS_Contribution, rCurrentProcessInfo); //PJW- here is the problem
-
-		std::cout << "RHS_Contribution after = " << RHS_Contribution << std::endl;
-        //Matrix dummy_lhs;
-        //(pCurrentEntity)->CalculateLocalSystem(dummy_lhs, RHS_Contribution, rCurrentProcessInfo);
-
-		//PJW
+        pCurrentEntity->CalculateRightHandSide(RHS_Contribution, rCurrentProcessInfo);
         pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, FORCE_RESIDUAL, rCurrentProcessInfo);
-
-		std::cout << "pos6" << RHS_Contribution << std::endl;
         pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, MOMENT_RESIDUAL, rCurrentProcessInfo);
 
-		std::cout << "pos7" << RHS_Contribution << std::endl;
 		KRATOS_CATCH("")
     }
 

@@ -519,6 +519,11 @@ protected:
      */
     bool mFinalizedStep;
 
+	/**
+	 * Bool for implicit or explicit time integration
+	 */
+	bool mIsImplicit = true;
+
 
     ///@}
     ///@name Protected Operators

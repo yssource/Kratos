@@ -90,9 +90,9 @@ class ParticleMechanicsAnalysis(AnalysisStage):
 
             # MAP GRID BACK TO PARTICLES, VIA ELEMENT VIA SCHEME
             # A DIFFERENCE HERE IS THAT FOR EXPLICIT WE NEED TO DETEMINE THE STRESSES FROM THE GRADIENT VELOCITY, INSTEAD OF THE DISPS
-            input('before FinalizeSolutionStep')
+            #input('before FinalizeSolutionStep')
             self.FinalizeSolutionStep()
-            input('after FinalizeSolutionStep')
+            #input('after FinalizeSolutionStep')
 
 
             self.OutputSolutionStep()

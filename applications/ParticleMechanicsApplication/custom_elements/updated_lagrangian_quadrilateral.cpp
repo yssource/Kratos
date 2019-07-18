@@ -319,8 +319,7 @@ void UpdatedLagrangianQuadrilateral::CalculateElementalSystem( LocalSystemCompon
 	Variables.StressMeasure = ConstitutiveLaw::StressMeasure_Cauchy;
 
 
-	bool isImplicit = false; //PJW CalculateElementalSystem
-	if (isImplicit)
+	if (mIsImplicit)
 	{
 		ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS, true);
 		ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN,false);
@@ -671,8 +670,7 @@ void UpdatedLagrangianQuadrilateral::CalculateAndAddInternalForces(VectorType& r
 	KRATOS_TRY
 
 	VectorType internal_forces = ZeroVector(rRightHandSideVector.size());
-	bool isImplicit = false;
-	if (isImplicit)
+	if (mIsImplicit)
 	{
 		internal_forces += rIntegrationWeight * prod(trans(rVariables.B), rVariables.StressVector);
 	}
@@ -1081,10 +1079,6 @@ void UpdatedLagrangianQuadrilateral::FinalizeNonLinearIteration( ProcessInfo& rC
 void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrentProcessInfo )
 {
     KRATOS_TRY
-
-	// TODO: add some test to see what time integration we have
-	bool isImplicit = false; // finalize solution step
-
     // Create and initialize element variables:
     GeneralVariables Variables;
     this->InitializeGeneralVariables(Variables,rCurrentProcessInfo);
@@ -1096,7 +1090,7 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
     Flags &ConstitutiveLawOptions=Values.GetOptions();
 	ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS);
 	
-	if (isImplicit)
+	if (mIsImplicit)
 	{
 		// use deformation gradient based strain
 		ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN, false); 

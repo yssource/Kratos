@@ -522,7 +522,7 @@ protected:
 	/**
 	 * Bool for implicit or explicit time integration
 	 */
-	bool mIsImplicit = true;
+	bool mIsImplicit = false;
 
 
     ///@}

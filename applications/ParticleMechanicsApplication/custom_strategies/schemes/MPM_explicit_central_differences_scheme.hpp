@@ -328,6 +328,7 @@ public:
                 if (fix_displacements[j]) {
                     r_current_acceleration[j] = 0.0;
                     r_middle_velocity[j] = 0.0;
+					
                 }
 
                 r_current_velocity[j] =  r_previous_middle_velocity[j] + (mTime.Previous - mTime.PreviousMiddle) * r_current_acceleration[j]; //+ actual_velocity;

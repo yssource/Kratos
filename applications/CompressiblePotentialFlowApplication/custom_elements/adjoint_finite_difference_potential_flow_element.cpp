@@ -110,15 +110,21 @@ namespace Kratos
             rOutput.resize(NumNodes, RHS.size(), false);
 
         for(unsigned int i_node = 0; i_node<NumNodes; i_node++){
-            double distance_value = r_geometry[i_node].GetSolutionStepValue(GEOMETRY_DISTANCE);
-            //perturbate distance
-            pPrimalElement->GetGeometry()[i_node].GetSolutionStepValue(GEOMETRY_DISTANCE) = distance_value+delta;
-            //compute perturbated RHS
-            pPrimalElement->CalculateRightHandSide(RHS_perturbed, process_info);
-            //recover distance value
-            pPrimalElement->GetGeometry()[i_node].GetSolutionStepValue(GEOMETRY_DISTANCE) = distance_value;
-            for (unsigned int i_dof =0;i_dof<RHS.size();i_dof++) {
-                rOutput(i_node,i_dof) = (RHS_perturbed(i_dof)-RHS(i_dof))/delta;
+            if (!r_geometry[i_node].GetValue(TRAILING_EDGE) && this->Is(ACTIVE)){
+                double distance_value = r_geometry[i_node].GetSolutionStepValue(GEOMETRY_DISTANCE);
+                //perturbate distance
+                pPrimalElement->GetGeometry()[i_node].GetSolutionStepValue(GEOMETRY_DISTANCE) = distance_value+delta;
+                //compute perturbated RHS
+                pPrimalElement->CalculateRightHandSide(RHS_perturbed, process_info);
+                //recover distance value
+                pPrimalElement->GetGeometry()[i_node].GetSolutionStepValue(GEOMETRY_DISTANCE) = distance_value;
+                for (unsigned int i_dof =0;i_dof<RHS.size();i_dof++) {
+                    rOutput(i_node,i_dof) = (RHS_perturbed(i_dof)-RHS(i_dof))/delta;
+                }
+            }
+            else {
+                for(unsigned int i_dof = 0; i_dof < RHS.size(); ++i_dof)
+                    rOutput(i_node, i_dof) = 0.0;
             }
         }
         KRATOS_CATCH("")

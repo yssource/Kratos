@@ -92,6 +92,7 @@ namespace Kratos
                 {
                     rResponseGradient[i] = derivative;
                     rResponseGradient[i+NumNodes] = -derivative;
+                    return;
                 }
             }
         }

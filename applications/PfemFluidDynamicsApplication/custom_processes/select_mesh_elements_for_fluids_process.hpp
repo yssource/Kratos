@@ -313,7 +313,7 @@ public:
 		if(numrigid==nds){
 		  Alpha*=0.95;
 		}
-
+		Alpha*=1.5;
 	      }
 	      if(firstMesh==true){
 		Alpha*=1.15;

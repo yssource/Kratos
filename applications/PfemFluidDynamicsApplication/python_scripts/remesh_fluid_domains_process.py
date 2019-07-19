@@ -36,10 +36,11 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
         self.settings = custom_settings
         self.settings.ValidateAndAssignDefaults(default_settings)
 
-        self.echo_level        = self.settings["echo_level"].GetInt()
-        self.dimension         = self.main_model_part.ProcessInfo[KratosMultiphysics.SPACE_DIMENSION]
-        self.meshing_frequency = self.settings["meshing_frequency"].GetDouble()
+        self.echo_level         = self.settings["echo_level"].GetInt()
+        self.dimension          = self.main_model_part.ProcessInfo[KratosMultiphysics.SPACE_DIMENSION]
+        self.meshing_frequency  = self.settings["meshing_frequency"].GetDouble()
         self.write_total_volume = self.settings["write_totalVolumeBeforeMeshing"].GetBool()
+        self.write_total_volume = False
 
         self.meshing_control_is_time = False
         meshing_control_type   = self.settings["meshing_control_type"].GetString()
@@ -208,19 +209,12 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
             #self.probe3.write(outstring)
 
             for domain in self.meshing_domains:
-                if(domain.Active()):
+                if(domain.Active() and self.write_total_volume):
                     domain.ComputeAverageMeshParameters()
                     meanVolumeBeforeMeshing=domain.GetMeanVolume()
                     totalVolumeBeforeMeshing=domain.GetTotalVolume()
                     outstring = str(currentTime) + " " +  str(totalVolumeBeforeMeshing) + " "
                     self.fileTotalVolume.write(outstring)
-                    #fileTotalVolume = open("totalVolumeBeforeMeshing.txt", 'a')
-                    #if(currentStep==2):
-                        #fileTotalVolume.seek(0)
-                        #fileTotalVolume.truncate()
-
-                    #fileTotalVolume.write(outstring)
-                    #fileTotalVolume.close
 
         volume_acceleration=self.main_model_part.ProcessInfo[KratosMultiphysics.GRAVITY]
         variable_utils = KratosMultiphysics.VariableUtils()
@@ -242,19 +236,17 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
 
         if(currentStep > 1 and self.fileTotalVolume is not None):
             for domain in self.meshing_domains:
-                if(domain.Active()):
+                if(domain.Active() and self.write_total_volume):
                     domain.ComputeAverageMeshParameters()
                     meanVolumeAfterMeshing=domain.GetMeanVolume()
                     totalVolumeAfterMeshing=domain.GetTotalVolume()
                     diffMeanVolume=meanVolumeAfterMeshing-meanVolumeBeforeMeshing
                     diffTotalVolume=totalVolumeAfterMeshing-totalVolumeBeforeMeshing
-                    #fileTotalVolume = open("totalVolumeBeforeMeshing.txt", 'a')
 
                     outstring =  str(totalVolumeAfterMeshing) + " " +  str(diffTotalVolume) + "\n"
-                    #fileTotalVolume.write(outstring)
-                    #fileTotalVolume.close
+
                     self.fileTotalVolume.write(outstring)
-        if self.fileTotalVolume is not None:
+        if (self.fileTotalVolume is not None and self.write_total_volume):
             self.fileTotalVolume.flush()
             #self.probe1.flush()
             #self.probe2.flush()
@@ -262,7 +254,7 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
 
 
     def ExecuteFinalize(self):
-        if self.fileTotalVolume is not None:
+        if (self.fileTotalVolume is not None and self.write_total_volume):
             self.fileTotalVolume.close()
             #self.probe1.close()
             #self.probe2.close()

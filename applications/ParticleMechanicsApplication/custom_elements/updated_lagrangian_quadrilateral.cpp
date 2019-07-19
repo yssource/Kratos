@@ -130,7 +130,11 @@ void UpdatedLagrangianQuadrilateral::Initialize()
 	Vector mp_vel = this->GetValue(MP_VELOCITY);
 	mp_vel[0] = 0.4;
 	this->SetValue(MP_VELOCITY, mp_vel);
+	Vector mp_middle_vel = this->GetValue(MP_MIDDLE_VELOCITY);
+	mp_middle_vel[0] = 0.4;
+	this->SetValue(MP_MIDDLE_VELOCITY, mp_middle_vel);
 	std::cout << "\n\n\n========= Initial velocity ============== \n" << this->GetValue(MP_VELOCITY) << std::endl;
+	std::cout << "\n\n\n========= Initial middle velocity ============== \n" << this->GetValue(MP_MIDDLE_VELOCITY) << std::endl;
 
     // Initialize parameters
     const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
@@ -486,7 +490,7 @@ void UpdatedLagrangianQuadrilateral::CalculateExplicitKinematics(GeneralVariable
 	Matrix velocityGradient = Matrix(dimension, dimension, 0.0);
 	for (unsigned int nodeIndex = 0; nodeIndex < number_of_nodes; nodeIndex++)
 	{
-		const array_1d<double, 3 > & nodal_velocity = rGeom[nodeIndex].FastGetSolutionStepValue(VELOCITY, 0);
+		const array_1d<double, 3 > & nodal_velocity = rGeom[nodeIndex].FastGetSolutionStepValue(MIDDLE_VELOCITY,0);
 		std::cout << "nodal_velocity" << nodal_velocity << std::endl;
 		for (unsigned int i = 0; i < dimension; i++)
 		{
@@ -1019,6 +1023,7 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     mFinalizedStep = false;
 
     const array_1d<double,3>& MP_Velocity = this->GetValue(MP_VELOCITY);
+	const array_1d<double, 3>& MP_Middle_Velocity = this->GetValue(MP_MIDDLE_VELOCITY);
     const array_1d<double,3>& MP_Acceleration = this->GetValue(MP_ACCELERATION);
 	//const Vector& MP_Stress = this->GetValue(MP_CAUCHY_STRESS_VECTOR); //PJW, retrieve stress vector, explicit only
     const double& MP_Mass = this->GetValue(MP_MASS);
@@ -1057,16 +1062,16 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
 			//nodal_force_internal_normal[j] = MP_Volume * MP_Stress[j] * Variables.DN_DX(i, j); //PJW, nodal internal forces
         }
 
-		std::cout << "initialize nodal_momentum = " << nodal_momentum << std::endl;
+		std::cout << "initialize MP_Velocity = " << MP_Velocity << std::endl;
+		std::cout << "initialize AUX_MP_Velocity = " << AUX_MP_Velocity << std::endl;
 
         rGeom[i].SetLock();
         rGeom[i].FastGetSolutionStepValue(NODAL_MOMENTUM, 0) += nodal_momentum;
         rGeom[i].FastGetSolutionStepValue(NODAL_INERTIA, 0)  += nodal_inertia;
-		//rGeom[i].FastGetSolutionStepValue(FORCE_RESIDUAL, 0) -= nodal_force_internal_normal; //PJW, minus sign, internal forces
-
         rGeom[i].FastGetSolutionStepValue(NODAL_MASS, 0) += Variables.N[i] * MP_Mass;
+		rGeom[i].FastGetSolutionStepValue(VELOCITY, 0) += Variables.N[i] * MP_Velocity;
+		rGeom[i].FastGetSolutionStepValue(MIDDLE_VELOCITY, 0) += Variables.N[i] * MP_Middle_Velocity;
         rGeom[i].UnSetLock();
-
     }
 }
 

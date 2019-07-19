@@ -415,6 +415,7 @@ public:
         array_1d<double,3> xg = ZeroVector(3);
         array_1d<double,3> MP_Displacement = ZeroVector(3);
         array_1d<double,3> MP_Velocity = ZeroVector(3);
+		array_1d<double, 3> MP_Middle_Velocity = ZeroVector(3);
         array_1d<double,3> MP_Acceleration = ZeroVector(3);
         array_1d<double,3> MP_Volume_Acceleration = ZeroVector(3);
 
@@ -575,6 +576,7 @@ public:
                         p_element->SetValue(MP_COORD, xg);
                         p_element->SetValue(MP_DISPLACEMENT, MP_Displacement);
                         p_element->SetValue(MP_VELOCITY, MP_Velocity);
+						p_element->SetValue(MP_MIDDLE_VELOCITY, MP_Middle_Velocity);
                         p_element->SetValue(MP_ACCELERATION, MP_Acceleration);
                         p_element->SetValue(MP_VOLUME_ACCELERATION, MP_Volume_Acceleration);
                         p_element->SetValue(MP_CAUCHY_STRESS_VECTOR, MP_Cauchy_Stress_Vector);

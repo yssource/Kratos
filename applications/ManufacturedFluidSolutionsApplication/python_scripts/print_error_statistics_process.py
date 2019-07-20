@@ -27,7 +27,9 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
                 "model_part_name"  : "model_part",
                 "file_name"        : "output_file",
                 "label"            : "description",
-                "variables_list"   : []
+                "variables_list"   : [],
+                "write_reynolds"   : true,
+                "write_strouhal"   : true
             }
             """
             )
@@ -55,6 +57,15 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
     def ExecuteFinalize(self):
         self._WriteAverageError()
 
+
+    def _FillAdditionalAttributes(self):
+        if self.settings["write_reynolds"].GetBool():
+            reynolds = self.manufactured_solution.Reynolds()
+            self.manufactured_solution.GetParameters().AddEmptyValue("reynolds").SetDouble(reynolds)
+        if self.settings["write_strouhal"].GetBool():
+            strouhal = self.manufactured_solution.Strouhal()
+            self.manufactured_solution.GetParameters().AddEmptyValue("strouhal").SetDouble(strouhal)
+        
 
     def _WriteAttributes(self, dset):
         manufactured_parameters = self.manufactured_solution.GetParameters()
@@ -91,6 +102,7 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
 
 
     def _GetManufacturedDataset(self):
+        self._FillAdditionalAttributes()
         for name, data in self.f.items():
             if self._CheckAttributes(data.attrs):
                 return data

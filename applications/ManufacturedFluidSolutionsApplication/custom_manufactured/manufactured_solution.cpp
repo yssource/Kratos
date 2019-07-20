@@ -63,7 +63,7 @@ array_1d<double, 3> ManufacturedSolution::ConvectiveTerm(array_1d<double, 3>& rC
 
 array_1d<double, 3> ManufacturedSolution::ViscousTerm(array_1d<double, 3>& rCoords, double& rTime)
 {
-    return mDynamicViscosity * VelocityLaplacian(rCoords, rTime);
+    return mKinematicViscosity * VelocityLaplacian(rCoords, rTime);
 }
 
 

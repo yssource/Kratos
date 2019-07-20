@@ -33,8 +33,8 @@ EcaFlow::EcaFlow(
 {
     // Getting the fluid properties
     mDensity = (*mpProperties)[DENSITY];
-    mDynamicViscosity = (*mpProperties)[DYNAMIC_VISCOSITY];
     mInvDensity = 1 / mDensity;
+    mKinematicViscosity = mInvDensity * (*mpProperties)[DYNAMIC_VISCOSITY];
 
     // Getting the manufactured settings
     Parameters default_parameters( R"(

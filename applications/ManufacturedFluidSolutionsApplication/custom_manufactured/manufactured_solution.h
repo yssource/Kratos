@@ -160,7 +160,7 @@ protected:
 
     double mDensity;
     double mInvDensity;
-    double mDynamicViscosity;
+    double mKinematicViscosity;
 
     ///@}
     ///@name Protected Operators

@@ -79,6 +79,7 @@ public:
     ///@name Operations
     ///@{
 
+    double Reynolds() override;
 
     ///@}
     ///@name Access

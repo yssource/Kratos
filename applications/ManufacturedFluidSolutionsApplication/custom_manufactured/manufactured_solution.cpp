@@ -113,6 +113,20 @@ array_1d<double, 3> ManufacturedSolution::PressureGradient(array_1d<double, 3>& 
 }
 
 
+double ManufacturedSolution::Reynolds()
+{
+    KRATOS_WARNING("ManufacturedSolution") << "Calling the base class. Please, implement the Reynolds definition in your derived manufactured solution" << Info() << std::endl;
+    return 0.0;
+}
+
+
+double ManufacturedSolution::Strouhal()
+{
+    KRATOS_WARNING("ManufacturedSolution") << "Calling the base class. Please, implement the Strouhal definition in your derived manufactred solution" << Info() << std::endl;
+    return 0.0;
+}
+
+
 Parameters& ManufacturedSolution::GetParameters()
 {
     return *mpParameters;

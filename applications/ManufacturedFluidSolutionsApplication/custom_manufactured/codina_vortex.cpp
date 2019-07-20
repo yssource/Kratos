@@ -55,6 +55,12 @@ CodinaVortex::CodinaVortex(
 }
 
 
+double CodinaVortex::Reynolds()
+{
+    return mVelocity * mLength / mKinematicViscosity;
+}
+
+
 bool CodinaVortex::IsInsideDomain(array_1d<double, 3>& rCoords)
 {
     bool is_inside = true;

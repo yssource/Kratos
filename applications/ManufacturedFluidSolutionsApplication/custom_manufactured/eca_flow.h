@@ -80,6 +80,9 @@ public:
     ///@name Operations
     ///@{
 
+    double Reynolds() override;
+
+    double Strouhal() override;
 
     ///@}
     ///@name Access

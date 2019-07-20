@@ -108,6 +108,12 @@ public:
 
     virtual array_1d<double, 3> VelocityLaplacian(array_1d<double, 3>& rCoords, double& rTime);
 
+    // CFD quantities
+
+    virtual double Reynolds();
+
+    virtual double Strouhal();
+
     ///@}
     ///@name Access
     ///@{
@@ -304,5 +310,3 @@ inline std::ostream& operator << (std::ostream& rOStream,
 }  // namespace Kratos.
 
 #endif // KRATOS_MANUFACTURED_SOLUTION_H_INCLUDED  defined
-
-

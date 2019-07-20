@@ -40,6 +40,8 @@ void  AddCustomManufacturedToPython(pybind11::module& m)
         .def("PressureGradient", &ManufacturedSolution::PressureGradient)
         .def("VelocityGradient", &ManufacturedSolution::VelocityGradient)
         .def("VelocityLaplacian", &ManufacturedSolution::VelocityLaplacian)
+        .def("Reynolds", &ManufacturedSolution::Reynolds)
+        .def("Strouhal", &ManufacturedSolution::Strouhal)
         .def("GetParameters", &ManufacturedSolution::GetParameters)
         .def("GetProperties", &ManufacturedSolution::GetProperties)
         ;

@@ -59,6 +59,19 @@ EcaFlow::EcaFlow(
 }
 
 
+double EcaFlow::Reynolds()
+{
+    return mVelocity * mLength / mKinematicViscosity;
+}
+
+
+double EcaFlow::Strouhal()
+{
+    double frequency = 0.5 * mOmega / M_PI;
+    return frequency * mLength / mVelocity;
+}
+
+
 bool EcaFlow::IsInsideDomain(array_1d<double, 3>& rCoords)
 {
     bool is_inside = true;

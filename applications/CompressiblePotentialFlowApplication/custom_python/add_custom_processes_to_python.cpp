@@ -23,6 +23,7 @@
 #include "custom_processes/metrics_potential_hessian_process.h"
 #include "custom_processes/compute_custom_nodal_gradient_process.h"
 #include "custom_processes/define_2d_wake_process.h"
+#include "custom_processes/apply_far_field_process.h"
 
 namespace Kratos {
 namespace Python {
@@ -61,6 +62,11 @@ void  AddCustomProcessesToPython(pybind11::module& m)
     py::class_<Define2DWakeProcess, Define2DWakeProcess::Pointer, Process >
         (m, "Define2DWakeProcess")
         .def(py::init<ModelPart&, const double>())
+        ;
+
+    py::class_<ApplyFarFieldProcess, ApplyFarFieldProcess::Pointer, Process >
+        (m, "ApplyFarFieldProcess")
+        .def(py::init<ModelPart&, const double, const bool>())
         ;
 }
 

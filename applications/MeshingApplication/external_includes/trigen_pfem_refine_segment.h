@@ -377,7 +377,7 @@ public:
             //from now on it is consecutive
             int pr_id = (nodes_begin + i)->Id();
 
-            (nodes_begin + i)->SetId(i+1);
+            // (nodes_begin + i)->SetId(i+1);
 //				(nodes_begin + i)->Id() = i+1;
 
             in_mid.pointlist[base] = (nodes_begin + i)->X();
@@ -387,7 +387,7 @@ public:
 
             for(Node<3>::DofsContainerType::iterator iii = node_dofs.begin();    iii != node_dofs.end(); iii++)
             {
-                iii->SetId(i+1);
+                // iii->SetId(i+1);
 //                                    iii->Id() = i+1;
             }
             //reordering segment list

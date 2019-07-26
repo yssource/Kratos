@@ -222,7 +222,7 @@ namespace Kratos {
 
         /** Destructor.
          */
-        ~ResidualBasedPredictorCorrectorVelocityBossakSchemeTurbulent() override {
+        virtual ~ResidualBasedPredictorCorrectorVelocityBossakSchemeTurbulent() override {
         }
 
 
@@ -417,14 +417,14 @@ namespace Kratos {
 
             //Initializing the non linear iteration for the current element
             (rCurrentElement) -> InitializeNonLinearIteration(CurrentProcessInfo);
-            //KRATOS_WATCH(LHS_Contribution);
+
             //basic operations for the element considered
             (rCurrentElement)->CalculateLocalSystem(LHS_Contribution, RHS_Contribution, CurrentProcessInfo);
-
             //std::cout << rCurrentElement->Id() << " RHS = " << RHS_Contribution << std::endl;
             (rCurrentElement)->CalculateMassMatrix(mMass[k], CurrentProcessInfo);
+            //KRATOS_WATCH(mMass[k])
             (rCurrentElement)->CalculateLocalVelocityContribution(mDamp[k], RHS_Contribution, CurrentProcessInfo);
-
+            //KRATOS_WATCH(mDamp[k])
             (rCurrentElement)->EquationIdVector(EquationId, CurrentProcessInfo);
 
             //adding the dynamic contributions (statics is already included)

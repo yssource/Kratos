@@ -60,6 +60,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 //strategies
 #include "../DEMApplication/custom_strategies/strategies/explicit_solver_strategy.h"
+#include "../FluidDynamicsApplication/custom_strategies/strategies/residualbased_predictorcorrector_velocity_bossak_scheme_turbulent.h"
+#include "custom_strategies/strategies/residualbased_predictorcorrector_velocity_bossak_scheme_turbulentDEMCoupled.h"
 #include "custom_strategies/strategies/adams_bashforth_strategy.h"
 #include "custom_strategies/strategies/residualbased_derivative_recovery_strategy.h"
 
@@ -128,8 +130,16 @@ namespace Kratos
             .def("GetResidualNorm", &ResidualBasedLinearStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType >::GetResidualNorm)
             .def("SetBuilderAndSolver", &ResidualBasedLinearStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType >::SetBuilderAndSolver)
             ;
-		}
 
+
+            py::class_< ResidualBasedPredictorCorrectorVelocityBossakSchemeTurbulentDEMCoupled<SparseSpaceType, LocalSpaceType>,
+            typename ResidualBasedPredictorCorrectorVelocityBossakSchemeTurbulentDEMCoupled<SparseSpaceType, LocalSpaceType>::Pointer,
+            BaseSchemeType>(m, "ResidualBasedPredictorCorrectorVelocityBossakSchemeTurbulentDEMCoupled")
+            .def(py::init<double, double, unsigned int, Process::Pointer>())
+            .def(py::init<double, double, unsigned int>())                        // constructor without a turbulence model
+            .def(py::init<double, unsigned int, const Kratos::Variable<int> &>()) // constructor without a turbulence model for periodic boundary conditions
+            ;
+            }
 	}  // namespace Python.
 
 } // Namespace Kratos

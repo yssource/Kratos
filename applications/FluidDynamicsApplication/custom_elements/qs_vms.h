@@ -275,7 +275,7 @@ protected:
         TElementData& rData,
         VectorType& rRHS) override;
 
-    void AddVelocitySystem(
+    virtual void AddVelocitySystem(
         TElementData& rData,
         MatrixType& rLocalLHS,
         VectorType& rLocalRHS) override;
@@ -293,7 +293,7 @@ protected:
 
     // Implementation details of QSVMS ////////////////////////////////////////
 
-    void AddMassStabilization(
+    virtual void AddMassStabilization(
         TElementData& rData,
         MatrixType& rMassMatrix);
 

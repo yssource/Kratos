@@ -468,6 +468,7 @@ void QSVMS<TElementData>::AddMassLHS(
         {
             unsigned int col = j*BlockSize;
             const double Mij = rData.Weight * density * rData.N[i] * rData.N[j];
+
             for (unsigned int d = 0; d < Dim; d++)
                 rMassMatrix(row+d,col+d) += Mij;
         }
@@ -586,8 +587,8 @@ void QSVMS<TElementData>::AddViscousTerm(
     // Multiply times integration point weight (I do this here to avoid a temporal in LHS += weight * Bt * C * B)
     strain_matrix *= rData.Weight;
 
-    noalias(rLHS) += prod(trans(strain_matrix),shear_stress_matrix);
-    noalias(rRHS) -= prod(trans(strain_matrix),rData.ShearStress);
+    noalias(rLHS) += prod(trans(strain_matrix), shear_stress_matrix);
+    noalias(rRHS) -= prod(trans(strain_matrix), rData.ShearStress);
 }
 
 
@@ -644,7 +645,7 @@ void QSVMS<TElementData>::CalculateTau(
 
     const double h = rData.ElementSize;
     const double density = this->GetAtCoordinate(rData.Density,rData.N);
-    const double viscosity = this->GetAtCoordinate(rData.EffectiveViscosity,rData.N);
+    const double viscosity = this->GetAtCoordinate(rData.EffectiveViscosity, rData.N);
 
     double velocity_norm = Velocity[0]*Velocity[0];
     for (unsigned int d = 1; d < Dim; d++)
@@ -652,6 +653,7 @@ void QSVMS<TElementData>::CalculateTau(
     velocity_norm = std::sqrt(velocity_norm);
 
     double inv_tau = c1 * viscosity / (h*h) + density * ( rData.DynamicTau/rData.DeltaTime + c2 * velocity_norm / h );
+
     TauOne = 1.0/inv_tau;
     TauTwo = viscosity + c2 * density * velocity_norm * h / c1;
 }

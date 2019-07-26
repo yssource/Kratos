@@ -237,9 +237,7 @@ class SwimmingDEMSolver(PythonSolver):
         else:
             Say("Skipping solving system for the fluid phase...\n")
 
-        self.derivative_recovery_counter.Activate(self.time > self.interaction_start_time and self.calculating_fluid_in_current_step)
-
-        if self.derivative_recovery_counter.Tick():
+        if self.derivative_recovery_counter.Tick(self.time > self.interaction_start_time and self.calculating_fluid_in_current_step):
             self.recovery.Recover()
 
         # Solving the disperse-phase component

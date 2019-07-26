@@ -23,6 +23,10 @@ class DEMCoupledFluidDynamicsAnalysis(FluidDynamicsAnalysis):
     def AddFluidVariablesForSwimmingDEM(self):
         self.vars_man.AddNodalVariables(self.fluid_model_part, self.vars_man.fluid_vars)
 
+    def _CreateSolver(self):
+        import python_solvers_wrapper_fluidDEM
+        return python_solvers_wrapper_fluidDEM.CreateSolver(self.model, self.project_parameters)
+
 if __name__ == '__main__':
     from sys import argv
 

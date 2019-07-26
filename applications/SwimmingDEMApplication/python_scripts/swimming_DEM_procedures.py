@@ -341,7 +341,7 @@ class Counter:
         self.is_dead = is_dead
         self.accumulated_ticks = 0
 
-    def Tick(self):
+    def Tick(self, condition = True):
 
         if self.is_dead:
             return False
@@ -353,7 +353,7 @@ class Counter:
         if self.step_in_cycle == self.steps_in_cycle:
             self.step += 1
             self.step_in_cycle = 1
-            return True
+            return True and condition
 
         else:
             self.step += 1

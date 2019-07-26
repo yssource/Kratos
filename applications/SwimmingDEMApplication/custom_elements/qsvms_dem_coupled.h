@@ -13,11 +13,17 @@
 #ifndef KRATOS_QSVMS_DEM_COUPLED_H
 #define KRATOS_QSVMS_DEM_COUPLED_H
 
-//#include "includes/checks.h"
+// System includes
+#include <string>
+#include <iostream>
+
+#include "includes/checks.h"
+#include "containers/array_1d.h"
 #include "includes/define.h"
 #include "includes/element.h"
 #include "includes/serializer.h"
 #include "geometries/geometry.h"
+#include "utilities/geometry_utilities.h"
 
 #include "includes/cfd_variables.h"
 #include "../../applications/FluidDynamicsApplication/custom_elements/qs_vms.h"
@@ -195,124 +201,74 @@ public:
     ///@name Access
     ///@{
 
+    ///@}
+    ///@name Inquiry
+    ///@{
+
+    void Calculate(
+        const Variable<double>& rVariable,
+        double& rOutput,
+        const ProcessInfo& rCurrentProcessInfo) override;
+
+    void Calculate(
+        const Variable<Vector >& rVariable,
+        Vector& Output,
+        const ProcessInfo& rCurrentProcessInfo) override;
+
+    void Calculate(
+        const Variable<Matrix >& rVariable,
+        Matrix& Output,
+        const ProcessInfo& rCurrentProcessInfo) override;
+
+
     void EquationIdVector(EquationIdVectorType& rResult,
                           ProcessInfo& rCurrentProcessInfo) override;
 
     void GetDofList(DofsVectorType& rElementalDofList,
                     ProcessInfo& rCurrentProcessInfo) override;
 
-    ///@}
-    ///@name Inquiry
-    ///@{
+    double FilterWidth();
 
-    void GetValueOnIntegrationPoints(Variable<array_1d<double, 3>> const& rVariable,
-                                     std::vector<array_1d<double, 3>>& rOutput,
-                                     ProcessInfo const& rCurrentProcessInfo) override;
-
-    void GetValueOnIntegrationPoints(const Variable<double>& rVariable,
-                                     std::vector<double>& rValues,
-                                     const ProcessInfo& rCurrentProcessInfo) override;
-
-    void CalculateWeights(ShapeFunctionDerivativesArrayType& rDN_DX,
-                          Matrix& rNContainer,
-                          Vector& rGaussWeights);
-
-    double ElementSize(const double Variable);
-
-    void CalculateB(BoundedMatrix<double, (Dim * NumNodes) / 2, Dim * NumNodes >& rB,
-                    const BoundedMatrix<double, NumNodes, Dim >& rShapeDeriv);
-
-    void CalculateC(BoundedMatrix< double, (Dim * NumNodes)/2, (Dim*NumNodes)/2> & rC,
-                    const double Viscosity);
-
-    void GetModifiedConvectionOperator(array_1d< double,  NumNodes >& rResult,
-                                       const array_1d< double, 3 > & rVelocity,
-                                       const double & rVelocityDiv,
-                                       const array_1d< double,  NumNodes >& rShapeFunc,
-                                       const BoundedMatrix<double,  NumNodes,  Dim >& rShapeDeriv);
-
-    void CalculateLaplacianLumpedMassMatrix(MatrixType& rLHSMatrix,
-                                            const double Mass);
-
-    double ConsistentMassCoef(const double Variable);
+    double FilterWidth(const BoundedMatrix<double, NumNodes, Dim >& DN_DX);
 
     void CalculateLocalSystem(MatrixType& rLeftHandSideMatrix,
                               VectorType& rRightHandSideVector,
                               ProcessInfo& rCurrentProcessInfo) override;
 
-    double SymmetricGradientNorm(const BoundedMatrix<double, NumNodes, Dim >& rShapeDeriv);
-
-    double FilterWidth();
-
-    double FilterWidth(const BoundedMatrix<double, NumNodes, Dim >& DN_DX);
-
     void CalculateLeftHandSide(MatrixType& rLeftHandSideMatrix,
                                ProcessInfo& rCurrentProcessInfo) override;
-
-    void CalculateLumpedMassMatrix(MatrixType& rLHSMatrix, const double Mass);
-
-    void GetAdvectiveVelDivergence(double & rAdvVelDiv, const BoundedMatrix<double, NumNodes, Dim >& rShapeDeriv);
-
-    void GetAdvectiveVelDivergence(double & rAdvVelDiv, const BoundedMatrix<double, NumNodes, Dim >& rShapeDeriv,
-                                   const std::size_t Step);
-
-    void AddIntegrationPointVelocityContribution(MatrixType& rDampingMatrix,
-                                                 VectorType& rDampRHS,
-                                                 const double Density,
-                                                 const double Viscosity,
-                                                 const array_1d< double, 3 > & rAdvVel,
-                                                 const double TauOne,
-                                                 const double TauTwo,
-                                                 const array_1d< double, NumNodes >& rShapeFunc,
-                                                 const BoundedMatrix<double, NumNodes, Dim >& rShapeDeriv,
-                                                 const double Weight);
 
     void CalculateRightHandSide(VectorType& rRightHandSideVector,
                                 ProcessInfo& rCurrentProcessInfo) override;
 
-    void CalculateMassMatrix(MatrixType& rMassMatrix,
-                            ProcessInfo& rCurrentProcessInfo) override;
-
-    void AddMassStabTerms(MatrixType& rLHSMatrix, const double Density, const array_1d<double, 3 > & rAdvVel,
-                          const double TauOne,
-                          const array_1d<double, NumNodes>& rShapeFunc,
-                          const BoundedMatrix<double, NumNodes, Dim>& rShapeDeriv,
-                          const double Weight);
+    void AddMassStabilization(TElementData& rData,
+                              MatrixType &rMassMatrix) override;
 
     void CalculateLaplacianMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo);
 
-    void CalculateLocalVelocityContribution(MatrixType& rDampingMatrix,
-                                            VectorType& rRightHandSideVector,
-                                            ProcessInfo& rCurrentProcessInfo) override;
+    void GetAdvectiveVelDivergence(double & rAdvVelDiv, const BoundedMatrix<double, NumNodes, Dim >& rShapeDeriv);
 
-    void FinalizeSolutionStep(ProcessInfo &rCurrentProcessInfo) override;
-
-    void Calculate(const Variable<array_1d<double, 3 > >& rVariable,
-                   array_1d<double, 3 > & rOutput,
-                   const ProcessInfo& rCurrentProcessInfo) override;
-
-    void CalculateStaticTau(double& TauOne,
-                            const array_1d< double, 3 > & rAdvVel,
-                            const double Area,
-                            const double Density,
-                            const double KinViscosity);
-
-    void AddMomentumRHS(VectorType& F,
-                        const double Density,
-                        const array_1d<double, NumNodes>& rShapeFunc,
-                        const double Weight);
+    void CalculateLaplacianLumpedMassMatrix(MatrixType& rLHSMatrix, const double Mass);
 
     void AddRHSLaplacian(VectorType& F,
                         const BoundedMatrix<double, NumNodes, Dim>& rShapeDeriv,
                         const double Weight);
 
+    void AddMassRHS(VectorType& F,
+                    const double Density,
+                    const array_1d<double, NumNodes>& rShapeFunc,
+                    const double Weight,
+                    const std::vector<double>& TimeSchemeWeights,
+                    const double& DeltaTime,
+                    TElementData& rData);
+
+    void AddMomentumRHS(VectorType& F, const double Weight, TElementData& rData);
+
     void AddProjectionToRHS(VectorType& RHS,
                             const array_1d<double, 3 > & rAdvVel,
-                            const double Density,
+                            TElementData& rData,
                             const double TauOne,
                             const double TauTwo,
-                            const array_1d<double, NumNodes>& rShapeFunc,
-                            const BoundedMatrix<double, NumNodes, Dim>& rShapeDeriv,
                             const double Weight,
                             const double DeltaTime = 1.0);
 
@@ -322,73 +278,19 @@ public:
                                        const double& DeltaTime,
                                        const std::vector<double>& rSchemeWeigths);
 
-    void AddMassRHS(VectorType& F,
-                    const double Density,
-                    const array_1d<double, NumNodes>& rShapeFunc,
-                    const double Weight,
-                    const std::vector<double>& TimeSchemeWeights,
-                    const double& DeltaTime);
+    void GetModifiedConvectionOperator(array_1d< double,  NumNodes >& rResult,
+                                       array_1d< double, 3 > & rVelocity,
+                                       const double & rVelocityDiv,
+                                       const typename TElementData::ShapeFunctionsType& rShapeFunc,
+                                       const typename TElementData::ShapeDerivativesType& rShapeDeriv);
 
-    void Calculate(const Variable<double>& rVariable, double& rOutput,
-                   const ProcessInfo& rCurrentProcessInfo) override;
+    void GetAdvectiveVel(array_1d< double, 3 > & rAdvVel,const typename TElementData::ShapeFunctionsType& rShapeFunc);
+
+    void MassProjTerm(const TElementData& rData, double &rMassRHS) const override;
 
     void EvaluateGradientOfScalarInPoint(array_1d< double, 3 >& rResult,
-                                         const Variable< double >& rVariable,
-                                         const BoundedMatrix<double, NumNodes, Dim >& rShapeDeriv);
-
-    void AddBTransCB(MatrixType& rDampingMatrix,
-                     const BoundedMatrix<double, NumNodes, Dim >& rShapeDeriv,
-                     const double Weight);
-
-    void EvaluateInPoint(double& rResult, const Variable< double >& rVariable,
-                         const array_1d< double, NumNodes >& rShapeFunc);
-
-    void EvaluateInPoint(array_1d< double, 3 > & rResult, const Variable< array_1d< double, 3 > >& rVariable,
-                         const array_1d< double, NumNodes >& rShapeFunc);
-
-    void ModulatedGradientDiffusion(MatrixType& rDampingMatrix,
-                                    const BoundedMatrix<double, NumNodes, Dim >& rDN_DX,
-                                    const double Weight);
-
-    void GetEffectiveViscosity(const double Density,
-                          const double MolecularViscosity,
-                          const array_1d<double, NumNodes>& rShapeFunc,
-                          const BoundedMatrix<double, NumNodes, Dim >& rShapeDeriv,
-                          double& TotalViscosity,
-                          const ProcessInfo& rCurrentProcessInfo);
-
-    void GetAdvectiveVel(array_1d< double, 3 > & rAdvVel,
-                        const array_1d< double, NumNodes >& rShapeFunc);
-
-    void GetAdvectiveVel(array_1d< double, 3 > & rAdvVel,
-                        const array_1d< double, NumNodes >& rShapeFunc,
-                        const std::size_t Step);
-
-    void GetConvectionOperator(array_1d< double, NumNodes >& rResult,
-                               const array_1d< double, 3 > & rVelocity,
-                               const BoundedMatrix<double, NumNodes, Dim >& rShapeDeriv);
-
-    void ASGSMomResidual(const array_1d< double, 3 > & rAdvVel,
-                         const double Density,
-                         array_1d< double, 3 > & rElementalMomRes,
-                         const array_1d< double, NumNodes >& rShapeFunc,
-                         const BoundedMatrix<double, NumNodes, Dim >& rShapeDeriv,
-                         const double Weight);
-
-    void OSSMomResidual(const array_1d< double, 3 > & rAdvVel,
-                        const double Density,
-                        array_1d< double, 3 > & rElementalMomRes,
-                        const array_1d< double, NumNodes >& rShapeFunc,
-                        const BoundedMatrix<double, NumNodes, Dim >& rShapeDeriv,
-                        const double Weight);
-
-    void AddProjectionResidualContribution(const array_1d< double, 3 > & rAdvVel,
-                                           const double Density,
-                                           array_1d< double, 3 > & rElementalMomRes,
-                                           double& rElementalMassRes,
-                                           const array_1d< double, NumNodes >& rShapeFunc,
-                                           const BoundedMatrix<double, NumNodes, Dim >& rShapeDeriv,
-                                           const double Weight);
+                                         const double& variable,
+                                         const typename TElementData::ShapeDerivativesType& rShapeDeriv) const;
 
     int Check(const ProcessInfo &rCurrentProcessInfo) override;
 
@@ -430,18 +332,9 @@ protected:
     ///@}
     ///@name Protected Operations
     ///@{
+    void AddVelocitySystem(TElementData& rData, MatrixType &rLocalLHS, VectorType &rLocalRHS) override;
 
     // Protected interface of FluidElement ////////////////////////////////////
-
-    void AddViscousTerm(MatrixType& rDampMatrix,
-                        const BoundedMatrix<double,NumNodes,Dim>& rShapeDeriv,
-                        const double Weight);
-
-    void CalculateTau(double& TauOne, double& TauTwo, const array_1d< double, 3 > & rAdvVel,
-                      const double Area,
-                      const double Density,
-                      const double KinViscosity,
-                      const ProcessInfo& rCurrentProcessInfo);
 
     /**
      * @brief EffectiveViscosity Evaluate the total kinematic viscosity at a given integration point.
@@ -450,6 +343,7 @@ protected:
      * @param ElemSize Characteristic length representing the element (for Smagorinsky, this is the filter width)
      * @return Kinematic viscosity at the integration point.
      */
+    KRATOS_DEPRECATED double EffectiveViscosity(TElementData& rData, double ElementSize) override;
 
     ///@}
     ///@name Protected  Access

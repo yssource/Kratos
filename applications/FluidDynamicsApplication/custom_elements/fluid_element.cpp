@@ -234,7 +234,6 @@ void FluidElement<TElementData>::CalculateLocalVelocityContribution(
             this->UpdateIntegrationPointData(
                 data, g, gauss_weights[g],
                 row(shape_functions, g),r_dndx);
-
             this->AddVelocitySystem(data, rDampMatrix, rRightHandSideVector);
         }
     }

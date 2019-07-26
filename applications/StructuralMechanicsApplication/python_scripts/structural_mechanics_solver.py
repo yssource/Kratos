@@ -9,6 +9,11 @@ import KratosMultiphysics.StructuralMechanicsApplication as StructuralMechanicsA
 # Importing the base class
 from KratosMultiphysics.python_solver import PythonSolver
 
+# Other imports
+from KratosMultiphysics.StructuralMechanicsApplication import check_and_prepare_model_process_structural
+from KratosMultiphysics.StructuralMechanicsApplication import convergence_criteria_factory
+from KratosMultiphysics import python_linear_solver_factory as linear_solver_factory
+
 class MechanicalSolver(PythonSolver):
     """The base class for structural mechanics solvers.
 
@@ -64,7 +69,12 @@ class MechanicalSolver(PythonSolver):
         if model_part_name == "":
             raise Exception('Please specify a model_part name!')
 
-        # This will be changed once the Model is fully supported!
+        # Only needed during the transition of removing the ComputingModelPart
+        if self.settings["problem_domain_sub_model_part_list"].size() == 0:
+            self.settings["problem_domain_sub_model_part_list"].Append(model_part_name)
+        if self.settings["processes_sub_model_part_list"].size() == 0:
+            self.settings["processes_sub_model_part_list"].Append(model_part_name)
+
         if self.model.HasModelPart(model_part_name):
             self.main_model_part = self.model[model_part_name]
         else:
@@ -114,8 +124,8 @@ class MechanicalSolver(PythonSolver):
             "residual_absolute_tolerance": 1.0e-9,
             "max_iteration": 10,
             "linear_solver_settings": { },
-            "problem_domain_sub_model_part_list": ["solid"],
-            "processes_sub_model_part_list": [""],
+            "problem_domain_sub_model_part_list": [],
+            "processes_sub_model_part_list": [],
             "auxiliary_variables_list" : [],
             "auxiliary_dofs_list" : [],
             "auxiliary_reaction_list" : []
@@ -329,7 +339,6 @@ class MechanicalSolver(PythonSolver):
         params.AddValue("problem_domain_sub_model_part_list",self.settings["problem_domain_sub_model_part_list"])
         params.AddValue("processes_sub_model_part_list",self.settings["processes_sub_model_part_list"])
         # Assign mesh entities from domain and process sub model parts to the computing model part.
-        import check_and_prepare_model_process_structural
         check_and_prepare_model_process_structural.CheckAndPrepareModelProcess(self.model, params).Execute()
 
         # Import constitutive laws.
@@ -400,14 +409,12 @@ class MechanicalSolver(PythonSolver):
         return conv_params
 
     def _create_convergence_criterion(self):
-        import convergence_criteria_factory
         convergence_criterion = convergence_criteria_factory.convergence_criterion(self._get_convergence_criterion_settings())
         return convergence_criterion.mechanical_convergence_criterion
 
     def _create_linear_solver(self):
         linear_solver_configuration = self.settings["linear_solver_settings"]
         if linear_solver_configuration.Has("solver_type"): # user specified a linear solver
-            from KratosMultiphysics import python_linear_solver_factory as linear_solver_factory
             return linear_solver_factory.ConstructSolver(linear_solver_configuration)
         else:
             # using a default linear solver (selecting the fastest one available)

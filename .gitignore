@@ -70,3 +70,7 @@ applications/python_scripts/beam_profiles\.csv
 applications/ShapeOptimizationApplication/test_examples/09_circular_plate_improved/
 
 applications/ShapeOptimizationApplication/test_examples/10_circular_plate_scaling_test/
+
+applications/ShapeOptimizationApplication/test_examples/09_circular_plate_improved_stripes/
+
+applications/ShapeOptimizationApplication/test_examples/11_collaps_test/

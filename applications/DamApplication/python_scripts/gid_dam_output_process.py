@@ -201,45 +201,45 @@ class GiDDamOutputProcess(Process):
                 self.__write_nodal_flags(label)
                 self.__finalize_results()
 
-            result_file_configuration = self.param["result_file_configuration"]
-            output_control_type = result_file_configuration["output_control_type"].GetString()
-            if output_control_type == "time_s":
-                self.multifiles = (
-                    MultifileList(self.base_file_name, 1),
-                    MultifileList(self.base_file_name, 60),
-                    MultifileList(self.base_file_name, 3600),
-                    MultifileList(self.base_file_name, 43200),
-                    MultifileList(self.base_file_name, 86400),
-                )
-            elif output_control_type == "time_h":
-                self.multifiles = (
-                    MultifileList(self.base_file_name, 1),
-                    MultifileList(self.base_file_name, 12),
-                    MultifileList(self.base_file_name, 24),
-                    MultifileList(self.base_file_name, 168),
-                )
-            elif output_control_type == "time_d":
-                self.multifiles = (
-                    MultifileList(self.base_file_name, 1),
-                    MultifileList(self.base_file_name, 7),
-                )
-            elif output_control_type == "time_w":
-                self.multifiles = (
-                    MultifileList(self.base_file_name, 1),
-                )
-            elif output_control_type == "step":
-                self.multifiles = (
-                    MultifileList(self.base_file_name, 1),
-                )
-            else:
-                msg = "{0} Error: Unknown value \"{1}\" read for parameter \"{2}\"".format(self.__class__.__name__,output_control_type,"output_control_type")
-                raise Exception(msg)
+            #result_file_configuration = self.param["result_file_configuration"]
+            #output_control_type = result_file_configuration["output_control_type"].GetString()
+            #if output_control_type == "time_s":
+                #self.multifiles = (
+                    #MultifileList(self.base_file_name, 1),
+                    #MultifileList(self.base_file_name, 60),
+                    #MultifileList(self.base_file_name, 3600),
+                    #MultifileList(self.base_file_name, 43200),
+                    #MultifileList(self.base_file_name, 86400),
+                #)
+            #elif output_control_type == "time_h":
+                #self.multifiles = (
+                    #MultifileList(self.base_file_name, 1),
+                    #MultifileList(self.base_file_name, 12),
+                    #MultifileList(self.base_file_name, 24),
+                    #MultifileList(self.base_file_name, 168),
+                #)
+            #elif output_control_type == "time_d":
+                #self.multifiles = (
+                    #MultifileList(self.base_file_name, 1),
+                    #MultifileList(self.base_file_name, 7),
+                #)
+            #elif output_control_type == "time_w":
+                #self.multifiles = (
+                    #MultifileList(self.base_file_name, 1),
+                #)
+            #elif output_control_type == "step":
+                #self.multifiles = (
+                    #MultifileList(self.base_file_name, 1),
+                #)
+            #else:
+                #msg = "{0} Error: Unknown value \"{1}\" read for parameter \"{2}\"".format(self.__class__.__name__,output_control_type,"output_control_type")
+                #raise Exception(msg)
 
-            self.multifilelists = []
-            self.__set_multifile_lists(self.multifiles)
+            #self.multifilelists = []
+            #self.__set_multifile_lists(self.multifiles)
 
-            if self.start_output_results == 0:
-                self.__write_inital_step_in_multifile_lists(label)
+            #if self.start_output_results == 0:
+                #self.__write_inital_step_in_multifile_lists(label)
 
         if self.point_output_process is not None:
             self.point_output_process.ExecuteBeforeSolutionLoop()
@@ -308,7 +308,7 @@ class GiDDamOutputProcess(Process):
 
         if self.multifile_flag == MultiFileFlag.MultipleFiles:
             self.__finalize_results()
-            self.__write_multifile_lists(label)
+            #self.__write_multifile_lists(label)
 
         # Schedule next output
         if self.output_frequency > 0.0: # Note: if == 0, we'll just always print
@@ -324,8 +324,8 @@ class GiDDamOutputProcess(Process):
         if self.multifile_flag == MultiFileFlag.SingleFile:
             self.__finalize_results()
 
-        if self.multifile_flag == MultiFileFlag.MultipleFiles:
-            self.__close_multifiles()
+        #if self.multifile_flag == MultiFileFlag.MultipleFiles:
+            #self.__close_multifiles()
 
         if self.point_output_process is not None:
             self.point_output_process.ExecuteFinalize()
@@ -628,41 +628,41 @@ class GiDDamOutputProcess(Process):
             mfilelist.file.write("Multiple\n")
             mfilelist.index = 1
 
-    def __write_inital_step_in_multifile_lists(self, label):
-        for mfilelist in self.multifilelists:
+    #def __write_inital_step_in_multifile_lists(self, label):
+        #for mfilelist in self.multifilelists:
 
-            if (self.post_mode == GiDPostMode.GiD_PostBinary):
-                text_to_print = self.__get_multifile_list_name(mfilelist.name)+"_"+"%.12g"%label+".post.bin\n"
-                mfilelist.file.write(text_to_print)
-            else:
-                text_to_print1 = self.__get_multifile_list_name(mfilelist.name)+"_"+"%.12g"%label+".post.msh\n"
-                text_to_print2 = self.__get_multifile_list_name(mfilelist.name)+"_"+"%.12g"%label+".post.res\n"
-                mfilelist.file.write(text_to_print1)
-                mfilelist.file.write(text_to_print2)
-            self.Flush(mfilelist.file)
+            #if (self.post_mode == GiDPostMode.GiD_PostBinary):
+                #text_to_print = self.__get_multifile_list_name(mfilelist.name)+"_"+"%.12g"%label+".post.bin\n"
+                #mfilelist.file.write(text_to_print)
+            #else:
+                #text_to_print1 = self.__get_multifile_list_name(mfilelist.name)+"_"+"%.12g"%label+".post.msh\n"
+                #text_to_print2 = self.__get_multifile_list_name(mfilelist.name)+"_"+"%.12g"%label+".post.res\n"
+                #mfilelist.file.write(text_to_print1)
+                #mfilelist.file.write(text_to_print2)
+            #self.Flush(mfilelist.file)
 
-    def __write_multifile_lists(self, label):
+    #def __write_multifile_lists(self, label):
 
-        for mfilelist in self.multifilelists:
-            if (label % mfilelist.step) == 0:
+        #for mfilelist in self.multifilelists:
+            #if (label % mfilelist.step) == 0:
 
-                if (self.post_mode == GiDPostMode.GiD_PostBinary):
-                    text_to_print = self.__get_multifile_list_name(mfilelist.name)+"_"+"%.12g"%label+".post.bin\n"
-                    mfilelist.file.write(text_to_print)
-                else:
-                    text_to_print1 = self.__get_multifile_list_name(mfilelist.name)+"_"+"%.12g"%label+".post.msh\n"
-                    text_to_print2 = self.__get_multifile_list_name(mfilelist.name)+"_"+"%.12g"%label+".post.res\n"
-                    mfilelist.file.write(text_to_print1)
-                    mfilelist.file.write(text_to_print2)
-                self.Flush(mfilelist.file)
+                #if (self.post_mode == GiDPostMode.GiD_PostBinary):
+                    #text_to_print = self.__get_multifile_list_name(mfilelist.name)+"_"+"%.12g"%label+".post.bin\n"
+                    #mfilelist.file.write(text_to_print)
+                #else:
+                    #text_to_print1 = self.__get_multifile_list_name(mfilelist.name)+"_"+"%.12g"%label+".post.msh\n"
+                    #text_to_print2 = self.__get_multifile_list_name(mfilelist.name)+"_"+"%.12g"%label+".post.res\n"
+                    #mfilelist.file.write(text_to_print1)
+                    #mfilelist.file.write(text_to_print2)
+                #self.Flush(mfilelist.file)
 
     @classmethod
     def __get_multifile_list_name(cls, name):
         return name
 
-    def __close_multifiles(self):
-        for mfilelist in self.multifilelists:
-            mfilelist.file.close()
+    #def __close_multifiles(self):
+        #for mfilelist in self.multifilelists:
+            #mfilelist.file.close()
 
     # NOTE (PR): 'Codacy' suggest to change the following method, from a standard method to a 'classmethod' or 'staticmethod' as it does not refer to any of the class attributes
     @classmethod
@@ -733,5 +733,5 @@ class MultifileList(object):
         self.index = 0
         self.step = step
         self.name = name
-        absolute_path_to_file = os.path.join("_list_" + self.name + "_" + str(step) + ".post.lst")
-        self.file = open(absolute_path_to_file,"w")
+        #absolute_path_to_file = os.path.join("_list_" + self.name + "_" + str(step) + ".post.lst")
+        #self.file = open(absolute_path_to_file,"w")

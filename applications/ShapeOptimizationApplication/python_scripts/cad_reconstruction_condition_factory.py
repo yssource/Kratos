@@ -237,6 +237,11 @@ class ConditionFactory:
             if len(list_of_exclusive_faces) > 0 and face_i.Key() not in list_of_exclusive_faces:
                 continue
 
+            # Skipp embedded faces if not explicitly specified
+            if len(list_of_exclusive_faces) == 0 and face_i.Attributes().HasTag('Embedded'):
+                print(f'Skipping embedded_face: {face_i.Key()}')
+                continue
+
             print("> Processing face ",face_i.Key())
 
             surface_geometry = face_i.Data().Geometry()

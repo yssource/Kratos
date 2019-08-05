@@ -45,9 +45,9 @@ MPMParticlePenaltyCouplingInterfaceCondition::MPMParticlePenaltyCouplingInterfac
 //********************************* CREATE *******************************************
 //************************************************************************************
 
-Condition::Pointer MPMParticlePenaltyCouplingInterfaceCondition::Create(IndexType NewId,GeometryType::Pointer pGeom,PropertiesType::Pointer pProperties) const
+Condition::Pointer MPMParticlePenaltyCouplingInterfaceCondition::Create(IndexType NewId,GeometryType::Pointer pGeometry,PropertiesType::Pointer pProperties) const
 {
-    return Kratos::make_intrusive<MPMParticlePenaltyCouplingInterfaceCondition>(NewId, pGeom, pProperties);
+    return Kratos::make_intrusive<MPMParticlePenaltyCouplingInterfaceCondition>(NewId, pGeometry, pProperties);
 }
 
 //************************************************************************************
@@ -202,7 +202,7 @@ void MPMParticlePenaltyCouplingInterfaceCondition::CalculateInterfaceContactForc
         const double nodal_area  = r_geometry[i].FastGetSolutionStepValue(NODAL_AREA, 0);
         const Vector nodal_force = r_geometry[i].FastGetSolutionStepValue(REACTION);
 
-        if (nodal_mass > std::numeric_limits<double>::epsilon())
+        if (nodal_mass > std::numeric_limits<double>::epsilon() && nodal_area > std::numeric_limits<double>::epsilon())
         {
             mpc_force += Variables.N[i] * nodal_force * r_mpc_area / nodal_area;
         }

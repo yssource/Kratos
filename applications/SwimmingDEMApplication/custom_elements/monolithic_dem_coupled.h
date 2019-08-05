@@ -252,8 +252,15 @@ public:
                             PropertiesType::Pointer pProperties) const override
     {
 
-        return Element::Pointer(new MonolithicDEMCoupled(NewId, GetGeometry().Create(ThisNodes), pProperties));
+        return Kratos::make_intrusive< MonolithicDEMCoupled<TDim, TNumNodes> >(NewId, GetGeometry().Create(ThisNodes), pProperties);
 
+    }
+
+    Element::Pointer Create(IndexType NewId,
+                           GeometryType::Pointer pGeom,
+                           PropertiesType::Pointer pProperties) const override
+    {
+        return Kratos::make_intrusive< MonolithicDEMCoupled<TDim, TNumNodes> >(NewId, pGeom, pProperties);
     }
 
     /// Provides local contributions from body forces and OSS projection terms
@@ -502,7 +509,6 @@ public:
             const ShapeFunctionsType& Ng = row(NContainer, g);
             this->AddConsistentMassMatrixContribution(rMassMatrix, Ng, Density, GaussWeight);
           }
-*/
 //Z
         /* For ASGS: add dynamic stabilization terms.
          These terms are not used in OSS, as they belong to the finite element
@@ -1056,7 +1062,7 @@ public:
             this->EvaluateInPoint(KinViscosity, VISCOSITY, N);
 
             double Viscosity;
-            this->GetEffectiveViscosity(Density,KinViscosity, N, DN_DX, Viscosity, rCurrentProcessInfo);
+            this->GetEffectiveViscosity(Density, KinViscosity, N, DN_DX, Viscosity, rCurrentProcessInfo);
 
             this->CalculateTau(TauOne, TauTwo, AdvVel, Area, Density, Viscosity, rCurrentProcessInfo);
 
@@ -1322,7 +1328,6 @@ protected:
         //TauOne = 1.0 / (Density * ( rCurrentProcessInfo[DYNAMIC_TAU] / rCurrentProcessInfo[DELTA_TIME] + 12.0 * KinViscosity / (Element_Size * Element_Size) + 2.0 * AdvVelNorm / Element_Size) );
         //TauTwo = Density * (KinViscosity + Element_Size * AdvVelNorm / 6.0);
 
-
     }
 
     /// Calculate momentum stabilization parameter (without time term).
@@ -1576,6 +1581,7 @@ protected:
         double FluidFraction;
         this->EvaluateInPoint(FluidFraction, FLUID_FRACTION, rShapeFunc);
 //Z
+        if(this->Id() == 35) KRATOS_WATCH(AGradN * Density)
 
         // Note: Dof order is (vx,vy,[vz,]p) for each node
         for (unsigned int i = 0; i < TNumNodes; ++i)
@@ -1587,7 +1593,6 @@ protected:
 //G
                 K = Coef * Density * AGradN[i] * Density * rShapeFunc[j];
                 //K = Coef * Density * AGradNMod[i] * Density * rShapeFunc[j];
-//Z
 
                 for (unsigned int d = 0; d < TDim; ++d) // iterate over dimensions for velocity Dofs in this node combination
                 {

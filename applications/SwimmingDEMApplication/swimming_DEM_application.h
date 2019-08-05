@@ -112,9 +112,9 @@ private:
     ///@name Static Member Variables
     ///@{
     /// 2D instance of the MonolithicDEMCoupled element
-    const MonolithicDEMCoupled<2> mMonolithicDEMCoupled2D;
+    const MonolithicDEMCoupled<2, 3> mMonolithicDEMCoupled2D;
     /// 3D instance of the MonolithicDEMCoupled element
-    const MonolithicDEMCoupled<3> mMonolithicDEMCoupled3D;
+    const MonolithicDEMCoupled<3, 4> mMonolithicDEMCoupled3D;
 
     /// 2D instance of the MonolithicDEMCoupledWeak element
     const MonolithicDEMCoupledWeak<2> mMonolithicDEMCoupledWeak2D;

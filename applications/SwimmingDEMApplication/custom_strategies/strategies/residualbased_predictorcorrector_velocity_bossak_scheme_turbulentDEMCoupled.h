@@ -118,7 +118,21 @@ namespace Kratos {
           ResidualBasedPredictorCorrectorVelocityBossakSchemeTurbulent<TSparseSpace, TDenseSpace>(NewAlphaBossak, MoveMeshStrategy, DomainSize),
           mRotationTool(DomainSize,DomainSize+1,SLIP), // Second argument is number of matrix rows per node: monolithic elements have velocity and pressure dofs.
           mrPeriodicIdVar(Kratos::Variable<int>::StaticObject())
-          {}
+          {
+            //default values for the Newmark Scheme
+            mAlphaBossak = NewAlphaBossak;
+            mBetaNewmark = 0.25 * pow((1.00 - mAlphaBossak), 2);
+            mGammaNewmark = 0.5 - mAlphaBossak;
+            mMeshVelocity = MoveMeshStrategy;
+
+
+            //Allocate auxiliary memory
+            int NumThreads = OpenMPUtils::GetNumThreads();
+            mMass.resize(NumThreads);
+            mDamp.resize(NumThreads);
+            mvel.resize(NumThreads);
+            macc.resize(NumThreads);
+            maccold.resize(NumThreads);}
 
 
         /** Constructor without a turbulence model with periodic conditions
@@ -131,7 +145,22 @@ namespace Kratos {
           ResidualBasedPredictorCorrectorVelocityBossakSchemeTurbulent<TSparseSpace, TDenseSpace>(NewAlphaBossak, DomainSize, rPeriodicIdVar),
           mRotationTool(DomainSize,DomainSize+1,SLIP), // Second argument is number of matrix rows per node: monolithic elements have velocity and pressure dofs.
           mrPeriodicIdVar(rPeriodicIdVar)
-          {}
+          {
+            //default values for the Newmark Scheme
+            mAlphaBossak = NewAlphaBossak;
+            mBetaNewmark = 0.25 * pow((1.00 - mAlphaBossak), 2);
+            mGammaNewmark = 0.5 - mAlphaBossak;
+            mMeshVelocity = 0.0;
+
+
+            //Allocate auxiliary memory
+            int NumThreads = OpenMPUtils::GetNumThreads();
+            mMass.resize(NumThreads);
+            mDamp.resize(NumThreads);
+            mvel.resize(NumThreads);
+            macc.resize(NumThreads);
+            maccold.resize(NumThreads);
+          }
 
 
         /** Constructor without a turbulence model
@@ -145,7 +174,22 @@ namespace Kratos {
           ResidualBasedPredictorCorrectorVelocityBossakSchemeTurbulent<TSparseSpace, TDenseSpace>(NewAlphaBossak, MoveMeshStrategy, DomainSize, rSlipFlag),
           mRotationTool(DomainSize,DomainSize+1,rSlipFlag), // Second argument is number of matrix rows per node: monolithic elements have velocity and pressure dofs.
           mrPeriodicIdVar(Kratos::Variable<int>::StaticObject())
-          {}
+          {
+            //default values for the Newmark Scheme
+            mAlphaBossak = NewAlphaBossak;
+            mBetaNewmark = 0.25 * pow((1.00 - mAlphaBossak), 2);
+            mGammaNewmark = 0.5 - mAlphaBossak;
+            mMeshVelocity = MoveMeshStrategy;
+
+
+            //Allocate auxiliary memory
+            int NumThreads = OpenMPUtils::GetNumThreads();
+            mMass.resize(NumThreads);
+            mDamp.resize(NumThreads);
+            mvel.resize(NumThreads);
+            macc.resize(NumThreads);
+            maccold.resize(NumThreads);
+          }
 
         /** Constructor with a turbulence model
          */
@@ -159,7 +203,22 @@ namespace Kratos {
           mRotationTool(DomainSize,DomainSize+1,SLIP), // Second argument is number of matrix rows per node: monolithic elements have velocity and pressure dofs
           mrPeriodicIdVar(Kratos::Variable<int>::StaticObject()),
           mpTurbulenceModel(pTurbulenceModel)
-          {}
+          {
+            //default values for the Newmark Scheme
+            mAlphaBossak = NewAlphaBossak;
+            mBetaNewmark = 0.25 * pow((1.00 - mAlphaBossak), 2);
+            mGammaNewmark = 0.5 - mAlphaBossak;
+            mMeshVelocity = MoveMeshStrategy;
+
+
+            //Allocate auxiliary memory
+            int NumThreads = OpenMPUtils::GetNumThreads();
+            mMass.resize(NumThreads);
+            mDamp.resize(NumThreads);
+            mvel.resize(NumThreads);
+            macc.resize(NumThreads);
+            maccold.resize(NumThreads);
+          }
 
         /** Destructor.
          */
@@ -196,15 +255,11 @@ namespace Kratos {
             for(int k = 0; k<static_cast<int>(r_model_part.Nodes().size()); k++)
             {
                 auto itNode = r_model_part.NodesBegin() + k;
-                array_1d<double, 3 > & Velocity = (itNode)->FastGetSolutionStepValue(VELOCITY);
-                double& Pressure = (itNode)->FastGetSolutionStepValue(PRESSURE);
                 const double & FluidFraction = (itNode)->FastGetSolutionStepValue(FLUID_FRACTION);
                 const double & FluidFractionRate = delta_time_inv * ((itNode)->FastGetSolutionStepValue(FLUID_FRACTION) - (itNode)->FastGetSolutionStepValue(FLUID_FRACTION_OLD));
                 (itNode)->FastGetSolutionStepValue(FLUID_FRACTION_RATE) = FluidFractionRate;
                 (itNode)->SetValue(FLUID_FRACTION, FluidFraction);
                 (itNode)->SetValue(FLUID_FRACTION_RATE, FluidFractionRate);
-                (itNode)->SetValue(PRESSURE, Pressure);
-                (itNode)->SetValue(VELOCITY, Velocity);
 
             }
         }
@@ -233,7 +288,6 @@ namespace Kratos {
             ProcessInfo& CurrentProcessInfo = rModelPart.GetProcessInfo();
 
             //for (ModelPart::NodeIterator itNode = rModelPart.NodesBegin(); itNode != rModelPart.NodesEnd(); ++itNode)
-
             #pragma omp parallel for
             for(int k = 0; k<static_cast<int>(rModelPart.Nodes().size()); k++)
             {
@@ -264,9 +318,14 @@ namespace Kratos {
                 (*itElem)->CalculateLocalSystem(LHS_Contribution, RHS_Contribution, CurrentProcessInfo);
 
                 //std::cout << rCurrentElement->Id() << " RHS = " << RHS_Contribution << std::endl;
-                (*itElem)->CalculateMassMatrix(mMass[thread_id], CurrentProcessInfo);
-                (*itElem)->CalculateLocalVelocityContribution(mDamp[thread_id], RHS_Contribution, CurrentProcessInfo);
+                //if ((*itElem)->Id() == 35) std::cout << (*itElem)->Id() << " RHS = " << RHS_Contribution << std::endl;
 
+                (*itElem)->CalculateMassMatrix(mMass[thread_id], CurrentProcessInfo);
+                //if ((*itElem)->Id() == 35) std::cout << (*itElem)->Id() << " mMass = " << mMass[thread_id] << std::endl;
+
+                (*itElem)->CalculateLocalVelocityContribution(mDamp[thread_id], RHS_Contribution, CurrentProcessInfo);
+                //if ((*itElem)->Id() == 35) std::cout << (*itElem)->Id() << " mDamp = " << mDamp[thread_id] << std::endl;
+                //if ((*itElem)->Id() == 35) std::cout << (*itElem)->Id() << " CurrentProcessInfo = " << CurrentProcessInfo << std::endl;
                 (*itElem)->EquationIdVector(EquationId, CurrentProcessInfo);
 
                 //adding the dynamic contributions (statics is already included)

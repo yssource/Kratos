@@ -420,11 +420,11 @@ namespace Kratos {
 
             //basic operations for the element considered
             (rCurrentElement)->CalculateLocalSystem(LHS_Contribution, RHS_Contribution, CurrentProcessInfo);
-            //std::cout << rCurrentElement->Id() << " RHS = " << RHS_Contribution << std::endl;
+            //std::cout << rCurrentElement->Id() << std::endl;
             (rCurrentElement)->CalculateMassMatrix(mMass[k], CurrentProcessInfo);
-            //KRATOS_WATCH(mMass[k])
+            if (rCurrentElement->Id() == 35) std::cout << rCurrentElement->Id() << " Mass = " << mMass[k] << std::endl;
             (rCurrentElement)->CalculateLocalVelocityContribution(mDamp[k], RHS_Contribution, CurrentProcessInfo);
-            //KRATOS_WATCH(mDamp[k])
+            if (rCurrentElement->Id() == 35) KRATOS_WATCH(mDamp[k])
             (rCurrentElement)->EquationIdVector(EquationId, CurrentProcessInfo);
 
             //adding the dynamic contributions (statics is already included)
@@ -631,7 +631,7 @@ namespace Kratos {
             }
         }
 
-        void FinalizeSolutionStep(ModelPart &rModelPart, TSystemMatrixType &A, TSystemVectorType &Dx, TSystemVectorType &b) override
+        virtual void FinalizeSolutionStep(ModelPart &rModelPart, TSystemMatrixType &A, TSystemVectorType &Dx, TSystemVectorType &b) override
         {
             Element::EquationIdVectorType EquationId;
             LocalSystemVectorType RHS_Contribution;
@@ -645,7 +645,6 @@ namespace Kratos {
             {
                 auto itNode = rModelPart.NodesBegin() + k;
                 (itNode->FastGetSolutionStepValue(REACTION)).clear();
-
                 // calculating relaxed acceleration
                 const array_1d<double, 3 > & CurrentAcceleration = (itNode)->FastGetSolutionStepValue(ACCELERATION, 0);
                 const array_1d<double, 3 > & OldAcceleration = (itNode)->FastGetSolutionStepValue(ACCELERATION, 1);
@@ -667,8 +666,8 @@ namespace Kratos {
                 //basic operations for the element considered
                 (*itElem)->CalculateLocalSystem(LHS_Contribution, RHS_Contribution, CurrentProcessInfo);
 
-                //std::cout << rCurrentElement->Id() << " RHS = " << RHS_Contribution << std::endl;
                 (*itElem)->CalculateMassMatrix(mMass[thread_id], CurrentProcessInfo);
+
                 (*itElem)->CalculateLocalVelocityContribution(mDamp[thread_id], RHS_Contribution, CurrentProcessInfo);
 
                 (*itElem)->EquationIdVector(EquationId, CurrentProcessInfo);

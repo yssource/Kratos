@@ -117,7 +117,7 @@ void KratosSwimmingDEMApplication::Register()
   /* Define In Global variables.cpp */
 
   KRATOS_REGISTER_ELEMENT("MonolithicDEMCoupled2D", mMonolithicDEMCoupled2D)
-  KRATOS_REGISTER_ELEMENT("MonolithicDEMCoupled3D", mMonolithicDEMCoupled3D)
+  KRATOS_REGISTER_ELEMENT("MonolithicDEMCoupled3D4N", mMonolithicDEMCoupled3D)
   KRATOS_REGISTER_ELEMENT("MonolithicDEMCoupledWeak2D", mMonolithicDEMCoupledWeak2D)
   KRATOS_REGISTER_ELEMENT("MonolithicDEMCoupledWeak3D", mMonolithicDEMCoupledWeak3D)
   KRATOS_REGISTER_ELEMENT("QSVMSDEMCoupled2D3N", mQSVMSDEMCoupled2D3N)

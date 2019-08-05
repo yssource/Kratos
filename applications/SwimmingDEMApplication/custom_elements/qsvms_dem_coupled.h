@@ -272,6 +272,11 @@ public:
                             const double Weight,
                             const double DeltaTime = 1.0);
 
+    void CalculateTau(TElementData& rData,
+                      const array_1d<double,3> &Velocity,
+                      double &TauOne,
+                      double &TauTwo);
+
     void EvaluateTimeDerivativeInPoint(double& rResult,
                                        const Variable< double >& rVariable,
                                        const array_1d< double,  NumNodes >& rShapeFunc,
@@ -343,7 +348,7 @@ protected:
      * @param ElemSize Characteristic length representing the element (for Smagorinsky, this is the filter width)
      * @return Kinematic viscosity at the integration point.
      */
-    KRATOS_DEPRECATED double EffectiveViscosity(TElementData& rData, double ElementSize) override;
+    void GetEffectiveViscosity(TElementData& rData, double& rViscosity);
 
     ///@}
     ///@name Protected  Access

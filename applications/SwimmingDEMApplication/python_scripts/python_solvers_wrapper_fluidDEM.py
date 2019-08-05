@@ -15,7 +15,7 @@ def CreateSolverByParameters(model, solver_settings, parallelism):
         if (solver_type == "Monolithic"):
             solver_module_name = "navier_stokes_solver_vmsmonolithic"
 
-        if (solver_type == "MonolithicDEM"):
+        elif (solver_type == "MonolithicDEM"):
             solver_module_name = "navier_stokes_solver_vms_monolithic_DEMCoupled"
 
         elif (solver_type == "FractionalStep"):

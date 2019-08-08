@@ -97,7 +97,7 @@ class TestCalculateDistanceToSkin(KratosUnittest.TestCase):
         # Call the CalculateDistanceToSkinProcess() multiple times
         distance_process = KratosMultiphysics.CalculateDistanceToSkinProcess2D(model_part, skin_model_part)
         import time
-        n = 1000
+        n = 50
         for i in range(n):
             start = time.time()
             distance_process.Execute()

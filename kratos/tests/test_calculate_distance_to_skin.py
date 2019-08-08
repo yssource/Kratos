@@ -69,6 +69,41 @@ class TestCalculateDistanceToSkin(KratosUnittest.TestCase):
         self.assertAlmostEqual(model_part.GetNode(6013).GetSolutionStepValue(KratosMultiphysics.DISTANCE), 0.0023331634638708203)
         self.assertAlmostEqual(model_part.GetNode(6114).GetSolutionStepValue(KratosMultiphysics.DISTANCE), 0.0036621637956599693)
 
+    def test_naca_0012_calculate_distance_to_skin_2d_multiple(self):
+        # Set the problem domain using the structured mesh generator process
+        current_model = KratosMultiphysics.Model()
+        model_part = current_model.CreateModelPart("ModelPart")
+        model_part.AddNodalSolutionStepVariable(KratosMultiphysics.VELOCITY)
+        model_part.AddNodalSolutionStepVariable(KratosMultiphysics.DISTANCE)
+        model_part.AddNodalSolutionStepVariable(KratosMultiphysics.EMBEDDED_VELOCITY)
+
+        problem_domain = KratosMultiphysics.Quadrilateral2D4(
+            KratosMultiphysics.Node(1, -0.25, -0.75, 0.0),
+            KratosMultiphysics.Node(2, -0.25,  0.75, 0.0),
+            KratosMultiphysics.Node(3,  1.25,  0.75, 0.0),
+            KratosMultiphysics.Node(4,  1.25, -0.75, 0.0))
+        parameters = KratosMultiphysics.Parameters("{}")
+        parameters.AddEmptyValue("element_name").SetString("Element2D3N")
+        parameters.AddEmptyValue("condition_name").SetString("Condition2D2N")
+        parameters.AddEmptyValue("create_skin_sub_model_part").SetBool(False)
+        parameters.AddEmptyValue("number_of_divisions").SetInt(100)
+
+        KratosMultiphysics.StructuredMeshGeneratorProcess(problem_domain, model_part, parameters).Execute()
+
+        # Set aerofoil geometry
+        skin_model_part = current_model.CreateModelPart("Aerofoil")
+        KratosMultiphysics.ModelPartIO(GetFilePath("auxiliar_files_for_python_unnitest/mdpa_files/test_calculate_distance_to_skin_naca_0012")).ReadModelPart(skin_model_part)
+
+        # Call the CalculateDistanceToSkinProcess() multiple times
+        distance_process = KratosMultiphysics.CalculateDistanceToSkinProcess2D(model_part, skin_model_part)
+        import time
+        n = 1000
+        for i in range(n):
+            start = time.time()
+            distance_process.Execute()
+            end = time.time()
+            print("Test: ",i," Time: ", end - start)
+
     @KratosUnittest.skip("Due to its computational cost, this test is left for debugging.")
     def test_naca_0012_calculate_distance_to_skin_3d(self):
         # Set the problem domain using the structured mesh generator process
@@ -133,6 +168,7 @@ if __name__ == '__main__':
     domain_size = 2
     test = TestCalculateDistanceToSkin()
     if (domain_size == 2):
-        test.test_naca_0012_calculate_distance_to_skin_2d()
+        # test.test_naca_0012_calculate_distance_to_skin_2d()
+        test.test_naca_0012_calculate_distance_to_skin_2d_multiple()
     else:
         test.test_naca_0012_calculate_distance_to_skin_3d()

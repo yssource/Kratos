@@ -261,7 +261,7 @@ public:
     /// Print object's data.
     void  PrintData(std::ostream& OStream) const override
     {
-//         OStream << "GMRES "<<mNumberOfRestarts<<" times restarted"<<std::endl;
+        OStream << "GMRES configuration parameters: " << mSettingsParameters << std::endl;
         BaseType::PrintData(OStream);
     }
 

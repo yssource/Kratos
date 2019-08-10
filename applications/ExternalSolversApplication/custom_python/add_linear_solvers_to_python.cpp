@@ -138,7 +138,7 @@ ExternalSolversApplicationRegisterLinearSolvers::ExternalSolversApplicationRegis
     static auto SuperLUSolverFactory= StandardLinearSolverFactory<SpaceType,LocalSpaceType,SuperLUSolverType>();
     static auto SuperLUIterativeSolverFactory= StandardLinearSolverFactory<SpaceType,LocalSpaceType,SuperLUIterativeSolverType>();
 
-    KRATOS_REGISTER_LINEAR_SOLVER("gmres", GMRESSolverFactory);
+    KRATOS_REGISTER_LINEAR_SOLVER("gmres_legacy", GMRESSolverFactory);
     KRATOS_REGISTER_LINEAR_SOLVER("super_lu", SuperLUSolverFactory);
     KRATOS_REGISTER_LINEAR_SOLVER("super_lu_iterative", SuperLUIterativeSolverFactory);
 

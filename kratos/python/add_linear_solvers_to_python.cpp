@@ -34,6 +34,7 @@
 #include "linear_solvers/skyline_lu_custom_scalar_solver.h"
 #include "linear_solvers/scaling_solver.h"
 #include "linear_solvers/mixedup_linear_solver.h"
+#include "linear_solvers/gmres_solver.h"
 
 #include "linear_solvers/preconditioner.h"
 #include "linear_solvers/diagonal_preconditioner.h"
@@ -74,6 +75,7 @@ void  AddLinearSolversToPython(pybind11::module& m)
     typedef MixedUPLinearSolver<SpaceType,  LocalSpaceType> MixedUPLinearSolverType;
     typedef BICGSTABSolver<SpaceType,  LocalSpaceType> BICGSTABSolverType;
     typedef TFQMRSolver<SpaceType,  LocalSpaceType> TFQMRSolverType;
+    typedef AMGCLGMRESSolver<SpaceType,  LocalSpaceType> AMGCLGMRESSolverType;
     typedef ScalingSolver<SpaceType,  LocalSpaceType> ScalingSolverType;
     typedef PowerIterationEigenvalueSolver<SpaceType, LocalSpaceType, LinearSolverType> PowerIterationEigenvalueSolverType;
     typedef PowerIterationHighestEigenvalueSolver<SpaceType, LocalSpaceType, LinearSolverType> PowerIterationHighestEigenvalueSolverType;
@@ -163,6 +165,14 @@ void  AddLinearSolversToPython(pybind11::module& m)
     .def(py::init<double, unsigned int>())
     .def("__str__", PrintObject<TFQMRSolverType>)
     .def(py::init<double, unsigned int,  PreconditionerType::Pointer>())
+    .def(py::init<Parameters,  PreconditionerType::Pointer>())
+    ;
+
+    py::class_<AMGCLGMRESSolverType, AMGCLGMRESSolverType::Pointer,IterativeSolverType>(m,"AMGCLGMRESSolver")
+    .def(py::init<const double>())
+    .def(py::init<const double, const std::size_t>())
+    .def("__str__", PrintObject<AMGCLGMRESSolverType>)
+    .def(py::init<const double, const std::size_t,  PreconditionerType::Pointer>())
     .def(py::init<Parameters,  PreconditionerType::Pointer>())
     ;
 

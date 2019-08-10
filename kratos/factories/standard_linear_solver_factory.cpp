@@ -24,6 +24,7 @@
 #include "linear_solvers/bicgstab_solver.h"
 #include "linear_solvers/tfqmr_solver.h"
 #include "linear_solvers/mixedup_linear_solver.h"
+#include "linear_solvers/gmres_solver.h"
 #include "linear_solvers/amgcl_solver.h"
 #include "linear_solvers/amgcl_ns_solver.h"
 #include "linear_solvers/scaling_solver.h"
@@ -45,6 +46,7 @@ namespace Kratos
 //         typedef MixedUPLinearSolver<SpaceType,  LocalSpaceType> MixedUPLinearSolverType;
         typedef BICGSTABSolver<SpaceType,  LocalSpaceType> BICGSTABSolverType;
         typedef TFQMRSolver<SpaceType,  LocalSpaceType> TFQMRSolverType;
+        typedef AMGCLGMRESSolver<SpaceType,  LocalSpaceType> AMGCLGMRESSolverType;
         typedef SkylineLUFactorizationSolver<SpaceType,  LocalSpaceType> SkylineLUFactorizationSolverType;
         typedef AMGCLSolver<SpaceType,  LocalSpaceType> AMGCLSolverType;
         typedef AMGCL_NS_Solver<SpaceType,  LocalSpaceType> AMGCL_NS_SolverType;
@@ -59,6 +61,7 @@ namespace Kratos
         static auto SkylineLUFactorizationSolverFactory= StandardLinearSolverFactory<SpaceType,LocalSpaceType,SkylineLUFactorizationSolverType>();
 //         static auto MixedUPStandardLinearSolverFactory = StandardLinearSolverFactory<SpaceType,LocalSpaceType,MixedUPLinearSolverType>();
         static auto TFQMRSolverFactory = StandardLinearSolverFactory<SpaceType,LocalSpaceType,TFQMRSolverType>();
+        static auto AMGCLGMRESSolverFactory = StandardLinearSolverFactory<SpaceType,LocalSpaceType,AMGCLGMRESSolverType>();
         static auto AMGCLSolverFactory= StandardLinearSolverFactory<SpaceType,LocalSpaceType,AMGCLSolverType>();
         static auto AMGCL_NS_SolverFactory= StandardLinearSolverFactory<SpaceType,LocalSpaceType,AMGCL_NS_SolverType>();
         static auto ScalingSolverFactory= StandardLinearSolverFactory<SpaceType,LocalSpaceType,ScalingSolverType>();
@@ -70,6 +73,7 @@ namespace Kratos
         KRATOS_REGISTER_LINEAR_SOLVER("bicgstab", BICGSTABSolverFactory);
         KRATOS_REGISTER_LINEAR_SOLVER("deflated_cg", DeflatedCGSolverFactory);
         KRATOS_REGISTER_LINEAR_SOLVER("tfqmr", TFQMRSolverFactory);
+        KRATOS_REGISTER_LINEAR_SOLVER("gmres", AMGCLGMRESSolverFactory);
         KRATOS_REGISTER_LINEAR_SOLVER("skyline_lu_factorization",SkylineLUFactorizationSolverFactory );
         KRATOS_REGISTER_LINEAR_SOLVER("amgcl", AMGCLSolverFactory);
         KRATOS_REGISTER_LINEAR_SOLVER("amgcl_ns",AMGCL_NS_SolverFactory );

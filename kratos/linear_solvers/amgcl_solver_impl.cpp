@@ -1,3 +1,19 @@
+//    |  /           |
+//    ' /   __| _` | __|  _ \   __|
+//    . \  |   (   | |   (   |\__ `
+//   _|\_\_|  \__,_|\__|\___/ ____/
+//                   Multi-Physics
+//
+//  License:         BSD License
+//                     Kratos default license: kratos/license.txt
+//
+//  Main authors:    Denis Demidov
+//                   Riccardo Rossi
+//
+
+// System includes
+
+// External includes
 /* AMGCL */
 #include <amgcl/adapter/crs_tuple.hpp>
 #include <amgcl/adapter/ublas.hpp>
@@ -17,6 +33,7 @@
 #  include <amgcl/backend/vexcl_static_matrix.hpp>
 #endif
 
+// Project includes
 #include "spaces/ublas_space.h"
 #include "linear_solvers/amgcl_solver.h"
 

@@ -252,7 +252,7 @@ class ConditionFactory:
             list_of_points, list_of_parameters, list_of_integration_weights = self.__CreateIntegrationPointsForFace(face_i, drawing_tolerance)
 
             # Create conditions
-            for (x,y,z), (u,v), weight in zip(list_of_points, list_of_parameters, list_of_integration_weights):
+            for (x,y,z), (u,v), integration_weight in zip(list_of_points, list_of_parameters, list_of_integration_weights):
 
                 nonzero_indices, shape_functions = surface_geometry_data.ShapeFunctionsAt(u, v, order=2)
                 nonzero_pole_nodes = [pole_nodes[i] for i in nonzero_indices]
@@ -261,8 +261,7 @@ class ConditionFactory:
                 # point_ptr.Attributes().SetLayer('IntegrationPoints_'+str(face_i.Key()))
 
                 if apply_kl_shell:
-                    weight = shell_penalty_fac * weight
-                    new_condition = clib.KLShellConditionWithAD(nonzero_pole_nodes, shape_functions, weight)
+                    new_condition = clib.KLShellConditionWithAD(nonzero_pole_nodes, shape_functions, shell_penalty_fac, integration_weight)
                     conditions.append(new_condition)
 
     # --------------------------------------------------------------------------
@@ -408,9 +407,8 @@ class ConditionFactory:
                     # Positions enforcement
                     if penalty_factor_position_enforcement > 0:
                         target_position = integration_point + np.array(target_displacement)
-                        weight = penalty_factor_position_enforcement * integration_weight
 
-                        new_condition = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes, shape_functions, weight)
+                        new_condition = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes, shape_functions, penalty_factor_position_enforcement, integration_weight)
                         conditions.append(new_condition)
 
             elif num_adjacent_faces == 2:
@@ -481,23 +479,21 @@ class ConditionFactory:
                     if penalty_factor_position_enforcement > 0:
                         target_displacement = fe_node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)
                         target_position = np.array([fe_node.X+target_displacement[0], fe_node.Y+target_displacement[1], fe_node.Z+target_displacement[2]])
-                        weight = penalty_factor_position_enforcement * integration_weight
 
-                        new_condition_a = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes_a, shape_functions_a, weight)
+                        new_condition_a = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes_a, shape_functions_a, penalty_factor_position_enforcement, integration_weight)
                         position_conditions.append(new_condition_a)
 
-                        new_condition_b = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes_b, shape_functions_b, weight)
+                        new_condition_b = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes_b, shape_functions_b, penalty_factor_position_enforcement, integration_weight)
                         position_conditions.append(new_condition_b)
 
                     # Tangents enforcement
                     if penalty_factor_tangent_enforcement > 0:
                         target_normal = fe_node.GetSolutionStepValue(KratosShape.NORMALIZED_SURFACE_NORMAL)
-                        weight = penalty_factor_tangent_enforcement * integration_weight
 
-                        new_condition_a = clib.TangentEnforcementConditionWithAD(target_normal, nonzero_pole_nodes_a, shape_functions_a, weight)
+                        new_condition_a = clib.TangentEnforcementConditionWithAD(target_normal, nonzero_pole_nodes_a, shape_functions_a, penalty_factor_tangent_enforcement, integration_weight)
                         tangent_conditions.append(new_condition_a)
 
-                        new_condition_b = clib.TangentEnforcementConditionWithAD(target_normal, nonzero_pole_nodes_b, shape_functions_b, weight)
+                        new_condition_b = clib.TangentEnforcementConditionWithAD(target_normal, nonzero_pole_nodes_b, shape_functions_b, penalty_factor_tangent_enforcement, integration_weight)
                         tangent_conditions.append(new_condition_b)
             else:
                 raise RuntimeError("Max number of adjacent has to be 2!!")
@@ -608,17 +604,15 @@ class ConditionFactory:
 
             # Tangents enforcement
             target_normal = fe_node.GetSolutionStepValue(KratosShape.NORMALIZED_SURFACE_NORMAL)
-            weight = penalty_factor * integration_weight
 
-            new_condition = clib.TangentEnforcementConditionWithAD(target_normal, nonzero_pole_nodes, shape_functions, weight)
+            new_condition = clib.TangentEnforcementConditionWithAD(target_normal, nonzero_pole_nodes, shape_functions, penalty_factor, integration_weight)
             tangent_conditions.append(new_condition)
 
             # Positions enforcement
             target_displacement = fe_node.GetSolutionStepValue(KratosShape.SHAPE_CHANGE)
             target_position = np.array([fe_node.X+target_displacement[0], fe_node.Y+target_displacement[1], fe_node.Z+target_displacement[2]])
-            weight = penalty_factor * integration_weight
 
-            new_condition = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes, shape_functions, weight)
+            new_condition = clib.PositionEnforcementCondition(target_position, nonzero_pole_nodes, shape_functions, penalty_factor, integration_weight)
             position_conditions.append(new_condition)
 
     # --------------------------------------------------------------------------
@@ -670,8 +664,6 @@ class ConditionFactory:
 
                     # displacement coupling condition
                     if penalty_factor_displacement > 0:
-                        weight = penalty_factor_displacement * integration_weight
-
                         new_condition = clib.DisplacementCouplingCondition( nonzero_pole_nodes_a,
                                                                             nonzero_pole_nodes_b,
                                                                             shape_functions_a,
@@ -680,15 +672,14 @@ class ConditionFactory:
                                                                             surface_geometry_b,
                                                                             (u_a, v_a),
                                                                             (u_b, v_b),
-                                                                            weight )
+                                                                            penalty_factor_displacement,
+                                                                            integration_weight )
                         displacement_conditions.append(new_condition)
 
                     # rotation coupling condition
                     if penalty_factor_rotation > 0:
                         _, T2_edge = edge_curve_a.DerivativesAt(t_a, order=1)
                         T2_edge /=   np.linalg.norm(T2_edge)
-
-                        weight = penalty_factor_rotation * integration_weight
 
                         new_condition = clib.RotationCouplingConditionWithAD( nonzero_pole_nodes_a,
                                                                               nonzero_pole_nodes_b,
@@ -699,7 +690,8 @@ class ConditionFactory:
                                                                               surface_geometry_b,
                                                                               (u_a, v_a),
                                                                               (u_b, v_b),
-                                                                              weight )
+                                                                              penalty_factor_rotation,
+                                                                              integration_weight )
                         rotation_conditions.append(new_condition)
             else:
                 raise RuntimeError("Max number of adjacent has to be 2!!")

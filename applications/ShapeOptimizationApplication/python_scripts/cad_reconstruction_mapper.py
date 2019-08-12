@@ -24,6 +24,7 @@ from cad_reconstruction_condition_factory import ConditionFactory
 import ANurbs as an
 import numpy as np
 import numpy.linalg as la
+import scipy.sparse.linalg as sla
 import time, os, shutil
 import EQlib as eq
 
@@ -581,15 +582,20 @@ class CADMapper:
         self.conditions_scaling_factors.append(1)
 
         if is_initial_assembly:
-            system_max = abs(self.system.working_h).max()
-            print("> Max absolute system LHS = " + str(system_max))
+            system_norm_inf = sla.norm(self.system.working_h, np.inf)
+
+            if self.parameters["output"]["echo_level"].GetInt() > 1:
+                print("> Max absolute value system LHS = " + str(abs(self.system.working_h).max()))
+                print("> Norm infinity of system LHS = " + str(system_norm_inf))
+                print("> Max value system LHS = " + str((self.system.working_h).max()))
+                print("> Min value system LHS = " + str((self.system.working_h).min()))
 
         # Beta regularization
         beta = self.parameters["regularization"]["beta"].GetDouble()
 
         if is_initial_assembly:
-            max_beta = 1
-            self.beta_scaling_factor = system_max/max_beta
+            beta_norm_inf = 1
+            self.beta_scaling_factor = system_norm_inf/beta_norm_inf
             print("> beta_scaling_factor = "+str(self.beta_scaling_factor)+"\n")
 
         self.system.add_diagonal(self.beta_scaling_factor*beta)
@@ -600,14 +606,21 @@ class CADMapper:
             self.system.compute(index=itr, parallel=self.parameters["solution"]["parallel_assembly"].GetBool())
 
             if is_initial_assembly:
-                weight_of_element_type = self.conditions[itr][0].GetWeight()
-                constraint_max = abs(self.system.working_h).max() / weight_of_element_type
-                scaling_factor = system_max/constraint_max
+                penalty_fac_of_element_type = self.conditions[itr][0].GetPenaltyFactor()
 
+                constraint_norm_inf = sla.norm(self.system.working_h, np.inf) / penalty_fac_of_element_type
+
+                scaling_factor = system_norm_inf/constraint_norm_inf
                 self.conditions_scaling_factors.append(scaling_factor)
 
-                print("> scaling_factor_"+str(itr)+" = "+str(scaling_factor))
-                print("> Max absolute value constraint LHS_"+str(itr)+"= " + str(constraint_max)+"\n")
+                if self.parameters["output"]["echo_level"].GetInt() > 1:
+                    print("> Infinity norm constraint LHS_"+str(itr)+" before scaling without penalty factor = " + str(constraint_norm_inf))
+                    print("> Infinity norm constraint LHS_"+str(itr)+" after scaling with penalty factor= " + str(penalty_fac_of_element_type*scaling_factor*constraint_norm_inf))
+                    constraint_max = abs(self.system.working_h).max() / penalty_fac_of_element_type
+                    print("> Max absolute value constraint LHS_"+str(itr)+" before scaling without penalty factor = " + str(constraint_max))
+                    print("> Max absolute value constraint LHS_"+str(itr)+" after scaling with penalty factor = " + str(penalty_fac_of_element_type*scaling_factor*constraint_max))
+                    print("> penalty_factor_"+str(itr)+" = "+str(penalty_fac_of_element_type))
+                    print("> scaling_factor_"+str(itr)+" = "+str(scaling_factor)+"\n")
 
             self.system.add_working_system(factor=self.conditions_scaling_factors[itr])
 

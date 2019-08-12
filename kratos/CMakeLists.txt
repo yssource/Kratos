@@ -5,6 +5,11 @@ if(${MPI_NEEDED} MATCHES ON )
   add_subdirectory(mpi)
 endif(${MPI_NEEDED} MATCHES ON )
 
+## Kratos Version
+set( KRATOS_VERSION_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/sources/kratos_version.cpp
+)
+
 ## Kratos main source code
 set( KRATOS_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/containers/flags.cpp
@@ -148,7 +153,6 @@ set( KRATOS_PYTHON_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/python/add_table_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/python/add_search_strategies_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/python/add_kratos_parameters_to_python.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/python/add_testing_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/python/add_logger_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/python/add_model_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/python/add_memory_info_to_python.cpp
@@ -160,9 +164,10 @@ set( KRATOS_PYTHON_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/python/add_global_pointers_to_python.cpp
 )
 
-## Kratos Version
-set( KRATOS_VERSION_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/sources/kratos_version.cpp
+## Kratos python testing interface code
+set( KRATOS_PYTHON_TESTING_SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/python/kratos_python_testing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/python/add_testing_to_python.cpp
 )
 
 ## Kratos testing engine soruces
@@ -188,13 +193,18 @@ target_compile_definitions(KratosVersion PRIVATE
 )
 
 ## Define library KratosCore to be included in all of the others
-add_library(KratosCore SHARED ${KRATOS_CORE_SOURCES} ${KRATOS_CORE_TESTING_ENGINE_SOURCES} ${KRATOS_CORE_INPUT_OUTPUT_SOURCES} ${KRATOS_TEST_SOURCES} $<TARGET_OBJECTS:KratosVersion>)
+add_library(KratosCore SHARED ${KRATOS_CORE_SOURCES} ${KRATOS_CORE_TESTING_ENGINE_SOURCES} ${KRATOS_CORE_INPUT_OUTPUT_SOURCES} $<TARGET_OBJECTS:KratosVersion>)
 target_link_libraries(KratosCore PUBLIC gidpost)
 set_target_properties(KratosCore PROPERTIES COMPILE_DEFINITIONS "KRATOS_CORE=IMPORT,API")
 target_compile_definitions(KratosCore PRIVATE
     KRATOS_MAJOR_VERSION=${KratosMultiphysics_MAJOR_VERSION}
     KRATOS_MINOR_VERSION=${KratosMultiphysics_MINOR_VERSION}
 )
+
+# Define KratosTests
+add_library(KratosCoreTests SHARED ${KRATOS_TEST_SOURCES})
+target_link_libraries(KratosCoreTests PUBLIC KratosCore)
+
 
 if (${AMGCL_GPGPU} MATCHES ON)
     add_subdirectory(
@@ -214,9 +224,11 @@ endif()
 
 ## Define library Kratos which defines the basic python interface
 pybind11_add_module(Kratos MODULE THIN_LTO ${KRATOS_PYTHON_SOURCES})
-# add_library(Kratos SHARED ${KRATOS_PYTHON_SOURCES})
-target_link_libraries(Kratos PRIVATE ${KRATOS_TEST_LIBRARIES} KratosCore)
-# set_target_properties(Kratos PROPERTIES PREFIX "")
+target_link_libraries(Kratos PRIVATE KratosCore)
+
+## Define library KratosTest which provides an entry point for the testst interface
+pybind11_add_module(KratosTests MODULE THIN_LTO ${KRATOS_PYTHON_TESTING_SOURCES})
+target_link_libraries(KratosTests PRIVATE KratosCoreTests)
 
 if(USE_COTIRE MATCHES ON)
     ## Kratos cannot be compiled with just one unity build as it takes way too much ram
@@ -226,7 +238,7 @@ if(USE_COTIRE MATCHES ON)
     cotire(KratosVersion)
     cotire(KratosCore)
     if(${KRATOS_BUILD_TESTING} MATCHES ON)
-        cotire(KratosTests)
+        cotire(KratosCoreTests)
     endif(${KRATOS_BUILD_TESTING} MATCHES ON)
 
     ## Kratos cannot be compiled with just one unity build as it takes way too much ram
@@ -238,26 +250,18 @@ if(USE_COTIRE MATCHES ON)
     set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/python/add_utilities_to_python.cpp PROPERTIES COTIRE_EXCLUDED TRUE)
 
     cotire(Kratos)
+    if(${KRATOS_BUILD_TESTING} MATCHES ON)
+        cotire(KratosTests)
+    endif(${KRATOS_BUILD_TESTING} MATCHES ON)
 endif(USE_COTIRE MATCHES ON)
 
-## Changing the .dll suffix to .pyd (For Windows)
-# if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-#     if(${KRATOS_BUILD_TESTING} MATCHES ON)
-#         set_target_properties(KratosTests PROPERTIES SUFFIX .pyd)
-#     endif(${KRATOS_BUILD_TESTING} MATCHES ON)
-#     set_target_properties(Kratos PROPERTIES SUFFIX .pyd)
-# endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-#
-# ## Changing the .dylib suffix to .so (For MacOS)
-# if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-#     if(${KRATOS_BUILD_TESTING} MATCHES ON)
-#         set_target_properties(KratosTests PROPERTIES SUFFIX .so)
-#     endif(${KRATOS_BUILD_TESTING} MATCHES ON)
-#     set_target_properties(Kratos PROPERTIES SUFFIX .so)
-# endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
-install(TARGETS Kratos DESTINATION libs )
+# Install libs
 install(TARGETS KratosCore DESTINATION libs)
+install(TARGETS KratosCoreTests DESTINATION libs)
+
+# Install interfaces
+install(TARGETS Kratos DESTINATION libs )
+install(TARGETS KratosTests DESTINATION libs )
 
 # Kratos Testing. Install everything except sources
 if(${INSTALL_TESTING_FILES} MATCHES ON )
@@ -273,5 +277,8 @@ endif(${INSTALL_TESTING_FILES} MATCHES ON)
 # Install python scripts
 if(${INSTALL_PYTHON_FILES} MATCHES ON)
     get_filename_component (CURRENT_DIR_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python_scripts DESTINATION kratos/ FILES_MATCHING PATTERN "*.py" PATTERN ".svn" EXCLUDE)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python_scripts DESTINATION kratos/ FILES_MATCHING PATTERN "*.py" PATTERN ".git" EXCLUDE)
+    if(${KRATOS_BUILD_TESTING} MATCHES ON)
+        install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/CoreTestModule.py" DESTINATION "KratosMultiphysics/Tests" RENAME "__init__.py")    
+    endif(${KRATOS_BUILD_TESTING} MATCHES ON)
 endif(${INSTALL_PYTHON_FILES} MATCHES ON)

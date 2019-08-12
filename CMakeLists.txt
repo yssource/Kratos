@@ -407,6 +407,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/external_libraries/triangle)
 if(${INSTALL_EMBEDDED_PYTHON} MATCHES ON )
   add_subdirectory(embedded_python)
 endif(${INSTALL_EMBEDDED_PYTHON} MATCHES ON )
+add_subdirectory(runtests)
 
 # Set installation directory
 if(DEFINED KRATOS_INSTALL_PREFIX)

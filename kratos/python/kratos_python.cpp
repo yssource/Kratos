@@ -132,7 +132,7 @@ PYBIND11_MODULE(Kratos, m)
     AddKratosParametersToPython(m);
 //
     AddSearchStrategiesToPython(m);
-     AddTestingToPython(m);
+     //AddTestingToPython(m);
      AddLoggerToPython(m); //TO BE SPOKEN WITH POOYAN
      AddConstraintToPython(m);
      AddResponseFunctionsToPython(m);

@@ -97,13 +97,23 @@ endif(${KRATOS_BUILD_TESTING} MATCHES ON)
 
 ###############################################################################
 ## FluidDynamicsApplication core library (C++ parts)
-add_library( KratosFluidDynamicsCore SHARED ${KRATOS_FLUID_DYNAMICS_APPLICATION_CORE_SOURCES} ${KRATOS_FLUID_DYNAMICS_TESTING_SOURCES} )
+add_library( KratosFluidDynamicsCore SHARED ${KRATOS_FLUID_DYNAMICS_APPLICATION_CORE_SOURCES})
 target_link_libraries( KratosFluidDynamicsCore PUBLIC KratosCore)
 set_target_properties( KratosFluidDynamicsCore PROPERTIES COMPILE_DEFINITIONS "FLUID_DYNAMICS_APPLICATION=EXPORT,API")
+
+## FluidDynamicsApplication core library (C++ parts)
+add_test_library( KratosFluidDynamicsTestsCore SHARED "${KRATOS_FLUID_DYNAMICS_TESTING_SOURCES}")
+target_link_libraries( KratosFluidDynamicsTestsCore PUBLIC KratosFluidDynamicsCore)
+
 
 ## FluidDynamicsApplication python module
 pybind11_add_module( KratosFluidDynamicsApplication MODULE THIN_LTO ${KRATOS_FLUID_DYNAMICS_PYTHON_INTERFACE_SOURCES} )
 target_link_libraries( KratosFluidDynamicsApplication PRIVATE KratosFluidDynamicsCore)
+set_target_properties( KratosFluidDynamicsApplication PROPERTIES PREFIX "")
+
+## FluidDynamicsApplication test python module
+pybind11_add_module( KratosFluidDynamicsTests MODULE THIN_LTO ${KRATOS_FLUID_DYNAMICS_PYTHON_INTERFACE_SOURCES} )
+target_link_libraries( KratosFluidDynamicsApplication PRIVATE KratosFluidDynamicsTestsCore)
 set_target_properties( KratosFluidDynamicsApplication PROPERTIES PREFIX "")
 
 ###############################################################################
@@ -120,7 +130,9 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 ###############################################################################
 if(USE_COTIRE MATCHES ON)
     cotire(KratosFluidDynamicsCore)
+    cotire(KratosFluidDynamicsTestsCore)
     cotire(KratosFluidDynamicsApplication)
+    cotire(KratosFluidDynamicsTests)
 endif(USE_COTIRE MATCHES ON)
 
 ###############################################################################
@@ -128,6 +140,8 @@ endif(USE_COTIRE MATCHES ON)
 
 install(TARGETS KratosFluidDynamicsCore DESTINATION libs )
 install(TARGETS KratosFluidDynamicsApplication DESTINATION libs )
+install(TARGETS KratosFluidDynamicsTestsCore DESTINATION libs )
+install(TARGETS KratosFluidDynamicsTests DESTINATION libs )
 
 # Add to the KratosMultiphisics Python module
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/FluidDynamicsApplication.py" DESTINATION "KratosMultiphysics/FluidDynamicsApplication" RENAME "__init__.py")

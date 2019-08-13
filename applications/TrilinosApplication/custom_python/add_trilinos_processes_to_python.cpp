@@ -1,4 +1,4 @@
-#if defined(KRATOS_PYTHON)
+
 // External includes
 #include "custom_python/add_trilinos_processes_to_python.h"
 

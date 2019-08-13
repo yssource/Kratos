@@ -202,7 +202,7 @@ target_compile_definitions(KratosCore PRIVATE
 )
 
 # Define KratosTests
-add_library(KratosCoreTests SHARED ${KRATOS_TEST_SOURCES})
+add_test_library(KratosCoreTests SHARED "${KRATOS_TEST_SOURCES}")
 target_link_libraries(KratosCoreTests PUBLIC KratosCore)
 
 

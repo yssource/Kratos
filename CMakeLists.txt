@@ -184,6 +184,9 @@ endif(DEFINED KRATOS_INSTALL_PREFIX)
 # Set kratos specific module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake_modules")
 
+# Add_testing_library wrapper
+include(kratosTestTools)
+
 if(USE_COTIRE MATCHES ON)
     include(cotire)
 endif(USE_COTIRE MATCHES ON)

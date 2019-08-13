@@ -12,50 +12,10 @@ def CreateSolverByParameters(model, solver_settings, parallelism):
 
     # Solvers for OpenMP parallelism
     if (parallelism == "OpenMP"):
-        if (solver_type == "Monolithic"):
-            solver_module_name = "navier_stokes_solver_vmsmonolithic"
-
-        elif (solver_type == "MonolithicDEM"):
-            solver_module_name = "navier_stokes_solver_vms_monolithic_DEMCoupled"
-
-        elif (solver_type == "FractionalStep"):
-            solver_module_name = "navier_stokes_solver_fractionalstep"
-
-        elif (solver_type == "Embedded"):
-            solver_module_name = "navier_stokes_embedded_solver"
-
-        elif (solver_type == "Compressible"):
-            solver_module_name = "navier_stokes_compressible_solver"
-
-        elif (solver_type == "ConjugateHeatTransfer"):
-            solver_module_name = "conjugate_heat_transfer_solver"
-
-        elif (solver_type == "TwoFluids"):
-            solver_module_name = "navier_stokes_two_fluids_solver"
-
-        else:
-            raise Exception("the requested solver type is not in the python solvers wrapper. Solver type is : " + solver_type)
-
+        solver_module_name = "navier_stokes_solver_vms_monolithic_DEMCoupled"
     # Solvers for MPI parallelism
     elif (parallelism == "MPI"):
-        if (solver_type == "Monolithic"):
-            solver_module_name = "trilinos_navier_stokes_solver_vmsmonolithic"
-
-        if (solver_type == "MonolithicDEM"):
-            solver_module_name = "navier_stokes_solver_vms_monolithic_DEMCoupled"
-
-        elif (solver_type == "FractionalStep"):
-            solver_module_name = "trilinos_navier_stokes_solver_fractionalstep"
-
-        elif (solver_type == "Embedded"):
-            solver_module_name = "trilinos_navier_stokes_embedded_solver"
-
-        elif (solver_type == "TwoFluids"):
-            solver_module_name = "trilinos_navier_stokes_two_fluids_solver"
-
-        else:
-            raise Exception("the requested solver type is not in the python solvers wrapper. Solver type is : " + solver_type)
-
+        solver_module_name = "navier_stokes_solver_vms_monolithic_DEMCoupled"
     else:
         raise Exception("parallelism is neither OpenMP nor MPI")
 

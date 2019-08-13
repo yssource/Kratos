@@ -69,22 +69,6 @@ void Initialize(const Element& rElement, const ProcessInfo& rProcessInfo) overri
     // Base class Initialize manages constitutive law parameters
     QSVMSData<TDim,TNumNodes, TElementIntegratesInTime>::Initialize(rElement,rProcessInfo);
 
-    const Geometry< Node<3> >& r_geometry = rElement.GetGeometry();
-    const Properties& r_properties = rElement.GetProperties();
-    this->FillFromNodalData(Velocity,VELOCITY,r_geometry);
-    this->FillFromNodalData(MeshVelocity,MESH_VELOCITY,r_geometry);
-    this->FillFromNodalData(BodyForce,BODY_FORCE,r_geometry);
-    this->FillFromNodalData(MomentumProjection,ADVPROJ,r_geometry);
-    this->FillFromNodalData(Pressure,PRESSURE,r_geometry);
-    this->FillFromNodalData(MassProjection,DIVPROJ,r_geometry);
-    this->FillFromProperties(Density,DENSITY,r_properties);
-    this->FillFromProperties(DynamicViscosity,DYNAMIC_VISCOSITY,r_properties); //TODO: remove once we have a Smagorinky constitutive law
-    this->FillFromElementData(CSmagorinsky,C_SMAGORINSKY,rElement); //TODO: remove once we have a Smagorinky constitutive law
-    this->FillFromProcessInfo(DeltaTime,DELTA_TIME,rProcessInfo);
-    this->FillFromProcessInfo(DynamicTau,DYNAMIC_TAU,rProcessInfo);
-    this->FillFromProcessInfo(UseOSS,OSS_SWITCH,rProcessInfo);
-
-    ElementSize = ElementSizeCalculator<TDim,TNumNodes>::MinimumElementSize(r_geometry);
 }
 
 static int Check(const Element& rElement, const ProcessInfo& rProcessInfo)

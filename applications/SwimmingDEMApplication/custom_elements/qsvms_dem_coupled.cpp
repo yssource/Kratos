@@ -99,6 +99,15 @@ void QSVMSDEMCoupled<TElementData>::Calculate(const Variable<double>& rVariable,
     double& rOutput, const ProcessInfo& rCurrentProcessInfo) {}
 
 template <class TElementData>
+void QSVMSDEMCoupled<TElementData>::Calculate(const Variable<array_1d<double, 3>>& rVariable,
+                                              array_1d<double, 3>& rOutput,
+                                              const ProcessInfo& rCurrentProcessInfo) {
+
+    QSVMS<TElementData>::Calculate(rVariable, rOutput, rCurrentProcessInfo);
+
+}
+
+template <class TElementData>
 void QSVMSDEMCoupled<TElementData>::Calculate(const Variable<Vector>& rVariable,
     Vector& rOutput, const ProcessInfo& rCurrentProcessInfo) {}
 
@@ -249,9 +258,8 @@ void QSVMSDEMCoupled<TElementData>::CalculateRightHandSide(VectorType& rRightHan
         TElementData data;
         data.Initialize(*this, rCurrentProcessInfo);
         // Calculate this element's geometric parameters
-        double Area;
+        double Area = data.Weight;
         array_1d<double, 3> convective_velocity;
-        GeometryUtils::CalculateGeometryData(this->GetGeometry(), data.DN_DX, data.N, Area);
 
         // Calculate this element's fluid properties
         QSVMS<TElementData>::CalculateRightHandSide(rRightHandSideVector, rCurrentProcessInfo);
@@ -300,18 +308,14 @@ void QSVMSDEMCoupled<TElementData>::AddMassStabilization(TElementData& rData,
 
         this->CalculateTau(rData, convective_velocity, tau_one, tau_two);
 
-        double Area;
-        GeometryUtils::CalculateGeometryData(this->GetGeometry(), rData.DN_DX, rData.N, Area);
-
         double K; // Temporary results
         double weight = rData.Weight * tau_one * density; // This density is for the dynamic term in the residual (rho*Du/Dt)
         // If we want to use more than one Gauss point to integrate the convective term, this has to be evaluated once per integration point
+
         Vector AGradN, AGradNMod;
         this->ConvectionOperator(AGradN, convective_velocity, rData.DN_DX); // Get a * grad(Ni)
-        AGradN *= density;
 
-        double AdvVelDiv = 0.0;
-        this->GetAdvectiveVelDivergence(AdvVelDiv, rData.DN_DX);
+        AGradN *= density;
 
         const double fluid_fraction = this->GetAtCoordinate(rData.FluidFraction, rData.N);
 
@@ -396,12 +400,10 @@ void QSVMSDEMCoupled<TElementData>::CalculateLaplacianMassMatrix(MatrixType& rMa
             rMassMatrix.resize(LocalSize, LocalSize, false);
 
         rMassMatrix = ZeroMatrix(LocalSize, LocalSize);
-
+        TElementData data;
+        data.Initialize(*this, rCurrentProcessInfo);
         // Get the element's geometric parameters
-        double Area;
-        array_1d<double, NumNodes> N;
-        BoundedMatrix<double, NumNodes, Dim> DN_DX;
-        GeometryUtils::CalculateGeometryData(this->GetGeometry(), DN_DX, N, Area);
+        double Area = data.Weight;
 
         // Calculate this element's fluid properties
 
@@ -530,7 +532,7 @@ void QSVMSDEMCoupled<TElementData>::AddProjectionToRHS(VectorType& RHS,
         const double density = this->GetAtCoordinate(rData.Density, rData.N);
         Vector AGradN;
         this->ConvectionOperator(AGradN, rAdvVel, rData.DN_DX); // Get a * grad(Ni)
-        array_1d<double,3> MomProj(3,0.0);
+        array_1d<double,Dim> MomProj(Dim,0.0);
         MomProj = this->GetAtCoordinate(rData.MomentumProjection, rData.N);
         double DivProj = 0.0;
         DivProj = this->GetAtCoordinate(rData.MassProjection, rData.N);
@@ -539,46 +541,17 @@ void QSVMSDEMCoupled<TElementData>::AddProjectionToRHS(VectorType& RHS,
 
         for (unsigned int i = 0; i < NumNodes; i++)
         {
-
-            //double FluidFraction = this->GetGeometry()[i].FastGetSolutionStepValue(FLUID_FRACTION);
-            array_1d<double,3> FluidFractionGradient(3,0.0);
-            FluidFractionGradient[0] += rData.DN_DX(i, 0) * fluid_fraction;
-            FluidFractionGradient[1] += rData.DN_DX(i, 1) * fluid_fraction;
-            FluidFractionGradient[2] += rData.DN_DX(i, 2) * fluid_fraction;
-
-
+            array_1d<double,Dim> FluidFractionGradient(Dim,0.0);
             for (unsigned int d = 0; d < Dim; d++)
             {
+
+                FluidFractionGradient[d] += rData.DN_DX(i, d) * rData.FluidFraction[d];
                 RHS[FirstRow+d] -= Weight * (density * AGradN[i] * TauOne * MomProj[d] + (fluid_fraction * rData.DN_DX(i,d) + FluidFractionGradient[d] * rData.N[i]) * TauTwo * DivProj); // TauOne * (a * Grad(v)) * MomProjection + TauTwo * Div(v) * MassProjection
                 RHS[FirstRow+Dim] -= Weight * rData.DN_DX(i,d) * TauOne * MomProj[d]; // TauOne * Grad(q) * MomProjection
             }
             FirstRow += BlockSize;
         }
     }
-
-// template<class TElementData>
-// void QSVMSDEMCoupled<TElementData>::EvaluateTimeDerivativeInPoint(double& rResult,
-//                                                                   const Variable< double >& rVariable,
-//                                                                   const array_1d< double,  NumNodes >& rShapeFunc,
-//                                                                   const double& DeltaTime,
-//                                                                   const std::vector<double>& rSchemeWeigths)
-//     {
-//         // Compute the time derivative of a nodal variable as a liner contribution of weighted value of the nodal variable in the (Gauss) Point
-
-//       if (rVariable == FLUID_FRACTION_RATE){
-//         double delta_time_inv = 1.0 / DeltaTime;
-
-//         for (unsigned int iNode = 0; iNode <  NumNodes; ++iNode){
-//             double rate = delta_time_inv * (this->GetGeometry()[iNode].FastGetSolutionStepValue(FLUID_FRACTION) - this->GetGeometry()[iNode].FastGetSolutionStepValue(FLUID_FRACTION_OLD));
-//             this->GetGeometry()[iNode].SetLock();
-//             this->GetGeometry()[iNode].FastGetSolutionStepValue(FLUID_FRACTION_RATE) = rate;
-//             this->GetGeometry()[iNode].UnSetLock();
-//             rResult += rShapeFunc[iNode] * rate;
-//             }
-
-//           }
-
-//     }
 
 template< class TElementData >
 void QSVMSDEMCoupled<TElementData>::CalculateTau(
@@ -606,7 +579,7 @@ void QSVMSDEMCoupled<TElementData>::CalculateTau(
 
 }
 
-/// Add a the contribution from a single integration point to the velocity contribution
+// Add a the contribution from a single integration point to the velocity contribution
 template< class TElementData >
 void QSVMSDEMCoupled<TElementData>::AddVelocitySystem(TElementData& rData,
                                                       MatrixType &rLocalLHS,
@@ -614,26 +587,24 @@ void QSVMSDEMCoupled<TElementData>::AddVelocitySystem(TElementData& rData,
 {
     auto& LHS = rData.LHS;
     LHS.clear();
+
     // Interpolate nodal data on the integration point
     const double density = this->GetAtCoordinate(rData.Density, rData.N);
     array_1d<double,3> body_force = this->GetAtCoordinate(rData.BodyForce,rData.N);
     array_1d<double,3> momentum_projection = this->GetAtCoordinate(rData.MomentumProjection, rData.N);
     double mass_projection = this->GetAtCoordinate(rData.MassProjection, rData.N);
+
     double tau_one;
     double tau_two;
     array_1d<double, 3> convective_velocity =
         this->GetAtCoordinate(rData.Velocity, rData.N) -
         this->GetAtCoordinate(rData.MeshVelocity, rData.N);
-    array_1d< double,  NumNodes > AGradNMod;
 
     this->CalculateTau(rData, convective_velocity, tau_one, tau_two);
 
     Vector AGradN;
     this->ConvectionOperator(AGradN, convective_velocity, rData.DN_DX);
 
-    double AdvVelDiv = 0.0;
-    this->GetAdvectiveVelDivergence(AdvVelDiv, rData.DN_DX);
-    this->GetModifiedConvectionOperator(AGradNMod, convective_velocity, AdvVelDiv, rData.N, rData.DN_DX);
     // Multiplying some quantities by density to have correct units
     body_force *= density; // Force per unit of volume
     AGradN *= density; // Convective term is always multiplied by density
@@ -641,20 +612,14 @@ void QSVMSDEMCoupled<TElementData>::AddVelocitySystem(TElementData& rData,
     double PAlphaDivV, GAlpha;
     array_1d<double,3> FluidFractionGradient(3,0.0);
     const double fluid_fraction = this->GetAtCoordinate(rData.FluidFraction, rData.N);
-    this->EvaluateGradientOfScalarInPoint(FluidFractionGradient, fluid_fraction, rData.DN_DX);
+
+    this->EvaluateGradientOfScalarInPoint(FluidFractionGradient, rData.FluidFraction, rData.DN_DX);
 
     for (unsigned int i = 0; i < NumNodes; ++i) {
         this->GetGeometry()[i].FastGetSolutionStepValue(FLUID_FRACTION_GRADIENT) = FluidFractionGradient;
     }
 
     const double fluid_fraction_rate = this->GetAtCoordinate(rData.FluidFractionRate, rData.N);
-
-    const double EpsilonInside = false;
-
-        if (EpsilonInside){
-        array_1d<double,3> rGradEpsOverEps;
-        rGradEpsOverEps = 1.0 / fluid_fraction * FluidFractionGradient;
-        }
 
     // Temporary containers
     double K, G, PDivV;
@@ -698,7 +663,7 @@ void QSVMSDEMCoupled<TElementData>::AddVelocitySystem(TElementData& rData,
                 laplacian += fluid_fraction * rData.DN_DX(i,d) * rData.DN_DX(j,d); // Stabilization: Grad(q) * tau_one * Grad(p)
 
                 for (unsigned int e = 0; e < Dim; e++) // Stabilization: Div(v) * tau_two * Div(u)
-                    LHS(row+d,col+e) += rData.Weight * tau_two * rData.DN_DX(i,d) * rData.DN_DX(j,e) * (fluid_fraction * rData.DN_DX(j,e) + FluidFractionGradient[e] * rData.N[j]);
+                    LHS(row+d,col+e) += rData.Weight * tau_two * rData.DN_DX(i,d) * (fluid_fraction * rData.DN_DX(j,e) + FluidFractionGradient[e] * rData.N[j]);
             }
 
             // Write q-p term
@@ -759,7 +724,7 @@ void QSVMSDEMCoupled<TElementData>::MassProjTerm(const TElementData& rData,
 
         const double fluid_fraction = this->GetAtCoordinate(rData.FluidFraction, rData.N);
 
-        this->EvaluateGradientOfScalarInPoint(FluidFractionGradient, fluid_fraction, rData.DN_DX);
+        this->EvaluateGradientOfScalarInPoint(FluidFractionGradient, rData.FluidFraction, rData.DN_DX);
 
         const double fluid_fraction_rate = this->GetAtCoordinate(rData.FluidFractionRate, rData.N);
         // Compute this node's contribution to the residual (evaluated at inegration point)
@@ -774,12 +739,12 @@ void QSVMSDEMCoupled<TElementData>::MassProjTerm(const TElementData& rData,
 
 template<class TElementData>
 void QSVMSDEMCoupled<TElementData>::EvaluateGradientOfScalarInPoint(array_1d< double, 3 >& rResult,
-                                                                    const double& variable,
+                                                                    const typename TElementData::NodalScalarData& variable,
                                                                     const typename TElementData::ShapeDerivativesType& rShapeDeriv) const
     {
 
         for (unsigned int i = 0; i < NumNodes; ++i) {
-            const double& scalar = variable;
+            const double& scalar = variable[i];
 
             for (unsigned int d = 0; d < Dim; ++d){
                 rResult[d] += rShapeDeriv(i, d) * scalar;

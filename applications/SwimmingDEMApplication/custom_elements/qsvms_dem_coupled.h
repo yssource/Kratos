@@ -210,6 +210,10 @@ public:
         double& rOutput,
         const ProcessInfo& rCurrentProcessInfo) override;
 
+    void Calculate(const Variable<array_1d<double, 3>>& rVariable,
+                   array_1d<double, 3>& rOutput,
+                   const ProcessInfo& rCurrentProcessInfo) override;
+
     void Calculate(
         const Variable<Vector >& rVariable,
         Vector& Output,
@@ -294,7 +298,7 @@ public:
     void MassProjTerm(const TElementData& rData, double &rMassRHS) const override;
 
     void EvaluateGradientOfScalarInPoint(array_1d< double, 3 >& rResult,
-                                         const double& variable,
+                                         const typename TElementData::NodalScalarData& variable,
                                          const typename TElementData::ShapeDerivativesType& rShapeDeriv) const;
 
     int Check(const ProcessInfo &rCurrentProcessInfo) override;

@@ -65,44 +65,44 @@ class ManufacturedVortex(ManufacturedSolution):
 
     # Velocity
 
-    def u1(self, x1, x2, t):
+    def u1(self, t, x1, x2):
         return self.a(t) * self.f(x1) * self.g(x2)
 
-    def u2(self, x1, x2, t):
+    def u2(self, t, x1, x2):
         return -self.a(t) * self.g(x1) * self.f(x2)
 
     # Velocity derivatives
 
-    def du11(self, x1, x2, t):
+    def du11(self, t, x1, x2):
         return self.a(t) * self.df(x1) * self.g(x2)
 
-    def du12(self, x1, x2, t):
+    def du12(self, t, x1, x2):
         return self.a(t) * self.f(x1) * self.dg(x2)
 
-    def du21(self, x1, x2, t):
+    def du21(self, t, x1, x2):
         return -self.a(t) * self.dg(x1) * self.f(x2)
 
-    def du22(self, x1, x2, t):
+    def du22(self, t, x1, x2):
         return -self.a(t) * self.g(x1) * self.df(x2)
 
     # Velocity second derivatives
 
-    def du111(self, x1, x2, t):
+    def du111(self, t, x1, x2):
         return self.a(t) * self.ddf(x1) * self.g(x2)
 
-    def du122(self, x1, x2, t):
+    def du122(self, t, x1, x2):
         return self.a(t) * self.f(x1) * self.ddg(x2)
 
-    def du211(self, x1, x2, t):
+    def du211(self, t, x1, x2):
         return -self.a(t) * self.ddg(x1) * self.f(x2)
 
-    def du222(self, x1, x2, t):
+    def du222(self, t, x1, x2):
         return -self.a(t) * self.g(x1) * self.ddf(x2)
 
     # Accelerations
 
-    def du1dt(self, x1, x2, t):
+    def du1dt(self, t, x1, x2):
         return self.da(t) * self.f(x1) * self.g(x2)
 
-    def du2dt(self, x1, x2, t):
+    def du2dt(self, t, x1, x2):
         return -self.da(t) * self.g(x1) * self.f(x2)

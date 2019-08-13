@@ -32,8 +32,9 @@ class ApplyCustomBodyForceProcess(KratosMultiphysics.Process):
         self.model_part = model[self.settings["model_part_name"].GetString()]
         self.variable = KratosMultiphysics.KratosGlobals.GetVariable(self.settings["variable_name"].GetString())
 
-        benchmark_module = __import__(self.settings["benchmark_name"].GetString(), fromlist=[None])
-        self.benchmark = benchmark_module.CreateManufacturedSolution(self.settings["benchmark_parameters"])
+        #benchmark_module = __import__(self.settings["benchmark_name"].GetString(), fromlist=[None])
+        from KratosMultiphysics.SwimmingDEMApplication.custom_body_force import stationary_fluid_fraction_solution
+        self.benchmark = stationary_fluid_fraction_solution.CreateManufacturedSolution(self.settings["benchmark_parameters"])
 
         self.compute_error = self.settings["compute_nodal_error"].GetBool()
 
@@ -45,9 +46,9 @@ class ApplyCustomBodyForceProcess(KratosMultiphysics.Process):
     def ExecuteBeforeSolutionLoop(self):
         current_time = 0.0
         for node in self.model_part.Nodes:
-            value = self.benchmark.Velocity(node.X, node.Y, node.Z, current_time)
+            value = self.benchmark.Velocity(current_time, node.X, node.Y, node.Z)
             node.SetSolutionStepValue(KratosMultiphysics.VELOCITY, value)
-            exact_value = self.benchmark.Velocity(node.X, node.Y, node.Z, current_time)
+            exact_value = self.benchmark.Velocity(current_time, node.X, node.Y, node.Z)
             node.SetValue(KratosMultiphysics.Y, exact_value)
 
     def ExecuteInitializeSolutionStep(self):
@@ -70,7 +71,7 @@ class ApplyCustomBodyForceProcess(KratosMultiphysics.Process):
     def _SetBodyForce(self):
         current_time = self.model_part.ProcessInfo[KratosMultiphysics.TIME]
         for node in self.model_part.Nodes:
-            value = self.benchmark.BodyForce(node.X, node.Y, node.Z, current_time)
+            value = self.benchmark.BodyForce(current_time, node.X, node.Y, node.Z)
             node.SetSolutionStepValue(self.variable, value)
 
     def _ComputeVelocityError(self):

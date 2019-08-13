@@ -24,7 +24,7 @@ class StabilizedFormulationDEMCoupled(NavierMonolithic.StabilizedFormulation):
         default_settings = KratosMultiphysics.Parameters(r"""{
             "element_type": "qsvmsDEM",
             "use_orthogonal_subscales": false,
-            "dynamic_tau": 0.0,
+            "dynamic_tau": 0.01,
             "element_name": "QSVMSDEMCoupled"
         }""")
         settings.ValidateAndAssignDefaults(default_settings)
@@ -40,12 +40,13 @@ def CreateSolver(model, custom_settings):
 
 class NavierStokesSolverMonolithicDEM(FluidDEMSolver):
 
-    def _ValidateSettings(self, settings):
+    @classmethod
+    def GetDefaultSettings(cls):
 
         ##settings string in json format
         default_settings = KratosMultiphysics.Parameters("""
         {
-            "solver_type": "navier_stokes_solver_vmsmonolithic",
+            "solver_type": "MonolithicDEM",
             "model_part_name": "FluidModelPart",
             "domain_size": -1,
             "model_import_settings": {
@@ -91,9 +92,8 @@ class NavierStokesSolverMonolithicDEM(FluidDEMSolver):
             "turbulence_model": "None"
         }""")
 
-        settings = self._BackwardsCompatibilityHelper(settings)
-        settings.ValidateAndAssignDefaults(default_settings)
-        return settings
+        default_settings.AddMissingParameters(super(NavierStokesSolverMonolithicDEM, cls).GetDefaultSettings())
+        return default_settings
 
     def _BackwardsCompatibilityHelper(self,settings):
         ## Backwards compatibility -- deprecation warnings
@@ -130,6 +130,9 @@ class NavierStokesSolverMonolithicDEM(FluidDEMSolver):
 
 
     def __init__(self, model, custom_settings):
+
+        self._validate_settings_in_baseclass=True
+        custom_settings = self._BackwardsCompatibilityHelper(custom_settings)
 
         super(NavierStokesSolverMonolithicDEM,self).__init__(model, custom_settings)
 

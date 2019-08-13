@@ -52,38 +52,38 @@ class PolynomialVortex(ManufacturedSolution):
     def dddf(self, x):
         return 12 * self.sq_au * (2*x - self.L)
 
-    def u1(self, x1, x2, t):
+    def u1(self, t, x1, x2):
         return self.f(x1) * self.df(x2) * self.g(t)
 
-    def u2(self, x1, x2, t):
+    def u2(self, t, x1, x2):
         return -self.df(x1) * self.f(x2) * self.g(t)
 
-    def du1dt(self, x1, x2, t):
+    def du1dt(self, t, x1, x2):
         return self.f(x1) * self.df(x2) * self.dg(t)
 
-    def du2dt(self, x1, x2, t):
+    def du2dt(self, t, x1, x2):
         return -self.df(x1) * self.f(x2) * self.dg(t)
 
-    def du11(self, x1, x2, t):
+    def du11(self, t, x1, x2):
         return self.df(x1) * self.df(x2) * self.g(t)
 
-    def du12(self, x1, x2, t):
+    def du12(self, t, x1, x2):
         return self.f(x1) * self.ddf(x2) * self.g(t)
 
-    def du21(self, x1, x2, t):
+    def du21(self, t, x1, x2):
         return -self.ddf(x1) * self.f(x2) * self.g(t)
 
-    def du22(self, x1, x2, t):
+    def du22(self, t, x1, x2):
         return -self.df(x1) * self.df(x2) * self.g(t)
 
-    def du111(self, x1, x2, t):
+    def du111(self, t, x1, x2):
         return self.ddf(x1) * self.df(x2) * self.g(t)
 
-    def du122(self, x1, x2, t):
+    def du122(self, t, x1, x2):
         return self.f(x1) * self.dddf(x2) * self.g(t)
 
-    def du211(self, x1, x2, t):
+    def du211(self, t, x1, x2):
         return -self.dddf(x1) * self.f(x2) * self.g(t)
 
-    def du222(self, x1, x2, t):
+    def du222(self, t, x1, x2):
         return -self.df(x1) * self.ddf(x2) * self.g(t)

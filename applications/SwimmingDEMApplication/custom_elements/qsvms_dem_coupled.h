@@ -139,7 +139,7 @@ public:
     QSVMSDEMCoupled(IndexType NewId, GeometryType::Pointer pGeometry, Properties::Pointer pProperties);
 
     /// Destructor.
-    ~QSVMSDEMCoupled() override;
+    virtual ~QSVMSDEMCoupled() override;
 
     ///@}
     ///@name Operators
@@ -183,19 +183,6 @@ public:
      * @param pProperties: the properties assigned to the new element
      * @return a Pointer to the new element
      */
-
-    // Element::Pointer Clone( IndexType NewId, NodesArrayType const& rThisNodes ) const override
-    // {
-    //     QSVMSDEMCoupled NewElement( NewId, this->GetGeometry().Create( rThisNodes ), this->pGetProperties() );
-
-    //     NewElement.SetData(this->GetData());
-    //     NewElement.SetFlags(this->GetFlags());
-
-    //     if(this->mpConstitutiveLaw != nullptr)
-    //         NewElement.mpConstitutiveLaw = this->mpConstitutiveLaw->Clone();
-
-    //     return Kratos::make_intrusive< QSVMSDEMCoupled >(NewElement);
-    // }
 
     ///@}
     ///@name Access

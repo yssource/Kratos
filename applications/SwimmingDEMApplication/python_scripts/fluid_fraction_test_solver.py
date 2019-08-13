@@ -15,9 +15,6 @@ class FluidFractionTestSolver(BaseSolver):
                                                       variables_manager)
 
     def ReturnExactFluidFraction(self, x, y):
-        #interpolate_process_data = self.project_parameters['processes']['check_interpolated_fluid_fraction'][0]
-        #interpolate_process_parameters = interpolate_process_data['Parameters']
-        #field_def = [entry.GetString() for entry in interpolate_process_parameters['value']]
         #field = eval('-0.4 * x - 0.4 * y + 1')
         field = 1.0
         return field
@@ -27,7 +24,6 @@ class FluidFractionTestSolver(BaseSolver):
 
     def SolveFluidSolutionStep(self):
         self.ImposeVelocity()
-        #self.SetBodyForceField()
         super(FluidFractionTestSolver, self).SolveFluidSolutionStep()
 
     def SetFluidFractionField(self):

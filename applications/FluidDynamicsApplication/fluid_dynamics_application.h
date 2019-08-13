@@ -73,6 +73,7 @@
 #include "custom_elements/vms_adjoint_element.h"
 
 #include "custom_utilities/qsvms_data.h"
+#include "../SwimmingDEMApplication/custom_utilities/qsvmsdemcoupled_data.h"
 #include "custom_utilities/time_integrated_qsvms_data.h"
 #include "custom_utilities/fic_data.h"
 #include "custom_utilities/time_integrated_fic_data.h"

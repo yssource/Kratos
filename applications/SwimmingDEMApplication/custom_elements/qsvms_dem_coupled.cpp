@@ -17,8 +17,8 @@
 
 #include "../FluidDynamicsApplication/fluid_dynamics_application_variables.h"
 #include "../FluidDynamicsApplication/fluid_dynamics_application.h"
-#include "../FluidDynamicsApplication/custom_utilities/qsvms_data.h"
 #include "../FluidDynamicsApplication/custom_utilities/fluid_element_utilities.h"
+#include "custom_utilities/qsvmsdemcoupled_data.h"
 
 namespace Kratos
 {
@@ -792,8 +792,8 @@ void QSVMSDEMCoupled<TElementData>::load(Serializer& rSerializer)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Class template instantiation
 
-template class QSVMSDEMCoupled<QSVMSData< 2, 3 >>;
-template class QSVMSDEMCoupled<QSVMSData< 3, 4 >>;
+template class QSVMSDEMCoupled<QSVMSDEMCoupledData< 2, 3 >>;
+template class QSVMSDEMCoupled<QSVMSDEMCoupledData< 3, 4 >>;
 
 }
 

@@ -497,7 +497,7 @@ public:
         double Coeff = Density * Area / TNumNodes; //Optimize!
 //G
         this->CalculateLumpedMassMatrix(rMassMatrix, Coeff);
-/*
+        /**
         MatrixType NContainer;
         ShapeFunctionDerivativesArrayType DN_DXContainer;
         VectorType GaussWeights;
@@ -509,8 +509,8 @@ public:
             const ShapeFunctionsType& Ng = row(NContainer, g);
             this->AddConsistentMassMatrixContribution(rMassMatrix, Ng, Density, GaussWeight);
           }
-//Z
-        /* For ASGS: add dynamic stabilization terms.
+//Z      */
+        /** For ASGS: add dynamic stabilization terms.
          These terms are not used in OSS, as they belong to the finite element
          space and cancel out with their projections.
          */

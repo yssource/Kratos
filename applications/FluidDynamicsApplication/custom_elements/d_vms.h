@@ -287,7 +287,7 @@ protected:
 
     void AddMassStabilization(
         TElementData& rData,
-        MatrixType& rMassMatrix);
+        MatrixType& rMassMatrix) override;
 
     void CalculateProjections(const ProcessInfo &rCurrentProcessInfo) override;
 

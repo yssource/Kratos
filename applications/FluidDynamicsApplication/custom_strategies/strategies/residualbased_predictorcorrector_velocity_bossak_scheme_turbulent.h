@@ -422,9 +422,9 @@ namespace Kratos {
             (rCurrentElement)->CalculateLocalSystem(LHS_Contribution, RHS_Contribution, CurrentProcessInfo);
             //std::cout << rCurrentElement->Id() << std::endl;
             (rCurrentElement)->CalculateMassMatrix(mMass[k], CurrentProcessInfo);
-            if (rCurrentElement->Id() == 35) std::cout << rCurrentElement->Id() << " Mass = " << mMass[k] << std::endl;
+
             (rCurrentElement)->CalculateLocalVelocityContribution(mDamp[k], RHS_Contribution, CurrentProcessInfo);
-            if (rCurrentElement->Id() == 35) KRATOS_WATCH(mDamp[k])
+
             (rCurrentElement)->EquationIdVector(EquationId, CurrentProcessInfo);
 
             //adding the dynamic contributions (statics is already included)

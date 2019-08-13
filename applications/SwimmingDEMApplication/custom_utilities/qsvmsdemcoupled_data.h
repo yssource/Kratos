@@ -14,8 +14,10 @@
 #define KRATOS_QSVMSDEMCOUPLED_DATA_H
 
 #include "../FluidDynamicsApplication/fluid_dynamics_application_variables.h"
+#include "../FluidDynamicsApplication/custom_utilities/fluid_element_data.h"
 #include "../FluidDynamicsApplication/custom_utilities/qsvms_data.h"
 #include "../FluidDynamicsApplication/custom_utilities/element_size_calculator.h"
+#include "includes/checks.h"
 
 namespace Kratos {
 
@@ -25,7 +27,7 @@ namespace Kratos {
 ///@name Kratos classes
 ///@{
 
-template< size_t TDim, size_t TNumNodes, bool TElementIntegratesInTime = false >
+template< size_t TDim, size_t TNumNodes, bool TElementIntegratesInTime = false>
 class KRATOS_API(SWIMMING_DEM_APPLICATION) QSVMSDEMCoupledData : public QSVMSData<TDim, TNumNodes, TElementIntegratesInTime>
 {
 public:
@@ -33,32 +35,17 @@ public:
 ///@name Type Definitions
 ///@{
 
-using NodalScalarData = typename QSVMSData<TDim,TNumNodes, false>::NodalScalarData;
-using NodalVectorData = typename QSVMSData<TDim,TNumNodes, false>::NodalVectorData;
+using NodalScalarData = typename FluidElementData<TDim,TNumNodes, false>::NodalScalarData;
+using NodalVectorData = typename FluidElementData<TDim,TNumNodes, false>::NodalVectorData;
 
 ///@}
 ///@name Public Members
 ///@{
 
-NodalVectorData Velocity;
-NodalVectorData MeshVelocity;
-NodalVectorData BodyForce;
-NodalVectorData MomentumProjection;
-
-NodalScalarData Pressure;
-NodalScalarData MassProjection;
-
-double Density;
-double DynamicViscosity;
-double CSmagorinsky;
-double DeltaTime;
-double DynamicTau;
-int UseOSS;
+NodalScalarData FluidFraction;
+NodalScalarData FluidFractionRate;
 
 double ElementSize;
-
-/// Auxiliary container for the local matrix at the integration point (stored to save reallocation at each point)
-BoundedMatrix<double,TNumNodes*(TDim+1),TNumNodes*(TDim+1)> LHS;
 
 ///@}
 ///@name Public Operations
@@ -67,37 +54,24 @@ BoundedMatrix<double,TNumNodes*(TDim+1),TNumNodes*(TDim+1)> LHS;
 void Initialize(const Element& rElement, const ProcessInfo& rProcessInfo) override
 {
     // Base class Initialize manages constitutive law parameters
-    QSVMSData<TDim,TNumNodes, TElementIntegratesInTime>::Initialize(rElement,rProcessInfo);
+    QSVMSData<TDim, TNumNodes, TElementIntegratesInTime>::Initialize(rElement,rProcessInfo);
+    const Geometry< Node<3> >& r_geometry = rElement.GetGeometry();
+    this->FillFromNodalData(FluidFraction, FLUID_FRACTION, r_geometry);
+    this->FillFromNodalData(FluidFractionRate, FLUID_FRACTION_RATE, r_geometry);
 
+    ElementSize = ElementSizeCalculator<TDim,TNumNodes>::MinimumElementSize(r_geometry);
 }
 
 static int Check(const Element& rElement, const ProcessInfo& rProcessInfo)
 {
+    QSVMSData<TDim, TNumNodes, TElementIntegratesInTime>::Check(rElement, rProcessInfo);
+
     const Geometry< Node<3> >& r_geometry = rElement.GetGeometry();
-
-    KRATOS_CHECK_VARIABLE_KEY(VELOCITY);
-    KRATOS_CHECK_VARIABLE_KEY(MESH_VELOCITY);
-    KRATOS_CHECK_VARIABLE_KEY(BODY_FORCE);
-    KRATOS_CHECK_VARIABLE_KEY(ADVPROJ);
-    KRATOS_CHECK_VARIABLE_KEY(PRESSURE);
-    KRATOS_CHECK_VARIABLE_KEY(DIVPROJ);
-
     for (unsigned int i = 0; i < TNumNodes; i++)
     {
-        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(VELOCITY,r_geometry[i]);
-        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(MESH_VELOCITY,r_geometry[i]);
-        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(BODY_FORCE,r_geometry[i]);
-        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(ADVPROJ,r_geometry[i]);
-        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(PRESSURE,r_geometry[i]);
-        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(DIVPROJ,r_geometry[i]);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(FLUID_FRACTION, r_geometry[i]);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(FLUID_FRACTION_RATE, r_geometry[i]);
     }
-
-    KRATOS_CHECK_VARIABLE_KEY(DENSITY);
-    KRATOS_CHECK_VARIABLE_KEY(DYNAMIC_VISCOSITY);
-    KRATOS_CHECK_VARIABLE_KEY(C_SMAGORINSKY);
-    KRATOS_CHECK_VARIABLE_KEY(DELTA_TIME);
-    KRATOS_CHECK_VARIABLE_KEY(DYNAMIC_TAU);
-    KRATOS_CHECK_VARIABLE_KEY(OSS_SWITCH);
 
     return 0;
 }

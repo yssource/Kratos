@@ -24,7 +24,7 @@
 #include "includes/variables.h"
 #include "includes/dem_variables.h"  //TODO: must be removed eventually
 #include "includes/cfd_variables.h"  //TODO: must be removed eventually
-#include "includes/legacy_structural_app_vars.h"  //TODO: must be removed eventually
+#include "includes/legacy_structural_app_vars.h"  //TODO: must be removed
 #include "custom_elements/monolithic_dem_coupled.h"
 #include "custom_elements/monolithic_dem_coupled_weak.h"
 #include "custom_elements/qsvms_dem_coupled.h"
@@ -45,6 +45,7 @@
 #include "../DEMApplication/custom_elements/analytic_spheric_particle.h"
 #include "../FluidDynamicsApplication/custom_elements/qs_vms.h"
 #include "../FluidDynamicsApplication/custom_utilities/qsvms_data.h"
+#include "custom_utilities/qsvmsdemcoupled_data.h"
 
 namespace Kratos
 {
@@ -122,9 +123,9 @@ private:
     const MonolithicDEMCoupledWeak<3> mMonolithicDEMCoupledWeak3D;
 
     /// 2D instance of the QSVMSDEMCoupled element
-    const QSVMSDEMCoupled< QSVMSData < 2, 3 > > mQSVMSDEMCoupled2D3N;
+    const QSVMSDEMCoupled< QSVMSDEMCoupledData < 2, 3 > > mQSVMSDEMCoupled2D3N;
     /// 3D instance of the QSVMSDEMCoupled element
-    const QSVMSDEMCoupled< QSVMSData < 3, 4 > > mQSVMSDEMCoupled3D4N;
+    const QSVMSDEMCoupled< QSVMSDEMCoupledData < 3, 4 > > mQSVMSDEMCoupled3D4N;
 
     const ComputeLaplacianSimplex<2> mComputeLaplacianSimplex2D;
     const ComputeLaplacianSimplex<3> mComputeLaplacianSimplex3D;

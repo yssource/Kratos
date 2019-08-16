@@ -261,7 +261,7 @@ class ConditionFactory:
                 # point_ptr.Attributes().SetLayer('IntegrationPoints_'+str(face_i.Key()))
 
                 if apply_kl_shell:
-                    new_condition = clib.KLShellConditionWithAD(nonzero_pole_nodes, shape_functions, shell_penalty_fac, integration_weight)
+                    new_condition = clib.KLShellConditionWithAD(nonzero_pole_nodes, shape_functions, shell_penalty_fac, integration_weight, membrane_fac, bending_fac)
                     conditions.append(new_condition)
 
     # --------------------------------------------------------------------------

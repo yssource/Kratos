@@ -446,15 +446,16 @@ class ALMContactProcess(search_base_process.SearchBaseProcess):
         if process_info[KM.SCALE_FACTOR] < sys.float_info.epsilon:
             process_info[KM.SCALE_FACTOR] = 1.0e0
 
-        # We print the parameters considered
-        KM.Logger.PrintInfo("SCALE_FACTOR: ", "{:.2e}".format(process_info[KM.SCALE_FACTOR]))
-        KM.Logger.PrintInfo("INITIAL_PENALTY: ", "{:.2e}".format(process_info[KM.INITIAL_PENALTY]))
-
         # We set MAX_LM_THRESHOLD
         if not self.contact_settings["max_lagrange_multiplier_check"].IsNull():
             process_info[CSMA.MAX_LM_THRESHOLD] = self.contact_settings["max_lagrange_multiplier_check"].GetDouble() * process_info[KM.INITIAL_PENALTY]
         else:
             process_info[CSMA.MAX_LM_THRESHOLD] = 1.0e30
+
+        # We print the parameters considered
+        KM.Logger.PrintInfo("SCALE_FACTOR: ", "{:.2e}".format(process_info[KM.SCALE_FACTOR]))
+        KM.Logger.PrintInfo("INITIAL_PENALTY: ", "{:.2e}".format(process_info[KM.INITIAL_PENALTY]))
+        KM.Logger.PrintInfo("MAX_LM_THRESHOLD: ", "{:.2e}".format(process_info[CSMA.MAX_LM_THRESHOLD]))
 
     def _initialize_search_conditions(self):
         """ This method initializes some conditions values

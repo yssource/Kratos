@@ -44,7 +44,7 @@ std::size_t ComputePenaltyFrictionlessActiveSet(ModelPart& rModelPart)
                 const double epsilon = it_node->Has(INITIAL_PENALTY) ? it_node->GetValue(INITIAL_PENALTY) : common_epsilon;
                 const double augmented_normal_pressure = epsilon * it_node->FastGetSolutionStepValue(WEIGHTED_GAP);
 
-                it_node->SetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE, augmented_normal_pressure); // NOTE: This value is purely for debugging interest (to see the "effective" pressure)
+                it_node->SetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE, augmented_normal_pressure);
 
                 if (augmented_normal_pressure < 0.0) { // NOTE: This could be conflictive (< or <=)
                     if (it_node->IsNot(ACTIVE)) {
@@ -192,6 +192,7 @@ std::size_t ComputeALMFrictionlessActiveSet(ModelPart& rModelPart)
     if (rModelPart.Is(INTERACTION) || r_process_info[NL_ITERATION_NUMBER] == 1) {
         const double common_epsilon = r_process_info[INITIAL_PENALTY];
         const double scale_factor = r_process_info[SCALE_FACTOR];
+        const double max_lagrange_multiplier = r_process_info.Has(MAX_LM_THRESHOLD) ? r_process_info[MAX_LM_THRESHOLD] : 1.0e30;
 
         auto& r_nodes_array = rModelPart.GetSubModelPart("Contact").Nodes();
         const auto it_node_begin = r_nodes_array.begin();
@@ -201,9 +202,24 @@ std::size_t ComputeALMFrictionlessActiveSet(ModelPart& rModelPart)
             auto it_node = it_node_begin + i;
             if (it_node->Is(SLAVE)) {
                 const double epsilon = it_node->Has(INITIAL_PENALTY) ? it_node->GetValue(INITIAL_PENALTY) : common_epsilon;
-                const double augmented_normal_pressure = scale_factor * it_node->FastGetSolutionStepValue(LAGRANGE_MULTIPLIER_CONTACT_PRESSURE) + epsilon * it_node->FastGetSolutionStepValue(WEIGHTED_GAP);
+                double augmented_normal_pressure = scale_factor * it_node->FastGetSolutionStepValue(LAGRANGE_MULTIPLIER_CONTACT_PRESSURE) + epsilon * it_node->FastGetSolutionStepValue(WEIGHTED_GAP);
 
-                it_node->SetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE, augmented_normal_pressure); // NOTE: This value is purely for debugging interest (to see the "effective" pressure)
+                // Check for the maximum value
+                if (std::abs(augmented_normal_pressure) > max_lagrange_multiplier) {
+                    KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM is to high, it will be reduced in order to avoid problems" << std::endl;
+                    if (augmented_normal_pressure < 0.0) {
+                        augmented_normal_pressure = - max_lagrange_multiplier;
+                        if (it_node->Is(ACTIVE)) {
+                            it_node->FastGetSolutionStepValue(LAGRANGE_MULTIPLIER_CONTACT_PRESSURE) = augmented_normal_pressure/scale_factor;
+                        }
+                    } else {
+                        augmented_normal_pressure = 0.0;
+                        it_node->FastGetSolutionStepValue(LAGRANGE_MULTIPLIER_CONTACT_PRESSURE) = 0.0;
+                    }
+                }
+
+                // Saving augmented contact pressure
+                it_node->SetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE, augmented_normal_pressure);
 
                 if (augmented_normal_pressure < 0.0) { // NOTE: This could be conflictive (< or <=)
                     if (it_node->IsNot(ACTIVE)) {
@@ -239,6 +255,7 @@ std::size_t ComputeALMFrictionlessComponentsActiveSet(ModelPart& rModelPart)
     if (rModelPart.Is(INTERACTION) || r_process_info[NL_ITERATION_NUMBER] == 1) {
         const double common_epsilon = r_process_info[INITIAL_PENALTY];
         const double scale_factor = r_process_info[SCALE_FACTOR];
+        const double max_lagrange_multiplier = r_process_info.Has(MAX_LM_THRESHOLD) ? r_process_info[MAX_LM_THRESHOLD] : 1.0e30;
 
         auto& r_nodes_array = rModelPart.GetSubModelPart("Contact").Nodes();
         const auto it_node_begin = r_nodes_array.begin();
@@ -253,9 +270,24 @@ std::size_t ComputeALMFrictionlessComponentsActiveSet(ModelPart& rModelPart)
                 const array_1d<double,3>& r_nodal_normal = it_node->FastGetSolutionStepValue(NORMAL);
                 const double normal_r_lagrange_multiplier = inner_prod(r_nodal_normal, r_lagrange_multiplier);
 
-                const double augmented_normal_pressure = scale_factor * normal_r_lagrange_multiplier + epsilon * it_node->FastGetSolutionStepValue(WEIGHTED_GAP);
+                double augmented_normal_pressure = scale_factor * normal_r_lagrange_multiplier + epsilon * it_node->FastGetSolutionStepValue(WEIGHTED_GAP);
 
-                it_node->SetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE, augmented_normal_pressure); // NOTE: This value is purely for debugging interest (to see the "effective" pressure)
+                // Check for the maximum value
+                if (std::abs(augmented_normal_pressure) > max_lagrange_multiplier) {
+                    KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM is to high, it will be reduced in order to avoid problems" << std::endl;
+                    if (augmented_normal_pressure < 0.0) {
+                        augmented_normal_pressure = - max_lagrange_multiplier;
+                        if (it_node->Is(ACTIVE)) {
+                            noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = r_nodal_normal * augmented_normal_pressure/scale_factor;
+                        }
+                    } else {
+                        augmented_normal_pressure = 0.0;
+                        noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = ZeroVector(3);
+                    }
+                }
+
+                // Saving augmented contact pressure
+                it_node->SetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE, augmented_normal_pressure);
 
                 if (augmented_normal_pressure < 0.0) { // NOTE: This could be conflictive (< or <=)
                     if (it_node->IsNot(ACTIVE)) {
@@ -303,6 +335,7 @@ array_1d<std::size_t, 2> ComputeALMFrictionalActiveSet(
     if (rModelPart.Is(INTERACTION) || r_process_info[NL_ITERATION_NUMBER] == 1) {
         const double common_epsilon = r_process_info[INITIAL_PENALTY];
         const double scale_factor = r_process_info[SCALE_FACTOR];
+        const double max_lagrange_multiplier = r_process_info.Has(MAX_LM_THRESHOLD) ? r_process_info[MAX_LM_THRESHOLD] : 1.0e30;
         const double tangent_factor = r_process_info[TANGENT_FACTOR];
 
         // Slip convergence enhancers NOTE: https://www.youtube.com/watch?v=KmAuQ1mHWrQ
@@ -323,8 +356,23 @@ array_1d<std::size_t, 2> ComputeALMFrictionalActiveSet(
                 const array_1d<double,3>& r_nodal_normal = it_node->FastGetSolutionStepValue(NORMAL);
                 const double normal_lagrange_multiplier = inner_prod(r_nodal_normal, r_lagrange_multiplier);
 
-                const double augmented_normal_pressure = scale_factor * normal_lagrange_multiplier + epsilon * it_node->FastGetSolutionStepValue(WEIGHTED_GAP);
+                double augmented_normal_pressure = scale_factor * normal_lagrange_multiplier + epsilon * it_node->FastGetSolutionStepValue(WEIGHTED_GAP);
 
+                // Check for the maximum value
+                if (std::abs(augmented_normal_pressure) > max_lagrange_multiplier) {
+                    KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM is to high, it will be reduced in order to avoid problems" << std::endl;
+                    if (augmented_normal_pressure < 0.0) {
+                        augmented_normal_pressure = - max_lagrange_multiplier;
+                        if (it_node->Is(ACTIVE)) {
+                            noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = r_nodal_normal * augmented_normal_pressure/scale_factor;
+                        }
+                    } else {
+                        augmented_normal_pressure = 0.0;
+                        noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = ZeroVector(3);
+                    }
+                }
+
+                // Saving augmented contact pressure
                 it_node->SetValue(AUGMENTED_NORMAL_CONTACT_PRESSURE, augmented_normal_pressure);
 
                 if (augmented_normal_pressure < 0.0) { // NOTE: This could be conflictive (< or <=)

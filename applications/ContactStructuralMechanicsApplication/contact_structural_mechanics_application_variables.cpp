@@ -27,6 +27,7 @@ KRATOS_CREATE_VARIABLE( int , INNER_LOOP_ITERATION )                            
 KRATOS_CREATE_VARIABLE( int , INTEGRATION_ORDER_CONTACT )                         // The integration order computed in the contact
 KRATOS_CREATE_VARIABLE( double, DISTANCE_THRESHOLD )                              // The distance threshold considered
 KRATOS_CREATE_VARIABLE( double, MAX_LM_THRESHOLD )                                // The maximum module of the Lagrange Multiplier allowed
+KRATOS_CREATE_VARIABLE( double, MAX_LM_RESET_FACTOR )                             // The factor respect MAX_LM_THRESHOLD to reset the movement of the nodes
 KRATOS_CREATE_VARIABLE( double, ACTIVE_CHECK_FACTOR )                             // The factor employed to search an active/inactive node
 KRATOS_CREATE_VARIABLE( GeometryType::Pointer, PAIRED_GEOMETRY )                  // The paired geometry with the current condition
 KRATOS_CREATE_VARIABLE( Vector3, PAIRED_NORMAL )                                  // The normal of the paired geometry
@@ -46,7 +47,7 @@ KRATOS_CREATE_VARIABLE( bool, ACTIVE_SET_COMPUTED )                             
 KRATOS_CREATE_VARIABLE( bool, ACTIVE_SET_CONVERGED )                              // To know if the active set has converged
 KRATOS_CREATE_VARIABLE( bool, SLIP_SET_CONVERGED )                                // To know if the slip set has converged
 KRATOS_CREATE_VARIABLE( double, SLIP_CONVERGENCE_COEFFICIENT )                    // Coefficient to improve the slip computation convergence
-KRATOS_CREATE_VARIABLE( double, SLIP_AUGMENTATION_COEFFICIENT )                  // Coefficient to improve the slip computation convergence (augmented part related)
+KRATOS_CREATE_VARIABLE( double, SLIP_AUGMENTATION_COEFFICIENT )                   // Coefficient to improve the slip computation convergence (augmented part related)
 KRATOS_CREATE_VARIABLE( double, DYNAMIC_FACTOR )                                  // The factor considered for dynamic problems (in order to take intro account the gap evolution)
 KRATOS_CREATE_VARIABLE( double, LAGRANGE_MULTIPLIER_CONTACT_PRESSURE )            // The lagrange multiplier for normal contact pressure
 KRATOS_CREATE_VARIABLE( double, AUGMENTED_NORMAL_CONTACT_PRESSURE )               // The resultant augmented pressure in the normal direction

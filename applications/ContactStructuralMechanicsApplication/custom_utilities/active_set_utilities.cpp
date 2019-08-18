@@ -193,6 +193,7 @@ std::size_t ComputeALMFrictionlessActiveSet(ModelPart& rModelPart)
         const double common_epsilon = r_process_info[INITIAL_PENALTY];
         const double scale_factor = r_process_info[SCALE_FACTOR];
         const double max_lagrange_multiplier = r_process_info.Has(MAX_LM_THRESHOLD) ? r_process_info[MAX_LM_THRESHOLD] : 1.0e30;
+        const double max_lm_reset_value = max_lagrange_multiplier * (r_process_info.Has(MAX_LM_RESET_FACTOR) ? r_process_info[MAX_LM_RESET_FACTOR] : 1.0);
 
         auto& r_nodes_array = rModelPart.GetSubModelPart("Contact").Nodes();
         const auto it_node_begin = r_nodes_array.begin();
@@ -215,6 +216,14 @@ std::size_t ComputeALMFrictionlessActiveSet(ModelPart& rModelPart)
                     } else {
                         augmented_normal_pressure = 0.0;
                         it_node->FastGetSolutionStepValue(LAGRANGE_MULTIPLIER_CONTACT_PRESSURE) = 0.0;
+                    }
+
+                    // If brutal value we revert movement
+                    if (std::abs(augmented_normal_pressure) > max_lm_reset_value) {
+                        KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM in node: " << it_node->Id() << "   is to huge: " << augmented_normal_pressure << " vs the theshold considered: " << max_lm_reset_value << ", the movement in that node will be reverted" << std::endl;
+                        const auto& r_previous_displacement = it_node->FastGetSolutionStepValue(DISPLACEMENT, 1);
+                        noalias(it_node->FastGetSolutionStepValue(DISPLACEMENT)) = r_previous_displacement;
+                        noalias(it_node->Coordinates()) = it_node->GetInitialPosition().Coordinates() + r_previous_displacement;
                     }
                 }
 
@@ -256,6 +265,7 @@ std::size_t ComputeALMFrictionlessComponentsActiveSet(ModelPart& rModelPart)
         const double common_epsilon = r_process_info[INITIAL_PENALTY];
         const double scale_factor = r_process_info[SCALE_FACTOR];
         const double max_lagrange_multiplier = r_process_info.Has(MAX_LM_THRESHOLD) ? r_process_info[MAX_LM_THRESHOLD] : 1.0e30;
+        const double max_lm_reset_value = max_lagrange_multiplier * (r_process_info.Has(MAX_LM_RESET_FACTOR) ? r_process_info[MAX_LM_RESET_FACTOR] : 1.0);
 
         auto& r_nodes_array = rModelPart.GetSubModelPart("Contact").Nodes();
         const auto it_node_begin = r_nodes_array.begin();
@@ -283,6 +293,14 @@ std::size_t ComputeALMFrictionlessComponentsActiveSet(ModelPart& rModelPart)
                     } else {
                         augmented_normal_pressure = 0.0;
                         noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = ZeroVector(3);
+                    }
+
+                    // If brutal value we revert movement
+                    if (std::abs(augmented_normal_pressure) > max_lm_reset_value) {
+                        KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM in node: " << it_node->Id() << "   is to huge: " << augmented_normal_pressure << " vs the theshold considered: " << max_lm_reset_value << ", the movement in that node will be reverted" << std::endl;
+                        const auto& r_previous_displacement = it_node->FastGetSolutionStepValue(DISPLACEMENT, 1);
+                        noalias(it_node->FastGetSolutionStepValue(DISPLACEMENT)) = r_previous_displacement;
+                        noalias(it_node->Coordinates()) = it_node->GetInitialPosition().Coordinates() + r_previous_displacement;
                     }
                 }
 
@@ -336,6 +354,7 @@ array_1d<std::size_t, 2> ComputeALMFrictionalActiveSet(
         const double common_epsilon = r_process_info[INITIAL_PENALTY];
         const double scale_factor = r_process_info[SCALE_FACTOR];
         const double max_lagrange_multiplier = r_process_info.Has(MAX_LM_THRESHOLD) ? r_process_info[MAX_LM_THRESHOLD] : 1.0e30;
+        const double max_lm_reset_value = max_lagrange_multiplier * (r_process_info.Has(MAX_LM_RESET_FACTOR) ? r_process_info[MAX_LM_RESET_FACTOR] : 1.0);
         const double tangent_factor = r_process_info[TANGENT_FACTOR];
 
         // Slip convergence enhancers NOTE: https://www.youtube.com/watch?v=KmAuQ1mHWrQ
@@ -369,6 +388,14 @@ array_1d<std::size_t, 2> ComputeALMFrictionalActiveSet(
                     } else {
                         augmented_normal_pressure = 0.0;
                         noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = ZeroVector(3);
+                    }
+
+                    // If brutal value we revert movement
+                    if (std::abs(augmented_normal_pressure) > max_lm_reset_value) {
+                        KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM in node: " << it_node->Id() << "   is to huge: " << augmented_normal_pressure << " vs the theshold considered: " << max_lm_reset_value << ", the movement in that node will be reverted" << std::endl;
+                        const auto& r_previous_displacement = it_node->FastGetSolutionStepValue(DISPLACEMENT, 1);
+                        noalias(it_node->FastGetSolutionStepValue(DISPLACEMENT)) = r_previous_displacement;
+                        noalias(it_node->Coordinates()) = it_node->GetInitialPosition().Coordinates() + r_previous_displacement;
                     }
                 }
 

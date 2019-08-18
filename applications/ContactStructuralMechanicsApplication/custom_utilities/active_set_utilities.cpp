@@ -206,7 +206,7 @@ std::size_t ComputeALMFrictionlessActiveSet(ModelPart& rModelPart)
 
                 // Check for the maximum value
                 if (std::abs(augmented_normal_pressure) > max_lagrange_multiplier) {
-                    KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM in node: " << it_node->Id() << "   is to high: " << std::abs(augmented_normal_pressure) << " vs the theshold considered: " << max_lagrange_multiplier << ", it will be reduced in order to avoid problems" << std::endl;
+                    KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM in node: " << it_node->Id() << "   is to high: " << augmented_normal_pressure << " vs the theshold considered: " << max_lagrange_multiplier << ", it will be reduced in order to avoid problems" << std::endl;
                     if (augmented_normal_pressure < 0.0) {
                         augmented_normal_pressure = - max_lagrange_multiplier;
                         if (it_node->Is(ACTIVE)) {
@@ -274,7 +274,7 @@ std::size_t ComputeALMFrictionlessComponentsActiveSet(ModelPart& rModelPart)
 
                 // Check for the maximum value
                 if (std::abs(augmented_normal_pressure) > max_lagrange_multiplier) {
-                    KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM in node: " << it_node->Id() << "   is to high: " << std::abs(augmented_normal_pressure) << " vs the theshold considered: " << max_lagrange_multiplier << ", it will be reduced in order to avoid problems" << std::endl;
+                    KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM in node: " << it_node->Id() << "   is to high: " << augmented_normal_pressure << " vs the theshold considered: " << max_lagrange_multiplier << ", it will be reduced in order to avoid problems" << std::endl;
                     if (augmented_normal_pressure < 0.0) {
                         augmented_normal_pressure = - max_lagrange_multiplier;
                         if (it_node->Is(ACTIVE)) {
@@ -360,7 +360,7 @@ array_1d<std::size_t, 2> ComputeALMFrictionalActiveSet(
 
                 // Check for the maximum value
                 if (std::abs(augmented_normal_pressure) > max_lagrange_multiplier) {
-                    KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM in node: " << it_node->Id() << "   is to high: " << std::abs(augmented_normal_pressure) << " vs the theshold considered: " << max_lagrange_multiplier << ", it will be reduced in order to avoid problems" << std::endl;
+                    KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM in node: " << it_node->Id() << "   is to high: " << augmented_normal_pressure << " vs the theshold considered: " << max_lagrange_multiplier << ", it will be reduced in order to avoid problems" << std::endl;
                     if (augmented_normal_pressure < 0.0) {
                         augmented_normal_pressure = - max_lagrange_multiplier;
                         if (it_node->Is(ACTIVE)) {

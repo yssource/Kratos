@@ -208,15 +208,6 @@ std::size_t ComputeALMFrictionlessActiveSet(ModelPart& rModelPart)
                 // Check for the maximum value
                 if (std::abs(augmented_normal_pressure) > max_lagrange_multiplier) {
                     KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM in node: " << it_node->Id() << "   is to high: " << augmented_normal_pressure << " vs the theshold considered: " << max_lagrange_multiplier << ", it will be reduced in order to avoid problems" << std::endl;
-                    if (augmented_normal_pressure < 0.0) {
-                        augmented_normal_pressure = - max_lagrange_multiplier;
-                        if (it_node->Is(ACTIVE)) {
-                            it_node->FastGetSolutionStepValue(LAGRANGE_MULTIPLIER_CONTACT_PRESSURE) = augmented_normal_pressure/scale_factor;
-                        }
-                    } else {
-                        augmented_normal_pressure = 0.0;
-                        it_node->FastGetSolutionStepValue(LAGRANGE_MULTIPLIER_CONTACT_PRESSURE) = 0.0;
-                    }
 
                     // If brutal value we revert movement
                     if (std::abs(augmented_normal_pressure) > max_lm_reset_value) {
@@ -224,6 +215,18 @@ std::size_t ComputeALMFrictionlessActiveSet(ModelPart& rModelPart)
                         const auto& r_previous_displacement = it_node->FastGetSolutionStepValue(DISPLACEMENT, 1);
                         noalias(it_node->FastGetSolutionStepValue(DISPLACEMENT)) = r_previous_displacement;
                         noalias(it_node->Coordinates()) = it_node->GetInitialPosition().Coordinates() + r_previous_displacement;
+                    }
+
+                    // We reset the value
+                    if (augmented_normal_pressure < 0.0) {
+                        augmented_normal_pressure = - max_lagrange_multiplier/10.0;
+//                         augmented_normal_pressure = - max_lagrange_multiplier;
+                        if (it_node->Is(ACTIVE)) {
+                            it_node->FastGetSolutionStepValue(LAGRANGE_MULTIPLIER_CONTACT_PRESSURE) = augmented_normal_pressure/scale_factor;
+                        }
+                    } else {
+                        augmented_normal_pressure = 0.0;
+                        it_node->FastGetSolutionStepValue(LAGRANGE_MULTIPLIER_CONTACT_PRESSURE) = 0.0;
                     }
                 }
 
@@ -285,15 +288,6 @@ std::size_t ComputeALMFrictionlessComponentsActiveSet(ModelPart& rModelPart)
                 // Check for the maximum value
                 if (std::abs(augmented_normal_pressure) > max_lagrange_multiplier) {
                     KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM in node: " << it_node->Id() << "   is to high: " << augmented_normal_pressure << " vs the theshold considered: " << max_lagrange_multiplier << ", it will be reduced in order to avoid problems" << std::endl;
-                    if (augmented_normal_pressure < 0.0) {
-                        augmented_normal_pressure = - max_lagrange_multiplier;
-                        if (it_node->Is(ACTIVE)) {
-                            noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = r_nodal_normal * augmented_normal_pressure/scale_factor;
-                        }
-                    } else {
-                        augmented_normal_pressure = 0.0;
-                        noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = ZeroVector(3);
-                    }
 
                     // If brutal value we revert movement
                     if (std::abs(augmented_normal_pressure) > max_lm_reset_value) {
@@ -301,6 +295,18 @@ std::size_t ComputeALMFrictionlessComponentsActiveSet(ModelPart& rModelPart)
                         const auto& r_previous_displacement = it_node->FastGetSolutionStepValue(DISPLACEMENT, 1);
                         noalias(it_node->FastGetSolutionStepValue(DISPLACEMENT)) = r_previous_displacement;
                         noalias(it_node->Coordinates()) = it_node->GetInitialPosition().Coordinates() + r_previous_displacement;
+                    }
+
+                    // We reset the value
+                    if (augmented_normal_pressure < 0.0) {
+                        augmented_normal_pressure = - max_lagrange_multiplier/10.0;
+//                         augmented_normal_pressure = - max_lagrange_multiplier;
+                        if (it_node->Is(ACTIVE)) {
+                            noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = r_nodal_normal * augmented_normal_pressure/scale_factor;
+                        }
+                    } else {
+                        augmented_normal_pressure = 0.0;
+                        noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = ZeroVector(3);
                     }
                 }
 
@@ -380,15 +386,6 @@ array_1d<std::size_t, 2> ComputeALMFrictionalActiveSet(
                 // Check for the maximum value
                 if (std::abs(augmented_normal_pressure) > max_lagrange_multiplier) {
                     KRATOS_WARNING("ActiveSetUtilities") << "The value of the LM in node: " << it_node->Id() << "   is to high: " << augmented_normal_pressure << " vs the theshold considered: " << max_lagrange_multiplier << ", it will be reduced in order to avoid problems" << std::endl;
-                    if (augmented_normal_pressure < 0.0) {
-                        augmented_normal_pressure = - max_lagrange_multiplier;
-                        if (it_node->Is(ACTIVE)) {
-                            noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = r_nodal_normal * augmented_normal_pressure/scale_factor;
-                        }
-                    } else {
-                        augmented_normal_pressure = 0.0;
-                        noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = ZeroVector(3);
-                    }
 
                     // If brutal value we revert movement
                     if (std::abs(augmented_normal_pressure) > max_lm_reset_value) {
@@ -396,6 +393,18 @@ array_1d<std::size_t, 2> ComputeALMFrictionalActiveSet(
                         const auto& r_previous_displacement = it_node->FastGetSolutionStepValue(DISPLACEMENT, 1);
                         noalias(it_node->FastGetSolutionStepValue(DISPLACEMENT)) = r_previous_displacement;
                         noalias(it_node->Coordinates()) = it_node->GetInitialPosition().Coordinates() + r_previous_displacement;
+                    }
+
+                    // We reset the value
+                    if (augmented_normal_pressure < 0.0) {
+                        augmented_normal_pressure = - max_lagrange_multiplier/10.0;
+//                         augmented_normal_pressure = - max_lagrange_multiplier;
+                        if (it_node->Is(ACTIVE)) {
+                            noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = r_nodal_normal * augmented_normal_pressure/scale_factor;
+                        }
+                    } else {
+                        augmented_normal_pressure = 0.0;
+                        noalias(it_node->FastGetSolutionStepValue(VECTOR_LAGRANGE_MULTIPLIER)) = ZeroVector(3);
                     }
                 }
 

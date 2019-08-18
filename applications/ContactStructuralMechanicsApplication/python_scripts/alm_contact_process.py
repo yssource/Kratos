@@ -73,6 +73,7 @@ class ALMContactProcess(search_base_process.SearchBaseProcess):
             "tangent_factor"                : 1.0e0,
             "slip_convergence_coefficient"  : 1.0,
             "slip_augmentation_coefficient" : 1.0,
+            "max_lagrange_multiplier_check" : null,
             "integration_order"             : 2,
             "clear_inactive_for_post"       : true,
             "search_parameters"             : {
@@ -448,6 +449,12 @@ class ALMContactProcess(search_base_process.SearchBaseProcess):
         # We print the parameters considered
         KM.Logger.PrintInfo("SCALE_FACTOR: ", "{:.2e}".format(process_info[KM.SCALE_FACTOR]))
         KM.Logger.PrintInfo("INITIAL_PENALTY: ", "{:.2e}".format(process_info[KM.INITIAL_PENALTY]))
+
+        # We set MAX_LM_THRESHOLD
+        if not self.contact_settings["max_lagrange_multiplier_check"].IsNull():
+            process_info[CSMA.MAX_LM_THRESHOLD] = self.contact_settings["max_lagrange_multiplier_check"].GetDouble() * process_info[KM.INITIAL_PENALTY]
+        else:
+            process_info[CSMA.MAX_LM_THRESHOLD] = 1.0e30
 
     def _initialize_search_conditions(self):
         """ This method initializes some conditions values

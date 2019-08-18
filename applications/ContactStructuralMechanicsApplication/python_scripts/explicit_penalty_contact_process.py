@@ -55,6 +55,7 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
             "tangent_factor"                : 1.0e-4,
             "slip_convergence_coefficient"  : 1.0,
             "slip_augmentation_coefficient" : 1.0,
+            "max_lagrange_multiplier_check" : null,
             "integration_order"             : 2,
             "clear_inactive_for_post"       : true,
             "search_parameters"             : {

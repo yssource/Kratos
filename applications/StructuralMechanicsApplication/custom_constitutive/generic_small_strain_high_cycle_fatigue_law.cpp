@@ -94,6 +94,7 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
         double max_stress_relative_error = mMaxStressRelativeError;
         double CyclesToFailure = mCyclesToFailure;
         bool new_cycle = false;
+        double s_th = mThresholdStress;
         bool adnvance_strategy_applied = rValues.GetProcessInfo()[ADVANCE_STRATEGY_APPLIED];
 
 
@@ -109,17 +110,13 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
             // this->SetMaxStress(max_stress);
             // this->SetMinStress(min_stress);
 
-            // KRATOS_WATCH(max_indicator)
-            KRATOS_WATCH(max_stress)
-            // KRATOS_WATCH(min_indicator)
-            KRATOS_WATCH(min_stress)
 
             if (max_indicator && min_indicator) {
                 double previous_reversion_factor = HighCycleFatigueLawIntegrator<6>::CalculateReversionFactor(previous_max_stress, previous_min_stress);
                 double reversion_factor = HighCycleFatigueLawIntegrator<6>::CalculateReversionFactor(max_stress, min_stress);
-                KRATOS_WATCH(reversion_factor)
+                // KRATOS_WATCH(reversion_factor)
 
-                double s_th, alphat;
+                double alphat;
                 HighCycleFatigueLawIntegrator<6>::CalculateFatigueParameters(
                     max_stress,
                     reversion_factor,
@@ -155,11 +152,12 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
                                                                                                 alphat,
                                                                                                 fatigue_reduction_factor,
                                                                                                 wohler_stress);
+
             }
 
             if (adnvance_strategy_applied) {
                 double reversion_factor = HighCycleFatigueLawIntegrator<6>::CalculateReversionFactor(max_stress, min_stress);
-                double s_th, alphat;
+                double alphat;
                 HighCycleFatigueLawIntegrator<6>::CalculateFatigueParameters(
                     max_stress,
                     reversion_factor,
@@ -191,8 +189,7 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
             mReversionFactorRelativeError = reversion_factor_relative_error;
             mMaxStressRelativeError = max_stress_relative_error;
             mNewCycleIndicator = new_cycle;
-            // KRATOS_WATCH(global_number_of_cycles)
-            // KRATOS_WATCH(uniaxial_stress)
+            mThresholdStress = s_th;
 
         }
 
@@ -284,6 +281,12 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::FinalizeMat
         bool min_indicator = this->GetMinDetected();
         double fatigue_reduction_factor = this->GetFatigueReductionFactor();
 
+        double previous_max = max_stress;
+        double previous_min = min_stress;
+
+
+        // KRATOS_WATCH(this->GetPreviousStresses()[1])
+        // KRATOS_WATCH(this->GetPreviousStresses()[0])
         HighCycleFatigueLawIntegrator<6>::CalculateMaximumAndMinimumStresses(
             uniaxial_stress,
             max_stress,
@@ -371,6 +374,10 @@ bool GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::Has(const V
         return true;
     } else if (rThisVariable == MAX_STRESS_RELATIVE_ERROR) {
         return true;
+    } else if (rThisVariable == MAX_STRESS) {
+        return true;
+    } else if (rThisVariable == THRESHOLD_STRESS) {
+        return true;
     } else if (rThisVariable == PREVIOUS_CYCLE) {
         return true;
     } else if (rThisVariable == CYCLE_PERIOD) {
@@ -436,6 +443,10 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::SetValue(
         mReversionFactorRelativeError = rValue;
     } else if (rThisVariable == MAX_STRESS_RELATIVE_ERROR) {
         mMaxStressRelativeError = rValue;
+    } else if (rThisVariable == MAX_STRESS) {
+        mMaxStress = rValue;
+    } else if (rThisVariable == THRESHOLD_STRESS) {
+        mThresholdStress = rValue;
     } else if (rThisVariable == PREVIOUS_CYCLE) {
         mPreviousCycleTime = rValue;
     } else if (rThisVariable == CYCLE_PERIOD) {
@@ -500,6 +511,10 @@ double& GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::GetValue
         rValue = mReversionFactorRelativeError;
     } else if (rThisVariable == MAX_STRESS_RELATIVE_ERROR) {
         rValue = mMaxStressRelativeError;
+    } else if (rThisVariable == MAX_STRESS) {
+        rValue = mMaxStress;
+    } else if (rThisVariable == THRESHOLD_STRESS) {
+        rValue = mThresholdStress;
     } else if (rThisVariable == PREVIOUS_CYCLE) {
         rValue = mPreviousCycleTime;
     } else if (rThisVariable == CYCLE_PERIOD) {

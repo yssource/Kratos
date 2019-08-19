@@ -392,6 +392,7 @@ private:
     double mCyclesToFailure = 0.0;
     double mPreviousCycleTime = 0.0;
     double mPeriod = 0.0;
+    double mThresholdStress = 0.0;
 
     ///@}
     ///@name Private Operators
@@ -425,6 +426,7 @@ private:
         rSerializer.save("MaxDetected", mMaxDetected);
         rSerializer.save("MinDetected", mMinDetected);
         rSerializer.save("WohlerStress", mWohlerStress);
+        rSerializer.save("ThresholdStress", mThresholdStress);
     }
 
     void load(Serializer &rSerializer) override
@@ -443,6 +445,7 @@ private:
         rSerializer.load("MaxDetected", mMaxDetected);
         rSerializer.load("MinDetected", mMinDetected);
         rSerializer.load("WohlerStress", mWohlerStress);
+        rSerializer.load("ThresholdStress", mThresholdStress);
     }
     ///@}
 

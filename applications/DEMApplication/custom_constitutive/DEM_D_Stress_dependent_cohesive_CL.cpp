@@ -107,7 +107,9 @@ namespace Kratos {
         double AuxElasticShearForce;
         double MaximumAdmisibleShearForce;
 
-        CalculateTangentialForceWithNeighbour(normal_contact_force, OldLocalElasticContactForce, LocalElasticContactForce, ViscoDampingLocalContactForce, LocalDeltDisp,
+        double contact_force = normal_contact_force + cohesive_force;
+
+        CalculateTangentialForceWithNeighbour(contact_force, OldLocalElasticContactForce, LocalElasticContactForce, ViscoDampingLocalContactForce, LocalDeltDisp,
                                               sliding, p_element1, p_element2, indentation, previous_indentation, AuxElasticShearForce, MaximumAdmisibleShearForce);
 
         double& elastic_energy = element1->GetElasticEnergy();
@@ -189,7 +191,9 @@ namespace Kratos {
         double AuxElasticShearForce;
         double MaximumAdmisibleShearForce;
 
-        CalculateTangentialForceWithNeighbour(normal_contact_force, OldLocalElasticContactForce, LocalElasticContactForce, ViscoDampingLocalContactForce, LocalDeltDisp,
+        double contact_force = normal_contact_force + cohesive_force;
+
+        CalculateTangentialForceWithNeighbour(contact_force, OldLocalElasticContactForce, LocalElasticContactForce, ViscoDampingLocalContactForce, LocalDeltDisp,
                                               sliding, p_element, wall, indentation, previous_indentation, AuxElasticShearForce, MaximumAdmisibleShearForce);
 
         double& elastic_energy = element->GetElasticEnergy();
@@ -270,7 +274,7 @@ namespace Kratos {
             }
         }
 
-        const double cohesive_force = Globals::Pi * equiv_cohesion * equiv_radius* equiv_radius;
+        const double cohesive_force = Globals::Pi * equiv_cohesion * equiv_radius * equiv_radius;
 
         return cohesive_force;
     }

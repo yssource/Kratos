@@ -175,11 +175,37 @@ void AdvanceInTimeStrategyHighCycleFatigueProcess::TimeIncrement(double& rIncrem
 
     double user_avancing_time = mThisParameters["fatigue"]["advancing_strategy_time"].GetDouble();
     double user_avancing_cycles = mThisParameters["fatigue"]["advancing_strategy_cycles"].GetDouble();
+    std::vector<std::string> constraints_list = mThisParameters["fatigue"]["constraints_process_list"].GetStringArray();
+    
+    KRATOS_WATCH(constraints_list.size())
+    KRATOS_WATCH(constraints_list[0])
+    KRATOS_WATCH(mThisParameters["constraints_process_list"][0]["Parameters"]["model_part_name"].GetString())
+    KRATOS_WATCH(mThisParameters["constraints_process_list"][0]["Parameters"]["interval"][1].GetDouble())
+
+    double model_part_final_time = mThisParameters["problem_data"]["end_time"].GetDouble();
+    for (unsigned int i = 0; i < constraints_list.size(); i++){
+        for (unsigned int j = 0; j < mThisParameters["constraints_process_list"].size(); j++){
+            std::string model_part_name = mThisParameters["constraints_process_list"][j]["Parameters"]["model_part_name"].GetString();
+            double model_part_end_time = mThisParameters["constraints_process_list"][j]["Parameters"]["interval"][1].GetDouble();
+            if (constraints_list[i] == model_part_name && time <= model_part_end_time) {
+                model_part_final_time = model_part_end_time;
+            }
+        }
+    }
+    double model_part_time_increment = model_part_final_time - time;
+    KRATOS_WATCH(model_part_final_time)
+    KRATOS_WATCH(model_part_time_increment)
+    std::cout.precision(15); 
+    std::cout << model_part_time_increment << "\n";
+    KRATOS_WATCH(time)
+
+
     KRATOS_WATCH(mThisParameters["fatigue"]["advancing_strategy_time"].GetDouble())
     KRATOS_WATCH(mThisParameters["fatigue"]["advancing_strategy_cycles"].GetDouble())
     KRATOS_WATCH(mThisParameters["constraints_process_list"][4]["Parameters"]["interval"][1].GetDouble())
     KRATOS_WATCH(user_avancing_time)
     KRATOS_WATCH(user_avancing_cycles)
+    KRATOS_WATCH(mThisParameters["fatigue"]["constraints_process_list"].GetStringArray())
 
     min_time_to_failure = user_avancing_time;
     for (auto& r_elem : mrModelPart.Elements()) {
@@ -194,6 +220,7 @@ void AdvanceInTimeStrategyHighCycleFatigueProcess::TimeIncrement(double& rIncrem
             if (max_stress[i] > s_th[1]) {
                 double Nf_time_to_failure = (cycles_to_failure_element[i] - local_number_of_cycles[i]) * period[i];
                 double user_avancing_cycles_to_time = user_avancing_cycles * period[i];
+                // double user_avancing_cycles_to_time = user_avancing_cycles * period[i];
                 if (Nf_time_to_failure < min_time_to_failure){
                     min_time_to_failure = Nf_time_to_failure;
                     KRATOS_WATCH(min_time_to_failure)
@@ -225,7 +252,7 @@ void AdvanceInTimeStrategyHighCycleFatigueProcess::TimeAndCyclesUpdate(double In
         KRATOS_WATCH(local_number_of_cycles)
         r_elem.SetValueOnIntegrationPoints(LOCAL_NUMBER_OF_CYCLES, local_number_of_cycles, r_process_info);
     }
-    // double time = r_process_info[TIME];
+    r_process_info[TIME_INCREMENT] = Increment;
     // time += Increment;
     // r_process_info[TIME] = time;
 }

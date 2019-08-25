@@ -110,10 +110,18 @@ public:
         const double stress_increment_1 = stress_1 - stress_2;
         const double stress_increment_2 = CurrentStress - stress_1;
 
-        if (stress_increment_1 >= 1.0e-3 && stress_increment_2 <= 0.0) {
+        
+        KRATOS_WATCH(CurrentStress)
+        KRATOS_WATCH(stress_1)
+        KRATOS_WATCH(stress_2)
+        KRATOS_WATCH(stress_increment_1)
+        KRATOS_WATCH(stress_increment_2)
+        // if (stress_increment_1 >= 1.0e-3 && stress_increment_2 <= 0.0) {
+        if (stress_increment_1 >= 1.0e-3 && stress_increment_2 < 1.0e-3) {
             rMaximumStress = stress_1;
             rMaxIndicator = true;
-        } else if (stress_increment_1 <= -1.0e-3 && stress_increment_2 >= 0.0) {
+        // } else if (stress_increment_1 <= -1.0e-3 && stress_increment_2 >= 0.0) {
+        } else if (stress_increment_1 <= -1.0e-3 && stress_increment_2 > -1.0e-3) {
             rMinimumStress = stress_1;
             rMinIndicator = true;
         }
@@ -131,14 +139,12 @@ public:
 
         double abs_component = 0.0, average_component = 0.0, sum_abs = 0.0, sum_average = 0.0;
         for (unsigned int i = 0; i < principal_stresses.size(); ++i) {
-            KRATOS_WATCH(principal_stresses[i])
             abs_component = std::abs(principal_stresses[i]);
             average_component = 0.5 * (principal_stresses[i] + abs_component);
             sum_average += average_component;
             sum_abs += abs_component;
         }
         const double pre_indicator = sum_average / sum_abs;
-        KRATOS_WATCH(pre_indicator)
         if (pre_indicator < 0.5) {
             return -1.0;
         } else {
@@ -220,6 +226,14 @@ public:
             rN_f = std::pow(10.0,std::pow(-std::log((MaxStress - rSth) / (yield_stress - rSth))/rAlphat,(1.0/BETAF)));
             rB0 = -(std::log(MaxStress / yield_stress) / std::pow((std::log10(rN_f)), square_betaf));
         }
+
+        // KRATOS_WATCH(rN_f)
+        // KRATOS_WATCH(rSth)
+        // KRATOS_WATCH(yield_stress)
+        // KRATOS_WATCH(rAlphat)
+        // KRATOS_WATCH(BETAF)
+        // KRATOS_WATCH(rB0)
+        // KRATOS_WATCH(square_betaf)
     }
 
     /**
@@ -253,6 +267,17 @@ public:
         if (MaxStress > Sth) {
             rFatigueReductionFactor = std::exp(-B0 * std::pow(std::log10(static_cast<double>(LocalNumberOfCycles)), (BETAF * BETAF)));
         }
+
+        // KRATOS_WATCH(MaxStress)
+        // KRATOS_WATCH(rWohlerStress)
+        // KRATOS_WATCH(Sth)
+        // KRATOS_WATCH(Alphat)
+        // KRATOS_WATCH(GlobalNumberOfCycles)
+        // KRATOS_WATCH(BETAF)
+        // KRATOS_WATCH(rFatigueReductionFactor)
+        // KRATOS_WATCH(B0)
+        // KRATOS_WATCH(GlobalNumberOfCycles)
+        // KRATOS_WATCH(BETAF)
     }
 
     ///@}

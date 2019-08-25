@@ -393,6 +393,7 @@ private:
     double mPreviousCycleTime = 0.0;
     double mPeriod = 0.0;
     double mThresholdStress = 0.0;
+    unsigned int mCyclesAfterAdvanceStrategy = 0;
 
     ///@}
     ///@name Private Operators
@@ -427,6 +428,7 @@ private:
         rSerializer.save("MinDetected", mMinDetected);
         rSerializer.save("WohlerStress", mWohlerStress);
         rSerializer.save("ThresholdStress", mThresholdStress);
+        rSerializer.save("CyclesAfterAdvanceStrategy", mCyclesAfterAdvanceStrategy);
     }
 
     void load(Serializer &rSerializer) override
@@ -446,6 +448,7 @@ private:
         rSerializer.load("MinDetected", mMinDetected);
         rSerializer.load("WohlerStress", mWohlerStress);
         rSerializer.load("ThresholdStress", mThresholdStress);
+        rSerializer.load("CyclesAfterAdvanceStrategy", mCyclesAfterAdvanceStrategy);
     }
     ///@}
 

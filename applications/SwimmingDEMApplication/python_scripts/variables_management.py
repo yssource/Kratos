@@ -339,7 +339,7 @@ class VariablesManager:
 
         # fluid coupling variables
         self.coupling_fluid_vars = []
-        self.coupling_fluid_vars += [Kratos.MATERIAL_ACCELERATION]
+        self.coupling_fluid_vars += [Kratos.MATERIAL_ACCELERATION, SDEM.EXACT_VELOCITY, SDEM.VECTORIAL_ERROR, SDEM.ERROR_X, SDEM.ERROR_Y, SDEM.ERROR_Z]
 
         self.coupling_fluid_vars += [Kratos.KratosGlobals.GetVariable(parameters["body_force_per_unit_mass_variable_name"].GetString() )]
 

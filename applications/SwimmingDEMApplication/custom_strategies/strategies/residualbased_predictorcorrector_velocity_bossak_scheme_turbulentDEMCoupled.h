@@ -313,19 +313,14 @@ namespace Kratos {
                 int thread_id = OpenMPUtils::ThisThread();
 
                 (*itElem)->InitializeNonLinearIteration(CurrentProcessInfo);
-                //KRATOS_WATCH(LHS_Contribution);
+
                 //basic operations for the element considered
                 (*itElem)->CalculateLocalSystem(LHS_Contribution, RHS_Contribution, CurrentProcessInfo);
 
-                //std::cout << rCurrentElement->Id() << " RHS = " << RHS_Contribution << std::endl;
-                //if ((*itElem)->Id() == 35) std::cout << (*itElem)->Id() << " RHS = " << RHS_Contribution << std::endl;
-
                 (*itElem)->CalculateMassMatrix(mMass[thread_id], CurrentProcessInfo);
-                //if ((*itElem)->Id() == 35) std::cout << (*itElem)->Id() << " mMass = " << mMass[thread_id] << std::endl;
 
                 (*itElem)->CalculateLocalVelocityContribution(mDamp[thread_id], RHS_Contribution, CurrentProcessInfo);
-                //if ((*itElem)->Id() == 35) std::cout << (*itElem)->Id() << " mDamp = " << mDamp[thread_id] << std::endl;
-                //if ((*itElem)->Id() == 35) std::cout << (*itElem)->Id() << " CurrentProcessInfo = " << CurrentProcessInfo << std::endl;
+
                 (*itElem)->EquationIdVector(EquationId, CurrentProcessInfo);
 
                 //adding the dynamic contributions (statics is already included)

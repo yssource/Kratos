@@ -1,6 +1,6 @@
 # Importing the Kratos Library
 import KratosMultiphysics
-
+import KratosMultiphysics.SwimmingDEMApplication as SDEM
 
 def Factory(settings, Model):
     if not isinstance(settings, KratosMultiphysics.Parameters):
@@ -71,6 +71,8 @@ class ApplyCustomBodyForceProcess(KratosMultiphysics.Process):
     def _SetBodyForce(self):
         current_time = self.model_part.ProcessInfo[KratosMultiphysics.TIME]
         for node in self.model_part.Nodes:
+            #fluid_fraction = node.GetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION)
+            #value = self.benchmark.BodyForce(current_time, node.X, node.Y, node.Z, fluid_fraction)
             value = self.benchmark.BodyForce(current_time, node.X, node.Y, node.Z)
             node.SetSolutionStepValue(self.variable, value)
 
@@ -79,12 +81,13 @@ class ApplyCustomBodyForceProcess(KratosMultiphysics.Process):
         current_time = self.model_part.ProcessInfo[KratosMultiphysics.TIME]
         for node in self.model_part.Nodes:
             fem_vel = node.GetSolutionStepValue(KratosMultiphysics.VELOCITY)
-            exact_vel = self.benchmark.Velocity(node.X, node.Y, node.Z, current_time)
+            exact_vel = self.benchmark.Velocity(current_time, node.X, node.Y, node.Z)
             fem_vel_modulus = (fem_vel[0]**2 + fem_vel[1]**2 + fem_vel[2]**2)**0.5
             exact_vel_modulus = (exact_vel[0]**2 + exact_vel[1]**2 + exact_vel[2]**2)**0.5
             error = abs(fem_vel_modulus - exact_vel_modulus)
             error = error / abs(exact_vel_modulus + epsilon)
             node.SetValue(KratosMultiphysics.NODAL_ERROR, error)
+            node.SetSolutionStepValue(SDEM.EXACT_VELOCITY, exact_vel)
 
     def _CopyVelocityAsNonHistorical(self):
         for node in self.model_part.Nodes:

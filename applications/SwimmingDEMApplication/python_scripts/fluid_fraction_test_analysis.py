@@ -1,5 +1,7 @@
 from KratosMultiphysics import Model, Parameters, Logger
 import swimming_DEM_procedures as SDP
+import KratosMultiphysics
+import KratosMultiphysics.SwimmingDEMApplication
 import os
 import sys
 file_path = os.path.abspath(__file__)
@@ -7,16 +9,19 @@ dir_path = os.path.dirname(file_path)
 sys.path.insert(0, dir_path)
 from swimming_DEM_analysis import SwimmingDEMAnalysis
 from swimming_DEM_analysis import Say
+import L2_error_projection_utility as error_projector
+import fluid_fraction_test_solver as sdem_solver
 
 class FluidFractionTestAnalysis(SwimmingDEMAnalysis):
     def __init__(self, model, varying_parameters = Parameters("{}")):
         super(FluidFractionTestAnalysis, self).__init__(model, varying_parameters)
+        self.project_parameters = varying_parameters
 
     def Initialize(self):
         super(FluidFractionTestAnalysis, self).Initialize()
-        # self._GetSolver().CalculateDerivatives()
         self._GetSolver().SetFluidFractionField()
         # self._GetSolver().ImposePressure()
+        self._GetSolver().ConstructL2ErrorProjector()
 
     def GetDebugInfo(self):
         return SDP.Counter(is_dead = 1)
@@ -30,19 +35,9 @@ class FluidFractionTestAnalysis(SwimmingDEMAnalysis):
                                                    self._GetDEMAnalysis()._GetSolver(),
                                                    self.vars_man)
 
-    # def FinalizeSolutionStep(self):
-    #     # printing if required
-    #     if self._GetSolver().CannotIgnoreFluidNow():
-    #         self._GetFluidAnalysis().FinalizeSolutionStep()
-
-    #     self._GetDEMAnalysis().FinalizeSolutionStep()
-
-    #     # coupling checks (debugging)
-    #     if self.debug_info_counter.Tick():
-    #         self.dem_volume_tool.UpdateDataAndPrint(
-    #             self.project_parameters["fluid_domain_volume"].GetDouble())
-
-    #     self.KratosMultiphysics.analysis_stage.AnalysisStage.FinalizeSolutionStep()
+    def FinalizeSolutionStep(self):
+        super(FluidFractionTestAnalysis, self).FinalizeSolutionStep()
+        self._GetSolver().ProjectL2Error()
 
     def TransferBodyForceFromDisperseToFluid(self):
         pass

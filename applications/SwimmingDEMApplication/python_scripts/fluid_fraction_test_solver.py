@@ -1,9 +1,11 @@
 import KratosMultiphysics as Kratos
 from KratosMultiphysics import Vector
+import KratosMultiphysics.SwimmingDEMApplication
 import swimming_DEM_solver
 import sympy as sp
 import numpy as np
 BaseSolver = swimming_DEM_solver.SwimmingDEMSolver
+import L2_error_projection_utility as error_projector
 
 class FluidFractionTestSolver(BaseSolver):
     def __init__(self, model, project_parameters, field_utility, fluid_solver, dem_solver, variables_manager):
@@ -27,14 +29,22 @@ class FluidFractionTestSolver(BaseSolver):
         super(FluidFractionTestSolver, self).SolveFluidSolutionStep()
 
     def SetFluidFractionField(self):
-        for node in self.fluid_solver.main_model_part.Nodes:
-            fluid_fraction = self.ReturnExactFluidFraction(node.X, node.Y)
-            node.SetSolutionStepValue(Kratos.FLUID_FRACTION, fluid_fraction)
+        pass
+        #from KratosMultiphysics.SwimmingDEMApplication import field_utilities
+        #field_utilities.PorosityField(0, True).ImposePorosityField(self.fluid_solver.main_model_part)
+            #fluid_fraction = self.ReturnExactFluidFraction(node.X, node.Y)
+            #node.SetSolutionStepValue(Kratos.FLUID_FRACTION, fluid_fraction)
 
     def ImposeVelocity(self):
         for node in self.fluid_solver.main_model_part.Nodes:
             node.SetSolutionStepValue(Kratos.VELOCITY_Z, 0.0)
             node.Fix(Kratos.VELOCITY_Z)
+
+    def ConstructL2ErrorProjector(self):
+        self.L2_error_projector = error_projector.L2ErrorProjectionUtility(self.fluid_solver.main_model_part)
+
+    def ProjectL2Error(self):
+        self.L2_error_projector.ProjectL2()
 
     def SolveDEM(self):
         super(FluidFractionTestSolver, self).SolveDEM()

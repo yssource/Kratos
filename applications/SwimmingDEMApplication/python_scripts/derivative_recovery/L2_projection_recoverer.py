@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import, division  # makes KratosMultiphysics backward compatible with python 2.6 and 2.7
 # importing the Kratos Library
 import KratosMultiphysics as Kratos
-from KratosMultiphysics import Vector, ModelPart
+from KratosMultiphysics import Vector
 import KratosMultiphysics.SwimmingDEMApplication as SDEM
 from . import recoverer
 import parameters_tools as PT
@@ -11,7 +11,7 @@ class L2ProjectionDerivativesRecoverer(recoverer.DerivativesRecoverer):
         recoverer.DerivativesRecoverer.__init__(self, project_parameters, model_part)
         self.model_part = model_part
         self.use_lumped_mass_matrix = project_parameters["material_acceleration_calculation_type"].GetInt() == 3
-        self.recovery_model_part = ModelPart("PostGradientFluidPart")
+        self.recovery_model_part = Kratos.ModelPart("PostGradientFluidPart")
         self.custom_functions_tool = SDEM.CustomFunctionsCalculator3D()
         self.calculate_vorticity = (project_parameters["vorticity_calculation_type"].GetInt() > 0
                                     or PT.RecursiveFindParametersWithCondition(project_parameters["properties"],

@@ -19,8 +19,8 @@ class PorosityField:
             self.force_default_vector[2] = 0.0
             self.porosity_formula = self.force_formula.GetPorosityField()
             self.b_box_rule = SDEM.BoundingBoxRule()
-            self.b_box_rule.SetTimeBoundingInterval(0,3)
-            self.b_box_rule.SetYBoundingInterval(-1,1)
+            self.b_box_rule.SetTimeBoundingInterval(0.0, 3.0)
+            self.b_box_rule.SetYBoundingInterval(-1.0, 1.0)
             self.domain = SDEM.SpaceTimeSet()
             self.domain.AddAndRule(self.b_box_rule)
             self.porosity_field_utility = SDEM.FieldUtility(self.domain)

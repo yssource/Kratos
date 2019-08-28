@@ -84,6 +84,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "custom_utilities/mesh_rotation_utility.h"
 #include "custom_utilities/renumbering_nodes_utility.h"
 #include "custom_utilities/stationarity_check.h"
+#include "custom_utilities/L2_error_projection_utility.h"
 
 namespace Kratos{
 
@@ -261,7 +262,7 @@ void  AddCustomUtilitiesToPython(pybind11::module& m){
         .def(py::init<>())
         ;
 
-    py::class_<BoundingBoxRule, SpaceTimeRule > (m, "BoundingBoxRule")
+    py::class_<BoundingBoxRule, SpaceTimeRule> (m, "BoundingBoxRule")
         .def(py::init<>())
         .def(py::init<const double, const double, const double, const double, const double, const double, const double, const double>())
         .def("SetTimeBoundingInterval", &BoundingBoxRule::SetTimeBoundingInterval)
@@ -491,6 +492,12 @@ void  AddCustomUtilitiesToPython(pybind11::module& m){
         .def("TransferWalls", &SwimmingDemInPfemUtils::TransferWalls)
         ;
 
+    py::class_<L2ErrorProjection> (m, "L2ErrorProjection")
+        .def(py::init<>())
+        .def("GetL2Projection", &L2ErrorProjection::GetL2Projection)
+        .def("GetElementArea", &L2ErrorProjection::GetElementArea)
+        ;
+
     py::class_<MeshRotationUtility> (m, "MeshRotationUtility")
         .def(py::init<Parameters&>())
         .def("RotateMesh", &MeshRotationUtility::RotateMesh)
@@ -498,6 +505,7 @@ void  AddCustomUtilitiesToPython(pybind11::module& m){
         .def("SetStationaryField", &MeshRotationUtility::SetStationaryField)
         .def("RotateFluidVelocities", &MeshRotationUtility::RotateFluidVelocities)
         ;
+
     py::class_<RenumberingNodesUtility> (m, "RenumberingNodesUtility")
         .def(py::init<ModelPart&>())
         .def(py::init<ModelPart&,ModelPart&>())

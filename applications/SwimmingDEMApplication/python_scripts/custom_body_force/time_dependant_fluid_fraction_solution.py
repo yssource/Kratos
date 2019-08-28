@@ -1,14 +1,15 @@
 import KratosMultiphysics
 import numpy as np
 import sympy as sp
+from KratosMultiphysics.SwimmingDEMApplication import field_utilities
 
 ## Import base class file
 from custom_body_force.manufactured_solution import ManufacturedSolution
 
 def CreateManufacturedSolution(custom_settings):
-    return StationaryFluidFractionVortex(custom_settings)
+    return TimeDependantFluidFractionVortex(custom_settings)
 
-class StationaryFluidFractionVortex(ManufacturedSolution):
+class TimeDependantFluidFractionVortex(ManufacturedSolution):
     def __init__(self, settings):
 
         default_settings = KratosMultiphysics.Parameters("""
@@ -29,6 +30,14 @@ class StationaryFluidFractionVortex(ManufacturedSolution):
         self.L = settings["length"].GetDouble()
         self.rho = settings["density"].GetDouble()
         self.nu = settings["viscosity"].GetDouble() / self.rho
+        # self.X = sp.symbols("X")
+        # self.T  = sp.symbols("T")
+        # self.fx = 100 * self.X**2 * (self.L - self.X)**2
+        # self.gt = sp.cos(np.pi * self.T) * sp.exp(-self.T)
+        # self.dfx = sp.diff(self.fx, self.X)
+        # self.dgt = sp.diff(self.gt, self.T)
+        # self.ddfx = sp.diff(self.fx, self.X, 2)
+        # self.dddfx = sp.diff(self.fx, self.X, 3)
 
     def f(self, x):
         return 100 * x**2 * (self.L - x)**2
@@ -84,9 +93,6 @@ class StationaryFluidFractionVortex(ManufacturedSolution):
     def du222(self, t, x1, x2, x3):
         return -self.df(x1) * self.ddf(x2) * self.g(t)
 
-    def alpha(self, t, x1, x2, x3):
-        #self.fluid_fraction = -0.4 * x1 -0.4 * x2 + 1
-        self.fluid_fraction = 1.0
-        return self.fluid_fraction
-
-
+    def alpha(self, t, x1, x2, x3, fluid_fraction):
+        self.fluid_fraction = fluid_fraction
+        return fluid_fraction

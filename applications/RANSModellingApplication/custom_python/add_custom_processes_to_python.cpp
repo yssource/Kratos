@@ -18,6 +18,7 @@
 
 // RANS Y Plus models
 #include "custom_processes/y_plus_model_processes/rans_logarithmic_y_plus_model_process.h"
+#include "custom_processes/y_plus_model_processes/rans_logarithmic_y_plus_model_sensitivities_process.h"
 
 // RANS initialization processes
 #include "custom_processes/k_epsilon_evaluation_utau_process.h"
@@ -48,6 +49,10 @@ void AddCustomProcessesToPython(pybind11::module& m)
     py::class_<RansLogarithmicYPlusModelProcess, RansLogarithmicYPlusModelProcess::Pointer, Process>(
         m, "RansLogarithmicYPlusModelProcess")
         .def(py::init<ModelPart&, Parameters&>());
+    py::class_<RansLogarithmicYPlusModelSensitivitiesProcess, RansLogarithmicYPlusModelSensitivitiesProcess::Pointer, Process>(
+        m, "RansLogarithmicYPlusModelSensitivitiesProcess")
+        .def(py::init<ModelPart&, Parameters&>());
+
 
     py::class_<RansKEpsilonEvaluationUtauProcess, RansKEpsilonEvaluationUtauProcess::Pointer, Process>(
         m, "RansKEpsilonEvaluationUtauProcess")

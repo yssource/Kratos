@@ -250,11 +250,7 @@ private:
                 this->mrConvergenceVariable, OLD_CONVERGENCE_VARIABLE, r_nodes);
 
             for (SolvingStrategyType* p_solving_strategy : this->mrSolvingStrategiesList)
-            {
-                std::cout<<"test 1\n";
                 p_solving_strategy->SolveSolutionStep();
-                std::cout<<"test 2\n";
-            }
 
             this->UpdateConvergenceVariable();
 

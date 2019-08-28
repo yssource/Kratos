@@ -75,6 +75,17 @@ void CalculateTurbulentValues(double& turbulent_kinetic_energy,
                               const double mixing_length,
                               const double c_mu);
 
+double CalculateReactionTurbulentKineticEnergy(const double kinematic_viscosity,
+                                               const double wall_distance,
+                                               const double gamma);
+
+double CalculateReactionTurbulentEnergyDissipationRate(const double c2,
+                                                       const double f2,
+                                                       const double gamma,
+                                                       const double kinematic_viscosity,
+                                                       const double y_plus,
+                                                       const double wall_distance);
+
 } // namespace EvmKepsilonModelUtilities
 
 ///@}

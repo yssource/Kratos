@@ -3,6 +3,8 @@ import KratosMultiphysics
 import KratosMultiphysics.FluidDynamicsApplication
 import KratosMultiphysics.RANSModellingApplication
 
+import run_cpp_unit_tests
+
 import subprocess
 
 # Import Kratos "wrapper" for unittests
@@ -40,13 +42,14 @@ def AssembleTestSuites():
     # Create a test suite that contains all the tests:
     allSuite = suites['all']
     # allSuite.addTests(nightSuite) #TODO: Has a convergence problem, therefore gives a race condition
-    allSuite.addTests(validationSuite)
+    # allSuite.addTests(validationSuite)
 
     return suites
 
 if __name__ == '__main__':
     KratosMultiphysics.Logger.GetDefaultOutput().SetSeverity(KratosMultiphysics.Logger.Severity.WARNING)
     KratosMultiphysics.Logger.PrintInfo("Unittests", "\nRunning cpp unit tests ...")
+    run_cpp_unit_tests.run()
     KratosMultiphysics.Logger.PrintInfo("Unittests", "Finished running cpp unit tests!")
 
     KratosMultiphysics.Logger.PrintInfo("Unittests", "\nRunning mpi python tests ...")

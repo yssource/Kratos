@@ -1,0 +1,49 @@
+{
+library : {
+name   : "Behaviour";
+type   : SHARED_LIBRARY;
+prefix : "lib";
+suffix : "so";
+install_path : "";
+sources : {
+"Norton-generic.cxx",
+"Norton.cxx",
+"Plasticity-generic.cxx",
+"Plasticity.cxx"
+};
+cppflags : {
+"$(shell tfel-config --cppflags --compiler-flags)"
+};
+include_directories : {
+"$(shell tfel-config --include-path)"
+};
+link_directories : {
+"$(shell tfel-config --library-path)"
+};
+link_libraries : {
+"$(shell tfel-config --library-dependency --material --mfront-profiling --physical-constants)"
+};
+epts : {
+"Norton_AxisymmetricalGeneralisedPlaneStrain",
+"Norton_Axisymmetrical",
+"Norton_PlaneStrain",
+"Norton_GeneralisedPlaneStrain",
+"Norton_Tridimensional",
+"Plasticity_AxisymmetricalGeneralisedPlaneStrain",
+"Plasticity_Axisymmetrical",
+"Plasticity_PlaneStrain",
+"Plasticity_GeneralisedPlaneStrain",
+"Plasticity_Tridimensional"
+};
+};
+headers : {
+"MFront/GenericBehaviour/Norton-generic.hxx",
+"TFEL/Material/Norton.hxx",
+"TFEL/Material/NortonBehaviourData.hxx",
+"TFEL/Material/NortonIntegrationData.hxx",
+"MFront/GenericBehaviour/Plasticity-generic.hxx",
+"TFEL/Material/Plasticity.hxx",
+"TFEL/Material/PlasticityBehaviourData.hxx",
+"TFEL/Material/PlasticityIntegrationData.hxx"
+};
+};

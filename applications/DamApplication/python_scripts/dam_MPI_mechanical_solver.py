@@ -110,6 +110,9 @@ class DamMPIMechanicalSolver(dam_mechanical_solver.DamMechanicalSolver):
         # Construct the communicators
         ModelPartImporter.CreateCommunicators()
 
+    def PrepareModelPart(self): #TODO: for the moment, provided for compatibility
+        pass
+
     def Initialize(self):
 
         # Construct the communicator

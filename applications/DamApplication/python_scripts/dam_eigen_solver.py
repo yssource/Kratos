@@ -97,6 +97,8 @@ class DamEigenSolver():
 
         print ("Model reading finished")
 
+    def PrepareModelPart(self): #TODO: for the moment, provided for compatibility
+        pass
 
     def Initialize(self):
 

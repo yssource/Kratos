@@ -4,7 +4,7 @@ import KratosMultiphysics.DamApplication as KratosDam
 
 class SaveVariablesUtility:
 
-    def SaveMechanicalVariables(problem_name, ProjectParameters, main_model_part, time):
+    def SaveMechanicalVariables(problem_name, mechanical_loads_sub_model_part_list, main_model_part, time):
 
         OriginalMdpa = open(problem_name + ".mdpa" , 'r')
         OutputMdpa = open(problem_name + "_mechanical_" + str(time) + ".mdpa", 'w')
@@ -14,8 +14,6 @@ class SaveVariablesUtility:
                 OriginalMdpa.close()
                 break
             OutputMdpa.write(Line)
-
-        mechanical_loads_sub_model_part_list = ProjectParameters["solver_settings"]["mechanical_solver_settings"]["problem_domain_sub_model_part_list"]
 
         mechanical_parts = []
 
@@ -36,7 +34,7 @@ class SaveVariablesUtility:
 
         OutputMdpa.close()
 
-    def SaveFinalMechanicalVariables(problem_name, ProjectParameters, main_model_part):
+    def SaveFinalMechanicalVariables(problem_name, mechanical_loads_sub_model_part_list, main_model_part):
 
         OriginalMdpa = open(problem_name + ".mdpa" , 'r')
         OutputMdpa = open(problem_name + "_mechanical.mdpa", 'w')
@@ -46,8 +44,6 @@ class SaveVariablesUtility:
                 OriginalMdpa.close()
                 break
             OutputMdpa.write(Line)
-
-        mechanical_loads_sub_model_part_list = ProjectParameters["solver_settings"]["mechanical_solver_settings"]["problem_domain_sub_model_part_list"]
 
         mechanical_parts = []
         for i in range(mechanical_loads_sub_model_part_list.size()):
@@ -67,7 +63,7 @@ class SaveVariablesUtility:
 
         OutputMdpa.close()
 
-    def SaveThermalVariables(problem_name, ProjectParameters, main_model_part, time):
+    def SaveThermalVariables(problem_name, thermal_loads_sub_model_part_list, main_model_part, time):
 
         OriginalMdpa = open(problem_name + ".mdpa" , 'r')
         OutputMdpa = open(problem_name + "_thermal_" + str(time) + ".mdpa", 'w')
@@ -77,8 +73,6 @@ class SaveVariablesUtility:
                 OriginalMdpa.close()
                 break
             OutputMdpa.write(Line)
-
-        thermal_loads_sub_model_part_list = ProjectParameters["solver_settings"]["thermal_solver_settings"]["problem_domain_sub_model_part_list"]
 
         thermal_parts = []
 
@@ -99,7 +93,7 @@ class SaveVariablesUtility:
 
         OutputMdpa.close()
 
-    def SaveFinalThermalVariables(problem_name, ProjectParameters, main_model_part):
+    def SaveFinalThermalVariables(problem_name, thermal_loads_sub_model_part_list, main_model_part):
 
         OriginalMdpa = open(problem_name + ".mdpa" , 'r')
         OutputMdpa = open(problem_name + "_thermal.mdpa", 'w')
@@ -109,8 +103,6 @@ class SaveVariablesUtility:
                 OriginalMdpa.close()
                 break
             OutputMdpa.write(Line)
-
-        thermal_loads_sub_model_part_list = ProjectParameters["solver_settings"]["thermal_solver_settings"]["problem_domain_sub_model_part_list"]
 
         thermal_parts = []
         for i in range(thermal_loads_sub_model_part_list.size()):

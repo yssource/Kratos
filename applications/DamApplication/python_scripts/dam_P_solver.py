@@ -123,6 +123,8 @@ class DamUPSolver:
 
         print ("model reading finished")
 
+    def PrepareModelPart(self): #TODO: for the moment, provided for compatibility
+        pass
 
     def GetMinimumBufferSize(self):
         return 2;

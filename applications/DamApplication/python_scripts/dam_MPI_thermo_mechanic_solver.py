@@ -132,6 +132,9 @@ class DamMPIThermoMechanicSolver(dam_thermo_mechanic_solver.DamThermoMechanicSol
         # Construct the communicators
         ModelPartImporter.CreateCommunicators()
 
+    def PrepareModelPart(self): #TODO: for the moment, provided for compatibility
+        pass
+
     def Initialize(self):
 
         # Construct the communicator

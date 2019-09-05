@@ -374,6 +374,30 @@ void BeamParticle::ComputeNewRigidFaceNeighboursHistoricalData()
         ComputeBrokenBondsRatio();
     } //  ComputeBallToBallContactForce
 
+    void BeamParticle::AddContributionToRepresentativeVolume(const double distance,
+                                                             const double radius_sum,
+                                                             const double contact_area) {
+        KRATOS_TRY
+
+        mPartialRepresentativeVolume += 0.5 * distance * contact_area;
+
+        KRATOS_CATCH("")
+    }
+
+    void BeamParticle::FinalizeSolutionStep(ProcessInfo& r_process_info) {
+        KRATOS_TRY
+
+        SphericParticle::FinalizeSolutionStep(r_process_info);
+
+        //Update sphere mass and inertia taking into account the real volume of the represented volume:
+        SetMass(mPartialRepresentativeVolume * GetDensity());
+        if (this->Is(DEMFlags::HAS_ROTATION) ){
+            GetGeometry()[0].FastGetSolutionStepValue(PARTICLE_MOMENT_OF_INERTIA) = CalculateMomentOfInertia();
+        }
+
+        KRATOS_CATCH("")
+    }
+
     double BeamParticle::GetParticleInitialCohesion()            { return SphericParticle::GetFastProperties()->GetParticleInitialCohesion();            }
     double BeamParticle::GetAmountOfCohesionFromStress()         { return SphericParticle::GetFastProperties()->GetAmountOfCohesionFromStress();         }
     double BeamParticle::GetParticleConicalDamageContactRadius() { return SphericParticle::GetFastProperties()->GetParticleConicalDamageContactRadius(); }

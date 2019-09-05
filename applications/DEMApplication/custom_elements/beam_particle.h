@@ -64,6 +64,12 @@ namespace Kratos {
                                                    array_1d<double, 3>& rContactForce,
                                                    double& RollingResistance) override;
 
+        virtual void AddContributionToRepresentativeVolume(const double distance,
+                                                           const double radius_sum,
+                                                           const double contact_area) override;
+
+        virtual void FinalizeSolutionStep(ProcessInfo& r_process_info) override;
+
         virtual double GetParticleInitialCohesion();
         void   SetParticleInitialCohesionFromProperties(double* particle_initial_cohesion);
         virtual double GetAmountOfCohesionFromStress();

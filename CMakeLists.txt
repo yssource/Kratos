@@ -399,9 +399,11 @@ if(DEFINED KRATOS_EXTERNAL_APPLICATION_DIR)
     endforeach(APPLICATION_EXTERNAL_DIR ${KRATOS_EXTERNAL_APPLICATION_DIR})
 endif(DEFINED KRATOS_EXTERNAL_APPLICATION_DIR)
 
-#compiling the triangle library
+# Compiling the triangle library
 add_subdirectory(${CMAKE_SOURCE_DIR}/external_libraries/triangle)
 
+# Compiling the doctest library
+add_subdirectory(${CMAKE_SOURCE_DIR}/external_libraries/doctest)
 
 # Embedded python - compiles "krun and packages the python lib needed"
 if(${INSTALL_EMBEDDED_PYTHON} MATCHES ON )

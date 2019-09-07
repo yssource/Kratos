@@ -5,6 +5,9 @@ if(${MPI_NEEDED} MATCHES ON )
   add_subdirectory(mpi)
 endif(${MPI_NEEDED} MATCHES ON )
 
+# Include doctest
+include_directories( ${CMAKE_SOURCE_DIR}/external_libraries/doctest )
+
 ## Kratos main source code
 set( KRATOS_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/containers/flags.cpp

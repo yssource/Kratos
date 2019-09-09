@@ -17,8 +17,8 @@ class FluidFractionTestSolver(BaseSolver):
                                                       variables_manager)
 
     def ReturnExactFluidFraction(self, x, y):
-        #field = eval('-0.4 * x - 0.4 * y + 1')
-        field = 1.0
+        field = eval('-0.4 * x - 0.4 * y + 1')
+        #field = 1.0
         return field
 
     def CannotIgnoreFluidNow(self):
@@ -29,11 +29,12 @@ class FluidFractionTestSolver(BaseSolver):
         super(FluidFractionTestSolver, self).SolveFluidSolutionStep()
 
     def SetFluidFractionField(self):
-        pass
+        #pass
         #from KratosMultiphysics.SwimmingDEMApplication import field_utilities
         #field_utilities.PorosityField(0, True).ImposePorosityField(self.fluid_solver.main_model_part)
-            #fluid_fraction = self.ReturnExactFluidFraction(node.X, node.Y)
-            #node.SetSolutionStepValue(Kratos.FLUID_FRACTION, fluid_fraction)
+        for node in self.fluid_solver.main_model_part.Nodes:
+            fluid_fraction = self.ReturnExactFluidFraction(node.X, node.Y)
+            node.SetSolutionStepValue(Kratos.FLUID_FRACTION, fluid_fraction)
 
     def ImposeVelocity(self):
         for node in self.fluid_solver.main_model_part.Nodes:
@@ -44,7 +45,8 @@ class FluidFractionTestSolver(BaseSolver):
         self.L2_error_projector = error_projector.L2ErrorProjectionUtility(self.fluid_solver.main_model_part)
 
     def ProjectL2Error(self):
-        self.L2_error_projector.ProjectL2()
+        self.velocity_error_projected, self.pressure_error_projected, self.error_model_part = self.L2_error_projector.ProjectL2()
+        return self.velocity_error_projected, self.pressure_error_projected, self.error_model_part
 
     def SolveDEM(self):
         super(FluidFractionTestSolver, self).SolveDEM()

@@ -27,23 +27,22 @@ class L2ErrorProjectionUtility:
         self.AddDofs(self.DOFs)
         self.SetStrategy()
 
-        from KratosMultiphysics.SwimmingDEMApplication import hdf5_script
-        self.projector_post_process = hdf5_script.ErrorProjectionPostProcessTool(self.error_model_part, 1)
-
     def ProjectL2(self):
         self.ComputeVelocityError()
         self.Solve()
 
         self.velocity_error_projected = SDEM.L2ErrorProjection().GetL2Projection(self.error_model_part)
-        self.projector_post_process.WriteData(self.velocity_error_projected, 0.0)
-        print(self.velocity_error_projected)
+        self.pressure_error_projected = 0.0
+        return self.velocity_error_projected, self.pressure_error_projected, self.error_model_part
 
     def ComputeVelocityError(self):
+        mod_error = 0
         for node in self.error_model_part.Nodes:
             vectorial_error = Vector(node.GetSolutionStepValue(KratosMultiphysics.VELOCITY) - node.GetSolutionStepValue(SDEM.EXACT_VELOCITY))
-            print("velocity : ", node.GetSolutionStepValue(KratosMultiphysics.VELOCITY))
-            print("exact_velocity : ", node.GetSolutionStepValue(SDEM.EXACT_VELOCITY))
+            mod_error += np.sqrt(vectorial_error[0]**2 + vectorial_error[1]**2 + vectorial_error[2]**2)
             node.SetSolutionStepValue(SDEM.VECTORIAL_ERROR, vectorial_error)
+
+        print("av_mod_error :", mod_error / len(self.error_model_part.Elements))
 
     def SetStrategy(self):
         scheme = KratosMultiphysics.ResidualBasedIncrementalUpdateStaticScheme()

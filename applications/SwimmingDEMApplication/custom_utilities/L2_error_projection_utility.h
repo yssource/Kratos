@@ -41,67 +41,50 @@ virtual ~L2ErrorProjection(){}
 double GetL2Projection(ModelPart& r_model_part)
 {
     const unsigned int n_elements = r_model_part.Elements().size();
-    double area, interpolator = 0.0;
+    double interpolator = 0.0, result = 0.0, error_x = 0.0, error_y = 0.0, error_z = 0.0;
     const unsigned int dim = r_model_part.GetProcessInfo()[DOMAIN_SIZE];
     Matrix NContainer;
-    Vector N;
+    array_1d<double, 3> scalar_product;
     std::vector<double> error;
-    array_1d<double, 3> scalar_product = ZeroVector(3);
 
     for (unsigned int i = 0; i < n_elements; ++i){
 
         ElementIterator ielem = r_model_part.ElementsBegin() + i;
         GeometryType& rGeom = ielem->GetGeometry();
         const unsigned int NumNodes = rGeom.PointsNumber();
-
+        const GeometryType::IntegrationPointsArrayType& IntegrationPoints = ielem->GetGeometry().IntegrationPoints(GeometryData::GI_GAUSS_2);
         NContainer = rGeom.ShapeFunctionsValues(GeometryData::GI_GAUSS_2);
         const SizeType& NumGauss = NContainer.size1();
 
-        for (SizeType g = 0; g < NumGauss; ++g){
-            N = row(NContainer, g);
-        }
-
-        area = this->GetElementArea(area, rGeom);
-
-        for (unsigned int j = 0; j < NumNodes; ++j){
-            error.push_back(rGeom[j].FastGetSolutionStepValue(ERROR_X));
-            error.push_back(rGeom[j].FastGetSolutionStepValue(ERROR_Y));
-            error.push_back(rGeom[j].FastGetSolutionStepValue(ERROR_Z));
-
-            for (unsigned int k = 0; k < dim; ++k){
-                for (unsigned int l = 0; l < NumNodes; ++l){
-                    scalar_product[k] += error[k] * N[l];
-                }
+        for (SizeType gss = 0; gss < NumGauss; ++gss){
+            array_1d<double, 4> N;
+            N = row(NContainer, gss);
+            Vector DetJ = ZeroVector(NumGauss);
+            ielem->GetGeometry().DeterminantOfJacobian(DetJ, GeometryData::GI_GAUSS_2);
+            for (unsigned int j = 0; j < NumNodes; ++j){
+                error_x += rGeom[j].FastGetSolutionStepValue(ERROR_X) * N[j];
+                error_y += rGeom[j].FastGetSolutionStepValue(ERROR_Y) * N[j];
+                error_z += rGeom[j].FastGetSolutionStepValue(ERROR_Z) * N[j];
             }
-            interpolator += DEM_INNER_PRODUCT_3(scalar_product, scalar_product);
+            error.push_back(error_x);
+            error.push_back(error_y);
+            error.push_back(error_z);
+            for (unsigned int d = 0; d < dim; ++d){
+                scalar_product[d] = error[d];
+            }
+            result += pow(SWIMMING_MODULUS_3(scalar_product),2) * DetJ[gss] * IntegrationPoints[gss].Weight();
             error.clear();
-            scalar_product = ZeroVector(3);
+            error_x = 0.0;
+            error_y = 0.0;
+            error_z = 0.0;
         }
-        interpolator *= area;
+        interpolator += result;
+        result = 0.0;
     }
 
     return std::sqrt(interpolator);
 }
 
-double GetElementArea(double& area, GeometryType& rGeometry)
-{
-    double x10 = rGeometry[1].X() - rGeometry[0].X();
-    double y10 = rGeometry[1].Y() - rGeometry[0].Y();
-    double z10 = rGeometry[1].Z() - rGeometry[0].Z();
-
-    double x20 = rGeometry[2].X() - rGeometry[0].X();
-    double y20 = rGeometry[2].Y() - rGeometry[0].Y();
-    double z20 = rGeometry[2].Z() - rGeometry[0].Z();
-
-    double x30 = rGeometry[3].X() - rGeometry[0].X();
-    double y30 = rGeometry[3].Y() - rGeometry[0].Y();
-    double z30 = rGeometry[3].Z() - rGeometry[0].Z();
-
-    double detJ = x10 * y20 * z30 - x10 * y30 * z20 + y10 * z20 * x30 - y10 * x20 * z30 + z10 * x20 * y30 - z10 * y20 * x30;
-
-    return pow(detJ/6.0,1./3.);
-
-}
 //**************************************************************************************************************************************************
 //**************************************************************************************************************************************************
 

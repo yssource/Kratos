@@ -299,7 +299,6 @@ namespace Kratos {
                 const array_1d<double, 3 > & OldAcceleration = (itNode)->FastGetSolutionStepValue(ACCELERATION, 1);
                 const array_1d<double, 3> relaxed_acceleration = (1 - mAlphaBossak) * CurrentAcceleration
                                                                     + mAlphaBossak * OldAcceleration;
-                (itNode)->FastGetSolutionStepValue(FLUID_FRACTION_OLD) = (itNode)->FastGetSolutionStepValue(FLUID_FRACTION);
 
                 (itNode)->SetValue(RELAXED_ACCELERATION, relaxed_acceleration);
             }
@@ -361,6 +360,13 @@ namespace Kratos {
             }
 
             rModelPart.GetCommunicator().AssembleCurrentData(REACTION);
+
+            #pragma omp parallel for
+            for(int k = 0; k<static_cast<int>(rModelPart.Nodes().size()); k++)
+            {
+                auto itNode = rModelPart.NodesBegin() + k;
+                (itNode)->FastGetSolutionStepValue(FLUID_FRACTION_OLD) = (itNode)->FastGetSolutionStepValue(FLUID_FRACTION);
+            }
 
             // Base scheme calls FinalizeSolutionStep method of elements and conditions
             Scheme<TSparseSpace, TDenseSpace>::FinalizeSolutionStep(rModelPart, A, Dx, b);

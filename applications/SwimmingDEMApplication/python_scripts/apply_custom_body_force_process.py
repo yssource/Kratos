@@ -1,6 +1,7 @@
 # Importing the Kratos Library
 import KratosMultiphysics
-import KratosMultiphysics.SwimmingDEMApplication as SDEM
+import KratosMultiphysics.SwimmingDEMApplication
+from importlib import import_module
 
 def Factory(settings, Model):
     if not isinstance(settings, KratosMultiphysics.Parameters):
@@ -17,7 +18,7 @@ class ApplyCustomBodyForceProcess(KratosMultiphysics.Process):
             {
                 "model_part_name"          : "please_specify_model_part_name",
                 "variable_name"            : "BODY_FORCE",
-                "benchmark_name"           : "vortex",
+                "benchmark_name"           : "custom_body_force.vortex",
                 "benchmark_parameters"     : {},
                 "compute_nodal_error"      : true,
                 "print_convergence_output" : false,
@@ -32,9 +33,8 @@ class ApplyCustomBodyForceProcess(KratosMultiphysics.Process):
         self.model_part = model[self.settings["model_part_name"].GetString()]
         self.variable = KratosMultiphysics.KratosGlobals.GetVariable(self.settings["variable_name"].GetString())
 
-        #benchmark_module = __import__(self.settings["benchmark_name"].GetString(), fromlist=[None])
-        from KratosMultiphysics.SwimmingDEMApplication.custom_body_force import stationary_fluid_fraction_solution
-        self.benchmark = stationary_fluid_fraction_solution.CreateManufacturedSolution(self.settings["benchmark_parameters"])
+        benchmark_module = import_module(self.settings["benchmark_name"].GetString())
+        self.benchmark = benchmark_module.CreateManufacturedSolution(self.settings["benchmark_parameters"])
 
         self.compute_error = self.settings["compute_nodal_error"].GetBool()
 
@@ -87,7 +87,7 @@ class ApplyCustomBodyForceProcess(KratosMultiphysics.Process):
             error = abs(fem_vel_modulus - exact_vel_modulus)
             error = error / abs(exact_vel_modulus + epsilon)
             node.SetValue(KratosMultiphysics.NODAL_ERROR, error)
-            node.SetSolutionStepValue(SDEM.EXACT_VELOCITY, exact_vel)
+            node.SetSolutionStepValue(KratosMultiphysics.SwimmingDEMApplication.EXACT_VELOCITY, exact_vel)
 
     def _CopyVelocityAsNonHistorical(self):
         for node in self.model_part.Nodes:

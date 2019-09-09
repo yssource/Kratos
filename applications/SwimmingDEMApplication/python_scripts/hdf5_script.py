@@ -4,16 +4,11 @@ import os
 import numpy as np
 import h5py
 import KratosMultiphysics as Kratos
+from KratosMultiphysics import Vector
 import KratosMultiphysics.SwimmingDEMApplication as Dem
 
-def Norm(vector):
-    return np.sqrt(sum(v**2 for v in vector))
-
 class ErrorProjectionPostProcessTool(object):
-    def __init__(self, error_model_part, test_number):
-
-        if not test_number:
-            return
+    def __init__(self, test_number):
 
         self.parameters = Kratos.Parameters( """
         {
@@ -22,56 +17,52 @@ class ErrorProjectionPostProcessTool(object):
             "probe_height" : 0.2032
         }  """ )
 
-        if test_number == 1: # CTW16
-            test_id = "CTW16"
-        elif test_number == 2: # CTW10
-            test_id = "CTW10"
-        else: # Blind test
-            test_id = "BlindTest"
-
-        self.parameters.AddEmptyValue("test_id")
-        self.parameters["test_id"].SetString(test_id)
-
-        self.error_model_part = error_model_part
-        self.time = self.error_model_part.ProcessInfo[Kratos.TIME]
+        self.time = []
+        self.v_error = []
+        self.p_error = []
+        self.av_mod_error = []
         self.problem_path = os.getcwd()
         self.file_path = os.path.join(str(self.problem_path),self.parameters["file_name"].GetString())
-
         self.dtype = np.float64
-        self.compression_type = 'gzip'
-        self.number_of_readings = 0
+        self.group_name = test_number
 
-        self.last_time = - float('inf')
+    def WriteData(self, error_model_part, velocity_error_projected, pressure_error_projected):
+        self.error_model_part = error_model_part
+        mod_error = 0.0
+        for node in self.error_model_part.Nodes:
+            #vectorial_error = Vector(node.GetSolutionStepValue(Kratos.VELOCITY) - node.GetSolutionStepValue(Dem.EXACT_VELOCITY))
+            #mod_error += np.sqrt(vectorial_error[0]**2 + vectorial_error[1]**2 + vectorial_error[2]**2)
+            mod_error += np.sqrt(node.GetSolutionStepValue(Dem.ERROR_X)**2 + node.GetSolutionStepValue(Dem.ERROR_Y)**2 + node.GetSolutionStepValue(Dem.ERROR_Z)**2)
+        self.av_mod_error.append(mod_error/ len(self.error_model_part.Elements))
 
-        # This assumes annulus centered at the origin
-        #with h5py.File(self.file_path, 'w') as f:
-        #     f.attrs['test_id'] = self.parameters["test_id"].GetString()
-        #    f.attrs['time'] = self.time
-        #     f.attrs['error_velocity'] = self.error_velocity
-        #     f.attrs['error_pressure'] = self.error_pressure
+        for Element in self.error_model_part.Elements:
+            self.element_size = Element.GetGeometry().Length()
+            break
+        self.time.append(self.error_model_part.ProcessInfo[Kratos.TIME])
+        self.v_error.append(velocity_error_projected)
+        self.p_error.append(pressure_error_projected)
+        with h5py.File(self.file_path, 'a') as f:
+                self.WriteDataToFile(file_or_group = f,
+                            names = ['TIME', 'V_ERROR', 'P_ERROR', 'AVERAGE_ERROR'],
+                            data = [self.time, self.v_error, self.p_error, self.av_mod_error])
 
-    def WriteData(self, velocity_error_projected, pressure_error_projected):
-        time = self.time
-        name = str(self.number_of_readings + 1)
-        with h5py.File(self.file_path, 'w') as f:
-            #f.attrs['test_id'] = self.parameters["test_id"].GetString()
-            f.create_group(name = name)
-            f[name].attrs['test_id'] = "CTWD"
-            # f[name].attrs['error_velocity'] = velocity_error_projected
-            # f[name].attrs['error_pressure'] = pressure_error_projected
-        #column_shape = (len(self.error_model_part.Nodes), )
-        #self.ids_array = np.array([node.Id for node in self.error_model_part.Nodes])
-        self.v_error = velocity_error_projected
-        self.p_error = pressure_error_projected
+    def WriteDataToFile(self, file_or_group, names, data):
+        self.sub_group = self.CreateGroup(file_or_group, self.group_name)
+        self.sub_group.attrs['element_size'] = str(self.element_size)
+        self.sub_group.attrs['n_elements'] = str(len(self.error_model_part.Elements))
+        for name, datum in zip(names, data):
+            self.DeleteDataSet(file_or_group, name)
+        for name, datum in zip(names, data):
+            self.sub_group.create_dataset(name = name, data = datum)
 
-        if not self.last_time == time:
-            with h5py.File(self.file_path, 'r+') as f:
-                f.create_dataset(name + '/time', shape = (), dtype = self.dtype)
-                f[name + '/time'] = self.time
-                f.create_dataset('/velocity_error', shape = (), dtype = self.dtype)
-                f['/velocity_error'] = self.v_error
-                f.create_dataset('/pressure_error', shape = (), dtype = self.dtype)
-                f['/pressure_error'] = self.p_error
+    def DeleteDataSet(self, file_or_group, dset_name):
+        if dset_name in file_or_group:
+            file_or_group.__delitem__(dset_name)
 
-        self.last_time = time
-        self.number_of_readings += 1
+    def CreateGroup(self, file_or_group, name, overwrite_previous = True):
+        if name in file_or_group:
+            if overwrite_previous:
+                file_or_group['/'].__delitem__(name)
+            else:
+                return file_or_group['/' + name]
+        return file_or_group.create_group(name)

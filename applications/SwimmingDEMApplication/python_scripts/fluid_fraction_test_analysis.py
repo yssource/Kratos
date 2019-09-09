@@ -13,9 +13,13 @@ import L2_error_projection_utility as error_projector
 import fluid_fraction_test_solver as sdem_solver
 
 class FluidFractionTestAnalysis(SwimmingDEMAnalysis):
-    def __init__(self, model, varying_parameters = Parameters("{}")):
+    def __init__(self, model, iteration, varying_parameters = Parameters("{}")):
+
+        from KratosMultiphysics.SwimmingDEMApplication import hdf5_script
+        self.projector_post_process = hdf5_script.ErrorProjectionPostProcessTool(iteration)
         super(FluidFractionTestAnalysis, self).__init__(model, varying_parameters)
         self.project_parameters = varying_parameters
+        self.iteration = iteration
 
     def Initialize(self):
         super(FluidFractionTestAnalysis, self).Initialize()
@@ -37,7 +41,9 @@ class FluidFractionTestAnalysis(SwimmingDEMAnalysis):
 
     def FinalizeSolutionStep(self):
         super(FluidFractionTestAnalysis, self).FinalizeSolutionStep()
-        self._GetSolver().ProjectL2Error()
+        self.velocity_error_projected, self.pressure_error_projected, self.error_model_part = self._GetSolver().ProjectL2Error()
+        from KratosMultiphysics.SwimmingDEMApplication import hdf5_script
+        self.projector_post_process.WriteData(self.error_model_part, self.velocity_error_projected, self.pressure_error_projected)
 
     def TransferBodyForceFromDisperseToFluid(self):
         pass

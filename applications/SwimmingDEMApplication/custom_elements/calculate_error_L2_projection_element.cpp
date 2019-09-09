@@ -83,20 +83,16 @@ void CalculateErrorL2Projection<TDim, TNumNodes>::CalculateMassMatrix(MatrixType
     array_1d<double, TNumNodes> N;
 
     // Add 'consistent' mass matrix
-    double DetJ;
-    Matrix InvJ;
+
     MatrixType NContainer = this->GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_2);
     const GeometryType::IntegrationPointsArrayType& IntegrationPoints = this->GetGeometry().IntegrationPoints(GeometryData::GI_GAUSS_2);
 
-    GeometryType::JacobiansType J;
-    this->GetGeometry().Jacobian( J, GeometryData::GI_GAUSS_2 );
-
-        // calculate inverse of the jacobian and its determinant
-    MathUtils<double>::InvertMatrix( J[0], InvJ, DetJ );
     const SizeType NumGauss = NContainer.size1();
+    Vector DetJ = ZeroVector(NumGauss);
+    this->GetGeometry().DeterminantOfJacobian(DetJ, GeometryData::GI_GAUSS_2);
 
     for (SizeType g = 0; g < NumGauss; g++){
-            const double GaussWeight = DetJ * IntegrationPoints[g].Weight();
+            const double GaussWeight = DetJ[g] * IntegrationPoints[g].Weight();
             const ShapeFunctionsType& Ng = row(NContainer, g);
             this->AddConsistentMassMatrixContribution(rMassMatrix, Ng, GaussWeight);
         }
@@ -152,6 +148,7 @@ void CalculateErrorL2Projection<TDim, TNumNodes>::AddIntegrationPointRHSContribu
                 Vector NodalComponent = this->GetGeometry()[iNodeA].FastGetSolutionStepValue(VECTORIAL_ERROR);
 
                 value += rShapeFunc[iNodeB] * NodalComponent[dj];
+
             }
 
             F[LocalIndex++] += Coef * value;
@@ -163,22 +160,17 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void CalculateErrorL2Projection<TDim, TNumNodes>::CalculateRHS(VectorType& F, ProcessInfo& rCurrentProcessInfo)
 {
 
-    double DetJ;
     array_1d<double, TNumNodes> N;
-    Matrix InvJ;
     MatrixType NContainer = this->GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_2);
     VectorType GaussWeights;
     const GeometryType::IntegrationPointsArrayType& IntegrationPoints = this->GetGeometry().IntegrationPoints(GeometryData::GI_GAUSS_2);
 
-    GeometryType::JacobiansType J;
-    this->GetGeometry().Jacobian( J, GeometryData::GI_GAUSS_2 );
-
-    // calculate inverse of the jacobian and its determinant
-    MathUtils<double>::InvertMatrix( J[0], InvJ, DetJ );
     const SizeType NumGauss = NContainer.size1();
+    Vector DetJ = ZeroVector(NumGauss);
+    this->GetGeometry().DeterminantOfJacobian(DetJ, GeometryData::GI_GAUSS_2);
 
     for (SizeType g = 0; g < NumGauss; g++){
-        const double GaussWeight = DetJ * IntegrationPoints[g].Weight();
+        const double GaussWeight = DetJ[g] * IntegrationPoints[g].Weight();
         const ShapeFunctionsType& Ng = row(NContainer, g);
         this->AddIntegrationPointRHSContribution(F, Ng, GaussWeight);
     }

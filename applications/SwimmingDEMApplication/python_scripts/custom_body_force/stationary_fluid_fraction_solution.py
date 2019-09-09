@@ -85,8 +85,8 @@ class StationaryFluidFractionVortex(ManufacturedSolution):
         return -self.df(x1) * self.ddf(x2) * self.g(t)
 
     def alpha(self, t, x1, x2, x3):
-        #self.fluid_fraction = -0.4 * x1 -0.4 * x2 + 1
-        self.fluid_fraction = 1.0
+        self.fluid_fraction = -0.4 * x1 -0.4 * x2 + 1
+        #self.fluid_fraction = 1.0
         return self.fluid_fraction
 
 

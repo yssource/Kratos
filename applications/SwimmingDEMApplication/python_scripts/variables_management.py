@@ -406,8 +406,8 @@ class VariablesManager:
         if parameters["coupling"]["coupling_level_type"].GetInt() >= 1 or parameters["custom_fluid"]["fluid_model_type"].GetInt() == 0:
             self.coupling_dem_vars += [Kratos.FLUID_FRACTION_PROJECTED]
 
-        if (parameters["coupling"]["coupling_level_type"].GetInt() >= 1
-            and 'FLUID_FRACTION_GRADIENT_PROJECTED' in self.dem_printing_vars):
+        if (parameters["coupling"]["coupling_level_type"].GetInt() >= 1):
+            #and 'FLUID_FRACTION_GRADIENT_PROJECTED' in self.dem_printing_vars):
             self.coupling_dem_vars += [Kratos.FLUID_FRACTION_GRADIENT_PROJECTED]
 
         if parameters["non_newtonian_fluid"]["non_newtonian_option"].GetBool():

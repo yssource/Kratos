@@ -546,8 +546,9 @@ namespace Kratos {
 
     void BeamParticle::AddContributionToRepresentativeVolume(const double distance, const double radius_sum, const double contact_area) {
 
+        KRATOS_WATCH(contact_area)
         mPartialRepresentativeVolume += 0.5 * distance * contact_area;
-        mPartialRepresentativeInertia += 0.5 * distance * distance;
+        mPartialRepresentativeInertia += 0.5 * distance;
     }
 
     void BeamParticle::FinalizeSolutionStep(ProcessInfo& r_process_info) {
@@ -557,8 +558,8 @@ namespace Kratos {
         //Update sphere mass and inertia taking into account the real volume of the represented volume:
         SetMass(mPartialRepresentativeVolume * GetDensity());
         GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = GetProperties()[BEAM_PRINCIPAL_MOMENT_OF_INERTIA_X];
-        GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = mPartialRepresentativeVolume * GetProperties()[BEAM_PRINCIPAL_MOMENT_OF_INERTIA_Y];
-        GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = mPartialRepresentativeVolume * GetProperties()[BEAM_PRINCIPAL_MOMENT_OF_INERTIA_Z];
+        GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = mPartialRepresentativeInertia * GetProperties()[BEAM_PRINCIPAL_MOMENT_OF_INERTIA_Y];
+        GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = mPartialRepresentativeInertia * GetProperties()[BEAM_PRINCIPAL_MOMENT_OF_INERTIA_Z];
     }
 
     double BeamParticle::GetParticleInitialCohesion()            { return SphericParticle::GetFastProperties()->GetParticleInitialCohesion();            }

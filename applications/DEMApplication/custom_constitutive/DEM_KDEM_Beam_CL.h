@@ -22,6 +22,12 @@ namespace Kratos {
         void SetConstitutiveLawInProperties(Properties::Pointer pProp, bool verbose = true) const override;
         void Check(Properties::Pointer pProp) const override;
 
+        virtual void GetContactArea(const double radius,
+                                    const double other_radius,
+                                    const Vector& vector_of_initial_areas,
+                                    const int neighbour_position,
+                                    double& calculation_area) override;
+
         virtual void ComputeParticleRotationalMoments(SphericContinuumParticle* element,
                                                       SphericContinuumParticle* neighbor,
                                                       double equiv_young,

@@ -282,6 +282,7 @@ array_1d<double, 3> mContactMoment; //SLS
 BoundedMatrix<double, 3, 3>* mStressTensor;
 BoundedMatrix<double, 3, 3>* mSymmStressTensor;
 double mPartialRepresentativeVolume;
+double mPartialRepresentativeInertia;
 
 std::vector<int> mFemOldNeighbourIds;
 
@@ -355,7 +356,7 @@ virtual void ComputeMoments(double normalLocalContactForce,
                             double indentation,
                             bool wall=false) final;
 
-virtual void ComputeRollingFriction(array_1d<double, 3>& rolling_resistance_moment, double& RollingResistance, double dt) final;
+virtual void ComputeRollingFriction(array_1d<double, 3>& rolling_resistance_moment, double& RollingResistance, double dt);
 
 virtual double GetInitialDeltaWithFEM(int index);
 

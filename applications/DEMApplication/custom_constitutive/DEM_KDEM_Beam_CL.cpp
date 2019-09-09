@@ -31,6 +31,10 @@ namespace Kratos {
         }
     }
 
+    void DEM_KDEM_Beam::GetContactArea(const double radius, const double other_radius, const Vector& vector_of_initial_areas, const int neighbour_position, double& calculation_area) {
+        if (vector_of_initial_areas.size()) calculation_area = vector_of_initial_areas[neighbour_position];
+    }
+
     void DEM_KDEM_Beam::ComputeParticleRotationalMoments(SphericContinuumParticle* element,
                                                          SphericContinuumParticle* neighbor,
                                                          double equiv_young,
@@ -54,10 +58,14 @@ namespace Kratos {
         GeometryFunctions::VectorGlobal2Local(LocalCoordSystem, GlobalDeltaRotatedAngle, LocalDeltaRotatedAngle);
         GeometryFunctions::VectorGlobal2Local(LocalCoordSystem, GlobalDeltaAngularVelocity, LocalDeltaAngularVelocity);
 
-        const double element_mass  = element->GetMass();
-        const double neighbor_mass = neighbor->GetMass();
-        const double equiv_mass    = element_mass * neighbor_mass / (element_mass + neighbor_mass);
+        // const double element_mass  = element->GetMass();
+        // const double neighbor_mass = neighbor->GetMass();
+        // const double equiv_mass    = 0.5 * element_mass + neighbor_mass;
         const double equiv_shear   = equiv_young / (2.0 * (1 + equiv_poisson));
+
+        const double MomentOfInertiaX = 0.5 * (element->GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] + neighbor->GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0]);
+        const double MomentOfInertiaY = 0.5 * (element->GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] + neighbor->GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1]);
+        const double MomentOfInertiaZ = 0.5 * (element->GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] + neighbor->GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2]);
 
         const double Inertia_Ix = std::max(element->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X], neighbor->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X]);
         const double Inertia_Iy = std::max(element->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y], neighbor->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y]);
@@ -73,9 +81,9 @@ namespace Kratos {
 
         double norm_distance = (element->GetRadius() + neighbor->GetRadius()) / distance; // If spheres are not tangent the Damping coefficient, DeltaRotatedAngle and DeltaAngularVelocity have to be normalized
 
-        const double visc_param_rot_x = 2.0 * equiv_gamma * sqrt(equiv_mass * k_rot_x) * norm_distance;
-        const double visc_param_rot_y = 2.0 * equiv_gamma * sqrt(equiv_mass * k_rot_y) * norm_distance;
-        const double visc_param_tor   = 2.0 * equiv_gamma * sqrt(equiv_mass * k_tor  ) * norm_distance;
+        const double visc_param_rot_x = 2.0 * equiv_gamma * sqrt(MomentOfInertiaX * k_rot_x) * norm_distance;
+        const double visc_param_rot_y = 2.0 * equiv_gamma * sqrt(MomentOfInertiaY * k_rot_y) * norm_distance;
+        const double visc_param_tor   = 2.0 * equiv_gamma * sqrt(MomentOfInertiaZ * k_tor  ) * norm_distance;
 
         ElasticLocalRotationalMoment[0] = -k_rot_x * LocalDeltaRotatedAngle[0] * norm_distance;
         ElasticLocalRotationalMoment[1] = -k_rot_y * LocalDeltaRotatedAngle[1] * norm_distance;

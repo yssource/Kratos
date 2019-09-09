@@ -46,11 +46,11 @@ namespace Kratos {
     }
 
     void DEM_KDEM_Cable::CalculateViscoDampingCoeff(double& equiv_visco_damp_coeff_normal,
-                                              double& equiv_visco_damp_coeff_tangential,
-                                              SphericContinuumParticle* element1,
-                                              SphericContinuumParticle* element2,
-                                              const double kn_el,
-                                              const double kt_el) {
+                                                    double& equiv_visco_damp_coeff_tangential,
+                                                    SphericContinuumParticle* element1,
+                                                    SphericContinuumParticle* element2,
+                                                    const double kn_el,
+                                                    const double kt_el) {
 
         const double my_mass    = element1->GetMass();
         const double other_mass = element2->GetMass();
@@ -71,15 +71,15 @@ namespace Kratos {
     }
 
     void DEM_KDEM_Cable::ComputeParticleRotationalMoments(SphericContinuumParticle* element,
-                                                    SphericContinuumParticle* neighbor,
-                                                    double equiv_young,
-                                                    double distance,
-                                                    double calculation_area,
-                                                    double LocalCoordSystem[3][3],
-                                                    double ElasticLocalRotationalMoment[3],
-                                                    double ViscoLocalRotationalMoment[3],
-                                                    double equiv_poisson,
-                                                    double indentation) {
+                                                          SphericContinuumParticle* neighbor,
+                                                          double equiv_young,
+                                                          double distance,
+                                                          double calculation_area,
+                                                          double LocalCoordSystem[3][3],
+                                                          double ElasticLocalRotationalMoment[3],
+                                                          double ViscoLocalRotationalMoment[3],
+                                                          double equiv_poisson,
+                                                          double indentation) {
 
         double LocalDeltaRotatedAngle[3]    = {0.0};
         double LocalDeltaAngularVelocity[3] = {0.0};

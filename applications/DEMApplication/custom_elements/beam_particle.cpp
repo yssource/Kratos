@@ -61,27 +61,13 @@ namespace Kratos {
         SphericContinuumParticle::Initialize(r_process_info);
 
         if (this->Is(DEMFlags::HAS_ROTATION)) {
-            GetGeometry()[0].GetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = GetProperties()[BEAM_PRINCIPAL_MOMENT_OF_INERTIA_X];
-            GetGeometry()[0].GetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = GetProperties()[BEAM_PRINCIPAL_MOMENT_OF_INERTIA_Y];
-            GetGeometry()[0].GetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = GetProperties()[BEAM_PRINCIPAL_MOMENT_OF_INERTIA_Z];
+            GetGeometry()[0].GetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = (GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X] + GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y]) / GetProperties()[BEAM_CROSS_SECTION];
+            GetGeometry()[0].GetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X] / GetProperties()[BEAM_CROSS_SECTION];
+            GetGeometry()[0].GetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y] / GetProperties()[BEAM_CROSS_SECTION];
         }
     }
 
-    void BeamParticle::CalculateLocalAngularMomentum(array_1d<double, 3>& r_angular_momentum)
-    {
-        array_1d<double, 3> base_principal_moments_of_inertia = GetGeometry()[0].GetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA);
-
-        Quaternion<double>& Orientation = GetGeometry()[0].GetSolutionStepValue(ORIENTATION);
-        Orientation.normalize();
-
-        array_1d<double, 3> angular_velocity = GetGeometry()[0].GetSolutionStepValue(ANGULAR_VELOCITY);
-        array_1d<double, 3> angular_momentum;
-        double LocalTensor[3][3];
-        double GlobalTensor[3][3];
-        GeometryFunctions::ConstructLocalTensor(base_principal_moments_of_inertia, LocalTensor);
-        GeometryFunctions::QuaternionTensorLocal2Global(Orientation, LocalTensor, GlobalTensor);
-        GeometryFunctions::ProductMatrix3X3Vector3X1(GlobalTensor, angular_velocity, angular_momentum);
-    }
+    void BeamParticle::CalculateLocalAngularMomentum(array_1d<double, 3>& r_angular_momentum) {}
 
     void BeamParticle::ComputeNewNeighboursHistoricalData(DenseVector<int>& temp_neighbours_ids, std::vector<array_1d<double, 3> >& temp_neighbour_elastic_contact_forces)
     {
@@ -546,9 +532,15 @@ namespace Kratos {
 
     void BeamParticle::AddContributionToRepresentativeVolume(const double distance, const double radius_sum, const double contact_area) {
 
-        KRATOS_WATCH(contact_area)
         mPartialRepresentativeVolume += 0.5 * distance * contact_area;
-        mPartialRepresentativeInertia += 0.5 * distance;
+
+        double L1 = distance;
+        double L2 = sqrt( 12.0 * GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X] / GetProperties()[BEAM_CROSS_SECTION] );
+        double L3 = sqrt( 12.0 * GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y] / GetProperties()[BEAM_CROSS_SECTION] );
+
+        mPartialRepresentativeInertia1 += 0.5 * 0.083333333333333333 * GetDensity() * distance * contact_area * (L2 * L2 + L3 * L3);
+        mPartialRepresentativeInertia2 += 0.5 * 0.083333333333333333 * GetDensity() * distance * contact_area * (L1 * L1 + L3 * L3);
+        mPartialRepresentativeInertia3 += 0.5 * 0.083333333333333333 * GetDensity() * distance * contact_area * (L1 * L1 + L2 * L2);
     }
 
     void BeamParticle::FinalizeSolutionStep(ProcessInfo& r_process_info) {
@@ -557,9 +549,9 @@ namespace Kratos {
 
         //Update sphere mass and inertia taking into account the real volume of the represented volume:
         SetMass(mPartialRepresentativeVolume * GetDensity());
-        GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = GetProperties()[BEAM_PRINCIPAL_MOMENT_OF_INERTIA_X];
-        GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = mPartialRepresentativeInertia * GetProperties()[BEAM_PRINCIPAL_MOMENT_OF_INERTIA_Y];
-        GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = mPartialRepresentativeInertia * GetProperties()[BEAM_PRINCIPAL_MOMENT_OF_INERTIA_Z];
+        GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = mPartialRepresentativeInertia1;
+        GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = mPartialRepresentativeInertia2;
+        GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = mPartialRepresentativeInertia3;
     }
 
     double BeamParticle::GetParticleInitialCohesion()            { return SphericParticle::GetFastProperties()->GetParticleInitialCohesion();            }

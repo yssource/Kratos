@@ -116,7 +116,9 @@ SphericParticle& SphericParticle::operator=(const SphericParticle& rOther) {
     mNeighbourElasticExtraContactForces = rOther.mNeighbourElasticExtraContactForces;
     mContactMoment = rOther.mContactMoment;
     mPartialRepresentativeVolume = rOther.mPartialRepresentativeVolume; //TODO: to continuum!
-    mPartialRepresentativeInertia = rOther.mPartialRepresentativeInertia; //TODO: to continuum!
+    mPartialRepresentativeInertia1 = rOther.mPartialRepresentativeInertia1; //TODO: to beam!
+    mPartialRepresentativeInertia2 = rOther.mPartialRepresentativeInertia2; //TODO: to beam!
+    mPartialRepresentativeInertia3 = rOther.mPartialRepresentativeInertia3; //TODO: to beam!
     mFemOldNeighbourIds = rOther.mFemOldNeighbourIds;
     mRadius = rOther.mRadius;
     mSearchRadius = rOther.mSearchRadius;
@@ -1389,7 +1391,9 @@ void SphericParticle::InitializeSolutionStep(ProcessInfo& r_process_info)
 
     mRadius = this->GetGeometry()[0].FastGetSolutionStepValue(RADIUS); //Just in case someone is overwriting the radius in Python
     mPartialRepresentativeVolume = 0.0;
-    mPartialRepresentativeInertia = 0.0;
+    mPartialRepresentativeInertia1 = 0.0;
+    mPartialRepresentativeInertia2 = 0.0;
+    mPartialRepresentativeInertia3 = 0.0;
     this->GetGeometry()[0].FastGetSolutionStepValue(REPRESENTATIVE_VOLUME) = CalculateVolume();
     double& elastic_energy = this->GetElasticEnergy();
     elastic_energy = 0.0;

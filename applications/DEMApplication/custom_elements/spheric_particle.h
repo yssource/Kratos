@@ -282,9 +282,6 @@ array_1d<double, 3> mContactMoment; //SLS
 BoundedMatrix<double, 3, 3>* mStressTensor;
 BoundedMatrix<double, 3, 3>* mSymmStressTensor;
 double mPartialRepresentativeVolume;
-double mPartialRepresentativeInertia1;
-double mPartialRepresentativeInertia2;
-double mPartialRepresentativeInertia3;
 
 std::vector<int> mFemOldNeighbourIds;
 

@@ -20,12 +20,6 @@ namespace Kratos {
         /// Pointer definition of BeamParticle
         KRATOS_CLASS_POINTER_DEFINITION(BeamParticle);
 
-        // typedef GlobalPointersVector<Condition> ConditionWeakVectorType;
-        // typedef GlobalPointersVector<Condition >::iterator ConditionWeakIteratorType;
-
-        // typedef GlobalPointersVector<Element> ParticleWeakVectorType;
-        // typedef ParticleWeakVectorType::ptr_iterator ParticleWeakIteratorType_ptr;
-        // typedef GlobalPointersVector<Element >::iterator ParticleWeakIteratorType;
         typedef SphericContinuumParticle BaseType;
         typedef BaseType::ParticleDataBuffer BaseBufferType;
         typedef std::unique_ptr<BaseType::ParticleDataBuffer> BaseBufferPointerType;
@@ -74,13 +68,11 @@ namespace Kratos {
 
         void Calculate(const Variable<double>& rVariable, double& Output, const ProcessInfo& r_process_info) override;
 
-        void MoveBeam(const double delta_t, const bool rotation_option, const double force_reduction_factor, const int StepFlag);
+        void Move(const double delta_t, const bool rotation_option, const double force_reduction_factor, const int StepFlag) override;
 
         virtual void AddContributionToRepresentativeVolume(const double distance,
                                                            const double radius_sum,
                                                            const double contact_area) override;
-
-        virtual void FinalizeSolutionStep(ProcessInfo& r_process_info) override;
 
         virtual double GetParticleInitialCohesion();
         void   SetParticleInitialCohesionFromProperties(double* particle_initial_cohesion);

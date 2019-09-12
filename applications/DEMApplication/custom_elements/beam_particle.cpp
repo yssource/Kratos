@@ -61,9 +61,15 @@ namespace Kratos {
         SphericContinuumParticle::Initialize(r_process_info);
 
         if (this->Is(DEMFlags::HAS_ROTATION)) {
-            GetGeometry()[0].GetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = (GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X] + GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y]) / GetProperties()[BEAM_CROSS_SECTION];
-            GetGeometry()[0].GetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X] / GetProperties()[BEAM_CROSS_SECTION];
-            GetGeometry()[0].GetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y] / GetProperties()[BEAM_CROSS_SECTION];
+            double distance = GetProperties()[BEAM_DISTANCE];
+            double contact_area = GetProperties()[BEAM_CROSS_SECTION];
+            double aux1 = distance;
+            double aux2 = sqrt( 12.0 * GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X] / contact_area );
+            double aux3 = sqrt( 12.0 * GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y] / contact_area );
+
+            GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux1 * aux1 + aux2 * aux2);
+            GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux2 * aux2 + aux3 * aux3);
+            GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux1 * aux1 + aux3 * aux3);
         }
     }
 
@@ -523,36 +529,14 @@ namespace Kratos {
 
     } //Calculate
 
-    void BeamParticle::MoveBeam(const double delta_t, const bool rotation_option, const double force_reduction_factor, const int StepFlag) {
+    void BeamParticle::Move(const double delta_t, const bool rotation_option, const double force_reduction_factor, const int StepFlag) {
         GetTranslationalIntegrationScheme().Move(GetGeometry()[0], delta_t, force_reduction_factor, StepFlag);
         if (rotation_option) {
             GetRotationalIntegrationScheme().RotateBeam(GetGeometry()[0], delta_t, force_reduction_factor, StepFlag);
         }
     }
 
-    void BeamParticle::AddContributionToRepresentativeVolume(const double distance, const double radius_sum, const double contact_area) {
-
-        mPartialRepresentativeVolume += 0.5 * distance * contact_area;
-
-        double L1 = distance;
-        double L2 = sqrt( 12.0 * GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X] / GetProperties()[BEAM_CROSS_SECTION] );
-        double L3 = sqrt( 12.0 * GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y] / GetProperties()[BEAM_CROSS_SECTION] );
-
-        mPartialRepresentativeInertia1 += 0.5 * 0.083333333333333333 * GetDensity() * distance * contact_area * (L2 * L2 + L3 * L3);
-        mPartialRepresentativeInertia2 += 0.5 * 0.083333333333333333 * GetDensity() * distance * contact_area * (L1 * L1 + L3 * L3);
-        mPartialRepresentativeInertia3 += 0.5 * 0.083333333333333333 * GetDensity() * distance * contact_area * (L1 * L1 + L2 * L2);
-    }
-
-    void BeamParticle::FinalizeSolutionStep(ProcessInfo& r_process_info) {
-
-        SphericParticle::FinalizeSolutionStep(r_process_info);
-
-        //Update sphere mass and inertia taking into account the real volume of the represented volume:
-        SetMass(mPartialRepresentativeVolume * GetDensity());
-        GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = mPartialRepresentativeInertia1;
-        GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = mPartialRepresentativeInertia2;
-        GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = mPartialRepresentativeInertia3;
-    }
+    void BeamParticle::AddContributionToRepresentativeVolume(const double distance, const double radius_sum, const double contact_area) { mPartialRepresentativeVolume += 0.5 * GetProperties()[BEAM_DISTANCE] * contact_area; }
 
     double BeamParticle::GetParticleInitialCohesion()            { return SphericParticle::GetFastProperties()->GetParticleInitialCohesion();            }
     double BeamParticle::GetAmountOfCohesionFromStress()         { return SphericParticle::GetFastProperties()->GetAmountOfCohesionFromStress();         }

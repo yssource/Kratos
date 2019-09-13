@@ -31,10 +31,6 @@ namespace Kratos {
         }
     }
 
-    void DEM_KDEM_Beam::GetContactArea(const double radius, const double other_radius, const Vector& vector_of_initial_areas, const int neighbour_position, double& calculation_area) {
-        if (vector_of_initial_areas.size()) calculation_area = vector_of_initial_areas[neighbour_position];
-    }
-
     void DEM_KDEM_Beam::ComputeParticleRotationalMoments(SphericContinuumParticle* element,
                                                          SphericContinuumParticle* neighbor,
                                                          double equiv_young,
@@ -64,19 +60,19 @@ namespace Kratos {
 
         const double equiv_shear   = equiv_young / (2.0 * (1 + equiv_poisson));
 
-        const double Inertia_Ix = std::max(element->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X], neighbor->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X]);
-        const double Inertia_Iy = std::max(element->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y], neighbor->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y]);
+        const double Inertia_Ix = 0.5 * (element->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X] + neighbor->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X]);
+        const double Inertia_Iy = 0.5 * (element->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y] + neighbor->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y]);
         const double Inertia_J  = Inertia_Ix + Inertia_Iy;
 
         const double my_gamma    = element->GetProperties()[DAMPING_GAMMA];
         const double other_gamma = neighbor->GetProperties()[DAMPING_GAMMA];
         const double equiv_gamma = 0.5 * (my_gamma + other_gamma);
 
+        double norm_distance = (element->GetRadius() + neighbor->GetRadius()) / distance; // If spheres are not tangent the Damping coefficient, DeltaRotatedAngle and DeltaAngularVelocity have to be normalized
+
         const double k_rot_x = equiv_young * Inertia_Ix / distance;
         const double k_rot_y = equiv_young * Inertia_Iy / distance;
         const double k_tor   = equiv_shear * Inertia_J  / distance;
-
-        double norm_distance = (element->GetRadius() + neighbor->GetRadius()) / distance; // If spheres are not tangent the Damping coefficient, DeltaRotatedAngle and DeltaAngularVelocity have to be normalized
 
         const double visc_param_rot_x = 2.0 * equiv_gamma * sqrt(MomentOfInertiaX * k_rot_x) * norm_distance;
         const double visc_param_rot_y = 2.0 * equiv_gamma * sqrt(MomentOfInertiaY * k_rot_y) * norm_distance;

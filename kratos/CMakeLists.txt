@@ -5,6 +5,14 @@ if(${MPI_NEEDED} MATCHES ON )
   add_subdirectory(mpi)
 endif(${MPI_NEEDED} MATCHES ON )
 
+include_directories( ${CMAKE_SOURCE_DIR}/external_libraries/triangle )
+
+if(DELAUNATORCPP_INCLUDE_DIR)
+    add_definitions( -DINCLUDE_DELAUNATORCPP )
+
+    INCLUDE_DIRECTORIES(${DELAUNATORCPP_INCLUDE_DIR})
+endif(DELAUNATORCPP_INCLUDE_DIR)
+
 ## Kratos main source code
 set( KRATOS_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/containers/flags.cpp
@@ -22,8 +30,8 @@ set( KRATOS_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/sources/variables.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/sources/kratos_application.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/sources/integration_rules.cpp;
+    ${CMAKE_CURRENT_SOURCE_DIR}/sources/communicator.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/sources/mmio.c;
-    ${CMAKE_CURRENT_SOURCE_DIR}/sources/timer.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/sources/serializer.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/sources/kernel.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/sources/periodic_condition.cpp;
@@ -36,10 +44,11 @@ set( KRATOS_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/processes/simple_mortar_mapper_process.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/sources/io.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/sources/model_part.cpp;
+    ${CMAKE_CURRENT_SOURCE_DIR}/containers/nodal_data.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/sources/kratos_parameters.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/containers/model.cpp;
-    ${CMAKE_CURRENT_SOURCE_DIR}/sources/standard_linear_solver_factory.cpp;
-    ${CMAKE_CURRENT_SOURCE_DIR}/sources/standard_preconditioner_factory.cpp;
+    ${CMAKE_CURRENT_SOURCE_DIR}/factories/standard_linear_solver_factory.cpp;
+    ${CMAKE_CURRENT_SOURCE_DIR}/factories/standard_preconditioner_factory.cpp;
     #${CMAKE_CURRENT_SOURCE_DIR}/sources/kratos_exception.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/containers/variable_data.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/containers/data_value_container.cpp;
@@ -75,7 +84,6 @@ set( KRATOS_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/sources/connectivity_preserve_modeler.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/sources/parallel_environment.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/sources/data_communicator.cpp;
-    ${CMAKE_CURRENT_SOURCE_DIR}/utilities/delaunator_utilities.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utilities/exact_mortar_segmentation_utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utilities/divide_geometry.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/utilities/divide_triangle_2d_3.cpp;
@@ -94,6 +102,10 @@ set( KRATOS_CORE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/utilities/sensitivity_builder.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/utilities/mortar_utilities.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/utilities/os_utilities.cpp;
+    ${CMAKE_CURRENT_SOURCE_DIR}/utilities/exact_mortar_segmentation_utility.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/utilities/timer.cpp;
+    ${CMAKE_CURRENT_SOURCE_DIR}/utilities/geometrical_transformation_utilities.cpp;
+    ${CMAKE_CURRENT_SOURCE_DIR}/utilities/delaunator_utilities.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utilities/inside_outside_geometry_utilities.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/modeler/tetrahedra_ball.cpp;
     ${CMAKE_CURRENT_SOURCE_DIR}/modeler/tetrahedra_edge_shell.cpp;
@@ -190,7 +202,7 @@ target_compile_definitions(KratosVersion PRIVATE
 
 ## Define library KratosCore to be included in all of the others
 add_library(KratosCore SHARED ${KRATOS_CORE_SOURCES} ${KRATOS_CORE_TESTING_ENGINE_SOURCES} ${KRATOS_CORE_INPUT_OUTPUT_SOURCES} ${KRATOS_TEST_SOURCES} $<TARGET_OBJECTS:KratosVersion>)
-target_link_libraries(KratosCore PUBLIC gidpost)
+target_link_libraries(KratosCore PUBLIC gidpost triangle)
 set_target_properties(KratosCore PROPERTIES COMPILE_DEFINITIONS "KRATOS_CORE=IMPORT,API")
 target_compile_definitions(KratosCore PRIVATE
     KRATOS_MAJOR_VERSION=${KratosMultiphysics_MAJOR_VERSION}
@@ -224,6 +236,7 @@ if(USE_COTIRE MATCHES ON)
     SET(COTIRE_MAXIMUM_NUMBER_OF_UNITY_INCLUDES "-j2")
     set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/sources/kratos_parameters.cpp PROPERTIES COTIRE_EXCLUDED TRUE)
     set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/utilities/mortar_utilities.cpp PROPERTIES COTIRE_EXCLUDED TRUE)
+    set_source_files_properties (${CMAKE_CURRENT_SOURCE_DIR}/utilities/exact_mortar_segmentation_utility.cpp PROPERTIES COTIRE_EXCLUDED TRUE)
     cotire(KratosVersion)
     cotire(KratosCore)
     if(${KRATOS_BUILD_TESTING} MATCHES ON)

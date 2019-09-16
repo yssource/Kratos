@@ -57,6 +57,7 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
             "slip_augmentation_coefficient" : 1.0,
             "max_lagrange_multiplier_check" : null,
             "max_lm_reset_factor"           : 5.0,
+            "zero_tolerance_factor"         : 1.0,
             "integration_order"             : 2,
             "clear_inactive_for_post"       : true,
             "search_parameters"             : {
@@ -79,6 +80,7 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
                     "bounding_box_factor"             : 0.1,
                     "debug_obb"                       : false,
                     "OBB_intersection_type"           : "SeparatingAxisTheorem",
+                    "build_from_bounding_box"         : true,
                     "lower_bounding_box_coefficient"  : 0.0,
                     "higher_bounding_box_coefficient" : 1.0
                 }

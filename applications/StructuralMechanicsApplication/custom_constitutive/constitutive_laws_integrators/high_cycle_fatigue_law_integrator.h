@@ -111,11 +111,11 @@ public:
         const double stress_increment_2 = CurrentStress - stress_1;
 
         
-        KRATOS_WATCH(CurrentStress)
-        KRATOS_WATCH(stress_1)
-        KRATOS_WATCH(stress_2)
-        KRATOS_WATCH(stress_increment_1)
-        KRATOS_WATCH(stress_increment_2)
+        // KRATOS_WATCH(CurrentStress)
+        // KRATOS_WATCH(stress_1)
+        // KRATOS_WATCH(stress_2)
+        // KRATOS_WATCH(stress_increment_1)
+        // KRATOS_WATCH(stress_increment_2)
         // if (stress_increment_1 >= 1.0e-3 && stress_increment_2 <= 0.0) {
         if (stress_increment_1 >= 1.0e-3 && stress_increment_2 < 1.0e-3) {
             rMaximumStress = stress_1;

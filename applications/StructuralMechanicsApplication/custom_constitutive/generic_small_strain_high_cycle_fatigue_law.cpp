@@ -129,7 +129,11 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
                     CyclesToFailure);
 
                 double betaf = rValues.GetMaterialProperties()[HIGH_CYCLE_FATIGUE_COEFFICIENTS][4];
-                reversion_factor_relative_error = std::abs((reversion_factor - previous_reversion_factor) / reversion_factor);
+                if (std::abs(min_stress) < 0.001) {
+                    reversion_factor_relative_error = std::abs(reversion_factor - previous_reversion_factor);
+                } else {
+                    reversion_factor_relative_error = std::abs((reversion_factor - previous_reversion_factor) / reversion_factor);
+                }
                 max_stress_relative_error = std::abs((max_stress - previous_max_stress) / max_stress);
 
                 // KRATOS_WATCH(reversion_factor)
@@ -139,8 +143,8 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::CalculateMa
                 // KRATOS_WATCH(previous_max_stress)
                 // KRATOS_WATCH(max_stress_relative_error)
 
-                // if (global_number_of_cycles > 2 && ((reversion_factor_relative_error > 0.001 && (min_stress - previous_min_stress) > 0.001) || max_stress_relative_error > 0.001)) {
-                if (global_number_of_cycles > 2 && (reversion_factor_relative_error > 0.001 || max_stress_relative_error > 0.001) && damage == 0.0) {
+                // if (global_number_of_cycles > 2 && ((reversion_factor_relative_error > 0.001 && std::abs(min_stress - previous_min_stress) > 0.001) || max_stress_relative_error > 0.001)) {
+                if (global_number_of_cycles > 2 && (reversion_factor_relative_error > 0.001 || max_stress_relative_error > 0.001)) {
                     local_number_of_cycles = std::trunc(std::pow(10, std::pow(-(std::log(fatigue_reduction_factor) / B0), 1.0 / (betaf * betaf)))) + 1;
                 }
                 global_number_of_cycles++;
@@ -316,12 +320,12 @@ void GenericSmallStrainHighCycleFatigueLaw<TConstLawIntegratorType>::FinalizeMat
 
         // KRATOS_WATCH(this->GetFatigueReductionFactor())
         // KRATOS_WATCH(this->GetNumberOfCyclesGlobal())
-        KRATOS_WATCH(max_stress)
-        KRATOS_WATCH(max_indicator)
-        KRATOS_WATCH(min_indicator)
+        // KRATOS_WATCH(max_stress)
+        // KRATOS_WATCH(max_indicator)
+        // KRATOS_WATCH(min_indicator)
         // KRATOS_WATCH(max_stress - previous_max)
         // KRATOS_WATCH(min_stress - previous_min)
-        KRATOS_WATCH(uniaxial_stress)
+        // KRATOS_WATCH(uniaxial_stress)
 
         uniaxial_stress *= sign_factor;
         uniaxial_stress /= fatigue_reduction_factor;  // Fatigue contribution

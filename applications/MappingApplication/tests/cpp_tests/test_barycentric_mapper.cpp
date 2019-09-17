@@ -10,6 +10,9 @@
 //  Main authors:    Philipp Bucher
 //
 
+// System includes
+#include <limits>
+
 // Project includes
 #include "geometries/line_2d_2.h"
 #include "geometries/triangle_3d_3.h"
@@ -85,6 +88,41 @@ KRATOS_TEST_CASE_IN_SUITE(BarycentricInterfaceInfo_simple_line_interpolation, Kr
     const std::vector<double> exp_results {
         0.3, 0.0, 0.0,
         1.0, 0.1, -0.2
+    };
+    KRATOS_CHECK_VECTOR_EQUAL(exp_results, neighbor_coords)
+}
+
+KRATOS_TEST_CASE_IN_SUITE(BarycentricInterfaceInfo_line_only_one_point, KratosMappingApplicationSerialTestSuite)
+{
+    Point coords(0.4, 0.0, 0.0);
+
+    std::size_t source_local_sys_idx = 123;
+
+    BarycentricInterfaceInfo barycentric_info(coords, source_local_sys_idx, 0, 2);
+
+    auto node_1(Kratos::make_intrusive<NodeType>(1,  3.3, 0.0, 0.0));
+
+    InterfaceObject::Pointer interface_node_1(Kratos::make_shared<InterfaceNode>(node_1.get()));
+
+    node_1->SetValue(INTERFACE_EQUATION_ID, 13);
+
+    // distances are not used internally!
+    barycentric_info.ProcessSearchResult(*interface_node_1, 0.0);
+
+    KRATOS_CHECK(barycentric_info.GetLocalSearchWasSuccessful());
+    KRATOS_CHECK_IS_FALSE(barycentric_info.GetIsApproximation());
+
+    std::vector<int> found_ids;
+    barycentric_info.GetValue(found_ids, MapperInterfaceInfo::InfoType::Dummy);
+    KRATOS_CHECK_EQUAL(found_ids.size(), 2);
+    KRATOS_CHECK_EQUAL(found_ids[0], 13);
+    KRATOS_CHECK_EQUAL(found_ids[1], -1);
+
+    std::vector<double> neighbor_coords;
+    barycentric_info.GetValue(neighbor_coords, MapperInterfaceInfo::InfoType::Dummy);
+    const std::vector<double> exp_results {
+        3.3, 0.0, 0.0,
+        std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), std::numeric_limits<double>::max()
     };
     KRATOS_CHECK_VECTOR_EQUAL(exp_results, neighbor_coords)
 }
@@ -262,19 +300,25 @@ KRATOS_TEST_CASE_IN_SUITE(BarycentricInterfaceInfo_triangle_collinear_nodes_inte
     auto node_2(Kratos::make_intrusive<NodeType>(3,  1.0, 0.0, 0.0)); // this is closer than the next one but collinear and hence forbidden
     auto node_3(Kratos::make_intrusive<NodeType>(15, 0.0, 1.1, 0.0));
     auto node_4(Kratos::make_intrusive<NodeType>(18, 1.0, 1.0, 0.0));
-    auto node_5(Kratos::make_intrusive<NodeType>(21, 0.5, 0.0, 0.0));
+    auto node_5(Kratos::make_intrusive<NodeType>(21, 0.7, 0.0, 0.0));
+    auto node_6(Kratos::make_intrusive<NodeType>(22, 0.5, 0.0, 0.0));
+    auto node_7(Kratos::make_intrusive<NodeType>(23, 0.75, 0.0, 0.0));
 
     InterfaceObject::Pointer interface_node_1(Kratos::make_shared<InterfaceNode>(node_1.get()));
     InterfaceObject::Pointer interface_node_2(Kratos::make_shared<InterfaceNode>(node_2.get()));
     InterfaceObject::Pointer interface_node_3(Kratos::make_shared<InterfaceNode>(node_3.get()));
     InterfaceObject::Pointer interface_node_4(Kratos::make_shared<InterfaceNode>(node_4.get()));
     InterfaceObject::Pointer interface_node_5(Kratos::make_shared<InterfaceNode>(node_5.get()));
+    InterfaceObject::Pointer interface_node_6(Kratos::make_shared<InterfaceNode>(node_6.get()));
+    InterfaceObject::Pointer interface_node_7(Kratos::make_shared<InterfaceNode>(node_7.get()));
 
     node_1->SetValue(INTERFACE_EQUATION_ID, 13);
     node_2->SetValue(INTERFACE_EQUATION_ID, 5);
     node_3->SetValue(INTERFACE_EQUATION_ID, 108);
     node_4->SetValue(INTERFACE_EQUATION_ID, 41);
     node_5->SetValue(INTERFACE_EQUATION_ID, 63);
+    node_6->SetValue(INTERFACE_EQUATION_ID, 64);
+    node_7->SetValue(INTERFACE_EQUATION_ID, 65);
 
     // distances are not used internally!
     barycentric_info.ProcessSearchResult(*interface_node_1, 0.0);
@@ -282,24 +326,121 @@ KRATOS_TEST_CASE_IN_SUITE(BarycentricInterfaceInfo_triangle_collinear_nodes_inte
     barycentric_info.ProcessSearchResult(*interface_node_3, 0.0);
     barycentric_info.ProcessSearchResult(*interface_node_4, 0.0);
     barycentric_info.ProcessSearchResult(*interface_node_5, 0.0);
+    barycentric_info.ProcessSearchResult(*interface_node_6, 0.0);
+    barycentric_info.ProcessSearchResult(*interface_node_7, 0.0);
 
     KRATOS_CHECK(barycentric_info.GetLocalSearchWasSuccessful());
     KRATOS_CHECK_IS_FALSE(barycentric_info.GetIsApproximation());
 
     std::vector<int> found_ids;
     barycentric_info.GetValue(found_ids, MapperInterfaceInfo::InfoType::Dummy);
-    // in case collinear nodes are not forbidden the result would be [13, 63, 5]!
+    KRATOS_CHECK_EQUAL(found_ids.size(), 3);
+    KRATOS_CHECK_EQUAL(found_ids[0], 13);
+    KRATOS_CHECK_EQUAL(found_ids[1], 64);
+    KRATOS_CHECK_EQUAL(found_ids[2], 108);
+
+    std::vector<double> neighbor_coords;
+    barycentric_info.GetValue(neighbor_coords, MapperInterfaceInfo::InfoType::Dummy);
+    const std::vector<double> exp_results {
+        0.0, 0.0, 0.0,
+        0.5, 0.0, 0.0,
+        0.0, 1.1, 0.0
+    };
+    KRATOS_CHECK_VECTOR_EQUAL(exp_results, neighbor_coords)
+}
+
+KRATOS_TEST_CASE_IN_SUITE(BarycentricInterfaceInfo_triangle_only_collinear_nodes_approx, KratosMappingApplicationSerialTestSuite)
+{
+    Point coords(0.2, 0.2, 0.0);
+
+    std::size_t source_local_sys_idx = 123;
+
+    BarycentricInterfaceInfo barycentric_info(coords, source_local_sys_idx, 0, 3);
+
+    auto node_1(Kratos::make_intrusive<NodeType>(1,  0.0, 0.0, 0.0));
+    auto node_2(Kratos::make_intrusive<NodeType>(3,  1.0, 0.0, 0.0)); // this should NOT be saved since it is collinear!
+    auto node_3(Kratos::make_intrusive<NodeType>(22, 0.5, 0.0, 0.0));
+
+    InterfaceObject::Pointer interface_node_1(Kratos::make_shared<InterfaceNode>(node_1.get()));
+    InterfaceObject::Pointer interface_node_2(Kratos::make_shared<InterfaceNode>(node_2.get()));
+    InterfaceObject::Pointer interface_node_3(Kratos::make_shared<InterfaceNode>(node_3.get()));
+
+    node_1->SetValue(INTERFACE_EQUATION_ID, 13);
+    node_2->SetValue(INTERFACE_EQUATION_ID, 5);
+    node_3->SetValue(INTERFACE_EQUATION_ID, 108);
+
+    // distances are not used internally!
+    barycentric_info.ProcessSearchResult(*interface_node_1, 0.0);
+    barycentric_info.ProcessSearchResult(*interface_node_2, 0.0);
+    barycentric_info.ProcessSearchResult(*interface_node_3, 0.0);
+
+    KRATOS_CHECK(barycentric_info.GetLocalSearchWasSuccessful());
+    KRATOS_CHECK_IS_FALSE(barycentric_info.GetIsApproximation());
+
+    std::vector<int> found_ids;
+    barycentric_info.GetValue(found_ids, MapperInterfaceInfo::InfoType::Dummy);
     KRATOS_CHECK_EQUAL(found_ids.size(), 3);
     KRATOS_CHECK_EQUAL(found_ids[0], 13);
     KRATOS_CHECK_EQUAL(found_ids[1], 108);
-    KRATOS_CHECK_EQUAL(found_ids[2], 63);
+    KRATOS_CHECK_EQUAL(found_ids[2], -1);
+
+    std::vector<double> neighbor_coords;
+    barycentric_info.GetValue(neighbor_coords, MapperInterfaceInfo::InfoType::Dummy);
+    const std::vector<double> exp_results {
+        0.0, 0.0, 0.0,
+        0.5, 0.0, 0.0,
+        std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), std::numeric_limits<double>::max()
+    };
+    KRATOS_CHECK_VECTOR_EQUAL(exp_results, neighbor_coords)
+}
+
+KRATOS_TEST_CASE_IN_SUITE(BarycentricInterfaceInfo_simple_tetra_interpolation, KratosMappingApplicationSerialTestSuite)
+{
+    Point coords(0.3, 0.2, 0.0);
+
+    std::size_t source_local_sys_idx = 123;
+
+    BarycentricInterfaceInfo barycentric_info(coords, source_local_sys_idx, 0, 4);
+
+    auto node_1(Kratos::make_intrusive<NodeType>(1,  0.0, 0.0, 0.0));
+    auto node_2(Kratos::make_intrusive<NodeType>(3,  1.0, 0.0, 0.0));
+    auto node_3(Kratos::make_intrusive<NodeType>(15, 0.0, 1.0, 0.0));
+    auto node_4(Kratos::make_intrusive<NodeType>(18, 1.0, 1.0, 0.0));
+
+    InterfaceObject::Pointer interface_node_1(Kratos::make_shared<InterfaceNode>(node_1.get()));
+    InterfaceObject::Pointer interface_node_2(Kratos::make_shared<InterfaceNode>(node_2.get()));
+    InterfaceObject::Pointer interface_node_3(Kratos::make_shared<InterfaceNode>(node_3.get()));
+    InterfaceObject::Pointer interface_node_4(Kratos::make_shared<InterfaceNode>(node_4.get()));
+
+    node_1->SetValue(INTERFACE_EQUATION_ID, 13);
+    node_2->SetValue(INTERFACE_EQUATION_ID, 5);
+    node_3->SetValue(INTERFACE_EQUATION_ID, 108);
+    node_4->SetValue(INTERFACE_EQUATION_ID, 41);
+
+    // distances are not used internally!
+    barycentric_info.ProcessSearchResult(*interface_node_1, 0.0);
+    barycentric_info.ProcessSearchResult(*interface_node_2, 0.0);
+    barycentric_info.ProcessSearchResult(*interface_node_3, 0.0);
+    barycentric_info.ProcessSearchResult(*interface_node_4, 0.0);
+
+    KRATOS_CHECK(barycentric_info.GetLocalSearchWasSuccessful());
+    KRATOS_CHECK_IS_FALSE(barycentric_info.GetIsApproximation());
+
+    std::vector<int> found_ids;
+    barycentric_info.GetValue(found_ids, MapperInterfaceInfo::InfoType::Dummy);
+    KRATOS_CHECK_EQUAL(found_ids.size(), 4);
+    KRATOS_CHECK_EQUAL(found_ids[0], 13);
+    KRATOS_CHECK_EQUAL(found_ids[1], 5);
+    KRATOS_CHECK_EQUAL(found_ids[2], 108);
+    KRATOS_CHECK_EQUAL(found_ids[3], 41);
 
     std::vector<double> neighbor_coords;
     barycentric_info.GetValue(neighbor_coords, MapperInterfaceInfo::InfoType::Dummy);
     const std::vector<double> exp_results {
         0.0, 0.0, 0.0,
         1.0, 0.0, 0.0,
-        0.0, 1.0, 0.0
+        0.0, 1.0, 0.0,
+        1.0, 1.0, 0.0
     };
     KRATOS_CHECK_VECTOR_EQUAL(exp_results, neighbor_coords)
 }

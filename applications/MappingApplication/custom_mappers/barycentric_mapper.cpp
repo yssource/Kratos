@@ -52,7 +52,7 @@ void ComputeNeighborDistances(const array_1d<double,3>& rCoords,
     }
 }
 
-void InsertIfCloser(const array_1d<double,3>& rRefCoords,
+void InsertIfBetter(const array_1d<double,3>& rRefCoords,
                     const int CandidateEquationId,
                     const array_1d<double,3>& rCandidateCoords,
                     std::vector<int>& rNeighborIds,
@@ -75,19 +75,43 @@ void InsertIfCloser(const array_1d<double,3>& rRefCoords,
     const double candidate_distance = MapperUtilities::ComputeDistance(rRefCoords, rCandidateCoords);
 
     // check if the candidate is closer than the previously found nodes and save it if it is closer
+    std::vector<int> temp_neighbor_ids(rNeighborIds);
+    std::vector<double> temp_neighbor_coords(rNeighborCoods);
+
     for (std::size_t i=0; i<num_interpolation_nodes; ++i) {
         if (candidate_distance < neighbor_distances[i]) {
-            rNeighborIds.insert(rNeighborIds.begin()+i, CandidateEquationId);
-            rNeighborCoods.insert(rNeighborCoods.begin()+(i*3), std::begin(rCandidateCoords), std::end(rCandidateCoords));
+            temp_neighbor_ids.insert(temp_neighbor_ids.begin()+i, CandidateEquationId);
+            temp_neighbor_coords.insert(temp_neighbor_coords.begin()+(i*3), std::begin(rCandidateCoords), std::end(rCandidateCoords));
             break;
         }
     }
-    // resize is required because insert increases the size
-    if (rNeighborIds.size() != num_interpolation_nodes) {
-        rNeighborIds.resize(num_interpolation_nodes);
+
+    // check the quality of the resulting geometry
+    if (num_interpolation_nodes == 3 || num_interpolation_nodes == 4) {
+        if (std::count(temp_neighbor_ids.begin(), temp_neighbor_ids.begin()+num_interpolation_nodes, -1) == 0) { // make sure enough points were found
+            GeometryType::PointsArrayType geom_points;
+            for (std::size_t i=0; i<num_interpolation_nodes; ++i) {
+                geom_points.push_back(Kratos::make_intrusive<NodeType>(0, temp_neighbor_coords[i*3], temp_neighbor_coords[i*3+1], temp_neighbor_coords[i*3+2]));
+            }
+            Kratos::unique_ptr<GeometryType> p_geom;
+            if      (num_interpolation_nodes == 3) p_geom = Kratos::make_unique<Triangle3D3<NodeType>>(geom_points);
+            else if (num_interpolation_nodes == 4) p_geom = Kratos::make_unique<Tetrahedra3D4<NodeType>>(geom_points);
+
+            const double quality(p_geom->Quality(GeometryType::QualityCriteria::INRADIUS_TO_CIRCUMRADIUS));
+            if (quality < 0.05) {
+                temp_neighbor_ids.erase(temp_neighbor_ids.begin()+2);
+                temp_neighbor_coords.erase(temp_neighbor_coords.begin()+6, temp_neighbor_coords.begin()+9);
+            }
+        }
     }
-    if (rNeighborCoods.size() != 3*num_interpolation_nodes) {
-        rNeighborCoods.resize(3*num_interpolation_nodes);
+
+    // copy back the final results
+    for (std::size_t i=0; i<num_interpolation_nodes; ++i) {
+        rNeighborIds[i] = temp_neighbor_ids[i];
+        rNeighborCoods[(i*3)]   = temp_neighbor_coords[(i*3)];
+        rNeighborCoods[(i*3)+1] = temp_neighbor_coords[(i*3)+1];
+        rNeighborCoods[(i*3)+2] = temp_neighbor_coords[(i*3)+2];
+
     }
 }
 
@@ -130,7 +154,7 @@ void BarycentricInterfaceInfo::ProcessSearchResult(const InterfaceObject& rInter
     SetLocalSearchWasSuccessful();
 
     const auto p_node = rInterfaceObject.pGetBaseNode();
-    InsertIfCloser(
+    InsertIfBetter(
         Coordinates(),
         p_node->GetValue(INTERFACE_EQUATION_ID),
         p_node->Coordinates(),
@@ -169,7 +193,7 @@ void BarycentricLocalSystem::CalculateAll(MatrixType& rLocalMappingMatrix,
         }
 
         for (std::size_t j=0; j<num_interpolation_nodes; ++j) {
-            InsertIfCloser(
+            InsertIfBetter(
                 Coordinates(),
                 node_ids[j],
                 CreateArrayFromVector(neighbor_coods, j*3),

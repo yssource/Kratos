@@ -405,7 +405,7 @@ KRATOS_TEST_CASE_IN_SUITE(BarycentricInterfaceInfo_simple_tetra_interpolation, K
     auto node_1(Kratos::make_intrusive<NodeType>(1,  0.0, 0.0, 0.0));
     auto node_2(Kratos::make_intrusive<NodeType>(3,  1.0, 0.0, 0.0));
     auto node_3(Kratos::make_intrusive<NodeType>(15, 0.0, 1.0, 0.0));
-    auto node_4(Kratos::make_intrusive<NodeType>(18, 1.0, 1.0, 0.0));
+    auto node_4(Kratos::make_intrusive<NodeType>(18, 0.0, 0.0, 1.1));
 
     InterfaceObject::Pointer interface_node_1(Kratos::make_shared<InterfaceNode>(node_1.get()));
     InterfaceObject::Pointer interface_node_2(Kratos::make_shared<InterfaceNode>(node_2.get()));
@@ -440,7 +440,7 @@ KRATOS_TEST_CASE_IN_SUITE(BarycentricInterfaceInfo_simple_tetra_interpolation, K
         0.0, 0.0, 0.0,
         1.0, 0.0, 0.0,
         0.0, 1.0, 0.0,
-        1.0, 1.0, 0.0
+        0.0, 0.0, 1.1
     };
     KRATOS_CHECK_VECTOR_EQUAL(exp_results, neighbor_coords)
 }

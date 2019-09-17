@@ -98,7 +98,7 @@ void InsertIfBetter(const array_1d<double,3>& rRefCoords,
             else if (num_interpolation_nodes == 4) p_geom = Kratos::make_unique<Tetrahedra3D4<NodeType>>(geom_points);
 
             const double quality(p_geom->Quality(GeometryType::QualityCriteria::INRADIUS_TO_CIRCUMRADIUS));
-            if (quality < 0.05) {
+            if (quality < 0.05) { // TODO check if this is suitable ...
                 temp_neighbor_ids.erase(temp_neighbor_ids.begin()+2);
                 temp_neighbor_coords.erase(temp_neighbor_coords.begin()+6, temp_neighbor_coords.begin()+9);
             }
@@ -111,7 +111,6 @@ void InsertIfBetter(const array_1d<double,3>& rRefCoords,
         rNeighborCoods[(i*3)]   = temp_neighbor_coords[(i*3)];
         rNeighborCoods[(i*3)+1] = temp_neighbor_coords[(i*3)+1];
         rNeighborCoods[(i*3)+2] = temp_neighbor_coords[(i*3)+2];
-
     }
 }
 

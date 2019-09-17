@@ -136,6 +136,7 @@ void BarycentricInterfaceInfo::ProcessSearchResult(const InterfaceObject& rInter
         p_node->Coordinates(),
         mNodeIds,
         mNeighborCoordinates);
+    // no need to set this as approximation even if not enough points are found, this will be determined in the BarycentricLocalSystem
 }
 
 void BarycentricLocalSystem::CalculateAll(MatrixType& rLocalMappingMatrix,

@@ -87,21 +87,33 @@ void InsertIfBetter(const array_1d<double,3>& rRefCoords,
     }
 
     // check the quality of the resulting geometry
-    if (num_interpolation_nodes == 3 || num_interpolation_nodes == 4) {
+    if (num_interpolation_nodes == 3) {
         if (std::count(temp_neighbor_ids.begin(), temp_neighbor_ids.begin()+num_interpolation_nodes, -1) == 0) { // make sure enough points were found
             GeometryType::PointsArrayType geom_points;
             for (std::size_t i=0; i<num_interpolation_nodes; ++i) {
                 geom_points.push_back(Kratos::make_intrusive<NodeType>(0, temp_neighbor_coords[i*3], temp_neighbor_coords[i*3+1], temp_neighbor_coords[i*3+2]));
             }
-            Kratos::unique_ptr<GeometryType> p_geom;
-            if      (num_interpolation_nodes == 3) p_geom = Kratos::make_unique<Triangle3D3<NodeType>>(geom_points);
-            else if (num_interpolation_nodes == 4) p_geom = Kratos::make_unique<Tetrahedra3D4<NodeType>>(geom_points);
+            Kratos::unique_ptr<GeometryType> p_geom = Kratos::make_unique<Triangle3D3<NodeType>>(geom_points);
 
             const double quality(p_geom->Quality(GeometryType::QualityCriteria::INRADIUS_TO_CIRCUMRADIUS));
             if (quality < 0.05) { // TODO check if this is suitable ...
+                KRATOS_INFO("Bad Quality") << quality << std::endl;
+                // removing the 3rd closest point
                 temp_neighbor_ids.erase(temp_neighbor_ids.begin()+2);
                 temp_neighbor_coords.erase(temp_neighbor_coords.begin()+6, temp_neighbor_coords.begin()+9);
             }
+        }
+    } else if (num_interpolation_nodes == 4) {
+
+        if (std::count(temp_neighbor_ids.begin(), temp_neighbor_ids.begin()+num_interpolation_nodes, -1) == 0) { // make sure enough points were found
+            GeometryType::PointsArrayType geom_points;
+            for (std::size_t i=0; i<num_interpolation_nodes; ++i) {
+                geom_points.push_back(Kratos::make_intrusive<NodeType>(0, temp_neighbor_coords[i*3], temp_neighbor_coords[i*3+1], temp_neighbor_coords[i*3+2]));
+            }
+            Kratos::unique_ptr<GeometryType> p_geom = Kratos::make_unique<Tetrahedra3D4<NodeType>>(geom_points);
+            std::cout << "\n  >>> HHHEEERRREEE <<<" << std::endl;
+
+            // TODO I think I have to check first the Tri (only when filling up with points, after that should be enough to only check the tetra(...?)) and then the Tetra ...?
         }
     }
 

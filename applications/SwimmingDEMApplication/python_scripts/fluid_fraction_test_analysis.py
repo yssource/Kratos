@@ -1,4 +1,4 @@
-from KratosMultiphysics import Model, Parameters, Logger
+from KratosMultiphysics import Model, Parameters, Logger, Vector
 import swimming_DEM_procedures as SDP
 import KratosMultiphysics
 import KratosMultiphysics.SwimmingDEMApplication
@@ -11,7 +11,7 @@ from swimming_DEM_analysis import SwimmingDEMAnalysis
 from swimming_DEM_analysis import Say
 import L2_error_projection_utility as error_projector
 import fluid_fraction_test_solver as sdem_solver
-
+import numpy as np
 class FluidFractionTestAnalysis(SwimmingDEMAnalysis):
     def __init__(self, model, iteration, varying_parameters = Parameters("{}")):
 
@@ -20,11 +20,11 @@ class FluidFractionTestAnalysis(SwimmingDEMAnalysis):
         super(FluidFractionTestAnalysis, self).__init__(model, varying_parameters)
         self.project_parameters = varying_parameters
         self.iteration = iteration
+        self._GetSolver().SetFluidFractionField()
 
     def Initialize(self):
         super(FluidFractionTestAnalysis, self).Initialize()
         self._GetSolver().SetFluidFractionField()
-        # self._GetSolver().ImposePressure()
         self._GetSolver().ConstructL2ErrorProjector()
 
     def GetDebugInfo(self):
@@ -38,6 +38,9 @@ class FluidFractionTestAnalysis(SwimmingDEMAnalysis):
                                                    self._GetFluidAnalysis()._GetSolver(),
                                                    self._GetDEMAnalysis()._GetSolver(),
                                                    self.vars_man)
+
+    def SetUpResultsDatabase(self):
+        self._GetSolver().SetFluidFractionField()
 
     def FinalizeSolutionStep(self):
         super(FluidFractionTestAnalysis, self).FinalizeSolutionStep()

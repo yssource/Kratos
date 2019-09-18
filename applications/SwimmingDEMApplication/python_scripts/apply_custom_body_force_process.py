@@ -72,7 +72,6 @@ class ApplyCustomBodyForceProcess(KratosMultiphysics.Process):
         current_time = self.model_part.ProcessInfo[KratosMultiphysics.TIME]
         for node in self.model_part.Nodes:
             #fluid_fraction = node.GetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION)
-            #value = self.benchmark.BodyForce(current_time, node.X, node.Y, node.Z, fluid_fraction)
             value = self.benchmark.BodyForce(current_time, node.X, node.Y, node.Z)
             node.SetSolutionStepValue(self.variable, value)
 

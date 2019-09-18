@@ -18,11 +18,11 @@ class FluidFractionTestSolver(BaseSolver):
 
     def ReturnExactFluidFraction(self, x, y):
         field = eval('-0.4 * x - 0.4 * y + 1')
-        #field = 1.0
+        #field = 0.5
         return field
 
     def CannotIgnoreFluidNow(self):
-        return self.calculating_fluid_in_current_step
+        return self.solve_system and self.calculating_fluid_in_current_step
 
     def SolveFluidSolutionStep(self):
         self.ImposeVelocity()
@@ -30,11 +30,11 @@ class FluidFractionTestSolver(BaseSolver):
 
     def SetFluidFractionField(self):
         #pass
-        #from KratosMultiphysics.SwimmingDEMApplication import field_utilities
         #field_utilities.PorosityField(0, True).ImposePorosityField(self.fluid_solver.main_model_part)
         for node in self.fluid_solver.main_model_part.Nodes:
             fluid_fraction = self.ReturnExactFluidFraction(node.X, node.Y)
             node.SetSolutionStepValue(Kratos.FLUID_FRACTION, fluid_fraction)
+            node.SetSolutionStepValue(Kratos.FLUID_FRACTION_OLD, fluid_fraction)
 
     def ImposeVelocity(self):
         for node in self.fluid_solver.main_model_part.Nodes:

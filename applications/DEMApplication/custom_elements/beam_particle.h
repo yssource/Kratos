@@ -54,6 +54,8 @@ namespace Kratos {
 
         virtual void Initialize(const ProcessInfo& r_process_info) override;
 
+        virtual void InitializeSolutionStep(ProcessInfo& r_process_info) override;
+
         virtual void CalculateLocalAngularMomentum(array_1d<double, 3>& r_angular_momentum) override;
 
         virtual void ComputeRollingFriction(array_1d<double, 3>& rolling_resistance_moment, double& RollingResistance, double dt) override;
@@ -73,6 +75,8 @@ namespace Kratos {
         virtual void AddContributionToRepresentativeVolume(const double distance,
                                                            const double radius_sum,
                                                            const double contact_area) override;
+
+        virtual void FinalizeSolutionStep(ProcessInfo& r_process_info) override;
 
         virtual double GetParticleInitialCohesion();
         void   SetParticleInitialCohesionFromProperties(double* particle_initial_cohesion);

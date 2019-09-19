@@ -73,6 +73,21 @@ namespace Kratos {
         }
     }
 
+    void BeamParticle::InitializeSolutionStep(ProcessInfo& r_process_info)
+    {
+        mRadius = this->GetGeometry()[0].FastGetSolutionStepValue(RADIUS); //Just in case someone is overwriting the radius in Python
+        mPartialRepresentativeVolume = 0.0;
+        double& elastic_energy = this->GetElasticEnergy();
+        elastic_energy = 0.0;
+        if (this->Is(DEMFlags::HAS_STRESS_TENSOR)) {
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    (*mStressTensor)(i,j) = 0.0;
+                }
+            }
+        }
+    }
+
     void BeamParticle::CalculateLocalAngularMomentum(array_1d<double, 3>& r_angular_momentum) {}
 
     void BeamParticle::ComputeNewNeighboursHistoricalData(DenseVector<int>& temp_neighbours_ids, std::vector<array_1d<double, 3> >& temp_neighbour_elastic_contact_forces)
@@ -243,7 +258,6 @@ namespace Kratos {
         const array_1d<double, 3>& vel         = this->GetGeometry()[0].FastGetSolutionStepValue(VELOCITY);
         const array_1d<double, 3>& delta_displ = this->GetGeometry()[0].FastGetSolutionStepValue(DELTA_DISPLACEMENT);
         const array_1d<double, 3>& ang_vel     = this->GetGeometry()[0].FastGetSolutionStepValue(ANGULAR_VELOCITY);
-        Vector& cont_ini_neigh_area            = this->GetValue(NEIGHBOURS_CONTACT_AREAS);
         int NeighbourSize = mNeighbourElements.size();
         GetGeometry()[0].GetSolutionStepValue(NEIGHBOUR_SIZE) = NeighbourSize;
 
@@ -298,7 +312,6 @@ namespace Kratos {
                 double area = this->GetProperties()[BEAM_CROSS_SECTION];
                 double other_area = data_buffer.mpOtherParticle->GetProperties()[BEAM_CROSS_SECTION];
                 calculation_area = std::max(area, other_area);
-                mContinuumConstitutiveLawArray[i]->GetContactArea(GetRadius(), other_radius, cont_ini_neigh_area, i, calculation_area); //some Constitutive Laws get a value, some others calculate the value.
                 mContinuumConstitutiveLawArray[i]->CalculateElasticConstants(kn_el, kt_el, initial_dist, equiv_young, equiv_poisson, calculation_area, this, neighbour_iterator);
             }
 
@@ -536,7 +549,34 @@ namespace Kratos {
         }
     }
 
-    void BeamParticle::AddContributionToRepresentativeVolume(const double distance, const double radius_sum, const double contact_area) { mPartialRepresentativeVolume += 0.5 * GetProperties()[BEAM_DISTANCE] * contact_area; }
+    void BeamParticle::AddContributionToRepresentativeVolume(const double distance, const double radius_sum, const double contact_area) {
+        mPartialRepresentativeVolume += 0.5 * distance * contact_area;
+        }
+
+    void BeamParticle::FinalizeSolutionStep(ProcessInfo& r_process_info) {
+
+        ComputeReactions();
+
+        this->GetGeometry()[0].FastGetSolutionStepValue(REPRESENTATIVE_VOLUME) = mPartialRepresentativeVolume;
+        double& rRepresentative_Volume = this->GetGeometry()[0].FastGetSolutionStepValue(REPRESENTATIVE_VOLUME);
+
+        if (this->Is(DEMFlags::HAS_STRESS_TENSOR)) {
+
+            //Divide Stress Tensor by the total volume:
+            //const array_1d<double, 3>& reaction_force=this->GetGeometry()[0].FastGetSolutionStepValue(FORCE_REACTION);
+
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    (*mStressTensor)(i,j) /= rRepresentative_Volume;
+                }
+            }
+
+            SymmetrizeStressTensor();
+        }
+
+        //Update sphere mass and inertia taking into account the real volume of the represented volume:
+        SetMass(this->GetGeometry()[0].FastGetSolutionStepValue(REPRESENTATIVE_VOLUME) * GetDensity());
+    }
 
     double BeamParticle::GetParticleInitialCohesion()            { return SphericParticle::GetFastProperties()->GetParticleInitialCohesion();            }
     double BeamParticle::GetAmountOfCohesionFromStress()         { return SphericParticle::GetFastProperties()->GetAmountOfCohesionFromStress();         }

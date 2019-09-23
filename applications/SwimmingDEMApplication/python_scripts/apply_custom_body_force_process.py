@@ -2,6 +2,8 @@
 import KratosMultiphysics
 import KratosMultiphysics.SwimmingDEMApplication
 from importlib import import_module
+import numpy as np
+from KratosMultiphysics import Vector
 
 def Factory(settings, Model):
     if not isinstance(settings, KratosMultiphysics.Parameters):
@@ -45,11 +47,18 @@ class ApplyCustomBodyForceProcess(KratosMultiphysics.Process):
 
     def ExecuteBeforeSolutionLoop(self):
         current_time = 0.0
+        x = np.array([node.X for node in self.model_part.Nodes])
+        y = np.array([node.Y for node in self.model_part.Nodes])
+        z = np.array([node.Z for node in self.model_part.Nodes])
+
+        value = np.array([self.benchmark.Velocity(current_time, x, y, z) for x, y, z in zip(x, y, z)])
+
+        iterator = 0
         for node in self.model_part.Nodes:
-            value = self.benchmark.Velocity(current_time, node.X, node.Y, node.Z)
-            node.SetSolutionStepValue(KratosMultiphysics.VELOCITY, value)
-            exact_value = self.benchmark.Velocity(current_time, node.X, node.Y, node.Z)
-            node.SetValue(KratosMultiphysics.Y, exact_value)
+            vel_value = Vector(list(value[iterator]))
+            node.SetSolutionStepValue(KratosMultiphysics.VELOCITY, vel_value)
+            node.SetValue(KratosMultiphysics.Y, vel_value)
+            iterator += 1
 
     def ExecuteInitializeSolutionStep(self):
         self._SetBodyForce()
@@ -70,23 +79,40 @@ class ApplyCustomBodyForceProcess(KratosMultiphysics.Process):
 
     def _SetBodyForce(self):
         current_time = self.model_part.ProcessInfo[KratosMultiphysics.TIME]
+        x = np.array([node.X for node in self.model_part.Nodes])
+        y = np.array([node.Y for node in self.model_part.Nodes])
+        z = np.array([node.Z for node in self.model_part.Nodes])
+
+        value = np.array([self.benchmark.BodyForce(current_time, x, y, z) for x, y, z in zip(x, y, z)])
+        iterator = 0
         for node in self.model_part.Nodes:
-            #fluid_fraction = node.GetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION)
-            value = self.benchmark.BodyForce(current_time, node.X, node.Y, node.Z)
-            node.SetSolutionStepValue(self.variable, value)
+            var_value = Vector(list(value[iterator]))
+            node.SetSolutionStepValue(self.variable, var_value)
+            iterator += 1
 
     def _ComputeVelocityError(self):
         epsilon = 1e-16
         current_time = self.model_part.ProcessInfo[KratosMultiphysics.TIME]
+
+        x = np.array([node.X for node in self.model_part.Nodes])
+        y = np.array([node.Y for node in self.model_part.Nodes])
+        z = np.array([node.Z for node in self.model_part.Nodes])
+
+        value = np.array([self.benchmark.Velocity(current_time, x, y, z) for x, y, z in zip(x, y, z)])
+        iterator = 0
+
         for node in self.model_part.Nodes:
             fem_vel = node.GetSolutionStepValue(KratosMultiphysics.VELOCITY)
-            exact_vel = self.benchmark.Velocity(current_time, node.X, node.Y, node.Z)
+            exact_vel = Vector(list(value[iterator]))
             fem_vel_modulus = (fem_vel[0]**2 + fem_vel[1]**2 + fem_vel[2]**2)**0.5
             exact_vel_modulus = (exact_vel[0]**2 + exact_vel[1]**2 + exact_vel[2]**2)**0.5
             error = abs(fem_vel_modulus - exact_vel_modulus)
             error = error / abs(exact_vel_modulus + epsilon)
             node.SetValue(KratosMultiphysics.NODAL_ERROR, error)
             node.SetSolutionStepValue(KratosMultiphysics.SwimmingDEMApplication.EXACT_VELOCITY, exact_vel)
+            if node.X == min(x) or node.X == max(x)  or node.Y == min(y) or node.Y == max(y):
+                node.SetSolutionStepValue(KratosMultiphysics.VELOCITY, exact_vel)
+            iterator += 1
 
     def _CopyVelocityAsNonHistorical(self):
         for node in self.model_part.Nodes:
@@ -95,9 +121,17 @@ class ApplyCustomBodyForceProcess(KratosMultiphysics.Process):
 
     def _ComputeVelocityBenchmark(self):
         current_time = self.model_part.ProcessInfo[KratosMultiphysics.TIME]
+        x = np.array([node.X for node in self.model_part.Nodes])
+        y = np.array([node.Y for node in self.model_part.Nodes])
+        z = np.array([node.Z for node in self.model_part.Nodes])
+
+        value = np.array([self.benchmark.Velocity(current_time, x, y, z) for x, y, z in zip(x, y, z)])
+        iterator = 0
         for node in self.model_part.Nodes:
-            vel = self.benchmark.Velocity(node.X, node.Y, node.Z, current_time)
-            node.SetValue(KratosMultiphysics.Y, vel)
+            vel_value = Vector(list(value[iterator]))
+            node.SetSolutionStepValue(KratosMultiphysics.VELOCITY, vel_value)
+            node.SetValue(KratosMultiphysics.Y, vel_value)
+            iterator += 1
 
     def _SumNodalError(self):
         err_sum = 0.0

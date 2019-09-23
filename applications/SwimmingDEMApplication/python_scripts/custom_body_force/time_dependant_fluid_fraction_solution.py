@@ -19,7 +19,10 @@ class TimeDependantFluidFractionVortex(ManufacturedSolution):
                 "viscosity"   : 0.1,
                 "density"     : 1.0,
                 "frequency"   : 1.0,
-                "damping"     : 1.0
+                "damping"     : 1.0,
+                "alpha0"      : 0.7,
+                "alpha_min"   : 0.5,
+                "period"      : 0.01
             }
             """
             )
@@ -30,69 +33,44 @@ class TimeDependantFluidFractionVortex(ManufacturedSolution):
         self.L = settings["length"].GetDouble()
         self.rho = settings["density"].GetDouble()
         self.nu = settings["viscosity"].GetDouble() / self.rho
-        # self.X = sp.symbols("X")
-        # self.T  = sp.symbols("T")
-        # self.fx = 100 * self.X**2 * (self.L - self.X)**2
-        # self.gt = sp.cos(np.pi * self.T) * sp.exp(-self.T)
-        # self.dfx = sp.diff(self.fx, self.X)
-        # self.dgt = sp.diff(self.gt, self.T)
-        # self.ddfx = sp.diff(self.fx, self.X, 2)
-        # self.dddfx = sp.diff(self.fx, self.X, 3)
+        self.alpha0 = settings["alpha0"].GetDouble()
+        period = settings["period"].GetDouble()
+        alpha_min = settings["alpha_min"].GetDouble()
+        self.delta_alpha = min(self.alpha0 - alpha_min, 1.0 - self.alpha0)
+        self.omega = 2 * np.pi / period
 
-    def f(self, x):
-        return 100 * x**2 * (self.L - x)**2
+    def u1(self, time, x1, x2, x3):
+        return (x1*(-self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L) + 20000*x1*x2*(x1 - 1)**2*(x2 - 1)*(2*x2 - 1)*np.cos(np.pi*time))*np.exp(-time)/(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L)))
 
-    def g(self, t):
-        return sp.cos(np.pi * t) * sp.exp(-t)
+    def u2(self, time, x1, x2, x3):
+        return (-x2*(self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L) + 20000*x1*x2*(x1 - 1)*(2*x1 - 1)*(x2 - 1)**2*np.cos(np.pi*time))*np.exp(-time)/(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L)))
 
-    def df(self, x):
-        return 2 * 100 * x * (self.L - x)**2 - 2 * 100 * x**2 * (self.L - x)
+    def du1dt(self, time, x1, x2, x3):
+        return (x1*(self.delta_alpha*self.omega*(self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L) - 20000*x1*x2*(x1 - 1)**2*(x2 - 1)*(2*x2 - 1)*np.cos(np.pi*time))*np.cos(self.omega*time + x2/self.L) + (self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))*(self.delta_alpha*self.omega**2*np.exp(time)*np.sin(self.omega*time + x2/self.L) - 20000*np.pi*x1*x2*(x1 - 1)**2*(x2 - 1)*(2*x2 - 1)*np.sin(np.pi*time) - 20000*x1*x2*(x1 - 1)**2*(x2 - 1)*(2*x2 - 1)*np.cos(np.pi*time)))*np.exp(-time)/(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))**2)
 
-    def dg(self, t):
-        return -np.pi * np.sin(np.pi * t) * np.e**(-t) -np.cos(np.pi * t) * np.e**(-t)
+    def du2dt(self, time, x1, x2, x3):
+        return x2*(self.delta_alpha*self.omega*(self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L) + 20000*x1*x2*(x1 - 1)*(2*x1 - 1)*(x2 - 1)**2*np.cos(np.pi*time))*np.cos(self.omega*time + x2/self.L) + (self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))*(self.delta_alpha*self.omega**2*np.exp(time)*np.sin(self.omega*time + x2/self.L) + 20000*np.pi*x1*x2*(x1 - 1)*(2*x1 - 1)*(x2 - 1)**2*np.sin(np.pi*time) + 20000*x1*x2*(x1 - 1)*(2*x1 - 1)*(x2 - 1)**2*np.cos(np.pi*time)))*np.exp(-time)/(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))**2
 
-    def ddf(self, x):
-        return 2 * 100 * (self.L**2 - 6*self.L*x + 6*x**2)
+    def du11(self, time, x1, x2, x3):
+        return ((-self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L) + 20000*x1*x2*(x1 - 1)**2*(x2 - 1)*(2*x2 - 1)*np.cos(np.pi*time) + 20000*x1*x2*(x1 - 1)*(3*x1 - 1)*(x2 - 1)*(2*x2 - 1)*np.cos(np.pi*time))*np.exp(-time)/(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L)))
 
-    def dddf(self, x):
-        return 12 * 100 * (2*x - self.L)
+    def du111(self, time, x1, x2, x3):
+        return (20000*x2*(x2 - 1)*(2*x2 - 1)*(5*x1*(x1 - 1) + x1*(3*x1 - 1) + (x1 - 1)**2 + (x1 - 1)*(3*x1 - 1))*np.exp(-time)*np.cos(np.pi*time)/(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L)))
 
-    def u1(self, t, x1, x2, x3):
-        return self.f(x1) * self.df(x2) * self.g(t)
+    def du12(self, time, x1, x2, x3):
+        return (x1*(self.delta_alpha*(self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L) - 20000*x1*x2*(x1 - 1)**2*(x2 - 1)*(2*x2 - 1)*np.cos(np.pi*time))*np.cos(self.omega*time + x2/self.L) + (self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))*(20000*self.L*x1*(x1 - 1)**2*(2*x2*(x2 - 1) + x2*(2*x2 - 1) + (x2 - 1)*(2*x2 - 1))*np.cos(np.pi*time) + self.delta_alpha*self.omega*np.exp(time)*np.sin(self.omega*time + x2/self.L)))*np.exp(-time)/(self.L*(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))**2))
 
-    def u2(self, t, x1, x2, x3):
-        return -self.df(x1) * self.f(x2) * self.g(t)
+    def du122(self, time, x1, x2, x3):
+        return (-x1*(2*self.delta_alpha*(self.delta_alpha*(self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L) - 20000*x1*x2*(x1 - 1)**2*(x2 - 1)*(2*x2 - 1)*np.cos(np.pi*time))*np.cos(self.omega*time + x2/self.L) + (self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))*(20000*self.L*x1*(x1 - 1)**2*(2*x2*(x2 - 1) + x2*(2*x2 - 1) + (x2 - 1)*(2*x2 - 1))*np.cos(np.pi*time) + self.delta_alpha*self.omega*np.exp(time)*np.sin(self.omega*time + x2/self.L)))*np.cos(self.omega*time + x2/self.L) + (self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))*(self.delta_alpha*(self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L) - 20000*x1*x2*(x1 - 1)**2*(x2 - 1)*(2*x2 - 1)*np.cos(np.pi*time))*np.sin(self.omega*time + x2/self.L) - (self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))*(120000*self.L**2*x1*(x1 - 1)**2*(2*x2 - 1)*np.cos(np.pi*time) + self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L))))*np.exp(-time)/(self.L**2*(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))**3))
 
-    def du1dt(self, t, x1, x2, x3):
-        return self.f(x1) * self.df(x2) * self.dg(t)
+    def du22(self, time, x1, x2, x3):
+        return ((-self.L*(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))*(self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L) + 20000*x1*x2*(x1 - 1)*(2*x1 - 1)*(x2 - 1)**2*np.cos(np.pi*time)) + self.delta_alpha*x2*(self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L) + 20000*x1*x2*(x1 - 1)*(2*x1 - 1)*(x2 - 1)**2*np.cos(np.pi*time))*np.cos(self.omega*time + x2/self.L) - x2*(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))*(20000*self.L*x1*(x1 - 1)*(2*x1 - 1)*(x2 - 1)*(3*x2 - 1)*np.cos(np.pi*time) - self.delta_alpha*self.omega*np.exp(time)*np.sin(self.omega*time + x2/self.L)))*np.exp(-time)/(self.L*(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))**2))
 
-    def du2dt(self, t, x1, x2, x3):
-        return -self.df(x1) * self.f(x2) * self.dg(t)
+    def du222(self, time, x1, x2, x3):
+        return ((2*self.delta_alpha*(self.L*(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))*(self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L) + 20000*x1*x2*(x1 - 1)*(2*x1 - 1)*(x2 - 1)**2*np.cos(np.pi*time)) - self.delta_alpha*x2*(self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L) + 20000*x1*x2*(x1 - 1)*(2*x1 - 1)*(x2 - 1)**2*np.cos(np.pi*time))*np.cos(self.omega*time + x2/self.L) + x2*(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))*(20000*self.L*x1*(x1 - 1)*(2*x1 - 1)*(x2 - 1)*(3*x2 - 1)*np.cos(np.pi*time) - self.delta_alpha*self.omega*np.exp(time)*np.sin(self.omega*time + x2/self.L)))*np.cos(self.omega*time + x2/self.L) - (self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))*(2*self.L*(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))*(20000*self.L*x1*(x1 - 1)*(2*x1 - 1)*(x2 - 1)*(3*x2 - 1)*np.cos(np.pi*time) - self.delta_alpha*self.omega*np.exp(time)*np.sin(self.omega*time + x2/self.L)) + self.delta_alpha*x2*(self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L) + 20000*x1*x2*(x1 - 1)*(2*x1 - 1)*(x2 - 1)**2*np.cos(np.pi*time))*np.sin(self.omega*time + x2/self.L) + x2*(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))*(40000*self.L**2*x1*(x1 - 1)*(2*x1 - 1)*(3*x2 - 2)*np.cos(np.pi*time) - self.delta_alpha*self.omega*np.exp(time)*np.cos(self.omega*time + x2/self.L))))*np.exp(-time)/(self.L**2*(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L))**3))
 
-    def du11(self, t, x1, x2, x3):
-        return self.df(x1) * self.df(x2) * self.g(t)
+    def du21(self, time, x1, x2, x3):
+        return (-20000*x2**2*(x2 - 1)**2*(2*x1*(x1 - 1) + x1*(2*x1 - 1) + (x1 - 1)*(2*x1 - 1))*np.exp(-time)*np.cos(np.pi*time)/(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L)))
 
-    def du12(self, t, x1, x2, x3):
-        return self.f(x1) * self.ddf(x2) *  self.g(t)
-
-    def du21(self, t, x1, x2, x3):
-        return -self.ddf(x1) * self.f(x2) * self.g(t)
-
-    def du22(self, t, x1, x2, x3):
-        return -self.df(x1) * self.df(x2) * self.g(t)
-
-    def du111(self, t, x1, x2, x3):
-        return self.ddf(x1) * self.df(x2) * self.g(t)
-
-    def du122(self, t, x1, x2, x3):
-        return self.f(x1) * self.dddf(x2) * self.g(t)
-
-    def du211(self, t, x1, x2, x3):
-        return -self.dddf(x1) * self.f(x2) * self.g(t)
-
-    def du222(self, t, x1, x2, x3):
-        return -self.df(x1) * self.ddf(x2) * self.g(t)
-
-    def alpha(self, t, x1, x2, x3, fluid_fraction):
-        self.fluid_fraction = fluid_fraction
-        return fluid_fraction
+    def du211(self, time, x1, x2, x3):
+        return (-120000*x2**2*(2*x1 - 1)*(x2 - 1)**2*np.exp(-time)*np.cos(np.pi*time)/(self.alpha0 + self.delta_alpha*np.sin(self.omega*time + x2/self.L)))

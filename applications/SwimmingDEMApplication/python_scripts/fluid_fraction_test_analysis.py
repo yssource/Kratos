@@ -24,7 +24,6 @@ class FluidFractionTestAnalysis(SwimmingDEMAnalysis):
 
     def Initialize(self):
         super(FluidFractionTestAnalysis, self).Initialize()
-        self._GetSolver().SetFluidFractionField()
         self._GetSolver().ConstructL2ErrorProjector()
 
     def GetDebugInfo(self):

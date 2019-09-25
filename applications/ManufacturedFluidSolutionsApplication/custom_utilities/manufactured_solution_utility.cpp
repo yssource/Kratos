@@ -102,6 +102,20 @@ void ManufacturedSolutionUtility::ComputeExactPressure()
 }
 
 
+void ManufacturedSolutionUtility::ComputeExactConvection()
+{
+    double time = mrModelPart.GetProcessInfo().GetValue(TIME);
+    #pragma omp parallel for
+    for (int i = 0; i < static_cast<int>(mrModelPart.Nodes().size()); i++)
+    {
+        auto it_node = mrModelPart.NodesBegin() + i;
+        array_1d<double, 3>& coords = it_node->Coordinates();
+        array_1d<double, 3> conv = mrManufactured.ConvectiveTerm(coords, time);
+        it_node->SetValue(EXACT_CONVECTION, conv);
+    }
+}
+
+
 void ManufacturedSolutionUtility::ComputeExactMaterialAcceleration()
 {
     double time = mrModelPart.GetProcessInfo().GetValue(TIME);
@@ -118,19 +132,19 @@ void ManufacturedSolutionUtility::ComputeExactMaterialAcceleration()
 
 void ManufacturedSolutionUtility::ComputeVelocityRelativeError()
 {
-    ComputeRelativeError<Variable<array_1d<double, 3>>>(EXACT_VELOCITY, VELOCITY, VELOCITY_RELATIVE_ERROR);
+    ComputeError<Variable<array_1d<double, 3>>>(EXACT_VELOCITY, VELOCITY, VELOCITY_RELATIVE_ERROR);
 }
 
 
 void ManufacturedSolutionUtility::ComputePressureRelativeError()
 {
-    ComputeRelativeError<Variable<double>>(EXACT_PRESSURE, PRESSURE, PRESSURE_RELATIVE_ERROR);
+    ComputeError<Variable<double>>(EXACT_PRESSURE, PRESSURE, PRESSURE_RELATIVE_ERROR);
 }
 
 
 void ManufacturedSolutionUtility::ComputeMaterialAccelerationError()
 {
-    ComputeRelativeError<Variable<array_1d<double, 3>>>(
+    ComputeError<Variable<array_1d<double, 3>>>(
         EXACT_MATERIAL_ACCELERATION,
         MATERIAL_ACCELERATION,
         MATERIAL_ACCELERATION_ERROR);
@@ -140,7 +154,7 @@ void ManufacturedSolutionUtility::ComputeMaterialAccelerationError()
 void ManufacturedSolutionUtility::RecoverMaterialAcceleration()
 {
     VariableUtils().CopyVectorVar(ACCELERATION, MATERIAL_ACCELERATION, mrModelPart.Nodes());
-    constexpr bool save_as_historical_variable = true;
+    constexpr bool save_as_historical_variable = false;
     ComputeNodalGradientProcess<save_as_historical_variable>(mrModelPart, VELOCITY_X, VELOCITY_X_GRADIENT)();
     ComputeNodalGradientProcess<save_as_historical_variable>(mrModelPart, VELOCITY_Y, VELOCITY_Y_GRADIENT)();
     ComputeNodalGradientProcess<save_as_historical_variable>(mrModelPart, VELOCITY_Z, VELOCITY_Z_GRADIENT)();
@@ -150,9 +164,9 @@ void ManufacturedSolutionUtility::RecoverMaterialAcceleration()
         auto it_node = mrModelPart.NodesBegin() + i;
         auto vel = it_node->FastGetSolutionStepValue(VELOCITY);
         auto acc = it_node->FastGetSolutionStepValue(ACCELERATION);
-        auto grad_x = it_node->FastGetSolutionStepValue(VELOCITY_X_GRADIENT);
-        auto grad_y = it_node->FastGetSolutionStepValue(VELOCITY_Y_GRADIENT);
-        auto grad_z = it_node->FastGetSolutionStepValue(VELOCITY_Z_GRADIENT);
+        auto grad_x = it_node->GetValue(VELOCITY_X_GRADIENT);
+        auto grad_y = it_node->GetValue(VELOCITY_Y_GRADIENT);
+        auto grad_z = it_node->GetValue(VELOCITY_Z_GRADIENT);
         it_node->FastGetSolutionStepValue(MATERIAL_ACCELERATION_X) += inner_prod(vel, grad_x);
         it_node->FastGetSolutionStepValue(MATERIAL_ACCELERATION_Y) += inner_prod(vel, grad_y);
         it_node->FastGetSolutionStepValue(MATERIAL_ACCELERATION_Z) += inner_prod(vel, grad_z);

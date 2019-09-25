@@ -94,6 +94,8 @@ public:
 
     void ComputeExactPressure();
 
+    void ComputeExactConvection();
+
     void ComputeExactMaterialAcceleration();
 
     void ComputeVelocityRelativeError();
@@ -179,6 +181,26 @@ public:
             auto value_nn = it_node->FastGetSolutionStepValue(rPrimaryVariable, 1);
             auto derivative = dt_inv * (value_n - value_nn);
             it_node->FastGetSolutionStepValue(rDerivativeVariable) = derivative;
+        }
+    }
+
+    template<class TVarType>
+    void Bossak(
+        TVarType& rPrimaryVariable,
+        TVarType& rDerivativeVariable,
+        double Alpha)
+    {
+        double gamma = 0.5 - Alpha;
+        double dt_inv = 1 / mrModelPart.GetProcessInfo().GetValue(DELTA_TIME);
+        #pragma omp parallel for
+        for (int i = 0; i < static_cast<int>(mrModelPart.Nodes().size()); i++)
+        {
+            auto it_node = mrModelPart.NodesBegin() + i;
+            auto value_n = it_node->FastGetSolutionStepValue(rPrimaryVariable);
+            auto value_nn = it_node->FastGetSolutionStepValue(rPrimaryVariable, 1);
+            auto derivative_nn = it_node->FastGetSolutionStepValue(rDerivativeVariable, 1);
+            auto derivative_n = dt_inv / gamma * (value_n - value_nn) + (gamma - 1.0) / gamma * derivative_nn;
+            it_node->FastGetSolutionStepValue(rDerivativeVariable) = derivative_n;
         }
     }
 

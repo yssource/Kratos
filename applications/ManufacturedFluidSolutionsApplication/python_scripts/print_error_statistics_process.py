@@ -56,6 +56,7 @@ class PrintErrorStatisticsProcess(ManufacturedProcess):
 
     def ExecuteFinalize(self):
         self._WriteAverageError()
+        self.f.close()
 
 
     def _FillAdditionalAttributes(self):

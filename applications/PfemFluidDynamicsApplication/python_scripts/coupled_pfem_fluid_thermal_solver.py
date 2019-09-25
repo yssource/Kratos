@@ -20,46 +20,77 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
 
         super(CoupledPfemFluidThermalSolver, self).__init__(model, custom_settings)
 
-        # default_settings to be updated 
         default_settings = KratosMultiphysics.Parameters("""
         {
-            "solver_type" : "PFEMFluidThermallyCoupled",
-            "domain_size" : -1,
-            "echo_level": 0,
-            "fluid_solver_settings": {
-                "solver_type"                        : "pfem_fluid_solver",
-                "model_part_name"                    : "PfemFluidModelPart",
-                "physics_type"                       : "fluid",
-                "domain_size"                        : 2,
-                "time_stepping"                      : {
+            "solver_type": "coupled_pfem_fluid_thermal_solver",
+            "model_part_name": "PfemFluidModelPart",
+            "echo_level"                         : 1,
+            "fluid_solver_settings":{
+                "physics_type"   : "fluid",
+                "domain_size": 2,
+                "time_stepping"               : {
                     "automatic_time_step" : false,
                     "time_step"           : 0.001
                 },
-                "model_import_settings"              : {
-                    "input_type"     : "mdpa",
-                    "input_filename" : "unknown_name"
+                "model_import_settings":{
+                    "input_type": "mdpa",
+                    "input_filename": "unknown_name"
                 },
-                "maximum_pressure_iterations"        : 7,
-                "velocity_tolerance"                 : 1e-5,
-                "pressure_tolerance"                 : 1e-5,
-                "echo_level"                         : 0,
-                "velocity_linear_solver_settings"    : {
-                    "solver_type"         : "bicgstab",
-                    "max_iteration"       : 5000,
-                    "tolerance"           : 1e-9,
-                    "preconditioner_type" : "ilu0",
-                    "scaling"             : false
+                "buffer_size": 3,
+                "echo_level": 1,
+                "reform_dofs_at_each_step": false,
+                "clear_storage": false,
+                "compute_reactions": true,
+                "move_mesh_flag": true,
+                "dofs"                : [],
+                "stabilization_factor": 1.0,
+                "line_search": false,
+                "compute_contact_forces": false,
+                "block_builder": false,
+                "component_wise": false,
+                "predictor_corrector": true,
+                "time_order": 2,
+                "maximum_velocity_iterations": 1,
+                "maximum_pressure_iterations": 7,
+                "velocity_tolerance": 1e-5,
+                "pressure_tolerance": 1e-5,
+                "pressure_linear_solver_settings":  {
+                    "solver_type"                    : "amgcl",
+                    "max_iteration"                  : 5000,
+                    "tolerance"                      : 1e-9,
+                    "provide_coordinates"            : false,
+                    "scaling"                        : false,
+                    "smoother_type"                  : "damped_jacobi",
+                    "krylov_type"                    : "cg",
+                    "coarsening_type"                : "aggregation",
+                    "verbosity"                      : 0
                 },
-                "pressure_linear_solver_settings"    : {
-                    "solver_type"         : "bicgstab",
-                    "max_iteration"       : 5000,
-                    "tolerance"           : 1e-9,
-                    "preconditioner_type" : "ilu0",
-                    "scaling"             : false
+                "velocity_linear_solver_settings": {
+                    "solver_type"                    : "bicgstab",
+                    "max_iteration"                  : 5000,
+                    "tolerance"                      : 1e-9,
+                    "preconditioner_type"            : "none",
+                    "scaling"                        : false
                 },
-                "bodies_list"                        : [],
-                "problem_domain_sub_model_part_list" : [],
-                "processes_sub_model_part_list"      : []
+                "solving_strategy_settings":{
+                   "time_step_prediction_level": 0,
+                   "max_delta_time": 1.0e-5,
+                   "fraction_delta_time": 0.9,
+                   "rayleigh_damping": false,
+                   "rayleigh_alpha": 0.0,
+                   "rayleigh_beta" : 0.0
+                },
+                "bodies_list": [],
+                "problem_domain_sub_model_part_list": [],
+                "processes_sub_model_part_list": [],
+                "constraints_process_list": [],
+                "loads_process_list"       : [],
+                "output_process_list"      : [],
+                "output_configuration"     : {},
+                "problem_process_list"     : [],
+                "processes"                : {},
+                "output_processes"         : {},
+                "check_process_list": []
             },
             "thermal_solver_settings": {
                 "solver_type": "Transient",
@@ -73,15 +104,14 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
             }
         }
         """)
-
+            
+        #self.settings = custom_settings
         ## Overwrite the default settings with user-provided parameters
         self.settings.ValidateAndAssignDefaults(default_settings)
 
         ## Get domain size
-        self.domain_size = self.settings["domain_size"].GetInt()
+        self.domain_size = self.settings["fluid_solver_settings"]["domain_size"].GetInt()
         
-        # from KratosMultiphysics.FluidDynamicsApplication import python_solvers_wrapper_fluid
-        # self.fluid_solver = python_solvers_wrapper_fluid.CreateSolverByParameters(self.model, self.settings["fluid_solver_settings"],"OpenMP")
         from KratosMultiphysics.PfemFluidDynamicsApplication import pfem_fluid_solver
         self.fluid_solver = pfem_fluid_solver.CreateSolver(self.model,self.settings["fluid_solver_settings"]) 
 
@@ -93,10 +123,14 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
         self.fluid_solver.AddVariables()
         self.thermal_solver.AddVariables()
         KratosMultiphysics.MergeVariableListsUtility().Merge(self.fluid_solver.main_model_part, self.thermal_solver.main_model_part)
+        print("::[Coupled Pfem Fluid Thermal Solver]:: Variables MERGED")
+        ## 2190920: a warning is raised when the thermal model is cloned form the fluid one because the pfem extra variables are
+        ##          added after (by the pfem_analysis and not by pfem_fluid_solver)
 
     def ImportModelPart(self):
         # Call the fluid solver to import the model part from the mdpa
-        self.fluid_solver.ImportModelPart()
+        self.fluid_solver.ImportModelPart() # import model fluid model part and call pfem_check_and_prepare_model_process_fluid
+        # self.fluid_solver._ImportModelPart(self.fluid_solver.main_model_part,self.settings["fluid_solver_settings"]["model_import_settings"])
 
         # Save the convection diffusion settings
         convection_diffusion_settings = self.thermal_solver.main_model_part.ProcessInfo.GetValue(KratosMultiphysics.CONVECTION_DIFFUSION_SETTINGS)
@@ -113,9 +147,20 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
                                       self.thermal_solver.main_model_part,
                                       "EulerianConvDiff3D",
                                       "ThermalFace3D3N")
+        
+        # self.fluid_solver.ImportModelPart()
 
         # Set the saved convection diffusion settings to the new thermal model part
         self.thermal_solver.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.CONVECTION_DIFFUSION_SETTINGS, convection_diffusion_settings)
+        #namedd = self.fluid_solver.main_model_part
+        #self.thermal_solver.main_model_part = self.model["PfemFluidModelPart.fluid_computing_domain"]
+        #self.thermal_solver.main_model_part.append(self.model["PfemFluidModelPart.fluid_computing_domain"])
+        #self.thermal_solver.computing_model_part = self.model["PfemFluidModelPart.fluid_computing_domain"]
+        # self.thermal_solver.main_model_part = self.fluid_solver.main_model_part
+        # 20190920: it is not clear where is assigned the computin_model_part_name of the thermal problem, hence it needs
+        #           to be overriden as follows 
+        self.settings["thermal_solver_settings"]["computing_model_part_name"].SetString("fluid_computing_domain")
+        print(1)
 
     def PrepareModelPart(self):
         self.fluid_solver.PrepareModelPart()
@@ -145,6 +190,12 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
     def Initialize(self):
         self.fluid_solver.Initialize()
         self.thermal_solver.Initialize()
+
+    def InitializeStrategy(self):
+        if self.settings["fluid_solver_settings"]["clear_storage"].GetBool():
+            self.Clear()
+        self.fluid_solver.Initialize()
+        #pass
 
     def Clear(self):
         (self.fluid_solver).Clear()

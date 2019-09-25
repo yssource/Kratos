@@ -95,6 +95,7 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
             "thermal_solver_settings": {
                 "solver_type": "Transient",
                 "analysis_type": "linear",
+                "computing_model_part_name": "fluid_computing_domain",
                 "model_import_settings": {
                     "input_type": "use_input_model_part"
                 },
@@ -138,7 +139,8 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
         # Here the fluid model part is cloned to be thermal model part so that the nodes are shared
         modeler = KratosMultiphysics.ConnectivityPreserveModeler()
         if self.domain_size == 2:
-            modeler.GenerateModelPart(self.fluid_solver.main_model_part,
+            #modeler.GenerateModelPart(self.fluid_solver.main_model_part,
+            modeler.GenerateModelPart(self.fluid_solver.GetComputingModelPart(),
                                       self.thermal_solver.main_model_part,
                                       "EulerianConvDiff2D",
                                       "ThermalFace2D2N")
@@ -159,7 +161,7 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
         # self.thermal_solver.main_model_part = self.fluid_solver.main_model_part
         # 20190920: it is not clear where is assigned the computin_model_part_name of the thermal problem, hence it needs
         #           to be overriden as follows 
-        self.settings["thermal_solver_settings"]["computing_model_part_name"].SetString("fluid_computing_domain")
+        #self.settings["thermal_solver_settings"]["computing_model_part_name"].SetString("fluid_computing_domain")
         print(1)
 
     def PrepareModelPart(self):

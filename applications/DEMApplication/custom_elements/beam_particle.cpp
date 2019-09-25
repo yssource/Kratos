@@ -60,16 +60,24 @@ namespace Kratos {
     {
         SphericContinuumParticle::Initialize(r_process_info);
 
-        if (this->Is(DEMFlags::HAS_ROTATION)) {
-            double distance = GetProperties()[BEAM_DISTANCE];
-            double contact_area = GetProperties()[BEAM_CROSS_SECTION];
-            double aux1 = distance;
-            double aux2 = sqrt( 12.0 * GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X] / contact_area );
-            double aux3 = sqrt( 12.0 * GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y] / contact_area );
+        double distance = GetProperties()[BEAM_DISTANCE];
+        double contact_area = GetProperties()[BEAM_CROSS_SECTION];
+        if (IsSkin()) distance *= 0.5;
 
-            GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux1 * aux1 + aux2 * aux2);
-            GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux2 * aux2 + aux3 * aux3);
-            GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux1 * aux1 + aux3 * aux3);
+        GetGeometry()[0].FastGetSolutionStepValue(REPRESENTATIVE_VOLUME) = distance * contact_area;
+        SetMass(GetDensity() * distance * contact_area);
+
+        if (this->Is(DEMFlags::HAS_ROTATION)) {
+            // double aux2 = sqrt( 12.0 * GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X] / contact_area );
+            // double aux3 = sqrt( 12.0 * GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y] / contact_area );
+
+            // GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux1 * aux1 + aux2 * aux2);
+            // GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux2 * aux2 + aux3 * aux3);
+            // GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux1 * aux1 + aux3 * aux3);
+
+            GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_X] * GetDensity() * distance * contact_area;
+            GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_Y] * GetDensity() * distance * contact_area;
+            GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_Z] * GetDensity() * distance * contact_area;
         }
     }
 
@@ -285,7 +293,8 @@ namespace Kratos {
             double myPoisson = GetPoisson();
 
             double kn_el = 0.0;
-            double kt_el = 0.0;
+            double kt_el_0 = 0.0;
+            double kt_el_1 = 0.0;
             double DeltDisp[3] = {0.0};
             double RelVel[3] = {0.0};
             DEM_SET_COMPONENTS_TO_ZERO_3x3(data_buffer.mLocalCoordSystem)
@@ -312,7 +321,7 @@ namespace Kratos {
                 double area = this->GetProperties()[BEAM_CROSS_SECTION];
                 double other_area = data_buffer.mpOtherParticle->GetProperties()[BEAM_CROSS_SECTION];
                 calculation_area = std::max(area, other_area);
-                mContinuumConstitutiveLawArray[i]->CalculateElasticConstants(kn_el, kt_el, initial_dist, equiv_young, equiv_poisson, calculation_area, this, neighbour_iterator);
+                mContinuumConstitutiveLawArray[i]->CalculateElasticConstants(kn_el, kt_el_0, kt_el_1, initial_dist, equiv_young, equiv_poisson, calculation_area, this, neighbour_iterator);
             }
 
             EvaluateDeltaDisplacement(data_buffer, DeltDisp, RelVel, data_buffer.mLocalCoordSystem, data_buffer.mOldLocalCoordSystem, vel, delta_displ);
@@ -348,7 +357,8 @@ namespace Kratos {
 
             double ViscoDampingLocalContactForce[3] = {0.0};
             double equiv_visco_damp_coeff_normal;
-            double equiv_visco_damp_coeff_tangential;
+            double equiv_visco_damp_coeff_tangential_0;
+            double equiv_visco_damp_coeff_tangential_1;
             double ElasticLocalRotationalMoment[3] = {0.0};
             double ViscoLocalRotationalMoment[3] = {0.0};
             double cohesive_force =  0.0;
@@ -366,7 +376,8 @@ namespace Kratos {
                                                                    data_buffer.mLocalCoordSystem,
                                                                    LocalDeltDisp,
                                                                    kn_el,
-                                                                   kt_el,
+                                                                   kt_el_0,
+                                                                   kt_el_1,
                                                                    contact_sigma,
                                                                    contact_tau,
                                                                    failure_criterion_state,
@@ -383,7 +394,8 @@ namespace Kratos {
                                                                    search_control,
                                                                    search_control_vector,
                                                                    equiv_visco_damp_coeff_normal,
-                                                                   equiv_visco_damp_coeff_tangential,
+                                                                   equiv_visco_damp_coeff_tangential_0,
+                                                                   equiv_visco_damp_coeff_tangential_1,
                                                                    LocalRelVel,
                                                                    ViscoDampingLocalContactForce);
 
@@ -550,14 +562,14 @@ namespace Kratos {
     }
 
     void BeamParticle::AddContributionToRepresentativeVolume(const double distance, const double radius_sum, const double contact_area) {
-        mPartialRepresentativeVolume += 0.5 * distance * contact_area;
+        // mPartialRepresentativeVolume += 0.5 * distance * contact_area;
         }
 
     void BeamParticle::FinalizeSolutionStep(ProcessInfo& r_process_info) {
 
         ComputeReactions();
 
-        this->GetGeometry()[0].FastGetSolutionStepValue(REPRESENTATIVE_VOLUME) = mPartialRepresentativeVolume;
+        // this->GetGeometry()[0].FastGetSolutionStepValue(REPRESENTATIVE_VOLUME) = mPartialRepresentativeVolume;
         double& rRepresentative_Volume = this->GetGeometry()[0].FastGetSolutionStepValue(REPRESENTATIVE_VOLUME);
 
         if (this->Is(DEMFlags::HAS_STRESS_TENSOR)) {
@@ -575,7 +587,7 @@ namespace Kratos {
         }
 
         //Update sphere mass and inertia taking into account the real volume of the represented volume:
-        SetMass(this->GetGeometry()[0].FastGetSolutionStepValue(REPRESENTATIVE_VOLUME) * GetDensity());
+        // SetMass(this->GetGeometry()[0].FastGetSolutionStepValue(REPRESENTATIVE_VOLUME) * GetDensity());
     }
 
     double BeamParticle::GetParticleInitialCohesion()            { return SphericParticle::GetFastProperties()->GetParticleInitialCohesion();            }

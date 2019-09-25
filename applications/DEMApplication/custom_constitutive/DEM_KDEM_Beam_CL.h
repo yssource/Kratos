@@ -22,6 +22,25 @@ namespace Kratos {
         void SetConstitutiveLawInProperties(Properties::Pointer pProp, bool verbose = true) const override;
         void Check(Properties::Pointer pProp) const override;
 
+        virtual void CalculateElasticConstants(double& kn_el,
+                                               double& kt_el_0,
+                                               double& kt_el_1,
+                                               double initial_dist,
+                                               double equiv_young,
+                                               double equiv_poisson,
+                                               double calculation_area,
+                                               SphericContinuumParticle* element1,
+                                               SphericContinuumParticle* element2) override;
+
+        virtual void CalculateViscoDampingCoeff(double& equiv_visco_damp_coeff_normal,
+                                                double& equiv_visco_damp_coeff_tangential_0,
+                                                double& equiv_visco_damp_coeff_tangential_1,
+                                                SphericContinuumParticle* element1,
+                                                SphericContinuumParticle* element2,
+                                                const double kn_el,
+                                                const double kt_el_0,
+                                                const double kt_el_1);
+
         virtual void CalculateForces(const ProcessInfo& r_process_info,
                                      double OldLocalElasticContactForce[3],
                                      double LocalElasticContactForce[3],
@@ -29,7 +48,8 @@ namespace Kratos {
                                      double LocalCoordSystem[3][3],
                                      double LocalDeltDisp[3],
                                      const double kn_el,
-                                     const double kt_el,
+                                     const double kt_el_0,
+                                     const double kt_el_1,
                                      double& contact_sigma,
                                      double& contact_tau,
                                      double& failure_criterion_state,
@@ -45,8 +65,9 @@ namespace Kratos {
                                      bool& sliding,
                                      int search_control,
                                      DenseVector<int>& search_control_vector,
-                                     double &equiv_visco_damp_coeff_normal,
-                                     double &equiv_visco_damp_coeff_tangential,
+                                     double& equiv_visco_damp_coeff_normal,
+                                     double& equiv_visco_damp_coeff_tangential_0,
+                                     double& equiv_visco_damp_coeff_tangential_1,
                                      double LocalRelVel[3],
                                      double ViscoDampingLocalContactForce[3]) override;
 
@@ -55,7 +76,8 @@ namespace Kratos {
                                                double LocalElasticExtraContactForce[3],
                                                double LocalCoordSystem[3][3],
                                                double LocalDeltDisp[3],
-                                               const double kt_el,
+                                               const double kt_el_0,
+                                               const double kt_el_1,
                                                const double equiv_young,
                                                double& contact_sigma,
                                                double& contact_tau,
@@ -68,7 +90,16 @@ namespace Kratos {
                                                bool& sliding,
                                                int search_control,
                                                DenseVector<int>& search_control_vector,
-                                               const ProcessInfo& r_process_info) override;
+                                               const ProcessInfo& r_process_info);
+
+        virtual void CalculateViscoDamping(double LocalRelVel[3],
+                                           double ViscoDampingLocalContactForce[3],
+                                           double indentation,
+                                           double equiv_visco_damp_coeff_normal,
+                                           double equiv_visco_damp_coeff_tangential_0,
+                                           double equiv_visco_damp_coeff_tangential_1,
+                                           bool& sliding,
+                                           int failure_id);
 
         virtual void ComputeParticleRotationalMoments(SphericContinuumParticle* element,
                                                       SphericContinuumParticle* neighbor,

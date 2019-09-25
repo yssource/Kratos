@@ -1,8 +1,12 @@
 from __future__ import print_function, absolute_import, division  # makes KM backward compatible with python 2.6 and 2.7
 
 import KratosMultiphysics as KM
-import KratosMultiphysics.StructuralMechanicsApplication as SMA
 import KratosMultiphysics.ContactStructuralMechanicsApplication as CSMA
+
+# Some imports
+from KratosMultiphysics import from_json_check_result_process
+#from KratosMultiphysics import json_output_process
+from KratosMultiphysics.gid_output_process import GiDOutputProcess
 
 import KratosMultiphysics.KratosUnittest as KratosUnittest
 
@@ -40,7 +44,7 @@ class TestDynamicSearch(KratosUnittest.TestCase):
         KM.VariableUtils().AddDof(KM.DISPLACEMENT_Z, KM.REACTION_Z,self.main_model_part)
         KM.VariableUtils().AddDof(CSMA.LAGRANGE_MULTIPLIER_CONTACT_PRESSURE, CSMA.WEIGHTED_GAP, self.main_model_part)
 
-        if (self.main_model_part.HasSubModelPart("Contact")):
+        if self.main_model_part.HasSubModelPart("Contact"):
             interface_model_part = self.main_model_part.GetSubModelPart("Contact")
         else:
             interface_model_part = self.main_model_part.CreateSubModelPart("Contact")
@@ -48,7 +52,7 @@ class TestDynamicSearch(KratosUnittest.TestCase):
         self.contact_model_part = self.main_model_part.GetSubModelPart("DISPLACEMENT_Displacement_Auto2")
 
         model_part_slave = self.main_model_part.GetSubModelPart("Parts_Parts_Auto1")
-        model_part_master = self.main_model_part.GetSubModelPart("Parts_Parts_Auto2")
+        #model_part_master = self.main_model_part.GetSubModelPart("Parts_Parts_Auto2")
         KM.VariableUtils().SetFlag(KM.SLAVE, False, self.contact_model_part.Nodes)
         KM.VariableUtils().SetFlag(KM.MASTER, True, self.contact_model_part.Nodes)
         KM.VariableUtils().SetFlag(KM.SLAVE, True, model_part_slave.Nodes)
@@ -59,7 +63,6 @@ class TestDynamicSearch(KratosUnittest.TestCase):
             #node.X -= 9.81 / 32.0
             #node.SetSolutionStepValue(KM.DISPLACEMENT_X, -9.81 / 32.0)
             node.SetSolutionStepValue(KM.ACCELERATION_X, 1, -9.81)
-        del(node)
 
         self.main_model_part.ProcessInfo[KM.STEP] = 1
         self.main_model_part.ProcessInfo[KM.DELTA_TIME] = 0.5
@@ -79,10 +82,8 @@ class TestDynamicSearch(KratosUnittest.TestCase):
         # We copy the conditions to the ContactSubModelPart
         for cond in self.contact_model_part.Conditions:
             interface_model_part.AddCondition(cond)
-        del(cond)
         for node in self.contact_model_part.Nodes:
             interface_model_part.AddNode(node, 0)
-        del(node)
 
         # We compute NODAL_H that can be used in the search and some values computation
         self.find_nodal_h = KM.FindNodalHProcess(self.contact_model_part)
@@ -94,23 +95,18 @@ class TestDynamicSearch(KratosUnittest.TestCase):
 
         search_parameters = KM.Parameters("""
         {
-            "dynamic_search"              : true
+            "dynamic_search"              : true,
+            "simple_search"               : false
         }
         """)
-        if (num_nodes == 3):
-            contact_search = CSMA.AdvancedContactSearch3D3N(self.main_model_part, search_parameters)
-        else:
-            contact_search = CSMA.AdvancedContactSearch3D4N(self.main_model_part, search_parameters)
+        contact_search = CSMA.ContactSearchProcess(self.main_model_part, search_parameters)
 
         # We initialize the search utility
-        contact_search.CreatePointListMortar()
-        contact_search.InitializeMortarConditions()
-        contact_search.UpdateMortarConditions()
+        contact_search.ExecuteInitialize()
+        contact_search.ExecuteInitializeSolutionStep()
 
         ## DEBUG
         #self.__post_process()
-
-        import from_json_check_result_process
 
         check_parameters = KM.Parameters("""
         {
@@ -129,8 +125,6 @@ class TestDynamicSearch(KratosUnittest.TestCase):
         check.ExecuteInitialize()
         check.ExecuteBeforeSolutionLoop()
         check.ExecuteFinalizeSolutionStep()
-
-        #import json_output_process
 
         #out_parameters = KM.Parameters("""
         #{
@@ -151,17 +145,16 @@ class TestDynamicSearch(KratosUnittest.TestCase):
         #out.ExecuteFinalizeSolutionStep()
 
     def test_dynamic_search_triangle(self):
-        input_filename = os.path.dirname(os.path.realpath(__file__)) + "/integration_tests/test_double_curvature_integration_triangle"
+        input_filename = os.path.dirname(os.path.realpath(__file__)) + "/auxiliar_files_for_python_unnitest/integration_tests/test_double_curvature_integration_triangle"
 
         self._dynamic_search_tests(input_filename, 3)
 
     def test_dynamic_search_quad(self):
-        input_filename = os.path.dirname(os.path.realpath(__file__)) + "/integration_tests/test_double_curvature_integration_quadrilateral"
+        input_filename = os.path.dirname(os.path.realpath(__file__)) + "/auxiliar_files_for_python_unnitest/integration_tests/test_double_curvature_integration_quadrilateral"
 
         self._dynamic_search_tests(input_filename, 4)
 
     def __post_process(self):
-        from gid_output_process import GiDOutputProcess
         self.gid_output = GiDOutputProcess(self.main_model_part,
                                     "gid_output",
                                     KM.Parameters("""

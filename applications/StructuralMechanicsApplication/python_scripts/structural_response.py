@@ -5,7 +5,7 @@ from __future__ import print_function, absolute_import, division
 import KratosMultiphysics
 from KratosMultiphysics import Parameters, Logger
 import KratosMultiphysics.StructuralMechanicsApplication as StructuralMechanicsApplication
-import structural_mechanics_analysis
+from KratosMultiphysics.StructuralMechanicsApplication.structural_mechanics_analysis import StructuralMechanicsAnalysis
 
 import time as timer
 
@@ -84,7 +84,7 @@ class StrainEnergyResponseFunction(ResponseFunctionBase):
 
         self.primal_model_part = _GetModelPart(model, ProjectParametersPrimal["solver_settings"])
 
-        self.primal_analysis = structural_mechanics_analysis.StructuralMechanicsAnalysis(model, ProjectParametersPrimal)
+        self.primal_analysis = StructuralMechanicsAnalysis(model, ProjectParametersPrimal)
         self.primal_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.SHAPE_SENSITIVITY)
 
         self.response_function_utility = StructuralMechanicsApplication.StrainEnergyResponseFunctionUtility(self.primal_model_part, response_settings)
@@ -174,7 +174,7 @@ class EigenFrequencyResponseFunction(StrainEnergyResponseFunction):
 
         self.primal_model_part = _GetModelPart(model, ProjectParametersPrimal["solver_settings"])
 
-        self.primal_analysis = structural_mechanics_analysis.StructuralMechanicsAnalysis(model, ProjectParametersPrimal)
+        self.primal_analysis = StructuralMechanicsAnalysis(model, ProjectParametersPrimal)
         self.primal_model_part.AddNodalSolutionStepVariable(KratosMultiphysics.SHAPE_SENSITIVITY)
 
         self.response_function_utility = StructuralMechanicsApplication.EigenfrequencyResponseFunctionUtility(self.primal_model_part, response_settings)
@@ -216,8 +216,6 @@ class MassResponseFunction(ResponseFunctionBase):
         self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.SHAPE_SENSITIVITY)
 
     def Initialize(self):
-        import read_materials_process
-
         if self.model_part_needs_to_be_imported:
             # import model part
             model_part_io = KratosMultiphysics.ModelPartIO(self.response_settings["model_import_settings"]["input_filename"].GetString())
@@ -277,7 +275,7 @@ class AdjointResponseFunction(ResponseFunctionBase):
 
         self.primal_model_part = _GetModelPart(model, primal_parameters["solver_settings"])
 
-        self.primal_analysis = structural_mechanics_analysis.StructuralMechanicsAnalysis(model, primal_parameters)
+        self.primal_analysis = StructuralMechanicsAnalysis(model, primal_parameters)
 
         # Create the adjoint solver
         adjoint_parameters = self._GetAdjointParameters()
@@ -285,7 +283,7 @@ class AdjointResponseFunction(ResponseFunctionBase):
         self.adjoint_model_part = _GetModelPart(adjoint_model, adjoint_parameters["solver_settings"])
 
         # TODO find out why it is not possible to use the same model_part
-        self.adjoint_analysis = structural_mechanics_analysis.StructuralMechanicsAnalysis(adjoint_model, adjoint_parameters)
+        self.adjoint_analysis = StructuralMechanicsAnalysis(adjoint_model, adjoint_parameters)
 
         self.primal_state_variables = [KratosMultiphysics.DISPLACEMENT]
         if primal_parameters["solver_settings"].Has("rotation_dofs"):
@@ -355,10 +353,11 @@ class AdjointResponseFunction(ResponseFunctionBase):
             adjoint_node.Z = primal_node.Z
 
         # Put primal solution on adjoint model - for "auto" setting, else it has to be done by the user e.g. using hdf5 process
-        Logger.PrintInfo("> Transfer primal state to adjoint model part.")
-        variable_utils = KratosMultiphysics.VariableUtils()
-        for variable in self.primal_state_variables:
-            variable_utils.CopyModelPartNodalVar(variable, self.primal_model_part, self.adjoint_model_part, 0)
+        if self.response_settings["adjoint_settings"].GetString() == "auto":
+            Logger.PrintInfo("> Transfer primal state to adjoint model part.")
+            variable_utils = KratosMultiphysics.VariableUtils()
+            for variable in self.primal_state_variables:
+                variable_utils.CopyModelPartNodalVar(variable, self.primal_model_part, self.adjoint_model_part, 0)
 
 
     def _GetAdjointParameters(self):

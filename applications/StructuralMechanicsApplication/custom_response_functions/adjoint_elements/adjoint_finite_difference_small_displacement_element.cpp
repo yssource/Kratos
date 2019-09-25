@@ -7,6 +7,7 @@
 //           license: structural_mechanics_application/license.txt
 //
 //  Main authors:    Armin Geiser, https://github.com/armingeiser
+//                   Daniel Baumgaertner, https://github.com/dbaumgaertner
 //
 
 
@@ -14,41 +15,37 @@
 #include "structural_mechanics_application_variables.h"
 #include "custom_response_functions/response_utilities/stress_response_definitions.h"
 #include "includes/checks.h"
+#include "custom_elements/small_displacement.h"
 
 
 namespace Kratos
 {
 
-AdjointFiniteDifferenceSmallDisplacementElement::AdjointFiniteDifferenceSmallDisplacementElement(Element::Pointer pPrimalElement)
-    : AdjointFiniteDifferencingBaseElement(pPrimalElement)
-{
-}
-
-AdjointFiniteDifferenceSmallDisplacementElement::~AdjointFiniteDifferenceSmallDisplacementElement()
-{
-}
-
-void AdjointFiniteDifferenceSmallDisplacementElement::CalculateStressDisplacementDerivative(const Variable<Vector>& rStressVariable,
+template <class TPrimalElement>
+void AdjointFiniteDifferencingSmallDisplacementElement<TPrimalElement>::CalculateStressDisplacementDerivative(const Variable<Vector>& rStressVariable,
                                                                                             Matrix& rOutput, const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY;
 
     // First check applicability of this function
     KRATOS_ERROR_IF(rStressVariable != STRESS_ON_GP)
-        << "AdjointFiniteDifferenceSmallDisplacementElement::CalculateStressDisplacementDerivative: Invalid stress variable! Stress variable not supported for this element!" << std::endl;
+        << "AdjointFiniteDifferencingSmallDisplacementElement::CalculateStressDisplacementDerivative: Invalid stress variable! Stress variable not supported for this element!" << std::endl;
 
     TracedStressType traced_stress_type = static_cast<TracedStressType>(this->GetValue(TRACED_STRESS_TYPE));
     KRATOS_ERROR_IF(traced_stress_type != TracedStressType::VON_MISES_STRESS)
-        << "AdjointFiniteDifferenceSmallDisplacementElement::CalculateStressDisplacementDerivative: Invalid stress type! Stress type not supported for this element!" << std::endl;
+        << "AdjointFiniteDifferencingSmallDisplacementElement::CalculateStressDisplacementDerivative: Invalid stress type! Stress type not supported for this element!" << std::endl;
 
     KRATOS_ERROR_IF(rCurrentProcessInfo.Has(NL_ITERATION_NUMBER))
         << "This stress displacement derivative computation is only usable for linear cases!" << std::endl;
 
     // Some working variables
-    const SizeType num_nodes = mpPrimalElement->GetGeometry().PointsNumber();
-    const SizeType dimension = mpPrimalElement->GetGeometry().WorkingSpaceDimension();
-    const SizeType num_dofs_per_node = (mHasRotationDofs) ?  2 * dimension : dimension;
+    const SizeType num_nodes = this->mpPrimalElement->GetGeometry().PointsNumber();
+    const SizeType dimension = this->mpPrimalElement->GetGeometry().WorkingSpaceDimension();
+    const SizeType num_dofs_per_node = (this->mHasRotationDofs) ?  2 * dimension : dimension;
     const SizeType num_dofs = num_nodes * num_dofs_per_node;
+  
+    KRATOS_ERROR_IF(dimension != 3)
+        << "AdjointFiniteDifferencingSmallDisplacementElement::CalculateStressDisplacementDerivative: Invalid element dimension! Currently only 3D SmallDisplacementElements are supported!" << std::endl;
 
     // Build vector of variables containing the DOF-variables of the primal problem
     std::vector<VariableComponent<VectorComponentAdaptor<array_1d<double, 3>>>> primal_solution_variable_list;
@@ -58,7 +55,7 @@ void AdjointFiniteDifferenceSmallDisplacementElement::CalculateStressDisplacemen
     primal_solution_variable_list.push_back(DISPLACEMENT_Z);
 
     std::vector<Matrix> stress_tensor;
-    mpPrimalElement->CalculateOnIntegrationPoints(PK2_STRESS_TENSOR, stress_tensor, rCurrentProcessInfo);
+    this->mpPrimalElement->CalculateOnIntegrationPoints(PK2_STRESS_TENSOR, stress_tensor, rCurrentProcessInfo);
 
     const unsigned int number_integration_points = stress_tensor.size();
 
@@ -72,7 +69,7 @@ void AdjointFiniteDifferenceSmallDisplacementElement::CalculateStressDisplacemen
         radicant += PK2_k(0,0)*PK2_k(0,0) + PK2_k(1,1)*PK2_k(1,1) + PK2_k(2,2)*PK2_k(2,2);
         radicant -= PK2_k(0,0)*PK2_k(1,1) + PK2_k(0,0)*PK2_k(2,2) + PK2_k(1,1)*PK2_k(2,2);
         radicant += 3*PK2_k(0,1)*PK2_k(0,1) + 3*PK2_k(0,2)*PK2_k(0,2) + 3*PK2_k(1,2)*PK2_k(1,2);
-        sensitivity_prefactors[k] = 0.5/sqrt(radicant);
+        sensitivity_prefactors[k] = 0.5/std::sqrt(radicant);
     }
 
     // Store primal results and initialize deformation
@@ -84,8 +81,8 @@ void AdjointFiniteDifferenceSmallDisplacementElement::CalculateStressDisplacemen
         const IndexType index = i * num_dofs_per_node;
         for(IndexType j = 0; j < primal_solution_variable_list.size(); ++j)
         {
-            initial_state_variables[index + j] = mpPrimalElement->GetGeometry()[i].FastGetSolutionStepValue(primal_solution_variable_list[j]);
-            mpPrimalElement->GetGeometry()[i].FastGetSolutionStepValue(primal_solution_variable_list[j]) = 0.0;
+            initial_state_variables[index + j] = this->mpPrimalElement->GetGeometry()[i].FastGetSolutionStepValue(primal_solution_variable_list[j]);
+            this->mpPrimalElement->GetGeometry()[i].FastGetSolutionStepValue(primal_solution_variable_list[j]) = 0.0;
         }
     }
 
@@ -101,8 +98,8 @@ void AdjointFiniteDifferenceSmallDisplacementElement::CalculateStressDisplacemen
 
         for(IndexType j = 0; j < primal_solution_variable_list.size(); ++j)
         {
-            mpPrimalElement->GetGeometry()[i].FastGetSolutionStepValue(primal_solution_variable_list[j]) = 1.0;
-            mpPrimalElement->CalculateOnIntegrationPoints(PK2_STRESS_TENSOR, partial_stress_derivatives, rCurrentProcessInfo);
+            this->mpPrimalElement->GetGeometry()[i].FastGetSolutionStepValue(primal_solution_variable_list[j]) = 1.0;
+            this->mpPrimalElement->CalculateOnIntegrationPoints(PK2_STRESS_TENSOR, partial_stress_derivatives, rCurrentProcessInfo);
 
             for(IndexType k = 0; k < number_integration_points; ++k)
             {
@@ -131,7 +128,7 @@ void AdjointFiniteDifferenceSmallDisplacementElement::CalculateStressDisplacemen
                 rOutput(index+j, k) = sensitivity_entry_k;
             }
 
-            mpPrimalElement->GetGeometry()[i].FastGetSolutionStepValue(primal_solution_variable_list[j]) = 0.0;
+            this->mpPrimalElement->GetGeometry()[i].FastGetSolutionStepValue(primal_solution_variable_list[j]) = 0.0;
         }
     }
 
@@ -140,17 +137,20 @@ void AdjointFiniteDifferenceSmallDisplacementElement::CalculateStressDisplacemen
     {
         const IndexType index = i * num_dofs_per_node;
         for(IndexType j = 0; j < primal_solution_variable_list.size(); ++j)
-            mpPrimalElement->GetGeometry()[i].FastGetSolutionStepValue(primal_solution_variable_list[j]) = initial_state_variables[index + j];
+            this->mpPrimalElement->GetGeometry()[i].FastGetSolutionStepValue(primal_solution_variable_list[j]) = initial_state_variables[index + j];
     }
 
     KRATOS_CATCH("")
 }
 
-int AdjointFiniteDifferenceSmallDisplacementElement::Check(const ProcessInfo& rCurrentProcessInfo)
+template <class TPrimalElement>
+int AdjointFiniteDifferencingSmallDisplacementElement<TPrimalElement>::Check(const ProcessInfo& rCurrentProcessInfo)
 {
     KRATOS_TRY;
 
-    Element::Check(rCurrentProcessInfo);
+    int return_value = BaseType::Check(rCurrentProcessInfo);
+
+    KRATOS_ERROR_IF_NOT(this->mpPrimalElement) << "Primal element pointer is nullptr!" << std::endl;
 
     const SizeType number_of_nodes = this->GetGeometry().size();
     const SizeType dimension = this->GetGeometry().WorkingSpaceDimension();
@@ -181,20 +181,24 @@ int AdjointFiniteDifferenceSmallDisplacementElement::Check(const ProcessInfo& rC
         KRATOS_ERROR_IF_NOT(strain_size == 6) << "Wrong constitutive law used. This is a 3D element! expected strain size is 6 (el id = ) "<<  this->Id() << std::endl;
     }
 
-    return 0;
+    return return_value;
 
     KRATOS_CATCH( "" );
 }
 
-void AdjointFiniteDifferenceSmallDisplacementElement::save(Serializer& rSerializer) const
+template <class TPrimalElement>
+void AdjointFiniteDifferencingSmallDisplacementElement<TPrimalElement>::save(Serializer& rSerializer) const
 {
-    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, AdjointFiniteDifferencingBaseElement);
+    KRATOS_SERIALIZE_SAVE_BASE_CLASS(rSerializer, BaseType);
 }
 
-void AdjointFiniteDifferenceSmallDisplacementElement::load(Serializer& rSerializer)
+template <class TPrimalElement>
+void AdjointFiniteDifferencingSmallDisplacementElement<TPrimalElement>::load(Serializer& rSerializer)
 {
-    KRATOS_SERIALIZE_LOAD_BASE_CLASS(rSerializer, AdjointFiniteDifferencingBaseElement);
+    KRATOS_SERIALIZE_LOAD_BASE_CLASS( rSerializer, BaseType);
 }
+
+template class KRATOS_API(STRUCTURAL_MECHANICS_APPLICATION) AdjointFiniteDifferencingSmallDisplacementElement<SmallDisplacement>;
 
 } // namespace Kratos.
 

@@ -519,7 +519,15 @@ public:
         //Gets the array of elements from the modeler
         ElementsArrayType& r_elements_array = rModelPart.Elements();
         const int number_of_elements = static_cast<int>(r_elements_array.size());
-
+        KRATOS_WATCH(rModelPart.Elements());
+        //KRATOS_WATCH(rModelPart.ALL_ENTITIES());
+        //KRATOS_WATCH(rModelPart.Kratos_All());
+        //KRATOS_WATCH(rModelPart.mName());
+        //KRATOS_WATCH(rModelPart.mSubModelParts());
+        //KRATOS_WATCH(rModelPart.mData());
+        //KRATOS_WATCH(rModelPart.mpProcessInfo());
+        //KRATOS_WATCH(rModelPart.mpVariablesList());
+        
         DofsVectorType dof_list, second_dof_list; // NOTE: The second dof list is only used on constraints to include master/slave relations
 
         unsigned int nthreads = OpenMPUtils::GetNumThreads();

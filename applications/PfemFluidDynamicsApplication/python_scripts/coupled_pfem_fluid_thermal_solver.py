@@ -190,10 +190,7 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
         self.thermal_solver.Initialize()
 
     def InitializeStrategy(self):
-        if self.settings["fluid_solver_settings"]["clear_storage"].GetBool():
-            self.Clear()
-        self.fluid_solver.Initialize()
-        #pass
+        self.fluid_solver.InitializeStrategy()
 
     def Clear(self):
         (self.fluid_solver).Clear()

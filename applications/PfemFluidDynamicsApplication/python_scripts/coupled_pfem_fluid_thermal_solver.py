@@ -153,6 +153,10 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
         
         # self.fluid_solver.ImportModelPart()
 
+        # CheckAndPrepareModelProcess creates the thermal_computational model part
+        #from KratosMultiphysics.ConvectionDiffusionApplication import check_and_prepare_model_process_convection_diffusion
+        #check_and_prepare_model_process_convection_diffusion.CheckAndPrepareModelProcess(self.thermal_solver.main_model_part, params).Execute()
+
         # Set the saved convection diffusion settings to the new thermal model part
         self.thermal_solver.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.CONVECTION_DIFFUSION_SETTINGS, convection_diffusion_settings)
 

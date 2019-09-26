@@ -17,11 +17,11 @@ from KratosMultiphysics import *
 from KratosMultiphysics.ShapeOptimizationApplication import *
 
 # Additional imports
-from algorithm_base import OptimizationAlgorithm
-import mapper_factory
-import data_logger_factory
-from custom_timer import Timer
-from custom_variable_utilities import WriteDictionaryDataOnNodalVariable
+from .algorithm_base import OptimizationAlgorithm
+from . import mapper_factory
+from . import data_logger_factory
+from .custom_timer import Timer
+from .custom_variable_utilities import WriteDictionaryDataOnNodalVariable
 
 import numpy as np
 from scipy.optimize import minimize

@@ -27,6 +27,8 @@ from .value_logger_steepest_descent import ValueLoggerSteepestDescent
 from .value_logger_penalized_projection import ValueLoggerPenalizedProjection
 from .value_logger_trust_region import ValueLoggerTrustRegion
 from .value_logger_bead_optimization import ValueLoggerBeadOptimization
+from .value_logger_steepest_descent_with_projection import ValueLoggerSteepestDescentWithProjection
+from .value_logger_conjugate_gradient import ValueLoggerConjugateGradient
 
 # ==============================================================================
 def CreateDataLogger( ModelPartController, Communicator, OptimizationSettings ):

@@ -17,11 +17,11 @@ from KratosMultiphysics import *
 from KratosMultiphysics.ShapeOptimizationApplication import *
 
 # Additional imports
-from algorithm_base import OptimizationAlgorithm
-import mapper_factory
-import data_logger_factory
-from custom_timer import Timer
-from custom_variable_utilities import WriteDictionaryDataOnNodalVariable
+from .algorithm_base import OptimizationAlgorithm
+from . import mapper_factory
+from . import data_logger_factory
+from .custom_timer import Timer
+from .custom_variable_utilities import WriteDictionaryDataOnNodalVariable
 
 import numpy as np
 
@@ -78,10 +78,10 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
         self.max_step_size = self.step_size*self.algorithm_settings["line_search"]["max_increase_factor"].GetDouble()
 
         self.optimization_model_part = model_part_controller.GetOptimizationModelPart()
-        self.optimization_model_part.AddNodalSolutionStepVariable(SEARCH_DIRECTION)
-        self.optimization_model_part.AddNodalSolutionStepVariable(VECTOR_VARIABLE)
-        self.optimization_model_part.AddNodalSolutionStepVariable(VECTOR_VARIABLE_MAPPED)
-        self.optimization_model_part.AddNodalSolutionStepVariable(NODAL_VAUX)
+        self.optimization_model_part.AddNodalSolutionStepVariable(KSO.SEARCH_DIRECTION)
+        self.optimization_model_part.AddNodalSolutionStepVariable(KSO.VECTOR_VARIABLE)
+        self.optimization_model_part.AddNodalSolutionStepVariable(KSO.VECTOR_VARIABLE_MAPPED)
+        self.optimization_model_part.AddNodalSolutionStepVariable(KM.NODAL_VAUX)
 
     # --------------------------------------------------------------------------
     def CheckApplicability(self):
@@ -108,11 +108,11 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
         self.optimization_utilities = OptimizationUtilities(self.design_surface, self.optimization_settings)
 
         # Identify fixed design areas (geometric constraints)
-        VariableUtils().SetFlag(BOUNDARY, False, self.optimization_model_part.Nodes)
+        VariableUtils().SetFlag(KM.BOUNDARY, False, self.optimization_model_part.Nodes)
         for itr in range(self.algorithm_settings["fix_boundaries"].size()):
             sub_model_part_name = self.algorithm_settings["fix_boundaries"][itr].GetString()
             node_set = self.optimization_model_part.GetSubModelPart(sub_model_part_name).Nodes
-            VariableUtils().SetFlag(BOUNDARY, True, node_set)
+            VariableUtils().SetFlag(KM.BOUNDARY, True, node_set)
 
     # --------------------------------------------------------------------------
     def RunOptimizationLoop(self):
@@ -153,7 +153,7 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
     # --------------------------------------------------------------------------
     def __initializeNewShape(self):
         self.model_part_controller.UpdateTimeStep(self.optimization_iteration)
-        self.model_part_controller.UpdateMeshAccordingInputVariable(SHAPE_UPDATE)
+        self.model_part_controller.UpdateMeshAccordingInputVariable(KSO.SHAPE_UPDATE)
         self.model_part_controller.SetReferenceMeshToMesh()
 
     # --------------------------------------------------------------------------
@@ -165,13 +165,13 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
         self.analyzer.AnalyzeDesignAndReportToCommunicator(self.design_surface, self.optimization_iteration, self.communicator)
 
         objGradientDict = self.communicator.getStandardizedGradient(self.objectives[0]["identifier"].GetString())
-        WriteDictionaryDataOnNodalVariable(objGradientDict, self.optimization_model_part, DF1DX)
+        WriteDictionaryDataOnNodalVariable(objGradientDict, self.optimization_model_part, KSO.DF1DX)
 
         if self.objectives[0]["project_gradient_on_surface_normals"].GetBool():
             self.model_part_controller.ComputeUnitSurfaceNormals()
-            self.model_part_controller.ProjectNodalVariableOnUnitSurfaceNormals(DF1DX)
+            self.model_part_controller.ProjectNodalVariableOnUnitSurfaceNormals(KSO.DF1DX)
 
-        self.model_part_controller.DampNodalVariableIfSpecified(DF1DX)
+        self.model_part_controller.DampNodalVariableIfSpecified(KSO.DF1DX)
 
     # --------------------------------------------------------------------------
     def __adjustStepSize(self):
@@ -180,8 +180,8 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
         # Compare actual and estimated improvement using linear information
         dfda1 = 0.0
         for node in self.design_surface.Nodes:
-            s1 = node.GetSolutionStepValue(SEARCH_DIRECTION)
-            dfds1 = node.GetSolutionStepValue(DF1DX_MAPPED)
+            s1 = node.GetSolutionStepValue(KSO.SEARCH_DIRECTION)
+            dfds1 = node.GetSolutionStepValue(KSO.DF1DX_MAPPED)
             dfda1 = dfda1 + s1[0]*dfds1[0] + s1[1]*dfds1[1] + s1[2]*dfds1[2]
 
         f2 = self.communicator.getStandardizedValue(self.objectives[0]["identifier"].GetString())
@@ -215,7 +215,7 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
     def __computeShapeUpdate(self):
         if self.update_mapping_matrix:
             self.mapper.Update()
-        self.mapper.InverseMap(DF1DX, DF1DX_MAPPED)
+        self.mapper.InverseMap(KSO.DF1DX, KSO.DF1DX_MAPPED)
 
 
 
@@ -230,12 +230,12 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
         num_boundary_nodes = 0
 
         for itr, node in enumerate(self.design_surface.Nodes):
-            temp_vec = node.GetSolutionStepValue(DF1DX_MAPPED)
+            temp_vec = node.GetSolutionStepValue(KSO.DF1DX_MAPPED)
             dJds[3*itr+0] = temp_vec[0]
             dJds[3*itr+1] = temp_vec[1]
             dJds[3*itr+2] = temp_vec[2]
 
-            if node.Is(BOUNDARY):
+            if node.Is(KM.BOUNDARY):
                 num_boundary_nodes += 1
 
         Cm = np.zeros((num_boundary_nodes*3,num_design_nodes*3))
@@ -243,14 +243,14 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
         boundar_node_index = 0
 
         for row_itr, node in enumerate(self.design_surface.Nodes):
-            if node.Is(BOUNDARY):
-                node.SetSolutionStepValue(VECTOR_VARIABLE,[1,1,1])
-                self.mapper.InverseMap(VECTOR_VARIABLE, VECTOR_VARIABLE_MAPPED)
+            if node.Is(KM.BOUNDARY):
+                node.SetSolutionStepValue(KSO.VECTOR_VARIABLE,[1,1,1])
+                self.mapper.InverseMap(KSO.VECTOR_VARIABLE, KSO.VECTOR_VARIABLE_MAPPED)
 
-                node.SetSolutionStepValue(VECTOR_VARIABLE,[0,0,0])
+                node.SetSolutionStepValue(KSO.VECTOR_VARIABLE,[0,0,0])
 
                 for coll_itr, coll_node in enumerate(self.design_surface.Nodes):
-                    another_temp_vec = coll_node.GetSolutionStepValue(VECTOR_VARIABLE_MAPPED)
+                    another_temp_vec = coll_node.GetSolutionStepValue(KSO.VECTOR_VARIABLE_MAPPED)
 
                     Cm[3*boundar_node_index+0,3*coll_itr+0] = another_temp_vec[0]
                     Cm[3*boundar_node_index+1,3*coll_itr+1] = another_temp_vec[1]
@@ -274,8 +274,8 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
         # plot lambda
         boundary_node_itr = 0
         for node in self.design_surface.Nodes:
-            if node.Is(BOUNDARY):
-                node.SetSolutionStepValue(NODAL_VAUX,lambda_fac[(3*boundary_node_itr):(3*boundary_node_itr+3)].tolist())
+            if node.Is(KM.BOUNDARY):
+                node.SetSolutionStepValue(KM.NODAL_VAUX,lambda_fac[(3*boundary_node_itr):(3*boundary_node_itr+3)].tolist())
                 boundary_node_itr += 1
 
         print("\n> Time needed for solution of projection equation = ", new_timer.GetLapTime(), "s")
@@ -293,7 +293,7 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
         # Store computed search direction (inverse of descent direction)
         for itr, node in enumerate(self.design_surface.Nodes):
             temp_vec = [p[3*itr+0], p[3*itr+1], p[3*itr+2]]
-            node.SetSolutionStepValue(SEARCH_DIRECTION,temp_vec)
+            node.SetSolutionStepValue(KSO.SEARCH_DIRECTION,temp_vec)
 
 
 
@@ -302,13 +302,13 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
         # self.optimization_utilities.ComputeSearchDirectionSteepestDescent()
         self.optimization_utilities.ComputeControlPointUpdate(self.step_size)
 
-        self.mapper.Map(CONTROL_POINT_UPDATE, SHAPE_UPDATE)
-        self.model_part_controller.DampNodalVariableIfSpecified(SHAPE_UPDATE)
+        self.mapper.Map(KSO.CONTROL_POINT_UPDATE, KSO.SHAPE_UPDATE)
+        self.model_part_controller.DampNodalVariableIfSpecified(KSO.SHAPE_UPDATE)
 
     # --------------------------------------------------------------------------
     def __logCurrentOptimizationStep(self):
         self.previos_objective_value = self.communicator.getStandardizedValue(self.objectives[0]["identifier"].GetString())
-        self.norm_obj_gradient = self.optimization_utilities.ComputeL2NormOfNodalVariable(DF1DX_MAPPED)
+        self.norm_obj_gradient = self.optimization_utilities.ComputeL2NormOfNodalVariable(KSO.DF1DX_MAPPED)
 
         additional_values_to_log = {}
         additional_values_to_log["step_size"] = self.step_size
@@ -341,7 +341,7 @@ class AlgorithmSteepestDescentWithProjection(OptimizationAlgorithm):
 
     # --------------------------------------------------------------------------
     def __determineAbsoluteChanges(self):
-        self.optimization_utilities.AddFirstVariableToSecondVariable(CONTROL_POINT_UPDATE, CONTROL_POINT_CHANGE)
-        self.optimization_utilities.AddFirstVariableToSecondVariable(SHAPE_UPDATE, SHAPE_CHANGE)
+        self.optimization_utilities.AddFirstVariableToSecondVariable(KSO.CONTROL_POINT_UPDATE, KSO.CONTROL_POINT_CHANGE)
+        self.optimization_utilities.AddFirstVariableToSecondVariable(KSO.SHAPE_UPDATE, KSO.SHAPE_CHANGE)
 
 # ==============================================================================

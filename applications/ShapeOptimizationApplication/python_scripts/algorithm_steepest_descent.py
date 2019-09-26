@@ -101,10 +101,10 @@ class AlgorithmSteepestDescent(OptimizationAlgorithm):
         self.optimization_utilities = KSO.OptimizationUtilities(self.design_surface, self.optimization_settings)
 
         # Identify fixed design areas (geometric constraints)
-        VariableUtils().SetFlag(BOUNDARY, False, self.optimization_model_part.Nodes)
+        KM.VariableUtils().SetFlag(KM.BOUNDARY, False, self.optimization_model_part.Nodes)
 
         radius = self.mapper_settings["filter_radius"].GetDouble()
-        search_based_functions = SearchBasedFunctions(self.design_surface)
+        search_based_functions = KSO.SearchBasedFunctions(self.design_surface)
 
         for itr in range(self.algorithm_settings["fix_boundaries"].size()):
             sub_model_part_name = self.algorithm_settings["fix_boundaries"][itr].GetString()
@@ -213,18 +213,18 @@ class AlgorithmSteepestDescent(OptimizationAlgorithm):
     def __computeShapeUpdate(self):
         if self.update_mapping_matrix:
             self.mapper.Update()
-        self.mapper.InverseMap(DF1DX, DF1DX_MAPPED)
+        self.mapper.InverseMap(KSO.DF1DX, KSO.DF1DX_MAPPED)
 
         self.optimization_utilities.ComputeSearchDirectionSteepestDescent()
         self.optimization_utilities.ComputeControlPointUpdate(self.step_size)
 
         # Enforce geometric constraint
         for node in self.design_surface.Nodes:
-            if node.Is(BOUNDARY):
-                node.SetSolutionStepValue(CONTROL_POINT_UPDATE,[0.0, 0.0, 0.0])
+            if node.Is(KM.BOUNDARY):
+                node.SetSolutionStepValue(KSO.CONTROL_POINT_UPDATE,[0.0, 0.0, 0.0])
 
-        self.mapper.Map(CONTROL_POINT_UPDATE, SHAPE_UPDATE)
-        self.model_part_controller.DampNodalVariableIfSpecified(SHAPE_UPDATE)
+        self.mapper.Map(KSO.CONTROL_POINT_UPDATE, KSO.SHAPE_UPDATE)
+        self.model_part_controller.DampNodalVariableIfSpecified(KSO.SHAPE_UPDATE)
 
     # --------------------------------------------------------------------------
     def __logCurrentOptimizationStep(self):

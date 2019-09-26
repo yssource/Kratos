@@ -14,11 +14,11 @@ from KratosMultiphysics import *
 from KratosMultiphysics.ShapeOptimizationApplication import *
 
 # Import logger base classes
-from value_logger_base import ValueLogger
+from .value_logger_base import ValueLogger
 
 # Import additional libraries
 import csv
-from custom_timer import Timer
+from .custom_timer import Timer
 
 # ==============================================================================
 class ValueLoggerSteepestDescentWithProjection( ValueLogger ):

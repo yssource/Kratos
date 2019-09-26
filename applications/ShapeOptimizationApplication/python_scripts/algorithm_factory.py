@@ -16,6 +16,8 @@ from .algorithm_steepest_descent import AlgorithmSteepestDescent
 from .algorithm_penalized_projection import AlgorithmPenalizedProjection
 from .algorithm_trust_region import AlgorithmTrustRegion
 from .algorithm_bead_optimization import AlgorithmBeadOptimization
+from .algorithm_steepest_descent_with_projection import AlgorithmSteepestDescentWithProjection
+from .algorithm_conjugate_gradient import AlgorithmConjugateGradient
 
 # ==============================================================================
 def CreateOptimizationAlgorithm(optimization_settings, analyzer, communicator, model_part_controller):

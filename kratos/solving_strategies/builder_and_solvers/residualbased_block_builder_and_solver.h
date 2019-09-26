@@ -604,7 +604,7 @@ public:
         Doftemp.reserve(dof_global_set.size());
         for (auto it= dof_global_set.begin(); it!= dof_global_set.end(); it++)
         {
-            Doftemp.push_back( it->get() );
+            Doftemp.push_back( *it );
         }
         Doftemp.Sort();
 

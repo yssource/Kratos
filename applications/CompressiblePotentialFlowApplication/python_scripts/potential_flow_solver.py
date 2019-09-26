@@ -20,6 +20,8 @@ class PotentialFlowFormulation(object):
                 self._SetUpCompressibleElement(formulation_settings)
             elif element_type == "embedded_incompressible":
                 self._SetUpEmbeddedIncompressibleElement(formulation_settings)
+            elif element_type == "embedded_compressible":
+                self._SetUpEmbeddedCompressibleElement(formulation_settings)
         else:
             raise RuntimeError("Argument \'element_type\' not found in formulation settings.")
 
@@ -50,13 +52,23 @@ class PotentialFlowFormulation(object):
         self.element_name = "EmbeddedIncompressiblePotentialFlowElement"
         self.condition_name = "PotentialWallCondition"
 
+    def _SetUpEmbeddedCompressibleElement(self, formulation_settings):
+        default_settings = KratosMultiphysics.Parameters(r"""{
+            "element_type": "embedded_compressible"
+        }""")
+        formulation_settings.ValidateAndAssignDefaults(default_settings)
+
+        self.element_name = "EmbeddedCompressiblePotentialFlowElement"
+        self.condition_name = "PotentialWallCondition"
+
 def CreateSolver(model, custom_settings):
     return PotentialFlowSolver(model, custom_settings)
 
 class PotentialFlowSolver(FluidSolver):
 
-    def _ValidateSettings(self, settings):
-        # Defaul settings string in json format
+    @classmethod
+    def GetDefaultSettings(cls):
+        # Default settings string in json format
         default_settings = KratosMultiphysics.Parameters(r'''{
             "solver_type": "potential_flow_solver",
             "model_part_name": "PotentialFluidModelPart",
@@ -89,11 +101,12 @@ class PotentialFlowSolver(FluidSolver):
             "auxiliary_variables_list" : []
         }''')
 
-        settings.ValidateAndAssignDefaults(default_settings)
-        return settings
+        default_settings.AddMissingParameters(super(PotentialFlowSolver, cls).GetDefaultSettings())
+        return default_settings
 
     def __init__(self, model, custom_settings):
 
+        self._validate_settings_in_baseclass=True # To be removed eventually
         super(PotentialFlowSolver, self).__init__(model, custom_settings)
 
         # There is only a single rank in OpenMP, we always print

@@ -24,6 +24,7 @@
 #include "custom_processes/apply_far_field_process.h"
 #include "custom_processes/compute_embedded_lift_process.h"
 #include "custom_processes/define_embedded_wake_process.h"
+#include "custom_processes/compute_nodal_potential_flow_velocity_process.h"
 #include "custom_processes/project_sensitivity_to_skin_process.cpp"
 
 
@@ -62,6 +63,11 @@ void  AddCustomProcessesToPython(pybind11::module& m)
     py::class_<DefineEmbeddedWakeProcess, DefineEmbeddedWakeProcess::Pointer, Process >
         (m, "DefineEmbeddedWakeProcess")
         .def(py::init<ModelPart&, ModelPart&>())
+        ;
+
+    py::class_<ComputeNodalPotentialFlowVelocityProcess, ComputeNodalPotentialFlowVelocityProcess::Pointer, Process>
+        (m,"ComputeNodalPotentialFlowVelocityProcess")
+        .def(py::init<ModelPart&>())
         ;
 
     py::class_<ProjectSensitivityToSkinProcess, ProjectSensitivityToSkinProcess::Pointer, Process >

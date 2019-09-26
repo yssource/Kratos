@@ -149,14 +149,13 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
                                       self.thermal_solver.main_model_part,
                                       "EulerianConvDiff3D",
                                       "ThermalFace3D3N")
+        print("::[Coupled Pfem Fluid Thermal Solver]:: Thermal_model_part CLONED")
         
         # self.fluid_solver.ImportModelPart()
 
         # Set the saved convection diffusion settings to the new thermal model part
         self.thermal_solver.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.CONVECTION_DIFFUSION_SETTINGS, convection_diffusion_settings)
 
-        # 20190920: it is not clear where is assigned the computin_model_part_name of the thermal problem, hence it needs
-        #           to be overriden as follows 
         # self.settings["thermal_solver_settings"]["computing_model_part_name"].SetString("fluid_computing_domain")
         print(1)
 

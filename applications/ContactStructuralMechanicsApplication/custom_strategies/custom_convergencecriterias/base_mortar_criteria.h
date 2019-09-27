@@ -73,6 +73,7 @@ public:
     /// Local Flags
     KRATOS_DEFINE_LOCAL_FLAG( COMPUTE_DYNAMIC_FACTOR );
     KRATOS_DEFINE_LOCAL_FLAG( IO_DEBUG );
+    KRATOS_DEFINE_LOCAL_FLAG( PURE_SLIP );
 
     /// The base class definition (and it subclasses)
     typedef ConvergenceCriteria< TSparseSpace, TDenseSpace > BaseType;
@@ -88,7 +89,8 @@ public:
     /// Default constructors
     explicit BaseMortarConvergenceCriteria(
         const bool ComputeDynamicFactor = false,
-        const bool IODebug = false
+        const bool IODebug = false,
+        const bool PureSlip = false
         )
         : ConvergenceCriteria< TSparseSpace, TDenseSpace >(),
           mpIO(nullptr)
@@ -96,6 +98,7 @@ public:
         // Set local flags
         mOptions.Set(BaseMortarConvergenceCriteria::COMPUTE_DYNAMIC_FACTOR, ComputeDynamicFactor);
         mOptions.Set(BaseMortarConvergenceCriteria::IO_DEBUG, IODebug);
+        mOptions.Set(BaseMortarConvergenceCriteria::PURE_SLIP, PureSlip);
     }
 
     ///Copy constructor
@@ -138,8 +141,20 @@ public:
 
         // We update the normals if necessary
         const auto normal_variation = r_process_info.Has(CONSIDER_NORMAL_VARIATION) ? static_cast<NormalDerivativesComputation>(r_process_info.GetValue(CONSIDER_NORMAL_VARIATION)) : NO_DERIVATIVES_COMPUTATION;
-        if (normal_variation != NO_DERIVATIVES_COMPUTATION)
+        if (normal_variation != NO_DERIVATIVES_COMPUTATION) {
             ComputeNodesMeanNormalModelPartWithPairedNormal(rModelPart); // Update normal of the conditions
+        }
+
+        // Update tangent (must be updated even for constant normal)
+        const bool frictional_problem = rModelPart.IsDefined(SLIP) ? rModelPart.Is(SLIP) : false;
+        if (frictional_problem) {
+            const bool has_lm = rModelPart.HasNodalSolutionStepVariable(VECTOR_LAGRANGE_MULTIPLIER);
+            if (has_lm && mOptions.IsNot(BaseMortarConvergenceCriteria::PURE_SLIP)) {
+                MortarUtilities::ComputeNodesTangentModelPart(r_contact_model_part);
+            } else {
+                MortarUtilities::ComputeNodesTangentModelPart(r_contact_model_part, &WEIGHTED_SLIP, 1.0, true);
+            }
+        }
 
         const bool adapt_penalty = r_process_info.Has(ADAPT_PENALTY) ? r_process_info.GetValue(ADAPT_PENALTY) : false;
         const bool dynamic_case = rModelPart.HasNodalSolutionStepVariable(VELOCITY);
@@ -215,7 +230,12 @@ public:
      */
     void Initialize(ModelPart& rModelPart) override
     {
-        KRATOS_ERROR << "YOUR ARE CALLING THE BASE MORTAR CRITERIA" << std::endl;
+        // Calling base criteria
+        BaseType::Initialize(rModelPart);
+
+        // The current process info
+        ProcessInfo& r_process_info = rModelPart.GetProcessInfo();
+        r_process_info.SetValue(ACTIVE_SET_COMPUTED, false);
     }
 
     /**
@@ -235,7 +255,17 @@ public:
         ) override
     {
         // Update normal of the conditions
-        MortarUtilities::ComputeNodesMeanNormalModelPart(rModelPart.GetSubModelPart("Contact"));
+        ModelPart& r_contact_model_part = rModelPart.GetSubModelPart("Contact");
+        MortarUtilities::ComputeNodesMeanNormalModelPart(r_contact_model_part);
+        const bool frictional_problem = rModelPart.IsDefined(SLIP) ? rModelPart.Is(SLIP) : false;
+        if (frictional_problem) {
+            const bool has_lm = rModelPart.HasNodalSolutionStepVariable(VECTOR_LAGRANGE_MULTIPLIER);
+            if (has_lm && mOptions.IsNot(BaseMortarConvergenceCriteria::PURE_SLIP)) {
+                MortarUtilities::ComputeNodesTangentModelPart(r_contact_model_part);
+            } else {
+                MortarUtilities::ComputeNodesTangentModelPart(r_contact_model_part, &WEIGHTED_SLIP, 1.0, true);
+            }
+        }
 
         // IO for debugging
         if (mOptions.Is(BaseMortarConvergenceCriteria::IO_DEBUG)) {
@@ -289,6 +319,30 @@ public:
 
             mpIO = Kratos::make_shared<VtkOutput>(rModelPart, debug_io_parameters);
         }
+    }
+
+    /**
+     * @brief This function finalizes the non-linear iteration
+     * @param rModelPart Reference to the ModelPart containing the problem.
+     * @param rDofSet Reference to the container of the problem's degrees of freedom (stored by the BuilderAndSolver)
+     * @param rA System matrix (unused)
+     * @param rDx Vector of results (variations on nodal variables)
+     * @param rb RHS vector (residual + reactions)
+     */
+    void FinalizeNonLinearIteration(
+        ModelPart& rModelPart,
+        DofsArrayType& rDofSet,
+        const TSystemMatrixType& rA,
+        const TSystemVectorType& rDx,
+        const TSystemVectorType& rb
+        ) override
+    {
+        // Calling base criteria
+        BaseType::FinalizeNonLinearIteration(rModelPart, rDofSet, rA, rDx, rb);
+
+        // The current process info
+        ProcessInfo& r_process_info = rModelPart.GetProcessInfo();
+        r_process_info.SetValue(ACTIVE_SET_COMPUTED, false);
     }
 
     ///@}
@@ -371,11 +425,15 @@ private:
      * @brief It computes the mean of the normal in the condition in all the nodes
      * @param rModelPart The model part to compute
      */
-    static inline void ComputeNodesMeanNormalModelPartWithPairedNormal(ModelPart& rModelPart) {
-        MortarUtilities::ComputeNodesMeanNormalModelPart(rModelPart.GetSubModelPart("Contact"));
+    inline void ComputeNodesMeanNormalModelPartWithPairedNormal(ModelPart& rModelPart)
+    {
+        // Compute normal and tangent
+        ModelPart& r_contact_model_part = rModelPart.GetSubModelPart("Contact");
+        MortarUtilities::ComputeNodesMeanNormalModelPart(r_contact_model_part);
 
         // Iterate over the computing conditions
-        auto& r_conditions_array = rModelPart.GetSubModelPart("ComputingContact").Conditions();
+        ModelPart& r_computing_contact_model_part = rModelPart.GetSubModelPart("ComputingContact");
+        ConditionsArrayType& r_conditions_array = r_computing_contact_model_part.Conditions();
         const auto it_cond_begin = r_conditions_array.begin();
 
         #pragma omp parallel for
@@ -386,14 +444,9 @@ private:
             Point::CoordinatesArrayType aux_coords;
 
             // We update the paired normal
-            GeometryType& this_geometry = it_cond->GetGeometry();
-            aux_coords = this_geometry.PointLocalCoordinates(aux_coords, this_geometry.Center());
-            it_cond->SetValue(NORMAL, this_geometry.UnitNormal(aux_coords));
-
-            // We update the paired normal
-            GeometryType::Pointer p_paired_geometry = it_cond->GetValue(PAIRED_GEOMETRY);
-            aux_coords = p_paired_geometry->PointLocalCoordinates(aux_coords, p_paired_geometry->Center());
-            it_cond->SetValue(PAIRED_NORMAL, p_paired_geometry->UnitNormal(aux_coords));
+            GeometryType& r_parent_geometry = it_cond->GetGeometry().GetGeometryPart(0);
+            aux_coords = r_parent_geometry.PointLocalCoordinates(aux_coords, r_parent_geometry.Center());
+            it_cond->SetValue(NORMAL, r_parent_geometry.UnitNormal(aux_coords));
         }
     }
 
@@ -427,6 +480,10 @@ template<class TSparseSpace, class TDenseSpace>
 const Kratos::Flags BaseMortarConvergenceCriteria<TSparseSpace, TDenseSpace>::IO_DEBUG(Kratos::Flags::Create(1));
 template<class TSparseSpace, class TDenseSpace>
 const Kratos::Flags BaseMortarConvergenceCriteria<TSparseSpace, TDenseSpace>::NOT_IO_DEBUG(Kratos::Flags::Create(1, false));
+template<class TSparseSpace, class TDenseSpace>
+const Kratos::Flags BaseMortarConvergenceCriteria<TSparseSpace, TDenseSpace>::PURE_SLIP(Kratos::Flags::Create(2));
+template<class TSparseSpace, class TDenseSpace>
+const Kratos::Flags BaseMortarConvergenceCriteria<TSparseSpace, TDenseSpace>::NOT_PURE_SLIP(Kratos::Flags::Create(2, false));
 
 }  // namespace Kratos
 

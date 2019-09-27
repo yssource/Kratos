@@ -44,7 +44,6 @@ DOCTEST_GCC_SUPPRESS_WARNING("-Wstrict-aliasing")
 DOCTEST_GCC_SUPPRESS_WARNING("-Wmissing-field-initializers")
 DOCTEST_GCC_SUPPRESS_WARNING("-Wmissing-braces")
 DOCTEST_GCC_SUPPRESS_WARNING("-Wmissing-declarations")
-DOCTEST_GCC_SUPPRESS_WARNING("-Winline")
 DOCTEST_GCC_SUPPRESS_WARNING("-Wswitch")
 DOCTEST_GCC_SUPPRESS_WARNING("-Wswitch-enum")
 DOCTEST_GCC_SUPPRESS_WARNING("-Wswitch-default")
@@ -315,10 +314,11 @@ namespace detail {
         std::vector<String> stringifiedContexts; // logging from INFO() due to an exception
 
         // stuff for subcases
-        std::set<SubcaseSignature> subcasesPassed;
-        std::set<int>              subcasesEnteredLevels;
-        int                        subcasesCurrentLevel;
-        bool                       should_reenter;
+        std::vector<SubcaseSignature>     subcasesStack;
+        std::set<decltype(subcasesStack)> subcasesPassed;
+        int                               subcasesCurrentMaxLevel;
+        bool                              should_reenter;
+        std::atomic<bool>                 shouldLogCurrentException;
 
         void resetRunData() {
             numTestCases                = 0;
@@ -585,6 +585,10 @@ const char* assertString(assertType::Enum at) {
         case assertType::DT_CHECK_THROWS_WITH       : return "CHECK_THROWS_WITH";
         case assertType::DT_REQUIRE_THROWS_WITH     : return "REQUIRE_THROWS_WITH";
 
+        case assertType::DT_WARN_THROWS_WITH_AS     : return "WARN_THROWS_WITH_AS";
+        case assertType::DT_CHECK_THROWS_WITH_AS    : return "CHECK_THROWS_WITH_AS";
+        case assertType::DT_REQUIRE_THROWS_WITH_AS  : return "REQUIRE_THROWS_WITH_AS";
+
         case assertType::DT_WARN_NOTHROW            : return "WARN_NOTHROW";
         case assertType::DT_CHECK_NOTHROW           : return "CHECK_NOTHROW";
         case assertType::DT_REQUIRE_NOTHROW         : return "REQUIRE_NOTHROW";
@@ -648,21 +652,6 @@ const char* skipPathFromFilename(const char* file) {
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
 DOCTEST_GCC_SUPPRESS_WARNING_POP
 
-DOCTEST_DEFINE_DEFAULTS(TestCaseData);
-DOCTEST_DEFINE_COPIES(TestCaseData);
-
-DOCTEST_DEFINE_DEFAULTS(AssertData);
-
-DOCTEST_DEFINE_DEFAULTS(MessageData);
-
-SubcaseSignature::SubcaseSignature(const char* name, const char* file, int line)
-        : m_name(name)
-        , m_file(file)
-        , m_line(line) {}
-
-DOCTEST_DEFINE_DEFAULTS(SubcaseSignature);
-DOCTEST_DEFINE_COPIES(SubcaseSignature);
-
 bool SubcaseSignature::operator<(const SubcaseSignature& other) const {
     if(m_line != other.m_line)
         return m_line < other.m_line;
@@ -673,8 +662,6 @@ bool SubcaseSignature::operator<(const SubcaseSignature& other) const {
 
 IContextScope::IContextScope()  = default;
 IContextScope::~IContextScope() = default;
-
-DOCTEST_DEFINE_DEFAULTS(ContextOptions);
 
 #ifdef DOCTEST_CONFIG_TREAT_CHAR_STAR_AS_STRING
 String toString(char* in) { return toString(static_cast<const char*>(in)); }
@@ -715,8 +702,6 @@ Approx::Approx(double value)
         : m_epsilon(static_cast<double>(std::numeric_limits<float>::epsilon()) * 100)
         , m_scale(1.0)
         , m_value(value) {}
-
-DOCTEST_DEFINE_COPIES(Approx);
 
 Approx Approx::operator()(double value) const {
     Approx approx(value);
@@ -772,10 +757,6 @@ void Context::setAsDefaultForAssertsOutOfTestCases() {}
 void Context::setAssertHandler(detail::assert_handler) {}
 int  Context::run() { return 0; }
 
-DOCTEST_DEFINE_DEFAULTS(CurrentTestCaseStats);
-
-DOCTEST_DEFINE_DEFAULTS(TestRunStats);
-
 IReporter::~IReporter() = default;
 
 int                         IReporter::get_num_active_contexts() { return 0; }
@@ -826,8 +807,6 @@ namespace detail {
     for(auto& curr_rep : g_cs->reporters_currently_used)                                           \
     curr_rep->function(__VA_ARGS__)
 
-    DOCTEST_DEFINE_DEFAULTS(TestFailureException);
-    DOCTEST_DEFINE_COPIES(TestFailureException);
     bool checkIfShouldThrow(assertType::Enum at) {
         if(at & assertType::is_require) //!OCLINT bitwise operator in conditional
             return true;
@@ -842,7 +821,10 @@ namespace detail {
     }
 
 #ifndef DOCTEST_CONFIG_NO_EXCEPTIONS
-    [[noreturn]] void throwException() { throw TestFailureException(); } // NOLINT(cert-err60-cpp)
+    [[noreturn]] void throwException() {
+        g_cs->shouldLogCurrentException = false;
+        throw TestFailureException();
+    } // NOLINT(cert-err60-cpp)
 #else // DOCTEST_CONFIG_NO_EXCEPTIONS
     void throwException() {}
 #endif // DOCTEST_CONFIG_NO_EXCEPTIONS
@@ -911,45 +893,62 @@ namespace {
 namespace detail {
 
     Subcase::Subcase(const char* name, const char* file, int line)
-            : m_signature(name, file, line) {
+            : m_signature({name, file, line}) {
         ContextState* s = g_cs;
 
-        // if we have already completed it
-        if(s->subcasesPassed.count(m_signature) != 0)
-            return;
-
         // check subcase filters
-        if(s->subcasesCurrentLevel < s->subcase_filter_levels) {
+        if(s->subcasesStack.size() < size_t(s->subcase_filter_levels)) {
             if(!matchesAny(m_signature.m_name, s->filters[6], true, s->case_sensitive))
                 return;
             if(matchesAny(m_signature.m_name, s->filters[7], false, s->case_sensitive))
                 return;
         }
-
+        
         // if a Subcase on the same level has already been entered
-        if(s->subcasesEnteredLevels.count(s->subcasesCurrentLevel) != 0) {
+        if(s->subcasesStack.size() < size_t(s->subcasesCurrentMaxLevel)) {
             s->should_reenter = true;
             return;
         }
 
-        s->subcasesEnteredLevels.insert(s->subcasesCurrentLevel++);
+        // push the current signature to the stack so we can check if the
+        // current stack + the current new subcase have been traversed
+        s->subcasesStack.push_back(m_signature);
+        if(s->subcasesPassed.count(s->subcasesStack) != 0) {
+            // pop - revert to previous stack since we've already passed this
+            s->subcasesStack.pop_back();
+            return;
+        }
+
+        s->subcasesCurrentMaxLevel = s->subcasesStack.size();
         m_entered = true;
 
         DOCTEST_ITERATE_THROUGH_REPORTERS(subcase_start, m_signature);
     }
 
+    DOCTEST_MSVC_SUPPRESS_WARNING_WITH_PUSH(4996) // std::uncaught_exception is deprecated in C++17
+    DOCTEST_GCC_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated-declarations")
+    DOCTEST_CLANG_SUPPRESS_WARNING_WITH_PUSH("-Wdeprecated-declarations")
     Subcase::~Subcase() {
         if(m_entered) {
-            ContextState* s = g_cs;
+            // only mark the subcase stack as passed if no subcases have been skipped
+            if(g_cs->should_reenter == false)
+                g_cs->subcasesPassed.insert(g_cs->subcasesStack);
+            g_cs->subcasesStack.pop_back();
 
-            s->subcasesCurrentLevel--;
-            // only mark the subcase as passed if no subcases have been skipped
-            if(s->should_reenter == false)
-                s->subcasesPassed.insert(m_signature);
-
+            if(std::uncaught_exception() && g_cs->shouldLogCurrentException) {
+                DOCTEST_ITERATE_THROUGH_REPORTERS(
+                        test_case_exception, {"exception thrown in subcase - will translate later "
+                                              "when the whole test case has been exited (cannot "
+                                              "translate while there is an active exception)",
+                                              false});
+                g_cs->shouldLogCurrentException = false;
+            }
             DOCTEST_ITERATE_THROUGH_REPORTERS(subcase_end, DOCTEST_EMPTY);
         }
     }
+    DOCTEST_CLANG_SUPPRESS_WARNING_POP
+    DOCTEST_GCC_SUPPRESS_WARNING_POP
+    DOCTEST_MSVC_SUPPRESS_WARNING_POP
 
     Subcase::operator bool() const { return m_entered; }
 
@@ -957,16 +956,8 @@ namespace detail {
             : m_passed(passed)
             , m_decomp(decomposition) {}
 
-    DOCTEST_DEFINE_DEFAULTS(Result);
-    DOCTEST_DEFINE_COPIES(Result);
-
     ExpressionDecomposer::ExpressionDecomposer(assertType::Enum at)
             : m_at(at) {}
-
-    DOCTEST_DEFINE_DEFAULTS(ExpressionDecomposer);
-
-    DOCTEST_DEFINE_DEFAULTS(TestSuite);
-    DOCTEST_DEFINE_COPIES(TestSuite);
 
     TestSuite& TestSuite::operator*(const char* in) {
         m_test_suite = in;
@@ -997,8 +988,6 @@ namespace detail {
         m_type        = type;
         m_template_id = template_id;
     }
-
-    DOCTEST_DEFINE_DEFAULTS(TestCase);
 
     TestCase::TestCase(const TestCase& other)
             : TestCaseData() {
@@ -1210,6 +1199,9 @@ namespace detail {
         return 0;
     }
 
+#ifdef DOCTEST_IS_DEBUGGER_ACTIVE
+    bool isDebuggerActive() { return DOCTEST_IS_DEBUGGER_ACTIVE(); }
+#else // DOCTEST_IS_DEBUGGER_ACTIVE
 #ifdef DOCTEST_PLATFORM_MAC
     // The following function is taken directly from the following technical note:
     // http://developer.apple.com/library/mac/#qa/qa2004/qa1361.html
@@ -1242,6 +1234,7 @@ namespace detail {
 #else
     bool isDebuggerActive() { return false; }
 #endif // Platform
+#endif // DOCTEST_IS_DEBUGGER_ACTIVE
 
     void registerExceptionTranslatorImpl(const IExceptionTranslator* et) {
         if(std::find(getExceptionTranslators().begin(), getExceptionTranslators().end(), et) ==
@@ -1480,8 +1473,10 @@ namespace {
 
         DOCTEST_ITERATE_THROUGH_REPORTERS(test_case_exception, {message.c_str(), true});
 
-        while(g_cs->subcasesCurrentLevel--)
+        while(g_cs->subcasesStack.size()) {
+            g_cs->subcasesStack.pop_back();
             DOCTEST_ITERATE_THROUGH_REPORTERS(subcase_end, DOCTEST_EMPTY);
+        }
 
         g_cs->finalizeTestCaseData();
 
@@ -1494,23 +1489,22 @@ namespace {
 namespace detail {
 
     ResultBuilder::ResultBuilder(assertType::Enum at, const char* file, int line, const char* expr,
-                                 const char* exception_type) {
-        m_test_case      = g_cs->currentTest;
-        m_at             = at;
-        m_file           = file;
-        m_line           = line;
-        m_expr           = expr;
-        m_failed         = true;
-        m_threw          = false;
-        m_threw_as       = false;
-        m_exception_type = exception_type;
+                                 const char* exception_type, const char* exception_string) {
+        m_test_case        = g_cs->currentTest;
+        m_at               = at;
+        m_file             = file;
+        m_line             = line;
+        m_expr             = expr;
+        m_failed           = true;
+        m_threw            = false;
+        m_threw_as         = false;
+        m_exception_type   = exception_type;
+        m_exception_string = exception_string;
 #if DOCTEST_MSVC
         if(m_expr[0] == ' ') // this happens when variadic macros are disabled under MSVC
             ++m_expr;
 #endif // MSVC
     }
-
-    DOCTEST_DEFINE_DEFAULTS(ResultBuilder);
 
     void ResultBuilder::setResult(const Result& res) {
         m_decomp = res.m_decomp;
@@ -1525,10 +1519,12 @@ namespace detail {
     bool ResultBuilder::log() {
         if(m_at & assertType::is_throws) { //!OCLINT bitwise operator in conditional
             m_failed = !m_threw;
+        } else if((m_at & assertType::is_throws_as) && (m_at & assertType::is_throws_with)) { //!OCLINT
+            m_failed = !m_threw_as || (m_exception != m_exception_string);
         } else if(m_at & assertType::is_throws_as) { //!OCLINT bitwise operator in conditional
             m_failed = !m_threw_as;
         } else if(m_at & assertType::is_throws_with) { //!OCLINT bitwise operator in conditional
-            m_failed = m_exception != m_exception_type;
+            m_failed = m_exception != m_exception_string;
         } else if(m_at & assertType::is_nothrow) { //!OCLINT bitwise operator in conditional
             m_failed = m_threw;
         }
@@ -1590,7 +1586,7 @@ namespace detail {
 
         const bool isWarn = m_severity & assertType::is_warn;
 
-        // warn is just a message in this context so we dont treat it as an assert
+        // warn is just a message in this context so we don't treat it as an assert
         if(!isWarn) {
             addAssert(m_severity);
             addFailedAssert(m_severity);
@@ -2145,6 +2141,8 @@ namespace {
             test_case_start_impl(in);
             xml.ensureTagClosed();
         }
+        
+        void test_case_reenter(const TestCaseData&) override {}
 
         void test_case_end(const CurrentTestCaseStats& st) override {
             xml.startElement("OverallResultsAsserts")
@@ -2197,11 +2195,12 @@ namespace {
             if(rb.m_threw)
                 xml.scopedElement("Exception").writeText(rb.m_exception.c_str());
 
-            if(rb.m_at & (assertType::is_throws_as | assertType::is_throws_with)) {
+            if(rb.m_at & assertType::is_throws_as)
                 xml.scopedElement("ExpectedException").writeText(rb.m_exception_type);
-            } else if((rb.m_at & assertType::is_normal) && !rb.m_threw) {
+            if(rb.m_at & assertType::is_throws_with)
+                xml.scopedElement("ExpectedExceptionString").writeText(rb.m_exception_string);
+            if((rb.m_at & assertType::is_normal) && !rb.m_threw)
                 xml.scopedElement("Expanded").writeText(rb.m_decomp.c_str());
-            }
 
             log_contexts();
 
@@ -2565,6 +2564,8 @@ namespace {
             hasLoggedCurrentTestStart = false;
             tc                        = &in;
         }
+        
+        void test_case_reenter(const TestCaseData&) override {}
 
         void test_case_end(const CurrentTestCaseStats& st) override {
             // log the preamble of the test case only if there is something
@@ -2650,6 +2651,19 @@ namespace {
 
             if(rb.m_at & assertType::is_throws) { //!OCLINT bitwise operator in conditional
                 s << (rb.m_threw ? "threw as expected!" : "did NOT throw at all!") << "\n";
+            } else if((rb.m_at & assertType::is_throws_as) &&
+                      (rb.m_at & assertType::is_throws_with)) { //!OCLINT
+                s << Color::Cyan << assertString(rb.m_at) << "( " << rb.m_expr << ", \""
+                  << rb.m_exception_string << "\", " << rb.m_exception_type << " ) " << Color::None;
+                if(rb.m_threw) {
+                    if(!rb.m_failed) {
+                        s << "threw as expected!\n";
+                    } else {
+                        s << "threw a DIFFERENT exception! (contents: " << rb.m_exception << ")\n";
+                    }
+                } else {
+                    s << "did NOT throw at all!\n";
+                }
             } else if(rb.m_at &
                       assertType::is_throws_as) { //!OCLINT bitwise operator in conditional
                 s << Color::Cyan << assertString(rb.m_at) << "( " << rb.m_expr << ", "
@@ -2661,7 +2675,7 @@ namespace {
             } else if(rb.m_at &
                       assertType::is_throws_with) { //!OCLINT bitwise operator in conditional
                 s << Color::Cyan << assertString(rb.m_at) << "( " << rb.m_expr << ", \""
-                  << rb.m_exception_type << "\" ) " << Color::None
+                  << rb.m_exception_string << "\" ) " << Color::None
                   << (rb.m_threw ? (!rb.m_failed ? "threw as expected!" :
                                                    "threw a DIFFERENT exception: ") :
                                    "did NOT throw at all!")
@@ -2720,6 +2734,7 @@ namespace {
         DOCTEST_DEBUG_OUTPUT_REPORTER_OVERRIDE(test_run_start, DOCTEST_EMPTY, DOCTEST_EMPTY)
         DOCTEST_DEBUG_OUTPUT_REPORTER_OVERRIDE(test_run_end, const TestRunStats&, in)
         DOCTEST_DEBUG_OUTPUT_REPORTER_OVERRIDE(test_case_start, const TestCaseData&, in)
+        DOCTEST_DEBUG_OUTPUT_REPORTER_OVERRIDE(test_case_reenter, const TestCaseData&, in)
         DOCTEST_DEBUG_OUTPUT_REPORTER_OVERRIDE(test_case_end, const CurrentTestCaseStats&, in)
         DOCTEST_DEBUG_OUTPUT_REPORTER_OVERRIDE(test_case_exception, const TestCaseException&, in)
         DOCTEST_DEBUG_OUTPUT_REPORTER_OVERRIDE(subcase_start, const SubcaseSignature&, in)
@@ -2734,7 +2749,7 @@ namespace {
 
     // the implementation of parseOption()
     bool parseOptionImpl(int argc, const char* const* argv, const char* pattern, String* value) {
-        // going from the end to the begining and stopping on the first occurance from the end
+        // going from the end to the beginning and stopping on the first occurrence from the end
         for(int i = argc; i > 0; --i) {
             auto index = i - 1;
             auto temp = std::strstr(argv[index], pattern);
@@ -3195,12 +3210,16 @@ int Context::run() {
             DOCTEST_ITERATE_THROUGH_REPORTERS(test_case_start, tc);
 
             p->timer.start();
+            
+            bool run_test = true;
 
             do {
                 // reset some of the fields for subcases (except for the set of fully passed ones)
-                p->should_reenter       = false;
-                p->subcasesCurrentLevel = 0;
-                p->subcasesEnteredLevels.clear();
+                p->should_reenter          = false;
+                p->subcasesCurrentMaxLevel = 0;
+                p->subcasesStack.clear();
+
+                p->shouldLogCurrentException = true;
 
                 // reset stuff for logging with INFO()
                 p->stringifiedContexts.clear();
@@ -3225,10 +3244,15 @@ int Context::run() {
                 // exit this loop if enough assertions have failed - even if there are more subcases
                 if(p->abort_after > 0 &&
                    p->numAssertsFailed + p->numAssertsFailedCurrentTest_atomic >= p->abort_after) {
-                    p->should_reenter = false;
+                    run_test = false;
                     p->failure_flags |= TestCaseFailureReason::TooManyFailedAsserts;
                 }
-            } while(p->should_reenter == true);
+                
+                if(p->should_reenter && run_test)
+                    DOCTEST_ITERATE_THROUGH_REPORTERS(test_case_reenter, tc);
+                if(!p->should_reenter)
+                    run_test = false;
+            } while(run_test);
 
             p->finalizeTestCaseData();
 
@@ -3261,10 +3285,6 @@ int Context::run() {
 
     return cleanup_and_return();
 }
-
-DOCTEST_DEFINE_DEFAULTS(CurrentTestCaseStats);
-
-DOCTEST_DEFINE_DEFAULTS(TestRunStats);
 
 IReporter::~IReporter() = default;
 

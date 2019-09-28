@@ -105,7 +105,7 @@ namespace Kratos
         }
         mArePrefactorsInitialized = true;
 
-        double KS_value = 1/mRho * std::log(mSumPrefactors);
+        double KS_value = mStressScalingFactor * 1/mRho * std::log(mSumPrefactors);
         return KS_value;
 
         KRATOS_CATCH("");
@@ -134,7 +134,7 @@ namespace Kratos
             KRATOS_ERROR_IF(rResponseGradient.size() != rResidualGradient.size1())
                 << "Size of stress displacement derivative does not fit!" << std::endl;
 
-            rResponseGradient *= (-1) * mKSPrefactors[rAdjointElement.Id()] / (mStressScalingFactor * mSumPrefactors);
+            rResponseGradient *= (-1) * mStressScalingFactor * mKSPrefactors[rAdjointElement.Id()] / (mStressScalingFactor * mSumPrefactors);
         }
         else
         {
@@ -165,7 +165,7 @@ namespace Kratos
             ProcessInfo process_info = rProcessInfo;
             this->CalculateElementContributionToPartialSensitivity(rAdjointElement, rVariable.Name(), rSensitivityMatrix,
                                                                     rSensitivityGradient, process_info);
-            rSensitivityGradient *= mKSPrefactors[rAdjointElement.Id()] / (mStressScalingFactor * mSumPrefactors);
+            rSensitivityGradient *= mStressScalingFactor * mKSPrefactors[rAdjointElement.Id()] / (mStressScalingFactor * mSumPrefactors);
         }
         else
             rSensitivityGradient = ZeroVector(rSensitivityMatrix.size1());
@@ -205,7 +205,7 @@ namespace Kratos
             ProcessInfo process_info = rProcessInfo;
             this->CalculateElementContributionToPartialSensitivity(rAdjointElement, rVariable.Name(), rSensitivityMatrix,
                                                                     rSensitivityGradient, process_info);
-            rSensitivityGradient *= mKSPrefactors[rAdjointElement.Id()] / (mStressScalingFactor * mSumPrefactors);
+            rSensitivityGradient *= mStressScalingFactor * mKSPrefactors[rAdjointElement.Id()] / (mStressScalingFactor * mSumPrefactors);
         }
         else
             rSensitivityGradient = ZeroVector(rSensitivityMatrix.size1());

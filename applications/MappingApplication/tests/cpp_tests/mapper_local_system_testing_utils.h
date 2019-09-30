@@ -19,7 +19,7 @@ namespace Kratos {
 namespace Testing {
 namespace MapperLocalSystemTestingUtils {
 
-
+void ExecuteMapperLocalSystemTest();
 
 }  // namespace MapperLocalSystemTestingUtils
 }  // namespace Testing

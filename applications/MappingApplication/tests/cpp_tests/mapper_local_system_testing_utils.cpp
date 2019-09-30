@@ -20,6 +20,15 @@ namespace MapperLocalSystemTestingUtils {
 
 
 
+void ExecuteMapperLocalSystemTest()
+{
+
+
+
+
+}
+
+
 }  // namespace MapperLocalSystemTestingUtils
 }  // namespace Testing
 }  // namespace Kratos

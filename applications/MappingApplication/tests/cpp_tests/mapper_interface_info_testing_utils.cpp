@@ -18,7 +18,23 @@ namespace Kratos {
 namespace Testing {
 namespace MapperInterfaceInfoTeestingUtils {
 
+void CreateNodesModelPart(
+    const std::size_t NumNodes,
+    ModelPart& rModelPart,
+    NodalCoordsContainerType& rNodalCoords,
+    EqIdVectorType& rEquationIds)
+{
 
+}
+
+void ExecuteMapperInterfaceInfoTest()
+{
+
+
+
+
+    // final step: test serialization
+}
 
 }  // namespace MapperInterfaceInfoTeestingUtils
 }  // namespace Testing

@@ -74,3 +74,5 @@ applications/ShapeOptimizationApplication/test_examples/10_circular_plate_scalin
 applications/ShapeOptimizationApplication/test_examples/09_circular_plate_improved_stripes/
 
 applications/ShapeOptimizationApplication/test_examples/11_collaps_test/
+
+applications/ShapeOptimizationApplication/test_examples/09_circular_plate_improved_refinement/

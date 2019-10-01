@@ -23,6 +23,7 @@
 
 // Project includes
 #include "includes/kratos_application.h"
+#include "custom_elements/fractional_step_semi_explicit.h"
 
 
 namespace Kratos {
@@ -177,6 +178,10 @@ private:
 
     // const Elem2D   mElem2D;
     // const Elem3D   mElem3D;
+    /// instance of the fractional step semi explicit element
+    const FractionalStepSemiExplicitElement mFractionalStepSemiExplicit2D3N;
+    const FractionalStepSemiExplicitElement mFractionalStepSemiExplicit3D4N;
+
 
     ///@}
     ///@name Private Operators

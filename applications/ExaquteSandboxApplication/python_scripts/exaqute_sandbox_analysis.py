@@ -5,12 +5,9 @@ from sys import argv
 import KratosMultiphysics
 from KratosMultiphysics.analysis_stage import AnalysisStage
 import KratosMultiphysics.ExaquteSandboxApplication
-import KratosMultiphysics.ConvectionDiffusionApplication
-from KratosMultiphysics.process_factory import KratosProcessFactory
-from KratosMultiphysics.FluidDynamicsApplication import python_solvers_wrapper_fluid
 
 class ExaquteSandboxAnalysis(AnalysisStage):
-    '''Main script for fluid dynamics simulations using the navier_stokes family of python solvers.'''
+    '''Analysis Stage only meant to run cases of Exaqute application.'''
 
     def __init__(self,model,parameters):
         super(ExaquteSandboxAnalysis,self).__init__(model,parameters)

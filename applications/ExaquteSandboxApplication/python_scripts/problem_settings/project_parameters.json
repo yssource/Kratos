@@ -13,6 +13,7 @@
             "model_part_name" : "MainModelPart",
             "domain_size" : 2,
             "solver_type" : "stationary",
+            "analysis_type": "fractional_step_semi_explicit",
             "echo_level": 0,
             "model_import_settings": {
                 "input_type": "mdpa",

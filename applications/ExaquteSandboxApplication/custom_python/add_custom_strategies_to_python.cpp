@@ -26,6 +26,7 @@
 
 //strategies
 #include "solving_strategies/strategies/solving_strategy.h"
+#include "custom_strategies/fractional_step_semi_explicit_strategy.h"
 
 //linear solvers
 #include "linear_solvers/linear_solver.h"
@@ -53,6 +54,12 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
     //  	.def(py::init<ModelPart&, LinearSolverType::Pointer, int, int, bool >() )
     //  	.def("MoveNodes",&TestStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType >::MoveNodes)
     //  	;
+
+    py::class_< FractionalStepSemiExplicitStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType>,
+     		FractionalStepSemiExplicitStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType>::Pointer,
+            BaseSolvingStrategyType>(m, "FractionalStepSemiExplicitStrategy")
+        .def(py::init < ModelPart&, BaseSchemeType::Pointer, LinearSolverType::Pointer, bool, bool, bool, bool >())
+     	;
 
 }
 

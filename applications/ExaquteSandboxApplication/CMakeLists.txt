@@ -24,6 +24,10 @@ set( KRATOS_EXAQUTE_SANDBOX_APPLICATION_SOURCES
     # processes
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_processes/weighted_divergence_calculation_process.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_processes/metrics_divergencefree_process.cpp
+
+    # strategies
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_strategies/fractional_step_semi_explicit_strategy.h
+
 )
 
 ## define python interface sources

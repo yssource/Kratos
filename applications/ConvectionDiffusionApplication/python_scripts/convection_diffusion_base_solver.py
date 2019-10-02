@@ -2,6 +2,7 @@ from __future__ import print_function, absolute_import, division  # makes Kratos
 
 # Importing the Kratos Library
 import KratosMultiphysics
+import KratosMultiphysics.ExaquteSandboxApplication
 import KratosMultiphysics.python_linear_solver_factory as linear_solver_factory
 import KratosMultiphysics.base_convergence_criteria_factory as convergence_criteria_factory
 
@@ -589,6 +590,8 @@ class ConvectionDiffusionBaseSolver(PythonSolver):
                 convection_diffusion_solution_strategy = self._create_newton_raphson_strategy()
             else:
                 convection_diffusion_solution_strategy = self._create_line_search_strategy()
+        elif analysis_type == "fractional_step_semi_explicit":
+            convection_diffusion_solution_strategy = self._create_fractional_step_semi_explicit_strategy()
         else:
             err_msg =  "The requested analysis type \"" + analysis_type + "\" is not available!\n"
             err_msg += "Available options are: \"linear\", \"non_linear\""
@@ -640,3 +643,17 @@ class ConvectionDiffusionBaseSolver(PythonSolver):
                             self.settings["compute_reactions"].GetBool(),
                             self.settings["reform_dofs_at_each_step"].GetBool(),
                             self.settings["move_mesh_flag"].GetBool())
+
+    def _create_fractional_step_semi_explicit_strategy(self):
+        computing_model_part = self.GetComputingModelPart()
+        convection_diffusion_scheme = self.get_solution_scheme()
+        linear_solver = self.get_linear_solver()
+        builder_and_solver = self.get_builder_and_solver()
+        return KratosMultiphysics.ExaquteSandboxApplication.FractionalStepSemiExplicitStrategy(computing_model_part,
+                                                                     convection_diffusion_scheme,
+                                                                     linear_solver,
+                                                                     builder_and_solver,
+                                                                     self.settings["compute_reactions"].GetBool(),
+                                                                     self.settings["reform_dofs_at_each_step"].GetBool(),
+                                                                     False,
+                                                                     self.settings["move_mesh_flag"].GetBool())

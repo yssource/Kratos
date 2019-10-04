@@ -45,6 +45,7 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
     typedef LinearSolver<SparseSpaceType, LocalSpaceType > LinearSolverType;
     typedef SolvingStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType > BaseSolvingStrategyType;
     typedef Scheme< SparseSpaceType, LocalSpaceType > BaseSchemeType;
+    typedef BuilderAndSolver< SparseSpaceType, LocalSpaceType, LinearSolverType > BuilderAndSolverType;
 
     //********************************************************************
     //********************************************************************
@@ -59,6 +60,7 @@ void  AddCustomStrategiesToPython(pybind11::module& m)
      		FractionalStepSemiExplicitStrategy< SparseSpaceType, LocalSpaceType, LinearSolverType>::Pointer,
             BaseSolvingStrategyType>(m, "FractionalStepSemiExplicitStrategy")
         .def(py::init < ModelPart&, BaseSchemeType::Pointer, LinearSolverType::Pointer, bool, bool, bool, bool >())
+        .def(py::init < ModelPart&, BaseSchemeType::Pointer, LinearSolverType::Pointer, BuilderAndSolverType::Pointer, bool, bool, bool,  bool  >())
      	;
 
 }

@@ -121,6 +121,34 @@ public:
     }
 
     /**
+     * Constructor specifying the builder and solver
+     * @param rModelPart The model part of the problem
+     * @param pScheme The integration scheme
+     * @param pNewLinearSolver The linear solver employed
+     * @param pNewBuilderAndSolver The builder and solver employed
+     * @param CalculateReactionFlag The flag for the reaction calculation
+     * @param ReformDofSetAtEachStep The flag that allows to compute the modification of the DOF
+     * @param CalculateNormDxFlag The flag sets if the norm of Dx is computed
+     * @param MoveMeshFlag The flag that allows to move the mesh
+     */
+    FractionalStepSemiExplicitStrategy(
+        ModelPart& rModelPart,
+        typename TSchemeType::Pointer pScheme,
+        typename TLinearSolver::Pointer pNewLinearSolver,
+        typename TBuilderAndSolverType::Pointer pNewBuilderAndSolver,
+        bool CalculateReactionFlag = false,
+        bool ReformDofSetAtEachStep = false,
+        bool CalculateNormDxFlag = false,
+        bool MoveMeshFlag = false
+    )
+        : ResidualBasedLinearStrategy<TSparseSpace, TDenseSpace, TLinearSolver>(rModelPart, pScheme, pNewLinearSolver, pNewBuilderAndSolver, CalculateReactionFlag, ReformDofSetAtEachStep, CalculateNormDxFlag, MoveMeshFlag)
+    {
+        std::cout<< "*********************************************"<< std::endl;
+	    std::cout <<"*   FRACTIONAL STEP SEMI EXPLICIT STRATEGY  *"<< std::endl;
+        std::cout<< "*********************************************"<< std::endl;
+    }
+
+    /**
      * @brief Destructor.
      * @details In trilinos third party library, the linear solver's preconditioner should be freed before the system matrix. We control the deallocation order with Clear().
      */

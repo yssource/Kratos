@@ -7,9 +7,9 @@ import sys
 from KratosMultiphysics import *
 from KratosMultiphysics.DEMApplication import *
 
-from DEM_analysis_stage import DEMAnalysisStage
-import plot_variables                # Related to benchmarks in Chung, Ooi
-import DEM_benchmarks_class as DBC
+from KratosMultiphysics.DEMApplication.DEM_analysis_stage import DEMAnalysisStage
+import KratosMultiphysics.DEMApplication.plot_variables as plot_variables        # Related to benchmarks in Chung, Ooi
+import KratosMultiphysics.DEMApplication.DEM_benchmarks_class as DBC
 
 sys.path.insert(0,'')
 start = timer.time()
@@ -121,23 +121,11 @@ class DEMBenchmarksAnalysisStage(DEMAnalysisStage):
         super(DEMBenchmarksAnalysisStage, self).ReadModelParts()
         benchmark.set_initial_data(self.spheres_model_part, self.rigid_face_model_part, self.iteration, self.number_of_points_in_the_graphic, coeff_of_restitution_iteration)
 
-    def GetMpFilename(self):
-        return 'benchmark' + str(benchmark_number) + "DEM"
-
-    def GetInletFilename(self):
-        if benchmark_number == 40:
-            return 'benchmark' + str(benchmark_number) + "DEM_Inlet"
-        else:
+    def GetInputFilePath(self, file_name):
+        if file_name == "DEM_Inlet" and benchmark_number != 40: # TODO: get rid of this exception
             return 'benchmarkDEM_Inlet'
-
-    def GetFemFilename(self):
-        return 'benchmark' + str(benchmark_number) + "DEM_FEM_boundary"
-
-    def GetClusterFilename(self):
-        return 'benchmark' + str(benchmark_number) + "DEM_Clusters"
-
-    def GetProblemTypeFilename(self):
-        return 'benchmark' + str(benchmark_number)
+        else:
+            return 'benchmark' + str(benchmark_number) + file_name
 
     def InitializeSolutionStep(self):
         super(DEMBenchmarksAnalysisStage, self).InitializeSolutionStep()

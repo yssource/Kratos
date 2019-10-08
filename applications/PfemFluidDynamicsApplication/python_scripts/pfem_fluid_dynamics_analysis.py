@@ -168,6 +168,9 @@ class PfemFluidDynamicsAnalysis(AnalysisStage):
         # processes to be executed at the begining of the solution step
         self.model_processes.ExecuteInitializeSolutionStep()
 
+        # clone the thermal model
+        self._solver.CloneThermalModelPart()
+
         for process in self._GetListOfProcesses():
             process.ExecuteInitializeSolutionStep()
 

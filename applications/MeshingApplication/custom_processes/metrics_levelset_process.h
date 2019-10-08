@@ -209,6 +209,7 @@ private:
     double mSizeBoundLayer;                               /// The boundary layer limit Distance for the element size
     Interpolation mInterpolation;                         /// The interpolation type for the anisotropic ratio
     Interpolation mSizeInterpolation;                     /// The interpolation type for the element size
+    double mMaxGradientNorm;                     /// The interpolation type for the element size
 
     ///@}
     ///@name Private Operators
@@ -263,7 +264,8 @@ private:
 
     double CalculateElementSize(
         const double Distance,
-        const double NodalH
+        const double NodalH,
+        const double CurrentGradientNorm
         );
 
     ///@}

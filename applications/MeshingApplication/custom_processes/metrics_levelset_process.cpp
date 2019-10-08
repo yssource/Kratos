@@ -107,12 +107,22 @@ void ComputeLevelSetSolMetricProcess<TDim>::Execute()
         }
     }
 
+    mMaxGradientNorm = 0.0;
+    #pragma omp parallel for
+    for(int i = 0; i < num_nodes; ++i)  {
+        auto it_node = it_node_begin + i;
+        array_1d<double, 3>& r_gradient_value = it_node->FastGetSolutionStepValue(mVariableGradient);
+        double gradient_norm = inner_prod(r_gradient_value,r_gradient_value);
+        mMaxGradientNorm = std::max(gradient_norm, mMaxGradientNorm);
+    }
+
     #pragma omp parallel for
     for(int i = 0; i < num_nodes; ++i)  {
         auto it_node = it_node_begin + i;
 
         array_1d<double, 3>& r_gradient_value = it_node->FastGetSolutionStepValue(mVariableGradient);
-
+        double current_gradient_norm = inner_prod(r_gradient_value,r_gradient_value);
+        it_node->SetValue(TEMPERATURE, current_gradient_norm);
         // Isotropic by default
         double ratio = 1.0;
         if (it_node->SolutionStepsDataHas(ani_reference_var)) {
@@ -125,7 +135,7 @@ void ComputeLevelSetSolMetricProcess<TDim>::Execute()
         const double nodal_h = it_node->GetValue(NODAL_H);
         if (it_node->SolutionStepsDataHas(r_size_reference_var)) {
             const double size_reference = it_node->FastGetSolutionStepValue(r_size_reference_var);
-            element_size = CalculateElementSize(size_reference, nodal_h);
+            element_size = CalculateElementSize(size_reference, nodal_h, current_gradient_norm);
             if (((element_size > nodal_h) && (mEnforceCurrent)) || (std::abs(size_reference) > mSizeBoundLayer))
                 element_size = nodal_h;
         } else {
@@ -247,7 +257,8 @@ double ComputeLevelSetSolMetricProcess<TDim>::CalculateAnisotropicRatio(
 template<SizeType TDim>
 double ComputeLevelSetSolMetricProcess<TDim>::CalculateElementSize(
     const double Distance,
-    const double NodalH
+    const double NodalH,
+    const double CurrentGradientNorm
     )
 {
     double size = NodalH;
@@ -262,6 +273,17 @@ double ComputeLevelSetSolMetricProcess<TDim>::CalculateElementSize(
         }
     }
 
+    if (std::abs(Distance) <= NodalH) {
+
+        // double max_multiplier = 0.1;
+        // double min_multiplier = 1.0;
+        // double multiplier = max_multiplier+(1-CurrentGradientNorm/mMaxGradientNorm)*(min_multiplier - max_multiplier);
+        if (CurrentGradientNorm>0.6*mMaxGradientNorm) {
+            // size = size*multiplier;
+            size = size*0.1;
+
+        }
+    }
 
     return size;
 }

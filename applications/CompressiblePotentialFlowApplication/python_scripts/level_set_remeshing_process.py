@@ -159,8 +159,56 @@ class LevelSetRemeshingProcess(KratosMultiphysics.Process):
 
         KratosMultiphysics.VariableUtils().SetNonHistoricalVariableToZero(KratosMultiphysics.MeshingApplication.METRIC_TENSOR_2D,self.main_model_part.Nodes)
 
-        metric_process = MeshingApplication.ComputeLevelSetSolMetricProcess2D(self.main_model_part,  KratosMultiphysics.DISTANCE_GRADIENT, self.metric_parameters)
+        # metric_process = MeshingApplication.ComputeLevelSetSolMetricProcess2D(self.main_model_part,  KratosMultiphysics.DISTANCE_GRADIENT, self.metric_parameters)
+        # metric_process.Execute()
+
+
+        hessian_parameters = KratosMultiphysics.Parameters("""
+        {
+                "minimal_size"                        : 0.001,
+                "maximal_size"                        : 10.0,
+                "enforce_current"                     : false,
+                "hessian_strategy_parameters":
+                {
+                    "non_historical_metric_variable"  : true,
+                    "estimate_interpolation_error"    : false,
+                    "interpolation_error"             : 1e-2
+                },
+                "anisotropy_remeshing"                : false
+        }
+        """)
+
+
+        metric_process = MeshingApplication.ComputeHessianSolMetricProcess(self.main_model_part, KratosMultiphysics.DISTANCE, hessian_parameters)
         metric_process.Execute()
+
+        # metric_process = MeshingApplication.ComputeHessianSolMetricProcess(self.main_model_part, KratosMultiphysics.DISTANCE_GRADIENT_Y, hessian_parameters)
+        # metric_process.Execute()
+
+
+        from KratosMultiphysics.gid_output_process import GiDOutputProcess
+        gid_output = GiDOutputProcess(
+            self.main_model_part,
+            'metric_2d',
+            KratosMultiphysics.Parameters("""
+                {
+                    "result_file_configuration" : {
+                        "gidpost_flags": {
+                            "GiDPostMode": "GiD_PostBinary",
+                            "MultiFileFlag": "SingleFile"
+                        },
+                        "nodal_results" : ["DISTANCE_GRADIENT","DISTANCE"],
+                        "nodal_nonhistorical_results": ["METRIC_TENSOR_2D","NODAL_H", "TEMPERATURE"]
+                    }
+                }
+                """)
+            )
+        gid_output.ExecuteInitialize()
+        gid_output.ExecuteBeforeSolutionLoop()
+        gid_output.ExecuteInitializeSolutionStep()
+        gid_output.PrintOutput()
+        gid_output.ExecuteFinalizeSolutionStep()
+        gid_output.ExecuteFinalize()
 
         mmg_parameters = KratosMultiphysics.Parameters("""
         {
@@ -173,6 +221,29 @@ class LevelSetRemeshingProcess(KratosMultiphysics.Process):
 
         mmg_process = MeshingApplication.MmgProcess2D(self.main_model_part, mmg_parameters)
         mmg_process.Execute()
+
+
+        from KratosMultiphysics.gid_output_process import GiDOutputProcess
+        gid_output = GiDOutputProcess(
+            self.main_model_part,
+            'remeshed_2d',
+            KratosMultiphysics.Parameters("""
+                {
+                    "result_file_configuration" : {
+                        "gidpost_flags": {
+                            "GiDPostMode": "GiD_PostBinary",
+                            "MultiFileFlag": "SingleFile"
+                        }
+                    }
+                }
+                """)
+            )
+        gid_output.ExecuteInitialize()
+        gid_output.ExecuteBeforeSolutionLoop()
+        gid_output.ExecuteInitializeSolutionStep()
+        gid_output.PrintOutput()
+        gid_output.ExecuteFinalizeSolutionStep()
+        gid_output.ExecuteFinalize()
 
         KratosMultiphysics.Logger.PrintInfo('LevelSetRemeshing','Remesh time: ',time.time()-ini_time)
 

@@ -5,6 +5,7 @@ import KratosMultiphysics.FemToDemApplication as FEMDEM
 import KratosMultiphysics.PfemFluidDynamicsApplication as PFEM
 import KratosMultiphysics.FemToDemApplication.MainCouplingFemDem_for_PFEM_coupling as MainCouplingFemDem_for_PFEM_coupling
 import KratosMultiphysics.FemToDemApplication.MainPFEM_for_coupling as MainPFEM_for_coupling
+import KratosMultiphysics.FemToDemApplication.coupled_pfem_dem_gid_output_utility as coupled_pfem_dem_gid_output_utility
 
 def Wait():
     input("PFEM-FEMDEM -> Press Something")
@@ -80,6 +81,13 @@ class MainCouplingPfemFemDem_Solution:
 
         # We update the NO_MESH flag in the FEMDEM skin
         self.UpdateFEMDEMBoundary()
+
+        # if self.FEMDEM_Solution.FEM_Solution.step == 2:
+        #     io = coupled_pfem_dem_gid_output_utility.GidOutputUtility("testeo", self.FEMDEM_Solution.ProjectParameters["output_configuration"])
+        #     io.initialize_results(self.PFEM_Solution.main_model_part)
+        #     io.write_results(self.PFEM_Solution.main_model_part, "VELOCITY", "", 1.0, 69, 0)
+        #     Wait()
+
 
 
 #============================================================================================================================

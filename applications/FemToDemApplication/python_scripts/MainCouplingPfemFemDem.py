@@ -82,11 +82,31 @@ class MainCouplingPfemFemDem_Solution:
         # We update the NO_MESH flag in the FEMDEM skin
         self.UpdateFEMDEMBoundary()
 
-        # if self.FEMDEM_Solution.FEM_Solution.step == 2:
-        #     io = coupled_pfem_dem_gid_output_utility.GidOutputUtility("testeo", self.FEMDEM_Solution.ProjectParameters["output_configuration"])
-        #     io.initialize_results(self.PFEM_Solution.main_model_part)
-        #     io.write_results(self.PFEM_Solution.main_model_part, "VELOCITY", "", 1.0, 69, 0)
-        #     Wait()
+
+
+
+
+
+        if self.FEMDEM_Solution.FEM_Solution.step == 2:
+            output_param = self.FEMDEM_Solution.FEM_Solution.ProjectParameters["output_configuration"]
+
+            model = KM.Model()
+            model.CreateModelPart("output_model")
+            output_model_part = model.GetModelPart("output_model")
+
+            # io = coupled_pfem_dem_gid_output_utility.GiDOutputProcess(self.PFEM_Solution.main_model_part,"NAME" ,output_param)
+            io = coupled_pfem_dem_gid_output_utility.GiDOutputProcess(output_model_part,"NAME" ,output_param)
+            io.ExecuteInitialize()
+            io.ExecuteBeforeSolutionLoop()
+            io.ExecuteInitializeSolutionStep()
+            io.PrintOutput()
+            # io.initialize_results(self.PFEM_Solution.main_model_part)
+            # io.write_results(self.PFEM_Solution.main_model_part, "VELOCITY", "", 1.0, 69, 0)
+            Wait()
+
+
+
+
 
 
 

@@ -216,8 +216,6 @@ class MassResponseFunction(ResponseFunctionBase):
         self.model_part.AddNodalSolutionStepVariable(KratosMultiphysics.SHAPE_SENSITIVITY)
 
     def Initialize(self):
-        import read_materials_process
-
         if self.model_part_needs_to_be_imported:
             # import model part
             model_part_io = KratosMultiphysics.ModelPartIO(self.response_settings["model_import_settings"]["input_filename"].GetString())
@@ -401,6 +399,12 @@ class AdjointResponseFunction(ResponseFunctionBase):
                 KratosMultiphysics.Logger.PrintWarning(__name__, depr_msg)
                 solver_settings.RemoveValue("scheme_settings")
 
+            if solver_settings["model_import_settings"]["input_type"].GetString() == "use_input_model_part":
+                solver_settings["model_import_settings"]["input_type"].SetString("mdpa")
+                solver_settings["model_import_settings"].AddEmptyValue("input_filename")
+                model_part_name = solver_settings["model_part_name"].GetString()
+                solver_settings["model_import_settings"]["input_filename"].SetString(model_part_name)
+
             # Dirichlet conditions: change variables
             for i in range(0,primal_parameters["processes"]["constraints_process_list"].size()):
                 process = adjoint_parameters["processes"]["constraints_process_list"][i]
@@ -411,9 +415,9 @@ class AdjointResponseFunction(ResponseFunctionBase):
 
             # Output process:
             # TODO how to add the output process? How find out about the variables?
-            if adjoint_parameters.Has("output_configuration"):
+            if adjoint_parameters.Has("output_processes"):
                 Logger.PrintInfo("> Output process is removed for adjoint analysis. To enable it define adjoint_parameters yourself.")
-                adjoint_parameters.RemoveValue("output_configuration")
+                adjoint_parameters.RemoveValue("output_processes")
 
             # sensitivity settings
             adjoint_parameters["solver_settings"].AddValue("sensitivity_settings", self.response_settings["sensitivity_settings"])

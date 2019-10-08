@@ -4,12 +4,14 @@
 //   _|\_\_|  \__,_|\__|\___/ ____/
 //                   Multi-Physics
 //
-//  License:		 BSD License
-//					 Kratos default license: kratos/license.txt
+//  License:        BSD License
+//                  Kratos default license: kratos/license.txt
 //
-//  Main authors:    Inigo Lopez and Riccardo Rossi
+//  Main authors:    Marc Núñez, based on Iñigo Lopez and Riccardo Rossi work
 //
 #include "embedded_incompressible_potential_flow_element.h"
+#include "compressible_potential_flow_application_variables.h"
+#include "custom_utilities/potential_flow_utilities.h"
 
 namespace Kratos
 {
@@ -18,20 +20,20 @@ namespace Kratos
 
 template <int Dim, int NumNodes>
 Element::Pointer EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::Create(
-    IndexType NewId, NodesArrayType const& ThisNodes, PropertiesType::Pointer pProperties) const
+    IndexType NewId, NodesArrayType const& ThisNodes, typename PropertiesType::Pointer pProperties) const
 {
     KRATOS_TRY
-    return Kratos::make_shared<EmbeddedIncompressiblePotentialFlowElement>(
+    return Kratos::make_intrusive<EmbeddedIncompressiblePotentialFlowElement>(
         NewId, this->GetGeometry().Create(ThisNodes), pProperties);
     KRATOS_CATCH("");
 }
 
 template <int Dim, int NumNodes>
 Element::Pointer EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::Create(
-    IndexType NewId, GeometryType::Pointer pGeom, PropertiesType::Pointer pProperties) const
+    IndexType NewId, typename GeometryType::Pointer pGeom, typename PropertiesType::Pointer pProperties) const
 {
     KRATOS_TRY
-    return Kratos::make_shared<EmbeddedIncompressiblePotentialFlowElement>(
+    return Kratos::make_intrusive<EmbeddedIncompressiblePotentialFlowElement>(
         NewId, pGeom, pProperties);
     KRATOS_CATCH("");
 }
@@ -41,7 +43,7 @@ Element::Pointer EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::Clon
     IndexType NewId, NodesArrayType const& ThisNodes) const
 {
     KRATOS_TRY
-    return Kratos::make_shared<EmbeddedIncompressiblePotentialFlowElement>(
+    return Kratos::make_intrusive<EmbeddedIncompressiblePotentialFlowElement>(
         NewId, this->GetGeometry().Create(ThisNodes), this->pGetProperties());
     KRATOS_CATCH("");
 }
@@ -54,8 +56,13 @@ void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::CalculateLocalSy
     const int wake = r_this.GetValue(WAKE);
     const int kutta = r_this.GetValue(KUTTA);
 
+    BoundedVector<double,NumNodes> distances;
+    for(unsigned int i_node = 0; i_node<NumNodes; i_node++){
+        distances[i_node] = this->GetGeometry()[i_node].GetSolutionStepValue(GEOMETRY_DISTANCE);
+    }
+    const bool is_embedded = PotentialFlowUtilities::CheckIfElementIsCutByDistance<Dim,NumNodes>(distances);
 
-    if (this->Is(BOUNDARY) && wake == 0 && kutta == 0)
+    if (is_embedded && wake == 0 && kutta == 0)
         CalculateEmbeddedLocalSystem(rLeftHandSideMatrix,rRightHandSideVector,rCurrentProcessInfo);
     else
         BaseType::CalculateLocalSystem(rLeftHandSideMatrix, rRightHandSideVector, rCurrentProcessInfo);
@@ -72,66 +79,42 @@ void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::CalculateEmbedde
         rRightHandSideVector.resize(NumNodes, false);
     rLeftHandSideMatrix.clear();
 
-    ElementalData<NumNodes,Dim> data;
-    array_1d<double,NumNodes> elemental_distance;
+    array_1d<double, NumNodes> potential;
+    Vector distances(NumNodes);
     for(unsigned int i_node = 0; i_node<NumNodes; i_node++)
-        elemental_distance[i_node] = this->GetGeometry()[i_node].GetSolutionStepValue(LEVEL_SET_DISTANCE);
+        distances(i_node) = this->GetGeometry()[i_node].GetSolutionStepValue(GEOMETRY_DISTANCE);
 
-    BaseType::GetPotentialOnNormalElement(data.phis);
+    potential = PotentialFlowUtilities::GetPotentialOnNormalElement<Dim, NumNodes>(*this);
 
-    const Vector& r_elemental_distances=elemental_distance;
-    Triangle2D3ModifiedShapeFunctions triangle_shape_functions(this->pGetGeometry(), r_elemental_distances);
+    ModifiedShapeFunctions::Pointer pModifiedShFunc = this->pGetModifiedShapeFunctions(distances);
     Matrix positive_side_sh_func;
     ModifiedShapeFunctions::ShapeFunctionsGradientsType positive_side_sh_func_gradients;
     Vector positive_side_weights;
-    triangle_shape_functions.ComputePositiveSideShapeFunctionsAndGradientsValues(
+    pModifiedShFunc -> ComputePositiveSideShapeFunctionsAndGradientsValues(
         positive_side_sh_func,
         positive_side_sh_func_gradients,
         positive_side_weights,
-        GeometryData::GI_GAUSS_2);
+        GeometryData::GI_GAUSS_1);
 
-        for (unsigned int i_gauss=0;i_gauss<positive_side_sh_func_gradients.size();i_gauss++){
-            MatrixType aux_matrix;
-            bounded_matrix<double,NumNodes,Dim> DN_DX;
-            DN_DX=positive_side_sh_func_gradients(i_gauss);
-            
-            //reading properties and conditions
-            aux_matrix=prod(DN_DX,trans(DN_DX))*positive_side_weights(i_gauss);  // Bt D B
+    const double free_stream_density = rCurrentProcessInfo[FREE_STREAM_DENSITY];
 
-            noalias(rLeftHandSideMatrix) += aux_matrix;                       
-        }
-     
-    noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, data.phis);
+    BoundedMatrix<double,NumNodes,Dim> DN_DX;
+    for (unsigned int i_gauss=0;i_gauss<positive_side_sh_func_gradients.size();i_gauss++){
+        DN_DX=positive_side_sh_func_gradients(i_gauss);
+        noalias(rLeftHandSideMatrix) += free_stream_density*prod(DN_DX,trans(DN_DX))*positive_side_weights(i_gauss);;
+    }
+
+    noalias(rRightHandSideVector) = -prod(rLeftHandSideMatrix, potential);
 }
 
-
-template <int Dim, int NumNodes>
-void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::CalculateRightHandSide(
-    VectorType& rRightHandSideVector, ProcessInfo& rCurrentProcessInfo)
-{
-    // TODO: improve speed
-    Matrix tmp;
-    CalculateLocalSystem(tmp, rRightHandSideVector, rCurrentProcessInfo);
+template <>
+ModifiedShapeFunctions::Pointer EmbeddedIncompressiblePotentialFlowElement<2,3>::pGetModifiedShapeFunctions(Vector& rDistances) {
+    return Kratos::make_shared<Triangle2D3ModifiedShapeFunctions>(this->pGetGeometry(), rDistances);
 }
 
-template <int Dim, int NumNodes>
-void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::EquationIdVector(
-    EquationIdVectorType& rResult, ProcessInfo& rCurrentProcessInfo)
-{
-    BaseType::EquationIdVector(rResult, rCurrentProcessInfo);
-}
-
-template <int Dim, int NumNodes>
-void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::GetDofList(DofsVectorType& rElementalDofList,
-                                                                   ProcessInfo& rCurrentProcessInfo)
-{
-    BaseType::GetDofList(rElementalDofList, rCurrentProcessInfo);
-}
-
-template <int Dim, int NumNodes>
-void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo)
-{
-    BaseType::FinalizeSolutionStep(rCurrentProcessInfo);
+template <>
+ModifiedShapeFunctions::Pointer EmbeddedIncompressiblePotentialFlowElement<3,4>::pGetModifiedShapeFunctions(Vector& rDistances) {
+    return Kratos::make_shared<Tetrahedra3D4ModifiedShapeFunctions>(this->pGetGeometry(), rDistances);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -149,12 +132,9 @@ int EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::Check(const Proce
         return out;
     }
 
-    KRATOS_ERROR_IF(this->GetGeometry().Area() <= 0.0)
-        << this->Id() << "Area cannot be less than or equal to 0" << std::endl;
-
     for (unsigned int i = 0; i < this->GetGeometry().size(); i++)
     {
-        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(VELOCITY_POTENTIAL,this->GetGeometry()[i]);
+        KRATOS_CHECK_VARIABLE_IN_NODAL_DATA(GEOMETRY_DISTANCE,this->GetGeometry()[i]);
     }
 
     return out;
@@ -162,30 +142,6 @@ int EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::Check(const Proce
     KRATOS_CATCH("");
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-template <int Dim, int NumNodes>
-void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::GetValueOnIntegrationPoints(
-    const Variable<double>& rVariable, std::vector<double>& rValues, const ProcessInfo& rCurrentProcessInfo)
-{
-    BaseType::GetValueOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
-}
-
-template <int Dim, int NumNodes>
-void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::GetValueOnIntegrationPoints(
-    const Variable<int>& rVariable, std::vector<int>& rValues, const ProcessInfo& rCurrentProcessInfo)
-{
-    BaseType::GetValueOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
-}
-
-template <int Dim, int NumNodes>
-void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::GetValueOnIntegrationPoints(
-    const Variable<array_1d<double, 3>>& rVariable,
-    std::vector<array_1d<double, 3>>& rValues,
-    const ProcessInfo& rCurrentProcessInfo)
-{
-    BaseType::GetValueOnIntegrationPoints(rVariable, rValues, rCurrentProcessInfo);
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Input and output
@@ -232,5 +188,7 @@ void EmbeddedIncompressiblePotentialFlowElement<Dim, NumNodes>::load(Serializer&
 // Template class instantiation
 
 template class EmbeddedIncompressiblePotentialFlowElement<2, 3>;
+template class EmbeddedIncompressiblePotentialFlowElement<3, 4>;
+
 
 } // namespace Kratos

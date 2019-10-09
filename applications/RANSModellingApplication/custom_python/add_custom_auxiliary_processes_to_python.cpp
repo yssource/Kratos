@@ -42,6 +42,7 @@
 #include "custom_processes/auxiliary_processes/rans_vector_align_process.h"
 #include "custom_processes/auxiliary_processes/rans_vector_cell_center_averaging_process.h"
 #include "custom_processes/auxiliary_processes/rans_wall_distance_calculation_process.h"
+#include "custom_processes/auxiliary_processes/rans_vtk_output.h"
 
 namespace Kratos
 {
@@ -168,6 +169,11 @@ void AddCustomAuxiliaryProcessesToPython(pybind11::module& m)
     using RansLineOutputProcessType = RansLineOutputProcess;
     py::class_<RansLineOutputProcessType, RansLineOutputProcessType::Pointer, Process>(
         m, "RansLineOutputProcess")
+        .def(py::init<Model&, Parameters&>());
+
+    using RansVtkOutputProcessType = RansVtkOutputProcess;
+    py::class_<RansVtkOutputProcessType, RansVtkOutputProcessType::Pointer, Process>(
+        m, "RansVtkOutputProcess")
         .def(py::init<Model&, Parameters&>());
 }
 

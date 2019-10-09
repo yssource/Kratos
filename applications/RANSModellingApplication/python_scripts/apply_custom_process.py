@@ -82,6 +82,10 @@ def Factory(settings, Model):
         [
             "LineOutputProcess",
             KratosRANS.RansLineOutputProcess
+        ],
+        [
+            "VtkOutputProcess",
+            KratosRANS.RansVtkOutputProcess
         ]
     ]
 

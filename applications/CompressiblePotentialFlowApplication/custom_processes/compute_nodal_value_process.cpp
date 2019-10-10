@@ -55,11 +55,11 @@ void ComputeNodalValueProcess::Execute()
 
     for (std::size_t i_var = 0; i_var < mArrayVariablesList.size(); i_var++){
         const auto& r_array_var = *mArrayVariablesList[i_var];
-        AddElementsContribution(r_array_var);
+        AddElementsContribution<array_1d<double, 3>,3>(r_array_var);
     }
     for (std::size_t i_var = 0; i_var < mDoubleVariablesList.size(); i_var++){
         const auto& r_double_var = *mDoubleVariablesList[i_var];
-        AddElementsContribution(r_double_var);
+        AddElementsContribution<double, 1>(r_double_var);
     }
 
     PonderateNodalValues();
@@ -127,7 +127,7 @@ void ComputeNodalValueProcess::ClearNodalValues()
     }
 }
 
-template< typename TValueType >
+template< typename TValueType, std::size_t TSize >
 void ComputeNodalValueProcess::AddElementsContribution(const Variable<TValueType>& rVariable){
     // Auxiliar container
     Vector N;
@@ -162,8 +162,9 @@ void ComputeNodalValueProcess::AddElementsContribution(const Variable<TValueType
         // The containers of the shape functions and the local gradients
         const Matrix& rNmatrix = r_geometry.ShapeFunctionsValues(r_integration_method);
 
-        std::vector<TValueType> element_values(number_of_integration_points);
-        it_elem->GetValueOnIntegrationPoints(rVariable, element_values, r_current_process_info);
+        // std::vector<TValueType> element_values(number_of_integration_points);
+        // it_elem->GetValueOnIntegrationPoints(rVariable, element_values, r_current_process_info);
+        auto element_values = GetElementValue<TValueType, TSize>(number_of_integration_points, it_elem, rVariable, r_current_process_info);
 
         for ( IndexType i_gauss = 0; i_gauss < number_of_integration_points; ++i_gauss ) {
             // Getting the shape functions
@@ -178,10 +179,61 @@ void ComputeNodalValueProcess::AddElementsContribution(const Variable<TValueType
             const double gauss_point_volume = r_integration_points[i_gauss].Weight() * detJ0[i_gauss];
 
             for(std::size_t i_node=0; i_node<number_of_nodes; ++i_node) {
-                UpdateNodalValue(r_geometry[i_node], rVariable, N[i_node], gauss_point_volume, gauss_point_value);
+                //UpdateNodalValue(r_geometry[i_node], rVariable, N[i_node], gauss_point_volume, gauss_point_value);
+                auto& value = GetNodalValue<TValueType, TSize>(r_geometry[i_node], rVariable);
+                for(std::size_t k=0; k<TSize; ++k) {
+                    #pragma omp atomic
+                    value[k] += N[i_node]* gauss_point_volume * gauss_point_value[k];
+                }
             }
         }
     }
+}
+
+template< typename TValueType, std::size_t TSize >
+array_1d<double, TSize>& ComputeNodalValueProcess::GetNodalValue(Element::NodeType& rNode,
+    const Variable<TValueType>& rVariable)
+{
+    array_1d<double, TSize>& val = rNode.GetValue(rVariable);
+    return val;
+}
+
+template<>
+array_1d<double, 1>& ComputeNodalValueProcess::GetNodalValue(Element::NodeType& rNode,
+    const Variable<double>& rVariable)
+{
+    double& val = rNode.GetValue(rVariable);
+    array_1d<double, 1> val_array = {val};
+    //array_1d<double, 1>& val_array[0] = rNode.GetValue(rVariable);
+    return val_array;
+}
+
+template< typename TValueType, std::size_t TSize >
+std::vector<array_1d<double, TSize>> ComputeNodalValueProcess::GetElementValue(const std::size_t& rNumberOfIntegrationPoints,
+    ModelPart::ElementIterator rItElem,
+    const Variable<TValueType>& rVariable,
+    const ProcessInfo& rCurrentProcessInfo)
+{
+    std::vector<TValueType> element_values(rNumberOfIntegrationPoints);
+    rItElem->GetValueOnIntegrationPoints(rVariable, element_values, rCurrentProcessInfo);
+
+    return element_values;
+}
+
+template<>
+std::vector<array_1d<double, 1>> ComputeNodalValueProcess::GetElementValue(const std::size_t& rNumberOfIntegrationPoints,
+    ModelPart::ElementIterator rItElem,
+    const Variable<double>& rVariable,
+    const ProcessInfo& rCurrentProcessInfo)
+{
+    std::vector<double> element_values(rNumberOfIntegrationPoints);
+    rItElem->GetValueOnIntegrationPoints(rVariable, element_values, rCurrentProcessInfo);
+    std::vector<array_1d<double, 1>> element_value_array(rNumberOfIntegrationPoints);
+    for ( IndexType i_gauss = 0; i_gauss < rNumberOfIntegrationPoints; ++i_gauss ) {
+        element_value_array[i_gauss][0] = element_values[i_gauss];
+    }
+
+    return element_value_array;
 }
 
 void ComputeNodalValueProcess::UpdateNodalValue(Element::NodeType& rNode,
@@ -228,4 +280,22 @@ void ComputeNodalValueProcess::PonderateNodalValues()
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Template instantiation
+
+template void ComputeNodalValueProcess::AddElementsContribution<array_1d<double, 3>, 3>(const Variable<array_1d<double, 3>>&);
+template void ComputeNodalValueProcess::AddElementsContribution<double, 1>(const Variable<double>& rVariable);
+
+template std::vector<array_1d<double, 3>> ComputeNodalValueProcess::GetElementValue<array_1d<double, 3>, 3>(const std::size_t& rNumberOfIntegrationPoints,
+    ModelPart::ElementIterator rItElem,
+    const Variable<array_1d<double, 3>>& rVariable,
+    const ProcessInfo& rCurrentProcessInfo);
+
+template array_1d<double, 3>& ComputeNodalValueProcess::GetNodalValue(Element::NodeType& rNode,
+    const Variable<array_1d<double, 3>>& rVariable);
+
+// template std::vector<array_1d<double, 1>> ComputeNodalValueProcess::GetElementValue<double, 1>(const std::size_t& rNumberOfIntegrationPoints,
+//     ModelPart::ElementIterator rItElem,
+//     const Variable<double>& rVariable,
+//     const ProcessInfo& rCurrentProcessInfo);
 } /* namespace Kratos.*/

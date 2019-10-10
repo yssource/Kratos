@@ -129,8 +129,18 @@ private:
     /**
      * This sums up the contribution of all elements to their respective nodes
      */
-    template< typename TValueType >
+    template< typename TValueType, std::size_t TSize >
     void AddElementsContribution(const Variable<TValueType>& rVariable);
+
+    template< typename TValueType, std::size_t TSize >
+    std::vector<array_1d<double, TSize>> GetElementValue(const std::size_t& rNumberOfIntegrationPoints,
+                                                         ModelPart::ElementIterator rItElem,
+                                                         const Variable<TValueType>& rVariable,
+                                                         const ProcessInfo& rCurrentProcessInfo);
+
+    template< typename TValueType, std::size_t TSize >
+    array_1d<double, TSize>& GetNodalValue(Element::NodeType& rNode,
+                                          const Variable<TValueType>& rVariable);
 
     /**
      * This updates the nodal value of array_1d<double, 3> variables

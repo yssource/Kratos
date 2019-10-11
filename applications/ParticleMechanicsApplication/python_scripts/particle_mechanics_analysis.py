@@ -85,14 +85,14 @@ class ParticleMechanicsAnalysis(AnalysisStage):
 
             # DETERMINE CONVERGED QUANTITIES, VIA SOLVER
             # FOR EXPLICIT THIS SHOULD OCCUR DIRECTLY WITHOUT ITERATION, in explicit strategy
-            input('before SolveSolutionStep')
+            ## // PJW input('before SolveSolutionStep')
             self._GetSolver().SolveSolutionStep()
 
             # MAP GRID BACK TO PARTICLES, VIA ELEMENT VIA SCHEME
             # A DIFFERENCE HERE IS THAT FOR EXPLICIT WE NEED TO DETEMINE THE STRESSES FROM THE GRADIENT VELOCITY, INSTEAD OF THE DISPS
-            input('before FinalizeSolutionStep')
+            ## // PJW inputinput('before FinalizeSolutionStep')
             self.FinalizeSolutionStep()
-            input('after FinalizeSolutionStep')
+            ## // PJW inputinput('after FinalizeSolutionStep')
 
 
             self.OutputSolutionStep()

@@ -217,7 +217,7 @@ void UpdatedLagrangianQuadrilateral::SetGeneralVariables(GeneralVariables& rVari
     rVariables.detF  = MathUtils<double>::Det(rVariables.F);
 
     // Check if detF is negative (element is inverted)
-    if(rVariables.detF<0)
+    if(rVariables.detF<=0)
     {
         KRATOS_INFO("UpdatedLagrangianQuadrilateral")<<" Element: "<<this->Id()<<std::endl;
         KRATOS_INFO("UpdatedLagrangianQuadrilateral")<<" Element position "<<this->GetValue(MP_COORD)<<std::endl;
@@ -248,7 +248,7 @@ void UpdatedLagrangianQuadrilateral::SetGeneralVariables(GeneralVariables& rVari
             }
         }
 
-        KRATOS_ERROR << "MPM UPDATED LAGRANGIAN DISPLACEMENT ELEMENT INVERTED: |F|<0  detF = " << rVariables.detF << std::endl;
+        KRATOS_ERROR << "MPM UPDATED LAGRANGIAN DISPLACEMENT ELEMENT INVERTED: |F|<=0  detF = " << rVariables.detF << std::endl;
     }
 
     rVariables.detFT = rVariables.detF * rVariables.detF0;
@@ -385,7 +385,6 @@ void UpdatedLagrangianQuadrilateral::CalculateElementalSystem( LocalSystemCompon
     {
         // Contribution to forces (in residual term) are calculated
         volume_force  = this->CalculateVolumeForce( volume_force, Variables );
-		std::cout << "Vol force = " << volume_force << std::endl;
         this->CalculateAndAddRHS ( rLocalSystem, Variables, volume_force, MP_Volume );
     }
 
@@ -483,7 +482,7 @@ void UpdatedLagrangianQuadrilateral::CalculateExplicitKinematics(GeneralVariable
 	Matrix velocityGradient = Matrix(dimension, dimension, 0.0);
 	for (unsigned int nodeIndex = 0; nodeIndex < number_of_nodes; nodeIndex++)
 	{
-		const array_1d<double, 3 > & nodal_velocity = rGeom[nodeIndex].FastGetSolutionStepValue(VELOCITY, 0);
+		const array_1d<double, 3 > & nodal_velocity = rGeom[nodeIndex].FastGetSolutionStepValue(MIDDLE_VELOCITY, 0);
 
 		for (unsigned int i = 0; i < dimension; i++)
 		{
@@ -506,16 +505,15 @@ void UpdatedLagrangianQuadrilateral::CalculateExplicitKinematics(GeneralVariable
 
 	//PJW calculate and store objective strain increments
 	Vector& MP_Strain = this->GetValue(MP_ALMANSI_STRAIN_VECTOR); //PJW, retrieve stress vector, explicit only
-	MP_Strain(0) += jaumannRate(1, 1)*delta_time; //e_xx
-	MP_Strain(1) += jaumannRate(2, 2)*delta_time; //e_yy
-	MP_Strain(2) += 2.0*jaumannRate(1, 2)*delta_time; //e_xy
+	MP_Strain(0) += jaumannRate(0, 0)*delta_time; //e_xx
+	MP_Strain(1) += jaumannRate(1, 1)*delta_time; //e_yy
+	MP_Strain(2) += 2.0*jaumannRate(0, 1)*delta_time; //e_xy
 	rVariables.StrainVector = MP_Strain;
 
 
-	// Set dummy parameters
-	rVariables.F = mDeformationGradientF0;
-	rVariables.detF = mDeterminantF0;
-	
+	// Determinant of the previous Deformation Gradient F_n
+	rVariables.detF0 = mDeterminantF0;
+	rVariables.F0 = mDeformationGradientF0;
 
 	bool isCompressible = false; //add some test to see if we are considering compressibility or not
 	if (isCompressible)
@@ -537,6 +535,13 @@ void UpdatedLagrangianQuadrilateral::CalculateExplicitKinematics(GeneralVariable
 		double& MP_Density = this->GetValue(MP_DENSITY); //PJW, needed for explicit force calculation
 		MP_Density /= rVariables.detF;
 		this->SetValue(MP_DENSITY, MP_Density);
+	}
+	else
+	{
+		//PJW Set dummy parameters
+		rVariables.F = mDeformationGradientF0;
+		rVariables.detF = mDeterminantF0;
+		double test = 1;
 	}
 
 	KRATOS_CATCH("")
@@ -627,13 +632,10 @@ void UpdatedLagrangianQuadrilateral::CalculateAndAddRHS(LocalSystemComponents& r
     {
         VectorType& rRightHandSideVector = rLocalSystem.GetRightHandSideVector();
 
-		std::cout << "pos3" << rRightHandSideVector << std::endl;
         // Operation performed: rRightHandSideVector += ExtForce*IntToReferenceWeight
         this->CalculateAndAddExternalForces( rRightHandSideVector, rVariables, rVolumeForce, rIntegrationWeight );
-		std::cout << "pos4" << rRightHandSideVector << std::endl;
         // Operation performed: rRightHandSideVector -= IntForce*IntToReferenceWeight
         this->CalculateAndAddInternalForces( rRightHandSideVector, rVariables, rIntegrationWeight );
-		std::cout << "pos5" << rRightHandSideVector << std::endl;
     }
 
 }
@@ -841,8 +843,6 @@ void UpdatedLagrangianQuadrilateral::CalculateRightHandSide( VectorType& rRightH
     // Set Variables to Local system components
     LocalSystem.SetLeftHandSideMatrix(LeftHandSideMatrix);
     LocalSystem.SetRightHandSideVector(rRightHandSideVector);
-
-	std::cout << "RHS before calculateElementalSystem = " << rRightHandSideVector << std::endl;
 
     // Calculate elemental system
     CalculateElementalSystem( LocalSystem, rCurrentProcessInfo ); //PJW - this is the problem
@@ -1125,6 +1125,8 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
 		// Compute explicit element kinematics
 		this->CalculateExplicitKinematics(Variables, rCurrentProcessInfo);
 
+		//PJW detF needs to be set properly above!
+
 		// Set general variables to constitutivelaw parameters
 		this->SetGeneralVariables(Variables, Values);
 
@@ -1152,7 +1154,7 @@ void UpdatedLagrangianQuadrilateral::FinalizeStepVariables( GeneralVariables & r
     mDeterminantF0         = rVariables.detF* rVariables.detF0;
     mDeformationGradientF0 = prod(rVariables.F, rVariables.F0);
 
-    this->SetValue(MP_CAUCHY_STRESS_VECTOR, rVariables.StressVector);
+	this->SetValue(MP_CAUCHY_STRESS_VECTOR, rVariables.StressVector);
     this->SetValue(MP_ALMANSI_STRAIN_VECTOR, rVariables.StrainVector);
 
     // Delta Plastic Strains
@@ -1999,8 +2001,7 @@ void UpdatedLagrangianQuadrilateral::AddExplicitContribution(
         CalculateDampingMatrix(damping_matrix, temp_process_information);
         // current residual contribution due to damping
         noalias(damping_residual_contribution) = prod(damping_matrix, current_nodal_velocities);
-		
-		std::cout << "rRHSVector = " << rRHSVector << std::endl;
+
 
         for (size_t i = 0; i < number_of_nodes; ++i) {
             size_t index = dimension * i;

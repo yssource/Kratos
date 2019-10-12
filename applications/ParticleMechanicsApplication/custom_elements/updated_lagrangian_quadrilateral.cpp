@@ -125,7 +125,16 @@ UpdatedLagrangianQuadrilateral::~UpdatedLagrangianQuadrilateral()
 
 void UpdatedLagrangianQuadrilateral::Initialize()
 {
-    KRATOS_TRY
+	KRATOS_TRY
+
+	Vector mp_vel = this->GetValue(MP_VELOCITY);
+	mp_vel[0] = 0.4;
+	this->SetValue(MP_VELOCITY, mp_vel);
+	Vector mp_middle_vel = this->GetValue(MP_MIDDLE_VELOCITY);
+	mp_middle_vel[0] = 0.4;
+	this->SetValue(MP_MIDDLE_VELOCITY, mp_middle_vel);
+	std::cout << "\n\n\n========= Initial velocity ============== \n" << this->GetValue(MP_VELOCITY) << std::endl;
+	std::cout << "\n\n\n========= Initial middle velocity ============== \n" << this->GetValue(MP_MIDDLE_VELOCITY) << std::endl;
 
     // Initialize parameters
     const unsigned int dimension = GetGeometry().WorkingSpaceDimension();
@@ -319,8 +328,7 @@ void UpdatedLagrangianQuadrilateral::CalculateElementalSystem( LocalSystemCompon
 	Variables.StressMeasure = ConstitutiveLaw::StressMeasure_Cauchy;
 
 
-	bool isImplicit = false; //PJW add element system
-	if (isImplicit)
+	if (mIsImplicit)
 	{
 		ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS, true);
 		ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN,false);
@@ -469,7 +477,6 @@ void UpdatedLagrangianQuadrilateral::CalculateExplicitKinematics(GeneralVariable
 	const array_1d<double, 3>& xg = this->GetValue(MP_COORD);
 
 	//PJW Calculate shape function gradients
-
 	Matrix Jacobian;
 	Jacobian = this->MPMJacobian(Jacobian, xg);
 	Matrix InvJ;
@@ -483,7 +490,6 @@ void UpdatedLagrangianQuadrilateral::CalculateExplicitKinematics(GeneralVariable
 	for (unsigned int nodeIndex = 0; nodeIndex < number_of_nodes; nodeIndex++)
 	{
 		const array_1d<double, 3 > & nodal_velocity = rGeom[nodeIndex].FastGetSolutionStepValue(MIDDLE_VELOCITY, 0);
-
 		for (unsigned int i = 0; i < dimension; i++)
 		{
 			for (unsigned int j = 0; j < dimension; j++)
@@ -492,6 +498,8 @@ void UpdatedLagrangianQuadrilateral::CalculateExplicitKinematics(GeneralVariable
 			}
 		}
 	}
+
+	std::cout << "vel grad" << velocityGradient << std::endl;
 
 	//PJW calculate rate of deformation and spin tensors
 	Matrix rateOfDeformation = 0.5*(velocityGradient + trans(velocityGradient));
@@ -675,8 +683,7 @@ void UpdatedLagrangianQuadrilateral::CalculateAndAddInternalForces(VectorType& r
 	KRATOS_TRY
 
 	VectorType internal_forces = ZeroVector(rRightHandSideVector.size());
-	bool isImplicit = false;
-	if (isImplicit)
+	if (mIsImplicit)
 	{
 		internal_forces += rIntegrationWeight * prod(trans(rVariables.B), rVariables.StressVector);
 	}
@@ -708,8 +715,9 @@ void UpdatedLagrangianQuadrilateral::CalculateAndAddInternalForces(VectorType& r
 				internal_forces[index] += MP_Volume * MP_Stress[j] * Variables.DN_DX(i, j); //PJW-nodal internal forces
 			}
 		}
-
 	}
+
+	
 
 
 	//PJW - add internal forces here!
@@ -1000,6 +1008,8 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     const array_1d<double,3>& xg = this->GetValue(MP_COORD);
     GeneralVariables Variables;
 
+	std::cout << "xg = " << xg << std::endl;
+
     // Calculating shape function
     Variables.N = this->MPMShapeFunctionPointValues(Variables.N, xg);
 
@@ -1015,6 +1025,7 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     mFinalizedStep = false;
 
     const array_1d<double,3>& MP_Velocity = this->GetValue(MP_VELOCITY);
+	const array_1d<double, 3>& MP_Middle_Velocity = this->GetValue(MP_MIDDLE_VELOCITY);
     const array_1d<double,3>& MP_Acceleration = this->GetValue(MP_ACCELERATION);
 	//const Vector& MP_Stress = this->GetValue(MP_CAUCHY_STRESS_VECTOR); //PJW, retrieve stress vector, explicit only
     const double& MP_Mass = this->GetValue(MP_MASS);
@@ -1024,6 +1035,8 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     array_1d<double,3> AUX_MP_Acceleration = ZeroVector(3);
     array_1d<double,3> nodal_momentum = ZeroVector(3);
     array_1d<double,3> nodal_inertia  = ZeroVector(3);
+
+	std::cout << "initialize MP_Velocity = " << MP_Velocity << std::endl;
 
 	//array_1d<double, 3> nodal_force_internal_normal = ZeroVector(3); //PJW, needed for explicit force
 
@@ -1051,14 +1064,16 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
 			//nodal_force_internal_normal[j] = MP_Volume * MP_Stress[j] * Variables.DN_DX(i, j); //PJW, nodal internal forces
         }
 
+		std::cout << "initialize MP_Velocity = " << MP_Velocity << std::endl;
+		std::cout << "initialize AUX_MP_Velocity = " << AUX_MP_Velocity << std::endl;
+
         rGeom[i].SetLock();
         rGeom[i].FastGetSolutionStepValue(NODAL_MOMENTUM, 0) += nodal_momentum;
         rGeom[i].FastGetSolutionStepValue(NODAL_INERTIA, 0)  += nodal_inertia;
-		//rGeom[i].FastGetSolutionStepValue(FORCE_RESIDUAL, 0) -= nodal_force_internal_normal; //PJW, minus sign, internal forces
-
         rGeom[i].FastGetSolutionStepValue(NODAL_MASS, 0) += Variables.N[i] * MP_Mass;
+		rGeom[i].FastGetSolutionStepValue(VELOCITY, 0) += Variables.N[i] * MP_Velocity;
+		rGeom[i].FastGetSolutionStepValue(MIDDLE_VELOCITY, 0) += Variables.N[i] * MP_Middle_Velocity;
         rGeom[i].UnSetLock();
-
     }
 }
 
@@ -1084,10 +1099,6 @@ void UpdatedLagrangianQuadrilateral::FinalizeNonLinearIteration( ProcessInfo& rC
 void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrentProcessInfo )
 {
     KRATOS_TRY
-
-	// TODO: add some test to see what time integration we have
-	bool isImplicit = false;
-
     // Create and initialize element variables:
     GeneralVariables Variables;
     this->InitializeGeneralVariables(Variables,rCurrentProcessInfo);
@@ -1099,7 +1110,7 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
     Flags &ConstitutiveLawOptions=Values.GetOptions();
 	ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS);
 	
-	if (isImplicit)
+	if (mIsImplicit)
 	{
 		// use deformation gradient based strain
 		ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN, false); 
@@ -1115,7 +1126,7 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
 	}
 	else
 	{
-		ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR);
+		ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR, true);
 
 		// use element provided strain incremented from velocity gradient
 		ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN, true);
@@ -2001,7 +2012,6 @@ void UpdatedLagrangianQuadrilateral::AddExplicitContribution(
         CalculateDampingMatrix(damping_matrix, temp_process_information);
         // current residual contribution due to damping
         noalias(damping_residual_contribution) = prod(damping_matrix, current_nodal_velocities);
-
 
         for (size_t i = 0; i < number_of_nodes; ++i) {
             size_t index = dimension * i;

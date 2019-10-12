@@ -331,7 +331,16 @@ public:
                 r_current_velocity[j] =  r_previous_middle_velocity[j] + (mTime.Previous - mTime.PreviousMiddle) * r_current_acceleration[j]; //+ actual_velocity;
                 r_middle_velocity[j] = r_current_velocity[j] + (mTime.Middle - mTime.Previous) * r_current_acceleration[j];
                 r_current_displacement[j] = r_previous_displacement[j] + mTime.Delta * r_middle_velocity[j];
+
+
+				
+
             } // for DomainSize
+
+			if (norm_2(r_middle_velocity) > 0.0)
+			{
+				int test = 1;
+			}
         }
 
 

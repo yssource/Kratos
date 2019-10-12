@@ -301,36 +301,10 @@ public:
             array_1d<double, 3>& r_current_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT);
             array_1d<double, 3>& r_middle_velocity = itCurrentNode->FastGetSolutionStepValue(MIDDLE_VELOCITY);
 
-			std::cout << "Before momentum update, r_current_velocity = " << r_current_velocity << std::endl;
-			std::cout << "Before momentum update, r_middle_velocity = " << r_middle_velocity << std::endl;
-
             array_1d<double, 3>& r_current_acceleration = itCurrentNode->FastGetSolutionStepValue(ACCELERATION);
 
-            
-			array_1d<double, 3>& r_actual_previous_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT, 1);
-			array_1d<double, 3>& r_actual_previous_middle_velocity = itCurrentNode->FastGetSolutionStepValue(MIDDLE_VELOCITY, 1);
-
-			array_1d<double, 3>& r_previous_displacement = r_actual_previous_displacement;
-			array_1d<double, 3>& r_previous_middle_velocity = r_actual_previous_middle_velocity;
-
-			if (mTime.Previous == 0.0)
-			{
-				//const array_1d<double, 3> r_initial_previous_displacement = array_1d<double, 3>(DomainSize, 0.0);
-				//const array_1d<double, 3>& r_initial_previous_middle_velocity = r_middle_velocity;
-
-				r_previous_displacement = array_1d<double, 3>(3, 0.0);
-				r_previous_middle_velocity = r_middle_velocity;
-			}
-			//else
-			//{
-			//	const array_1d<double, 3>& r_actual_previous_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT, 1);
-			//	const array_1d<double, 3>& r_actual_previous_middle_velocity = itCurrentNode->FastGetSolutionStepValue(MIDDLE_VELOCITY, 1);
-
-			//	r_previous_displacement = r_actual_previous_displacement;
-			//	r_previous_middle_velocity = r_actual_previous_middle_velocity;
-			//}
-
-
+            const array_1d<double, 3>& r_previous_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT, 1);
+            const array_1d<double, 3>& r_previous_middle_velocity = itCurrentNode->FastGetSolutionStepValue(MIDDLE_VELOCITY, 1);
             // Solution of the explicit equation:
 			//PJW: THIS IS WHERE WE ACTUALLY HIT, IT SEEMS TO WORK CORRECTLY. (JUST CHECKED FOR GRAVITY LOAD)
             if (nodal_mass > numerical_limit)
@@ -352,15 +326,11 @@ public:
                 if (fix_displacements[j]) {
                     r_current_acceleration[j] = 0.0;
                     r_middle_velocity[j] = 0.0;
-					r_current_velocity[j] = 0.0;
-					std::cout << "Fixing DOF " << j + 1 << std::endl;
                 }
-				else
-				{
-					r_current_velocity[j] = r_previous_middle_velocity[j] + (mTime.Previous - mTime.PreviousMiddle) * r_current_acceleration[j]; //+ actual_velocity;
-					r_middle_velocity[j] = r_current_velocity[j] + (mTime.Middle - mTime.Previous) * r_current_acceleration[j];
-					r_current_displacement[j] = r_previous_displacement[j] + mTime.Delta * r_middle_velocity[j];
-				}
+
+                r_current_velocity[j] =  r_previous_middle_velocity[j] + (mTime.Previous - mTime.PreviousMiddle) * r_current_acceleration[j]; //+ actual_velocity;
+                r_middle_velocity[j] = r_current_velocity[j] + (mTime.Middle - mTime.Previous) * r_current_acceleration[j];
+                r_current_displacement[j] = r_previous_displacement[j] + mTime.Delta * r_middle_velocity[j];
             } // for DomainSize
         }
 
@@ -770,7 +740,6 @@ public:
                 if (fix_displacements[j]) {
                     r_current_acceleration[j] = 0.0;
                     r_middle_velocity[j] = 0.0;
-
                 }
 
                 r_middle_velocity[j] = 0.0 + (mTime.Middle - mTime.Previous) * r_current_acceleration[j];
@@ -829,9 +798,21 @@ public:
     {
 		KRATOS_TRY
 
-        pCurrentEntity->CalculateRightHandSide(RHS_Contribution, rCurrentProcessInfo);
+		//std::cout << "RHS_Contribution before = " << RHS_Contribution << std::endl;
+
+        pCurrentEntity->CalculateRightHandSide(RHS_Contribution, rCurrentProcessInfo); //PJW- here is the problem
+
+		//std::cout << "RHS_Contribution after = " << RHS_Contribution << std::endl;
+        //Matrix dummy_lhs;
+        //(pCurrentEntity)->CalculateLocalSystem(dummy_lhs, RHS_Contribution, rCurrentProcessInfo);
+
+		//PJW
         pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, FORCE_RESIDUAL, rCurrentProcessInfo);
+
+		//std::cout << "pos6" << RHS_Contribution << std::endl;
         pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, MOMENT_RESIDUAL, rCurrentProcessInfo);
+
+		//std::cout << "pos7" << RHS_Contribution << std::endl;
 		KRATOS_CATCH("")
     }
 

@@ -23,7 +23,7 @@ namespace Kratos
 {
 namespace MeshingUtilities
 {
-void RecursiveEnsureModelPartOwnsProperties(
+void KRATOS_API(MESHING_APPLICATION) RecursiveEnsureModelPartOwnsProperties(
     ModelPart& rModelPart,
     const bool RemovePreviousProperties
     )
@@ -40,7 +40,7 @@ void RecursiveEnsureModelPartOwnsProperties(
 /***********************************************************************************/
 /***********************************************************************************/
 
-void EnsureModelPartOwnsProperties(
+void KRATOS_API(MESHING_APPLICATION) EnsureModelPartOwnsProperties(
     ModelPart& rModelPart,
     const bool RemovePreviousProperties
     )
@@ -51,7 +51,7 @@ void EnsureModelPartOwnsProperties(
     }
 
     // The list of properties
-    std::unordered_set<Properties::Pointer, IndexedObjecPointertHasher, IndexedObjectPointerComparator> list_of_properties;
+    std::unordered_set<Properties::Pointer, IndexedObjecPointertHasher<Properties::Pointer>, IndexedObjectPointerComparator<Properties::Pointer>> list_of_properties;
 
     // Iterating over the elements
     auto& r_elements_array = rModelPart.Elements();
@@ -66,7 +66,7 @@ void EnsureModelPartOwnsProperties(
     #pragma omp parallel
     {
         // The list of properties
-        std::unordered_set<Properties::Pointer, IndexedObjecPointertHasher, IndexedObjectPointerComparator> buffer_list_of_properties;
+        std::unordered_set<Properties::Pointer, IndexedObjecPointertHasher<Properties::Pointer>, IndexedObjectPointerComparator<Properties::Pointer>> buffer_list_of_properties;
 
         #pragma omp for schedule(guided, 512) nowait
         for (int i = 0; i < number_of_elements; ++i) {

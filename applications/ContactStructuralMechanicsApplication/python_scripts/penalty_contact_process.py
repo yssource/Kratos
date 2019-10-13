@@ -53,7 +53,6 @@ class PenaltyContactProcess(alm_contact_process.ALMContactProcess):
             "normal_variation"              : "no_derivatives_computation",
             "frictional_law"                : "Coulomb",
             "tangent_factor"                : 1.0e-3,
-            "slip_convergence_coefficient"  : 1.0,
             "max_lagrange_multiplier_check" : null,
             "max_lm_reset_factor"           : 5.0,
             "slip_augmentation_coefficient" : 0.0,
@@ -61,6 +60,7 @@ class PenaltyContactProcess(alm_contact_process.ALMContactProcess):
             "zero_tolerance_factor"         : 1.0,
             "integration_order"             : 2,
             "clear_inactive_for_post"       : true,
+            "slip_step_reset_frequency"     : 1,
             "search_parameters"             : {
                 "type_search"                         : "in_radius_with_obb",
                 "simple_search"                       : false,

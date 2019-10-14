@@ -18,10 +18,28 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
 
     def __init__(self, model, custom_settings):
 
+        self._validate_settings_in_baseclass = True
+        
         super(CoupledPfemFluidThermalSolver, self).__init__(model, custom_settings)
 
-        default_settings = KratosMultiphysics.Parameters("""
-        {
+        #default_settings = KratosMultiphysics.Parameters()
+        #    
+        ##self.settings = custom_settings
+        ### Overwrite the default settings with user-provided parameters
+        #self.settings.ValidateAndAssignDefaults(default_settings)
+
+        ## Get domain size
+        self.domain_size = self.settings["fluid_solver_settings"]["domain_size"].GetInt()
+        
+        from KratosMultiphysics.PfemFluidDynamicsApplication import pfem_fluid_solver
+        self.fluid_solver = pfem_fluid_solver.CreateSolver(self.model,self.settings["fluid_solver_settings"]) 
+
+        from KratosMultiphysics.ConvectionDiffusionApplication import python_solvers_wrapper_convection_diffusion
+        self.thermal_solver = python_solvers_wrapper_convection_diffusion.CreateSolverByParameters(self.model,self.settings["thermal_solver_settings"],"OpenMP")
+
+    @classmethod
+    def GetDefaultSettings(cls):
+        this_defaults = KratosMultiphysics.Parameters("""{
             "solver_type": "coupled_pfem_fluid_thermal_solver",
             "model_part_name": "PfemFluidModelPart",
             "echo_level"                         : 1,

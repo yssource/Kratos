@@ -339,7 +339,8 @@ class PfemFluidDynamicsAnalysis(AnalysisStage):
         return ["initial_conditions_process_list",
                 "constraints_process_list",
                 "loads_process_list",
-                "auxiliar_process_list"]
+                "auxiliar_process_list",
+                "list_other_processes"]
 
     #### Main internal methods ####
 

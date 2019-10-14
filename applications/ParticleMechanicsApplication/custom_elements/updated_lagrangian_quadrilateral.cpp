@@ -365,6 +365,7 @@ void UpdatedLagrangianQuadrilateral::CalculateElementalSystem( LocalSystemCompon
     
 
 	// Auxiliary terms
+	std::cout << "normal volume force calc disabled" << std::endl;
 	Vector volume_force;
     if ( rLocalSystem.CalculationFlags.Is(UpdatedLagrangianQuadrilateral::COMPUTE_RHS_VECTOR) ) // if calculation of the vector is required
     {
@@ -451,29 +452,18 @@ void UpdatedLagrangianQuadrilateral::CalculateExplicitKinematics(GeneralVariable
 	GeometryType& rGeom = GetGeometry();
 	const unsigned int dimension = rGeom.WorkingSpaceDimension();
 	const unsigned int number_of_nodes = rGeom.PointsNumber();
-	const array_1d<double, 3>& xg = this->GetValue(MP_COORD);
-
-	//PJW Calculate shape function gradients
-
-	Matrix Jacobian;
-	Jacobian = this->MPMJacobian(Jacobian, xg);
-	Matrix InvJ;
-	double detJ;
-	MathUtils<double>::InvertMatrix(Jacobian, InvJ, detJ);
-	rVariables.DN_De = this->MPMShapeFunctionsLocalGradients(rVariables.DN_De, xg); // local gradients
-	rVariables.DN_DX = prod(rVariables.DN_De, InvJ); // cartesian gradients
 
 	//PJW calculate velocity gradients
 	Matrix velocityGradient = Matrix(dimension, dimension, 0.0);
 	for (unsigned int nodeIndex = 0; nodeIndex < number_of_nodes; nodeIndex++)
 	{
-		const array_1d<double, 3 > & nodal_velocity = rGeom[nodeIndex].FastGetSolutionStepValue(MIDDLE_VELOCITY, 0);
+		const array_1d<double, 3 > & nodal_velocity = rGeom[nodeIndex].FastGetSolutionStepValue(VELOCITY);
 
 		for (unsigned int i = 0; i < dimension; i++)
 		{
 			for (unsigned int j = 0; j < dimension; j++)
 			{
-				velocityGradient(i, j) += nodal_velocity[i] * rVariables.DN_DX(nodeIndex, j);
+				velocityGradient(i, j) += nodal_velocity[i] * mDN_DX(nodeIndex, j);
 			}
 		}
 	}
@@ -500,7 +490,7 @@ void UpdatedLagrangianQuadrilateral::CalculateExplicitKinematics(GeneralVariable
 	rVariables.detF0 = mDeterminantF0;
 	rVariables.F0 = mDeformationGradientF0;
 
-	bool isCompressible = false; //add some test to see if we are considering compressibility or not
+	bool isCompressible = false; //add some test to see if we are considering compressible or not
 	if (isCompressible)
 	{
 		//PJW calculate compressiblity related phenomena
@@ -526,7 +516,6 @@ void UpdatedLagrangianQuadrilateral::CalculateExplicitKinematics(GeneralVariable
 		//PJW Set dummy parameters
 		rVariables.F = mDeformationGradientF0;
 		rVariables.detF = mDeterminantF0;
-		double test = 1;
 	}
 
 	KRATOS_CATCH("")
@@ -803,8 +792,6 @@ Vector& UpdatedLagrangianQuadrilateral::CalculateVolumeForce( Vector& rVolumeFor
     rVolumeForce = ZeroVector(dimension);
     rVolumeForce = this->GetValue(MP_VOLUME_ACCELERATION)* this->GetValue(MP_MASS);
 
-    //KRATOS_WATCH(rVolumeForce);
-
     return rVolumeForce;
 
     KRATOS_CATCH( "" )
@@ -998,6 +985,14 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     const array_1d<double,3>& MP_Acceleration = this->GetValue(MP_ACCELERATION);
 	const double& MP_Mass = this->GetValue(MP_MASS);
 
+	if (xg[0] > 1.3 && xg[0] < 1.7)
+	{
+		if (xg[1] > 1.3 && xg[1] < 1.7)
+		{
+			int testBreak = 1;
+		}
+	}
+
     array_1d<double,3> AUX_MP_Velocity = ZeroVector(3);
     array_1d<double,3> AUX_MP_Acceleration = ZeroVector(3);
     array_1d<double,3> nodal_momentum = ZeroVector(3);
@@ -1017,11 +1012,6 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
 				AUX_MP_Acceleration[k] += Variables.N[j] * nodal_acceleration[k];
 			}
 		}
-	}
-
-	if (norm_2(AUX_MP_Velocity) > 0.000001)
-	{
-		int test = 1;
 	}
 
     // Here MP contribution in terms of momentum, inertia and mass are added
@@ -1061,9 +1051,27 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
 
 		for (unsigned int i = 0; i < number_of_nodes; i++)
 		{
+
+			//f_x = V*(s_xx*dNdX + s_xy*dNdY)
+			nodal_force_internal_normal[0] = MP_Volume * 
+				(MP_Stress[0] * Variables.DN_DX(i, 0) + 
+					MP_Stress[2] * Variables.DN_DX(i, 1));
+
+			//f_x = V*(s_yy*dNdX + s_xy*dNdX)
+			nodal_force_internal_normal[1] = MP_Volume *
+				(MP_Stress[1] * Variables.DN_DX(i, 1) +
+					MP_Stress[2] * Variables.DN_DX(i, 0));
+			//PJW, nodal internal forces
+
+
+
 			for (unsigned int j = 0; j < dimension; j++)
 			{
-				nodal_force_internal_normal[j] = MP_Volume * MP_Stress[j] * Variables.DN_DX(i, j); //PJW, nodal internal forces
+				
+
+
+
+				//nodal_force_internal_normal[j] = MP_Volume * MP_Stress[j] * Variables.DN_DX(i, j); //PJW, nodal internal forces
 			}
 
 			if (norm_2(nodal_force_internal_normal) > 0.0001)
@@ -1074,16 +1082,18 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
 			rGeom[i].FastGetSolutionStepValue(FORCE_RESIDUAL, 0) -= nodal_force_internal_normal; //PJW, minus sign, internal forces
 			rGeom[i].UnSetLock();
 		}
+
+		if (xg[0] > 1.3 && xg[0] < 1.7)
+		{
+			if (xg[1] > 1.3 && xg[1] < 1.7)
+			{
+				int testBreak = 1;
+			}
+		}
 	} // explicit internal force calculation
 
 
-	//if (xg[0] > 1.3 && xg[0] < 1.7)
-	//{
-	//	if (xg[1] > 1.3 && xg[1] < 1.7)
-	//	{
-	//		int testBreak = 1;
-	//	}
-	//}
+
 }
 
 
@@ -1139,17 +1149,15 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
 	}
 	else
 	{
-		ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR);
+		// Map grid to particle
+		this->UpdateGaussPointExplicit(Variables, rCurrentProcessInfo);
 
 		// use element provided strain incremented from velocity gradient
+		ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR);
 		ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN, true);
-
-		// Set parameters
 
 		// Compute explicit element kinematics
 		this->CalculateExplicitKinematics(Variables, rCurrentProcessInfo);
-
-		//PJW detF needs to be set properly above!
 
 		// Set general variables to constitutivelaw parameters
 		this->SetGeneralVariables(Variables, Values);
@@ -1160,11 +1168,10 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
 		call CalculateMaterialResponseKirchhoff() in the constitutive_law.*/
 		mConstitutiveLawVector->CalculateMaterialResponse(Values, Variables.StressMeasure);
 	}
-
-	// Call the element internal variables update
+	
 	this->FinalizeStepVariables(Variables, rCurrentProcessInfo);
 
-    mFinalizedStep = true;
+	mFinalizedStep = true;
 
     KRATOS_CATCH( "" )
 }
@@ -1201,7 +1208,12 @@ void UpdatedLagrangianQuadrilateral::FinalizeStepVariables( GeneralVariables & r
     double AccumulatedPlasticDeviatoricStrain = mConstitutiveLawVector->GetValue(MP_ACCUMULATED_PLASTIC_DEVIATORIC_STRAIN, AccumulatedPlasticDeviatoricStrain);
     this->SetValue(MP_ACCUMULATED_PLASTIC_DEVIATORIC_STRAIN, AccumulatedPlasticDeviatoricStrain);
 
-    this->UpdateGaussPoint(rVariables, rCurrentProcessInfo);
+	bool isImplicit = false;
+	if (isImplicit)
+	{
+		this->UpdateGaussPoint(rVariables, rCurrentProcessInfo);
+	}
+    
 
 }
 
@@ -1307,6 +1319,76 @@ void UpdatedLagrangianQuadrilateral::UpdateGaussPoint( GeneralVariables & rVaria
     this -> SetValue(MP_DISPLACEMENT,MP_Displacement );
 
     KRATOS_CATCH( "" )
+}
+
+void UpdatedLagrangianQuadrilateral::UpdateGaussPointExplicit(GeneralVariables & rVariables, const ProcessInfo & rCurrentProcessInfo)
+{
+	KRATOS_TRY
+
+	GeometryType& rGeom = GetGeometry();
+	const unsigned int number_of_nodes = rGeom.PointsNumber();
+	const unsigned int dimension = rGeom.WorkingSpaceDimension();
+
+	array_1d<double, 3> delta_xg = ZeroVector(3);
+	array_1d<double, 3> MP_Acceleration = ZeroVector(3);
+	const double& delta_time = rCurrentProcessInfo[DELTA_TIME];
+
+	for (unsigned int i = 0; i < number_of_nodes; i++)
+	{
+		if (mN[i] > std::numeric_limits<double>::epsilon())
+		{
+			const double nodal_mass = rGeom[i].FastGetSolutionStepValue(NODAL_MASS);
+
+			if (nodal_mass > std::numeric_limits<double>::epsilon())
+			{
+				const array_1d<double, 3>& r_nodal_momenta = rGeom[i].FastGetSolutionStepValue(NODAL_MOMENTUM);
+				const array_1d<double, 3>& r_current_residual = rGeom[i].FastGetSolutionStepValue(FORCE_RESIDUAL);
+
+				for (unsigned int j = 0; j < dimension; j++)
+				{
+					MP_Acceleration[j] += mN[i] * r_current_residual[j] / nodal_mass;
+					delta_xg[j] += delta_time * mN[i] * r_nodal_momenta[j] / nodal_mass;
+				}
+			}
+		}
+	}
+
+
+	// Update the MP Velocity
+	const array_1d<double, 3>& MP_PreviousVelocity = this->GetValue(MP_VELOCITY);
+	array_1d<double, 3> MP_Velocity = ZeroVector(3);
+	for (unsigned int j = 0; j < dimension; j++)
+	{
+		MP_Velocity[j] = MP_PreviousVelocity[j] + delta_time * MP_Acceleration[j];
+
+	}
+	this->SetValue(MP_VELOCITY, MP_Velocity);
+
+
+	// Update the MP Position
+	const array_1d<double, 3>& xg = this->GetValue(MP_COORD);
+	const array_1d<double, 3>& new_xg = xg + delta_xg;
+	this->SetValue(MP_COORD, new_xg);
+
+
+	// Update the MP Acceleration
+	this->SetValue(MP_ACCELERATION, MP_Acceleration);
+
+
+	// Update the MP total displacement
+	array_1d<double, 3>& MP_Displacement = this->GetValue(MP_DISPLACEMENT);
+	MP_Displacement += delta_xg;
+	this->SetValue(MP_DISPLACEMENT, MP_Displacement);
+
+
+	// PJW test
+	if (xg[0] > 1.2 && xg[0] < 1.8)
+	{
+		Vector& mpStress = this->GetValue(MP_CAUCHY_STRESS_VECTOR);
+		int test123 = 1;
+	}
+
+	KRATOS_CATCH("")
 }
 
 

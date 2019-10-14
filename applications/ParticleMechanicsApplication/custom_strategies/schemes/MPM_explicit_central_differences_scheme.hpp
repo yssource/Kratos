@@ -296,69 +296,124 @@ public:
 			const double node_Y = itCurrentNode->Y();
 			// PJW
 
-            const double nodal_mass = itCurrentNode->FastGetSolutionStepValue(NODAL_MASS);
+   //         const double nodal_mass = itCurrentNode->FastGetSolutionStepValue(NODAL_MASS);
+			//
 
-            const double nodal_displacement_damping = itCurrentNode->GetValue(NODAL_DISPLACEMENT_DAMPING);
-            const array_1d<double, 3>& r_current_residual = itCurrentNode->FastGetSolutionStepValue(FORCE_RESIDUAL);
+   //         const double nodal_displacement_damping = itCurrentNode->GetValue(NODAL_DISPLACEMENT_DAMPING);
+   //         const array_1d<double, 3>& r_current_residual = itCurrentNode->FastGetSolutionStepValue(FORCE_RESIDUAL);
 
-            array_1d<double, 3>& r_current_velocity = itCurrentNode->FastGetSolutionStepValue(VELOCITY);
-            array_1d<double, 3>& r_current_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT);
-            array_1d<double, 3>& r_middle_velocity = itCurrentNode->FastGetSolutionStepValue(MIDDLE_VELOCITY);
+   //         array_1d<double, 3>& r_current_velocity = itCurrentNode->FastGetSolutionStepValue(VELOCITY);
+   //         array_1d<double, 3>& r_current_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT);
+   //         array_1d<double, 3>& r_middle_velocity = itCurrentNode->FastGetSolutionStepValue(MIDDLE_VELOCITY);
 
-            array_1d<double, 3>& r_current_acceleration = itCurrentNode->FastGetSolutionStepValue(ACCELERATION);
+   //         array_1d<double, 3>& r_current_acceleration = itCurrentNode->FastGetSolutionStepValue(ACCELERATION);
 
-            const array_1d<double, 3>& r_previous_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT, 1);
-            const array_1d<double, 3>& r_previous_middle_velocity = itCurrentNode->FastGetSolutionStepValue(MIDDLE_VELOCITY, 1);
-            // Solution of the explicit equation:
-            if (nodal_mass > numerical_limit)
-                // I do this on element lvl
-                //noalias(r_current_acceleration) = (r_current_residual - nodal_displacement_damping * r_current_velocity) / nodal_mass;
-                noalias(r_current_acceleration) = (r_current_residual) / nodal_mass;
-            else
-                noalias(r_current_acceleration) = ZeroVector(3);
+   //         const array_1d<double, 3>& r_previous_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT, 1);
+   //         const array_1d<double, 3>& r_previous_middle_velocity = itCurrentNode->FastGetSolutionStepValue(MIDDLE_VELOCITY, 1);
+   //         
+			//// Solution of the explicit equation:
+   //         if (nodal_mass > numerical_limit)
+   //             // I do this on element lvl
+   //             //noalias(r_current_acceleration) = (r_current_residual - nodal_displacement_damping * r_current_velocity) / nodal_mass;
+   //             noalias(r_current_acceleration) = (r_current_residual) / nodal_mass;
+   //         else
+   //             noalias(r_current_acceleration) = ZeroVector(3);
 
 
-            std::array<bool, 3> fix_displacements = {false, false, false};
+   //         std::array<bool, 3> fix_displacements = {false, false, false};
 
+   //         fix_displacements[0] = (itCurrentNode->GetDof(DISPLACEMENT_X, DisplacementPosition).IsFixed());
+   //         fix_displacements[1] = (itCurrentNode->GetDof(DISPLACEMENT_Y, DisplacementPosition + 1).IsFixed());
+   //         if (DomainSize == 3)
+   //             fix_displacements[2] = (itCurrentNode->GetDof(DISPLACEMENT_Z, DisplacementPosition + 2).IsFixed());
+
+
+
+			////PJW
+			//if (node_X >1.7 && node_X < 2.3 && node_Y > 1.7 && node_Y < 2.3 && nodal_mass > numerical_limit)
+			//{
+			//	int myTest = 1;
+			//}
+			////PJW
+
+
+   //         for (IndexType j = 0; j < DomainSize; j++) {
+   //             if (fix_displacements[j]) {
+   //                 r_current_acceleration[j] = 0.0;
+   //                 r_middle_velocity[j] = 0.0;
+   //             }
+
+   //             r_current_velocity[j] =  r_previous_middle_velocity[j] + (mTime.Previous - mTime.PreviousMiddle) * r_current_acceleration[j]; //+ actual_velocity;
+   //             r_middle_velocity[j] = r_current_velocity[j] + (mTime.Middle - mTime.Previous) * r_current_acceleration[j];
+   //             r_current_displacement[j] = r_previous_displacement[j] + mTime.Delta * r_middle_velocity[j];
+
+			//	//r_current_velocity[j] = r_middle_velocity[j]; //PJW TESTING
+
+			//	
+
+   //         } // for DomainSize
+
+
+
+			//PJW integrated momentum form of explicit advance =============================
+			std::array<bool, 3> fix_displacements = {false, false, false};
             fix_displacements[0] = (itCurrentNode->GetDof(DISPLACEMENT_X, DisplacementPosition).IsFixed());
             fix_displacements[1] = (itCurrentNode->GetDof(DISPLACEMENT_Y, DisplacementPosition + 1).IsFixed());
             if (DomainSize == 3)
                 fix_displacements[2] = (itCurrentNode->GetDof(DISPLACEMENT_Z, DisplacementPosition + 2).IsFixed());
 
+			array_1d<double, 3>& r_nodal_momenta = itCurrentNode->FastGetSolutionStepValue(NODAL_MOMENTUM);
+			array_1d<double, 3>& r_current_residual = itCurrentNode->FastGetSolutionStepValue(FORCE_RESIDUAL);
 
-
-			//PJW
-			if (node_X >1.7 && node_X < 2.3 && node_Y > 1.7 && node_Y < 2.3)
+			if (node_X == 2.0 && node_Y == 2.0)
 			{
-				int myTest = 1;
-			}
-
-
-			//PJW
-
-
-            for (IndexType j = 0; j < DomainSize; j++) {
-                if (fix_displacements[j]) {
-                    r_current_acceleration[j] = 0.0;
-                    r_middle_velocity[j] = 0.0;
-                }
-
-                r_current_velocity[j] =  r_previous_middle_velocity[j] + (mTime.Previous - mTime.PreviousMiddle) * r_current_acceleration[j]; //+ actual_velocity;
-                r_middle_velocity[j] = r_current_velocity[j] + (mTime.Middle - mTime.Previous) * r_current_acceleration[j];
-                r_current_displacement[j] = r_previous_displacement[j] + mTime.Delta * r_middle_velocity[j];
-
-				//r_current_velocity[j] = r_middle_velocity[j]; //PJW TESTING
-
-				
-
-            } // for DomainSize
-
-
-
-			if (norm_2(r_middle_velocity) > 0.0) //PJW TESTING
-			{
+				const double nodal_mass1 = itCurrentNode->FastGetSolutionStepValue(NODAL_MASS);
+				double testVel = r_nodal_momenta[0] / nodal_mass1;
 				int test = 1;
 			}
+
+			//PJW, simple coefficient for central difference stepping
+			double alpha = 1.0; 
+			if (mTime.Previous == 0.0)
+			{
+				alpha = 0.5;
+			}
+
+			// Advance momenta
+			for (IndexType j = 0; j < DomainSize; j++) {
+				if (fix_displacements[j]) {
+					r_nodal_momenta[j] = 0.0;
+					r_current_residual[j] = 0.0;
+				}
+				r_nodal_momenta[j] += alpha * mTime.Delta*r_current_residual[j];
+
+			} // for DomainSize
+
+
+			// We need to set updated grid velocity here if we are using USL formulation
+			bool isUSL = true;
+			if (isUSL)
+			{
+				array_1d<double, 3>& r_current_velocity = itCurrentNode->FastGetSolutionStepValue(VELOCITY);
+				r_current_velocity.clear();
+				const double nodal_mass = itCurrentNode->FastGetSolutionStepValue(NODAL_MASS);
+				if (nodal_mass > numerical_limit)
+				{
+					for (IndexType j = 0; j < DomainSize; j++) 
+					{
+						r_current_velocity[j] = r_nodal_momenta[j] / nodal_mass;
+					} // for DomainSize
+				}
+			}
+
+			if (node_X == 2.0 && node_Y == 2.0)
+			{
+				int test = 1;
+
+			}
+
+
+			//PJW integrated momentum form of explicit advance =============================
         }
 
 
@@ -456,15 +511,31 @@ public:
             double & nodal_density  = (i)->FastGetSolutionStepValue(DENSITY);
             array_1d<double, 3 > & nodal_momentum = (i)->FastGetSolutionStepValue(NODAL_MOMENTUM);
             array_1d<double, 3 > & nodal_inertia  = (i)->FastGetSolutionStepValue(NODAL_INERTIA);
-			array_1d<double, 3 > & nodal_force_internal_normal = (i)->FastGetSolutionStepValue(FORCE_RESIDUAL); //PJW
+			array_1d<double, 3 > & nodal_force = (i)->FastGetSolutionStepValue(FORCE_RESIDUAL); //PJW
 
             array_1d<double, 3 > & nodal_displacement = (i)->FastGetSolutionStepValue(DISPLACEMENT);
-            //array_1d<double, 3 > & nodal_velocity     = (i)->FastGetSolutionStepValue(VELOCITY);
-			//array_1d<double, 3 > & nodal_middle_velocity = (i)->FastGetSolutionStepValue(MIDDLE_VELOCITY); //PJW
-			//array_1d<double, 3 > & nodal_acceleration = (i)->FastGetSolutionStepValue(ACCELERATION); //PJW
+            array_1d<double, 3 > & nodal_velocity     = (i)->FastGetSolutionStepValue(VELOCITY);
+			array_1d<double, 3 > & nodal_middle_velocity = (i)->FastGetSolutionStepValue(MIDDLE_VELOCITY); //PJW
+			array_1d<double, 3 > & nodal_acceleration = (i)->FastGetSolutionStepValue(ACCELERATION); //PJW
 
-			array_1d<double, 3 > & nodal_velocity = (i)->FastGetSolutionStepValue(VELOCITY, 1);
-			array_1d<double, 3 > & nodal_acceleration = (i)->FastGetSolutionStepValue(ACCELERATION, 1);
+			//array_1d<double, 3 > & nodal_velocity = (i)->FastGetSolutionStepValue(VELOCITY, 1);
+			//array_1d<double, 3 > & nodal_acceleration = (i)->FastGetSolutionStepValue(ACCELERATION, 1);
+
+			
+			//if (norm_2(nodal_velocity) > 1E-6)
+			//{
+			//	//PJW
+			//	const double node_X = i->X();
+			//	const double node_Y = i->Y();
+			//	// PJW
+			//	if (node_X > 1.7 && node_X < 2.3 && node_Y > 1.7 && node_Y < 2.3)
+			//	{
+			//		array_1d<double, 3 > & test_nodal_velocity = (i)->FastGetSolutionStepValue(VELOCITY); //PJW testingh
+			//		array_1d<double, 3 > & test_nodal_middle_velocity = (i)->FastGetSolutionStepValue(MIDDLE_VELOCITY); //PJW
+			//		int myTest = 1;
+			//	}
+			//}
+
 
             double & nodal_old_pressure = (i)->FastGetSolutionStepValue(PRESSURE,1);
             double & nodal_pressure = (i)->FastGetSolutionStepValue(PRESSURE);
@@ -478,11 +549,11 @@ public:
             nodal_density = 0.0;
             nodal_momentum.clear();
             nodal_inertia.clear();
-			nodal_force_internal_normal.clear(); //PJW
+			nodal_force.clear(); //PJW
 
             nodal_displacement.clear();
             nodal_velocity.clear();
-			//nodal_middle_velocity.clear(); //PJW
+			nodal_middle_velocity.clear(); //PJW
             nodal_acceleration.clear();
             nodal_old_pressure = 0.0;
             nodal_pressure = 0.0;
@@ -500,31 +571,56 @@ public:
 
             if (nodal_mass > std::numeric_limits<double>::epsilon())
             {
-                const array_1d<double, 3 > & nodal_momentum   = (i)->FastGetSolutionStepValue(NODAL_MOMENTUM);
-                const array_1d<double, 3 > & nodal_inertia    = (i)->FastGetSolutionStepValue(NODAL_INERTIA);
+                //const array_1d<double, 3 > & nodal_momentum   = (i)->FastGetSolutionStepValue(NODAL_MOMENTUM);
+                //const array_1d<double, 3 > & nodal_inertia    = (i)->FastGetSolutionStepValue(NODAL_INERTIA);
 
-                array_1d<double, 3 > & nodal_velocity     = (i)->FastGetSolutionStepValue(VELOCITY,1);
-                array_1d<double, 3 > & nodal_acceleration = (i)->FastGetSolutionStepValue(ACCELERATION,1);
-                double & nodal_pressure = (i)->FastGetSolutionStepValue(PRESSURE,1);
+                //array_1d<double, 3 > & nodal_velocity     = (i)->FastGetSolutionStepValue(VELOCITY); //PJW, was 1
+                //array_1d<double, 3 > & nodal_acceleration = (i)->FastGetSolutionStepValue(ACCELERATION); //PJW, was 1
+				//nodal_velocity += nodal_momentum / nodal_mass;
+				//nodal_acceleration = nodal_inertia / nodal_mass;
+																										 
+																										 
+				//double & nodal_pressure = (i)->FastGetSolutionStepValue(PRESSURE,1);
 
-                double delta_nodal_pressure = 0.0;
+                //double delta_nodal_pressure = 0.0;
 
-                // For mixed formulation
-                if (i->HasDofFor(PRESSURE) && i->SolutionStepsDataHas(NODAL_MPRESSURE))
-                {
-                    double & nodal_mpressure = (i)->FastGetSolutionStepValue(NODAL_MPRESSURE);
-                    delta_nodal_pressure = nodal_mpressure/nodal_mass;
-                }
+                //// For mixed formulation
+                //if (i->HasDofFor(PRESSURE) && i->SolutionStepsDataHas(NODAL_MPRESSURE))
+                //{
+                //    double & nodal_mpressure = (i)->FastGetSolutionStepValue(NODAL_MPRESSURE);
+                //    delta_nodal_pressure = nodal_mpressure/nodal_mass;
+                //}
 
-                const array_1d<double, 3 > delta_nodal_velocity = nodal_momentum/nodal_mass;
-                const array_1d<double, 3 > delta_nodal_acceleration = nodal_inertia/nodal_mass;
+                //const array_1d<double, 3 > delta_nodal_velocity = nodal_momentum/nodal_mass;
+                //const array_1d<double, 3 > delta_nodal_acceleration = nodal_inertia/nodal_mass;
 
-                nodal_velocity += delta_nodal_velocity;
-                nodal_acceleration += delta_nodal_acceleration;
+                //nodal_velocity += delta_nodal_velocity;
+                //nodal_acceleration += delta_nodal_acceleration;
 
-                nodal_pressure += delta_nodal_pressure;
+                //nodal_pressure += delta_nodal_pressure;
             }
         }
+
+		////PJW testing momenta before update
+		//for (int iter = 0; iter < static_cast<int>(mr_grid_model_part.Nodes().size()); ++iter)
+		//{
+		//	auto i = mr_grid_model_part.NodesBegin() + iter;
+
+		//	//PJW
+		//	const double node_X = i->X();
+		//	const double node_Y = i->Y();
+		//	// PJW
+		//	if (node_X > 1.7 && node_X < 2.3 && node_Y > 1.7 && node_Y < 2.3)
+		//	{
+		//		array_1d<double, 3 > & test_nodal_velocity = (i)->FastGetSolutionStepValue(VELOCITY); //PJW testingh
+		//		array_1d<double, 3 > & test_nodal_middle_velocity = (i)->FastGetSolutionStepValue(MIDDLE_VELOCITY); //PJW
+
+		//		array_1d<double, 3 > & test_nodal_velocity1 = (i)->FastGetSolutionStepValue(VELOCITY,1); //PJW testingh
+		//		array_1d<double, 3 > & test_nodal_middle_velocity1 = (i)->FastGetSolutionStepValue(MIDDLE_VELOCITY,1); //PJW
+		//		int myTest = 1;
+		//	}
+		//}
+		////PJW testing momenta before update
 
         // The array of nodes
         NodesArrayType& r_nodes = r_model_part.Nodes();
@@ -833,11 +929,14 @@ public:
 		KRATOS_TRY
 
 		//PJW
+			std::cout << "CalculateRightHandSide disabled" << std::endl;
         pCurrentEntity->CalculateRightHandSide(RHS_Contribution, rCurrentProcessInfo);
 
+			std::cout << "FORCE residual disabled" << std::endl;
         pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, FORCE_RESIDUAL, rCurrentProcessInfo);
 
-        pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, MOMENT_RESIDUAL, rCurrentProcessInfo);
+		std::cout << "moment residual disabled" << std::endl;
+        //pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, MOMENT_RESIDUAL, rCurrentProcessInfo);
 
 		KRATOS_CATCH("")
     }

@@ -679,6 +679,11 @@ protected:
 
     virtual void UpdateGaussPoint(GeneralVariables & rVariables, const ProcessInfo& rCurrentProcessInfo);
 
+	/**
+	  * Update the position of the MP or Gauss point when Finalize Element Internal Variables is called
+	  */
+	virtual void UpdateGaussPointExplicit(GeneralVariables & rVariables, const ProcessInfo& rCurrentProcessInfo);
+
     /**
      * Get the Historical Deformation Gradient to calculate after finalize the step
      */

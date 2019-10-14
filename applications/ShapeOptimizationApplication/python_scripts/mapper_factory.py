@@ -34,7 +34,7 @@ def CreateMapper(origin_model_part, destination_model_part, mapper_settings):
     mapper_settings.ValidateAndAssignDefaults(default_settings)
 
     if mapper_settings["use_empire"].GetBool():
-        import empire_mapper
+        from KratosMultiphysics.ShapeOptimizationApplication import empire_mapper
         mapper_type = mapper_settings["empire_settings"]["mapper_type"].GetString()
         if mapper_type == "VertexMorphing":
             return empire_mapper.EmpireVertexMorphingMapper(origin_model_part, destination_model_part, mapper_settings)

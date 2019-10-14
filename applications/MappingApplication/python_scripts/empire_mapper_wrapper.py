@@ -34,8 +34,11 @@ class EmpireMapperWrapper(PythonMapper):
     def __init__(self, model_part_origin, model_part_destination, mapper_settings):
         super(EmpireMapperWrapper, self).__init__(model_part_origin, model_part_destination, mapper_settings)
 
+        # TODO use gather-mp utility for mapping in MPI
+        if model_part_origin.IsDistributed() or model_part_destination.IsDistributed():
+            raise Exception('{} does not yet support mapping with distributed ModelParts!'.format(self._ClassName()))
+
         EmpireMapperWrapper.mapper_count += 1 # required for identification purposes
-        self.__coupling_matrices_are_build = False
         self.__inverse_mapper = None
 
         if EmpireMapperWrapper.mapper_lib == None: # load it only once
@@ -75,8 +78,6 @@ class EmpireMapperWrapper(PythonMapper):
 
 
     def Map(self, variable_origin, variable_destination, mapper_flags=KM.Flags()):
-        if not self.__coupling_matrices_are_build:
-            self.__BuildCouplingMatrices()
         raise NotImplementedError('"Map" was not implemented for "{}"'.format(self._ClassName()))
 
     def InverseMap(self, variable_origin, variable_destination, mapper_flags=KM.Flags()):
@@ -88,13 +89,13 @@ class EmpireMapperWrapper(PythonMapper):
         raise NotImplementedError('"InverseMap" was not implemented for "{}"'.format(self._ClassName()))
 
     def UpdateInterface(self):
-        self.__BuildCouplingMatrices() # TODO check if this works
+        # this requires recreating the mapper completely!
+        super(EmpireMapperWrapper, self).UpdateInterface()
+
 
     def __BuildCouplingMatrices(self):
-
         if EmpireMapperWrapper.mapper_lib.hasMapper(ctp.c_char_p(self.name)):
             EmpireMapperWrapper.mapper_lib.buildCouplingMatrices(ctp.c_char_p(self.name))
-            self.__coupling_matrices_are_build = True
         else:
             pass # TODO print warning
 
@@ -128,12 +129,20 @@ class EmpireNearestNeighborMapper(EmpireMapperWrapper):
     def __init__(self, model_part_origin, model_part_destination, mapper_settings):
         super(EmpireNearestNeighborMapper, self).__init__(model_part_origin, model_part_destination, mapper_settings)
 
+        # create Mapper
+
+        self.__BuildCouplingMatrices()
+
 
 class EmpireNearestElementMapper(EmpireMapperWrapper):
     """Wrapper for the nearest element mapper of Empire"""
 
     def __init__(self, model_part_origin, model_part_destination, mapper_settings):
         super(EmpireNearestElementMapper, self).__init__(model_part_origin, model_part_destination, mapper_settings)
+
+        # create Mapper
+
+        self.__BuildCouplingMatrices()
 
 
 class EmpireBarycentricMapper(EmpireMapperWrapper):
@@ -142,12 +151,20 @@ class EmpireBarycentricMapper(EmpireMapperWrapper):
     def __init__(self, model_part_origin, model_part_destination, mapper_settings):
         super(EmpireBarycentricMapper, self).__init__(model_part_origin, model_part_destination, mapper_settings)
 
+        # create Mapper
+
+        self.__BuildCouplingMatrices()
+
 
 class EmpireMortarMapper(EmpireMapperWrapper):
     """Wrapper for the mortar mapper of Empire"""
 
     def __init__(self, model_part_origin, model_part_destination, mapper_settings):
         super(EmpireMortarMapper, self).__init__(model_part_origin, model_part_destination, mapper_settings)
+
+        # create Mapper
+
+        self.__BuildCouplingMatrices()
 
     @classmethod
     def _GetDefaultSettings(cls):

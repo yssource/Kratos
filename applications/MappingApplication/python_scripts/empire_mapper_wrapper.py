@@ -110,7 +110,7 @@ class EmpireMapperWrapper(PythonMapper):
             if self.echo_level > 1:
                 KM.Logger.PrintInfo('EmpireMapperWrapper', 'Destroying last instance, deleting all meshes & mappers')
             #  delete everything to make sure nothing is left
-            # EmpireMapperWrapper.mapper_lib.deleteAllMeshes()
+            EmpireMapperWrapper.mapper_lib.deleteAllMeshes()
             EmpireMapperWrapper.mapper_lib.deleteAllMappers()
 
     @classmethod

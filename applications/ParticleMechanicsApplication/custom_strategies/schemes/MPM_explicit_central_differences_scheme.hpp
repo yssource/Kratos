@@ -291,7 +291,11 @@ public:
             )
         {
 
-            //const double nodal_mass = itCurrentNode->GetValue(NODAL_MASS);
+			//PJW
+			const double node_X = itCurrentNode->X();
+			const double node_Y = itCurrentNode->Y();
+			// PJW
+
             const double nodal_mass = itCurrentNode->FastGetSolutionStepValue(NODAL_MASS);
 
             const double nodal_displacement_damping = itCurrentNode->GetValue(NODAL_DISPLACEMENT_DAMPING);
@@ -306,7 +310,6 @@ public:
             const array_1d<double, 3>& r_previous_displacement = itCurrentNode->FastGetSolutionStepValue(DISPLACEMENT, 1);
             const array_1d<double, 3>& r_previous_middle_velocity = itCurrentNode->FastGetSolutionStepValue(MIDDLE_VELOCITY, 1);
             // Solution of the explicit equation:
-			//PJW: THIS IS WHERE WE ACTUALLY HIT, IT SEEMS TO WORK CORRECTLY. (JUST CHECKED FOR GRAVITY LOAD)
             if (nodal_mass > numerical_limit)
                 // I do this on element lvl
                 //noalias(r_current_acceleration) = (r_current_residual - nodal_displacement_damping * r_current_velocity) / nodal_mass;
@@ -322,6 +325,18 @@ public:
             if (DomainSize == 3)
                 fix_displacements[2] = (itCurrentNode->GetDof(DISPLACEMENT_Z, DisplacementPosition + 2).IsFixed());
 
+
+
+			//PJW
+			if (node_X >1.7 && node_X < 2.3 && node_Y > 1.7 && node_Y < 2.3)
+			{
+				int myTest = 1;
+			}
+
+
+			//PJW
+
+
             for (IndexType j = 0; j < DomainSize; j++) {
                 if (fix_displacements[j]) {
                     r_current_acceleration[j] = 0.0;
@@ -332,12 +347,15 @@ public:
                 r_middle_velocity[j] = r_current_velocity[j] + (mTime.Middle - mTime.Previous) * r_current_acceleration[j];
                 r_current_displacement[j] = r_previous_displacement[j] + mTime.Delta * r_middle_velocity[j];
 
+				//r_current_velocity[j] = r_middle_velocity[j]; //PJW TESTING
 
 				
 
             } // for DomainSize
 
-			if (norm_2(r_middle_velocity) > 0.0)
+
+
+			if (norm_2(r_middle_velocity) > 0.0) //PJW TESTING
 			{
 				int test = 1;
 			}
@@ -438,10 +456,15 @@ public:
             double & nodal_density  = (i)->FastGetSolutionStepValue(DENSITY);
             array_1d<double, 3 > & nodal_momentum = (i)->FastGetSolutionStepValue(NODAL_MOMENTUM);
             array_1d<double, 3 > & nodal_inertia  = (i)->FastGetSolutionStepValue(NODAL_INERTIA);
+			array_1d<double, 3 > & nodal_force_internal_normal = (i)->FastGetSolutionStepValue(FORCE_RESIDUAL); //PJW
 
             array_1d<double, 3 > & nodal_displacement = (i)->FastGetSolutionStepValue(DISPLACEMENT);
-            array_1d<double, 3 > & nodal_velocity     = (i)->FastGetSolutionStepValue(VELOCITY,1);
-            array_1d<double, 3 > & nodal_acceleration = (i)->FastGetSolutionStepValue(ACCELERATION,1);
+            //array_1d<double, 3 > & nodal_velocity     = (i)->FastGetSolutionStepValue(VELOCITY);
+			//array_1d<double, 3 > & nodal_middle_velocity = (i)->FastGetSolutionStepValue(MIDDLE_VELOCITY); //PJW
+			//array_1d<double, 3 > & nodal_acceleration = (i)->FastGetSolutionStepValue(ACCELERATION); //PJW
+
+			array_1d<double, 3 > & nodal_velocity = (i)->FastGetSolutionStepValue(VELOCITY, 1);
+			array_1d<double, 3 > & nodal_acceleration = (i)->FastGetSolutionStepValue(ACCELERATION, 1);
 
             double & nodal_old_pressure = (i)->FastGetSolutionStepValue(PRESSURE,1);
             double & nodal_pressure = (i)->FastGetSolutionStepValue(PRESSURE);
@@ -455,9 +478,11 @@ public:
             nodal_density = 0.0;
             nodal_momentum.clear();
             nodal_inertia.clear();
+			nodal_force_internal_normal.clear(); //PJW
 
             nodal_displacement.clear();
             nodal_velocity.clear();
+			//nodal_middle_velocity.clear(); //PJW
             nodal_acceleration.clear();
             nodal_old_pressure = 0.0;
             nodal_pressure = 0.0;
@@ -507,7 +532,7 @@ public:
         // Auxiliary values
         const array_1d<double, 3> zero_array = ZeroVector(3);
         // Initializing the variables
-        VariableUtils().SetVectorVar(FORCE_RESIDUAL, zero_array,r_nodes); //PJW, setting nodal forces to zero
+        //VariableUtils().SetVectorVar(FORCE_RESIDUAL, zero_array,r_nodes); //PJW, setting nodal forces to zero
 
         KRATOS_CATCH( "" )
     }
@@ -807,21 +832,13 @@ public:
     {
 		KRATOS_TRY
 
-		//std::cout << "RHS_Contribution before = " << RHS_Contribution << std::endl;
-
-        pCurrentEntity->CalculateRightHandSide(RHS_Contribution, rCurrentProcessInfo); //PJW- here is the problem
-
-		//std::cout << "RHS_Contribution after = " << RHS_Contribution << std::endl;
-        //Matrix dummy_lhs;
-        //(pCurrentEntity)->CalculateLocalSystem(dummy_lhs, RHS_Contribution, rCurrentProcessInfo);
-
 		//PJW
+        pCurrentEntity->CalculateRightHandSide(RHS_Contribution, rCurrentProcessInfo);
+
         pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, FORCE_RESIDUAL, rCurrentProcessInfo);
 
-		//std::cout << "pos6" << RHS_Contribution << std::endl;
         pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, MOMENT_RESIDUAL, rCurrentProcessInfo);
 
-		//std::cout << "pos7" << RHS_Contribution << std::endl;
 		KRATOS_CATCH("")
     }
 

@@ -344,32 +344,17 @@ void UpdatedLagrangianQuadrilateral::CalculateElementalSystem( LocalSystemCompon
 		const double MP_Density = (GetProperties()[DENSITY]) / Variables.detFT;
 		this->SetValue(MP_DENSITY, MP_Density);
 
-		
+		// The MP_Volume (integration weight) is evaluated
+		const double MP_Volume = this->GetValue(MP_MASS) / this->GetValue(MP_DENSITY);
+		this->SetValue(MP_VOLUME, MP_Volume);
 	}
 	else
 	{
 		rLocalSystem.CalculationFlags.Set(UpdatedLagrangianQuadrilateral::COMPUTE_LHS_MATRIX, false);
 
-		//ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS, false);
-		//ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN, true);
-
-		//PJW: Assign current parameters to constiutive law
-
-
-		
-		// Set general variables to constitutivelaw parameters
-		//this->SetGeneralVariables(Variables, Values);
-
-		// Calculate Material Response
-		/* NOTE:
-		The function below will call CalculateMaterialResponseCauchy() by default and then (may)
-		call CalculateMaterialResponseKirchhoff() in the constitutive_law.*/
-		//mConstitutiveLawVector->CalculateMaterialResponse(Values, Variables.StressMeasure);
 	}
 
-	// The MP_Volume (integration weight) is evaluated
 	const double MP_Volume = this->GetValue(MP_MASS) / this->GetValue(MP_DENSITY);
-	this->SetValue(MP_VOLUME, MP_Volume);
 
 
 	if (rLocalSystem.CalculationFlags.Is(UpdatedLagrangianQuadrilateral::COMPUTE_LHS_MATRIX)) // if calculation of the matrix is required
@@ -845,7 +830,7 @@ void UpdatedLagrangianQuadrilateral::CalculateRightHandSide( VectorType& rRightH
     LocalSystem.SetRightHandSideVector(rRightHandSideVector);
 
     // Calculate elemental system
-    CalculateElementalSystem( LocalSystem, rCurrentProcessInfo ); //PJW - this is the problem
+    CalculateElementalSystem( LocalSystem, rCurrentProcessInfo );
 }
 
 //************************************************************************************
@@ -994,51 +979,50 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     In the InitializeSolutionStep of each time step the nodal initial conditions are evaluated.
     This function is called by the base scheme class.*/
 
+	bool isImplicit = false;
+
     GeometryType& rGeom = GetGeometry();
     const unsigned int dimension = rGeom.WorkingSpaceDimension();
     const unsigned int number_of_nodes = rGeom.PointsNumber();
     const array_1d<double,3>& xg = this->GetValue(MP_COORD);
     GeneralVariables Variables;
 
+
+
     // Calculating shape function
     Variables.N = this->MPMShapeFunctionPointValues(Variables.N, xg);
-
-	////PJW Calculate shape function gradients
-	//Matrix Jacobian;
-	//Jacobian = this->MPMJacobian(Jacobian, xg);
-	//Matrix InvJ;
-	//double detJ;
-	//MathUtils<double>::InvertMatrix(Jacobian, InvJ, detJ);
-	//Variables.DN_De = this->MPMShapeFunctionsLocalGradients(Variables.DN_De, xg); // local gradients
-	//Variables.DN_DX = prod(Variables.DN_De, InvJ); // cartesian gradients
-
+	mN = this->MPMShapeFunctionPointValues(Variables.N, xg); //PJW, reduce double up
     mFinalizedStep = false;
 
     const array_1d<double,3>& MP_Velocity = this->GetValue(MP_VELOCITY);
     const array_1d<double,3>& MP_Acceleration = this->GetValue(MP_ACCELERATION);
-	//const Vector& MP_Stress = this->GetValue(MP_CAUCHY_STRESS_VECTOR); //PJW, retrieve stress vector, explicit only
-    const double& MP_Mass = this->GetValue(MP_MASS);
-	//const double& MP_Volume = this->GetValue(MP_VOLUME); //PJW, needed for explicit force calculation
+	const double& MP_Mass = this->GetValue(MP_MASS);
 
     array_1d<double,3> AUX_MP_Velocity = ZeroVector(3);
     array_1d<double,3> AUX_MP_Acceleration = ZeroVector(3);
     array_1d<double,3> nodal_momentum = ZeroVector(3);
     array_1d<double,3> nodal_inertia  = ZeroVector(3);
 
-	//array_1d<double, 3> nodal_force_internal_normal = ZeroVector(3); //PJW, needed for explicit force
+	if (isImplicit)
+	{
+		for (unsigned int j = 0; j < number_of_nodes; j++)
+		{
+			// These are the values of nodal velocity and nodal acceleration evaluated in the initialize solution step
+			const array_1d<double, 3 > & nodal_acceleration = rGeom[j].FastGetSolutionStepValue(ACCELERATION, 1);
+			const array_1d<double, 3 > & nodal_velocity = rGeom[j].FastGetSolutionStepValue(VELOCITY, 1);
 
-    for (unsigned int j=0; j<number_of_nodes; j++)
-    {
-        // These are the values of nodal velocity and nodal acceleration evaluated in the initialize solution step
-        const array_1d<double, 3 > & nodal_acceleration = rGeom[j].FastGetSolutionStepValue(ACCELERATION,1);
-        const array_1d<double, 3 > & nodal_velocity = rGeom[j].FastGetSolutionStepValue(VELOCITY,1);
+			for (unsigned int k = 0; k < dimension; k++)
+			{
+				AUX_MP_Velocity[k] += Variables.N[j] * nodal_velocity[k];
+				AUX_MP_Acceleration[k] += Variables.N[j] * nodal_acceleration[k];
+			}
+		}
+	}
 
-        for (unsigned int k = 0; k < dimension; k++)
-        {
-            AUX_MP_Velocity[k]     += Variables.N[j] * nodal_velocity[k];
-            AUX_MP_Acceleration[k] += Variables.N[j] * nodal_acceleration[k];
-        }
-    }
+	if (norm_2(AUX_MP_Velocity) > 0.000001)
+	{
+		int test = 1;
+	}
 
     // Here MP contribution in terms of momentum, inertia and mass are added
     for ( unsigned int i = 0; i < number_of_nodes; i++ )
@@ -1047,19 +1031,59 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
         {
             nodal_momentum[j] = Variables.N[i] * (MP_Velocity[j] - AUX_MP_Velocity[j]) * MP_Mass;
             nodal_inertia[j]  = Variables.N[i] * (MP_Acceleration[j] - AUX_MP_Acceleration[j]) * MP_Mass;
-
-			//nodal_force_internal_normal[j] = MP_Volume * MP_Stress[j] * Variables.DN_DX(i, j); //PJW, nodal internal forces
-        }
+		}
 
         rGeom[i].SetLock();
         rGeom[i].FastGetSolutionStepValue(NODAL_MOMENTUM, 0) += nodal_momentum;
         rGeom[i].FastGetSolutionStepValue(NODAL_INERTIA, 0)  += nodal_inertia;
-		//rGeom[i].FastGetSolutionStepValue(FORCE_RESIDUAL, 0) -= nodal_force_internal_normal; //PJW, minus sign, internal forces
-
         rGeom[i].FastGetSolutionStepValue(NODAL_MASS, 0) += Variables.N[i] * MP_Mass;
         rGeom[i].UnSetLock();
 
     }
+
+	// Add in explicit internal force calculation (Fint = Volume*divergence(sigma))
+	if (!isImplicit)
+	{
+		////PJW Calculate shape function gradients
+		Matrix Jacobian;
+		Jacobian = this->MPMJacobian(Jacobian, xg);
+		Matrix InvJ;
+		double detJ;
+		MathUtils<double>::InvertMatrix(Jacobian, InvJ, detJ);
+		Variables.DN_De = this->MPMShapeFunctionsLocalGradients(Variables.DN_De, xg); // parametric gradients
+		Variables.DN_DX = prod(Variables.DN_De, InvJ); // cartesian gradients
+		mDN_DX = Variables.DN_DX;
+
+		const Vector& MP_Stress = this->GetValue(MP_CAUCHY_STRESS_VECTOR); //PJW, retrieve stress vector, explicit only
+		const double& MP_Volume = this->GetValue(MP_VOLUME); //PJW, needed for explicit force calculation
+
+		array_1d<double, 3> nodal_force_internal_normal = ZeroVector(3); //PJW, needed for explicit force
+
+		for (unsigned int i = 0; i < number_of_nodes; i++)
+		{
+			for (unsigned int j = 0; j < dimension; j++)
+			{
+				nodal_force_internal_normal[j] = MP_Volume * MP_Stress[j] * Variables.DN_DX(i, j); //PJW, nodal internal forces
+			}
+
+			if (norm_2(nodal_force_internal_normal) > 0.0001)
+			{
+				int test = 1; //PJW test
+			}
+			rGeom[i].SetLock();
+			rGeom[i].FastGetSolutionStepValue(FORCE_RESIDUAL, 0) -= nodal_force_internal_normal; //PJW, minus sign, internal forces
+			rGeom[i].UnSetLock();
+		}
+	} // explicit internal force calculation
+
+
+	//if (xg[0] > 1.3 && xg[0] < 1.7)
+	//{
+	//	if (xg[1] > 1.3 && xg[1] < 1.7)
+	//	{
+	//		int testBreak = 1;
+	//	}
+	//}
 }
 
 
@@ -1189,7 +1213,9 @@ void UpdatedLagrangianQuadrilateral::FinalizeStepVariables( GeneralVariables & r
 
 void UpdatedLagrangianQuadrilateral::UpdateGaussPoint( GeneralVariables & rVariables, const ProcessInfo& rCurrentProcessInfo)
 {
-    KRATOS_TRY
+	KRATOS_TRY
+
+	bool isImplicit = false;
 
     GeometryType& rGeom = GetGeometry();
     rVariables.CurrentDisp = CalculateCurrentDisp(rVariables.CurrentDisp, rCurrentProcessInfo);
@@ -1212,12 +1238,21 @@ void UpdatedLagrangianQuadrilateral::UpdateGaussPoint( GeneralVariables & rVaria
         if (rVariables.N[i] > std::numeric_limits<double>::epsilon() )
         {
             const array_1d<double, 3 > & nodal_acceleration = rGeom[i].FastGetSolutionStepValue(ACCELERATION);
+			const array_1d<double, 3>& r_middle_velocity = rGeom[i].FastGetSolutionStepValue(MIDDLE_VELOCITY);
 
             for ( unsigned int j = 0; j < dimension; j++ )
             {
 
-                delta_xg[j] += rVariables.N[i] * rVariables.CurrentDisp(i,j);
-                MP_Acceleration[j] += rVariables.N[i] * nodal_acceleration[j];
+				if (isImplicit)
+				{
+					delta_xg[j] += rVariables.N[i] * rVariables.CurrentDisp(i, j);
+				}
+				else
+				{
+					delta_xg[j] += delta_time * rVariables.N[i] * r_middle_velocity[j];
+				}
+                
+				MP_Acceleration[j] += rVariables.N[i] * nodal_acceleration[j];
 
                 /* NOTE: The following interpolation techniques have been tried:
                     MP_Velocity[j]      += rVariables.N[i] * nodal_velocity[j];
@@ -1230,20 +1265,38 @@ void UpdatedLagrangianQuadrilateral::UpdateGaussPoint( GeneralVariables & rVaria
 
     }
 
-    /* NOTE:
-    Another way to update the MP velocity (see paper Guilkey and Weiss, 2003).
-    This assume newmark (or trapezoidal, since n.gamma=0.5) rule of integration*/
-    MP_Velocity = MP_PreviousVelocity + 0.5 * delta_time * (MP_Acceleration + MP_PreviousAcceleration);
-    this -> SetValue(MP_VELOCITY,MP_Velocity );
+	if (isImplicit)
+	{
+		/* NOTE:
+	Another way to update the MP velocity (see paper Guilkey and Weiss, 2003).
+	This assume newmark (or trapezoidal, since n.gamma=0.5) rule of integration*/
+		MP_Velocity = MP_PreviousVelocity + 0.5 * delta_time * (MP_Acceleration + MP_PreviousAcceleration);
+		this->SetValue(MP_VELOCITY, MP_Velocity);
+	}
+	else
+	{
+		MP_Velocity = MP_PreviousVelocity + delta_time * MP_Acceleration;
+		this->SetValue(MP_VELOCITY, MP_Velocity);
+	}
+    
 
     /* NOTE: The following interpolation techniques have been tried:
         MP_Acceleration = 4/(delta_time * delta_time) * delta_xg - 4/delta_time * MP_PreviousVelocity;
         MP_Velocity = 2.0/delta_time * delta_xg - MP_PreviousVelocity;
     */
 
+	if (xg[0] > 1.2 && xg[0] < 1.8)
+	{
+		Vector& mpStress = this->GetValue(MP_CAUCHY_STRESS_VECTOR);
+		int test123 = 1;
+	}
+
+
     // Update the MP Position
     const array_1d<double,3>& new_xg = xg + delta_xg ;
     this -> SetValue(MP_COORD,new_xg);
+
+
 
     // Update the MP Acceleration
     this -> SetValue(MP_ACCELERATION,MP_Acceleration);
@@ -1255,6 +1308,7 @@ void UpdatedLagrangianQuadrilateral::UpdateGaussPoint( GeneralVariables & rVaria
 
     KRATOS_CATCH( "" )
 }
+
 
 void UpdatedLagrangianQuadrilateral::InitializeMaterial()
 {
@@ -1918,6 +1972,7 @@ void UpdatedLagrangianQuadrilateral::GetSecondDerivativesVector( Vector& values,
             values[index + 2] = rGeom[i].FastGetSolutionStepValue( ACCELERATION_Z, Step );
     }
 }
+
 //************************************************************************************
 //************************************************************************************
 void UpdatedLagrangianQuadrilateral::GetHistoricalVariables( GeneralVariables& rVariables )
@@ -2003,6 +2058,17 @@ void UpdatedLagrangianQuadrilateral::AddExplicitContribution(
         noalias(damping_residual_contribution) = prod(damping_matrix, current_nodal_velocities);
 
 
+		//PJW test
+		if (norm_2(damping_residual_contribution) > 1E-6)
+		{
+			int test = 1;
+		}
+		if (norm_2(rRHSVector) > 1E-6)
+		{
+			int test = 1;
+		}
+		//PJW test
+
         for (size_t i = 0; i < number_of_nodes; ++i) {
             size_t index = dimension * i;
             array_1d<double, 3>& r_force_residual = rGeom[i].FastGetSolutionStepValue(FORCE_RESIDUAL);
@@ -2011,6 +2077,8 @@ void UpdatedLagrangianQuadrilateral::AddExplicitContribution(
 				r_force_residual[j] += rRHSVector[index + j] - damping_residual_contribution[index + j];
             }
         }
+
+
 
 		
     } else if (rDestinationVariable == NODAL_INERTIA) {

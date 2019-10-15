@@ -365,7 +365,6 @@ void UpdatedLagrangianQuadrilateral::CalculateElementalSystem( LocalSystemCompon
     
 
 	// Auxiliary terms
-	std::cout << "normal volume force calc disabled" << std::endl;
 	Vector volume_force;
     if ( rLocalSystem.CalculationFlags.Is(UpdatedLagrangianQuadrilateral::COMPUTE_RHS_VECTOR) ) // if calculation of the vector is required
     {
@@ -604,6 +603,8 @@ void UpdatedLagrangianQuadrilateral::CalculateAndAddRHS(LocalSystemComponents& r
     }
     else
     {
+		//PJW, this is of interest here!
+
         VectorType& rRightHandSideVector = rLocalSystem.GetRightHandSideVector();
 
         // Operation performed: rRightHandSideVector += ExtForce*IntToReferenceWeight
@@ -653,42 +654,12 @@ void UpdatedLagrangianQuadrilateral::CalculateAndAddInternalForces(VectorType& r
 	if (isImplicit)
 	{
 		internal_forces += rIntegrationWeight * prod(trans(rVariables.B), rVariables.StressVector);
+		noalias(rRightHandSideVector) -= internal_forces;
 	}
 	else
 	{
-		GeometryType& rGeom = GetGeometry();
-		const unsigned int dimension = rGeom.WorkingSpaceDimension();
-		const unsigned int number_of_nodes = rGeom.PointsNumber();
-		const unsigned int local_size = dimension * number_of_nodes;
-
-		// determine internal nodal force, mapped from particle stresses
-		const array_1d<double, 3>& xg = this->GetValue(MP_COORD);
-		const double& MP_Volume = this->GetValue(MP_VOLUME); //PJW, needed for explicit force calculation
-		const Vector& MP_Stress = this->GetValue(MP_CAUCHY_STRESS_VECTOR); //PJW, retrieve stress vector, explicit only
-		array_1d<double, 3> nodal_force_internal_normal = ZeroVector(3); //PJW, needed for explicit force
-		GeneralVariables Variables;
-		Matrix Jacobian;
-		Jacobian = this->MPMJacobian(Jacobian, xg);
-		Matrix InvJ;
-		double detJ;
-		MathUtils<double>::InvertMatrix(Jacobian, InvJ, detJ);
-		Variables.DN_De = this->MPMShapeFunctionsLocalGradients(Variables.DN_De, xg); // local gradients
-		Variables.DN_DX = prod(Variables.DN_De, InvJ); // cartesian gradients
-
-		for (size_t i = 0; i < number_of_nodes; ++i) {
-			
-			for (size_t j = 0; j < dimension; ++j) {
-				size_t index = dimension * i + j;
-				internal_forces[index] += MP_Volume * MP_Stress[j] * Variables.DN_DX(i, j); //PJW-nodal internal forces
-			}
-		}
-
+		// internal force for explicit time integration already added during mapping phase!
 	}
-
-
-	//PJW - add internal forces here!
-
-    noalias( rRightHandSideVector ) -= internal_forces;
 
     KRATOS_CATCH( "" )
 }
@@ -974,8 +945,6 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     const array_1d<double,3>& xg = this->GetValue(MP_COORD);
     GeneralVariables Variables;
 
-
-
     // Calculating shape function
     Variables.N = this->MPMShapeFunctionPointValues(Variables.N, xg);
 	mN = this->MPMShapeFunctionPointValues(Variables.N, xg); //PJW, reduce double up
@@ -984,14 +953,6 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     const array_1d<double,3>& MP_Velocity = this->GetValue(MP_VELOCITY);
     const array_1d<double,3>& MP_Acceleration = this->GetValue(MP_ACCELERATION);
 	const double& MP_Mass = this->GetValue(MP_MASS);
-
-	if (xg[0] > 1.3 && xg[0] < 1.7)
-	{
-		if (xg[1] > 1.3 && xg[1] < 1.7)
-		{
-			int testBreak = 1;
-		}
-	}
 
     array_1d<double,3> AUX_MP_Velocity = ZeroVector(3);
     array_1d<double,3> AUX_MP_Acceleration = ZeroVector(3);
@@ -1063,33 +1024,36 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
 					MP_Stress[2] * Variables.DN_DX(i, 0));
 			//PJW, nodal internal forces
 
-
-
-			for (unsigned int j = 0; j < dimension; j++)
-			{
-				
-
-
-
-				//nodal_force_internal_normal[j] = MP_Volume * MP_Stress[j] * Variables.DN_DX(i, j); //PJW, nodal internal forces
-			}
-
-			if (norm_2(nodal_force_internal_normal) > 0.0001)
-			{
-				int test = 1; //PJW test
-			}
 			rGeom[i].SetLock();
 			rGeom[i].FastGetSolutionStepValue(FORCE_RESIDUAL, 0) -= nodal_force_internal_normal; //PJW, minus sign, internal forces
 			rGeom[i].UnSetLock();
 		}
 
-		if (xg[0] > 1.3 && xg[0] < 1.7)
+		/*if (xg[0] > 1.3 && xg[0] < 1.7)
 		{
 			if (xg[1] > 1.3 && xg[1] < 1.7)
 			{
+				for (unsigned int i = 0; i < number_of_nodes; i++)
+				{
+					const array_1d<double, 3 > & nodal_force = rGeom[i].FastGetSolutionStepValue(FORCE_RESIDUAL);
+					const double xForce = nodal_force[0];
+
+
+					const array_1d<double, 3 > & nodal_mom = rGeom[i].FastGetSolutionStepValue(NODAL_MOMENTUM,0);
+					const double xMom = nodal_mom[0];
+
+					double nodal_X = rGeom[i].X();
+					double nodal_Y = rGeom[i].Y();
+
+					double Ni = mN[i];
+					double dNiDx = mDN_DX(i, 0);
+					double dNiDy = mDN_DX(i, 1);
+					
+					int testBreak = 1;
+				}
 				int testBreak = 1;
 			}
-		}
+		}*/
 	} // explicit internal force calculation
 
 

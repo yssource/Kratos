@@ -518,24 +518,6 @@ public:
 			array_1d<double, 3 > & nodal_middle_velocity = (i)->FastGetSolutionStepValue(MIDDLE_VELOCITY); //PJW
 			array_1d<double, 3 > & nodal_acceleration = (i)->FastGetSolutionStepValue(ACCELERATION); //PJW
 
-			//array_1d<double, 3 > & nodal_velocity = (i)->FastGetSolutionStepValue(VELOCITY, 1);
-			//array_1d<double, 3 > & nodal_acceleration = (i)->FastGetSolutionStepValue(ACCELERATION, 1);
-
-			
-			//if (norm_2(nodal_velocity) > 1E-6)
-			//{
-			//	//PJW
-			//	const double node_X = i->X();
-			//	const double node_Y = i->Y();
-			//	// PJW
-			//	if (node_X > 1.7 && node_X < 2.3 && node_Y > 1.7 && node_Y < 2.3)
-			//	{
-			//		array_1d<double, 3 > & test_nodal_velocity = (i)->FastGetSolutionStepValue(VELOCITY); //PJW testingh
-			//		array_1d<double, 3 > & test_nodal_middle_velocity = (i)->FastGetSolutionStepValue(MIDDLE_VELOCITY); //PJW
-			//		int myTest = 1;
-			//	}
-			//}
-
 
             double & nodal_old_pressure = (i)->FastGetSolutionStepValue(PRESSURE,1);
             double & nodal_pressure = (i)->FastGetSolutionStepValue(PRESSURE);
@@ -929,14 +911,11 @@ public:
 		KRATOS_TRY
 
 		//PJW
-			std::cout << "CalculateRightHandSide disabled" << std::endl;
         pCurrentEntity->CalculateRightHandSide(RHS_Contribution, rCurrentProcessInfo);
 
-			std::cout << "FORCE residual disabled" << std::endl;
         pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, FORCE_RESIDUAL, rCurrentProcessInfo);
 
-		std::cout << "moment residual disabled" << std::endl;
-        //pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, MOMENT_RESIDUAL, rCurrentProcessInfo);
+        pCurrentEntity->AddExplicitContribution(RHS_Contribution, RESIDUAL_VECTOR, MOMENT_RESIDUAL, rCurrentProcessInfo);
 
 		KRATOS_CATCH("")
     }

@@ -50,6 +50,7 @@ template<class TSparseSpace,  class TDenseSpace >
 class MPMExplicitCentralDifferencesScheme: public Scheme<TSparseSpace,TDenseSpace>
 {
 protected:
+
 public:
 
     /**@name Type Definitions */
@@ -328,15 +329,6 @@ public:
    //             fix_displacements[2] = (itCurrentNode->GetDof(DISPLACEMENT_Z, DisplacementPosition + 2).IsFixed());
 
 
-
-			////PJW
-			//if (node_X >1.7 && node_X < 2.3 && node_Y > 1.7 && node_Y < 2.3 && nodal_mass > numerical_limit)
-			//{
-			//	int myTest = 1;
-			//}
-			////PJW
-
-
    //         for (IndexType j = 0; j < DomainSize; j++) {
    //             if (fix_displacements[j]) {
    //                 r_current_acceleration[j] = 0.0;
@@ -365,13 +357,6 @@ public:
 			array_1d<double, 3>& r_nodal_momenta = itCurrentNode->FastGetSolutionStepValue(NODAL_MOMENTUM);
 			array_1d<double, 3>& r_current_residual = itCurrentNode->FastGetSolutionStepValue(FORCE_RESIDUAL);
 
-			if (node_X == 2.0 && node_Y == 2.0)
-			{
-				const double nodal_mass1 = itCurrentNode->FastGetSolutionStepValue(NODAL_MASS);
-				double testVel = r_nodal_momenta[0] / nodal_mass1;
-				int test = 1;
-			}
-
 			//PJW, simple coefficient for central difference stepping
 			double alpha = 1.0; 
 			if (mTime.Previous == 0.0)
@@ -391,8 +376,7 @@ public:
 
 
 			// We need to set updated grid velocity here if we are using USL formulation
-			bool isUSL = true;
-			if (isUSL)
+			if (mStressUpdate == 1)
 			{
 				array_1d<double, 3>& r_current_velocity = itCurrentNode->FastGetSolutionStepValue(VELOCITY);
 				r_current_velocity.clear();
@@ -405,14 +389,6 @@ public:
 					} // for DomainSize
 				}
 			}
-
-			if (node_X == 2.0 && node_Y == 2.0)
-			{
-				int test = 1;
-
-			}
-
-
 			//PJW integrated momentum form of explicit advance =============================
         }
 
@@ -544,74 +520,6 @@ public:
         // Extrapolate from Material Point Elements and Conditions
         Scheme<TSparseSpace,TDenseSpace>::InitializeSolutionStep(r_model_part,A,Dx,b);
 
-        // Assign nodal variables after extrapolation
-        #pragma omp parallel for
-        for(int iter = 0; iter < static_cast<int>(mr_grid_model_part.Nodes().size()); ++iter)
-        {
-            auto i = mr_grid_model_part.NodesBegin() + iter;
-            const double & nodal_mass = (i)->FastGetSolutionStepValue(NODAL_MASS);
-
-            if (nodal_mass > std::numeric_limits<double>::epsilon())
-            {
-                //const array_1d<double, 3 > & nodal_momentum   = (i)->FastGetSolutionStepValue(NODAL_MOMENTUM);
-                //const array_1d<double, 3 > & nodal_inertia    = (i)->FastGetSolutionStepValue(NODAL_INERTIA);
-
-                //array_1d<double, 3 > & nodal_velocity     = (i)->FastGetSolutionStepValue(VELOCITY); //PJW, was 1
-                //array_1d<double, 3 > & nodal_acceleration = (i)->FastGetSolutionStepValue(ACCELERATION); //PJW, was 1
-				//nodal_velocity += nodal_momentum / nodal_mass;
-				//nodal_acceleration = nodal_inertia / nodal_mass;
-																										 
-																										 
-				//double & nodal_pressure = (i)->FastGetSolutionStepValue(PRESSURE,1);
-
-                //double delta_nodal_pressure = 0.0;
-
-                //// For mixed formulation
-                //if (i->HasDofFor(PRESSURE) && i->SolutionStepsDataHas(NODAL_MPRESSURE))
-                //{
-                //    double & nodal_mpressure = (i)->FastGetSolutionStepValue(NODAL_MPRESSURE);
-                //    delta_nodal_pressure = nodal_mpressure/nodal_mass;
-                //}
-
-                //const array_1d<double, 3 > delta_nodal_velocity = nodal_momentum/nodal_mass;
-                //const array_1d<double, 3 > delta_nodal_acceleration = nodal_inertia/nodal_mass;
-
-                //nodal_velocity += delta_nodal_velocity;
-                //nodal_acceleration += delta_nodal_acceleration;
-
-                //nodal_pressure += delta_nodal_pressure;
-            }
-        }
-
-		////PJW testing momenta before update
-		//for (int iter = 0; iter < static_cast<int>(mr_grid_model_part.Nodes().size()); ++iter)
-		//{
-		//	auto i = mr_grid_model_part.NodesBegin() + iter;
-
-		//	//PJW
-		//	const double node_X = i->X();
-		//	const double node_Y = i->Y();
-		//	// PJW
-		//	if (node_X > 1.7 && node_X < 2.3 && node_Y > 1.7 && node_Y < 2.3)
-		//	{
-		//		array_1d<double, 3 > & test_nodal_velocity = (i)->FastGetSolutionStepValue(VELOCITY); //PJW testingh
-		//		array_1d<double, 3 > & test_nodal_middle_velocity = (i)->FastGetSolutionStepValue(MIDDLE_VELOCITY); //PJW
-
-		//		array_1d<double, 3 > & test_nodal_velocity1 = (i)->FastGetSolutionStepValue(VELOCITY,1); //PJW testingh
-		//		array_1d<double, 3 > & test_nodal_middle_velocity1 = (i)->FastGetSolutionStepValue(MIDDLE_VELOCITY,1); //PJW
-		//		int myTest = 1;
-		//	}
-		//}
-		////PJW testing momenta before update
-
-        // The array of nodes
-        NodesArrayType& r_nodes = r_model_part.Nodes();
-
-        // Auxiliary values
-        const array_1d<double, 3> zero_array = ZeroVector(3);
-        // Initializing the variables
-        //VariableUtils().SetVectorVar(FORCE_RESIDUAL, zero_array,r_nodes); //PJW, setting nodal forces to zero
-
         KRATOS_CATCH( "" )
     }
 
@@ -635,6 +543,34 @@ public:
         ElementsArrayType& rElements = rModelPart.Elements();
         ProcessInfo& CurrentProcessInfo = rModelPart.GetProcessInfo();
 
+		if (mStressUpdate == 2)
+		{
+			// MUSL stress update. This works by projecting the updated particle
+			// velocity back to the nodes. The nodal velocity field is then
+			// used for stress computations.
+
+			// We need to call 'FinalizeSolutionStep' for each element but
+			// only update the particles and do nothing else.
+
+			for (int iter = 0; iter < static_cast<int>(mr_grid_model_part.Nodes().size()); ++iter)
+			{
+				auto i = mr_grid_model_part.NodesBegin() + iter;
+				(i)->SetValue(MUSL_VELOCITY_FIELD_COMPUTED, false);
+			}
+
+			// Call each particle and aggregate the nodal velocity field
+			for (ElementsArrayType::iterator it = rElements.begin(); it != rElements.end(); ++it)
+			{
+				(it)->FinalizeSolutionStep(CurrentProcessInfo);
+			}
+
+			for (int iter = 0; iter < static_cast<int>(mr_grid_model_part.Nodes().size()); ++iter)
+			{
+				auto i = mr_grid_model_part.NodesBegin() + iter;
+				(i)->SetValue(MUSL_VELOCITY_FIELD_COMPUTED, true);
+			}
+		}
+
         int num_threads = OpenMPUtils::GetNumThreads();
         OpenMPUtils::PartitionVector element_partition;
         OpenMPUtils::DivideInPartitions(rElements.size(), num_threads, element_partition);
@@ -649,7 +585,6 @@ public:
             for (ElementsArrayType::iterator itElem = element_begin; itElem != element_end; itElem++)
             {
                 itElem->FinalizeSolutionStep(CurrentProcessInfo);
-
             }
         }
 
@@ -966,6 +901,8 @@ protected:
     DeltaTimeParameters mDeltaTime; /// This struct contains the information related with the increment od time step
 
     ModelPart& mr_grid_model_part;
+
+	const int mStressUpdate = 2; // 0 = USF, 1 = USL, 2 = MUSL
     /*@} */
     /**@name Protected Operators*/
     /*@{ */

@@ -35,6 +35,7 @@ class ParticleMPMSolver(PythonSolver):
             "echo_level"                         : 0,
             "analysis_type"                      : "explicit",
             "scheme_type"                        : "",
+            "stress_update"                      : "USL",
             "grid_model_import_settings"              : {
                 "input_type"     : "mdpa",
                 "input_filename" : "unknown_name_Grid"

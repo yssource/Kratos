@@ -355,6 +355,11 @@ public:
      */
     void FinalizeSolutionStep(ProcessInfo& rCurrentProcessInfo) override;
 
+	/**
+	 * Called at the end of each explicit solution step (allows for MUSL)
+	 */
+	void FinalizeSolutionStepExplicit(ProcessInfo& rCurrentProcessInfo);
+
     //************* COMPUTING  METHODS
 
 

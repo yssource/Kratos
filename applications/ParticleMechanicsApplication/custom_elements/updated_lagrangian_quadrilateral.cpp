@@ -937,6 +937,11 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     In the InitializeSolutionStep of each time step the nodal initial conditions are evaluated.
     This function is called by the base scheme class.*/
 
+
+	
+
+
+
 	bool isImplicit = false;
 
     GeometryType& rGeom = GetGeometry();
@@ -944,6 +949,7 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     const unsigned int number_of_nodes = rGeom.PointsNumber();
     const array_1d<double,3>& xg = this->GetValue(MP_COORD);
     GeneralVariables Variables;
+
 
     // Calculating shape function
     Variables.N = this->MPMShapeFunctionPointValues(Variables.N, xg);
@@ -1012,7 +1018,6 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
 
 		for (unsigned int i = 0; i < number_of_nodes; i++)
 		{
-
 			//f_x = V*(s_xx*dNdX + s_xy*dNdY)
 			nodal_force_internal_normal[0] = MP_Volume * 
 				(MP_Stress[0] * Variables.DN_DX(i, 0) + 
@@ -1022,42 +1027,12 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
 			nodal_force_internal_normal[1] = MP_Volume *
 				(MP_Stress[1] * Variables.DN_DX(i, 1) +
 					MP_Stress[2] * Variables.DN_DX(i, 0));
-			//PJW, nodal internal forces
 
 			rGeom[i].SetLock();
 			rGeom[i].FastGetSolutionStepValue(FORCE_RESIDUAL, 0) -= nodal_force_internal_normal; //PJW, minus sign, internal forces
 			rGeom[i].UnSetLock();
 		}
-
-		/*if (xg[0] > 1.3 && xg[0] < 1.7)
-		{
-			if (xg[1] > 1.3 && xg[1] < 1.7)
-			{
-				for (unsigned int i = 0; i < number_of_nodes; i++)
-				{
-					const array_1d<double, 3 > & nodal_force = rGeom[i].FastGetSolutionStepValue(FORCE_RESIDUAL);
-					const double xForce = nodal_force[0];
-
-
-					const array_1d<double, 3 > & nodal_mom = rGeom[i].FastGetSolutionStepValue(NODAL_MOMENTUM,0);
-					const double xMom = nodal_mom[0];
-
-					double nodal_X = rGeom[i].X();
-					double nodal_Y = rGeom[i].Y();
-
-					double Ni = mN[i];
-					double dNiDx = mDN_DX(i, 0);
-					double dNiDy = mDN_DX(i, 1);
-					
-					int testBreak = 1;
-				}
-				int testBreak = 1;
-			}
-		}*/
 	} // explicit internal force calculation
-
-
-
 }
 
 
@@ -1085,20 +1060,20 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
 
 	// TODO: add some test to see what time integration we have
 	bool isImplicit = false;
-
-    // Create and initialize element variables:
-    GeneralVariables Variables;
-    this->InitializeGeneralVariables(Variables,rCurrentProcessInfo);
-
-    // Create constitutive law parameters:
-    ConstitutiveLaw::Parameters Values(GetGeometry(),GetProperties(),rCurrentProcessInfo);
-
-    // Set constitutive law flags:
-    Flags &ConstitutiveLawOptions=Values.GetOptions();
-	ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS);
 	
 	if (isImplicit)
 	{
+		// Create and initialize element variables:
+		GeneralVariables Variables;
+		this->InitializeGeneralVariables(Variables, rCurrentProcessInfo);
+
+		// Create constitutive law parameters:
+		ConstitutiveLaw::Parameters Values(GetGeometry(), GetProperties(), rCurrentProcessInfo);
+
+		// Set constitutive law flags:
+		Flags &ConstitutiveLawOptions = Values.GetOptions();
+		ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS);
+
 		// use deformation gradient based strain
 		ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN, false); 
 
@@ -1110,11 +1085,60 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
 
 		// Call the constitutive law to update material variables
 		mConstitutiveLawVector->FinalizeMaterialResponse(Values, Variables.StressMeasure);
+
+		this->FinalizeStepVariables(Variables, rCurrentProcessInfo);
+
+		mFinalizedStep = true;
 	}
 	else
 	{
+		FinalizeSolutionStepExplicit(rCurrentProcessInfo);
+	}
+
+    KRATOS_CATCH( "" )
+}
+
+void UpdatedLagrangianQuadrilateral::FinalizeSolutionStepExplicit(ProcessInfo & rCurrentProcessInfo)
+{
+	KRATOS_TRY
+
+	bool mapGridToParticles = true;
+	bool calculateStresses = true;
+
+	GeometryType& rGeom = GetGeometry();
+	if (rGeom[0].Has(MUSL_VELOCITY_FIELD_COMPUTED))
+	{
+		if (!rGeom[0].GetValue(MUSL_VELOCITY_FIELD_COMPUTED))
+		{
+			calculateStresses = false;
+		}
+		else
+		{
+			mapGridToParticles = false;
+		}
+	}
+
+
+	// Create and initialize element variables:
+	GeneralVariables Variables;
+	this->InitializeGeneralVariables(Variables, rCurrentProcessInfo);
+
+	if (mapGridToParticles)
+	{
 		// Map grid to particle
 		this->UpdateGaussPointExplicit(Variables, rCurrentProcessInfo);
+
+		//PJW CALCULATE NODAL VELOCITIES HERE!!!!
+	}
+
+	if (calculateStresses)
+	{
+		// Create constitutive law parameters:
+		ConstitutiveLaw::Parameters Values(GetGeometry(), GetProperties(), rCurrentProcessInfo);
+
+		// Set constitutive law flags:
+		Flags &ConstitutiveLawOptions = Values.GetOptions();
+		ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS);
 
 		// use element provided strain incremented from velocity gradient
 		ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_CONSTITUTIVE_TENSOR);
@@ -1131,13 +1155,13 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
 		The function below will call CalculateMaterialResponseCauchy() by default and then (may)
 		call CalculateMaterialResponseKirchhoff() in the constitutive_law.*/
 		mConstitutiveLawVector->CalculateMaterialResponse(Values, Variables.StressMeasure);
+
+		this->FinalizeStepVariables(Variables, rCurrentProcessInfo);
+
+		mFinalizedStep = true;
 	}
-	
-	this->FinalizeStepVariables(Variables, rCurrentProcessInfo);
 
-	mFinalizedStep = true;
-
-    KRATOS_CATCH( "" )
+	KRATOS_CATCH("")
 }
 
 ////************************************************************************************
@@ -1343,14 +1367,6 @@ void UpdatedLagrangianQuadrilateral::UpdateGaussPointExplicit(GeneralVariables &
 	array_1d<double, 3>& MP_Displacement = this->GetValue(MP_DISPLACEMENT);
 	MP_Displacement += delta_xg;
 	this->SetValue(MP_DISPLACEMENT, MP_Displacement);
-
-
-	// PJW test
-	if (xg[0] > 1.2 && xg[0] < 1.8)
-	{
-		Vector& mpStress = this->GetValue(MP_CAUCHY_STRESS_VECTOR);
-		int test123 = 1;
-	}
 
 	KRATOS_CATCH("")
 }

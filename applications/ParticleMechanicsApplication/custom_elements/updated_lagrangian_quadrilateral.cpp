@@ -1051,6 +1051,27 @@ void UpdatedLagrangianQuadrilateral::FinalizeNonLinearIteration( ProcessInfo& rC
 
 }
 
+void UpdatedLagrangianQuadrilateral::CalculateMUSLGridVelocity(ProcessInfo & rCurrentProcessInfo)
+{
+	GeometryType& rGeom = GetGeometry();
+	const unsigned int dimension = rGeom.WorkingSpaceDimension();
+	const unsigned int number_of_nodes = rGeom.PointsNumber();
+	const array_1d<double, 3>& MP_Velocity = this->GetValue(MP_VELOCITY);
+	const double& MP_Mass = this->GetValue(MP_MASS);
+
+	for (unsigned int i = 0; i < number_of_nodes; i++)
+	{
+		array_1d<double, 3>& r_current_velocity = rGeom[i].FastGetSolutionStepValue(VELOCITY);
+		const double & r_nodal_mass = rGeom[i].FastGetSolutionStepValue(NODAL_MASS);
+
+		for (unsigned int j = 0; j < dimension; j++)
+		{
+			// we need to use the original shape functions here (calculated before the momenta update)
+			r_current_velocity[j] += mN[i] * MP_Mass * MP_Velocity[j] / r_nodal_mass;
+		}
+	}
+}
+
 ////************************************************************************************
 ////************************************************************************************
 
@@ -1129,6 +1150,11 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStepExplicit(ProcessInfo & 
 		this->UpdateGaussPointExplicit(Variables, rCurrentProcessInfo);
 
 		//PJW CALCULATE NODAL VELOCITIES HERE!!!!
+		if (rGeom[0].Has(MUSL_VELOCITY_FIELD_COMPUTED))
+		{
+			this->CalculateMUSLGridVelocity(rCurrentProcessInfo);
+			rGeom[0].SetValue(MUSL_VELOCITY_FIELD_COMPUTED, true);
+		}
 	}
 
 	if (calculateStresses)

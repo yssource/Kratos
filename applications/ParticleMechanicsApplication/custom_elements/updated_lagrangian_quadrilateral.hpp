@@ -350,6 +350,11 @@ public:
      */
     void FinalizeNonLinearIteration(ProcessInfo& rCurrentProcessInfo) override;
 
+	/**
+	 * this is called for explicit analysis at the end of the iteration process
+	 */
+	void CalculateMUSLGridVelocity(ProcessInfo& rCurrentProcessInfo);
+
     /**
      * Called at the end of eahc solution step
      */

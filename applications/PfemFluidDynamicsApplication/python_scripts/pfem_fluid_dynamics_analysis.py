@@ -172,6 +172,9 @@ class PfemFluidDynamicsAnalysis(AnalysisStage):
         # processes to be executed at the begining of the solution step
         self.model_processes.ExecuteInitializeSolutionStep()
 
+        # delete previous thermal elements
+        #self._solver.DeleteConvDiffElementsAndNodes()
+
         # clone the thermal model
         self._solver.AddConvDiffElementsAndNodes()
         #self._solver.CloneFluidComputingModelPart()

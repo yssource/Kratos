@@ -532,7 +532,7 @@ protected:
 	/**
 	 * Time integration bool
 	 */
-	bool mIsImplicit;
+	bool mIsImplicit = false; 	//TODO - Have this driven by the project parameters!
 
 	/**
 	 * Container to store shape functions over whole timestep

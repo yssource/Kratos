@@ -927,6 +927,7 @@ protected:
 
     ModelPart& mr_grid_model_part;
 
+	//TODO - Have this driven by the project parameters!
 	const int mStressUpdate = 2; // 0 = USF, 1 = USL, 2 = MUSL
     /*@} */
     /**@name Protected Operators*/

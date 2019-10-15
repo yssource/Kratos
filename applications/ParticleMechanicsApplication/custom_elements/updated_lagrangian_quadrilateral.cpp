@@ -318,9 +318,7 @@ void UpdatedLagrangianQuadrilateral::CalculateElementalSystem( LocalSystemCompon
 	// Define the stress measure
 	Variables.StressMeasure = ConstitutiveLaw::StressMeasure_Cauchy;
 
-
-	bool isImplicit = false; //PJW add element system
-	if (isImplicit)
+	if (mIsImplicit)
 	{
 		ConstitutiveLawOptions.Set(ConstitutiveLaw::COMPUTE_STRESS, true);
 		ConstitutiveLawOptions.Set(ConstitutiveLaw::USE_ELEMENT_PROVIDED_STRAIN,false);
@@ -650,8 +648,7 @@ void UpdatedLagrangianQuadrilateral::CalculateAndAddInternalForces(VectorType& r
 	KRATOS_TRY
 
 	VectorType internal_forces = ZeroVector(rRightHandSideVector.size());
-	bool isImplicit = false;
-	if (isImplicit)
+	if (mIsImplicit)
 	{
 		internal_forces += rIntegrationWeight * prod(trans(rVariables.B), rVariables.StressVector);
 		noalias(rRightHandSideVector) -= internal_forces;
@@ -937,13 +934,6 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     In the InitializeSolutionStep of each time step the nodal initial conditions are evaluated.
     This function is called by the base scheme class.*/
 
-
-	
-
-
-
-	bool isImplicit = false;
-
     GeometryType& rGeom = GetGeometry();
     const unsigned int dimension = rGeom.WorkingSpaceDimension();
     const unsigned int number_of_nodes = rGeom.PointsNumber();
@@ -965,7 +955,7 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     array_1d<double,3> nodal_momentum = ZeroVector(3);
     array_1d<double,3> nodal_inertia  = ZeroVector(3);
 
-	if (isImplicit)
+	if (mIsImplicit)
 	{
 		for (unsigned int j = 0; j < number_of_nodes; j++)
 		{
@@ -999,7 +989,7 @@ void UpdatedLagrangianQuadrilateral::InitializeSolutionStep( ProcessInfo& rCurre
     }
 
 	// Add in explicit internal force calculation (Fint = Volume*divergence(sigma))
-	if (!isImplicit)
+	if (!mIsImplicit)
 	{
 		////PJW Calculate shape function gradients
 		Matrix Jacobian;
@@ -1079,10 +1069,7 @@ void UpdatedLagrangianQuadrilateral::FinalizeSolutionStep( ProcessInfo& rCurrent
 {
     KRATOS_TRY
 
-	// TODO: add some test to see what time integration we have
-	bool isImplicit = false;
-	
-	if (isImplicit)
+	if (mIsImplicit)
 	{
 		// Create and initialize element variables:
 		GeneralVariables Variables;
@@ -1222,8 +1209,7 @@ void UpdatedLagrangianQuadrilateral::FinalizeStepVariables( GeneralVariables & r
     double AccumulatedPlasticDeviatoricStrain = mConstitutiveLawVector->GetValue(MP_ACCUMULATED_PLASTIC_DEVIATORIC_STRAIN, AccumulatedPlasticDeviatoricStrain);
     this->SetValue(MP_ACCUMULATED_PLASTIC_DEVIATORIC_STRAIN, AccumulatedPlasticDeviatoricStrain);
 
-	bool isImplicit = false;
-	if (isImplicit)
+	if (mIsImplicit)
 	{
 		this->UpdateGaussPoint(rVariables, rCurrentProcessInfo);
 	}
@@ -1240,8 +1226,6 @@ void UpdatedLagrangianQuadrilateral::FinalizeStepVariables( GeneralVariables & r
 void UpdatedLagrangianQuadrilateral::UpdateGaussPoint( GeneralVariables & rVariables, const ProcessInfo& rCurrentProcessInfo)
 {
 	KRATOS_TRY
-
-	bool isImplicit = false;
 
     GeometryType& rGeom = GetGeometry();
     rVariables.CurrentDisp = CalculateCurrentDisp(rVariables.CurrentDisp, rCurrentProcessInfo);
@@ -1268,16 +1252,7 @@ void UpdatedLagrangianQuadrilateral::UpdateGaussPoint( GeneralVariables & rVaria
 
             for ( unsigned int j = 0; j < dimension; j++ )
             {
-
-				if (isImplicit)
-				{
-					delta_xg[j] += rVariables.N[i] * rVariables.CurrentDisp(i, j);
-				}
-				else
-				{
-					delta_xg[j] += delta_time * rVariables.N[i] * r_middle_velocity[j];
-				}
-                
+				delta_xg[j] += rVariables.N[i] * rVariables.CurrentDisp(i, j);                
 				MP_Acceleration[j] += rVariables.N[i] * nodal_acceleration[j];
 
                 /* NOTE: The following interpolation techniques have been tried:
@@ -1291,19 +1266,12 @@ void UpdatedLagrangianQuadrilateral::UpdateGaussPoint( GeneralVariables & rVaria
 
     }
 
-	if (isImplicit)
-	{
 		/* NOTE:
 	Another way to update the MP velocity (see paper Guilkey and Weiss, 2003).
 	This assume newmark (or trapezoidal, since n.gamma=0.5) rule of integration*/
-		MP_Velocity = MP_PreviousVelocity + 0.5 * delta_time * (MP_Acceleration + MP_PreviousAcceleration);
-		this->SetValue(MP_VELOCITY, MP_Velocity);
-	}
-	else
-	{
-		MP_Velocity = MP_PreviousVelocity + delta_time * MP_Acceleration;
-		this->SetValue(MP_VELOCITY, MP_Velocity);
-	}
+	MP_Velocity = MP_PreviousVelocity + 0.5 * delta_time * (MP_Acceleration + MP_PreviousAcceleration);
+	this->SetValue(MP_VELOCITY, MP_Velocity);
+
     
 
     /* NOTE: The following interpolation techniques have been tried:
@@ -1311,18 +1279,10 @@ void UpdatedLagrangianQuadrilateral::UpdateGaussPoint( GeneralVariables & rVaria
         MP_Velocity = 2.0/delta_time * delta_xg - MP_PreviousVelocity;
     */
 
-	if (xg[0] > 1.2 && xg[0] < 1.8)
-	{
-		Vector& mpStress = this->GetValue(MP_CAUCHY_STRESS_VECTOR);
-		int test123 = 1;
-	}
-
 
     // Update the MP Position
     const array_1d<double,3>& new_xg = xg + delta_xg ;
     this -> SetValue(MP_COORD,new_xg);
-
-
 
     // Update the MP Acceleration
     this -> SetValue(MP_ACCELERATION,MP_Acceleration);

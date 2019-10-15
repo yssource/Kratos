@@ -304,12 +304,20 @@ class ParticleMPMSolver(PythonSolver):
         model_part.AddNodalSolutionStepVariable(KratosParticle.MIDDLE_VELOCITY)
         model_part.AddNodalSolutionStepVariable(KratosMultiphysics.FORCE_RESIDUAL)
         model_part.AddNodalSolutionStepVariable(KratosMultiphysics.RESIDUAL_VECTOR)
+        model_part.AddNodalSolutionStepVariable(KratosParticle.EXPLICIT_STRESS_UPDATE)
 
         # Add variables for specific cases
         if self.settings["pressure_dofs"].GetBool():
             # add specific variables for the problem (pressure dofs)
             model_part.AddNodalSolutionStepVariable(KratosParticle.PRESSURE_REACTION)
             model_part.AddNodalSolutionStepVariable(KratosParticle.NODAL_MPRESSURE)
+
+        #if self.settings["stress_update"].GetString() == "USF":
+        #    model_part.AddNodalSolutionStepVariable(KratosParticle.EXPLICIT_STRESS_UPDATE,0)
+        #elif self.settings["stress_update"].GetString() == "USL":
+        #    model_part.AddNodalSolutionStepVariable(KratosParticle.EXPLICIT_STRESS_UPDATE,1)
+        #elif self.settings["stress_update"].GetString() == "MUSL":
+        #    model_part.AddNodalSolutionStepVariable(KratosParticle.EXPLICIT_STRESS_UPDATE,2)
 
     def _model_part_reading(self):
         # reading the model part of the background grid

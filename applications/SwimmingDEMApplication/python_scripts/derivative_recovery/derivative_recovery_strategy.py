@@ -9,6 +9,7 @@ from . import L2_projection_recoverer
 from . import pouliot_2012_recoverer
 from . import pouliot_2012_edge_recoverer
 from . import lagrangian_recoverer
+from . import manufactured_solution_recoverer
 
 import weakref
 
@@ -136,6 +137,10 @@ class DerivativeRecoveryStrategy:
             return standard_recoverer.StandardGradientRecoverer(self.parameters, self.fluid_model_part)
         elif self.fluid_fraction_grad_type == 2:
             return zhang_guo_recoverer.ZhangGuoGradientRecoverer(self.parameters, self.fluid_model_part)
+        elif self.fluid_fraction_grad_type == 3:
+            return manufactured_solution_recoverer.CasasSolutionRecoverer(self.parameters, self.fluid_model_part)
+        elif self.fluid_fraction_grad_type == 4:
+            return manufactured_solution_recoverer.StationarySolutionRecoverer(self.parameters, self.fluid_model_part)
         else:
             raise Exception('The value of fluid_fraction_grad_type is ' + str(self.fluid_fraction_grad_type) + ' , which does not correspond to any valid option.')
 

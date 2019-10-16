@@ -47,16 +47,16 @@ class ManufacturedSolution(object):
         return 0.0
 
     def convective1(self, t, *x):
-        return  self.u1(t, *x) * self.du11(t, *x) + self.u2(t, *x) * self.du12(t, *x)
+        return self.u1(t, *x) * self.du11(t, *x) + self.u2(t, *x) * self.du12(t, *x)
 
     def convective2(self, t, *x):
-        return  self.u1(t, *x) * self.du21(t, *x) + self.u2(t, *x) * self.du22(t, *x)
+        return self.u1(t, *x) * self.du21(t, *x) + self.u2(t, *x) * self.du22(t, *x)
 
     def laplacian1(self, t, *x):
-        return  self.du111(t, *x) + self.du122(t, *x)
+        return self.du111(t, *x) + self.du122(t, *x)
 
     def laplacian2(self, t, *x):
-        return  self.du211(t, *x) + self.du222(t, *x)
+        return self.du211(t, *x) + self.du222(t, *x)
 
     def press_grad1(self, t, *x):
         return self.dp1(t, *x)
@@ -136,3 +136,9 @@ class ManufacturedSolution(object):
         By default, alpha is 1
         '''
         return 1.0
+
+    def dalphat(self, t, *x):
+        '''
+        By default, alpha is 0
+        '''
+        return 0.0

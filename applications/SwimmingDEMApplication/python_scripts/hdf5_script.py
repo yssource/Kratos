@@ -29,15 +29,16 @@ class ErrorProjectionPostProcessTool(object):
     def WriteData(self, error_model_part, velocity_error_projected, pressure_error_projected):
         self.error_model_part = error_model_part
         mod_error = 0.0
+        iterator = 0
+        self.element_size = []
         for node in self.error_model_part.Nodes:
-            #vectorial_error = Vector(node.GetSolutionStepValue(Kratos.VELOCITY) - node.GetSolutionStepValue(Dem.EXACT_VELOCITY))
-            #mod_error += np.sqrt(vectorial_error[0]**2 + vectorial_error[1]**2 + vectorial_error[2]**2)
             mod_error += np.sqrt(node.GetSolutionStepValue(Dem.ERROR_X)**2 + node.GetSolutionStepValue(Dem.ERROR_Y)**2 + node.GetSolutionStepValue(Dem.ERROR_Z)**2)
         self.av_mod_error.append(mod_error/ len(self.error_model_part.Elements))
 
         for Element in self.error_model_part.Elements:
-            self.element_size = Element.GetGeometry().Length()
-            break
+            self.element_size.append(Element.GetGeometry().Length())
+            iterator += 1
+        self.max_element = max(self.element_size)
         self.time.append(self.error_model_part.ProcessInfo[Kratos.TIME])
         self.v_error.append(velocity_error_projected)
         self.p_error.append(pressure_error_projected)
@@ -48,7 +49,7 @@ class ErrorProjectionPostProcessTool(object):
 
     def WriteDataToFile(self, file_or_group, names, data):
         self.sub_group = self.CreateGroup(file_or_group, self.group_name)
-        self.sub_group.attrs['element_size'] = str(self.element_size)
+        self.sub_group.attrs['element_size'] = str(self.max_element)
         self.sub_group.attrs['n_elements'] = str(len(self.error_model_part.Elements))
         for name, datum in zip(names, data):
             self.DeleteDataSet(file_or_group, name)

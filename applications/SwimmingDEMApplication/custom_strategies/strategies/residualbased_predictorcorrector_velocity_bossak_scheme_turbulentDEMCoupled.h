@@ -256,10 +256,10 @@ namespace Kratos {
             {
                 auto itNode = r_model_part.NodesBegin() + k;
                 const double & FluidFraction = (itNode)->FastGetSolutionStepValue(FLUID_FRACTION);
-                const double & FluidFractionRate = delta_time_inv * ((itNode)->FastGetSolutionStepValue(FLUID_FRACTION) - (itNode)->FastGetSolutionStepValue(FLUID_FRACTION_OLD));
-                (itNode)->FastGetSolutionStepValue(FLUID_FRACTION_RATE) = FluidFractionRate;
+                //const double & FluidFractionRate = delta_time_inv * ((itNode)->FastGetSolutionStepValue(FLUID_FRACTION) - (itNode)->FastGetSolutionStepValue(FLUID_FRACTION_OLD));
+                //(itNode)->FastGetSolutionStepValue(FLUID_FRACTION_RATE) = FluidFractionRate;
                 (itNode)->SetValue(FLUID_FRACTION, FluidFraction);
-                (itNode)->SetValue(FLUID_FRACTION_RATE, FluidFractionRate);
+                //(itNode)->SetValue(FLUID_FRACTION_RATE, FluidFractionRate);
 
             }
         }

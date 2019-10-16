@@ -7,17 +7,9 @@ import numpy as np
 BaseSolver = swimming_DEM_solver.SwimmingDEMSolver
 import L2_error_projection_utility as error_projector
 
-def CartesianToPolar(x, y):
-    x0 = 0.0
-    y0 = 0.0
-    L = 1
-    x_rel, y_rel = x-x0, y-y0
-    r = np.sqrt(x_rel**2 + y_rel**2)
-    theta = x/L
-    return r, theta
-
 class FluidFractionTestSolver(BaseSolver):
     def __init__(self, model, project_parameters, field_utility, fluid_solver, dem_solver, variables_manager):
+        self.project_parameters = project_parameters
         super(FluidFractionTestSolver, self).__init__(model,
                                                       project_parameters,
                                                       field_utility,
@@ -25,35 +17,37 @@ class FluidFractionTestSolver(BaseSolver):
                                                       dem_solver,
                                                       variables_manager)
 
-    def ReturnExactFluidFraction(self, x, y):
-        time = self.fluid_solver.main_model_part.ProcessInfo[Kratos.TIME]
-        r, theta = CartesianToPolar(x, y)
-        alpha0 = 0.7
-        alpha_min = 0.5
-        assert(alpha0 >= alpha_min and alpha0 <= 1.0 and alpha_min > 0.0)
-        delta_alpha = min(alpha0 - alpha_min, 1.0 - alpha0)
-        T = 0.1
-        omega = 2 * np.pi / T
-
-        return alpha0 + delta_alpha * np.sin(theta + omega * time)
-
     def CannotIgnoreFluidNow(self):
         return self.solve_system and self.calculating_fluid_in_current_step
 
     def SolveFluidSolutionStep(self):
         self.ImposeVelocity()
         super(FluidFractionTestSolver, self).SolveFluidSolutionStep()
-        self.SetFluidFractionField()
-
-    def SetFluidFractionField(self):
-        for node in self.fluid_solver.main_model_part.Nodes:
-            fluid_fraction = self.ReturnExactFluidFraction(node.X, node.Y)
-            node.SetSolutionStepValue(Kratos.FLUID_FRACTION, fluid_fraction)
 
     def ImposeVelocity(self):
         for node in self.fluid_solver.main_model_part.Nodes:
             node.SetSolutionStepValue(Kratos.VELOCITY_Z, 0.0)
             node.Fix(Kratos.VELOCITY_Z)
+
+    def SetUpResultsDatabase(self):
+        current_time = self.fluid_solver.main_model_part.ProcessInfo[KratosMultiphysics.TIME]
+        x = np.array([node.X for node in self.fluid_solver.main_model_part.Nodes])
+        y = np.array([node.Y for node in self.fluid_solver.main_model_part.Nodes])
+        z = np.array([node.Z for node in self.fluid_solver.main_model_part.Nodes])
+
+        from KratosMultiphysics.SwimmingDEMApplication.custom_body_force import casas_fluid_fraction_solution
+        self.casas_solution = casas_fluid_fraction_solution.CasasFluidFractionSolution(self.project_parameters["fluid_parameters"]["processes"]["boundary_conditions_process_list"][1]["Parameters"]["benchmark_parameters"])
+        fluid_fraction_list = np.array([self.casas_solution.alpha(current_time, x, y, z) for x, y, z in zip(x, y, z)])
+        fluid_fraction_rate_list = np.array([self.casas_solution.dalphat(current_time, x, y, z) for x, y, z in zip(x, y, z)])
+
+
+        iterator = 0
+        for node in self.fluid_solver.main_model_part.Nodes:
+            fluid_fraction = fluid_fraction_list[iterator]
+            fluid_fraction_rate = fluid_fraction_rate_list[iterator]
+            node.SetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION, fluid_fraction)
+            node.SetSolutionStepValue(KratosMultiphysics.FLUID_FRACTION_RATE, fluid_fraction_rate)
+            iterator += 1
 
     def ConstructL2ErrorProjector(self):
         self.L2_error_projector = error_projector.L2ErrorProjectionUtility(self.fluid_solver.main_model_part)

@@ -6,19 +6,23 @@ import sympy as sp
 from custom_body_force.manufactured_solution import ManufacturedSolution
 
 def CreateManufacturedSolution(custom_settings):
-    return StationaryFluidFractionVortex(custom_settings)
+    return StationaryFluidFractionSolution(custom_settings)
 
-class StationaryFluidFractionVortex(ManufacturedSolution):
+class StationaryFluidFractionSolution(ManufacturedSolution):
     def __init__(self, settings):
 
         default_settings = KratosMultiphysics.Parameters("""
             {
-                "velocity"    : 1.0,
-                "length"      : 1.0,
-                "viscosity"   : 0.1,
-                "density"     : 1.0,
-                "frequency"   : 1.0,
-                "damping"     : 1.0
+                "velocity"         : 1.0,
+                "length"           : 1.0,
+                "viscosity"        : 0.1,
+                "density"          : 1.0,
+                "frequency"        : 1.0,
+                "damping"          : 1.0,
+                "center_x1"        : 0.0,
+                "center_x2"        : 0.0,
+                "independent_term" : 0.4,
+                "maximum_alpha"    : 1.0
             }
             """
             )
@@ -29,86 +33,58 @@ class StationaryFluidFractionVortex(ManufacturedSolution):
         self.L = settings["length"].GetDouble()
         self.rho = settings["density"].GetDouble()
         self.nu = settings["viscosity"].GetDouble() / self.rho
-        # self.X = sp.symbols("X")
-        # self.T  = sp.symbols("T")
-        # self.fx = 100 * self.X**2 * (self.L - self.X)**2
-        # self.gt = sp.cos(np.pi * self.T) * sp.exp(-self.T)
-        # self.dfx = sp.diff(self.fx, self.X)
-        # self.dgt = sp.diff(self.gt, self.T)
-        # self.ddfx = sp.diff(self.fx, self.X, 2)
-        # self.dddfx = sp.diff(self.fx, self.X, 3)
+        self.centerx1 = settings["center_x1"].GetDouble()
+        self.centerx2 = settings["center_x2"].GetDouble()
+        self.independent_term = settings["independent_term"].GetDouble()
+        self.maximum_alpha = settings["maximum_alpha"].GetDouble()
 
-    def f(self, x):
-        return 100 * x**2 * (self.L - x)**2
+    def u1(self, time, x1, x2, x3):
+        return  100*(-self.centerx1 + x1)**2*(100*(-2*self.centerx2 + 2*x2)*(self.centerx2 - x2 + 1)**2 + 100*(-self.centerx2 + x2)**2*(-2*self.centerx2 + 2*x2 - 2))*(self.centerx1 - x1 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)
 
-    def g(self, t):
-        return np.cos(np.pi * t) * np.e**(-t)
+    def u2(self, time, x1, x2, x3):
+        return 100*(-self.centerx2 + x2)**2*(-100*(-2*self.centerx1 + 2*x1)*(self.centerx1 - x1 + 1)**2 - 100*(-self.centerx1 + x1)**2*(-2*self.centerx1 + 2*x1 - 2))*(self.centerx2 - x2 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)
 
-    def df(self, x):
-        return 2 * 100 * x * (self.L - x)**2 - 2 * 100 * x**2 * (self.L - x)
+    def du1dt(self, time, x1, x2, x3):
+        return -100*np.pi*(-self.centerx1 + x1)**2*(100*(-2*self.centerx2 + 2*x2)*(self.centerx2 - x2 + 1)**2 + 100*(-self.centerx2 + x2)**2*(-2*self.centerx2 + 2*x2 - 2))*(self.centerx1 - x1 + 1)**2*np.exp(-time)*np.sin(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha) - 100*(-self.centerx1 + x1)**2*(100*(-2*self.centerx2 + 2*x2)*(self.centerx2 - x2 + 1)**2 + 100*(-self.centerx2 + x2)**2*(-2*self.centerx2 + 2*x2 - 2))*(self.centerx1 - x1 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)
 
-    def dg(self, t):
-        return -np.pi * np.sin(np.pi * t) * np.e**(-t) - np.cos(np.pi * t) * np.e**(-t)
+    def du2dt(self, time, x1, x2, x3):
+        return -100*np.pi*(-self.centerx2 + x2)**2*(-100*(-2*self.centerx1 + 2*x1)*(self.centerx1 - x1 + 1)**2 - 100*(-self.centerx1 + x1)**2*(-2*self.centerx1 + 2*x1 - 2))*(self.centerx2 - x2 + 1)**2*np.exp(-time)*np.sin(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha) - 100*(-self.centerx2 + x2)**2*(-100*(-2*self.centerx1 + 2*x1)*(self.centerx1 - x1 + 1)**2 - 100*(-self.centerx1 + x1)**2*(-2*self.centerx1 + 2*x1 - 2))*(self.centerx2 - x2 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)
 
-    def ddf(self, x):
-        return 2 * 100 * (self.L**2 - 6 * self.L * x + 6 * x**2)
+    def du11(self, time, x1, x2, x3):
+        return 100*self.independent_term*(-self.centerx1 + x1)**2*(100*(-2*self.centerx2 + 2*x2)*(self.centerx2 - x2 + 1)**2 + 100*(-self.centerx2 + x2)**2*(-2*self.centerx2 + 2*x2 - 2))*(self.centerx1 - x1 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)**2 + 100*(-2*self.centerx1 + 2*x1)*(100*(-2*self.centerx2 + 2*x2)*(self.centerx2 - x2 + 1)**2 + 100*(-self.centerx2 + x2)**2*(-2*self.centerx2 + 2*x2 - 2))*(self.centerx1 - x1 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha) + 100*(-self.centerx1 + x1)**2*(100*(-2*self.centerx2 + 2*x2)*(self.centerx2 - x2 + 1)**2 + 100*(-self.centerx2 + x2)**2*(-2*self.centerx2 + 2*x2 - 2))*(-2*self.centerx1 + 2*x1 - 2)*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)
 
-    def dddf(self, x):
-        return 12 * 100 * (2 * x - self.L)
+    def du12(self, time, x1, x2, x3):
+        return 100*self.independent_term*(-self.centerx1 + x1)**2*(100*(-2*self.centerx2 + 2*x2)*(self.centerx2 - x2 + 1)**2 + 100*(-self.centerx2 + x2)**2*(-2*self.centerx2 + 2*x2 - 2))*(self.centerx1 - x1 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)**2 + 100*(-self.centerx1 + x1)**2*(self.centerx1 - x1 + 1)**2*(200*(-2*self.centerx2 + 2*x2)*(-2*self.centerx2 + 2*x2 - 2) + 200*(-self.centerx2 + x2)**2 + 200*(self.centerx2 - x2 + 1)**2)*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)
 
-    def u1(self, t, x1, x2, x3):
-        return self.f(x1) * self.df(x2) * self.g(t) / self.alpha(t, x1, x2, x3)
+    def du21(self, time, x1, x2, x3):
+        return 100*self.independent_term*(-self.centerx2 + x2)**2*(-100*(-2*self.centerx1 + 2*x1)*(self.centerx1 - x1 + 1)**2 - 100*(-self.centerx1 + x1)**2*(-2*self.centerx1 + 2*x1 - 2))*(self.centerx2 - x2 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)**2 + 100*(-self.centerx2 + x2)**2*(self.centerx2 - x2 + 1)**2*(-200*(-2*self.centerx1 + 2*x1)*(-2*self.centerx1 + 2*x1 - 2) - 200*(-self.centerx1 + x1)**2 - 200*(self.centerx1 - x1 + 1)**2)*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)
 
-    def u2(self, t, x1, x2, x3):
-        return -self.df(x1) * self.f(x2) * self.g(t) / self.alpha(t, x1, x2, x3)
 
-    def du1dt(self, t, x1, x2, x3):
-        return self.f(x1) * self.df(x2) * self.dg(t) / self.alpha(t, x1, x2, x3)
+    def du22(self, time, x1, x2, x3):
+        return 100*self.independent_term*(-self.centerx2 + x2)**2*(-100*(-2*self.centerx1 + 2*x1)*(self.centerx1 - x1 + 1)**2 - 100*(-self.centerx1 + x1)**2*(-2*self.centerx1 + 2*x1 - 2))*(self.centerx2 - x2 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)**2 + 100*(-2*self.centerx2 + 2*x2)*(-100*(-2*self.centerx1 + 2*x1)*(self.centerx1 - x1 + 1)**2 - 100*(-self.centerx1 + x1)**2*(-2*self.centerx1 + 2*x1 - 2))*(self.centerx2 - x2 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha) + 100*(-self.centerx2 + x2)**2*(-100*(-2*self.centerx1 + 2*x1)*(self.centerx1 - x1 + 1)**2 - 100*(-self.centerx1 + x1)**2*(-2*self.centerx1 + 2*x1 - 2))*(-2*self.centerx2 + 2*x2 - 2)*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)
 
-    def du2dt(self, t, x1, x2, x3):
-        return -self.df(x1) * self.f(x2) * self.dg(t) / self.alpha(t, x1, x2, x3)
 
-    def du11(self, t, x1, x2, x3):
-        return (self.df(x1) * self.df(x2) * self.g(t) * self.alpha(t, x1, x2, x3) - self.f(x1) * self.df(x2) * self.g(t) * self.dalpha1(x1, x2)) / (self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3))
+    def du111(self, time, x1, x2, x3):
+        return 200*self.independent_term**2*(-self.centerx1 + x1)**2*(100*(-2*self.centerx2 + 2*x2)*(self.centerx2 - x2 + 1)**2 + 100*(-self.centerx2 + x2)**2*(-2*self.centerx2 + 2*x2 - 2))*(self.centerx1 - x1 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)**3 + 200*self.independent_term*(-2*self.centerx1 + 2*x1)*(100*(-2*self.centerx2 + 2*x2)*(self.centerx2 - x2 + 1)**2 + 100*(-self.centerx2 + x2)**2*(-2*self.centerx2 + 2*x2 - 2))*(self.centerx1 - x1 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)**2 + 200*self.independent_term*(-self.centerx1 + x1)**2*(100*(-2*self.centerx2 + 2*x2)*(self.centerx2 - x2 + 1)**2 + 100*(-self.centerx2 + x2)**2*(-2*self.centerx2 + 2*x2 - 2))*(-2*self.centerx1 + 2*x1 - 2)*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)**2 + 200*(-2*self.centerx1 + 2*x1)*(100*(-2*self.centerx2 + 2*x2)*(self.centerx2 - x2 + 1)**2 + 100*(-self.centerx2 + x2)**2*(-2*self.centerx2 + 2*x2 - 2))*(-2*self.centerx1 + 2*x1 - 2)*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha) + 200*(-self.centerx1 + x1)**2*(100*(-2*self.centerx2 + 2*x2)*(self.centerx2 - x2 + 1)**2 + 100*(-self.centerx2 + x2)**2*(-2*self.centerx2 + 2*x2 - 2))*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha) + 200*(100*(-2*self.centerx2 + 2*x2)*(self.centerx2 - x2 + 1)**2 + 100*(-self.centerx2 + x2)**2*(-2*self.centerx2 + 2*x2 - 2))*(self.centerx1 - x1 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)
 
-    def du12(self, t, x1, x2, x3):
-        return (self.f(x1) * self.ddf(x2) *  self.g(t) * self.alpha(t, x1, x2, x3) - self.f(x1) * self.df(x2) *  self.g(t) * self.dalpha2(x1, x2)) / (self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3))
+    def du122(self, time, x1, x2, x3):
+        return 200*self.independent_term**2*(-self.centerx1 + x1)**2*(100*(-2*self.centerx2 + 2*x2)*(self.centerx2 - x2 + 1)**2 + 100*(-self.centerx2 + x2)**2*(-2*self.centerx2 + 2*x2 - 2))*(self.centerx1 - x1 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)**3 + 200*self.independent_term*(-self.centerx1 + x1)**2*(self.centerx1 - x1 + 1)**2*(200*(-2*self.centerx2 + 2*x2)*(-2*self.centerx2 + 2*x2 - 2) + 200*(-self.centerx2 + x2)**2 + 200*(self.centerx2 - x2 + 1)**2)*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)**2 + 100*(-self.centerx1 + x1)**2*(self.centerx1 - x1 + 1)**2*(-2400*self.centerx2 + 2400*x2 - 1200)*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)
 
-    def du21(self, t, x1, x2, x3):
-        return (-self.ddf(x1) * self.f(x2) * self.g(t) * self.alpha(t, x1, x2, x3) - (-self.df(x1) * self.f(x2) * self.g(t) * self.dalpha1(x1, x2))) / (self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3))
+    def du211(self, time, x1, x2, x3):
+        return 200*self.independent_term**2*(-self.centerx2 + x2)**2*(-100*(-2*self.centerx1 + 2*x1)*(self.centerx1 - x1 + 1)**2 - 100*(-self.centerx1 + x1)**2*(-2*self.centerx1 + 2*x1 - 2))*(self.centerx2 - x2 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)**3 + 200*self.independent_term*(-self.centerx2 + x2)**2*(self.centerx2 - x2 + 1)**2*(-200*(-2*self.centerx1 + 2*x1)*(-2*self.centerx1 + 2*x1 - 2) - 200*(-self.centerx1 + x1)**2 - 200*(self.centerx1 - x1 + 1)**2)*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)**2 + 100*(-self.centerx2 + x2)**2*(2400*self.centerx1 - 2400*x1 + 1200)*(self.centerx2 - x2 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)
 
-    def du22(self, t, x1, x2, x3):
-        return (-self.df(x1) * self.df(x2) * self.g(t) * self.alpha(t, x1, x2, x3) - (-self.df(x1) * self.f(x2) * self.g(t) * self.dalpha2(x1, x2))) / (self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3))
 
-    def du111(self, t, x1, x2, x3):
-        return ((self.ddf(x1) * self.df(x2) * self.g(t) * self.alpha(t, x1, x2, x3) + self.df(x1) * self.df(x2) * self.g(t) * self.dalpha1(x1, x2) - (self.df(x1) * self.df(x2) * self.g(t) * self.dalpha1(x1, x2) + self.f(x1) * self.df(x2) * self.g(t) * self.ddalpha1(x1, x2))) * self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3) - (self.df(x1) * self.df(x2) * self.g(t) * self.alpha(t, x1, x2, x3) - self.f(x1) * self.df(x2) * self.g(t) * self.dalpha1(x1, x2)) * (self.dalpha1(x1, x2) * self.alpha(t, x1, x2, x3) + self.alpha(t, x1, x2, x3) * self.dalpha1(x1, x2))) / (self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3))
+    def du222(self, time, x1, x2, x3):
+        return 200*self.independent_term**2*(-self.centerx2 + x2)**2*(-100*(-2*self.centerx1 + 2*x1)*(self.centerx1 - x1 + 1)**2 - 100*(-self.centerx1 + x1)**2*(-2*self.centerx1 + 2*x1 - 2))*(self.centerx2 - x2 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)**3 + 200*self.independent_term*(-2*self.centerx2 + 2*x2)*(-100*(-2*self.centerx1 + 2*x1)*(self.centerx1 - x1 + 1)**2 - 100*(-self.centerx1 + x1)**2*(-2*self.centerx1 + 2*x1 - 2))*(self.centerx2 - x2 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)**2 + 200*self.independent_term*(-self.centerx2 + x2)**2*(-100*(-2*self.centerx1 + 2*x1)*(self.centerx1 - x1 + 1)**2 - 100*(-self.centerx1 + x1)**2*(-2*self.centerx1 + 2*x1 - 2))*(-2*self.centerx2 + 2*x2 - 2)*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)**2 + 200*(-2*self.centerx2 + 2*x2)*(-100*(-2*self.centerx1 + 2*x1)*(self.centerx1 - x1 + 1)**2 - 100*(-self.centerx1 + x1)**2*(-2*self.centerx1 + 2*x1 - 2))*(-2*self.centerx2 + 2*x2 - 2)*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha) + 200*(-self.centerx2 + x2)**2*(-100*(-2*self.centerx1 + 2*x1)*(self.centerx1 - x1 + 1)**2 - 100*(-self.centerx1 + x1)**2*(-2*self.centerx1 + 2*x1 - 2))*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha) + 200*(-100*(-2*self.centerx1 + 2*x1)*(self.centerx1 - x1 + 1)**2 - 100*(-self.centerx1 + x1)**2*(-2*self.centerx1 + 2*x1 - 2))*(self.centerx2 - x2 + 1)**2*np.exp(-time)*np.cos(np.pi*time)/(-self.independent_term*(-self.centerx1 + x1) - self.independent_term*(-self.centerx2 + x2) + self.maximum_alpha)
 
-    def du122(self, t, x1, x2, x3):
-        return ((((self.f(x1) * self.dddf(x2) * self.g(t) * self.alpha(t, x1, x2, x3) + self.f(x1) * self.ddf(x2) *  self.g(t) * self.dalpha2(x1, x2)) - (self.f(x1) * self.ddf(x2) *  self.g(t) * self.dalpha2(x1, x2) + self.f(x1) * self.df(x2) *  self.g(t) * self.ddalpha2(x1, x2))) * self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3)) - (self.f(x1) * self.ddf(x2) *  self.g(t) * self.alpha(t, x1, x2, x3) - self.f(x1) * self.df(x2) *  self.g(t) * self.dalpha2(x1, x2)) * (self.dalpha2(x1, x2) * self.alpha(t, x1, x2, x3) + self.alpha(t, x1, x2, x3) * self.dalpha2(x1, x2))) / (self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3))
+    def alpha(self, time, x1, x2, x3):
+        return -self.independent_term * x1 - self.independent_term * x2 + self.maximum_alpha
 
-    def du211(self, t, x1, x2, x3):
-        return (((((-self.dddf(x1) * self.f(x2) * self.g(t) * self.alpha(t, x1, x2, x3) + (-self.ddf(x1) * self.f(x2) * self.g(t) * self.dalpha1(x1, x2))) - ((-self.ddf(x1) * self.f(x2) * self.g(t) * self.dalpha1(x1, x2) + (-self.df(x1) * self.f(x2) * self.g(t) * self.ddalpha1(x1, x2)))))) * self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3)) - (-self.ddf(x1) * self.f(x2) * self.g(t) * self.alpha(t, x1, x2, x3) - (-self.df(x1) * self.f(x2) * self.g(t) * self.dalpha1(x1, x2))) * (self.dalpha1(x1, x2) * self.alpha(t, x1, x2, x3) + self.alpha(t, x1, x2, x3) * self.dalpha1(x1, x2))) / (self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3))
+    def alpha1(self, time, x1, x2, x3):
+        return -self.independent_term
 
-    def du222(self, t, x1, x2, x3):
-        return ((((-self.df(x1) * self.ddf(x2) * self.g(t) * self.alpha(t, x1, x2, x3) + (-self.df(x1) * self.df(x2) * self.g(t) * self.dalpha2(x1, x2))) - (-self.df(x1) * self.df(x2) * self.g(t) * self.dalpha2(x1, x2) + (-self.df(x1) * self.f(x2) * self.g(t) * self.ddalpha2(x1, x2)))) * self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3)) - ((-self.df(x1) * self.df(x2) * self.g(t) * self.alpha(t, x1, x2, x3) - (-self.df(x1) * self.f(x2) * self.g(t) * self.dalpha2(x1, x2)))) * (self.dalpha2(x1, x2) * self.alpha(t, x1, x2, x3) + self.alpha(t, x1, x2, x3) * self.dalpha2(x1, x2))) / (self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3) * self.alpha(t, x1, x2, x3))
+    def alpha2(self, time, x1, x2, x3):
+        return -self.independent_term
 
-    def alpha(self, t, x1, x2, x3):
-        self.fluid_fraction = -0.4 * x1 - 0.4 * x2 + 1
-        return self.fluid_fraction
-
-    def dalpha1(self, x1, x2):
-        self.dfluid_fraction = -0.4
-        return self.dfluid_fraction
-
-    def dalpha2(self, x1, x2):
-        self.dfluid_fraction = -0.4
-        return self.dfluid_fraction
-
-    def ddalpha1(self, x1, x2):
-        self.ddfluid_fraction = 0.0
-        return self.ddfluid_fraction
-
-    def ddalpha2(self, x1, x2):
-        self.ddfluid_fraction = 0.0
-        return self.ddfluid_fraction
-
+    def alpha3(self, time, x1, x2, x3):
+        return 0.0

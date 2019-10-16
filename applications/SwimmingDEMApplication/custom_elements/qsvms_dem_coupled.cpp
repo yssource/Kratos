@@ -507,13 +507,13 @@ void QSVMSDEMCoupled<TElementData>::AddMassRHS(VectorType& F,
                                                const double& DeltaTime,
                                                TElementData& rData)
     {
-      double FluidFractionRate = this->GetAtCoordinate(rData.FluidFractionRate, rData.N);
+      double fluid_fraction_rate = this->GetAtCoordinate(rData.FluidFractionRate, rData.N);
       //this->EvaluateTimeDerivativeInPoint(FluidFractionRate, FLUID_FRACTION_RATE, rShapeFunc, DeltaTime, TimeSchemeWeights);
       // Add the results to the pressure components (Local Dofs are vx, vy, [vz,] p for each node)
       int LocalIndex = Dim;
 
       for (unsigned int iNode = 0; iNode < NumNodes; ++iNode){
-          F[LocalIndex] -= Weight * rShapeFunc[iNode] * FluidFractionRate;
+          F[LocalIndex] -= Weight * rShapeFunc[iNode] * fluid_fraction_rate;
           LocalIndex += Dim + 1;
       }
 
@@ -560,7 +560,7 @@ void QSVMSDEMCoupled<TElementData>::CalculateTau(
     double &TauOne,
     double &TauTwo)
 {
-    constexpr double c1 = 8.0;
+    constexpr double c1 = 4.0;
     constexpr double c2 = 2.0;
 
     const double h = rData.ElementSize;
@@ -614,10 +614,6 @@ void QSVMSDEMCoupled<TElementData>::AddVelocitySystem(TElementData& rData,
     const double fluid_fraction = this->GetAtCoordinate(rData.FluidFraction, rData.N);
 
     this->EvaluateGradientOfScalarInPoint(FluidFractionGradient, rData.FluidFraction, rData.DN_DX);
-
-    for (unsigned int i = 0; i < NumNodes; ++i) {
-        this->GetGeometry()[i].FastGetSolutionStepValue(FLUID_FRACTION_GRADIENT) = FluidFractionGradient;
-    }
 
     const double fluid_fraction_rate = this->GetAtCoordinate(rData.FluidFractionRate, rData.N);
 
@@ -676,7 +672,8 @@ void QSVMSDEMCoupled<TElementData>::AddVelocitySystem(TElementData& rData,
         {
             rLocalRHS[row+d] += rData.Weight * rData.N[i] * body_force[d]; // v*BodyForce
             rLocalRHS[row+d] += rData.Weight * tau_one * AGradN[i] * ( body_force[d] - momentum_projection[d]); // ( a * Grad(v) ) * tau_one * (Density * BodyForce)
-            rLocalRHS[row+d] -= rData.Weight * tau_two * rData.DN_DX(i,d) * mass_projection * fluid_fraction_rate;
+            rLocalRHS[row+d] -= rData.Weight * tau_two * rData.DN_DX(i,d) * mass_projection;
+            rLocalRHS[row+d] -= rData.Weight * tau_two * rData.DN_DX(i,d) * fluid_fraction_rate;
             forcing += fluid_fraction * rData.DN_DX(i,d) * (body_force[d] - momentum_projection[d]);
         }
         rLocalRHS[row + Dim] += rData.Weight * tau_one * forcing; // Grad(q) * tau_one * (Density * BodyForce)

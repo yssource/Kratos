@@ -20,7 +20,6 @@ class FluidFractionTestAnalysis(SwimmingDEMAnalysis):
         super(FluidFractionTestAnalysis, self).__init__(model, varying_parameters)
         self.project_parameters = varying_parameters
         self.iteration = iteration
-        self._GetSolver().SetFluidFractionField()
 
     def Initialize(self):
         super(FluidFractionTestAnalysis, self).Initialize()
@@ -39,7 +38,8 @@ class FluidFractionTestAnalysis(SwimmingDEMAnalysis):
                                                    self.vars_man)
 
     def SetUpResultsDatabase(self):
-        self._GetSolver().SetFluidFractionField()
+        #pass
+        self._GetSolver().SetUpResultsDatabase()
 
     def FinalizeSolutionStep(self):
         super(FluidFractionTestAnalysis, self).FinalizeSolutionStep()

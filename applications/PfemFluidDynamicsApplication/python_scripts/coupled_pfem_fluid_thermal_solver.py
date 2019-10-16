@@ -120,7 +120,8 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
                 "material_import_settings": {
                         "materials_filename": "ThermalMaterials.json"
                 }
-            }
+            },
+            "coupling_settings": {}
         }""")
 
         this_defaults.AddMissingParameters(super(CoupledPfemFluidThermalSolver, cls).GetDefaultSettings())

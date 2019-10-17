@@ -167,17 +167,13 @@ class PfemFluidDynamicsAnalysis(AnalysisStage):
         self.clock_time = self.StartTimeMeasuring()
 
         # delete previous thermal elements 
-        self._solver.DeleteConvDiffElementsAndNodes()
+        self._solver.DeleteThermalElements()
 
         # processes to be executed at the begining of the solution step
         self.model_processes.ExecuteInitializeSolutionStep()
 
-        # delete previous thermal elements
-        #self._solver.DeleteConvDiffElementsAndNodes()
-
-        # clone the thermal model
-        self._solver.AddConvDiffElementsAndNodes()
-        #self._solver.CloneFluidComputingModelPart()
+        # adding new thermal elements
+        self._solver.AddThermalElements()
 
         for process in self._GetListOfProcesses():
             process.ExecuteInitializeSolutionStep()

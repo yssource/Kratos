@@ -138,7 +138,13 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
     def ImportModelPart(self):
         # Call the fluid solver to import the model part from the mdpa
         self.fluid_solver.ImportModelPart() # import model fluid model part and call pfem_check_and_prepare_model_process_fluid
-        self.AddConvDiffElementsAndNodes()
+        
+        self.ImportThermalProperties()
+        self.AddThermalNodes()
+        self.AddThermalElements()
+        self.thermal_solver._assign_nodally_properties()
+        self.thermal_solver._set_and_fill_buffer()
+        #self.thermal_solver._execute_after_reading()
         #NOT USED# self.fluid_solver._ImportModelPart(self.fluid_solver.main_model_part,self.settings["fluid_solver_settings"]["model_import_settings"])
         #NOT USED# Save the convection diffusion settings
         #NOT USED#convection_diffusion_settings = self.thermal_solver.main_model_part.ProcessInfo.GetValue(KratosMultiphysics.CONVECTION_DIFFUSION_SETTINGS)
@@ -173,11 +179,12 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
         #NOT USED#print(1)
         #if (not self.thermal_solver.main_model_part.HasSubModelPart("thermal_computing_domain")): 
         #    self.thermal_solver.main_model_part.CreateSubModelPart("thermal_computing_domain")
-        print(1)
+        #print(1)
 
     def PrepareModelPart(self):
         self.fluid_solver.PrepareModelPart()
         self.thermal_solver.PrepareModelPart()
+        #TODO: it seems to be not used
 
     def AddDofs(self):
         self.fluid_solver.AddDofs()
@@ -271,19 +278,21 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
         self.SolveSolutionStep()
         self.FinalizeSolutionStep()
     
-    def AddConvDiffElementsAndNodes(self):
-        if (not self.thermal_solver.model.HasModelPart("ThermalModelPart")): 
-            self.thermal_solver.model.CreateModelPart("ThermalModelPart")
-            #convection_diffusion_settings = self.fluid_solver.main_model_part.ProcessInfo.GetValue(KratosMultiphysics.CONVECTION_DIFFUSION_SETTINGS)
-            #self.thermal_solver.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.CONVECTION_DIFFUSION_SETTINGS, convection_diffusion_settings)
-            self.thermal_solver.main_model_part.ProcessInfo=self.thermal_process_info
-
-        if (not self.thermal_solver.main_model_part.HasSubModelPart("thermal_computing_domain")): 
-            convection_diffusion_computational_model_part = self.thermal_solver.main_model_part.CreateSubModelPart("thermal_computing_domain")
+    #def AddConvDiffElementsAndNodes(self):
+        #if (not self.thermal_solver.model.HasModelPart("ThermalModelPart")): 
+        #    self.thermal_solver.model.CreateModelPart("ThermalModelPart")
+        #    #convection_diffusion_settings = self.fluid_solver.main_model_part.ProcessInfo.GetValue(KratosMultiphysics.CONVECTION_DIFFUSION_SETTINGS)
+        #    #self.thermal_solver.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.CONVECTION_DIFFUSION_SETTINGS, convection_diffusion_settings)
+        #    self.thermal_solver.main_model_part.ProcessInfo=self.thermal_process_info
+        #
+        #if (not self.thermal_solver.main_model_part.HasSubModelPart("thermal_computing_domain")): 
+        #    convection_diffusion_computational_model_part = self.thermal_solver.main_model_part.CreateSubModelPart("thermal_computing_domain")
         # copying the nodes
-        for node in self.fluid_solver.main_model_part.Nodes:
-            self.thermal_solver.main_model_part.AddNode(node,0)
-        #self.thermal_solver.AddDofs()
+        #thermal_computing_domain = self.thermal_solver.main_model_part.GetSubModelPart("thermal_computing_domain")
+        #inlet2_model_part.CreateNewNode(4, 4.00,0.00,0.00)
+        #for node in self.fluid_solver.main_model_part.Nodes:
+        #    self.thermal_solver.main_model_part.AddNode(node,0)
+            #thermal_computing_domain.CreateNewNode(node.Id,node.X, node.Y, node.Z)
             #print(node.Id)
             #print(self.fluid_solver.main_model_part.Nodes[node.Id])
         #for node in self.thermal_solver.main_model_part.Nodes:
@@ -291,40 +300,38 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
         #    print(self.thermal_solver.main_model_part.Nodes[node.Id])
 
         # Import ConvDiff constitutive laws.
-        if not hasattr(self,'ConvDiffProperties'):#(not self.thermal_solver.main_model_part.HasProperties(0)):
-            materials_imported = self.thermal_solver.import_materials()
-            if materials_imported:
-                KratosMultiphysics.Logger.PrintInfo("::[ConvectionDiffusionBaseSolver]:: ", "ConvDiff materials were successfully imported.")
-                self.ConvDiffProperties = self.thermal_solver.main_model_part.Properties[0]
-            else:
-                KratosMultiphysics.Logger.PrintInfo("::[ConvectionDiffusionBaseSolver]:: ", "ConvDiff materials were not imported.")
+        #if not hasattr(self,'ConvDiffProperties'):#(not self.thermal_solver.main_model_part.HasProperties(0)):
+        #    materials_imported = self.thermal_solver.import_materials()
+        #    if materials_imported:
+        #        KratosMultiphysics.Logger.PrintInfo("::[ConvectionDiffusionBaseSolver]:: ", "ConvDiff materials were successfully imported.")
+        #        self.ConvDiffProperties = self.thermal_solver.main_model_part.Properties[0]
+        #    else:
+        #        KratosMultiphysics.Logger.PrintInfo("::[ConvectionDiffusionBaseSolver]:: ", "ConvDiff materials were not imported.")
             #TODO: number of properties to be automatic 
             #ConvDiffProperties = self.thermal_solver.main_model_part.Properties[0]
 
          # creating new thermal elements
-        for elem in self.fluid_solver.main_model_part.Elements:
-            node_ids = []
-            if self.domain_size == 2:
-                if len(elem.GetNodes()) == 3:
-                    #for i in range(len(elem.GetNodes())):
-                    node_ids = [elem.GetNode(0).Id, elem.GetNode(1).Id, elem.GetNode(2).Id]
-                    #print(elem.Id)
-                    #print(node_ids)
-                    self.thermal_solver.main_model_part.CreateNewElement("EulerianConvDiff2D", elem.Id, node_ids, self.ConvDiffProperties)
-            else:
-                node_ids = [elem.GetNode(0).Id, elem.GetNode(1).Id, elem.GetNode(2).Id, elem.GetNode(3).Id]
-                self.thermal_solver.main_model_part.CreateNewElement("EulerianConvDiff3D", elem.Id, node_ids, self.thermal_solver.main_model_part.Properties[0])
+        #for elem in self.fluid_solver.main_model_part.Elements:
+            #node_ids = []
+            #if self.domain_size == 2:
+            #    if len(elem.GetNodes()) == 3:
+            #        #for i in range(len(elem.GetNodes())):
+            #        node_ids = [elem.GetNode(0).Id, elem.GetNode(1).Id, elem.GetNode(2).Id]
+            #        #print(elem.Id)
+            #        #print(node_ids)
+            #        self.thermal_solver.main_model_part.CreateNewElement("EulerianConvDiff2D", elem.Id, node_ids, self.thermal_solver.main_model_part.Properties[0])
+            #else:
+            #    node_ids = [elem.GetNode(0).Id, elem.GetNode(1).Id, elem.GetNode(2).Id, elem.GetNode(3).Id]
+            #    self.thermal_solver.main_model_part.CreateNewElement("EulerianConvDiff3D", elem.Id, node_ids, self.thermal_solver.main_model_part.Properties[0])
         #for elem in self.thermal_solver.main_model_part.Elements:
         #    print(elem)
         #transfer_process = KratosMultiphysics.FastTransferBetweenModelPartsProcess(convection_diffusion_computational_model_part, self.thermal_solver.main_model_part, KratosMultiphysics.FastTransferBetweenModelPartsProcess.EntityTransfered.NODESANDELEMENTS)
-        transfer_process = KratosMultiphysics.FastTransferBetweenModelPartsProcess(self.thermal_solver.main_model_part.GetSubModelPart("thermal_computing_domain"), self.thermal_solver.main_model_part, KratosMultiphysics.FastTransferBetweenModelPartsProcess.EntityTransfered.NODESANDELEMENTS)
-        transfer_process.Execute()
+        #transfer_process = KratosMultiphysics.FastTransferBetweenModelPartsProcess(self.thermal_solver.main_model_part.GetSubModelPart("thermal_computing_domain"), self.thermal_solver.main_model_part, KratosMultiphysics.FastTransferBetweenModelPartsProcess.EntityTransfered.NODESANDELEMENTS)
+        #transfer_process.Execute()
         #KratosMultiphysics.MergeVariableListsUtility().Merge(self.fluid_solver.main_model_part, self.thermal_solver.main_model_part)
-        print(1)
+        #print(1)
 
-    def DeleteConvDiffElementsAndNodes(self):
-        self.thermal_process_info = self.thermal_solver.main_model_part.ProcessInfo
-        self.thermal_solver.model.DeleteModelPart("ThermalModelPart")
+    #def DeleteConvDiffElementsAndNodes(self):
         #self.DeleteThermalModelPartElements()
         #self.DeleteThermalModelPartNodes()
         #print(1)
@@ -377,10 +384,10 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
         #    print(node.GetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_X))
 
         print("end")
-    def CloneFluidComputingModelPart(self):
+    #def CloneFluidComputingModelPart(self):
 
-        if (not self.thermal_solver.model.HasModelPart("ThermalModelPart")): 
-            self.thermal_solver.model.CreateModelPart("ThermalModelPart")
+        #if (not self.thermal_solver.model.HasModelPart("ThermalModelPart")): 
+        #    self.thermal_solver.model.CreateModelPart("ThermalModelPart")
             #convection_diffusion_settings = self.fluid_solver.main_model_part.ProcessInfo.GetValue(KratosMultiphysics.CONVECTION_DIFFUSION_SETTINGS)
             #self.thermal_solver.main_model_part.ProcessInfo.SetValue(KratosMultiphysics.CONVECTION_DIFFUSION_SETTINGS, convection_diffusion_settings)
             #self.fluid_solver.main_model_part.ProcessInfo.SetValue()
@@ -388,32 +395,72 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
 
         #if (not self.thermal_solver.main_model_part.HasSubModelPart("thermal_computing_domain")): 
             #convection_diffusion_computational_model_part = self.thermal_solver.main_model_part.CreateSubModelPart("thermal_computing_domain")
-        self.thermal_solver.main_model_part.CreateSubModelPart("thermal_computing_domain")
-
-        modeler = KratosMultiphysics.ConnectivityPreserveModeler()
-        if self.domain_size == 2:
-            modeler.GenerateModelPart(self.fluid_solver.GetComputingModelPart(),
-                                      self.thermal_solver.main_model_part,
-                                      "EulerianConvDiff2D")
-        else:
-            modeler.GenerateModelPart(self.fluid_solver.main_model_part,
-                                      self.thermal_solver.main_model_part,
-                                      "EulerianConvDiff3D",
-                                      "ThermalFace3D3N")
-        print("::[Coupled Pfem Fluid Thermal Solver]:: Thermal_model_part CLONED")
+        #self.thermal_solver.main_model_part.CreateSubModelPart("thermal_computing_domain")
+        #
+        #modeler = KratosMultiphysics.ConnectivityPreserveModeler()
+        #if self.domain_size == 2:
+        #    modeler.GenerateModelPart(self.fluid_solver.GetComputingModelPart(),
+        #                              self.thermal_solver.main_model_part,
+        #                              "EulerianConvDiff2D")
+        #else:
+        #    modeler.GenerateModelPart(self.fluid_solver.main_model_part,
+        #                              self.thermal_solver.main_model_part,
+        #                              "EulerianConvDiff3D",
+        #                              "ThermalFace3D3N")
+        #print("::[Coupled Pfem Fluid Thermal Solver]:: Thermal_model_part CLONED")
         #self.thermal_solver.main_model_part.ProcessInfo=self.thermal_process_info
-        transfer_process = KratosMultiphysics.FastTransferBetweenModelPartsProcess(self.thermal_solver.GetComputingModelPart(), self.thermal_solver.main_model_part, KratosMultiphysics.FastTransferBetweenModelPartsProcess.EntityTransfered.NODESANDELEMENTS)
-        transfer_process.Execute()
-        print(1)
-    def DeleteThermalModelPartElements(self):
+        #transfer_process = KratosMultiphysics.FastTransferBetweenModelPartsProcess(self.thermal_solver.GetComputingModelPart(), self.thermal_solver.main_model_part, KratosMultiphysics.FastTransferBetweenModelPartsProcess.EntityTransfered.NODESANDELEMENTS)
+        #transfer_process.Execute()
+        #print(1)
+    def DeleteThermalElements(self):
         for elem in self.thermal_solver.main_model_part.Elements:
             elem.Set(KratosMultiphysics.TO_ERASE, True)
         self.thermal_solver.main_model_part.RemoveElementsFromAllLevels(KratosMultiphysics.TO_ERASE)
-    def DeleteThermalModelPartNodes(self):
+    def DeleteThermalNodes(self):
         for node in self.thermal_solver.main_model_part.Nodes:
             node.Set(KratosMultiphysics.TO_ERASE, True)
         self.thermal_solver.main_model_part.RemoveNodesFromAllLevels(KratosMultiphysics.TO_ERASE)
-        print("end deleting nodes")
+        #print("end deleting nodes")
+        #for node in self.fluid_solver.main_model_part.Nodes:
+        #    print(node)
+    def ImportThermalProperties(self):
+        # Import ConvDiff constitutive laws.
+        materials_imported = self.thermal_solver.import_materials()
+        if materials_imported:
+            KratosMultiphysics.Logger.PrintInfo("::[ConvectionDiffusionBaseSolver]:: ", "ConvDiff materials were successfully imported.")
+            #self.ConvDiffProperties = self.thermal_solver.main_model_part.Properties[0]
+        else:
+            KratosMultiphysics.Logger.PrintInfo("::[ConvectionDiffusionBaseSolver]:: ", "ConvDiff materials were not imported.")
+    #def DeleteThermaModelPart(self):    
+        #self.thermal_process_info = self.thermal_solver.main_model_part.ProcessInfo
+        #self.thermal_solver.model.DeleteModelPart("ThermalModelPart")
 
+    def AddThermalElements(self):
+        for elem in self.fluid_solver.main_model_part.Elements:
+            node_ids = []
+            if self.domain_size == 2:
+                if len(elem.GetNodes()) == 3:
+                    node_ids = [elem.GetNode(0).Id, elem.GetNode(1).Id, elem.GetNode(2).Id]                    
+                    self.thermal_solver.main_model_part.CreateNewElement("EulerianConvDiff2D", elem.Id, node_ids, self.thermal_solver.main_model_part.Properties[0])
+                    #self.thermal_solver.main_model_part.AddElement(elem,0)
+            else:
+                print("3D case to be implemented")
+                #TODO: complete 3D case...
         
-        
+        # transfer elements to thermal_computing_domain
+        transfer_process = KratosMultiphysics.FastTransferBetweenModelPartsProcess(self.thermal_solver.main_model_part.GetSubModelPart("thermal_computing_domain"), self.thermal_solver.main_model_part, KratosMultiphysics.FastTransferBetweenModelPartsProcess.EntityTransfered.NODESANDELEMENTS)
+        #transfer_process = KratosMultiphysics.FastTransferBetweenModelPartsProcess(self.thermal_solver.main_model_part.GetSubModelPart("thermal_computing_domain"), self.thermal_solver.main_model_part, KratosMultiphysics.FastTransferBetweenModelPartsProcess.EntityTransfered.ELEMENTS)
+        transfer_process.Execute()
+
+    def AddThermalNodes(self):
+        if (not self.thermal_solver.model.HasModelPart("ThermalModelPart")): 
+            self.thermal_solver.model.CreateModelPart("ThermalModelPart")
+
+        if (not self.thermal_solver.main_model_part.HasSubModelPart("thermal_computing_domain")): 
+            convection_diffusion_computational_model_part = self.thermal_solver.main_model_part.CreateSubModelPart("thermal_computing_domain")
+            convection_diffusion_computational_model_part.ProcessInfo = self.thermal_solver.main_model_part.ProcessInfo
+            convection_diffusion_computational_model_part.Properties  = self.thermal_solver.main_model_part.Properties
+        # copying the nodes
+        for node in self.fluid_solver.main_model_part.Nodes:
+            self.thermal_solver.main_model_part.AddNode(node,0)
+        print(1)

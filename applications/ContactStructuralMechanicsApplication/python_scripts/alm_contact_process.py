@@ -70,7 +70,7 @@ class ALMContactProcess(search_base_process.SearchBaseProcess):
             "interval"                      : [0.0,"End"],
             "normal_variation"              : "no_derivatives_computation",
             "frictional_law"                : "Coulomb",
-            "max_lagrange_multiplier_check" : null,
+            "max_lagrange_multiplier_check" : 1.0e30,
             "max_lm_reset_factor"           : 5.0,
             "tangent_factor"                : 2.5e-2,
             "slip_augmentation_coefficient" : 0.0,
@@ -457,10 +457,7 @@ class ALMContactProcess(search_base_process.SearchBaseProcess):
             process_info[KM.SCALE_FACTOR] = 1.0e0
 
         # We set MAX_LM_THRESHOLD
-        if not self.contact_settings["max_lagrange_multiplier_check"].IsNull():
-            process_info[CSMA.MAX_LM_THRESHOLD] = self.contact_settings["max_lagrange_multiplier_check"].GetDouble() * process_info[KM.INITIAL_PENALTY]
-        else:
-            process_info[CSMA.MAX_LM_THRESHOLD] = 1.0e30
+        process_info[CSMA.MAX_LM_THRESHOLD] = self.contact_settings["max_lagrange_multiplier_check"].GetDouble() * process_info[KM.INITIAL_PENALTY]
 
         # Setting MAX_LM_RESET_FACTOR
         process_info[CSMA.MAX_LM_RESET_FACTOR] = self.contact_settings["max_lm_reset_factor"].GetDouble()

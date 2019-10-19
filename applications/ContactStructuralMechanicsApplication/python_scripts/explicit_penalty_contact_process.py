@@ -53,7 +53,7 @@ class ExplicitPenaltyContactProcess(penalty_contact_process.PenaltyContactProces
             "normal_variation"              : "no_derivatives_computation",
             "frictional_law"                : "Coulomb",
             "tangent_factor"                : 1.0e-4,
-            "max_lagrange_multiplier_check" : null,
+            "max_lagrange_multiplier_check" : 1.0e30,
             "max_lm_reset_factor"           : 5.0,
             "slip_augmentation_coefficient" : 0.0,
             "slip_threshold"                : 2.0e-2,

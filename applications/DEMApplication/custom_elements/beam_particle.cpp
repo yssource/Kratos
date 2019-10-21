@@ -226,7 +226,39 @@ namespace Kratos {
         mNeighbourRigidCohesion.swap(temp_cohesion);
     }
 
-    void BeamParticle::ComputeRollingFriction(array_1d<double, 3>& rolling_resistance_moment, double& RollingResistance, double dt) {}
+    void BeamParticle::ComputeRollingFriction(array_1d<double, 3>& rolling_resistance_moment, double& RollingResistance, double dt)
+    {
+        array_1d<double, 3> base_principal_moments_of_inertia = GetGeometry()[0].GetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA);
+        const array_1d<double, 3>  coeff_acc                  = base_principal_moments_of_inertia / dt;
+        const array_1d<double, 3>& ang_velocity               = this->GetGeometry()[0].FastGetSolutionStepValue(ANGULAR_VELOCITY);
+
+        const double MaxRotaMoment[3] = {coeff_acc[0] * ang_velocity[0] + mContactMoment[0], coeff_acc[1] * ang_velocity[1] + mContactMoment[1], coeff_acc[2] * ang_velocity[2] + mContactMoment[2]};
+        double CoordSystemMoment[3]   = {0.0};
+
+        double max_rota_moment_modulus_inv = 1.0 / DEM_MODULUS_3(MaxRotaMoment);
+        CoordSystemMoment[0]         = MaxRotaMoment[0] * max_rota_moment_modulus_inv;
+        CoordSystemMoment[1]         = MaxRotaMoment[1] * max_rota_moment_modulus_inv;
+        CoordSystemMoment[2]         = MaxRotaMoment[2] * max_rota_moment_modulus_inv;
+
+        const double MR_now = DEM_INNER_PRODUCT_3(CoordSystemMoment, CoordSystemMoment) * RollingResistance * RollingResistance;
+        const double MR_max = DEM_INNER_PRODUCT_3(MaxRotaMoment, MaxRotaMoment);
+
+        if (MR_max > MR_now) {
+            mContactMoment[0] -= CoordSystemMoment[0] * RollingResistance;
+            mContactMoment[1] -= CoordSystemMoment[1] * RollingResistance;
+            mContactMoment[2] -= CoordSystemMoment[2] * RollingResistance;
+
+            rolling_resistance_moment[0] -= CoordSystemMoment[0] * RollingResistance;
+            rolling_resistance_moment[1] -= CoordSystemMoment[1] * RollingResistance;
+            rolling_resistance_moment[2] -= CoordSystemMoment[2] * RollingResistance;
+        }
+        else {
+            rolling_resistance_moment = - mContactMoment;
+            mContactMoment[0] = - coeff_acc[0] * ang_velocity[0];
+            mContactMoment[1] = - coeff_acc[1] * ang_velocity[1];
+            mContactMoment[2] = - coeff_acc[2] * ang_velocity[2];
+        }
+    }
 
     void BeamParticle::ContactAreaWeighting() {}
 

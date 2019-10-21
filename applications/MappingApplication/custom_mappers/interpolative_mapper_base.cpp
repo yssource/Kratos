@@ -37,10 +37,10 @@ typedef std::size_t SizeType;
 
 template<class TSparseSpace, class TDenseSpace>
 void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::InitializeInterface(Kratos::Flags MappingOptions)
-{
+{   std::cout << "CreateMapperLocalSystems : " << std::endl;
     CreateMapperLocalSystems(mrModelPartDestination.GetCommunicator(),
                              mMapperLocalSystems);
-
+    std::cout << "BuildMappingMatrix : " << std::endl;
     BuildMappingMatrix(MappingOptions);
 }
 
@@ -61,7 +61,7 @@ void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::BuildMappingMatrix(Krat
                                                   p_ref_interface_info);
 
     const int echo_level = mMapperSettings["echo_level"].GetInt();
-
+    KRATOS_WATCH("BEFORE Building MMatrix")
     MappingMatrixUtilities::BuildMappingMatrix<TSparseSpace, TDenseSpace>(
         mpMappingMatrix,
         mpInterfaceVectorContainerOrigin->pGetVector(),
@@ -101,7 +101,7 @@ void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::MapInternal(
     const Variable<double>& rOriginVariable,
     const Variable<double>& rDestinationVariable,
     Kratos::Flags MappingOptions)
-{
+{   std::cout << "Using first MapInternal" << std::endl;
     mpInterfaceVectorContainerOrigin->UpdateSystemVectorFromModelPart(rOriginVariable, MappingOptions);
 
     TSparseSpace::Mult(
@@ -141,6 +141,32 @@ void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::MapInternal(
         const auto& var_destination = KratosComponents<ComponentVariableType>::Get(rDestinationVariable.Name() + var_ext);
 
         mpInterfaceVectorContainerOrigin->UpdateSystemVectorFromModelPart(var_origin, MappingOptions);
+
+        TSparseSpace::Mult(
+            *mpMappingMatrix,
+            mpInterfaceVectorContainerOrigin->GetVector(),
+            mpInterfaceVectorContainerDestination->GetVector()); // rQd = rMdo * rQo
+
+        mpInterfaceVectorContainerDestination->UpdateModelPartFromSystemVector(var_destination, MappingOptions);
+    }
+}
+
+// for beam mapper
+template<class TSparseSpace, class TDenseSpace>
+void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::MapInternal(
+    const Variable<array_1d<double, 3>>& rOriginDisplacementsVariable,
+    const Variable<array_1d<double, 3>>& rOriginRotationsVariable,
+    const Variable<array_1d<double, 3>>& rDestinationVariable,
+    Kratos::Flags MappingOptions)
+{
+    const std::vector<std::string> var_comps{"_X", "_Y", "_Z"};
+
+    for (const auto& var_ext : var_comps) {
+        const auto& var_displacements_origin = KratosComponents<ComponentVariableType>::Get(rOriginDisplacementsVariable.Name() + var_ext);
+        const auto& var_rotations_origin = KratosComponents<ComponentVariableType>::Get(rOriginRotationsVariable.Name() + var_ext);
+        const auto& var_destination = KratosComponents<ComponentVariableType>::Get(rDestinationVariable.Name() + var_ext);
+        // can I save more than one vector, in this case the two 3d vectors of displacements and rotations of the origin
+        mpInterfaceVectorContainerOrigin->UpdateSystemVectorFromModelPart(var_displacements_origin, MappingOptions);
 
         TSparseSpace::Mult(
             *mpMappingMatrix,

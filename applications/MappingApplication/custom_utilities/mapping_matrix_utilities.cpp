@@ -64,7 +64,7 @@ void ConstructMatrixStructure(Kratos::unique_ptr<typename SparseSpaceType::Matri
 {
     // one set for each row storing the corresponding col-IDs
     std::vector<std::unordered_set<IndexType> > indices(NumNodesDestination);
-
+    
     // preallocate memory for the column indices
     for (IndexType i=0; i<NumNodesDestination; ++i) {
         // TODO I guess this can be optimized...
@@ -79,6 +79,7 @@ void ConstructMatrixStructure(Kratos::unique_ptr<typename SparseSpaceType::Matri
     // TODO omp
     for (/*const*/auto& r_local_sys : rMapperLocalSystems) { // TODO I think this can be const bcs it is the ptr
         r_local_sys->EquationIdVectors(origin_ids, destination_ids);
+        //std::cout << "Trying to find ..................." << std::endl;
         for (const auto dest_idx : destination_ids) {
             indices[dest_idx].insert(origin_ids.begin(), origin_ids.end());
         }
@@ -191,13 +192,15 @@ void BuildMappingMatrix<SparseSpaceType, DenseSpaceType>(
 
     const SizeType num_nodes_origin = rModelPartOrigin.NumberOfNodes();
     const SizeType num_nodes_destination = rModelPartDestination.NumberOfNodes();
-
+    KRATOS_WATCH("1")
     // Initialize the Matrix
     // This has to be done always since the Graph has changed if the Interface is updated!
     ConstructMatrixStructure(rpMappingMatrix, rMapperLocalSystems,
                              num_nodes_origin, num_nodes_destination);
+    KRATOS_WATCH("2")
 
     BuildMatrix(rpMappingMatrix, rMapperLocalSystems);
+    KRATOS_WATCH("3")
 
     if (EchoLevel > 2) {
         const std::string base_file_name = "O_" + rModelPartOrigin.Name() + "__D_" + rModelPartDestination.Name() +".mm";
@@ -205,8 +208,11 @@ void BuildMappingMatrix<SparseSpaceType, DenseSpaceType>(
         CheckRowSum(*rpMappingMatrix, base_file_name);
     }
 
+    std::cout << "4" << std::endl;
+
     InitializeSystemVector(rpInterfaceVectorOrigin, num_nodes_origin);
     InitializeSystemVector(rpInterfaceVectorDestination, num_nodes_destination);
+    std::cout << "finish BuildMappingMatrix ..." << std::endl;
 
     KRATOS_CATCH("")
 }

@@ -214,7 +214,8 @@ private:
 
     ///@name Private Operations
     ///@{
-
+    // takes a communicator and a vector where the LocalSystems for each node will be created, in the utilities takes
+    // a template to the LocalSystem of that mapper
     void CreateMapperLocalSystems(
         const Communicator& rModelPartCommunicator,
         std::vector<Kratos::unique_ptr<MapperLocalSystem>>& rLocalSystems) override

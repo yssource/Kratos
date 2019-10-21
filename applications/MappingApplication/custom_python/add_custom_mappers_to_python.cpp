@@ -133,6 +133,7 @@ void ExposeMapperToPython(pybind11::module& m, const std::string& rName)
             .def("InverseMap",       InverseMapWithoutOptionsVector<TSparseSpace, TDenseSpace>)
 
             .def("UpdateInterface",  &MapperType::UpdateInterface)
+            .def("BeamMap",          &MapperType::BeamMap)
             .def("Map",              pMapScalarOptions<TSparseSpace, TDenseSpace>)
             .def("Map",              pMapVectorOptions<TSparseSpace, TDenseSpace>)
             .def("InverseMap",       pInverseMapScalarOptions<TSparseSpace, TDenseSpace>)

@@ -81,11 +81,9 @@ void CrBeamElement3D2N::GetDofList(DofsVectorType& rElementalDofList,
 
     for (int i = 0; i < msNumberOfNodes; ++i) {
         int index = i * msNumberOfNodes * msDimension;
-        rElementalDofList[index] = GetGeometry()[i].pGetDof(DISPLACEMENT_X);
-        rElementalDofList[index + 1] =
-            GetGeometry()[i].pGetDof(DISPLACEMENT_Y);
-        rElementalDofList[index + 2] =
-            GetGeometry()[i].pGetDof(DISPLACEMENT_Z);
+        rElementalDofList[index] =     GetGeometry()[i].pGetDof(DISPLACEMENT_X);
+        rElementalDofList[index + 1] = GetGeometry()[i].pGetDof(DISPLACEMENT_Y);
+        rElementalDofList[index + 2] = GetGeometry()[i].pGetDof(DISPLACEMENT_Z);
 
         rElementalDofList[index + 3] = GetGeometry()[i].pGetDof(ROTATION_X);
         rElementalDofList[index + 4] = GetGeometry()[i].pGetDof(ROTATION_Y);

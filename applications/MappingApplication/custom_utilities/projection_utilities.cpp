@@ -78,19 +78,23 @@ PairingIndex ProjectOnLine(const GeometryType& rGeometry,
     PairingIndex pairing_index;
 
     if (rGeometry.IsInside(projected_point, local_coords, 1e-14)) {
+        std::cout << "1" << std::endl;
         pairing_index = PairingIndex::Line_Inside;
         rGeometry.ShapeFunctionsValues(rShapeFunctionValues, local_coords);
         FillEquationIdVector(rGeometry, rEquationIds);
 
     } else if (!ComputeApproximation) {
+        std::cout << "2" << std::endl;
         return PairingIndex::Unspecified;
 
     } else if (rGeometry.IsInside(projected_point, local_coords, LocalCoordTol)) {
+        std::cout << "3" << std::endl;
         pairing_index = PairingIndex::Line_Outside;
         rGeometry.ShapeFunctionsValues(rShapeFunctionValues, local_coords);
         FillEquationIdVector(rGeometry, rEquationIds);
 
     } else {
+        std::cout << "4 done" << std::endl;
         // projection is ouside the line, searching the closest point
         pairing_index = PairingIndex::Closest_Point;
         const double dist_1 = MapperUtilities::ComputeDistance(rPointToProject, rGeometry[0]);
@@ -233,6 +237,7 @@ bool ComputeProjection(const GeometryType& rGeometry,
 
     if (geom_family == GeometryData::Kratos_Linear && num_points == 2) { // linear line
         rPairingIndex = ProjectOnLine(rGeometry, rPointToProject, LocalCoordTol, rShapeFunctionValues, rEquationIds, rProjectionDistance, ComputeApproximation);
+        std::cout << "rShapeFunctionValues : " << rShapeFunctionValues << std::endl;
         is_full_projection = (rPairingIndex == PairingIndex::Line_Inside);
 
     } else if ((geom_family == GeometryData::Kratos_Triangle      && num_points == 3) || // linear triangle

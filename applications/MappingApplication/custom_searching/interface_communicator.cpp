@@ -263,6 +263,7 @@ void InterfaceCommunicator::ConductLocalSearch()
                     distance_itr, num_interface_obj_bin);
 
                 for (IndexType j=0; j<number_of_results; ++j) {
+                    std::cout << "For this element, the number of results are : " << number_of_results << std::endl;
                     r_interface_info->ProcessSearchResult(*(neighbor_results[j]), neighbor_distances[j]);
                 }
 

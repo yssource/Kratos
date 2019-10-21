@@ -111,6 +111,19 @@ public:
         Kratos::Flags MappingOptions) = 0;
 
     /**
+    * @brief Mapping from Origin to Destination, Vector Variable
+    * Same as Map, but maps two vectors from the origin (displacements and rotations)
+    * used for BeamMapper
+    * @see Map
+    */
+    virtual void Map(
+        const Variable< array_1d<double, 3> >& rOriginDisplacementsVariable,
+        const Variable< array_1d<double, 3> >& rOriginRotationsVariable,
+        const Variable< array_1d<double, 3> >& rDestinationVariable,
+        Kratos::Flags MappingOptions) = 0;
+
+
+    /**
     * @brief Mapping from Destination to Origin, Scalar Variable
     * Data is exchanged on the Interface, from the Destination-Modelpart
     * to the Origin-ModelPart (the modelparts were specified in the

@@ -22,6 +22,7 @@
 
 // Project includes
 #include "interpolative_mapper_base.h"
+#include "custom_utilities/projection_utilities.h"
 
 
 namespace Kratos
@@ -34,12 +35,13 @@ class BeamMapperInterfaceInfo : public MapperInterfaceInfo
 public:
 
     /// Default constructor.
-    BeamMapperInterfaceInfo() {}
+    explicit BeamMapperInterfaceInfo(const double LocalCoordTol=0.0) : mLocalCoordTol(LocalCoordTol) {}
 
     explicit BeamMapperInterfaceInfo(const CoordinatesArrayType& rCoordinates,
-                                 const IndexType SourceLocalSystemIndex,
-                                 const IndexType SourceRank)
-        : MapperInterfaceInfo(rCoordinates, SourceLocalSystemIndex, SourceRank) {}
+                                     const IndexType SourceLocalSystemIndex,
+                                     const IndexType SourceRank,
+                                     const double LocalCoordTol=0.0)
+    : MapperInterfaceInfo(rCoordinates, SourceLocalSystemIndex, SourceRank), mLocalCoordTol(LocalCoordTol) {}
 
     MapperInterfaceInfo::Pointer Create() const override
     {
@@ -53,48 +55,78 @@ public:
         return Kratos::make_shared<BeamMapperInterfaceInfo>(
             rCoordinates,
             SourceLocalSystemIndex,
-            SourceRank);
+            SourceRank, 
+            mLocalCoordTol);
     }
 
     InterfaceObject::ConstructionType GetInterfaceObjectType() const override
     {
-        return InterfaceObject::ConstructionType::Node_Coords;
+        return InterfaceObject::ConstructionType::Geometry_Center;
     }
 
     void ProcessSearchResult(const InterfaceObject& rInterfaceObject,
                              const double NeighborDistance) override;
 
-    void GetValue(int& rValue,
+    void ProcessSearchResultForApproximation(const InterfaceObject& rInterfaceObject,
+                                             const double NeighborDistance) override;
+
+    void GetValue(std::vector<int>& rValue,
                   const InfoType ValueType) const override
     {
-        rValue = mNearestNeighborId;
+        rValue = mNodeIds;
+    }
+
+    void GetValue(std::vector<double>& rValue,
+                  const InfoType ValueType) const override
+    {
+        rValue = mShapeFunctionValues;
     }
 
     void GetValue(double& rValue,
                   const InfoType ValueType) const override
     {
-        rValue = mNearestNeighborDistance;
+        rValue = mClosestProjectionDistance;
+    }
+
+    void GetValue(int& rValue,
+                  const InfoType ValueType) const override
+    {
+        rValue = (int)mPairingIndex;
     }
 
 private:
 
     int mNearestNeighborId = -1;
     double mNearestNeighborDistance = std::numeric_limits<double>::max();
+    std::vector<int> mNodeIds;
+    std::vector<double> mShapeFunctionValues;
+    double mClosestProjectionDistance = std::numeric_limits<double>::max();
+    ProjectionUtilities::PairingIndex mPairingIndex = ProjectionUtilities::PairingIndex::Unspecified;
+    double mLocalCoordTol; // this is not needed after searching, hence no need to serialize it
+
+    void SaveSearchResult(const InterfaceObject& rInterfaceObject,
+                          const bool ComputeApproximation);
 
     friend class Serializer;
 
     void save(Serializer& rSerializer) const override
     {
         KRATOS_SERIALIZE_SAVE_BASE_CLASS( rSerializer, MapperInterfaceInfo );
-        rSerializer.save("NearestNeighborId", mNearestNeighborId);
-        rSerializer.save("NearestNeighborDistance", mNearestNeighborDistance);
+        rSerializer.save("NodeIds", mNodeIds);
+        rSerializer.save("SFValues", mShapeFunctionValues);
+        rSerializer.save("ClosestProjectionDistance", mClosestProjectionDistance);
+        rSerializer.save("PairingIndex", (int)mPairingIndex);
     }
 
     void load(Serializer& rSerializer) override
     {
         KRATOS_SERIALIZE_LOAD_BASE_CLASS( rSerializer, MapperInterfaceInfo );
-        rSerializer.load("NearestNeighborId", mNearestNeighborId);
-        rSerializer.load("NearestNeighborDistance", mNearestNeighborDistance);
+        rSerializer.load("NodeIds", mNodeIds);
+        rSerializer.load("SFValues", mShapeFunctionValues);
+        rSerializer.load("ClosestProjectionDistance", mClosestProjectionDistance);
+        int temp;
+        rSerializer.load("PairingIndex", temp);
+        mPairingIndex = (ProjectionUtilities::PairingIndex)temp;
     }
 };
 
@@ -120,11 +152,12 @@ public:
 
 private:
     NodePointerType mpNode;
+    mutable ProjectionUtilities::PairingIndex mPairingIndex = ProjectionUtilities::PairingIndex::Unspecified;
 
 };
 
-/// Nearest Neighbor Mapper
-/** This class implements the Nearest Neighbor Mapping technique.
+/// Beam Mapping
+/** This class implements the Beam Mapping technique.
 * Each node on the destination side gets assigned is's closest neighbor on the other side of the interface.
 * In the mapping phase every node gets assigned the value of it's neighbor
 * For information abt the available echo_levels and the JSON default-parameters
@@ -163,8 +196,13 @@ public:
                                      rModelPartDestination,
                                      JsonParameters)
     {
+        std::cout << "CTOR BEAM mapper..." << std::endl;
         this->ValidateInput();
+        std::cout << "...Finished ValidateInput beam mapper" << std::endl;
+        //mLocalCoordTol = JsonParameters["local_coord_tolerance"].GetDouble();
+        KRATOS_ERROR_IF(mLocalCoordTol < 0.0) << "The local-coord-tolerance cannot be negative" << std::endl;
         this->Initialize();
+        std::cout << "...Finished constructing beam mapper" << std::endl;
     }
 
     /// Destructor.
@@ -177,7 +215,7 @@ public:
     MapperUniquePointerType Clone(ModelPart& rModelPartOrigin,
                                   ModelPart& rModelPartDestination,
                                   Parameters JsonParameters) const override
-    {
+    {   std::cout << "Cloning mapper" << std::endl;
         return Kratos::make_unique<BeamMapper<TSparseSpace, TDenseSpace>>(
             rModelPartOrigin,
             rModelPartDestination,
@@ -214,6 +252,7 @@ private:
 
     ///@name Private Operations
     ///@{
+    double mLocalCoordTol;
 
     void CreateMapperLocalSystems(
         const Communicator& rModelPartCommunicator,

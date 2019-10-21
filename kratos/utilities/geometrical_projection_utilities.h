@@ -184,13 +184,16 @@ public:
     {
         const array_1d<double, 3>& r_p_a = rGeometry[0].Coordinates();
         const array_1d<double, 3>& r_p_b = rGeometry[1].Coordinates();
+        std::cout << "Line: Cooords. node 1=" << rGeometry[0].Coordinates() << " Cooords. node 2=" <<rGeometry[1].Coordinates() << std::endl;
         const array_1d<double, 3> ab = r_p_b - r_p_a;
 
         const array_1d<double, 3> p_c = rPointToProject.Coordinates();
+        std::cout << "Coords point to project=" << rPointToProject.Coordinates() << std::endl;
 
         const double factor = (inner_prod(r_p_b, p_c) - inner_prod(r_p_a, p_c) - inner_prod(r_p_b, r_p_a) + inner_prod(r_p_a, r_p_a)) / inner_prod(ab, ab);
 
         rPointProjected.Coordinates() = r_p_a + factor * ab;
+        std::cout << "Coords Point projected" << rPointProjected.Coordinates() << std::endl;
 
         return norm_2(rPointProjected.Coordinates()-p_c);
     }

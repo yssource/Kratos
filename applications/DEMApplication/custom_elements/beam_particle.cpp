@@ -61,23 +61,35 @@ namespace Kratos {
         SphericContinuumParticle::Initialize(r_process_info);
 
         double distance = GetProperties()[BEAM_DISTANCE];
-        double contact_area = GetProperties()[BEAM_CROSS_SECTION];
-        if (IsSkin()) distance *= 0.5;
 
-        GetGeometry()[0].FastGetSolutionStepValue(REPRESENTATIVE_VOLUME) = distance * contact_area;
-        SetMass(GetDensity() * distance * contact_area);
+        if (distance)
+        {
+            double contact_area = GetProperties()[BEAM_CROSS_SECTION];
+            if (IsSkin()) distance *= 0.5;
 
-        if (this->Is(DEMFlags::HAS_ROTATION)) {
-            // double aux2 = sqrt( 12.0 * GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X] / contact_area );
-            // double aux3 = sqrt( 12.0 * GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y] / contact_area );
+            GetGeometry()[0].FastGetSolutionStepValue(REPRESENTATIVE_VOLUME) = distance * contact_area;
+            SetMass(GetDensity() * distance * contact_area);
 
-            // GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux1 * aux1 + aux2 * aux2);
-            // GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux2 * aux2 + aux3 * aux3);
-            // GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux1 * aux1 + aux3 * aux3);
+            if (this->Is(DEMFlags::HAS_ROTATION)) {
+                // double aux2 = sqrt( 12.0 * GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X] / contact_area );
+                // double aux3 = sqrt( 12.0 * GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y] / contact_area );
 
-            GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_X] * GetDensity() * distance * contact_area;
-            GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_Y] * GetDensity() * distance * contact_area;
-            GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_Z] * GetDensity() * distance * contact_area;
+                // GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux1 * aux1 + aux2 * aux2);
+                // GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux2 * aux2 + aux3 * aux3);
+                // GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = 0.083333333333333333 * GetDensity() * distance * contact_area * (aux1 * aux1 + aux3 * aux3);
+
+                GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_X] * GetDensity() * distance * contact_area;
+                GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_Y] * GetDensity() * distance * contact_area;
+                GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = GetProperties()[BEAM_PRINCIPAL_MOMENTS_OF_INERTIA_Z] * GetDensity() * distance * contact_area;
+            }
+        }
+        else
+        {
+            if (this->Is(DEMFlags::HAS_ROTATION)) {
+                GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[0] = GetGeometry()[0].FastGetSolutionStepValue(PARTICLE_MOMENT_OF_INERTIA);
+                GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[1] = GetGeometry()[0].FastGetSolutionStepValue(PARTICLE_MOMENT_OF_INERTIA);
+                GetGeometry()[0].FastGetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA)[2] = GetGeometry()[0].FastGetSolutionStepValue(PARTICLE_MOMENT_OF_INERTIA);
+            }
         }
     }
 
@@ -214,39 +226,7 @@ namespace Kratos {
         mNeighbourRigidCohesion.swap(temp_cohesion);
     }
 
-    void BeamParticle::ComputeRollingFriction(array_1d<double, 3>& rolling_resistance_moment, double& RollingResistance, double dt)
-    {
-        array_1d<double, 3> base_principal_moments_of_inertia = GetGeometry()[0].GetSolutionStepValue(PRINCIPAL_MOMENTS_OF_INERTIA);
-        const array_1d<double, 3>  coeff_acc                  = base_principal_moments_of_inertia / dt;
-        const array_1d<double, 3>& ang_velocity               = this->GetGeometry()[0].FastGetSolutionStepValue(ANGULAR_VELOCITY);
-
-        const double MaxRotaMoment[3] = {coeff_acc[0] * ang_velocity[0] + mContactMoment[0], coeff_acc[1] * ang_velocity[1] + mContactMoment[1], coeff_acc[2] * ang_velocity[2] + mContactMoment[2]};
-        double CoordSystemMoment[3]   = {0.0};
-
-        double max_rota_moment_modulus_inv = 1.0 / DEM_MODULUS_3(MaxRotaMoment);
-        CoordSystemMoment[0]         = MaxRotaMoment[0] * max_rota_moment_modulus_inv;
-        CoordSystemMoment[1]         = MaxRotaMoment[1] * max_rota_moment_modulus_inv;
-        CoordSystemMoment[2]         = MaxRotaMoment[2] * max_rota_moment_modulus_inv;
-
-        const double MR_now = DEM_INNER_PRODUCT_3(CoordSystemMoment, CoordSystemMoment) * RollingResistance * RollingResistance;
-        const double MR_max = DEM_INNER_PRODUCT_3(MaxRotaMoment, MaxRotaMoment);
-
-        if (MR_max > MR_now) {
-            mContactMoment[0] -= CoordSystemMoment[0] * RollingResistance;
-            mContactMoment[1] -= CoordSystemMoment[1] * RollingResistance;
-            mContactMoment[2] -= CoordSystemMoment[2] * RollingResistance;
-
-            rolling_resistance_moment[0] -= CoordSystemMoment[0] * RollingResistance;
-            rolling_resistance_moment[1] -= CoordSystemMoment[1] * RollingResistance;
-            rolling_resistance_moment[2] -= CoordSystemMoment[2] * RollingResistance;
-        }
-        else {
-            rolling_resistance_moment = - mContactMoment;
-            mContactMoment[0] = - coeff_acc[0] * ang_velocity[0];
-            mContactMoment[1] = - coeff_acc[1] * ang_velocity[1];
-            mContactMoment[2] = - coeff_acc[2] * ang_velocity[2];
-        }
-    }
+    void BeamParticle::ComputeRollingFriction(array_1d<double, 3>& rolling_resistance_moment, double& RollingResistance, double dt) {}
 
     void BeamParticle::ContactAreaWeighting() {}
 
@@ -366,8 +346,6 @@ namespace Kratos {
             GeometryFunctions::VectorGlobal2Local(data_buffer.mLocalCoordSystem, RelVel, LocalRelVel);
 
             if (i < (int)mContinuumInitialNeighborsSize) {
-
-                mContinuumConstitutiveLawArray[i]->CheckFailure(i, this, neighbour_iterator);
 
                 mContinuumConstitutiveLawArray[i]->CalculateForces(r_process_info,
                                                                    OldLocalElasticContactForce,
@@ -561,9 +539,7 @@ namespace Kratos {
         }
     }
 
-    void BeamParticle::AddContributionToRepresentativeVolume(const double distance, const double radius_sum, const double contact_area) {
-        // mPartialRepresentativeVolume += 0.5 * distance * contact_area;
-        }
+    void BeamParticle::AddContributionToRepresentativeVolume(const double distance, const double radius_sum, const double contact_area) {}
 
     void BeamParticle::FinalizeSolutionStep(ProcessInfo& r_process_info) {
 

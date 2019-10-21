@@ -46,13 +46,12 @@ namespace Kratos {
         const double Inertia_Ix = 0.5 * (element1->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X] + element2->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_X]);
         const double Inertia_Iy = 0.5 * (element1->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y] + element2->GetProperties()[BEAM_PLANAR_MOMENT_OF_INERTIA_Y]);
 
-        // array_1d<double, 3> other_to_me_vect;
-        // noalias(other_to_me_vect) = element1->GetGeometry()[0].Coordinates() - element2->GetGeometry()[0].Coordinates();
-        // const double distance = DEM_MODULUS_3(other_to_me_vect);
-        // const double norm_distance = (element1->GetRadius() + element2->GetRadius()) / distance; // If spheres are not tangent the Damping coefficient has to be normalized
-
         kt_el_0 = 3.0 * equiv_young * Inertia_Iy / (calculation_area * initial_dist);
         kt_el_1 = 3.0 * equiv_young * Inertia_Ix / (calculation_area * initial_dist);
+
+        // 2013 Bourrier. Discrete modeling of granular soils reinforcement by plant roots FOR CYLINDERS!!! CHECK!!!
+        // kt_el_0 = 12.0 * equiv_young * Inertia_Iy / (initial_dist * initial_dist * initial_dist);
+        // kt_el_1 = 12.0 * equiv_young * Inertia_Ix / (initial_dist * initial_dist * initial_dist);
     }
 
     void DEM_KDEM_Beam::CalculateViscoDampingCoeff(double& equiv_visco_damp_coeff_normal,
@@ -64,8 +63,8 @@ namespace Kratos {
                                                    const double kt_el_0,
                                                    const double kt_el_1) {
 
-        const double equiv_mass = std::max(element1->GetMass(), element2->GetMass());
-        double equiv_gamma = 0.5 * (element1->GetProperties()[DAMPING_GAMMA] + element2->GetProperties()[DAMPING_GAMMA]);
+        const double equiv_mass  = 0.5 * (element1->GetMass() + element2->GetMass());
+        const double equiv_gamma = 0.5 * (element1->GetProperties()[DAMPING_GAMMA] + element2->GetProperties()[DAMPING_GAMMA]);
 
         equiv_visco_damp_coeff_normal       = 2.0 * equiv_gamma * sqrt(equiv_mass * kn_el  );
         equiv_visco_damp_coeff_tangential_0 = 2.0 * equiv_gamma * sqrt(equiv_mass * kt_el_0); // * norm_distance;
@@ -151,6 +150,20 @@ namespace Kratos {
                               equiv_visco_damp_coeff_tangential_1,
                               sliding,
                               element1->mIniNeighbourFailureId[i_neighbour_count]);
+    }
+
+    void DEM_KDEM_Beam::CalculateNormalForces(double LocalElasticContactForce[3],
+                                              const double kn_el,
+                                              double equiv_young,
+                                              double indentation,
+                                              double calculation_area,
+                                              double& acumulated_damage,
+                                              SphericContinuumParticle* element1,
+                                              SphericContinuumParticle* element2,
+                                              int i_neighbour_count,
+                                              int time_steps) {
+
+            LocalElasticContactForce[2] = kn_el * indentation;
     }
 
     void DEM_KDEM_Beam::CalculateTangentialForces(double OldLocalElasticContactForce[3],

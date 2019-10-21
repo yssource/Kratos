@@ -17,6 +17,7 @@
 #define  KRATOS_BEAM_MAPPER_H_INCLUDED
 
 // System includes
+#include <tuple>
 
 // External includes
 
@@ -173,6 +174,47 @@ public:
     ///@}
     ///@name Operations
     ///@{
+
+    void Map(
+        const std::tuple<const Variable< array_1d<double, 3> >&,
+                         const Variable< array_1d<double, 3> >&>& rOriginVariables,
+        const Variable< array_1d<double, 3> >& rDestinationVariable,
+        Kratos::Flags MappingOptions)
+    {
+        KRATOS_ERROR << "Implement Me!" << std::endl;
+    }
+
+    void Map(
+        const Variable<double>& rOriginVariable,
+        const Variable<double>& rDestinationVariable,
+        Kratos::Flags MappingOptions) override
+    {
+        KRATOS_ERROR << "This function is not supported for the Beam-Mapper!" << std::endl;
+    }
+
+    void Map(
+        const Variable< array_1d<double, 3> >& rOriginVariable,
+        const Variable< array_1d<double, 3> >& rDestinationVariable,
+        Kratos::Flags MappingOptions) override
+    {
+        KRATOS_ERROR << "This function is not supported for the Beam-Mapper!" << std::endl;
+    }
+
+    void InverseMap(
+        const Variable<double>& rOriginVariable,
+        const Variable<double>& rDestinationVariable,
+        Kratos::Flags MappingOptions) override
+    {
+        KRATOS_ERROR << "This function is not supported for the Beam-Mapper!" << std::endl;
+    }
+
+    void InverseMap(
+        const Variable< array_1d<double, 3> >& rOriginVariable,
+        const Variable< array_1d<double, 3> >& rDestinationVariable,
+        Kratos::Flags MappingOptions) override
+    {
+        KRATOS_ERROR << "This function is not supported for the Beam-Mapper!" << std::endl;
+    }
 
     MapperUniquePointerType Clone(ModelPart& rModelPartOrigin,
                                   ModelPart& rModelPartDestination,

@@ -26,8 +26,7 @@
 #include "custom_utilities/mapper_typedefs.h"
 
 // Mappers
-#include "custom_mappers/nearest_neighbor_mapper.h"
-#include "custom_mappers/nearest_element_mapper.h"
+#include "custom_mappers/beam_mapper.h"
 
 
 namespace Kratos {
@@ -93,6 +92,16 @@ inline void InverseMapWithoutOptionsVector(Mapper<TSparseSpace, TDenseSpace>& du
 }
 
 template<class TSparseSpace, class TDenseSpace>
+inline void BeamMapWithoutOptions(BeamMapper<TSparseSpace, TDenseSpace>& dummy,
+                const std::tuple<const Variable< array_1d<double, 3> >&,
+                                 const Variable< array_1d<double, 3> >&>& origin_variables,
+                const Variable< array_1d<double, 3> >& destination_variable)
+{
+    Kratos::Flags dummy_flags = Kratos::Flags();
+    dummy.Map(origin_variables, destination_variable, dummy_flags);
+}
+
+template<class TSparseSpace, class TDenseSpace>
 void (Mapper<TSparseSpace, TDenseSpace>::*pMapScalarOptions)(const Variable<double> &,
         const Variable<double> &,
         Kratos::Flags)
@@ -116,36 +125,43 @@ void (Mapper<TSparseSpace, TDenseSpace>::*pInverseMapVectorOptions)(const Variab
         Kratos::Flags)
     = &Mapper<TSparseSpace, TDenseSpace>::InverseMap;
 
+
 template<class TSparseSpace, class TDenseSpace>
 void ExposeMapperToPython(pybind11::module& m, const std::string& rName)
 {
-    typedef Mapper<TSparseSpace, TDenseSpace> MapperType;
     namespace py = pybind11;
+
+    typedef Mapper<TSparseSpace, TDenseSpace> MapperType;
     // Exposing the base class of the Mappers to Python, but without constructor
-    const auto mapper
-        = py::class_< MapperType, typename MapperType::Pointer >(m, rName.c_str())
-            .def("UpdateInterface",  UpdateInterfaceWithoutArgs<TSparseSpace, TDenseSpace>)
-            .def("UpdateInterface",  UpdateInterfaceWithOptions<TSparseSpace, TDenseSpace>)
-            .def("UpdateInterface",  UpdateInterfaceWithSearchRadius<TSparseSpace, TDenseSpace>)
-            .def("Map",              MapWithoutOptionsScalar<TSparseSpace, TDenseSpace>)
-            .def("Map",              MapWithoutOptionsVector<TSparseSpace, TDenseSpace>)
-            .def("InverseMap",       InverseMapWithoutOptionsScalar<TSparseSpace, TDenseSpace>)
-            .def("InverseMap",       InverseMapWithoutOptionsVector<TSparseSpace, TDenseSpace>)
+    const auto mapper = py::class_< MapperType, typename MapperType::Pointer >(m, rName.c_str())
+        .def("UpdateInterface",  UpdateInterfaceWithoutArgs<TSparseSpace, TDenseSpace>)
+        .def("UpdateInterface",  UpdateInterfaceWithOptions<TSparseSpace, TDenseSpace>)
+        .def("UpdateInterface",  UpdateInterfaceWithSearchRadius<TSparseSpace, TDenseSpace>)
+        .def("Map",              MapWithoutOptionsScalar<TSparseSpace, TDenseSpace>)
+        .def("Map",              MapWithoutOptionsVector<TSparseSpace, TDenseSpace>)
+        .def("InverseMap",       InverseMapWithoutOptionsScalar<TSparseSpace, TDenseSpace>)
+        .def("InverseMap",       InverseMapWithoutOptionsVector<TSparseSpace, TDenseSpace>)
 
-            .def("UpdateInterface",  &MapperType::UpdateInterface)
-            .def("Map",              pMapScalarOptions<TSparseSpace, TDenseSpace>)
-            .def("Map",              pMapVectorOptions<TSparseSpace, TDenseSpace>)
-            .def("InverseMap",       pInverseMapScalarOptions<TSparseSpace, TDenseSpace>)
-            .def("InverseMap",       pInverseMapVectorOptions<TSparseSpace, TDenseSpace>)
+        .def("UpdateInterface",  &MapperType::UpdateInterface)
+        .def("Map",              pMapScalarOptions<TSparseSpace, TDenseSpace>)
+        .def("Map",              pMapVectorOptions<TSparseSpace, TDenseSpace>)
+        .def("InverseMap",       pInverseMapScalarOptions<TSparseSpace, TDenseSpace>)
+        .def("InverseMap",       pInverseMapVectorOptions<TSparseSpace, TDenseSpace>)
 
-            .def("__str__",          PrintObject<MapperType>)
-            ;
+        .def("__str__",          PrintObject<MapperType>)
+        ;
 
     // Adding the flags that can be used for mapping
     mapper.attr("SWAP_SIGN")        = MapperFlags::SWAP_SIGN;
     mapper.attr("ADD_VALUES")       = MapperFlags::ADD_VALUES;
     mapper.attr("REMESHED")         = MapperFlags::REMESHED;
     mapper.attr("USE_TRANSPOSE")    = MapperFlags::USE_TRANSPOSE;
+
+    typedef BeamMapper<TSparseSpace, TDenseSpace> BeamMapperType;
+    const std::string beam_mapper_name("Beam" + rName);
+    py::class_< BeamMapperType, typename BeamMapperType::Pointer, MapperType >(m, beam_mapper_name.c_str())
+        .def("Map", BeamMapWithoutOptions<TSparseSpace, TDenseSpace>)
+        ;
 }
 
 void  AddCustomMappersToPython(pybind11::module& m)

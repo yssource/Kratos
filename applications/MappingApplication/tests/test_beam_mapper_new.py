@@ -69,12 +69,13 @@ class TestBeamMapper(KratosUnittest.TestCase):
         }""")
 
         self.mapper = KratosMapping.MapperFactory.CreateMapper(self.model_part_beam, self.model_part_surface, mapper_settings)
-        #WriteGiDOutput(self.model_part_surface)
+
         for node in self.model_part_beam.Nodes:
             node.SetSolutionStepValue(KM.DISPLACEMENT_Y, 10*node.X)
             node.SetSolutionStepValue(KM.ROTATION_X, 10*node.X)
             
-        self.mapper.Map(KM.DISPLACEMENT, KM.ROTATION, KM.DISPLACEMENT)
+        self.mapper.Map((KM.DISPLACEMENT, KM.ROTATION), KM.DISPLACEMENT)
+        #self.mapper.Map(KM.ROTATION, KM.DISPLACEMENT)
         #self.mapper.InverseMap(KM.PRESSURE, KM.TEMPERATURE)
         #self.mapper.InverseMap(KM.DISPLACEMENT, KM.TEMPERATURE)
         #self.mapper.InverseMap(KM.DISPLACEMENT_X, KM.TEMPERATURE)
@@ -82,7 +83,7 @@ class TestBeamMapper(KratosUnittest.TestCase):
         #self.mapper.InverseMap(KM.DISPLACEMENT_Z, KM.TEMPERATURE)
 
         #WriteGiDOutput(self.model_part_beam)
-        WriteGiDOutput(self.model_part_surface)
+        #WriteGiDOutput(self.model_part_surface)
 
 
 if __name__ == '__main__':

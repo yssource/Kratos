@@ -148,17 +148,6 @@ public:
         }
     }
 
-    // for beam Mapper
-    void Map(
-        const Variable< array_1d<double, 3> >& rOriginDisplacementsVariable,
-        const Variable< array_1d<double, 3> >& rOriginRotationsVariable,
-        const Variable< array_1d<double, 3> >& rDestinationVariable,
-        Kratos::Flags MappingOptions) override
-    {   std::cout << "Using 3nd constructor" << std::endl;
-        std::cout << "Map 3" << std::endl;
-        MapInternal(rOriginDisplacementsVariable, rOriginRotationsVariable, MappingOptions);
-    }
-
     void InverseMap(
         const Variable<double>& rOriginVariable,
         const Variable<double>& rDestinationVariable,
@@ -291,12 +280,6 @@ private:
     void MapInternalTranspose(const Variable<array_1d<double, 3>>& rOriginVariable,
                               const Variable<array_1d<double, 3>>& rDestinationVariable,
                               Kratos::Flags MappingOptions);
-
-    // For beam mapper
-    void MapInternal(const Variable<array_1d<double, 3>>& rOriginDisplacementsVariable,
-                     const Variable<array_1d<double, 3>>& rOriginRotationsVariable,
-                     const Variable<array_1d<double, 3>>& rDestinationVariable,
-                     Kratos::Flags MappingOptions);
 
     void PrintPairingInfo(const int EchoLevel);
 

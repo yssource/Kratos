@@ -151,32 +151,6 @@ void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::MapInternal(
     }
 }
 
-// for beam mapper
-template<class TSparseSpace, class TDenseSpace>
-void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::MapInternal(
-    const Variable<array_1d<double, 3>>& rOriginDisplacementsVariable,
-    const Variable<array_1d<double, 3>>& rOriginRotationsVariable,
-    const Variable<array_1d<double, 3>>& rDestinationVariable,
-    Kratos::Flags MappingOptions)
-{
-    const std::vector<std::string> var_comps{"_X", "_Y", "_Z"};
-
-    for (const auto& var_ext : var_comps) {
-        const auto& var_displacements_origin = KratosComponents<ComponentVariableType>::Get(rOriginDisplacementsVariable.Name() + var_ext);
-        const auto& var_rotations_origin = KratosComponents<ComponentVariableType>::Get(rOriginRotationsVariable.Name() + var_ext);
-        const auto& var_destination = KratosComponents<ComponentVariableType>::Get(rDestinationVariable.Name() + var_ext);
-        // can I save more than one vector, in this case the two 3d vectors of displacements and rotations of the origin
-        mpInterfaceVectorContainerOrigin->UpdateSystemVectorFromModelPart(var_displacements_origin, MappingOptions);
-
-        TSparseSpace::Mult(
-            *mpMappingMatrix,
-            mpInterfaceVectorContainerOrigin->GetVector(),
-            mpInterfaceVectorContainerDestination->GetVector()); // rQd = rMdo * rQo
-
-        mpInterfaceVectorContainerDestination->UpdateModelPartFromSystemVector(var_destination, MappingOptions);
-    }
-}
-
 template<class TSparseSpace, class TDenseSpace>
 void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::MapInternalTranspose(
     const Variable<array_1d<double, 3>>& rOriginVariable,
@@ -257,11 +231,7 @@ void InterpolativeMapperBase<TSparseSpace, TDenseSpace>::PrintPairingInfo(const 
             "output_control_type"                : "step",
             "custom_name_prefix"                 : "",
             "save_output_files_in_folder"        : false,
-            "nodal_solution_step_data_variables" : [],
-            "nodal_data_value_variables"         : ["PAIRING_STATUS"],
-            "element_data_value_variables"       : [],
-            "condition_data_value_variables"     : [],
-            "gauss_point_variables"              : []
+            "nodal_data_value_variables"         : ["PAIRING_STATUS"]
         })");
 
         vtk_params["custom_name_prefix"].SetString(prefix);

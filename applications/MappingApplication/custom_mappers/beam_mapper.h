@@ -25,7 +25,6 @@
 #include "interpolative_mapper_base.h"
 #include "custom_utilities/projection_utilities.h"
 
-
 namespace Kratos
 {
 ///@name Kratos Classes
@@ -39,10 +38,10 @@ public:
     explicit BeamMapperInterfaceInfo(const double LocalCoordTol=0.0) : mLocalCoordTol(LocalCoordTol) {}
 
     explicit BeamMapperInterfaceInfo(const CoordinatesArrayType& rCoordinates,
-                                     const IndexType SourceLocalSystemIndex,
-                                     const IndexType SourceRank,
-                                     const double LocalCoordTol=0.0)
-    : MapperInterfaceInfo(rCoordinates, SourceLocalSystemIndex, SourceRank), mLocalCoordTol(LocalCoordTol) {}
+                                 const IndexType SourceLocalSystemIndex,
+                                 const IndexType SourceRank,
+                                 const double LocalCoordTol=0.0)
+        : MapperInterfaceInfo(rCoordinates, SourceLocalSystemIndex, SourceRank), mLocalCoordTol(LocalCoordTol) {}
 
     MapperInterfaceInfo::Pointer Create() const override
     {
@@ -56,7 +55,7 @@ public:
         return Kratos::make_shared<BeamMapperInterfaceInfo>(
             rCoordinates,
             SourceLocalSystemIndex,
-            SourceRank, 
+            SourceRank,
             mLocalCoordTol);
     }
 
@@ -67,7 +66,7 @@ public:
 
     void ProcessSearchResult(const InterfaceObject& rInterfaceObject,
                              const double NeighborDistance) override;
-
+    
     void ProcessSearchResultForApproximation(const InterfaceObject& rInterfaceObject,
                                              const double NeighborDistance) override;
 
@@ -83,13 +82,13 @@ public:
         rValue = mShapeFunctionValues;
     }
 
-    void GetValue(double& rValue,
+    void GetValue(int& rValue,
                   const InfoType ValueType) const override
     {
         rValue = mClosestProjectionDistance;
     }
 
-    void GetValue(int& rValue,
+    void GetValue(double& rValue,
                   const InfoType ValueType) const override
     {
         rValue = (int)mPairingIndex;
@@ -97,8 +96,6 @@ public:
 
 private:
 
-    int mNearestNeighborId = -1;
-    double mNearestNeighborDistance = std::numeric_limits<double>::max();
     std::vector<int> mNodeIds;
     std::vector<double> mShapeFunctionValues;
     double mClosestProjectionDistance = std::numeric_limits<double>::max();
@@ -157,8 +154,8 @@ private:
 
 };
 
-/// Beam Mapping
-/** This class implements the Beam Mapping technique.
+/// Beam Mapper
+/** This class implements the Beam Mapper technique.
 * Each node on the destination side gets assigned is's closest neighbor on the other side of the interface.
 * In the mapping phase every node gets assigned the value of it's neighbor
 * For information abt the available echo_levels and the JSON default-parameters
@@ -219,7 +216,8 @@ public:
         const Variable< array_1d<double, 3> >& rDestinationVariable,
         Kratos::Flags MappingOptions)
     {
-        KRATOS_ERROR << "Implement Me!" << std::endl;
+        //KRATOS_ERROR << "Implement Me!" << std::endl;
+        MapInternal(rOriginVariables, rDestinationVariable, MappingOptions);
     }
 
     void Map(
@@ -257,7 +255,7 @@ public:
     MapperUniquePointerType Clone(ModelPart& rModelPartOrigin,
                                   ModelPart& rModelPartDestination,
                                   Parameters JsonParameters) const override
-    {   std::cout << "Cloning mapper" << std::endl;
+    {
         return Kratos::make_unique<BeamMapper<TSparseSpace, TDenseSpace>>(
             rModelPartOrigin,
             rModelPartDestination,
@@ -294,7 +292,6 @@ private:
 
     ///@name Private Operations
     ///@{
-    double mLocalCoordTol;
 
     void CreateMapperLocalSystems(
         const Communicator& rModelPartCommunicator,
@@ -303,6 +300,14 @@ private:
         MapperUtilities::CreateMapperLocalSystemsFromNodes<BeamMapperLocalSystem>(
             rModelPartCommunicator,
             rLocalSystems);
+    }
+
+    void MapInternal(const std::tuple<const Variable< array_1d<double, 3> >&,
+                                      const Variable< array_1d<double, 3> >&>& rOriginVariables,
+                     const Variable< array_1d<double, 3> >& rDestinationVariable,
+                     Kratos::Flags MappingOptions)
+    {
+       KRATOS_ERROR << "Implement Me in MapInternal!" << std::endl; 
     }
 
     MapperInterfaceInfoUniquePointerType GetMapperInterfaceInfo() const override

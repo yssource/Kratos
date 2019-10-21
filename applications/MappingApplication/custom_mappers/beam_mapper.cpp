@@ -26,31 +26,21 @@ namespace Kratos
 
 void BeamMapperInterfaceInfo::ProcessSearchResult(const InterfaceObject& rInterfaceObject,
                                                       const double NeighborDistance)
-{   
-    /*
-    BeamMapperInterfaceInfo is build from the surface nodes
-    
-    const auto p_geom = rInterfaceObject.pGetBaseGeometry();
-    => this is the beam geometry on which we can project
-    => get all the information we need (weights, distance, equationids ...)
-
-   */
-  //std::cout << "this is BeamMapperInterfaceInfo::ProcessSearchResult" << std::endl;
-  //std::cout << "rInterfaceObject : " << rInterfaceObject << std::endl;
-  //std::cout << "double NeighborDistance : " << NeighborDistance << std::endl;
-    SaveSearchResult(rInterfaceObject, false);
+{
+    SaveSearchResult(rInterfaceObject,false);
 }
 
 void BeamMapperInterfaceInfo::ProcessSearchResultForApproximation(const InterfaceObject& rInterfaceObject,
-                                                                      const double NeighborDistance)
+                                                                  const double NeighborDistance)
 {
     SaveSearchResult(rInterfaceObject, true);
 }
 
 void BeamMapperInterfaceInfo::SaveSearchResult(const InterfaceObject& rInterfaceObject,
-                                                   const bool ComputeApproximation)
+                                               const bool ComputeApproximation)
 {
-    const auto p_geom = rInterfaceObject.pGetBaseGeometry(); // This is a line
+    const auto p_geom = rInterfaceObject.pGetBaseGeometry();
+
     double proj_dist;
 
     const Point point_to_proj(this->Coordinates());
@@ -86,24 +76,12 @@ void BeamMapperInterfaceInfo::SaveSearchResult(const InterfaceObject& rInterface
         }
     }
 }
-
+        
 void BeamMapperLocalSystem::CalculateAll(MatrixType& rLocalMappingMatrix,
                     EquationIdVectorType& rOriginIds,
                     EquationIdVectorType& rDestinationIds,
                     MapperLocalSystem::PairingStatus& rPairingStatus) const
 {
-    //std::cout << "CalculatAll(...) from BeamMapperLocalSystem........................" << std::endl;
-    //if (mInterfaceInfos.size() > 0) {
-    //    ResizeToZero(rLocalMappingMatrix, rOriginIds, rDestinationIds, rPairingStatus);
-    //    return;
-    //} //This is from nearest neighbor approach
-
-    // take information from mInterfaceInfos and construct local mapping matrix
-
-    //KRATOS_DEBUG_ERROR_IF_NOT(mpNode) << "Members are not intitialized!" << std::endl;
-    //rDestinationIds[0] = mpNode->GetValue(INTERFACE_EQUATION_ID);
-
-    // This is from neares element approach
     if (mInterfaceInfos.size() > 0) {
         double distance;
         double min_distance = std::numeric_limits<double>::max();
@@ -176,9 +154,7 @@ std::string BeamMapperLocalSystem::PairingInfo(const int EchoLevel) const
         buffer << " at Coodinates " << Coordinates()[0] << " | " << Coordinates()[1] << " | " << Coordinates()[2];
         if (mPairingStatus == MapperLocalSystem::PairingStatus::Approximation) {
             mpNode->SetValue(PAIRING_STATUS, 0);
-        } else {
-            mpNode->SetValue(PAIRING_STATUS, -1);
-        }
+        } 
     }
     return buffer.str();
 }

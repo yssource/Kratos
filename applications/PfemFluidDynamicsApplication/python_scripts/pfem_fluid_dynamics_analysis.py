@@ -173,6 +173,8 @@ class PfemFluidDynamicsAnalysis(AnalysisStage):
         self.model_processes.ExecuteInitializeSolutionStep()
 
         # adding new thermal elements
+        if (self.main_model_part.ProcessInfo[KratosMultiphysics.STEP]==1):
+            self._solver.AddThermalNodes()    
         self._solver.AddThermalElements()
 
         for process in self._GetListOfProcesses():

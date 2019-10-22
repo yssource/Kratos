@@ -526,7 +526,7 @@ Vector BeamElement3D2N::LocalDeformations() const
 
     local_rot_node_1 = prod(trans(current_co_rot_matrix),local_rot_node_1);
 
-    Matrix local_rot_node_2 = prod(mGlobalRotationNode1,reference_co_rot_matrix);
+    Matrix local_rot_node_2 = prod(mGlobalRotationNode2,reference_co_rot_matrix);
     local_rot_node_2 = prod(trans(current_co_rot_matrix),local_rot_node_2);
 
     Matrix log_rotation_node_1 = LogRotationMatrix(local_rot_node_1);
@@ -725,7 +725,7 @@ Matrix BeamElement3D2N::BMatrixGlobal() const
     Matrix b_global = ZeroMatrix(local_deformation_possibilities,msElementSize);
 
     Vector r = RVector();
-    for (int i=0;i<msElementSize;++i) b_global(0,i) = r[i];
+    for (SizeType i=0;i<msElementSize;++i) b_global(0,i) = r[i];
 
     Matrix P_E_t = prod(PMatrix(),trans(EMatrix()));
 
@@ -738,7 +738,7 @@ Matrix BeamElement3D2N::QMatrix() const
 {
     Vector internal_forces_a = LocalInternalIntermediateForces();
     Vector internal_moments = ZeroVector(msLocalSize);
-    for (int i=0;i<msLocalSize;++i) internal_moments[i] = internal_forces_a[i+1];
+    for (SizeType i=0;i<msLocalSize;++i) internal_moments[i] = internal_forces_a[i+1];
 
     Vector q_vec = prod(trans(PMatrix()),internal_moments);
 

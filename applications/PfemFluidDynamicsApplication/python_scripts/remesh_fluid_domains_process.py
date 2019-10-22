@@ -211,10 +211,11 @@ class RemeshFluidDomainsProcess(KratosMultiphysics.Process):
             for domain in self.meshing_domains:
                 if(domain.Active() and self.write_total_volume):
                     domain.ComputeAverageMeshParameters()
-                    meanVolumeBeforeMeshing=domain.GetMeanVolume()
-                    totalVolumeBeforeMeshing=domain.GetTotalVolume()
-                    outstring = str(currentTime) + " " +  str(totalVolumeBeforeMeshing) + " "
-                    self.fileTotalVolume.write(outstring)
+                    if(self.write_total_volume):
+                        meanVolumeBeforeMeshing=domain.GetMeanVolume()
+                        totalVolumeBeforeMeshing=domain.GetTotalVolume()
+                        outstring = str(currentTime) + " " +  str(totalVolumeBeforeMeshing) + " "
+                        self.fileTotalVolume.write(outstring)
 
         volume_acceleration=self.main_model_part.ProcessInfo[KratosMultiphysics.GRAVITY]
         variable_utils = KratosMultiphysics.VariableUtils()

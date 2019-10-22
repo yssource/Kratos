@@ -331,6 +331,8 @@ namespace Kratos
 					   double& bulkCoefficient,
 					   double timeStep) override;
 
+      double ComputeFrictionViscosityVajont(ElementalVariables &rElementalVariables,bool boundaryElement);
+
       double ComputeNonLinearViscosity(double & equivalentStrainRate);
 
       void ComputeMaterialParametersGranularGas(double& Density,
@@ -342,6 +344,8 @@ namespace Kratos
       double ComputeJopMuIrheologyViscosity(ElementalVariables & rElementalVariables);
 
       double ComputeBercovierMuIrheologyViscosity(ElementalVariables & rElementalVariables);
+
+      double ComputePapanastasiouMuIrheologyViscosityVajont(ElementalVariables & rElementalVariables,bool boundaryElement);
 
       double ComputePapanastasiouMuIrheologyViscosity(ElementalVariables & rElementalVariables);
 

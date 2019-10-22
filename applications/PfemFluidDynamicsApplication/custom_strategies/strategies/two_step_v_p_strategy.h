@@ -726,7 +726,7 @@ protected:
       double DvErrorNorm = 0;
       ConvergedMomentum = this->CheckVelocityConvergence(NormDv,DvErrorNorm);
 
-      unsigned int iterationForCheck=3;
+      unsigned int iterationForCheck=1;
         KRATOS_INFO("TwoStepVPStrategy") << "iteration("<<it<<") Velocity error: "<< DvErrorNorm <<" velTol: " << mVelocityTolerance<< std::endl;
 
       // Check convergence
@@ -1348,6 +1348,9 @@ protected:
       if((DvErrorNorm>minTolerance || (DvErrorNorm<0 && DvErrorNorm>0) || (DvErrorNorm!=DvErrorNorm) || isItNan==true || isItInf==true) && DvErrorNorm!=0 && DvErrorNorm!=1){
 	fixedTimeStep=true;
 	rCurrentProcessInfo.SetValue(BAD_PRESSURE_CONVERGENCE,true);
+        if(DvErrorNorm>1.0){
+	rCurrentProcessInfo.SetValue(BAD_VELOCITY_CONVERGENCE,true);
+      }
       }else{
 	rCurrentProcessInfo.SetValue(BAD_PRESSURE_CONVERGENCE,false);
       }

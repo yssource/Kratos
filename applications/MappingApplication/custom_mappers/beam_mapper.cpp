@@ -49,6 +49,8 @@ void BeamMapperInterfaceInfo::SaveSearchResult(const InterfaceObject& rInterface
     std::vector<int> eq_ids;
 
     ProjectionUtilities::PairingIndex pairing_index;
+    
+    std::cout << "Is it calculating and approximation? " << ComputeApproximation << std::endl;
 
     const bool is_full_projection = ProjectionUtilities::ComputeProjection(*p_geom, point_to_proj, mLocalCoordTol, shape_function_values, eq_ids, proj_dist, pairing_index, ComputeApproximation);
 

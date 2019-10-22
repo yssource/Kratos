@@ -73,8 +73,9 @@ PairingIndex ProjectOnLine(const GeometryType& rGeometry,
     Point projected_point;
 
     rProjectionDistance = std::abs(GeometricalProjectionUtilities::FastProjectOnLine(rGeometry, rPointToProject, projected_point));
-
+    std::cout << "Projection Distance : " << rProjectionDistance << std::endl;
     array_1d<double, 3> local_coords;
+    std::cout << "local coords : " << local_coords << std::endl;
     PairingIndex pairing_index;
 
     if (rGeometry.IsInside(projected_point, local_coords, 1e-14)) {

@@ -197,7 +197,7 @@ public:
         std::cout << "CTOR BEAM mapper..." << std::endl;
         this->ValidateInput();
         std::cout << "...Finished ValidateInput beam mapper" << std::endl;
-        //mLocalCoordTol = JsonParameters["local_coord_tolerance"].GetDouble();
+        mLocalCoordTol = JsonParameters["local_coord_tolerance"].GetDouble();
         KRATOS_ERROR_IF(mLocalCoordTol < 0.0) << "The local-coord-tolerance cannot be negative" << std::endl;
         this->Initialize();
         std::cout << "...Finished constructing beam mapper" << std::endl;
@@ -289,6 +289,10 @@ public:
     }
 
 private:
+    ///@name Member Variables
+    ///@{
+
+    double mLocalCoordTol;
 
     ///@name Private Operations
     ///@{
@@ -320,6 +324,7 @@ private:
         return Parameters( R"({
             "search_radius"            : -1.0,
             "search_iterations"        : 3,
+            "local_coord_tolerance"    : 0.25,
             "echo_level"               : 0
         })");
     }

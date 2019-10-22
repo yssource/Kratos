@@ -225,7 +225,6 @@ Matrix BeamElement3D2N::CreateElementStiffnessMatrix_Material() const
     local_stiffness_matrix(3, 6) = 2.0*E*Iy/L;
     local_stiffness_matrix(6, 3) = 2.0*E*Iy/L;
 
-
     return local_stiffness_matrix;
     KRATOS_CATCH("")
 }
@@ -300,7 +299,7 @@ Matrix BeamElement3D2N::GlobalTangentStiffnessMatrix() const
 {
     Matrix b_g = BMatrixGlobal();
     Matrix tangent_stiffness_matrix = prod(CreateElementStiffnessMatrixIntermediate(),b_g);
-    tangent_stiffness_matrix = prod(trans(b_g),CreateElementStiffnessMatrixIntermediate());
+    tangent_stiffness_matrix = prod(trans(b_g),tangent_stiffness_matrix);
 
     Vector intermediate_internal_forces = LocalInternalIntermediateForces();
 
@@ -313,6 +312,7 @@ Matrix BeamElement3D2N::GlobalTangentStiffnessMatrix() const
     Matrix temp_1 = prod(trans(g),trans(e));
     temp_1 = prod(QMatrix(),temp_1);
     temp_1 = prod(e,temp_1);
+
 
     ///////
     tangent_stiffness_matrix -= temp_1;
@@ -520,7 +520,10 @@ Vector BeamElement3D2N::LocalDeformations() const
     Matrix reference_co_rot_matrix = CalculateInitialLocalCS();
     Matrix current_co_rot_matrix = CoRotatingCS();
 
+
     Matrix local_rot_node_1 = prod(mGlobalRotationNode1,reference_co_rot_matrix);
+
+
     local_rot_node_1 = prod(trans(current_co_rot_matrix),local_rot_node_1);
 
     Matrix local_rot_node_2 = prod(mGlobalRotationNode1,reference_co_rot_matrix);
@@ -528,6 +531,7 @@ Vector BeamElement3D2N::LocalDeformations() const
 
     Matrix log_rotation_node_1 = LogRotationMatrix(local_rot_node_1);
     Matrix log_rotation_node_2 = LogRotationMatrix(local_rot_node_2);
+
 
     local_deformations[1] = log_rotation_node_1(2, 1);
     local_deformations[2] = log_rotation_node_1(0, 2);
@@ -542,11 +546,16 @@ Vector BeamElement3D2N::LocalDeformations() const
 
 Matrix BeamElement3D2N::LogRotationMatrix(const Matrix& rRotationMatrix) const
 {
+    const double numerical_limit = std::numeric_limits<double>::epsilon();
     const double trace = rRotationMatrix(0,0)+rRotationMatrix(1,1)+rRotationMatrix(2,2);
     const double phi = std::acos((trace - 1.0)/2.0);
 
-    Matrix log_matrix = rRotationMatrix-trans(rRotationMatrix);
-    log_matrix *= phi / (2.0*std::sin(phi));
+    Matrix log_matrix = ZeroMatrix(msDimension);
+
+    if (std::abs(phi)>numerical_limit){
+        log_matrix = rRotationMatrix-trans(rRotationMatrix);
+        log_matrix *= phi / (2.0*std::sin(phi));
+    }
 
     return log_matrix;
 }
@@ -669,6 +678,7 @@ Matrix BeamElement3D2N::GMatrix() const
     G_transposed(2, 1) = -1.0/l;
     G_transposed(2, 7) = 1.0/l;
 
+
     return trans(G_transposed);
 }
 
@@ -690,8 +700,8 @@ Matrix BeamElement3D2N::PMatrix() const
 
     Matrix g = GMatrix();
 
-    project(p, range(0,3),range(3,12)) -= trans(g);
-    project(p, range(3,6),range(3,12)) -= trans(g);
+    project(p, range(0,3),range(0,12)) -= trans(g);
+    project(p, range(3,6),range(0,12)) -= trans(g);
 
     return p;
 }
@@ -765,7 +775,7 @@ Matrix BeamElement3D2N::InverseLocalRotation(const int node_nr) const
     else KRATOS_ERROR << "wrong node number in InverseLocalRotation" << std::endl;
 
     const double phi_norm = MathUtils<double>::Norm(nodal_rot);
-    Matrix rot_inverse = ZeroMatrix(msDimension);
+    Matrix rot_inverse = IdentityMatrix(msDimension);
 
     if (phi_norm>numerical_limit){
         Vector u = nodal_rot/phi_norm;

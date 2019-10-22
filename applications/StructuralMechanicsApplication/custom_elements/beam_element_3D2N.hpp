@@ -198,8 +198,8 @@ private:
 
     Vector mDeformationCurrentIteration = ZeroVector(msElementSize);
     Vector mDeformationPreviousIteration = ZeroVector(msElementSize);
-    Matrix mGlobalRotationNode1 = IdentityMatrix(msElementSize);
-    Matrix mGlobalRotationNode2 = IdentityMatrix(msElementSize);
+    Matrix mGlobalRotationNode1 = IdentityMatrix(msDimension);
+    Matrix mGlobalRotationNode2 = IdentityMatrix(msDimension);
 
 
     friend class Serializer;

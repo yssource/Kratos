@@ -280,7 +280,7 @@ void SphericParticle::CalculateRightHandSide(ProcessInfo& r_process_info, double
         }
     }
 
-    // ApplyGlobalDampingToContactForcesAndMoments(contact_force, mContactMoment);
+    ApplyGlobalDampingToContactForcesAndMoments(contact_force, mContactMoment);
 
     array_1d<double,3>& total_forces = this_node.FastGetSolutionStepValue(TOTAL_FORCES);
     array_1d<double,3>& total_moment = this_node.FastGetSolutionStepValue(PARTICLE_MOMENT);

@@ -63,12 +63,13 @@ namespace Kratos {
                                                    const double kt_el_0,
                                                    const double kt_el_1) {
 
-        const double equiv_mass  = 0.5 * (element1->GetMass() + element2->GetMass());
+        const double equiv_mass  = std::max(element1->GetMass(), element2->GetMass());
+        const double aux = 0.5 *(element1->GetProperties()[BEAM_MASS] / equiv_mass);
         const double equiv_gamma = 0.5 * (element1->GetProperties()[DAMPING_GAMMA] + element2->GetProperties()[DAMPING_GAMMA]);
 
-        equiv_visco_damp_coeff_normal       = 2.0 * equiv_gamma * sqrt(equiv_mass * kn_el  );
-        equiv_visco_damp_coeff_tangential_0 = 2.0 * equiv_gamma * sqrt(equiv_mass * kt_el_0); // * norm_distance;
-        equiv_visco_damp_coeff_tangential_1 = 2.0 * equiv_gamma * sqrt(equiv_mass * kt_el_1); // * norm_distance;
+        equiv_visco_damp_coeff_normal       = 2.0 * equiv_gamma * aux * sqrt(equiv_mass * kn_el  );
+        equiv_visco_damp_coeff_tangential_0 = 2.0 * equiv_gamma * aux * sqrt(equiv_mass * kt_el_0);
+        equiv_visco_damp_coeff_tangential_1 = 2.0 * equiv_gamma * aux * sqrt(equiv_mass * kt_el_1);
     }
 
     void DEM_KDEM_Beam::CalculateForces(const ProcessInfo& r_process_info,

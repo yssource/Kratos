@@ -136,13 +136,13 @@ inline void CalculateAbsoluteScalarValueVectorDerivatives(Matrix& rOutput,
         (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
 }
 
-template<std::size_t TNumNodes>
+template <std::size_t TNumNodes>
 inline void CalculatePsiOneScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
-                                      const double velocity_norm,
-                                      const double reaction_tilde,
-                                      const double tau,
-                                      const Vector& rTauScalarDerivatives,
-                                      const Vector& rAbsoluteReactionTildeScalarDerivatives)
+                                             const double velocity_norm,
+                                             const double reaction_tilde,
+                                             const double tau,
+                                             const Vector& rTauScalarDerivatives,
+                                             const Vector& rAbsoluteReactionTildeScalarDerivatives)
 {
     const double absolute_reaction_tilde = std::abs(reaction_tilde);
 
@@ -150,14 +150,14 @@ inline void CalculatePsiOneScalarDerivatives(BoundedVector<double, TNumNodes>& r
     noalias(rOutput) += rAbsoluteReactionTildeScalarDerivatives * (tau * velocity_norm);
 }
 
-template<std::size_t TDim, std::size_t TNumNodes>
+template <std::size_t TDim, std::size_t TNumNodes>
 inline void CalculatePsiOneVelocityDerivatives(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
-                                        const double velocity_norm,
-                                        const double reaction_tilde,
-                                        const double tau,
-                                        const Matrix& rTauDerivatives,
-                                        const Matrix& rAbsoluteReactionTildeDerivatives,
-                                        const Matrix& rVelocityMagnitudeDerivatives)
+                                               const double velocity_norm,
+                                               const double reaction_tilde,
+                                               const double tau,
+                                               const Matrix& rTauDerivatives,
+                                               const Matrix& rAbsoluteReactionTildeDerivatives,
+                                               const Matrix& rVelocityMagnitudeDerivatives)
 {
     noalias(rOutput) = rVelocityMagnitudeDerivatives +
                        rTauDerivatives * (velocity_norm * reaction_tilde) +
@@ -166,14 +166,14 @@ inline void CalculatePsiOneVelocityDerivatives(BoundedMatrix<double, TNumNodes, 
 }
 
 inline double CalculatePsiOneShapeSensitivity(const double tau,
-                                       const double tau_deriv,
-                                       const double velocity_magnitude,
-                                       const double reaction,
-                                       const double reaction_deriv,
-                                       const double bossak_alpha,
-                                       const double bossak_gamma,
-                                       const double delta_time,
-                                       const double DynamicTau)
+                                              const double tau_deriv,
+                                              const double velocity_magnitude,
+                                              const double reaction,
+                                              const double reaction_deriv,
+                                              const double bossak_alpha,
+                                              const double bossak_gamma,
+                                              const double delta_time,
+                                              const double DynamicTau)
 {
     const double reaction_dynamics =
         reaction + DynamicTau * (1 - bossak_alpha) / (bossak_gamma * delta_time);
@@ -182,6 +182,78 @@ inline double CalculatePsiOneShapeSensitivity(const double tau,
     return tau_deriv * velocity_magnitude * abs_reaction_dynamics +
            tau * velocity_magnitude * reaction_dynamics * reaction_deriv /
                (abs_reaction_dynamics + std::numeric_limits<double>::epsilon());
+}
+
+template <std::size_t TNumNodes>
+inline void CalculatePsiTwoScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
+                                             const double element_length,
+                                             const double tau,
+                                             const double reaction_tilde,
+                                             const Vector& rTauScalarDerivatives,
+                                             const Vector& rReactionTildeDerivatives,
+                                             const Vector& rAbsoluteReactionTildeScalarDerivatives)
+{
+    const double absolute_reaction_tilde = std::abs(reaction_tilde);
+
+    noalias(rOutput) = rReactionTildeDerivatives;
+    noalias(rOutput) += rTauScalarDerivatives * (reaction_tilde * absolute_reaction_tilde);
+    noalias(rOutput) += rReactionTildeDerivatives * (tau * absolute_reaction_tilde);
+    noalias(rOutput) += rAbsoluteReactionTildeScalarDerivatives * (tau * reaction_tilde);
+    noalias(rOutput) = rOutput * (std::pow(element_length, 2) / 6.0);
+}
+
+template <std::size_t TDim, std::size_t TNumNodes>
+inline void CalculatePsiTwoVelocityDerivatives(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+                                               const double reaction_tilde,
+                                               const double tau,
+                                               const double element_length,
+                                               const Matrix& rTauDerivatives,
+                                               const Matrix& rReactionTildeDerivatives,
+                                               const Matrix& rAbsoluteReactionTildeDerivatives,
+                                               const Matrix& rElementLengthDerivatives)
+{
+    const double abs_reaction_tilde = std::abs(reaction_tilde);
+
+    noalias(rOutput) =
+        (rReactionTildeDerivatives + rTauDerivatives * (reaction_tilde * abs_reaction_tilde) +
+         rReactionTildeDerivatives * (tau * abs_reaction_tilde) +
+         rAbsoluteReactionTildeDerivatives * (tau * reaction_tilde)) *
+            std::pow(element_length, 2) / 6.0 +
+        rElementLengthDerivatives *
+            (element_length *
+             (reaction_tilde + tau * reaction_tilde * abs_reaction_tilde) / 3.0);
+}
+
+inline double CalculatePsiTwoShapeSensitivity(const double psi_two,
+                                              const double element_length,
+                                              const double element_length_deriv,
+                                              const double reaction,
+                                              const double reaction_deriv,
+                                              const double tau,
+                                              const double tau_deriv,
+                                              const double bossak_alpha,
+                                              const double bossak_gamma,
+                                              const double delta_time,
+                                              const double DynamicTau)
+{
+    double shape_sensitivity = 0.0;
+
+    const double reaction_dynamics =
+        reaction + DynamicTau * (1 - bossak_alpha) / (bossak_gamma * delta_time);
+    const double abs_reaction_dynamics = std::abs(reaction_dynamics);
+
+    shape_sensitivity += reaction_deriv;
+    shape_sensitivity += tau_deriv * reaction_dynamics * abs_reaction_dynamics;
+    shape_sensitivity += tau * reaction_deriv * abs_reaction_dynamics;
+    shape_sensitivity +=
+        tau * reaction_dynamics * reaction_dynamics * reaction_deriv /
+        (abs_reaction_dynamics + std::numeric_limits<double>::epsilon());
+
+    shape_sensitivity *= std::pow(element_length, 2) / 6.0;
+
+    shape_sensitivity += 2.0 * psi_two * element_length_deriv / element_length;
+
+    return shape_sensitivity;
 }
 
 template <std::size_t TNumNodes>

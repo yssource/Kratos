@@ -668,13 +668,13 @@ public:
             tau_derivatives(TNumNodes, TDim), source_derivatives(TNumNodes, TDim),
             chi_derivatives(TNumNodes, TDim), residual_derivatives(TNumNodes, TDim),
             absolute_residual_derivatives(TNumNodes, TDim),
-            positivity_preservation_coeff_derivatives(TNumNodes, TDim),
             absolute_reaction_tilde_derivatives(TNumNodes, TDim),
             psi_one_derivatives(TNumNodes, TDim),
             psi_two_derivatives(TNumNodes, TDim), s_derivatives(TNumNodes, TDim),
             contravariant_metric_tensor(TDim, TDim);
 
-        BoundedMatrix<double, TNumNodes, TDim> stream_line_diffusion_coeff_derivatives,
+        BoundedMatrix<double, TNumNodes, TDim> positivity_preservation_coeff_derivatives,
+            stream_line_diffusion_coeff_derivatives,
             cross_wind_diffusion_coeff_derivatives;
 
         array_1d<double, 3> primal_variable_gradient;
@@ -782,7 +782,7 @@ public:
             this->CalculateAbsoluteScalarValueVectorDerivatives(
                 absolute_residual_derivatives, residual, residual_derivatives);
 
-            this->CalculatePositivityPreservationCoefficientVelocityDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculatePositivityPreservationCoefficientVelocityDerivatives(
                 positivity_preservation_coeff_derivatives, std::abs(residual),
                 primal_variable_gradient_norm, velocity_magnitude, chi, chi_derivatives,
                 absolute_residual_derivatives, velocity_magnitude_derivatives);
@@ -2088,92 +2088,6 @@ private:
         }
     }
 
-    void CalculatePositivityPreservationCoefficientScalarDerivatives(
-        Vector& rOutput,
-        const double chi,
-        const double residual,
-        const double scalar_gradient_norm,
-        const double velocity_norm_square,
-        const Vector& rChiScalarDerivatives,
-        const Vector& rAbsoluteResidualScalarDerivatives,
-        const Vector& rAbsoluteScalarGradientScalarDerivative,
-        const Variable<double>& rDerivativeVariable)
-    {
-        const double abs_residual = std::abs(residual);
-
-        if (scalar_gradient_norm <= std::numeric_limits<double>::epsilon() ||
-            velocity_norm_square <= std::numeric_limits<double>::epsilon())
-        {
-            rOutput.clear();
-        }
-        else
-        {
-            noalias(rOutput) = rAbsoluteResidualScalarDerivatives *
-                               (chi / (velocity_norm_square * scalar_gradient_norm));
-            noalias(rOutput) +=
-                rChiScalarDerivatives *
-                (abs_residual / (velocity_norm_square * scalar_gradient_norm));
-
-            if (this->GetPrimalVariable() == rDerivativeVariable)
-                noalias(rOutput) -=
-                    rAbsoluteScalarGradientScalarDerivative *
-                    (chi * abs_residual /
-                     (std::pow(scalar_gradient_norm, 2) * velocity_norm_square));
-        }
-    }
-
-    void CalculatePositivityPreservationCoefficientVelocityDerivatives(
-        Matrix& rOutput,
-        const double absolute_residual,
-        const double primal_variable_gradient_norm,
-        const double velocity_magnitude,
-        const double chi,
-        const Matrix& rChiDerivatives,
-        const Matrix& rAbsoluteResidualDerivatives,
-        const Matrix& rVelocityMagnitudeDerivatives)
-    {
-        const double velocity_magnitude_square = std::pow(velocity_magnitude, 2);
-
-        if (primal_variable_gradient_norm <= std::numeric_limits<double>::epsilon() ||
-            velocity_magnitude_square <= std::numeric_limits<double>::epsilon())
-        {
-            rOutput.clear();
-        }
-
-        else
-        {
-            noalias(rOutput) =
-                (rVelocityMagnitudeDerivatives * (-2.0 * chi / velocity_magnitude) + rChiDerivatives) *
-                    (absolute_residual /
-                     (velocity_magnitude_square * primal_variable_gradient_norm)) +
-                rAbsoluteResidualDerivatives *
-                    (chi / (primal_variable_gradient_norm * velocity_magnitude_square));
-        }
-    }
-
-    double CalculatePositivityPreservationCoefficientShapeSensitivity(
-        const double chi,
-        const double chi_deriv,
-        const double abs_residual,
-        const double abs_residual_deriv,
-        const double velocity_magnitude_square,
-        const double scalar_gradient_norm,
-        const double scalar_gradient_norm_deriv)
-    {
-        if (scalar_gradient_norm <= std::numeric_limits<double>::epsilon() ||
-            velocity_magnitude_square <= std::numeric_limits<double>::epsilon())
-        {
-            return 0.0;
-        }
-        else
-        {
-            return chi_deriv * abs_residual / (scalar_gradient_norm * velocity_magnitude_square) +
-                   chi * abs_residual_deriv / (scalar_gradient_norm * velocity_magnitude_square) -
-                   chi * abs_residual * scalar_gradient_norm_deriv /
-                       (std::pow(scalar_gradient_norm, 2) * velocity_magnitude_square);
-        }
-    }
-
     void CalculatePsiOneScalarDerivatives(Vector& rOutput,
                                           const double velocity_norm,
                                           const double reaction_tilde,
@@ -2350,12 +2264,11 @@ private:
             tau_derivatives(TNumNodes), s_derivatives(TNumNodes),
             chi_derivatives(TNumNodes), scalar_gradient_norm_derivative(TNumNodes),
             residual_derivatives(TNumNodes), absolute_residual_derivatives(TNumNodes),
-            positivity_preserving_coeff_derivatives(TNumNodes),
             absolute_reaction_tilde_derivatives(TNumNodes),
             psi_one_derivatives(TNumNodes), psi_two_derivatives(TNumNodes);
 
-        BoundedVector<double, TNumNodes> streamline_diffusion_coeff_derivatives,
-            crosswind_diffusion_coeff_derivatives;
+        BoundedVector<double, TNumNodes> positivity_preserving_coeff_derivatives,
+            streamline_diffusion_coeff_derivatives, crosswind_diffusion_coeff_derivatives;
 
         array_1d<double, 3> scalar_gradient;
 
@@ -2458,11 +2371,11 @@ private:
             this->CalculateAbsoluteScalarValueScalarDerivatives(
                 absolute_residual_derivatives, residual, residual_derivatives);
 
-            this->CalculatePositivityPreservationCoefficientScalarDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculatePositivityPreservationCoefficientScalarDerivatives(
                 positivity_preserving_coeff_derivatives, chi, residual,
-                scalar_gradient_norm, velocity_magnitude_square,
-                chi_derivatives, absolute_residual_derivatives,
-                scalar_gradient_norm_derivative, rDerivativeVariable);
+                scalar_gradient_norm, velocity_magnitude_square, chi_derivatives,
+                absolute_residual_derivatives, scalar_gradient_norm_derivative,
+                primal_variable, rDerivativeVariable);
 
             const double reaction_tilde =
                 reaction + dynamic_tau * (1 - bossak_alpha) / (bossak_gamma * delta_time);
@@ -3243,7 +3156,7 @@ private:
                         primal_variable_nodal_values, reaction_deriv, source_deriv);
 
                     const double positivity_preserving_coeff_deriv =
-                        CalculatePositivityPreservationCoefficientShapeSensitivity(
+                        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculatePositivityPreservationCoefficientShapeSensitivity(
                             chi, chi_deriv, residual, residual_deriv,
                             velocity_magnitude_square, primal_variable_gradient_norm,
                             primal_variable_gradient_norm_deriv);

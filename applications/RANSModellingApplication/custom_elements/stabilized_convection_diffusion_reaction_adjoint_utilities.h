@@ -67,6 +67,93 @@ inline void CalculateStabilizationTauScalarDerivatives(Vector& rOutput,
         (-1.0 * std::pow(Tau, 3));
 }
 
+template <std::size_t TNumNodes>
+inline void CalculatePositivityPreservationCoefficientScalarDerivatives(
+    BoundedVector<double, TNumNodes>& rOutput,
+    const double chi,
+    const double residual,
+    const double scalar_gradient_norm,
+    const double velocity_norm_square,
+    const Vector& rChiScalarDerivatives,
+    const Vector& rAbsoluteResidualScalarDerivatives,
+    const Vector& rAbsoluteScalarGradientScalarDerivative,
+    const Variable<double>& rPrimalVariable,
+    const Variable<double>& rDerivativeVariable)
+{
+    const double abs_residual = std::abs(residual);
+
+    if (scalar_gradient_norm <= std::numeric_limits<double>::epsilon() ||
+        velocity_norm_square <= std::numeric_limits<double>::epsilon())
+    {
+        rOutput.clear();
+    }
+    else
+    {
+        noalias(rOutput) = rAbsoluteResidualScalarDerivatives *
+                           (chi / (velocity_norm_square * scalar_gradient_norm));
+        noalias(rOutput) +=
+            rChiScalarDerivatives *
+            (abs_residual / (velocity_norm_square * scalar_gradient_norm));
+
+        if (rPrimalVariable == rDerivativeVariable)
+            noalias(rOutput) -=
+                rAbsoluteScalarGradientScalarDerivative *
+                (chi * abs_residual / (std::pow(scalar_gradient_norm, 2) * velocity_norm_square));
+    }
+}
+
+template <std::size_t TDim, std::size_t TNumNodes>
+inline void CalculatePositivityPreservationCoefficientVelocityDerivatives(
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+    const double absolute_residual,
+    const double primal_variable_gradient_norm,
+    const double velocity_magnitude,
+    const double chi,
+    const Matrix& rChiDerivatives,
+    const Matrix& rAbsoluteResidualDerivatives,
+    const Matrix& rVelocityMagnitudeDerivatives)
+{
+    const double velocity_magnitude_square = std::pow(velocity_magnitude, 2);
+
+    if (primal_variable_gradient_norm <= std::numeric_limits<double>::epsilon() ||
+        velocity_magnitude_square <= std::numeric_limits<double>::epsilon())
+    {
+        rOutput.clear();
+    }
+
+    else
+    {
+        noalias(rOutput) =
+            (rVelocityMagnitudeDerivatives * (-2.0 * chi / velocity_magnitude) + rChiDerivatives) *
+                (absolute_residual / (velocity_magnitude_square * primal_variable_gradient_norm)) +
+            rAbsoluteResidualDerivatives *
+                (chi / (primal_variable_gradient_norm * velocity_magnitude_square));
+    }
+}
+
+inline double CalculatePositivityPreservationCoefficientShapeSensitivity(
+    const double chi,
+    const double chi_deriv,
+    const double abs_residual,
+    const double abs_residual_deriv,
+    const double velocity_magnitude_square,
+    const double scalar_gradient_norm,
+    const double scalar_gradient_norm_deriv)
+{
+    if (scalar_gradient_norm <= std::numeric_limits<double>::epsilon() ||
+        velocity_magnitude_square <= std::numeric_limits<double>::epsilon())
+    {
+        return 0.0;
+    }
+    else
+    {
+        return chi_deriv * abs_residual / (scalar_gradient_norm * velocity_magnitude_square) +
+               chi * abs_residual_deriv / (scalar_gradient_norm * velocity_magnitude_square) -
+               chi * abs_residual * scalar_gradient_norm_deriv /
+                   (std::pow(scalar_gradient_norm, 2) * velocity_magnitude_square);
+    }
+}
+
 template <std::size_t TDim, std::size_t TNumNodes>
 inline void CalculateCrossWindDiffusionCoeffVelocityDerivatives(
     BoundedMatrix<double, TNumNodes, TDim>& rOutput,

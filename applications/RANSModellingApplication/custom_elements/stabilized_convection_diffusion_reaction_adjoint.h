@@ -661,11 +661,6 @@ public:
         BoundedVector<double, TNumNodes> primal_variable_gradient_convective_terms,
             velocity_convective_terms;
 
-        Matrix velocity_magnitude_derivatives(TNumNodes, TDim),
-            absolute_residual_derivatives(TNumNodes, TDim),
-            absolute_reaction_tilde_derivatives(TNumNodes, TDim),
-            s_derivatives(TNumNodes, TDim);
-
         BoundedMatrix<double, TDim, TDim> contravariant_metric_tensor;
 
         BoundedMatrix<double, TNumNodes, TDim> effective_kinematic_viscosity_derivatives,
@@ -673,7 +668,9 @@ public:
             tau_derivatives, psi_one_derivatives, psi_two_derivatives, chi_derivatives,
             residual_derivatives, positivity_preservation_coeff_derivatives,
             stream_line_diffusion_coeff_derivatives,
-            cross_wind_diffusion_coeff_derivatives;
+            cross_wind_diffusion_coeff_derivatives,
+            velocity_magnitude_derivatives, absolute_residual_derivatives,
+            absolute_reaction_tilde_derivatives, s_derivatives;
 
         array_1d<double, 3> primal_variable_gradient;
 
@@ -711,7 +708,7 @@ public:
             const array_1d<double, 3>& velocity =
                 this->EvaluateInPoint(VELOCITY, gauss_shape_functions);
             const double velocity_magnitude = norm_2(velocity);
-            this->CalculateVelocityMagnitudeVelocityDerivative(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateVelocityMagnitudeVelocityDerivative(
                 velocity_magnitude_derivatives, velocity_magnitude, velocity,
                 gauss_shape_functions);
             this->GetConvectionOperator(velocity_convective_terms, velocity, r_shape_derivatives);
@@ -777,7 +774,7 @@ public:
                 residual_derivatives, primal_variable_value, primal_variable_gradient,
                 reaction_derivatives, source_derivatives, gauss_shape_functions);
 
-            this->CalculateAbsoluteScalarValueVectorDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateAbsoluteScalarValueVectorDerivatives(
                 absolute_residual_derivatives, residual, residual_derivatives);
 
             StabilizedConvectionDiffusionReactionAdjointUtilities::CalculatePositivityPreservationCoefficientVelocityDerivatives(
@@ -787,7 +784,7 @@ public:
 
             const double reaction_tilde =
                 reaction + dynamic_tau * (1 - bossak_alpha) / (bossak_gamma * delta_time);
-            this->CalculateAbsoluteScalarValueVectorDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateAbsoluteScalarValueVectorDerivatives(
                 absolute_reaction_tilde_derivatives, reaction_tilde, reaction_derivatives);
 
             const double psi_one =
@@ -818,7 +815,7 @@ public:
                 effective_kinematic_viscosity_derivatives, element_length_derivatives);
 
             const double s = std::abs(reaction);
-            this->CalculateAbsoluteScalarValueVectorDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateAbsoluteScalarValueVectorDerivatives(
                 s_derivatives, reaction, reaction_derivatives);
 
             for (unsigned int a = 0; a < TNumNodes; ++a)
@@ -1766,33 +1763,6 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
-
-    void CalculateVelocityMagnitudeVelocityDerivative(Matrix& rOutput,
-                                                      const double VelocityMagnitude,
-                                                      const array_1d<double, 3>& rVelocity,
-                                                      const Vector& rGaussShapeFunctions) const
-    {
-        if (VelocityMagnitude <= std::numeric_limits<double>::epsilon())
-        {
-            rOutput.clear();
-        }
-        else
-        {
-            for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node)
-                for (unsigned int i_dim = 0; i_dim < TDim; ++i_dim)
-                    rOutput(i_node, i_dim) =
-                        rVelocity[i_dim] * rGaussShapeFunctions[i_node] / VelocityMagnitude;
-        }
-    }
-
-    void CalculateAbsoluteScalarValueVectorDerivatives(Matrix& rOutput,
-                                                       const double scalar_value,
-                                                       const Matrix& rScalarValueDerivatives)
-    {
-        noalias(rOutput) = rScalarValueDerivatives *
-                           (scalar_value / (std::abs(scalar_value) +
-                                            std::numeric_limits<double>::epsilon()));
-    }
 
     double CalculateScalarProduct(const Vector& rVector1, const array_1d<double, 3>& rVector2)
     {

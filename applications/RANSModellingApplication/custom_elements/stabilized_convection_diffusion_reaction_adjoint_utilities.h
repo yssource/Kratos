@@ -274,6 +274,26 @@ inline double CalculateAbsoluteScalarGradientShapeSensitivity(
 }
 
 template <std::size_t TDim, std::size_t TNumNodes>
+inline void CalculateVelocityMagnitudeVelocityDerivative(
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+    const double VelocityMagnitude,
+    const array_1d<double, 3>& rVelocity,
+    const Vector& rGaussShapeFunctions)
+{
+    if (VelocityMagnitude <= std::numeric_limits<double>::epsilon())
+    {
+        rOutput.clear();
+    }
+    else
+    {
+        for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node)
+            for (unsigned int i_dim = 0; i_dim < TDim; ++i_dim)
+                rOutput(i_node, i_dim) =
+                    rVelocity[i_dim] * rGaussShapeFunctions[i_node] / VelocityMagnitude;
+    }
+}
+
+template <std::size_t TDim, std::size_t TNumNodes>
 inline void CalculateElementLengthH2VelocityDerivative(
     BoundedMatrix<double, TNumNodes, TDim>& rOutput,
     const double VelocityMagnitude,

@@ -35,66 +35,6 @@ namespace Kratos
 
 namespace EvmKepsilonModelAdjointUtilities
 {
-void CalculateNodalFmuVectorSensitivities(Matrix& rFmuNodalSensitivities,
-                                          const Vector& nodal_y_plus,
-                                          const Matrix& rYPlusNodalSensitivities)
-{
-    const std::size_t number_of_nodes = rYPlusNodalSensitivities.size1();
-    const std::size_t domain_size = rYPlusNodalSensitivities.size2();
-
-    if (rFmuNodalSensitivities.size1() != number_of_nodes ||
-        rFmuNodalSensitivities.size2() != domain_size)
-        rFmuNodalSensitivities.resize(number_of_nodes, domain_size);
-
-    for (std::size_t i_node = 0; i_node < number_of_nodes; ++i_node)
-    {
-        for (std::size_t i_dim = 0; i_dim < domain_size; ++i_dim)
-        {
-            rFmuNodalSensitivities(i_node, i_dim) =
-                std::exp(-0.0115 * nodal_y_plus[i_node]) * 0.0115 *
-                rYPlusNodalSensitivities(i_node, i_dim);
-        }
-    }
-}
-
-void CalculateGaussFmuVectorSensitivities(Matrix& rFmuGaussSensitivities,
-                                          const double y_plus,
-                                          const Matrix& rYPlusNodalSensitivities,
-                                          const Vector& rGaussShapeFunctions)
-{
-    // CalculateGaussSensitivities(rFmuGaussSensitivities,
-    //                             rYPlusNodalSensitivities, rGaussShapeFunctions);
-    // const double coeff = 0.0115 * std::exp(-0.0115 * y_plus);
-
-    // noalias(rFmuGaussSensitivities) = rFmuGaussSensitivities * coeff;
-}
-
-void CalculateNodalTurbulentViscosityVectorSensitivities(
-    Matrix& rTurbulentViscosityNodalSensitivities,
-    const double c_mu,
-    const Vector& nodal_turbulent_kinetic_energy,
-    const Vector& nodal_turbulent_energy_dissipation_rate,
-    const Matrix& rFmuNodalSensitivities)
-{
-    const std::size_t number_of_nodes = rFmuNodalSensitivities.size1();
-    const std::size_t domain_size = rFmuNodalSensitivities.size2();
-
-    if (rTurbulentViscosityNodalSensitivities.size1() != number_of_nodes ||
-        rTurbulentViscosityNodalSensitivities.size2() != domain_size)
-        rTurbulentViscosityNodalSensitivities.resize(number_of_nodes, domain_size);
-
-    for (std::size_t i_node = 0; i_node < number_of_nodes; ++i_node)
-    {
-        for (std::size_t i_dim = 0; i_dim < domain_size; ++i_dim)
-        {
-            rTurbulentViscosityNodalSensitivities(i_node, i_dim) =
-                c_mu * std::pow(nodal_turbulent_kinetic_energy[i_node], 2) /
-                nodal_turbulent_energy_dissipation_rate[i_node] *
-                rFmuNodalSensitivities(i_node, i_dim);
-        }
-    }
-}
-
 template <unsigned int TDim, unsigned int TNumNodes>
 void CalculateProductionVelocitySensitivities(
     BoundedMatrix<double, TNumNodes, TDim>& rOutput,
@@ -220,13 +160,14 @@ void CalculateProductionScalarSensitivities(BoundedVector<double, TNumNodes>& rO
     noalias(rOutput) = rNuTScalarDerivatives * value;
 }
 
-void CalculateThetaVelocitySensitivity(Matrix& rOutput,
+template <unsigned int TDim, unsigned int TNumNodes>
+void CalculateThetaVelocitySensitivity(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
                                        const double c_mu,
                                        const double f_mu,
                                        const double tke,
                                        const double nu_t,
-                                       const Matrix& rFmuSensitivities,
-                                       const Matrix& rNuTSensitivities)
+                                       const BoundedMatrix<double, TNumNodes, TDim>& rFmuSensitivities,
+                                       const BoundedMatrix<double, TNumNodes, TDim>& rNuTSensitivities)
 {
     std::size_t number_of_nodes = rFmuSensitivities.size1();
     std::size_t domain_size = rFmuSensitivities.size2();
@@ -239,12 +180,13 @@ void CalculateThetaVelocitySensitivity(Matrix& rOutput,
     noalias(rOutput) -= rNuTSensitivities * c_mu * f_mu * tke / std::pow(nu_t, 2);
 }
 
-void CalculateThetaTKESensitivity(Vector& rOutput,
+template <unsigned int TNumNodes>
+void CalculateThetaTKESensitivity(BoundedVector<double, TNumNodes>& rOutput,
                                   const double c_mu,
                                   const double f_mu,
                                   const double tke,
                                   const double nu_t,
-                                  const Vector& rNuTGaussSensitivities,
+                                  const BoundedVector<double, TNumNodes>& rNuTGaussSensitivities,
                                   const Vector& rGaussShapeFunctions)
 {
     std::size_t number_of_nodes = rNuTGaussSensitivities.size();
@@ -257,12 +199,13 @@ void CalculateThetaTKESensitivity(Vector& rOutput,
     noalias(rOutput) -= rNuTGaussSensitivities * c_mu * f_mu * tke / std::pow(nu_t, 2);
 }
 
-void CalculateThetaEpsilonSensitivity(Vector& rOutput,
+template <unsigned int TNumNodes>
+void CalculateThetaEpsilonSensitivity(BoundedVector<double, TNumNodes>& rOutput,
                                       const double c_mu,
                                       const double f_mu,
                                       const double tke,
                                       const double nu_t,
-                                      const Vector& rNuTSensitivities)
+                                      const BoundedVector<double, TNumNodes>& rNuTSensitivities)
 {
     std::size_t number_of_nodes = rNuTSensitivities.size();
 
@@ -273,79 +216,75 @@ void CalculateThetaEpsilonSensitivity(Vector& rOutput,
         rNuTSensitivities * (-1.0 * c_mu * f_mu * tke / std::pow(nu_t, 2));
 }
 
-void CalculateTurbulentReynoldsNumberVelocitySensitivity(Matrix& rOutput,
-                                                         const double tke,
-                                                         const double epsilon,
-                                                         const double nu,
-                                                         const Matrix& rNuTSensitivities)
-{
-    std::size_t number_of_nodes = rNuTSensitivities.size1();
-    std::size_t domain_size = rNuTSensitivities.size2();
+// template instantiations
+template void CalculateThetaVelocitySensitivity<2, 3>(BoundedMatrix<double, 3, 2>&,
+                                                      const double,
+                                                      const double,
+                                                      const double,
+                                                      const double,
+                                                      const BoundedMatrix<double, 3, 2>&,
+                                                      const BoundedMatrix<double, 3, 2>&);
+template void CalculateThetaVelocitySensitivity<2, 4>(BoundedMatrix<double, 4, 2>&,
+                                                      const double,
+                                                      const double,
+                                                      const double,
+                                                      const double,
+                                                      const BoundedMatrix<double, 4, 2>&,
+                                                      const BoundedMatrix<double, 4, 2>&);
+template void CalculateThetaVelocitySensitivity<3, 4>(BoundedMatrix<double, 4, 3>&,
+                                                      const double,
+                                                      const double,
+                                                      const double,
+                                                      const double,
+                                                      const BoundedMatrix<double, 4, 3>&,
+                                                      const BoundedMatrix<double, 4, 3>&);
+template void CalculateThetaVelocitySensitivity<3, 8>(BoundedMatrix<double, 8, 3>&,
+                                                      const double,
+                                                      const double,
+                                                      const double,
+                                                      const double,
+                                                      const BoundedMatrix<double, 8, 3>&,
+                                                      const BoundedMatrix<double, 8, 3>&);
 
-    if (rOutput.size1() != number_of_nodes || rOutput.size2() != domain_size)
-        rOutput.resize(number_of_nodes, domain_size);
-
-    rOutput.clear();
-}
-
-void CalculateTurbulentReynoldsNumberTKESensitivity(Vector& rOutput,
-                                                    const double tke,
-                                                    const double epsilon,
-                                                    const double nu,
-                                                    const Vector& rGaussShapeFunctions)
-{
-    std::size_t number_of_nodes = rGaussShapeFunctions.size();
-
-    if (rOutput.size() != number_of_nodes)
-        rOutput.resize(number_of_nodes);
-
-    noalias(rOutput) = rGaussShapeFunctions * (2.0 * tke / (epsilon * nu));
-}
-
-void CalculateTurbulentReynoldsNumberEpsilonSensitivity(Vector& rOutput,
-                                                        const double tke,
-                                                        const double epsilon,
-                                                        const double nu,
-                                                        const Vector& rGaussShapeFunctions)
-{
-    std::size_t number_of_nodes = rGaussShapeFunctions.size();
-
-    if (rOutput.size() != number_of_nodes)
-        rOutput.resize(number_of_nodes);
-
-    noalias(rOutput) = rGaussShapeFunctions * (-1.0 * std::pow(tke / epsilon, 2) / nu);
-}
-
-void CalculateF2VelocitySensitivity(Matrix& rOutput,
-                                    const double tke,
-                                    const double epsilon,
-                                    const double nu,
-                                    const Matrix& rNuTSensitivities)
-{
-    CalculateTurbulentReynoldsNumberVelocitySensitivity(rOutput, tke, epsilon,
-                                                        nu, rNuTSensitivities);
-
-    rOutput.clear();
-}
-
-void CalculateF2ScalarSensitivity(Vector& rOutput,
-                                  const double epsilon,
-                                  const double Re_t,
-                                  const Vector& rReTSensitivities)
-{
-    std::size_t number_of_nodes = rReTSensitivities.size();
-
-    if (rOutput.size() != number_of_nodes)
-        rOutput.resize(number_of_nodes);
-
-    // if (std::abs(epsilon) <= std::numeric_limits<double>::epsilon())
-    // {
-    //     rOutput.clear();
-    //     return;
-    // }
-    noalias(rOutput) = rReTSensitivities *
-                       (0.44 * Re_t / 36.0 * std::exp(-std::pow(Re_t / 6.0, 2)));
-}
+template void CalculateThetaTKESensitivity<3>(BoundedVector<double, 3>&,
+                                              const double,
+                                              const double,
+                                              const double,
+                                              const double,
+                                              const BoundedVector<double, 3>&,
+                                              const Vector&);
+template void CalculateThetaTKESensitivity<4>(BoundedVector<double, 4>&,
+                                              const double,
+                                              const double,
+                                              const double,
+                                              const double,
+                                              const BoundedVector<double, 4>&,
+                                              const Vector&);
+template void CalculateThetaTKESensitivity<8>(BoundedVector<double, 8>&,
+                                              const double,
+                                              const double,
+                                              const double,
+                                              const double,
+                                              const BoundedVector<double, 8>&,
+                                              const Vector&);
+template void CalculateThetaEpsilonSensitivity<3>(BoundedVector<double, 3>&,
+                                                  const double,
+                                                  const double,
+                                                  const double,
+                                                  const double,
+                                                  const BoundedVector<double, 3>&);
+template void CalculateThetaEpsilonSensitivity<4>(BoundedVector<double, 4>&,
+                                                  const double,
+                                                  const double,
+                                                  const double,
+                                                  const double,
+                                                  const BoundedVector<double, 4>&);
+template void CalculateThetaEpsilonSensitivity<8>(BoundedVector<double, 8>&,
+                                                  const double,
+                                                  const double,
+                                                  const double,
+                                                  const double,
+                                                  const BoundedVector<double, 8>&);
 
 template void CalculateProductionVelocitySensitivities<2, 3>(
     BoundedMatrix<double, 3, 2>&,

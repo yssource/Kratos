@@ -38,28 +38,13 @@ namespace Kratos
 
 namespace EvmKepsilonModelAdjointUtilities
 {
-void CalculateNodalFmuVectorSensitivities(Matrix& rFmuNodalSensitivities,
-                                          const Vector& nodal_y_plus,
-                                          const Matrix& rYPlusNodalSensitivities);
-
-void CalculateGaussFmuVectorSensitivities(Matrix& rFmuGaussSensitivities,
-                                          const double y_plus,
-                                          const Matrix& rYPlusNodalSensitivities,
-                                          const Vector& rGaussShapeFunctions);
-
-void CalculateNodalTurbulentViscosityVectorSensitivities(
-    Matrix& rTurbulentViscosityNodalSensitivities,
-    const double c_mu,
-    const Vector& nodal_turbulent_kinetic_energy,
-    const Vector& nodal_turbulent_energy_dissipation_rate,
-    const Matrix& rFmuNodalSensitivities);
-
 template <unsigned int TDim, unsigned int TNumNodes>
-void CalculateProductionVelocitySensitivities(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
-                                              const double NuT,
-                                              const BoundedMatrix<double, TNumNodes, TDim>& rNuTVelocityDerivatives,
-                                              const BoundedMatrix<double, TDim, TDim>& rVelocityGradient,
-                                              const Matrix& rShapeDerivatives);
+void CalculateProductionVelocitySensitivities(
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+    const double NuT,
+    const BoundedMatrix<double, TNumNodes, TDim>& rNuTVelocityDerivatives,
+    const BoundedMatrix<double, TDim, TDim>& rVelocityGradient,
+    const Matrix& rShapeDerivatives);
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void CalculateProductionShapeSensitivities(
@@ -76,55 +61,31 @@ void CalculateProductionScalarSensitivities(BoundedVector<double, TNumNodes>& rO
                                             const BoundedVector<double, TNumNodes>& rNuTScalarDerivatives,
                                             const BoundedMatrix<double, TDim, TDim>& rVelocityGradient);
 
-void CalculateThetaVelocitySensitivity(Matrix& rOutput,
+template <unsigned int TDim, unsigned int TNumNodes>
+void CalculateThetaVelocitySensitivity(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
                                        const double c_mu,
                                        const double f_mu,
                                        const double tke,
                                        const double nu_t,
-                                       const Matrix& rFmuSensitivities,
-                                       const Matrix& rNuTSensitivities);
-void CalculateThetaTKESensitivity(Vector& rOutput,
+                                       const BoundedMatrix<double, TNumNodes, TDim>& rFmuSensitivities,
+                                       const BoundedMatrix<double, TNumNodes, TDim>& rNuTSensitivities);
+
+template <unsigned int TNumNodes>
+void CalculateThetaTKESensitivity(BoundedVector<double, TNumNodes>& rOutput,
                                   const double c_mu,
                                   const double f_mu,
                                   const double tke,
                                   const double nu_t,
-                                  const Vector& rNuTSensitivities,
+                                  const BoundedVector<double, TNumNodes>& rNuTSensitivities,
                                   const Vector& rGaussShapeFunctions);
 
-void CalculateThetaEpsilonSensitivity(Vector& rOutput,
+template <unsigned int TNumNodes>
+void CalculateThetaEpsilonSensitivity(BoundedVector<double, TNumNodes>& rOutput,
                                       const double c_mu,
                                       const double f_mu,
                                       const double tke,
                                       const double nu_t,
-                                      const Vector& rNuTSensitivities);
-void CalculateTurbulentReynoldsNumberVelocitySensitivity(Matrix& rOutput,
-                                                         const double tke,
-                                                         const double epsilon,
-                                                         const double nu,
-                                                         const Matrix& rNuTSensitivities);
-
-void CalculateTurbulentReynoldsNumberTKESensitivity(Vector& rOutput,
-                                                    const double tke,
-                                                    const double epsilon,
-                                                    const double nu,
-                                                    const Vector& rGaussShapeFunctions);
-
-void CalculateTurbulentReynoldsNumberEpsilonSensitivity(Vector& rOutput,
-                                                        const double tke,
-                                                        const double epsilon,
-                                                        const double nu,
-                                                        const Vector& rGaussShapeFunctions);
-
-void CalculateF2VelocitySensitivity(Matrix& rOutput,
-                                    const double tke,
-                                    const double epsilon,
-                                    const double nu_t,
-                                    const Matrix& rNuTSensitivities);
-
-void CalculateF2ScalarSensitivity(Vector& rOutput,
-                                  const double epsilon,
-                                  const double Re_t,
-                                  const Vector& rReTSensitivities);
+                                      const BoundedVector<double, TNumNodes>& rNuTSensitivities);
 
 } // namespace EvmKepsilonModelAdjointUtilities
 

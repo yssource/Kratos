@@ -501,8 +501,8 @@ void RansEvmEpsilonAdjoint<TDim, TNumNodes>::CalculateReactionTermScalarDerivati
             rOutput, rCurrentData.TurbulentKinematicViscositySensitivitiesK,
             rCurrentData.ShapeFunctions);
 
-        Vector theta_sensitivities(rOutput.size());
-        EvmKepsilonModelAdjointUtilities::CalculateThetaTKESensitivity(
+        BoundedVector<double, TNumNodes> theta_sensitivities;
+        EvmKepsilonModelAdjointUtilities::CalculateThetaTKESensitivity<TNumNodes>(
             theta_sensitivities, c_mu, 1.0, rCurrentData.TurbulentKineticEnergy,
             rCurrentData.TurbulentKinematicViscosity, rOutput, rCurrentData.ShapeFunctions);
 
@@ -517,8 +517,8 @@ void RansEvmEpsilonAdjoint<TDim, TNumNodes>::CalculateReactionTermScalarDerivati
             rOutput, rCurrentData.TurbulentKinematicViscositySensitivitiesEpsilon,
             rCurrentData.ShapeFunctions);
 
-        Vector theta_sensitivities(rOutput.size());
-        EvmKepsilonModelAdjointUtilities::CalculateThetaEpsilonSensitivity(
+        BoundedVector<double, TNumNodes> theta_sensitivities;
+        EvmKepsilonModelAdjointUtilities::CalculateThetaEpsilonSensitivity<TNumNodes>(
             theta_sensitivities, c_mu, 1.0, rCurrentData.TurbulentKineticEnergy,
             rCurrentData.TurbulentKinematicViscosity, rOutput);
 
@@ -559,8 +559,8 @@ void RansEvmEpsilonAdjoint<TDim, TNumNodes>::CalculateSourceTermScalarDerivative
         EvmKepsilonModelAdjointUtilities::CalculateProductionScalarSensitivities<TDim, TNumNodes>(
             p_k_sensitivities, rOutput, velocity_gradient);
 
-        Vector theta_sensitivities(rOutput.size());
-        EvmKepsilonModelAdjointUtilities::CalculateThetaTKESensitivity(
+        BoundedVector<double, TNumNodes> theta_sensitivities;
+        EvmKepsilonModelAdjointUtilities::CalculateThetaTKESensitivity<TNumNodes>(
             theta_sensitivities, c_mu, 1.0, rCurrentData.TurbulentKineticEnergy,
             rCurrentData.TurbulentKinematicViscosity, rOutput, rCurrentData.ShapeFunctions);
 
@@ -588,8 +588,8 @@ void RansEvmEpsilonAdjoint<TDim, TNumNodes>::CalculateSourceTermScalarDerivative
         EvmKepsilonModelAdjointUtilities::CalculateProductionScalarSensitivities<TDim, TNumNodes>(
             p_k_sensitivities, rOutput, velocity_gradient);
 
-        Vector theta_sensitivities(rOutput.size());
-        EvmKepsilonModelAdjointUtilities::CalculateThetaEpsilonSensitivity(
+        BoundedVector<double, TNumNodes> theta_sensitivities;
+        EvmKepsilonModelAdjointUtilities::CalculateThetaEpsilonSensitivity<TNumNodes>(
             theta_sensitivities, c_mu, 1.0, rCurrentData.TurbulentKineticEnergy,
             rCurrentData.TurbulentKinematicViscosity, rOutput);
 

@@ -1785,51 +1785,6 @@ private:
         }
     }
 
-    void CalculateAbsoluteScalarGradientScalarDerivative(Vector& rOutput,
-                                                         const array_1d<double, 3> rScalarGradient,
-                                                         const Matrix& rShapeFunctionDerivatives)
-    {
-        const double scalar_gradient_norm = norm_2(rScalarGradient);
-
-        if (scalar_gradient_norm <= std::numeric_limits<double>::epsilon())
-        {
-            rOutput.clear();
-        }
-        else
-        {
-            for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
-            {
-                const Vector& shape_function_gradient =
-                    row(rShapeFunctionDerivatives, i_node);
-                rOutput[i_node] =
-                    CalculateScalarProduct(shape_function_gradient, rScalarGradient) /
-                    scalar_gradient_norm;
-            }
-        }
-    }
-
-    double CalculateAbsoluteScalarGradientShapeSensitivity(const array_1d<double, 3>& rScalarGradient,
-                                                           const Matrix& rShapeFunctionDerivShapeSensitivity,
-                                                           const Vector& rNodalScalarValues)
-    {
-        const double scalar_gradient_norm = norm_2(rScalarGradient);
-
-        if (scalar_gradient_norm <= std::numeric_limits<double>::epsilon())
-        {
-            return 0.0;
-        }
-        else
-        {
-            Vector scalar_gradient_shape_sensitivity(TDim);
-            noalias(scalar_gradient_shape_sensitivity) =
-                prod(trans(rShapeFunctionDerivShapeSensitivity), rNodalScalarValues);
-
-            const Vector& scalar_gradient =
-                RansCalculationUtilities().GetVector<TDim>(rScalarGradient);
-            return inner_prod(scalar_gradient_shape_sensitivity, scalar_gradient) / scalar_gradient_norm;
-        }
-    }
-
     void CalculateAbsoluteScalarValueVectorDerivatives(Matrix& rOutput,
                                                        const double scalar_value,
                                                        const Matrix& rScalarValueDerivatives)
@@ -1871,19 +1826,16 @@ private:
             TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
         const double dynamic_tau = rCurrentProcessInfo[DYNAMIC_TAU];
 
-        BoundedVector<double, TNumNodes> velocity_convective_terms, scalar_convective_terms;
-
-        Matrix contravariant_metric_tensor(TDim, TDim);
-
-        Vector s_derivatives(TNumNodes), scalar_gradient_norm_derivative(TNumNodes),
-            absolute_residual_derivatives(TNumNodes),
-            absolute_reaction_tilde_derivatives(TNumNodes);
+        BoundedMatrix<double, TDim, TDim> contravariant_metric_tensor;
 
         BoundedVector<double, TNumNodes> effective_kinematic_viscosity_derivatives,
             reaction_derivatives, source_derivatives, tau_derivatives,
             psi_one_derivatives, psi_two_derivatives, chi_derivatives,
             residual_derivatives, positivity_preserving_coeff_derivatives,
-            streamline_diffusion_coeff_derivatives, crosswind_diffusion_coeff_derivatives;
+            streamline_diffusion_coeff_derivatives,
+            crosswind_diffusion_coeff_derivatives, velocity_convective_terms,
+            absolute_reaction_tilde_derivatives, scalar_convective_terms, s_derivatives,
+            scalar_gradient_norm_derivative, absolute_residual_derivatives;
 
         array_1d<double, 3> scalar_gradient;
 
@@ -1975,7 +1927,7 @@ private:
                 chi_derivatives, chi, element_length, bossak_alpha, bossak_gamma,
                 delta_time, reaction, dynamic_tau, reaction_derivatives);
 
-            this->CalculateAbsoluteScalarGradientScalarDerivative(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateAbsoluteScalarGradientScalarDerivative(
                 scalar_gradient_norm_derivative, scalar_gradient, r_shape_derivatives);
 
             StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateResidualScalarDerivative(
@@ -2128,12 +2080,9 @@ private:
             TimeDiscretization::Bossak(bossak_alpha, 0.25, 0.5).GetGamma();
         const double dynamic_tau = rCurrentProcessInfo[DYNAMIC_TAU];
 
-        BoundedVector<double, TNumNodes> velocity_convective_terms, scalar_convective_terms;
-
-        Matrix contravariant_metric_tensor(TDim, TDim);
-
-        Vector positivity_preserving_coeff_derivatives(TNumNodes);
-
+        BoundedVector<double, TNumNodes> velocity_convective_terms,
+            scalar_convective_terms, positivity_preserving_coeff_derivatives;
+        BoundedMatrix<double, TDim, TDim> contravariant_metric_tensor;
         array_1d<double, 3> scalar_gradient;
 
         TElementData current_data;
@@ -2759,7 +2708,7 @@ private:
                             bossak_alpha, bossak_gamma, delta_time, dynamic_tau);
 
                     const double primal_variable_gradient_norm_deriv =
-                        this->CalculateAbsoluteScalarGradientShapeSensitivity(
+                        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateAbsoluteScalarGradientShapeSensitivity(
                             primal_variable_gradient, DN_DX_deriv, primal_variable_nodal_values);
 
                     const double source_deriv = this->CalculateSourceTermShapeSensitivity(

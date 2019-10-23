@@ -130,9 +130,9 @@ inline double CalculateStabilizationTauShapeSensitivity(const double Tau,
 }
 
 template <std::size_t TDim, std::size_t TNumNodes>
-void CalculateGaussSensitivities(BoundedMatrix<double, TNumNodes, TDim>& rGaussSensitivities,
-                                 const Matrix& rNodalSensitivities,
-                                 const Vector& rGaussShapeFunctions)
+inline void CalculateGaussSensitivities(BoundedMatrix<double, TNumNodes, TDim>& rGaussSensitivities,
+                                        const Matrix& rNodalSensitivities,
+                                        const Vector& rGaussShapeFunctions)
 {
     for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
     {
@@ -223,6 +223,54 @@ inline void CalculateAbsoluteScalarValueVectorDerivatives(Matrix& rOutput,
     noalias(rOutput) =
         rScalarValueDerivatives *
         (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
+}
+
+template <std::size_t TNumNodes>
+inline void CalculateAbsoluteScalarGradientScalarDerivative(
+    BoundedVector<double, TNumNodes>& rOutput,
+    const array_1d<double, 3> rScalarGradient,
+    const Matrix& rShapeFunctionDerivatives)
+{
+    const double scalar_gradient_norm = norm_2(rScalarGradient);
+
+    if (scalar_gradient_norm <= std::numeric_limits<double>::epsilon())
+    {
+        rOutput.clear();
+    }
+    else
+    {
+        for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
+        {
+            const Vector& shape_function_gradient = row(rShapeFunctionDerivatives, i_node);
+            rOutput[i_node] =
+                CalculateScalarProduct(shape_function_gradient, rScalarGradient) / scalar_gradient_norm;
+        }
+    }
+}
+
+inline double CalculateAbsoluteScalarGradientShapeSensitivity(
+    const array_1d<double, 3>& rScalarGradient,
+    const Matrix& rShapeFunctionDerivShapeSensitivity,
+    const Vector& rNodalScalarValues)
+{
+    const double scalar_gradient_norm = norm_2(rScalarGradient);
+
+    if (scalar_gradient_norm <= std::numeric_limits<double>::epsilon())
+    {
+        return 0.0;
+    }
+    else
+    {
+        Vector scalar_gradient_shape_sensitivity(
+            rShapeFunctionDerivShapeSensitivity.size2());
+        noalias(scalar_gradient_shape_sensitivity) =
+            prod(trans(rShapeFunctionDerivShapeSensitivity), rNodalScalarValues);
+
+        Vector scalar_gradient(rShapeFunctionDerivShapeSensitivity.size2());
+        for (std::size_t i = 0; i < rShapeFunctionDerivShapeSensitivity.size2(); ++i)
+            scalar_gradient[i] = rScalarGradient[i];
+        return inner_prod(scalar_gradient_shape_sensitivity, scalar_gradient) / scalar_gradient_norm;
+    }
 }
 
 template <std::size_t TDim, std::size_t TNumNodes>

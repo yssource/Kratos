@@ -291,7 +291,7 @@ protected:
     }
 
     virtual void CalculateTurbulentKinematicViscosityVelocityDerivatives(
-        Matrix& rOutput,
+        BoundedMatrix<double, TNumNodes, TDim>& rOutput,
         const TRANSEvmVMSAdjointData& rCurrentData,
         const ProcessInfo& rCurrentProcessInfo) const
     {
@@ -308,7 +308,7 @@ protected:
     }
 
     virtual void CalculateTurbulentKinematicViscosityScalarDerivatives(
-        Vector& rOutput,
+        BoundedVector<double, TNumNodes>& rOutput,
         const Variable<double>& rDerivativeVariable,
         const TRANSEvmVMSAdjointData& rCurrentData,
         const ProcessInfo& rCurrentProcessInfo) const
@@ -382,7 +382,7 @@ protected:
 
         if (VelNorm > 0.0)
         {
-            Vector NuTDerivative(TNumNodes);
+            BoundedVector<double, TNumNodes> NuTDerivative;
             this->CalculateTurbulentKinematicViscosityScalarDerivatives(
                 NuTDerivative, rDerivativeVariable, current_data, rCurrentProcessInfo);
 
@@ -523,7 +523,7 @@ protected:
         BoundedVector<double, TNumNodes> TauOneDeriv;
         BoundedVector<double, TNumNodes> TauTwoDeriv;
 
-        Vector NuTDerivative(TNumNodes);
+        BoundedVector<double, TNumNodes> NuTDerivative;
         this->CalculateTurbulentKinematicViscosityScalarDerivatives(
             NuTDerivative, rDerivativeVariable, current_data, rCurrentProcessInfo);
 
@@ -673,7 +673,7 @@ protected:
 
         if (VelNorm > 0.0)
         {
-            Matrix NuTDerivative(TNumNodes, TDim);
+            BoundedMatrix<double, TNumNodes, TDim> NuTDerivative;
             this->CalculateTurbulentKinematicViscosityVelocityDerivatives(
                 NuTDerivative, current_data, rCurrentProcessInfo);
 
@@ -831,7 +831,7 @@ protected:
         BoundedMatrix<double, TNumNodes, TDim> TauOneDeriv;
         BoundedMatrix<double, TNumNodes, TDim> TauTwoDeriv;
 
-        Matrix NuTDerivative(TNumNodes, TDim);
+        BoundedMatrix<double, TNumNodes, TDim> NuTDerivative;
         this->CalculateTurbulentKinematicViscosityVelocityDerivatives(
             NuTDerivative, current_data, rCurrentProcessInfo);
 

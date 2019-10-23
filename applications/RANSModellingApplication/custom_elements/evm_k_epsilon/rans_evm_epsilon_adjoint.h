@@ -154,8 +154,8 @@ public:
      * Constructor using Properties
      */
     RansEvmEpsilonAdjoint(IndexType NewId,
-                             GeometryType::Pointer pGeometry,
-                             PropertiesType::Pointer pProperties);
+                          GeometryType::Pointer pGeometry,
+                          PropertiesType::Pointer pProperties);
 
     /**
      * Copy Constructor
@@ -331,31 +331,32 @@ private:
                                const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateEffectiveKinematicViscosityScalarDerivatives(
-        Vector& rOutput,
+        BoundedVector<double, TNumNodes>& rOutput,
         const Variable<double>& rDerivativeVariable,
         const RansEvmEpsilonAdjointData& rCurrentData,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
-    void CalculateReactionTermScalarDerivatives(Vector& rOutput,
+    void CalculateReactionTermScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
                                                 const Variable<double>& rDerivativeVariable,
                                                 const RansEvmEpsilonAdjointData& rCurrentData,
                                                 const ProcessInfo& rCurrentProcessInfo) const override;
 
-    void CalculateSourceTermScalarDerivatives(Vector& rOutput,
+    void CalculateSourceTermScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
                                               const Variable<double>& rDerivativeVariable,
                                               const RansEvmEpsilonAdjointData& rCurrentData,
                                               const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateEffectiveKinematicViscosityVelocityDerivatives(
-        Matrix& rOutput,
+        BoundedMatrix<double, TNumNodes, TDim>& rOutput,
         const RansEvmEpsilonAdjointData& rCurrentData,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
-    void CalculateReactionTermVelocityDerivatives(Matrix& rOutput,
-                                                  const RansEvmEpsilonAdjointData& rCurrentData,
-                                                  const ProcessInfo& rCurrentProcessInfo) const override;
+    void CalculateReactionTermVelocityDerivatives(
+        BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+        const RansEvmEpsilonAdjointData& rCurrentData,
+        const ProcessInfo& rCurrentProcessInfo) const override;
 
-    void CalculateSourceTermVelocityDerivatives(Matrix& rOutput,
+    void CalculateSourceTermVelocityDerivatives(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
                                                 const RansEvmEpsilonAdjointData& rCurrentData,
                                                 const ProcessInfo& rCurrentProcessInfo) const override;
 

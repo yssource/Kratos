@@ -29,6 +29,7 @@
 #include "includes/cfd_variables.h"
 #include "rans_evm_epsilon_adjoint_wall_condition.h"
 #include "rans_modelling_application_variables.h"
+#include "custom_elements/stabilized_convection_diffusion_reaction_adjoint_utilities.h"
 
 namespace Kratos
 {
@@ -421,8 +422,8 @@ void RansEvmEpsilonAdjointWallCondition<TNumNodes, TDim>::CalculateConditionResi
         const Vector& gauss_shape_functions = row(shape_functions, g);
         const double weight = J * integration_points[g].Weight();
 
-        Vector turbulent_kinematic_viscosity_tke_gauss_sensitivities(TNumNodes);
-        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+        BoundedVector<double, TNumNodes> turbulent_kinematic_viscosity_tke_gauss_sensitivities;
+        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
             turbulent_kinematic_viscosity_tke_gauss_sensitivities,
             turbulent_kinematic_viscosity_tke_nodal_sensitivities, gauss_shape_functions);
 
@@ -513,8 +514,8 @@ void RansEvmEpsilonAdjointWallCondition<TNumNodes, TDim>::CalculateConditionResi
         const Vector& gauss_shape_functions = row(shape_functions, g);
         const double weight = J * integration_points[g].Weight();
 
-        Vector turbulent_kinematic_viscosity_epsilon_gauss_sensitivities(TNumNodes);
-        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+        BoundedVector<double, TNumNodes> turbulent_kinematic_viscosity_epsilon_gauss_sensitivities;
+        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
             turbulent_kinematic_viscosity_epsilon_gauss_sensitivities,
             turbulent_kinematic_viscosity_epsilon_nodal_sensitivities, gauss_shape_functions);
 

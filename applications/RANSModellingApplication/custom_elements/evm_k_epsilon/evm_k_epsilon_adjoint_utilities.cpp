@@ -35,43 +35,6 @@ namespace Kratos
 
 namespace EvmKepsilonModelAdjointUtilities
 {
-void CalculateGaussSensitivities(Matrix& rGaussSensitivities,
-                                 const Matrix& rNodalSensitivities,
-                                 const Vector& rGaussShapeFunctions)
-{
-    const std::size_t number_of_nodes = rNodalSensitivities.size1();
-    const std::size_t domain_size = rNodalSensitivities.size2();
-
-    if (rGaussSensitivities.size1() != number_of_nodes ||
-        rGaussSensitivities.size2() != domain_size)
-        rGaussSensitivities.resize(number_of_nodes, domain_size);
-
-    for (std::size_t i_node = 0; i_node < number_of_nodes; ++i_node)
-    {
-        for (std::size_t i_dim = 0; i_dim < domain_size; ++i_dim)
-        {
-            rGaussSensitivities(i_node, i_dim) =
-                rGaussShapeFunctions[i_node] * rNodalSensitivities(i_node, i_dim);
-        }
-    }
-}
-
-void CalculateGaussSensitivities(Vector& rGaussSensitivities,
-                                 const Vector& rNodalSensitivities,
-                                 const Vector& rGaussShapeFunctions)
-{
-    const std::size_t number_of_nodes = rNodalSensitivities.size();
-
-    if (rGaussSensitivities.size() != number_of_nodes)
-        rGaussSensitivities.resize(number_of_nodes);
-
-    for (std::size_t i_node = 0; i_node < number_of_nodes; ++i_node)
-    {
-        rGaussSensitivities[i_node] =
-            rGaussShapeFunctions[i_node] * rNodalSensitivities[i_node];
-    }
-}
-
 void CalculateNodalFmuVectorSensitivities(Matrix& rFmuNodalSensitivities,
                                           const Vector& nodal_y_plus,
                                           const Matrix& rYPlusNodalSensitivities)
@@ -99,11 +62,11 @@ void CalculateGaussFmuVectorSensitivities(Matrix& rFmuGaussSensitivities,
                                           const Matrix& rYPlusNodalSensitivities,
                                           const Vector& rGaussShapeFunctions)
 {
-    CalculateGaussSensitivities(rFmuGaussSensitivities,
-                                rYPlusNodalSensitivities, rGaussShapeFunctions);
-    const double coeff = 0.0115 * std::exp(-0.0115 * y_plus);
+    // CalculateGaussSensitivities(rFmuGaussSensitivities,
+    //                             rYPlusNodalSensitivities, rGaussShapeFunctions);
+    // const double coeff = 0.0115 * std::exp(-0.0115 * y_plus);
 
-    noalias(rFmuGaussSensitivities) = rFmuGaussSensitivities * coeff;
+    // noalias(rFmuGaussSensitivities) = rFmuGaussSensitivities * coeff;
 }
 
 void CalculateNodalTurbulentViscosityVectorSensitivities(
@@ -132,17 +95,14 @@ void CalculateNodalTurbulentViscosityVectorSensitivities(
     }
 }
 
-template <unsigned int TDim>
-void CalculateProductionVelocitySensitivities(Matrix& rOutput,
-                                              const double NuT,
-                                              const Matrix& rNuTVelocityDerivatives,
-                                              const BoundedMatrix<double, TDim, TDim>& rVelocityGradient,
-                                              const Matrix& rShapeDerivatives)
+template <unsigned int TDim, unsigned int TNumNodes>
+void CalculateProductionVelocitySensitivities(
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+    const double NuT,
+    const BoundedMatrix<double, TNumNodes, TDim>& rNuTVelocityDerivatives,
+    const BoundedMatrix<double, TDim, TDim>& rVelocityGradient,
+    const Matrix& rShapeDerivatives)
 {
-    const std::size_t number_of_nodes = rShapeDerivatives.size1();
-
-    if (rOutput.size1() != number_of_nodes || rOutput.size2() != TDim)
-        rOutput.resize(number_of_nodes, TDim);
     rOutput.clear();
 
     double velocity_divergence = 0.0;
@@ -161,7 +121,7 @@ void CalculateProductionVelocitySensitivities(Matrix& rOutput,
 
     noalias(rOutput) = rNuTVelocityDerivatives * value;
 
-    for (std::size_t c = 0; c < number_of_nodes; ++c)
+    for (std::size_t c = 0; c < TNumNodes; ++c)
     {
         for (std::size_t k = 0; k < TDim; ++k)
         {
@@ -180,7 +140,7 @@ void CalculateProductionVelocitySensitivities(Matrix& rOutput,
     }
 }
 
-template <unsigned int TDim>
+template <unsigned int TDim, unsigned int TNumNodes>
 void CalculateProductionShapeSensitivities(
     double& rOutput,
     const double turbulent_kinematic_viscosity,
@@ -190,8 +150,6 @@ void CalculateProductionShapeSensitivities(
     const Matrix& rShapeDerivatives,
     const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_DxDerivatives)
 {
-    const std::size_t number_of_nodes = rShapeDerivatives.size1();
-
     rOutput = 0.0;
 
     double velocity_divergence = 0.0;
@@ -210,12 +168,12 @@ void CalculateProductionShapeSensitivities(
 
     const double negative_two_thirds = -2.0 / 3.0;
 
-    for (std::size_t a = 0; a < number_of_nodes; ++a)
+    for (std::size_t a = 0; a < TNumNodes; ++a)
     {
         const Vector& r_dna_dx_derivative = row(rDN_DxDerivatives, a);
         const Vector& r_velocity_a = row(rNodalVelocity, a);
         const Vector& r_dna_dx = row(rShapeDerivatives, a);
-        for (std::size_t b = 0; b < number_of_nodes; ++b)
+        for (std::size_t b = 0; b < TNumNodes; ++b)
         {
             const Vector& r_dnb_dx_derivative = row(rDN_DxDerivatives, b);
             const Vector& r_dnb_dx = row(rShapeDerivatives, b);
@@ -240,16 +198,11 @@ void CalculateProductionShapeSensitivities(
     rOutput += turbulent_kinematic_viscosity_derivative * value;
 }
 
-template <unsigned int TDim>
-void CalculateProductionScalarSensitivities(Vector& rOutput,
-                                            const Vector& rNuTScalarDerivatives,
+template <unsigned int TDim, unsigned int TNumNodes>
+void CalculateProductionScalarSensitivities(BoundedVector<double, TNumNodes>& rOutput,
+                                            const BoundedVector<double, TNumNodes>& rNuTScalarDerivatives,
                                             const BoundedMatrix<double, TDim, TDim>& rVelocityGradient)
 {
-    const std::size_t number_of_nodes = rNuTScalarDerivatives.size();
-
-    if (rOutput.size() != number_of_nodes)
-        rOutput.resize(number_of_nodes);
-
     double velocity_divergence = 0.0;
     velocity_divergence =
         RansCalculationUtilities().CalculateMatrixTrace<TDim>(rVelocityGradient);
@@ -369,8 +322,8 @@ void CalculateF2VelocitySensitivity(Matrix& rOutput,
                                     const double nu,
                                     const Matrix& rNuTSensitivities)
 {
-    CalculateTurbulentReynoldsNumberVelocitySensitivity(
-        rOutput, tke, epsilon, nu, rNuTSensitivities);
+    CalculateTurbulentReynoldsNumberVelocitySensitivity(rOutput, tke, epsilon,
+                                                        nu, rNuTSensitivities);
 
     rOutput.clear();
 }
@@ -394,11 +347,31 @@ void CalculateF2ScalarSensitivity(Vector& rOutput,
                        (0.44 * Re_t / 36.0 * std::exp(-std::pow(Re_t / 6.0, 2)));
 }
 
-template void CalculateProductionVelocitySensitivities<2>(
-    Matrix&, const double, const Matrix&, const BoundedMatrix<double, 2, 2>&, const Matrix&);
-template void CalculateProductionVelocitySensitivities<3>(
-    Matrix&, const double, const Matrix&, const BoundedMatrix<double, 3, 3>&, const Matrix&);
-template void CalculateProductionShapeSensitivities<2>(
+template void CalculateProductionVelocitySensitivities<2, 3>(
+    BoundedMatrix<double, 3, 2>&,
+    const double,
+    const BoundedMatrix<double, 3, 2>&,
+    const BoundedMatrix<double, 2, 2>&,
+    const Matrix&);
+template void CalculateProductionVelocitySensitivities<2, 4>(
+    BoundedMatrix<double, 4, 2>&,
+    const double,
+    const BoundedMatrix<double, 4, 2>&,
+    const BoundedMatrix<double, 2, 2>&,
+    const Matrix&);
+template void CalculateProductionVelocitySensitivities<3, 4>(
+    BoundedMatrix<double, 4, 3>&,
+    const double,
+    const BoundedMatrix<double, 4, 3>&,
+    const BoundedMatrix<double, 3, 3>&,
+    const Matrix&);
+template void CalculateProductionVelocitySensitivities<3, 8>(
+    BoundedMatrix<double, 8, 3>&,
+    const double,
+    const BoundedMatrix<double, 8, 3>&,
+    const BoundedMatrix<double, 3, 3>&,
+    const Matrix&);
+template void CalculateProductionShapeSensitivities<2, 3>(
     double&,
     const double,
     const double,
@@ -406,7 +379,15 @@ template void CalculateProductionShapeSensitivities<2>(
     const BoundedMatrix<double, 2, 2>&,
     const Matrix&,
     const GeometricalSensitivityUtility::ShapeFunctionsGradientType&);
-template void CalculateProductionShapeSensitivities<3>(
+template void CalculateProductionShapeSensitivities<2, 4>(
+    double&,
+    const double,
+    const double,
+    const Matrix&,
+    const BoundedMatrix<double, 2, 2>&,
+    const Matrix&,
+    const GeometricalSensitivityUtility::ShapeFunctionsGradientType&);
+template void CalculateProductionShapeSensitivities<3, 4>(
     double&,
     const double,
     const double,
@@ -414,11 +395,32 @@ template void CalculateProductionShapeSensitivities<3>(
     const BoundedMatrix<double, 3, 3>&,
     const Matrix&,
     const GeometricalSensitivityUtility::ShapeFunctionsGradientType&);
-template void CalculateProductionScalarSensitivities<2>(
-    Vector&, const Vector&, const BoundedMatrix<double, 2, 2>&);
+template void CalculateProductionShapeSensitivities<3, 8>(
+    double&,
+    const double,
+    const double,
+    const Matrix&,
+    const BoundedMatrix<double, 3, 3>&,
+    const Matrix&,
+    const GeometricalSensitivityUtility::ShapeFunctionsGradientType&);
+template void CalculateProductionScalarSensitivities<2, 3>(
+    BoundedVector<double, 3>&,
+    const BoundedVector<double, 3>&,
+    const BoundedMatrix<double, 2, 2>&);
+template void CalculateProductionScalarSensitivities<2, 4>(
+    BoundedVector<double, 4>&,
+    const BoundedVector<double, 4>&,
+    const BoundedMatrix<double, 2, 2>&);
 
-template void CalculateProductionScalarSensitivities<3>(
-    Vector&, const Vector&, const BoundedMatrix<double, 3, 3>&);
+template void CalculateProductionScalarSensitivities<3, 4>(
+    BoundedVector<double, 4>&,
+    const BoundedVector<double, 4>&,
+    const BoundedMatrix<double, 3, 3>&);
+
+template void CalculateProductionScalarSensitivities<3, 8>(
+    BoundedVector<double, 8>&,
+    const BoundedVector<double, 8>&,
+    const BoundedMatrix<double, 3, 3>&);
 
 } // namespace EvmKepsilonModelAdjointUtilities
 

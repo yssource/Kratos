@@ -129,6 +129,33 @@ inline double CalculateStabilizationTauShapeSensitivity(const double Tau,
     return shape_sensitivity;
 }
 
+template <std::size_t TDim, std::size_t TNumNodes>
+void CalculateGaussSensitivities(BoundedMatrix<double, TNumNodes, TDim>& rGaussSensitivities,
+                                 const Matrix& rNodalSensitivities,
+                                 const Vector& rGaussShapeFunctions)
+{
+    for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
+    {
+        for (std::size_t i_dim = 0; i_dim < TDim; ++i_dim)
+        {
+            rGaussSensitivities(i_node, i_dim) =
+                rGaussShapeFunctions[i_node] * rNodalSensitivities(i_node, i_dim);
+        }
+    }
+}
+
+template <std::size_t TNumNodes>
+inline void CalculateGaussSensitivities(BoundedVector<double, TNumNodes>& rGaussSensitivities,
+                                        const Vector& rNodalSensitivities,
+                                        const Vector& rGaussShapeFunctions)
+{
+    for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
+    {
+        rGaussSensitivities[i_node] =
+            rGaussShapeFunctions[i_node] * rNodalSensitivities[i_node];
+    }
+}
+
 inline double CalculateScalarProduct(const Vector& rVector1, const array_1d<double, 3>& rVector2)
 {
     double result = 0.0;

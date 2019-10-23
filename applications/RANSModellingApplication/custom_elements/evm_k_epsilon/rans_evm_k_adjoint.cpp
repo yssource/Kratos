@@ -459,7 +459,7 @@ double RansEvmKAdjoint<TDim, TNumNodes>::CalculateSourceTerm(
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKAdjoint<TDim, TNumNodes>::CalculateEffectiveKinematicViscosityScalarDerivatives(
-    Vector& rOutput,
+    BoundedVector<double, TNumNodes>& rOutput,
     const Variable<double>& rDerivativeVariable,
     const RansEvmKAdjointData& rCurrentData,
     const ProcessInfo& rCurrentProcessInfo) const
@@ -470,7 +470,7 @@ void RansEvmKAdjoint<TDim, TNumNodes>::CalculateEffectiveKinematicViscosityScala
     {
         const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
 
-        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
             rOutput, rCurrentData.TurbulentKinematicViscositySensitivitiesK,
             rCurrentData.ShapeFunctions);
 
@@ -480,7 +480,7 @@ void RansEvmKAdjoint<TDim, TNumNodes>::CalculateEffectiveKinematicViscosityScala
     {
         const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
 
-        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
             rOutput, rCurrentData.TurbulentKinematicViscositySensitivitiesEpsilon,
             rCurrentData.ShapeFunctions);
 
@@ -497,7 +497,7 @@ void RansEvmKAdjoint<TDim, TNumNodes>::CalculateEffectiveKinematicViscosityScala
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKAdjoint<TDim, TNumNodes>::CalculateReactionTermScalarDerivatives(
-    Vector& rOutput,
+    BoundedVector<double, TNumNodes>& rOutput,
     const Variable<double>& rDerivativeVariable,
     const RansEvmKAdjointData& rCurrentData,
     const ProcessInfo& rCurrentProcessInfo) const
@@ -506,7 +506,7 @@ void RansEvmKAdjoint<TDim, TNumNodes>::CalculateReactionTermScalarDerivatives(
     {
         const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
 
-        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
             rOutput, rCurrentData.TurbulentKinematicViscositySensitivitiesK,
             rCurrentData.ShapeFunctions);
 
@@ -521,7 +521,7 @@ void RansEvmKAdjoint<TDim, TNumNodes>::CalculateReactionTermScalarDerivatives(
     {
         const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
 
-        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
             rOutput, rCurrentData.TurbulentKinematicViscositySensitivitiesEpsilon,
             rCurrentData.ShapeFunctions);
 
@@ -541,14 +541,14 @@ void RansEvmKAdjoint<TDim, TNumNodes>::CalculateReactionTermScalarDerivatives(
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKAdjoint<TDim, TNumNodes>::CalculateSourceTermScalarDerivatives(
-    Vector& rOutput,
+    BoundedVector<double, TNumNodes>& rOutput,
     const Variable<double>& rDerivativeVariable,
     const RansEvmKAdjointData& rCurrentData,
     const ProcessInfo& rCurrentProcessInfo) const
 {
     if (rDerivativeVariable == TURBULENT_KINETIC_ENERGY)
     {
-        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
             rOutput, rCurrentData.TurbulentKinematicViscositySensitivitiesK,
             rCurrentData.ShapeFunctions);
 
@@ -556,12 +556,12 @@ void RansEvmKAdjoint<TDim, TNumNodes>::CalculateSourceTermScalarDerivatives(
         this->CalculateGradient(velocity_gradient, VELOCITY,
                                 rCurrentData.ShapeFunctionDerivatives);
 
-        EvmKepsilonModelAdjointUtilities::CalculateProductionScalarSensitivities<TDim>(
+        EvmKepsilonModelAdjointUtilities::CalculateProductionScalarSensitivities<TDim, TNumNodes>(
             rOutput, rOutput, velocity_gradient);
     }
     else if (rDerivativeVariable == TURBULENT_ENERGY_DISSIPATION_RATE)
     {
-        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
             rOutput, rCurrentData.TurbulentKinematicViscositySensitivitiesEpsilon,
             rCurrentData.ShapeFunctions);
 
@@ -569,7 +569,7 @@ void RansEvmKAdjoint<TDim, TNumNodes>::CalculateSourceTermScalarDerivatives(
         this->CalculateGradient(velocity_gradient, VELOCITY,
                                 rCurrentData.ShapeFunctionDerivatives);
 
-        EvmKepsilonModelAdjointUtilities::CalculateProductionScalarSensitivities<TDim>(
+        EvmKepsilonModelAdjointUtilities::CalculateProductionScalarSensitivities<TDim, TNumNodes>(
             rOutput, rOutput, velocity_gradient);
     }
     else
@@ -607,26 +607,26 @@ void RansEvmKAdjoint<TDim, TNumNodes>::Calculate(const Variable<Matrix>& rVariab
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKAdjoint<TDim, TNumNodes>::CalculateEffectiveKinematicViscosityVelocityDerivatives(
-    Matrix& rOutput, const RansEvmKAdjointData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput, const RansEvmKAdjointData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
 {
     rOutput.clear();
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKAdjoint<TDim, TNumNodes>::CalculateReactionTermVelocityDerivatives(
-    Matrix& rOutput, const RansEvmKAdjointData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput, const RansEvmKAdjointData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
 {
     noalias(rOutput) = rCurrentData.ShapeFunctionDerivatives * (2.0 / 3.0);
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKAdjoint<TDim, TNumNodes>::CalculateSourceTermVelocityDerivatives(
-    Matrix& rOutput, const RansEvmKAdjointData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput, const RansEvmKAdjointData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
 {
     BoundedMatrix<double, TDim, TDim> velocity_gradient;
     this->CalculateGradient(velocity_gradient, VELOCITY, rCurrentData.ShapeFunctionDerivatives);
 
-    EvmKepsilonModelAdjointUtilities::CalculateProductionVelocitySensitivities<TDim>(
+    EvmKepsilonModelAdjointUtilities::CalculateProductionVelocitySensitivities<TDim, TNumNodes>(
         rOutput, rCurrentData.TurbulentKinematicViscosity,
         ZeroMatrix(rOutput.size1(), rOutput.size2()), velocity_gradient,
         rCurrentData.ShapeFunctionDerivatives);
@@ -667,7 +667,7 @@ double RansEvmKAdjoint<TDim, TNumNodes>::CalculateSourceTermShapeSensitivity(
     BoundedMatrix<double, TDim, TDim> velocity_gradient;
     this->CalculateGradient(velocity_gradient, VELOCITY, rCurrentData.ShapeFunctionDerivatives);
 
-    EvmKepsilonModelAdjointUtilities::CalculateProductionShapeSensitivities<TDim>(
+    EvmKepsilonModelAdjointUtilities::CalculateProductionShapeSensitivities<TDim, TNumNodes>(
         value, rCurrentData.TurbulentKinematicViscosity, 0.0, rCurrentData.NodalVelocity,
         velocity_gradient, rCurrentData.ShapeFunctionDerivatives, rDN_Dx_deriv);
 

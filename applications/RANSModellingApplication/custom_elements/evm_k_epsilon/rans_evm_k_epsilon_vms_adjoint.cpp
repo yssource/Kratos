@@ -22,6 +22,7 @@
 #include "custom_utilities/rans_variable_utils.h"
 #include "includes/cfd_variables.h"
 #include "rans_modelling_application_variables.h"
+#include "custom_elements/stabilized_convection_diffusion_reaction_adjoint_utilities.h"
 
 namespace Kratos
 {
@@ -321,7 +322,7 @@ void RansEvmKEpsilonVMSAdjoint<TDim, TNumNodes>::CalculateElementData(
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKEpsilonVMSAdjoint<TDim, TNumNodes>::CalculateTurbulentKinematicViscosityScalarDerivatives(
-    Vector& rOutput,
+    BoundedVector<double, TNumNodes>& rOutput,
     const Variable<double>& rDerivativeVariable,
     const RANSEvmVMSAdjointData& rCurrentData,
     const ProcessInfo& rCurrentProcessInfo) const
@@ -330,13 +331,13 @@ void RansEvmKEpsilonVMSAdjoint<TDim, TNumNodes>::CalculateTurbulentKinematicVisc
 
     if (rDerivativeVariable == TURBULENT_KINETIC_ENERGY)
     {
-        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
             rOutput, rCurrentData.TurbulentKinematicViscositySensitivitiesK,
             rCurrentData.ShapeFunctions);
     }
     else if (rDerivativeVariable == TURBULENT_ENERGY_DISSIPATION_RATE)
     {
-        EvmKepsilonModelAdjointUtilities::CalculateGaussSensitivities(
+        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
             rOutput, rCurrentData.TurbulentKinematicViscositySensitivitiesEpsilon,
             rCurrentData.ShapeFunctions);
     }
@@ -380,7 +381,7 @@ void RansEvmKEpsilonVMSAdjoint<TDim, TNumNodes>::Calculate(const Variable<Matrix
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKEpsilonVMSAdjoint<TDim, TNumNodes>::CalculateTurbulentKinematicViscosityVelocityDerivatives(
-    Matrix& rOutput, const RANSEvmVMSAdjointData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput, const RANSEvmVMSAdjointData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
 {
     rOutput.clear();
 }

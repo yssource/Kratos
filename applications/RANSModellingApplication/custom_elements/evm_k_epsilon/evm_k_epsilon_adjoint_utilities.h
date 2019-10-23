@@ -38,14 +38,6 @@ namespace Kratos
 
 namespace EvmKepsilonModelAdjointUtilities
 {
-void CalculateGaussSensitivities(Matrix& rGaussSensitivities,
-                                 const Matrix& rNodalSensitivities,
-                                 const Vector& rGaussShapeFunctions);
-
-void CalculateGaussSensitivities(Vector& rGaussSensitivities,
-                                 const Vector& rNodalSensitivities,
-                                 const Vector& rGaussShapeFunctions);
-
 void CalculateNodalFmuVectorSensitivities(Matrix& rFmuNodalSensitivities,
                                           const Vector& nodal_y_plus,
                                           const Matrix& rYPlusNodalSensitivities);
@@ -62,14 +54,14 @@ void CalculateNodalTurbulentViscosityVectorSensitivities(
     const Vector& nodal_turbulent_energy_dissipation_rate,
     const Matrix& rFmuNodalSensitivities);
 
-template <unsigned int TDim>
-void CalculateProductionVelocitySensitivities(Matrix& rOutput,
+template <unsigned int TDim, unsigned int TNumNodes>
+void CalculateProductionVelocitySensitivities(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
                                               const double NuT,
-                                              const Matrix& rNuTVelocityDerivatives,
+                                              const BoundedMatrix<double, TNumNodes, TDim>& rNuTVelocityDerivatives,
                                               const BoundedMatrix<double, TDim, TDim>& rVelocityGradient,
                                               const Matrix& rShapeDerivatives);
 
-template <unsigned int TDim>
+template <unsigned int TDim, unsigned int TNumNodes>
 void CalculateProductionShapeSensitivities(
     double& rOutput,
     const double turbulent_kinematic_viscosity,
@@ -79,9 +71,9 @@ void CalculateProductionShapeSensitivities(
     const Matrix& rShapeDerivatives,
     const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_DxDerivatives);
 
-template <unsigned int TDim>
-void CalculateProductionScalarSensitivities(Vector& rOutput,
-                                            const Vector& rNuTScalarDerivatives,
+template <unsigned int TDim, unsigned int TNumNodes>
+void CalculateProductionScalarSensitivities(BoundedVector<double, TNumNodes>& rOutput,
+                                            const BoundedVector<double, TNumNodes>& rNuTScalarDerivatives,
                                             const BoundedMatrix<double, TDim, TDim>& rVelocityGradient);
 
 void CalculateThetaVelocitySensitivity(Matrix& rOutput,

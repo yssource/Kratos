@@ -273,13 +273,13 @@ private:
                               const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateTurbulentKinematicViscosityScalarDerivatives(
-        Vector& rOutput,
+        BoundedVector<double, TNumNodes>& rOutput,
         const Variable<double>& rDerivativeVariable,
         const RANSEvmVMSAdjointData& rCurrentData,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateTurbulentKinematicViscosityVelocityDerivatives(
-        Matrix& rOutput,
+        BoundedMatrix<double, TNumNodes, TDim>& rOutput,
         const RANSEvmVMSAdjointData& rCurrentData,
         const ProcessInfo& rCurrentProcessInfo) const override;
 

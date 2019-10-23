@@ -661,18 +661,16 @@ public:
         BoundedVector<double, TNumNodes> primal_variable_gradient_convective_terms,
             velocity_convective_terms;
 
-        Matrix effective_kinematic_viscosity_derivatives(TNumNodes, TDim),
-            reaction_derivatives(TNumNodes, TDim),
-            velocity_magnitude_derivatives(TNumNodes, TDim),
-            source_derivatives(TNumNodes, TDim),
+        Matrix velocity_magnitude_derivatives(TNumNodes, TDim),
             absolute_residual_derivatives(TNumNodes, TDim),
             absolute_reaction_tilde_derivatives(TNumNodes, TDim),
             s_derivatives(TNumNodes, TDim);
 
         BoundedMatrix<double, TDim, TDim> contravariant_metric_tensor;
 
-        BoundedMatrix<double, TNumNodes, TDim> element_length_derivatives, tau_derivatives,
-            psi_one_derivatives, psi_two_derivatives, chi_derivatives,
+        BoundedMatrix<double, TNumNodes, TDim> effective_kinematic_viscosity_derivatives,
+            reaction_derivatives, source_derivatives, element_length_derivatives,
+            tau_derivatives, psi_one_derivatives, psi_two_derivatives, chi_derivatives,
             residual_derivatives, positivity_preservation_coeff_derivatives,
             stream_line_diffusion_coeff_derivatives,
             cross_wind_diffusion_coeff_derivatives;
@@ -1294,7 +1292,7 @@ protected:
      * @param rCurrentProcessInfo  Current process info
      */
     virtual void CalculateEffectiveKinematicViscosityScalarDerivatives(
-        Vector& rOutput,
+        BoundedVector<double, TNumNodes>& rOutput,
         const Variable<double>& rDerivativeVariable,
         const TElementData& rCurrentData,
         const ProcessInfo& rCurrentProcessInfo) const
@@ -1330,10 +1328,11 @@ protected:
      * @param rCurrentData         Data required to calculate partial derivatives
      * @param rCurrentProcessInfo  Current process info
      */
-    virtual void CalculateReactionTermScalarDerivatives(Vector& rOutput,
-                                                        const Variable<double>& rDerivativeVariable,
-                                                        const TElementData& rCurrentData,
-                                                        const ProcessInfo& rCurrentProcessInfo) const
+    virtual void CalculateReactionTermScalarDerivatives(
+        BoundedVector<double, TNumNodes>& rOutput,
+        const Variable<double>& rDerivativeVariable,
+        const TElementData& rCurrentData,
+        const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
 
@@ -1365,7 +1364,7 @@ protected:
      * @param rCurrentData         Data required to calculate partial derivatives
      * @param rCurrentProcessInfo  Current process info
      */
-    virtual void CalculateSourceTermScalarDerivatives(Vector& rOutput,
+    virtual void CalculateSourceTermScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
                                                       const Variable<double>& rDerivativeVariable,
                                                       const TElementData& rCurrentData,
                                                       const ProcessInfo& rCurrentProcessInfo) const
@@ -1397,7 +1396,9 @@ protected:
      * @param rCurrentProcessInfo Current process info
      */
     virtual void CalculateEffectiveKinematicViscosityVelocityDerivatives(
-        Matrix& rOutput, const TElementData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
+        BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+        const TElementData& rCurrentData,
+        const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
 
@@ -1427,9 +1428,10 @@ protected:
      * @param rCurrentData        Data required to calculate partial derivatives
      * @param rCurrentProcessInfo Current process info
      */
-    virtual void CalculateReactionTermVelocityDerivatives(Matrix& rOutput,
-                                                          const TElementData& rCurrentData,
-                                                          const ProcessInfo& rCurrentProcessInfo) const
+    virtual void CalculateReactionTermVelocityDerivatives(
+        BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+        const TElementData& rCurrentData,
+        const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
 
@@ -1457,9 +1459,10 @@ protected:
      * @param rCurrentData        Data required to calculate partial derivatives
      * @param rCurrentProcessInfo Current process info
      */
-    virtual void CalculateSourceTermVelocityDerivatives(Matrix& rOutput,
-                                                        const TElementData& rCurrentData,
-                                                        const ProcessInfo& rCurrentProcessInfo) const
+    virtual void CalculateSourceTermVelocityDerivatives(
+        BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+        const TElementData& rCurrentData,
+        const ProcessInfo& rCurrentProcessInfo) const
     {
         KRATOS_TRY
 
@@ -1872,15 +1875,14 @@ private:
 
         Matrix contravariant_metric_tensor(TDim, TDim);
 
-        Vector effective_kinematic_viscosity_derivatives(TNumNodes),
-            reaction_derivatives(TNumNodes), source_derivatives(TNumNodes),
-            s_derivatives(TNumNodes), scalar_gradient_norm_derivative(TNumNodes),
+        Vector s_derivatives(TNumNodes), scalar_gradient_norm_derivative(TNumNodes),
             absolute_residual_derivatives(TNumNodes),
             absolute_reaction_tilde_derivatives(TNumNodes);
 
-        BoundedVector<double, TNumNodes> tau_derivatives, psi_one_derivatives,
-            psi_two_derivatives, chi_derivatives, residual_derivatives,
-            positivity_preserving_coeff_derivatives,
+        BoundedVector<double, TNumNodes> effective_kinematic_viscosity_derivatives,
+            reaction_derivatives, source_derivatives, tau_derivatives,
+            psi_one_derivatives, psi_two_derivatives, chi_derivatives,
+            residual_derivatives, positivity_preserving_coeff_derivatives,
             streamline_diffusion_coeff_derivatives, crosswind_diffusion_coeff_derivatives;
 
         array_1d<double, 3> scalar_gradient;
@@ -2482,12 +2484,11 @@ private:
 
         Matrix contravariant_metric_tensor(TDim, TDim);
 
-        BoundedVector<double, TNumNodes> velocity_convective_terms, tau_derivatives;
+        BoundedVector<double, TNumNodes> velocity_convective_terms,
+            tau_derivatives, effective_kinematic_viscosity_derivatives,
+            reaction_derivatives, s_derivatives;
 
         TElementData current_data;
-
-        Vector effective_kinematic_viscosity_derivatives(TNumNodes),
-            reaction_derivatives(TNumNodes), s_derivatives(TNumNodes);
 
         for (unsigned int g = 0; g < num_gauss_points; g++)
         {

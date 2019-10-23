@@ -337,54 +337,29 @@ class CoupledPfemFluidThermalSolver(PythonSolver):
         #self.DeleteThermalModelPartNodes()
         #print(1)
     def UpdateThermalVelocityField(self):
-        #print("fluid_model_part velocity field")
-        #for node in self.fluid_solver.main_model_part.Nodes:
-        #    print(node.Id)
-        #    print(node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X))      
-        #print("thermal_model_part velocity field")
-        #for node in self.thermal_solver.main_model_part.Nodes:
-        #    print(node.Id)
-        #    print(node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X))
-        #
-        #print("fluid_model_part temperature field")
-        #for node in self.fluid_solver.main_model_part.Nodes:
-        #    print(node.Id)
-        #    print(node.GetSolutionStepValue(KratosMultiphysics.TEMPERATURE))      
-        #print("thermal_model_part temperature field")
-        #for node in self.thermal_solver.main_model_part.Nodes:
-        #    #print(node.Id)
-        #    print("node Id: {} temp: {}".format(node.Id, node.GetSolutionStepValue(KratosMultiphysics.TEMPERATURE)))
         
-
-        #print("fluid_model_part mesh velocity field")
-        #for node in self.fluid_solver.main_model_part.Nodes:
-        #    print(node.Id)
-        #    print(node.GetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_X))
-
         #Update mesh velocity
-        new_mesh_velocity_x = []
-        new_mesh_velocity_y = []
-        #count=0
+        #tested with moving heating plate#new_mesh_velocity_x = []
+        #tested with moving heating plate#new_mesh_velocity_y = []
+        #tested with moving heating plate##count=0
+        #tested with moving heating plate#for node in self.fluid_solver.main_model_part.Nodes:
+        #tested with moving heating plate#    new_mesh_velocity_x.append(node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X))
+        #tested with moving heating plate#    #node.SetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_X, new_mesh_velocity_x)
+        #tested with moving heating plate#    new_mesh_velocity_y.append(node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y))
+        #tested with moving heating plate#    #node.SetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_Y, new_mesh_velocity_y)
+        #tested with moving heating plate#    #print("Fluid node Id: {} VEL_X: {}".format(node.Id, node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)))
+        #tested with moving heating plate#    #count+=1
+        #tested with moving heating plate#count=0
+        #tested with moving heating plate#for node in self.thermal_solver.main_model_part.Nodes:
+        #tested with moving heating plate#    node.SetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_X, new_mesh_velocity_x[count])
+        #tested with moving heating plate#    node.SetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_Y, new_mesh_velocity_y[count])
+        #tested with moving heating plate#    #print("Thermal node Id: {} MESH_VEL_X: {}".format(node.Id, node.GetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_X)))
+        #tested with moving heating plate#    count+=1
         for node in self.fluid_solver.main_model_part.Nodes:
-            new_mesh_velocity_x.append(node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X))
-            #node.SetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_X, new_mesh_velocity_x)
-            new_mesh_velocity_y.append(node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y))
-            #node.SetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_Y, new_mesh_velocity_y)
-            #print("Fluid node Id: {} VEL_X: {}".format(node.Id, node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X)))
-            #count+=1
-        count=0
-        for node in self.thermal_solver.main_model_part.Nodes:
-            node.SetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_X, new_mesh_velocity_x[count])
-            node.SetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_Y, new_mesh_velocity_y[count])
-            #print("Thermal node Id: {} MESH_VEL_X: {}".format(node.Id, node.GetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_X)))
-            count+=1
-        #print(new_mesh_velocity_y)
-        #print("thermal_model_part UPDATED mesh velocity field")
-        #for node in self.thermal_solver.main_model_part.Nodes:
-        #    print(node.Id)
-        #    print(node.GetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_X))
+            node.SetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_X, node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_X))
+            node.SetSolutionStepValue(KratosMultiphysics.MESH_VELOCITY_Y, node.GetSolutionStepValue(KratosMultiphysics.VELOCITY_Y))
 
-        print("end")
+        #print("end")
     #def CloneFluidComputingModelPart(self):
 
         #if (not self.thermal_solver.model.HasModelPart("ThermalModelPart")): 

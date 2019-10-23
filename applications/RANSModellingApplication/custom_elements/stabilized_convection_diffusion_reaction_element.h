@@ -584,8 +584,8 @@ public:
                              (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
                              reaction * gauss_shape_functions[b]; // * positive_values_list[b];
 
-                    // Adding cross wind dissipation
-                    value += cross_wind_diffusion * dNa_dNb * velocity_magnitude_square;
+                    // // Adding cross wind dissipation
+                    // value += cross_wind_diffusion * dNa_dNb * velocity_magnitude_square;
                     value -= cross_wind_diffusion * velocity_convective_terms[a] *
                              velocity_convective_terms[b];
 

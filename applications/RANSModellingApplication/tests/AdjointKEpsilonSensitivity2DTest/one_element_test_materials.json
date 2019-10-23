@@ -5,10 +5,10 @@
         "Material"        : {
             "Variables"        : {
                 "DENSITY": 1.0E+00,
-                "VISCOSITY": 1.0E-05,
-                "DYNAMIC_VISCOSITY": 1.0E-05,
-                "KINEMATIC_VISCOSITY": 1.0E-05,
-                "TURBULENT_VISCOSITY": 1e-5
+                "VISCOSITY": 1.0E-03,
+                "DYNAMIC_VISCOSITY": 1.0E-03,
+                "KINEMATIC_VISCOSITY": 1.0E-03,
+                "TURBULENT_VISCOSITY": 1e-3
             },
             "Tables"           : {}
         }

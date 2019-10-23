@@ -342,46 +342,58 @@ void RansEvmMonolithicKEpsilonVMSAdjoint<TDim, TNumNodes>::CalculateFirstDerivat
 
     BoundedMatrix<double, TFluidLocalSize, TFluidLocalSize> vms_vms;
     fluid_element.CalculateFirstDerivativesLHS(vms_vms, rCurrentProcessInfo);
+    std::cout<<"ADJOINT_MATRICES\n";
+    KRATOS_WATCH(vms_vms);
     AssignSubMatrix(vms_vms, rLeftHandSideMatrix, VelPresBlock(), VelPresBlock());
 
     BoundedMatrix<double, TNumNodes, TFluidLocalSize> vms_k;
     fluid_element.CalculateResidualScalarDerivatives(
         TURBULENT_KINETIC_ENERGY, vms_k, rCurrentProcessInfo);
+    KRATOS_WATCH(vms_k);
     AssignSubMatrix(vms_k, rLeftHandSideMatrix, KBlock(), VelPresBlock());
 
     BoundedMatrix<double, TNumNodes, TFluidLocalSize> vms_epsilon;
     fluid_element.CalculateResidualScalarDerivatives(
         TURBULENT_ENERGY_DISSIPATION_RATE, vms_epsilon, rCurrentProcessInfo);
+    KRATOS_WATCH(vms_epsilon);
     AssignSubMatrix(vms_epsilon, rLeftHandSideMatrix, EpsilonBlock(), VelPresBlock());
 
     BoundedMatrix<double, TCoordLocalSize, TNumNodes> k_vms;
     k_element.CalculateElementTotalResidualVelocityDerivatives(k_vms, rCurrentProcessInfo);
+    KRATOS_WATCH(k_vms);
     AssignSubMatrix(k_vms, rLeftHandSideMatrix, VelBlock(), KBlock());
 
     BoundedMatrix<double, TNumNodes, TNumNodes> k_k;
     k_element.CalculateFirstDerivativesLHS(k_k, rCurrentProcessInfo);
+    KRATOS_WATCH(k_k);
     AssignSubMatrix(k_k, rLeftHandSideMatrix, KBlock(), KBlock());
 
     BoundedMatrix<double, TNumNodes, TNumNodes> k_epsilon;
     k_element.CalculateResidualScalarDerivatives(
         TURBULENT_ENERGY_DISSIPATION_RATE, k_epsilon, rCurrentProcessInfo);
+    KRATOS_WATCH(k_epsilon);
     AssignSubMatrix(k_epsilon, rLeftHandSideMatrix, EpsilonBlock(), KBlock());
 
     BoundedMatrix<double, TCoordLocalSize, TNumNodes> epsilon_vms;
     epsilon_element.CalculateElementTotalResidualVelocityDerivatives(
         epsilon_vms, rCurrentProcessInfo);
+    KRATOS_WATCH(epsilon_vms);
     AssignSubMatrix(epsilon_vms, rLeftHandSideMatrix, VelBlock(), EpsilonBlock());
 
     BoundedMatrix<double, TNumNodes, TNumNodes> epsilon_k;
     epsilon_element.CalculateResidualScalarDerivatives(
         TURBULENT_KINETIC_ENERGY, epsilon_k, rCurrentProcessInfo);
+    KRATOS_WATCH(epsilon_k);
     AssignSubMatrix(epsilon_k, rLeftHandSideMatrix, KBlock(), EpsilonBlock());
 
     BoundedMatrix<double, TNumNodes, TNumNodes> epsilon_epsilon;
     epsilon_element.CalculateFirstDerivativesLHS(epsilon_epsilon, rCurrentProcessInfo);
+    KRATOS_WATCH(epsilon_epsilon);
     AssignSubMatrix(epsilon_epsilon, rLeftHandSideMatrix, EpsilonBlock(),
                     EpsilonBlock());
 
+    KRATOS_WATCH(rLeftHandSideMatrix);
+    std::cout<<"ADJOINT_MATRICES_END\n";
     KRATOS_CATCH("");
 }
 

@@ -232,6 +232,79 @@ public:
      */
     int Check(const ProcessInfo& rCurrentProcessInfo) override;
 
+    ///@}
+    ///@name Access
+    ///@{
+
+    ///@}
+    ///@name Inquiry
+    ///@{
+
+    ///@}
+    ///@name Input and output
+    ///@{
+
+    /// Turn back information as a string.
+    std::string Info() const override;
+
+    /// Print information about this object.
+    void PrintInfo(std::ostream& rOStream) const override;
+
+    /// Print object's data.
+    void PrintData(std::ostream& rOStream) const override;
+
+    ///@}
+    ///@name Friends
+    ///@{
+
+    ///@}
+
+protected:
+    ///@name Protected static Member Variables
+    ///@{
+
+    ///@}
+    ///@name Protected member Variables
+    ///@{
+
+    ///@}
+    ///@name Protected Operators
+    ///@{
+
+    ///@}
+    ///@name Protected Operations
+    ///@{
+
+    ///@}
+    ///@name Protected  Access
+    ///@{
+
+    ///@}
+    ///@name Protected Inquiry
+    ///@{
+
+    ///@}
+    ///@name Protected LifeCycle
+    ///@{
+
+    ///@}
+
+private:
+    ///@name Static Member Variables
+    ///@{
+
+    ///@}
+    ///@name Member Variables
+    ///@{
+
+    ///@}
+    ///@name Private Operators
+    ///@{
+
+    ///@}
+    ///@name Private Operations
+    ///@{
+
     const Variable<double>& GetPrimalVariable() const override;
 
     const Variable<double>& GetPrimalRelaxedRateVariable() const override;
@@ -307,79 +380,6 @@ public:
         const double detJ_deriv,
         const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
         const ProcessInfo& rCurrentProcessInfo) const override;
-
-    ///@}
-    ///@name Access
-    ///@{
-
-    ///@}
-    ///@name Inquiry
-    ///@{
-
-    ///@}
-    ///@name Input and output
-    ///@{
-
-    /// Turn back information as a string.
-    std::string Info() const override;
-
-    /// Print information about this object.
-    void PrintInfo(std::ostream& rOStream) const override;
-
-    /// Print object's data.
-    void PrintData(std::ostream& rOStream) const override;
-
-    ///@}
-    ///@name Friends
-    ///@{
-
-    ///@}
-
-protected:
-    ///@name Protected static Member Variables
-    ///@{
-
-    ///@}
-    ///@name Protected member Variables
-    ///@{
-
-    ///@}
-    ///@name Protected Operators
-    ///@{
-
-    ///@}
-    ///@name Protected Operations
-    ///@{
-
-    ///@}
-    ///@name Protected  Access
-    ///@{
-
-    ///@}
-    ///@name Protected Inquiry
-    ///@{
-
-    ///@}
-    ///@name Protected LifeCycle
-    ///@{
-
-    ///@}
-
-private:
-    ///@name Static Member Variables
-    ///@{
-
-    ///@}
-    ///@name Member Variables
-    ///@{
-
-    ///@}
-    ///@name Private Operators
-    ///@{
-
-    ///@}
-    ///@name Private Operations
-    ///@{
 
     ///@}
     ///@name Serialization

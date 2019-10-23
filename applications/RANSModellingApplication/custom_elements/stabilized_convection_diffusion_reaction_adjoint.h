@@ -2697,12 +2697,12 @@ private:
                              (velocity_convective_terms[a] + s * gauss_shape_functions[a]) *
                              reaction_derivatives[c] * scalar_value;
 
-                    // // Adding cross wind dissipation derivatives
-                    // value += positivity_preserving_coeff_derivatives[c] * k2 *
-                    //          scalar_convective_terms[a] * velocity_magnitude_square;
-                    // value += positivity_preserving_coeff *
-                    //          crosswind_diffusion_coeff_derivatives[c] *
-                    //          scalar_convective_terms[a] * velocity_magnitude_square;
+                    // Adding cross wind dissipation derivatives
+                    value += positivity_preserving_coeff_derivatives[c] * k2 *
+                             scalar_convective_terms[a] * velocity_magnitude_square;
+                    value += positivity_preserving_coeff *
+                             crosswind_diffusion_coeff_derivatives[c] *
+                             scalar_convective_terms[a] * velocity_magnitude_square;
 
                     value -= positivity_preserving_coeff_derivatives[c] * k2 *
                              velocity_convective_terms[a] * velocity_dot_scalar_gradient;
@@ -3003,7 +3003,7 @@ private:
                              reaction * gauss_shape_functions[c]; // * positive_values_list[c];
 
                     // // Adding cross wind dissipation
-                    // value += cross_wind_diffusion * dNa_dNc * velocity_magnitude_square;
+                    value += cross_wind_diffusion * dNa_dNc * velocity_magnitude_square;
                     value -= cross_wind_diffusion * velocity_convective_terms[a] *
                              velocity_convective_terms[c];
 

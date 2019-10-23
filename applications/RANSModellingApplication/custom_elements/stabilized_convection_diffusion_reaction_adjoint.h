@@ -666,14 +666,14 @@ public:
             velocity_magnitude_derivatives(TNumNodes, TDim),
             element_length_derivatives(TNumNodes, TDim),
             tau_derivatives(TNumNodes, TDim), source_derivatives(TNumNodes, TDim),
-            chi_derivatives(TNumNodes, TDim), residual_derivatives(TNumNodes, TDim),
+            chi_derivatives(TNumNodes, TDim),
             absolute_residual_derivatives(TNumNodes, TDim),
             absolute_reaction_tilde_derivatives(TNumNodes, TDim),
             psi_one_derivatives(TNumNodes, TDim),
             psi_two_derivatives(TNumNodes, TDim), s_derivatives(TNumNodes, TDim),
             contravariant_metric_tensor(TDim, TDim);
 
-        BoundedMatrix<double, TNumNodes, TDim> positivity_preservation_coeff_derivatives,
+        BoundedMatrix<double, TNumNodes, TDim> residual_derivatives,positivity_preservation_coeff_derivatives,
             stream_line_diffusion_coeff_derivatives,
             cross_wind_diffusion_coeff_derivatives;
 
@@ -775,7 +775,7 @@ public:
                 delta_time, reaction, dynamic_tau, reaction_derivatives,
                 velocity_magnitude_derivatives, element_length_derivatives);
 
-            this->CalculateResidualVelocityDerivative(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateResidualVelocityDerivative(
                 residual_derivatives, primal_variable_value, primal_variable_gradient,
                 reaction_derivatives, source_derivatives, gauss_shape_functions);
 
@@ -2016,78 +2016,6 @@ private:
         }
     }
 
-    void CalculateResidualScalarDerivative(Vector& rOutput,
-                                           const double scalar_value,
-                                           const double reaction,
-                                           const array_1d<double, 3>& rVelocity,
-                                           const Vector& rReactionScalarDerivatives,
-                                           const Vector& rSourceScalarDerivatives,
-                                           const Vector& rShapeFunctions,
-                                           const Matrix& rShapeFunctionDerivatives,
-                                           const Variable<double>& rDerivativeVariable)
-    {
-        for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
-        {
-            const Vector& shape_function_gradient = row(rShapeFunctionDerivatives, i_node);
-            double value = 0.0;
-
-            value += scalar_value * rReactionScalarDerivatives[i_node];
-            value -= rSourceScalarDerivatives[i_node];
-
-            if (this->GetPrimalVariable() == rDerivativeVariable)
-            {
-                value += reaction * rShapeFunctions[i_node];
-                value += CalculateScalarProduct(shape_function_gradient, rVelocity);
-            }
-
-            rOutput[i_node] = value;
-        }
-    }
-
-    void CalculateResidualVelocityDerivative(Matrix& rOutput,
-                                             const double primal_variable_value,
-                                             const array_1d<double, 3>& rPrimalVariableGradient,
-                                             const Matrix& rReactionDerivatives,
-                                             const Matrix& rSourceDerivatives,
-                                             const Vector& rGaussShapeFunctions)
-    {
-        for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node)
-            for (unsigned int i_dim = 0; i_dim < TDim; ++i_dim)
-                rOutput(i_node, i_dim) =
-                    rGaussShapeFunctions[i_node] * rPrimalVariableGradient[i_dim];
-
-        noalias(rOutput) = rOutput + rReactionDerivatives * primal_variable_value - rSourceDerivatives;
-    }
-
-    double CalculateResidualShapeSensitivity(const double residual,
-                                             const array_1d<double, 3>& rVelocity,
-                                             const Matrix& rShapeFunctionDerivShapeSensitivity,
-                                             const double scalar_value,
-                                             const Vector& rNodalScalarValues,
-                                             const double reaction_deriv,
-                                             const double source_deriv)
-    {
-        const double abs_residual = std::abs(residual);
-
-        if (abs_residual <= std::numeric_limits<double>::epsilon())
-        {
-            return 0.0;
-        }
-        else
-        {
-            const Vector& r_velocity =
-                RansCalculationUtilities().GetVector<TDim>(rVelocity);
-            Vector primal_variable_gradient_shape_sensitivity(TDim);
-            noalias(primal_variable_gradient_shape_sensitivity) =
-                prod(trans(rShapeFunctionDerivShapeSensitivity), rNodalScalarValues);
-
-            return residual *
-                   (inner_prod(r_velocity, primal_variable_gradient_shape_sensitivity) +
-                    reaction_deriv * scalar_value - source_deriv) /
-                   abs_residual;
-        }
-    }
-
     void CalculatePsiOneScalarDerivatives(Vector& rOutput,
                                           const double velocity_norm,
                                           const double reaction_tilde,
@@ -2263,11 +2191,11 @@ private:
             reaction_derivatives(TNumNodes), source_derivatives(TNumNodes),
             tau_derivatives(TNumNodes), s_derivatives(TNumNodes),
             chi_derivatives(TNumNodes), scalar_gradient_norm_derivative(TNumNodes),
-            residual_derivatives(TNumNodes), absolute_residual_derivatives(TNumNodes),
+            absolute_residual_derivatives(TNumNodes),
             absolute_reaction_tilde_derivatives(TNumNodes),
             psi_one_derivatives(TNumNodes), psi_two_derivatives(TNumNodes);
 
-        BoundedVector<double, TNumNodes> positivity_preserving_coeff_derivatives,
+        BoundedVector<double, TNumNodes> residual_derivatives, positivity_preserving_coeff_derivatives,
             streamline_diffusion_coeff_derivatives, crosswind_diffusion_coeff_derivatives;
 
         array_1d<double, 3> scalar_gradient;
@@ -2363,10 +2291,10 @@ private:
             this->CalculateAbsoluteScalarGradientScalarDerivative(
                 scalar_gradient_norm_derivative, scalar_gradient, r_shape_derivatives);
 
-            this->CalculateResidualScalarDerivative(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateResidualScalarDerivative(
                 residual_derivatives, scalar_value, reaction, velocity,
                 reaction_derivatives, source_derivatives, gauss_shape_functions,
-                r_shape_derivatives, rDerivativeVariable);
+                r_shape_derivatives, primal_variable, rDerivativeVariable);
 
             this->CalculateAbsoluteScalarValueScalarDerivatives(
                 absolute_residual_derivatives, residual, residual_derivatives);
@@ -3151,7 +3079,7 @@ private:
                     const double source_deriv = this->CalculateSourceTermShapeSensitivity(
                         current_data, deriv, detJ_deriv, DN_DX_deriv, rCurrentProcessInfo);
 
-                    const double residual_deriv = this->CalculateResidualShapeSensitivity(
+                    const double residual_deriv = StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateResidualShapeSensitivity(
                         residual, velocity, DN_DX_deriv, primal_variable_value,
                         primal_variable_nodal_values, reaction_deriv, source_deriv);
 

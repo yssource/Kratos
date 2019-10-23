@@ -67,6 +67,91 @@ inline void CalculateStabilizationTauScalarDerivatives(Vector& rOutput,
         (-1.0 * std::pow(Tau, 3));
 }
 
+inline double CalculateScalarProduct(const Vector& rVector1, const array_1d<double, 3>& rVector2)
+{
+    double result = 0.0;
+    for (std::size_t i_dim = 0; i_dim < rVector1.size(); ++i_dim)
+        result += rVector1[i_dim] * rVector2[i_dim];
+    return result;
+}
+
+template <std::size_t TNumNodes>
+inline void CalculateResidualScalarDerivative(BoundedVector<double, TNumNodes>& rOutput,
+                                              const double scalar_value,
+                                              const double reaction,
+                                              const array_1d<double, 3>& rVelocity,
+                                              const Vector& rReactionScalarDerivatives,
+                                              const Vector& rSourceScalarDerivatives,
+                                              const Vector& rShapeFunctions,
+                                              const Matrix& rShapeFunctionDerivatives,
+                                              const Variable<double>& rPrimalVariable,
+                                              const Variable<double>& rDerivativeVariable)
+{
+    for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
+    {
+        const Vector& shape_function_gradient = row(rShapeFunctionDerivatives, i_node);
+        double value = 0.0;
+
+        value += scalar_value * rReactionScalarDerivatives[i_node];
+        value -= rSourceScalarDerivatives[i_node];
+
+        if (rPrimalVariable == rDerivativeVariable)
+        {
+            value += reaction * rShapeFunctions[i_node];
+            value += CalculateScalarProduct(shape_function_gradient, rVelocity);
+        }
+
+        rOutput[i_node] = value;
+    }
+}
+
+template <std::size_t TDim, std::size_t TNumNodes>
+inline void CalculateResidualVelocityDerivative(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+                                                const double primal_variable_value,
+                                                const array_1d<double, 3>& rPrimalVariableGradient,
+                                                const Matrix& rReactionDerivatives,
+                                                const Matrix& rSourceDerivatives,
+                                                const Vector& rGaussShapeFunctions)
+{
+    for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node)
+        for (unsigned int i_dim = 0; i_dim < TDim; ++i_dim)
+            rOutput(i_node, i_dim) =
+                rGaussShapeFunctions[i_node] * rPrimalVariableGradient[i_dim];
+
+    noalias(rOutput) = rOutput + rReactionDerivatives * primal_variable_value - rSourceDerivatives;
+}
+
+inline double CalculateResidualShapeSensitivity(const double residual,
+                                                const array_1d<double, 3>& rVelocity,
+                                                const Matrix& rShapeFunctionDerivShapeSensitivity,
+                                                const double scalar_value,
+                                                const Vector& rNodalScalarValues,
+                                                const double reaction_deriv,
+                                                const double source_deriv)
+{
+    const double abs_residual = std::abs(residual);
+
+    if (abs_residual <= std::numeric_limits<double>::epsilon())
+    {
+        return 0.0;
+    }
+    else
+    {
+        Vector r_velocity(rShapeFunctionDerivShapeSensitivity.size2());
+        for (std::size_t i = 0; i < rShapeFunctionDerivShapeSensitivity.size2(); ++i)
+            r_velocity[i] = rVelocity[i];
+        // const Vector& r_velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
+        Vector primal_variable_gradient_shape_sensitivity(rShapeFunctionDerivShapeSensitivity.size2());
+        noalias(primal_variable_gradient_shape_sensitivity) =
+            prod(trans(rShapeFunctionDerivShapeSensitivity), rNodalScalarValues);
+
+        return residual *
+               (inner_prod(r_velocity, primal_variable_gradient_shape_sensitivity) +
+                reaction_deriv * scalar_value - source_deriv) /
+               abs_residual;
+    }
+}
+
 template <std::size_t TNumNodes>
 inline void CalculatePositivityPreservationCoefficientScalarDerivatives(
     BoundedVector<double, TNumNodes>& rOutput,

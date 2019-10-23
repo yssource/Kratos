@@ -155,6 +155,8 @@ void RunScalarSensitivityTest(
                 r_adjoint_gauss_shape_derivatives, r_rans_adjoint_element,
                 adjoint_data, r_adjoint_process_info);
 
+            KRATOS_WATCH(adjoint_scalar_sensitivities);
+
             // Calculating reference scalar value
             execute_primal_process();
             UpdateVariablesInModelPart(rPrimalModelPart);
@@ -198,6 +200,8 @@ void RunScalarSensitivityTest(
                 RansModellingApplicationTestUtilities::CheckNear(
                     adjoint_scalar_sensitivities[i_node], scalar_value_sensitivity,
                     RelativePrecision, AbsolutePrecision);
+
+                KRATOS_WATCH(scalar_value_sensitivity);
 
                 PerturbVariable(r_node) -= Delta;
             }
@@ -645,7 +649,7 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonAdjoint2D3N_CalculateSourceTermScalarDer
 
     RunScalarKEpsilon2D3NElementTest<primal_element, adjoint_element>(
         "RansEvmEpsilon", "RansEvmEpsilonAdjoint", perturb_variable,
-        calculate_scalar_sensitivity, calculate_scalar_value, 1e-7, 1e-6, 1e-14);
+        calculate_scalar_sensitivity, calculate_scalar_value, 1e-5, 1e-6, 1e-14);
 }
 } // namespace Testing
 } // namespace Kratos

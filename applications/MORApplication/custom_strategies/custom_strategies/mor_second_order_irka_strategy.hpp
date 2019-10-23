@@ -177,6 +177,7 @@ class MorSecondOrderIRKAStrategy
         // Set members
         //TODO: let pybind11 do the conversion
         mSamplingPoints.resize(samplingPoints_real.size());
+        #pragma omp parallel for
         for(size_t i=0; i<samplingPoints_real.size(); i++)
         {
             mSamplingPoints(i) = complex( samplingPoints_real(i), samplingPoints_imag(i) );
@@ -312,6 +313,7 @@ class MorSecondOrderIRKAStrategy
         mpComplexLinearSolver->Initialize( r_tmp_Vn, r_tmp_Vr_col, r_b);
 
         // build V
+        #pragma omp parallel for
         for(size_t i=0; i < n_sampling_points/2; ++i)
         {
             r_tmp_Vn = std::pow( mSamplingPoints(2*i), 2.0 ) * r_M + mSamplingPoints(2*i) * r_D + r_K;
@@ -327,6 +329,7 @@ class MorSecondOrderIRKAStrategy
         mQR_decomposition.compute( system_size, reduced_system_size, &(r_Vr_dense)(0,0) );
         mQR_decomposition.compute_q();
 
+        #pragma omp parallel for
         for(size_t i=0; i < system_size; ++i)
         {
             for(size_t j=0; j < reduced_system_size; ++j)
@@ -408,6 +411,7 @@ class MorSecondOrderIRKAStrategy
             );
 
             //store the Eigenvalues in a complex vector
+            #pragma omp parallel for
             for(size_t ii = 0; ii<2*reduced_system_size; ii++)
             {
                 lam_2r(ii) = complex( Eigenvalues(2*ii), Eigenvalues(2*ii+1) );
@@ -420,18 +424,21 @@ class MorSecondOrderIRKAStrategy
 
             // reduce to r Eigenvalues so that the dimension of the reduced system does not increase
             // choose the r Eigenvalues which are closest to the imaginary axis (done by previous sorting)
+            #pragma omp parallel for
             for(size_t ii=0; ii < reduced_system_size; ii++)
             {
                 mSamplingPoints(ii) = lam_2r(ii);
             }
 
 
-            // calculate the error between old and new sampling points           
+            // calculate the error between old and new sampling points
+            #pragma omp parallel for           
             for(size_t ii=0 ; ii < reduced_system_size; ii++)
             {
                 abs_val_old(ii) = abs(samplingPoints_old(ii));
             }
          
+            #pragma omp parallel for         
             for(size_t ii=0 ; ii < reduced_system_size; ii++)
             {
                 abs_val_new(ii) = abs(mSamplingPoints(ii));
@@ -449,6 +456,7 @@ class MorSecondOrderIRKAStrategy
             samplingPoints_old = mSamplingPoints;
 
             // update V
+            #pragma omp parallel for
             for(size_t i=0; i < n_sampling_points/2; ++i)
             {
                 r_tmp_Vn = std::pow( mSamplingPoints(2*i), 2.0 ) * r_M + mSamplingPoints(2*i) * r_D + r_K;
@@ -462,6 +470,7 @@ class MorSecondOrderIRKAStrategy
             mQR_decomposition.compute( system_size, reduced_system_size, &(r_Vr_dense)(0,0) );
             mQR_decomposition.compute_q();
 
+            #pragma omp parallel for
             for(size_t i=0; i < system_size; ++i)
             {
                 for(size_t j=0; j < reduced_system_size; ++j)

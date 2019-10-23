@@ -668,11 +668,10 @@ public:
             tau_derivatives(TNumNodes, TDim), source_derivatives(TNumNodes, TDim),
             absolute_residual_derivatives(TNumNodes, TDim),
             absolute_reaction_tilde_derivatives(TNumNodes, TDim),
-            psi_one_derivatives(TNumNodes, TDim),
             psi_two_derivatives(TNumNodes, TDim), s_derivatives(TNumNodes, TDim),
             contravariant_metric_tensor(TDim, TDim);
 
-        BoundedMatrix<double, TNumNodes, TDim> chi_derivatives,
+        BoundedMatrix<double, TNumNodes, TDim> psi_one_derivatives, chi_derivatives,
             residual_derivatives, positivity_preservation_coeff_derivatives,
             stream_line_diffusion_coeff_derivatives,
             cross_wind_diffusion_coeff_derivatives;
@@ -795,7 +794,7 @@ public:
             const double psi_one =
                 StabilizedConvectionDiffusionReactionUtilities::CalculatePsiOne(
                     velocity_magnitude, tau, reaction_tilde);
-            this->CalculatePsiOneVelocityDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculatePsiOneVelocityDerivatives(
                 psi_one_derivatives, velocity_magnitude, reaction_tilde, tau, tau_derivatives,
                 absolute_reaction_tilde_derivatives, velocity_magnitude_derivatives);
 
@@ -1954,52 +1953,6 @@ private:
         }
     }
 
-    void CalculatePsiOneScalarDerivatives(Vector& rOutput,
-                                          const double velocity_norm,
-                                          const double reaction_tilde,
-                                          const double tau,
-                                          const Vector& rTauScalarDerivatives,
-                                          const Vector& rAbsoluteReactionTildeScalarDerivatives)
-    {
-        const double absolute_reaction_tilde = std::abs(reaction_tilde);
-
-        noalias(rOutput) = rTauScalarDerivatives * (velocity_norm * absolute_reaction_tilde);
-        noalias(rOutput) += rAbsoluteReactionTildeScalarDerivatives * (tau * velocity_norm);
-    }
-
-    void CalculatePsiOneVelocityDerivatives(Matrix& rOutput,
-                                            const double velocity_norm,
-                                            const double reaction_tilde,
-                                            const double tau,
-                                            const Matrix& rTauDerivatives,
-                                            const Matrix& rAbsoluteReactionTildeDerivatives,
-                                            const Matrix& rVelocityMagnitudeDerivatives)
-    {
-        noalias(rOutput) = rVelocityMagnitudeDerivatives +
-                           rTauDerivatives * (velocity_norm * reaction_tilde) +
-                           rVelocityMagnitudeDerivatives * (tau * reaction_tilde) +
-                           rAbsoluteReactionTildeDerivatives * (tau * velocity_norm);
-    }
-
-    double CalculatePsiOneShapeSensitivity(const double tau,
-                                           const double tau_deriv,
-                                           const double velocity_magnitude,
-                                           const double reaction,
-                                           const double reaction_deriv,
-                                           const double bossak_alpha,
-                                           const double bossak_gamma,
-                                           const double delta_time,
-                                           const double DynamicTau)
-    {
-        const double reaction_dynamics =
-            reaction + DynamicTau * (1 - bossak_alpha) / (bossak_gamma * delta_time);
-        const double abs_reaction_dynamics = std::abs(reaction_dynamics);
-
-        return tau_deriv * velocity_magnitude * abs_reaction_dynamics +
-               tau * velocity_magnitude * reaction_dynamics * reaction_deriv /
-                   (abs_reaction_dynamics + std::numeric_limits<double>::epsilon());
-    }
-
     void CalculatePsiTwoScalarDerivatives(Vector& rOutput,
                                           const double element_length,
                                           const double tau,
@@ -2071,15 +2024,6 @@ private:
         return shape_sensitivity;
     }
 
-    void CalculateAbsoluteScalarValueScalarDerivatives(Vector& rOutput,
-                                                       const double scalar_value,
-                                                       const Vector& rScalarValueDerivatives)
-    {
-        noalias(rOutput) = rScalarValueDerivatives *
-                           (scalar_value / (std::abs(scalar_value) +
-                                            std::numeric_limits<double>::epsilon()));
-    }
-
     void CalculateAbsoluteScalarValueVectorDerivatives(Matrix& rOutput,
                                                        const double scalar_value,
                                                        const Matrix& rScalarValueDerivatives)
@@ -2131,9 +2075,9 @@ private:
             scalar_gradient_norm_derivative(TNumNodes),
             absolute_residual_derivatives(TNumNodes),
             absolute_reaction_tilde_derivatives(TNumNodes),
-            psi_one_derivatives(TNumNodes), psi_two_derivatives(TNumNodes);
+            psi_two_derivatives(TNumNodes);
 
-        BoundedVector<double, TNumNodes> chi_derivatives, residual_derivatives,
+        BoundedVector<double, TNumNodes> psi_one_derivatives, chi_derivatives, residual_derivatives,
             positivity_preserving_coeff_derivatives,
             streamline_diffusion_coeff_derivatives, crosswind_diffusion_coeff_derivatives;
 
@@ -2190,7 +2134,7 @@ private:
                 effective_kinematic_viscosity_derivatives, reaction_derivatives);
 
             const double s = std::abs(reaction);
-            CalculateAbsoluteScalarValueScalarDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateAbsoluteScalarValueScalarDerivatives(
                 s_derivatives, reaction, reaction_derivatives);
 
             const double velocity_dot_scalar_gradient =
@@ -2235,7 +2179,7 @@ private:
                 reaction_derivatives, source_derivatives, gauss_shape_functions,
                 r_shape_derivatives, primal_variable, rDerivativeVariable);
 
-            this->CalculateAbsoluteScalarValueScalarDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateAbsoluteScalarValueScalarDerivatives(
                 absolute_residual_derivatives, residual, residual_derivatives);
 
             StabilizedConvectionDiffusionReactionAdjointUtilities::CalculatePositivityPreservationCoefficientScalarDerivatives(
@@ -2246,13 +2190,13 @@ private:
 
             const double reaction_tilde =
                 reaction + dynamic_tau * (1 - bossak_alpha) / (bossak_gamma * delta_time);
-            this->CalculateAbsoluteScalarValueScalarDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateAbsoluteScalarValueScalarDerivatives(
                 absolute_reaction_tilde_derivatives, reaction_tilde, reaction_derivatives);
 
             const double psi_one =
                 StabilizedConvectionDiffusionReactionUtilities::CalculatePsiOne(
                     velocity_magnitude, tau, reaction_tilde);
-            this->CalculatePsiOneScalarDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculatePsiOneScalarDerivatives(
                 psi_one_derivatives, velocity_magnitude, reaction_tilde, tau,
                 tau_derivatives, absolute_reaction_tilde_derivatives);
 
@@ -2785,7 +2729,7 @@ private:
                 effective_kinematic_viscosity_derivatives, reaction_derivatives);
 
             const double s = std::abs(reaction);
-            this->CalculateAbsoluteScalarValueScalarDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateAbsoluteScalarValueScalarDerivatives(
                 s_derivatives, reaction, reaction_derivatives);
 
             for (unsigned int a = 0; a < TNumNodes; ++a)
@@ -3030,7 +2974,7 @@ private:
                             velocity_magnitude_square, primal_variable_gradient_norm,
                             primal_variable_gradient_norm_deriv);
 
-                    const double psi_one_deriv = CalculatePsiOneShapeSensitivity(
+                    const double psi_one_deriv = StabilizedConvectionDiffusionReactionAdjointUtilities::CalculatePsiOneShapeSensitivity(
                         tau, tau_deriv, velocity_magnitude, reaction, reaction_deriv,
                         bossak_alpha, bossak_gamma, delta_time, dynamic_tau);
 

@@ -95,9 +95,10 @@ inline void CalculateAbsoluteScalarValueScalarDerivatives(BoundedVector<double, 
 }
 
 template <std::size_t TNumNodes>
-inline void CalculateAbsoluteScalarValueScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
-                                                          const double scalar_value,
-                                                          const BoundedVector<double, TNumNodes>& rScalarValueDerivatives)
+inline void CalculateAbsoluteScalarValueScalarDerivatives(
+    BoundedVector<double, TNumNodes>& rOutput,
+    const double scalar_value,
+    const BoundedVector<double, TNumNodes>& rScalarValueDerivatives)
 {
     noalias(rOutput) =
         rScalarValueDerivatives *
@@ -105,9 +106,10 @@ inline void CalculateAbsoluteScalarValueScalarDerivatives(BoundedVector<double, 
 }
 
 template <std::size_t TDim, std::size_t TNumNodes>
-inline void CalculateAbsoluteScalarValueVectorDerivatives(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
-                                                          const double scalar_value,
-                                                          const BoundedMatrix<double, TNumNodes, TDim>& rScalarValueDerivatives)
+inline void CalculateAbsoluteScalarValueVectorDerivatives(
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+    const double scalar_value,
+    const BoundedMatrix<double, TNumNodes, TDim>& rScalarValueDerivatives)
 {
     noalias(rOutput) =
         rScalarValueDerivatives *
@@ -125,14 +127,61 @@ inline void CalculateAbsoluteScalarValueVectorDerivatives(
         (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
 }
 
-inline void CalculateAbsoluteScalarValueVectorDerivatives(
-    Matrix& rOutput,
-    const double scalar_value,
-    const Matrix& rScalarValueDerivatives)
+inline void CalculateAbsoluteScalarValueVectorDerivatives(Matrix& rOutput,
+                                                          const double scalar_value,
+                                                          const Matrix& rScalarValueDerivatives)
 {
     noalias(rOutput) =
         rScalarValueDerivatives *
         (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
+}
+
+template<std::size_t TNumNodes>
+inline void CalculatePsiOneScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
+                                      const double velocity_norm,
+                                      const double reaction_tilde,
+                                      const double tau,
+                                      const Vector& rTauScalarDerivatives,
+                                      const Vector& rAbsoluteReactionTildeScalarDerivatives)
+{
+    const double absolute_reaction_tilde = std::abs(reaction_tilde);
+
+    noalias(rOutput) = rTauScalarDerivatives * (velocity_norm * absolute_reaction_tilde);
+    noalias(rOutput) += rAbsoluteReactionTildeScalarDerivatives * (tau * velocity_norm);
+}
+
+template<std::size_t TDim, std::size_t TNumNodes>
+inline void CalculatePsiOneVelocityDerivatives(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+                                        const double velocity_norm,
+                                        const double reaction_tilde,
+                                        const double tau,
+                                        const Matrix& rTauDerivatives,
+                                        const Matrix& rAbsoluteReactionTildeDerivatives,
+                                        const Matrix& rVelocityMagnitudeDerivatives)
+{
+    noalias(rOutput) = rVelocityMagnitudeDerivatives +
+                       rTauDerivatives * (velocity_norm * reaction_tilde) +
+                       rVelocityMagnitudeDerivatives * (tau * reaction_tilde) +
+                       rAbsoluteReactionTildeDerivatives * (tau * velocity_norm);
+}
+
+inline double CalculatePsiOneShapeSensitivity(const double tau,
+                                       const double tau_deriv,
+                                       const double velocity_magnitude,
+                                       const double reaction,
+                                       const double reaction_deriv,
+                                       const double bossak_alpha,
+                                       const double bossak_gamma,
+                                       const double delta_time,
+                                       const double DynamicTau)
+{
+    const double reaction_dynamics =
+        reaction + DynamicTau * (1 - bossak_alpha) / (bossak_gamma * delta_time);
+    const double abs_reaction_dynamics = std::abs(reaction_dynamics);
+
+    return tau_deriv * velocity_magnitude * abs_reaction_dynamics +
+           tau * velocity_magnitude * reaction_dynamics * reaction_deriv /
+               (abs_reaction_dynamics + std::numeric_limits<double>::epsilon());
 }
 
 template <std::size_t TNumNodes>

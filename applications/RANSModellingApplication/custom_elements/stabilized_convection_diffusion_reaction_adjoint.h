@@ -26,6 +26,7 @@
 #include "custom_utilities/rans_variable_utils.h"
 #include "includes/cfd_variables.h"
 #include "rans_modelling_application_variables.h"
+#include "stabilized_convection_diffusion_reaction_adjoint_utilities.h"
 #include "stabilized_convection_diffusion_reaction_utilities.h"
 #include "utilities/geometrical_sensitivity_utility.h"
 #include "utilities/time_discretization.h"
@@ -671,8 +672,9 @@ public:
             absolute_reaction_tilde_derivatives(TNumNodes, TDim),
             psi_one_derivatives(TNumNodes, TDim), psi_two_derivatives(TNumNodes, TDim),
             stream_line_diffusion_coeff_derivatives(TNumNodes, TDim),
-            cross_wind_diffusion_coeff_derivatives(TNumNodes, TDim),
             s_derivatives(TNumNodes, TDim), contravariant_metric_tensor(TDim, TDim);
+
+        BoundedMatrix<double, TNumNodes, TDim> cross_wind_diffusion_coeff_derivatives;
 
         array_1d<double, 3> primal_variable_gradient;
 
@@ -811,7 +813,7 @@ public:
                 psi_two_derivatives, tau_derivatives, reaction_derivatives,
                 effective_kinematic_viscosity_derivatives, element_length_derivatives);
 
-            this->CalculateCrossWindDiffusionCoeffVelocityDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateCrossWindDiffusionCoeffVelocityDerivatives(
                 cross_wind_diffusion_coeff_derivatives, psi_one, element_length,
                 psi_one_derivatives, psi_two_derivatives,
                 effective_kinematic_viscosity_derivatives, element_length_derivatives);
@@ -1761,38 +1763,6 @@ private:
     ///@name Private Operations
     ///@{
 
-    /**
-     * @brief Calculates stabilization tau scalar derivatives
-     *
-     * \[
-     *  -\tau_\phi^3\left[144\frac{\nu_\phi}{h^4_2}\left(\nu_{\phi,w}\right)^c + s_\phi\left(s_{\phi,w}\right)^c\right]
-     * \]
-     *
-     * Where $w$ is the derivative variable
-     *
-     * @param rOutput                                        Scalar derivatives for each node w.r.t. $w$
-     * @param Tau                                            Stabilization tau
-     * @param EffectiveKinematicViscosity                    Effective kinematic viscosity $\nu_\phi$
-     * @param Reaction                                       Reaction coefficient $s_\phi$
-     * @param ElementLength                                  Element length $h_2$
-     * @param rEffectiveKinematicViscosityScalarDerivatives  Scalar derivatives of effective kinematic viscosity $\left(\nu_{\phi,w}\right)$
-     * @param rReactionScalarDerivatives                     Reaction scalar derivatives $\left(s_{\phi,w}\right)$
-     */
-    void CalculateStabilizationTauScalarDerivatives(Vector& rOutput,
-                                                    const double Tau,
-                                                    const double EffectiveKinematicViscosity,
-                                                    const double Reaction,
-                                                    const double ElementLength,
-                                                    const Vector& rEffectiveKinematicViscosityScalarDerivatives,
-                                                    const Vector& rReactionScalarDerivatives) const
-    {
-        noalias(rOutput) =
-            (rEffectiveKinematicViscosityScalarDerivatives *
-                 (144 * EffectiveKinematicViscosity / std::pow(ElementLength, 4)) +
-             rReactionScalarDerivatives * (Reaction)) *
-            (-1.0 * std::pow(Tau, 3));
-    }
-
     void CalculateStabilizationTauVelocityDerivatives(
         Matrix& rOutput,
         const double Tau,
@@ -2415,53 +2385,6 @@ private:
         return shape_sensitivity;
     }
 
-    void CalculateCrossWindDiffusionCoeffScalarDerivatives(
-        Vector& rOutput,
-        const double psi_one,
-        const double element_length,
-        const Vector& rPsiOneScalarDerivatives,
-        const Vector& rPsiTwoScalarDerivatives,
-        const Vector& rEffectiveKinematicViscosityScalarDerivatives)
-    {
-        noalias(rOutput) = rPsiOneScalarDerivatives *
-                           (0.5 * psi_one * element_length / (std::abs(psi_one)) +
-                            std::numeric_limits<double>::epsilon());
-        noalias(rOutput) -= rEffectiveKinematicViscosityScalarDerivatives;
-        noalias(rOutput) += rPsiTwoScalarDerivatives;
-    }
-
-    void CalculateCrossWindDiffusionCoeffVelocityDerivatives(
-        Matrix& rOutput,
-        const double psi_one,
-        const double element_length,
-        const Matrix& rPsiOneDerivatives,
-        const Matrix& rPsiTwoDerivatives,
-        const Matrix& rEffectiveKinematicViscosityDerivatives,
-        const Matrix& rElementLengthDerivatives)
-    {
-        const double abs_psi_one = std::abs(psi_one);
-
-        noalias(rOutput) =
-            rPsiOneDerivatives * (0.5 * psi_one * element_length /
-                                  (abs_psi_one + std::numeric_limits<double>::epsilon())) +
-            rElementLengthDerivatives * (0.5 * abs_psi_one) -
-            rEffectiveKinematicViscosityDerivatives + rPsiTwoDerivatives;
-    }
-
-    double CalculateCrossWindDiffusionCoeffShapeSensitivity(const double psi_one,
-                                                            const double psi_one_deriv,
-                                                            const double element_length,
-                                                            const double element_length_deriv,
-                                                            const double effective_kinematic_viscosity_deriv,
-                                                            const double psi_two_deriv)
-    {
-        const double abs_psi_one = std::abs(psi_one);
-        return 0.5 * psi_one * element_length * psi_one_deriv /
-                   (abs_psi_one + std::numeric_limits<double>::epsilon()) +
-               0.5 * abs_psi_one * element_length_deriv -
-               effective_kinematic_viscosity_deriv + psi_two_deriv;
-    }
-
     void CalculateAbsoluteScalarValueScalarDerivatives(Vector& rOutput,
                                                        const double scalar_value,
                                                        const Vector& rScalarValueDerivatives)
@@ -2524,8 +2447,9 @@ private:
             positivity_preserving_coeff_derivatives(TNumNodes),
             absolute_reaction_tilde_derivatives(TNumNodes),
             psi_one_derivatives(TNumNodes), psi_two_derivatives(TNumNodes),
-            streamline_diffusion_coeff_derivatives(TNumNodes),
-            crosswind_diffusion_coeff_derivatives(TNumNodes);
+            streamline_diffusion_coeff_derivatives(TNumNodes);
+
+        BoundedVector<double, TNumNodes> crosswind_diffusion_coeff_derivatives;
 
         array_1d<double, 3> scalar_gradient;
 
@@ -2575,7 +2499,7 @@ private:
                 tau, element_length, velocity, contravariant_metric_tensor,
                 reaction, effective_kinematic_viscosity, bossak_alpha,
                 bossak_gamma, delta_time, dynamic_tau);
-            this->CalculateStabilizationTauScalarDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateStabilizationTauScalarDerivatives(
                 tau_derivatives, tau, effective_kinematic_viscosity, reaction, element_length,
                 effective_kinematic_viscosity_derivatives, reaction_derivatives);
 
@@ -2659,7 +2583,7 @@ private:
                 psi_one_derivatives, psi_two_derivatives, tau_derivatives,
                 reaction_derivatives, effective_kinematic_viscosity_derivatives);
 
-            this->CalculateCrossWindDiffusionCoeffScalarDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateCrossWindDiffusionCoeffScalarDerivatives(
                 crosswind_diffusion_coeff_derivatives, psi_one, element_length, psi_one_derivatives,
                 psi_two_derivatives, effective_kinematic_viscosity_derivatives);
 
@@ -3170,7 +3094,7 @@ private:
                 tau, element_length, velocity, contravariant_metric_tensor,
                 reaction, effective_kinematic_viscosity, bossak_alpha,
                 bossak_gamma, delta_time, dynamic_tau);
-            this->CalculateStabilizationTauScalarDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateStabilizationTauScalarDerivatives(
                 tau_derivatives, tau, effective_kinematic_viscosity, reaction, element_length,
                 effective_kinematic_viscosity_derivatives, reaction_derivatives);
 
@@ -3435,7 +3359,7 @@ private:
                             bossak_alpha, bossak_gamma, delta_time, dynamic_tau);
 
                     const double cross_wind_diffusion_coeff_deriv =
-                        CalculateCrossWindDiffusionCoeffShapeSensitivity(
+                        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateCrossWindDiffusionCoeffShapeSensitivity(
                             psi_one, psi_one_deriv, element_length, element_length_deriv,
                             effective_kinematic_viscosity_deriv, psi_two_deriv);
 

@@ -198,6 +198,76 @@ inline void CalculateAbsoluteScalarValueVectorDerivatives(Matrix& rOutput,
         (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
 }
 
+template <std::size_t TDim, std::size_t TNumNodes>
+inline void CalculateElementLengthH2VelocityDerivative(
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+    const double VelocityMagnitude,
+    const array_1d<double, 3>& rVelocity,
+    const Matrix& rVelocityMagnitudeVelocityDerivatives,
+    const BoundedMatrix<double, TDim, TDim>& rContravariantMetricTensor,
+    const Vector& rGaussShapeFunctions)
+{
+    if (VelocityMagnitude <= std::numeric_limits<double>::epsilon())
+    {
+        rOutput.clear();
+    }
+    else
+    {
+        const Vector& velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
+
+        const double sqrt_u_e_u =
+            std::sqrt(inner_prod(velocity, prod(rContravariantMetricTensor, velocity)));
+
+        Vector contravariant_metric_velocity(TDim);
+        noalias(contravariant_metric_velocity) =
+            prod(rContravariantMetricTensor, velocity) +
+            prod(trans(rContravariantMetricTensor), velocity);
+
+        for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
+            for (std::size_t i_dim = 0; i_dim < TDim; ++i_dim)
+                rOutput(i_node, i_dim) = rGaussShapeFunctions[i_node] *
+                                         contravariant_metric_velocity[i_dim];
+
+        noalias(rOutput) =
+            rOutput * (-1.0 * VelocityMagnitude / std::pow(sqrt_u_e_u, 3));
+        noalias(rOutput) += (rVelocityMagnitudeVelocityDerivatives) * (2.0 / sqrt_u_e_u);
+    }
+}
+
+template <std::size_t TDim>
+inline double CalculateElementLengthH2ShapeSensitivity(
+    const double VelocityMagnitude,
+    const array_1d<double, 3>& rVelocity,
+    const BoundedMatrix<double, TDim, TDim>& rContravariantMetricTensor,
+    const BoundedMatrix<double, TDim, TDim>& rContravariantMetricTensorShapeSensitivity)
+{
+    if (VelocityMagnitude <= std::numeric_limits<double>::epsilon())
+    {
+        double sensitivity = 0.0;
+        double element_length = 0.0;
+        for (unsigned int i = 0; i < TDim; ++i)
+            for (unsigned int j = 0; j < TDim; ++j)
+            {
+                sensitivity += rContravariantMetricTensorShapeSensitivity(i, j);
+                element_length += rContravariantMetricTensor(i, j);
+            }
+        element_length = std::sqrt(1.0 / element_length) * 2.0;
+
+        return sensitivity * std::pow(element_length, 3) * (-1.0 / 8.0);
+    }
+    else
+    {
+        const Vector& velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
+
+        const double u_e_u = std::pow(
+            inner_prod(velocity, prod(rContravariantMetricTensor, velocity)), 1.5);
+
+        return -VelocityMagnitude *
+               (inner_prod(velocity, prod(rContravariantMetricTensorShapeSensitivity, velocity))) /
+               u_e_u;
+    }
+}
+
 template <std::size_t TNumNodes>
 inline void CalculatePsiOneScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
                                              const double velocity_norm,

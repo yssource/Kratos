@@ -664,13 +664,14 @@ public:
         Matrix effective_kinematic_viscosity_derivatives(TNumNodes, TDim),
             reaction_derivatives(TNumNodes, TDim),
             velocity_magnitude_derivatives(TNumNodes, TDim),
-            element_length_derivatives(TNumNodes, TDim),
             source_derivatives(TNumNodes, TDim),
             absolute_residual_derivatives(TNumNodes, TDim),
             absolute_reaction_tilde_derivatives(TNumNodes, TDim),
-            s_derivatives(TNumNodes, TDim), contravariant_metric_tensor(TDim, TDim);
+            s_derivatives(TNumNodes, TDim);
 
-        BoundedMatrix<double, TNumNodes, TDim> tau_derivatives,
+        BoundedMatrix<double, TDim, TDim> contravariant_metric_tensor;
+
+        BoundedMatrix<double, TNumNodes, TDim> element_length_derivatives, tau_derivatives,
             psi_one_derivatives, psi_two_derivatives, chi_derivatives,
             residual_derivatives, positivity_preservation_coeff_derivatives,
             stream_line_diffusion_coeff_derivatives,
@@ -723,7 +724,7 @@ public:
                 reaction, effective_kinematic_viscosity, bossak_alpha,
                 bossak_gamma, delta_time, dynamic_tau);
 
-            this->CalculateElementLengthH2VelocityDerivative(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateElementLengthH2VelocityDerivative(
                 element_length_derivatives, velocity_magnitude, velocity,
                 velocity_magnitude_derivatives, contravariant_metric_tensor,
                 gauss_shape_functions);
@@ -1781,73 +1782,6 @@ private:
         }
     }
 
-    void CalculateElementLengthH2VelocityDerivative(Matrix& rOutput,
-                                                    const double VelocityMagnitude,
-                                                    const array_1d<double, 3>& rVelocity,
-                                                    const Matrix& rVelocityMagnitudeVelocityDerivatives,
-                                                    const Matrix& rContravariantMetricTensor,
-                                                    const Vector& rGaussShapeFunctions) const
-    {
-        if (VelocityMagnitude <= std::numeric_limits<double>::epsilon())
-        {
-            rOutput.clear();
-        }
-        else
-        {
-            const Vector& velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
-
-            const double sqrt_u_e_u = std::sqrt(inner_prod(
-                velocity, prod(rContravariantMetricTensor, velocity)));
-
-            Vector contravariant_metric_velocity(TDim);
-            noalias(contravariant_metric_velocity) =
-                prod(rContravariantMetricTensor, velocity) +
-                prod(trans(rContravariantMetricTensor), velocity);
-
-            for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
-                for (std::size_t i_dim = 0; i_dim < TDim; ++i_dim)
-                    rOutput(i_node, i_dim) = rGaussShapeFunctions[i_node] *
-                                             contravariant_metric_velocity[i_dim];
-
-            noalias(rOutput) =
-                rOutput * (-1.0 * VelocityMagnitude / std::pow(sqrt_u_e_u, 3));
-            noalias(rOutput) += (rVelocityMagnitudeVelocityDerivatives) * (2.0 / sqrt_u_e_u);
-        }
-    }
-
-    double CalculateElementLengthH2ShapeSensitivity(const double VelocityMagnitude,
-                                                    const array_1d<double, 3>& rVelocity,
-                                                    const Matrix& rContravariantMetricTensor,
-                                                    const Matrix& rContravariantMetricTensorShapeSensitivity)
-    {
-        if (VelocityMagnitude <= std::numeric_limits<double>::epsilon())
-        {
-            double sensitivity = 0.0;
-            double element_length = 0.0;
-            for (unsigned int i = 0; i < TDim; ++i)
-                for (unsigned int j = 0; j < TDim; ++j)
-                {
-                    sensitivity += rContravariantMetricTensorShapeSensitivity(i, j);
-                    element_length += rContravariantMetricTensor(i, j);
-                }
-            element_length = std::sqrt(1.0 / element_length) * 2.0;
-
-            return sensitivity * std::pow(element_length, 3) * (-1.0 / 8.0);
-        }
-        else
-        {
-            const Vector& velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
-
-            const double u_e_u = std::pow(
-                inner_prod(velocity, prod(rContravariantMetricTensor, velocity)), 1.5);
-
-            return -VelocityMagnitude *
-                   (inner_prod(velocity, prod(rContravariantMetricTensorShapeSensitivity,
-                                              velocity))) /
-                   u_e_u;
-        }
-    }
-
     void CalculateAbsoluteScalarGradientScalarDerivative(Vector& rOutput,
                                                          const array_1d<double, 3> rScalarGradient,
                                                          const Matrix& rShapeFunctionDerivatives)
@@ -2659,9 +2593,8 @@ private:
         const GeometryType::ShapeFunctionsGradientsType& r_dn_de =
             this->GetGeometry().ShapeFunctionsLocalGradients(this->GetIntegrationMethod());
 
-        Matrix contravariant_metric_tensor(TDim, TDim),
-            parameter_derivatives_shape_derivs(TDim, TDim),
-            contravariant_metric_tensor_deriv(TDim, TDim);
+        BoundedMatrix<double, TDim, TDim> contravariant_metric_tensor,
+            parameter_derivatives_shape_derivs, contravariant_metric_tensor_deriv;
 
         TElementData current_data;
 
@@ -2809,7 +2742,7 @@ private:
                                                 primal_variable_gradient, DN_DX_deriv);
 
                     const double element_length_deriv =
-                        this->CalculateElementLengthH2ShapeSensitivity(
+                        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateElementLengthH2ShapeSensitivity(
                             velocity_magnitude, velocity, contravariant_metric_tensor,
                             contravariant_metric_tensor_deriv);
 

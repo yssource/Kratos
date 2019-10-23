@@ -666,14 +666,14 @@ public:
             velocity_magnitude_derivatives(TNumNodes, TDim),
             element_length_derivatives(TNumNodes, TDim),
             tau_derivatives(TNumNodes, TDim), source_derivatives(TNumNodes, TDim),
-            chi_derivatives(TNumNodes, TDim),
             absolute_residual_derivatives(TNumNodes, TDim),
             absolute_reaction_tilde_derivatives(TNumNodes, TDim),
             psi_one_derivatives(TNumNodes, TDim),
             psi_two_derivatives(TNumNodes, TDim), s_derivatives(TNumNodes, TDim),
             contravariant_metric_tensor(TDim, TDim);
 
-        BoundedMatrix<double, TNumNodes, TDim> residual_derivatives,positivity_preservation_coeff_derivatives,
+        BoundedMatrix<double, TNumNodes, TDim> chi_derivatives,
+            residual_derivatives, positivity_preservation_coeff_derivatives,
             stream_line_diffusion_coeff_derivatives,
             cross_wind_diffusion_coeff_derivatives;
 
@@ -770,7 +770,7 @@ public:
                     (velocity_magnitude_square * primal_variable_gradient_norm);
             }
 
-            this->CalculateChiVelocityDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateChiVelocityDerivatives(
                 chi_derivatives, chi, element_length, bossak_alpha, bossak_gamma,
                 delta_time, reaction, dynamic_tau, reaction_derivatives,
                 velocity_magnitude_derivatives, element_length_derivatives);
@@ -1909,68 +1909,6 @@ private:
         }
     }
 
-    void CalculateChiScalarDerivatives(Vector& rOutput,
-                                       const double Chi,
-                                       const double ElementLength,
-                                       const double BossakAlpha,
-                                       const double BossakGamma,
-                                       const double DeltaTime,
-                                       const double Reaction,
-                                       const double DynamicTau,
-                                       const Vector& rReactionScalarDerivatives)
-    {
-        const double reaction_tilde =
-            Reaction + DynamicTau * (1 - BossakAlpha) / (BossakGamma * DeltaTime);
-
-        CalculateAbsoluteScalarValueScalarDerivatives(
-            rOutput, reaction_tilde, rReactionScalarDerivatives);
-        noalias(rOutput) = rOutput * (-0.5 * std::pow(Chi, 2) * ElementLength);
-    }
-
-    void CalculateChiVelocityDerivatives(Matrix& rOutput,
-                                         const double Chi,
-                                         const double ElementLength,
-                                         const double BossakAlpha,
-                                         const double BossakGamma,
-                                         const double DeltaTime,
-                                         const double Reaction,
-                                         const double DynamicTau,
-                                         const Matrix& rReactionDerivatives,
-                                         const Matrix& rVelocityMagnitudeDerivatives,
-                                         const Matrix& rElementLengthDerivatives)
-    {
-        const double reaction_tilde =
-            Reaction + DynamicTau * (1 - BossakAlpha) / (BossakGamma * DeltaTime);
-        const double abs_reaction_tilde = std::abs(reaction_tilde);
-
-        CalculateAbsoluteScalarValueVectorDerivatives(rOutput, reaction_tilde,
-                                                      rReactionDerivatives);
-
-        noalias(rOutput) = (rOutput * ElementLength + rElementLengthDerivatives * abs_reaction_tilde +
-                            rVelocityMagnitudeDerivatives * 2.0) *
-                           (-0.5 * std::pow(Chi, 2));
-    }
-
-    double CalculateChiShapeSensitivity(const double chi,
-                                        const double reaction,
-                                        const double reaction_deriv,
-                                        const double element_length,
-                                        const double element_length_deriv,
-                                        const double bossak_alpha,
-                                        const double bossak_gamma,
-                                        const double delta_time,
-                                        const double DynamicTau)
-    {
-        const double reaction_tilde =
-            reaction + DynamicTau * (1 - bossak_alpha) / (bossak_gamma * delta_time);
-        const double abs_reaction_tilde = std::abs(reaction_tilde);
-
-        return -0.5 * std::pow(chi, 2) *
-               (abs_reaction_tilde * element_length_deriv +
-                reaction_tilde * element_length * reaction_deriv /
-                    (abs_reaction_tilde + std::numeric_limits<double>::epsilon()));
-    }
-
     void CalculateAbsoluteScalarGradientScalarDerivative(Vector& rOutput,
                                                          const array_1d<double, 3> rScalarGradient,
                                                          const Matrix& rShapeFunctionDerivatives)
@@ -2190,12 +2128,13 @@ private:
         Vector effective_kinematic_viscosity_derivatives(TNumNodes),
             reaction_derivatives(TNumNodes), source_derivatives(TNumNodes),
             tau_derivatives(TNumNodes), s_derivatives(TNumNodes),
-            chi_derivatives(TNumNodes), scalar_gradient_norm_derivative(TNumNodes),
+            scalar_gradient_norm_derivative(TNumNodes),
             absolute_residual_derivatives(TNumNodes),
             absolute_reaction_tilde_derivatives(TNumNodes),
             psi_one_derivatives(TNumNodes), psi_two_derivatives(TNumNodes);
 
-        BoundedVector<double, TNumNodes> residual_derivatives, positivity_preserving_coeff_derivatives,
+        BoundedVector<double, TNumNodes> chi_derivatives, residual_derivatives,
+            positivity_preserving_coeff_derivatives,
             streamline_diffusion_coeff_derivatives, crosswind_diffusion_coeff_derivatives;
 
         array_1d<double, 3> scalar_gradient;
@@ -2284,7 +2223,7 @@ private:
                     residual * chi / (velocity_magnitude_square * scalar_gradient_norm);
             }
 
-            this->CalculateChiScalarDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateChiScalarDerivatives(
                 chi_derivatives, chi, element_length, bossak_alpha, bossak_gamma,
                 delta_time, reaction, dynamic_tau, reaction_derivatives);
 
@@ -3068,9 +3007,10 @@ private:
                         element_length_deriv, effective_kinematic_viscosity,
                         effective_kinematic_viscosity_deriv, reaction, reaction_deriv);
 
-                    const double chi_deriv = this->CalculateChiShapeSensitivity(
-                        chi, reaction, reaction_deriv, element_length, element_length_deriv,
-                        bossak_alpha, bossak_gamma, delta_time, dynamic_tau);
+                    const double chi_deriv =
+                        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateChiShapeSensitivity(
+                            chi, reaction, reaction_deriv, element_length, element_length_deriv,
+                            bossak_alpha, bossak_gamma, delta_time, dynamic_tau);
 
                     const double primal_variable_gradient_norm_deriv =
                         this->CalculateAbsoluteScalarGradientShapeSensitivity(
@@ -3079,9 +3019,10 @@ private:
                     const double source_deriv = this->CalculateSourceTermShapeSensitivity(
                         current_data, deriv, detJ_deriv, DN_DX_deriv, rCurrentProcessInfo);
 
-                    const double residual_deriv = StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateResidualShapeSensitivity(
-                        residual, velocity, DN_DX_deriv, primal_variable_value,
-                        primal_variable_nodal_values, reaction_deriv, source_deriv);
+                    const double residual_deriv =
+                        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateResidualShapeSensitivity(
+                            residual, velocity, DN_DX_deriv, primal_variable_value,
+                            primal_variable_nodal_values, reaction_deriv, source_deriv);
 
                     const double positivity_preserving_coeff_deriv =
                         StabilizedConvectionDiffusionReactionAdjointUtilities::CalculatePositivityPreservationCoefficientShapeSensitivity(

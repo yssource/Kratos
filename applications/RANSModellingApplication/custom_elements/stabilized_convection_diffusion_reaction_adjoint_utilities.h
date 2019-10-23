@@ -75,6 +75,129 @@ inline double CalculateScalarProduct(const Vector& rVector1, const array_1d<doub
     return result;
 }
 
+inline void CalculateAbsoluteScalarValueScalarDerivatives(Vector& rOutput,
+                                                          const double scalar_value,
+                                                          const Vector& rScalarValueDerivatives)
+{
+    noalias(rOutput) =
+        rScalarValueDerivatives *
+        (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
+}
+
+template <std::size_t TNumNodes>
+inline void CalculateAbsoluteScalarValueScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
+                                                          const double scalar_value,
+                                                          const Vector& rScalarValueDerivatives)
+{
+    noalias(rOutput) =
+        rScalarValueDerivatives *
+        (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
+}
+
+template <std::size_t TNumNodes>
+inline void CalculateAbsoluteScalarValueScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
+                                                          const double scalar_value,
+                                                          const BoundedVector<double, TNumNodes>& rScalarValueDerivatives)
+{
+    noalias(rOutput) =
+        rScalarValueDerivatives *
+        (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
+}
+
+template <std::size_t TDim, std::size_t TNumNodes>
+inline void CalculateAbsoluteScalarValueVectorDerivatives(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+                                                          const double scalar_value,
+                                                          const BoundedMatrix<double, TNumNodes, TDim>& rScalarValueDerivatives)
+{
+    noalias(rOutput) =
+        rScalarValueDerivatives *
+        (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
+}
+
+template <std::size_t TDim, std::size_t TNumNodes>
+inline void CalculateAbsoluteScalarValueVectorDerivatives(
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+    const double scalar_value,
+    const Matrix& rScalarValueDerivatives)
+{
+    noalias(rOutput) =
+        rScalarValueDerivatives *
+        (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
+}
+
+inline void CalculateAbsoluteScalarValueVectorDerivatives(
+    Matrix& rOutput,
+    const double scalar_value,
+    const Matrix& rScalarValueDerivatives)
+{
+    noalias(rOutput) =
+        rScalarValueDerivatives *
+        (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
+}
+
+template <std::size_t TNumNodes>
+inline void CalculateChiScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
+                                          const double Chi,
+                                          const double ElementLength,
+                                          const double BossakAlpha,
+                                          const double BossakGamma,
+                                          const double DeltaTime,
+                                          const double Reaction,
+                                          const double DynamicTau,
+                                          const Vector& rReactionScalarDerivatives)
+{
+    const double reaction_tilde =
+        Reaction + DynamicTau * (1 - BossakAlpha) / (BossakGamma * DeltaTime);
+
+    CalculateAbsoluteScalarValueScalarDerivatives(rOutput, reaction_tilde,
+                                                  rReactionScalarDerivatives);
+    noalias(rOutput) = rOutput * (-0.5 * std::pow(Chi, 2) * ElementLength);
+}
+
+template <std::size_t TDim, std::size_t TNumNodes>
+inline void CalculateChiVelocityDerivatives(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+                                            const double Chi,
+                                            const double ElementLength,
+                                            const double BossakAlpha,
+                                            const double BossakGamma,
+                                            const double DeltaTime,
+                                            const double Reaction,
+                                            const double DynamicTau,
+                                            const Matrix& rReactionDerivatives,
+                                            const Matrix& rVelocityMagnitudeDerivatives,
+                                            const Matrix& rElementLengthDerivatives)
+{
+    const double reaction_tilde =
+        Reaction + DynamicTau * (1 - BossakAlpha) / (BossakGamma * DeltaTime);
+    const double abs_reaction_tilde = std::abs(reaction_tilde);
+
+    CalculateAbsoluteScalarValueVectorDerivatives(rOutput, reaction_tilde, rReactionDerivatives);
+
+    noalias(rOutput) = (rOutput * ElementLength + rElementLengthDerivatives * abs_reaction_tilde +
+                        rVelocityMagnitudeDerivatives * 2.0) *
+                       (-0.5 * std::pow(Chi, 2));
+}
+
+inline double CalculateChiShapeSensitivity(const double chi,
+                                           const double reaction,
+                                           const double reaction_deriv,
+                                           const double element_length,
+                                           const double element_length_deriv,
+                                           const double bossak_alpha,
+                                           const double bossak_gamma,
+                                           const double delta_time,
+                                           const double DynamicTau)
+{
+    const double reaction_tilde =
+        reaction + DynamicTau * (1 - bossak_alpha) / (bossak_gamma * delta_time);
+    const double abs_reaction_tilde = std::abs(reaction_tilde);
+
+    return -0.5 * std::pow(chi, 2) *
+           (abs_reaction_tilde * element_length_deriv +
+            reaction_tilde * element_length * reaction_deriv /
+                (abs_reaction_tilde + std::numeric_limits<double>::epsilon()));
+}
+
 template <std::size_t TNumNodes>
 inline void CalculateResidualScalarDerivative(BoundedVector<double, TNumNodes>& rOutput,
                                               const double scalar_value,
@@ -141,7 +264,8 @@ inline double CalculateResidualShapeSensitivity(const double residual,
         for (std::size_t i = 0; i < rShapeFunctionDerivShapeSensitivity.size2(); ++i)
             r_velocity[i] = rVelocity[i];
         // const Vector& r_velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
-        Vector primal_variable_gradient_shape_sensitivity(rShapeFunctionDerivShapeSensitivity.size2());
+        Vector primal_variable_gradient_shape_sensitivity(
+            rShapeFunctionDerivShapeSensitivity.size2());
         noalias(primal_variable_gradient_shape_sensitivity) =
             prod(trans(rShapeFunctionDerivShapeSensitivity), rNodalScalarValues);
 

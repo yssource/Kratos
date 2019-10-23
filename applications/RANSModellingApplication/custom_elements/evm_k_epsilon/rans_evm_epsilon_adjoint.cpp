@@ -459,22 +459,18 @@ void RansEvmEpsilonAdjoint<TDim, TNumNodes>::CalculateEffectiveKinematicViscosit
         const double epsilon_sigma =
             rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
 
-        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
+        EvmKepsilonModelAdjointUtilities::CalculateEffectiveKinematicViscosityScalarDerivatives<TNumNodes>(
             rOutput, rCurrentData.TurbulentKinematicViscositySensitivitiesK,
-            rCurrentData.ShapeFunctions);
-
-        noalias(rOutput) = rOutput / epsilon_sigma;
+            epsilon_sigma, rCurrentData.ShapeFunctions);
     }
     else if (rDerivativeVariable == TURBULENT_ENERGY_DISSIPATION_RATE)
     {
         const double epsilon_sigma =
             rCurrentProcessInfo[TURBULENT_ENERGY_DISSIPATION_RATE_SIGMA];
 
-        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
+        EvmKepsilonModelAdjointUtilities::CalculateEffectiveKinematicViscosityScalarDerivatives<TNumNodes>(
             rOutput, rCurrentData.TurbulentKinematicViscositySensitivitiesEpsilon,
-            rCurrentData.ShapeFunctions);
-
-        noalias(rOutput) = rOutput / epsilon_sigma;
+            epsilon_sigma, rCurrentData.ShapeFunctions);
     }
     else
     {

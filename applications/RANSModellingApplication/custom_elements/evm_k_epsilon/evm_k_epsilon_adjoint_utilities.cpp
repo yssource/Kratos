@@ -14,6 +14,7 @@
 
 // Project includes
 #include "evm_k_epsilon_adjoint_utilities.h"
+#include "custom_elements/stabilized_convection_diffusion_reaction_adjoint_utilities.h"
 #include "custom_utilities/rans_calculation_utilities.h"
 
 namespace Kratos
@@ -216,7 +217,27 @@ void CalculateThetaEpsilonSensitivity(BoundedVector<double, TNumNodes>& rOutput,
         rNuTSensitivities * (-1.0 * c_mu * f_mu * tke / std::pow(nu_t, 2));
 }
 
+template <unsigned int TNumNodes>
+void CalculateEffectiveKinematicViscosityScalarDerivatives(
+    BoundedVector<double, TNumNodes>& rOutput,
+    const BoundedVector<double, TNumNodes>& rNutSensitivities,
+    const double Sigma,
+    const Vector& rGaussShapeFunctions)
+{
+    StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
+        rOutput, rNutSensitivities, rGaussShapeFunctions);
+
+    noalias(rOutput) = rOutput / Sigma;
+}
+
 // template instantiations
+template void CalculateEffectiveKinematicViscosityScalarDerivatives<3>(
+    BoundedVector<double, 3>&, const BoundedVector<double, 3>&, const double, const Vector&);
+template void CalculateEffectiveKinematicViscosityScalarDerivatives<4>(
+    BoundedVector<double, 4>&, const BoundedVector<double, 4>&, const double, const Vector&);
+template void CalculateEffectiveKinematicViscosityScalarDerivatives<8>(
+    BoundedVector<double, 8>&, const BoundedVector<double, 8>&, const double, const Vector&);
+
 template void CalculateThetaVelocitySensitivity<2, 3>(BoundedMatrix<double, 3, 2>&,
                                                       const double,
                                                       const double,

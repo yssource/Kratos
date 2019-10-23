@@ -87,6 +87,13 @@ void CalculateThetaEpsilonSensitivity(BoundedVector<double, TNumNodes>& rOutput,
                                       const double nu_t,
                                       const BoundedVector<double, TNumNodes>& rNuTSensitivities);
 
+template <unsigned int TNumNodes>
+void CalculateEffectiveKinematicViscosityScalarDerivatives(
+    BoundedVector<double, TNumNodes>& rOutput,
+    const BoundedVector<double, TNumNodes>& rNutSensitivities,
+    const double Sigma,
+    const Vector& rGaussShapeFunctions);
+
 } // namespace EvmKepsilonModelAdjointUtilities
 
 ///@}

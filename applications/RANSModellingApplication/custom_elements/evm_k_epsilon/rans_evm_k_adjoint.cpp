@@ -454,21 +454,17 @@ void RansEvmKAdjoint<TDim, TNumNodes>::CalculateEffectiveKinematicViscosityScala
     {
         const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
 
-        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
+        EvmKepsilonModelAdjointUtilities::CalculateEffectiveKinematicViscosityScalarDerivatives<TNumNodes>(
             rOutput, rCurrentData.TurbulentKinematicViscositySensitivitiesK,
-            rCurrentData.ShapeFunctions);
-
-        noalias(rOutput) = rOutput / tke_sigma;
+            tke_sigma, rCurrentData.ShapeFunctions);
     }
     else if (rDerivativeVariable == TURBULENT_ENERGY_DISSIPATION_RATE)
     {
         const double tke_sigma = rCurrentProcessInfo[TURBULENT_KINETIC_ENERGY_SIGMA];
 
-        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateGaussSensitivities(
+        EvmKepsilonModelAdjointUtilities::CalculateEffectiveKinematicViscosityScalarDerivatives<TNumNodes>(
             rOutput, rCurrentData.TurbulentKinematicViscositySensitivitiesEpsilon,
-            rCurrentData.ShapeFunctions);
-
-        noalias(rOutput) = rOutput / tke_sigma;
+            tke_sigma, rCurrentData.ShapeFunctions);
     }
     else
     {

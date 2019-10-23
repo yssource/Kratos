@@ -173,16 +173,14 @@ class PfemFluidDynamicsAnalysis(AnalysisStage):
         self.model_processes.ExecuteInitializeSolutionStep()
 
         # delete previous thermal elements 
-        self._solver.DeleteThermalElements()
-
-        # delete previous thermal nodes 
-        self._solver.DeleteThermalNodes()
-
-        # adding new thermal elements
-        #if (self.main_model_part.ProcessInfo[KratosMultiphysics.STEP]==1):
-        #    self._solver.AddThermalNodes()    
-        self._solver.AddThermalNodesToComputing()
-        self._solver.AddThermalElementsToComputing()
+        #self._solver.DeleteThermalElements()
+        #
+        ## delete previous thermal nodes 
+        #self._solver.DeleteThermalNodes()
+        #
+        ## adding new thermal elements    
+        #self._solver.AddThermalNodesToComputing()
+        #self._solver.AddThermalElementsToComputing()
         
 
         for process in self._GetListOfProcesses():

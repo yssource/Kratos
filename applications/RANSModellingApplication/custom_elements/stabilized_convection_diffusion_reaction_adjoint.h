@@ -128,6 +128,9 @@ public:
     typedef BoundedMatrix<double, TNumNodes, TDim> BoundedMatrixND;
 
     typedef BoundedVector<double, TNumNodes> BoundedVectorN;
+
+    using ConvectionDiffusionReactionAdjointDataType = TElementData;
+
     ///@}
 
     ///@name Life Cycle

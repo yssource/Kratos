@@ -677,7 +677,7 @@ public:
         KRATOS_CATCH("");
     }
 
-    virtual double GetEffectiveKinematicViscosity(TConvectionDiffusionReactionData& rData,
+    virtual double GetEffectiveKinematicViscosity(const TConvectionDiffusionReactionData& rData,
                                                   const Vector& rShapeFunctions,
                                                   const Matrix& rShapeFunctionDerivatives,
                                                   const ProcessInfo& rCurrentProcessInfo,
@@ -692,7 +692,7 @@ public:
         KRATOS_CATCH("");
     }
 
-    virtual double GetScalarVariableGradientNorm(TConvectionDiffusionReactionData& rData,
+    virtual double GetScalarVariableGradientNorm(const TConvectionDiffusionReactionData& rData,
                                                  const Vector& rShapeFunctions,
                                                  const Matrix& rShapeFunctionDerivatives,
                                                  const ProcessInfo& rCurrentProcessInfo,
@@ -707,7 +707,7 @@ public:
         KRATOS_CATCH("");
     }
 
-    virtual double GetScalarVariableRelaxedAcceleration(TConvectionDiffusionReactionData& rData,
+    virtual double GetScalarVariableRelaxedAcceleration(const TConvectionDiffusionReactionData& rData,
                                                         const Vector& rShapeFunctions,
                                                         const Matrix& rShapeFunctionDerivatives,
                                                         const ProcessInfo& rCurrentProcessInfo,

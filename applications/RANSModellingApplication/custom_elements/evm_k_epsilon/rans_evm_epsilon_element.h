@@ -298,19 +298,19 @@ private:
                                                   const ProcessInfo& rCurrentProcessInfo,
                                                   const int Step = 0) const override;
 
-    double GetEffectiveKinematicViscosity(RansEvmEpsilonElementData& rData,
+    double GetEffectiveKinematicViscosity(const RansEvmEpsilonElementData& rData,
                                           const Vector& rShapeFunctions,
                                           const Matrix& rShapeFunctionDerivatives,
                                           const ProcessInfo& rCurrentProcessInfo,
                                           const int Step = 0) const override;
 
-    double GetScalarVariableGradientNorm(RansEvmEpsilonElementData& rData,
+    double GetScalarVariableGradientNorm(const RansEvmEpsilonElementData& rData,
                                          const Vector& rShapeFunctions,
                                          const Matrix& rShapeFunctionDerivatives,
                                          const ProcessInfo& rCurrentProcessInfo,
                                          const int Step = 0) const override;
 
-    double GetScalarVariableRelaxedAcceleration(RansEvmEpsilonElementData& rData,
+    double GetScalarVariableRelaxedAcceleration(const RansEvmEpsilonElementData& rData,
                                                 const Vector& rShapeFunctions,
                                                 const Matrix& rShapeFunctionDerivatives,
                                                 const ProcessInfo& rCurrentProcessInfo,

@@ -388,7 +388,7 @@ void RansEvmKElement<TDim, TNumNodes>::CalculateConvectionDiffusionReactionData(
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmKElement<TDim, TNumNodes>::GetEffectiveKinematicViscosity(
+double RansEvmKElement<TDim, TNumNodes>::GetEffectiveKinematicViscosity(const
     RansEvmKElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
@@ -400,7 +400,7 @@ double RansEvmKElement<TDim, TNumNodes>::GetEffectiveKinematicViscosity(
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmKElement<TDim, TNumNodes>::GetScalarVariableGradientNorm(
+double RansEvmKElement<TDim, TNumNodes>::GetScalarVariableGradientNorm(const
     RansEvmKElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
@@ -413,7 +413,7 @@ double RansEvmKElement<TDim, TNumNodes>::GetScalarVariableGradientNorm(
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmKElement<TDim, TNumNodes>::GetScalarVariableRelaxedAcceleration(
+double RansEvmKElement<TDim, TNumNodes>::GetScalarVariableRelaxedAcceleration(const
     RansEvmKElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,

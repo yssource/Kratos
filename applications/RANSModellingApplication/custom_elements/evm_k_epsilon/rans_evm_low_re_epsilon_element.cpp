@@ -400,7 +400,7 @@ void RansEvmLowReEpsilonElement<TDim, TNumNodes>::CalculateConvectionDiffusionRe
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetEffectiveKinematicViscosity(
+double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetEffectiveKinematicViscosity(const
     RansEvmLowReEpsilonElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
@@ -413,7 +413,7 @@ double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetEffectiveKinematicViscosi
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetScalarVariableGradientNorm(
+double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetScalarVariableGradientNorm(const
     RansEvmLowReEpsilonElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
@@ -427,7 +427,7 @@ double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetScalarVariableGradientNor
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetScalarVariableRelaxedAcceleration(
+double RansEvmLowReEpsilonElement<TDim, TNumNodes>::GetScalarVariableRelaxedAcceleration(const
     RansEvmLowReEpsilonElementData& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,

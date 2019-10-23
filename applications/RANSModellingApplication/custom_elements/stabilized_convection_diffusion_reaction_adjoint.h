@@ -1029,51 +1029,6 @@ public:
                                      rCurrentProcessInfo);
     }
 
-    ///@}
-    ///@name Input and output
-    ///@{
-
-    /// Turn back information as a string.
-
-    std::string Info() const override
-    {
-        std::stringstream buffer;
-        buffer << "StabilizedConvectionDiffusionReactionAdjointElement #" << Id();
-        return buffer.str();
-    }
-
-    /// Print information about this object.
-
-    void PrintInfo(std::ostream& rOStream) const override
-    {
-        rOStream << "StabilizedConvectionDiffusionReactionAdjointElement #" << Id();
-    }
-
-    /// Print object's data.
-
-    void PrintData(std::ostream& rOStream) const override
-    {
-        pGetGeometry()->PrintData(rOStream);
-    }
-
-    ///@}
-    ///@name Friends
-    ///@{
-    ///@}
-
-protected:
-    ///@name Protected static Member Variables
-    ///@{
-    ///@}
-    ///@name Protected member Variables
-    ///@{
-    ///@}
-    ///@name Protected Operators
-    ///@{
-    ///@}
-    ///@name Protected Operations
-    ///@{
-
     /**
      * @brief Get the primal scalar variable
      *
@@ -1570,6 +1525,51 @@ protected:
 
         KRATOS_CATCH("");
     }
+
+    ///@}
+    ///@name Input and output
+    ///@{
+
+    /// Turn back information as a string.
+
+    std::string Info() const override
+    {
+        std::stringstream buffer;
+        buffer << "StabilizedConvectionDiffusionReactionAdjointElement #" << Id();
+        return buffer.str();
+    }
+
+    /// Print information about this object.
+
+    void PrintInfo(std::ostream& rOStream) const override
+    {
+        rOStream << "StabilizedConvectionDiffusionReactionAdjointElement #" << Id();
+    }
+
+    /// Print object's data.
+
+    void PrintData(std::ostream& rOStream) const override
+    {
+        pGetGeometry()->PrintData(rOStream);
+    }
+
+    ///@}
+    ///@name Friends
+    ///@{
+    ///@}
+
+protected:
+    ///@name Protected static Member Variables
+    ///@{
+    ///@}
+    ///@name Protected member Variables
+    ///@{
+    ///@}
+    ///@name Protected Operators
+    ///@{
+    ///@}
+    ///@name Protected Operations
+    ///@{
 
     /**
      * @brief Calculates shape function data for this element

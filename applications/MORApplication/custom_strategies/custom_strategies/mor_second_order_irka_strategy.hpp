@@ -177,7 +177,6 @@ class MorSecondOrderIRKAStrategy
         // Set members
         //TODO: let pybind11 do the conversion
         mSamplingPoints.resize(samplingPoints_real.size());
-        #pragma omp parallel for
         for(size_t i=0; i<samplingPoints_real.size(); i++)
         {
             mSamplingPoints(i) = complex( samplingPoints_real(i), samplingPoints_imag(i) );
@@ -312,11 +311,17 @@ class MorSecondOrderIRKAStrategy
         // initialize the complex solver
         mpComplexLinearSolver->Initialize( r_tmp_Vn, r_tmp_Vr_col, r_b);
 
+        // fill a vector with the chosen half of sampling points to remove index skip for OMP
+        vector<complex> halfSamplingPoints_forOMP (n_sampling_points/2);
+        for(size_t i=0; i<n_sampling_points/2; i++)
+        {
+            halfSamplingPoints_forOMP(i) = mSamplingPoints(2*i);
+        }
         // build V
-        #pragma omp parallel for
+        //#pragma omp parallel for // does not work
         for(size_t i=0; i < n_sampling_points/2; ++i)
         {
-            r_tmp_Vn = std::pow( mSamplingPoints(2*i), 2.0 ) * r_M + mSamplingPoints(2*i) * r_D + r_K;
+            r_tmp_Vn = std::pow( halfSamplingPoints_forOMP(i), 2.0 ) * r_M + halfSamplingPoints_forOMP(i) * r_D + r_K;
             mpComplexLinearSolver->Solve( r_tmp_Vn, r_tmp_Vr_col, r_b); // Ax = b, solve for x
 
             column(r_Vr_dense, 2*i) = real(r_tmp_Vr_col);
@@ -329,7 +334,7 @@ class MorSecondOrderIRKAStrategy
         mQR_decomposition.compute( system_size, reduced_system_size, &(r_Vr_dense)(0,0) );
         mQR_decomposition.compute_q();
 
-        #pragma omp parallel for
+        //#pragma omp parallel for // does not work // whole class shared? races?
         for(size_t i=0; i < system_size; ++i)
         {
             for(size_t j=0; j < reduced_system_size; ++j)
@@ -411,7 +416,6 @@ class MorSecondOrderIRKAStrategy
             );
 
             //store the Eigenvalues in a complex vector
-            #pragma omp parallel for
             for(size_t ii = 0; ii<2*reduced_system_size; ii++)
             {
                 lam_2r(ii) = complex( Eigenvalues(2*ii), Eigenvalues(2*ii+1) );
@@ -424,21 +428,18 @@ class MorSecondOrderIRKAStrategy
 
             // reduce to r Eigenvalues so that the dimension of the reduced system does not increase
             // choose the r Eigenvalues which are closest to the imaginary axis (done by previous sorting)
-            #pragma omp parallel for
             for(size_t ii=0; ii < reduced_system_size; ii++)
             {
                 mSamplingPoints(ii) = lam_2r(ii);
             }
 
 
-            // calculate the error between old and new sampling points
-            #pragma omp parallel for           
+            // calculate the error between old and new sampling points      
             for(size_t ii=0 ; ii < reduced_system_size; ii++)
             {
                 abs_val_old(ii) = abs(samplingPoints_old(ii));
             }
-         
-            #pragma omp parallel for         
+             
             for(size_t ii=0 ; ii < reduced_system_size; ii++)
             {
                 abs_val_new(ii) = abs(mSamplingPoints(ii));
@@ -456,7 +457,10 @@ class MorSecondOrderIRKAStrategy
             samplingPoints_old = mSamplingPoints;
 
             // update V
-            #pragma omp parallel for
+            //#pragma omp parallel for // does not work // maybe get's confused with the solver?
+            // is the solver also implemented in paralle?
+            // suggestions: apply a decomposition of r_tmp_Vn before the loop
+            // but: building this decomposition yiels extra time
             for(size_t i=0; i < n_sampling_points/2; ++i)
             {
                 r_tmp_Vn = std::pow( mSamplingPoints(2*i), 2.0 ) * r_M + mSamplingPoints(2*i) * r_D + r_K;
@@ -470,7 +474,7 @@ class MorSecondOrderIRKAStrategy
             mQR_decomposition.compute( system_size, reduced_system_size, &(r_Vr_dense)(0,0) );
             mQR_decomposition.compute_q();
 
-            #pragma omp parallel for
+            //#pragma omp parallel for //does not work //whole class shared?
             for(size_t i=0; i < system_size; ++i)
             {
                 for(size_t j=0; j < reduced_system_size; ++j)

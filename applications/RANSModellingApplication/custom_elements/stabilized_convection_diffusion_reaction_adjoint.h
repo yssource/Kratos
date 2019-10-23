@@ -1764,14 +1764,6 @@ private:
     ///@name Private Operations
     ///@{
 
-    double CalculateScalarProduct(const Vector& rVector1, const array_1d<double, 3>& rVector2)
-    {
-        double result = 0.0;
-        for (std::size_t i_dim = 0; i_dim < rVector1.size(); ++i_dim)
-            result += rVector1[i_dim] * rVector2[i_dim];
-        return result;
-    }
-
     void AddPrimalSteadyTermScalarDerivatives(BoundedMatrix<double, TNumNodes, TNumNodes>& rLeftHandSideMatrix,
                                               const Variable<double>& rDerivativeVariable,
                                               const ProcessInfo& rCurrentProcessInfo)

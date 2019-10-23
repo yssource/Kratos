@@ -19,10 +19,10 @@
 
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_adjoint_utilities.h"
 #include "custom_elements/evm_k_epsilon/evm_k_epsilon_utilities.h"
+#include "custom_elements/stabilized_convection_diffusion_reaction_adjoint_utilities.h"
 #include "custom_utilities/rans_variable_utils.h"
 #include "includes/cfd_variables.h"
 #include "rans_modelling_application_variables.h"
-#include "custom_elements/stabilized_convection_diffusion_reaction_adjoint_utilities.h"
 
 namespace Kratos
 {
@@ -274,16 +274,13 @@ void RansEvmKEpsilonVMSAdjoint<TDim, TNumNodes>::PrintData(std::ostream& rOStrea
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKEpsilonVMSAdjoint<TDim, TNumNodes>::CalculateElementData(
-    RANSEvmVMSAdjointData& rData,
+    RANSEvmVMSAdjointData<TNumNodes>& rData,
     const Vector& rShapeFunctions,
     const Matrix& rShapeFunctionDerivatives,
     const ProcessInfo& rCurrentProcessInfo) const
 {
     rData.ShapeFunctionDerivatives = rShapeFunctionDerivatives;
     rData.ShapeFunctions = rShapeFunctions;
-
-    rData.TurbulentKinematicViscositySensitivitiesK.resize(TNumNodes);
-    rData.TurbulentKinematicViscositySensitivitiesEpsilon.resize(TNumNodes);
 
     for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node)
     {
@@ -300,31 +297,13 @@ void RansEvmKEpsilonVMSAdjoint<TDim, TNumNodes>::CalculateElementData(
         rData.TurbulentKinematicViscositySensitivitiesEpsilon[i_node] =
             turbulent_kinematic_viscosity_sensitivities[1];
     }
-
-    RansVariableUtils rans_variable_utils;
-
-    rans_variable_utils.GetNodalArray(rData.NodalTurbulentKineticEnergy, *this,
-                                      TURBULENT_KINETIC_ENERGY);
-    rans_variable_utils.GetNodalArray(rData.NodalTurbulentEnergyDissipationRate,
-                                      *this, TURBULENT_ENERGY_DISSIPATION_RATE);
-    rans_variable_utils.GetNodalArray(rData.NodalYPlus, *this, RANS_Y_PLUS);
-
-    const std::size_t number_of_nodes = rData.NodalYPlus.size();
-
-    if (rData.NodalFmu.size() != number_of_nodes)
-        rData.NodalFmu.resize(rData.NodalYPlus.size());
-
-    for (std::size_t i_node = 0; i_node < number_of_nodes; ++i_node)
-    {
-        rData.NodalFmu[i_node] = 1.0;
-    }
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKEpsilonVMSAdjoint<TDim, TNumNodes>::CalculateTurbulentKinematicViscosityScalarDerivatives(
     BoundedVector<double, TNumNodes>& rOutput,
     const Variable<double>& rDerivativeVariable,
-    const RANSEvmVMSAdjointData& rCurrentData,
+    const RANSEvmVMSAdjointData<TNumNodes>& rCurrentData,
     const ProcessInfo& rCurrentProcessInfo) const
 {
     KRATOS_TRY
@@ -381,7 +360,9 @@ void RansEvmKEpsilonVMSAdjoint<TDim, TNumNodes>::Calculate(const Variable<Matrix
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKEpsilonVMSAdjoint<TDim, TNumNodes>::CalculateTurbulentKinematicViscosityVelocityDerivatives(
-    BoundedMatrix<double, TNumNodes, TDim>& rOutput, const RANSEvmVMSAdjointData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+    const RANSEvmVMSAdjointData<TNumNodes>& rCurrentData,
+    const ProcessInfo& rCurrentProcessInfo) const
 {
     rOutput.clear();
 }

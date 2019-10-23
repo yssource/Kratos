@@ -131,7 +131,7 @@ inline double CalculateStabilizationTauShapeSensitivity(const double Tau,
 
 template <std::size_t TDim, std::size_t TNumNodes>
 inline void CalculateGaussSensitivities(BoundedMatrix<double, TNumNodes, TDim>& rGaussSensitivities,
-                                        const Matrix& rNodalSensitivities,
+                                        const BoundedMatrix<double, TNumNodes, TDim>& rNodalSensitivities,
                                         const Vector& rGaussShapeFunctions)
 {
     for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
@@ -146,7 +146,7 @@ inline void CalculateGaussSensitivities(BoundedMatrix<double, TNumNodes, TDim>& 
 
 template <std::size_t TNumNodes>
 inline void CalculateGaussSensitivities(BoundedVector<double, TNumNodes>& rGaussSensitivities,
-                                        const Vector& rNodalSensitivities,
+                                        const BoundedVector<double, TNumNodes>& rNodalSensitivities,
                                         const Vector& rGaussShapeFunctions)
 {
     for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
@@ -162,25 +162,6 @@ inline double CalculateScalarProduct(const Vector& rVector1, const array_1d<doub
     for (std::size_t i_dim = 0; i_dim < rVector1.size(); ++i_dim)
         result += rVector1[i_dim] * rVector2[i_dim];
     return result;
-}
-
-inline void CalculateAbsoluteScalarValueScalarDerivatives(Vector& rOutput,
-                                                          const double scalar_value,
-                                                          const Vector& rScalarValueDerivatives)
-{
-    noalias(rOutput) =
-        rScalarValueDerivatives *
-        (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
-}
-
-template <std::size_t TNumNodes>
-inline void CalculateAbsoluteScalarValueScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
-                                                          const double scalar_value,
-                                                          const Vector& rScalarValueDerivatives)
-{
-    noalias(rOutput) =
-        rScalarValueDerivatives *
-        (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
 }
 
 template <std::size_t TNumNodes>
@@ -199,26 +180,6 @@ inline void CalculateAbsoluteScalarValueVectorDerivatives(
     BoundedMatrix<double, TNumNodes, TDim>& rOutput,
     const double scalar_value,
     const BoundedMatrix<double, TNumNodes, TDim>& rScalarValueDerivatives)
-{
-    noalias(rOutput) =
-        rScalarValueDerivatives *
-        (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
-}
-
-template <std::size_t TDim, std::size_t TNumNodes>
-inline void CalculateAbsoluteScalarValueVectorDerivatives(
-    BoundedMatrix<double, TNumNodes, TDim>& rOutput,
-    const double scalar_value,
-    const Matrix& rScalarValueDerivatives)
-{
-    noalias(rOutput) =
-        rScalarValueDerivatives *
-        (scalar_value / (std::abs(scalar_value) + std::numeric_limits<double>::epsilon()));
-}
-
-inline void CalculateAbsoluteScalarValueVectorDerivatives(Matrix& rOutput,
-                                                          const double scalar_value,
-                                                          const Matrix& rScalarValueDerivatives)
 {
     noalias(rOutput) =
         rScalarValueDerivatives *
@@ -492,7 +453,7 @@ inline void CalculateChiScalarDerivatives(BoundedVector<double, TNumNodes>& rOut
                                           const double DeltaTime,
                                           const double Reaction,
                                           const double DynamicTau,
-                                          const Vector& rReactionScalarDerivatives)
+                                          const BoundedVector<double, TNumNodes>& rReactionScalarDerivatives)
 {
     const double reaction_tilde =
         Reaction + DynamicTau * (1 - BossakAlpha) / (BossakGamma * DeltaTime);
@@ -511,9 +472,9 @@ inline void CalculateChiVelocityDerivatives(BoundedMatrix<double, TNumNodes, TDi
                                             const double DeltaTime,
                                             const double Reaction,
                                             const double DynamicTau,
-                                            const Matrix& rReactionDerivatives,
-                                            const Matrix& rVelocityMagnitudeDerivatives,
-                                            const Matrix& rElementLengthDerivatives)
+                                            const BoundedMatrix<double, TNumNodes, TDim>& rReactionDerivatives,
+                                            const BoundedMatrix<double, TNumNodes, TDim>& rVelocityMagnitudeDerivatives,
+                                            const BoundedMatrix<double, TNumNodes, TDim>& rElementLengthDerivatives)
 {
     const double reaction_tilde =
         Reaction + DynamicTau * (1 - BossakAlpha) / (BossakGamma * DeltaTime);
@@ -580,8 +541,8 @@ template <std::size_t TDim, std::size_t TNumNodes>
 inline void CalculateResidualVelocityDerivative(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
                                                 const double primal_variable_value,
                                                 const array_1d<double, 3>& rPrimalVariableGradient,
-                                                const Matrix& rReactionDerivatives,
-                                                const Matrix& rSourceDerivatives,
+                                                const BoundedMatrix<double, TNumNodes, TDim>& rReactionDerivatives,
+                                                const BoundedMatrix<double, TNumNodes, TDim>& rSourceDerivatives,
                                                 const Vector& rGaussShapeFunctions)
 {
     for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node)
@@ -631,9 +592,9 @@ inline void CalculatePositivityPreservationCoefficientScalarDerivatives(
     const double residual,
     const double scalar_gradient_norm,
     const double velocity_norm_square,
-    const Vector& rChiScalarDerivatives,
-    const Vector& rAbsoluteResidualScalarDerivatives,
-    const Vector& rAbsoluteScalarGradientScalarDerivative,
+    const BoundedVector<double, TNumNodes>& rChiScalarDerivatives,
+    const BoundedVector<double, TNumNodes>& rAbsoluteResidualScalarDerivatives,
+    const BoundedVector<double, TNumNodes>& rAbsoluteScalarGradientScalarDerivative,
     const Variable<double>& rPrimalVariable,
     const Variable<double>& rDerivativeVariable)
 {
@@ -666,9 +627,9 @@ inline void CalculatePositivityPreservationCoefficientVelocityDerivatives(
     const double primal_variable_gradient_norm,
     const double velocity_magnitude,
     const double chi,
-    const Matrix& rChiDerivatives,
-    const Matrix& rAbsoluteResidualDerivatives,
-    const Matrix& rVelocityMagnitudeDerivatives)
+    const BoundedMatrix<double, TNumNodes, TDim>& rChiDerivatives,
+    const BoundedMatrix<double, TNumNodes, TDim>& rAbsoluteResidualDerivatives,
+    const BoundedMatrix<double, TNumNodes, TDim>& rVelocityMagnitudeDerivatives)
 {
     const double velocity_magnitude_square = std::pow(velocity_magnitude, 2);
 
@@ -716,10 +677,10 @@ inline void CalculateCrossWindDiffusionCoeffVelocityDerivatives(
     BoundedMatrix<double, TNumNodes, TDim>& rOutput,
     const double psi_one,
     const double element_length,
-    const Matrix& rPsiOneDerivatives,
-    const Matrix& rPsiTwoDerivatives,
-    const Matrix& rEffectiveKinematicViscosityDerivatives,
-    const Matrix& rElementLengthDerivatives)
+    const BoundedMatrix<double, TNumNodes, TDim>& rPsiOneDerivatives,
+    const BoundedMatrix<double, TNumNodes, TDim>& rPsiTwoDerivatives,
+    const BoundedMatrix<double, TNumNodes, TDim>& rEffectiveKinematicViscosityDerivatives,
+    const BoundedMatrix<double, TNumNodes, TDim>& rElementLengthDerivatives)
 {
     const double abs_psi_one = std::abs(psi_one);
 
@@ -750,9 +711,9 @@ inline void CalculateCrossWindDiffusionCoeffScalarDerivatives(
     BoundedVector<double, TNumNodes>& rOutput,
     const double psi_one,
     const double element_length,
-    const Vector& rPsiOneScalarDerivatives,
-    const Vector& rPsiTwoScalarDerivatives,
-    const Vector& rEffectiveKinematicViscosityScalarDerivatives)
+    const BoundedVector<double, TNumNodes>& rPsiOneScalarDerivatives,
+    const BoundedVector<double, TNumNodes>& rPsiTwoScalarDerivatives,
+    const BoundedVector<double, TNumNodes>& rEffectiveKinematicViscosityScalarDerivatives)
 {
     noalias(rOutput) = rPsiOneScalarDerivatives *
                        (0.5 * psi_one * element_length / (std::abs(psi_one)) +
@@ -770,11 +731,11 @@ inline void CalculateStreamLineDiffusionCoeffScalarDerivatives(
     const double reaction_tilde,
     const double psi_one,
     const double psi_two,
-    const Vector& rPsiOneScalarDerivatives,
-    const Vector& rPsiTwoScalarDerivatives,
-    const Vector& rTauScalarDerivatives,
-    const Vector& rReactionTildeScalarDerivatives,
-    const Vector& rEffectiveViscosityScalarDerivatives)
+    const BoundedVector<double, TNumNodes>& rPsiOneScalarDerivatives,
+    const BoundedVector<double, TNumNodes>& rPsiTwoScalarDerivatives,
+    const BoundedVector<double, TNumNodes>& rTauScalarDerivatives,
+    const BoundedVector<double, TNumNodes>& rReactionTildeScalarDerivatives,
+    const BoundedVector<double, TNumNodes>& rEffectiveViscosityScalarDerivatives)
 {
     noalias(rOutput) = rPsiOneScalarDerivatives;
     noalias(rOutput) -= rTauScalarDerivatives * (velocity_norm * reaction_tilde);
@@ -798,13 +759,13 @@ inline void CalculateStreamLineDiffusionCoeffVelocityDerivatives(
     const double reaction_tilde,
     const double psi_one,
     const double psi_two,
-    const Matrix& rVelocityMagnitudeDerivatives,
-    const Matrix& rPsiOneDerivatives,
-    const Matrix& rPsiTwoDerivatives,
-    const Matrix& rTauDerivatives,
-    const Matrix& rReactionTildeDerivatives,
-    const Matrix& rEffectiveViscosityDerivatives,
-    const Matrix& rElementLengthDerivatives)
+    const BoundedMatrix<double, TNumNodes, TDim>& rVelocityMagnitudeDerivatives,
+    const BoundedMatrix<double, TNumNodes, TDim>& rPsiOneDerivatives,
+    const BoundedMatrix<double, TNumNodes, TDim>& rPsiTwoDerivatives,
+    const BoundedMatrix<double, TNumNodes, TDim>& rTauDerivatives,
+    const BoundedMatrix<double, TNumNodes, TDim>& rReactionTildeDerivatives,
+    const BoundedMatrix<double, TNumNodes, TDim>& rEffectiveViscosityDerivatives,
+    const BoundedMatrix<double, TNumNodes, TDim>& rElementLengthDerivatives)
 {
     noalias(rOutput) =
         (rPsiOneDerivatives - rTauDerivatives * (velocity_norm * reaction_tilde) -

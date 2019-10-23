@@ -43,7 +43,7 @@ namespace Kratos
 ///@}
 ///@name Kratos Classes
 ///@{
-
+template<std::size_t TNumNodes>
 struct RansEvmKAdjointData
 {
     double KinematicViscosity;
@@ -60,25 +60,21 @@ struct RansEvmKAdjointData
     Matrix ShapeFunctionDerivatives;
     Vector ShapeFunctions;
 
-    Vector NodalTurbulentKineticEnergy;
-    Vector NodalTurbulentEnergyDissipationRate;
-    Vector NodalFmu;
-    Vector NodalYPlus;
     Matrix NodalVelocity;
 
-    Vector TurbulentKinematicViscositySensitivitiesK;
-    Vector TurbulentKinematicViscositySensitivitiesEpsilon;
+    BoundedVector<double, TNumNodes> TurbulentKinematicViscositySensitivitiesK;
+    BoundedVector<double, TNumNodes> TurbulentKinematicViscositySensitivitiesEpsilon;
 };
 
 template <unsigned int TDim, unsigned int TNumNodes>
 class RansEvmKAdjoint
-    : public StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, RansEvmKAdjointData>
+    : public StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, RansEvmKAdjointData<TNumNodes>>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    typedef StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, RansEvmKAdjointData> BaseType;
+    typedef StabilizedConvectionDiffusionReactionAdjointElement<TDim, TNumNodes, RansEvmKAdjointData<TNumNodes>> BaseType;
 
     /// Node type (default is: Node<3>)
     typedef Node<3> NodeType;
@@ -310,65 +306,65 @@ private:
 
     const Variable<double>& GetAdjointSecondVariable() const override;
 
-    void CalculateElementData(RansEvmKAdjointData& rData,
+    void CalculateElementData(RansEvmKAdjointData<TNumNodes>& rData,
                               const Vector& rShapeFunctions,
                               const Matrix& rShapeFunctionDerivatives,
                               const ProcessInfo& rCurrentProcessInfo) const override;
 
-    double CalculateEffectiveKinematicViscosity(const RansEvmKAdjointData& rCurrentData,
+    double CalculateEffectiveKinematicViscosity(const RansEvmKAdjointData<TNumNodes>& rCurrentData,
                                                 const ProcessInfo& rCurrentProcessInfo) const override;
 
-    double CalculateReactionTerm(const RansEvmKAdjointData& rCurrentData,
+    double CalculateReactionTerm(const RansEvmKAdjointData<TNumNodes>& rCurrentData,
                                  const ProcessInfo& rCurrentProcessInfo) const override;
 
-    double CalculateSourceTerm(const RansEvmKAdjointData& rCurrentData,
+    double CalculateSourceTerm(const RansEvmKAdjointData<TNumNodes>& rCurrentData,
                                const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateEffectiveKinematicViscosityScalarDerivatives(
         BoundedVector<double, TNumNodes>& rOutput,
         const Variable<double>& rDerivativeVariable,
-        const RansEvmKAdjointData& rCurrentData,
+        const RansEvmKAdjointData<TNumNodes>& rCurrentData,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateReactionTermScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
                                                 const Variable<double>& rDerivativeVariable,
-                                                const RansEvmKAdjointData& rCurrentData,
+                                                const RansEvmKAdjointData<TNumNodes>& rCurrentData,
                                                 const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateSourceTermScalarDerivatives(BoundedVector<double, TNumNodes>& rOutput,
                                               const Variable<double>& rDerivativeVariable,
-                                              const RansEvmKAdjointData& rCurrentData,
+                                              const RansEvmKAdjointData<TNumNodes>& rCurrentData,
                                               const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateEffectiveKinematicViscosityVelocityDerivatives(
         BoundedMatrix<double, TNumNodes, TDim>& rOutput,
-        const RansEvmKAdjointData& rCurrentData,
+        const RansEvmKAdjointData<TNumNodes>& rCurrentData,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateReactionTermVelocityDerivatives(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
-                                                  const RansEvmKAdjointData& rCurrentData,
+                                                  const RansEvmKAdjointData<TNumNodes>& rCurrentData,
                                                   const ProcessInfo& rCurrentProcessInfo) const override;
 
     void CalculateSourceTermVelocityDerivatives(BoundedMatrix<double, TNumNodes, TDim>& rOutput,
-                                                const RansEvmKAdjointData& rCurrentData,
+                                                const RansEvmKAdjointData<TNumNodes>& rCurrentData,
                                                 const ProcessInfo& rCurrentProcessInfo) const override;
 
     double CalculateEffectiveKinematicViscosityShapeSensitivity(
-        const RansEvmKAdjointData& rCurrentData,
+        const RansEvmKAdjointData<TNumNodes>& rCurrentData,
         const ShapeParameter& rShapeDerivative,
         const double detJ_deriv,
         const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
     double CalculateReactionTermShapeSensitivity(
-        const RansEvmKAdjointData& rCurrentData,
+        const RansEvmKAdjointData<TNumNodes>& rCurrentData,
         const ShapeParameter& rShapeDerivative,
         const double detJ_deriv,
         const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
         const ProcessInfo& rCurrentProcessInfo) const override;
 
     double CalculateSourceTermShapeSensitivity(
-        const RansEvmKAdjointData& rCurrentData,
+        const RansEvmKAdjointData<TNumNodes>& rCurrentData,
         const ShapeParameter& rShapeDerivative,
         const double detJ_deriv,
         const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,

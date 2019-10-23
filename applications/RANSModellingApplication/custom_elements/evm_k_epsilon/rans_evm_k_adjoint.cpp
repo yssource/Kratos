@@ -356,10 +356,11 @@ const Variable<double>& RansEvmKAdjoint<TDim, TNumNodes>::GetAdjointSecondVariab
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
-void RansEvmKAdjoint<TDim, TNumNodes>::CalculateElementData(RansEvmKAdjointData& rData,
-                                                            const Vector& rShapeFunctions,
-                                                            const Matrix& rShapeFunctionDerivatives,
-                                                            const ProcessInfo& rCurrentProcessInfo) const
+void RansEvmKAdjoint<TDim, TNumNodes>::CalculateElementData(
+    RansEvmKAdjointData<TNumNodes>& rData,
+    const Vector& rShapeFunctions,
+    const Matrix& rShapeFunctionDerivatives,
+    const ProcessInfo& rCurrentProcessInfo) const
 {
     rData.ShapeFunctionDerivatives = rShapeFunctionDerivatives;
     rData.ShapeFunctions = rShapeFunctions;
@@ -372,9 +373,6 @@ void RansEvmKAdjoint<TDim, TNumNodes>::CalculateElementData(RansEvmKAdjointData&
     const double& nu = this->EvaluateInPoint(KINEMATIC_VISCOSITY, rShapeFunctions);
     const double& wall_distance = this->EvaluateInPoint(DISTANCE, rShapeFunctions);
     const double& gamma = EvmKepsilonModelUtilities::CalculateGamma(c_mu, 1.0, tke, nu_t);
-
-    rData.TurbulentKinematicViscositySensitivitiesK.resize(TNumNodes);
-    rData.TurbulentKinematicViscositySensitivitiesEpsilon.resize(TNumNodes);
 
     for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node)
     {
@@ -402,25 +400,11 @@ void RansEvmKAdjoint<TDim, TNumNodes>::CalculateElementData(RansEvmKAdjointData&
     rData.VelocityDivergence =
         this->GetDivergenceOperator(VELOCITY, rShapeFunctionDerivatives);
 
-    RansVariableUtils rans_variable_utils;
-
-    rans_variable_utils.GetNodalArray(rData.NodalTurbulentKineticEnergy, *this,
-                                      TURBULENT_KINETIC_ENERGY);
-    rans_variable_utils.GetNodalArray(rData.NodalTurbulentEnergyDissipationRate,
-                                      *this, TURBULENT_ENERGY_DISSIPATION_RATE);
-    rans_variable_utils.GetNodalArray(rData.NodalYPlus, *this, RANS_Y_PLUS);
-
-    std::size_t number_of_nodes = rData.NodalYPlus.size();
-
-    if (rData.NodalFmu.size() != number_of_nodes)
-        rData.NodalFmu.resize(rData.NodalYPlus.size());
-
     if (rData.NodalVelocity.size1() != TNumNodes || rData.NodalVelocity.size2() != TDim)
         rData.NodalVelocity.resize(TNumNodes, TDim);
 
-    for (std::size_t i_node = 0; i_node < number_of_nodes; ++i_node)
+    for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
     {
-        rData.NodalFmu[i_node] = 1.0;
         const array_1d<double, 3>& rVelocity =
             this->GetGeometry()[i_node].FastGetSolutionStepValue(VELOCITY);
         for (unsigned int i_dim = 0; i_dim < TDim; ++i_dim)
@@ -432,21 +416,21 @@ void RansEvmKAdjoint<TDim, TNumNodes>::CalculateElementData(RansEvmKAdjointData&
 
 template <unsigned int TDim, unsigned int TNumNodes>
 double RansEvmKAdjoint<TDim, TNumNodes>::CalculateEffectiveKinematicViscosity(
-    const RansEvmKAdjointData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
+    const RansEvmKAdjointData<TNumNodes>& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
 {
     return rCurrentData.EffectiveKinematicViscosity;
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
 double RansEvmKAdjoint<TDim, TNumNodes>::CalculateReactionTerm(
-    const RansEvmKAdjointData& rData, const ProcessInfo& rCurrentProcessInfo) const
+    const RansEvmKAdjointData<TNumNodes>& rData, const ProcessInfo& rCurrentProcessInfo) const
 {
     return rData.Gamma + 2 * rData.VelocityDivergence / 3.0;
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
 double RansEvmKAdjoint<TDim, TNumNodes>::CalculateSourceTerm(
-    const RansEvmKAdjointData& rData, const ProcessInfo& rCurrentProcessInfo) const
+    const RansEvmKAdjointData<TNumNodes>& rData, const ProcessInfo& rCurrentProcessInfo) const
 {
     BoundedMatrix<double, TDim, TDim> velocity_gradient_matrix;
     this->CalculateGradient(velocity_gradient_matrix, VELOCITY, rData.ShapeFunctionDerivatives);
@@ -461,7 +445,7 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKAdjoint<TDim, TNumNodes>::CalculateEffectiveKinematicViscosityScalarDerivatives(
     BoundedVector<double, TNumNodes>& rOutput,
     const Variable<double>& rDerivativeVariable,
-    const RansEvmKAdjointData& rCurrentData,
+    const RansEvmKAdjointData<TNumNodes>& rCurrentData,
     const ProcessInfo& rCurrentProcessInfo) const
 {
     KRATOS_TRY
@@ -499,7 +483,7 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKAdjoint<TDim, TNumNodes>::CalculateReactionTermScalarDerivatives(
     BoundedVector<double, TNumNodes>& rOutput,
     const Variable<double>& rDerivativeVariable,
-    const RansEvmKAdjointData& rCurrentData,
+    const RansEvmKAdjointData<TNumNodes>& rCurrentData,
     const ProcessInfo& rCurrentProcessInfo) const
 {
     if (rDerivativeVariable == TURBULENT_KINETIC_ENERGY)
@@ -543,7 +527,7 @@ template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKAdjoint<TDim, TNumNodes>::CalculateSourceTermScalarDerivatives(
     BoundedVector<double, TNumNodes>& rOutput,
     const Variable<double>& rDerivativeVariable,
-    const RansEvmKAdjointData& rCurrentData,
+    const RansEvmKAdjointData<TNumNodes>& rCurrentData,
     const ProcessInfo& rCurrentProcessInfo) const
 {
     if (rDerivativeVariable == TURBULENT_KINETIC_ENERGY)
@@ -607,21 +591,27 @@ void RansEvmKAdjoint<TDim, TNumNodes>::Calculate(const Variable<Matrix>& rVariab
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKAdjoint<TDim, TNumNodes>::CalculateEffectiveKinematicViscosityVelocityDerivatives(
-    BoundedMatrix<double, TNumNodes, TDim>& rOutput, const RansEvmKAdjointData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+    const RansEvmKAdjointData<TNumNodes>& rCurrentData,
+    const ProcessInfo& rCurrentProcessInfo) const
 {
     rOutput.clear();
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKAdjoint<TDim, TNumNodes>::CalculateReactionTermVelocityDerivatives(
-    BoundedMatrix<double, TNumNodes, TDim>& rOutput, const RansEvmKAdjointData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+    const RansEvmKAdjointData<TNumNodes>& rCurrentData,
+    const ProcessInfo& rCurrentProcessInfo) const
 {
     noalias(rOutput) = rCurrentData.ShapeFunctionDerivatives * (2.0 / 3.0);
 }
 
 template <unsigned int TDim, unsigned int TNumNodes>
 void RansEvmKAdjoint<TDim, TNumNodes>::CalculateSourceTermVelocityDerivatives(
-    BoundedMatrix<double, TNumNodes, TDim>& rOutput, const RansEvmKAdjointData& rCurrentData, const ProcessInfo& rCurrentProcessInfo) const
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+    const RansEvmKAdjointData<TNumNodes>& rCurrentData,
+    const ProcessInfo& rCurrentProcessInfo) const
 {
     BoundedMatrix<double, TDim, TDim> velocity_gradient;
     this->CalculateGradient(velocity_gradient, VELOCITY, rCurrentData.ShapeFunctionDerivatives);
@@ -634,7 +624,7 @@ void RansEvmKAdjoint<TDim, TNumNodes>::CalculateSourceTermVelocityDerivatives(
 
 template <unsigned int TDim, unsigned int TNumNodes>
 double RansEvmKAdjoint<TDim, TNumNodes>::CalculateEffectiveKinematicViscosityShapeSensitivity(
-    const RansEvmKAdjointData& rCurrentData,
+    const RansEvmKAdjointData<TNumNodes>& rCurrentData,
     const ShapeParameter& rShapeDerivative,
     const double detJ_deriv,
     const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
@@ -645,7 +635,7 @@ double RansEvmKAdjoint<TDim, TNumNodes>::CalculateEffectiveKinematicViscositySha
 
 template <unsigned int TDim, unsigned int TNumNodes>
 double RansEvmKAdjoint<TDim, TNumNodes>::CalculateReactionTermShapeSensitivity(
-    const RansEvmKAdjointData& rCurrentData,
+    const RansEvmKAdjointData<TNumNodes>& rCurrentData,
     const ShapeParameter& rShapeDerivative,
     const double detJ_deriv,
     const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,
@@ -656,7 +646,7 @@ double RansEvmKAdjoint<TDim, TNumNodes>::CalculateReactionTermShapeSensitivity(
 
 template <unsigned int TDim, unsigned int TNumNodes>
 double RansEvmKAdjoint<TDim, TNumNodes>::CalculateSourceTermShapeSensitivity(
-    const RansEvmKAdjointData& rCurrentData,
+    const RansEvmKAdjointData<TNumNodes>& rCurrentData,
     const ShapeParameter& rShapeDerivative,
     const double detJ_deriv,
     const GeometricalSensitivityUtility::ShapeFunctionsGradientType& rDN_Dx_deriv,

@@ -140,6 +140,34 @@ public:
     Matrix InverseLocalRotation(const int node_nr) const;
     Vector LocalInternalIntermediateForces() const;
 
+
+    void CalculateConsistentMassMatrix(MatrixType& rMassMatrix, const ProcessInfo& rCurrentProcessInfo) const;
+    void CalculateLumpedMassMatrix(MatrixType& rMassMatrix, const ProcessInfo& rCurrentProcessInfo) const;
+    void CalculateMassMatrix(MatrixType& rMassMatrix, ProcessInfo& rCurrentProcessInfo) override;
+    void CalculateDampingMatrix(MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo) override;
+    void AddExplicitContribution(const VectorType& rRHSVector, const Variable<VectorType>& rRHSVariable,
+        Variable<array_1d<double, 3>>& rDestinationVariable,const ProcessInfo& rCurrentProcessInfo) override;
+
+
+    void GetValueOnIntegrationPoints(
+    const Variable<array_1d<double, 3>>& rVariable,
+    std::vector<array_1d<double, 3>>& rOutput,
+    const ProcessInfo& rCurrentProcessInfo) override;
+
+    void CalculateOnIntegrationPoints(
+    const Variable<array_1d<double, 3>>& rVariable,
+    std::vector<array_1d<double, 3>>& rOutput,
+    const ProcessInfo& rCurrentProcessInfo) override;
+
+    IntegrationMethod GetIntegrationMethod() const override;
+
+    void CalculateAndAddWorkEquivalentNodalForcesLineLoad(
+    const BoundedVector<double, msDimension> ForceInput,
+    BoundedVector<double, msElementSize>
+    & rRightHandSideVector,const double GeometryLength) const;
+
+    BoundedVector<double, msElementSize> CalculateBodyForces() const;
+
     void CalculateLocalSystem(
         MatrixType& rLeftHandSideMatrix,
         VectorType& rRightHandSideVector,

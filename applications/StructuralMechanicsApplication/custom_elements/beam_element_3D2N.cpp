@@ -188,7 +188,6 @@ void BeamElement3D2N::GetValuesVector(Vector& rValues, int Step)
     KRATOS_CATCH("")
 }
 
-
 Matrix BeamElement3D2N::CreateElementStiffnessMatrix_Material() const
 {
 
@@ -849,6 +848,7 @@ void BeamElement3D2N::ConstCalculateRightHandSide(
     KRATOS_TRY;
     rRightHandSideVector = ZeroVector(msElementSize);
     noalias(rRightHandSideVector) -= CalculateGlobalNodalForces();
+    noalias(rRightHandSideVector) += CalculateBodyForces();
     KRATOS_CATCH("")
 }
 
@@ -901,6 +901,435 @@ double BeamElement3D2N::CalculateShearModulus() const
     return G;
     KRATOS_CATCH("")
 }
+
+void BeamElement3D2N::CalculateConsistentMassMatrix(
+    MatrixType& rMassMatrix, const ProcessInfo& rCurrentProcessInfo) const
+{
+    KRATOS_TRY;
+
+    if (rMassMatrix.size1() != msElementSize) {
+        rMassMatrix.resize(msElementSize, msElementSize, false);
+    }
+    rMassMatrix = ZeroMatrix(msElementSize, msElementSize);
+
+    const double L = StructuralMechanicsElementUtilities::CalculateReferenceLength3D2N(*this);
+    const double rho = StructuralMechanicsElementUtilities::GetDensityForMassMatrixComputation(*this);
+    const double A = GetProperties()[CROSS_AREA];
+    const double Iy = GetProperties()[I22];
+    const double Iz = GetProperties()[I33];
+
+
+    double I_t = 0.00;
+    if (GetProperties().Has(MASS_MOMENT_OF_INERTIA)){
+        I_t = GetProperties()[MASS_MOMENT_OF_INERTIA];
+    }
+    else {
+        //This is an approximation for a circular cross section
+        I_t = Iy + Iz;
+    }
+
+    rMassMatrix(0,0) = (1.0/3.0)*A*L*rho;
+    rMassMatrix(0,6) = 0.16666666666666669*A*L*rho;
+    rMassMatrix(1,1) = 0.371428571428571*A*L*rho;
+    rMassMatrix(1,5) = 0.052380952380952528*A*std::pow(L, 2)*rho;
+    rMassMatrix(1,7) = 0.12857142857142856*A*L*rho;
+    rMassMatrix(1,11) = -0.030952380952380898*A*std::pow(L, 2)*rho;
+    rMassMatrix(2,2) = 0.371428571428571*A*L*rho;
+    rMassMatrix(2,4) = -0.052380952380952639*A*std::pow(L, 2)*rho;
+    rMassMatrix(2,8) = 0.12857142857142856*A*L*rho;
+    rMassMatrix(2,10) = 0.030952380952380731*A*std::pow(L, 2)*rho;
+    rMassMatrix(3,3) = (1.0/3.0)*I_t*L*rho;
+    rMassMatrix(3,9) = 0.16666666666666669*I_t*L*rho;
+    rMassMatrix(4,2) = -0.052380952380952639*A*std::pow(L, 2)*rho;
+    rMassMatrix(4,4) = 0.009523809523809601*A*std::pow(L, 3)*rho;
+    rMassMatrix(4,8) = -0.030952380952380842*A*std::pow(L, 2)*rho;
+    rMassMatrix(4,10) = -0.0071428571428571175*A*std::pow(L, 3)*rho;
+    rMassMatrix(5,1) = 0.052380952380952528*A*std::pow(L, 2)*rho;
+    rMassMatrix(5,5) = 0.009523809523809601*A*std::pow(L, 3)*rho;
+    rMassMatrix(5,7) = 0.030952380952380842*A*std::pow(L, 2)*rho;
+    rMassMatrix(5,11) = -0.0071428571428571175*A*std::pow(L, 3)*rho;
+    rMassMatrix(6,0) = 0.16666666666666669*A*L*rho;
+    rMassMatrix(6,6) = 0.33333333333333326*A*L*rho;
+    rMassMatrix(7,1) = 0.12857142857142856*A*L*rho;
+    rMassMatrix(7,5) = 0.030952380952380842*A*std::pow(L, 2)*rho;
+    rMassMatrix(7,7) = 0.37142857142857144*A*L*rho;
+    rMassMatrix(7,11) = -0.052380952380952528*A*std::pow(L, 2)*rho;
+    rMassMatrix(8,2) = 0.12857142857142856*A*L*rho;
+    rMassMatrix(8,4) = -0.030952380952380842*A*std::pow(L, 2)*rho;
+    rMassMatrix(8,8) = 0.37142857142857144*A*L*rho;
+    rMassMatrix(8,10) = 0.052380952380952528*A*std::pow(L, 2)*rho;
+    rMassMatrix(9,3) = 0.16666666666666669*I_t*L*rho;
+    rMassMatrix(9,9) = 0.33333333333333326*I_t*L*rho;
+    rMassMatrix(10,2) = 0.030952380952380731*A*std::pow(L, 2)*rho;
+    rMassMatrix(10,4) = -0.0071428571428571175*A*std::pow(L, 3)*rho;
+    rMassMatrix(10,8) = 0.052380952380952528*A*std::pow(L, 2)*rho;
+    rMassMatrix(10,10) = 0.0095238095238095455*A*std::pow(L, 3)*rho;
+    rMassMatrix(11,1) = -0.030952380952380898*A*std::pow(L, 2)*rho;
+    rMassMatrix(11,5) = -0.0071428571428571175*A*std::pow(L, 3)*rho;
+    rMassMatrix(11,7) = -0.052380952380952528*A*std::pow(L, 2)*rho;
+    rMassMatrix(11,11) = 0.0095238095238095455*A*std::pow(L, 3)*rho;
+
+
+    // rotate the consistent mass matrix
+    Matrix current_co_rotating_rotation_matrix = EMatrix();
+    rMassMatrix = prod(rMassMatrix,trans(current_co_rotating_rotation_matrix));
+    rMassMatrix = prod(current_co_rotating_rotation_matrix,rMassMatrix);
+    KRATOS_CATCH("")
+}
+
+void BeamElement3D2N::CalculateLumpedMassMatrix(
+    MatrixType& rMassMatrix, const ProcessInfo& rCurrentProcessInfo) const
+{
+    KRATOS_TRY;
+    if (rMassMatrix.size1() != msElementSize) {
+        rMassMatrix.resize(msElementSize, msElementSize, false);
+    }
+    rMassMatrix = ZeroMatrix(msElementSize, msElementSize);
+    const double A = GetProperties()[CROSS_AREA];
+    const double L = StructuralMechanicsElementUtilities::CalculateReferenceLength3D2N(*this);
+    const double rho = StructuralMechanicsElementUtilities::GetDensityForMassMatrixComputation(*this);
+
+    const double total_mass = A * L * rho;
+    const double temp = 0.50 * total_mass;
+
+    // w.r.t. Felippa - Chapter 31: LUMPED AND CONSISTENT MASS MATRICES - p.31–10
+    const double rotational_inertia_lumped = total_mass * L * L * GetProperties()[LUMPED_MASS_ROTATION_COEFFICIENT];
+
+    // translatonal mass
+    for (int i = 0; i < msNumberOfNodes; ++i) {
+        for (int j = 0; j < msDimension; ++j) {
+            int index = i * (msDimension * 2) + j;
+            rMassMatrix(index, index) = temp;
+
+            // add rotational inertia
+            rMassMatrix(index+msDimension, index+msDimension) = rotational_inertia_lumped;
+        }
+    }
+
+    KRATOS_CATCH("")
+}
+
+void BeamElement3D2N::CalculateMassMatrix(MatrixType& rMassMatrix,
+        ProcessInfo& rCurrentProcessInfo)
+{
+    KRATOS_TRY;
+    if (rMassMatrix.size1() != msElementSize) {
+        rMassMatrix.resize(msElementSize, msElementSize, false);
+    }
+    rMassMatrix = ZeroMatrix(msElementSize, msElementSize);
+
+    bool use_consistent_mass_matrix = false;
+
+    if (GetProperties().Has(USE_CONSISTENT_MASS_MATRIX)) {
+        use_consistent_mass_matrix = GetProperties()[USE_CONSISTENT_MASS_MATRIX];
+    }
+
+    if (use_consistent_mass_matrix) CalculateConsistentMassMatrix(rMassMatrix, rCurrentProcessInfo);
+    else CalculateLumpedMassMatrix(rMassMatrix, rCurrentProcessInfo);
+
+    KRATOS_CATCH("")
+}
+
+void BeamElement3D2N::CalculateDampingMatrix(
+    MatrixType& rDampingMatrix, ProcessInfo& rCurrentProcessInfo)
+{
+    StructuralMechanicsElementUtilities::CalculateRayleighDampingMatrix(
+        *this,
+        rDampingMatrix,
+        rCurrentProcessInfo,
+        msElementSize);
+}
+
+BoundedVector<double, BeamElement3D2N::msElementSize> BeamElement3D2N::CalculateBodyForces() const
+{
+    KRATOS_TRY
+    // getting shapefunctionvalues for linear SF
+    const Matrix& Ncontainer =
+        GetGeometry().ShapeFunctionsValues(GeometryData::GI_GAUSS_1);
+
+    BoundedVector<double, msDimension> equivalent_line_load =
+        ZeroVector(msDimension);
+    BoundedVector<double, msElementSize> body_forces_global =
+        ZeroVector(msElementSize);
+
+    const double A = GetProperties()[CROSS_AREA];
+    const double l = StructuralMechanicsElementUtilities::CalculateCurrentLength3D2N(*this);
+    const double rho = StructuralMechanicsElementUtilities::GetDensityForMassMatrixComputation(*this);
+
+    // calculating equivalent line load
+    for (int i = 0; i < msNumberOfNodes; ++i) {
+        noalias(equivalent_line_load) +=
+            (A * rho * Ncontainer(0, i)) *
+            GetGeometry()[i].FastGetSolutionStepValue(VOLUME_ACCELERATION);
+    }
+
+    // adding the nodal forces
+    for (int i = 0; i < msNumberOfNodes; ++i) {
+        int index = i * msLocalSize;
+        for (int j = 0; j < msDimension; ++j) {
+            body_forces_global[j + index] =
+                equivalent_line_load[j] * Ncontainer(0, i) * l;
+        }
+    }
+
+    // adding the nodal moments
+    CalculateAndAddWorkEquivalentNodalForcesLineLoad(equivalent_line_load,
+            body_forces_global, l);
+
+    // return the total ForceVector
+    return body_forces_global;
+    KRATOS_CATCH("")
+}
+
+void BeamElement3D2N::AddExplicitContribution(
+    const VectorType& rRHSVector, const Variable<VectorType>& rRHSVariable,
+    Variable<array_1d<double, 3>>& rDestinationVariable,
+    const ProcessInfo& rCurrentProcessInfo
+)
+{
+    KRATOS_TRY;
+
+    BoundedVector<double, msElementSize> damping_residual_contribution = ZeroVector(msElementSize);
+    // Calculate damping contribution to residual -->
+    if ((GetProperties().Has(RAYLEIGH_ALPHA) ||
+            GetProperties().Has(RAYLEIGH_BETA)) &&
+            (rDestinationVariable != NODAL_INERTIA)) {
+        Vector current_nodal_velocities = ZeroVector(msElementSize);
+        GetFirstDerivativesVector(current_nodal_velocities);
+        Matrix damping_matrix = ZeroMatrix(msElementSize, msElementSize);
+        ProcessInfo temp_process_information; // cant pass const ProcessInfo
+        CalculateDampingMatrix(damping_matrix, temp_process_information);
+        // current residual contribution due to damping
+        noalias(damping_residual_contribution) = prod(damping_matrix, current_nodal_velocities);
+    }
+
+    if (rRHSVariable == RESIDUAL_VECTOR &&
+            rDestinationVariable == FORCE_RESIDUAL) {
+
+        for (IndexType i = 0; i < msNumberOfNodes; ++i) {
+            const SizeType index = msLocalSize * i;
+
+            array_1d<double, 3>& r_force_residual = GetGeometry()[i].FastGetSolutionStepValue(FORCE_RESIDUAL);
+
+            for (IndexType j = 0; j < msDimension; ++j) {
+                #pragma omp atomic
+                r_force_residual[j] += rRHSVector[index + j] - damping_residual_contribution[index + j];
+            }
+        }
+    }
+
+    if (rRHSVariable == RESIDUAL_VECTOR &&
+            rDestinationVariable == MOMENT_RESIDUAL) {
+
+        for (IndexType i = 0; i < msNumberOfNodes; ++i) {
+            const SizeType index = (msLocalSize * i) + msDimension;
+
+            array_1d<double, 3>& r_moment_residual = GetGeometry()[i].FastGetSolutionStepValue(MOMENT_RESIDUAL);
+
+            for (IndexType j = 0; j < msDimension; ++j) {
+                #pragma omp atomic
+                r_moment_residual[j] += rRHSVector[index + j] - damping_residual_contribution[index + j];
+            }
+        }
+    }
+
+    if (rDestinationVariable == NODAL_INERTIA) {
+        Matrix element_mass_matrix = ZeroMatrix(msElementSize, msElementSize);
+        ProcessInfo temp_info; // Dummy
+        CalculateMassMatrix(element_mass_matrix, temp_info);
+
+        for (IndexType i = 0; i < msNumberOfNodes; ++i) {
+            double aux_nodal_mass = 0.0;
+            array_1d<double, 3> aux_nodal_inertia(3, 0.0);
+
+            const SizeType index = i * msLocalSize;
+
+            for (IndexType j = 0; j < msElementSize; ++j) {
+                aux_nodal_mass += element_mass_matrix(index, j);
+                for (IndexType k = 0; k < msDimension; ++k) {
+                    aux_nodal_inertia[k] += element_mass_matrix(index + msDimension + k, j);
+                }
+            }
+
+            #pragma omp atomic
+            GetGeometry()[i].GetValue(NODAL_MASS) += aux_nodal_mass;
+
+            array_1d<double, 3>& r_nodal_inertia = GetGeometry()[i].GetValue(NODAL_INERTIA);
+            for (IndexType k = 0; k < msDimension; ++k) {
+                #pragma omp atomic
+                r_nodal_inertia[k] += std::abs(aux_nodal_inertia[k]);
+            }
+        }
+    }
+
+    KRATOS_CATCH("")
+}
+
+void BeamElement3D2N::CalculateAndAddWorkEquivalentNodalForcesLineLoad(
+    const BoundedVector<double, BeamElement3D2N::msDimension> ForceInput,
+    BoundedVector<double, BeamElement3D2N::msElementSize>
+    & rRightHandSideVector,
+    const double GeometryLength) const
+{
+    KRATOS_TRY;
+    // calculate orthogonal load vector
+    const double numerical_limit = std::numeric_limits<double>::epsilon();
+    Vector geometric_orientation = ZeroVector(msDimension);
+    geometric_orientation[0] =
+        GetGeometry()[1].X() - GetGeometry()[0].X();
+    geometric_orientation[1] =
+        GetGeometry()[1].Y() - GetGeometry()[0].Y();
+    if (msDimension == 3) {
+        geometric_orientation[2] =
+            GetGeometry()[1].Z() - GetGeometry()[0].Z();
+    }
+
+    const double vector_norm_a = MathUtils<double>::Norm(geometric_orientation);
+    if (vector_norm_a > numerical_limit) {
+        geometric_orientation /= vector_norm_a;
+    }
+
+    Vector line_load_direction = ZeroVector(msDimension);
+    for (int i = 0; i < msDimension; ++i) {
+        line_load_direction[i] = ForceInput[i];
+    }
+
+    const double vector_norm_b = MathUtils<double>::Norm(line_load_direction);
+    if (vector_norm_b > numerical_limit) {
+        line_load_direction /= vector_norm_b;
+    }
+
+    double cos_angle = 0.00;
+    for (int i = 0; i < msDimension; ++i) {
+        cos_angle += line_load_direction[i] * geometric_orientation[i];
+    }
+
+    const double sin_angle = std::sqrt(1.00 - (cos_angle * cos_angle));
+    const double norm_force_vector_orthogonal = sin_angle * vector_norm_b;
+
+    Vector node_a = ZeroVector(msDimension);
+    node_a[0] = GetGeometry()[0].X();
+    node_a[1] = GetGeometry()[0].Y();
+    if (msDimension == 3) {
+        node_a[2] = GetGeometry()[0].Z();
+    }
+
+    Vector node_b = ZeroVector(msDimension);
+    node_b = node_a + line_load_direction;
+
+    Vector node_c = ZeroVector(msDimension);
+    node_c = node_a + (geometric_orientation * cos_angle);
+
+    Vector load_orthogonal_direction = ZeroVector(msDimension);
+    load_orthogonal_direction = node_b - node_c;
+    const double vector_norm_c =
+        MathUtils<double>::Norm(load_orthogonal_direction);
+    if (vector_norm_c > numerical_limit) {
+        load_orthogonal_direction /= vector_norm_c;
+    }
+
+    // now caluclate respective work equivilent nodal moments
+
+    const double custom_moment =
+        norm_force_vector_orthogonal * GeometryLength * GeometryLength / 12.00;
+
+    Vector moment_a = ZeroVector(msDimension);
+    moment_a = MathUtils<double>::CrossProduct(geometric_orientation,
+               load_orthogonal_direction);
+    moment_a *= custom_moment;
+
+    for (int i = 0; i < msDimension; ++i) {
+        rRightHandSideVector[(1 * msDimension) + i] += moment_a[i];
+        rRightHandSideVector[(3 * msDimension) + i] -= moment_a[i];
+    }
+
+    KRATOS_CATCH("")
+}
+
+BeamElement3D2N::IntegrationMethod BeamElement3D2N::GetIntegrationMethod() const
+{
+    // do this to have 3GP as an output in GID
+    return Kratos::GeometryData::GI_GAUSS_3;
+}
+
+void BeamElement3D2N::CalculateOnIntegrationPoints(
+    const Variable<array_1d<double, 3>>& rVariable,
+    std::vector<array_1d<double, 3>>& rOutput,
+    const ProcessInfo& rCurrentProcessInfo)
+{
+
+    KRATOS_TRY
+    // element with two nodes can only represent results at one node
+    const unsigned int& write_points_number =
+        GetGeometry().IntegrationPointsNumber(Kratos::GeometryData::GI_GAUSS_3);
+    if (rOutput.size() != write_points_number) {
+        rOutput.resize(write_points_number);
+    }
+
+
+    // rOutput[GP 1,2,3][x,y,z]
+
+    if (rVariable == MOMENT) {
+        Vector nodal_forces_local_qe = LocalInternalForces();
+        rOutput[0][0] = -1.0 * nodal_forces_local_qe[1] * 0.75 + nodal_forces_local_qe[4] * 0.25;
+        rOutput[1][0] = -1.0 * nodal_forces_local_qe[1] * 0.50 + nodal_forces_local_qe[4] * 0.50;
+        rOutput[2][0] = -1.0 * nodal_forces_local_qe[1] * 0.25 + nodal_forces_local_qe[4] * 0.75;
+
+        rOutput[0][1] = -1.0 * (nodal_forces_local_qe[2] - (nodal_forces_local_qe[2]+nodal_forces_local_qe[5]) * 0.25);
+        rOutput[1][1] = -1.0 * (nodal_forces_local_qe[2] - (nodal_forces_local_qe[2]+nodal_forces_local_qe[5]) * 0.50);
+        rOutput[2][1] = -1.0 * (nodal_forces_local_qe[2] - (nodal_forces_local_qe[2]+nodal_forces_local_qe[5]) * 0.75);
+
+        rOutput[0][2] = (nodal_forces_local_qe[3] - (nodal_forces_local_qe[3]+nodal_forces_local_qe[6]) * 0.25);
+        rOutput[1][2] = (nodal_forces_local_qe[3] - (nodal_forces_local_qe[3]+nodal_forces_local_qe[6]) * 0.50);
+        rOutput[2][2] = (nodal_forces_local_qe[3] - (nodal_forces_local_qe[3]+nodal_forces_local_qe[6]) * 0.75);
+    } else if (rVariable == FORCE) {
+        Vector nodal_forces_local_qe = LocalInternalForces();
+        const double l = StructuralMechanicsElementUtilities::CalculateCurrentLength3D2N(*this);
+
+        rOutput[0][0] = nodal_forces_local_qe[0];
+        rOutput[1][0] = nodal_forces_local_qe[0];
+        rOutput[2][0] = nodal_forces_local_qe[0];
+
+        rOutput[0][1] = -1.0 * (nodal_forces_local_qe[3]+nodal_forces_local_qe[6]) / l;
+        rOutput[1][1] = -1.0 * (nodal_forces_local_qe[3]+nodal_forces_local_qe[6]) / l;
+        rOutput[2][1] = -1.0 * (nodal_forces_local_qe[3]+nodal_forces_local_qe[6]) / l;
+
+        rOutput[0][2] = (nodal_forces_local_qe[2]+nodal_forces_local_qe[5]) / l;
+        rOutput[1][2] = (nodal_forces_local_qe[2]+nodal_forces_local_qe[5]) / l;
+        rOutput[2][2] = (nodal_forces_local_qe[2]+nodal_forces_local_qe[5]) / l;
+    }
+
+    else if (rVariable == LOCAL_AXIS_1) {
+        BoundedMatrix<double, msElementSize, msElementSize> rotation_matrix = CoRotatingCS();
+        for (SizeType i =0; i<msDimension; ++i) {
+            rOutput[1][i] = column(rotation_matrix, 0)[i];
+        }
+    } else if (rVariable == LOCAL_AXIS_2) {
+        BoundedMatrix<double, msElementSize, msElementSize> rotation_matrix = CoRotatingCS();
+        for (SizeType i =0; i<msDimension; ++i) {
+            rOutput[1][i] = column(rotation_matrix, 1)[i];
+        }
+    } else if (rVariable == LOCAL_AXIS_3) {
+        BoundedMatrix<double, msElementSize, msElementSize> rotation_matrix = CoRotatingCS();
+        for (SizeType i =0; i<msDimension; ++i) {
+            rOutput[1][i] = column(rotation_matrix, 2)[i];
+        }
+    }
+
+
+    KRATOS_CATCH("")
+}
+
+void BeamElement3D2N::GetValueOnIntegrationPoints(
+    const Variable<array_1d<double, 3>>& rVariable,
+    std::vector<array_1d<double, 3>>& rOutput,
+    const ProcessInfo& rCurrentProcessInfo)
+{
+    KRATOS_TRY;
+    CalculateOnIntegrationPoints(rVariable, rOutput, rCurrentProcessInfo);
+    KRATOS_CATCH("")
+}
+
 
 int BeamElement3D2N::Check(const ProcessInfo& rCurrentProcessInfo)
 {

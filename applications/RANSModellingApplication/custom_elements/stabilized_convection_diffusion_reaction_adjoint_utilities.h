@@ -117,6 +117,103 @@ inline void CalculateCrossWindDiffusionCoeffScalarDerivatives(
     noalias(rOutput) += rPsiTwoScalarDerivatives;
 }
 
+template <std::size_t TNumNodes>
+inline void CalculateStreamLineDiffusionCoeffScalarDerivatives(
+    BoundedVector<double, TNumNodes>& rOutput,
+    const double element_length,
+    const double tau,
+    const double velocity_norm,
+    const double reaction_tilde,
+    const double psi_one,
+    const double psi_two,
+    const Vector& rPsiOneScalarDerivatives,
+    const Vector& rPsiTwoScalarDerivatives,
+    const Vector& rTauScalarDerivatives,
+    const Vector& rReactionTildeScalarDerivatives,
+    const Vector& rEffectiveViscosityScalarDerivatives)
+{
+    noalias(rOutput) = rPsiOneScalarDerivatives;
+    noalias(rOutput) -= rTauScalarDerivatives * (velocity_norm * reaction_tilde);
+    noalias(rOutput) -= rReactionTildeScalarDerivatives * (tau * velocity_norm);
+
+    const double coeff = psi_one - tau * velocity_norm * reaction_tilde;
+    noalias(rOutput) = rOutput * (0.5 * element_length * (coeff) / (std::abs(coeff)) +
+                                  std::numeric_limits<double>::epsilon());
+
+    noalias(rOutput) += rPsiTwoScalarDerivatives;
+    noalias(rOutput) -= rEffectiveViscosityScalarDerivatives;
+    noalias(rOutput) -= rTauScalarDerivatives * std::pow(velocity_norm, 2);
+}
+
+template <std::size_t TDim, std::size_t TNumNodes>
+inline void CalculateStreamLineDiffusionCoeffVelocityDerivatives(
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+    const double element_length,
+    const double tau,
+    const double velocity_norm,
+    const double reaction_tilde,
+    const double psi_one,
+    const double psi_two,
+    const Matrix& rVelocityMagnitudeDerivatives,
+    const Matrix& rPsiOneDerivatives,
+    const Matrix& rPsiTwoDerivatives,
+    const Matrix& rTauDerivatives,
+    const Matrix& rReactionTildeDerivatives,
+    const Matrix& rEffectiveViscosityDerivatives,
+    const Matrix& rElementLengthDerivatives)
+{
+    noalias(rOutput) =
+        (rPsiOneDerivatives - rTauDerivatives * (velocity_norm * reaction_tilde) -
+         rVelocityMagnitudeDerivatives * (tau * reaction_tilde) -
+         rReactionTildeDerivatives * (tau * velocity_norm));
+
+    const double coeff = psi_one - tau * velocity_norm * reaction_tilde;
+    noalias(rOutput) = rOutput * (0.5 * element_length * (coeff) / (std::abs(coeff)) +
+                                  std::numeric_limits<double>::epsilon());
+
+    noalias(rOutput) += rElementLengthDerivatives * (0.5 * std::abs(coeff));
+
+    noalias(rOutput) += rPsiTwoDerivatives;
+    noalias(rOutput) -= rEffectiveViscosityDerivatives;
+    noalias(rOutput) -= rTauDerivatives * std::pow(velocity_norm, 2);
+    noalias(rOutput) -= rVelocityMagnitudeDerivatives * (2.0 * tau * velocity_norm);
+}
+
+inline double CalculateStreamLineDiffusionCoeffShapeSensitivity(
+    const double psi_one,
+    const double psi_one_deriv,
+    const double tau,
+    const double tau_deriv,
+    const double velocity_magnitude,
+    const double reaction,
+    const double reaction_deriv,
+    const double element_length,
+    const double element_length_deriv,
+    const double effective_kinematic_viscosity_deriv,
+    const double psi_two_deriv,
+    const double bossak_alpha,
+    const double bossak_gamma,
+    const double delta_time,
+    const double DynamicTau)
+{
+    const double reaction_dynamics =
+        reaction + DynamicTau * (1 - bossak_alpha) / (bossak_gamma * delta_time);
+    const double coeff = psi_one - tau * velocity_magnitude * reaction_dynamics;
+    const double abs_coeff = std::abs(coeff);
+    double shape_sensitivity = 0.0;
+
+    shape_sensitivity += psi_one_deriv - tau_deriv * velocity_magnitude * reaction_dynamics -
+                         tau * velocity_magnitude * reaction_deriv;
+    shape_sensitivity *= 0.5 * coeff * element_length /
+                         (abs_coeff + std::numeric_limits<double>::epsilon());
+    shape_sensitivity += 0.5 * abs_coeff * element_length_deriv;
+    shape_sensitivity -= effective_kinematic_viscosity_deriv +
+                         tau_deriv * std::pow(velocity_magnitude, 2);
+    shape_sensitivity += psi_two_deriv;
+
+    return shape_sensitivity;
+}
+
 } // namespace StabilizedConvectionDiffusionReactionAdjointUtilities
 
 } // namespace Kratos

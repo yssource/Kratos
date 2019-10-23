@@ -665,14 +665,14 @@ public:
             reaction_derivatives(TNumNodes, TDim),
             velocity_magnitude_derivatives(TNumNodes, TDim),
             element_length_derivatives(TNumNodes, TDim),
-            tau_derivatives(TNumNodes, TDim), source_derivatives(TNumNodes, TDim),
+            source_derivatives(TNumNodes, TDim),
             absolute_residual_derivatives(TNumNodes, TDim),
             absolute_reaction_tilde_derivatives(TNumNodes, TDim),
             s_derivatives(TNumNodes, TDim), contravariant_metric_tensor(TDim, TDim);
 
-        BoundedMatrix<double, TNumNodes, TDim> psi_one_derivatives,
-            psi_two_derivatives, chi_derivatives, residual_derivatives,
-            positivity_preservation_coeff_derivatives,
+        BoundedMatrix<double, TNumNodes, TDim> tau_derivatives,
+            psi_one_derivatives, psi_two_derivatives, chi_derivatives,
+            residual_derivatives, positivity_preservation_coeff_derivatives,
             stream_line_diffusion_coeff_derivatives,
             cross_wind_diffusion_coeff_derivatives;
 
@@ -728,7 +728,7 @@ public:
                 velocity_magnitude_derivatives, contravariant_metric_tensor,
                 gauss_shape_functions);
 
-            this->CalculateStabilizationTauVelocityDerivatives(
+            StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateStabilizationTauVelocityDerivatives(
                 tau_derivatives, tau, effective_kinematic_viscosity, reaction,
                 element_length, velocity, contravariant_metric_tensor,
                 effective_kinematic_viscosity_derivatives, reaction_derivatives,
@@ -1763,66 +1763,6 @@ private:
     ///@name Private Operations
     ///@{
 
-    void CalculateStabilizationTauVelocityDerivatives(
-        Matrix& rOutput,
-        const double Tau,
-        const double EffectiveKinematicViscosity,
-        const double Reaction,
-        const double ElementLength,
-        const array_1d<double, 3>& rVelocity,
-        const Matrix& rContravariantMetricTensor,
-        const Matrix& rEffectiveKinematicViscosityVelocityDerivatives,
-        const Matrix& rReactionVelocityDerivatives,
-        const Matrix& rElementLengthDerivatives,
-        const Vector& rGaussShapeFunctions) const
-    {
-        Vector contravariant_metric_velocity(TDim);
-        const Vector& velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
-
-        noalias(contravariant_metric_velocity) =
-            prod(rContravariantMetricTensor, velocity) +
-            prod(trans(rContravariantMetricTensor), velocity);
-
-        for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
-            for (std::size_t i_dim = 0; i_dim < TDim; ++i_dim)
-                rOutput(i_node, i_dim) = 0.5 * rGaussShapeFunctions[i_node] *
-                                         contravariant_metric_velocity[i_dim];
-
-        noalias(rOutput) +=
-            rEffectiveKinematicViscosityVelocityDerivatives *
-            (144.0 * EffectiveKinematicViscosity / std::pow(ElementLength, 4));
-        noalias(rOutput) -= rElementLengthDerivatives *
-                            (288.0 * std::pow(EffectiveKinematicViscosity, 2) /
-                             std::pow(ElementLength, 5));
-        noalias(rOutput) += rReactionVelocityDerivatives * (Reaction);
-        noalias(rOutput) = rOutput * (-1.0 * std::pow(Tau, 3));
-    }
-
-    double CalculateStabilizationTauShapeSensitivity(const double Tau,
-                                                     const double VelocityMagnitude,
-                                                     const double ElementLength,
-                                                     const double ElementLengthDeriv,
-                                                     const double EffectiveKinematicViscosity,
-                                                     const double EffectiveKinematicViscosityDeriv,
-                                                     const double Reaction,
-                                                     const double ReactionDeriv) const
-    {
-        double shape_sensitivity = 0.0;
-
-        shape_sensitivity += 4.0 * std::pow(VelocityMagnitude, 2) *
-                             ElementLengthDeriv / std::pow(ElementLength, 3);
-        shape_sensitivity -= 144.0 * EffectiveKinematicViscosity *
-                             EffectiveKinematicViscosityDeriv /
-                             std ::pow(ElementLength, 4);
-        shape_sensitivity += 288.0 * std::pow(EffectiveKinematicViscosity, 2) *
-                             ElementLengthDeriv / std::pow(ElementLength, 5);
-        shape_sensitivity -= Reaction * ReactionDeriv;
-
-        shape_sensitivity *= std::pow(Tau, 3);
-
-        return shape_sensitivity;
-    }
-
     void CalculateVelocityMagnitudeVelocityDerivative(Matrix& rOutput,
                                                       const double VelocityMagnitude,
                                                       const array_1d<double, 3>& rVelocity,
@@ -2000,12 +1940,11 @@ private:
 
         Vector effective_kinematic_viscosity_derivatives(TNumNodes),
             reaction_derivatives(TNumNodes), source_derivatives(TNumNodes),
-            tau_derivatives(TNumNodes), s_derivatives(TNumNodes),
-            scalar_gradient_norm_derivative(TNumNodes),
+            s_derivatives(TNumNodes), scalar_gradient_norm_derivative(TNumNodes),
             absolute_residual_derivatives(TNumNodes),
             absolute_reaction_tilde_derivatives(TNumNodes);
 
-        BoundedVector<double, TNumNodes> psi_one_derivatives,
+        BoundedVector<double, TNumNodes> tau_derivatives, psi_one_derivatives,
             psi_two_derivatives, chi_derivatives, residual_derivatives,
             positivity_preserving_coeff_derivatives,
             streamline_diffusion_coeff_derivatives, crosswind_diffusion_coeff_derivatives;
@@ -2609,13 +2548,12 @@ private:
 
         Matrix contravariant_metric_tensor(TDim, TDim);
 
-        BoundedVector<double, TNumNodes> velocity_convective_terms;
+        BoundedVector<double, TNumNodes> velocity_convective_terms, tau_derivatives;
 
         TElementData current_data;
 
         Vector effective_kinematic_viscosity_derivatives(TNumNodes),
-            reaction_derivatives(TNumNodes), tau_derivatives(TNumNodes),
-            s_derivatives(TNumNodes);
+            reaction_derivatives(TNumNodes), s_derivatives(TNumNodes);
 
         for (unsigned int g = 0; g < num_gauss_points; g++)
         {
@@ -2875,10 +2813,11 @@ private:
                             velocity_magnitude, velocity, contravariant_metric_tensor,
                             contravariant_metric_tensor_deriv);
 
-                    const double tau_deriv = this->CalculateStabilizationTauShapeSensitivity(
-                        tau, velocity_magnitude, element_length,
-                        element_length_deriv, effective_kinematic_viscosity,
-                        effective_kinematic_viscosity_deriv, reaction, reaction_deriv);
+                    const double tau_deriv =
+                        StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateStabilizationTauShapeSensitivity(
+                            tau, velocity_magnitude, element_length,
+                            element_length_deriv, effective_kinematic_viscosity,
+                            effective_kinematic_viscosity_deriv, reaction, reaction_deriv);
 
                     const double chi_deriv =
                         StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateChiShapeSensitivity(

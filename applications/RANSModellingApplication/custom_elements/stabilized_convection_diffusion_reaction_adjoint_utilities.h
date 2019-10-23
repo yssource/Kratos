@@ -52,19 +52,81 @@ namespace StabilizedConvectionDiffusionReactionAdjointUtilities
  * @param rEffectiveKinematicViscosityScalarDerivatives  Scalar derivatives of effective kinematic viscosity $\left(\nu_{\phi,w}\right)$
  * @param rReactionScalarDerivatives                     Reaction scalar derivatives $\left(s_{\phi,w}\right)$
  */
-inline void CalculateStabilizationTauScalarDerivatives(Vector& rOutput,
-                                                       const double Tau,
-                                                       const double EffectiveKinematicViscosity,
-                                                       const double Reaction,
-                                                       const double ElementLength,
-                                                       const Vector& rEffectiveKinematicViscosityScalarDerivatives,
-                                                       const Vector& rReactionScalarDerivatives)
+template <std::size_t TNumNodes>
+inline void CalculateStabilizationTauScalarDerivatives(
+    BoundedVector<double, TNumNodes>& rOutput,
+    const double Tau,
+    const double EffectiveKinematicViscosity,
+    const double Reaction,
+    const double ElementLength,
+    const Vector& rEffectiveKinematicViscosityScalarDerivatives,
+    const Vector& rReactionScalarDerivatives)
 {
     noalias(rOutput) =
         (rEffectiveKinematicViscosityScalarDerivatives *
              (144 * EffectiveKinematicViscosity / std::pow(ElementLength, 4)) +
          rReactionScalarDerivatives * (Reaction)) *
         (-1.0 * std::pow(Tau, 3));
+}
+
+template <std::size_t TDim, std::size_t TNumNodes>
+inline void CalculateStabilizationTauVelocityDerivatives(
+    BoundedMatrix<double, TNumNodes, TDim>& rOutput,
+    const double Tau,
+    const double EffectiveKinematicViscosity,
+    const double Reaction,
+    const double ElementLength,
+    const array_1d<double, 3>& rVelocity,
+    const Matrix& rContravariantMetricTensor,
+    const Matrix& rEffectiveKinematicViscosityVelocityDerivatives,
+    const Matrix& rReactionVelocityDerivatives,
+    const Matrix& rElementLengthDerivatives,
+    const Vector& rGaussShapeFunctions)
+{
+    Vector contravariant_metric_velocity(TDim);
+    const Vector& velocity = RansCalculationUtilities().GetVector<TDim>(rVelocity);
+
+    noalias(contravariant_metric_velocity) =
+        prod(rContravariantMetricTensor, velocity) +
+        prod(trans(rContravariantMetricTensor), velocity);
+
+    for (std::size_t i_node = 0; i_node < TNumNodes; ++i_node)
+        for (std::size_t i_dim = 0; i_dim < TDim; ++i_dim)
+            rOutput(i_node, i_dim) = 0.5 * rGaussShapeFunctions[i_node] *
+                                     contravariant_metric_velocity[i_dim];
+
+    noalias(rOutput) +=
+        rEffectiveKinematicViscosityVelocityDerivatives *
+        (144.0 * EffectiveKinematicViscosity / std::pow(ElementLength, 4));
+    noalias(rOutput) -=
+        rElementLengthDerivatives *
+        (288.0 * std::pow(EffectiveKinematicViscosity, 2) / std::pow(ElementLength, 5));
+    noalias(rOutput) += rReactionVelocityDerivatives * (Reaction);
+    noalias(rOutput) = rOutput * (-1.0 * std::pow(Tau, 3));
+}
+
+inline double CalculateStabilizationTauShapeSensitivity(const double Tau,
+                                                        const double VelocityMagnitude,
+                                                        const double ElementLength,
+                                                        const double ElementLengthDeriv,
+                                                        const double EffectiveKinematicViscosity,
+                                                        const double EffectiveKinematicViscosityDeriv,
+                                                        const double Reaction,
+                                                        const double ReactionDeriv)
+{
+    double shape_sensitivity = 0.0;
+
+    shape_sensitivity += 4.0 * std::pow(VelocityMagnitude, 2) *
+                         ElementLengthDeriv / std::pow(ElementLength, 3);
+    shape_sensitivity -= 144.0 * EffectiveKinematicViscosity *
+                         EffectiveKinematicViscosityDeriv / std ::pow(ElementLength, 4);
+    shape_sensitivity += 288.0 * std::pow(EffectiveKinematicViscosity, 2) *
+                         ElementLengthDeriv / std::pow(ElementLength, 5);
+    shape_sensitivity -= Reaction * ReactionDeriv;
+
+    shape_sensitivity *= std::pow(Tau, 3);
+
+    return shape_sensitivity;
 }
 
 inline double CalculateScalarProduct(const Vector& rVector1, const array_1d<double, 3>& rVector2)

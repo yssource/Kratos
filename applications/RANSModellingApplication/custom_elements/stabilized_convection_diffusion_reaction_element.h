@@ -996,6 +996,11 @@ public:
         noalias(rOutput) = prod(trans(rParameterDerivatives), rParameterDerivatives);
     }
 
+    virtual double GetDeltaTime(const ProcessInfo& rProcessInfo) const
+    {
+        return rProcessInfo[DELTA_TIME];
+    }
+
     ///@}
     ///@name Access
     ///@{
@@ -1064,11 +1069,6 @@ protected:
     {
         for (IndexType iNode = 0; iNode < TNumNodes; ++iNode)
             rMassMatrix(iNode, iNode) += Mass;
-    }
-
-    virtual double GetDeltaTime(const ProcessInfo& rProcessInfo) const
-    {
-        return rProcessInfo[DELTA_TIME];
     }
 
     ///@}

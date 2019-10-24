@@ -52,13 +52,15 @@ void RunScalarSensitivityTest(
                          const Matrix&,
                          const typename TEvmAdjointElement::BaseType&,
                          const typename TEvmAdjointElement::BaseType::ConvectionDiffusionReactionAdjointDataType&,
-                         const ProcessInfo&)> CalculateElementScalarValueAdjointSensitivities,
+                         const ProcessInfo&,
+                         const int GaussIndex)> CalculateElementScalarValueAdjointSensitivities,
     std::function<double&(NodeType&)> PerturbVariable,
     std::function<double(const Vector&,
                          const Matrix&,
                          const typename TEvmElement::BaseType&,
                          const typename TEvmElement::BaseType::ConvectionDiffusionReactionDataType&,
-                         const ProcessInfo&)> CalculateElementScalarValue,
+                         const ProcessInfo&,
+                         const int GaussIndex)> CalculateElementScalarValue,
     std::function<void(ModelPart&)> UpdateVariablesInModelPart,
     const double Delta,
     const double RelativePrecision,
@@ -152,7 +154,7 @@ void RunScalarSensitivityTest(
             const double adjoint_scalar_value = CalculateElementScalarValueAdjointSensitivities(
                 adjoint_scalar_sensitivities, r_adjoint_gauss_shape_functions,
                 r_adjoint_gauss_shape_derivatives, r_rans_adjoint_element,
-                adjoint_data, r_adjoint_process_info);
+                adjoint_data, r_adjoint_process_info, g);
 
             // KRATOS_WATCH(adjoint_scalar_sensitivities);
 
@@ -172,7 +174,7 @@ void RunScalarSensitivityTest(
             // Check scalar value reference calculation
             const double scalar_value_reference = CalculateElementScalarValue(
                 primal_gauss_shape_functions, primal_gauss_shape_derivatives,
-                r_rans_primal_element, data, r_primal_process_info);
+                r_rans_primal_element, data, r_primal_process_info, g);
 
             KRATOS_CHECK_NEAR(adjoint_scalar_value, scalar_value_reference, 1e-12);
 
@@ -195,7 +197,7 @@ void RunScalarSensitivityTest(
                     primal_gauss_shape_derivatives, r_primal_process_info);
                 const double scalar_value = CalculateElementScalarValue(
                     primal_gauss_shape_functions, primal_gauss_shape_derivatives,
-                    r_rans_primal_element, data, r_primal_process_info);
+                    r_rans_primal_element, data, r_primal_process_info, g);
 
                 const double scalar_value_sensitivity =
                     (scalar_value - scalar_value_reference) / Delta;
@@ -222,12 +224,14 @@ void RunScalarKEpsilon2D3NElementTest(
                          const Matrix&,
                          const typename TEvmAdjointElement::BaseType&,
                          const typename TEvmAdjointElement::BaseType::ConvectionDiffusionReactionAdjointDataType&,
-                         const ProcessInfo&)> CalculateElementScalarValueAdjointSensitivities,
+                         const ProcessInfo&,
+                         const int GaussIndex)> CalculateElementScalarValueAdjointSensitivities,
     std::function<double(const Vector&,
                          const Matrix&,
                          const typename TEvmElement::BaseType&,
                          const typename TEvmElement::BaseType::ConvectionDiffusionReactionDataType&,
-                         const ProcessInfo&)> CalculateElementScalarValue,
+                         const ProcessInfo&,
+                         const int GaussIndex)> CalculateElementScalarValue,
     const double Delta,
     const double RelativePrecision,
     const double AbsolutePrecision)
@@ -241,6 +245,9 @@ void RunScalarKEpsilon2D3NElementTest(
     ModelPart& r_adjoint_model_part = adjoint_model.CreateModelPart("test");
     RansEvmKEpsilonModel::GenerateRansEvmKEpsilonElementTestModelPart(
         r_adjoint_model_part, AdjointElementName + "2D3N");
+
+    ProcessInfo& r_adjoint_process_info = r_adjoint_model_part.GetProcessInfo();
+    r_adjoint_process_info.SetValue(DELTA_TIME, r_adjoint_process_info[DELTA_TIME] * -1.0);
 
     std::vector<Process*> adjoint_processes_list;
     std::vector<Process*> primal_processes_list;

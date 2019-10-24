@@ -1381,6 +1381,11 @@ public:
         KRATOS_CATCH("");
     }
 
+    double GetDeltaTime(const ProcessInfo& rProcessInfo) const override
+    {
+        return -1.0 * rProcessInfo[DELTA_TIME];
+    }
+
     ///@}
     ///@name Input and output
     ///@{
@@ -1451,11 +1456,6 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
-
-    double GetDeltaTime(const ProcessInfo& rProcessInfo) const override
-    {
-        return -1.0 * rProcessInfo[DELTA_TIME];
-    }
 
     void AddPrimalSteadyTermScalarDerivatives(BoundedMatrix<double, TNumNodes, TNumNodes>& rLeftHandSideMatrix,
                                               const Variable<double>& rDerivativeVariable,

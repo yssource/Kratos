@@ -604,12 +604,6 @@ void RansEvmEpsilonAdjoint<TDim, TNumNodes>::CalculateSourceTermScalarDerivative
 
         noalias(rOutput) = theta_sensitivities * (p_k * c1) +
                            p_k_sensitivities * (rCurrentData.Gamma * c1);
-
-        KRATOS_WATCH(theta_sensitivities);
-        KRATOS_WATCH(p_k_sensitivities);
-        KRATOS_WATCH(p_k);
-        KRATOS_WATCH(c1);
-        KRATOS_WATCH(rCurrentData.Gamma);
     }
     else
     {

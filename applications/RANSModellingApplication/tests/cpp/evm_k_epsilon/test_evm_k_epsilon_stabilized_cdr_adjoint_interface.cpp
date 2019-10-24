@@ -48,12 +48,12 @@ void RunScalarSensitivityTest(
     ModelPart& rAdjointModelPart,
     std::vector<Process*>& rPrimalProcessList,
     std::vector<Process*>& rAdjointProcessList,
-    std::function<void(BoundedVector<double, TNumNodes>&,
-                       const Vector&,
-                       const Matrix&,
-                       const typename TEvmAdjointElement::BaseType&,
-                       const typename TEvmAdjointElement::BaseType::ConvectionDiffusionReactionAdjointDataType&,
-                       const ProcessInfo&)> CalculateElementScalarValueAdjointSensitivities,
+    std::function<double(BoundedVector<double, TNumNodes>&,
+                         const Vector&,
+                         const Matrix&,
+                         const typename TEvmAdjointElement::BaseType&,
+                         const typename TEvmAdjointElement::BaseType::ConvectionDiffusionReactionAdjointDataType&,
+                         const ProcessInfo&)> CalculateElementScalarValueAdjointSensitivities,
     std::function<double&(NodeType&)> PerturbVariable,
     std::function<double(const Vector&,
                          const Matrix&,
@@ -150,12 +150,12 @@ void RunScalarSensitivityTest(
                 r_adjoint_gauss_shape_derivatives, r_adjoint_process_info);
 
             BoundedVector<double, TNumNodes> adjoint_scalar_sensitivities;
-            CalculateElementScalarValueAdjointSensitivities(
+            const double adjoint_scalar_value = CalculateElementScalarValueAdjointSensitivities(
                 adjoint_scalar_sensitivities, r_adjoint_gauss_shape_functions,
                 r_adjoint_gauss_shape_derivatives, r_rans_adjoint_element,
                 adjoint_data, r_adjoint_process_info);
 
-            KRATOS_WATCH(adjoint_scalar_sensitivities);
+            // KRATOS_WATCH(adjoint_scalar_sensitivities);
 
             // Calculating reference scalar value
             execute_primal_process();
@@ -169,9 +169,13 @@ void RunScalarSensitivityTest(
             r_rans_primal_element.CalculateElementData(
                 data, primal_gauss_shape_functions,
                 primal_gauss_shape_derivatives, r_primal_process_info);
+
+            // Check scalar value reference calculation
             const double scalar_value_reference = CalculateElementScalarValue(
                 primal_gauss_shape_functions, primal_gauss_shape_derivatives,
                 r_rans_primal_element, data, r_primal_process_info);
+
+            KRATOS_CHECK_NEAR(adjoint_scalar_value, scalar_value_reference, 1e-12);
 
             for (unsigned int i_node = 0; i_node < TNumNodes; ++i_node)
             {
@@ -201,7 +205,7 @@ void RunScalarSensitivityTest(
                     adjoint_scalar_sensitivities[i_node], scalar_value_sensitivity,
                     RelativePrecision, AbsolutePrecision);
 
-                KRATOS_WATCH(scalar_value_sensitivity);
+                // KRATOS_WATCH(scalar_value_sensitivity);
 
                 PerturbVariable(r_node) -= Delta;
             }
@@ -214,12 +218,12 @@ void RunScalarKEpsilon2D3NElementTest(
     const std::string PrimalElementName,
     const std::string AdjointElementName,
     const Variable<double>& rPerturbVariable,
-    std::function<void(BoundedVector<double, 3>&,
-                       const Vector&,
-                       const Matrix&,
-                       const typename TEvmAdjointElement::BaseType&,
-                       const typename TEvmAdjointElement::BaseType::ConvectionDiffusionReactionAdjointDataType&,
-                       const ProcessInfo&)> CalculateElementScalarValueAdjointSensitivities,
+    std::function<double(BoundedVector<double, 3>&,
+                         const Vector&,
+                         const Matrix&,
+                         const typename TEvmAdjointElement::BaseType&,
+                         const typename TEvmAdjointElement::BaseType::ConvectionDiffusionReactionAdjointDataType&,
+                         const ProcessInfo&)> CalculateElementScalarValueAdjointSensitivities,
     std::function<double(const Vector&,
                          const Matrix&,
                          const typename TEvmElement::BaseType&,
@@ -282,6 +286,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateEffectiveKinematicViscosi
             const ProcessInfo& rProcessInfo) {
             rElement.CalculateEffectiveKinematicViscosityScalarDerivatives(
                 rOutput, perturb_variable, rData, rProcessInfo);
+            return rElement.CalculateEffectiveKinematicViscosity(
+                rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
 
     auto calculate_scalar_value =
@@ -314,7 +320,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateEffectiveKinematicViscosi
             const ProcessInfo& rProcessInfo) {
             rElement.CalculateEffectiveKinematicViscosityScalarDerivatives(
                 rOutput, perturb_variable, rData, rProcessInfo);
-            noalias(rOutput) = rOutput;
+            return rElement.CalculateEffectiveKinematicViscosity(
+                rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
 
     auto calculate_scalar_value =
@@ -347,7 +354,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateReactionTermScalarDerivat
             const ProcessInfo& rProcessInfo) {
             rElement.CalculateReactionTermScalarDerivatives(
                 rOutput, perturb_variable, rData, rProcessInfo);
-            noalias(rOutput) = rOutput;
+            return rElement.CalculateReactionTerm(
+                rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
 
     auto calculate_scalar_value =
@@ -380,7 +388,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateReactionTermScalarDerivat
             const ProcessInfo& rProcessInfo) {
             rElement.CalculateReactionTermScalarDerivatives(
                 rOutput, perturb_variable, rData, rProcessInfo);
-            noalias(rOutput) = rOutput;
+            return rElement.CalculateReactionTerm(
+                rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
 
     auto calculate_scalar_value =
@@ -413,7 +422,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateSourceTermScalarDerivativ
             const ProcessInfo& rProcessInfo) {
             rElement.CalculateSourceTermScalarDerivatives(
                 rOutput, perturb_variable, rData, rProcessInfo);
-            noalias(rOutput) = rOutput;
+            return rElement.CalculateSourceTerm(
+                rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
 
     auto calculate_scalar_value =
@@ -446,7 +456,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateSourceTermScalarDerivativ
             const ProcessInfo& rProcessInfo) {
             rElement.CalculateSourceTermScalarDerivatives(
                 rOutput, perturb_variable, rData, rProcessInfo);
-            noalias(rOutput) = rOutput;
+            return rElement.CalculateSourceTerm(
+                rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
 
     auto calculate_scalar_value =
@@ -479,6 +490,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonAdjoint2D3N_CalculateEffectiveKinematicV
             const ProcessInfo& rProcessInfo) {
             rElement.CalculateEffectiveKinematicViscosityScalarDerivatives(
                 rOutput, perturb_variable, rData, rProcessInfo);
+            return rElement.CalculateEffectiveKinematicViscosity(
+                rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
 
     auto calculate_scalar_value =
@@ -511,7 +524,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonAdjoint2D3N_CalculateEffectiveKinematicV
             const ProcessInfo& rProcessInfo) {
             rElement.CalculateEffectiveKinematicViscosityScalarDerivatives(
                 rOutput, perturb_variable, rData, rProcessInfo);
-            noalias(rOutput) = rOutput;
+            return rElement.CalculateEffectiveKinematicViscosity(
+                rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
 
     auto calculate_scalar_value =
@@ -544,7 +558,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonAdjoint2D3N_CalculateReactionTermScalarD
             const ProcessInfo& rProcessInfo) {
             rElement.CalculateReactionTermScalarDerivatives(
                 rOutput, perturb_variable, rData, rProcessInfo);
-            noalias(rOutput) = rOutput;
+            return rElement.CalculateReactionTerm(
+                rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
 
     auto calculate_scalar_value =
@@ -577,7 +592,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonAdjoint2D3N_CalculateReactionTermScalarD
             const ProcessInfo& rProcessInfo) {
             rElement.CalculateReactionTermScalarDerivatives(
                 rOutput, perturb_variable, rData, rProcessInfo);
-            noalias(rOutput) = rOutput;
+            return rElement.CalculateReactionTerm(
+                rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
 
     auto calculate_scalar_value =
@@ -610,7 +626,8 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonAdjoint2D3N_CalculateSourceTermScalarDer
             const ProcessInfo& rProcessInfo) {
             rElement.CalculateSourceTermScalarDerivatives(
                 rOutput, perturb_variable, rData, rProcessInfo);
-            noalias(rOutput) = rOutput;
+            return rElement.CalculateSourceTerm(
+                rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
         };
 
     auto calculate_scalar_value =
@@ -643,7 +660,10 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonAdjoint2D3N_CalculateSourceTermScalarDer
             const ProcessInfo& rProcessInfo) {
             rElement.CalculateSourceTermScalarDerivatives(
                 rOutput, perturb_variable, rData, rProcessInfo);
-            noalias(rOutput) = rOutput;
+
+            double temp = rElement.CalculateSourceTerm(
+                rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
+            return temp;
         };
 
     auto calculate_scalar_value =
@@ -651,13 +671,14 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmEpsilonAdjoint2D3N_CalculateSourceTermScalarDer
            const typename primal_element::BaseType& rElement,
            const typename primal_element::BaseType::ConvectionDiffusionReactionDataType& rData,
            const ProcessInfo& rProcessInfo) {
-            return rElement.CalculateSourceTerm(
+            double temp= rElement.CalculateSourceTerm(
                 rData, rShapeFunctions, rShapeDerivatives, rProcessInfo, 0);
+            return temp;
         };
 
     RunScalarKEpsilon2D3NElementTest<primal_element, adjoint_element>(
         "RansEvmEpsilon", "RansEvmEpsilonAdjoint", perturb_variable,
-        calculate_scalar_sensitivity, calculate_scalar_value, 1e-5, 1e-6, 1e-14);
+        calculate_scalar_sensitivity, calculate_scalar_value, 1e-8, 1e-6, 1e-6);
 }
 } // namespace Testing
 } // namespace Kratos

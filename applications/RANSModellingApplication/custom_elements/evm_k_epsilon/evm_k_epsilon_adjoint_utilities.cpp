@@ -14,6 +14,7 @@
 
 // Project includes
 #include "evm_k_epsilon_adjoint_utilities.h"
+#include "evm_k_epsilon_utilities.h"
 #include "custom_elements/stabilized_convection_diffusion_reaction_adjoint_utilities.h"
 #include "custom_utilities/rans_calculation_utilities.h"
 
@@ -170,11 +171,6 @@ void CalculateThetaVelocitySensitivity(BoundedMatrix<double, TNumNodes, TDim>& r
                                        const BoundedMatrix<double, TNumNodes, TDim>& rFmuSensitivities,
                                        const BoundedMatrix<double, TNumNodes, TDim>& rNuTSensitivities)
 {
-    std::size_t number_of_nodes = rFmuSensitivities.size1();
-    std::size_t domain_size = rFmuSensitivities.size2();
-
-    if (rOutput.size1() != number_of_nodes || rOutput.size2() != domain_size)
-        rOutput.resize(number_of_nodes, domain_size);
     rOutput.clear();
 
     noalias(rOutput) += rFmuSensitivities * c_mu * tke / nu_t;
@@ -190,10 +186,6 @@ void CalculateThetaTKESensitivity(BoundedVector<double, TNumNodes>& rOutput,
                                   const BoundedVector<double, TNumNodes>& rNuTGaussSensitivities,
                                   const Vector& rGaussShapeFunctions)
 {
-    std::size_t number_of_nodes = rNuTGaussSensitivities.size();
-
-    if (rOutput.size() != number_of_nodes)
-        rOutput.resize(number_of_nodes);
     rOutput.clear();
 
     noalias(rOutput) += rGaussShapeFunctions * c_mu * f_mu / nu_t;
@@ -208,13 +200,8 @@ void CalculateThetaEpsilonSensitivity(BoundedVector<double, TNumNodes>& rOutput,
                                       const double nu_t,
                                       const BoundedVector<double, TNumNodes>& rNuTSensitivities)
 {
-    std::size_t number_of_nodes = rNuTSensitivities.size();
-
-    if (rOutput.size() != number_of_nodes)
-        rOutput.resize(number_of_nodes);
-
-    noalias(rOutput) =
-        rNuTSensitivities * (-1.0 * c_mu * f_mu * tke / std::pow(nu_t, 2));
+    const double gamma = EvmKepsilonModelUtilities::CalculateGamma(c_mu, f_mu, tke, nu_t);
+    noalias(rOutput) = rNuTSensitivities * (-1.0 * gamma / nu_t);
 }
 
 template <unsigned int TNumNodes>

@@ -795,14 +795,13 @@ public:
                 residual += reaction * variable_value;
                 residual -= source;
                 residual = std::abs(residual);
-                residual /= variable_gradient_norm;
 
                 StabilizedConvectionDiffusionReactionUtilities::CalculateCrossWindDiffusionParameters(
                     chi, k1, k2, velocity_magnitude, tau,
                     effective_kinematic_viscosity, reaction, bossak_alpha,
                     bossak_gamma, delta_time, element_length, dynamic_tau);
 
-                positivity_preserving_coefficient = residual * chi / velocity_magnitude_square;
+                positivity_preserving_coefficient = residual * chi / (velocity_magnitude_square * variable_gradient_norm);
             }
 
             const double s = std::abs(reaction);

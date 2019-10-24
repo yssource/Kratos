@@ -703,12 +703,15 @@ KRATOS_TEST_CASE_IN_SUITE(RansEvmKAdjoint2D3N_CalculateCrossWindDiffusionCoeffSc
             psi_one_derivatives, velocity_magnitude, reaction_tilde, tau,
             tau_derivatives, absolute_reaction_tilde_derivatives);
 
+        const double psi_two = StabilizedConvectionDiffusionReactionUtilities::CalculatePsiTwo(
+            reaction_tilde, tau, element_length);
         StabilizedConvectionDiffusionReactionAdjointUtilities::CalculatePsiTwoScalarDerivatives(
             psi_two_derivatives, element_length, tau, reaction_tilde, tau_derivatives,
             reaction_derivatives, absolute_reaction_tilde_derivatives);
 
         StabilizedConvectionDiffusionReactionAdjointUtilities::CalculateCrossWindDiffusionCoeffScalarDerivatives(
-            rOutput, psi_one, element_length, psi_one_derivatives,
+            rOutput, psi_one, psi_two, element_length,
+            effective_kinematic_viscosity, psi_one_derivatives,
             psi_two_derivatives, effective_kinematic_viscosity_derivatives);
 
         return k2;

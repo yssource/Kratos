@@ -717,16 +717,29 @@ template <std::size_t TNumNodes>
 inline void CalculateCrossWindDiffusionCoeffScalarDerivatives(
     BoundedVector<double, TNumNodes>& rOutput,
     const double psi_one,
+    const double psi_two,
     const double element_length,
+    const double effective_kinematic_viscosity,
     const BoundedVector<double, TNumNodes>& rPsiOneScalarDerivatives,
     const BoundedVector<double, TNumNodes>& rPsiTwoScalarDerivatives,
     const BoundedVector<double, TNumNodes>& rEffectiveKinematicViscosityScalarDerivatives)
 {
-    noalias(rOutput) = rPsiOneScalarDerivatives *
-                       (0.5 * psi_one * element_length / (std::abs(psi_one)) +
-                        std::numeric_limits<double>::epsilon());
-    noalias(rOutput) -= rEffectiveKinematicViscosityScalarDerivatives;
-    noalias(rOutput) += rPsiTwoScalarDerivatives;
+    const double cross_wind_diffusion_coeff =
+        0.5 * std::abs(psi_one) * element_length - effective_kinematic_viscosity + psi_two;
+
+    if (cross_wind_diffusion_coeff >= 0.0)
+    {
+        noalias(rOutput) =
+            rPsiOneScalarDerivatives *
+            (0.5 * psi_one * element_length /
+             (std::abs(psi_one) + std::numeric_limits<double>::epsilon()));
+        noalias(rOutput) -= rEffectiveKinematicViscosityScalarDerivatives;
+        noalias(rOutput) += rPsiTwoScalarDerivatives;
+    }
+    else
+    {
+        rOutput.clear();
+    }
 }
 
 template <std::size_t TNumNodes>

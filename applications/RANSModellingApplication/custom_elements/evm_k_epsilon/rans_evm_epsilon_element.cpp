@@ -382,7 +382,6 @@ void RansEvmEpsilonElement<TDim, TNumNodes>::CalculateElementData(
     rData.C1 = c1;
     rData.C2 = c2;
     rData.Gamma = gamma;
-    rData.ShapeFunctionDerivatives = rShapeFunctionDerivatives;
     rData.TurbulentKinematicViscosity = nu_t;
     rData.KinematicViscosity = nu;
     rData.TurbulentKineticEnergy = tke;
@@ -451,7 +450,7 @@ double RansEvmEpsilonElement<TDim, TNumNodes>::CalculateSourceTerm(
     double production = 0.0;
 
     BoundedMatrix<double, TDim, TDim> velocity_gradient_matrix;
-    this->CalculateGradient(velocity_gradient_matrix, VELOCITY, rData.ShapeFunctionDerivatives);
+    this->CalculateGradient(velocity_gradient_matrix, VELOCITY, rShapeFunctionDerivatives);
 
     production = EvmKepsilonModelUtilities::CalculateSourceTerm<TDim>(
         velocity_gradient_matrix, rData.TurbulentKinematicViscosity, rData.TurbulentKineticEnergy);

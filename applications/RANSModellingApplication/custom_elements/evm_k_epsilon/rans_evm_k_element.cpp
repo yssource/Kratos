@@ -367,8 +367,6 @@ void RansEvmKElement<TDim, TNumNodes>::CalculateElementData(RansEvmKElementData&
 {
     KRATOS_TRY
 
-    rData.ShapeFunctionDerivatives = rShapeFunctionDerivatives;
-
     const double c_mu = rCurrentProcessInfo[TURBULENCE_RANS_C_MU];
 
     const double nu_t = this->EvaluateInPoint(TURBULENT_VISCOSITY, rShapeFunctions);
@@ -443,7 +441,7 @@ double RansEvmKElement<TDim, TNumNodes>::CalculateSourceTerm(const RansEvmKEleme
     double production = 0.0;
 
     BoundedMatrix<double, TDim, TDim> velocity_gradient_matrix;
-    this->CalculateGradient(velocity_gradient_matrix, VELOCITY, rData.ShapeFunctionDerivatives);
+    this->CalculateGradient(velocity_gradient_matrix, VELOCITY, rShapeFunctionDerivatives);
 
     production = EvmKepsilonModelUtilities::CalculateSourceTerm<TDim>(
         velocity_gradient_matrix, rData.TurbulentKinematicViscosity, rData.TurbulentKineticEnergy);

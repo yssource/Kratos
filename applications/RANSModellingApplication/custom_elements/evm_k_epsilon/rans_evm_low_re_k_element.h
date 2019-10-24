@@ -53,11 +53,8 @@ struct RansEvmLowReKElementData
     double KinematicViscosity;
     double WallDistance;
     double Gamma;
-
     double TurbulentKineticEnergy;
     double TurbulentKinematicViscosity;
-
-    Matrix ShapeFunctionDerivatives;
 };
 
 template <unsigned int TDim, unsigned int TNumNodes>

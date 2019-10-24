@@ -392,7 +392,6 @@ void RansEvmLowReEpsilonElement<TDim, TNumNodes>::CalculateElementData(
     rData.F2 = f2;
     rData.Gamma = gamma;
     rData.KinematicViscosity = nu;
-    rData.ShapeFunctionDerivatives = rShapeFunctionDerivatives;
     rData.TurbulentKinematicViscosity = nu_t;
     rData.TurbulentKineticEnergy = tke;
     rData.WallDistance = wall_distance;
@@ -459,7 +458,7 @@ double RansEvmLowReEpsilonElement<TDim, TNumNodes>::CalculateSourceTerm(
     const int Step) const
 {
     BoundedMatrix<double, TDim, TDim> velocity_gradient_matrix;
-    this->CalculateGradient(velocity_gradient_matrix, VELOCITY, rData.ShapeFunctionDerivatives);
+    this->CalculateGradient(velocity_gradient_matrix, VELOCITY, rShapeFunctionDerivatives);
     double production = EvmKepsilonModelUtilities::CalculateSourceTerm<TDim>(
         velocity_gradient_matrix, rData.TurbulentKinematicViscosity, rData.TurbulentKineticEnergy);
 

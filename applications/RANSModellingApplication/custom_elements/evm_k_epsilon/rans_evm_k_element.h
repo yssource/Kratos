@@ -51,13 +51,10 @@ namespace Kratos
 struct RansEvmKElementData
 {
     double Gamma;
-
     double TurbulentKineticEnergy;
     double TurbulentKinematicViscosity;
     double KinematicViscosity;
     double VelocityDivergence;
-
-    Matrix ShapeFunctionDerivatives;
 };
 
 template <unsigned int TDim, unsigned int TNumNodes>

@@ -56,8 +56,6 @@ struct RansEvmEpsilonElementData
     double TurbulentKineticEnergy;
     double TurbulentKinematicViscosity;
     double KinematicViscosity;
-
-    Matrix ShapeFunctionDerivatives;
     double VelocityDivergence;
 };
 

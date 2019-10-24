@@ -117,8 +117,10 @@ public:
         const TDataType DispAbsTolerance,
         const TDataType LMNormalRatioTolerance,
         const TDataType LMNormalAbsTolerance,
-        const TDataType LMTangentRatioTolerance,
-        const TDataType LMTangentAbsTolerance,
+        const TDataType LMTangentStickRatioTolerance,
+        const TDataType LMTangentStickAbsTolerance,
+        const TDataType LMTangentSlipRatioTolerance,
+        const TDataType LMTangentSlipAbsTolerance,
         const TDataType NormalTangentRatio,
         const bool EnsureContact = false,
         const bool PureSlip = false,
@@ -143,8 +145,10 @@ public:
         mLMNormalAbsTolerance = LMNormalAbsTolerance;
 
         // The tangent contact residual
-        mLMTangentRatioTolerance = LMTangentRatioTolerance;
-        mLMTangentAbsTolerance = LMTangentAbsTolerance;
+        mLMTangentStickRatioTolerance = LMTangentStickRatioTolerance;
+        mLMTangentStickAbsTolerance = LMTangentStickAbsTolerance;
+        mLMTangentSlipRatioTolerance = LMTangentSlipRatioTolerance;
+        mLMTangentSlipAbsTolerance = LMTangentSlipAbsTolerance;
 
         // We get the  ratio between the normal and tangent that will accepted as converged
         mNormalTangentRatio = NormalTangentRatio;
@@ -160,15 +164,17 @@ public:
         // The default parameters
         Parameters default_parameters = Parameters(R"(
         {
-            "ensure_contact"                                 : false,
-            "pure_slip"                                      : false,
-            "print_convergence_criterion"                    : false,
-            "residual_relative_tolerance"                    : 1.0e-4,
-            "residual_absolute_tolerance"                    : 1.0e-9,
-            "contact_residual_relative_tolerance"            : 1.0e-4,
-            "contact_residual_absolute_tolerance"            : 1.0e-9,
-            "frictional_contact_residual_relative_tolerance" : 1.0e-4,
-            "frictional_contact_residual_absolute_tolerance" : 1.0e-9
+            "ensure_contact"                                       : false,
+            "pure_slip"                                            : false,
+            "print_convergence_criterion"                          : false,
+            "residual_relative_tolerance"                          : 1.0e-4,
+            "residual_absolute_tolerance"                          : 1.0e-9,
+            "contact_residual_relative_tolerance"                  : 1.0e-4,
+            "contact_residual_absolute_tolerance"                  : 1.0e-9,
+            "frictional_stick_contact_residual_relative_tolerance" : 1.0e-4,
+            "frictional_stick_contact_residual_absolute_tolerance" : 1.0e-9,
+            "frictional_slip_contact_residual_relative_tolerance"  : 1.0e-4,
+            "frictional_slip_contact_residual_absolute_tolerance"  : 1.0e-9
         })" );
 
         ThisParameters.ValidateAndAssignDefaults(default_parameters);
@@ -182,8 +188,10 @@ public:
         mLMNormalAbsTolerance =  ThisParameters["contact_residual_absolute_tolerance"].GetDouble();
 
         // The tangent contact residual
-        mLMTangentRatioTolerance =  ThisParameters["frictional_contact_residual_relative_tolerance"].GetDouble();
-        mLMTangentAbsTolerance =  ThisParameters["frictional_contact_residual_absolute_tolerance"].GetDouble();
+        mLMTangentStickRatioTolerance =  ThisParameters["frictional_stick_contact_residual_relative_tolerance"].GetDouble();
+        mLMTangentStickAbsTolerance =  ThisParameters["frictional_stick_contact_residual_absolute_tolerance"].GetDouble();
+        mLMTangentSlipRatioTolerance =  ThisParameters["frictional_slip_contact_residual_relative_tolerance"].GetDouble();
+        mLMTangentSlipAbsTolerance =  ThisParameters["frictional_slip_contact_residual_absolute_tolerance"].GetDouble();
 
         // We get the  ratio between the normal and tangent that will accepted as converged
         mNormalTangentRatio = ThisParameters["ratio_normal_tangent_threshold"].GetDouble();
@@ -210,8 +218,10 @@ public:
       ,mLMNormalAbsTolerance(rOther.mLMNormalAbsTolerance)
       ,mLMNormalInitialResidualNorm(rOther.mLMNormalInitialResidualNorm)
       ,mLMNormalCurrentResidualNorm(rOther.mLMNormalCurrentResidualNorm)
-      ,mLMTangentRatioTolerance(rOther.mLMTangentRatioTolerance)
-      ,mLMTangentAbsTolerance(rOther.mLMTangentAbsTolerance)
+      ,mLMTangentStickRatioTolerance(rOther.mLMTangentStickRatioTolerance)
+      ,mLMTangentStickAbsTolerance(rOther.mLMTangentStickAbsTolerance)
+      ,mLMTangentSlipRatioTolerance(rOther.mLMTangentSlipRatioTolerance)
+      ,mLMTangentSlipAbsTolerance(rOther.mLMTangentSlipAbsTolerance)
       ,mLMTangentStickInitialResidualNorm(rOther.mLMTangentStickInitialResidualNorm)
       ,mLMTangentStickCurrentResidualNorm(rOther.mLMTangentStickCurrentResidualNorm)
       ,mStickCounter(rOther.mStickCounter)
@@ -250,7 +260,7 @@ public:
             ProcessInfo& r_process_info = rModelPart.GetProcessInfo();
             const bool active_set_reseted = r_process_info[ACTIVE_SET_RESETED];
 
-            // Compute the active set
+            // Compute the active set // TODO: Remove this
             if (!r_process_info[ACTIVE_SET_COMPUTED]) {
                 // Recompute the WEIGHTED_GAP and WEIGHTED_GAP
                 NodesArrayType& r_nodes_array = rModelPart.GetSubModelPart("Contact").Nodes();
@@ -457,9 +467,9 @@ public:
                     TablePrinterPointerType p_table = r_process_info[TABLE_UTILITY];
                     auto& r_table = p_table->GetTable();
                     if (mOptions.IsNot(DisplacementLagrangeMultiplierResidualFrictionalContactCriteria::PURE_SLIP)) {
-                        r_table << residual_disp_ratio << mDispRatioTolerance << residual_disp_abs << mDispAbsTolerance << residual_normal_lm_ratio << mLMNormalRatioTolerance << residual_normal_lm_abs << mLMNormalAbsTolerance << residual_tangent_lm_stick_ratio << mLMTangentRatioTolerance << residual_tangent_lm_stick_abs << mLMTangentAbsTolerance << residual_tangent_lm_slip_ratio << mLMTangentRatioTolerance << residual_tangent_lm_slip_abs << mLMTangentAbsTolerance;
+                        r_table << residual_disp_ratio << mDispRatioTolerance << residual_disp_abs << mDispAbsTolerance << residual_normal_lm_ratio << mLMNormalRatioTolerance << residual_normal_lm_abs << mLMNormalAbsTolerance << residual_tangent_lm_stick_ratio << mLMTangentStickRatioTolerance << residual_tangent_lm_stick_abs << mLMTangentStickAbsTolerance << residual_tangent_lm_slip_ratio << mLMTangentSlipRatioTolerance << residual_tangent_lm_slip_abs << mLMTangentSlipAbsTolerance;
                     } else {
-                        r_table << residual_disp_ratio << mDispRatioTolerance << residual_disp_abs << mDispAbsTolerance << residual_normal_lm_ratio << mLMNormalRatioTolerance << residual_normal_lm_abs << mLMNormalAbsTolerance << residual_tangent_lm_slip_ratio << mLMTangentRatioTolerance << residual_tangent_lm_slip_abs << mLMTangentAbsTolerance;
+                        r_table << residual_disp_ratio << mDispRatioTolerance << residual_disp_abs << mDispAbsTolerance << residual_normal_lm_ratio << mLMNormalRatioTolerance << residual_normal_lm_abs << mLMNormalAbsTolerance << residual_tangent_lm_slip_ratio << mLMTangentSlipRatioTolerance << residual_tangent_lm_slip_abs << mLMTangentSlipAbsTolerance;
                     }
                 } else {
                     std::cout.precision(4);
@@ -467,14 +477,14 @@ public:
                         KRATOS_INFO("DisplacementLagrangeMultiplierResidualFrictionalContactCriteria") << BOLDFONT("RESIDUAL CONVERGENCE CHECK") << "\tSTEP: " << r_process_info[STEP] << "\tNL ITERATION: " << r_process_info[NL_ITERATION_NUMBER] << std::endl << std::scientific;
                         KRATOS_INFO("DisplacementLagrangeMultiplierResidualFrictionalContactCriteria") << BOLDFONT("\tDISPLACEMENT: RATIO = ") << residual_disp_ratio << BOLDFONT(" EXP.RATIO = ") << mDispRatioTolerance << BOLDFONT(" ABS = ") << residual_disp_abs << BOLDFONT(" EXP.ABS = ") << mDispAbsTolerance << std::endl;
                         KRATOS_INFO("DisplacementLagrangeMultiplierResidualFrictionalContactCriteria") << BOLDFONT("\tNORMAL LAGRANGE MUL: RATIO = ") << residual_normal_lm_ratio << BOLDFONT(" EXP.RATIO = ") << mLMNormalRatioTolerance << BOLDFONT(" ABS = ") << residual_normal_lm_abs << BOLDFONT(" EXP.ABS = ") << mLMNormalAbsTolerance << std::endl;
-                        KRATOS_INFO_IF("DisplacementLagrangeMultiplierResidualFrictionalContactCriteria", mOptions.IsNot(DisplacementLagrangeMultiplierResidualFrictionalContactCriteria::PURE_SLIP)) << BOLDFONT("\tSTICK LAGRANGE MUL: RATIO = ") << residual_tangent_lm_stick_ratio << BOLDFONT(" EXP.RATIO = ") << mLMTangentRatioTolerance << BOLDFONT(" ABS = ") << residual_tangent_lm_stick_abs << BOLDFONT(" EXP.ABS = ") << mLMTangentAbsTolerance << std::endl;
-                        KRATOS_INFO("DisplacementLagrangeMultiplierResidualFrictionalContactCriteria") << BOLDFONT("\tSLIP LAGRANGE MUL: RATIO = ") << residual_tangent_lm_slip_ratio << BOLDFONT(" EXP.RATIO = ") << mLMTangentRatioTolerance << BOLDFONT(" ABS = ") << residual_tangent_lm_slip_abs << BOLDFONT(" EXP.ABS = ") << mLMTangentAbsTolerance << std::endl;
+                        KRATOS_INFO_IF("DisplacementLagrangeMultiplierResidualFrictionalContactCriteria", mOptions.IsNot(DisplacementLagrangeMultiplierResidualFrictionalContactCriteria::PURE_SLIP)) << BOLDFONT("\tSTICK LAGRANGE MUL: RATIO = ") << residual_tangent_lm_stick_ratio << BOLDFONT(" EXP.RATIO = ") << mLMTangentStickRatioTolerance << BOLDFONT(" ABS = ") << residual_tangent_lm_stick_abs << BOLDFONT(" EXP.ABS = ") << mLMTangentStickAbsTolerance << std::endl;
+                        KRATOS_INFO("DisplacementLagrangeMultiplierResidualFrictionalContactCriteria") << BOLDFONT("\tSLIP LAGRANGE MUL: RATIO = ") << residual_tangent_lm_slip_ratio << BOLDFONT(" EXP.RATIO = ") << mLMTangentSlipRatioTolerance << BOLDFONT(" ABS = ") << residual_tangent_lm_slip_abs << BOLDFONT(" EXP.ABS = ") << mLMTangentSlipAbsTolerance << std::endl;
                     } else {
                         KRATOS_INFO("DisplacementLagrangeMultiplierResidualFrictionalContactCriteria") << "RESIDUAL CONVERGENCE CHECK" << "\tSTEP: " << r_process_info[STEP] << "\tNL ITERATION: " << r_process_info[NL_ITERATION_NUMBER] << std::endl << std::scientific;
                         KRATOS_INFO("DisplacementLagrangeMultiplierResidualFrictionalContactCriteria") << "\tDISPLACEMENT: RATIO = " << residual_disp_ratio << " EXP.RATIO = " << mDispRatioTolerance << " ABS = " << residual_disp_abs << " EXP.ABS = " << mDispAbsTolerance << std::endl;
                         KRATOS_INFO("DisplacementLagrangeMultiplierResidualFrictionalContactCriteria") << "\tNORMAL LAGRANGE MUL: RATIO = " << residual_normal_lm_ratio << " EXP.RATIO = " << mLMNormalRatioTolerance << " ABS = " << residual_normal_lm_abs << " EXP.ABS = " << mLMNormalAbsTolerance << std::endl;
-                        KRATOS_INFO_IF("DisplacementLagrangeMultiplierResidualFrictionalContactCriteria", mOptions.IsNot(DisplacementLagrangeMultiplierResidualFrictionalContactCriteria::PURE_SLIP)) << "\tSTICK LAGRANGE MUL: RATIO = " << residual_tangent_lm_stick_ratio << " EXP.RATIO = " << mLMTangentRatioTolerance << " ABS = " << residual_tangent_lm_stick_abs << " EXP.ABS = " << mLMTangentAbsTolerance << std::endl;
-                        KRATOS_INFO("DisplacementLagrangeMultiplierResidualFrictionalContactCriteria") << "\tSLIP LAGRANGE MUL: RATIO = " << residual_tangent_lm_slip_ratio << " EXP.RATIO = " << mLMTangentRatioTolerance << " ABS = " << residual_tangent_lm_slip_abs << " EXP.ABS = " << mLMTangentAbsTolerance << std::endl;
+                        KRATOS_INFO_IF("DisplacementLagrangeMultiplierResidualFrictionalContactCriteria", mOptions.IsNot(DisplacementLagrangeMultiplierResidualFrictionalContactCriteria::PURE_SLIP)) << "\tSTICK LAGRANGE MUL: RATIO = " << residual_tangent_lm_stick_ratio << " EXP.RATIO = " << mLMTangentStickRatioTolerance << " ABS = " << residual_tangent_lm_stick_abs << " EXP.ABS = " << mLMTangentStickAbsTolerance << std::endl;
+                        KRATOS_INFO("DisplacementLagrangeMultiplierResidualFrictionalContactCriteria") << "\tSLIP LAGRANGE MUL: RATIO = " << residual_tangent_lm_slip_ratio << " EXP.RATIO = " << mLMTangentSlipRatioTolerance << " ABS = " << residual_tangent_lm_slip_abs << " EXP.ABS = " << mLMTangentSlipAbsTolerance << std::endl;
                     }
                 }
             }
@@ -486,7 +496,7 @@ public:
 
             // We check if converged
             const bool disp_converged = (residual_disp_ratio <= mDispRatioTolerance || residual_disp_abs <= mDispAbsTolerance);
-            const bool lm_converged = (mOptions.IsNot(DisplacementLagrangeMultiplierResidualFrictionalContactCriteria::ENSURE_CONTACT) && residual_normal_lm_ratio == 0.0) ? true : (residual_normal_lm_ratio <= mLMNormalRatioTolerance || residual_normal_lm_abs <= mLMNormalAbsTolerance) && (residual_tangent_lm_stick_ratio <= mLMTangentRatioTolerance || residual_tangent_lm_stick_abs <= mLMTangentAbsTolerance || normal_tangent_stick_ratio <= mNormalTangentRatio) && (residual_tangent_lm_slip_ratio <= mLMTangentRatioTolerance || residual_tangent_lm_slip_abs <= mLMTangentAbsTolerance || normal_tangent_slip_ratio <= mNormalTangentRatio);
+            const bool lm_converged = (mOptions.IsNot(DisplacementLagrangeMultiplierResidualFrictionalContactCriteria::ENSURE_CONTACT) && residual_normal_lm_ratio == 0.0) ? true : (residual_normal_lm_ratio <= mLMNormalRatioTolerance || residual_normal_lm_abs <= mLMNormalAbsTolerance) && (residual_tangent_lm_stick_ratio <= mLMTangentStickRatioTolerance || residual_tangent_lm_stick_abs <= mLMTangentStickAbsTolerance || normal_tangent_stick_ratio <= mNormalTangentRatio) && (residual_tangent_lm_slip_ratio <= mLMTangentSlipRatioTolerance || residual_tangent_lm_slip_abs <= mLMTangentSlipAbsTolerance || normal_tangent_slip_ratio <= mNormalTangentRatio);
 
             if (disp_converged && lm_converged ) {
                 if (rModelPart.GetCommunicator().MyPID() == 0 && this->GetEchoLevel() > 0) {
@@ -678,8 +688,10 @@ private:
     TDataType mLMNormalInitialResidualNorm;       /// The reference norm of the normal LM residual
     TDataType mLMNormalCurrentResidualNorm;       /// The current norm of the normal LM residual
 
-    TDataType mLMTangentRatioTolerance;           /// The ratio threshold for the norm of the tangent LM residual
-    TDataType mLMTangentAbsTolerance;             /// The absolute value threshold for the norm of the tangent LM  residual
+    TDataType mLMTangentStickRatioTolerance;      /// The ratio threshold for the norm of the tangent LM residual (stick)
+    TDataType mLMTangentStickAbsTolerance;        /// The absolute value threshold for the norm of the tangent LM  residual (stick)
+    TDataType mLMTangentSlipRatioTolerance;       /// The ratio threshold for the norm of the tangent LM residual (slip)
+    TDataType mLMTangentSlipAbsTolerance;         /// The absolute value threshold for the norm of the tangent LM  residual (slip)
     TDataType mLMTangentStickInitialResidualNorm; /// The reference norm of the tangent LM residual (stick)
     TDataType mLMTangentStickCurrentResidualNorm; /// The current norm of the tangent LM residual (stick)
     TDataType mLMTangentSlipInitialResidualNorm;  /// The reference norm of the tangent LM residual (slip)

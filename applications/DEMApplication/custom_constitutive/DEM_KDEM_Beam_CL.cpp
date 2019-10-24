@@ -14,7 +14,7 @@ namespace Kratos {
         return p_clone;
     }
 
-    void DEM_KDEM_Beam::SetConstitutiveLawInProperties(Properties::Pointer pProp, bool verbose) const {
+    void DEM_KDEM_Beam::SetConstitutiveLawInProperties(Properties::Pointer pProp, bool verbose) {
         KRATOS_INFO("DEM") << "Assigning DEM_KDEM_Beam to Properties " << pProp->Id() << std::endl;
         pProp->SetValue(DEM_CONTINUUM_CONSTITUTIVE_LAW_POINTER, this->Clone());
         this->Check(pProp);
@@ -111,7 +111,8 @@ namespace Kratos {
                               element1,
                               element2,
                               i_neighbour_count,
-                              time_steps);
+                              time_steps,
+                              r_process_info);
 
         CalculateTangentialForces(OldLocalElasticContactForce,
                                   LocalElasticContactForce,
@@ -162,7 +163,8 @@ namespace Kratos {
                                               SphericContinuumParticle* element1,
                                               SphericContinuumParticle* element2,
                                               int i_neighbour_count,
-                                              int time_steps) {
+                                              int time_steps,
+                                              const ProcessInfo& r_process_info) {
 
             LocalElasticContactForce[2] = kn_el * indentation;
     }
@@ -255,6 +257,7 @@ namespace Kratos {
         const double equiv_gamma = 0.5 * (my_gamma + other_gamma);
 
         double norm_distance = (element->GetRadius() + neighbor->GetRadius()) / distance; // If spheres are not tangent the Damping coefficient, DeltaRotatedAngle and DeltaAngularVelocity have to be normalized
+        double norm_distance_torsion = 2.0 / distance;
 
         const double k_rot_x = equiv_young * Inertia_Ix * norm_distance / distance;
         const double k_rot_y = equiv_young * Inertia_Iy * norm_distance / distance;
@@ -262,7 +265,7 @@ namespace Kratos {
 
         const double visc_param_rot_x = 2.0 * equiv_gamma * auxX * sqrt(MomentOfInertiaX * k_rot_x) * norm_distance;
         const double visc_param_rot_y = 2.0 * equiv_gamma * auxY * sqrt(MomentOfInertiaY * k_rot_y) * norm_distance;
-        const double visc_param_tor   = 2.0 * equiv_gamma * auxZ * sqrt(MomentOfInertiaZ * k_tor  );
+        const double visc_param_tor   = 2.0 * equiv_gamma * auxZ * sqrt(MomentOfInertiaZ * k_tor  ) * norm_distance_torsion;
 
         ElasticLocalRotationalMoment[0] = -k_rot_x * LocalDeltaRotatedAngle[0];
         ElasticLocalRotationalMoment[1] = -k_rot_y * LocalDeltaRotatedAngle[1];

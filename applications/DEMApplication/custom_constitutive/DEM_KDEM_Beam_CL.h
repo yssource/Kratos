@@ -19,7 +19,7 @@ namespace Kratos {
 
         DEMContinuumConstitutiveLaw::Pointer Clone() const override;
 
-        void SetConstitutiveLawInProperties(Properties::Pointer pProp, bool verbose = true) const override;
+        void SetConstitutiveLawInProperties(Properties::Pointer pProp, bool verbose = true) override;
         void Check(Properties::Pointer pProp) const override;
 
         virtual void CalculateElasticConstants(double& kn_el,
@@ -80,7 +80,8 @@ namespace Kratos {
                                            SphericContinuumParticle* element1,
                                            SphericContinuumParticle* element2,
                                            int i_neighbour_count,
-                                           int time_steps) override;
+                                           int time_steps,
+                                           const ProcessInfo& r_process_info) override;
 
         virtual void CalculateTangentialForces(double OldLocalElasticContactForce[3],
                                                double LocalElasticContactForce[3],

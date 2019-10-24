@@ -775,7 +775,7 @@ public:
                 bossak_gamma, delta_time, dynamic_tau);
 
             // Calculate residual for cross wind dissipation coefficient
-            double cross_wind_diffusion{0.0}, stream_line_diffusion{0.0};
+            double positivity_preserving_coefficient{0.0}, k1{0.0}, k2{0.0}, chi{0.0};
             const double velocity_magnitude_square = std::pow(velocity_magnitude, 2);
 
             const double velocity_dot_variable_gradient =
@@ -797,16 +797,12 @@ public:
                 residual = std::abs(residual);
                 residual /= variable_gradient_norm;
 
-                double chi, k1, k2;
                 StabilizedConvectionDiffusionReactionUtilities::CalculateCrossWindDiffusionParameters(
                     chi, k1, k2, velocity_magnitude, tau,
                     effective_kinematic_viscosity, reaction, bossak_alpha,
                     bossak_gamma, delta_time, element_length, dynamic_tau);
 
-                stream_line_diffusion =
-                    residual * chi * k1 * (1.0 / velocity_magnitude_square);
-                cross_wind_diffusion =
-                    residual * chi * k2 * (1.0 / velocity_magnitude_square);
+                positivity_preserving_coefficient = residual * chi / velocity_magnitude_square;
             }
 
             const double s = std::abs(reaction);
@@ -835,12 +831,15 @@ public:
                              reaction * gauss_shape_functions[b]; // * positive_values_list[b];
 
                     // Adding cross wind dissipation
-                    value += cross_wind_diffusion * dNa_dNb * velocity_magnitude_square;
-                    value -= cross_wind_diffusion * velocity_convective_terms[a] *
+                    value += positivity_preserving_coefficient * k2 * dNa_dNb *
+                             velocity_magnitude_square;
+                    value -= positivity_preserving_coefficient * k2 *
+                             velocity_convective_terms[a] *
                              velocity_convective_terms[b];
 
                     // Adding stream line dissipation
-                    value += stream_line_diffusion * velocity_convective_terms[a] *
+                    value += positivity_preserving_coefficient * k1 *
+                             velocity_convective_terms[a] *
                              velocity_convective_terms[b];
 
                     rDampingMatrix(a, b) += gauss_weights[g] * value;
